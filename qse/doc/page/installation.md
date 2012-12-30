@@ -1,7 +1,8 @@
-Installation                                    {#installation}
-============
+Installation                                                     {#installation}
+================================================================================
 
-## Source Package ##
+Source Package
+--------------
 
 You can download the source package from 
 
@@ -14,7 +15,8 @@ repository by executing the following command:
 
     svn checkout http://qse.googlecode.com/svn/trunk/qse/
 
-## Building on Unix/Linux ##
+Building on Unix/Linux
+----------------------
 
 The project uses the standard autoconf/automake generated script files for 
 buildiing. If you work on the systems where these scripts can run, you can 
@@ -26,7 +28,8 @@ follow the standard procedures of configuring and making the project.
 
 You can use this method of building for MinGW or Cygwin on Windows.
  
-## Cross-compiling for WIN32 ##
+Cross-compiling for WIN32
+-------------------------
 
 While the autoconf/automake scripts may not support your native compilers,
 you can cross-compile it for WIN32/WIN64 with a cross-compiler. Get a 
@@ -48,7 +51,8 @@ With MINGW-W64, you may run *configure* as shown below:
 The actual host and target names may vary depending on the cross-compiler 
 installed.
 
-## Native Makefiles ##
+Native Makefiles 
+----------------
 
 The project provides makefiles for some selected compilers and platforms.
 The makefiles were generated with bakefile (www.bakefile.org) and can be
@@ -66,7 +70,8 @@ the wide character type, you can execute this:
     cd bld\os2-watcom
     wmake BUILD=release CHAR=wchar
 
-## Build Options ## 
+Build Options
+-------------
 
 The configure script and the native makefiles provides some options that you
 can use to change the build environment. The options presented here can be
@@ -95,7 +100,7 @@ extra information useful for debugging. The default mode is **release**.
  debug   | enable-debug   | BUILD=debug
  release | disable-debug  | BUILD=release
 
-### Character Type ###
+### Character Type ###  
 
 You can choose between the wide charcter type and the multi-byte character
 type as a basic character type represented in the #qse_char_t type. The default
