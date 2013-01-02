@@ -1008,7 +1008,7 @@ static void* mux_open (qse_httpd_t* httpd, qse_httpd_muxcb_t cbfun)
 	qse_mux_t* mux;
 	mux_xtn_t* xtn;
 
-	mux = qse_mux_open (httpd->mmgr, QSE_SIZEOF(*xtn), dispatch_muxcb, 256);
+	mux = qse_mux_open (httpd->mmgr, QSE_SIZEOF(*xtn), dispatch_muxcb, 256, QSE_NULL);
 	if (!mux)
 	{
 		qse_httpd_seterrnum (httpd, QSE_HTTPD_ESYSERR);

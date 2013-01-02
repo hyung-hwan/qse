@@ -17312,7 +17312,20 @@ fi
 
 done
 
-for ac_header in sys/resource.h sys/wait.h sys/syscall.h sys/sendfile.h sys/epoll.h sys/ioctl.h
+for ac_header in sys/resource.h sys/wait.h sys/syscall.h sys/ioctl.h
+do :
+  as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
+ac_fn_c_check_header_mongrel "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"
+if eval test \"x\$"$as_ac_Header"\" = x"yes"; then :
+  cat >>confdefs.h <<_ACEOF
+#define `$as_echo "HAVE_$ac_header" | $as_tr_cpp` 1
+_ACEOF
+
+fi
+
+done
+
+for ac_header in sys/sendfile.h sys/epoll.h sys/event.h
 do :
   as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
 ac_fn_c_check_header_mongrel "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"
@@ -17931,6 +17944,19 @@ then
 $as_echo "#define HAVE_EPOLL 1" >>confdefs.h
 
 fi
+
+for ac_func in kqueue kqueue1 kevent
+do :
+  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
+ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
+if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  cat >>confdefs.h <<_ACEOF
+#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+_ACEOF
+
+fi
+done
+
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for main in -lunicows" >&5
 $as_echo_n "checking for main in -lunicows... " >&6; }
