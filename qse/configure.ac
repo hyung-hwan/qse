@@ -101,7 +101,8 @@ dnl check header files.
 AC_HEADER_STDC
 AC_CHECK_HEADERS([stddef.h wchar.h wctype.h errno.h signal.h fcntl.h dirent.h])
 AC_CHECK_HEADERS([time.h sys/time.h utime.h spawn.h execinfo.h ucontext.h])
-AC_CHECK_HEADERS([sys/resource.h sys/wait.h sys/syscall.h sys/sendfile.h sys/epoll.h sys/ioctl.h])
+AC_CHECK_HEADERS([sys/resource.h sys/wait.h sys/syscall.h sys/ioctl.h])
+AC_CHECK_HEADERS([sys/sendfile.h sys/epoll.h sys/event.h])
 AC_CHECK_HEADERS([sys/sysctl.h sys/socket.h sys/sockio.h ifaddrs.h])
 AC_CHECK_HEADERS([net/if.h net/if_dl.h], [], [], [
 	#include <sys/types.h>
@@ -214,6 +215,8 @@ if test "$ac_cv_func_epoll_create" = "yes"
 then
 	AC_DEFINE(HAVE_EPOLL, 1, [epoll support])
 fi
+
+AC_CHECK_FUNCS([kqueue kqueue1 kevent])
 
 dnl check is the import library for unicows.dll exists
 dnl this check doesn't look for a particular symbol

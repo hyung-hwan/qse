@@ -51,12 +51,16 @@
 #	if defined(HAVE_SYS_TIME_H)
 #		include <sys/time.h>
 #	endif
-#	if defined(HAVE_SYS_EPOLL_H)
+#	if defined(HAVE_SYS_EVENT_H) && defined(HAVE_KQUEUE) && defined(HAVE_KEVENT)
+#		include <sys/event.h>
+#		define USE_KQUEUE
+#	elif defined(HAVE_SYS_EPOLL_H)
 #		include <sys/epoll.h>
 #		if defined(HAVE_EPOLL_CREATE)
 #			define USE_EPOLL
 #		endif
 #	elif defined(HAVE_POLL_H)
+		/* TODO */
 #		define USE_POLL
 #	else
 #		define USE_SELECT
@@ -76,6 +80,19 @@ struct qse_mux_t
 	fd_set tmpwset;
 	int size;
 	int maxhnd;
+	struct
+	{
+		qse_mux_evt_t** ptr;
+		int ubound;
+	} me;
+
+#elif defined(USE_KQUEUE)
+
+	int kq;
+
+	/* event list: TODO: find the optimal size or make it auto-scalable */
+	struct kevent evlist[512]; 
+	int size;
 	struct
 	{
 		qse_mux_evt_t** ptr;
@@ -106,9 +123,13 @@ struct qse_mux_t
 #endif
 };
 
-int qse_mux_init (qse_mux_t* mux, qse_mmgr_t* mmgr, qse_mux_evtfun_t evtfun, qse_size_t capahint);
+int qse_mux_init (
+	qse_mux_t*       mux,
+	qse_mmgr_t*      mmgr,
+	qse_mux_evtfun_t evtfun,
+	qse_size_t       capahint
+);
 void qse_mux_fini (qse_mux_t* mux);
-
 
 #if defined(_WIN32)
 static qse_mux_errnum_t skerr_to_errnum (DWORD e)
@@ -210,7 +231,10 @@ static qse_mux_errnum_t skerr_to_errnum (int e)
 }
 #endif
 
-qse_mux_t* qse_mux_open (qse_mmgr_t* mmgr, qse_size_t xtnsize, qse_mux_evtfun_t evtfun, qse_size_t capahint)
+qse_mux_t* qse_mux_open (
+	qse_mmgr_t* mmgr, qse_size_t xtnsize, 
+	qse_mux_evtfun_t evtfun, qse_size_t capahint, 
+	qse_mux_errnum_t* errnum)
 {
 	qse_mux_t* mux;
 	
@@ -219,6 +243,7 @@ qse_mux_t* qse_mux_open (qse_mmgr_t* mmgr, qse_size_t xtnsize, qse_mux_evtfun_t 
 	{
 		if (qse_mux_init (mux, mmgr, evtfun, capahint) <= -1)
 		{
+			if (errnum) *errnum = qse_mux_geterrnum (mux);
 			QSE_MMGR_FREE (mmgr, mux);
 			mux = QSE_NULL;
 		}
@@ -234,7 +259,9 @@ void qse_mux_close (qse_mux_t* mux)
 	QSE_MMGR_FREE (mux->mmgr, mux);
 }
 
-int qse_mux_init (qse_mux_t* mux, qse_mmgr_t* mmgr, qse_mux_evtfun_t evtfun, qse_size_t capahint)
+int qse_mux_init (
+	qse_mux_t* mux, qse_mmgr_t* mmgr,
+	qse_mux_evtfun_t evtfun, qse_size_t capahint)
 {
 	QSE_MEMSET (mux, 0, QSE_SIZEOF(*mux));
 	mux->mmgr = mmgr;
@@ -250,6 +277,28 @@ int qse_mux_init (qse_mux_t* mux, qse_mmgr_t* mmgr, qse_mux_evtfun_t evtfun, qse
 	FD_ZERO (&mux->rset);
 	FD_ZERO (&mux->wset);
 	mux->maxhnd = -1;
+
+#elif defined(USE_KQUEUE)
+
+	#if defined(HAVE_KQUEUE1) && defined(O_CLOEXEC)
+	mux->kq = kqueue1 (O_CLOEXEC);
+	#else
+	mux->kq = kqueue ();
+	#endif
+	if (mux->kq <= -1)
+	{	
+		mux->errnum = skerr_to_errnum (errno);
+		return -1;
+	}
+
+	#if defined(HAVE_KQUEUE1) && defined(O_CLOEXEC)
+	/* nothing to do */
+	#elif defined(FD_CLOEXEC)
+	{
+		int flag = fcntl (mux->kq, F_GETFD);
+		if (flag >= 0) fcntl (mux->kq, F_SETFD, flag | FD_CLOEXEC);
+	}
+	#endif
 
 #elif defined(USE_EPOLL) 
 	#if defined(HAVE_EPOLL_CREATE1) && defined(O_CLOEXEC)
@@ -273,6 +322,7 @@ int qse_mux_init (qse_mux_t* mux, qse_mmgr_t* mmgr, qse_mux_evtfun_t evtfun, qse
 	#endif
 
 #elif defined(__OS2__)
+
 	/* nothing special to do */
 
 #else
@@ -304,6 +354,23 @@ void qse_mux_fini (qse_mux_t* mux)
 		QSE_MMGR_FREE (mux->mmgr, mux->me.ptr);
 		mux->me.ubound = 0;
 		mux->maxhnd = -1;
+	}
+
+#elif defined(USE_KQUEUE)
+	close (mux->kq);
+
+	if (mux->me.ptr)
+	{
+		int i;
+
+		for (i = 0; i < mux->me.ubound; i++)
+		{
+			if (mux->me.ptr[i]) 
+				QSE_MMGR_FREE (mux->mmgr, mux->me.ptr[i]);
+		}
+
+		QSE_MMGR_FREE (mux->mmgr, mux->me.ptr);
+		mux->me.ubound = 0;
 	}
 
 #elif defined(USE_EPOLL)
@@ -408,6 +475,74 @@ int qse_mux_insert (qse_mux_t* mux, const qse_mux_evt_t* evt)
 
 	*mux->me.ptr[evt->hnd] = *evt;
 	if (evt->hnd > mux->maxhnd) mux->maxhnd = evt->hnd;
+	mux->size++;
+	return 0;
+
+#elif defined(USE_KQUEUE)
+	struct kevent chlist[2];
+	int count = 0;
+
+	/* TODO: study if it is better to put 'evt' to the udata 
+	 *       field of chlist? */
+
+	if (evt->mask & QSE_MUX_IN)
+	{
+		EV_SET (&chlist[count], evt->hnd, 
+			EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, 0);
+		count++;
+	}
+
+	if (evt->mask & QSE_MUX_OUT)
+	{
+		EV_SET (&chlist[count], evt->hnd,
+			EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, 0);
+		count++;
+	}
+
+	if (count == 0 || evt->hnd < 0)
+	{
+		mux->errnum = QSE_MUX_EINVAL;
+		return -1;
+	}
+
+	if (evt->hnd >= mux->me.ubound)
+	{
+		qse_mux_evt_t** tmp;
+		int ubound;
+
+		ubound = evt->hnd + 1;
+		ubound = ALIGN_TO (ubound, 128);
+
+		tmp = QSE_MMGR_REALLOC (mux->mmgr, mux->me.ptr, QSE_SIZEOF(*mux->me.ptr) * ubound);
+		if (tmp == QSE_NULL)
+		{
+			mux->errnum = QSE_MUX_ENOMEM;
+			return -1;
+		}
+
+		QSE_MEMSET (&tmp[mux->me.ubound], 0, QSE_SIZEOF(*mux->me.ptr) * (ubound - mux->me.ubound));
+		mux->me.ptr = tmp;
+		mux->me.ubound = ubound;
+	}
+
+	if (!mux->me.ptr[evt->hnd])
+	{
+		mux->me.ptr[evt->hnd] = QSE_MMGR_ALLOC (mux->mmgr, QSE_SIZEOF(*evt));
+		if (!mux->me.ptr[evt->hnd])
+		{
+			mux->errnum = QSE_MUX_ENOMEM;
+			return -1;
+		}
+	}
+
+	/* add the event */
+	if (kevent (mux->kq, chlist, count, QSE_NULL, 0, QSE_NULL) <= -1)
+	{
+		mux->errnum = skerr_to_errnum (errno);
+		return -1;
+	}
+
+	*mux->me.ptr[evt->hnd] = *evt;
 	mux->size++;
 	return 0;
 
@@ -590,6 +725,50 @@ done:
 	mux->size--;
 	return 0;	
 
+#elif defined(USE_KQUEUE)
+
+	qse_mux_evt_t* mevt;
+	struct kevent chlist[2];
+	int count = 0;
+
+	if (mux->size <= 0 || evt->hnd < 0 || evt->hnd >= mux->me.ubound) 
+	{
+		mux->errnum = QSE_MUX_EINVAL;
+		return -1;
+	}
+
+	mevt = mux->me.ptr[evt->hnd];
+	if (mevt->hnd != evt->hnd) 
+	{
+		/* already deleted??? */
+		mux->errnum = QSE_MUX_EINVAL;
+		return -1;
+	}
+
+	/* compose the change list */
+	if (mevt->mask & QSE_MUX_IN)
+	{
+		EV_SET (&chlist[count], evt->hnd, 
+			EVFILT_READ, EV_DELETE | EV_DISABLE, 0, 0, 0);
+		count++;
+	}
+	if (mevt->mask & QSE_MUX_OUT) 
+	{
+		EV_SET (&chlist[count], evt->hnd,
+			EVFILT_WRITE, EV_DELETE | EV_DISABLE, 0, 0, 0);
+		count++;
+	}
+
+	/* delte the event by applying the change list */
+	if (kevent (mux->kq, chlist, count, QSE_NULL, 0, QSE_NULL) <= -1)
+	{
+		mux->errnum = skerr_to_errnum (errno);
+		return -1;
+	}
+	
+	mux->size--;
+	return 0;
+
 #elif defined(USE_EPOLL)
 	if (mux->ee.len <= 0) 
 	{
@@ -629,7 +808,6 @@ done:
 	mux->size--;
 	return 0;	
 
-	
 #else
 	/* TODO */
 	mux->errnum = QSE_MUX_ENOIMPL;
@@ -684,6 +862,50 @@ int qse_mux_poll (qse_mux_t* mux, const qse_ntime_t* tmout)
 	}
 
 	return n;
+
+#elif defined(USE_KQUEUE)
+	int nevs;
+	struct timespec ts;
+
+	ts.tv_sec = tmout->sec;
+	ts.tv_nsec = tmout->nsec;
+
+	/* wait for events */
+	nevs = kevent (mux->kq, QSE_NULL, 0, 
+		mux->evlist, QSE_COUNTOF(mux->evlist), &ts);
+	if (nevs <= -1) 
+	{
+		mux->errnum = skerr_to_errnum(errno);
+		return -1;
+	}
+
+	if (nevs > 0)
+	{
+		int i;
+		qse_mux_hnd_t fd;
+		qse_mux_evt_t* evt, xevt;
+
+		for (i = 0; i < nevs; i++)
+		{
+			if (mux->evlist[i].flags & EV_ERROR) continue;
+
+			fd = mux->evlist[i].ident;
+			evt = mux->me.ptr[fd];
+			if (!evt || evt->hnd != fd) continue;
+
+			xevt = *evt;
+			xevt.mask = 0;
+
+			if ((evt->mask & QSE_MUX_IN) && 
+			    mux->evlist[i].filter == EVFILT_READ) xevt.mask |= QSE_MUX_IN;
+			if ((evt->mask & QSE_MUX_OUT) &&
+			    mux->evlist[i].filter == EVFILT_WRITE) xevt.mask |= QSE_MUX_OUT;
+
+			if (xevt.mask > 0) mux->evtfun (mux, &xevt);
+		}
+	}
+
+	return nevs;
 
 #elif defined(USE_EPOLL)
 	int nfds, i;

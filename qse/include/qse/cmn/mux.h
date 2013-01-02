@@ -86,10 +86,11 @@ extern "C" {
 #endif
 
 QSE_EXPORT qse_mux_t* qse_mux_open (
-	qse_mmgr_t*      mmgr,
-	qse_size_t       xtnsize,
-	qse_mux_evtfun_t evtfun,
-	qse_size_t       capahint
+	qse_mmgr_t*       mmgr,
+	qse_size_t        xtnsize,
+	qse_mux_evtfun_t  evtfun,
+	qse_size_t        capahint,
+	qse_mux_errnum_t* errnum
 );
 
 QSE_EXPORT void qse_mux_close (

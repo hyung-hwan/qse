@@ -194,6 +194,15 @@
 /* Define to 1 if you have the `iswctype' function. */
 #undef HAVE_ISWCTYPE
 
+/* Define to 1 if you have the `kevent' function. */
+#undef HAVE_KEVENT
+
+/* Define to 1 if you have the `kqueue' function. */
+#undef HAVE_KQUEUE
+
+/* Define to 1 if you have the `kqueue1' function. */
+#undef HAVE_KQUEUE1
+
 /* Define if you have the libdl library or equivalent. */
 #undef HAVE_LIBDL
 
@@ -437,6 +446,9 @@
 
 /* Define to 1 if you have the <sys/epoll.h> header file. */
 #undef HAVE_SYS_EPOLL_H
+
+/* Define to 1 if you have the <sys/event.h> header file. */
+#undef HAVE_SYS_EVENT_H
 
 /* Define to 1 if you have the <sys/ioctl.h> header file. */
 #undef HAVE_SYS_IOCTL_H
