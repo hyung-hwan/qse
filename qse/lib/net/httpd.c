@@ -498,17 +498,28 @@ static int activate_servers (qse_httpd_t* httpd)
 	{
 		if (httpd->scb->server.open (httpd, server) <= -1)
 		{
-qse_char_t buf[64];
-qse_nwadtostr (&server->nwad, buf, QSE_COUNTOF(buf), QSE_NWADTOSTR_ALL);
-qse_printf (QSE_T("FAILED TO ACTIVATE SERVER....[%s]\n"), buf);
+			qse_char_t buf[64];
+			qse_nwadtostr (&server->nwad, 
+				buf, QSE_COUNTOF(buf), QSE_NWADTOSTR_ALL);
+
+/*
+			httpd->rcb->log (httpd, 0, 
+				QSE_T("cannot activate %s"), buf);
+*/
 			continue;
 		}
 
-qse_printf (QSE_T("MUX ADDHND SERVER %d\n"), server->handle.i);
 		if (httpd->scb->mux.addhnd (
 			httpd, httpd->mux, server->handle, QSE_HTTPD_MUX_READ, server) <= -1)
 		{
-qse_printf (QSE_T("FAILED TO ADD SERVER HANDLE TO MUX....\n"));
+			qse_char_t buf[64];
+			qse_nwadtostr (&server->nwad, 
+				buf, QSE_COUNTOF(buf), QSE_NWADTOSTR_ALL);
+/*
+			httpd->rcb->log (httpd, 0, 
+				QSE_T("cannot activate %s - "), buf);
+*/
+
 			httpd->scb->server.close (httpd, server);
 			continue;
 		}
@@ -802,7 +813,6 @@ qse_printf (QSE_T("task returend %d\n"), n);
 
 			if (client->status & CLIENT_MUTE)
 			{
-qse_printf (QSE_T("REMOVING XXXXX FROM READING....\n"));
 				mux_mask &= ~QSE_HTTPD_MUX_READ;
 				mux_status &= ~CLIENT_HANDLE_READ_IN_MUX;
 			}
@@ -813,7 +823,6 @@ qse_printf (QSE_T("REMOVING XXXXX FROM READING....\n"));
 			{
 				/* no more task. but this client
 				 * has closed connection previously */
-qse_printf (QSE_T("REMOVING XXXXX FROM READING NO MORE TASK....\n"));
 				return -1;
 			}
 		}
@@ -1092,8 +1101,12 @@ static int dispatch_mux (
 		perform_client_task (httpd, mux, handle, mask, cbarg);
 }
 
-int qse_httpd_loop (qse_httpd_t* httpd, qse_httpd_scb_t* scb, qse_httpd_rcb_t* rcb, const qse_ntime_t* tmout)
+int qse_httpd_loop (
+	qse_httpd_t* httpd, qse_httpd_scb_t* scb,
+	qse_httpd_rcb_t* rcb, const qse_ntime_t* tmout)
 {
+	int xret;
+
 	QSE_ASSERTX (httpd->server.list.head != QSE_NULL,
 		"Add listeners before calling qse_httpd_loop()");	
 
@@ -1114,11 +1127,7 @@ int qse_httpd_loop (qse_httpd_t* httpd, qse_httpd_scb_t* scb, qse_httpd_rcb_t* r
 	QSE_ASSERT (httpd->server.navail > 0);
 
 	httpd->mux = httpd->scb->mux.open (httpd, dispatch_mux);
-	if (httpd->mux == QSE_NULL)
-	{
-qse_printf (QSE_T("can't open mux....\n"));
-		return -1;
-	}
+	if (httpd->mux == QSE_NULL) return -1;
 
 	if (activate_servers (httpd) <= -1) 
 	{
@@ -1127,22 +1136,22 @@ qse_printf (QSE_T("can't open mux....\n"));
 	}
 	if (httpd->server.nactive <= 0)
 	{
-qse_printf (QSE_T("no servers are active....\n"));
+		httpd->errnum = QSE_HTTPD_ENOSVR;
 		httpd->scb->mux.close (httpd, httpd->mux);
 		return -1;
 	}
+
+	xret = 0;
 
 	while (!httpd->stopreq)
 	{
 		int count;
 
 		count = httpd->scb->mux.poll (httpd, httpd->mux, tmout);
-		if (count <= -1)
+		if (count <= -1) 
 		{
-/* TODO: call user callback for this multiplexer error */
-			/*if (errno == EINTR) continue;*/
-qse_fprintf (QSE_STDERR, QSE_T("Error: mux returned failure %d\n"), (int)httpd->errnum);
-			/* break; */
+			xret = -1; 
+			break;
 		}
 
 		purge_bad_clients (httpd);
@@ -1152,7 +1161,7 @@ qse_fprintf (QSE_STDERR, QSE_T("Error: mux returned failure %d\n"), (int)httpd->
 	purge_client_list (httpd);
 	deactivate_servers (httpd);
 	httpd->scb->mux.close (httpd, httpd->mux);
-	return 0;
+	return xret;
 }
 
 /* --------------------------------------------------- */

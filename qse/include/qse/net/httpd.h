@@ -49,6 +49,7 @@ enum qse_httpd_errnum_t
 	QSE_HTTPD_EPIPE,
 	QSE_HTTPD_EAGAIN,
 
+	QSE_HTTPD_ENOSVR,  /* no active servers */
 	QSE_HTTPD_ECONN,
 	QSE_HTTPD_ENOBUF,  /* no buffer available */
 	QSE_HTTPD_EDISCON, /* client disconnnected */
@@ -231,6 +232,8 @@ struct qse_httpd_rcb_t
 		qse_httpd_t* httpd, qse_httpd_client_t* client, 
 		const qse_mchar_t* qpath, const qse_httpd_dirent_t* dirent,
 		qse_mchar_t* buf, int bufsz);
+
+	int (*log) (qse_httpd_t* httpd, int level, const qse_char_t* message);
 };
 
 /* -------------------------------------------------------------------------- */
