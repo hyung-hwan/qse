@@ -190,6 +190,29 @@ static void link_task (qse_task_t* task, qse_task_slice_t* slice)
 #	define __CALL_BACK__
 #endif
 
+#if defined(USE_UCONTEXT) && \
+    (QSE_SIZEOF_INT == QSE_SIZEOF_INT32_T) && \
+    (QSE_SIZEOF_VOID_P == (QSE_SIZEOF_INT32_T * 2))
+
+static void __CALL_BACK__ execute_current_slice (qse_uint32_t ptr1, qse_uint32_t ptr2)
+{
+	qse_task_slice_t* slice;
+	qse_task_slice_t* to;
+
+	slice = (qse_task_slice_t*)(((qse_uintptr_t)ptr1 << 32) | ptr2);
+
+	QSE_ASSERT (slice->task->current == slice);
+	to = slice->fnc (slice->task, slice, slice->ctx);
+
+	/* the task function is now terminated. we need to
+	 * purge it from the slice list and switch to the next
+	 * slice. */
+	purge_current_slice (slice, to);
+	QSE_ASSERT (!"must never reach here...");
+}
+
+#else
+
 static void __CALL_BACK__ execute_current_slice (qse_task_slice_t* slice)
 {
 	qse_task_slice_t* to;
@@ -203,6 +226,8 @@ static void __CALL_BACK__ execute_current_slice (qse_task_slice_t* slice)
 	purge_current_slice (slice, to);
 	QSE_ASSERT (!"must never reach here...");
 }
+
+#endif
 
 #if defined(__WATCOMC__)
 /* for watcom, i support i386/32bit only */
@@ -261,7 +286,17 @@ qse_task_slice_t* qse_task_create (
 	slice->uctx.uc_stack.ss_sp = slice + 1;
 	slice->uctx.uc_stack.ss_size = stksize;
 	slice->uctx.uc_link = QSE_NULL;
+
+	#if (QSE_SIZEOF_INT == QSE_SIZEOF_INT32_T) && \
+	    (QSE_SIZEOF_VOID_P == (QSE_SIZEOF_INT32_T * 2))
+
+	/* limited work around for unclear makecontext parameters */
+	makecontext (&slice->uctx, execute_current_slice, 2, 
+		(qse_uint32_t)(((qse_uintptr_t)slice) >> 32), 
+		(qse_uint32_t)((qse_uintptr_t)slice & 0xFFFFFFFFu));
+	#else
 	makecontext (&slice->uctx, execute_current_slice, 1, slice);
+	#endif
 
 #else
 
