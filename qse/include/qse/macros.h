@@ -60,7 +60,7 @@
 #	undef QSE_HAVE_INLINE_NEVER
 #endif
 
-#if defined(_WIN32)
+#if defined(_WIN32) || defined(__WATCOMC__)
 #	define QSE_IMPORT __declspec(dllimport)
 #	define QSE_EXPORT __declspec(dllexport)
 #	define QSE_PRIVATE 
@@ -69,10 +69,6 @@
 #	define QSE_EXPORT __attribute__((visibility("default")))
 #	define QSE_PRIVATE __attribute__((visibility("hidden")))
 /*#	define QSE_PRIVATE __attribute__((visibility("internal")))*/
-#elif defined(__WATCOMC__)
-#	define QSE_IMPORT __declspec(dllimport)
-#	define QSE_EXPORT __declspec(dllexport)
-#	define QSE_PRIVATE 
 #else
 #	define QSE_IMPORT
 #	define QSE_EXPORT
