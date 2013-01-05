@@ -498,6 +498,7 @@ static int fnc_getnwifcfg (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
 	qse_nwifcfg_t cfg;
 	qse_awk_rtx_valtostr_out_t out;
+	int ret = -1;
 
 	out.type = QSE_AWK_RTX_VALTOSTR_CPLCPY;
 	out.u.cplcpy.ptr = cfg.name;
@@ -520,7 +521,7 @@ static int fnc_getnwifcfg (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 				qse_char_t mask[128];
 				qse_char_t ethw[32];
 				qse_awk_val_map_data_t md[7];
-				qse_awk_val_t* retv;
+				qse_awk_val_t* tmp;
 
 				QSE_MEMSET (md, 0, QSE_SIZEOF(md));
 
@@ -563,14 +564,19 @@ static int fnc_getnwifcfg (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 					md[5].vptr = (cfg.flags & QSE_NWIFCFG_LINKUP)? QSE_T("up"): QSE_T("down");
 				}
 
-				retv = qse_awk_rtx_makemapvalwithdata (rtx, md);
-				if (retv == QSE_NULL) return -1;
-
-				qse_awk_rtx_setretval (rtx, retv);
+				tmp = qse_awk_rtx_makemapvalwithdata (rtx, md);
+				if (tmp)
+				{
+					if (qse_awk_rtx_setrefval (rtx, qse_awk_rtx_getarg (rtx, 2), tmp) <= -1)
+						qse_awk_rtx_freeval (rtx, tmp);
+					else ret = 0;
+				}
 			}
 		}
 	}
 
+	/* no error check for qse_awk_rtx_makeintval() since ret is 0 or -1 */
+	qse_awk_rtx_setretval (rtx, qse_awk_rtx_makeintval (rtx, ret));
 	return 0;
 }
 
@@ -592,22 +598,22 @@ static fnctab_t fnctab[] =
 {
 	/* keep this table sorted for binary search in query(). */
 
-	{ QSE_T("fork"),       { { 0, 0, QSE_NULL }, fnc_fork,       0  } },
-	{ QSE_T("getegid"),    { { 0, 0, QSE_NULL }, fnc_getegid,    0  } },
-	{ QSE_T("getenv"),     { { 1, 1, QSE_NULL }, fnc_getenv,     0  } },
-	{ QSE_T("geteuid"),    { { 0, 0, QSE_NULL }, fnc_geteuid,    0  } },
-	{ QSE_T("getgid"),     { { 0, 0, QSE_NULL }, fnc_getgid,     0  } },
-	{ QSE_T("getnwifcfg"), { { 2, 2, QSE_NULL }, fnc_getnwifcfg, 0  } },
-	{ QSE_T("getpgrp"),    { { 0, 0, QSE_NULL }, fnc_getpgrp,    0  } },
-	{ QSE_T("getpid"),     { { 0, 0, QSE_NULL }, fnc_getpid,     0  } },
-	{ QSE_T("getppid"),    { { 0, 0, QSE_NULL }, fnc_getppid,    0  } },
-	{ QSE_T("gettid"),     { { 0, 0, QSE_NULL }, fnc_gettid,     0  } },
-	{ QSE_T("gettime"),    { { 0, 0, QSE_NULL }, fnc_gettime,    0  } },
-	{ QSE_T("getuid"),     { { 0, 0, QSE_NULL }, fnc_getuid,     0  } },
-	{ QSE_T("kill"),       { { 2, 2, QSE_NULL }, fnc_kill,       0  } },
-	{ QSE_T("settime"),    { { 1, 1, QSE_NULL }, fnc_settime,    0  } },
-	{ QSE_T("sleep"),      { { 1, 1, QSE_NULL }, fnc_sleep,      0  } },
-	{ QSE_T("wait"),       { { 1, 1, QSE_NULL }, fnc_wait,       0  } }
+	{ QSE_T("fork"),       { { 0, 0, QSE_NULL     }, fnc_fork,       0  } },
+	{ QSE_T("getegid"),    { { 0, 0, QSE_NULL     }, fnc_getegid,    0  } },
+	{ QSE_T("getenv"),     { { 1, 1, QSE_NULL     }, fnc_getenv,     0  } },
+	{ QSE_T("geteuid"),    { { 0, 0, QSE_NULL     }, fnc_geteuid,    0  } },
+	{ QSE_T("getgid"),     { { 0, 0, QSE_NULL     }, fnc_getgid,     0  } },
+	{ QSE_T("getnwifcfg"), { { 3, 3, QSE_T("vvr") }, fnc_getnwifcfg, 0  } },
+	{ QSE_T("getpgrp"),    { { 0, 0, QSE_NULL     }, fnc_getpgrp,    0  } },
+	{ QSE_T("getpid"),     { { 0, 0, QSE_NULL     }, fnc_getpid,     0  } },
+	{ QSE_T("getppid"),    { { 0, 0, QSE_NULL     }, fnc_getppid,    0  } },
+	{ QSE_T("gettid"),     { { 0, 0, QSE_NULL     }, fnc_gettid,     0  } },
+	{ QSE_T("gettime"),    { { 0, 0, QSE_NULL     }, fnc_gettime,    0  } },
+	{ QSE_T("getuid"),     { { 0, 0, QSE_NULL     }, fnc_getuid,     0  } },
+	{ QSE_T("kill"),       { { 2, 2, QSE_NULL     }, fnc_kill,       0  } },
+	{ QSE_T("settime"),    { { 1, 1, QSE_NULL     }, fnc_settime,    0  } },
+	{ QSE_T("sleep"),      { { 1, 1, QSE_NULL     }, fnc_sleep,      0  } },
+	{ QSE_T("wait"),       { { 1, 1, QSE_NULL     }, fnc_wait,       0  } }
 };
 
 #if !defined(SIGHUP)

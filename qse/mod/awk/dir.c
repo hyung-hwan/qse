@@ -281,11 +281,11 @@ static int read_byid (qse_awk_rtx_t* rtx, dir_list_t* list, qse_long_t id, qse_a
 		if (!tmp || qse_awk_rtx_setrefval (rtx, ref, tmp) <= -1) 
 		{
 			list->errnum = awk_err_to_errnum (qse_awk_rtx_geterrnum (rtx));
-			if (tmp) qse_awk_rtx_freemem (rtx, tmp);
+			if (tmp) qse_awk_rtx_freeval (rtx, tmp);
 			return -1;
 		}
 
-		return 1;
+		return 0;
 	}
 	else
 	{
@@ -356,9 +356,10 @@ static int fnc_dir_errstr (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 static int fnc_dir_open (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
 	dir_list_t* list;
-	dir_node_t* node;
+	dir_node_t* node = QSE_NULL;
 	qse_long_t ret;
 	qse_char_t* path;
+	qse_awk_val_t* retv;
 
 	list = rtx_to_list (rtx, fi);
 
@@ -376,7 +377,16 @@ static int fnc_dir_open (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 		ret = -1;
 	}
 
-	qse_awk_rtx_setretval (rtx, qse_awk_rtx_makeintval (rtx, ret));
+	/* ret may not be a statically managed number. 
+	 * error checking is required */
+	retv = qse_awk_rtx_makeintval (rtx, ret);
+	if (retv == QSE_NULL)
+	{
+		if (node) free_dir_node (rtx, list, node);
+		return -1;
+	}
+
+	qse_awk_rtx_setretval (rtx, retv);
 	return 0;
 }
 

@@ -426,7 +426,7 @@ static int adddeltapath_byid (
 
 static int getsection_byid (
 	qse_awk_rtx_t* rtx, uctx_list_t* list, qse_long_t id,
-	qse_mchar_t* tuple, qse_awk_val_t** retv)
+	qse_mchar_t* tuple, qse_awk_val_ref_t* ref)
 {
 	int x = UCI_ERR_INVAL;
 
@@ -469,7 +469,14 @@ static int getsection_byid (
 					md[2].vptr = &lv;
 
 					tmp = qse_awk_rtx_makemapvalwithdata (rtx, md);
-					if (tmp) *retv = tmp;
+					if (tmp) 
+					{
+						if (qse_awk_rtx_setrefval (rtx, ref, tmp) <= -1)
+						{
+							qse_awk_rtx_freeval (rtx, tmp);
+							x = UCI_ERR_MEM;
+						}
+					}
 					else x = UCI_ERR_MEM;
 				}
 				else x = UCI_ERR_NOTFOUND;
@@ -484,7 +491,7 @@ static int getsection_byid (
 
 static int getoption_byid (
 	qse_awk_rtx_t* rtx, uctx_list_t* list, qse_long_t id,
-	qse_mchar_t* tuple, qse_awk_val_t** retv)
+	qse_mchar_t* tuple, qse_awk_val_ref_t* ref)
 {
 	int x = UCI_ERR_INVAL;
 
@@ -524,7 +531,15 @@ static int getoption_byid (
 						md[1].vptr = uo->v.string;
 
 						map = qse_awk_rtx_makemapvalwithdata (rtx, md);
-						if (map) *retv = map;
+						if (map) 
+						{
+							if (qse_awk_rtx_setrefval (rtx, ref, map) <= -1)
+							{
+								qse_awk_rtx_freeval (rtx, map);
+								map = QSE_NULL;
+								x = UCI_ERR_MEM;
+							}
+						}
 						else x = UCI_ERR_MEM;
 					}
 					else if (uo->type == UCI_TYPE_LIST)
@@ -564,8 +579,7 @@ static int getoption_byid (
 								fld = qse_awk_rtx_makestrvalwithmbs (rtx, tmp->name);
 								if (!fld)
 								{
-									qse_awk_rtx_refupval (rtx, map);
-									qse_awk_rtx_refdownval (rtx, map);
+									qse_awk_rtx_freeval (rtx, map);
 									map = QSE_NULL;
 									x = UCI_ERR_MEM;
 									break;
@@ -586,10 +600,8 @@ static int getoption_byid (
 								if (kp == QSE_NULL || qse_awk_rtx_setmapvalfld (rtx, map, kp, kl, fld) == QSE_NULL)
 								{
 									if (kp) QSE_MMGR_FREE (qse_awk_rtx_getmmgr(rtx), kp);
-									qse_awk_rtx_refupval (rtx, fld);
-									qse_awk_rtx_refdownval (rtx, fld);
-									qse_awk_rtx_refupval (rtx, map);
-									qse_awk_rtx_refdownval (rtx, map);
+									qse_awk_rtx_freeval (rtx, fld);
+									qse_awk_rtx_freeval (rtx, map);
 									map = QSE_NULL;
 									x = UCI_ERR_MEM;
 									break;
@@ -599,7 +611,15 @@ static int getoption_byid (
 								count++;
 							}
 							
-							if (map) *retv = map;
+							if (map) 
+							{
+								if (qse_awk_rtx_setrefval (rtx, ref, map) <= -1)
+								{
+									qse_awk_rtx_freeval (rtx, map);
+									map = QSE_NULL;
+									x = UCI_ERR_MEM;
+								}
+							}
 						}
 						else x = UCI_ERR_MEM;
 					} 
@@ -1199,7 +1219,6 @@ static int fnc_uci_adddeltapath  (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* 
 static int fnc_uci_getoption (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
 	uctx_list_t* list;
-	qse_awk_val_t* retv;
 	qse_long_t id;
 	int ret;
 	
@@ -1214,7 +1233,7 @@ static int fnc_uci_getoption (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 		item = qse_awk_rtx_valtombsdup (rtx, qse_awk_rtx_getarg(rtx, 1), QSE_NULL);
 		if (item)
 		{
-			ret = getoption_byid (rtx, list, id, item, &retv);
+			ret = getoption_byid (rtx, list, id, item, qse_awk_rtx_getarg (rtx, 2));
 			qse_awk_rtx_freemem (rtx, item);
 		}
 		else ret = -UCI_ERR_MEM;
@@ -1223,18 +1242,17 @@ static int fnc_uci_getoption (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	if (ret <= -1) 
 	{
 		list->errnum = -ret;
+		ret = -1;
 	}
-	else
-	{
-		qse_awk_rtx_setretval (rtx, retv);
-	}
+	else ret = 0;
+
+	qse_awk_rtx_setretval (rtx, qse_awk_rtx_makeintval (rtx, ret));
 	return 0;
 }
 
 static int fnc_uci_getsection (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
 	uctx_list_t* list;
-	qse_awk_val_t* retv;
 	qse_long_t id;
 	int ret;
 	
@@ -1246,10 +1264,10 @@ static int fnc_uci_getsection (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	{
 		qse_mchar_t* item;
 
-		item = qse_awk_rtx_valtombsdup (rtx, qse_awk_rtx_getarg(rtx, 1), QSE_NULL);
+		item = qse_awk_rtx_valtombsdup (rtx, qse_awk_rtx_getarg (rtx, 1), QSE_NULL);
 		if (item)
 		{
-			ret = getsection_byid (rtx, list, id, item, &retv);
+			ret = getsection_byid (rtx, list, id, item, qse_awk_rtx_getarg (rtx, 2));
 			qse_awk_rtx_freemem (rtx, item);
 		}
 		else ret = -UCI_ERR_MEM;
@@ -1258,11 +1276,11 @@ static int fnc_uci_getsection (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	if (ret <= -1) 
 	{
 		list->errnum = -ret;
+		ret = -1;
 	}
-	else
-	{
-		qse_awk_rtx_setretval (rtx, retv);
-	}
+	else ret = 0;
+
+	qse_awk_rtx_setretval (rtx, qse_awk_rtx_makeintval (rtx, ret));
 	return 0;
 }
 
@@ -1277,25 +1295,25 @@ struct fnctab_t
 
 static fnctab_t fnctab[] =
 {
-	{ QSE_T("adddeltapath"), { { 2, 2, QSE_NULL }, fnc_uci_adddeltapath, 0 } },
-	{ QSE_T("addlist"),      { { 2, 2, QSE_NULL }, fnc_uci_addlist,      0 } },
-	{ QSE_T("addsection"),   { { 3, 3, QSE_NULL }, fnc_uci_addsection,   0 } },
-	{ QSE_T("close"),        { { 1, 1, QSE_NULL }, fnc_uci_close,        0 } },
-	{ QSE_T("commit"),       { { 2, 2, QSE_NULL }, fnc_uci_commit,       0 } },
-	{ QSE_T("delete"),       { { 2, 2, QSE_NULL }, fnc_uci_delete,       0 } },
-	{ QSE_T("errno"),        { { 0, 0, QSE_NULL }, fnc_uci_errno,        0 } },
-	{ QSE_T("errstr"),       { { 0, 1, QSE_NULL }, fnc_uci_errstr,       0 } },
-	{ QSE_T("getoption"),    { { 2, 2, QSE_NULL }, fnc_uci_getoption,    0 } },
-	{ QSE_T("getsection"),   { { 2, 2, QSE_NULL }, fnc_uci_getsection,   0 } },
-	{ QSE_T("load"),         { { 2, 2, QSE_NULL }, fnc_uci_load,         0 } },
-	{ QSE_T("open"),         { { 0, 0, QSE_NULL }, fnc_uci_open,         0 } },
-	{ QSE_T("rename"),       { { 2, 2, QSE_NULL }, fnc_uci_rename,       0 } },
-	{ QSE_T("revert"),       { { 2, 2, QSE_NULL }, fnc_uci_revert,       0 } },
-	{ QSE_T("save"),         { { 2, 2, QSE_NULL }, fnc_uci_save,         0 } },
-	{ QSE_T("set"),          { { 2, 2, QSE_NULL }, fnc_uci_set,          0 } }, 
-	{ QSE_T("setconfdir"),   { { 2, 2, QSE_NULL }, fnc_uci_setconfdir,   0 } }, 
-	{ QSE_T("setsavedir"),   { { 2, 2, QSE_NULL }, fnc_uci_setsavedir,   0 } }, 
-	{ QSE_T("unload"),       { { 1, 1, QSE_NULL }, fnc_uci_unload,       0 } }
+	{ QSE_T("adddeltapath"), { { 2, 2, QSE_NULL    }, fnc_uci_adddeltapath, 0 } },
+	{ QSE_T("addlist"),      { { 2, 2, QSE_NULL    }, fnc_uci_addlist,      0 } },
+	{ QSE_T("addsection"),   { { 3, 3, QSE_NULL    }, fnc_uci_addsection,   0 } },
+	{ QSE_T("close"),        { { 1, 1, QSE_NULL    }, fnc_uci_close,        0 } },
+	{ QSE_T("commit"),       { { 2, 2, QSE_NULL    }, fnc_uci_commit,       0 } },
+	{ QSE_T("delete"),       { { 2, 2, QSE_NULL    }, fnc_uci_delete,       0 } },
+	{ QSE_T("errno"),        { { 0, 0, QSE_NULL    }, fnc_uci_errno,        0 } },
+	{ QSE_T("errstr"),       { { 0, 1, QSE_NULL    }, fnc_uci_errstr,       0 } },
+	{ QSE_T("getoption"),    { { 3, 3, QSE_T("vvr")}, fnc_uci_getoption,    0 } },
+	{ QSE_T("getsection"),   { { 3, 3, QSE_T("vvr")}, fnc_uci_getsection,   0 } },
+	{ QSE_T("load"),         { { 2, 2, QSE_NULL    }, fnc_uci_load,         0 } },
+	{ QSE_T("open"),         { { 0, 0, QSE_NULL    }, fnc_uci_open,         0 } },
+	{ QSE_T("rename"),       { { 2, 2, QSE_NULL    }, fnc_uci_rename,       0 } },
+	{ QSE_T("revert"),       { { 2, 2, QSE_NULL    }, fnc_uci_revert,       0 } },
+	{ QSE_T("save"),         { { 2, 2, QSE_NULL    }, fnc_uci_save,         0 } },
+	{ QSE_T("set"),          { { 2, 2, QSE_NULL    }, fnc_uci_set,          0 } }, 
+	{ QSE_T("setconfdir"),   { { 2, 2, QSE_NULL    }, fnc_uci_setconfdir,   0 } }, 
+	{ QSE_T("setsavedir"),   { { 2, 2, QSE_NULL    }, fnc_uci_setsavedir,   0 } }, 
+	{ QSE_T("unload"),       { { 1, 1, QSE_NULL    }, fnc_uci_unload,       0 } }
 };
 
 /* ------------------------------------------------------------------------ */

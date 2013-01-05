@@ -755,9 +755,6 @@ qse_awk_rtx_t* qse_awk_rtx_open (
 	qse_awk_rtx_t* rtx;
 	struct module_init_ctx_t mic;
 
-	QSE_ASSERTX (awk->prm.math.pow != QSE_NULL, "Call qse_awk_setprm() first");
-	QSE_ASSERTX (awk->prm.sprintf != QSE_NULL, "Call qse_awk_setprm() first");
-
 	/* clear the awk error code */
 	qse_awk_seterrnum (awk, QSE_AWK_ENOERR, QSE_NULL);
 
@@ -4731,9 +4728,6 @@ static qse_awk_val_t* eval_binop_exp (
 	qse_long_t l1, l2;
 	qse_flt_t r1, r2;
 	qse_awk_val_t* res;
-
-	QSE_ASSERTX (rtx->awk->prm.math.pow != QSE_NULL,
-		"the pow function must be provided when the awk object is created to make exponentiation work properly.");
 
 	n1 = qse_awk_rtx_valtonum (rtx, left, &l1, &r1);
 	n2 = qse_awk_rtx_valtonum (rtx, right, &l2, &r2);

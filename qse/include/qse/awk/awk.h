@@ -1454,10 +1454,22 @@ QSE_EXPORT void* qse_awk_getxtn (
 );
 
 /**
- * The qse_awk_getprm() function gets primitive functions
+ * The qse_awk_getprm() function retrieves primitive functions
+ * associated. Actual function pointers are copied into a 
+ * structure specified by @a prm.
  */
-QSE_EXPORT qse_awk_prm_t* qse_awk_getprm (
-	qse_awk_t* awk
+QSE_EXPORT void qse_awk_getprm (
+	qse_awk_t*     awk,
+	qse_awk_prm_t* prm
+);
+
+/**
+ * The qse_awk_setprm() function changes existing primitive
+ * functions. 
+ */
+QSE_EXPORT void qse_awk_setprm (
+	qse_awk_t*           awk,
+	const qse_awk_prm_t* prm
 );
 
 /**
