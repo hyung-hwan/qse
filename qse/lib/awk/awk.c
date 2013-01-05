@@ -424,9 +424,14 @@ void* qse_awk_getxtn (qse_awk_t* awk)
 	return QSE_XTN (awk);
 }
 
-qse_awk_prm_t* qse_awk_getprm (qse_awk_t* awk)
+void qse_awk_getprm (qse_awk_t* awk, qse_awk_prm_t* prm)
 {
-	return &awk->prm;
+	*prm = awk->prm;
+}
+
+void qse_awk_setprm (qse_awk_t* awk, const qse_awk_prm_t* prm)
+{
+	awk->prm = *prm;
 }
 
 int qse_awk_setopt (qse_awk_t* awk, qse_awk_opt_t id, const void* value)
