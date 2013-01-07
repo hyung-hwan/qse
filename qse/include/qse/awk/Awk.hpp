@@ -1085,7 +1085,7 @@ public:
 	typedef int (Awk::*FunctionHandler) (
 		Run&              run,
 		Value&            ret,
-		const Value*      args,
+		Value*            args,
 		size_t            nargs, 
 		const fnc_info_t* fi
 	);
@@ -1098,6 +1098,7 @@ public:
 		const char_t* name,      ///< function name
 		size_t minArgs,          ///< minimum numbers of arguments
 		size_t maxArgs,          ///< maximum numbers of arguments
+		const char_t* argSpec,   ///< argument specification
 		FunctionHandler handler, ///< function handler
 		int    validOpts = 0     ///< valid if these options are set
 	);

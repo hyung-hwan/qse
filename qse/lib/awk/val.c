@@ -1703,9 +1703,12 @@ but is this really necessary? i feel all these awk quarkiness is nasty..
 */
 
 		rref = (qse_awk_val_t**)ref->adr;
-		qse_awk_rtx_refdownval (rtx, *rref);
-		*rref = val;
-		qse_awk_rtx_refupval (rtx, *rref);
+		if (*rref != val)
+		{
+			qse_awk_rtx_refdownval (rtx, *rref);
+			*rref = val;
+			qse_awk_rtx_refupval (rtx, *rref);
+		}
 		return 0;
 	}
 }

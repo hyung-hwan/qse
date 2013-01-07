@@ -73,17 +73,6 @@
 QSE_BEGIN_NAMESPACE(QSE)
 /////////////////////////////////
 
-#define ADDFNC(name,min,max,impl,vopts) \
-	do { \
-		if (addFunction (name, min, max, \
-			(FunctionHandler)impl, vopts) == -1)  \
-		{ \
-			Awk::close (); \
-			return -1; \
-		} \
-	} while (0)
-
-
 StdAwk::ioattr_t StdAwk::default_ioattr;
 
 static qse_sio_t* open_sio (Awk* awk, StdAwk::Run* run, const qse_char_t* file, int flags)
@@ -141,11 +130,11 @@ int StdAwk::open ()
 		goto oops;
 	}
 
-	if (addFunction (QSE_T("rand"),       0, 0, (FunctionHandler)&StdAwk::rand,      0) <= -1 ||
-	    addFunction (QSE_T("srand"),      0, 1, (FunctionHandler)&StdAwk::srand,     0) <= -1 ||
-	    addFunction (QSE_T("system"),     1, 1, (FunctionHandler)&StdAwk::system,    0) <= -1 ||
-	    addFunction (QSE_T("setioattr"),  3, 3, (FunctionHandler)&StdAwk::setioattr, QSE_AWK_RIO) <= -1 ||
-	    addFunction (QSE_T("getioattr"),  2, 2, (FunctionHandler)&StdAwk::getioattr, QSE_AWK_RIO) <= -1)
+	if (addFunction (QSE_T("rand"),       0, 0, QSE_NULL,     (FunctionHandler)&StdAwk::rand,      0) <= -1 ||
+	    addFunction (QSE_T("srand"),      0, 1, QSE_NULL,     (FunctionHandler)&StdAwk::srand,     0) <= -1 ||
+	    addFunction (QSE_T("system"),     1, 1, QSE_NULL,     (FunctionHandler)&StdAwk::system,    0) <= -1 ||
+	    addFunction (QSE_T("setioattr"),  3, 3, QSE_NULL,     (FunctionHandler)&StdAwk::setioattr, QSE_AWK_RIO) <= -1 ||
+	    addFunction (QSE_T("getioattr"),  3, 3, QSE_T("vvr"), (FunctionHandler)&StdAwk::getioattr, QSE_AWK_RIO) <= -1)
 	{
 		goto oops;
 	}
@@ -348,7 +337,7 @@ int StdAwk::make_additional_globals (Run* run)
 	return 0;
 }
 
-int StdAwk::rand (Run& run, Value& ret, const Value* args, size_t nargs,
+int StdAwk::rand (Run& run, Value& ret, Value* args, size_t nargs,
 	const char_t* name, size_t len)
 {
 #define RANDV_MAX QSE_TYPE_MAX(long_t)
@@ -358,7 +347,7 @@ int StdAwk::rand (Run& run, Value& ret, const Value* args, size_t nargs,
 #undef RANDV_MAX 
 }
 
-int StdAwk::srand (Run& run, Value& ret, const Value* args, size_t nargs,
+int StdAwk::srand (Run& run, Value& ret, Value* args, size_t nargs,
 	const char_t* name, size_t len)
 {
 	long_t prevSeed = (long_t)this->seed;
@@ -384,7 +373,7 @@ int StdAwk::srand (Run& run, Value& ret, const Value* args, size_t nargs,
 	return ret.setInt ((long_t)prevSeed);
 }
 
-int StdAwk::system (Run& run, Value& ret, const Value* args, size_t nargs,
+int StdAwk::system (Run& run, Value& ret, Value* args, size_t nargs,
 	const char_t* name, size_t len)
 {
 	size_t l;
@@ -457,7 +446,7 @@ static int timeout_code (const qse_char_t* name)
 }
 
 int StdAwk::setioattr (
-	Run& run, Value& ret, const Value* args, size_t nargs,
+	Run& run, Value& ret, Value* args, size_t nargs,
 	const char_t* name, size_t len)
 {
 	QSE_ASSERT (this->cmgrtab_inited == true);
@@ -531,7 +520,7 @@ int StdAwk::setioattr (
 }
 
 int StdAwk::getioattr (
-	Run& run, Value& ret, const Value* args, size_t nargs,
+	Run& run, Value& ret, Value* args, size_t nargs,
 	const char_t* name, size_t len)
 {
 	QSE_ASSERT (this->cmgrtab_inited == true);
@@ -541,34 +530,33 @@ int StdAwk::getioattr (
 	ptr[0] = args[0].toStr(&l[0]);
 	ptr[1] = args[1].toStr(&l[1]);
 
-	if (qse_strxchr (ptr[0], l[0], QSE_T('\0')) ||
-	    qse_strxchr (ptr[1], l[1], QSE_T('\0')))
+	int xx = -1;
+
+	/* ionames must not contains a null character */
+	if (qse_strxchr (ptr[0], l[0], QSE_T('\0')) == QSE_NULL &&
+	    qse_strxchr (ptr[1], l[1], QSE_T('\0')) == QSE_NULL)
 	{
-		return ret.setInt ((long_t)-1);
+		ioattr_t* ioattr = get_ioattr (ptr[0], l[0]);
+		if (ioattr == QSE_NULL) ioattr = &StdAwk::default_ioattr;
+
+		int tmout;
+		if ((tmout = timeout_code(ptr[1])) >= 0)
+		{
+			if (ioattr->tmout[tmout].nsec == 0)
+				xx = args[2].setInt ((long_t)ioattr->tmout[tmout].sec);
+			else
+				xx = args[2].setFlt ((qse_flt_t)ioattr->tmout[tmout].sec + QSE_NSEC_TO_SEC((qse_flt_t)ioattr->tmout[tmout].nsec));
+		}
+	#if defined(QSE_CHAR_IS_WCHAR)
+		else if (qse_strcasecmp (ptr[1], QSE_T("codepage")) == 0)
+		{
+			xx = args[2].setStr (ioattr->cmgr_name);
+		}
+	#endif
 	}
 
-	ioattr_t* ioattr = get_ioattr (ptr[0], l[0]);
-	if (ioattr == QSE_NULL) ioattr = &StdAwk::default_ioattr;
-
-	int tmout;
-	if ((tmout = timeout_code(ptr[1])) >= 0)
-	{
-		if (ioattr->tmout[tmout].nsec == 0)
-			return ret.setInt ((long_t)ioattr->tmout[tmout].sec);
-		else
-			return ret.setFlt ((qse_flt_t)ioattr->tmout[tmout].sec + QSE_NSEC_TO_SEC((qse_flt_t)ioattr->tmout[tmout].nsec));
-	}
-#if defined(QSE_CHAR_IS_WCHAR)
-	else if (qse_strcasecmp (ptr[1], QSE_T("codepage")) == 0)
-	{
-		return ret.setStr (ioattr->cmgr_name);
-	}
-#endif
-	else
-	{
-		// unknown attribute name
-		return ret.setInt ((long_t)-1);
-	}
+	// unknown attribute name or errors
+	return ret.setInt ((long_t)xx);
 }
 
 int StdAwk::open_nwio (Pipe& io, int flags, void* nwad)
