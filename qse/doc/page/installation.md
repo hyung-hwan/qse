@@ -100,7 +100,7 @@ extra information useful for debugging. The default mode is **release**.
  debug   | enable-debug   | BUILD=debug
  release | disable-debug  | BUILD=release
 
-### Character Type ###  
+### Character Type ###
 
 You can choose between the wide charcter type and the multi-byte character
 type as a basic character type represented in the #qse_char_t type. The default

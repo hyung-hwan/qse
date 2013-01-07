@@ -1,36 +1,7 @@
-/*
- * $Id: awk01.c 441 2011-04-22 14:28:43Z hyunghwan.chung $ 
- *
-    Copyright 2006-2012 Chung, Hyung-Hwan.
-    This file is part of QSE.
-
-    QSE is free software: you can redistribute it and/or modify
-    it under the terms of the GNU Lesser General Public License as 
-    published by the Free Software Foundation, either version 3 of 
-    the License, or (at your option) any later version.
-
-    QSE is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU Lesser General Public License for more details.
-
-    You should have received a copy of the GNU Lesser General Public 
-    License along with QSE. If not, see <http://www.gnu.org/licenses/>.
- */
-
 #include <qse/awk/std.h>
 #include <qse/cmn/stdio.h>
 
-const qse_char_t* src = QSE_T(
-	"BEGIN {"
-	"	for (i=2;i<=9;i++)"
-	"	{"
-	"		for (j=1;j<=9;j++)"
-	"			print i \"*\" j \"=\" i * j;"
-	"		print \"---------------------\";"
-	"	}"
-	"}"
-);
+static const qse_char_t* script = QSE_T("BEGIN { print \"hello, world\"; }");
 
 int main ()
 {
@@ -40,6 +11,7 @@ int main ()
 	qse_awk_parsestd_t psin;
 	int ret = -1;
 
+	/* create an awk object */
 	awk = qse_awk_openstd (0);
 	if (awk == QSE_NULL)  
 	{
@@ -48,9 +20,10 @@ int main ()
 	}
 
 	psin.type = QSE_AWK_PARSESTD_STR;
-	psin.u.str.ptr = src;
-	psin.u.str.len = qse_strlen(src);
+	psin.u.str.ptr = script;
+	psin.u.str.len = qse_strlen(script);
 
+	/* parse a script in a string */
 	if (qse_awk_parsestd (awk, &psin, QSE_NULL) <= -1)
 	{
 		qse_fprintf (QSE_STDERR, QSE_T("ERROR: %s\n"), 
@@ -58,12 +31,13 @@ int main ()
 		goto oops;
 	}
 
+	/* open a runtime context */
 	rtx = qse_awk_rtx_openstd (
 		awk, 
 		0,
 		QSE_T("awk01"),
 		QSE_NULL, /* stdin */
-		QSE_NULL,  /* stdout */               
+		QSE_NULL, /* stdout */               
 		QSE_NULL  /* default cmgr */
 	);
 	if (rtx == QSE_NULL) 
@@ -73,6 +47,7 @@ int main ()
 		goto oops;
 	}
 	
+	/* execute pattern-action blocks */
 	retv = qse_awk_rtx_loop (rtx);
 	if (retv == QSE_NULL)
 	{
@@ -81,12 +56,16 @@ int main ()
 		goto oops;
 	}
 
+	/* decrement the reference count of the return value */
 	qse_awk_rtx_refdownval (rtx, retv);
 	ret = 0;
 
 oops:
-	if (rtx != QSE_NULL) qse_awk_rtx_close (rtx);
-	if (awk != QSE_NULL) qse_awk_close (awk);
+	/* destroy the runtime context */
+	if (rtx) qse_awk_rtx_close (rtx);
+
+	/* destroy the awk object */
+	if (awk) qse_awk_close (awk);
+
 	return ret;
 }
-
