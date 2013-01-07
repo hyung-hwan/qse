@@ -6,11 +6,12 @@ EXTRA_DIST = \
 	gendoc.sh \
 	page/mainpage.md \
 	page/installation.md \
-     page/mem.doc \
-     page/cenc.doc \
-     page/io.doc \
-     page/awk.doc \
-     page/awk-lang.md \
-     page/sed.doc \
+	page/mem.doc \
+	page/cenc.doc \
+	page/io.doc \
+	page/awk.doc \
+	page/awk-embed.md \
+	page/awk-lang.md \
+	page/sed.doc \
 	image/qse-logo.png	
 

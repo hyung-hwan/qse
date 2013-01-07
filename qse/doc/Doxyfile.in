@@ -1549,6 +1549,7 @@ PREDEFINED             = "QSE_BEGIN_NAMESPACE(x)=namespace x {" \
                          "QSE_SIZEOF_FLOAT=@QSE_SIZEOF_FLOAT@" \
                          "QSE_SIZEOF_DOUBLE=@QSE_SIZEOF_DOUBLE@" \
                          "QSE_SIZEOF_LONG_DOUBLE=@QSE_SIZEOF_LONG_DOUBLE@" \
+                         "QSE_EXPORT=" \
                          "@CHAR_MODE@"
 
 # If the MACRO_EXPANSION and EXPAND_ONLY_PREDEF tags are set to YES then
