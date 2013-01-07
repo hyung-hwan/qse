@@ -58,13 +58,13 @@ public:
 
 		/* this is for demonstration only. 
 		 * you can use sys::sleep() instead */
-		if (addFunction (QSE_T("sleep"), 1, 1,
+		if (addFunction (QSE_T("sleep"), 1, 1, QSE_NULL,
 		    	(FunctionHandler)&MyAwk::sleep) <= -1) goto oops;
 
-		if (addFunction (QSE_T("sumintarray"), 1, 1,
+		if (addFunction (QSE_T("sumintarray"), 1, 1, QSE_NULL,
 		    	(FunctionHandler)&MyAwk::sumintarray) <= -1) goto oops;
 
-		if (addFunction (QSE_T("arrayindices"), 1, 1,
+		if (addFunction (QSE_T("arrayindices"), 1, 1, QSE_NULL,
 		    	(FunctionHandler)&MyAwk::arrayindices) <= -1) goto oops;
 
 		return 0;
@@ -75,7 +75,7 @@ public:
 	}
 
 	int sleep (
-		Run& run, Value& ret, const Value* args, size_t nargs, 
+		Run& run, Value& ret, Value* args, size_t nargs, 
 		const char_t* name, size_t len)
 	{
 		if (args[0].isIndexed()) 
@@ -106,7 +106,7 @@ public:
 	}
 
 	int sumintarray (
-		Run& run, Value& ret, const Value* args, size_t nargs, 
+		Run& run, Value& ret, Value* args, size_t nargs, 
 		const char_t* name, size_t len)
 	{
 		// BEGIN { 
@@ -138,7 +138,7 @@ public:
 	int arrayindices (
 		Run& run, 
 		Value& ret,
-		const Value* args,
+		Value* args,
 		size_t nargs, 
 		const char_t* name, 
 		size_t len)

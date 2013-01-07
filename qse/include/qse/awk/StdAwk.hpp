@@ -142,18 +142,18 @@ protected:
 	int __build_environ (Run* run, void* envptr);
 
 	// intrinsic functions 
-	int rand (Run& run, Value& ret, const Value* args, size_t nargs,
+	int rand (Run& run, Value& ret, Value* args, size_t nargs,
 		const char_t* name, size_t len);
-	int srand (Run& run, Value& ret, const Value* args, size_t nargs,
+	int srand (Run& run, Value& ret, Value* args, size_t nargs,
 		const char_t* name, size_t len);
-	int system (Run& run, Value& ret, const Value* args, size_t nargs,
+	int system (Run& run, Value& ret, Value* args, size_t nargs,
 		const char_t* name, size_t len);
 
 	qse_cmgr_t* getcmgr (const char_t* ioname);
 
-	int setioattr (Run& run, Value& ret, const Value* args, size_t nargs,
+	int setioattr (Run& run, Value& ret, Value* args, size_t nargs,
 		const char_t* name, size_t len);
-	int getioattr (Run& run, Value& ret, const Value* args, size_t nargs,
+	int getioattr (Run& run, Value& ret, Value* args, size_t nargs,
 		const char_t* name, size_t len);
 
 	// pipe io handlers 

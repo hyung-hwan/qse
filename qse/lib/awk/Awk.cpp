@@ -23,9 +23,6 @@
 #include "../cmn/mem.h"
 #include "awk.h"
 
-// enable this once addFunction() is extended with argument spec (rxv...).
-//#define PASS_BY_REFERENCE
-
 /////////////////////////////////
 QSE_BEGIN_NAMESPACE(QSE)
 /////////////////////////////////
@@ -1359,6 +1356,7 @@ void Awk::setMaxDepth (depth_t id, size_t depth)
 int Awk::dispatch_function (Run* run, const fnc_info_t* fi)
 {
 	pair_t* pair;
+	bool has_ref_arg = false;
 
 	pair = qse_htb_search (functionMap, fi->name.ptr, fi->name.len);
 	if (pair == QSE_NULL) 
@@ -1387,24 +1385,51 @@ int Awk::dispatch_function (Run* run, const fnc_info_t* fi)
 
 	for (i = 0; i < nargs; i++)
 	{
+		int xx;
 		val_t* v = qse_awk_rtx_getarg (run->rtx, i);
-#ifdef PASS_BY_REFERENCE
-		QSE_ASSERT (v->type == QSE_AWK_VAL_REF);
-		val_t** ref = (val_t**)((qse_awk_val_ref_t*)v)->adr;
-		if (args[i].setVal (run, *ref) == -1)
+
+		if (v->type == QSE_AWK_VAL_REF)
+		{
+			qse_awk_val_ref_t* ref = (qse_awk_val_ref_t*)v;
+
+			if (ref->id == qse_awk_val_ref_t::QSE_AWK_VAL_REF_POS)
+			{
+				qse_size_t idx = (qse_size_t)ref->adr;
+
+				if (idx == 0)
+				{
+					xx = args[i].setStr (run, 
+						QSE_STR_PTR(&run->rtx->inrec.line),
+						QSE_STR_LEN(&run->rtx->inrec.line));
+				}
+				else if (idx <= run->rtx->inrec.nflds)
+				{
+					xx = args[i].setStr (run,
+						run->rtx->inrec.flds[idx-1].ptr,
+						run->rtx->inrec.flds[idx-1].len);
+				}
+				else
+				{
+					xx = args[i].setStr (run, QSE_T(""), 0);
+				}
+			}
+			else
+			{
+				xx = args[i].setVal (run, *(ref->adr));
+			}
+			has_ref_arg = true;
+		}
+		else
+		{
+			xx = args[i].setVal (run, v);
+		}
+
+		if (xx <= -1)
 		{
 			run->setError (QSE_AWK_ENOMEM);
 			if (args != buf) delete[] args;
 			return -1;
 		}
-#else
-		if (args[i].setVal (run, v) == -1)
-		{
-			run->setError (QSE_AWK_ENOMEM);
-			if (args != buf) delete[] args;
-			return -1;
-		}
-#endif
 	}
 	
 	Value ret (run);
@@ -1414,28 +1439,25 @@ int Awk::dispatch_function (Run* run, const fnc_info_t* fi)
 	try { n = (this->*handler) (*run, ret, args, nargs, fi); }
 	catch (...) { n = -1; }
 
-#ifdef PASS_BY_REFERENCE
-	if (n >= 0)
+	if (n >= 0 && has_ref_arg)
 	{
 		for (i = 0; i < nargs; i++)
 		{
 			QSE_ASSERTX (args[i].run == run, 
-				"Do NOT change Run from function handler");
+				"Do NOT change the run field from function handler");
 
 			val_t* v = qse_awk_rtx_getarg (run->rtx, i);
-			val_t* nv = args[i].toVal();
-
-			if (nv == v) continue;
-
-			QSE_ASSERT (v->type == QSE_AWK_VAL_REF);
-			val_t** ref = (val_t**)((qse_awk_val_ref_t*)v)->adr;
-	
-			qse_awk_rtx_refdownval (run->rtx, *ref);
-			*ref = nv;
-			qse_awk_rtx_refupval (run->rtx, *ref);
+			if (v->type == QSE_AWK_VAL_REF)
+			{
+				if (qse_awk_rtx_setrefval (run->rtx, (qse_awk_val_ref_t*)v, args[i].toVal()) <= -1)
+				{
+					n = -1;
+					break;
+				}
+			}
 		}
 	}
-#endif
+
 	if (args != buf) delete[] args;
 
 	if (n <= -1) 
@@ -1559,7 +1581,7 @@ int Awk::getGlobal (int id, Value& v)
 
 int Awk::addFunction (
 	const char_t* name, size_t minArgs, size_t maxArgs, 
-	FunctionHandler handler, int validOpts) 
+	const char_t* argSpec, FunctionHandler handler, int validOpts)
 {
 	QSE_ASSERT (awk != QSE_NULL);
 
@@ -1578,9 +1600,7 @@ int Awk::addFunction (
 	QSE_MEMSET (&spec, 0, QSE_SIZEOF(spec));
 	spec.arg.min = minArgs;
 	spec.arg.max = maxArgs;
-#ifdef PASS_BY_REFERENCE
-	spec.arg.spec = QSE_T("R"); // pass all arguments by reference
-#endif
+	spec.arg.spec = argSpec;
 	spec.impl = functionHandler;
 	spec.trait = validOpts;
 

@@ -2520,15 +2520,13 @@ done:
 	while (i > 0)
 	{
 		i--;
-		if (v[i]->type != QSE_AWK_VAL_STR) 
-			QSE_AWK_FREE (rtx->awk, ptr[i]);
+		if (v[i]->type != QSE_AWK_VAL_STR) QSE_AWK_FREE (rtx->awk, ptr[i]);
 	}
 
 	if (ret >= 0)
 	{
-		if (rv)
+		if (rv && qse_awk_rtx_setrefval (rtx, qse_awk_rtx_getarg (rtx, 2), rv) >= 0)
 		{
-			qse_awk_rtx_setrefval (rtx, qse_awk_rtx_getarg (rtx, 2), rv);
 			qse_awk_rtx_setretval (rtx, qse_awk_val_zero);
 		}
 		else
