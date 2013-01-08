@@ -19,6 +19,7 @@ int main ()
 		goto oops;
 	}
 
+	/* prepare a script to parse */
 	psin[0].type = QSE_AWK_PARSESTD_STR;
 	psin[0].u.str.ptr = script;
 	psin[0].u.str.len = qse_strlen(script);

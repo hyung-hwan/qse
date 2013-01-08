@@ -1,24 +1,3 @@
-/*
- * $Id: awk04.c 523 2011-07-25 15:42:35Z hyunghwan.chung $
- *
-    Copyright 2006-2012 Chung, Hyung-Hwan.
-    This file is part of QSE.
-
-    QSE is free software: you can redistribute it and/or modify
-    it under the terms of the GNU Lesser General Public License as 
-    published by the Free Software Foundation, either version 3 of 
-    the License, or (at your option) any later version.
-
-    QSE is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU Lesser General Public License for more details.
-
-    You should have received a copy of the GNU Lesser General Public 
-    License along with QSE. If not, see <http://www.gnu.org/licenses/>.
- */
-
-#include <qse/awk/awk.h>
 #include <qse/awk/std.h>
 #include <qse/cmn/stdio.h>
 
@@ -35,13 +14,9 @@ int main ()
 	qse_size_t len;
 	qse_awk_val_t* rtv = QSE_NULL;
 	qse_awk_val_t* arg[2] = { QSE_NULL, QSE_NULL };
-	qse_awk_fun_t* fun;
 	int ret, i, opt;
 
-	qse_awk_rtx_valtostr_out_t out;
-	qse_char_t numbuf[128];
-
-	/* create a main processor */
+	/* create an awk object */
 	awk = qse_awk_openstd (0);
 	if (awk == QSE_NULL)  
 	{
@@ -49,18 +24,20 @@ int main ()
 		ret = -1; goto oops;
 	}
 
-     qse_awk_getopt (awk, QSE_AWK_TRAIT, &opt);
-	/* don't allow BEGIN, END, pattern-action blocks */
+	/* get the awk's trait */
+	qse_awk_getopt (awk, QSE_AWK_TRAIT, &opt);
+	/* change the trait value to disallow BEGIN, END, pattern-action blocks */
 	opt &= ~QSE_AWK_PABLOCK;
-	/* enable ** */
-     qse_awk_setopt (awk, QSE_AWK_TRAIT, &opt);
+	/* update the trait */
+	qse_awk_setopt (awk, QSE_AWK_TRAIT, &opt);
 
-
+	/* prepare an awk script to parse */
 	psin[0].type = QSE_AWK_PARSESTD_STR;
 	psin[0].u.str.ptr = src;
 	psin[0].u.str.len = qse_strlen(src);
 	psin[1].type = QSE_AWK_PARSESTD_NULL;
 
+	/* parse the script */
 	ret = qse_awk_parsestd (awk, psin, QSE_NULL);
 	if (ret == -1)
 	{
@@ -73,7 +50,7 @@ int main ()
 	rtx = qse_awk_rtx_openstd (
 		awk, 
 		0,
-		QSE_T("awk04"),
+		QSE_T("awk04"), 
 		QSE_NULL, /* stdin */
 		QSE_NULL, /* stdout */
 		QSE_NULL  /* default cmgr */
@@ -85,7 +62,7 @@ int main ()
 		ret = -1; goto oops;
 	}
 	
-	/* invoke the pow function */
+	/* create the first argument to the pow function to call */
 	arg[0] = qse_awk_rtx_makeintval (rtx, 50);
 	if (arg[0] == QSE_NULL)
 	{
@@ -95,6 +72,7 @@ int main ()
 	}
 	qse_awk_rtx_refupval (rtx, arg[0]);
 
+	/* create the second argument to the pow function to call */
 	arg[1] = qse_awk_rtx_makeintval (rtx, 3);
 	if (arg[1] == QSE_NULL)
 	{
@@ -104,6 +82,7 @@ int main ()
 	}
 	qse_awk_rtx_refupval (rtx, arg[1]);
 
+	/* call the pow function */
 	rtv = qse_awk_rtx_call (rtx, QSE_T("pow"), arg, 2);
 	if (rtv == QSE_NULL)
 	{
@@ -112,7 +91,12 @@ int main ()
 		ret = -1; goto oops;
 	}
 
+	/* duplicate the return value to a string */
 	str = qse_awk_rtx_valtostrdup (rtx, rtv, &len);
+
+	/* clear the return value */
+	qse_awk_rtx_refdownval (rtx, rtv);
+
 	if (str == QSE_NULL)
 	{
 		qse_fprintf (QSE_STDERR, QSE_T("error: %s\n"), 
@@ -121,52 +105,11 @@ int main ()
 	}
 
 	qse_printf (QSE_T("[%.*s]\n"), (int)len, str);
+
+	/* destroy the duplicated string  */
 	qse_awk_rtx_freemem (rtx, str);
 
-	if (rtv) 
-	{
-		qse_awk_rtx_refdownval (rtx, rtv);
-		rtv = QSE_NULL;
-	}
-
-	/* call the function again using different API functions */
-	fun = qse_awk_rtx_findfun (rtx, QSE_T("pow"));
-	if (fun == QSE_NULL)
-	{
-		qse_fprintf (QSE_STDERR, QSE_T("error: %s\n"), 
-			qse_awk_rtx_geterrmsg(rtx));
-		ret = -1; goto oops;
-	}
-
-	rtv = qse_awk_rtx_callfun (rtx, fun, arg, 2);
-	if (rtv == QSE_NULL)
-	{
-		qse_fprintf (QSE_STDERR, QSE_T("error: %s\n"), 
-			qse_awk_rtx_geterrmsg(rtx));
-		ret = -1; goto oops;
-	}
-
-	/* Convert a value to a string in a different way */
-	out.type = QSE_AWK_RTX_VALTOSTR_CPL;
-	out.u.cpl.ptr = numbuf; /* used if the value is not a string */
-	out.u.cpl.len = QSE_COUNTOF(numbuf);
-	if (qse_awk_rtx_valtostr (rtx, rtv, &out) <= -1)
-	{
-		qse_fprintf (QSE_STDERR, QSE_T("error: %s\n"), 
-			qse_awk_rtx_geterrmsg(rtx));
-		ret = -1; goto oops;
-	}
-
-	qse_printf (QSE_T("[%.*s]\n"), (int)out.u.cpl.len, out.u.cpl.ptr);
-
 oops:
-	/* clear the return value */
-	if (rtv) 
-	{
-		qse_awk_rtx_refdownval (rtx, rtv);
-		rtv = QSE_NULL;
-	}
-
 	/* dereference all arguments */
 	for (i = 0; i < QSE_COUNTOF(arg); i++)
 	{
@@ -177,5 +120,6 @@ oops:
 	if (rtx) qse_awk_rtx_close (rtx);
 	/* destroy the processor */
 	if (awk) qse_awk_close (awk);
+
 	return ret;
 }

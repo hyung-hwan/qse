@@ -1,4 +1,4 @@
-Embedding Guide                                               {#embedding-guide}
+QSEAWK Embedding Guide                                              {#awk-embed}
 ================================================================================
 
 Overview
@@ -28,7 +28,7 @@ Embedding QSEAWK involves the following steps in the simplest form:
 The sample below follows these steps using as many standard layer functions as
 possible for convenience sake. It simply prints *hello, world* to the console.
 
-  \includelineno awk01.c
+ \includelineno awk01.c
 
 Separation of the awk object and the runtime context was devised to deal with
 such cases as you want to reuse the same script over different data streams.
@@ -47,11 +47,52 @@ to override the callback functions implemented by qse_awk_rtx_openstd()
 partially. This sample redefines the console handler while keeping the file 
 and pipe handler by qse_awk_rtx_openstd().
 
-  \includelineno awk02.c
+ \includelineno awk02.c
 
+Entry Point
+-----------
 
-Changes
--------
+A typical AWK program executes BEGIN, patten-action, END blocks. QSEAWK provides
+a way to drive a AWK program in a different style. That is, you can execute
+a particular user-defined function on demand. It can be useful if you want
+to drive an AWK program in an event-driven mannger though you can free to
+change the entry point for your preference. The qse_awk_rtx_call() function
+used is limited to user-defined functions. It is not able to call built-in
+functions like *gsub* or *index*.
+
+ \includelineno awk03.c  
+
+If you want to pass arguments to the function you call with qse_awk_rtx_call(),
+you must create values with value creation functions, updates their reference
+count, and pass them to qse_awk_rtx_call(). The sample below creates 2 integer
+values with qse_awk_rtx_makeintval() and pass them to the *pow* function.
+
+ \includelineno awk04.c
+
+While qse_awk_rtx_call() looks up a function in the function table by name, 
+you can find the function in advance and use the information found when 
+calling a function. qse_awk_rtx_findfun() and qse_awk_rtx_callfun() come 
+to play a role in this situation. qse_awk_rtx_call() in the sample above 
+can be translated into 2 separate calls to qse_awk_rtx_findfun() and 
+qse_awk_rtx_callfun(). You can reduce look-up overhead via these 2 
+functions if you have to execute the same function multiple times.
+
+ \includelineno awk05.c
+
+Global Variables
+----------------
+
+You can add built-in global variables with qse_awk_addgbl().
+Use qse_awk_getgbl() to get information. 
+
+Built-in Functions
+------------------
+
+You can add built-in functions with qse_awk_addfnc().
+On the other hand, modular built-in functions reside in a shared object.
+
+Changes in 0.6.0
+----------------
 
 ### qse_awk_parsestd() ###
 
@@ -63,7 +104,7 @@ In 0.5.6, it accepted a single script.
     psin.u.str.len = qse_strlen(src);
     qse_awk_parsestd (awk, &psin, QSE_NULL);
 
-In 0.6.0 or later, it accepts an array of scripts.
+In 0.6.X, it accepts an array of scripts.
 
     qse_awk_parsestd_t psin[2];
     psin[0].type = QSE_AWK_PARSESTD_STR;
@@ -73,6 +114,8 @@ In 0.6.0 or later, it accepts an array of scripts.
     qse_awk_parsestd (awk, psin, QSE_NULL)
 
 ### qse_awk_parsestd_t ###
+
 the cmgr field moved from the union member file to the outer structure.
 
-
+### 0 upon Opening ###
+I/O handlers can return 0 for success upon opening.
