@@ -40,7 +40,7 @@ int main ()
 	qse_awk_t* awk = QSE_NULL;
 	qse_awk_rtx_t* rtx = QSE_NULL;
 	qse_awk_val_t* retv;
-	qse_awk_parsestd_t psin;
+	qse_awk_parsestd_t psin[2];
 	int ret = -1, opt;
 
 	const qse_char_t* output_files[] = 
@@ -67,11 +67,12 @@ int main ()
 	opt |= QSE_AWK_EXTRAKWS;
 	qse_awk_setopt (awk, QSE_AWK_TRAIT, &opt);
 
-	psin.type = QSE_AWK_PARSESTD_STR;
-	psin.u.str.ptr = src;
-	psin.u.str.len = qse_strlen(src);
+	psin[0].type = QSE_AWK_PARSESTD_STR;
+	psin[0].u.str.ptr = src;
+	psin[0].u.str.len = qse_strlen(src);
+	psin[1].type = QSE_AWK_PARSESTD_NULL;
 
-	if (qse_awk_parsestd (awk, &psin, QSE_NULL) <= -1)
+	if (qse_awk_parsestd (awk, psin, QSE_NULL) <= -1)
 	{
 		qse_fprintf (QSE_STDERR, QSE_T("ERROR: %s\n"), 
 			qse_awk_geterrmsg(awk));

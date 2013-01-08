@@ -1073,7 +1073,8 @@ int qse_awk_parsestd (
 	if (in == QSE_NULL || (in[0].type != QSE_AWK_PARSESTD_FILE && 
 	                       in[0].type != QSE_AWK_PARSESTD_STR))
 	{
-		/* the input is a must */
+		/* the input is a must. at least 1 file or 1 string 
+		 * must be specified */
 		qse_awk_seterrnum (awk, QSE_AWK_EINVAL, QSE_NULL);
 		return -1;
 	}
