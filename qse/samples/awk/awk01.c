@@ -8,7 +8,7 @@ int main ()
 	qse_awk_t* awk = QSE_NULL;
 	qse_awk_rtx_t* rtx = QSE_NULL;
 	qse_awk_val_t* retv;
-	qse_awk_parsestd_t psin;
+	qse_awk_parsestd_t psin[2];
 	int ret = -1;
 
 	/* create an awk object */
@@ -19,12 +19,13 @@ int main ()
 		goto oops;
 	}
 
-	psin.type = QSE_AWK_PARSESTD_STR;
-	psin.u.str.ptr = script;
-	psin.u.str.len = qse_strlen(script);
+	psin[0].type = QSE_AWK_PARSESTD_STR;
+	psin[0].u.str.ptr = script;
+	psin[0].u.str.len = qse_strlen(script);
+	psin[1].type = QSE_AWK_PARSESTD_NULL;
 
 	/* parse a script in a string */
-	if (qse_awk_parsestd (awk, &psin, QSE_NULL) <= -1)
+	if (qse_awk_parsestd (awk, psin, QSE_NULL) <= -1)
 	{
 		qse_fprintf (QSE_STDERR, QSE_T("ERROR: %s\n"), 
 			qse_awk_geterrmsg(awk));

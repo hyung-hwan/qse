@@ -1,5 +1,5 @@
 /*
- * $Id: awk01.c 441 2011-04-22 14:28:43Z hyunghwan.chung $ 
+ * $Id: awk02.c 441 2011-04-22 14:28:43Z hyunghwan.chung $ 
  *
     Copyright 2006-2012 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -18,65 +18,38 @@
     License along with QSE. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <qse/awk/awk.h>
 #include <qse/awk/std.h>
+#include <qse/cmn/mem.h>
 #include <qse/cmn/stdio.h>
 
-const qse_char_t* src = QSE_T("BEGIN { print \"hello, world\" | \"dir\"; }");
-
-struct rtx_xtn_t
-{
-	qse_awk_rio_impl_t old_pipe_handler;
-};
-
-static qse_ssize_t new_pipe_handler (
-	qse_awk_rtx_t* rtx, qse_awk_rio_cmd_t cmd, qse_awk_rio_arg_t* riod,
-	qse_char_t* data, qse_size_t size)
-{
-	struct rtx_xtn_t* xtn;
-	xtn = qse_awk_rtx_getxtnstd (rtx);
-
-	if (cmd == QSE_AWK_RIO_OPEN)
-		qse_fprintf (QSE_STDERR, QSE_T("LOG: Executing [%s] for piping\n"), riod->name);
-
-	return xtn->old_pipe_handler (rtx, cmd, riod, data, size);
-}
-
-static void extend_pipe_handler (qse_awk_rtx_t* rtx)
-{
-	/* this function simply demonstrates how to extend
-	 * runtime I/O handlers provided by qse_awk_rtx_openstd() */
-
-	struct rtx_xtn_t* xtn;
-	qse_awk_rio_t rio;
-
-	xtn = qse_awk_rtx_getxtnstd (rtx);
-
-	/* get the previous handler functions */
-	qse_awk_rtx_getrio (rtx, &rio); 
-
-	/* remember the old pipe handler function */
-	xtn->old_pipe_handler = rio.pipe;
-
-	/* change the pipe handler to a new one */
-	rio.pipe = new_pipe_handler;
-
-	/* changes the handlers with a new set */
-	qse_awk_rtx_setrio (rtx, &rio);
-}
+static const qse_char_t* src = QSE_T(
+	"BEGIN {"
+	"	for (i=2;i<=9;i++)"
+	"	{"
+	"		for (j=1;j<=9;j++)"
+	"			print i \"*\" j \"=\" i * j;"
+	"		print \"---------------------\";"
+	"	}"
+	"}"
+);
 
 int main ()
 {
 	qse_awk_t* awk = QSE_NULL;
 	qse_awk_rtx_t* rtx = QSE_NULL;
 	qse_awk_val_t* retv;
+
 	qse_awk_parsestd_t psin[2];
-	int ret = -1;
+	qse_awk_parsestd_t psout;
+
+	int ret;
 
 	awk = qse_awk_openstd (0);
 	if (awk == QSE_NULL)  
 	{
 		qse_fprintf (QSE_STDERR, QSE_T("ERROR: cannot open awk\n"));
-		goto oops;
+		ret = -1; goto oops;
 	}
 
 	psin[0].type = QSE_AWK_PARSESTD_STR;
@@ -84,36 +57,45 @@ int main ()
 	psin[0].u.str.len = qse_strlen(src);
 	psin[1].type = QSE_AWK_PARSESTD_NULL;
 
-	if (qse_awk_parsestd (awk, psin, QSE_NULL) <= -1)
+	psout.type = QSE_AWK_PARSESTD_STR;
+	/* ps.out.u.str.ptr and ps.out.u.str.len are set when qse_awk_parsestd() 
+	 * returns success */
+
+	ret = qse_awk_parsestd (awk, psin, &psout);
+	if (ret <= -1)
 	{
 		qse_fprintf (QSE_STDERR, QSE_T("ERROR: %s\n"), 
 			qse_awk_geterrmsg(awk));
-		goto oops;
+		ret = -1; goto oops;
 	}
+
+	qse_printf (QSE_T("DEPARSED SOURCE:\n%s\n"), psout.u.str.ptr);
+	qse_printf (QSE_T("=================================\n"));
+	qse_fflush (QSE_STDOUT);
+
+	QSE_MMGR_FREE (qse_awk_getmmgr(awk), psout.u.str.ptr);
 
 	rtx = qse_awk_rtx_openstd (
 		awk, 
-		QSE_SIZEOF(struct rtx_xtn_t),
-		QSE_T("awk11"),
-		QSE_NULL, /* stdin */
-		QSE_NULL,  /* stdout */               
-		QSE_NULL  /* default cmgr */
+		0,
+		QSE_T("awk02"),
+		QSE_NULL,  /* stdin */
+		QSE_NULL,  /* stdout */
+		QSE_NULL   /* default cmgr */
 	);
 	if (rtx == QSE_NULL) 
 	{
 		qse_fprintf (QSE_STDERR, QSE_T("ERROR: %s\n"), 
 			qse_awk_geterrmsg(awk));
-		goto oops;
+		ret = -1; goto oops;
 	}
-
-	extend_pipe_handler (rtx);
 	
 	retv = qse_awk_rtx_loop (rtx);
 	if (retv == QSE_NULL)
 	{
 		qse_fprintf (QSE_STDERR, QSE_T("ERROR: %s\n"), 
 			qse_awk_rtx_geterrmsg(rtx));
-		goto oops;
+		ret = -1; goto oops;
 	}
 
 	qse_awk_rtx_refdownval (rtx, retv);
@@ -122,6 +104,6 @@ int main ()
 oops:
 	if (rtx != QSE_NULL) qse_awk_rtx_close (rtx);
 	if (awk != QSE_NULL) qse_awk_close (awk);
-	return ret;
+	return -1;
 }
 

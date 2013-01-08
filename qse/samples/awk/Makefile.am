@@ -5,7 +5,7 @@ AM_CPPFLAGS = \
 	-I$(top_srcdir)/include \
 	-I$(includedir)
 
-bin_PROGRAMS = awk01 awk02 awk03 awk04 awk09 awk10 awk11
+bin_PROGRAMS = awk01 awk02 awk03 awk04 awk09 awk10 awk11 awk15
 
 LDFLAGS = -L../../lib/awk -L../../lib/cmn
 LDADD = -lqseawk -lqsecmn $(LIBM)
@@ -23,6 +23,7 @@ awk04_SOURCES = awk04.c
 awk09_SOURCES = awk09.c
 awk10_SOURCES = awk10.c
 awk11_SOURCES = awk11.c
+awk15_SOURCES = awk15.c
 
 if ENABLE_CXX
 
