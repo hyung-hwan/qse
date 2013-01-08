@@ -27,4 +27,5 @@ See the subpages for more information.
 - @subpage awk "AWK Interpreter" 
 - @subpage sed "SED Stream Editor" 
 - @subpage awk-lang
+- @subpage awk-embed
 

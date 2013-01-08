@@ -15,3 +15,5 @@ EXTRA_DIST = \
 	page/sed.doc \
 	image/qse-logo.png	
 
+all:
+	doxygen 

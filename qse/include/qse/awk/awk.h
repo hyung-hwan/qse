@@ -1898,7 +1898,7 @@ QSE_EXPORT qse_awk_fun_t* qse_awk_rtx_findfun (
 );
 
 /**
- * The qse_awk_rtx_callfun() function invokdes an AWK function described by
+ * The qse_awk_rtx_callfun() function invokes an AWK function described by
  * the structure pointed to by @a fun.
  * @sa qse_awk_rtx_call
  */
@@ -1913,17 +1913,17 @@ QSE_EXPORT qse_awk_val_t* qse_awk_rtx_callfun (
  * The qse_awk_rtx_call() function invokes an AWK function named @a name. 
  * However, it is not able to invoke an intrinsic function such as split(). 
  * The #QSE_AWK_PABLOCK option can be turned off to make illegal the BEGIN 
- * block, the pattern-action blocks, and the END block.
+ * blocks, the pattern-action blocks, and the END blocks.
  *
  * The example shows typical usage of the function.
  * @code
  * rtx = qse_awk_rtx_open (awk, 0, rio, QSE_NULL);
- * if (rtx != QSE_NULL)
+ * if (rtx)
  * {
  *     v = qse_awk_rtx_call (rtx, QSE_T("init"), QSE_NULL, 0);
- *     if (v != QSE_NULL) qse_awk_rtx_refdownval (rtx, v);
+ *     if (v) qse_awk_rtx_refdownval (rtx, v);
  *     qse_awk_rtx_call (rtx, QSE_T("fini"), QSE_NULL, 0);
- *     if (v != QSE_NULL) qse_awk_rtx_refdownval (rtx, v);
+ *     if (v) qse_awk_rtx_refdownval (rtx, v);
  *     qse_awk_rtx_close (rtx);
  * }
  * @endcode

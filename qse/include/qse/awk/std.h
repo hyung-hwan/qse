@@ -49,8 +49,8 @@
  */
 enum qse_awk_parsestd_type_t
 {
-	QSE_AWK_PARSESTD_NULL  = 0, /**< invalid type */
-	QSE_AWK_PARSESTD_FILE  = 1, /**< files */
+	QSE_AWK_PARSESTD_NULL  = 0, /**< pseudo-value to indicate no script */
+	QSE_AWK_PARSESTD_FILE  = 1, /**< script file */
 	QSE_AWK_PARSESTD_STR   = 2  /**< length-bounded string */
 };
 
@@ -67,7 +67,7 @@ struct qse_awk_parsestd_t
 	{
 		struct
 		{
-			/** file path to open. QSE_NULL or '-' for stdin/stdout. */
+			/** file path to open. #QSE_NULL or '-' for stdin/stdout. */
 			const qse_char_t*  path; 
 		} file;
 

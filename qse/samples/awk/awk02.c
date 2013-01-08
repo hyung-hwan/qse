@@ -12,7 +12,7 @@ static const qse_char_t* conin =
 	QSE_T("Beth 4.00 0\nDan  3.74 0\nKathy     4.00 10\nMark 5.00 20\nMary 5.50 22\nSusie     4.25 18\n");
 static qse_size_t coninpos = 0;
 
-/* i'll store the console output to this buffer */
+/* the console output is stored into this buffer */
 static qse_char_t conout[10000];
 static qse_size_t conoutpos = 0;
 
