@@ -40,63 +40,36 @@ static void print_error (
 
 static int run_awk (QSE::StdAwk& awk)
 {
-	QSE::StdAwk::Run* run;
+	// ARGV[0]
+	if (awk.addArgument (QSE_T("awk05")) <= -1) return -1;
+
+	// ARGV[1] and/or the first console input file
+	if (awk.addArgument (QSE_T("Makefile")) <= -1) return -1;
 
 	const qse_char_t* script = QSE_T(
-		"function add (a, b) { return a + b }\n"
-		"function mul (a, b) { return a * b }\n"
-		"function div (a, b) { return a / b }\n"
-		"function sine (a) { return sin(a) }\n"
+		"BEGIN { print \">> PRINT ALL LINES WHOSE LENGTH IS GREATER THAN 0\"; }\n" 
+		"length($0) > 0 { print $0; count++; }\n"
+		"END { print \">> TOTAL\", count, \"LINES\"; }\n"
 	);
 
 	QSE::StdAwk::SourceString in (script);
-	QSE::StdAwk::SourceFile out (QSE_T("awk06.out"));
+	QSE::StdAwk::SourceFile out (QSE_T("awk05.out"));
 
-	// parse the script and deparse it to awk06.out
-	run = awk.parse (in, out);
-	if (run == QSE_NULL) return -1;
+	// parse the script string and deparse it to awk05.out.
+	if (awk.parse (in, out) == QSE_NULL) return -1;
 
-	QSE::StdAwk::Value arg[2];
-	if (arg[0].setInt (run, -20) <= -1) return -1;
-	if (arg[1].setStr (run, QSE_T("51")) <= -1) return -1;
-
-	// ret = add (-20, 51) 
-	QSE::StdAwk::Value ret;
-	if (awk.call (QSE_T("add"), &ret, arg, 2) <= -1) return -1;
-
-	// ret = mul (ret, 51);
-	arg[0] = ret;
-	if (awk.call (QSE_T("mul"), &ret, arg, 2) <= -1) return -1;
-
-	// ret = div (ret, 2);
-	arg[0] = ret;
-	if (arg[1].setFlt (run, 2) <= -1) return -1;
-	if (awk.call (QSE_T("div"), &ret, arg, 2) <= -1) return -1;
-
-	// output the result in various types
-	qse_printf (QSE_T("RESULT: (int) [%lld]\n"), (long long)ret.toInt());
-	qse_printf (QSE_T("        (flt) [%Lf]\n"), (long double)ret.toFlt());
-	qse_printf (QSE_T("        (str) [%s]\n"), ret.toStr(QSE_NULL));
-
-	// ret = sine (ret);
-	arg[0] = ret;
-	if (awk.call (QSE_T("sine"), &ret, arg, 1) <= -1) return -1;
-
-	// output the result in various types
-	qse_printf (QSE_T("RESULT: (int) [%lld]\n"), (long long)ret.toInt());
-	qse_printf (QSE_T("        (flt) [%Lf]\n"), (long double)ret.toFlt());
-	qse_printf (QSE_T("        (str) [%s]\n"), ret.toStr(QSE_NULL));
-
-	return 0;
+	QSE::StdAwk::Value r;
+	// execute the BEGIN, pattern-action, END blocks.
+	return awk.loop (&r);
 }
 
 static int awk_main (int argc, qse_char_t* argv[])
 {
 	QSE::StdAwk awk;
 
-	int ret = awk.open();
-
+	int ret = awk.open ();
 	if (ret >= 0) ret = run_awk (awk);
+
 	if (ret <= -1) 
 	{
 		QSE::StdAwk::loc_t loc = awk.getErrorLocation();
@@ -104,7 +77,7 @@ static int awk_main (int argc, qse_char_t* argv[])
 	}
 
 	awk.close ();
-	return -1;
+	return ret;
 }
 
 int qse_main (int argc, qse_achar_t* argv[])
@@ -127,5 +100,6 @@ int qse_main (int argc, qse_achar_t* argv[])
 	setlocale (LC_ALL, "");
 	qse_setdflcmgrbyid (QSE_CMGR_SLMB);
 #endif
+
 	return qse_runmain (argc,argv,awk_main);
 }

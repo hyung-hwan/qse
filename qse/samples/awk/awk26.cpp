@@ -57,6 +57,7 @@ public:
 		this->inend = inptr + this->input.length();
 	}
 
+	void clearOutput () { this->output.clear (); }
 	const char_t* getOutput () { return this->output.c_str(); }
 
 protected:
@@ -68,16 +69,6 @@ protected:
 	
 	int openConsole (Console& io) 
 	{ 
-		if (io.getMode() == Console::READ)
-		{
-			this->inptr = this->input.c_str();
-			this->inend = inptr + this->input.length();
-		}
-		else
-		{
-			this->output.clear ();
-		}
-
 		return 1; // return open-success
 	}
 
@@ -95,8 +86,8 @@ protected:
 	int nextConsole (Console& io) 
 	{ 
 		// this stripped-down awk doesn't honor the nextfile statement
-		// or the nextofile statement. just return failure.
-		return -1; 
+		// or the nextofile statement. just return success.
+		return 0; 
 	} 
 
 	ssize_t readConsole (Console& io, char_t* data, size_t size) 
@@ -145,30 +136,18 @@ static int run_awk (MyAwk& awk)
 		"sdace        555-3430     2400/1200/300     A\n"
 		"sabafoo      555-2127     1200/300          C\n");
 
-	const qse_char_t* instr2 = QSE_T(
-		"aardvark     555-5553     1200/300          A\n"
-		"alpo-net     555-3412     2400/1200/300     B\n"
-		"barfly       555-7685     1200/300          C\n"
-		"bites        555-1675     2400/1200/300     A\n"
-		"camelot      555-0542     300               C\n"
-		"core         555-2912     1200/300          B\n"
-		"fooey        555-1234     2400/1200/300     A\n"
-		"foot         555-6699     1200/300          A\n"
-		"macfoo       555-6480     1200/300          B\n"
-		"sdace        555-3430     2400/1200/300     B\n"
-		"sabafoo      555-2127     1200/300          A\n");
-
 	// ARGV[0]
-	if (awk.addArgument (QSE_T("awk13")) <= -1) return -1;
+	if (awk.addArgument (QSE_T("awk12")) <= -1) return -1;
 
-	// prepare a string to print lines with A in the fourth column
-	MyAwk::SourceString in (QSE_T("$4 == \"A\" { print $2, $1, $3; }")); 
+	// prepare a script to print the second and the first column
+	MyAwk::SourceString in (QSE_T("{ print $2, $1; }")); 
 	
 	// parse the script.
 	if (awk.parse (in, MyAwk::Source::NONE) == QSE_NULL) return -1;
 	MyAwk::Value r;
 
 	awk.setInput (instr); // locate the input string
+	awk.clearOutput (); // clear the output string
 	int x = awk.loop (&r); // execute the BEGIN, pattern-action, END blocks.
 
 	if (x >= 0)
@@ -176,11 +155,12 @@ static int run_awk (MyAwk& awk)
 		qse_printf (QSE_T("%s"), awk.getOutput()); // print the console output
 		qse_printf (QSE_T("-----------------------------\n"));
 
-		awk.setInput (instr2);
+		// prepare a string to print lines with A in the fourth column
+		MyAwk::SourceString in2 (QSE_T("$4 == \"A\" { print $1; }")); 
+		if (awk.parse (in2, MyAwk::Source::NONE) == QSE_NULL) return -1;
 
-		// reset the runtime context so that the next loop() method
-		// is performed over a new console stream.
-		if (awk.resetRunContext() == QSE_NULL) return -1;
+		awk.setInput (instr);
+		awk.clearOutput ();
 
 		int x = awk.loop (&r);
 

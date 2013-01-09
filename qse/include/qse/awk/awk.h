@@ -26,47 +26,23 @@
 #include <qse/cmn/htb.h>
 #include <qse/cmn/str.h>
 
-/** @file
+/** \file
  * An embeddable AWK interpreter is defined in this header file.
  *
- * @todo
+ * \todo
  * - make enhancement to treat a function as a value
  * - improve performance of qse_awk_rtx_readio() if RS is logner than 2 chars.
  * - consider something like ${1:3,5} => $1, $2, $3, and $5 concatenated
  */
 
-/**
- * @example awk.c
- * This program demonstrates how to build a complete awk interpreter.
- *
- * @example awk01.c
- * This program demonstrates how to use qse_awk_rtx_loop().
- *
- * @example awk02.c
- * The program deparses the source code and prints it before executing it.
- *
- * @example awk03.c
- * This program demonstrates how to use qse_awk_rtx_call().
- * It parses the program stored in the string src and calls the functions
- * stated in the array fnc. If no errors occur, it should print 24.
- *
- * @example awk04.c
- * This programs shows how to qse_awk_rtx_call().
- *
- * @example awk10.c
- * This programs shows how to manipuate a map using qse_awk_rtx_makemapval()
- * and qse_awk_rtx_setmapvalfld().
- *
- */
-
-/** @struct qse_awk_t
+/** \struct qse_awk_t
  * The #qse_awk_t type defines an AWK interpreter. It provides an interface
  * to parse an AWK script and run it to manipulate input and output data.
  *
  * In brief, you need to call APIs with user-defined handlers to run a typical
  * AWK script as shown below:
  * 
- * @code
+ * \code
  * qse_awk_t* awk;
  * qse_awk_rtx_t* rtx;
  * qse_awk_sio_t sio; // need to initialize it with callback functions
@@ -80,18 +56,18 @@
  *    qse_awk_rtx_refdownval (rtx, retv); // free return value
  * qse_awk_rtx_close (rtx);           // destroy the runtime context
  * qse_awk_close (awk);               // destroy the interpreter
- * @endcode
+ * \endcode
  *
  * It provides an interface to change the conventional behavior of the 
  * interpreter; most notably, you can call a particular function with 
  * qse_awk_rtx_call() instead of entering the BEGIN, pattern-action blocks, END
  * loop. By doing this, you may utilize a script in an event-driven way.
  *
- * @sa qse_awk_rtx_t qse_awk_open qse_awk_close
+ * \sa qse_awk_rtx_t qse_awk_open qse_awk_close
  */
 typedef struct qse_awk_t qse_awk_t;
 
-/** @struct qse_awk_rtx_t
+/** \struct qse_awk_rtx_t
  * The #qse_awk_rtx_t type defines a runtime context. A runtime context 
  * maintains runtime state for a running script. You can create multiple
  * runtime contexts out of a single AWK interpreter; in other words, you 
@@ -114,7 +90,7 @@ typedef struct qse_awk_t qse_awk_t;
  *   read from a console. (/susie/ { ... })
  * - print and printf write to a console. (print "hello, world")
  *
- * @sa qse_awk_t qse_awk_rtx_open qse_awk_rio_t
+ * \sa qse_awk_t qse_awk_rtx_open qse_awk_rio_t
  */
 typedef struct qse_awk_rtx_t qse_awk_rtx_t;
 
@@ -130,7 +106,7 @@ struct qse_awk_loc_t
 typedef struct qse_awk_loc_t qse_awk_loc_t;
 
 /**
- * The QSE_AWK_VAL_HDR defines the common header for a value.
+ * The #QSE_AWK_VAL_HDR defines the common header for a value.
  * Three common fields are:
  * - type - type of a value from #qse_awk_val_type_t
  * - ref - reference count
@@ -275,12 +251,25 @@ struct qse_awk_val_map_itr_t
 };
 typedef struct qse_awk_val_map_itr_t qse_awk_val_map_itr_t;
 
+/**
+ * The #QSE_AWK_VAL_MAP_ITR_KEY macro get the pointer to the key part 
+ * of a map value.
+ */
 #define QSE_AWK_VAL_MAP_ITR_KEY(itr) \
 	((const qse_cstr_t*)QSE_HTB_KPTL((itr)->pair))
+
+/**
+ * The #QSE_AWK_VAL_MAP_ITR_VAL macro get the pointer to the value part 
+ * of a map value.
+ */
 #define QSE_AWK_VAL_MAP_ITR_VAL(itr) \
 	((const qse_awk_val_t*)QSE_HTB_VPTR((itr)->pair))
 
 
+/**
+ * The qse_awk_val_map_data_type_t type defines the type of
+ * map value data for the #qse_awk_val_map_data_t structure.
+ */
 enum qse_awk_val_map_data_type_t
 {
 	QSE_AWK_VAL_MAP_DATA_INT  = 0,
@@ -297,12 +286,18 @@ enum qse_awk_val_map_data_type_t
 };
 typedef enum qse_awk_val_map_data_type_t qse_awk_val_map_data_type_t;
 
+/**
+ * The qse_awk_val_map_data_t type defines a structure that
+ * describes a key/value pair for a map value to be created
+ * with qse_awk_makemapvalwithdata().
+ */
 struct qse_awk_val_map_data_t
 {
 	qse_cstr_t                   key;
 	qse_awk_val_map_data_type_t  type;
 	void*                        vptr;
 };
+
 typedef struct qse_awk_val_map_data_t qse_awk_val_map_data_t;
 
 /* ------------------------------------------------------------------------ */
@@ -373,7 +368,7 @@ typedef enum qse_awk_nde_type_t qse_awk_nde_type_t;
 	qse_awk_loc_t      loc; \
 	qse_awk_nde_t*     next
 
-/** @struct qse_awk_nde_t
+/** \struct qse_awk_nde_t
  * The qse_awk_nde_t type defines a common part of a node.
  */
 typedef struct qse_awk_nde_t  qse_awk_nde_t;
@@ -608,10 +603,10 @@ typedef enum qse_awk_rio_rwcmode_t qse_awk_rio_rwcmode_t;
 
 /**
  * The qse_awk_rio_arg_t defines the data structure passed to a runtime 
- * I/O handler. An I/O handler should inspect the @a mode field and the 
- * @a name field and store an open handle to the @a handle field when 
+ * I/O handler. An I/O handler should inspect the \a mode field and the 
+ * \a name field and store an open handle to the \a handle field when 
  * #QSE_AWK_RIO_OPEN is requested. For other request type, it can refer
- * to the @a handle field set previously.
+ * to the \a handle field set previously.
  */
 struct qse_awk_rio_arg_t 
 {
@@ -706,7 +701,7 @@ typedef struct qse_awk_prm_t qse_awk_prm_t;
  * a script and optionally deparse it. Typical input and output handlers 
  * are shown below:
  *
- * @code
+ * \code
  * qse_ssize_t in (
  *    qse_awk_t* awk, qse_awk_sio_cmd_t cmd,
  *    qse_char_t* buf, qse_size_t size)
@@ -724,7 +719,7 @@ typedef struct qse_awk_prm_t qse_awk_prm_t;
  *    else if (cmd == QSE_AWK_SIO_CLOSE) close_output_stream;
  *    else write data of size characters to output stream;
  * }
- * @endcode
+ * \endcode
  *
  * For #QSE_AWK_SIO_OPEN, a handler must return:
  * - -1 if it failed to open a stream.
@@ -751,7 +746,7 @@ typedef struct qse_awk_sio_t qse_awk_sio_t;
 
 /**
  * The qse_awk_rio_t type defines a runtime I/O handler set.
- * @sa qse_awk_rtx_t
+ * \sa qse_awk_rtx_t
  */
 struct qse_awk_rio_t
 {
@@ -1013,7 +1008,7 @@ enum qse_awk_trait_t
 	 */
 	QSE_AWK_EXTRAKWS = (1 << 2),
 
-	/** supports @b getline and @b print */
+	/** supports \b getline and \b print */
 	QSE_AWK_RIO = (1 << 3), 
 
 	/** enables the two-way pipe if #QSE_AWK_RIO is on */
@@ -1026,22 +1021,22 @@ enum qse_awk_trait_t
 	 * removes empty fields when splitting a record if FS is a regular
 	 * expression and the match is all spaces.
 	 *
-	 * @code
+	 * \code
 	 * BEGIN { FS="[[:space:]]+"; } 
 	 * { 
 	 *    print "NF=" NF; 
 	 *    for (i = 0; i < NF; i++) print i " [" $(i+1) "]";
 	 * }
-	 * @endcode
+	 * \endcode
 	 * " a b c " is split to [a], [b], [c] if #QSE_AWK_STRIPRECSPC is on.
 	 * Otherwise, it is split to [], [a], [b], [c], [].
 	 *
-	 * @code
+	 * \code
 	 * BEGIN { 
 	 *   n=split("   oh my  noodle  ", x, /[ o]+/); 
 	 *   for (i=1;i<=n;i++) print "[" x[i] "]"; 
 	 * }
-	 * @endcode
+	 * \endcode
 	 * This example splits the string to [], [h], [my], [n], [dle]
 	 * if #QSE_AWK_STRIPRECSPC is on. Otherwise, it results in
 	 * [], [h], [my], [n], [dle], []. Note that the first empty field is not 
@@ -1065,7 +1060,7 @@ enum qse_awk_trait_t
 	 */
 	QSE_AWK_FLEXMAP = (1 << 11),
 
-	/** allows @b BEGIN, @b END, pattern-action blocks */
+	/** allows \b BEGIN, \b END, pattern-action blocks */
 	QSE_AWK_PABLOCK = (1 << 12),
 
 	/** allows {n,m} in a regular expression. */
@@ -1326,8 +1321,8 @@ typedef enum qse_awk_gbl_id_t qse_awk_gbl_id_t;
 
 /**
  * The qse_awk_val_type_t type defines types of AWK values. Each value 
- * allocated is tagged with a value type in the @a type field.
- * @sa qse_awk_val_t QSE_AWK_VAL_HDR
+ * allocated is tagged with a value type in the \a type field.
+ * \sa qse_awk_val_t QSE_AWK_VAL_HDR
  */
 enum qse_awk_val_type_t
 {
@@ -1415,7 +1410,7 @@ extern "C" {
  * function structures. Therefore, you should keep the memory manager valid 
  * during the whole life cycle of an qse_awk_t object.
  *
- * @code
+ * \code
  * qse_awk_t* dummy()
  * {
  *     qse_mmgr_t mmgr;
@@ -1427,9 +1422,9 @@ extern "C" {
  *        &prm   // OK 
  *     );
  * }
- * @endcode
+ * \endcode
  *
- * @return a pointer to a qse_awk_t object on success, #QSE_NULL on failure.
+ * \return a pointer to a qse_awk_t object on success, #QSE_NULL on failure.
  */
 QSE_EXPORT qse_awk_t* qse_awk_open ( 
 	qse_mmgr_t*    mmgr,    /**< memory manager */
@@ -1439,7 +1434,7 @@ QSE_EXPORT qse_awk_t* qse_awk_open (
 
 /**
  *  The qse_awk_close() function destroys a qse_awk_t object.
- * @return 0 on success, -1 on failure 
+ * \return 0 on success, -1 on failure 
  */
 QSE_EXPORT int qse_awk_close (
 	qse_awk_t* awk /**< awk */
@@ -1456,7 +1451,7 @@ QSE_EXPORT void* qse_awk_getxtn (
 /**
  * The qse_awk_getprm() function retrieves primitive functions
  * associated. Actual function pointers are copied into a 
- * structure specified by @a prm.
+ * structure specified by \a prm.
  */
 QSE_EXPORT void qse_awk_getprm (
 	qse_awk_t*     awk,
@@ -1473,12 +1468,12 @@ QSE_EXPORT void qse_awk_setprm (
 );
 
 /**
- * The qse_awk_clear() clears the internal state of @a awk. If you want to
+ * The qse_awk_clear() clears the internal state of \a awk. If you want to
  * reuse a qse_awk_t instance that finished being used, you may call 
  * qse_awk_clear() instead of destroying and creating a new
  * #qse_awk_t instance using qse_awk_close() and qse_awk_open().
  *
- * @return 0 on success, -1 on failure
+ * \return 0 on success, -1 on failure
  */
 QSE_EXPORT int qse_awk_clear (
 	qse_awk_t* awk 
@@ -1497,7 +1492,7 @@ QSE_EXPORT qse_awk_errstr_t qse_awk_geterrstr (
  *
  * Here is an example of changing the formatting string for the #QSE_SED_ECMDNR 
  * error.
- * @code
+ * \code
  * qse_awk_errstr_t orgerrstr;
  *
  * const qse_char_t* myerrstr (qse_awk_t* awk, qse_awk_errnum_t num)
@@ -1513,7 +1508,7 @@ QSE_EXPORT qse_awk_errstr_t qse_awk_geterrstr (
  *    qse_awk_seterrstr (awk, myerrstr);
  *    ...
  * }
- * @endcode
+ * \endcode
  */
 QSE_EXPORT void qse_awk_seterrstr (
 	qse_awk_t*       awk,   /**< awk */
@@ -1523,7 +1518,7 @@ QSE_EXPORT void qse_awk_seterrstr (
 /**
  * The qse_awk_geterrnum() function returns the number of the last error 
  * occurred.
- * @return error number
+ * \return error number
  */
 QSE_EXPORT qse_awk_errnum_t qse_awk_geterrnum (
 	const qse_awk_t* awk /**< awk */
@@ -1539,9 +1534,9 @@ QSE_EXPORT const qse_awk_loc_t* qse_awk_geterrloc (
 
 /**
  * The qse_awk_geterrmsg() function returns the error message describing
- * the last error occurred. The @b fil field of the location returned is
- * #QSE_NULL if the error occurred in the main script.
- * @return error message
+ * the last error occurred. 
+ *
+ * \return error message
  */
 QSE_EXPORT const qse_char_t* qse_awk_geterrmsg (
 	const qse_awk_t* awk /**< awk */
@@ -1549,7 +1544,7 @@ QSE_EXPORT const qse_char_t* qse_awk_geterrmsg (
 
 /**
  * The qse_awk_geterrinf() function copies error information into memory
- * pointed to by @a errinf from @a awk.
+ * pointed to by \a errinf from \a awk.
  */
 QSE_EXPORT void qse_awk_geterrinf (
 	const qse_awk_t*  awk,   /**< awk */
@@ -1558,8 +1553,8 @@ QSE_EXPORT void qse_awk_geterrinf (
 
 /**
  * The qse_awk_seterrnum() function sets the error information omitting 
- * error location. You must pass a non-NULL for @a errarg if the specified
- * error number @a errnum requires one or more arguments to format an
+ * error location. You must pass a non-NULL for \a errarg if the specified
+ * error number \a errnum requires one or more arguments to format an
  * error message.
  */
 QSE_EXPORT void qse_awk_seterrnum (
@@ -1631,7 +1626,7 @@ QSE_EXPORT void qse_awk_pushecb (
 
 /**
  * The qse_awk_addgbl() function adds an intrinsic global variable.
- * @return the ID of the global variable added on success, -1 on failure.
+ * \return the ID of the global variable added on success, -1 on failure.
  */
 QSE_EXPORT int qse_awk_addgbl (
 	qse_awk_t*        awk,   /**< awk */
@@ -1640,7 +1635,7 @@ QSE_EXPORT int qse_awk_addgbl (
 
 /**
  * The qse_awk_delgbl() function deletes an intrinsic global variable by name.
- * @return 0 on success, -1 on failure
+ * \return 0 on success, -1 on failure
  */
 QSE_EXPORT int qse_awk_delgbl (
 	qse_awk_t*        awk,  /**< awk */
@@ -1650,7 +1645,7 @@ QSE_EXPORT int qse_awk_delgbl (
 /**
  * The qse_awk_findgbl() function returns the numeric ID of an intrinsic global
  * variable.
- * @return number >= 0 on success, -1 on failure
+ * \return number >= 0 on success, -1 on failure
  */
 QSE_EXPORT int qse_awk_findgbl (
 	qse_awk_t*        awk,  /**< awk */
@@ -1668,7 +1663,7 @@ QSE_EXPORT qse_awk_fnc_t* qse_awk_addfnc (
 
 /**
  * The qse_awk_delfnc() function deletes an intrinsic function by name.
- * @return 0 on success, -1 on failure
+ * \return 0 on success, -1 on failure
  */
 QSE_EXPORT int qse_awk_delfnc (
 	qse_awk_t*        awk,  /**< awk */
@@ -1686,10 +1681,10 @@ QSE_EXPORT void qse_awk_clrfnc (
  * The qse_awk_parse() function parses a source script, and optionally 
  * deparses it back. 
  *
- * It reads a source script by calling @a sio->in as shown in the pseudo code 
+ * It reads a source script by calling \a sio->in as shown in the pseudo code 
  * below:
  *
- * @code
+ * \code
  * n = sio->in (awk, QSE_AWK_SIO_OPEN);
  * if (n >= 0)
  * {
@@ -1697,17 +1692,17 @@ QSE_EXPORT void qse_awk_clrfnc (
  *       n = sio->in (awk, QSE_AWK_SIO_READ, buf, buf_size);
  *    sio->in (awk, QSE_AWK_SIO_CLOSE);
  * }
- * @endcode
+ * \endcode
  *
  * A negative number returned causes qse_awk_parse() to return failure;
  * 0 returned indicates the end of a stream; A positive number returned 
  * indicates successful opening of a stream or the length of the text read.
  *
- * If @a sio->out is not #QSE_NULL, it deparses the internal parse tree
+ * If \a sio->out is not #QSE_NULL, it deparses the internal parse tree
  * composed of a source script and writes back the deparsing result by 
- * calling @a sio->out as shown below:
+ * calling \a sio->out as shown below:
  *
- * @code
+ * \code
  * n = sio->out (awk, QSE_AWK_SIO_OPEN);
  * if (n >= 0)
  * {
@@ -1715,13 +1710,13 @@ QSE_EXPORT void qse_awk_clrfnc (
  *       n = sio->out (awk, QSE_AWK_SIO_WRITE, text, text_size);
  *    sio->out (awk, QSE_AWK_SIO_CLOSE);
  * }
- * @endcode
+ * \endcode
  * 
- * Unlike @a sf->in, the return value of 0 from @a sf->out is treated as
+ * Unlike \a sf->in, the return value of 0 from \a sf->out is treated as
  * premature end of a stream; therefore, it causes qse_awk_parse() to return
  * failure.
  *
- * @return 0 on success, -1 on failure.
+ * \return 0 on success, -1 on failure.
  */
 QSE_EXPORT int qse_awk_parse (
 	qse_awk_t*     awk, /**< awk */
@@ -1730,7 +1725,7 @@ QSE_EXPORT int qse_awk_parse (
 
 /**
  * The qse_awk_allocmem() function allocates dynamic memory.
- * @return a pointer to a memory block on success, #QSE_NULL on failure
+ * \return a pointer to a memory block on success, #QSE_NULL on failure
  */
 QSE_EXPORT void* qse_awk_allocmem (
 	qse_awk_t* awk,  /**< awk */
@@ -1739,7 +1734,7 @@ QSE_EXPORT void* qse_awk_allocmem (
 
 /**
  * The qse_awk_reallocmem() function resizes a dynamic memory block.
- * @return a pointer to a memory block on success, #QSE_NULL on failure
+ * \return a pointer to a memory block on success, #QSE_NULL on failure
  */
 QSE_EXPORT void* qse_awk_reallocmem (
 	qse_awk_t* awk,  /**< awk */
@@ -1749,8 +1744,8 @@ QSE_EXPORT void* qse_awk_reallocmem (
 
 /**
  * The qse_awk_callocmem() function allocates a memory block of 
- * the size of @a size bytes and initializes it with 0.
- * @return a pointer to a memory block on success, #QSE_NULL on failure
+ * the size of \a size bytes and initializes it with 0.
+ * \return a pointer to a memory block on success, #QSE_NULL on failure
  */
 QSE_EXPORT void* qse_awk_callocmem (
 	qse_awk_t* awk,  /**< awk */
@@ -1771,7 +1766,7 @@ QSE_EXPORT void qse_awk_freemem (
  * The new string must be freed using the qse_awk_freemem() function when
  * it's not needed any more.
  *
- * @return a pointer to a new string duplicated of @a s on success, 
+ * \return a pointer to a new string duplicated of \a s on success, 
  *         #QSE_NULL on failure.
  */
 QSE_EXPORT qse_char_t* qse_awk_strdup (
@@ -1785,7 +1780,7 @@ QSE_EXPORT qse_char_t* qse_awk_strdup (
  * qse_awk_t instance. The new string must be freed using the qse_awk_freemem()
  * function it's not needed any more.
  *
- * @return a pointer to a new string duplicated of @a s on success, 
+ * \return a pointer to a new string duplicated of \a s on success, 
  *         #QSE_NULL on failure.
  */
 QSE_EXPORT qse_char_t* qse_awk_strxdup (
@@ -1795,11 +1790,11 @@ QSE_EXPORT qse_char_t* qse_awk_strxdup (
 );
 
 /**
- * The qse_awk_cstrdup() funcation duplicates @a str->len characters from a 
+ * The qse_awk_cstrdup() funcation duplicates \a str->len characters from a 
  * string pointed to by @str->ptr. The duplicated string must be freed with
  * the qse_awk_freemem() function when it's not needed any more.
  * 
- * @return pointer to a duplicated string on success,
+ * \return pointer to a duplicated string on success,
  *         #QSE_NULL on failure.
  */
 QSE_EXPORT qse_char_t* qse_awk_cstrdup (
@@ -1842,13 +1837,13 @@ QSE_EXPORT qse_size_t qse_awk_longtostr (
 );
 
 /**
- * The qse_awk_rtx_open() creates a runtime context associated with @a awk.
- * It also allocates an extra memory block as large as the @a xtn bytes.
+ * The qse_awk_rtx_open() creates a runtime context associated with \a awk.
+ * It also allocates an extra memory block as large as the \a xtn bytes.
  * You can get the pointer to the beginning of the block with 
  * qse_awk_rtx_getxtn(). The block is destroyed when the runtime context is
  * destroyed. 
  *
- * @return new runtime context on success, #QSE_NULL on failure
+ * \return new runtime context on success, #QSE_NULL on failure
  */
 QSE_EXPORT qse_awk_rtx_t* qse_awk_rtx_open (
 	qse_awk_t*        awk, /**< awk */
@@ -1871,17 +1866,17 @@ QSE_EXPORT void qse_awk_rtx_close (
  * is not desirable.
  *
  * The example shows typical usage of the function.
- * @code
- * rtx = qse_awk_rtx_open (awk, 0, rio, QSE_NULL);
- * if (rtx != QSE_NULL)
+ * \code
+ * rtx = qse_awk_rtx_open (awk, 0, rio);
+ * if (rtx)
  * {
  *    retv = qse_awk_rtx_loop (rtx);
- *    if (retv != QSE_NULL) qse_awk_rtx_refdownval (rtx, retv);
+ *    if (retv) qse_awk_rtx_refdownval (rtx, retv);
  *    qse_awk_rtx_close (rtx);
  * }
- * @endcode
+ * \endcode
  *
- * @return return value on success, #QSE_NULL on failure.
+ * \return return value on success, #QSE_NULL on failure.
  */
 QSE_EXPORT qse_awk_val_t* qse_awk_rtx_loop (
 	qse_awk_rtx_t* rtx /**< runtime context */
@@ -1890,7 +1885,7 @@ QSE_EXPORT qse_awk_val_t* qse_awk_rtx_loop (
 /**
  * The qse_awk_rtx_findfun() function finds the function structure by name
  * and returns the pointer to it if one is found. It returns #QSE_NULL if
- * it fails to find a function by the @a name.
+ * it fails to find a function by the \a name.
  */
 QSE_EXPORT qse_awk_fun_t* qse_awk_rtx_findfun (
 	qse_awk_rtx_t*    rtx, /**< runtime context */
@@ -1899,8 +1894,8 @@ QSE_EXPORT qse_awk_fun_t* qse_awk_rtx_findfun (
 
 /**
  * The qse_awk_rtx_callfun() function invokes an AWK function described by
- * the structure pointed to by @a fun.
- * @sa qse_awk_rtx_call
+ * the structure pointed to by \a fun.
+ * \sa qse_awk_rtx_call
  */
 QSE_EXPORT qse_awk_val_t* qse_awk_rtx_callfun (
 	qse_awk_rtx_t*  rtx,     /**< runtime context */
@@ -1910,14 +1905,14 @@ QSE_EXPORT qse_awk_val_t* qse_awk_rtx_callfun (
 );
 
 /**
- * The qse_awk_rtx_call() function invokes an AWK function named @a name. 
+ * The qse_awk_rtx_call() function invokes an AWK function named \a name. 
  * However, it is not able to invoke an intrinsic function such as split(). 
  * The #QSE_AWK_PABLOCK option can be turned off to make illegal the BEGIN 
  * blocks, the pattern-action blocks, and the END blocks.
  *
  * The example shows typical usage of the function.
- * @code
- * rtx = qse_awk_rtx_open (awk, 0, rio, QSE_NULL);
+ * \code
+ * rtx = qse_awk_rtx_open (awk, 0, rio);
  * if (rtx)
  * {
  *     v = qse_awk_rtx_call (rtx, QSE_T("init"), QSE_NULL, 0);
@@ -1926,9 +1921,9 @@ QSE_EXPORT qse_awk_val_t* qse_awk_rtx_callfun (
  *     if (v) qse_awk_rtx_refdownval (rtx, v);
  *     qse_awk_rtx_close (rtx);
  * }
- * @endcode
+ * \endcode
  *
- * @return 0 on success, -1 on failure
+ * \return 0 on success, -1 on failure
  */
 QSE_EXPORT qse_awk_val_t* qse_awk_rtx_call (
 	qse_awk_rtx_t*    rtx,    /**< runtime context */
@@ -1952,7 +1947,7 @@ QSE_EXPORT qse_awk_val_t* qse_awk_rtx_callwithstrs (
 
 /**
  * The qse_awk_stopall() function aborts all active runtime contexts
- * associated with @a awk.
+ * associated with \a awk.
  */
 QSE_EXPORT void qse_awk_stopall (
 	qse_awk_t* awk /**< awk */
@@ -1967,7 +1962,7 @@ QSE_EXPORT int qse_awk_rtx_isstop (
 );
 
 /**
- * The qse_awk_rtx_stop() function causes an active runtime context @a rtx to 
+ * The qse_awk_rtx_stop() function causes an active runtime context \a rtx to 
  * be aborted. 
  */
 QSE_EXPORT void qse_awk_rtx_stop (
@@ -1976,7 +1971,7 @@ QSE_EXPORT void qse_awk_rtx_stop (
 
 /**
  * The qse_awk_rtx_getrio() function copies runtime I/O handlers
- * to the memory buffer pointed to by @a rio.
+ * to the memory buffer pointed to by \a rio.
  */
 QSE_EXPORT void qse_awk_rtx_getrio (
 	qse_awk_rtx_t* rtx,
@@ -1985,7 +1980,7 @@ QSE_EXPORT void qse_awk_rtx_getrio (
 
 /**
  * The qse_awk_rtx_getrio() function sets runtime I/O handlers
- * with the functions pointed to by @a rio.
+ * with the functions pointed to by \a rio.
  */
 QSE_EXPORT void qse_awk_rtx_setrio (
 	qse_awk_rtx_t*       rtx,
@@ -2037,12 +2032,12 @@ QSE_EXPORT const qse_xstr_t* qse_awk_rtx_getsubsep (
 
 /**
  * The qse_awk_rtx_getgbl() gets the value of a global variable.
- * The global variable ID @a id is one of the predefined global 
+ * The global variable ID \a id is one of the predefined global 
  * variable IDs or a value returned by qse_awk_addgbl().
  * This function never fails so long as the ID is valid. Otherwise, 
  * you may get into trouble.
  *
- * @return value pointer
+ * \return value pointer
  */
 QSE_EXPORT qse_awk_val_t* qse_awk_rtx_getgbl (
 	qse_awk_rtx_t* rtx, /**< runtime context */
@@ -2090,8 +2085,8 @@ QSE_EXPORT int qse_awk_rtx_setofilename (
 );
 
 /**
- * The qse_awk_rtx_getawk() function gets the owner of a runtime context @a rtx.
- * @return owner of a runtime context @a rtx.
+ * The qse_awk_rtx_getawk() function gets the owner of a runtime context \a rtx.
+ * \return owner of a runtime context \a rtx.
  */
 QSE_EXPORT qse_awk_t* qse_awk_rtx_getawk (
 	qse_awk_rtx_t* rtx /**< runtime context */
@@ -2122,7 +2117,7 @@ QSE_EXPORT qse_htb_t* qse_awk_rtx_getnvmap (
 /**
  * The qse_awk_rtx_geterrnum() function gets the number of the last error
  * occurred during runtime.
- * @return error number
+ * \return error number
  */
 QSE_EXPORT qse_awk_errnum_t qse_awk_rtx_geterrnum (
 	const qse_awk_rtx_t* rtx /**< runtime context */
@@ -2131,7 +2126,7 @@ QSE_EXPORT qse_awk_errnum_t qse_awk_rtx_geterrnum (
 /**
  * The qse_awk_rtx_geterrloc() function gets the location of the last error
  * occurred during runtime. The 
- * @return error location
+ * \return error location
  */
 QSE_EXPORT const qse_awk_loc_t* qse_awk_rtx_geterrloc (
 	const qse_awk_rtx_t* rtx /**< runtime context */
@@ -2140,7 +2135,7 @@ QSE_EXPORT const qse_awk_loc_t* qse_awk_rtx_geterrloc (
 /**
  * The qse_awk_rtx_geterrmsg() function gets the string describing the last 
  * error occurred during runtime.
- * @return error message
+ * \return error message
  */
 QSE_EXPORT const qse_char_t* qse_awk_rtx_geterrmsg (
 	const qse_awk_rtx_t* rtx /**< runtime context */
@@ -2148,7 +2143,7 @@ QSE_EXPORT const qse_char_t* qse_awk_rtx_geterrmsg (
 
 /**
  * The qse_awk_rtx_geterrinf() function copies error information into memory
- * pointed to by @a errinf from a runtime context @a rtx.
+ * pointed to by \a errinf from a runtime context \a rtx.
  */
 QSE_EXPORT void qse_awk_rtx_geterrinf (
 	const qse_awk_rtx_t* rtx,   /**< runtime context */
@@ -2157,9 +2152,9 @@ QSE_EXPORT void qse_awk_rtx_geterrinf (
 
 /**
  * The qse_awk_rtx_geterror() function retrieves error information from a 
- * runtime context @a rtx. The error number is stored into memory pointed
- * to by @a errnum; the error message pointer into memory pointed to by 
- * @a errmsg; the error line into memory pointed to by @a errlin.
+ * runtime context \a rtx. The error number is stored into memory pointed
+ * to by \a errnum; the error message pointer into memory pointed to by 
+ * \a errmsg; the error line into memory pointed to by \a errlin.
  */
 QSE_EXPORT void qse_awk_rtx_geterror (
 	const qse_awk_rtx_t* rtx,    /**< runtime context */
@@ -2236,7 +2231,7 @@ QSE_EXPORT qse_awk_val_t* qse_awk_rtx_makenilval (
 
 /**
  * The qse_awk_rtx_makeintval() function creates an integer value.
- * @return value on success, QSE_NULL on failure
+ * \return value on success, #QSE_NULL on failure
  */
 QSE_EXPORT qse_awk_val_t* qse_awk_rtx_makeintval (
 	qse_awk_rtx_t* rtx,
@@ -2245,7 +2240,7 @@ QSE_EXPORT qse_awk_val_t* qse_awk_rtx_makeintval (
 
 /**
  * The qse_awk_rtx_makefltval() function creates a floating-point value.
- * @return value on success, QSE_NULL on failure
+ * \return value on success, #QSE_NULL on failure
  */
 QSE_EXPORT qse_awk_val_t* qse_awk_rtx_makefltval (
 	qse_awk_rtx_t* rtx,
@@ -2254,7 +2249,7 @@ QSE_EXPORT qse_awk_val_t* qse_awk_rtx_makefltval (
 
 /**
  * The qse_awk_rtx_makestrvalwithstr() function creates a string value.
- * @return value on success, QSE_NULL on failure
+ * \return value on success, #QSE_NULL on failure
  */
 QSE_EXPORT qse_awk_val_t* qse_awk_rtx_makestrvalwithstr (
 	qse_awk_rtx_t*    rtx,
@@ -2264,7 +2259,7 @@ QSE_EXPORT qse_awk_val_t* qse_awk_rtx_makestrvalwithstr (
 /**
  * The qse_awk_rtx_makestrvalwithmbs() function creates a string value
  * from a null-terminated multibyte string.
- * @return value on success, QSE_NULL on failure
+ * \return value on success, #QSE_NULL on failure
  */
 QSE_EXPORT qse_awk_val_t* qse_awk_rtx_makestrvalwithmbs (
      qse_awk_rtx_t*     rtx,
@@ -2274,7 +2269,7 @@ QSE_EXPORT qse_awk_val_t* qse_awk_rtx_makestrvalwithmbs (
 /**
  * The qse_awk_rtx_makestrvalwithwcs() function creates a string value
  * from a null-terminated wide-character string.
- * @return value on success, QSE_NULL on failure
+ * \return value on success, #QSE_NULL on failure
  */
 QSE_EXPORT qse_awk_val_t* qse_awk_rtx_makestrvalwithwcs (
      qse_awk_rtx_t*     rtx,
@@ -2283,7 +2278,7 @@ QSE_EXPORT qse_awk_val_t* qse_awk_rtx_makestrvalwithwcs (
 
 /**
  * The qse_awk_rtx_makestrvalwithcstr() function creates a string value.
- * @return value on success, QSE_NULL on failure
+ * \return value on success, #QSE_NULL on failure
  */
 QSE_EXPORT qse_awk_val_t* qse_awk_rtx_makestrvalwithcstr (
 	qse_awk_rtx_t*    rtx,
@@ -2302,7 +2297,7 @@ QSE_EXPORT qse_awk_val_t* qse_awk_rtx_makestrvalwithwcstr (
 
 /**
  * The qse_awk_rtx_makestrval() function creates a string value.
- * @return value on success, QSE_NULL on failure
+ * \return value on success, #QSE_NULL on failure
  */
 QSE_EXPORT qse_awk_val_t* qse_awk_rtx_makestrval (
 	qse_awk_rtx_t*    rtx,
@@ -2313,7 +2308,7 @@ QSE_EXPORT qse_awk_val_t* qse_awk_rtx_makestrval (
 /**
  * The qse_awk_rtx_makestrval2() function creates a string value combining
  * two strings.
- * @return value on success, QSE_NULL on failure
+ * \return value on success, #QSE_NULL on failure
  */
 QSE_EXPORT qse_awk_val_t* qse_awk_rtx_makestrval2 (
 	qse_awk_rtx_t*    rtx,
@@ -2324,10 +2319,10 @@ QSE_EXPORT qse_awk_val_t* qse_awk_rtx_makestrval2 (
 );
 
 /**
- * The qse_awk_rtx_makenstrval() function creates a numeric string value.
- * A numeric string is a string value whose one of the header fields @b nstr
- * is 1.
- * @return value on success, QSE_NULL on failure
+ * The qse_awk_rtx_makenstrvalwithcstr() function creates a numeric string 
+ * value. A numeric string is a string value whose one of the header fields
+ * \b nstr is 1.
+ * \return value on success, #QSE_NULL on failure
  */
 QSE_EXPORT qse_awk_val_t* qse_awk_rtx_makenstrvalwithcstr (
 	qse_awk_rtx_t*    rtx,
@@ -2336,7 +2331,7 @@ QSE_EXPORT qse_awk_val_t* qse_awk_rtx_makenstrvalwithcstr (
 
 /**
  * The qse_awk_rtx_makerexval() function creates a regular expression value.
- * @return value on success, QSE_NULL on failure
+ * \return value on success, #QSE_NULL on failure
  */
 QSE_EXPORT qse_awk_val_t* qse_awk_rtx_makerexval (
 	qse_awk_rtx_t*    rtx,
@@ -2346,12 +2341,19 @@ QSE_EXPORT qse_awk_val_t* qse_awk_rtx_makerexval (
 
 /**
  * The qse_awk_rtx_makemapval() function creates an empty map value.
- * @return value on success, QSE_NULL on failure
+ * \return value on success, #QSE_NULL on failure
  */
 QSE_EXPORT qse_awk_val_t* qse_awk_rtx_makemapval (
 	qse_awk_rtx_t* rtx
 );
 
+/**
+ * The qse_awk_rtx_makemapvalwithdata() function creates a map value
+ * containing key/value pairs described in the structure array \a data.
+ * It combines qse_awk_rtx_makemapval() an qse_awk_rtx_setmapvalfld()
+ * for convenience sake.
+ * \return value on success, #QSE_NULL on failure
+ */
 QSE_EXPORT qse_awk_val_t* qse_awk_rtx_makemapvalwithdata (
 	qse_awk_rtx_t*         rtx,
 	qse_awk_val_map_data_t data[]
@@ -2359,8 +2361,8 @@ QSE_EXPORT qse_awk_val_t* qse_awk_rtx_makemapvalwithdata (
 
 /**
  * The qse_awk_rtx_setmapvalfld() function sets a field value in a map.
- * You must make sure that the type of @a map is #QSE_AWK_VAL_MAP.
- * @return value @a v on success, #QSE_NULL on failure.
+ * You must make sure that the type of \a map is #QSE_AWK_VAL_MAP.
+ * \return value \a v on success, #QSE_NULL on failure.
  */
 QSE_EXPORT qse_awk_val_t* qse_awk_rtx_setmapvalfld (
 	qse_awk_rtx_t*    rtx,
@@ -2372,10 +2374,10 @@ QSE_EXPORT qse_awk_val_t* qse_awk_rtx_setmapvalfld (
 
 /**
  * The qse_awk_rtx_setmapvalfld() function gets the field value in a map.
- * You must make sure that the type of @a map is #QSE_AWK_VAL_MAP.
+ * You must make sure that the type of \a map is #QSE_AWK_VAL_MAP.
  * If the field is not found, the function fails and sets the error number
  * to #QSE_AWK_EINVAL. The function does not fail for other reasons.
- * @return field value on success, #QSE_NULL on failure.
+ * \return field value on success, #QSE_NULL on failure.
  */
 QSE_EXPORT qse_awk_val_t* qse_awk_rtx_getmapvalfld (
 	qse_awk_rtx_t*     rtx,
@@ -2387,8 +2389,8 @@ QSE_EXPORT qse_awk_val_t* qse_awk_rtx_getmapvalfld (
 /**
  * The qse_awk_rtx_getfirstmapvalitr() returns the iterator to the
  * first pair in the map. It returns #QSE_NULL and sets the pair field of 
- * @a itr to #QSE_NULL if the map contains no pair. Otherwise, it returns
- * @a itr pointing to the first pair.
+ * \a itr to #QSE_NULL if the map contains no pair. Otherwise, it returns
+ * \a itr pointing to the first pair.
  */
 QSE_EXPORT qse_awk_val_map_itr_t* qse_awk_rtx_getfirstmapvalitr (
      qse_awk_rtx_t*         rtx,
@@ -2398,9 +2400,9 @@ QSE_EXPORT qse_awk_val_map_itr_t* qse_awk_rtx_getfirstmapvalitr (
 
 /**
  * The qse_awk_rtx_getnextmapvalitr() returns the iterator to the
- * next pair to @a itr in the map. It returns #QSE_NULL and sets the pair 
- * field of @a itr to #QSE_NULL if @a itr points to the last pair.
- * Otherwise, it returns @a itr pointing to the next pair.
+ * next pair to \a itr in the map. It returns #QSE_NULL and sets the pair 
+ * field of \a itr to #QSE_NULL if \a itr points to the last pair.
+ * Otherwise, it returns \a itr pointing to the next pair.
  */
 QSE_EXPORT qse_awk_val_map_itr_t* qse_awk_rtx_getnextmapvalitr (
      qse_awk_rtx_t*         rtx,
@@ -2411,7 +2413,7 @@ QSE_EXPORT qse_awk_val_map_itr_t* qse_awk_rtx_getnextmapvalitr (
 
 /**
  * The qse_awk_rtx_makerefval() function creates a reference value.
- * @return value on success, QSE_NULL on failure
+ * \return value on success, #QSE_NULL on failure
  */
 QSE_EXPORT qse_awk_val_t* qse_awk_rtx_makerefval (
 	qse_awk_rtx_t*  rtx,
@@ -2423,7 +2425,7 @@ QSE_EXPORT qse_awk_val_t* qse_awk_rtx_makerefval (
  * The qse_awk_rtx_isstaticval() function determines if a value is static.
  * A static value is allocated once and reused until a runtime context @ rtx 
  * is closed.
- * @return QSE_TRUE if @a val is static, QSE_FALSE if @a val is false
+ * \return QSE_TRUE if \a val is static, QSE_FALSE if \a val is false
  */
 QSE_EXPORT int qse_awk_rtx_isstaticval (
 	qse_awk_rtx_t* rtx, /**< runtime context */
@@ -2432,7 +2434,7 @@ QSE_EXPORT int qse_awk_rtx_isstaticval (
 
 /**
  * The qse_awk_rtx_refupval() function increments a reference count of a 
- * value @a val.
+ * value \a val.
  */
 QSE_EXPORT void qse_awk_rtx_refupval (
 	qse_awk_rtx_t* rtx, /**< runtime context */
@@ -2441,7 +2443,7 @@ QSE_EXPORT void qse_awk_rtx_refupval (
 
 /**
  * The qse_awk_rtx_refdownval() function decrements a reference count of
- * a value @a val. It destroys the value if it has reached the count of 0.
+ * a value \a val. It destroys the value if it has reached the count of 0.
  */
 QSE_EXPORT void qse_awk_rtx_refdownval (
 	qse_awk_rtx_t* rtx, /**< runtime context */
@@ -2450,7 +2452,7 @@ QSE_EXPORT void qse_awk_rtx_refdownval (
 
 /**
  * The qse_awk_rtx_refdownval() function decrements a reference count of
- * a value @a val. It does not destroy the value if it has reached the 
+ * a value \a val. It does not destroy the value if it has reached the 
  * count of 0.
  */
 QSE_EXPORT void qse_awk_rtx_refdownval_nofree (
@@ -2459,7 +2461,7 @@ QSE_EXPORT void qse_awk_rtx_refdownval_nofree (
 );
 
 /**
- * The qse_awk_rtx_valtobool() function converts a value @a val to a boolean
+ * The qse_awk_rtx_valtobool() function converts a value \a val to a boolean
  * value.
  */
 QSE_EXPORT int qse_awk_rtx_valtobool (
@@ -2468,7 +2470,7 @@ QSE_EXPORT int qse_awk_rtx_valtobool (
 );
 
 /**
- * The qse_awk_rtx_valtostr() function converts a value @a val to a string as 
+ * The qse_awk_rtx_valtostr() function converts a value \a val to a string as 
  * instructed in the parameter out. Before the call to the function, you 
  * should initialize a variable of the #qse_awk_rtx_valtostr_out_t type.
  *
@@ -2482,14 +2484,14 @@ QSE_EXPORT int qse_awk_rtx_valtobool (
  *
  * It can optionally be ORed with #QSE_AWK_RTX_VALTOSTR_PRINT. The option
  * causes the function to use OFMT for real number conversion. Otherwise,
- * it uses @b CONVFMT. 
+ * it uses \b CONVFMT. 
  *
  * You should initialize or free other fields before and after the call 
  * depending on the type field as shown below:
  *  
  * If you have a static buffer, use #QSE_AWK_RTX_VALTOSTR_CPLCPY.
  * the resulting string is copied to the buffer.
- * @code
+ * \code
  * qse_awk_rtx_valtostr_out_t out;
  * qse_char_t buf[100];
  * out.type = QSE_AWK_RTX_VALTOSTR_CPLCPY;
@@ -2497,13 +2499,13 @@ QSE_EXPORT int qse_awk_rtx_valtobool (
  * out.u.cplcpy.len = QSE_COUNTOF(buf);
  * if (qse_awk_rtx_valtostr (rtx, v, &out) <= -1) goto oops;
  * qse_printf (QSE_T("%.*s\n"), (int)out.u.cplcpy.len, out.u.cplcpy.ptr);
- * @endcode
+ * \endcode
  *
  * #QSE_AWK_RTX_VALTOSTR_CPL is different from #QSE_AWK_RTX_VALTOSTR_CPLCPY
  * in that it doesn't copy the string to the buffer if the type of the value
  * is #QSE_AWK_VAL_STR. It copies the resulting string to the buffer if
  * the value type is not #QSE_AWK_VAL_STR. 
- * @code
+ * \code
  * qse_awk_rtx_valtostr_out_t out;
  * qse_char_t buf[100];
  * out.type = QSE_AWK_RTX_VALTOSTR_CPL;
@@ -2511,22 +2513,22 @@ QSE_EXPORT int qse_awk_rtx_valtobool (
  * out.u.cpl.len = QSE_COUNTOF(buf);
  * if (qse_awk_rtx_valtostr (rtx, v, &out) <= -1) goto oops;
  * qse_printf (QSE_T("%.*s\n"), (int)out.u.cpl.len, out.u.cpl.ptr);
- * @endcode
+ * \endcode
  * 
  * When unsure of the size of the string after conversion, you can use
  * #QSE_AWK_RTX_VALTOSTR_CPLDUP. However, you should free the memory block
  * pointed to by the u.cpldup.ptr field after use.
- * @code
+ * \code
  * qse_awk_rtx_valtostr_out_t out;
  * out.type = QSE_AWK_RTX_VALTOSTR_CPLDUP;
  * if (qse_awk_rtx_valtostr (rtx, v, &out) <= -1) goto oops;
  * qse_printf (QSE_T("%.*s\n"), (int)out.u.cpldup.len, out.u.cpldup.ptr);
  * qse_awk_rtx_free (rtx, out.u.cpldup.ptr);
- * @endcode
+ * \endcode
  *
  * You may like to store the result in a dynamically resizable string.
  * Consider #QSE_AWK_RTX_VALTOSTR_STRP.
- * @code
+ * \code
  * qse_awk_rtx_valtostr_out_t out;
  * qse_str_t str;
  * qse_str_init (&str, qse_awk_rtx_getmmgr(rtx), 100);
@@ -2536,18 +2538,18 @@ QSE_EXPORT int qse_awk_rtx_valtobool (
  * qse_printf (QSE_T("%.*s\n"), 
  *     (int)QSE_STR_LEN(out.u.strp), QSE_STR_PTR(out.u.strp));
  * qse_str_fini (&str);
- * @endcode
+ * \endcode
  * 
  * If you want to append the converted string to an existing dynamically 
  * resizable string, #QSE_AWK_RTX_VALTOSTR_STRPCAT is the answer. The usage is
  * the same as #QSE_AWK_RTX_VALTOSTR_STRP except that you have to use the 
  * u.strpcat field instead of the u.strp field.
  *
- * In the context where @a val is determined to be of the type
+ * In the context where \a val is determined to be of the type
  * #QSE_AWK_VAL_STR, you may access its string pointer and length directly
  * instead of calling this function.
  *
- * @return 0 on success, -1 on failure
+ * \return 0 on success, -1 on failure
  */
 QSE_EXPORT int qse_awk_rtx_valtostr (
 	qse_awk_rtx_t*              rtx, /**< runtime context */
@@ -2558,18 +2560,18 @@ QSE_EXPORT int qse_awk_rtx_valtostr (
 /**
  * The qse_awk_rtx_valtostrdup() function provides a shortcut to the 
  * qse_awk_rtx_valtostr() function with the #QSE_AWK_RTX_VALTOSTR_CPLDUP type.
- * It returns the pointer to a string converted from @a val and stores its 
- * length to memory pointed to by @a len. You should free the returned
+ * It returns the pointer to a string converted from \a val and stores its 
+ * length to memory pointed to by \a len. You should free the returned
  * memory block after use. See the code snippet below for a simple usage.
  *
- * @code
+ * \code
  * ptr = qse_awk_rtx_valtostrdup (rtx, v, &len);
  * if (str == QSE_NULL) handle_error();
  * qse_printf (QSE_T("%.*s\n"), (int)len, ptr);
  * qse_awk_rtx_free (rtx, ptr);
- * @endcode
+ * \endcode
  *
- * @return character pointer to a string converted on success,
+ * \return character pointer to a string converted on success,
  *         #QSE_NULL on failure
  */
 QSE_EXPORT qse_char_t* qse_awk_rtx_valtostrdup (
@@ -2595,12 +2597,12 @@ QSE_EXPORT qse_wchar_t* qse_awk_rtx_valtowcsdup (
  * If the value is converted to a long number, it is stored in the memory
  * pointed to by l and 0 is returned. If the value is converted to a real 
  * number, it is stored in the memory pointed to by r and 1 is returned.
- * The function never fails as long as @a val points to a valid value.
+ * The function never fails as long as \a val points to a valid value.
  *
  * The code below shows how to convert a value to a number and determine
  * if it is an integer or a floating-point number.
  *
- * @code
+ * \code
  * qse_long_t l;
  * qse_flt_t r;
  * int n;
@@ -2608,9 +2610,9 @@ QSE_EXPORT qse_wchar_t* qse_awk_rtx_valtowcsdup (
  * if (n <= -1) error ();
  * else if (n == 0) print_long (l);
  * else if (n >= 1) print_real (r);
- * @endcode
+ * \endcode
  *
- * @return -1 on failure, 0 if converted to a long number, 1 if converted to 
+ * \return -1 on failure, 0 if converted to a long number, 1 if converted to 
  *         a floating-point number.
  */
 QSE_EXPORT int qse_awk_rtx_valtonum (
@@ -2636,13 +2638,13 @@ QSE_EXPORT int qse_awk_rtx_valtoflt (
  * The qse_awk_rtx_strtonum() function converts a string to a number.
  * A numeric string in the valid decimal, hexadecimal(0x), binary(0b), 
  * octal(0) notation is converted to an integer and it is stored into
- * memory pointed to by @a l; A string containng '.', 'E', or 'e' is 
+ * memory pointed to by \a l; A string containng '.', 'E', or 'e' is 
  * converted to a floating-pointer number and it is stored into memory
- * pointed to by @a r. If @a strict is 0, the function takes up to the last
- * valid character and never fails. If @a strict is non-zero, an invalid 
+ * pointed to by \a r. If \a strict is 0, the function takes up to the last
+ * valid character and never fails. If \a strict is non-zero, an invalid 
  * character causes the function to return an error.
  *
- * @return 0 if converted to an integer,
+ * \return 0 if converted to an integer,
  *         1 if converted to a floating-point number
  *         -1 on error.
  */
@@ -2666,8 +2668,8 @@ QSE_EXPORT qse_long_t qse_awk_rtx_hashval (
 
 /**
  * The qse_awk_rtx_setrefval() function changes the value
- * of a variable referenced in @a ref. 
- * @return 0 on success, -1 on failure.
+ * of a variable referenced in \a ref. 
+ * \return 0 on success, -1 on failure.
  */
 QSE_EXPORT int qse_awk_rtx_setrefval (
 	qse_awk_rtx_t*     rtx,
@@ -2686,9 +2688,9 @@ QSE_EXPORT void qse_awk_rtx_getnrflt (
 );
 
 /**
- * The qse_awk_rtx_allocmem() function allocats a memory block of @a size bytes
- * using the memory manager associated with a runtime context @a rtx. 
- * @return the pointer to a memory block on success, #QSE_NULL on failure.
+ * The qse_awk_rtx_allocmem() function allocats a memory block of \a size bytes
+ * using the memory manager associated with a runtime context \a rtx. 
+ * \return the pointer to a memory block on success, #QSE_NULL on failure.
  */
 QSE_EXPORT void* qse_awk_rtx_allocmem (
 	qse_awk_rtx_t* rtx, /**< runtime context */
@@ -2697,9 +2699,9 @@ QSE_EXPORT void* qse_awk_rtx_allocmem (
 
 /**
  * The qse_awk_rtx_reallocmem() function resizes a memory block pointed to
- * by @a ptr to @a size bytes using the memory manager associated with 
- * a runtime context @a rtx. 
- * @return the pointer to a memory block on success, #QSE_NULL on failure.
+ * by \a ptr to \a size bytes using the memory manager associated with 
+ * a runtime context \a rtx. 
+ * \return the pointer to a memory block on success, #QSE_NULL on failure.
  */
 QSE_EXPORT void* qse_awk_rtx_reallocmem (
 	qse_awk_rtx_t* rtx, /**< runtime context */
@@ -2709,8 +2711,8 @@ QSE_EXPORT void* qse_awk_rtx_reallocmem (
 
 /**
  * The qse_awk_rtx_callocmem() function allocates a memory block of 
- * the size of @a size bytes and initializes it with 0.
- * @return a pointer to a memory block on success, #QSE_NULL on failure
+ * the size of \a size bytes and initializes it with 0.
+ * \return a pointer to a memory block on success, #QSE_NULL on failure
  */
 QSE_EXPORT void* qse_awk_rtx_callocmem (
 	qse_awk_rtx_t* rtx, /**< runtime context */
@@ -2718,8 +2720,8 @@ QSE_EXPORT void* qse_awk_rtx_callocmem (
 );
 
 /**
- * The qse_awk_rtx_freemem() function frees a memory block pointed to by @a ptr
- * using the memory manager of a runtime ocntext @a rtx.
+ * The qse_awk_rtx_freemem() function frees a memory block pointed to by \a ptr
+ * using the memory manager of a runtime ocntext \a rtx.
  */
 QSE_EXPORT void qse_awk_rtx_freemem (
 	qse_awk_rtx_t* rtx, /**< runtime context */

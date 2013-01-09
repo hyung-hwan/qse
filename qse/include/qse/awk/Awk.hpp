@@ -29,7 +29,6 @@
 
 /// @file
 /// AWK Interpreter
-///
 
 /////////////////////////////////
 QSE_BEGIN_NAMESPACE(QSE)

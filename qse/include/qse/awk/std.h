@@ -24,7 +24,7 @@
 #include <qse/awk/awk.h>
 #include <qse/cmn/sio.h>
 
-/** @file
+/** \file
  * This file defines functions and data types that help you create
  * an awk interpreter with less effort. It is designed to be as close
  * to conventional awk implementations as possible.
@@ -32,16 +32,6 @@
  * The source script handler does not evaluate a file name of the "var=val"
  * form as an assignment expression. Instead, it just treats it as a
  * normal file name.
- */
-
-/**
- * @example awk09.c
- * This programs shows how to specify multiple console output files.
- *
- * @example awk11.c
- * This programs shows how to extend an I/O handler implemented by 
- * qse_awk_rtx_openstd().
- *
  */
 
 /**
@@ -128,7 +118,7 @@ QSE_EXPORT void* qse_awk_getxtnstd (
  * The qse_awk_parsestd() functions parses source script.
  * The code below shows how to parse a literal string 'BEGIN { print 10; }' 
  * and deparses it out to a buffer 'buf'.
- * @code
+ * \code
  * int n;
  * qse_awk_parsestd_t in[2];
  * qse_awk_parsestd_t out;
@@ -144,7 +134,7 @@ QSE_EXPORT void* qse_awk_getxtnstd (
  *   qse_printf (QSE_T("%s\n"), out.u.str.ptr);
  *   QSE_MMGR_FREE (out.u.str.ptr);
  * }
- * @endcode
+ * \endcode
  */
 QSE_EXPORT int qse_awk_parsestd (
 	qse_awk_t*          awk,
@@ -154,9 +144,9 @@ QSE_EXPORT int qse_awk_parsestd (
 
 /**
  * The qse_awk_rtx_openstd() function creates a standard runtime context.
- * The caller should keep the contents of @a icf and @a ocf valid throughout
- * the lifetime of the runtime context created. The @a cmgr is set to the
- * streams created with @a icf and @a ocf if it is not #QSE_NULL.
+ * The caller should keep the contents of \a icf and \a ocf valid throughout
+ * the lifetime of the runtime context created. The \a cmgr is set to the
+ * streams created with \a icf and \a ocf if it is not #QSE_NULL.
  */
 QSE_EXPORT qse_awk_rtx_t* qse_awk_rtx_openstd (
 	qse_awk_t*        awk,
@@ -178,7 +168,7 @@ QSE_EXPORT void* qse_awk_rtx_getxtnstd (
 /**
  * The qse_awk_rtx_getcmgrstd() function gets the current character 
  * manager associated with a particular I/O target indicated by the name 
- * @a ioname if #QSE_CHAR_IS_WCHAR is defined. It always returns #QSE_NULL
+ * \a ioname if #QSE_CHAR_IS_WCHAR is defined. It always returns #QSE_NULL
  * if #QSE_CHAR_IS_MCHAR is defined.
  */
 QSE_EXPORT qse_cmgr_t* qse_awk_rtx_getcmgrstd (

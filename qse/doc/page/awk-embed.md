@@ -62,22 +62,30 @@ functions like *gsub* or *index*.
 
  \includelineno awk03.c  
 
-If you want to pass arguments to the function you call with qse_awk_rtx_call(),
-you must create values with value creation functions, updates their reference
-count, and pass them to qse_awk_rtx_call(). The sample below creates 2 integer
-values with qse_awk_rtx_makeintval() and pass them to the *pow* function.
+If you want to pass arguments to the function, you must create values with 
+value creation functions, updates their reference count, and pass them to 
+qse_awk_rtx_call(). The sample below creates 2 integer values with 
+qse_awk_rtx_makeintval() and pass them to the *pow* function.  
 
  \includelineno awk04.c
 
 While qse_awk_rtx_call() looks up a function in the function table by name, 
 you can find the function in advance and use the information found when 
-calling a function. qse_awk_rtx_findfun() and qse_awk_rtx_callfun() come 
-to play a role in this situation. qse_awk_rtx_call() in the sample above 
-can be translated into 2 separate calls to qse_awk_rtx_findfun() and 
-qse_awk_rtx_callfun(). You can reduce look-up overhead via these 2 
-functions if you have to execute the same function multiple times.
+calling it. qse_awk_rtx_findfun() and qse_awk_rtx_callfun() come to play a role
+in this situation. qse_awk_rtx_call() in the sample above can be translated 
+into 2 separate calls to qse_awk_rtx_findfun() and qse_awk_rtx_callfun(). 
+You can reduce look-up overhead via these 2 functions if you are to execute
+the same function multiple times.
 
  \includelineno awk05.c
+
+Similarly, you can pass a more complex value than a number. You can compose
+a map value with qse_awk_rtx_makemapval() or qse_awk_rtx_makemapvalwithdata().
+The sample below demonstrates how to use qse_awk_rtx_makemapvalwithdata(),
+pass a created map value to qse_awk_rtx_call(), and traverse a map value
+returned with qse_awk_rtx_getfirstmapvalitr() and qse_awk_rtx_getnextmapvalitr().
+
+ \includelineno awk06.c
 
 Global Variables
 ----------------
@@ -90,6 +98,29 @@ Built-in Functions
 
 You can add built-in functions with qse_awk_addfnc().
 On the other hand, modular built-in functions reside in a shared object.
+
+Single Script over Multiple Data Streams
+----------------------------------------
+
+Customizing Language Features
+-----------------------------
+
+Creating multiple awk objects
+-----------------------------
+
+Memory Pool
+-----------
+
+Embedding in C++
+-----------------
+
+The QSE::Awk class and QSE::StdAwk classe wrap the underlying C library routines
+for better object-orientation. These two classes are defined in <qse/awk/Awk.hpp>
+and <qse/awk/StdAwk.hpp> respectively. The embedding task can be simplified despite
+slight performance overhead. The hello-world sample in C can be rewritten with 
+less numbers of lines in C++.
+
+ \includelineno awk21.cpp
 
 Changes in 0.6.0
 ----------------

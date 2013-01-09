@@ -234,7 +234,6 @@ EXTRA_DIST = \
 	page/mem.doc \
 	page/cenc.doc \
 	page/io.doc \
-	page/awk.doc \
 	page/awk-embed.md \
 	page/awk-lang.md \
 	page/sed.doc \
@@ -431,6 +430,9 @@ uninstall-am:
 	maintainer-clean-generic mostlyclean mostlyclean-generic \
 	mostlyclean-libtool pdf pdf-am ps ps-am uninstall uninstall-am
 
+
+all:
+	doxygen 
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

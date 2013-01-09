@@ -27,33 +27,6 @@
 
 /// @file
 /// Standard AWK Interpreter
-///
-/// @example awk05.cpp
-/// This program demonstrates how to use QSE::StdAwk::loop().
-///
-/// @example awk06.cpp
-/// This program demonstrates how to use QSE::StdAwk::call().
-///
-/// @example awk07.cpp
-/// This program demonstrates how to handle an indexed value.
-///
-/// @example awk08.cpp
-/// This program shows how to add intrinsic functions.
-///
-/// @example awk12.cpp
-/// This program shows how to override console methods to use 
-/// string buffers for console input and output.
-///
-/// @example awk13.cpp
-/// This program shows how to use resetRunContext(). It is similar
-/// to awk12.cpp in principle.
-///
-/// @example awk14.cpp
-/// This program shows how to define a console handler to use
-/// string buffers for console input and output. It is identical
-/// to awk13.cpp except that it relies an external console handler
-/// rather than overriding console methods.
-///
 
 /////////////////////////////////
 QSE_BEGIN_NAMESPACE(QSE)
