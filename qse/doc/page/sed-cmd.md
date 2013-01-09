@@ -1,114 +1,48 @@
-/** @page sed Stream Editor
+QSESED Commands                                                       {#sed-cmd}
+================================================================================
 
-@section sed_contents CONTENTS
-- \ref sed_intro
-- \ref sed_command
-
-@section sed_intro INTRODUCTION
-
+Overview
+--------
 A stream editor is a non-interactive text editing tool commonly used
 on Unix environment. It reads text from an input stream, stores it to
 pattern space, manipulates the pattern space by applying a set of editing
 commands, and writes the pattern space to an output stream. Typically, the
 input and output streams are a console or a file. 
 
-@b QSESED is an embeddable stream editor that supports most of 
-the conventional sed commands and implements input and output streams as a 
-callback function: 
-
-- #qse_sed_t - C type that encapsulates a stream editor
-- QSE::Sed - C++ class that wraps #qse_sed_t
-- QSE::StdSed - C++ child class of QSE::Sed that implements standard input and output streams
-
-@code
-#include <qse/sed/StdSed.hpp>
-#include <qse/cmn/main.h>
-#include <iostream>
-
-#ifdef QSE_CHAR_IS_MCHAR
-#	define xcout std::cout
-#else
-#	define xcout std::wcout
-#endif
-
-int sed_main (int argc, qse_char_t* argv[])
-{
-	if (argc <  2 || argc > 4)
-	{
-		xcout << QSE_T("USAGE: ") << argv[0] <<
-		         QSE_T(" command-string [input-file [output-file]]") << std::endl;
-		return -1;
-	}
-
-	QSE::StdSed sed;
-
-	if (sed.open () == -1)
-	{
-		xcout << QSE_T("ERR: cannot open - ") << sed.getErrorMessage() << std::endl;
-		return -1;
-	}
-
-	if (sed.compile (argv[1]) == -1)
-	{
-		xcout << QSE_T("ERR: cannot compile - ") << sed.getErrorMessage() << std::endl;
-		sed.close ();
-		return -1;
-	}
-
-	qse_char_t* infile = (argc >= 3)? argv[2]: QSE_NULL;
-	qse_char_t* outfile = (argc >= 4)? argv[3]: QSE_NULL;
-	QSE::StdSed::StdStream stream (infile, outfile);
-
-	if (sed.execute (stream) == -1)
-	{
-		xcout << QSE_T("ERR: cannot execute - ") << sed.getErrorMessage() << std::endl;
-		sed.close ();
-		return -1;
-	}
-
-	sed.close ();
-	return 0;
-}
-
-int qse_main (int argc, qse_achar_t* argv[])
-{
-	return qse_runmain (argc, argv, sed_main);
-}
-@endcode
-
-@section sed_command COMMAND
+Commands
+--------
 
 A sed command is composed of:
 
-- line selector (optional)
-- ! (optional)
-- command code
-- command arguments (optional, dependent on command code)
+ - line selector (optional)
+ - ! (optional)
+ - command code
+ - command arguments (optional, dependent on command code)
 
 A line selector selects input lines to apply a command to and has the following
 forms:
-- address - specify a single address
-- address,address - specify an address range 
-- start~step - specify a starting line and a step. 
-               #QSE_SED_STARTSTEP enables this form.
+ - address - specify a single address
+ - address,address - specify an address range 
+ - start~step - specify a starting line and a step. 
+                #QSE_SED_STARTSTEP enables this form.
 
 An @b address is a line number, a regular expression, or a dollar sign ($) 
 while a @b start and a @b step is a line number. 
 
 A regular expression for an address has the following form:
-- /rex/ - a regular expression @b rex is enclosed in slashes
-- \\CrexC - a regular expression @b rex is enclosed in @b \\C and @b C 
+ - /rex/ - a regular expression @b rex is enclosed in slashes
+ - \\CrexC - a regular expression @b rex is enclosed in @b \\C and @b C 
             where @b C can be any character.
 
 It treats the @b \\n sequence specially to match a newline character.
 
 Here are examples of line selectors:
-- 10 - match the 10th line
-- 10,20 - match lines from the 10th to the 20th.
-- /^[[:space:]]*$/ - match an empty line 
-- /^abc$/,/^def$/ - match all lines between @b abc and @b def inclusive
-- 10,$ - match the 10th line down to the last line.
-- 3~4 - match every 4th line from the 3rd line.
+ - 10 - match the 10th line
+ - 10,20 - match lines from the 10th to the 20th.
+ - /^[[:space:]]*$/ - match an empty line 
+ - /^abc$/,/^def$/ - match all lines between @b abc and @b def inclusive
+ - 10,$ - match the 10th line down to the last line.
+ - 3~4 - match every 4th line from the 3rd line.
 
 Note that an address range always selects the line matching the first address
 regardless of the second address; For example, 8,6 selects the 8th line.
@@ -289,29 +223,25 @@ Prints the last line. If #QSE_SED_QUIET is on, try <b>$p</b>.
 - <b>1!G;h;$!d</b>
 Prints input lines in the reverse order. That is, it prints the last line 
 first and the first line last.
-@code
-$ echo -e "a\nb\nc" | qsesed '1!G;h;$!d'
-c
-b
-a
-@endcode
+
+    $ echo -e "a\nb\nc" | qsesed '1!G;h;$!d'
+    c
+    b
+    a
 
 - <b>s/[[:space:]]{2,}/ /g</b>
 Compacts whitespaces if #QSE_SED_REXBOUND is on.
 
 - <b>C/d:,f3,1/</b>
 Prints the third field and the first field from a colon separated text.
-@code
-$ head -5 /etc/passwd
-root:x:0:0:root:/root:/bin/bash
-daemon:x:1:1:daemon:/usr/sbin:/bin/sh
-bin:x:2:2:bin:/bin:/bin/sh
-sys:x:3:3:sys:/dev:/bin/sh
-sync:x:4:65534:sync:/bin:/bin/sync
-$ qsesed '1,3C/d:,f3,1/;4,$d' /etc/passwd 
-0 root
-1 daemon
-2 bin
-@endcode
 
-*/
+    $ head -5 /etc/passwd
+    root:x:0:0:root:/root:/bin/bash
+    daemon:x:1:1:daemon:/usr/sbin:/bin/sh
+    bin:x:2:2:bin:/bin:/bin/sh
+    sys:x:3:3:sys:/dev:/bin/sh
+    sync:x:4:65534:sync:/bin:/bin/sync
+    $ qsesed '1,3C/d:,f3,1/;4,$d' /etc/passwd 
+    0 root
+    1 daemon
+    2 bin

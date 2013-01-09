@@ -111,6 +111,10 @@ Creating multiple awk objects
 Memory Pool
 -----------
 
+Locale
+------
+
+
 Embedding in C++
 -----------------
 
@@ -121,6 +125,31 @@ slight performance overhead. The hello-world sample in C can be rewritten with
 less numbers of lines in C++.
 
  \includelineno awk21.cpp
+
+Customizing the console I/O is not much different in C++. When using the
+QSE::StdAwk class, you can inherit the class and implement these five methods:
+
+ - int openConsole (Console& io);
+ - int closeConsole (Console& io);
+ - int flushConsole (Console& io);
+ - int nextConsole (Console& io);
+ - ssize_t readConsole (Console& io, char_t* data, size_t size);
+ - ssize_t writeConsole (Console& io, const char_t* data, size_t size);
+
+The sample below shows how to do it to use a string as the console input
+and store the console output to a string buffer.
+
+ \includelineno awk22.cpp
+
+Alternatively, you can choose to implement QSE::Awk::Console::Handler
+and call QSE::Awk::setConsoleHandler() with the implemented handler.
+This way, you do not need to inherit QSE::Awk or QSE::StdAwk.
+The sample here shows how to customize the console I/O by implementing
+QSE::Awk::Console::Handler. It also shows how to run the same script
+over two different data streams in a row.
+
+ \includelineno awk23.cpp
+
 
 Changes in 0.6.0
 ----------------

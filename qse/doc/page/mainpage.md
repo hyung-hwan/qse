@@ -23,8 +23,9 @@ See the subpages for more information.
 - @ref installation
 - @ref awk-lang
 - @ref awk-embed
+- @ref sed-cmd
+- @ref sed-embed
 - @subpage mem "Memory Management"
 - @subpage cenc "Character Encoding"
 - @subpage io  "I/O Handling"
-- @subpage sed "SED Stream Editor" 
 

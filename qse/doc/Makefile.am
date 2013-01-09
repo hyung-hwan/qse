@@ -11,7 +11,8 @@ EXTRA_DIST = \
 	page/io.doc \
 	page/awk-embed.md \
 	page/awk-lang.md \
-	page/sed.doc \
+	page/sed-cmd.md \
+	page/sed-embed.md \
 	image/qse-logo.png	
 
 all:
