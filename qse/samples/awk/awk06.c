@@ -1,23 +1,3 @@
-/*
- * $Id: awk04.c 441 2011-04-22 14:28:43Z hyunghwan.chung $
- *
-    Copyright 2006-2012 Chung, Hyung-Hwan.
-    This file is part of QSE.
-
-    QSE is free software: you can redistribute it and/or modify
-    it under the terms of the GNU Lesser General Public License as 
-    published by the Free Software Foundation, either version 3 of 
-    the License, or (at your option) any later version.
-
-    QSE is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU Lesser General Public License for more details.
-
-    You should have received a copy of the GNU Lesser General Public 
-    License along with QSE. If not, see <http://www.gnu.org/licenses/>.
- */
-
 #include <qse/awk/std.h>
 #include <qse/cmn/stdio.h>
 
@@ -32,20 +12,18 @@ int main ()
 	qse_awk_parsestd_t psin[2];
 	qse_awk_val_t* rtv = QSE_NULL;
 	qse_awk_val_t* arg = QSE_NULL;
-	int ret, i, opt;
-	struct 
+	int ret, opt;
+
+	/* this structure is passed to qse_awk_rtx_makemapvalwithdata() */
+	qse_awk_val_map_data_t md[] =
 	{
-		const qse_char_t* kptr;
-		qse_size_t klen;
-		const qse_char_t* vptr;
-	} xxx[] =
-	{
-		{ QSE_T("f0"), 2, QSE_T("linux") },
-		{ QSE_T("f1"), 2, QSE_T("openvms") },
-		{ QSE_T("f2"), 2, QSE_T("hpux") }
+		{ { QSE_T("f0"), 2 }, QSE_AWK_VAL_MAP_DATA_STR, QSE_T("linux") },
+		{ { QSE_T("f1"), 2 }, QSE_AWK_VAL_MAP_DATA_STR, QSE_T("openvms") },
+		{ { QSE_T("f2"), 2 }, QSE_AWK_VAL_MAP_DATA_STR, QSE_T("hpux") },
+		{ { QSE_NULL,    0 }, 0, QSE_NULL } /* last item */
 	};
 
-	/* create a main processor */
+	/* create a standard awk object */
 	awk = qse_awk_openstd (0);
 	if (awk == QSE_NULL)  
 	{
@@ -53,18 +31,20 @@ int main ()
 		ret = -1; goto oops;
 	}
 
+	/* get the awk's trait */
 	qse_awk_getopt (awk, QSE_AWK_TRAIT, &opt);
-	/* don't allow BEGIN, END, pattern-action blocks */
+	/* change the trait value to disallow BEGIN, END, pattern-action blocks */
 	opt &= ~QSE_AWK_PABLOCK;
-	/* can assign a map to a variable */
-	opt |= QSE_AWK_FLEXMAP;
+	/* update the trait */
 	qse_awk_setopt (awk, QSE_AWK_TRAIT, &opt);
 
+	/* prepare a script to parse */
 	psin[0].type = QSE_AWK_PARSESTD_STR;
 	psin[0].u.str.ptr = src;
 	psin[0].u.str.len = qse_strlen(src);
 	psin[1].type = QSE_AWK_PARSESTD_NULL;
 
+	/* parse the script */
 	ret = qse_awk_parsestd (awk, psin, QSE_NULL);
 	if (ret == -1)
 	{
@@ -73,11 +53,11 @@ int main ()
 		goto oops;
 	}
 
-	/* create a runtime context */
+	/* create a standard runtime context */
 	rtx = qse_awk_rtx_openstd (
 		awk, 
 		0,
-		QSE_T("awk10"),
+		QSE_T("awk06"),
 		QSE_NULL, /* stdin */
 		QSE_NULL, /* stdout */
 		QSE_NULL  /* default cmgr */
@@ -90,8 +70,8 @@ int main ()
 		ret = -1; goto oops;
 	}
 	
-	/* prepare a argument to be a map */
-	arg = qse_awk_rtx_makemapval (rtx);
+	/* create a map value to pass as an argument */
+	arg = qse_awk_rtx_makemapvalwithdata (rtx, md);
 	if (arg == QSE_NULL)
 	{
 		qse_fprintf (QSE_STDERR, QSE_T("error: %s\n"), 
@@ -99,31 +79,8 @@ int main ()
 		ret = -1; goto oops;
 	}
 	qse_awk_rtx_refupval (rtx, arg);
-
-	/* insert some key/value pairs into the map */
-	for (i = 0; i < QSE_COUNTOF(xxx); i++)
-	{
-		qse_awk_val_t* v, * fv;
-
-		fv = qse_awk_rtx_makestrvalwithstr (rtx, xxx[i].vptr);
-		if (fv == QSE_NULL)
-		{
-			qse_fprintf (QSE_STDERR, QSE_T("error: %s\n"), 
-				qse_awk_rtx_geterrmsg(rtx));
-			ret = -1; goto oops;
-		}
-		qse_awk_rtx_refupval (rtx, fv);
-		v = qse_awk_rtx_setmapvalfld (rtx, arg, xxx[i].kptr, xxx[i].klen, fv);
-		qse_awk_rtx_refdownval (rtx, fv);
-		if (v == QSE_NULL)
-		{
-			qse_fprintf (QSE_STDERR, QSE_T("error: %s\n"), 
-				qse_awk_rtx_geterrmsg(rtx));
-			ret = -1; goto oops;
-		}
-	}
 	
-	/* invoke the dump function */
+	/* execute the dump function in the awk script */
 	rtv = qse_awk_rtx_call (rtx, QSE_T("dump"), &arg, 1);
 	if (rtv == QSE_NULL)
 	{
@@ -132,17 +89,21 @@ int main ()
 		ret = -1; goto oops;
 	}
 
-	/* print the return value */
 	if (rtv->type == QSE_AWK_VAL_MAP)
 	{
+		/* if a returned value is a map, 
+		 * traverse the map and print the key/value pairs. */
+
 		qse_awk_val_map_itr_t itr;
 		qse_awk_val_map_itr_t* iptr;
 
+		/* get the iterator to the first key/value pair */
 		iptr = qse_awk_rtx_getfirstmapvalitr (rtx, rtv, &itr);
 		while (iptr)
 		{
 			qse_xstr_t str;
 
+			/* #QSE_AWK_VAL_MAP_ITR_VAL returns the value part */
 			str.ptr = qse_awk_rtx_valtostrdup (
 				rtx, QSE_AWK_VAL_MAP_ITR_VAL(iptr), &str.len);
 			if (str.ptr == QSE_NULL)
@@ -152,6 +113,7 @@ int main ()
 				ret = -1; goto oops;
 			}
 	
+			/* #QSE_AWK_VAL_MAP_ITR_KEY returns the key part */
 			qse_printf (QSE_T("ret [%.*s]=[%.*s]\n"), 
 				(int)QSE_AWK_VAL_MAP_ITR_KEY(iptr)->len, 
 				QSE_AWK_VAL_MAP_ITR_KEY(iptr)->ptr,
@@ -159,11 +121,14 @@ int main ()
 			);
 			qse_awk_rtx_freemem (rtx, str.ptr);
 			
+			/* get the iterator to the next key/value pair */
 			iptr = qse_awk_rtx_getnextmapvalitr (rtx, rtv, &itr);
 		}
 	}
 	else
 	{
+		/* if it is a plain value, convert it to a string
+		 * and print it */
 		qse_xstr_t str;
 
 		str.ptr = qse_awk_rtx_valtostrdup (rtx, rtv, &str.len);
@@ -187,7 +152,9 @@ oops:
 
 	/* destroy a runtime context */
 	if (rtx) qse_awk_rtx_close (rtx);
+
 	/* destroy the processor */
 	if (awk) qse_awk_close (awk);
+
 	return ret;
 }

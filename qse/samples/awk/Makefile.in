@@ -35,10 +35,10 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 bin_PROGRAMS = awk01$(EXEEXT) awk02$(EXEEXT) awk03$(EXEEXT) \
-	awk04$(EXEEXT) awk05$(EXEEXT) awk09$(EXEEXT) awk10$(EXEEXT) \
+	awk04$(EXEEXT) awk05$(EXEEXT) awk06$(EXEEXT) awk09$(EXEEXT) \
 	awk11$(EXEEXT) awk15$(EXEEXT) $(am__EXEEXT_1)
 @WCHAR_TRUE@@WIN32_TRUE@am__append_1 = $(UNICOWS_LIBS)
-@ENABLE_CXX_TRUE@am__append_2 = awk21 awk22 awk23 awk24 awk25 awk26 awk27
+@ENABLE_CXX_TRUE@am__append_2 = awk21 awk22 awk23 awk24 awk25 awk26 awk27 awk28
 subdir = samples/awk
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -56,7 +56,7 @@ CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 @ENABLE_CXX_TRUE@am__EXEEXT_1 = awk21$(EXEEXT) awk22$(EXEEXT) \
 @ENABLE_CXX_TRUE@	awk23$(EXEEXT) awk24$(EXEEXT) awk25$(EXEEXT) \
-@ENABLE_CXX_TRUE@	awk26$(EXEEXT) awk27$(EXEEXT)
+@ENABLE_CXX_TRUE@	awk26$(EXEEXT) awk27$(EXEEXT) awk28$(EXEEXT)
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
 am_awk01_OBJECTS = awk01.$(OBJEXT)
@@ -81,14 +81,14 @@ am_awk05_OBJECTS = awk05.$(OBJEXT)
 awk05_OBJECTS = $(am_awk05_OBJECTS)
 awk05_LDADD = $(LDADD)
 awk05_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_2)
+am_awk06_OBJECTS = awk06.$(OBJEXT)
+awk06_OBJECTS = $(am_awk06_OBJECTS)
+awk06_LDADD = $(LDADD)
+awk06_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_2)
 am_awk09_OBJECTS = awk09.$(OBJEXT)
 awk09_OBJECTS = $(am_awk09_OBJECTS)
 awk09_LDADD = $(LDADD)
 awk09_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_2)
-am_awk10_OBJECTS = awk10.$(OBJEXT)
-awk10_OBJECTS = $(am_awk10_OBJECTS)
-awk10_LDADD = $(LDADD)
-awk10_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_2)
 am_awk11_OBJECTS = awk11.$(OBJEXT)
 awk11_OBJECTS = $(am_awk11_OBJECTS)
 awk11_LDADD = $(LDADD)
@@ -133,6 +133,11 @@ am__awk27_SOURCES_DIST = awk27.cpp
 awk27_OBJECTS = $(am_awk27_OBJECTS)
 @ENABLE_CXX_TRUE@awk27_DEPENDENCIES = $(am__DEPENDENCIES_1) \
 @ENABLE_CXX_TRUE@	$(am__DEPENDENCIES_3)
+am__awk28_SOURCES_DIST = awk27.cpp
+@ENABLE_CXX_TRUE@am_awk28_OBJECTS = awk27.$(OBJEXT)
+awk28_OBJECTS = $(am_awk28_OBJECTS)
+@ENABLE_CXX_TRUE@awk28_DEPENDENCIES = $(am__DEPENDENCIES_1) \
+@ENABLE_CXX_TRUE@	$(am__DEPENDENCIES_3)
 DEFAULT_INCLUDES = 
 depcomp = $(SHELL) $(top_srcdir)/ac/depcomp
 am__depfiles_maybe = depfiles
@@ -156,18 +161,18 @@ CXXLINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
 SOURCES = $(awk01_SOURCES) $(awk02_SOURCES) $(awk03_SOURCES) \
-	$(awk04_SOURCES) $(awk05_SOURCES) $(awk09_SOURCES) \
-	$(awk10_SOURCES) $(awk11_SOURCES) $(awk15_SOURCES) \
+	$(awk04_SOURCES) $(awk05_SOURCES) $(awk06_SOURCES) \
+	$(awk09_SOURCES) $(awk11_SOURCES) $(awk15_SOURCES) \
 	$(awk21_SOURCES) $(awk22_SOURCES) $(awk23_SOURCES) \
 	$(awk24_SOURCES) $(awk25_SOURCES) $(awk26_SOURCES) \
-	$(awk27_SOURCES)
+	$(awk27_SOURCES) $(awk28_SOURCES)
 DIST_SOURCES = $(awk01_SOURCES) $(awk02_SOURCES) $(awk03_SOURCES) \
-	$(awk04_SOURCES) $(awk05_SOURCES) $(awk09_SOURCES) \
-	$(awk10_SOURCES) $(awk11_SOURCES) $(awk15_SOURCES) \
+	$(awk04_SOURCES) $(awk05_SOURCES) $(awk06_SOURCES) \
+	$(awk09_SOURCES) $(awk11_SOURCES) $(awk15_SOURCES) \
 	$(am__awk21_SOURCES_DIST) $(am__awk22_SOURCES_DIST) \
 	$(am__awk23_SOURCES_DIST) $(am__awk24_SOURCES_DIST) \
 	$(am__awk25_SOURCES_DIST) $(am__awk26_SOURCES_DIST) \
-	$(am__awk27_SOURCES_DIST)
+	$(am__awk27_SOURCES_DIST) $(am__awk28_SOURCES_DIST)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -354,8 +359,8 @@ awk02_SOURCES = awk02.c
 awk03_SOURCES = awk03.c
 awk04_SOURCES = awk04.c
 awk05_SOURCES = awk05.c
+awk06_SOURCES = awk06.c
 awk09_SOURCES = awk09.c
-awk10_SOURCES = awk10.c
 awk11_SOURCES = awk11.c
 awk15_SOURCES = awk15.c
 @ENABLE_CXX_TRUE@CXXLIB = -lqseawkxx -lqsecmnxx
@@ -366,6 +371,7 @@ awk15_SOURCES = awk15.c
 @ENABLE_CXX_TRUE@awk25_SOURCES = awk25.cpp
 @ENABLE_CXX_TRUE@awk26_SOURCES = awk26.cpp
 @ENABLE_CXX_TRUE@awk27_SOURCES = awk27.cpp
+@ENABLE_CXX_TRUE@awk28_SOURCES = awk27.cpp
 @ENABLE_CXX_TRUE@awk21_LDADD = $(CXXLIB) $(LDADD)
 @ENABLE_CXX_TRUE@awk22_LDADD = $(CXXLIB) $(LDADD)
 @ENABLE_CXX_TRUE@awk23_LDADD = $(CXXLIB) $(LDADD)
@@ -373,6 +379,7 @@ awk15_SOURCES = awk15.c
 @ENABLE_CXX_TRUE@awk25_LDADD = $(CXXLIB) $(LDADD)
 @ENABLE_CXX_TRUE@awk26_LDADD = $(CXXLIB) $(LDADD)
 @ENABLE_CXX_TRUE@awk27_LDADD = $(CXXLIB) $(LDADD)
+@ENABLE_CXX_TRUE@awk28_LDADD = $(CXXLIB) $(LDADD)
 all: all-am
 
 .SUFFIXES:
@@ -465,12 +472,12 @@ awk04$(EXEEXT): $(awk04_OBJECTS) $(awk04_DEPENDENCIES) $(EXTRA_awk04_DEPENDENCIE
 awk05$(EXEEXT): $(awk05_OBJECTS) $(awk05_DEPENDENCIES) $(EXTRA_awk05_DEPENDENCIES) 
 	@rm -f awk05$(EXEEXT)
 	$(LINK) $(awk05_OBJECTS) $(awk05_LDADD) $(LIBS)
+awk06$(EXEEXT): $(awk06_OBJECTS) $(awk06_DEPENDENCIES) $(EXTRA_awk06_DEPENDENCIES) 
+	@rm -f awk06$(EXEEXT)
+	$(LINK) $(awk06_OBJECTS) $(awk06_LDADD) $(LIBS)
 awk09$(EXEEXT): $(awk09_OBJECTS) $(awk09_DEPENDENCIES) $(EXTRA_awk09_DEPENDENCIES) 
 	@rm -f awk09$(EXEEXT)
 	$(LINK) $(awk09_OBJECTS) $(awk09_LDADD) $(LIBS)
-awk10$(EXEEXT): $(awk10_OBJECTS) $(awk10_DEPENDENCIES) $(EXTRA_awk10_DEPENDENCIES) 
-	@rm -f awk10$(EXEEXT)
-	$(LINK) $(awk10_OBJECTS) $(awk10_LDADD) $(LIBS)
 awk11$(EXEEXT): $(awk11_OBJECTS) $(awk11_DEPENDENCIES) $(EXTRA_awk11_DEPENDENCIES) 
 	@rm -f awk11$(EXEEXT)
 	$(LINK) $(awk11_OBJECTS) $(awk11_LDADD) $(LIBS)
@@ -498,6 +505,9 @@ awk26$(EXEEXT): $(awk26_OBJECTS) $(awk26_DEPENDENCIES) $(EXTRA_awk26_DEPENDENCIE
 awk27$(EXEEXT): $(awk27_OBJECTS) $(awk27_DEPENDENCIES) $(EXTRA_awk27_DEPENDENCIES) 
 	@rm -f awk27$(EXEEXT)
 	$(CXXLINK) $(awk27_OBJECTS) $(awk27_LDADD) $(LIBS)
+awk28$(EXEEXT): $(awk28_OBJECTS) $(awk28_DEPENDENCIES) $(EXTRA_awk28_DEPENDENCIES) 
+	@rm -f awk28$(EXEEXT)
+	$(CXXLINK) $(awk28_OBJECTS) $(awk28_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -510,8 +520,8 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/awk03.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/awk04.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/awk05.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/awk06.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/awk09.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/awk10.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/awk11.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/awk15.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/awk21.Po@am__quote@
