@@ -17,13 +17,13 @@ over its corresponding core layer name.
 
 Embedding QSEAWK involves the following steps in the simplest form:
 
- - open a new awk object
+ - create a new awk object
  - parse in a source script
- - open a new runtime context
+ - create a new runtime context
  - execute pattern-action blocks or call a function
  - decrement the reference count of the return value
- - close the runtime context
- - close the awk object
+ - destroy the runtime context
+ - destroy the awk object
 
 The sample below follows these steps using as many standard layer functions as
 possible for convenience sake. It simply prints *hello, world* to the console.

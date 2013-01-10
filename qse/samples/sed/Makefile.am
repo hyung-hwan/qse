@@ -15,20 +15,20 @@ LDADD += $(UNICOWS_LIBS)
 endif
 endif
 
-bin_PROGRAMS = sed01
+bin_PROGRAMS = sed01 
 
-sed01_SOURCES = sed01.c
+sed01_SOURCES = sed01.c 
 sed01_LDADD = $(LDADD)
 
 if ENABLE_CXX
 
 CXXLIB = -lqsesedxx -lqsecmnxx
-bin_PROGRAMS += sed02 sed03 
+bin_PROGRAMS += sed21 sed22
 
-sed02_SOURCES = sed02.cpp
-sed02_LDADD = $(CXXLIB) $(LDADD)
+sed21_SOURCES = sed21.cpp
+sed21_LDADD = $(CXXLIB) $(LDADD)
 
-sed03_SOURCES = sed03.cpp
-sed03_LDADD = $(CXXLIB) $(LDADD)
+sed22_SOURCES = sed22.cpp
+sed22_LDADD = $(CXXLIB) $(LDADD)
 
 endif
