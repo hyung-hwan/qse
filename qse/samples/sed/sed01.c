@@ -1,23 +1,3 @@
-/*
- * $Id$
- *
-    Copyright 2006-2012 Chung, Hyung-Hwan.
-    This file is part of QSE.
-
-    QSE is free software: you can redistribute it and/or modify
-    it under the terms of the GNU Lesser General Public License as 
-    published by the Free Software Foundation, either version 3 of 
-    the License, or (at your option) any later version.
-
-    QSE is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU Lesser General Public License for more details.
-
-    You should have received a copy of the GNU Lesser General Public 
-    License along with QSE. If not, see <http://www.gnu.org/licenses/>.
- */
-
 #include <qse/sed/std.h>
 #include <qse/cmn/main.h>
 #include <qse/cmn/mbwc.h>
@@ -75,7 +55,7 @@ int qse_main (int argc, qse_achar_t* argv[])
 	UINT codepage = GetConsoleOutputCP();	
 	if (codepage == CP_UTF8)
 	{
-		/*SetConsoleOUtputCP (CP_UTF8);*/
+		/*SetConsoleOutputCP (CP_UTF8);*/
 		qse_setdflcmgrbyid (QSE_CMGR_UTF8);
 	}
 	else

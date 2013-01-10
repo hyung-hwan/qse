@@ -413,21 +413,57 @@ public:
 	public:
 		friend class Awk;
 
+		/// Console mode enumerators
 		enum Mode
 		{
-			READ = QSE_AWK_RIO_CONSOLE_READ,
-			WRITE = QSE_AWK_RIO_CONSOLE_WRITE
+			READ = QSE_AWK_RIO_CONSOLE_READ,  ///< open for input
+			WRITE = QSE_AWK_RIO_CONSOLE_WRITE ///< open for output
 		};
 
+		/// 
+		/// The Handler class is an abstract class that can be
+		/// implemented for customized I/O handling.
 		class QSE_EXPORT Handler 
 		{
 		public:
-			virtual int     open  (Console& io) = 0;
-			virtual int     close (Console& io) = 0;
+			/// The open() function is called before the initial
+			/// access to the console for input and output.
+			/// It must return 0 for success and -1 for failure.
+			/// Upon successful opening, it can store information
+			/// required using setHandle() and setUflags().
+			/// The information set here is available in subsequent
+			/// calls to other methods and are accessible with
+			/// getHandle() and getUflags().
+			virtual int open  (Console& io) = 0;
+
+			/// The close() function is called when the console
+			/// is not needed any more. It must return 0 for success 
+			/// and -1 for failure. 
+			virtual int close (Console& io) = 0;
+
+			/// The read() function is called when the console
+			/// is read for input. It must fill the buffer \a buf with
+			/// data not more than \a len characters and return the
+			/// number of characters filled into the buufer. It can
+			/// return 0 to indicate EOF and -1 for failure.
 			virtual ssize_t read  (Console& io, char_t* buf, size_t len) = 0;
+
+			/// The write() function is called when the console
+			/// is written for output. It can write upto \a len characters
+			/// available in the buffer \a buf and return the number of
+			/// characters written. It can return 0 to indicate EOF and -1 
+			/// for failure.
 			virtual ssize_t write (Console& io, const char_t* buf, size_t len) = 0;
-			virtual int     flush (Console& io) = 0;
-			virtual int     next  (Console& io) = 0;
+
+			/// You may choose to buffer the data passed to the write() 
+			/// function and perform actual writing when flush() is called. 
+			/// It must return 0 for success and -1 for failure.
+			virtual int flush (Console& io) = 0;
+
+			/// The next() function is called when \b nextfile or 
+			/// \b nextofile is executed. It must return 0 for success 
+			/// and -1 for failure.
+			virtual int next  (Console& io) = 0;
 		};
 
 	protected:
@@ -435,7 +471,10 @@ public:
 		~Console ();
 
 	public:
+		/// The getMode() function returns if the console is
+		/// opened for reading or writing.
 		Mode getMode () const;
+
 		int setFileName (const char_t* name);
 		int setFNR (long_t fnr);
 
