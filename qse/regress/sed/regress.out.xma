@@ -102,7 +102,7 @@ if [ -n "$FROMINIT" ];then
 	cp -af /image/* /ramdisk/cdrom/
 fi
 --------------------------------------------------------------------------------
-[CMD]  qsesed -m 500000 -w -f s008.sed s008.dat </dev/stdin 2>&1 
+[CMD]  qsesed -m 500000 -b -f s008.sed s008.dat </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 
 # copy binaries to ramdisk
