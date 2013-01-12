@@ -700,7 +700,8 @@ static int open_parsestd (qse_awk_t* awk, xtn_t* xtn, qse_size_t index)
 				}
 
 			}
-			if (psin->cmgr) qse_sio_setcmgr (xtn->s.in.u.file.sio, psin->cmgr);
+			if (psin->u.file.cmgr) 
+				qse_sio_setcmgr (xtn->s.in.u.file.sio, psin->u.file.cmgr);
 			return 0;
 
 		case QSE_AWK_PARSESTD_STR:
@@ -975,8 +976,8 @@ static qse_ssize_t sf_out (
 						if (xtn->s.out.u.file.sio == QSE_NULL) return -1;
 					}
 
-					if (xtn->s.out.x->cmgr)
-						qse_sio_setcmgr (xtn->s.out.u.file.sio, xtn->s.out.x->cmgr);
+					if (xtn->s.out.x->u.file.cmgr)
+						qse_sio_setcmgr (xtn->s.out.u.file.sio, xtn->s.out.x->u.file.cmgr);
 					return 1;
 
 				case QSE_AWK_PARSESTD_STR:

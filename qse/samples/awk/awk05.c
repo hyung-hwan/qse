@@ -17,7 +17,6 @@ static int awk_main (int argc, qse_char_t* argv[])
 	qse_awk_val_t* rtv = QSE_NULL;
 	qse_awk_val_t* arg[2] = { QSE_NULL, QSE_NULL };
 	int ret, i, opt;
-	qse_awk_fun_t* fun;
 
 	/* create an awk object */
 	awk = qse_awk_openstd (0);
@@ -53,7 +52,7 @@ static int awk_main (int argc, qse_char_t* argv[])
 	rtx = qse_awk_rtx_openstd (
 		awk, 
 		0,
-		QSE_T("awk05"), 
+		QSE_T("awk04"), 
 		QSE_NULL, /* stdin */
 		QSE_NULL, /* stdout */
 		QSE_NULL  /* default cmgr */
@@ -85,17 +84,8 @@ static int awk_main (int argc, qse_char_t* argv[])
 	}
 	qse_awk_rtx_refupval (rtx, arg[1]);
 
-	/* find the pow function */
-	fun = qse_awk_rtx_findfun (rtx, QSE_T("pow"));
-	if (fun == QSE_NULL)
-	{
-		qse_fprintf (QSE_STDERR, QSE_T("error: %s\n"), 
-			qse_awk_rtx_geterrmsg(rtx));
-		ret = -1; goto oops;
-	}
-
-	/* call the function found */
-	rtv = qse_awk_rtx_callfun (rtx, fun, arg, 2);
+	/* call the pow function */
+	rtv = qse_awk_rtx_call (rtx, QSE_T("pow"), arg, 2);
 	if (rtv == QSE_NULL)
 	{
 		qse_fprintf (QSE_STDERR, QSE_T("error: %s\n"), 

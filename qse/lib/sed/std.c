@@ -123,8 +123,7 @@ static int verify_iostd_in  (qse_sed_t* sed, qse_sed_iostd_t in[])
 
 	for (i = 0; in[i].type != QSE_SED_IOSTD_NULL; i++)
 	{
-		if (in[i].type != QSE_SED_IOSTD_SIO &&
-		    in[i].type != QSE_SED_IOSTD_FILE &&
+		if (in[i].type != QSE_SED_IOSTD_FILE &&
 		    in[i].type != QSE_SED_IOSTD_STR)
 		{
 			qse_sed_seterrnum (sed, QSE_SED_EINVAL, QSE_NULL);
@@ -183,10 +182,6 @@ static void close_main_stream (
 {
 	switch (io->type)
 	{
-		case QSE_SED_IOSTD_SIO:
-			/* nothing to do */
-			break;
-
 		case QSE_SED_IOSTD_FILE:
 			qse_sio_close (arg->handle);
 			break;
@@ -213,10 +208,6 @@ static int open_input_stream (
 	QSE_ASSERT (io != QSE_NULL);
 	switch (io->type)
 	{
-		case QSE_SED_IOSTD_SIO:
-			arg->handle = io->u.sio;
-			break;
-
 		case QSE_SED_IOSTD_FILE:
 		{
 			qse_sio_t* sio;
@@ -281,10 +272,6 @@ static int open_output_stream (qse_sed_t* sed, qse_sed_io_arg_t* arg, qse_sed_io
 	QSE_ASSERT (io != QSE_NULL);
 	switch (io->type)
 	{
-		case QSE_SED_IOSTD_SIO:
-			arg->handle = io->u.sio;
-			break;
-
 		case QSE_SED_IOSTD_FILE:
 		{
 			qse_sio_t* sio;
@@ -773,8 +760,7 @@ int qse_sed_execstd (
 
 	if (out)
 	{
-		if (out->type != QSE_SED_IOSTD_SIO &&
-		    out->type != QSE_SED_IOSTD_FILE &&
+		if (out->type != QSE_SED_IOSTD_FILE &&
 		    out->type != QSE_SED_IOSTD_STR)
 		{
 			qse_sed_seterrnum (sed, QSE_SED_EINVAL, QSE_NULL);

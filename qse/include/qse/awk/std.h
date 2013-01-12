@@ -35,15 +35,14 @@
  */
 
 /**
- * The qse_awk_parsestd_type_t type defines the types of source I/O.
+ * The qse_awk_parsestd_type_t type defines standard source I/O types.
  */
 enum qse_awk_parsestd_type_t
 {
 	QSE_AWK_PARSESTD_NULL  = 0, /**< pseudo-value to indicate no script */
-	QSE_AWK_PARSESTD_FILE  = 1, /**< script file */
+	QSE_AWK_PARSESTD_FILE  = 1, /**< file */
 	QSE_AWK_PARSESTD_STR   = 2  /**< length-bounded string */
 };
-
 typedef enum qse_awk_parsestd_type_t qse_awk_parsestd_type_t;
 
 /**
@@ -59,6 +58,10 @@ struct qse_awk_parsestd_t
 		{
 			/** file path to open. #QSE_NULL or '-' for stdin/stdout. */
 			const qse_char_t*  path; 
+
+			/** a stream created with the file path is set with this
+			 * cmgr if it is not #QSE_NULL. */
+			qse_cmgr_t*  cmgr; 
 		} file;
 
 		/** 
@@ -73,10 +76,6 @@ struct qse_awk_parsestd_t
 		 */
 		qse_xstr_t str;
 	} u;
-
-	/* the streams created with the file path is set with this
-	 * cmgr if it is not #QSE_NULL. */
-	qse_cmgr_t*  cmgr; 
 };
 
 typedef struct qse_awk_parsestd_t qse_awk_parsestd_t;
@@ -106,9 +105,9 @@ QSE_EXPORT qse_awk_t* qse_awk_openstdwithmmgr (
 );
 
 /**
- * The qse_awk_getxtnstd() gets the pointer to extension space. 
- * Note that you must not call qse_awk_getxtn() for an awk object
- * created with qse_awk_openstd() and qse_awk_openstdwithmmgr().
+ * The qse_awk_getxtnstd() gets the pointer to extension area created with 
+ * qse_awk_openstd() or qse_awk_openstdwithmmgr(). You must not call 
+ * qse_awk_getxtn() for sunch an object.
  */
 QSE_EXPORT void* qse_awk_getxtnstd (
 	qse_awk_t* awk
@@ -158,7 +157,8 @@ QSE_EXPORT qse_awk_rtx_t* qse_awk_rtx_openstd (
 );
 
 /**
- * The qse_awk_rtx_getxtnstd() function gets the pointer to extension space.
+ * The qse_awk_rtx_getxtnstd() function gets the pointer to extension area
+ * created with qse_awk_rtx_openstd().
  */
 QSE_EXPORT void* qse_awk_rtx_getxtnstd (
 	qse_awk_rtx_t* rtx

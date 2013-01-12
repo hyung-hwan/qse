@@ -23,6 +23,13 @@ and optionally an input file name and an output file name.
 
  \includelineno sed01.c
 
+You can call qse_sed_compstdfile() instead of qse_sed_compstdstr() to compile
+sed commands stored in a file. You can use qse_sed_compstd() or qse_sed_comp()
+for more flexibility. 
+
+Customize Console
+-----------------
+
 Accessing Pattern Space
 -----------------------
 

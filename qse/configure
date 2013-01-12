@@ -624,6 +624,8 @@ LTLIBOBJS
 LIBOBJS
 QSE_PROJECT_URL
 QSE_PROJECT_AUTHOR
+QSE_SIZEOF_OFF64_T
+QSE_SIZEOF_OFF_T
 QSE_SIZEOF_LONG_DOUBLE
 QSE_SIZEOF_DOUBLE
 QSE_SIZEOF_FLOAT
@@ -1471,8 +1473,8 @@ Optional Features:
                           optimize for fast installation [default=yes]
   --disable-libtool-lock  avoid locking (might break parallel builds)
   --enable-ltdl-install   install libltdl
-  --enable-wchar          use wchar_t a default charater type when enabled
-                          (default. yes)
+  --enable-wchar          Use the wide character type as the default charater
+                          type when enabled (default. yes)
   --enable-bundled-unicode
                           use thn bundled unicode routines (default. no)
   --enable-xcmgrs         include more built-in cmgrs like cp949 and cp950
@@ -20742,6 +20744,10 @@ QSE_SIZEOF_FLOAT=$ac_cv_sizeof_float
 QSE_SIZEOF_DOUBLE=$ac_cv_sizeof_double
 
 QSE_SIZEOF_LONG_DOUBLE=$ac_cv_sizeof_long_double
+
+QSE_SIZEOF_OFF_T=$ac_cv_sizeof_off_t
+
+QSE_SIZEOF_OFF64_T=$ac_cv_sizeof_off64_t
 
 
 QSE_PROJECT_AUTHOR="${PACKAGE_BUGREPORT}"

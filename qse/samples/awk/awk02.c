@@ -1,6 +1,8 @@
 #include <qse/awk/std.h>
 #include <qse/cmn/str.h>
+#include <qse/cmn/main.h>
 #include <qse/cmn/stdio.h>
+#include "awk00.h"
 
 /* i'll print records with the second field grater than 4. 
  * at the end, we'll print the number of records seen so far */
@@ -73,8 +75,7 @@ static qse_ssize_t handle_console (
 	return -1;
 }
 
-
-int main ()
+static int awk_main (int argc, qse_char_t* argv[])
 {
 	qse_awk_t* awk = QSE_NULL;
 	qse_awk_rtx_t* rtx = QSE_NULL;
@@ -150,4 +151,11 @@ oops:
 
 	qse_printf (QSE_T("Console Output:\n================\n%.*s\n"), (int)conoutpos, conout);
 	return ret;
+}
+
+int qse_main (int argc, qse_achar_t* argv[])
+{
+	extern void init_awk_sample_locale (void);
+	init_awk_sample_locale ();
+	return qse_runmain (argc, argv, awk_main);
 }

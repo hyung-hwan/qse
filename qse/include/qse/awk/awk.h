@@ -1440,10 +1440,18 @@ QSE_EXPORT int qse_awk_close (
 	qse_awk_t* awk /**< awk */
 );
 
+/**
+ * The qse_awk_getmmgr() function gets the memory manager used in
+ * qse_awk_open().
+ */
 QSE_EXPORT qse_mmgr_t* qse_awk_getmmgr (
 	qse_awk_t* awk
 ); 
 
+/** 
+ * The qse_awk_getxtn() function gets the poniter to the beginning
+ * of the extension area created with qse_awk_open ().
+ */
 QSE_EXPORT void* qse_awk_getxtn (
 	qse_awk_t* awk
 );
@@ -2101,7 +2109,8 @@ QSE_EXPORT qse_mmgr_t* qse_awk_rtx_getmmgr (
 );
 
 /**
- * The qse_awk_rtx_getxtn() function gets the pointer to the extension block.
+ * The qse_awk_rtx_getxtn() function gets the pointer to the extension area
+ * created with qse_awk_rtx_open().
  */
 QSE_EXPORT void* qse_awk_rtx_getxtn (
 	qse_awk_rtx_t* rtx /**< runtime context */
