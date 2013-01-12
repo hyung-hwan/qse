@@ -34,6 +34,26 @@ Separation of the awk object and the runtime context was devised to deal with
 such cases as you want to reuse the same script over different data streams.
 More complex samples concerning this will be shown later.
 
+Locale
+------
+
+While QSEAWK can use a wide character type as the default character type,
+the hosting program still has to initialize the locale whenever necessary.
+All the samples to be shown from here down will call a common function 
+init_awk_sample_locale(), use the qse_main() macro as the main function,
+and call qse_runmain() for cross-platform and cross-character-set support.
+
+Here is the function prototype.
+
+ \includelineno awk00.h
+
+Here goes the actual function.
+
+ \includelineno awk00.c
+
+Note that these two files do not constitute QSEAWK and are used for samples
+here only.
+
 Customizing Console I/O
 -----------------------
 
@@ -49,6 +69,28 @@ and pipe handler by qse_awk_rtx_openstd().
 
  \includelineno awk02.c
 
+Extention Area
+--------------
+
+When creating an awk object or a runtime context object, you can ask
+a private extension area to be allocated with the main object. You can 
+use this extension area to store data associated with the object.
+You can specify the size of the extension area when calling qse_awk_open(),
+qse_awk_rtx_open(), qse_awk_openstd(), and qse_awk_rtx_openstd(). 
+These functions iniitlize the area to zeros. You can get the pointer
+to the beginning of the area with qse_awk_getxtn(), qse_awk_rtx_getxtn(),
+qse_awk_getxtnstd(), qse_awk_rtx_getxtnstd() respectively.
+
+In the sample above, the string and the buffer used for I/O customization
+are declared globally. When you have multiple runtime contexts and independent
+console strings and buffers, you may want to associate a runtime context
+with an independent console string and buffer. The extension area that can 
+be allocated on demand when you create a runtime context comes in handy. 
+The sample below shows how to associate them through the extension area 
+but does not create multiple runtime contexts for simplicity.
+
+ \includelineno awk03.c
+
 Entry Point
 -----------
 
@@ -60,14 +102,14 @@ change the entry point for your preference. The qse_awk_rtx_call() function
 used is limited to user-defined functions. It is not able to call built-in
 functions like *gsub* or *index*.
 
- \includelineno awk03.c  
+ \includelineno awk04.c  
 
 If you want to pass arguments to the function, you must create values with 
 value creation functions, updates their reference count, and pass them to 
 qse_awk_rtx_call(). The sample below creates 2 integer values with 
 qse_awk_rtx_makeintval() and pass them to the *pow* function.  
 
- \includelineno awk04.c
+ \includelineno awk05.c
 
 While qse_awk_rtx_call() looks up a function in the function table by name, 
 you can find the function in advance and use the information found when 
@@ -77,7 +119,7 @@ into 2 separate calls to qse_awk_rtx_findfun() and qse_awk_rtx_callfun().
 You can reduce look-up overhead via these 2 functions if you are to execute
 the same function multiple times.
 
- \includelineno awk05.c
+ \includelineno awk06.c
 
 Similarly, you can pass a more complex value than a number. You can compose
 a map value with qse_awk_rtx_makemapval() or qse_awk_rtx_makemapvalwithdata().
@@ -85,7 +127,7 @@ The sample below demonstrates how to use qse_awk_rtx_makemapvalwithdata(),
 pass a created map value to qse_awk_rtx_call(), and traverse a map value
 returned with qse_awk_rtx_getfirstmapvalitr() and qse_awk_rtx_getnextmapvalitr().
 
- \includelineno awk06.c
+ \includelineno awk07.c
 
 Global Variables
 ----------------

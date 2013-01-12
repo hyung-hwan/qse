@@ -37,31 +37,37 @@
  */
 
 /**
- * The qse_sed_iostd_t type defines standard I/O resources.
+ * The qse_sed_iostd_type_t type defines types of standard
+ * I/O resources.
  */
-typedef struct qse_sed_iostd_t qse_sed_iostd_t;
+enum qse_sed_iostd_type_t
+{
+	QSE_SED_IOSTD_NULL, /**< null resource type */
+	QSE_SED_IOSTD_FILE, /**< file */
+	QSE_SED_IOSTD_STR,  /**< string  */
+	QSE_SED_IOSTD_SIO   /**< sio */
+};
+typedef enum qse_sed_iostd_type_t qse_sed_iostd_type_t;
 
+/**
+ * The qse_sed_iostd_t type defines a standard I/O resource.
+ */
 struct qse_sed_iostd_t
 {
-	enum
-	{
-		QSE_SED_IOSTD_NULL, /** invalid resource */
-		QSE_SED_IOSTD_FILE,
-		QSE_SED_IOSTD_STR,
-		QSE_SED_IOSTD_SIO
-	} type;
-
+	qse_sed_iostd_type_t type;  /**< resource type */
 	union
 	{
 		struct
 		{
-			const qse_char_t* path;
-			qse_cmgr_t*       cmgr; 
-		} file;
+			const qse_char_t* path; /**< file path */
+			qse_cmgr_t*       cmgr; /**< cmgr for the file */
+		} file; 
 		qse_xstr_t        str;
 		qse_sio_t*        sio;
-	} u;
+	} u; /**< union containing data for each type */
 };
+
+typedef struct qse_sed_iostd_t qse_sed_iostd_t;
 
 #ifdef __cplusplus
 extern "C" {
@@ -69,8 +75,8 @@ extern "C" {
 
 /**
  * The qse_sed_openstd() function creates a stream editor with the default
- * memory manager and initializes it. Use qse_getxtnstd(), not qse_getxtn() 
- * to get the pointer to the extension area.
+ * memory manager and initializes it. Use qse_sed_getxtnstd() to get the 
+ * pointer to the extension area. Do not use qse_sed_getxtn() for this.
  * @return pointer to a stream editor on success, #QSE_NULL on failure.
  */
 QSE_EXPORT qse_sed_t* qse_sed_openstd (
@@ -80,8 +86,8 @@ QSE_EXPORT qse_sed_t* qse_sed_openstd (
 /**
  * The qse_sed_openstdwithmmgr() function creates a stream editor with a 
  * user-defined memory manager. It is equivalent to qse_sed_openstd(), 
- * except that you can specify your own memory manager.Use qse_getxtnstd(), 
- * not qse_getxtn() to get the pointer to the extension area.
+ * except that you can specify your own memory manager.Use qse_sed_getxtnstd(), 
+ * not qse_sed_getxtn() to get the pointer to the extension area.
  * @return pointer to a stream editor on success, #QSE_NULL on failure.
  */
 QSE_EXPORT qse_sed_t* qse_sed_openstdwithmmgr (

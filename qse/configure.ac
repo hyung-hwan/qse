@@ -390,15 +390,15 @@ AC_C_BIGENDIAN(
 	[AC_DEFINE([QSE_ENDIAN_UNKNOWN],[],[Unknown Endian])])
 
 dnl define extra options
-AC_ARG_ENABLE([wchar], [AS_HELP_STRING([--enable-wchar],[use wchar_t a default charater type when enabled (default. yes)])],
+AC_ARG_ENABLE([wchar], [AS_HELP_STRING([--enable-wchar],[Use the wide character type as the default charater type when enabled (default. yes)])],
 	enable_wchar_is=$enableval,enable_wchar_is=yes)
 test "${ac_cv_sizeof_wchar_t}" = "0" && enable_wchar_is=no
 if test "${enable_wchar_is}" = "yes"
 then
-	AC_DEFINE([QSE_CHAR_IS_WCHAR],[],[char is wchar])
+	AC_DEFINE([QSE_CHAR_IS_WCHAR],[],[The default character type is the wide character type])
 	AC_SUBST(CHAR_MODE, "QSE_CHAR_IS_WCHAR")
 else
-	AC_DEFINE([QSE_CHAR_IS_MCHAR],[],[char is mchar])
+	AC_DEFINE([QSE_CHAR_IS_MCHAR],[],[The default character type is the multi-byte character type])
 	AC_SUBST(CHAR_MODE, "QSE_CHAR_IS_MCHAR")
 fi
 AM_CONDITIONAL(WCHAR, test "${enable_wchar_is}" = "yes")
@@ -480,6 +480,8 @@ AC_SUBST(QSE_SIZEOF_VOID_P, $ac_cv_sizeof_void_p)
 AC_SUBST(QSE_SIZEOF_FLOAT, $ac_cv_sizeof_float)
 AC_SUBST(QSE_SIZEOF_DOUBLE, $ac_cv_sizeof_double)
 AC_SUBST(QSE_SIZEOF_LONG_DOUBLE, $ac_cv_sizeof_long_double)
+AC_SUBST(QSE_SIZEOF_OFF_T, $ac_cv_sizeof_off_t)
+AC_SUBST(QSE_SIZEOF_OFF64_T, $ac_cv_sizeof_off64_t)
 
 AC_SUBST(QSE_PROJECT_AUTHOR, "${PACKAGE_BUGREPORT}")
 AC_SUBST(QSE_PROJECT_URL, "${PACKAGE_URL}")

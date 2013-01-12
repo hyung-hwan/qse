@@ -637,7 +637,7 @@ static int comparg (int argc, qse_char_t* argv[], struct arg_t* arg)
 
 				isf[isfl].type = QSE_AWK_PARSESTD_FILE;
 				isf[isfl].u.file.path = opt.arg;
-				isf[isfl].cmgr = QSE_NULL;
+				isf[isfl].u.file.cmgr = QSE_NULL;
 				isfl++;
 				break;
 			}
@@ -809,7 +809,11 @@ static int comparg (int argc, qse_char_t* argv[], struct arg_t* arg)
 		isfl++;
 	}
 
-	for (i = 0; i < isfl ; i++) isf[isfl].cmgr = arg->script_cmgr;
+	for (i = 0; i < isfl ; i++) 
+	{
+		if (isf[i].type == QSE_AWK_PARSESTD_FILE)
+			isf[isfl].u.file.cmgr = arg->script_cmgr;
+	}
 
 	isf[isfl].type = QSE_AWK_PARSESTD_NULL;
 	arg->psin = isf;
@@ -992,7 +996,7 @@ static int awk_main (int argc, qse_char_t* argv[])
 	{
 		psout.type = QSE_AWK_PARSESTD_FILE;
 		psout.u.file.path = arg.osf;
-		psout.cmgr = arg.script_cmgr;
+		psout.u.file.cmgr = arg.script_cmgr;
 	}
 
 #if defined(QSE_BUILD_DEBUG)

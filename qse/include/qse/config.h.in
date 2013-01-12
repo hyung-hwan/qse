@@ -622,10 +622,10 @@
    your system. */
 #undef PTHREAD_CREATE_JOINABLE
 
-/* char is mchar */
+/* The default character type is the multi-byte character type */
 #undef QSE_CHAR_IS_MCHAR
 
-/* char is wchar */
+/* The default character type is the wide character type */
 #undef QSE_CHAR_IS_WCHAR
 
 /* use the bundled unicode routines */
