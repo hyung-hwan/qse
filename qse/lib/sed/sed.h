@@ -27,19 +27,6 @@
 #define QSE_MAP_AS_RBT
 #include <qse/cmn/map.h>
 
-/* 
- * Define USE_REX to use rex.h on behalf of tre.h 
- * rex.h currently does not support backreference.
- */
-#ifdef USE_REX
-enum qse_sed_depth_t
-{
-     QSE_SED_DEPTH_REX_BUILD = (1 << 0),
-     QSE_SED_DEPTH_REX_MATCH = (1 << 1)
-};
-typedef enum qse_sed_depth_t qse_sed_depth_t;
-#endif
-
 /* structure to maintain data to append
  * at the end of each cycle, triggered by r, R, and a */
 typedef struct qse_sed_app_t qse_sed_app_t;
@@ -86,25 +73,28 @@ struct qse_sed_t
 	qse_char_t errmsg[128];  /**< error message holder */
 	qse_sed_loc_t errloc;    /**< location of the last error */
 
-	int option;              /**< stores options */
-
-	qse_sed_lformatter_t lformatter;
-
-	struct
+	struct 
 	{
+		int                  trait;	
+		qse_sed_tracer_t     tracer;
+		qse_sed_lformatter_t lformatter;
+
 		struct
 		{
-			qse_size_t build;
-			qse_size_t match; 
-		} rex;
-	} depth;
+			struct
+			{
+				qse_size_t build;
+				qse_size_t match; 
+			} rex;
+		} depth; /* useful only for rex.h */
+	} opt;
 
 	qse_sed_ecb_t* ecb;
 
 	/** source text pointers */
 	struct
 	{
-		qse_sed_io_impl_t  fun; /**< input stream handler */
+		qse_sed_io_impl_t fun; /**< input stream handler */
 		qse_sed_io_arg_t  arg;
 		qse_char_t        buf[1024];
 		int               eof;
@@ -223,11 +213,6 @@ struct qse_sed_t
 
 		/** stop requested */
 		int stopreq;
-
-#ifdef QSE_ENABLE_SEDTRACER
-		/** trace function */
-		qse_sed_exec_tracer_t tracer;
-#endif
 	} e;
 };
 
@@ -248,25 +233,6 @@ const qse_char_t* qse_sed_dflerrstr (
 	const qse_sed_t* sed, 
 	qse_sed_errnum_t errnum
 );
-
-#ifdef USE_REX
-/**
- * The qse_sed_getmaxdepth() gets the maximum processing depth.
- */
-qse_size_t qse_sed_getmaxdepth (
-	const qse_sed_t* sed, /**< stream editor */
-	qse_sed_depth_t  id   /**< one of qse_sed_depth_t values */
-);
-
-/**
- * The qse_sed_setmaxdepth() sets the maximum processing depth.
- */
-void qse_sed_setmaxdepth (
-	qse_sed_t* sed,  /**< stream editor */
-	int        ids,  /**< 0 or a number OR'ed of #qse_sed_depth_t values */
-	qse_size_t depth /**< maximum depth level */
-);
-#endif
 
 #ifdef __cplusplus
 }

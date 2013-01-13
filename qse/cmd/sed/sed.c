@@ -560,20 +560,20 @@ static void unset_intr_run (void)
 }
 
 #if defined(QSE_ENABLE_SEDTRACER)
-static void trace_exec (qse_sed_t* sed, qse_sed_exec_op_t op, const qse_sed_cmd_t* cmd)
+static void trace_exec (qse_sed_t* sed, qse_sed_tracer_op_t op, const qse_sed_cmd_t* cmd)
 {
 	switch (op)
 	{
-		case QSE_SED_EXEC_READ:
+		case QSE_SED_TRACER_READ:
 			/*qse_fprintf (QSE_STDERR, QSE_T("reading...\n"));*/
 			break;
-		case QSE_SED_EXEC_WRITE:
+		case QSE_SED_TRACER_WRITE:
 			/*qse_fprintf (QSE_STDERR, QSE_T("wrting...\n"));*/
 			break;
 
 		/* TODO: use function to get hold space and pattern space and print them */
 
-		case QSE_SED_EXEC_MATCH:
+		case QSE_SED_TRACER_MATCH:
 			qse_fprintf (QSE_STDERR, QSE_T("%s:%lu [%c] MA\n"), 
 				((cmd->lid && cmd->lid[0])? cmd->lid: QSE_T("<<UNKNOWN>>")), 
 				(unsigned long)cmd->loc.line,
@@ -581,7 +581,7 @@ static void trace_exec (qse_sed_t* sed, qse_sed_exec_op_t op, const qse_sed_cmd_
 			);
 			break;
 
-		case QSE_SED_EXEC_EXEC:
+		case QSE_SED_TRACER_EXEC:
 			qse_fprintf (QSE_STDERR, QSE_T("%s:%lu [%c] EC\n"), 
 				((cmd->lid && cmd->lid[0])? cmd->lid: QSE_T("<<UNKNOWN>>")), 
 				(unsigned long)cmd->loc.line,
@@ -737,7 +737,7 @@ static int sed_main (int argc, qse_char_t* argv[])
 		goto oops;
 	}
 
-	qse_sed_setoption (sed, g_option);
+	qse_sed_setopt (sed, QSE_SED_TRAIT, &g_option);
 
 	if (qse_sed_compstd (sed, g_script.io, &script_count) <= -1)
 	{
@@ -780,7 +780,7 @@ static int sed_main (int argc, qse_char_t* argv[])
 	}
 
 #if defined(QSE_ENABLE_SEDTRACER)
-	if (g_trace) qse_sed_setexectracer (sed, trace_exec);
+	if (g_trace) qse_sed_setopt (sed, QSE_SED_TRACER, trace_exec);
 #endif
 
 	qse_memset (&xarg, 0, QSE_SIZEOF(xarg));

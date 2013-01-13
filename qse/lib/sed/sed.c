@@ -22,8 +22,10 @@
 #include "../cmn/mem.h"
 #include <qse/cmn/chr.h>
 
+/* Define USE_REX to use <qse/cmn/rex.h> */
+/*#define USE_REX*/
 /* Define USE_REGEX to use regcomp(), regexec(), regfree() instead of TRE */
-/* #define USE_REGEX */
+/*#define USE_REGEX*/
 
 #if defined(USE_REX)
 #	include <qse/cmn/rex.h>
@@ -153,29 +155,63 @@ void* qse_sed_getxtn (qse_sed_t* sed)
 	return QSE_XTN (sed);
 }
 
-void qse_sed_setoption (qse_sed_t* sed, int option)
+int qse_sed_setopt (qse_sed_t* sed, qse_sed_opt_t id, const void* value)
 {
-	sed->option = option;
+	switch (id)
+	{
+		case QSE_SED_TRAIT:
+			sed->opt.trait = *(const int*)value;
+			return 0;
+
+		case QSE_SED_TRACER:
+			sed->opt.tracer = (qse_sed_tracer_t)value;
+			return 0;
+
+		case QSE_SED_LFORMATTER:
+			sed->opt.lformatter = (qse_sed_lformatter_t)value;
+			return 0;
+
+		case QSE_SED_DEPTH_REX_BUILD:
+			sed->opt.depth.rex.build = *(const qse_size_t*)value;
+			return 0;
+
+		case QSE_SED_DEPTH_REX_MATCH:
+			sed->opt.depth.rex.match = *(const qse_size_t*)value;
+			return 0;
+	}
+
+	qse_sed_seterrnum (sed, QSE_SED_EINVAL, QSE_NULL);
+	return -1;
 }
 
-int qse_sed_getoption (const qse_sed_t* sed)
+int qse_sed_getopt (qse_sed_t* sed, qse_sed_opt_t  id, void* value)
 {
-	return sed->option;
-}
+	switch  (id)
+	{
+		case QSE_SED_TRAIT:
+			*(int*)value = sed->opt.trait;
+			return 0;
 
-#if defined(USE_REX)
-qse_size_t qse_sed_getmaxdepth (const qse_sed_t* sed, qse_sed_depth_t id)
-{
-	return (id & QSE_SED_DEPTH_REX_BUILD)? sed->depth.rex.build:
-	       (id & QSE_SED_DEPTH_REX_MATCH)? sed->depth.rex.match: 0;
-}
+		case QSE_SED_TRACER:
+			*(qse_sed_tracer_t*)value = sed->opt.tracer;
+			return 0;
 
-void qse_sed_setmaxdepth (qse_sed_t* sed, int ids, qse_size_t depth)
-{
-	if (ids & QSE_SED_DEPTH_REX_BUILD) sed->depth.rex.build = depth;
-	if (ids & QSE_SED_DEPTH_REX_MATCH) sed->depth.rex.match = depth;
+		case QSE_SED_LFORMATTER:
+			*(qse_sed_lformatter_t*)value = sed->opt.lformatter;
+			return 0;
+
+		case QSE_SED_DEPTH_REX_BUILD:
+			*(qse_size_t*)value = sed->opt.depth.rex.build;
+			return 0;
+
+		case QSE_SED_DEPTH_REX_MATCH:
+			*(qse_size_t*)value = sed->opt.depth.rex.match;
+			return 0;
+	};
+
+	qse_sed_seterrnum (sed, QSE_SED_EINVAL, QSE_NULL);
+	return -1;
 }
-#endif
 
 static void* build_rex (
 	qse_sed_t* sed, const qse_cstr_t* str, 
@@ -185,10 +221,10 @@ static void* build_rex (
 	void* rex;
 	int opt = 0;
 
-	if ((sed->option & QSE_SED_EXTENDEDREX) == 0) opt |= QSE_REX_NOBOUND;
+	if ((sed->opt.trait & QSE_SED_EXTENDEDREX) == 0) opt |= QSE_REX_NOBOUND;
 
 	rex = qse_buildrex (
-		sed->mmgr, sed->depth.rex.build,
+		sed->mmgr, sed->opt.depth.rex.build,
 		opt, str->ptr, str->len, QSE_NULL
 	);
 	if (rex == QSE_NULL)
@@ -205,7 +241,7 @@ static void* build_rex (
 	int xopt = 0;
 
 	if (ignorecase) xopt |= REG_ICASE;
-	if (sed->option & QSE_SED_EXTENDEDREX) xopt |= REG_EXTENDED;
+	if (sed->opt.trait & QSE_SED_EXTENDEDREX) xopt |= REG_EXTENDED;
 
 	rex = QSE_MMGR_ALLOC (sed->mmgr, QSE_SIZEOF(*rex));
 	if (rex == QSE_NULL)
@@ -247,8 +283,8 @@ static void* build_rex (
 
 	/* ignorecase is a compile option for TRE */
 	if (ignorecase) opt |= QSE_TRE_IGNORECASE; 
-	if (sed->option & QSE_SED_EXTENDEDREX) opt |= QSE_TRE_EXTENDED;
-	if (sed->option & QSE_SED_NONSTDEXTREX) opt |= QSE_TRE_NONSTDEXT;
+	if (sed->opt.trait & QSE_SED_EXTENDEDREX) opt |= QSE_TRE_EXTENDED;
+	if (sed->opt.trait & QSE_SED_NONSTDEXTREX) opt |= QSE_TRE_NONSTDEXT;
 
 	if (qse_tre_compx (tre, str->ptr, str->len, QSE_NULL, opt) <= -1)
 	{
@@ -982,7 +1018,7 @@ do { \
 
 	do 
 	{
-		if (sed->option & QSE_SED_STRIPLS)
+		if (sed->opt.trait & QSE_SED_STRIPLS)
 		{
 			/* get the first non-space character */
 			while (IS_SPACE(c)) NXTSC_GOTO (sed, c, oops);
@@ -997,7 +1033,7 @@ do { \
 				NXTSC_GOTO (sed, c, oops);
 				if (c == QSE_CHAR_EOF) 
 				{
-					if (sed->option & QSE_SED_KEEPTBS) 
+					if (sed->opt.trait & QSE_SED_KEEPTBS) 
 						ADD (sed, t, QSE_T('\\'), oops);
 					break;
 				}
@@ -1028,7 +1064,7 @@ do { \
 	while (c != QSE_CHAR_EOF);
 
 done:
-	if ((sed->option & QSE_SED_ENSURENL) && c != QSE_T('\n'))
+	if ((sed->opt.trait & QSE_SED_ENSURENL) && c != QSE_T('\n'))
 	{
 		/* TODO: support different line end convension */
 		ADD (sed, t, QSE_T('\n'), oops);
@@ -1056,7 +1092,7 @@ static int get_label (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 	if (!IS_LABCHAR(c))
 	{
 		/* label name is empty */
-		if (sed->option & QSE_SED_STRICT)
+		if (sed->opt.trait & QSE_SED_STRICT)
 		{
 			SETERR0 (sed, QSE_SED_ELABEM, &sed->src.loc);
 			return -1;
@@ -1811,7 +1847,7 @@ static int get_command (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 		case QSE_T('q'):
 		case QSE_T('Q'):
 			cmd->type = c;
-			if (sed->option & QSE_SED_STRICT &&
+			if (sed->opt.trait & QSE_SED_STRICT &&
 			    cmd->a2.type != QSE_SED_ADR_NONE)
 			{
 				SETERR1 (
@@ -1827,7 +1863,7 @@ static int get_command (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 
 		case QSE_T('a'):
 		case QSE_T('i'):
-			if (sed->option & QSE_SED_STRICT &&
+			if (sed->opt.trait & QSE_SED_STRICT &&
 			    cmd->a2.type != QSE_SED_ADR_NONE)
 			{
 				qse_char_t tmpc = c;
@@ -1846,7 +1882,7 @@ static int get_command (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 
 			if (c != QSE_T('\\'))
 			{
-				if ((sed->option & QSE_SED_SAMELINE) && 
+				if ((sed->opt.trait & QSE_SED_SAMELINE) && 
 				    c != QSE_CHAR_EOF && c != QSE_T('\n')) 
 				{
 					/* allow text without a starting backslash 
@@ -1863,7 +1899,7 @@ static int get_command (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 
 			if (c != QSE_CHAR_EOF && c != QSE_T('\n'))
 			{
-				if (sed->option & QSE_SED_SAMELINE) 
+				if (sed->opt.trait & QSE_SED_SAMELINE) 
 				{
 					/* allow text with a starting backslash 
 					 * on the same line as a command */
@@ -1884,7 +1920,7 @@ static int get_command (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 		}
 
 		case QSE_T('='):
-			if (sed->option & QSE_SED_STRICT &&
+			if (sed->opt.trait & QSE_SED_STRICT &&
 			    cmd->a2.type != QSE_SED_ADR_NONE)
 			{
 				qse_char_t tmpc = c;
@@ -2031,14 +2067,14 @@ int qse_sed_comp (qse_sed_t* sed, qse_sed_io_impl_t inf)
 			while (IS_SPACE(c)) NXTSC_GOTO (sed, c, oops);
 
 			if (c == QSE_T(',') ||
-			    ((sed->option & QSE_SED_EXTENDEDADR) && c == QSE_T('~')))
+			    ((sed->opt.trait & QSE_SED_EXTENDEDADR) && c == QSE_T('~')))
 			{
 				qse_char_t delim = c;
 
 				/* maybe an address range */
 				do { NXTSC_GOTO (sed, c, oops); } while (IS_SPACE(c));
 
-				if (get_address (sed, &cmd->a2, (sed->option & QSE_SED_EXTENDEDADR)) == QSE_NULL) 
+				if (get_address (sed, &cmd->a2, (sed->opt.trait & QSE_SED_EXTENDEDADR)) == QSE_NULL) 
 				{
 					QSE_ASSERT (cmd->a2.type == QSE_SED_ADR_NONE);
 					SETERR0 (sed, QSE_SED_EA2MOI, &sed->src.loc);
@@ -2062,7 +2098,7 @@ int qse_sed_comp (qse_sed_t* sed, qse_sed_io_impl_t inf)
 						}
 					}
 				}
-				else if ((sed->option & QSE_SED_EXTENDEDADR) && 
+				else if ((sed->opt.trait & QSE_SED_EXTENDEDADR) && 
 				         (delim == QSE_T('~')))
 				{
 					if (cmd->a1.type != QSE_SED_ADR_LINE || 
@@ -2091,7 +2127,7 @@ int qse_sed_comp (qse_sed_t* sed, qse_sed_io_impl_t inf)
 		if (cmd->a1.type == QSE_SED_ADR_LINE && cmd->a1.u.lno <= 0)
 		{
 			if (cmd->a2.type == QSE_SED_ADR_STEP || 
-			    ((sed->option & QSE_SED_EXTENDEDADR) && 
+			    ((sed->opt.trait & QSE_SED_EXTENDEDADR) && 
 			     cmd->a2.type == QSE_SED_ADR_REX))
 			{
 				/* 0 as the first address is allowed in this two contexts.
@@ -2773,7 +2809,7 @@ static int do_subst (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 #if defined(USE_REX)
 			n = qse_matchrex (
 				sed->mmgr, 
-				sed->depth.rex.match,
+				sed->opt.depth.rex.match,
 				rex, opt,
 				&str, &cur, &mat, &errnum
 			);
@@ -3223,7 +3259,7 @@ static int match_a (qse_sed_t* sed, qse_sed_cmd_t* cmd, qse_sed_adr_t* a)
 #if defined(USE_REX)
 			n = qse_matchrex (
 				sed->mmgr, 
-				sed->depth.rex.match,
+				sed->opt.depth.rex.match,
 				rex, 0,
 				&line, &line,
 				&match, &errnum);
@@ -3517,9 +3553,9 @@ static qse_sed_cmd_t* exec_cmd (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 			break;
 
 		case QSE_SED_CMD_PRINT_CLEARLY:
-			if (sed->lformatter)
+			if (sed->opt.lformatter)
 			{
-				n = sed->lformatter (
+				n = sed->opt.lformatter (
 					sed,
 					QSE_STR_PTR(&sed->e.in.line),
 					QSE_STR_LEN(&sed->e.in.line),
@@ -3741,7 +3777,7 @@ static int init_command_block_for_exec (qse_sed_t* sed, qse_sed_cmd_blk_t* b)
 		/* clear states */
 		c->state.a1_matched = 0;
 
-		if (sed->option & QSE_SED_EXTENDEDADR)
+		if (sed->opt.trait & QSE_SED_EXTENDEDADR)
 		{
 			if (c->a2.type == QSE_SED_ADR_REX &&
 			    c->a1.type == QSE_SED_ADR_LINE &&
@@ -3848,7 +3884,7 @@ static int emit_output (qse_sed_t* sed, int skipline)
 {
 	int n;
 
-	if (!skipline && !(sed->option & QSE_SED_QUIET))
+	if (!skipline && !(sed->opt.trait & QSE_SED_QUIET))
 	{
 		/* write the pattern space */
 		n = write_str (sed, 
@@ -3885,7 +3921,7 @@ int qse_sed_exec (qse_sed_t* sed, qse_sed_io_impl_t inf, qse_sed_io_impl_t outf)
 		},
 		QSE_MAP_COMPER_DEFAULT,
 		QSE_MAP_KEEPER_DEFAULT
-#ifdef QSE_MAP_AS_HTB
+#if defined(QSE_MAP_AS_HTB)
 		,
 		QSE_MAP_SIZER_DEFAULT,
 		QSE_MAP_HASHER_DEFAULT
@@ -3961,8 +3997,8 @@ int qse_sed_exec (qse_sed_t* sed, qse_sed_io_impl_t inf, qse_sed_io_impl_t outf)
 
 	while (!sed->e.stopreq)
 	{
-#ifdef QSE_ENABLE_SEDTRACER
-		if (sed->e.tracer) sed->e.tracer (sed, QSE_SED_EXEC_READ, QSE_NULL);
+#if defined(QSE_ENABLE_SEDTRACER)
+		if (sed->opt.tracer) sed->opt.tracer (sed, QSE_SED_TRACER_READ, QSE_NULL);
 #endif
 
 		n = read_line (sed, 0);
@@ -3982,8 +4018,8 @@ int qse_sed_exec (qse_sed_t* sed, qse_sed_io_impl_t inf, qse_sed_io_impl_t outf)
 
 			while (c != &sed->cmd.over)
 			{
-#ifdef QSE_ENABLE_SEDTRACER
-				if (sed->e.tracer) sed->e.tracer (sed, QSE_SED_EXEC_MATCH, c);
+#if defined(QSE_ENABLE_SEDTRACER)
+				if (sed->opt.tracer) sed->opt.tracer (sed, QSE_SED_TRACER_MATCH, c);
 #endif
 
 				n = match_address (sed, c);
@@ -3996,8 +4032,8 @@ int qse_sed_exec (qse_sed_t* sed, qse_sed_io_impl_t inf, qse_sed_io_impl_t outf)
 					continue;
 				}
 
-#ifdef QSE_ENABLE_SEDTRACER
-				if (sed->e.tracer) sed->e.tracer (sed, QSE_SED_EXEC_EXEC, c);
+#if defined(QSE_ENABLE_SEDTRACER)
+				if (sed->opt.tracer) sed->opt.tracer (sed, QSE_SED_TRACER_EXEC, c);
 #endif
 				j = exec_cmd (sed, c);
 				if (j == QSE_NULL) { ret = -1; goto done; }
@@ -4015,8 +4051,8 @@ int qse_sed_exec (qse_sed_t* sed, qse_sed_io_impl_t inf, qse_sed_io_impl_t outf)
 			}
 		}
 
-#ifdef QSE_ENABLE_SEDTRACER
-		if (sed->e.tracer) sed->e.tracer (sed, QSE_SED_EXEC_WRITE, QSE_NULL);
+#if defined(QSE_ENABLE_SEDTRACER)
+		if (sed->opt.tracer) sed->opt.tracer (sed, QSE_SED_TRACER_WRITE, QSE_NULL);
 #endif
 		if (emit_output (sed, 0) <= -1) { ret = -1; goto done; }
 	}
@@ -4040,16 +4076,6 @@ void qse_sed_stop (qse_sed_t* sed)
 int qse_sed_isstop (qse_sed_t* sed)
 {
 	return sed->e.stopreq;
-}
-
-qse_sed_lformatter_t qse_sed_getlformatter (qse_sed_t* sed)
-{
-	return sed->lformatter;
-}
-
-void qse_sed_setlformatter (qse_sed_t* sed, qse_sed_lformatter_t lf)
-{
-	sed->lformatter = lf;
 }
 
 const qse_char_t* qse_sed_getcompid (qse_sed_t* sed)
@@ -4141,18 +4167,6 @@ void qse_sed_freemem (qse_sed_t* sed, void* ptr)
 	QSE_MMGR_FREE (sed->mmgr, ptr);
 }
 
-
-#ifdef QSE_ENABLE_SEDTRACER
-qse_sed_exec_tracer_t qse_sed_getexectracer (qse_sed_t* sed)
-{
-	return sed->e.tracer;
-}
-
-void qse_sed_setexectracer (qse_sed_t* sed, qse_sed_exec_tracer_t tracer)
-{
-	sed->e.tracer = tracer;
-}
-#endif
 
 void qse_sed_getspace (qse_sed_t* sed, qse_sed_space_t space, qse_cstr_t* str)
 {

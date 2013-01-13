@@ -52,4 +52,3 @@ int qse_main (int argc, qse_achar_t* argv[])
 	init_sed_sample_locale ();
 	return qse_runmain (argc, argv, sed_main);
 }
-

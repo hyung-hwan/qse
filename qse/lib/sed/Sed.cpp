@@ -76,17 +76,20 @@ bool Sed::isStop () const
 	return qse_sed_isstop (sed);
 }
 
-int Sed::getOption() const
+int Sed::getTrait () const
 {
 	QSE_ASSERT (sed != QSE_NULL);
-	return qse_sed_getoption (sed);
+	int val;
+	qse_sed_getopt (sed, QSE_SED_TRAIT, &val);
+	return val;
 }
 
-void Sed::setOption (int opt)
+void Sed::setTrait (int trait)
 {
 	QSE_ASSERT (sed != QSE_NULL);
-	qse_sed_setoption (sed, opt);
+	qse_sed_setopt (sed, QSE_SED_TRAIT, &trait);
 }
+
 
 #if 0
 Sed::size_t Sed::getMaxDepth (depth_t id) const

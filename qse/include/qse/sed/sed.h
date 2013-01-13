@@ -38,10 +38,6 @@
  * qse_sed_exec (sed);
  * qse_sed_close (sed);
  * @endcode
- *
- * @todo 
- * - enhance execution of the l(ell) command - consider adding a callback
- *
  */
 
 /** @struct qse_sed_t
@@ -275,12 +271,26 @@ typedef const qse_char_t* (*qse_sed_errstr_t) (
 	qse_sed_errnum_t num    /**< an error number */
 );
 
-/** 
- * The qse_sed_option_t type defines various option codes for a stream editor.
- * Options can be OR'ed with each other and be passed to a stream editor with
- * the qse_sed_setoption() function.
+/**
+ * The qse_sed_opt_t type defines various option types.
  */
-enum qse_sed_option_t
+enum qse_sed_opt_t
+{
+	QSE_SED_TRAIT,      /**< trait */
+	QSE_SED_TRACER,     /**< tracer hook */
+	QSE_SED_LFORMATTER, /**< formatter for the 'l' command */
+
+	QSE_SED_DEPTH_REX_BUILD,
+	QSE_SED_DEPTH_REX_MATCH
+};
+typedef enum qse_sed_opt_t qse_sed_opt_t;
+
+/** 
+ * The qse_sed_trait_t type defines various trait codes for a stream editor.
+ * Options can be OR'ed with each other and be passed to a stream editor with
+ * the qse_sed_setopt() function.
+ */
+enum qse_sed_trait_t
 {
 	QSE_SED_STRIPLS      = (1 << 0), /**< strip leading spaces from text */
 	QSE_SED_KEEPTBS      = (1 << 1), /**< keep an trailing backslash */
@@ -292,7 +302,7 @@ enum qse_sed_option_t
 	QSE_SED_EXTENDEDREX  = (1 << 8), /**< use extended regex */
 	QSE_SED_NONSTDEXTREX = (1 << 9)  /**< enable non-standard extensions to regex */
 };
-typedef enum qse_sed_option_t qse_sed_option_t;
+typedef enum qse_sed_trait_t qse_sed_trait_t;
 
 /**
  * The qse_sed_io_cmd_t type defines I/O command codes. The code indicates 
@@ -366,22 +376,20 @@ struct qse_sed_ecb_t
 	qse_sed_ecb_t* next;
 };
 
-#ifdef QSE_ENABLE_SEDTRACER
-enum qse_sed_exec_op_t
+enum qse_sed_tracer_op_t
 {
-	QSE_SED_EXEC_READ,
-	QSE_SED_EXEC_WRITE,
-	QSE_SED_EXEC_MATCH,
-	QSE_SED_EXEC_EXEC
+	QSE_SED_TRACER_READ,
+	QSE_SED_TRACER_WRITE,
+	QSE_SED_TRACER_MATCH,
+	QSE_SED_TRACER_EXEC
 };
-typedef enum qse_sed_exec_op_t qse_sed_exec_op_t;
+typedef enum qse_sed_tracer_op_t qse_sed_tracer_op_t;
 
-typedef void (*qse_sed_exec_tracer_t) (
+typedef void (*qse_sed_tracer_t) (
 	qse_sed_t*           sed,
-	qse_sed_exec_op_t    op,
+	qse_sed_tracer_op_t  op,
 	const qse_sed_cmd_t* cmd
 );
-#endif
 
 /**
  * The qse_sed_space_t type defines the types of
@@ -420,29 +428,56 @@ QSE_EXPORT void qse_sed_close (
 	qse_sed_t* sed /**< stream editor */
 );
 
+/**
+ * The  qse_sed_getmmgr() function returns the memory
+ * manager used in qse_sed_open().
+ */
 QSE_EXPORT qse_mmgr_t* qse_sed_getmmgr (
 	qse_sed_t* sed
 ); 
 
+/**
+ * The qse_sed_getxtn() function returns the pointer
+ * to the beginning of the extension area created with 
+ * qse_sed_open().
+ */
 QSE_EXPORT void* qse_sed_getxtn (
 	qse_sed_t* sed
 );
 
+
 /**
- * The qse_sed_getoption() function retrieves the current options set in
- * a stream editor.
- * @return 0 or a number OR'ed of #qse_sed_option_t values 
+ * The qse_sed_getopt() function gets the value of an option
+ * specified by \a id into the buffer pointed to by \a value.
+ *
+ * The \a value field is dependent on \a id:
+ *  - #QSE_SED_TRAIT - int*
+ *  - #QSE_SED_TRACER - qse_sed_tracer_t*
+ *  - #QSE_SED_LFORMATTER - qse_sed_lformatter_t*
+ *
+ * \return 0 on success, -1 on failure
  */
-QSE_EXPORT int qse_sed_getoption (
-	const qse_sed_t* sed /**< stream editor */
+QSE_EXPORT int qse_sed_getopt (
+	qse_sed_t*    sed,
+	qse_sed_opt_t id,
+	void*         value
 );
 
 /**
- * The qse_sed_setoption() function sets the option code.
+ * The qse_sed_setopt() function sets the value of an option 
+ * specified by \a id to the value pointed to by \a value.
+ *
+ * The \a value field is dependent on \a id:
+ *  - #QSE_SED_TRAIT - const int*
+ *  - #QSE_SED_TRACER - qse_sed_tracer_t
+ *  - #QSE_SED_LFORMATTER - qse_sed_lformatter_t
+ *
+ * \return 0 on success, -1 on failure
  */
-QSE_EXPORT void qse_sed_setoption (
-	qse_sed_t* sed, /**< stream editor */
-	int        opt  /**< 0 or a number OR'ed of #qse_sed_option_t values */
+QSE_EXPORT int qse_sed_setopt (
+	qse_sed_t*    sed,
+	qse_sed_opt_t id,
+	const void*   value
 );
 
 /**
@@ -483,7 +518,7 @@ QSE_EXPORT void qse_sed_seterrstr (
 
 /**
  * The qse_sed_geterrnum() function gets the number of the last error.
- * @return the number of the last error
+ * @return error number
  */
 QSE_EXPORT qse_sed_errnum_t qse_sed_geterrnum (
 	const qse_sed_t* sed /**< stream editor */
@@ -500,7 +535,7 @@ QSE_EXPORT const qse_sed_loc_t* qse_sed_geterrloc (
 
 /**
  * The qse_sed_geterrmsg() function gets a string describing the last error.
- * @return a pointer to an error message
+ * @return error message pointer
  */
 QSE_EXPORT const qse_char_t* qse_sed_geterrmsg (
 	const qse_sed_t* sed /**< stream editor */
@@ -604,24 +639,6 @@ QSE_EXPORT int qse_sed_isstop (
 );
 	
 /**
- * The qse_sed_getlformatter() function gets the text formatter for the 'l'
- * command.
- */
-QSE_EXPORT qse_sed_lformatter_t qse_sed_getlformatter (
-	qse_sed_t* sed /**< stream editor */
-);
-
-/**
- * The qse_sed_setlformatter() function sets the text formatter for the 'l'
- * command. The text formatter must output the text with a character writer
- * provided and return -1 on failure and 0 on success.
- */
-QSE_EXPORT void qse_sed_setlformatter (
-	qse_sed_t*           sed,       /**< stream editor */
-	qse_sed_lformatter_t lformatter /**< text formatter */
-);
-
-/**
  * The qse_sed_getcompid() function returns the latest
  * identifier successfully set with qse_sed_setcompid(). 
  */
@@ -696,25 +713,6 @@ QSE_EXPORT void qse_sed_freemem (
 	qse_sed_t* sed,
 	void*      ptr
 );
-
-#ifdef QSE_ENABLE_SEDTRACER
-/**
- * The qse_sed_getexectracer() function returns the execution tracer 
- * function.
- */
-QSE_EXPORT qse_sed_exec_tracer_t qse_sed_getexectracer (
-	qse_sed_t* sed
-);
-
-/**
- * The qse_sed_setexectracer() function sets a hook function via which 
- * you can trace commands being executed.
- */
-QSE_EXPORT void qse_sed_setexectracer (
-	qse_sed_t*            sed,
-	qse_sed_exec_tracer_t tracer
-);
-#endif
 
 /**
  * The qse_sed_getspace() function gets the pointer and the length

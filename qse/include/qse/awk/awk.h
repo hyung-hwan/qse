@@ -973,9 +973,12 @@ struct qse_awk_rtx_ecb_t
 
 /* ------------------------------------------------------------------------ */
 
+/**
+ * The qse_awk_opt_t type defines various option types.
+ */
 enum qse_awk_opt_t
 {
-	QSE_AWK_TRAIT = 0,
+	QSE_AWK_TRAIT,
 
 	QSE_AWK_MODPREFIX,
 	QSE_AWK_MODPOSTFIX,
