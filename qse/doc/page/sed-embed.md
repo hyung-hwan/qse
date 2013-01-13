@@ -66,8 +66,10 @@ Accessing Pattern and Hold Space
 
 The qse_sed_getspace() allows to you get the pointer and the length
 of the pattern space and the hold space. It may not be so useful you 
-access them after execution is completed. The qse_sed_setexectracer()
-function lets you set up a hook function during execution time.
+access them after execution is completed. The qse_sed_setopt() 
+function called with #QSE_SED_TRACER lets you set up a hook function 
+that can inspect various things during execution time.
+
 The following sample prints the contents of the pattern space and
 hold space at each phase of execution.
 

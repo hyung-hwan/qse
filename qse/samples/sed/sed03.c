@@ -3,7 +3,7 @@
 #include <qse/cmn/stdio.h>
 #include "sed00.h"
 
-static void trace_exec (qse_sed_t* sed, qse_sed_exec_op_t op, qse_sed_cmd_t* cmd)
+static void trace_exec (qse_sed_t* sed, qse_sed_tracer_op_t op, qse_sed_cmd_t* cmd)
 {
 	qse_cstr_t h, p;
 
@@ -48,7 +48,7 @@ static int sed_main (int argc, qse_char_t* argv[])
 	out.type = QSE_SED_IOSTD_STR;
 
 	/* squeeze in a tracing hook */
-	qse_sed_setexectracer (sed, trace_exec);
+	qse_sed_setopt (sed, QSE_SED_TRACER, trace_exec);
 
 	/* execute the compiled command */
 	if (qse_sed_execstd (sed, in, &out) <= -1)
@@ -74,4 +74,3 @@ int qse_main (int argc, qse_achar_t* argv[])
 	init_sed_sample_locale ();
 	return qse_runmain (argc, argv, sed_main);
 }
-

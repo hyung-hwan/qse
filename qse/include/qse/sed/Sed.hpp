@@ -52,8 +52,8 @@ public:
 	typedef qse_sed_io_cmd_t io_cmd_t;
 	/// The io_arg_t type redefines an IO data type
 	typedef qse_sed_io_arg_t io_arg_t;
-	/// The option_t type redefines an option type
-	typedef qse_sed_option_t option_t;
+	/// The trait_t type redefines an trait type
+	typedef qse_sed_trait_t trait_t;
 #if 0
 	/// The depth_t type redefines an depth IDs
 	typedef qse_sed_depth_t depth_t;
@@ -204,17 +204,17 @@ public:
 	bool isStop () const;
 
 	///
-	/// The getOption() function gets the current options.
-	/// @return 0 or current options ORed of #option_t enumerators.
+	/// The getTrait() function gets the current traits.
+	/// @return 0 or current options ORed of #trait_t enumerators.
 	///
-	int getOption () const;
+	int getTrait () const;
 
 	///
-	/// The setOption() function sets options for a stream editor.
-	/// The option code @a opt is 0 or OR'ed of #option_t enumerators.
+	/// The setTrait() function sets traits for a stream editor.
+	/// The option code @a opt is 0 or OR'ed of #trait_t enumerators.
 	///
-	void setOption (
-		int opt ///< option code
+	void setTrait (
+		int trait ///< option code
 	);
 
 #if 0
