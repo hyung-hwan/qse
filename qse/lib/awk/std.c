@@ -669,7 +669,7 @@ static int open_parsestd (qse_awk_t* awk, xtn_t* xtn, qse_size_t index)
 			    (psin->u.file.path[0] == QSE_T('-') &&
 			     psin->u.file.path[1] == QSE_T('\0')))
 			{
-				/* special file name '-' */
+				/* no path name or - -> stdin */
 				qse_sio_t* tmp;
 
 				tmp = open_sio_std (awk, QSE_SIO_STDIN, QSE_SIO_READ | QSE_SIO_IGNOREMBWCERR);
@@ -955,11 +955,12 @@ static qse_ssize_t sf_out (
 			switch (xtn->s.out.x->type)
 			{
 				case QSE_AWK_PARSESTD_FILE:
-					if (xtn->s.out.x->u.file.path == QSE_NULL || 
+					if (xtn->s.out.x->u.file.path == QSE_NULL ||
 					    (xtn->s.out.x->u.file.path[0] == QSE_T('-') &&
 					     xtn->s.out.x->u.file.path[1] == QSE_T('\0')))
+
 					{
-						/* special file name '-' */
+						/* no path name or - -> stdout */
 						xtn->s.out.u.file.sio = open_sio_std (
 							awk, QSE_SIO_STDOUT, 
 							QSE_SIO_WRITE | QSE_SIO_IGNOREMBWCERR
@@ -1510,7 +1511,7 @@ static int open_rio_console (qse_awk_rtx_t* rtx, qse_awk_rio_arg_t* riod)
 			qse_char_t ibuf[128];
 			qse_size_t ibuflen;
 			qse_awk_val_t* v;
-			qse_awk_rtx_valtostr_out_t out;
+			qse_xstr_t as;
 
 		nextfile:
 			file = rxtn->c.in.files[rxtn->c.in.index];
@@ -1568,35 +1569,34 @@ static int open_rio_console (qse_awk_rtx_t* rtx, qse_awk_rio_arg_t* riod)
 			v = QSE_HTB_VPTR(pair);
 			QSE_ASSERT (v != QSE_NULL);
 
-			out.type = QSE_AWK_RTX_VALTOSTR_CPLDUP;
-			if (qse_awk_rtx_valtostr (rtx, v, &out) <= -1) return -1;
+			as.ptr = qse_awk_rtx_valtostrdup (rtx, v, &as.len);
+			if (as.ptr == QSE_NULL) return -1;
 
-			if (out.u.cpldup.len == 0)
+			if (as.len == 0)
 			{
 				/* the name is empty */
-				qse_awk_rtx_freemem (rtx, out.u.cpldup.ptr);
+				qse_awk_rtx_freemem (rtx, as.ptr);
 				rxtn->c.in.index++;
 				goto nextfile;
 			}
 
-			if (qse_strlen(out.u.cpldup.ptr) < out.u.cpldup.len)
+			if (qse_strlen(as.ptr) < as.len)
 			{
 				/* the name contains one or more '\0' */
 				qse_cstr_t errarg;
 
-				errarg.ptr = out.u.cpldup.ptr;
+				errarg.ptr = as.ptr;
 				/* use this length not to contains '\0'
 				 * in an error message */
-				errarg.len = qse_strlen(out.u.cpldup.ptr);
+				errarg.len = qse_strlen(as.ptr);
 
-				qse_awk_rtx_seterrnum (
-					rtx, QSE_AWK_EIONMNL, &errarg);
+				qse_awk_rtx_seterrnum (rtx, QSE_AWK_EIONMNL, &errarg);
 
-				qse_awk_rtx_freemem (rtx, out.u.cpldup.ptr);
+				qse_awk_rtx_freemem (rtx, as.ptr);
 				return -1;
 			}
 
-			file = out.u.cpldup.ptr;
+			file = as.ptr;
 
 			sio = (file[0] == QSE_T('-') && file[1] == QSE_T('\0'))?
 				open_sio_std_rtx (rtx, QSE_SIO_STDIN, 
@@ -1605,7 +1605,7 @@ static int open_rio_console (qse_awk_rtx_t* rtx, qse_awk_rio_arg_t* riod)
 					QSE_SIO_READ | QSE_SIO_IGNOREMBWCERR);
 			if (sio == QSE_NULL)
 			{
-				qse_awk_rtx_freemem (rtx, out.u.cpldup.ptr);
+				qse_awk_rtx_freemem (rtx, as.ptr);
 				return -1;
 			}
 
@@ -1615,11 +1615,11 @@ static int open_rio_console (qse_awk_rtx_t* rtx, qse_awk_rio_arg_t* riod)
 				rtx, file, qse_strlen(file)) <= -1)
 			{
 				qse_sio_close (sio);
-				qse_awk_rtx_freemem (rtx, out.u.cpldup.ptr);
+				qse_awk_rtx_freemem (rtx, as.ptr);
 				return -1;
 			}
 
-			qse_awk_rtx_freemem (rtx, out.u.cpldup.ptr);
+			qse_awk_rtx_freemem (rtx, as.ptr);
 			riod->handle = sio;
 
 			/* increment the counter of files successfully opened */

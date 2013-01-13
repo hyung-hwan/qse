@@ -212,8 +212,7 @@ static int add_script (const qse_char_t* str, int mem)
 	else
 	{
 		g_script.io[g_script.size].type = QSE_SED_IOSTD_FILE;
-		g_script.io[g_script.size].u.file.path = 
-			(qse_strcmp (str, QSE_T("-")) == 0)? QSE_NULL: str;
+		g_script.io[g_script.size].u.file.path = str;
 		g_script.io[g_script.size].u.file.cmgr = g_script_cmgr;
 	}
 	g_script.size++;
@@ -797,6 +796,8 @@ static int sed_main (int argc, qse_char_t* argv[])
 		qse_sed_iostd_t* output = QSE_NULL;
 		int inpos;
 
+		/* a dash is treated specially for QSE_SED_IOSTD_FILE in
+		 * qse_sed_execstd(). so make an exception here */
 		if (g_output_file && 
 		    qse_strcmp (g_output_file, QSE_T("-")) != 0)
 		{
@@ -833,8 +834,7 @@ static int sed_main (int argc, qse_char_t* argv[])
 			qse_char_t* tmpl_tmpfile;
 			
 			in[0].type = QSE_SED_IOSTD_FILE;
-			in[0].u.file.path =
-				(qse_strcmp (xarg.ptr[inpos], QSE_T("-")) == 0)?  QSE_NULL: xarg.ptr[inpos];
+			in[0].u.file.path = xarg.ptr[inpos];
 			in[0].u.file.cmgr = g_infile_cmgr;
 			in[1].type = QSE_SED_IOSTD_NULL;
 
@@ -954,8 +954,7 @@ static int sed_main (int argc, qse_char_t* argv[])
 			{
 				in[i].type = QSE_SED_IOSTD_FILE;
 				tmp = xarg.ptr[i];
-				in[i].u.file.path =
-					(qse_strcmp (tmp, QSE_T("-")) == 0)? QSE_NULL: tmp;
+				in[i].u.file.path = tmp;
 				in[i].u.file.cmgr = g_infile_cmgr;
 			}
 
@@ -965,9 +964,7 @@ static int sed_main (int argc, qse_char_t* argv[])
 		if (g_output_file)
 		{
 			out.type = QSE_SED_IOSTD_FILE;
-			out.u.file.path = 
-				(qse_strcmp (g_output_file, QSE_T("-")) == 0)? 
-				QSE_NULL: g_output_file;
+			out.u.file.path = g_output_file;
 			out.u.file.cmgr = g_outfile_cmgr;
 		}
 		else

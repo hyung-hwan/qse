@@ -65,14 +65,20 @@ struct qse_awk_parsestd_t
 		} file;
 
 		/** 
+		 * input string or dynamically allocated output string
+		 *
 		 * For input, the ptr and the len field of str indicates the 
-		 * pointer and the length of a string to read.
+		 * pointer and the length of a string to read. You must set
+		 * these fields before calling qse_awk_parsestd().
 		 *
 		 * For output, the ptr and the len field of str indicates the
 		 * pointer and the length of a deparsed source string. The output
-		 * string is dynamically allocated. You must free this output 
-		 * pointer using #QSE_MMGR_FREE once you're done with it to avoid 
-		 * memory leaks. 
+		 * string is dynamically allocated. You don't need to set these
+		 * fields before calling qse_awk_parsestd() because they are set
+		 * by qse_awk_parsestd() and valid while the relevant awk object
+		 * is alive. You must free the memory chunk pointed to by the
+		 * ptr field with qse_awk_freemem() once you're done with it to 
+		 * avoid memory leaks. 
 		 */
 		qse_xstr_t str;
 	} u;

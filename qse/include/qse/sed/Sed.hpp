@@ -34,9 +34,9 @@
 QSE_BEGIN_NAMESPACE(QSE)
 /////////////////////////////////
 
-/**
- * The Sed class implements a stream editor by wrapping around #qse_sed_t.
- */
+///
+/// The Sed class implements a stream editor by wrapping around #qse_sed_t.
+///
 class QSE_EXPORT Sed: public Mmged
 {
 public:
@@ -60,7 +60,7 @@ public:
 #endif
 
 	///
-	/// The Stream class is a base class for I/O operation during
+	/// The Stream class is a abstract class for I/O operation during
 	/// execution.
 	///
 	class QSE_EXPORT Stream: public Types

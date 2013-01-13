@@ -30,10 +30,6 @@
  * you can choose to use the helper functions provided here. It is  
  * a higher-level interface that is easier to use as it implements 
  * default handlers for I/O and memory management.
- *
- * @example sed01.c
- * This example shows how to write a simple stream editor using easy API 
- * functions.
  */
 
 /**
@@ -54,17 +50,43 @@ typedef enum qse_sed_iostd_type_t qse_sed_iostd_type_t;
  */
 struct qse_sed_iostd_t
 {
-	qse_sed_iostd_type_t type;  /**< resource type */
+	/** resource type */
+	qse_sed_iostd_type_t type;
+
+	/** union describing the resource of the specified type */
 	union
 	{
+		/** file path with character encoding */
 		struct
 		{
-			const qse_char_t* path; /**< file path */
-			qse_cmgr_t*       cmgr; /**< cmgr for the file */
+			/** file path to open. #QSE_NULL or '-' for stdin/stdout. */
+			const qse_char_t*  path;
+			/** a stream created with the file path is set with this
+			 * cmgr if it is not #QSE_NULL. */
+			qse_cmgr_t*  cmgr;
 		} file; 
+
+		/** 
+		 * input string or dynamically allocated output string
+		 *
+		 * For input, the ptr and the len field of str indicates the 
+		 * pointer and the length of a string to read. You must set
+		 * these two fields before calling qse_sed_execstd().
+		 *
+		 * For output, the ptr and the len field of str indicates the
+		 * pointer and the length of produced output. The output
+		 * string is dynamically allocated. You don't need to set these
+		 * fields before calling qse_sed_execstd() because they are
+		 * set by qse_sed_execstd() and valid while the relevant sed
+		 * object is alive. You must free the memory chunk pointed to by
+		 * the ptr field with qse_sed_freemem() once you're done with it
+	      * to avoid memory leaks. 
+           */
 		qse_xstr_t        str;
+
+		/** pre-opened sio stream */
 		qse_sio_t*        sio;
-	} u; /**< union containing data for each type */
+	} u;
 };
 
 typedef struct qse_sed_iostd_t qse_sed_iostd_t;

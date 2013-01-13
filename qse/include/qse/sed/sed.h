@@ -44,11 +44,6 @@
  *
  */
 
-/**
- * @example sed.c
- * This example shows how to write a basic stream editor.
- */
-
 /** @struct qse_sed_t
  * The qse_sed_t type defines a stream editor. The structural details are 
  * hidden as it is a relatively complex data type and fragile to external
@@ -388,6 +383,17 @@ typedef void (*qse_sed_exec_tracer_t) (
 );
 #endif
 
+/**
+ * The qse_sed_space_t type defines the types of
+ * sed bufferspaces. 
+ */
+enum qse_sed_space_t
+{
+	QSE_SED_SPACE_HOLD,   /**< hold space */
+	QSE_SED_SPACE_PATTERN /**< pattern space */
+};
+typedef enum qse_sed_space_t qse_sed_space_t;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -653,6 +659,44 @@ QSE_EXPORT void qse_sed_setlinenum (
 	qse_size_t num    /**< a line number */
 );
 
+
+/**
+ * The qse_sed_allocmem() function allocates a chunk of memory using
+ * the memory manager of \a sed.
+ */
+QSE_EXPORT void* qse_sed_allocmem (
+	qse_sed_t* sed,
+	qse_size_t size
+);
+
+/**
+ * The qse_sed_allocmem() function allocates a chunk of memory using
+ * the memory manager of \a sed and clears it to zeros.
+ */
+QSE_EXPORT void* qse_sed_callocmem (
+	qse_sed_t* sed,
+	qse_size_t size
+);
+
+/**
+ * The qse_sed_allocmem() function reallocates a chunk of memory using
+ * the memory manager of \a sed.
+ */
+QSE_EXPORT void* qse_sed_reallocmem (
+	qse_sed_t* sed,
+	void*      ptr,
+	qse_size_t size
+);
+
+/**
+ * The qse_sed_allocmem() function frees a chunk of memory using
+ * the memory manager of \a sed.
+ */
+QSE_EXPORT void qse_sed_freemem (
+	qse_sed_t* sed,
+	void*      ptr
+);
+
 #ifdef QSE_ENABLE_SEDTRACER
 /**
  * The qse_sed_getexectracer() function returns the execution tracer 
@@ -663,7 +707,7 @@ QSE_EXPORT qse_sed_exec_tracer_t qse_sed_getexectracer (
 );
 
 /**
- * The qse_sed_getexectracer() function sets a hook function via which 
+ * The qse_sed_setexectracer() function sets a hook function via which 
  * you can trace commands being executed.
  */
 QSE_EXPORT void qse_sed_setexectracer (
@@ -671,6 +715,16 @@ QSE_EXPORT void qse_sed_setexectracer (
 	qse_sed_exec_tracer_t tracer
 );
 #endif
+
+/**
+ * The qse_sed_getspace() function gets the pointer and the length
+ * to a buffer space specfied by \a space.
+ */
+QSE_EXPORT void qse_sed_getspace (
+	qse_sed_t*      sed,
+	qse_sed_space_t space,
+	qse_cstr_t*     str
+);
 
 #ifdef __cplusplus
 }

@@ -216,9 +216,22 @@ static int open_input_stream (
 		case QSE_SED_IOSTD_FILE:
 		{
 			qse_sio_t* sio;
-			sio = (io->u.file.path == QSE_NULL)?
-				open_sio_std (sed, QSE_SIO_STDIN, QSE_SIO_READ | QSE_SIO_IGNOREMBWCERR):
-				open_sio_file (sed, io->u.file.path, QSE_SIO_READ | QSE_SIO_IGNOREMBWCERR);
+			
+			if (io->u.file.path == QSE_NULL || 
+			    (io->u.file.path[0] == QSE_T('-') && 
+			     io->u.file.path[1] == QSE_T('\0')))
+			{
+				sio = open_sio_std (
+					sed, QSE_SIO_STDIN, 
+					QSE_SIO_READ | QSE_SIO_IGNOREMBWCERR
+				);
+			}
+			else
+			{
+				sio = open_sio_file (
+					sed, io->u.file.path,
+					QSE_SIO_READ | QSE_SIO_IGNOREMBWCERR);
+			}
 			if (sio == QSE_NULL) return -1;
 			if (io->u.file.cmgr) qse_sio_setcmgr (sio, io->u.file.cmgr);
 			arg->handle = sio;
@@ -284,7 +297,9 @@ static int open_output_stream (qse_sed_t* sed, qse_sed_io_arg_t* arg, qse_sed_io
 		case QSE_SED_IOSTD_FILE:
 		{
 			qse_sio_t* sio;
-			if (io->u.file.path == QSE_NULL)
+			if (io->u.file.path == QSE_NULL ||
+			    (io->u.file.path[0] == QSE_T('-') && 
+			     io->u.file.path[1] == QSE_T('\0')))
 			{
 				sio = open_sio_std (
 					sed, QSE_SIO_STDOUT,
@@ -512,6 +527,7 @@ static qse_ssize_t x_in (
 				/* no file specified. console stream */
 				if (xtn->e.in.ptr == QSE_NULL) 
 				{
+					/* QSE_NULL passed into qse_sed_exec() for input */
 					sio = open_sio_std (
 						sed, QSE_SIO_STDIN, QSE_SIO_READ | QSE_SIO_IGNOREMBWCERR);
 					if (sio == QSE_NULL) return -1;
@@ -609,8 +625,11 @@ static qse_ssize_t x_out (
 		{
 			if (arg->path == QSE_NULL)
 			{
+				/* main data stream */
+
 				if (xtn->e.out.ptr == QSE_NULL) 
 				{
+					/* QSE_NULL passed into qse_sed_execstd() for output */
 					sio = open_sio_std (
 						sed, QSE_SIO_STDOUT,
 						QSE_SIO_WRITE |
@@ -628,6 +647,7 @@ static qse_ssize_t x_out (
 			}
 			else
 			{
+
 				sio = open_sio_file (
 					sed, arg->path,
 					QSE_SIO_WRITE |
@@ -785,7 +805,7 @@ int qse_sed_execstd (
 	QSE_MEMSET (&xtn->e, 0, QSE_SIZEOF(xtn->e));
 	xtn->e.in.ptr = in;
 	xtn->e.in.cur = in;
-	xtn->e.out.ptr= out;
+	xtn->e.out.ptr = out;
 
 	n = qse_sed_exec (sed, x_in, x_out);
 
