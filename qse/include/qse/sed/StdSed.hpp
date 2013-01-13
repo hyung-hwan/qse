@@ -34,16 +34,19 @@
 QSE_BEGIN_NAMESPACE(QSE)
 /////////////////////////////////
 
-/**
- * The StdSed class inherits the Sed class, implements a standard
- * I/O stream class, and sets the default memory manager.
- *
- */
+///
+/// The StdSed class inherits the Sed class, implements a standard
+/// I/O stream class, and sets the default memory manager.
+///
 class QSE_EXPORT StdSed: public Sed
 {
 public:
 	StdSed (Mmgr* mmgr = StdMmgr::getDFL()): Sed (mmgr) {}
 
+	///
+	/// The FileStream class implements a stream over input
+	/// and output files.
+	///
 	class QSE_EXPORT FileStream: public Stream
 	{
 	public:
@@ -65,6 +68,9 @@ public:
 		qse_cmgr_t*   cmgr;
 	};
 
+	///
+	/// The StringStream class implements a stream over a string
+	///
 	class QSE_EXPORT StringStream: public Stream
 	{
 	public:
@@ -95,19 +101,6 @@ public:
 		} out;
 	};
 };
-
-/** 
- * @example sed02.cpp 
- * The example shows how to use the QSE::StdSed class to write a simple stream
- * editor that reads from a standard input or a file and writes to a standard 
- * output or a file.
- */
-
-/**
- * @example sed03.cpp 
- * The example shows how to extend the QSE::StdSed class to read from and 
- * write to a string.
- */
 
 /////////////////////////////////
 QSE_END_NAMESPACE(QSE)

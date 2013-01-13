@@ -1,37 +1,10 @@
-/**
- * $Id$
- *
-    Copyright 2006-2012 Chung, Hyung-Hwan.
-    This file is part of QSE.
-
-    QSE is free software: you can redistribute it and/or modify
-    it under the terms of the GNU Lesser General Public License as 
-    published by the Free Software Foundation, either version 3 of 
-    the License, or (at your option) any later version.
-
-    QSE is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU Lesser General Public License for more details.
-
-    You should have received a copy of the GNU Lesser General Public 
-    License along with QSE. If not, see <http://www.gnu.org/licenses/>.
- */
-
 #include <qse/sed/StdSed.hpp>
 #include <qse/cmn/main.h>
-#include <qse/cmn/mbwc.h>
 #include <qse/cmn/sio.h>
 #include <iostream>
+#include "sed00.h"
 
-#include <locale.h>
-#if defined(_WIN32)
-#	include <stdio.h>
-#	include <windows.h>
-#endif
-
-
-#ifdef QSE_CHAR_IS_MCHAR
+#if defined(QSE_CHAR_IS_MCHAR)
 #	define xcout std::cout
 #else
 #	define xcout std::wcout
@@ -94,23 +67,6 @@ int sed_main (int argc, qse_char_t* argv[])
 
 int qse_main (int argc, qse_achar_t* argv[])
 {
-#if defined(_WIN32)
-	char locale[100];
-	UINT codepage = GetConsoleOutputCP();	
-	if (codepage == CP_UTF8)
-	{
-		/*SetConsoleOUtputCP (CP_UTF8);*/
-		qse_setdflcmgrbyid (QSE_CMGR_UTF8);
-	}
-	else
-	{
-		sprintf (locale, ".%u", (unsigned int)codepage);
-		setlocale (LC_ALL, locale);
-		qse_setdflcmgrbyid (QSE_CMGR_SLMB);
-	}
-#else
-	setlocale (LC_ALL, "");
-	qse_setdflcmgrbyid (QSE_CMGR_SLMB);
-#endif
+	init_sed_sample_locale ();
 	return qse_runmain (argc, argv, sed_main);
 }

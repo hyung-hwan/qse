@@ -504,14 +504,9 @@ static int add_command_block (qse_sed_t* sed)
 {
 	qse_sed_cmd_blk_t* b;
 
-	b = (qse_sed_cmd_blk_t*) QSE_MMGR_ALLOC (sed->mmgr, QSE_SIZEOF(*b));
-	if (b == QSE_NULL)
-	{
-		SETERR0 (sed, QSE_SED_ENOMEM, QSE_NULL);
-		return -1;
-	}
+	b = (qse_sed_cmd_blk_t*) qse_sed_callocmem (sed, QSE_SIZEOF(*b));
+	if (b == QSE_NULL) return -1;
 
-	QSE_MEMSET (b, 0, QSE_SIZEOF(*b));
 	b->next = QSE_NULL;
 	b->len = 0;
 
@@ -1513,14 +1508,9 @@ static int add_cut_selector_block (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 {
 	qse_sed_cut_sel_t* b;
 
-	b = (qse_sed_cut_sel_t*) QSE_MMGR_ALLOC (sed->mmgr, QSE_SIZEOF(*b));
-	if (b == QSE_NULL)
-	{
-		SETERR0 (sed, QSE_SED_ENOMEM, QSE_NULL);
-		return -1;
-	}
+	b = (qse_sed_cut_sel_t*) qse_sed_callocmem (sed, QSE_SIZEOF(*b));
+	if (b == QSE_NULL) return -1;
 
-	QSE_MEMSET (b, 0, QSE_SIZEOF(*b));
 	b->next = QSE_NULL;
 	b->len = 0;
 
@@ -3021,22 +3011,14 @@ static int split_into_fields_for_cut (
 				
 				if (sed->e.cutf.flds == sed->e.cutf.sflds)
 				{
-					tmp = QSE_MMGR_ALLOC (sed->mmgr, QSE_SIZEOF(*tmp) * nsz);
-					if (tmp == QSE_NULL) 
-					{
-						SETERR0 (sed, QSE_SED_ENOMEM, QSE_NULL);
-						return -1;
-					}
+					tmp = qse_sed_allocmem (sed, QSE_SIZEOF(*tmp) * nsz);
+					if (tmp == QSE_NULL) return -1;
 					QSE_MEMCPY (tmp, sed->e.cutf.flds, QSE_SIZEOF(*tmp) * sed->e.cutf.cflds);
 				}
 				else
 				{
-					tmp = QSE_MMGR_REALLOC (sed->mmgr, sed->e.cutf.flds, QSE_SIZEOF(*tmp) * nsz);
-					if (tmp == QSE_NULL) 
-					{
-						SETERR0 (sed, QSE_SED_ENOMEM, QSE_NULL);
-						return -1;
-					}
+					tmp = qse_sed_reallocmem (sed, sed->e.cutf.flds, QSE_SIZEOF(*tmp) * nsz);
+					if (tmp == QSE_NULL) return -1;
 				}
 
 				sed->e.cutf.flds = tmp;
@@ -4131,6 +4113,35 @@ void qse_sed_pushecb (qse_sed_t* sed, qse_sed_ecb_t* ecb)
 	sed->ecb = ecb;
 }
 
+void* qse_sed_allocmem (qse_sed_t* sed, qse_size_t size)
+{
+	void* ptr = QSE_MMGR_ALLOC (sed->mmgr, size);
+	if (ptr == QSE_NULL) 
+		qse_sed_seterrnum (sed, QSE_SED_ENOMEM, QSE_NULL);
+	return ptr;
+}
+
+void* qse_sed_callocmem (qse_sed_t* sed, qse_size_t size)
+{
+	void* ptr = QSE_MMGR_ALLOC (sed->mmgr, size);
+	if (ptr) QSE_MEMSET (ptr, 0, size);
+	else qse_sed_seterrnum (sed, QSE_SED_ENOMEM, QSE_NULL);
+	return ptr;
+}
+
+void* qse_sed_reallocmem (qse_sed_t* sed, void* ptr, qse_size_t size)
+{
+	void* nptr = QSE_MMGR_REALLOC (sed->mmgr, ptr, size);
+	if (nptr == QSE_NULL) qse_sed_seterrnum (sed, QSE_SED_ENOMEM, QSE_NULL);
+	return nptr;
+}
+
+void qse_sed_freemem (qse_sed_t* sed, void* ptr)
+{
+	QSE_MMGR_FREE (sed->mmgr, ptr);
+}
+
+
 #ifdef QSE_ENABLE_SEDTRACER
 qse_sed_exec_tracer_t qse_sed_getexectracer (qse_sed_t* sed)
 {
@@ -4143,3 +4154,17 @@ void qse_sed_setexectracer (qse_sed_t* sed, qse_sed_exec_tracer_t tracer)
 }
 #endif
 
+void qse_sed_getspace (qse_sed_t* sed, qse_sed_space_t space, qse_cstr_t* str)
+{
+	switch (space)
+	{
+		case QSE_SED_SPACE_HOLD:
+			str->ptr = QSE_STR_PTR(&sed->e.txt.hold);
+			str->len = QSE_STR_LEN(&sed->e.txt.hold);
+			break;
+		case QSE_SED_SPACE_PATTERN:
+			str->ptr = QSE_STR_PTR(&sed->e.in.line);
+			str->len = QSE_STR_LEN(&sed->e.in.line);
+			break;
+	}
+}

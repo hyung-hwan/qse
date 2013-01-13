@@ -1,16 +1,9 @@
 #include <qse/sed/StdSed.hpp>
 #include <qse/cmn/main.h>
-#include <qse/cmn/mbwc.h>
 #include <iostream>
+#include "sed00.h"
 
-#include <locale.h>
-#if defined(_WIN32)
-#	include <stdio.h>
-#    include <windows.h>
-#endif
-
-
-#ifdef QSE_CHAR_IS_MCHAR
+#if defined(QSE_CHAR_IS_MCHAR)
 #	define xcout std::cout
 #else
 #	define xcout std::wcout
@@ -27,7 +20,7 @@ int sed_main (int argc, qse_char_t* argv[])
 
 	QSE::StdSed sed;
 
-	if (sed.open () == -1)
+	if (sed.open () <= -1)
 	{
 		xcout << QSE_T("ERR: cannot open") << std::endl;
 		return -1;
@@ -35,7 +28,7 @@ int sed_main (int argc, qse_char_t* argv[])
 
 
 	QSE::StdSed::StringStream sstream (argv[1]);
-	if (sed.compile (sstream) == -1)
+	if (sed.compile (sstream) <= -1)
 	{
 		xcout << QSE_T("ERR: cannot compile - ") << sed.getErrorMessage() << std::endl;
 		sed.close ();
@@ -46,7 +39,7 @@ int sed_main (int argc, qse_char_t* argv[])
 	qse_char_t* outfile = (argc >= 4)? argv[3]: QSE_NULL;
 	QSE::StdSed::FileStream fstream (infile, outfile);
 
-	if (sed.execute (fstream) == -1)
+	if (sed.execute (fstream) <= -1)
 	{
 		xcout << QSE_T("ERR: cannot execute - ") << sed.getErrorMessage() << std::endl;
 		sed.close ();
@@ -59,23 +52,6 @@ int sed_main (int argc, qse_char_t* argv[])
 
 int qse_main (int argc, qse_achar_t* argv[])
 {
-#if defined(_WIN32)
-	char locale[100];
-	UINT codepage = GetConsoleOutputCP();	
-	if (codepage == CP_UTF8)
-	{
-		/*SetConsoleOUtputCP (CP_UTF8);*/
-		qse_setdflcmgrbyid (QSE_CMGR_UTF8);
-	}
-	else
-	{
-		sprintf (locale, ".%u", (unsigned int)codepage);
-		setlocale (LC_ALL, locale);
-		qse_setdflcmgrbyid (QSE_CMGR_SLMB);
-	}
-#else
-	setlocale (LC_ALL, "");
-	qse_setdflcmgrbyid (QSE_CMGR_SLMB);
-#endif
+	init_sed_sample_locale ();
 	return qse_runmain (argc, argv, sed_main);
 }

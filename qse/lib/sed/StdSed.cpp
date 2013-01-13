@@ -78,17 +78,17 @@ int StdSed::FileStream::open (Data& io)
 	if (ioname == QSE_NULL)
 	{
 		//
-		// a normal console is indicated by a null name 
+		// a normal console is indicated by a null name or a dash
 		//
 		if (io.getMode() == READ)
 		{
-			sio = (infile == QSE_NULL)?
+			sio = (infile == QSE_NULL || (infile[0] == QSE_T('-') && infile[1] == QSE_T('\0')))?
 				open_sio_std (io, QSE_SIO_STDIN, oflags):
 				open_sio (io, infile, oflags);
 		}
 		else
 		{
-			sio = (outfile == QSE_NULL)?
+			sio = (outfile == QSE_NULL || (outfile[0] == QSE_T('-') && outfile[1] == QSE_T('\0')))?
 				open_sio_std (io, QSE_SIO_STDOUT, oflags):
 				open_sio (io, outfile, oflags);
 		}

@@ -221,3 +221,23 @@ the cmgr field moved from the union member file to the outer structure.
 
 ### 0 upon Opening ###
 I/O handlers can return 0 for success upon opening.
+
+
+
+
+
+
+\skipline ---------------------------------------------------------------------
+\skipline the sample files are listed here for example list generation purpose.
+\skipline ---------------------------------------------------------------------
+\example awk01.c
+\example awk02.c
+\example awk03.c
+\example awk04.c
+\example awk05.c
+\example awk06.c
+\example awk07.c
+\example awk21.cpp
+\example awk22.cpp
+\example awk23.cpp
+

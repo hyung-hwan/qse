@@ -35,7 +35,8 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 @WCHAR_TRUE@@WIN32_TRUE@am__append_1 = $(UNICOWS_LIBS)
-bin_PROGRAMS = sed01$(EXEEXT) $(am__EXEEXT_1)
+bin_PROGRAMS = sed01$(EXEEXT) sed02$(EXEEXT) sed03$(EXEEXT) \
+	$(am__EXEEXT_1)
 @ENABLE_CXX_TRUE@am__append_2 = sed21 sed22
 subdir = samples/sed
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
@@ -55,19 +56,26 @@ CONFIG_CLEAN_VPATH_FILES =
 @ENABLE_CXX_TRUE@am__EXEEXT_1 = sed21$(EXEEXT) sed22$(EXEEXT)
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
-am_sed01_OBJECTS = sed01.$(OBJEXT)
+am__objects_1 = sed00.$(OBJEXT)
+am_sed01_OBJECTS = sed01.$(OBJEXT) $(am__objects_1)
 sed01_OBJECTS = $(am_sed01_OBJECTS)
 am__DEPENDENCIES_1 =
 @WCHAR_TRUE@@WIN32_TRUE@am__DEPENDENCIES_2 = $(am__DEPENDENCIES_1)
 am__DEPENDENCIES_3 = $(am__DEPENDENCIES_2)
 sed01_DEPENDENCIES = $(am__DEPENDENCIES_3)
-am__sed21_SOURCES_DIST = sed21.cpp
-@ENABLE_CXX_TRUE@am_sed21_OBJECTS = sed21.$(OBJEXT)
+am_sed02_OBJECTS = sed02.$(OBJEXT) $(am__objects_1)
+sed02_OBJECTS = $(am_sed02_OBJECTS)
+sed02_DEPENDENCIES = $(am__DEPENDENCIES_3)
+am_sed03_OBJECTS = sed03.$(OBJEXT) $(am__objects_1)
+sed03_OBJECTS = $(am_sed03_OBJECTS)
+sed03_DEPENDENCIES = $(am__DEPENDENCIES_3)
+am__sed21_SOURCES_DIST = sed21.cpp sed00.c sed00.h
+@ENABLE_CXX_TRUE@am_sed21_OBJECTS = sed21.$(OBJEXT) $(am__objects_1)
 sed21_OBJECTS = $(am_sed21_OBJECTS)
 @ENABLE_CXX_TRUE@sed21_DEPENDENCIES = $(am__DEPENDENCIES_1) \
 @ENABLE_CXX_TRUE@	$(am__DEPENDENCIES_3)
-am__sed22_SOURCES_DIST = sed22.cpp
-@ENABLE_CXX_TRUE@am_sed22_OBJECTS = sed22.$(OBJEXT)
+am__sed22_SOURCES_DIST = sed22.cpp sed00.c sed00.h
+@ENABLE_CXX_TRUE@am_sed22_OBJECTS = sed22.$(OBJEXT) $(am__objects_1)
 sed22_OBJECTS = $(am_sed22_OBJECTS)
 @ENABLE_CXX_TRUE@sed22_DEPENDENCIES = $(am__DEPENDENCIES_1) \
 @ENABLE_CXX_TRUE@	$(am__DEPENDENCIES_3)
@@ -93,9 +101,10 @@ CXXLD = $(CXX)
 CXXLINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
-SOURCES = $(sed01_SOURCES) $(sed21_SOURCES) $(sed22_SOURCES)
-DIST_SOURCES = $(sed01_SOURCES) $(am__sed21_SOURCES_DIST) \
-	$(am__sed22_SOURCES_DIST)
+SOURCES = $(sed01_SOURCES) $(sed02_SOURCES) $(sed03_SOURCES) \
+	$(sed21_SOURCES) $(sed22_SOURCES)
+DIST_SOURCES = $(sed01_SOURCES) $(sed02_SOURCES) $(sed03_SOURCES) \
+	$(am__sed21_SOURCES_DIST) $(am__sed22_SOURCES_DIST)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -279,12 +288,17 @@ AM_CPPFLAGS = \
 	-I$(includedir)
 
 LDADD = -lqsesed -lqsecmn $(am__append_1)
-sed01_SOURCES = sed01.c 
+CMNFILES = sed00.c sed00.h
+sed01_SOURCES = sed01.c $(CMNFILES)
 sed01_LDADD = $(LDADD)
+sed02_SOURCES = sed02.c $(CMNFILES)
+sed02_LDADD = $(LDADD)
+sed03_SOURCES = sed03.c $(CMNFILES)
+sed03_LDADD = $(LDADD)
 @ENABLE_CXX_TRUE@CXXLIB = -lqsesedxx -lqsecmnxx
-@ENABLE_CXX_TRUE@sed21_SOURCES = sed21.cpp
+@ENABLE_CXX_TRUE@sed21_SOURCES = sed21.cpp $(CMNFILES)
 @ENABLE_CXX_TRUE@sed21_LDADD = $(CXXLIB) $(LDADD)
-@ENABLE_CXX_TRUE@sed22_SOURCES = sed22.cpp
+@ENABLE_CXX_TRUE@sed22_SOURCES = sed22.cpp $(CMNFILES)
 @ENABLE_CXX_TRUE@sed22_LDADD = $(CXXLIB) $(LDADD)
 all: all-am
 
@@ -366,6 +380,12 @@ clean-binPROGRAMS:
 sed01$(EXEEXT): $(sed01_OBJECTS) $(sed01_DEPENDENCIES) $(EXTRA_sed01_DEPENDENCIES) 
 	@rm -f sed01$(EXEEXT)
 	$(LINK) $(sed01_OBJECTS) $(sed01_LDADD) $(LIBS)
+sed02$(EXEEXT): $(sed02_OBJECTS) $(sed02_DEPENDENCIES) $(EXTRA_sed02_DEPENDENCIES) 
+	@rm -f sed02$(EXEEXT)
+	$(LINK) $(sed02_OBJECTS) $(sed02_LDADD) $(LIBS)
+sed03$(EXEEXT): $(sed03_OBJECTS) $(sed03_DEPENDENCIES) $(EXTRA_sed03_DEPENDENCIES) 
+	@rm -f sed03$(EXEEXT)
+	$(LINK) $(sed03_OBJECTS) $(sed03_LDADD) $(LIBS)
 sed21$(EXEEXT): $(sed21_OBJECTS) $(sed21_DEPENDENCIES) $(EXTRA_sed21_DEPENDENCIES) 
 	@rm -f sed21$(EXEEXT)
 	$(CXXLINK) $(sed21_OBJECTS) $(sed21_LDADD) $(LIBS)
@@ -379,7 +399,10 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sed00.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sed01.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sed02.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sed03.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sed21.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sed22.Po@am__quote@
 

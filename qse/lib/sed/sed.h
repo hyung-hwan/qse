@@ -174,10 +174,10 @@ struct qse_sed_t
 		/** data needed for input streams */
 		struct
 		{
-			qse_sed_io_impl_t fun; /**< an input handler */
+			qse_sed_io_impl_t fun; /**< input handler */
 			qse_sed_io_arg_t arg; /**< input handling data */
 
-			qse_char_t xbuf[1]; /**< a read-ahead buffer */
+			qse_char_t xbuf[1]; /**< read-ahead buffer */
 			int xbuf_len; /**< data length in the buffer */
 
 			qse_char_t buf[2048]; /**< input buffer */
@@ -199,6 +199,7 @@ struct qse_sed_t
 				qse_sed_app_t* tail;
 			} d;
 		} append;
+
 		/** text buffers */
 		struct
 		{
