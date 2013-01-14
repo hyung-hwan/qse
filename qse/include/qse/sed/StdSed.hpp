@@ -25,10 +25,11 @@
 #include <qse/cmn/StdMmgr.hpp>
 #include <qse/cmn/str.h>
 
-/** @file
- * This file defines easier-to-use stream editor classes providing standard
- * memory management and I/O handling.
- */
+///
+/// @file
+/// This file defines easier-to-use stream editor classes providing standard
+/// memory management and I/O handling.
+///
 
 /////////////////////////////////
 QSE_BEGIN_NAMESPACE(QSE)

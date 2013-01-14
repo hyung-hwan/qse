@@ -5,7 +5,7 @@ AM_CPPFLAGS = \
 	-I$(top_srcdir)/include \
 	-I$(includedir)
 
-bin_PROGRAMS = awk01 awk02 awk03 awk04 awk05 awk06 awk07 awk09 awk11 awk15
+bin_PROGRAMS = awk01 awk02 awk03 awk04 awk05 awk06 awk07 awk08 awk09 awk10 awk11 awk12 awk15
 
 LDFLAGS = -L../../lib/awk -L../../lib/cmn
 LDADD = -lqseawk -lqsecmn $(LIBM)
@@ -16,16 +16,20 @@ LDADD += $(UNICOWS_LIBS)
 endif
 endif
 
+CMNFILES = awk00.c awk00.h
 awk01_SOURCES = awk01.c 
-awk02_SOURCES = awk02.c awk00.c awk00.h
-awk03_SOURCES = awk03.c awk00.c awk00.h
-awk04_SOURCES = awk04.c awk00.c awk00.h
-awk05_SOURCES = awk05.c awk00.c awk00.h
-awk06_SOURCES = awk06.c awk00.c awk00.h
-awk07_SOURCES = awk07.c awk00.c awk00.h
-awk09_SOURCES = awk09.c awk00.c awk00.h
-awk11_SOURCES = awk11.c awk00.c awk00.h
-awk15_SOURCES = awk15.c awk00.c awk00.h
+awk02_SOURCES = awk02.c $(CMNFILES)
+awk03_SOURCES = awk03.c $(CMNFILES) 
+awk04_SOURCES = awk04.c $(CMNFILES)
+awk05_SOURCES = awk05.c $(CMNFILES)
+awk06_SOURCES = awk06.c $(CMNFILES)
+awk07_SOURCES = awk07.c $(CMNFILES)
+awk08_SOURCES = awk08.c $(CMNFILES)
+awk09_SOURCES = awk09.c $(CMNFILES)
+awk10_SOURCES = awk10.c $(CMNFILES)
+awk11_SOURCES = awk11.c $(CMNFILES)
+awk12_SOURCES = awk12.c $(CMNFILES)
+awk15_SOURCES = awk15.c $(CMNFILES)
 
 if ENABLE_CXX
 

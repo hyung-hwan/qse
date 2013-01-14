@@ -109,8 +109,7 @@ static int awk_main (int argc, qse_char_t* argv[])
 	/* parse a script in a string */
 	if (qse_awk_parsestd (awk, psin, QSE_NULL) <= -1)
 	{
-		qse_fprintf (QSE_STDERR, QSE_T("ERROR: %s\n"), 
-			qse_awk_geterrmsg(awk));
+		qse_fprintf (QSE_STDERR, QSE_T("ERROR: %s\n"), qse_awk_geterrmsg(awk));
 		goto oops;
 	}
 
@@ -125,8 +124,7 @@ static int awk_main (int argc, qse_char_t* argv[])
 	);
 	if (rtx == QSE_NULL) 
 	{
-		qse_fprintf (QSE_STDERR, QSE_T("ERROR: %s\n"), 
-			qse_awk_geterrmsg(awk));
+		qse_fprintf (QSE_STDERR, QSE_T("ERROR: %s\n"), qse_awk_geterrmsg(awk));
 		goto oops;
 	}
 
@@ -148,19 +146,19 @@ static int awk_main (int argc, qse_char_t* argv[])
 	retv = qse_awk_rtx_loop (rtx);
 	if (retv == QSE_NULL)
 	{
-		qse_fprintf (QSE_STDERR, QSE_T("ERROR: %s\n"), 
-			qse_awk_rtx_geterrmsg(rtx));
+		qse_fprintf (QSE_STDERR, QSE_T("ERROR: %s\n"), qse_awk_rtx_geterrmsg(rtx));
 		goto oops;
 	}
 
 	/* decrement the reference count of the return value */
 	qse_awk_rtx_refdownval (rtx, retv);
-	ret = 0;
 
-oops:
 	/* the buffer is available during the runtime context is alive */
 	qse_printf (QSE_T("Console Output:\n================\n%.*s\n"), (int)con->conoutpos, con->conout);
 
+	ret = 0;
+
+oops:
 	/* destroy the runtime context */
 	if (rtx) qse_awk_rtx_close (rtx);
 

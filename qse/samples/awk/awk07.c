@@ -14,7 +14,7 @@ static int awk_main (int argc, qse_char_t* argv[])
 	qse_awk_parsestd_t psin[2];
 	qse_awk_val_t* rtv = QSE_NULL;
 	qse_awk_val_t* arg = QSE_NULL;
-	int ret, opt;
+	int ret = -1, opt;
 
 	/* this structure is passed to qse_awk_rtx_makemapvalwithdata() */
 	qse_awk_val_map_data_t md[] =
@@ -29,8 +29,8 @@ static int awk_main (int argc, qse_char_t* argv[])
 	awk = qse_awk_openstd (0);
 	if (awk == QSE_NULL)  
 	{
-		qse_fprintf (QSE_STDERR, QSE_T("error: cannot open awk\n"));
-		ret = -1; goto oops;
+		qse_fprintf (QSE_STDERR, QSE_T("ERROR: cannot open awk\n"));
+		goto oops;
 	}
 
 	/* get the awk's trait */
@@ -47,11 +47,9 @@ static int awk_main (int argc, qse_char_t* argv[])
 	psin[1].type = QSE_AWK_PARSESTD_NULL;
 
 	/* parse the script */
-	ret = qse_awk_parsestd (awk, psin, QSE_NULL);
-	if (ret == -1)
+	if (qse_awk_parsestd (awk, psin, QSE_NULL) <= -1)
 	{
-		qse_fprintf (QSE_STDERR, QSE_T("error: %s\n"), 
-			qse_awk_geterrmsg(awk));
+		qse_fprintf (QSE_STDERR, QSE_T("ERROR: %s\n"), qse_awk_geterrmsg(awk));
 		goto oops;
 	}
 
@@ -67,18 +65,16 @@ static int awk_main (int argc, qse_char_t* argv[])
 	);
 	if (rtx == QSE_NULL) 
 	{
-		qse_fprintf (QSE_STDERR, QSE_T("error: %s\n"), 
-			qse_awk_geterrmsg(awk));
-		ret = -1; goto oops;
+		qse_fprintf (QSE_STDERR, QSE_T("ERROR: %s\n"), qse_awk_geterrmsg(awk));
+		goto oops;
 	}
 	
 	/* create a map value to pass as an argument */
 	arg = qse_awk_rtx_makemapvalwithdata (rtx, md);
 	if (arg == QSE_NULL)
 	{
-		qse_fprintf (QSE_STDERR, QSE_T("error: %s\n"), 
-			qse_awk_rtx_geterrmsg(rtx));
-		ret = -1; goto oops;
+		qse_fprintf (QSE_STDERR, QSE_T("ERROR: %s\n"), qse_awk_rtx_geterrmsg(rtx));
+		goto oops;
 	}
 	qse_awk_rtx_refupval (rtx, arg);
 	
@@ -86,9 +82,8 @@ static int awk_main (int argc, qse_char_t* argv[])
 	rtv = qse_awk_rtx_call (rtx, QSE_T("dump"), &arg, 1);
 	if (rtv == QSE_NULL)
 	{
-		qse_fprintf (QSE_STDERR, QSE_T("error: %s\n"), 
-			qse_awk_rtx_geterrmsg(rtx));
-		ret = -1; goto oops;
+		qse_fprintf (QSE_STDERR, QSE_T("ERROR: %s\n"), qse_awk_rtx_geterrmsg(rtx));
+		goto oops;
 	}
 
 	if (rtv->type == QSE_AWK_VAL_MAP)
@@ -110,9 +105,8 @@ static int awk_main (int argc, qse_char_t* argv[])
 				rtx, QSE_AWK_VAL_MAP_ITR_VAL(iptr), &str.len);
 			if (str.ptr == QSE_NULL)
 			{
-				qse_fprintf (QSE_STDERR, QSE_T("error: %s\n"), 
-					qse_awk_rtx_geterrmsg(rtx));
-				ret = -1; goto oops;
+				qse_fprintf (QSE_STDERR, QSE_T("ERROR: %s\n"), qse_awk_rtx_geterrmsg(rtx));
+				goto oops;
 			}
 	
 			/* #QSE_AWK_VAL_MAP_ITR_KEY returns the key part */
@@ -136,14 +130,15 @@ static int awk_main (int argc, qse_char_t* argv[])
 		str.ptr = qse_awk_rtx_valtostrdup (rtx, rtv, &str.len);
 		if (str.ptr == QSE_NULL)
 		{
-			qse_fprintf (QSE_STDERR, QSE_T("error: %s\n"), 
-				qse_awk_rtx_geterrmsg(rtx));
-			ret = -1; goto oops;
+			qse_fprintf (QSE_STDERR, QSE_T("ERROR: %s\n"), qse_awk_rtx_geterrmsg(rtx));
+			goto oops;
 		}
 	
 		qse_printf (QSE_T("ret [%.*s]\n"), (int)str.len, str.ptr);
 		qse_awk_rtx_freemem (rtx, str.ptr);
 	}
+
+	ret = 0;
 
 oops:
 	/* clear the return value */

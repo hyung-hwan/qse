@@ -14,17 +14,17 @@ static int awk_main (int argc, qse_char_t* argv[])
 	qse_awk_parsestd_t psin[2];
 	qse_char_t* str;
 	qse_size_t len;
-	qse_awk_val_t* rtv = QSE_NULL;
+	qse_awk_val_t* rtv;
 	qse_awk_val_t* arg[2] = { QSE_NULL, QSE_NULL };
-	int ret, i, opt;
+	int ret = -1, i, opt;
 	qse_awk_fun_t* fun;
 
 	/* create an awk object */
 	awk = qse_awk_openstd (0);
 	if (awk == QSE_NULL)  
 	{
-		qse_fprintf (QSE_STDERR, QSE_T("error: cannot open awk\n"));
-		ret = -1; goto oops;
+		qse_fprintf (QSE_STDERR, QSE_T("ERROR: cannot open awk\n"));
+		goto oops;
 	}
 
 	/* get the awk's trait */
@@ -41,11 +41,9 @@ static int awk_main (int argc, qse_char_t* argv[])
 	psin[1].type = QSE_AWK_PARSESTD_NULL;
 
 	/* parse the script */
-	ret = qse_awk_parsestd (awk, psin, QSE_NULL);
-	if (ret == -1)
+	if (qse_awk_parsestd (awk, psin, QSE_NULL) <= -1)
 	{
-		qse_fprintf (QSE_STDERR, QSE_T("error: %s\n"), 
-			qse_awk_geterrmsg(awk));
+		qse_fprintf (QSE_STDERR, QSE_T("ERROR: %s\n"), qse_awk_geterrmsg(awk));
 		goto oops;
 	}
 
@@ -60,18 +58,16 @@ static int awk_main (int argc, qse_char_t* argv[])
 	);
 	if (rtx == QSE_NULL) 
 	{
-		qse_fprintf (QSE_STDERR, QSE_T("error: %s\n"), 
-			qse_awk_geterrmsg(awk));
-		ret = -1; goto oops;
+		qse_fprintf (QSE_STDERR, QSE_T("ERROR: %s\n"), qse_awk_geterrmsg(awk));
+		goto oops;
 	}
 	
 	/* create the first argument to the pow function to call */
 	arg[0] = qse_awk_rtx_makeintval (rtx, 50);
 	if (arg[0] == QSE_NULL)
 	{
-		qse_fprintf (QSE_STDERR, QSE_T("error: %s\n"), 
-			qse_awk_rtx_geterrmsg(rtx));
-		ret = -1; goto oops;
+		qse_fprintf (QSE_STDERR, QSE_T("ERROR: %s\n"), qse_awk_rtx_geterrmsg(rtx));
+		goto oops;
 	}
 	qse_awk_rtx_refupval (rtx, arg[0]);
 
@@ -79,9 +75,8 @@ static int awk_main (int argc, qse_char_t* argv[])
 	arg[1] = qse_awk_rtx_makeintval (rtx, 3);
 	if (arg[1] == QSE_NULL)
 	{
-		qse_fprintf (QSE_STDERR, QSE_T("error: %s\n"), 
-			qse_awk_rtx_geterrmsg(rtx));
-		ret = -1; goto oops;
+		qse_fprintf (QSE_STDERR, QSE_T("ERROR: %s\n"), qse_awk_rtx_geterrmsg(rtx));
+		goto oops;
 	}
 	qse_awk_rtx_refupval (rtx, arg[1]);
 
@@ -89,18 +84,16 @@ static int awk_main (int argc, qse_char_t* argv[])
 	fun = qse_awk_rtx_findfun (rtx, QSE_T("pow"));
 	if (fun == QSE_NULL)
 	{
-		qse_fprintf (QSE_STDERR, QSE_T("error: %s\n"), 
-			qse_awk_rtx_geterrmsg(rtx));
-		ret = -1; goto oops;
+		qse_fprintf (QSE_STDERR, QSE_T("ERROR: %s\n"), qse_awk_rtx_geterrmsg(rtx));
+		goto oops;
 	}
 
 	/* call the function found */
 	rtv = qse_awk_rtx_callfun (rtx, fun, arg, 2);
 	if (rtv == QSE_NULL)
 	{
-		qse_fprintf (QSE_STDERR, QSE_T("error: %s\n"), 
-			qse_awk_rtx_geterrmsg(rtx));
-		ret = -1; goto oops;
+		qse_fprintf (QSE_STDERR, QSE_T("ERROR: %s\n"), qse_awk_rtx_geterrmsg(rtx));
+		goto oops;
 	}
 
 	/* duplicate the return value to a string */
@@ -111,15 +104,16 @@ static int awk_main (int argc, qse_char_t* argv[])
 
 	if (str == QSE_NULL)
 	{
-		qse_fprintf (QSE_STDERR, QSE_T("error: %s\n"), 
-			qse_awk_rtx_geterrmsg(rtx));
-		ret = -1; goto oops;
+		qse_fprintf (QSE_STDERR, QSE_T("ERROR: %s\n"), qse_awk_rtx_geterrmsg(rtx));
+		goto oops;
 	}
 
 	qse_printf (QSE_T("[%.*s]\n"), (int)len, str);
 
 	/* destroy the duplicated string  */
 	qse_awk_rtx_freemem (rtx, str);
+
+	ret = 0;
 
 oops:
 	/* dereference all arguments */
@@ -130,6 +124,7 @@ oops:
 
 	/* destroy a runtime context */
 	if (rtx) qse_awk_rtx_close (rtx);
+
 	/* destroy the processor */
 	if (awk) qse_awk_close (awk);
 
