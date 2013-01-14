@@ -101,8 +101,7 @@ static int awk_main (int argc, qse_char_t* argv[])
 	/* parse a script in a string */
 	if (qse_awk_parsestd (awk, psin, QSE_NULL) <= -1)
 	{
-		qse_fprintf (QSE_STDERR, QSE_T("ERROR: %s\n"), 
-			qse_awk_geterrmsg(awk));
+		qse_fprintf (QSE_STDERR, QSE_T("ERROR: %s\n"), qse_awk_geterrmsg(awk));
 		goto oops;
 	}
 

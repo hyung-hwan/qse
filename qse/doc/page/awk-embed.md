@@ -129,17 +129,36 @@ returned with qse_awk_rtx_getfirstmapvalitr() and qse_awk_rtx_getnextmapvalitr()
 
  \includelineno awk07.c
 
-Global Variables
-----------------
+Built-in Global Variables
+--------------------------
 
-You can add built-in global variables with qse_awk_addgbl().
-Use qse_awk_getgbl() to get information. 
+QSEAWK predefines global variables such as *SUBSEP* and *ARGC*.  You can add 
+your own built-in variables in the global scope with qse_awk_addgbl(). You 
+must add new variables before qse_awk_parse() or qse_awk_parsestd(). Later,
+you can get the values of the global variables using qse_awk_rtx_getgbl()
+with an ID returned by qse_awk_addgbl(). The IDs of the predefined global 
+variables are available as the ::qse_awk_gbl_id_t type values
+
+ \includelineno awk08.c
 
 Built-in Functions
 ------------------
 
-You can add built-in functions with qse_awk_addfnc().
-On the other hand, modular built-in functions reside in a shared object.
+QSEAWK predefines built-in functions like *match*. You can add your own 
+built-in function with qse_awk_addfnc(). The following sample shows how to add
+a function named *basename* that get the base file name part of a path name.
+
+ \includelineno awk09.c
+
+In the sample above, the *basename* function returns a resulting string. In 
+case of any implemenation errors, it would cause the runtime context to abort
+with an error since it returned -1. To avoid the situation, you may change
+the way basename() works by defining it to return the resulting string via
+the second parameter and return 0 or -1 as a return value. For the arguements
+to pass by reference, you can specify the letter *r* into the *arg.spec* field
+at the argument position.
+
+ \includelineno awk10.c
 
 Single Script over Multiple Data Streams
 ----------------------------------------
@@ -153,9 +172,10 @@ Creating multiple awk objects
 Memory Pool
 -----------
 
-Locale
-------
+Writing Modules
+---------------
 
+modular built-in functions and variables reside in a shared object.
 
 Embedding in C++
 -----------------
@@ -215,10 +235,6 @@ In 0.6.X, it accepts an array of scripts.
     psin[1].type = QSE_AWK_PARSESTD_STR;
     qse_awk_parsestd (awk, psin, QSE_NULL)
 
-### qse_awk_parsestd_t ###
-
-the cmgr field moved from the union member file to the outer structure.
-
 ### 0 upon Opening ###
 I/O handlers can return 0 for success upon opening.
 
@@ -237,6 +253,9 @@ I/O handlers can return 0 for success upon opening.
 \example awk05.c
 \example awk06.c
 \example awk07.c
+\example awk08.c
+\example awk09.c
+\example awk10.c
 \example awk21.cpp
 \example awk22.cpp
 \example awk23.cpp

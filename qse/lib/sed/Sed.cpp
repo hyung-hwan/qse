@@ -90,21 +90,6 @@ void Sed::setTrait (int trait)
 	qse_sed_setopt (sed, QSE_SED_TRAIT, &trait);
 }
 
-
-#if 0
-Sed::size_t Sed::getMaxDepth (depth_t id) const
-{
-	QSE_ASSERT (sed != QSE_NULL);
-	return qse_sed_getmaxdepth (sed, id);
-}
-
-void Sed::setMaxDepth (int ids, size_t depth)
-{
-	QSE_ASSERT (sed != QSE_NULL);
-	qse_sed_setmaxdepth (sed, ids, depth);
-}
-#endif
-
 const Sed::char_t* Sed::getErrorMessage () const
 {
 	return (sed == QSE_NULL)? QSE_T(""): qse_sed_geterrmsg (sed);

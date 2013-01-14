@@ -6,12 +6,12 @@
 #include "awk00.h"
 
 static const qse_char_t* src = QSE_T(
-	"BEGIN { print basename(\"/etc/passwd\");  }"
+	"BEGIN { if (basename(\"/etc/passwd\", base) <= -1) print \"ERROR\"; else  print base;  }"
 );
 
 static int fnc_basename (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
-	qse_awk_val_t* a0, * rv;
+	qse_awk_val_t* a0, * rv = QSE_NULL;
 	qse_char_t* ptr;
 	qse_size_t len;
 
@@ -34,21 +34,33 @@ static int fnc_basename (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 		/* if it is a string value, convert the value to a string 
 		 * with duplication  */
 		ptr = qse_awk_rtx_valtostrdup (rtx, a0, &len);	
-		if (ptr == QSE_NULL) return -1; 
+		if (ptr)
+		{
+			/* make a string value with the base name  */
+			rv = qse_awk_rtx_makestrvalwithstr (rtx, qse_basename (ptr));
 
-		/* make a string value with the base name  */
-		rv = qse_awk_rtx_makestrvalwithstr (rtx, qse_basename (ptr));
-
-		/* free the duplicated string */
-		qse_awk_rtx_freemem (rtx, ptr);
+			/* free the duplicated string */
+			qse_awk_rtx_freemem (rtx, ptr);
+		}
 	}
 
-	if (rv == QSE_NULL) return -1;
+	if (rv)
+	{
+		/* change the value of the second parameter passed by reference  */
+		qse_awk_rtx_setrefval (rtx, qse_awk_rtx_getarg (rtx, 1), rv);
 
-	/* set the return value that basename() will return */
-	qse_awk_rtx_setretval (rtx, rv);
+		/* set the return value without error checks because 
+		 * qse_awk_rtx_makeintval() for 0 never fails */
+		qse_awk_rtx_setretval (rtx, qse_awk_rtx_makeintval (rtx, 0));
+	}
+	else
+	{
+		/* set the return value without error checks because 
+		 * qse_awk_rtx_makeintval() for -1 never fails */
+		qse_awk_rtx_setretval (rtx, qse_awk_rtx_makeintval (rtx, -1));
+	}
 
-	/* implemenation success */
+	/* implementation success */
 	return 0;
 }
 
@@ -71,8 +83,9 @@ static int awk_main (int argc, qse_char_t* argv[])
 
 	/* add a built-in function basename() */
 	qse_memset (&spec, 0, QSE_SIZEOF(spec));
-	spec.arg.min = 1; /* limit the number of arguments to 1 */
-	spec.arg.max = 1;
+	spec.arg.min = 2; /* limit the number of arguments to 1 */
+	spec.arg.max = 2;
+	spec.arg.spec = QSE_T("vr"); /* pass the second argument by reference */
 	spec.impl = fnc_basename; /* specify the actual implementation */
 	if (qse_awk_addfnc (awk, QSE_T("basename"), &spec) == QSE_NULL)
 	{
@@ -97,7 +110,7 @@ static int awk_main (int argc, qse_char_t* argv[])
 	rtx = qse_awk_rtx_openstd (
 		awk, 
 		0,
-		QSE_T("awk09"), 
+		QSE_T("awk10"), 
 		QSE_NULL, /* stdin */
 		QSE_NULL, /* stdout */
 		QSE_NULL  /* default cmgr */

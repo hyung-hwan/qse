@@ -83,6 +83,11 @@ how to embed QSE::StdSed for stream editing.
 
  \includelineno sed21.cpp
 
+The following sample shows how to inherit QSE::StdSed and and create a 
+customized stream editor.
+
+ \includelineno sed22.cpp
+
 
 
 
@@ -93,3 +98,4 @@ how to embed QSE::StdSed for stream editing.
 \example sed02.c
 \example sed03.c
 \example sed21.cpp
+\example sed22.cpp

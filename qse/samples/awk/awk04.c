@@ -24,14 +24,14 @@ static int awk_main (int argc, qse_char_t* argv[])
 	qse_awk_t* awk = QSE_NULL;
 	qse_awk_rtx_t* rtx = QSE_NULL;
 	qse_awk_parsestd_t psin[2];
-	int ret, i, opt;
+	int ret = -1, i, opt;
 
 	/* create an awk object */
 	awk = qse_awk_openstd (0);
 	if (awk == QSE_NULL)  
 	{
-		qse_fprintf (QSE_STDERR, QSE_T("error: cannot open awk\n"));
-		ret = -1; goto oops;
+		qse_fprintf (QSE_STDERR, QSE_T("ERROR: cannot open awk\n"));
+		goto oops;
 	}
 
 	/* get the awk's trait */
@@ -48,10 +48,9 @@ static int awk_main (int argc, qse_char_t* argv[])
 	psin[1].type = QSE_AWK_PARSESTD_NULL;
 
 	/* parse a script */
-	ret = qse_awk_parsestd (awk, psin, QSE_NULL);
-	if (ret == -1)
+	if (qse_awk_parsestd (awk, psin, QSE_NULL) <= -1)
 	{
-		qse_fprintf (QSE_STDERR, QSE_T("error: %s\n"), 
+		qse_fprintf (QSE_STDERR, QSE_T("ERROR: %s\n"), 
 			qse_awk_geterrmsg(awk));
 		goto oops;
 	}
@@ -67,9 +66,8 @@ static int awk_main (int argc, qse_char_t* argv[])
 	);
 	if (rtx == QSE_NULL) 
 	{
-		qse_fprintf (QSE_STDERR, QSE_T("error: %s\n"), 
-			qse_awk_geterrmsg(awk));
-		ret = -1; goto oops;
+		qse_fprintf (QSE_STDERR, QSE_T("ERROR: %s\n"), qse_awk_geterrmsg(awk));
+		goto oops;
 	}
 	
 	/* call init() initially, followed by 4 calls to main(), 
@@ -84,9 +82,8 @@ static int awk_main (int argc, qse_char_t* argv[])
 		v = qse_awk_rtx_call (rtx, fnc[i], QSE_NULL, 0);
 		if (v == QSE_NULL)
 		{
-			qse_fprintf (QSE_STDERR, QSE_T("error: %s\n"), 
-				qse_awk_rtx_geterrmsg(rtx));
-			ret = -1; goto oops;
+			qse_fprintf (QSE_STDERR, QSE_T("ERROR: %s\n"), qse_awk_rtx_geterrmsg(rtx));
+			goto oops;
 		}
 
 		/* convert the return value to a string with duplication */
@@ -97,9 +94,8 @@ static int awk_main (int argc, qse_char_t* argv[])
 
 		if (str == QSE_NULL)
 		{
-			qse_fprintf (QSE_STDERR, QSE_T("error: %s\n"), 
-				qse_awk_rtx_geterrmsg(rtx));
-			ret = -1; goto oops;
+			qse_fprintf (QSE_STDERR, QSE_T("ERROR: %s\n"), qse_awk_rtx_geterrmsg(rtx));
+			goto oops;
 		}
 
 		/* print the return value */
@@ -109,9 +105,12 @@ static int awk_main (int argc, qse_char_t* argv[])
 		qse_awk_rtx_freemem (rtx, str);
 	}	
 
+	ret = 0;
+
 oops:
 	/* destroy a runtime context */
 	if (rtx) qse_awk_rtx_close (rtx);
+
 	/* destroy the awk object */
 	if (awk) qse_awk_close (awk);
 

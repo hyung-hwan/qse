@@ -24,11 +24,13 @@
 #include <qse/cmn/Mmged.hpp>
 #include <qse/sed/sed.h>
 
-/** @file
- * This file defines C++ classes that you can use when you create a stream
- * editor. The C++ classes encapsulates the C data types and functions in 
- * a more object-oriented manner.
- */
+/// \file
+/// This file defines C++ classes that you can use when you create a stream
+/// editor. The C++ classes encapsulates the C data types and functions in 
+/// a more object-oriented manner.
+///
+/// \todo support sed tracer
+///
 
 /////////////////////////////////
 QSE_BEGIN_NAMESPACE(QSE)
@@ -97,7 +99,7 @@ public:
 			void setHandle (void* handle) { this->arg->handle = handle; }
 
 			/// The getName() function returns an I/O name.
-			/// @return #QSE_NULL for the main data stream,
+			/// \return #QSE_NULL for the main data stream,
 			///         file path for explicit file stream
 			const char_t* getName () const { return this->arg->path; }
 
@@ -122,7 +124,7 @@ public:
 
 		/// The open() function should be implemented by a subclass
 		/// to open a stream. It can get the mode requested by calling
-		/// the Data::getMode() function over the I/O parameter @a io.
+		/// the Data::getMode() function over the I/O parameter \a io.
 		///
 		/// The return value of 0 may look a bit tricky. Easygoers 
 		/// can just return 1 on success and never return 0 from open().
@@ -134,7 +136,7 @@ public:
 		///   failure after having called close() as it cannot write
 		///   further on EOF.
 		///
-		/// @return -1 on failure, 1 on success, 
+		/// \return -1 on failure, 1 on success, 
 		///         0 on success but reached EOF.
 		virtual int open (Data& io) = 0;
 
@@ -157,7 +159,7 @@ public:
 
 	///
 	/// The ~Sed() function destroys a stream editor. 
-	/// @note The close() function is not called by this destructor.
+	/// \note The close() function is not called by this destructor.
 	///       To avoid resource leaks, You should call close() before
 	///       a stream editor is destroyed if it has been initialized
 	///       with open().
@@ -167,7 +169,7 @@ public:
 	///
 	/// The open() function initializes a stream editor and makes it
 	/// ready for subsequent use.
-	/// @return 0 on success, -1 on failure.
+	/// \return 0 on success, -1 on failure.
 	///
 	int open ();
 
@@ -178,15 +180,15 @@ public:
 
 	///
 	/// The compile() function compiles a script from a stream 
-	/// @a iostream.
-	/// @return 0 on success, -1 on failure
+	/// \a iostream.
+	/// \return 0 on success, -1 on failure
 	///
 	int compile (Stream& sstream);
 
 	///
 	/// The execute() function executes compiled commands over the I/O
 	/// streams defined through I/O handlers
-	/// @return 0 on success, -1 on failure
+	/// \return 0 on success, -1 on failure
 	///
 	int execute (Stream& iostream);
 
@@ -205,35 +207,17 @@ public:
 
 	///
 	/// The getTrait() function gets the current traits.
-	/// @return 0 or current options ORed of #trait_t enumerators.
+	/// \return 0 or current options ORed of #trait_t enumerators.
 	///
 	int getTrait () const;
 
 	///
 	/// The setTrait() function sets traits for a stream editor.
-	/// The option code @a opt is 0 or OR'ed of #trait_t enumerators.
+	/// The option code \a opt is 0 or OR'ed of #trait_t enumerators.
 	///
 	void setTrait (
 		int trait ///< option code
 	);
-
-#if 0
-	///
-	/// The getMaxDepth() function gets the maximum processing depth for
-	/// an operation type identified by @a id.
-	///
-	size_t getMaxDepth (
-		depth_t id ///< operation type
-	) const;
-
-	///
-	/// The setMaxDepth() function gets the maximum processing depth.
-	///
-	void setMaxDepth (
-		int    ids,  ///< 0 or a number OR'ed of depth_t values
-		size_t depth ///< 0 maximum depth
-	);
-#endif
 
 	///
 	/// The getErrorMessage() function gets the description of the last 
@@ -276,7 +260,7 @@ public:
 	///
 	/// The getConsoleLine() function returns the current line
 	/// number from an input console. 
-	/// @return current line number
+	/// \return current line number
 	///
 	size_t getConsoleLine ();
 
@@ -291,7 +275,7 @@ public:
 protected:
 	///
 	/// The getErrorString() function returns an error formatting string
-	/// for the error number @a num. A subclass wishing to customize
+	/// for the error number \a num. A subclass wishing to customize
 	/// an error formatting string may override this function.
 	/// 
 	virtual const char_t* getErrorString (
