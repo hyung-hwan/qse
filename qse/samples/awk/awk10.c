@@ -149,4 +149,3 @@ int qse_main (int argc, qse_achar_t* argv[])
 	init_awk_sample_locale ();
 	return qse_runmain (argc, argv, awk_main);
 }
-

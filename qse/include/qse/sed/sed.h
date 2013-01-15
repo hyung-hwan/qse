@@ -451,7 +451,7 @@ QSE_EXPORT void* qse_sed_getxtn (
  * specified by \a id into the buffer pointed to by \a value.
  *
  * The \a value field is dependent on \a id:
- *  - #QSE_SED_TRAIT - int*
+ *  - #QSE_SED_TRAIT - int*, 0 or bitwised-ORed of #qse_sed_trait_t values
  *  - #QSE_SED_TRACER - qse_sed_tracer_t*
  *  - #QSE_SED_LFORMATTER - qse_sed_lformatter_t*
  *
@@ -468,7 +468,7 @@ QSE_EXPORT int qse_sed_getopt (
  * specified by \a id to the value pointed to by \a value.
  *
  * The \a value field is dependent on \a id:
- *  - #QSE_SED_TRAIT - const int*
+ *  - #QSE_SED_TRAIT - const int*, 0 or bitwised-ORed of #qse_sed_trait_t values
  *  - #QSE_SED_TRACER - qse_sed_tracer_t
  *  - #QSE_SED_LFORMATTER - qse_sed_lformatter_t
  *
