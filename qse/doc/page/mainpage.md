@@ -26,6 +26,4 @@ See the subpages for more information.
 - @ref sed-cmd
 - @ref sed-embed
 - @subpage mem "Memory Management"
-- @subpage cenc "Character Encoding"
-- @subpage io  "I/O Handling"
 

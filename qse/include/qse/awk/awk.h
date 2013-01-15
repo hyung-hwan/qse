@@ -978,7 +978,8 @@ struct qse_awk_rtx_ecb_t
  */
 enum qse_awk_opt_t
 {
-	QSE_AWK_TRAIT,
+	/** trait option. 0 or bitwise-ORed of ::qse_awk_trait_t values */
+	QSE_AWK_TRAIT,  
 
 	QSE_AWK_MODPREFIX,
 	QSE_AWK_MODPOSTFIX,
@@ -1001,17 +1002,14 @@ typedef enum qse_awk_opt_t qse_awk_opt_t;
  */
 enum qse_awk_trait_t
 { 
-	/**
-	 * allows undeclared variables and implicit concatenation 
-	 **/
+	/** allows undeclared variables */
 	QSE_AWK_IMPLICIT = (1 << 0),
 
-	/**
-	 * enable abort,reset,nextofile,OFILENAME,@include.
-	 */
+	/** enable abort,reset,nextofile,OFILENAME,@include. */
 	QSE_AWK_EXTRAKWS = (1 << 2),
 
-	/** supports \b getline and \b print */
+	/** supports \b getline, \b print, \b printf, \b close, \b fflush,
+	 *  piping, and file rediction */
 	QSE_AWK_RIO = (1 << 3), 
 
 	/** enables the two-way pipe if #QSE_AWK_RIO is on */
@@ -1047,11 +1045,11 @@ enum qse_awk_trait_t
 	 */
 	QSE_AWK_STRIPRECSPC = (1 << 6),
 
-	/**
-	 * strips off leading spaces when converting a string to a number.
-	 */
+	/** strips off leading spaces when converting a string to a number. */
 	QSE_AWK_STRIPSTRSPC = (1 << 7),
 
+	/** enable implicit concatenation. 
+	 *  if this is off, you need %% for concatenation.  */
 	QSE_AWK_BLANKCONCAT = (1 << 8),
 
 	/** CR + LF by default */
@@ -1606,12 +1604,24 @@ QSE_EXPORT void qse_awk_seterror (
 	const qse_awk_loc_t* errloc  /**< error location */
 );
 
+/**
+ * The qse_awk_getopt() function gets the value of an option
+ * specified by \a id into the buffer pointed to by \a value.
+ *
+ * \return 0 on success, -1 on failure
+ */
 QSE_EXPORT int qse_awk_getopt (
 	qse_awk_t*    awk,
 	qse_awk_opt_t id,
 	void*         value
 );
 
+/**
+ * The qse_awk_setopt() function sets the value of an option 
+ * specified by \a id to the value pointed to by \a value.
+ *
+ * \return 0 on success, -1 on failure
+ */
 QSE_EXPORT int qse_awk_setopt (
 	qse_awk_t*    awk,
 	qse_awk_opt_t id,
@@ -2243,6 +2253,7 @@ QSE_EXPORT qse_awk_val_t* qse_awk_rtx_makenilval (
 
 /**
  * The qse_awk_rtx_makeintval() function creates an integer value.
+ * If \a v is one of -1, 0, 1, this function never fails.
  * \return value on success, #QSE_NULL on failure
  */
 QSE_EXPORT qse_awk_val_t* qse_awk_rtx_makeintval (

@@ -121,11 +121,12 @@ the same function multiple times.
 
  \includelineno awk06.c
 
-Similarly, you can pass a more complex value than a number. You can compose
-a map value with qse_awk_rtx_makemapval() or qse_awk_rtx_makemapvalwithdata().
-The sample below demonstrates how to use qse_awk_rtx_makemapvalwithdata(),
-pass a created map value to qse_awk_rtx_call(), and traverse a map value
-returned with qse_awk_rtx_getfirstmapvalitr() and qse_awk_rtx_getnextmapvalitr().
+Similarly, you can pass a more complex value than a plain number or string. 
+You can compose a map value with qse_awk_rtx_makemapval() or 
+qse_awk_rtx_makemapvalwithdata(). The following sample demonstrates how to
+use qse_awk_rtx_makemapvalwithdata(), pass a created map value to 
+qse_awk_rtx_call(), and traverse a map value returned with 
+qse_awk_rtx_getfirstmapvalitr() and qse_awk_rtx_getnextmapvalitr().
 
  \includelineno awk07.c
 
@@ -144,9 +145,9 @@ variables are available as the ::qse_awk_gbl_id_t type values
 Built-in Functions
 ------------------
 
-QSEAWK predefines built-in functions like *match*. You can add your own 
-built-in function with qse_awk_addfnc(). The following sample shows how to add
-a function named *basename* that get the base file name part of a path name.
+QSEAWK predefines built-in functions like *match* and *gsub*. You can add your
+own built-in function with qse_awk_addfnc(). The following sample shows how to 
+add a function named *basename* that get the base file name part of a path name.
 
  \includelineno awk09.c
 
@@ -156,26 +157,62 @@ with an error since it returned -1. To avoid the situation, you may change
 the way basename() works by defining it to return the resulting string via
 the second parameter and return 0 or -1 as a return value. For the arguements
 to pass by reference, you can specify the letter *r* into the *arg.spec* field
-at the argument position.
+at the argument position. That is, speciying *r* at the second position in
+the *arg.spec* string means that you want to pass the second argument by
+reference.
 
  \includelineno awk10.c
 
-Single Script over Multiple Data Streams
-----------------------------------------
+Customizing Other Behaviors
+---------------------------
 
-Customizing Language Features
------------------------------
+QSEAWK comes with more more trait options that you can use to change the
+behavior. For instance, you have seen how to disable the standard BEGIN, 
+END, pattern-action blocks by turning off the #QSE_AWK_PABLOCK trait option
+in several sample program above. 
 
-Creating multiple awk objects
------------------------------
+The ::qse_awk_trait_t type defines various trait options that you can turn
+on or off using qse_awk_setopt() with #QSE_AWK_TRAIT. The following code 
+snippet shows how to disable all built-in I/O statements like *getline*, 
+*print*, *printf*, *close*, *fflush*, piping, and file redirection. 
+Additionally, it disables the BEGIN, END, pattern-action blocks.
+
+~~~~~{.c}
+ qse_awk_getopt (awk, QSE_AWK_TRAIT, &opt);
+ opt &= ~QSE_AWK_PABLOCK;
+ opt &= ~QSE_AWK_RIO;
+ qse_awk_setopt (awk, QSE_AWK_TRAIT, &opt);
+~~~~~
+
+This way, you can change the QSEAWK language behave differently for your
+own needs.
+
+Multiple Instances
+------------------
+
+The awk object and the runtime context object reside in its own memory blocks
+allocated and maintain related information in their own object space. Multiple
+instances created are independent of each other.
+
+You can run a script over multiple data streams by creating multiple runtime
+context objects from a single awk object.
+
+TBD.
 
 Memory Pool
 -----------
 
+You can confine the information used for an awk object include the related
+runtime context objects in a single memory pool.
+
+TBD.
+
 Writing Modules
 ---------------
 
-modular built-in functions and variables reside in a shared object.
+Modular built-in functions and variables reside in a shared object.
+
+TBD.
 
 Embedding in C++
 -----------------
@@ -218,28 +255,33 @@ Changes in 0.6.0
 
 ### qse_awk_parsestd() ###
 
-In 0.5.6, it accepted a single script.
+The second parameter of qse_awk_parsestd() specifies the input script.
 
-    qse_awk_parsestd_t psin;
-    psin.type = QSE_AWK_PARSESTD_STR;
-    psin.u.str.ptr = src;
-    psin.u.str.len = qse_strlen(src);
-    qse_awk_parsestd (awk, &psin, QSE_NULL);
+In 0.5.6, it accepted a single script for input.
 
-In 0.6.X, it accepts an array of scripts.
+~~~~~{.c}
+ qse_awk_parsestd_t psin;
+ psin.type = QSE_AWK_PARSESTD_STR;
+ psin.u.str.ptr = src;
+ psin.u.str.len = qse_strlen(src);
+ qse_awk_parsestd (awk, &psin, QSE_NULL);
+~~~~~
 
-    qse_awk_parsestd_t psin[2];
-    psin[0].type = QSE_AWK_PARSESTD_STR;
-    psin[0].u.str.ptr = src;
-    psin[0].u.str.len = qse_strlen(src);
-    psin[1].type = QSE_AWK_PARSESTD_STR;
-    qse_awk_parsestd (awk, psin, QSE_NULL)
+In 0.6.X, it accepts an array of scripts for input. To specify a single script,
+use an array of 2 elements whose last element is of the #QSE_AWK_PARSESTD_NULL
+type.
+
+~~~~~{.c}
+ qse_awk_parsestd_t psin[2];
+ psin[0].type = QSE_AWK_PARSESTD_STR;
+ psin[0].u.str.ptr = src;
+ psin[0].u.str.len = qse_strlen(src);
+ psin[1].type = QSE_AWK_PARSESTD_NULL;
+ qse_awk_parsestd (awk, psin, QSE_NULL);
+~~~~~
 
 ### 0 upon Opening ###
 I/O handlers can return 0 for success upon opening.
-
-
-
 
 
 
