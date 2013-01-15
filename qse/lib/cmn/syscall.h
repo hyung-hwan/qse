@@ -496,8 +496,8 @@ the user-level applications with the following differences:
 
 #define QSE_SYSCALL0(ret,num) \
 	__asm__ volatile ( \
-		"int $0x80\n"  \
-		: "=a"(ret)  \
+		"int $0x80\n" \
+		: "=a"(ret) \
 		: "a"((qse_uint32_t)num) \
 		: "memory" \
 	)

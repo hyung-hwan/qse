@@ -199,7 +199,7 @@ static int fnc_getpid (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 
 static int fnc_gettid (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
-	qse_long_t pid;
+	qse_intptr_t pid;
 	qse_awk_val_t* retv;
 
 #if defined(_WIN32)
@@ -226,7 +226,7 @@ static int fnc_gettid (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	#endif
 #endif
 
-	retv = qse_awk_rtx_makeintval (rtx, pid);
+	retv = qse_awk_rtx_makeintval (rtx, (qse_long_t)pid);
 	if (retv == QSE_NULL) return -1;
 
 	qse_awk_rtx_setretval (rtx, retv);
