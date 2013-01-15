@@ -1,6 +1,9 @@
 QSEAWK Language                                                      {#awk-lang}
 ================================================================================
 
+Overview
+--------
+
 QSEAWK implements the language described in the 
 [The AWK Programming Language][awkbook] with extensions.
 
@@ -8,22 +11,47 @@ QSEAWK reads an AWK program, recognizes various tokens contained while skipping
 comments and whitespaces that don't constinute a token, analyses syntax, and
 tranforms them to an internal form for execution.
 
-### Comments ###
+An QSEAWK program can be composed of the following elements at the top level.
+
+ - pattern-action blocks
+ - *BEGIN* blocks
+ - *END* blocks
+ - user-defined functions
+ - comments
+ - \@global variables
+ - \@include statements
+
+The following code snippet is a valid QSEAWK program that print the string
+*hello, world* to the console. it is composed of a single *BEGIN* block.
+
+~~~~~{.awk}
+ BEGIN {
+   print "hello, world";
+ }
+~~~~~
+
+Comments
+--------
 
 A single-line comment is introduced by a hash character #, and is terminated at 
 the end of the same line. Additionally, it supports a C-style multi-line comment
 enclosed in /* and */. The multi-line comment can't nest and can't appear within
 string literals and regular expressions.
 
-    x = y; # assign y to x.
-    /*
-    this line is ignored.
-    this line is ignored too.
-    */
+~~~~~{.awk}
+ x = y; # assign y to x.
+ /*
+ this line is ignored.
+ this line is ignored too.
+ */
+~~~~~
 
-## Tokens ##
+Tokens
+------
 
-A token is composed of one or more consecutive characters.
+When QSEAWK parses a program, it classifies the a series of input charcters 
+into meaningful tokens. It can extract the smallest meaningful unit through
+this tokenization process. There are 
 
 ### Numbers ###
 
