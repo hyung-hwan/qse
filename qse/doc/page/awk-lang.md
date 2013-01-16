@@ -84,9 +84,9 @@ string literals and regular expressions.
 Tokens
 ------
 
-When QSEAWK parses a program, it classifies the a series of input charcters 
+When QSEAWK parses a program, it classifies a series of input characters 
 into meaningful tokens. It can extract the smallest meaningful unit through
-this tokenization process. There are 
+this tokenization process. 
 
 ### Numbers ###
 
@@ -650,17 +650,25 @@ of *r* causes the function to close the read-end of the pipe and the value of
 The function returns 0 on success and -1 on failure.
 
 Though not so useful, it is possible to create more than 1 streams of different
-kinds under the same name. It is undefined which stream *close* 
-should close in the following program.
+kinds under the same name. The following program generates a shell script 
+/tmp/x containing a command *ls -laF* and executes it without closing the
+script file being generated. It reads the execution output via a pipe and
+prints it to the console. It is undefined which stream the last *close* 
+should close assuming the first *close* is commented out and the program works.
 
 ~~~~~{.awk}
- BEGIN { 
-   "/tmp/x" || getline y; # rwpipe stream
-   print 1 | "/tmp/x"; # pipe stream
-   print 1 > "/tmp/x"; # file stream
-   close ("/tmp/x");
+ BEGIN {
+    print "ls -laF" > "/tmp/x";      # file stream
+    system ("chmod ugo+x /tmp/x");   
+    #close ("/tmp/x"); 
+    while(("/tmp/x" | getline y) > 0) print y;  # pipe stream
+    close ("/tmp/x"); # which stream to close?
  }
 ~~~~~
+
+Note that the execution of generated script fails if the script file is
+open on some platforms. That's what the first *close* commented out is 
+actually for.
 
 ### fflush (io-name) ###
 
