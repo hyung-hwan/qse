@@ -21,6 +21,7 @@
 #include <qse/cmn/mbwc.h>
 #include <qse/cmn/slmb.h>
 #include <qse/cmn/utf8.h>
+#include <qse/cmn/mb8.h>
 #include <qse/cmn/cp949.h>
 #include <qse/cmn/cp950.h>
 #include <qse/cmn/str.h>
@@ -30,31 +31,18 @@
  *       dependent. 
  */
 
-/* TODO: binary cmgr -> simply expands a byte to wchar and vice versa. */
-
 static qse_cmgr_t builtin_cmgr[] =
 {
-	{
-		qse_slmbtoslwc,
-		qse_slwctoslmb
-	},
-
+	/* keep the order aligned with qse_cmgr_id_t values in <qse/cmn/mbwc.h> */
+	{ qse_slmbtoslwc, qse_slwctoslmb },
+	{ qse_utf8touc,   qse_uctoutf8 },
+	{ qse_mb8towc,    qse_wctomb8 }
 #if defined(QSE_ENABLE_XCMGRS)
-	{
-		qse_cp949touc,
-		qse_uctocp949
-	},
-
-	{
-		qse_cp950touc,
-		qse_uctocp950
-	},
+	,
+	{ qse_cp949touc,  qse_uctocp949 },
+	{ qse_cp950touc,  qse_uctocp950 }
 #endif
 
-	{
-		qse_utf8touc,
-		qse_uctoutf8
-	}
 };
 
 static qse_cmgr_t* dfl_cmgr = &builtin_cmgr[QSE_CMGR_SLMB];
@@ -84,6 +72,8 @@ qse_cmgr_t* qse_findcmgrbyid (qse_cmgr_id_t id)
 
 qse_cmgr_t* qse_findcmgr (const qse_char_t* name)
 {
+	/* TODO: binary search or something better for performance improvement 
+	 *       when there are many entries in the table */
 	static struct 
 	{
 		const qse_char_t* name;
@@ -95,7 +85,8 @@ qse_cmgr_t* qse_findcmgr (const qse_char_t* name)
 		{ QSE_T("cp949"),  QSE_CMGR_CP949 },
 		{ QSE_T("cp950"),  QSE_CMGR_CP950 },
 #endif
-		{ QSE_T("slmb"),   QSE_CMGR_UTF8 }
+		{ QSE_T("slmb"),   QSE_CMGR_SLMB },
+		{ QSE_T("mb8"),    QSE_CMGR_MB8 }
 	};
 
 	if (name)

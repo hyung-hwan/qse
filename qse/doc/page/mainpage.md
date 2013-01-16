@@ -1,7 +1,7 @@
 QSE                                                                  {#mainpage}
 ================================================================================
 
-@image html qse-logo.png 
+\image html qse-logo.png 
 
 The QSE library implements AWK, SED, and Unix commands in an embeddable form 
 and defines data types, functions, and classes that you can use when you embed 
@@ -20,10 +20,10 @@ Chung, Hyung-Hwan <hyunghwan.chung@gmail.com>
 
 See the subpages for more information.
 
-- @ref installation
-- @ref awk-lang
-- @ref awk-embed
-- @ref sed-cmd
-- @ref sed-embed
-- @subpage mem "Memory Management"
+- \ref installation
+- \ref awk-lang
+- \ref awk-embed
+- \ref sed-cmd
+- \ref sed-embed
+- \subpage mem "Memory Management"
 
