@@ -35,14 +35,26 @@ typedef qse_cmgr_t* (*qse_cmgr_finder_t) (const qse_char_t* name);
  */
 enum qse_cmgr_id_t
 {
+	/** The slmb cmgr relies on the locale routnines in the underlying
+	 *  platforms. You should initialize locale properly before using this.
+	 */
 	QSE_CMGR_SLMB,
+
+	/**
+	 * The utf cmgr converts between utf8 and unicode characters.
+	 */
 	QSE_CMGR_UTF8,
+
+	/**
+	 * The mb8 cmgr is used to convert raw bytes to wide characters and
+	 * vice versa.
+	 */
 	QSE_CMGR_MB8
 
 #if defined(QSE_ENABLE_XCMGRS)
 	,
-	QSE_CMGR_CP949,
-	QSE_CMGR_CP950
+	QSE_CMGR_CP949, /**< cp949 */
+	QSE_CMGR_CP950  /**< cp950 */
 #endif
 };
 typedef enum qse_cmgr_id_t qse_cmgr_id_t;

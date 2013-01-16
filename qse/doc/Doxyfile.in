@@ -1552,6 +1552,8 @@ PREDEFINED             = "QSE_BEGIN_NAMESPACE(x)=namespace x {" \
                          "QSE_SIZEOF_OFF_T=@QSE_SIZEOF_OFF_T@" \
                          "QSE_SIZEOF_OFF64_T=@QSE_SIZEOF_OFF64_T@" \
                          "QSE_EXPORT=" \
+                         "QSE_ENABLE_XCMGRS=" \
+                         "QSE_ENABLE_BUNDLED_UNICODE=" \
                          "QSE_ENABLE_SEDTRACER=" \
                          "@CHAR_MODE@"
 
