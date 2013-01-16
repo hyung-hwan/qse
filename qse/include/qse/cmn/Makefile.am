@@ -20,6 +20,7 @@ pkginclude_HEADERS = \
 	lda.h \
 	main.h \
 	map.h \
+	mb8.h \
 	mbwc.h \
 	mem.h \
 	mux.h \

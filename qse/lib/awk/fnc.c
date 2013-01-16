@@ -225,7 +225,7 @@ static int fnc_close (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 		if (name == QSE_NULL) return -1;
 	}
 
-	if (a1 != QSE_NULL)
+	if (a1)
 	{
 		if (a1->type == QSE_AWK_VAL_STR)
 		{
@@ -246,7 +246,7 @@ static int fnc_close (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 
 	if (len == 0)
 	{
-		/* getline or print doesn't allow an emptry for the 
+		/* getline or print doesn't allow an empty string for the 
 		 * input or output file name. so close should not allow 
 		 * it either.  
 		 * another reason for this is if close is called explicitly 
@@ -346,8 +346,16 @@ static int fnc_fflush (qse_awk_rtx_t* run, const qse_awk_fnc_info_t* fi)
 
 	if (nargs == 0)
 	{
-		/* flush the console output.
-		 * fflush() should return -1 on errors */
+		/* fflush() flushes the console output.
+		 * fflush() should return -1 on errors.
+		 *
+		 * if no previous console output statement is seen,
+		 * this function won't be able to find the entry.
+		 * so it returns -1;
+		 *
+		 * BEGIN { flush(); } # flush() returns -1
+		 * BEGIN { print 1; flush(); } # flush() returns 0
+		 */
 		n = qse_awk_rtx_flushio (run, QSE_AWK_OUT_CONSOLE, QSE_T(""));
 	}
 	else
@@ -380,17 +388,43 @@ static int fnc_fflush (qse_awk_rtx_t* run, const qse_awk_fnc_info_t* fi)
 			ptr++;
 		}
 
-		/* flush the given rio */
+		/* flush the given rio.
+		 *
+		 * flush("") flushes all output streams regardless of names.
+		 * pass QSE_NULL for the name in that case so that the
+		 * callee matches any streams. 
+		 *
+		 * fflush() doesn't specify the type of output streams
+		 * so it attemps to flush all types of output streams.
+		 * 
+		 * though not useful, it's possible to have multiple
+		 * streams with the same name but of different types.
+		 * 
+		 *  BEGIN { 
+		 *    print 1 | "/tmp/x"; 
+		 *    print 1 > "/tmp/x";
+		 *    fflush("/tmp/x"); 
+		 *  }
+		 */
+
 		n = flush_io (
-			run, QSE_AWK_RIO_FILE, 
+			run, QSE_AWK_OUT_FILE, 
 			((len0 == 0)? QSE_NULL: str0), 1);
 		/*if (n == -99) return -1;*/
 		n = flush_io (
-			run, QSE_AWK_RIO_PIPE,
+			run, QSE_AWK_OUT_APFILE, 
+			((len0 == 0)? QSE_NULL: str0), n);
+		/*if (n == -99) return -1;*/
+		n = flush_io (
+			run, QSE_AWK_OUT_PIPE,
+			((len0 == 0)? QSE_NULL: str0), n);
+		/*if (n == -99) return -1;*/
+		n = flush_io (
+			run, QSE_AWK_OUT_RWPIPE,
 			((len0 == 0)? QSE_NULL: str0), n);
 		/*if (n == -99) return -1;*/
 
-		/* if n remains 1, no ip handlers have been defined for
+		/* if n remains 1, no io handlers have been defined for
 		 * file, pipe, and rwpipe. so make fflush return -1. 
 		 * if n is -2, no such named io has been found at all 
 		 * if n is -1, the io handler has returned an error */

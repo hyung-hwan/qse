@@ -21,7 +21,7 @@
 #ifndef _QSE_CMN_MBWC_H_
 #define _QSE_CMN_MBWC_H_
 
-/** @file
+/** \file
  * This file provides functions and definitions needed for 
  * multibyte/wide-characer conversion.
  */
@@ -36,7 +36,9 @@ typedef qse_cmgr_t* (*qse_cmgr_finder_t) (const qse_char_t* name);
 enum qse_cmgr_id_t
 {
 	QSE_CMGR_SLMB,
-	QSE_CMGR_UTF8
+	QSE_CMGR_UTF8,
+	QSE_CMGR_MB8
+
 #if defined(QSE_ENABLE_XCMGRS)
 	,
 	QSE_CMGR_CP949,
@@ -59,7 +61,7 @@ QSE_EXPORT qse_cmgr_t* qse_findcmgrbyid (
 /**
  * The qse_getfindcmgr() function find a built-in cmgr matching a given 
  * @a name and returns it. It returns #QSE_NULL if no match is found.
- * The @a name can be one of "utf8", "slmb", "cp949", "cp950", and an 
+ * The @a name can be one of "slmb", "utf8", "mb8", "cp949", "cp950", and an 
  * empty string. Calling this function with an empty string is the same
  * as calling qse_getdflcmgr().
  */

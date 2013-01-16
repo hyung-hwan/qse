@@ -30,6 +30,41 @@ The following code snippet is a valid QSEAWK program that print the string
  }
 ~~~~~
 
+In general, QSEAWK starts executing the *BEGIN* blocks. For each input record
+from an input stream, it executes the pattern-action blocks if the pattern 
+evaluates to true. Finally, it executes the *END* blocks. By default, each
+line in the input stream is an input record. None of these blocks are 
+mandatory. However, a useful program needs at least 1 block to be present.
+
+For the following input records,
+~~~~~{.txt}
+ abcdefgahijklmn
+ 1234567890
+ opqrstuvwxyz
+~~~~~
+
+this AWK program produces
+~~~~~{.awk}
+ BEGIN { mr=0; }
+ /abc|vwx/ { print $0; mr++; }
+ END { 
+   print "total records: " NR; 
+   print "matching records: " mr; 
+ }
+~~~~~
+
+this output text.
+~~~~~{.txt}
+ abcdefgahijklmn
+ opqrstuvwxyz
+ total records: 3
+ matching records: 2
+~~~~~
+
+The QSEAWK library provides a capability to use a use a user-defined function
+as an entry point instead of executing these blocks. See \ref awk-embed for 
+how to change the entry point.
+
 Comments
 --------
 
@@ -221,15 +256,15 @@ to a non-zero value. This is possible if you allow assigning a map to
 another non-map variable with #QSE_AWK_MAPTOVAR. In this case, a map
 is not deep-copied but the reference to it is copied.
 
-@code
-BEGIN { 
-	a[10]=20; 
-	b=a; 
-	b[20]=40;
-	for (i in a) print i, a[i];  
-	print a===b;
-}
-@endcode
+~~~~~{.awk}
+ BEGIN { 
+   a[10]=20; 
+   b=a; 
+   b[20]=40;
+   for (i in a) print i, a[i];  
+   print a===b;
+ }
+~~~~~
 
 
 The === operator may be also useful when you want to indicate an error
@@ -237,21 +272,21 @@ with an uninitialized variable. The following code check if the function
 returned a map. Since the variable 'nil' has never been assigned, its 
 internal type is 'NIL' and 
 
-@code
-function a ()
-{
-	x[10] = 2;
-	return x;
-}
+~~~~~{.awk}
+ function a ()
+ {
+   x[10] = 2;
+   return x;
+ }
 
-BEGIN {
-	t = a();
-	if (t === nil)
-		print "nil";
-	else
-		print "ok";
-}
-@endcode.
+ BEGIN {
+   t = a();
+   if (t === nil)
+     print "nil";
+   else
+     print "ok";
+ }
+~~~~~
 
 The !== operator is a negated form of the === operator.
 
@@ -287,14 +322,18 @@ stream being processed. The directive can only be used at the outmost scope
 where global variable declarations, *BEGIN*, *END*, and/or pattern-action 
 blocks appear. 
 
-    @include "abc.awk"
-    BEGIN { func_in_abc (); }
+~~~~~{.awk}
+ @include "abc.awk"
+ BEGIN { func_in_abc (); }
+~~~~~
 
 A semicolon is optional after the included file name. The following is the 
 same as the sample above.
 
-    @include "abc.awk";
-    BEGIN { func_in_abc(); }
+~~~~~{.awk}
+ @include "abc.awk";
+ BEGIN { func_in_abc(); }
+~~~~~
 
 If #QSE_AWK_NEWLINE is off, the semicolon is required.
 
@@ -330,41 +369,42 @@ of expressions separated with a comma. Each expression in the group is
 evaluated in the appearing order. The evaluation result of the last 
 expression in the group is returned as that of the group.
 
-@code
-BEGIN {
-	c = (1, 2, 9);
-	a=((1*c, 3*c), (3 - c), ((k = 6+(c+1, c+2)), (-7 * c)));
-	print c; # 9;
-	print a; # -63	
-	print k; # 17
-}
-@endcode
+~~~~~{.awk}
+ BEGIN {
+   c = (1, 2, 9);
+   a=((1*c, 3*c), (3 - c), ((k = 6+(c+1, c+2)), (-7 * c)));
+   print c; # 9;
+   print a; # -63	
+   print k; # 17
+ }
+~~~~~
 
 ### RETURN ###
 The return statement is valid in pattern-action blocks as well as in functions.
 The execution of a calling block is aborted once the return statement is executed.
 
-@code
-$ qseawk 'BEGIN { return 20; }' ; echo $?
-20
-#endcode
+~~~~~
+ $ qseawk 'BEGIN { return 20; }' ; echo $?
+ 20
+~~~~~
 
 If #QSE_AWK_MAPTOVAR is on, you can return an arrayed value from a function.
-@code
-function getarray() {
-	@local a;
-	a["one"] = 1;
-	a["two"] = 2;
-	a["three"] = 3;
-	return a;
-}
 
-BEGIN {
-	@local x;
-	x = getarray();
-	for (i in x) print i, x[i];
-}
-@endcode
+~~~~~{.awk}
+ function getarray() {
+   @local a;
+   a["one"] = 1;
+   a["two"] = 2;
+   a["three"] = 3;
+   return a;
+ }
+
+ BEGIN {
+   @local x;
+   x = getarray();
+   for (i in x) print i, x[i];
+ }
+~~~~~
 
 
 ### RESET ###
@@ -373,14 +413,14 @@ After that, the array variable can also be used as a scalar variable again.
 You must have #QSE_AWK_RESET on to be able to be able to use this 
 statement.
 
-@code
-BEGIN {
-	a[1] = 20;
-	reset a;
-	a = 20; # this is legal
-	print a;
-}
-@endcode
+~~~~~{.awk}
+ BEGIN {
+   a[1] = 20;
+   reset a;
+   a = 20; # this is legal
+   print a;
+ }
+~~~~~
 
 ### ABORT ###
 The abort statment is similar to the exit statement except that
@@ -551,9 +591,11 @@ For this reason, you are advised to parenthesize *getline* and its related
 components to avoid confusion whenever necessary. The example reading into 
 the variable *line* can be made clearer with parenthesization.
 
-    BEGIN {
-        while ((getline line) > 0) print line;
-    }
+~~~~~{.awk}
+ BEGIN {
+   while ((getline line) > 0) print line;
+ }
+~~~~~
 
 ### print ###
 **TODO**
@@ -565,30 +607,34 @@ they are function calls.  In this mode, they return a negative number
 on failure and a zero on success and any I/O failure doesn't abort
 a running program. 
 
-    BEGIN {
-        a = print "hello, world" > "/dev/null";
-        print a;	
-        a = print ("hello, world") > "/dev/null";
-        print a;	
-    }
+~~~~~{.awk}
+ BEGIN {
+   a = print "hello, world" > "/dev/null";
+   print a;	
+   a = print ("hello, world") > "/dev/null";
+   print a;	
+ }
+~~~~~
 
 Since print and printf are like function calls, you can use them
 in any context where a normal expression is allowed. For example,
 printf is used as a conditional expression in an 'if' statement 
 in the sample code below.
 
-    BEGIN {
-        if ((printf "hello, world\n" || "tcp://127.0.0.1:9999") <= -1)
-            print "FAILURE";
-        else
-            print "SUCCESS";
-    }
+~~~~~{.awk}
+ BEGIN {
+   if ((printf "hello, world\n" || "tcp://127.0.0.1:9999") <= -1)
+     print "FAILURE";
+   else
+     print "SUCCESS";
+ }
+~~~~~
 
 ### close (io-name, what) ###
 
-The *close* function closes a stream indicated by the name *io-name*. It takes
-an optional parameter *what* indicating whether input or output should be
-closed. 
+The *close* function closes a stream indicated by the name *io-name*. 
+It takes an optional parameter *what* indicating whether input or output 
+should be closed. 
 
 If *io-name* is a file, it closes the file handle associated;
 If *io-name* is a command, it may kill the running process from the command,
@@ -597,11 +643,63 @@ If *io-name* is a network stream, it tears down connections to the network
 peer and closes the socket handles.
 
 The optional paramenter *what* must be one of *r* or *w* when used is useful
-when *io-name* is a command invoked for the two-way operator. The value of
-*r* causes the function to close the read-end of the pipe and the value of
+when *io-name* is a command invoked for the two-way pipe operator. The value 
+of *r* causes the function to close the read-end of the pipe and the value of
 *w* causes the function to close the write-end of the pipe.
 
 The function returns 0 on success and -1 on failure.
+
+Though not so useful, it is possible to create more than 1 streams of different
+kinds under the same name. It is undefined which stream *close* 
+should close in the following program.
+
+~~~~~{.awk}
+ BEGIN { 
+   "/tmp/x" || getline y; # rwpipe stream
+   print 1 | "/tmp/x"; # pipe stream
+   print 1 > "/tmp/x"; # file stream
+   close ("/tmp/x");
+ }
+~~~~~
+
+### fflush (io-name) ###
+
+The *fflush* function flushes the output stream indicated by *io-name*. 
+If *io-name* is not specified, it flushes the open console output stream.
+If *io-name* is an empty stream, it flushes all open output streams.
+It returns 0 on success and -1 on failure.
+
+QSEAWK doesn't open the console output stream before it executes any output
+commands like *print* or *printf*. so fflush() returns -1 in the following
+program.
+
+~~~~~{.awk}
+ BEGIN { 
+   fflush(); 
+ }
+~~~~~
+
+The *print* command is executed before fflush() in the following program.
+When fflush() is executed, the output stream is open. so fflush() returns 0.
+
+~~~~~{.awk}
+ BEGIN { 
+   print 1; 
+   fflush(); 
+ }
+~~~~~
+
+Though not so useful, it is possible to create more than 1 output streams
+of different kinds under the same name. *fflush* in the following program
+flushes both the file stream and the pipe stream.
+
+~~~~~{.awk}
+ BEGIN { 
+   print 1 | "/tmp/x"; # file stream
+   print 1 > "/tmp/x"; # pipe stream
+   fflush ("/tmp/x");
+ }
+~~~~~
 
 ### setioattr (io-name, attr-name, attr-value) ###
 
@@ -614,17 +712,19 @@ success and -1 on failure.
  - *attr-name* is one of *codepage*, *ctimeout*, *atimeout*, *rtimeout*, 
    *wtimeout*.
  - *attr-value* varies depending on *attr-name*.
-   + codepage: *cp949*, *cp950*, *utf8*
+   + codepage: *cp949*, *cp950*, *utf8*, *slmb*, *mb8*
    + ctimeout, atimeout, rtimeout, wtimeout: the number of seconds. effective 
     on socket based streams only. you may use a floating-point number for 
     lower resoluation than a second. a negative value turns off timeout. 
 
 See this sample that prints the contents of a document encoded in cp949.
 
-    BEGIN { 
-        setioattr ("README.TXT", "codepage", "cp949"); 
-        while ((getline x < "README.TXT") > 0) print x; 
-    }
+~~~~~{.awk}
+ BEGIN { 
+   setioattr ("README.TXT", "codepage", "cp949"); 
+   while ((getline x < "README.TXT") > 0) print x; 
+  }
+~~~~~
 
 ### getioattr (io-name, attr-name, attr-value) ###
 
@@ -634,12 +734,14 @@ is set to the variable referenced by *attr-value*. See *setioattr* for
 description on *io-name* and *attr-name*. It returns 0 on success and -1 on 
 failure.
 
-    BEGIN { 
-        setioattr ("README.TXT", "codepage", "cp949"); 
-        if (getioattr ("README.TXT", "codepage", codepage) <= -1)
-            print "codepage unknown";
-        else print "codepage: " codepage;
-    }
+~~~~~{.awk}
+ BEGIN { 
+   setioattr ("README.TXT", "codepage", "cp949"); 
+   if (getioattr ("README.TXT", "codepage", codepage) <= -1)
+     print "codepage unknown";
+   else print "codepage: " codepage;
+ }
+~~~~~
 
 ### Two-way Pipe ###
 
@@ -649,17 +751,19 @@ must be set with #QSE_AWK_RWPIPE to be able to use the two-way pipe.
 The example redirects the output of *print* to the external *sort* command
 and reads back the output. 
 
-    BEGIN {
-        print "15" || "sort";
-        print "14" || "sort";
-        print "13" || "sort";
-        print "12" || "sort";
-        print "11" || "sort";
-        # close the input side of the pipe as 'sort' starts emitting result 
-        # once the input is closed.
-        close ("sort", "r");
-        while (("sort" || getline x) > 0) print x; 
-    }
+~~~~~{.awk}
+ BEGIN {
+   print "15" || "sort";
+   print "14" || "sort";
+   print "13" || "sort";
+   print "12" || "sort";
+   print "11" || "sort";
+   # close the input side of the pipe as 'sort' starts emitting result 
+   # once the input is closed.
+   close ("sort", "r");
+   while (("sort" || getline x) > 0) print x; 
+ }
+~~~~~
 
 This two-way pipe can create a TCP or UDP connection if the pipe command
 string is prefixed with one of the followings:
@@ -671,100 +775,106 @@ string is prefixed with one of the followings:
 
 See this example.
 
-    BEGIN { 
-        # it binds a TCP socket to the IPv6 address :: and the port number 
-        # 9999 and waits for the first coming connection. It repeats writing
-        # "hello world" to the first connected peer and reading a line from
-        # it until the session is torn down.
-        do { 
-            print "hello world" || "tcpd://[::]:9999"; 
-            if (("tcpd://[::]:9999" || getline x) <= 0) break; 
-            print x; 
-        } 
-        while(1);  
-    }
+~~~~~{.awk}
+ BEGIN { 
+   # it binds a TCP socket to the IPv6 address :: and the port number 
+   # 9999 and waits for the first coming connection. It repeats writing
+   # "hello world" to the first connected peer and reading a line from
+   # it until the session is torn down.
+   do { 
+      print "hello world" || "tcpd://[::]:9999"; 
+      if (("tcpd://[::]:9999" || getline x) <= 0) break; 
+      print x; 
+   } 
+   while(1);  
+ }
+~~~~~
 
 You can manipulate TCP or UDP timeouts for connection, accepting, reading, and 
 writing with the *setioattr* function and the *getioattr* function.
 
 See the example below.
 
-    BEGIN { 
-        setioattr ("tcp://127.0.0.1:9999", "ctimeout", 3);
-        setioattr ("tcp://127.0.0.1:9999", "rtimeout", 5.5);
-        print "hello world" || "tcp://127.0.0.1:9999"; 
-        "tcp://127.0.0.1:9999" || getline x; 
-        print x;
-    }
+~~~~~{.awk}
+ BEGIN { 
+   setioattr ("tcp://127.0.0.1:9999", "ctimeout", 3);
+   setioattr ("tcp://127.0.0.1:9999", "rtimeout", 5.5);
+   print "hello world" || "tcp://127.0.0.1:9999"; 
+   "tcp://127.0.0.1:9999" || getline x; 
+   print x;
+ }
+~~~~~
 
 Here is an interesting example adopting Michael Sanders' AWK web server, 
 modified for QSEAWK.
 
-    # 
-    # Michael Sanders' AWK web server for QSEAWK.
-    # Orginal code in http://awk.info/?tools/server
-    #
-    # qseawk --tolerant=on --rwpipe=on webserver.awk
-    #
-    BEGIN {
-      x        = 1                         # script exits if x < 1 
-      port     = 8080                      # port number 
-      host     = "tcpd://0.0.0.0:" port    # host string 
-      url      = "http://localhost:" port  # server url 
-      status   = 200                       # 200 == OK 
-      reason   = "OK"                      # server response 
-      RS = ORS = "\r\n"                    # header line terminators 
-      doc      = Setup()                   # html document 
-      len      = length(doc) + length(ORS) # length of document 
-      while (x) {
-         if ($1 == "GET") RunApp(substr($2, 2))
-         if (! x) break
-         print "HTTP/1.0", status, reason || host
-         print "Connection: Close"        || host
-         print "Pragma: no-cache"         || host
-         print "Content-length:", len     || host
-         print ORS doc                    || host
-         close(host)     # close client connection 
-         host || getline # wait for new client request 
-      }
-      # server terminated... 
-      doc = Bye()
-      len = length(doc) + length(ORS)
+~~~~~{.awk}
+ # 
+ # Michael Sanders' AWK web server for QSEAWK.
+ # Orginal code in http://awk.info/?tools/server
+ #
+ # qseawk --tolerant=on --rwpipe=on webserver.awk
+ #
+ BEGIN {
+   x        = 1                         # script exits if x < 1 
+   port     = 8080                      # port number 
+   host     = "tcpd://0.0.0.0:" port    # host string 
+   url      = "http://localhost:" port  # server url 
+   status   = 200                       # 200 == OK 
+   reason   = "OK"                      # server response 
+   RS = ORS = "\r\n"                    # header line terminators 
+   doc      = Setup()                   # html document 
+   len      = length(doc) + length(ORS) # length of document 
+   while (x) {
+      if ($1 == "GET") RunApp(substr($2, 2))
+      if (! x) break
       print "HTTP/1.0", status, reason || host
       print "Connection: Close"        || host
       print "Pragma: no-cache"         || host
       print "Content-length:", len     || host
       print ORS doc                    || host
-      close(host)
-    }
-    
-    function Setup() {
-      tmp = "<html>\
-      <head><title>Simple gawk server</title></head>\
-      <body>\
-      <p><a href=" url "/xterm>xterm</a>\
-      <p><a href=" url "/xcalc>xcalc</a>\
-      <p><a href=" url "/xload>xload</a>\
-      <p><a href=" url "/exit>terminate script</a>\
-      </body>\
-      </html>"
-      return tmp
-    }
-    
-    function Bye() {
-      tmp = "<html>\
-      <head><title>Simple gawk server</title></head>\
-      <body><p>Script Terminated...</body>\
-      </html>"
-      return tmp
-    }
-    
-    function RunApp(app) {
-      if (app == "xterm")  {system("xterm&"); return}
-      if (app == "xcalc" ) {system("xcalc&"); return}
-      if (app == "xload" ) {system("xload&"); return}
-      if (app == "exit")   {x = 0}
-    }
+      close(host)     # close client connection 
+      host || getline # wait for new client request 
+   }
+   # server terminated... 
+   doc = Bye()
+   len = length(doc) + length(ORS)
+   print "HTTP/1.0", status, reason || host
+   print "Connection: Close"        || host
+   print "Pragma: no-cache"         || host
+   print "Content-length:", len     || host
+   print ORS doc                    || host
+   close(host)
+ }
+ 
+ function Setup() {
+   tmp = "<html>\
+   <head><title>Simple gawk server</title></head>\
+   <body>\
+   <p><a href=" url "/xterm>xterm</a>\
+   <p><a href=" url "/xcalc>xcalc</a>\
+   <p><a href=" url "/xload>xload</a>\
+   <p><a href=" url "/exit>terminate script</a>\
+   </body>\
+   </html>"
+   return tmp
+ }
+ 
+ function Bye() {
+   tmp = "<html>\
+   <head><title>Simple gawk server</title></head>\
+   <body><p>Script Terminated...</body>\
+   </html>"
+   return tmp
+ }
+ 
+ function RunApp(app) {
+   if (app == "xterm")  {system("xterm&"); return}
+   if (app == "xcalc" ) {system("xcalc&"); return}
+   if (app == "xload" ) {system("xload&"); return}
+   if (app == "exit")   {x = 0}
+ }
+~~~~~
 
 ### I/O Character Encoding ###
 

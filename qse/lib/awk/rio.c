@@ -114,7 +114,7 @@ static int find_rio_in (
 	}
 
 	/* search the chain for exiting an existing io name */
-	while (p != QSE_NULL)
+	while (p)
 	{
 		if (p->type == (io_type | io_mask) &&
 		    qse_strcmp (p->name,name) == 0) break;
@@ -688,7 +688,7 @@ int qse_awk_rtx_writeio_str (
 	}
 
 	/* look for the corresponding rio for name */
-	while (p != QSE_NULL)
+	while (p)
 	{
 		/* the file "1.tmp", in the following code snippets, 
 		 * would be opened by the first print statement, but not by
@@ -799,7 +799,7 @@ int qse_awk_rtx_flushio (
 {
 	qse_awk_rio_arg_t* p = run->rio.chain;
 	qse_awk_rio_impl_t handler;
-	int io_type, /*io_mode,*/ io_mask;
+	int io_type, io_mode, io_mask;
 	qse_ssize_t n;
 	int ok = 0;
 
@@ -809,7 +809,7 @@ int qse_awk_rtx_flushio (
 
 	/* translate the out_type into the relevant I/O type and mode */
 	io_type = out_type_map[out_type];
-	/*io_mode = out_mode_map[out_type];*/
+	io_mode = out_mode_map[out_type];
 	io_mask = out_mask_map[out_type];
 
 	handler = run->rio.handler[io_type];
@@ -821,9 +821,13 @@ int qse_awk_rtx_flushio (
 	}
 
 	/* look for the corresponding rio for name */
-	while (p != QSE_NULL)
+	while (p)
 	{
-		if (p->type == (io_type | io_mask) && 
+		/* without the check for io_mode and p->mode,
+		 * QSE_AWK_OUT_FILE and QSE_AWK_OUT_APFILE matches the
+		 * same entry since (io_type | io_mask) has the same value
+		 * for both. */
+		if (p->type == (io_type | io_mask) && p->mode == io_mode &&
 		    (name == QSE_NULL || qse_strcmp(p->name,name) == 0)) 
 		{
 			qse_awk_rtx_seterrnum (run, QSE_AWK_ENOERR, QSE_NULL);
@@ -1123,7 +1127,7 @@ int qse_awk_rtx_closeio (
 {
 	qse_awk_rio_arg_t* p = rtx->rio.chain, * px = QSE_NULL;
 
-	while (p != QSE_NULL)
+	while (p)
 	{
 		 /* it handles the first that matches the given name
 		  * regardless of the io type */

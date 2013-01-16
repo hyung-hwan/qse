@@ -45,6 +45,7 @@ libqsecmn_la_SOURCES = \
 	ipad.c \
 	lda.c \
 	main.c \
+	mb8.c \
 	mbwc.c \
 	mbwc-str.c \
 	mem.c \
