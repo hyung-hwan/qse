@@ -108,6 +108,7 @@ AC_CHECK_HEADERS([net/if.h net/if_dl.h], [], [], [
 	#include <sys/types.h>
 	#include <sys/socket.h>])
 AC_CHECK_HEADERS([sys/stropts.h sys/macstat.h linux/ethtool.h linux/sockios.h])
+AC_CHECK_HEADERS([crt_externs.h])
 AC_CHECK_HEADERS([uci.h])
 
 dnl check data types
@@ -235,9 +236,15 @@ else
 		SSL_LIBS="-lssl"
 		AC_DEFINE(HAVE_SSL, 1, [ssl support])
 
+		dnl additional check
+		AC_CHECK_LIB([crypto], [ERR_get_error], [
+			SSL_LIBS="${SSL_LIBS} -lcrypto"
+		])
+
 		dnl only for consistency with AC_CHECK_FUNCS
 		AC_DEFINE(HAVE_SSL_LIBRARY_INIT, 1)
 	])
+
 fi
 AC_SUBST(SSL_LIBS)
 
@@ -331,10 +338,23 @@ dnl Changing ac_cv_sizeof___int128_t here doesn't corret SIZEOF___INT128_T
 dnl since it's already generated. It only affects QSE_SIZEOF___INT128_T below.
 if test ${ac_cv_sizeof___int128_t} -gt 0
 then
+	AC_MSG_CHECKING([__int128_t with %])
 	AC_COMPILE_IFELSE(
-		[AC_LANG_PROGRAM([], [__int128_t x = 0; x %= 10;])],
-		[],
-		[ac_cv_sizeof___int128_t=0]
+		[AC_LANG_PROGRAM([], [
+			volatile __int128_t x, base;
+			x = (__int128_t)&base;
+			base = (__int128_t)&x;
+			x = x % base;
+			return (int)x;
+		])],
+
+		[
+			AC_MSG_RESULT(yes)
+		],
+		[
+			AC_MSG_RESULT(no)
+			ac_cv_sizeof___int128_t=0
+		]
 	)
 fi
 
