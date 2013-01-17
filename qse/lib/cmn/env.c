@@ -28,6 +28,11 @@
 #    include <windows.h>
 #endif
 
+#if defined(HAVE_CRT_EXTERNS_H)
+	/* MacOSX/darwin. _NSGetEnviron() */
+#	include <crt_externs.h>
+#endif
+
 #define STRSIZE 4096
 #define ARRSIZE 128
 
@@ -410,7 +415,6 @@ static qse_char_t* get_env (qse_env_t* env, const qse_char_t* name, int* free)
 
 	return QSE_NULL;
 }
-
 #elif defined(QSE_ENV_CHAR_IS_WCHAR)
 static qse_wchar_t* get_env (qse_env_t* env, const qse_wchar_t* name, int* free)
 {
@@ -470,8 +474,13 @@ static qse_wchar_t* get_env (qse_env_t* env, const qse_wchar_t* name, int* free)
 
 static qse_mchar_t* get_env (qse_env_t* env, const qse_mchar_t* name, int* free)
 {
+
+	#if defined(HAVE_CRT_EXTERNS_H)
+	qse_mchar_t** p = *(_NSGetEnviron());
+	#else
 	extern char** environ;
 	qse_mchar_t** p = environ;
+	#endif
 
 	if (p)
 	{
@@ -633,8 +642,13 @@ done:
 	return 0;
 
 #else
+
+	#if defined(HAVE_CRT_EXTERNS_H)
+	qse_mchar_t** p = *(_NSGetEnviron());
+	#else
 	extern char** environ;
 	qse_mchar_t** p = environ;
+	#endif
 
 	if (p)
 	{

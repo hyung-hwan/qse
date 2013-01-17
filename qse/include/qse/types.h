@@ -73,7 +73,8 @@ typedef enum qse_tri_t qse_tri_t;
 /** @typedef qse_uint_t
  * The qse_uint_t type defines an unsigned integer type as large as a pointer.
  */
-#if (defined(hpux) || defined(__hpux) || defined(__hpux__)) && \
+#if (defined(hpux) || defined(__hpux) || defined(__hpux__) || \
+     (defined(__APPLE__) && defined(__MACH__))) && \
     (QSE_SIZEOF_VOID_P == QSE_SIZEOF_LONG)
 	typedef long qse_int_t;
 	typedef unsigned long qse_uint_t;

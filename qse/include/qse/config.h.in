@@ -75,6 +75,9 @@
 /* Define to 1 if you have the `cosl' function. */
 #undef HAVE_COSL
 
+/* Define to 1 if you have the <crt_externs.h> header file. */
+#undef HAVE_CRT_EXTERNS_H
+
 /* Define to 1 if you have the declaration of `cygwin_conv_path', and to 0 if
    you don't. */
 #undef HAVE_DECL_CYGWIN_CONV_PATH

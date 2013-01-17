@@ -38,6 +38,9 @@
 #	if defined(HAVE_SPAWN_H)
 #		include <spawn.h>
 #	endif
+#	if defined(HAVE_CRT_EXTERNS_H)
+#		include <crt_externs.h> /* MacOSX/darwin. _NSGetEnviron() */
+#	endif
 #endif
 
 static qse_ssize_t pio_input (
@@ -445,18 +448,30 @@ int qse_pio_init (
 	posix_spawnattr_t psattr;
 	qse_pio_pid_t pid;
 	param_t param;
+	#if defined(HAVE_CRT_EXTERNS_H)
+	#define environ (*(_NSGetEnviron()))
+	#else
 	extern char** environ;
+	#endif
 #elif defined(QSE_SYSCALL0) && defined(SYS_vfork)
 	qse_pio_pid_t pid;
 	param_t param;
+	#if defined(HAVE_CRT_EXTERNS_H)
+	#define environ (*(_NSGetEnviron()))
+	#else
 	extern char** environ;
+	#endif
 	char** envarr;
 	int highest_fd;
 	int dummy;
 #else
 	qse_pio_pid_t pid;
 	param_t param;
+	#if defined(HAVE_CRT_EXTERNS_H)
+	#define environ (*(_NSGetEnviron()))
+	#else
 	extern char** environ;
+	#endif
 #endif
 
 	QSE_MEMSET (pio, 0, QSE_SIZEOF(*pio));
