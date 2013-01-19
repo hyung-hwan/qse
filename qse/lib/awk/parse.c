@@ -5415,11 +5415,11 @@ static int get_number (qse_awk_t* awk, qse_awk_tok_t* tok)
 static int get_string (
 	qse_awk_t* awk, qse_char_t end_char, 
 	qse_char_t esc_char, int keep_esc_char,
-	int preescaped, qse_awk_tok_t* tok)
+	qse_size_t preescaped, qse_awk_tok_t* tok)
 {
 	qse_cint_t c;
-	int escaped = preescaped;
-	int digit_count = 0;
+	qse_size_t escaped = preescaped;
+	qse_size_t digit_count = 0;
 	qse_cint_t c_acc = 0;
 
 	while (1)
@@ -5440,6 +5440,8 @@ static int get_string (
 				digit_count++;
 				if (digit_count >= escaped) 
 				{
+					/* should i limit the max to 0xFF/0377? 
+					 * if (c_acc > 0377) c_acc = 0377;*/
 					ADD_TOKEN_CHAR (awk, tok, c_acc);
 					escaped = 0;
 				}
@@ -5451,7 +5453,7 @@ static int get_string (
 				escaped = 0;
 			}
 		}
-		else if (escaped == 2 || escaped == 4 || escaped == 8)
+		else if (escaped == QSE_TYPE_MAX(qse_size_t) || escaped == 4 || escaped == 8)
 		{
 			if (c >= QSE_T('0') && c <= QSE_T('9'))
 			{
@@ -5490,9 +5492,8 @@ static int get_string (
 			{
 				qse_char_t rc;
 
-				rc = (escaped == 2)? QSE_T('x'):
+				rc = (escaped == QSE_TYPE_MAX(qse_size_t))? QSE_T('x'):
 				     (escaped == 4)? QSE_T('u'): QSE_T('U');
-
 				if (digit_count == 0) 
 					ADD_TOKEN_CHAR (awk, tok, rc);
 				else ADD_TOKEN_CHAR (awk, tok, c_acc);
@@ -5533,12 +5534,12 @@ static int get_string (
 			}
 			else if (c == QSE_T('x')) 
 			{
-				escaped = 2;
+				escaped = QSE_TYPE_MAX(qse_size_t);
 				digit_count = 0;
 				c_acc = 0;
 				continue;
 			}
-		#ifdef QSE_CHAR_IS_WCHAR
+		#if defined(QSE_CHAR_IS_WCHAR)
 			else if (c == QSE_T('u') && QSE_SIZEOF(qse_char_t) >= 2) 
 			{
 				escaped = 4;

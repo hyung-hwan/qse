@@ -13,9 +13,9 @@ tranforms them to an internal form for execution.
 
 An QSEAWK program can be composed of the following elements at the top level.
 
- - pattern-action blocks
  - *BEGIN* blocks
  - *END* blocks
+ - pattern-action blocks
  - user-defined functions
  - comments
  - \@global variables
@@ -107,17 +107,17 @@ point with a preceeding number.
     34.56e # 34.56 
     34.56E3 
 
-An integer can be prefixed with 0x, 0, 0b for a hexa-decimal number, an octal number,
-and a binary number respectively. For a hexa-decimal number, letters from A to F
-can form a number case-insenstively in addition to numeric digits.
+An integer can be prefixed with 0x, 0, 0b for a hexa-decimal number, an octal 
+number, and a binary number respectively. For a hexa-decimal number, letters 
+from A to F can form a number case-insenstively in addition to numeric digits.
 
     0xA1   # 161
     0xB0b0 # 45232
     020    # 16
     0b101  # 5
 
-If the prefix is not followed by any numeric digits, it is still a valid token and
-represents the value of 0.
+If the prefix is not followed by any numeric digits, it is still a valid token 
+and represents the value of 0.
 
     0x # 0x0 but not desirable.
     0b # 0b0 but not desirable.
@@ -127,21 +127,44 @@ represents the value of 0.
 A string is enclosed in a pair of double quotes or single quotes.
 
 A character in a string encosed in the double-quotes, when preceded with 
-a back-slash, changes the meaning.
+a back-slash, changes the meaning. 
 
- - \\
- - \a
- - \b
- - \uXXXX
- - \UXXXXXXXX
+ - \\a - alert
+ - \\b - backspace
+ - \\f - formfeed
+ - \\n - newline
+ - \\r - carriage return
+ - \\t - horizontal tab
+ - \\v - vertical tab
+ - \\\\ - backslash
+ - \\" - double quote
 
-You can use \\u and \\U in a string to specify a character by unicode if  
-[Character Type](@ref installation) chosen for building is the wide character
-type.
+You can specify a character with an octal number or a hexadecimal number.
+The actual value can range between 0 and 255 inclusive.
 
-    BEGIN { 
-        print "\uC720\uB2C8\uCF54\uB4DC \U00007D71\U00004E00\U000078BC"; 
-    }
+ - \\OOO - O is an octal digit.  
+ - \\xXX - X is a hexadecimal digit. 
+
+In the octal sequence, you can specify up to 3 octal digits after \\; In the 
+hexadecimal sequence, you can specify as many hexadecimal digits as possible 
+after \\x.  
+
+If the number doesn't fit in the range that the default character type 
+can represent, the character generated from the sequence is undefined.
+
+You can use \\u and \\U in a string to specify a character by a Unicode code 
+point if  [Character Type](@ref installation) chosen for building is the 
+wide character type.
+
+ - \\uXXXX - X is a hexadecimal digit.
+ - \\UXXXXXXXX - X is a hexadecimal digit.
+
+
+~~~~~{.awk}
+ BEGIN { 
+   print "\uC720\uB2C8\uCF54\uB4DC \U00007D71\U00004E00\U000078BC"; 
+ }
+~~~~~
 
 This program should print 유니코드 統一碼.
 
