@@ -18,7 +18,11 @@
     License along with QSE. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <qse/cmn/alg.h>
+#if defined(macintosh)
+#	include <:qse:cmn:alg.h>
+#else
+#	include <qse/cmn/alg.h>
+#endif
 
 #define ENC(x) \
 	((x < 26)? (QSE_MT('A') + x): \

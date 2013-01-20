@@ -3,7 +3,7 @@ SUBDIRS = cmn awk sed net
 pkgincludedir = $(includedir)/qse
 
 pkginclude_HEADERS = \
-	conf-msw.h conf-os2.h conf-dos.h conf-vms.h conf-inf.h \
+	conf-msw.h conf-os2.h conf-dos.h conf-vms.h conf-mac.h conf-inf.h \
 	types.h macros.h pack1.h unpack.h 
 
 if ENABLE_CXX

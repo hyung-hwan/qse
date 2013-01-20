@@ -60,8 +60,8 @@ RECURSIVE_TARGETS = all-recursive check-recursive dvi-recursive \
 	installcheck-recursive installdirs-recursive pdf-recursive \
 	ps-recursive uninstall-recursive
 am__pkginclude_HEADERS_DIST = conf-msw.h conf-os2.h conf-dos.h \
-	conf-vms.h conf-inf.h types.h macros.h pack1.h unpack.h \
-	Types.hpp
+	conf-vms.h conf-mac.h conf-inf.h types.h macros.h pack1.h \
+	unpack.h Types.hpp
 am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
 am__vpath_adj = case $$p in \
     $(srcdir)/*) f=`echo "$$p" | sed "s|^$$srcdirstrip/||"`;; \
@@ -301,7 +301,8 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 SUBDIRS = cmn awk sed net
 pkginclude_HEADERS = conf-msw.h conf-os2.h conf-dos.h conf-vms.h \
-	conf-inf.h types.h macros.h pack1.h unpack.h $(am__append_1)
+	conf-mac.h conf-inf.h types.h macros.h pack1.h unpack.h \
+	$(am__append_1)
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-recursive
 
