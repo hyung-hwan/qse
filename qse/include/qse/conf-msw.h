@@ -1,5 +1,5 @@
 /*
- * $Id: conf_msw.h 561 2011-09-07 07:17:05Z hyunghwan.chung $
+ * $Id$
  *
     Copyright 2006-2012 Chung, Hyung-Hwan.
     This file is part of QSE.

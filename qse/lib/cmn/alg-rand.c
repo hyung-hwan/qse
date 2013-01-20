@@ -18,7 +18,11 @@
     License along with QSE. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <qse/cmn/alg.h>
+#if defined(macintosh)
+#	include <:qse:cmn:alg.h>
+#else
+#	include <qse/cmn/alg.h>
+#endif
 
 /* Park-Miller "minimal standard" 31 bit 
  * pseudo-random number generator, implemented

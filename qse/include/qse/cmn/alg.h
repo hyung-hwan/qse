@@ -21,20 +21,25 @@
 #ifndef _QSE_ALG_H_
 #define _QSE_ALG_H_
 
-/** @file
+/** \file
  * This file provides functions for commonly used algorithms.
  */
 
-#include <qse/types.h>
-#include <qse/macros.h>
+#if defined(macintosh)
+#	include <:qse:types.h>
+#	include <:qse:macros.h>
+#else
+#	include <qse/types.h>
+#	include <qse/macros.h>
+#endif
 
 /**
  * The qse_search_comper_t type defines a search callback function.
  * The callback function is called by search functions for each comparison
- * performed. It should return 0 if @a ptr1 and @a ptr2 are 
- * euqal, a positive integer if @a ptr1 is greater than @a ptr2, a negative 
- * if @a ptr2 is greater than @a ptr1. Both @a ptr1 and @a ptr2 are 
- * pointers to any two items in the array. @a ctx which is a pointer to 
+ * performed. It should return 0 if \a ptr1 and \a ptr2 are 
+ * euqal, a positive integer if \a ptr1 is greater than \a ptr2, a negative 
+ * if \a ptr2 is greater than \a ptr1. Both \a ptr1 and \a ptr2 are 
+ * pointers to any two items in the array. \a ctx which is a pointer to 
  * user-defined data passed to a search function is passed to the callback
  * with no modification.
  */
@@ -55,14 +60,14 @@ extern "C" {
 
 /**
  * The qse_bsearch() function performs binary search over a sorted array.
- * It looks for an item matching @a key in an array @a base containing 
- * @a nmemb items each of which is as large as @a size. The comparison
- * function @a comper is invoked with @a key as the first parameter and
- * an item being tested as the second parameter. The @a ctx parameter is
- * passed to @a comper as the third parameter.
+ * It looks for an item matching \a key in an array \a base containing 
+ * \a nmemb items each of which is as large as \a size. The comparison
+ * function \a comper is invoked with \a key as the first parameter and
+ * an item being tested as the second parameter. The \a ctx parameter is
+ * passed to \a comper as the third parameter.
  *
  * See the example below:
- * @code
+ * \code
  * static int compstr (const void* s1, const void* s2, void* ctx)
  * {
  * 	return qse_strcmp ((const qse_char_t*)s1, *(const qse_char_t**)s2);
@@ -88,7 +93,7 @@ extern "C" {
  * 	);
  * 	return ptr? (ptr - tgtnames): -1;
  * }
- * @endcode
+ * \endcode
  */
 QSE_EXPORT void* qse_bsearch (
 	const void*         key,

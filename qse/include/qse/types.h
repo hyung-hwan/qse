@@ -40,6 +40,8 @@
 #	include <qse/conf-dos.h>
 #elif defined(vms) || defined(__vms)
 #	include <qse/conf-vms.h>
+#elif defined(macintosh)
+#	include <:qse:conf-mac.h> /* class mac os */
 #else
 #	error Unsupported operating system
 #endif

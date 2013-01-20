@@ -47,7 +47,11 @@
  * SUCH DAMAGE.
  */
 
+#if defined(macintosh)
+#include <:qse:cmn:alg.h>
+#else
 #include <qse/cmn/alg.h>
+#endif
 
 #define qsort_min(a,b) (((a)<(b))? a: b)
 

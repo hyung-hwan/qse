@@ -21,7 +21,11 @@
 #ifndef _QSE_MACROS_H_
 #define _QSE_MACROS_H_
 
-#include <qse/types.h>
+#if defined(macintosh)
+#	include <:qse:types.h>
+#else
+#	include <qse/types.h>
+#endif
 
 /** @file
  * This file contains various useful macro definitions.

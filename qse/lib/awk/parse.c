@@ -5557,6 +5557,11 @@ static int get_string (
 		#endif
 			else if (keep_esc_char) 
 			{
+				/* if the following character doesn't compose a proper
+				 * escape sequence, keep the escape character. 
+				 * an unhandled escape sequence can be handled 
+				 * outside this function since the escape character 
+				 * is preserved.*/
 				ADD_TOKEN_CHAR (awk, tok, esc_char);
 			}
 
@@ -5597,13 +5602,13 @@ static int get_rexstr (qse_awk_t* awk, qse_awk_tok_t* tok)
 	}
 	else 
 	{
-		int escaped = 0;
+		qse_size_t preescaped = 0;
 		if (awk->sio.last.c == QSE_T('\\')) 
 		{		
 			/* for input like /\//, this condition is met. 
 			 * the initial escape character is added when the
 			 * second charater is handled in get_string() */
-			escaped = 1;
+			preescaped = 1;
 		}
 		else 
 		{
@@ -5611,8 +5616,7 @@ static int get_rexstr (qse_awk_t* awk, qse_awk_tok_t* tok)
 			 * begins with reading the next character */
 			ADD_TOKEN_CHAR (awk, tok, awk->sio.last.c);
 		}
-		return get_string (
-			awk, QSE_T('/'), QSE_T('\\'), 1, escaped, tok);
+		return get_string (awk, QSE_T('/'), QSE_T('\\'), 1, preescaped, tok);
 	}
 }
 
