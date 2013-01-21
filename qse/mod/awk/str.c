@@ -22,6 +22,28 @@
 #include <qse/cmn/str.h>
 #include "../../lib/cmn/mem.h"
 
+static int fnc_normspc (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	/* normalize spaces 
+	 * - trim leading and trailing spaces
+	 * - replace a series of spaces to a single space
+	 */
+	qse_xstr_t path;
+	qse_awk_val_t* retv;
+
+	path.ptr = qse_awk_rtx_valtostrdup (
+		rtx, qse_awk_rtx_getarg(rtx, 0), &path.len);
+	if (path.ptr)
+	{
+		path.len = qse_strxpac (path.ptr, path.len);
+		retv = qse_awk_rtx_makestrval (rtx, path.ptr, path.len);
+		qse_awk_rtx_freemem (rtx, path.ptr);
+		if (retv) qse_awk_rtx_setretval (rtx, retv);
+	}
+
+	return 0;
+}
+
 static int trim (qse_awk_rtx_t* rtx, int flags)
 {
 	qse_xstr_t path;
@@ -33,12 +55,9 @@ static int trim (qse_awk_rtx_t* rtx, int flags)
 	if (path.ptr)
 	{
 		npath = qse_strxtrmx (path.ptr, &path.len, flags);
-
 		retv = qse_awk_rtx_makestrval (rtx, npath, path.len);
 		qse_awk_rtx_freemem (rtx, path.ptr);
-		if (retv == QSE_NULL) return -1;
-			
-		qse_awk_rtx_setretval (rtx, retv);
+		if (retv) qse_awk_rtx_setretval (rtx, retv);
 	}
 
 	return 0;
@@ -68,6 +87,7 @@ static fnctab_t fnctab[] =
 {
 	/* keep this table sorted for binary search in query(). */
 	{ QSE_T("ltrim"),    { { 1, 1, QSE_NULL }, fnc_ltrim,    0  } },
+	{ QSE_T("normspc"),  { { 1, 1, QSE_NULL }, fnc_normspc,  0  } },
 	{ QSE_T("rtrim"),    { { 1, 1, QSE_NULL }, fnc_rtrim,    0  } },
 	{ QSE_T("trim"),     { { 1, 1, QSE_NULL }, fnc_trim,     0  } }
 };

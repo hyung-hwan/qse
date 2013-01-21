@@ -568,7 +568,10 @@ static int fnc_getnwifcfg (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 				if (tmp)
 				{
 					if (qse_awk_rtx_setrefval (rtx, qse_awk_rtx_getarg (rtx, 2), tmp) <= -1)
-						qse_awk_rtx_freeval (rtx, tmp);
+					{
+						qse_awk_rtx_refupval (rtx, tmp);
+						qse_awk_rtx_refdownval (rtx, tmp);
+					}
 					else ret = 0;
 				}
 			}

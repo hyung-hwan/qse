@@ -473,7 +473,8 @@ static int getsection_byid (
 					{
 						if (qse_awk_rtx_setrefval (rtx, ref, tmp) <= -1)
 						{
-							qse_awk_rtx_freeval (rtx, tmp);
+							qse_awk_rtx_refupval (rtx, tmp);
+							qse_awk_rtx_refdownval (rtx, tmp);
 							x = UCI_ERR_MEM;
 						}
 					}
@@ -535,7 +536,8 @@ static int getoption_byid (
 						{
 							if (qse_awk_rtx_setrefval (rtx, ref, map) <= -1)
 							{
-								qse_awk_rtx_freeval (rtx, map);
+								qse_awk_rtx_refupval (rtx, map);
+								qse_awk_rtx_refdownval (rtx, map);
 								map = QSE_NULL;
 								x = UCI_ERR_MEM;
 							}
@@ -579,7 +581,8 @@ static int getoption_byid (
 								fld = qse_awk_rtx_makestrvalwithmbs (rtx, tmp->name);
 								if (!fld)
 								{
-									qse_awk_rtx_freeval (rtx, map);
+									qse_awk_rtx_refupval (rtx, map);
+									qse_awk_rtx_refdownval (rtx, map);
 									map = QSE_NULL;
 									x = UCI_ERR_MEM;
 									break;
@@ -600,8 +603,10 @@ static int getoption_byid (
 								if (kp == QSE_NULL || qse_awk_rtx_setmapvalfld (rtx, map, kp, kl, fld) == QSE_NULL)
 								{
 									if (kp) QSE_MMGR_FREE (qse_awk_rtx_getmmgr(rtx), kp);
-									qse_awk_rtx_freeval (rtx, fld);
-									qse_awk_rtx_freeval (rtx, map);
+									qse_awk_rtx_refupval (rtx, fld);
+									qse_awk_rtx_refdownval (rtx, fld);
+									qse_awk_rtx_refupval (rtx, map);
+									qse_awk_rtx_refdownval (rtx, map);
 									map = QSE_NULL;
 									x = UCI_ERR_MEM;
 									break;
@@ -615,7 +620,8 @@ static int getoption_byid (
 							{
 								if (qse_awk_rtx_setrefval (rtx, ref, map) <= -1)
 								{
-									qse_awk_rtx_freeval (rtx, map);
+									qse_awk_rtx_refupval (rtx, map);
+									qse_awk_rtx_refdownval (rtx, map);
 									map = QSE_NULL;
 									x = UCI_ERR_MEM;
 								}

@@ -281,7 +281,11 @@ static int read_byid (qse_awk_rtx_t* rtx, dir_list_t* list, qse_long_t id, qse_a
 		if (!tmp || qse_awk_rtx_setrefval (rtx, ref, tmp) <= -1) 
 		{
 			list->errnum = awk_err_to_errnum (qse_awk_rtx_geterrnum (rtx));
-			if (tmp) qse_awk_rtx_freeval (rtx, tmp);
+			if (tmp) 
+			{
+				qse_awk_rtx_refupval (rtx, tmp);
+				qse_awk_rtx_refdownval (rtx, tmp);
+			}
 			return -1;
 		}
 
