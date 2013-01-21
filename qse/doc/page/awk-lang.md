@@ -126,7 +126,7 @@ and represents the value of 0.
 
 A string is enclosed in a pair of double quotes or single quotes.
 
-A character in a string encosed in the double-quotes, when preceded with 
+A character in a string enclosed in the double-quotes, when preceded with 
 a back-slash, changes the meaning. 
 
  - \\a - alert
@@ -149,16 +149,25 @@ In the octal sequence, you can specify up to 3 octal digits after \\; In the
 hexadecimal sequence, you can specify as many hexadecimal digits as possible 
 after \\x.  
 
-If the number doesn't fit in the range that the default character type 
-can represent, the character generated from the sequence is undefined.
+~~~~~{.awk}
+ BEGIN { 
+   print "\xC720\xB2C8\xCF54\xB4DC \x7D71\x4E00\x78BC"; 
+ }
+~~~~~
 
-You can use \\u and \\U in a string to specify a character by a Unicode code 
-point if  [Character Type](@ref installation) chosen for building is the 
-wide character type.
+This program should print \em 유니코드 \em 統一碼 if the character type can 
+represent the numbers in the sequence. If the number doesn't fit in the range 
+that the current character type can represent, the character generated from 
+the sequence is undefined.
 
- - \\uXXXX - X is a hexadecimal digit.
- - \\UXXXXXXXX - X is a hexadecimal digit.
+The \\u and \\U sequences, unlike ths \\x sequence, limits the maximum number of
+hexadecimal digits. It is available if the [Character Type](@ref installation)
+chosen for building is the wide character type. 
 
+ - \\uXXXX - X is a hexadecimal digit. up to 4 digits
+ - \\UXXXXXXXX - X is a hexadecimal digit. up to 8 digits
+
+The program above can be rewritten like this.
 
 ~~~~~{.awk}
  BEGIN { 
@@ -166,16 +175,25 @@ wide character type.
  }
 ~~~~~
 
-This program should print 유니코드 統一碼.
+If \\x, \\u, \\U are not followed by a hexadecimal digit, *x*, *u*, *U* are
+produced respectively.
 
-There are no escaping sequences supported for a string enclosed in the single
+There are no special sequences supported for a string enclosed in the single
 quotes. For that reason, you can't specify the single quote itself within
-a single-quoted string.
+a single-quoted string. The following program prints *awk* in double quotes.
+
+~~~~~{.awk}
+ BEGIN { 
+   print '"awk"';
+ }
+~~~~~
 
 ### Regular Expressions ###
 
-A regular expression is enclosed in a pair of forward slashes.
+A regular expression is enclosed in a pair of forward slashes. The special
+sequences for a double-quoted string are all supported in a regular expression.
 
+TBD.
 
 ### Note ###
 
@@ -189,42 +207,9 @@ Let's take this as an example.
 Since 0x not followed by a digit is a valid token, and T is an identifier,
 it is the same expression as 0x concatenated with T (0x @@ T).
 
-An AWK program can be composed of the following elements shown below. 
-Each language element requires the option in the second column to be on. 
 
-<table>
-<tr><th>Element                    </th><th>Option             </th></tr>
-<tr><td>Comment                    </td><td>                   </td></tr>
-<tr><td>Global variable declaration</td><td>                   </td></tr>
-<tr><td>Pattern-action block       </td><td>#QSE_AWK_PABLOCK   </td></tr>
-<tr><td>User-defined function      </td><td>                   </td></tr>
-<tr><td>\@include                  </td><td>#QSE_AWK_INCLUDE   </td></tr>
-</table>
-
-Single line comments begin with the '#' letter and end at the end of the
-same line. The C style multi-line comments are supported as well.
-Comments are ignored.
-
-- pattern-action-block := pattern action-block
-- pattern := BEGIN | END | expression | expression-range
-- expression-range := expression , expression
-
-A pattern in a pattern action block can be omitted.
-The action part can be omitted if the pattern is not BEGIN nor END.
-
-A pattern-action block, and a user-defined function can have the following elements.
-
-<table>
-<tr><th>Element                    </th><th>Option            </th></tr>
-<tr><td>Local variable declaration</td><td>                   </td></tr>
-<tr><td>Statement                 </td><td>                   </td></tr>
-<tr><td>getline                   </td><td>#QSE_AWK_RIO       </td></tr>
-<tr><td>print                     </td><td>#QSE_AWK_RIO       </td></tr>
-<tr><td>nextofile                 </td><td>#QSE_AWK_NEXTOFILE </td></tr>
-<tr><td>reset                     </td><td>#QSE_AWK_RESET     </td></tr>
-<tr><td>abort                     </td><td>#QSE_AWK_ABORT     </td></tr>
-</table>
-
+Commands
+--------
 
 AWK has the following statement constructs.
 - if

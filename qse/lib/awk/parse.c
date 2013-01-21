@@ -3729,7 +3729,7 @@ static qse_awk_nde_t* parse_concat (qse_awk_t* awk, const qse_awk_loc_t* xloc)
 			   /* unary operators */
 			   MATCH(awk,TOK_PLUS) || MATCH(awk,TOK_MINUS) ||
 			   MATCH(awk,TOK_LNOT) || MATCH(awk,TOK_BNOT) || 
-			   MATCH(awk,TOK_COLON) ||
+			   MATCH(awk,TOK_BQUOTE) ||
 			   /* increment operators */
 			   MATCH(awk,TOK_PLUSPLUS) || MATCH(awk,TOK_MINUSMINUS) ||
 			   ((awk->opt.trait & QSE_AWK_TOLERANT) && 
