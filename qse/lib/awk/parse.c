@@ -751,6 +751,12 @@ static int begin_include (qse_awk_t* awk)
 	/*QSE_HTB_VPTR(pair) = QSE_HTB_KPTR(pair);
 	QSE_HTB_VLEN(pair) = QSE_HTB_KLEN(pair);*/
 
+	if (awk->opt.incldirs.ptr)
+	{
+		/* include directory is set... */
+/* TODO: */
+	}
+
 	arg = (qse_awk_sio_arg_t*) qse_awk_callocmem (awk, QSE_SIZEOF(*arg));
 	if (arg == QSE_NULL)
 	{
