@@ -124,6 +124,7 @@ struct qse_awk_t
 	{
 		int trait;
 		qse_xstr_t mod[2];
+		qse_xstr_t incldirs;
 
 		union
 		{
