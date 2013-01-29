@@ -666,7 +666,7 @@ int qse_awk_rtx_setofilename (
 	qse_awk_val_t* tmp;
 	int n;
 
-	if (rtx->awk->opt.trait & QSE_AWK_EXTRAKWS)
+	if (rtx->awk->opt.trait & QSE_AWK_NEXTOFILE)
 	{
 		if (len == 0) tmp = qse_awk_val_zls;
 		else

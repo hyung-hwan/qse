@@ -1007,8 +1007,8 @@ enum qse_awk_trait_t
 	/** allows undeclared variables */
 	QSE_AWK_IMPLICIT = (1 << 0),
 
-	/** enable abort,reset,nextofile,OFILENAME,@include. */
-	QSE_AWK_EXTRAKWS = (1 << 2),
+	/** enables nextofile and NEXTOFILE */
+	QSE_AWK_NEXTOFILE = (1 << 0),
 
 	/** supports \b getline, \b print, \b printf, \b close, \b fflush,
 	 *  piping, and file rediction */
@@ -1110,8 +1110,8 @@ enum qse_awk_trait_t
 		QSE_AWK_STRIPSTRSPC | QSE_AWK_NCMPONSTR | QSE_AWK_STRICTNAMING,
 
 	QSE_AWK_MODERN =
-		QSE_AWK_CLASSIC | QSE_AWK_EXTRAKWS | QSE_AWK_FLEXMAP |
-		QSE_AWK_RWPIPE | QSE_AWK_TOLERANT
+		QSE_AWK_CLASSIC | QSE_AWK_FLEXMAP |
+		QSE_AWK_RWPIPE | QSE_AWK_TOLERANT | QSE_AWK_NEXTOFILE
 };
 typedef enum qse_awk_trait_t qse_awk_trait_t;
 

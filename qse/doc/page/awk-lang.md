@@ -88,6 +88,43 @@ When QSEAWK parses a program, it classifies a series of input characters
 into meaningful tokens. It can extract the smallest meaningful unit through
 this tokenization process. 
 
+### Reserved Words ###
+
+The following words are reserved and cannot be used as a variable name,
+a parameter name, or a function name.
+
+ - BEGIN
+ - END
+ - function
+ - @local
+ - @global
+ - @include
+ - if
+ - else
+ - while
+ - for
+ - do
+ - break
+ - continue
+ - return
+ - exit
+ - @abort
+ - delete
+ - @reset
+ - next
+ - nextfile
+ - nextofile
+ - print
+ - printf
+ - getline
+
+However, these words can be used as normal names in the context of a
+module call.
+
+In practice, the predefined names used for built-in commands, functions,
+and variables are treated as if they are reserved since you can't create
+another denifition with the same name.
+
 ### Numbers ###
 
 An integer begins with a numeric digit between 0 and 9 inclusive and can be 

@@ -107,13 +107,17 @@ enum tok_t
 	TOK_ATSIGN,
 
 	/* ==  begin reserved words == */
+	/* === extended reserved words === */
+	TOK_XGLOBAL,
+	TOK_XLOCAL, 
+	TOK_XINCLUDE,
+	TOK_XABORT,
+	TOK_XRESET,
+
+	/* === normal reserved words === */
 	TOK_BEGIN,
 	TOK_END,
 	TOK_FUNCTION,
-
-	TOK_XLOCAL,
-	TOK_XGLOBAL,
-	TOK_XINCLUDE,
 
 	TOK_IF,
 	TOK_ELSE,
@@ -124,15 +128,13 @@ enum tok_t
 	TOK_CONTINUE,
 	TOK_RETURN,
 	TOK_EXIT,
-	TOK_XABORT,
+	TOK_DELETE,
 	TOK_NEXT,
 	TOK_NEXTFILE,
 	TOK_NEXTOFILE,
-	TOK_DELETE,
-	TOK_XRESET,
+
 	TOK_PRINT,
 	TOK_PRINTF,
-
 	TOK_GETLINE,
 	/* ==  end reserved words == */
 
@@ -292,7 +294,7 @@ static kwent_t kwtab[] =
 	{ { QSE_T("in"),           2 }, TOK_IN,          0 },
 	{ { QSE_T("next"),         4 }, TOK_NEXT,        QSE_AWK_PABLOCK },
 	{ { QSE_T("nextfile"),     8 }, TOK_NEXTFILE,    QSE_AWK_PABLOCK },
-	{ { QSE_T("nextofile"),    9 }, TOK_NEXTOFILE,   QSE_AWK_PABLOCK | QSE_AWK_EXTRAKWS },
+	{ { QSE_T("nextofile"),    9 }, TOK_NEXTOFILE,   QSE_AWK_PABLOCK | QSE_AWK_NEXTOFILE },
 	{ { QSE_T("print"),        5 }, TOK_PRINT,       QSE_AWK_RIO },
 	{ { QSE_T("printf"),       6 }, TOK_PRINTF,      QSE_AWK_RIO },
 	{ { QSE_T("return"),       6 }, TOK_RETURN,      0 },
@@ -310,6 +312,10 @@ struct global_t
 
 static global_t gtab[] =
 {
+	/* 
+	 * this table must match the order of the qse_awk_gbl_id_t enumerators 
+	 */
+
 	/* output real-to-str conversion format for other cases than 'print' */
 	{ QSE_T("CONVFMT"),      7,  0 },
 
@@ -334,7 +340,7 @@ static global_t gtab[] =
 	{ QSE_T("NR"),           2,  QSE_AWK_PABLOCK },
 
 	/* current output file name */
-	{ QSE_T("OFILENAME"),    9,  QSE_AWK_PABLOCK | QSE_AWK_EXTRAKWS },
+	{ QSE_T("OFILENAME"),    9,  QSE_AWK_PABLOCK | QSE_AWK_NEXTOFILE },
 
 	/* output real-to-str conversion format for 'print' */
 	{ QSE_T("OFMT"),         4,  QSE_AWK_RIO }, 
@@ -4741,6 +4747,11 @@ static int dup_ident_and_get_next (
 
 		if (get_token(awk) <= -1) goto oops;
 
+		/* the identifier after ::
+		 * allow reserved words as well since i view the whole name(mod::ident) 
+		 * as one segment. however, i don't want the identifier part to begin
+		 * with @. some extended keywords begin with @ like @include. 
+		 * TOK_XGLOBAL to TOK_XRESET are excuded from the check for that reason. */
 		if (!MATCH(awk, TOK_IDENT) && !(MATCH_RANGE(awk, TOK_BEGIN, TOK_GETLINE)))
 		{
 			SETERR_TOK (awk, QSE_AWK_EIDENT);

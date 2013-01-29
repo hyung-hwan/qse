@@ -1264,7 +1264,7 @@ create_process:
 	if (!(flags & QSE_PIO_NOCLOEXEC))
 	{
 		int fd = get_highest_fd ();
-		while (--fd > 2)
+		while (fd > 2)
 		{
 			if (fd == handle[0] || fd == handle[1] ||
 			    fd == handle[2] || fd == handle[3] ||
@@ -1280,6 +1280,7 @@ create_process:
 				pio->errnum = syserr_to_errnum (pserr);
 				goto oops;
 			}
+			fd--;
 		}
 	}
 
@@ -1419,7 +1420,7 @@ create_process:
 
 			/* close all other unknown open handles except 
 			 * stdin/out/err and the pipes. */
-			while (--fd > 2)
+			while (fd > 2)
 			{
 				if (fd != handle[0] && fd != handle[1] &&
 				    fd != handle[2] && fd != handle[3] &&
@@ -1427,6 +1428,7 @@ create_process:
 				{
 					QSE_SYSCALL1 (dummy, SYS_close, fd);
 				}
+				fd--;
 			}
 		}
 
@@ -1610,7 +1612,7 @@ create_process:
 
 			/* close all other unknown open handles except 
 			 * stdin/out/err and the pipes. */
-			while (--fd > 2)
+			while (fd > 2)
 			{
 				if (fd != handle[0] && fd != handle[1] &&
 				    fd != handle[2] && fd != handle[3] &&
@@ -1618,6 +1620,7 @@ create_process:
 				{
 					QSE_CLOSE (fd);
 				}
+				fd--;
 			}
 		}
 
