@@ -51,7 +51,7 @@
 #define ENSERT 3
 #define INSERT 4
 
-#define IS_NIL(rbt,x) ((x) == &((rbt)->nil))
+#define IS_NIL(rbt,x) ((x) == &((rbt)->xnil))
 #define LEFT 0
 #define RIGHT 1
 #define left child[LEFT]
@@ -76,8 +76,8 @@ QSE_INLINE pair_t* qse_rbt_allocpair (
 
 	n->color = QSE_RBT_RED;
 	n->parent = QSE_NULL;
-	n->child[LEFT] = &rbt->nil;
-	n->child[RIGHT] = &rbt->nil;
+	n->child[LEFT] = &rbt->xnil;
+	n->child[RIGHT] = &rbt->xnil;
 
 	KLEN(n) = klen;
 	if (kcop == QSE_RBT_COPIER_SIMPLE)
@@ -231,13 +231,13 @@ int qse_rbt_init (rbt_t* rbt, mmgr_t* mmgr, int kscale, int vscale)
 	rbt->mancbs = &mancbs[0];
 	
 	/* self-initializing nil */
-	QSE_MEMSET(&rbt->nil, 0, QSE_SIZEOF(rbt->nil));
-	rbt->nil.color = QSE_RBT_BLACK;
-	rbt->nil.left = &rbt->nil;
-	rbt->nil.right = &rbt->nil;
+	QSE_MEMSET(&rbt->xnil, 0, QSE_SIZEOF(rbt->xnil));
+	rbt->xnil.color = QSE_RBT_BLACK;
+	rbt->xnil.left = &rbt->xnil;
+	rbt->xnil.right = &rbt->xnil;
 
 	/* root is set to nil initially */
-	rbt->root = &rbt->nil;
+	rbt->root = &rbt->xnil;
 
 	return 0;
 }
@@ -546,7 +546,7 @@ static pair_t* insert (
 	if (x_par == QSE_NULL)
 	{
 		/* the tree contains no pair */
-		QSE_ASSERT (rbt->root == &rbt->nil);
+		QSE_ASSERT (rbt->root == &rbt->xnil);
 		rbt->root = x_new;
 	}
 	else
@@ -555,12 +555,12 @@ static pair_t* insert (
 		int n = rbt->mancbs->comper (rbt, kptr, klen, KPTR(x_par), KLEN(x_par));
 		if (n > 0)
 		{
-			QSE_ASSERT (x_par->right == &rbt->nil);
+			QSE_ASSERT (x_par->right == &rbt->xnil);
 			x_par->right = x_new;
 		}
 		else
 		{
-			QSE_ASSERT (x_par->left == &rbt->nil);
+			QSE_ASSERT (x_par->left == &rbt->xnil);
 			x_par->left = x_new;
 		}
 
@@ -666,7 +666,7 @@ pair_t* qse_rbt_cbsert (
 	if (x_par == QSE_NULL)
 	{
 		/* the tree contains no pair */
-		QSE_ASSERT (rbt->root == &rbt->nil);
+		QSE_ASSERT (rbt->root == &rbt->xnil);
 		rbt->root = x_new;
 	}
 	else
@@ -675,12 +675,12 @@ pair_t* qse_rbt_cbsert (
 		int n = rbt->mancbs->comper (rbt, kptr, klen, KPTR(x_par), KLEN(x_par));
 		if (n > 0)
 		{
-			QSE_ASSERT (x_par->right == &rbt->nil);
+			QSE_ASSERT (x_par->right == &rbt->xnil);
 			x_par->right = x_new;
 		}
 		else
 		{
-			QSE_ASSERT (x_par->left == &rbt->nil);
+			QSE_ASSERT (x_par->left == &rbt->xnil);
 			x_par->left = x_new;
 		}
 

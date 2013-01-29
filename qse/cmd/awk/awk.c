@@ -376,7 +376,7 @@ struct opttab_t
 } opttab[] =
 {
 	{ QSE_T("implicit"),     QSE_AWK_IMPLICIT,       QSE_T("allow undeclared variables") },
-	{ QSE_T("extrakws"),     QSE_AWK_EXTRAKWS,       QSE_T("enable nextofile,OFILENAME") },
+	{ QSE_T("nextofile"),    QSE_AWK_NEXTOFILE,      QSE_T("enable nextofile & OFILENAME") },
 	{ QSE_T("rio"),          QSE_AWK_RIO,            QSE_T("enable builtin I/O including getline & print") },
 	{ QSE_T("rwpipe"),       QSE_AWK_RWPIPE,         QSE_T("allow a dual-directional pipe") },
 	{ QSE_T("newline"),      QSE_AWK_NEWLINE,        QSE_T("enable a newline to terminate a statement") },

@@ -361,10 +361,10 @@ static int awk_main_2 (MyAwk& awk, int argc, qse_char_t* argv[])
 	cmdline_t cmdline;
 	int n;
 
-	awk.setTrait (awk.getTrait() | QSE_AWK_EXTRAKWS | QSE_AWK_FLEXMAP | QSE_AWK_RWPIPE);
+	awk.setTrait (awk.getTrait() | QSE_AWK_FLEXMAP | QSE_AWK_RWPIPE | QSE_AWK_NEXTOFILE);
 
 	// ARGV[0]
-	if (awk.addArgument (QSE_T("awk08")) <= -1)
+	if (awk.addArgument (QSE_T("awk25")) <= -1)
 	{
 		print_error (awk); 
 		return -1; 

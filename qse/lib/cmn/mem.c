@@ -84,6 +84,25 @@ void* qse_memcpy (void* dst, const void* src, qse_size_t n)
 	qse_byte_t* d;
 	qse_byte_t* s;
 
+	if (n < 8)
+	{
+		d = (qse_byte_t*)dst;
+		s = (qse_byte_t*)src;
+
+		switch (n)
+		{
+			case 7: *d++ = *s++;
+			case 6: *d++ = *s++;
+			case 5: *d++ = *s++;
+			case 4: *d++ = *s++;
+			case 3: *d++ = *s++;
+			case 2: *d++ = *s++;
+			case 1: *d++ = *s++;
+		}
+
+		return dst;
+	}
+
 	if (n >= QSE_SIZEOF(qse_size_t) && IS_BOTH_ALIGNED(dst,src))
 	{
 		qse_size_t* du = (qse_size_t*)dst;

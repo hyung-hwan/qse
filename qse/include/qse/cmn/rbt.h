@@ -226,7 +226,7 @@ struct qse_rbt_t
 
 	qse_byte_t       scale[2];  /**< length scale */
 
-	qse_rbt_pair_t   nil;       /**< internal nil node */
+	qse_rbt_pair_t   xnil;      /**< internal nil node */
 
 	qse_size_t       size;      /**< number of pairs */
 	qse_rbt_pair_t*  root;      /**< root pair */
