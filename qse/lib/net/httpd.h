@@ -35,7 +35,10 @@ struct qse_httpd_t
 	qse_httpd_scb_t* scb; /* system callbacks */
 	qse_httpd_rcb_t* rcb; /* request callbacks */
 
-	int option;
+	struct
+	{
+		int trait;
+	} opt;
 	int stopreq;
 
 	qse_mchar_t sname[128]; /* server name for the server header */

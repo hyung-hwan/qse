@@ -885,7 +885,6 @@ static int task_main_proxy_5 (
 	task_proxy_t* proxy = (task_proxy_t*)task->ctx;
 	qse_ssize_t n;
 
-	//QSE_ASSERT (proxy->pio_inited);
 qse_printf (QSE_T("task_main_proxy_5 trigger[0].mask=%d trigger[1].mask=%d trigger[2].mask=%d\n"), 
 	task->trigger[0].mask, task->trigger[1].mask, task->trigger[2].mask);
 
@@ -932,8 +931,6 @@ static int task_main_proxy_4 (
 {
 	task_proxy_t* proxy = (task_proxy_t*)task->ctx;
 	
-	//QSE_ASSERT (proxy->pio_inited);
-
 qse_printf (QSE_T("task_main_proxy_4 trigger[0].mask=%d trigger[1].mask=%d trigger[2].mask=%d\n"), 
 	task->trigger[0].mask, task->trigger[1].mask, task->trigger[2].mask);
 

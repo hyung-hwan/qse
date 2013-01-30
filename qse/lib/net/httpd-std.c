@@ -2049,6 +2049,7 @@ static int attempt_cgi (
 				target->u.cgi.script = script;
 				target->u.cgi.suffix = QSE_NULL;
 				target->u.cgi.docroot = docroot;
+				target->u.cgi.shebang = cgistd[i].shebang;
 				return 1;
 			}
 		}
@@ -2095,6 +2096,7 @@ static int attempt_cgi (
 				target->u.cgi.script = script;
 				target->u.cgi.suffix = suffix;
 				target->u.cgi.docroot = docroot;
+				target->u.cgi.shebang = cgistd[i].shebang;
 				return 1;
 			}
 		}
@@ -2154,7 +2156,7 @@ auth_ok:
 	if (stx <= -1)
 	{
 		/* this OS may fail in stat_file() if the path contains the trailing 
-		 * separator. it 's beause of the way FindFirstFile() or DosQueryPathInfo()
+		 * separator. it's beause of the way FindFirstFile() or DosQueryPathInfo()
 		 * is ussed in stat_file(). let me work around it here. */
 		qse_size_t pl = qse_mbslen(xpath);
 		if (pl > 1 && xpath[pl - 1] == QSE_MT('/')) 
@@ -2271,11 +2273,12 @@ qse_httpd_server_t* qse_httpd_attachserverstd (
 	qse_uint16_t default_port;
 	qse_uri_t xuri;
 
+
 	static qse_httpd_server_cgistd_t server_cgistd[] = 
 	{
-		{ QSE_MT(".cgi"), 4, 0 },
-		{ QSE_MT(".nph"), 4, 1 },
-		{ QSE_NULL,       0, 0 }
+		{ QSE_MT(".cgi"), 4, 0, QSE_NULL },
+		{ QSE_MT(".nph"), 4, 1, QSE_NULL },
+		{ QSE_NULL,       0, 0, QSE_NULL }
 	};
 
 	static qse_httpd_server_mimestd_t server_mimestd[] =
@@ -2458,7 +2461,7 @@ int qse_httpd_getserveroptstd (
 		case QSE_HTTPD_SERVER_CGISTD:
 		case QSE_HTTPD_SERVER_MIMESTD:
 		case QSE_HTTPD_SERVER_IDXSTD:
-			*(qse_mchar_t**)value = (void*)server_xtn->cfg2.a[id - QSE_HTTPD_SERVER_CBSTD];
+			*(void**)value = (void*)server_xtn->cfg2.a[id - QSE_HTTPD_SERVER_CBSTD];
 			return 0;
 	}	
 
