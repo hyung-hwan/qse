@@ -58,13 +58,20 @@ enum qse_httpd_errnum_t
 };
 typedef enum qse_httpd_errnum_t qse_httpd_errnum_t;
 
-enum qse_httpd_option_t
+enum qse_httpd_opt_t
+{
+	QSE_HTTPD_TRAIT
+};
+typedef enum qse_httpd_opt_t qse_httpd_opt_t;
+
+enum qse_httpd_trait_t
 {
 	QSE_HTTPD_MUTECLIENT   = (1 << 0),
 	QSE_HTTPD_CGIERRTONUL  = (1 << 1),
 	QSE_HTTPD_CGINOCLOEXEC = (1 << 2),
 	QSE_HTTPD_CGINOCHUNKED = (1 << 3)
 };
+typedef enum qse_httpd_trait_t qse_httpd_trait_t;
 
 typedef struct qse_httpd_stat_t qse_httpd_stat_t;
 struct qse_httpd_stat_t
@@ -383,8 +390,18 @@ enum qse_httpd_rsrc_type_t
 };
 typedef enum qse_httpd_rsrc_type_t qse_httpd_rsrc_type_t;
 
-typedef struct qse_httpd_rsrc_t qse_httpd_rsrc_t;
+typedef struct qse_httpd_rsrc_cgi_t qse_httpd_rsrc_cgi_t;
+struct qse_httpd_rsrc_cgi_t
+{
+	const qse_mchar_t* path;
+	const qse_mchar_t* script;
+	const qse_mchar_t* suffix;
+	const qse_mchar_t* docroot;
+	const qse_mchar_t* shebang; 
+	int nph;
+};
 
+typedef struct qse_httpd_rsrc_t qse_httpd_rsrc_t;
 struct qse_httpd_rsrc_t
 {
 	qse_httpd_rsrc_type_t type;
@@ -394,14 +411,9 @@ struct qse_httpd_rsrc_t
 		{
 			const qse_mchar_t* realm;
 		} auth;
-		struct 
-		{
-			const qse_mchar_t* path;
-			const qse_mchar_t* script;
-			const qse_mchar_t* suffix;
-			const qse_mchar_t* docroot;
-			int nph;
-		} cgi;	
+
+		qse_httpd_rsrc_cgi_t cgi;
+
 		struct
 		{
 			const qse_mchar_t* path;
@@ -478,9 +490,10 @@ struct qse_httpd_server_cbstd_t
 typedef struct qse_httpd_server_cgistd_t qse_httpd_server_cgistd_t;
 struct qse_httpd_server_cgistd_t
 {
-	const qse_mchar_t* ext;
-	qse_size_t         len;
-	int                nph;
+	const qse_mchar_t*  ext;
+	qse_size_t          len;
+	int                 nph;
+	const qse_mchar_t*  shebang; /* optional, can be #QSE_NULL */
 };
 
 typedef struct qse_httpd_server_mimestd_t qse_httpd_server_mimestd_t;
@@ -551,13 +564,16 @@ QSE_EXPORT void qse_httpd_seterrnum (
 	qse_httpd_errnum_t errnum
 );
 
-QSE_EXPORT int qse_httpd_getoption (
-	qse_httpd_t* httpd
+QSE_EXPORT int qse_httpd_getopt (
+	qse_httpd_t*    httpd,
+	qse_httpd_opt_t id,
+	void*           value
 );
 
-QSE_EXPORT void qse_httpd_setoption (
-	qse_httpd_t* httpd,
-	int          option
+QSE_EXPORT int qse_httpd_setopt (
+	qse_httpd_t*    httpd,
+	qse_httpd_opt_t id,
+	const void*     value
 );
 
 /**
@@ -758,11 +774,7 @@ QSE_EXPORT qse_httpd_task_t* qse_httpd_entaskcgi (
 	qse_httpd_t*              httpd,
 	qse_httpd_client_t*       client,
 	qse_httpd_task_t*         pred,
-	const qse_mchar_t*        path,
-	const qse_mchar_t*        script,
-	const qse_mchar_t*        suffix,
-	const qse_mchar_t*        docroot,
-	int                       nph,
+	qse_httpd_rsrc_cgi_t*     cgi,
 	qse_htre_t*               req
 );
 

@@ -109,14 +109,30 @@ void* qse_httpd_getxtn (qse_httpd_t* httpd)
 	return QSE_XTN (httpd);
 }
 
-int qse_httpd_getoption (qse_httpd_t* httpd)
+int qse_httpd_getopt (qse_httpd_t* httpd, qse_httpd_opt_t id, void* value)
 {
-	return httpd->option;
+	switch (id)
+	{
+		case QSE_HTTPD_TRAIT:
+			*(int*)value = httpd->opt.trait;
+			return 0;
+	}
+
+	httpd->errnum = QSE_HTTPD_EINVAL;
+	return -1;
 }
 
-void qse_httpd_setoption (qse_httpd_t* httpd, int option)
+int qse_httpd_setopt (qse_httpd_t* httpd, qse_httpd_opt_t id, const void* value)
 {
-	httpd->option = option;
+	switch (id)
+	{
+		case QSE_HTTPD_TRAIT:
+			httpd->opt.trait = *(const int*)value;
+			return 0;
+	}
+
+	httpd->errnum = QSE_HTTPD_EINVAL;
+	return -1;
 }
 
 /* --------------------------------------------------- */
@@ -640,7 +656,7 @@ qse_printf (QSE_T("Debug: connection closed %d\n"), client->handle.i);
 		 * if QSE_HTTPD_MUTECLIENT is on, attempt to handle
 		 * it as a half-close under a certain condition. */
 
-		if (httpd->option & QSE_HTTPD_MUTECLIENT &&
+		if (httpd->opt.trait & QSE_HTTPD_MUTECLIENT &&
 		    client->task.head && client->htrd->clean)
 		{
 			/* there is still more tasks to finish and 

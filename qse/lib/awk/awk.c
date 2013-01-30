@@ -504,7 +504,7 @@ int qse_awk_setopt (qse_awk_t* awk, qse_awk_opt_t id, const void* value)
 	return -1;
 }
 
-int qse_awk_getopt (qse_awk_t* awk, qse_awk_opt_t  id, void* value)
+int qse_awk_getopt (qse_awk_t* awk, qse_awk_opt_t id, void* value)
 {
 	switch  (id)
 	{

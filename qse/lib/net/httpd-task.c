@@ -405,45 +405,42 @@ qse_httpd_task_t* qse_httpd_entaskrsrc (
 	switch (rsrc->type)
 	{
 		case QSE_HTTPD_RSRC_AUTH:
-			task = qse_httpd_entaskauth (httpd, client, QSE_NULL, rsrc->u.auth.realm, req);
+			task = qse_httpd_entaskauth (httpd, client, pred, rsrc->u.auth.realm, req);
 			break;
 
 		case QSE_HTTPD_RSRC_CGI:
-			task = qse_httpd_entaskcgi (
-				httpd, client, QSE_NULL, rsrc->u.cgi.path,
-				rsrc->u.cgi.script, rsrc->u.cgi.suffix, 
-				rsrc->u.cgi.docroot, rsrc->u.cgi.nph, req);
+			task = qse_httpd_entaskcgi (httpd, client, pred, &rsrc->u.cgi, req);
 			break;
 
 		case QSE_HTTPD_RSRC_DIR:
 			qse_httpd_discardcontent (httpd, req);
-			task = qse_httpd_entaskdir (httpd, client, QSE_NULL, rsrc->u.dir.path, req);
+			task = qse_httpd_entaskdir (httpd, client, pred, rsrc->u.dir.path, req);
 			break;
 
 		case QSE_HTTPD_RSRC_ERR:
 			qse_httpd_discardcontent (httpd, req);
-			task = qse_httpd_entaskerr (httpd, client, QSE_NULL, rsrc->u.err.code, req);
+			task = qse_httpd_entaskerr (httpd, client, pred, rsrc->u.err.code, req);
 			break;
 
 		case QSE_HTTPD_RSRC_FILE:
 			qse_httpd_discardcontent (httpd, req);
-			task = qse_httpd_entaskfile (httpd, client, QSE_NULL, rsrc->u.file.path, rsrc->u.file.mime, req);
+			task = qse_httpd_entaskfile (httpd, client, pred, rsrc->u.file.path, rsrc->u.file.mime, req);
 			break;
 	
 		case QSE_HTTPD_RSRC_PROXY:
-			task = qse_httpd_entaskproxy (httpd, client, QSE_NULL, &rsrc->u.proxy.dst, &rsrc->u.proxy.src, req);
+			task = qse_httpd_entaskproxy (httpd, client, pred, &rsrc->u.proxy.dst, &rsrc->u.proxy.src, req);
 			break;
 
 		case QSE_HTTPD_RSRC_RELOC:
-			task = qse_httpd_entaskreloc (httpd, client, QSE_NULL, rsrc->u.reloc.dst, req);
+			task = qse_httpd_entaskreloc (httpd, client, pred, rsrc->u.reloc.dst, req);
 			break;
 
 		case QSE_HTTPD_RSRC_REDIR:
-			task = qse_httpd_entaskredir (httpd, client, QSE_NULL, rsrc->u.redir.dst, req);
+			task = qse_httpd_entaskredir (httpd, client, pred, rsrc->u.redir.dst, req);
 			break;
 
 		case QSE_HTTPD_RSRC_TEXT:
-			task = qse_httpd_entasktext (httpd, client, QSE_NULL, rsrc->u.text.ptr, rsrc->u.text.mime, req);
+			task = qse_httpd_entasktext (httpd, client, pred, rsrc->u.text.ptr, rsrc->u.text.mime, req);
 			break;
 
 		default:

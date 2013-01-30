@@ -185,6 +185,7 @@ static int httpd_main (int argc, qse_char_t* argv[])
 	qse_httpd_t* httpd = QSE_NULL;
 	qse_ntime_t tmout;
 	int ret = -1, i;
+	int trait;
 	static qse_httpd_server_cbstd_t cbstd = { makersrc, freersrc };
 
 	if (argc <= 1)
@@ -218,7 +219,8 @@ static int httpd_main (int argc, qse_char_t* argv[])
 
 	qse_httpd_setname (httpd, QSE_MT("qsehttpd 1.0"));
 
-	qse_httpd_setoption (httpd, QSE_HTTPD_CGIERRTONUL);
+	trait = QSE_HTTPD_CGIERRTONUL;
+	qse_httpd_setopt (httpd, QSE_HTTPD_TRAIT, &trait);
 
 	tmout.sec = 10;
 	tmout.nsec = 0;
@@ -258,7 +260,6 @@ int qse_main (int argc, qse_achar_t* argv[])
 		setlocale (LC_ALL, locale);
 		qse_setdflcmgrbyid (QSE_CMGR_SLMB);
 	}
-
 
 	if (WSAStartup (MAKEWORD(2,0), &wsadata) != 0)
 	{

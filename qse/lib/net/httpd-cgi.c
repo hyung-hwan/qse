@@ -33,6 +33,7 @@ struct task_cgi_arg_t
 	qse_mcstr_t script;
 	qse_mcstr_t suffix;
 	qse_mcstr_t docroot;
+	qse_mcstr_t shebang;
 	int nph;
 	qse_htre_t* req;
 };
@@ -47,6 +48,7 @@ struct task_cgi_t
 	const qse_mchar_t* script;
 	const qse_mchar_t* suffix;
 	const qse_mchar_t* docroot;
+	const qse_mchar_t* shebang;
 	qse_http_version_t version;
 	int keepalive; /* taken from the request */
 	int nph;
@@ -706,10 +708,12 @@ static int task_init_cgi (
 	cgi->script = cgi->path + arg->path.len + 1;
 	cgi->suffix = cgi->script + arg->script.len + 1;
 	cgi->docroot = cgi->suffix + arg->suffix.len + 1;
+	cgi->shebang = cgi->docroot + arg->docroot.len + 1;
 	qse_mbscpy ((qse_mchar_t*)cgi->path, arg->path.ptr);
 	qse_mbscpy ((qse_mchar_t*)cgi->script, arg->script.ptr);
 	qse_mbscpy ((qse_mchar_t*)cgi->suffix, arg->suffix.ptr);
 	qse_mbscpy ((qse_mchar_t*)cgi->docroot, arg->docroot.ptr);
+	qse_mbscpy ((qse_mchar_t*)cgi->shebang, arg->shebang.ptr);
 
 	cgi->version = *qse_htre_getversion(arg->req);
 	cgi->keepalive = (arg->req->attr.flags & QSE_HTRE_ATTR_KEEPALIVE);
@@ -737,7 +741,7 @@ static int task_init_cgi (
 		 * such a request to entask a cgi script dropping the
 		 * content */
 
-		if (httpd->option & QSE_HTTPD_CGINOCHUNKED)
+		if (httpd->opt.trait & QSE_HTTPD_CGINOCHUNKED)
 		{
 			qse_htre_discardcontent (arg->req);
 			cgi->reqflags |= CGI_REQ_GOTALL;
@@ -844,8 +848,8 @@ done:
 	}
 
 	/* get the content type header value */
-     tmp = qse_htre_getheaderval(arg->req, QSE_MT("Content-Type"));
-     if (tmp) while (tmp->next) tmp = tmp->next; /* get the last value */
+	tmp = qse_htre_getheaderval(arg->req, QSE_MT("Content-Type"));
+	if (tmp) while (tmp->next) tmp = tmp->next; /* get the last value */
 
 	if (cgi_add_env (
 		httpd, client, cgi->env, arg->req, 
@@ -1332,8 +1336,9 @@ static int task_main_cgi (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
 {
 	task_cgi_t* cgi = (task_cgi_t*)task->ctx;
-	int pio_options;
+	int pio_options, x;
 	int http_errnum = 500;
+	qse_mchar_t* xpath;
 
 	if (cgi->init_failed) goto oops;
 
@@ -1368,16 +1373,31 @@ static int task_main_cgi (
 	}
 
 	pio_options = QSE_PIO_READOUT | QSE_PIO_WRITEIN | QSE_PIO_MBSCMD;
-	if (httpd->option & QSE_HTTPD_CGIERRTONUL)
+	if (httpd->opt.trait & QSE_HTTPD_CGIERRTONUL)
 		pio_options |= QSE_PIO_ERRTONUL;
 	else
 		pio_options |= QSE_PIO_ERRTOOUT;
-	if (httpd->option & QSE_HTTPD_CGINOCLOEXEC) 
+	if (httpd->opt.trait & QSE_HTTPD_CGINOCLOEXEC) 
 		pio_options |= QSE_PIO_NOCLOEXEC;
 
-	if (qse_pio_init (
-		&cgi->pio, httpd->mmgr, (const qse_char_t*)cgi->path, 
-		cgi->env, pio_options) <= -1)
+	if (cgi->shebang[0] != QSE_MT('\0'))
+	{
+		const qse_mchar_t* tmp[4];
+		tmp[0] = cgi->shebang;
+		tmp[1] = QSE_MT(" ");
+		tmp[2] = cgi->path;
+		tmp[3] = QSE_NULL;
+		xpath = qse_mbsadup (tmp, QSE_NULL, httpd->mmgr);
+		if (xpath == QSE_NULL) goto oops;
+	}
+	else xpath = cgi->path;
+
+	x = qse_pio_init (
+		&cgi->pio, httpd->mmgr, (const qse_char_t*)xpath,
+		cgi->env, pio_options);
+	if (xpath != cgi->path) QSE_MMGR_FREE (httpd->mmgr, xpath);
+
+	if (x <= -1)
 	{
 		qse_pio_errnum_t errnum;
 
@@ -1468,30 +1488,31 @@ qse_httpd_task_t* qse_httpd_entaskcgi (
 	qse_httpd_t* httpd,
 	qse_httpd_client_t* client,
 	qse_httpd_task_t* pred,
-	const qse_mchar_t* path, 
-	const qse_mchar_t* script,
-	const qse_mchar_t* suffix,
-	const qse_mchar_t* docroot,
-	int                nph,
+	qse_httpd_rsrc_cgi_t* cgi,
 	qse_htre_t*        req)
 {
 	qse_httpd_task_t task;
 	task_cgi_arg_t arg;
+	qse_httpd_rsrc_cgi_t rsrc;
 
-	if (script == QSE_NULL) script = qse_htre_getqpath(req);
-	if (suffix == QSE_NULL) suffix = QSE_MT("");
-	if (docroot == QSE_NULL) docroot = QSE_MT("");
+	rsrc = *cgi;
+	if (rsrc.script == QSE_NULL) rsrc.script = qse_htre_getqpath(req);
+	if (rsrc.suffix == QSE_NULL) rsrc.suffix = QSE_MT("");
+	if (rsrc.docroot == QSE_NULL) rsrc.docroot = QSE_MT("");
+	if (rsrc.shebang == QSE_NULL) rsrc.shebang = QSE_MT("");
 
-	arg.path.ptr = path;
-	arg.path.len = qse_mbslen(path);
-	arg.script.ptr = script;
-	arg.script.len = qse_mbslen(script);
-	arg.suffix.ptr = suffix;
-	arg.suffix.len = qse_mbslen(suffix);
-	arg.docroot.ptr = docroot;
-	arg.docroot.len = qse_mbslen(docroot);
+	arg.path.ptr = rsrc.path;
+	arg.path.len = qse_mbslen(rsrc.path);
+	arg.script.ptr = rsrc.script;
+	arg.script.len = qse_mbslen(rsrc.script);
+	arg.suffix.ptr = rsrc.suffix;
+	arg.suffix.len = qse_mbslen(rsrc.suffix);
+	arg.docroot.ptr = rsrc.docroot;
+	arg.docroot.len = qse_mbslen(rsrc.docroot);
+	arg.nph = rsrc.nph;
+	arg.shebang.ptr = rsrc.shebang;
+	arg.shebang.len = qse_mbslen(rsrc.shebang);
 	arg.req = req;
-	arg.nph = nph;
 
 	QSE_MEMSET (&task, 0, QSE_SIZEOF(task));
 	task.init = task_init_cgi;
@@ -1502,10 +1523,11 @@ qse_httpd_task_t* qse_httpd_entaskcgi (
 	return qse_httpd_entask (
 		httpd, client, pred, &task, 
 		QSE_SIZEOF(task_cgi_t) + 
-		((arg.path.len + 1) * QSE_SIZEOF(*path)) + 
-		((arg.script.len + 1) * QSE_SIZEOF(*script)) + 
-		((arg.suffix.len + 1) * QSE_SIZEOF(*suffix)) +
-		((arg.docroot.len + 1) * QSE_SIZEOF(*docroot))
+		((arg.path.len + 1) * QSE_SIZEOF(*arg.path.ptr)) + 
+		((arg.script.len + 1) * QSE_SIZEOF(*arg.script.ptr)) + 
+		((arg.suffix.len + 1) * QSE_SIZEOF(*arg.suffix.ptr)) +
+		((arg.docroot.len + 1) * QSE_SIZEOF(*arg.docroot.ptr)) +
+		((arg.shebang.len + 1) * QSE_SIZEOF(*arg.shebang.ptr))
 	);
 }
 
