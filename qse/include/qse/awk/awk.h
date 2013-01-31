@@ -1008,7 +1008,7 @@ enum qse_awk_trait_t
 	QSE_AWK_IMPLICIT = (1 << 0),
 
 	/** enables nextofile and NEXTOFILE */
-	QSE_AWK_NEXTOFILE = (1 << 0),
+	QSE_AWK_NEXTOFILE = (1 << 1),
 
 	/** supports \b getline, \b print, \b printf, \b close, \b fflush,
 	 *  piping, and file rediction */
