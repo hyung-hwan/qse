@@ -289,7 +289,7 @@ EXTRA_DIST = LICENSE \
 	bld/os2-watcom/makefile bld/win32-watcom/makefile \
 	bld/win32-msvc/makefile bld/win32-borland/makefile
 
-SUBDIRS = libltdl include lib cmd mod
+SUBDIRS = libltdl include lib cmd
 DIST_SUBDIRS = $(SUBDIRS) regress samples doc tools
 all: all-recursive
 

@@ -518,14 +518,13 @@ AC_CONFIG_FILES([
 	lib/Makefile 
 	lib/cmn/Makefile 
 	lib/awk/Makefile 
+	lib/awk/mod/Makefile 
 	lib/sed/Makefile 
 	lib/net/Makefile 
 	cmd/Makefile 
 	cmd/awk/Makefile 
 	cmd/sed/Makefile 
 	cmd/net/Makefile 
-	mod/Makefile
-	mod/awk/Makefile
 	samples/Makefile 
 	samples/cmn/Makefile 
 	samples/awk/Makefile 

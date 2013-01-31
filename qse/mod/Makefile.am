@@ -1,2 +1,0 @@
-SUBDIRS = awk  
-DIST_SUBDIRS = $(SUBDIRS) 

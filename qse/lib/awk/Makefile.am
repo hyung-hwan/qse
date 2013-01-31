@@ -1,5 +1,7 @@
 AUTOMAKE_OPTIONS = nostdinc
 
+SUBDIRS = . mod
+
 AM_CPPFLAGS = \
 	-I$(top_builddir)/include \
 	-I$(top_srcdir)/include \
