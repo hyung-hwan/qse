@@ -828,13 +828,13 @@ $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\dllqseawk_rio.obj :  .AUTODEPEND ..\..\lib\aw
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\dllqseawk_std.obj :  .AUTODEPEND ..\..\lib\awk\std.c
 	$(CC) -bt=nt -zq -fo=$^@ $(DLLQSEAWK_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\modqseawkdir_dir.obj :  .AUTODEPEND ..\..\mod\awk\dir.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\modqseawkdir_dir.obj :  .AUTODEPEND ..\..\lib\awk\mod\dir.c
 	$(CC) -bt=nt -zq -fo=$^@ $(MODQSEAWKDIR_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\modqseawkstr_str.obj :  .AUTODEPEND ..\..\mod\awk\str.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\modqseawkstr_str.obj :  .AUTODEPEND ..\..\lib\awk\mod\str.c
 	$(CC) -bt=nt -zq -fo=$^@ $(MODQSEAWKSTR_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\modqseawksys_sys.obj :  .AUTODEPEND ..\..\mod\awk\sys.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\modqseawksys_sys.obj :  .AUTODEPEND ..\..\lib\awk\mod\sys.c
 	$(CC) -bt=nt -zq -fo=$^@ $(MODQSEAWKSYS_CFLAGS) $<
 
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\dllqsesed_sed.obj :  .AUTODEPEND ..\..\lib\sed\sed.c

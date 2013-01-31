@@ -261,7 +261,7 @@
 	<dll id="modqseawkdir" template="base">
 		<dllname>$(AWKMODPREFIX)dir$(AWKMODPOSTFIX)</dllname>
 		<libname>$(AWKMODPREFIX)dir$(AWKMODPOSTFIX)</libname>
-		<set-srcdir>../../mod/awk</set-srcdir>
+		<set-srcdir>../../lib/awk/mod</set-srcdir>
 		<sources>dir.c</sources>
 		<library>dllqsecmn</library>
 		<library>dllqseawk</library>
@@ -271,7 +271,7 @@
 	<dll id="modqseawkstr" template="base">
 		<dllname>$(AWKMODPREFIX)str$(AWKMODPOSTFIX)</dllname>
 		<libname>$(AWKMODPREFIX)str$(AWKMODPOSTFIX)</libname>
-		<set-srcdir>../../mod/awk</set-srcdir>
+		<set-srcdir>../../lib/awk/mod</set-srcdir>
 		<sources>str.c</sources>
 		<library>dllqsecmn</library>
 		<library>dllqseawk</library>
@@ -281,7 +281,7 @@
 	<dll id="modqseawksys" template="base">
 		<dllname>$(AWKMODPREFIX)sys$(AWKMODPOSTFIX)</dllname>
 		<libname>$(AWKMODPREFIX)sys$(AWKMODPOSTFIX)</libname>
-		<set-srcdir>../../mod/awk</set-srcdir>
+		<set-srcdir>../../lib/awk/mod</set-srcdir>
 		<sources>sys.c</sources>
 		<library>dllqsecmn</library>
 		<library>dllqseawk</library>

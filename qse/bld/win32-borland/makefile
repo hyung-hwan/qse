@@ -795,14 +795,14 @@ $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\dllqseawk_rio.obj: ..\..\lib\awk\rio.c
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\dllqseawk_std.obj: ..\..\lib\awk\std.c
 	$(CC) -q -c -P- -o$@ $(DLLQSEAWK_CFLAGS) ..\..\lib\awk\std.c
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\modqseawkdir_dir.obj: ..\..\mod\awk\dir.c
-	$(CC) -q -c -P- -o$@ $(MODQSEAWKDIR_CFLAGS) ..\..\mod\awk\dir.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\modqseawkdir_dir.obj: ..\..\lib\awk\mod\dir.c
+	$(CC) -q -c -P- -o$@ $(MODQSEAWKDIR_CFLAGS) ..\..\lib\awk\mod\dir.c
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\modqseawkstr_str.obj: ..\..\mod\awk\str.c
-	$(CC) -q -c -P- -o$@ $(MODQSEAWKSTR_CFLAGS) ..\..\mod\awk\str.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\modqseawkstr_str.obj: ..\..\lib\awk\mod\str.c
+	$(CC) -q -c -P- -o$@ $(MODQSEAWKSTR_CFLAGS) ..\..\lib\awk\mod\str.c
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\modqseawksys_sys.obj: ..\..\mod\awk\sys.c
-	$(CC) -q -c -P- -o$@ $(MODQSEAWKSYS_CFLAGS) ..\..\mod\awk\sys.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\modqseawksys_sys.obj: ..\..\lib\awk\mod\sys.c
+	$(CC) -q -c -P- -o$@ $(MODQSEAWKSYS_CFLAGS) ..\..\lib\awk\mod\sys.c
 
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\dllqsesed_sed.obj: ..\..\lib\sed\sed.c
 	$(CC) -q -c -P- -o$@ $(DLLQSESED_CFLAGS) ..\..\lib\sed\sed.c
