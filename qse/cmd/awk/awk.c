@@ -519,7 +519,7 @@ static int comparg (int argc, qse_char_t* argv[], struct arg_t* arg)
 	{
 
 		{ QSE_T(":implicit"),        QSE_T('\0') },
-		{ QSE_T(":extrakws"),        QSE_T('\0') },
+		{ QSE_T(":nextofile"),       QSE_T('\0') },
 		{ QSE_T(":rio"),             QSE_T('\0') },
 		{ QSE_T(":rwpipe"),          QSE_T('\0') },
 		{ QSE_T(":newline"),         QSE_T('\0') },
