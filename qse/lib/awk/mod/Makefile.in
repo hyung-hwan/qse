@@ -36,7 +36,7 @@ build_triplet = @build@
 host_triplet = @host@
 @HAVE_LIBUCI_TRUE@am__append_1 = libqseawk-uci.la
 @HAVE_C_MPI_TRUE@am__append_2 = libqseawk-mpi.la
-subdir = mod/awk
+subdir = lib/awk/mod
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/argz.m4 \
@@ -320,7 +320,7 @@ AM_CPPFLAGS = \
 	-I$(top_srcdir)/include \
 	-I$(includedir)
 
-LDFLAGS_COMMON = -L$(abs_builddir)/../../lib/cmn -L$(abs_builddir)/../../lib/awk -L$(libdir) -no-undefined -version-info 1:0:0
+LDFLAGS_COMMON = -L$(abs_builddir)/../../cmn -L$(abs_builddir)/../../awk -L$(libdir) -no-undefined -version-info 1:0:0
 LIBADD_COMMON = -lqseawk -lqsecmn
 moddir = $(libdir)
 mod_LTLIBRARIES = libqseawk-sys.la libqseawk-str.la libqseawk-dir.la \
@@ -354,9 +354,9 @@ $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign mod/awk/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign lib/awk/mod/Makefile'; \
 	$(am__cd) $(top_srcdir) && \
-	  $(AUTOMAKE) --foreign mod/awk/Makefile
+	  $(AUTOMAKE) --foreign lib/awk/mod/Makefile
 .PRECIOUS: Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \

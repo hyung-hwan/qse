@@ -23,7 +23,7 @@
 #include <qse/cmn/time.h>
 #include <qse/cmn/nwif.h>
 #include <qse/cmn/nwad.h>
-#include "../../lib/cmn/mem.h"
+#include "../../cmn/mem.h"
 
 #if defined(_WIN32)
 #	include <windows.h>
@@ -36,7 +36,7 @@
 #elif defined(__DOS__)
 #	include <dos.h>
 #else
-#	include "../../lib/cmn/syscall.h"
+#	include "../../cmn/syscall.h"
 #	if defined(HAVE_SYS_SYSCALL_H)
 #		include <sys/syscall.h>
 #	endif

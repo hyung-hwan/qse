@@ -5,7 +5,7 @@ AM_CPPFLAGS = \
 	-I$(top_srcdir)/include \
 	-I$(includedir)
 
-LDFLAGS_COMMON = -L$(abs_builddir)/../../lib/cmn -L$(abs_builddir)/../../lib/awk -L$(libdir) -no-undefined -version-info 1:0:0
+LDFLAGS_COMMON = -L$(abs_builddir)/../../cmn -L$(abs_builddir)/../../awk -L$(libdir) -no-undefined -version-info 1:0:0
 LIBADD_COMMON = -lqseawk -lqsecmn
 
 moddir = $(libdir)
