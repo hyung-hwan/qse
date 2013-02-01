@@ -20,7 +20,7 @@
 
 #include <qse/awk/awk.h>
 #include <qse/cmn/str.h>
-#include "../../cmn/mem.h"
+#include "../cmn/mem.h"
 
 static int fnc_normspc (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {

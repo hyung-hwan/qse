@@ -173,6 +173,7 @@ DLLQSECMN_OBJECTS =  &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\dllqsecmn_ipad.obj &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\dllqsecmn_lda.obj &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\dllqsecmn_main.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\dllqsecmn_mb8.obj &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\dllqsecmn_mbwc.obj &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\dllqsecmn_mbwc_str.obj &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\dllqsecmn_mem.obj &
@@ -257,17 +258,17 @@ MODQSEAWKDIR_CFLAGS = -bd -i=..\..\include $(CPPFLAGS_BUILD) $(CPPFLAGS_CHAR) &
 	$(CPPFLAGS_XCMGRS) $(CPPFLAGS_BUNDLED_UNICODE) $(CPPFLAGS_TCPV40HDRS) -wx &
 	$(__DEBUG_INFO) -bm -ot -ox $(CPPFLAGS) $(CFLAGS)
 MODQSEAWKDIR_OBJECTS =  &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\modqseawkdir_dir.obj
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\modqseawkdir_mod_dir.obj
 MODQSEAWKSTR_CFLAGS = -bd -i=..\..\include $(CPPFLAGS_BUILD) $(CPPFLAGS_CHAR) &
 	$(CPPFLAGS_XCMGRS) $(CPPFLAGS_BUNDLED_UNICODE) $(CPPFLAGS_TCPV40HDRS) -wx &
 	$(__DEBUG_INFO) -bm -ot -ox $(CPPFLAGS) $(CFLAGS)
 MODQSEAWKSTR_OBJECTS =  &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\modqseawkstr_str.obj
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\modqseawkstr_mod_str.obj
 MODQSEAWKSYS_CFLAGS = -bd -i=..\..\include $(CPPFLAGS_BUILD) $(CPPFLAGS_CHAR) &
 	$(CPPFLAGS_XCMGRS) $(CPPFLAGS_BUNDLED_UNICODE) $(CPPFLAGS_TCPV40HDRS) -wx &
 	$(__DEBUG_INFO) -bm -ot -ox $(CPPFLAGS) $(CFLAGS)
 MODQSEAWKSYS_OBJECTS =  &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\modqseawksys_sys.obj
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\modqseawksys_mod_sys.obj
 DLLQSESED_CFLAGS = -bd -i=..\..\include $(CPPFLAGS_BUILD) $(CPPFLAGS_CHAR) &
 	$(CPPFLAGS_XCMGRS) $(CPPFLAGS_BUNDLED_UNICODE) $(CPPFLAGS_TCPV40HDRS) -wx &
 	$(__DEBUG_INFO) -bm -ot -ox $(CPPFLAGS) $(CFLAGS)
@@ -597,6 +598,9 @@ $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\dllqsecmn_lda.obj :  .AUTODEPEND ..\..\lib\cm
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\dllqsecmn_main.obj :  .AUTODEPEND ..\..\lib\cmn\main.c
 	$(CC) -bt=nt -zq -fo=$^@ $(DLLQSECMN_CFLAGS) $<
 
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\dllqsecmn_mb8.obj :  .AUTODEPEND ..\..\lib\cmn\mb8.c
+	$(CC) -bt=nt -zq -fo=$^@ $(DLLQSECMN_CFLAGS) $<
+
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\dllqsecmn_mbwc.obj :  .AUTODEPEND ..\..\lib\cmn\mbwc.c
 	$(CC) -bt=nt -zq -fo=$^@ $(DLLQSECMN_CFLAGS) $<
 
@@ -828,13 +832,13 @@ $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\dllqseawk_rio.obj :  .AUTODEPEND ..\..\lib\aw
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\dllqseawk_std.obj :  .AUTODEPEND ..\..\lib\awk\std.c
 	$(CC) -bt=nt -zq -fo=$^@ $(DLLQSEAWK_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\modqseawkdir_dir.obj :  .AUTODEPEND ..\..\lib\awk\mod\dir.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\modqseawkdir_mod_dir.obj :  .AUTODEPEND ..\..\lib\awk\mod-dir.c
 	$(CC) -bt=nt -zq -fo=$^@ $(MODQSEAWKDIR_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\modqseawkstr_str.obj :  .AUTODEPEND ..\..\lib\awk\mod\str.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\modqseawkstr_mod_str.obj :  .AUTODEPEND ..\..\lib\awk\mod-str.c
 	$(CC) -bt=nt -zq -fo=$^@ $(MODQSEAWKSTR_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\modqseawksys_sys.obj :  .AUTODEPEND ..\..\lib\awk\mod\sys.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\modqseawksys_mod_sys.obj :  .AUTODEPEND ..\..\lib\awk\mod-sys.c
 	$(CC) -bt=nt -zq -fo=$^@ $(MODQSEAWKSYS_CFLAGS) $<
 
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\dllqsesed_sed.obj :  .AUTODEPEND ..\..\lib\sed\sed.c

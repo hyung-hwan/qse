@@ -518,7 +518,6 @@ AC_CONFIG_FILES([
 	lib/Makefile 
 	lib/cmn/Makefile 
 	lib/awk/Makefile 
-	lib/awk/mod/Makefile 
 	lib/sed/Makefile 
 	lib/net/Makefile 
 	cmd/Makefile 
