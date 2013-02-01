@@ -18,11 +18,11 @@
     License along with QSE. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <qse/awk/awk.h>
+#include "mod-str.h"
 #include <qse/cmn/str.h>
 #include "../cmn/mem.h"
 
-static int fnc_normspc (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+static int fnc_normspace (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
 	/* normalize spaces 
 	 * - trim leading and trailing spaces
@@ -86,10 +86,10 @@ struct fnctab_t
 static fnctab_t fnctab[] =
 {
 	/* keep this table sorted for binary search in query(). */
-	{ QSE_T("ltrim"),    { { 1, 1, QSE_NULL }, fnc_ltrim,    0  } },
-	{ QSE_T("normspc"),  { { 1, 1, QSE_NULL }, fnc_normspc,  0  } },
-	{ QSE_T("rtrim"),    { { 1, 1, QSE_NULL }, fnc_rtrim,    0  } },
-	{ QSE_T("trim"),     { { 1, 1, QSE_NULL }, fnc_trim,     0  } }
+	{ QSE_T("ltrim"),     { { 1, 1, QSE_NULL }, fnc_ltrim,    0  } },
+	{ QSE_T("normspace"), { { 1, 1, QSE_NULL }, fnc_normspace,  0  } },
+	{ QSE_T("rtrim"),     { { 1, 1, QSE_NULL }, fnc_rtrim,    0  } },
+	{ QSE_T("trim"),      { { 1, 1, QSE_NULL }, fnc_trim,     0  } }
 };
 
 static int query (qse_awk_mod_t* mod, qse_awk_t* awk, const qse_char_t* name, qse_awk_mod_sym_t* sym)
@@ -158,7 +158,7 @@ static void unload (qse_awk_mod_t* mod, qse_awk_t* awk)
 	/* TODO: anything */
 }
 
-QSE_EXPORT int load (qse_awk_mod_t* mod, qse_awk_t* awk)
+int qse_awk_mod_str (qse_awk_mod_t* mod, qse_awk_t* awk)
 {
 	mod->query = query;
 	mod->unload = unload;
@@ -172,7 +172,3 @@ QSE_EXPORT int load (qse_awk_mod_t* mod, qse_awk_t* awk)
 	return 0;
 }
 
-#if defined(__DOS__)
-/* kind of DllMain() for Causeway DLL */
-int main (int eax) { return 0; }
-#endif

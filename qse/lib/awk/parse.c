@@ -6480,16 +6480,49 @@ int qse_awk_putsrcstrn (
 	return 0;
 }
 
+#if defined(QSE_ENABLE_STATIC_MODULE)
+
+/* let's hardcode module information */
+#include "mod-dir.h"
+#include "mod-str.h"
+#include "mod-sys.h"
+#if defined(HAVE_MPI)
+#	include "mod-mpi.h"
+#endif
+#if defined(HAVE_UCI)
+#	include "mod-uci.h"
+#endif
+
+static struct
+{
+	qse_char_t* modname;
+	int (*modload) (qse_awk_mod_t* mod, qse_awk_t* awk);
+} static_modtab[] = 
+{
+	{ QSE_T("dir"), qse_awk_mod_dir },
+#if defined(HAVE_MPI)
+	{ QSE_T("mpi"), qse_awk_mod_mpi },
+#endif
+	{ QSE_T("str"), qse_awk_mod_str },
+	{ QSE_T("sys"), qse_awk_mod_sys },
+#if defined(HAVE_UCI)
+	{ QSE_T("uci"), qse_awk_mod_uci }
+#endif
+};
+#endif
+
 static qse_awk_mod_t* query_module (
 	qse_awk_t* awk, const qse_xstr_t segs[], int nsegs,
 	qse_awk_mod_sym_t* sym)
 {
+
 	qse_rbt_pair_t* pair;
 	qse_awk_mod_data_t* mdp;
 	qse_cstr_t ea;
 	int n;
 
 	QSE_ASSERT (nsegs == 2);
+
 
 	pair = qse_rbt_search (awk->modtab, segs[0].ptr, segs[0].len);
 	if (pair)
@@ -6498,9 +6531,59 @@ static qse_awk_mod_t* query_module (
 	}
 	else
 	{
+		qse_awk_mod_data_t md;
 		qse_awk_mod_load_t load;
 		qse_awk_mod_spec_t spec;
-		qse_awk_mod_data_t md;
+		qse_char_t buf[64 + 15] = QSE_T("_qse_awk_mod_");
+		qse_size_t buflen;
+
+		if (segs[0].len > QSE_COUNTOF(buf) - 15)
+		{
+			/* module name too long  */
+			ea.ptr = segs[0].ptr;
+			ea.len = segs[0].len;
+			qse_awk_seterror (awk, QSE_AWK_ESEGTL, &ea, QSE_NULL);
+			return QSE_NULL;
+		}
+
+#if defined(QSE_ENABLE_STATIC_MODULE)
+		/* TODO: binary search ... */
+		for (n = 0; n < QSE_COUNTOF(static_modtab); n++)
+		{
+			if (qse_strcmp (static_modtab[n].modname, segs[0].ptr) == 0) 
+			{
+				load = static_modtab[n].modload;
+				break;
+			}
+		}
+
+		if (n >= QSE_COUNTOF(static_modtab))
+		{
+			ea.ptr = segs[0].ptr;
+			ea.len = segs[0].len;
+			qse_awk_seterror (awk, QSE_AWK_ENOENT, &ea, QSE_NULL);
+			return QSE_NULL;
+		}
+
+		QSE_MEMSET (&md, 0, QSE_SIZEOF(md));
+
+		/* i copy-insert 'md' into the table before calling 'load'.
+		 * to pass the same address to load(), query(), etc */
+		pair = qse_rbt_insert (awk->modtab, segs[0].ptr, segs[0].len, &md, QSE_SIZEOF(md));
+		if (pair == QSE_NULL)
+		{
+			qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);
+			return QSE_NULL;
+		}
+
+		mdp = (qse_awk_mod_data_t*)QSE_RBT_VPTR(pair);
+		if (load (&mdp->mod, awk) <= -1)
+		{
+			qse_rbt_delete (awk->modtab, segs[0].ptr, segs[0].len);
+			return QSE_NULL;
+		}
+
+#else
 
 		QSE_MEMSET (&spec, 0, QSE_SIZEOF(spec));
 
@@ -6520,7 +6603,7 @@ static qse_awk_mod_t* query_module (
 		}
 		else md.handle = QSE_NULL;
 
-		if (!md.handle) 
+		if (md.handle == QSE_NULL) 
 		{
 			ea.ptr = segs[0].ptr;
 			ea.len = segs[0].len;
@@ -6528,17 +6611,23 @@ static qse_awk_mod_t* query_module (
 			return QSE_NULL;
 		}
 
-		load = awk->prm.modsym (awk, md.handle, QSE_T("load"));
+		buflen = qse_strcpy (&buf[13], segs[0].ptr);
+		/* attempt qse_awk_mod_xxx */
+		load = awk->prm.modsym (awk, md.handle, &buf[1]);
 		if (!load) 
 		{
-			load = awk->prm.modsym (awk, md.handle, QSE_T("_load"));
+			/* attempt _qse_awk_mod_xxx */
+			load = awk->prm.modsym (awk, md.handle, &buf[0]);
 			if (!load)
 			{
-				load = awk->prm.modsym (awk, md.handle, QSE_T("load_"));
+				/* attempt qse_awk_mod_xxx_ */
+				buf[13 + buflen] = QSE_T('_');
+				buf[13 + buflen + 1] = QSE_T('\0');
+				load = awk->prm.modsym (awk, md.handle, &buf[1]);
 				if (!load)
 				{
-					ea.ptr = QSE_T("load");
-					ea.len = 4;
+					ea.ptr = &buf[1];
+					ea.len = 4 + buflen;
 					qse_awk_seterror (awk, QSE_AWK_ENOENT, &ea, QSE_NULL);
 
 					awk->prm.modclose (awk, md.handle);
@@ -6564,6 +6653,7 @@ static qse_awk_mod_t* query_module (
 			awk->prm.modclose (awk, mdp->handle);
 			return QSE_NULL;
 		}
+#endif
 	}
 
 	n = mdp->mod.query (&mdp->mod, awk, segs[1].ptr, sym);

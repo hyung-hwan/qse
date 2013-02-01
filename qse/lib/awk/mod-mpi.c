@@ -18,7 +18,7 @@
     License along with QSE. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <qse/awk/awk.h>
+#include "mod-mpi.h"
 #include <qse/cmn/str.h>
 #include <qse/cmn/main.h>
 
@@ -253,7 +253,7 @@ static void unload (qse_awk_mod_t* mod, qse_awk_t* awk)
 	/* TODO: anything */
 }
 
-QSE_EXPORT int load (qse_awk_mod_t* mod, qse_awk_t* awk)
+int qse_awk_mod_mpi (qse_awk_mod_t* mod, qse_awk_t* awk)
 {
 	mod->query = query;
 	mod->unload = unload;
@@ -276,7 +276,7 @@ QSE_EXPORT int load (qse_awk_mod_t* mod, qse_awk_t* awk)
  * and the module wasn't built. So you can't access mpi::xxx symbols either 
  */
 
-QSE_EXPORT int mpi_init (int argc, qse_achar_t* argv[])
+QSE_EXPORT int qse_awk_mod_mpi_init (int argc, qse_achar_t* argv[])
 {
 	int rx;
 
@@ -290,7 +290,7 @@ QSE_EXPORT int mpi_init (int argc, qse_achar_t* argv[])
 	return rx;
 }
 
-QSE_EXPORT void mpi_fini (void)
+QSE_EXPORT void qse_awk_mod_mpi_fini (void)
 {
 	MPI_Finalize ();
 }

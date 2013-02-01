@@ -1179,8 +1179,8 @@ static void open_mpi (mpi_t* mpi, int argc, qse_achar_t* argv[])
 
 	if (mpi->h)
 	{
-		mpi->i = lt_dlsym (mpi->h, "mpi_init");
-		mpi->f = lt_dlsym (mpi->h, "mpi_fini");
+		mpi->i = lt_dlsym (mpi->h, "qse_awk_mod_mpi_init");
+		mpi->f = lt_dlsym (mpi->h, "qse_awk_mod_mpi_fini");
 
 		if (mpi->i == QSE_NULL || 
 		    mpi->f == QSE_NULL ||

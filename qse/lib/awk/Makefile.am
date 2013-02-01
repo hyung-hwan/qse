@@ -16,8 +16,8 @@ LDFLAGS_LIB_COMMON = $(LDFLAGS_ALL_COMMON)
 LIBADD_LIB_COMMON = -lqsecmn $(LIBM) $(LIBLTDL)
 
 if WIN32
-# you must adjust the value of DEFAULT_MODPOSTFIX according to
-# -version-info in mod/awk/Makefile.am
+# you must adjust the value of DEFAULT_MODPOSTFIX according 
+# to the first number in -version-info above
 CPPFLAGS_LIB_COMMON += -DQSE_AWK_DEFAULT_MODPREFIX=\"libqseawk-\" -DQSE_AWK_DEFAULT_MODPOSTFIX=\"-1\"
 else
 CPPFLAGS_LIB_COMMON += -DQSE_AWK_DEFAULT_MODPREFIX=\"$(libdir)/libqseawk-\" -DQSE_AWK_DEFAULT_MODPOSTFIX=\"\"
@@ -37,8 +37,30 @@ libqseawkxx_la_LDFLAGS = $(LDFLAGS_LIB_COMMON)
 libqseawkxx_la_LIBADD = -lqseawk -lqsecmnxx $(LIBADD_LIB_COMMON)
 endif
 
+if ENABLE_STATIC_MODULE
+
 ##################################################
-# MODULES 
+# STATIC MODULES BUILT INTO MAIN LIBRARY
+##################################################
+libqseawk_la_SOURCES += \
+	mod-dir.c mod-dir.h \
+	mod-str.c mod-str.h \
+	mod-sys.c mod-sys.h
+
+if HAVE_C_MPI
+libqseawk_la_SOURCES += mod-mpi.c mod-mpi.h
+libqseawk_la_CPPFLAGS += $(MPI_CFLAGS)
+libqseawk_la_LDFLAGS += $(MPI_CLDFLAGS)
+endif
+
+if HAVE_LIBUCI
+libqseawk_la_SOURCES += mod-uci.c mod-uci.h
+libqseawk_la_LIBADD += $(UCI_LIBS)
+endif
+
+else
+##################################################
+# DYNAMIC MODULES 
 ##################################################
 
 CPPFLAGS_MOD_COMMON = $(CPPFLAGS_ALL_COMMON)
@@ -48,26 +70,26 @@ LIBADD_MOD_COMMON = -lqseawk -lqsecmn
 moddir = $(libdir)
 
 mod_LTLIBRARIES = libqseawk-dir.la
-libqseawk_dir_la_SOURCES = mod-dir.c
+libqseawk_dir_la_SOURCES = mod-dir.c mod-dir.h
 libqseawk_dir_la_CPPFLAGS = $(CPPFLAGS_MOD_COMMON)
 libqseawk_dir_la_LDFLAGS = $(LDFLAGS_MOD_COMMON)
 libqseawk_dir_la_LIBADD = $(LIBADD_MOD_COMMON)
 
 mod_LTLIBRARIES += libqseawk-str.la
-libqseawk_str_la_SOURCES = mod-str.c
+libqseawk_str_la_SOURCES = mod-str.c mod-str.h
 libqseawk_str_la_CPPFLAGS = $(CPPFLAGS_MOD_COMMON)
 libqseawk_str_la_LDFLAGS = $(LDFLAGS_MOD_COMMON)
 libqseawk_str_la_LIBADD = $(LIBADD_MOD_COMMON)
 
 mod_LTLIBRARIES += libqseawk-sys.la
-libqseawk_sys_la_SOURCES = mod-sys.c
+libqseawk_sys_la_SOURCES = mod-sys.c mod-sys.h
 libqseawk_sys_la_CPPFLAGS = $(CPPFLAGS_MOD_COMMON)
 libqseawk_sys_la_LDFLAGS = $(LDFLAGS_MOD_COMMON)
 libqseawk_sys_la_LIBADD = $(LIBADD_MOD_COMMON)
 
 if HAVE_C_MPI
 mod_LTLIBRARIES += libqseawk-mpi.la
-libqseawk_mpi_la_SOURCES = mod-mpi.c
+libqseawk_mpi_la_SOURCES = mod-mpi.c mod-mpi.h
 libqseawk_mpi_la_CPPFLAGS = $(CPPFLAGS_MOD_COMMON) $(MPI_CFLAGS)
 libqseawk_mpi_la_LDFLAGS = $(LDFLAGS_MOD_COMMON) $(MPI_CLDFLAGS)
 libqseawk_mpi_la_LIBADD = $(LIBADD_MOD_COMMON)
@@ -75,10 +97,10 @@ endif
 
 if HAVE_LIBUCI
 mod_LTLIBRARIES += libqseawk-uci.la
-libqseawk_uci_la_SOURCES = mod-uci.c
+libqseawk_uci_la_SOURCES = mod-uci.c mod-uci.h
 libqseawk_uci_la_CPPFLAGS = $(CPPFLAGS_MOD_COMMON) 
 libqseawk_uci_la_LDFLAGS = $(LDFLAGS_MOD_COMMON) 
 libqseawk_uci_la_LIBADD = $(LIBADD_MOD_COMMON) $(UCI_LIBS)
 endif
 
-
+endif

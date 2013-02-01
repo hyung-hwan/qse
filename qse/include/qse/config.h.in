@@ -637,6 +637,9 @@
 /* enable qse_sed_setexectracer() */
 #undef QSE_ENABLE_SEDTRACER
 
+/* link modules statically into the main library */
+#undef QSE_ENABLE_STATIC_MODULE
+
 /* include more built-in cmgrs like cp949 and cp950 */
 #undef QSE_ENABLE_XCMGRS
 

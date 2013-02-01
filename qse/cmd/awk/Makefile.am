@@ -7,7 +7,7 @@ AM_CPPFLAGS = \
 
 if WIN32
 # you must adjust the value of DEFAULT_MODPOSTFIX according to
-# -version-info in ../../mod/awk/Makefile.am
+# -version-info in ../../lib/awk/Makefile.am
 AM_CPPFLAGS += -DDEFAULT_MODPREFIX=\"libqseawk-\" -DDEFAULT_MODPOSTFIX=\"-1\"
 else
 AM_CPPFLAGS += -DDEFAULT_MODPREFIX=\"$(libdir)/libqseawk-\" -DDEFAULT_MODPOSTFIX=\"\"
@@ -19,7 +19,7 @@ bin_PROGRAMS = qseawk
 
 qseawk_SOURCES = awk.c
 qseawk_LDFLAGS = -L../../lib/awk -L../../lib/cmn -L$(libdir)
-qseawk_LDADD = -lqseawk -lqsecmn $(LIBM) $(LIBLTDL)
+qseawk_LDADD = -lqseawk -lqsecmn $(LIBM) $(LIBLTDL) 
 
 if WIN32
 if WCHAR
