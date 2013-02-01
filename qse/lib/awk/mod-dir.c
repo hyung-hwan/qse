@@ -18,7 +18,7 @@
     License along with QSE. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <qse/awk/awk.h>
+#include "mod-dir.h"
 #include <qse/cmn/str.h>
 #include <qse/cmn/rbt.h>
 #include <qse/cmn/dir.h>
@@ -579,7 +579,7 @@ static void unload (qse_awk_mod_t* mod, qse_awk_t* awk)
 	qse_rbt_close (rbt);
 }
 
-QSE_EXPORT int load (qse_awk_mod_t* mod, qse_awk_t* awk) 
+int qse_awk_mod_dir (qse_awk_mod_t* mod, qse_awk_t* awk) 
 {
 	qse_rbt_t* rbt;
 
@@ -601,8 +601,4 @@ QSE_EXPORT int load (qse_awk_mod_t* mod, qse_awk_t* awk)
 	return 0;
 }
 
-#if defined(__DOS__)
-/* kind of DllMain() for Causeway DLL */
-int main (int eax) { return 0; }
-#endif
        

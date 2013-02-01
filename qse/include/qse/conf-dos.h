@@ -112,4 +112,7 @@
 #	error Define the size of various data types.
 #endif
 
+/* well, supporting dynamic modules in DOS is nearly impossible */
+#define QSE_ENABLE_STATIC_MODULE 1
+
 #include <qse/conf-inf.h>

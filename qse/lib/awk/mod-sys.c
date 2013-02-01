@@ -18,7 +18,7 @@
     License along with QSE. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <qse/awk/awk.h>
+#include "mod-sys.h"
 #include <qse/cmn/str.h>
 #include <qse/cmn/time.h>
 #include <qse/cmn/nwif.h>
@@ -729,7 +729,7 @@ static void unload (qse_awk_mod_t* mod, qse_awk_t* awk)
 	/* TODO: anything */
 }
 
-QSE_EXPORT int load (qse_awk_mod_t* mod, qse_awk_t* awk)
+int qse_awk_mod_sys (qse_awk_mod_t* mod, qse_awk_t* awk)
 {
 	mod->query = query;
 	mod->unload = unload;
@@ -743,7 +743,3 @@ QSE_EXPORT int load (qse_awk_mod_t* mod, qse_awk_t* awk)
 	return 0;
 }
 
-#if defined(__DOS__)
-/* kind of DllMain() for Causeway DLL */
-int main (int eax) { return 0; }
-#endif

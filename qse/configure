@@ -636,6 +636,8 @@ QSE_SIZEOF_INT
 QSE_SIZEOF_LONG
 QSE_SIZEOF_LONG_LONG
 QSE_SIZEOF_WCHAR_T
+ENABLE_STATIC_MODULE_FALSE
+ENABLE_STATIC_MODULE_TRUE
 PTHREAD_CFLAGS
 PTHREAD_LIBS
 PTHREAD_CC
@@ -20258,10 +20260,13 @@ fi
 
 if test "${ac_cv_header_wctype_h}" = "no" -o "${ac_cv_func_wctrans}" = "no" -o "${ac_cv_func_wctype}" = "no"
 then
+		enable_bundled_unicode_is=yes
+fi
+if test "${enable_bundled_unicode_is}" = "yes"
+then
 
 $as_echo "#define QSE_ENABLE_BUNDLED_UNICODE /**/" >>confdefs.h
 
-	enable_bundled_unicode_is=yes
 fi
  if test "${enable_bundled_unicode_is}" = "yes"; then
   ENABLE_BUNDLED_UNICODE_TRUE=
@@ -20796,6 +20801,21 @@ $as_echo "no" >&6; }
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 
+if test "${enable_shared}" = "no" -a "${enable_static}" = "yes"
+then
+
+$as_echo "#define QSE_ENABLE_STATIC_MODULE /**/" >>confdefs.h
+
+fi
+ if test "${enable_shared}" = "no" -a "${enable_static}" = "yes"; then
+  ENABLE_STATIC_MODULE_TRUE=
+  ENABLE_STATIC_MODULE_FALSE='#'
+else
+  ENABLE_STATIC_MODULE_TRUE='#'
+  ENABLE_STATIC_MODULE_FALSE=
+fi
+
+
 QSE_SIZEOF_WCHAR_T=$ac_cv_sizeof_wchar_t
 
 QSE_SIZEOF_LONG_LONG=$ac_cv_sizeof_long_long
@@ -21009,6 +21029,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${ENABLE_CXX_TRUE}" && test -z "${ENABLE_CXX_FALSE}"; then
   as_fn_error $? "conditional \"ENABLE_CXX\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${ENABLE_STATIC_MODULE_TRUE}" && test -z "${ENABLE_STATIC_MODULE_FALSE}"; then
+  as_fn_error $? "conditional \"ENABLE_STATIC_MODULE\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 

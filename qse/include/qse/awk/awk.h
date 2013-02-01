@@ -1189,7 +1189,8 @@ enum qse_awk_errnum_t
 	QSE_AWK_EGBLTM,    /**< too many global variables */
 	QSE_AWK_ELCLTM,    /**< too many local variables */
 	QSE_AWK_EPARTM,    /**< too many parameters */
-	QSE_AWK_ESEGTM,    /**< too many identifier segments */
+	QSE_AWK_ESEGTM,    /**< too many segments */
+	QSE_AWK_ESEGTL,    /**< segment '${0}' too long */
 	QSE_AWK_EBADARG,   /**< bad argument */
 	QSE_AWK_ENOARG,    /**< no argument */
 	QSE_AWK_EBREAK,    /**< 'break' outside a loop */

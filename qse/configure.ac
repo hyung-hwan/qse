@@ -427,8 +427,12 @@ AC_ARG_ENABLE([bundled-unicode], [AS_HELP_STRING([--enable-bundled-unicode],[use
 	enable_bundled_unicode_is=$enableval,enable_bundled_unicode_is=yes)
 if test "${ac_cv_header_wctype_h}" = "no" -o "${ac_cv_func_wctrans}" = "no" -o "${ac_cv_func_wctype}" = "no"
 then
-	AC_DEFINE([QSE_ENABLE_BUNDLED_UNICODE],[],[use the bundled unicode routines])
+	dnl force bundled-unicode to yes if some wchar functions are not available
 	enable_bundled_unicode_is=yes
+fi
+if test "${enable_bundled_unicode_is}" = "yes"
+then
+	AC_DEFINE([QSE_ENABLE_BUNDLED_UNICODE],[],[use the bundled unicode routines])
 fi
 AM_CONDITIONAL(ENABLE_BUNDLED_UNICODE, test "${enable_bundled_unicode_is}" = "yes")
 
@@ -489,6 +493,12 @@ AC_TRY_COMPILE([#define _POSIX_PII_SOCKET
 	AC_MSG_RESULT(yes)],
 	[AC_MSG_RESULT(no)]
 )
+
+if test "${enable_shared}" = "no" -a "${enable_static}" = "yes"
+then
+	AC_DEFINE([QSE_ENABLE_STATIC_MODULE],[],[link modules statically into the main library])
+fi
+AM_CONDITIONAL(ENABLE_STATIC_MODULE, test "${enable_shared}" = "no" -a "${enable_static}" = "yes")
 
 AC_SUBST(QSE_SIZEOF_WCHAR_T, $ac_cv_sizeof_wchar_t)
 AC_SUBST(QSE_SIZEOF_LONG_LONG, $ac_cv_sizeof_long_long)

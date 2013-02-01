@@ -36,7 +36,7 @@ build_triplet = @build@
 host_triplet = @host@
 
 # you must adjust the value of DEFAULT_MODPOSTFIX according to
-# -version-info in ../../mod/awk/Makefile.am
+# -version-info in ../../lib/awk/Makefile.am
 @WIN32_TRUE@am__append_1 = -DDEFAULT_MODPREFIX=\"libqseawk-\" -DDEFAULT_MODPOSTFIX=\"-1\"
 @WIN32_FALSE@am__append_2 = -DDEFAULT_MODPREFIX=\"$(libdir)/libqseawk-\" -DDEFAULT_MODPOSTFIX=\"\"
 bin_PROGRAMS = qseawk$(EXEEXT)
