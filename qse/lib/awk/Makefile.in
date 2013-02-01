@@ -36,10 +36,12 @@ build_triplet = @build@
 host_triplet = @host@
 
 # you must adjust the value of DEFAULT_MODPOSTFIX according to
-# -version-info in ../../mod/awk/Makefile.am
+# -version-info in mod/awk/Makefile.am
 @WIN32_TRUE@am__append_1 = -DQSE_AWK_DEFAULT_MODPREFIX=\"libqseawk-\" -DQSE_AWK_DEFAULT_MODPOSTFIX=\"-1\"
 @WIN32_FALSE@am__append_2 = -DQSE_AWK_DEFAULT_MODPREFIX=\"$(libdir)/libqseawk-\" -DQSE_AWK_DEFAULT_MODPOSTFIX=\"\"
 @ENABLE_CXX_TRUE@am__append_3 = libqseawkxx.la
+@HAVE_C_MPI_TRUE@am__append_4 = libqseawk-mpi.la
+@HAVE_LIBUCI_TRUE@am__append_5 = libqseawk-uci.la
 subdir = lib/awk
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -82,21 +84,61 @@ am__uninstall_files_from_dir = { \
     || { echo " ( cd '$$dir' && rm -f" $$files ")"; \
          $(am__cd) "$$dir" && rm -f $$files; }; \
   }
-am__installdirs = "$(DESTDIR)$(libdir)"
-LTLIBRARIES = $(lib_LTLIBRARIES)
+am__installdirs = "$(DESTDIR)$(libdir)" "$(DESTDIR)$(moddir)"
+LTLIBRARIES = $(lib_LTLIBRARIES) $(mod_LTLIBRARIES)
 am__DEPENDENCIES_1 =
-libqseawk_la_DEPENDENCIES = $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
-am_libqseawk_la_OBJECTS = awk.lo err.lo tree.lo parse.lo run.lo rec.lo \
-	val.lo fnc.lo misc.lo rio.lo std.lo
+libqseawk_dir_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
+am_libqseawk_dir_la_OBJECTS = libqseawk_dir_la-mod-dir.lo
+libqseawk_dir_la_OBJECTS = $(am_libqseawk_dir_la_OBJECTS)
+libqseawk_dir_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
+	$(libqseawk_dir_la_LDFLAGS) $(LDFLAGS) -o $@
+@HAVE_C_MPI_TRUE@libqseawk_mpi_la_DEPENDENCIES =  \
+@HAVE_C_MPI_TRUE@	$(am__DEPENDENCIES_1)
+am__libqseawk_mpi_la_SOURCES_DIST = mod-mpi.c
+@HAVE_C_MPI_TRUE@am_libqseawk_mpi_la_OBJECTS =  \
+@HAVE_C_MPI_TRUE@	libqseawk_mpi_la-mod-mpi.lo
+libqseawk_mpi_la_OBJECTS = $(am_libqseawk_mpi_la_OBJECTS)
+libqseawk_mpi_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
+	$(libqseawk_mpi_la_LDFLAGS) $(LDFLAGS) -o $@
+@HAVE_C_MPI_TRUE@am_libqseawk_mpi_la_rpath = -rpath $(moddir)
+libqseawk_str_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
+am_libqseawk_str_la_OBJECTS = libqseawk_str_la-mod-str.lo
+libqseawk_str_la_OBJECTS = $(am_libqseawk_str_la_OBJECTS)
+libqseawk_str_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
+	$(libqseawk_str_la_LDFLAGS) $(LDFLAGS) -o $@
+libqseawk_sys_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
+am_libqseawk_sys_la_OBJECTS = libqseawk_sys_la-mod-sys.lo
+libqseawk_sys_la_OBJECTS = $(am_libqseawk_sys_la_OBJECTS)
+libqseawk_sys_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
+	$(libqseawk_sys_la_LDFLAGS) $(LDFLAGS) -o $@
+@HAVE_LIBUCI_TRUE@libqseawk_uci_la_DEPENDENCIES =  \
+@HAVE_LIBUCI_TRUE@	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
+am__libqseawk_uci_la_SOURCES_DIST = mod-uci.c
+@HAVE_LIBUCI_TRUE@am_libqseawk_uci_la_OBJECTS =  \
+@HAVE_LIBUCI_TRUE@	libqseawk_uci_la-mod-uci.lo
+libqseawk_uci_la_OBJECTS = $(am_libqseawk_uci_la_OBJECTS)
+libqseawk_uci_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
+	$(libqseawk_uci_la_LDFLAGS) $(LDFLAGS) -o $@
+@HAVE_LIBUCI_TRUE@am_libqseawk_uci_la_rpath = -rpath $(moddir)
+am__DEPENDENCIES_2 = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
+libqseawk_la_DEPENDENCIES = $(am__DEPENDENCIES_2)
+am_libqseawk_la_OBJECTS = libqseawk_la-awk.lo libqseawk_la-err.lo \
+	libqseawk_la-tree.lo libqseawk_la-parse.lo libqseawk_la-run.lo \
+	libqseawk_la-rec.lo libqseawk_la-val.lo libqseawk_la-fnc.lo \
+	libqseawk_la-misc.lo libqseawk_la-rio.lo libqseawk_la-std.lo
 libqseawk_la_OBJECTS = $(am_libqseawk_la_OBJECTS)
 libqseawk_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(libqseawk_la_LDFLAGS) $(LDFLAGS) -o $@
-@ENABLE_CXX_TRUE@libqseawkxx_la_DEPENDENCIES = $(am__DEPENDENCIES_1) \
-@ENABLE_CXX_TRUE@	$(am__DEPENDENCIES_1)
+@ENABLE_CXX_TRUE@libqseawkxx_la_DEPENDENCIES = $(am__DEPENDENCIES_2)
 am__libqseawkxx_la_SOURCES_DIST = Awk.cpp StdAwk.cpp
-@ENABLE_CXX_TRUE@am_libqseawkxx_la_OBJECTS = Awk.lo StdAwk.lo
+@ENABLE_CXX_TRUE@am_libqseawkxx_la_OBJECTS = libqseawkxx_la-Awk.lo \
+@ENABLE_CXX_TRUE@	libqseawkxx_la-StdAwk.lo
 libqseawkxx_la_OBJECTS = $(am_libqseawkxx_la_OBJECTS)
 libqseawkxx_la_LINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
@@ -124,50 +166,18 @@ CXXLD = $(CXX)
 CXXLINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
-SOURCES = $(libqseawk_la_SOURCES) $(libqseawkxx_la_SOURCES)
-DIST_SOURCES = $(libqseawk_la_SOURCES) \
+SOURCES = $(libqseawk_dir_la_SOURCES) $(libqseawk_mpi_la_SOURCES) \
+	$(libqseawk_str_la_SOURCES) $(libqseawk_sys_la_SOURCES) \
+	$(libqseawk_uci_la_SOURCES) $(libqseawk_la_SOURCES) \
+	$(libqseawkxx_la_SOURCES)
+DIST_SOURCES = $(libqseawk_dir_la_SOURCES) \
+	$(am__libqseawk_mpi_la_SOURCES_DIST) \
+	$(libqseawk_str_la_SOURCES) $(libqseawk_sys_la_SOURCES) \
+	$(am__libqseawk_uci_la_SOURCES_DIST) $(libqseawk_la_SOURCES) \
 	$(am__libqseawkxx_la_SOURCES_DIST)
-RECURSIVE_TARGETS = all-recursive check-recursive dvi-recursive \
-	html-recursive info-recursive install-data-recursive \
-	install-dvi-recursive install-exec-recursive \
-	install-html-recursive install-info-recursive \
-	install-pdf-recursive install-ps-recursive install-recursive \
-	installcheck-recursive installdirs-recursive pdf-recursive \
-	ps-recursive uninstall-recursive
-RECURSIVE_CLEAN_TARGETS = mostlyclean-recursive clean-recursive	\
-  distclean-recursive maintainer-clean-recursive
-AM_RECURSIVE_TARGETS = $(RECURSIVE_TARGETS:-recursive=) \
-	$(RECURSIVE_CLEAN_TARGETS:-recursive=) tags TAGS ctags CTAGS \
-	distdir
 ETAGS = etags
 CTAGS = ctags
-DIST_SUBDIRS = $(SUBDIRS)
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
-am__relativize = \
-  dir0=`pwd`; \
-  sed_first='s,^\([^/]*\)/.*$$,\1,'; \
-  sed_rest='s,^[^/]*/*,,'; \
-  sed_last='s,^.*/\([^/]*\)$$,\1,'; \
-  sed_butlast='s,/*[^/]*$$,,'; \
-  while test -n "$$dir1"; do \
-    first=`echo "$$dir1" | sed -e "$$sed_first"`; \
-    if test "$$first" != "."; then \
-      if test "$$first" = ".."; then \
-        dir2=`echo "$$dir0" | sed -e "$$sed_last"`/"$$dir2"; \
-        dir0=`echo "$$dir0" | sed -e "$$sed_butlast"`; \
-      else \
-        first2=`echo "$$dir2" | sed -e "$$sed_first"`; \
-        if test "$$first2" = "$$first"; then \
-          dir2=`echo "$$dir2" | sed -e "$$sed_rest"`; \
-        else \
-          dir2="../$$dir2"; \
-        fi; \
-        dir0="$$dir0"/"$$first"; \
-      fi; \
-    fi; \
-    dir1=`echo "$$dir1" | sed -e "$$sed_rest"`; \
-  done; \
-  reldir="$$dir2"
 ACLOCAL = @ACLOCAL@
 AMTAR = @AMTAR@
 AR = @AR@
@@ -342,17 +352,60 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AUTOMAKE_OPTIONS = nostdinc
-SUBDIRS = . mod
-AM_CPPFLAGS = -I$(top_builddir)/include -I$(top_srcdir)/include \
-	-I$(includedir) $(LTDLINCL) $(am__append_1) $(am__append_2)
+CPPFLAGS_ALL_COMMON = \
+	-I$(top_builddir)/include \
+	-I$(top_srcdir)/include \
+	-I$(includedir)
+
+LDFLAGS_ALL_COMMON = -L. -L../cmn -L$(libdir) -version-info 1:0:0 -no-undefined
+
+##################################################
+# MAIN LIBRARY 
+##################################################
+CPPFLAGS_LIB_COMMON = $(CPPFLAGS_ALL_COMMON) $(LTDLINCL) \
+	$(am__append_1) $(am__append_2)
+LDFLAGS_LIB_COMMON = $(LDFLAGS_ALL_COMMON) 
+LIBADD_LIB_COMMON = -lqsecmn $(LIBM) $(LIBLTDL)
 lib_LTLIBRARIES = libqseawk.la $(am__append_3)
 libqseawk_la_SOURCES = awk.c err.c tree.c parse.c run.c rec.c val.c fnc.c misc.c rio.c std.c awk.h err.h rio.h val.h fnc.h misc.h parse.h run.h tree.h 
-libqseawk_la_LDFLAGS = -L../cmn -L$(libdir) -version-info 1:0:0 -no-undefined
-libqseawk_la_LIBADD = -lqsecmn $(LIBM) $(LIBLTDL)
+libqseawk_la_CPPFLAGS = $(CPPFLAGS_LIB_COMMON)
+libqseawk_la_LDFLAGS = $(LDFLAGS_LIB_COMMON)
+libqseawk_la_LIBADD = $(LIBADD_LIB_COMMON)
 @ENABLE_CXX_TRUE@libqseawkxx_la_SOURCES = Awk.cpp StdAwk.cpp
-@ENABLE_CXX_TRUE@libqseawkxx_la_LDFLAGS = -L. -L../cmn -L$(libdir) -version-info 1:0:0 -no-undefined
-@ENABLE_CXX_TRUE@libqseawkxx_la_LIBADD = -lqseawk -lqsecmnxx -lqsecmn $(LIBM) $(LIBLTDL)
-all: all-recursive
+@ENABLE_CXX_TRUE@libqseawkxx_la_CPPFLAGS = $(CPPFLAGS_LIB_COMMON)
+@ENABLE_CXX_TRUE@libqseawkxx_la_LDFLAGS = $(LDFLAGS_LIB_COMMON)
+@ENABLE_CXX_TRUE@libqseawkxx_la_LIBADD = -lqseawk -lqsecmnxx $(LIBADD_LIB_COMMON)
+
+##################################################
+# MODULES 
+##################################################
+CPPFLAGS_MOD_COMMON = $(CPPFLAGS_ALL_COMMON)
+LDFLAGS_MOD_COMMON = $(LDFLAGS_ALL_COMMON)
+LIBADD_MOD_COMMON = -lqseawk -lqsecmn
+moddir = $(libdir)
+mod_LTLIBRARIES = libqseawk-dir.la libqseawk-str.la libqseawk-sys.la \
+	$(am__append_4) $(am__append_5)
+libqseawk_dir_la_SOURCES = mod-dir.c
+libqseawk_dir_la_CPPFLAGS = $(CPPFLAGS_MOD_COMMON)
+libqseawk_dir_la_LDFLAGS = $(LDFLAGS_MOD_COMMON)
+libqseawk_dir_la_LIBADD = $(LIBADD_MOD_COMMON)
+libqseawk_str_la_SOURCES = mod-str.c
+libqseawk_str_la_CPPFLAGS = $(CPPFLAGS_MOD_COMMON)
+libqseawk_str_la_LDFLAGS = $(LDFLAGS_MOD_COMMON)
+libqseawk_str_la_LIBADD = $(LIBADD_MOD_COMMON)
+libqseawk_sys_la_SOURCES = mod-sys.c
+libqseawk_sys_la_CPPFLAGS = $(CPPFLAGS_MOD_COMMON)
+libqseawk_sys_la_LDFLAGS = $(LDFLAGS_MOD_COMMON)
+libqseawk_sys_la_LIBADD = $(LIBADD_MOD_COMMON)
+@HAVE_C_MPI_TRUE@libqseawk_mpi_la_SOURCES = mod-mpi.c
+@HAVE_C_MPI_TRUE@libqseawk_mpi_la_CPPFLAGS = $(CPPFLAGS_MOD_COMMON) $(MPI_CFLAGS)
+@HAVE_C_MPI_TRUE@libqseawk_mpi_la_LDFLAGS = $(LDFLAGS_MOD_COMMON) $(MPI_CLDFLAGS)
+@HAVE_C_MPI_TRUE@libqseawk_mpi_la_LIBADD = $(LIBADD_MOD_COMMON)
+@HAVE_LIBUCI_TRUE@libqseawk_uci_la_SOURCES = mod-uci.c
+@HAVE_LIBUCI_TRUE@libqseawk_uci_la_CPPFLAGS = $(CPPFLAGS_MOD_COMMON) 
+@HAVE_LIBUCI_TRUE@libqseawk_uci_la_LDFLAGS = $(LDFLAGS_MOD_COMMON) 
+@HAVE_LIBUCI_TRUE@libqseawk_uci_la_LIBADD = $(LIBADD_MOD_COMMON) $(UCI_LIBS)
+all: all-am
 
 .SUFFIXES:
 .SUFFIXES: .c .cpp .lo .o .obj
@@ -417,6 +470,47 @@ clean-libLTLIBRARIES:
 	  echo "rm -f \"$${dir}/so_locations\""; \
 	  rm -f "$${dir}/so_locations"; \
 	done
+install-modLTLIBRARIES: $(mod_LTLIBRARIES)
+	@$(NORMAL_INSTALL)
+	test -z "$(moddir)" || $(MKDIR_P) "$(DESTDIR)$(moddir)"
+	@list='$(mod_LTLIBRARIES)'; test -n "$(moddir)" || list=; \
+	list2=; for p in $$list; do \
+	  if test -f $$p; then \
+	    list2="$$list2 $$p"; \
+	  else :; fi; \
+	done; \
+	test -z "$$list2" || { \
+	  echo " $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install $(INSTALL) $(INSTALL_STRIP_FLAG) $$list2 '$(DESTDIR)$(moddir)'"; \
+	  $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install $(INSTALL) $(INSTALL_STRIP_FLAG) $$list2 "$(DESTDIR)$(moddir)"; \
+	}
+
+uninstall-modLTLIBRARIES:
+	@$(NORMAL_UNINSTALL)
+	@list='$(mod_LTLIBRARIES)'; test -n "$(moddir)" || list=; \
+	for p in $$list; do \
+	  $(am__strip_dir) \
+	  echo " $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=uninstall rm -f '$(DESTDIR)$(moddir)/$$f'"; \
+	  $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=uninstall rm -f "$(DESTDIR)$(moddir)/$$f"; \
+	done
+
+clean-modLTLIBRARIES:
+	-test -z "$(mod_LTLIBRARIES)" || rm -f $(mod_LTLIBRARIES)
+	@list='$(mod_LTLIBRARIES)'; for p in $$list; do \
+	  dir="`echo $$p | sed -e 's|/[^/]*$$||'`"; \
+	  test "$$dir" != "$$p" || dir=.; \
+	  echo "rm -f \"$${dir}/so_locations\""; \
+	  rm -f "$${dir}/so_locations"; \
+	done
+libqseawk-dir.la: $(libqseawk_dir_la_OBJECTS) $(libqseawk_dir_la_DEPENDENCIES) $(EXTRA_libqseawk_dir_la_DEPENDENCIES) 
+	$(libqseawk_dir_la_LINK) -rpath $(moddir) $(libqseawk_dir_la_OBJECTS) $(libqseawk_dir_la_LIBADD) $(LIBS)
+libqseawk-mpi.la: $(libqseawk_mpi_la_OBJECTS) $(libqseawk_mpi_la_DEPENDENCIES) $(EXTRA_libqseawk_mpi_la_DEPENDENCIES) 
+	$(libqseawk_mpi_la_LINK) $(am_libqseawk_mpi_la_rpath) $(libqseawk_mpi_la_OBJECTS) $(libqseawk_mpi_la_LIBADD) $(LIBS)
+libqseawk-str.la: $(libqseawk_str_la_OBJECTS) $(libqseawk_str_la_DEPENDENCIES) $(EXTRA_libqseawk_str_la_DEPENDENCIES) 
+	$(libqseawk_str_la_LINK) -rpath $(moddir) $(libqseawk_str_la_OBJECTS) $(libqseawk_str_la_LIBADD) $(LIBS)
+libqseawk-sys.la: $(libqseawk_sys_la_OBJECTS) $(libqseawk_sys_la_DEPENDENCIES) $(EXTRA_libqseawk_sys_la_DEPENDENCIES) 
+	$(libqseawk_sys_la_LINK) -rpath $(moddir) $(libqseawk_sys_la_OBJECTS) $(libqseawk_sys_la_LIBADD) $(LIBS)
+libqseawk-uci.la: $(libqseawk_uci_la_OBJECTS) $(libqseawk_uci_la_DEPENDENCIES) $(EXTRA_libqseawk_uci_la_DEPENDENCIES) 
+	$(libqseawk_uci_la_LINK) $(am_libqseawk_uci_la_rpath) $(libqseawk_uci_la_OBJECTS) $(libqseawk_uci_la_LIBADD) $(LIBS)
 libqseawk.la: $(libqseawk_la_OBJECTS) $(libqseawk_la_DEPENDENCIES) $(EXTRA_libqseawk_la_DEPENDENCIES) 
 	$(libqseawk_la_LINK) -rpath $(libdir) $(libqseawk_la_OBJECTS) $(libqseawk_la_LIBADD) $(LIBS)
 libqseawkxx.la: $(libqseawkxx_la_OBJECTS) $(libqseawkxx_la_DEPENDENCIES) $(EXTRA_libqseawkxx_la_DEPENDENCIES) 
@@ -428,19 +522,24 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Awk.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/StdAwk.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/awk.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/err.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fnc.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/misc.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/parse.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rec.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rio.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/run.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/std.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tree.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/val.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqseawk_dir_la-mod-dir.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqseawk_la-awk.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqseawk_la-err.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqseawk_la-fnc.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqseawk_la-misc.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqseawk_la-parse.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqseawk_la-rec.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqseawk_la-rio.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqseawk_la-run.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqseawk_la-std.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqseawk_la-tree.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqseawk_la-val.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqseawk_mpi_la-mod-mpi.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqseawk_str_la-mod-str.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqseawk_sys_la-mod-sys.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqseawk_uci_la-mod-uci.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqseawkxx_la-Awk.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqseawkxx_la-StdAwk.Plo@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
@@ -463,6 +562,118 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LTCOMPILE) -c -o $@ $<
 
+libqseawk_dir_la-mod-dir.lo: mod-dir.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libqseawk_dir_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libqseawk_dir_la-mod-dir.lo -MD -MP -MF $(DEPDIR)/libqseawk_dir_la-mod-dir.Tpo -c -o libqseawk_dir_la-mod-dir.lo `test -f 'mod-dir.c' || echo '$(srcdir)/'`mod-dir.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libqseawk_dir_la-mod-dir.Tpo $(DEPDIR)/libqseawk_dir_la-mod-dir.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='mod-dir.c' object='libqseawk_dir_la-mod-dir.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libqseawk_dir_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libqseawk_dir_la-mod-dir.lo `test -f 'mod-dir.c' || echo '$(srcdir)/'`mod-dir.c
+
+libqseawk_mpi_la-mod-mpi.lo: mod-mpi.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libqseawk_mpi_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libqseawk_mpi_la-mod-mpi.lo -MD -MP -MF $(DEPDIR)/libqseawk_mpi_la-mod-mpi.Tpo -c -o libqseawk_mpi_la-mod-mpi.lo `test -f 'mod-mpi.c' || echo '$(srcdir)/'`mod-mpi.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libqseawk_mpi_la-mod-mpi.Tpo $(DEPDIR)/libqseawk_mpi_la-mod-mpi.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='mod-mpi.c' object='libqseawk_mpi_la-mod-mpi.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libqseawk_mpi_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libqseawk_mpi_la-mod-mpi.lo `test -f 'mod-mpi.c' || echo '$(srcdir)/'`mod-mpi.c
+
+libqseawk_str_la-mod-str.lo: mod-str.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libqseawk_str_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libqseawk_str_la-mod-str.lo -MD -MP -MF $(DEPDIR)/libqseawk_str_la-mod-str.Tpo -c -o libqseawk_str_la-mod-str.lo `test -f 'mod-str.c' || echo '$(srcdir)/'`mod-str.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libqseawk_str_la-mod-str.Tpo $(DEPDIR)/libqseawk_str_la-mod-str.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='mod-str.c' object='libqseawk_str_la-mod-str.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libqseawk_str_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libqseawk_str_la-mod-str.lo `test -f 'mod-str.c' || echo '$(srcdir)/'`mod-str.c
+
+libqseawk_sys_la-mod-sys.lo: mod-sys.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libqseawk_sys_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libqseawk_sys_la-mod-sys.lo -MD -MP -MF $(DEPDIR)/libqseawk_sys_la-mod-sys.Tpo -c -o libqseawk_sys_la-mod-sys.lo `test -f 'mod-sys.c' || echo '$(srcdir)/'`mod-sys.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libqseawk_sys_la-mod-sys.Tpo $(DEPDIR)/libqseawk_sys_la-mod-sys.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='mod-sys.c' object='libqseawk_sys_la-mod-sys.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libqseawk_sys_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libqseawk_sys_la-mod-sys.lo `test -f 'mod-sys.c' || echo '$(srcdir)/'`mod-sys.c
+
+libqseawk_uci_la-mod-uci.lo: mod-uci.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libqseawk_uci_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libqseawk_uci_la-mod-uci.lo -MD -MP -MF $(DEPDIR)/libqseawk_uci_la-mod-uci.Tpo -c -o libqseawk_uci_la-mod-uci.lo `test -f 'mod-uci.c' || echo '$(srcdir)/'`mod-uci.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libqseawk_uci_la-mod-uci.Tpo $(DEPDIR)/libqseawk_uci_la-mod-uci.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='mod-uci.c' object='libqseawk_uci_la-mod-uci.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libqseawk_uci_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libqseawk_uci_la-mod-uci.lo `test -f 'mod-uci.c' || echo '$(srcdir)/'`mod-uci.c
+
+libqseawk_la-awk.lo: awk.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libqseawk_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libqseawk_la-awk.lo -MD -MP -MF $(DEPDIR)/libqseawk_la-awk.Tpo -c -o libqseawk_la-awk.lo `test -f 'awk.c' || echo '$(srcdir)/'`awk.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libqseawk_la-awk.Tpo $(DEPDIR)/libqseawk_la-awk.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='awk.c' object='libqseawk_la-awk.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libqseawk_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libqseawk_la-awk.lo `test -f 'awk.c' || echo '$(srcdir)/'`awk.c
+
+libqseawk_la-err.lo: err.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libqseawk_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libqseawk_la-err.lo -MD -MP -MF $(DEPDIR)/libqseawk_la-err.Tpo -c -o libqseawk_la-err.lo `test -f 'err.c' || echo '$(srcdir)/'`err.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libqseawk_la-err.Tpo $(DEPDIR)/libqseawk_la-err.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='err.c' object='libqseawk_la-err.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libqseawk_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libqseawk_la-err.lo `test -f 'err.c' || echo '$(srcdir)/'`err.c
+
+libqseawk_la-tree.lo: tree.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libqseawk_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libqseawk_la-tree.lo -MD -MP -MF $(DEPDIR)/libqseawk_la-tree.Tpo -c -o libqseawk_la-tree.lo `test -f 'tree.c' || echo '$(srcdir)/'`tree.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libqseawk_la-tree.Tpo $(DEPDIR)/libqseawk_la-tree.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='tree.c' object='libqseawk_la-tree.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libqseawk_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libqseawk_la-tree.lo `test -f 'tree.c' || echo '$(srcdir)/'`tree.c
+
+libqseawk_la-parse.lo: parse.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libqseawk_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libqseawk_la-parse.lo -MD -MP -MF $(DEPDIR)/libqseawk_la-parse.Tpo -c -o libqseawk_la-parse.lo `test -f 'parse.c' || echo '$(srcdir)/'`parse.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libqseawk_la-parse.Tpo $(DEPDIR)/libqseawk_la-parse.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='parse.c' object='libqseawk_la-parse.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libqseawk_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libqseawk_la-parse.lo `test -f 'parse.c' || echo '$(srcdir)/'`parse.c
+
+libqseawk_la-run.lo: run.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libqseawk_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libqseawk_la-run.lo -MD -MP -MF $(DEPDIR)/libqseawk_la-run.Tpo -c -o libqseawk_la-run.lo `test -f 'run.c' || echo '$(srcdir)/'`run.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libqseawk_la-run.Tpo $(DEPDIR)/libqseawk_la-run.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='run.c' object='libqseawk_la-run.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libqseawk_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libqseawk_la-run.lo `test -f 'run.c' || echo '$(srcdir)/'`run.c
+
+libqseawk_la-rec.lo: rec.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libqseawk_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libqseawk_la-rec.lo -MD -MP -MF $(DEPDIR)/libqseawk_la-rec.Tpo -c -o libqseawk_la-rec.lo `test -f 'rec.c' || echo '$(srcdir)/'`rec.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libqseawk_la-rec.Tpo $(DEPDIR)/libqseawk_la-rec.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rec.c' object='libqseawk_la-rec.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libqseawk_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libqseawk_la-rec.lo `test -f 'rec.c' || echo '$(srcdir)/'`rec.c
+
+libqseawk_la-val.lo: val.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libqseawk_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libqseawk_la-val.lo -MD -MP -MF $(DEPDIR)/libqseawk_la-val.Tpo -c -o libqseawk_la-val.lo `test -f 'val.c' || echo '$(srcdir)/'`val.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libqseawk_la-val.Tpo $(DEPDIR)/libqseawk_la-val.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='val.c' object='libqseawk_la-val.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libqseawk_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libqseawk_la-val.lo `test -f 'val.c' || echo '$(srcdir)/'`val.c
+
+libqseawk_la-fnc.lo: fnc.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libqseawk_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libqseawk_la-fnc.lo -MD -MP -MF $(DEPDIR)/libqseawk_la-fnc.Tpo -c -o libqseawk_la-fnc.lo `test -f 'fnc.c' || echo '$(srcdir)/'`fnc.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libqseawk_la-fnc.Tpo $(DEPDIR)/libqseawk_la-fnc.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='fnc.c' object='libqseawk_la-fnc.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libqseawk_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libqseawk_la-fnc.lo `test -f 'fnc.c' || echo '$(srcdir)/'`fnc.c
+
+libqseawk_la-misc.lo: misc.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libqseawk_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libqseawk_la-misc.lo -MD -MP -MF $(DEPDIR)/libqseawk_la-misc.Tpo -c -o libqseawk_la-misc.lo `test -f 'misc.c' || echo '$(srcdir)/'`misc.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libqseawk_la-misc.Tpo $(DEPDIR)/libqseawk_la-misc.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='misc.c' object='libqseawk_la-misc.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libqseawk_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libqseawk_la-misc.lo `test -f 'misc.c' || echo '$(srcdir)/'`misc.c
+
+libqseawk_la-rio.lo: rio.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libqseawk_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libqseawk_la-rio.lo -MD -MP -MF $(DEPDIR)/libqseawk_la-rio.Tpo -c -o libqseawk_la-rio.lo `test -f 'rio.c' || echo '$(srcdir)/'`rio.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libqseawk_la-rio.Tpo $(DEPDIR)/libqseawk_la-rio.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rio.c' object='libqseawk_la-rio.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libqseawk_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libqseawk_la-rio.lo `test -f 'rio.c' || echo '$(srcdir)/'`rio.c
+
+libqseawk_la-std.lo: std.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libqseawk_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libqseawk_la-std.lo -MD -MP -MF $(DEPDIR)/libqseawk_la-std.Tpo -c -o libqseawk_la-std.lo `test -f 'std.c' || echo '$(srcdir)/'`std.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libqseawk_la-std.Tpo $(DEPDIR)/libqseawk_la-std.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='std.c' object='libqseawk_la-std.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libqseawk_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libqseawk_la-std.lo `test -f 'std.c' || echo '$(srcdir)/'`std.c
+
 .cpp.o:
 @am__fastdepCXX_TRUE@	$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
 @am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
@@ -484,81 +695,25 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(LTCXXCOMPILE) -c -o $@ $<
 
+libqseawkxx_la-Awk.lo: Awk.cpp
+@am__fastdepCXX_TRUE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libqseawkxx_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libqseawkxx_la-Awk.lo -MD -MP -MF $(DEPDIR)/libqseawkxx_la-Awk.Tpo -c -o libqseawkxx_la-Awk.lo `test -f 'Awk.cpp' || echo '$(srcdir)/'`Awk.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/libqseawkxx_la-Awk.Tpo $(DEPDIR)/libqseawkxx_la-Awk.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='Awk.cpp' object='libqseawkxx_la-Awk.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libqseawkxx_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libqseawkxx_la-Awk.lo `test -f 'Awk.cpp' || echo '$(srcdir)/'`Awk.cpp
+
+libqseawkxx_la-StdAwk.lo: StdAwk.cpp
+@am__fastdepCXX_TRUE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libqseawkxx_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libqseawkxx_la-StdAwk.lo -MD -MP -MF $(DEPDIR)/libqseawkxx_la-StdAwk.Tpo -c -o libqseawkxx_la-StdAwk.lo `test -f 'StdAwk.cpp' || echo '$(srcdir)/'`StdAwk.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/libqseawkxx_la-StdAwk.Tpo $(DEPDIR)/libqseawkxx_la-StdAwk.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='StdAwk.cpp' object='libqseawkxx_la-StdAwk.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libqseawkxx_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libqseawkxx_la-StdAwk.lo `test -f 'StdAwk.cpp' || echo '$(srcdir)/'`StdAwk.cpp
+
 mostlyclean-libtool:
 	-rm -f *.lo
 
 clean-libtool:
 	-rm -rf .libs _libs
-
-# This directory's subdirectories are mostly independent; you can cd
-# into them and run `make' without going through this Makefile.
-# To change the values of `make' variables: instead of editing Makefiles,
-# (1) if the variable is set in `config.status', edit `config.status'
-#     (which will cause the Makefiles to be regenerated when you run `make');
-# (2) otherwise, pass the desired values on the `make' command line.
-$(RECURSIVE_TARGETS):
-	@fail= failcom='exit 1'; \
-	for f in x $$MAKEFLAGS; do \
-	  case $$f in \
-	    *=* | --[!k]*);; \
-	    *k*) failcom='fail=yes';; \
-	  esac; \
-	done; \
-	dot_seen=no; \
-	target=`echo $@ | sed s/-recursive//`; \
-	list='$(SUBDIRS)'; for subdir in $$list; do \
-	  echo "Making $$target in $$subdir"; \
-	  if test "$$subdir" = "."; then \
-	    dot_seen=yes; \
-	    local_target="$$target-am"; \
-	  else \
-	    local_target="$$target"; \
-	  fi; \
-	  ($(am__cd) $$subdir && $(MAKE) $(AM_MAKEFLAGS) $$local_target) \
-	  || eval $$failcom; \
-	done; \
-	if test "$$dot_seen" = "no"; then \
-	  $(MAKE) $(AM_MAKEFLAGS) "$$target-am" || exit 1; \
-	fi; test -z "$$fail"
-
-$(RECURSIVE_CLEAN_TARGETS):
-	@fail= failcom='exit 1'; \
-	for f in x $$MAKEFLAGS; do \
-	  case $$f in \
-	    *=* | --[!k]*);; \
-	    *k*) failcom='fail=yes';; \
-	  esac; \
-	done; \
-	dot_seen=no; \
-	case "$@" in \
-	  distclean-* | maintainer-clean-*) list='$(DIST_SUBDIRS)' ;; \
-	  *) list='$(SUBDIRS)' ;; \
-	esac; \
-	rev=''; for subdir in $$list; do \
-	  if test "$$subdir" = "."; then :; else \
-	    rev="$$subdir $$rev"; \
-	  fi; \
-	done; \
-	rev="$$rev ."; \
-	target=`echo $@ | sed s/-recursive//`; \
-	for subdir in $$rev; do \
-	  echo "Making $$target in $$subdir"; \
-	  if test "$$subdir" = "."; then \
-	    local_target="$$target-am"; \
-	  else \
-	    local_target="$$target"; \
-	  fi; \
-	  ($(am__cd) $$subdir && $(MAKE) $(AM_MAKEFLAGS) $$local_target) \
-	  || eval $$failcom; \
-	done && test -z "$$fail"
-tags-recursive:
-	list='$(SUBDIRS)'; for subdir in $$list; do \
-	  test "$$subdir" = . || ($(am__cd) $$subdir && $(MAKE) $(AM_MAKEFLAGS) tags); \
-	done
-ctags-recursive:
-	list='$(SUBDIRS)'; for subdir in $$list; do \
-	  test "$$subdir" = . || ($(am__cd) $$subdir && $(MAKE) $(AM_MAKEFLAGS) ctags); \
-	done
 
 ID: $(HEADERS) $(SOURCES) $(LISP) $(TAGS_FILES)
 	list='$(SOURCES) $(HEADERS) $(LISP) $(TAGS_FILES)'; \
@@ -570,23 +725,10 @@ ID: $(HEADERS) $(SOURCES) $(LISP) $(TAGS_FILES)
 	mkid -fID $$unique
 tags: TAGS
 
-TAGS: tags-recursive $(HEADERS) $(SOURCES)  $(TAGS_DEPENDENCIES) \
+TAGS:  $(HEADERS) $(SOURCES)  $(TAGS_DEPENDENCIES) \
 		$(TAGS_FILES) $(LISP)
 	set x; \
 	here=`pwd`; \
-	if ($(ETAGS) --etags-include --version) >/dev/null 2>&1; then \
-	  include_option=--etags-include; \
-	  empty_fix=.; \
-	else \
-	  include_option=--include; \
-	  empty_fix=; \
-	fi; \
-	list='$(SUBDIRS)'; for subdir in $$list; do \
-	  if test "$$subdir" = .; then :; else \
-	    test ! -f $$subdir/TAGS || \
-	      set "$$@" "$$include_option=$$here/$$subdir/TAGS"; \
-	  fi; \
-	done; \
 	list='$(SOURCES) $(HEADERS)  $(LISP) $(TAGS_FILES)'; \
 	unique=`for i in $$list; do \
 	    if test -f "$$i"; then echo $$i; else echo $(srcdir)/$$i; fi; \
@@ -605,7 +747,7 @@ TAGS: tags-recursive $(HEADERS) $(SOURCES)  $(TAGS_DEPENDENCIES) \
 	  fi; \
 	fi
 ctags: CTAGS
-CTAGS: ctags-recursive $(HEADERS) $(SOURCES)  $(TAGS_DEPENDENCIES) \
+CTAGS:  $(HEADERS) $(SOURCES)  $(TAGS_DEPENDENCIES) \
 		$(TAGS_FILES) $(LISP)
 	list='$(SOURCES) $(HEADERS)  $(LISP) $(TAGS_FILES)'; \
 	unique=`for i in $$list; do \
@@ -655,51 +797,22 @@ distdir: $(DISTFILES)
 	    || exit 1; \
 	  fi; \
 	done
-	@list='$(DIST_SUBDIRS)'; for subdir in $$list; do \
-	  if test "$$subdir" = .; then :; else \
-	    test -d "$(distdir)/$$subdir" \
-	    || $(MKDIR_P) "$(distdir)/$$subdir" \
-	    || exit 1; \
-	  fi; \
-	done
-	@list='$(DIST_SUBDIRS)'; for subdir in $$list; do \
-	  if test "$$subdir" = .; then :; else \
-	    dir1=$$subdir; dir2="$(distdir)/$$subdir"; \
-	    $(am__relativize); \
-	    new_distdir=$$reldir; \
-	    dir1=$$subdir; dir2="$(top_distdir)"; \
-	    $(am__relativize); \
-	    new_top_distdir=$$reldir; \
-	    echo " (cd $$subdir && $(MAKE) $(AM_MAKEFLAGS) top_distdir="$$new_top_distdir" distdir="$$new_distdir" \\"; \
-	    echo "     am__remove_distdir=: am__skip_length_check=: am__skip_mode_fix=: distdir)"; \
-	    ($(am__cd) $$subdir && \
-	      $(MAKE) $(AM_MAKEFLAGS) \
-	        top_distdir="$$new_top_distdir" \
-	        distdir="$$new_distdir" \
-		am__remove_distdir=: \
-		am__skip_length_check=: \
-		am__skip_mode_fix=: \
-	        distdir) \
-	      || exit 1; \
-	  fi; \
-	done
 check-am: all-am
-check: check-recursive
+check: check-am
 all-am: Makefile $(LTLIBRARIES)
-installdirs: installdirs-recursive
-installdirs-am:
-	for dir in "$(DESTDIR)$(libdir)"; do \
+installdirs:
+	for dir in "$(DESTDIR)$(libdir)" "$(DESTDIR)$(moddir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
 	done
-install: install-recursive
-install-exec: install-exec-recursive
-install-data: install-data-recursive
-uninstall: uninstall-recursive
+install: install-am
+install-exec: install-exec-am
+install-data: install-data-am
+uninstall: uninstall-am
 
 install-am: all-am
 	@$(MAKE) $(AM_MAKEFLAGS) install-exec-am install-data-am
 
-installcheck: installcheck-recursive
+installcheck: installcheck-am
 install-strip:
 	if test -z '$(STRIP)'; then \
 	  $(MAKE) $(AM_MAKEFLAGS) INSTALL_PROGRAM="$(INSTALL_STRIP_PROGRAM)" \
@@ -721,95 +834,93 @@ distclean-generic:
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
 	@echo "it deletes files that may require special tools to rebuild."
-clean: clean-recursive
+clean: clean-am
 
 clean-am: clean-generic clean-libLTLIBRARIES clean-libtool \
-	mostlyclean-am
+	clean-modLTLIBRARIES mostlyclean-am
 
-distclean: distclean-recursive
+distclean: distclean-am
 	-rm -rf ./$(DEPDIR)
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-tags
 
-dvi: dvi-recursive
+dvi: dvi-am
 
 dvi-am:
 
-html: html-recursive
+html: html-am
 
 html-am:
 
-info: info-recursive
+info: info-am
 
 info-am:
 
-install-data-am:
+install-data-am: install-modLTLIBRARIES
 
-install-dvi: install-dvi-recursive
+install-dvi: install-dvi-am
 
 install-dvi-am:
 
 install-exec-am: install-libLTLIBRARIES
 
-install-html: install-html-recursive
+install-html: install-html-am
 
 install-html-am:
 
-install-info: install-info-recursive
+install-info: install-info-am
 
 install-info-am:
 
 install-man:
 
-install-pdf: install-pdf-recursive
+install-pdf: install-pdf-am
 
 install-pdf-am:
 
-install-ps: install-ps-recursive
+install-ps: install-ps-am
 
 install-ps-am:
 
 installcheck-am:
 
-maintainer-clean: maintainer-clean-recursive
+maintainer-clean: maintainer-clean-am
 	-rm -rf ./$(DEPDIR)
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 
-mostlyclean: mostlyclean-recursive
+mostlyclean: mostlyclean-am
 
 mostlyclean-am: mostlyclean-compile mostlyclean-generic \
 	mostlyclean-libtool
 
-pdf: pdf-recursive
+pdf: pdf-am
 
 pdf-am:
 
-ps: ps-recursive
+ps: ps-am
 
 ps-am:
 
-uninstall-am: uninstall-libLTLIBRARIES
+uninstall-am: uninstall-libLTLIBRARIES uninstall-modLTLIBRARIES
 
-.MAKE: $(RECURSIVE_CLEAN_TARGETS) $(RECURSIVE_TARGETS) ctags-recursive \
-	install-am install-strip tags-recursive
+.MAKE: install-am install-strip
 
-.PHONY: $(RECURSIVE_CLEAN_TARGETS) $(RECURSIVE_TARGETS) CTAGS GTAGS \
-	all all-am check check-am clean clean-generic \
-	clean-libLTLIBRARIES clean-libtool ctags ctags-recursive \
+.PHONY: CTAGS GTAGS all all-am check check-am clean clean-generic \
+	clean-libLTLIBRARIES clean-libtool clean-modLTLIBRARIES ctags \
 	distclean distclean-compile distclean-generic \
 	distclean-libtool distclean-tags distdir dvi dvi-am html \
 	html-am info info-am install install-am install-data \
 	install-data-am install-dvi install-dvi-am install-exec \
 	install-exec-am install-html install-html-am install-info \
-	install-info-am install-libLTLIBRARIES install-man install-pdf \
-	install-pdf-am install-ps install-ps-am install-strip \
-	installcheck installcheck-am installdirs installdirs-am \
-	maintainer-clean maintainer-clean-generic mostlyclean \
-	mostlyclean-compile mostlyclean-generic mostlyclean-libtool \
-	pdf pdf-am ps ps-am tags tags-recursive uninstall uninstall-am \
-	uninstall-libLTLIBRARIES
+	install-info-am install-libLTLIBRARIES install-man \
+	install-modLTLIBRARIES install-pdf install-pdf-am install-ps \
+	install-ps-am install-strip installcheck installcheck-am \
+	installdirs maintainer-clean maintainer-clean-generic \
+	mostlyclean mostlyclean-compile mostlyclean-generic \
+	mostlyclean-libtool pdf pdf-am ps ps-am tags uninstall \
+	uninstall-am uninstall-libLTLIBRARIES uninstall-modLTLIBRARIES
 
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
