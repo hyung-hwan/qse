@@ -6534,8 +6534,24 @@ static qse_awk_mod_t* query_module (
 		qse_awk_mod_data_t md;
 		qse_awk_mod_load_t load;
 		qse_awk_mod_spec_t spec;
-		qse_char_t buf[64 + 15] = QSE_T("_qse_awk_mod_");
 		qse_size_t buflen;
+		/*qse_char_t buf[64 + 15] = QSE_T("_qse_awk_mod_");*/
+		qse_char_t buf[64 + 15] = 
+		{
+			QSE_T('_'), 
+			QSE_T('q'), 
+			QSE_T('s'), 
+			QSE_T('e'), 
+			QSE_T('_'), 
+			QSE_T('a'), 
+			QSE_T('w'), 
+			QSE_T('k'), 
+			QSE_T('m'), 
+			QSE_T('o'), 
+			QSE_T('d'), 
+			QSE_T('_')
+			/* the terminating null isn't needed */
+		};
 
 		if (segs[0].len > QSE_COUNTOF(buf) - 15)
 		{

@@ -1,0 +1,21 @@
+<?xml version="1.0" ?>
+
+<bakefile-gen xmlns="http://www.bakefile.org/schema/bakefile-gen">
+
+	<input>
+		qse.bkl
+	</input>
+
+	<add-formats>
+		watcom
+	</add-formats>
+
+	<add-flags>
+		-DPLATFORM_MSDOS=1
+	</add-flags>
+
+	<add-flags formats="watcom">
+		-o$(INPUT_FILE_DIR)/msdos-watcom/makefile
+	</add-flags>
+
+</bakefile-gen>

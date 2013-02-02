@@ -318,7 +318,13 @@ static int custom_awk_sprintf (
 
 static void* custom_awk_modopen (qse_awk_t* awk, const qse_awk_mod_spec_t* spec)
 {
-#if defined(USE_LTDL)
+#if defined(QSE_ENABLE_STATIC_MODULE)
+	/* this won't be called at all when modules are linked into
+	 * the main library. */
+	qse_awk_seterrnum (awk, QSE_AWK_ENOIMPL, QSE_NULL);
+	return QSE_NULL;
+
+#elif defined(USE_LTDL)
 	void* h;
 	qse_mchar_t* modpath;
 	const qse_char_t* tmp[4];
@@ -449,7 +455,10 @@ static void* custom_awk_modopen (qse_awk_t* awk, const qse_awk_mod_spec_t* spec)
 
 static void custom_awk_modclose (qse_awk_t* awk, void* handle)
 {
-#if defined(USE_LTDL)
+#if defined(QSE_ENABLE_STATIC_MODULE)
+	/* this won't be called at all when modules are linked into
+	 * the main library. */
+#elif defined(USE_LTDL)
 	lt_dlclose (handle);
 #elif defined(_WIN32)
 	FreeLibrary ((HMODULE)handle);
@@ -478,7 +487,12 @@ static void* custom_awk_modsym (qse_awk_t* awk, void* handle, const qse_char_t* 
 	}
 #endif
 
-#if defined(USE_LTDL)
+#if defined(QSE_ENABLE_STATIC_MODULE)
+	/* this won't be called at all when modules are linked into
+	 * the main library. */
+	s = QSE_NULL;
+
+#elif defined(USE_LTDL)
 	s = lt_dlsym (handle, mname);
 
 #elif defined(_WIN32)
@@ -501,7 +515,6 @@ static void* custom_awk_modsym (qse_awk_t* awk, void* handle, const qse_char_t* 
 #endif
 
 	return s;
-
 }
 
 static int add_globals (qse_awk_t* awk);
