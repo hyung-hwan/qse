@@ -13,6 +13,10 @@
 		<values>wchar,mchar</values>
 		<default-value>wchar</default-value>
 	</option>
+	<option name="SHARED">
+		<values>on,off</values>
+		<default-value>on</default-value>
+	</option>
 	<option name="XCMGRS">
 		<values>on,off</values>
 		<default-value>on</default-value>
@@ -20,10 +24,6 @@
 	<option name="BUNDLED_UNICODE">
 		<values>on,off</values>
 		<default-value>on</default-value>
-	</option>
-	<option name="STATIC_MODULE">
-		<values>on,off</values>
-		<default-value>off</default-value>
 	</option>
 	<option name="TCPV40HDRS">
 		<!-- this is OS/2 specific. no effect on other platforms -->
@@ -53,27 +53,16 @@
 	<!-- =========================================================
 	 Varibles to use as conditionals
 	 ========================================================= -->
-	<set var="ENABLE_NETWORKING">
-		<if cond="PLATFORM_WIN32=='1'">1</if>
-		<if cond="PLATFORM_OS2=='1'">1</if>
-		<if cond="PLATFORM_MSDOS=='1'">0</if>
-		<if cond="PLATFORM_UNIX=='1'">1</if>
-	</set>
-
 	<set var="ENABLE_DLL">
-		<if cond="PLATFORM_WIN32=='1'">1</if>
-		<if cond="PLATFORM_OS2=='1'">1</if>
+		<if cond="SHARED=='on'">1</if>
+		<if cond="SHARED=='off'">0</if>
 		<if cond="PLATFORM_MSDOS=='1'">0</if>
-		<if cond="PLATFORM_UNIX=='1'">1</if>
 	</set>
 
 	<set var="ENABLE_STATIC_MODULE">
-		<if cond="STATIC_MODULE=='on'">1</if>
-		<if cond="STATIC_MODULE=='off'">0</if>
-
-		<!-- Force ENABLE_STATIC_MODULE to be 1 on the 
-		     platforms where no DLL is supported -->
-		<if cond="ENABLE_DLL=='0'">1</if> 
+		<if cond="SHARED=='on'">0</if>
+		<if cond="SHARED=='off'">1</if>
+		<if cond="PLATFORM_MSDOS=='1'">1</if>
 	</set>
 
 	<!-- =========================================================
@@ -87,8 +76,12 @@
 		<if cond="CHAR=='wchar'">wchar</if>
 		<if cond="CHAR=='mchar'">mchar</if>
 	</set>
+	<set var="BUILDDIR_SHARED">
+		<if cond="ENABLE_DLL=='1'">shared</if>
+		<if cond="ENABLE_DLL=='0'">static</if>
+	</set>
 	<set var="BUILDDIR">
-		$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)
+		$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)
 	</set>
 
 	<!-- =========================================================
@@ -323,7 +316,7 @@
 	 TARGETS
 	 ========================================================= -->
 
-	<dll id="libqsecmn" template="base" cond="ENABLE_DLL=='1'">
+	<dll id="dllqsecmn" template="base" cond="ENABLE_DLL=='1'">
 		<libname>qsecmn</libname>
 		<dllname>qsecmn</dllname>
 		<set-srcdir>../../lib/cmn</set-srcdir>
@@ -340,13 +333,13 @@
 		<sys-lib>$(SYSLIB_SOCKET2)</sys-lib>
 	</lib>
 
-	<dll id="libqseawk" template="base" cond="ENABLE_DLL=='1'">
+	<dll id="dllqseawk" template="base" cond="ENABLE_DLL=='1'">
 		<libname>qseawk</libname>
 		<dllname>qseawk</dllname>
 		<set-srcdir>../../lib/awk</set-srcdir>
 		<sources>$(SOURCES_LIBQSEAWK)</sources>
 		<library>libqsecmn</library>
-		<depends>libqsecmn</depends>
+		<depends>dllqsecmn</depends>
 	</dll>
 
 	<lib id="libqseawk" template="base" cond="ENABLE_DLL=='0'">
@@ -363,7 +356,7 @@
 		<sources>mod-dir.c</sources>
 		<library>libqsecmn</library>
 		<library>libqseawk</library>
-		<depends>libqseawk</depends>
+		<depends>dllqseawk</depends>
 	</dll>
 
 	<dll id="modqseawkstr" template="base" cond="ENABLE_STATIC_MODULE=='0'">
@@ -373,7 +366,7 @@
 		<sources>mod-str.c</sources>
 		<library>libqsecmn</library>
 		<library>libqseawk</library>
-		<depends>libqseawk</depends>
+		<depends>dllqseawk</depends>
 	</dll>
 
 	<dll id="modqseawksys" template="base" cond="ENABLE_STATIC_MODULE=='0'">
@@ -383,16 +376,16 @@
 		<sources>mod-sys.c</sources>
 		<library>libqsecmn</library>
 		<library>libqseawk</library>
-		<depends>libqseawk</depends>
+		<depends>dllqseawk</depends>
 	</dll>
 
-	<dll id="libqsesed" template="base" cond="ENABLE_DLL=='1'">
+	<dll id="dllqsesed" template="base" cond="ENABLE_DLL=='1'">
 		<libname>qsesed</libname>
 		<dllname>qsesed</dllname>
 		<set-srcdir>../../lib/sed</set-srcdir>
 		<sources>$(SOURCES_LIBQSESED)</sources>
 		<library>libqsecmn</library>
-		<depends>libqsecmn</depends>
+		<depends>dllqsecmn</depends>
 	</dll>
 
 	<lib id="libqsesed" template="base" cond="ENABLE_DLL=='0'">
@@ -403,18 +396,18 @@
 		<depends>libqsecmn</depends>
 	</lib>
 
-	<dll id="libqsenet" template="base" cond="ENABLE_DLL+ENABLE_NETWORKING=='11'">
+	<dll id="dllqsenet" template="base" cond="ENABLE_DLL=='1'">
 		<libname>qsenet</libname>
 		<dllname>qsenet</dllname>
 		<set-srcdir>../../lib/net</set-srcdir>
 		<sources>$(SOURCES_LIBQSENET)</sources>
 		<library>libqsecmn</library>
-		<depends>libqsecmn</depends>
+		<depends>dllqsecmn</depends>
 		<sys-lib>$(SYSLIB_SOCKET)</sys-lib>
 		<sys-lib>$(SYSLIB_SOCKET2)</sys-lib>
 	</dll>
 
-	<lib id="libqsenet" template="base" cond="ENABLE_DLL+ENABLE_NETWORKING=='01'">
+	<lib id="libqsenet" template="base" cond="ENABLE_DLL=='0'">
 		<libname>qsenet</libname>
 		<set-srcdir>../../lib/net</set-srcdir>
 		<sources>$(SOURCES_LIBQSENET)</sources>
@@ -431,7 +424,7 @@
 		<sources>awk.c</sources>
 		<library>libqsecmn</library>
 		<library>libqseawk</library>
-		<depends>libqseawk</depends>
+		<!-- <depends>libqseawk</depends> -->
 		<sys-lib>$(SYSLIB_SOCKET)</sys-lib>
 		<sys-lib>$(SYSLIB_SOCKET2)</sys-lib>
 	</exe>
@@ -443,28 +436,28 @@
 		<sources>sed.c</sources>
 		<library>libqsecmn</library>
 		<library>libqsesed</library>
-		<depends>libqsesed</depends>
+		<!-- <depends>libqsesed</depends> -->
 	</exe>
 
-	<exe id="exeqsehttpd" template="base" cond="ENABLE_NETWORKING=='1'">
+	<exe id="exeqsehttpd" template="base">
 		<exename>qsehttpd</exename>
 		<app-type>console</app-type>
 		<set-srcdir>../../cmd/net</set-srcdir>
 		<sources>httpd.c</sources>
 		<library>libqsecmn</library>
 		<library>libqsenet</library>
-		<depends>libqsenet</depends>
+		<!-- <depends>libqsenet</depends> -->
 		<sys-lib>$(SYSLIB_SOCKET)</sys-lib>
 		<sys-lib>$(SYSLIB_SOCKET2)</sys-lib>
 	</exe>
 
-	<dll id="libqsecmnxx" template="base,basexx" cond="ENABLE_DLL=='1'">
+	<dll id="dllqsecmnxx" template="base,basexx" cond="ENABLE_DLL=='1'">
 		<libname>qsecmnxx</libname>
 		<dllname>qsecmnxx</dllname>
 		<set-srcdir>../../lib/cmn</set-srcdir>
 		<sources>$(SOURCES_LIBQSECMNXX)</sources>
 		<library>libqsecmn</library>
-		<depends>libqsecmn</depends>
+		<depends>dllqsecmn</depends>
 	</dll>
 
 	<lib id="libqsecmnxx" template="base,basexx" cond="ENABLE_DLL=='0'">
@@ -475,7 +468,7 @@
 		<depends>libqsecmn</depends>
 	</lib>
 
-	<dll id="libqseawkxx" template="base,basexx" cond="ENABLE_DLL=='1'">
+	<dll id="dllqseawkxx" template="base,basexx" cond="ENABLE_DLL=='1'">
 		<libname>qseawkxx</libname>
 		<dllname>qseawkxx</dllname>
 		<set-srcdir>../../lib/awk</set-srcdir>
@@ -483,8 +476,8 @@
 		<library>libqsecmn</library>
 		<library>libqsecmnxx</library>
 		<library>libqseawk</library>
-		<depends>libqsecmnxx</depends>
-		<depends>libqseawk</depends>
+		<depends>dllqsecmnxx</depends>
+		<depends>dllqseawk</depends>
 	</dll>
 
 	<lib id="libqseawkxx" template="base,basexx" cond="ENABLE_DLL=='0'">
@@ -498,7 +491,7 @@
 		<depends>libqseawk</depends>
 	</lib>
 
-	<dll id="libqsesedxx" template="base,basexx" cond="ENABLE_DLL=='1'">
+	<dll id="dllqsesedxx" template="base,basexx" cond="ENABLE_DLL=='1'">
 		<libname>qsesedxx</libname>
 		<dllname>qsesedxx</dllname>
 		<set-srcdir>../../lib/sed</set-srcdir>
@@ -506,8 +499,8 @@
 		<library>libqsecmn</library>
 		<library>libqsecmnxx</library>
 		<library>libqsesed</library>
-		<depends>libqsecmnxx</depends>
-		<depends>libqsesed</depends>
+		<depends>dllqsecmnxx</depends>
+		<depends>dllqsesed</depends>
 	</dll>
 
 	<lib id="libqsesedxx" template="base,basexx" cond="ENABLE_DLL=='0'">

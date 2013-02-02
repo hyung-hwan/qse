@@ -30,6 +30,9 @@
 #	include <windows.h>
 /*#	include <psapi.h>*/ /* for GetMappedFileName(). but dynamically loaded */
 #	include <tchar.h>
+#	if !defined(INVALID_SET_FILE_POINTER)
+#		define INVALID_SET_FILE_POINTER ((DWORD)-1)
+#	endif
 #elif defined(__OS2__)
 #	define INCL_DOSFILEMGR
 #	define INCL_DOSMODULEMGR
@@ -303,8 +306,10 @@ int qse_fio_init (
 		if (flags & QSE_FIO_SYNC) 
 			flag_and_attr |= FILE_FLAG_WRITE_THROUGH;
 
+	#if defined(FILE_FLAG_OPEN_REPARSE_POINT)
 		if (flags & QSE_FIO_NOFOLLOW)
 			flag_and_attr |= FILE_FLAG_OPEN_REPARSE_POINT;
+	#endif
 
 		/* these two are just hints to OS */
 		if (flags & QSE_FIO_RANDOM) 

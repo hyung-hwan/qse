@@ -6546,6 +6546,7 @@ static qse_awk_mod_t* query_module (
 			QSE_T('a'), 
 			QSE_T('w'), 
 			QSE_T('k'), 
+			QSE_T('_'), 
 			QSE_T('m'), 
 			QSE_T('o'), 
 			QSE_T('d'), 
@@ -6643,7 +6644,7 @@ static qse_awk_mod_t* query_module (
 				if (!load)
 				{
 					ea.ptr = &buf[1];
-					ea.len = 4 + buflen;
+					ea.len = 12 + buflen;
 					qse_awk_seterror (awk, QSE_AWK_ENOENT, &ea, QSE_NULL);
 
 					awk->prm.modclose (awk, md.handle);

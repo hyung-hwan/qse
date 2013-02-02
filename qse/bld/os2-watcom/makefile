@@ -35,13 +35,13 @@ BUILD = release
 CHAR = wchar
 
 #  [on,off]
+SHARED = on
+
+#  [on,off]
 XCMGRS = on
 
 #  [on,off]
 BUNDLED_UNICODE = on
-
-#  [on,off]
-STATIC_MODULE = off
 
 #  [on,off]
 TCPV40HDRS = off
@@ -87,6 +87,13 @@ BUILDDIR_CHAR = mchar
 !ifeq CHAR wchar
 BUILDDIR_CHAR = wchar
 !endif
+BUILDDIR_SHARED =
+!ifeq SHARED off
+BUILDDIR_SHARED = static
+!endif
+!ifeq SHARED on
+BUILDDIR_SHARED = shared
+!endif
 CPPFLAGS_BUILD =
 !ifeq BUILD debug
 CPPFLAGS_BUILD = -DQSE_BUILD_DEBUG -DDEBUG -D_DEBUG
@@ -116,11 +123,11 @@ CPPFLAGS_BUNDLED_UNICODE = -UQSE_ENABLE_BUNDLED_UNICODE
 CPPFLAGS_BUNDLED_UNICODE = -DQSE_ENABLE_BUNDLED_UNICODE=1
 !endif
 CPPFLAGS_STATIC_MODULE =
-!ifeq STATIC_MODULE off
-CPPFLAGS_STATIC_MODULE = -UQSE_ENABLE_STATIC_MODULE
-!endif
-!ifeq STATIC_MODULE on
+!ifeq SHARED off
 CPPFLAGS_STATIC_MODULE = -DQSE_ENABLE_STATIC_MODULE
+!endif
+!ifeq SHARED on
+CPPFLAGS_STATIC_MODULE = -UQSE_ENABLE_STATIC_MODULE
 !endif
 CPPFLAGS_TCPV40HDRS =
 !ifeq TCPV40HDRS off
@@ -129,35 +136,126 @@ CPPFLAGS_TCPV40HDRS = -UTCPV40HDRS
 !ifeq TCPV40HDRS on
 CPPFLAGS_TCPV40HDRS = -DTCPV40HDRS
 !endif
+__dllqsecmn___depname =
+!ifeq SHARED on
+__dllqsecmn___depname = &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsecmn.dll
+!endif
 ____SOURCES_XCMGRS_FILENAMES_OBJECTS =
 !ifeq XCMGRS on
 ____SOURCES_XCMGRS_FILENAMES_OBJECTS =  &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_cp949.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_cp950.obj
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_cp949.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_cp950.obj
 !endif
 ____SOURCES_BUNDLED_UNICODE_FILENAMES_OBJECTS =
 !ifeq BUNDLED_UNICODE on
 ____SOURCES_BUNDLED_UNICODE_FILENAMES_OBJECTS =  &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_uni.obj
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_uni.obj
+!endif
+__libqsecmn___depname =
+!ifeq SHARED off
+__libqsecmn___depname = &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsecmn.lib
+!endif
+____SOURCES_XCMGRS_FILENAMES_1_OBJECTS =
+!ifeq XCMGRS on
+____SOURCES_XCMGRS_FILENAMES_1_OBJECTS =  &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_cp949.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_cp950.obj
+!endif
+____SOURCES_BUNDLED_UNICODE_FILENAMES_1_OBJECTS =
+!ifeq BUNDLED_UNICODE on
+____SOURCES_BUNDLED_UNICODE_FILENAMES_1_OBJECTS =  &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_uni.obj
+!endif
+__dllqseawk___depname =
+!ifeq SHARED on
+__dllqseawk___depname = &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qseawk.dll
 !endif
 ____SOURCES_STATIC_AWK_MODULE_FILENAMES_OBJECTS =
-!ifeq STATIC_MODULE on
+!ifeq SHARED off
 ____SOURCES_STATIC_AWK_MODULE_FILENAMES_OBJECTS =  &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqseawk_mod_dir.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqseawk_mod_str.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqseawk_mod_sys.obj
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqseawk_mod_dir.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqseawk_mod_str.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqseawk_mod_sys.obj
+!endif
+__libqseawk___depname =
+!ifeq SHARED off
+__libqseawk___depname = &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qseawk.lib
+!endif
+____SOURCES_STATIC_AWK_MODULE_FILENAMES_1_OBJECTS =
+!ifeq SHARED off
+____SOURCES_STATIC_AWK_MODULE_FILENAMES_1_OBJECTS =  &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqseawk_mod_dir.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqseawk_mod_str.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqseawk_mod_sys.obj
 !endif
 __modqseawkdir___depname =
-!ifeq STATIC_MODULE off
-__modqseawkdir___depname = $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\awk-dir.dll
+!ifeq SHARED on
+__modqseawkdir___depname = &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\awk-dir.dll
 !endif
 __modqseawkstr___depname =
-!ifeq STATIC_MODULE off
-__modqseawkstr___depname = $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\awk-str.dll
+!ifeq SHARED on
+__modqseawkstr___depname = &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\awk-str.dll
 !endif
 __modqseawksys___depname =
-!ifeq STATIC_MODULE off
-__modqseawksys___depname = $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\awk-sys.dll
+!ifeq SHARED on
+__modqseawksys___depname = &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\awk-sys.dll
+!endif
+__dllqsesed___depname =
+!ifeq SHARED on
+__dllqsesed___depname = &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsesed.dll
+!endif
+__libqsesed___depname =
+!ifeq SHARED off
+__libqsesed___depname = &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsesed.lib
+!endif
+__dllqsenet___depname =
+!ifeq SHARED on
+__dllqsenet___depname = &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsenet.dll
+!endif
+__libqsenet___depname =
+!ifeq SHARED off
+__libqsenet___depname = &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsenet.lib
+!endif
+__dllqsecmnxx___depname =
+!ifeq SHARED on
+__dllqsecmnxx___depname = &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsecmnxx.dll
+!endif
+__libqsecmnxx___depname =
+!ifeq SHARED off
+__libqsecmnxx___depname = &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsecmnxx.lib
+!endif
+__dllqseawkxx___depname =
+!ifeq SHARED on
+__dllqseawkxx___depname = &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qseawkxx.dll
+!endif
+__libqseawkxx___depname =
+!ifeq SHARED off
+__libqseawkxx___depname = &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qseawkxx.lib
+!endif
+__dllqsesedxx___depname =
+!ifeq SHARED on
+__dllqsesedxx___depname = &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsesedxx.dll
+!endif
+__libqsesedxx___depname =
+!ifeq SHARED off
+__libqsesedxx___depname = &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsesedxx.lib
 !endif
 __SYSLIB_SOCKET_p =
 !ifeq TCPV40HDRS off
@@ -170,6 +268,13 @@ __SYSLIB_SOCKET2_p =
 !ifeq TCPV40HDRS on
 __SYSLIB_SOCKET2_p = so32dll.lib
 !endif
+__DEBUG_INFO_1_2 =
+!ifeq BUILD debug
+__DEBUG_INFO_1_2 = debug all
+!endif
+!ifeq BUILD release
+__DEBUG_INFO_1_2 = 
+!endif
 __DEBUG_INFO =
 !ifeq BUILD debug
 __DEBUG_INFO = -d2
@@ -177,801 +282,1392 @@ __DEBUG_INFO = -d2
 !ifeq BUILD release
 __DEBUG_INFO = -d0
 !endif
-__DEBUG_INFO_1_0 =
-!ifeq BUILD debug
-__DEBUG_INFO_1_0 = debug all
-!endif
-!ifeq BUILD release
-__DEBUG_INFO_1_0 = 
-!endif
 
 ### Variables: ###
 
-LIBQSECMN_CFLAGS = -bd -i=..\..\include $(CPPFLAGS_BUILD) $(CPPFLAGS_CHAR) &
+DLLQSECMN_CFLAGS = -bd -i=..\..\include $(CPPFLAGS_BUILD) $(CPPFLAGS_CHAR) &
+	$(CPPFLAGS_XCMGRS) $(CPPFLAGS_BUNDLED_UNICODE) $(CPPFLAGS_STATIC_MODULE) &
+	$(CPPFLAGS_TCPV40HDRS) -wx $(__DEBUG_INFO) -bm -ot -ox $(CPPFLAGS) $(CFLAGS)
+DLLQSECMN_OBJECTS =  &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_alg_base64.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_alg_rand.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_alg_search.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_alg_sort.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_assert.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_chr.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_dir.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_dll.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_env.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_gdl.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_htb.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_fio.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_fma.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_fmt.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_fs.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_fs_err.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_fs_move.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_glob.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_hton.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_ipad.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_lda.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_main.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_mb8.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_mbwc.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_mbwc_str.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_mem.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_mux.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_nwad.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_nwad_skad.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_nwif.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_nwif_cfg.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_nwio.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_oht.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_opt.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_path_basename.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_path_canon.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_pio.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_pma.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_rbt.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_rex.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_sio.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_sll.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_slmb.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_stdio.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_str_beg.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_str_cat.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_str_chr.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_str_cnv.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_str_cmp.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_str_cpy.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_str_del.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_str_dup.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_str_dynm.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_str_dynw.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_str_end.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_str_excl.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_str_fcpy.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_str_fnmat.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_str_incl.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_str_len.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_str_pac.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_str_pbrk.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_str_put.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_str_rev.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_str_rot.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_str_set.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_str_spl.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_str_spn.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_str_str.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_str_subst.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_str_tok.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_str_trm.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_str_word.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_task.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_time.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_tio.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_tre.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_tre_ast.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_tre_compile.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_tre_match_backtrack.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_tre_match_parallel.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_tre_parse.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_tre_stack.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_uri.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_utf8.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_xma.obj &
+	$(____SOURCES_XCMGRS_FILENAMES_OBJECTS) &
+	$(____SOURCES_BUNDLED_UNICODE_FILENAMES_OBJECTS)
+LIBQSECMN_CFLAGS = -i=..\..\include $(CPPFLAGS_BUILD) $(CPPFLAGS_CHAR) &
 	$(CPPFLAGS_XCMGRS) $(CPPFLAGS_BUNDLED_UNICODE) $(CPPFLAGS_STATIC_MODULE) &
 	$(CPPFLAGS_TCPV40HDRS) -wx $(__DEBUG_INFO) -bm -ot -ox $(CPPFLAGS) $(CFLAGS)
 LIBQSECMN_OBJECTS =  &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_alg_base64.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_alg_rand.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_alg_search.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_alg_sort.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_assert.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_chr.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_dir.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_dll.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_env.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_gdl.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_htb.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_fio.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_fma.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_fmt.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_fs.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_fs_err.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_fs_move.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_glob.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_hton.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_ipad.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_lda.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_main.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_mb8.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_mbwc.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_mbwc_str.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_mem.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_mux.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_nwad.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_nwad_skad.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_nwif.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_nwif_cfg.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_nwio.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_oht.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_opt.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_path_basename.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_path_canon.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_pio.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_pma.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_rbt.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_rex.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_sio.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_sll.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_slmb.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_stdio.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_str_beg.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_str_cat.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_str_chr.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_str_cnv.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_str_cmp.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_str_cpy.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_str_del.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_str_dup.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_str_dynm.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_str_dynw.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_str_end.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_str_excl.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_str_fcpy.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_str_fnmat.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_str_incl.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_str_len.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_str_pac.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_str_pbrk.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_str_put.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_str_rev.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_str_rot.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_str_set.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_str_spl.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_str_spn.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_str_str.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_str_subst.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_str_tok.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_str_trm.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_str_word.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_task.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_time.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_tio.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_tre.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_tre_ast.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_tre_compile.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_tre_match_backtrack.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_tre_match_parallel.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_tre_parse.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_tre_stack.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_uri.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_utf8.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_xma.obj &
-	$(____SOURCES_XCMGRS_FILENAMES_OBJECTS) &
-	$(____SOURCES_BUNDLED_UNICODE_FILENAMES_OBJECTS)
-LIBQSEAWK_CFLAGS = -bd -i=..\..\include $(CPPFLAGS_BUILD) $(CPPFLAGS_CHAR) &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_alg_base64.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_alg_rand.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_alg_search.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_alg_sort.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_assert.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_chr.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_dir.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_dll.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_env.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_gdl.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_htb.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_fio.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_fma.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_fmt.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_fs.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_fs_err.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_fs_move.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_glob.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_hton.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_ipad.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_lda.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_main.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_mb8.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_mbwc.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_mbwc_str.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_mem.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_mux.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_nwad.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_nwad_skad.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_nwif.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_nwif_cfg.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_nwio.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_oht.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_opt.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_path_basename.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_path_canon.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_pio.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_pma.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_rbt.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_rex.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_sio.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_sll.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_slmb.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_stdio.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_str_beg.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_str_cat.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_str_chr.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_str_cnv.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_str_cmp.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_str_cpy.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_str_del.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_str_dup.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_str_dynm.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_str_dynw.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_str_end.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_str_excl.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_str_fcpy.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_str_fnmat.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_str_incl.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_str_len.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_str_pac.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_str_pbrk.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_str_put.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_str_rev.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_str_rot.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_str_set.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_str_spl.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_str_spn.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_str_str.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_str_subst.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_str_tok.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_str_trm.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_str_word.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_task.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_time.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_tio.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_tre.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_tre_ast.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_tre_compile.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_tre_match_backtrack.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_tre_match_parallel.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_tre_parse.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_tre_stack.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_uri.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_utf8.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_xma.obj &
+	$(____SOURCES_XCMGRS_FILENAMES_1_OBJECTS) &
+	$(____SOURCES_BUNDLED_UNICODE_FILENAMES_1_OBJECTS)
+DLLQSEAWK_CFLAGS = -bd -i=..\..\include $(CPPFLAGS_BUILD) $(CPPFLAGS_CHAR) &
+	$(CPPFLAGS_XCMGRS) $(CPPFLAGS_BUNDLED_UNICODE) $(CPPFLAGS_STATIC_MODULE) &
+	$(CPPFLAGS_TCPV40HDRS) -wx $(__DEBUG_INFO) -bm -ot -ox $(CPPFLAGS) $(CFLAGS)
+DLLQSEAWK_OBJECTS =  &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqseawk_awk.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqseawk_err.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqseawk_tree.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqseawk_parse.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqseawk_run.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqseawk_rec.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqseawk_val.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqseawk_fnc.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqseawk_misc.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqseawk_rio.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqseawk_std.obj &
+	$(____SOURCES_STATIC_AWK_MODULE_FILENAMES_OBJECTS)
+LIBQSEAWK_CFLAGS = -i=..\..\include $(CPPFLAGS_BUILD) $(CPPFLAGS_CHAR) &
 	$(CPPFLAGS_XCMGRS) $(CPPFLAGS_BUNDLED_UNICODE) $(CPPFLAGS_STATIC_MODULE) &
 	$(CPPFLAGS_TCPV40HDRS) -wx $(__DEBUG_INFO) -bm -ot -ox $(CPPFLAGS) $(CFLAGS)
 LIBQSEAWK_OBJECTS =  &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqseawk_awk.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqseawk_err.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqseawk_tree.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqseawk_parse.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqseawk_run.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqseawk_rec.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqseawk_val.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqseawk_fnc.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqseawk_misc.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqseawk_rio.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqseawk_std.obj &
-	$(____SOURCES_STATIC_AWK_MODULE_FILENAMES_OBJECTS)
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqseawk_awk.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqseawk_err.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqseawk_tree.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqseawk_parse.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqseawk_run.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqseawk_rec.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqseawk_val.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqseawk_fnc.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqseawk_misc.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqseawk_rio.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqseawk_std.obj &
+	$(____SOURCES_STATIC_AWK_MODULE_FILENAMES_1_OBJECTS)
 MODQSEAWKDIR_CFLAGS = -bd -i=..\..\include $(CPPFLAGS_BUILD) $(CPPFLAGS_CHAR) &
 	$(CPPFLAGS_XCMGRS) $(CPPFLAGS_BUNDLED_UNICODE) $(CPPFLAGS_STATIC_MODULE) &
 	$(CPPFLAGS_TCPV40HDRS) -wx $(__DEBUG_INFO) -bm -ot -ox $(CPPFLAGS) $(CFLAGS)
 MODQSEAWKDIR_OBJECTS =  &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\modqseawkdir_mod_dir.obj
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\modqseawkdir_mod_dir.obj
 MODQSEAWKSTR_CFLAGS = -bd -i=..\..\include $(CPPFLAGS_BUILD) $(CPPFLAGS_CHAR) &
 	$(CPPFLAGS_XCMGRS) $(CPPFLAGS_BUNDLED_UNICODE) $(CPPFLAGS_STATIC_MODULE) &
 	$(CPPFLAGS_TCPV40HDRS) -wx $(__DEBUG_INFO) -bm -ot -ox $(CPPFLAGS) $(CFLAGS)
 MODQSEAWKSTR_OBJECTS =  &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\modqseawkstr_mod_str.obj
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\modqseawkstr_mod_str.obj
 MODQSEAWKSYS_CFLAGS = -bd -i=..\..\include $(CPPFLAGS_BUILD) $(CPPFLAGS_CHAR) &
 	$(CPPFLAGS_XCMGRS) $(CPPFLAGS_BUNDLED_UNICODE) $(CPPFLAGS_STATIC_MODULE) &
 	$(CPPFLAGS_TCPV40HDRS) -wx $(__DEBUG_INFO) -bm -ot -ox $(CPPFLAGS) $(CFLAGS)
 MODQSEAWKSYS_OBJECTS =  &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\modqseawksys_mod_sys.obj
-LIBQSESED_CFLAGS = -bd -i=..\..\include $(CPPFLAGS_BUILD) $(CPPFLAGS_CHAR) &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\modqseawksys_mod_sys.obj
+DLLQSESED_CFLAGS = -bd -i=..\..\include $(CPPFLAGS_BUILD) $(CPPFLAGS_CHAR) &
+	$(CPPFLAGS_XCMGRS) $(CPPFLAGS_BUNDLED_UNICODE) $(CPPFLAGS_STATIC_MODULE) &
+	$(CPPFLAGS_TCPV40HDRS) -wx $(__DEBUG_INFO) -bm -ot -ox $(CPPFLAGS) $(CFLAGS)
+DLLQSESED_OBJECTS =  &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsesed_sed.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsesed_err.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsesed_std.obj
+LIBQSESED_CFLAGS = -i=..\..\include $(CPPFLAGS_BUILD) $(CPPFLAGS_CHAR) &
 	$(CPPFLAGS_XCMGRS) $(CPPFLAGS_BUNDLED_UNICODE) $(CPPFLAGS_STATIC_MODULE) &
 	$(CPPFLAGS_TCPV40HDRS) -wx $(__DEBUG_INFO) -bm -ot -ox $(CPPFLAGS) $(CFLAGS)
 LIBQSESED_OBJECTS =  &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsesed_sed.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsesed_err.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsesed_std.obj
-LIBQSENET_CFLAGS = -bd -i=..\..\include $(CPPFLAGS_BUILD) $(CPPFLAGS_CHAR) &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsesed_sed.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsesed_err.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsesed_std.obj
+DLLQSENET_CFLAGS = -bd -i=..\..\include $(CPPFLAGS_BUILD) $(CPPFLAGS_CHAR) &
+	$(CPPFLAGS_XCMGRS) $(CPPFLAGS_BUNDLED_UNICODE) $(CPPFLAGS_STATIC_MODULE) &
+	$(CPPFLAGS_TCPV40HDRS) -wx $(__DEBUG_INFO) -bm -ot -ox $(CPPFLAGS) $(CFLAGS)
+DLLQSENET_OBJECTS =  &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_http.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_htre.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_htrd.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_httpd.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_httpd_cgi.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_httpd_dir.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_httpd_file.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_httpd_proxy.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_httpd_resol.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_httpd_std.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_httpd_task.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_httpd_text.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_upxd.obj
+LIBQSENET_CFLAGS = -i=..\..\include $(CPPFLAGS_BUILD) $(CPPFLAGS_CHAR) &
 	$(CPPFLAGS_XCMGRS) $(CPPFLAGS_BUNDLED_UNICODE) $(CPPFLAGS_STATIC_MODULE) &
 	$(CPPFLAGS_TCPV40HDRS) -wx $(__DEBUG_INFO) -bm -ot -ox $(CPPFLAGS) $(CFLAGS)
 LIBQSENET_OBJECTS =  &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsenet_http.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsenet_htre.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsenet_htrd.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsenet_httpd.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsenet_httpd_cgi.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsenet_httpd_dir.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsenet_httpd_file.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsenet_httpd_proxy.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsenet_httpd_resol.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsenet_httpd_std.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsenet_httpd_task.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsenet_httpd_text.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsenet_upxd.obj
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_http.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_htre.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_htrd.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_httpd.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_httpd_cgi.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_httpd_dir.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_httpd_file.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_httpd_proxy.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_httpd_resol.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_httpd_std.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_httpd_task.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_httpd_text.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_upxd.obj
 EXEQSEAWK_CFLAGS = -i=..\..\include $(CPPFLAGS_BUILD) $(CPPFLAGS_CHAR) &
 	$(CPPFLAGS_XCMGRS) $(CPPFLAGS_BUNDLED_UNICODE) $(CPPFLAGS_STATIC_MODULE) &
 	$(CPPFLAGS_TCPV40HDRS) -wx $(__DEBUG_INFO) -bm -ot -ox $(CPPFLAGS) $(CFLAGS)
 EXEQSEAWK_OBJECTS =  &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\exeqseawk_awk.obj
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\exeqseawk_awk.obj
 EXEQSESED_CFLAGS = -i=..\..\include $(CPPFLAGS_BUILD) $(CPPFLAGS_CHAR) &
 	$(CPPFLAGS_XCMGRS) $(CPPFLAGS_BUNDLED_UNICODE) $(CPPFLAGS_STATIC_MODULE) &
 	$(CPPFLAGS_TCPV40HDRS) -wx $(__DEBUG_INFO) -bm -ot -ox $(CPPFLAGS) $(CFLAGS)
 EXEQSESED_OBJECTS =  &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\exeqsesed_sed.obj
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\exeqsesed_sed.obj
 EXEQSEHTTPD_CFLAGS = -i=..\..\include $(CPPFLAGS_BUILD) $(CPPFLAGS_CHAR) &
 	$(CPPFLAGS_XCMGRS) $(CPPFLAGS_BUNDLED_UNICODE) $(CPPFLAGS_STATIC_MODULE) &
 	$(CPPFLAGS_TCPV40HDRS) -wx $(__DEBUG_INFO) -bm -ot -ox $(CPPFLAGS) $(CFLAGS)
 EXEQSEHTTPD_OBJECTS =  &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\exeqsehttpd_httpd.obj
-LIBQSECMNXX_CXXFLAGS = -bd -i=..\..\include $(CPPFLAGS_BUILD) $(CPPFLAGS_CHAR) &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\exeqsehttpd_httpd.obj
+DLLQSECMNXX_CXXFLAGS = -bd -i=..\..\include $(CPPFLAGS_BUILD) $(CPPFLAGS_CHAR) &
+	$(CPPFLAGS_XCMGRS) $(CPPFLAGS_BUNDLED_UNICODE) $(CPPFLAGS_STATIC_MODULE) &
+	$(CPPFLAGS_TCPV40HDRS) -wx $(__DEBUG_INFO) -bm -ot -ox -xs $(CPPFLAGS) &
+	$(CXXFLAGS)
+DLLQSECMNXX_OBJECTS =  &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmnxx_Mmgr.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmnxx_StdMmgr.obj
+LIBQSECMNXX_CXXFLAGS = -i=..\..\include $(CPPFLAGS_BUILD) $(CPPFLAGS_CHAR) &
 	$(CPPFLAGS_XCMGRS) $(CPPFLAGS_BUNDLED_UNICODE) $(CPPFLAGS_STATIC_MODULE) &
 	$(CPPFLAGS_TCPV40HDRS) -wx $(__DEBUG_INFO) -bm -ot -ox -xs $(CPPFLAGS) &
 	$(CXXFLAGS)
 LIBQSECMNXX_OBJECTS =  &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmnxx_Mmgr.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmnxx_StdMmgr.obj
-LIBQSEAWKXX_CXXFLAGS = -bd -i=..\..\include $(CPPFLAGS_BUILD) $(CPPFLAGS_CHAR) &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmnxx_Mmgr.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmnxx_StdMmgr.obj
+DLLQSEAWKXX_CXXFLAGS = -bd -i=..\..\include $(CPPFLAGS_BUILD) $(CPPFLAGS_CHAR) &
+	$(CPPFLAGS_XCMGRS) $(CPPFLAGS_BUNDLED_UNICODE) $(CPPFLAGS_STATIC_MODULE) &
+	$(CPPFLAGS_TCPV40HDRS) -wx $(__DEBUG_INFO) -bm -ot -ox -xs $(CPPFLAGS) &
+	$(CXXFLAGS)
+DLLQSEAWKXX_OBJECTS =  &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqseawkxx_Awk.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqseawkxx_StdAwk.obj
+LIBQSEAWKXX_CXXFLAGS = -i=..\..\include $(CPPFLAGS_BUILD) $(CPPFLAGS_CHAR) &
 	$(CPPFLAGS_XCMGRS) $(CPPFLAGS_BUNDLED_UNICODE) $(CPPFLAGS_STATIC_MODULE) &
 	$(CPPFLAGS_TCPV40HDRS) -wx $(__DEBUG_INFO) -bm -ot -ox -xs $(CPPFLAGS) &
 	$(CXXFLAGS)
 LIBQSEAWKXX_OBJECTS =  &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqseawkxx_Awk.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqseawkxx_StdAwk.obj
-LIBQSESEDXX_CXXFLAGS = -bd -i=..\..\include $(CPPFLAGS_BUILD) $(CPPFLAGS_CHAR) &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqseawkxx_Awk.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqseawkxx_StdAwk.obj
+DLLQSESEDXX_CXXFLAGS = -bd -i=..\..\include $(CPPFLAGS_BUILD) $(CPPFLAGS_CHAR) &
+	$(CPPFLAGS_XCMGRS) $(CPPFLAGS_BUNDLED_UNICODE) $(CPPFLAGS_STATIC_MODULE) &
+	$(CPPFLAGS_TCPV40HDRS) -wx $(__DEBUG_INFO) -bm -ot -ox -xs $(CPPFLAGS) &
+	$(CXXFLAGS)
+DLLQSESEDXX_OBJECTS =  &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsesedxx_Sed.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsesedxx_StdSed.obj
+LIBQSESEDXX_CXXFLAGS = -i=..\..\include $(CPPFLAGS_BUILD) $(CPPFLAGS_CHAR) &
 	$(CPPFLAGS_XCMGRS) $(CPPFLAGS_BUNDLED_UNICODE) $(CPPFLAGS_STATIC_MODULE) &
 	$(CPPFLAGS_TCPV40HDRS) -wx $(__DEBUG_INFO) -bm -ot -ox -xs $(CPPFLAGS) &
 	$(CXXFLAGS)
 LIBQSESEDXX_OBJECTS =  &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsesedxx_Sed.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsesedxx_StdSed.obj
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsesedxx_Sed.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsesedxx_StdSed.obj
 
 
-all : $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR) :
-	-if not exist $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR) mkdir $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)
+all : $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED) :
+	-if not exist $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED) mkdir $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)
 
 ### Targets: ###
 
-all : .SYMBOLIC $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsecmn.dll $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qseawk.dll $(__modqseawkdir___depname) $(__modqseawkstr___depname) $(__modqseawksys___depname) $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsesed.dll $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsenet.dll $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qseawk.exe $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsesed.exe $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsehttpd.exe $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsecmnxx.dll $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qseawkxx.dll $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsesedxx.dll
+all : .SYMBOLIC $(__dllqsecmn___depname) $(__libqsecmn___depname) $(__dllqseawk___depname) $(__libqseawk___depname) $(__modqseawkdir___depname) $(__modqseawkstr___depname) $(__modqseawksys___depname) $(__dllqsesed___depname) $(__libqsesed___depname) $(__dllqsenet___depname) $(__libqsenet___depname) $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qseawk.exe $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsesed.exe $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsehttpd.exe $(__dllqsecmnxx___depname) $(__libqsecmnxx___depname) $(__dllqseawkxx___depname) $(__libqseawkxx___depname) $(__dllqsesedxx___depname) $(__libqsesedxx___depname)
 
 clean : .SYMBOLIC 
-	-if exist $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\*.obj del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\*.obj
-	-if exist $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\*.res del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\*.res
-	-if exist $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\*.lbc del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\*.lbc
-	-if exist $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\*.ilk del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\*.ilk
-	-if exist $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\*.pch del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\*.pch
-	-del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsecmn.dll
-	-del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsecmn.lib
-	-del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qseawk.dll
-	-del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qseawk.lib
-	-del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\awk-dir.dll
-	-del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\awk-dir.lib
-	-del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\awk-str.dll
-	-del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\awk-str.lib
-	-del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\awk-sys.dll
-	-del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\awk-sys.lib
-	-del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsesed.dll
-	-del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsesed.lib
-	-del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsenet.dll
-	-del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsenet.lib
-	-del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qseawk.exe
-	-del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsesed.exe
-	-del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsehttpd.exe
-	-del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsecmnxx.dll
-	-del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsecmnxx.lib
-	-del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qseawkxx.dll
-	-del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qseawkxx.lib
-	-del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsesedxx.dll
-	-del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsesedxx.lib
+	-if exist $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\*.obj del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\*.obj
+	-if exist $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\*.res del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\*.res
+	-if exist $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\*.lbc del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\*.lbc
+	-if exist $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\*.ilk del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\*.ilk
+	-if exist $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\*.pch del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\*.pch
+	-del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsecmn.dll
+	-del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsecmn.lib
+	-del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsecmn.lib
+	-del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qseawk.dll
+	-del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qseawk.lib
+	-del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qseawk.lib
+	-del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\awk-dir.dll
+	-del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\awk-dir.lib
+	-del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\awk-str.dll
+	-del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\awk-str.lib
+	-del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\awk-sys.dll
+	-del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\awk-sys.lib
+	-del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsesed.dll
+	-del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsesed.lib
+	-del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsesed.lib
+	-del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsenet.dll
+	-del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsenet.lib
+	-del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsenet.lib
+	-del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qseawk.exe
+	-del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsesed.exe
+	-del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsehttpd.exe
+	-del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsecmnxx.dll
+	-del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsecmnxx.lib
+	-del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsecmnxx.lib
+	-del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qseawkxx.dll
+	-del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qseawkxx.lib
+	-del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qseawkxx.lib
+	-del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsesedxx.dll
+	-del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsesedxx.lib
+	-del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsesedxx.lib
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsecmn.dll :  $(LIBQSECMN_OBJECTS)
-	@%create $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn.lbc
-	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn.lbc option quiet
-	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn.lbc name $^@
-	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn.lbc option caseexact
-	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn.lbc  $(__DEBUG_INFO_1_0)  $(LDFLAGS)
-	@for %i in ($(LIBQSECMN_OBJECTS)) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn.lbc file %i
-	@for %i in ( $(__SYSLIB_SOCKET_p) $(__SYSLIB_SOCKET2_p)) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn.lbc library %i
-	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn.lbc
-	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn.lbc system os2v2 dll
-	wlink @$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn.lbc
-	wlib -q -n -b $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsecmn.lib +$^@
-
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qseawk.dll :  $(LIBQSEAWK_OBJECTS) $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsecmn.dll $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsecmn.dll
-	@%create $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqseawk.lbc
-	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqseawk.lbc option quiet
-	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqseawk.lbc name $^@
-	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqseawk.lbc option caseexact
-	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqseawk.lbc  $(__DEBUG_INFO_1_0)  $(LDFLAGS)
-	@for %i in ($(LIBQSEAWK_OBJECTS)) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqseawk.lbc file %i
-	@for %i in ( $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsecmn.lib) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqseawk.lbc library %i
-	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqseawk.lbc
-	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqseawk.lbc system os2v2 dll
-	wlink @$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqseawk.lbc
-	wlib -q -n -b $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qseawk.lib +$^@
-
-!ifeq STATIC_MODULE off
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\awk-dir.dll :  $(MODQSEAWKDIR_OBJECTS) $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsecmn.dll $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qseawk.dll $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qseawk.dll
-	@%create $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\modqseawkdir.lbc
-	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\modqseawkdir.lbc option quiet
-	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\modqseawkdir.lbc name $^@
-	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\modqseawkdir.lbc option caseexact
-	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\modqseawkdir.lbc  $(__DEBUG_INFO_1_0)  $(LDFLAGS)
-	@for %i in ($(MODQSEAWKDIR_OBJECTS)) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\modqseawkdir.lbc file %i
-	@for %i in ( $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsecmn.lib $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qseawk.lib) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\modqseawkdir.lbc library %i
-	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\modqseawkdir.lbc
-	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\modqseawkdir.lbc system os2v2 dll
-	wlink @$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\modqseawkdir.lbc
-	wlib -q -n -b $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\awk-dir.lib +$^@
+!ifeq SHARED on
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsecmn.dll :  $(DLLQSECMN_OBJECTS)
+	@%create $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn.lbc
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn.lbc option quiet
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn.lbc name $^@
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn.lbc option caseexact
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn.lbc  $(__DEBUG_INFO_1_2)  $(LDFLAGS)
+	@for %i in ($(DLLQSECMN_OBJECTS)) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn.lbc file %i
+	@for %i in ( $(__SYSLIB_SOCKET_p) $(__SYSLIB_SOCKET2_p)) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn.lbc library %i
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn.lbc
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn.lbc system os2v2 dll
+	wlink @$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn.lbc
+	wlib -q -n -b $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsecmn.lib +$^@
 !endif
 
-!ifeq STATIC_MODULE off
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\awk-str.dll :  $(MODQSEAWKSTR_OBJECTS) $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsecmn.dll $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qseawk.dll $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qseawk.dll
-	@%create $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\modqseawkstr.lbc
-	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\modqseawkstr.lbc option quiet
-	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\modqseawkstr.lbc name $^@
-	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\modqseawkstr.lbc option caseexact
-	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\modqseawkstr.lbc  $(__DEBUG_INFO_1_0)  $(LDFLAGS)
-	@for %i in ($(MODQSEAWKSTR_OBJECTS)) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\modqseawkstr.lbc file %i
-	@for %i in ( $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsecmn.lib $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qseawk.lib) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\modqseawkstr.lbc library %i
-	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\modqseawkstr.lbc
-	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\modqseawkstr.lbc system os2v2 dll
-	wlink @$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\modqseawkstr.lbc
-	wlib -q -n -b $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\awk-str.lib +$^@
+!ifeq SHARED off
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsecmn.lib :  $(LIBQSECMN_OBJECTS)
+	@%create $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn.lbc
+	@for %i in ($(LIBQSECMN_OBJECTS)) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn.lbc +%i
+	wlib -q -p4096 -n -b $^@ @$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn.lbc
 !endif
 
-!ifeq STATIC_MODULE off
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\awk-sys.dll :  $(MODQSEAWKSYS_OBJECTS) $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsecmn.dll $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qseawk.dll $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qseawk.dll
-	@%create $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\modqseawksys.lbc
-	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\modqseawksys.lbc option quiet
-	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\modqseawksys.lbc name $^@
-	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\modqseawksys.lbc option caseexact
-	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\modqseawksys.lbc  $(__DEBUG_INFO_1_0)  $(LDFLAGS)
-	@for %i in ($(MODQSEAWKSYS_OBJECTS)) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\modqseawksys.lbc file %i
-	@for %i in ( $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsecmn.lib $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qseawk.lib) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\modqseawksys.lbc library %i
-	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\modqseawksys.lbc
-	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\modqseawksys.lbc system os2v2 dll
-	wlink @$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\modqseawksys.lbc
-	wlib -q -n -b $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\awk-sys.lib +$^@
+!ifeq SHARED on
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qseawk.dll :  $(DLLQSEAWK_OBJECTS) $(__libqsecmn___depname) $(__dllqsecmn___depname)
+	@%create $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqseawk.lbc
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqseawk.lbc option quiet
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqseawk.lbc name $^@
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqseawk.lbc option caseexact
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqseawk.lbc  $(__DEBUG_INFO_1_2)  $(LDFLAGS)
+	@for %i in ($(DLLQSEAWK_OBJECTS)) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqseawk.lbc file %i
+	@for %i in ( $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsecmn.lib) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqseawk.lbc library %i
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqseawk.lbc
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqseawk.lbc system os2v2 dll
+	wlink @$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqseawk.lbc
+	wlib -q -n -b $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qseawk.lib +$^@
 !endif
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsesed.dll :  $(LIBQSESED_OBJECTS) $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsecmn.dll $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsecmn.dll
-	@%create $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsesed.lbc
-	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsesed.lbc option quiet
-	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsesed.lbc name $^@
-	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsesed.lbc option caseexact
-	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsesed.lbc  $(__DEBUG_INFO_1_0)  $(LDFLAGS)
-	@for %i in ($(LIBQSESED_OBJECTS)) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsesed.lbc file %i
-	@for %i in ( $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsecmn.lib) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsesed.lbc library %i
-	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsesed.lbc
-	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsesed.lbc system os2v2 dll
-	wlink @$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsesed.lbc
-	wlib -q -n -b $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsesed.lib +$^@
-
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsenet.dll :  $(LIBQSENET_OBJECTS) $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsecmn.dll $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsecmn.dll
-	@%create $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsenet.lbc
-	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsenet.lbc option quiet
-	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsenet.lbc name $^@
-	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsenet.lbc option caseexact
-	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsenet.lbc  $(__DEBUG_INFO_1_0)  $(LDFLAGS)
-	@for %i in ($(LIBQSENET_OBJECTS)) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsenet.lbc file %i
-	@for %i in ( $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsecmn.lib $(__SYSLIB_SOCKET_p) $(__SYSLIB_SOCKET2_p)) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsenet.lbc library %i
-	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsenet.lbc
-	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsenet.lbc system os2v2 dll
-	wlink @$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsenet.lbc
-	wlib -q -n -b $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsenet.lib +$^@
-
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qseawk.exe :  $(EXEQSEAWK_OBJECTS) $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsecmn.dll $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qseawk.dll $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qseawk.dll
-	@%create $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\exeqseawk.lbc
-	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\exeqseawk.lbc option quiet
-	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\exeqseawk.lbc name $^@
-	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\exeqseawk.lbc option caseexact
-	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\exeqseawk.lbc  $(__DEBUG_INFO_1_0)  system os2v2 $(LDFLAGS)
-	@for %i in ($(EXEQSEAWK_OBJECTS)) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\exeqseawk.lbc file %i
-	@for %i in ( $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsecmn.lib $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qseawk.lib $(__SYSLIB_SOCKET_p) $(__SYSLIB_SOCKET2_p)) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\exeqseawk.lbc library %i
-	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\exeqseawk.lbc
-	@for %i in () do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\exeqseawk.lbc option stack=%i
-	wlink @$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\exeqseawk.lbc
-
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsesed.exe :  $(EXEQSESED_OBJECTS) $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsecmn.dll $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsesed.dll $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsesed.dll
-	@%create $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\exeqsesed.lbc
-	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\exeqsesed.lbc option quiet
-	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\exeqsesed.lbc name $^@
-	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\exeqsesed.lbc option caseexact
-	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\exeqsesed.lbc  $(__DEBUG_INFO_1_0)  system os2v2 $(LDFLAGS)
-	@for %i in ($(EXEQSESED_OBJECTS)) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\exeqsesed.lbc file %i
-	@for %i in ( $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsecmn.lib $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsesed.lib) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\exeqsesed.lbc library %i
-	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\exeqsesed.lbc
-	@for %i in () do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\exeqsesed.lbc option stack=%i
-	wlink @$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\exeqsesed.lbc
+!ifeq SHARED off
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qseawk.lib :  $(LIBQSEAWK_OBJECTS) $(__libqsecmn___depname)
+	@%create $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqseawk.lbc
+	@for %i in ($(LIBQSEAWK_OBJECTS)) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqseawk.lbc +%i
+	wlib -q -p4096 -n -b $^@ @$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqseawk.lbc
+!endif
+
+!ifeq SHARED on
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\awk-dir.dll :  $(MODQSEAWKDIR_OBJECTS) $(__libqsecmn___depname) $(__libqseawk___depname) $(__dllqseawk___depname)
+	@%create $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\modqseawkdir.lbc
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\modqseawkdir.lbc option quiet
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\modqseawkdir.lbc name $^@
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\modqseawkdir.lbc option caseexact
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\modqseawkdir.lbc  $(__DEBUG_INFO_1_2)  $(LDFLAGS)
+	@for %i in ($(MODQSEAWKDIR_OBJECTS)) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\modqseawkdir.lbc file %i
+	@for %i in ( $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsecmn.lib $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qseawk.lib) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\modqseawkdir.lbc library %i
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\modqseawkdir.lbc
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\modqseawkdir.lbc system os2v2 dll
+	wlink @$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\modqseawkdir.lbc
+	wlib -q -n -b $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\awk-dir.lib +$^@
+!endif
+
+!ifeq SHARED on
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\awk-str.dll :  $(MODQSEAWKSTR_OBJECTS) $(__libqsecmn___depname) $(__libqseawk___depname) $(__dllqseawk___depname)
+	@%create $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\modqseawkstr.lbc
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\modqseawkstr.lbc option quiet
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\modqseawkstr.lbc name $^@
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\modqseawkstr.lbc option caseexact
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\modqseawkstr.lbc  $(__DEBUG_INFO_1_2)  $(LDFLAGS)
+	@for %i in ($(MODQSEAWKSTR_OBJECTS)) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\modqseawkstr.lbc file %i
+	@for %i in ( $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsecmn.lib $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qseawk.lib) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\modqseawkstr.lbc library %i
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\modqseawkstr.lbc
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\modqseawkstr.lbc system os2v2 dll
+	wlink @$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\modqseawkstr.lbc
+	wlib -q -n -b $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\awk-str.lib +$^@
+!endif
+
+!ifeq SHARED on
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\awk-sys.dll :  $(MODQSEAWKSYS_OBJECTS) $(__libqsecmn___depname) $(__libqseawk___depname) $(__dllqseawk___depname)
+	@%create $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\modqseawksys.lbc
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\modqseawksys.lbc option quiet
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\modqseawksys.lbc name $^@
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\modqseawksys.lbc option caseexact
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\modqseawksys.lbc  $(__DEBUG_INFO_1_2)  $(LDFLAGS)
+	@for %i in ($(MODQSEAWKSYS_OBJECTS)) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\modqseawksys.lbc file %i
+	@for %i in ( $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsecmn.lib $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qseawk.lib) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\modqseawksys.lbc library %i
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\modqseawksys.lbc
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\modqseawksys.lbc system os2v2 dll
+	wlink @$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\modqseawksys.lbc
+	wlib -q -n -b $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\awk-sys.lib +$^@
+!endif
+
+!ifeq SHARED on
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsesed.dll :  $(DLLQSESED_OBJECTS) $(__libqsecmn___depname) $(__dllqsecmn___depname)
+	@%create $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsesed.lbc
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsesed.lbc option quiet
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsesed.lbc name $^@
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsesed.lbc option caseexact
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsesed.lbc  $(__DEBUG_INFO_1_2)  $(LDFLAGS)
+	@for %i in ($(DLLQSESED_OBJECTS)) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsesed.lbc file %i
+	@for %i in ( $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsecmn.lib) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsesed.lbc library %i
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsesed.lbc
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsesed.lbc system os2v2 dll
+	wlink @$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsesed.lbc
+	wlib -q -n -b $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsesed.lib +$^@
+!endif
+
+!ifeq SHARED off
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsesed.lib :  $(LIBQSESED_OBJECTS) $(__libqsecmn___depname) $(__libqsecmn___depname)
+	@%create $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsesed.lbc
+	@for %i in ($(LIBQSESED_OBJECTS)) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsesed.lbc +%i
+	wlib -q -p4096 -n -b $^@ @$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsesed.lbc
+!endif
+
+!ifeq SHARED on
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsenet.dll :  $(DLLQSENET_OBJECTS) $(__libqsecmn___depname) $(__dllqsecmn___depname)
+	@%create $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet.lbc
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet.lbc option quiet
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet.lbc name $^@
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet.lbc option caseexact
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet.lbc  $(__DEBUG_INFO_1_2)  $(LDFLAGS)
+	@for %i in ($(DLLQSENET_OBJECTS)) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet.lbc file %i
+	@for %i in ( $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsecmn.lib $(__SYSLIB_SOCKET_p) $(__SYSLIB_SOCKET2_p)) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet.lbc library %i
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet.lbc
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet.lbc system os2v2 dll
+	wlink @$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet.lbc
+	wlib -q -n -b $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsenet.lib +$^@
+!endif
+
+!ifeq SHARED off
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsenet.lib :  $(LIBQSENET_OBJECTS) $(__libqsecmn___depname) $(__libqsecmn___depname)
+	@%create $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet.lbc
+	@for %i in ($(LIBQSENET_OBJECTS)) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet.lbc +%i
+	wlib -q -p4096 -n -b $^@ @$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet.lbc
+!endif
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qseawk.exe :  $(EXEQSEAWK_OBJECTS) $(__libqsecmn___depname) $(__libqseawk___depname)
+	@%create $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\exeqseawk.lbc
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\exeqseawk.lbc option quiet
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\exeqseawk.lbc name $^@
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\exeqseawk.lbc option caseexact
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\exeqseawk.lbc  $(__DEBUG_INFO_1_2)  system os2v2 $(LDFLAGS)
+	@for %i in ($(EXEQSEAWK_OBJECTS)) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\exeqseawk.lbc file %i
+	@for %i in ( $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsecmn.lib $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qseawk.lib $(__SYSLIB_SOCKET_p) $(__SYSLIB_SOCKET2_p)) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\exeqseawk.lbc library %i
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\exeqseawk.lbc
+	@for %i in () do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\exeqseawk.lbc option stack=%i
+	wlink @$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\exeqseawk.lbc
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsesed.exe :  $(EXEQSESED_OBJECTS) $(__libqsecmn___depname) $(__libqsesed___depname)
+	@%create $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\exeqsesed.lbc
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\exeqsesed.lbc option quiet
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\exeqsesed.lbc name $^@
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\exeqsesed.lbc option caseexact
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\exeqsesed.lbc  $(__DEBUG_INFO_1_2)  system os2v2 $(LDFLAGS)
+	@for %i in ($(EXEQSESED_OBJECTS)) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\exeqsesed.lbc file %i
+	@for %i in ( $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsecmn.lib $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsesed.lib) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\exeqsesed.lbc library %i
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\exeqsesed.lbc
+	@for %i in () do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\exeqsesed.lbc option stack=%i
+	wlink @$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\exeqsesed.lbc
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsehttpd.exe :  $(EXEQSEHTTPD_OBJECTS) $(__libqsecmn___depname) $(__libqsenet___depname)
+	@%create $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\exeqsehttpd.lbc
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\exeqsehttpd.lbc option quiet
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\exeqsehttpd.lbc name $^@
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\exeqsehttpd.lbc option caseexact
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\exeqsehttpd.lbc  $(__DEBUG_INFO_1_2)  system os2v2 $(LDFLAGS)
+	@for %i in ($(EXEQSEHTTPD_OBJECTS)) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\exeqsehttpd.lbc file %i
+	@for %i in ( $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsecmn.lib $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsenet.lib $(__SYSLIB_SOCKET_p) $(__SYSLIB_SOCKET2_p)) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\exeqsehttpd.lbc library %i
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\exeqsehttpd.lbc
+	@for %i in () do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\exeqsehttpd.lbc option stack=%i
+	wlink @$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\exeqsehttpd.lbc
+
+!ifeq SHARED on
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsecmnxx.dll :  $(DLLQSECMNXX_OBJECTS) $(__libqsecmn___depname) $(__dllqsecmn___depname)
+	@%create $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmnxx.lbc
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmnxx.lbc option quiet
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmnxx.lbc name $^@
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmnxx.lbc option caseexact
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmnxx.lbc  $(__DEBUG_INFO_1_2)  $(LDFLAGS)
+	@for %i in ($(DLLQSECMNXX_OBJECTS)) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmnxx.lbc file %i
+	@for %i in ( $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsecmn.lib) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmnxx.lbc library %i
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmnxx.lbc
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmnxx.lbc system os2v2 dll
+	wlink @$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmnxx.lbc
+	wlib -q -n -b $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsecmnxx.lib +$^@
+!endif
+
+!ifeq SHARED off
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsecmnxx.lib :  $(LIBQSECMNXX_OBJECTS) $(__libqsecmn___depname) $(__libqsecmn___depname)
+	@%create $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmnxx.lbc
+	@for %i in ($(LIBQSECMNXX_OBJECTS)) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmnxx.lbc +%i
+	wlib -q -p4096 -n -b $^@ @$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmnxx.lbc
+!endif
+
+!ifeq SHARED on
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qseawkxx.dll :  $(DLLQSEAWKXX_OBJECTS) $(__libqsecmn___depname) $(__libqsecmnxx___depname) $(__libqseawk___depname) $(__dllqsecmnxx___depname) $(__dllqseawk___depname)
+	@%create $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqseawkxx.lbc
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqseawkxx.lbc option quiet
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqseawkxx.lbc name $^@
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqseawkxx.lbc option caseexact
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqseawkxx.lbc  $(__DEBUG_INFO_1_2)  $(LDFLAGS)
+	@for %i in ($(DLLQSEAWKXX_OBJECTS)) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqseawkxx.lbc file %i
+	@for %i in ( $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsecmn.lib $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsecmnxx.lib $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qseawk.lib) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqseawkxx.lbc library %i
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqseawkxx.lbc
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqseawkxx.lbc system os2v2 dll
+	wlink @$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqseawkxx.lbc
+	wlib -q -n -b $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qseawkxx.lib +$^@
+!endif
+
+!ifeq SHARED off
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qseawkxx.lib :  $(LIBQSEAWKXX_OBJECTS) $(__libqsecmn___depname) $(__libqsecmnxx___depname) $(__libqseawk___depname) $(__libqsecmnxx___depname) $(__libqseawk___depname)
+	@%create $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqseawkxx.lbc
+	@for %i in ($(LIBQSEAWKXX_OBJECTS)) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqseawkxx.lbc +%i
+	wlib -q -p4096 -n -b $^@ @$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqseawkxx.lbc
+!endif
+
+!ifeq SHARED on
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsesedxx.dll :  $(DLLQSESEDXX_OBJECTS) $(__libqsecmn___depname) $(__libqsecmnxx___depname) $(__libqsesed___depname) $(__dllqsecmnxx___depname) $(__dllqsesed___depname)
+	@%create $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsesedxx.lbc
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsesedxx.lbc option quiet
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsesedxx.lbc name $^@
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsesedxx.lbc option caseexact
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsesedxx.lbc  $(__DEBUG_INFO_1_2)  $(LDFLAGS)
+	@for %i in ($(DLLQSESEDXX_OBJECTS)) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsesedxx.lbc file %i
+	@for %i in ( $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsecmn.lib $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsecmnxx.lib $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsesed.lib) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsesedxx.lbc library %i
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsesedxx.lbc
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsesedxx.lbc system os2v2 dll
+	wlink @$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsesedxx.lbc
+	wlib -q -n -b $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsesedxx.lib +$^@
+!endif
+
+!ifeq SHARED off
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsesedxx.lib :  $(LIBQSESEDXX_OBJECTS) $(__libqsecmn___depname) $(__libqsecmnxx___depname) $(__libqsesed___depname) $(__libqsecmnxx___depname) $(__libqsesed___depname)
+	@%create $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsesedxx.lbc
+	@for %i in ($(LIBQSESEDXX_OBJECTS)) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsesedxx.lbc +%i
+	wlib -q -p4096 -n -b $^@ @$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsesedxx.lbc
+!endif
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_alg_base64.obj :  .AUTODEPEND ..\..\lib\cmn\alg-base64.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSECMN_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_alg_rand.obj :  .AUTODEPEND ..\..\lib\cmn\alg-rand.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSECMN_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_alg_search.obj :  .AUTODEPEND ..\..\lib\cmn\alg-search.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSECMN_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_alg_sort.obj :  .AUTODEPEND ..\..\lib\cmn\alg-sort.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSECMN_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_assert.obj :  .AUTODEPEND ..\..\lib\cmn\assert.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSECMN_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_chr.obj :  .AUTODEPEND ..\..\lib\cmn\chr.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSECMN_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_dir.obj :  .AUTODEPEND ..\..\lib\cmn\dir.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSECMN_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_dll.obj :  .AUTODEPEND ..\..\lib\cmn\dll.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSECMN_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_env.obj :  .AUTODEPEND ..\..\lib\cmn\env.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSECMN_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_gdl.obj :  .AUTODEPEND ..\..\lib\cmn\gdl.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSECMN_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_htb.obj :  .AUTODEPEND ..\..\lib\cmn\htb.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSECMN_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_fio.obj :  .AUTODEPEND ..\..\lib\cmn\fio.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSECMN_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_fma.obj :  .AUTODEPEND ..\..\lib\cmn\fma.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSECMN_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_fmt.obj :  .AUTODEPEND ..\..\lib\cmn\fmt.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSECMN_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_fs.obj :  .AUTODEPEND ..\..\lib\cmn\fs.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSECMN_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_fs_err.obj :  .AUTODEPEND ..\..\lib\cmn\fs-err.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSECMN_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_fs_move.obj :  .AUTODEPEND ..\..\lib\cmn\fs-move.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSECMN_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_glob.obj :  .AUTODEPEND ..\..\lib\cmn\glob.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSECMN_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_hton.obj :  .AUTODEPEND ..\..\lib\cmn\hton.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSECMN_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_ipad.obj :  .AUTODEPEND ..\..\lib\cmn\ipad.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSECMN_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_lda.obj :  .AUTODEPEND ..\..\lib\cmn\lda.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSECMN_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_main.obj :  .AUTODEPEND ..\..\lib\cmn\main.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSECMN_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_mb8.obj :  .AUTODEPEND ..\..\lib\cmn\mb8.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSECMN_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_mbwc.obj :  .AUTODEPEND ..\..\lib\cmn\mbwc.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSECMN_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_mbwc_str.obj :  .AUTODEPEND ..\..\lib\cmn\mbwc-str.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSECMN_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_mem.obj :  .AUTODEPEND ..\..\lib\cmn\mem.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSECMN_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_mux.obj :  .AUTODEPEND ..\..\lib\cmn\mux.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSECMN_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_nwad.obj :  .AUTODEPEND ..\..\lib\cmn\nwad.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSECMN_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_nwad_skad.obj :  .AUTODEPEND ..\..\lib\cmn\nwad-skad.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSECMN_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsehttpd.exe :  $(EXEQSEHTTPD_OBJECTS) $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsecmn.dll $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsenet.dll $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsenet.dll
-	@%create $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\exeqsehttpd.lbc
-	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\exeqsehttpd.lbc option quiet
-	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\exeqsehttpd.lbc name $^@
-	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\exeqsehttpd.lbc option caseexact
-	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\exeqsehttpd.lbc  $(__DEBUG_INFO_1_0)  system os2v2 $(LDFLAGS)
-	@for %i in ($(EXEQSEHTTPD_OBJECTS)) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\exeqsehttpd.lbc file %i
-	@for %i in ( $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsecmn.lib $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsenet.lib $(__SYSLIB_SOCKET_p) $(__SYSLIB_SOCKET2_p)) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\exeqsehttpd.lbc library %i
-	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\exeqsehttpd.lbc
-	@for %i in () do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\exeqsehttpd.lbc option stack=%i
-	wlink @$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\exeqsehttpd.lbc
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_nwif.obj :  .AUTODEPEND ..\..\lib\cmn\nwif.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSECMN_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsecmnxx.dll :  $(LIBQSECMNXX_OBJECTS) $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsecmn.dll $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsecmn.dll
-	@%create $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmnxx.lbc
-	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmnxx.lbc option quiet
-	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmnxx.lbc name $^@
-	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmnxx.lbc option caseexact
-	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmnxx.lbc  $(__DEBUG_INFO_1_0)  $(LDFLAGS)
-	@for %i in ($(LIBQSECMNXX_OBJECTS)) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmnxx.lbc file %i
-	@for %i in ( $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsecmn.lib) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmnxx.lbc library %i
-	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmnxx.lbc
-	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmnxx.lbc system os2v2 dll
-	wlink @$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmnxx.lbc
-	wlib -q -n -b $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsecmnxx.lib +$^@
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_nwif_cfg.obj :  .AUTODEPEND ..\..\lib\cmn\nwif-cfg.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSECMN_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qseawkxx.dll :  $(LIBQSEAWKXX_OBJECTS) $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsecmn.dll $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsecmnxx.dll $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qseawk.dll $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsecmnxx.dll $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qseawk.dll
-	@%create $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqseawkxx.lbc
-	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqseawkxx.lbc option quiet
-	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqseawkxx.lbc name $^@
-	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqseawkxx.lbc option caseexact
-	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqseawkxx.lbc  $(__DEBUG_INFO_1_0)  $(LDFLAGS)
-	@for %i in ($(LIBQSEAWKXX_OBJECTS)) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqseawkxx.lbc file %i
-	@for %i in ( $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsecmn.lib $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsecmnxx.lib $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qseawk.lib) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqseawkxx.lbc library %i
-	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqseawkxx.lbc
-	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqseawkxx.lbc system os2v2 dll
-	wlink @$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqseawkxx.lbc
-	wlib -q -n -b $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qseawkxx.lib +$^@
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_nwio.obj :  .AUTODEPEND ..\..\lib\cmn\nwio.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSECMN_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsesedxx.dll :  $(LIBQSESEDXX_OBJECTS) $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsecmn.dll $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsecmnxx.dll $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsesed.dll $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsecmnxx.dll $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsesed.dll
-	@%create $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsesedxx.lbc
-	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsesedxx.lbc option quiet
-	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsesedxx.lbc name $^@
-	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsesedxx.lbc option caseexact
-	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsesedxx.lbc  $(__DEBUG_INFO_1_0)  $(LDFLAGS)
-	@for %i in ($(LIBQSESEDXX_OBJECTS)) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsesedxx.lbc file %i
-	@for %i in ( $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsecmn.lib $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsecmnxx.lib $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsesed.lib) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsesedxx.lbc library %i
-	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsesedxx.lbc
-	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsesedxx.lbc system os2v2 dll
-	wlink @$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsesedxx.lbc
-	wlib -q -n -b $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsesedxx.lib +$^@
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_oht.obj :  .AUTODEPEND ..\..\lib\cmn\oht.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSECMN_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_alg_base64.obj :  .AUTODEPEND ..\..\lib\cmn\alg-base64.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_opt.obj :  .AUTODEPEND ..\..\lib\cmn\opt.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSECMN_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_path_basename.obj :  .AUTODEPEND ..\..\lib\cmn\path-basename.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSECMN_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_path_canon.obj :  .AUTODEPEND ..\..\lib\cmn\path-canon.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSECMN_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_pio.obj :  .AUTODEPEND ..\..\lib\cmn\pio.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSECMN_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_pma.obj :  .AUTODEPEND ..\..\lib\cmn\pma.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSECMN_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_rbt.obj :  .AUTODEPEND ..\..\lib\cmn\rbt.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSECMN_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_rex.obj :  .AUTODEPEND ..\..\lib\cmn\rex.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSECMN_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_sio.obj :  .AUTODEPEND ..\..\lib\cmn\sio.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSECMN_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_sll.obj :  .AUTODEPEND ..\..\lib\cmn\sll.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSECMN_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_slmb.obj :  .AUTODEPEND ..\..\lib\cmn\slmb.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSECMN_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_stdio.obj :  .AUTODEPEND ..\..\lib\cmn\stdio.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSECMN_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_str_beg.obj :  .AUTODEPEND ..\..\lib\cmn\str-beg.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSECMN_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_str_cat.obj :  .AUTODEPEND ..\..\lib\cmn\str-cat.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSECMN_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_str_chr.obj :  .AUTODEPEND ..\..\lib\cmn\str-chr.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSECMN_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_str_cnv.obj :  .AUTODEPEND ..\..\lib\cmn\str-cnv.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSECMN_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_str_cmp.obj :  .AUTODEPEND ..\..\lib\cmn\str-cmp.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSECMN_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_str_cpy.obj :  .AUTODEPEND ..\..\lib\cmn\str-cpy.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSECMN_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_str_del.obj :  .AUTODEPEND ..\..\lib\cmn\str-del.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSECMN_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_str_dup.obj :  .AUTODEPEND ..\..\lib\cmn\str-dup.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSECMN_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_str_dynm.obj :  .AUTODEPEND ..\..\lib\cmn\str-dynm.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSECMN_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_str_dynw.obj :  .AUTODEPEND ..\..\lib\cmn\str-dynw.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSECMN_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_str_end.obj :  .AUTODEPEND ..\..\lib\cmn\str-end.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSECMN_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_str_excl.obj :  .AUTODEPEND ..\..\lib\cmn\str-excl.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSECMN_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_str_fcpy.obj :  .AUTODEPEND ..\..\lib\cmn\str-fcpy.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSECMN_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_str_fnmat.obj :  .AUTODEPEND ..\..\lib\cmn\str-fnmat.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSECMN_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_str_incl.obj :  .AUTODEPEND ..\..\lib\cmn\str-incl.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSECMN_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_str_len.obj :  .AUTODEPEND ..\..\lib\cmn\str-len.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSECMN_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_str_pac.obj :  .AUTODEPEND ..\..\lib\cmn\str-pac.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSECMN_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_str_pbrk.obj :  .AUTODEPEND ..\..\lib\cmn\str-pbrk.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSECMN_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_str_put.obj :  .AUTODEPEND ..\..\lib\cmn\str-put.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSECMN_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_str_rev.obj :  .AUTODEPEND ..\..\lib\cmn\str-rev.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSECMN_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_str_rot.obj :  .AUTODEPEND ..\..\lib\cmn\str-rot.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSECMN_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_str_set.obj :  .AUTODEPEND ..\..\lib\cmn\str-set.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSECMN_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_str_spl.obj :  .AUTODEPEND ..\..\lib\cmn\str-spl.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSECMN_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_str_spn.obj :  .AUTODEPEND ..\..\lib\cmn\str-spn.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSECMN_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_str_str.obj :  .AUTODEPEND ..\..\lib\cmn\str-str.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSECMN_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_str_subst.obj :  .AUTODEPEND ..\..\lib\cmn\str-subst.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSECMN_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_str_tok.obj :  .AUTODEPEND ..\..\lib\cmn\str-tok.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSECMN_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_str_trm.obj :  .AUTODEPEND ..\..\lib\cmn\str-trm.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSECMN_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_str_word.obj :  .AUTODEPEND ..\..\lib\cmn\str-word.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSECMN_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_task.obj :  .AUTODEPEND ..\..\lib\cmn\task.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSECMN_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_time.obj :  .AUTODEPEND ..\..\lib\cmn\time.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSECMN_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_tio.obj :  .AUTODEPEND ..\..\lib\cmn\tio.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSECMN_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_tre.obj :  .AUTODEPEND ..\..\lib\cmn\tre.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSECMN_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_tre_ast.obj :  .AUTODEPEND ..\..\lib\cmn\tre-ast.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSECMN_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_tre_compile.obj :  .AUTODEPEND ..\..\lib\cmn\tre-compile.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSECMN_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_tre_match_backtrack.obj :  .AUTODEPEND ..\..\lib\cmn\tre-match-backtrack.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSECMN_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_tre_match_parallel.obj :  .AUTODEPEND ..\..\lib\cmn\tre-match-parallel.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSECMN_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_tre_parse.obj :  .AUTODEPEND ..\..\lib\cmn\tre-parse.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSECMN_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_tre_stack.obj :  .AUTODEPEND ..\..\lib\cmn\tre-stack.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSECMN_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_uri.obj :  .AUTODEPEND ..\..\lib\cmn\uri.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSECMN_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_utf8.obj :  .AUTODEPEND ..\..\lib\cmn\utf8.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSECMN_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_xma.obj :  .AUTODEPEND ..\..\lib\cmn\xma.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSECMN_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_cp949.obj :  .AUTODEPEND ..\..\lib\cmn\cp949.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSECMN_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_cp950.obj :  .AUTODEPEND ..\..\lib\cmn\cp950.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSECMN_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_uni.obj :  .AUTODEPEND ..\..\lib\cmn\uni.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSECMN_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_alg_base64.obj :  .AUTODEPEND ..\..\lib\cmn\alg-base64.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_alg_rand.obj :  .AUTODEPEND ..\..\lib\cmn\alg-rand.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_alg_rand.obj :  .AUTODEPEND ..\..\lib\cmn\alg-rand.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_alg_search.obj :  .AUTODEPEND ..\..\lib\cmn\alg-search.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_alg_search.obj :  .AUTODEPEND ..\..\lib\cmn\alg-search.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_alg_sort.obj :  .AUTODEPEND ..\..\lib\cmn\alg-sort.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_alg_sort.obj :  .AUTODEPEND ..\..\lib\cmn\alg-sort.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_assert.obj :  .AUTODEPEND ..\..\lib\cmn\assert.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_assert.obj :  .AUTODEPEND ..\..\lib\cmn\assert.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_chr.obj :  .AUTODEPEND ..\..\lib\cmn\chr.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_chr.obj :  .AUTODEPEND ..\..\lib\cmn\chr.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_dir.obj :  .AUTODEPEND ..\..\lib\cmn\dir.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_dir.obj :  .AUTODEPEND ..\..\lib\cmn\dir.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_dll.obj :  .AUTODEPEND ..\..\lib\cmn\dll.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_dll.obj :  .AUTODEPEND ..\..\lib\cmn\dll.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_env.obj :  .AUTODEPEND ..\..\lib\cmn\env.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_env.obj :  .AUTODEPEND ..\..\lib\cmn\env.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_gdl.obj :  .AUTODEPEND ..\..\lib\cmn\gdl.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_gdl.obj :  .AUTODEPEND ..\..\lib\cmn\gdl.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_htb.obj :  .AUTODEPEND ..\..\lib\cmn\htb.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_htb.obj :  .AUTODEPEND ..\..\lib\cmn\htb.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_fio.obj :  .AUTODEPEND ..\..\lib\cmn\fio.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_fio.obj :  .AUTODEPEND ..\..\lib\cmn\fio.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_fma.obj :  .AUTODEPEND ..\..\lib\cmn\fma.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_fma.obj :  .AUTODEPEND ..\..\lib\cmn\fma.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_fmt.obj :  .AUTODEPEND ..\..\lib\cmn\fmt.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_fmt.obj :  .AUTODEPEND ..\..\lib\cmn\fmt.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_fs.obj :  .AUTODEPEND ..\..\lib\cmn\fs.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_fs.obj :  .AUTODEPEND ..\..\lib\cmn\fs.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_fs_err.obj :  .AUTODEPEND ..\..\lib\cmn\fs-err.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_fs_err.obj :  .AUTODEPEND ..\..\lib\cmn\fs-err.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_fs_move.obj :  .AUTODEPEND ..\..\lib\cmn\fs-move.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_fs_move.obj :  .AUTODEPEND ..\..\lib\cmn\fs-move.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_glob.obj :  .AUTODEPEND ..\..\lib\cmn\glob.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_glob.obj :  .AUTODEPEND ..\..\lib\cmn\glob.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_hton.obj :  .AUTODEPEND ..\..\lib\cmn\hton.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_hton.obj :  .AUTODEPEND ..\..\lib\cmn\hton.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_ipad.obj :  .AUTODEPEND ..\..\lib\cmn\ipad.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_ipad.obj :  .AUTODEPEND ..\..\lib\cmn\ipad.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_lda.obj :  .AUTODEPEND ..\..\lib\cmn\lda.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_lda.obj :  .AUTODEPEND ..\..\lib\cmn\lda.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_main.obj :  .AUTODEPEND ..\..\lib\cmn\main.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_main.obj :  .AUTODEPEND ..\..\lib\cmn\main.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_mb8.obj :  .AUTODEPEND ..\..\lib\cmn\mb8.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_mb8.obj :  .AUTODEPEND ..\..\lib\cmn\mb8.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_mbwc.obj :  .AUTODEPEND ..\..\lib\cmn\mbwc.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_mbwc.obj :  .AUTODEPEND ..\..\lib\cmn\mbwc.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_mbwc_str.obj :  .AUTODEPEND ..\..\lib\cmn\mbwc-str.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_mbwc_str.obj :  .AUTODEPEND ..\..\lib\cmn\mbwc-str.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_mem.obj :  .AUTODEPEND ..\..\lib\cmn\mem.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_mem.obj :  .AUTODEPEND ..\..\lib\cmn\mem.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_mux.obj :  .AUTODEPEND ..\..\lib\cmn\mux.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_mux.obj :  .AUTODEPEND ..\..\lib\cmn\mux.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_nwad.obj :  .AUTODEPEND ..\..\lib\cmn\nwad.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_nwad.obj :  .AUTODEPEND ..\..\lib\cmn\nwad.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_nwad_skad.obj :  .AUTODEPEND ..\..\lib\cmn\nwad-skad.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_nwad_skad.obj :  .AUTODEPEND ..\..\lib\cmn\nwad-skad.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_nwif.obj :  .AUTODEPEND ..\..\lib\cmn\nwif.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_nwif.obj :  .AUTODEPEND ..\..\lib\cmn\nwif.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_nwif_cfg.obj :  .AUTODEPEND ..\..\lib\cmn\nwif-cfg.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_nwif_cfg.obj :  .AUTODEPEND ..\..\lib\cmn\nwif-cfg.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_nwio.obj :  .AUTODEPEND ..\..\lib\cmn\nwio.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_nwio.obj :  .AUTODEPEND ..\..\lib\cmn\nwio.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_oht.obj :  .AUTODEPEND ..\..\lib\cmn\oht.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_oht.obj :  .AUTODEPEND ..\..\lib\cmn\oht.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_opt.obj :  .AUTODEPEND ..\..\lib\cmn\opt.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_opt.obj :  .AUTODEPEND ..\..\lib\cmn\opt.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_path_basename.obj :  .AUTODEPEND ..\..\lib\cmn\path-basename.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_path_basename.obj :  .AUTODEPEND ..\..\lib\cmn\path-basename.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_path_canon.obj :  .AUTODEPEND ..\..\lib\cmn\path-canon.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_path_canon.obj :  .AUTODEPEND ..\..\lib\cmn\path-canon.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_pio.obj :  .AUTODEPEND ..\..\lib\cmn\pio.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_pio.obj :  .AUTODEPEND ..\..\lib\cmn\pio.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_pma.obj :  .AUTODEPEND ..\..\lib\cmn\pma.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_pma.obj :  .AUTODEPEND ..\..\lib\cmn\pma.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_rbt.obj :  .AUTODEPEND ..\..\lib\cmn\rbt.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_rbt.obj :  .AUTODEPEND ..\..\lib\cmn\rbt.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_rex.obj :  .AUTODEPEND ..\..\lib\cmn\rex.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_rex.obj :  .AUTODEPEND ..\..\lib\cmn\rex.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_sio.obj :  .AUTODEPEND ..\..\lib\cmn\sio.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_sio.obj :  .AUTODEPEND ..\..\lib\cmn\sio.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_sll.obj :  .AUTODEPEND ..\..\lib\cmn\sll.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_sll.obj :  .AUTODEPEND ..\..\lib\cmn\sll.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_slmb.obj :  .AUTODEPEND ..\..\lib\cmn\slmb.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_slmb.obj :  .AUTODEPEND ..\..\lib\cmn\slmb.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_stdio.obj :  .AUTODEPEND ..\..\lib\cmn\stdio.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_stdio.obj :  .AUTODEPEND ..\..\lib\cmn\stdio.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_str_beg.obj :  .AUTODEPEND ..\..\lib\cmn\str-beg.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_str_beg.obj :  .AUTODEPEND ..\..\lib\cmn\str-beg.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_str_cat.obj :  .AUTODEPEND ..\..\lib\cmn\str-cat.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_str_cat.obj :  .AUTODEPEND ..\..\lib\cmn\str-cat.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_str_chr.obj :  .AUTODEPEND ..\..\lib\cmn\str-chr.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_str_chr.obj :  .AUTODEPEND ..\..\lib\cmn\str-chr.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_str_cnv.obj :  .AUTODEPEND ..\..\lib\cmn\str-cnv.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_str_cnv.obj :  .AUTODEPEND ..\..\lib\cmn\str-cnv.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_str_cmp.obj :  .AUTODEPEND ..\..\lib\cmn\str-cmp.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_str_cmp.obj :  .AUTODEPEND ..\..\lib\cmn\str-cmp.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_str_cpy.obj :  .AUTODEPEND ..\..\lib\cmn\str-cpy.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_str_cpy.obj :  .AUTODEPEND ..\..\lib\cmn\str-cpy.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_str_del.obj :  .AUTODEPEND ..\..\lib\cmn\str-del.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_str_del.obj :  .AUTODEPEND ..\..\lib\cmn\str-del.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_str_dup.obj :  .AUTODEPEND ..\..\lib\cmn\str-dup.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_str_dup.obj :  .AUTODEPEND ..\..\lib\cmn\str-dup.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_str_dynm.obj :  .AUTODEPEND ..\..\lib\cmn\str-dynm.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_str_dynm.obj :  .AUTODEPEND ..\..\lib\cmn\str-dynm.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_str_dynw.obj :  .AUTODEPEND ..\..\lib\cmn\str-dynw.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_str_dynw.obj :  .AUTODEPEND ..\..\lib\cmn\str-dynw.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_str_end.obj :  .AUTODEPEND ..\..\lib\cmn\str-end.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_str_end.obj :  .AUTODEPEND ..\..\lib\cmn\str-end.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_str_excl.obj :  .AUTODEPEND ..\..\lib\cmn\str-excl.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_str_excl.obj :  .AUTODEPEND ..\..\lib\cmn\str-excl.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_str_fcpy.obj :  .AUTODEPEND ..\..\lib\cmn\str-fcpy.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_str_fcpy.obj :  .AUTODEPEND ..\..\lib\cmn\str-fcpy.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_str_fnmat.obj :  .AUTODEPEND ..\..\lib\cmn\str-fnmat.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_str_fnmat.obj :  .AUTODEPEND ..\..\lib\cmn\str-fnmat.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_str_incl.obj :  .AUTODEPEND ..\..\lib\cmn\str-incl.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_str_incl.obj :  .AUTODEPEND ..\..\lib\cmn\str-incl.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_str_len.obj :  .AUTODEPEND ..\..\lib\cmn\str-len.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_str_len.obj :  .AUTODEPEND ..\..\lib\cmn\str-len.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_str_pac.obj :  .AUTODEPEND ..\..\lib\cmn\str-pac.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_str_pac.obj :  .AUTODEPEND ..\..\lib\cmn\str-pac.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_str_pbrk.obj :  .AUTODEPEND ..\..\lib\cmn\str-pbrk.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_str_pbrk.obj :  .AUTODEPEND ..\..\lib\cmn\str-pbrk.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_str_put.obj :  .AUTODEPEND ..\..\lib\cmn\str-put.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_str_put.obj :  .AUTODEPEND ..\..\lib\cmn\str-put.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_str_rev.obj :  .AUTODEPEND ..\..\lib\cmn\str-rev.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_str_rev.obj :  .AUTODEPEND ..\..\lib\cmn\str-rev.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_str_rot.obj :  .AUTODEPEND ..\..\lib\cmn\str-rot.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_str_rot.obj :  .AUTODEPEND ..\..\lib\cmn\str-rot.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_str_set.obj :  .AUTODEPEND ..\..\lib\cmn\str-set.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_str_set.obj :  .AUTODEPEND ..\..\lib\cmn\str-set.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_str_spl.obj :  .AUTODEPEND ..\..\lib\cmn\str-spl.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_str_spl.obj :  .AUTODEPEND ..\..\lib\cmn\str-spl.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_str_spn.obj :  .AUTODEPEND ..\..\lib\cmn\str-spn.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_str_spn.obj :  .AUTODEPEND ..\..\lib\cmn\str-spn.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_str_str.obj :  .AUTODEPEND ..\..\lib\cmn\str-str.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_str_str.obj :  .AUTODEPEND ..\..\lib\cmn\str-str.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_str_subst.obj :  .AUTODEPEND ..\..\lib\cmn\str-subst.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_str_subst.obj :  .AUTODEPEND ..\..\lib\cmn\str-subst.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_str_tok.obj :  .AUTODEPEND ..\..\lib\cmn\str-tok.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_str_tok.obj :  .AUTODEPEND ..\..\lib\cmn\str-tok.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_str_trm.obj :  .AUTODEPEND ..\..\lib\cmn\str-trm.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_str_trm.obj :  .AUTODEPEND ..\..\lib\cmn\str-trm.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_str_word.obj :  .AUTODEPEND ..\..\lib\cmn\str-word.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_str_word.obj :  .AUTODEPEND ..\..\lib\cmn\str-word.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_task.obj :  .AUTODEPEND ..\..\lib\cmn\task.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_task.obj :  .AUTODEPEND ..\..\lib\cmn\task.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_time.obj :  .AUTODEPEND ..\..\lib\cmn\time.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_time.obj :  .AUTODEPEND ..\..\lib\cmn\time.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_tio.obj :  .AUTODEPEND ..\..\lib\cmn\tio.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_tio.obj :  .AUTODEPEND ..\..\lib\cmn\tio.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_tre.obj :  .AUTODEPEND ..\..\lib\cmn\tre.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_tre.obj :  .AUTODEPEND ..\..\lib\cmn\tre.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_tre_ast.obj :  .AUTODEPEND ..\..\lib\cmn\tre-ast.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_tre_ast.obj :  .AUTODEPEND ..\..\lib\cmn\tre-ast.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_tre_compile.obj :  .AUTODEPEND ..\..\lib\cmn\tre-compile.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_tre_compile.obj :  .AUTODEPEND ..\..\lib\cmn\tre-compile.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_tre_match_backtrack.obj :  .AUTODEPEND ..\..\lib\cmn\tre-match-backtrack.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_tre_match_backtrack.obj :  .AUTODEPEND ..\..\lib\cmn\tre-match-backtrack.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_tre_match_parallel.obj :  .AUTODEPEND ..\..\lib\cmn\tre-match-parallel.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_tre_match_parallel.obj :  .AUTODEPEND ..\..\lib\cmn\tre-match-parallel.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_tre_parse.obj :  .AUTODEPEND ..\..\lib\cmn\tre-parse.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_tre_parse.obj :  .AUTODEPEND ..\..\lib\cmn\tre-parse.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_tre_stack.obj :  .AUTODEPEND ..\..\lib\cmn\tre-stack.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_tre_stack.obj :  .AUTODEPEND ..\..\lib\cmn\tre-stack.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_uri.obj :  .AUTODEPEND ..\..\lib\cmn\uri.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_uri.obj :  .AUTODEPEND ..\..\lib\cmn\uri.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_utf8.obj :  .AUTODEPEND ..\..\lib\cmn\utf8.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_utf8.obj :  .AUTODEPEND ..\..\lib\cmn\utf8.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_xma.obj :  .AUTODEPEND ..\..\lib\cmn\xma.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_xma.obj :  .AUTODEPEND ..\..\lib\cmn\xma.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_cp949.obj :  .AUTODEPEND ..\..\lib\cmn\cp949.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_cp949.obj :  .AUTODEPEND ..\..\lib\cmn\cp949.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_cp950.obj :  .AUTODEPEND ..\..\lib\cmn\cp950.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_cp950.obj :  .AUTODEPEND ..\..\lib\cmn\cp950.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmn_uni.obj :  .AUTODEPEND ..\..\lib\cmn\uni.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_uni.obj :  .AUTODEPEND ..\..\lib\cmn\uni.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqseawk_awk.obj :  .AUTODEPEND ..\..\lib\awk\awk.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSEAWK_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqseawk_err.obj :  .AUTODEPEND ..\..\lib\awk\err.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSEAWK_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqseawk_tree.obj :  .AUTODEPEND ..\..\lib\awk\tree.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSEAWK_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqseawk_parse.obj :  .AUTODEPEND ..\..\lib\awk\parse.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSEAWK_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqseawk_run.obj :  .AUTODEPEND ..\..\lib\awk\run.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSEAWK_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqseawk_rec.obj :  .AUTODEPEND ..\..\lib\awk\rec.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSEAWK_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqseawk_val.obj :  .AUTODEPEND ..\..\lib\awk\val.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSEAWK_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqseawk_fnc.obj :  .AUTODEPEND ..\..\lib\awk\fnc.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSEAWK_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqseawk_misc.obj :  .AUTODEPEND ..\..\lib\awk\misc.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSEAWK_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqseawk_rio.obj :  .AUTODEPEND ..\..\lib\awk\rio.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSEAWK_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqseawk_std.obj :  .AUTODEPEND ..\..\lib\awk\std.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSEAWK_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqseawk_mod_dir.obj :  .AUTODEPEND ..\..\lib\awk\mod-dir.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSEAWK_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqseawk_mod_str.obj :  .AUTODEPEND ..\..\lib\awk\mod-str.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSEAWK_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqseawk_mod_sys.obj :  .AUTODEPEND ..\..\lib\awk\mod-sys.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSEAWK_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqseawk_awk.obj :  .AUTODEPEND ..\..\lib\awk\awk.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqseawk_awk.obj :  .AUTODEPEND ..\..\lib\awk\awk.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSEAWK_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqseawk_err.obj :  .AUTODEPEND ..\..\lib\awk\err.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqseawk_err.obj :  .AUTODEPEND ..\..\lib\awk\err.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSEAWK_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqseawk_tree.obj :  .AUTODEPEND ..\..\lib\awk\tree.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqseawk_tree.obj :  .AUTODEPEND ..\..\lib\awk\tree.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSEAWK_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqseawk_parse.obj :  .AUTODEPEND ..\..\lib\awk\parse.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqseawk_parse.obj :  .AUTODEPEND ..\..\lib\awk\parse.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSEAWK_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqseawk_run.obj :  .AUTODEPEND ..\..\lib\awk\run.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqseawk_run.obj :  .AUTODEPEND ..\..\lib\awk\run.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSEAWK_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqseawk_rec.obj :  .AUTODEPEND ..\..\lib\awk\rec.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqseawk_rec.obj :  .AUTODEPEND ..\..\lib\awk\rec.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSEAWK_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqseawk_val.obj :  .AUTODEPEND ..\..\lib\awk\val.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqseawk_val.obj :  .AUTODEPEND ..\..\lib\awk\val.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSEAWK_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqseawk_fnc.obj :  .AUTODEPEND ..\..\lib\awk\fnc.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqseawk_fnc.obj :  .AUTODEPEND ..\..\lib\awk\fnc.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSEAWK_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqseawk_misc.obj :  .AUTODEPEND ..\..\lib\awk\misc.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqseawk_misc.obj :  .AUTODEPEND ..\..\lib\awk\misc.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSEAWK_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqseawk_rio.obj :  .AUTODEPEND ..\..\lib\awk\rio.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqseawk_rio.obj :  .AUTODEPEND ..\..\lib\awk\rio.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSEAWK_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqseawk_std.obj :  .AUTODEPEND ..\..\lib\awk\std.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqseawk_std.obj :  .AUTODEPEND ..\..\lib\awk\std.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSEAWK_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqseawk_mod_dir.obj :  .AUTODEPEND ..\..\lib\awk\mod-dir.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqseawk_mod_dir.obj :  .AUTODEPEND ..\..\lib\awk\mod-dir.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSEAWK_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqseawk_mod_str.obj :  .AUTODEPEND ..\..\lib\awk\mod-str.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqseawk_mod_str.obj :  .AUTODEPEND ..\..\lib\awk\mod-str.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSEAWK_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqseawk_mod_sys.obj :  .AUTODEPEND ..\..\lib\awk\mod-sys.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqseawk_mod_sys.obj :  .AUTODEPEND ..\..\lib\awk\mod-sys.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSEAWK_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\modqseawkdir_mod_dir.obj :  .AUTODEPEND ..\..\lib\awk\mod-dir.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\modqseawkdir_mod_dir.obj :  .AUTODEPEND ..\..\lib\awk\mod-dir.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(MODQSEAWKDIR_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\modqseawkstr_mod_str.obj :  .AUTODEPEND ..\..\lib\awk\mod-str.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\modqseawkstr_mod_str.obj :  .AUTODEPEND ..\..\lib\awk\mod-str.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(MODQSEAWKSTR_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\modqseawksys_mod_sys.obj :  .AUTODEPEND ..\..\lib\awk\mod-sys.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\modqseawksys_mod_sys.obj :  .AUTODEPEND ..\..\lib\awk\mod-sys.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(MODQSEAWKSYS_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsesed_sed.obj :  .AUTODEPEND ..\..\lib\sed\sed.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsesed_sed.obj :  .AUTODEPEND ..\..\lib\sed\sed.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSESED_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsesed_err.obj :  .AUTODEPEND ..\..\lib\sed\err.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSESED_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsesed_std.obj :  .AUTODEPEND ..\..\lib\sed\std.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSESED_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsesed_sed.obj :  .AUTODEPEND ..\..\lib\sed\sed.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSESED_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsesed_err.obj :  .AUTODEPEND ..\..\lib\sed\err.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsesed_err.obj :  .AUTODEPEND ..\..\lib\sed\err.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSESED_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsesed_std.obj :  .AUTODEPEND ..\..\lib\sed\std.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsesed_std.obj :  .AUTODEPEND ..\..\lib\sed\std.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSESED_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsenet_http.obj :  .AUTODEPEND ..\..\lib\net\http.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_http.obj :  .AUTODEPEND ..\..\lib\net\http.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSENET_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_htre.obj :  .AUTODEPEND ..\..\lib\net\htre.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSENET_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_htrd.obj :  .AUTODEPEND ..\..\lib\net\htrd.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSENET_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_httpd.obj :  .AUTODEPEND ..\..\lib\net\httpd.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSENET_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_httpd_cgi.obj :  .AUTODEPEND ..\..\lib\net\httpd-cgi.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSENET_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_httpd_dir.obj :  .AUTODEPEND ..\..\lib\net\httpd-dir.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSENET_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_httpd_file.obj :  .AUTODEPEND ..\..\lib\net\httpd-file.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSENET_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_httpd_proxy.obj :  .AUTODEPEND ..\..\lib\net\httpd-proxy.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSENET_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_httpd_resol.obj :  .AUTODEPEND ..\..\lib\net\httpd-resol.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSENET_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_httpd_std.obj :  .AUTODEPEND ..\..\lib\net\httpd-std.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSENET_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_httpd_task.obj :  .AUTODEPEND ..\..\lib\net\httpd-task.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSENET_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_httpd_text.obj :  .AUTODEPEND ..\..\lib\net\httpd-text.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSENET_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_upxd.obj :  .AUTODEPEND ..\..\lib\net\upxd.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSENET_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_http.obj :  .AUTODEPEND ..\..\lib\net\http.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSENET_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsenet_htre.obj :  .AUTODEPEND ..\..\lib\net\htre.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_htre.obj :  .AUTODEPEND ..\..\lib\net\htre.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSENET_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsenet_htrd.obj :  .AUTODEPEND ..\..\lib\net\htrd.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_htrd.obj :  .AUTODEPEND ..\..\lib\net\htrd.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSENET_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsenet_httpd.obj :  .AUTODEPEND ..\..\lib\net\httpd.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_httpd.obj :  .AUTODEPEND ..\..\lib\net\httpd.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSENET_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsenet_httpd_cgi.obj :  .AUTODEPEND ..\..\lib\net\httpd-cgi.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_httpd_cgi.obj :  .AUTODEPEND ..\..\lib\net\httpd-cgi.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSENET_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsenet_httpd_dir.obj :  .AUTODEPEND ..\..\lib\net\httpd-dir.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_httpd_dir.obj :  .AUTODEPEND ..\..\lib\net\httpd-dir.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSENET_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsenet_httpd_file.obj :  .AUTODEPEND ..\..\lib\net\httpd-file.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_httpd_file.obj :  .AUTODEPEND ..\..\lib\net\httpd-file.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSENET_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsenet_httpd_proxy.obj :  .AUTODEPEND ..\..\lib\net\httpd-proxy.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_httpd_proxy.obj :  .AUTODEPEND ..\..\lib\net\httpd-proxy.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSENET_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsenet_httpd_resol.obj :  .AUTODEPEND ..\..\lib\net\httpd-resol.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_httpd_resol.obj :  .AUTODEPEND ..\..\lib\net\httpd-resol.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSENET_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsenet_httpd_std.obj :  .AUTODEPEND ..\..\lib\net\httpd-std.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_httpd_std.obj :  .AUTODEPEND ..\..\lib\net\httpd-std.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSENET_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsenet_httpd_task.obj :  .AUTODEPEND ..\..\lib\net\httpd-task.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_httpd_task.obj :  .AUTODEPEND ..\..\lib\net\httpd-task.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSENET_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsenet_httpd_text.obj :  .AUTODEPEND ..\..\lib\net\httpd-text.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_httpd_text.obj :  .AUTODEPEND ..\..\lib\net\httpd-text.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSENET_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsenet_upxd.obj :  .AUTODEPEND ..\..\lib\net\upxd.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_upxd.obj :  .AUTODEPEND ..\..\lib\net\upxd.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSENET_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\exeqseawk_awk.obj :  .AUTODEPEND ..\..\cmd\awk\awk.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\exeqseawk_awk.obj :  .AUTODEPEND ..\..\cmd\awk\awk.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(EXEQSEAWK_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\exeqsesed_sed.obj :  .AUTODEPEND ..\..\cmd\sed\sed.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\exeqsesed_sed.obj :  .AUTODEPEND ..\..\cmd\sed\sed.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(EXEQSESED_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\exeqsehttpd_httpd.obj :  .AUTODEPEND ..\..\cmd\net\httpd.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\exeqsehttpd_httpd.obj :  .AUTODEPEND ..\..\cmd\net\httpd.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(EXEQSEHTTPD_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmnxx_Mmgr.obj :  .AUTODEPEND ..\..\lib\cmn\Mmgr.cpp
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmnxx_Mmgr.obj :  .AUTODEPEND ..\..\lib\cmn\Mmgr.cpp
+	$(CXX) -bt=os2 -zq -fo=$^@ $(DLLQSECMNXX_CXXFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmnxx_StdMmgr.obj :  .AUTODEPEND ..\..\lib\cmn\StdMmgr.cpp
+	$(CXX) -bt=os2 -zq -fo=$^@ $(DLLQSECMNXX_CXXFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmnxx_Mmgr.obj :  .AUTODEPEND ..\..\lib\cmn\Mmgr.cpp
 	$(CXX) -bt=os2 -zq -fo=$^@ $(LIBQSECMNXX_CXXFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsecmnxx_StdMmgr.obj :  .AUTODEPEND ..\..\lib\cmn\StdMmgr.cpp
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmnxx_StdMmgr.obj :  .AUTODEPEND ..\..\lib\cmn\StdMmgr.cpp
 	$(CXX) -bt=os2 -zq -fo=$^@ $(LIBQSECMNXX_CXXFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqseawkxx_Awk.obj :  .AUTODEPEND ..\..\lib\awk\Awk.cpp
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqseawkxx_Awk.obj :  .AUTODEPEND ..\..\lib\awk\Awk.cpp
+	$(CXX) -bt=os2 -zq -fo=$^@ $(DLLQSEAWKXX_CXXFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqseawkxx_StdAwk.obj :  .AUTODEPEND ..\..\lib\awk\StdAwk.cpp
+	$(CXX) -bt=os2 -zq -fo=$^@ $(DLLQSEAWKXX_CXXFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqseawkxx_Awk.obj :  .AUTODEPEND ..\..\lib\awk\Awk.cpp
 	$(CXX) -bt=os2 -zq -fo=$^@ $(LIBQSEAWKXX_CXXFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqseawkxx_StdAwk.obj :  .AUTODEPEND ..\..\lib\awk\StdAwk.cpp
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqseawkxx_StdAwk.obj :  .AUTODEPEND ..\..\lib\awk\StdAwk.cpp
 	$(CXX) -bt=os2 -zq -fo=$^@ $(LIBQSEAWKXX_CXXFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsesedxx_Sed.obj :  .AUTODEPEND ..\..\lib\sed\Sed.cpp
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsesedxx_Sed.obj :  .AUTODEPEND ..\..\lib\sed\Sed.cpp
+	$(CXX) -bt=os2 -zq -fo=$^@ $(DLLQSESEDXX_CXXFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsesedxx_StdSed.obj :  .AUTODEPEND ..\..\lib\sed\StdSed.cpp
+	$(CXX) -bt=os2 -zq -fo=$^@ $(DLLQSESEDXX_CXXFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsesedxx_Sed.obj :  .AUTODEPEND ..\..\lib\sed\Sed.cpp
 	$(CXX) -bt=os2 -zq -fo=$^@ $(LIBQSESEDXX_CXXFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\libqsesedxx_StdSed.obj :  .AUTODEPEND ..\..\lib\sed\StdSed.cpp
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsesedxx_StdSed.obj :  .AUTODEPEND ..\..\lib\sed\StdSed.cpp
 	$(CXX) -bt=os2 -zq -fo=$^@ $(LIBQSESEDXX_CXXFLAGS) $<
 
