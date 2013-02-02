@@ -151,8 +151,8 @@ am__awk27_SOURCES_DIST = awk27.cpp
 awk27_OBJECTS = $(am_awk27_OBJECTS)
 @ENABLE_CXX_TRUE@awk27_DEPENDENCIES = $(am__DEPENDENCIES_1) \
 @ENABLE_CXX_TRUE@	$(am__DEPENDENCIES_3)
-am__awk28_SOURCES_DIST = awk27.cpp
-@ENABLE_CXX_TRUE@am_awk28_OBJECTS = awk27.$(OBJEXT)
+am__awk28_SOURCES_DIST = awk28.cpp
+@ENABLE_CXX_TRUE@am_awk28_OBJECTS = awk28.$(OBJEXT)
 awk28_OBJECTS = $(am_awk28_OBJECTS)
 @ENABLE_CXX_TRUE@awk28_DEPENDENCIES = $(am__DEPENDENCIES_1) \
 @ENABLE_CXX_TRUE@	$(am__DEPENDENCIES_3)
@@ -399,7 +399,7 @@ awk15_SOURCES = awk15.c $(CMNFILES)
 @ENABLE_CXX_TRUE@awk25_SOURCES = awk25.cpp
 @ENABLE_CXX_TRUE@awk26_SOURCES = awk26.cpp
 @ENABLE_CXX_TRUE@awk27_SOURCES = awk27.cpp
-@ENABLE_CXX_TRUE@awk28_SOURCES = awk27.cpp
+@ENABLE_CXX_TRUE@awk28_SOURCES = awk28.cpp
 @ENABLE_CXX_TRUE@awk21_LDADD = $(CXXLIB) $(LDADD)
 @ENABLE_CXX_TRUE@awk22_LDADD = $(CXXLIB) $(LDADD)
 @ENABLE_CXX_TRUE@awk23_LDADD = $(CXXLIB) $(LDADD)
@@ -576,6 +576,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/awk25.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/awk26.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/awk27.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/awk28.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<

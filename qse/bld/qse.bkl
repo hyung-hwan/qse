@@ -21,6 +21,10 @@
 		<values>on,off</values>
 		<default-value>on</default-value>
 	</option>
+	<option name="STATIC_MODULE">
+		<values>on,off</values>
+		<default-value>off</default-value>
+	</option>
 	<option name="TCPV40HDRS">
 		<!-- this is OS/2 specific. no effect on other platforms -->
 		<values>on,off</values>
@@ -45,7 +49,33 @@
 		<if cond="PLATFORM_MSDOS=='1'"></if>
 		<if cond="PLATFORM_UNIX=='1'"></if>
 	</set>
-	
+
+	<!-- =========================================================
+	 Varibles to use as conditionals
+	 ========================================================= -->
+	<set var="ENABLE_NETWORKING">
+		<if cond="PLATFORM_WIN32=='1'">1</if>
+		<if cond="PLATFORM_OS2=='1'">1</if>
+		<if cond="PLATFORM_MSDOS=='1'">0</if>
+		<if cond="PLATFORM_UNIX=='1'">1</if>
+	</set>
+
+	<set var="ENABLE_DLL">
+		<if cond="PLATFORM_WIN32=='1'">1</if>
+		<if cond="PLATFORM_OS2=='1'">1</if>
+		<if cond="PLATFORM_MSDOS=='1'">0</if>
+		<if cond="PLATFORM_UNIX=='1'">1</if>
+	</set>
+
+	<set var="ENABLE_STATIC_MODULE">
+		<if cond="STATIC_MODULE=='on'">1</if>
+		<if cond="STATIC_MODULE=='off'">0</if>
+
+		<!-- Force ENABLE_STATIC_MODULE to be 1 on the 
+		     platforms where no DLL is supported -->
+		<if cond="ENABLE_DLL=='0'">1</if> 
+	</set>
+
 	<!-- =========================================================
 	 BUILD DIRECTORY
 	 ========================================================= -->
@@ -80,6 +110,10 @@
 		<if cond="BUNDLED_UNICODE=='on'">-DQSE_ENABLE_BUNDLED_UNICODE=1</if>
 		<if cond="BUNDLED_UNICODE=='off'">-UQSE_ENABLE_BUNDLED_UNICODE</if>
 	</set>
+	<set var="CPPFLAGS_STATIC_MODULE">
+		<if cond="ENABLE_STATIC_MODULE=='1'">-DQSE_ENABLE_STATIC_MODULE</if>
+		<if cond="ENABLE_STATIC_MODULE=='0'">-UQSE_ENABLE_STATIC_MODULE</if>
+	</set>
 	<set var="CPPFLAGS_TCPV40HDRS">
 		<if cond="TCPV40HDRS=='on'">-DTCPV40HDRS</if>
 		<if cond="TCPV40HDRS=='off'">-UTCPV40HDRS</if>
@@ -89,6 +123,7 @@
 		$(CPPFLAGS_CHAR)
 		$(CPPFLAGS_XCMGRS)
 		$(CPPFLAGS_BUNDLED_UNICODE)
+		$(CPPFLAGS_STATIC_MODULE)
 		$(CPPFLAGS_TCPV40HDRS)
 	</set>
 
@@ -101,13 +136,160 @@
 	</set>
 
 	<!-- =========================================================
-	 CONDITIONAL SOURCE FILES
+	 SOURCE FILES
 	 ========================================================= -->
 	<set var="SOURCES_XCMGRS">
 		<if cond="XCMGRS=='on'">cp949.c cp950.c</if>
 	</set>
 	<set var="SOURCES_BUNDLED_UNICODE">
 		<if cond="BUNDLED_UNICODE=='on'">uni.c</if>
+	</set>
+
+	<set var="SOURCES_LIBQSECMN">
+		alg-base64.c 
+		alg-rand.c 
+		alg-search.c  
+		alg-sort.c 
+		assert.c 
+		chr.c 
+		dir.c 
+		dll.c 
+		env.c 
+		gdl.c 
+		htb.c 
+		fio.c 
+		fma.c 
+		fmt.c 
+		fs.c 
+		fs-err.c 
+		fs-move.c 
+		glob.c 
+		hton.c 
+		ipad.c 
+		lda.c 
+		main.c 
+		mb8.c
+		mbwc.c 
+		mbwc-str.c 
+		mem.c 
+		mux.c 
+		nwad.c 
+		nwad-skad.c 
+		nwif.c 
+		nwif-cfg.c 
+		nwio.c 
+		oht.c 
+		opt.c 
+		path-basename.c 
+		path-canon.c 
+		pio.c 
+		pma.c 
+		rbt.c 
+		rex.c 
+		sio.c 
+		sll.c 
+		slmb.c 
+		stdio.c 
+		str-beg.c 
+		str-cat.c 
+		str-chr.c 
+		str-cnv.c 
+		str-cmp.c 
+		str-cpy.c 
+		str-del.c 
+		str-dup.c 
+		str-dynm.c 
+		str-dynw.c 
+		str-end.c 
+		str-excl.c 
+		str-fcpy.c 
+		str-fnmat.c 
+		str-incl.c 
+		str-len.c 
+		str-pac.c 
+		str-pbrk.c 
+		str-put.c 
+		str-rev.c 
+		str-rot.c 
+		str-set.c 
+		str-spl.c 
+		str-spn.c 
+		str-str.c 
+		str-subst.c 
+		str-tok.c 
+		str-trm.c 
+		str-word.c 
+		task.c 
+		time.c 
+		tio.c 
+		tre.c 
+		tre-ast.c 
+		tre-compile.c 
+		tre-match-backtrack.c 
+		tre-match-parallel.c 
+		tre-parse.c 
+		tre-stack.c 
+		uri.c 
+		utf8.c 
+		xma.c
+		$(SOURCES_XCMGRS)
+		$(SOURCES_BUNDLED_UNICODE)
+	</set>
+
+	<set var="SOURCES_STATIC_AWK_MODULE">
+		<if cond="ENABLE_STATIC_MODULE=='1'">mod-dir.c mod-str.c mod-sys.c</if>
+	</set>
+
+	<set var="SOURCES_LIBQSEAWK">
+		awk.c 
+		err.c 
+		tree.c 
+		parse.c 
+		run.c 
+		rec.c 
+		val.c 
+		fnc.c 
+		misc.c
+		rio.c 
+		std.c 
+		$(SOURCES_STATIC_AWK_MODULE)
+	</set>
+
+	<set var="SOURCES_LIBQSESED">
+		sed.c
+		err.c
+		std.c 
+	</set>
+
+	<set var="SOURCES_LIBQSENET">
+		http.c 
+		htre.c
+		htrd.c 
+		httpd.c 
+		httpd-cgi.c 
+		httpd-dir.c
+		httpd-file.c
+		httpd-proxy.c
+		httpd-resol.c 
+		httpd-std.c
+		httpd-task.c
+		httpd-text.c 
+		upxd.c   
+	</set>
+
+	<set var="SOURCES_LIBQSECMNXX">
+		Mmgr.cpp
+		StdMmgr.cpp
+	</set>
+
+	<set var="SOURCES_LIBQSEAWKXX">
+		Awk.cpp
+		StdAwk.cpp
+	</set>
+
+	<set var="SOURCES_LIBQSESEDXX">
+		Sed.cpp
+		StdSed.cpp
 	</set>
 
 	<!-- =========================================================
@@ -140,201 +322,116 @@
 	<!-- =========================================================
 	 TARGETS
 	 ========================================================= -->
-	<dll id="dllqsecmn" template="base">
+
+	<dll id="libqsecmn" template="base" cond="ENABLE_DLL=='1'">
 		<libname>qsecmn</libname>
 		<dllname>qsecmn</dllname>
 		<set-srcdir>../../lib/cmn</set-srcdir>
-		<sources>
-			alg-base64.c 
-			alg-rand.c 
-			alg-search.c  
-			alg-sort.c 
-			assert.c 
-			chr.c 
-			dir.c 
-			dll.c 
-			env.c 
-			gdl.c 
-			htb.c 
-			fio.c 
-			fma.c 
-			fmt.c 
-			fs.c 
-			fs-err.c 
-			fs-move.c 
-			glob.c 
-			hton.c 
-			ipad.c 
-			lda.c 
-			main.c 
-			mb8.c
-			mbwc.c 
-			mbwc-str.c 
-			mem.c 
-			mux.c 
-			nwad.c 
-			nwad-skad.c 
-			nwif.c 
-			nwif-cfg.c 
-			nwio.c 
-			oht.c 
-			opt.c 
-			path-basename.c 
-			path-canon.c 
-			pio.c 
-			pma.c 
-			rbt.c 
-			rex.c 
-			sio.c 
-			sll.c 
-			slmb.c 
-			stdio.c 
-			str-beg.c 
-			str-cat.c 
-			str-chr.c 
-			str-cnv.c 
-			str-cmp.c 
-			str-cpy.c 
-			str-del.c 
-			str-dup.c 
-			str-dynm.c 
-			str-dynw.c 
-			str-end.c 
-			str-excl.c 
-			str-fcpy.c 
-			str-fnmat.c 
-			str-incl.c 
-			str-len.c 
-			str-pac.c 
-			str-pbrk.c 
-			str-put.c 
-			str-rev.c 
-			str-rot.c 
-			str-set.c 
-			str-spl.c 
-			str-spn.c 
-			str-str.c 
-			str-subst.c 
-			str-tok.c 
-			str-trm.c 
-			str-word.c 
-			task.c 
-			time.c 
-			tio.c 
-			tre.c 
-			tre-ast.c 
-			tre-compile.c 
-			tre-match-backtrack.c 
-			tre-match-parallel.c 
-			tre-parse.c 
-			tre-stack.c 
-			uri.c 
-			utf8.c 
-			xma.c
-			$(SOURCES_XCMGRS)
-			$(SOURCES_BUNDLED_UNICODE)
-		</sources>
+		<sources>$(SOURCES_LIBQSECMN)</sources>
 		<sys-lib>$(SYSLIB_SOCKET)</sys-lib>
 		<sys-lib>$(SYSLIB_SOCKET2)</sys-lib>
 	</dll>
 
-	<dll id="dllqseawk" template="base">
+	<lib id="libqsecmn" template="base" cond="ENABLE_DLL=='0'">
+		<libname>qsecmn</libname>
+		<set-srcdir>../../lib/cmn</set-srcdir>
+		<sources>$(SOURCES_LIBQSECMN)</sources>
+		<sys-lib>$(SYSLIB_SOCKET)</sys-lib>
+		<sys-lib>$(SYSLIB_SOCKET2)</sys-lib>
+	</lib>
+
+	<dll id="libqseawk" template="base" cond="ENABLE_DLL=='1'">
 		<libname>qseawk</libname>
 		<dllname>qseawk</dllname>
 		<set-srcdir>../../lib/awk</set-srcdir>
-		<sources>
-			awk.c 
-			err.c 
-			tree.c 
-			parse.c 
-			run.c 
-			rec.c 
-			val.c 
-			fnc.c 
-			misc.c
-			rio.c 
-			std.c 
-		</sources>
-		<library>dllqsecmn</library>
-		<depends>dllqsecmn</depends>
+		<sources>$(SOURCES_LIBQSEAWK)</sources>
+		<library>libqsecmn</library>
+		<depends>libqsecmn</depends>
 	</dll>
 
-	<dll id="modqseawkdir" template="base">
+	<lib id="libqseawk" template="base" cond="ENABLE_DLL=='0'">
+		<libname>qseawk</libname>
+		<set-srcdir>../../lib/awk</set-srcdir>
+		<sources>$(SOURCES_LIBQSEAWK)</sources>
+		<depends>libqsecmn</depends>
+	</lib>
+
+	<dll id="modqseawkdir" template="base" cond="ENABLE_STATIC_MODULE=='0'">
 		<dllname>$(AWKMODPREFIX)dir$(AWKMODPOSTFIX)</dllname>
 		<libname>$(AWKMODPREFIX)dir$(AWKMODPOSTFIX)</libname>
 		<set-srcdir>../../lib/awk</set-srcdir>
 		<sources>mod-dir.c</sources>
-		<library>dllqsecmn</library>
-		<library>dllqseawk</library>
-		<depends>dllqseawk</depends>
+		<library>libqsecmn</library>
+		<library>libqseawk</library>
+		<depends>libqseawk</depends>
 	</dll>
 
-	<dll id="modqseawkstr" template="base">
+	<dll id="modqseawkstr" template="base" cond="ENABLE_STATIC_MODULE=='0'">
 		<dllname>$(AWKMODPREFIX)str$(AWKMODPOSTFIX)</dllname>
 		<libname>$(AWKMODPREFIX)str$(AWKMODPOSTFIX)</libname>
 		<set-srcdir>../../lib/awk</set-srcdir>
 		<sources>mod-str.c</sources>
-		<library>dllqsecmn</library>
-		<library>dllqseawk</library>
-		<depends>dllqseawk</depends>
+		<library>libqsecmn</library>
+		<library>libqseawk</library>
+		<depends>libqseawk</depends>
 	</dll>
 
-	<dll id="modqseawksys" template="base">
+	<dll id="modqseawksys" template="base" cond="ENABLE_STATIC_MODULE=='0'">
 		<dllname>$(AWKMODPREFIX)sys$(AWKMODPOSTFIX)</dllname>
 		<libname>$(AWKMODPREFIX)sys$(AWKMODPOSTFIX)</libname>
 		<set-srcdir>../../lib/awk</set-srcdir>
 		<sources>mod-sys.c</sources>
-		<library>dllqsecmn</library>
-		<library>dllqseawk</library>
-		<depends>dllqseawk</depends>
+		<library>libqsecmn</library>
+		<library>libqseawk</library>
+		<depends>libqseawk</depends>
 	</dll>
 
-	<dll id="dllqsesed" template="base">
+	<dll id="libqsesed" template="base" cond="ENABLE_DLL=='1'">
 		<libname>qsesed</libname>
 		<dllname>qsesed</dllname>
 		<set-srcdir>../../lib/sed</set-srcdir>
-		<sources>
-			sed.c
-			err.c
-			std.c 
-		</sources>
-		<library>dllqsecmn</library>
-		<depends>dllqsecmn</depends>
+		<sources>$(SOURCES_LIBQSESED)</sources>
+		<library>libqsecmn</library>
+		<depends>libqsecmn</depends>
 	</dll>
 
-	<dll id="dllqsenet" template="base">
+	<lib id="libqsesed" template="base" cond="ENABLE_DLL=='0'">
+		<libname>qsesed</libname>
+		<set-srcdir>../../lib/sed</set-srcdir>
+		<sources>$(SOURCES_LIBQSESED)</sources>
+		<library>libqsecmn</library>
+		<depends>libqsecmn</depends>
+	</lib>
+
+	<dll id="libqsenet" template="base" cond="ENABLE_DLL+ENABLE_NETWORKING=='11'">
 		<libname>qsenet</libname>
 		<dllname>qsenet</dllname>
 		<set-srcdir>../../lib/net</set-srcdir>
-		<sources>
-			http.c 
-			htre.c
-			htrd.c 
-			httpd.c 
-			httpd-cgi.c 
-			httpd-dir.c
-			httpd-file.c
-			httpd-proxy.c
-			httpd-resol.c 
-			httpd-std.c
-			httpd-task.c
-			httpd-text.c 
-			upxd.c   
-		</sources>
-		<library>dllqsecmn</library>
-		<depends>dllqsecmn</depends>
+		<sources>$(SOURCES_LIBQSENET)</sources>
+		<library>libqsecmn</library>
+		<depends>libqsecmn</depends>
 		<sys-lib>$(SYSLIB_SOCKET)</sys-lib>
 		<sys-lib>$(SYSLIB_SOCKET2)</sys-lib>
 	</dll>
+
+	<lib id="libqsenet" template="base" cond="ENABLE_DLL+ENABLE_NETWORKING=='01'">
+		<libname>qsenet</libname>
+		<set-srcdir>../../lib/net</set-srcdir>
+		<sources>$(SOURCES_LIBQSENET)</sources>
+		<library>libqsecmn</library>
+		<depends>libqsecmn</depends>
+		<sys-lib>$(SYSLIB_SOCKET)</sys-lib>
+		<sys-lib>$(SYSLIB_SOCKET2)</sys-lib>
+	</lib>
 
 	<exe id="exeqseawk" template="base">
 		<exename>qseawk</exename>
 		<app-type>console</app-type>
 		<set-srcdir>../../cmd/awk</set-srcdir>
 		<sources>awk.c</sources>
-		<library>dllqsecmn</library>
-		<library>dllqseawk</library>
-		<depends>dllqseawk</depends>
+		<library>libqsecmn</library>
+		<library>libqseawk</library>
+		<depends>libqseawk</depends>
 		<sys-lib>$(SYSLIB_SOCKET)</sys-lib>
 		<sys-lib>$(SYSLIB_SOCKET2)</sys-lib>
 	</exe>
@@ -344,63 +441,84 @@
 		<app-type>console</app-type>
 		<set-srcdir>../../cmd/sed</set-srcdir>
 		<sources>sed.c</sources>
-		<library>dllqsecmn</library>
-		<library>dllqsesed</library>
-		<depends>dllqsesed</depends>
+		<library>libqsecmn</library>
+		<library>libqsesed</library>
+		<depends>libqsesed</depends>
 	</exe>
 
-	<exe id="exeqsehttpd" template="base">
+	<exe id="exeqsehttpd" template="base" cond="ENABLE_NETWORKING=='1'">
 		<exename>qsehttpd</exename>
 		<app-type>console</app-type>
 		<set-srcdir>../../cmd/net</set-srcdir>
 		<sources>httpd.c</sources>
-		<library>dllqsecmn</library>
-		<library>dllqsenet</library>
-		<depends>dllqsenet</depends>
+		<library>libqsecmn</library>
+		<library>libqsenet</library>
+		<depends>libqsenet</depends>
 		<sys-lib>$(SYSLIB_SOCKET)</sys-lib>
 		<sys-lib>$(SYSLIB_SOCKET2)</sys-lib>
 	</exe>
 
-	<dll id="dllqsecmnxx" template="base,basexx">
+	<dll id="libqsecmnxx" template="base,basexx" cond="ENABLE_DLL=='1'">
 		<libname>qsecmnxx</libname>
 		<dllname>qsecmnxx</dllname>
 		<set-srcdir>../../lib/cmn</set-srcdir>
-		<sources>
-			Mmgr.cpp
-			StdMmgr.cpp
-		</sources>
-		<library>dllqsecmn</library>
-		<depends>dllqsecmn</depends>
+		<sources>$(SOURCES_LIBQSECMNXX)</sources>
+		<library>libqsecmn</library>
+		<depends>libqsecmn</depends>
 	</dll>
 
-	<dll id="dllqseawkxx" template="base,basexx">
+	<lib id="libqsecmnxx" template="base,basexx" cond="ENABLE_DLL=='0'">
+		<libname>qsecmnxx</libname>
+		<set-srcdir>../../lib/cmn</set-srcdir>
+		<sources>$(SOURCES_LIBQSECMNXX)</sources>
+		<library>libqsecmn</library>
+		<depends>libqsecmn</depends>
+	</lib>
+
+	<dll id="libqseawkxx" template="base,basexx" cond="ENABLE_DLL=='1'">
 		<libname>qseawkxx</libname>
 		<dllname>qseawkxx</dllname>
 		<set-srcdir>../../lib/awk</set-srcdir>
-		<sources>
-			Awk.cpp
-			StdAwk.cpp
-		</sources>
-		<library>dllqsecmn</library>
-		<library>dllqsecmnxx</library>
-		<library>dllqseawk</library>
-		<depends>dllqsecmnxx</depends>
-		<depends>dllqseawk</depends>
+		<sources>$(SOURCES_LIBQSEAWKXX)</sources>
+		<library>libqsecmn</library>
+		<library>libqsecmnxx</library>
+		<library>libqseawk</library>
+		<depends>libqsecmnxx</depends>
+		<depends>libqseawk</depends>
 	</dll>
 
-	<dll id="dllqsesedxx" template="base,basexx">
+	<lib id="libqseawkxx" template="base,basexx" cond="ENABLE_DLL=='0'">
+		<libname>qseawkxx</libname>
+		<set-srcdir>../../lib/awk</set-srcdir>
+		<sources>$(SOURCES_LIBQSEAWKXX)</sources>
+		<library>libqsecmn</library>
+		<library>libqsecmnxx</library>
+		<library>libqseawk</library>
+		<depends>libqsecmnxx</depends>
+		<depends>libqseawk</depends>
+	</lib>
+
+	<dll id="libqsesedxx" template="base,basexx" cond="ENABLE_DLL=='1'">
 		<libname>qsesedxx</libname>
 		<dllname>qsesedxx</dllname>
 		<set-srcdir>../../lib/sed</set-srcdir>
-		<sources>
-			Sed.cpp
-			StdSed.cpp
-		</sources>
-		<library>dllqsecmn</library>
-		<library>dllqsecmnxx</library>
-		<library>dllqsesed</library>
-		<depends>dllqsecmnxx</depends>
-		<depends>dllqsesed</depends>
+		<sources>$(SOURCES_LIBQSESEDXX)</sources>
+		<library>libqsecmn</library>
+		<library>libqsecmnxx</library>
+		<library>libqsesed</library>
+		<depends>libqsecmnxx</depends>
+		<depends>libqsesed</depends>
 	</dll>
+
+	<lib id="libqsesedxx" template="base,basexx" cond="ENABLE_DLL=='0'">
+		<libname>qsesedxx</libname>
+		<set-srcdir>../../lib/sed</set-srcdir>
+		<sources>$(SOURCES_LIBQSESEDXX)</sources>
+		<library>libqsecmn</library>
+		<library>libqsecmnxx</library>
+		<library>libqsesed</library>
+		<depends>libqsecmnxx</depends>
+		<depends>libqsesed</depends>
+	</lib>
 
 </makefile>

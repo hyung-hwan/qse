@@ -44,7 +44,7 @@ awk24_SOURCES = awk24.cpp
 awk25_SOURCES = awk25.cpp
 awk26_SOURCES = awk26.cpp
 awk27_SOURCES = awk27.cpp
-awk28_SOURCES = awk27.cpp
+awk28_SOURCES = awk28.cpp
 
 awk21_LDADD = $(CXXLIB) $(LDADD)
 awk22_LDADD = $(CXXLIB) $(LDADD)

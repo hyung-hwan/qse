@@ -20,4 +20,5 @@ You can execute the following commands to regenerate the makefiles.
 
  - bakefile_gen -d os2.bkgen
  - bakefile_gen -d win32.bkgen
+ - bakefile_gen -d msdos.bkgen
 

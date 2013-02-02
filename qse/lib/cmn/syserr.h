@@ -97,12 +97,12 @@
 	{ \
 		switch (e) \
 		{ \
-			case ENOMEM: return __SYSERRNUM__ (syserrobj, ENOMEM); \
-			case EINVAL: return __SYSERRNUM__ (syserrobj, EINVAL); \
-			case EACCES: return __SYSERRNUM__ (syserrobj, EACCES); \
-			case ENOENT: return __SYSERRNUM__ (syserrobj, ENOENT); \
-			case EEXIST: return __SYSERRNUM__ (syserrobj, EEXIST); \
-			default:     return __SYSERRNUM__ (syserrobj, ESYSERR); \
+			case ENOMEM: return __SYSERRNUM__ (obj2, ENOMEM); \
+			case EINVAL: return __SYSERRNUM__ (obj2, EINVAL); \
+			case EACCES: return __SYSERRNUM__ (obj2, EACCES); \
+			case ENOENT: return __SYSERRNUM__ (obj2, ENOENT); \
+			case EEXIST: return __SYSERRNUM__ (obj2, EEXIST); \
+			default:     return __SYSERRNUM__ (obj2, ESYSERR); \
 		} \
 	}
 
