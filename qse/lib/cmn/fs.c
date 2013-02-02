@@ -445,12 +445,15 @@ qse_fs_ent_t* qse_fs_read (qse_fs_t* fs, int flags)
 #if !defined(IO_REPARSE_TAG_SYMLINK)
 #	define IO_REPARSE_TAG_SYMLINK 0xA000000C
 #endif
+#if !defined(FILE_ATTRIBUTE_REPARSE_POINT)
+#	define FILE_ATTRIBUTE_REPARSE_POINT 0x00000400
+#endif
 		if (info->wfd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
 		{
 			fs->ent.type = QSE_FS_ENT_SUBDIR;
 		}
 		else if ((info->wfd.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) &&
-			    (info->wfd.dwReserved0 == IO_REPARSE_TAG_SYMLINK))
+			 (info->wfd.dwReserved0 == IO_REPARSE_TAG_SYMLINK))
 		{
 			fs->ent.type = QSE_FS_ENT_SYMLINK;
 		}
