@@ -58,6 +58,7 @@
 
 #elif defined(__DOS__)
 	/* TODO */
+#	include <errno.h>
 
 #else
 #	include "../cmn/syscall.h"
@@ -261,6 +262,7 @@ static qse_httpd_errnum_t skerr_to_errnum (int e)
 }
 
 #define SKERR_TO_ERRNUM() skerr_to_errnum(errno)
+
 #endif
 
 
@@ -369,26 +371,43 @@ static qse_httpd_errnum_t direrr_to_errnum (qse_dir_errnum_t e)
 
 #define MAX_SEND_SIZE 4096
 
-static qse_ssize_t __send_file (
-	int out_fd, qse_ubi_t in_fd, qse_foff_t* offset, qse_size_t count)
+static QSE_INLINE qse_ssize_t __send_file (
+	qse_httpd_t* httpd, int out_fd, qse_ubi_t in_fd, 
+	qse_foff_t* offset, qse_size_t count)
 {
-#if defined(HAVE_SENDFILE) && defined(HAVE_SENDFILE64)
+	/* TODO: os2 warp 4.5 has send_file. support it??? load it dynamically??? */
 
+#if defined(__DOS__)
+	qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
+	return -1;
+
+#elif defined(HAVE_SENDFILE) && defined(HAVE_SENDFILE64)
+
+	qse_ssize_t ret;
 	qse_ubi_t infd = qse_fio_gethandleasubi (in_fd.ptr);
 
 	#if !defined(_LP64) && (QSE_SIZEOF_VOID_P<8) && defined(HAVE_SENDFILE64)
-	return sendfile64 (out_fd, infd.i, offset, count);
+	ret =  sendfile64 (out_fd, infd.i, offset, count);
 	#else
-	return sendfile (out_fd, infd.i, offset, count);
+	ret =  sendfile (out_fd, infd.i, offset, count);
 	#endif
+	if (ret <= -1) qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
+	return ret;
 
 #elif defined(HAVE_SENDFILE)
+
+	qse_ssize_t ret;
 	qse_ubi_t infd = qse_fio_gethandleasubi (in_fd.ptr);
-	return sendfile (out_fd, infd.i, offset, count);
+	ret = sendfile (out_fd, infd.i, offset, count);
+	if (ret <= -1) qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
+	return ret;
 
 #elif defined(HAVE_SENDFILE64)
+	qse_ssize_t ret;
 	qse_ubi_t infd = qse_fio_gethandleasubi (in_fd.ptr);
-	return sendfile64 (out_fd, in_fd.i, offset, count);
+	ret = sendfile64 (out_fd, in_fd.i, offset, count);
+	if (ret <= -1) qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
+	return ret;
 
 #elif defined(HAVE_SENDFILEV) || defined(HAVE_SENDFILEV64)
 
@@ -398,7 +417,7 @@ static qse_ssize_t __send_file (
 	struct sendfilevec vec;
 	#endif
 	size_t xfer;
-	ssize_t n;
+	ssize_t ret;
 
 	vec.sfv_fd = in_fd.i;
 	vec.sfv_flag = 0;
@@ -414,77 +433,105 @@ static qse_ssize_t __send_file (
 	vec.sfv_len = count;
 
 	#if !defined(_LP64) && (QSE_SIZEOF_VOID_P<8) && defined(HAVE_SENDFILE64)
-	n = sendfilev64 (out_fd, &vec, 1, &xfer);
+	ret = sendfilev64 (out_fd, &vec, 1, &xfer);
 	#else
-	n = sendfilev (out_fd, &vec, 1, &xfer);
+	ret = sendfilev (out_fd, &vec, 1, &xfer);
 	#endif
-	if (offset) *offset = *offset + xfer;
+
+	if (ret <= -1) qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
+	else if (offset) *offset = *offset + xfer;
 
 /* TODO: xfer contains number of byte written even on failure
-on success xfer == n.
-on failure xfer != n.
+on success xfer == ret.
+on failure xfer != ret.
  */
-	return n;
+	return ret;
 
 #else
 
 	qse_mchar_t buf[MAX_SEND_SIZE];
-	qse_ssize_t n;
+	qse_ssize_t ret;
+	qse_foff_t foff;
 
-	#if 0
-	if (offset && QSE_LSEEK (in_fd.i, *offset, SEEK_SET) != *offset)  
+	if (offset && (foff = qse_fio_seek (in_fd.ptr, *offset, QSE_FIO_BEGIN)) != *offset)  
+	{
+		if (foff == (qse_foff_t)-1) 	
+			qse_httpd_seterrnum (httpd, fioerr_to_errnum(qse_fio_geterrnum(in_fd.ptr)));	
+		else
+			qse_httpd_seterrnum (httpd, QSE_HTTPD_ESYSERR);
 		return (qse_ssize_t)-1;
+	}
 
 	if (count > QSE_COUNTOF(buf)) count = QSE_COUNTOF(buf);
-	n = QSE_READ (in_fd.i, buf, count);
-	if (n == (qse_ssize_t)-1 || n == 0) return n;
-	#endif
+	ret = qse_fio_read (in_fd.ptr, buf, count);
+	if (ret > 0)
+	{
+		ret = send (out_fd, buf, ret, 0);
+		if (ret > 0)
+		{
+			if (offset) *offset = *offset + ret;
+		}
+		else if (ret <= -1) qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
+	}
+	else if (ret <= -1)
+	{
+		qse_httpd_seterrnum (httpd, fioerr_to_errnum(qse_fio_geterrnum(in_fd.ptr)));	
+	}
 
-	if (offset && qse_fio_seek (in_fd.ptr, *offset, QSE_FIO_BEGIN) != *offset)  
-		return (qse_ssize_t)-1;
-
-	if (count > QSE_COUNTOF(buf)) count = QSE_COUNTOF(buf);
-	n = qse_fio_read (in_fd.ptr, buf, count);
-	if (n == (qse_ssize_t)-1 || n == 0) return n;
-
-	n = send (out_fd, buf, n, 0);
-	if (n > 0 && offset) *offset = *offset + n;
-
-	return n;
+	return ret;
 
 #endif
 }
 
 /* ------------------------------------------------------------------- */
 
-#if defined(HAVE_SSL)
-static qse_ssize_t __send_file_ssl (
-	SSL* out, qse_ubi_t in_fd, qse_foff_t* offset, qse_size_t count)
+static QSE_INLINE qse_ssize_t __send_file_ssl (
+	qse_httpd_t* httpd, void* xout, qse_ubi_t in_fd, 
+	qse_foff_t* offset, qse_size_t count)
 {
+#if defined(HAVE_SSL)
 	qse_mchar_t buf[MAX_SEND_SIZE];
-	qse_ssize_t n;
-
-#if 0
-	if (offset && QSE_LSEEK (in_fd.i, *offset, SEEK_SET) != *offset)  
+	qse_ssize_t ret;
+	qse_foff_t foff;
+	SSL* out = (SSL*)xout;
+	
+	if (offset && (foff = qse_fio_seek (in_fd.ptr, *offset, QSE_FIO_BEGIN)) != *offset)  
+	{
+		if (foff == (qse_foff_t)-1) 	
+			qse_httpd_seterrnum (httpd, fioerr_to_errnum(qse_fio_geterrnum(in_fd.ptr)));	
+		else
+			qse_httpd_seterrnum (httpd, QSE_HTTPD_ESYSERR);
 		return (qse_ssize_t)-1;
+	}
 
 	if (count > QSE_COUNTOF(buf)) count = QSE_COUNTOF(buf);
-	n = QSE_READ (in_fd.i, buf, count);
-	if (n == (qse_ssize_t)-1 || n == 0) return n;
+	ret = qse_fio_read (in_fd.ptr, buf, count);
+	if (ret > 0)
+	{
+		ret = SSL_write (out, buf, count);
+		if (ret > 0)
+		{
+			if (offset) *offset = *offset + ret;
+		}
+		else if (ret <= -1)
+		{
+			if (SSL_get_error(out, ret) == SSL_ERROR_WANT_WRITE)
+				qse_httpd_seterrnum (httpd, QSE_HTTPD_EAGAIN);
+			else
+				qse_httpd_seterrnum (httpd, QSE_HTTPD_ESYSERR);
+		}
+	}
+	else if (ret <= -1)
+	{
+		qse_httpd_seterrnum (httpd, fioerr_to_errnum(qse_fio_geterrnum(in_fd.ptr)));	
+	}
+
+	return ret;
+#else
+	qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
+	return -1;
 #endif
-	if (offset && qse_fio_seek (in_fd.ptr, *offset, QSE_FIO_BEGIN) != *offset)  
-		return (qse_ssize_t)-1;
-
-	if (count > QSE_COUNTOF(buf)) count = QSE_COUNTOF(buf);
-	n = qse_fio_read (in_fd.ptr, buf, count);
-	if (n == (qse_ssize_t)-1 || n == 0) return n;
-
-	n = SSL_write (out, buf, count);
-	if (n > 0 && offset) *offset = *offset + n;
-
-	return n;
 }
-#endif
 
 /* ------------------------------------------------------------------- */
 
@@ -585,6 +632,10 @@ void* qse_httpd_getxtnstd (qse_httpd_t* httpd)
 
 static int server_open (qse_httpd_t* httpd, qse_httpd_server_t* server)
 {
+#if defined(__DOS__)
+	qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
+	return -1;
+#else
 	int fd = -1, flag;
 	qse_skad_t addr;
 	int addrsize;
@@ -599,53 +650,53 @@ static int server_open (qse_httpd_t* httpd, qse_httpd_server_t* server)
 	fd = socket (qse_skadfamily(&addr), SOCK_STREAM, IPPROTO_TCP);
 	if (fd <= -1) goto oops;
 
-#if defined(FD_CLOEXEC)
+	#if defined(FD_CLOEXEC)
 	flag = fcntl (fd, F_GETFD);
 	if (flag >= 0) fcntl (fd, F_SETFD, flag | FD_CLOEXEC);
-#endif
+	#endif
 
-#if defined(SO_REUSEADDR)
+	#if defined(SO_REUSEADDR)
 	flag = 1;
 	setsockopt (fd, SOL_SOCKET, SO_REUSEADDR, (void*)&flag, QSE_SIZEOF(flag));
-#endif
+	#endif
 
 /* TODO: linux. use capset() to set required capabilities just in case */
-#if defined(IP_TRANSPARENT)
+	#if defined(IP_TRANSPARENT)
 	/* remove the ip routing restriction that a packet can only
 	 * be sent using a local ip address. this option is useful
 	 * if transparency is achieved with TPROXY */
 
-/*
-ip rule add fwmark 0x1/0x1 lookup 100
-ip route add local 0.0.0.0/0 dev lo table 100
+	/*
+	ip rule add fwmark 0x1/0x1 lookup 100
+	ip route add local 0.0.0.0/0 dev lo table 100
 
-iptables -t mangle -N DIVERT
-iptables -t mangle -A PREROUTING -p tcp -m socket --transparent -j DIVERT
-iptables -t mangle -A DIVERT -j MARK --set-mark 0x1/0x1
-iptables -t mangle -A DIVERT -j ACCEPT
+	iptables -t mangle -N DIVERT
+	iptables -t mangle -A PREROUTING -p tcp -m socket --transparent -j DIVERT
+	iptables -t mangle -A DIVERT -j MARK --set-mark 0x1/0x1
+	iptables -t mangle -A DIVERT -j ACCEPT
 
-iptables -t mangle -A PREROUTING -p tcp --dport 80 -j TPROXY --tproxy-mark 0x1/0x1 --on-port 8000
+	iptables -t mangle -A PREROUTING -p tcp --dport 80 -j TPROXY --tproxy-mark 0x1/0x1 --on-port 8000
 
-----------------------------------------------------------------------
+	----------------------------------------------------------------------
 
-if the socket is bound to 99.99.99.99:8000, you may do...
-iptables -t mangle -A PREROUTING -p tcp --dport 80 -j TPROXY --tproxy-mark 0x1/0x1 --on-ip 99.99.99.99 --on-port 8000
+	if the socket is bound to 99.99.99.99:8000, you may do...
+	iptables -t mangle -A PREROUTING -p tcp --dport 80 -j TPROXY --tproxy-mark 0x1/0x1 --on-ip 99.99.99.99 --on-port 8000
 
-iptables -t mangle -A PREROUTING -p tcp  ! -s 127.0.0.0/255.0.0.0 --dport 80 -j TPROXY --tproxy-mark 0x1/0x1 --on-ip 0.0.0.0 --on-port 8000
+	iptables -t mangle -A PREROUTING -p tcp  ! -s 127.0.0.0/255.0.0.0 --dport 80 -j TPROXY --tproxy-mark 0x1/0x1 --on-ip 0.0.0.0 --on-port 8000
 
-IP_TRANSPRENT is needed for:
-- accepting TPROXYed connections
-- binding to a non-local IP address (IP address the local system doesn't have)
-- using a non-local IP address as a source
-- 
- */
+	IP_TRANSPRENT is needed for:
+	- accepting TPROXYed connections
+	- binding to a non-local IP address (IP address the local system doesn't have)
+	- using a non-local IP address as a source
+	- 
+	 */
 	flag = 1;
 	setsockopt (fd, SOL_IP, IP_TRANSPARENT, &flag, QSE_SIZEOF(flag));
-#endif
+	#endif
 
 	if (server->flags & QSE_HTTPD_SERVER_BINDTONWIF)
 	{
-#if defined(SO_BINDTODEVICE)
+	#if defined(SO_BINDTODEVICE)
 		qse_mchar_t tmp[64];
 		qse_size_t len;
 
@@ -656,7 +707,7 @@ IP_TRANSPRENT is needed for:
 			/* TODO: logging ... */
 			goto oops;
 		}
-#endif
+	#endif
 	}
 
 	/* Solaris 8 returns EINVAL if QSE_SIZEOF(addr) is passed in as the
@@ -664,7 +715,7 @@ IP_TRANSPRENT is needed for:
 	/*if (bind (s, (struct sockaddr*)&addr, QSE_SIZEOF(addr)) <= -1) goto oops_esocket;*/
 	if (bind (fd, (struct sockaddr*)&addr, addrsize) <= -1)
 	{
-#if defined(IPV6_V6ONLY) && defined(EADDRINUSE)
+	#if defined(IPV6_V6ONLY) && defined(EADDRINUSE)
 		if (errno == EADDRINUSE && qse_skadfamily(&addr) == AF_INET6)
 		{
 			int on = 1;
@@ -672,34 +723,35 @@ IP_TRANSPRENT is needed for:
 			if (bind (fd, (struct sockaddr*)&addr, addrsize) <= -1)  goto oops;
 		}
 		else goto oops;
-#else
+	#else
 		goto oops;
-#endif
+	#endif
 	}
 
 
 	if (listen (fd, 10) <= -1) goto oops;
 
-#if defined(O_NONBLOCK)
+	#if defined(O_NONBLOCK)
 	flag = fcntl (fd, F_GETFL);
 	if (flag >= 0) fcntl (fd, F_SETFL, flag | O_NONBLOCK);
-#endif
+	#endif
 
 	server->handle.i = fd;
 	return 0;
 
 oops:
 	qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
-#if defined(_WIN32)
+	#if defined(_WIN32)
 	if (fd != INVALID_SOCKET) closesocket (fd);
-#elif defined(__OS2__)
+	#elif defined(__OS2__)
 	if (fd >= 0) soclose (fd);
-#elif defined(__DOS__)
-	/* TODO: */
-#else
+	#elif defined(__DOS__)
+		/* TODO: */
+	#else
 	if (fd >= 0) QSE_CLOSE (fd);
-#endif
+	#endif
 	return -1;
+#endif
 }
 
 static void server_close (qse_httpd_t* httpd, qse_httpd_server_t* server)
@@ -718,13 +770,18 @@ static void server_close (qse_httpd_t* httpd, qse_httpd_server_t* server)
 static int server_accept (
 	qse_httpd_t* httpd, qse_httpd_server_t* server, qse_httpd_client_t* client)
 {
+#if defined(__DOS__)
+	qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
+	return -1;
+
+#else
 	qse_skad_t addr;
 
-#if defined(HAVE_SOCKLEN_T)
+	#if defined(HAVE_SOCKLEN_T)
 	socklen_t addrlen;
-#else
+	#else
 	int addrlen;
-#endif
+	#endif
 	int fd, flag;
 
 	addrlen = QSE_SIZEOF(addr);
@@ -735,7 +792,7 @@ static int server_accept (
 		return -1;
 	}
 
-#if 0
+	#if 0
 	if (fd >= FD_SETSIZE)
 	{
 qse_fprintf (QSE_STDERR, QSE_T("Error: too many client?\n"));
@@ -743,17 +800,17 @@ qse_fprintf (QSE_STDERR, QSE_T("Error: too many client?\n"));
 		QSE_CLOSE (fd);
 		return -1;
 	}
-#endif
+	#endif
 
-#if defined(FD_CLOEXEC)
+	#if defined(FD_CLOEXEC)
 	flag = fcntl (fd, F_GETFD);
 	if (flag >= 0) fcntl (fd, F_SETFD, flag | FD_CLOEXEC);
-#endif
+	#endif
 
-#if defined(O_NONBLOCK)
+	#if defined(O_NONBLOCK)
 	flag = fcntl (fd, F_GETFL);
 	if (flag >= 0) fcntl (fd, F_SETFL, flag | O_NONBLOCK);
-#endif
+	#endif
 
 	if (qse_skadtonwad (&addr, &client->remote_addr) <= -1)
 	{
@@ -769,7 +826,7 @@ qse_fprintf (QSE_STDERR, QSE_T("Error: too many client?\n"));
 		client->local_addr = server->nwad;
 	}
 
-#if defined(SO_ORIGINAL_DST)
+	#if defined(SO_ORIGINAL_DST)
 	/* if REDIRECT is used, SO_ORIGINAL_DST returns the original
 	 * destination. If TPROXY is used, getsockname() above returns
 	 * the original address. */
@@ -780,28 +837,37 @@ qse_fprintf (QSE_STDERR, QSE_T("Error: too many client?\n"));
 	{
 		client->orgdst_addr = client->local_addr;
 	}
-#else
+	#else
 	client->orgdst_addr = client->local_addr;
-#endif
+	#endif
 
 
-#if 0
+	#if 0
 	client->initial_ifindex = resolve_ifindex (fd, client->local_addr);
 	if (client->ifindex <= -1)
 	{
 		/* the local_address is not one of a local address.
 		 * it's probably proxied. */
 	}
-#endif
+	#endif
 
 	client->handle.i = fd;
 	return 0;
+#endif
 }
 
 /* ------------------------------------------------------------------- */
 
 static int peer_open (qse_httpd_t* httpd, qse_httpd_peer_t* peer)
 {
+#if defined(__DOS__)
+	qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
+	return -1;
+
+#else
+
+	/* -------------------------------------------------------------------- */
+
 	qse_skad_t connaddr, bindaddr;
 	int connaddrsize, bindaddrsize;
 	int connected = 1;
@@ -810,7 +876,7 @@ static int peer_open (qse_httpd_t* httpd, qse_httpd_peer_t* peer)
 	unsigned long cmd;
 #elif defined(__OS2__)
 	int fd = -1; 
-	int flag;
+	int cmd;
 #elif defined(__DOS__)
 	int fd = -1; 
 	int flag;
@@ -830,17 +896,16 @@ static int peer_open (qse_httpd_t* httpd, qse_httpd_peer_t* peer)
 	fd = socket (qse_skadfamily(&connaddr), SOCK_STREAM, IPPROTO_TCP);
 	if (fd <= -1) goto oops;
 
-#if defined(IP_TRANSPARENT)
+	#if defined(IP_TRANSPARENT)
 	flag = 1;
 	setsockopt (fd, SOL_IP, IP_TRANSPARENT, &flag, QSE_SIZEOF(flag));
-#endif
+	#endif
 
 	if (bind (fd, (struct sockaddr*)&bindaddr, bindaddrsize) <= -1) 
 	{
 		/* i won't care about binding faiulre */
 		/* TODO: some logging for this failure though */
 	}
-
 
 #if defined(_WIN32)
 	cmd = 1;
@@ -854,11 +919,25 @@ static int peer_open (qse_httpd_t* httpd, qse_httpd_peer_t* peer)
 
 	cmd = 0;
 	if (ioctlsocket(fd, FIONBIO, &cmd) == SOCKET_ERROR) goto oops;
+
 #elif defined(__OS2__)
-	/* TODO: */
+
+	cmd = 1;
+	if (ioctl(fd, FIONBIO, &cmd, QSE_SIZEOF(cmd)) == -1) goto oops;
+
+	if (connect (fd, (struct sockaddr*)&connaddr, connaddrsize) == -1)
+	{
+		if (sock_errno() != SOCEINPROGRESS) goto oops;
+		connected = 0;
+	}
+
+	cmd = 0;
+	if (ioctl(fd, FIONBIO, &cmd, QSE_SIZEOF(cmd)) == -1) goto oops;
 
 #elif defined(__DOS__)
+
 	/* TODO: */
+
 #else
 
 	#if defined(FD_CLOEXEC)
@@ -877,6 +956,7 @@ static int peer_open (qse_httpd_t* httpd, qse_httpd_peer_t* peer)
 
 	/* restore flags */
 	if (fcntl (fd, F_SETFL, flag) <= -1) goto oops;
+
 #endif
 
 	peer->handle.i = fd;
@@ -894,6 +974,9 @@ oops:
 	if (fd >= 0) QSE_CLOSE (fd);
 #endif
 	return -1;
+
+	/* -------------------------------------------------------------------- */
+#endif
 }
 
 static void peer_close (qse_httpd_t* httpd, qse_httpd_peer_t* peer)
@@ -932,13 +1015,32 @@ static int peer_connected (qse_httpd_t* httpd, qse_httpd_peer_t* peer)
 	return 1; /* connection completed */
 
 #elif defined(__OS2__)
-	/* TODO */
-	httpd->errnum = QSE_HTTPD_ENOIMPL;
-	return -1;
+
+	int len;
+	int ret;
+
+	len = QSE_SIZEOF(ret);
+	if (getsockopt (peer->handle.i, SOL_SOCKET, SO_ERROR, (char*)&ret, &len) == -1)
+	{
+		qse_httpd_seterrnum (httpd, skerr_to_errnum (ret));
+		return -1;
+	}
+
+	if (ret == SOCEINPROGRESS) return 0;
+	if (ret != 0)
+	{
+		qse_httpd_seterrnum (httpd, skerr_to_errnum (ret));
+		return -1;
+	}
+
+	return 1; /* connection completed */
+
 #elif defined(__DOS__)
+
 	/* TODO */
-	httpd->errnum = QSE_HTTPD_ENOIMPL;
+	qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
 	return -1;
+
 #else
 
 	#if defined(HAVE_SOCKLEN_T)
@@ -970,18 +1072,28 @@ static qse_ssize_t peer_recv (
 	qse_httpd_t* httpd, qse_httpd_peer_t* peer,
 	qse_mchar_t* buf, qse_size_t bufsize)
 {
+#if defined(__DOS__)
+	qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
+	return -1;
+#else
 	qse_ssize_t ret = recv (peer->handle.i, buf, bufsize, 0);
 	if (ret <= -1) qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
 	return ret;
+#endif
 }
 
 static qse_ssize_t peer_send (
 	qse_httpd_t* httpd, qse_httpd_peer_t* peer,
 	const qse_mchar_t* buf, qse_size_t bufsize)
 {
+#if defined(__DOS__)
+	qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
+	return -1;
+#else
 	qse_ssize_t ret = send (peer->handle.i, buf, bufsize, 0);
 	if (ret <= -1) qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
 	return ret;
+#endif
 }
 
 /* ------------------------------------------------------------------- */
@@ -1076,6 +1188,12 @@ static int mux_readable (qse_httpd_t* httpd, qse_ubi_t handle, const qse_ntime_t
 
 	tv = tmout? QSE_SECNSEC_TO_MSEC (tmout->sec, tmout->nsec): -1;
 	return os2_select (&handle.i, 1, 0, 0, tv);
+
+#elif defined(__DOS__)
+
+	qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
+	return -1;
+
 #else
 	fd_set r;
 	struct timeval tv, * tvp;
@@ -1101,6 +1219,12 @@ static int mux_writable (qse_httpd_t* httpd, qse_ubi_t handle, const qse_ntime_t
 	long tv;
 	tv = tmout? QSE_SECNSEC_TO_MSEC (tmout->sec, tmout->nsec): -1;
 	return os2_select (&handle.i, 0, 1, 0, tv);
+
+#elif defined(__DOS__)
+
+	qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
+	return -1;
+
 #else
 	fd_set w;
 	struct timeval tv, * tvp;
@@ -1468,7 +1592,9 @@ static void client_close (
 static void client_shutdown (
 	qse_httpd_t* httpd, qse_httpd_client_t* client)
 {
-#if defined(SHUT_RDWR)
+#if defined(__DOS__)
+	/* TODO */
+#elif defined(SHUT_RDWR)
 	shutdown (client->handle.i, SHUT_RDWR);
 #else
 	shutdown (client->handle.i, 2);
@@ -1481,7 +1607,7 @@ static qse_ssize_t client_recv (
 {
 	if (client->status & CLIENT_SECURE)
 	{
-#if defined(HAVE_SSL)
+	#if defined(HAVE_SSL)
 		int ret = SSL_read (client->handle2.ptr, buf, bufsize);
 		if (ret <= -1)
 		{
@@ -1497,16 +1623,22 @@ static qse_ssize_t client_recv (
 			client->status &= ~CLIENT_PENDING;
 
 		return ret;
-#else
+	#else
+		qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
 		return -1;
-#endif
+	#endif
 	}
 	else
 	{
+	#if defined(__DOS__)
+		qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
+		return -1;
+	#else
 		qse_ssize_t ret;
 		ret = recv (client->handle.i, buf, bufsize, 0);
 		if (ret <= -1) qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
 		return ret;
+	#endif
 	}
 }
 
@@ -1516,7 +1648,7 @@ static qse_ssize_t client_send (
 {
 	if (client->status & CLIENT_SECURE)
 	{
-#if defined(HAVE_SSL)
+	#if defined(HAVE_SSL)
 		int ret = SSL_write (client->handle2.ptr, buf, bufsize);
 		if (ret <= -1)
 		{
@@ -1526,15 +1658,21 @@ static qse_ssize_t client_send (
 				qse_httpd_seterrnum (httpd, QSE_HTTPD_ESYSERR);
 		}
 		return ret;
-#else
+	#else
+		qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
 		return -1;
-#endif
+	#endif
 	}
 	else
 	{
+	#if defined(__DOS__)
+		qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
+		return -1;
+	#else
 		qse_ssize_t ret = send (client->handle.i, buf, bufsize, 0);
 		if (ret <= -1) qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
 		return ret;
+	#endif
 	}
 }
 
@@ -1544,15 +1682,11 @@ static qse_ssize_t client_sendfile (
 {
 	if (client->status & CLIENT_SECURE)
 	{
-#if defined(HAVE_SSL)
-		return __send_file_ssl (client->handle2.ptr, handle, offset, count);
-#else
-		return -1;
-#endif
+		return __send_file_ssl (httpd, client->handle2.ptr, handle, offset, count);
 	}
 	else
 	{
-		return __send_file (client->handle.i, handle, offset, count);
+		return __send_file (httpd, client->handle.i, handle, offset, count);
 	}
 }
 
@@ -1561,7 +1695,7 @@ static int client_accepted (qse_httpd_t* httpd, qse_httpd_client_t* client)
 
 	if (client->status & CLIENT_SECURE)
 	{
-#if defined(HAVE_SSL)
+	#if defined(HAVE_SSL)
 		int ret;
 		SSL* ssl;
 		httpd_xtn_t* xtn;
@@ -1570,6 +1704,7 @@ static int client_accepted (qse_httpd_t* httpd, qse_httpd_client_t* client)
 		if (!xtn->ssl_ctx)
 		{
 			/* delayed initialization of ssl */
+/* TODO: certificate from options */
 			if (init_xtn_ssl (xtn, "http01.pem", "http01.key") <= -1) 
 			{
 				return -1;
@@ -1616,10 +1751,10 @@ qse_fflush (QSE_STDOUT);
 		}
 qse_printf (QSE_T("SSL ACCEPTED %d\n"), client->handle.i);
 qse_fflush (QSE_STDOUT);
-#else
-		qse_fprintf (QSE_STDERR, QSE_T("Error: NO SSL SUPPORT\n"));
+	#else
+		qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
 		return -1;
-#endif
+	#endif
 	}
 
 	return 1; /* accept completed */
@@ -1629,13 +1764,13 @@ static void client_closed (qse_httpd_t* httpd, qse_httpd_client_t* client)
 {
 	if (client->status & CLIENT_SECURE)
 	{
-#if defined(HAVE_SSL)
+	#if defined(HAVE_SSL)
 		if (client->handle2.ptr)
 		{
 			SSL_shutdown ((SSL*)client->handle2.ptr); /* is this needed? */
 			SSL_free ((SSL*)client->handle2.ptr);
 		}
-#endif
+	#endif
 	}
 }
 
