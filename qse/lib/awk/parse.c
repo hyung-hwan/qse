@@ -194,7 +194,7 @@ static qse_awk_nde_t* parse_block_dc (
 static qse_awk_nde_t* parse_statement (
 	qse_awk_t* awk, const qse_awk_loc_t* xloc);
 
-static qse_awk_nde_t* parse_expr_dc (
+static qse_awk_nde_t* parse_expr_withdc (
 	qse_awk_t* awk, const qse_awk_loc_t* xloc);
 
 static qse_awk_nde_t* parse_logical_or (
@@ -972,7 +972,7 @@ static int parse_progunit (qse_awk_t* awk)
 		awk->parse.id.block = PARSE_PATTERN;
 
 		eloc = awk->tok.loc;
-		ptn = parse_expr_dc (awk, &eloc);
+		ptn = parse_expr_withdc (awk, &eloc);
 		if (ptn == QSE_NULL) return -1;
 
 		QSE_ASSERT (ptn->next == QSE_NULL);
@@ -986,7 +986,7 @@ static int parse_progunit (qse_awk_t* awk)
 			}	
 
 			eloc = awk->tok.loc;
-			ptn->next = parse_expr_dc (awk, &eloc);
+			ptn->next = parse_expr_withdc (awk, &eloc);
 
 			if (ptn->next == QSE_NULL) 
 			{
@@ -2062,7 +2062,7 @@ static qse_awk_nde_t* parse_if (qse_awk_t* awk, const qse_awk_loc_t* xloc)
 	if (get_token(awk) <= -1) return QSE_NULL;
 
 	eloc = awk->tok.loc;
-	test = parse_expr_dc (awk, &eloc);
+	test = parse_expr_withdc (awk, &eloc);
 	if (test == QSE_NULL) goto oops;
 
 	if (!MATCH(awk,TOK_RPAREN)) 
@@ -2135,7 +2135,7 @@ static qse_awk_nde_t* parse_while (qse_awk_t* awk, const qse_awk_loc_t* xloc)
 	if (get_token(awk) <= -1) goto oops;
 
 	ploc = awk->tok.loc;
-	test = parse_expr_dc (awk, &ploc);
+	test = parse_expr_withdc (awk, &ploc);
 	if (test == QSE_NULL) goto oops;
 
 	if (!MATCH(awk,TOK_RPAREN)) 
@@ -2193,7 +2193,7 @@ static qse_awk_nde_t* parse_for (qse_awk_t* awk, const qse_awk_loc_t* xloc)
 		int no_foreach = MATCH(awk,TOK_LPAREN);
 
 		ploc = awk->tok.loc;
-		init = parse_expr_dc (awk, &ploc);
+		init = parse_expr_withdc (awk, &ploc);
 		if (init == QSE_NULL) goto oops;
 
 		if (!no_foreach && init->type == QSE_AWK_NDE_EXP_BIN &&
@@ -2247,7 +2247,7 @@ static qse_awk_nde_t* parse_for (qse_awk_t* awk, const qse_awk_loc_t* xloc)
 	if (!MATCH(awk,TOK_SEMICOLON)) 
 	{
 		ploc = awk->tok.loc;
-		test = parse_expr_dc (awk, &ploc);
+		test = parse_expr_withdc (awk, &ploc);
 		if (test == QSE_NULL) goto oops;
 
 		if (!MATCH(awk,TOK_SEMICOLON)) 
@@ -2268,7 +2268,7 @@ static qse_awk_nde_t* parse_for (qse_awk_t* awk, const qse_awk_loc_t* xloc)
 	{
 		{
 			qse_awk_loc_t eloc = awk->tok.loc;
-			incr = parse_expr_dc (awk, &eloc);
+			incr = parse_expr_withdc (awk, &eloc);
 			if (incr == QSE_NULL) goto oops;
 		}
 
@@ -2344,7 +2344,7 @@ static qse_awk_nde_t* parse_dowhile (qse_awk_t* awk, const qse_awk_loc_t* xloc)
 	if (get_token(awk) <= -1) goto oops;
 
 	ploc = awk->tok.loc;
-	test = parse_expr_dc (awk, &ploc);
+	test = parse_expr_withdc (awk, &ploc);
 	if (test == QSE_NULL) goto oops;
 
 	if (!MATCH(awk,TOK_RPAREN)) 
@@ -2449,7 +2449,7 @@ static qse_awk_nde_t* parse_return (qse_awk_t* awk, const qse_awk_loc_t* xloc)
 	else 
 	{
 		qse_awk_loc_t eloc = awk->tok.loc;
-		val = parse_expr_dc (awk, &eloc);
+		val = parse_expr_withdc (awk, &eloc);
 		if (val == QSE_NULL) 
 		{
 			QSE_AWK_FREE (awk, nde);
@@ -2487,7 +2487,7 @@ static qse_awk_nde_t* parse_exit (qse_awk_t* awk, const qse_awk_loc_t* xloc)
 	else 
 	{
 		qse_awk_loc_t eloc = awk->tok.loc;
-		val = parse_expr_dc (awk, &eloc);
+		val = parse_expr_withdc (awk, &eloc);
 		if (val == QSE_NULL) 
 		{
 			QSE_AWK_FREE (awk, nde);
@@ -2648,18 +2648,31 @@ static qse_awk_nde_t* parse_print (qse_awk_t* awk, const qse_awk_loc_t* xloc)
 		qse_awk_nde_t* args_tail;
 		qse_awk_nde_t* tail_prev;
 
-		/* print and printf provide weird syntaxs.
-		 * 
-		 *    1. print 10, 20;
-		 *    2. print (10, 20);
-		 *    3. print (10,20,30) in a;
-		 *    4. print ((10,20,30) in a);
-		 *
-		 * Due the case 3, i can't consume LPAREN
-		 * here and expect RPAREN later. 
-		 */
+		int in_parens = 0, gm_in_parens = 0;
+		qse_size_t opening_lparen_seq;
+
+		if (MATCH(awk,TOK_LPAREN))
+		{
+			/* just remember the sequence number of the left 
+			 * parenthesis before calling parse_expr_withdc() 
+			 * that eventually calls parse_primary_lparen() */
+			opening_lparen_seq = awk->parse.lparen_seq;
+			in_parens = 1; /* maybe. not confirmed yet */
+
+			/* print and printf provide weird syntaxs.
+			 * 
+			 *    1. print 10, 20;
+			 *    2. print (10, 20);
+			 *    3. print (10,20,30) in a;
+			 *    4. print ((10,20,30) in a);
+			 *
+			 * Due to case 3, i can't consume LPAREN
+			 * here and expect RPAREN later. 
+			 */
+		}
+
 		eloc = awk->tok.loc;
-		args = parse_expr_dc (awk, &eloc);
+		args = parse_expr_withdc (awk, &eloc);
 		if (args == QSE_NULL) goto oops;
 
 		args_tail = args;
@@ -2669,6 +2682,7 @@ static qse_awk_nde_t* parse_print (qse_awk_t* awk, const qse_awk_loc_t* xloc)
 		{
 			/* args->type == QSE_AWK_NDE_GRP when print (a, b, c) 
 			 * args->type != QSE_AWK_NDE_GRP when print a, b, c */
+			qse_size_t group_opening_lparen_seq;
 			
 			while (MATCH(awk,TOK_COMMA))
 			{
@@ -2678,19 +2692,60 @@ static qse_awk_nde_t* parse_print (qse_awk_t* awk, const qse_awk_loc_t* xloc)
 				}
 				while (MATCH(awk,TOK_NEWLINE));
 
+				/* if it's grouped, i must check if the last group member
+				 * is enclosed in parentheses.
+				 *
+				 * i set the condition to false whenever i see
+				 * a new group member. */
+				gm_in_parens = 0;
+				if (MATCH(awk,TOK_LPAREN))
+				{
+					group_opening_lparen_seq = awk->parse.lparen_seq;
+					gm_in_parens = 1; /* maybe */
+				}
+
 				eloc = awk->tok.loc;
-				args_tail->next = parse_expr_dc (awk, &eloc);
+				args_tail->next = parse_expr_withdc (awk, &eloc);
 				if (args_tail->next == QSE_NULL) goto oops;
 
 				tail_prev = args_tail;
 				args_tail = args_tail->next;
+
+				if (gm_in_parens == 1 && awk->ptok.type == TOK_RPAREN &&
+				    awk->parse.lparen_last_closed == group_opening_lparen_seq) 
+				{
+					/* confirm that the last group seen so far
+					 * is parenthesized */
+					gm_in_parens = 2;
+				}
 			}
 		}
 
 		/* print 1 > 2 would print 1 to the file named 2. 
-		 * print (1 > 2) would print (1 > 2) on the console */
-		if (awk->ptok.type != TOK_RPAREN &&
-		    args_tail->type == QSE_AWK_NDE_EXP_BIN)
+		 * print (1 > 2) would print (1 > 2) on the console 
+		 * 
+		 * think of all these... there are many more possible combinations.
+		 *
+		 * print ((10,20,30) in a) > "x"; 
+		 * print ((10,20,30) in a)
+		 * print ((10,20,30) in a) > ("x"); 
+		 * print ((10,20,30) in a) > (("x")); 
+		 * function abc() { return "abc"; } BEGIN { print (1 > abc()); }
+		 * function abc() { return "abc"; } BEGIN { print 1 > abc(); }
+		 * print 1, 2, 3 > 4;
+		 * print (1, 2, 3) > 4;
+		 * print ((1, 2, 3) > 4);
+		 * print 1, 2, 3 > 4 + 5;
+		 * print 1, 2, (3 > 4) > 5;
+		 * print 1, 2, (3 > 4) > 5 + 6;
+		 */
+		if (in_parens == 1 && awk->ptok.type == TOK_RPAREN && 
+		    awk->parse.lparen_last_closed == opening_lparen_seq) 
+		{
+			in_parens = 2; /* confirmed */
+		}
+
+		if (in_parens != 2 && gm_in_parens != 2 && args_tail->type == QSE_AWK_NDE_EXP_BIN)
 		{
 			int i;
 			qse_awk_nde_exp_t* ep = (qse_awk_nde_exp_t*)args_tail;
@@ -2762,7 +2817,7 @@ static qse_awk_nde_t* parse_print (qse_awk_t* awk, const qse_awk_loc_t* xloc)
 			if (get_token(awk) <= -1) goto oops;
 
 			eloc = awk->tok.loc;
-			out = parse_expr_dc (awk, &eloc);
+			out = parse_expr_withdc (awk, &eloc);
 			if (out == QSE_NULL) goto oops;
 		}
 	}
@@ -2887,11 +2942,11 @@ static qse_awk_nde_t* parse_statement_nb (
 			if (get_token(awk) <= -1) return QSE_NULL;
 			nde = parse_print (awk, xloc);
 		}
-		else nde = parse_expr_dc (awk, xloc);
+		else nde = parse_expr_withdc (awk, xloc);
 	}
 	else 
 	{
-		nde = parse_expr_dc (awk, xloc);
+		nde = parse_expr_withdc (awk, xloc);
 	}
 
 	if (nde == QSE_NULL) return QSE_NULL;
@@ -3033,7 +3088,7 @@ static qse_awk_nde_t* parse_expr_basic (
 		}
 
 		eloc = awk->tok.loc;	
-		n1 = parse_expr_dc (awk, &eloc);
+		n1 = parse_expr_withdc (awk, &eloc);
 		if (n1 == QSE_NULL) 
 		{
 			qse_awk_clrpt (awk, nde);
@@ -3055,7 +3110,7 @@ static qse_awk_nde_t* parse_expr_basic (
 		}
 
 		eloc = awk->tok.loc;
-		n2 = parse_expr_dc (awk, &eloc);
+		n2 = parse_expr_withdc (awk, &eloc);
 		if (n2 == QSE_NULL)
 		{
 			qse_awk_clrpt (awk, nde);
@@ -3120,7 +3175,7 @@ static qse_awk_nde_t* parse_expr (
 
 	{
 		qse_awk_loc_t eloc = awk->tok.loc;
-		y = parse_expr_dc (awk, &eloc);
+		y = parse_expr_withdc (awk, &eloc);
 	}
 	if (y == QSE_NULL) 
 	{
@@ -3149,10 +3204,12 @@ static qse_awk_nde_t* parse_expr (
 	return (qse_awk_nde_t*)nde;
 }
 
-static qse_awk_nde_t* parse_expr_dc (
+static qse_awk_nde_t* parse_expr_withdc (
 	qse_awk_t* awk, const qse_awk_loc_t* xloc)
 {
 	qse_awk_nde_t* nde;
+
+	/* perform depth check before parsing expression */
 
 	if (awk->opt.depth.s.expr_parse > 0 &&
 	    awk->parse.depth.expr >= awk->opt.depth.s.expr_parse)
@@ -4338,13 +4395,16 @@ static qse_awk_nde_t* parse_primary_lparen (qse_awk_t* awk, const qse_awk_loc_t*
 	qse_awk_nde_t* nde;
 	qse_awk_nde_t* last;
 	qse_awk_loc_t eloc;
+	qse_size_t opening_lparen_seq;
+
+	opening_lparen_seq = awk->parse.lparen_seq++;
 
 	/* eat up the left parenthesis */
 	if (get_token(awk) <= -1) return QSE_NULL;
 
 	/* parse the sub-expression inside the parentheses */
 	eloc = awk->tok.loc;
-	nde = parse_expr_dc (awk, &eloc);
+	nde = parse_expr_withdc (awk, &eloc);
 	if (nde == QSE_NULL) return QSE_NULL;
 
 	/* parse subsequent expressions separated by a comma, if any */
@@ -4362,7 +4422,7 @@ static qse_awk_nde_t* parse_primary_lparen (qse_awk_t* awk, const qse_awk_loc_t*
 		while (MATCH(awk,TOK_NEWLINE));
 
 		eloc = awk->tok.loc;
-		tmp = parse_expr_dc (awk, &eloc);
+		tmp = parse_expr_withdc (awk, &eloc);
 		if (tmp == QSE_NULL) goto oops;
 
 		QSE_ASSERT (tmp->next == QSE_NULL);
@@ -4377,6 +4437,10 @@ static qse_awk_nde_t* parse_primary_lparen (qse_awk_t* awk, const qse_awk_loc_t*
 		SETERR_TOK (awk, QSE_AWK_ERPAREN);
 		goto oops;
 	}
+
+	/* remember the sequence number of the left parenthesis
+	 * that' been just closed by the matching right parenthesis */
+	awk->parse.lparen_last_closed = opening_lparen_seq;
 
 	if (get_token(awk) <= -1) goto oops;
 
@@ -4492,7 +4556,7 @@ novar:
 
 		ploc = awk->tok.loc;
 		/* TODO: is this correct? */
-		/*nde->in = parse_expr_dc (awk, &ploc);*/
+		/*nde->in = parse_expr_withdc (awk, &ploc);*/
 		nde->in = parse_primary (awk, &ploc);
 		if (nde->in == QSE_NULL) goto oops;
 
@@ -5077,7 +5141,7 @@ static qse_awk_nde_t* parse_hashidx (
 
 		{
 			qse_awk_loc_t eloc = awk->tok.loc;
-			tmp = parse_expr_dc (awk, &eloc);
+			tmp = parse_expr_withdc (awk, &eloc);
 		}
 		if (tmp == QSE_NULL) 
 		{
@@ -5236,7 +5300,7 @@ static qse_awk_nde_t* parse_fncall (
 		while (1) 
 		{
 			eloc = awk->tok.loc;
-			nde = parse_expr_dc (awk, &eloc);
+			nde = parse_expr_withdc (awk, &eloc);
 			if (nde == QSE_NULL) goto oops;
 	
 			if (head == QSE_NULL) head = nde;
@@ -5843,6 +5907,7 @@ static int get_symbols (qse_awk_t* awk, qse_cint_t c, qse_awk_tok_t* tok)
 	/* note that the loop below is not generaic enough.
 	 * you must keep the operators strings in a particular order */
 
+
 	for (p = ops; p->str != QSE_NULL; )
 	{
 		if (p->opt == 0 || (awk->opt.trait & p->opt))
@@ -6089,7 +6154,46 @@ static int get_token (qse_awk_t* awk)
 
 static int preget_token (qse_awk_t* awk)
 {
-	return get_token_into (awk, &awk->ntok);
+	/* LIMITATION: no more than one token can be pre-read in a row 
+	               without consumption. */
+	
+	if (QSE_STR_LEN(awk->ntok.name) > 0)
+	{
+		/* you can't read more than 1 token in advance. 
+		 * 
+		 * if there is a token already read in, it is just
+		 * retained. 
+		 * 
+		 * parsing an expression like '$0 | a' causes this 
+		 * funtion to be called before get_token() consumes the
+		 * pre-read token. 
+		 *
+		 * Because the expression like this 
+		 *    print $1 | getline x;
+		 * must be parsed as
+		 *    print $(1 | getline x);
+		 * preget_token() is called from parse_primary().
+		 *
+		 * For the expression '$0 | $2',
+		 * 1) parse_primary() calls parse_primary_positional() if $ is encountered.
+		 * 2) parse_primary_positional() calls parse_primary() recursively for the positional part after $.
+		 * 3) parse_primary() in #2 calls preget_token()
+		 * 4) parse_primary() in #1 also calls preget_token().
+		 *
+		 * this block is reached because no token is consumed between #3 and #4.
+		 *
+		 * in short, it happens if getline doesn't doesn't follow | after the positional. 
+		 *   $1 | $2
+		 *   $1 | abc + 20
+	 	 */
+		return 0;
+	}
+	else
+	{
+		/* if there is no token pre-read, we get a new
+		 * token and place it to awk->ntok. */ 
+		return get_token_into (awk, &awk->ntok);
+	}
 }
 
 static int classify_ident (qse_awk_t* awk, const qse_cstr_t* name)
