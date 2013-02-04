@@ -178,7 +178,7 @@ PROGS="
 	lang-049.awk!!!--newline=on -d-
 
 	columnate.awk!passwd.dat!!--newline=on -F:
-	levenshtein-utests.awk!!!--newline=on --extrakws=on
+	levenshtein-utests.awk!!!--newline=on
 	rcalc.awk!!!--newline=on -v target=89000
 	quicksort.awk!quicksort.dat!!
 	quicksort2.awk!quicksort2.dat!!-vQSEAWK=\"${QSEAWK}\" -vSCRIPT_PATH=\"${SCRIPT_DIR}\"

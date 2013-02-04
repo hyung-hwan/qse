@@ -180,6 +180,13 @@ struct qse_awk_t
 
 		/* maximum number of local variables */
 		qse_size_t nlcls_max;
+
+		/* some data to find if an expression is
+		 * enclosed in parentheses or not.
+		 * see parse_primary_lparen() and parse_print() in parse.c
+		 */
+		qse_size_t lparen_seq;
+		qse_size_t lparen_last_closed;
 	} parse;
 
 	/* source code management */
