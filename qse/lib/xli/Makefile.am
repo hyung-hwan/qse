@@ -1,0 +1,12 @@
+AUTOMAKE_OPTIONS = nostdinc
+
+AM_CPPFLAGS = \
+	-I$(top_builddir)/include \
+	-I$(top_srcdir)/include \
+	-I$(includedir)
+
+lib_LTLIBRARIES = libqsexli.la
+libqsexli_la_SOURCES = xli.h xli.c read.c
+libqsexli_la_LDFLAGS = -L../cmn  -L$(libdir)  -version-info 1:0:0 -no-undefined
+libqsexli_la_LIBADD = -lqsecmn 
+

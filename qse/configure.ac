@@ -524,11 +524,13 @@ AC_CONFIG_FILES([
 	include/qse/cmn/Makefile
 	include/qse/awk/Makefile
 	include/qse/sed/Makefile
+	include/qse/xli/Makefile
 	include/qse/net/Makefile
 	lib/Makefile 
 	lib/cmn/Makefile 
 	lib/awk/Makefile 
 	lib/sed/Makefile 
+	lib/xli/Makefile 
 	lib/net/Makefile 
 	cmd/Makefile 
 	cmd/awk/Makefile 
