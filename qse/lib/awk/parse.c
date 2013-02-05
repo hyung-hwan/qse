@@ -104,7 +104,6 @@ enum tok_t
 	TOK_COLON,
 	TOK_DBLCOLON,
 	TOK_QUEST,
-	TOK_ATSIGN,
 
 	/* ==  begin reserved words == */
 	/* === extended reserved words === */
@@ -5834,7 +5833,7 @@ static int get_symbols (qse_awk_t* awk, qse_cint_t c, qse_awk_tok_t* tok)
 		const qse_char_t* str;
 		qse_size_t len;
 		int tid;
-		int opt;
+		int trait;
 	};
 
 	static struct ops_t ops[] = 
@@ -5896,7 +5895,6 @@ static int get_symbols (qse_awk_t* awk, qse_cint_t c, qse_awk_tok_t* tok)
 		{ QSE_T("::"),  2, TOK_DBLCOLON,     0 },
 		{ QSE_T(":"),   1, TOK_COLON,        0 },
 		{ QSE_T("?"),   1, TOK_QUEST,        0 },
-		{ QSE_T("@"),   1, TOK_ATSIGN,       0 },
 		{ QSE_T("`"),   1, TOK_BQUOTE,       0 },
 		{ QSE_NULL,     0, 0,                0 }
 	};
@@ -5910,7 +5908,7 @@ static int get_symbols (qse_awk_t* awk, qse_cint_t c, qse_awk_tok_t* tok)
 
 	for (p = ops; p->str != QSE_NULL; )
 	{
-		if (p->opt == 0 || (awk->opt.trait & p->opt))
+		if (p->trait == 0 || (awk->opt.trait & p->trait))
 		{
 			if (p->str[idx] == QSE_T('\0'))
 			{
@@ -6061,7 +6059,6 @@ retry:
 	else if (c == QSE_T('\''))
 	{
 		/* single-quoted string - no escaping */
-		qse_cint_t c;
 
 		SET_TOKEN_TYPE (awk, tok, TOK_STR);
 
