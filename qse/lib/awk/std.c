@@ -749,8 +749,6 @@ static qse_ssize_t sf_in_open (
 				awk->sio.arg.name = xtn->s.in.x[0].u.file.path;
 			else
 				awk->sio.arg.name = QSE_NULL;
-			awk->sio.arg.line = 1;
-			awk->sio.arg.colm = 1;
 		}
 
 		return x;
@@ -902,8 +900,6 @@ static qse_ssize_t sf_in_read (
 						awk->sio.arg.name = xtn->s.in.x[next].u.file.path;
 					else
 						awk->sio.arg.name = QSE_NULL;
-					awk->sio.arg.line = 1;
-					awk->sio.arg.colm = 1;
 
 					goto again;
 				}

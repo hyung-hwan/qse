@@ -535,6 +535,7 @@ AC_CONFIG_FILES([
 	cmd/Makefile 
 	cmd/awk/Makefile 
 	cmd/sed/Makefile 
+	cmd/xli/Makefile 
 	cmd/net/Makefile 
 	samples/Makefile 
 	samples/cmn/Makefile 

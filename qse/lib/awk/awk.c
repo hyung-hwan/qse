@@ -151,15 +151,14 @@ qse_awk_t* qse_awk_open (qse_mmgr_t* mmgr, qse_size_t xtnsize, qse_awk_prm_t* pr
 	if (init_token (mmgr, &awk->tok) == -1) goto oops;
 	if (init_token (mmgr, &awk->ntok) == -1) goto oops;
 
-	awk->sio.names = qse_htb_open (
+	awk->sio_names = qse_htb_open (
 		mmgr, QSE_SIZEOF(awk), 128, 70, QSE_SIZEOF(qse_char_t), 1
 	);
-	if (awk->sio.names == QSE_NULL) goto oops;
-	*(qse_awk_t**)QSE_XTN(awk->sio.names) = awk;
-	qse_htb_setmancbs (awk->sio.names, 
+	if (awk->sio_names == QSE_NULL) goto oops;
+	*(qse_awk_t**)QSE_XTN(awk->sio_names) = awk;
+	qse_htb_setmancbs (awk->sio_names, 
 		qse_gethtbmancbs(QSE_HTB_MANCBS_INLINE_KEY_COPIER)
 	);
-	awk->sio.inp = &awk->sio.arg;
 
 	/* TODO: initial map size?? */
 	awk->tree.funs = qse_htb_open (
@@ -257,7 +256,7 @@ oops:
 	if (awk->parse.named) qse_htb_close (awk->parse.named);
 	if (awk->parse.funs) qse_htb_close (awk->parse.funs);
 	if (awk->tree.funs) qse_htb_close (awk->tree.funs);
-	if (awk->sio.names) qse_htb_close (awk->sio.names);
+	if (awk->sio_names) qse_htb_close (awk->sio_names);
 	fini_token (&awk->ntok);
 	fini_token (&awk->tok);
 	fini_token (&awk->ptok);
@@ -287,7 +286,7 @@ int qse_awk_close (qse_awk_t* awk)
 	qse_htb_close (awk->parse.funs);
 
 	qse_htb_close (awk->tree.funs);
-	qse_htb_close (awk->sio.names);
+	qse_htb_close (awk->sio_names);
 
 	fini_token (&awk->ntok);
 	fini_token (&awk->tok);
@@ -391,26 +390,11 @@ int qse_awk_clear (qse_awk_t* awk)
 	awk->tree.chain_tail = QSE_NULL;	
 	awk->tree.chain_size = 0;
 
-	QSE_ASSERT (awk->sio.inp == &awk->sio.arg);
 	/* this table must not be cleared here as there can be a reference
 	 * to an entry of this table from errinf.fil when qse_awk_parse() 
 	 * failed. this table is cleared in qse_awk_parse().
-	 * qse_htb_clear (awk->sio.names);
+	 * qse_htb_clear (awk->sio_names);
 	 */
-
-	awk->sio.last.c = QSE_CHAR_EOF;
-	awk->sio.last.line = 0;
-	awk->sio.last.colm = 0;
-	awk->sio.last.file = QSE_NULL;
-	awk->sio.nungots = 0;
-
-	awk->sio.arg.flags = 0;
-	awk->sio.arg.name = QSE_NULL;
-	awk->sio.arg.line = 1;
-	awk->sio.arg.colm = 1;
-	awk->sio.arg.b.pos = 0;
-	awk->sio.arg.b.len = 0;
-
 	return 0;
 }
 

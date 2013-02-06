@@ -741,9 +741,11 @@ static int sed_main (int argc, qse_char_t* argv[])
 
 	if (qse_sed_compstd (sed, g_script.io, &script_count) <= -1)
 	{
-		const qse_sed_loc_t* errloc = qse_sed_geterrloc(sed);
+		const qse_sed_loc_t* errloc;
 		const qse_char_t* target;
 		qse_char_t exprbuf[128];
+
+		errloc = qse_sed_geterrloc(sed);
 	
 		if (g_script.io[script_count].type == QSE_SED_IOSTD_FILE)
 		{

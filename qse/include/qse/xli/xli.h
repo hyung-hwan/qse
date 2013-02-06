@@ -93,6 +93,7 @@ struct qse_xli_list_t
 struct qse_xli_str_t
 {
 	QSE_XLI_VAL_HDR;
+	int verbatim;
 	const qse_char_t* ptr;
 	qse_size_t len;
 };
@@ -137,6 +138,10 @@ typedef void (*qse_xli_ecb_close_t) (
 	qse_xli_t* xli  /**< xli */
 );
 
+typedef void (*qse_xli_ecb_clear_t) (
+	qse_xli_t* xli  /**< xli */
+);
+
 /**
  * The qse_xli_ecb_t type defines an event callback set.
  * You can register a callback function set with
@@ -146,10 +151,10 @@ typedef void (*qse_xli_ecb_close_t) (
 typedef struct qse_xli_ecb_t qse_xli_ecb_t;
 struct qse_xli_ecb_t
 {
-	/**
-	 * called by qse_xli_close().
-	 */
+	/** called by qse_xli_close() */
 	qse_xli_ecb_close_t close;
+	/** called by qse_xli_clear() */
+	qse_xli_ecb_clear_t clear;
 
 	/* internal use only. don't touch this field */
 	qse_xli_ecb_t* next;
@@ -191,7 +196,7 @@ struct qse_xli_io_lxc_t
 
 enum qse_xli_io_arg_flag_t
 {
-	QSE_XLI_SIO_INCLUDED = (1 << 0)
+	QSE_XLI_IO_INCLUDED = (1 << 0)
 };
 
 typedef struct qse_xli_io_arg_t qse_xli_io_arg_t;
@@ -282,7 +287,6 @@ QSE_EXPORT qse_xli_ecb_t* qse_xli_popecb (
 	qse_xli_t* xli
 );
 
-
 QSE_EXPORT void* qse_xli_allocmem (
 	qse_xli_t* xli,
 	qse_size_t size
@@ -298,19 +302,37 @@ QSE_EXPORT void qse_xli_freemem (
 	void*      ptr
 );
 
+QSE_EXPORT qse_xli_pair_t* qse_xli_insertpairwithemptylist (
+     qse_xli_t*        xli,
+	qse_xli_list_t*   parent,
+	qse_xli_atom_t*   peer,
+     const qse_char_t* key,
+	const qse_char_t* name
+);
+
+QSE_EXPORT qse_xli_pair_t* qse_xli_insertpairwithstr (
+     qse_xli_t*        xli, 
+	qse_xli_list_t*   parent,
+	qse_xli_atom_t*   peer,
+     const qse_char_t* key,
+	const qse_char_t* name,
+	const qse_char_t* value,
+	int               verbatim
+);
+
+
+QSE_EXPORT void qse_xli_clear (
+	qse_xli_t* xli
+);
+
 QSE_EXPORT int qse_xli_read (
 	qse_xli_t*        xli,
 	qse_xli_io_impl_t io
 );
 
-
 QSE_EXPORT int qse_xli_write (
-	qse_xli_t* xli,
+	qse_xli_t*        xli,
 	qse_xli_io_impl_t io
-);
-
-QSE_EXPORT void qse_xli_clear (
-	qse_xli_t* xli
 );
 
 #if defined(__cplusplus)

@@ -601,7 +601,7 @@ oops:
 	if (ret <= -1)
 	{
 		/* an error occurred and control has reached here
-		 * probably, some included files might not have beed 
+		 * probably, some included files might not have been 
 		 * closed. close them */
 		while (awk->sio.inp != &awk->sio.arg)
 		{
@@ -667,9 +667,15 @@ int qse_awk_parse (qse_awk_t* awk, qse_awk_sio_t* sio)
 	QSE_ASSERT (awk->parse.depth.expr == 0);
 
 	qse_awk_clear (awk);
-	qse_htb_clear (awk->sio.names);
+	qse_htb_clear (awk->sio_names);
+
+	QSE_MEMSET (&awk->sio, 0, QSE_SIZEOF(awk->sio));
 	awk->sio.inf = sio->in;
 	awk->sio.outf = sio->out;
+	awk->sio.last.c = QSE_CHAR_EOF;
+	awk->sio.arg.line = 1;
+	awk->sio.arg.colm = 1;
+	awk->sio.inp = &awk->sio.arg;
 
 	n = parse (awk);
 	if (n == 0  && awk->sio.outf != QSE_NULL) n = deparse (awk);
@@ -740,9 +746,9 @@ static int begin_include (qse_awk_t* awk)
 		return -1;
 	}
 
-	/* store the file name to awk->sio.names */
+	/* store the file name to awk->sio_names */
 	pair = qse_htb_ensert (
-		awk->sio.names, 
+		awk->sio_names, 
 		QSE_STR_PTR(awk->tok.name),
 		QSE_STR_LEN(awk->tok.name) + 1, /* to include '\0' */
 		QSE_NULL, 0
@@ -771,6 +777,8 @@ static int begin_include (qse_awk_t* awk)
 
 	arg->flags = QSE_AWK_SIO_INCLUDED;
 	arg->name = QSE_HTB_KPTR(pair);
+	arg->line = 1;
+	arg->colm = 1;
 
 	CLRERR (awk);
 	op = awk->sio.inf (awk, QSE_AWK_SIO_OPEN, arg, QSE_NULL, 0);
@@ -784,9 +792,6 @@ static int begin_include (qse_awk_t* awk)
 	arg->next = awk->sio.inp;
 	awk->sio.inp = arg;
 	awk->parse.depth.incl++;
-
-	awk->sio.inp->line = 1;
-	awk->sio.inp->colm = 1;
 
 	/* read in the first character in the included file. 
 	 * so the next call to get_token() sees the character read
@@ -851,8 +856,7 @@ static int parse_progunit (qse_awk_t* awk)
 	
 		if (!MATCH(awk,TOK_STR))
 		{
-			SETERR_LOC (
-				awk, QSE_AWK_EINCLSTR, &awk->ptok.loc);
+			SETERR_LOC (awk, QSE_AWK_EINCLSTR, &awk->ptok.loc);
 			return -1;
 		}
 	
@@ -6081,7 +6085,6 @@ retry:
 
 			ADD_TOKEN_CHAR (awk, tok, c);
 		}
-		return 0;
 	}
 	else
 	{
@@ -6249,10 +6252,7 @@ static int deparse (qse_awk_t* awk)
 
 	QSE_ASSERT (awk->sio.outf != QSE_NULL);
 
-	awk->sio.arg.name = QSE_NULL;
-	awk->sio.arg.handle = QSE_NULL;
-	awk->sio.arg.b.len = 0;
-	awk->sio.arg.b.pos = 0;
+	QSE_MEMSET (&awk->sio.arg, 0, QSE_SIZEOF(awk->sio.arg));
 
 	CLRERR (awk);
 	op = awk->sio.outf (

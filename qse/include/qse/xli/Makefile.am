@@ -1,4 +1,4 @@
 pkgincludedir= $(includedir)/qse/xli
 
-pkginclude_HEADERS = xli.h 
+pkginclude_HEADERS = xli.h std.h
 

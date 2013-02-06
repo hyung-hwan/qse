@@ -21,35 +21,16 @@
 #include "xli.h"
 #include <qse/cmn/chr.h>
 
-#if 0
-static int open_stream (qse_xli_t* xli)
-{
-	qse_ssize_t n;
-
-	xli->errnum = QSE_XLI_ENOERR;
-	n = xli->src.fun (xli, QSE_XLI_IO_OPEN, &xli->src.arg, QSE_NULL, 0);
-	if (n <= -1)
-	{
-		if (xli->errnum == QSE_XLI_ENOERR) xli->errnum = QSE_XLI_EIOUSR;
-		return -1;
-	}
-
-	xli->src.cur = xli->src.buf;
-	xli->src.end = xli->src.buf;
-	xli->src.cc  = QSE_CHAR_EOF;
-	xli->src.loc.line = 1;
-	xli->src.loc.colm = 0;
-
-	xli->src.eof = 0;
-	return 0;
-}
+static int get_char (qse_xli_t* xli);
+static int get_token (qse_xli_t* xli);
+static int read_list (qse_xli_t* xli, qse_xli_list_t* list);
 
 static int close_stream (qse_xli_t* xli)
 {
 	qse_ssize_t n;
 
 	xli->errnum = QSE_XLI_ENOERR;
-	n = xli->src.fun (xli, QSE_XLI_IO_CLOSE, &xli->src.arg, QSE_NULL, 0);
+	n = xli->sio.inf (xli, QSE_XLI_IO_CLOSE, xli->sio.inp, QSE_NULL, 0);
 	if (n <= -1)
 	{
 		if (xli->errnum == QSE_XLI_ENOERR) xli->errnum = QSE_XLI_EIOUSR;
@@ -58,36 +39,6 @@ static int close_stream (qse_xli_t* xli)
 
 	return 0;
 }
-
-static int read_stream (qse_xli_t* xli)
-{
-	qse_ssize_t n;
-
-	xli->errnum = QSE_XLI_ENOERR;
-	n = xli->src.fun (
-		xli, QSE_XLI_IO_READ, &xli->src.arg, 
-		xli->src.buf, QSE_COUNTOF(xli->src.buf)
-	);
-	if (n <= -1)
-	{
-		if (xli->errnum == QSE_XLI_ENOERR) xli->errnum = QSE_XLI_EIOUSR;
-		return -1; /* error */
-	}
-
-	if (n == 0)
-	{
-		/* don't change xli->src.cur and xli->src.end.
-		 * they remain the same on eof  */
-		xli->src.eof = 1;
-		return 0; /* eof */
-	}
-
-	xli->src.cur = xli->src.buf;
-	xli->src.end = xli->src.buf + n;
-	return 1; /* read something */
-}
-
-#endif
 
 enum tok_t
 {
@@ -253,8 +204,7 @@ static int classify_ident (qse_xli_t* xli, const qse_cstr_t* name)
 			right = mid - 1;
 		}
 		else if (n < 0) left = mid + 1;
-
-		return kwp->type;
+		else return kwp->type;
 	}
 
 	return TOK_IDENT;
@@ -307,6 +257,114 @@ static int get_symbols (qse_xli_t* xli, qse_cint_t c, qse_xli_tok_t* tok)
 	return 0;
 }
 
+static int end_include (qse_xli_t* xli)
+{
+	int x;
+	qse_xli_io_arg_t* cur;
+
+	if (xli->sio.inp == &xli->sio.arg) return 0; /* no include */
+
+	/* if it is an included file, close it and
+	 * retry to read a character from an outer file */
+
+	xli->errnum = QSE_XLI_ENOERR;
+	x = xli->sio.inf (
+		xli, QSE_XLI_IO_CLOSE, 
+		xli->sio.inp, QSE_NULL, 0);
+
+	/* if closing has failed, still destroy the
+	 * sio structure first as normal and return
+	 * the failure below. this way, the caller 
+	 * does not call QSE_XLI_SIO_CLOSE on 
+	 * xli->sio.inp again. */
+
+	cur = xli->sio.inp;
+	xli->sio.inp = xli->sio.inp->next;
+
+	QSE_ASSERT (cur->name != QSE_NULL);
+	QSE_MMGR_FREE (xli->mmgr, cur);
+	/* xli->parse.depth.incl--; */
+
+	if (x != 0)
+	{
+		/* the failure mentioned above is returned here */
+		if (xli->errnum == QSE_XLI_ENOERR) xli->errnum = QSE_XLI_EIOUSR;
+		return -1;
+	}
+
+	xli->sio.last = xli->sio.inp->last;
+	return 1; /* ended the included file successfully */
+}
+
+static int begin_include (qse_xli_t* xli)
+{
+	qse_ssize_t op;
+	qse_xli_io_arg_t* arg = QSE_NULL;
+	qse_htb_pair_t* pair = QSE_NULL;
+
+	/* store the file name to xli->sio_names */
+	pair = qse_htb_ensert (
+		xli->sio_names, 
+		QSE_STR_PTR(xli->tok.name),
+		QSE_STR_LEN(xli->tok.name) + 1, /* to include '\0' */
+		QSE_NULL, 0
+	);
+	if (pair == QSE_NULL)
+	{
+#if 0
+		SETERR_LOC (xli, QSE_XLI_ENOMEM, &xli->ptok.loc);
+#endif
+		goto oops;
+	}
+
+	/*QSE_HTB_VPTR(pair) = QSE_HTB_KPTR(pair);
+	QSE_HTB_VLEN(pair) = QSE_HTB_KLEN(pair);*/
+
+	arg = (qse_xli_io_arg_t*) qse_xli_callocmem (xli, QSE_SIZEOF(*arg));
+	if (arg == QSE_NULL)
+	{
+#if 0
+		ADJERR_LOC (xli, &xli->ptok.loc);
+#endif
+		goto oops;
+	}
+
+	arg->flags = QSE_XLI_IO_INCLUDED;
+	arg->name = QSE_HTB_KPTR(pair);
+	arg->line = 1;
+	arg->colm = 1;
+
+	xli->errnum = QSE_XLI_ENOERR;
+	op = xli->sio.inf (xli, QSE_XLI_IO_OPEN, arg, QSE_NULL, 0);
+	if (op <= -1)
+	{
+		if (xli->errnum == QSE_XLI_ENOERR) xli->errnum = QSE_XLI_EIOUSR;
+		goto oops;
+	}
+
+	arg->next = xli->sio.inp;
+	xli->sio.inp = arg;
+	/* xli->parse.depth.incl++; */
+
+	/* read in the first character in the included file. 
+	 * so the next call to get_token() sees the character read
+	 * from this file. */
+	if (get_char (xli) <= -1 || get_token (xli) <= -1) 
+	{
+		end_include (xli); 
+		/* i don't jump to oops since i've called 
+		 * end_include() where xli->sio.inp/arg is freed. */
+		return -1;
+	}
+
+	return 0;
+
+oops:
+	if (arg) QSE_MMGR_FREE (xli->mmgr, arg);
+	return -1;
+}
+
+
 static int get_token_into (qse_xli_t* xli, qse_xli_tok_t* tok)
 {
 	qse_cint_t c;
@@ -330,7 +388,6 @@ retry:
 
 	if (c == QSE_CHAR_EOF) 
 	{
-#if 0
 		n = end_include (xli);
 		if (n <= -1) return -1;
 		if (n >= 1) 
@@ -340,7 +397,6 @@ retry:
 			skip_semicolon_after_include = 1; 
 			goto retry;
 		}
-#endif
 
 		ADD_TOKEN_STR (xli, tok, QSE_T("<EOF>"), 5);
 		SET_TOKEN_TYPE (xli, tok, TOK_EOF);
@@ -399,10 +455,9 @@ retry:
 	else if (c == QSE_T('\'') || c == QSE_T('\"'))
 	{
 		/* single-quoted string - no escaping */
-		qse_cint_t sc = c;
+		qse_cint_t cc = c;
 
-		SET_TOKEN_TYPE (xli, tok, 
-			((sc == QSE_T('\''))? TOK_SQSTR: TOK_DQSTR));
+		SET_TOKEN_TYPE (xli, tok, ((cc == QSE_T('\''))? TOK_SQSTR: TOK_DQSTR));
 
 		while (1)
 		{
@@ -417,7 +472,7 @@ retry:
 				return -1;
 			}
 
-			if (c == sc)
+			if (c == cc)
 			{
 				/* terminating quote */
 				GET_CHAR (xli);
@@ -426,7 +481,6 @@ retry:
 
 			ADD_TOKEN_CHAR (xli, tok, c);
 		}
-		return 0;
 	}
 	else
 	{
@@ -479,38 +533,198 @@ static int get_token (qse_xli_t* xli)
 	return get_token_into (xli, &xli->tok);
 }
 
+static int read_pair (qse_xli_t* xli, qse_xli_list_t* list)
+{
+	qse_char_t* key = QSE_NULL;
+	qse_char_t* name = QSE_NULL;
+	int got_eq = 0;
+	qse_xli_pair_t* pair;
+
+	key = qse_strdup (QSE_STR_PTR(xli->tok.name), xli->mmgr);
+	if (key == QSE_NULL) 
+	{
+		xli->errnum = QSE_XLI_ENOMEM;
+		goto oops;
+	}
+
+	if (get_token (xli) <= -1) goto oops;
+	if (MATCH (xli, TOK_SQSTR) || MATCH(xli, TOK_DQSTR))
+	{
+		name = qse_strdup (QSE_STR_PTR(xli->tok.name), xli->mmgr);
+		if (name == QSE_NULL) 
+		{
+			xli->errnum = QSE_XLI_ENOMEM;
+			goto oops;
+		}
+
+		if (get_token (xli) <= -1) goto oops;
+	}
+
+	if (MATCH (xli, TOK_EQ))
+	{
+		if (get_token (xli) <= -1) goto oops;
+		got_eq = 1;
+	}
+	
+	if (MATCH (xli, TOK_LBRACE))
+	{
+		if (get_token (xli) <= -1) goto oops;
+
+/*  TODO: make it optional??? check duplicate entries... */
+
+		/* insert a pair with an empty list */
+		pair = qse_xli_insertpairwithemptylist (xli, list, QSE_NULL, key, name);
+		if (pair == QSE_NULL) goto oops;
+	
+		if (read_list (xli, (qse_xli_list_t*)pair->val) <= -1) goto oops;
+		
+		if (!MATCH (xli, TOK_RBRACE))
+		{
+			/* TODO: syntax error */
+			goto oops;
+		}
+
+		if (get_token (xli) <= -1) goto oops;
+
+		/* semicolon is optional for a list */
+		if (MATCH (xli, TOK_SEMICOLON))
+		{
+			/* skip the semicolon */
+			if (get_token (xli) <= -1) goto oops;
+		}
+	}
+	else if (MATCH (xli, TOK_SQSTR) || MATCH (xli, TOK_DQSTR))
+	{
+		if (!got_eq) 
+		{
+			/* TODO: syntax error */
+			goto oops;
+		}
+
+		pair = qse_xli_insertpairwithstr (
+			xli, list, QSE_NULL, key, name, 
+			QSE_STR_PTR(xli->tok.name), MATCH (xli, TOK_SQSTR));
+		if (pair == QSE_NULL) goto oops;
+
+		if (get_token (xli) <= -1) goto oops;
+
+		/* semicolon is mandatory for a string */
+		if (!MATCH (xli, TOK_SEMICOLON))
+		{
+			/* TODO: syntax error */
+			goto oops;
+		}
+
+		if (get_token (xli) <= -1) goto oops;
+	}
+	else
+	{
+		/* TODO: syntax error */
+		goto oops;	
+	}
+
+	QSE_MMGR_FREE (xli->mmgr, name);
+	QSE_MMGR_FREE (xli->mmgr, key);
+	return 0;
+	
+oops:
+	if (name) QSE_MMGR_FREE (xli->mmgr, name);
+	if (key) QSE_MMGR_FREE (xli->mmgr, key);
+	return -1;
+}
+
+static int read_list (qse_xli_t* xli, qse_xli_list_t* list)
+{
+	while (1)
+	{
+		if (MATCH (xli, TOK_XINCLUDE))
+		{
+			if (get_token(xli) <= -1) goto oops;
+
+			if (!MATCH(xli,TOK_SQSTR) && !MATCH(xli,TOK_DQSTR))
+			{
+#if 0
+				SETERR_LOC (xli, QSE_XLI_EINCLSTR, &xli->ptok.loc);
+#endif
+				return -1;
+			}
+
+			if (begin_include (xli) <= -1) goto oops;
+		}
+		else if (MATCH (xli, TOK_IDENT))
+		{
+			if (read_pair (xli, list) <= -1) goto oops;
+		}
+		else if (MATCH (xli, TOK_TEXT))
+		{
+			if (get_token(xli) <= -1) goto oops;
+		}
+		else break;
+	}
+
+	return 0;
+
+oops:
+	return -1;
+}
+
 int qse_xli_read (qse_xli_t* xli, qse_xli_io_impl_t io)
 {
+	qse_ssize_t n;
+
 	if (io == QSE_NULL)
 	{
 		xli->errnum = QSE_XLI_EINVAL;
 		return -1;
 	}
 
+	QSE_MEMSET (&xli->sio, 0, QSE_SIZEOF(xli->sio));
 	xli->sio.inf = io;
-#if 0
-	if (open_stream (xli) <= -1) return -1;
+	xli->sio.arg.line = 1;
+	xli->sio.arg.colm = 1;
+	xli->sio.inp = &xli->sio.arg;
+	qse_htb_clear (xli->sio_names);
 
-	close_stream (xli);
-#endif
-
-	do
+	xli->errnum = QSE_XLI_ENOERR;
+	n = xli->sio.inf (xli, QSE_XLI_IO_OPEN, xli->sio.inp, QSE_NULL, 0);
+	if (n <= -1)
 	{
-		if (get_token (xli) <= -1) return -1;
-		if (MATCH (xli, TOK_XINCLUDE))
-		{
-		}
-		else if (MATCH (xli, TOK_IDENT))
-		{
-		}
-		else if (MATCH (xli, TOK_TEXT))
-		{
-		}
-		else
-		{
-		}
+		if (xli->errnum == QSE_XLI_ENOERR) xli->errnum = QSE_XLI_EIOUSR;
+		return -1;
 	}
-	while (1);
+	/* the input stream is open now */
 
+	if (get_char (xli) <= -1 || get_token (xli) <= -1) goto oops;
+	if (read_list (xli, &xli->root) <= -1) goto oops;
+
+	if (!MATCH (xli, TOK_EOF))
+	{
+/* TODO: set erro code */
+qse_printf (QSE_T("NOT ENDING WITH EOF... %s\n"), QSE_STR_PTR(xli->tok.name));
+		goto oops;
+	}
+
+	QSE_ASSERT (xli->sio.inp == &xli->sio.arg);
+	close_stream (xli);
 	return 0;
+
+oops:
+	/* an error occurred and control has reached here
+	 * probably, some included files might not have been 
+	 * closed. close them */
+	while (xli->sio.inp != &xli->sio.arg)
+	{
+		qse_xli_io_arg_t* next;
+
+		/* nothing much to do about a close error */
+		close_stream (xli);
+
+		next = xli->sio.inp->next;
+		QSE_ASSERT (xli->sio.inp->name != QSE_NULL);
+		QSE_MMGR_FREE (xli->mmgr, xli->sio.inp);
+		xli->sio.inp = next;
+	}
+	
+	close_stream (xli);
+	return -1;
 }

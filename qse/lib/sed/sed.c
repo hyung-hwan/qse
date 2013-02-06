@@ -62,12 +62,14 @@ qse_sed_t* qse_sed_open (qse_mmgr_t* mmgr, qse_size_t xtnsize)
 	qse_sed_t* sed;
 
 	sed = (qse_sed_t*) QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(qse_sed_t) + xtnsize);
-	if (sed == QSE_NULL) return QSE_NULL;
-
-	if (qse_sed_init (sed, mmgr) <= -1)
+	if (sed)
 	{
-		QSE_MMGR_FREE (sed->mmgr, sed);
-		return QSE_NULL;
+		if (qse_sed_init (sed, mmgr) <= -1)
+		{
+			QSE_MMGR_FREE (sed->mmgr, sed);
+			return QSE_NULL;
+		}
+		else QSE_MEMSET (QSE_XTN(sed), 0, xtnsize);
 	}
 
 	return sed;

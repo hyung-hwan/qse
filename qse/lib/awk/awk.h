@@ -201,9 +201,9 @@ struct qse_awk_t
 		qse_awk_sio_lxc_t ungot[5];
 
 		qse_awk_sio_arg_t arg; /* for the top level source */
-		qse_awk_sio_arg_t* inp; /* current input */
-		qse_htb_t* names; 
+		qse_awk_sio_arg_t* inp; /* current input argument. */
 	} sio;
+	qse_htb_t* sio_names; 
 
 	/* previous token */
 	qse_awk_tok_t ptok;
