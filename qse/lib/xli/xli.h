@@ -23,6 +23,7 @@
 
 #include <qse/xli/xli.h>
 #include <qse/cmn/str.h>
+#include <qse/cmn/htb.h>
 #include "../cmn/mem.h"
 
 typedef struct qse_xli_tok_t qse_xli_tok_t;
@@ -52,11 +53,11 @@ struct qse_xli_t
 	struct
 	{
 		qse_xli_io_impl_t inf; /* input handler */
+		qse_xli_io_lxc_t last;	
 		qse_xli_io_arg_t  arg; /* for top level */
 		qse_xli_io_arg_t* inp; /* current */
-
-		qse_xli_io_lxc_t last;	
 	} sio;
+	qse_htb_t* sio_names;
 };
 
 

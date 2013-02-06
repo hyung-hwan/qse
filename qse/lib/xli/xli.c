@@ -25,12 +25,14 @@ qse_xli_t* qse_xli_open (qse_mmgr_t* mmgr, qse_size_t xtnsize)
 	qse_xli_t* xli;
 
 	xli = (qse_xli_t*) QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(qse_xli_t) + xtnsize);
-	if (xli == QSE_NULL) return QSE_NULL;
-
-	if (qse_xli_init (xli, mmgr) <= -1)
+	if (xli)
 	{
-		QSE_MMGR_FREE (xli->mmgr, xli);
-		return QSE_NULL;
+		if (qse_xli_init (xli, mmgr) <= -1)
+		{
+			QSE_MMGR_FREE (xli->mmgr, xli);
+			return QSE_NULL;
+		}
+		else QSE_MEMSET (QSE_XTN(xli), 0, xtnsize);
 	}
 
 	return xli;
@@ -53,17 +55,30 @@ int qse_xli_init (qse_xli_t* xli, qse_mmgr_t* mmgr)
 	xli->mmgr = mmgr;
 
 	xli->tok.name = qse_str_open (mmgr, 0, 128);
-	if (xli->tok.name == QSE_NULL) 
-	{
-		xli->errnum = QSE_XLI_ENOMEM;
-		return -1;
-	}
+	if (xli->tok.name == QSE_NULL) goto oops;
+
+	xli->sio_names = qse_htb_open (
+		mmgr, QSE_SIZEOF(xli), 128, 70, QSE_SIZEOF(qse_char_t), 1
+	);
+	if (xli->sio_names == QSE_NULL) goto oops;
+	*(qse_xli_t**)QSE_XTN(xli->sio_names) = xli;
+	qse_htb_setmancbs (xli->sio_names, 
+		qse_gethtbmancbs(QSE_HTB_MANCBS_INLINE_KEY_COPIER)
+	);
 	
 	return 0;
+
+oops:
+	xli->errnum = QSE_XLI_ENOMEM;
+	if (xli->sio_names) qse_htb_close (xli->sio_names);
+	if (xli->tok.name) qse_str_close (xli->tok.name);
+	return -1;
 }
 
 void qse_xli_fini (qse_xli_t* xli)
 {
+	qse_xli_clear (xli);
+	qse_htb_close (xli->sio_names);
 	qse_str_close (xli->tok.name);
 }
 
@@ -154,6 +169,7 @@ static void insert_atom (
 	{
 		/* insert it to the tail */
 		atom->prev = parent->tail;
+		if (parent->tail) parent->tail->next = atom;
 		parent->tail = atom;
 		if (parent->head == QSE_NULL) parent->head = atom;
 	}
@@ -175,7 +191,7 @@ static void insert_atom (
 	}
 }
 
-qse_xli_atom_t* qse_xli_insertpair (
+qse_xli_pair_t* qse_xli_insertpair (
 	qse_xli_t* xli, qse_xli_list_t* parent, qse_xli_atom_t* peer,
 	const qse_char_t* key, const qse_char_t* name, qse_xli_val_t* value)
 {
@@ -196,17 +212,35 @@ qse_xli_atom_t* qse_xli_insertpair (
 	pair->name = pair->key + klen + 1;
 	pair->val = value;  /* this assumes it points to a dynamically allocated atom  */
 
-	insert_atom (xli, parent, peer, pair);
+	qse_strcpy (pair->key, key);
+	if (name) qse_strcpy (pair->name, name);
 
-	return (qse_xli_atom_t*)pair;
+	insert_atom (xli, parent, peer, (qse_xli_atom_t*)pair);
+	return pair;
 }
 
-qse_xli_atom_t* qse_xli_insertpairwithstr (
+qse_xli_pair_t* qse_xli_insertpairwithemptylist (
 	qse_xli_t* xli, qse_xli_list_t* parent, qse_xli_atom_t* peer,
-	const qse_char_t* key, const qse_char_t* name, const qse_char_t* value)
+	const qse_char_t* key, const qse_char_t* name)
+{
+	qse_xli_list_t* val;
+	qse_xli_pair_t* tmp;
+
+	val = qse_xli_callocmem (xli, QSE_SIZEOF(*val));
+	if (val == QSE_NULL) return QSE_NULL;
+
+	val->type = QSE_XLI_LIST;
+	tmp = qse_xli_insertpair (xli, parent, peer, key, name, (qse_xli_val_t*)val);	
+	if (tmp == QSE_NULL) qse_xli_freemem (xli, val);
+	return tmp;
+}
+
+qse_xli_pair_t* qse_xli_insertpairwithstr (
+	qse_xli_t* xli, qse_xli_list_t* parent, qse_xli_atom_t* peer,
+	const qse_char_t* key, const qse_char_t* name, const qse_char_t* value, int verbatim)
 {
 	qse_xli_str_t* val;
-	qse_xli_atom_t* tmp;
+	qse_xli_pair_t* tmp;
 	qse_size_t vlen;
 
 	vlen = qse_strlen (value);
@@ -216,13 +250,14 @@ qse_xli_atom_t* qse_xli_insertpairwithstr (
 	val->type = QSE_XLI_STR;
 	val->ptr = (const qse_char_t*)(val + 1);
 	val->len = vlen;
-	tmp = qse_xli_insertpair (xli, parent, peer, key, name, val);	
+	val->verbatim = verbatim;
+	tmp = qse_xli_insertpair (xli, parent, peer, key, name, (qse_xli_val_t*)val);	
 	if (tmp == QSE_NULL) qse_xli_freemem (xli, val);
 	return tmp;
 }
 
-qse_xli_atom_t* qse_xli_inserttext (
-	qse_xli_t* xli, qse_xli_atom_t* parent, qse_xli_atom_t* peer, const qse_char_t* str)
+qse_xli_text_t* qse_xli_inserttext (
+	qse_xli_t* xli, qse_xli_list_t* parent, qse_xli_atom_t* peer, const qse_char_t* str)
 {
 	qse_xli_text_t* text;
 	qse_size_t slen;
@@ -236,21 +271,48 @@ qse_xli_atom_t* qse_xli_inserttext (
 	text->ptr = (const qse_char_t*)(text + 1);
 	text->len = slen;
 
-	insert_atom (xli, parent, peer, text);
+	insert_atom (xli, parent, peer, (qse_xli_atom_t*)text);
 
-	return (qse_xli_atom_t*)text;
+	return text;
 }
 
 /* ------------------------------------------------------ */
 
-int qse_xli_write (qse_xli_t* xli, qse_xli_io_impl_t io)
+static void free_list (qse_xli_t* xli, qse_xli_list_t* list);
+
+static void free_atom (qse_xli_t* xli, qse_xli_atom_t* atom)
 {
-	/* TODO: write data to io stream */
-	xli->errnum = QSE_XLI_ENOIMPL;
-	return -1;
+	if (atom->type == QSE_XLI_PAIR)
+	{
+		qse_xli_pair_t* pair = (qse_xli_pair_t*)atom;
+
+		if (pair->val->type == QSE_XLI_LIST)
+			free_list (xli, (qse_xli_list_t*)pair->val);
+
+		QSE_MMGR_FREE (xli->mmgr, pair->val);
+	}
+	
+	QSE_MMGR_FREE (xli->mmgr, atom);
+}
+
+static void free_list (qse_xli_t* xli, qse_xli_list_t* list)
+{
+	qse_xli_atom_t* p, * n;
+
+	p = list->head;
+	while (p)
+	{
+		n = p->next;
+		free_atom (xli, p);	
+		p = n;
+	}
+
+	list->head = QSE_NULL;
+	list->tail = QSE_NULL;
 }
 
 void qse_xli_clear (qse_xli_t* xli)
 {
 	/* TODO: free data under xli->root */
+	free_list (xli, &xli->root);
 }

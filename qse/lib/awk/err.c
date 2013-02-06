@@ -101,7 +101,7 @@ const qse_char_t* qse_awk_dflerrstr (const qse_awk_t* awk, qse_awk_errnum_t errn
 		QSE_T("'nextfile' illegal in the END block"),
 		QSE_T("both prefix and postfix increment/decrement operator present"),
 		QSE_T("illegal operand for increment/decrement operator"),
-		QSE_T("'include' not followed by a string"),
+		QSE_T("'@include' not followed by a string"),
 		QSE_T("include level too deep"),
 		QSE_T("@word '${0}' not recognized"),
 		QSE_T("@ not followed by a valid word"),

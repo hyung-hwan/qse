@@ -79,7 +79,7 @@ am__uninstall_files_from_dir = { \
 am__installdirs = "$(DESTDIR)$(libdir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
 libqsexli_la_DEPENDENCIES =
-am_libqsexli_la_OBJECTS = xli.lo read.lo
+am_libqsexli_la_OBJECTS = xli.lo read.lo write.lo std.lo
 libqsexli_la_OBJECTS = $(am_libqsexli_la_OBJECTS)
 libqsexli_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
@@ -282,7 +282,7 @@ AM_CPPFLAGS = \
 	-I$(includedir)
 
 lib_LTLIBRARIES = libqsexli.la
-libqsexli_la_SOURCES = xli.h xli.c read.c
+libqsexli_la_SOURCES = xli.h xli.c read.c write.c std.c
 libqsexli_la_LDFLAGS = -L../cmn  -L$(libdir)  -version-info 1:0:0 -no-undefined
 libqsexli_la_LIBADD = -lqsecmn 
 all: all-am
@@ -359,8 +359,10 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xli.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/read.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/std.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/write.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xli.Plo@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
