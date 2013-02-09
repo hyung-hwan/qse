@@ -53,7 +53,7 @@
 static qse_char_t* g_input_file = QSE_NULL;
 static qse_char_t* g_output_file = QSE_NULL;
 static qse_ulong_t g_memlimit = 0;
-static int g_option = 0;
+static int g_trait = 0;
 
 static qse_cmgr_t* g_infile_cmgr = QSE_NULL;
 static qse_cmgr_t* g_outfile_cmgr = QSE_NULL;
@@ -129,6 +129,7 @@ static void print_usage (QSE_FILE* out, int argc, qse_char_t* argv[])
 	qse_fprintf (out, QSE_T(" --version                 show version\n"));
 	qse_fprintf (out, QSE_T(" -f                 file   specify an input file\n"));
 	qse_fprintf (out, QSE_T(" -o                 file   specify an output file\n"));
+	qse_fprintf (out, QSE_T(" -n                        allow a key name\n"));
 	qse_fprintf (out, QSE_T(" -m                 number specify the maximum amount of memory to use in bytes\n"));
 #if defined(QSE_BUILD_DEBUG)
 	qse_fprintf (out, QSE_T(" -X                 number fail the number'th memory allocation\n"));
@@ -155,9 +156,9 @@ static int handle_args (int argc, qse_char_t* argv[])
 	static qse_opt_t opt = 
 	{
 #if defined(QSE_BUILD_DEBUG)
-		QSE_T("hf:o:m:X:"),
+		QSE_T("hf:o:nm:X:"),
 #else
-		QSE_T("hf:o:m:"),
+		QSE_T("hf:o:nm:"),
 #endif
 		lng
 	};
@@ -197,6 +198,10 @@ static int handle_args (int argc, qse_char_t* argv[])
 
 			case QSE_T('o'):
 				g_output_file = opt.arg;
+				break;
+
+			case QSE_T('n'):
+				g_trait |= QSE_XLI_NAMEDKEY;
 				break;
 
 			case QSE_T('m'):
@@ -318,7 +323,12 @@ static int xli_main (int argc, qse_char_t* argv[])
 		goto oops;
 	}
 
-	qse_xli_setopt (xli, QSE_XLI_TRAIT, &g_option);
+	{
+		int trait;
+		qse_xli_getopt (xli, QSE_XLI_TRAIT, &trait);
+		g_trait |= trait;
+		qse_xli_setopt (xli, QSE_XLI_TRAIT, &g_trait);
+	}
 
 	in.type = QSE_XLI_IOSTD_FILE;
 	in.u.file.path = g_input_file;
@@ -326,30 +336,15 @@ static int xli_main (int argc, qse_char_t* argv[])
 
 	if (qse_xli_readstd (xli, &in) <= -1)
 	{
-#if 0
 		const qse_xli_loc_t* errloc;
-		const qse_char_t* target;
-		qse_char_t exprbuf[128];
 	
-		errloc = getxli_geterrloc (xli);
-		if (g_script.io[script_count].type == QSE_XLI_IOSTD_FILE)
-		{
-			target = g_script.io[script_count].u.file.path;
-		}
-		else 
-		{
-			/* i dont' use QSE_XLI_IOSTD_SIO for input */	
-			QSE_ASSERT (g_script.io[script_count].type == QSE_XLI_IOSTD_STR);
-			qse_sprintf (exprbuf, QSE_COUNTOF(exprbuf), 
-				QSE_T("expression #%lu"), (unsigned long)script_count);
-			target = exprbuf;
-		}
+		errloc = qse_xli_geterrloc (xli);
 
 		if (errloc->line > 0 || errloc->colm > 0)
 		{
 			qse_fprintf (QSE_STDERR, 
-				QSE_T("ERROR: cannot compile %s - %s at line %lu column %lu\n"),
-				target,
+				QSE_T("ERROR: cannot read %s - %s at line %lu column %lu\n"),
+				g_input_file,
 				qse_xli_geterrmsg(xli),
 				(unsigned long)errloc->line,
 				(unsigned long)errloc->colm
@@ -358,13 +353,11 @@ static int xli_main (int argc, qse_char_t* argv[])
 		else
 		{
 			qse_fprintf (QSE_STDERR, 
-				QSE_T("ERROR: cannot compile %s - %s\n"),
-				target,
+				QSE_T("ERROR: cannot read %s - %s\n"),
+				g_input_file,
 				qse_xli_geterrmsg(xli)
 			);
 		}
-#endif
-		qse_fprintf (QSE_STDERR, QSE_T("ERROR: cannot read\n"));
 		goto oops;
 	}
 

@@ -29,11 +29,11 @@ static int close_stream (qse_xli_t* xli)
 {
 	qse_ssize_t n;
 
-	xli->errnum = QSE_XLI_ENOERR;
 	n = xli->sio.inf (xli, QSE_XLI_IO_CLOSE, xli->sio.inp, QSE_NULL, 0);
 	if (n <= -1)
 	{
-		if (xli->errnum == QSE_XLI_ENOERR) xli->errnum = QSE_XLI_EIOUSR;
+		if (xli->errnum == QSE_XLI_ENOERR) 
+			qse_xli_seterrnum (xli, QSE_XLI_EIOUSR, QSE_NULL);
 		return -1;
 	}
 
@@ -69,7 +69,7 @@ enum tok_t
 	do { \
 		if (qse_str_ccat((tok)->name,(c)) == (qse_size_t)-1) \
 		{ \
-			xli->errnum = QSE_XLI_ENOMEM; \
+			qse_xli_seterrnum (xli, QSE_XLI_ENOMEM, QSE_NULL); \
 			return -1; \
 		} \
 	} while (0)
@@ -78,7 +78,7 @@ enum tok_t
 	do { \
 		if (qse_str_ncat((tok)->name,(s),(l)) == (qse_size_t)-1) \
 		{ \
-			xli->errnum = QSE_XLI_ENOMEM; \
+			qse_xli_seterrnum (xli, QSE_XLI_ENOMEM, QSE_NULL); \
 			return -1; \
 		} \
 	} while (0)
@@ -108,7 +108,6 @@ static int get_char (qse_xli_t* xli)
 
 	if (xli->sio.inp->b.pos >= xli->sio.inp->b.len)
 	{
-		xli->errnum = QSE_XLI_ENOERR;
 		n = xli->sio.inf (
 			xli, QSE_XLI_IO_READ, xli->sio.inp,
 			xli->sio.inp->b.buf, QSE_COUNTOF(xli->sio.inp->b.buf)
@@ -116,7 +115,7 @@ static int get_char (qse_xli_t* xli)
 		if (n <= -1)
 		{
 			if (xli->errnum == QSE_XLI_ENOERR)
-				xli->errnum = QSE_XLI_EIOUSR;
+				qse_xli_seterrnum (xli, QSE_XLI_EIOUSR, QSE_NULL); 
 			return -1;
 		}
 
@@ -267,7 +266,6 @@ static int end_include (qse_xli_t* xli)
 	/* if it is an included file, close it and
 	 * retry to read a character from an outer file */
 
-	xli->errnum = QSE_XLI_ENOERR;
 	x = xli->sio.inf (
 		xli, QSE_XLI_IO_CLOSE, 
 		xli->sio.inp, QSE_NULL, 0);
@@ -288,7 +286,8 @@ static int end_include (qse_xli_t* xli)
 	if (x != 0)
 	{
 		/* the failure mentioned above is returned here */
-		if (xli->errnum == QSE_XLI_ENOERR) xli->errnum = QSE_XLI_EIOUSR;
+		if (xli->errnum == QSE_XLI_ENOERR)
+			qse_xli_seterrnum (xli, QSE_XLI_EIOUSR, QSE_NULL); 
 		return -1;
 	}
 
@@ -334,11 +333,11 @@ static int begin_include (qse_xli_t* xli)
 	arg->line = 1;
 	arg->colm = 1;
 
-	xli->errnum = QSE_XLI_ENOERR;
 	op = xli->sio.inf (xli, QSE_XLI_IO_OPEN, arg, QSE_NULL, 0);
 	if (op <= -1)
 	{
-		if (xli->errnum == QSE_XLI_ENOERR) xli->errnum = QSE_XLI_EIOUSR;
+		if (xli->errnum == QSE_XLI_ENOERR)
+			qse_xli_seterrnum (xli, QSE_XLI_EIOUSR, QSE_NULL); 
 		goto oops;
 	}
 
@@ -537,40 +536,99 @@ static int read_pair (qse_xli_t* xli, qse_xli_list_t* list)
 {
 	qse_char_t* key = QSE_NULL;
 	qse_char_t* name = QSE_NULL;
-	int got_eq = 0;
 	qse_xli_pair_t* pair;
+
+	if (xli->opt.trait & QSE_XLI_NODUPKEY)
+	{
+		qse_xli_atom_t* atom;
+
+		/* find any key conflicts in the current scope */
+		atom = list->tail;
+		while (atom)
+		{
+			if (atom->type == QSE_XLI_PAIR &&
+			    qse_strcmp (((qse_xli_pair_t*)atom)->key, QSE_STR_PTR(xli->tok.name)) == 0)
+			{
+				qse_xli_seterror (xli, QSE_XLI_EEXIST, QSE_STR_CSTR(xli->tok.name), &xli->tok.loc);
+				goto oops;
+			}
+
+			atom = atom->prev;
+		}
+	}
 
 	key = qse_strdup (QSE_STR_PTR(xli->tok.name), xli->mmgr);
 	if (key == QSE_NULL) 
 	{
-		xli->errnum = QSE_XLI_ENOMEM;
+		qse_xli_seterrnum (xli, QSE_XLI_ENOMEM, QSE_NULL); 
 		goto oops;
 	}
 
 	if (get_token (xli) <= -1) goto oops;
-	if (MATCH (xli, TOK_SQSTR) || MATCH(xli, TOK_DQSTR))
-	{
-		name = qse_strdup (QSE_STR_PTR(xli->tok.name), xli->mmgr);
-		if (name == QSE_NULL) 
-		{
-			xli->errnum = QSE_XLI_ENOMEM;
-			goto oops;
-		}
 
-		if (get_token (xli) <= -1) goto oops;
+	if  (xli->opt.trait & QSE_XLI_NAMEDKEY)
+	{
+		/* the name part must be unique for the same key(s) */
+		if (MATCH (xli, TOK_SQSTR) || MATCH(xli, TOK_DQSTR))
+		{
+			qse_xli_atom_t* atom;
+
+			atom = list->tail;
+			while (atom)
+			{
+				if (atom->type == QSE_XLI_PAIR &&
+				    ((qse_xli_pair_t*)atom)->name && 
+				    qse_strcmp (((qse_xli_pair_t*)atom)->key, key) == 0 &&
+				    qse_strcmp (((qse_xli_pair_t*)atom)->name, QSE_STR_PTR(xli->tok.name)) == 0)
+				{
+					qse_xli_seterror (xli, QSE_XLI_EEXIST, QSE_STR_CSTR(xli->tok.name), &xli->tok.loc);
+					goto oops;
+				}
+				atom = atom->prev;
+			}
+
+			name = qse_strdup (QSE_STR_PTR(xli->tok.name), xli->mmgr);
+			if (name == QSE_NULL) 
+			{
+				qse_xli_seterrnum (xli, QSE_XLI_ENOMEM, QSE_NULL); 
+				goto oops;
+			}
+
+			if (get_token (xli) <= -1) goto oops;
+		}
 	}
 
 	if (MATCH (xli, TOK_EQ))
 	{
 		if (get_token (xli) <= -1) goto oops;
-		got_eq = 1;
+
+		if (MATCH (xli, TOK_SQSTR) || MATCH (xli, TOK_DQSTR))
+		{
+			pair = qse_xli_insertpairwithstr (
+				xli, list, QSE_NULL, key, name, 
+				QSE_STR_PTR(xli->tok.name), MATCH (xli, TOK_SQSTR));
+			if (pair == QSE_NULL) goto oops;
+
+			if (get_token (xli) <= -1) goto oops;
+
+			/* semicolon is mandatory for a string */
+			if (!MATCH (xli, TOK_SEMICOLON))
+			{
+				qse_xli_seterror (xli, QSE_XLI_ESCOLON, QSE_STR_CSTR(xli->tok.name), &xli->tok.loc);
+				goto oops;
+			}
+
+			if (get_token (xli) <= -1) goto oops;
+		}
+		else
+		{
+			qse_xli_seterror (xli, QSE_XLI_EPAVAL, QSE_STR_CSTR(xli->tok.name), &xli->tok.loc);
+			goto oops;	
+		}
 	}
-	
-	if (MATCH (xli, TOK_LBRACE))
+	else if (MATCH (xli, TOK_LBRACE))
 	{
 		if (get_token (xli) <= -1) goto oops;
-
-/*  TODO: make it optional??? check duplicate entries... */
 
 		/* insert a pair with an empty list */
 		pair = qse_xli_insertpairwithemptylist (xli, list, QSE_NULL, key, name);
@@ -580,7 +638,7 @@ static int read_pair (qse_xli_t* xli, qse_xli_list_t* list)
 		
 		if (!MATCH (xli, TOK_RBRACE))
 		{
-			/* TODO: syntax error */
+			qse_xli_seterror (xli, QSE_XLI_ERBRCE, QSE_STR_CSTR(xli->tok.name), &xli->tok.loc);
 			goto oops;
 		}
 
@@ -593,33 +651,9 @@ static int read_pair (qse_xli_t* xli, qse_xli_list_t* list)
 			if (get_token (xli) <= -1) goto oops;
 		}
 	}
-	else if (MATCH (xli, TOK_SQSTR) || MATCH (xli, TOK_DQSTR))
-	{
-		if (!got_eq) 
-		{
-			/* TODO: syntax error */
-			goto oops;
-		}
-
-		pair = qse_xli_insertpairwithstr (
-			xli, list, QSE_NULL, key, name, 
-			QSE_STR_PTR(xli->tok.name), MATCH (xli, TOK_SQSTR));
-		if (pair == QSE_NULL) goto oops;
-
-		if (get_token (xli) <= -1) goto oops;
-
-		/* semicolon is mandatory for a string */
-		if (!MATCH (xli, TOK_SEMICOLON))
-		{
-			/* TODO: syntax error */
-			goto oops;
-		}
-
-		if (get_token (xli) <= -1) goto oops;
-	}
 	else
 	{
-		/* TODO: syntax error */
+		qse_xli_seterror (xli, QSE_XLI_ELBREQ, QSE_STR_CSTR(xli->tok.name), &xli->tok.loc);
 		goto oops;	
 	}
 
@@ -674,7 +708,7 @@ int qse_xli_read (qse_xli_t* xli, qse_xli_io_impl_t io)
 
 	if (io == QSE_NULL)
 	{
-		xli->errnum = QSE_XLI_EINVAL;
+		qse_xli_seterrnum (xli, QSE_XLI_EINVAL, QSE_NULL); 
 		return -1;
 	}
 
@@ -685,11 +719,11 @@ int qse_xli_read (qse_xli_t* xli, qse_xli_io_impl_t io)
 	xli->sio.inp = &xli->sio.arg;
 	qse_htb_clear (xli->sio_names);
 
-	xli->errnum = QSE_XLI_ENOERR;
 	n = xli->sio.inf (xli, QSE_XLI_IO_OPEN, xli->sio.inp, QSE_NULL, 0);
 	if (n <= -1)
 	{
-		if (xli->errnum == QSE_XLI_ENOERR) xli->errnum = QSE_XLI_EIOUSR;
+		if (xli->errnum == QSE_XLI_ENOERR)
+			qse_xli_seterrnum (xli, QSE_XLI_EIOUSR, QSE_NULL); 
 		return -1;
 	}
 	/* the input stream is open now */

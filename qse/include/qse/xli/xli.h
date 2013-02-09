@@ -35,9 +35,28 @@ enum qse_xli_errnum_t
 	QSE_XLI_EINTERN, /**< internal error */
 	QSE_XLI_ENOMEM,  /**< insufficient memory */
 	QSE_XLI_EINVAL,  /**< invalid parameter or data */
-	QSE_XLI_EIOUSR   /**< i/o handler error */
+	QSE_XLI_ENOENT,  /**< '${0}' not found */
+	QSE_XLI_EEXIST,  /**< '${0}' already exists */
+	QSE_XLI_EIOFIL,  /**< io error with file '${0}' */
+	QSE_XLI_EIOUSR,  /**< i/o handler error */
+	QSE_XLI_ESCOLON, /**< semicolon expected in place of '${0}' */
+	QSE_XLI_ELBREQ,  /**< { or = expected in place of '${0}' */
+	QSE_XLI_ERBRCE,  /**< } expected in place of '${0}' */
+	QSE_XLI_EPAVAL   /**< pair value expected in place of '${0}' */
 };
 typedef enum qse_xli_errnum_t qse_xli_errnum_t;
+
+/**
+ * The qse_xli_errstr_t type defines an error string getter. It should return 
+ * an error formatting string for an error number requested. A new string
+ * should contain the same number of positional parameters (${X}) as in the
+ * default error formatting string. You can set a new getter into a stream
+ * editor with the qse_xli_seterrstr() function to customize an error string.
+ */
+typedef const qse_char_t* (*qse_xli_errstr_t) (
+	const qse_xli_t* xli,   /**< stream editor */
+	qse_xli_errnum_t num    /**< an error number */
+);
 
 enum qse_xli_opt_t
 {
@@ -47,7 +66,9 @@ typedef enum qse_xli_opt_t qse_xli_opt_t;
 
 enum qse_xli_trait_t
 {
-	QSE_XLI_NOTEXT = (1 << 0)
+	QSE_XLI_NAMEDKEY = (1 << 0),
+	QSE_XLI_NODUPKEY = (1 << 1),
+	QSE_XLI_NOTEXT   = (1 << 10)
 };
 typedef enum qse_xli_trait_t qse_xli_trait_t;
 
@@ -95,7 +116,7 @@ struct qse_xli_str_t
 	QSE_XLI_VAL_HDR;
 	int verbatim;
 	const qse_char_t* ptr;
-	qse_size_t len;
+	qse_size_t        len;
 };
 
 #define QSE_XLI_ATOM_HDR \
@@ -287,6 +308,144 @@ QSE_EXPORT qse_xli_ecb_t* qse_xli_popecb (
 	qse_xli_t* xli
 );
 
+
+/**
+ * The qse_xli_getopt() function gets the value of an option
+ * specified by \a id into the buffer pointed to by \a value.
+ *
+ * The \a value field is dependent on \a id:
+ *  - #QSE_XLI_TRAIT - int*, 0 or bitwixli-ORed of #qse_xli_trait_t values
+ *
+ * \return 0 on success, -1 on failure
+ */
+QSE_EXPORT int qse_xli_getopt (
+	qse_xli_t*    xli,
+	qse_xli_opt_t id,
+	void*         value
+);
+
+/**
+ * The qse_xli_setopt() function sets the value of an option 
+ * specified by \a id to the value pointed to by \a value.
+ *
+ * The \a value field is dependent on \a id:
+ *  - #QSE_XLI_TRAIT - const int*, 0 or bitwixli-ORed of #qse_xli_trait_t values
+ *
+ * \return 0 on success, -1 on failure
+ */
+QSE_EXPORT int qse_xli_setopt (
+	qse_xli_t*    xli,
+	qse_xli_opt_t id,
+	const void*   value
+);
+
+/**
+ * The qse_xli_geterrstr() gets an error string getter.
+ */
+QSE_EXPORT qse_xli_errstr_t qse_xli_geterrstr (
+	const qse_xli_t* xli    /**< stream editor */
+);
+
+/**
+ * The qse_xli_seterrstr() sets an error string getter that is called to
+ * compose an error message when its retrieval is requested.
+ *
+ * Here is an example of changing the formatting string for the #QSE_XLI_EIOFIL 
+ * error.
+ * @code
+ * qse_xli_errstr_t orgerrstr;
+ *
+ * const qse_char_t* myerrstr (qse_xli_t* xli, qse_xli_errnum_t num)
+ * {
+ *   if (num == QSE_XLI_EIOFIL) return QSE_T("file I/O error in ${0}");
+ *   return orgerrstr (xli, num);
+ * }
+ * int main ()
+ * {
+ *    qse_xli_t* xli;
+ *    ...
+ *    orgerrstr = qse_xli_geterrstr (xli);
+ *    qse_xli_seterrstr (xli, myerrstr);
+ *    ...
+ * }
+ * @endcode
+ */
+QSE_EXPORT void qse_xli_seterrstr (
+	qse_xli_t*       xli,   /**< stream editor */
+	qse_xli_errstr_t errstr /**< an error string getter */
+);
+
+/**
+ * The qse_xli_geterrnum() function gets the number of the last error.
+ * @return error number
+ */
+QSE_EXPORT qse_xli_errnum_t qse_xli_geterrnum (
+	const qse_xli_t* xli /**< stream editor */
+);
+
+/**
+ * The qse_xli_geterrloc() function gets the location where the last error 
+ * has occurred.
+ * @return error location
+ */
+QSE_EXPORT const qse_xli_loc_t* qse_xli_geterrloc (
+	const qse_xli_t* xli /**< stream editor */
+);
+
+/**
+ * The qse_xli_geterrmsg() function gets a string describing the last error.
+ * @return error message pointer
+ */
+QSE_EXPORT const qse_char_t* qse_xli_geterrmsg (
+	const qse_xli_t* xli /**< stream editor */
+);
+
+/**
+ * The qse_xli_geterror() function gets an error number, an error location, 
+ * and an error message. The information is set to the memory area pointed 
+ * to by each parameter.
+ */
+QSE_EXPORT void qse_xli_geterror (
+	const qse_xli_t*   xli,    /**< stream editor */
+	qse_xli_errnum_t*  errnum, /**< error number */
+	const qse_char_t** errmsg, /**< error message */
+	qse_xli_loc_t*     errloc  /**< error location */
+);
+
+/**
+ * The qse_xli_seterrnum() function sets error information omitting error
+ * location.
+ */
+QSE_EXPORT void qse_xli_seterrnum (
+	qse_xli_t*        xli,    /**< stream editor */
+	qse_xli_errnum_t  errnum, /**< error number */
+	const qse_cstr_t* errarg  /**< argument for formatting error message */
+);
+
+/**
+ * The qse_xli_seterrmsg() function sets error information with a customized 
+ * message for a given error number.
+ */
+QSE_EXPORT void qse_xli_seterrmsg (
+	qse_xli_t*        xli,      /**< stream editor */
+	qse_xli_errnum_t  errnum,   /**< error number */
+	const qse_char_t* errmsg,   /**< error message */
+	const qse_xli_loc_t* errloc /**< error location */
+);
+
+/**
+ * The qse_xli_seterror() function sets an error number, an error location, and
+ * an error message. An error string is compoxli of a formatting string
+ * and an array of formatting parameters.
+ */
+QSE_EXPORT void qse_xli_seterror (
+	qse_xli_t*           xli,    /**< stream editor */
+	qse_xli_errnum_t     errnum, /**< error number */
+	const qse_cstr_t*    errarg, /**< array of arguments for formatting 
+	                              *   an error message */
+	const qse_xli_loc_t* errloc  /**< error location */
+);
+
 QSE_EXPORT void* qse_xli_allocmem (
 	qse_xli_t* xli,
 	qse_size_t size
@@ -303,18 +462,18 @@ QSE_EXPORT void qse_xli_freemem (
 );
 
 QSE_EXPORT qse_xli_pair_t* qse_xli_insertpairwithemptylist (
-     qse_xli_t*        xli,
+	qse_xli_t*        xli,
 	qse_xli_list_t*   parent,
 	qse_xli_atom_t*   peer,
-     const qse_char_t* key,
+	const qse_char_t* key,
 	const qse_char_t* name
 );
 
 QSE_EXPORT qse_xli_pair_t* qse_xli_insertpairwithstr (
-     qse_xli_t*        xli, 
+	qse_xli_t*        xli, 
 	qse_xli_list_t*   parent,
 	qse_xli_atom_t*   peer,
-     const qse_char_t* key,
+	const qse_char_t* key,
 	const qse_char_t* name,
 	const qse_char_t* value,
 	int               verbatim

@@ -6,7 +6,7 @@ AM_CPPFLAGS = \
 	-I$(includedir)
 
 lib_LTLIBRARIES = libqsexli.la
-libqsexli_la_SOURCES = xli.h xli.c read.c write.c std.c
+libqsexli_la_SOURCES = xli.h xli.c err.c read.c write.c std.c
 libqsexli_la_LDFLAGS = -L../cmn  -L$(libdir)  -version-info 1:0:0 -no-undefined
 libqsexli_la_LIBADD = -lqsecmn 
 

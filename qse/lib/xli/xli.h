@@ -38,7 +38,11 @@ struct qse_xli_tok_t
 struct qse_xli_t
 {
 	qse_mmgr_t* mmgr;
-	qse_xli_errnum_t errnum;
+
+	qse_xli_errstr_t errstr; /**< error string getter */
+	qse_xli_errnum_t errnum; /**< stores an error number */
+	qse_char_t errmsg[128];  /**< error message holder */
+	qse_xli_loc_t errloc;    /**< location of the last error */
 
 	struct
 	{
@@ -68,6 +72,9 @@ extern "C" {
 int qse_xli_init (qse_xli_t* xli, qse_mmgr_t* mmgr);
 
 void qse_xli_fini (qse_xli_t* xli);
+
+const qse_char_t* qse_xli_dflerrstr (
+     const qse_xli_t* xli, qse_xli_errnum_t errnum);
 
 #if defined(__cplusplus)
 }

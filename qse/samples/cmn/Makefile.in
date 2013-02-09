@@ -68,6 +68,9 @@ chr01_LDADD = $(LDADD)
 am__DEPENDENCIES_1 =
 @WCHAR_TRUE@@WIN32_TRUE@am__DEPENDENCIES_2 = $(am__DEPENDENCIES_1)
 chr01_DEPENDENCIES = $(am__DEPENDENCIES_2)
+AM_V_lt = $(am__v_lt_@AM_V@)
+am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
+am__v_lt_0 = --silent
 am_dll_OBJECTS = dll.$(OBJEXT)
 dll_OBJECTS = $(am_dll_OBJECTS)
 dll_LDADD = $(LDADD)
@@ -218,13 +221,26 @@ am__depfiles_maybe = depfiles
 am__mv = mv -f
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
-LTCOMPILE = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
-	--mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
-	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
+LTCOMPILE = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) \
+	$(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) \
+	$(AM_CFLAGS) $(CFLAGS)
+AM_V_CC = $(am__v_CC_@AM_V@)
+am__v_CC_ = $(am__v_CC_@AM_DEFAULT_V@)
+am__v_CC_0 = @echo "  CC    " $@;
+AM_V_at = $(am__v_at_@AM_V@)
+am__v_at_ = $(am__v_at_@AM_DEFAULT_V@)
+am__v_at_0 = @
 CCLD = $(CC)
-LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
-	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
-	$(LDFLAGS) -o $@
+LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
+	$(AM_LDFLAGS) $(LDFLAGS) -o $@
+AM_V_CCLD = $(am__v_CCLD_@AM_V@)
+am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
+am__v_CCLD_0 = @echo "  CCLD  " $@;
+AM_V_GEN = $(am__v_GEN_@AM_V@)
+am__v_GEN_ = $(am__v_GEN_@AM_DEFAULT_V@)
+am__v_GEN_0 = @echo "  GEN   " $@;
 SOURCES = $(chr01_SOURCES) $(dll_SOURCES) $(env_SOURCES) \
 	$(fio01_SOURCES) $(fio02_SOURCES) $(fma_SOURCES) \
 	$(fmt01_SOURCES) $(fmt02_SOURCES) $(fs01_SOURCES) \
@@ -252,6 +268,7 @@ CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 ACLOCAL = @ACLOCAL@
 AMTAR = @AMTAR@
+AM_DEFAULT_VERBOSITY = @AM_DEFAULT_VERBOSITY@
 AR = @AR@
 ARGZ_H = @ARGZ_H@
 AUTOCONF = @AUTOCONF@
@@ -542,115 +559,115 @@ clean-binPROGRAMS:
 	rm -f $$list
 chr01$(EXEEXT): $(chr01_OBJECTS) $(chr01_DEPENDENCIES) $(EXTRA_chr01_DEPENDENCIES) 
 	@rm -f chr01$(EXEEXT)
-	$(LINK) $(chr01_OBJECTS) $(chr01_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(LINK) $(chr01_OBJECTS) $(chr01_LDADD) $(LIBS)
 dll$(EXEEXT): $(dll_OBJECTS) $(dll_DEPENDENCIES) $(EXTRA_dll_DEPENDENCIES) 
 	@rm -f dll$(EXEEXT)
-	$(LINK) $(dll_OBJECTS) $(dll_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(LINK) $(dll_OBJECTS) $(dll_LDADD) $(LIBS)
 env$(EXEEXT): $(env_OBJECTS) $(env_DEPENDENCIES) $(EXTRA_env_DEPENDENCIES) 
 	@rm -f env$(EXEEXT)
-	$(LINK) $(env_OBJECTS) $(env_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(LINK) $(env_OBJECTS) $(env_LDADD) $(LIBS)
 fio01$(EXEEXT): $(fio01_OBJECTS) $(fio01_DEPENDENCIES) $(EXTRA_fio01_DEPENDENCIES) 
 	@rm -f fio01$(EXEEXT)
-	$(LINK) $(fio01_OBJECTS) $(fio01_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(LINK) $(fio01_OBJECTS) $(fio01_LDADD) $(LIBS)
 fio02$(EXEEXT): $(fio02_OBJECTS) $(fio02_DEPENDENCIES) $(EXTRA_fio02_DEPENDENCIES) 
 	@rm -f fio02$(EXEEXT)
-	$(LINK) $(fio02_OBJECTS) $(fio02_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(LINK) $(fio02_OBJECTS) $(fio02_LDADD) $(LIBS)
 fma$(EXEEXT): $(fma_OBJECTS) $(fma_DEPENDENCIES) $(EXTRA_fma_DEPENDENCIES) 
 	@rm -f fma$(EXEEXT)
-	$(LINK) $(fma_OBJECTS) $(fma_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(LINK) $(fma_OBJECTS) $(fma_LDADD) $(LIBS)
 fmt01$(EXEEXT): $(fmt01_OBJECTS) $(fmt01_DEPENDENCIES) $(EXTRA_fmt01_DEPENDENCIES) 
 	@rm -f fmt01$(EXEEXT)
-	$(LINK) $(fmt01_OBJECTS) $(fmt01_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(LINK) $(fmt01_OBJECTS) $(fmt01_LDADD) $(LIBS)
 fmt02$(EXEEXT): $(fmt02_OBJECTS) $(fmt02_DEPENDENCIES) $(EXTRA_fmt02_DEPENDENCIES) 
 	@rm -f fmt02$(EXEEXT)
-	$(LINK) $(fmt02_OBJECTS) $(fmt02_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(LINK) $(fmt02_OBJECTS) $(fmt02_LDADD) $(LIBS)
 fs01$(EXEEXT): $(fs01_OBJECTS) $(fs01_DEPENDENCIES) $(EXTRA_fs01_DEPENDENCIES) 
 	@rm -f fs01$(EXEEXT)
-	$(LINK) $(fs01_OBJECTS) $(fs01_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(LINK) $(fs01_OBJECTS) $(fs01_LDADD) $(LIBS)
 glob01$(EXEEXT): $(glob01_OBJECTS) $(glob01_DEPENDENCIES) $(EXTRA_glob01_DEPENDENCIES) 
 	@rm -f glob01$(EXEEXT)
-	$(LINK) $(glob01_OBJECTS) $(glob01_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(LINK) $(glob01_OBJECTS) $(glob01_LDADD) $(LIBS)
 htb$(EXEEXT): $(htb_OBJECTS) $(htb_DEPENDENCIES) $(EXTRA_htb_DEPENDENCIES) 
 	@rm -f htb$(EXEEXT)
-	$(LINK) $(htb_OBJECTS) $(htb_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(LINK) $(htb_OBJECTS) $(htb_LDADD) $(LIBS)
 ipad01$(EXEEXT): $(ipad01_OBJECTS) $(ipad01_DEPENDENCIES) $(EXTRA_ipad01_DEPENDENCIES) 
 	@rm -f ipad01$(EXEEXT)
-	$(LINK) $(ipad01_OBJECTS) $(ipad01_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(LINK) $(ipad01_OBJECTS) $(ipad01_LDADD) $(LIBS)
 lda$(EXEEXT): $(lda_OBJECTS) $(lda_DEPENDENCIES) $(EXTRA_lda_DEPENDENCIES) 
 	@rm -f lda$(EXEEXT)
-	$(LINK) $(lda_OBJECTS) $(lda_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(LINK) $(lda_OBJECTS) $(lda_LDADD) $(LIBS)
 main01$(EXEEXT): $(main01_OBJECTS) $(main01_DEPENDENCIES) $(EXTRA_main01_DEPENDENCIES) 
 	@rm -f main01$(EXEEXT)
-	$(LINK) $(main01_OBJECTS) $(main01_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(LINK) $(main01_OBJECTS) $(main01_LDADD) $(LIBS)
 main02$(EXEEXT): $(main02_OBJECTS) $(main02_DEPENDENCIES) $(EXTRA_main02_DEPENDENCIES) 
 	@rm -f main02$(EXEEXT)
-	$(LINK) $(main02_OBJECTS) $(main02_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(LINK) $(main02_OBJECTS) $(main02_LDADD) $(LIBS)
 mbwc01$(EXEEXT): $(mbwc01_OBJECTS) $(mbwc01_DEPENDENCIES) $(EXTRA_mbwc01_DEPENDENCIES) 
 	@rm -f mbwc01$(EXEEXT)
-	$(LINK) $(mbwc01_OBJECTS) $(mbwc01_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(LINK) $(mbwc01_OBJECTS) $(mbwc01_LDADD) $(LIBS)
 mbwc02$(EXEEXT): $(mbwc02_OBJECTS) $(mbwc02_DEPENDENCIES) $(EXTRA_mbwc02_DEPENDENCIES) 
 	@rm -f mbwc02$(EXEEXT)
-	$(LINK) $(mbwc02_OBJECTS) $(mbwc02_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(LINK) $(mbwc02_OBJECTS) $(mbwc02_LDADD) $(LIBS)
 nwad01$(EXEEXT): $(nwad01_OBJECTS) $(nwad01_DEPENDENCIES) $(EXTRA_nwad01_DEPENDENCIES) 
 	@rm -f nwad01$(EXEEXT)
-	$(LINK) $(nwad01_OBJECTS) $(nwad01_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(LINK) $(nwad01_OBJECTS) $(nwad01_LDADD) $(LIBS)
 nwif01$(EXEEXT): $(nwif01_OBJECTS) $(nwif01_DEPENDENCIES) $(EXTRA_nwif01_DEPENDENCIES) 
 	@rm -f nwif01$(EXEEXT)
-	$(LINK) $(nwif01_OBJECTS) $(nwif01_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(LINK) $(nwif01_OBJECTS) $(nwif01_LDADD) $(LIBS)
 nwif02$(EXEEXT): $(nwif02_OBJECTS) $(nwif02_DEPENDENCIES) $(EXTRA_nwif02_DEPENDENCIES) 
 	@rm -f nwif02$(EXEEXT)
-	$(LINK) $(nwif02_OBJECTS) $(nwif02_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(LINK) $(nwif02_OBJECTS) $(nwif02_LDADD) $(LIBS)
 oht$(EXEEXT): $(oht_OBJECTS) $(oht_DEPENDENCIES) $(EXTRA_oht_DEPENDENCIES) 
 	@rm -f oht$(EXEEXT)
-	$(LINK) $(oht_OBJECTS) $(oht_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(LINK) $(oht_OBJECTS) $(oht_LDADD) $(LIBS)
 path01$(EXEEXT): $(path01_OBJECTS) $(path01_DEPENDENCIES) $(EXTRA_path01_DEPENDENCIES) 
 	@rm -f path01$(EXEEXT)
-	$(LINK) $(path01_OBJECTS) $(path01_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(LINK) $(path01_OBJECTS) $(path01_LDADD) $(LIBS)
 pio$(EXEEXT): $(pio_OBJECTS) $(pio_DEPENDENCIES) $(EXTRA_pio_DEPENDENCIES) 
 	@rm -f pio$(EXEEXT)
-	$(LINK) $(pio_OBJECTS) $(pio_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(LINK) $(pio_OBJECTS) $(pio_LDADD) $(LIBS)
 pma$(EXEEXT): $(pma_OBJECTS) $(pma_DEPENDENCIES) $(EXTRA_pma_DEPENDENCIES) 
 	@rm -f pma$(EXEEXT)
-	$(LINK) $(pma_OBJECTS) $(pma_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(LINK) $(pma_OBJECTS) $(pma_LDADD) $(LIBS)
 rbt$(EXEEXT): $(rbt_OBJECTS) $(rbt_DEPENDENCIES) $(EXTRA_rbt_DEPENDENCIES) 
 	@rm -f rbt$(EXEEXT)
-	$(LINK) $(rbt_OBJECTS) $(rbt_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(LINK) $(rbt_OBJECTS) $(rbt_LDADD) $(LIBS)
 rex01$(EXEEXT): $(rex01_OBJECTS) $(rex01_DEPENDENCIES) $(EXTRA_rex01_DEPENDENCIES) 
 	@rm -f rex01$(EXEEXT)
-	$(LINK) $(rex01_OBJECTS) $(rex01_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(LINK) $(rex01_OBJECTS) $(rex01_LDADD) $(LIBS)
 sio01$(EXEEXT): $(sio01_OBJECTS) $(sio01_DEPENDENCIES) $(EXTRA_sio01_DEPENDENCIES) 
 	@rm -f sio01$(EXEEXT)
-	$(LINK) $(sio01_OBJECTS) $(sio01_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(LINK) $(sio01_OBJECTS) $(sio01_LDADD) $(LIBS)
 sio02$(EXEEXT): $(sio02_OBJECTS) $(sio02_DEPENDENCIES) $(EXTRA_sio02_DEPENDENCIES) 
 	@rm -f sio02$(EXEEXT)
-	$(LINK) $(sio02_OBJECTS) $(sio02_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(LINK) $(sio02_OBJECTS) $(sio02_LDADD) $(LIBS)
 sio03$(EXEEXT): $(sio03_OBJECTS) $(sio03_DEPENDENCIES) $(EXTRA_sio03_DEPENDENCIES) 
 	@rm -f sio03$(EXEEXT)
-	$(LINK) $(sio03_OBJECTS) $(sio03_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(LINK) $(sio03_OBJECTS) $(sio03_LDADD) $(LIBS)
 sll$(EXEEXT): $(sll_OBJECTS) $(sll_DEPENDENCIES) $(EXTRA_sll_DEPENDENCIES) 
 	@rm -f sll$(EXEEXT)
-	$(LINK) $(sll_OBJECTS) $(sll_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(LINK) $(sll_OBJECTS) $(sll_LDADD) $(LIBS)
 slmb01$(EXEEXT): $(slmb01_OBJECTS) $(slmb01_DEPENDENCIES) $(EXTRA_slmb01_DEPENDENCIES) 
 	@rm -f slmb01$(EXEEXT)
-	$(LINK) $(slmb01_OBJECTS) $(slmb01_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(LINK) $(slmb01_OBJECTS) $(slmb01_LDADD) $(LIBS)
 str01$(EXEEXT): $(str01_OBJECTS) $(str01_DEPENDENCIES) $(EXTRA_str01_DEPENDENCIES) 
 	@rm -f str01$(EXEEXT)
-	$(LINK) $(str01_OBJECTS) $(str01_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(LINK) $(str01_OBJECTS) $(str01_LDADD) $(LIBS)
 task01$(EXEEXT): $(task01_OBJECTS) $(task01_DEPENDENCIES) $(EXTRA_task01_DEPENDENCIES) 
 	@rm -f task01$(EXEEXT)
-	$(LINK) $(task01_OBJECTS) $(task01_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(LINK) $(task01_OBJECTS) $(task01_LDADD) $(LIBS)
 time$(EXEEXT): $(time_OBJECTS) $(time_DEPENDENCIES) $(EXTRA_time_DEPENDENCIES) 
 	@rm -f time$(EXEEXT)
-	$(LINK) $(time_OBJECTS) $(time_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(LINK) $(time_OBJECTS) $(time_LDADD) $(LIBS)
 tre01$(EXEEXT): $(tre01_OBJECTS) $(tre01_DEPENDENCIES) $(EXTRA_tre01_DEPENDENCIES) 
 	@rm -f tre01$(EXEEXT)
-	$(LINK) $(tre01_OBJECTS) $(tre01_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(LINK) $(tre01_OBJECTS) $(tre01_LDADD) $(LIBS)
 uri01$(EXEEXT): $(uri01_OBJECTS) $(uri01_DEPENDENCIES) $(EXTRA_uri01_DEPENDENCIES) 
 	@rm -f uri01$(EXEEXT)
-	$(LINK) $(uri01_OBJECTS) $(uri01_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(LINK) $(uri01_OBJECTS) $(uri01_LDADD) $(LIBS)
 xma$(EXEEXT): $(xma_OBJECTS) $(xma_DEPENDENCIES) $(EXTRA_xma_DEPENDENCIES) 
 	@rm -f xma$(EXEEXT)
-	$(LINK) $(xma_OBJECTS) $(xma_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(LINK) $(xma_OBJECTS) $(xma_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -697,25 +714,25 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xma.Po@am__quote@
 
 .c.o:
-@am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(COMPILE) -c $<
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(COMPILE) -c $<
 
 .c.obj:
-@am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ `$(CYGPATH_W) '$<'`
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ `$(CYGPATH_W) '$<'`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(COMPILE) -c `$(CYGPATH_W) '$<'`
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(COMPILE) -c `$(CYGPATH_W) '$<'`
 
 .c.lo:
-@am__fastdepCC_TRUE@	$(LTCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LTCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LTCOMPILE) -c -o $@ $<
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LTCOMPILE) -c -o $@ $<
 
 mostlyclean-libtool:
 	-rm -f *.lo

@@ -254,7 +254,7 @@ enum qse_sed_errnum_t
 	QSE_SED_EOCSTL,  /**< occurrence specifier too large */
 	QSE_SED_ENPREX,  /**< no previous regular expression */
 	QSE_SED_ECSLNV,  /**< cut selector not valid */
-	QSE_SED_EIOFIL,  /**< io error with file '${0}'*/
+	QSE_SED_EIOFIL,  /**< io error with file '${0}' */
 	QSE_SED_EIOUSR   /**< error returned by user io handler */
 };
 typedef enum qse_sed_errnum_t qse_sed_errnum_t;
