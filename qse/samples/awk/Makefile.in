@@ -66,6 +66,9 @@ awk01_LDADD = $(LDADD)
 am__DEPENDENCIES_1 =
 @WCHAR_TRUE@@WIN32_TRUE@am__DEPENDENCIES_2 = $(am__DEPENDENCIES_1)
 awk01_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_2)
+AM_V_lt = $(am__v_lt_@AM_V@)
+am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
+am__v_lt_0 = --silent
 am__objects_1 = awk00.$(OBJEXT)
 am_awk02_OBJECTS = awk02.$(OBJEXT) $(am__objects_1)
 awk02_OBJECTS = $(am_awk02_OBJECTS)
@@ -162,22 +165,42 @@ am__depfiles_maybe = depfiles
 am__mv = mv -f
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
-LTCOMPILE = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
-	--mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
-	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
+LTCOMPILE = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) \
+	$(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) \
+	$(AM_CFLAGS) $(CFLAGS)
+AM_V_CC = $(am__v_CC_@AM_V@)
+am__v_CC_ = $(am__v_CC_@AM_DEFAULT_V@)
+am__v_CC_0 = @echo "  CC    " $@;
+AM_V_at = $(am__v_at_@AM_V@)
+am__v_at_ = $(am__v_at_@AM_DEFAULT_V@)
+am__v_at_0 = @
 CCLD = $(CC)
-LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
-	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
-	$(LDFLAGS) -o $@
+LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
+	$(AM_LDFLAGS) $(LDFLAGS) -o $@
+AM_V_CCLD = $(am__v_CCLD_@AM_V@)
+am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
+am__v_CCLD_0 = @echo "  CCLD  " $@;
 CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
 	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
-LTCXXCOMPILE = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
-	--mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
-	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
+LTCXXCOMPILE = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) \
+	$(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) \
+	$(AM_CXXFLAGS) $(CXXFLAGS)
+AM_V_CXX = $(am__v_CXX_@AM_V@)
+am__v_CXX_ = $(am__v_CXX_@AM_DEFAULT_V@)
+am__v_CXX_0 = @echo "  CXX   " $@;
 CXXLD = $(CXX)
-CXXLINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
-	--mode=link $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) \
-	$(LDFLAGS) -o $@
+CXXLINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
+	$(CXXFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
+AM_V_CXXLD = $(am__v_CXXLD_@AM_V@)
+am__v_CXXLD_ = $(am__v_CXXLD_@AM_DEFAULT_V@)
+am__v_CXXLD_0 = @echo "  CXXLD " $@;
+AM_V_GEN = $(am__v_GEN_@AM_V@)
+am__v_GEN_ = $(am__v_GEN_@AM_DEFAULT_V@)
+am__v_GEN_0 = @echo "  GEN   " $@;
 SOURCES = $(awk01_SOURCES) $(awk02_SOURCES) $(awk03_SOURCES) \
 	$(awk04_SOURCES) $(awk05_SOURCES) $(awk06_SOURCES) \
 	$(awk07_SOURCES) $(awk08_SOURCES) $(awk09_SOURCES) \
@@ -199,6 +222,7 @@ CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 ACLOCAL = @ACLOCAL@
 AMTAR = @AMTAR@
+AM_DEFAULT_VERBOSITY = @AM_DEFAULT_VERBOSITY@
 AR = @AR@
 ARGZ_H = @ARGZ_H@
 AUTOCONF = @AUTOCONF@
@@ -487,67 +511,67 @@ clean-binPROGRAMS:
 	rm -f $$list
 awk01$(EXEEXT): $(awk01_OBJECTS) $(awk01_DEPENDENCIES) $(EXTRA_awk01_DEPENDENCIES) 
 	@rm -f awk01$(EXEEXT)
-	$(LINK) $(awk01_OBJECTS) $(awk01_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(LINK) $(awk01_OBJECTS) $(awk01_LDADD) $(LIBS)
 awk02$(EXEEXT): $(awk02_OBJECTS) $(awk02_DEPENDENCIES) $(EXTRA_awk02_DEPENDENCIES) 
 	@rm -f awk02$(EXEEXT)
-	$(LINK) $(awk02_OBJECTS) $(awk02_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(LINK) $(awk02_OBJECTS) $(awk02_LDADD) $(LIBS)
 awk03$(EXEEXT): $(awk03_OBJECTS) $(awk03_DEPENDENCIES) $(EXTRA_awk03_DEPENDENCIES) 
 	@rm -f awk03$(EXEEXT)
-	$(LINK) $(awk03_OBJECTS) $(awk03_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(LINK) $(awk03_OBJECTS) $(awk03_LDADD) $(LIBS)
 awk04$(EXEEXT): $(awk04_OBJECTS) $(awk04_DEPENDENCIES) $(EXTRA_awk04_DEPENDENCIES) 
 	@rm -f awk04$(EXEEXT)
-	$(LINK) $(awk04_OBJECTS) $(awk04_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(LINK) $(awk04_OBJECTS) $(awk04_LDADD) $(LIBS)
 awk05$(EXEEXT): $(awk05_OBJECTS) $(awk05_DEPENDENCIES) $(EXTRA_awk05_DEPENDENCIES) 
 	@rm -f awk05$(EXEEXT)
-	$(LINK) $(awk05_OBJECTS) $(awk05_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(LINK) $(awk05_OBJECTS) $(awk05_LDADD) $(LIBS)
 awk06$(EXEEXT): $(awk06_OBJECTS) $(awk06_DEPENDENCIES) $(EXTRA_awk06_DEPENDENCIES) 
 	@rm -f awk06$(EXEEXT)
-	$(LINK) $(awk06_OBJECTS) $(awk06_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(LINK) $(awk06_OBJECTS) $(awk06_LDADD) $(LIBS)
 awk07$(EXEEXT): $(awk07_OBJECTS) $(awk07_DEPENDENCIES) $(EXTRA_awk07_DEPENDENCIES) 
 	@rm -f awk07$(EXEEXT)
-	$(LINK) $(awk07_OBJECTS) $(awk07_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(LINK) $(awk07_OBJECTS) $(awk07_LDADD) $(LIBS)
 awk08$(EXEEXT): $(awk08_OBJECTS) $(awk08_DEPENDENCIES) $(EXTRA_awk08_DEPENDENCIES) 
 	@rm -f awk08$(EXEEXT)
-	$(LINK) $(awk08_OBJECTS) $(awk08_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(LINK) $(awk08_OBJECTS) $(awk08_LDADD) $(LIBS)
 awk09$(EXEEXT): $(awk09_OBJECTS) $(awk09_DEPENDENCIES) $(EXTRA_awk09_DEPENDENCIES) 
 	@rm -f awk09$(EXEEXT)
-	$(LINK) $(awk09_OBJECTS) $(awk09_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(LINK) $(awk09_OBJECTS) $(awk09_LDADD) $(LIBS)
 awk10$(EXEEXT): $(awk10_OBJECTS) $(awk10_DEPENDENCIES) $(EXTRA_awk10_DEPENDENCIES) 
 	@rm -f awk10$(EXEEXT)
-	$(LINK) $(awk10_OBJECTS) $(awk10_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(LINK) $(awk10_OBJECTS) $(awk10_LDADD) $(LIBS)
 awk11$(EXEEXT): $(awk11_OBJECTS) $(awk11_DEPENDENCIES) $(EXTRA_awk11_DEPENDENCIES) 
 	@rm -f awk11$(EXEEXT)
-	$(LINK) $(awk11_OBJECTS) $(awk11_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(LINK) $(awk11_OBJECTS) $(awk11_LDADD) $(LIBS)
 awk12$(EXEEXT): $(awk12_OBJECTS) $(awk12_DEPENDENCIES) $(EXTRA_awk12_DEPENDENCIES) 
 	@rm -f awk12$(EXEEXT)
-	$(LINK) $(awk12_OBJECTS) $(awk12_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(LINK) $(awk12_OBJECTS) $(awk12_LDADD) $(LIBS)
 awk15$(EXEEXT): $(awk15_OBJECTS) $(awk15_DEPENDENCIES) $(EXTRA_awk15_DEPENDENCIES) 
 	@rm -f awk15$(EXEEXT)
-	$(LINK) $(awk15_OBJECTS) $(awk15_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(LINK) $(awk15_OBJECTS) $(awk15_LDADD) $(LIBS)
 awk21$(EXEEXT): $(awk21_OBJECTS) $(awk21_DEPENDENCIES) $(EXTRA_awk21_DEPENDENCIES) 
 	@rm -f awk21$(EXEEXT)
-	$(CXXLINK) $(awk21_OBJECTS) $(awk21_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(CXXLINK) $(awk21_OBJECTS) $(awk21_LDADD) $(LIBS)
 awk22$(EXEEXT): $(awk22_OBJECTS) $(awk22_DEPENDENCIES) $(EXTRA_awk22_DEPENDENCIES) 
 	@rm -f awk22$(EXEEXT)
-	$(CXXLINK) $(awk22_OBJECTS) $(awk22_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(CXXLINK) $(awk22_OBJECTS) $(awk22_LDADD) $(LIBS)
 awk23$(EXEEXT): $(awk23_OBJECTS) $(awk23_DEPENDENCIES) $(EXTRA_awk23_DEPENDENCIES) 
 	@rm -f awk23$(EXEEXT)
-	$(CXXLINK) $(awk23_OBJECTS) $(awk23_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(CXXLINK) $(awk23_OBJECTS) $(awk23_LDADD) $(LIBS)
 awk24$(EXEEXT): $(awk24_OBJECTS) $(awk24_DEPENDENCIES) $(EXTRA_awk24_DEPENDENCIES) 
 	@rm -f awk24$(EXEEXT)
-	$(CXXLINK) $(awk24_OBJECTS) $(awk24_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(CXXLINK) $(awk24_OBJECTS) $(awk24_LDADD) $(LIBS)
 awk25$(EXEEXT): $(awk25_OBJECTS) $(awk25_DEPENDENCIES) $(EXTRA_awk25_DEPENDENCIES) 
 	@rm -f awk25$(EXEEXT)
-	$(CXXLINK) $(awk25_OBJECTS) $(awk25_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(CXXLINK) $(awk25_OBJECTS) $(awk25_LDADD) $(LIBS)
 awk26$(EXEEXT): $(awk26_OBJECTS) $(awk26_DEPENDENCIES) $(EXTRA_awk26_DEPENDENCIES) 
 	@rm -f awk26$(EXEEXT)
-	$(CXXLINK) $(awk26_OBJECTS) $(awk26_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(CXXLINK) $(awk26_OBJECTS) $(awk26_LDADD) $(LIBS)
 awk27$(EXEEXT): $(awk27_OBJECTS) $(awk27_DEPENDENCIES) $(EXTRA_awk27_DEPENDENCIES) 
 	@rm -f awk27$(EXEEXT)
-	$(CXXLINK) $(awk27_OBJECTS) $(awk27_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(CXXLINK) $(awk27_OBJECTS) $(awk27_LDADD) $(LIBS)
 awk28$(EXEEXT): $(awk28_OBJECTS) $(awk28_DEPENDENCIES) $(EXTRA_awk28_DEPENDENCIES) 
 	@rm -f awk28$(EXEEXT)
-	$(CXXLINK) $(awk28_OBJECTS) $(awk28_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(CXXLINK) $(awk28_OBJECTS) $(awk28_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -579,46 +603,46 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/awk28.Po@am__quote@
 
 .c.o:
-@am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(COMPILE) -c $<
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(COMPILE) -c $<
 
 .c.obj:
-@am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ `$(CYGPATH_W) '$<'`
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ `$(CYGPATH_W) '$<'`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(COMPILE) -c `$(CYGPATH_W) '$<'`
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(COMPILE) -c `$(CYGPATH_W) '$<'`
 
 .c.lo:
-@am__fastdepCC_TRUE@	$(LTCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LTCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LTCOMPILE) -c -o $@ $<
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LTCOMPILE) -c -o $@ $<
 
 .cpp.o:
-@am__fastdepCXX_TRUE@	$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
-@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXXCOMPILE) -c -o $@ $<
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXXCOMPILE) -c -o $@ $<
 
 .cpp.obj:
-@am__fastdepCXX_TRUE@	$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ `$(CYGPATH_W) '$<'`
-@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ `$(CYGPATH_W) '$<'`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXXCOMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXXCOMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
 
 .cpp.lo:
-@am__fastdepCXX_TRUE@	$(LTCXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
-@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LTCXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(LTCXXCOMPILE) -c -o $@ $<
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LTCXXCOMPILE) -c -o $@ $<
 
 mostlyclean-libtool:
 	-rm -f *.lo

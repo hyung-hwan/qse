@@ -16,6 +16,10 @@ AC_LANG(C)
 dnl initialize automake
 AM_INIT_AUTOMAKE([-Wall -Werror foreign])
 
+dnl enable silent rules if automake supports them.
+m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([no])])
+dnl m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
+
 dnl determine a C compiler to use
 AC_PROG_CC
 

@@ -53,6 +53,7 @@ int qse_xli_init (qse_xli_t* xli, qse_mmgr_t* mmgr)
 {
 	QSE_MEMSET (xli, 0, QSE_SIZEOF(*xli));
 	xli->mmgr = mmgr;
+	xli->errstr = qse_xli_dflerrstr;
 
 	xli->tok.name = qse_str_open (mmgr, 0, 128);
 	if (xli->tok.name == QSE_NULL) goto oops;
@@ -69,7 +70,7 @@ int qse_xli_init (qse_xli_t* xli, qse_mmgr_t* mmgr)
 	return 0;
 
 oops:
-	xli->errnum = QSE_XLI_ENOMEM;
+	qse_xli_seterrnum (xli, QSE_XLI_ENOMEM, QSE_NULL);
 	if (xli->sio_names) qse_htb_close (xli->sio_names);
 	if (xli->tok.name) qse_str_close (xli->tok.name);
 	return -1;
@@ -101,7 +102,7 @@ int qse_xli_setopt (qse_xli_t* xli, qse_xli_opt_t id, const void* value)
 			return 0;
 	}
 
-	xli->errnum = QSE_XLI_EINVAL;
+	qse_xli_seterrnum (xli, QSE_XLI_EINVAL, QSE_NULL);
 	return -1;
 }
 
@@ -114,7 +115,7 @@ int qse_xli_getopt (qse_xli_t* xli, qse_xli_opt_t  id, void* value)
 			return 0;
 	};
 
-	xli->errnum = QSE_XLI_EINVAL;
+	qse_xli_seterrnum (xli, QSE_XLI_EINVAL, QSE_NULL);
 	return -1;
 }
 
@@ -138,7 +139,8 @@ void* qse_xli_allocmem (qse_xli_t* xli, qse_size_t size)
 	void* ptr;
 
 	ptr = QSE_MMGR_ALLOC (xli->mmgr, size);
-	if (ptr == QSE_NULL) xli->errnum = QSE_XLI_ENOMEM;
+	if (ptr == QSE_NULL) 
+		qse_xli_seterrnum (xli, QSE_XLI_ENOMEM, QSE_NULL);
 	return ptr;
 }
 
@@ -147,7 +149,8 @@ void* qse_xli_callocmem (qse_xli_t* xli, qse_size_t size)
 	void* ptr;
 
 	ptr = QSE_MMGR_ALLOC (xli->mmgr, size);
-	if (ptr == QSE_NULL) xli->errnum = QSE_XLI_ENOMEM;
+	if (ptr == QSE_NULL)
+		qse_xli_seterrnum (xli, QSE_XLI_ENOMEM, QSE_NULL);
 	else QSE_MEMSET (ptr, 0, size);
 	return ptr;
 }
@@ -197,6 +200,7 @@ qse_xli_pair_t* qse_xli_insertpair (
 {
 	qse_xli_pair_t* pair;
 	qse_size_t klen, nlen;
+	qse_char_t* kptr, * nptr;
 
 	klen = qse_strlen (key);
 	nlen = name? qse_strlen (name): 0;
@@ -207,13 +211,15 @@ qse_xli_pair_t* qse_xli_insertpair (
 		((nlen + 1) * QSE_SIZEOF(*name)));
 	if (pair == QSE_NULL) return QSE_NULL;
 
-	pair->type = QSE_XLI_PAIR;
-	pair->key = (const qse_char_t*)(pair + 1);
-	pair->name = pair->key + klen + 1;
-	pair->val = value;  /* this assumes it points to a dynamically allocated atom  */
+	kptr = (qse_char_t*)(pair + 1);
+	nptr = kptr + klen + 1;
+	qse_strcpy (kptr, key);
+	if (name) qse_strcpy (nptr, name);
 
-	qse_strcpy (pair->key, key);
-	if (name) qse_strcpy (pair->name, name);
+	pair->type = QSE_XLI_PAIR;
+	pair->key = kptr;
+	pair->name = nptr;
+	pair->val = value;  /* this assumes it points to a dynamically allocated atom  */
 
 	insert_atom (xli, parent, peer, (qse_xli_atom_t*)pair);
 	return pair;
