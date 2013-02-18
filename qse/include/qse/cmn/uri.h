@@ -24,22 +24,37 @@
 #include <qse/types.h>
 #include <qse/macros.h>
 
+typedef struct qse_muri_t qse_muri_t;
+typedef struct qse_wuri_t qse_wuri_t;
 
-typedef struct qse_uri_t qse_uri_t;
-
-struct qse_uri_t
+struct qse_muri_t
 {
-	qse_cptl_t scheme;
+	qse_mcstr_t scheme;
 	struct
 	{
-		qse_cptl_t user;
-		qse_cptl_t pass;
+		qse_mcstr_t user;
+		qse_mcstr_t pass;
 	} auth;
-	qse_cptl_t host;
-	qse_cptl_t port;
-	qse_cptl_t path;
-	qse_cptl_t query;
-	qse_cptl_t frag;
+	qse_mcstr_t host;
+	qse_mcstr_t port;
+	qse_mcstr_t path;
+	qse_mcstr_t query;
+	qse_mcstr_t frag;
+};
+
+struct qse_wuri_t
+{
+	qse_wcstr_t scheme;
+	struct
+	{
+		qse_wcstr_t user;
+		qse_wcstr_t pass;
+	} auth;
+	qse_wcstr_t host;
+	qse_wcstr_t port;
+	qse_wcstr_t path;
+	qse_wcstr_t query;
+	qse_wcstr_t frag;
 };
 
 enum qse_mbstouri_flag_t
@@ -60,10 +75,12 @@ enum qse_wcstouri_flag_t
 #	define QSE_STRTOURI_NOAUTH  QSE_MBSTOURI_NOAUTH
 #	define QSE_STRTOURI_NOQUERY QSE_MBSTOURI_NOQUERY
 #	define QSE_STRTOURI_NOFRAG  QSE_MBSTOURI_NOFRAG
+	typedef qse_muri_t qse_uri_t;
 #else
 #	define QSE_STRTOURI_NOAUTH  QSE_WCSTOURI_NOAUTH
 #	define QSE_STRTOURI_NOQUERY QSE_WCSTOURI_NOQUERY
 #	define QSE_STRTOURI_NOFRAG  QSE_WCSTOURI_NOFRAG
+	typedef qse_wuri_t qse_uri_t;
 #endif
 
 #ifdef __cplusplus
@@ -72,13 +89,13 @@ extern "C" {
 
 QSE_EXPORT int qse_mbstouri (
 	const qse_mchar_t* str,
-	qse_uri_t*         uri,
+	qse_muri_t*        uri,
 	int                flags
 );
 
 QSE_EXPORT int qse_wcstouri (
 	const qse_wchar_t* str,
-	qse_uri_t*         uri,
+	qse_wuri_t*        uri,
 	int                flags
 );
 

@@ -18,12 +18,12 @@
     License along with QSE. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _QSE_LIB_NET_HTTPD_H_
-#define _QSE_LIB_NET_HTTPD_H_
+#ifndef _QSE_LIB_HTTP_HTTPD_H_
+#define _QSE_LIB_HTTP_HTTPD_H_
 
 /* private header file for httpd */
 
-#include <qse/net/httpd.h>
+#include <qse/http/httpd.h>
 
 #include <qse/cmn/stdio.h> /* TODO: remove this.. only for debugging at this moment */
 
@@ -39,7 +39,8 @@ struct qse_httpd_t
 	{
 		int trait;
 	} opt;
-	int stopreq;
+	int stopreq: 1;
+	int reconfigreq: 1;
 
 	qse_mchar_t sname[128]; /* server name for the server header */
 	qse_mchar_t gtbuf[10][64]; /* GMT time buffers */

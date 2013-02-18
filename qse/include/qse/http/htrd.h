@@ -18,11 +18,11 @@
     License along with QSE. If not, see <htrd://www.gnu.org/licenses/>.
  */
 
-#ifndef _QSE_NET_HTRD_H_
-#define _QSE_NET_HTRD_H_
+#ifndef _QSE_HTTP_HTRD_H_
+#define _QSE_HTTP_HTRD_H_
 
-#include <qse/net/http.h>
-#include <qse/net/htre.h>
+#include <qse/http/http.h>
+#include <qse/http/htre.h>
 
 typedef struct qse_htrd_t qse_htrd_t;
 

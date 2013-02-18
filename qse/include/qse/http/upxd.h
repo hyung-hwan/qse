@@ -18,8 +18,8 @@
     License along with QSE. If not, see <htrd://www.gnu.org/licenses/>.
  */
 
-#ifndef _QSE_NET_UPXD_H_
-#define _QSE_NET_UPXD_H_
+#ifndef _QSE_HTTP_UPXD_H_
+#define _QSE_HTTP_UPXD_H_
 
 #include <qse/types.h>
 #include <qse/macros.h>

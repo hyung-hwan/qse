@@ -18,17 +18,18 @@
     License along with QSE. If not, see <htrd://www.gnu.org/licenses/>.
  */
 
-#ifndef _QSE_NET_HTTPD_H_
-#define _QSE_NET_HTTPD_H_
+#ifndef _QSE_HTTP_HTTPD_H_
+#define _QSE_HTTP_HTTPD_H_
 
 #include <qse/types.h>
 #include <qse/macros.h>
-#include <qse/net/htre.h>
-#include <qse/net/htrd.h>
+#include <qse/http/htre.h>
+#include <qse/http/htrd.h>
 #include <qse/cmn/nwad.h>
 #include <qse/cmn/time.h>
 
 typedef struct qse_httpd_t        qse_httpd_t;
+typedef struct qse_httpd_mate_t   qse_httpd_mate_t;
 typedef struct qse_httpd_server_t qse_httpd_server_t;
 typedef struct qse_httpd_client_t qse_httpd_client_t;
 
@@ -300,17 +301,28 @@ struct qse_httpd_task_t
 	qse_httpd_task_t*     next;
 };
 
-enum qse_httpd_sctype_t 
+enum qse_httpd_mate_type_t 
 {
 	QSE_HTTPD_SERVER,
 	QSE_HTTPD_CLIENT
 };
-typedef enum qse_httpd_sctype_t  qse_httpd_sctype_t;
+typedef enum qse_httpd_mate_type_t  qse_httpd_mate_type_t;
+
+/* it contains header fields common between 
+ * qse_httpd_cleint_t and qse_httpd_server_t. */
+#define QSE_HTTPD_MATE_HDR \
+	qse_httpd_mate_type_t type
+
+struct qse_httpd_mate_t
+{
+	/* == PRIVATE == */
+	QSE_HTTPD_MATE_HDR;
+};
 
 struct qse_httpd_client_t
 {
 	/* == PRIVATE == */
-	qse_httpd_sctype_t       type;
+	QSE_HTTPD_MATE_HDR;
 
 	/* == PUBLIC  == */
 	qse_ubi_t                handle;
@@ -352,22 +364,36 @@ typedef void (*qse_httpd_server_predetach_t) (
 	qse_httpd_server_t* server
 );
 
-struct qse_httpd_server_t
-{
-	qse_httpd_sctype_t       type;
+typedef void (*qse_httpd_server_reconfig_t) (
+	qse_httpd_t*        httpd,
+	qse_httpd_server_t* server
+);
 
-	/* ---------------------------------------------- */
-	int          flags;
+typedef struct qse_httpd_server_dope_t qse_httpd_server_dope_t;
+
+struct qse_httpd_server_dope_t
+{
+	int          flags; /* bitwise-ORed of qse_httpd_server_flag_t */
 	qse_nwad_t   nwad; /* binding address */
 	unsigned int nwif; /* interface number to bind to */
+	qse_httpd_server_predetach_t predetach; /* executed when the server is detached */
+	qse_httpd_server_reconfig_t reconfig; /* executed when reconfiguration is requested */
+};
+
+struct qse_httpd_server_t
+{
+	/* == PRIVATE == */
+	QSE_HTTPD_MATE_HDR;
+
+	/* provided by a user for attaching */
+	qse_httpd_server_dope_t dope;
 
 	/* set by server.open callback */
 	qse_ubi_t  handle;
 
 	/* private  */
-	qse_httpd_server_predetach_t predetach;
-	qse_httpd_server_t*          next;
-	qse_httpd_server_t*          prev;
+	qse_httpd_server_t*   next;
+	qse_httpd_server_t*   prev;
 };
 
 /* -------------------------------------------------------------------------- */
@@ -480,54 +506,6 @@ struct qse_httpd_ecb_t
 	qse_httpd_ecb_t* next;
 };
 
-typedef struct qse_httpd_server_cbstd_t qse_httpd_server_cbstd_t;
-struct qse_httpd_server_cbstd_t
-{
-	int (*makersrc) (qse_httpd_t* httpd, qse_httpd_client_t* client, qse_htre_t* req, qse_httpd_rsrc_t* rsrc); /* required */
-	void (*freersrc) (qse_httpd_t* httpd, qse_httpd_client_t* client, qse_htre_t* req, qse_httpd_rsrc_t* rsrc); /* optional */
-};
-
-typedef struct qse_httpd_server_cgistd_t qse_httpd_server_cgistd_t;
-struct qse_httpd_server_cgistd_t
-{
-	const qse_mchar_t*  ext;
-	qse_size_t          len;
-	int                 nph;
-	const qse_mchar_t*  shebang; /* optional, can be #QSE_NULL */
-};
-
-typedef struct qse_httpd_server_mimestd_t qse_httpd_server_mimestd_t;
-struct qse_httpd_server_mimestd_t
-{
-	const qse_mchar_t* ext;
-	const qse_mchar_t* type;
-};
-
-/**
- * The qse_httpd_server_idxstd_t type defines a structure to hold
- * an index file name.
- */
-typedef struct qse_httpd_server_idxstd_t qse_httpd_server_idxstd_t;
-struct qse_httpd_server_idxstd_t
-{
-	const qse_mchar_t* name;
-};
-
-enum qse_httpd_server_optstd_t
-{
-	QSE_HTTPD_SERVER_DOCROOT = 0, /* const qse_mchar_t* */
-	QSE_HTTPD_SERVER_REALM,       /* const qse_mchar_t* */
-	QSE_HTTPD_SERVER_AUTH,        /* const qse_mchar_t* */
-	QSE_HTTPD_SERVER_DIRCSS,      /* const qse_mchar_t* */
-	QSE_HTTPD_SERVER_ERRCSS,      /* const qse_mchar_t* */
-
-	QSE_HTTPD_SERVER_CBSTD,       /* qse_httpd_server_cbstd_t* */
-	QSE_HTTPD_SERVER_CGISTD,      /* qse_httpd_server_cgistd_t[] */
-	QSE_HTTPD_SERVER_MIMESTD,     /* qse_httpd_server_mimestd_t[] */
-	QSE_HTTPD_SERVER_IDXSTD       /* qse_httpd_server_idxstd_t[] */
-};
-typedef enum qse_httpd_server_optstd_t qse_httpd_server_optstd_t;
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -610,13 +588,16 @@ QSE_EXPORT void qse_httpd_stop (
 	qse_httpd_t* httpd
 );
 
+QSE_EXPORT void qse_httpd_reconfig (
+	qse_httpd_t* httpd
+);
+
 #define qse_httpd_getserverxtn(httpd,server) ((void*)(server+1))
 
 QSE_EXPORT qse_httpd_server_t* qse_httpd_attachserver (
-	qse_httpd_t*                 httpd,
-	const qse_httpd_server_t*    tmpl,
-	qse_httpd_server_predetach_t predetach,	
-	qse_size_t                   xtnsize
+	qse_httpd_t*                   httpd,
+	const qse_httpd_server_dope_t* dope,
+	qse_size_t                     xtnsize
 );
 
 QSE_EXPORT void qse_httpd_detachserver (
@@ -804,6 +785,11 @@ QSE_EXPORT void* qse_httpd_allocmem (
 	qse_size_t   size
 );
 
+QSE_EXPORT void* qse_httpd_callocmem (
+	qse_httpd_t* httpd, 
+	qse_size_t   size
+);
+
 QSE_EXPORT void* qse_httpd_reallocmem (
 	qse_httpd_t* httpd,
 	void*        ptr,
@@ -815,52 +801,16 @@ QSE_EXPORT void qse_httpd_freemem (
 	void*        ptr
 );
 
-/* -------------------------------------------- */
-
-QSE_EXPORT qse_httpd_t* qse_httpd_openstd (
-	qse_size_t xtnsize
+QSE_EXPORT qse_mchar_t* qse_httpd_strtombsdup (
+	qse_httpd_t* httpd, 
+	const qse_char_t*  str
 );
 
-QSE_EXPORT qse_httpd_t* qse_httpd_openstdwithmmgr (
-	qse_mmgr_t* mmgr,
-	qse_size_t  xtnsize
-);
-
-QSE_EXPORT void* qse_httpd_getxtnstd (
-	qse_httpd_t* httpd
-);
-
-QSE_EXPORT qse_httpd_server_t* qse_httpd_attachserverstd (
-	qse_httpd_t*                 httpd,
-	const qse_char_t*            uri,
-	qse_httpd_server_predetach_t predetach,	
-	qse_size_t                   xtnsize
-);
-
-QSE_EXPORT int qse_httpd_getserveroptstd (
-	qse_httpd_t*              httpd,
-	qse_httpd_server_t*       server,
-	qse_httpd_server_optstd_t id,
-	void*                     value
-);
-
-QSE_EXPORT int qse_httpd_setserveroptstd (
-	qse_httpd_t*              httpd,
-	qse_httpd_server_t*       server,
-	qse_httpd_server_optstd_t id,
-	const void*               value
-);
-
-QSE_EXPORT void* qse_httpd_getserverxtnstd (
-	qse_httpd_t*         httpd,
-	qse_httpd_server_t*  server
-);
-
-QSE_EXPORT int qse_httpd_loopstd (
+QSE_EXPORT qse_mchar_t* qse_httpd_strntombsdup (
 	qse_httpd_t*       httpd, 
-	const qse_ntime_t* tmout
+	const qse_char_t*  str,
+	qse_size_t         len
 );
-
 
 #ifdef __cplusplus
 }

@@ -39,10 +39,17 @@ enum qse_xli_errnum_t
 	QSE_XLI_EEXIST,  /**< '${0}' already exists */
 	QSE_XLI_EIOFIL,  /**< io error with file '${0}' */
 	QSE_XLI_EIOUSR,  /**< i/o handler error */
+
+	QSE_XLI_ESYNTAX, /**< syntax error */
 	QSE_XLI_ESCOLON, /**< semicolon expected in place of '${0}' */
 	QSE_XLI_ELBREQ,  /**< { or = expected in place of '${0}' */
 	QSE_XLI_ERBRCE,  /**< } expected in place of '${0}' */
-	QSE_XLI_EPAVAL   /**< pair value expected in place of '${0}' */
+	QSE_XLI_EPAVAL,  /**< pair value expected in place of '${0}' */
+	QSE_XLI_ESTRNC,  /**< string not closed */
+	QSE_XLI_EINCLSTR,/**< '@include' not followed by a string */
+	QSE_XLI_ELXCHR,  /**< invalid character '${0} */
+	QSE_XLI_EXKWNR,  /**< @word '${0}' not recognized */
+	QSE_XLI_EXKWEM   /**< @ not followed by a valid word  */
 };
 typedef enum qse_xli_errnum_t qse_xli_errnum_t;
 
@@ -66,13 +73,14 @@ typedef enum qse_xli_opt_t qse_xli_opt_t;
 
 enum qse_xli_trait_t
 {
-	QSE_XLI_NAMEDKEY = (1 << 0),
-	QSE_XLI_NODUPKEY = (1 << 1),
+	QSE_XLI_KEYNODUP = (1 << 0),
+	QSE_XLI_KEYNAME  = (1 << 1),
 	QSE_XLI_NOTEXT   = (1 << 10)
 };
 typedef enum qse_xli_trait_t qse_xli_trait_t;
 
 typedef struct qse_xli_val_t qse_xli_val_t;
+typedef struct qse_xli_nil_t qse_xli_nil_t;
 typedef struct qse_xli_str_t qse_xli_str_t;
 typedef struct qse_xli_list_t qse_xli_list_t;
 
@@ -83,6 +91,7 @@ typedef struct qse_xli_file_t qse_xli_file_t;
 
 enum qse_xli_val_type_t
 {
+	QSE_XLI_NIL,
 	QSE_XLI_STR,
 	QSE_XLI_LIST,
 };
@@ -104,6 +113,11 @@ struct qse_xli_val_t
 	QSE_XLI_VAL_HDR;
 };
 
+struct qse_xli_nil_t
+{
+	QSE_XLI_VAL_HDR;
+};
+
 struct qse_xli_list_t
 {
 	QSE_XLI_VAL_HDR;
@@ -114,9 +128,8 @@ struct qse_xli_list_t
 struct qse_xli_str_t
 {
 	QSE_XLI_VAL_HDR;
-	int verbatim;
 	const qse_char_t* ptr;
-	qse_size_t        len;
+	qse_size_t        len; /* take note that qse_strlen(ptr) != len */
 };
 
 #define QSE_XLI_ATOM_HDR \
@@ -142,7 +155,6 @@ struct qse_xli_text_t
 {
 	QSE_XLI_ATOM_HDR;
 	const qse_char_t* ptr;
-	qse_size_t len;
 };
 
 struct qse_xli_file_t
@@ -461,9 +473,18 @@ QSE_EXPORT void qse_xli_freemem (
 	void*      ptr
 );
 
+QSE_EXPORT qse_xli_pair_t* qse_xli_insertpair (
+	qse_xli_t*        xli,
+	qse_xli_list_t*   list,
+	qse_xli_atom_t*   peer,
+	const qse_char_t* key,
+	const qse_char_t* name,
+	qse_xli_val_t*    val
+);
+
 QSE_EXPORT qse_xli_pair_t* qse_xli_insertpairwithemptylist (
 	qse_xli_t*        xli,
-	qse_xli_list_t*   parent,
+	qse_xli_list_t*   list,
 	qse_xli_atom_t*   peer,
 	const qse_char_t* key,
 	const qse_char_t* name
@@ -471,12 +492,18 @@ QSE_EXPORT qse_xli_pair_t* qse_xli_insertpairwithemptylist (
 
 QSE_EXPORT qse_xli_pair_t* qse_xli_insertpairwithstr (
 	qse_xli_t*        xli, 
-	qse_xli_list_t*   parent,
+	qse_xli_list_t*   list,
 	qse_xli_atom_t*   peer,
 	const qse_char_t* key,
 	const qse_char_t* name,
-	const qse_char_t* value,
-	int               verbatim
+	const qse_cstr_t* value
+);
+
+
+qse_xli_pair_t* qse_xli_findpairbyname (
+     qse_xli_t*            xli,
+	const qse_xli_list_t* list,
+	const qse_char_t*     name
 );
 
 

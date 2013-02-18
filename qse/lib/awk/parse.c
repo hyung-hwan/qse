@@ -5512,7 +5512,7 @@ static int get_string (
 
 		if (c == QSE_CHAR_EOF)
 		{
-			SETERR_TOK (awk, QSE_AWK_ESTRNC);
+			SETERR_LOC (awk, QSE_AWK_ESTRNC, &awk->tok.loc);
 			return -1;
 		}
 
@@ -6072,7 +6072,7 @@ retry:
 
 			if (c == QSE_CHAR_EOF)
 			{
-				SETERR_TOK (awk, QSE_AWK_ESTRNC);
+				SETERR_LOC (awk, QSE_AWK_ESTRNC, &awk->tok.loc);
 				return -1;
 			}
 

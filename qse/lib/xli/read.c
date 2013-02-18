@@ -48,6 +48,7 @@ enum tok_t
 	TOK_LBRACE,
 	TOK_RBRACE,
 	TOK_EQ,
+	TOK_COMMA,
 	TOK_DQSTR,
 	TOK_SQSTR,
 	TOK_IDENT,
@@ -221,6 +222,7 @@ static int get_symbols (qse_xli_t* xli, qse_cint_t c, qse_xli_tok_t* tok)
 	static struct ops_t ops[] = 
 	{
 		{ QSE_T("="),   1, TOK_EQ          },
+		{ QSE_T(","),   1, TOK_COMMA       },
 		{ QSE_T(";"),   1, TOK_SEMICOLON   },
 		{ QSE_T("{"),   1, TOK_LBRACE      },
 		{ QSE_T("}"),   1, TOK_RBRACE      },
@@ -310,9 +312,7 @@ static int begin_include (qse_xli_t* xli)
 	);
 	if (pair == QSE_NULL)
 	{
-#if 0
-		SETERR_LOC (xli, QSE_XLI_ENOMEM, &xli->ptok.loc);
-#endif
+		qse_xli_seterror (xli, QSE_XLI_ENOMEM, QSE_NULL, &xli->tok.loc);
 		goto oops;
 	}
 
@@ -320,13 +320,7 @@ static int begin_include (qse_xli_t* xli)
 	QSE_HTB_VLEN(pair) = QSE_HTB_KLEN(pair);*/
 
 	arg = (qse_xli_io_arg_t*) qse_xli_callocmem (xli, QSE_SIZEOF(*arg));
-	if (arg == QSE_NULL)
-	{
-#if 0
-		ADJERR_LOC (xli, &xli->ptok.loc);
-#endif
-		goto oops;
-	}
+	if (arg == QSE_NULL) goto oops;
 
 	arg->flags = QSE_XLI_IO_INCLUDED;
 	arg->name = QSE_HTB_KPTR(pair);
@@ -411,9 +405,7 @@ retry:
 		{
 			/* this directive is empty, 
 			 * not followed by a valid word */
-#if  0
-			SETERR_LOC (xli, QSE_XLI_EXKWEM, &(xli)->tok.loc);
-#endif
+			qse_xli_seterror (xli, QSE_XLI_EXKWEM, QSE_NULL, &xli->tok.loc);
 			return -1;
 		}
 
@@ -429,9 +421,7 @@ retry:
 		if (type == TOK_IDENT)
 		{
 			/* this directive is not recognized */
-#if 0
-			SETERR_TOK (xli, QSE_XLI_EXKWNR);
-#endif
+			qse_xli_seterror (xli, QSE_XLI_EXKWNR, QSE_STR_CSTR(xli->tok.name), &xli->tok.loc);
 			return -1;
 		}
 		SET_TOKEN_TYPE (xli, tok, type);
@@ -465,9 +455,7 @@ retry:
 			if (c == QSE_CHAR_EOF)
 			{
 				/* the string is not closed */
-#if 0
-				SETERR_TOK (xli, QSE_XLI_ESTRNC);
-#endif
+				qse_xli_seterror (xli, QSE_XLI_ESTRNC, QSE_NULL, &xli->tok.loc);
 				return -1;
 			}
 
@@ -490,18 +478,18 @@ retry:
 			/* not handled yet */
 			if (c == QSE_T('\0'))
 			{
-#if 0
-				SETERR_ARG_LOC (
-					xli, QSE_XLI_ELXCHR,
-					QSE_T("<NUL>"), 5, &tok->loc);
-#endif
+				qse_cstr_t ea;
+				ea.ptr = QSE_T("<NUL>");
+				ea.len = 5;
+				qse_xli_seterror (xli, QSE_XLI_ELXCHR, &ea, &tok->loc);
 			}
 			else
 			{
-#if 0
 				qse_char_t cc = (qse_char_t)c;
-				SETERR_ARG_LOC (xli, QSE_XLI_ELXCHR, &cc, 1, &tok->loc);
-#endif
+				qse_cstr_t ea;
+				ea.ptr = &cc;
+				ea.len = 1;
+				qse_xli_seterror (xli, QSE_XLI_ELXCHR, &ea, &tok->loc);
 			}
 			return -1;
 		}
@@ -518,9 +506,7 @@ retry:
 	if (skip_semicolon_after_include)
 	{
 		/* semiclon has not been skipped yet */
-#if 0
 		qse_xli_seterror (xli, QSE_XLI_ESCOLON, QSE_STR_CSTR(tok->name), &tok->loc);
-#endif
 		return -1;
 	}
 
@@ -538,7 +524,7 @@ static int read_pair (qse_xli_t* xli, qse_xli_list_t* list)
 	qse_char_t* name = QSE_NULL;
 	qse_xli_pair_t* pair;
 
-	if (xli->opt.trait & QSE_XLI_NODUPKEY)
+	if (xli->opt.trait & QSE_XLI_KEYNODUP)
 	{
 		qse_xli_atom_t* atom;
 
@@ -566,10 +552,10 @@ static int read_pair (qse_xli_t* xli, qse_xli_list_t* list)
 
 	if (get_token (xli) <= -1) goto oops;
 
-	if  (xli->opt.trait & QSE_XLI_NAMEDKEY)
+	if  (xli->opt.trait & QSE_XLI_KEYNAME)
 	{
 		/* the name part must be unique for the same key(s) */
-		if (MATCH (xli, TOK_SQSTR) || MATCH(xli, TOK_DQSTR))
+		if (MATCH (xli, TOK_IDENT) || MATCH (xli, TOK_DQSTR) || MATCH (xli, TOK_SQSTR))
 		{
 			qse_xli_atom_t* atom;
 
@@ -602,14 +588,42 @@ static int read_pair (qse_xli_t* xli, qse_xli_list_t* list)
 	{
 		if (get_token (xli) <= -1) goto oops;
 
-		if (MATCH (xli, TOK_SQSTR) || MATCH (xli, TOK_DQSTR))
+		if (MATCH (xli, TOK_SQSTR) || MATCH (xli, TOK_DQSTR) || MATCH (xli, TOK_IDENT))
 		{
-			pair = qse_xli_insertpairwithstr (
-				xli, list, QSE_NULL, key, name, 
-				QSE_STR_PTR(xli->tok.name), MATCH (xli, TOK_SQSTR));
-			if (pair == QSE_NULL) goto oops;
+			if (qse_str_ncpy (xli->tmp[0], QSE_STR_PTR(xli->tok.name), QSE_STR_LEN(xli->tok.name) + 1) == (qse_size_t)-1)
+			{
+				qse_xli_seterrnum (xli, QSE_XLI_ENOMEM, QSE_NULL);
+				goto oops;
+			}
 
 			if (get_token (xli) <= -1) goto oops;
+			if (MATCH(xli, TOK_COMMA))
+			{
+				/* multi-segmented string */
+				do
+				{
+					if (get_token (xli) <= -1) goto oops; /* skip the comma */
+
+					if (!MATCH (xli, TOK_SQSTR) && !MATCH (xli, TOK_DQSTR) && !MATCH (xli, TOK_IDENT))
+					{
+						qse_xli_seterror (xli, QSE_XLI_ESYNTAX, QSE_NULL, &xli->tok.loc);
+						goto oops;
+					}
+
+					if (qse_str_ncat (xli->tmp[0], QSE_STR_PTR(xli->tok.name), QSE_STR_LEN(xli->tok.name) + 1) == (qse_size_t)-1)
+					{
+						qse_xli_seterrnum (xli, QSE_XLI_ENOMEM, QSE_NULL);
+						goto oops;
+					}
+
+					if (get_token (xli) <= -1) goto oops; /* skip the value */
+				}
+				while (MATCH (xli, TOK_COMMA));
+			}
+			
+			pair = qse_xli_insertpairwithstr (
+				xli, list, QSE_NULL, key, name, QSE_STR_CSTR(xli->tmp[0]));
+			if (pair == QSE_NULL) goto oops;
 
 			/* semicolon is mandatory for a string */
 			if (!MATCH (xli, TOK_SEMICOLON))
@@ -651,6 +665,15 @@ static int read_pair (qse_xli_t* xli, qse_xli_list_t* list)
 			if (get_token (xli) <= -1) goto oops;
 		}
 	}
+	else if (MATCH (xli, TOK_SEMICOLON))
+	{
+		/* no value has been specified for the pair */
+		pair = qse_xli_insertpair (xli, list, QSE_NULL, key, name, &xli->xnil);
+		if (pair == QSE_NULL) goto oops;
+
+		/* skip the semicolon */
+		if (get_token (xli) <= -1) goto oops;
+	}
 	else
 	{
 		qse_xli_seterror (xli, QSE_XLI_ELBREQ, QSE_STR_CSTR(xli->tok.name), &xli->tok.loc);
@@ -677,9 +700,7 @@ static int read_list (qse_xli_t* xli, qse_xli_list_t* list)
 
 			if (!MATCH(xli,TOK_SQSTR) && !MATCH(xli,TOK_DQSTR))
 			{
-#if 0
-				SETERR_LOC (xli, QSE_XLI_EINCLSTR, &xli->ptok.loc);
-#endif
+				qse_xli_seterror (xli, QSE_XLI_EINCLSTR, QSE_NULL, &xli->tok.loc);
 				return -1;
 			}
 
@@ -693,7 +714,10 @@ static int read_list (qse_xli_t* xli, qse_xli_list_t* list)
 		{
 			if (get_token(xli) <= -1) goto oops;
 		}
-		else break;
+		else 
+		{
+			break;
+		}
 	}
 
 	return 0;
@@ -733,8 +757,7 @@ int qse_xli_read (qse_xli_t* xli, qse_xli_io_impl_t io)
 
 	if (!MATCH (xli, TOK_EOF))
 	{
-/* TODO: set erro code */
-qse_printf (QSE_T("NOT ENDING WITH EOF... %s\n"), QSE_STR_PTR(xli->tok.name));
+		qse_xli_seterror (xli, QSE_XLI_ESYNTAX, QSE_NULL, &xli->tok.loc);
 		goto oops;
 	}
 

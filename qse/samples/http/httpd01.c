@@ -1,5 +1,5 @@
 
-#include <qse/net/httpd.h>
+#include <qse/http/httpd.h>
 #include <qse/cmn/stdio.h>
 #include <qse/cmn/main.h>
 #include <qse/cmn/str.h>

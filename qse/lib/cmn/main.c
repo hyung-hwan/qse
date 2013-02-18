@@ -20,6 +20,7 @@
 
 #include <qse/cmn/main.h>
 #include <qse/cmn/mbwc.h>
+
 #include "mem.h"
 
 int qse_runmain (

@@ -52,6 +52,7 @@
 
 static qse_char_t* g_input_file = QSE_NULL;
 static qse_char_t* g_output_file = QSE_NULL;
+static qse_char_t* g_lookup_key = QSE_NULL;
 static qse_ulong_t g_memlimit = 0;
 static int g_trait = 0;
 
@@ -122,7 +123,7 @@ static void print_usage (QSE_FILE* out, int argc, qse_char_t* argv[])
 {
 	const qse_char_t* b = qse_basename (argv[0]);
 
-	qse_fprintf (out, QSE_T("USAGE: %s [options] -f input-file\n"), b);
+	qse_fprintf (out, QSE_T("USAGE: %s [options] -f input-file [key]\n"), b);
 
 	qse_fprintf (out, QSE_T("options as follows:\n"));
 	qse_fprintf (out, QSE_T(" -h/--help                 show this message\n"));
@@ -201,7 +202,7 @@ static int handle_args (int argc, qse_char_t* argv[])
 				break;
 
 			case QSE_T('n'):
-				g_trait |= QSE_XLI_NAMEDKEY;
+				g_trait |= QSE_XLI_KEYNAME;
 				break;
 
 			case QSE_T('m'):
@@ -251,6 +252,14 @@ static int handle_args (int argc, qse_char_t* argv[])
 		goto oops;
 	}
 
+	if (opt.ind < argc) g_lookup_key = argv[opt.ind++];
+
+	if (opt.ind < argc)
+	{
+		print_usage (QSE_STDERR, argc, argv);
+		goto oops;
+	}
+
 	return 1;
 
 oops:
@@ -287,7 +296,6 @@ static int xli_main (int argc, qse_char_t* argv[])
 {
 	qse_mmgr_t* mmgr = QSE_MMGR_GETDFL();
 	qse_xli_t* xli = QSE_NULL;
-	qse_fs_t* fs = QSE_NULL;
 	qse_xli_iostd_t in, out;
 	int ret = -1;
 
@@ -361,11 +369,41 @@ static int xli_main (int argc, qse_char_t* argv[])
 		goto oops;
 	}
 
+	if (g_lookup_key)
+	{
+		qse_xli_pair_t* pair;
+		pair = qse_xli_findpairbyname (xli, QSE_NULL, g_lookup_key);
+		if (pair == QSE_NULL)
+		{
+			qse_fprintf (QSE_STDERR, 
+				QSE_T("ERROR: cannot find %s - %s \n"),
+				g_lookup_key,
+				qse_xli_geterrmsg(xli)
+			);
+			goto oops;
+		}
+		else
+		{
+			if (pair->val->type == QSE_XLI_STR)
+			{
+				qse_xli_str_t* str = (qse_xli_str_t*)pair->val;
+				qse_printf (QSE_T("[%.*s]\n"), (int)str->len, str->ptr);
+			}
+			else if (pair->val->type == QSE_XLI_NIL)
+			{
+				qse_printf (QSE_T("#NIL\n"));
+			}
+			else
+			{
+				qse_printf (QSE_T("#LIST\n"));
+			}
+		}
+	}
+
 	ret = 0;
 
 oops:
 	if (xli) qse_xli_close (xli);
-	if (fs) qse_fs_close (fs);
 	if (xma_mmgr.ctx) qse_xma_close (xma_mmgr.ctx);
 
 #if defined(QSE_BUILD_DEBUG)
