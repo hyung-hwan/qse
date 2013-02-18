@@ -36,7 +36,7 @@ build_triplet = @build@
 host_triplet = @host@
 bin_PROGRAMS = httpd01$(EXEEXT) httpd02$(EXEEXT) upxd01$(EXEEXT)
 @WCHAR_TRUE@@WIN32_TRUE@am__append_1 = $(UNICOWS_LIBS)
-subdir = samples/net
+subdir = samples/http
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/argz.m4 \
@@ -144,7 +144,7 @@ INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
 LD = @LD@
-LDFLAGS = @LDFLAGS@ -L../../lib/cmn -L../../lib/net
+LDFLAGS = @LDFLAGS@ -L../../lib/cmn -L../../lib/http
 LIBADD_DL = @LIBADD_DL@
 LIBADD_DLD_LINK = @LIBADD_DLD_LINK@
 LIBADD_DLOPEN = @LIBADD_DLOPEN@
@@ -282,7 +282,7 @@ AM_CPPFLAGS = \
 	-I$(top_srcdir)/include \
 	-I$(includedir) 
 
-LDADD = -lqsenet -lqsecmn $(PTHREAD_LIBS) $(SOCKET_LIBS) \
+LDADD = -lqsehttp -lqsecmn $(PTHREAD_LIBS) $(SOCKET_LIBS) \
 	$(SENDFILE_LIBS) $(am__append_1)
 httpd01_SOURCES = httpd01.c
 httpd02_SOURCES = httpd02.c
@@ -302,9 +302,9 @@ $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign samples/net/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign samples/http/Makefile'; \
 	$(am__cd) $(top_srcdir) && \
-	  $(AUTOMAKE) --foreign samples/net/Makefile
+	  $(AUTOMAKE) --foreign samples/http/Makefile
 .PRECIOUS: Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \

@@ -24,12 +24,12 @@ int qse_xli_write (qse_xli_t* xli, qse_xli_io_impl_t io)
 {
 	if (io == QSE_NULL)
 	{
-		xli->errnum = QSE_XLI_EINVAL;
+		qse_xli_seterrnum (xli, QSE_XLI_EINVAL, QSE_NULL);
 		return -1;
 	}
 
 	/* TODO: write data to io stream */
-	xli->errnum = QSE_XLI_ENOIMPL;
+	qse_xli_seterrnum (xli, QSE_XLI_ENOIMPL, QSE_NULL);
 	return -1;
 }
 

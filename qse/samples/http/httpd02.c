@@ -1,5 +1,5 @@
 
-#include <qse/net/httpd.h>
+#include <qse/http/httpd.h>
 #include <qse/cmn/stdio.h>
 #include <qse/cmn/main.h>
 #include <qse/cmn/str.h>
@@ -11,7 +11,6 @@
 #include <locale.h>
 
 #if defined(_WIN32)
-#	include <winsock2.h>
 #	include <windows.h>
 #	include <tchar.h>
 #	include <process.h>
@@ -49,7 +48,6 @@ typedef struct server_xtn_t server_xtn_t;
 struct server_xtn_t
 {
 	int tproxy;
-	int nodir; /* no directory listing */
 	qse_httpd_server_cbstd_t* orgcbstd;
 };
 
@@ -87,16 +85,19 @@ static int makersrc (
 	}
 	else
 	{
+	#if 0
 		if (server_xtn->orgcbstd->makersrc (httpd, client, req, rsrc) <= -1) return -1;
-		if (server_xtn->nodir && rsrc->type == QSE_HTTPD_RSRC_DIR)
+		if (rsrc->type == QSE_HTTPD_RSRC_DIR)
 		{
-			/* prohibit no directory listing */
+			/* no directory listing - */
 			if (server_xtn->orgcbstd->freersrc)
 				server_xtn->orgcbstd->freersrc (httpd, client, req, rsrc);
-			rsrc->type = QSE_HTTPD_RSRC_ERR;
-			rsrc->u.err.code = 403;
+			rsrc->type = QSE_HTTPD_RSRC_ERROR;
+			rsrc->u.error.code = 403;
 		}
 		return 0;
+	#endif
+		return server_xtn->orgcbstd->makersrc (httpd, client, req, rsrc);
 	}
 }
 
@@ -185,7 +186,6 @@ static int httpd_main (int argc, qse_char_t* argv[])
 	qse_httpd_t* httpd = QSE_NULL;
 	qse_ntime_t tmout;
 	int ret = -1, i;
-	int trait;
 	static qse_httpd_server_cbstd_t cbstd = { makersrc, freersrc };
 
 	if (argc <= 1)
@@ -217,10 +217,9 @@ static int httpd_main (int argc, qse_char_t* argv[])
 	signal (SIGPIPE, SIG_IGN);
 #endif
 
-	qse_httpd_setname (httpd, QSE_MT("qsehttpd 1.0"));
+	qse_httpd_setname (httpd, QSE_MT("httpd02/qse 1.0"));
 
-	trait = QSE_HTTPD_CGIERRTONUL;
-	qse_httpd_setopt (httpd, QSE_HTTPD_TRAIT, &trait);
+	qse_httpd_setoption (httpd, QSE_HTTPD_CGIERRTONUL);
 
 	tmout.sec = 10;
 	tmout.nsec = 0;
@@ -260,6 +259,7 @@ int qse_main (int argc, qse_achar_t* argv[])
 		setlocale (LC_ALL, locale);
 		qse_setdflcmgrbyid (QSE_CMGR_SLMB);
 	}
+
 
 	if (WSAStartup (MAKEWORD(2,0), &wsadata) != 0)
 	{

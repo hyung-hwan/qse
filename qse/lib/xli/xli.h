@@ -52,12 +52,14 @@ struct qse_xli_t
 	qse_xli_ecb_t* ecb;
 
 	qse_xli_list_t root;
+	qse_xli_nil_t xnil;
 
+	qse_str_t* tmp[1];
 	qse_xli_tok_t tok;
 	struct
 	{
 		qse_xli_io_impl_t inf; /* input handler */
-		qse_xli_io_lxc_t last;	
+		qse_xli_io_lxc_t  last;	
 		qse_xli_io_arg_t  arg; /* for top level */
 		qse_xli_io_arg_t* inp; /* current */
 	} sio;

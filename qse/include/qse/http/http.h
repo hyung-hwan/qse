@@ -18,8 +18,8 @@
     License along with QSE. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _QSE_NET_HTTP_H_
-#define _QSE_NET_HTTP_H_
+#ifndef _QSE_HTTP_HTTP_H_
+#define _QSE_HTTP_HTTP_H_
 
 /** @file
  * This file provides basic data types and functions for the http protocol.

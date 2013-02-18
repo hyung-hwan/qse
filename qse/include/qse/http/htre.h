@@ -18,10 +18,10 @@
     License along with QSE. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _QSE_NET_HTRE_H_
-#define _QSE_NET_HTRE_H_
+#ifndef _QSE_HTTP_HTRE_H_
+#define _QSE_HTTP_HTRE_H_
 
-#include <qse/net/http.h>
+#include <qse/http/http.h>
 #include <qse/cmn/htb.h>
 #include <qse/cmn/str.h>
 

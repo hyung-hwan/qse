@@ -18,7 +18,7 @@
     License along with QSE. If not, see <htrd://www.gnu.org/licenses/>.
  */
 
-#include <qse/net/htrd.h>
+#include <qse/http/htrd.h>
 #include <qse/cmn/chr.h>
 #include <qse/cmn/path.h>
 #include "../cmn/mem.h"

@@ -529,23 +529,23 @@ AC_CONFIG_FILES([
 	include/qse/awk/Makefile
 	include/qse/sed/Makefile
 	include/qse/xli/Makefile
-	include/qse/net/Makefile
+	include/qse/http/Makefile
 	lib/Makefile 
 	lib/cmn/Makefile 
 	lib/awk/Makefile 
 	lib/sed/Makefile 
 	lib/xli/Makefile 
-	lib/net/Makefile 
+	lib/http/Makefile 
 	cmd/Makefile 
 	cmd/awk/Makefile 
 	cmd/sed/Makefile 
 	cmd/xli/Makefile 
-	cmd/net/Makefile 
+	cmd/http/Makefile 
 	samples/Makefile 
 	samples/cmn/Makefile 
 	samples/awk/Makefile 
 	samples/sed/Makefile 
-	samples/net/Makefile
+	samples/http/Makefile
 	regress/Makefile
 	regress/awk/Makefile
 	regress/awk/regress.sh

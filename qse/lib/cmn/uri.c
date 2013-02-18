@@ -21,10 +21,10 @@
 #include <qse/cmn/uri.h>
 #include "mem.h"
 
-int qse_mbstouri (const qse_mchar_t* str, qse_uri_t* uri, int flags)
+int qse_mbstouri (const qse_mchar_t* str, qse_muri_t* uri, int flags)
 {
 	const qse_mchar_t* ptr, * colon;
-	qse_uri_t xuri;
+	qse_muri_t xuri;
 
 	QSE_MEMSET (&xuri, 0, QSE_SIZEOF(xuri));
 
@@ -145,10 +145,10 @@ int qse_mbstouri (const qse_mchar_t* str, qse_uri_t* uri, int flags)
 
 /* -------------------------------------------------------- */
 
-int qse_wcstouri (const qse_wchar_t* str, qse_uri_t* uri, int flags)
+int qse_wcstouri (const qse_wchar_t* str, qse_wuri_t* uri, int flags)
 {
 	const qse_wchar_t* ptr, * colon;
-	qse_uri_t xuri;
+	qse_wuri_t xuri;
 
 	QSE_MEMSET (&xuri, 0, QSE_SIZEOF(xuri));
 

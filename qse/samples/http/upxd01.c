@@ -1,4 +1,4 @@
-#include <qse/net/upxd.h>
+#include <qse/http/upxd.h>
 #include <qse/cmn/stdio.h>
 #include <qse/cmn/main.h>
 #include <qse/cmn/str.h>

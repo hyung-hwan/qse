@@ -89,6 +89,11 @@ void qse_httpd_stop (qse_httpd_t* httpd)
 	httpd->stopreq = 1;
 }
 
+void qse_httpd_reconfig (qse_httpd_t* httpd)
+{
+	httpd->reconfigreq = 1;
+}
+
 qse_httpd_errnum_t qse_httpd_geterrnum (qse_httpd_t* httpd)
 {
 	return httpd->errnum;
@@ -159,6 +164,14 @@ QSE_INLINE void* qse_httpd_allocmem (qse_httpd_t* httpd, qse_size_t size)
 	return ptr;
 }
 
+QSE_INLINE void* qse_httpd_callocmem (qse_httpd_t* httpd, qse_size_t size)
+{
+	void* ptr = QSE_MMGR_ALLOC (httpd->mmgr, size);
+	if (ptr == QSE_NULL) httpd->errnum = QSE_HTTPD_ENOMEM;
+	else QSE_MEMSET (ptr, 0, size);
+	return ptr;
+}
+
 QSE_INLINE void* qse_httpd_reallocmem (
 	qse_httpd_t* httpd, void* ptr, qse_size_t size)
 {
@@ -170,6 +183,34 @@ QSE_INLINE void* qse_httpd_reallocmem (
 QSE_INLINE void qse_httpd_freemem (qse_httpd_t* httpd, void* ptr)
 {
 	QSE_MMGR_FREE (httpd->mmgr, ptr);
+}
+
+qse_mchar_t* qse_httpd_strtombsdup (qse_httpd_t* httpd, const qse_char_t* str)
+{
+	qse_mchar_t* mptr;
+
+#if defined(QSE_CHAR_IS_MCHAR)
+	mptr = qse_mbsdup (str, httpd->mmgr);
+#else
+	mptr = qse_wcstombsdup (str, QSE_NULL, httpd->mmgr);
+#endif
+
+	if (mptr == QSE_NULL) httpd->errnum = QSE_HTTPD_ENOMEM;
+	return mptr;
+}
+
+qse_mchar_t* qse_httpd_strntombsdup (qse_httpd_t* httpd, const qse_char_t* str, qse_size_t len)
+{
+	qse_mchar_t* mptr;
+
+#if defined(QSE_CHAR_IS_MCHAR)
+	mptr = qse_mbsxdup (str, len, httpd->mmgr);
+#else
+	mptr = qse_wcsntombsdup (str, len, QSE_NULL, httpd->mmgr);
+#endif
+
+	if (mptr == QSE_NULL) httpd->errnum = QSE_HTTPD_ENOMEM;
+	return mptr;
 }
 
 /* --------------------------------------------------- */
@@ -434,15 +475,15 @@ static int accept_client (
 		{
 /* TODO: proper logging */
 qse_char_t tmp[128];
-qse_nwadtostr (&server->nwad, tmp, QSE_COUNTOF(tmp), QSE_NWADTOSTR_ALL);
-qse_printf (QSE_T("failed to accept from server %s\n"), tmp);
+qse_nwadtostr (&server->dope.nwad, tmp, QSE_COUNTOF(tmp), QSE_NWADTOSTR_ALL);
+qse_printf (QSE_T("failed to accept from server [%s] [%d]\n"), tmp, server->handle.i);
 
 			return -1;
 		}
 
 /* TODO: check maximum number of client. if exceed call client.close */
 
-		if (server->flags & QSE_HTTPD_SERVER_SECURE) clibuf.status |= CLIENT_SECURE;
+		if (server->dope.flags & QSE_HTTPD_SERVER_SECURE) clibuf.status |= CLIENT_SECURE;
 		clibuf.server = server;
 
 		client = new_client (httpd, &clibuf);
@@ -496,11 +537,11 @@ static void deactivate_servers (qse_httpd_t* httpd)
 
 	for (server = httpd->server.list.head; server; server = server->next)
 	{
-		if (server->flags & QSE_HTTPD_SERVER_ACTIVE)
+		if (server->dope.flags & QSE_HTTPD_SERVER_ACTIVE)
 		{
 			httpd->scb->mux.delhnd (httpd, httpd->mux, server->handle);
 			httpd->scb->server.close (httpd, server);
-			server->flags &= ~QSE_HTTPD_SERVER_ACTIVE;
+			server->dope.flags &= ~QSE_HTTPD_SERVER_ACTIVE;
 			httpd->server.nactive--;
 		}
 	}
@@ -515,13 +556,12 @@ static int activate_servers (qse_httpd_t* httpd)
 		if (httpd->scb->server.open (httpd, server) <= -1)
 		{
 			qse_char_t buf[64];
-			qse_nwadtostr (&server->nwad, 
-				buf, QSE_COUNTOF(buf), QSE_NWADTOSTR_ALL);
+			qse_nwadtostr (&server->dope.nwad, buf, QSE_COUNTOF(buf), QSE_NWADTOSTR_ALL);
 
 /*
-			httpd->rcb->log (httpd, 0, 
-				QSE_T("cannot activate %s"), buf);
+			httpd->rcb->log (httpd, 0, QSE_T("cannot activate %s"), buf);
 */
+qse_printf(QSE_T("cannot activate [%s]\n"), buf);
 			continue;
 		}
 
@@ -529,18 +569,17 @@ static int activate_servers (qse_httpd_t* httpd)
 			httpd, httpd->mux, server->handle, QSE_HTTPD_MUX_READ, server) <= -1)
 		{
 			qse_char_t buf[64];
-			qse_nwadtostr (&server->nwad, 
-				buf, QSE_COUNTOF(buf), QSE_NWADTOSTR_ALL);
+			qse_nwadtostr (&server->dope.nwad, buf, QSE_COUNTOF(buf), QSE_NWADTOSTR_ALL);
 /*
-			httpd->rcb->log (httpd, 0, 
-				QSE_T("cannot activate %s - "), buf);
+			httpd->rcb->log (httpd, 0, QSE_T("cannot activate %s - "), buf);
 */
+qse_printf(QSE_T("cannot add handle [%s]\n"), buf);
 
 			httpd->scb->server.close (httpd, server);
 			continue;
 		}
 
-		server->flags |= QSE_HTTPD_SERVER_ACTIVE;
+		server->dope.flags |= QSE_HTTPD_SERVER_ACTIVE;
 		httpd->server.nactive++;
 	}
 
@@ -566,20 +605,18 @@ static void free_server_list (qse_httpd_t* httpd)
 }
 
 qse_httpd_server_t* qse_httpd_attachserver (
-	qse_httpd_t* httpd, const qse_httpd_server_t* tmpl, 
-	qse_httpd_server_predetach_t predetach, qse_size_t xtnsize)
+	qse_httpd_t* httpd, const qse_httpd_server_dope_t* dope, qse_size_t xtnsize)
 {
 	qse_httpd_server_t* server;
 
-	server = qse_httpd_allocmem (httpd, QSE_SIZEOF(*server) + xtnsize);
+	server = qse_httpd_callocmem (httpd, QSE_SIZEOF(*server) + xtnsize);
 	if (server == QSE_NULL) return QSE_NULL;
 
-	QSE_MEMCPY (server, tmpl, QSE_SIZEOF(*server)); 
-	QSE_MEMSET (server + 1, 0, xtnsize);
-
 	server->type = QSE_HTTPD_SERVER;
-	server->flags &= ~QSE_HTTPD_SERVER_ACTIVE;
-	server->predetach = predetach;
+	/* copy the server dope */
+	server->dope = *dope;
+	/* and correct some fields in case the dope contains invalid stuffs */
+	server->dope.flags &= ~QSE_HTTPD_SERVER_ACTIVE;
 
 	/* chain the server to the tail of the list */
 	server->prev = httpd->server.list.tail;
@@ -601,9 +638,9 @@ void qse_httpd_detachserver (qse_httpd_t* httpd, qse_httpd_server_t* server)
 	prev = server->prev;
 	next = server->next;
 
-	QSE_ASSERT (!(server->flags & QSE_HTTPD_SERVER_ACTIVE));
+	QSE_ASSERT (!(server->dope.flags & QSE_HTTPD_SERVER_ACTIVE));
 
-	if (server->predetach) server->predetach (httpd, server);
+	if (server->dope.predetach) server->dope.predetach (httpd, server);
 
 	qse_httpd_freemem (httpd, server);
 	httpd->server.navail--;
@@ -1112,9 +1149,22 @@ qse_printf (QSE_T("MUX ADDHND CLIENT RW(ENTASK) %d\n"), client->handle.i);
 static int dispatch_mux (
 	qse_httpd_t* httpd, void* mux, qse_ubi_t handle, int mask, void* cbarg)
 {
-	return ((qse_httpd_server_t*)cbarg)->type == QSE_HTTPD_SERVER?
+	return ((qse_httpd_mate_t*)cbarg)->type == QSE_HTTPD_SERVER?
 		accept_client (httpd, mux, handle, mask, cbarg):
 		perform_client_task (httpd, mux, handle, mask, cbarg);
+}
+
+static void reconfig_servers (qse_httpd_t* httpd)
+{
+	qse_httpd_server_t* server;
+
+	for (server = httpd->server.list.head; server; server = server->next)
+	{
+		if (server->dope.flags & QSE_HTTPD_SERVER_ACTIVE)
+		{
+			if (server->dope.reconfig) server->dope.reconfig (httpd, server);
+		}
+	}
 }
 
 int qse_httpd_loop (
@@ -1166,12 +1216,21 @@ int qse_httpd_loop (
 		count = httpd->scb->mux.poll (httpd, httpd->mux, tmout);
 		if (count <= -1) 
 		{
-			xret = -1; 
-			break;
+			if (httpd->errnum != QSE_HTTPD_EINTR)
+			{
+				xret = -1; 
+				break;
+			}
 		}
 
 		purge_bad_clients (httpd);
 		purge_idle_clients (httpd);
+
+		if (httpd->reconfigreq)
+		{
+			reconfig_servers (httpd);	
+			httpd->reconfigreq = 0;
+		}
 	}
 
 	purge_client_list (httpd);

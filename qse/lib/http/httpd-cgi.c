@@ -446,13 +446,20 @@ static int cgi_add_env (
 	if (suffix && suffix[0] != QSE_MT('\0')) 
 	{
 		const qse_mchar_t* tmp[3];
+		qse_mchar_t* tr;
 
 		tmp[0] = docroot; 
 		tmp[1] = suffix; 
 		tmp[2] = QSE_NULL;
 
+		tr = qse_mbsadup  (tmp, QSE_NULL, httpd->mmgr);
+		if (tr) 
+		{
+			qse_canonmbspath (tr, tr, 0);
+			qse_env_insertmbs (env, QSE_MT("PATH_TRANSLATED"), tr);
+			QSE_MMGR_FREE (httpd->mmgr, tr);
+		}
 		qse_env_insertmbs (env, QSE_MT("PATH_INFO"), suffix);
-		qse_env_insertmbsa (env, QSE_MT("PATH_TRANSLATED"), tmp);
 	}
 
 	qse_env_insertmbs (env, QSE_MT("REQUEST_METHOD"), qse_htre_getqmethodname(req));

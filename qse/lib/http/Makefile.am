@@ -5,8 +5,8 @@ AM_CPPFLAGS = \
 	-I$(top_srcdir)/include \
 	-I$(includedir)
 
-lib_LTLIBRARIES = libqsenet.la
-libqsenet_la_SOURCES = \
+lib_LTLIBRARIES = libqsehttp.la
+libqsehttp_la_SOURCES = \
 	httpd.h \
 	upxd.h \
 	http.c \
@@ -23,6 +23,6 @@ libqsenet_la_SOURCES = \
 	httpd-text.c \
 	upxd.c
 
-libqsenet_la_LDFLAGS = -version-info 1:0:0 -no-undefined -L../cmn -L$(libdir)
-libqsenet_la_LIBADD = -lqsecmn $(SOCKET_LIBS) $(SENDFILE_LIBS) $(SSL_LIBS)
+libqsehttp_la_LDFLAGS = -version-info 1:0:0 -no-undefined -L../cmn -L$(libdir)
+libqsehttp_la_LIBADD = -lqsecmn $(SOCKET_LIBS) $(SENDFILE_LIBS) $(SSL_LIBS)
 

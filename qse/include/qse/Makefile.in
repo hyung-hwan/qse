@@ -306,7 +306,7 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-SUBDIRS = cmn awk sed net
+SUBDIRS = cmn awk sed http
 pkginclude_HEADERS = conf-msw.h conf-os2.h conf-dos.h conf-vms.h \
 	conf-mac.h conf-inf.h types.h macros.h pack1.h unpack.h \
 	$(am__append_1)

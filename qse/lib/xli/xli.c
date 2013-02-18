@@ -19,6 +19,7 @@
  */
 
 #include "xli.h"
+#include <qse/cmn/chr.h>
 
 qse_xli_t* qse_xli_open (qse_mmgr_t* mmgr, qse_size_t xtnsize)
 {
@@ -51,9 +52,17 @@ void qse_xli_close (qse_xli_t* xli)
 
 int qse_xli_init (qse_xli_t* xli, qse_mmgr_t* mmgr)
 {
+	qse_size_t i;
+
 	QSE_MEMSET (xli, 0, QSE_SIZEOF(*xli));
 	xli->mmgr = mmgr;
 	xli->errstr = qse_xli_dflerrstr;
+
+	for (i = 0; i < QSE_COUNTOF(xli->tmp); i++)
+	{
+		xli->tmp[i] = qse_str_open (mmgr, 0, 128);
+		if (xli->tmp[i] == QSE_NULL) goto oops;
+	}
 
 	xli->tok.name = qse_str_open (mmgr, 0, 128);
 	if (xli->tok.name == QSE_NULL) goto oops;
@@ -67,20 +76,34 @@ int qse_xli_init (qse_xli_t* xli, qse_mmgr_t* mmgr)
 		qse_gethtbmancbs(QSE_HTB_MANCBS_INLINE_KEY_COPIER)
 	);
 	
+	xli->root.type = QSE_XLI_LIST;
+	xli->xnil.type = QSE_XLI_NIL;
 	return 0;
 
 oops:
 	qse_xli_seterrnum (xli, QSE_XLI_ENOMEM, QSE_NULL);
 	if (xli->sio_names) qse_htb_close (xli->sio_names);
 	if (xli->tok.name) qse_str_close (xli->tok.name);
+	
+	for (i = QSE_COUNTOF(xli->tmp); i > 0; )
+	{
+		if (xli->tmp[--i]) qse_str_close (xli->tmp[i]);
+	}
 	return -1;
 }
 
 void qse_xli_fini (qse_xli_t* xli)
 {
+	qse_size_t i;
+
 	qse_xli_clear (xli);
 	qse_htb_close (xli->sio_names);
 	qse_str_close (xli->tok.name);
+
+	for (i = QSE_COUNTOF(xli->tmp); i > 0; )
+	{
+		if (xli->tmp[--i]) qse_str_close (xli->tmp[i]);
+	}
 }
 
 qse_mmgr_t* qse_xli_getmmgr (qse_xli_t* xli)
@@ -243,20 +266,20 @@ qse_xli_pair_t* qse_xli_insertpairwithemptylist (
 
 qse_xli_pair_t* qse_xli_insertpairwithstr (
 	qse_xli_t* xli, qse_xli_list_t* parent, qse_xli_atom_t* peer,
-	const qse_char_t* key, const qse_char_t* name, const qse_char_t* value, int verbatim)
+	const qse_char_t* key, const qse_char_t* name, const qse_cstr_t* value)
 {
 	qse_xli_str_t* val;
 	qse_xli_pair_t* tmp;
-	qse_size_t vlen;
 
-	vlen = qse_strlen (value);
-	val = qse_xli_callocmem (xli, QSE_SIZEOF(*val) + ((vlen  + 1) * QSE_SIZEOF(*value)));
+	val = qse_xli_callocmem (xli, QSE_SIZEOF(*val) + ((value->len  + 1) * QSE_SIZEOF(*value->ptr)));
 	if (val == QSE_NULL) return QSE_NULL;
 
 	val->type = QSE_XLI_STR;
+
+	qse_strncpy ((qse_char_t*)(val + 1), value->ptr, value->len);
 	val->ptr = (const qse_char_t*)(val + 1);
-	val->len = vlen;
-	val->verbatim = verbatim;
+	val->len = value->len;
+
 	tmp = qse_xli_insertpair (xli, parent, peer, key, name, (qse_xli_val_t*)val);	
 	if (tmp == QSE_NULL) qse_xli_freemem (xli, val);
 	return tmp;
@@ -275,7 +298,6 @@ qse_xli_text_t* qse_xli_inserttext (
 
 	text->type = QSE_XLI_TEXT;
 	text->ptr = (const qse_char_t*)(text + 1);
-	text->len = slen;
 
 	insert_atom (xli, parent, peer, (qse_xli_atom_t*)text);
 
@@ -292,10 +314,13 @@ static void free_atom (qse_xli_t* xli, qse_xli_atom_t* atom)
 	{
 		qse_xli_pair_t* pair = (qse_xli_pair_t*)atom;
 
-		if (pair->val->type == QSE_XLI_LIST)
-			free_list (xli, (qse_xli_list_t*)pair->val);
+		if (pair->val != &xli->xnil)
+		{
+			if (pair->val->type == QSE_XLI_LIST)
+				free_list (xli, (qse_xli_list_t*)pair->val);
 
-		QSE_MMGR_FREE (xli->mmgr, pair->val);
+			QSE_MMGR_FREE (xli->mmgr, pair->val);
+		}
 	}
 	
 	QSE_MMGR_FREE (xli->mmgr, atom);
@@ -319,6 +344,186 @@ static void free_list (qse_xli_t* xli, qse_xli_list_t* list)
 
 void qse_xli_clear (qse_xli_t* xli)
 {
-	/* TODO: free data under xli->root */
 	free_list (xli, &xli->root);
 }
+
+static qse_xli_pair_t* find_pair_byname (
+	qse_xli_t* xli, const qse_xli_list_t* list, 
+	const qse_cstr_t* key, const qse_cstr_t* name)
+{
+	qse_xli_atom_t* p;
+
+	/* TODO: speed up. no linear search */
+	p = list->head;
+	while (p)
+	{
+		if (p->type == QSE_XLI_PAIR)
+		{
+			qse_xli_pair_t* pair = (qse_xli_pair_t*)p;
+			if (qse_strxcmp (key->ptr, key->len, pair->key) == 0) 
+			{
+				if (name == QSE_NULL || 
+				    qse_strxcmp (name->ptr, name->len, pair->name) == 0) return pair;
+			}
+		}
+
+		p = p->next;
+	}
+
+	return QSE_NULL;
+}
+
+static qse_xli_pair_t* find_pair_byindex (
+	qse_xli_t* xli, const qse_xli_list_t* list, 
+	const qse_cstr_t* key, qse_size_t index)
+{
+	qse_xli_atom_t* p;
+	qse_size_t count = 0;
+
+	/* TODO: speed up. no linear search */
+	p = list->head;
+	while (p)
+	{
+		if (p->type == QSE_XLI_PAIR)
+		{
+			qse_xli_pair_t* pair = (qse_xli_pair_t*)p;
+			if (qse_strxcmp (key->ptr, key->len, pair->key) == 0) 
+			{
+				if (index == count) return pair;
+				count++;
+			}
+		}
+
+		p = p->next;
+	}
+
+	return QSE_NULL;
+}
+
+qse_xli_pair_t* qse_xli_findpairbyname (
+	qse_xli_t* xli, const qse_xli_list_t* list, const qse_char_t* name)
+{
+	const qse_char_t* ptr;
+	qse_cstr_t seg;
+	qse_xli_list_t* curlist;
+	qse_xli_pair_t* pair;
+
+	curlist = list? list: &xli->root;
+
+	ptr = name;
+	while (1)
+	{
+		seg.ptr = ptr;
+		while (*ptr != QSE_T('\0') && 
+		       *ptr != QSE_T('.') && 
+		       *ptr != QSE_T('[')) ptr++;
+		if (ptr == seg.ptr) goto inval;
+		seg.len = ptr - seg.ptr;
+
+		if (curlist->type != QSE_XLI_LIST) 
+		{
+			/* check the type of curlist. this check is needed
+			 * because of the unconditional switching at the bottom of the 
+			 * this loop. this implementation strategy has been chosen
+			 * to provide the segment name easily. */
+			goto noent;
+		}
+
+		if (*ptr == QSE_T('['))
+		{
+			/*  index is specified */
+			ptr++;
+
+			if (QSE_ISDIGIT(*ptr))
+			{
+				/* numeric index */
+				qse_size_t index = 0, count = 0;
+				do 
+				{
+					index = index * 10 + (*ptr++ - QSE_T('0')); 
+					count++;
+				}
+				while (QSE_ISDIGIT(*ptr));
+
+				if (*ptr != QSE_T(']')) goto inval;
+
+				pair = find_pair_byindex (xli, curlist, &seg, index);
+				if (pair == QSE_NULL) 
+				{
+					seg.len += count + 2; /* adjustment for error message */
+					goto noent;
+				}
+			}
+			else if (QSE_ISALPHA(*ptr))
+			{
+				/* word index */
+				qse_cstr_t idx;
+
+				idx.ptr = ptr;
+				do ptr++; while (QSE_ISALNUM(*ptr) || *ptr == QSE_T('_') || *ptr == QSE_T('-'));
+				idx.len = ptr - idx.ptr;
+	
+				if (*ptr != QSE_T(']')) goto inval;
+
+				pair = find_pair_byname (xli, curlist, &seg, &idx);
+				if (pair == QSE_NULL) 
+				{
+					seg.len += idx.len + 2; /* adjustment for error message */
+					goto noent;
+				}
+			}
+			else if (*ptr == QSE_T('\'') || *ptr == QSE_T('\"'))
+			{
+				qse_cstr_t idx;
+				qse_char_t cc = *ptr++;
+
+				idx.ptr = ptr;
+				do ptr++; while (*ptr != cc && *ptr != QSE_T('\0'));
+				idx.len = ptr - idx.ptr;
+		
+				if (*ptr != cc) goto inval;
+				if (*++ptr != QSE_T(']')) goto inval;
+
+				pair = find_pair_byname (xli, curlist, &seg, &idx);
+				if (pair == QSE_NULL) 
+				{
+					seg.len += idx.len + 4; /* adjustment for error message */
+					goto noent;
+				}
+			}
+			else goto inval;
+
+			ptr++;  /* skip ] */
+
+			if (*ptr == QSE_T('\0')) break; /* no more segments */
+			else if (*ptr != QSE_T('.')) goto inval;
+		}
+		else
+		{
+			pair = find_pair_byname (xli, curlist, &seg, QSE_NULL);
+			if (pair == QSE_NULL) goto noent;
+
+			if (*ptr == QSE_T('\0')) break; /* no more segments */
+		}
+
+		/* more segments to handle */
+		QSE_ASSERT (*ptr == QSE_T('.'));
+		ptr++;
+
+		/* switch to the value regardless of its type.
+		 * check if it is a list in the beginning of the loop
+		 * just after having gotten the next segment name */
+		curlist = (qse_xli_list_t*)pair->val;
+	}
+
+	return pair;
+
+inval:
+	qse_xli_seterrnum (xli, QSE_XLI_EINVAL, QSE_NULL);
+	return QSE_NULL;
+
+noent:
+	qse_xli_seterrnum (xli, QSE_XLI_ENOENT, &seg);
+	return QSE_NULL;
+}
+

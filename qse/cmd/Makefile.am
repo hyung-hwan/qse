@@ -1,2 +1,2 @@
-SUBDIRS = awk sed xli net 
+SUBDIRS = awk sed xli http 
 DIST_SUBDIRS = $(SUBDIRS) 

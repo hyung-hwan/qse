@@ -18,7 +18,7 @@
     License along with QSE. If not, see <htrd://www.gnu.org/licenses/>.
  */
 
-#include <qse/net/htre.h>
+#include <qse/http/htre.h>
 #include "../cmn/mem.h"
 
 static void free_hdrval (qse_htb_t* htb, void* vptr, qse_size_t vlen)

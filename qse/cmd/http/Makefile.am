@@ -8,8 +8,8 @@ AM_CPPFLAGS = \
 bin_PROGRAMS = qsehttpd
 
 qsehttpd_SOURCES = httpd.c
-qsehttpd_LDFLAGS = -L../../lib/net -L../../lib/cmn -L$(libdir)
-qsehttpd_LDADD = -lqsenet -lqsecmn
+qsehttpd_LDFLAGS = -L../../lib/xli -L../../lib/http -L../../lib/cmn -L$(libdir)
+qsehttpd_LDADD = -lqsexli -lqsehttp -lqsecmn
 
 if WIN32 
 if WCHAR

@@ -270,7 +270,7 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-SUBDIRS = awk sed xli net 
+SUBDIRS = awk sed xli http 
 DIST_SUBDIRS = $(SUBDIRS) 
 all: all-recursive
 
