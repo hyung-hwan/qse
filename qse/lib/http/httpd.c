@@ -89,9 +89,9 @@ void qse_httpd_stop (qse_httpd_t* httpd)
 	httpd->stopreq = 1;
 }
 
-void qse_httpd_reconfig (qse_httpd_t* httpd)
+void qse_httpd_reconf (qse_httpd_t* httpd)
 {
-	httpd->reconfigreq = 1;
+	httpd->reconfreq = 1;
 }
 
 qse_httpd_errnum_t qse_httpd_geterrnum (qse_httpd_t* httpd)
@@ -640,7 +640,7 @@ void qse_httpd_detachserver (qse_httpd_t* httpd, qse_httpd_server_t* server)
 
 	QSE_ASSERT (!(server->dope.flags & QSE_HTTPD_SERVER_ACTIVE));
 
-	if (server->dope.predetach) server->dope.predetach (httpd, server);
+	if (server->dope.detach) server->dope.detach (httpd, server);
 
 	qse_httpd_freemem (httpd, server);
 	httpd->server.navail--;
@@ -1154,7 +1154,7 @@ static int dispatch_mux (
 		perform_client_task (httpd, mux, handle, mask, cbarg);
 }
 
-static void reconfig_servers (qse_httpd_t* httpd)
+static void reconf_servers (qse_httpd_t* httpd)
 {
 	qse_httpd_server_t* server;
 
@@ -1162,7 +1162,7 @@ static void reconfig_servers (qse_httpd_t* httpd)
 	{
 		if (server->dope.flags & QSE_HTTPD_SERVER_ACTIVE)
 		{
-			if (server->dope.reconfig) server->dope.reconfig (httpd, server);
+			if (server->dope.reconf) server->dope.reconf (httpd, server);
 		}
 	}
 }
@@ -1226,10 +1226,19 @@ int qse_httpd_loop (
 		purge_bad_clients (httpd);
 		purge_idle_clients (httpd);
 
-		if (httpd->reconfigreq)
+		if (httpd->reconfreq)
 		{
-			reconfig_servers (httpd);	
-			httpd->reconfigreq = 0;
+			qse_httpd_ecb_t* ecb;
+
+			for (ecb = httpd->ecb; ecb; ecb = ecb->next)
+				if (ecb->reconf) ecb->reconf (httpd, QSE_HTTPD_ECB_RECONF_PRE);
+
+			reconf_servers (httpd);	
+
+			for (ecb = httpd->ecb; ecb; ecb = ecb->next)
+				if (ecb->reconf) ecb->reconf (httpd, QSE_HTTPD_ECB_RECONF_POST);
+
+			httpd->reconfreq = 0;
 		}
 	}
 

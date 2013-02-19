@@ -94,8 +94,8 @@
 typedef struct server_xtn_t server_xtn_t;
 struct server_xtn_t
 {
-	qse_httpd_server_predetach_t predetach;
-	qse_httpd_server_reconfig_t reconfig;
+	qse_httpd_server_detach_t detach;
+	qse_httpd_server_reconf_t reconf;
 
 	qse_httpd_serverstd_query_t query;
 	qse_httpd_serverstd_makersrc_t makersrc;
@@ -1914,19 +1914,22 @@ static int format_err (
 {
 	int n;
 	server_xtn_t* server_xtn;
-	const qse_mchar_t* css, * msg;
+	const qse_mchar_t* css, * msg, * name;
 
 	server_xtn = qse_httpd_getserverxtn (httpd, client->server);
 
 	if (server_xtn->query (httpd, client->server, QSE_NULL, QSE_NULL, QSE_HTTPD_SERVERSTD_ERRCSS, &css) <= -1) css = QSE_NULL;
 	if (css == QSE_NULL) css = QSE_MT("");
 
+	if (server_xtn->query (httpd, client->server, QSE_NULL, QSE_NULL, QSE_HTTPD_SERVERSTD_NAME, &name) <= -1) name = QSE_NULL;
+	if (name == QSE_NULL) name = qse_httpd_getname(httpd);
+
 	msg = qse_httpstatustombs(code);
 
 /* TODO: use my own version of snprintf replacement */
 	n = snprintf (buf, bufsz,
 		QSE_MT("<html><head>%s<title>%s</title></head><body><div class='header'>HTTP ERROR</div><div class='body'>%d %s</div><div class='footer'>%s</div></body></html>"), 
-		css, msg, code, msg, qse_httpd_getname(httpd));
+		css, msg, code, msg, name);
 	if (n < 0 || n >= bufsz) 
 	{
 		httpd->errnum = QSE_HTTPD_ENOBUF;
@@ -1968,7 +1971,12 @@ static int format_dir (
 		else
 		{
 			/* footer */
-			n = snprintf (buf, bufsz, QSE_MT("</table></div><div class='footer'>%s</div></body></html>"), qse_httpd_getname(httpd));
+			const qse_mchar_t* name;
+
+			if (server_xtn->query (httpd, client->server, QSE_NULL, QSE_NULL, QSE_HTTPD_SERVERSTD_NAME, &name) <= -1) name = QSE_NULL;
+			if (name == QSE_NULL) name = qse_httpd_getname(httpd);
+
+			n = snprintf (buf, bufsz, QSE_MT("</table></div><div class='footer'>%s</div></body></html>"), name);
 		}
 	}
 	else
@@ -2451,21 +2459,21 @@ auth_ok:
 
 /* ------------------------------------------------------------------- */
 
-static void predetach_server (qse_httpd_t* httpd, qse_httpd_server_t* server)
+static void detach_server (qse_httpd_t* httpd, qse_httpd_server_t* server)
 {
 	server_xtn_t* server_xtn;
 
 	server_xtn = (server_xtn_t*) qse_httpd_getserverxtn (httpd, server);
-	if (server_xtn->predetach) server_xtn->predetach (httpd, server);
+	if (server_xtn->detach) server_xtn->detach (httpd, server);
 	if (server_xtn->auth.ptr) QSE_MMGR_FREE (httpd->mmgr, server_xtn->auth.ptr);
 }
 
-static void reconfig_server (qse_httpd_t* httpd, qse_httpd_server_t* server)
+static void reconf_server (qse_httpd_t* httpd, qse_httpd_server_t* server)
 {
 	server_xtn_t* server_xtn;
 	server_xtn = (server_xtn_t*) qse_httpd_getserverxtn (httpd, server);
 	
-	if (server_xtn->reconfig) server_xtn->reconfig (httpd, server);
+	if (server_xtn->reconf) server_xtn->reconf (httpd, server);
 
 	/* nothing more to do here ...  */
 }
@@ -2502,6 +2510,7 @@ static int query_server (
 
 	switch (code)
 	{
+		case QSE_HTTPD_SERVERSTD_NAME:
 		case QSE_HTTPD_SERVERSTD_DOCROOT:
 		case QSE_HTTPD_SERVERSTD_REALM:
 		case QSE_HTTPD_SERVERSTD_AUTH:
@@ -2554,24 +2563,24 @@ static int query_server (
 }
 
 qse_httpd_server_t* qse_httpd_attachserverstd (
-	qse_httpd_t* httpd, qse_httpd_serverstd_t* server, qse_size_t xtnsize)
+	qse_httpd_t* httpd, const qse_httpd_server_dope_t* dope, qse_size_t xtnsize)
 {
-	qse_httpd_server_dope_t dope;
+	qse_httpd_server_dope_t xdope;
 	qse_httpd_server_t* xserver;
 	server_xtn_t* server_xtn;
 
-	/* memcpy here assumes that the top of the dope structure
-	 * is common with the server structure */
-	QSE_MEMCPY (&dope, server, QSE_SIZEOF(dope));
-	dope.predetach = predetach_server; /* set my own detaching function */
-	dope.reconfig = reconfig_server; /* set my own detaching function */
+	xdope = *dope;
+	xdope.detach = detach_server;
+	xdope.reconf = reconf_server; 
 
-	xserver = qse_httpd_attachserver (httpd, &dope, QSE_SIZEOF(*server_xtn) + xtnsize);
+	xserver = qse_httpd_attachserver (httpd, &xdope, QSE_SIZEOF(*server_xtn) + xtnsize);
 	if (xserver == QSE_NULL) return QSE_NULL;
 
 	server_xtn = qse_httpd_getserverxtn (httpd, xserver);
-	server_xtn->predetach = server->predetach;
-	server_xtn->reconfig = server->reconfig;
+
+	server_xtn->detach = dope->detach;
+	server_xtn->reconf = dope->reconf;
+
 	server_xtn->query = query_server;
 	server_xtn->makersrc = make_resource;
 	server_xtn->freersrc = free_resource;
@@ -2579,10 +2588,11 @@ qse_httpd_server_t* qse_httpd_attachserverstd (
 	return xserver;
 }
 
+#if 0
 qse_httpd_server_t* qse_httpd_attachserverstdwithuri (
 	qse_httpd_t* httpd, const qse_char_t* uri, 
-	qse_httpd_server_predetach_t predetach, 
-	qse_httpd_server_reconfig_t reconfig, 
+	qse_httpd_server_detach_t detach, 
+	qse_httpd_server_reconf_t reconf, 
 	qse_httpd_serverstd_query_t query, 
 	qse_size_t xtnsize)
 {
@@ -2621,8 +2631,8 @@ qse_httpd_server_t* qse_httpd_attachserverstdwithuri (
 			server.nwad.u.in6.port = qse_hton16(default_port);
 	}
 
-	server.predetach = predetach;
-	server.reconfig = reconfig;
+	server.detach = detach;
+	server.reconf = reconf;
 #if 0
 	server.docroot = xuri.path;
 	if (server.docroot.ptr && qse_ismbsdriveabspath((const qse_mchar_t*)server.docroot.ptr + 1))
@@ -2641,10 +2651,11 @@ invalid:
 	httpd->errnum = QSE_HTTPD_EINVAL;
 	return QSE_NULL;
 }
+#endif
 
-int qse_httpd_getserveroptstd (
+int qse_httpd_getserverstdopt (
 	qse_httpd_t* httpd, qse_httpd_server_t* server,
-	qse_httpd_server_optstd_t id, void* value)
+	qse_httpd_serverstd_opt_t id, void* value)
 {
 	server_xtn_t* server_xtn;
 
@@ -2670,9 +2681,9 @@ int qse_httpd_getserveroptstd (
 }
 
 
-int qse_httpd_setserveroptstd (
+int qse_httpd_setserverstdopt (
 	qse_httpd_t* httpd, qse_httpd_server_t* server,
-	qse_httpd_server_optstd_t id, const void* value)
+	qse_httpd_serverstd_opt_t id, const void* value)
 {
 	server_xtn_t* server_xtn;
 
@@ -2698,7 +2709,7 @@ int qse_httpd_setserveroptstd (
 }
 
 
-void* qse_httpd_getserverxtnstd (qse_httpd_t* httpd, qse_httpd_server_t* server)
+void* qse_httpd_getserverstdxtn (qse_httpd_t* httpd, qse_httpd_server_t* server)
 {
 	server_xtn_t* xtn = qse_httpd_getserverxtn (httpd, server);
 	return (void*)(xtn + 1);

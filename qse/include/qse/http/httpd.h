@@ -359,12 +359,12 @@ enum qse_httpd_server_flag_t
 	QSE_HTTPD_SERVER_BINDTONWIF = (1 << 2)
 };
 
-typedef void (*qse_httpd_server_predetach_t) (
+typedef void (*qse_httpd_server_detach_t) (
 	qse_httpd_t*        httpd,
 	qse_httpd_server_t* server
 );
 
-typedef void (*qse_httpd_server_reconfig_t) (
+typedef void (*qse_httpd_server_reconf_t) (
 	qse_httpd_t*        httpd,
 	qse_httpd_server_t* server
 );
@@ -376,8 +376,8 @@ struct qse_httpd_server_dope_t
 	int          flags; /* bitwise-ORed of qse_httpd_server_flag_t */
 	qse_nwad_t   nwad; /* binding address */
 	unsigned int nwif; /* interface number to bind to */
-	qse_httpd_server_predetach_t predetach; /* executed when the server is detached */
-	qse_httpd_server_reconfig_t reconfig; /* executed when reconfiguration is requested */
+	qse_httpd_server_detach_t detach; /* executed when the server is detached */
+	qse_httpd_server_reconf_t reconf; /* executed when reconfuration is requested */
 };
 
 struct qse_httpd_server_t
@@ -488,6 +488,18 @@ typedef void (*qse_httpd_ecb_close_t) (
 	qse_httpd_t* httpd  /**< httpd */
 );
 
+enum qse_httpd_ecb_reconf_type_t
+{
+	QSE_HTTPD_ECB_RECONF_PRE,
+	QSE_HTTPD_ECB_RECONF_POST
+};
+typedef enum qse_httpd_ecb_reconf_type_t qse_httpd_ecb_reconf_type_t;
+
+typedef void (*qse_httpd_ecb_reconf_t) (
+	qse_httpd_t* httpd,  /**< httpd */
+	qse_httpd_ecb_reconf_type_t  type
+);
+
 /**
  * The qse_httpd_ecb_t type defines an event callback set.
  * You can register a callback function set with
@@ -501,6 +513,7 @@ struct qse_httpd_ecb_t
 	 * called by qse_httpd_close().
 	 */
 	qse_httpd_ecb_close_t close;
+	qse_httpd_ecb_reconf_t reconf;
 
 	/* internal use only. don't touch this field */
 	qse_httpd_ecb_t* next;
@@ -588,7 +601,7 @@ QSE_EXPORT void qse_httpd_stop (
 	qse_httpd_t* httpd
 );
 
-QSE_EXPORT void qse_httpd_reconfig (
+QSE_EXPORT void qse_httpd_reconf (
 	qse_httpd_t* httpd
 );
 

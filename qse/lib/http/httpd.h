@@ -40,7 +40,7 @@ struct qse_httpd_t
 		int trait;
 	} opt;
 	int stopreq: 1;
-	int reconfigreq: 1;
+	int reconfreq: 1;
 
 	qse_mchar_t sname[128]; /* server name for the server header */
 	qse_mchar_t gtbuf[10][64]; /* GMT time buffers */
