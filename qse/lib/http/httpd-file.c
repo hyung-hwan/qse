@@ -59,7 +59,7 @@ static void task_fini_fseg (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
 {
 	task_fseg_t* ctx = (task_fseg_t*)task->ctx;
-	httpd->scb->file.close (httpd, ctx->handle);
+	httpd->opt.scb.file.close (httpd, ctx->handle);
 }
 
 static int task_main_fseg (
@@ -73,7 +73,7 @@ static int task_main_fseg (
 	if (count >= ctx->left) count = ctx->left;
 
 /* TODO: more adjustment needed for OS with different sendfile semantics... */
-	n = httpd->scb->client.sendfile (
+	n = httpd->opt.scb.client.sendfile (
 		httpd, client, ctx->handle, &ctx->offset, count);
 	if (n <= -1) 
 	{
@@ -158,7 +158,7 @@ static QSE_INLINE int task_main_file (
          setting a trigger or non-blocking I/O are needed. */
 
 	httpd->errnum = QSE_HTTPD_ENOERR;
-	if (httpd->scb->file.stat (httpd, file->path.ptr, &st) <= -1)
+	if (httpd->opt.scb.file.stat (httpd, file->path.ptr, &st) <= -1)
 	{
 		int http_errnum;
 		http_errnum = (httpd->errnum == QSE_HTTPD_ENOENT)? 404:
@@ -170,7 +170,7 @@ static QSE_INLINE int task_main_file (
 	}
 
 	httpd->errnum = QSE_HTTPD_ENOERR;
-	if (httpd->scb->file.ropen (httpd, file->path.ptr, &handle) <= -1)
+	if (httpd->opt.scb.file.ropen (httpd, file->path.ptr, &handle) <= -1)
 	{
 		int http_errnum;
 		http_errnum = (httpd->errnum == QSE_HTTPD_ENOENT)? 404:
@@ -292,11 +292,11 @@ static QSE_INLINE int task_main_file (
 	}
 
 	if (x) return 0;
-	httpd->scb->file.close (httpd, handle);
+	httpd->opt.scb.file.close (httpd, handle);
 	return -1;
 
 no_file_send:
-	if (fileopen) httpd->scb->file.close (httpd, handle);
+	if (fileopen) httpd->opt.scb.file.close (httpd, handle);
 	return (x == QSE_NULL)? -1: 0;
 }
 

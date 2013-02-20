@@ -35,8 +35,6 @@
 #	include <openssl/engine.h>
 #endif
 
-static void reconf_server (qse_httpd_t* httpd, qse_httpd_server_t* server);
-
 /* --------------------------------------------------------------------- */
 
 static qse_httpd_t* g_httpd = QSE_NULL;
@@ -48,7 +46,11 @@ static void sigint (int sig)
 
 static void sighup (int sig)
 {
-	if (g_httpd) qse_httpd_reconf (g_httpd);
+	if (g_httpd) 
+	{
+		/* arrange to intefere with httpd to perform reconfiguration */
+		qse_httpd_impede (g_httpd);
+	}
 }
 
 static void setup_signal_handlers ()
@@ -181,7 +183,7 @@ struct httpd_xtn_t
 {
 	const  qse_char_t* cfgfile;
 	qse_xli_t* xli;
-	qse_httpd_ecb_t ecb;
+	qse_httpd_impede_t orgimpede;
 };
 
 static int make_resource (
@@ -222,8 +224,7 @@ static int make_resource (
 		if (server_xtn->nodir && rsrc->type == QSE_HTTPD_RSRC_DIR)
 		{
 			/* prohibit no directory listing */
-			if (server_xtn->orgfreersrc)
-				server_xtn->orgfreersrc (httpd, client, req, rsrc);
+			server_xtn->orgfreersrc (httpd, client, req, rsrc);
 			rsrc->type = QSE_HTTPD_RSRC_ERR;
 			rsrc->u.err.code = 403;
 		}
@@ -245,8 +246,7 @@ static void free_resource (
 	}
 	else
 	{
-		if (server_xtn->orgfreersrc) 
-			server_xtn->orgfreersrc (httpd, client, req, rsrc);
+		server_xtn->orgfreersrc (httpd, client, req, rsrc);
 	}
 }
 /* --------------------------------------------------------------------- */
@@ -653,7 +653,6 @@ static qse_httpd_server_t* attach_server (qse_httpd_t* httpd, int num, qse_xli_l
 	}
 
 	dope.detach = detach_server;
-	dope.reconf = reconf_server;
 	xserver = qse_httpd_attachserverstd (httpd, &dope, QSE_SIZEOF(server_xtn_t));
 	if (xserver == QSE_NULL) 
 	{
@@ -700,7 +699,6 @@ static int open_config_file (qse_httpd_t* httpd)
 	qse_xli_getopt (httpd_xtn->xli, QSE_XLI_TRAIT, &trait);
 	trait |= QSE_XLI_KEYNAME;
 	qse_xli_setopt (httpd_xtn->xli, QSE_XLI_TRAIT, &trait);
-
 
 	xli_in.type = QSE_XLI_IOSTD_FILE;
 	xli_in.u.file.path = httpd_xtn->cfgfile;
@@ -795,25 +793,14 @@ oops:
 	return -1;
 }
 
-static void reconf_httpd (qse_httpd_t* httpd, qse_httpd_ecb_reconf_type_t type)
-{
-	switch (type)
-	{
-		case QSE_HTTPD_ECB_RECONF_PRE:
-			open_config_file (httpd);
-			break;
-
-		case QSE_HTTPD_ECB_RECONF_POST:
-			close_config_file (httpd);
-			break;
-	}
-}
 
 static void reconf_server (qse_httpd_t* httpd, qse_httpd_server_t* server)
 {
 	httpd_xtn_t* httpd_xtn;
 	server_xtn_t* server_xtn;
 	qse_xli_pair_t* pair;
+
+	/* reconfigure the server when the server is impeded. */
 
 	httpd_xtn = qse_httpd_getxtnstd (httpd);
 	server_xtn = qse_httpd_getserverstdxtn (httpd, server);
@@ -832,6 +819,50 @@ static void reconf_server (qse_httpd_t* httpd, qse_httpd_server_t* server)
 	}
 }
 
+static void impede_httpd (qse_httpd_t* httpd)
+{
+	httpd_xtn_t* httpd_xtn;
+
+	httpd_xtn = qse_httpd_getxtnstd (httpd);
+
+	if (open_config_file (httpd) >= 0)
+	{		
+		qse_httpd_server_t* server;
+
+		server = qse_httpd_getfirstserver (httpd);
+		while (server)
+		{
+			if (server->dope.flags & QSE_HTTPD_SERVER_ACTIVE)
+				reconf_server (httpd, server);	
+
+			server = qse_httpd_getnextserver (httpd, server);
+		}
+		close_config_file (httpd);
+	}
+
+	/* chain-call the orignal impedence function */
+	if (httpd_xtn->orgimpede) httpd_xtn->orgimpede (httpd);
+}
+
+static void logact_httpd (qse_httpd_t* httpd, qse_httpd_act_t* act)
+{
+	httpd_xtn_t* httpd_xtn;
+	qse_char_t tmp[256];
+
+	httpd_xtn = qse_httpd_getxtnstd (httpd);
+
+	switch (act->code)
+	{
+		case QSE_HTTPD_ACCEPT_CLIENT:
+			break;
+
+		case QSE_HTTPD_PURGE_CLIENT:
+			qse_nwadtostr (&act->u.client->remote_addr, tmp, QSE_COUNTOF(tmp), QSE_NWADTOSTR_ALL);
+			qse_printf (QSE_T("purged client from %s\n"), tmp);
+			break;		
+	}
+}
+
 /* --------------------------------------------------------------------- */
 static int httpd_main (int argc, qse_char_t* argv[])
 {
@@ -839,6 +870,7 @@ static int httpd_main (int argc, qse_char_t* argv[])
 	httpd_xtn_t* httpd_xtn;
 	qse_ntime_t tmout;
 	int trait, ret = -1;
+	qse_httpd_rcb_t rcb;
 
 	if (argc != 2)
 	{
@@ -857,21 +889,30 @@ static int httpd_main (int argc, qse_char_t* argv[])
 	httpd_xtn = qse_httpd_getxtnstd (httpd);
 	httpd_xtn->cfgfile = argv[1];
 
-	httpd_xtn->ecb.reconf = reconf_httpd;
-	qse_httpd_pushecb (httpd, &httpd_xtn->ecb);
-
 	if (load_config (httpd) <= -1) goto oops;
 
 	g_httpd = httpd;
 	setup_signal_handlers ();
 
 	qse_httpd_getopt (httpd, QSE_HTTPD_TRAIT, &trait);
-	trait |= QSE_HTTPD_CGIERRTONUL;
+	trait |= QSE_HTTPD_CGIERRTONUL | QSE_HTTPD_ENABLELOG;
 	qse_httpd_setopt (httpd, QSE_HTTPD_TRAIT, &trait);
 
 	tmout.sec = 10;
 	tmout.nsec = 0;
-	ret = qse_httpd_loopstd (httpd, &tmout);
+	qse_httpd_setopt (httpd, QSE_HTTPD_TMOUT, &tmout);
+
+	tmout.sec = 30;
+	tmout.nsec = 0;
+	qse_httpd_setopt (httpd, QSE_HTTPD_IDLELIMIT, &tmout);
+
+	qse_httpd_getopt (httpd, QSE_HTTPD_RCB, &rcb);
+	httpd_xtn->orgimpede = rcb.impede;
+	rcb.impede = impede_httpd; /* executed when qse_httpd_impede() is called */
+	rcb.logact = logact_httpd; /* i don't remember this */
+	qse_httpd_setopt (httpd, QSE_HTTPD_RCB, &rcb);
+	
+	ret = qse_httpd_loopstd (httpd);
 
 	restore_signal_handlers ();
 	g_httpd = QSE_NULL;

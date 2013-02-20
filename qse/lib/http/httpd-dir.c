@@ -83,7 +83,7 @@ static void task_fini_dseg (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
 {
 	task_dseg_t* ctx = (task_dseg_t*)task->ctx;
-	httpd->scb->dir.close (httpd, ctx->handle);
+	httpd->opt.scb.dir.close (httpd, ctx->handle);
 }
 
 #define SIZE_CHLEN     4 /* the space size to hold the hexadecimal chunk length */
@@ -136,7 +136,7 @@ static int add_footer (qse_httpd_t* httpd, qse_httpd_client_t* client, task_dseg
 		return -1;
 	}
 
-	x = httpd->rcb->format_dir (
+	x = httpd->opt.rcb.fmtdir (
 		httpd, client, QSE_NULL, QSE_NULL,
 		&ctx->buf[ctx->buflen], rem);
 	if (x <= -1) return -1;
@@ -234,7 +234,7 @@ static int task_main_dseg (
 	if (!(ctx->state & HEADER_ADDED))
 	{
 		/* compose the header since this is the first time. */
-		x = httpd->rcb->format_dir (
+		x = httpd->opt.rcb.fmtdir (
 			httpd, client, ctx->qpath.ptr, QSE_NULL,
 			&ctx->buf[ctx->buflen], ctx->bufrem);
 		if (x <= -1)
@@ -261,7 +261,7 @@ static int task_main_dseg (
 	}
 	else 
 	{
-		if (httpd->scb->dir.read (httpd, ctx->handle, &ctx->dent) <= 0)
+		if (httpd->opt.scb.dir.read (httpd, ctx->handle, &ctx->dent) <= 0)
 			ctx->state |= DIRENT_NOMORE;	
 	}
 
@@ -289,7 +289,7 @@ static int task_main_dseg (
 		if (qse_mbscmp (ctx->dent.name, QSE_MT(".")) != 0 &&
 		    qse_mbscmp (ctx->dent.name, QSE_MT("..")) != 0)
 		{
-			x = httpd->rcb->format_dir (
+			x = httpd->opt.rcb.fmtdir (
 				httpd, client, ctx->qpath.ptr, &ctx->dent,
 				&ctx->buf[ctx->buflen], ctx->bufrem);
 			if (x <= -1)
@@ -325,7 +325,7 @@ static int task_main_dseg (
 			}
 		}
 
-		if (httpd->scb->dir.read (httpd, ctx->handle, &ctx->dent) <= 0)
+		if (httpd->opt.scb.dir.read (httpd, ctx->handle, &ctx->dent) <= 0)
 			ctx->state |= DIRENT_NOMORE;
 	}
 	while (1);
@@ -333,7 +333,7 @@ static int task_main_dseg (
 
 send_dirlist:
 	httpd->errnum = QSE_HTTPD_ENOERR;
-	n = httpd->scb->client.send (
+	n = httpd->opt.scb.client.send (
 		httpd, client, &ctx->buf[ctx->bufpos], ctx->buflen - ctx->bufpos);
 	if (n <= -1) return -1;
 
@@ -401,7 +401,7 @@ static QSE_INLINE int task_main_dir (
 
 	if (qse_mbsend (dir->path.ptr, QSE_MT("/")))
 	{
-		if (httpd->scb->dir.open (httpd, dir->path.ptr, &handle) <= -1)
+		if (httpd->opt.scb.dir.open (httpd, dir->path.ptr, &handle) <= -1)
 		{
 			int http_errnum;
 			http_errnum = (httpd->errnum == QSE_HTTPD_ENOENT)? 404:
@@ -426,7 +426,7 @@ static QSE_INLINE int task_main_dir (
 			if (x) x = entask_directory_segment (httpd, client, x, handle, dir);
 			if (x) return 0;
 
-			httpd->scb->dir.close (httpd, handle);
+			httpd->opt.scb.dir.close (httpd, handle);
 			return -1;
 		}
 	}

@@ -37,7 +37,7 @@
 static int task_main_disconnect (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
 {
-	httpd->scb->client.shutdown (httpd, client);
+	httpd->opt.scb.client.shutdown (httpd, client);
 	return 0;
 }
 
@@ -95,7 +95,7 @@ static int task_main_format (
 	count = MAX_SEND_SIZE;
 	if (count >= ctx->left) count = ctx->left;
 
-	n = httpd->scb->client.send (httpd, client, ctx->ptr, count);
+	n = httpd->opt.scb.client.send (httpd, client, ctx->ptr, count);
 	if (n <= -1) return -1;
 
 	ctx->left -= n;
@@ -230,8 +230,7 @@ static qse_httpd_task_t* entask_status (
 	}
 	else
 	{
-		if (httpd->rcb->format_err (httpd, client, code, text, QSE_COUNTOF(text)) <= -1) 
-			return QSE_NULL;
+		if (httpd->opt.rcb.fmterr (httpd, client, code, text, QSE_COUNTOF(text)) <= -1) return QSE_NULL;
 
 		if (code == 401)
 		{

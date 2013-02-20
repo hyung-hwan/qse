@@ -53,7 +53,7 @@ static int task_main_text (
 	if (count >= ctx->left) count = ctx->left;
 
 /* TODO: do i need to add code to skip this send if count is 0? */
-	n = httpd->scb->client.send (httpd, client, ctx->ptr, count);
+	n = httpd->opt.scb.client.send (httpd, client, ctx->ptr, count);
 	if (n <= -1) return -1;
 
 	ctx->left -= n;
