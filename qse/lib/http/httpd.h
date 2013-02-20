@@ -32,15 +32,19 @@ struct qse_httpd_t
 	qse_mmgr_t* mmgr;
 	qse_httpd_errnum_t errnum;
 	qse_httpd_ecb_t* ecb; /* event callbacks */
-	qse_httpd_scb_t* scb; /* system callbacks */
-	qse_httpd_rcb_t* rcb; /* request callbacks */
+
 
 	struct
 	{
 		int trait;
+		qse_httpd_scb_t scb; /* system callbacks */
+		qse_httpd_rcb_t rcb; /* request callbacks */
+		qse_ntime_t tmout; /* poll timeout */
+		qse_ntime_t idle_limit; 
 	} opt;
+
 	int stopreq: 1;
-	int reconfreq: 1;
+	int impedereq: 1;
 
 	qse_mchar_t sname[128]; /* server name for the server header */
 	qse_mchar_t gtbuf[10][64]; /* GMT time buffers */

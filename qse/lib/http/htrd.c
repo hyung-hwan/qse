@@ -1390,11 +1390,11 @@ int qse_htrd_feed (qse_htrd_t* htrd, const qse_mchar_t* req, qse_size_t len)
 						header_completed_during_this_feed = 0;
 					}
 
-					if (htrd->recbs->handle)
+					if (htrd->recbs->poke)
 					{
 						int n;
 						htrd->errnum = QSE_HTRD_ENOERR;
-						n = htrd->recbs->handle (htrd, &htrd->re);
+						n = htrd->recbs->poke (htrd, &htrd->re);
 						if (n <= -1)
 						{
 							if (htrd->errnum == QSE_HTRD_ENOERR)
@@ -1473,11 +1473,11 @@ int qse_htrd_halt (qse_htrd_t* htrd)
 	{
 		qse_htre_completecontent (&htrd->re);
 
-		if (htrd->recbs->handle)
+		if (htrd->recbs->poke)
 		{
 			int n;
 			htrd->errnum = QSE_HTRD_ENOERR;
-			n = htrd->recbs->handle (htrd, &htrd->re);
+			n = htrd->recbs->poke (htrd, &htrd->re);
 			if (n <= -1)
 			{
 				if (htrd->errnum == QSE_HTRD_ENOERR)

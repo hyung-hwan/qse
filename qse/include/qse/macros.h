@@ -282,9 +282,9 @@
  * a field ID for initialzing a structure  in both C9X and C89
  */
 #if (defined(__STDC_VERSION__) && (__STDC_VERSION__>=199901L)) || defined(__GNUC__)
-#	define QSE_STRUCT_FIELD(id) .id =
+#	define QSE_STRUCT_FIELD(id,value) .id = value
 #else
-#	define QSE_STRUCT_FIELD(id)
+#	define QSE_STRUCT_FIELD(id,value) value
 #endif
 
 #ifdef NDEBUG

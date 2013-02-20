@@ -618,7 +618,7 @@ qse_printf (QSE_T("FORWARD: CLEARING REQCON FOR ERROR\n"));
 
 			if (writable) goto forward;
 
-			n = httpd->scb->mux.writable (
+			n = httpd->opt.scb.mux.writable (
 				httpd, qse_pio_gethandleasubi (&cgi->pio, QSE_PIO_IN), 0);
 			if (n >= 1)
 			{
@@ -943,7 +943,7 @@ static QSE_INLINE qse_ssize_t cgi_write_script_output_to_client (
 	qse_ssize_t n;
 
 	httpd->errnum = QSE_HTTPD_ENOERR;
-	n = httpd->scb->client.send (httpd, client, cgi->buf, cgi->buflen);
+	n = httpd->opt.scb.client.send (httpd, client, cgi->buf, cgi->buflen);
 	if (n > 0)
 	{
 		QSE_MEMCPY (&cgi->buf[0], &cgi->buf[n], cgi->buflen - n);
@@ -1204,7 +1204,7 @@ qse_printf (QSE_T("[cgi_3 sending %d bytes]\n"), (int)count);
 		if (count > 0)
 		{
 			httpd->errnum = QSE_HTTPD_ENOERR;
-			n = httpd->scb->client.send (httpd, client, cgi->res_ptr, count);
+			n = httpd->opt.scb.client.send (httpd, client, cgi->res_ptr, count);
 
 			if (n <= -1) 
 			{

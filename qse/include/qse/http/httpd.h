@@ -61,7 +61,11 @@ typedef enum qse_httpd_errnum_t qse_httpd_errnum_t;
 
 enum qse_httpd_opt_t
 {
-	QSE_HTTPD_TRAIT
+	QSE_HTTPD_TRAIT,
+	QSE_HTTPD_SCB,
+	QSE_HTTPD_RCB,
+	QSE_HTTPD_TMOUT,
+	QSE_HTTPD_IDLELIMIT
 };
 typedef enum qse_httpd_opt_t qse_httpd_opt_t;
 
@@ -70,7 +74,8 @@ enum qse_httpd_trait_t
 	QSE_HTTPD_MUTECLIENT   = (1 << 0),
 	QSE_HTTPD_CGIERRTONUL  = (1 << 1),
 	QSE_HTTPD_CGINOCLOEXEC = (1 << 2),
-	QSE_HTTPD_CGINOCHUNKED = (1 << 3)
+	QSE_HTTPD_CGINOCHUNKED = (1 << 3),
+	QSE_HTTPD_ENABLELOG    = (1 << 4)      
 };
 typedef enum qse_httpd_trait_t qse_httpd_trait_t;
 
@@ -222,26 +227,74 @@ struct qse_httpd_scb_t
 			qse_httpd_t* httpd,
 			qse_httpd_client_t* client);  /* optional */
 	} client;
-
 };
+
+/* -------------------------------------------------------------------------- */
+
+typedef int (*qse_httpd_peekreq_t) (
+	qse_httpd_t*        httpd,
+	qse_httpd_client_t* client,
+	qse_htre_t*         req
+);
+
+typedef int (*qse_httpd_pokereq_t) (
+	qse_httpd_t*        httpd,
+	qse_httpd_client_t* client,
+	qse_htre_t*         req
+);
+
+typedef int (*qse_httpd_fmterr_t) (
+	qse_httpd_t*        httpd,
+	qse_httpd_client_t* client, 
+	int                 code,
+	qse_mchar_t*        buf,
+	int                 bufsz
+);
+
+typedef int (*qse_httpd_fmtdir_t) (
+	qse_httpd_t*              httpd,
+	qse_httpd_client_t*       client, 
+	const qse_mchar_t*        qpath,
+	const qse_httpd_dirent_t* dirent,
+	qse_mchar_t*              buf,
+	int                       bufsz
+);
+
+typedef void (*qse_httpd_impede_t) (
+	qse_httpd_t* httpd
+);
+
+enum qse_httpd_act_code_t 
+{
+	QSE_HTTPD_ACCEPT_CLIENT,
+	QSE_HTTPD_PURGE_CLIENT,
+};
+typedef enum qse_httpd_act_code_t qse_httpd_act_code_t;
+
+struct qse_httpd_act_t
+{
+	qse_httpd_act_code_t code;
+	union
+	{
+		qse_httpd_client_t* client;
+	} u;
+};
+typedef struct qse_httpd_act_t qse_httpd_act_t;
+
+typedef void (*qse_httpd_logact_t) (
+	qse_httpd_t*            httpd,
+	const qse_httpd_act_t*  act
+);
 
 typedef struct qse_httpd_rcb_t qse_httpd_rcb_t;
 struct qse_httpd_rcb_t
 {
-	int (*peek_request) (
-		qse_httpd_t* httpd, qse_httpd_client_t* client, qse_htre_t* req);
-	int (*handle_request) (
-		qse_httpd_t* httpd, qse_httpd_client_t* client, qse_htre_t* req);
-
-	int (*format_err) (
-		qse_httpd_t* httpd, qse_httpd_client_t* client, 
-		int code, qse_mchar_t* buf, int bufsz);
-	int (*format_dir) (
-		qse_httpd_t* httpd, qse_httpd_client_t* client, 
-		const qse_mchar_t* qpath, const qse_httpd_dirent_t* dirent,
-		qse_mchar_t* buf, int bufsz);
-
-	int (*log) (qse_httpd_t* httpd, int level, const qse_char_t* message);
+	qse_httpd_peekreq_t peekreq;
+	qse_httpd_pokereq_t pokereq;
+	qse_httpd_fmterr_t fmterr;
+	qse_httpd_fmtdir_t fmtdir;
+	qse_httpd_impede_t impede;
+	qse_httpd_logact_t logact;
 };
 
 /* -------------------------------------------------------------------------- */
@@ -364,11 +417,6 @@ typedef void (*qse_httpd_server_detach_t) (
 	qse_httpd_server_t* server
 );
 
-typedef void (*qse_httpd_server_reconf_t) (
-	qse_httpd_t*        httpd,
-	qse_httpd_server_t* server
-);
-
 typedef struct qse_httpd_server_dope_t qse_httpd_server_dope_t;
 
 struct qse_httpd_server_dope_t
@@ -377,7 +425,6 @@ struct qse_httpd_server_dope_t
 	qse_nwad_t   nwad; /* binding address */
 	unsigned int nwif; /* interface number to bind to */
 	qse_httpd_server_detach_t detach; /* executed when the server is detached */
-	qse_httpd_server_reconf_t reconf; /* executed when reconfuration is requested */
 };
 
 struct qse_httpd_server_t
@@ -488,18 +535,6 @@ typedef void (*qse_httpd_ecb_close_t) (
 	qse_httpd_t* httpd  /**< httpd */
 );
 
-enum qse_httpd_ecb_reconf_type_t
-{
-	QSE_HTTPD_ECB_RECONF_PRE,
-	QSE_HTTPD_ECB_RECONF_POST
-};
-typedef enum qse_httpd_ecb_reconf_type_t qse_httpd_ecb_reconf_type_t;
-
-typedef void (*qse_httpd_ecb_reconf_t) (
-	qse_httpd_t* httpd,  /**< httpd */
-	qse_httpd_ecb_reconf_type_t  type
-);
-
 /**
  * The qse_httpd_ecb_t type defines an event callback set.
  * You can register a callback function set with
@@ -513,7 +548,6 @@ struct qse_httpd_ecb_t
 	 * called by qse_httpd_close().
 	 */
 	qse_httpd_ecb_close_t close;
-	qse_httpd_ecb_reconf_t reconf;
 
 	/* internal use only. don't touch this field */
 	qse_httpd_ecb_t* next;
@@ -588,10 +622,7 @@ QSE_EXPORT void qse_httpd_pushecb (
  * The qse_httpd_loop() function starts a httpd server loop.
  */
 QSE_EXPORT int qse_httpd_loop (
-	qse_httpd_t*        httpd, 
-	qse_httpd_scb_t*    scb,
-	qse_httpd_rcb_t*    rcb,
-	const qse_ntime_t*  tmout
+	qse_httpd_t* httpd
 );
 
 /**
@@ -601,7 +632,7 @@ QSE_EXPORT void qse_httpd_stop (
 	qse_httpd_t* httpd
 );
 
-QSE_EXPORT void qse_httpd_reconf (
+QSE_EXPORT void qse_httpd_impede (
 	qse_httpd_t* httpd
 );
 
@@ -615,6 +646,24 @@ QSE_EXPORT qse_httpd_server_t* qse_httpd_attachserver (
 
 QSE_EXPORT void qse_httpd_detachserver (
 	qse_httpd_t*        httpd,
+	qse_httpd_server_t* server
+);
+
+QSE_EXPORT qse_httpd_server_t* qse_httpd_getfirstserver (
+	qse_httpd_t* httpd
+);
+
+QSE_EXPORT qse_httpd_server_t* qse_httpd_getlastserver (
+	qse_httpd_t* httpd
+);
+
+QSE_EXPORT qse_httpd_server_t* qse_httpd_getnextserver (
+	qse_httpd_t*        httpd,
+	qse_httpd_server_t* server
+);
+
+QSE_EXPORT qse_httpd_server_t* qse_httpd_getprevserver (
+	qse_httpd_t*        httpd, 
 	qse_httpd_server_t* server
 );
 

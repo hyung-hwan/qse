@@ -95,7 +95,6 @@ typedef struct server_xtn_t server_xtn_t;
 struct server_xtn_t
 {
 	qse_httpd_server_detach_t detach;
-	qse_httpd_server_reconf_t reconf;
 
 	qse_httpd_serverstd_query_t query;
 	qse_httpd_serverstd_makersrc_t makersrc;
@@ -104,6 +103,8 @@ struct server_xtn_t
 	/* temporary buffer to handle authorization */
 	qse_mxstr_t auth;
 };
+
+static void set_httpd_callbacks (qse_httpd_t* httpd);
 
 /* ------------------------------------------------------------------- */
 
@@ -602,8 +603,11 @@ qse_httpd_t* qse_httpd_openstdwithmmgr (qse_mmgr_t* mmgr, qse_size_t xtnsize)
 	/*init_xtn_ssl (xtn, "http01.pem", "http01.key");*/
 #endif
 
+	set_httpd_callbacks (httpd);
+
 	xtn->ecb.close = cleanup_standard_httpd;
 	qse_httpd_pushecb (httpd, &xtn->ecb);
+
 	return httpd;	
 }
 
@@ -1862,8 +1866,7 @@ if (qse_htre_getcontentlen(req) > 0)
 			else
 			{
 				task = qse_httpd_entaskrsrc (httpd, client, QSE_NULL, &rsrc, req);
-				if (server_xtn->freersrc) 
-					server_xtn->freersrc (httpd, client, req, &rsrc);
+				server_xtn->freersrc (httpd, client, req, &rsrc);
 			}
 			if (task == QSE_NULL) goto oops;
 		}
@@ -1903,13 +1906,13 @@ static int peek_request (
 	return process_request (httpd, client, req, 1);
 }
 
-static int handle_request (
+static int poke_request (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_htre_t* req)
 {
 	return process_request (httpd, client, req, 0);
 }
 
-static int format_err (
+static int format_error (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, int code, qse_mchar_t* buf, int bufsz)
 {
 	int n;
@@ -2036,6 +2039,16 @@ static int format_dir (
 	return n;
 }
 
+static void impede_httpd (qse_httpd_t* httpd)
+{
+	/* do nothing */
+}
+
+static void logact_httpd (qse_httpd_t* httpd, qse_httpd_act_t* act)
+{
+	/* do nothing */
+}
+
 static qse_httpd_scb_t httpd_system_callbacks =
 {
 	/* server */
@@ -2088,12 +2101,19 @@ static qse_httpd_scb_t httpd_system_callbacks =
 
 static qse_httpd_rcb_t httpd_request_callbacks =
 {
-	peek_request,
-	handle_request,
-	format_err,
-	format_dir
+	QSE_STRUCT_FIELD(peekreq, peek_request),
+	QSE_STRUCT_FIELD(pokereq, poke_request),
+	QSE_STRUCT_FIELD(fmterr,  format_error),
+	QSE_STRUCT_FIELD(fmtdir,  format_dir),
+	QSE_STRUCT_FIELD(impede,  impede_httpd),
+	QSE_STRUCT_FIELD(logact,  logact_httpd)
 };
 
+static void set_httpd_callbacks (qse_httpd_t* httpd)
+{
+	qse_httpd_setopt (httpd, QSE_HTTPD_SCB, &httpd_system_callbacks);
+	qse_httpd_setopt (httpd, QSE_HTTPD_RCB, &httpd_request_callbacks);
+}
 /* ------------------------------------------------------------------- */
 
 static void free_resource (
@@ -2163,7 +2183,10 @@ static void merge_paths_to_buf (
 	qse_size_t len = 0;
 	len += qse_mbscpy (&xpath[len], base);
 	len += qse_mbscpy (&xpath[len], QSE_MT("/"));
-	len += qse_mbsncpy (&xpath[len], path, plen);
+	if (plen == (qse_size_t)-1)
+		len += qse_mbscpy (&xpath[len], path);
+	else
+		len += qse_mbsncpy (&xpath[len], path, plen);
 	qse_canonmbspath (xpath, xpath, 0);
 }
 
@@ -2219,6 +2242,7 @@ static int attempt_cgi (
 		/* inspect each segment from the head. */
 		const qse_mchar_t* ptr;
 		const qse_mchar_t* slash;
+		int xpath_changed = 0;
 
 		QSE_ASSERT (tmp->qpath[0] == QSE_T('/'));
 
@@ -2238,10 +2262,18 @@ static int attempt_cgi (
 					 * tmp->xpath should be large enough to hold the merge path made of
 					 * the subsegments of the original query path and docroot. */
 					merge_paths_to_buf (httpd, tmp->docroot, tmp->qpath, slash - tmp->qpath, tmp->xpath);
+					xpath_changed = 1;
 	
-					/* attempt this */
 					stx = stat_file (httpd, tmp->xpath, &st, 0);
-					if (stx >= 0 && !st.isdir)
+					if (stx <= -1) 
+					{
+						/* stop at the current segment if stating fails. 
+						 * if the current semgment can't be stat-ed, it's not likely that
+						 * the next segment can be successfully stat-ed */
+						break; 
+					}
+
+					if (!st.isdir)
 					{
 						if (server_xtn->query (httpd, client->server, req, tmp->xpath, QSE_HTTPD_SERVERSTD_CGI, &cgi) >= 0 && cgi.cgi)
 						{
@@ -2269,6 +2301,9 @@ static int attempt_cgi (
 				break;
 			}
 		}
+
+		/* restore the xpath because it has changed... */
+		if (xpath_changed) merge_paths_to_buf (httpd, tmp->docroot, tmp->qpath, (qse_size_t)-1, tmp->xpath);
 	}
 
 	return 0; /* not a cgi */
@@ -2407,7 +2442,7 @@ auth_ok:
 						return -1;
 					}
 
-					if (httpd->scb->file.stat (httpd, tpath, &st) >= 0 && !st.isdir)
+					if (httpd->opt.scb.file.stat (httpd, tpath, &st) >= 0 && !st.isdir)
 					{
 						/* the index file is found */
 						QSE_MMGR_FREE (httpd->mmgr, tmp.xpath);
@@ -2466,16 +2501,6 @@ static void detach_server (qse_httpd_t* httpd, qse_httpd_server_t* server)
 	server_xtn = (server_xtn_t*) qse_httpd_getserverxtn (httpd, server);
 	if (server_xtn->detach) server_xtn->detach (httpd, server);
 	if (server_xtn->auth.ptr) QSE_MMGR_FREE (httpd->mmgr, server_xtn->auth.ptr);
-}
-
-static void reconf_server (qse_httpd_t* httpd, qse_httpd_server_t* server)
-{
-	server_xtn_t* server_xtn;
-	server_xtn = (server_xtn_t*) qse_httpd_getserverxtn (httpd, server);
-	
-	if (server_xtn->reconf) server_xtn->reconf (httpd, server);
-
-	/* nothing more to do here ...  */
 }
 
 struct mime_tab_t
@@ -2571,7 +2596,6 @@ qse_httpd_server_t* qse_httpd_attachserverstd (
 
 	xdope = *dope;
 	xdope.detach = detach_server;
-	xdope.reconf = reconf_server; 
 
 	xserver = qse_httpd_attachserver (httpd, &xdope, QSE_SIZEOF(*server_xtn) + xtnsize);
 	if (xserver == QSE_NULL) return QSE_NULL;
@@ -2579,7 +2603,6 @@ qse_httpd_server_t* qse_httpd_attachserverstd (
 	server_xtn = qse_httpd_getserverxtn (httpd, xserver);
 
 	server_xtn->detach = dope->detach;
-	server_xtn->reconf = dope->reconf;
 
 	server_xtn->query = query_server;
 	server_xtn->makersrc = make_resource;
@@ -2592,7 +2615,6 @@ qse_httpd_server_t* qse_httpd_attachserverstd (
 qse_httpd_server_t* qse_httpd_attachserverstdwithuri (
 	qse_httpd_t* httpd, const qse_char_t* uri, 
 	qse_httpd_server_detach_t detach, 
-	qse_httpd_server_reconf_t reconf, 
 	qse_httpd_serverstd_query_t query, 
 	qse_size_t xtnsize)
 {
@@ -2632,7 +2654,6 @@ qse_httpd_server_t* qse_httpd_attachserverstdwithuri (
 	}
 
 	server.detach = detach;
-	server.reconf = reconf;
 #if 0
 	server.docroot = xuri.path;
 	if (server.docroot.ptr && qse_ismbsdriveabspath((const qse_mchar_t*)server.docroot.ptr + 1))
@@ -2717,9 +2738,7 @@ void* qse_httpd_getserverstdxtn (qse_httpd_t* httpd, qse_httpd_server_t* server)
 
 /* ------------------------------------------------------------------- */
 
-int qse_httpd_loopstd (qse_httpd_t* httpd, const qse_ntime_t* tmout)
+int qse_httpd_loopstd (qse_httpd_t* httpd)
 {
-	return qse_httpd_loop (
-		httpd, &httpd_system_callbacks,
-		&httpd_request_callbacks, tmout);	
+	return qse_httpd_loop (httpd);	
 }

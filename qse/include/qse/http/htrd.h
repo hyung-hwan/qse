@@ -65,8 +65,8 @@ typedef struct qse_htrd_recbs_t qse_htrd_recbs_t;
 
 struct qse_htrd_recbs_t
 {
-	int  (*peek)    (qse_htrd_t* htrd, qse_htre_t* re);
-	int  (*handle)  (qse_htrd_t* htrd, qse_htre_t* re);
+	int  (*peek) (qse_htrd_t* htrd, qse_htre_t* re);
+	int  (*poke) (qse_htrd_t* htrd, qse_htre_t* re);
 };
 
 struct qse_htrd_t
