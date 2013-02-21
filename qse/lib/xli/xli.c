@@ -235,13 +235,16 @@ qse_xli_pair_t* qse_xli_insertpair (
 	if (pair == QSE_NULL) return QSE_NULL;
 
 	kptr = (qse_char_t*)(pair + 1);
-	nptr = kptr + klen + 1;
 	qse_strcpy (kptr, key);
-	if (name) qse_strcpy (nptr, name);
 
 	pair->type = QSE_XLI_PAIR;
 	pair->key = kptr;
-	pair->name = nptr;
+	if (name) 
+	{
+		nptr = kptr + klen + 1;
+		qse_strcpy (nptr, name);
+		pair->name = nptr;
+	}
 	pair->val = value;  /* this assumes it points to a dynamically allocated atom  */
 
 	insert_atom (xli, parent, peer, (qse_xli_atom_t*)pair);
