@@ -33,7 +33,7 @@ struct task_cgi_arg_t
 	qse_mcstr_t path;
 	qse_mcstr_t script;
 	qse_mcstr_t suffix;
-	qse_mcstr_t docroot;
+	qse_mcstr_t root;
 	qse_mcstr_t shebang;
 	int nph;
 	qse_htre_t* req;
@@ -48,7 +48,7 @@ struct task_cgi_t
 	const qse_mchar_t* path;
 	const qse_mchar_t* script;
 	const qse_mchar_t* suffix;
-	const qse_mchar_t* docroot;
+	const qse_mchar_t* root;
 	const qse_mchar_t* shebang;
 	qse_http_version_t version;
 	int keepalive; /* taken from the request */
@@ -427,7 +427,7 @@ static int cgi_add_env (
 	const qse_mchar_t* path, 
 	const qse_mchar_t* script,
 	const qse_mchar_t* suffix,
-	const qse_mchar_t* docroot,
+	const qse_mchar_t* root,
 	const qse_mchar_t* content_type,
 	qse_size_t content_length, 
 	int chunked)
@@ -455,13 +455,13 @@ static int cgi_add_env (
 
 	qse_env_insertmbs (env, QSE_MT("SCRIPT_FILENAME"), path);
 	qse_env_insertmbs (env, QSE_MT("SCRIPT_NAME"), script);
-	qse_env_insertmbs (env, QSE_MT("DOCUMENT_ROOT"), docroot);
+	qse_env_insertmbs (env, QSE_MT("DOCUMENT_ROOT"), root);
 	if (suffix && suffix[0] != QSE_MT('\0')) 
 	{
 		const qse_mchar_t* tmp[3];
 		qse_mchar_t* tr;
 
-		tmp[0] = docroot; 
+		tmp[0] = root; 
 		tmp[1] = suffix; 
 		tmp[2] = QSE_NULL;
 
@@ -738,12 +738,12 @@ static int task_init_cgi (
 	cgi->path = (qse_mchar_t*)(cgi + 1);
 	cgi->script = cgi->path + arg->path.len + 1;
 	cgi->suffix = cgi->script + arg->script.len + 1;
-	cgi->docroot = cgi->suffix + arg->suffix.len + 1;
-	cgi->shebang = cgi->docroot + arg->docroot.len + 1;
+	cgi->root = cgi->suffix + arg->suffix.len + 1;
+	cgi->shebang = cgi->root + arg->root.len + 1;
 	qse_mbscpy ((qse_mchar_t*)cgi->path, arg->path.ptr);
 	qse_mbscpy ((qse_mchar_t*)cgi->script, arg->script.ptr);
 	qse_mbscpy ((qse_mchar_t*)cgi->suffix, arg->suffix.ptr);
-	qse_mbscpy ((qse_mchar_t*)cgi->docroot, arg->docroot.ptr);
+	qse_mbscpy ((qse_mchar_t*)cgi->root, arg->root.ptr);
 	qse_mbscpy ((qse_mchar_t*)cgi->shebang, arg->shebang.ptr);
 
 	cgi->version = *qse_htre_getversion(arg->req);
@@ -884,7 +884,7 @@ done:
 
 	if (cgi_add_env (
 		httpd, client, cgi->env, arg->req, 
-		cgi->path, cgi->script, cgi->suffix, cgi->docroot, 
+		cgi->path, cgi->script, cgi->suffix, cgi->root, 
 		(tmp? tmp->ptr: QSE_NULL), content_length, 
 		(cgi->reqflags & CGI_REQ_FWDCHUNKED)) <= -1)
 	{
@@ -1523,7 +1523,7 @@ qse_httpd_task_t* qse_httpd_entaskcgi (
 	rsrc = *cgi;
 	if (rsrc.script == QSE_NULL) rsrc.script = qse_htre_getqpath(req);
 	if (rsrc.suffix == QSE_NULL) rsrc.suffix = QSE_MT("");
-	if (rsrc.docroot == QSE_NULL) rsrc.docroot = QSE_MT("");
+	if (rsrc.root == QSE_NULL) rsrc.root = QSE_MT("");
 	if (rsrc.shebang == QSE_NULL) rsrc.shebang = QSE_MT("");
 
 	arg.path.ptr = rsrc.path;
@@ -1532,8 +1532,8 @@ qse_httpd_task_t* qse_httpd_entaskcgi (
 	arg.script.len = qse_mbslen(rsrc.script);
 	arg.suffix.ptr = rsrc.suffix;
 	arg.suffix.len = qse_mbslen(rsrc.suffix);
-	arg.docroot.ptr = rsrc.docroot;
-	arg.docroot.len = qse_mbslen(rsrc.docroot);
+	arg.root.ptr = rsrc.root;
+	arg.root.len = qse_mbslen(rsrc.root);
 	arg.nph = rsrc.nph;
 	arg.shebang.ptr = rsrc.shebang;
 	arg.shebang.len = qse_mbslen(rsrc.shebang);
@@ -1551,7 +1551,7 @@ qse_httpd_task_t* qse_httpd_entaskcgi (
 		((arg.path.len + 1) * QSE_SIZEOF(*arg.path.ptr)) + 
 		((arg.script.len + 1) * QSE_SIZEOF(*arg.script.ptr)) + 
 		((arg.suffix.len + 1) * QSE_SIZEOF(*arg.suffix.ptr)) +
-		((arg.docroot.len + 1) * QSE_SIZEOF(*arg.docroot.ptr)) +
+		((arg.root.len + 1) * QSE_SIZEOF(*arg.root.ptr)) +
 		((arg.shebang.len + 1) * QSE_SIZEOF(*arg.shebang.ptr))
 	);
 }

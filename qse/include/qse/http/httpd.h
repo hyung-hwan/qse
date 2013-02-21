@@ -474,7 +474,7 @@ struct qse_httpd_rsrc_cgi_t
 	const qse_mchar_t* path;
 	const qse_mchar_t* script;
 	const qse_mchar_t* suffix;
-	const qse_mchar_t* docroot;
+	const qse_mchar_t* root;
 	const qse_mchar_t* shebang; 
 	int nph;
 };

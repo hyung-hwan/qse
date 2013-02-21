@@ -2239,7 +2239,7 @@ struct rsrc_tmp_t
 	const qse_mchar_t* idxfile;
 	qse_mchar_t* xpath;
 
-	const qse_mchar_t* docroot;
+	qse_httpd_serverstd_root_t root;
 	const qse_mchar_t* realm;
 	const qse_mchar_t* auth;
 	qse_httpd_serverstd_index_t index;
@@ -2261,7 +2261,7 @@ static int attempt_cgi (
 
 	if (tmp->final_match)
 	{
-		/* it is a final match. tmp->xpath is tmp->docroot + tmp->qpath  */
+		/* it is a final match. tmp->xpath is tmp->root + tmp->qpath  */
 		if (server_xtn->query (httpd, client->server, req, tmp->xpath, QSE_HTTPD_SERVERSTD_CGI, &cgi) >= 0 && cgi.cgi)
 		{
 			if (tmp->idxfile)
@@ -2304,7 +2304,7 @@ static int attempt_cgi (
 					 *
 					 * tmp->xpath should be large enough to hold the merge path made of
 					 * the subsegments of the original query path and docroot. */
-					merge_paths_to_buf (httpd, tmp->docroot, tmp->qpath, slash - tmp->qpath, tmp->xpath);
+					merge_paths_to_buf (httpd, tmp->root.u.path, tmp->qpath, slash - tmp->qpath, tmp->xpath);
 					xpath_changed = 1;
 	
 					stx = stat_file (httpd, tmp->xpath, &st, 0);
@@ -2346,7 +2346,7 @@ static int attempt_cgi (
 		}
 
 		/* restore the xpath because it has changed... */
-		if (xpath_changed) merge_paths_to_buf (httpd, tmp->docroot, tmp->qpath, (qse_size_t)-1, tmp->xpath);
+		if (xpath_changed) merge_paths_to_buf (httpd, tmp->root.u.path, tmp->qpath, (qse_size_t)-1, tmp->xpath);
 	}
 
 	return 0; /* not a cgi */
@@ -2357,7 +2357,7 @@ bingo:
 	target->u.cgi.path = tmp->xpath;
 	target->u.cgi.script = script;
 	target->u.cgi.suffix = suffix;
-	target->u.cgi.docroot = tmp->docroot;
+	target->u.cgi.root = tmp->root.u.path;
 	target->u.cgi.shebang = shebang;
 	return 1;
 
@@ -2386,7 +2386,18 @@ static int make_resource (
 
 	server_xtn = qse_httpd_getserverxtn (httpd, client->server);
 
-	if (server_xtn->query (httpd, client->server, req, tmp.xpath, QSE_HTTPD_SERVERSTD_DOCROOT, &tmp.docroot) <= -1) return -1;
+	if (server_xtn->query (httpd, client->server, req, tmp.xpath, QSE_HTTPD_SERVERSTD_ROOT, &tmp.root) <= -1) return -1;
+	if (tmp.root.type == QSE_HTTPD_SERVERSTD_ROOT_NWAD)
+	{
+		/* proxy the request */
+		target->type = QSE_HTTPD_RSRC_PROXY;
+		/*target->u.proxy.dst = client->orgdst_addr;*/
+		target->u.proxy.dst = tmp.root.u.nwad;
+		target->u.proxy.src = client->remote_addr;
+		return 0;
+	}
+
+	QSE_ASSERT (tmp.root.type == QSE_HTTPD_SERVERSTD_ROOT_PATH);
 
 	if (server_xtn->query (httpd, client->server, req, tmp.xpath, QSE_HTTPD_SERVERSTD_REALM, &tmp.realm) <= -1 ||
 	    server_xtn->query (httpd, client->server, req, tmp.xpath, QSE_HTTPD_SERVERSTD_AUTH, &tmp.auth) <= -1 ||
@@ -2396,7 +2407,7 @@ static int make_resource (
 	}
 
 	/* default to the root directory. */
-	if (!tmp.docroot) tmp.docroot = QSE_MT("/"); 
+	if (!tmp.root.u.path) tmp.root.u.path = QSE_MT("/"); 
 
 	if (tmp.realm && tmp.auth)
 	{
@@ -2438,7 +2449,7 @@ static int make_resource (
 	}
 
 auth_ok:
-	tmp.xpath = merge_paths (httpd, tmp.docroot, tmp.qpath);
+	tmp.xpath = merge_paths (httpd, tmp.root.u.path, tmp.qpath);
 	if (tmp.xpath == QSE_NULL) return -1;
 
 	stx = stat_file (httpd, tmp.xpath, &st, 0);
@@ -2601,7 +2612,14 @@ static int query_server (
 	switch (code)
 	{
 		case QSE_HTTPD_SERVERSTD_NAME:
-		case QSE_HTTPD_SERVERSTD_DOCROOT:
+			*(const qse_mchar_t**)result = QSE_NULL;
+			break;
+
+		case QSE_HTTPD_SERVERSTD_ROOT:
+			((qse_httpd_serverstd_root_t*)result)->type = QSE_HTTPD_SERVERSTD_ROOT_PATH;
+			((qse_httpd_serverstd_root_t*)result)->u.path = QSE_NULL;
+			break;
+		
 		case QSE_HTTPD_SERVERSTD_REALM:
 		case QSE_HTTPD_SERVERSTD_AUTH:
 		case QSE_HTTPD_SERVERSTD_ERRCSS:

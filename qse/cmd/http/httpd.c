@@ -180,7 +180,7 @@ static int daemonize (int devnull)
 enum
 {
 	SCFG_NAME,
-	SCFG_DOCROOT,
+	SCFG_ROOT,
 	SCFG_REALM,
 	SCFG_AUTH,
 	SCFG_DIRCSS,
@@ -250,6 +250,8 @@ struct server_xtn_t
 	qse_httpd_serverstd_query_t orgquery;
 
 	qse_mchar_t* scfg[SCFG_MAX];
+	int root_is_nwad;
+	qse_nwad_t root_nwad;
 	
 	struct
 	{
@@ -438,8 +440,17 @@ static int query_server (
 			*(const qse_mchar_t**)result = server_xtn->scfg[SCFG_NAME];
 			return 0;
 
-		case QSE_HTTPD_SERVERSTD_DOCROOT:
-			*(const qse_mchar_t**)result = server_xtn->scfg[SCFG_DOCROOT];
+		case QSE_HTTPD_SERVERSTD_ROOT:
+			if (server_xtn->root_is_nwad)
+			{
+				((qse_httpd_serverstd_root_t*)result)->type = QSE_HTTPD_SERVERSTD_ROOT_NWAD;
+				((qse_httpd_serverstd_root_t*)result)->u.nwad = server_xtn->root_nwad;
+			}
+			else
+			{
+				((qse_httpd_serverstd_root_t*)result)->type = QSE_HTTPD_SERVERSTD_ROOT_PATH;
+				((qse_httpd_serverstd_root_t*)result)->u.path = server_xtn->scfg[SCFG_ROOT];
+			}
 			return 0;
 
 		case QSE_HTTPD_SERVERSTD_REALM:
@@ -560,7 +571,7 @@ static struct
 } scfg_items[] =
 {
 	{ QSE_T("host['*'].location['/'].name"),      QSE_T("default.name") },
-	{ QSE_T("host['*'].location['/'].docroot"),   QSE_T("default.docroot") },
+	{ QSE_T("host['*'].location['/'].root"),      QSE_T("default.root") },
 	{ QSE_T("host['*'].location['/'].realm"),     QSE_T("default.realm") },
 	{ QSE_T("host['*'].location['/'].auth"),      QSE_T("default.auth") },
 	{ QSE_T("host['*'].location['/'].dir-css"),   QSE_T("default.dir-css") },
@@ -830,6 +841,7 @@ static int load_server_config (
 		qse_printf (QSE_T("WARNING: no colon in the auth string - [%hs]\n"), server_xtn->scfg[SCFG_AUTH]);
 	}
 
+	if (qse_mbstonwad (server_xtn->scfg[SCFG_ROOT], &server_xtn->root_nwad) >= 0) server_xtn->root_is_nwad = 1;
 	return 0;
 }
 
