@@ -531,12 +531,15 @@ struct httpd_xtn_t
 
 #if defined(HAVE_SSL)
 static int init_xtn_ssl (
-	httpd_xtn_t* xtn,
+	qse_httpd_t* httpd,
 	const qse_mchar_t* pemfile,
 	const qse_mchar_t* keyfile/*,
 	const qse_mchar_t* chainfile*/)
 {
 	SSL_CTX* ctx;
+	httpd_xtn_t* xtn;
+
+	xtn = (httpd_xtn_t*)qse_httpd_getxtn (httpd);
 
 	ctx = SSL_CTX_new (SSLv23_server_method());
 	if (ctx == QSE_NULL) return -1;
@@ -548,10 +551,14 @@ static int init_xtn_ssl (
 	    SSL_CTX_check_private_key (ctx) == 0 /*||
 	    SSL_CTX_use_certificate_chain_file (ctx, chainfile) == 0*/)
 	{
-		qse_mchar_t buf[128];
-		ERR_error_string_n(ERR_get_error(), buf, QSE_COUNTOF(buf));
-/* TODO: logging */
-qse_fprintf (QSE_STDERR, QSE_T("Error: %hs\n"), buf);
+		if (httpd->opt.trait & QSE_HTTPD_LOGACT)
+		{
+			qse_httpd_act_t msg;
+			msg.code = QSE_HTTPD_CATCH_MERRMSG;
+			ERR_error_string_n (ERR_get_error(), msg.u.merrmsg, QSE_COUNTOF(msg.u.merrmsg));
+			httpd->opt.rcb.logact (httpd, &msg);
+		}
+
 		SSL_CTX_free (ctx);
 		return -1;
 	}
@@ -600,7 +607,7 @@ qse_httpd_t* qse_httpd_openstdwithmmgr (qse_mmgr_t* mmgr, qse_size_t xtnsize)
 	xtn = (httpd_xtn_t*)qse_httpd_getxtn (httpd);
 
 #if defined(HAVE_SSL)
-	/*init_xtn_ssl (xtn, "http01.pem", "http01.key");*/
+	/*init_xtn_ssl (httpd, "http01.pem", "http01.key");*/
 #endif
 
 	set_httpd_callbacks (httpd);
@@ -1409,7 +1416,16 @@ static int file_ropen (
 	}
 
 	handle->ptr = fio;
-qse_printf (QSE_T("opened rfile [%hs][%p][%p]\n"), path, handle->ptr, fio->handle);
+
+	if (httpd->opt.trait & QSE_HTTPD_LOGACT)
+	{
+		qse_httpd_act_t msg;
+		qse_size_t pos;
+		msg.code = QSE_HTTPD_CATCH_MDBGMSG;
+		pos = qse_mbscpy (msg.u.mdbgmsg, QSE_MT("ropened file "));
+		qse_mbsxcpy (&msg.u.mdbgmsg[pos], QSE_COUNTOF(msg.u.mdbgmsg) - pos, path);
+		httpd->opt.rcb.logact (httpd, &msg);
+	}
 	return 0;
 
 }
@@ -1438,13 +1454,22 @@ static int file_wopen (
 	}
 
 	handle->ptr = fio;
-qse_printf (QSE_T("opened wfile [%hs][%p][%p]\n"), path, handle->ptr, fio->handle);
+
+	if (httpd->opt.trait & QSE_HTTPD_LOGACT)
+	{
+		qse_httpd_act_t msg;
+		qse_size_t pos;
+		msg.code = QSE_HTTPD_CATCH_MDBGMSG;
+		pos = qse_mbscpy (msg.u.mdbgmsg, QSE_MT("wopened file "));
+		qse_mbsxcpy (&msg.u.mdbgmsg[pos], QSE_COUNTOF(msg.u.mdbgmsg) - pos, path);
+		httpd->opt.rcb.logact (httpd, &msg);
+	}
+
 	return 0;
 }
 
 static void file_close (qse_httpd_t* httpd, qse_ubi_t handle)
 {
-qse_printf (QSE_T("closed file....%p\n"), handle.ptr);
 	qse_fio_fini (handle.ptr);
 	QSE_MMGR_FREE (httpd->mmgr, handle.ptr);
 }
@@ -1512,7 +1537,16 @@ static int dir_open (qse_httpd_t* httpd, const qse_mchar_t* path, qse_ubi_t* han
 		return -1;
 	}
 		
-qse_printf (QSE_T("OPENED DIRECTORY [%hs]\n"), path);
+	if (httpd->opt.trait & QSE_HTTPD_LOGACT)
+	{
+		qse_httpd_act_t msg;
+		qse_size_t pos;
+		msg.code = QSE_HTTPD_CATCH_MDBGMSG;
+		pos = qse_mbscpy (msg.u.mdbgmsg, QSE_MT("opened dir "));
+		qse_mbsxcpy (&msg.u.mdbgmsg[pos], QSE_COUNTOF(msg.u.mdbgmsg) - pos, path);
+		httpd->opt.rcb.logact (httpd, &msg);
+	}
+
 	handle->ptr = d;
 	return 0;
 }
@@ -1693,7 +1727,7 @@ static int client_accepted (qse_httpd_t* httpd, qse_httpd_client_t* client)
 		{
 			/* delayed initialization of ssl */
 /* TODO: certificate from options */
-			if (init_xtn_ssl (xtn, "http01.pem", "http01.key") <= -1) 
+			if (init_xtn_ssl (httpd, "http01.pem", "http01.key") <= -1) 
 			{
 				return -1;
 			}
@@ -1711,9 +1745,6 @@ static int client_accepted (qse_httpd_t* httpd, qse_httpd_client_t* client)
 			if (ssl == QSE_NULL) return -1;
 
 			client->handle2.ptr = ssl;
-
-qse_printf (QSE_T("SSL ACCEPTING %d\n"), client->handle.i);
-qse_fflush (QSE_STDOUT);
 			if (SSL_set_fd (ssl, client->handle.i) == 0)
 			{
 				/* don't free ssl here since client_closed()
@@ -1727,18 +1758,25 @@ qse_fflush (QSE_STDOUT);
 		ret = SSL_accept (ssl);
 		if (ret <= 0)
 		{
-			if (SSL_get_error(ssl,ret) == SSL_ERROR_WANT_READ)
+			int err;
+			if ((err = SSL_get_error(ssl,ret)) == SSL_ERROR_WANT_READ)
 			{
 				/* handshaking isn't complete. */
 				return 0;
 			}
 
-			qse_fprintf (QSE_STDERR, QSE_T("Error: SSL ACCEPT ERROR\n"));
+			if (httpd->opt.trait & QSE_HTTPD_LOGACT)
+			{
+				qse_httpd_act_t msg;
+				msg.code = QSE_HTTPD_CATCH_MERRMSG;
+				ERR_error_string_n (err, msg.u.merrmsg, QSE_COUNTOF(msg.u.merrmsg));
+				httpd->opt.rcb.logact (httpd, &msg);
+			}
+
 			/* SSL_free (ssl); */
 			return -1;
 		}
-qse_printf (QSE_T("SSL ACCEPTED %d\n"), client->handle.i);
-qse_fflush (QSE_STDOUT);
+
 	#else
 		qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
 		return -1;
@@ -1763,6 +1801,7 @@ static void client_closed (qse_httpd_t* httpd, qse_httpd_client_t* client)
 }
 
 /* ------------------------------------------------------------------- */
+#if 0
 static qse_htb_walk_t walk (qse_htb_t* htb, qse_htb_pair_t* pair, void* ctx)
 {
 	qse_htre_hdrval_t* val;
@@ -1775,6 +1814,7 @@ qse_printf (QSE_T("HEADER OK %d[%hs] %d[%hs]\n"),  (int)QSE_HTB_KLEN(pair), QSE_
 	}
 	return QSE_HTB_WALK_FORWARD;
 }
+#endif
 
 static int process_request (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_htre_t* req, int peek)
@@ -1796,6 +1836,7 @@ static int process_request (
 	 * non-peek mode as well */
 	if (peek) qse_perdechttpstr (qse_htre_getqpath(req), qse_htre_getqpath(req));
 
+#if 0
 qse_printf (QSE_T("================================\n"));
 qse_printf (QSE_T("[%lu] %hs REQUEST ==> [%hs] version[%d.%d %hs] method[%hs]\n"),
 	(unsigned long)time(NULL),
@@ -1814,6 +1855,7 @@ if (qse_htre_getcontentlen(req) > 0)
 {
 	qse_printf (QSE_T("CONTENT [%.*S]\n"), (int)qse_htre_getcontentlen(req), qse_htre_getcontentptr(req));
 }
+#endif
 
 	if (peek)
 	{
@@ -2044,10 +2086,11 @@ static void impede_httpd (qse_httpd_t* httpd)
 	/* do nothing */
 }
 
-static void logact_httpd (qse_httpd_t* httpd, qse_httpd_act_t* act)
+static void logact_httpd (qse_httpd_t* httpd, const qse_httpd_act_t* act)
 {
 	/* do nothing */
 }
+
 
 static qse_httpd_scb_t httpd_system_callbacks =
 {
@@ -2341,11 +2384,11 @@ static int make_resource (
 
 	QSE_MEMSET (target, 0, QSE_SIZEOF(*target));
 
-qse_printf (QSE_T(">>> MAKING RESOURCE [%hs]\n"), tmp.qpath);
 	server_xtn = qse_httpd_getserverxtn (httpd, client->server);
 
-	if (server_xtn->query (httpd, client->server, req, tmp.xpath, QSE_HTTPD_SERVERSTD_DOCROOT, &tmp.docroot) <= -1 ||
-	    server_xtn->query (httpd, client->server, req, tmp.xpath, QSE_HTTPD_SERVERSTD_REALM, &tmp.realm) <= -1 ||
+	if (server_xtn->query (httpd, client->server, req, tmp.xpath, QSE_HTTPD_SERVERSTD_DOCROOT, &tmp.docroot) <= -1) return -1;
+
+	if (server_xtn->query (httpd, client->server, req, tmp.xpath, QSE_HTTPD_SERVERSTD_REALM, &tmp.realm) <= -1 ||
 	    server_xtn->query (httpd, client->server, req, tmp.xpath, QSE_HTTPD_SERVERSTD_AUTH, &tmp.auth) <= -1 ||
 	    server_xtn->query (httpd, client->server, req, tmp.xpath, QSE_HTTPD_SERVERSTD_INDEX, &tmp.index) <= -1)
 	{
@@ -2455,8 +2498,19 @@ auth_ok:
 				}
 			}
 
-			target->type = QSE_HTTPD_RSRC_DIR;
-			target->u.dir.path = tmp.xpath;
+			/* it is a directory - should i allow it? */
+			if (server_xtn->query (httpd, client->server, req, tmp.xpath, QSE_HTTPD_SERVERSTD_DIRACC, &target->u.err.code) <= -1) target->u.err.code = 500;
+			if (target->u.err.code != 200)
+			{
+				target->type = QSE_HTTPD_RSRC_ERR;
+				/* free xpath since it won't be used */
+				QSE_MMGR_FREE (httpd->mmgr, tmp.xpath);
+			}
+			else
+			{
+				target->type = QSE_HTTPD_RSRC_DIR;
+				target->u.dir.path = tmp.xpath;
+			}
 		}
 		else
 		{
@@ -2478,14 +2532,25 @@ auth_ok:
 		}
 		if (n >= 1) return 0;
 
-		/* fall back to a normal file. */
-		target->type = QSE_HTTPD_RSRC_FILE;
-		target->u.file.path = tmp.xpath;
-
-		if (server_xtn->query (httpd, client->server, req, tmp.xpath, QSE_HTTPD_SERVERSTD_MIME, &target->u.file.mime) <= -1)
+		/* check file's access permission */
+		if (server_xtn->query (httpd, client->server, req, tmp.xpath, QSE_HTTPD_SERVERSTD_FILEACC, &target->u.err.code) <= -1) target->u.err.code = 500;
+		if (target->u.err.code != 200)
 		{
-			/* don't care about failure */
-			target->u.file.mime = QSE_NULL;
+			target->type = QSE_HTTPD_RSRC_ERR;
+			/* free xpath since it won't be used */
+			QSE_MMGR_FREE (httpd->mmgr, tmp.xpath);
+		}
+		else
+		{
+			/* fall back to a normal file. */
+			target->type = QSE_HTTPD_RSRC_FILE;
+			target->u.file.path = tmp.xpath;
+
+			if (server_xtn->query (httpd, client->server, req, tmp.xpath, QSE_HTTPD_SERVERSTD_MIME, &target->u.file.mime) <= -1)
+			{
+				/* don't care about failure */
+				target->u.file.mime = QSE_NULL;
+			}
 		}
 	}
 
@@ -2581,6 +2646,12 @@ static int query_server (
 
 			*(const qse_mchar_t**)result = QSE_NULL;
 			return 0;
+
+		case QSE_HTTPD_SERVERSTD_DIRACC:
+		case QSE_HTTPD_SERVERSTD_FILEACC:
+			*(int*)result = 200;
+			return 0;
+			
 	}
 
 	qse_httpd_seterrnum (httpd, QSE_HTTPD_EINVAL);

@@ -385,8 +385,13 @@ static int get_highest_fd (void)
 		#endif
 		}
 		else fd = rlim.rlim_max;
+		if (fd == -1) fd = 1024; /* fallback */
+
+		/* F_MAXFD is the highest fd. but RLIMIT_NOFILE and 
+		 * _SC_OPEN_MAX returnes the maximum number of file 
+		 * descriptors. make adjustment */
+		if (fd > 0) fd--; 
 	}
-	if (fd == -1) fd = 1024; /* fallback */
 	return fd;
 }
 

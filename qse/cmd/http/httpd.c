@@ -8,6 +8,7 @@
 #include <qse/cmn/mbwc.h>
 #include <qse/cmn/time.h>
 #include <qse/cmn/path.h>
+#include <qse/cmn/opt.h>
 
 #include <signal.h>
 #include <locale.h>
@@ -27,6 +28,7 @@
 #else
 #	include <unistd.h>
 #	include <errno.h>
+#	include <fcntl.h>
 #endif
 
 #if defined(HAVE_SSL)
@@ -38,17 +40,34 @@
 /* --------------------------------------------------------------------- */
 
 static qse_httpd_t* g_httpd = QSE_NULL;
+static const qse_char_t* g_cfgfile = QSE_NULL;
+static int g_daemon = 0;
 
-static void sigint (int sig)
+/* --------------------------------------------------------------------- */
+
+typedef struct httpd_xtn_t httpd_xtn_t;
+struct httpd_xtn_t
+{
+	const  qse_char_t* cfgfile;
+	qse_xli_t* xli;
+	qse_httpd_impede_t orgimpede;
+	int impede_code;
+};
+
+/* --------------------------------------------------------------------- */
+
+static void sig_stop (int sig)
 {
 	if (g_httpd) qse_httpd_stop (g_httpd);
 }
 
-static void sighup (int sig)
+static void sig_reconf (int sig)
 {
 	if (g_httpd) 
 	{
-		/* arrange to intefere with httpd to perform reconfiguration */
+		httpd_xtn_t* httpd_xtn;
+		httpd_xtn = qse_httpd_getxtnstd (g_httpd);
+		httpd_xtn->impede_code = sig;
 		qse_httpd_impede (g_httpd);
 	}
 }
@@ -59,14 +78,24 @@ static void setup_signal_handlers ()
 
 #if defined(SIGINT)
 	qse_memset (&act, 0, QSE_SIZEOF(act));
-	act.sa_handler = sigint;
+	act.sa_handler = sig_stop;
 	sigaction (SIGINT, &act, QSE_NULL);
+#endif
+#if defined(SIGTERM)
+	qse_memset (&act, 0, QSE_SIZEOF(act));
+	act.sa_handler = sig_stop;
+	sigaction (SIGTERM, &act, QSE_NULL);
 #endif
 
 #if defined(SIGHUP)
 	qse_memset (&act, 0, QSE_SIZEOF(act));
-	act.sa_handler = sighup;
+	act.sa_handler = sig_reconf;
 	sigaction (SIGHUP, &act, QSE_NULL);
+#endif
+#if defined(SIGUSR1)
+	qse_memset (&act, 0, QSE_SIZEOF(act));
+	act.sa_handler = sig_reconf;
+	sigaction (SIGUSR1, &act, QSE_NULL);
 #endif
 
 #if defined(SIGPIPE)
@@ -85,17 +114,64 @@ static void restore_signal_handlers ()
 	act.sa_handler = SIG_DFL;
 	sigaction (SIGINT, &act, QSE_NULL);
 #endif
+#if defined(SIGTERM)
+	qse_memset (&act, 0, QSE_SIZEOF(act));
+	act.sa_handler = SIG_DFL;
+	sigaction (SIGTERM, &act, QSE_NULL);
+#endif
 
 #if defined(SIGHUP)
 	qse_memset (&act, 0, QSE_SIZEOF(act));
 	act.sa_handler = SIG_DFL;
 	sigaction (SIGHUP, &act, QSE_NULL);
 #endif
+#if defined(SIGUSR1)
+	qse_memset (&act, 0, QSE_SIZEOF(act));
+	act.sa_handler = SIG_DFL;
+	sigaction (SIGUSR1, &act, QSE_NULL);
+#endif
 
 #if defined(SIGPIPE)
 	qse_memset (&act, 0, QSE_SIZEOF(act));
 	act.sa_handler = SIG_DFL;
 	sigaction (SIGPIPE, &act, QSE_NULL);
+#endif
+}
+
+static int daemonize (int devnull)
+{
+
+#if defined(HAVE_FORK)
+	switch (fork())
+	{
+		case -1: return -1;
+		case 0: break; /* child */
+		default: _exit (0); /* parent */
+	}
+
+	if (setsid () <= -1) return -1;
+
+	/*umask (0);*/
+	chdir ("/");
+
+	if (devnull)
+	{
+		/* redirect stdin/out/err to /dev/null */
+		int fd = open ("/dev/null", O_RDWR);	
+		if (fd >= 0)
+		{
+			dup2 (fd, 0);
+			dup2 (fd, 1);
+			dup2 (fd, 2);
+			close (fd);
+		}
+	}
+
+	return 0;
+
+#else
+
+	return -1;
 #endif
 }
 
@@ -117,8 +193,7 @@ struct cgi_t
 {
 	enum {
 		CGI_SUFFIX,
-		CGI_FILE,
-
+		CGI_NAME,
 		CGI_MAX
 	} type;
 
@@ -133,8 +208,8 @@ struct mime_t
 {
 	enum {
 		MIME_SUFFIX,
-		MIME_FILE,
-
+		MIME_NAME,
+		MIME_OTHER,
 		MIME_MAX
 	} type;
 
@@ -142,6 +217,23 @@ struct mime_t
 	qse_mchar_t* value;
 
 	struct mime_t* next;
+};
+
+struct access_t
+{
+	/* TODO: support more types like ACCESS_GLOB 
+	         not-only the base name, find a way to use query path or xpath */
+	enum {
+		ACCESS_SUFFIX,
+		ACCESS_NAME,
+		ACCESS_OTHER,
+		ACCESS_MAX
+	} type;
+
+	qse_mchar_t* spec;
+	int value;
+
+	struct access_t* next;
 };
 
 typedef struct server_xtn_t server_xtn_t;
@@ -176,15 +268,14 @@ struct server_xtn_t
 		struct mime_t* head;
 		struct mime_t* tail;
 	} mime[MIME_MAX];
+
+	struct
+	{
+		struct access_t* head;
+		struct access_t* tail;
+	} access[2][ACCESS_MAX];
 };
 
-typedef struct httpd_xtn_t httpd_xtn_t;
-struct httpd_xtn_t
-{
-	const  qse_char_t* cfgfile;
-	qse_xli_t* xli;
-	qse_httpd_impede_t orgimpede;
-};
 
 static int make_resource (
 	qse_httpd_t* httpd, qse_httpd_client_t* client,
@@ -253,7 +344,7 @@ static void free_resource (
 static void clear_server_config (qse_httpd_t* httpd, qse_httpd_server_t* server)
 {
 	server_xtn_t* server_xtn;
-	qse_size_t i;
+	qse_size_t i, j;
 
 	server_xtn = qse_httpd_getserverstdxtn (httpd, server);
 
@@ -305,6 +396,25 @@ static void clear_server_config (qse_httpd_t* httpd, qse_httpd_server_t* server)
 
 		server_xtn->mime[i].head = QSE_NULL;
 		server_xtn->mime[i].tail = QSE_NULL;
+	}
+
+	for (j = 0; j < QSE_COUNTOF(server_xtn->access); j++)
+	{
+		for (i = 0; i < QSE_COUNTOF(server_xtn->access[j]); i++)
+		{
+			struct access_t* access = server_xtn->access[j][i].head;
+			while (access)
+			{
+				struct access_t* x = access;
+				access = x->next;
+
+				if (x->spec) qse_httpd_freemem (httpd, x->spec);
+				if (x) qse_httpd_freemem (httpd, x);
+			}
+
+			server_xtn->access[j][i].head = QSE_NULL;
+			server_xtn->access[j][i].tail = QSE_NULL;
+		}
 	}
 }
 
@@ -369,8 +479,8 @@ static int query_server (
 				struct cgi_t* cgi;
 				for (cgi = server_xtn->cgi[i].head; cgi; cgi = cgi->next)
 				{
-					if ((cgi->type == MIME_SUFFIX && qse_mbsend (xpath_base, cgi->spec)) ||
-					    (cgi->type == MIME_FILE && qse_mbscmp (xpath_base, cgi->spec) == 0))
+					if ((cgi->type == CGI_SUFFIX && qse_mbsend (xpath_base, cgi->spec)) ||
+					    (cgi->type == CGI_NAME && qse_mbscmp (xpath_base, cgi->spec) == 0))
 					{
 						scgi->cgi = 1;
 						scgi->nph = cgi->nph;		
@@ -386,7 +496,7 @@ static int query_server (
 		case QSE_HTTPD_SERVERSTD_MIME:
 		{
 			qse_size_t i;
-			qse_mchar_t* xpath_base;
+			const qse_mchar_t* xpath_base;
 
 			xpath_base = qse_mbsbasename (xpath);
 
@@ -397,9 +507,39 @@ static int query_server (
 				for (mime = server_xtn->mime[i].head; mime; mime = mime->next)
 				{
 					if ((mime->type == MIME_SUFFIX && qse_mbsend (xpath_base, mime->spec)) ||
-					    (mime->type == MIME_FILE && qse_mbscmp (xpath_base, mime->spec) == 0))
+					    (mime->type == MIME_NAME && qse_mbscmp (xpath_base, mime->spec) == 0) ||
+					    mime->type == MIME_OTHER)
 					{
 						*(const qse_mchar_t**)result = mime->value;
+						return 0;
+					}
+				}
+			}
+			return 0;
+		}
+
+		case QSE_HTTPD_SERVERSTD_DIRACC:
+		case QSE_HTTPD_SERVERSTD_FILEACC:
+		{
+			qse_size_t i;
+			const qse_mchar_t* xpath_base;
+			int id;
+
+			id = (code == QSE_HTTPD_SERVERSTD_DIRACC)? 0: 1;
+
+			xpath_base = qse_mbsbasename (xpath);
+
+			*(int*)result = 200;
+			for (i = 0; i < QSE_COUNTOF(server_xtn->access[id]); i++)
+			{
+				struct access_t* access;
+				for (access = server_xtn->access[id][i].head; access; access = access->next)
+				{
+					if ((access->type == ACCESS_SUFFIX && qse_mbsend (xpath_base, access->spec)) ||
+					    (access->type == ACCESS_NAME && qse_mbscmp (xpath_base, access->spec) == 0) ||
+					    access->type == ACCESS_OTHER)
+					{
+						*(int*)result = access->value;
 						return 0;
 					}
 				}
@@ -498,9 +638,9 @@ static int load_server_config (
 				{
 					type = CGI_SUFFIX;
 				}
-				else if (qse_strcmp (pair->key, QSE_T("file")) == 0)
+				else if (qse_strcmp (pair->key, QSE_T("name")) == 0)
 				{
-					type = CGI_FILE;
+					type = CGI_NAME;
 				}
 				else continue;
 
@@ -570,13 +710,14 @@ static int load_server_config (
 			if (atom->type != QSE_XLI_PAIR) continue;
 
 			pair = (qse_xli_pair_t*)atom;
-			if (pair->key && pair->name && pair->val->type == QSE_XLI_STR)
+			if (pair->key && pair->val->type == QSE_XLI_STR)
 			{
 				struct mime_t* mime;
 				int type;
 
-				if (qse_strcmp (pair->key, QSE_T("suffix")) == 0) type = MIME_SUFFIX;
-				else if (qse_strcmp (pair->key, QSE_T("file")) == 0) type = MIME_FILE;
+				if (qse_strcmp (pair->key, QSE_T("suffix")) == 0 && pair->name) type = MIME_SUFFIX;
+				else if (qse_strcmp (pair->key, QSE_T("name")) == 0 && pair->name) type = MIME_NAME;
+				else if (qse_strcmp (pair->key, QSE_T("other")) == 0 && !pair->name) type = MIME_OTHER;
 				else continue;
 
 				mime = qse_httpd_callocmem (httpd, QSE_SIZEOF(*mime));
@@ -594,20 +735,16 @@ static int load_server_config (
 					qse_printf (QSE_T("ERROR: memory failure in copying mime\n"));
 					return -1;
 				}
-				if (pair->val->type == QSE_XLI_STR) 
+
+				mime->value = qse_httpd_strtombsdup (httpd, ((qse_xli_str_t*)pair->val)->ptr);
+				if (!mime->value)
 				{
-					mime->value = qse_httpd_strtombsdup (httpd, ((qse_xli_str_t*)pair->val)->ptr);
-					if (!mime->value)
-					{
-						qse_httpd_freemem (httpd, mime->spec);
-						qse_httpd_freemem (httpd, mime);
-						qse_printf (QSE_T("ERROR: memory failure in copying mime\n"));
-						return -1;
-					}
-
-					/* TODO: more sanity check */
-
+					qse_httpd_freemem (httpd, mime->spec);
+					qse_httpd_freemem (httpd, mime);
+					qse_printf (QSE_T("ERROR: memory failure in copying mime\n"));
+					return -1;
 				}
+
 				if (server_xtn->mime[type].tail)
 					server_xtn->mime[type].tail->next = mime;
 				else
@@ -615,6 +752,76 @@ static int load_server_config (
 				server_xtn->mime[type].tail = mime;
 			}
 		}	
+	}
+
+	for (i = 0; i < 2;  i++)
+	{
+		static struct 
+		{
+			const qse_char_t* x;
+			const qse_char_t* y;
+		} acc_items[] =
+		{
+			{ QSE_T("host['*'].location['/'].dir-access"), QSE_T("default.dir-access") },
+			{ QSE_T("host['*'].location['/'].file-access"), QSE_T("default.file-access") },
+		};
+
+		pair = qse_xli_findpairbyname (httpd_xtn->xli, list, acc_items[i].x);
+		if (!pair) pair = qse_xli_findpairbyname (httpd_xtn->xli, QSE_NULL, acc_items[i].y);
+		if (pair && pair->val->type == QSE_XLI_LIST)
+		{
+			qse_xli_list_t* acclist = (qse_xli_list_t*)pair->val;
+			for (atom = acclist->head; atom; atom = atom->next)
+			{
+				if (atom->type != QSE_XLI_PAIR) continue;
+	
+				pair = (qse_xli_pair_t*)atom;
+				if (pair->key && pair->val->type == QSE_XLI_STR)
+				{
+					struct access_t* acc;
+					const qse_char_t* tmp;
+					int type, value;
+	
+					if (qse_strcmp (pair->key, QSE_T("suffix")) == 0 && pair->name) type = ACCESS_SUFFIX;
+					else if (qse_strcmp (pair->key, QSE_T("name")) == 0 && pair->name) type = ACCESS_NAME;
+					else if (qse_strcmp (pair->key, QSE_T("other")) == 0 && !pair->name) type = ACCESS_OTHER;
+					else continue;
+	
+					tmp = ((qse_xli_str_t*)pair->val)->ptr;
+					if (qse_strcmp (tmp, QSE_T("noent")) == 0) value = 404;
+					else if (qse_strcmp (tmp, QSE_T("forbid")) == 0) value = 403;
+					else if (qse_strcmp (tmp, QSE_T("ok")) == 0) value = 200;
+					else continue;
+					/* TODO: more sanity check */
+	
+					acc = qse_httpd_callocmem (httpd, QSE_SIZEOF(*acc));
+					if (acc == QSE_NULL)
+					{
+						qse_printf (QSE_T("ERROR: memory failure in copying acc\n"));
+						return -1;
+					}
+	
+					acc->type = type;
+					if (pair->name)
+					{
+						acc->spec = qse_httpd_strtombsdup (httpd, pair->name);
+						if (!acc->spec)
+						{
+							qse_httpd_freemem (httpd, acc);
+							qse_printf (QSE_T("ERROR: memory failure in copying access\n"));
+							return -1;
+						}
+					}
+					acc->value = value;
+	
+					if (server_xtn->access[i][type].tail)
+						server_xtn->access[i][type].tail->next = acc;
+					else
+						server_xtn->access[i][type].head = acc;
+					server_xtn->access[i][type].tail = acc;
+				}
+			}	
+		}
 	}
 
 	/* perform more sanity check */
@@ -844,58 +1051,171 @@ static void impede_httpd (qse_httpd_t* httpd)
 	if (httpd_xtn->orgimpede) httpd_xtn->orgimpede (httpd);
 }
 
-static void logact_httpd (qse_httpd_t* httpd, qse_httpd_act_t* act)
+static void logact_httpd (qse_httpd_t* httpd, const qse_httpd_act_t* act)
 {
 	httpd_xtn_t* httpd_xtn;
-	qse_char_t tmp[256];
+	qse_char_t tmp[128], tmp2[128], tmp3[128];
 
 	httpd_xtn = qse_httpd_getxtnstd (httpd);
 
 	switch (act->code)
 	{
-		case QSE_HTTPD_ACCEPT_CLIENT:
+		case QSE_HTTPD_CATCH_MERRMSG:
+			qse_printf (QSE_T("ERROR: %hs\n"), act->u.merrmsg);
 			break;
+
+		case QSE_HTTPD_CATCH_MDBGMSG:
+			qse_printf (QSE_T("DEBUG: %hs\n"), act->u.mdbgmsg);
+			break;
+
+		case QSE_HTTPD_ACCEPT_CLIENT:
+			qse_nwadtostr (&act->u.client->local_addr, tmp, QSE_COUNTOF(tmp), QSE_NWADTOSTR_ALL);
+			qse_nwadtostr (&act->u.client->orgdst_addr, tmp2, QSE_COUNTOF(tmp2), QSE_NWADTOSTR_ALL);
+			qse_nwadtostr (&act->u.client->remote_addr, tmp3, QSE_COUNTOF(tmp3), QSE_NWADTOSTR_ALL);
+			qse_printf (QSE_T("accepted client %s(%s) from %s\n"), tmp, tmp2, tmp3);
 
 		case QSE_HTTPD_PURGE_CLIENT:
 			qse_nwadtostr (&act->u.client->remote_addr, tmp, QSE_COUNTOF(tmp), QSE_NWADTOSTR_ALL);
-			qse_printf (QSE_T("purged client from %s\n"), tmp);
+			qse_printf (QSE_T("purged client - %s\n"), tmp);
+			break;		
+
+		case QSE_HTTPD_READERR_CLIENT:
+			qse_nwadtostr (&act->u.client->remote_addr, tmp, QSE_COUNTOF(tmp), QSE_NWADTOSTR_ALL);
+			qse_printf (QSE_T("failed to read client - %s\n"), tmp);
 			break;		
 	}
 }
 
 /* --------------------------------------------------------------------- */
+static void print_version (void)
+{
+	qse_printf (QSE_T("QSEHTTPD version %hs\n"), QSE_PACKAGE_VERSION);
+}
+
+static void print_usage (QSE_FILE* out, int argc, qse_char_t* argv[])
+{
+	const qse_char_t* b = qse_basename (argv[0]);
+
+	qse_fprintf (out, QSE_T("USAGE: %s [options] -c file\n"), b);
+	qse_fprintf (out, QSE_T("       %s [options] --config-file file\n"), b);
+
+	qse_fprintf (out, QSE_T("options as follows:\n"));
+	qse_fprintf (out, QSE_T(" -h/--help                 show this message\n"));
+	qse_fprintf (out, QSE_T(" --version                 show version\n"));
+	qse_fprintf (out, QSE_T(" -c/--config-file file     specify a configuration file\n"));
+	qse_fprintf (out, QSE_T(" -d/--daemon               run in the background\n"));
+}
+
+static int handle_args (int argc, qse_char_t* argv[])
+{
+	static qse_opt_lng_t lng[] = 
+	{
+		{ QSE_T(":config-file"),     QSE_T('c') },
+		{ QSE_T("daemon"),           QSE_T('d') },
+		{ QSE_T("help"),             QSE_T('h') },
+		{ QSE_T("version"),          QSE_T('\0') },
+		{ QSE_NULL,                  QSE_T('\0') }                  
+	};
+	static qse_opt_t opt = 
+	{
+		QSE_T("c:dh"),
+		lng
+	};
+	qse_cint_t c;
+
+	while ((c = qse_getopt (argc, argv, &opt)) != QSE_CHAR_EOF)
+	{
+		switch (c)
+		{
+			default:
+				goto wrongusage;
+
+			case QSE_T('?'):
+				qse_fprintf (QSE_STDERR, 
+					QSE_T("ERROR: bad option - %c\n"),
+					opt.opt
+				);
+				goto wrongusage;
+
+			case QSE_T(':'):
+				qse_fprintf (QSE_STDERR, 
+					QSE_T("ERROR: bad parameter for %c\n"),
+					opt.opt
+				);
+				goto wrongusage;
+
+			case QSE_T('c'):
+				g_cfgfile = opt.arg;
+				break;
+
+			case QSE_T('d'):
+				g_daemon = 1;
+				break;
+
+			case QSE_T('h'):
+				print_usage (QSE_STDOUT, argc, argv);
+				return 0;
+
+			case QSE_T('\0'):
+			{
+				if (qse_strcmp(opt.lngopt, QSE_T("version")) == 0)
+				{
+					print_version ();
+					return 0;
+                    }
+				break;
+			}
+
+		}
+	}
+
+	if (opt.ind < argc || g_cfgfile == QSE_NULL) goto wrongusage;
+
+	return 1;
+
+wrongusage:
+	print_usage (QSE_STDERR, argc, argv);
+	return -1;
+}
+
 static int httpd_main (int argc, qse_char_t* argv[])
 {
 	qse_httpd_t* httpd = QSE_NULL;
 	httpd_xtn_t* httpd_xtn;
 	qse_ntime_t tmout;
-	int trait, ret = -1;
+	int trait, ret;
 	qse_httpd_rcb_t rcb;
 
-	if (argc != 2)
-	{
-		/* TODO: proper check... */
-		qse_fprintf (QSE_STDERR, QSE_T("Usage: %s -f config-file\n"), argv[0]);
-		goto oops;
-	}
+	ret = handle_args (argc, argv);
+	if (ret <= -1) return -1;
+	if (ret == 0) return 0;
 
 	httpd = qse_httpd_openstd (QSE_SIZEOF(httpd_xtn_t));
 	if (httpd == QSE_NULL)
 	{
-		qse_fprintf (QSE_STDERR, QSE_T("Cannot open httpd\n"));
+		qse_fprintf (QSE_STDERR, QSE_T("ERROR: Cannot open httpd\n"));
 		goto oops;
 	}
 
 	httpd_xtn = qse_httpd_getxtnstd (httpd);
-	httpd_xtn->cfgfile = argv[1];
+	httpd_xtn->cfgfile = g_cfgfile;
 
 	if (load_config (httpd) <= -1) goto oops;
+
+	if (g_daemon)
+	{
+		if (daemonize (1) <= -1)
+		{
+			qse_fprintf (QSE_STDERR, QSE_T("ERROR: Cannot daemonize\n"));
+			goto oops;
+		}
+	}
 
 	g_httpd = httpd;
 	setup_signal_handlers ();
 
 	qse_httpd_getopt (httpd, QSE_HTTPD_TRAIT, &trait);
-	trait |= QSE_HTTPD_CGIERRTONUL | QSE_HTTPD_ENABLELOG;
+	trait |= QSE_HTTPD_CGIERRTONUL | QSE_HTTPD_LOGACT;
 	qse_httpd_setopt (httpd, QSE_HTTPD_TRAIT, &trait);
 
 	tmout.sec = 10;
@@ -921,7 +1241,7 @@ static int httpd_main (int argc, qse_char_t* argv[])
 
 oops:
 	if (httpd) qse_httpd_close (httpd);
-	return ret;
+	return -1;
 }
 
 int qse_main (int argc, qse_achar_t* argv[])

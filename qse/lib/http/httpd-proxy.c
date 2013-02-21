@@ -29,8 +29,8 @@
 typedef struct task_proxy_arg_t task_proxy_arg_t;
 struct task_proxy_arg_t 
 {
-	qse_nwad_t* peer_nwad;
-	qse_nwad_t* peer_local;
+	const qse_nwad_t* peer_nwad;
+	const qse_nwad_t* peer_local;
 	qse_htre_t* req;
 };
 

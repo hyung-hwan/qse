@@ -75,7 +75,7 @@ enum qse_httpd_trait_t
 	QSE_HTTPD_CGIERRTONUL  = (1 << 1),
 	QSE_HTTPD_CGINOCLOEXEC = (1 << 2),
 	QSE_HTTPD_CGINOCHUNKED = (1 << 3),
-	QSE_HTTPD_ENABLELOG    = (1 << 4)      
+	QSE_HTTPD_LOGACT       = (1 << 4)
 };
 typedef enum qse_httpd_trait_t qse_httpd_trait_t;
 
@@ -115,8 +115,8 @@ typedef struct qse_httpd_dirent_t qse_httpd_dirent_t;
 
 struct qse_httpd_dirent_t
 {
-	qse_mchar_t*     name;
-	qse_httpd_stat_t stat;
+	const qse_mchar_t* name;
+	qse_httpd_stat_t   stat;
 };
 
 typedef struct qse_httpd_scb_t qse_httpd_scb_t;
@@ -266,8 +266,11 @@ typedef void (*qse_httpd_impede_t) (
 
 enum qse_httpd_act_code_t 
 {
+	QSE_HTTPD_CATCH_MERRMSG,
+	QSE_HTTPD_CATCH_MDBGMSG,
 	QSE_HTTPD_ACCEPT_CLIENT,
 	QSE_HTTPD_PURGE_CLIENT,
+	QSE_HTTPD_READERR_CLIENT
 };
 typedef enum qse_httpd_act_code_t qse_httpd_act_code_t;
 
@@ -277,6 +280,8 @@ struct qse_httpd_act_t
 	union
 	{
 		qse_httpd_client_t* client;
+		qse_mchar_t merrmsg[128];
+		qse_mchar_t mdbgmsg[128];
 	} u;
 };
 typedef struct qse_httpd_act_t qse_httpd_act_t;

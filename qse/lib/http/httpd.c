@@ -457,7 +457,7 @@ static void purge_client (qse_httpd_t* httpd, qse_httpd_client_t* client)
 	prev = client->prev;
 	next = client->next;
 
-	if (httpd->opt.trait & QSE_HTTPD_ENABLELOG)
+	if (httpd->opt.trait & QSE_HTTPD_LOGACT)
 	{
 		qse_httpd_act_t msg;
 		msg.code = QSE_HTTPD_PURGE_CLIENT;
@@ -562,14 +562,13 @@ qse_printf (QSE_T("MUX ADDHND CLIENT READ %d\n"), client->handle.i);
 			httpd->client.list.tail = client;
 		}
 
-{
-/* TODO: proper logging */
-qse_char_t tmp[128], tmp2[128], tmp3[128];
-qse_nwadtostr (&client->local_addr, tmp, QSE_COUNTOF(tmp), QSE_NWADTOSTR_ALL);
-qse_nwadtostr (&client->orgdst_addr, tmp2, QSE_COUNTOF(tmp2), QSE_NWADTOSTR_ALL);
-qse_nwadtostr (&client->remote_addr, tmp3, QSE_COUNTOF(tmp3), QSE_NWADTOSTR_ALL);
-qse_printf (QSE_T("connection %d accepted %s(%s from %s\n"), client->handle.i, tmp, tmp2, tmp3);
-}
+		if (httpd->opt.trait & QSE_HTTPD_LOGACT)
+		{
+			qse_httpd_act_t msg;
+			msg.code = QSE_HTTPD_ACCEPT_CLIENT;
+			msg.u.client = client;
+			httpd->opt.rcb.logact (httpd, &msg);
+		}
 	}
 	return 0;
 }
@@ -733,7 +732,6 @@ reread:
 		if (httpd->errnum == QSE_HTTPD_EAGAIN)
 		{
 			/* nothing to read yet. */
-qse_printf (QSE_T("Warning: Nothing to read from a client %d\n"), client->handle.i);
 			return 0; /* return ok */
 		}
 		else if (httpd->errnum == QSE_HTTPD_EINTR)
@@ -743,14 +741,22 @@ qse_printf (QSE_T("Warning: Nothing to read from a client %d\n"), client->handle
 		else
 		{
 			/* TOOD: if (httpd->errnum == QSE_HTTPD_ENOERR) httpd->errnum = QSE_HTTPD_ECALLBACK; */
-qse_printf (QSE_T("Error: failed to read from a client %d\n"), client->handle.i);
-	/* TODO: find a way to disconnect */
+			if (httpd->opt.trait & QSE_HTTPD_LOGACT)
+			{
+				qse_httpd_act_t msg;
+				msg.code = QSE_HTTPD_READERR_CLIENT;
+				msg.u.client = client;
+				httpd->opt.rcb.logact (httpd, &msg);
+			}
+			/* TODO: find a way to disconnect */
 			return -1;
 		}
 	}
 	else if (m == 0)
 	{
+#if 0
 qse_printf (QSE_T("Debug: connection closed %d\n"), client->handle.i);
+#endif
 		/* reading from the client returned 0. this typically
 		 * happens when the client closes the connection or
 		 * shutdown the writing half of the socket. it's
@@ -764,17 +770,22 @@ qse_printf (QSE_T("Debug: connection closed %d\n"), client->handle.i);
 			/* there is still more tasks to finish and 
 			 * http reader is not waiting for any more feeds.  */
 			client->status |= CLIENT_MUTE;
+#if 0
 qse_printf (QSE_T(">>>>> Marking client %d as MUTE\n"), client->handle.i);
+#endif
 			return 0;
 		}
 		else
 		{
+#if 0
 qse_printf (QSE_T(">>>>> Returning failure for client %d\n"), client->handle.i);
+#endif
 			httpd->errnum = QSE_HTTPD_EDISCON;
 			return -1;
 		}
 	}
 	
+#if 0
 qse_printf (QSE_T("!!!!!FEEDING %d from %d ["), (int)m, (int)client->handle.i);
 #if !defined(__WATCOMC__)
 {
@@ -783,6 +794,7 @@ for (i = 0; i < m; i++) qse_printf (QSE_T("%hc"), buf[i]);
 }
 #endif
 qse_printf (QSE_T("]\n"));
+#endif
 
 	/* qse_htrd_feed() may call the request callback 
 	 * multiple times. that's because we don't know 
@@ -798,17 +810,21 @@ qse_printf (QSE_T("]\n"));
 			else httpd->errnum = QSE_HTTPD_ENOMEM; /* TODO: better translate error code */
 		}
 	
+#if 0
 qse_printf (QSE_T("Error: http error while processing %d ["), (int)client->handle.i);
 {
 int i;
 for (i = 0; i < m; i++) qse_printf (QSE_T("%hc"), buf[i]);
 }
 qse_printf (QSE_T("]\n"));
+#endif
 
 
 		return -1;
 	}
+#if 0
 qse_printf (QSE_T("!!!!!FEEDING OK OK OK OK %d from %d\n"), (int)m, (int)client->handle.i);
+#endif
 
 	if (client->status & CLIENT_PENDING) 
 	{
@@ -840,7 +856,6 @@ static int invoke_client_task (
 	int n, trigger_fired, client_handle_writable;
 
 /* TODO: handle comparison callback ... */
-qse_printf (QSE_T("INVOKE CLIENT TASK..........\n"));
 	if (handle.i == client->handle.i && (mask & QSE_HTTPD_MUX_READ)) /* TODO: no direct comparision */
 	{
 		if (!(client->status & CLIENT_MUTE) && 
@@ -850,7 +865,6 @@ qse_printf (QSE_T("INVOKE CLIENT TASK..........\n"));
 			 * purge the client in perform_client_task().
 			 * thus the following line isn't necessary.
 			 *if (httpd->errnum == QSE_HTTPD_EDISCON) return 0;*/
-qse_printf (QSE_T("ERROR: read from client [%d] failed...\n"), (int)handle.i);
 			return -1;
 		}
 	}
@@ -862,7 +876,6 @@ qse_printf (QSE_T("ERROR: read from client [%d] failed...\n"), (int)handle.i);
 		if (client->status & CLIENT_MUTE)
 		{
 			/* handle this delayed client disconnection */
-qse_printf (QSE_T("ERROR: mute client got no more task [%d] failed...\n"), (int)client->handle.i);
 			return -1;
 		}
 
@@ -908,7 +921,6 @@ qse_printf (QSE_T("ERROR: mute client got no more task [%d] failed...\n"), (int)
 	}
 
 	n = task->main (httpd, client, task);
-qse_printf (QSE_T("task returend %d\n"), n);
 	if (n <= -1) return -1;
 	else if (n == 0)
 	{
@@ -1118,17 +1130,12 @@ static int perform_client_task (
 		qse_gettime (&client->last_active); /* TODO: error check??? */
 		move_client_to_tail (httpd, client);
 
-		if (invoke_client_task (httpd, client, handle, mask) <= -1) 
-		{
-qse_printf (QSE_T("OOPS AFTER CLIENT TASK BAD XXXXXXXXXXXXXX [%d]\n"), (int)handle.i);
-			goto oops;
-		}
+		if (invoke_client_task (httpd, client, handle, mask) <= -1) goto oops;
 	}
 
 	return 0;
 
 oops:
-qse_printf (QSE_T("MARKING BAD XXXXXXXXXXXXXX [%d]\n"), (int)handle.i);
 	/*purge_client (httpd, client);*/
 	client->status |= CLIENT_BAD;
 	client->bad_next = httpd->client.bad;
@@ -1336,3 +1343,8 @@ const qse_mchar_t* qse_httpd_fmtgmtimetobb (
 	qse_fmthttptime (nt, httpd->gtbuf[idx], QSE_COUNTOF(httpd->gtbuf[idx]));
 	return httpd->gtbuf[idx];
 }
+
+
+/* --------------------------------------------------- */
+
+

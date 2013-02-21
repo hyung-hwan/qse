@@ -23,6 +23,7 @@
 #include <qse/cmn/str.h>
 #include <qse/cmn/pio.h>
 #include <qse/cmn/fmt.h>
+#include <qse/cmn/path.h>
 
 #include <stdio.h> /* TODO: remove this */
 
@@ -196,6 +197,17 @@ static int cgi_capture_script_header (qse_htre_t* req, const qse_mchar_t* key, c
 	return 0;
 }
 
+static void log_cgi_script_error (task_cgi_t* cgi, const qse_mchar_t* shortmsg)
+{
+	qse_httpd_act_t msg;
+	qse_size_t pos = 0;
+
+	msg.code = QSE_HTTPD_CATCH_MERRMSG;
+	pos += qse_mbsxcpy (&msg.u.merrmsg[pos], QSE_COUNTOF(msg.u.merrmsg) - pos, shortmsg);
+	pos += qse_mbsxcpy (&msg.u.merrmsg[pos], QSE_COUNTOF(msg.u.merrmsg) - pos, cgi->script);
+	cgi->httpd->opt.rcb.logact (cgi->httpd, &msg);
+}
+
 static int cgi_htrd_peek_script_output (qse_htrd_t* htrd, qse_htre_t* req)
 {
 	cgi_script_htrd_xtn_t* xtn;
@@ -355,8 +367,9 @@ static int cgi_htrd_peek_script_output (qse_htrd_t* htrd, qse_htre_t* req)
 	if ((cgi->resflags & CGI_RES_SCRIPT_LENGTH) &&
 	    cgi->script_output_received > cgi->script_output_length)
 	{
-/* TODO: cgi returning too much data... something is wrong in CGI */
-qse_printf (QSE_T("CGI SCRIPT FUCKED - RETURNING TOO MUCH...\n"));
+		/* cgi returning too much data... something is wrong in CGI */
+		if (cgi->httpd->opt.trait & QSE_HTTPD_LOGACT) 
+			log_cgi_script_error (cgi, QSE_MT("cgi redundant output - "));
 		cgi->httpd->errnum = QSE_HTTPD_EINVAL; /* TODO: change it to a better error code */
 		return -1;
 	}
@@ -501,8 +514,10 @@ static int cgi_snatch_client_input (
 	task = (qse_httpd_task_t*)ctx;
 	cgi = (task_cgi_t*)task->ctx;
 
+#if 0
 if (ptr) qse_printf (QSE_T("!!!CGI SNATCHING [%.*hs]\n"), len, ptr);
 else qse_printf (QSE_T("!!!CGI SNATCHING DONE\n"));
+#endif
 
 	QSE_ASSERT (cgi->req);
 	QSE_ASSERT (!(cgi->reqflags & CGI_REQ_GOTALL));
@@ -587,7 +602,9 @@ else qse_printf (QSE_T("!!!CGI SNATCHING DONE\n"));
 
 		/* output pipe to child */
 		task->trigger[1].mask = QSE_HTTPD_TASK_TRIGGER_WRITE;
+#if 0
 qse_printf (QSE_T("!!!CGI SNATCHED [%.*hs]\n"), len, ptr);
+#endif
 	}
 
 	return 0;
@@ -608,7 +625,9 @@ static void cgi_forward_client_input_to_script (
 		{
 			/* a forwarding error has occurred previously.
 			 * clear the forwarding buffer */
+#if 0
 qse_printf (QSE_T("FORWARD: CLEARING REQCON FOR ERROR\n"));
+#endif
 			qse_mbs_clear (cgi->reqfwdbuf);
 		}
 		else
@@ -624,9 +643,11 @@ qse_printf (QSE_T("FORWARD: CLEARING REQCON FOR ERROR\n"));
 			{
 			forward:
 				/* writable */
+#if 0
 qse_printf (QSE_T("FORWARD: @@@@@@@@@@WRITING[%.*hs]\n"),
 	(int)QSE_MBS_LEN(cgi->reqfwdbuf),
 	QSE_MBS_PTR(cgi->reqfwdbuf));
+#endif
 				n = qse_pio_write (
 					&cgi->pio, QSE_PIO_IN,
 					QSE_MBS_PTR(cgi->reqfwdbuf),
@@ -647,8 +668,9 @@ to the head all the time..  grow the buffer to a certain limit. */
 
 			if (n <= -1)
 			{
-qse_printf (QSE_T("FORWARD: @@@@@@@@WRITE TO CGI FAILED\n"));
-/* TODO: logging ... */
+				if (cgi->httpd->opt.trait & QSE_HTTPD_LOGACT) 
+					log_cgi_script_error (cgi, QSE_MT("cgi pio write error - "));
+
 				cgi->reqflags |= CGI_REQ_FWDERR;
 				qse_mbs_clear (cgi->reqfwdbuf); 
 
@@ -679,7 +701,9 @@ qse_printf (QSE_T("FORWARD: @@@@@@@@WRITE TO CGI FAILED\n"));
 		 * there is nothing more to forward in the forwarding buffer.
 		 * clear the relay and write triggers for the time being.
 		 */
+#if 0
 qse_printf (QSE_T("FORWARD: @@@@@@@@NOTHING MORE TO WRITE TO CGI\n"));
+#endif
 		QSE_ASSERT (cgi->req == QSE_NULL);
 
 		/* mark the end of input to the child explicitly. */
@@ -919,8 +943,6 @@ static void task_fini_cgi (
 		QSE_ASSERT (!(cgi->reqflags & CGI_REQ_GOTALL));
 		qse_htre_unsetconcb (cgi->req);
 	}
-		
-qse_printf (QSE_T("task_fini_cgi\n"));
 }
 
 static QSE_INLINE qse_ssize_t cgi_read_script_output_to_buffer (
@@ -934,6 +956,10 @@ static QSE_INLINE qse_ssize_t cgi_read_script_output_to_buffer (
 		QSE_SIZEOF(cgi->buf) - cgi->buflen
 	);
 	if (n > 0) cgi->buflen += n;
+
+	if (n <= -1 && cgi->httpd->opt.trait & QSE_HTTPD_LOGACT) 
+		log_cgi_script_error (cgi, QSE_MT("cgi pio read error - "));
+
 	return n;
 }
 
@@ -942,13 +968,16 @@ static QSE_INLINE qse_ssize_t cgi_write_script_output_to_client (
 {
 	qse_ssize_t n;
 
-	httpd->errnum = QSE_HTTPD_ENOERR;
 	n = httpd->opt.scb.client.send (httpd, client, cgi->buf, cgi->buflen);
 	if (n > 0)
 	{
 		QSE_MEMCPY (&cgi->buf[0], &cgi->buf[n], cgi->buflen - n);
 		cgi->buflen -= n;
 	}
+
+	if (n <= -1 && cgi->httpd->opt.trait & QSE_HTTPD_LOGACT) 
+		log_cgi_script_error (cgi, QSE_MT("cgi write error to client - "));
+
 	return n;
 }
 
@@ -971,13 +1000,11 @@ static int task_main_cgi_5 (
 	if (!(task->trigger[2].mask & QSE_HTTPD_TASK_TRIGGER_WRITE) ||
 	    (task->trigger[2].mask & QSE_HTTPD_TASK_TRIGGER_WRITABLE))
 	{
-qse_printf (QSE_T("task_main_cgi_5 about to write %d bytes\n"), (int)cgi->buflen);
 		if (cgi->buflen > 0)
 		{
 			if (cgi_write_script_output_to_client (httpd, client, cgi) <= -1)
 			{
-		/* can't return internal server error any more... */
-/* TODO: logging ... */
+				/* can't return internal server error any more... */
 				return -1;
 			}
 		}
@@ -1024,11 +1051,7 @@ static int task_main_cgi_4_nph (
 		}
 
 		QSE_ASSERT (cgi->buflen > 0);
-		if (cgi_write_script_output_to_client (httpd, client, cgi) <= -1)
-		{
-/* TODO: logging ... */
-			return -1;
-		}
+		if (cgi_write_script_output_to_client (httpd, client, cgi) <= -1) return -1;
 	}
 
 	return 1;
@@ -1043,8 +1066,10 @@ static int task_main_cgi_4 (
 	QSE_ASSERT (!cgi->nph);
 	QSE_ASSERT (cgi->pio_inited);
 
+#if 0
 qse_printf (QSE_T("task_main_cgi_4 trigger[0].mask=%d trigger[1].mask=%d trigger[2].mask=%d\n"), 
 	task->trigger[0].mask, task->trigger[1].mask, task->trigger[2].mask);
+#endif
 
 	if (task->trigger[2].mask & QSE_HTTPD_TASK_TRIGGER_READABLE)
 	{
@@ -1057,7 +1082,6 @@ qse_printf (QSE_T("task_main_cgi_4 trigger[0].mask=%d trigger[1].mask=%d trigger
 
 	if (task->trigger[0].mask & QSE_HTTPD_TASK_TRIGGER_READABLE)
 	{
-qse_printf (QSE_T("TASK_MAIN_CGI_4\n"));
 		if (cgi->resflags & CGI_RES_CLIENT_CHUNK)
 		{
 			qse_size_t count, extra;
@@ -1068,7 +1092,6 @@ qse_printf (QSE_T("TASK_MAIN_CGI_4\n"));
 	
 #define CHLEN_RESERVE 6 
 
-	qse_printf (QSE_T("READING CHUNKED MODE...\n"));
 			extra = CHLEN_RESERVE + 2;
 			count = QSE_SIZEOF(cgi->buf) - cgi->buflen;
 			if (count > extra)
@@ -1080,7 +1103,8 @@ qse_printf (QSE_T("TASK_MAIN_CGI_4\n"));
 				);
 				if (n <= -1)
 				{
-	/* TODO: logging ... */
+					if (cgi->httpd->opt.trait & QSE_HTTPD_LOGACT) 
+						log_cgi_script_error (cgi, QSE_MT("cgi pio read error - "));
 					return -1;
 				}
 				if (n == 0) 
@@ -1121,15 +1145,15 @@ qse_printf (QSE_T("TASK_MAIN_CGI_4\n"));
 				if ((cgi->resflags & CGI_RES_SCRIPT_LENGTH) &&
 				    cgi->script_output_received > cgi->script_output_length)
 				{
-	/* TODO: cgi returning too much data... something is wrong in CGI */
-	qse_printf (QSE_T("CGI FUCKED UP...RETURNING TOO MUCH DATA\n"));
+					/* cgi returning too much data... something is wrong in CGI */
+					if (cgi->httpd->opt.trait & QSE_HTTPD_LOGACT) 
+						log_cgi_script_error (cgi, QSE_MT("cgi redundant output - "));
 					return -1;
 				}
 			}
 		}
 		else
 		{
-	qse_printf (QSE_T("READING IN NON-CHUNKED MODE...\n"));
 			if (cgi->buflen < QSE_SIZEOF(cgi->buf))
 			{
 				n = cgi_read_script_output_to_buffer (httpd, client, cgi);
@@ -1147,9 +1171,9 @@ qse_printf (QSE_T("TASK_MAIN_CGI_4\n"));
 				if ((cgi->resflags & CGI_RES_SCRIPT_LENGTH) &&
 				    cgi->script_output_received > cgi->script_output_length)
 				{
-					/* TODO: logging */
-	/* TODO: cgi returning too much data... something is wrong in CGI */
-	qse_printf (QSE_T("CGI FUCKED UP...RETURNING TOO MUCH DATA\n"));
+					/* cgi returning too much data... something is wrong in CGI */
+					if (cgi->httpd->opt.trait & QSE_HTTPD_LOGACT) 
+						log_cgi_script_error (cgi, QSE_MT("cgi redundant output - "));
 					return -1;
 				}
 			}
@@ -1159,11 +1183,7 @@ qse_printf (QSE_T("TASK_MAIN_CGI_4\n"));
 		 * side is writable. it should be safe to write whenever
 		 * this task function is called. */
 		QSE_ASSERT (cgi->buflen > 0);
-		if (cgi_write_script_output_to_client (httpd, client, cgi) <= -1)
-		{
-			/* TODO: logging ... */
-			return -1;
-		}
+		if (cgi_write_script_output_to_client (httpd, client, cgi) <= -1) return -1;
 	}
 
 	return 1;
@@ -1181,8 +1201,10 @@ static int task_main_cgi_3 (
 
 	QSE_ASSERT (!cgi->nph);
 
+#if  0
 qse_printf (QSE_T("task_main_cgi_3 trigger[0].mask=%d trigger[1].mask=%d trigger[2].mask=%d\n"), 
 	task->trigger[0].mask, task->trigger[1].mask, task->trigger[2].mask);
+#endif
 	if (task->trigger[2].mask & QSE_HTTPD_TASK_TRIGGER_READABLE)
 	{
 		cgi_forward_client_input_to_script (httpd, task, 0);
@@ -1200,15 +1222,13 @@ qse_printf (QSE_T("task_main_cgi_3 trigger[0].mask=%d trigger[1].mask=%d trigger
 		count = MAX_SEND_SIZE;
 		if (count >= cgi->res_left) count = cgi->res_left;
 
-qse_printf (QSE_T("[cgi_3 sending %d bytes]\n"), (int)count);
 		if (count > 0)
 		{
-			httpd->errnum = QSE_HTTPD_ENOERR;
 			n = httpd->opt.scb.client.send (httpd, client, cgi->res_ptr, count);
-
 			if (n <= -1) 
 			{
-qse_printf (QSE_T("[cgi-3 send failure....\n"));
+				if (cgi->httpd->opt.trait & QSE_HTTPD_LOGACT) 
+					log_cgi_script_error (cgi, QSE_MT("cgi initial write error to client - "));
 				return -1;
 			}
 
@@ -1223,7 +1243,6 @@ qse_printf (QSE_T("[cgi-3 send failure....\n"));
 			if ((cgi->resflags & CGI_RES_SCRIPT_LENGTH) &&
 			    cgi->script_output_received >= cgi->script_output_length)
 			{	
-qse_printf (QSE_T("[switching to cgi-5....\n"));
 				/* if a cgi script specified the content length
 				 * and it has emitted as much as the length,
 				 * i don't wait for the script to finish.
@@ -1236,7 +1255,6 @@ qse_printf (QSE_T("[switching to cgi-5....\n"));
 			}
 			else
 			{
-qse_printf (QSE_T("[switching to cgi-4....\n"));
 				task->main = task_main_cgi_4;
 				task->trigger[2].mask &= ~QSE_HTTPD_TASK_TRIGGER_WRITE;
 			}
@@ -1262,12 +1280,13 @@ static int task_main_cgi_2 (
 	QSE_ASSERT (!cgi->nph);
 	QSE_ASSERT (cgi->pio_inited);
 
+#if 0
 qse_printf (QSE_T("task_main_cgi_2 trigger[0].mask=%d trigger[1].mask=%d trigger[2].mask=%d\n"), 
 	task->trigger[0].mask, task->trigger[1].mask, task->trigger[2].mask);
+#endif
 
 	if (task->trigger[2].mask & QSE_HTTPD_TASK_TRIGGER_READABLE)
 	{
-qse_printf (QSE_T("[cgi_2 write]\n"));
 		cgi_forward_client_input_to_script (httpd, task, 0);
 	}
 	else if (task->trigger[1].mask & QSE_HTTPD_TASK_TRIGGER_WRITABLE)
@@ -1277,7 +1296,6 @@ qse_printf (QSE_T("[cgi_2 write]\n"));
 
 	if (task->trigger[0].mask & QSE_HTTPD_TASK_TRIGGER_READABLE)
 	{
-qse_printf (QSE_T("[cgi_2 read]\n"));
 		n = qse_pio_read (
 			&cgi->pio, QSE_PIO_OUT,
 			&cgi->buf[cgi->buflen], 
@@ -1286,25 +1304,24 @@ qse_printf (QSE_T("[cgi_2 read]\n"));
 		if (n <= -1)
 		{
 			/* can't return internal server error any more... */
-/* TODO: logging ... */
+			if (cgi->httpd->opt.trait & QSE_HTTPD_LOGACT) 
+				log_cgi_script_error (cgi, QSE_MT("cgi pio read error - "));
 			goto oops;
 		}
 		if (n == 0) 
 		{
 			/* end of output from cgi before it has seen a header.
 			 * the cgi script must be crooked. */
-/* TODO: logging */
-qse_printf (QSE_T("#####PREMATURE EOF FROM CHILD\n"));
+			if (cgi->httpd->opt.trait & QSE_HTTPD_LOGACT) 
+				log_cgi_script_error (cgi, QSE_MT("cgi premature eof - "));
 			goto oops;
 		}
-			
 		cgi->buflen += n;
 
-qse_printf (QSE_T("#####CGI FEED [%.*hs]\n"), (int)cgi->buflen, cgi->buf);
 		if (qse_htrd_feed (cgi->script_htrd, cgi->buf, cgi->buflen) <= -1)
 		{
-/* TODO: logging */
-qse_printf (QSE_T("#####INVALID HEADER FROM FROM CHILD [%.*hs]\n"), (int)cgi->buflen, cgi->buf);
+			if (cgi->httpd->opt.trait & QSE_HTTPD_LOGACT) 
+				log_cgi_script_error (cgi, QSE_MT("cgi feed error - "));
 			goto oops;
 		}
 
@@ -1324,7 +1341,9 @@ qse_printf (QSE_T("#####INVALID HEADER FROM FROM CHILD [%.*hs]\n"), (int)cgi->bu
 			cgi->res_ptr = QSE_MBS_PTR(cgi->res);
 			cgi->res_left = QSE_MBS_LEN(cgi->res);
 
+#if 0
 qse_printf (QSE_T("TRAILING DATA=[%.*hs]\n"), (int)QSE_MBS_LEN(cgi->res), QSE_MBS_PTR(cgi->res));
+#endif
 			task->main = task_main_cgi_3;
 			task->trigger[2].mask |= QSE_HTTPD_TASK_TRIGGER_WRITE;
 			return 1;
@@ -1447,7 +1466,6 @@ static int task_main_cgi (
 			 * this is possible because the main loop can still read 
 			 * between the initializer function (task_init_cgi()) and 
 			 * this function. so let's forward it initially. */
-qse_printf (QSE_T("FORWARDING INITIAL PART OF CONTENT...\n"));
 			cgi_forward_client_input_to_script (httpd, task, 0);
 
 			/* if the initial forwarding clears the forwarding 
