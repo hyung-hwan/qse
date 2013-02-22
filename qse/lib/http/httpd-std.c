@@ -18,7 +18,7 @@
     License along with QSE. If not, see <htrd://www.gnu.org/licenses/>.
  */
 
-#include <qse/http/std.h>
+#include <qse/http/stdhttpd.h>
 #include "httpd.h"
 #include "../cmn/mem.h"
 #include <qse/cmn/hton.h>
@@ -2240,8 +2240,8 @@ struct rsrc_tmp_t
 	qse_mchar_t* xpath;
 
 	qse_httpd_serverstd_root_t root;
-	const qse_mchar_t* realm;
-	const qse_mchar_t* auth;
+	qse_httpd_serverstd_realm_t realm;
+	qse_httpd_serverstd_auth_t auth;
 	qse_httpd_serverstd_index_t index;
 
 	int final_match;
@@ -2400,16 +2400,16 @@ static int make_resource (
 	QSE_ASSERT (tmp.root.type == QSE_HTTPD_SERVERSTD_ROOT_PATH);
 
 	if (server_xtn->query (httpd, client->server, req, tmp.xpath, QSE_HTTPD_SERVERSTD_REALM, &tmp.realm) <= -1 ||
-	    server_xtn->query (httpd, client->server, req, tmp.xpath, QSE_HTTPD_SERVERSTD_AUTH, &tmp.auth) <= -1 ||
 	    server_xtn->query (httpd, client->server, req, tmp.xpath, QSE_HTTPD_SERVERSTD_INDEX, &tmp.index) <= -1)
 	{
 		return -1;
 	}
 
+
 	/* default to the root directory. */
 	if (!tmp.root.u.path) tmp.root.u.path = QSE_MT("/"); 
 
-	if (tmp.realm && tmp.auth)
+	if (tmp.realm.authreq && tmp.realm.name)
 	{
 		const qse_htre_hdrval_t* authv;
 
@@ -2439,12 +2439,15 @@ static int make_resource (
 				/* decoding a base64-encoded string result in a shorter value than the input.
 				 * so passing the length of the input(authl) as the output buffer size is ok */
 				authl2 = qse_debase64 (&authv->ptr[6], authl, server_xtn->auth.ptr, authl, QSE_NULL);
-				if (qse_mbsxcmp (server_xtn->auth.ptr, authl2, tmp.auth) == 0) goto auth_ok;
+
+				tmp.auth.key.ptr = server_xtn->auth.ptr;
+				tmp.auth.key.len = authl2;
+	    			if (server_xtn->query (httpd, client->server, req, tmp.xpath, QSE_HTTPD_SERVERSTD_AUTH, &tmp.auth) >= 0 && tmp.auth.authok) goto auth_ok;
 			}
 		}
 
 		target->type = QSE_HTTPD_RSRC_AUTH;
-		target->u.auth.realm = tmp.realm; 
+		target->u.auth.realm = tmp.realm.name; 
 		return 0;
 	}
 
@@ -2621,7 +2624,14 @@ static int query_server (
 			break;
 		
 		case QSE_HTTPD_SERVERSTD_REALM:
+			((qse_httpd_serverstd_realm_t*)result)->name = QSE_NULL;
+			((qse_httpd_serverstd_realm_t*)result)->authreq = 0;
+			break;
+
 		case QSE_HTTPD_SERVERSTD_AUTH:
+			((qse_httpd_serverstd_auth_t*)result)->authok = 1;
+			break;
+			
 		case QSE_HTTPD_SERVERSTD_ERRCSS:
 		case QSE_HTTPD_SERVERSTD_DIRCSS:
 			*(const qse_mchar_t**)result = QSE_NULL;

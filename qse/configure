@@ -15922,6 +15922,10 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
 
+
+save_CFLAGS="$CFLAGS"
+save_LDFLAGS="$LDFLAGS"
+save_LIBS="$LIBS"
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking which extension is used for runtime loadable modules" >&5
 $as_echo_n "checking which extension is used for runtime loadable modules... " >&6; }
 if ${libltdl_cv_shlibext+:} false; then :
@@ -16997,10 +17001,14 @@ eval "LTDLOPEN=\"$libname_spec\""
 # Only expand once:
 
 
+LDFLAGS="$save_LDFLAGS"
+CFLAGS="$save_CFLAGS"
+LIBS="$save_LIBS"
 
 if test "x$with_included_ltdl" != "xyes"; then
 	save_CFLAGS="$CFLAGS"
 	save_LDFLAGS="$LDFLAGS"
+	save_LIBS="$LIBS"
 	CFLAGS="$CFLAGS $LTDLINCL"
 	LDFLAGS="$LDFLAGS $LIBLTDL"
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for lt_dladvise_init in -lltdl" >&5
@@ -17052,6 +17060,7 @@ fi
 
 	LDFLAGS="$save_LDFLAGS"
 	CFLAGS="$save_CFLAGS"
+	LIBS="$save_LIBS"
 fi
 
 if test "$ac_test_CFLAGS" != "set"

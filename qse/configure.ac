@@ -50,18 +50,27 @@ AC_SUBST(LIBTOOL_DEPS)
 dnl 'recursive' type seems to have problems in setting LT_CONFIG_H
 dnl so i use the classic 'subproject' type here
 LT_CONFIG_LTDL_DIR([libltdl])
+
+save_CFLAGS="$CFLAGS"
+save_LDFLAGS="$LDFLAGS"
+save_LIBS="$LIBS"
 LTDL_INIT
+LDFLAGS="$save_LDFLAGS"
+CFLAGS="$save_CFLAGS"
+LIBS="$save_LIBS"
 
 dnl The lt_dladvise_init symbol was added with libtool-2.2
 if test "x$with_included_ltdl" != "xyes"; then
 	save_CFLAGS="$CFLAGS"
 	save_LDFLAGS="$LDFLAGS"
+	save_LIBS="$LIBS"
 	CFLAGS="$CFLAGS $LTDLINCL"
 	LDFLAGS="$LDFLAGS $LIBLTDL"
 	AC_CHECK_LIB([ltdl], [lt_dladvise_init], [],
 	             [AC_MSG_ERROR([installed libltdl is too old. install a newer libltdl or specify --with-included-ltdl])])
 	LDFLAGS="$save_LDFLAGS"
 	CFLAGS="$save_CFLAGS"
+	LIBS="$save_LIBS"
 fi
 
 dnl overrides the default CFLAGS setting
