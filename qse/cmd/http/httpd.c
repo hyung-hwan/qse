@@ -43,6 +43,7 @@
 static qse_httpd_t* g_httpd = QSE_NULL;
 static const qse_char_t* g_cfgfile = QSE_NULL;
 static int g_daemon = 0;
+static int g_debug = 0;
 
 /* --------------------------------------------------------------------- */
 
@@ -1108,6 +1109,7 @@ static void print_usage (QSE_FILE* out, int argc, qse_char_t* argv[])
 	qse_fprintf (out, QSE_T(" --version                 show version\n"));
 	qse_fprintf (out, QSE_T(" -c/--config-file file     specify a configuration file\n"));
 	qse_fprintf (out, QSE_T(" -d/--daemon               run in the background\n"));
+	qse_fprintf (out, QSE_T(" -x                        output debugging messages\n"));
 }
 
 static int handle_args (int argc, qse_char_t* argv[])
@@ -1122,7 +1124,7 @@ static int handle_args (int argc, qse_char_t* argv[])
 	};
 	static qse_opt_t opt = 
 	{
-		QSE_T("c:dh"),
+		QSE_T("c:dhx"),
 		lng
 	};
 	qse_cint_t c;
@@ -1159,6 +1161,10 @@ static int handle_args (int argc, qse_char_t* argv[])
 			case QSE_T('h'):
 				print_usage (QSE_STDOUT, argc, argv);
 				return 0;
+
+			case QSE_T('x'):
+				g_debug = 1;
+				break;
 
 			case QSE_T('\0'):
 			{
@@ -1233,7 +1239,7 @@ static int httpd_main (int argc, qse_char_t* argv[])
 	qse_httpd_getopt (httpd, QSE_HTTPD_RCB, &rcb);
 	httpd_xtn->orgimpede = rcb.impede;
 	rcb.impede = impede_httpd; /* executed when qse_httpd_impede() is called */
-	rcb.logact = logact_httpd; /* i don't remember this */
+	if (g_debug) rcb.logact = logact_httpd; /* i don't remember old logging handler */
 	qse_httpd_setopt (httpd, QSE_HTTPD_RCB, &rcb);
 	
 	ret = qse_httpd_loopstd (httpd);
