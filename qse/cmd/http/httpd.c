@@ -851,7 +851,12 @@ static int load_server_config (
 	}
 #endif
 
-	if (qse_mbstonwad (server_xtn->scfg[SCFG_ROOT], &server_xtn->root_nwad) >= 0) server_xtn->root_is_nwad = 1;
+	if (server_xtn->scfg[SCFG_ROOT] && 
+	    qse_mbstonwad (server_xtn->scfg[SCFG_ROOT], &server_xtn->root_nwad) >= 0) 
+	{
+		server_xtn->root_is_nwad = 1;
+	}
+
 	return 0;
 }
 
