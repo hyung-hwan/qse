@@ -106,7 +106,7 @@ enum qse_xli_atom_type_t
 typedef enum qse_xli_atom_type_t qse_xli_atom_type_t;
 
 #define QSE_XLI_VAL_HDR \
-	qse_xli_val_type_t type;
+	qse_xli_val_type_t type
 
 struct qse_xli_val_t
 {
@@ -500,7 +500,7 @@ QSE_EXPORT qse_xli_pair_t* qse_xli_insertpairwithstr (
 );
 
 
-qse_xli_pair_t* qse_xli_findpairbyname (
+QSE_EXPORT qse_xli_pair_t* qse_xli_findpairbyname (
      qse_xli_t*            xli,
 	const qse_xli_list_t* list,
 	const qse_char_t*     name

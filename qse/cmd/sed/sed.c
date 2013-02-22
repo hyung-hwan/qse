@@ -33,6 +33,7 @@
 #include <qse/cmn/glob.h>
 
 #include <locale.h>
+#include <stdio.h>
 
 #if defined(_WIN32)
 #	include <windows.h>

@@ -35,6 +35,7 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <locale.h>
+#include <stdio.h>
 
 #define ENABLE_CALLBACK
 #define ABORT(label) goto label

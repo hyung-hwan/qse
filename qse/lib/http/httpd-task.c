@@ -183,7 +183,6 @@ qse_httpd_task_t* qse_httpd_entaskformat (
 	task.main = task_main_format;
 	task.ctx = &data;
 
-qse_printf (QSE_T("SEND: [%.*hs]\n"), (int)l, buf);
 	return qse_httpd_entask (
 		httpd, client, pred, &task, QSE_SIZEOF(data));
 }

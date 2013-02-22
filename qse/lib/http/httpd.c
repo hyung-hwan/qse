@@ -431,7 +431,9 @@ static void free_client (
 
 	qse_htrd_close (client->htrd);
 
+#if 0
 qse_printf (QSE_T("Debug: CLOSING SOCKET %d\n"), client->handle.i);
+#endif
 
 	if (client->status & CLIENT_HANDLE_IN_MUX)
 	{
@@ -518,10 +520,12 @@ static int accept_client (
 
 		if (httpd->opt.scb.server.accept (httpd, server, &clibuf) <= -1) 
 		{
+#if 0
 /* TODO: proper logging */
 qse_char_t tmp[128];
 qse_nwadtostr (&server->dope.nwad, tmp, QSE_COUNTOF(tmp), QSE_NWADTOSTR_ALL);
 qse_printf (QSE_T("failed to accept from server [%s] [%d]\n"), tmp, server->handle.i);
+#endif
 
 			return -1;
 		}
@@ -538,7 +542,9 @@ qse_printf (QSE_T("failed to accept from server [%s] [%d]\n"), tmp, server->hand
 			return -1;
 		}
 
+#if 0
 qse_printf (QSE_T("MUX ADDHND CLIENT READ %d\n"), client->handle.i);
+#endif
 		if (httpd->opt.scb.mux.addhnd (
 			httpd, mux, client->handle, QSE_HTTPD_MUX_READ, client) <= -1)
 		{
@@ -605,7 +611,9 @@ static int activate_servers (qse_httpd_t* httpd)
 /*
 			httpd->opt.rcb.log (httpd, 0, QSE_T("cannot activate %s"), buf);
 */
+#if 0
 qse_printf(QSE_T("cannot activate [%s]\n"), buf);
+#endif
 			continue;
 		}
 
@@ -617,7 +625,9 @@ qse_printf(QSE_T("cannot activate [%s]\n"), buf);
 /*
 			httpd->opt.rcb.log (httpd, 0, QSE_T("cannot activate %s - "), buf);
 */
+#if 0
 qse_printf(QSE_T("cannot add handle [%s]\n"), buf);
+#endif
 
 			httpd->opt.scb.server.close (httpd, server);
 			continue;
@@ -1202,7 +1212,9 @@ qse_httpd_task_t* qse_httpd_entask (
 		httpd->opt.scb.mux.delhnd (httpd, httpd->mux, client->handle);
 		client->status &= ~CLIENT_HANDLE_IN_MUX;
 
+#if 0
 qse_printf (QSE_T("MUX ADDHND CLIENT RW(ENTASK) %d\n"), client->handle.i);
+#endif
 		if (httpd->opt.scb.mux.addhnd (
 			httpd, httpd->mux, client->handle, 
 			QSE_HTTPD_MUX_READ | QSE_HTTPD_MUX_WRITE, 

@@ -63,7 +63,6 @@ static void task_fini_resol (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
 {
 	task_resol_t* resol = (task_resol_t*)task->ctx;
-qse_printf (QSE_T("task_fini_resol\n"));
 }
 
 static int task_main_resol (

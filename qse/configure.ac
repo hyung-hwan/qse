@@ -136,6 +136,7 @@ AC_CHECK_FUNCS([backtrace backtrace_symbols])
 AC_CHECK_FUNCS([fdopendir])
 AC_CHECK_FUNCS([fork vfork posix_spawn gettid nanosleep select])
 AC_CHECK_FUNCS([makecontext swapcontext getcontext setcontext])
+AC_CHECK_FUNCS([_vsnprintf _vsnwprintf])
 
 OLDLIBS="$LIBS"
 LIBS="$LIBM $LIBS"
