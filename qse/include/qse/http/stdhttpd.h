@@ -56,6 +56,20 @@ struct qse_httpd_serverstd_root_t
 	} u;
 };
 
+typedef struct qse_httpd_serverstd_realm_t qse_httpd_serverstd_realm_t;
+struct qse_httpd_serverstd_realm_t
+{
+	const qse_mchar_t* name;
+	int authreq;
+};
+
+typedef struct qse_httpd_serverstd_auth_t qse_httpd_serverstd_auth_t;
+struct qse_httpd_serverstd_auth_t
+{
+	qse_mcstr_t key;
+	int authok;
+};
+
 typedef struct qse_httpd_serverstd_cgi_t qse_httpd_serverstd_cgi_t;
 struct qse_httpd_serverstd_cgi_t
 {
@@ -75,8 +89,8 @@ enum qse_httpd_serverstd_query_code_t
 {
 	QSE_HTTPD_SERVERSTD_NAME,           /* const qse_mchar_t* */
 	QSE_HTTPD_SERVERSTD_ROOT,           /* qse_httpd_serverstd_root_t */
-	QSE_HTTPD_SERVERSTD_REALM,          /* const qse_mchar_t* */
-	QSE_HTTPD_SERVERSTD_AUTH,           /* const qse_mchar_t* */
+	QSE_HTTPD_SERVERSTD_REALM,          /* qse_httpd_serverstd_realm_t */
+	QSE_HTTPD_SERVERSTD_AUTH,           /* qse_httpd_serverstd_auth_t */
 	QSE_HTTPD_SERVERSTD_DIRCSS,         /* const qse_mchar_t* */
 	QSE_HTTPD_SERVERSTD_ERRCSS,         /* const qse_mchar_t* */
 

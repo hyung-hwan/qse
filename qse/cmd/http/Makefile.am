@@ -20,3 +20,5 @@ if WCHAR
 qsehttpd_LDADD += $(UNICOWS_LIBS)
 endif
 endif
+
+EXTRA_DIST = $(qsecfg_DATA)

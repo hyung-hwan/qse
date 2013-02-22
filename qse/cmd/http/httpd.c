@@ -447,12 +447,26 @@ static int query_server (
 			return 0;
 
 		case QSE_HTTPD_SERVERSTD_REALM:
-			*(const qse_mchar_t**)result = server_xtn->scfg[SCFG_REALM];
+			((qse_httpd_serverstd_realm_t*)result)->name = server_xtn->scfg[SCFG_REALM];
+			((qse_httpd_serverstd_realm_t*)result)->authreq = (server_xtn->scfg[SCFG_REALM] != QSE_NULL);
 			return 0;
 
 		case QSE_HTTPD_SERVERSTD_AUTH:
-			*(const qse_mchar_t**)result = server_xtn->scfg[SCFG_AUTH];
+		{
+			qse_httpd_serverstd_auth_t* auth;
+
+			auth = (qse_httpd_serverstd_auth_t*)result;
+			auth->authok = 0;
+
+			if (server_xtn->scfg[SCFG_AUTH])
+			{
+				if (qse_mbsxcmp (auth->key.ptr, auth->key.len, server_xtn->scfg[SCFG_AUTH]) == 0)
+				{
+					auth->authok = 1;
+				}
+			}
 			return 0;
+		}
 
 		case QSE_HTTPD_SERVERSTD_DIRCSS:
 			*(const qse_mchar_t**)result = server_xtn->scfg[SCFG_DIRCSS];
@@ -829,10 +843,13 @@ static int load_server_config (
 	}
 
 	/* perform more sanity check */
+/* TODO: support multiple auth entries here and above */
+#if 0
 	if (qse_mbschr (server_xtn->scfg[SCFG_AUTH], QSE_MT(':')) == QSE_NULL)
 	{
 		qse_printf (QSE_T("WARNING: no colon in the auth string - [%hs]\n"), server_xtn->scfg[SCFG_AUTH]);
 	}
+#endif
 
 	if (qse_mbstonwad (server_xtn->scfg[SCFG_ROOT], &server_xtn->root_nwad) >= 0) server_xtn->root_is_nwad = 1;
 	return 0;
