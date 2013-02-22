@@ -58,7 +58,7 @@ am__v_at_ = $(am__v_at_@AM_DEFAULT_V@)
 am__v_at_0 = @
 SOURCES =
 DIST_SOURCES =
-am__pkginclude_HEADERS_DIST = sed.h std.h Sed.hpp StdSed.hpp
+am__pkginclude_HEADERS_DIST = sed.h stdsed.h Sed.hpp StdSed.hpp
 am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
 am__vpath_adj = case $$p in \
     $(srcdir)/*) f=`echo "$$p" | sed "s|^$$srcdirstrip/||"`;; \
@@ -266,7 +266,7 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-pkginclude_HEADERS = sed.h std.h $(am__append_1)
+pkginclude_HEADERS = sed.h stdsed.h $(am__append_1)
 all: all-am
 
 .SUFFIXES:

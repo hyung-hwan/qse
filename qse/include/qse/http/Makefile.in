@@ -264,7 +264,7 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-pkginclude_HEADERS = http.h htre.h htrd.h httpd.h std.h upxd.h
+pkginclude_HEADERS = http.h htre.h htrd.h httpd.h stdhttpd.h upxd.h
 all: all-am
 
 .SUFFIXES:

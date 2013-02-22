@@ -18,8 +18,7 @@
     License along with QSE. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <qse/awk/awk.h>
-#include <qse/awk/std.h>
+#include <qse/awk/stdawk.h>
 #include <qse/cmn/sll.h>
 #include <qse/cmn/mem.h>
 #include <qse/cmn/chr.h>

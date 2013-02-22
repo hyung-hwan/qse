@@ -1,4 +1,4 @@
-#include <qse/awk/std.h>
+#include <qse/awk/stdawk.h>
 #include <qse/cmn/stdio.h>
 
 /* this sample produces 8 text files containing multiplication chart. */

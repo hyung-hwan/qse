@@ -18,7 +18,7 @@
     License along with QSE. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <qse/awk/std.h>
+#include <qse/awk/stdawk.h>
 #include <qse/cmn/stdio.h>
 
 const qse_char_t* src = QSE_T("BEGIN { print \"hello, world\" | \"dir\"; }");
