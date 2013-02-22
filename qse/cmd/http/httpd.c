@@ -12,6 +12,7 @@
 
 #include <signal.h>
 #include <locale.h>
+#include <stdio.h>
 
 #if defined(_WIN32)
 #	include <winsock2.h>
@@ -72,69 +73,57 @@ static void sig_reconf (int sig)
 	}
 }
 
+static void setup_signal_handler (int signum, void(*handler)(int))
+{
+#if defined(HAVE_SIGACTION)
+	struct sigaction act;
+	qse_memset (&act, 0, QSE_SIZEOF(act));
+	act.sa_handler = handler;
+	sigaction (signum, &act, QSE_NULL);
+#else
+	signal (signum, handler);
+#endif
+}
+
 static void setup_signal_handlers ()
 {
-	struct sigaction act;
-
 #if defined(SIGINT)
-	qse_memset (&act, 0, QSE_SIZEOF(act));
-	act.sa_handler = sig_stop;
-	sigaction (SIGINT, &act, QSE_NULL);
+	setup_signal_handler (SIGINT, sig_stop);
 #endif
 #if defined(SIGTERM)
-	qse_memset (&act, 0, QSE_SIZEOF(act));
-	act.sa_handler = sig_stop;
-	sigaction (SIGTERM, &act, QSE_NULL);
+	setup_signal_handler (SIGTERM, sig_stop);
 #endif
 
 #if defined(SIGHUP)
-	qse_memset (&act, 0, QSE_SIZEOF(act));
-	act.sa_handler = sig_reconf;
-	sigaction (SIGHUP, &act, QSE_NULL);
+	setup_signal_handler (SIGHUP, sig_reconf);
 #endif
 #if defined(SIGUSR1)
-	qse_memset (&act, 0, QSE_SIZEOF(act));
-	act.sa_handler = sig_reconf;
-	sigaction (SIGUSR1, &act, QSE_NULL);
+	setup_signal_handler (SIGUSR1, sig_reconf);
 #endif
 
 #if defined(SIGPIPE)
-	qse_memset (&act, 0, QSE_SIZEOF(act));
-	act.sa_handler = SIG_IGN;
-	sigaction (SIGPIPE, &act, QSE_NULL);
+	setup_signal_handler (SIGPIPE, SIG_IGN);
 #endif
 }
 
 static void restore_signal_handlers ()
 {
-	struct sigaction act;
-
 #if defined(SIGINT)
-	qse_memset (&act, 0, QSE_SIZEOF(act));
-	act.sa_handler = SIG_DFL;
-	sigaction (SIGINT, &act, QSE_NULL);
+	setup_signal_handler (SIGINT, SIG_DFL);
 #endif
 #if defined(SIGTERM)
-	qse_memset (&act, 0, QSE_SIZEOF(act));
-	act.sa_handler = SIG_DFL;
-	sigaction (SIGTERM, &act, QSE_NULL);
+	setup_signal_handler (SIGTERM, SIG_DFL);
 #endif
 
 #if defined(SIGHUP)
-	qse_memset (&act, 0, QSE_SIZEOF(act));
-	act.sa_handler = SIG_DFL;
-	sigaction (SIGHUP, &act, QSE_NULL);
+	setup_signal_handler (SIGHUP, SIG_DFL);
 #endif
 #if defined(SIGUSR1)
-	qse_memset (&act, 0, QSE_SIZEOF(act));
-	act.sa_handler = SIG_DFL;
-	sigaction (SIGUSR1, &act, QSE_NULL);
+	setup_signal_handler (SIGUSR1, SIG_DFL);
 #endif
 
 #if defined(SIGPIPE)
-	qse_memset (&act, 0, QSE_SIZEOF(act));
-	act.sa_handler = SIG_DFL;
-	sigaction (SIGPIPE, &act, QSE_NULL);
+	setup_signal_handler (SIGPIPE, SIG_DFL);
 #endif
 }
 
@@ -192,6 +181,7 @@ enum
 struct cgi_t
 {
 	enum {
+		CGI_PREFIX,
 		CGI_SUFFIX,
 		CGI_NAME,
 		CGI_MAX
@@ -207,6 +197,7 @@ struct cgi_t
 struct mime_t
 {
 	enum {
+		MIME_PREFIX,
 		MIME_SUFFIX,
 		MIME_NAME,
 		MIME_OTHER,
@@ -224,6 +215,7 @@ struct access_t
 	/* TODO: support more types like ACCESS_GLOB 
 	         not-only the base name, find a way to use query path or xpath */
 	enum {
+		ACCESS_PREFIX,
 		ACCESS_SUFFIX,
 		ACCESS_NAME,
 		ACCESS_OTHER,
@@ -490,7 +482,8 @@ static int query_server (
 				struct cgi_t* cgi;
 				for (cgi = server_xtn->cgi[i].head; cgi; cgi = cgi->next)
 				{
-					if ((cgi->type == CGI_SUFFIX && qse_mbsend (xpath_base, cgi->spec)) ||
+					if ((cgi->type == CGI_PREFIX && qse_mbsbeg (xpath_base, cgi->spec)) ||
+					    (cgi->type == CGI_SUFFIX && qse_mbsend (xpath_base, cgi->spec)) ||
 					    (cgi->type == CGI_NAME && qse_mbscmp (xpath_base, cgi->spec) == 0))
 					{
 						scgi->cgi = 1;
@@ -517,7 +510,8 @@ static int query_server (
 				struct mime_t* mime;
 				for (mime = server_xtn->mime[i].head; mime; mime = mime->next)
 				{
-					if ((mime->type == MIME_SUFFIX && qse_mbsend (xpath_base, mime->spec)) ||
+					if ((mime->type == MIME_PREFIX && qse_mbsbeg (xpath_base, mime->spec)) ||
+					    (mime->type == MIME_SUFFIX && qse_mbsend (xpath_base, mime->spec)) ||
 					    (mime->type == MIME_NAME && qse_mbscmp (xpath_base, mime->spec) == 0) ||
 					    mime->type == MIME_OTHER)
 					{
@@ -546,7 +540,8 @@ static int query_server (
 				struct access_t* access;
 				for (access = server_xtn->access[id][i].head; access; access = access->next)
 				{
-					if ((access->type == ACCESS_SUFFIX && qse_mbsend (xpath_base, access->spec)) ||
+					if ((access->type == ACCESS_PREFIX && qse_mbsbeg (xpath_base, access->spec)) ||
+					    (access->type == ACCESS_SUFFIX && qse_mbsend (xpath_base, access->spec)) ||
 					    (access->type == ACCESS_NAME && qse_mbscmp (xpath_base, access->spec) == 0) ||
 					    access->type == ACCESS_OTHER)
 					{
@@ -645,14 +640,9 @@ static int load_server_config (
 				struct cgi_t* cgi;
 				int type;
 
-				if (qse_strcmp (pair->key, QSE_T("suffix")) == 0)
-				{
-					type = CGI_SUFFIX;
-				}
-				else if (qse_strcmp (pair->key, QSE_T("name")) == 0)
-				{
-					type = CGI_NAME;
-				}
+				if (qse_strcmp (pair->key, QSE_T("prefix")) == 0) type = CGI_PREFIX;
+				else if (qse_strcmp (pair->key, QSE_T("suffix")) == 0) type = CGI_SUFFIX;
+				else if (qse_strcmp (pair->key, QSE_T("name")) == 0) type = CGI_NAME;
 				else continue;
 
 				cgi = qse_httpd_callocmem (httpd, QSE_SIZEOF(*cgi));
@@ -726,7 +716,8 @@ static int load_server_config (
 				struct mime_t* mime;
 				int type;
 
-				if (qse_strcmp (pair->key, QSE_T("suffix")) == 0 && pair->name) type = MIME_SUFFIX;
+				if (qse_strcmp (pair->key, QSE_T("prefix")) == 0 && pair->name) type = MIME_PREFIX;
+				else if (qse_strcmp (pair->key, QSE_T("suffix")) == 0 && pair->name) type = MIME_SUFFIX;
 				else if (qse_strcmp (pair->key, QSE_T("name")) == 0 && pair->name) type = MIME_NAME;
 				else if (qse_strcmp (pair->key, QSE_T("other")) == 0 && !pair->name) type = MIME_OTHER;
 				else continue;
@@ -793,7 +784,8 @@ static int load_server_config (
 					const qse_char_t* tmp;
 					int type, value;
 	
-					if (qse_strcmp (pair->key, QSE_T("suffix")) == 0 && pair->name) type = ACCESS_SUFFIX;
+					if (qse_strcmp (pair->key, QSE_T("prefix")) == 0 && pair->name) type = ACCESS_PREFIX;
+					else if (qse_strcmp (pair->key, QSE_T("suffix")) == 0 && pair->name) type = ACCESS_SUFFIX;
 					else if (qse_strcmp (pair->key, QSE_T("name")) == 0 && pair->name) type = ACCESS_NAME;
 					else if (qse_strcmp (pair->key, QSE_T("other")) == 0 && !pair->name) type = ACCESS_OTHER;
 					else continue;

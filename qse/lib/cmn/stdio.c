@@ -161,13 +161,13 @@ int qse_vsprintf (qse_char_t* buf, qse_size_t size, const qse_char_t* fmt, va_li
 	if (nf == NULL) return -1;
 
 #if defined(QSE_CHAR_IS_MCHAR)
-	#if defined(_MSC_VER) || defined(__BORLANDC__) || (defined(__WATCOMC__) && (__WATCOMC__ < 1200))
+	#if defined(_MSC_VER) || defined(__BORLANDC__) || (defined(__WATCOMC__) && (__WATCOMC__ < 1200)) || defined(HAVE__VSNPRINTF)
 		n = _vsnprintf (buf, size, nf, ap);
 	#else
 		n = vsnprintf (buf, size, nf, ap);
 	#endif
 #else
-	#if defined(_MSC_VER) || defined(__BORLANDC__) || (defined(__WATCOMC__) && (__WATCOMC__ < 1200))
+	#if defined(_MSC_VER) || defined(__BORLANDC__) || (defined(__WATCOMC__) && (__WATCOMC__ < 1200)) || defined(HAVE__VSNWPRINTF)
 		n = _vsnwprintf (buf, size, nf, ap);
 	#else
 		n = vswprintf (buf, size, nf, ap);

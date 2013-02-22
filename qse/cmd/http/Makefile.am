@@ -5,6 +5,10 @@ AM_CPPFLAGS = \
 	-I$(top_srcdir)/include \
 	-I$(includedir)
 
+
+qsecfgdir = $(sysconfdir)/qse
+qsecfg_DATA = httpd.conf httpd-mime.conf
+
 bin_PROGRAMS = qsehttpd
 
 qsehttpd_SOURCES = httpd.c
