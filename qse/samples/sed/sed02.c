@@ -1,4 +1,4 @@
-#include <qse/sed/std.h>
+#include <qse/sed/stdsed.h>
 #include <qse/cmn/main.h>
 #include <qse/cmn/stdio.h>
 #include "sed00.h"

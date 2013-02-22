@@ -19,7 +19,7 @@
  */
 
 #include "sed.h"
-#include <qse/sed/std.h>
+#include <qse/sed/stdsed.h>
 #include <qse/cmn/str.h>
 #include <qse/cmn/sio.h>
 #include "../cmn/mem.h"

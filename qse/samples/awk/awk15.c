@@ -19,7 +19,7 @@
  */
 
 #include <qse/awk/awk.h>
-#include <qse/awk/std.h>
+#include <qse/awk/stdawk.h>
 #include <qse/cmn/mem.h>
 #include <qse/cmn/stdio.h>
 

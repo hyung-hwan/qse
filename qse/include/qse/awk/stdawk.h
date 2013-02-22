@@ -18,8 +18,8 @@
     License along with QSE. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _QSE_AWK_STD_H_
-#define _QSE_AWK_STD_H_
+#ifndef _QSE_AWK_STDAWK_H_
+#define _QSE_AWK_STDAWK_H_
 
 #include <qse/awk/awk.h>
 #include <qse/cmn/sio.h>

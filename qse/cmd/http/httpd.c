@@ -1,6 +1,6 @@
 
-#include <qse/http/std.h>
-#include <qse/xli/std.h>
+#include <qse/http/stdhttpd.h>
+#include <qse/xli/stdxli.h>
 #include <qse/cmn/stdio.h>
 #include <qse/cmn/main.h>
 #include <qse/cmn/str.h>

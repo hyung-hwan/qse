@@ -18,8 +18,8 @@
     License along with QSE. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _QSE_SED_STD_H_
-#define _QSE_SED_STD_H_
+#ifndef _QSE_SED_STDSED_H_
+#define _QSE_SED_STDSED_H_
 
 #include <qse/sed/sed.h>
 #include <qse/cmn/sio.h>

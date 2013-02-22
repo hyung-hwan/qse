@@ -18,8 +18,8 @@
     License along with QSE. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _QSE_XLI_STD_H_
-#define _QSE_XLI_STD_H_
+#ifndef _QSE_XLI_STDXLI_H_
+#define _QSE_XLI_STDXLI_H_
 
 #include <qse/xli/xli.h>
 #include <qse/cmn/sio.h>

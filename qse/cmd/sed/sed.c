@@ -18,7 +18,7 @@
     License along with QSE. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <qse/sed/std.h>
+#include <qse/sed/stdsed.h>
 #include <qse/cmn/str.h>
 #include <qse/cmn/mem.h>
 #include <qse/cmn/chr.h>
