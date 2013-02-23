@@ -299,6 +299,12 @@
 /* Define to 1 if you have the `powl' function. */
 #undef HAVE_POWL
 
+/* Define to 1 if you have the `prctl' function. */
+#undef HAVE_PRCTL
+
+/* Define to 1 if you have the <prctl.h> header file. */
+#undef HAVE_PRCTL_H
+
 /* Define if libtool can extract symbol lists from object files. */
 #undef HAVE_PRELOADED_SYMBOLS
 

@@ -121,8 +121,7 @@ AC_CHECK_HEADERS([net/if.h net/if_dl.h], [], [], [
 	#include <sys/types.h>
 	#include <sys/socket.h>])
 AC_CHECK_HEADERS([sys/stropts.h sys/macstat.h linux/ethtool.h linux/sockios.h])
-AC_CHECK_HEADERS([crt_externs.h])
-AC_CHECK_HEADERS([uci.h])
+AC_CHECK_HEADERS([crt_externs.h prctl.h uci.h])
 
 dnl check data types
 AC_CHECK_TYPE([wchar_t], 
@@ -140,9 +139,8 @@ AC_CHECK_FUNCS([isblank iswblank])
 AC_CHECK_FUNCS([lseek64 stat64 fstat64 lstat64 ftruncate64 readdir64])
 AC_CHECK_FUNCS([timegm timelocal])
 AC_CHECK_FUNCS([utime utimes])
-AC_CHECK_FUNCS([sysconf])
+AC_CHECK_FUNCS([sysconf prctl fdopendir])
 AC_CHECK_FUNCS([backtrace backtrace_symbols])
-AC_CHECK_FUNCS([fdopendir])
 AC_CHECK_FUNCS([fork vfork posix_spawn gettid nanosleep select])
 AC_CHECK_FUNCS([makecontext swapcontext getcontext setcontext])
 AC_CHECK_FUNCS([_vsnprintf _vsnwprintf])

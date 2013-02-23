@@ -38,6 +38,10 @@
 #	include <openssl/engine.h>
 #endif
 
+#if defined(HAVE_SYS_PRCTL_H)
+#	include <sys/prctl.h>
+#endif
+
 /* --------------------------------------------------------------------- */
 
 static qse_httpd_t* g_httpd = QSE_NULL;
@@ -1131,6 +1135,7 @@ static void print_usage (QSE_FILE* out, int argc, qse_char_t* argv[])
 	qse_fprintf (out, QSE_T(" --version                 show version\n"));
 	qse_fprintf (out, QSE_T(" -c/--config-file file     specify a configuration file\n"));
 	qse_fprintf (out, QSE_T(" -d/--daemon               run in the background\n"));
+	qse_fprintf (out, QSE_T(" -n               string   specify a process name if supported\n"));
 	qse_fprintf (out, QSE_T(" -x                        output debugging messages\n"));
 }
 
@@ -1146,7 +1151,7 @@ static int handle_args (int argc, qse_char_t* argv[])
 	};
 	static qse_opt_t opt = 
 	{
-		QSE_T("c:dhx"),
+		QSE_T("c:dhn:x"),
 		lng
 	};
 	qse_cint_t c;
@@ -1183,6 +1188,27 @@ static int handle_args (int argc, qse_char_t* argv[])
 			case QSE_T('h'):
 				print_usage (QSE_STDOUT, argc, argv);
 				return 0;
+
+			case QSE_T('n'):
+			{
+				/* i don't care about failure to set the name */
+				#if defined(HAVE_PRCTL)
+					#if !defined(PR_SET_NAME)
+					#	define PR_SET_NAME 15
+					#endif
+					#if defined(QSE_CHAR_IS_MCHAR)
+						prctl (PR_SET_NAME, (unsigned long)opt.arg, 0, 0, 0);
+					#else
+						qse_mchar_t* mopt = qse_wcstombsdup (opt.arg, QSE_NULL, QSE_MMGR_GETDFL());
+						if (mopt) 
+						{
+							prctl (PR_SET_NAME, (unsigned long)mopt, 0, 0, 0);
+							QSE_MMGR_FREE (QSE_MMGR_GETDFL(), mopt);
+						}
+					#endif
+				#endif
+				break;
+			}
 
 			case QSE_T('x'):
 				g_debug = 1;
