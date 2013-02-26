@@ -8,7 +8,7 @@ AM_CPPFLAGS = \
 
 bin_PROGRAMS = \
 	chr01 \
-	env \
+	env01 \
 	dll \
 	fio01 \
 	fio02 \
@@ -55,7 +55,7 @@ endif
 endif
 
 chr01_SOURCES = chr01.c
-env_SOURCES = env.c
+env01_SOURCES = env01.c
 dll_SOURCES = dll.c
 fio01_SOURCES = fio01.c
 fio02_SOURCES = fio02.c
