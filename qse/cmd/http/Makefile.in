@@ -301,13 +301,12 @@ top_srcdir = @top_srcdir@
 AUTOMAKE_OPTIONS = nostdinc
 AM_CPPFLAGS = \
 	-I$(top_builddir)/include \
-	-I$(top_srcdir)/include \
-	-I$(includedir)
+	-I$(top_srcdir)/include 
 
 qsecfgdir = $(sysconfdir)/qse
 qsecfg_DATA = httpd.conf httpd-mime.conf
 qsehttpd_SOURCES = httpd.c
-qsehttpd_LDFLAGS = -L../../lib/xli -L../../lib/http -L../../lib/cmn -L$(libdir)
+qsehttpd_LDFLAGS = -L../../lib/xli -L../../lib/http -L../../lib/cmn 
 qsehttpd_LDADD = -lqsexli -lqsehttp -lqsecmn $(am__append_1)
 EXTRA_DIST = $(qsecfg_DATA)
 all: all-am
