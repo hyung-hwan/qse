@@ -2,8 +2,7 @@ AUTOMAKE_OPTIONS = nostdinc
 
 AM_CPPFLAGS = \
 	-I$(top_builddir)/include \
-	-I$(top_srcdir)/include \
-	-I$(includedir)
+	-I$(top_srcdir)/include 
 
 
 qsecfgdir = $(sysconfdir)/qse
@@ -12,8 +11,8 @@ qsecfg_DATA = httpd.conf httpd-mime.conf
 bin_PROGRAMS = qsehttpd
 
 qsehttpd_SOURCES = httpd.c
-qsehttpd_LDFLAGS = -L../../lib/xli -L../../lib/http -L../../lib/cmn -L$(libdir)
-qsehttpd_LDADD = -lqsexli -lqsehttp -lqsecmn
+qsehttpd_LDFLAGS = -L../../lib/xli -L../../lib/http -L../../lib/cmn 
+qsehttpd_LDADD = -lqsexli -lqsehttp -lqsecmn 
 
 if WIN32 
 if WCHAR

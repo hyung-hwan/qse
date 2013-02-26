@@ -830,6 +830,7 @@ with_included_ltdl
 with_ltdl_include
 with_ltdl_lib
 enable_ltdl_install
+enable_ssl
 enable_wchar
 enable_bundled_unicode
 enable_xcmgrs
@@ -1482,6 +1483,7 @@ Optional Features:
                           optimize for fast installation [default=yes]
   --disable-libtool-lock  avoid locking (might break parallel builds)
   --enable-ltdl-install   install libltdl
+  --enable-ssl            build the library in the ssl mode (default. yes)
   --enable-wchar          Use the wide character type as the default charater
                           type when enabled (default. yes)
   --enable-bundled-unicode
@@ -18057,7 +18059,16 @@ fi
 
 
 
-for ac_func in SSL_library_init
+# Check whether --enable-ssl was given.
+if test "${enable_ssl+set}" = set; then :
+  enableval=$enable_ssl; enable_ssl_is=$enableval
+else
+  enable_ssl_is=yes
+fi
+
+if test "$enable_ssl_is" = "yes"
+then
+		for ac_func in SSL_library_init
 do :
   ac_fn_c_check_func "$LINENO" "SSL_library_init" "ac_cv_func_SSL_library_init"
 if test "x$ac_cv_func_SSL_library_init" = xyes; then :
@@ -18068,13 +18079,13 @@ _ACEOF
 fi
 done
 
-if test "$ac_cv_func_SSL_library_init" = "yes"
-then
+	if test "$ac_cv_func_SSL_library_init" = "yes"
+	then
 
 $as_echo "#define HAVE_SSL 1" >>confdefs.h
 
-else
-	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for SSL_library_init in -lssl" >&5
+	else
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for SSL_library_init in -lssl" >&5
 $as_echo_n "checking for SSL_library_init in -lssl... " >&6; }
 if ${ac_cv_lib_ssl_SSL_library_init+:} false; then :
   $as_echo_n "(cached) " >&6
@@ -18112,12 +18123,12 @@ fi
 $as_echo "$ac_cv_lib_ssl_SSL_library_init" >&6; }
 if test "x$ac_cv_lib_ssl_SSL_library_init" = xyes; then :
 
-		SSL_LIBS="-lssl"
+			SSL_LIBS="-lssl"
 
 $as_echo "#define HAVE_SSL 1" >>confdefs.h
 
 
-				{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for ERR_get_error in -lcrypto" >&5
+						{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for ERR_get_error in -lcrypto" >&5
 $as_echo_n "checking for ERR_get_error in -lcrypto... " >&6; }
 if ${ac_cv_lib_crypto_ERR_get_error+:} false; then :
   $as_echo_n "(cached) " >&6
@@ -18155,17 +18166,17 @@ fi
 $as_echo "$ac_cv_lib_crypto_ERR_get_error" >&6; }
 if test "x$ac_cv_lib_crypto_ERR_get_error" = xyes; then :
 
-			SSL_LIBS="${SSL_LIBS} -lcrypto"
+				SSL_LIBS="${SSL_LIBS} -lcrypto"
 
 fi
 
 
-				$as_echo "#define HAVE_SSL_LIBRARY_INIT 1" >>confdefs.h
+						$as_echo "#define HAVE_SSL_LIBRARY_INIT 1" >>confdefs.h
 
 
 fi
 
-
+	fi
 fi
 
 

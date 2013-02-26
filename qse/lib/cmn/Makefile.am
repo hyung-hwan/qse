@@ -2,9 +2,7 @@
 AUTOMAKE_OPTIONS = nostdinc
 AM_CPPFLAGS = \
 	-I$(top_builddir)/include \
-	-I$(top_srcdir)/include \
-	-I$(includedir)
-
+	-I$(top_srcdir)/include
 
 lib_LTLIBRARIES = libqsecmn.la
 
@@ -119,7 +117,7 @@ libqsecmn_la_SOURCES += cp949.c cp950.c
 endif
 
 
-libqsecmn_la_LDFLAGS = -L$(libdir) -version-info 1:0:0 -no-undefined
+libqsecmn_la_LDFLAGS = -version-info 1:0:0 -no-undefined
 libqsecmn_la_LIBADD = $(SOCKET_LIBS)
 
 if ENABLE_CXX
@@ -127,7 +125,7 @@ if ENABLE_CXX
 lib_LTLIBRARIES += libqsecmnxx.la
 libqsecmnxx_la_SOURCES = \
 	Mmgr.cpp StdMmgr.cpp
-libqsecmnxx_la_LDFLAGS = -L$(libdir) -version-info 1:0:0 -no-undefined
+libqsecmnxx_la_LDFLAGS = -version-info 1:0:0 -no-undefined
 libqsecmnxx_la_LIBADD = 
 
 endif

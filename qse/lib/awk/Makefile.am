@@ -2,10 +2,9 @@ AUTOMAKE_OPTIONS = nostdinc
 
 CPPFLAGS_ALL_COMMON = \
 	-I$(top_builddir)/include \
-	-I$(top_srcdir)/include \
-	-I$(includedir)
+	-I$(top_srcdir)/include
 
-LDFLAGS_ALL_COMMON = -L. -L../cmn -L$(libdir) -version-info 1:0:0 -no-undefined
+LDFLAGS_ALL_COMMON = -L. -L../cmn -version-info 1:0:0 -no-undefined
 
 ##################################################
 # MAIN LIBRARY 

@@ -2,8 +2,7 @@ AUTOMAKE_OPTIONS = nostdinc
 
 AM_CPPFLAGS = \
 	-I$(top_builddir)/include \
-	-I$(top_srcdir)/include \
-	-I$(includedir)
+	-I$(top_srcdir)/include
 
 lib_LTLIBRARIES = libqsehttp.la
 libqsehttp_la_SOURCES = \
@@ -23,6 +22,6 @@ libqsehttp_la_SOURCES = \
 	httpd-text.c \
 	upxd.c
 
-libqsehttp_la_LDFLAGS = -version-info 1:0:0 -no-undefined -L../cmn -L$(libdir)
+libqsehttp_la_LDFLAGS = -L../cmn -version-info 1:0:0 -no-undefined
 libqsehttp_la_LIBADD = -lqsecmn $(SOCKET_LIBS) $(SENDFILE_LIBS) $(SSL_LIBS)
 
