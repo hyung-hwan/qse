@@ -723,7 +723,6 @@ static int server_open (qse_httpd_t* httpd, qse_httpd_server_t* server)
 	#endif
 	}
 
-
 	if (listen (fd, 10) <= -1) goto oops;
 
 	#if defined(O_NONBLOCK)

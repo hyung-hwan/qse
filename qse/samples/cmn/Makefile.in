@@ -34,16 +34,16 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-bin_PROGRAMS = chr01$(EXEEXT) env$(EXEEXT) dll$(EXEEXT) fio01$(EXEEXT) \
-	fio02$(EXEEXT) fma$(EXEEXT) fmt01$(EXEEXT) fmt02$(EXEEXT) \
-	fs01$(EXEEXT) htb$(EXEEXT) glob01$(EXEEXT) ipad01$(EXEEXT) \
-	lda$(EXEEXT) main01$(EXEEXT) main02$(EXEEXT) mbwc01$(EXEEXT) \
-	mbwc02$(EXEEXT) nwad01$(EXEEXT) nwif01$(EXEEXT) \
-	nwif02$(EXEEXT) oht$(EXEEXT) path01$(EXEEXT) pio$(EXEEXT) \
-	pma$(EXEEXT) rex01$(EXEEXT) rbt$(EXEEXT) sio01$(EXEEXT) \
-	sio02$(EXEEXT) sio03$(EXEEXT) sll$(EXEEXT) slmb01$(EXEEXT) \
-	str01$(EXEEXT) task01$(EXEEXT) time$(EXEEXT) tre01$(EXEEXT) \
-	uri01$(EXEEXT) xma$(EXEEXT)
+bin_PROGRAMS = chr01$(EXEEXT) env01$(EXEEXT) dll$(EXEEXT) \
+	fio01$(EXEEXT) fio02$(EXEEXT) fma$(EXEEXT) fmt01$(EXEEXT) \
+	fmt02$(EXEEXT) fs01$(EXEEXT) htb$(EXEEXT) glob01$(EXEEXT) \
+	ipad01$(EXEEXT) lda$(EXEEXT) main01$(EXEEXT) main02$(EXEEXT) \
+	mbwc01$(EXEEXT) mbwc02$(EXEEXT) nwad01$(EXEEXT) \
+	nwif01$(EXEEXT) nwif02$(EXEEXT) oht$(EXEEXT) path01$(EXEEXT) \
+	pio$(EXEEXT) pma$(EXEEXT) rex01$(EXEEXT) rbt$(EXEEXT) \
+	sio01$(EXEEXT) sio02$(EXEEXT) sio03$(EXEEXT) sll$(EXEEXT) \
+	slmb01$(EXEEXT) str01$(EXEEXT) task01$(EXEEXT) time$(EXEEXT) \
+	tre01$(EXEEXT) uri01$(EXEEXT) xma$(EXEEXT)
 @WCHAR_TRUE@@WIN32_TRUE@am__append_1 = $(UNICOWS_LIBS)
 subdir = samples/cmn
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
@@ -75,10 +75,10 @@ am_dll_OBJECTS = dll.$(OBJEXT)
 dll_OBJECTS = $(am_dll_OBJECTS)
 dll_LDADD = $(LDADD)
 dll_DEPENDENCIES = $(am__DEPENDENCIES_2)
-am_env_OBJECTS = env.$(OBJEXT)
-env_OBJECTS = $(am_env_OBJECTS)
-env_LDADD = $(LDADD)
-env_DEPENDENCIES = $(am__DEPENDENCIES_2)
+am_env01_OBJECTS = env01.$(OBJEXT)
+env01_OBJECTS = $(am_env01_OBJECTS)
+env01_LDADD = $(LDADD)
+env01_DEPENDENCIES = $(am__DEPENDENCIES_2)
 am_fio01_OBJECTS = fio01.$(OBJEXT)
 fio01_OBJECTS = $(am_fio01_OBJECTS)
 fio01_LDADD = $(LDADD)
@@ -241,7 +241,7 @@ am__v_CCLD_0 = @echo "  CCLD  " $@;
 AM_V_GEN = $(am__v_GEN_@AM_V@)
 am__v_GEN_ = $(am__v_GEN_@AM_DEFAULT_V@)
 am__v_GEN_0 = @echo "  GEN   " $@;
-SOURCES = $(chr01_SOURCES) $(dll_SOURCES) $(env_SOURCES) \
+SOURCES = $(chr01_SOURCES) $(dll_SOURCES) $(env01_SOURCES) \
 	$(fio01_SOURCES) $(fio02_SOURCES) $(fma_SOURCES) \
 	$(fmt01_SOURCES) $(fmt02_SOURCES) $(fs01_SOURCES) \
 	$(glob01_SOURCES) $(htb_SOURCES) $(ipad01_SOURCES) \
@@ -252,7 +252,7 @@ SOURCES = $(chr01_SOURCES) $(dll_SOURCES) $(env_SOURCES) \
 	$(sio01_SOURCES) $(sio02_SOURCES) $(sio03_SOURCES) \
 	$(sll_SOURCES) $(slmb01_SOURCES) $(str01_SOURCES) task01.c \
 	$(time_SOURCES) $(tre01_SOURCES) uri01.c $(xma_SOURCES)
-DIST_SOURCES = $(chr01_SOURCES) $(dll_SOURCES) $(env_SOURCES) \
+DIST_SOURCES = $(chr01_SOURCES) $(dll_SOURCES) $(env01_SOURCES) \
 	$(fio01_SOURCES) $(fio02_SOURCES) $(fma_SOURCES) \
 	$(fmt01_SOURCES) $(fmt02_SOURCES) $(fs01_SOURCES) \
 	$(glob01_SOURCES) $(htb_SOURCES) $(ipad01_SOURCES) \
@@ -448,7 +448,7 @@ AM_CPPFLAGS = \
 
 LDADD = -lqsecmn $(am__append_1)
 chr01_SOURCES = chr01.c
-env_SOURCES = env.c
+env01_SOURCES = env01.c
 dll_SOURCES = dll.c
 fio01_SOURCES = fio01.c
 fio02_SOURCES = fio02.c
@@ -563,9 +563,9 @@ chr01$(EXEEXT): $(chr01_OBJECTS) $(chr01_DEPENDENCIES) $(EXTRA_chr01_DEPENDENCIE
 dll$(EXEEXT): $(dll_OBJECTS) $(dll_DEPENDENCIES) $(EXTRA_dll_DEPENDENCIES) 
 	@rm -f dll$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(dll_OBJECTS) $(dll_LDADD) $(LIBS)
-env$(EXEEXT): $(env_OBJECTS) $(env_DEPENDENCIES) $(EXTRA_env_DEPENDENCIES) 
-	@rm -f env$(EXEEXT)
-	$(AM_V_CCLD)$(LINK) $(env_OBJECTS) $(env_LDADD) $(LIBS)
+env01$(EXEEXT): $(env01_OBJECTS) $(env01_DEPENDENCIES) $(EXTRA_env01_DEPENDENCIES) 
+	@rm -f env01$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(env01_OBJECTS) $(env01_LDADD) $(LIBS)
 fio01$(EXEEXT): $(fio01_OBJECTS) $(fio01_DEPENDENCIES) $(EXTRA_fio01_DEPENDENCIES) 
 	@rm -f fio01$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(fio01_OBJECTS) $(fio01_LDADD) $(LIBS)
@@ -677,7 +677,7 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/chr01.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dll.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/env.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/env01.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fio01.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fio02.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fma.Po@am__quote@
