@@ -98,8 +98,8 @@ am__uninstall_files_from_dir = { \
     || { echo " ( cd '$$dir' && rm -f" $$files ")"; \
          $(am__cd) "$$dir" && rm -f $$files; }; \
   }
-am__installdirs = "$(DESTDIR)$(libdir)" "$(DESTDIR)$(moddir)"
-LTLIBRARIES = $(lib_LTLIBRARIES) $(mod_LTLIBRARIES)
+am__installdirs = "$(DESTDIR)$(libdir)" "$(DESTDIR)$(modexecdir)"
+LTLIBRARIES = $(lib_LTLIBRARIES) $(modexec_LTLIBRARIES)
 am__DEPENDENCIES_1 =
 @ENABLE_STATIC_MODULE_FALSE@libqseawk_dir_la_DEPENDENCIES =  \
 @ENABLE_STATIC_MODULE_FALSE@	$(am__DEPENDENCIES_1)
@@ -115,7 +115,7 @@ libqseawk_dir_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
 	$(AM_CFLAGS) $(CFLAGS) $(libqseawk_dir_la_LDFLAGS) $(LDFLAGS) \
 	-o $@
 @ENABLE_STATIC_MODULE_FALSE@am_libqseawk_dir_la_rpath = -rpath \
-@ENABLE_STATIC_MODULE_FALSE@	$(moddir)
+@ENABLE_STATIC_MODULE_FALSE@	$(modexecdir)
 @ENABLE_STATIC_MODULE_FALSE@@HAVE_C_MPI_TRUE@libqseawk_mpi_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
 am__libqseawk_mpi_la_SOURCES_DIST = mod-mpi.c mod-mpi.h
 @ENABLE_STATIC_MODULE_FALSE@@HAVE_C_MPI_TRUE@am_libqseawk_mpi_la_OBJECTS = libqseawk_mpi_la-mod-mpi.lo
@@ -125,7 +125,8 @@ libqseawk_mpi_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
 	$(AM_CFLAGS) $(CFLAGS) $(libqseawk_mpi_la_LDFLAGS) $(LDFLAGS) \
 	-o $@
 @ENABLE_STATIC_MODULE_FALSE@@HAVE_C_MPI_TRUE@am_libqseawk_mpi_la_rpath =  \
-@ENABLE_STATIC_MODULE_FALSE@@HAVE_C_MPI_TRUE@	-rpath $(moddir)
+@ENABLE_STATIC_MODULE_FALSE@@HAVE_C_MPI_TRUE@	-rpath \
+@ENABLE_STATIC_MODULE_FALSE@@HAVE_C_MPI_TRUE@	$(modexecdir)
 @ENABLE_STATIC_MODULE_FALSE@libqseawk_str_la_DEPENDENCIES =  \
 @ENABLE_STATIC_MODULE_FALSE@	$(am__DEPENDENCIES_1)
 am__libqseawk_str_la_SOURCES_DIST = mod-str.c mod-str.h
@@ -137,7 +138,7 @@ libqseawk_str_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
 	$(AM_CFLAGS) $(CFLAGS) $(libqseawk_str_la_LDFLAGS) $(LDFLAGS) \
 	-o $@
 @ENABLE_STATIC_MODULE_FALSE@am_libqseawk_str_la_rpath = -rpath \
-@ENABLE_STATIC_MODULE_FALSE@	$(moddir)
+@ENABLE_STATIC_MODULE_FALSE@	$(modexecdir)
 @ENABLE_STATIC_MODULE_FALSE@libqseawk_sys_la_DEPENDENCIES =  \
 @ENABLE_STATIC_MODULE_FALSE@	$(am__DEPENDENCIES_1)
 am__libqseawk_sys_la_SOURCES_DIST = mod-sys.c mod-sys.h
@@ -149,7 +150,7 @@ libqseawk_sys_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
 	$(AM_CFLAGS) $(CFLAGS) $(libqseawk_sys_la_LDFLAGS) $(LDFLAGS) \
 	-o $@
 @ENABLE_STATIC_MODULE_FALSE@am_libqseawk_sys_la_rpath = -rpath \
-@ENABLE_STATIC_MODULE_FALSE@	$(moddir)
+@ENABLE_STATIC_MODULE_FALSE@	$(modexecdir)
 @ENABLE_STATIC_MODULE_FALSE@@HAVE_LIBUCI_TRUE@libqseawk_uci_la_DEPENDENCIES = $(am__DEPENDENCIES_1) \
 @ENABLE_STATIC_MODULE_FALSE@@HAVE_LIBUCI_TRUE@	$(am__DEPENDENCIES_1)
 am__libqseawk_uci_la_SOURCES_DIST = mod-uci.c mod-uci.h
@@ -160,7 +161,8 @@ libqseawk_uci_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
 	$(AM_CFLAGS) $(CFLAGS) $(libqseawk_uci_la_LDFLAGS) $(LDFLAGS) \
 	-o $@
 @ENABLE_STATIC_MODULE_FALSE@@HAVE_LIBUCI_TRUE@am_libqseawk_uci_la_rpath =  \
-@ENABLE_STATIC_MODULE_FALSE@@HAVE_LIBUCI_TRUE@	-rpath $(moddir)
+@ENABLE_STATIC_MODULE_FALSE@@HAVE_LIBUCI_TRUE@	-rpath \
+@ENABLE_STATIC_MODULE_FALSE@@HAVE_LIBUCI_TRUE@	$(modexecdir)
 am__DEPENDENCIES_2 = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 @ENABLE_STATIC_MODULE_TRUE@@HAVE_LIBUCI_TRUE@am__DEPENDENCIES_3 = $(am__DEPENDENCIES_1)
 libqseawk_la_DEPENDENCIES = $(am__DEPENDENCIES_2) \
@@ -457,8 +459,8 @@ libqseawk_la_LIBADD = $(LIBADD_LIB_COMMON) $(am__append_9)
 @ENABLE_STATIC_MODULE_FALSE@CPPFLAGS_MOD_COMMON = $(CPPFLAGS_ALL_COMMON)
 @ENABLE_STATIC_MODULE_FALSE@LDFLAGS_MOD_COMMON = $(LDFLAGS_ALL_COMMON)
 @ENABLE_STATIC_MODULE_FALSE@LIBADD_MOD_COMMON = -lqseawk -lqsecmn
-@ENABLE_STATIC_MODULE_FALSE@moddir = $(libdir)
-@ENABLE_STATIC_MODULE_FALSE@mod_LTLIBRARIES = libqseawk-dir.la \
+@ENABLE_STATIC_MODULE_FALSE@modexecdir = $(libdir)
+@ENABLE_STATIC_MODULE_FALSE@modexec_LTLIBRARIES = libqseawk-dir.la \
 @ENABLE_STATIC_MODULE_FALSE@	libqseawk-str.la libqseawk-sys.la \
 @ENABLE_STATIC_MODULE_FALSE@	$(am__append_10) $(am__append_11)
 @ENABLE_STATIC_MODULE_FALSE@libqseawk_dir_la_SOURCES = mod-dir.c mod-dir.h
@@ -546,32 +548,32 @@ clean-libLTLIBRARIES:
 	  echo "rm -f \"$${dir}/so_locations\""; \
 	  rm -f "$${dir}/so_locations"; \
 	done
-install-modLTLIBRARIES: $(mod_LTLIBRARIES)
+install-modexecLTLIBRARIES: $(modexec_LTLIBRARIES)
 	@$(NORMAL_INSTALL)
-	test -z "$(moddir)" || $(MKDIR_P) "$(DESTDIR)$(moddir)"
-	@list='$(mod_LTLIBRARIES)'; test -n "$(moddir)" || list=; \
+	test -z "$(modexecdir)" || $(MKDIR_P) "$(DESTDIR)$(modexecdir)"
+	@list='$(modexec_LTLIBRARIES)'; test -n "$(modexecdir)" || list=; \
 	list2=; for p in $$list; do \
 	  if test -f $$p; then \
 	    list2="$$list2 $$p"; \
 	  else :; fi; \
 	done; \
 	test -z "$$list2" || { \
-	  echo " $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install $(INSTALL) $(INSTALL_STRIP_FLAG) $$list2 '$(DESTDIR)$(moddir)'"; \
-	  $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install $(INSTALL) $(INSTALL_STRIP_FLAG) $$list2 "$(DESTDIR)$(moddir)"; \
+	  echo " $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install $(INSTALL) $(INSTALL_STRIP_FLAG) $$list2 '$(DESTDIR)$(modexecdir)'"; \
+	  $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install $(INSTALL) $(INSTALL_STRIP_FLAG) $$list2 "$(DESTDIR)$(modexecdir)"; \
 	}
 
-uninstall-modLTLIBRARIES:
+uninstall-modexecLTLIBRARIES:
 	@$(NORMAL_UNINSTALL)
-	@list='$(mod_LTLIBRARIES)'; test -n "$(moddir)" || list=; \
+	@list='$(modexec_LTLIBRARIES)'; test -n "$(modexecdir)" || list=; \
 	for p in $$list; do \
 	  $(am__strip_dir) \
-	  echo " $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=uninstall rm -f '$(DESTDIR)$(moddir)/$$f'"; \
-	  $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=uninstall rm -f "$(DESTDIR)$(moddir)/$$f"; \
+	  echo " $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=uninstall rm -f '$(DESTDIR)$(modexecdir)/$$f'"; \
+	  $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=uninstall rm -f "$(DESTDIR)$(modexecdir)/$$f"; \
 	done
 
-clean-modLTLIBRARIES:
-	-test -z "$(mod_LTLIBRARIES)" || rm -f $(mod_LTLIBRARIES)
-	@list='$(mod_LTLIBRARIES)'; for p in $$list; do \
+clean-modexecLTLIBRARIES:
+	-test -z "$(modexec_LTLIBRARIES)" || rm -f $(modexec_LTLIBRARIES)
+	@list='$(modexec_LTLIBRARIES)'; for p in $$list; do \
 	  dir="`echo $$p | sed -e 's|/[^/]*$$||'`"; \
 	  test "$$dir" != "$$p" || dir=.; \
 	  echo "rm -f \"$${dir}/so_locations\""; \
@@ -917,7 +919,7 @@ check-am: all-am
 check: check-am
 all-am: Makefile $(LTLIBRARIES)
 installdirs:
-	for dir in "$(DESTDIR)$(libdir)" "$(DESTDIR)$(moddir)"; do \
+	for dir in "$(DESTDIR)$(libdir)" "$(DESTDIR)$(modexecdir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
 	done
 install: install-am
@@ -953,7 +955,7 @@ maintainer-clean-generic:
 clean: clean-am
 
 clean-am: clean-generic clean-libLTLIBRARIES clean-libtool \
-	clean-modLTLIBRARIES mostlyclean-am
+	clean-modexecLTLIBRARIES mostlyclean-am
 
 distclean: distclean-am
 	-rm -rf ./$(DEPDIR)
@@ -973,13 +975,13 @@ info: info-am
 
 info-am:
 
-install-data-am: install-modLTLIBRARIES
+install-data-am:
 
 install-dvi: install-dvi-am
 
 install-dvi-am:
 
-install-exec-am: install-libLTLIBRARIES
+install-exec-am: install-libLTLIBRARIES install-modexecLTLIBRARIES
 
 install-html: install-html-am
 
@@ -1019,24 +1021,25 @@ ps: ps-am
 
 ps-am:
 
-uninstall-am: uninstall-libLTLIBRARIES uninstall-modLTLIBRARIES
+uninstall-am: uninstall-libLTLIBRARIES uninstall-modexecLTLIBRARIES
 
 .MAKE: install-am install-strip
 
 .PHONY: CTAGS GTAGS all all-am check check-am clean clean-generic \
-	clean-libLTLIBRARIES clean-libtool clean-modLTLIBRARIES ctags \
-	distclean distclean-compile distclean-generic \
+	clean-libLTLIBRARIES clean-libtool clean-modexecLTLIBRARIES \
+	ctags distclean distclean-compile distclean-generic \
 	distclean-libtool distclean-tags distdir dvi dvi-am html \
 	html-am info info-am install install-am install-data \
 	install-data-am install-dvi install-dvi-am install-exec \
 	install-exec-am install-html install-html-am install-info \
 	install-info-am install-libLTLIBRARIES install-man \
-	install-modLTLIBRARIES install-pdf install-pdf-am install-ps \
-	install-ps-am install-strip installcheck installcheck-am \
-	installdirs maintainer-clean maintainer-clean-generic \
-	mostlyclean mostlyclean-compile mostlyclean-generic \
-	mostlyclean-libtool pdf pdf-am ps ps-am tags uninstall \
-	uninstall-am uninstall-libLTLIBRARIES uninstall-modLTLIBRARIES
+	install-modexecLTLIBRARIES install-pdf install-pdf-am \
+	install-ps install-ps-am install-strip installcheck \
+	installcheck-am installdirs maintainer-clean \
+	maintainer-clean-generic mostlyclean mostlyclean-compile \
+	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
+	tags uninstall uninstall-am uninstall-libLTLIBRARIES \
+	uninstall-modexecLTLIBRARIES
 
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
