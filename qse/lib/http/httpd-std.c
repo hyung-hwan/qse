@@ -530,32 +530,44 @@ struct httpd_xtn_t
 };
 
 #if defined(HAVE_SSL)
-static int init_xtn_ssl (
-	qse_httpd_t* httpd,
-	const qse_mchar_t* pemfile,
-	const qse_mchar_t* keyfile/*,
-	const qse_mchar_t* chainfile*/)
+static int init_xtn_ssl (qse_httpd_t* httpd, qse_httpd_server_t* server)
 {
 	SSL_CTX* ctx;
 	httpd_xtn_t* xtn;
+	server_xtn_t* server_xtn;
+	qse_httpd_serverstd_ssl_t ssl;
 
 	xtn = (httpd_xtn_t*)qse_httpd_getxtn (httpd);
+	server_xtn = (server_xtn_t*)qse_httpd_getserverxtn (httpd, server);
+
+	if (server_xtn->query (httpd, server, QSE_NULL, QSE_NULL, QSE_HTTPD_SERVERSTD_SSL, &ssl) <= -1)
+	{
+		return -1;
+	}
+
+	if (ssl.certfile == QSE_NULL || ssl.keyfile == QSE_NULL)
+	{
+		qse_httpd_seterrnum (httpd, QSE_HTTPD_EINVAL);	
+		return -1;
+	}
 
 	ctx = SSL_CTX_new (SSLv23_server_method());
 	if (ctx == QSE_NULL) return -1;
 
 	/*SSL_CTX_set_info_callback(ctx,ssl_info_callback);*/
 
-	if (SSL_CTX_use_certificate_file (ctx, pemfile, SSL_FILETYPE_PEM) == 0 ||
-	    SSL_CTX_use_PrivateKey_file (ctx, keyfile, SSL_FILETYPE_PEM) == 0 ||
+	if (SSL_CTX_use_certificate_file (ctx, ssl.certfile, SSL_FILETYPE_PEM) == 0 ||
+	    SSL_CTX_use_PrivateKey_file (ctx, ssl.keyfile, SSL_FILETYPE_PEM) == 0 ||
 	    SSL_CTX_check_private_key (ctx) == 0 /*||
 	    SSL_CTX_use_certificate_chain_file (ctx, chainfile) == 0*/)
 	{
 		if (httpd->opt.trait & QSE_HTTPD_LOGACT)
 		{
 			qse_httpd_act_t msg;
+			qse_size_t len;
 			msg.code = QSE_HTTPD_CATCH_MERRMSG;
-			ERR_error_string_n (ERR_get_error(), msg.u.merrmsg, QSE_COUNTOF(msg.u.merrmsg));
+			len = qse_mbscpy (msg.u.merrmsg, QSE_MT("cert/key file error - "));
+			ERR_error_string_n (ERR_get_error(), &msg.u.merrmsg[len], QSE_COUNTOF(msg.u.merrmsg) - len);
 			httpd->opt.rcb.logact (httpd, &msg);
 		}
 
@@ -605,10 +617,6 @@ qse_httpd_t* qse_httpd_openstdwithmmgr (qse_mmgr_t* mmgr, qse_size_t xtnsize)
 	if (httpd == QSE_NULL) return QSE_NULL;
 
 	xtn = (httpd_xtn_t*)qse_httpd_getxtn (httpd);
-
-#if defined(HAVE_SSL)
-	/*init_xtn_ssl (httpd, "http01.pem", "http01.key");*/
-#endif
 
 	set_httpd_callbacks (httpd);
 
@@ -1725,8 +1733,7 @@ static int client_accepted (qse_httpd_t* httpd, qse_httpd_client_t* client)
 		if (!xtn->ssl_ctx)
 		{
 			/* delayed initialization of ssl */
-/* TODO: certificate from options */
-			if (init_xtn_ssl (httpd, "http01.pem", "http01.key") <= -1) 
+			if (init_xtn_ssl (httpd, client->server) <= -1) 
 			{
 				return -1;
 			}
@@ -2678,7 +2685,12 @@ static int query_server (
 		case QSE_HTTPD_SERVERSTD_FILEACC:
 			*(int*)result = 200;
 			return 0;
-			
+
+		case QSE_HTTPD_SERVERSTD_SSL:
+			/* you must specify the certificate and the key file to be able
+			 * to use SSL */
+			qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOENT);
+			return -1;
 	}
 
 	qse_httpd_seterrnum (httpd, QSE_HTTPD_EINVAL);

@@ -179,6 +179,8 @@ enum
 	SCFG_AUTH,
 	SCFG_DIRCSS,
 	SCFG_ERRCSS,
+	SCFG_SSLCERTFILE,
+	SCFG_SSLKEYFILE,
 
 	SCFG_MAX
 };
@@ -241,6 +243,7 @@ struct server_xtn_t
 
 	int num;
 	qse_nwad_t bind;
+	int secure;
 
 	qse_httpd_serverstd_makersrc_t orgmakersrc;
 	qse_httpd_serverstd_freersrc_t orgfreersrc;
@@ -250,6 +253,12 @@ struct server_xtn_t
 	int root_is_nwad;
 	qse_nwad_t root_nwad;
 	
+	struct
+	{
+		qse_mchar_t* certfile;
+		qse_mchar_t* keyfile;
+	} ssl;
+
 	struct
 	{
 		qse_size_t count;
@@ -571,6 +580,16 @@ static int query_server (
 			}
 			return 0;
 		}
+
+		case QSE_HTTPD_SERVERSTD_SSL:
+		{
+			qse_httpd_serverstd_ssl_t* ssl;
+			ssl = (qse_httpd_serverstd_ssl_t*)result;
+			ssl->certfile = server_xtn->scfg[SCFG_SSLCERTFILE];
+			ssl->keyfile = server_xtn->scfg[SCFG_SSLKEYFILE];
+			return 0;
+		}
+
 	}
 
 	return server_xtn->orgquery (httpd, server, req, xpath, code, result);
@@ -589,7 +608,9 @@ static struct
 	{ QSE_T("host['*'].location['/'].realm"),     QSE_T("default.realm") },
 	{ QSE_T("host['*'].location['/'].auth"),      QSE_T("default.auth") },
 	{ QSE_T("host['*'].location['/'].dir-css"),   QSE_T("default.dir-css") },
-	{ QSE_T("host['*'].location['/'].error-css"), QSE_T("default.error-css") }
+	{ QSE_T("host['*'].location['/'].error-css"), QSE_T("default.error-css") },
+	{ QSE_T("ssl-cert-file"),                     QSE_T("default.ssl-cert-file") },
+	{ QSE_T("ssl-key-file"),                      QSE_T("default.ssl-key-file") }
 };
 
 static int load_server_config (
@@ -882,6 +903,7 @@ static qse_httpd_server_t* attach_server (qse_httpd_t* httpd, int num, qse_xli_l
 		return QSE_NULL;
 	}
 
+
 	qse_memset (&dope, 0, QSE_SIZEOF(dope));
 	if (qse_strtonwad (((qse_xli_str_t*)pair->val)->ptr, &dope.nwad) <= -1)
 	{
@@ -889,6 +911,10 @@ static qse_httpd_server_t* attach_server (qse_httpd_t* httpd, int num, qse_xli_l
 		qse_printf (QSE_T("WARNING: invalid value for bind - %s\n"), ((qse_xli_str_t*)pair->val)->ptr);
 		return QSE_NULL;
 	}
+
+	pair = qse_xli_findpairbyname (httpd_xtn->xli, list, QSE_T("ssl"));
+	if (!pair) pair = qse_xli_findpairbyname (httpd_xtn->xli, QSE_NULL, QSE_T("default.ssl"));
+	if (pair && pair->val->type == QSE_XLI_STR) dope.flags |= QSE_HTTPD_SERVER_SECURE;	
 
 	dope.detach = detach_server;
 	xserver = qse_httpd_attachserverstd (httpd, &dope, QSE_SIZEOF(server_xtn_t));
@@ -914,6 +940,7 @@ static qse_httpd_server_t* attach_server (qse_httpd_t* httpd, int num, qse_xli_l
 	/* remember the binding address used */
 	server_xtn->num = num;
 	server_xtn->bind = dope.nwad;
+	server_xtn->secure = (dope.flags & QSE_HTTPD_SERVER_SECURE);
 
 	return xserver;
 }
@@ -1343,7 +1370,8 @@ int qse_main (int argc, qse_achar_t* argv[])
 	ret = qse_runmain (argc, argv, httpd_main);
 
 #if defined(HAVE_SSL)
-	/*ERR_remove_state ();*/
+	/* ERR_remove_state() should be called for each thread if the application is thread */
+	ERR_remove_state (0); 
 	ENGINE_cleanup ();
 	ERR_free_strings ();
 	EVP_cleanup ();
