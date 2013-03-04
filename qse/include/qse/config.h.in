@@ -302,9 +302,6 @@
 /* Define to 1 if you have the `prctl' function. */
 #undef HAVE_PRCTL
 
-/* Define to 1 if you have the <prctl.h> header file. */
-#undef HAVE_PRCTL_H
-
 /* Define if libtool can extract symbol lists from object files. */
 #undef HAVE_PRELOADED_SYMBOLS
 
@@ -468,6 +465,9 @@
 /* Define to 1 if you have the <sys/ndir.h> header file, and it defines `DIR'.
    */
 #undef HAVE_SYS_NDIR_H
+
+/* Define to 1 if you have the <sys/prctl.h> header file. */
+#undef HAVE_SYS_PRCTL_H
 
 /* Define to 1 if you have the <sys/resource.h> header file. */
 #undef HAVE_SYS_RESOURCE_H

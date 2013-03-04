@@ -85,6 +85,13 @@ struct qse_httpd_serverstd_index_t
 	const qse_mchar_t* files;  /* "value1\0value2\0" */
 };
 
+typedef struct qse_httpd_serverstd_ssl_t qse_httpd_serverstd_ssl_t;
+struct qse_httpd_serverstd_ssl_t
+{
+	const qse_mchar_t* certfile;
+	const qse_mchar_t* keyfile;
+};
+
 enum qse_httpd_serverstd_query_code_t
 {
 	QSE_HTTPD_SERVERSTD_NAME,           /* const qse_mchar_t* */
@@ -98,7 +105,9 @@ enum qse_httpd_serverstd_query_code_t
 	QSE_HTTPD_SERVERSTD_CGI,            /* qse_httpd_serverstd_cgi_t */
 	QSE_HTTPD_SERVERSTD_MIME,           /* const qse_mchar_t* */
 	QSE_HTTPD_SERVERSTD_DIRACC,         /* int (http error code) */
-	QSE_HTTPD_SERVERSTD_FILEACC         /* int (http error code) */
+	QSE_HTTPD_SERVERSTD_FILEACC,        /* int (http error code) */
+
+	QSE_HTTPD_SERVERSTD_SSL             /* qse_httpd_serverstd_ssl_t */
 };
 typedef enum qse_httpd_serverstd_query_code_t qse_httpd_serverstd_query_code_t;
 

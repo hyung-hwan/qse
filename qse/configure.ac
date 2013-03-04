@@ -121,7 +121,7 @@ AC_CHECK_HEADERS([net/if.h net/if_dl.h], [], [], [
 	#include <sys/types.h>
 	#include <sys/socket.h>])
 AC_CHECK_HEADERS([sys/stropts.h sys/macstat.h linux/ethtool.h linux/sockios.h])
-AC_CHECK_HEADERS([crt_externs.h prctl.h uci.h])
+AC_CHECK_HEADERS([crt_externs.h sys/prctl.h uci.h])
 
 dnl check data types
 AC_CHECK_TYPE([wchar_t], 
