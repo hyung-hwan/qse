@@ -501,11 +501,16 @@ QSE_EXPORT qse_xli_pair_t* qse_xli_insertpairwithstr (
 
 
 QSE_EXPORT qse_xli_pair_t* qse_xli_findpairbyname (
-     qse_xli_t*            xli,
+	qse_xli_t*            xli,
 	const qse_xli_list_t* list,
 	const qse_char_t*     name
 );
 
+QSE_EXPORT qse_size_t qse_xli_getnumpairsbyname (
+	qse_xli_t*            xli,
+	const qse_xli_list_t* list,
+	const qse_char_t*     name 
+);
 
 QSE_EXPORT void qse_xli_clear (
 	qse_xli_t* xli

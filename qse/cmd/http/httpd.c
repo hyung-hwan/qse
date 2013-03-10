@@ -9,6 +9,7 @@
 #include <qse/cmn/time.h>
 #include <qse/cmn/path.h>
 #include <qse/cmn/opt.h>
+#include <qse/cmn/htb.h>
 
 #include <signal.h>
 #include <locale.h>
@@ -171,18 +172,22 @@ static int daemonize (int devnull)
 
 /* --------------------------------------------------------------------- */
 
-enum
+enum 
 {
-	SCFG_NAME,
-	SCFG_ROOT,
-	SCFG_REALM,
-	SCFG_AUTH,
-	SCFG_DIRCSS,
-	SCFG_ERRCSS,
 	SCFG_SSLCERTFILE,
 	SCFG_SSLKEYFILE,
-
 	SCFG_MAX
+};
+
+enum
+{
+	XCFG_NAME,
+	XCFG_ROOT,
+	XCFG_REALM,
+	XCFG_AUTH,
+	XCFG_DIRCSS,
+	XCFG_ERRCSS,
+	XCFG_MAX
 };
 
 struct cgi_t
@@ -235,6 +240,50 @@ struct access_t
 	struct access_t* next;
 };
 
+
+typedef struct server_loccfg_t server_loccfg_t;
+struct server_loccfg_t
+{
+	qse_mchar_t* locname;
+
+	qse_mchar_t* xcfg[XCFG_MAX];
+	int root_is_nwad;
+	qse_nwad_t root_nwad;
+	struct
+	{
+		qse_size_t count;
+		qse_mchar_t* files;
+	} index;
+
+	struct
+	{
+		struct cgi_t* head;
+		struct cgi_t* tail;
+	} cgi[CGI_MAX];
+
+	struct
+	{
+		struct mime_t* head;
+		struct mime_t* tail;
+	} mime[MIME_MAX];
+
+	struct
+	{
+		struct access_t* head;
+		struct access_t* tail;
+	} access[2][ACCESS_MAX];
+
+	server_loccfg_t* next;
+};
+
+typedef struct server_hostcfg_t server_hostcfg_t;
+struct server_hostcfg_t
+{
+	qse_mchar_t* hostname;
+	server_loccfg_t* loccfg;
+	server_hostcfg_t* next;
+};
+
 typedef struct server_xtn_t server_xtn_t;
 struct server_xtn_t
 {
@@ -244,21 +293,18 @@ struct server_xtn_t
 	int num;
 	qse_nwad_t bind;
 	int secure;
+	qse_mchar_t* scfg[SCFG_MAX];
 
 	qse_httpd_serverstd_makersrc_t orgmakersrc;
 	qse_httpd_serverstd_freersrc_t orgfreersrc;
 	qse_httpd_serverstd_query_t orgquery;
 
-	qse_mchar_t* scfg[SCFG_MAX];
+	qse_htb_t cfgtab;
+
+	/* ---------------------------------------------- */
+	qse_mchar_t* xcfg[XCFG_MAX];
 	int root_is_nwad;
 	qse_nwad_t root_nwad;
-	
-	struct
-	{
-		qse_mchar_t* certfile;
-		qse_mchar_t* keyfile;
-	} ssl;
-
 	struct
 	{
 		qse_size_t count;
@@ -283,7 +329,6 @@ struct server_xtn_t
 		struct access_t* tail;
 	} access[2][ACCESS_MAX];
 };
-
 
 static int make_resource (
 	qse_httpd_t* httpd, qse_httpd_client_t* client,
@@ -365,6 +410,15 @@ static void clear_server_config (qse_httpd_t* httpd, qse_httpd_server_t* server)
 		}
 	}
 
+	for (i = 0; i < QSE_COUNTOF(server_xtn->xcfg); i++)
+	{
+		if (server_xtn->xcfg[i]) 
+		{
+			qse_httpd_freemem (httpd, server_xtn->xcfg[i]);
+			server_xtn->xcfg[i] = QSE_NULL;
+		}
+	}
+
 	if (server_xtn->index.files) 
 	{
 		qse_httpd_freemem (httpd, server_xtn->index.files);
@@ -443,7 +497,7 @@ static int query_server (
 	switch (code)
 	{
 		case QSE_HTTPD_SERVERSTD_NAME:
-			*(const qse_mchar_t**)result = server_xtn->scfg[SCFG_NAME];
+			*(const qse_mchar_t**)result = server_xtn->xcfg[XCFG_NAME];
 			return 0;
 
 		case QSE_HTTPD_SERVERSTD_ROOT:
@@ -455,13 +509,13 @@ static int query_server (
 			else
 			{
 				((qse_httpd_serverstd_root_t*)result)->type = QSE_HTTPD_SERVERSTD_ROOT_PATH;
-				((qse_httpd_serverstd_root_t*)result)->u.path = server_xtn->scfg[SCFG_ROOT];
+				((qse_httpd_serverstd_root_t*)result)->u.path = server_xtn->xcfg[XCFG_ROOT];
 			}
 			return 0;
 
 		case QSE_HTTPD_SERVERSTD_REALM:
-			((qse_httpd_serverstd_realm_t*)result)->name = server_xtn->scfg[SCFG_REALM];
-			((qse_httpd_serverstd_realm_t*)result)->authreq = (server_xtn->scfg[SCFG_REALM] != QSE_NULL);
+			((qse_httpd_serverstd_realm_t*)result)->name = server_xtn->xcfg[XCFG_REALM];
+			((qse_httpd_serverstd_realm_t*)result)->authreq = (server_xtn->xcfg[XCFG_REALM] != QSE_NULL);
 			return 0;
 
 		case QSE_HTTPD_SERVERSTD_AUTH:
@@ -471,9 +525,9 @@ static int query_server (
 			auth = (qse_httpd_serverstd_auth_t*)result;
 			auth->authok = 0;
 
-			if (server_xtn->scfg[SCFG_AUTH])
+			if (server_xtn->xcfg[XCFG_AUTH])
 			{
-				if (qse_mbsxcmp (auth->key.ptr, auth->key.len, server_xtn->scfg[SCFG_AUTH]) == 0)
+				if (qse_mbsxcmp (auth->key.ptr, auth->key.len, server_xtn->xcfg[XCFG_AUTH]) == 0)
 				{
 					auth->authok = 1;
 				}
@@ -482,11 +536,11 @@ static int query_server (
 		}
 
 		case QSE_HTTPD_SERVERSTD_DIRCSS:
-			*(const qse_mchar_t**)result = server_xtn->scfg[SCFG_DIRCSS];
+			*(const qse_mchar_t**)result = server_xtn->xcfg[XCFG_DIRCSS];
 			return 0;
 
 		case QSE_HTTPD_SERVERSTD_ERRCSS:
-			*(const qse_mchar_t**)result = server_xtn->scfg[SCFG_ERRCSS];
+			*(const qse_mchar_t**)result = server_xtn->xcfg[XCFG_ERRCSS];
 			return 0;
 
 		case QSE_HTTPD_SERVERSTD_INDEX:
@@ -597,20 +651,38 @@ static int query_server (
 
 /* --------------------------------------------------------------------- */
 
-static struct 
+static struct
 {
 	const qse_char_t* x;
 	const qse_char_t* y;
 } scfg_items[] =
+{
+	{ QSE_T("ssl-cert-file"),  QSE_T("default.ssl-cert-file") },
+	{ QSE_T("ssl-key-file"),   QSE_T("default.ssl-key-file") }
+};
+
+static struct 
+{
+	const qse_char_t* x;
+	const qse_char_t* y;
+} xcfg_items[] =
 {
 	{ QSE_T("host['*'].location['/'].name"),      QSE_T("default.name") },
 	{ QSE_T("host['*'].location['/'].root"),      QSE_T("default.root") },
 	{ QSE_T("host['*'].location['/'].realm"),     QSE_T("default.realm") },
 	{ QSE_T("host['*'].location['/'].auth"),      QSE_T("default.auth") },
 	{ QSE_T("host['*'].location['/'].dir-css"),   QSE_T("default.dir-css") },
-	{ QSE_T("host['*'].location['/'].error-css"), QSE_T("default.error-css") },
-	{ QSE_T("ssl-cert-file"),                     QSE_T("default.ssl-cert-file") },
-	{ QSE_T("ssl-key-file"),                      QSE_T("default.ssl-key-file") }
+	{ QSE_T("host['*'].location['/'].error-css"), QSE_T("default.error-css") }
+};
+
+static struct 
+{
+	const qse_char_t* x;
+	const qse_char_t* y;
+} acc_items[] =
+{
+	{ QSE_T("host['*'].location['/'].dir-access"), QSE_T("default.dir-access") },
+	{ QSE_T("host['*'].location['/'].file-access"), QSE_T("default.file-access") },
 };
 
 static int load_server_config (
@@ -633,6 +705,22 @@ static int load_server_config (
 		{
 			server_xtn->scfg[i] = qse_httpd_strtombsdup (httpd, ((qse_xli_str_t*)pair->val)->ptr);
 			if (server_xtn->scfg[i] == QSE_NULL) 
+			{
+				/*qse_printf (QSE_T("ERROR in copying - %s\n"), qse_httpd_geterrmsg (httpd));*/
+				qse_printf (QSE_T("ERROR in copying\n"));
+				return -1;
+			}
+		}
+	}
+
+	for (i = 0; i < QSE_COUNTOF(xcfg_items); i++)
+	{
+		pair = qse_xli_findpairbyname (httpd_xtn->xli, list, xcfg_items[i].x);
+		if (!pair) pair = qse_xli_findpairbyname (httpd_xtn->xli, QSE_NULL, xcfg_items[i].y);
+		if (pair && pair->val->type == QSE_XLI_STR)
+		{
+			server_xtn->xcfg[i] = qse_httpd_strtombsdup (httpd, ((qse_xli_str_t*)pair->val)->ptr);
+			if (server_xtn->xcfg[i] == QSE_NULL) 
 			{
 				/*qse_printf (QSE_T("ERROR in copying - %s\n"), qse_httpd_geterrmsg (httpd));*/
 				qse_printf (QSE_T("ERROR in copying\n"));
@@ -798,15 +886,6 @@ static int load_server_config (
 
 	for (i = 0; i < 2;  i++)
 	{
-		static struct 
-		{
-			const qse_char_t* x;
-			const qse_char_t* y;
-		} acc_items[] =
-		{
-			{ QSE_T("host['*'].location['/'].dir-access"), QSE_T("default.dir-access") },
-			{ QSE_T("host['*'].location['/'].file-access"), QSE_T("default.file-access") },
-		};
 
 		pair = qse_xli_findpairbyname (httpd_xtn->xli, list, acc_items[i].x);
 		if (!pair) pair = qse_xli_findpairbyname (httpd_xtn->xli, QSE_NULL, acc_items[i].y);
@@ -870,19 +949,473 @@ static int load_server_config (
 	/* perform more sanity check */
 /* TODO: support multiple auth entries here and above */
 #if 0
-	if (qse_mbschr (server_xtn->scfg[SCFG_AUTH], QSE_MT(':')) == QSE_NULL)
+	if (qse_mbschr (server_xtn->xcfg[XCFG_AUTH], QSE_MT(':')) == QSE_NULL)
 	{
-		qse_printf (QSE_T("WARNING: no colon in the auth string - [%hs]\n"), server_xtn->scfg[SCFG_AUTH]);
+		qse_printf (QSE_T("WARNING: no colon in the auth string - [%hs]\n"), server_xtn->xcfg[XCFG_AUTH]);
 	}
 #endif
 
-	if (server_xtn->scfg[SCFG_ROOT] && 
-	    qse_mbstonwad (server_xtn->scfg[SCFG_ROOT], &server_xtn->root_nwad) >= 0) 
+	if (server_xtn->xcfg[XCFG_ROOT] && 
+	    qse_mbstonwad (server_xtn->xcfg[XCFG_ROOT], &server_xtn->root_nwad) >= 0) 
 	{
 		server_xtn->root_is_nwad = 1;
 	}
 
 	return 0;
+}
+
+
+static struct 
+{
+	const qse_char_t* x;
+	const qse_char_t* y;
+} loc_xcfg_items[] =
+{
+	{ QSE_T("name"),      QSE_T("default.name") },
+	{ QSE_T("root"),      QSE_T("default.root") },
+	{ QSE_T("realm"),     QSE_T("default.realm") },
+	{ QSE_T("auth"),      QSE_T("default.auth") },
+	{ QSE_T("dir-css"),   QSE_T("default.dir-css") },
+	{ QSE_T("error-css"), QSE_T("default.error-css") }
+};
+
+static struct 
+{
+	const qse_char_t* x;
+	const qse_char_t* y;
+} loc_acc_items[] =
+{
+	{ QSE_T("dir-access"), QSE_T("default.dir-access") },
+	{ QSE_T("file-access"), QSE_T("default.file-access") }
+};
+
+static void free_server_loccfg (qse_httpd_t* httpd, server_loccfg_t* loccfg)
+{
+	qse_size_t i, j;
+
+	for (i = 0; i < QSE_COUNTOF(loccfg->xcfg); i++)
+	{
+		if (loccfg->xcfg[i]) 
+		{
+			qse_httpd_freemem (httpd, loccfg->xcfg[i]);
+			loccfg->xcfg[i] = QSE_NULL;
+		}
+	}
+
+	if (loccfg->index.files) 
+	{
+		qse_httpd_freemem (httpd, loccfg->index.files);
+		loccfg->index.files = QSE_NULL;
+		loccfg->index.count = 0;
+	}
+
+	for (i = 0; i < QSE_COUNTOF(loccfg->cgi); i++)
+	{
+		struct cgi_t* cgi = loccfg->cgi[i].head;
+		while (cgi)
+		{
+			struct cgi_t* x = cgi;
+			cgi = x->next;
+
+			if (x->shebang) qse_httpd_freemem (httpd, x->shebang);
+			if (x->spec) qse_httpd_freemem (httpd, x->spec);
+			if (x) qse_httpd_freemem (httpd, x);
+		}
+
+		loccfg->cgi[i].head = QSE_NULL;
+		loccfg->cgi[i].tail = QSE_NULL;
+	}
+
+	for (i = 0; i < QSE_COUNTOF(loccfg->mime); i++)
+	{
+		struct mime_t* mime = loccfg->mime[i].head;
+		while (mime)
+		{
+			struct mime_t* x = mime;
+			mime = x->next;
+
+			if (x->spec) qse_httpd_freemem (httpd, x->spec);
+			if (x->value) qse_httpd_freemem (httpd, x->value);
+			if (x) qse_httpd_freemem (httpd, x);
+		}
+
+		loccfg->mime[i].head = QSE_NULL;
+		loccfg->mime[i].tail = QSE_NULL;
+	}
+
+	for (j = 0; j < QSE_COUNTOF(loccfg->access); j++)
+	{
+		for (i = 0; i < QSE_COUNTOF(loccfg->access[j]); i++)
+		{
+			struct access_t* access = loccfg->access[j][i].head;
+			while (access)
+			{
+				struct access_t* x = access;
+				access = x->next;
+
+				if (x->spec) qse_httpd_freemem (httpd, x->spec);
+				if (x) qse_httpd_freemem (httpd, x);
+			}
+
+			loccfg->access[j][i].head = QSE_NULL;
+			loccfg->access[j][i].tail = QSE_NULL;
+		}
+	}
+
+	qse_httpd_freemem (httpd, loccfg->locname);
+	qse_httpd_freemem (httpd, loccfg);
+}
+
+static void free_server_hostcfg (qse_httpd_t* httpd, server_hostcfg_t* hostcfg)
+{
+	server_loccfg_t* lc, * cur;
+
+	lc = hostcfg->loccfg;
+	while (lc)
+	{
+		cur = lc;
+		lc = lc->next;	
+		free_server_loccfg (httpd, cur);
+	}
+	qse_httpd_freemem (httpd, hostcfg->hostname);
+	qse_httpd_freemem (httpd, hostcfg);
+}
+
+static int load_server_loccfg (qse_httpd_t* httpd, qse_xli_list_t* list, server_loccfg_t* cfg)
+{
+	qse_size_t i;
+	qse_xli_pair_t* pair;
+	qse_xli_atom_t* atom;
+	httpd_xtn_t* httpd_xtn;
+
+	httpd_xtn = qse_httpd_getxtnstd (httpd);
+
+	for (i = 0; i < QSE_COUNTOF(loc_xcfg_items); i++)
+	{
+		pair = qse_xli_findpairbyname (httpd_xtn->xli, list, loc_xcfg_items[i].x);
+		if (!pair) pair = qse_xli_findpairbyname (httpd_xtn->xli, QSE_NULL, loc_xcfg_items[i].y);
+		if (pair && pair->val->type == QSE_XLI_STR)
+		{
+			cfg->xcfg[i] = qse_httpd_strtombsdup (httpd, ((qse_xli_str_t*)pair->val)->ptr);
+			if (cfg->xcfg[i] == QSE_NULL) 
+			{
+				/*qse_printf (QSE_T("ERROR in copying - %s\n"), qse_httpd_geterrmsg (httpd));*/
+				qse_printf (QSE_T("ERROR in copying\n"));
+				return -1;
+			}
+		}
+	}
+
+	pair = qse_xli_findpairbyname (httpd_xtn->xli, list, QSE_T("host['*'].location['/'].index"));
+	if (!pair) pair = qse_xli_findpairbyname (httpd_xtn->xli, QSE_NULL, QSE_T("default.index"));
+	if (pair && pair->val->type == QSE_XLI_STR)
+	{
+		const qse_char_t* tmpptr, * tmpend;
+		qse_size_t count;
+
+		tmpptr = ((qse_xli_str_t*)pair->val)->ptr;
+		tmpend = tmpptr + ((qse_xli_str_t*)pair->val)->len;
+	
+		for (count = 0; tmpptr < tmpend; count++) tmpptr += qse_strlen (tmpptr) + 1;
+
+		cfg->index.count = count;
+		cfg->index.files = qse_httpd_strntombsdup (
+			httpd, ((qse_xli_str_t*)pair->val)->ptr, ((qse_xli_str_t*)pair->val)->len);
+		if (cfg->index.files == QSE_NULL) 
+		{
+			qse_printf (QSE_T("ERROR: in copying index\n"));
+			return -1;
+		}
+	}
+
+	pair = qse_xli_findpairbyname (httpd_xtn->xli, list, QSE_T("host['*'].location['/'].cgi"));
+	if (!pair) pair = qse_xli_findpairbyname (httpd_xtn->xli, QSE_NULL, QSE_T("default.cgi"));
+	if (pair && pair->val->type == QSE_XLI_LIST)
+	{
+		/* TODO: more sanity check... this can be done with xli schema... if supported */
+		qse_xli_list_t* cgilist = (qse_xli_list_t*)pair->val;
+		for (atom = cgilist->head; atom; atom = atom->next)
+		{
+			if (atom->type != QSE_XLI_PAIR) continue;
+
+			pair = (qse_xli_pair_t*)atom;
+			if (pair->key && pair->name && 
+			    (pair->val->type == QSE_XLI_NIL || pair->val->type == QSE_XLI_STR))
+			{
+				struct cgi_t* cgi;
+				int type;
+
+				if (qse_strcmp (pair->key, QSE_T("prefix")) == 0) type = CGI_PREFIX;
+				else if (qse_strcmp (pair->key, QSE_T("suffix")) == 0) type = CGI_SUFFIX;
+				else if (qse_strcmp (pair->key, QSE_T("name")) == 0) type = CGI_NAME;
+				else continue;
+
+				cgi = qse_httpd_callocmem (httpd, QSE_SIZEOF(*cgi));
+				if (cgi == QSE_NULL)
+				{
+					qse_printf (QSE_T("ERROR: memory failure in copying cgi\n"));
+					return -1;
+				}
+
+				cgi->type = type;
+				cgi->spec = qse_httpd_strtombsdup (httpd, pair->name);
+				if (!cgi->spec)
+				{
+					qse_httpd_freemem (httpd, cgi);
+					qse_printf (QSE_T("ERROR: memory failure in copying cgi\n"));
+					return -1;
+				}
+				if (pair->val->type == QSE_XLI_STR) 
+				{
+					const qse_char_t* tmpptr, * tmpend;
+					qse_size_t count;
+
+					tmpptr = ((qse_xli_str_t*)pair->val)->ptr;
+					tmpend = tmpptr + ((qse_xli_str_t*)pair->val)->len;
+	
+					for (count = 0; tmpptr < tmpend; count++) 
+					{
+						if (count == 0)
+						{
+							if (qse_strcmp (tmpptr, QSE_T("nph")) == 0) cgi->nph = 1;
+						}
+						else if (count == 1)
+						{
+							cgi->shebang = qse_httpd_strtombsdup (httpd, tmpptr);
+							if (!cgi->shebang)
+							{
+								qse_httpd_freemem (httpd, cgi->spec);
+								qse_httpd_freemem (httpd, cgi);
+								qse_printf (QSE_T("ERROR: memory failure in copying cgi\n"));
+								return -1;
+							}
+						}
+
+						tmpptr += qse_strlen (tmpptr) + 1;
+
+						/* TODO: more sanity check */
+					}
+
+				}
+				if (cfg->cgi[type].tail)
+					cfg->cgi[type].tail->next = cgi;
+				else
+					cfg->cgi[type].head = cgi;
+				cfg->cgi[type].tail = cgi;
+			}
+		}	
+	}
+
+	pair = qse_xli_findpairbyname (httpd_xtn->xli, list, QSE_T("host['*'].location['/'].mime"));
+	if (!pair) pair = qse_xli_findpairbyname (httpd_xtn->xli, QSE_NULL, QSE_T("default.mime"));
+	if (pair && pair->val->type == QSE_XLI_LIST)
+	{
+		qse_xli_list_t* mimelist = (qse_xli_list_t*)pair->val;
+		for (atom = mimelist->head; atom; atom = atom->next)
+		{
+			if (atom->type != QSE_XLI_PAIR) continue;
+
+			pair = (qse_xli_pair_t*)atom;
+			if (pair->key && pair->val->type == QSE_XLI_STR)
+			{
+				struct mime_t* mime;
+				int type;
+
+				if (qse_strcmp (pair->key, QSE_T("prefix")) == 0 && pair->name) type = MIME_PREFIX;
+				else if (qse_strcmp (pair->key, QSE_T("suffix")) == 0 && pair->name) type = MIME_SUFFIX;
+				else if (qse_strcmp (pair->key, QSE_T("name")) == 0 && pair->name) type = MIME_NAME;
+				else if (qse_strcmp (pair->key, QSE_T("other")) == 0 && !pair->name) type = MIME_OTHER;
+				else continue;
+
+				mime = qse_httpd_callocmem (httpd, QSE_SIZEOF(*mime));
+				if (mime == QSE_NULL)
+				{
+					qse_printf (QSE_T("ERROR: memory failure in copying mime\n"));
+					return -1;
+				}
+
+				mime->type = type;
+				mime->spec = qse_httpd_strtombsdup (httpd, pair->name);
+				if (!mime->spec)
+				{
+					qse_httpd_freemem (httpd, mime);
+					qse_printf (QSE_T("ERROR: memory failure in copying mime\n"));
+					return -1;
+				}
+
+				mime->value = qse_httpd_strtombsdup (httpd, ((qse_xli_str_t*)pair->val)->ptr);
+				if (!mime->value)
+				{
+					qse_httpd_freemem (httpd, mime->spec);
+					qse_httpd_freemem (httpd, mime);
+					qse_printf (QSE_T("ERROR: memory failure in copying mime\n"));
+					return -1;
+				}
+
+				if (cfg->mime[type].tail)
+					cfg->mime[type].tail->next = mime;
+				else
+					cfg->mime[type].head = mime;
+				cfg->mime[type].tail = mime;
+			}
+		}	
+	}
+
+	for (i = 0; i < 2;  i++)
+	{
+
+		pair = qse_xli_findpairbyname (httpd_xtn->xli, list, loc_acc_items[i].x);
+		if (!pair) pair = qse_xli_findpairbyname (httpd_xtn->xli, QSE_NULL, loc_acc_items[i].y);
+		if (pair && pair->val->type == QSE_XLI_LIST)
+		{
+			qse_xli_list_t* acclist = (qse_xli_list_t*)pair->val;
+			for (atom = acclist->head; atom; atom = atom->next)
+			{
+				if (atom->type != QSE_XLI_PAIR) continue;
+	
+				pair = (qse_xli_pair_t*)atom;
+				if (pair->key && pair->val->type == QSE_XLI_STR)
+				{
+					struct access_t* acc;
+					const qse_char_t* tmp;
+					int type, value;
+	
+					if (qse_strcmp (pair->key, QSE_T("prefix")) == 0 && pair->name) type = ACCESS_PREFIX;
+					else if (qse_strcmp (pair->key, QSE_T("suffix")) == 0 && pair->name) type = ACCESS_SUFFIX;
+					else if (qse_strcmp (pair->key, QSE_T("name")) == 0 && pair->name) type = ACCESS_NAME;
+					else if (qse_strcmp (pair->key, QSE_T("other")) == 0 && !pair->name) type = ACCESS_OTHER;
+					else continue;
+	
+					tmp = ((qse_xli_str_t*)pair->val)->ptr;
+					if (qse_strcmp (tmp, QSE_T("noent")) == 0) value = 404;
+					else if (qse_strcmp (tmp, QSE_T("forbid")) == 0) value = 403;
+					else if (qse_strcmp (tmp, QSE_T("ok")) == 0) value = 200;
+					else continue;
+					/* TODO: more sanity check */
+	
+					acc = qse_httpd_callocmem (httpd, QSE_SIZEOF(*acc));
+					if (acc == QSE_NULL)
+					{
+						qse_printf (QSE_T("ERROR: memory failure in copying acc\n"));
+						return -1;
+					}
+	
+					acc->type = type;
+					if (pair->name)
+					{
+						acc->spec = qse_httpd_strtombsdup (httpd, pair->name);
+						if (!acc->spec)
+						{
+							qse_httpd_freemem (httpd, acc);
+							qse_printf (QSE_T("ERROR: memory failure in copying access\n"));
+							return -1;
+						}
+					}
+					acc->value = value;
+	
+					if (cfg->access[i][type].tail)
+						cfg->access[i][type].tail->next = acc;
+					else
+						cfg->access[i][type].head = acc;
+					cfg->access[i][type].tail = acc;
+				}
+			}	
+		}
+	}
+
+	/* TODO: support multiple auth entries here and above */
+
+#if 0
+	/* TODO: perform more sanity check */
+	if (qse_mbschr (cfg->xcfg[XCFG_AUTH], QSE_MT(':')) == QSE_NULL)
+	{
+		qse_printf (QSE_T("WARNING: no colon in the auth string - [%hs]\n"), cfg->xcfg[XCFG_AUTH]);
+	}
+#endif
+
+	if (cfg->xcfg[XCFG_ROOT] && qse_mbstonwad (cfg->xcfg[XCFG_ROOT], &cfg->root_nwad) >= 0) 
+	{
+		cfg->root_is_nwad = 1;
+	}
+
+	return 0;
+}
+
+static int load_server_hostcfg (qse_httpd_t* httpd, qse_httpd_server_t* server, qse_xli_list_t* list)
+{
+	qse_size_t i, j, host_count, loc_count;
+	qse_xli_pair_t* host, * loc;
+	httpd_xtn_t* httpd_xtn;
+	server_xtn_t* server_xtn;
+	qse_char_t buf[32];
+	server_hostcfg_t* hostcfg;
+	server_loccfg_t* loccfg;
+
+	httpd_xtn = qse_httpd_getxtnstd (httpd);
+	server_xtn = qse_httpd_getserverstdxtn (httpd, server);
+
+	host_count = qse_xli_getnumpairsbyname (httpd_xtn->xli, list, QSE_T("host"));
+	if (host_count <= 0) return 0; /* nothing to load */
+
+	qse_htb_init (&server_xtn->cfgtab, qse_httpd_getmmgr (httpd), host_count + (host_count / 3) + 1, 70, 0, 0);
+
+	for (i = 0; i < host_count; i++)
+	{
+		qse_sprintf (buf, QSE_COUNTOF(buf), QSE_T("host[%d]"), i);
+		host = qse_xli_findpairbyname (httpd_xtn->xli, list, buf);
+		if (!host) break;
+
+		if (host->val->type == QSE_XLI_LIST && host->name) 
+		{
+			loc_count = qse_xli_getnumpairsbyname (httpd_xtn->xli, host->val, QSE_T("location"));
+
+			hostcfg = qse_httpd_callocmem (httpd, QSE_SIZEOF(*hostcfg));
+			if (hostcfg == QSE_NULL) return -1;
+			
+			for (j = loc_count; j > 0; )
+			{
+				j--;
+
+				qse_sprintf (buf, QSE_COUNTOF(buf), QSE_T("location[%d]"), j);
+				loc = qse_xli_findpairbyname (httpd_xtn->xli, host->val, buf);
+				if (!loc) break;
+
+				if (loc->val->type == QSE_XLI_LIST && loc->name) 
+				{
+					loccfg = qse_httpd_callocmem (httpd, QSE_SIZEOF(*loccfg));
+					if (loccfg == QSE_NULL) goto oops;
+
+					hostcfg->loccfg = loccfg;
+					loccfg->next = hostcfg->loccfg;
+
+					if (load_server_loccfg (httpd, loc, loccfg) <= -1) goto oops;
+
+					loccfg->locname = qse_httpd_strtombsdup (httpd, loc->name);
+					if (loccfg->locname == QSE_NULL)  goto oops;
+				}
+			}
+
+			if (hostcfg->loccfg)
+			{
+				hostcfg->hostname = qse_httpd_strtombsdup (httpd, host->name);
+				if (hostcfg->hostname == QSE_NULL) goto oops;
+
+				if (qse_htb_insert (&server_xtn->cfgtab, hostcfg->hostname, 0, hostcfg, 0) == QSE_NULL) goto oops;		
+			}
+			else
+			{
+				/* no location configuration found in the host configuration */
+				qse_httpd_freemem (httpd, hostcfg);
+				hostcfg = QSE_NULL;
+			}
+		}
+	}
+
+	return 0;
+
+oops:
+	if (hostcfg) free_server_hostcfg (httpd, hostcfg);
+	return -1;
 }
 
 static qse_httpd_server_t* attach_server (qse_httpd_t* httpd, int num, qse_xli_list_t* list)
@@ -902,7 +1435,6 @@ static qse_httpd_server_t* attach_server (qse_httpd_t* httpd, int num, qse_xli_l
 		qse_printf (QSE_T("WARNING: no value or invalid value specified for bind\n"));
 		return QSE_NULL;
 	}
-
 
 	qse_memset (&dope, 0, QSE_SIZEOF(dope));
 	if (qse_strtonwad (((qse_xli_str_t*)pair->val)->ptr, &dope.nwad) <= -1)
@@ -1024,6 +1556,8 @@ static int load_config (qse_httpd_t* httpd)
 			if (server)
 			{
 				load_server_config (httpd, server, (qse_xli_list_t*)pair->val);
+				/* TODO: error check */
+				load_server_hostcfg (httpd, server, (qse_xli_list_t*)pair->val);
 				/* TODO: error check */
 			}
 		}
