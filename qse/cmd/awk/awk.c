@@ -595,8 +595,8 @@ static int comparg (int argc, qse_char_t* argv[], struct arg_t* arg)
 		goto oops;
 	}
 
-	qse_htb_setmancbs (gvm,
-		qse_gethtbmancbs(QSE_HTB_MANCBS_INLINE_VALUE_COPIER)
+	qse_htb_setstyle (gvm,
+		qse_gethtbstyle(QSE_HTB_STYLE_INLINE_VALUE_COPIER)
 	);
 
 	while ((c = qse_getopt (argc, argv, &opt)) != QSE_CHAR_EOF)

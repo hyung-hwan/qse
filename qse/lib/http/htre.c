@@ -37,7 +37,7 @@ static void free_hdrval (qse_htb_t* htb, void* vptr, qse_size_t vlen)
 
 int qse_htre_init (qse_htre_t* re, qse_mmgr_t* mmgr)
 {
-	static qse_htb_mancbs_t mancbs =
+	static qse_htb_style_t style =
 	{
           {
                QSE_HTB_COPIER_DEFAULT,
@@ -59,8 +59,8 @@ int qse_htre_init (qse_htre_t* re, qse_mmgr_t* mmgr)
 	if (qse_htb_init (&re->hdrtab, mmgr, 60, 70, 1, 1) <= -1) return -1;
 	if (qse_htb_init (&re->trailers, mmgr, 20, 70, 1, 1) <= -1) return -1;
 
-	qse_htb_setmancbs (&re->hdrtab, &mancbs);
-	qse_htb_setmancbs (&re->trailers, &mancbs);
+	qse_htb_setstyle (&re->hdrtab, &style);
+	qse_htb_setstyle (&re->trailers, &style);
 
 	qse_mbs_init (&re->content, mmgr, 0);
 #if 0

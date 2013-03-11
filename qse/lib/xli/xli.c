@@ -72,8 +72,8 @@ int qse_xli_init (qse_xli_t* xli, qse_mmgr_t* mmgr)
 	);
 	if (xli->sio_names == QSE_NULL) goto oops;
 	*(qse_xli_t**)QSE_XTN(xli->sio_names) = xli;
-	qse_htb_setmancbs (xli->sio_names, 
-		qse_gethtbmancbs(QSE_HTB_MANCBS_INLINE_KEY_COPIER)
+	qse_htb_setstyle (xli->sio_names, 
+		qse_gethtbstyle(QSE_HTB_STYLE_INLINE_KEY_COPIER)
 	);
 	
 	xli->root.type = QSE_XLI_LIST;
@@ -433,9 +433,9 @@ static qse_xli_pair_t* find_pair_byindex (
 qse_xli_pair_t* qse_xli_findpairbyname (qse_xli_t* xli, const qse_xli_list_t* list, const qse_char_t* name)
 {
 	const qse_char_t* ptr;
-	qse_cstr_t seg;
-	qse_xli_list_t* curlist;
+	const qse_xli_list_t* curlist;
 	qse_xli_pair_t* pair;
+	qse_cstr_t seg;
 
 	curlist = list? list: &xli->root;
 
@@ -557,9 +557,9 @@ noent:
 qse_size_t qse_xli_getnumpairsbyname (qse_xli_t* xli, const qse_xli_list_t* list, const qse_char_t* name)
 {
 	const qse_char_t* ptr;
-	qse_cstr_t seg;
-	qse_xli_list_t* curlist;
+	const qse_xli_list_t* curlist;
 	qse_xli_pair_t* pair;
+	qse_cstr_t seg;
 
 	curlist = list? list: &xli->root;
 
@@ -679,7 +679,9 @@ qse_size_t qse_xli_getnumpairsbyname (qse_xli_t* xli, const qse_xli_list_t* list
 		curlist = (qse_xli_list_t*)pair->val;
 	}
 
-	return pair;
+	/* this part must never be reached */
+	qse_xli_seterrnum (xli, QSE_XLI_EINTERN, QSE_NULL);
+	return 0;
 
 inval:
 	qse_xli_seterrnum (xli, QSE_XLI_EINVAL, QSE_NULL);

@@ -206,8 +206,8 @@ StdAwk::Run* StdAwk::parse (Source& in, Source& out)
 			this->setError (QSE_AWK_ENOMEM);
 			return QSE_NULL;
 		}
-		qse_htb_setmancbs (&this->cmgrtab,
-			qse_gethtbmancbs(QSE_HTB_MANCBS_INLINE_KEY_COPIER));
+		qse_htb_setstyle (&this->cmgrtab,
+			qse_gethtbstyle(QSE_HTB_STYLE_INLINE_KEY_COPIER));
 		this->cmgrtab_inited = true;
 	}
 

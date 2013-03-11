@@ -1422,7 +1422,7 @@ int qse_awk_mod_uci (qse_awk_mod_t* mod, qse_awk_t* awk)
 		qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);
 		return -1;
 	}
-	qse_rbt_setmancbs (rbt, qse_getrbtmancbs(QSE_RBT_MANCBS_INLINE_COPIERS));
+	qse_rbt_setstyle (rbt, qse_getrbtstyle(QSE_RBT_STYLE_INLINE_COPIERS));
 
 	mod->ctx = rbt;
 	return 0;
