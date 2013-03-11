@@ -894,7 +894,7 @@ static void same_namedval (qse_htb_t* map, void* dptr, qse_size_t dlen)
 
 static int init_rtx (qse_awk_rtx_t* rtx, qse_awk_t* awk, qse_awk_rio_t* rio)
 {
-	static qse_htb_mancbs_t mancbs_for_named =
+	static qse_htb_style_t style_for_named =
 	{
 		{
 			QSE_HTB_COPIER_INLINE,
@@ -942,7 +942,7 @@ static int init_rtx (qse_awk_rtx_t* rtx, qse_awk_t* awk, qse_awk_rio_t* rio)
 	rtx->named = qse_htb_open (MMGR(rtx), QSE_SIZEOF(rtx), 1024, 70, QSE_SIZEOF(qse_char_t), 1);
 	if (rtx->named == QSE_NULL) goto oops_5;
 	*(qse_awk_rtx_t**)QSE_XTN(rtx->named) = rtx;
-	qse_htb_setmancbs (rtx->named, &mancbs_for_named);
+	qse_htb_setstyle (rtx->named, &style_for_named);
 
 	rtx->format.tmp.ptr = (qse_char_t*)
 		QSE_AWK_ALLOC (rtx->awk, 4096*QSE_SIZEOF(qse_char_t*));

@@ -1542,12 +1542,12 @@ QSE_EXPORT qse_wchar_t* qse_wcsxnend (
 );
 
 #if defined(QSE_CHAR_IS_MCHAR)
-#	define qse_strend(str,sub)             qse_mbsxend(str,sub)
+#	define qse_strend(str,sub)             qse_mbsend(str,sub)
 #	define qse_strxend(str,len,sub)        qse_mbsxend(str,len,sub)
 #	define qse_strnend(str,sub,len)        qse_mbsnend(str,sub,len)
 #	define qse_strxnend(str,len1,sub,len2) qse_mbsxnend(str,len1,sub,len2)
 #else
-#	define qse_strend(str,sub)             qse_wcsxend(str,sub)
+#	define qse_strend(str,sub)             qse_wcsend(str,sub)
 #	define qse_strxend(str,len,sub)        qse_wcsxend(str,len,sub)
 #	define qse_strnend(str,sub,len)        qse_wcsnend(str,sub,len)
 #	define qse_strxnend(str,len1,sub,len2) qse_wcsxnend(str,len1,sub,len2)

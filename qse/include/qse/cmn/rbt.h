@@ -49,7 +49,7 @@
  *   int i;
  * 
  *   s1 = qse_rbt_open (QSE_MMGR_GETDFL(), 0, 1, 1); // error handling skipped
- *   qse_rbt_setmancbs (s1, qse_getrbtmancbs(QSE_RBT_MANCBS_INLINE_COPIERS));
+ *   qse_rbt_setstyle (s1, qse_getrbtstyle(QSE_RBT_STYLE_INLINE_COPIERS));
  * 
  *   for (i = 0; i < 20; i++)
  *   {
@@ -183,13 +183,13 @@ struct qse_rbt_pair_t
 	qse_rbt_pair_t* child[2]; /* left and right */
 };
 
-typedef struct qse_rbt_mancbs_t qse_rbt_mancbs_t;
+typedef struct qse_rbt_style_t qse_rbt_style_t;
 
 /**
- * The qse_rbt_mancbs_t type defines callback function sets for key/value 
+ * The qse_rbt_style_t type defines callback function sets for key/value 
  * pair manipulation. 
  */
-struct qse_rbt_mancbs_t
+struct qse_rbt_style_t
 {
 	qse_rbt_copier_t copier[2]; /**< key and value copier */
 	qse_rbt_freeer_t freeer[2]; /**< key and value freeer */
@@ -198,22 +198,22 @@ struct qse_rbt_mancbs_t
 };
 
 /**
- * The qse_rbt_mancbs_kind_t type defines the type of predefined
+ * The qse_rbt_style_kind_t type defines the type of predefined
  * callback set for pair manipulation.
  */
-enum qse_rbt_mancbs_kind_t
+enum qse_rbt_style_kind_t
 {
 	/** store the key and the value pointer */
-	QSE_RBT_MANCBS_DEFAULT,
+	QSE_RBT_STYLE_DEFAULT,
 	/** copy both key and value into the pair */
-	QSE_RBT_MANCBS_INLINE_COPIERS,
+	QSE_RBT_STYLE_INLINE_COPIERS,
 	/** copy the key into the pair but store the value pointer */
-	QSE_RBT_MANCBS_INLINE_KEY_COPIER,
+	QSE_RBT_STYLE_INLINE_KEY_COPIER,
 	/** copy the value into the pair but store the key pointer */
-	QSE_RBT_MANCBS_INLINE_VALUE_COPIER
+	QSE_RBT_STYLE_INLINE_VALUE_COPIER
 };
 
-typedef enum qse_rbt_mancbs_kind_t  qse_rbt_mancbs_kind_t;
+typedef enum qse_rbt_style_kind_t  qse_rbt_style_kind_t;
 
 /**
  * The qse_rbt_t type defines a red-black tree.
@@ -222,7 +222,7 @@ struct qse_rbt_t
 {
 	qse_mmgr_t* mmgr;
 
-	const qse_rbt_mancbs_t* mancbs;
+	const qse_rbt_style_t* style;
 
 	qse_byte_t       scale[2];  /**< length scale */
 
@@ -271,11 +271,11 @@ extern "C" {
 #endif
 
 /**
- * The qse_getrbtmancbs() functions returns a predefined callback set for
+ * The qse_getrbtstyle() functions returns a predefined callback set for
  * pair manipulation.
  */
-QSE_EXPORT const qse_rbt_mancbs_t* qse_getrbtmancbs (
-	qse_rbt_mancbs_kind_t kind
+QSE_EXPORT const qse_rbt_style_t* qse_getrbtstyle (
+	qse_rbt_style_kind_t kind
 );
 
 /**
@@ -322,19 +322,22 @@ QSE_EXPORT void* qse_rbt_getxtn (
 );
 
 /**
- * The qse_rbt_getmancbs() function gets manipulation callback function set.
+ * The qse_rbt_getstyle() function gets manipulation callback function set.
  */
-QSE_EXPORT const qse_rbt_mancbs_t* qse_rbt_getmancbs (
+QSE_EXPORT const qse_rbt_style_t* qse_rbt_getstyle (
 	const qse_rbt_t* rbt /**< red-black tree */
 );
 
 /**
- * The qse_rbt_setmancbs() function sets internal manipulation callback 
+ * The qse_rbt_setstyle() function sets internal manipulation callback 
  * functions for data construction, destruction, comparison, etc.
+ * The callback structure pointed to by \a style must outlive the tree
+ * pointed to by \a htb as the tree doesn't copy the contents of the 
+ * structure.
  */
-QSE_EXPORT void qse_rbt_setmancbs (
-	qse_rbt_t*              rbt,   /**< red-black tree */
-	const qse_rbt_mancbs_t* mancbs /**< callback function set */
+QSE_EXPORT void qse_rbt_setstyle (
+	qse_rbt_t*             rbt,  /**< red-black tree */
+	const qse_rbt_style_t* style /**< callback function set */
 );
 
 /**
@@ -483,7 +486,7 @@ QSE_EXPORT qse_rbt_pair_t* qse_rbt_update (
  *     QSE_MMGR_GETDFL(), 0,
  *     QSE_SIZEOF(qse_char_t), QSE_SIZEOF(qse_char_t)
  *   ); // note error check is skipped 
- *   qse_rbt_setmancbs (s1, &mancbs1);
+ *   qse_rbt_setstyle (s1, &style1);
  * 
  *   for (i = 0; i < QSE_COUNTOF(vals); i++)
  *   {

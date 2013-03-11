@@ -51,7 +51,11 @@ struct qse_httpd_serverstd_root_t
 	qse_httpd_serverstd_root_type_t type;
 	union 
 	{
-		const qse_mchar_t* path;
+		struct
+		{
+			const qse_mchar_t* val;
+			qse_size_t rpl;  /* replacement length */
+		} path;
 		qse_nwad_t nwad;
 	} u;
 };
@@ -94,6 +98,8 @@ struct qse_httpd_serverstd_ssl_t
 
 enum qse_httpd_serverstd_query_code_t
 {
+	QSE_HTTPD_SERVERSTD_SSL,            /* qse_httpd_serverstd_ssl_t */
+
 	QSE_HTTPD_SERVERSTD_NAME,           /* const qse_mchar_t* */
 	QSE_HTTPD_SERVERSTD_ROOT,           /* qse_httpd_serverstd_root_t */
 	QSE_HTTPD_SERVERSTD_REALM,          /* qse_httpd_serverstd_realm_t */
@@ -105,9 +111,8 @@ enum qse_httpd_serverstd_query_code_t
 	QSE_HTTPD_SERVERSTD_CGI,            /* qse_httpd_serverstd_cgi_t */
 	QSE_HTTPD_SERVERSTD_MIME,           /* const qse_mchar_t* */
 	QSE_HTTPD_SERVERSTD_DIRACC,         /* int (http error code) */
-	QSE_HTTPD_SERVERSTD_FILEACC,        /* int (http error code) */
+	QSE_HTTPD_SERVERSTD_FILEACC         /* int (http error code) */
 
-	QSE_HTTPD_SERVERSTD_SSL             /* qse_httpd_serverstd_ssl_t */
 };
 typedef enum qse_httpd_serverstd_query_code_t qse_httpd_serverstd_query_code_t;
 

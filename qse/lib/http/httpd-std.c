@@ -2209,8 +2209,11 @@ static qse_mchar_t* merge_paths (
 	qse_size_t idx = 0;
 		
 	ta[idx++] = base;
-	ta[idx++] = QSE_MT("/");	
-	ta[idx++] = path;
+	if (path[0] != QSE_MT('\0'))
+	{
+		ta[idx++] = QSE_MT("/");	
+		ta[idx++] = path;
+	}
 	ta[idx++] = QSE_NULL;
 	xpath = qse_mbsadup (ta, QSE_NULL, httpd->mmgr);
 	if (xpath == QSE_NULL)
@@ -2231,11 +2234,17 @@ static void merge_paths_to_buf (
 	 * to hold the result. it doesn't duplicate the result */
 	qse_size_t len = 0;
 	len += qse_mbscpy (&xpath[len], base);
-	len += qse_mbscpy (&xpath[len], QSE_MT("/"));
+
 	if (plen == (qse_size_t)-1)
+	{
+		len += qse_mbscpy (&xpath[len], QSE_MT("/"));
 		len += qse_mbscpy (&xpath[len], path);
-	else
+	}
+	else if (plen > 0)
+	{
+		len += qse_mbscpy (&xpath[len], QSE_MT("/"));
 		len += qse_mbsncpy (&xpath[len], path, plen);
+	}
 	qse_canonmbspath (xpath, xpath, 0);
 }
 
@@ -2244,6 +2253,9 @@ struct rsrc_tmp_t
 	const qse_mchar_t* qpath;
 	const qse_mchar_t* idxfile;
 	qse_mchar_t* xpath;
+
+	qse_size_t qpath_len;
+	const qse_mchar_t* qpath_rp;
 
 	qse_httpd_serverstd_root_t root;
 	qse_httpd_serverstd_realm_t realm;
@@ -2295,7 +2307,7 @@ static int attempt_cgi (
 
 		QSE_ASSERT (tmp->qpath[0] == QSE_T('/'));
 
-		ptr = tmp->qpath + 1;
+		ptr = tmp->qpath_rp + 1;
 		while (*ptr != QSE_MT('\0'))
 		{
 			slash = qse_mbschr (ptr, QSE_MT('/'));
@@ -2309,8 +2321,9 @@ static int attempt_cgi (
 					/* a slash is found and the segment is not empty.
 					 *
 					 * tmp->xpath should be large enough to hold the merge path made of
-					 * the subsegments of the original query path and docroot. */
-					merge_paths_to_buf (httpd, tmp->root.u.path, tmp->qpath, slash - tmp->qpath, tmp->xpath);
+					 * the subsegments of the original query path and docroot. 
+					 */
+					merge_paths_to_buf (httpd, tmp->root.u.path.val, tmp->qpath_rp, slash - tmp->qpath_rp, tmp->xpath);
 					xpath_changed = 1;
 	
 					stx = stat_file (httpd, tmp->xpath, &st, 0);
@@ -2326,7 +2339,10 @@ static int attempt_cgi (
 					{
 						if (server_xtn->query (httpd, client->server, req, tmp->xpath, QSE_HTTPD_SERVERSTD_CGI, &cgi) >= 0 && cgi.cgi)
 						{
-							script = qse_mbsxdup (tmp->qpath, slash - tmp->qpath , httpd->mmgr);
+							/* the script name is composed of the orginal query path.
+							 * the pointer held in 'slash' is valid for tmp->qpath as
+							 * tmp->qpath_rp is at most the tail part of tmp->qpath. */
+							script = qse_mbsxdup (tmp->qpath, slash - tmp->qpath, httpd->mmgr);
 							suffix = qse_mbsdup (slash, httpd->mmgr);
 							if (!script || !suffix) goto oops;
 
@@ -2351,8 +2367,8 @@ static int attempt_cgi (
 			}
 		}
 
-		/* restore the xpath because it has changed... */
-		if (xpath_changed) merge_paths_to_buf (httpd, tmp->root.u.path, tmp->qpath, (qse_size_t)-1, tmp->xpath);
+		/* restore xpath because it has changed... */
+		if (xpath_changed) merge_paths_to_buf (httpd, tmp->root.u.path.val, tmp->qpath_rp, (qse_size_t)-1, tmp->xpath);
 	}
 
 	return 0; /* not a cgi */
@@ -2363,7 +2379,7 @@ bingo:
 	target->u.cgi.path = tmp->xpath;
 	target->u.cgi.script = script;
 	target->u.cgi.suffix = suffix;
-	target->u.cgi.root = tmp->root.u.path;
+	target->u.cgi.root = tmp->root.u.path.val;
 	target->u.cgi.shebang = shebang;
 	return 1;
 
@@ -2387,6 +2403,7 @@ static int make_resource (
 
 	QSE_MEMSET (&tmp, 0, QSE_SIZEOF(tmp));
 	tmp.qpath = qse_htre_getqpath(req);
+	tmp.qpath_len = qse_mbslen (tmp.qpath);
 
 	QSE_MEMSET (target, 0, QSE_SIZEOF(*target));
 
@@ -2411,9 +2428,11 @@ static int make_resource (
 		return -1;
 	}
 
-
 	/* default to the root directory. */
-	if (!tmp.root.u.path) tmp.root.u.path = QSE_MT("/"); 
+	if (!tmp.root.u.path.val) tmp.root.u.path.val = QSE_MT("/"); 
+
+	tmp.qpath_rp = (tmp.root.u.path.rpl >= tmp.qpath_len)? 
+		&tmp.qpath[tmp.qpath_len]: &tmp.qpath[tmp.root.u.path.rpl];
 
 	if (tmp.realm.authreq && tmp.realm.name)
 	{
@@ -2458,7 +2477,7 @@ static int make_resource (
 	}
 
 auth_ok:
-	tmp.xpath = merge_paths (httpd, tmp.root.u.path, tmp.qpath);
+	tmp.xpath = merge_paths (httpd, tmp.root.u.path.val, tmp.qpath_rp);
 	if (tmp.xpath == QSE_NULL) return -1;
 
 	stx = stat_file (httpd, tmp.xpath, &st, 0);
@@ -2620,13 +2639,20 @@ static int query_server (
 
 	switch (code)
 	{
+		case QSE_HTTPD_SERVERSTD_SSL:
+			/* you must specify the certificate and the key file to be able
+			 * to use SSL */
+			qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOENT);
+			return -1;
+
 		case QSE_HTTPD_SERVERSTD_NAME:
 			*(const qse_mchar_t**)result = QSE_NULL;
 			break;
 
 		case QSE_HTTPD_SERVERSTD_ROOT:
 			((qse_httpd_serverstd_root_t*)result)->type = QSE_HTTPD_SERVERSTD_ROOT_PATH;
-			((qse_httpd_serverstd_root_t*)result)->u.path = QSE_NULL;
+			((qse_httpd_serverstd_root_t*)result)->u.path.val = QSE_NULL;
+			((qse_httpd_serverstd_root_t*)result)->u.path.rpl = 0;
 			break;
 		
 		case QSE_HTTPD_SERVERSTD_REALM:
@@ -2685,12 +2711,6 @@ static int query_server (
 		case QSE_HTTPD_SERVERSTD_FILEACC:
 			*(int*)result = 200;
 			return 0;
-
-		case QSE_HTTPD_SERVERSTD_SSL:
-			/* you must specify the certificate and the key file to be able
-			 * to use SSL */
-			qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOENT);
-			return -1;
 	}
 
 	qse_httpd_seterrnum (httpd, QSE_HTTPD_EINVAL);

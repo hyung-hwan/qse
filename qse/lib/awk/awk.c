@@ -74,7 +74,7 @@ qse_awk_t* qse_awk_open (qse_mmgr_t* mmgr, qse_size_t xtnsize, qse_awk_prm_t* pr
 {
 	qse_awk_t* awk;
 
-	static qse_htb_mancbs_t treefuncbs =
+	static qse_htb_style_t treefuncbs =
 	{
 		{
 			QSE_HTB_COPIER_INLINE,
@@ -90,7 +90,7 @@ qse_awk_t* qse_awk_open (qse_mmgr_t* mmgr, qse_size_t xtnsize, qse_awk_prm_t* pr
 		QSE_HTB_HASHER_DEFAULT
 	};
 
-	static qse_htb_mancbs_t fncusercbs =
+	static qse_htb_style_t fncusercbs =
 	{
 		{
 			QSE_HTB_COPIER_INLINE,
@@ -156,8 +156,8 @@ qse_awk_t* qse_awk_open (qse_mmgr_t* mmgr, qse_size_t xtnsize, qse_awk_prm_t* pr
 	);
 	if (awk->sio_names == QSE_NULL) goto oops;
 	*(qse_awk_t**)QSE_XTN(awk->sio_names) = awk;
-	qse_htb_setmancbs (awk->sio_names, 
-		qse_gethtbmancbs(QSE_HTB_MANCBS_INLINE_KEY_COPIER)
+	qse_htb_setstyle (awk->sio_names, 
+		qse_gethtbstyle(QSE_HTB_STYLE_INLINE_KEY_COPIER)
 	);
 
 	/* TODO: initial map size?? */
@@ -166,15 +166,15 @@ qse_awk_t* qse_awk_open (qse_mmgr_t* mmgr, qse_size_t xtnsize, qse_awk_prm_t* pr
 	);
 	if (awk->tree.funs == QSE_NULL) goto oops;
 	*(qse_awk_t**)QSE_XTN(awk->tree.funs) = awk;
-	qse_htb_setmancbs (awk->tree.funs, &treefuncbs);
+	qse_htb_setstyle (awk->tree.funs, &treefuncbs);
 
 	awk->parse.funs = qse_htb_open (
 		mmgr, QSE_SIZEOF(awk), 256, 70, QSE_SIZEOF(qse_char_t), 1
 	);
 	if (awk->parse.funs == QSE_NULL) goto oops;
 	*(qse_awk_t**)QSE_XTN(awk->parse.funs) = awk;
-	qse_htb_setmancbs (awk->parse.funs,
-		qse_gethtbmancbs(QSE_HTB_MANCBS_INLINE_KEY_COPIER)
+	qse_htb_setstyle (awk->parse.funs,
+		qse_gethtbstyle(QSE_HTB_STYLE_INLINE_KEY_COPIER)
 	);
 
 	awk->parse.named = qse_htb_open (
@@ -182,8 +182,8 @@ qse_awk_t* qse_awk_open (qse_mmgr_t* mmgr, qse_size_t xtnsize, qse_awk_prm_t* pr
 	);
 	if (awk->parse.named == QSE_NULL) goto oops;
 	*(qse_awk_t**)QSE_XTN(awk->parse.named) = awk;
-	qse_htb_setmancbs (awk->parse.named,
-		qse_gethtbmancbs(QSE_HTB_MANCBS_INLINE_KEY_COPIER)
+	qse_htb_setstyle (awk->parse.named,
+		qse_gethtbstyle(QSE_HTB_STYLE_INLINE_KEY_COPIER)
 	);
 
 	awk->parse.gbls = qse_lda_open (mmgr, QSE_SIZEOF(awk), 128);
@@ -234,13 +234,13 @@ qse_awk_t* qse_awk_open (qse_mmgr_t* mmgr, qse_size_t xtnsize, qse_awk_prm_t* pr
 	);
 	if (awk->fnc.user == QSE_NULL) goto oops;
 	*(qse_awk_t**)QSE_XTN(awk->fnc.user) = awk;
-	qse_htb_setmancbs (awk->fnc.user, &fncusercbs);
+	qse_htb_setstyle (awk->fnc.user, &fncusercbs);
 
 	awk->modtab = qse_rbt_open (mmgr, 0, QSE_SIZEOF(qse_char_t), 1);
 	if (awk->modtab == QSE_NULL) goto  oops;
-	qse_rbt_setmancbs (
+	qse_rbt_setstyle (
 		awk->modtab,
-		qse_getrbtmancbs(QSE_RBT_MANCBS_INLINE_COPIERS)
+		qse_getrbtstyle(QSE_RBT_STYLE_INLINE_COPIERS)
 	);
 
 	if (qse_awk_initgbls (awk) <= -1) goto oops;

@@ -32,8 +32,8 @@
 #define sizer_t         qse_htb_sizer_t
 #define walker_t        qse_htb_walker_t
 #define cbserter_t      qse_htb_cbserter_t
-#define mancbs_t        qse_htb_mancbs_t
-#define mancbs_kind_t   qse_htb_mancbs_kind_t
+#define style_t        qse_htb_style_t
+#define style_kind_t   qse_htb_style_kind_t
 
 #define KPTR(p)  QSE_HTB_KPTR(p)
 #define KLEN(p)  QSE_HTB_KLEN(p)
@@ -53,10 +53,13 @@ QSE_INLINE pair_t* qse_htb_allocpair (
 	htb_t* htb, void* kptr, size_t klen, void* vptr, size_t vlen)
 {
 	pair_t* n;
-	copier_t kcop = htb->mancbs->copier[QSE_HTB_KEY];
-	copier_t vcop = htb->mancbs->copier[QSE_HTB_VAL];
+	copier_t kcop, vcop;
+	size_t as;
 
-	size_t as = SIZEOF(pair_t);
+	kcop = htb->style->copier[QSE_HTB_KEY];
+	vcop = htb->style->copier[QSE_HTB_VAL];
+
+	as = SIZEOF(pair_t);
 	if (kcop == QSE_HTB_COPIER_INLINE) as += KTOB(htb,klen);
 	if (vcop == QSE_HTB_COPIER_INLINE) as += VTOB(htb,vlen);
 
@@ -106,8 +109,8 @@ QSE_INLINE pair_t* qse_htb_allocpair (
 		VPTR(n) = vcop (htb, vptr, vlen);
 		if (VPTR(n) != QSE_NULL)
 		{
-			if (htb->mancbs->freeer[QSE_HTB_KEY] != QSE_NULL)
-				htb->mancbs->freeer[QSE_HTB_KEY] (htb, KPTR(n), KLEN(n));
+			if (htb->style->freeer[QSE_HTB_KEY] != QSE_NULL)
+				htb->style->freeer[QSE_HTB_KEY] (htb, KPTR(n), KLEN(n));
 			QSE_MMGR_FREE (htb->mmgr, n);		
 			return QSE_NULL;
 		}
@@ -118,10 +121,10 @@ QSE_INLINE pair_t* qse_htb_allocpair (
 
 QSE_INLINE void qse_htb_freepair (htb_t* htb, pair_t* pair)
 {
-	if (htb->mancbs->freeer[QSE_HTB_KEY] != QSE_NULL) 
-		htb->mancbs->freeer[QSE_HTB_KEY] (htb, KPTR(pair), KLEN(pair));
-	if (htb->mancbs->freeer[QSE_HTB_VAL] != QSE_NULL)
-		htb->mancbs->freeer[QSE_HTB_VAL] (htb, VPTR(pair), VLEN(pair));
+	if (htb->style->freeer[QSE_HTB_KEY] != QSE_NULL) 
+		htb->style->freeer[QSE_HTB_KEY] (htb, KPTR(pair), KLEN(pair));
+	if (htb->style->freeer[QSE_HTB_VAL] != QSE_NULL)
+		htb->style->freeer[QSE_HTB_VAL] (htb, VPTR(pair), VLEN(pair));
 	QSE_MMGR_FREE (htb->mmgr, pair);
 }
 
@@ -133,14 +136,14 @@ static QSE_INLINE pair_t* change_pair_val (
 		/* if the old value and the new value are the same,
 		 * it just calls the handler for this condition. 
 		 * No value replacement occurs. */
-		if (htb->mancbs->keeper != QSE_NULL)
+		if (htb->style->keeper != QSE_NULL)
 		{
-			htb->mancbs->keeper (htb, vptr, vlen);
+			htb->style->keeper (htb, vptr, vlen);
 		}
 	}
 	else
 	{
-		copier_t vcop = htb->mancbs->copier[QSE_HTB_VAL];
+		copier_t vcop = htb->style->copier[QSE_HTB_VAL];
 		void* ovptr = VPTR(pair);
 		size_t ovlen = VLEN(pair);
 
@@ -176,9 +179,9 @@ static QSE_INLINE pair_t* change_pair_val (
 		}
 
 		/* free up the old value */
-		if (htb->mancbs->freeer[QSE_HTB_VAL] != QSE_NULL) 
+		if (htb->style->freeer[QSE_HTB_VAL] != QSE_NULL) 
 		{
-			htb->mancbs->freeer[QSE_HTB_VAL] (htb, ovptr, ovlen);
+			htb->style->freeer[QSE_HTB_VAL] (htb, ovptr, ovlen);
 		}
 	}
 
@@ -186,9 +189,9 @@ static QSE_INLINE pair_t* change_pair_val (
 	return pair;
 }
 
-static mancbs_t mancbs[] =
+static style_t style[] =
 {
-    	/* == QSE_HTB_MANCBS_DEFAULT == */
+    	/* == QSE_HTB_STYLE_DEFAULT == */
 	{
 		{
 			QSE_HTB_COPIER_DEFAULT,
@@ -204,7 +207,7 @@ static mancbs_t mancbs[] =
 		QSE_HTB_HASHER_DEFAULT
 	},
 
-	/* == QSE_HTB_MANCBS_INLINE_COPIERS == */
+	/* == QSE_HTB_STYLE_INLINE_COPIERS == */
 	{
 		{
 			QSE_HTB_COPIER_INLINE,
@@ -220,7 +223,7 @@ static mancbs_t mancbs[] =
 		QSE_HTB_HASHER_DEFAULT
 	},
 
-	/* == QSE_HTB_MANCBS_INLINE_KEY_COPIER == */
+	/* == QSE_HTB_STYLE_INLINE_KEY_COPIER == */
 	{
 		{
 			QSE_HTB_COPIER_INLINE,
@@ -236,7 +239,7 @@ static mancbs_t mancbs[] =
 		QSE_HTB_HASHER_DEFAULT
 	},
 
-	/* == QSE_HTB_MANCBS_INLINE_VALUE_COPIER == */
+	/* == QSE_HTB_STYLE_INLINE_VALUE_COPIER == */
 	{
 		{
 			QSE_HTB_COPIER_DEFAULT,
@@ -253,9 +256,9 @@ static mancbs_t mancbs[] =
 	}
 };
 
-const mancbs_t* qse_gethtbmancbs (mancbs_kind_t kind)
+const style_t* qse_gethtbstyle (style_kind_t kind)
 {
-	return &mancbs[kind];
+	return &style[kind];
 }
 
 htb_t* qse_htb_open (
@@ -318,7 +321,7 @@ int qse_htb_init (
 	htb->threshold = htb->capa * htb->factor / 100;
 	if (htb->capa > 0 && htb->threshold <= 0) htb->threshold = 1;
 
-	htb->mancbs = &mancbs[0];
+	htb->style = &style[0];
 	return 0;
 }
 
@@ -338,15 +341,15 @@ void* qse_htb_getxtn (qse_htb_t* htb)
 	return QSE_XTN (htb);
 }
 
-const mancbs_t* qse_htb_getmancbs (const htb_t* htb)
+const style_t* qse_htb_getstyle (const htb_t* htb)
 {
-	return htb->mancbs;
+	return htb->style;
 }
 
-void qse_htb_setmancbs (htb_t* htb, const mancbs_t* mancbs)
+void qse_htb_setstyle (htb_t* htb, const style_t* style)
 {
-	QSE_ASSERT (mancbs != QSE_NULL);
-	htb->mancbs = mancbs;
+	QSE_ASSERT (style != QSE_NULL);
+	htb->style = style;
 }
 
 size_t qse_htb_getsize (const htb_t* htb)
@@ -364,12 +367,12 @@ pair_t* qse_htb_search (const htb_t* htb, const void* kptr, size_t klen)
 	pair_t* pair;
 	size_t hc;
 
-	hc = htb->mancbs->hasher(htb,kptr,klen) % htb->capa;
+	hc = htb->style->hasher(htb,kptr,klen) % htb->capa;
 	pair = htb->bucket[hc];
 
 	while (pair != QSE_NULL) 
 	{
-		if (htb->mancbs->comper (htb, KPTR(pair), KLEN(pair), kptr, klen) == 0)
+		if (htb->style->comper (htb, KPTR(pair), KLEN(pair), kptr, klen) == 0)
 		{
 			return pair;
 		}
@@ -385,9 +388,9 @@ static QSE_INLINE_ALWAYS int reorganize (htb_t* htb)
 	size_t i, hc, new_capa;
 	pair_t** new_buck;
 
-	if (htb->mancbs->sizer)
+	if (htb->style->sizer)
 	{
-		new_capa = htb->mancbs->sizer (htb, htb->capa + 1);
+		new_capa = htb->style->sizer (htb, htb->capa + 1);
 
 		/* if no change in capacity, return success 
 		 * without reorganization */
@@ -423,7 +426,7 @@ static QSE_INLINE_ALWAYS int reorganize (htb_t* htb)
 		{
 			pair_t* next = NEXT(pair);
 
-			hc = htb->mancbs->hasher (htb,
+			hc = htb->style->hasher (htb,
 				KPTR(pair),
 				KLEN(pair)) % new_capa;
 
@@ -454,7 +457,7 @@ static pair_t* insert (
 	pair_t* pair, * p, * prev, * next;
 	size_t hc;
 
-	hc = htb->mancbs->hasher(htb,kptr,klen) % htb->capa;
+	hc = htb->style->hasher(htb,kptr,klen) % htb->capa;
 	pair = htb->bucket[hc];
 	prev = QSE_NULL;
 
@@ -462,7 +465,7 @@ static pair_t* insert (
 	{
 		next = NEXT(pair);
 
-		if (htb->mancbs->comper (htb, KPTR(pair), KLEN(pair), kptr, klen) == 0) 
+		if (htb->style->comper (htb, KPTR(pair), KLEN(pair), kptr, klen) == 0) 
 		{
 			/* found a pair with a matching key */
 			switch (opt)
@@ -509,7 +512,7 @@ static pair_t* insert (
 		 * more bucket collision and performance penalty. */
 		if (reorganize(htb) == 0) 
 		{
-			hc = htb->mancbs->hasher(htb,kptr,klen) % htb->capa;
+			hc = htb->style->hasher(htb,kptr,klen) % htb->capa;
 		}
 	}
 
@@ -556,7 +559,7 @@ pair_t* qse_htb_cbsert (
 	pair_t* pair, * p, * prev, * next;
 	size_t hc;
 
-	hc = htb->mancbs->hasher(htb,kptr,klen) % htb->capa;
+	hc = htb->style->hasher(htb,kptr,klen) % htb->capa;
 	pair = htb->bucket[hc];
 	prev = QSE_NULL;
 
@@ -564,7 +567,7 @@ pair_t* qse_htb_cbsert (
 	{
 		next = NEXT(pair);
 
-		if (htb->mancbs->comper (htb, KPTR(pair), KLEN(pair), kptr, klen) == 0) 
+		if (htb->style->comper (htb, KPTR(pair), KLEN(pair), kptr, klen) == 0) 
 		{
 			/* found a pair with a matching key */
 			p = cbserter (htb, pair, kptr, klen, ctx);
@@ -596,7 +599,7 @@ pair_t* qse_htb_cbsert (
 		 * more bucket collision and performance penalty. */
 		if (reorganize(htb) == 0)
 		{
-			hc = htb->mancbs->hasher(htb,kptr,klen) % htb->capa;
+			hc = htb->style->hasher(htb,kptr,klen) % htb->capa;
 		}
 	}
 
@@ -617,13 +620,13 @@ int qse_htb_delete (htb_t* htb, const void* kptr, size_t klen)
 	pair_t* pair, * prev;
 	size_t hc;
 
-	hc = htb->mancbs->hasher(htb,kptr,klen) % htb->capa;
+	hc = htb->style->hasher(htb,kptr,klen) % htb->capa;
 	pair = htb->bucket[hc];
 	prev = QSE_NULL;
 
 	while (pair != QSE_NULL) 
 	{
-		if (htb->mancbs->comper (htb, KPTR(pair), KLEN(pair), kptr, klen) == 0) 
+		if (htb->style->comper (htb, KPTR(pair), KLEN(pair), kptr, klen) == 0) 
 		{
 			if (prev == QSE_NULL) 
 				htb->bucket[hc] = NEXT(pair);

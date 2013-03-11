@@ -488,7 +488,7 @@ static void same_mapval (qse_htb_t* map, void* dptr, qse_size_t dlen)
 
 qse_awk_val_t* qse_awk_rtx_makemapval (qse_awk_rtx_t* rtx)
 {
-	static qse_htb_mancbs_t mancbs =
+	static qse_htb_style_t style =
 	{
 	/* the key is copied inline into a pair and is freed when the pair
 	 * is destroyed. not setting copier for a value means that the pointer 
@@ -559,7 +559,7 @@ qse_awk_val_t* qse_awk_rtx_makemapval (qse_awk_rtx_t* rtx)
 		return QSE_NULL;
 	}
 	*(qse_awk_rtx_t**)QSE_XTN(val->map) = rtx;
-	qse_htb_setmancbs (val->map, &mancbs);
+	qse_htb_setstyle (val->map, &style);
 	/* END CHECK */
 
 	return (qse_awk_val_t*)val;

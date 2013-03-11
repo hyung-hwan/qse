@@ -49,7 +49,7 @@
  *   int i;
  * 
  *   s1 = qse_htb_open (QSE_MMGR_GETDFL(), 0, 30, 75, 1, 1); // error handling skipped
- *   qse_htb_setmancbs (s1, qse_gethtbmancbs(QSE_HTB_MANCBS_INLINE_COPIERS));
+ *   qse_htb_setstyle (s1, qse_gethtbstyle(QSE_HTB_STYLE_INLINE_COPIERS));
  * 
  *   for (i = 0; i < 20; i++)
  *   {
@@ -202,9 +202,9 @@ struct qse_htb_pair_t
 	qse_htb_pair_t* next; 
 };
 
-typedef struct qse_htb_mancbs_t qse_htb_mancbs_t;
+typedef struct qse_htb_style_t qse_htb_style_t;
 
-struct qse_htb_mancbs_t
+struct qse_htb_style_t
 {
 	qse_htb_copier_t copier[2];
 	qse_htb_freeer_t freeer[2];
@@ -215,22 +215,22 @@ struct qse_htb_mancbs_t
 };
 
 /**
- * The qse_htb_mancbs_kind_t type defines the type of predefined
+ * The qse_htb_style_kind_t type defines the type of predefined
  * callback set for pair manipulation.
  */
-enum qse_htb_mancbs_kind_t
+enum qse_htb_style_kind_t
 {
 	/** store the key and the value pointer */
-	QSE_HTB_MANCBS_DEFAULT,
+	QSE_HTB_STYLE_DEFAULT,
 	/** copy both key and value into the pair */
-	QSE_HTB_MANCBS_INLINE_COPIERS,
+	QSE_HTB_STYLE_INLINE_COPIERS,
 	/** copy the key into the pair but store the value pointer */
-	QSE_HTB_MANCBS_INLINE_KEY_COPIER,
+	QSE_HTB_STYLE_INLINE_KEY_COPIER,
 	/** copy the value into the pair but store the key pointer */
-	QSE_HTB_MANCBS_INLINE_VALUE_COPIER
+	QSE_HTB_STYLE_INLINE_VALUE_COPIER
 };
 
-typedef enum qse_htb_mancbs_kind_t  qse_htb_mancbs_kind_t;
+typedef enum qse_htb_style_kind_t  qse_htb_style_kind_t;
 
 /**
  * The qse_htb_t type defines a hash table.
@@ -239,7 +239,7 @@ struct qse_htb_t
 {
 	qse_mmgr_t* mmgr;
 
-	const qse_htb_mancbs_t* mancbs;
+	const qse_htb_style_t* style;
 
 	qse_byte_t       scale[2]; /**< length scale */
 	qse_byte_t       factor;   /**< load factor in percentage */
@@ -300,11 +300,11 @@ extern "C" {
 #endif
 
 /**
- * The qse_gethtbmancbs() functions returns a predefined callback set for
+ * The qse_gethtbstyle() functions returns a predefined callback set for
  * pair manipulation.
  */
-QSE_EXPORT const qse_htb_mancbs_t* qse_gethtbmancbs (
-	qse_htb_mancbs_kind_t kind
+QSE_EXPORT const qse_htb_style_t* qse_gethtbstyle (
+	qse_htb_style_kind_t kind
 );
 
 /**
@@ -364,19 +364,22 @@ QSE_EXPORT void* qse_htb_getxtn (
 );
 
 /**
- * The qse_htb_getmancbs() function gets manipulation callback function set.
+ * The qse_htb_getstyle() function gets manipulation callback function set.
  */
-QSE_EXPORT const qse_htb_mancbs_t* qse_htb_getmancbs (
+QSE_EXPORT const qse_htb_style_t* qse_htb_getstyle (
 	const qse_htb_t* htb /**< hash table */
 );
 
 /**
- * The qse_htb_setmancbs() function sets internal manipulation callback 
+ * The qse_htb_setstyle() function sets internal manipulation callback 
  * functions for data construction, destruction, resizing, hashing, etc.
+ * The callback structure pointed to by \a style must outlive the hash
+ * table pointed to by \a htb as the hash table doesn't copy the contents
+ * of the structure.
  */
-QSE_EXPORT void qse_htb_setmancbs (
-	qse_htb_t*              htb,   /**< hash table */
-	const qse_htb_mancbs_t* mancbs /**< callback function set */
+QSE_EXPORT void qse_htb_setstyle (
+	qse_htb_t*              htb,  /**< hash table */
+	const qse_htb_style_t*  style /**< callback function set */
 );
 
 /**
@@ -533,7 +536,7 @@ QSE_EXPORT qse_htb_pair_t* qse_htb_update (
  *     QSE_MMGR_GETDFL(), 0, 10, 70,
  *     QSE_SIZEOF(qse_char_t), QSE_SIZEOF(qse_char_t)
  *   ); // note error check is skipped 
- *   qse_htb_setmancbs (s1, &mancbs1);
+ *   qse_htb_setstyle (s1, &style1);
  * 
  *   for (i = 0; i < QSE_COUNTOF(vals); i++)
  *   {

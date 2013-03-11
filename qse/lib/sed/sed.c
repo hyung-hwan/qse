@@ -97,9 +97,9 @@ int qse_sed_init (qse_sed_t* sed, qse_mmgr_t* mmgr)
 
 	if (qse_map_init (&sed->tmp.labs, mmgr,
 		128, 70, QSE_SIZEOF(qse_char_t), 1) <= -1) goto oops_3;
-	qse_map_setmancbs (
+	qse_map_setstyle (
 		&sed->tmp.labs, 
-		qse_getmapmancbs(QSE_MAP_MANCBS_INLINE_KEY_COPIER)
+		qse_getmapstyle(QSE_MAP_STYLE_INLINE_KEY_COPIER)
 	);
 
 	/* init_append (sed); */
@@ -3911,7 +3911,7 @@ int qse_sed_exec (qse_sed_t* sed, qse_sed_io_impl_t inf, qse_sed_io_impl_t outf)
 	qse_ssize_t n;
 	int ret = 0;
 
-	static qse_map_mancbs_t mancbs =
+	static qse_map_style_t style =
 	{
 		{
 			QSE_MAP_COPIER_INLINE,
@@ -3955,7 +3955,7 @@ int qse_sed_exec (qse_sed_t* sed, qse_sed_io_impl_t inf, qse_sed_io_impl_t outf)
 		return -1;
 	}
 	*(qse_sed_t**)QSE_XTN(&sed->e.out.files) = sed;
-	qse_map_setmancbs (&sed->e.out.files, &mancbs);
+	qse_map_setstyle (&sed->e.out.files, &style);
 
 	sed->e.in.fun = inf;
 	sed->e.in.eof = 0;

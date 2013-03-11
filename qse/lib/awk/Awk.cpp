@@ -1141,7 +1141,7 @@ int Awk::open ()
 
 	*(Awk**)QSE_XTN(functionMap) = this;
 
-	static qse_htb_mancbs_t mancbs =
+	static qse_htb_style_t style =
 	{
 		{
 			QSE_HTB_COPIER_INLINE,
@@ -1156,7 +1156,7 @@ int Awk::open ()
 		QSE_HTB_SIZER_DEFAULT,
 		QSE_HTB_HASHER_DEFAULT
 	};
-	qse_htb_setmancbs (functionMap, &mancbs);
+	qse_htb_setstyle (functionMap, &style);
 
 	return 0;
 }

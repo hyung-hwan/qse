@@ -30,8 +30,8 @@
 #define keeper_t        qse_rbt_keeper_t
 #define walker_t        qse_rbt_walker_t
 #define cbserter_t      qse_rbt_cbserter_t
-#define mancbs_t        qse_rbt_mancbs_t
-#define mancbs_kind_t   qse_rbt_mancbs_kind_t
+#define style_t        qse_rbt_style_t
+#define style_kind_t   qse_rbt_style_kind_t
 
 #define KPTR(p)  QSE_RBT_KPTR(p)
 #define KLEN(p)  QSE_RBT_KLEN(p)
@@ -64,8 +64,8 @@ QSE_INLINE pair_t* qse_rbt_allocpair (
 {
 	pair_t* n;
 
-	copier_t kcop = rbt->mancbs->copier[QSE_RBT_KEY];
-	copier_t vcop = rbt->mancbs->copier[QSE_RBT_VAL];
+	copier_t kcop = rbt->style->copier[QSE_RBT_KEY];
+	copier_t vcop = rbt->style->copier[QSE_RBT_VAL];
 
 	size_t as = SIZEOF(pair_t);
 	if (kcop == QSE_RBT_COPIER_INLINE) as += KTOB(rbt,klen);
@@ -116,8 +116,8 @@ QSE_INLINE pair_t* qse_rbt_allocpair (
 		VPTR(n) = vcop (rbt, vptr, vlen);
 		if (VPTR(n) != QSE_NULL)
 		{
-			if (rbt->mancbs->freeer[QSE_RBT_KEY] != QSE_NULL)
-				rbt->mancbs->freeer[QSE_RBT_KEY] (rbt, KPTR(n), KLEN(n));
+			if (rbt->style->freeer[QSE_RBT_KEY] != QSE_NULL)
+				rbt->style->freeer[QSE_RBT_KEY] (rbt, KPTR(n), KLEN(n));
 			QSE_MMGR_FREE (rbt->mmgr, n);		
 			return QSE_NULL;
 		}
@@ -128,14 +128,14 @@ QSE_INLINE pair_t* qse_rbt_allocpair (
 
 QSE_INLINE void qse_rbt_freepair (rbt_t* rbt, pair_t* pair)
 {
-	if (rbt->mancbs->freeer[QSE_RBT_KEY] != QSE_NULL) 
-		rbt->mancbs->freeer[QSE_RBT_KEY] (rbt, KPTR(pair), KLEN(pair));
-	if (rbt->mancbs->freeer[QSE_RBT_VAL] != QSE_NULL)
-		rbt->mancbs->freeer[QSE_RBT_VAL] (rbt, VPTR(pair), VLEN(pair));
+	if (rbt->style->freeer[QSE_RBT_KEY] != QSE_NULL) 
+		rbt->style->freeer[QSE_RBT_KEY] (rbt, KPTR(pair), KLEN(pair));
+	if (rbt->style->freeer[QSE_RBT_VAL] != QSE_NULL)
+		rbt->style->freeer[QSE_RBT_VAL] (rbt, VPTR(pair), VLEN(pair));
 	QSE_MMGR_FREE (rbt->mmgr, pair);
 }
 
-static mancbs_t mancbs[] =
+static style_t style[] =
 {
 	{
 		{
@@ -190,9 +190,9 @@ static mancbs_t mancbs[] =
 	}
 };
 
-const mancbs_t* qse_getrbtmancbs (mancbs_kind_t kind)
+const style_t* qse_getrbtstyle (style_kind_t kind)
 {
-	return &mancbs[kind];
+	return &style[kind];
 }
 
 rbt_t* qse_rbt_open (mmgr_t* mmgr, size_t xtnsize, int kscale, int vscale)
@@ -228,7 +228,7 @@ int qse_rbt_init (rbt_t* rbt, mmgr_t* mmgr, int kscale, int vscale)
 	rbt->scale[QSE_RBT_VAL] = (vscale < 1)? 1: vscale;
 	rbt->size = 0;
 
-	rbt->mancbs = &mancbs[0];
+	rbt->style = &style[0];
 	
 	/* self-initializing nil */
 	QSE_MEMSET(&rbt->xnil, 0, QSE_SIZEOF(rbt->xnil));
@@ -257,15 +257,15 @@ void* qse_rbt_getxtn (qse_rbt_t* rbt)
 	return QSE_XTN (rbt);
 }
 
-const mancbs_t* qse_rbt_getmancbs (const rbt_t* rbt)
+const style_t* qse_rbt_getstyle (const rbt_t* rbt)
 {
-	return rbt->mancbs;
+	return rbt->style;
 }
 
-void qse_rbt_setmancbs (rbt_t* rbt, const mancbs_t* mancbs)
+void qse_rbt_setstyle (rbt_t* rbt, const style_t* style)
 {
-	QSE_ASSERT (mancbs != QSE_NULL);
-	rbt->mancbs = mancbs;
+	QSE_ASSERT (style != QSE_NULL);
+	rbt->style = style;
 }
 
 size_t qse_rbt_getsize (const rbt_t* rbt)
@@ -279,7 +279,7 @@ pair_t* qse_rbt_search (const rbt_t* rbt, const void* kptr, size_t klen)
 
 	while (!IS_NIL(rbt,pair))
 	{
-		int n = rbt->mancbs->comper (rbt, kptr, klen, KPTR(pair), KLEN(pair));
+		int n = rbt->style->comper (rbt, kptr, klen, KPTR(pair), KLEN(pair));
 		if (n == 0) return pair;
 
 		if (n > 0) pair = pair->right;
@@ -429,14 +429,14 @@ static pair_t* change_pair_val (
 		/* if the old value and the new value are the same,
 		 * it just calls the handler for this condition. 
 		 * No value replacement occurs. */
-		if (rbt->mancbs->keeper != QSE_NULL)
+		if (rbt->style->keeper != QSE_NULL)
 		{
-			rbt->mancbs->keeper (rbt, vptr, vlen);
+			rbt->style->keeper (rbt, vptr, vlen);
 		}
 	}
 	else
 	{
-		copier_t vcop = rbt->mancbs->copier[QSE_RBT_VAL];
+		copier_t vcop = rbt->style->copier[QSE_RBT_VAL];
 		void* ovptr = VPTR(pair);
 		size_t ovlen = VLEN(pair);
 
@@ -495,9 +495,9 @@ static pair_t* change_pair_val (
 		}
 
 		/* free up the old value */
-		if (rbt->mancbs->freeer[QSE_RBT_VAL] != QSE_NULL) 
+		if (rbt->style->freeer[QSE_RBT_VAL] != QSE_NULL) 
 		{
-			rbt->mancbs->freeer[QSE_RBT_VAL] (rbt, ovptr, ovlen);
+			rbt->style->freeer[QSE_RBT_VAL] (rbt, ovptr, ovlen);
 		}
 	}
 
@@ -513,7 +513,7 @@ static pair_t* insert (
 
 	while (!IS_NIL(rbt,x_cur))
 	{
-		int n = rbt->mancbs->comper (rbt, kptr, klen, KPTR(x_cur), KLEN(x_cur));
+		int n = rbt->style->comper (rbt, kptr, klen, KPTR(x_cur), KLEN(x_cur));
 		if (n == 0) 
 		{
 			switch (opt)
@@ -552,7 +552,7 @@ static pair_t* insert (
 	else
 	{
 		/* perform normal binary insert */
-		int n = rbt->mancbs->comper (rbt, kptr, klen, KPTR(x_par), KLEN(x_par));
+		int n = rbt->style->comper (rbt, kptr, klen, KPTR(x_par), KLEN(x_par));
 		if (n > 0)
 		{
 			QSE_ASSERT (x_par->right == &rbt->xnil);
@@ -607,7 +607,7 @@ pair_t* qse_rbt_cbsert (
 
 	while (!IS_NIL(rbt,x_cur))
 	{
-		int n = rbt->mancbs->comper (rbt, kptr, klen, KPTR(x_cur), KLEN(x_cur));
+		int n = rbt->style->comper (rbt, kptr, klen, KPTR(x_cur), KLEN(x_cur));
 		if (n == 0) 
 		{
 			/* back up the contents of the current pair 
@@ -672,7 +672,7 @@ pair_t* qse_rbt_cbsert (
 	else
 	{
 		/* perform normal binary insert */
-		int n = rbt->mancbs->comper (rbt, kptr, klen, KPTR(x_par), KLEN(x_par));
+		int n = rbt->style->comper (rbt, kptr, klen, KPTR(x_par), KLEN(x_par));
 		if (n > 0)
 		{
 			QSE_ASSERT (x_par->right == &rbt->xnil);

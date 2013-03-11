@@ -2095,8 +2095,8 @@ qse_awk_rtx_t* qse_awk_rtx_openstd (
 			qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);
 			return QSE_NULL;
 		}
-		qse_htb_setmancbs (&rxtn->cmgrtab, 
-			qse_gethtbmancbs(QSE_HTB_MANCBS_INLINE_COPIERS));
+		qse_htb_setstyle (&rxtn->cmgrtab, 
+			qse_gethtbstyle(QSE_HTB_STYLE_INLINE_COPIERS));
 		rxtn->cmgrtab_inited = 1;
 	}
 

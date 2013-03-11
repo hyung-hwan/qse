@@ -399,7 +399,7 @@ static QSE_INLINE int task_main_dir (
 	dir = (task_dir_t*)task->ctx;
 	x = task;
 
-	if (qse_mbsend (dir->path.ptr, QSE_MT("/")))
+	if (qse_mbsend (dir->qpath.ptr, QSE_MT("/")))
 	{
 		if (httpd->opt.scb.dir.open (httpd, dir->path.ptr, &handle) <= -1)
 		{
