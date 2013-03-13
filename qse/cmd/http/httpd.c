@@ -374,13 +374,13 @@ static void free_resource (
 
 static loccfg_t* find_loccfg (
 	qse_httpd_t* httpd, qse_htb_t* cfgtab, 
-	const qse_mchar_t* host, const qse_mchar_t* qpath)
+	const qse_mchar_t* host, qse_size_t hostlen, const qse_mchar_t* qpath)
 {
 	qse_htb_pair_t* pair;
 	server_hostcfg_t* hostcfg;
 	loccfg_t* loccfg;
 
-	pair = qse_htb_search (cfgtab, host, qse_mbslen(host));
+	pair = qse_htb_search (cfgtab, host, hostlen);
 	if (pair) 
 	{
 		hostcfg = (server_hostcfg_t*)QSE_HTB_VPTR(pair);
@@ -425,7 +425,6 @@ static int query_server (
 	if (req)
 	{
 		const qse_htre_hdrval_t* hosthdr;
-
 		const qse_mchar_t* host;
 		const qse_mchar_t* qpath;
 
@@ -434,14 +433,25 @@ static int query_server (
 		hosthdr = qse_htre_getheaderval (req, QSE_MT("Host"));
 		if (hosthdr)
 		{
+			const qse_mchar_t* colon;
+			qse_size_t hostlen;
+
 			/* take the last host value and search */
 			while (hosthdr->next) hosthdr = hosthdr->next;
 			host = hosthdr->ptr;
-			loccfg = find_loccfg (httpd, server_xtn->cfgtab, host, qpath);
+
+			/* remove :port-number if the host name contains it */
+			colon = qse_mbsrchr(host, QSE_MT(':'));
+			if (colon) hostlen = colon - host;
+			else hostlen = qse_mbslen(hostlen);
+
+			loccfg = find_loccfg (httpd, server_xtn->cfgtab, host, hostlen, qpath);
+			if (loccfg == QSE_NULL && qse_mbscmp(qpath, QSE_MT("/")) != 0) 
+				loccfg = find_loccfg (httpd, server_xtn->cfgtab, host, hostlen, QSE_MT("/"));
 		}
-		if (loccfg == QSE_NULL) loccfg = find_loccfg (httpd, server_xtn->cfgtab, QSE_MT("*"), qpath);
+		if (loccfg == QSE_NULL) loccfg = find_loccfg (httpd, server_xtn->cfgtab, QSE_MT("*"), 1, qpath);
 	}
-	if (loccfg == QSE_NULL) loccfg = find_loccfg (httpd, server_xtn->cfgtab, QSE_MT("*"), QSE_MT("/"));
+	if (loccfg == QSE_NULL) loccfg = find_loccfg (httpd, server_xtn->cfgtab, QSE_MT("*"), 1, QSE_MT("/"));
 	if (loccfg == QSE_NULL) loccfg = &httpd_xtn->dflcfg;
 
 	switch (code)
