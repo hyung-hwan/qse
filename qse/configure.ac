@@ -485,11 +485,11 @@ AC_ARG_ENABLE([cxx], [AS_HELP_STRING([--enable-cxx],[build the library for C++ i
 [test "${HAVE_CXX}" = "yes" || enable_cxx_is="no"]
 AM_CONDITIONAL(ENABLE_CXX, test "${enable_cxx_is}" = "yes" )
 
-AC_ARG_ENABLE([reentrant], [AS_HELP_STRING([--enable-reentrant],[define _REENTRANT (default. yes)])],
-	enable_reentrant_is=$enableval,enable_reentrant_is=yes)
+AX_PTHREAD()
+AC_ARG_ENABLE([reentrant], [AS_HELP_STRING([--enable-reentrant],[add thread options (default. no)])],
+	enable_reentrant_is=$enableval,enable_reentrant_is=no)
 if test "$enable_reentrant_is" = "yes"
 then
-	AX_PTHREAD()
 	[CFLAGS="$CFLAGS $PTHREAD_CFLAGS"]
 	[CXXFLAGS="$CXXFLAGS $PTHREAD_CFLAGS"]
 fi
