@@ -2195,6 +2195,11 @@ static void free_resource (
 				QSE_MMGR_FREE (httpd->mmgr, (qse_mchar_t*)target->u.cgi.path);
 			break;
 
+		case QSE_HTTPD_RSRC_RELOC:
+			if (target->u.reloc.dst != qpath)
+				QSE_MMGR_FREE (httpd->mmgr, (qse_mchar_t*)target->u.reloc.dst);
+			break;
+
 		default:
 			/* nothing to do */
 			break;
@@ -2284,8 +2289,19 @@ static int attempt_cgi (
 		{
 			if (tmp->idxfile)
 			{
+				#if 0
 				script = merge_paths (httpd, tmp->qpath, tmp->idxfile);
 				if (script == QSE_NULL) goto oops;
+				#endif
+
+				/* create a relocation resource */
+				target->type = QSE_HTTPD_RSRC_RELOC;
+				target->u.reloc.dst = merge_paths (httpd, tmp->qpath, tmp->idxfile);
+				if (target->u.reloc.dst == QSE_NULL) goto oops;
+				/* free tmp->xpath here upon success since it's not used for relocation.
+				 * it is freed by the called upon failure so the 'oops' part don't free it */
+				QSE_MMGR_FREE (httpd->mmgr, tmp->xpath);
+				return 1;
 			}
 			else script = (qse_mchar_t*)tmp->qpath;
 
@@ -2575,20 +2591,33 @@ auth_ok:
 		if (server_xtn->query (httpd, client->server, req, tmp.xpath, QSE_HTTPD_SERVERSTD_FILEACC, &target->u.err.code) <= -1) target->u.err.code = 500;
 		if (target->u.err.code != 200)
 		{
-			target->type = QSE_HTTPD_RSRC_ERR;
 			/* free xpath since it won't be used */
 			QSE_MMGR_FREE (httpd->mmgr, tmp.xpath);
+			target->type = QSE_HTTPD_RSRC_ERR;
 		}
 		else
 		{
 			/* fall back to a normal file. */
-			target->type = QSE_HTTPD_RSRC_FILE;
-			target->u.file.path = tmp.xpath;
-
-			if (server_xtn->query (httpd, client->server, req, tmp.xpath, QSE_HTTPD_SERVERSTD_MIME, &target->u.file.mime) <= -1)
+			if (tmp.idxfile)
 			{
-				/* don't care about failure */
-				target->u.file.mime = QSE_NULL;
+				/* free xpath since it won't be used */
+				QSE_MMGR_FREE (httpd->mmgr, tmp.xpath);
+
+				/* create a relocation resource */
+				target->type = QSE_HTTPD_RSRC_RELOC;
+				target->u.reloc.dst = merge_paths (httpd, tmp.qpath, tmp.idxfile);
+				if (target->u.reloc.dst == QSE_NULL) return -1;
+			}
+			else
+			{
+				target->type = QSE_HTTPD_RSRC_FILE;
+				target->u.file.path = tmp.xpath;
+
+				if (server_xtn->query (httpd, client->server, req, tmp.xpath, QSE_HTTPD_SERVERSTD_MIME, &target->u.file.mime) <= -1)
+				{
+					/* don't care about failure */
+					target->u.file.mime = QSE_NULL;
+				}
 			}
 		}
 	}
