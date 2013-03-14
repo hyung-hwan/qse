@@ -2200,6 +2200,11 @@ static void free_resource (
 				QSE_MMGR_FREE (httpd->mmgr, (qse_mchar_t*)target->u.reloc.dst);
 			break;
 
+		case QSE_HTTPD_RSRC_REDIR:
+			if (target->u.redir.dst != qpath)
+				QSE_MMGR_FREE (httpd->mmgr, (qse_mchar_t*)target->u.redir.dst);
+			break;
+
 		default:
 			/* nothing to do */
 			break;
@@ -2558,6 +2563,14 @@ auth_ok:
 			if (target->u.err.code != 200)
 			{
 				target->type = QSE_HTTPD_RSRC_ERR;
+				/* free xpath since it won't be used */
+				QSE_MMGR_FREE (httpd->mmgr, tmp.xpath);
+			}
+			else if (tmp.qpath[tmp.qpath_len - 1] != QSE_MT('/'))
+			{
+				/* the query path doesn't end with a slash. so redirect it  */
+				target->type = QSE_HTTPD_RSRC_REDIR;
+				target->u.redir.dst = tmp.qpath;
 				/* free xpath since it won't be used */
 				QSE_MMGR_FREE (httpd->mmgr, tmp.xpath);
 			}

@@ -399,8 +399,14 @@ static QSE_INLINE int task_main_dir (
 	dir = (task_dir_t*)task->ctx;
 	x = task;
 
+	/*
+	 * I've commented out the check for a slash at the end of the query path
+	 * expecting that redirection is performed by the caller if such a condition
+	 * isn't met or that redirection is not required under such a condition.
+
 	if (qse_mbsend (dir->qpath.ptr, QSE_MT("/")))
 	{
+	*/
 		if (httpd->opt.scb.dir.open (httpd, dir->path.ptr, &handle) <= -1)
 		{
 			int http_errnum;
@@ -429,6 +435,7 @@ static QSE_INLINE int task_main_dir (
 			httpd->opt.scb.dir.close (httpd, handle);
 			return -1;
 		}
+	/*
 	}
 	else
 	{
@@ -438,6 +445,7 @@ static QSE_INLINE int task_main_dir (
 
 		return (x == QSE_NULL)? -1: 0;
 	}
+	*/
 }
 
 qse_httpd_task_t* qse_httpd_entaskdir (
