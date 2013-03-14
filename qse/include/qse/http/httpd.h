@@ -75,7 +75,8 @@ enum qse_httpd_trait_t
 	QSE_HTTPD_CGIERRTONUL  = (1 << 1),
 	QSE_HTTPD_CGINOCLOEXEC = (1 << 2),
 	QSE_HTTPD_CGINOCHUNKED = (1 << 3),
-	QSE_HTTPD_LOGACT       = (1 << 4)
+	QSE_HTTPD_PROXYNOVIA   = (1 << 4),
+	QSE_HTTPD_LOGACT       = (1 << 5)
 };
 typedef enum qse_httpd_trait_t qse_httpd_trait_t;
 
@@ -698,7 +699,7 @@ QSE_EXPORT void qse_httpd_setname (
  * pointer to the string used as the value for the server
  * header.
  */
-QSE_EXPORT qse_mchar_t* qse_httpd_getname (
+QSE_EXPORT const qse_mchar_t* qse_httpd_getname (
 	qse_httpd_t* httpd
 );
 

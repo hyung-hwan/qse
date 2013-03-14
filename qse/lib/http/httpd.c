@@ -1330,7 +1330,7 @@ void qse_httpd_setname (qse_httpd_t* httpd, const qse_mchar_t* name)
 	qse_mbsxcpy (httpd->sname, QSE_COUNTOF(httpd->sname), name);
 }
 
-qse_mchar_t* qse_httpd_getname (qse_httpd_t* httpd)
+const qse_mchar_t* qse_httpd_getname (qse_httpd_t* httpd)
 {
 	return httpd->sname;
 }

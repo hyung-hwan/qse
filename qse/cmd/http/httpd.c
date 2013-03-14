@@ -1312,20 +1312,8 @@ static int load_config (qse_httpd_t* httpd)
 		}
 	}
 
-	pair = qse_xli_findpairbyname (httpd_xtn->xli, QSE_NULL, QSE_T("default.name"));
-	if (pair && pair->val->type == QSE_XLI_STR)
-	{
-		qse_mchar_t* name = qse_httpd_strtombsdup (httpd, ((qse_xli_str_t*)pair->val)->ptr);
-		if (name)
-		{
-			qse_httpd_setname (httpd, name);
-			qse_httpd_freemem (httpd, name);
-		}
-		else
-		{
-			/* TODO: warning */
-		}
-	}
+	if (httpd_xtn->dflcfg.xcfg[XCFG_NAME]) 
+		qse_httpd_setname (httpd, httpd_xtn->dflcfg.xcfg[XCFG_NAME]);
 
 	close_config_file (httpd);
 	return 0;
