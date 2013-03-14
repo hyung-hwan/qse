@@ -389,9 +389,15 @@ static loccfg_t* find_loccfg (
 		 * in the configuration. */
 		for (loccfg = hostcfg->loccfg; loccfg; loccfg = loccfg->next)
 		{
+			QSE_ASSERT (loccfg->locname.len > 0);
+
 			if (qse_mbsbeg (qpath, loccfg->locname.ptr) && 
-			    (qpath[loccfg->locname.len] == QSE_MT('/') || 
-			     qpath[loccfg->locname.len] == QSE_MT('\0'))) return loccfg;
+			    (loccfg->locname.ptr[loccfg->locname.len - 1] == QSE_MT('/') ||
+			     qpath[loccfg->locname.len] == QSE_MT('/') || 
+			     qpath[loccfg->locname.len] == QSE_MT('\0'))) 
+			{
+				return loccfg;
+			}
 		}
 	}
 
@@ -443,11 +449,9 @@ static int query_server (
 			/* remove :port-number if the host name contains it */
 			colon = qse_mbsrchr(host, QSE_MT(':'));
 			if (colon) hostlen = colon - host;
-			else hostlen = qse_mbslen(hostlen);
+			else hostlen = qse_mbslen(host);
 
 			loccfg = find_loccfg (httpd, server_xtn->cfgtab, host, hostlen, qpath);
-			if (loccfg == QSE_NULL && qse_mbscmp(qpath, QSE_MT("/")) != 0) 
-				loccfg = find_loccfg (httpd, server_xtn->cfgtab, host, hostlen, QSE_MT("/"));
 		}
 		if (loccfg == QSE_NULL) loccfg = find_loccfg (httpd, server_xtn->cfgtab, QSE_MT("*"), 1, qpath);
 	}
@@ -1075,7 +1079,7 @@ static int load_server_config (qse_httpd_t* httpd, qse_httpd_server_t* server, q
 			loc_count = qse_xli_getnumpairsbyname (httpd_xtn->xli, (qse_xli_list_t*)host->val, QSE_T("location"));
 
 			if (((hostcfg = qse_httpd_callocmem (httpd, QSE_SIZEOF(*hostcfg))) == QSE_NULL) ||
-			    ((hostcfg->hostname = qse_httpd_strtombsdup (httpd, host->name)) == QSE_NULL)) goto oops;
+			    ((hostcfg->hostname = qse_httpd_strtombsdup (httpd, (host->name[0] == QSE_T('\0')? QSE_T("*"):host->name))) == QSE_NULL)) goto oops;
 			
 			for (j = loc_count; j > 0; )
 			{
@@ -1100,7 +1104,8 @@ static int load_server_config (qse_httpd_t* httpd, qse_httpd_server_t* server, q
 					if (load_loccfg (httpd, (qse_xli_list_t*)loc->val, loccfg) <= -1) goto oops;
 
 					/* clone the location name  */
-					loccfg->locname.ptr = qse_httpd_strtombsdup (httpd, loc->name);
+					loccfg->locname.ptr = qse_httpd_strtombsdup (httpd, 
+						(loc->name[0] == QSE_T('\0')? QSE_T("/"): loc->name));
 					if (loccfg->locname.ptr == QSE_NULL) goto oops;
 
 					loccfg->locname.len = qse_mbslen (loccfg->locname.ptr);
