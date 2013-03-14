@@ -1865,10 +1865,10 @@ if (qse_htre_getcontentlen(req) > 0)
 
 	if (peek)
 	{
-		if (method != QSE_HTTP_POST && method != QSE_HTTP_PUT)
+		/*if (method != QSE_HTTP_POST && method != QSE_HTTP_PUT && method != QSE_HTTP_OPTIONS)*/
+		if (method == QSE_HTTP_HEAD || method == QSE_HTTP_GET)
 		{
-			/* i'll discard request contents if the method is none of
-			 * post and put */
+			/* i'll discard request contents if the method is HEAD or GET */
 			qse_httpd_discardcontent (httpd, req);
 		}
 
