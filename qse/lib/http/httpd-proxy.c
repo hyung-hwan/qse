@@ -495,6 +495,18 @@ qse_printf (QSE_T("NORMAL REPLY 222222222222222222222 NORMAL REPLY\n"));
 		}
 		/* end initial line */
 
+		if (!(proxy->httpd->opt.trait & QSE_HTTPD_PROXYNOVIA))
+		{
+			/* add the Via: header into the response */
+			if (qse_mbs_cat (proxy->res, QSE_MT("Via: ")) == (qse_size_t)-1 ||
+			    qse_mbs_cat (proxy->res, qse_httpd_getname (proxy->httpd)) == (qse_size_t)-1 ||
+			    qse_mbs_cat (proxy->res, QSE_MT("\r\n")) == (qse_size_t)-1) 
+			{
+				proxy->httpd->errnum = QSE_HTTPD_ENOMEM;
+				return -1; 
+			}
+		}
+
 		if (proxy->resflags & PROXY_RES_PEER_LENGTH_FAKE)
 		{
 			qse_mchar_t buf[64];
@@ -749,6 +761,15 @@ static int task_init_proxy (
 	}
 
 	snatch_needed = 0;
+
+	if (!(httpd->opt.trait & QSE_HTTPD_PROXYNOVIA))
+	{
+		/* add the Via: header into the request */
+		if (qse_mbs_cat (proxy->reqfwdbuf, QSE_MT("Via: ")) == (qse_size_t)-1 ||
+		    qse_mbs_cat (proxy->reqfwdbuf, qse_httpd_getname (httpd)) == (qse_size_t)-1 ||
+		    qse_mbs_cat (proxy->reqfwdbuf, QSE_MT("\r\n")) == (qse_size_t)-1) goto oops;
+	}
+
 	if (arg->req->state & QSE_HTRE_DISCARDED)
 	{
 		/* no content to add */
@@ -803,6 +824,7 @@ static int task_init_proxy (
 	}
 	else if (arg->req->attr.flags & QSE_HTRE_ATTR_LENGTH)
 	{
+		/* the Content-Length header field is contained in the request. */
 		qse_mchar_t buf[64];
 		qse_fmtuintmaxtombs (
 			buf, QSE_COUNTOF(buf),
