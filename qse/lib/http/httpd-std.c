@@ -1765,7 +1765,8 @@ static int client_accepted (qse_httpd_t* httpd, qse_httpd_client_t* client)
 		if (ret <= 0)
 		{
 			int err;
-			if ((err = SSL_get_error(ssl,ret)) == SSL_ERROR_WANT_READ)
+			err = SSL_get_error(ssl,ret);
+			if (err == SSL_ERROR_WANT_READ || err == SSL_ERROR_WANT_WRITE)
 			{
 				/* handshaking isn't complete. */
 				return 0;
