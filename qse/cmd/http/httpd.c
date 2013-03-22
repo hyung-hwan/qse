@@ -427,11 +427,6 @@ static int query_server (
 		ssl->keyfile = server_xtn->scfg[SCFG_SSLKEYFILE];
 		return 0;
 	}
-	else if (code == QSE_HTTPD_SERVERSTD_EXPECT100)
-	{
-		*(int*)result = 100;
-		return 0;
-	}
 
 	if (req)
 	{
