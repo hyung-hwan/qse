@@ -574,11 +574,17 @@ static int capture_expect (qse_htrd_t* htrd, qse_htb_pair_t* pair)
 {
 	qse_htre_hdrval_t* val;
 
-	val = QSE_HTB_VPTR(pair);
-	while (val->next) val = val->next;
+	/* Expect is included */
+	htrd->re.attr.flags |= QSE_HTRE_ATTR_EXPECT; 
 
-	if (qse_mbscmp (val->ptr, QSE_MT("100-continue")) == 0)
-		htrd->re.attr.flags |= QSE_HTRE_ATTR_EXPECT100;
+	val = QSE_HTB_VPTR(pair);
+	while (val) 
+	{	
+		/* Expect: 100-continue is included */
+		if (qse_mbscasecmp (val->ptr, QSE_MT("100-continue")) == 0)
+			htrd->re.attr.flags |= QSE_HTRE_ATTR_EXPECT100; 
+		val = val->next;
+	}
 
 	return 0;
 }

@@ -70,7 +70,7 @@ int qse_mbscasecmp (const qse_mchar_t* s1, const qse_mchar_t* s2)
 	while (QSE_TOMUPPER(*s1) == QSE_TOMUPPER(*s2)) 
 	{
 		if (*s1 == QSE_C('\0')) return 0;
-		s1++, s2++;
+		s1++; s2++;
 	}
 
 	return (QSE_TOMUPPER(*s1) > QSE_TOMUPPER(*s2))? 1: -1;

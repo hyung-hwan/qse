@@ -99,7 +99,6 @@ struct qse_httpd_serverstd_ssl_t
 enum qse_httpd_serverstd_query_code_t
 {
 	QSE_HTTPD_SERVERSTD_SSL,            /* qse_httpd_serverstd_ssl_t */
-	QSE_HTTPD_SERVERSTD_EXPECT100,      /* int (http error code) */
 
 	QSE_HTTPD_SERVERSTD_NAME,           /* const qse_mchar_t* */
 	QSE_HTTPD_SERVERSTD_ROOT,           /* qse_httpd_serverstd_root_t */

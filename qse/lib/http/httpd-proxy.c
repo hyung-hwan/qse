@@ -495,9 +495,9 @@ qse_printf (QSE_T("NORMAL REPLY 222222222222222222222 NORMAL REPLY\n"));
 		}
 		/* end initial line */
 
-		if (!(proxy->httpd->opt.trait & QSE_HTTPD_PROXYNOVIA))
+		if (!(proxy->httpd->opt.trait & QSE_HTTPD_PROXYNOVIA) && qse_htre_getscodeval(res) != 100)
 		{
-			/* add the Via: header into the response */
+			/* add the Via: header into the response if it is not 100. */
 			if (qse_mbs_cat (proxy->res, QSE_MT("Via: ")) == (qse_size_t)-1 ||
 			    qse_mbs_cat (proxy->res, qse_httpd_getname (proxy->httpd)) == (qse_size_t)-1 ||
 			    qse_mbs_cat (proxy->res, QSE_MT("\r\n")) == (qse_size_t)-1) 

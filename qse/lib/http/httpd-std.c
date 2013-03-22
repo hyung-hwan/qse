@@ -1866,43 +1866,39 @@ if (qse_htre_getcontentlen(req) > 0)
 
 	if (peek)
 	{
-		/*if (method != QSE_HTTP_POST && method != QSE_HTTP_PUT && method != QSE_HTTP_OPTIONS)*/
+#if 0
 		if (method == QSE_HTTP_HEAD || method == QSE_HTTP_GET)
 		{
 			/* i'll discard request contents if the method is HEAD or GET */
 			qse_httpd_discardcontent (httpd, req);
 		}
-
-		if ((req->attr.flags & QSE_HTRE_ATTR_EXPECT100) &&
+#endif
+		if ((req->attr.flags & QSE_HTRE_ATTR_EXPECT) &&
 		    (req->version.major > 1 ||
 		     (req->version.major == 1 && req->version.minor >= 1)) &&
 		    !content_received)
 		{
 			int code;
 
-			/* "Expect: 100-Continue" in the header, version 1.1 or higher,
-			 * and no content received yet */
+			/* "Expect" in the header, version 1.1 or higher,
+			 * and no content received yet.
+			 * if the partial or complete content is already received,
+			 * we don't need to send '100 continue'. */
 
-			if (server_xtn->query (httpd, client->server, req, QSE_NULL, QSE_HTTPD_SERVERSTD_EXPECT100, &code) <= -1) return -1;
-
-			/* TODO: determine if to return 100-continue or other errors */
-			if (code == 100)
+			if (req->attr.flags & QSE_HTRE_ATTR_EXPECT100)
 			{
+				/* "Expect: 100-continue" in the header */
 				if (qse_httpd_entaskcontinue (httpd, client, QSE_NULL, req) == QSE_NULL) return -1;
 			}
-			else if (code == 417) 
+			else
 			{
 				/* if expectation fails, the client must not send the contents.
 				 * however, some erroneous clients may do that. 
 				 * calling qse_httpd_discardcontent() won't do any harms */
-
-				/*
-				if (qse_httpd_entaskexpectfailure (httpd, client, QSE_NULL, req) == QSE_NULL) return -1;
-				*/
 				qse_httpd_discardcontent (httpd, req);
+				task = qse_httpd_entaskerr (httpd, client, QSE_NULL, 417, req);
+				if (task == QSE_NULL) goto oops;
 			}
-
-			/* if 200, ignore "Expect: 100-Continue" */
 		}
 	}
 
@@ -2705,10 +2701,6 @@ static int query_server (
 			 * to use SSL */
 			qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOENT);
 			return -1;
-
-		case QSE_HTTPD_SERVERSTD_EXPECT100:
-			*(int*)result = 100;
-			break;
 
 		case QSE_HTTPD_SERVERSTD_NAME:
 			*(const qse_mchar_t**)result = QSE_NULL;
