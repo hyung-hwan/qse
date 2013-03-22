@@ -427,6 +427,11 @@ static int query_server (
 		ssl->keyfile = server_xtn->scfg[SCFG_SSLKEYFILE];
 		return 0;
 	}
+	else if (code == QSE_HTTPD_SERVERSTD_EXPECT100)
+	{
+		*(int*)result = 100;
+		return 0;
+	}
 
 	if (req)
 	{
@@ -460,6 +465,7 @@ static int query_server (
 
 	switch (code)
 	{
+
 		case QSE_HTTPD_SERVERSTD_NAME:
 			*(const qse_mchar_t**)result = loccfg->xcfg[XCFG_NAME];
 			return 0;
