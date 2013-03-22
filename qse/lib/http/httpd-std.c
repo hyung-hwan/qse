@@ -1878,13 +1878,31 @@ if (qse_htre_getcontentlen(req) > 0)
 		     (req->version.major == 1 && req->version.minor >= 1)) &&
 		    !content_received)
 		{
-/* TODO: check method.... */
-			/* "expect" in the header, version 1.1 or higher,
+			int code;
+
+			/* "Expect: 100-Continue" in the header, version 1.1 or higher,
 			 * and no content received yet */
 
+			if (server_xtn->query (httpd, client->server, req, QSE_NULL, QSE_HTTPD_SERVERSTD_EXPECT100, &code) <= -1) return -1;
+
 			/* TODO: determine if to return 100-continue or other errors */
-			if (qse_httpd_entaskcontinue (
-				httpd, client, QSE_NULL, req) == QSE_NULL) return -1;
+			if (code == 100)
+			{
+				if (qse_httpd_entaskcontinue (httpd, client, QSE_NULL, req) == QSE_NULL) return -1;
+			}
+			else if (code == 417) 
+			{
+				/* if expectation fails, the client must not send the contents.
+				 * however, some erroneous clients may do that. 
+				 * calling qse_httpd_discardcontent() won't do any harms */
+
+				/*
+				if (qse_httpd_entaskexpectfailure (httpd, client, QSE_NULL, req) == QSE_NULL) return -1;
+				*/
+				qse_httpd_discardcontent (httpd, req);
+			}
+
+			/* if 200, ignore "Expect: 100-Continue" */
 		}
 	}
 
@@ -2687,6 +2705,10 @@ static int query_server (
 			 * to use SSL */
 			qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOENT);
 			return -1;
+
+		case QSE_HTTPD_SERVERSTD_EXPECT100:
+			*(int*)result = 100;
+			break;
 
 		case QSE_HTTPD_SERVERSTD_NAME:
 			*(const qse_mchar_t**)result = QSE_NULL;
