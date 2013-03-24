@@ -469,6 +469,11 @@ enum qse_httpd_rsrc_type_t
 };
 typedef enum qse_httpd_rsrc_type_t qse_httpd_rsrc_type_t;
 
+enum qse_httpd_rsrc_flag_t
+{
+	QSE_HTTPD_RSRC_100_CONTINUE = (1 << 0)
+};
+
 typedef struct qse_httpd_rsrc_cgi_t qse_httpd_rsrc_cgi_t;
 struct qse_httpd_rsrc_cgi_t
 {
@@ -484,6 +489,7 @@ typedef struct qse_httpd_rsrc_t qse_httpd_rsrc_t;
 struct qse_httpd_rsrc_t
 {
 	qse_httpd_rsrc_type_t type;
+	int flags; /**< bitwised-ORed of #qse_httpd_rsrc_flag_t */
 	union 
 	{
 		struct

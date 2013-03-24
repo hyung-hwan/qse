@@ -36,6 +36,7 @@ struct task_file_t
 	qse_ntime_t        if_modified_since;
 	qse_http_version_t version;
 	int                keepalive;
+	int                headonly;
 };
 
 typedef struct task_fseg_t task_fseg_t;
@@ -234,6 +235,7 @@ static QSE_INLINE int task_main_file (
 		);
 		if (x)
 		{
+			if (file->headonly) goto no_file_send;
 			x = entask_file_segment (
 				httpd, client, x,
 				handle, 
@@ -288,7 +290,11 @@ static QSE_INLINE int task_main_file (
 			qse_httpd_fmtgmtimetobb (httpd, &st.mtime, 1),
 			etag
 		);
-		if (x) x = entask_file_segment (httpd, client, x, handle, 0, st.size);
+		if (x) 
+		{
+			if (file->headonly) goto no_file_send;
+			x = entask_file_segment (httpd, client, x, handle, 0, st.size);
+		}
 	}
 
 	if (x) return 0;
@@ -311,6 +317,9 @@ qse_httpd_task_t* qse_httpd_entaskfile (
 	qse_httpd_task_t task;
 	task_file_t data;
 	const qse_htre_hdrval_t* tmp;
+	int meth;
+
+	meth = qse_htre_getqmethodtype(req);;
 
 	QSE_MEMSET (&data, 0, QSE_SIZEOF(data));
 	data.path.ptr = path;
@@ -322,6 +331,25 @@ qse_httpd_task_t* qse_httpd_entaskfile (
 	}
 	data.version = *qse_htre_getversion(req);
 	data.keepalive = (req->attr.flags & QSE_HTRE_ATTR_KEEPALIVE);
+
+	switch (meth)
+	{
+		case QSE_HTTP_HEAD:
+			data.headonly = 1;
+			break;
+	
+		case QSE_HTTP_OPTIONS:
+			break;
+
+		case QSE_HTTP_GET:
+		case QSE_HTTP_POST:
+		case QSE_HTTP_PUT:
+			break;
+
+		default:
+			/* Method not allowed */
+			return qse_httpd_entaskerr (httpd, client, pred, 405, req);
+	}
 
 	tmp = qse_htre_getheaderval(req, QSE_MT("Range"));
 	if (tmp) 

@@ -100,6 +100,7 @@ struct qse_htre_t
 #define QSE_HTRE_ATTR_KEEPALIVE (1 << 2)
 #define QSE_HTRE_ATTR_EXPECT    (1 << 3)
 #define QSE_HTRE_ATTR_EXPECT100 (1 << 4)
+#define QSE_HTRE_ATTR_PROXIED   (1 << 5)
 		int flags;
 		qse_size_t content_length;
 		const qse_mchar_t* status; /* for cgi */
