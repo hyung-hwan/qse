@@ -1826,18 +1826,13 @@ qse_printf (QSE_T("HEADER OK %d[%hs] %d[%hs]\n"),  (int)QSE_HTB_KLEN(pair), QSE_
 static int process_request (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_htre_t* req, int peek)
 {
-	int method;
 	qse_httpd_task_t* task;
-	int content_received;
 	server_xtn_t* server_xtn;
 
 	server_xtn = (server_xtn_t*)qse_httpd_getserverxtn (httpd, client->server);
 
-	method = qse_htre_getqmethodtype(req);
-	content_received = (qse_htre_getcontentlen(req) > 0);
-
 	/* percent-decode the query path to the original buffer
-	 * since i'm not gonna need it in the original form
+	 * since i'm not going to need it in the original form
 	 * any more. once it's decoded in the peek mode,
 	 * the decoded query path is made available in the
 	 * non-peek mode as well */
@@ -1866,84 +1861,68 @@ if (qse_htre_getcontentlen(req) > 0)
 
 	if (peek)
 	{
-#if 0
-		if (method == QSE_HTTP_HEAD || method == QSE_HTTP_GET)
+		qse_httpd_rsrc_t rsrc;
+
+		/* determine what to do once the header fields are all received.
+		 * i don't want to delay this until the contents are received.
+		 * if you don't like this behavior, you must implement your own
+		 * callback function for request handling. */
+
+		if (qse_htre_getqmethodtype(req) == QSE_HTTP_POST &&
+		    !(req->attr.flags & QSE_HTRE_ATTR_LENGTH) &&
+		    !(req->attr.flags & QSE_HTRE_ATTR_CHUNKED))
 		{
-			/* i'll discard request contents if the method is HEAD or GET */
+			/* POST without Content-Length nor not chunked */
+			req->attr.flags &= ~QSE_HTRE_ATTR_KEEPALIVE;
 			qse_httpd_discardcontent (httpd, req);
-		}
-#endif
-		if ((req->attr.flags & QSE_HTRE_ATTR_EXPECT) &&
-		    (req->version.major > 1 ||
-		     (req->version.major == 1 && req->version.minor >= 1)) &&
-		    !content_received)
-		{
-			int code;
-
-			/* "Expect" in the header, version 1.1 or higher,
-			 * and no content received yet.
-			 * if the partial or complete content is already received,
-			 * we don't need to send '100 continue'. */
-
-			if (req->attr.flags & QSE_HTRE_ATTR_EXPECT100)
+			task = qse_httpd_entaskerr (httpd, client, QSE_NULL, 411, req);
+			if (task) 
 			{
-				/* "Expect: 100-continue" in the header */
-				if (qse_httpd_entaskcontinue (httpd, client, QSE_NULL, req) == QSE_NULL) return -1;
-			}
-			else
-			{
-				/* if expectation fails, the client must not send the contents.
-				 * however, some erroneous clients may do that. 
-				 * calling qse_httpd_discardcontent() won't do any harms */
-				qse_httpd_discardcontent (httpd, req);
-				task = qse_httpd_entaskerr (httpd, client, QSE_NULL, 417, req);
-				if (task == QSE_NULL) goto oops;
+				/* 411 Length Required - can't keep alive. Force disconnect */
+				task = qse_httpd_entaskdisconnect (httpd, client, QSE_NULL);
 			}
 		}
-	}
-
-	if (method == QSE_HTTP_GET || method == QSE_HTTP_POST)
-	{
-		if (peek)
+		else if (server_xtn->makersrc (httpd, client, req, &rsrc) <= -1)
 		{
-			qse_httpd_rsrc_t rsrc;
-
-			if (method == QSE_HTTP_POST &&
-			    !(req->attr.flags & QSE_HTRE_ATTR_LENGTH) &&
-			    !(req->attr.flags & QSE_HTRE_ATTR_CHUNKED))
-			{
-				req->attr.flags &= ~QSE_HTRE_ATTR_KEEPALIVE;
-				qse_httpd_discardcontent (httpd, req);
-				task = qse_httpd_entaskerr (httpd, client, QSE_NULL, 411, req);
-				if (task) 
-				{
-					/* 411 Length Required - can't keep alive. Force disconnect */
-					task = qse_httpd_entaskdisconnect (httpd, client, QSE_NULL);
-				}
-			}
-			else if (server_xtn->makersrc (httpd, client, req, &rsrc) <= -1)
-			{
-				qse_httpd_discardcontent (httpd, req);
-				task = qse_httpd_entaskerr (httpd, client, QSE_NULL, 500, req);
-			}
-			else
-			{
-				task = qse_httpd_entaskrsrc (httpd, client, QSE_NULL, &rsrc, req);
-				server_xtn->freersrc (httpd, client, req, &rsrc);
-			}
-			if (task == QSE_NULL) goto oops;
-		}
-	}
-	else
-	{
-		if (peek)
-		{
+			/* failed to make a resource. just send the internal server error.
+			 * the makersrc handler can return a negative number to return 
+			 * '500 Internal Server Error'. If it wants to return a specific
+			 * error code, it should return 0 with the QSE_HTTPD_RSRC_ERR
+			 * resource. */
 			qse_httpd_discardcontent (httpd, req);
+			task = qse_httpd_entaskerr (httpd, client, QSE_NULL, 500, req);
 		}
 		else
 		{
-			task = qse_httpd_entaskerr (httpd, client, QSE_NULL, 405, req);
-			if (task == QSE_NULL) goto oops;
+			task = QSE_NULL;
+
+			/* inject '100 continue' first if it is needed */
+			if ((rsrc.flags & QSE_HTTPD_RSRC_100_CONTINUE) && 
+			    (task = qse_httpd_entaskcontinue (httpd, client, task, req)) == QSE_NULL) goto oops;
+
+			/* arrange the actual resource to be returned */
+			task = qse_httpd_entaskrsrc (httpd, client, task, &rsrc, req);
+			server_xtn->freersrc (httpd, client, req, &rsrc);
+
+			/* if the resource is indicating to return an error,
+			 * discard the contents since i won't return them */
+			if (rsrc.type == QSE_HTTPD_RSRC_ERR) qse_httpd_discardcontent (httpd, req); 
+		}
+		if (task == QSE_NULL) goto oops;
+	}
+	else
+	{
+		/* contents are all received */
+
+		if (req->attr.flags & QSE_HTRE_ATTR_PROXIED)
+		{
+			/* the contents should be proxied. 
+			 * do nothing locally */
+		}
+		else
+		{
+			/* when the request is handled locally, 
+			 * there's nothing special to do here */		
 		}
 	}
 
@@ -2435,7 +2414,7 @@ static int make_resource (
 	struct rsrc_tmp_t tmp;
 
 	qse_httpd_stat_t st;
-	int n, stx;
+	int n, stx, meth;
 
 	QSE_MEMSET (&tmp, 0, QSE_SIZEOF(tmp));
 	tmp.qpath = qse_htre_getqpath(req);
@@ -2445,7 +2424,7 @@ static int make_resource (
 
 	server_xtn = qse_httpd_getserverxtn (httpd, client->server);
 
-	if (server_xtn->query (httpd, client->server, req, tmp.xpath, QSE_HTTPD_SERVERSTD_ROOT, &tmp.root) <= -1) return -1;
+	if (server_xtn->query (httpd, client->server, req, QSE_NULL, QSE_HTTPD_SERVERSTD_ROOT, &tmp.root) <= -1) return -1;
 	if (tmp.root.type == QSE_HTTPD_SERVERSTD_ROOT_NWAD)
 	{
 		/* proxy the request */
@@ -2453,13 +2432,30 @@ static int make_resource (
 		/*target->u.proxy.dst = client->orgdst_addr;*/
 		target->u.proxy.dst = tmp.root.u.nwad;
 		target->u.proxy.src = client->remote_addr;
+
+		/* mark that this request is going to be proxied. */
+		req->attr.flags |= QSE_HTRE_ATTR_PROXIED;
 		return 0;
 	}
 
+	/* handle the request locally */
+
+#if 0
+	meth = qse_htre_getqmethodtype(req);
+	if (meth != QSE_HTTP_GET && meth != QSE_HTTP_POST && meth != QSE_HTTP_PUT && method != QSE_HTTP_)
+	{
+/* TODO: handle more method types */
+		/* method not allowed */
+		target->type = QSE_HTTPD_RSRC_ERR;
+		target->u.err.code = 405;
+		return 0;
+	}
+#endif
+
 	QSE_ASSERT (tmp.root.type == QSE_HTTPD_SERVERSTD_ROOT_PATH);
 
-	if (server_xtn->query (httpd, client->server, req, tmp.xpath, QSE_HTTPD_SERVERSTD_REALM, &tmp.realm) <= -1 ||
-	    server_xtn->query (httpd, client->server, req, tmp.xpath, QSE_HTTPD_SERVERSTD_INDEX, &tmp.index) <= -1)
+	if (server_xtn->query (httpd, client->server, req, QSE_NULL, QSE_HTTPD_SERVERSTD_REALM, &tmp.realm) <= -1 ||
+	    server_xtn->query (httpd, client->server, req, QSE_NULL, QSE_HTTPD_SERVERSTD_INDEX, &tmp.index) <= -1)
 	{
 		return -1;
 	}
@@ -2477,7 +2473,7 @@ static int make_resource (
 		authv = qse_htre_getheaderval (req, QSE_MT("Authorization"));
 		if (authv)
 		{
-			while (authv->next) authv = authv->next;
+			/*while (authv->next) authv = authv->next;*/
 
 			if (qse_mbszcasecmp(authv->ptr, QSE_MT("Basic "), 6) == 0) 
 			{
@@ -2488,11 +2484,11 @@ static int make_resource (
 				authl = qse_mbslen(&authv->ptr[6]);	
 				if (authl > server_xtn->auth.len)
 				{
-					qse_mchar_t* tmp;
-					tmp = qse_httpd_reallocmem (httpd, server_xtn->auth.ptr, authl * QSE_SIZEOF(qse_mchar_t));
-					if (!tmp) return -1;
+					qse_mchar_t* tptr;
+					tptr = qse_httpd_reallocmem (httpd, server_xtn->auth.ptr, authl * QSE_SIZEOF(qse_mchar_t));
+					if (!tptr) return -1;
 
-					server_xtn->auth.ptr = tmp;
+					server_xtn->auth.ptr = tptr;
 					/* the maximum capacity that can hold the largest authorization value */
 					server_xtn->auth.len = authl;	 
 				}
@@ -2503,7 +2499,7 @@ static int make_resource (
 
 				tmp.auth.key.ptr = server_xtn->auth.ptr;
 				tmp.auth.key.len = authl2;
-	    			if (server_xtn->query (httpd, client->server, req, tmp.xpath, QSE_HTTPD_SERVERSTD_AUTH, &tmp.auth) >= 0 && tmp.auth.authok) goto auth_ok;
+	    			if (server_xtn->query (httpd, client->server, req, QSE_NULL, QSE_HTTPD_SERVERSTD_AUTH, &tmp.auth) >= 0 && tmp.auth.authok) goto auth_ok;
 			}
 		}
 
@@ -2513,6 +2509,34 @@ static int make_resource (
 	}
 
 auth_ok:
+
+	/* if authentication is ok or no authentication is required,
+	 * handle 'Expect: 100-continue' if it is contained in the header */
+	if ((req->attr.flags & QSE_HTRE_ATTR_EXPECT) &&
+	    (req->version.major > 1 || (req->version.major == 1 && req->version.minor >= 1)) &&
+	    qse_htre_getcontentlen(req) <= 0)
+	{
+		/* "Expect" in the header, version 1.1 or higher,
+		 * and no content received yet. don't care about the method type. 
+		 *
+		 * if the partial or complete content is already received,
+		 * we don't need to send '100 continue'. */
+
+		if (req->attr.flags & QSE_HTRE_ATTR_EXPECT100)
+		{
+			/* "Expect: 100-continue" in the header.
+			 * mark to return "100 continue" */
+			target->flags |= QSE_HTTPD_RSRC_100_CONTINUE;
+		}
+		else
+		{
+			/* Expectation Failed */
+			target->type = QSE_HTTPD_RSRC_ERR;
+			target->u.err.code = 417;
+			return 0;
+		}
+	}
+
 	tmp.xpath = merge_paths (httpd, tmp.root.u.path.val, tmp.qpath_rp);
 	if (tmp.xpath == QSE_NULL) return -1;
 

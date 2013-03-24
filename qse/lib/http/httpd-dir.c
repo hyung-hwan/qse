@@ -30,6 +30,7 @@ struct task_dir_t
 	qse_mcstr_t        qpath;
 	qse_http_version_t version;
 	int                keepalive;
+	int                headonly;
 };
 
 typedef struct task_dseg_t task_dseg_t;
@@ -457,6 +458,9 @@ qse_httpd_task_t* qse_httpd_entaskdir (
 {
 	qse_httpd_task_t task;
 	task_dir_t data;
+	int meth;
+
+	meth = qse_htre_getqmethodtype(req);
 
 	QSE_MEMSET (&data, 0, QSE_SIZEOF(data));
 	data.path.ptr = path;
@@ -465,6 +469,25 @@ qse_httpd_task_t* qse_httpd_entaskdir (
 	data.qpath.len = qse_mbslen(data.qpath.ptr);
 	data.version = *qse_htre_getversion(req);
 	data.keepalive = (req->attr.flags & QSE_HTRE_ATTR_KEEPALIVE);
+
+	switch (meth)
+	{
+		case QSE_HTTP_HEAD:
+			data.headonly = 1;
+			break;
+	
+		case QSE_HTTP_OPTIONS:
+			break;
+
+		case QSE_HTTP_GET:
+		case QSE_HTTP_POST:
+		case QSE_HTTP_PUT:
+			break;
+
+		default:
+			/* Method not allowed */
+			return qse_httpd_entaskerr (httpd, client, pred, 405, req);
+	}
 
 	QSE_MEMSET (&task, 0, QSE_SIZEOF(task));
 	task.init = task_init_dir;
