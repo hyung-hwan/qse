@@ -350,9 +350,11 @@ static int proxy_htrd_peek_peer_output (qse_htrd_t* htrd, qse_htre_t* res)
 {
 	proxy_peer_htrd_xtn_t* xtn;
 	task_proxy_t* proxy;
+	qse_httpd_t* httpd;
 
 	xtn = (proxy_peer_htrd_xtn_t*) qse_htrd_getxtn (htrd);
 	proxy = xtn->proxy;
+	httpd = proxy->httpd;
 
 	QSE_ASSERT (!(res->state & QSE_HTRE_DISCARDED));
 
@@ -361,7 +363,7 @@ static int proxy_htrd_peek_peer_output (qse_htrd_t* htrd, qse_htre_t* res)
 		/* this peek handler is being called again. 
 		 * this can happen if qse_htrd_feed() is fed with
 		 * multiple responses in task_main_proxy_2 (). */
-		proxy->httpd->errnum = QSE_HTTPD_EINVAL;
+		httpd->errnum = QSE_HTTPD_EINVAL;
 		return -1;
 	}
 
@@ -380,7 +382,7 @@ static int proxy_htrd_peek_peer_output (qse_htrd_t* htrd, qse_htre_t* res)
 		    qse_mbs_cat (proxy->res, qse_htre_getsmesg(res)) == (qse_size_t)-1 ||
 		    qse_mbs_cat (proxy->res, QSE_MT("\r\n\r\n")) == (qse_size_t)-1) 
 		{
-			proxy->httpd->errnum = QSE_HTTPD_ENOMEM;
+			httpd->errnum = QSE_HTTPD_ENOMEM;
 			return -1; 
 		}
 
@@ -396,10 +398,6 @@ static int proxy_htrd_peek_peer_output (qse_htrd_t* htrd, qse_htre_t* res)
 		proxy->resflags &= ~PROXY_RES_AWAIT_100;
 		proxy->resflags &= ~PROXY_RES_AWAIT_RESHDR;
 		proxy->resflags |= PROXY_RES_RECEIVED_RESHDR;
-
-#if 0
-qse_printf (QSE_T("NORMAL REPLY 222222222222222222222 NORMAL REPLY\n"));
-#endif
 
 		keepalive = proxy->keepalive;
 		if (res->attr.flags & QSE_HTRE_ATTR_LENGTH)
@@ -448,7 +446,7 @@ qse_printf (QSE_T("NORMAL REPLY 222222222222222222222 NORMAL REPLY\n"));
 				/* mark that the connection to client should be closed */
 				proxy->resflags |= PROXY_RES_CLIENT_DISCON; 
 				/* and push the actual disconnection task */
-				if (qse_httpd_entaskdisconnect (proxy->httpd, xtn->client, xtn->task) == QSE_NULL) return -1;
+				if (qse_httpd_entaskdisconnect (httpd, xtn->client, xtn->task) == QSE_NULL) return -1;
 
 				if (res->attr.flags & QSE_HTRE_ATTR_CHUNKED)
 					proxy->resflags |= PROXY_RES_PEER_CHUNK;
@@ -471,7 +469,7 @@ qse_printf (QSE_T("NORMAL REPLY 222222222222222222222 NORMAL REPLY\n"));
 			    qse_mbs_cat (proxy->res, QSE_MT(".")) == (qse_size_t)-1 ||
 			    qse_mbs_cat (proxy->res, minor) == (qse_size_t)-1)
 			{
-				proxy->httpd->errnum = QSE_HTTPD_ENOMEM;
+				httpd->errnum = QSE_HTTPD_ENOMEM;
 				return -1;
 			}
 		}
@@ -479,7 +477,7 @@ qse_printf (QSE_T("NORMAL REPLY 222222222222222222222 NORMAL REPLY\n"));
 		{
 			if (qse_mbs_cat (proxy->res, qse_htre_getverstr(res)) == (qse_size_t)-1) 
 			{
-				proxy->httpd->errnum = QSE_HTTPD_ENOMEM;
+				httpd->errnum = QSE_HTTPD_ENOMEM;
 				return -1;
 			}
 		}
@@ -490,19 +488,19 @@ qse_printf (QSE_T("NORMAL REPLY 222222222222222222222 NORMAL REPLY\n"));
 		    qse_mbs_cat (proxy->res, qse_htre_getsmesg(res)) == (qse_size_t)-1 ||
 		    qse_mbs_cat (proxy->res, QSE_MT("\r\n")) == (qse_size_t)-1) 
 		{
-			proxy->httpd->errnum = QSE_HTTPD_ENOMEM;
+			httpd->errnum = QSE_HTTPD_ENOMEM;
 			return -1; 
 		}
 		/* end initial line */
 
-		if (!(proxy->httpd->opt.trait & QSE_HTTPD_PROXYNOVIA) && qse_htre_getscodeval(res) != 100)
+		if (!(httpd->opt.trait & QSE_HTTPD_PROXYNOVIA) && qse_htre_getscodeval(res) != 100)
 		{
 			/* add the Via: header into the response if it is not 100. */
 			if (qse_mbs_cat (proxy->res, QSE_MT("Via: ")) == (qse_size_t)-1 ||
-			    qse_mbs_cat (proxy->res, qse_httpd_getname (proxy->httpd)) == (qse_size_t)-1 ||
+			    qse_mbs_cat (proxy->res, qse_httpd_getname (httpd)) == (qse_size_t)-1 ||
 			    qse_mbs_cat (proxy->res, QSE_MT("\r\n")) == (qse_size_t)-1) 
 			{
-				proxy->httpd->errnum = QSE_HTTPD_ENOMEM;
+				httpd->errnum = QSE_HTTPD_ENOMEM;
 				return -1; 
 			}
 		}
@@ -523,7 +521,7 @@ qse_printf (QSE_T("NORMAL REPLY 222222222222222222222 NORMAL REPLY\n"));
 			    qse_mbs_cat (proxy->res, buf) == (qse_size_t)-1 ||
 			    qse_mbs_cat (proxy->res, QSE_MT("\r\n")) == (qse_size_t)-1)
 			{
-				proxy->httpd->errnum = QSE_HTTPD_ENOMEM;
+				httpd->errnum = QSE_HTTPD_ENOMEM;
 				return -1;
 			}
 		}
@@ -531,14 +529,14 @@ qse_printf (QSE_T("NORMAL REPLY 222222222222222222222 NORMAL REPLY\n"));
 		{
 			if (qse_mbs_cat (proxy->res, QSE_MT("Transfer-Encoding: chunked\r\n")) == (qse_size_t)-1) 
 			{
-				proxy->httpd->errnum = QSE_HTTPD_ENOMEM;
+				httpd->errnum = QSE_HTTPD_ENOMEM;
 				return -1;
 			}
 		}
 
 		if (qse_mbs_cat (proxy->res, (keepalive? QSE_MT("Connection: keep-alive\r\n"): QSE_MT("Connection: close\r\n"))) == (qse_size_t)-1) 
 		{
-			proxy->httpd->errnum = QSE_HTTPD_ENOMEM;
+			httpd->errnum = QSE_HTTPD_ENOMEM;
 			return -1;
 		}
 
@@ -551,10 +549,10 @@ qse_printf (QSE_T("NORMAL REPLY 222222222222222222222 NORMAL REPLY\n"));
 		if ((proxy->resflags & PROXY_RES_PEER_LENGTH) && 
 		    proxy->peer_output_received > proxy->peer_output_length)
 		{
-			if (proxy->httpd->opt.trait & QSE_HTTPD_LOGACT) 
+			if (httpd->opt.trait & QSE_HTTPD_LOGACT) 
 				log_proxy_error (proxy, "proxy redundant output - ");
 
-			proxy->httpd->errnum = QSE_HTTPD_EINVAL; /* TODO: change it to a better error code */
+			httpd->errnum = QSE_HTTPD_EINVAL; /* TODO: change it to a better error code */
 			return -1;
 		}
 
@@ -577,7 +575,7 @@ qse_printf (QSE_T("NORMAL REPLY 222222222222222222222 NORMAL REPLY\n"));
 				    qse_mbs_ncat (proxy->res, qse_htre_getcontentptr(res), qse_htre_getcontentlen(res)) == (qse_size_t)-1 ||
 				    qse_mbs_cat (proxy->res, QSE_MT("\r\n")) == (qse_size_t)-1) 
 				{
-					proxy->httpd->errnum = QSE_HTTPD_ENOMEM;
+					httpd->errnum = QSE_HTTPD_ENOMEM;
 					return -1;
 				}
 			}
@@ -585,7 +583,7 @@ qse_printf (QSE_T("NORMAL REPLY 222222222222222222222 NORMAL REPLY\n"));
 			{
 				if (qse_mbs_ncat (proxy->res, qse_htre_getcontentptr(res), qse_htre_getcontentlen(res)) == (qse_size_t)-1) 
 				{
-					proxy->httpd->errnum = QSE_HTTPD_ENOMEM;
+					httpd->errnum = QSE_HTTPD_ENOMEM;
 					return -1;
 				}
 			}
@@ -596,9 +594,6 @@ qse_printf (QSE_T("NORMAL REPLY 222222222222222222222 NORMAL REPLY\n"));
 			/* arrange to store further contents received to proxy->res */
 			qse_htre_setconcb (res, proxy_snatch_peer_output, xtn->task);
 		}
-#if 0
-qse_printf (QSE_T("NORMAL REPLY 222222222222222222222 NORMAL REPLY OK\n"));
-#endif
 	}
 
 	proxy->res_pending = QSE_MBS_LEN(proxy->res) - proxy->res_consumed;
@@ -909,7 +904,7 @@ oops:
 	proxy->init_failed = 1;
 	task->ctx = proxy;
 
-	proxy->httpd->errnum = QSE_HTTPD_ENOMEM;
+	httpd->errnum = QSE_HTTPD_ENOMEM;
 	return 0;
 }
 
@@ -960,7 +955,7 @@ qse_printf (QSE_T("task_main_proxy_5 trigger[0].mask=%d trigger[1].mask=%d trigg
 			if (n <= -1)
 			{
 				/* can't return internal server error any more... */
-				if (proxy->httpd->opt.trait & QSE_HTTPD_LOGACT) 
+				if (httpd->opt.trait & QSE_HTTPD_LOGACT) 
 					log_proxy_error (proxy, "proxy send-to-client error - ");
 				return -1;
 			}
@@ -1043,7 +1038,7 @@ qse_printf (QSE_T("task_main_proxy_4 trigger[0].mask=%d trigger[1].mask=%d trigg
 				if (proxy->peer_output_received > proxy->peer_output_length)
 				{
 					/* proxy returning too much data... something is wrong in PROXY */
-					if (proxy->httpd->opt.trait & QSE_HTTPD_LOGACT) 
+					if (httpd->opt.trait & QSE_HTTPD_LOGACT) 
 						log_proxy_error (proxy, "proxy redundant output - ");
 					return -1;
 				}
@@ -1065,7 +1060,7 @@ qse_printf (QSE_T("task_main_proxy_4 trigger[0].mask=%d trigger[1].mask=%d trigg
 		if (n <= -1)
 		{
 			/* can't return internal server error any more... */
-			if (proxy->httpd->opt.trait & QSE_HTTPD_LOGACT)
+			if (httpd->opt.trait & QSE_HTTPD_LOGACT)
 				log_proxy_error (proxy, "proxy send-to-client error - ");
 			return -1;
 		}

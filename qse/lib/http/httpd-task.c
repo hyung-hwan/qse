@@ -263,6 +263,7 @@ qse_httpd_task_t* qse_httpd_entaskerr (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, 
 	qse_httpd_task_t* pred, int code, qse_htre_t* req)
 {
+	qse_htre_discardcontent (req);
 	return entask_status (
 		httpd, client, pred, code, QSE_NULL, 
 		qse_htre_getversion(req), (req->attr.flags & QSE_HTRE_ATTR_KEEPALIVE));
@@ -411,17 +412,14 @@ qse_httpd_task_t* qse_httpd_entaskrsrc (
 			break;
 
 		case QSE_HTTPD_RSRC_DIR:
-			qse_httpd_discardcontent (httpd, req);
 			task = qse_httpd_entaskdir (httpd, client, pred, rsrc->u.dir.path, req);
 			break;
 
 		case QSE_HTTPD_RSRC_ERR:
-			qse_httpd_discardcontent (httpd, req);
 			task = qse_httpd_entaskerr (httpd, client, pred, rsrc->u.err.code, req);
 			break;
 
 		case QSE_HTTPD_RSRC_FILE:
-			qse_httpd_discardcontent (httpd, req);
 			task = qse_httpd_entaskfile (httpd, client, pred, rsrc->u.file.path, rsrc->u.file.mime, req);
 			break;
 	
