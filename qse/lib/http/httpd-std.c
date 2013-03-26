@@ -1906,7 +1906,11 @@ if (qse_htre_getcontentlen(req) > 0)
 
 			/* if the resource is indicating to return an error,
 			 * discard the contents since i won't return them */
-			if (rsrc.type == QSE_HTTPD_RSRC_ERR) qse_httpd_discardcontent (httpd, req); 
+			if (rsrc.type == QSE_HTTPD_RSRC_ERR) 
+			{ 
+qse_printf (QSE_T("DISCARD 3\n"));
+				qse_httpd_discardcontent (httpd, req); 
+			}
 		}
 		if (task == QSE_NULL) goto oops;
 	}
@@ -2414,7 +2418,7 @@ static int make_resource (
 	struct rsrc_tmp_t tmp;
 
 	qse_httpd_stat_t st;
-	int n, stx, meth;
+	int n, stx, method;
 
 	QSE_MEMSET (&tmp, 0, QSE_SIZEOF(tmp));
 	tmp.qpath = qse_htre_getqpath(req);
@@ -2439,16 +2443,24 @@ static int make_resource (
 	}
 
 	/* handle the request locally */
-
 #if 0
-	meth = qse_htre_getqmethodtype(req);
-	if (meth != QSE_HTTP_GET && meth != QSE_HTTP_POST && meth != QSE_HTTP_PUT && method != QSE_HTTP_)
+	method = qse_htre_getqmethodtype(req);
+	switch (method)
 	{
-/* TODO: handle more method types */
-		/* method not allowed */
-		target->type = QSE_HTTPD_RSRC_ERR;
-		target->u.err.code = 405;
-		return 0;
+		case QSE_HTTP_HEAD:
+		case QSE_HTTP_GET:
+		case QSE_HTTP_POST:
+		case QSE_HTTP_PUT:
+		case QSE_HTTP_DELETE:
+		case QSE_HTTP_OPTIONS:
+			/* let these methods be handled locally */
+			break;
+
+		default:
+			/* method not allowed */
+			target->type = QSE_HTTPD_RSRC_ERR;
+			target->u.err.code = 405;
+			return 0;
 	}
 #endif
 

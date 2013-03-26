@@ -470,15 +470,14 @@ qse_httpd_task_t* qse_httpd_entaskdir (
 	data.version = *qse_htre_getversion(req);
 	data.keepalive = (req->attr.flags & QSE_HTRE_ATTR_KEEPALIVE);
 
+
+	qse_htre_discardcontent (req); /* TODO: don't discard for put??? */
 	switch (meth)
 	{
 		case QSE_HTTP_HEAD:
 			data.headonly = 1;
 			break;
 	
-		case QSE_HTTP_OPTIONS:
-			break;
-
 		case QSE_HTTP_GET:
 		case QSE_HTTP_POST:
 		case QSE_HTTP_PUT:

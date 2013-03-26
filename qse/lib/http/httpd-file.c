@@ -25,50 +25,68 @@
 
 #define ETAG_LEN_MAX 127
 
+#define PUTFILE_INIT_FAILED (1 << 0)
+
 typedef struct task_file_t task_file_t;
 struct task_file_t
 {
 	qse_mcstr_t path;
-	qse_mcstr_t mime;
 
 	qse_http_range_t   range;
 	qse_mchar_t        if_none_match[ETAG_LEN_MAX + 1];
 	qse_ntime_t        if_modified_since;
 	qse_http_version_t version;
 	int                keepalive;
-	int                headonly;
+	int                method;
+
+	/* only for put file... */
+	union
+	{
+		struct
+		{
+			qse_mcstr_t mime;
+		} get;
+		struct
+		{
+			int flags;
+			qse_htre_t* req;
+			qse_ubi_t handle;
+		} put;
+	} u;
 };
 
-typedef struct task_fseg_t task_fseg_t;
-struct task_fseg_t
+/*------------------------------------------------------------------------*/
+
+typedef struct task_getfseg_t task_getfseg_t;
+struct task_getfseg_t
 {
 	qse_ubi_t handle;
 	qse_foff_t left;
 	qse_foff_t offset;
 };
 
-static int task_init_fseg (
+static int task_init_getfseg (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
 {
-	task_fseg_t* xtn = qse_httpd_gettaskxtn (httpd, task);
+	task_getfseg_t* xtn = qse_httpd_gettaskxtn (httpd, task);
 	QSE_MEMCPY (xtn, task->ctx, QSE_SIZEOF(*xtn));
 	task->ctx = xtn;
 	return 0;
 }
 
-static void task_fini_fseg (
+static void task_fini_getfseg (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
 {
-	task_fseg_t* ctx = (task_fseg_t*)task->ctx;
+	task_getfseg_t* ctx = (task_getfseg_t*)task->ctx;
 	httpd->opt.scb.file.close (httpd, ctx->handle);
 }
 
-static int task_main_fseg (
+static int task_main_getfseg (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
 {
 	qse_ssize_t n;
 	qse_size_t count;
-	task_fseg_t* ctx = (task_fseg_t*)task->ctx;
+	task_getfseg_t* ctx = (task_getfseg_t*)task->ctx;
 
 	count = MAX_SEND_SIZE;
 	if (count >= ctx->left) count = ctx->left;
@@ -98,13 +116,13 @@ static int task_main_fseg (
 	return 1; /* more work to do */
 }
 
-static qse_httpd_task_t* entask_file_segment (
+static qse_httpd_task_t* entask_getfseg (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, 
 	qse_httpd_task_t* pred,
 	qse_ubi_t handle, qse_foff_t offset, qse_foff_t size)
 {
 	qse_httpd_task_t task;
-	task_fseg_t data;
+	task_getfseg_t data;
 	
 	QSE_MEMSET (&data, 0, QSE_SIZEOF(data));
 	data.handle = handle;
@@ -112,9 +130,9 @@ static qse_httpd_task_t* entask_file_segment (
 	data.left = size;
 
 	QSE_MEMSET (&task, 0, QSE_SIZEOF(task));
-	task.init = task_init_fseg;
-	task.main = task_main_fseg;
-	task.fini = task_fini_fseg;
+	task.init = task_init_getfseg;
+	task.main = task_main_getfseg;
+	task.fini = task_fini_getfseg;
 	task.ctx = &data;
 
 	return qse_httpd_entask (httpd, client, pred, &task, QSE_SIZEOF(data));
@@ -123,7 +141,7 @@ static qse_httpd_task_t* entask_file_segment (
 /*------------------------------------------------------------------------*/
 
 
-static int task_init_file (
+static int task_init_getfile (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
 {
 	task_file_t* file = qse_httpd_gettaskxtn (httpd, task);
@@ -133,17 +151,17 @@ static int task_init_file (
 
 	file->path.ptr = (qse_mchar_t*)(file + 1);
 	qse_mbscpy ((qse_mchar_t*)file->path.ptr, arg->path.ptr);
-	if (arg->mime.ptr)
+	if (arg->u.get.mime.ptr)
 	{
-		file->mime.ptr = file->path.ptr + file->path.len + 1;
-		qse_mbscpy ((qse_mchar_t*)file->mime.ptr, arg->mime.ptr);
+		file->u.get.mime.ptr = file->path.ptr + file->path.len + 1;
+		qse_mbscpy ((qse_mchar_t*)file->u.get.mime.ptr, arg->u.get.mime.ptr);
 	}
 
 	task->ctx = file;
 	return 0;
 }
 
-static QSE_INLINE int task_main_file (
+static QSE_INLINE int task_main_getfile (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
 {
 	task_file_t* file;
@@ -228,15 +246,15 @@ static QSE_INLINE int task_main_file (
 			qse_httpd_getname (httpd),
 			qse_httpd_fmtgmtimetobb (httpd, QSE_NULL, 0),
 			(file->keepalive? QSE_MT("keep-alive"): QSE_MT("close")),
-			(file->mime.len > 0? QSE_MT("Content-Type: "): QSE_MT("")),
-			(file->mime.len > 0? file->mime.ptr: QSE_MT("")),
-			(file->mime.len > 0? QSE_MT("\r\n"): QSE_MT("")),
+			(file->u.get.mime.len > 0? QSE_MT("Content-Type: "): QSE_MT("")),
+			(file->u.get.mime.len > 0? file->u.get.mime.ptr: QSE_MT("")),
+			(file->u.get.mime.len > 0? QSE_MT("\r\n"): QSE_MT("")),
 			tmp[0], tmp[1], tmp[2], tmp[3], etag
 		);
 		if (x)
 		{
-			if (file->headonly) goto no_file_send;
-			x = entask_file_segment (
+			if (file->method == QSE_HTTP_HEAD) goto no_file_send;
+			x = entask_getfseg (
 				httpd, client, x,
 				handle, 
 				file->range.from, 
@@ -283,17 +301,17 @@ static QSE_INLINE int task_main_file (
 			qse_httpd_getname (httpd),
 			qse_httpd_fmtgmtimetobb (httpd, QSE_NULL, 0),
 			(file->keepalive? QSE_MT("keep-alive"): QSE_MT("close")),
-			(file->mime.len > 0? QSE_MT("Content-Type: "): QSE_MT("")),
-			(file->mime.len > 0? file->mime.ptr: QSE_MT("")),
-			(file->mime.len > 0? QSE_MT("\r\n"): QSE_MT("")),
+			(file->u.get.mime.len > 0? QSE_MT("Content-Type: "): QSE_MT("")),
+			(file->u.get.mime.len > 0? file->u.get.mime.ptr: QSE_MT("")),
+			(file->u.get.mime.len > 0? QSE_MT("\r\n"): QSE_MT("")),
 			b_fsize,
 			qse_httpd_fmtgmtimetobb (httpd, &st.mtime, 1),
 			etag
 		);
 		if (x) 
 		{
-			if (file->headonly) goto no_file_send;
-			x = entask_file_segment (httpd, client, x, handle, 0, st.size);
+			if (file->method == QSE_HTTP_HEAD) goto no_file_send;
+			x = entask_getfseg (httpd, client, x, handle, 0, st.size);
 		}
 	}
 
@@ -306,6 +324,205 @@ no_file_send:
 	return (x == QSE_NULL)? -1: 0;
 }
 
+/*------------------------------------------------------------------------*/
+
+static int putfile_snatch_client_input (
+	qse_htre_t* req, const qse_mchar_t* ptr, qse_size_t len, void* ctx)
+{
+	qse_httpd_task_t* task;
+	task_file_t* file; 
+
+	task = (qse_httpd_task_t*)ctx;
+	file = (task_file_t*)task->ctx;
+
+	if (ptr == QSE_NULL)
+	{
+		/*
+		 * this callback is called with ptr of QSE_NULL 
+		 * when the request is completed or discarded. 
+		 * and this indicates that there's nothing more to read
+		 * from the client side. this can happen when the end of
+		 * a request is seen or when an error occurs 
+		 */
+		QSE_ASSERT (len == 0);
+
+		/* mark the there's nothing to read form the client side */
+		qse_htre_unsetconcb (file->u.put.req);
+		file->u.put.req = QSE_NULL; 
+
+		/* since there is no more to read from the client side.
+		 * the trigger is not needed any more. */
+		task->trigger[0].mask = 0;
+	}
+	else /*if (!(file->reqflags & PROXY_REQ_FWDERR))*/
+	{
+		/* TODO: write to file */
+qse_printf (QSE_T("WRITING 4 [%.*hs]\n"), (int)len, ptr);
+	}
+
+	return 0;
+}
+
+static int task_init_putfile (
+	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
+{
+	task_file_t* file = qse_httpd_gettaskxtn (httpd, task);
+	task_file_t* arg = (task_file_t*)task->ctx;
+	int snatch_needed;
+
+	/* zero out the task's extension area */
+	QSE_MEMCPY (file, arg, QSE_SIZEOF(*file));
+	file->u.put.req = QSE_NULL;
+	
+	/* copy in the path name to the area */
+	file->path.ptr = (qse_mchar_t*)(file + 1);
+	qse_mbscpy ((qse_mchar_t*)file->path.ptr, arg->path.ptr);
+
+	snatch_needed = 0;
+
+#if 0
+	httpd->errnum = QSE_HTTPD_ENOERR;
+	if (httpd->opt.scb.file.stat (httpd, file->path.ptr, &st) <= -1)
+	{
+		int http_errnum = 500;
+
+		switch (httpd->errnum)
+		{
+			case QSE_HTTPD_ENOENT:
+				/* nothing to do */
+				break;
+
+			case QSE_HTTPD_EACCES:
+				http_errnum = 403;
+			default:
+				
+				goto no_file_write;
+		}
+	}
+#endif
+
+	if (httpd->opt.scb.file.wopen (httpd, file->path.ptr, &file->u.put.handle) <= -1) goto oops;
+
+	if (arg->u.put.req->state & QSE_HTRE_DISCARDED)
+	{
+		/* no content to add */
+/* TODO: return what??? */
+qse_printf (QSE_T("ALL DISCARDED...\n"));
+	}
+	else if (arg->u.put.req->state & QSE_HTRE_COMPLETED)
+	{
+#if 0
+		len = qse_htre_getcontentlen(arg->u.put.req);
+		if (len > 0)
+		{
+			ptr = qse_htre_getcontentptr(arg->u.put.req);
+			/* TODO: write this to a file */
+		}
+#endif
+qse_printf (QSE_T("WRITING 1 [%.*hs]\n"), (int)qse_htre_getcontentlen(arg->u.put.req), qse_htre_getcontentptr(arg->u.put.req));
+	}
+	else if (arg->u.put.req->attr.flags & QSE_HTRE_ATTR_LENGTH)
+	{
+		/* Content-Length is included and the content
+		 * has been received partially so far */
+
+#if 0
+		len = qse_htre_getcontentlen(arg->u.put.req);
+		if (len > 0)
+		{
+			ptr = qse_htre_getcontentptr(arg->u.put.req);
+			/* TODO: write to a file */
+		}
+
+#endif
+qse_printf (QSE_T("WRITING 2 [%.*hs]\n"), (int)qse_htre_getcontentlen(arg->u.put.req), qse_htre_getcontentptr(arg->u.put.req));
+		snatch_needed = 1;
+	}
+	else
+	{
+		/* if this request is not chunked nor not length based,
+		 * the state should be QSE_HTRE_COMPLETED. so only a
+		 * chunked request should reach here */
+		QSE_ASSERT (arg->u.put.req->attr.flags & QSE_HTRE_ATTR_CHUNKED);
+
+qse_printf (QSE_T("WRITING 3 [%.*hs]\n"), (int)qse_htre_getcontentlen(arg->u.put.req), qse_htre_getcontentptr(arg->u.put.req));
+#if 0
+		len = qse_htre_getcontentlen(arg->u.put.req);
+		if (len > 0)
+		{
+			ptr = qse_htre_getcontentptr(arg->u.put.req);
+		}
+#endif
+
+		snatch_needed = 1;
+	}
+
+	if (snatch_needed)
+	{
+		/* set up a callback to be called when the request content
+		 * is fed to the htrd reader. qse_htre_addcontent() that 
+		 * htrd calls invokes this callback. */
+		file->u.put.req = arg->u.put.req;
+		qse_htre_setconcb (file->u.put.req, putfile_snatch_client_input, task);
+	}
+
+	/* no triggers yet since the main loop doesn't allow me to set 
+	 * triggers in the task initializer. however the main task handler
+	 * will be invoked so long as the client handle is writable by
+	 * the main loop. */
+
+	task->ctx = file; /* switch the task context to the extension area */
+	return 0;
+
+oops:
+	/* since a new task can't be added in the initializer,
+	 * i mark that initialization failed and let task_main_putfile()
+	 * add an error task */
+	file->u.put.flags |= PUTFILE_INIT_FAILED;
+	task->ctx = file;
+	return 0;
+}
+
+static void task_fini_putfile (
+	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
+{
+	task_file_t* file = (task_file_t*)task->ctx;
+
+qse_printf (QSE_T("put fini....\n"));
+	if (!(file->u.put.flags & PUTFILE_INIT_FAILED))
+		httpd->opt.scb.file.close (httpd, file->u.put.handle);
+}
+
+static int task_main_putfile (
+	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
+{
+	task_file_t* file = (task_file_t*)task->ctx;
+qse_printf (QSE_T("put main....\n"));
+
+	if (file->u.put.req)
+	{
+qse_printf (QSE_T("put xxxxx....\n"));
+		/* still snatching the content body */
+		task->trigger[0].mask = QSE_HTTPD_TASK_TRIGGER_READ;
+		task->trigger[0].handle = client->handle;
+		return 1;
+	}
+
+qse_printf (QSE_T("put what....\n"));
+	return 0;
+}
+
+/*------------------------------------------------------------------------*/
+
+static QSE_INLINE int task_main_delfile (
+	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
+{
+	/* TODO: implement this */
+	return -1;
+}
+
+/*------------------------------------------------------------------------*/
+
 qse_httpd_task_t* qse_httpd_entaskfile (
 	qse_httpd_t* httpd,
 	qse_httpd_client_t* client, 
@@ -317,34 +534,49 @@ qse_httpd_task_t* qse_httpd_entaskfile (
 	qse_httpd_task_t task;
 	task_file_t data;
 	const qse_htre_hdrval_t* tmp;
-	int meth;
-
-	meth = qse_htre_getqmethodtype(req);;
+	qse_size_t xtnsize;
 
 	QSE_MEMSET (&data, 0, QSE_SIZEOF(data));
 	data.path.ptr = path;
 	data.path.len = qse_mbslen(path);
-	if (mime)
-	{
-		data.mime.ptr = mime;
-		data.mime.len = qse_mbslen(mime);
-	}
 	data.version = *qse_htre_getversion(req);
 	data.keepalive = (req->attr.flags & QSE_HTRE_ATTR_KEEPALIVE);
+	data.method = qse_htre_getqmethodtype(req);
 
-	switch (meth)
+	xtnsize = QSE_SIZEOF(task_file_t) + data.path.len + 1;
+
+	QSE_MEMSET (&task, 0, QSE_SIZEOF(task));
+
+	switch (data.method)
 	{
 		case QSE_HTTP_HEAD:
-			data.headonly = 1;
-			break;
-	
-		case QSE_HTTP_OPTIONS:
-			break;
-
 		case QSE_HTTP_GET:
 		case QSE_HTTP_POST:
-		case QSE_HTTP_PUT:
+			qse_htre_discardcontent (req);
+
+			if (mime)
+			{
+				data.u.get.mime.ptr = mime;
+				data.u.get.mime.len = qse_mbslen(mime);
+				xtnsize += data.u.get.mime.len + 1;
+			}
+
+			task.init = task_init_getfile;
+			task.main = task_main_getfile;
 			break;
+
+		case QSE_HTTP_PUT:
+			data.u.put.req = req;
+			task.init = task_init_putfile;
+			task.main = task_main_putfile;
+			task.fini = task_fini_putfile;
+			break;
+
+#if 0
+		case QSE_HTTP_DELETE:
+			task.main = task_main_delfile;
+			break;
+#endif
 
 		default:
 			/* Method not allowed */
@@ -395,12 +627,7 @@ qse_httpd_task_t* qse_httpd_entaskfile (
 		}
 	}
 	
-	QSE_MEMSET (&task, 0, QSE_SIZEOF(task));
-	task.init = task_init_file;
-	task.main = task_main_file;
 	task.ctx = &data;
-
-	return qse_httpd_entask (httpd, client, pred, &task, 
-		QSE_SIZEOF(task_file_t) + data.path.len + 1 + data.mime.len + 1);
+	return qse_httpd_entask (httpd, client, pred, &task, xtnsize);
 }
 
