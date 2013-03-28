@@ -121,6 +121,7 @@ qse_httpd_task_t* qse_httpd_entask_err (
 	qse_httpd_client_t* client,
      qse_httpd_task_t* pred,
 	int code,
+	qse_http_method_t method,
      const qse_http_version_t* version,
 	int keepalive
 );
@@ -129,35 +130,9 @@ qse_httpd_task_t* qse_httpd_entask_nomod (
 	qse_httpd_t* httpd,
 	qse_httpd_client_t* client,
      qse_httpd_task_t* pred,
+     qse_http_method_t method,
      const qse_http_version_t* version,
 	int keepalive
-);
-
-qse_httpd_task_t* qse_httpd_entask_reloc (
-	qse_httpd_t* httpd,
-	qse_httpd_client_t* client,
-     qse_httpd_task_t* pred,
-	const qse_mchar_t* dst,
-     const qse_http_version_t* version,
-	int keepalive
-);
-
-qse_httpd_task_t* qse_httpd_entask_redir (
-	qse_httpd_t* httpd,
-	qse_httpd_client_t* client,
-     qse_httpd_task_t* pred,
-	const qse_mchar_t* dst,
-     const qse_http_version_t* version,
-	int keepalive
-);
-
-
-qse_httpd_task_t* qse_httpd_entask_text (
-	qse_httpd_t* httpd,
-	qse_httpd_client_t* client,
-     qse_httpd_task_t* pred,
-	const qse_mchar_t* ptr,
-	qse_size_t len
 );
 
 #ifdef __cplusplus

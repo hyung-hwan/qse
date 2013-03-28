@@ -39,6 +39,8 @@ struct task_proxy_t
 	qse_httpd_t* httpd;
 
 	const qse_mchar_t* host;
+
+	int method;
 	qse_http_version_t version;
 	int keepalive; /* taken from the request */
 
@@ -714,6 +716,7 @@ static int task_init_proxy (
 	QSE_MEMSET (proxy, 0, QSE_SIZEOF(*proxy));
 	proxy->httpd = httpd;
 
+	proxy->method = qse_htre_getqmethodtype(arg->req);
 	proxy->version = *qse_htre_getversion(arg->req);
 	proxy->keepalive = (arg->req->attr.flags & QSE_HTRE_ATTR_KEEPALIVE);
 	proxy->peer.nwad = *arg->peer_nwad;
@@ -1356,7 +1359,7 @@ qse_printf (QSE_T("TRAILING DATA=%d, [%hs]\n"), (int)QSE_MBS_LEN(proxy->res), QS
 
 oops:
 	if (proxy->resflags & PROXY_RES_EVER_SENTBACK) return -1;
-	return (qse_httpd_entask_err (httpd, client, task, http_errnum, &proxy->version, proxy->keepalive) == QSE_NULL)? -1: 0;
+	return (qse_httpd_entask_err (httpd, client, task, http_errnum, proxy->method, &proxy->version, proxy->keepalive) == QSE_NULL)? -1: 0;
 }
 
 static int task_main_proxy_1 (
@@ -1419,7 +1422,7 @@ static int task_main_proxy_1 (
 	return 1;
 
 oops:
-	return (qse_httpd_entask_err (httpd, client, task, http_errnum, &proxy->version, proxy->keepalive) == QSE_NULL)? -1: 0;
+	return (qse_httpd_entask_err (httpd, client, task, http_errnum, proxy->method, &proxy->version, proxy->keepalive) == QSE_NULL)? -1: 0;
 }
 
 static int task_main_proxy (
@@ -1509,7 +1512,7 @@ oops:
 
 	return (qse_httpd_entask_err (
 		httpd, client, task, http_errnum, 
-		&proxy->version, proxy->keepalive) == QSE_NULL)? -1: 0;
+		proxy->method, &proxy->version, proxy->keepalive) == QSE_NULL)? -1: 0;
 }
 
 qse_httpd_task_t* qse_httpd_entaskproxy (

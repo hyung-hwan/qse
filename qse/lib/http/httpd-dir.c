@@ -30,7 +30,7 @@ struct task_dir_t
 	qse_mcstr_t        qpath;
 	qse_http_version_t version;
 	int                keepalive;
-	int                headonly;
+	int                method;
 };
 
 typedef struct task_dseg_t task_dseg_t;
@@ -370,7 +370,7 @@ static qse_httpd_task_t* entask_directory_segment (
 
 /*------------------------------------------------------------------------*/
 
-static int task_init_dir (
+static int task_init_getdir (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
 {
 	task_dir_t* xtn = qse_httpd_gettaskxtn (httpd, task);
@@ -390,7 +390,7 @@ static int task_init_dir (
 	return 0;
 }
 
-static QSE_INLINE int task_main_dir (
+static QSE_INLINE int task_main_getdir (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
 {
 	task_dir_t* dir;
@@ -415,26 +415,46 @@ static QSE_INLINE int task_main_dir (
 					    (httpd->errnum == QSE_HTTPD_EACCES)? 403: 500;
 			x = qse_httpd_entask_err (
 				httpd, client, x, http_errnum,
-				&dir->version, dir->keepalive);
+				dir->method, &dir->version, dir->keepalive);
 	
 			return (x == QSE_NULL)? -1: 0;
 		}
 		else
 		{
-			x = qse_httpd_entaskformat (
-				httpd, client, x,
-    				QSE_MT("HTTP/%d.%d 200 OK\r\nServer: %s\r\nDate: %s\r\nConnection: %s\r\nContent-Type: text/html\r\n%s\r\n"), 
-				dir->version.major, dir->version.minor,
-				qse_httpd_getname (httpd),
-				qse_httpd_fmtgmtimetobb (httpd, QSE_NULL, 0),
-				(dir->keepalive? QSE_MT("keep-alive"): QSE_MT("close")),
-				(dir->keepalive? QSE_MT("Transfer-Encoding: chunked\r\n"): QSE_MT(""))
-			);
-			if (x) x = entask_directory_segment (httpd, client, x, handle, dir);
-			if (x) return 0;
+			if (dir->method == QSE_HTTP_HEAD)
+			{
+				x = qse_httpd_entaskformat (
+					httpd, client, x,
+    					QSE_MT("HTTP/%d.%d 200 OK\r\nServer: %s\r\nDate: %s\r\nConnection: %s\r\nContent-Type: text/html\r\nContent-Length: 0\r\n\r\n"), 
+					dir->version.major, dir->version.minor,
+					qse_httpd_getname (httpd),
+					qse_httpd_fmtgmtimetobb (httpd, QSE_NULL, 0),
+					(dir->keepalive? QSE_MT("keep-alive"): QSE_MT("close"))
+				);
 
-			httpd->opt.scb.dir.close (httpd, handle);
-			return -1;
+				httpd->opt.scb.dir.close (httpd, handle);
+				return (x == QSE_NULL)? -1: 0;
+			}
+			else
+			{
+				x = qse_httpd_entaskformat (
+					httpd, client, x,
+    					QSE_MT("HTTP/%d.%d 200 OK\r\nServer: %s\r\nDate: %s\r\nConnection: %s\r\nContent-Type: text/html\r\n%s\r\n"), 
+					dir->version.major, dir->version.minor,
+					qse_httpd_getname (httpd),
+					qse_httpd_fmtgmtimetobb (httpd, QSE_NULL, 0),
+					(dir->keepalive? QSE_MT("keep-alive"): QSE_MT("close")),
+					(dir->keepalive? QSE_MT("Transfer-Encoding: chunked\r\n"): QSE_MT(""))
+				);
+				if (x) 
+				{
+					x = entask_directory_segment (httpd, client, x, handle, dir);
+					if (x) return 0;
+				}
+
+				httpd->opt.scb.dir.close (httpd, handle);
+				return -1;
+			}
 		}
 	/*
 	}
@@ -458,9 +478,6 @@ qse_httpd_task_t* qse_httpd_entaskdir (
 {
 	qse_httpd_task_t task;
 	task_dir_t data;
-	int meth;
-
-	meth = qse_htre_getqmethodtype(req);
 
 	QSE_MEMSET (&data, 0, QSE_SIZEOF(data));
 	data.path.ptr = path;
@@ -469,28 +486,71 @@ qse_httpd_task_t* qse_httpd_entaskdir (
 	data.qpath.len = qse_mbslen(data.qpath.ptr);
 	data.version = *qse_htre_getversion(req);
 	data.keepalive = (req->attr.flags & QSE_HTRE_ATTR_KEEPALIVE);
+	data.method = qse_htre_getqmethodtype(req);
 
+	QSE_MEMSET (&task, 0, QSE_SIZEOF(task));
 
-	qse_htre_discardcontent (req); /* TODO: don't discard for put??? */
-	switch (meth)
+	/* i don't need contents for directories */
+	qse_htre_discardcontent (req); 
+
+	switch (data.method)
 	{
+		case QSE_HTTP_OPTIONS:
+			return qse_httpd_entaskallow (httpd, client, pred, 
+				QSE_MT("OPTIONS,GET,HEAD,POST,PUT,DELETE"), req);
+
 		case QSE_HTTP_HEAD:
-			data.headonly = 1;
-			break;
-	
 		case QSE_HTTP_GET:
 		case QSE_HTTP_POST:
-		case QSE_HTTP_PUT:
+			task.init = task_init_getdir;
+			task.main = task_main_getdir;
 			break;
+			
+		case QSE_HTTP_PUT:
+		{
+			int status = 201; /* 201 Created */
+
+
+			if (httpd->opt.scb.dir.make (httpd, path) <= -1)
+			{
+				if (httpd->errnum == QSE_HTTPD_EEXIST)
+				{
+					/* an entry with the same name exists.
+					 * if it is a directory, it's considered ok.
+					 * if not, send '403 forbidden' indicating you can't 
+					 * change a file to a directory */
+					qse_httpd_stat_t st;
+					status = (httpd->opt.scb.dir.stat (httpd, path, &st) <= -1)? 403: 204;
+				}
+				else
+				{
+					status = (httpd->errnum == QSE_HTTPD_ENOENT)? 404:
+					         (httpd->errnum == QSE_HTTPD_EACCES)? 403: 500;
+				}
+			}
+				
+			return qse_httpd_entaskerr (httpd, client, pred, status, req);
+		}
+
+
+		case QSE_HTTP_DELETE:
+		{
+			int status = 200;
+
+			if (httpd->opt.scb.dir.purge (httpd, path) <= -1)
+			{
+				status = (httpd->errnum == QSE_HTTPD_ENOENT)? 404:
+				         (httpd->errnum == QSE_HTTPD_EACCES)? 403: 500;
+			}
+				
+			return qse_httpd_entaskerr (httpd, client, pred, status, req);
+		}
 
 		default:
 			/* Method not allowed */
 			return qse_httpd_entaskerr (httpd, client, pred, 405, req);
 	}
 
-	QSE_MEMSET (&task, 0, QSE_SIZEOF(task));
-	task.init = task_init_dir;
-	task.main = task_main_dir;
 	task.ctx = &data;
 
 	return qse_httpd_entask (httpd, client, pred, &task,

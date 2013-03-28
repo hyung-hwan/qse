@@ -33,6 +33,9 @@
 #include <qse/cmn/dir.h>
 #include <qse/cmn/fio.h>
 
+#define STAT_REG   1
+#define STAT_DIR   2
+
 #if defined(_WIN32)
 #	include <winsock2.h>
 #	include <ws2tcpip.h> /* sockaddr_in6 */
@@ -1250,7 +1253,7 @@ static int mux_writable (qse_httpd_t* httpd, qse_ubi_t handle, const qse_ntime_t
 
 static int stat_file (
 	qse_httpd_t* httpd, const qse_mchar_t* path,
-	qse_httpd_stat_t* hst, int regonly)
+	qse_httpd_stat_t* hst, int filter)
 {
 
 #if defined(_WIN32)
@@ -1360,9 +1363,8 @@ static int stat_file (
 		return -1;
 	}
 
-	/* stating for a file. it should be a regular file.
-	 * i don't allow other file types. */
-	if (regonly && !S_ISREG(st.st_mode))
+	if ((filter == STAT_REG && !S_ISREG(st.st_mode)) ||
+	    (filter == STAT_DIR && !S_ISDIR(st.st_mode)))
 	{
 		qse_httpd_seterrnum (httpd, QSE_HTTPD_EACCES);
 		return -1;
@@ -1397,8 +1399,47 @@ static int file_stat (
 	/* this callback is not required to be a general stat function
 	 * for a file. it is mainly used to get a file size and timestamps
 	 * of a regular file. so it should fail for a non-regular file.
-	 * note that 1 passes 1 to stat_file for it */
-	return stat_file (httpd, path, hst, 1);	
+	 * note that STAT_REG is passed to stat_file for it */
+	return stat_file (httpd, path, hst, STAT_REG);	
+}
+
+static int file_purge (qse_httpd_t* httpd, const qse_mchar_t* path)
+{
+#if defined(_WIN32)
+	if (DeleteFileA (path) == FALSE)
+	{
+		qse_httpd_seterrnum (httpd, syserr_to_errnum(GetLastError()));
+		return -1;
+	}
+	return 0;
+
+#elif defined(__OS2__)
+
+	APIRET rc;
+
+	rc = DosDelete (path); /* TODO: is DosForceDelete better? */
+	if (rc != NO_ERROR)
+	{
+		qse_httpd_seterrnum (httpd, syserr_to_errnum(rc));
+		return -1;
+	}
+	return 0;
+
+#elif defined(__DOS__)
+	/* TODO: */
+	qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
+	return -1;
+
+#else
+
+	if (QSE_UNLINK (path) <= -1)
+	{
+		qse_httpd_seterrnum (httpd, syserr_to_errnum(errno));
+		return -1;
+	}
+	return 0;
+
+#endif
 }
 
 static int file_ropen (
@@ -1502,6 +1543,90 @@ static qse_ssize_t file_write (
 }
 
 /* ------------------------------------------------------------------- */
+
+static int dir_stat (
+	qse_httpd_t* httpd, const qse_mchar_t* path, qse_httpd_stat_t* hst)
+{
+	/* this callback is not required to be a general stat function
+	 * for a file. it is mainly used to get a file size and timestamps
+	 * of a regular file. so it should fail for a non-regular file.
+	 * note that STAT_REG is passed to stat_file for it */
+	return stat_file (httpd, path, hst, STAT_DIR);
+}
+
+static int dir_make (qse_httpd_t* httpd, const qse_mchar_t* path)
+{
+#if defined(_WIN32)
+
+	if (CreateDirectoryA (path, QSE_NULL) == FALSE)
+	{
+		qse_httpd_seterrnum (httpd, syserr_to_errnum(GetLastError()));
+		return -1;
+	}
+
+	return 0;
+	
+#elif defined(__OS2__)
+
+	APIRET rc;
+
+	rc = DosCreateDir (path, QSE_NULL); /* TODO: is DosForceDelete better? */
+	if (rc != NO_ERROR)
+	{
+		qse_httpd_seterrnum (httpd, syserr_to_errnum(rc));
+		return -1;
+	}
+	return 0;
+
+#elif defined(__DOS__)
+	qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
+	return -1;
+#else
+
+	if (QSE_MKDIR (path, 0755) <= -1)
+	{
+		qse_httpd_seterrnum (httpd, syserr_to_errnum(errno));
+		return -1;
+	}
+	return 0;
+
+#endif
+}
+
+static int dir_purge (qse_httpd_t* httpd, const qse_mchar_t* path)
+{
+#if defined(_WIN32)
+	if (RemoveDirectoryA (path) == FALSE)
+	{
+		qse_httpd_seterrnum (httpd, syserr_to_errnum(GetLastError()));
+		return -1;
+	}
+#elif defined(__OS2__)
+
+	APIRET rc;
+
+	rc = DosDeleteDir (path); /* TODO: is DosForceDelete better? */
+	if (rc != NO_ERROR)
+	{
+		qse_httpd_seterrnum (httpd, syserr_to_errnum(rc));
+		return -1;
+	}
+	return 0;
+
+#elif defined(__DOS__)
+	qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
+	return -1;
+#else
+
+	if (QSE_RMDIR (path) <= -1)
+	{
+		qse_httpd_seterrnum (httpd, syserr_to_errnum(errno));
+		return -1;
+	}
+	return 0;
+
+#endif
+}
 
 typedef struct dir_t dir_t;
 struct dir_t
@@ -1868,6 +1993,19 @@ if (qse_htre_getcontentlen(req) > 0)
 		 * if you don't like this behavior, you must implement your own
 		 * callback function for request handling. */
 
+#if 0
+/* TODO support X-HTTP-Method-Override */
+	if (data.method == QSE_HTTP_POST)
+	{
+		tmp = qse_htre_getheaderval(req, QSE_MT("X-HTTP-Method-Override"));
+		if (tmp)
+		{
+			/*while (tmp->next) tmp = tmp->next;*/ /* get the last value */
+			data.method = qse_mbstohttpmethod (tmp->ptr);
+		}
+	}
+#endif
+
 		if (qse_htre_getqmethodtype(req) == QSE_HTTP_POST &&
 		    !(req->attr.flags & QSE_HTRE_ATTR_LENGTH) &&
 		    !(req->attr.flags & QSE_HTRE_ATTR_CHUNKED))
@@ -1908,7 +2046,6 @@ if (qse_htre_getcontentlen(req) > 0)
 			 * discard the contents since i won't return them */
 			if (rsrc.type == QSE_HTTPD_RSRC_ERR) 
 			{ 
-qse_printf (QSE_T("DISCARD 3\n"));
 				qse_httpd_discardcontent (httpd, req); 
 			}
 		}
@@ -2122,6 +2259,7 @@ static qse_httpd_scb_t httpd_system_callbacks =
 
 	/* file operation */
 	{ file_stat,
+	  file_purge,
 	  file_ropen,
 	  file_wopen,
 	  file_close,
@@ -2130,7 +2268,10 @@ static qse_httpd_scb_t httpd_system_callbacks =
 	},
 
 	/* directory operation */
-	{ dir_open,
+	{ dir_stat,
+	  dir_make,
+       dir_purge,
+	  dir_open,
 	  dir_close,
 	  dir_read
 	},
@@ -2418,7 +2559,7 @@ static int make_resource (
 	struct rsrc_tmp_t tmp;
 
 	qse_httpd_stat_t st;
-	int n, stx, method;
+	int n, stx, acc;
 
 	QSE_MEMSET (&tmp, 0, QSE_SIZEOF(tmp));
 	tmp.qpath = qse_htre_getqpath(req);
@@ -2429,41 +2570,27 @@ static int make_resource (
 	server_xtn = qse_httpd_getserverxtn (httpd, client->server);
 
 	if (server_xtn->query (httpd, client->server, req, QSE_NULL, QSE_HTTPD_SERVERSTD_ROOT, &tmp.root) <= -1) return -1;
-	if (tmp.root.type == QSE_HTTPD_SERVERSTD_ROOT_NWAD)
+	switch (tmp.root.type)
 	{
-		/* proxy the request */
-		target->type = QSE_HTTPD_RSRC_PROXY;
-		/*target->u.proxy.dst = client->orgdst_addr;*/
-		target->u.proxy.dst = tmp.root.u.nwad;
-		target->u.proxy.src = client->remote_addr;
+		case QSE_HTTPD_SERVERSTD_ROOT_NWAD:
+			/* proxy the request */
+			target->type = QSE_HTTPD_RSRC_PROXY;
+			/*target->u.proxy.dst = client->orgdst_addr;*/
+			target->u.proxy.dst = tmp.root.u.nwad;
+			target->u.proxy.src = client->remote_addr;
 
-		/* mark that this request is going to be proxied. */
-		req->attr.flags |= QSE_HTRE_ATTR_PROXIED;
-		return 0;
+			/* mark that this request is going to be proxied. */
+			req->attr.flags |= QSE_HTRE_ATTR_PROXIED;
+			return 0;
+
+		case QSE_HTTPD_SERVERSTD_ROOT_TEXT:
+			target->type = QSE_HTTPD_RSRC_TEXT;
+			target->u.text.ptr = tmp.root.u.text.ptr;
+			target->u.text.mime = tmp.root.u.text.mime;
+			return 0;
 	}
 
 	/* handle the request locally */
-#if 0
-	method = qse_htre_getqmethodtype(req);
-	switch (method)
-	{
-		case QSE_HTTP_HEAD:
-		case QSE_HTTP_GET:
-		case QSE_HTTP_POST:
-		case QSE_HTTP_PUT:
-		case QSE_HTTP_DELETE:
-		case QSE_HTTP_OPTIONS:
-			/* let these methods be handled locally */
-			break;
-
-		default:
-			/* method not allowed */
-			target->type = QSE_HTTPD_RSRC_ERR;
-			target->u.err.code = 405;
-			return 0;
-	}
-#endif
-
 	QSE_ASSERT (tmp.root.type == QSE_HTTPD_SERVERSTD_ROOT_PATH);
 
 	if (server_xtn->query (httpd, client->server, req, QSE_NULL, QSE_HTTPD_SERVERSTD_REALM, &tmp.realm) <= -1 ||
@@ -2543,6 +2670,7 @@ auth_ok:
 		else
 		{
 			/* Expectation Failed */
+			qse_htre_discardcontent (req);
 			target->type = QSE_HTTPD_RSRC_ERR;
 			target->u.err.code = 417;
 			return 0;
@@ -2611,8 +2739,9 @@ auth_ok:
 
 			/* it is a directory - should i allow it? */
 			if (server_xtn->query (httpd, client->server, req, tmp.xpath, QSE_HTTPD_SERVERSTD_DIRACC, &target->u.err.code) <= -1) target->u.err.code = 500;
-			if (target->u.err.code != 200)
+			if (target->u.err.code < 200 || target->u.err.code > 299)
 			{
+				qse_htre_discardcontent (req);
 				target->type = QSE_HTTPD_RSRC_ERR;
 				/* free xpath since it won't be used */
 				QSE_MMGR_FREE (httpd->mmgr, tmp.xpath);
@@ -2620,6 +2749,7 @@ auth_ok:
 			else if (tmp.qpath[tmp.qpath_len - 1] != QSE_MT('/'))
 			{
 				/* the query path doesn't end with a slash. so redirect it  */
+				qse_htre_discardcontent (req);
 				target->type = QSE_HTTPD_RSRC_REDIR;
 				target->u.redir.dst = tmp.qpath;
 				/* free xpath since it won't be used */
@@ -2651,11 +2781,16 @@ auth_ok:
 		}
 		if (n >= 1) return 0;
 
+		acc = (tmp.idxfile || !qse_mbsend(tmp.qpath, QSE_MT("/")))? 
+			QSE_HTTPD_SERVERSTD_FILEACC: QSE_HTTPD_SERVERSTD_DIRACC;
+
 		/* check file's access permission */
-		if (server_xtn->query (httpd, client->server, req, tmp.xpath, QSE_HTTPD_SERVERSTD_FILEACC, &target->u.err.code) <= -1) target->u.err.code = 500;
-		if (target->u.err.code != 200)
+		if (server_xtn->query (httpd, client->server, req, tmp.xpath, acc, &target->u.err.code) <= -1) target->u.err.code = 500;
+
+		if (target->u.err.code < 200 || target->u.err.code > 299)
 		{
 			/* free xpath since it won't be used */
+			qse_htre_discardcontent (req);
 			QSE_MMGR_FREE (httpd->mmgr, tmp.xpath);
 			target->type = QSE_HTTPD_RSRC_ERR;
 		}
@@ -2664,6 +2799,8 @@ auth_ok:
 			/* fall back to a normal file. */
 			if (tmp.idxfile)
 			{
+				qse_htre_discardcontent (req);
+
 				/* free xpath since it won't be used */
 				QSE_MMGR_FREE (httpd->mmgr, tmp.xpath);
 
@@ -2671,6 +2808,11 @@ auth_ok:
 				target->type = QSE_HTTPD_RSRC_RELOC;
 				target->u.reloc.dst = merge_paths (httpd, tmp.qpath, tmp.idxfile);
 				if (target->u.reloc.dst == QSE_NULL) return -1;
+			}
+			else if (acc == QSE_HTTPD_SERVERSTD_DIRACC)
+			{
+				target->type = QSE_HTTPD_RSRC_DIR;
+				target->u.dir.path = tmp.xpath;
 			}
 			else
 			{
@@ -2802,8 +2944,26 @@ static int query_server (
 
 		case QSE_HTTPD_SERVERSTD_DIRACC:
 		case QSE_HTTPD_SERVERSTD_FILEACC:
-			*(int*)result = 200;
+		{
+			/* i don't allow PUT or DELET by default.
+			 * override this query result if you want to change
+			 * the behavior. */
+			switch (qse_htre_getqmethodtype(req))
+			{
+				case QSE_HTTP_OPTIONS:
+				case QSE_HTTP_HEAD:
+				case QSE_HTTP_GET:
+				case QSE_HTTP_POST:
+					*(int*)result = 200;
+					break;
+		
+				default:
+					/* method not allowed */
+					*(int*)result = 405;
+					break;
+			}
 			return 0;
+		}
 	}
 
 	qse_httpd_seterrnum (httpd, QSE_HTTPD_EINVAL);

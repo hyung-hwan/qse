@@ -41,7 +41,8 @@ typedef void (*qse_httpd_serverstd_freersrc_t) (
 enum qse_httpd_serverstd_root_type_t
 {
 	QSE_HTTPD_SERVERSTD_ROOT_PATH,
-	QSE_HTTPD_SERVERSTD_ROOT_NWAD
+	QSE_HTTPD_SERVERSTD_ROOT_NWAD,
+	QSE_HTTPD_SERVERSTD_ROOT_TEXT
 }; 
 typedef enum qse_httpd_serverstd_root_type_t qse_httpd_serverstd_root_type_t;
 
@@ -57,6 +58,11 @@ struct qse_httpd_serverstd_root_t
 			qse_size_t rpl;  /* replacement length */
 		} path;
 		qse_nwad_t nwad;
+		struct
+		{
+			const qse_mchar_t* ptr;
+			const qse_mchar_t* mime;
+		} text;
 	} u;
 };
 
