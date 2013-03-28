@@ -466,6 +466,17 @@ static int query_server (
 			return 0;
 
 		case QSE_HTTPD_SERVERSTD_ROOT:
+			#if 0
+			if (qse_mbscmp (qse_htre_getqpath(req), QSE_MT("/version")) == 0)
+			{
+				/* return static text without inspecting further */
+				((qse_httpd_serverstd_root_t*)result)->type = QSE_HTTPD_SERVERSTD_ROOT_TEXT;
+				((qse_httpd_serverstd_root_t*)result)->u.text.ptr = QSE_MT(QSE_PACKAGE_NAME " " QSE_PACKAGE_VERSION);
+				((qse_httpd_serverstd_root_t*)result)->u.text.mime = QSE_MT("text/plain");
+			}
+			else
+			#endif
+
 			if (loccfg->root_is_nwad)
 			{
 				((qse_httpd_serverstd_root_t*)result)->type = QSE_HTTPD_SERVERSTD_ROOT_NWAD;
@@ -574,30 +585,47 @@ static int query_server (
 		case QSE_HTTPD_SERVERSTD_DIRACC:
 		case QSE_HTTPD_SERVERSTD_FILEACC:
 		{
-			qse_size_t i;
-			const qse_mchar_t* xpath_base;
-			int id;
-
-			id = (code == QSE_HTTPD_SERVERSTD_DIRACC)? 0: 1;
-
-			xpath_base = qse_mbsbasename (xpath);
-
-			*(int*)result = 200;
-			for (i = 0; i < QSE_COUNTOF(loccfg->access[id]); i++)
+			switch (qse_htre_getqmethodtype(req))
 			{
-				struct access_t* access;
-				for (access = loccfg->access[id][i].head; access; access = access->next)
+				case QSE_HTTP_OPTIONS:
+				case QSE_HTTP_HEAD:
+				case QSE_HTTP_GET:
+				case QSE_HTTP_POST:
+				case QSE_HTTP_PUT:
+				case QSE_HTTP_DELETE:
 				{
-					if ((access->type == ACCESS_PREFIX && qse_mbsbeg (xpath_base, access->spec)) ||
-					    (access->type == ACCESS_SUFFIX && qse_mbsend (xpath_base, access->spec)) ||
-					    (access->type == ACCESS_NAME && qse_mbscmp (xpath_base, access->spec) == 0) ||
-					    access->type == ACCESS_OTHER)
+					qse_size_t i;
+					const qse_mchar_t* xpath_base;
+					int id;
+
+					id = (code == QSE_HTTPD_SERVERSTD_DIRACC)? 0: 1;
+		
+					xpath_base = qse_mbsbasename (xpath);
+		
+					*(int*)result = 200;
+					for (i = 0; i < QSE_COUNTOF(loccfg->access[id]); i++)
 					{
-						*(int*)result = access->value;
-						return 0;
+						struct access_t* access;
+						for (access = loccfg->access[id][i].head; access; access = access->next)
+						{
+							if ((access->type == ACCESS_PREFIX && qse_mbsbeg (xpath_base, access->spec)) ||
+							    (access->type == ACCESS_SUFFIX && qse_mbsend (xpath_base, access->spec)) ||
+							    (access->type == ACCESS_NAME && qse_mbscmp (xpath_base, access->spec) == 0) ||
+							    access->type == ACCESS_OTHER)
+							{
+								*(int*)result = access->value;
+								return 0;
+							}
+						}
 					}
+					break;
 				}
+	
+				default:
+					*(int*)result = 405; /* method not allowed */
+					break;
 			}
+
 			return 0;
 		}
 	}

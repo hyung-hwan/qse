@@ -128,6 +128,7 @@
 		{ \
 			case ENOMEM: return __SYSERRNUM__ (obj2, ENOMEM); \
 			case EINVAL: return __SYSERRNUM__ (obj2, EINVAL); \
+			case EBUSY: \
 			case EACCES: return __SYSERRNUM__ (obj2, EACCES); \
 			case ENOTDIR: \
 			case ENOENT: return __SYSERRNUM__ (obj2, ENOENT); \

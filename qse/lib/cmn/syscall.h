@@ -318,6 +318,12 @@
 #	define QSE_RENAME(oldpath,newpath) rename(oldpath,newpath)
 #endif
 
+#if defined(SYS_mkdir) && defined(QSE_USE_SYSCALL)
+#	define QSE_MKDIR(path,mode) syscall(SYS_mkdir,path,mode)
+#else
+#	define QSE_MKDIR(path,mode) mkdir(path,mode)
+#endif
+
 #if defined(SYS_rmdir) && defined(QSE_USE_SYSCALL)
 #	define QSE_RMDIR(path) syscall(SYS_rmdir,path)
 #else

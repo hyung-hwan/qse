@@ -50,6 +50,8 @@ struct task_cgi_t
 	const qse_mchar_t* suffix;
 	const qse_mchar_t* root;
 	const qse_mchar_t* shebang;
+
+	int method;
 	qse_http_version_t version;
 	int keepalive; /* taken from the request */
 	int nph;
@@ -746,6 +748,7 @@ static int task_init_cgi (
 	qse_mbscpy ((qse_mchar_t*)cgi->root, arg->root.ptr);
 	qse_mbscpy ((qse_mchar_t*)cgi->shebang, arg->shebang.ptr);
 
+	cgi->method = qse_htre_getqmethodtype(arg->req);
 	cgi->version = *qse_htre_getversion(arg->req);
 	cgi->keepalive = (arg->req->attr.flags & QSE_HTRE_ATTR_KEEPALIVE);
 	cgi->nph = arg->nph;
@@ -1355,7 +1358,7 @@ qse_printf (QSE_T("TRAILING DATA=[%.*hs]\n"), (int)QSE_MBS_LEN(cgi->res), QSE_MB
 	return 1;
 
 oops:
-	return (qse_httpd_entask_err (httpd, client, task, 500, &cgi->version, cgi->keepalive) == QSE_NULL)? -1: 0;
+	return (qse_httpd_entask_err (httpd, client, task, 500, cgi->method, &cgi->version, cgi->keepalive) == QSE_NULL)? -1: 0;
 }
 
 static int task_main_cgi (
@@ -1502,7 +1505,7 @@ oops:
 
 	return (qse_httpd_entask_err (
 		httpd, client, task, http_errnum, 
-		&cgi->version, cgi->keepalive) == QSE_NULL)? -1: 0;
+		cgi->method, &cgi->version, cgi->keepalive) == QSE_NULL)? -1: 0;
 }
 
 /* TODO: global option or individual paramter for max cgi lifetime 

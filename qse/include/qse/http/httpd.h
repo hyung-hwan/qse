@@ -166,6 +166,7 @@ struct qse_httpd_scb_t
 		int (*stat) (
 			qse_httpd_t* httpd, const qse_mchar_t* path, 
 			qse_httpd_stat_t* stat);
+		int (*purge) (qse_httpd_t* httpd, const qse_mchar_t* path);
 			
 		int (*ropen) (
 			qse_httpd_t* httpd, const qse_mchar_t* path, 
@@ -185,6 +186,12 @@ struct qse_httpd_scb_t
 
 	struct
 	{
+		int (*stat) (
+			qse_httpd_t* httpd, const qse_mchar_t* path, 
+			qse_httpd_stat_t* stat);
+		int (*make) (qse_httpd_t* httpd, const qse_mchar_t* path);
+		int (*purge) (qse_httpd_t* httpd, const qse_mchar_t* path);
+
 		int (*open) (
 			qse_httpd_t* httpd, const qse_mchar_t* path, 
 			qse_ubi_t* handle);
@@ -805,6 +812,14 @@ QSE_EXPORT qse_httpd_task_t* qse_httpd_entasknomod (
      qse_httpd_t*              httpd,
 	qse_httpd_client_t*       client,
 	qse_httpd_task_t*         pred,
+	qse_htre_t*               req
+);
+
+QSE_EXPORT qse_httpd_task_t* qse_httpd_entaskallow (
+	qse_httpd_t*              httpd,
+	qse_httpd_client_t*       client,
+	qse_httpd_task_t*         pred,
+	const qse_mchar_t*        allow,
 	qse_htre_t*               req
 );
 

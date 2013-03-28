@@ -25,30 +25,32 @@
 
 #define ETAG_LEN_MAX 127
 
-#define PUTFILE_INIT_FAILED (1 << 0)
+#define PUTFILE_INIT_FAILED  (1 << 0)
+#define PUTFILE_WRITE_FAILED (1 << 1)
 
 typedef struct task_file_t task_file_t;
 struct task_file_t
 {
 	qse_mcstr_t path;
 
-	qse_http_range_t   range;
-	qse_mchar_t        if_none_match[ETAG_LEN_MAX + 1];
-	qse_ntime_t        if_modified_since;
 	qse_http_version_t version;
 	int                keepalive;
 	int                method;
 
-	/* only for put file... */
 	union
 	{
 		struct
 		{
 			qse_mcstr_t mime;
+			qse_mchar_t if_none_match[ETAG_LEN_MAX + 1];
+			qse_ntime_t if_modified_since;
+			qse_http_range_t range;
 		} get;
 		struct
 		{
+			qse_httpd_t* httpd;
 			int flags;
+			int status;
 			qse_htre_t* req;
 			qse_ubi_t handle;
 		} put;
@@ -91,7 +93,6 @@ static int task_main_getfseg (
 	count = MAX_SEND_SIZE;
 	if (count >= ctx->left) count = ctx->left;
 
-/* TODO: more adjustment needed for OS with different sendfile semantics... */
 	n = httpd->opt.scb.client.sendfile (
 		httpd, client, ctx->handle, &ctx->offset, count);
 	if (n <= -1) 
@@ -184,7 +185,7 @@ static QSE_INLINE int task_main_getfile (
 		              (httpd->errnum == QSE_HTTPD_EACCES)? 403: 500;
 		x = qse_httpd_entask_err (
 			httpd, client, x, http_errnum, 
-			&file->version, file->keepalive);
+			file->method, &file->version, file->keepalive);
 		goto no_file_send;
 	}
 
@@ -196,37 +197,37 @@ static QSE_INLINE int task_main_getfile (
 		              (httpd->errnum == QSE_HTTPD_EACCES)? 403: 500;
 		x = qse_httpd_entask_err (
 			httpd, client, x, http_errnum, 
-			&file->version, file->keepalive);
+			file->method, &file->version, file->keepalive);
 		goto no_file_send;
 	}	
 	fileopen = 1;
 
-	if (file->range.type != QSE_HTTP_RANGE_NONE)
+	if (file->u.get.range.type != QSE_HTTP_RANGE_NONE)
 	{ 
 		qse_mchar_t tmp[4][64];
 		qse_mchar_t etag[ETAG_LEN_MAX + 1];
 		qse_size_t etag_len;
 
-		if (file->range.type == QSE_HTTP_RANGE_SUFFIX)
+		if (file->u.get.range.type == QSE_HTTP_RANGE_SUFFIX)
 		{
-			if (file->range.to > st.size) file->range.to = st.size;
-			file->range.from = st.size - file->range.to;
-			file->range.to = file->range.to + file->range.from;
-			if (st.size > 0) file->range.to--;
+			if (file->u.get.range.to > st.size) file->u.get.range.to = st.size;
+			file->u.get.range.from = st.size - file->u.get.range.to;
+			file->u.get.range.to = file->u.get.range.to + file->u.get.range.from;
+			if (st.size > 0) file->u.get.range.to--;
 		}
 
-		if (file->range.from >= st.size)
+		if (file->u.get.range.from >= st.size)
 		{
 			x = qse_httpd_entask_err (
-				httpd, client, x, 416, &file->version, file->keepalive);
+				httpd, client, x, 416, file->method, &file->version, file->keepalive);
 			goto no_file_send;
 		}
 
-		if (file->range.to >= st.size) file->range.to = st.size - 1;
+		if (file->u.get.range.to >= st.size) file->u.get.range.to = st.size - 1;
 
-		qse_fmtuintmaxtombs (tmp[0], QSE_COUNTOF(tmp[0]), (file->range.to - file->range.from + 1), 10, -1, QSE_MT('\0'), QSE_NULL);
-		qse_fmtuintmaxtombs (tmp[1], QSE_COUNTOF(tmp[1]), file->range.from, 10, -1, QSE_MT('\0'), QSE_NULL);
-		qse_fmtuintmaxtombs (tmp[2], QSE_COUNTOF(tmp[2]), file->range.to, 10, -1, QSE_MT('\0'), QSE_NULL);
+		qse_fmtuintmaxtombs (tmp[0], QSE_COUNTOF(tmp[0]), (file->u.get.range.to - file->u.get.range.from + 1), 10, -1, QSE_MT('\0'), QSE_NULL);
+		qse_fmtuintmaxtombs (tmp[1], QSE_COUNTOF(tmp[1]), file->u.get.range.from, 10, -1, QSE_MT('\0'), QSE_NULL);
+		qse_fmtuintmaxtombs (tmp[2], QSE_COUNTOF(tmp[2]), file->u.get.range.to, 10, -1, QSE_MT('\0'), QSE_NULL);
 		qse_fmtuintmaxtombs (tmp[3], QSE_COUNTOF(tmp[3]), st.size, 10, -1, QSE_MT('\0'), QSE_NULL);
 
 		etag_len = qse_fmtuintmaxtombs (&etag[0], QSE_COUNTOF(etag), st.mtime.sec, 16, -1, QSE_MT('\0'), QSE_NULL);
@@ -249,7 +250,10 @@ static QSE_INLINE int task_main_getfile (
 			(file->u.get.mime.len > 0? QSE_MT("Content-Type: "): QSE_MT("")),
 			(file->u.get.mime.len > 0? file->u.get.mime.ptr: QSE_MT("")),
 			(file->u.get.mime.len > 0? QSE_MT("\r\n"): QSE_MT("")),
-			tmp[0], tmp[1], tmp[2], tmp[3], etag
+			((file->method == QSE_HTTP_HEAD)? QSE_MT("0"): tmp[0]),
+			tmp[1], tmp[2], tmp[3],
+			qse_httpd_fmtgmtimetobb (httpd, &st.mtime, 1),
+			etag
 		);
 		if (x)
 		{
@@ -257,8 +261,8 @@ static QSE_INLINE int task_main_getfile (
 			x = entask_getfseg (
 				httpd, client, x,
 				handle, 
-				file->range.from, 
-				(file->range.to - file->range.from + 1)
+				file->u.get.range.from, 
+				(file->u.get.range.to - file->u.get.range.from + 1)
 			);
 		}
 	}
@@ -278,13 +282,13 @@ static QSE_INLINE int task_main_getfile (
 		etag[etag_len++] = QSE_MT('-');
 		etag_len += qse_fmtuintmaxtombs (&etag[etag_len], QSE_COUNTOF(etag) - etag_len, st.dev, 16, -1, QSE_MT('\0'), QSE_NULL);
 
-		if ((file->if_none_match[0] != QSE_MT('\0') && qse_mbscmp (etag, file->if_none_match) == 0) ||
-		    (file->if_modified_since.sec > 0 && st.mtime.sec <= file->if_modified_since.sec)) 
+		if ((file->u.get.if_none_match[0] != QSE_MT('\0') && qse_mbscmp (etag, file->u.get.if_none_match) == 0) ||
+		    (file->u.get.if_modified_since.sec > 0 && st.mtime.sec <= file->u.get.if_modified_since.sec)) 
 		{
 			/* i've converted milliseconds to seconds before timestamp comparison
 			 * because st.mtime has the actual milliseconds less than 1 second
 			 * while if_modified_since doesn't have such small milliseconds */
-			x = qse_httpd_entask_nomod (httpd, client, x, &file->version, file->keepalive);
+			x = qse_httpd_entask_nomod (httpd, client, x, file->method, &file->version, file->keepalive);
 			goto no_file_send;
 		}
 
@@ -304,7 +308,7 @@ static QSE_INLINE int task_main_getfile (
 			(file->u.get.mime.len > 0? QSE_MT("Content-Type: "): QSE_MT("")),
 			(file->u.get.mime.len > 0? file->u.get.mime.ptr: QSE_MT("")),
 			(file->u.get.mime.len > 0? QSE_MT("\r\n"): QSE_MT("")),
-			b_fsize,
+			((file->method == QSE_HTTP_HEAD)? QSE_MT("0"): b_fsize),
 			qse_httpd_fmtgmtimetobb (httpd, &st.mtime, 1),
 			etag
 		);
@@ -325,6 +329,24 @@ no_file_send:
 }
 
 /*------------------------------------------------------------------------*/
+
+static int write_file (qse_httpd_t* httpd, qse_ubi_t handle, const qse_mchar_t* ptr, qse_size_t len)
+{
+	qse_ssize_t n;
+	qse_size_t pos = 0;
+
+	/* this implementation assumes that file writing will never get 
+	 * blocked in practice. so no i/o multiplexing is performed over
+	 * file descriptors */
+	while (pos < len)
+	{
+		n = httpd->opt.scb.file.write (httpd, handle, &ptr[pos], len - pos);
+		if (n <= 0) return -1;
+		pos += n;
+	}
+
+	return 0;
+}
 
 static int putfile_snatch_client_input (
 	qse_htre_t* req, const qse_mchar_t* ptr, qse_size_t len, void* ctx)
@@ -354,10 +376,13 @@ static int putfile_snatch_client_input (
 		 * the trigger is not needed any more. */
 		task->trigger[0].mask = 0;
 	}
-	else /*if (!(file->reqflags & PROXY_REQ_FWDERR))*/
+	else if (!(file->u.put.flags & PUTFILE_WRITE_FAILED))
 	{
-		/* TODO: write to file */
-qse_printf (QSE_T("WRITING 4 [%.*hs]\n"), (int)len, ptr);
+		if (write_file (file->u.put.httpd, file->u.put.handle, ptr, len) <= -1)
+		{
+			file->u.put.flags |= PUTFILE_WRITE_FAILED;
+			file->u.put.status = 500;
+		}
 	}
 
 	return 0;
@@ -368,7 +393,7 @@ static int task_init_putfile (
 {
 	task_file_t* file = qse_httpd_gettaskxtn (httpd, task);
 	task_file_t* arg = (task_file_t*)task->ctx;
-	int snatch_needed;
+	qse_httpd_stat_t st;
 
 	/* zero out the task's extension area */
 	QSE_MEMCPY (file, arg, QSE_SIZEOF(*file));
@@ -377,87 +402,36 @@ static int task_init_putfile (
 	/* copy in the path name to the area */
 	file->path.ptr = (qse_mchar_t*)(file + 1);
 	qse_mbscpy ((qse_mchar_t*)file->path.ptr, arg->path.ptr);
+	file->u.put.status = 204; /* 200 should also be ok to indicate success. */
+	task->ctx = file; /* switch the task context to the extension area */
 
-	snatch_needed = 0;
-
-#if 0
 	httpd->errnum = QSE_HTTPD_ENOERR;
 	if (httpd->opt.scb.file.stat (httpd, file->path.ptr, &st) <= -1)
 	{
-		int http_errnum = 500;
-
-		switch (httpd->errnum)
+		if (httpd->errnum == QSE_HTTPD_ENOENT) 
 		{
-			case QSE_HTTPD_ENOENT:
-				/* nothing to do */
-				break;
-
-			case QSE_HTTPD_EACCES:
-				http_errnum = 403;
-			default:
-				
-				goto no_file_write;
+			/* stat found no such file. so if the request is achived
+			 * successfully, it should send '201 Created' */
+			file->u.put.status = 201;
 		}
 	}
-#endif
 
-	if (httpd->opt.scb.file.wopen (httpd, file->path.ptr, &file->u.put.handle) <= -1) goto oops;
-
-	if (arg->u.put.req->state & QSE_HTRE_DISCARDED)
+	httpd->errnum = QSE_HTTPD_ENOERR;
+	if (httpd->opt.scb.file.wopen (httpd, file->path.ptr, &file->u.put.handle) <= -1) 
 	{
-		/* no content to add */
-/* TODO: return what??? */
-qse_printf (QSE_T("ALL DISCARDED...\n"));
-	}
-	else if (arg->u.put.req->state & QSE_HTRE_COMPLETED)
-	{
-#if 0
-		len = qse_htre_getcontentlen(arg->u.put.req);
-		if (len > 0)
-		{
-			ptr = qse_htre_getcontentptr(arg->u.put.req);
-			/* TODO: write this to a file */
-		}
-#endif
-qse_printf (QSE_T("WRITING 1 [%.*hs]\n"), (int)qse_htre_getcontentlen(arg->u.put.req), qse_htre_getcontentptr(arg->u.put.req));
-	}
-	else if (arg->u.put.req->attr.flags & QSE_HTRE_ATTR_LENGTH)
-	{
-		/* Content-Length is included and the content
-		 * has been received partially so far */
-
-#if 0
-		len = qse_htre_getcontentlen(arg->u.put.req);
-		if (len > 0)
-		{
-			ptr = qse_htre_getcontentptr(arg->u.put.req);
-			/* TODO: write to a file */
-		}
-
-#endif
-qse_printf (QSE_T("WRITING 2 [%.*hs]\n"), (int)qse_htre_getcontentlen(arg->u.put.req), qse_htre_getcontentptr(arg->u.put.req));
-		snatch_needed = 1;
-	}
-	else
-	{
-		/* if this request is not chunked nor not length based,
-		 * the state should be QSE_HTRE_COMPLETED. so only a
-		 * chunked request should reach here */
-		QSE_ASSERT (arg->u.put.req->attr.flags & QSE_HTRE_ATTR_CHUNKED);
-
-qse_printf (QSE_T("WRITING 3 [%.*hs]\n"), (int)qse_htre_getcontentlen(arg->u.put.req), qse_htre_getcontentptr(arg->u.put.req));
-#if 0
-		len = qse_htre_getcontentlen(arg->u.put.req);
-		if (len > 0)
-		{
-			ptr = qse_htre_getcontentptr(arg->u.put.req);
-		}
-#endif
-
-		snatch_needed = 1;
+		file->u.put.status = (httpd->errnum == QSE_HTTPD_EACCES)? 403: 500;
+		goto oops;
 	}
 
-	if (snatch_needed)
+	if (write_file (httpd, file->u.put.handle, qse_htre_getcontentptr(arg->u.put.req), qse_htre_getcontentlen(arg->u.put.req)) <= -1) 
+	{
+		httpd->opt.scb.file.close (httpd, file->u.put.handle);
+		file->u.put.status = 500;
+		goto oops;
+	}
+
+	if (!(arg->u.put.req->state & QSE_HTRE_DISCARDED) &&
+	    !(arg->u.put.req->state & QSE_HTRE_COMPLETED))
 	{
 		/* set up a callback to be called when the request content
 		 * is fed to the htrd reader. qse_htre_addcontent() that 
@@ -470,16 +444,14 @@ qse_printf (QSE_T("WRITING 3 [%.*hs]\n"), (int)qse_htre_getcontentlen(arg->u.put
 	 * triggers in the task initializer. however the main task handler
 	 * will be invoked so long as the client handle is writable by
 	 * the main loop. */
-
-	task->ctx = file; /* switch the task context to the extension area */
 	return 0;
 
 oops:
 	/* since a new task can't be added in the initializer,
 	 * i mark that initialization failed and let task_main_putfile()
 	 * add an error task */
+	qse_htre_discardcontent (arg->u.put.req);
 	file->u.put.flags |= PUTFILE_INIT_FAILED;
-	task->ctx = file;
 	return 0;
 }
 
@@ -488,37 +460,58 @@ static void task_fini_putfile (
 {
 	task_file_t* file = (task_file_t*)task->ctx;
 
-qse_printf (QSE_T("put fini....\n"));
 	if (!(file->u.put.flags & PUTFILE_INIT_FAILED))
 		httpd->opt.scb.file.close (httpd, file->u.put.handle);
+}
+
+static int task_main_putfile_2 (
+	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
+{
+	task_file_t* file = (task_file_t*)task->ctx;
+
+	if (file->u.put.req)
+	{
+		/* file->u.put.req is set to a non-NULL value if snatching
+		 * is needed in the task_init_putfile(). and it's reset to
+		 * QSE_NULL when snatching is over in putfile_snatch_client_input().
+		 * i set a trigger so that the task is executed
+		 * while there is input from the client side  */
+		task->trigger[0].mask = QSE_HTTPD_TASK_TRIGGER_READ;
+		task->trigger[0].handle = client->handle;
+		return 1; /* trigger me when a client sends data  */
+	}
+
+	/* snatching is over. writing error may have occurred as well.
+	 * file->u.put.status should hold a proper status code */
+	if (qse_httpd_entask_err (
+		httpd, client, task, file->u.put.status,
+		file->method, &file->version, file->keepalive) == QSE_NULL) return -1;
+	return 0; /* no more data to read. task over */
 }
 
 static int task_main_putfile (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
 {
 	task_file_t* file = (task_file_t*)task->ctx;
-qse_printf (QSE_T("put main....\n"));
 
-	if (file->u.put.req)
+	if (!(file->u.put.flags & PUTFILE_INIT_FAILED) && file->u.put.req)
 	{
-qse_printf (QSE_T("put xxxxx....\n"));
-		/* still snatching the content body */
-		task->trigger[0].mask = QSE_HTTPD_TASK_TRIGGER_READ;
-		task->trigger[0].handle = client->handle;
-		return 1;
+		/* initialization was successful and snatching is required. 
+		 * switch to the next phase. */
+		task->main = task_main_putfile_2;
+		return task_main_putfile_2 (httpd, client, task);
 	}
 
-qse_printf (QSE_T("put what....\n"));
-	return 0;
-}
-
-/*------------------------------------------------------------------------*/
-
-static QSE_INLINE int task_main_delfile (
-	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
-{
-	/* TODO: implement this */
-	return -1;
+	/* snatching is not required or initialization error has occurred.
+	 * file->u.put.status should hold a proper status code.
+	 *
+	 * note: if initialization error occurred and there is contents for the
+	 * client to send, this reply may get to the client before it finishes 
+	 * sending the contents. */
+	if (qse_httpd_entask_err (
+		httpd, client, task, file->u.put.status,
+		file->method, &file->version, file->keepalive) == QSE_NULL) return -1;
+	return 0; /* task over */
 }
 
 /*------------------------------------------------------------------------*/
@@ -549,6 +542,11 @@ qse_httpd_task_t* qse_httpd_entaskfile (
 
 	switch (data.method)
 	{
+		case QSE_HTTP_OPTIONS:
+			qse_htre_discardcontent (req);
+			return qse_httpd_entaskallow (httpd, client, pred, 
+				QSE_MT("OPTIONS,GET,HEAD,POST,PUT,DELETE"), req);
+
 		case QSE_HTTP_HEAD:
 		case QSE_HTTP_GET:
 		case QSE_HTTP_POST:
@@ -561,72 +559,84 @@ qse_httpd_task_t* qse_httpd_entaskfile (
 				xtnsize += data.u.get.mime.len + 1;
 			}
 
+			tmp = qse_htre_getheaderval(req, QSE_MT("If-None-Match"));
+			if (tmp)
+			{
+				/*while (tmp->next) tmp = tmp->next;*/ /* get the last value */
+				qse_mbsxcpy (data.u.get.if_none_match, QSE_COUNTOF(data.u.get.if_none_match), tmp->ptr);
+			}
+			if (data.u.get.if_none_match[0] == QSE_MT('\0'))
+			{
+				/* Both ETag and Last-Modified are included in the reply.
+				 * If the client understand ETag, it can choose to include 
+				 * If-None-Match in the request. If it understands Last-Modified,
+				 * it can choose to include If-Modified-Since. I don't care
+				 * the client understands both and include both of them
+				 * in the request.
+				 *
+				 * I check If-None-Match if it's included.
+				 * I check If-Modified-Since if If-None-Match is not included.
+				 */
+				tmp = qse_htre_getheaderval(req, QSE_MT("If-Modified-Since"));
+				if (tmp)
+				{
+					/*while (tmp->next) tmp = tmp->next;*/ /* get the last value */
+					if (qse_parsehttptime (tmp->ptr, &data.u.get.if_modified_since) <= -1)
+					{
+						data.u.get.if_modified_since.sec = 0;
+						data.u.get.if_modified_since.nsec = 0;
+					}
+				}
+			}
+
+			tmp = qse_htre_getheaderval(req, QSE_MT("Range"));
+			if (tmp) 
+			{
+				/*while (tmp->next) tmp = tmp->next;*/ /* get the last value */
+				if (qse_parsehttprange (tmp->ptr, &data.u.get.range) <= -1)
+				{
+					return qse_httpd_entaskerr (httpd, client, pred, 416, req);
+				}
+			}
+			else 
+			{
+				data.u.get.range.type = QSE_HTTP_RANGE_NONE;
+			}
+
 			task.init = task_init_getfile;
 			task.main = task_main_getfile;
 			break;
 
 		case QSE_HTTP_PUT:
+			/* note that no partial update is supported for PUT */
+			data.u.put.httpd = httpd;
 			data.u.put.req = req;
 			task.init = task_init_putfile;
 			task.main = task_main_putfile;
 			task.fini = task_fini_putfile;
 			break;
 
-#if 0
 		case QSE_HTTP_DELETE:
-			task.main = task_main_delfile;
-			break;
-#endif
+		{
+			int status = 200;
+
+			qse_htre_discardcontent (req);
+			if (httpd->opt.scb.file.purge (httpd, path) <= -1)
+			{
+				status = (httpd->errnum == QSE_HTTPD_ENOENT)? 404:
+				         (httpd->errnum == QSE_HTTPD_EACCES)? 403: 500;
+			}
+				
+			return qse_httpd_entaskerr (httpd, client, pred, status, req);
+		}
 
 		default:
 			/* Method not allowed */
+			qse_htre_discardcontent (req);
 			return qse_httpd_entaskerr (httpd, client, pred, 405, req);
 	}
 
-	tmp = qse_htre_getheaderval(req, QSE_MT("Range"));
-	if (tmp) 
-	{
-		while (tmp->next) tmp = tmp->next; /* get the last value */
-		if (qse_parsehttprange (tmp->ptr, &data.range) <= -1)
-		{
-			return qse_httpd_entaskerr (httpd, client, pred, 416, req);
-		}
-	}
-	else 
-	{
-		data.range.type = QSE_HTTP_RANGE_NONE;
-	}
 
-	tmp = qse_htre_getheaderval(req, QSE_MT("If-None-Match"));
-	if (tmp)
-	{
-		while (tmp->next) tmp = tmp->next; /* get the last value */
-		qse_mbsxcpy (data.if_none_match, QSE_COUNTOF(data.if_none_match), tmp->ptr);
-	}
-	if (data.if_none_match[0] == QSE_MT('\0'))
-	{
-		/* Both ETag and Last-Modified are included in the reply.
-		 * If the client understand ETag, it can choose to include 
-		 * If-None-Match in the request. If it understands Last-Modified,
-		 * it can choose to include If-Modified-Since. I don't care
-		 * the client understands both and include both of them
-		 * in the request.
-		 *
-		 * I check If-None-Match if it's included.
-		 * I check If-Modified-Since if If-None-Match is not included.
-		 */
-		tmp = qse_htre_getheaderval(req, QSE_MT("If-Modified-Since"));
-		if (tmp)
-		{
-			while (tmp->next) tmp = tmp->next; /* get the last value */
-			if (qse_parsehttptime (tmp->ptr, &data.if_modified_since) <= -1)
-			{
-				data.if_modified_since.sec = 0;
-				data.if_modified_since.nsec = 0;
-			}
-		}
-	}
-	
 	task.ctx = &data;
 	return qse_httpd_entask (httpd, client, pred, &task, xtnsize);
 }

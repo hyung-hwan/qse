@@ -201,7 +201,8 @@ struct status_reloc_t
 static qse_httpd_task_t* entask_status (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, 
 	qse_httpd_task_t* pred, int code, void* extra,
-	const qse_http_version_t* version, int keepalive)
+	qse_http_method_t method, const qse_http_version_t* version, 
+	int keepalive)
 {
 	const qse_mchar_t* msg;
 
@@ -209,34 +210,44 @@ static qse_httpd_task_t* entask_status (
 	const qse_mchar_t* extrapst = QSE_MT("");
 	const qse_mchar_t* extraval = QSE_MT("");
 
-	qse_mchar_t text[1024]; /* TODO: make this buffer dynamic or scalable */
+	qse_mchar_t text[1024] = QSE_MT(""); /* TODO: make this buffer dynamic or scalable */
 	
 	msg = qse_httpstatustombs (code);
-	if (code == 301 || code == 307) 
+	switch (code)
 	{
-		status_reloc_t* reloc;
-
-		reloc = (status_reloc_t*)extra;
-		extrapre = QSE_MT("Location: ");
-		extrapst = reloc->redir? QSE_MT("/\r\n"): QSE_MT("\r\n");
-		extraval = reloc->dst;
-
-		text[0] = QSE_MT('\0');
-	}
-	else if (code == 304)
-	{
-		text[0] = QSE_MT('\0');
-	}
-	else
-	{
-		if (httpd->opt.rcb.fmterr (httpd, client, code, text, QSE_COUNTOF(text)) <= -1) return QSE_NULL;
-
-		if (code == 401)
+		case 301:
+		case 307:
 		{
-			extrapre = QSE_MT("WWW-Authenticate: Basic realm=\"");
-			extrapst = QSE_MT("\"\r\n");
-			extraval = (const qse_mchar_t*)extra;
+			status_reloc_t* reloc;
+			reloc = (status_reloc_t*)extra;
+			extrapre = QSE_MT("Location: ");
+			extrapst = reloc->redir? QSE_MT("/\r\n"): QSE_MT("\r\n");
+			extraval = reloc->dst;
+			break;
 		}
+
+		case 304:
+		case 200:
+		case 201:
+		case 202:
+		case 203:
+		case 204:
+		case 205:
+		case 206:
+			/* nothing to do */
+			break;	
+
+		default:
+			if (method != QSE_HTTP_HEAD &&
+			    httpd->opt.rcb.fmterr (httpd, client, code, text, QSE_COUNTOF(text)) <= -1) return QSE_NULL;
+
+			if (code == 401)
+			{
+				extrapre = QSE_MT("WWW-Authenticate: Basic realm=\"");
+				extrapst = QSE_MT("\"\r\n");
+				extraval = (const qse_mchar_t*)extra;
+			}
+			break;
 	}
 
 	return qse_httpd_entaskformat (
@@ -254,19 +265,21 @@ static qse_httpd_task_t* entask_status (
 qse_httpd_task_t* qse_httpd_entask_err (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, 
 	qse_httpd_task_t* pred, int code,
-	const qse_http_version_t* version, int keepalive)
+	qse_http_method_t method, const qse_http_version_t* version, int keepalive)
 {
-	return entask_status (httpd, client, pred, code, QSE_NULL, version, keepalive);
+	return entask_status (httpd, client, pred, code, QSE_NULL, method, version, keepalive);
 }
 
 qse_httpd_task_t* qse_httpd_entaskerr (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, 
 	qse_httpd_task_t* pred, int code, qse_htre_t* req)
 {
-	qse_htre_discardcontent (req);
 	return entask_status (
 		httpd, client, pred, code, QSE_NULL, 
-		qse_htre_getversion(req), (req->attr.flags & QSE_HTRE_ATTR_KEEPALIVE));
+		qse_htre_getqmethodtype(req), 
+		qse_htre_getversion(req), 
+		(req->attr.flags & QSE_HTRE_ATTR_KEEPALIVE)
+	);
 }
 
 /*------------------------------------------------------------------------*/
@@ -289,27 +302,13 @@ qse_httpd_task_t* qse_httpd_entaskauth (
 {
 	return entask_status (
 		httpd, client, pred, 401, (void*)realm, 
+		qse_htre_getqmethodtype(req),
 		qse_htre_getversion(req), 
 		(req->attr.flags & QSE_HTRE_ATTR_KEEPALIVE));
 }
 
 
 /*------------------------------------------------------------------------*/
-
-qse_httpd_task_t* qse_httpd_entask_reloc (
-	qse_httpd_t* httpd, qse_httpd_client_t* client, 
-	qse_httpd_task_t* pred, const qse_mchar_t* dst,
-	const qse_http_version_t* version, int keepalive)
-{
-	status_reloc_t reloc;
-
-	reloc.dst = dst;
-	reloc.redir = 0;
-
-	return entask_status (
-		httpd, client, pred, 301, (void*)&reloc,
-		version, keepalive);
-}
 
 qse_httpd_task_t* qse_httpd_entaskreloc (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, 
@@ -322,23 +321,9 @@ qse_httpd_task_t* qse_httpd_entaskreloc (
 
 	return entask_status (
 		httpd, client, pred, 301, (void*)&reloc,
+		qse_htre_getqmethodtype(req), 
 		qse_htre_getversion(req), 
 		(req->attr.flags & QSE_HTRE_ATTR_KEEPALIVE));
-}
-
-qse_httpd_task_t* qse_httpd_entask_redir (
-	qse_httpd_t* httpd, qse_httpd_client_t* client, 
-	qse_httpd_task_t* pred, const qse_mchar_t* dst,
-	const qse_http_version_t* version, int keepalive)
-{
-	status_reloc_t reloc;
-
-	reloc.dst = dst;
-	reloc.redir = 1;
-
-	return entask_status (
-		httpd, client, pred, 301, (void*)&reloc,
-		version, keepalive);
 }
 
 qse_httpd_task_t* qse_httpd_entaskredir (
@@ -352,6 +337,7 @@ qse_httpd_task_t* qse_httpd_entaskredir (
 
 	return entask_status (
 		httpd, client, pred, 301, (void*)&reloc,
+		qse_htre_getqmethodtype(req), 
 		qse_htre_getversion(req), 
 		(req->attr.flags & QSE_HTRE_ATTR_KEEPALIVE));
 }
@@ -359,12 +345,11 @@ qse_httpd_task_t* qse_httpd_entaskredir (
 /*------------------------------------------------------------------------*/
 
 qse_httpd_task_t* qse_httpd_entask_nomod (
-	qse_httpd_t* httpd, qse_httpd_client_t* client, 
-	qse_httpd_task_t* pred, const qse_http_version_t* version, int keepalive)
+	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* pred, 
+	qse_http_method_t method, const qse_http_version_t* version, int keepalive)
 {
 	return entask_status (
-		httpd, client, pred, 304,
-		QSE_NULL, version, keepalive);
+		httpd, client, pred, 304, QSE_NULL, method, version, keepalive);
 }
 
 qse_httpd_task_t* qse_httpd_entasknomod (
@@ -372,9 +357,35 @@ qse_httpd_task_t* qse_httpd_entasknomod (
 	qse_httpd_task_t* pred, qse_htre_t* req)
 {
 	return entask_status (
-		httpd, client, pred, 304,
-		QSE_NULL, qse_htre_getversion(req), 
+		httpd, client, pred, 304, QSE_NULL, 
+		qse_htre_getqmethodtype(req), 
+		qse_htre_getversion(req), 
 		(req->attr.flags & QSE_HTRE_ATTR_KEEPALIVE));
+}
+
+/*------------------------------------------------------------------------*/
+
+qse_httpd_task_t* qse_httpd_entaskallow (
+	qse_httpd_t* httpd, qse_httpd_client_t* client, 
+	qse_httpd_task_t* pred, const qse_mchar_t* allow, qse_htre_t* req)
+{
+	int code = 200;
+	const qse_mchar_t* msg;
+	const qse_http_version_t* version;
+	int keepalive;
+
+	msg = qse_httpstatustombs (code);
+	version = qse_htre_getversion(req);
+	keepalive = (req->attr.flags & QSE_HTRE_ATTR_KEEPALIVE);
+	return qse_httpd_entaskformat (
+		httpd, client, pred,
+		QSE_MT("HTTP/%d.%d %d %s\r\nServer: %s\r\nDate: %s\r\nConnection: %s\r\nAllow: %s\r\nContent-Length: 0\r\n\r\n"),
+		version->major, version->minor, 
+		code, msg, qse_httpd_getname (httpd),
+		qse_httpd_fmtgmtimetobb (httpd, QSE_NULL, 0),
+		(keepalive? QSE_MT("keep-alive"): QSE_MT("close")),
+		allow
+	);
 }
 
 /*------------------------------------------------------------------------*/
