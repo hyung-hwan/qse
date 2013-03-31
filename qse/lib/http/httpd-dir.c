@@ -55,7 +55,7 @@ struct task_dseg_t
 	qse_size_t  tcount; /* total directory entries */
 	qse_size_t  dcount; /* the number of items in the buffer */
 
-	qse_mchar_t buf[4096*2];
+	qse_mchar_t buf[4096*2]; /* is this large enough? */
 	int         bufpos; 
 	int         buflen;
 	int         bufrem;

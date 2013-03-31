@@ -901,6 +901,11 @@ QSE_EXPORT qse_mchar_t* qse_httpd_strntombsdup (
 	qse_size_t         len
 );
 
+QSE_EXPORT qse_mchar_t* qse_httpd_escapehtml (
+	qse_httpd_t*        httpd, 
+	const qse_mchar_t*  str
+);
+
 #ifdef __cplusplus
 }
 #endif
