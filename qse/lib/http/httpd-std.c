@@ -2143,16 +2143,23 @@ static int format_dir (
 		{
 			/* header */
 			const qse_mchar_t* css;
-			int is_root = (qse_mbscmp (qpath, QSE_MT("/")) == 0);
+			int is_root;
+			qse_mchar_t* qpath_esc;
+
+			is_root = (qse_mbscmp (qpath, QSE_MT("/")) == 0);
 
 			if (server_xtn->query (httpd, client->server, QSE_NULL, QSE_NULL, QSE_HTTPD_SERVERSTD_DIRCSS, &css) <= -1) css = QSE_NULL;
 			if (css == QSE_NULL) css = QSE_MT("");
 
-/* TODO: html escaping of qpath */
+			qpath_esc = qse_httpd_escapehtml (httpd, qpath);
+			if (qpath_esc == QSE_NULL) return -1;
+
 			n = snprintf (buf, bufsz,
-				QSE_MT("<html><head>%s</head><body><div class='header'>%s</div><div class='body'><table>%s"), css, qpath,
+				QSE_MT("<html><head>%s</head><body><div class='header'>%s</div><div class='body'><table>%s"), css, qpath_esc,
 				(is_root? QSE_MT(""): QSE_MT("<tr><td class='name'><a href='../'>..</a></td><td class='time'></td><td class='size'></td></tr>"))
 			);
+
+			if (qpath_esc != qpath) qse_httpd_freemem (httpd, qpath_esc);
 		}
 		else
 		{
@@ -2169,16 +2176,27 @@ static int format_dir (
 	{
 		/* main entry */
 		qse_mchar_t* encname;
+		qse_mchar_t* escname;
 		qse_btime_t bt;
 		qse_mchar_t tmbuf[32];
 		qse_mchar_t fszbuf[64];
 
 		/* TODO: better buffer management in case there are 
 		 *       a lot of file names to escape. */
+
+		/* perform percent-encoding for the anchor */
 		encname = qse_perenchttpstrdup (dirent->name, httpd->mmgr);
 		if (encname == QSE_NULL)
 		{
 			httpd->errnum = QSE_HTTPD_ENOMEM;
+			return -1;
+		}
+
+		/* perform html escaping for the text */
+		escname = qse_httpd_escapehtml (httpd, dirent->name);
+		if (escname == QSE_NULL) 
+		{
+			if (encname != dirent->name) QSE_MMGR_FREE (httpd->mmgr, encname);
 			return -1;
 		}
 
@@ -2205,11 +2223,12 @@ static int format_dir (
 			QSE_MT("<tr><td class='name'><a href='%s%s'>%s%s</a></td><td class='time'>%s</td><td class='size'>%s</td></tr>"),
 			encname,
 			(dirent->stat.isdir? QSE_MT("/"): QSE_MT("")),
-			dirent->name, /* TODO: html escaping for entry name */
+			escname,
 			(dirent->stat.isdir? QSE_MT("/"): QSE_MT("")),
 			tmbuf, fszbuf
 		);
 
+		if (escname != dirent->name) qse_httpd_freemem (httpd, escname);
 		if (encname != dirent->name) QSE_MMGR_FREE (httpd->mmgr, encname);
 	}
 

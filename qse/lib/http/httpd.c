@@ -1359,4 +1359,68 @@ const qse_mchar_t* qse_httpd_fmtgmtimetobb (
 
 /* --------------------------------------------------- */
 
+qse_mchar_t* qse_httpd_escapehtml (qse_httpd_t* httpd, const qse_mchar_t* str)
+{
+	qse_mchar_t* ptr, * buf;
+	qse_size_t reqlen = 0;
 
+	for (ptr = str; *ptr != QSE_MT('\0'); ptr++) 
+	{
+		switch (*ptr)
+		{
+			case QSE_MT('<'):
+			case QSE_MT('>'):
+				reqlen += 4;
+				break;
+
+			case QSE_MT('&'):
+				reqlen += 5;
+				break;
+
+			default: 
+				reqlen++;
+				break;
+		}
+	}
+
+	if (ptr - str == reqlen) return str; /* no escaping is needed */
+
+	buf = qse_httpd_allocmem (httpd, QSE_SIZEOF(*buf) * (reqlen + 1));
+	if (buf == QSE_NULL) return QSE_NULL;
+
+	ptr = buf;
+	while (*str != QSE_MT('\0'))
+	{
+		switch (*str)
+		{
+			case QSE_MT('<'):
+				*ptr++ = QSE_MT('&');
+				*ptr++ = QSE_MT('l');
+				*ptr++ = QSE_MT('t');
+				*ptr++ = QSE_MT(';');
+				break;
+
+			case QSE_MT('>'):
+				*ptr++ = QSE_MT('&');
+				*ptr++ = QSE_MT('g');
+				*ptr++ = QSE_MT('t');
+				*ptr++ = QSE_MT(';');
+				break;
+
+			case QSE_MT('&'):
+				*ptr++ = QSE_MT('&');
+				*ptr++ = QSE_MT('a');
+				*ptr++ = QSE_MT('m');
+				*ptr++ = QSE_MT('p');
+				*ptr++ = QSE_MT(';');
+				break;
+
+			default: 
+				*ptr++ = *str;
+				break;
+		}
+		str++;
+	}
+	*ptr = QSE_MT('\0');
+	return buf;
+}
