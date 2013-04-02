@@ -928,7 +928,7 @@ static int peer_open (qse_httpd_t* httpd, qse_httpd_peer_t* peer)
 #elif defined(__OS2__)
 
 	cmd = 1;
-	if (ioctl(fd, FIONBIO, &cmd, QSE_SIZEOF(cmd)) == -1) goto oops;
+	if (ioctl(fd, FIONBIO, (char*)&cmd, QSE_SIZEOF(cmd)) == -1) goto oops;
 
 	if (connect (fd, (struct sockaddr*)&connaddr, connaddrsize) == -1)
 	{
@@ -937,7 +937,7 @@ static int peer_open (qse_httpd_t* httpd, qse_httpd_peer_t* peer)
 	}
 
 	cmd = 0;
-	if (ioctl(fd, FIONBIO, &cmd, QSE_SIZEOF(cmd)) == -1) goto oops;
+	if (ioctl(fd, FIONBIO, (char*)&cmd, QSE_SIZEOF(cmd)) == -1) goto oops;
 
 #elif defined(__DOS__)
 
