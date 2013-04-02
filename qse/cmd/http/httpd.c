@@ -428,34 +428,36 @@ static int query_server (
 		return 0;
 	}
 
-	if (req)
+	if (server_xtn->cfgtab)
 	{
-		const qse_htre_hdrval_t* hosthdr;
-		const qse_mchar_t* host;
-		const qse_mchar_t* qpath;
-
-		qpath = qse_htre_getqpath (req);
-
-		hosthdr = qse_htre_getheaderval (req, QSE_MT("Host"));
-		if (hosthdr)
+		if (req && server_xtn->cfgtab)
 		{
-			const qse_mchar_t* colon;
-			qse_size_t hostlen;
+			const qse_htre_hdrval_t* hosthdr;
+			const qse_mchar_t* host;
+			const qse_mchar_t* qpath;
 
-			/* take the last host value and search */
-			while (hosthdr->next) hosthdr = hosthdr->next;
-			host = hosthdr->ptr;
+			qpath = qse_htre_getqpath (req);
 
-			/* remove :port-number if the host name contains it */
-			colon = qse_mbsrchr(host, QSE_MT(':'));
-			if (colon) hostlen = colon - host;
-			else hostlen = qse_mbslen(host);
+			hosthdr = qse_htre_getheaderval (req, QSE_MT("Host"));
+			if (hosthdr)
+			{
+				const qse_mchar_t* colon;
+				qse_size_t hostlen;
 
-			loccfg = find_loccfg (httpd, server_xtn->cfgtab, host, hostlen, qpath);
+				/*while (hosthdr->next) hosthdr = hosthdr->next; */
+				host = hosthdr->ptr;
+
+				/* remove :port-number if the host name contains it */
+				colon = qse_mbsrchr(host, QSE_MT(':'));
+				if (colon) hostlen = colon - host;
+				else hostlen = qse_mbslen(host);
+
+				loccfg = find_loccfg (httpd, server_xtn->cfgtab, host, hostlen, qpath);
+			}
+			if (loccfg == QSE_NULL) loccfg = find_loccfg (httpd, server_xtn->cfgtab, QSE_MT("*"), 1, qpath);
 		}
-		if (loccfg == QSE_NULL) loccfg = find_loccfg (httpd, server_xtn->cfgtab, QSE_MT("*"), 1, qpath);
+		if (loccfg == QSE_NULL) loccfg = find_loccfg (httpd, server_xtn->cfgtab, QSE_MT("*"), 1, QSE_MT("/"));
 	}
-	if (loccfg == QSE_NULL) loccfg = find_loccfg (httpd, server_xtn->cfgtab, QSE_MT("*"), 1, QSE_MT("/"));
 	if (loccfg == QSE_NULL) loccfg = &httpd_xtn->dflcfg;
 
 	switch (code)
@@ -1248,7 +1250,7 @@ static int open_config_file (qse_httpd_t* httpd)
 	QSE_ASSERT (httpd_xtn->xli == QSE_NULL);
 
 	httpd_xtn->xli = qse_xli_openstd (0);
-	if (	httpd_xtn->xli == QSE_NULL)
+	if (httpd_xtn->xli == QSE_NULL)
 	{
 		qse_fprintf (QSE_STDERR, QSE_T("Cannot open xli\n"));
 		return -1;
@@ -1689,4 +1691,3 @@ int qse_main (int argc, qse_achar_t* argv[])
 
 	return ret;
 }
-

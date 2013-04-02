@@ -377,17 +377,19 @@ qse_mchar_t* qse_fmthttptime (
 
 /* TODO: avoid using snprintf () */
 
-#if defined(_MSC_VER) || (defined(__WATCOMC__) && (__WATCOMC__ < 1200))
-	_snprintf (buf, bufsz,
-#else
-	snprintf (buf, bufsz,
+#if defined(_MSC_VER) || defined(__BORLANDC__) || (defined(__WATCOMC__) && (__WATCOMC__ < 1200))
+#	define snprintf _snprintf 
 #endif
+
+	snprintf (
+		buf, bufsz,
 		QSE_MT("%s, %d %s %d %02d:%02d:%02d GMT"),
 		wday_name[bt.wday].s,
 		bt.mday,
 		mon_name[bt.mon].s,
 		bt.year + QSE_BTIME_YEAR_BASE,
-		bt.hour, bt.min, bt.sec);
+		bt.hour, bt.min, bt.sec
+	);
 
 	return buf;
 }

@@ -80,8 +80,12 @@
 		<if cond="ENABLE_DLL=='1'">shared</if>
 		<if cond="ENABLE_DLL=='0'">static</if>
 	</set>
+	<set var="BUILDDIR_TCPV40HDRS">
+		<if cond="TCPV40HDRS=='on'">-tcpv40hdrs</if>
+		<if cond="TCPV40HDRS=='off'"></if>
+	</set>
 	<set var="BUILDDIR">
-		$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)
+		$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)
 	</set>
 
 	<!-- =========================================================
