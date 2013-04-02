@@ -54,7 +54,7 @@ TCPV40HDRS = off
 
 ### Variables: ###
 
-DLLQSECMN_CFLAGS = /MD$(__DEBUG_INFO_2_5) /DWIN32 /I..\..\include \
+DLLQSECMN_CFLAGS = /MD$(__DEBUG_INFO_2_10) /DWIN32 /I..\..\include \
 	$(CPPFLAGS_BUILD) $(CPPFLAGS_CHAR) $(CPPFLAGS_XCMGRS) \
 	$(CPPFLAGS_BUNDLED_UNICODE) $(CPPFLAGS_STATIC_MODULE) \
 	$(CPPFLAGS_TCPV40HDRS) /W4 $(__DEBUG_INFO) $(____DEBUG_INFO) \
@@ -149,7 +149,7 @@ DLLQSECMN_OBJECTS =  \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn_xma.obj \
 	$(____SOURCES_XCMGRS_FILENAMES_OBJECTS) \
 	$(____SOURCES_BUNDLED_UNICODE_FILENAMES_OBJECTS)
-LIBQSECMN_CFLAGS = /MD$(__DEBUG_INFO_2_5) /DWIN32 /I..\..\include \
+LIBQSECMN_CFLAGS = /MD$(__DEBUG_INFO_2_10) /DWIN32 /I..\..\include \
 	$(CPPFLAGS_BUILD) $(CPPFLAGS_CHAR) $(CPPFLAGS_XCMGRS) \
 	$(CPPFLAGS_BUNDLED_UNICODE) $(CPPFLAGS_STATIC_MODULE) \
 	$(CPPFLAGS_TCPV40HDRS) /W4 $(__DEBUG_INFO) $(____DEBUG_INFO) \
@@ -244,7 +244,7 @@ LIBQSECMN_OBJECTS =  \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmn_xma.obj \
 	$(____SOURCES_XCMGRS_FILENAMES_1_OBJECTS) \
 	$(____SOURCES_BUNDLED_UNICODE_FILENAMES_1_OBJECTS)
-DLLQSEAWK_CFLAGS = /MD$(__DEBUG_INFO_2_5) /DWIN32 /I..\..\include \
+DLLQSEAWK_CFLAGS = /MD$(__DEBUG_INFO_2_10) /DWIN32 /I..\..\include \
 	$(CPPFLAGS_BUILD) $(CPPFLAGS_CHAR) $(CPPFLAGS_XCMGRS) \
 	$(CPPFLAGS_BUNDLED_UNICODE) $(CPPFLAGS_STATIC_MODULE) \
 	$(CPPFLAGS_TCPV40HDRS) /W4 $(__DEBUG_INFO) $(____DEBUG_INFO) \
@@ -263,7 +263,7 @@ DLLQSEAWK_OBJECTS =  \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqseawk_rio.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqseawk_std.obj \
 	$(____SOURCES_STATIC_AWK_MODULE_FILENAMES_OBJECTS)
-LIBQSEAWK_CFLAGS = /MD$(__DEBUG_INFO_2_5) /DWIN32 /I..\..\include \
+LIBQSEAWK_CFLAGS = /MD$(__DEBUG_INFO_2_10) /DWIN32 /I..\..\include \
 	$(CPPFLAGS_BUILD) $(CPPFLAGS_CHAR) $(CPPFLAGS_XCMGRS) \
 	$(CPPFLAGS_BUNDLED_UNICODE) $(CPPFLAGS_STATIC_MODULE) \
 	$(CPPFLAGS_TCPV40HDRS) /W4 $(__DEBUG_INFO) $(____DEBUG_INFO) \
@@ -282,7 +282,7 @@ LIBQSEAWK_OBJECTS =  \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqseawk_rio.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqseawk_std.obj \
 	$(____SOURCES_STATIC_AWK_MODULE_FILENAMES_1_OBJECTS)
-MODQSEAWKDIR_CFLAGS = /MD$(__DEBUG_INFO_2_5) /DWIN32 /I..\..\include \
+MODQSEAWKDIR_CFLAGS = /MD$(__DEBUG_INFO_2_10) /DWIN32 /I..\..\include \
 	$(CPPFLAGS_BUILD) $(CPPFLAGS_CHAR) $(CPPFLAGS_XCMGRS) \
 	$(CPPFLAGS_BUNDLED_UNICODE) $(CPPFLAGS_STATIC_MODULE) \
 	$(CPPFLAGS_TCPV40HDRS) /W4 $(__DEBUG_INFO) $(____DEBUG_INFO) \
@@ -290,7 +290,7 @@ MODQSEAWKDIR_CFLAGS = /MD$(__DEBUG_INFO_2_5) /DWIN32 /I..\..\include \
 	/O2 $(CPPFLAGS) $(CFLAGS)
 MODQSEAWKDIR_OBJECTS =  \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\modqseawkdir_mod_dir.obj
-MODQSEAWKSTR_CFLAGS = /MD$(__DEBUG_INFO_2_5) /DWIN32 /I..\..\include \
+MODQSEAWKSTR_CFLAGS = /MD$(__DEBUG_INFO_2_10) /DWIN32 /I..\..\include \
 	$(CPPFLAGS_BUILD) $(CPPFLAGS_CHAR) $(CPPFLAGS_XCMGRS) \
 	$(CPPFLAGS_BUNDLED_UNICODE) $(CPPFLAGS_STATIC_MODULE) \
 	$(CPPFLAGS_TCPV40HDRS) /W4 $(__DEBUG_INFO) $(____DEBUG_INFO) \
@@ -298,7 +298,7 @@ MODQSEAWKSTR_CFLAGS = /MD$(__DEBUG_INFO_2_5) /DWIN32 /I..\..\include \
 	/O2 $(CPPFLAGS) $(CFLAGS)
 MODQSEAWKSTR_OBJECTS =  \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\modqseawkstr_mod_str.obj
-MODQSEAWKSYS_CFLAGS = /MD$(__DEBUG_INFO_2_5) /DWIN32 /I..\..\include \
+MODQSEAWKSYS_CFLAGS = /MD$(__DEBUG_INFO_2_10) /DWIN32 /I..\..\include \
 	$(CPPFLAGS_BUILD) $(CPPFLAGS_CHAR) $(CPPFLAGS_XCMGRS) \
 	$(CPPFLAGS_BUNDLED_UNICODE) $(CPPFLAGS_STATIC_MODULE) \
 	$(CPPFLAGS_TCPV40HDRS) /W4 $(__DEBUG_INFO) $(____DEBUG_INFO) \
@@ -306,7 +306,7 @@ MODQSEAWKSYS_CFLAGS = /MD$(__DEBUG_INFO_2_5) /DWIN32 /I..\..\include \
 	/O2 $(CPPFLAGS) $(CFLAGS)
 MODQSEAWKSYS_OBJECTS =  \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\modqseawksys_mod_sys.obj
-DLLQSESED_CFLAGS = /MD$(__DEBUG_INFO_2_5) /DWIN32 /I..\..\include \
+DLLQSESED_CFLAGS = /MD$(__DEBUG_INFO_2_10) /DWIN32 /I..\..\include \
 	$(CPPFLAGS_BUILD) $(CPPFLAGS_CHAR) $(CPPFLAGS_XCMGRS) \
 	$(CPPFLAGS_BUNDLED_UNICODE) $(CPPFLAGS_STATIC_MODULE) \
 	$(CPPFLAGS_TCPV40HDRS) /W4 $(__DEBUG_INFO) $(____DEBUG_INFO) \
@@ -316,7 +316,7 @@ DLLQSESED_OBJECTS =  \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsesed_sed.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsesed_err.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsesed_std.obj
-LIBQSESED_CFLAGS = /MD$(__DEBUG_INFO_2_5) /DWIN32 /I..\..\include \
+LIBQSESED_CFLAGS = /MD$(__DEBUG_INFO_2_10) /DWIN32 /I..\..\include \
 	$(CPPFLAGS_BUILD) $(CPPFLAGS_CHAR) $(CPPFLAGS_XCMGRS) \
 	$(CPPFLAGS_BUNDLED_UNICODE) $(CPPFLAGS_STATIC_MODULE) \
 	$(CPPFLAGS_TCPV40HDRS) /W4 $(__DEBUG_INFO) $(____DEBUG_INFO) \
@@ -326,47 +326,71 @@ LIBQSESED_OBJECTS =  \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsesed_sed.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsesed_err.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsesed_std.obj
-DLLQSENET_CFLAGS = /MD$(__DEBUG_INFO_2_5) /DWIN32 /I..\..\include \
+DLLQSEHTTP_CFLAGS = /MD$(__DEBUG_INFO_2_10) /DWIN32 /I..\..\include \
 	$(CPPFLAGS_BUILD) $(CPPFLAGS_CHAR) $(CPPFLAGS_XCMGRS) \
 	$(CPPFLAGS_BUNDLED_UNICODE) $(CPPFLAGS_STATIC_MODULE) \
 	$(CPPFLAGS_TCPV40HDRS) /W4 $(__DEBUG_INFO) $(____DEBUG_INFO) \
-	/Fd$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsenet.pdb /O2 \
+	/Fd$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsehttp.pdb /O2 \
 	$(CPPFLAGS) $(CFLAGS)
-DLLQSENET_OBJECTS =  \
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_http.obj \
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_htre.obj \
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_htrd.obj \
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_httpd.obj \
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_httpd_cgi.obj \
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_httpd_dir.obj \
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_httpd_file.obj \
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_httpd_proxy.obj \
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_httpd_resol.obj \
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_httpd_std.obj \
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_httpd_task.obj \
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_httpd_text.obj \
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_upxd.obj
-LIBQSENET_CFLAGS = /MD$(__DEBUG_INFO_2_5) /DWIN32 /I..\..\include \
+DLLQSEHTTP_OBJECTS =  \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsehttp_http.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsehttp_htre.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsehttp_htrd.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsehttp_httpd.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsehttp_httpd_cgi.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsehttp_httpd_dir.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsehttp_httpd_file.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsehttp_httpd_proxy.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsehttp_httpd_resol.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsehttp_httpd_std.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsehttp_httpd_task.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsehttp_httpd_text.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsehttp_upxd.obj
+LIBQSEHTTP_CFLAGS = /MD$(__DEBUG_INFO_2_10) /DWIN32 /I..\..\include \
 	$(CPPFLAGS_BUILD) $(CPPFLAGS_CHAR) $(CPPFLAGS_XCMGRS) \
 	$(CPPFLAGS_BUNDLED_UNICODE) $(CPPFLAGS_STATIC_MODULE) \
 	$(CPPFLAGS_TCPV40HDRS) /W4 $(__DEBUG_INFO) $(____DEBUG_INFO) \
-	/Fd$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsenet.pdb /O2 \
+	/Fd$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsehttp.pdb /O2 \
 	$(CPPFLAGS) $(CFLAGS)
-LIBQSENET_OBJECTS =  \
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_http.obj \
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_htre.obj \
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_htrd.obj \
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_httpd.obj \
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_httpd_cgi.obj \
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_httpd_dir.obj \
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_httpd_file.obj \
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_httpd_proxy.obj \
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_httpd_resol.obj \
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_httpd_std.obj \
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_httpd_task.obj \
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_httpd_text.obj \
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_upxd.obj
-EXEQSEAWK_CFLAGS = /MD$(__DEBUG_INFO_2_5) /DWIN32 /I..\..\include \
+LIBQSEHTTP_OBJECTS =  \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsehttp_http.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsehttp_htre.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsehttp_htrd.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsehttp_httpd.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsehttp_httpd_cgi.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsehttp_httpd_dir.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsehttp_httpd_file.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsehttp_httpd_proxy.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsehttp_httpd_resol.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsehttp_httpd_std.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsehttp_httpd_task.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsehttp_httpd_text.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsehttp_upxd.obj
+DLLQSEXLI_CFLAGS = /MD$(__DEBUG_INFO_2_10) /DWIN32 /I..\..\include \
+	$(CPPFLAGS_BUILD) $(CPPFLAGS_CHAR) $(CPPFLAGS_XCMGRS) \
+	$(CPPFLAGS_BUNDLED_UNICODE) $(CPPFLAGS_STATIC_MODULE) \
+	$(CPPFLAGS_TCPV40HDRS) /W4 $(__DEBUG_INFO) $(____DEBUG_INFO) \
+	/Fd$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsexli.pdb /O2 \
+	$(CPPFLAGS) $(CFLAGS)
+DLLQSEXLI_OBJECTS =  \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsexli_xli.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsexli_err.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsexli_read.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsexli_write.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsexli_std.obj
+LIBQSEXLI_CFLAGS = /MD$(__DEBUG_INFO_2_10) /DWIN32 /I..\..\include \
+	$(CPPFLAGS_BUILD) $(CPPFLAGS_CHAR) $(CPPFLAGS_XCMGRS) \
+	$(CPPFLAGS_BUNDLED_UNICODE) $(CPPFLAGS_STATIC_MODULE) \
+	$(CPPFLAGS_TCPV40HDRS) /W4 $(__DEBUG_INFO) $(____DEBUG_INFO) \
+	/Fd$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsexli.pdb /O2 \
+	$(CPPFLAGS) $(CFLAGS)
+LIBQSEXLI_OBJECTS =  \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsexli_xli.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsexli_err.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsexli_read.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsexli_write.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsexli_std.obj
+EXEQSEAWK_CFLAGS = /MD$(__DEBUG_INFO_2_10) /DWIN32 /I..\..\include \
 	$(CPPFLAGS_BUILD) $(CPPFLAGS_CHAR) $(CPPFLAGS_XCMGRS) \
 	$(CPPFLAGS_BUNDLED_UNICODE) $(CPPFLAGS_STATIC_MODULE) \
 	$(CPPFLAGS_TCPV40HDRS) /W4 $(__DEBUG_INFO) $(____DEBUG_INFO) \
@@ -374,7 +398,7 @@ EXEQSEAWK_CFLAGS = /MD$(__DEBUG_INFO_2_5) /DWIN32 /I..\..\include \
 	/D_CONSOLE $(CPPFLAGS) $(CFLAGS)
 EXEQSEAWK_OBJECTS =  \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\exeqseawk_awk.obj
-EXEQSESED_CFLAGS = /MD$(__DEBUG_INFO_2_5) /DWIN32 /I..\..\include \
+EXEQSESED_CFLAGS = /MD$(__DEBUG_INFO_2_10) /DWIN32 /I..\..\include \
 	$(CPPFLAGS_BUILD) $(CPPFLAGS_CHAR) $(CPPFLAGS_XCMGRS) \
 	$(CPPFLAGS_BUNDLED_UNICODE) $(CPPFLAGS_STATIC_MODULE) \
 	$(CPPFLAGS_TCPV40HDRS) /W4 $(__DEBUG_INFO) $(____DEBUG_INFO) \
@@ -382,7 +406,7 @@ EXEQSESED_CFLAGS = /MD$(__DEBUG_INFO_2_5) /DWIN32 /I..\..\include \
 	/D_CONSOLE $(CPPFLAGS) $(CFLAGS)
 EXEQSESED_OBJECTS =  \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\exeqsesed_sed.obj
-EXEQSEHTTPD_CFLAGS = /MD$(__DEBUG_INFO_2_5) /DWIN32 /I..\..\include \
+EXEQSEHTTPD_CFLAGS = /MD$(__DEBUG_INFO_2_10) /DWIN32 /I..\..\include \
 	$(CPPFLAGS_BUILD) $(CPPFLAGS_CHAR) $(CPPFLAGS_XCMGRS) \
 	$(CPPFLAGS_BUNDLED_UNICODE) $(CPPFLAGS_STATIC_MODULE) \
 	$(CPPFLAGS_TCPV40HDRS) /W4 $(__DEBUG_INFO) $(____DEBUG_INFO) \
@@ -390,7 +414,7 @@ EXEQSEHTTPD_CFLAGS = /MD$(__DEBUG_INFO_2_5) /DWIN32 /I..\..\include \
 	/D_CONSOLE $(CPPFLAGS) $(CFLAGS)
 EXEQSEHTTPD_OBJECTS =  \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\exeqsehttpd_httpd.obj
-DLLQSECMNXX_CXXFLAGS = /MD$(__DEBUG_INFO_2_5) /DWIN32 /I..\..\include \
+DLLQSECMNXX_CXXFLAGS = /MD$(__DEBUG_INFO_2_10) /DWIN32 /I..\..\include \
 	$(CPPFLAGS_BUILD) $(CPPFLAGS_CHAR) $(CPPFLAGS_XCMGRS) \
 	$(CPPFLAGS_BUNDLED_UNICODE) $(CPPFLAGS_STATIC_MODULE) \
 	$(CPPFLAGS_TCPV40HDRS) /W4 $(__DEBUG_INFO) $(____DEBUG_INFO) \
@@ -399,7 +423,7 @@ DLLQSECMNXX_CXXFLAGS = /MD$(__DEBUG_INFO_2_5) /DWIN32 /I..\..\include \
 DLLQSECMNXX_OBJECTS =  \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmnxx_Mmgr.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmnxx_StdMmgr.obj
-LIBQSECMNXX_CXXFLAGS = /MD$(__DEBUG_INFO_2_5) /DWIN32 /I..\..\include \
+LIBQSECMNXX_CXXFLAGS = /MD$(__DEBUG_INFO_2_10) /DWIN32 /I..\..\include \
 	$(CPPFLAGS_BUILD) $(CPPFLAGS_CHAR) $(CPPFLAGS_XCMGRS) \
 	$(CPPFLAGS_BUNDLED_UNICODE) $(CPPFLAGS_STATIC_MODULE) \
 	$(CPPFLAGS_TCPV40HDRS) /W4 $(__DEBUG_INFO) $(____DEBUG_INFO) \
@@ -408,7 +432,7 @@ LIBQSECMNXX_CXXFLAGS = /MD$(__DEBUG_INFO_2_5) /DWIN32 /I..\..\include \
 LIBQSECMNXX_OBJECTS =  \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmnxx_Mmgr.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsecmnxx_StdMmgr.obj
-DLLQSEAWKXX_CXXFLAGS = /MD$(__DEBUG_INFO_2_5) /DWIN32 /I..\..\include \
+DLLQSEAWKXX_CXXFLAGS = /MD$(__DEBUG_INFO_2_10) /DWIN32 /I..\..\include \
 	$(CPPFLAGS_BUILD) $(CPPFLAGS_CHAR) $(CPPFLAGS_XCMGRS) \
 	$(CPPFLAGS_BUNDLED_UNICODE) $(CPPFLAGS_STATIC_MODULE) \
 	$(CPPFLAGS_TCPV40HDRS) /W4 $(__DEBUG_INFO) $(____DEBUG_INFO) \
@@ -417,7 +441,7 @@ DLLQSEAWKXX_CXXFLAGS = /MD$(__DEBUG_INFO_2_5) /DWIN32 /I..\..\include \
 DLLQSEAWKXX_OBJECTS =  \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqseawkxx_Awk.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqseawkxx_StdAwk.obj
-LIBQSEAWKXX_CXXFLAGS = /MD$(__DEBUG_INFO_2_5) /DWIN32 /I..\..\include \
+LIBQSEAWKXX_CXXFLAGS = /MD$(__DEBUG_INFO_2_10) /DWIN32 /I..\..\include \
 	$(CPPFLAGS_BUILD) $(CPPFLAGS_CHAR) $(CPPFLAGS_XCMGRS) \
 	$(CPPFLAGS_BUNDLED_UNICODE) $(CPPFLAGS_STATIC_MODULE) \
 	$(CPPFLAGS_TCPV40HDRS) /W4 $(__DEBUG_INFO) $(____DEBUG_INFO) \
@@ -426,7 +450,7 @@ LIBQSEAWKXX_CXXFLAGS = /MD$(__DEBUG_INFO_2_5) /DWIN32 /I..\..\include \
 LIBQSEAWKXX_OBJECTS =  \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqseawkxx_Awk.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqseawkxx_StdAwk.obj
-DLLQSESEDXX_CXXFLAGS = /MD$(__DEBUG_INFO_2_5) /DWIN32 /I..\..\include \
+DLLQSESEDXX_CXXFLAGS = /MD$(__DEBUG_INFO_2_10) /DWIN32 /I..\..\include \
 	$(CPPFLAGS_BUILD) $(CPPFLAGS_CHAR) $(CPPFLAGS_XCMGRS) \
 	$(CPPFLAGS_BUNDLED_UNICODE) $(CPPFLAGS_STATIC_MODULE) \
 	$(CPPFLAGS_TCPV40HDRS) /W4 $(__DEBUG_INFO) $(____DEBUG_INFO) \
@@ -435,7 +459,7 @@ DLLQSESEDXX_CXXFLAGS = /MD$(__DEBUG_INFO_2_5) /DWIN32 /I..\..\include \
 DLLQSESEDXX_OBJECTS =  \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsesedxx_Sed.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsesedxx_StdSed.obj
-LIBQSESEDXX_CXXFLAGS = /MD$(__DEBUG_INFO_2_5) /DWIN32 /I..\..\include \
+LIBQSESEDXX_CXXFLAGS = /MD$(__DEBUG_INFO_2_10) /DWIN32 /I..\..\include \
 	$(CPPFLAGS_BUILD) $(CPPFLAGS_CHAR) $(CPPFLAGS_XCMGRS) \
 	$(CPPFLAGS_BUNDLED_UNICODE) $(CPPFLAGS_STATIC_MODULE) \
 	$(CPPFLAGS_TCPV40HDRS) /W4 $(__DEBUG_INFO) $(____DEBUG_INFO) \
@@ -506,7 +530,7 @@ __dllqsecmn___depname = \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsecmn.dll
 !endif
 !if "$(BUILD)" == "debug"
-__DEBUG_INFO_9 = $(__DEBUG_INFO_2_3)
+__DEBUG_INFO_9 = $(__DEBUG_INFO_2_8)
 !endif
 !if "$(BUILD)" == "release"
 __DEBUG_INFO_9 = 
@@ -538,7 +562,7 @@ __dllqseawk___depname = \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qseawk.dll
 !endif
 !if "$(BUILD)" == "debug"
-__DEBUG_INFO_36 = $(__DEBUG_INFO_2_3)
+__DEBUG_INFO_36 = $(__DEBUG_INFO_2_8)
 !endif
 !if "$(BUILD)" == "release"
 __DEBUG_INFO_36 = 
@@ -564,7 +588,7 @@ __modqseawkdir___depname = \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qseawk-dir.dll
 !endif
 !if "$(BUILD)" == "debug"
-__DEBUG_INFO_63 = $(__DEBUG_INFO_2_3)
+__DEBUG_INFO_63 = $(__DEBUG_INFO_2_8)
 !endif
 !if "$(BUILD)" == "release"
 __DEBUG_INFO_63 = 
@@ -574,7 +598,7 @@ __modqseawkstr___depname = \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qseawk-str.dll
 !endif
 !if "$(BUILD)" == "debug"
-__DEBUG_INFO_77 = $(__DEBUG_INFO_2_3)
+__DEBUG_INFO_77 = $(__DEBUG_INFO_2_8)
 !endif
 !if "$(BUILD)" == "release"
 __DEBUG_INFO_77 = 
@@ -584,7 +608,7 @@ __modqseawksys___depname = \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qseawk-sys.dll
 !endif
 !if "$(BUILD)" == "debug"
-__DEBUG_INFO_91 = $(__DEBUG_INFO_2_3)
+__DEBUG_INFO_91 = $(__DEBUG_INFO_2_8)
 !endif
 !if "$(BUILD)" == "release"
 __DEBUG_INFO_91 = 
@@ -594,7 +618,7 @@ __dllqsesed___depname = \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsesed.dll
 !endif
 !if "$(BUILD)" == "debug"
-__DEBUG_INFO_105 = $(__DEBUG_INFO_2_3)
+__DEBUG_INFO_105 = $(__DEBUG_INFO_2_8)
 !endif
 !if "$(BUILD)" == "release"
 __DEBUG_INFO_105 = 
@@ -604,46 +628,60 @@ __libqsesed___depname = \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsesed.lib
 !endif
 !if "$(SHARED)" == "on"
-__dllqsenet___depname = \
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsenet.dll
+__dllqsehttp___depname = \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsehttp.dll
 !endif
 !if "$(BUILD)" == "debug"
-__DEBUG_INFO_132 = $(__DEBUG_INFO_2_3)
+__DEBUG_INFO_132 = $(__DEBUG_INFO_2_8)
 !endif
 !if "$(BUILD)" == "release"
 __DEBUG_INFO_132 = 
 !endif
 !if "$(SHARED)" == "off"
-__libqsenet___depname = \
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsenet.lib
+__libqsehttp___depname = \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsehttp.lib
+!endif
+!if "$(SHARED)" == "on"
+__dllqsexli___depname = \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsexli.dll
 !endif
 !if "$(BUILD)" == "debug"
-__DEBUG_INFO_158 = $(__DEBUG_INFO_2_3)
+__DEBUG_INFO_159 = $(__DEBUG_INFO_2_8)
 !endif
 !if "$(BUILD)" == "release"
-__DEBUG_INFO_158 = 
+__DEBUG_INFO_159 = 
+!endif
+!if "$(SHARED)" == "off"
+__libqsexli___depname = \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsexli.lib
 !endif
 !if "$(BUILD)" == "debug"
-__DEBUG_INFO_173 = $(__DEBUG_INFO_2_3)
+__DEBUG_INFO_185 = $(__DEBUG_INFO_2_8)
 !endif
 !if "$(BUILD)" == "release"
-__DEBUG_INFO_173 = 
+__DEBUG_INFO_185 = 
 !endif
 !if "$(BUILD)" == "debug"
-__DEBUG_INFO_188 = $(__DEBUG_INFO_2_3)
+__DEBUG_INFO_200 = $(__DEBUG_INFO_2_8)
 !endif
 !if "$(BUILD)" == "release"
-__DEBUG_INFO_188 = 
+__DEBUG_INFO_200 = 
+!endif
+!if "$(BUILD)" == "debug"
+__DEBUG_INFO_215 = $(__DEBUG_INFO_2_8)
+!endif
+!if "$(BUILD)" == "release"
+__DEBUG_INFO_215 = 
 !endif
 !if "$(SHARED)" == "on"
 __dllqsecmnxx___depname = \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsecmnxx.dll
 !endif
 !if "$(BUILD)" == "debug"
-__DEBUG_INFO_203 = $(__DEBUG_INFO_2_3)
+__DEBUG_INFO_230 = $(__DEBUG_INFO_2_8)
 !endif
 !if "$(BUILD)" == "release"
-__DEBUG_INFO_203 = 
+__DEBUG_INFO_230 = 
 !endif
 !if "$(SHARED)" == "off"
 __libqsecmnxx___depname = \
@@ -654,10 +692,10 @@ __dllqseawkxx___depname = \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qseawkxx.dll
 !endif
 !if "$(BUILD)" == "debug"
-__DEBUG_INFO_230 = $(__DEBUG_INFO_2_3)
+__DEBUG_INFO_257 = $(__DEBUG_INFO_2_8)
 !endif
 !if "$(BUILD)" == "release"
-__DEBUG_INFO_230 = 
+__DEBUG_INFO_257 = 
 !endif
 !if "$(SHARED)" == "off"
 __libqseawkxx___depname = \
@@ -668,26 +706,26 @@ __dllqsesedxx___depname = \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsesedxx.dll
 !endif
 !if "$(BUILD)" == "debug"
-__DEBUG_INFO_257 = $(__DEBUG_INFO_2_3)
+__DEBUG_INFO_284 = $(__DEBUG_INFO_2_8)
 !endif
 !if "$(BUILD)" == "release"
-__DEBUG_INFO_257 = 
+__DEBUG_INFO_284 = 
 !endif
 !if "$(SHARED)" == "off"
 __libqsesedxx___depname = \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsesedxx.lib
 !endif
 !if "$(BUILD)" == "debug"
-__DEBUG_INFO_2_1 = /DEBUG
+__DEBUG_INFO_2_6 = /DEBUG
 !endif
 !if "$(BUILD)" == "release"
-__DEBUG_INFO_2_1 = 
+__DEBUG_INFO_2_6 = 
 !endif
 !if "$(BUILD)" == "debug"
-__DEBUG_INFO_2_3 = 
+__DEBUG_INFO_2_8 = 
 !endif
 !if "$(BUILD)" == "release"
-__DEBUG_INFO_2_3 = /opt:ref /opt:icf
+__DEBUG_INFO_2_8 = /opt:ref /opt:icf
 !endif
 !if "$(BUILD)" == "debug"
 __DEBUG_INFO = /Zi
@@ -702,10 +740,10 @@ ____DEBUG_INFO = /D_DEBUG
 ____DEBUG_INFO = 
 !endif
 !if "$(BUILD)" == "debug"
-__DEBUG_INFO_2_5 = d
+__DEBUG_INFO_2_10 = d
 !endif
 !if "$(BUILD)" == "release"
-__DEBUG_INFO_2_5 = 
+__DEBUG_INFO_2_10 = 
 !endif
 
 
@@ -715,7 +753,7 @@ $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED):
 
 ### Targets: ###
 
-all: $(__dllqsecmn___depname) $(__libqsecmn___depname) $(__dllqseawk___depname) $(__libqseawk___depname) $(__modqseawkdir___depname) $(__modqseawkstr___depname) $(__modqseawksys___depname) $(__dllqsesed___depname) $(__libqsesed___depname) $(__dllqsenet___depname) $(__libqsenet___depname) $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qseawk.exe $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsesed.exe $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsehttpd.exe $(__dllqsecmnxx___depname) $(__libqsecmnxx___depname) $(__dllqseawkxx___depname) $(__libqseawkxx___depname) $(__dllqsesedxx___depname) $(__libqsesedxx___depname)
+all: $(__dllqsecmn___depname) $(__libqsecmn___depname) $(__dllqseawk___depname) $(__libqseawk___depname) $(__modqseawkdir___depname) $(__modqseawkstr___depname) $(__modqseawksys___depname) $(__dllqsesed___depname) $(__libqsesed___depname) $(__dllqsehttp___depname) $(__libqsehttp___depname) $(__dllqsexli___depname) $(__libqsexli___depname) $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qseawk.exe $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsesed.exe $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsehttpd.exe $(__dllqsecmnxx___depname) $(__libqsecmnxx___depname) $(__dllqseawkxx___depname) $(__libqseawkxx___depname) $(__dllqsesedxx___depname) $(__libqsesedxx___depname)
 
 clean: 
 	-if exist $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\*.obj del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\*.obj
@@ -748,11 +786,16 @@ clean:
 	-if exist $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsesed.pdb del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsesed.pdb
 	-if exist $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsesed.lib del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsesed.lib
 	-if exist $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsesed.lib del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsesed.lib
-	-if exist $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsenet.dll del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsenet.dll
-	-if exist $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsenet.ilk del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsenet.ilk
-	-if exist $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsenet.pdb del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsenet.pdb
-	-if exist $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsenet.lib del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsenet.lib
-	-if exist $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsenet.lib del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsenet.lib
+	-if exist $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsehttp.dll del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsehttp.dll
+	-if exist $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsehttp.ilk del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsehttp.ilk
+	-if exist $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsehttp.pdb del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsehttp.pdb
+	-if exist $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsehttp.lib del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsehttp.lib
+	-if exist $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsehttp.lib del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsehttp.lib
+	-if exist $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsexli.dll del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsexli.dll
+	-if exist $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsexli.ilk del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsexli.ilk
+	-if exist $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsexli.pdb del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsexli.pdb
+	-if exist $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsexli.lib del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsexli.lib
+	-if exist $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsexli.lib del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsexli.lib
 	-if exist $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qseawk.exe del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qseawk.exe
 	-if exist $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qseawk.ilk del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qseawk.ilk
 	-if exist $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qseawk.pdb del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qseawk.pdb
@@ -780,7 +823,7 @@ clean:
 
 !if "$(SHARED)" == "on"
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsecmn.dll: $(DLLQSECMN_OBJECTS)
-	link /DLL /NOLOGO /OUT:$@  $(__DEBUG_INFO_2_1) /pdb:"$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsecmn.pdb" $(__DEBUG_INFO_9)  $(LDFLAGS) @<<
+	link /DLL /NOLOGO /OUT:$@  $(__DEBUG_INFO_2_6) /pdb:"$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsecmn.pdb" $(__DEBUG_INFO_9)  $(LDFLAGS) @<<
 	$(DLLQSECMN_OBJECTS)   ws2_32.lib  /IMPLIB:$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsecmn.lib
 <<
 !endif
@@ -795,7 +838,7 @@ $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsecmn.lib: $(LIBQSECMN_OB
 
 !if "$(SHARED)" == "on"
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qseawk.dll: $(DLLQSEAWK_OBJECTS) $(__libqsecmn___depname) $(__dllqsecmn___depname)
-	link /DLL /NOLOGO /OUT:$@  $(__DEBUG_INFO_2_1) /pdb:"$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qseawk.pdb" $(__DEBUG_INFO_36)  $(LDFLAGS) @<<
+	link /DLL /NOLOGO /OUT:$@  $(__DEBUG_INFO_2_6) /pdb:"$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qseawk.pdb" $(__DEBUG_INFO_36)  $(LDFLAGS) @<<
 	$(DLLQSEAWK_OBJECTS)   $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsecmn.lib /IMPLIB:$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qseawk.lib
 <<
 !endif
@@ -810,28 +853,28 @@ $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qseawk.lib: $(LIBQSEAWK_OB
 
 !if "$(SHARED)" == "on"
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qseawk-dir.dll: $(MODQSEAWKDIR_OBJECTS) $(__libqsecmn___depname) $(__libqseawk___depname) $(__dllqseawk___depname)
-	link /DLL /NOLOGO /OUT:$@  $(__DEBUG_INFO_2_1) /pdb:"$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qseawk-dir.pdb" $(__DEBUG_INFO_63)  $(LDFLAGS) @<<
+	link /DLL /NOLOGO /OUT:$@  $(__DEBUG_INFO_2_6) /pdb:"$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qseawk-dir.pdb" $(__DEBUG_INFO_63)  $(LDFLAGS) @<<
 	$(MODQSEAWKDIR_OBJECTS)   $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsecmn.lib $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qseawk.lib /IMPLIB:$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qseawk-dir.lib
 <<
 !endif
 
 !if "$(SHARED)" == "on"
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qseawk-str.dll: $(MODQSEAWKSTR_OBJECTS) $(__libqsecmn___depname) $(__libqseawk___depname) $(__dllqseawk___depname)
-	link /DLL /NOLOGO /OUT:$@  $(__DEBUG_INFO_2_1) /pdb:"$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qseawk-str.pdb" $(__DEBUG_INFO_77)  $(LDFLAGS) @<<
+	link /DLL /NOLOGO /OUT:$@  $(__DEBUG_INFO_2_6) /pdb:"$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qseawk-str.pdb" $(__DEBUG_INFO_77)  $(LDFLAGS) @<<
 	$(MODQSEAWKSTR_OBJECTS)   $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsecmn.lib $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qseawk.lib /IMPLIB:$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qseawk-str.lib
 <<
 !endif
 
 !if "$(SHARED)" == "on"
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qseawk-sys.dll: $(MODQSEAWKSYS_OBJECTS) $(__libqsecmn___depname) $(__libqseawk___depname) $(__dllqseawk___depname)
-	link /DLL /NOLOGO /OUT:$@  $(__DEBUG_INFO_2_1) /pdb:"$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qseawk-sys.pdb" $(__DEBUG_INFO_91)  $(LDFLAGS) @<<
+	link /DLL /NOLOGO /OUT:$@  $(__DEBUG_INFO_2_6) /pdb:"$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qseawk-sys.pdb" $(__DEBUG_INFO_91)  $(LDFLAGS) @<<
 	$(MODQSEAWKSYS_OBJECTS)   $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsecmn.lib $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qseawk.lib /IMPLIB:$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qseawk-sys.lib
 <<
 !endif
 
 !if "$(SHARED)" == "on"
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsesed.dll: $(DLLQSESED_OBJECTS) $(__libqsecmn___depname) $(__dllqsecmn___depname)
-	link /DLL /NOLOGO /OUT:$@  $(__DEBUG_INFO_2_1) /pdb:"$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsesed.pdb" $(__DEBUG_INFO_105)  $(LDFLAGS) @<<
+	link /DLL /NOLOGO /OUT:$@  $(__DEBUG_INFO_2_6) /pdb:"$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsesed.pdb" $(__DEBUG_INFO_105)  $(LDFLAGS) @<<
 	$(DLLQSESED_OBJECTS)   $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsecmn.lib /IMPLIB:$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsesed.lib
 <<
 !endif
@@ -845,38 +888,53 @@ $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsesed.lib: $(LIBQSESED_OB
 !endif
 
 !if "$(SHARED)" == "on"
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsenet.dll: $(DLLQSENET_OBJECTS) $(__libqsecmn___depname) $(__dllqsecmn___depname)
-	link /DLL /NOLOGO /OUT:$@  $(__DEBUG_INFO_2_1) /pdb:"$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsenet.pdb" $(__DEBUG_INFO_132)  $(LDFLAGS) @<<
-	$(DLLQSENET_OBJECTS)   $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsecmn.lib ws2_32.lib  /IMPLIB:$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsenet.lib
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsehttp.dll: $(DLLQSEHTTP_OBJECTS) $(__libqsecmn___depname) $(__dllqsecmn___depname)
+	link /DLL /NOLOGO /OUT:$@  $(__DEBUG_INFO_2_6) /pdb:"$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsehttp.pdb" $(__DEBUG_INFO_132)  $(LDFLAGS) @<<
+	$(DLLQSEHTTP_OBJECTS)   $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsecmn.lib ws2_32.lib  /IMPLIB:$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsehttp.lib
 <<
 !endif
 
 !if "$(SHARED)" == "off"
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsenet.lib: $(LIBQSENET_OBJECTS) $(__libqsecmn___depname) $(__libqsecmn___depname)
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsehttp.lib: $(LIBQSEHTTP_OBJECTS) $(__libqsecmn___depname) $(__libqsecmn___depname)
 	if exist $@ del $@
 	link /LIB /NOLOGO /OUT:$@ @<<
-	$(LIBQSENET_OBJECTS)
+	$(LIBQSEHTTP_OBJECTS)
+<<
+!endif
+
+!if "$(SHARED)" == "on"
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsexli.dll: $(DLLQSEXLI_OBJECTS) $(__libqsecmn___depname) $(__dllqsecmn___depname)
+	link /DLL /NOLOGO /OUT:$@  $(__DEBUG_INFO_2_6) /pdb:"$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsexli.pdb" $(__DEBUG_INFO_159)  $(LDFLAGS) @<<
+	$(DLLQSEXLI_OBJECTS)   $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsecmn.lib /IMPLIB:$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsexli.lib
+<<
+!endif
+
+!if "$(SHARED)" == "off"
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsexli.lib: $(LIBQSEXLI_OBJECTS) $(__libqsecmn___depname) $(__libqsecmn___depname)
+	if exist $@ del $@
+	link /LIB /NOLOGO /OUT:$@ @<<
+	$(LIBQSEXLI_OBJECTS)
 <<
 !endif
 
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qseawk.exe: $(EXEQSEAWK_OBJECTS) $(__libqsecmn___depname) $(__libqseawk___depname)
-	link /NOLOGO /OUT:$@  $(__DEBUG_INFO_2_1) /pdb:"$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qseawk.pdb" $(__DEBUG_INFO_158)  /SUBSYSTEM:CONSOLE $(LDFLAGS) @<<
+	link /NOLOGO /OUT:$@  $(__DEBUG_INFO_2_6) /pdb:"$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qseawk.pdb" $(__DEBUG_INFO_185)  /SUBSYSTEM:CONSOLE $(LDFLAGS) @<<
 	$(EXEQSEAWK_OBJECTS)   $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsecmn.lib $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qseawk.lib ws2_32.lib
 <<
 
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsesed.exe: $(EXEQSESED_OBJECTS) $(__libqsecmn___depname) $(__libqsesed___depname)
-	link /NOLOGO /OUT:$@  $(__DEBUG_INFO_2_1) /pdb:"$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsesed.pdb" $(__DEBUG_INFO_173)  /SUBSYSTEM:CONSOLE $(LDFLAGS) @<<
+	link /NOLOGO /OUT:$@  $(__DEBUG_INFO_2_6) /pdb:"$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsesed.pdb" $(__DEBUG_INFO_200)  /SUBSYSTEM:CONSOLE $(LDFLAGS) @<<
 	$(EXEQSESED_OBJECTS)   $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsecmn.lib $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsesed.lib
 <<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsehttpd.exe: $(EXEQSEHTTPD_OBJECTS) $(__libqsecmn___depname) $(__libqsenet___depname)
-	link /NOLOGO /OUT:$@  $(__DEBUG_INFO_2_1) /pdb:"$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsehttpd.pdb" $(__DEBUG_INFO_188)  /SUBSYSTEM:CONSOLE $(LDFLAGS) @<<
-	$(EXEQSEHTTPD_OBJECTS)   $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsecmn.lib $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsenet.lib ws2_32.lib
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsehttpd.exe: $(EXEQSEHTTPD_OBJECTS) $(__libqsecmn___depname) $(__libqsehttp___depname) $(__libqsexli___depname)
+	link /NOLOGO /OUT:$@  $(__DEBUG_INFO_2_6) /pdb:"$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsehttpd.pdb" $(__DEBUG_INFO_215)  /SUBSYSTEM:CONSOLE $(LDFLAGS) @<<
+	$(EXEQSEHTTPD_OBJECTS)   $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsecmn.lib $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsehttp.lib $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsexli.lib ws2_32.lib
 <<
 
 !if "$(SHARED)" == "on"
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsecmnxx.dll: $(DLLQSECMNXX_OBJECTS) $(__libqsecmn___depname) $(__dllqsecmn___depname)
-	link /DLL /NOLOGO /OUT:$@  $(__DEBUG_INFO_2_1) /pdb:"$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsecmnxx.pdb" $(__DEBUG_INFO_203)  $(LDFLAGS) @<<
+	link /DLL /NOLOGO /OUT:$@  $(__DEBUG_INFO_2_6) /pdb:"$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsecmnxx.pdb" $(__DEBUG_INFO_230)  $(LDFLAGS) @<<
 	$(DLLQSECMNXX_OBJECTS)   $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsecmn.lib /IMPLIB:$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsecmnxx.lib
 <<
 !endif
@@ -891,7 +949,7 @@ $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsecmnxx.lib: $(LIBQSECMNX
 
 !if "$(SHARED)" == "on"
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qseawkxx.dll: $(DLLQSEAWKXX_OBJECTS) $(__libqsecmn___depname) $(__libqsecmnxx___depname) $(__libqseawk___depname) $(__dllqsecmnxx___depname) $(__dllqseawk___depname)
-	link /DLL /NOLOGO /OUT:$@  $(__DEBUG_INFO_2_1) /pdb:"$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qseawkxx.pdb" $(__DEBUG_INFO_230)  $(LDFLAGS) @<<
+	link /DLL /NOLOGO /OUT:$@  $(__DEBUG_INFO_2_6) /pdb:"$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qseawkxx.pdb" $(__DEBUG_INFO_257)  $(LDFLAGS) @<<
 	$(DLLQSEAWKXX_OBJECTS)   $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsecmn.lib $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsecmnxx.lib $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qseawk.lib /IMPLIB:$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qseawkxx.lib
 <<
 !endif
@@ -906,7 +964,7 @@ $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qseawkxx.lib: $(LIBQSEAWKX
 
 !if "$(SHARED)" == "on"
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsesedxx.dll: $(DLLQSESEDXX_OBJECTS) $(__libqsecmn___depname) $(__libqsecmnxx___depname) $(__libqsesed___depname) $(__dllqsecmnxx___depname) $(__dllqsesed___depname)
-	link /DLL /NOLOGO /OUT:$@  $(__DEBUG_INFO_2_1) /pdb:"$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsesedxx.pdb" $(__DEBUG_INFO_257)  $(LDFLAGS) @<<
+	link /DLL /NOLOGO /OUT:$@  $(__DEBUG_INFO_2_6) /pdb:"$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsesedxx.pdb" $(__DEBUG_INFO_284)  $(LDFLAGS) @<<
 	$(DLLQSESEDXX_OBJECTS)   $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsecmn.lib $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsecmnxx.lib $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsesed.lib /IMPLIB:$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsesedxx.lib
 <<
 !endif
@@ -1564,83 +1622,113 @@ $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsesed_err.obj: ..\..\l
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsesed_std.obj: ..\..\lib\sed\std.c
 	$(CC) /c /nologo /TC /Fo$@ $(LIBQSESED_CFLAGS) ..\..\lib\sed\std.c
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_http.obj: ..\..\lib\net\http.c
-	$(CC) /c /nologo /TC /Fo$@ $(DLLQSENET_CFLAGS) ..\..\lib\net\http.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsehttp_http.obj: ..\..\lib\http\http.c
+	$(CC) /c /nologo /TC /Fo$@ $(DLLQSEHTTP_CFLAGS) ..\..\lib\http\http.c
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_htre.obj: ..\..\lib\net\htre.c
-	$(CC) /c /nologo /TC /Fo$@ $(DLLQSENET_CFLAGS) ..\..\lib\net\htre.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsehttp_htre.obj: ..\..\lib\http\htre.c
+	$(CC) /c /nologo /TC /Fo$@ $(DLLQSEHTTP_CFLAGS) ..\..\lib\http\htre.c
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_htrd.obj: ..\..\lib\net\htrd.c
-	$(CC) /c /nologo /TC /Fo$@ $(DLLQSENET_CFLAGS) ..\..\lib\net\htrd.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsehttp_htrd.obj: ..\..\lib\http\htrd.c
+	$(CC) /c /nologo /TC /Fo$@ $(DLLQSEHTTP_CFLAGS) ..\..\lib\http\htrd.c
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_httpd.obj: ..\..\lib\net\httpd.c
-	$(CC) /c /nologo /TC /Fo$@ $(DLLQSENET_CFLAGS) ..\..\lib\net\httpd.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsehttp_httpd.obj: ..\..\lib\http\httpd.c
+	$(CC) /c /nologo /TC /Fo$@ $(DLLQSEHTTP_CFLAGS) ..\..\lib\http\httpd.c
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_httpd_cgi.obj: ..\..\lib\net\httpd-cgi.c
-	$(CC) /c /nologo /TC /Fo$@ $(DLLQSENET_CFLAGS) ..\..\lib\net\httpd-cgi.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsehttp_httpd_cgi.obj: ..\..\lib\http\httpd-cgi.c
+	$(CC) /c /nologo /TC /Fo$@ $(DLLQSEHTTP_CFLAGS) ..\..\lib\http\httpd-cgi.c
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_httpd_dir.obj: ..\..\lib\net\httpd-dir.c
-	$(CC) /c /nologo /TC /Fo$@ $(DLLQSENET_CFLAGS) ..\..\lib\net\httpd-dir.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsehttp_httpd_dir.obj: ..\..\lib\http\httpd-dir.c
+	$(CC) /c /nologo /TC /Fo$@ $(DLLQSEHTTP_CFLAGS) ..\..\lib\http\httpd-dir.c
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_httpd_file.obj: ..\..\lib\net\httpd-file.c
-	$(CC) /c /nologo /TC /Fo$@ $(DLLQSENET_CFLAGS) ..\..\lib\net\httpd-file.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsehttp_httpd_file.obj: ..\..\lib\http\httpd-file.c
+	$(CC) /c /nologo /TC /Fo$@ $(DLLQSEHTTP_CFLAGS) ..\..\lib\http\httpd-file.c
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_httpd_proxy.obj: ..\..\lib\net\httpd-proxy.c
-	$(CC) /c /nologo /TC /Fo$@ $(DLLQSENET_CFLAGS) ..\..\lib\net\httpd-proxy.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsehttp_httpd_proxy.obj: ..\..\lib\http\httpd-proxy.c
+	$(CC) /c /nologo /TC /Fo$@ $(DLLQSEHTTP_CFLAGS) ..\..\lib\http\httpd-proxy.c
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_httpd_resol.obj: ..\..\lib\net\httpd-resol.c
-	$(CC) /c /nologo /TC /Fo$@ $(DLLQSENET_CFLAGS) ..\..\lib\net\httpd-resol.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsehttp_httpd_resol.obj: ..\..\lib\http\httpd-resol.c
+	$(CC) /c /nologo /TC /Fo$@ $(DLLQSEHTTP_CFLAGS) ..\..\lib\http\httpd-resol.c
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_httpd_std.obj: ..\..\lib\net\httpd-std.c
-	$(CC) /c /nologo /TC /Fo$@ $(DLLQSENET_CFLAGS) ..\..\lib\net\httpd-std.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsehttp_httpd_std.obj: ..\..\lib\http\httpd-std.c
+	$(CC) /c /nologo /TC /Fo$@ $(DLLQSEHTTP_CFLAGS) ..\..\lib\http\httpd-std.c
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_httpd_task.obj: ..\..\lib\net\httpd-task.c
-	$(CC) /c /nologo /TC /Fo$@ $(DLLQSENET_CFLAGS) ..\..\lib\net\httpd-task.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsehttp_httpd_task.obj: ..\..\lib\http\httpd-task.c
+	$(CC) /c /nologo /TC /Fo$@ $(DLLQSEHTTP_CFLAGS) ..\..\lib\http\httpd-task.c
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_httpd_text.obj: ..\..\lib\net\httpd-text.c
-	$(CC) /c /nologo /TC /Fo$@ $(DLLQSENET_CFLAGS) ..\..\lib\net\httpd-text.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsehttp_httpd_text.obj: ..\..\lib\http\httpd-text.c
+	$(CC) /c /nologo /TC /Fo$@ $(DLLQSEHTTP_CFLAGS) ..\..\lib\http\httpd-text.c
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_upxd.obj: ..\..\lib\net\upxd.c
-	$(CC) /c /nologo /TC /Fo$@ $(DLLQSENET_CFLAGS) ..\..\lib\net\upxd.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsehttp_upxd.obj: ..\..\lib\http\upxd.c
+	$(CC) /c /nologo /TC /Fo$@ $(DLLQSEHTTP_CFLAGS) ..\..\lib\http\upxd.c
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_http.obj: ..\..\lib\net\http.c
-	$(CC) /c /nologo /TC /Fo$@ $(LIBQSENET_CFLAGS) ..\..\lib\net\http.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsehttp_http.obj: ..\..\lib\http\http.c
+	$(CC) /c /nologo /TC /Fo$@ $(LIBQSEHTTP_CFLAGS) ..\..\lib\http\http.c
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_htre.obj: ..\..\lib\net\htre.c
-	$(CC) /c /nologo /TC /Fo$@ $(LIBQSENET_CFLAGS) ..\..\lib\net\htre.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsehttp_htre.obj: ..\..\lib\http\htre.c
+	$(CC) /c /nologo /TC /Fo$@ $(LIBQSEHTTP_CFLAGS) ..\..\lib\http\htre.c
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_htrd.obj: ..\..\lib\net\htrd.c
-	$(CC) /c /nologo /TC /Fo$@ $(LIBQSENET_CFLAGS) ..\..\lib\net\htrd.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsehttp_htrd.obj: ..\..\lib\http\htrd.c
+	$(CC) /c /nologo /TC /Fo$@ $(LIBQSEHTTP_CFLAGS) ..\..\lib\http\htrd.c
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_httpd.obj: ..\..\lib\net\httpd.c
-	$(CC) /c /nologo /TC /Fo$@ $(LIBQSENET_CFLAGS) ..\..\lib\net\httpd.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsehttp_httpd.obj: ..\..\lib\http\httpd.c
+	$(CC) /c /nologo /TC /Fo$@ $(LIBQSEHTTP_CFLAGS) ..\..\lib\http\httpd.c
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_httpd_cgi.obj: ..\..\lib\net\httpd-cgi.c
-	$(CC) /c /nologo /TC /Fo$@ $(LIBQSENET_CFLAGS) ..\..\lib\net\httpd-cgi.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsehttp_httpd_cgi.obj: ..\..\lib\http\httpd-cgi.c
+	$(CC) /c /nologo /TC /Fo$@ $(LIBQSEHTTP_CFLAGS) ..\..\lib\http\httpd-cgi.c
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_httpd_dir.obj: ..\..\lib\net\httpd-dir.c
-	$(CC) /c /nologo /TC /Fo$@ $(LIBQSENET_CFLAGS) ..\..\lib\net\httpd-dir.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsehttp_httpd_dir.obj: ..\..\lib\http\httpd-dir.c
+	$(CC) /c /nologo /TC /Fo$@ $(LIBQSEHTTP_CFLAGS) ..\..\lib\http\httpd-dir.c
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_httpd_file.obj: ..\..\lib\net\httpd-file.c
-	$(CC) /c /nologo /TC /Fo$@ $(LIBQSENET_CFLAGS) ..\..\lib\net\httpd-file.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsehttp_httpd_file.obj: ..\..\lib\http\httpd-file.c
+	$(CC) /c /nologo /TC /Fo$@ $(LIBQSEHTTP_CFLAGS) ..\..\lib\http\httpd-file.c
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_httpd_proxy.obj: ..\..\lib\net\httpd-proxy.c
-	$(CC) /c /nologo /TC /Fo$@ $(LIBQSENET_CFLAGS) ..\..\lib\net\httpd-proxy.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsehttp_httpd_proxy.obj: ..\..\lib\http\httpd-proxy.c
+	$(CC) /c /nologo /TC /Fo$@ $(LIBQSEHTTP_CFLAGS) ..\..\lib\http\httpd-proxy.c
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_httpd_resol.obj: ..\..\lib\net\httpd-resol.c
-	$(CC) /c /nologo /TC /Fo$@ $(LIBQSENET_CFLAGS) ..\..\lib\net\httpd-resol.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsehttp_httpd_resol.obj: ..\..\lib\http\httpd-resol.c
+	$(CC) /c /nologo /TC /Fo$@ $(LIBQSEHTTP_CFLAGS) ..\..\lib\http\httpd-resol.c
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_httpd_std.obj: ..\..\lib\net\httpd-std.c
-	$(CC) /c /nologo /TC /Fo$@ $(LIBQSENET_CFLAGS) ..\..\lib\net\httpd-std.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsehttp_httpd_std.obj: ..\..\lib\http\httpd-std.c
+	$(CC) /c /nologo /TC /Fo$@ $(LIBQSEHTTP_CFLAGS) ..\..\lib\http\httpd-std.c
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_httpd_task.obj: ..\..\lib\net\httpd-task.c
-	$(CC) /c /nologo /TC /Fo$@ $(LIBQSENET_CFLAGS) ..\..\lib\net\httpd-task.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsehttp_httpd_task.obj: ..\..\lib\http\httpd-task.c
+	$(CC) /c /nologo /TC /Fo$@ $(LIBQSEHTTP_CFLAGS) ..\..\lib\http\httpd-task.c
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_httpd_text.obj: ..\..\lib\net\httpd-text.c
-	$(CC) /c /nologo /TC /Fo$@ $(LIBQSENET_CFLAGS) ..\..\lib\net\httpd-text.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsehttp_httpd_text.obj: ..\..\lib\http\httpd-text.c
+	$(CC) /c /nologo /TC /Fo$@ $(LIBQSEHTTP_CFLAGS) ..\..\lib\http\httpd-text.c
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_upxd.obj: ..\..\lib\net\upxd.c
-	$(CC) /c /nologo /TC /Fo$@ $(LIBQSENET_CFLAGS) ..\..\lib\net\upxd.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsehttp_upxd.obj: ..\..\lib\http\upxd.c
+	$(CC) /c /nologo /TC /Fo$@ $(LIBQSEHTTP_CFLAGS) ..\..\lib\http\upxd.c
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsexli_xli.obj: ..\..\lib\xli\xli.c
+	$(CC) /c /nologo /TC /Fo$@ $(DLLQSEXLI_CFLAGS) ..\..\lib\xli\xli.c
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsexli_err.obj: ..\..\lib\xli\err.c
+	$(CC) /c /nologo /TC /Fo$@ $(DLLQSEXLI_CFLAGS) ..\..\lib\xli\err.c
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsexli_read.obj: ..\..\lib\xli\read.c
+	$(CC) /c /nologo /TC /Fo$@ $(DLLQSEXLI_CFLAGS) ..\..\lib\xli\read.c
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsexli_write.obj: ..\..\lib\xli\write.c
+	$(CC) /c /nologo /TC /Fo$@ $(DLLQSEXLI_CFLAGS) ..\..\lib\xli\write.c
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsexli_std.obj: ..\..\lib\xli\std.c
+	$(CC) /c /nologo /TC /Fo$@ $(DLLQSEXLI_CFLAGS) ..\..\lib\xli\std.c
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsexli_xli.obj: ..\..\lib\xli\xli.c
+	$(CC) /c /nologo /TC /Fo$@ $(LIBQSEXLI_CFLAGS) ..\..\lib\xli\xli.c
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsexli_err.obj: ..\..\lib\xli\err.c
+	$(CC) /c /nologo /TC /Fo$@ $(LIBQSEXLI_CFLAGS) ..\..\lib\xli\err.c
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsexli_read.obj: ..\..\lib\xli\read.c
+	$(CC) /c /nologo /TC /Fo$@ $(LIBQSEXLI_CFLAGS) ..\..\lib\xli\read.c
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsexli_write.obj: ..\..\lib\xli\write.c
+	$(CC) /c /nologo /TC /Fo$@ $(LIBQSEXLI_CFLAGS) ..\..\lib\xli\write.c
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsexli_std.obj: ..\..\lib\xli\std.c
+	$(CC) /c /nologo /TC /Fo$@ $(LIBQSEXLI_CFLAGS) ..\..\lib\xli\std.c
 
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\exeqseawk_awk.obj: ..\..\cmd\awk\awk.c
 	$(CC) /c /nologo /TC /Fo$@ $(EXEQSEAWK_CFLAGS) ..\..\cmd\awk\awk.c
@@ -1648,8 +1736,8 @@ $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\exeqseawk_awk.obj: ..\..\c
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\exeqsesed_sed.obj: ..\..\cmd\sed\sed.c
 	$(CC) /c /nologo /TC /Fo$@ $(EXEQSESED_CFLAGS) ..\..\cmd\sed\sed.c
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\exeqsehttpd_httpd.obj: ..\..\cmd\net\httpd.c
-	$(CC) /c /nologo /TC /Fo$@ $(EXEQSEHTTPD_CFLAGS) ..\..\cmd\net\httpd.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\exeqsehttpd_httpd.obj: ..\..\cmd\http\httpd.c
+	$(CC) /c /nologo /TC /Fo$@ $(EXEQSEHTTPD_CFLAGS) ..\..\cmd\http\httpd.c
 
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmnxx_Mmgr.obj: ..\..\lib\cmn\Mmgr.cpp
 	$(CXX) /c /nologo /TP /Fo$@ $(DLLQSECMNXX_CXXFLAGS) ..\..\lib\cmn\Mmgr.cpp

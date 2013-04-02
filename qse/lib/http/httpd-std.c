@@ -1729,16 +1729,24 @@ static int dir_read (qse_httpd_t* httpd, qse_ubi_t handle, qse_httpd_dirent_t* d
 }
 
 /* ------------------------------------------------------------------- */
+#if !defined(SHUT_RDWR)
+#	define SHUT_RDWR 2
+#endif
+
 static void client_close (
 	qse_httpd_t* httpd, qse_httpd_client_t* client)
 {
+
 #if defined(_WIN32)
-	/* TODO: */
+	shutdown (client->handle.i, SHUT_RDWR);
+	closesocket (client->handle.i);
 #elif defined(__OS2__)
-	/* TODO: */
+	shutdown (client->handle.i, SHUT_RDWR);
+	soclose (client->handle.i);
 #elif defined(__DOS__)
 	/* TODO: */
 #else
+	shutdown (client->handle.i, SHUT_RDWR);
 	QSE_CLOSE (client->handle.i);
 #endif
 }
@@ -1746,12 +1754,14 @@ static void client_close (
 static void client_shutdown (
 	qse_httpd_t* httpd, qse_httpd_client_t* client)
 {
-#if defined(__DOS__)
-	/* TODO */
-#elif defined(SHUT_RDWR)
+#if defined(_WIN32)
 	shutdown (client->handle.i, SHUT_RDWR);
+#elif defined(__OS2__)
+	shutdown (client->handle.i, SHUT_RDWR);
+#elif defined(__DOS__)
+	/* TODO: */
 #else
-	shutdown (client->handle.i, 2);
+	shutdown (client->handle.i, SHUT_RDWR);
 #endif
 }
 
