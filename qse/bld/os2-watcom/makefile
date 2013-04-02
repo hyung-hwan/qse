@@ -217,15 +217,25 @@ __libqsesed___depname =
 __libqsesed___depname = &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsesed.lib
 !endif
-__dllqsenet___depname =
+__dllqsehttp___depname =
 !ifeq SHARED on
-__dllqsenet___depname = &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsenet.dll
+__dllqsehttp___depname = &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsehttp.dll
 !endif
-__libqsenet___depname =
+__libqsehttp___depname =
 !ifeq SHARED off
-__libqsenet___depname = &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsenet.lib
+__libqsehttp___depname = &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsehttp.lib
+!endif
+__dllqsexli___depname =
+!ifeq SHARED on
+__dllqsexli___depname = &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsexli.dll
+!endif
+__libqsexli___depname =
+!ifeq SHARED off
+__libqsexli___depname = &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsexli.lib
 !endif
 __dllqsecmnxx___depname =
 !ifeq SHARED on
@@ -268,12 +278,12 @@ __SYSLIB_SOCKET2_p =
 !ifeq TCPV40HDRS on
 __SYSLIB_SOCKET2_p = so32dll.lib
 !endif
-__DEBUG_INFO_1_2 =
+__DEBUG_INFO_1_3 =
 !ifeq BUILD debug
-__DEBUG_INFO_1_2 = debug all
+__DEBUG_INFO_1_3 = debug all
 !endif
 !ifeq BUILD release
-__DEBUG_INFO_1_2 = 
+__DEBUG_INFO_1_3 = 
 !endif
 __DEBUG_INFO =
 !ifeq BUILD debug
@@ -530,40 +540,58 @@ LIBQSESED_OBJECTS =  &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsesed_sed.obj &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsesed_err.obj &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsesed_std.obj
-DLLQSENET_CFLAGS = -bd -i=..\..\include $(CPPFLAGS_BUILD) $(CPPFLAGS_CHAR) &
+DLLQSEHTTP_CFLAGS = -bd -i=..\..\include $(CPPFLAGS_BUILD) $(CPPFLAGS_CHAR) &
 	$(CPPFLAGS_XCMGRS) $(CPPFLAGS_BUNDLED_UNICODE) $(CPPFLAGS_STATIC_MODULE) &
 	$(CPPFLAGS_TCPV40HDRS) -wx $(__DEBUG_INFO) -bm -ot -ox $(CPPFLAGS) $(CFLAGS)
-DLLQSENET_OBJECTS =  &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_http.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_htre.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_htrd.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_httpd.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_httpd_cgi.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_httpd_dir.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_httpd_file.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_httpd_proxy.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_httpd_resol.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_httpd_std.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_httpd_task.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_httpd_text.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_upxd.obj
-LIBQSENET_CFLAGS = -i=..\..\include $(CPPFLAGS_BUILD) $(CPPFLAGS_CHAR) &
+DLLQSEHTTP_OBJECTS =  &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsehttp_http.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsehttp_htre.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsehttp_htrd.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsehttp_httpd.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsehttp_httpd_cgi.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsehttp_httpd_dir.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsehttp_httpd_file.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsehttp_httpd_proxy.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsehttp_httpd_resol.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsehttp_httpd_std.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsehttp_httpd_task.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsehttp_httpd_text.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsehttp_upxd.obj
+LIBQSEHTTP_CFLAGS = -i=..\..\include $(CPPFLAGS_BUILD) $(CPPFLAGS_CHAR) &
 	$(CPPFLAGS_XCMGRS) $(CPPFLAGS_BUNDLED_UNICODE) $(CPPFLAGS_STATIC_MODULE) &
 	$(CPPFLAGS_TCPV40HDRS) -wx $(__DEBUG_INFO) -bm -ot -ox $(CPPFLAGS) $(CFLAGS)
-LIBQSENET_OBJECTS =  &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_http.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_htre.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_htrd.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_httpd.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_httpd_cgi.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_httpd_dir.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_httpd_file.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_httpd_proxy.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_httpd_resol.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_httpd_std.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_httpd_task.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_httpd_text.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_upxd.obj
+LIBQSEHTTP_OBJECTS =  &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsehttp_http.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsehttp_htre.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsehttp_htrd.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsehttp_httpd.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsehttp_httpd_cgi.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsehttp_httpd_dir.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsehttp_httpd_file.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsehttp_httpd_proxy.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsehttp_httpd_resol.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsehttp_httpd_std.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsehttp_httpd_task.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsehttp_httpd_text.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsehttp_upxd.obj
+DLLQSEXLI_CFLAGS = -bd -i=..\..\include $(CPPFLAGS_BUILD) $(CPPFLAGS_CHAR) &
+	$(CPPFLAGS_XCMGRS) $(CPPFLAGS_BUNDLED_UNICODE) $(CPPFLAGS_STATIC_MODULE) &
+	$(CPPFLAGS_TCPV40HDRS) -wx $(__DEBUG_INFO) -bm -ot -ox $(CPPFLAGS) $(CFLAGS)
+DLLQSEXLI_OBJECTS =  &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsexli_xli.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsexli_err.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsexli_read.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsexli_write.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsexli_std.obj
+LIBQSEXLI_CFLAGS = -i=..\..\include $(CPPFLAGS_BUILD) $(CPPFLAGS_CHAR) &
+	$(CPPFLAGS_XCMGRS) $(CPPFLAGS_BUNDLED_UNICODE) $(CPPFLAGS_STATIC_MODULE) &
+	$(CPPFLAGS_TCPV40HDRS) -wx $(__DEBUG_INFO) -bm -ot -ox $(CPPFLAGS) $(CFLAGS)
+LIBQSEXLI_OBJECTS =  &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsexli_xli.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsexli_err.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsexli_read.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsexli_write.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsexli_std.obj
 EXEQSEAWK_CFLAGS = -i=..\..\include $(CPPFLAGS_BUILD) $(CPPFLAGS_CHAR) &
 	$(CPPFLAGS_XCMGRS) $(CPPFLAGS_BUNDLED_UNICODE) $(CPPFLAGS_STATIC_MODULE) &
 	$(CPPFLAGS_TCPV40HDRS) -wx $(__DEBUG_INFO) -bm -ot -ox $(CPPFLAGS) $(CFLAGS)
@@ -629,7 +657,7 @@ $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED) :
 
 ### Targets: ###
 
-all : .SYMBOLIC $(__dllqsecmn___depname) $(__libqsecmn___depname) $(__dllqseawk___depname) $(__libqseawk___depname) $(__modqseawkdir___depname) $(__modqseawkstr___depname) $(__modqseawksys___depname) $(__dllqsesed___depname) $(__libqsesed___depname) $(__dllqsenet___depname) $(__libqsenet___depname) $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qseawk.exe $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsesed.exe $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsehttpd.exe $(__dllqsecmnxx___depname) $(__libqsecmnxx___depname) $(__dllqseawkxx___depname) $(__libqseawkxx___depname) $(__dllqsesedxx___depname) $(__libqsesedxx___depname)
+all : .SYMBOLIC $(__dllqsecmn___depname) $(__libqsecmn___depname) $(__dllqseawk___depname) $(__libqseawk___depname) $(__modqseawkdir___depname) $(__modqseawkstr___depname) $(__modqseawksys___depname) $(__dllqsesed___depname) $(__libqsesed___depname) $(__dllqsehttp___depname) $(__libqsehttp___depname) $(__dllqsexli___depname) $(__libqsexli___depname) $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qseawk.exe $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsesed.exe $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsehttpd.exe $(__dllqsecmnxx___depname) $(__libqsecmnxx___depname) $(__dllqseawkxx___depname) $(__libqseawkxx___depname) $(__dllqsesedxx___depname) $(__libqsesedxx___depname)
 
 clean : .SYMBOLIC 
 	-if exist $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\*.obj del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\*.obj
@@ -652,9 +680,12 @@ clean : .SYMBOLIC
 	-del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsesed.dll
 	-del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsesed.lib
 	-del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsesed.lib
-	-del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsenet.dll
-	-del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsenet.lib
-	-del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsenet.lib
+	-del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsehttp.dll
+	-del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsehttp.lib
+	-del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsehttp.lib
+	-del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsexli.dll
+	-del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsexli.lib
+	-del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsexli.lib
 	-del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qseawk.exe
 	-del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsesed.exe
 	-del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsehttpd.exe
@@ -674,7 +705,7 @@ $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsecmn.dll :  $(DLLQSECMN_
 	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn.lbc option quiet
 	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn.lbc name $^@
 	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn.lbc option caseexact
-	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn.lbc  $(__DEBUG_INFO_1_2)  $(LDFLAGS)
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn.lbc  $(__DEBUG_INFO_1_3)  $(LDFLAGS)
 	@for %i in ($(DLLQSECMN_OBJECTS)) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn.lbc file %i
 	@for %i in ( $(__SYSLIB_SOCKET_p) $(__SYSLIB_SOCKET2_p)) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn.lbc library %i
 	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmn.lbc
@@ -696,7 +727,7 @@ $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qseawk.dll :  $(DLLQSEAWK_
 	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqseawk.lbc option quiet
 	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqseawk.lbc name $^@
 	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqseawk.lbc option caseexact
-	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqseawk.lbc  $(__DEBUG_INFO_1_2)  $(LDFLAGS)
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqseawk.lbc  $(__DEBUG_INFO_1_3)  $(LDFLAGS)
 	@for %i in ($(DLLQSEAWK_OBJECTS)) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqseawk.lbc file %i
 	@for %i in ( $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsecmn.lib) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqseawk.lbc library %i
 	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqseawk.lbc
@@ -718,7 +749,7 @@ $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\awk-dir.dll :  $(MODQSEAWK
 	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\modqseawkdir.lbc option quiet
 	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\modqseawkdir.lbc name $^@
 	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\modqseawkdir.lbc option caseexact
-	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\modqseawkdir.lbc  $(__DEBUG_INFO_1_2)  $(LDFLAGS)
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\modqseawkdir.lbc  $(__DEBUG_INFO_1_3)  $(LDFLAGS)
 	@for %i in ($(MODQSEAWKDIR_OBJECTS)) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\modqseawkdir.lbc file %i
 	@for %i in ( $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsecmn.lib $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qseawk.lib) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\modqseawkdir.lbc library %i
 	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\modqseawkdir.lbc
@@ -733,7 +764,7 @@ $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\awk-str.dll :  $(MODQSEAWK
 	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\modqseawkstr.lbc option quiet
 	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\modqseawkstr.lbc name $^@
 	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\modqseawkstr.lbc option caseexact
-	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\modqseawkstr.lbc  $(__DEBUG_INFO_1_2)  $(LDFLAGS)
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\modqseawkstr.lbc  $(__DEBUG_INFO_1_3)  $(LDFLAGS)
 	@for %i in ($(MODQSEAWKSTR_OBJECTS)) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\modqseawkstr.lbc file %i
 	@for %i in ( $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsecmn.lib $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qseawk.lib) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\modqseawkstr.lbc library %i
 	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\modqseawkstr.lbc
@@ -748,7 +779,7 @@ $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\awk-sys.dll :  $(MODQSEAWK
 	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\modqseawksys.lbc option quiet
 	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\modqseawksys.lbc name $^@
 	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\modqseawksys.lbc option caseexact
-	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\modqseawksys.lbc  $(__DEBUG_INFO_1_2)  $(LDFLAGS)
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\modqseawksys.lbc  $(__DEBUG_INFO_1_3)  $(LDFLAGS)
 	@for %i in ($(MODQSEAWKSYS_OBJECTS)) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\modqseawksys.lbc file %i
 	@for %i in ( $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsecmn.lib $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qseawk.lib) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\modqseawksys.lbc library %i
 	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\modqseawksys.lbc
@@ -763,7 +794,7 @@ $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsesed.dll :  $(DLLQSESED_
 	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsesed.lbc option quiet
 	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsesed.lbc name $^@
 	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsesed.lbc option caseexact
-	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsesed.lbc  $(__DEBUG_INFO_1_2)  $(LDFLAGS)
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsesed.lbc  $(__DEBUG_INFO_1_3)  $(LDFLAGS)
 	@for %i in ($(DLLQSESED_OBJECTS)) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsesed.lbc file %i
 	@for %i in ( $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsecmn.lib) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsesed.lbc library %i
 	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsesed.lbc
@@ -780,25 +811,47 @@ $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsesed.lib :  $(LIBQSESED_
 !endif
 
 !ifeq SHARED on
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsenet.dll :  $(DLLQSENET_OBJECTS) $(__libqsecmn___depname) $(__dllqsecmn___depname)
-	@%create $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet.lbc
-	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet.lbc option quiet
-	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet.lbc name $^@
-	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet.lbc option caseexact
-	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet.lbc  $(__DEBUG_INFO_1_2)  $(LDFLAGS)
-	@for %i in ($(DLLQSENET_OBJECTS)) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet.lbc file %i
-	@for %i in ( $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsecmn.lib $(__SYSLIB_SOCKET_p) $(__SYSLIB_SOCKET2_p)) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet.lbc library %i
-	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet.lbc
-	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet.lbc system os2v2 dll
-	wlink @$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet.lbc
-	wlib -q -n -b $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsenet.lib +$^@
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsehttp.dll :  $(DLLQSEHTTP_OBJECTS) $(__libqsecmn___depname) $(__dllqsecmn___depname)
+	@%create $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsehttp.lbc
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsehttp.lbc option quiet
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsehttp.lbc name $^@
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsehttp.lbc option caseexact
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsehttp.lbc  $(__DEBUG_INFO_1_3)  $(LDFLAGS)
+	@for %i in ($(DLLQSEHTTP_OBJECTS)) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsehttp.lbc file %i
+	@for %i in ( $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsecmn.lib $(__SYSLIB_SOCKET_p) $(__SYSLIB_SOCKET2_p)) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsehttp.lbc library %i
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsehttp.lbc
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsehttp.lbc system os2v2 dll
+	wlink @$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsehttp.lbc
+	wlib -q -n -b $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsehttp.lib +$^@
 !endif
 
 !ifeq SHARED off
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsenet.lib :  $(LIBQSENET_OBJECTS) $(__libqsecmn___depname) $(__libqsecmn___depname)
-	@%create $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet.lbc
-	@for %i in ($(LIBQSENET_OBJECTS)) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet.lbc +%i
-	wlib -q -p4096 -n -b $^@ @$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet.lbc
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsehttp.lib :  $(LIBQSEHTTP_OBJECTS) $(__libqsecmn___depname) $(__libqsecmn___depname)
+	@%create $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsehttp.lbc
+	@for %i in ($(LIBQSEHTTP_OBJECTS)) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsehttp.lbc +%i
+	wlib -q -p4096 -n -b $^@ @$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsehttp.lbc
+!endif
+
+!ifeq SHARED on
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsexli.dll :  $(DLLQSEXLI_OBJECTS) $(__libqsecmn___depname) $(__dllqsecmn___depname)
+	@%create $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsexli.lbc
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsexli.lbc option quiet
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsexli.lbc name $^@
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsexli.lbc option caseexact
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsexli.lbc  $(__DEBUG_INFO_1_3)  $(LDFLAGS)
+	@for %i in ($(DLLQSEXLI_OBJECTS)) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsexli.lbc file %i
+	@for %i in ( $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsecmn.lib) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsexli.lbc library %i
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsexli.lbc
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsexli.lbc system os2v2 dll
+	wlink @$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsexli.lbc
+	wlib -q -n -b $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsexli.lib +$^@
+!endif
+
+!ifeq SHARED off
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsexli.lib :  $(LIBQSEXLI_OBJECTS) $(__libqsecmn___depname) $(__libqsecmn___depname)
+	@%create $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsexli.lbc
+	@for %i in ($(LIBQSEXLI_OBJECTS)) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsexli.lbc +%i
+	wlib -q -p4096 -n -b $^@ @$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsexli.lbc
 !endif
 
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qseawk.exe :  $(EXEQSEAWK_OBJECTS) $(__libqsecmn___depname) $(__libqseawk___depname)
@@ -806,7 +859,7 @@ $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qseawk.exe :  $(EXEQSEAWK_
 	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\exeqseawk.lbc option quiet
 	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\exeqseawk.lbc name $^@
 	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\exeqseawk.lbc option caseexact
-	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\exeqseawk.lbc  $(__DEBUG_INFO_1_2)  system os2v2 $(LDFLAGS)
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\exeqseawk.lbc  $(__DEBUG_INFO_1_3)  system os2v2 $(LDFLAGS)
 	@for %i in ($(EXEQSEAWK_OBJECTS)) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\exeqseawk.lbc file %i
 	@for %i in ( $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsecmn.lib $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qseawk.lib $(__SYSLIB_SOCKET_p) $(__SYSLIB_SOCKET2_p)) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\exeqseawk.lbc library %i
 	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\exeqseawk.lbc
@@ -818,21 +871,21 @@ $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsesed.exe :  $(EXEQSESED_
 	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\exeqsesed.lbc option quiet
 	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\exeqsesed.lbc name $^@
 	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\exeqsesed.lbc option caseexact
-	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\exeqsesed.lbc  $(__DEBUG_INFO_1_2)  system os2v2 $(LDFLAGS)
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\exeqsesed.lbc  $(__DEBUG_INFO_1_3)  system os2v2 $(LDFLAGS)
 	@for %i in ($(EXEQSESED_OBJECTS)) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\exeqsesed.lbc file %i
 	@for %i in ( $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsecmn.lib $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsesed.lib) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\exeqsesed.lbc library %i
 	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\exeqsesed.lbc
 	@for %i in () do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\exeqsesed.lbc option stack=%i
 	wlink @$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\exeqsesed.lbc
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsehttpd.exe :  $(EXEQSEHTTPD_OBJECTS) $(__libqsecmn___depname) $(__libqsenet___depname)
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsehttpd.exe :  $(EXEQSEHTTPD_OBJECTS) $(__libqsecmn___depname) $(__libqsehttp___depname) $(__libqsexli___depname)
 	@%create $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\exeqsehttpd.lbc
 	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\exeqsehttpd.lbc option quiet
 	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\exeqsehttpd.lbc name $^@
 	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\exeqsehttpd.lbc option caseexact
-	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\exeqsehttpd.lbc  $(__DEBUG_INFO_1_2)  system os2v2 $(LDFLAGS)
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\exeqsehttpd.lbc  $(__DEBUG_INFO_1_3)  system os2v2 $(LDFLAGS)
 	@for %i in ($(EXEQSEHTTPD_OBJECTS)) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\exeqsehttpd.lbc file %i
-	@for %i in ( $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsecmn.lib $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsenet.lib $(__SYSLIB_SOCKET_p) $(__SYSLIB_SOCKET2_p)) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\exeqsehttpd.lbc library %i
+	@for %i in ( $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsecmn.lib $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsehttp.lib $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsexli.lib $(__SYSLIB_SOCKET_p) $(__SYSLIB_SOCKET2_p)) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\exeqsehttpd.lbc library %i
 	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\exeqsehttpd.lbc
 	@for %i in () do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\exeqsehttpd.lbc option stack=%i
 	wlink @$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\exeqsehttpd.lbc
@@ -843,7 +896,7 @@ $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsecmnxx.dll :  $(DLLQSECM
 	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmnxx.lbc option quiet
 	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmnxx.lbc name $^@
 	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmnxx.lbc option caseexact
-	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmnxx.lbc  $(__DEBUG_INFO_1_2)  $(LDFLAGS)
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmnxx.lbc  $(__DEBUG_INFO_1_3)  $(LDFLAGS)
 	@for %i in ($(DLLQSECMNXX_OBJECTS)) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmnxx.lbc file %i
 	@for %i in ( $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsecmn.lib) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmnxx.lbc library %i
 	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmnxx.lbc
@@ -865,7 +918,7 @@ $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qseawkxx.dll :  $(DLLQSEAW
 	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqseawkxx.lbc option quiet
 	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqseawkxx.lbc name $^@
 	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqseawkxx.lbc option caseexact
-	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqseawkxx.lbc  $(__DEBUG_INFO_1_2)  $(LDFLAGS)
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqseawkxx.lbc  $(__DEBUG_INFO_1_3)  $(LDFLAGS)
 	@for %i in ($(DLLQSEAWKXX_OBJECTS)) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqseawkxx.lbc file %i
 	@for %i in ( $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsecmn.lib $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsecmnxx.lib $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qseawk.lib) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqseawkxx.lbc library %i
 	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqseawkxx.lbc
@@ -887,7 +940,7 @@ $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsesedxx.dll :  $(DLLQSESE
 	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsesedxx.lbc option quiet
 	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsesedxx.lbc name $^@
 	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsesedxx.lbc option caseexact
-	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsesedxx.lbc  $(__DEBUG_INFO_1_2)  $(LDFLAGS)
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsesedxx.lbc  $(__DEBUG_INFO_1_3)  $(LDFLAGS)
 	@for %i in ($(DLLQSESEDXX_OBJECTS)) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsesedxx.lbc file %i
 	@for %i in ( $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsecmn.lib $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsecmnxx.lib $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsesed.lib) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsesedxx.lbc library %i
 	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsesedxx.lbc
@@ -1548,83 +1601,113 @@ $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsesed_err.obj :  .AUTO
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsesed_std.obj :  .AUTODEPEND ..\..\lib\sed\std.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSESED_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_http.obj :  .AUTODEPEND ..\..\lib\net\http.c
-	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSENET_CFLAGS) $<
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsehttp_http.obj :  .AUTODEPEND ..\..\lib\http\http.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSEHTTP_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_htre.obj :  .AUTODEPEND ..\..\lib\net\htre.c
-	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSENET_CFLAGS) $<
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsehttp_htre.obj :  .AUTODEPEND ..\..\lib\http\htre.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSEHTTP_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_htrd.obj :  .AUTODEPEND ..\..\lib\net\htrd.c
-	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSENET_CFLAGS) $<
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsehttp_htrd.obj :  .AUTODEPEND ..\..\lib\http\htrd.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSEHTTP_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_httpd.obj :  .AUTODEPEND ..\..\lib\net\httpd.c
-	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSENET_CFLAGS) $<
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsehttp_httpd.obj :  .AUTODEPEND ..\..\lib\http\httpd.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSEHTTP_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_httpd_cgi.obj :  .AUTODEPEND ..\..\lib\net\httpd-cgi.c
-	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSENET_CFLAGS) $<
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsehttp_httpd_cgi.obj :  .AUTODEPEND ..\..\lib\http\httpd-cgi.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSEHTTP_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_httpd_dir.obj :  .AUTODEPEND ..\..\lib\net\httpd-dir.c
-	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSENET_CFLAGS) $<
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsehttp_httpd_dir.obj :  .AUTODEPEND ..\..\lib\http\httpd-dir.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSEHTTP_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_httpd_file.obj :  .AUTODEPEND ..\..\lib\net\httpd-file.c
-	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSENET_CFLAGS) $<
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsehttp_httpd_file.obj :  .AUTODEPEND ..\..\lib\http\httpd-file.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSEHTTP_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_httpd_proxy.obj :  .AUTODEPEND ..\..\lib\net\httpd-proxy.c
-	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSENET_CFLAGS) $<
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsehttp_httpd_proxy.obj :  .AUTODEPEND ..\..\lib\http\httpd-proxy.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSEHTTP_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_httpd_resol.obj :  .AUTODEPEND ..\..\lib\net\httpd-resol.c
-	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSENET_CFLAGS) $<
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsehttp_httpd_resol.obj :  .AUTODEPEND ..\..\lib\http\httpd-resol.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSEHTTP_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_httpd_std.obj :  .AUTODEPEND ..\..\lib\net\httpd-std.c
-	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSENET_CFLAGS) $<
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsehttp_httpd_std.obj :  .AUTODEPEND ..\..\lib\http\httpd-std.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSEHTTP_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_httpd_task.obj :  .AUTODEPEND ..\..\lib\net\httpd-task.c
-	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSENET_CFLAGS) $<
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsehttp_httpd_task.obj :  .AUTODEPEND ..\..\lib\http\httpd-task.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSEHTTP_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_httpd_text.obj :  .AUTODEPEND ..\..\lib\net\httpd-text.c
-	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSENET_CFLAGS) $<
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsehttp_httpd_text.obj :  .AUTODEPEND ..\..\lib\http\httpd-text.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSEHTTP_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_upxd.obj :  .AUTODEPEND ..\..\lib\net\upxd.c
-	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSENET_CFLAGS) $<
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsehttp_upxd.obj :  .AUTODEPEND ..\..\lib\http\upxd.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSEHTTP_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_http.obj :  .AUTODEPEND ..\..\lib\net\http.c
-	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSENET_CFLAGS) $<
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsehttp_http.obj :  .AUTODEPEND ..\..\lib\http\http.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSEHTTP_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_htre.obj :  .AUTODEPEND ..\..\lib\net\htre.c
-	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSENET_CFLAGS) $<
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsehttp_htre.obj :  .AUTODEPEND ..\..\lib\http\htre.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSEHTTP_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_htrd.obj :  .AUTODEPEND ..\..\lib\net\htrd.c
-	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSENET_CFLAGS) $<
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsehttp_htrd.obj :  .AUTODEPEND ..\..\lib\http\htrd.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSEHTTP_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_httpd.obj :  .AUTODEPEND ..\..\lib\net\httpd.c
-	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSENET_CFLAGS) $<
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsehttp_httpd.obj :  .AUTODEPEND ..\..\lib\http\httpd.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSEHTTP_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_httpd_cgi.obj :  .AUTODEPEND ..\..\lib\net\httpd-cgi.c
-	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSENET_CFLAGS) $<
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsehttp_httpd_cgi.obj :  .AUTODEPEND ..\..\lib\http\httpd-cgi.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSEHTTP_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_httpd_dir.obj :  .AUTODEPEND ..\..\lib\net\httpd-dir.c
-	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSENET_CFLAGS) $<
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsehttp_httpd_dir.obj :  .AUTODEPEND ..\..\lib\http\httpd-dir.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSEHTTP_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_httpd_file.obj :  .AUTODEPEND ..\..\lib\net\httpd-file.c
-	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSENET_CFLAGS) $<
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsehttp_httpd_file.obj :  .AUTODEPEND ..\..\lib\http\httpd-file.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSEHTTP_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_httpd_proxy.obj :  .AUTODEPEND ..\..\lib\net\httpd-proxy.c
-	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSENET_CFLAGS) $<
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsehttp_httpd_proxy.obj :  .AUTODEPEND ..\..\lib\http\httpd-proxy.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSEHTTP_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_httpd_resol.obj :  .AUTODEPEND ..\..\lib\net\httpd-resol.c
-	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSENET_CFLAGS) $<
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsehttp_httpd_resol.obj :  .AUTODEPEND ..\..\lib\http\httpd-resol.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSEHTTP_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_httpd_std.obj :  .AUTODEPEND ..\..\lib\net\httpd-std.c
-	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSENET_CFLAGS) $<
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsehttp_httpd_std.obj :  .AUTODEPEND ..\..\lib\http\httpd-std.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSEHTTP_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_httpd_task.obj :  .AUTODEPEND ..\..\lib\net\httpd-task.c
-	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSENET_CFLAGS) $<
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsehttp_httpd_task.obj :  .AUTODEPEND ..\..\lib\http\httpd-task.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSEHTTP_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_httpd_text.obj :  .AUTODEPEND ..\..\lib\net\httpd-text.c
-	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSENET_CFLAGS) $<
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsehttp_httpd_text.obj :  .AUTODEPEND ..\..\lib\http\httpd-text.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSEHTTP_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_upxd.obj :  .AUTODEPEND ..\..\lib\net\upxd.c
-	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSENET_CFLAGS) $<
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsehttp_upxd.obj :  .AUTODEPEND ..\..\lib\http\upxd.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSEHTTP_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsexli_xli.obj :  .AUTODEPEND ..\..\lib\xli\xli.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSEXLI_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsexli_err.obj :  .AUTODEPEND ..\..\lib\xli\err.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSEXLI_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsexli_read.obj :  .AUTODEPEND ..\..\lib\xli\read.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSEXLI_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsexli_write.obj :  .AUTODEPEND ..\..\lib\xli\write.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSEXLI_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsexli_std.obj :  .AUTODEPEND ..\..\lib\xli\std.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(DLLQSEXLI_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsexli_xli.obj :  .AUTODEPEND ..\..\lib\xli\xli.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSEXLI_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsexli_err.obj :  .AUTODEPEND ..\..\lib\xli\err.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSEXLI_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsexli_read.obj :  .AUTODEPEND ..\..\lib\xli\read.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSEXLI_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsexli_write.obj :  .AUTODEPEND ..\..\lib\xli\write.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSEXLI_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsexli_std.obj :  .AUTODEPEND ..\..\lib\xli\std.c
+	$(CC) -bt=os2 -zq -fo=$^@ $(LIBQSEXLI_CFLAGS) $<
 
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\exeqseawk_awk.obj :  .AUTODEPEND ..\..\cmd\awk\awk.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(EXEQSEAWK_CFLAGS) $<
@@ -1632,7 +1715,7 @@ $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\exeqseawk_awk.obj :  .AUTO
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\exeqsesed_sed.obj :  .AUTODEPEND ..\..\cmd\sed\sed.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(EXEQSESED_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\exeqsehttpd_httpd.obj :  .AUTODEPEND ..\..\cmd\net\httpd.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\exeqsehttpd_httpd.obj :  .AUTODEPEND ..\..\cmd\http\httpd.c
 	$(CC) -bt=os2 -zq -fo=$^@ $(EXEQSEHTTPD_CFLAGS) $<
 
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmnxx_Mmgr.obj :  .AUTODEPEND ..\..\lib\cmn\Mmgr.cpp

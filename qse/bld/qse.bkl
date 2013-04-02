@@ -254,7 +254,7 @@
 		std.c 
 	</set>
 
-	<set var="SOURCES_LIBQSENET">
+	<set var="SOURCES_LIBQSEHTTP">
 		http.c 
 		htre.c
 		htrd.c 
@@ -268,6 +268,14 @@
 		httpd-task.c
 		httpd-text.c 
 		upxd.c   
+	</set>
+
+	<set var="SOURCES_LIBQSEXLI">
+		xli.c
+		err.c
+		read.c
+		write.c
+		std.c
 	</set>
 
 	<set var="SOURCES_LIBQSECMNXX">
@@ -396,25 +404,42 @@
 		<depends>libqsecmn</depends>
 	</lib>
 
-	<dll id="dllqsenet" template="base" cond="ENABLE_DLL=='1'">
-		<libname>qsenet</libname>
-		<dllname>qsenet</dllname>
-		<set-srcdir>../../lib/net</set-srcdir>
-		<sources>$(SOURCES_LIBQSENET)</sources>
+	<dll id="dllqsehttp" template="base" cond="ENABLE_DLL=='1'">
+		<libname>qsehttp</libname>
+		<dllname>qsehttp</dllname>
+		<set-srcdir>../../lib/http</set-srcdir>
+		<sources>$(SOURCES_LIBQSEHTTP)</sources>
 		<library>libqsecmn</library>
 		<depends>dllqsecmn</depends>
 		<sys-lib>$(SYSLIB_SOCKET)</sys-lib>
 		<sys-lib>$(SYSLIB_SOCKET2)</sys-lib>
 	</dll>
 
-	<lib id="libqsenet" template="base" cond="ENABLE_DLL=='0'">
-		<libname>qsenet</libname>
-		<set-srcdir>../../lib/net</set-srcdir>
-		<sources>$(SOURCES_LIBQSENET)</sources>
+	<lib id="libqsehttp" template="base" cond="ENABLE_DLL=='0'">
+		<libname>qsehttp</libname>
+		<set-srcdir>../../lib/http</set-srcdir>
+		<sources>$(SOURCES_LIBQSEHTTP)</sources>
 		<library>libqsecmn</library>
 		<depends>libqsecmn</depends>
 		<sys-lib>$(SYSLIB_SOCKET)</sys-lib>
 		<sys-lib>$(SYSLIB_SOCKET2)</sys-lib>
+	</lib>
+
+	<dll id="dllqsexli" template="base" cond="ENABLE_DLL=='1'">
+		<libname>qsexli</libname>
+		<dllname>qsexli</dllname>
+		<set-srcdir>../../lib/xli</set-srcdir>
+		<sources>$(SOURCES_LIBQSEXLI)</sources>
+		<library>libqsecmn</library>
+		<depends>dllqsecmn</depends>
+	</dll>
+
+	<lib id="libqsexli" template="base" cond="ENABLE_DLL=='0'">
+		<libname>qsexli</libname>
+		<set-srcdir>../../lib/xli</set-srcdir>
+		<sources>$(SOURCES_LIBQSEXLI)</sources>
+		<library>libqsecmn</library>
+		<depends>libqsecmn</depends>
 	</lib>
 
 	<exe id="exeqseawk" template="base">
@@ -442,11 +467,12 @@
 	<exe id="exeqsehttpd" template="base">
 		<exename>qsehttpd</exename>
 		<app-type>console</app-type>
-		<set-srcdir>../../cmd/net</set-srcdir>
+		<set-srcdir>../../cmd/http</set-srcdir>
 		<sources>httpd.c</sources>
 		<library>libqsecmn</library>
-		<library>libqsenet</library>
-		<!-- <depends>libqsenet</depends> -->
+		<library>libqsehttp</library>
+		<!-- <depends>libqsehttp</depends> -->
+		<library>libqsexli</library>
 		<sys-lib>$(SYSLIB_SOCKET)</sys-lib>
 		<sys-lib>$(SYSLIB_SOCKET2)</sys-lib>
 	</exe>

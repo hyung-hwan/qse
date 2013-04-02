@@ -341,42 +341,62 @@ LIBQSESED_OBJECTS =  \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsesed_sed.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsesed_err.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsesed_std.obj
-DLLQSENET_CFLAGS = -I$(BCCDIR)\include -I..\..\include $(CPPFLAGS_BUILD) \
+DLLQSEHTTP_CFLAGS = -I$(BCCDIR)\include -I..\..\include $(CPPFLAGS_BUILD) \
 	$(CPPFLAGS_CHAR) $(CPPFLAGS_XCMGRS) $(CPPFLAGS_BUNDLED_UNICODE) \
 	$(CPPFLAGS_STATIC_MODULE) $(CPPFLAGS_TCPV40HDRS) $(__DEBUG_INFO) -tWM -O2 \
 	$(CPPFLAGS) $(CFLAGS)
-DLLQSENET_OBJECTS =  \
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_http.obj \
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_htre.obj \
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_htrd.obj \
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_httpd.obj \
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_httpd_cgi.obj \
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_httpd_dir.obj \
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_httpd_file.obj \
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_httpd_proxy.obj \
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_httpd_resol.obj \
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_httpd_std.obj \
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_httpd_task.obj \
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_httpd_text.obj \
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_upxd.obj
-LIBQSENET_CFLAGS = -I$(BCCDIR)\include -I..\..\include $(CPPFLAGS_BUILD) \
+DLLQSEHTTP_OBJECTS =  \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsehttp_http.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsehttp_htre.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsehttp_htrd.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsehttp_httpd.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsehttp_httpd_cgi.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsehttp_httpd_dir.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsehttp_httpd_file.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsehttp_httpd_proxy.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsehttp_httpd_resol.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsehttp_httpd_std.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsehttp_httpd_task.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsehttp_httpd_text.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsehttp_upxd.obj
+LIBQSEHTTP_CFLAGS = -I$(BCCDIR)\include -I..\..\include $(CPPFLAGS_BUILD) \
 	$(CPPFLAGS_CHAR) $(CPPFLAGS_XCMGRS) $(CPPFLAGS_BUNDLED_UNICODE) \
 	$(CPPFLAGS_STATIC_MODULE) $(CPPFLAGS_TCPV40HDRS) $(__DEBUG_INFO) -tWM -O2 \
 	$(CPPFLAGS) $(CFLAGS)
-LIBQSENET_OBJECTS =  \
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_http.obj \
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_htre.obj \
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_htrd.obj \
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_httpd.obj \
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_httpd_cgi.obj \
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_httpd_dir.obj \
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_httpd_file.obj \
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_httpd_proxy.obj \
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_httpd_resol.obj \
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_httpd_std.obj \
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_httpd_task.obj \
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_httpd_text.obj \
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_upxd.obj
+LIBQSEHTTP_OBJECTS =  \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsehttp_http.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsehttp_htre.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsehttp_htrd.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsehttp_httpd.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsehttp_httpd_cgi.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsehttp_httpd_dir.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsehttp_httpd_file.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsehttp_httpd_proxy.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsehttp_httpd_resol.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsehttp_httpd_std.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsehttp_httpd_task.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsehttp_httpd_text.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsehttp_upxd.obj
+DLLQSEXLI_CFLAGS = -I$(BCCDIR)\include -I..\..\include $(CPPFLAGS_BUILD) \
+	$(CPPFLAGS_CHAR) $(CPPFLAGS_XCMGRS) $(CPPFLAGS_BUNDLED_UNICODE) \
+	$(CPPFLAGS_STATIC_MODULE) $(CPPFLAGS_TCPV40HDRS) $(__DEBUG_INFO) -tWM -O2 \
+	$(CPPFLAGS) $(CFLAGS)
+DLLQSEXLI_OBJECTS =  \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsexli_xli.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsexli_err.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsexli_read.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsexli_write.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsexli_std.obj
+LIBQSEXLI_CFLAGS = -I$(BCCDIR)\include -I..\..\include $(CPPFLAGS_BUILD) \
+	$(CPPFLAGS_CHAR) $(CPPFLAGS_XCMGRS) $(CPPFLAGS_BUNDLED_UNICODE) \
+	$(CPPFLAGS_STATIC_MODULE) $(CPPFLAGS_TCPV40HDRS) $(__DEBUG_INFO) -tWM -O2 \
+	$(CPPFLAGS) $(CFLAGS)
+LIBQSEXLI_OBJECTS =  \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsexli_xli.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsexli_err.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsexli_read.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsexli_write.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsexli_std.obj
 EXEQSEAWK_CFLAGS = -I$(BCCDIR)\include -I..\..\include $(CPPFLAGS_BUILD) \
 	$(CPPFLAGS_CHAR) $(CPPFLAGS_XCMGRS) $(CPPFLAGS_BUNDLED_UNICODE) \
 	$(CPPFLAGS_STATIC_MODULE) $(CPPFLAGS_TCPV40HDRS) $(__DEBUG_INFO) -tWM -O2 \
@@ -561,12 +581,20 @@ __libqsesed___depname = \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsesed.lib
 !endif
 !if "$(SHARED)" == "on"
-__dllqsenet___depname = \
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsenet.dll
+__dllqsehttp___depname = \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsehttp.dll
 !endif
 !if "$(SHARED)" == "off"
-__libqsenet___depname = \
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsenet.lib
+__libqsehttp___depname = \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsehttp.lib
+!endif
+!if "$(SHARED)" == "on"
+__dllqsexli___depname = \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsexli.dll
+!endif
+!if "$(SHARED)" == "off"
+__libqsexli___depname = \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsexli.lib
 !endif
 !if "$(SHARED)" == "on"
 __dllqsecmnxx___depname = \
@@ -606,7 +634,7 @@ $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED):
 
 ### Targets: ###
 
-all: $(__dllqsecmn___depname) $(__libqsecmn___depname) $(__dllqseawk___depname) $(__libqseawk___depname) $(__modqseawkdir___depname) $(__modqseawkstr___depname) $(__modqseawksys___depname) $(__dllqsesed___depname) $(__libqsesed___depname) $(__dllqsenet___depname) $(__libqsenet___depname) $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qseawk.exe $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsesed.exe $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsehttpd.exe $(__dllqsecmnxx___depname) $(__libqsecmnxx___depname) $(__dllqseawkxx___depname) $(__libqseawkxx___depname) $(__dllqsesedxx___depname) $(__libqsesedxx___depname)
+all: $(__dllqsecmn___depname) $(__libqsecmn___depname) $(__dllqseawk___depname) $(__libqseawk___depname) $(__modqseawkdir___depname) $(__modqseawkstr___depname) $(__modqseawksys___depname) $(__dllqsesed___depname) $(__libqsesed___depname) $(__dllqsehttp___depname) $(__libqsehttp___depname) $(__dllqsexli___depname) $(__libqsexli___depname) $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qseawk.exe $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsesed.exe $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsehttpd.exe $(__dllqsecmnxx___depname) $(__libqsecmnxx___depname) $(__dllqseawkxx___depname) $(__libqseawkxx___depname) $(__dllqsesedxx___depname) $(__libqsesedxx___depname)
 
 clean: 
 	-if exist $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\*.obj del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\*.obj
@@ -657,14 +685,22 @@ clean:
 	-if exist $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsesed.ils del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsesed.ils
 	-if exist $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsesed.lib del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsesed.lib
 	-if exist $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsesed.lib del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsesed.lib
-	-if exist $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsenet.dll del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsenet.dll
-	-if exist $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsenet.tds del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsenet.tds
-	-if exist $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsenet.ilc del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsenet.ilc
-	-if exist $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsenet.ild del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsenet.ild
-	-if exist $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsenet.ilf del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsenet.ilf
-	-if exist $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsenet.ils del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsenet.ils
-	-if exist $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsenet.lib del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsenet.lib
-	-if exist $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsenet.lib del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsenet.lib
+	-if exist $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsehttp.dll del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsehttp.dll
+	-if exist $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsehttp.tds del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsehttp.tds
+	-if exist $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsehttp.ilc del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsehttp.ilc
+	-if exist $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsehttp.ild del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsehttp.ild
+	-if exist $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsehttp.ilf del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsehttp.ilf
+	-if exist $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsehttp.ils del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsehttp.ils
+	-if exist $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsehttp.lib del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsehttp.lib
+	-if exist $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsehttp.lib del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsehttp.lib
+	-if exist $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsexli.dll del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsexli.dll
+	-if exist $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsexli.tds del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsexli.tds
+	-if exist $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsexli.ilc del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsexli.ilc
+	-if exist $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsexli.ild del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsexli.ild
+	-if exist $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsexli.ilf del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsexli.ilf
+	-if exist $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsexli.ils del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsexli.ils
+	-if exist $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsexli.lib del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsexli.lib
+	-if exist $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsexli.lib del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsexli.lib
 	-if exist $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qseawk.exe del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qseawk.exe
 	-if exist $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qseawk.tds del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qseawk.tds
 	-if exist $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qseawk.ilc del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qseawk.ilc
@@ -781,18 +817,34 @@ $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsesed.lib: $(LIBQSESED_OB
 !endif
 
 !if "$(SHARED)" == "on"
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsenet.dll: $(DLLQSENET_OBJECTS) $(__libqsecmn___depname) $(__dllqsecmn___depname)
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsehttp.dll: $(DLLQSEHTTP_OBJECTS) $(__libqsecmn___depname) $(__dllqsecmn___depname)
 	ilink32 -Tpd -q  -L$(BCCDIR)\lib -L$(BCCDIR)\lib\psdk $(__DEBUG_INFO)  $(LDFLAGS) @&&|
-	c0d32.obj $(DLLQSENET_OBJECTS),$@,, $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsecmn.lib ws2_32.lib  import32.lib cw32mt.lib,,
+	c0d32.obj $(DLLQSEHTTP_OBJECTS),$@,, $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsecmn.lib ws2_32.lib  import32.lib cw32mt.lib,,
 |
-	implib -f $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsenet $@
+	implib -f $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsehttp $@
 !endif
 
 !if "$(SHARED)" == "off"
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsenet.lib: $(LIBQSENET_OBJECTS) $(__libqsecmn___depname) $(__libqsecmn___depname)
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsehttp.lib: $(LIBQSEHTTP_OBJECTS) $(__libqsecmn___depname) $(__libqsecmn___depname)
 	if exist $@ del $@
 	tlib /a /p4096 $@ @&&|
-	$(LIBQSENET_OBJECTS)
+	$(LIBQSEHTTP_OBJECTS)
+|
+!endif
+
+!if "$(SHARED)" == "on"
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsexli.dll: $(DLLQSEXLI_OBJECTS) $(__libqsecmn___depname) $(__dllqsecmn___depname)
+	ilink32 -Tpd -q  -L$(BCCDIR)\lib -L$(BCCDIR)\lib\psdk $(__DEBUG_INFO)  $(LDFLAGS) @&&|
+	c0d32.obj $(DLLQSEXLI_OBJECTS),$@,, $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsecmn.lib import32.lib cw32mt.lib,,
+|
+	implib -f $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsexli $@
+!endif
+
+!if "$(SHARED)" == "off"
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsexli.lib: $(LIBQSEXLI_OBJECTS) $(__libqsecmn___depname) $(__libqsecmn___depname)
+	if exist $@ del $@
+	tlib /a /p4096 $@ @&&|
+	$(LIBQSEXLI_OBJECTS)
 |
 !endif
 
@@ -806,9 +858,9 @@ $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsesed.exe: $(EXEQSESED_OB
 	c0x32.obj $(EXEQSESED_OBJECTS),$@,, $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsecmn.lib $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsesed.lib import32.lib cw32mt.lib,,
 |
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsehttpd.exe: $(EXEQSEHTTPD_OBJECTS) $(__libqsecmn___depname) $(__libqsenet___depname)
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsehttpd.exe: $(EXEQSEHTTPD_OBJECTS) $(__libqsecmn___depname) $(__libqsehttp___depname) $(__libqsexli___depname)
 	ilink32 -Tpe -q  -L$(BCCDIR)\lib -L$(BCCDIR)\lib\psdk $(__DEBUG_INFO)  -ap $(LDFLAGS) @&&|
-	c0x32.obj $(EXEQSEHTTPD_OBJECTS),$@,, $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsecmn.lib $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsenet.lib ws2_32.lib  import32.lib cw32mt.lib,,
+	c0x32.obj $(EXEQSEHTTPD_OBJECTS),$@,, $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsecmn.lib $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsehttp.lib $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\qsexli.lib ws2_32.lib  import32.lib cw32mt.lib,,
 |
 
 !if "$(SHARED)" == "on"
@@ -1504,83 +1556,113 @@ $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsesed_err.obj: ..\..\l
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsesed_std.obj: ..\..\lib\sed\std.c
 	$(CC) -q -c -P- -o$@ $(LIBQSESED_CFLAGS) ..\..\lib\sed\std.c
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_http.obj: ..\..\lib\net\http.c
-	$(CC) -q -c -P- -o$@ $(DLLQSENET_CFLAGS) ..\..\lib\net\http.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsehttp_http.obj: ..\..\lib\http\http.c
+	$(CC) -q -c -P- -o$@ $(DLLQSEHTTP_CFLAGS) ..\..\lib\http\http.c
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_htre.obj: ..\..\lib\net\htre.c
-	$(CC) -q -c -P- -o$@ $(DLLQSENET_CFLAGS) ..\..\lib\net\htre.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsehttp_htre.obj: ..\..\lib\http\htre.c
+	$(CC) -q -c -P- -o$@ $(DLLQSEHTTP_CFLAGS) ..\..\lib\http\htre.c
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_htrd.obj: ..\..\lib\net\htrd.c
-	$(CC) -q -c -P- -o$@ $(DLLQSENET_CFLAGS) ..\..\lib\net\htrd.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsehttp_htrd.obj: ..\..\lib\http\htrd.c
+	$(CC) -q -c -P- -o$@ $(DLLQSEHTTP_CFLAGS) ..\..\lib\http\htrd.c
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_httpd.obj: ..\..\lib\net\httpd.c
-	$(CC) -q -c -P- -o$@ $(DLLQSENET_CFLAGS) ..\..\lib\net\httpd.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsehttp_httpd.obj: ..\..\lib\http\httpd.c
+	$(CC) -q -c -P- -o$@ $(DLLQSEHTTP_CFLAGS) ..\..\lib\http\httpd.c
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_httpd_cgi.obj: ..\..\lib\net\httpd-cgi.c
-	$(CC) -q -c -P- -o$@ $(DLLQSENET_CFLAGS) ..\..\lib\net\httpd-cgi.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsehttp_httpd_cgi.obj: ..\..\lib\http\httpd-cgi.c
+	$(CC) -q -c -P- -o$@ $(DLLQSEHTTP_CFLAGS) ..\..\lib\http\httpd-cgi.c
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_httpd_dir.obj: ..\..\lib\net\httpd-dir.c
-	$(CC) -q -c -P- -o$@ $(DLLQSENET_CFLAGS) ..\..\lib\net\httpd-dir.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsehttp_httpd_dir.obj: ..\..\lib\http\httpd-dir.c
+	$(CC) -q -c -P- -o$@ $(DLLQSEHTTP_CFLAGS) ..\..\lib\http\httpd-dir.c
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_httpd_file.obj: ..\..\lib\net\httpd-file.c
-	$(CC) -q -c -P- -o$@ $(DLLQSENET_CFLAGS) ..\..\lib\net\httpd-file.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsehttp_httpd_file.obj: ..\..\lib\http\httpd-file.c
+	$(CC) -q -c -P- -o$@ $(DLLQSEHTTP_CFLAGS) ..\..\lib\http\httpd-file.c
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_httpd_proxy.obj: ..\..\lib\net\httpd-proxy.c
-	$(CC) -q -c -P- -o$@ $(DLLQSENET_CFLAGS) ..\..\lib\net\httpd-proxy.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsehttp_httpd_proxy.obj: ..\..\lib\http\httpd-proxy.c
+	$(CC) -q -c -P- -o$@ $(DLLQSEHTTP_CFLAGS) ..\..\lib\http\httpd-proxy.c
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_httpd_resol.obj: ..\..\lib\net\httpd-resol.c
-	$(CC) -q -c -P- -o$@ $(DLLQSENET_CFLAGS) ..\..\lib\net\httpd-resol.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsehttp_httpd_resol.obj: ..\..\lib\http\httpd-resol.c
+	$(CC) -q -c -P- -o$@ $(DLLQSEHTTP_CFLAGS) ..\..\lib\http\httpd-resol.c
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_httpd_std.obj: ..\..\lib\net\httpd-std.c
-	$(CC) -q -c -P- -o$@ $(DLLQSENET_CFLAGS) ..\..\lib\net\httpd-std.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsehttp_httpd_std.obj: ..\..\lib\http\httpd-std.c
+	$(CC) -q -c -P- -o$@ $(DLLQSEHTTP_CFLAGS) ..\..\lib\http\httpd-std.c
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_httpd_task.obj: ..\..\lib\net\httpd-task.c
-	$(CC) -q -c -P- -o$@ $(DLLQSENET_CFLAGS) ..\..\lib\net\httpd-task.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsehttp_httpd_task.obj: ..\..\lib\http\httpd-task.c
+	$(CC) -q -c -P- -o$@ $(DLLQSEHTTP_CFLAGS) ..\..\lib\http\httpd-task.c
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_httpd_text.obj: ..\..\lib\net\httpd-text.c
-	$(CC) -q -c -P- -o$@ $(DLLQSENET_CFLAGS) ..\..\lib\net\httpd-text.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsehttp_httpd_text.obj: ..\..\lib\http\httpd-text.c
+	$(CC) -q -c -P- -o$@ $(DLLQSEHTTP_CFLAGS) ..\..\lib\http\httpd-text.c
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsenet_upxd.obj: ..\..\lib\net\upxd.c
-	$(CC) -q -c -P- -o$@ $(DLLQSENET_CFLAGS) ..\..\lib\net\upxd.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsehttp_upxd.obj: ..\..\lib\http\upxd.c
+	$(CC) -q -c -P- -o$@ $(DLLQSEHTTP_CFLAGS) ..\..\lib\http\upxd.c
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_http.obj: ..\..\lib\net\http.c
-	$(CC) -q -c -P- -o$@ $(LIBQSENET_CFLAGS) ..\..\lib\net\http.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsehttp_http.obj: ..\..\lib\http\http.c
+	$(CC) -q -c -P- -o$@ $(LIBQSEHTTP_CFLAGS) ..\..\lib\http\http.c
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_htre.obj: ..\..\lib\net\htre.c
-	$(CC) -q -c -P- -o$@ $(LIBQSENET_CFLAGS) ..\..\lib\net\htre.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsehttp_htre.obj: ..\..\lib\http\htre.c
+	$(CC) -q -c -P- -o$@ $(LIBQSEHTTP_CFLAGS) ..\..\lib\http\htre.c
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_htrd.obj: ..\..\lib\net\htrd.c
-	$(CC) -q -c -P- -o$@ $(LIBQSENET_CFLAGS) ..\..\lib\net\htrd.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsehttp_htrd.obj: ..\..\lib\http\htrd.c
+	$(CC) -q -c -P- -o$@ $(LIBQSEHTTP_CFLAGS) ..\..\lib\http\htrd.c
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_httpd.obj: ..\..\lib\net\httpd.c
-	$(CC) -q -c -P- -o$@ $(LIBQSENET_CFLAGS) ..\..\lib\net\httpd.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsehttp_httpd.obj: ..\..\lib\http\httpd.c
+	$(CC) -q -c -P- -o$@ $(LIBQSEHTTP_CFLAGS) ..\..\lib\http\httpd.c
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_httpd_cgi.obj: ..\..\lib\net\httpd-cgi.c
-	$(CC) -q -c -P- -o$@ $(LIBQSENET_CFLAGS) ..\..\lib\net\httpd-cgi.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsehttp_httpd_cgi.obj: ..\..\lib\http\httpd-cgi.c
+	$(CC) -q -c -P- -o$@ $(LIBQSEHTTP_CFLAGS) ..\..\lib\http\httpd-cgi.c
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_httpd_dir.obj: ..\..\lib\net\httpd-dir.c
-	$(CC) -q -c -P- -o$@ $(LIBQSENET_CFLAGS) ..\..\lib\net\httpd-dir.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsehttp_httpd_dir.obj: ..\..\lib\http\httpd-dir.c
+	$(CC) -q -c -P- -o$@ $(LIBQSEHTTP_CFLAGS) ..\..\lib\http\httpd-dir.c
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_httpd_file.obj: ..\..\lib\net\httpd-file.c
-	$(CC) -q -c -P- -o$@ $(LIBQSENET_CFLAGS) ..\..\lib\net\httpd-file.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsehttp_httpd_file.obj: ..\..\lib\http\httpd-file.c
+	$(CC) -q -c -P- -o$@ $(LIBQSEHTTP_CFLAGS) ..\..\lib\http\httpd-file.c
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_httpd_proxy.obj: ..\..\lib\net\httpd-proxy.c
-	$(CC) -q -c -P- -o$@ $(LIBQSENET_CFLAGS) ..\..\lib\net\httpd-proxy.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsehttp_httpd_proxy.obj: ..\..\lib\http\httpd-proxy.c
+	$(CC) -q -c -P- -o$@ $(LIBQSEHTTP_CFLAGS) ..\..\lib\http\httpd-proxy.c
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_httpd_resol.obj: ..\..\lib\net\httpd-resol.c
-	$(CC) -q -c -P- -o$@ $(LIBQSENET_CFLAGS) ..\..\lib\net\httpd-resol.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsehttp_httpd_resol.obj: ..\..\lib\http\httpd-resol.c
+	$(CC) -q -c -P- -o$@ $(LIBQSEHTTP_CFLAGS) ..\..\lib\http\httpd-resol.c
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_httpd_std.obj: ..\..\lib\net\httpd-std.c
-	$(CC) -q -c -P- -o$@ $(LIBQSENET_CFLAGS) ..\..\lib\net\httpd-std.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsehttp_httpd_std.obj: ..\..\lib\http\httpd-std.c
+	$(CC) -q -c -P- -o$@ $(LIBQSEHTTP_CFLAGS) ..\..\lib\http\httpd-std.c
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_httpd_task.obj: ..\..\lib\net\httpd-task.c
-	$(CC) -q -c -P- -o$@ $(LIBQSENET_CFLAGS) ..\..\lib\net\httpd-task.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsehttp_httpd_task.obj: ..\..\lib\http\httpd-task.c
+	$(CC) -q -c -P- -o$@ $(LIBQSEHTTP_CFLAGS) ..\..\lib\http\httpd-task.c
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_httpd_text.obj: ..\..\lib\net\httpd-text.c
-	$(CC) -q -c -P- -o$@ $(LIBQSENET_CFLAGS) ..\..\lib\net\httpd-text.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsehttp_httpd_text.obj: ..\..\lib\http\httpd-text.c
+	$(CC) -q -c -P- -o$@ $(LIBQSEHTTP_CFLAGS) ..\..\lib\http\httpd-text.c
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsenet_upxd.obj: ..\..\lib\net\upxd.c
-	$(CC) -q -c -P- -o$@ $(LIBQSENET_CFLAGS) ..\..\lib\net\upxd.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsehttp_upxd.obj: ..\..\lib\http\upxd.c
+	$(CC) -q -c -P- -o$@ $(LIBQSEHTTP_CFLAGS) ..\..\lib\http\upxd.c
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsexli_xli.obj: ..\..\lib\xli\xli.c
+	$(CC) -q -c -P- -o$@ $(DLLQSEXLI_CFLAGS) ..\..\lib\xli\xli.c
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsexli_err.obj: ..\..\lib\xli\err.c
+	$(CC) -q -c -P- -o$@ $(DLLQSEXLI_CFLAGS) ..\..\lib\xli\err.c
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsexli_read.obj: ..\..\lib\xli\read.c
+	$(CC) -q -c -P- -o$@ $(DLLQSEXLI_CFLAGS) ..\..\lib\xli\read.c
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsexli_write.obj: ..\..\lib\xli\write.c
+	$(CC) -q -c -P- -o$@ $(DLLQSEXLI_CFLAGS) ..\..\lib\xli\write.c
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsexli_std.obj: ..\..\lib\xli\std.c
+	$(CC) -q -c -P- -o$@ $(DLLQSEXLI_CFLAGS) ..\..\lib\xli\std.c
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsexli_xli.obj: ..\..\lib\xli\xli.c
+	$(CC) -q -c -P- -o$@ $(LIBQSEXLI_CFLAGS) ..\..\lib\xli\xli.c
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsexli_err.obj: ..\..\lib\xli\err.c
+	$(CC) -q -c -P- -o$@ $(LIBQSEXLI_CFLAGS) ..\..\lib\xli\err.c
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsexli_read.obj: ..\..\lib\xli\read.c
+	$(CC) -q -c -P- -o$@ $(LIBQSEXLI_CFLAGS) ..\..\lib\xli\read.c
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsexli_write.obj: ..\..\lib\xli\write.c
+	$(CC) -q -c -P- -o$@ $(LIBQSEXLI_CFLAGS) ..\..\lib\xli\write.c
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\libqsexli_std.obj: ..\..\lib\xli\std.c
+	$(CC) -q -c -P- -o$@ $(LIBQSEXLI_CFLAGS) ..\..\lib\xli\std.c
 
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\exeqseawk_awk.obj: ..\..\cmd\awk\awk.c
 	$(CC) -q -c -P- -o$@ $(EXEQSEAWK_CFLAGS) ..\..\cmd\awk\awk.c
@@ -1588,8 +1670,8 @@ $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\exeqseawk_awk.obj: ..\..\c
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\exeqsesed_sed.obj: ..\..\cmd\sed\sed.c
 	$(CC) -q -c -P- -o$@ $(EXEQSESED_CFLAGS) ..\..\cmd\sed\sed.c
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\exeqsehttpd_httpd.obj: ..\..\cmd\net\httpd.c
-	$(CC) -q -c -P- -o$@ $(EXEQSEHTTPD_CFLAGS) ..\..\cmd\net\httpd.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\exeqsehttpd_httpd.obj: ..\..\cmd\http\httpd.c
+	$(CC) -q -c -P- -o$@ $(EXEQSEHTTPD_CFLAGS) ..\..\cmd\http\httpd.c
 
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)\dllqsecmnxx_Mmgr.obj: ..\..\lib\cmn\Mmgr.cpp
 	$(CXX) -q -c -P -o$@ $(DLLQSECMNXX_CXXFLAGS) ..\..\lib\cmn\Mmgr.cpp

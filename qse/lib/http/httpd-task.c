@@ -210,7 +210,9 @@ static qse_httpd_task_t* entask_status (
 	const qse_mchar_t* extrapst = QSE_MT("");
 	const qse_mchar_t* extraval = QSE_MT("");
 
-	qse_mchar_t text[1024] = QSE_MT(""); /* TODO: make this buffer dynamic or scalable */
+	qse_mchar_t text[1024]; /* TODO: make this buffer dynamic or scalable */
+
+	text[0] = QSE_MT('\0');
 	
 	msg = qse_httpstatustombs (code);
 	switch (code)
