@@ -106,12 +106,14 @@ enum qse_httpd_serverstd_query_code_t
 {
 	QSE_HTTPD_SERVERSTD_SSL,            /* qse_httpd_serverstd_ssl_t */
 
-	QSE_HTTPD_SERVERSTD_NAME,           /* const qse_mchar_t* */
 	QSE_HTTPD_SERVERSTD_ROOT,           /* qse_httpd_serverstd_root_t */
 	QSE_HTTPD_SERVERSTD_REALM,          /* qse_httpd_serverstd_realm_t */
 	QSE_HTTPD_SERVERSTD_AUTH,           /* qse_httpd_serverstd_auth_t */
-	QSE_HTTPD_SERVERSTD_DIRCSS,         /* const qse_mchar_t* */
-	QSE_HTTPD_SERVERSTD_ERRCSS,         /* const qse_mchar_t* */
+	QSE_HTTPD_SERVERSTD_ERRHEAD,        /* const qse_mchar_t* */
+	QSE_HTTPD_SERVERSTD_ERRFOOT,        /* const qse_mchar_t* */
+
+	QSE_HTTPD_SERVERSTD_DIRHEAD,        /* const qse_mchar_t* */
+	QSE_HTTPD_SERVERSTD_DIRFOOT,        /* const qse_mchar_t* */
 
 	QSE_HTTPD_SERVERSTD_INDEX,          /* qse_httpd_serverstd_index_t */
 	QSE_HTTPD_SERVERSTD_CGI,            /* qse_httpd_serverstd_cgi_t */

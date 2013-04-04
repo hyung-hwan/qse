@@ -115,7 +115,7 @@ static int test1 ()
 		qse_printf (QSE_T("cannot open a hash table\n"));
 		return -1;
 	}
-	qse_htb_setmancbs (s1, qse_gethtbmancbs(QSE_HTB_MANCBS_INLINE_COPIERS));
+	qse_htb_setstyle (s1, qse_gethtbstyle(QSE_HTB_STYLE_INLINE_COPIERS));
 
 	if (test1_build(s1) == -1) 
 	{
@@ -167,7 +167,7 @@ static int test2 ()
 		qse_printf (QSE_T("cannot open a hash table\n"));
 		return -1;
 	}
-	qse_htb_setmancbs (s1, qse_gethtbmancbs(QSE_HTB_MANCBS_INLINE_COPIERS));
+	qse_htb_setstyle (s1, qse_gethtbstyle(QSE_HTB_STYLE_INLINE_COPIERS));
 
 	for (i = 0; i < QSE_COUNTOF(keys); i++)
 	{
@@ -384,7 +384,7 @@ static int test5 ()
 		qse_printf (QSE_T("cannot open a hash table\n"));
 		return -1;
 	}
-	qse_htb_setmancbs (s1, qse_gethtbmancbs(QSE_HTB_MANCBS_INLINE_COPIERS));
+	qse_htb_setstyle (s1, qse_gethtbstyle(QSE_HTB_STYLE_INLINE_COPIERS));
 
 	for (i = 0; i < QSE_COUNTOF(vals); i++)
 	{

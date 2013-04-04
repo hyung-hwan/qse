@@ -22,6 +22,7 @@
 #include <qse/cmn/str.h>
 #include <qse/cmn/mbwc.h>
 #include <qse/cmn/path.h>
+#include <qse/cmn/lda.h>
 #include "mem.h"
 
 #if defined(_WIN32) 
@@ -37,6 +38,13 @@
 #	include "syscall.h"
 #endif
 
+
+#define STATUS_OPENED    (1 << 0)
+#define STATUS_DONE      (1 << 1)
+#define STATUS_DONE_ERR  (1 << 2)
+#define STATUS_POPHEAP   (1 << 3)
+#define STATUS_SORT_ERR  (1 << 4)
+
 struct qse_dir_t
 {
 	qse_mmgr_t* mmgr;
@@ -46,10 +54,12 @@ struct qse_dir_t
 	qse_str_t tbuf;
 	qse_mbs_t mbuf;
 
+	qse_lda_t* stab;
+	int status;
+
 #if defined(_WIN32)
 	HANDLE h;
 	WIN32_FIND_DATA wfd;	
-	int done;
 #elif defined(__OS2__)
 	HDIR h;
 	#if defined(FIL_STANDARDL) 
@@ -58,11 +68,8 @@ struct qse_dir_t
 	FILEFINDBUF3 ffb;	
 	#endif
 	ULONG count;
-	int opened;
 #elif defined(__DOS__)
 	struct find_t f;
-	int done;
-	int opened;
 #else
 	DIR* dp;
 #endif
@@ -71,7 +78,9 @@ struct qse_dir_t
 int qse_dir_init (qse_dir_t* dir, qse_mmgr_t* mmgr, const qse_char_t* path, int flags);
 void qse_dir_fini (qse_dir_t* dir);
 
+static void close_dir_safely (qse_dir_t* dir);
 static int reset_to_path (qse_dir_t* dir, const qse_char_t* path);
+static int read_ahead_and_sort (qse_dir_t* dir, const qse_char_t* path);
 
 #include "syserr.h"
 IMPLEMENT_SYSERR_TO_ERRNUM (dir, DIR)
@@ -122,6 +131,13 @@ qse_dir_errnum_t qse_dir_geterrnum (qse_dir_t* dir)
 	return dir->errnum;
 }
 
+static int compare_dirent (qse_lda_t* lda, const void* dptr1, size_t dlen1, const void* dptr2, size_t dlen2)
+{
+	int n = QSE_MEMCMP (dptr1, dptr2, ((dlen1 < dlen2)? dlen1: dlen2));
+	if (n == 0 && dlen1 != dlen2) n = (dlen1 > dlen2)? 1: -1;
+	return -n;
+}
+
 int qse_dir_init (qse_dir_t* dir, qse_mmgr_t* mmgr, const qse_char_t* path, int flags)
 {
 	int n;
@@ -131,25 +147,39 @@ int qse_dir_init (qse_dir_t* dir, qse_mmgr_t* mmgr, const qse_char_t* path, int 
 	dir->mmgr = mmgr;
 	dir->flags = flags;
 
-	if (qse_str_init (&dir->tbuf, mmgr, 256) <= -1) return -1;
-	if (qse_mbs_init (&dir->mbuf, mmgr, 256) <= -1) 
-	{
-		qse_str_fini (&dir->tbuf);
-		return -1;
-	}
+	if (qse_str_init (&dir->tbuf, mmgr, 256) <= -1) goto oops_0;
+	if (qse_mbs_init (&dir->mbuf, mmgr, 256) <= -1) goto oops_1;
 
 #if defined(_WIN32)
 	dir->h = INVALID_HANDLE_VALUE;
 #endif
 
 	n = reset_to_path  (dir, path);
-	if (n <= -1)
+	if (n <= -1) goto oops_2;
+
+	if (dir->flags & QSE_DIR_SORT)
 	{
-		qse_mbs_fini (&dir->mbuf);
-		qse_str_fini (&dir->tbuf);
+		dir->stab = qse_lda_open (dir->mmgr, 0, 128);
+		if (dir->stab == QSE_NULL) goto oops_3;
+
+		/*qse_lda_setscale (dir->stab, 1);*/
+		qse_lda_setcopier (dir->stab, QSE_LDA_COPIER_INLINE);
+		qse_lda_setcomper (dir->stab, compare_dirent);
+		if (read_ahead_and_sort (dir, path) <= -1) goto oops_4;
 	}
 
 	return n;
+
+oops_4:
+	qse_lda_close (dir->stab);
+oops_3:
+	close_dir_safely (dir);
+oops_2:
+	qse_mbs_fini (&dir->mbuf);
+oops_1:
+	qse_str_fini (&dir->tbuf);
+oops_0:
+	return -1;
 }
 
 static void close_dir_safely (qse_dir_t* dir)
@@ -161,16 +191,16 @@ static void close_dir_safely (qse_dir_t* dir)
 		dir->h = INVALID_HANDLE_VALUE;
 	}
 #elif defined(__OS2__)
-	if (dir->opened)
+	if (dir->status & STATUS_OPENED)
 	{
 		DosFindClose (dir->h);
-		dir->opened = 0;
+		dir->status &= ~STATUS_OPENED;
 	}
 #elif defined(__DOS__)
-	if (dir->opened)
+	if (dir->status & STATUS_OPENED)
 	{
 		_dos_findclose (&dir->f);
-		dir->opened = 0;
+		dir->status &= ~STATUS_OPENED;
 	}
 #else
 	if (dir->dp)
@@ -187,6 +217,8 @@ void qse_dir_fini (qse_dir_t* dir)
 
 	qse_mbs_fini (&dir->mbuf);
 	qse_str_fini (&dir->tbuf);
+
+	if (dir->stab) qse_lda_close (dir->stab);
 }
 
 static qse_mchar_t* wcs_to_mbuf (qse_dir_t* dir, const qse_wchar_t* wcs, qse_mbs_t* mbs)
@@ -316,7 +348,8 @@ static int reset_to_path (qse_dir_t* dir, const qse_char_t* path)
 	/* ------------------------------------------------------------------- */
 	qse_char_t* tptr;
 
-	dir->done = 0;
+	dir->status &= ~STATUS_DONE;
+	dir->status &= ~STATUS_DONE_ERR;
 
 	#if defined(QSE_CHAR_IS_MCHAR)
 	tptr = make_dos_path (dir, path);
@@ -390,7 +423,7 @@ static int reset_to_path (qse_dir_t* dir, const qse_char_t* path)
 		return -1;
 	}
 
-	dir->opened = 1;
+	dir->status |= STATUS_OPENED;
 	return 0;
 	/* ------------------------------------------------------------------- */
 
@@ -400,7 +433,8 @@ static int reset_to_path (qse_dir_t* dir, const qse_char_t* path)
 	unsigned int rc;
 	qse_mchar_t* mptr;
 
-	dir->done = 0;
+	dir->status &= ~STATUS_DONE;
+	dir->status &= ~STATUS_DONE_ERR;
 
 	#if defined(QSE_CHAR_IS_MCHAR)
 	mptr = make_dos_path (dir, path);
@@ -425,7 +459,7 @@ static int reset_to_path (qse_dir_t* dir, const qse_char_t* path)
 		return -1;
 	}
 
-	dir->opened = 1;
+	dir->status |= STATUS_OPENED;
 	return 0;
 	/* ------------------------------------------------------------------- */
 
@@ -471,7 +505,23 @@ static int reset_to_path (qse_dir_t* dir, const qse_char_t* path)
 int qse_dir_reset (qse_dir_t* dir, const qse_char_t* path)
 {
 	close_dir_safely (dir);
-	return reset_to_path (dir, path);
+	if (reset_to_path (dir, path) <= -1) return -1;
+
+	if (dir->flags & QSE_DIR_SORT)
+	{
+		qse_lda_clear (dir->stab);
+		if (read_ahead_and_sort (dir, path) <= -1) 
+		{
+			dir->status |= STATUS_SORT_ERR;
+			return -1;
+		}
+		else
+		{
+			dir->status &= ~STATUS_SORT_ERR;
+		}
+	}
+
+	return 0;
 }
 
 static int read_dir_to_tbuf (qse_dir_t* dir, void** name)
@@ -479,7 +529,7 @@ static int read_dir_to_tbuf (qse_dir_t* dir, void** name)
 #if defined(_WIN32)
 
 	/* ------------------------------------------------------------------- */
-	if (dir->done) return (dir->done > 0)? 0: -1;
+	if (dir->status & STATUS_DONE) return (dir->status & STATUS_DONE_ERR)? -1: 0;
 
 	#if defined(QSE_CHAR_IS_MCHAR)
 	if (qse_str_cpy (&dir->tbuf, dir->wfd.cFileName) == (qse_size_t)-1) 
@@ -508,11 +558,12 @@ static int read_dir_to_tbuf (qse_dir_t* dir, void** name)
 	if (FindNextFile (dir->h, &dir->wfd) == FALSE) 
 	{
 		DWORD x = GetLastError();
-		if (x == ERROR_NO_MORE_FILES) dir->done = 1;
+		if (x == ERROR_NO_MORE_FILES) dir->status |= STATUS_DONE;
 		else
 		{
 			dir->errnum = syserr_to_errnum (x);
-			dir->done = -1;
+			dir->status |= STATUS_DONE;
+			dir->status |= STATUS_DONE_ERR;
 		}
 	}
 
@@ -565,7 +616,7 @@ static int read_dir_to_tbuf (qse_dir_t* dir, void** name)
 
 	/* ------------------------------------------------------------------- */
 
-	if (dir->done) return (dir->done > 0)? 0: -1;
+	if (dir->status & STATUS_DONE) return (dir->status & STATUS_DONE_ERR)? -1: 0;
 
 	#if defined(QSE_CHAR_IS_MCHAR)
 	if (qse_str_cpy (&dir->tbuf, dir->f.name) == (qse_size_t)-1) 
@@ -593,11 +644,12 @@ static int read_dir_to_tbuf (qse_dir_t* dir, void** name)
 
 	if (_dos_findnext (&dir->f) != 0)
 	{
-		if (errno == ENOENT) dir->done = 1;
+		if (errno == ENOENT) dir->status |= STATUS_DONE;
 		else
 		{
 			dir->errnum = syserr_to_errnum (errno);
-			dir->done = -1;
+			dir->status |= STATUS_DONE;
+			dir->status |= STATUS_DONE_ERR;
 		}
 	}
 
@@ -643,28 +695,74 @@ static int read_dir_to_tbuf (qse_dir_t* dir, void** name)
 	}
 	#endif	
 
-	return 1;
 	/* ------------------------------------------------------------------- */
 
 #endif
 }
 
-int qse_dir_read (qse_dir_t* dir, qse_dir_ent_t* ent)
+static int read_ahead_and_sort (qse_dir_t* dir, const qse_char_t* path)
 {
 	int x;
 	void* name;
 
-	x = read_dir_to_tbuf (dir, &name);
-	if (x >= 1)
+	while (1)
 	{
-		QSE_MEMSET (ent, 0, QSE_SIZEOF(ent));
-		ent->name = name;
-
-		if (dir->flags & QSE_DIR_STAT)
+		x = read_dir_to_tbuf (dir, &name);
+		if (x >= 1)
 		{
-			/* TODO: more information */
+			qse_size_t size;
+
+#if defined(QSE_CHAR_IS_MCHAR)
+			size = (qse_mbslen(name) + 1) * QSE_SIZEOF(qse_mchar_t);
+#else
+			if (dir->flags & QSE_DIR_MBSPATH)
+				size = (qse_mbslen(name) + 1) * QSE_SIZEOF(qse_mchar_t);
+			else
+				size = (qse_wcslen(name) + 1) * QSE_SIZEOF(qse_wchar_t);
+		
+#endif
+
+			if (qse_lda_pushheap (dir->stab, name, size) == (qse_size_t)-1)
+			{
+				dir->errnum = QSE_DIR_ENOMEM;
+				return -1;
+			}
 		}
+		else if (x == 0) break;
+		else return -1;
 	}
 
-	return x;
+	dir->status &= ~STATUS_POPHEAP;
+	return 0;
+}
+
+
+int qse_dir_read (qse_dir_t* dir, qse_dir_ent_t* ent)
+{
+	if (dir->flags & QSE_DIR_SORT)
+	{
+		if (dir->status & STATUS_SORT_ERR) return -1;
+
+		if (dir->status & STATUS_POPHEAP) qse_lda_popheap (dir->stab);
+		else dir->status |= STATUS_POPHEAP;
+
+		if (QSE_LDA_SIZE(dir->stab) <= 0) return 0; /* no more entry */
+
+		ent->name = QSE_LDA_DPTR(dir->stab, 0);
+		return 1;
+	}
+	else
+	{
+		int x;
+		void* name;
+
+		x = read_dir_to_tbuf (dir, &name);
+		if (x >= 1)
+		{
+			QSE_MEMSET (ent, 0, QSE_SIZEOF(ent));
+			ent->name = name;
+		}
+
+		return x;
+	}
 }

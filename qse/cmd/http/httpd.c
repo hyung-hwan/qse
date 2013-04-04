@@ -61,12 +61,13 @@ enum
 
 enum
 {
-	XCFG_NAME,
 	XCFG_ROOT,
 	XCFG_REALM,
 	XCFG_AUTH,
-	XCFG_DIRCSS,
-	XCFG_ERRCSS,
+	XCFG_DIRHEAD,
+	XCFG_DIRFOOT,
+	XCFG_ERRHEAD,
+	XCFG_ERRFOOT,
 	XCFG_MAX
 };
 
@@ -463,10 +464,6 @@ static int query_server (
 	switch (code)
 	{
 
-		case QSE_HTTPD_SERVERSTD_NAME:
-			*(const qse_mchar_t**)result = loccfg->xcfg[XCFG_NAME];
-			return 0;
-
 		case QSE_HTTPD_SERVERSTD_ROOT:
 			#if 0
 			if (qse_mbscmp (qse_htre_getqpath(req), QSE_MT("/version")) == 0)
@@ -514,12 +511,20 @@ static int query_server (
 			return 0;
 		}
 
-		case QSE_HTTPD_SERVERSTD_DIRCSS:
-			*(const qse_mchar_t**)result = loccfg->xcfg[XCFG_DIRCSS];
+		case QSE_HTTPD_SERVERSTD_DIRHEAD:
+			*(const qse_mchar_t**)result = loccfg->xcfg[XCFG_DIRHEAD];
 			return 0;
 
-		case QSE_HTTPD_SERVERSTD_ERRCSS:
-			*(const qse_mchar_t**)result = loccfg->xcfg[XCFG_ERRCSS];
+		case QSE_HTTPD_SERVERSTD_DIRFOOT:
+			*(const qse_mchar_t**)result = loccfg->xcfg[XCFG_DIRFOOT];
+			return 0;
+
+		case QSE_HTTPD_SERVERSTD_ERRHEAD:
+			*(const qse_mchar_t**)result = loccfg->xcfg[XCFG_ERRHEAD];
+			return 0;
+
+		case QSE_HTTPD_SERVERSTD_ERRFOOT:
+			*(const qse_mchar_t**)result = loccfg->xcfg[XCFG_ERRFOOT];
 			return 0;
 
 		case QSE_HTTPD_SERVERSTD_INDEX:
@@ -643,8 +648,8 @@ static struct
 	const qse_char_t* y;
 } scfg_items[] =
 {
-	{ QSE_T("ssl-cert-file"),  QSE_T("default.ssl-cert-file") },
-	{ QSE_T("ssl-key-file"),   QSE_T("default.ssl-key-file") }
+	{ QSE_T("ssl-cert-file"),  QSE_T("server-default.ssl-cert-file") },
+	{ QSE_T("ssl-key-file"),   QSE_T("server-default.ssl-key-file") }
 };
 
 static struct 
@@ -653,12 +658,13 @@ static struct
 	const qse_char_t* y;
 } loc_xcfg_items[] =
 {
-	{ QSE_T("name"),      QSE_T("default.name") },
-	{ QSE_T("root"),      QSE_T("default.root") },
-	{ QSE_T("realm"),     QSE_T("default.realm") },
-	{ QSE_T("auth"),      QSE_T("default.auth") },
-	{ QSE_T("dir-css"),   QSE_T("default.dir-css") },
-	{ QSE_T("error-css"), QSE_T("default.error-css") }
+	{ QSE_T("root"),        QSE_T("server-default.root") },
+	{ QSE_T("realm"),       QSE_T("server-default.realm") },
+	{ QSE_T("auth"),        QSE_T("server-default.auth") },
+	{ QSE_T("dir-head"),    QSE_T("server-default.dir-head") },
+	{ QSE_T("dir-foot"),    QSE_T("server-default.dir-foot") },
+	{ QSE_T("error-head"),  QSE_T("server-default.error-head") },
+	{ QSE_T("error-foot"),  QSE_T("server-default.error-foot") },
 };
 
 static struct 
@@ -667,8 +673,8 @@ static struct
 	const qse_char_t* y;
 } loc_acc_items[] =
 {
-	{ QSE_T("dir-access"), QSE_T("default.dir-access") },
-	{ QSE_T("file-access"), QSE_T("default.file-access") }
+	{ QSE_T("dir-access"), QSE_T("server-default.dir-access") },
+	{ QSE_T("file-access"), QSE_T("server-default.file-access") }
 };
 
 static void free_loccfg_contents (qse_httpd_t* httpd, loccfg_t* loccfg)
@@ -1299,6 +1305,15 @@ static int load_config (qse_httpd_t* httpd)
 
 	if (open_config_file (httpd) <= -1) goto oops;
 
+	pair = qse_xli_findpairbyname (httpd_xtn->xli, QSE_NULL, QSE_T("name"));
+	if (pair && pair->val->type == QSE_XLI_STR)
+	{
+		qse_mchar_t* tmp;
+		tmp = qse_httpd_strtombsdup (httpd, ((qse_xli_str_t*)pair->val)->ptr);
+		if (tmp) qse_httpd_setname (httpd, tmp);
+		qse_httpd_freemem (httpd, tmp);
+	}
+
 	for (i = 0; ; i++)
 	{
 		qse_char_t buf[32];
@@ -1342,9 +1357,6 @@ static int load_config (qse_httpd_t* httpd)
 			goto oops;
 		}
 	}
-
-	if (httpd_xtn->dflcfg.xcfg[XCFG_NAME]) 
-		qse_httpd_setname (httpd, httpd_xtn->dflcfg.xcfg[XCFG_NAME]);
 
 	close_config_file (httpd);
 	return 0;
