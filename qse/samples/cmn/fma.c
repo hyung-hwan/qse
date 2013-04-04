@@ -9,7 +9,7 @@
 		if (f() == -1) return -1; \
 	} while (0)
 
-static qse_rbt_mancbs_t mancbs =
+static qse_rbt_style_t style =
 {
 	{
 		QSE_RBT_COPIER_INLINE,
@@ -117,7 +117,7 @@ static int test2 ()
 		qse_fma_close (fma);
 		return -1;
 	}
-	qse_rbt_setmancbs (&rbt, &mancbs);
+	qse_rbt_setstyle (&rbt, &style);
 
 	for (x = 10; x < 100; x++)
 	{

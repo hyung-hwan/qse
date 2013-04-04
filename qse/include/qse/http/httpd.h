@@ -259,15 +259,6 @@ typedef int (*qse_httpd_fmterr_t) (
 	int                 bufsz
 );
 
-typedef int (*qse_httpd_fmtdir_t) (
-	qse_httpd_t*              httpd,
-	qse_httpd_client_t*       client, 
-	const qse_mchar_t*        qpath,
-	const qse_httpd_dirent_t* dirent,
-	qse_mchar_t*              buf,
-	int                       bufsz
-);
-
 typedef void (*qse_httpd_impede_t) (
 	qse_httpd_t* httpd
 );
@@ -305,7 +296,6 @@ struct qse_httpd_rcb_t
 	qse_httpd_peekreq_t peekreq;
 	qse_httpd_pokereq_t pokereq;
 	qse_httpd_fmterr_t fmterr;
-	qse_httpd_fmtdir_t fmtdir;
 	qse_httpd_impede_t impede;
 	qse_httpd_logact_t logact;
 };
@@ -492,6 +482,14 @@ struct qse_httpd_rsrc_cgi_t
 	int nph;
 };
 
+typedef struct qse_httpd_rsrc_dir_t qse_httpd_rsrc_dir_t;
+struct qse_httpd_rsrc_dir_t
+{
+	const qse_mchar_t* path;
+	const qse_mchar_t* head;
+	const qse_mchar_t* foot;
+};
+
 typedef struct qse_httpd_rsrc_t qse_httpd_rsrc_t;
 struct qse_httpd_rsrc_t
 {
@@ -505,11 +503,7 @@ struct qse_httpd_rsrc_t
 		} auth;
 
 		qse_httpd_rsrc_cgi_t cgi;
-
-		struct
-		{
-			const qse_mchar_t* path;
-		} dir;
+		qse_httpd_rsrc_dir_t dir;
 
 		struct
 		{
@@ -827,7 +821,7 @@ QSE_EXPORT qse_httpd_task_t* qse_httpd_entaskdir (
 	qse_httpd_t*              httpd,
 	qse_httpd_client_t*       client,
 	qse_httpd_task_t*         pred,
-	const qse_mchar_t*        name,
+	qse_httpd_rsrc_dir_t*     dir,
 	qse_htre_t*               req
 );
 

@@ -2110,139 +2110,23 @@ static int format_error (
 {
 	int n;
 	server_xtn_t* server_xtn;
-	const qse_mchar_t* css, * msg, * name;
+	const qse_mchar_t* head, * foot, * msg;
 
 	server_xtn = qse_httpd_getserverxtn (httpd, client->server);
 
-	if (server_xtn->query (httpd, client->server, QSE_NULL, QSE_NULL, QSE_HTTPD_SERVERSTD_ERRCSS, &css) <= -1) css = QSE_NULL;
-	if (css == QSE_NULL) css = QSE_MT("");
+	if (server_xtn->query (httpd, client->server, QSE_NULL, QSE_NULL, QSE_HTTPD_SERVERSTD_ERRHEAD, &head) <= -1) head = QSE_NULL;
+	if (head == QSE_NULL) head = QSE_MT("");
 
-	if (server_xtn->query (httpd, client->server, QSE_NULL, QSE_NULL, QSE_HTTPD_SERVERSTD_NAME, &name) <= -1) name = QSE_NULL;
-	if (name == QSE_NULL) name = qse_httpd_getname(httpd);
+	if (server_xtn->query (httpd, client->server, QSE_NULL, QSE_NULL, QSE_HTTPD_SERVERSTD_ERRFOOT, &foot) <= -1) foot = QSE_NULL;
+	if (foot == QSE_NULL) foot = qse_httpd_getname(httpd);
 
 	msg = qse_httpstatustombs(code);
 
 /* TODO: use my own version of snprintf replacement */
 	n = snprintf (buf, bufsz,
 		QSE_MT("<html><head>%s<title>%s</title></head><body><div class='header'>HTTP ERROR</div><div class='body'>%d %s</div><div class='footer'>%s</div></body></html>"), 
-		css, msg, code, msg, name);
+		head, msg, code, msg, foot);
 	if (n < 0 || n >= bufsz) 
-	{
-		httpd->errnum = QSE_HTTPD_ENOBUF;
-		return -1;
-	}
-
-	return n;
-}
-
-static int format_dir (
-	qse_httpd_t* httpd, qse_httpd_client_t* client, 
-	const qse_mchar_t* qpath, const qse_httpd_dirent_t* dirent,
-	qse_mchar_t* buf, int bufsz)
-{
-/* TODO: page encoding?? utf-8??? or derive name from cmgr or current locale??? */
-/* TODO: html escaping of ctx->qpath.ptr */
-	int n;
-	server_xtn_t* server_xtn;
-
-	server_xtn = qse_httpd_getserverxtn (httpd, client->server);
-
-	if (dirent == QSE_NULL)
-	{
-		if (qpath)
-		{
-			/* header */
-			const qse_mchar_t* css;
-			int is_root;
-			qse_mchar_t* qpath_esc;
-
-			is_root = (qse_mbscmp (qpath, QSE_MT("/")) == 0);
-
-			if (server_xtn->query (httpd, client->server, QSE_NULL, QSE_NULL, QSE_HTTPD_SERVERSTD_DIRCSS, &css) <= -1) css = QSE_NULL;
-			if (css == QSE_NULL) css = QSE_MT("");
-
-			qpath_esc = qse_httpd_escapehtml (httpd, qpath);
-			if (qpath_esc == QSE_NULL) return -1;
-
-			n = snprintf (buf, bufsz,
-				QSE_MT("<html><head>%s</head><body><div class='header'>%s</div><div class='body'><table>%s"), css, qpath_esc,
-				(is_root? QSE_MT(""): QSE_MT("<tr><td class='name'><a href='../'>..</a></td><td class='time'></td><td class='size'></td></tr>"))
-			);
-
-			if (qpath_esc != qpath) qse_httpd_freemem (httpd, qpath_esc);
-		}
-		else
-		{
-			/* footer */
-			const qse_mchar_t* name;
-
-			if (server_xtn->query (httpd, client->server, QSE_NULL, QSE_NULL, QSE_HTTPD_SERVERSTD_NAME, &name) <= -1) name = QSE_NULL;
-			if (name == QSE_NULL) name = qse_httpd_getname(httpd);
-
-			n = snprintf (buf, bufsz, QSE_MT("</table></div><div class='footer'>%s</div></body></html>"), name);
-		}
-	}
-	else
-	{
-		/* main entry */
-		qse_mchar_t* encname;
-		qse_mchar_t* escname;
-		qse_btime_t bt;
-		qse_mchar_t tmbuf[32];
-		qse_mchar_t fszbuf[64];
-
-		/* TODO: better buffer management in case there are 
-		 *       a lot of file names to escape. */
-
-		/* perform percent-encoding for the anchor */
-		encname = qse_perenchttpstrdup (dirent->name, httpd->mmgr);
-		if (encname == QSE_NULL)
-		{
-			httpd->errnum = QSE_HTTPD_ENOMEM;
-			return -1;
-		}
-
-		/* perform html escaping for the text */
-		escname = qse_httpd_escapehtml (httpd, dirent->name);
-		if (escname == QSE_NULL) 
-		{
-			if (encname != dirent->name) QSE_MMGR_FREE (httpd->mmgr, encname);
-			return -1;
-		}
-
-		qse_localtime (&dirent->stat.mtime, &bt);
-		snprintf (tmbuf, QSE_COUNTOF(tmbuf),
-			QSE_MT("%04d-%02d-%02d %02d:%02d:%02d"),
-         		bt.year + QSE_BTIME_YEAR_BASE, bt.mon + 1, bt.mday,
-			bt.hour, bt.min, bt.sec);
-
-		if (dirent->stat.isdir)
-		{
-			fszbuf[0] = QSE_MT('\0');
-		}
-		else
-		{
-			qse_fmtuintmaxtombs (
-				fszbuf, QSE_COUNTOF(fszbuf),
-				dirent->stat.size, 10, -1, QSE_MT('\0'), QSE_NULL
-			);
-		}
-
-		n = snprintf (
-			buf, bufsz,
-			QSE_MT("<tr><td class='name'><a href='%s%s'>%s%s</a></td><td class='time'>%s</td><td class='size'>%s</td></tr>"),
-			encname,
-			(dirent->stat.isdir? QSE_MT("/"): QSE_MT("")),
-			escname,
-			(dirent->stat.isdir? QSE_MT("/"): QSE_MT("")),
-			tmbuf, fszbuf
-		);
-
-		if (escname != dirent->name) qse_httpd_freemem (httpd, escname);
-		if (encname != dirent->name) QSE_MMGR_FREE (httpd->mmgr, encname);
-	}
-
-	if (n <= -1 || n >= bufsz)
 	{
 		httpd->errnum = QSE_HTTPD_ENOBUF;
 		return -1;
@@ -2321,7 +2205,6 @@ static qse_httpd_rcb_t httpd_request_callbacks =
 	QSE_STRUCT_FIELD(peekreq, peek_request),
 	QSE_STRUCT_FIELD(pokereq, poke_request),
 	QSE_STRUCT_FIELD(fmterr,  format_error),
-	QSE_STRUCT_FIELD(fmtdir,  format_dir),
 	QSE_STRUCT_FIELD(impede,  impede_httpd),
 	QSE_STRUCT_FIELD(logact,  logact_httpd)
 };
@@ -2788,6 +2671,8 @@ auth_ok:
 			{
 				target->type = QSE_HTTPD_RSRC_DIR;
 				target->u.dir.path = tmp.xpath;
+				if (server_xtn->query (httpd, client->server, req, tmp.xpath, QSE_HTTPD_SERVERSTD_DIRHEAD, &target->u.dir.head) <= -1) target->u.dir.head = QSE_NULL;
+				if (server_xtn->query (httpd, client->server, req, tmp.xpath, QSE_HTTPD_SERVERSTD_DIRFOOT, &target->u.dir.foot) <= -1) target->u.dir.foot = QSE_NULL;
 			}
 		}
 		else
@@ -2842,6 +2727,9 @@ auth_ok:
 			{
 				target->type = QSE_HTTPD_RSRC_DIR;
 				target->u.dir.path = tmp.xpath;
+
+				if (server_xtn->query (httpd, client->server, req, tmp.xpath, QSE_HTTPD_SERVERSTD_DIRHEAD, &target->u.dir.head) <= -1) target->u.dir.head = QSE_NULL;
+				if (server_xtn->query (httpd, client->server, req, tmp.xpath, QSE_HTTPD_SERVERSTD_DIRFOOT, &target->u.dir.foot) <= -1) target->u.dir.foot = QSE_NULL;
 			}
 			else
 			{
@@ -2909,10 +2797,6 @@ static int query_server (
 			qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOENT);
 			return -1;
 
-		case QSE_HTTPD_SERVERSTD_NAME:
-			*(const qse_mchar_t**)result = QSE_NULL;
-			break;
-
 		case QSE_HTTPD_SERVERSTD_ROOT:
 			((qse_httpd_serverstd_root_t*)result)->type = QSE_HTTPD_SERVERSTD_ROOT_PATH;
 			((qse_httpd_serverstd_root_t*)result)->u.path.val = QSE_NULL;
@@ -2928,9 +2812,14 @@ static int query_server (
 			((qse_httpd_serverstd_auth_t*)result)->authok = 1;
 			break;
 			
-		case QSE_HTTPD_SERVERSTD_ERRCSS:
-		case QSE_HTTPD_SERVERSTD_DIRCSS:
+		case QSE_HTTPD_SERVERSTD_ERRHEAD:
+		case QSE_HTTPD_SERVERSTD_DIRHEAD:
 			*(const qse_mchar_t**)result = QSE_NULL;
+			return 0;
+
+		case QSE_HTTPD_SERVERSTD_ERRFOOT:
+		case QSE_HTTPD_SERVERSTD_DIRFOOT:
+			*(const qse_mchar_t**)result = qse_httpd_getname(httpd);
 			return 0;
 
 		case QSE_HTTPD_SERVERSTD_INDEX:

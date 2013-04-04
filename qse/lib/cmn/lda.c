@@ -122,6 +122,7 @@ int qse_lda_init (lda_t* lda, mmgr_t* mmgr, size_t capa)
 	lda->size = 0;
 	lda->capa = 0;
 	lda->slot = QSE_NULL;
+	lda->scale = 1;
 
 	lda->copier = QSE_LDA_COPIER_SIMPLE;
 	lda->comper = default_comparator;

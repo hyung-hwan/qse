@@ -8,8 +8,9 @@ AM_CPPFLAGS = \
 
 bin_PROGRAMS = \
 	chr01 \
-	env01 \
+	dir01 \
 	dll \
+	env01 \
 	fio01 \
 	fio02 \
 	fma \

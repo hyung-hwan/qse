@@ -23,14 +23,19 @@
 #include <qse/cmn/str.h>
 #include <qse/cmn/fmt.h>
 
+#include <stdio.h> /* TODO: remove this */
+
 typedef struct task_dir_t task_dir_t;
 struct task_dir_t
 {
 	qse_mcstr_t        path;
 	qse_mcstr_t        qpath;
+	qse_mcstr_t        head;
+	qse_mcstr_t        foot;
 	qse_http_version_t version;
 	int                keepalive;
 	int                method;
+	qse_ubi_t          handle;
 };
 
 typedef struct task_dseg_t task_dseg_t;
@@ -42,6 +47,8 @@ struct task_dseg_t
 	
 	qse_mcstr_t path;
 	qse_mcstr_t qpath;
+	qse_mcstr_t head;
+	qse_mcstr_t foot;
 	qse_ubi_t handle;
 	qse_httpd_dirent_t dent;
 
@@ -74,6 +81,11 @@ static int task_init_dseg (
 	qse_mbscpy ((qse_mchar_t*)xtn->path.ptr, arg->path.ptr);
 	xtn->qpath.ptr = xtn->path.ptr + xtn->path.len + 1;
 	qse_mbscpy ((qse_mchar_t*)xtn->qpath.ptr, arg->qpath.ptr);
+
+	xtn->head.ptr = xtn->qpath.ptr + xtn->qpath.len + 1;
+	qse_mbscpy ((qse_mchar_t*)xtn->head.ptr, arg->head.ptr);
+	xtn->foot.ptr = xtn->head.ptr + xtn->head.len + 1;
+	qse_mbscpy ((qse_mchar_t*)xtn->foot.ptr, arg->foot.ptr);
 
 	task->ctx = xtn;
 
@@ -126,6 +138,81 @@ static void fill_chunk_length (task_dseg_t* ctx)
 	while (ctx->buf[ctx->bufpos] == QSE_MT(' ')) ctx->bufpos++;
 }
 
+static int format_dirent (
+	qse_httpd_t* httpd, 
+	qse_httpd_client_t* client, 
+	const qse_httpd_dirent_t* dirent,
+	qse_mchar_t* buf, int bufsz)
+{
+/* TODO: page encoding?? utf-8??? or derive name from cmgr or current locale??? */
+	int n;
+
+	qse_mchar_t* encname;
+	qse_mchar_t* escname;
+	qse_btime_t bt;
+	qse_mchar_t tmbuf[32];
+	qse_mchar_t fszbuf[64];
+
+	/* TODO: better buffer management in case there are 
+	 *       a lot of file names to escape. */
+
+	/* perform percent-encoding for the anchor */
+	encname = qse_perenchttpstrdup (dirent->name, httpd->mmgr);
+	if (encname == QSE_NULL)
+	{
+		httpd->errnum = QSE_HTTPD_ENOMEM;
+		return -1;
+	}
+
+	/* perform html escaping for the text */
+	escname = qse_httpd_escapehtml (httpd, dirent->name);
+	if (escname == QSE_NULL) 
+	{
+		if (encname != dirent->name) QSE_MMGR_FREE (httpd->mmgr, encname);
+		return -1;
+	}
+
+	qse_localtime (&dirent->stat.mtime, &bt);
+	snprintf (tmbuf, QSE_COUNTOF(tmbuf),
+		QSE_MT("%04d-%02d-%02d %02d:%02d:%02d"),
+        		bt.year + QSE_BTIME_YEAR_BASE, bt.mon + 1, bt.mday,
+		bt.hour, bt.min, bt.sec);
+
+	if (dirent->stat.isdir)
+	{
+		fszbuf[0] = QSE_MT('\0');
+	}
+	else
+	{
+		qse_fmtuintmaxtombs (
+			fszbuf, QSE_COUNTOF(fszbuf),
+			dirent->stat.size, 10, -1, QSE_MT('\0'), QSE_NULL
+		);
+	}
+
+	n = snprintf (
+		buf, bufsz,
+		QSE_MT("<tr><td class='name'><a href='%s%s' class='%s'>%s%s</a></td><td class='time'>%s</td><td class='size'>%s</td></tr>\n"),
+		encname,
+		(dirent->stat.isdir? QSE_MT("/"): QSE_MT("")),
+		(dirent->stat.isdir? QSE_MT("dir"): QSE_MT("file")),
+		escname,
+		(dirent->stat.isdir? QSE_MT("/"): QSE_MT("")),
+		tmbuf, fszbuf
+	);
+
+	if (escname != dirent->name) qse_httpd_freemem (httpd, escname);
+	if (encname != dirent->name) QSE_MMGR_FREE (httpd->mmgr, encname);
+
+	if (n <= -1 || n >= bufsz)
+	{
+		httpd->errnum = QSE_HTTPD_ENOBUF;
+		return -1;
+	}
+
+	return n;
+}
+
 static int add_footer (qse_httpd_t* httpd, qse_httpd_client_t* client, task_dseg_t* ctx)
 {
 	int x, rem;
@@ -137,10 +224,12 @@ static int add_footer (qse_httpd_t* httpd, qse_httpd_client_t* client, task_dseg
 		return -1;
 	}
 
-	x = httpd->opt.rcb.fmtdir (
-		httpd, client, QSE_NULL, QSE_NULL,
-		&ctx->buf[ctx->buflen], rem);
-	if (x <= -1) return -1;
+	x = snprintf (&ctx->buf[ctx->buflen], rem, QSE_MT("</table></div>\n<div class='footer'>%s</div>\n</body></html>"), ctx->foot.ptr);
+	if (x <= -1 || x >= rem) 
+	{
+		httpd->errnum = QSE_HTTPD_ENOBUF;
+		return -1;
+	}
 
 	QSE_ASSERT (x < rem);
 
@@ -221,7 +310,7 @@ static int task_main_dseg (
 		if (add_footer (httpd, client, ctx) <= -1)
 		{
 			/* return an error if the buffer is too small to hold the 
-			 * trailing footer. you need to increate the buffer size */
+			 * trailing footer. you need to increase the buffer size */
 			return -1;
 		}
 
@@ -235,15 +324,31 @@ static int task_main_dseg (
 	if (!(ctx->state & HEADER_ADDED))
 	{
 		/* compose the header since this is the first time. */
-		x = httpd->opt.rcb.fmtdir (
-			httpd, client, ctx->qpath.ptr, QSE_NULL,
-			&ctx->buf[ctx->buflen], ctx->bufrem);
+		int is_root;
+		qse_mchar_t* qpath_esc;
+
+		is_root = (qse_mbscmp (ctx->qpath.ptr, QSE_MT("/")) == 0);
+
+		qpath_esc = qse_httpd_escapehtml (httpd, ctx->qpath.ptr);
+		if (qpath_esc == QSE_NULL) return -1;
+
+		x = snprintf (&ctx->buf[ctx->buflen], ctx->bufrem,
+			QSE_MT("<html><head>%s</head>\n<body>\n<div class='header'>%s</div>\n<div class='body'><table>%s"), ctx->head.ptr, qpath_esc,
+			(is_root? QSE_MT(""): QSE_MT("<tr><td class='name'><a href='../' class='dir'>..</a></td><td class='time'></td><td class='size'></td></tr>\n"))
+		);
+
+		if (qpath_esc != ctx->qpath.ptr) qse_httpd_freemem (httpd, qpath_esc);
+
+#if 0
 		if (x <= -1)
+#endif
+		if (x <= -1 || x >= ctx->bufrem)
 		{
 			/* return an error if the buffer is too small to 
 			 * hold the header(httpd->errnum == QSE_HTTPD_ENOBUF).
-			 * i need to increate the buffer size. or i have make
+			 * i need to increase the buffer size. or i have make
 			 * the buffer dynamic. */
+			httpd->errnum = QSE_HTTPD_ENOBUF;
 			return -1;
 		}
 
@@ -290,9 +395,7 @@ static int task_main_dseg (
 		if (qse_mbscmp (ctx->dent.name, QSE_MT(".")) != 0 &&
 		    qse_mbscmp (ctx->dent.name, QSE_MT("..")) != 0)
 		{
-			x = httpd->opt.rcb.fmtdir (
-				httpd, client, ctx->qpath.ptr, &ctx->dent,
-				&ctx->buf[ctx->buflen], ctx->bufrem);
+			x = format_dirent (httpd, client, &ctx->dent, &ctx->buf[ctx->buflen], ctx->bufrem); 
 			if (x <= -1)
 			{
 				/* buffer not large enough to hold this entry */
@@ -358,6 +461,8 @@ static qse_httpd_task_t* entask_directory_segment (
 	data.chunked = dir->keepalive;
 	data.path = dir->path;
 	data.qpath = dir->qpath;
+	data.head = dir->head;
+	data.foot = dir->foot;
 
 	QSE_MEMSET (&task, 0, QSE_SIZEOF(task));
 	task.init = task_init_dseg;
@@ -365,7 +470,7 @@ static qse_httpd_task_t* entask_directory_segment (
 	task.fini = task_fini_dseg;
 	task.ctx = &data;
 
-	return qse_httpd_entask (httpd, client, pred, &task, QSE_SIZEOF(data) + data.path.len + 1 + data.qpath.len + 1);
+	return qse_httpd_entask (httpd, client, pred, &task, QSE_SIZEOF(data) + data.path.len + 1 + data.qpath.len + 1 + data.head.len + 1 + data.foot.len + 1);
 }
 
 /*------------------------------------------------------------------------*/
@@ -384,9 +489,13 @@ static int task_init_getdir (
 	xtn->qpath.ptr = xtn->path.ptr + xtn->path.len + 1;
 	qse_mbscpy ((qse_mchar_t*)xtn->qpath.ptr, arg->qpath.ptr);
 
+	xtn->head.ptr = xtn->qpath.ptr + xtn->qpath.len + 1;
+	qse_mbscpy ((qse_mchar_t*)xtn->head.ptr, arg->head.ptr);
+	xtn->foot.ptr = xtn->head.ptr + xtn->head.len + 1;
+	qse_mbscpy ((qse_mchar_t*)xtn->foot.ptr, arg->foot.ptr);
+
 	/* switch the context to the extension area */
 	task->ctx = xtn;
-
 	return 0;
 }
 
@@ -395,105 +504,63 @@ static QSE_INLINE int task_main_getdir (
 {
 	task_dir_t* dir;
 	qse_httpd_task_t* x;
-	qse_ubi_t handle;
 
 	dir = (task_dir_t*)task->ctx;
 	x = task;
 
-	/*
-	 * I've commented out the check for a slash at the end of the query path
-	 * expecting that redirection is performed by the caller if such a condition
-	 * isn't met or that redirection is not required under such a condition.
-
-	if (qse_mbsend (dir->qpath.ptr, QSE_MT("/")))
+	/* arrange to return the header part first */
+	if (dir->method == QSE_HTTP_HEAD)
 	{
-	*/
-		if (httpd->opt.scb.dir.open (httpd, dir->path.ptr, &handle) <= -1)
-		{
-			int http_errnum;
-			http_errnum = (httpd->errnum == QSE_HTTPD_ENOENT)? 404:
-					    (httpd->errnum == QSE_HTTPD_EACCES)? 403: 500;
-			x = qse_httpd_entask_err (
-				httpd, client, x, http_errnum,
-				dir->method, &dir->version, dir->keepalive);
-	
-			return (x == QSE_NULL)? -1: 0;
-		}
-		else
-		{
-			if (dir->method == QSE_HTTP_HEAD)
-			{
-				x = qse_httpd_entaskformat (
-					httpd, client, x,
-    					QSE_MT("HTTP/%d.%d 200 OK\r\nServer: %s\r\nDate: %s\r\nConnection: %s\r\nContent-Type: text/html\r\nContent-Length: 0\r\n\r\n"), 
-					dir->version.major, dir->version.minor,
-					qse_httpd_getname (httpd),
-					qse_httpd_fmtgmtimetobb (httpd, QSE_NULL, 0),
-					(dir->keepalive? QSE_MT("keep-alive"): QSE_MT("close"))
-				);
+		x = qse_httpd_entaskformat (
+			httpd, client, x,
+    			QSE_MT("HTTP/%d.%d 200 OK\r\nServer: %s\r\nDate: %s\r\nConnection: %s\r\nContent-Type: text/html\r\nContent-Length: 0\r\n\r\n"), 
+			dir->version.major, dir->version.minor,
+			qse_httpd_getname (httpd),
+			qse_httpd_fmtgmtimetobb (httpd, QSE_NULL, 0),
+			(dir->keepalive? QSE_MT("keep-alive"): QSE_MT("close"))
+		);
 
-				httpd->opt.scb.dir.close (httpd, handle);
-				return (x == QSE_NULL)? -1: 0;
-			}
-			else
-			{
-				x = qse_httpd_entaskformat (
-					httpd, client, x,
-    					QSE_MT("HTTP/%d.%d 200 OK\r\nServer: %s\r\nDate: %s\r\nConnection: %s\r\nContent-Type: text/html\r\n%s\r\n"), 
-					dir->version.major, dir->version.minor,
-					qse_httpd_getname (httpd),
-					qse_httpd_fmtgmtimetobb (httpd, QSE_NULL, 0),
-					(dir->keepalive? QSE_MT("keep-alive"): QSE_MT("close")),
-					(dir->keepalive? QSE_MT("Transfer-Encoding: chunked\r\n"): QSE_MT(""))
-				);
-				if (x) 
-				{
-					x = entask_directory_segment (httpd, client, x, handle, dir);
-					if (x) return 0;
-				}
-
-				httpd->opt.scb.dir.close (httpd, handle);
-				return -1;
-			}
-		}
-	/*
+		httpd->opt.scb.dir.close (httpd, dir->handle);
+		return (x == QSE_NULL)? -1: 0;
 	}
 	else
 	{
-		x = qse_httpd_entask_redir (
-			httpd, client, x, dir->qpath.ptr, 
-			&dir->version, dir->keepalive);
+		x = qse_httpd_entaskformat (
+			httpd, client, x,
+    			QSE_MT("HTTP/%d.%d 200 OK\r\nServer: %s\r\nDate: %s\r\nConnection: %s\r\nContent-Type: text/html\r\n%s\r\n"), 
+			dir->version.major, dir->version.minor,
+			qse_httpd_getname (httpd),
+			qse_httpd_fmtgmtimetobb (httpd, QSE_NULL, 0),
+			(dir->keepalive? QSE_MT("keep-alive"): QSE_MT("close")),
+			(dir->keepalive? QSE_MT("Transfer-Encoding: chunked\r\n"): QSE_MT(""))
+		);
+		if (x) 
+		{
+			/* arrange to send the actual directory contents */
+			x = entask_directory_segment (httpd, client, x, dir->handle, dir);
+			if (x) return 0;
+		}
 
-		return (x == QSE_NULL)? -1: 0;
+		httpd->opt.scb.dir.close (httpd, dir->handle);
+		return -1;
 	}
-	*/
 }
 
 qse_httpd_task_t* qse_httpd_entaskdir (
 	qse_httpd_t* httpd,
 	qse_httpd_client_t* client, 
 	qse_httpd_task_t* pred,
-	const qse_mchar_t* path,
+	qse_httpd_rsrc_dir_t* dir,
 	qse_htre_t* req)
 {
-	qse_httpd_task_t task;
-	task_dir_t data;
+	int method;
 
-	QSE_MEMSET (&data, 0, QSE_SIZEOF(data));
-	data.path.ptr = path;
-	data.path.len = qse_mbslen(data.path.ptr);
-	data.qpath.ptr = qse_htre_getqpath(req);
-	data.qpath.len = qse_mbslen(data.qpath.ptr);
-	data.version = *qse_htre_getversion(req);
-	data.keepalive = (req->attr.flags & QSE_HTRE_ATTR_KEEPALIVE);
-	data.method = qse_htre_getqmethodtype(req);
-
-	QSE_MEMSET (&task, 0, QSE_SIZEOF(task));
+	method = qse_htre_getqmethodtype(req);
 
 	/* i don't need contents for directories */
 	qse_htre_discardcontent (req); 
 
-	switch (data.method)
+	switch (method)
 	{
 		case QSE_HTTP_OPTIONS:
 			return qse_httpd_entaskallow (httpd, client, pred, 
@@ -502,16 +569,58 @@ qse_httpd_task_t* qse_httpd_entaskdir (
 		case QSE_HTTP_HEAD:
 		case QSE_HTTP_GET:
 		case QSE_HTTP_POST:
-			task.init = task_init_getdir;
-			task.main = task_main_getdir;
-			break;
+		{
+			task_dir_t data;
+			QSE_MEMSET (&data, 0, QSE_SIZEOF(data));
+
+			/* check if the directory stream can be opened before
+			 * creating an actual task. */
+			if (httpd->opt.scb.dir.open (httpd, dir->path, &data.handle) <= -1)
+			{
+				/* arrange a status code to return */
+				int status;
+				status = (httpd->errnum == QSE_HTTPD_ENOENT)? 404:
+					    (httpd->errnum == QSE_HTTPD_EACCES)? 403: 500;
+				return qse_httpd_entaskerr (httpd, client, pred, status, req);
+			}
+			else
+			{
+				/* create a directory listing task */
+				qse_httpd_task_t task, * x;
+
+				data.path.ptr = dir->path;
+				data.path.len = qse_mbslen(data.path.ptr);
+				data.qpath.ptr = qse_htre_getqpath(req);
+				data.qpath.len = qse_mbslen(data.qpath.ptr);
+				data.head.ptr = dir->head? dir->head: QSE_MT("");
+				data.head.len = qse_mbslen(data.head.ptr);
+				data.foot.ptr = dir->foot? dir->foot: qse_httpd_getname(httpd);
+				data.foot.len = qse_mbslen(data.foot.ptr);
+				data.version = *qse_htre_getversion(req);
+				data.keepalive = (req->attr.flags & QSE_HTRE_ATTR_KEEPALIVE);
+				data.method = method;
+
+				QSE_MEMSET (&task, 0, QSE_SIZEOF(task));
+				task.init = task_init_getdir;
+				task.main = task_main_getdir;
+				task.ctx = &data;
+
+				x = qse_httpd_entask (httpd, client, pred, &task,
+					QSE_SIZEOF(task_dir_t) + data.path.len + 1 + data.qpath.len + 1 + 
+					                         data.head.len + 1 + data.foot.len + 1);
+				if (x == QSE_NULL)
+				{
+					httpd->opt.scb.dir.close (httpd, data.handle);
+				}
+				return x;
+			}
+		}
 			
 		case QSE_HTTP_PUT:
 		{
 			int status = 201; /* 201 Created */
 
-
-			if (httpd->opt.scb.dir.make (httpd, path) <= -1)
+			if (httpd->opt.scb.dir.make (httpd, dir->path) <= -1)
 			{
 				if (httpd->errnum == QSE_HTTPD_EEXIST)
 				{
@@ -520,7 +629,7 @@ qse_httpd_task_t* qse_httpd_entaskdir (
 					 * if not, send '403 forbidden' indicating you can't 
 					 * change a file to a directory */
 					qse_httpd_stat_t st;
-					status = (httpd->opt.scb.dir.stat (httpd, path, &st) <= -1)? 403: 204;
+					status = (httpd->opt.scb.dir.stat (httpd, dir->path, &st) <= -1)? 403: 204;
 				}
 				else
 				{
@@ -537,7 +646,7 @@ qse_httpd_task_t* qse_httpd_entaskdir (
 		{
 			int status = 200;
 
-			if (httpd->opt.scb.dir.purge (httpd, path) <= -1)
+			if (httpd->opt.scb.dir.purge (httpd, dir->path) <= -1)
 			{
 				status = (httpd->errnum == QSE_HTTPD_ENOENT)? 404:
 				         (httpd->errnum == QSE_HTTPD_EACCES)? 403: 500;
@@ -550,10 +659,4 @@ qse_httpd_task_t* qse_httpd_entaskdir (
 			/* Method not allowed */
 			return qse_httpd_entaskerr (httpd, client, pred, 405, req);
 	}
-
-	task.ctx = &data;
-
-	return qse_httpd_entask (httpd, client, pred, &task,
-		QSE_SIZEOF(task_dir_t) + data.path.len + 1 + data.qpath.len + 1);
 }
-

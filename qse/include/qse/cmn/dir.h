@@ -54,20 +54,12 @@ typedef enum qse_dir_errnum_t qse_dir_errnum_t;
 enum qse_dir_flag_t
 {
 	QSE_DIR_MBSPATH = (1 << 0),
-	QSE_DIR_SORT    = (1 << 1),
-	QSE_DIR_STAT    = (1 << 2)	
+	QSE_DIR_SORT    = (1 << 1)
 };
 
 struct qse_dir_ent_t
 {
 	const qse_char_t* name;
-
-	struct
-	{
-		int type;
-		qse_foff_t size;
-		qse_ntime_t tmmod;
-	} stat;
 };
 
 #ifdef __cplusplus

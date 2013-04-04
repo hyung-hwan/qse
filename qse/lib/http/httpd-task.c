@@ -425,7 +425,7 @@ qse_httpd_task_t* qse_httpd_entaskrsrc (
 			break;
 
 		case QSE_HTTPD_RSRC_DIR:
-			task = qse_httpd_entaskdir (httpd, client, pred, rsrc->u.dir.path, req);
+			task = qse_httpd_entaskdir (httpd, client, pred, &rsrc->u.dir, req);
 			break;
 
 		case QSE_HTTPD_RSRC_ERR:

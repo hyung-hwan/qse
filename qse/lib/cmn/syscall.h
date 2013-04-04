@@ -370,7 +370,8 @@
 
 /* ===== DIRECTORY - not really system calls ===== */
 #define QSE_OPENDIR(name) opendir(name)
-#define QSE_CLOSEDIR(name) closedir(name)
+#define QSE_CLOSEDIR(dir) closedir(dir)
+#define QSE_REWINDDIR(dir) rewinddir(dir)
 
 #if defined(HAVE_READDIR64)
 	typedef struct dirent64 qse_dirent_t;

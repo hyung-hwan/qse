@@ -1517,7 +1517,7 @@ qse_httpd_task_t* qse_httpd_entaskcgi (
 	qse_httpd_client_t* client,
 	qse_httpd_task_t* pred,
 	qse_httpd_rsrc_cgi_t* cgi,
-	qse_htre_t*        req)
+	qse_htre_t* req)
 {
 	qse_httpd_task_t task;
 	task_cgi_arg_t arg;
