@@ -779,7 +779,7 @@ static int load_loccfg (qse_httpd_t* httpd, qse_xli_list_t* list, loccfg_t* cfg)
 	}
 
 	pair = qse_xli_findpairbyname (httpd_xtn->xli, list, QSE_T("index"));
-	if (!pair) pair = qse_xli_findpairbyname (httpd_xtn->xli, QSE_NULL, QSE_T("default.index"));
+	if (!pair) pair = qse_xli_findpairbyname (httpd_xtn->xli, QSE_NULL, QSE_T("server-default.index"));
 	if (pair && pair->val->type == QSE_XLI_STR)
 	{
 		const qse_char_t* tmpptr, * tmpend;
@@ -801,7 +801,7 @@ static int load_loccfg (qse_httpd_t* httpd, qse_xli_list_t* list, loccfg_t* cfg)
 	}
 
 	pair = qse_xli_findpairbyname (httpd_xtn->xli, list, QSE_T("cgi"));
-	if (!pair) pair = qse_xli_findpairbyname (httpd_xtn->xli, QSE_NULL, QSE_T("default.cgi"));
+	if (!pair) pair = qse_xli_findpairbyname (httpd_xtn->xli, QSE_NULL, QSE_T("server-default.cgi"));
 	if (pair && pair->val->type == QSE_XLI_LIST)
 	{
 		/* TODO: more sanity check... this can be done with xli schema... if supported */
@@ -879,7 +879,7 @@ static int load_loccfg (qse_httpd_t* httpd, qse_xli_list_t* list, loccfg_t* cfg)
 	}
 
 	pair = qse_xli_findpairbyname (httpd_xtn->xli, list, QSE_T("mime"));
-	if (!pair) pair = qse_xli_findpairbyname (httpd_xtn->xli, QSE_NULL, QSE_T("default.mime"));
+	if (!pair) pair = qse_xli_findpairbyname (httpd_xtn->xli, QSE_NULL, QSE_T("server-default.mime"));
 	if (pair && pair->val->type == QSE_XLI_LIST)
 	{
 		qse_xli_list_t* mimelist = (qse_xli_list_t*)pair->val;
@@ -1214,7 +1214,7 @@ static qse_httpd_server_t* attach_server (qse_httpd_t* httpd, int num, qse_xli_l
 	}
 
 	pair = qse_xli_findpairbyname (httpd_xtn->xli, list, QSE_T("ssl"));
-	if (!pair) pair = qse_xli_findpairbyname (httpd_xtn->xli, QSE_NULL, QSE_T("default.ssl"));
+	if (!pair) pair = qse_xli_findpairbyname (httpd_xtn->xli, QSE_NULL, QSE_T("server-default.ssl"));
 	if (pair && pair->val->type == QSE_XLI_STR) dope.flags |= QSE_HTTPD_SERVER_SECURE;	
 
 	dope.detach = free_server_config;
@@ -1348,7 +1348,7 @@ static int load_config (qse_httpd_t* httpd)
 	}
 
 	/* load the global default */
-	pair = qse_xli_findpairbyname (httpd_xtn->xli, QSE_NULL, QSE_T("default"));
+	pair = qse_xli_findpairbyname (httpd_xtn->xli, QSE_NULL, QSE_T("server-default"));
 	if (pair && pair->val->type == QSE_XLI_LIST)
 	{
 		if (load_loccfg (httpd, (qse_xli_list_t*)pair->val, &httpd_xtn->dflcfg) <=  -1)
