@@ -2115,7 +2115,7 @@ static int format_error (
 	server_xtn = qse_httpd_getserverxtn (httpd, client->server);
 
 	if (server_xtn->query (httpd, client->server, QSE_NULL, QSE_NULL, QSE_HTTPD_SERVERSTD_ERRHEAD, &head) <= -1) head = QSE_NULL;
-	if (head == QSE_NULL) head = QSE_MT("");
+	if (head == QSE_NULL) head = QSE_MT("<style type='text/css'>body { background-color:#d0e4fe; font-size: 0.9em; } div.header { font-weight: bold; margin-bottom: 5px; } div.footer { border-top: 1px solid #99AABB; text-align: right; }</style>");
 
 	if (server_xtn->query (httpd, client->server, QSE_NULL, QSE_NULL, QSE_HTTPD_SERVERSTD_ERRFOOT, &foot) <= -1) foot = QSE_NULL;
 	if (foot == QSE_NULL) foot = qse_httpd_getname(httpd);
