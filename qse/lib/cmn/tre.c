@@ -202,7 +202,7 @@ static int tre_match(
 	}
 
 	/* Dispatch to the appropriate matcher. */
-	if (tnfa->have_backrefs || eflags & REG_BACKTRACKING_MATCHER)
+	if (tnfa->have_backrefs || (eflags & REG_BACKTRACKING_MATCHER))
 	{
 		/* The regex has back references, use the backtracking matcher. */
 		if (type == STR_USER)

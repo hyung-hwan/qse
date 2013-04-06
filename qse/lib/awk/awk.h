@@ -352,10 +352,4 @@ struct qse_awk_mod_data_t
 	qse_awk_mod_t mod;
 };
 
-#define QSE_AWK_FREEREX(awk,code) qse_freerex((awk)->mmgr,code)
-#define QSE_AWK_BUILDREX(awk,ptn,len,errnum) \
-	qse_awk_buildrex(awk,ptn,len,errnum)
-#define QSE_AWK_MATCHREX(awk,code,option,str,substr,match,errnum) \
-	qse_awk_matchrex(awk,code,option,str,substr,match,errnum)
-
 #endif

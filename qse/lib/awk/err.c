@@ -141,7 +141,8 @@ const qse_char_t* qse_awk_dflerrstr (const qse_awk_t* awk, qse_awk_errnum_t errn
 		QSE_T("invalid character in CONVFMT"),
 		QSE_T("invalid character in OFMT"),
 
-		QSE_T("no regular expression compiled"),
+		QSE_T("failed to build regular expression"),
+		QSE_T("failed to match regular expression"),
 		QSE_T("recursion too deep in regular expression"),
 		QSE_T("right parenthesis expected in regular expression"),
 		QSE_T("right bracket expected in regular expression"),

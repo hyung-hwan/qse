@@ -76,6 +76,8 @@ int qse_awk_matchrex (
 	qse_cstr_t* match, qse_awk_errnum_t* errnum
 );
 
+void qse_awk_freerex (qse_awk_t* awk, void* code);
+
 int qse_awk_sprintflt (
 	qse_awk_t*  awk,
 	qse_char_t* buf,

@@ -738,7 +738,7 @@ static int fnc_split (qse_awk_rtx_t* run, const qse_awk_fnc_info_t* fi)
 
 		if (fs.len > 1) 
 		{
-			fs_rex = QSE_AWK_BUILDREX (
+			fs_rex = qse_awk_buildrex (
 				run->awk, fs.ptr, fs.len, &errnum);
 			if (fs_rex == QSE_NULL)
 			{
@@ -816,7 +816,7 @@ static int fnc_split (qse_awk_rtx_t* run, const qse_awk_fnc_info_t* fi)
 
 	if (str_free) QSE_AWK_FREE (run->awk, str_free);
 	if (fs_free) QSE_AWK_FREE (run->awk, fs_free);
-	if (fs_rex_free) QSE_AWK_FREEREX (run->awk, fs_rex_free);
+	if (fs_rex_free) qse_awk_freerex (run->awk, fs_rex_free);
 
 	/*nflds--;*/
 
@@ -829,7 +829,7 @@ static int fnc_split (qse_awk_rtx_t* run, const qse_awk_fnc_info_t* fi)
 oops:
 	if (str_free) QSE_AWK_FREE (run->awk, str_free);
 	if (fs_free) QSE_AWK_FREE (run->awk, fs_free);
-	if (fs_rex_free) QSE_AWK_FREEREX (run->awk, fs_rex_free);
+	if (fs_rex_free) qse_awk_freerex (run->awk, fs_rex_free);
 	return -1;
 }
 
@@ -1033,7 +1033,7 @@ static int __substitute (qse_awk_rtx_t* run, qse_long_t max_count)
 	{
 		qse_awk_errnum_t errnum;
 
-		rex = QSE_AWK_BUILDREX (
+		rex = qse_awk_buildrex (
 			run->awk, s0.ptr, s0.len, &errnum);
 		if (rex == QSE_NULL)
 		{
@@ -1064,7 +1064,7 @@ static int __substitute (qse_awk_rtx_t* run, qse_long_t max_count)
 
 		if (max_count == 0 || sub_count < max_count)
 		{
-			n = QSE_AWK_MATCHREX (
+			n = qse_awk_matchrex (
 				run->awk, rex, opt, &s2, &cur, &mat, &errnum
 			);
 		}
@@ -1153,7 +1153,7 @@ static int __substitute (qse_awk_rtx_t* run, qse_long_t max_count)
 
 	if (rex_free)
 	{
-		QSE_AWK_FREEREX (run->awk, rex_free); 
+		qse_awk_freerex (run->awk, rex_free); 
 		rex_free = QSE_NULL;
 	}
 
@@ -1199,7 +1199,7 @@ static int __substitute (qse_awk_rtx_t* run, qse_long_t max_count)
 	return 0;
 
 oops:
-	if (rex_free) QSE_AWK_FREEREX (run->awk, rex_free); 
+	if (rex_free) qse_awk_freerex (run->awk, rex_free); 
 	if (new_inited) qse_str_fini (&new);
 	if (s2_free) QSE_AWK_FREE (run->awk, s2_free);
 	if (s1_free) QSE_AWK_FREE (run->awk, s1_free);
@@ -1295,7 +1295,7 @@ static int fnc_match (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 			}
 		}
 
-		rex = QSE_AWK_BUILDREX (rtx->awk, str1, len1, &errnum);
+		rex = qse_awk_buildrex (rtx->awk, str1, len1, &errnum);
 		if (rex == QSE_NULL)
 		{
 			if (a0->type != QSE_AWK_VAL_STR) 
@@ -1318,7 +1318,7 @@ static int fnc_match (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 		/*TODO: must use str0,len0?*/
 		tmp.ptr = str0 + start - 1;
 		tmp.len = len0 - start + 1;
-		n = QSE_AWK_MATCHREX (
+		n = qse_awk_matchrex (
 			rtx->awk, rex, 
 			(rtx->gbl.ignorecase? QSE_REX_IGNORECASE: 0),
 			&tmp, &tmp, &mat, &errnum
@@ -1326,7 +1326,7 @@ static int fnc_match (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	}
 
 	if (a0->type != QSE_AWK_VAL_STR) QSE_AWK_FREE (rtx->awk, str0);
-	if (a1->type != QSE_AWK_VAL_REX) QSE_AWK_FREEREX (rtx->awk, rex);
+	if (a1->type != QSE_AWK_VAL_REX) qse_awk_freerex (rtx->awk, rex);
 
 	if (n <= -1) 
 	{

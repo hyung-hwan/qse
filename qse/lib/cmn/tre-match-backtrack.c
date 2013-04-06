@@ -400,7 +400,7 @@ retry:
 		/* Go to the next character in the input string. */
 		empty_br_match = 0;
 		trans_i = state;
-		if (trans_i->state && trans_i->assertions & ASSERT_BACKREF)
+		if (trans_i->state && (trans_i->assertions & ASSERT_BACKREF))
 		{
 			/* This is a back reference state.  All transitions leaving from
 			   this state have the same back reference "assertion".  Instead
@@ -593,8 +593,7 @@ backtrack:
 				DPRINT(("	 backtracking\n"));
 				if (stack->item.state->assertions && ASSERT_BACKREF)
 				{
-					DPRINT(("  states_seen[%d] = 0\n",
-					        stack->item.state_id));
+					DPRINT(("  states_seen[%d] = 0\n", stack->item.state_id));
 					states_seen[stack->item.state_id] = 0;
 				}
 

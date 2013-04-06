@@ -1243,7 +1243,8 @@ enum qse_awk_errnum_t
 	QSE_AWK_EOFMTCHR,      /**< invalid character in OFMT */
 
 	/* regular expression error */
-	QSE_AWK_EREXNOCOMP,    /**< no regular expression compiled */
+	QSE_AWK_EREXBL,        /**< failed to build regular expression */
+	QSE_AWK_EREXMA,        /**< failed to match regular expression */
 	QSE_AWK_EREXRECUR,     /**< recursion too deep */
 	QSE_AWK_EREXRPAREN,    /**< a right parenthesis is expected */
 	QSE_AWK_EREXRBRACK,    /**< a right bracket is expected */

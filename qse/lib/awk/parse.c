@@ -4340,9 +4340,8 @@ static qse_awk_nde_t* parse_primary_rex  (qse_awk_t* awk, const qse_awk_loc_t* x
 	nde->str.ptr = qse_awk_cstrdup (awk, QSE_STR_CSTR(awk->tok.name));
 	if (nde->str.ptr == QSE_NULL) goto oops;
 
-	nde->code = QSE_AWK_BUILDREX (awk,
-		QSE_STR_PTR(awk->tok.name), QSE_STR_LEN(awk->tok.name), 
-		&errnum);
+	nde->code = qse_awk_buildrex (
+		awk, QSE_STR_PTR(awk->tok.name), QSE_STR_LEN(awk->tok.name), &errnum);
 	if (nde->code == QSE_NULL)
 	{
 		SETERR_LOC (awk, errnum, xloc);
@@ -4355,7 +4354,7 @@ static qse_awk_nde_t* parse_primary_rex  (qse_awk_t* awk, const qse_awk_loc_t* x
 
 oops:
 	QSE_ASSERT (nde != QSE_NULL);
-	if (nde->code) QSE_AWK_FREEREX (awk, nde->code);
+	if (nde->code) qse_awk_freerex (awk, nde->code);
 	if (nde->str.ptr) QSE_AWK_FREE (awk, nde->str.ptr);
 	QSE_AWK_FREE (awk, nde);
 	return QSE_NULL;
@@ -5609,8 +5608,10 @@ static int get_string (
 			else if (c == QSE_T('b')) c = QSE_T('\b');
 			else if (c == QSE_T('v')) c = QSE_T('\v');
 			else if (c == QSE_T('a')) c = QSE_T('\a');
-			else if (c >= QSE_T('0') && c <= QSE_T('7')) 
+			else if (c >= QSE_T('0') && c <= QSE_T('7') && end_char != QSE_T('/')) 
 			{
+				/* i don't support the octal notation for a regular expression.
+				 * it conflicts with the backreference notation between \1 and \7 inclusive. */
 				escaped = 3;
 				digit_count = 1;
 				c_acc = c - QSE_T('0');

@@ -605,7 +605,9 @@ qse_httpd_task_t* qse_httpd_entaskfile (
 
 			task.init = task_init_getfile;
 			task.main = task_main_getfile;
-			break;
+
+			task.ctx = &data;
+			return qse_httpd_entask (httpd, client, pred, &task, xtnsize);
 
 		case QSE_HTTP_PUT:
 			/* note that no partial update is supported for PUT */
@@ -614,7 +616,8 @@ qse_httpd_task_t* qse_httpd_entaskfile (
 			task.init = task_init_putfile;
 			task.main = task_main_putfile;
 			task.fini = task_fini_putfile;
-			break;
+			task.ctx = &data;
+			return qse_httpd_entask (httpd, client, pred, &task, xtnsize);
 
 		case QSE_HTTP_DELETE:
 		{
@@ -637,7 +640,5 @@ qse_httpd_task_t* qse_httpd_entaskfile (
 	}
 
 
-	task.ctx = &data;
-	return qse_httpd_entask (httpd, client, pred, &task, xtnsize);
 }
 
