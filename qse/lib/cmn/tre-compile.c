@@ -1690,10 +1690,8 @@ tre_make_trans(qse_mmgr_t* mmgr, tre_pos_and_tags_t *p1, tre_pos_and_tags_t *p2,
 				if (p1->neg_classes != NULL)
 				{
 					for (i = 0; p1->neg_classes[i] != (tre_ctype_t)0; i++);
-					trans->neg_classes =
-					    xmalloc(mmgr,sizeof(*trans->neg_classes) * (i + 1));
-					if (trans->neg_classes == NULL)
-						return REG_ESPACE;
+					trans->neg_classes = xmalloc(mmgr,sizeof(*trans->neg_classes) * (i + 1));
+					if (trans->neg_classes == NULL) return REG_ESPACE;
 					for (i = 0; p1->neg_classes[i] != (tre_ctype_t)0; i++)
 						trans->neg_classes[i] = p1->neg_classes[i];
 					trans->neg_classes[i] = (tre_ctype_t)0;

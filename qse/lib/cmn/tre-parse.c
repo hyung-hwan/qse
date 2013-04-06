@@ -1174,14 +1174,16 @@ parse_star:
 					goto parse_star;
 				}
 			}
-			else break;
+			break;
 			/* END QSE */
 
 
 		case CHAR_LBRACE:
 			/* "{" is literal without REG_EXTENDED */
-			if (!(ctx->cflags & REG_EXTENDED))
-				break;
+			if (!(ctx->cflags & REG_EXTENDED)) break;
+			/* QSE */
+			if (ctx->cflags & REG_NOBOUND) break;
+			/* END QSE */
 
 parse_brace:
 			DPRINT(("tre_parse:	bound: '%.*" STRF "'\n",
@@ -1194,6 +1196,7 @@ parse_brace:
 			STACK_PUSHX(stack, int, PARSE_POSTFIX);
 			break;
 		}
+
 		break;
 
 	case PARSE_ATOM:
@@ -1686,7 +1689,10 @@ parse_literal:
 			     || *ctx->re == CHAR_STAR
 			     || (ctx->cflags & REG_EXTENDED
 			         && (*ctx->re == CHAR_PIPE
-			             || *ctx->re == CHAR_LBRACE
+				/* QSE */
+			             /*|| *ctx->re == CHAR_LBRACE*/
+			             || (*ctx->re == CHAR_LBRACE && !(ctx->cflags & REG_NOBOUND))
+				/* END QSE */
 			             || *ctx->re == CHAR_PLUS
 			             || *ctx->re == CHAR_QUESTIONMARK))
 			     /* Test for "\)" in BRE mode. */

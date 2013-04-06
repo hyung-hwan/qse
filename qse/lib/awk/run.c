@@ -422,7 +422,7 @@ static int set_global (
 				void* rex;
 				qse_awk_errnum_t errnum;
 
-				rex = QSE_AWK_BUILDREX (
+				rex = qse_awk_buildrex (
 					rtx->awk, fs_ptr, fs_len, &errnum);
 				if (rex == QSE_NULL)
 				{
@@ -433,7 +433,7 @@ static int set_global (
 				}
 
 				if (rtx->gbl.fs != QSE_NULL)
-					QSE_AWK_FREEREX (rtx->awk, rtx->gbl.fs);
+					qse_awk_freerex (rtx->awk, rtx->gbl.fs);
 				
 				rtx->gbl.fs = rex;
 			}
@@ -571,7 +571,7 @@ static int set_global (
 
 			if (rtx->gbl.rs)
 			{
-				QSE_AWK_FREEREX (rtx->awk, rtx->gbl.rs);
+				qse_awk_freerex (rtx->awk, rtx->gbl.rs);
 				rtx->gbl.rs = QSE_NULL;
 			}
 
@@ -581,7 +581,7 @@ static int set_global (
 				qse_awk_errnum_t errnum;
 				
 				/* compile the regular expression */
-				rex = QSE_AWK_BUILDREX (
+				rex = qse_awk_buildrex (
 					rtx->awk, rss.ptr, rss.len, &errnum);
 				if (rex == QSE_NULL)
 				{
@@ -1007,12 +1007,12 @@ static void fini_rtx (qse_awk_rtx_t* rtx, int fini_globals)
 
 	if (rtx->gbl.rs)
 	{
-		QSE_AWK_FREEREX (rtx->awk, rtx->gbl.rs);
+		qse_awk_freerex (rtx->awk, rtx->gbl.rs);
 		rtx->gbl.rs = QSE_NULL;
 	}
 	if (rtx->gbl.fs)
 	{
-		QSE_AWK_FREEREX (rtx->awk, rtx->gbl.fs);
+		qse_awk_freerex (rtx->awk, rtx->gbl.fs);
 		rtx->gbl.fs = QSE_NULL;
 	}
 
@@ -3173,7 +3173,7 @@ static qse_awk_val_t* eval_expression (qse_awk_rtx_t* rtx, qse_awk_nde_t* nde)
 			vs.len = ((qse_awk_val_str_t*)rtx->inrec.d0)->val.len;
 		}	
 
-		n = QSE_AWK_MATCHREX (
+		n = qse_awk_matchrex (
 			((qse_awk_rtx_t*)rtx)->awk, 
 			((qse_awk_val_rex_t*)v)->code,
 			opt, &vs, &vs, QSE_NULL, &errnum
@@ -4852,7 +4852,7 @@ static qse_awk_val_t* eval_binop_match0 (
 	}
 	else if (right->type == QSE_AWK_VAL_STR)
 	{
-		rex_code = QSE_AWK_BUILDREX ( 
+		rex_code = qse_awk_buildrex ( 
 			rtx->awk,
 			((qse_awk_val_str_t*)right)->val.ptr,
 			((qse_awk_val_str_t*)right)->val.len, &errnum);
@@ -4869,7 +4869,7 @@ static qse_awk_val_t* eval_binop_match0 (
 		out.type = QSE_AWK_RTX_VALTOSTR_CPLDUP;
 		if (qse_awk_rtx_valtostr (rtx, right, &out) <= -1) return QSE_NULL;
 
-		rex_code = QSE_AWK_BUILDREX (
+		rex_code = qse_awk_buildrex (
 			rtx->awk, out.u.cpldup.ptr, out.u.cpldup.len, &errnum);
 		if (rex_code == QSE_NULL)
 		{
@@ -4883,7 +4883,7 @@ static qse_awk_val_t* eval_binop_match0 (
 
 	if (left->type == QSE_AWK_VAL_STR)
 	{
-		n = QSE_AWK_MATCHREX (
+		n = qse_awk_matchrex (
 			rtx->awk, rex_code,
 			((rtx->gbl.ignorecase)? QSE_REX_IGNORECASE: 0),
 			xstr_to_cstr(&((qse_awk_val_str_t*)left)->val),
@@ -4892,7 +4892,7 @@ static qse_awk_val_t* eval_binop_match0 (
 		if (n == -1) 
 		{
 			if (right->type != QSE_AWK_VAL_REX) 
-				QSE_AWK_FREEREX (rtx->awk, rex_code);
+				qse_awk_freerex (rtx->awk, rex_code);
 
 			SETERR_LOC (rtx, errnum, lloc);
 			return QSE_NULL;
@@ -4902,7 +4902,7 @@ static qse_awk_val_t* eval_binop_match0 (
 		if (res == QSE_NULL) 
 		{
 			if (right->type != QSE_AWK_VAL_REX) 
-				QSE_AWK_FREEREX (rtx->awk, rex_code);
+				qse_awk_freerex (rtx->awk, rex_code);
 
 			ADJERR_LOC (rtx, lloc);
 			return QSE_NULL;
@@ -4916,11 +4916,11 @@ static qse_awk_val_t* eval_binop_match0 (
 		if (qse_awk_rtx_valtostr (rtx, left, &out) <= -1)
 		{
 			if (right->type != QSE_AWK_VAL_REX) 
-				QSE_AWK_FREEREX (rtx->awk, rex_code);
+				qse_awk_freerex (rtx->awk, rex_code);
 			return QSE_NULL;
 		}
 
-		n = QSE_AWK_MATCHREX (
+		n = qse_awk_matchrex (
 			rtx->awk, rex_code,
 			((rtx->gbl.ignorecase)? QSE_REX_IGNORECASE: 0),
 			xstr_to_cstr(&out.u.cpldup),
@@ -4931,7 +4931,7 @@ static qse_awk_val_t* eval_binop_match0 (
 		{
 			QSE_AWK_FREE (rtx->awk, out.u.cpldup.ptr);
 			if (right->type != QSE_AWK_VAL_REX) 
-				QSE_AWK_FREEREX (rtx->awk, rex_code);
+				qse_awk_freerex (rtx->awk, rex_code);
 
 			SETERR_LOC (rtx, errnum, lloc);
 			return QSE_NULL;
@@ -4942,7 +4942,7 @@ static qse_awk_val_t* eval_binop_match0 (
 		{
 			QSE_AWK_FREE (rtx->awk, out.u.cpldup.ptr);
 			if (right->type != QSE_AWK_VAL_REX) 
-				QSE_AWK_FREEREX (rtx->awk, rex_code);
+				qse_awk_freerex (rtx->awk, rex_code);
 
 			ADJERR_LOC (rtx, lloc);
 			return QSE_NULL;
@@ -4951,7 +4951,7 @@ static qse_awk_val_t* eval_binop_match0 (
 		QSE_AWK_FREE (rtx->awk, out.u.cpldup.ptr);
 	}
 
-	if (right->type != QSE_AWK_VAL_REX) QSE_AWK_FREEREX (rtx->awk, rex_code);
+	if (right->type != QSE_AWK_VAL_REX) qse_awk_freerex (rtx->awk, rex_code);
 	return res;
 }
 

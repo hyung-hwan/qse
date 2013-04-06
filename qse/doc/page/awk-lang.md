@@ -232,6 +232,9 @@ sequences for a double-quoted string are all supported in a regular expression.
 
 TBD.
 
+Octal character notation is not supported in a regular expression literal
+since it conflicts with the backreference notation.
+
 ### Note ###
 
 QSEAWK forms a token with the lognest valid sequences.

@@ -536,6 +536,21 @@ static QSE_INLINE int task_main_getdir (
 		);
 		if (x) 
 		{
+#if 0
+			if (httpd->opt.trait & QSE_HTTPD_LOGACC)
+			{
+				qse_httpd_reqsum_t reqsum;
+
+				acc.remote = remote;
+				acc.qpath = qpath;	
+				acc.status = 200;
+				acc.version =  ...;
+				acc.method =  ...;
+
+				httpd->opt.rcb.logacc (httpd, &reqsum);
+			}
+#endif
+
 			/* arrange to send the actual directory contents */
 			x = entask_directory_segment (httpd, client, x, dir->handle, dir);
 			if (x) return 0;

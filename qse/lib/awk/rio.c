@@ -225,7 +225,7 @@ static QSE_INLINE int match_long_rs (
 
 	QSE_ASSERT (run->gbl.rs != QSE_NULL);
 
-	ret = QSE_AWK_MATCHREX (
+	ret = qse_awk_matchrex (
 		run->awk, run->gbl.rs,
 		((run->gbl.ignorecase)? QSE_REX_IGNORECASE: 0),
 		QSE_STR_CSTR(buf), QSE_STR_CSTR(buf),

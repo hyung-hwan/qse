@@ -79,12 +79,17 @@ enum qse_tre_cflag_t
 	QSE_TRE_RIGHTASSOC  = (1 << 5),
 	QSE_TRE_UNGREEDY    = (1 << 6),
 
+	/* Disable {n,m} occrrence specifier 
+	 * in the QSE_TRE_EXTENDED mode.
+	 * it doesn't affect the BRE's \{\}. */
+	QSE_TRE_NOBOUND     = (1 << 7),
+
 	/* Enable non-standard extensions:
 	 *  - Enable (?:text) for no submatch backreference.
 	 *  - Enable perl-like (?...) extensions like (?i) 
 	 *    if QSE_TRE_EXTENDED is also set.
 	 */
-	QSE_TRE_NONSTDEXT   = (1 << 7) 
+	QSE_TRE_NONSTDEXT   = (1 << 8) 
 };
 
 enum qse_tre_eflag_t

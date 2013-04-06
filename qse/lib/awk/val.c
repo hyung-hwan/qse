@@ -832,7 +832,7 @@ void qse_awk_rtx_freeval (
 		
 			/* code is just a pointer to a regular expression stored
 			 * in parse tree nodes. so don't free it.
-			QSE_AWK_FREEREX (rtx->awk, ((qse_awk_val_rex_t*)val)->code);
+			qse_awk_freerex (rtx->awk, ((qse_awk_val_rex_t*)val)->code);
 			 */
 
 			QSE_AWK_FREE (rtx->awk, val);

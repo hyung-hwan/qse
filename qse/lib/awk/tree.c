@@ -1305,7 +1305,7 @@ void qse_awk_clrpt (qse_awk_t* awk, qse_awk_nde_t* tree)
 
 			case QSE_AWK_NDE_REX:
 			{
-				QSE_AWK_FREEREX (awk, ((qse_awk_nde_rex_t*)p)->code);
+				qse_awk_freerex (awk, ((qse_awk_nde_rex_t*)p)->code);
 				QSE_AWK_FREE (awk, ((qse_awk_nde_rex_t*)p)->str.ptr);
 				QSE_AWK_FREE (awk, p);
 				break;
