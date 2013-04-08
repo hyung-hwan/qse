@@ -503,7 +503,8 @@ static QSE_INLINE qse_ssize_t __send_file_ssl (
 		}
 		else if (ret <= -1)
 		{
-			if (SSL_get_error(out, ret) == SSL_ERROR_WANT_WRITE)
+			int err = SSL_get_error(out, ret);
+			if (err == SSL_ERROR_WANT_READ || err == SSL_ERROR_WANT_WRITE)
 				qse_httpd_seterrnum (httpd, QSE_HTTPD_EAGAIN);
 			else
 				qse_httpd_seterrnum (httpd, QSE_HTTPD_ESYSERR);
@@ -1775,7 +1776,8 @@ static qse_ssize_t client_recv (
 		int ret = SSL_read (client->handle2.ptr, buf, bufsize);
 		if (ret <= -1)
 		{
-			if (SSL_get_error(client->handle2.ptr,ret) == SSL_ERROR_WANT_READ)
+			int err = SSL_get_error(client->handle2.ptr,ret);
+			if (err == SSL_ERROR_WANT_READ || err == SSL_ERROR_WANT_WRITE)
 				qse_httpd_seterrnum (httpd, QSE_HTTPD_EAGAIN);
 			else
 				qse_httpd_seterrnum (httpd, QSE_HTTPD_ESYSERR);
@@ -1816,7 +1818,8 @@ static qse_ssize_t client_send (
 		int ret = SSL_write (client->handle2.ptr, buf, bufsize);
 		if (ret <= -1)
 		{
-			if (SSL_get_error(client->handle2.ptr,ret) == SSL_ERROR_WANT_WRITE)
+			int err = SSL_get_error(client->handle2.ptr,ret);
+			if (err == SSL_ERROR_WANT_READ || err == SSL_ERROR_WANT_WRITE)
 				qse_httpd_seterrnum (httpd, QSE_HTTPD_EAGAIN);
 			else
 				qse_httpd_seterrnum (httpd, QSE_HTTPD_ESYSERR);
