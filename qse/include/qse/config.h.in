@@ -173,6 +173,9 @@
 /* Define to 1 if you have the `getifaddrs' function. */
 #undef HAVE_GETIFADDRS
 
+/* Define to 1 if you have the `getrlimit' function. */
+#undef HAVE_GETRLIMIT
+
 /* Define to 1 if you have the `gettid' function. */
 #undef HAVE_GETTID
 
@@ -343,6 +346,9 @@
 
 /* Define to 1 if you have the `setcontext' function. */
 #undef HAVE_SETCONTEXT
+
+/* Define to 1 if you have the `setrlimit' function. */
+#undef HAVE_SETRLIMIT
 
 /* Define if you have the shl_load function. */
 #undef HAVE_SHL_LOAD

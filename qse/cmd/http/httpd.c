@@ -43,6 +43,10 @@
 #	include <sys/prctl.h>
 #endif
 
+#if defined(HAVE_SYS_RESOURCE_H)
+#	include <sys/resource.h>
+#endif
+
 /* --------------------------------------------------------------------- */
 
 static qse_httpd_t* g_httpd = QSE_NULL;
@@ -1294,6 +1298,39 @@ static int close_config_file (qse_httpd_t* httpd)
 
 	return 0;
 }
+static void set_limit (qse_httpd_t* httpd, const qse_char_t* name, int what)
+{
+	qse_xli_pair_t* pair;
+	httpd_xtn_t* httpd_xtn;
+
+	httpd_xtn = (httpd_xtn_t*)qse_httpd_getxtnstd (httpd);
+
+	pair = qse_xli_findpairbyname (httpd_xtn->xli, QSE_NULL, name);
+	if (pair && pair->val->type == QSE_XLI_STR)
+	{
+#if defined(HAVE_GETRLIMIT) && defined(HAVE_SETRLIMIT)
+		struct rlimit lim;
+
+		if (getrlimit (what, &lim) == 0)
+		{
+			const qse_char_t* str;
+
+			str = ((qse_xli_str_t*)pair->val)->ptr;
+			if (qse_strcasecmp (str, QSE_T("none")) != 0)
+			{
+				if (qse_strcasecmp (str, QSE_T("unlimited")) == 0)
+					lim.rlim_cur = RLIM_INFINITY;
+				else
+					lim.rlim_cur = qse_strtoui (((qse_xli_str_t*)pair->val)->ptr);
+				if (setrlimit (what, &lim) <= -1)
+				{
+					/* TODO: warning */
+				}
+			}
+		}
+#endif
+	}
+}
 
 static int load_config (qse_httpd_t* httpd)
 {
@@ -1313,6 +1350,13 @@ static int load_config (qse_httpd_t* httpd)
 		if (tmp) qse_httpd_setname (httpd, tmp);
 		qse_httpd_freemem (httpd, tmp);
 	}
+
+#if defined(RLIMIT_NOFILE)
+	set_limit (httpd, QSE_T("max-nofile"), RLIMIT_NOFILE);
+#endif
+#if defined(RLIMIT_NPROC)
+	set_limit (httpd, QSE_T("max-nproc"), RLIMIT_NPROC);
+#endif
 
 	for (i = 0; ; i++)
 	{
