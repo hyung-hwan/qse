@@ -948,6 +948,16 @@ typedef void (*qse_awk_rtx_ecb_stmt_t) (
 );
 
 /**
+ * The qse_awk_rtx_ecb_gblset_t type defines the callback function 
+ * executed when a global variable is set with a value.
+ */
+typedef void (*qse_awk_rtx_ecb_gblset_t) (
+	qse_awk_rtx_t*     rtx, /**< runtime context */
+	qse_size_t         idx, /**< global variable index */
+	qse_awk_val_t*     val  /**< value */
+);
+
+/**
  * The qse_awk_rtx_ecb_t type defines an event callback set for a
  * runtime context. You can register a callback function set with
  * qse_awk_rtx_pushecb().  The callback functions in the registered
@@ -966,6 +976,11 @@ struct qse_awk_rtx_ecb_t
 	 * each statement executed.
 	 */
 	qse_awk_rtx_ecb_stmt_t stmt;
+
+	/**
+	 * called when a global variable is set with a value.
+	 */
+	qse_awk_rtx_ecb_gblset_t gblset;
 
 	/* internal use only. don't touch this field */
 	qse_awk_rtx_ecb_t* next;
