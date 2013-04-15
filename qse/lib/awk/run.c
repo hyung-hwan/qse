@@ -312,6 +312,7 @@ static int set_global (
 	qse_awk_nde_var_t* var, qse_awk_val_t* val)
 {
 	qse_awk_val_t* old;
+	qse_awk_rtx_ecb_t* ecb;
        
 	old = STACK_GBL (rtx, idx);
 	if (!(rtx->awk->opt.trait & QSE_AWK_FLEXMAP) && old->type == QSE_AWK_VAL_MAP)
@@ -331,7 +332,7 @@ static int set_global (
 		}
 		else
 		{
-			/* qse_awk_rtx_setgbl has been called */
+			/* qse_awk_rtx_setgbl() has been called */
 			qse_cstr_t ea;
 			ea.ptr = qse_awk_getgblname (rtx->awk, idx, &ea.len);
 			SETERR_ARGX (rtx, QSE_AWK_EMAPNRA, &ea);
@@ -468,8 +469,7 @@ static int set_global (
 				if (shorten_record (rtx, (qse_size_t)lv) == -1)
 				{
 					/* adjust the error line */
-					if (var != QSE_NULL) 
-						ADJERR_LOC (rtx, &var->loc);
+					if (var) ADJERR_LOC (rtx, &var->loc);
 					return -1;
 				}
 			}
@@ -620,6 +620,9 @@ static int set_global (
 	qse_awk_rtx_refdownval (rtx, old);
 	STACK_GBL(rtx,idx) = val;
 	qse_awk_rtx_refupval (rtx, val);
+
+	for (ecb = (rtx)->ecb; ecb; ecb = ecb->next)
+		if (ecb->gblset) ecb->gblset (rtx, idx, val);
 
 	return 0;
 }
@@ -5956,130 +5959,126 @@ static int get_reference (
 
 	/* refer to eval_indexed for application of a similar concept */
 
-	if (nde->type == QSE_AWK_NDE_NAMED)
+	switch (nde->type)
 	{
-		qse_htb_pair_t* pair;
-
-		pair = qse_htb_search (
-			run->named, tgt->id.name.ptr, tgt->id.name.len);
-		if (pair == QSE_NULL)
+		case QSE_AWK_NDE_NAMED:
 		{
-			/* it is bad that the named variable has to be
-			 * created in the function named "__get_refernce".
-			 * would there be any better ways to avoid this? */
-			pair = qse_htb_upsert (
-				run->named, tgt->id.name.ptr,
-				tgt->id.name.len, qse_awk_val_nil, 0);
-			if (pair == QSE_NULL) 
+			qse_htb_pair_t* pair;
+
+			pair = qse_htb_search (
+				run->named, tgt->id.name.ptr, tgt->id.name.len);
+			if (pair == QSE_NULL)
 			{
-				SETERR_LOC (run, QSE_AWK_ENOMEM, &nde->loc);
+				/* it is bad that the named variable has to be
+				 * created in the function named "__get_refernce".
+				 * would there be any better ways to avoid this? */
+				pair = qse_htb_upsert (
+					run->named, tgt->id.name.ptr,
+					tgt->id.name.len, qse_awk_val_nil, 0);
+				if (pair == QSE_NULL) 
+				{
+					SETERR_LOC (run, QSE_AWK_ENOMEM, &nde->loc);
+					return -1;
+				}
+			}
+
+			*ref = (qse_awk_val_t**)&QSE_HTB_VPTR(pair);
+			return 0;
+		}
+		
+		case QSE_AWK_NDE_GBL:
+			*ref = (qse_awk_val_t**)&STACK_GBL(run,tgt->id.idxa);
+			return 0;
+
+		case QSE_AWK_NDE_LCL:
+			*ref = (qse_awk_val_t**)&STACK_LCL(run,tgt->id.idxa);
+			return 0;
+
+		case QSE_AWK_NDE_ARG:
+			*ref = (qse_awk_val_t**)&STACK_ARG(run,tgt->id.idxa);
+			return 0;
+
+		case QSE_AWK_NDE_NAMEDIDX:
+		{
+			qse_htb_pair_t* pair;
+
+			pair = qse_htb_search (
+				run->named, tgt->id.name.ptr, tgt->id.name.len);
+			if (pair == QSE_NULL)
+			{
+				pair = qse_htb_upsert (
+					run->named, tgt->id.name.ptr,
+					tgt->id.name.len, qse_awk_val_nil, 0);
+				if (pair == QSE_NULL) 
+				{
+					SETERR_LOC (run, QSE_AWK_ENOMEM, &nde->loc);
+					return -1;
+				}
+			}
+
+			tmp = get_reference_indexed (
+				run, tgt, (qse_awk_val_t**)&QSE_HTB_VPTR(pair));
+			if (tmp == QSE_NULL) return -1;
+			*ref = tmp;
+			return 0;
+		}
+		
+		case QSE_AWK_NDE_GBLIDX:
+			tmp = get_reference_indexed (run, tgt, 
+				(qse_awk_val_t**)&STACK_GBL(run,tgt->id.idxa));
+			if (tmp == QSE_NULL) return -1;
+			*ref = tmp;
+			return 0;
+
+		case QSE_AWK_NDE_LCLIDX:
+			tmp = get_reference_indexed (run, tgt, 
+				(qse_awk_val_t**)&STACK_LCL(run,tgt->id.idxa));
+			if (tmp == QSE_NULL) return -1;
+			*ref = tmp;
+			return 0;
+
+		case QSE_AWK_NDE_ARGIDX:
+			tmp = get_reference_indexed (run, tgt, 
+				(qse_awk_val_t**)&STACK_ARG(run,tgt->id.idxa));
+			if (tmp == QSE_NULL) return -1;
+			*ref = tmp;
+			return 0;
+	
+		case QSE_AWK_NDE_POS:
+		{
+			int n;
+			qse_long_t lv;
+			qse_awk_val_t* v;
+	
+			/* the position number is returned for the positional 
+			 * variable unlike other reference types. */
+			v = eval_expression (run, ((qse_awk_nde_pos_t*)nde)->val);
+			if (v == QSE_NULL) return -1;
+	
+			qse_awk_rtx_refupval (run, v);
+			n = qse_awk_rtx_valtolong (run, v, &lv);
+			qse_awk_rtx_refdownval (run, v);
+	
+			if (n <= -1) 
+			{
+				SETERR_LOC (run, QSE_AWK_EPOSIDX, &nde->loc);
 				return -1;
 			}
-		}
-
-		*ref = (qse_awk_val_t**)&QSE_HTB_VPTR(pair);
-		return 0;
-	}
-
-	if (nde->type == QSE_AWK_NDE_GBL)
-	{
-		*ref = (qse_awk_val_t**)&STACK_GBL(run,tgt->id.idxa);
-		return 0;
-	}
-
-	if (nde->type == QSE_AWK_NDE_LCL)
-	{
-		*ref = (qse_awk_val_t**)&STACK_LCL(run,tgt->id.idxa);
-		return 0;
-	}
-
-	if (nde->type == QSE_AWK_NDE_ARG)
-	{
-		*ref = (qse_awk_val_t**)&STACK_ARG(run,tgt->id.idxa);
-		return 0;
-	}
-
-	if (nde->type == QSE_AWK_NDE_NAMEDIDX)
-	{
-		qse_htb_pair_t* pair;
-
-		pair = qse_htb_search (
-			run->named, tgt->id.name.ptr, tgt->id.name.len);
-		if (pair == QSE_NULL)
-		{
-			pair = qse_htb_upsert (
-				run->named, tgt->id.name.ptr,
-				tgt->id.name.len, qse_awk_val_nil, 0);
-			if (pair == QSE_NULL) 
+	
+			if (!IS_VALID_POSIDX(lv)) 
 			{
-				SETERR_LOC (run, QSE_AWK_ENOMEM, &nde->loc);
+				SETERR_LOC (run, QSE_AWK_EPOSIDX, &nde->loc);
 				return -1;
 			}
+
+			*ref = (qse_awk_val_t**)((qse_size_t)lv);
+			return 0;
 		}
 
-		tmp = get_reference_indexed (
-			run, tgt, (qse_awk_val_t**)&QSE_HTB_VPTR(pair));
-		if (tmp == QSE_NULL) return -1;
-		*ref = tmp;
-	}
-
-	if (nde->type == QSE_AWK_NDE_GBLIDX)
-	{
-		tmp = get_reference_indexed (run, tgt, 
-			(qse_awk_val_t**)&STACK_GBL(run,tgt->id.idxa));
-		if (tmp == QSE_NULL) return -1;
-		*ref = tmp;
-	}
-
-	if (nde->type == QSE_AWK_NDE_LCLIDX)
-	{
-		tmp = get_reference_indexed (run, tgt, 
-			(qse_awk_val_t**)&STACK_LCL(run,tgt->id.idxa));
-		if (tmp == QSE_NULL) return -1;
-		*ref = tmp;
-	}
-
-	if (nde->type == QSE_AWK_NDE_ARGIDX)
-	{
-		tmp = get_reference_indexed (run, tgt, 
-			(qse_awk_val_t**)&STACK_ARG(run,tgt->id.idxa));
-		if (tmp == QSE_NULL) return -1;
-		*ref = tmp;
-	}
-
-	if (nde->type == QSE_AWK_NDE_POS)
-	{
-		int n;
-		qse_long_t lv;
-		qse_awk_val_t* v;
-
-		/* the position number is returned for the positional 
-		 * variable unlike other reference types. */
-		v = eval_expression (run, ((qse_awk_nde_pos_t*)nde)->val);
-		if (v == QSE_NULL) return -1;
-
-		qse_awk_rtx_refupval (run, v);
-		n = qse_awk_rtx_valtolong (run, v, &lv);
-		qse_awk_rtx_refdownval (run, v);
-
-		if (n <= -1) 
-		{
-			SETERR_LOC (run, QSE_AWK_EPOSIDX, &nde->loc);
+		default:
+			SETERR_LOC (run, QSE_AWK_ENOTREF, &nde->loc);
 			return -1;
-		}
-
-		if (!IS_VALID_POSIDX(lv)) 
-		{
-			SETERR_LOC (run, QSE_AWK_EPOSIDX, &nde->loc);
-			return -1;
-		}
-
-		*ref = (qse_awk_val_t**)((qse_size_t)lv);
-		return 0;
 	}
-
-	SETERR_LOC (run, QSE_AWK_ENOTREF, &nde->loc);
-	return -1;
 }
 
 static qse_awk_val_t** get_reference_indexed (

@@ -971,8 +971,9 @@ static int awk_main (int argc, qse_char_t* argv[])
 #ifdef ENABLE_CALLBACK
 	static qse_awk_rtx_ecb_t rtx_ecb =
 	{
-		QSE_FV(.close, QSE_NULL),
-		QSE_FV(.stmt, on_statement)
+		QSE_FV(.close,  QSE_NULL),
+		QSE_FV(.stmt,   on_statement),
+		QSE_FV(.gblset, QSE_NULL)
 	};
 #endif
 
