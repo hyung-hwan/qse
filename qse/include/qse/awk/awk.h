@@ -949,7 +949,9 @@ typedef void (*qse_awk_rtx_ecb_stmt_t) (
 
 /**
  * The qse_awk_rtx_ecb_gblset_t type defines the callback function 
- * executed when a global variable is set with a value.
+ * executed when a global variable is set with a value. It is not
+ * called when a global variable is changed implicitly. For example,
+ * it is not called when FNR is updated for each record read.
  */
 typedef void (*qse_awk_rtx_ecb_gblset_t) (
 	qse_awk_rtx_t*     rtx, /**< runtime context */
@@ -1239,9 +1241,12 @@ enum qse_awk_errnum_t
 	QSE_AWK_EMAPNA,        /**< map cannot be assigned to variable */
 	QSE_AWK_EMAPNRA,       /**< map '${0}' cannot be reassigned */
 	QSE_AWK_EMAPUR,        /**< map unreturnable */
-	QSE_AWK_EMAPPH,        /**< map prohibited */
+	QSE_AWK_EMAPTOSCALAR,  /**< cannot change a map to a scalar value */
 	QSE_AWK_ESCALARTOMAP,  /**< cannot change a scalar value to a map */
-	QSE_AWK_EVALTYPE,      /**< invalid value type */
+	QSE_AWK_EVALTOSTR,     /**< invalid value to convert to a string */
+	QSE_AWK_EVALTONUM,     /**< invalid value to convert to a number */
+	QSE_AWK_EVALTOCHR,     /**< invalid value to convert to a character */
+	QSE_AWK_EHASHVAL,      /**< invalid value to hash */
 	QSE_AWK_ERNEXTBEG,     /**< 'next' called from BEGIN block */
 	QSE_AWK_ERNEXTEND,     /**< 'next' called from END block */
 	QSE_AWK_ERNEXTFBEG,    /**< 'nextfile' called from BEGIN block */

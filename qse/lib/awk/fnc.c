@@ -627,7 +627,7 @@ static int fnc_substr (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 static int fnc_split (qse_awk_rtx_t* run, const qse_awk_fnc_info_t* fi)
 {
 	qse_size_t nargs;
-	qse_awk_val_t* a0, * a1, * a2, * t1, * t2, ** a1_ref;
+	qse_awk_val_t* a0, * a1, * a2, * t1, * t2;
 
 	qse_cstr_t str, fs;
 	qse_char_t* str_free = QSE_NULL, * fs_free = QSE_NULL;
@@ -640,6 +640,7 @@ static int fnc_split (qse_awk_rtx_t* run, const qse_awk_fnc_info_t* fi)
 	qse_long_t nflds;
 
 	qse_awk_errnum_t errnum;
+	int x;
 
 	nargs = qse_awk_rtx_getnargs (run);
 	QSE_ASSERT (nargs >= 2 && nargs <= 3);
@@ -649,33 +650,6 @@ static int fnc_split (qse_awk_rtx_t* run, const qse_awk_fnc_info_t* fi)
 	a2 = (nargs >= 3)? qse_awk_rtx_getarg (run, 2): QSE_NULL;
 
 	QSE_ASSERT (a1->type == QSE_AWK_VAL_REF);
-
-	if (((qse_awk_val_ref_t*)a1)->id >= QSE_AWK_VAL_REF_NAMEDIDX &&
-	    ((qse_awk_val_ref_t*)a1)->id <= QSE_AWK_VAL_REF_ARGIDX)
-	{
-		/* an indexed value should not be assigned another map */
-		qse_awk_rtx_seterrnum (run, QSE_AWK_EIDXVALMAP, QSE_NULL);
-		return -1;
-	}
-
-	if (((qse_awk_val_ref_t*)a1)->id == QSE_AWK_VAL_REF_POS)
-	{
-		/* a positional should not be assigned a map */
-		qse_awk_rtx_seterrnum (run, QSE_AWK_EPOSVALMAP, QSE_NULL);
-		return -1;
-	}
-
-	a1_ref = (qse_awk_val_t**)((qse_awk_val_ref_t*)a1)->adr;
-	if ((*a1_ref)->type != QSE_AWK_VAL_NIL &&
-	    (*a1_ref)->type != QSE_AWK_VAL_MAP)
-	{
-		if (!(run->awk->opt.trait & QSE_AWK_FLEXMAP))
-		{
-			/* cannot change a scalar value to a map */
-			qse_awk_rtx_seterrnum (run, QSE_AWK_ESCALARTOMAP, QSE_NULL);
-			return -1;
-		}
-	}
 
 	if (a0->type == QSE_AWK_VAL_STR)
 	{
@@ -752,14 +726,12 @@ static int fnc_split (qse_awk_rtx_t* run, const qse_awk_fnc_info_t* fi)
 	t1 = qse_awk_rtx_makemapval (run);
 	if (t1 == QSE_NULL) goto oops;
 
-	/* use the following 3 lines intead of
-	 *  qse_awk_rtx_setrefval (run, a1, t1);
-	 * just for less overhead.
-	 */
-	qse_awk_rtx_refdownval (run, *a1_ref);
-	*a1_ref = t1;
-	qse_awk_rtx_refupval (run, *a1_ref);
+	qse_awk_rtx_refupval (run, t1);
+	x = qse_awk_rtx_setrefval (run, a1, t1);
+	qse_awk_rtx_refdownval (run, t1);
+	if (x <= -1) goto oops;
 
+	/* fill the map with actual values */
 	p = str.ptr; str_left = str.len; org_len = str.len;
 	nflds = 0;
 
@@ -907,6 +879,7 @@ static int fnc_toupper (qse_awk_rtx_t* run, const qse_awk_fnc_info_t* fi)
 	return 0;
 }
 
+
 static int __substitute (qse_awk_rtx_t* run, qse_long_t max_count)
 {
 	qse_size_t nargs;
@@ -972,54 +945,11 @@ static int __substitute (qse_awk_rtx_t* run, qse_long_t max_count)
 		s2.ptr = QSE_STR_PTR(&run->inrec.line);
 		s2.len = QSE_STR_LEN(&run->inrec.line);
 	}
-	else if (((qse_awk_val_ref_t*)a2)->id == QSE_AWK_VAL_REF_POS)
-	{
-		qse_size_t idx;
-	       
-		idx = (qse_size_t)((qse_awk_val_ref_t*)a2)->adr;
-		if (idx == 0)
-		{
-			s2.ptr = QSE_STR_PTR(&run->inrec.line);
-			s2.len = QSE_STR_LEN(&run->inrec.line);
-		}
-		else if (idx <= run->inrec.nflds)
-		{
-			s2.ptr = run->inrec.flds[idx-1].ptr;
-			s2.len = run->inrec.flds[idx-1].len;
-		}
-		else
-		{
-			s2.ptr = QSE_T("");
-			s2.len = 0;
-		}
-	}
 	else
 	{
-		a2_ref = (qse_awk_val_t**)((qse_awk_val_ref_t*)a2)->adr;
-
-		if ((*a2_ref)->type == QSE_AWK_VAL_MAP)
-		{
-			/* a map is not allowed as the third parameter. 
-			 * this is a prohibited condition regardless of QSE_AWK_FLEXMAP.
-			 * i don't accept this.
-			 *
-			 * TODO: can i extend to replace something in a map??? 
-			 */
-			qse_awk_rtx_seterrnum (run, QSE_AWK_EMAPPH, QSE_NULL);
-			goto oops;
-		}
-
-		if ((*a2_ref)->type == QSE_AWK_VAL_STR)
-		{
-			s2.ptr = ((qse_awk_val_str_t*)(*a2_ref))->val.ptr;
-			s2.len = ((qse_awk_val_str_t*)(*a2_ref))->val.len;
-		}
-		else
-		{
-			s2.ptr = qse_awk_rtx_valtostrdup (run, *a2_ref, &s2.len);
-			if (s2.ptr == QSE_NULL) goto oops;
-			s2_free = (qse_char_t*)s2.ptr;
-		}
+		s2.ptr = qse_awk_rtx_valtostrdup (run, a2, &s2.len);
+		if (s2.ptr == QSE_NULL) goto oops;
+		s2_free = (qse_char_t*)s2.ptr;
 	}
 
 	if (qse_str_init (&new, run->awk->mmgr, s2.len) <= -1)
@@ -1165,24 +1095,16 @@ static int __substitute (qse_awk_rtx_t* run, qse_long_t max_count)
 			n = qse_awk_rtx_setrec (run, 0, QSE_STR_CSTR(&new));
 			if (n <= -1) goto oops;
 		}
-		else if (((qse_awk_val_ref_t*)a2)->id == QSE_AWK_VAL_REF_POS)
+		else 
 		{
 			int n;
 
-			n = qse_awk_rtx_setrec (
-				run, (qse_size_t)((qse_awk_val_ref_t*)a2)->adr,
-				QSE_STR_CSTR(&new));
-
-			if (n <= -1) goto oops;
-		}
-		else
-		{
 			v = qse_awk_rtx_makestrvalwithcstr (run, QSE_STR_CSTR(&new));
 			if (v == QSE_NULL) goto oops;
-
-			qse_awk_rtx_refdownval (run, *a2_ref);
-			*a2_ref = v;
-			qse_awk_rtx_refupval (run, *a2_ref);
+			qse_awk_rtx_refupval (run, v);
+			n = qse_awk_rtx_setrefval (run, a2, v);
+			qse_awk_rtx_refdownval (run, v);
+			if (n <= -1) goto oops;
 		}
 	}
 

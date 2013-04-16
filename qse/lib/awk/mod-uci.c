@@ -471,12 +471,11 @@ static int getsection_byid (
 					tmp = qse_awk_rtx_makemapvalwithdata (rtx, md);
 					if (tmp) 
 					{
-						if (qse_awk_rtx_setrefval (rtx, ref, tmp) <= -1)
-						{
-							qse_awk_rtx_refupval (rtx, tmp);
-							qse_awk_rtx_refdownval (rtx, tmp);
-							x = UCI_ERR_MEM;
-						}
+						int n;
+						qse_awk_rtx_refupval (rtx, tmp);
+						n = qse_awk_rtx_setrefval (rtx, ref, tmp);
+						qse_awk_rtx_refdownval (rtx, tmp);
+						if (n <= -1) x = UCI_ERR_MEM; /* this is not a correct error code. who cares? */
 					}
 					else x = UCI_ERR_MEM;
 				}
@@ -534,10 +533,12 @@ static int getoption_byid (
 						map = qse_awk_rtx_makemapvalwithdata (rtx, md);
 						if (map) 
 						{
-							if (qse_awk_rtx_setrefval (rtx, ref, map) <= -1)
+							int n;
+							qse_awk_rtx_refupval (rtx, map);
+							n = qse_awk_rtx_setrefval (rtx, ref, map);
+							qse_awk_rtx_refdownval (rtx, map);
+							if (n <= -1)
 							{
-								qse_awk_rtx_refupval (rtx, map);
-								qse_awk_rtx_refdownval (rtx, map);
 								map = QSE_NULL;
 								x = UCI_ERR_MEM;
 							}

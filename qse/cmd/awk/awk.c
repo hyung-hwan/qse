@@ -250,7 +250,7 @@ static qse_htb_walk_t print_awk_value (
 	str = qse_awk_rtx_valtostrdup (rtx, QSE_HTB_VPTR(pair), &len);
 	if (str == QSE_NULL)
 	{
-		if (qse_awk_rtx_geterrnum(rtx) == QSE_AWK_EVALTYPE)
+		if (qse_awk_rtx_geterrnum(rtx) == QSE_AWK_EVALTOSTR)
 		{
 			dprint (QSE_T("%.*s = [not printable]\n"), 
 				(int)QSE_HTB_KLEN(pair), QSE_HTB_KPTR(pair));
