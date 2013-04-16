@@ -234,8 +234,9 @@ struct qse_awk_val_ref_t
 		QSE_AWK_VAL_REF_POS       /**< positional variable */
 	} id;
 
-	/* if id is QSE_AWK_VAL_REF_POS, adr holds an index of the 
-	 * positional variable. Otherwise, adr points to the value 
+	/* if id is QSE_AWK_VAL_REF_POS, adr holds the index of a 
+	 * positional variable. If id is QSE_AWK_VAL_REF_GBL, adr hold
+	 * the index of a global variable. Otherwise, adr points to the value 
 	 * directly. */
 	qse_awk_val_t** adr;
 };
@@ -1124,11 +1125,11 @@ enum qse_awk_trait_t
 	QSE_AWK_CLASSIC = 
 		QSE_AWK_IMPLICIT | QSE_AWK_RIO | 
 		QSE_AWK_NEWLINE | QSE_AWK_BLANKCONCAT | QSE_AWK_PABLOCK | 
-		QSE_AWK_STRIPSTRSPC | QSE_AWK_NCMPONSTR | QSE_AWK_STRICTNAMING,
+		QSE_AWK_STRIPSTRSPC | QSE_AWK_STRICTNAMING,
 
 	QSE_AWK_MODERN =
 		QSE_AWK_CLASSIC | QSE_AWK_FLEXMAP |
-		QSE_AWK_RWPIPE | QSE_AWK_TOLERANT | QSE_AWK_NEXTOFILE
+		QSE_AWK_RWPIPE | QSE_AWK_TOLERANT | QSE_AWK_NEXTOFILE  | QSE_AWK_NCMPONSTR
 };
 typedef enum qse_awk_trait_t qse_awk_trait_t;
 
