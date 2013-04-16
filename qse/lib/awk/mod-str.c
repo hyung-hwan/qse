@@ -76,6 +76,106 @@ static int fnc_rtrim (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	return trim (rtx, QSE_STRTRMX_RIGHT);
 }
 
+static int index_or_rindex (qse_awk_rtx_t* rtx, int rindex)
+{
+	/* this is similar to the built-in index() function but doesn't
+	 * care about IGNORECASE. */
+	qse_size_t nargs;
+	qse_awk_val_t* a0, * a1;
+	qse_char_t* str0, * str1, * ptr;
+	qse_size_t len0, len1;
+	qse_long_t idx, boundary = 1;
+
+	nargs = qse_awk_rtx_getnargs (rtx);
+	a0 = qse_awk_rtx_getarg (rtx, 0);
+	a1 = qse_awk_rtx_getarg (rtx, 1);
+
+	/*
+	str::index ("abc", "d", 3);
+	str::rindex ("abcdefabcdx", "cd", 8);
+	*/
+
+	if (nargs >= 3) 
+	{
+		qse_awk_val_t* a2;
+		int n;
+
+		a2 = qse_awk_rtx_getarg (rtx, 2);
+		n = qse_awk_rtx_valtolong (rtx, a2, &boundary);
+		if (n <= -1) return -1;
+	}
+
+	if (a0->type == QSE_AWK_VAL_STR)
+	{
+		str0 = ((qse_awk_val_str_t*)a0)->val.ptr;
+		len0 = ((qse_awk_val_str_t*)a0)->val.len;
+	}
+	else
+	{
+		str0 = qse_awk_rtx_valtostrdup (rtx, a0, &len0);
+		if (str0 == QSE_NULL) return -1;
+	}
+
+	if (a1->type == QSE_AWK_VAL_STR)
+	{
+		str1 = ((qse_awk_val_str_t*)a1)->val.ptr;
+		len1 = ((qse_awk_val_str_t*)a1)->val.len;
+	}
+	else
+	{
+		str1 = qse_awk_rtx_valtostrdup (rtx, a1, &len1);
+		if (str1 == QSE_NULL)
+		{
+			if (a0->type != QSE_AWK_VAL_STR) 
+				qse_awk_rtx_freemem (rtx, str0);
+			return -1;
+		}
+	}
+
+	if (nargs < 3)
+	{
+		boundary = rindex? len0: 1;
+	}
+	else
+	{
+		if (boundary == 0) boundary = 1;
+		else if (boundary < 0) boundary = len0 + boundary + 1;
+	}
+
+	if (rindex)
+	{
+		/* 'boundary' acts as an end position */
+		ptr = (boundary > len0 || boundary <= 0)? 
+			QSE_NULL: qse_strxnrstr (&str0[0], boundary, str1, len1);
+	}
+	else
+	{
+		/* 'boundary' acts as a start position */
+		ptr = (boundary > len0 || boundary <= 0)? 
+			QSE_NULL: qse_strxnstr (&str0[boundary-1], len0-boundary+1, str1, len1);
+	}
+
+	idx = (ptr == QSE_NULL)? 0: ((qse_long_t)(ptr-str0) + 1);
+
+	if (a0->type != QSE_AWK_VAL_STR) qse_awk_rtx_freemem (rtx, str0);
+	if (a1->type != QSE_AWK_VAL_STR) qse_awk_rtx_freemem (rtx, str1);
+
+	a0 = qse_awk_rtx_makeintval (rtx, idx);
+	if (a0 == QSE_NULL) return -1;
+
+	qse_awk_rtx_setretval (rtx, a0);
+	return 0;
+}
+
+static int fnc_index (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	return index_or_rindex (rtx, 0);
+}
+static int fnc_rindex (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	return index_or_rindex (rtx, 1);
+}
+
 typedef struct fnctab_t fnctab_t;
 struct fnctab_t
 {
@@ -86,10 +186,12 @@ struct fnctab_t
 static fnctab_t fnctab[] =
 {
 	/* keep this table sorted for binary search in query(). */
-	{ QSE_T("ltrim"),     { { 1, 1, QSE_NULL }, fnc_ltrim,    0  } },
-	{ QSE_T("normspace"), { { 1, 1, QSE_NULL }, fnc_normspace,  0  } },
-	{ QSE_T("rtrim"),     { { 1, 1, QSE_NULL }, fnc_rtrim,    0  } },
-	{ QSE_T("trim"),      { { 1, 1, QSE_NULL }, fnc_trim,     0  } }
+	{ QSE_T("index"),     { { 2, 3, QSE_NULL }, fnc_index,     0 } },
+	{ QSE_T("ltrim"),     { { 1, 1, QSE_NULL }, fnc_ltrim,     0 } },
+	{ QSE_T("normspace"), { { 1, 1, QSE_NULL }, fnc_normspace, 0 } },
+	{ QSE_T("rindex"),    { { 2, 3, QSE_NULL }, fnc_rindex,    0 } },
+	{ QSE_T("rtrim"),     { { 1, 1, QSE_NULL }, fnc_rtrim,     0 } },
+	{ QSE_T("trim"),      { { 1, 1, QSE_NULL }, fnc_trim,      0 } }
 };
 
 static int query (qse_awk_mod_t* mod, qse_awk_t* awk, const qse_char_t* name, qse_awk_mod_sym_t* sym)

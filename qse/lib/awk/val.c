@@ -913,37 +913,47 @@ void qse_awk_rtx_freevalchunk (qse_awk_rtx_t* rtx, qse_awk_val_chunk_t* chunk)
 static int val_ref_to_bool (
 	qse_awk_rtx_t* rtx, const qse_awk_val_ref_t* ref)
 {
-	if (ref->id == QSE_AWK_VAL_REF_POS)
+	switch (ref->id)
 	{
-		qse_size_t idx;
+		case QSE_AWK_VAL_REF_POS:
+		{
+			qse_size_t idx;
 	       
-		idx = (qse_size_t)ref->adr;
-		if (idx == 0)
-		{
-			return QSE_STR_LEN(&rtx->inrec.line) > 0;
+			idx = (qse_size_t)ref->adr;
+			if (idx == 0)
+			{
+				return QSE_STR_LEN(&rtx->inrec.line) > 0;
+			}
+			else if (idx <= rtx->inrec.nflds)
+			{
+				return rtx->inrec.flds[idx-1].len > 0;
+			}
+			else
+			{
+				/* the index is greater than the number of records.
+				 * it's an empty string. so false */
+				return 0;
+			}
 		}
-		else if (idx <= rtx->inrec.nflds)
+		case QSE_AWK_VAL_REF_GBL:
 		{
-			return rtx->inrec.flds[idx-1].len > 0;
+			qse_size_t idx;
+			idx = (qse_size_t)ref->adr;
+			return qse_awk_rtx_valtobool (rtx, RTX_STACK_GBL (rtx, idx));
 		}
-		else
-		{
-			/* the index is greater than the number of records.
-			 * it's an empty string. so false */
-			return 0;
-		}
-	}
-	else
-	{
-		qse_awk_val_t** xref = (qse_awk_val_t**)ref->adr;
 
-		/* A reference value is not able to point to another 
-		 * refernce value for the way values are represented
-		 * in QSEAWK */
-		QSE_ASSERT ((*xref)->type != QSE_AWK_VAL_REF); 
+		default:
+		{
+			qse_awk_val_t** xref = (qse_awk_val_t**)ref->adr;
 
-		/* make a recursive call back to the caller */
-		return qse_awk_rtx_valtobool (rtx, *xref);
+			/* A reference value is not able to point to another 
+			 * refernce value for the way values are represented
+			 * in QSEAWK */
+			QSE_ASSERT ((*xref)->type != QSE_AWK_VAL_REF); 
+
+			/* make a recursive call back to the caller */
+			return qse_awk_rtx_valtobool (rtx, *xref);
+		}
 	}
 }
 
@@ -1680,7 +1690,7 @@ qse_long_t qse_awk_rtx_hashval (qse_awk_rtx_t* rtx, qse_awk_val_t* v)
 
 int qse_awk_rtx_setrefval (qse_awk_rtx_t* rtx, qse_awk_val_ref_t* ref, qse_awk_val_t* val)
 {
-	if (val->type == QSE_AWK_VAL_REX)
+	if (val->type == QSE_AWK_VAL_REX || val->type == QSE_AWK_VAL_REF)
 	{
 		/* though it is possible that an intrinsic function handler
 		 * can accept a regular expression withtout evaluation when 'x'

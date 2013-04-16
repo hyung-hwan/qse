@@ -1392,30 +1392,42 @@ int Awk::dispatch_function (Run* run, const fnc_info_t* fi)
 		{
 			qse_awk_val_ref_t* ref = (qse_awk_val_ref_t*)v;
 
-			if (ref->id == qse_awk_val_ref_t::QSE_AWK_VAL_REF_POS)
+			switch (ref->id)
 			{
-				qse_size_t idx = (qse_size_t)ref->adr;
+				case qse_awk_val_ref_t::QSE_AWK_VAL_REF_POS:
+				{
+					qse_size_t idx = (qse_size_t)ref->adr;
 
-				if (idx == 0)
-				{
-					xx = args[i].setStr (run, 
-						QSE_STR_PTR(&run->rtx->inrec.line),
-						QSE_STR_LEN(&run->rtx->inrec.line));
+					if (idx == 0)
+					{
+						xx = args[i].setStr (run, 
+							QSE_STR_PTR(&run->rtx->inrec.line),
+							QSE_STR_LEN(&run->rtx->inrec.line));
+					}
+					else if (idx <= run->rtx->inrec.nflds)
+					{
+						xx = args[i].setStr (run,
+							run->rtx->inrec.flds[idx-1].ptr,
+							run->rtx->inrec.flds[idx-1].len);
+					}
+					else
+					{
+						xx = args[i].setStr (run, QSE_T(""), 0);
+					}
+					break;
 				}
-				else if (idx <= run->rtx->inrec.nflds)
+
+				case qse_awk_val_ref_t::QSE_AWK_VAL_REF_GBL:
 				{
-					xx = args[i].setStr (run,
-						run->rtx->inrec.flds[idx-1].ptr,
-						run->rtx->inrec.flds[idx-1].len);
+					qse_size_t idx = (qse_size_t)ref->adr;
+					qse_awk_val_t* val = (qse_awk_val_t*)RTX_STACK_GBL (run->rtx, idx);
+					xx = args[i].setVal (run, val);
+					break;
 				}
-				else
-				{
-					xx = args[i].setStr (run, QSE_T(""), 0);
-				}
-			}
-			else
-			{
-				xx = args[i].setVal (run, *(ref->adr));
+	
+				default:
+					xx = args[i].setVal (run, *(ref->adr));
+					break;
 			}
 			has_ref_arg = true;
 		}
