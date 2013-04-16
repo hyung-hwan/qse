@@ -275,21 +275,28 @@ static int read_byid (qse_awk_rtx_t* rtx, dir_list_t* list, qse_long_t id, qse_a
 			return -1;
 		}
 
-		if (y == 0) return 0;
+		if (y == 0) return 0; /* no more entry */
 
 		tmp = qse_awk_rtx_makestrvalwithstr (rtx, ent.name);	
-		if (!tmp || qse_awk_rtx_setrefval (rtx, ref, tmp) <= -1) 
+		if (!tmp)
 		{
 			list->errnum = awk_err_to_errnum (qse_awk_rtx_geterrnum (rtx));
-			if (tmp) 
-			{
-				qse_awk_rtx_refupval (rtx, tmp);
-				qse_awk_rtx_refdownval (rtx, tmp);
-			}
 			return -1;
 		}
+		else
+		{
+			int n;
+			qse_awk_rtx_refupval (rtx, tmp);
+			n = qse_awk_rtx_setrefval (rtx, ref, tmp);
+			qse_awk_rtx_refdownval (rtx, tmp);
+			if (n <= -1)
+			{
+				list->errnum = awk_err_to_errnum (qse_awk_rtx_geterrnum (rtx));
+				return -1;
+			}
+		}
 
-		return 0;
+		return 1; /* has entry */
 	}
 	else
 	{

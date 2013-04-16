@@ -1296,48 +1296,58 @@ static int val_ref_to_str (
 	qse_awk_rtx_t* rtx, const qse_awk_val_ref_t* ref,
 	qse_awk_rtx_valtostr_out_t* out)
 {
-	if (ref->id == QSE_AWK_VAL_REF_POS)
+	switch (ref->id)
 	{
-		qse_size_t idx;
+		case QSE_AWK_VAL_REF_POS:
+		{
+			qse_size_t idx;
 	       
-		/* special case when the reference value is 
-		 * pointing to the positional */
+			/* special case when the reference value is 
+			 * pointing to the positional */
 
-		idx = (qse_size_t)ref->adr;
-		if (idx == 0)
-		{
-			return str_to_str (
-				rtx,
-				QSE_STR_PTR(&rtx->inrec.line),
-				QSE_STR_LEN(&rtx->inrec.line),
-				out
-			);
+			idx = (qse_size_t)ref->adr;
+			if (idx == 0)
+			{
+				return str_to_str (
+					rtx,
+					QSE_STR_PTR(&rtx->inrec.line),
+					QSE_STR_LEN(&rtx->inrec.line),
+					out
+				);
+			}
+			else if (idx <= rtx->inrec.nflds)
+			{
+				return str_to_str (
+					rtx,
+					rtx->inrec.flds[idx-1].ptr,
+					rtx->inrec.flds[idx-1].len,
+					out
+				);
+			}
+			else
+			{
+				return str_to_str (rtx, QSE_T(""), 0, out);
+			}
 		}
-		else if (idx <= rtx->inrec.nflds)
-		{
-			return str_to_str (
-				rtx,
-				rtx->inrec.flds[idx-1].ptr,
-				rtx->inrec.flds[idx-1].len,
-				out
-			);
-		}
-		else
-		{
-			return str_to_str (rtx, QSE_T(""), 0, out);
-		}
-	}
-	else
-	{
-		qse_awk_val_t** xref = (qse_awk_val_t**)ref->adr;
 
-		/* A reference value is not able to point to another 
-		 * refernce value for the way values are represented
-		 * in QSEAWK */
-		QSE_ASSERT ((*xref)->type != QSE_AWK_VAL_REF); 
+		case QSE_AWK_VAL_REF_GBL:
+		{
+			qse_size_t idx = (qse_size_t)ref->adr;
+			return qse_awk_rtx_valtostr (rtx, RTX_STACK_GBL (rtx, idx), out);
+		}
 
-		/* make a recursive call back to the caller */
-		return qse_awk_rtx_valtostr (rtx, *xref, out);
+		default:
+		{
+			qse_awk_val_t** xref = (qse_awk_val_t**)ref->adr;
+
+			/* A reference value is not able to point to another 
+			 * refernce value for the way values are represented
+			 * in QSEAWK */
+			QSE_ASSERT ((*xref)->type != QSE_AWK_VAL_REF); 
+
+			/* make a recursive call back to the caller */
+			return qse_awk_rtx_valtostr (rtx, *xref, out);
+		}
 	}
 }
 
@@ -1373,7 +1383,9 @@ int qse_awk_rtx_valtostr (
 		case QSE_AWK_VAL_MAP:
 		{
 			if (rtx->awk->opt.trait & QSE_AWK_FLEXMAP)
+			{
 				return str_to_str (rtx, QSE_T("#MAP"), 4, out);
+			}
 			break;
 		}
 
@@ -1391,7 +1403,7 @@ int qse_awk_rtx_valtostr (
 		v->type
 	);
 #endif
-	qse_awk_rtx_seterrnum (rtx, QSE_AWK_EVALTYPE, QSE_NULL);
+	qse_awk_rtx_seterrnum (rtx, QSE_AWK_EVALTOSTR, QSE_NULL);
 	return -1;
 }
 
@@ -1458,47 +1470,57 @@ qse_wchar_t* qse_awk_rtx_valtowcsdup (
 static int val_ref_to_num (
 	qse_awk_rtx_t* rtx, const qse_awk_val_ref_t* ref, qse_long_t* l, qse_flt_t* r)
 {
-	if (ref->id == QSE_AWK_VAL_REF_POS)
+	switch (ref->id)
 	{
-		qse_size_t idx;
+		case QSE_AWK_VAL_REF_POS:
+		{
+			qse_size_t idx;
 	       
-		idx = (qse_size_t)ref->adr;
-		if (idx == 0)
-		{
-			return qse_awk_rtx_strtonum (
-				rtx, 0,
-				QSE_STR_PTR(&rtx->inrec.line),
-				QSE_STR_LEN(&rtx->inrec.line),
-				l, r
-			);
+			idx = (qse_size_t)ref->adr;
+			if (idx == 0)
+			{
+				return qse_awk_rtx_strtonum (
+					rtx, 0,
+					QSE_STR_PTR(&rtx->inrec.line),
+					QSE_STR_LEN(&rtx->inrec.line),
+					l, r
+				);
+			}
+			else if (idx <= rtx->inrec.nflds)
+			{
+				return qse_awk_rtx_strtonum (
+					rtx, 0,
+					rtx->inrec.flds[idx-1].ptr,
+					rtx->inrec.flds[idx-1].len,
+					l, r
+				);
+			}
+			else
+			{
+				return qse_awk_rtx_strtonum (
+					rtx, 0, QSE_T(""), 0, l, r
+				);
+			}
 		}
-		else if (idx <= rtx->inrec.nflds)
-		{
-			return qse_awk_rtx_strtonum (
-				rtx, 0,
-				rtx->inrec.flds[idx-1].ptr,
-				rtx->inrec.flds[idx-1].len,
-				l, r
-			);
-		}
-		else
-		{
-			return qse_awk_rtx_strtonum (
-				rtx, 0, QSE_T(""), 0, l, r
-			);
-		}
-	}
-	else
-	{
-		qse_awk_val_t** xref = (qse_awk_val_t**)ref->adr;
 
-		/* A reference value is not able to point to another 
-		 * refernce value for the way values are represented
-		 * in QSEAWK */
-		QSE_ASSERT ((*xref)->type != QSE_AWK_VAL_REF); 
+		case QSE_AWK_VAL_REF_GBL:
+		{
+			qse_size_t idx = (qse_size_t)ref->adr;
+			return qse_awk_rtx_valtonum (rtx, RTX_STACK_GBL (rtx, idx), l, r);
+		}
 
-		/* make a recursive call back to the caller */
-		return qse_awk_rtx_valtonum (rtx, *xref, l, r);
+		default:
+		{
+			qse_awk_val_t** xref = (qse_awk_val_t**)ref->adr;
+
+			/* A reference value is not able to point to another 
+			 * refernce value for the way values are represented
+			 * in QSEAWK */
+			QSE_ASSERT ((*xref)->type != QSE_AWK_VAL_REF); 
+
+			/* make a recursive call back to the caller */
+			return qse_awk_rtx_valtonum (rtx, *xref, l, r);
+		}
 	}
 }
 
@@ -1549,7 +1571,7 @@ int qse_awk_rtx_valtonum (
 	);
 #endif
 
-	qse_awk_rtx_seterrnum (rtx, QSE_AWK_EVALTYPE, QSE_NULL);
+	qse_awk_rtx_seterrnum (rtx, QSE_AWK_EVALTONUM, QSE_NULL);
 	return -1; /* error */
 }
 
@@ -1648,8 +1670,7 @@ qse_long_t qse_awk_rtx_hashval (qse_awk_rtx_t* rtx, qse_awk_val_t* v)
 				v->type
 			);
 #endif
-
-			qse_awk_rtx_seterrnum (rtx, QSE_AWK_EVALTYPE, QSE_NULL);
+			qse_awk_rtx_seterrnum (rtx, QSE_AWK_EHASHVAL, QSE_NULL);
 			return -1;
 	}
 
@@ -1672,44 +1693,106 @@ int qse_awk_rtx_setrefval (qse_awk_rtx_t* rtx, qse_awk_val_ref_t* ref, qse_awk_v
 		return -1;
 	}
 
-	if (ref->id == QSE_AWK_VAL_REF_POS)
+	switch (ref->id)
 	{
-		if (val->type == QSE_AWK_VAL_STR)
+		case QSE_AWK_VAL_REF_POS:
 		{
-			return qse_awk_rtx_setrec (
-				rtx, (qse_size_t)ref->adr, 
-				&((qse_awk_val_str_t*)val)->val
-			);
+
+			switch (val->type)
+			{
+				case QSE_AWK_VAL_MAP:
+					/* a map is assigned to a positional. this is disallowed. */
+					qse_awk_rtx_seterrnum (rtx, QSE_AWK_EPOSVALMAP, QSE_NULL);
+					return -1;	
+
+				case QSE_AWK_VAL_STR:
+				{
+					int x;
+
+					/* handle this separately from the default case
+					 * for no duplication. jumping to the default case
+					 * and callingqse_awk_rtx_valtostrdup() would also work, anyway. */
+					qse_awk_rtx_refupval (rtx, val);
+					x = qse_awk_rtx_setrec (
+						rtx, (qse_size_t)ref->adr, 
+						&((qse_awk_val_str_t*)val)->val
+					);
+					qse_awk_rtx_refdownval (rtx, val);
+					return x;
+				}
+
+				default:
+				{
+					qse_xstr_t str;
+					int x;
+	
+					str.ptr = qse_awk_rtx_valtostrdup (rtx, val, &str.len);
+					qse_awk_rtx_refupval (rtx, val);
+					x = qse_awk_rtx_setrec (rtx, (qse_size_t)ref->adr, &str);
+					qse_awk_rtx_refdownval (rtx, val);
+					QSE_AWK_FREE (rtx->awk, str.ptr);
+					return x;
+				}
+			}
 		}
-		else
+
+		case QSE_AWK_VAL_REF_GBL:
+			return qse_awk_rtx_setgbl (rtx, (int)ref->adr, val);
+
+		case QSE_AWK_VAL_REF_NAMEDIDX:
+		case QSE_AWK_VAL_REF_GBLIDX:
+		case QSE_AWK_VAL_REF_LCLIDX:
+		case QSE_AWK_VAL_REF_ARGIDX:
+			if (val->type == QSE_AWK_VAL_MAP)
+			{
+				/* an indexed variable cannot be assigned a map. 
+				 * in other cases, it falls down to the default case. */
+				qse_awk_rtx_seterrnum (rtx, QSE_AWK_EIDXVALMAP, QSE_NULL);
+				return -1;	
+			}
+			/* fall through */
+
+		default:
 		{
-			qse_xstr_t str;
-			int x;
-
-			str.ptr = qse_awk_rtx_valtostrdup (rtx, val, &str.len);
-			x = qse_awk_rtx_setrec (rtx, (qse_size_t)ref->adr, &str);
-			QSE_AWK_FREE (rtx->awk, str.ptr);
-			return x;
+			qse_awk_val_t** rref;
+          
+			rref = (qse_awk_val_t**)ref->adr;
+			if (val->type == QSE_AWK_VAL_MAP)
+			{
+				/* new value: map, old value: nil or map => ok */
+				if ((*rref)->type != QSE_AWK_VAL_NIL &&
+				    (*rref)->type != QSE_AWK_VAL_MAP)
+				{
+					if (!(rtx->awk->opt.trait & QSE_AWK_FLEXMAP))
+					{
+						/* cannot change a scalar value to a map */
+						qse_awk_rtx_seterrnum (rtx, QSE_AWK_ESCALARTOMAP, QSE_NULL);
+						return -1;
+					}
+				}
+			}
+			else
+			{
+				/* new value: scalar, old value: nil or scalar => ok */
+				if ((*rref)->type == QSE_AWK_VAL_MAP)
+				{
+					if (!(rtx->awk->opt.trait & QSE_AWK_FLEXMAP))
+					{
+						qse_awk_rtx_seterrnum (rtx, QSE_AWK_EMAPTOSCALAR, QSE_NULL);
+						return -1;
+					}
+				}
+			}
+			
+			if (*rref != val)
+			{
+				/* if the new value is not the same as the old value */
+				qse_awk_rtx_refdownval (rtx, *rref);
+				*rref = val;
+				qse_awk_rtx_refupval (rtx, *rref);
+			}
+			return 0;
 		}
-	}
-	else
-	{
-		qse_awk_val_t** rref;
-
-/* TODO: handle QSE_AWK_FLEXMAP...
-if FLEXMAP is not set.. check if rref is nil or map if value is map.
-also check if rref is nil... scalar if valeu is scalar.. 
-but is this really necessary? i feel all these awk quarkiness is nasty..
-*/
-
-		rref = (qse_awk_val_t**)ref->adr;
-		if (*rref != val)
-		{
-			qse_awk_rtx_refdownval (rtx, *rref);
-			*rref = val;
-			qse_awk_rtx_refupval (rtx, *rref);
-		}
-		return 0;
 	}
 }
 

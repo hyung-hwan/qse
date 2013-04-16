@@ -567,12 +567,11 @@ static int fnc_getnwifcfg (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 				tmp = qse_awk_rtx_makemapvalwithdata (rtx, md);
 				if (tmp)
 				{
-					if (qse_awk_rtx_setrefval (rtx, qse_awk_rtx_getarg (rtx, 2), tmp) <= -1)
-					{
-						qse_awk_rtx_refupval (rtx, tmp);
-						qse_awk_rtx_refdownval (rtx, tmp);
-					}
-					else ret = 0;
+					int x;
+					qse_awk_rtx_refupval (rtx, tmp);
+					x = qse_awk_rtx_setrefval (rtx, qse_awk_rtx_getarg (rtx, 2), tmp);
+					qse_awk_rtx_refdownval (rtx, tmp);
+					if (x >= 0) ret = 0;
 				}
 			}
 		}

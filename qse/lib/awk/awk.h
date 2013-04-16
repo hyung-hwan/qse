@@ -241,6 +241,14 @@ struct qse_awk_chain_t
 	qse_awk_chain_t* next;	
 };
 
+#define RTX_STACK_AT(rtx,n) ((rtx)->stack[(rtx)->stack_base+(n)])
+#define RTX_STACK_NARGS(rtx) (RTX_STACK_AT(rtx,3))
+#define RTX_STACK_ARG(rtx,n) RTX_STACK_AT(rtx,3+1+(n))
+#define RTX_STACK_LCL(rtx,n) RTX_STACK_AT(rtx,3+(qse_size_t)RTX_STACK_NARGS(rtx)+1+(n))
+#define RTX_STACK_RETVAL(rtx) RTX_STACK_AT(rtx,2)
+#define RTX_STACK_GBL(rtx,n) ((rtx)->stack[(n)])
+#define RTX_STACK_RETVAL_GBL(rtx) ((rtx)->stack[(rtx)->awk->tree.ngbls+2])
+
 struct qse_awk_rtx_t
 {
 	int id;

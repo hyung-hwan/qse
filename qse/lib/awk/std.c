@@ -2536,14 +2536,20 @@ done:
 
 	if (ret >= 0)
 	{
-		if (rv && qse_awk_rtx_setrefval (rtx, qse_awk_rtx_getarg (rtx, 2), rv) >= 0)
+		qse_awk_val_t* retv;
+
+		if (rv)
 		{
-			qse_awk_rtx_setretval (rtx, qse_awk_val_zero);
+			int x;
+			qse_awk_rtx_refupval (rtx, rv);
+			x = qse_awk_rtx_setrefval (rtx, qse_awk_rtx_getarg (rtx, 2), rv);
+			qse_awk_rtx_refdownval (rtx, rv);
+			if (x <= -1) retv = qse_awk_val_negone;
+			else retv = qse_awk_val_zero;
 		}
-		else
-		{
-			qse_awk_rtx_setretval (rtx, qse_awk_val_negone);
-		}
+		else retv = qse_awk_val_negone;
+
+		qse_awk_rtx_setretval (rtx, qse_awk_val_zero);
 	}
 
 	return ret;
