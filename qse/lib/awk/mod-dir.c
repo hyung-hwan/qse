@@ -35,7 +35,8 @@ enum
 	DIR_ENOMEM,
 	DIR_EINVAL,
 	DIR_EACCES,
-	DIR_ENOENT
+	DIR_ENOENT,
+	DIR_EMAPTOSCALAR
 };
 
 struct dir_node_t
@@ -96,6 +97,8 @@ static int awk_err_to_errnum (qse_awk_errnum_t num)
 			return DIR_EACCES;
 		case QSE_AWK_ENOENT:
 			return DIR_ENOENT;
+		case QSE_AWK_EMAPTOSCALAR:
+			return DIR_EMAPTOSCALAR;
 		default:	
 			return DIR_EOTHER;
 	}
@@ -338,6 +341,7 @@ static qse_char_t* errmsg[] =
 	QSE_T("invalid data"),
 	QSE_T("access denied"),
 	QSE_T("no entry"),
+	QSE_T("cannot change a map to a scalar"),
 	QSE_T("unknown error")
 };
 

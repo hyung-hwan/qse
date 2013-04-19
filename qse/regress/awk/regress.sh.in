@@ -176,6 +176,14 @@ PROGS="
 	lang-047.awk!!!--newline=on --tolerant=on -d-
 	lang-048.awk!!!--newline=on -d-
 	lang-049.awk!!!--newline=on -d-
+	lang-050.awk!!!--newline=on --flexmap=off -d-
+	lang-050.awk!!!--newline=on --flexmap=on -d-
+	lang-051.awk!!!--newline=on --flexmap=off -d-
+	lang-051.awk!!!--newline=on --flexmap=on -d-
+	lang-052.awk!!!--newline=on --flexmap=off -d-
+	lang-052.awk!!!--newline=on --flexmap=on -d-
+	lang-053.awk!!!--newline=on --flexmap=off -d-
+	lang-053.awk!!!--newline=on --flexmap=on -d-
 
 	columnate.awk!passwd.dat!!--newline=on -F:
 	levenshtein-utests.awk!!!--newline=on

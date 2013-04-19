@@ -6595,6 +6595,12 @@ int qse_awk_putsrcstrn (
 #	include "mod-uci.h"
 #endif
 
+/* 
+ * if modules are linked statically into the main awk module,
+ * this table is used to find the entry point of the modules.
+ * you must update this table if you add more modules 
+ */
+
 static struct
 {
 	qse_char_t* modname;

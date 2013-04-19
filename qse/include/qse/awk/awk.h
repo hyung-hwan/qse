@@ -346,7 +346,9 @@ enum qse_awk_nde_type_t
 
 	/* keep this order for the following items otherwise, you may have 
 	 * to change eval_incpre and eval_incpst in run.c as well as
-	 * QSE_AWK_VAL_REF_XXX in qse_awk_val_ref_t */
+	 * QSE_AWK_VAL_REF_XXX in qse_awk_val_ref_t. also do_assignment_map()
+	 * in run.c converts QSE_AWK_NDE_XXXIDX to QSE_AWK_NDE_XXX by
+	 * decrementing by 4. */
 	QSE_AWK_NDE_NAMED,
 	QSE_AWK_NDE_GBL,
 	QSE_AWK_NDE_LCL,
@@ -1129,7 +1131,7 @@ enum qse_awk_trait_t
 
 	QSE_AWK_MODERN =
 		QSE_AWK_CLASSIC | QSE_AWK_FLEXMAP |
-		QSE_AWK_RWPIPE | QSE_AWK_TOLERANT | QSE_AWK_NEXTOFILE  | QSE_AWK_NCMPONSTR
+		QSE_AWK_RWPIPE | QSE_AWK_TOLERANT | QSE_AWK_NEXTOFILE  /*| QSE_AWK_NCMPONSTR*/
 };
 typedef enum qse_awk_trait_t qse_awk_trait_t;
 
@@ -1231,19 +1233,20 @@ enum qse_awk_errnum_t
 	QSE_AWK_EARGTF,        /**< too few arguments */
 	QSE_AWK_EARGTM,        /**< too many arguments */
 	QSE_AWK_EFUNNF,        /**< function '${0}' not found */
-	QSE_AWK_ENOTIDX,       /**< not indexable */
 	QSE_AWK_ENOTDEL,       /**< '${0}' not deletable */
 	QSE_AWK_ENOTMAP,       /**< value not a map */
 	QSE_AWK_ENOTMAPIN,     /**< right-hand side of 'in' not a map */
 	QSE_AWK_ENOTMAPNILIN,  /**< right-hand side of 'in' not a map nor nil */
 	QSE_AWK_ENOTREF,       /**< value not referenceable */
-	QSE_AWK_EIDXVALMAP,    /**< indexed value cannot be a map */
-	QSE_AWK_EPOSVALMAP,    /**< positional cannot be a map */
-	QSE_AWK_EMAPNA,        /**< map cannot be assigned to variable */
-	QSE_AWK_EMAPNRA,       /**< map '${0}' cannot be reassigned */
-	QSE_AWK_EMAPUR,        /**< map unreturnable */
+	QSE_AWK_EMAPRET,       /**< map cannot be returned */
+	QSE_AWK_EMAPTOPOS,     /**< map cannot be assigned to a positional */
+	QSE_AWK_EMAPTOIDX,     /**< map cannot be assigned to an indexed variable */
+	QSE_AWK_EMAPTONVAR,    /**< map cannot be assigned to an variable '${0}' */
 	QSE_AWK_EMAPTOSCALAR,  /**< cannot change a map to a scalar value */
-	QSE_AWK_ESCALARTOMAP,  /**< cannot change a scalar value to a map */
+	QSE_AWK_ESCALARTOMAP,  /**< cannot change a scalar to a map */
+	QSE_AWK_ENMAPTOMAP,    /**< cannot change a map '${0}' to another map */
+	QSE_AWK_ENMAPTOSCALAR, /**< cannot change a map '${0}' to a scalar */
+	QSE_AWK_ENSCALARTOMAP, /**< cannot change a scalar '${0}' to a map */
 	QSE_AWK_EVALTOSTR,     /**< invalid value to convert to a string */
 	QSE_AWK_EVALTONUM,     /**< invalid value to convert to a number */
 	QSE_AWK_EVALTOCHR,     /**< invalid value to convert to a character */

@@ -132,9 +132,9 @@ static qse_awk_val_t* eval_assignment (
 	qse_awk_rtx_t* run, qse_awk_nde_t* nde);
 static qse_awk_val_t* do_assignment (
 	qse_awk_rtx_t* run, qse_awk_nde_t* var, qse_awk_val_t* val);
-static qse_awk_val_t* do_assignment_scalar (
+static qse_awk_val_t* do_assignment_nonidx (
 	qse_awk_rtx_t* run, qse_awk_nde_var_t* var, qse_awk_val_t* val);
-static qse_awk_val_t* do_assignment_map (
+static qse_awk_val_t* do_assignment_idx (
 	qse_awk_rtx_t* run, qse_awk_nde_var_t* var, qse_awk_val_t* val);
 static qse_awk_val_t* do_assignment_pos (
 	qse_awk_rtx_t* run, qse_awk_nde_pos_t* pos, qse_awk_val_t* val);
@@ -301,29 +301,50 @@ const qse_xstr_t* qse_awk_rtx_getsubsep (qse_awk_rtx_t* run)
  * require special treatment. */
 static int set_global (
 	qse_awk_rtx_t* rtx, int idx,
-	qse_awk_nde_var_t* var, qse_awk_val_t* val)
+	qse_awk_nde_var_t* var, qse_awk_val_t* val, int assign)
 {
 	qse_awk_val_t* old;
 	qse_awk_rtx_ecb_t* ecb;
        
 	old = RTX_STACK_GBL (rtx, idx);
-	if (old == val) return 0; /* the old value is the same as the new value. nothing to do */
 
 	if (!(rtx->awk->opt.trait & QSE_AWK_FLEXMAP))
 	{
 		qse_awk_errnum_t errnum = QSE_AWK_ENOERR;
 
-		if (old->type == QSE_AWK_VAL_MAP && val->type != QSE_AWK_VAL_MAP)
-			errnum = QSE_AWK_EMAPNRA;
-
 		if (val->type == QSE_AWK_VAL_MAP)
 		{
-			if (old->type != QSE_AWK_VAL_NIL)
-				errnum = QSE_AWK_EMAPNA;
+			if (old->type == QSE_AWK_VAL_NIL)
+			{
+				/* a nil valul can be overridden with any values */
+				/* ok. no error */
+			}
+			else if (!assign && old->type == QSE_AWK_VAL_MAP)
+			{
+				/* when both are maps, how should this operation be 
+				 * interpreted?
+				 *
+				 * is it an assignment?
+				 *    old = new
+				 *
+				 * or is it to delete all elements in the array
+				 * and add new items?
+				 *    for (i in old) delete old[i];
+				 *    for (i in new) old[i] = new[i];
+				 *
+				 * i interpret this operation as the latter.
+				 */
+
+				/* ok. no error */
+			}
+			else
+			{
+				errnum = QSE_AWK_ENSCALARTOMAP;
+			}
 		}
 		else
 		{
-			if (old->type == QSE_AWK_VAL_MAP) errnum = QSE_AWK_EMAPNRA;
+			if (old->type == QSE_AWK_VAL_MAP) errnum = QSE_AWK_ENMAPTOSCALAR;
 		}
 	
 		if (errnum != QSE_AWK_ENOERR)
@@ -334,12 +355,7 @@ static int set_global (
 			if (var)
 			{
 				/* global variable */
-				SETERR_ARGX_LOC (
-					rtx,
-					errnum,
-					xstr_to_cstr(&var->id.name),
-					&var->loc
-				);
+				SETERR_ARGX_LOC (rtx, errnum, xstr_to_cstr(&var->id.name), &var->loc);
 			}
 			else
 			{
@@ -357,15 +373,30 @@ static int set_global (
 	{
 		if (idx >= QSE_AWK_MIN_GBL_ID && idx <= QSE_AWK_MAX_GBL_ID)
 		{
-			/* short-circuit check block to prevent the basic built-in variables 
-			 * from being assigned a map. if you happen to add one and if that's 
-			 * allowed to be a map, you may have to change the condition here. */
+			/* short-circuit check block to prevent the basic built-in 
+			 * variables from being assigned a map. if you happen to add
+			 * one and if that's allowed to be a map, you may have to 
+			 * change the condition here. */
+
 /* TODO: use global variable attribute. can it be a map? can it be a scalar? is it read-only???? */
-			SETERR_COD (rtx, QSE_AWK_ESCALARTOMAP);
+
+			qse_cstr_t ea;
+			ea.ptr = qse_awk_getgblname (rtx->awk, idx, &ea.len);
+			SETERR_ARGX (rtx, QSE_AWK_ENSCALARTOMAP, &ea);
 			return -1;
 		}
 	}
 
+	if (old == val) 
+	{
+		/* if the old value is the same as the new value, don't take any actions.
+		 * note that several inspections have been performed before this check,
+		 * mainly for consistency. anyway, this condition can be met if you execute
+		 * a statement like 'ARGV=ARGV'. */
+		return 0; 
+	}
+
+	/* perform actual assignment or assignment-like operation */
 	switch (idx)
 	{
 		case QSE_AWK_GBL_CONVFMT:
@@ -652,7 +683,7 @@ QSE_INLINE int qse_awk_rtx_setgbl (
 	qse_awk_rtx_t* rtx, int id, qse_awk_val_t* val)
 {
 	QSE_ASSERT (id >= 0 && id < (int)QSE_LDA_SIZE(rtx->awk->parse.gbls));
-	return set_global (rtx, id, QSE_NULL, val);
+	return set_global (rtx, id, QSE_NULL, val, 0);
 }
 
 int qse_awk_rtx_setfilename (
@@ -2337,7 +2368,7 @@ static int run_return (qse_awk_rtx_t* run, qse_awk_nde_return_t* nde)
 				/* cannot return a map */
 				qse_awk_rtx_refupval (run, val);
 				qse_awk_rtx_refdownval (run, val);
-				SETERR_LOC (run, QSE_AWK_EMAPUR, &nde->loc);
+				SETERR_LOC (run, QSE_AWK_EMAPRET, &nde->loc);
 				return -1;
 			}
 		}
@@ -2739,12 +2770,8 @@ static int run_delete (qse_awk_rtx_t* rtx, qse_awk_nde_delete_t* nde)
 
 }
 
-static int run_reset (qse_awk_rtx_t* rtx, qse_awk_nde_reset_t* nde)
+static int reset_variable (qse_awk_rtx_t* rtx, qse_awk_nde_var_t* var)
 {
-	qse_awk_nde_var_t* var;
-
-	var = (qse_awk_nde_var_t*) nde->var;
-
 	switch (var->type)
 	{
 		case QSE_AWK_NDE_NAMED:
@@ -2808,6 +2835,11 @@ static int run_reset (qse_awk_rtx_t* rtx, qse_awk_nde_reset_t* nde)
 			SETERR_LOC (rtx, QSE_AWK_EBADARG, &var->loc);
 			return -1;
 	}
+}
+
+static int run_reset (qse_awk_rtx_t* rtx, qse_awk_nde_reset_t* nde)
+{
+	return reset_variable (rtx, (qse_awk_nde_var_t*)nde->var);
 }
 
 static int run_print (qse_awk_rtx_t* rtx, qse_awk_nde_print_t* nde)
@@ -3422,66 +3454,59 @@ static qse_awk_val_t* eval_assignment (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 }
 
 static qse_awk_val_t* do_assignment (
-	qse_awk_rtx_t* run, qse_awk_nde_t* var, qse_awk_val_t* val)
+	qse_awk_rtx_t* rtx, qse_awk_nde_t* var, qse_awk_val_t* val)
 {
 	qse_awk_val_t* ret;
 	qse_awk_errnum_t errnum;
 
-	if (var->type == QSE_AWK_NDE_NAMED ||
-	    var->type == QSE_AWK_NDE_GBL ||
-	    var->type == QSE_AWK_NDE_LCL ||
-	    var->type == QSE_AWK_NDE_ARG) 
+	switch (var->type)
 	{
-		if (!(run->awk->opt.trait & QSE_AWK_FLEXMAP))
-		{
-			/* a map value cannot be assigned to another variable */
+		case QSE_AWK_NDE_NAMED:
+		case QSE_AWK_NDE_GBL:
+		case QSE_AWK_NDE_LCL:
+		case QSE_AWK_NDE_ARG:
+			ret = do_assignment_nonidx (rtx, (qse_awk_nde_var_t*)var, val);
+			break;
+
+		case QSE_AWK_NDE_NAMEDIDX:
+		case QSE_AWK_NDE_GBLIDX:
+		case QSE_AWK_NDE_LCLIDX:
+		case QSE_AWK_NDE_ARGIDX:
 			if (val->type == QSE_AWK_VAL_MAP)
 			{
-				errnum = QSE_AWK_EMAPNA;
+				/* a map cannot become a member of a map */
+				errnum = QSE_AWK_EMAPTOIDX;
 				goto exit_on_error;
 			}
-		}
 
-		ret = do_assignment_scalar (run, (qse_awk_nde_var_t*)var, val);
-	}
-	else if (var->type == QSE_AWK_NDE_NAMEDIDX ||
-	         var->type == QSE_AWK_NDE_GBLIDX ||
-	         var->type == QSE_AWK_NDE_LCLIDX ||
-	         var->type == QSE_AWK_NDE_ARGIDX) 
-	{
-		if (val->type == QSE_AWK_VAL_MAP)
-		{
-			errnum = QSE_AWK_EMAPNA;
-			goto exit_on_error;
-		}
+			ret = do_assignment_idx (rtx, (qse_awk_nde_var_t*)var, val);
+			break;
 
-		ret = do_assignment_map (run, (qse_awk_nde_var_t*)var, val);
-	}
-	else if (var->type == QSE_AWK_NDE_POS)
-	{
-		if (val->type == QSE_AWK_VAL_MAP)
-		{
-			errnum = QSE_AWK_EMAPNA;
-			goto exit_on_error;
-		}
+		case QSE_AWK_NDE_POS:
+			if (val->type == QSE_AWK_VAL_MAP)
+			{
+				/* a map cannot be assigned to a positional */
+				errnum = QSE_AWK_EMAPTOPOS;
+				goto exit_on_error;
+			}
 	
-		ret = do_assignment_pos (run, (qse_awk_nde_pos_t*)var, val);
-	}
-	else
-	{
-		QSE_ASSERT (!"should never happen - invalid variable type");
-		errnum = QSE_AWK_EINTERN;
-		goto exit_on_error;
+			ret = do_assignment_pos (rtx, (qse_awk_nde_pos_t*)var, val);
+			break;
+
+		default:
+			QSE_ASSERT (!"should never happen - invalid variable type");
+			errnum = QSE_AWK_EINTERN;
+			goto exit_on_error;
 	}
 
 	return ret;
 
 exit_on_error:
-	SETERR_LOC (run, errnum, &var->loc);
+	SETERR_LOC (rtx, errnum, &var->loc);
 	return QSE_NULL;
 }
 
-static qse_awk_val_t* do_assignment_scalar (
+static qse_awk_val_t* do_assignment_nonidx (
 	qse_awk_rtx_t* run, qse_awk_nde_var_t* var, qse_awk_val_t* val)
 {
 	QSE_ASSERT (
@@ -3493,28 +3518,34 @@ static qse_awk_val_t* do_assignment_scalar (
 
 	QSE_ASSERT (var->idx == QSE_NULL);
 
-	QSE_ASSERT (
-		(run->awk->opt.trait & QSE_AWK_FLEXMAP) ||
-		val->type != QSE_AWK_VAL_MAP);
-
 	switch (var->type)
 	{
 		case QSE_AWK_NDE_NAMED:
 		{
 			qse_htb_pair_t* pair;
 
-			pair = qse_htb_search (
-				run->named, var->id.name.ptr, var->id.name.len);
-			if (!(run->awk->opt.trait & QSE_AWK_FLEXMAP) && 
-			    pair && ((qse_awk_val_t*)QSE_HTB_VPTR(pair))->type == QSE_AWK_VAL_MAP)
+			pair = qse_htb_search (run->named, var->id.name.ptr, var->id.name.len);
+
+			if (!(run->awk->opt.trait & QSE_AWK_FLEXMAP))
 			{
-				/* once a variable becomes a map,
-				 * it cannot be changed to a scalar variable */
-				SETERR_ARGX_LOC (
-					run, QSE_AWK_EMAPNRA,
-					xstr_to_cstr(&var->id.name), &var->loc);
-				return QSE_NULL;
+				if (pair && ((qse_awk_val_t*)QSE_HTB_VPTR(pair))->type == QSE_AWK_VAL_MAP)
+				{
+					/* old value is a map - it can only be accessed through indexing. */
+					qse_awk_errnum_t errnum;
+					errnum = (val->type == QSE_AWK_VAL_MAP)? 
+						QSE_AWK_ENMAPTOMAP: QSE_AWK_ENMAPTOSCALAR;
+					SETERR_ARGX_LOC (run, errnum, xstr_to_cstr(&var->id.name), &var->loc);
+					return QSE_NULL;
+				}
+				else if (val->type == QSE_AWK_VAL_MAP)
+				{
+					/* old value is not a map but a new value is a map.
+					 * a map cannot be assigned to a variable if FLEXMAP is off. */
+					SETERR_ARGX_LOC (run, QSE_AWK_EMAPTONVAR, xstr_to_cstr(&var->id.name), &var->loc);
+					return QSE_NULL;
+				}
 			}
+
 
 			if (qse_htb_upsert (run->named, 
 				var->id.name.ptr, var->id.name.len, val, 0) == QSE_NULL)
@@ -3529,7 +3560,7 @@ static qse_awk_val_t* do_assignment_scalar (
 
 		case QSE_AWK_NDE_GBL:
 		{
-			if (set_global (run, var->id.idxa, var, val) == -1) 
+			if (set_global (run, var->id.idxa, var, val, 1) == -1) 
 			{
 				ADJERR_LOC (run, &var->loc);
 				return QSE_NULL;
@@ -3540,16 +3571,27 @@ static qse_awk_val_t* do_assignment_scalar (
 		case QSE_AWK_NDE_LCL:
 		{
 			qse_awk_val_t* old = RTX_STACK_LCL(run,var->id.idxa);
-			if (!(run->awk->opt.trait & QSE_AWK_FLEXMAP) && old->type == QSE_AWK_VAL_MAP)
-			{	
-				/* once the variable becomes a map,
-				 * it cannot be changed to a scalar variable */
-				SETERR_ARGX_LOC (
-					run, QSE_AWK_EMAPNRA, 
-					xstr_to_cstr(&var->id.name), &var->loc);
-				return QSE_NULL;
+
+			if (!(run->awk->opt.trait & QSE_AWK_FLEXMAP))
+			{
+				if (old->type == QSE_AWK_VAL_MAP)
+				{
+					/* old value is a map - it can only be accessed through indexing. */
+					qse_awk_errnum_t errnum;
+					errnum = (val->type == QSE_AWK_VAL_MAP)? 
+						QSE_AWK_ENMAPTOMAP: QSE_AWK_ENMAPTOSCALAR;
+					SETERR_ARGX_LOC (run, errnum, xstr_to_cstr(&var->id.name), &var->loc);
+					return QSE_NULL;
+				}
+				else if (val->type == QSE_AWK_VAL_MAP)
+				{
+					/* old value is not a map but a new value is a map.
+					 * a map cannot be assigned to a variable if FLEXMAP is off. */
+					SETERR_ARGX_LOC (run, QSE_AWK_EMAPTONVAR, xstr_to_cstr(&var->id.name), &var->loc);
+					return QSE_NULL;
+				}
 			}
-	
+
 			qse_awk_rtx_refdownval (run, old);
 			RTX_STACK_LCL(run,var->id.idxa) = val;
 			qse_awk_rtx_refupval (run, val);
@@ -3559,14 +3601,25 @@ static qse_awk_val_t* do_assignment_scalar (
 		case QSE_AWK_NDE_ARG:
 		{
 			qse_awk_val_t* old = RTX_STACK_ARG(run,var->id.idxa);
-			if (!(run->awk->opt.trait & QSE_AWK_FLEXMAP) && old->type == QSE_AWK_VAL_MAP)
-			{	
-				/* once the variable becomes a map,
-				 * it cannot be changed to a scalar variable */
-				SETERR_ARGX_LOC (
-					run, QSE_AWK_EMAPNRA, 
-					xstr_to_cstr(&var->id.name), &var->loc);
-				return QSE_NULL;
+
+			if (!(run->awk->opt.trait & QSE_AWK_FLEXMAP))
+			{
+				if (old->type == QSE_AWK_VAL_MAP)
+				{
+					/* old value is a map - it can only be accessed through indexing. */
+					qse_awk_errnum_t errnum;
+					errnum = (val->type == QSE_AWK_VAL_MAP)? 
+						QSE_AWK_ENMAPTOMAP: QSE_AWK_ENMAPTOSCALAR;
+					SETERR_ARGX_LOC (run, errnum, xstr_to_cstr(&var->id.name), &var->loc);
+					return QSE_NULL;
+				}
+				else if (val->type == QSE_AWK_VAL_MAP)
+				{
+					/* old value is not a map but a new value is a map.
+					 * a map cannot be assigned to a variable if FLEXMAP is off. */
+					SETERR_ARGX_LOC (run, QSE_AWK_EMAPTONVAR, xstr_to_cstr(&var->id.name), &var->loc);
+					return QSE_NULL;
+				}
 			}
 	
 			qse_awk_rtx_refdownval (run, old);
@@ -3580,8 +3633,8 @@ static qse_awk_val_t* do_assignment_scalar (
 	return val;
 }
 
-static qse_awk_val_t* do_assignment_map (
-	qse_awk_rtx_t* run, qse_awk_nde_var_t* var, qse_awk_val_t* val)
+static qse_awk_val_t* do_assignment_idx (
+	qse_awk_rtx_t* rtx, qse_awk_nde_var_t* var, qse_awk_val_t* val)
 {
 	qse_awk_val_map_t* map;
 	qse_char_t* str;
@@ -3595,33 +3648,42 @@ static qse_awk_val_t* do_assignment_map (
 		 var->type == QSE_AWK_NDE_ARGIDX) && var->idx != QSE_NULL);
 	QSE_ASSERT (val->type != QSE_AWK_VAL_MAP);
 
-	if (var->type == QSE_AWK_NDE_NAMEDIDX)
+retry:
+	switch (var->type)
 	{
-		qse_htb_pair_t* pair;
-		pair = qse_htb_search (
-			run->named, var->id.name.ptr, var->id.name.len);
-		map = (pair == QSE_NULL)? 
-			(qse_awk_val_map_t*)qse_awk_val_nil: 
-			(qse_awk_val_map_t*)QSE_HTB_VPTR(pair);
-	}
-	else
-	{
-		map = (var->type == QSE_AWK_NDE_GBLIDX)? 
-		      	(qse_awk_val_map_t*)RTX_STACK_GBL(run,var->id.idxa):
-		      (var->type == QSE_AWK_NDE_LCLIDX)? 
-		      	(qse_awk_val_map_t*)RTX_STACK_LCL(run,var->id.idxa):
-		      	(qse_awk_val_map_t*)RTX_STACK_ARG(run,var->id.idxa);
+		case QSE_AWK_NDE_NAMEDIDX:
+		{
+			qse_htb_pair_t* pair;
+			pair = qse_htb_search (
+				rtx->named, var->id.name.ptr, var->id.name.len);
+			map = (pair == QSE_NULL)? 
+				(qse_awk_val_map_t*)qse_awk_val_nil: 
+				(qse_awk_val_map_t*)QSE_HTB_VPTR(pair);
+			break;
+		}
+
+		case QSE_AWK_NDE_GBLIDX:
+			map = (qse_awk_val_map_t*)RTX_STACK_GBL(rtx,var->id.idxa);
+			break;
+
+		case QSE_AWK_NDE_LCLIDX:
+			map = (qse_awk_val_map_t*)RTX_STACK_LCL(rtx,var->id.idxa);
+			break;
+
+		default:  /* QSE_AWK_NDE_ARGIDX */
+			map = (qse_awk_val_map_t*)RTX_STACK_ARG(rtx,var->id.idxa);
+			break;
 	} 
 
 	if (map->type == QSE_AWK_VAL_NIL)
 	{
-		/* the map is not initialized yet */
 		qse_awk_val_t* tmp;
 
-		tmp = qse_awk_rtx_makemapval (run);
+		/* the map is not initialized yet */
+		tmp = qse_awk_rtx_makemapval (rtx);
 		if (tmp == QSE_NULL) 
 		{
-			ADJERR_LOC (run, &var->loc);
+			ADJERR_LOC (rtx, &var->loc);
 			return QSE_NULL;
 		}
 
@@ -3632,11 +3694,11 @@ static qse_awk_val_t* do_assignment_map (
 				/* doesn't have to decrease the reference count 
 				 * of the previous value here as it is done by 
 				 * qse_htb_upsert */
-				qse_awk_rtx_refupval (run, tmp);
-				if (qse_htb_upsert (run->named, var->id.name.ptr, var->id.name.len, tmp, 0) == QSE_NULL)
+				qse_awk_rtx_refupval (rtx, tmp);
+				if (qse_htb_upsert (rtx->named, var->id.name.ptr, var->id.name.len, tmp, 0) == QSE_NULL)
 				{
-					qse_awk_rtx_refdownval (run, tmp);
-					SETERR_LOC (run, QSE_AWK_ENOMEM, &var->loc);
+					qse_awk_rtx_refdownval (rtx, tmp);
+					SETERR_LOC (rtx, QSE_AWK_ENOMEM, &var->loc);
 					return QSE_NULL;
 				}
 
@@ -3647,41 +3709,61 @@ static qse_awk_val_t* do_assignment_map (
 			{
 				int x;
 
-				qse_awk_rtx_refupval (run, tmp);
-				x = qse_awk_rtx_setgbl (run, (int)var->id.idxa, tmp);
-				qse_awk_rtx_refdownval (run, tmp);
+				qse_awk_rtx_refupval (rtx, tmp);
+				x = qse_awk_rtx_setgbl (rtx, (int)var->id.idxa, tmp);
+				qse_awk_rtx_refdownval (rtx, tmp);
 				if (x <= -1)
 				{
-					ADJERR_LOC (run, &var->loc);
+					ADJERR_LOC (rtx, &var->loc);
 					return QSE_NULL;
 				}
 				break;
 			}
 
 			case QSE_AWK_NDE_LCLIDX:
-				qse_awk_rtx_refdownval (run, (qse_awk_val_t*)map);
-				RTX_STACK_LCL(run,var->id.idxa) = tmp;
-				qse_awk_rtx_refupval (run, tmp);
+				qse_awk_rtx_refdownval (rtx, (qse_awk_val_t*)map);
+				RTX_STACK_LCL(rtx,var->id.idxa) = tmp;
+				qse_awk_rtx_refupval (rtx, tmp);
 				break;
 			
 			default: /* QSE_AWK_NDE_ARGIDX */
-				qse_awk_rtx_refdownval (run, (qse_awk_val_t*)map);
-				RTX_STACK_ARG(run,var->id.idxa) = tmp;
-				qse_awk_rtx_refupval (run, tmp);
+				qse_awk_rtx_refdownval (rtx, (qse_awk_val_t*)map);
+				RTX_STACK_ARG(rtx,var->id.idxa) = tmp;
+				qse_awk_rtx_refupval (rtx, tmp);
 				break;
 		}
 
-		map = (qse_awk_val_map_t*) tmp;
+		map = (qse_awk_val_map_t*)tmp;
 	}
 	else if (map->type != QSE_AWK_VAL_MAP)
 	{
-		/* variable assigned is not a map */
-		SETERR_LOC (run, QSE_AWK_ENOTIDX, &var->loc);
-		return QSE_NULL;
+		if (rtx->awk->opt.trait & QSE_AWK_FLEXMAP)
+		{
+			/* if FLEXMAP is on, you can switch a scalar value to a map */
+			qse_awk_nde_var_t fake;
+
+			/* create a fake non-indexed variable node */
+			fake = *var;
+			/* NOTE: type conversion by decrementing by 4 is 
+			 *       dependent on the qse_awk_nde_type_t 
+			 *       enumerators defined in <qse/awk/awk.h> */
+			fake.type = var->type - 4; 
+			fake.idx = QSE_NULL;
+
+			reset_variable (rtx, &fake);
+			goto retry;
+		}
+		else
+		{
+			/* you can't manipulate a variable pointing to
+			 * a scalar value with an index if FLEXMAP is off. */
+			SETERR_LOC (rtx, QSE_AWK_ESCALARTOMAP, &var->loc);
+			return QSE_NULL;
+		}
 	}
 
 	len = QSE_COUNTOF(idxbuf);
-	str = idxnde_to_str (run, var->idx, idxbuf, &len);
+	str = idxnde_to_str (rtx, var->idx, idxbuf, &len);
 	if (str == QSE_NULL) return QSE_NULL;
 
 #ifdef DEBUG_RUN
@@ -3691,13 +3773,13 @@ static qse_awk_val_t* do_assignment_map (
 
 	if (qse_htb_upsert (map->map, str, len, val, 0) == QSE_NULL)
 	{
-		if (str != idxbuf) QSE_AWK_FREE (run->awk, str);
-		SETERR_LOC (run, QSE_AWK_ENOMEM, &var->loc);
+		if (str != idxbuf) QSE_AWK_FREE (rtx->awk, str);
+		SETERR_LOC (rtx, QSE_AWK_ENOMEM, &var->loc);
 		return QSE_NULL;
 	}
 
-	if (str != idxbuf) QSE_AWK_FREE (run->awk, str);
-	qse_awk_rtx_refupval (run, val);
+	if (str != idxbuf) QSE_AWK_FREE (rtx->awk, str);
+	qse_awk_rtx_refupval (rtx, val);
 	return val;
 }
 
