@@ -112,19 +112,20 @@ const qse_char_t* qse_awk_dflerrstr (const qse_awk_t* awk, qse_awk_errnum_t errn
 		QSE_T("too few arguments"),
 		QSE_T("too many arguments"),
 		QSE_T("function '${0}' not found"),
-		QSE_T("not indexable"),
 		QSE_T("'${0}' not deletable"),
 		QSE_T("value not a map"),
 		QSE_T("right-hand side of the 'in' operator not a map"),
 		QSE_T("right-hand side of the 'in' operator not a map nor nil"),
 		QSE_T("value not referenceable"),
-		QSE_T("indexed variable cannot be assigned a map"),
-		QSE_T("positional cannot be assigned a map"),
-		QSE_T("map cannot be assigned to variable"),
-		QSE_T("map '${0}' cannot be reassigned"),
-		QSE_T("map cannot be returned"),
-		QSE_T("cannot change a map to a scalar value"),
-		QSE_T("cannot change a scalar value to a map"),
+		QSE_T("cannot return a map"),                      /* EMAPRET */
+		QSE_T("cannot assign a map to a positional"),      /* EMAPTOPOS */
+		QSE_T("cannot assign a map to an indexed variable"),/* EMAPTOIDX */
+		QSE_T("cannot assign a map to a variable '${0}'"), /* EMAPTONVAR */
+		QSE_T("cannot change a map to a scalar"),          /* EMAPTOSCALAR */
+		QSE_T("cannot change a scalar to a map"),          /* ESCALARTOMAP */
+		QSE_T("cannot change a map '${0}' to another map"),/* ENMAPTOMAP */
+		QSE_T("cannot change a map '${0}' to a scalar"),   /* ENMAPTOSCALAR */
+		QSE_T("cannot change a scalar '${0}' to a map"),   /* ENSCALARTOMAP */
 		QSE_T("invalid value to convert to a string"),
 		QSE_T("invalid value to convert to a number"),
 		QSE_T("invalid value to a character"),

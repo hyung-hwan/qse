@@ -635,14 +635,6 @@ qse_awk_val_t* qse_awk_rtx_setmapvalfld (
 {
 	QSE_ASSERT (map->type == QSE_AWK_VAL_MAP);
 
-#if 0
-	if (map->type != QSE_AWK_VAL_MAP)
-	{
-		qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOTIDX, QSE_NULL);
-		return QSE_NULL;
-	}
-#endif
-
 	if (qse_htb_upsert (
 		((qse_awk_val_map_t*)map)->map,
 		(qse_char_t*)kptr, klen, v, 0) == QSE_NULL)
@@ -667,14 +659,6 @@ qse_awk_val_t* qse_awk_rtx_getmapvalfld (
 	qse_htb_pair_t* pair;
 
 	QSE_ASSERT (map->type == QSE_AWK_VAL_MAP);
-
-#if 0
-	if (map->type != QSE_AWK_VAL_MAP)
-	{
-		qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOTIDX, QSE_NULL);
-		return QSE_NULL;
-	}
-#endif
 
 	pair = qse_htb_search (((qse_awk_val_map_t*)map)->map, kptr, klen);
 	if (pair == QSE_NULL)
@@ -1712,7 +1696,7 @@ int qse_awk_rtx_setrefval (qse_awk_rtx_t* rtx, qse_awk_val_ref_t* ref, qse_awk_v
 			{
 				case QSE_AWK_VAL_MAP:
 					/* a map is assigned to a positional. this is disallowed. */
-					qse_awk_rtx_seterrnum (rtx, QSE_AWK_EPOSVALMAP, QSE_NULL);
+					qse_awk_rtx_seterrnum (rtx, QSE_AWK_EMAPTOPOS, QSE_NULL);
 					return -1;	
 
 				case QSE_AWK_VAL_STR:
@@ -1757,7 +1741,7 @@ int qse_awk_rtx_setrefval (qse_awk_rtx_t* rtx, qse_awk_val_ref_t* ref, qse_awk_v
 			{
 				/* an indexed variable cannot be assigned a map. 
 				 * in other cases, it falls down to the default case. */
-				qse_awk_rtx_seterrnum (rtx, QSE_AWK_EIDXVALMAP, QSE_NULL);
+				qse_awk_rtx_seterrnum (rtx, QSE_AWK_EMAPTOIDX, QSE_NULL);
 				return -1;	
 			}
 			/* fall through */
