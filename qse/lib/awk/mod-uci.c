@@ -475,7 +475,7 @@ static int getsection_byid (
 						qse_awk_rtx_refupval (rtx, tmp);
 						n = qse_awk_rtx_setrefval (rtx, ref, tmp);
 						qse_awk_rtx_refdownval (rtx, tmp);
-						if (n <= -1) x = UCI_ERR_MEM; /* this is not a correct error code. who cares? */
+						if (n <= -1) return -9999;
 					}
 					else x = UCI_ERR_MEM;
 				}
@@ -540,7 +540,7 @@ static int getoption_byid (
 							if (n <= -1)
 							{
 								map = QSE_NULL;
-								x = UCI_ERR_MEM;
+								return -9999;
 							}
 						}
 						else x = UCI_ERR_MEM;
@@ -624,7 +624,7 @@ static int getoption_byid (
 									qse_awk_rtx_refupval (rtx, map);
 									qse_awk_rtx_refdownval (rtx, map);
 									map = QSE_NULL;
-									x = UCI_ERR_MEM;
+									return -9999;
 								}
 							}
 						}
@@ -1242,6 +1242,7 @@ static int fnc_uci_getoption (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 		{
 			ret = getoption_byid (rtx, list, id, item, qse_awk_rtx_getarg (rtx, 2));
 			qse_awk_rtx_freemem (rtx, item);
+			if (ret == -9999) return -1;
 		}
 		else ret = -UCI_ERR_MEM;
 	}
@@ -1276,6 +1277,7 @@ static int fnc_uci_getsection (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 		{
 			ret = getsection_byid (rtx, list, id, item, qse_awk_rtx_getarg (rtx, 2));
 			qse_awk_rtx_freemem (rtx, item);
+			if (ret == -9999) return -1;
 		}
 		else ret = -UCI_ERR_MEM;
 	}

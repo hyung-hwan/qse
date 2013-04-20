@@ -1352,7 +1352,7 @@ BEGIN {
 	printf ("%s\n",10.34);
 }
 
-ERROR: CODE 109 LINE 3 COLUMN 2 FILE /home/hyung-hwan/workspace/qse/bld/x86_64-linux-wchar-debug-shared/../../regress/awk/lang-013.awk - recursion detected in format conversion
+ERROR: CODE 110 LINE 3 COLUMN 2 FILE /home/hyung-hwan/workspace/qse/bld/x86_64-linux-wchar-debug-shared/../../regress/awk/lang-013.awk - recursion detected in format conversion
 --------------------------------------------------------------------------------
 [CMD]  qseawk -m 500000 --newline=on -d- -f lang-014.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
@@ -1533,7 +1533,7 @@ BEGIN {
 	delete iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiix;
 }
 
-ERROR: CODE 82 LINE 3 COLUMN 9 FILE /home/hyung-hwan/workspace/qse/bld/x86_64-linux-wchar-debug-shared/../../regress/awk/lang-025.awk - 'iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiix' not deletable
+ERROR: CODE 81 LINE 3 COLUMN 9 FILE /home/hyung-hwan/workspace/qse/bld/x86_64-linux-wchar-debug-shared/../../regress/awk/lang-025.awk - 'iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiix' not deletable
 --------------------------------------------------------------------------------
 [CMD]  qseawk -m 500000 --newline=on -d- -f lang-026.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
@@ -2457,6 +2457,128 @@ BEGIN {
 [CMD]  qseawk -m 500000 --newline=on -d- -f lang-049.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 ERROR: CODE 62 LINE 2 COLUMN 9 FILE /home/hyung-hwan/workspace/qse/bld/x86_64-linux-wchar-debug-shared/../../regress/awk/lang-049.awk - no argument provided
+--------------------------------------------------------------------------------
+[CMD]  qseawk -m 500000 --newline=on --flexmap=off -d- -f lang-050.awk  </dev/stdin 2>&1 
+--------------------------------------------------------------------------------
+BEGIN {
+	a = 20;
+	a[10] = 30;
+	for (i in a)
+		print i,a[i];
+}
+
+ERROR: CODE 91 LINE 6 COLUMN 2 FILE /home/hyung-hwan/workspace/qse/bld/x86_64-linux-wchar-debug-shared/../../regress/awk/lang-050.awk - cannot change a scalar to a map
+--------------------------------------------------------------------------------
+[CMD]  qseawk -m 500000 --newline=on --flexmap=on -d- -f lang-050.awk  </dev/stdin 2>&1 
+--------------------------------------------------------------------------------
+BEGIN {
+	a = 20;
+	a[10] = 30;
+	for (i in a)
+		print i,a[i];
+}
+
+10 30
+--------------------------------------------------------------------------------
+[CMD]  qseawk -m 500000 --newline=on --flexmap=off -d- -f lang-051.awk  </dev/stdin 2>&1 
+--------------------------------------------------------------------------------
+BEGIN {
+	split("a b c d e",ARGC);
+	for (i in ARGC)
+		print i,ARGC[i];
+}
+
+ERROR: CODE 94 LINE 7 COLUMN 2 FILE /home/hyung-hwan/workspace/qse/bld/x86_64-linux-wchar-debug-shared/../../regress/awk/lang-051.awk - cannot change a scalar 'ARGC' to a map
+--------------------------------------------------------------------------------
+[CMD]  qseawk -m 500000 --newline=on --flexmap=on -d- -f lang-051.awk  </dev/stdin 2>&1 
+--------------------------------------------------------------------------------
+BEGIN {
+	split("a b c d e",ARGC);
+	for (i in ARGC)
+		print i,ARGC[i];
+}
+
+1 a
+2 b
+3 c
+4 d
+5 e
+--------------------------------------------------------------------------------
+[CMD]  qseawk -m 500000 --newline=on --flexmap=off -d- -f lang-052.awk  </dev/stdin 2>&1 
+--------------------------------------------------------------------------------
+BEGIN {
+	split("a b c d e",ARGV);
+	for (i in ARGV)
+		print i,ARGV[i];
+}
+
+1 a
+2 b
+3 c
+4 d
+5 e
+--------------------------------------------------------------------------------
+[CMD]  qseawk -m 500000 --newline=on --flexmap=on -d- -f lang-052.awk  </dev/stdin 2>&1 
+--------------------------------------------------------------------------------
+BEGIN {
+	split("a b c d e",ARGV);
+	for (i in ARGV)
+		print i,ARGV[i];
+}
+
+1 a
+2 b
+3 c
+4 d
+5 e
+--------------------------------------------------------------------------------
+[CMD]  qseawk -m 500000 --newline=on --flexmap=off -d- -f lang-053.awk  </dev/stdin 2>&1 
+--------------------------------------------------------------------------------
+BEGIN {
+	a[1] = 1;
+	a[2] = 2;
+	b[4] = 4;
+	b[5] = 5;
+	a = b;
+	for (i in a)
+		print i,a[i];
+}
+
+ERROR: CODE 92 LINE 10 COLUMN 2 FILE /home/hyung-hwan/workspace/qse/bld/x86_64-linux-wchar-debug-shared/../../regress/awk/lang-053.awk - cannot change a map 'a' to another map
+--------------------------------------------------------------------------------
+[CMD]  qseawk -m 500000 --newline=on --flexmap=on -d- -f lang-053.awk  </dev/stdin 2>&1 
+--------------------------------------------------------------------------------
+BEGIN {
+	a[1] = 1;
+	a[2] = 2;
+	b[4] = 4;
+	b[5] = 5;
+	a = b;
+	for (i in a)
+		print i,a[i];
+}
+
+4 4
+5 5
+--------------------------------------------------------------------------------
+[CMD]  qseawk -m 500000 --newline=on --flexmap=off -d- -f lang-054.awk  </dev/stdin 2>&1 
+--------------------------------------------------------------------------------
+BEGIN {
+	print getioattr("xxxx","rtimeout",ARGV);
+	print ARGV;
+}
+
+ERROR: CODE 93 LINE 4 COLUMN 8 FILE /home/hyung-hwan/workspace/qse/bld/x86_64-linux-wchar-debug-shared/../../regress/awk/lang-054.awk - cannot change a map 'ARGV' to a scalar
+--------------------------------------------------------------------------------
+[CMD]  qseawk -m 500000 --newline=on --flexmap=on -d- -f lang-054.awk  </dev/stdin 2>&1 
+--------------------------------------------------------------------------------
+BEGIN {
+	print getioattr("xxxx","rtimeout",ARGV);
+	print ARGV;
+}
+
+0
+-999
 --------------------------------------------------------------------------------
 [CMD]  qseawk -m 500000 --newline=on -F: -f columnate.awk passwd.dat </dev/stdin 2>&1 
 --------------------------------------------------------------------------------

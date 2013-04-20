@@ -184,6 +184,8 @@ PROGS="
 	lang-052.awk!!!--newline=on --flexmap=on -d-
 	lang-053.awk!!!--newline=on --flexmap=off -d-
 	lang-053.awk!!!--newline=on --flexmap=on -d-
+	lang-054.awk!!!--newline=on --flexmap=off -d-
+	lang-054.awk!!!--newline=on --flexmap=on -d-
 
 	columnate.awk!passwd.dat!!--newline=on -F:
 	levenshtein-utests.awk!!!--newline=on

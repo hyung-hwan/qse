@@ -292,11 +292,7 @@ static int read_byid (qse_awk_rtx_t* rtx, dir_list_t* list, qse_long_t id, qse_a
 			qse_awk_rtx_refupval (rtx, tmp);
 			n = qse_awk_rtx_setrefval (rtx, ref, tmp);
 			qse_awk_rtx_refdownval (rtx, tmp);
-			if (n <= -1)
-			{
-				list->errnum = awk_err_to_errnum (qse_awk_rtx_geterrnum (rtx));
-				return -1;
-			}
+			if (n <= -1) return -9999;
 		}
 
 		return 1; /* has entry */
@@ -479,6 +475,7 @@ static int fnc_dir_read  (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	else
 	{
 		ret = read_byid (rtx, list, id, qse_awk_rtx_getarg (rtx, 1));
+		if (ret == -9999) return -1;
 	}
 
 	/* no error check for qse_awk_rtx_makeintval() here since ret 
