@@ -68,6 +68,7 @@ enum
 	XCFG_ROOT,
 	XCFG_REALM,
 	XCFG_AUTH,
+	XCFG_NOAUTH,
 	XCFG_DIRHEAD,
 	XCFG_DIRFOOT,
 	XCFG_ERRHEAD,
@@ -89,6 +90,23 @@ struct cgi_t
 	qse_mchar_t* shebang;
 
 	struct cgi_t* next;
+};
+
+struct auth_rule_t
+{
+	enum {
+		AUTH_RULE_PREFIX,
+		AUTH_RULE_SUFFIX,
+		AUTH_RULE_NAME,
+		AUTH_RULE_OTHER,
+		AUTH_RULE_MAX
+	} type;
+
+	qse_mchar_t* spec;
+	/* TODO: add individual realm and auth string */
+	int noauth;
+
+	struct auth_rule_t* next;
 };
 
 struct mime_t
@@ -145,6 +163,12 @@ struct loccfg_t
 		struct cgi_t* head;
 		struct cgi_t* tail;
 	} cgi[CGI_MAX];
+
+	struct
+	{
+		struct auth_rule_t* head;
+		struct auth_rule_t* tail;
+	} auth_rule[AUTH_RULE_MAX];
 
 	struct
 	{
@@ -494,9 +518,47 @@ static int query_server (
 			return 0;
 
 		case QSE_HTTPD_SERVERSTD_REALM:
+		{
+			const qse_mchar_t* apath;
+			qse_size_t i;
+
 			((qse_httpd_serverstd_realm_t*)result)->name = loccfg->xcfg[XCFG_REALM];
+
+			apath = xpath? xpath: qse_htre_getqpath (req);
+			if (apath)
+			{
+				const qse_mchar_t* base;
+				base = qse_mbsbasename (apath);
+
+				for (i = 0; i < QSE_COUNTOF(loccfg->auth_rule); i++)
+				{
+					struct auth_rule_t* auth_rule;
+					for (auth_rule = loccfg->auth_rule[i].head; auth_rule; auth_rule = auth_rule->next)
+					{
+						if ((auth_rule->type == AUTH_RULE_PREFIX && qse_mbsbeg (base, auth_rule->spec)) ||
+						    (auth_rule->type == AUTH_RULE_SUFFIX && qse_mbsend (base, auth_rule->spec)) ||
+						    (auth_rule->type == AUTH_RULE_NAME && qse_mbscmp (base, auth_rule->spec) == 0) ||
+						    auth_rule->type == AUTH_RULE_OTHER)
+						{
+							if (auth_rule->noauth) 
+							{
+								/* if noauth is set, authorization is not required */
+								((qse_httpd_serverstd_realm_t*)result)->authreq = 0;
+								return 0;
+							}
+							else 
+							{
+								/* proceed to perform authorization */
+								break;
+							}
+						}
+					}
+				}
+			}
+
 			((qse_httpd_serverstd_realm_t*)result)->authreq = (loccfg->xcfg[XCFG_REALM] != QSE_NULL);
 			return 0;
+		}
 
 		case QSE_HTTPD_SERVERSTD_AUTH:
 		{
@@ -718,6 +780,22 @@ static void free_loccfg_contents (qse_httpd_t* httpd, loccfg_t* loccfg)
 		loccfg->cgi[i].tail = QSE_NULL;
 	}
 
+	for (i = 0; i < QSE_COUNTOF(loccfg->auth_rule); i++)
+	{
+		struct auth_rule_t* auth_rule = loccfg->auth_rule[i].head;
+		while (auth_rule)
+		{
+			struct auth_rule_t* x = auth_rule;
+			auth_rule = x->next;
+
+			if (x->spec) qse_httpd_freemem (httpd, x->spec);
+			if (x) qse_httpd_freemem (httpd, x);
+		}
+
+		loccfg->auth_rule[i].head = QSE_NULL;
+		loccfg->auth_rule[i].tail = QSE_NULL;
+	}
+
 	for (i = 0; i < QSE_COUNTOF(loccfg->mime); i++)
 	{
 		struct mime_t* mime = loccfg->mime[i].head;
@@ -838,7 +916,7 @@ static int load_loccfg (qse_httpd_t* httpd, qse_xli_list_t* list, loccfg_t* cfg)
 				if (!cgi->spec)
 				{
 					qse_httpd_freemem (httpd, cgi);
-					qse_printf (QSE_T("ERROR: memory failure in copying cgi\n"));
+					qse_printf (QSE_T("ERROR: memory failure in copying cgi name\n"));
 					return -1;
 				}
 				if (pair->val->type == QSE_XLI_STR) 
@@ -862,7 +940,7 @@ static int load_loccfg (qse_httpd_t* httpd, qse_xli_list_t* list, loccfg_t* cfg)
 							{
 								qse_httpd_freemem (httpd, cgi->spec);
 								qse_httpd_freemem (httpd, cgi);
-								qse_printf (QSE_T("ERROR: memory failure in copying cgi\n"));
+								qse_printf (QSE_T("ERROR: memory failure in copying cgi shebang\n"));
 								return -1;
 							}
 						}
@@ -878,6 +956,59 @@ static int load_loccfg (qse_httpd_t* httpd, qse_xli_list_t* list, loccfg_t* cfg)
 				else
 					cfg->cgi[type].head = cgi;
 				cfg->cgi[type].tail = cgi;
+			}
+		}	
+	}
+
+	pair = qse_xli_findpairbyname (httpd_xtn->xli, list, QSE_T("auth-rule"));
+	if (!pair) pair = qse_xli_findpairbyname (httpd_xtn->xli, QSE_NULL, QSE_T("server-default.auth-rule"));
+	if (pair && pair->val->type == QSE_XLI_LIST)
+	{
+		qse_xli_list_t* auth_rule_list = (qse_xli_list_t*)pair->val;
+		for (atom = auth_rule_list->head; atom; atom = atom->next)
+		{
+			if (atom->type != QSE_XLI_PAIR) continue;
+
+			pair = (qse_xli_pair_t*)atom;
+			if (pair->key && pair->val->type == QSE_XLI_STR)
+			{
+				struct auth_rule_t* auth_rule;
+				int type;
+				const qse_char_t* tmp;
+
+				if (qse_strcmp (pair->key, QSE_T("prefix")) == 0 && pair->name) type = AUTH_RULE_PREFIX;
+				else if (qse_strcmp (pair->key, QSE_T("suffix")) == 0 && pair->name) type = AUTH_RULE_SUFFIX;
+				else if (qse_strcmp (pair->key, QSE_T("name")) == 0 && pair->name) type = AUTH_RULE_NAME;
+				else if (qse_strcmp (pair->key, QSE_T("other")) == 0 && !pair->name) type = AUTH_RULE_OTHER;
+				else continue;
+
+				auth_rule = qse_httpd_callocmem (httpd, QSE_SIZEOF(*auth_rule));
+				if (auth_rule == QSE_NULL)
+				{
+					qse_printf (QSE_T("ERROR: memory failure in copying auth-rule\n"));
+					return -1;
+				}
+
+				auth_rule->type = type;
+				if (pair->name)
+				{
+					auth_rule->spec = qse_httpd_strtombsdup (httpd, pair->name);
+					if (!auth_rule->spec)
+					{
+						qse_httpd_freemem (httpd, auth_rule);
+						qse_printf (QSE_T("ERROR: memory failure in copying auth-rule\n"));
+						return -1;
+					}
+				}
+
+				auth_rule->noauth = 0;
+				if (qse_strcmp (((qse_xli_str_t*)pair->val)->ptr, QSE_T("noauth")) == 0) auth_rule->noauth = 1;
+
+				if (cfg->auth_rule[type].tail)
+					cfg->auth_rule[type].tail->next = auth_rule;
+				else
+					cfg->auth_rule[type].head = auth_rule;
+				cfg->auth_rule[type].tail = auth_rule;
 			}
 		}	
 	}
@@ -939,7 +1070,6 @@ static int load_loccfg (qse_httpd_t* httpd, qse_xli_list_t* list, loccfg_t* cfg)
 
 	for (i = 0; i < 2;  i++)
 	{
-
 		pair = qse_xli_findpairbyname (httpd_xtn->xli, list, loc_acc_items[i].x);
 		if (!pair) pair = qse_xli_findpairbyname (httpd_xtn->xli, QSE_NULL, loc_acc_items[i].y);
 		if (pair && pair->val->type == QSE_XLI_LIST)
