@@ -122,10 +122,11 @@ static int get_char (qse_xli_t* xli)
 
 		if (n == 0)
 		{
-			xli->sio.last.c = QSE_CHAR_EOF;
-			xli->sio.last.line = xli->sio.inp->line;
-			xli->sio.last.colm = xli->sio.inp->colm;
-			xli->sio.last.file = xli->sio.inp->name;
+			xli->sio.inp->last.c = QSE_CHAR_EOF;
+			xli->sio.inp->last.line = xli->sio.inp->line;
+			xli->sio.inp->last.colm = xli->sio.inp->colm;
+			xli->sio.inp->last.file = xli->sio.inp->name;
+			xli->sio.last = xli->sio.inp->last;
 			return 0;
 		}
 
@@ -148,7 +149,6 @@ static int get_char (qse_xli_t* xli)
 	xli->sio.inp->last.line = xli->sio.inp->line;
 	xli->sio.inp->last.colm = xli->sio.inp->colm++;
 	xli->sio.inp->last.file = xli->sio.inp->name;
-
 	xli->sio.last = xli->sio.inp->last;
 	return 0;
 }

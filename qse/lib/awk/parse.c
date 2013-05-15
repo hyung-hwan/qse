@@ -471,10 +471,11 @@ static int get_char (qse_awk_t* awk)
 
 		if (n == 0)
 		{
-			awk->sio.last.c = QSE_CHAR_EOF;
-			awk->sio.last.line = awk->sio.inp->line;
-			awk->sio.last.colm = awk->sio.inp->colm;
-			awk->sio.last.file = awk->sio.inp->name;
+			awk->sio.inp->last.c = QSE_CHAR_EOF;
+			awk->sio.inp->last.line = awk->sio.inp->line;
+			awk->sio.inp->last.colm = awk->sio.inp->colm;
+			awk->sio.inp->last.file = awk->sio.inp->name;
+			awk->sio.last = awk->sio.inp->last;
 			return 0;
 		}
 
@@ -497,7 +498,6 @@ static int get_char (qse_awk_t* awk)
 	awk->sio.inp->last.line = awk->sio.inp->line;
 	awk->sio.inp->last.colm = awk->sio.inp->colm++;
 	awk->sio.inp->last.file = awk->sio.inp->name;
-
 	awk->sio.last = awk->sio.inp->last;
 	return 0;
 }
