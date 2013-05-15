@@ -151,15 +151,6 @@ qse_awk_t* qse_awk_open (qse_mmgr_t* mmgr, qse_size_t xtnsize, qse_awk_prm_t* pr
 	if (init_token (mmgr, &awk->tok) == -1) goto oops;
 	if (init_token (mmgr, &awk->ntok) == -1) goto oops;
 
-	awk->sio_names = qse_htb_open (
-		mmgr, QSE_SIZEOF(awk), 128, 70, QSE_SIZEOF(qse_char_t), 1
-	);
-	if (awk->sio_names == QSE_NULL) goto oops;
-	*(qse_awk_t**)QSE_XTN(awk->sio_names) = awk;
-	qse_htb_setstyle (awk->sio_names, 
-		qse_gethtbstyle(QSE_HTB_STYLE_INLINE_KEY_COPIER)
-	);
-
 	/* TODO: initial map size?? */
 	awk->tree.funs = qse_htb_open (
 		mmgr, QSE_SIZEOF(awk), 512, 70, QSE_SIZEOF(qse_char_t), 1
@@ -256,7 +247,6 @@ oops:
 	if (awk->parse.named) qse_htb_close (awk->parse.named);
 	if (awk->parse.funs) qse_htb_close (awk->parse.funs);
 	if (awk->tree.funs) qse_htb_close (awk->tree.funs);
-	if (awk->sio_names) qse_htb_close (awk->sio_names);
 	fini_token (&awk->ntok);
 	fini_token (&awk->tok);
 	fini_token (&awk->ptok);
@@ -286,11 +276,12 @@ int qse_awk_close (qse_awk_t* awk)
 	qse_htb_close (awk->parse.funs);
 
 	qse_htb_close (awk->tree.funs);
-	qse_htb_close (awk->sio_names);
 
 	fini_token (&awk->ntok);
 	fini_token (&awk->tok);
 	fini_token (&awk->ptok);
+
+	qse_awk_clearsionames (awk);
 
 	/* destroy dynamically allocated options */
 	for (i = 0; i < QSE_COUNTOF(awk->opt.mod); i++)
@@ -391,9 +382,9 @@ int qse_awk_clear (qse_awk_t* awk)
 	awk->tree.chain_size = 0;
 
 	/* this table must not be cleared here as there can be a reference
-	 * to an entry of this table from errinf.fil when qse_awk_parse() 
+	 * to an entry of this table from errinf.loc.file when qse_awk_parse() 
 	 * failed. this table is cleared in qse_awk_parse().
-	 * qse_htb_clear (awk->sio_names);
+	 * qse_awk_claersionames (awk);
 	 */
 	return 0;
 }

@@ -506,20 +506,9 @@ typedef struct qse_awk_sio_arg_t qse_awk_sio_arg_t;
 struct qse_awk_sio_arg_t 
 {
 	/** 
-	 * [IN] bitwise-ORed of #qse_awk_sio_arg_flag_t.
-	 * The field is set with #QSE_AWK_SIO_INCLUDED if an included file
-	 * is handled. 
-	 */
-	int flags;  
-
-	/** 
 	 * [IN/OUT] name of I/O object. 
-	 * if #QSE_AWK_SIO_INCLUDED is not set, the name is set to #QSE_NULL.
-	 * the source stream handler(#qse_awk_sio_impl_t) can change this field
-	 * to give useful information back to the parser.
-	 *
-	 * if #QSE_AWK_SIO_INCLUDED is set in the flags field,  
-	 * the name field is set to the name of the included file.
+	 * It is #QSE_NULL for the top-level stream. It points to a stream name
+	 * for an included stream.
 	 */
 	const qse_char_t* name;   
 
@@ -530,6 +519,12 @@ struct qse_awk_sio_arg_t
 	 * during opening.
 	 */
 	void* handle;
+
+	/**
+ 	 * [IN] points to the includer. #QSE_NULL for the toplevel.
+	 * 
+	 */
+	qse_awk_sio_arg_t* prev;
 
 	/*-- from here down, internal use only --*/
 	struct
@@ -543,7 +538,6 @@ struct qse_awk_sio_arg_t
 	qse_size_t colm;
 
 	qse_awk_sio_lxc_t last;
-	qse_awk_sio_arg_t* next;
 };
 
 /**

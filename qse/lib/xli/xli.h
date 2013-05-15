@@ -23,7 +23,6 @@
 
 #include <qse/xli/xli.h>
 #include <qse/cmn/str.h>
-#include <qse/cmn/htb.h>
 #include "../cmn/mem.h"
 
 typedef struct qse_xli_tok_t qse_xli_tok_t;
@@ -63,7 +62,7 @@ struct qse_xli_t
 		qse_xli_io_arg_t  arg; /* for top level */
 		qse_xli_io_arg_t* inp; /* current */
 	} sio;
-	qse_htb_t* sio_names;
+	qse_link_t* sio_names;
 };
 
 
@@ -77,6 +76,8 @@ void qse_xli_fini (qse_xli_t* xli);
 
 const qse_char_t* qse_xli_dflerrstr (
      const qse_xli_t* xli, qse_xli_errnum_t errnum);
+
+void qse_xli_clearsionames (qse_xli_t* xli);
 
 #if defined(__cplusplus)
 }

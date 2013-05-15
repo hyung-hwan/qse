@@ -605,19 +605,19 @@ oops:
 		 * closed. close them */
 		while (awk->sio.inp != &awk->sio.arg)
 		{
-			qse_awk_sio_arg_t* next;
+			qse_awk_sio_arg_t* prev;
 
 			/* nothing much to do about a close error */
 			awk->sio.inf (
 				awk, QSE_AWK_SIO_CLOSE, 
 				awk->sio.inp, QSE_NULL, 0);
 
-			next = awk->sio.inp->next;
+			prev = awk->sio.inp->prev;
 
 			QSE_ASSERT (awk->sio.inp->name != QSE_NULL);
 			QSE_MMGR_FREE (awk->mmgr, awk->sio.inp);
 
-			awk->sio.inp = next;
+			awk->sio.inp = prev;
 		}
 	}
 	else if (ret == 0) 
@@ -649,6 +649,17 @@ oops:
 	return ret;
 }
 
+void qse_awk_clearsionames (qse_awk_t* awk)
+{
+	qse_link_t* cur;
+	while (awk->sio_names)
+	{
+		cur = awk->sio_names;
+		awk->sio_names = cur->link;
+		QSE_MMGR_FREE (awk->mmgr, cur);
+	}
+}
+
 int qse_awk_parse (qse_awk_t* awk, qse_awk_sio_t* sio)
 {
 	int n;
@@ -667,7 +678,7 @@ int qse_awk_parse (qse_awk_t* awk, qse_awk_sio_t* sio)
 	QSE_ASSERT (awk->parse.depth.expr == 0);
 
 	qse_awk_clear (awk);
-	qse_htb_clear (awk->sio_names);
+	qse_awk_clearsionames (awk);
 
 	QSE_MEMSET (&awk->sio, 0, QSE_SIZEOF(awk->sio));
 	awk->sio.inf = sio->in;
@@ -708,7 +719,7 @@ static int end_include (qse_awk_t* awk)
 	 * awk->sio.inp again. */
 
 	cur = awk->sio.inp;
-	awk->sio.inp = awk->sio.inp->next;
+	awk->sio.inp = awk->sio.inp->prev;
 
 	QSE_ASSERT (cur->name != QSE_NULL);
 	QSE_MMGR_FREE (awk->mmgr, cur);
@@ -728,9 +739,8 @@ static int end_include (qse_awk_t* awk)
 
 static int begin_include (qse_awk_t* awk)
 {
-	qse_ssize_t op;
 	qse_awk_sio_arg_t* arg = QSE_NULL;
-	qse_htb_pair_t* pair = QSE_NULL;
+	qse_link_t* link;
 
 	if (qse_strlen(QSE_STR_PTR(awk->tok.name)) != QSE_STR_LEN(awk->tok.name))
 	{
@@ -746,50 +756,49 @@ static int begin_include (qse_awk_t* awk)
 		return -1;
 	}
 
-	/* store the file name to awk->sio_names */
-	pair = qse_htb_ensert (
-		awk->sio_names, 
-		QSE_STR_PTR(awk->tok.name),
-		QSE_STR_LEN(awk->tok.name) + 1, /* to include '\0' */
-		QSE_NULL, 0
-	);
-	if (pair == QSE_NULL)
-	{
-		SETERR_LOC (awk, QSE_AWK_ENOMEM, &awk->ptok.loc);
-		goto oops;
-	}
-
-	/*QSE_HTB_VPTR(pair) = QSE_HTB_KPTR(pair);
-	QSE_HTB_VLEN(pair) = QSE_HTB_KLEN(pair);*/
-
 	if (awk->opt.incldirs.ptr)
 	{
 		/* include directory is set... */
 /* TODO: */
 	}
 
-	arg = (qse_awk_sio_arg_t*) qse_awk_callocmem (awk, QSE_SIZEOF(*arg));
+	/* store the include-file name into a list
+	 * and this list is not deleted after qse_awk_parse.
+	 * the errinfo.loc.file can point to a string here. */
+	link = (qse_link_t*) qse_awk_callocmem (awk, QSE_SIZEOF(*link) + 
+		QSE_SIZEOF(*arg) + QSE_SIZEOF(qse_char_t) * (QSE_STR_LEN(awk->tok.name) + 1));
+	if (link == QSE_NULL)
+	{
+		ADJERR_LOC (awk, &awk->ptok.loc);
+		goto oops;
+	}
+	qse_strncpy ((qse_char_t*)(link + 1), QSE_STR_PTR(awk->tok.name), QSE_STR_LEN(awk->tok.name));
+	link->link = awk->sio_names;
+	awk->sio_names = link;
+
+	arg = (qse_awk_sio_arg_t*) qse_awk_callocmem (awk, QSE_SIZEOF(*awk));
 	if (arg == QSE_NULL)
 	{
 		ADJERR_LOC (awk, &awk->ptok.loc);
 		goto oops;
 	}
 
-	arg->flags = QSE_AWK_SIO_INCLUDED;
-	arg->name = QSE_HTB_KPTR(pair);
+	arg->name = (const qse_char_t*)(link + 1);
 	arg->line = 1;
 	arg->colm = 1;
 
+	/* let the argument's prev field point to the current */
+	arg->prev = awk->sio.inp;
+
 	CLRERR (awk);
-	op = awk->sio.inf (awk, QSE_AWK_SIO_OPEN, arg, QSE_NULL, 0);
-	if (op <= -1)
+	if (awk->sio.inf (awk, QSE_AWK_SIO_OPEN, arg, QSE_NULL, 0) <= -1)
 	{
 		if (ISNOERR(awk)) SETERR_TOK (awk, QSE_AWK_EOPEN);
 		else awk->errinf.loc = awk->tok.loc; /* adjust error location */
 		goto oops;
 	}
 
-	arg->next = awk->sio.inp;
+	/* i update the current pointer after opening is successful */
 	awk->sio.inp = arg;
 	awk->parse.depth.incl++;
 
@@ -807,6 +816,8 @@ static int begin_include (qse_awk_t* awk)
 	return 0;
 
 oops:
+	/* i don't need to free 'link'  here since it's linked to awk->sio_names
+	 * that's freed at the beginning of qse_awk_parse() or by qse_awk_close(). */
 	if (arg) QSE_MMGR_FREE (awk->mmgr, arg);
 	return -1;
 }

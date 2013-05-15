@@ -38,6 +38,7 @@ enum qse_sio_flag_t
 	 * the range is represented by QSE_FIO_RESERVED. */
 	QSE_SIO_IGNOREMBWCERR = (1 << 1),
 	QSE_SIO_NOAUTOFLUSH   = (1 << 2),
+	QSE_SIO_KEEPPATH      = (1 << 3),
 
 	/* ensure that the following enumerators are one of
 	 * qse_fio_flags_t enumerators */
@@ -111,6 +112,8 @@ struct qse_sio_t
 
 	qse_mchar_t inbuf[2048];
 	qse_mchar_t outbuf[2048];
+
+	qse_char_t* path;
 
 #if defined(_WIN32)
 	int status;
@@ -193,6 +196,15 @@ QSE_EXPORT qse_sio_hnd_t qse_sio_gethandle (
 
 QSE_EXPORT qse_ubi_t qse_sio_gethandleasubi (
 	const qse_sio_t* sio
+);
+
+/** 
+ * The qse_sio_getpath() returns the file path used to open the stream.
+ * It returns #QSE_NULL if #QSE_SIO_HANDLE was on or #QSE_SIO_KEEPPATH 
+ * was off at the time of opening.
+ */
+QSE_EXPORT const qse_char_t* qse_sio_getpath (
+	qse_sio_t* sio
 );
 
 QSE_EXPORT qse_ssize_t qse_sio_flush (

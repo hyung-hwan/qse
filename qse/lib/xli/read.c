@@ -279,7 +279,7 @@ static int end_include (qse_xli_t* xli)
 	 * xli->sio.inp again. */
 
 	cur = xli->sio.inp;
-	xli->sio.inp = xli->sio.inp->next;
+	xli->sio.inp = xli->sio.inp->prev;
 
 	QSE_ASSERT (cur->name != QSE_NULL);
 	QSE_MMGR_FREE (xli->mmgr, cur);
@@ -299,43 +299,35 @@ static int end_include (qse_xli_t* xli)
 
 static int begin_include (qse_xli_t* xli)
 {
-	qse_ssize_t op;
+	qse_link_t* link;
 	qse_xli_io_arg_t* arg = QSE_NULL;
-	qse_htb_pair_t* pair = QSE_NULL;
 
-	/* store the file name to xli->sio_names */
-	pair = qse_htb_ensert (
-		xli->sio_names, 
-		QSE_STR_PTR(xli->tok.name),
-		QSE_STR_LEN(xli->tok.name) + 1, /* to include '\0' */
-		QSE_NULL, 0
-	);
-	if (pair == QSE_NULL)
-	{
-		qse_xli_seterror (xli, QSE_XLI_ENOMEM, QSE_NULL, &xli->tok.loc);
-		goto oops;
-	}
+	link = (qse_xli_io_arg_t*) qse_xli_callocmem (xli, 
+		QSE_SIZEOF(*link) + QSE_SIZEOF(qse_char_t) * (QSE_STR_LEN(xli->tok.name) + 1));
+	if (link == QSE_NULL) goto oops;
 
-	/*QSE_HTB_VPTR(pair) = QSE_HTB_KPTR(pair);
-	QSE_HTB_VLEN(pair) = QSE_HTB_KLEN(pair);*/
+	qse_strncpy ((qse_char_t*)(link + 1), QSE_STR_PTR(xli->tok.name), QSE_STR_LEN(xli->tok.name));
+	link->link = xli->sio_names;
+	xli->sio_names = link;
 
 	arg = (qse_xli_io_arg_t*) qse_xli_callocmem (xli, QSE_SIZEOF(*arg));
 	if (arg == QSE_NULL) goto oops;
 
-	arg->flags = QSE_XLI_IO_INCLUDED;
-	arg->name = QSE_HTB_KPTR(pair);
+	arg->name = (const qse_char_t*)(link + 1);
 	arg->line = 1;
 	arg->colm = 1;
 
-	op = xli->sio.inf (xli, QSE_XLI_IO_OPEN, arg, QSE_NULL, 0);
-	if (op <= -1)
+	/* let the argument's prev point field to the current */
+	arg->prev = xli->sio.inp; 
+
+	if (xli->sio.inf (xli, QSE_XLI_IO_OPEN, arg, QSE_NULL, 0) <= -1)
 	{
 		if (xli->errnum == QSE_XLI_ENOERR)
 			qse_xli_seterrnum (xli, QSE_XLI_EIOUSR, QSE_NULL); 
 		goto oops;
 	}
 
-	arg->next = xli->sio.inp;
+	/* i update the current pointer after opening is successful */
 	xli->sio.inp = arg;
 	/* xli->parse.depth.incl++; */
 
@@ -353,6 +345,9 @@ static int begin_include (qse_xli_t* xli)
 	return 0;
 
 oops:
+	/* i don't need to free 'link' since it's linked to
+	 * xli->sio_names that's freed at the beginning of qse_xli_read()
+	 * or by qse_xli_fini() */
 	if (arg) QSE_MMGR_FREE (xli->mmgr, arg);
 	return -1;
 }
@@ -726,6 +721,17 @@ oops:
 	return -1;
 }
 
+void qse_xli_clearsionames (qse_xli_t* xli)
+{
+	qse_link_t* cur;
+	while (xli->sio_names)
+	{
+		cur = xli->sio_names;
+		xli->sio_names = cur->link;
+		QSE_MMGR_FREE (xli->mmgr, cur);
+	}
+}
+
 int qse_xli_read (qse_xli_t* xli, qse_xli_io_impl_t io)
 {
 	qse_ssize_t n;
@@ -741,7 +747,7 @@ int qse_xli_read (qse_xli_t* xli, qse_xli_io_impl_t io)
 	xli->sio.arg.line = 1;
 	xli->sio.arg.colm = 1;
 	xli->sio.inp = &xli->sio.arg;
-	qse_htb_clear (xli->sio_names);
+	qse_xli_clearsionames (xli);
 
 	n = xli->sio.inf (xli, QSE_XLI_IO_OPEN, xli->sio.inp, QSE_NULL, 0);
 	if (n <= -1)
@@ -771,15 +777,15 @@ oops:
 	 * closed. close them */
 	while (xli->sio.inp != &xli->sio.arg)
 	{
-		qse_xli_io_arg_t* next;
+		qse_xli_io_arg_t* prev;
 
 		/* nothing much to do about a close error */
 		close_stream (xli);
 
-		next = xli->sio.inp->next;
+		prev = xli->sio.inp->prev;
 		QSE_ASSERT (xli->sio.inp->name != QSE_NULL);
 		QSE_MMGR_FREE (xli->mmgr, xli->sio.inp);
-		xli->sio.inp = next;
+		xli->sio.inp = prev;
 	}
 	
 	close_stream (xli);

@@ -119,6 +119,14 @@ qse_sio_t* qse_sio_openstd (
 	qse_sio_t* sio;
 	qse_fio_hnd_t hnd;
 
+	/* Is this necessary?
+	if (flags & QSE_SIO_KEEPATH)
+	{
+		sio->errnum = QSE_SIO_EINVAL;
+		return QSE_NULL;
+	}
+	*/
+
 	if (qse_getstdfiohandle (std, &hnd) <= -1) return QSE_NULL;
 
 	sio = qse_sio_open (mmgr, xtnsize, 
@@ -146,7 +154,7 @@ void qse_sio_close (qse_sio_t* sio)
 }
 
 int qse_sio_init (
-	qse_sio_t* sio, qse_mmgr_t* mmgr, const qse_char_t* file, int flags)
+	qse_sio_t* sio, qse_mmgr_t* mmgr, const qse_char_t* path, int flags)
 {
 	int mode;
 	int topt = 0;
@@ -162,21 +170,30 @@ int qse_sio_init (
 	 * this function, a user can specify a sio flag enumerator not 
 	 * present in the fio flag enumerator. mask off such an enumerator. */
 	if (qse_fio_init (
-		&sio->file, mmgr, file, 
+		&sio->file, mmgr, path, 
 		(flags & ~QSE_FIO_RESERVED), mode) <= -1) 
 	{
 		sio->errnum = fio_errnum_to_sio_errnum (&sio->file);
-		return -1;
+		goto oops00;
 	}
 
 	if (flags & QSE_SIO_IGNOREMBWCERR) topt |= QSE_TIO_IGNOREMBWCERR;
 	if (flags & QSE_SIO_NOAUTOFLUSH) topt |= QSE_TIO_NOAUTOFLUSH;
 
+	if ((flags & QSE_SIO_KEEPPATH) && !(flags & QSE_SIO_HANDLE))
+	{
+		sio->path = qse_strdup (path, sio->mmgr);
+		if (sio->path == QSE_NULL)
+		{
+			sio->errnum = QSE_SIO_ENOMEM;
+			goto oops01;
+		}
+	}
+
 	if (qse_tio_init(&sio->tio.io, mmgr, topt) <= -1)
 	{
 		sio->errnum = tio_errnum_to_sio_errnum (&sio->tio.io);
-		qse_fio_fini (&sio->file);
-		return -1;
+		goto oops02;
 	}
 	/* store the back-reference to sio in the extension area.*/
 	QSE_ASSERT (QSE_XTN(&sio->tio.io) == &sio->tio.xtn);
@@ -187,12 +204,19 @@ int qse_sio_init (
 	{
 		if (sio->errnum == QSE_SIO_ENOERR) 
 			sio->errnum = tio_errnum_to_sio_errnum (&sio->tio.io);
-		qse_tio_fini (&sio->tio.io);	
-		qse_fio_fini (&sio->file);
-		return -1;
+		goto oops03;
 	}
 
 	return 0;
+
+oops03:
+	qse_tio_fini (&sio->tio.io);	
+oops02:
+	if (sio->path) QSE_MMGR_FREE (sio->mmgr, sio->path);
+oops01:
+	qse_fio_fini (&sio->file);
+oops00:
+	return -1;
 }
 
 int qse_sio_initstd (
@@ -227,6 +251,7 @@ void qse_sio_fini (qse_sio_t* sio)
 	qse_sio_flush (sio);
 	qse_tio_fini (&sio->tio.io);
 	qse_fio_fini (&sio->file);
+	if (sio->path) QSE_MMGR_FREE (sio->mmgr, sio->path);
 }
 
 qse_mmgr_t* qse_sio_getmmgr (qse_sio_t* sio)
@@ -263,6 +288,12 @@ qse_sio_hnd_t qse_sio_gethandle (const qse_sio_t* sio)
 qse_ubi_t qse_sio_gethandleasubi (const qse_sio_t* sio)
 {
 	return qse_fio_gethandleasubi (&sio->file);
+}
+
+const qse_char_t* qse_sio_getpath (qse_sio_t* sio)
+{
+	/* this path is valid if QSE_SIO_HANDLE is off and QSE_SIO_KEEPPATH is on */
+	return sio->path;
 }
 
 qse_ssize_t qse_sio_flush (qse_sio_t* sio)
@@ -635,4 +666,5 @@ static qse_ssize_t file_output (
 
 	return 0;
 }
+
 
