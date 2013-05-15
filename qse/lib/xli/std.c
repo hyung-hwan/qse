@@ -122,13 +122,7 @@ static qse_sio_t* open_sio (qse_xli_t* xli, const qse_char_t* file, int flags)
 	return sio;
 }
 
-struct sio_std_name_t
-{
-	const qse_char_t* ptr;
-	qse_size_t        len;
-};
-
-static struct sio_std_name_t sio_std_names[] =
+static qse_cstr_t sio_std_names[] =
 {
 	{ QSE_T("stdin"),   5 },
 	{ QSE_T("stdout"),  6 },
@@ -139,22 +133,18 @@ static qse_sio_t* open_sio_std (qse_xli_t* xli, qse_sio_std_t std, int flags)
 {
 	qse_sio_t* sio;
 	sio = qse_sio_openstd (xli->mmgr, 0, std, flags);
-	if (sio == QSE_NULL)
-	{
-		qse_cstr_t ea;
-		ea.ptr = sio_std_names[std].ptr;
-		ea.len = sio_std_names[std].len;
-		qse_xli_seterrnum (xli, QSE_XLI_EIOFIL, &ea);
-	}
+	if (sio == QSE_NULL) qse_xli_seterrnum (xli, QSE_XLI_EIOFIL, &sio_std_names[std]);
 	return sio;
 }
 
 static qse_ssize_t sf_in_open (qse_xli_t* xli, qse_xli_io_arg_t* arg, xtn_t* xtn)
 {
-	if (arg->name == QSE_NULL)
+	if (arg->prev == QSE_NULL)
 	{
 		qse_xli_iostd_t* psin = xtn->s.in.x;
 	
+		QSE_ASSERT (arg == &xli->sio.arg);
+
 		switch (psin->type)
 		{
 			/* normal source files */
@@ -172,6 +162,11 @@ static qse_ssize_t sf_in_open (qse_xli_t* xli, qse_xli_io_arg_t* arg, xtn_t* xtn
 				}
 				if (arg->handle == QSE_NULL) return -1;
 				if (psin->u.file.cmgr) qse_sio_setcmgr (arg->handle, psin->u.file.cmgr);
+
+				/* update the object name to something more specific */
+				arg->name = psin->u.file.path;
+				if (arg->name == QSE_NULL) arg->name = sio_std_names[QSE_SIO_STDIN].ptr;
+
 				return 0;
 	
 			case QSE_XLI_IOSTD_STR:
@@ -186,43 +181,47 @@ static qse_ssize_t sf_in_open (qse_xli_t* xli, qse_xli_io_arg_t* arg, xtn_t* xtn
 	}
 	else
 	{
-		QSE_ASSERT (arg->prev != QSE_NULL);
-
 		/* handle the included file - @include */
-		const qse_char_t* path, * outer;
+		const qse_char_t* path;
 		qse_char_t fbuf[64];
 		qse_char_t* dbuf = QSE_NULL;
 	
 		QSE_ASSERT (arg->name != QSE_NULL);
 
 		path = arg->name;
-		outer = qse_sio_getpath (arg->prev->handle);
-		if (outer)
+		if (arg->prev->handle)
 		{
-			const qse_char_t* base;
+			const qse_char_t* outer;
 
-			/* i'm being included from another file */
-			base = qse_basename (outer);
-			if (base != outer && arg->name[0] != QSE_T('/'))
+			outer = qse_sio_getpath (arg->prev->handle);
+
+			if (outer)
 			{
-				qse_size_t tmplen, totlen, dirlen;
-
-				dirlen = base - outer;	
-				
-				totlen = qse_strlen(arg->name) + dirlen;
-				if (totlen >= QSE_COUNTOF(fbuf))
+				const qse_char_t* base;
+	
+				/* i'm being included from another file */
+				base = qse_basename (outer);
+				if (base != outer && arg->name[0] != QSE_T('/'))
 				{
-					dbuf = qse_xli_allocmem (
-						xli, QSE_SIZEOF(qse_char_t) * (totlen + 1)
-					);
-					if (dbuf == QSE_NULL) return -1;
+					qse_size_t tmplen, totlen, dirlen;
 	
-					path = dbuf;
+					dirlen = base - outer;	
+					
+					totlen = qse_strlen(arg->name) + dirlen;
+					if (totlen >= QSE_COUNTOF(fbuf))
+					{
+						dbuf = qse_xli_allocmem (
+							xli, QSE_SIZEOF(qse_char_t) * (totlen + 1)
+						);
+						if (dbuf == QSE_NULL) return -1;
+		
+						path = dbuf;
+					}
+					else path = fbuf;
+		
+					tmplen = qse_strncpy ((qse_char_t*)path, outer, dirlen);
+					qse_strcpy ((qse_char_t*)path + tmplen, arg->name);
 				}
-				else path = fbuf;
-	
-				tmplen = qse_strncpy ((qse_char_t*)path, outer, dirlen);
-				qse_strcpy ((qse_char_t*)path + tmplen, arg->name);
 			}
 		}
 
@@ -248,7 +247,7 @@ static qse_ssize_t sf_in_open (qse_xli_t* xli, qse_xli_io_arg_t* arg, xtn_t* xtn
 static qse_ssize_t sf_in_close (
 	qse_xli_t* xli, qse_xli_io_arg_t* arg, xtn_t* xtn)
 {
-	if (arg->name == QSE_NULL)
+	if (arg->prev == QSE_NULL)
 	{
 		switch (xtn->s.in.x->type)
 		{
@@ -280,7 +279,7 @@ static qse_ssize_t sf_in_read (
 	qse_xli_t* xli, qse_xli_io_arg_t* arg,
 	qse_char_t* data, qse_size_t size, xtn_t* xtn)
 {
-	if (arg->name == QSE_NULL)
+	if (arg->prev == QSE_NULL)
 	{
 		qse_ssize_t n;
 
@@ -292,16 +291,9 @@ static qse_ssize_t sf_in_read (
 				if (n <= -1)
 				{
 					qse_cstr_t ea;
-					if (xtn->s.in.x->u.file.path)
-					{
-						ea.ptr = xtn->s.in.x->u.file.path;
-						ea.len = qse_strlen(ea.ptr);
-					}
-					else
-					{
-						ea.ptr = sio_std_names[QSE_SIO_STDIN].ptr;
-						ea.len = sio_std_names[QSE_SIO_STDIN].len;
-					}
+					ea.ptr = xtn->s.in.x->u.file.path;
+					if (ea.ptr == QSE_NULL) ea.ptr = sio_std_names[QSE_SIO_STDIN].ptr;
+					ea.len = qse_strlen(ea.ptr);
 					qse_xli_seterrnum (xli, QSE_XLI_EIOFIL, &ea);
 				}
 				break;
@@ -384,7 +376,6 @@ static qse_ssize_t sf_out (
 					if (xtn->s.out.x->u.file.path == QSE_NULL ||
 					    (xtn->s.out.x->u.file.path[0] == QSE_T('-') &&
 					     xtn->s.out.x->u.file.path[1] == QSE_T('\0')))
-
 					{
 						/* no path name or - -> stdout */
 						xtn->s.out.u.file.sio = open_sio_std (
@@ -451,16 +442,9 @@ static qse_ssize_t sf_out (
 					if (n <= -1)
 					{
 						qse_cstr_t ea;
-						if (xtn->s.out.x->u.file.path)
-						{
-							ea.ptr = xtn->s.out.x->u.file.path;
-							ea.len = qse_strlen(ea.ptr);
-						}
-						else
-						{
-							ea.ptr = sio_std_names[QSE_SIO_STDOUT].ptr;
-							ea.len = sio_std_names[QSE_SIO_STDOUT].len;
-						}
+						ea.ptr = xtn->s.out.x->u.file.path;
+						if (ea.ptr == QSE_NULL) ea.ptr = sio_std_names[QSE_SIO_STDOUT].ptr;
+						ea.len = qse_strlen(ea.ptr);
 						qse_xli_seterrnum (xli, QSE_XLI_EIOFIL, &ea);
 					}
 	

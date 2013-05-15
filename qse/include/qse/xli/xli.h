@@ -231,9 +231,9 @@ typedef struct qse_xli_io_arg_t qse_xli_io_arg_t;
 struct qse_xli_io_arg_t 
 {
 	/** 
-	 * [IN] name of I/O object. 
+	 * [IN/OUT] name of I/O object. 
 	 * It is #QSE_NULL for the top-level stream. It points to a stream name
-	 * for an included stream.
+	 * for an included stream. This can be changed by an I/O handler.
 	 */
 	const qse_char_t* name;   
 

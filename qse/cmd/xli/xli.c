@@ -351,11 +351,13 @@ static int xli_main (int argc, qse_char_t* argv[])
 		if (errloc->line > 0 || errloc->colm > 0)
 		{
 			qse_fprintf (QSE_STDERR, 
-				QSE_T("ERROR: cannot read %s - %s at line %lu column %lu\n"),
+				QSE_T("ERROR: cannot read %s - %s at line %lu column %lu%s%s\n"),
 				g_input_file,
 				qse_xli_geterrmsg(xli),
 				(unsigned long)errloc->line,
-				(unsigned long)errloc->colm
+				(unsigned long)errloc->colm,
+				(errloc->file? QSE_T(" in "): QSE_T("")),
+				(errloc->file? errloc->file: QSE_T(""))
 			);
 		}
 		else

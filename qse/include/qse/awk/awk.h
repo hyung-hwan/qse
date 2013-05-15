@@ -497,18 +497,13 @@ struct qse_awk_sio_lxc_t
 };
 typedef struct qse_awk_sio_lxc_t qse_awk_sio_lxc_t;
 
-enum qse_awk_sio_arg_flag_t
-{
-	QSE_AWK_SIO_INCLUDED = (1 << 0)
-};
-
 typedef struct qse_awk_sio_arg_t qse_awk_sio_arg_t;
 struct qse_awk_sio_arg_t 
 {
 	/** 
 	 * [IN/OUT] name of I/O object. 
 	 * It is #QSE_NULL for the top-level stream. It points to a stream name
-	 * for an included stream.
+	 * for an included stream. This can be changed by an I/O handler.
 	 */
 	const qse_char_t* name;   
 
