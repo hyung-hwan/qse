@@ -614,6 +614,12 @@ typedef int qse_mcint_t;
 #	endif
 #endif
 
+typedef struct qse_link_t qse_link_t;
+struct qse_link_t
+{
+	qse_link_t* link;
+};
+
 /**
  * The qse_mxstr_t type defines a structure combining a pointer to a character
  * string and the number of characters. It is designed to be interchangeable

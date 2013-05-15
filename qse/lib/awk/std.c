@@ -84,11 +84,8 @@ typedef struct xtn_t
 
 			union
 			{
-				struct 
-				{
-					qse_sio_t* sio; /* the handle to an open file */
-					qse_cstr_t dir;
-				} file;
+				/* nothing to maintain here for file */
+
 				struct 
 				{
 					const qse_char_t* ptr;	
@@ -669,7 +666,7 @@ static qse_sio_t* open_sio_std_rtx (qse_awk_rtx_t* rtx, qse_sio_std_t std, int f
 
 /*** PARSESTD ***/
 
-static int open_parsestd (qse_awk_t* awk, xtn_t* xtn, qse_size_t index)
+static int open_parsestd (qse_awk_t* awk, qse_awk_sio_arg_t* arg, xtn_t* xtn, qse_size_t index)
 {
 	qse_awk_parsestd_t* psin = &xtn->s.in.x[index];
 
@@ -689,37 +686,27 @@ static int open_parsestd (qse_awk_t* awk, xtn_t* xtn, qse_size_t index)
 				if (tmp == QSE_NULL) return -1;
 
 				if (index >= 1 && xtn->s.in.x[index-1].type == QSE_AWK_PARSESTD_FILE)
-					qse_sio_close (xtn->s.in.u.file.sio);
+					qse_sio_close (arg->handle);
 
-				xtn->s.in.u.file.sio = tmp;
+				arg->handle = tmp;
 			}
 			else
 			{
 				qse_sio_t* tmp;
-				const qse_char_t* base;
 
-				tmp = open_sio (awk, psin->u.file.path, QSE_SIO_READ | QSE_SIO_IGNOREMBWCERR);
+				tmp = open_sio (awk, psin->u.file.path, QSE_SIO_READ | QSE_SIO_IGNOREMBWCERR | QSE_SIO_KEEPPATH);
 				if (tmp == QSE_NULL) return -1;
 
 				if (index >= 1 && xtn->s.in.x[index-1].type == QSE_AWK_PARSESTD_FILE)
-					qse_sio_close (xtn->s.in.u.file.sio);
-				xtn->s.in.u.file.sio = tmp;
-
-				base = qse_basename (psin->u.file.path);
-				if (base != psin->u.file.path)
-				{
-					xtn->s.in.u.file.dir.ptr = psin->u.file.path;
-					xtn->s.in.u.file.dir.len = base - psin->u.file.path;
-				}
-
+					qse_sio_close (arg->handle);
+				arg->handle = tmp;
 			}
-			if (psin->u.file.cmgr) 
-				qse_sio_setcmgr (xtn->s.in.u.file.sio, psin->u.file.cmgr);
+			if (psin->u.file.cmgr) qse_sio_setcmgr (arg->handle, psin->u.file.cmgr);
 			return 0;
 
 		case QSE_AWK_PARSESTD_STR:
 			if (index >= 1 && xtn->s.in.x[index-1].type == QSE_AWK_PARSESTD_FILE)
-				qse_sio_close (xtn->s.in.u.file.sio);
+				qse_sio_close (arg->handle);
 
 			xtn->s.in.u.str.ptr = psin->u.str.ptr;
 			xtn->s.in.u.str.end = psin->u.str.ptr + psin->u.str.len;
@@ -734,21 +721,23 @@ static int open_parsestd (qse_awk_t* awk, xtn_t* xtn, qse_size_t index)
 static qse_ssize_t sf_in_open (
 	qse_awk_t* awk, qse_awk_sio_arg_t* arg, xtn_t* xtn)
 {
-	if (arg == QSE_NULL || !(arg->flags & QSE_AWK_SIO_INCLUDED)) 
+	if (arg->name == QSE_NULL)
 	{
 		/* handle normal source input streams specified 
 		 * to qse_awk_parsestd() */
 
 		qse_ssize_t x;
-		x = open_parsestd (awk, xtn, 0);
+		x = open_parsestd (awk, arg, xtn, 0);
 		if (x >= 0) 
 		{
 			xtn->s.in.xindex = 0; /* update the current stream index */
+#if 0
 			/* perform some manipulation about the top-level input information */
 			if (xtn->s.in.x[0].type == QSE_AWK_PARSESTD_FILE)
 				awk->sio.arg.name = xtn->s.in.x[0].u.file.path;
 			else
 				awk->sio.arg.name = QSE_NULL;
+#endif
 		}
 
 		return x;
@@ -756,39 +745,43 @@ static qse_ssize_t sf_in_open (
 	else
 	{
 		/* handle the included source file - @include */
-		const qse_char_t* file;
+		const qse_char_t* path, * outer;
 		qse_char_t fbuf[64];
 		qse_char_t* dbuf = QSE_NULL;
 	
 		QSE_ASSERT (arg->name != QSE_NULL);
 
-		file = arg->name;
-		if (xtn->s.in.u.file.dir.len > 0 && arg->name[0] != QSE_T('/'))
+		path = arg->name;
+		outer = qse_sio_getpath (arg->prev->handle);
+		if (outer)
 		{
-			qse_size_t tmplen, totlen;
-			
-			totlen = qse_strlen(arg->name) + xtn->s.in.u.file.dir.len;
-			if (totlen >= QSE_COUNTOF(fbuf))
+			const qse_char_t* base;
+
+			base = qse_basename (outer);
+			if (base != outer && arg->name[0] != QSE_T('/'))
 			{
-				dbuf = qse_awk_allocmem (
-					awk, QSE_SIZEOF(qse_char_t) * (totlen + 1)
-				);
-				if (dbuf == QSE_NULL) return -1;
+				qse_size_t tmplen, totlen, dirlen;
+			
+				dirlen = base - outer;
+				totlen = qse_strlen(arg->name) + dirlen;
+				if (totlen >= QSE_COUNTOF(fbuf))
+				{
+					dbuf = qse_awk_allocmem (
+						awk, QSE_SIZEOF(qse_char_t) * (totlen + 1)
+					);
+					if (dbuf == QSE_NULL) return -1;
+	
+					path = dbuf;
+				}
+				else path = fbuf;
 
-				file = dbuf;
+				tmplen = qse_strncpy ((qse_char_t*)path, outer, dirlen);
+				qse_strcpy ((qse_char_t*)path + tmplen, arg->name);
 			}
-			else file = fbuf;
-
-			tmplen = qse_strncpy (
-				(qse_char_t*)file,
-				xtn->s.in.u.file.dir.ptr,
-				xtn->s.in.u.file.dir.len
-			);
-			qse_strcpy ((qse_char_t*)file + tmplen, arg->name);
 		}
 
 		arg->handle = qse_sio_open (
-			awk->mmgr, 0, file, QSE_SIO_READ | QSE_SIO_IGNOREMBWCERR
+			awk->mmgr, 0, path, QSE_SIO_READ | QSE_SIO_IGNOREMBWCERR | QSE_SIO_KEEPPATH
 		);
 
 		if (dbuf) QSE_MMGR_FREE (awk->mmgr, dbuf);
@@ -808,12 +801,13 @@ static qse_ssize_t sf_in_open (
 static qse_ssize_t sf_in_close (
 	qse_awk_t* awk, qse_awk_sio_arg_t* arg, xtn_t* xtn)
 {
-	if (arg == QSE_NULL || !(arg->flags & QSE_AWK_SIO_INCLUDED)) 
+	if (arg->name == QSE_NULL)
 	{
 		switch (xtn->s.in.x[xtn->s.in.xindex].type)
 		{
 			case QSE_AWK_PARSESTD_FILE:
-				qse_sio_close (xtn->s.in.u.file.sio);
+				QSE_ASSERT (arg->handle != QSE_NULL);
+				qse_sio_close (arg->handle);
 				break;
 
 			case QSE_AWK_PARSESTD_STR:
@@ -839,8 +833,7 @@ static qse_ssize_t sf_in_read (
 	qse_awk_t* awk, qse_awk_sio_arg_t* arg,
 	qse_char_t* data, qse_size_t size, xtn_t* xtn)
 {
-
-	if (arg == QSE_NULL || !(arg->flags & QSE_AWK_SIO_INCLUDED)) 
+	if (arg->name == QSE_NULL)
 	{
 		qse_ssize_t n;
 
@@ -848,8 +841,8 @@ static qse_ssize_t sf_in_read (
 		switch (xtn->s.in.x[xtn->s.in.xindex].type)
 		{
 			case QSE_AWK_PARSESTD_FILE:
-				QSE_ASSERT (xtn->s.in.u.file.sio != QSE_NULL);
-				n = qse_sio_getstrn (xtn->s.in.u.file.sio, data, size);
+				QSE_ASSERT (arg->handle != QSE_NULL);
+				n = qse_sio_getstrn (arg->handle, data, size);
 				if (n <= -1)
 				{
 					qse_cstr_t ea;
@@ -889,18 +882,11 @@ static qse_ssize_t sf_in_read (
 			if (xtn->s.in.x[next].type != QSE_AWK_PARSESTD_NULL)
 			{
 				/* open the next stream if available. */
-				if (open_parsestd (awk, xtn, next) <= -1) n = -1;
+				if (open_parsestd (awk, arg, xtn, next) <= -1) n = -1;
 				else 
 				{
 					/* if successful, close the current stream */	
 					xtn->s.in.xindex = next; /* update the next to the current */
-
-					/* perform some manipulation about the top-level input information */
-					if (xtn->s.in.x[next].type == QSE_AWK_PARSESTD_FILE)
-						awk->sio.arg.name = xtn->s.in.x[next].u.file.path;
-					else
-						awk->sio.arg.name = QSE_NULL;
-
 					goto again;
 				}
 			}
@@ -2536,11 +2522,8 @@ done:
 
 	if (ret >= 0)
 	{
-		qse_awk_val_t* retv;
-
 		if (rv)
 		{
-			int x;
 			qse_awk_rtx_refupval (rtx, rv);
 			ret = qse_awk_rtx_setrefval (rtx, qse_awk_rtx_getarg (rtx, 2), rv);
 			qse_awk_rtx_refdownval (rtx, rv);

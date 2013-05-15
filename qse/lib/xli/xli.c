@@ -67,22 +67,12 @@ int qse_xli_init (qse_xli_t* xli, qse_mmgr_t* mmgr)
 	xli->tok.name = qse_str_open (mmgr, 0, 128);
 	if (xli->tok.name == QSE_NULL) goto oops;
 
-	xli->sio_names = qse_htb_open (
-		mmgr, QSE_SIZEOF(xli), 128, 70, QSE_SIZEOF(qse_char_t), 1
-	);
-	if (xli->sio_names == QSE_NULL) goto oops;
-	*(qse_xli_t**)QSE_XTN(xli->sio_names) = xli;
-	qse_htb_setstyle (xli->sio_names, 
-		qse_gethtbstyle(QSE_HTB_STYLE_INLINE_KEY_COPIER)
-	);
-	
 	xli->root.type = QSE_XLI_LIST;
 	xli->xnil.type = QSE_XLI_NIL;
 	return 0;
 
 oops:
 	qse_xli_seterrnum (xli, QSE_XLI_ENOMEM, QSE_NULL);
-	if (xli->sio_names) qse_htb_close (xli->sio_names);
 	if (xli->tok.name) qse_str_close (xli->tok.name);
 	
 	for (i = QSE_COUNTOF(xli->tmp); i > 0; )
@@ -97,13 +87,14 @@ void qse_xli_fini (qse_xli_t* xli)
 	qse_size_t i;
 
 	qse_xli_clear (xli);
-	qse_htb_close (xli->sio_names);
 	qse_str_close (xli->tok.name);
 
 	for (i = QSE_COUNTOF(xli->tmp); i > 0; )
 	{
 		if (xli->tmp[--i]) qse_str_close (xli->tmp[i]);
 	}
+
+	qse_xli_clearsionames (xli);
 }
 
 qse_mmgr_t* qse_xli_getmmgr (qse_xli_t* xli)

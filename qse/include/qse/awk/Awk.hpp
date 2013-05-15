@@ -207,21 +207,19 @@ public:
 				return this->mode;
 			}
 
-			int getFlags () const
-			{
-				return arg->flags;
-			}
-
 			const char_t* getName() const
 			{
 				return this->arg->name;
 			}
 
-			// since it doesn't copy the contents,
-			// it should point to something that outlives this object.
-			void setName (const char_t* name) 
+			const char_t* getPrevName() const
 			{
-				this->arg->name = name;
+				return this->arg->prev->name;
+			}
+
+			const void* getPrevHandle() const
+			{
+				return this->arg->prev->handle;
 			}
 
 			void* getHandle () const

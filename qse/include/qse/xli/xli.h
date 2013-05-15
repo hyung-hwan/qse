@@ -227,29 +227,13 @@ struct qse_xli_io_lxc_t
 	const qse_char_t* file; /**< file */
 };
 
-enum qse_xli_io_arg_flag_t
-{
-	QSE_XLI_IO_INCLUDED = (1 << 0)
-};
-
 typedef struct qse_xli_io_arg_t qse_xli_io_arg_t;
 struct qse_xli_io_arg_t 
 {
 	/** 
-	 * [IN] bitwise-ORed of #qse_xli_io_arg_flag_t.
-	 * The field is set with #QSE_XLI_SIO_INCLUDED if an included file
-	 * is handled. 
-	 */
-	int flags;  
-
-	/** 
-	 * [IN/OUT] name of I/O object. 
-	 * if #QSE_XLI_SIO_INCLUDED is not set, the name is set to #QSE_NULL.
-	 * the source stream handler(#qse_xli_io_impl_t) can change this field
-	 * to give useful information back to the parser.
-	 *
-	 * if #QSE_XLI_SIO_INCLUDED is set in the flags field,  
-	 * the name field is set to the name of the included file.
+	 * [IN] name of I/O object. 
+	 * It is #QSE_NULL for the top-level stream. It points to a stream name
+	 * for an included stream.
 	 */
 	const qse_char_t* name;   
 
@@ -260,6 +244,11 @@ struct qse_xli_io_arg_t
 	 * during opening.
 	 */
 	void* handle;
+
+	/**
+	 * [IN] points to the includer
+	 */
+	qse_xli_io_arg_t* prev;
 
 	/*-- from here down, internal use only --*/
 	struct
@@ -273,7 +262,6 @@ struct qse_xli_io_arg_t
 	qse_size_t colm;
 
 	qse_xli_io_lxc_t last;
-	qse_xli_io_arg_t* next;
 };
 
 /** 

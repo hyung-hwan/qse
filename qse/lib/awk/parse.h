@@ -84,6 +84,10 @@ int qse_awk_initgbls (
 	qse_awk_t* awk
 );
 
+void qse_awk_clearsionames (
+	qse_awk_t* awk
+);
+
 #ifdef __cplusplus
 }
 #endif
