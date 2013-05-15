@@ -622,13 +622,7 @@ static qse_sio_t* open_sio_rtx (qse_awk_rtx_t* rtx, const qse_char_t* file, int 
 	return sio;
 }
 
-struct sio_std_name_t
-{
-	const qse_char_t* ptr;
-	qse_size_t        len;
-};
-
-static struct sio_std_name_t sio_std_names[] =
+static qse_cstr_t sio_std_names[] =
 {
 	{ QSE_T("stdin"),   5 },
 	{ QSE_T("stdout"),  6 },
@@ -639,13 +633,7 @@ static qse_sio_t* open_sio_std (qse_awk_t* awk, qse_sio_std_t std, int flags)
 {
 	qse_sio_t* sio;
 	sio = qse_sio_openstd (awk->mmgr, 0, std, flags);
-	if (sio == QSE_NULL)
-	{
-		qse_cstr_t ea;
-		ea.ptr = sio_std_names[std].ptr;
-		ea.len = sio_std_names[std].len;
-		qse_awk_seterrnum (awk, QSE_AWK_EOPEN, &ea);
-	}
+	if (sio == QSE_NULL) qse_awk_seterrnum (awk, QSE_AWK_EOPEN, &sio_std_names[std]);
 	return sio;
 }
 
@@ -654,13 +642,7 @@ static qse_sio_t* open_sio_std_rtx (qse_awk_rtx_t* rtx, qse_sio_std_t std, int f
 	qse_sio_t* sio;
 
 	sio = qse_sio_openstd (rtx->awk->mmgr, 0, std, flags);
-	if (sio == QSE_NULL)
-	{
-		qse_cstr_t ea;
-		ea.ptr = sio_std_names[std].ptr;
-		ea.len = sio_std_names[std].len;
-		qse_awk_rtx_seterrnum (rtx, QSE_AWK_EOPEN, &ea);
-	}
+	if (sio == QSE_NULL) qse_awk_rtx_seterrnum (rtx, QSE_AWK_EOPEN, &sio_std_names[std]);
 	return sio;
 }
 
@@ -721,23 +703,26 @@ static int open_parsestd (qse_awk_t* awk, qse_awk_sio_arg_t* arg, xtn_t* xtn, qs
 static qse_ssize_t sf_in_open (
 	qse_awk_t* awk, qse_awk_sio_arg_t* arg, xtn_t* xtn)
 {
-	if (arg->name == QSE_NULL)
+	if (arg->prev == QSE_NULL)
 	{
 		/* handle normal source input streams specified 
 		 * to qse_awk_parsestd() */
 
 		qse_ssize_t x;
+
+		QSE_ASSERT (arg == &awk->sio.arg);
+
 		x = open_parsestd (awk, arg, xtn, 0);
 		if (x >= 0) 
 		{
 			xtn->s.in.xindex = 0; /* update the current stream index */
-#if 0
 			/* perform some manipulation about the top-level input information */
 			if (xtn->s.in.x[0].type == QSE_AWK_PARSESTD_FILE)
-				awk->sio.arg.name = xtn->s.in.x[0].u.file.path;
-			else
-				awk->sio.arg.name = QSE_NULL;
-#endif
+			{
+				arg->name = xtn->s.in.x[0].u.file.path;
+				if (arg->name == QSE_NULL) arg->name = sio_std_names[QSE_SIO_STDIN].ptr;
+			}
+			else arg->name = QSE_NULL;
 		}
 
 		return x;
@@ -745,38 +730,43 @@ static qse_ssize_t sf_in_open (
 	else
 	{
 		/* handle the included source file - @include */
-		const qse_char_t* path, * outer;
+		const qse_char_t* path;
 		qse_char_t fbuf[64];
 		qse_char_t* dbuf = QSE_NULL;
 	
 		QSE_ASSERT (arg->name != QSE_NULL);
 
 		path = arg->name;
-		outer = qse_sio_getpath (arg->prev->handle);
-		if (outer)
+		if (arg->prev->handle)
 		{
-			const qse_char_t* base;
+			const qse_char_t* outer;
 
-			base = qse_basename (outer);
-			if (base != outer && arg->name[0] != QSE_T('/'))
+			outer = qse_sio_getpath (arg->prev->handle);
+			if (outer)
 			{
-				qse_size_t tmplen, totlen, dirlen;
-			
-				dirlen = base - outer;
-				totlen = qse_strlen(arg->name) + dirlen;
-				if (totlen >= QSE_COUNTOF(fbuf))
-				{
-					dbuf = qse_awk_allocmem (
-						awk, QSE_SIZEOF(qse_char_t) * (totlen + 1)
-					);
-					if (dbuf == QSE_NULL) return -1;
-	
-					path = dbuf;
-				}
-				else path = fbuf;
+				const qse_char_t* base;
 
-				tmplen = qse_strncpy ((qse_char_t*)path, outer, dirlen);
-				qse_strcpy ((qse_char_t*)path + tmplen, arg->name);
+				base = qse_basename (outer);
+				if (base != outer && arg->name[0] != QSE_T('/'))
+				{
+					qse_size_t tmplen, totlen, dirlen;
+			
+					dirlen = base - outer;
+					totlen = qse_strlen(arg->name) + dirlen;
+					if (totlen >= QSE_COUNTOF(fbuf))
+					{
+						dbuf = qse_awk_allocmem (
+							awk, QSE_SIZEOF(qse_char_t) * (totlen + 1)
+						);
+						if (dbuf == QSE_NULL) return -1;
+	
+						path = dbuf;
+					}
+					else path = fbuf;
+
+					tmplen = qse_strncpy ((qse_char_t*)path, outer, dirlen);
+					qse_strcpy ((qse_char_t*)path + tmplen, arg->name);
+				}
 			}
 		}
 
@@ -801,7 +791,7 @@ static qse_ssize_t sf_in_open (
 static qse_ssize_t sf_in_close (
 	qse_awk_t* awk, qse_awk_sio_arg_t* arg, xtn_t* xtn)
 {
-	if (arg->name == QSE_NULL)
+	if (arg->prev == QSE_NULL)
 	{
 		switch (xtn->s.in.x[xtn->s.in.xindex].type)
 		{
@@ -833,9 +823,11 @@ static qse_ssize_t sf_in_read (
 	qse_awk_t* awk, qse_awk_sio_arg_t* arg,
 	qse_char_t* data, qse_size_t size, xtn_t* xtn)
 {
-	if (arg->name == QSE_NULL)
+	if (arg->prev == QSE_NULL)
 	{
 		qse_ssize_t n;
+
+		QSE_ASSERT (arg == &awk->sio.arg);
 
 	again:
 		switch (xtn->s.in.x[xtn->s.in.xindex].type)
@@ -846,16 +838,9 @@ static qse_ssize_t sf_in_read (
 				if (n <= -1)
 				{
 					qse_cstr_t ea;
-					if (xtn->s.in.x[xtn->s.in.xindex].u.file.path)
-					{
-						ea.ptr = xtn->s.in.x[xtn->s.in.xindex].u.file.path;
-						ea.len = qse_strlen(ea.ptr);
-					}
-					else
-					{
-						ea.ptr = sio_std_names[QSE_SIO_STDIN].ptr;
-						ea.len = sio_std_names[QSE_SIO_STDIN].len;
-					}
+					ea.ptr = xtn->s.in.x[xtn->s.in.xindex].u.file.path;
+					if (ea.ptr == QSE_NULL) ea.ptr = sio_std_names[QSE_SIO_STDIN].ptr;
+					ea.len = qse_strlen(ea.ptr);
 					qse_awk_seterrnum (awk, QSE_AWK_EREAD, &ea);
 				}
 				break;
@@ -885,8 +870,19 @@ static qse_ssize_t sf_in_read (
 				if (open_parsestd (awk, arg, xtn, next) <= -1) n = -1;
 				else 
 				{
-					/* if successful, close the current stream */	
 					xtn->s.in.xindex = next; /* update the next to the current */
+
+					/* update the I/O object name */
+					if (xtn->s.in.x[next].type == QSE_AWK_PARSESTD_FILE)
+					{
+						arg->name = xtn->s.in.x[next].u.file.path;
+						if (arg->name == QSE_NULL) arg->name = sio_std_names[QSE_SIO_STDIN].ptr;
+					}
+					else
+						arg->name = QSE_NULL;
+
+					arg->line = 0; /* reset the line number */
+					arg->colm = 0;
 					goto again;
 				}
 			}
@@ -1020,16 +1016,9 @@ static qse_ssize_t sf_out (
 					if (n <= -1)
 					{
 						qse_cstr_t ea;
-						if (xtn->s.out.x->u.file.path)
-						{
-							ea.ptr = xtn->s.out.x->u.file.path;
-							ea.len = qse_strlen(ea.ptr);
-						}
-						else
-						{
-							ea.ptr = sio_std_names[QSE_SIO_STDOUT].ptr;
-							ea.len = sio_std_names[QSE_SIO_STDOUT].len;
-						}
+						ea.ptr = xtn->s.out.x->u.file.path;
+						if (ea.ptr == QSE_NULL) ea.ptr = sio_std_names[QSE_SIO_STDOUT].ptr;
+						ea.len = qse_strlen(ea.ptr);
 						qse_awk_seterrnum (awk, QSE_AWK_EWRITE, &ea);
 					}
 	

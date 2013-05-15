@@ -207,9 +207,21 @@ public:
 				return this->mode;
 			}
 
+			bool isMaster() const
+			{
+				return this->arg->prev == QSE_NULL;
+			}
+
 			const char_t* getName() const
 			{
 				return this->arg->name;
+			}
+
+			// since it doesn't copy the contents,
+			// it should point to something that outlives this object.
+			void setName (const char_t* name)
+			{
+				this->arg->name = name;
 			}
 
 			const char_t* getPrevName() const

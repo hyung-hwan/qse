@@ -1500,7 +1500,7 @@ int StdAwk::SourceFile::open (Data& io)
 {
 	qse_sio_t* sio;
 
-	if (io.getName() == QSE_NULL)
+	if (io.isMaster())
 	{
 		// open the main source file.
 
@@ -1523,19 +1523,18 @@ int StdAwk::SourceFile::open (Data& io)
 				io, QSE_NULL, this->name,
 				(io.getMode() == READ? 
 					(QSE_SIO_READ | QSE_SIO_IGNOREMBWCERR | QSE_SIO_KEEPPATH): 
-					(QSE_SIO_WRITE | QSE_SIO_CREATE | 
-					 QSE_SIO_TRUNCATE | QSE_SIO_IGNOREMBWCERR))
+					(QSE_SIO_WRITE | QSE_SIO_CREATE | QSE_SIO_TRUNCATE | QSE_SIO_IGNOREMBWCERR))
 			);
 			if (sio == QSE_NULL) return -1;
-
 		}
 
 		if (this->cmgr) qse_sio_setcmgr (sio, this->cmgr);
+		io.setName (this->name);
 	}
 	else
 	{
 		// open an included file
-		const char_t* ioname, * file, * outer;
+		const char_t* ioname, * file;
 		char_t fbuf[64];
 		char_t* dbuf = QSE_NULL;
 	
@@ -1543,36 +1542,41 @@ int StdAwk::SourceFile::open (Data& io)
 		QSE_ASSERT (ioname != QSE_NULL);
 
 		file = ioname;
-		outer = qse_sio_getpath ((qse_sio_t*)io.getPrevHandle());
-		if (outer)
+		if (io.getPrevHandle())
 		{
-			const qse_char_t* base;
+			const char_t* outer;
 
-			base = qse_basename (outer);
-			if (base != outer && ioname[0] != QSE_T('/'))
+			outer = qse_sio_getpath ((qse_sio_t*)io.getPrevHandle());
+			if (outer)
 			{
-				size_t tmplen, totlen, dirlen;
-			
-				dirlen = base - outer;
-				totlen = qse_strlen(ioname) + dirlen;
-				if (totlen >= QSE_COUNTOF(fbuf))
+				const qse_char_t* base;
+
+				base = qse_basename (outer);
+				if (base != outer && ioname[0] != QSE_T('/'))
 				{
-					dbuf = (qse_char_t*) QSE_MMGR_ALLOC (
-						((Awk*)io)->getMmgr(),
-						QSE_SIZEOF(qse_char_t) * (totlen + 1)
-					);
-					if (dbuf == QSE_NULL)
+					size_t tmplen, totlen, dirlen;
+				
+					dirlen = base - outer;
+						totlen = qse_strlen(ioname) + dirlen;
+					if (totlen >= QSE_COUNTOF(fbuf))
 					{
-						((Awk*)io)->setError (QSE_AWK_ENOMEM);
-						return -1;
+						dbuf = (qse_char_t*) QSE_MMGR_ALLOC (
+							((Awk*)io)->getMmgr(),
+							QSE_SIZEOF(qse_char_t) * (totlen + 1)
+						);
+						if (dbuf == QSE_NULL)
+						{
+							((Awk*)io)->setError (QSE_AWK_ENOMEM);
+							return -1;
+						}
+
+						file = dbuf;
 					}
+					else file = fbuf;
 
-					file = dbuf;
+					tmplen = qse_strncpy ((char_t*)file, outer, dirlen);
+					qse_strcpy ((char_t*)file + tmplen, ioname);
 				}
-				else file = fbuf;
-
-				tmplen = qse_strncpy ((char_t*)file, outer, dirlen);
-				qse_strcpy ((char_t*)file + tmplen, ioname);
 			}
 		}
 
@@ -1580,8 +1584,7 @@ int StdAwk::SourceFile::open (Data& io)
 			io, QSE_NULL, file,
 			(io.getMode() == READ? 
 				(QSE_SIO_READ | QSE_SIO_IGNOREMBWCERR | QSE_SIO_KEEPPATH): 
-				(QSE_SIO_WRITE | QSE_SIO_CREATE | 
-				 QSE_SIO_TRUNCATE | QSE_SIO_IGNOREMBWCERR))
+				(QSE_SIO_WRITE | QSE_SIO_CREATE | QSE_SIO_TRUNCATE | QSE_SIO_IGNOREMBWCERR))
 		);
 		if (dbuf) QSE_MMGR_FREE (((Awk*)io)->getMmgr(), dbuf);
 		if (sio == QSE_NULL) return -1;
@@ -1623,25 +1626,63 @@ int StdAwk::SourceString::open (Data& io)
 	}
 	else
 	{
-		const char_t* ioname = io.getName();
-
 		// open an included file 
-		sio = qse_sio_open (
-			((Awk*)io)->getMmgr(),
-			0,
-			ioname,
-			(io.getMode() == READ? 
-				QSE_SIO_READ: 
-				(QSE_SIO_WRITE|QSE_SIO_CREATE|QSE_SIO_TRUNCATE))
-		);
-		if (sio == QSE_NULL)
+
+		const char_t* ioname, * file;
+		char_t fbuf[64];
+		char_t* dbuf = QSE_NULL;
+		
+		ioname = io.getName();
+		QSE_ASSERT (ioname != QSE_NULL);
+
+		file = ioname;
+		if (io.getPrevHandle())
 		{
-			qse_cstr_t ea;
-			ea.ptr = ioname;
-			ea.len = qse_strlen(ioname);
-			((Awk*)io)->setError (QSE_AWK_EOPEN, &ea);
-			return -1;
+			const qse_char_t* outer;
+
+			outer = qse_sio_getpath ((qse_sio_t*)io.getPrevHandle());
+			if (outer)
+			{
+				const qse_char_t* base;
+	
+				base = qse_basename (outer);
+				if (base != outer && ioname[0] != QSE_T('/'))
+				{
+					size_t tmplen, totlen, dirlen;
+				
+					dirlen = base - outer;
+					totlen = qse_strlen(ioname) + dirlen;
+					if (totlen >= QSE_COUNTOF(fbuf))
+					{
+						dbuf = (qse_char_t*) QSE_MMGR_ALLOC (
+							((Awk*)io)->getMmgr(),
+							QSE_SIZEOF(qse_char_t) * (totlen + 1)
+						);
+						if (dbuf == QSE_NULL)
+						{
+							((Awk*)io)->setError (QSE_AWK_ENOMEM);
+							return -1;
+						}
+	
+						file = dbuf;
+					}
+					else file = fbuf;
+	
+					tmplen = qse_strncpy ((char_t*)file, outer, dirlen);
+					qse_strcpy ((char_t*)file + tmplen, ioname);
+				}
+			}
 		}
+
+		sio = open_sio (
+			io, QSE_NULL, file,
+			(io.getMode() == READ? 
+				(QSE_SIO_READ | QSE_SIO_IGNOREMBWCERR | QSE_SIO_KEEPPATH): 
+				(QSE_SIO_WRITE | QSE_SIO_CREATE | QSE_SIO_TRUNCATE | QSE_SIO_IGNOREMBWCERR))
+		);
+		if (dbuf) QSE_MMGR_FREE (((Awk*)io)->getMmgr(), dbuf);
+		if (sio == QSE_NULL) return -1;
+
 		io.setHandle (sio);
 	}
 
@@ -1650,14 +1691,13 @@ int StdAwk::SourceString::open (Data& io)
 
 int StdAwk::SourceString::close (Data& io)
 {
-	if (io.getName() != QSE_NULL)
-		qse_sio_close ((qse_sio_t*)io.getHandle());
+	if (!io.isMaster()) qse_sio_close ((qse_sio_t*)io.getHandle());
 	return 0;
 }
 
 StdAwk::ssize_t StdAwk::SourceString::read (Data& io, char_t* buf, size_t len)
 {
-	if (io.getName() == QSE_NULL)
+	if (io.isMaster())
 	{
 		qse_size_t n = 0;
 		while (*ptr != QSE_T('\0') && n < len) buf[n++] = *ptr++;
@@ -1671,7 +1711,7 @@ StdAwk::ssize_t StdAwk::SourceString::read (Data& io, char_t* buf, size_t len)
 
 StdAwk::ssize_t StdAwk::SourceString::write (Data& io, const char_t* buf, size_t len)
 {
-	if (io.getName() == QSE_NULL)
+	if (io.isMaster())
 	{
 		return -1;
 	}
