@@ -406,6 +406,14 @@ init:
 	return (qse_awk_val_t*)val;
 }
 
+qse_awk_val_t* qse_awk_rtx_makenstrvalwithstr (qse_awk_rtx_t* rtx, const qse_char_t* str)
+{
+	qse_cstr_t cstr;
+	cstr.ptr = str;
+	cstr.len = qse_strlen(str);
+	return qse_awk_rtx_makenstrvalwithcstr (rtx, &cstr);
+}
+
 qse_awk_val_t* qse_awk_rtx_makenstrvalwithcstr (qse_awk_rtx_t* rtx, const qse_cstr_t* str)
 {
 	int x;

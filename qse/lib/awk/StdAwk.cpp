@@ -225,7 +225,7 @@ int StdAwk::build_argcv (Run* run)
 		if (argv.setIndexedStr (
 			Value::IntIndex(i), 
 			this->runarg.ptr[i].ptr, 
-			this->runarg.ptr[i].len) <= -1) return -1;
+			this->runarg.ptr[i].len, true) <= -1) return -1;
 	}
 		
 	run->setGlobal (this->gbl_argc, (long_t)this->runarg.len);
@@ -297,7 +297,8 @@ int StdAwk::__build_environ (Run* run, void* envptr)
 			*eq = QSE_WT('=');
 		#endif
 
-			v_env.setIndexedStr (Value::Index (kptr, klen), vptr);
+			// numeric string
+			v_env.setIndexedStr (Value::Index (kptr, klen), vptr, true);
 
 		#if ((defined(QSE_ENV_CHAR_IS_MCHAR) && defined(QSE_CHAR_IS_MCHAR)) || \
 		     (defined(QSE_ENV_CHAR_IS_WCHAR) && defined(QSE_CHAR_IS_WCHAR)))

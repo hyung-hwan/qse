@@ -292,7 +292,7 @@ static qse_htb_walk_t set_global (
 
 static int apply_fs_and_gvm (qse_awk_rtx_t* rtx, struct arg_t* arg)
 {
-	if (arg->fs != QSE_NULL)
+	if (arg->fs)
 	{
 		qse_awk_val_t* fs;
 
@@ -306,7 +306,7 @@ static int apply_fs_and_gvm (qse_awk_rtx_t* rtx, struct arg_t* arg)
 		qse_awk_rtx_refdownval (rtx, fs);
 	}
 
-	if (arg->gvm != QSE_NULL)
+	if (arg->gvm)
 	{
 		/* set the value of user-defined global variables 
 		 * to a runtime context */

@@ -573,7 +573,7 @@ int Awk::Value::setFlt (Run* r, flt_t v)
 	return n;
 }
 
-int Awk::Value::setStr (const char_t* str, size_t len)
+int Awk::Value::setStr (const char_t* str, size_t len, bool numeric)
 {
 	if (this->run == QSE_NULL) 
 	{
@@ -581,13 +581,19 @@ int Awk::Value::setStr (const char_t* str, size_t len)
 		 * set an error number for the same reason */
 		return -1; 
 	}
-	return setStr (this->run, str, len);
+	return setStr (this->run, str, len, numeric);
 }
 
-int Awk::Value::setStr (Run* r, const char_t* str, size_t len)
+int Awk::Value::setStr (Run* r, const char_t* str, size_t len, bool numeric)
 {
 	val_t* tmp;
-	tmp = qse_awk_rtx_makestrval (r->rtx, str, len);
+
+	cstr_t cstr;
+	cstr.ptr = str;
+	cstr.len = len;
+
+	tmp = numeric? qse_awk_rtx_makenstrvalwithcstr (r->rtx, &cstr):
+	               qse_awk_rtx_makestrvalwithcstr (r->rtx, &cstr);
 	if (tmp == QSE_NULL)
 	{
 		r->awk->retrieveError (r);
@@ -599,16 +605,17 @@ int Awk::Value::setStr (Run* r, const char_t* str, size_t len)
 	return n;
 }
 
-int Awk::Value::setStr (const char_t* str)
+int Awk::Value::setStr (const char_t* str, bool numeric)
 {
 	if (this->run == QSE_NULL) return -1;
-	return setStr (this->run, str);
+	return setStr (this->run, str, numeric);
 }
 
-int Awk::Value::setStr (Run* r, const char_t* str)
+int Awk::Value::setStr (Run* r, const char_t* str, bool numeric)
 {
 	val_t* tmp;
-	tmp = qse_awk_rtx_makestrvalwithstr (r->rtx, str);
+	tmp = numeric? qse_awk_rtx_makenstrvalwithstr (r->rtx, str):
+	               qse_awk_rtx_makestrvalwithstr (r->rtx, str);
 	if (tmp == QSE_NULL) 
 	{
 		r->awk->retrieveError (r);
@@ -733,17 +740,23 @@ int Awk::Value::setIndexedFlt (Run* r, const Index& idx, flt_t v)
 	return n;
 }
 
-int Awk::Value::setIndexedStr (const Index& idx, const char_t* str, size_t len)
+int Awk::Value::setIndexedStr (const Index& idx, const char_t* str, size_t len, bool numeric)
 {
 	if (run == QSE_NULL) return -1;
-	return setIndexedStr (run, idx, str, len);
+	return setIndexedStr (run, idx, str, len, numeric);
 }
 
 int Awk::Value::setIndexedStr (
-	Run* r, const Index& idx, const char_t* str, size_t len)
+	Run* r, const Index& idx, const char_t* str, size_t len, bool numeric)
 {
 	val_t* tmp;
-	tmp = qse_awk_rtx_makestrval (r->rtx, str, len);
+
+	cstr_t cstr;
+	cstr.ptr = str;
+	cstr.len = len;
+
+	tmp = numeric? qse_awk_rtx_makenstrvalwithcstr (r->rtx, &cstr):
+	               qse_awk_rtx_makestrvalwithcstr (r->rtx, &cstr);
 	if (tmp == QSE_NULL) 
 	{
 		r->awk->retrieveError (r);
@@ -757,16 +770,17 @@ int Awk::Value::setIndexedStr (
 	return n;
 }
 
-int Awk::Value::setIndexedStr (const Index& idx, const char_t* str)
+int Awk::Value::setIndexedStr (const Index& idx, const char_t* str, bool numeric)
 {
 	if (run == QSE_NULL) return -1;
-	return setIndexedStr (run, idx, str);
+	return setIndexedStr (run, idx, str, numeric);
 }
 
-int Awk::Value::setIndexedStr (Run* r, const Index& idx, const char_t* str)
+int Awk::Value::setIndexedStr (Run* r, const Index& idx, const char_t* str, bool numeric)
 {
 	val_t* tmp;
-	tmp = qse_awk_rtx_makestrvalwithstr (r->rtx, str);
+	tmp = numeric? qse_awk_rtx_makenstrvalwithstr (r->rtx, str):
+	               qse_awk_rtx_makestrvalwithstr (r->rtx, str);
 	if (tmp == QSE_NULL)
 	{
 		r->awk->retrieveError (r);
@@ -1412,7 +1426,7 @@ int Awk::dispatch_function (Run* run, const fnc_info_t* fi)
 					}
 					else
 					{
-						xx = args[i].setStr (run, QSE_T(""), 0);
+						xx = args[i].setStr (run, QSE_T(""), (size_t)0);
 					}
 					break;
 				}

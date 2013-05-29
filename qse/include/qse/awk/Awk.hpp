@@ -718,10 +718,10 @@ public:
 		int setInt (Run* r, long_t v);
 		int setFlt (flt_t v);
 		int setFlt (Run* r, flt_t v);
-		int setStr (const char_t* str, size_t len);
-		int setStr (Run* r, const char_t* str, size_t len);
-		int setStr (const char_t* str);
-		int setStr (Run* r, const char_t* str);
+		int setStr (const char_t* str, size_t len, bool numeric = false);
+		int setStr (Run* r, const char_t* str, size_t len, bool numeric = false);
+		int setStr (const char_t* str, bool numeric = false);
+		int setStr (Run* r, const char_t* str, bool numeric = false);
 
 		int setIndexedVal (
 			const Index& idx,
@@ -758,25 +758,29 @@ public:
 		int setIndexedStr (
 			const Index&  idx,
 			const char_t* str,
-			size_t        len
+			size_t        len,
+			bool  numeric = false
 		);
 
 		int setIndexedStr (
 			Run*          r,
 			const Index&  idx,
 			const char_t* str,
-			size_t        len
+			size_t        len,
+			bool  numeric = false
 		);
 
 		int setIndexedStr (
 			const Index&  idx,
-			const char_t* str
+			const char_t* str,
+			bool  numeric = false
 		);
 
 		int setIndexedStr (
 			Run*          r,
 			const Index&  idx,
-			const char_t* str
+			const char_t* str,
+			bool  numeric = false
 		);
 
 		///

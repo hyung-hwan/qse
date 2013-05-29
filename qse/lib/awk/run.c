@@ -4371,7 +4371,7 @@ static int __cmp_str_str (
 
 	if (ls->nstr == 0 || rs->nstr == 0)
 	{
-		/* nother are definitely a string */
+		/* both are definitely strings */
 		return (rtx->gbl.ignorecase)?
 			qse_strxncasecmp (ls->val.ptr, ls->val.len, rs->val.ptr, rs->val.len):
 			qse_strxncmp (ls->val.ptr, ls->val.len, rs->val.ptr, rs->val.len);
