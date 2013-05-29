@@ -2358,6 +2358,18 @@ QSE_EXPORT qse_awk_val_t* qse_awk_rtx_makestrval2 (
 	qse_size_t        len2
 );
 
+
+/**
+ * The qse_awk_rtx_makenstrvalwithstr() function creates a numeric string 
+ * value from a null-terminated string. A numeric string is a string value 
+ * whose one of the header fields \b nstr is 1.
+ * \return value on success, #QSE_NULL on failure
+ */
+QSE_EXPORT qse_awk_val_t* qse_awk_rtx_makenstrvalwithstr (
+	qse_awk_rtx_t* rtx,
+	const qse_char_t* str
+);
+
 /**
  * The qse_awk_rtx_makenstrvalwithcstr() function creates a numeric string 
  * value. A numeric string is a string value whose one of the header fields

@@ -766,8 +766,10 @@ static int fnc_split (qse_awk_rtx_t* run, const qse_awk_fnc_info_t* fi)
 
 		QSE_ASSERT ((tok.ptr != QSE_NULL && tok.len > 0) || tok.len == 0);
 
-		/* create the field string */
-		t2 = qse_awk_rtx_makestrvalwithcstr (run, &tok);
+		/* create the field string - however, the split function must
+		 * create a numeric string if the string is a number */
+		/*t2 = qse_awk_rtx_makestrvalwithcstr (run, &tok);*/
+		t2 = qse_awk_rtx_makenstrvalwithcstr (run, &tok);
 		if (t2 == QSE_NULL) goto oops;
 
 		/* put it into the map */

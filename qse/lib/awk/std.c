@@ -1814,7 +1814,10 @@ static int build_argcv (
 	{
 		for (argc = 1, p = icf; *p; p++, argc++) 
 		{
-			v_tmp = qse_awk_rtx_makestrvalwithstr (rtx, *p);
+			/* the argument must compose a numeric string if it can be.
+			 * so call qse_awk_rtx_makenstrvalwithstr() instead of
+			 * qse_awk_rtx_makestrvalwithstr(). */
+			v_tmp = qse_awk_rtx_makenstrvalwithstr (rtx, *p);
 			if (v_tmp == QSE_NULL)
 			{
 				qse_awk_rtx_refdownval (rtx, v_argv);
@@ -1941,7 +1944,10 @@ static int __build_environ (
 			*eq = QSE_WT('=');
 		#endif
 
-			v_tmp = qse_awk_rtx_makestrvalwithstr (rtx, vptr);
+			/* the string in ENVIRON should be a numeric string if
+			 * it can be converted to a number. call makenstrval()
+			 * instead of makestrval() */
+			v_tmp = qse_awk_rtx_makenstrvalwithstr (rtx, vptr);
 			if (v_tmp == QSE_NULL)
 			{
 		#if ((defined(QSE_ENV_CHAR_IS_MCHAR) && defined(QSE_CHAR_IS_MCHAR)) || \
