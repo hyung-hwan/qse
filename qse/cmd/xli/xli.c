@@ -402,6 +402,10 @@ static int xli_main (int argc, qse_char_t* argv[])
 		}
 	}
 
+
+/* TODO: qse_xli_writestd??? */
+qse_xli_write (xli, QSE_NULL);
+
 	ret = 0;
 
 oops:
