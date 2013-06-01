@@ -57,12 +57,19 @@ struct qse_xli_t
 	qse_xli_tok_t tok;
 	struct
 	{
-		qse_xli_io_impl_t inf; /* input handler */
+		qse_xli_io_impl_t impl; /* input handler */
 		qse_xli_io_lxc_t  last;	
 		qse_xli_io_arg_t  arg; /* for top level */
 		qse_xli_io_arg_t* inp; /* current */
 	} sio;
 	qse_link_t* sio_names;
+
+	struct 
+	{
+		qse_xli_io_impl_t impl; /* output handler */
+		qse_xli_io_arg_t  arg; /* for top level */
+		qse_xli_io_arg_t* inp; /* current */
+	} wio;
 };
 
 

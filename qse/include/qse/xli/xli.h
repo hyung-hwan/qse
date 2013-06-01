@@ -487,6 +487,9 @@ QSE_EXPORT qse_xli_pair_t* qse_xli_insertpairwithstr (
 	const qse_cstr_t* value
 );
 
+QSE_EXPORT qse_xli_list_t* qse_xli_getroot (
+	qse_xli_t* xli
+);
 
 QSE_EXPORT qse_xli_pair_t* qse_xli_findpairbyname (
 	qse_xli_t*            xli,

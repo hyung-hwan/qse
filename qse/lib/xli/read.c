@@ -25,11 +25,11 @@ static int get_char (qse_xli_t* xli);
 static int get_token (qse_xli_t* xli);
 static int read_list (qse_xli_t* xli, qse_xli_list_t* list);
 
-static int close_stream (qse_xli_t* xli)
+static int close_current_stream (qse_xli_t* xli)
 {
 	qse_ssize_t n;
 
-	n = xli->sio.inf (xli, QSE_XLI_IO_CLOSE, xli->sio.inp, QSE_NULL, 0);
+	n = xli->sio.impl (xli, QSE_XLI_IO_CLOSE, xli->sio.inp, QSE_NULL, 0);
 	if (n <= -1)
 	{
 		if (xli->errnum == QSE_XLI_ENOERR) 
@@ -109,7 +109,7 @@ static int get_char (qse_xli_t* xli)
 
 	if (xli->sio.inp->b.pos >= xli->sio.inp->b.len)
 	{
-		n = xli->sio.inf (
+		n = xli->sio.impl (
 			xli, QSE_XLI_IO_READ, xli->sio.inp,
 			xli->sio.inp->b.buf, QSE_COUNTOF(xli->sio.inp->b.buf)
 		);
@@ -160,17 +160,30 @@ static int skip_spaces (qse_xli_t* xli)
 	return 0;
 }
 
-static int skip_comment (qse_xli_t* xli)
+static int skip_comment (qse_xli_t* xli, qse_xli_tok_t* tok)
 {
 	qse_cint_t c = xli->sio.last.c;
 
 	if (c == QSE_T('#'))
 	{
-		
 		/* skip up to \n */
 		/* TODO: support a different line terminator */
-		do { GET_CHAR_TO (xli, c); }
-		while (c != QSE_T('\n') && c != QSE_CHAR_EOF);
+		qse_str_clear (tok->name);
+
+		do
+		{ 
+			GET_CHAR_TO (xli, c); 
+			if (c == QSE_T('\n') || c == QSE_CHAR_EOF) break;
+#if 0
+			ADD_TOKEN_CHAR (xli, tok, c);
+#endif
+		}
+		while (1);
+
+#if 0
+		if (qse_xli_inserttext (xli, list, QSE_NULL, QSE_STR_PTR(tok->name)) <= -1) return -1;
+#endif
+
 		GET_CHAR (xli); /* eat the new line letter */
 		return 1; /* comment by # */
 	}
@@ -268,7 +281,7 @@ static int end_include (qse_xli_t* xli)
 	/* if it is an included file, close it and
 	 * retry to read a character from an outer file */
 
-	x = xli->sio.inf (
+	x = xli->sio.impl (
 		xli, QSE_XLI_IO_CLOSE, 
 		xli->sio.inp, QSE_NULL, 0);
 
@@ -302,7 +315,7 @@ static int begin_include (qse_xli_t* xli)
 	qse_link_t* link;
 	qse_xli_io_arg_t* arg = QSE_NULL;
 
-	link = (qse_xli_io_arg_t*) qse_xli_callocmem (xli, 
+	link = (qse_link_t*) qse_xli_callocmem (xli, 
 		QSE_SIZEOF(*link) + QSE_SIZEOF(qse_char_t) * (QSE_STR_LEN(xli->tok.name) + 1));
 	if (link == QSE_NULL) goto oops;
 
@@ -320,7 +333,7 @@ static int begin_include (qse_xli_t* xli)
 	/* let the argument's prev point field to the current */
 	arg->prev = xli->sio.inp; 
 
-	if (xli->sio.inf (xli, QSE_XLI_IO_OPEN, arg, QSE_NULL, 0) <= -1)
+	if (xli->sio.impl (xli, QSE_XLI_IO_OPEN, arg, QSE_NULL, 0) <= -1)
 	{
 		if (xli->errnum == QSE_XLI_ENOERR)
 			qse_xli_seterrnum (xli, QSE_XLI_EIOUSR, QSE_NULL); 
@@ -362,8 +375,8 @@ static int get_token_into (qse_xli_t* xli, qse_xli_tok_t* tok)
 retry:
 	do 
 	{
-		if (skip_spaces(xli) <= -1) return -1;
-		if ((n = skip_comment(xli)) <= -1) return -1; 
+		if (skip_spaces (xli) <= -1) return -1;
+		if ((n = skip_comment (xli, tok)) <= -1) return -1; 
 	} 
 	while (n >= 1);
 
@@ -743,13 +756,13 @@ int qse_xli_read (qse_xli_t* xli, qse_xli_io_impl_t io)
 	}
 
 	QSE_MEMSET (&xli->sio, 0, QSE_SIZEOF(xli->sio));
-	xli->sio.inf = io;
+	xli->sio.impl = io;
 	xli->sio.arg.line = 1;
 	xli->sio.arg.colm = 1;
 	xli->sio.inp = &xli->sio.arg;
 	qse_xli_clearsionames (xli);
 
-	n = xli->sio.inf (xli, QSE_XLI_IO_OPEN, xli->sio.inp, QSE_NULL, 0);
+	n = xli->sio.impl (xli, QSE_XLI_IO_OPEN, xli->sio.inp, QSE_NULL, 0);
 	if (n <= -1)
 	{
 		if (xli->errnum == QSE_XLI_ENOERR)
@@ -768,7 +781,7 @@ int qse_xli_read (qse_xli_t* xli, qse_xli_io_impl_t io)
 	}
 
 	QSE_ASSERT (xli->sio.inp == &xli->sio.arg);
-	close_stream (xli);
+	close_current_stream (xli);
 	return 0;
 
 oops:
@@ -780,7 +793,7 @@ oops:
 		qse_xli_io_arg_t* prev;
 
 		/* nothing much to do about a close error */
-		close_stream (xli);
+		close_current_stream (xli);
 
 		prev = xli->sio.inp->prev;
 		QSE_ASSERT (xli->sio.inp->name != QSE_NULL);
@@ -788,6 +801,6 @@ oops:
 		xli->sio.inp = prev;
 	}
 	
-	close_stream (xli);
+	close_current_stream (xli);
 	return -1;
 }

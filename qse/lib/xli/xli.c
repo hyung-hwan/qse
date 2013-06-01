@@ -173,6 +173,13 @@ void qse_xli_freemem (qse_xli_t* xli, void* ptr)
 {
 	QSE_MMGR_FREE (xli->mmgr, ptr);
 }
+/* ------------------------------------------------------ */
+
+qse_xli_list_t* qse_xli_getroot (qse_xli_t* xli)
+{
+	return &xli->root;
+}
+
 
 /* ------------------------------------------------------ */
 
