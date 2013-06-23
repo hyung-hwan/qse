@@ -84,9 +84,12 @@ static int write_list (qse_xli_t* xli, qse_xli_list_t* list, int depth)
 
 			case QSE_XLI_FILE:
 				/* TODO filename escaping.... */
-				qse_printf (QSE_T("@include \"%s\";\n"),(( qse_xli_file_t*)curatom)->path);
+				qse_printf (QSE_T("@include \"%s\";\n"),((qse_xli_file_t*)curatom)->path);
 
 				/* TODO: open a new stream */
+				break;
+
+			case QSE_XLI_EOF:
 				break;
 		}
 	}

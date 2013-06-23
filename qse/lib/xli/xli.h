@@ -34,6 +34,14 @@ struct qse_xli_tok_t
      qse_xli_loc_t loc;
 };
 
+typedef struct qse_xli_list_link_t qse_xli_list_link_t;
+
+struct qse_xli_list_link_t
+{
+	qse_xli_list_link_t* next;
+	qse_xli_list_t* list;
+};
+
 struct qse_xli_t
 {
 	qse_mmgr_t* mmgr;
@@ -50,8 +58,9 @@ struct qse_xli_t
 
 	qse_xli_ecb_t* ecb;
 
-	qse_xli_list_t root;
 	qse_xli_nil_t xnil;
+	qse_xli_list_t  root;
+	qse_xli_list_link_t* parlink;
 
 	qse_str_t* tmp[1];
 	qse_xli_tok_t tok;

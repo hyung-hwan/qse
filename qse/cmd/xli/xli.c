@@ -128,9 +128,11 @@ static void print_usage (QSE_FILE* out, int argc, qse_char_t* argv[])
 	qse_fprintf (out, QSE_T("options as follows:\n"));
 	qse_fprintf (out, QSE_T(" -h/--help                 show this message\n"));
 	qse_fprintf (out, QSE_T(" --version                 show version\n"));
-	qse_fprintf (out, QSE_T(" -f                 file   specify an input file\n"));
+	qse_fprintf (out, QSE_T(" -i                 file   specify an input file\n"));
 	qse_fprintf (out, QSE_T(" -o                 file   specify an output file\n"));
 	qse_fprintf (out, QSE_T(" -n                        allow a key name\n"));
+	qse_fprintf (out, QSE_T(" -f                        keep file inclusion info\n"));
+	qse_fprintf (out, QSE_T(" -t                        keep comment text\n"));
 	qse_fprintf (out, QSE_T(" -m                 number specify the maximum amount of memory to use in bytes\n"));
 #if defined(QSE_BUILD_DEBUG)
 	qse_fprintf (out, QSE_T(" -X                 number fail the number'th memory allocation\n"));
@@ -157,9 +159,9 @@ static int handle_args (int argc, qse_char_t* argv[])
 	static qse_opt_t opt = 
 	{
 #if defined(QSE_BUILD_DEBUG)
-		QSE_T("hf:o:nm:X:"),
+		QSE_T("hi:o:nftm:X:"),
 #else
-		QSE_T("hf:o:nm:"),
+		QSE_T("hi:o:nftm:"),
 #endif
 		lng
 	};
@@ -193,7 +195,7 @@ static int handle_args (int argc, qse_char_t* argv[])
 				print_usage (QSE_STDOUT, argc, argv);
 				goto done;
 
-			case QSE_T('f'):
+			case QSE_T('i'):
 				g_input_file = opt.arg;
 				break;
 
@@ -203,6 +205,14 @@ static int handle_args (int argc, qse_char_t* argv[])
 
 			case QSE_T('n'):
 				g_trait |= QSE_XLI_KEYNAME;
+				break;
+
+			case QSE_T('f'):
+				g_trait |= QSE_XLI_KEEPFILE;
+				break;
+
+			case QSE_T('t'):
+				g_trait |= QSE_XLI_KEEPTEXT;
 				break;
 
 			case QSE_T('m'):
