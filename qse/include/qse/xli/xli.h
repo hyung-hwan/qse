@@ -73,9 +73,11 @@ typedef enum qse_xli_opt_t qse_xli_opt_t;
 
 enum qse_xli_trait_t
 {
-	QSE_XLI_KEYNODUP = (1 << 0),
-	QSE_XLI_KEYNAME  = (1 << 1),
-	QSE_XLI_NOTEXT   = (1 << 10)
+	QSE_XLI_KEYNODUP = (1 << 1),
+	QSE_XLI_KEYNAME  = (1 << 2),
+
+	QSE_XLI_KEEPTEXT = (1 << 3), /**< keep comment text */
+	QSE_XLI_KEEPFILE = (1 << 4), /**< keep inclusion file info */
 };
 typedef enum qse_xli_trait_t qse_xli_trait_t;
 
@@ -88,6 +90,7 @@ typedef struct qse_xli_atom_t qse_xli_atom_t;
 typedef struct qse_xli_pair_t qse_xli_pair_t;
 typedef struct qse_xli_text_t qse_xli_text_t;
 typedef struct qse_xli_file_t qse_xli_file_t;
+typedef struct qse_xli_eof_t qse_xli_eof_t;
 
 enum qse_xli_val_type_t
 {
@@ -102,6 +105,7 @@ enum qse_xli_atom_type_t
 	QSE_XLI_PAIR,
 	QSE_XLI_TEXT,
 	QSE_XLI_FILE,
+	QSE_XLI_EOF 
 };
 typedef enum qse_xli_atom_type_t qse_xli_atom_type_t;
 
@@ -162,6 +166,12 @@ struct qse_xli_file_t
 	QSE_XLI_ATOM_HDR;
 	const qse_char_t* path;
 };
+
+struct qse_xli_eof_t
+{
+	QSE_XLI_ATOM_HDR;
+};
+
 
 /**
  * The qse_xli_ecb_close_t type defines the callback function
@@ -485,6 +495,26 @@ QSE_EXPORT qse_xli_pair_t* qse_xli_insertpairwithstr (
 	const qse_char_t* key,
 	const qse_char_t* name,
 	const qse_cstr_t* value
+);
+
+QSE_EXPORT qse_xli_text_t* qse_xli_inserttext (
+        qse_xli_t* xli,
+	qse_xli_list_t* parent,
+	qse_xli_atom_t* peer,
+	const qse_char_t* str
+);
+
+QSE_EXPORT qse_xli_file_t* qse_xli_insertfile (
+        qse_xli_t* xli,
+	qse_xli_list_t* parent,
+	qse_xli_atom_t* peer,
+	const qse_char_t* path
+);
+
+QSE_EXPORT qse_xli_eof_t* qse_xli_inserteof (
+        qse_xli_t* xli,
+	qse_xli_list_t* parent,
+	qse_xli_atom_t* peer
 );
 
 QSE_EXPORT qse_xli_list_t* qse_xli_getroot (

@@ -300,9 +300,46 @@ qse_xli_text_t* qse_xli_inserttext (
 	text->type = QSE_XLI_TEXT;
 	text->ptr = (const qse_char_t*)(text + 1);
 
+	qse_strcpy ((qse_char_t*)(text + 1), str);
+
 	insert_atom (xli, parent, peer, (qse_xli_atom_t*)text);
 
 	return text;
+}
+
+qse_xli_file_t* qse_xli_insertfile (
+	qse_xli_t* xli, qse_xli_list_t* parent, qse_xli_atom_t* peer, const qse_char_t* path)
+{
+	qse_xli_file_t* file;
+	qse_size_t plen;
+
+	plen = qse_strlen (path);
+
+	file = qse_xli_callocmem (xli, QSE_SIZEOF(*file) + ((plen + 1) * QSE_SIZEOF(*path)));
+	if (file == QSE_NULL) return QSE_NULL;
+
+	file->type = QSE_XLI_FILE;
+	file->path = (const qse_char_t*)(file + 1);
+
+	qse_strcpy ((qse_char_t*)(file + 1), path);
+
+	insert_atom (xli, parent, peer, (qse_xli_atom_t*)file);
+
+	return file;
+}
+
+qse_xli_eof_t* qse_xli_inserteof (
+	qse_xli_t* xli, qse_xli_list_t* parent, qse_xli_atom_t* peer)
+{
+	qse_xli_eof_t* eof;
+
+	eof = qse_xli_callocmem (xli, QSE_SIZEOF(*eof));
+	if (eof == QSE_NULL) return QSE_NULL;
+
+	eof->type = QSE_XLI_EOF;
+	insert_atom (xli, parent, peer, (qse_xli_atom_t*)eof);
+
+	return eof;
 }
 
 /* ------------------------------------------------------ */

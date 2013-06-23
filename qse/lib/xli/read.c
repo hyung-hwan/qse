@@ -174,15 +174,13 @@ static int skip_comment (qse_xli_t* xli, qse_xli_tok_t* tok)
 		{ 
 			GET_CHAR_TO (xli, c); 
 			if (c == QSE_T('\n') || c == QSE_CHAR_EOF) break;
-#if 0
-			ADD_TOKEN_CHAR (xli, tok, c);
-#endif
+
+			if  (xli->opt.trait & QSE_XLI_KEEPTEXT) ADD_TOKEN_CHAR (xli, tok, c);
 		}
 		while (1);
 
-#if 0
-		if (qse_xli_inserttext (xli, list, QSE_NULL, QSE_STR_PTR(tok->name)) <= -1) return -1;
-#endif
+		if ((xli->opt.trait & QSE_XLI_KEEPTEXT) && 
+		    qse_xli_inserttext (xli, xli->parlink->list, QSE_NULL, QSE_STR_PTR(tok->name)) == QSE_NULL) return -1;
 
 		GET_CHAR (xli); /* eat the new line letter */
 		return 1; /* comment by # */
@@ -271,12 +269,13 @@ static int get_symbols (qse_xli_t* xli, qse_cint_t c, qse_xli_tok_t* tok)
 	return 0;
 }
 
-static int end_include (qse_xli_t* xli)
+static int end_include (qse_xli_t* xli, int noeof)
 {
 	int x;
 	qse_xli_io_arg_t* cur;
 
 	if (xli->sio.inp == &xli->sio.arg) return 0; /* no include */
+
 
 	/* if it is an included file, close it and
 	 * retry to read a character from an outer file */
@@ -297,6 +296,9 @@ static int end_include (qse_xli_t* xli)
 	QSE_ASSERT (cur->name != QSE_NULL);
 	QSE_MMGR_FREE (xli->mmgr, cur);
 	/* xli->parse.depth.incl--; */
+
+	if ((xli->opt.trait & QSE_XLI_KEEPFILE) && !noeof && 
+	    qse_xli_inserteof (xli, xli->parlink->list, QSE_NULL) == QSE_NULL) return -1;
 
 	if (x != 0)
 	{
@@ -349,9 +351,16 @@ static int begin_include (qse_xli_t* xli)
 	 * from this file. */
 	if (get_char (xli) <= -1 || get_token (xli) <= -1) 
 	{
-		end_include (xli); 
+		end_include (xli, 1); 
 		/* i don't jump to oops since i've called 
 		 * end_include() where xli->sio.inp/arg is freed. */
+		return -1;
+	}
+
+	if ((xli->opt.trait & QSE_XLI_KEEPFILE) &&
+	    qse_xli_insertfile (xli, xli->parlink->list, QSE_NULL, arg->name) == QSE_NULL) 
+	{
+		end_include (xli, 1);
 		return -1;
 	}
 
@@ -389,7 +398,7 @@ retry:
 
 	if (c == QSE_CHAR_EOF) 
 	{
-		n = end_include (xli);
+		n = end_include (xli, 0);
 		if (n <= -1) return -1;
 		if (n >= 1) 
 		{
@@ -526,18 +535,21 @@ static int get_token (qse_xli_t* xli)
 	return get_token_into (xli, &xli->tok);
 }
 
-static int read_pair (qse_xli_t* xli, qse_xli_list_t* list)
+static int read_pair (qse_xli_t* xli)
 {
 	qse_char_t* key = QSE_NULL;
 	qse_char_t* name = QSE_NULL;
 	qse_xli_pair_t* pair;
+	qse_xli_list_t* parlist;
+
+	parlist = xli->parlink->list;
 
 	if (xli->opt.trait & QSE_XLI_KEYNODUP)
 	{
 		qse_xli_atom_t* atom;
 
 		/* find any key conflicts in the current scope */
-		atom = list->tail;
+		atom = parlist->tail;
 		while (atom)
 		{
 			if (atom->type == QSE_XLI_PAIR &&
@@ -567,7 +579,7 @@ static int read_pair (qse_xli_t* xli, qse_xli_list_t* list)
 		{
 			qse_xli_atom_t* atom;
 
-			atom = list->tail;
+			atom = parlist->tail;
 			while (atom)
 			{
 				if (atom->type == QSE_XLI_PAIR &&
@@ -630,7 +642,7 @@ static int read_pair (qse_xli_t* xli, qse_xli_list_t* list)
 			}
 			
 			pair = qse_xli_insertpairwithstr (
-				xli, list, QSE_NULL, key, name, QSE_STR_CSTR(xli->tmp[0]));
+				xli, parlist, QSE_NULL, key, name, QSE_STR_CSTR(xli->tmp[0]));
 			if (pair == QSE_NULL) goto oops;
 
 			/* semicolon is mandatory for a string */
@@ -653,7 +665,7 @@ static int read_pair (qse_xli_t* xli, qse_xli_list_t* list)
 		if (get_token (xli) <= -1) goto oops;
 
 		/* insert a pair with an empty list */
-		pair = qse_xli_insertpairwithemptylist (xli, list, QSE_NULL, key, name);
+		pair = qse_xli_insertpairwithemptylist (xli, parlist, QSE_NULL, key, name);
 		if (pair == QSE_NULL) goto oops;
 	
 		if (read_list (xli, (qse_xli_list_t*)pair->val) <= -1) goto oops;
@@ -676,7 +688,7 @@ static int read_pair (qse_xli_t* xli, qse_xli_list_t* list)
 	else if (MATCH (xli, TOK_SEMICOLON))
 	{
 		/* no value has been specified for the pair */
-		pair = qse_xli_insertpair (xli, list, QSE_NULL, key, name, &xli->xnil);
+		pair = qse_xli_insertpair (xli, parlist, QSE_NULL, key, name, &xli->xnil);
 		if (pair == QSE_NULL) goto oops;
 
 		/* skip the semicolon */
@@ -698,8 +710,17 @@ oops:
 	return -1;
 }
 
-static int read_list (qse_xli_t* xli, qse_xli_list_t* list)
+static int read_list (qse_xli_t* xli, qse_xli_list_t* parlist)
 {
+	qse_xli_list_link_t* link = QSE_NULL;
+
+	link = (qse_xli_list_link_t*) qse_xli_callocmem (xli, QSE_SIZEOF(*link));
+	if (link == QSE_NULL) goto oops;
+
+	link->list = parlist;
+	link->next = xli->parlink;
+	xli->parlink = link;
+
 	while (1)
 	{
 		if (MATCH (xli, TOK_XINCLUDE))
@@ -716,7 +737,7 @@ static int read_list (qse_xli_t* xli, qse_xli_list_t* list)
 		}
 		else if (MATCH (xli, TOK_IDENT))
 		{
-			if (read_pair (xli, list) <= -1) goto oops;
+			if (read_pair (xli) <= -1) goto oops;
 		}
 		else if (MATCH (xli, TOK_TEXT))
 		{
@@ -728,9 +749,19 @@ static int read_list (qse_xli_t* xli, qse_xli_list_t* list)
 		}
 	}
 
+	QSE_ASSERT (link == xli->parlink);
+	xli->parlink = link->next;
+	qse_xli_freemem (xli, link);
+
 	return 0;
 
 oops:
+	if (link)
+	{
+		QSE_ASSERT (link == xli->parlink);
+		xli->parlink = link->next;
+		qse_xli_freemem (xli, link);
+	}
 	return -1;
 }
 
@@ -773,6 +804,8 @@ int qse_xli_read (qse_xli_t* xli, qse_xli_io_impl_t io)
 
 	if (get_char (xli) <= -1 || get_token (xli) <= -1) goto oops;
 	if (read_list (xli, &xli->root) <= -1) goto oops;
+
+	QSE_ASSERT (xli->parlink == QSE_NULL);
 
 	if (!MATCH (xli, TOK_EOF))
 	{
