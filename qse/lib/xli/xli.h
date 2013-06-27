@@ -76,7 +76,7 @@ struct qse_xli_t
 	struct 
 	{
 		qse_xli_io_impl_t impl; /* output handler */
-		qse_xli_io_arg_t  arg; /* for top level */
+		qse_xli_io_arg_t  top; /* for top level */
 		qse_xli_io_arg_t* inp; /* current */
 	} wio;
 };
