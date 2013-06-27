@@ -20,16 +20,101 @@
 
 #include "xli.h"
 
-static int close_current_stream (qse_xli_t* xli)
+static int flush (qse_xli_t* xli, qse_xli_io_arg_t* arg)
 {
 	qse_ssize_t n;
 
-	n = xli->wio.impl (xli, QSE_XLI_IO_CLOSE, xli->wio.inp, QSE_NULL, 0);
+/* TODO: flush all */
+	n = xli->wio.impl (xli, QSE_XLI_IO_WRITE, xli->wio.inp, arg->b.buf, arg->b.len);
 	if (n <= -1)
 	{
 		if (xli->errnum == QSE_XLI_ENOERR) 
 			qse_xli_seterrnum (xli, QSE_XLI_EIOUSR, QSE_NULL);
 		return -1;
+	}
+
+	arg->b.pos += n;
+	arg->b.len = 0;
+
+	return 0;
+}
+
+static int open_new_stream (qse_xli_t* xli, const qse_char_t* path, int old_depth)
+{
+	qse_ssize_t n;
+	qse_xli_io_arg_t* arg;
+
+	if (path == QSE_NULL)
+	{
+		/* top-level */
+		arg = &xli->wio.top;
+	}
+	else
+	{
+		qse_size_t plen;
+
+		plen = qse_strlen (path);
+
+		arg = (qse_xli_io_arg_t*) qse_xli_callocmem (xli, QSE_SIZEOF(*arg) + (plen + 1) * QSE_SIZEOF(*path));
+		if (arg == QSE_NULL) return -1;
+
+		qse_strcpy ((qse_char_t*)(arg + 1), path);
+		arg->name = (const qse_char_t*)(arg + 1);
+		arg->prev = xli->wio.inp;
+	}
+
+	n = xli->wio.impl (xli, QSE_XLI_IO_OPEN, arg, QSE_NULL, 0);
+	if (n <= -1)
+	{
+		if (xli->errnum == QSE_XLI_ENOERR)
+			qse_xli_seterrnum (xli, QSE_XLI_EIOUSR, QSE_NULL); 
+		if (arg != &xli->wio.top) qse_xli_freemem (xli, arg);
+		return -1;
+	}
+
+	xli->wio.inp = arg;
+	return 0;
+}
+
+static int close_current_stream (qse_xli_t* xli, int* org_depth)
+{
+	qse_ssize_t n;
+	qse_xli_io_arg_t* arg;
+
+	arg = xli->wio.inp;
+
+	flush (xli, arg); /* TODO: do i have to care about the result? */
+
+	n = xli->wio.impl (xli, QSE_XLI_IO_CLOSE, arg, QSE_NULL, 0);
+	if (n <= -1)
+	{
+		if (xli->errnum == QSE_XLI_ENOERR) 
+			qse_xli_seterrnum (xli, QSE_XLI_EIOUSR, QSE_NULL);
+		return -1;
+	}
+
+	xli->wio.inp = arg->prev;
+	/*if (org_depth) *org_depth = ...*/
+	qse_xli_freemem (xli, arg);
+	return 0;
+}
+
+static int write_to_current_stream (qse_xli_t* xli, const qse_char_t* ptr, qse_size_t len, int escape)
+{
+	qse_xli_io_arg_t* arg;
+	qse_size_t i;
+
+/* TODO: buffering or escaping... */
+	arg = xli->wio.inp;
+
+	for (i = 0; i < len; i++)
+	{
+		if (escape && (ptr[i] == QSE_T('\\') || ptr[i] == QSE_T('\"')))
+		{
+			arg->b.buf[arg->b.len++] = QSE_T('\\');
+		}
+		arg->b.buf[arg->b.len++] = ptr[i];
+		if (arg->b.len >= QSE_COUNTOF(arg->b.buf)) flush (xli, arg);
 	}
 
 	return 0;
@@ -48,30 +133,40 @@ static int write_list (qse_xli_t* xli, qse_xli_list_t* list, int depth)
 				int i;
 				qse_xli_pair_t* pair = (qse_xli_pair_t*)curatom;
 				
-				for (i = 0; i < depth; i++) qse_printf (QSE_T("\t"));
-				qse_printf (QSE_T("%s"), pair->key);
-				if (pair->name) qse_printf (QSE_T(" \"%s\""), pair->name);
+				for (i = 0; i < depth; i++) 
+				{
+					if (write_to_current_stream (xli, QSE_T("\t"), 1, 0) <= -1) return -1;
+				}
+
+				if (write_to_current_stream (xli, pair->key, qse_strlen(pair->key), 0) <= -1) return -1;
+
+				if (pair->name) 
+				{
+					if (write_to_current_stream (xli, QSE_T(" \""), 2, 0) <= -1 ||
+					    write_to_current_stream (xli, pair->name, qse_strlen(pair->name), 1) <= -1 ||
+					    write_to_current_stream (xli, QSE_T("\""), 1, 0) <= -1) return -1;
+				}
 
 				switch (pair->val->type)
 				{
 					case QSE_XLI_NIL:
-						qse_printf (QSE_T(";\n"));
+						if (write_to_current_stream (xli, QSE_T(";\n"), 2, 0) <= -1) return -1;
 						break;
 
 					case QSE_XLI_STR:
 					{
 						qse_xli_str_t* str = (qse_xli_str_t*)pair->val;
-						qse_printf (QSE_T(" = \"%.*s\";\n"), (int)str->len, str->ptr);
+						if (write_to_current_stream (xli, QSE_T(" = \""), 4, 0) <= -1 ||
+						    write_to_current_stream (xli, str->ptr, str->len, 1) <= -1 ||
+						    write_to_current_stream (xli, QSE_T("\";"), 2, 0) <= -1) return -1;
 						break;	
 					}
 
 					case QSE_XLI_LIST:
 					{
-						qse_printf (QSE_T("{\n"));
-						if (write_list (xli, pair->val, ++depth) <= -1)
-						{
-						}
-						qse_printf (QSE_T("}\n"));
+						if (write_to_current_stream (xli, QSE_T(" {\n"), 3, 0) <= -1 ||
+						    write_list (xli, pair->val, ++depth) <= -1 ||
+						    write_to_current_stream (xli, QSE_T("}\n"), 2, 0) <= -1) return -1;
 						break;
 					}
 				}
@@ -79,17 +174,29 @@ static int write_list (qse_xli_t* xli, qse_xli_list_t* list, int depth)
 			}
 
 			case QSE_XLI_TEXT:
-				qse_printf (QSE_T("# %s\n"), ((qse_xli_text_t*)curatom)->ptr);
+			{
+				const qse_char_t* str = ((qse_xli_text_t*)curatom)->ptr;
+				if (write_to_current_stream (xli, QSE_T("#"), 1, 0) <= -1 ||
+				    write_to_current_stream (xli, str, qse_strlen(str), 0) <= -1 ||
+				    write_to_current_stream (xli, QSE_T("\n"), 1, 0) <= -1) return -1;
 				break;
+			}
 
 			case QSE_XLI_FILE:
-				/* TODO filename escaping.... */
-				qse_printf (QSE_T("@include \"%s\";\n"),((qse_xli_file_t*)curatom)->path);
+			{
+				const qse_char_t* path = ((qse_xli_file_t*)curatom)->path;
 
-				/* TODO: open a new stream */
+				if (write_to_current_stream (xli, QSE_T("@include \""), 10, 0) <= -1 ||
+				    write_to_current_stream (xli, path, qse_strlen(path), 1) <= -1 ||
+				    write_to_current_stream (xli, QSE_T("\""), 1, 0) <= -1) return -1;
+				
+				if (open_new_stream (xli, ((qse_xli_file_t*)curatom)->path, depth) <= -1) return -1;
+				depth = 0;
 				break;
+			}
 
 			case QSE_XLI_EOF:
+				if (close_current_stream (xli, &depth) <= -1) return -1;
 				break;
 		}
 	}
@@ -111,26 +218,15 @@ int qse_xli_write (qse_xli_t* xli, qse_xli_io_impl_t io)
 
 	QSE_MEMSET (&xli->wio, 0, QSE_SIZEOF(xli->wio));
 	xli->wio.impl = io;
-	xli->wio.arg.line = 1;
-	xli->wio.arg.colm = 1;
-	xli->wio.inp = &xli->wio.arg;
+	xli->wio.inp = &xli->wio.top;
 	/*qse_xli_clearwionames (xli);*/
 
-#if 0
-	n = xli->wio.impl (xli, QSE_XLI_IO_OPEN, xli->wio.inp, QSE_NULL, 0);
-	if (n <= -1)
-	{
-		if (xli->errnum == QSE_XLI_ENOERR)
-			qse_xli_seterrnum (xli, QSE_XLI_EIOUSR, QSE_NULL); 
-		return -1;
-	}
-#endif
+	if (open_new_stream (xli, QSE_NULL, 0) <= -1) return -1;
 
 	n = write_list (xli, &xli->root, 0);
 	QSE_ASSERT (xli->wio.inp == &xli->wio.arg);
-#if 0
-	close_current_stream (xli);
-#endif
+
+	while (xli->wio.inp) close_current_stream (xli, QSE_NULL);
 	return n;
 }
 
