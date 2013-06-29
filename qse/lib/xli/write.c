@@ -20,22 +20,31 @@
 
 #include "xli.h"
 
+typedef struct arg_data_t arg_data_t;
+struct arg_data_t
+{
+	int org_depth;
+};
+
 static int flush (qse_xli_t* xli, qse_xli_io_arg_t* arg)
 {
 	qse_ssize_t n;
 
-/* TODO: flush all */
-	n = xli->wio.impl (xli, QSE_XLI_IO_WRITE, xli->wio.inp, arg->b.buf, arg->b.len);
-	if (n <= -1)
+	while (arg->b.pos < arg->b.len)
 	{
-		if (xli->errnum == QSE_XLI_ENOERR) 
-			qse_xli_seterrnum (xli, QSE_XLI_EIOUSR, QSE_NULL);
-		return -1;
+		n = xli->wio.impl (xli, QSE_XLI_IO_WRITE, xli->wio.inp, &arg->b.buf[arg->b.pos], arg->b.len - arg->b.pos);
+		if (n <= -1)
+		{
+			if (xli->errnum == QSE_XLI_ENOERR) 
+				qse_xli_seterrnum (xli, QSE_XLI_EIOUSR, QSE_NULL);
+			return -1;
+		}
+
+		arg->b.pos += n;
 	}
 
-	arg->b.pos += n;
+	arg->b.pos = 0;
 	arg->b.len = 0;
-
 	return 0;
 }
 
@@ -52,14 +61,19 @@ static int open_new_stream (qse_xli_t* xli, const qse_char_t* path, int old_dept
 	else
 	{
 		qse_size_t plen;
+		arg_data_t* arg_data;
 
 		plen = qse_strlen (path);
 
-		arg = (qse_xli_io_arg_t*) qse_xli_callocmem (xli, QSE_SIZEOF(*arg) + (plen + 1) * QSE_SIZEOF(*path));
+		arg = (qse_xli_io_arg_t*) qse_xli_callocmem (xli, 
+			QSE_SIZEOF(*arg) + QSE_SIZEOF(*arg_data) + (plen + 1) * QSE_SIZEOF(*path));
 		if (arg == QSE_NULL) return -1;
 
-		qse_strcpy ((qse_char_t*)(arg + 1), path);
-		arg->name = (const qse_char_t*)(arg + 1);
+		arg_data = (arg_data_t*)(arg + 1);
+		arg_data->org_depth = old_depth;
+		
+		qse_strcpy ((qse_char_t*)(arg_data + 1), path);
+		arg->name = (const qse_char_t*)(arg_data + 1);
 		arg->prev = xli->wio.inp;
 	}
 
@@ -94,7 +108,11 @@ static int close_current_stream (qse_xli_t* xli, int* org_depth)
 	}
 
 	xli->wio.inp = arg->prev;
-	/*if (org_depth) *org_depth = ...*/
+	if (org_depth)
+	{
+		*org_depth = (arg == &xli->wio.top)? 0: (((arg_data_t*)(arg + 1))->org_depth);
+	}
+
 	qse_xli_freemem (xli, arg);
 	return 0;
 }
@@ -104,17 +122,21 @@ static int write_to_current_stream (qse_xli_t* xli, const qse_char_t* ptr, qse_s
 	qse_xli_io_arg_t* arg;
 	qse_size_t i;
 
-/* TODO: buffering or escaping... */
 	arg = xli->wio.inp;
 
 	for (i = 0; i < len; i++)
 	{
 		if (escape && (ptr[i] == QSE_T('\\') || ptr[i] == QSE_T('\"')))
 		{
+			if (arg->b.len + 2 > QSE_COUNTOF(arg->b.buf) && flush (xli, arg) <= -1) return -1;
 			arg->b.buf[arg->b.len++] = QSE_T('\\');
+			arg->b.buf[arg->b.len++] = ptr[i];
 		}
-		arg->b.buf[arg->b.len++] = ptr[i];
-		if (arg->b.len >= QSE_COUNTOF(arg->b.buf)) flush (xli, arg);
+		else
+		{
+			if (arg->b.len + 1 > QSE_COUNTOF(arg->b.buf) && flush (xli, arg) <= -1) return -1;
+			arg->b.buf[arg->b.len++] = ptr[i];
+		}
 	}
 
 	return 0;
@@ -221,15 +243,16 @@ int qse_xli_write (qse_xli_t* xli, qse_xli_io_impl_t io)
 	xli->wio.inp = &xli->wio.top;
 	/*qse_xli_clearwionames (xli);*/
 
+	/* open the top level stream */
 	if (open_new_stream (xli, QSE_NULL, 0) <= -1) return -1;
 
+	/* begin writing the root list */
 	n = write_list (xli, &xli->root, 0);
-	QSE_ASSERT (xli->wio.inp == &xli->wio.arg);
-
+	
+	/* close all open streams. there should be only the
+	 * top-level stream here if there occurred no errors */
 	while (xli->wio.inp) close_current_stream (xli, QSE_NULL);
+
 	return n;
 }
-
-
-
 
