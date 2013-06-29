@@ -29,7 +29,7 @@ static int close_current_stream (qse_xli_t* xli)
 {
 	qse_ssize_t n;
 
-	n = xli->sio.impl (xli, QSE_XLI_IO_CLOSE, xli->sio.inp, QSE_NULL, 0);
+	n = xli->rio.impl (xli, QSE_XLI_IO_CLOSE, xli->rio.inp, QSE_NULL, 0);
 	if (n <= -1)
 	{
 		if (xli->errnum == QSE_XLI_ENOERR) 
@@ -63,7 +63,7 @@ enum tok_t
 #define GET_CHAR_TO(xli,c) \
 	do { \
 		if (get_char(xli) <= -1) return -1; \
-		c = (xli)->sio.last.c; \
+		c = (xli)->rio.last.c; \
 	} while(0)
 
 #define ADD_TOKEN_CHAR(xli,tok,c) \
@@ -107,11 +107,11 @@ static int get_char (qse_xli_t* xli)
 {
 	qse_ssize_t n;
 
-	if (xli->sio.inp->b.pos >= xli->sio.inp->b.len)
+	if (xli->rio.inp->b.pos >= xli->rio.inp->b.len)
 	{
-		n = xli->sio.impl (
-			xli, QSE_XLI_IO_READ, xli->sio.inp,
-			xli->sio.inp->b.buf, QSE_COUNTOF(xli->sio.inp->b.buf)
+		n = xli->rio.impl (
+			xli, QSE_XLI_IO_READ, xli->rio.inp,
+			xli->rio.inp->b.buf, QSE_COUNTOF(xli->rio.inp->b.buf)
 		);
 		if (n <= -1)
 		{
@@ -122,47 +122,47 @@ static int get_char (qse_xli_t* xli)
 
 		if (n == 0)
 		{
-			xli->sio.inp->last.c = QSE_CHAR_EOF;
-			xli->sio.inp->last.line = xli->sio.inp->line;
-			xli->sio.inp->last.colm = xli->sio.inp->colm;
-			xli->sio.inp->last.file = xli->sio.inp->name;
-			xli->sio.last = xli->sio.inp->last;
+			xli->rio.inp->last.c = QSE_CHAR_EOF;
+			xli->rio.inp->last.line = xli->rio.inp->line;
+			xli->rio.inp->last.colm = xli->rio.inp->colm;
+			xli->rio.inp->last.file = xli->rio.inp->name;
+			xli->rio.last = xli->rio.inp->last;
 			return 0;
 		}
 
-		xli->sio.inp->b.pos = 0;
-		xli->sio.inp->b.len = n;	
+		xli->rio.inp->b.pos = 0;
+		xli->rio.inp->b.len = n;	
 	}
 
-	if (xli->sio.inp->last.c == QSE_T('\n'))
+	if (xli->rio.inp->last.c == QSE_T('\n'))
 	{
 		/* if the previous charater was a newline,
 		 * increment the line counter and reset column to 1.
 		 * incrementing it line number here instead of
 		 * updating inp->last causes the line number for
 		 * TOK_EOF to be the same line as the last newline. */
-		xli->sio.inp->line++;
-		xli->sio.inp->colm = 1;
+		xli->rio.inp->line++;
+		xli->rio.inp->colm = 1;
 	}
 	
-	xli->sio.inp->last.c = xli->sio.inp->b.buf[xli->sio.inp->b.pos++];
-	xli->sio.inp->last.line = xli->sio.inp->line;
-	xli->sio.inp->last.colm = xli->sio.inp->colm++;
-	xli->sio.inp->last.file = xli->sio.inp->name;
-	xli->sio.last = xli->sio.inp->last;
+	xli->rio.inp->last.c = xli->rio.inp->b.buf[xli->rio.inp->b.pos++];
+	xli->rio.inp->last.line = xli->rio.inp->line;
+	xli->rio.inp->last.colm = xli->rio.inp->colm++;
+	xli->rio.inp->last.file = xli->rio.inp->name;
+	xli->rio.last = xli->rio.inp->last;
 	return 0;
 }
 
 static int skip_spaces (qse_xli_t* xli)
 {
-	qse_cint_t c = xli->sio.last.c;
+	qse_cint_t c = xli->rio.last.c;
 	while (QSE_ISSPACE(c)) GET_CHAR_TO (xli, c);
 	return 0;
 }
 
 static int skip_comment (qse_xli_t* xli, qse_xli_tok_t* tok)
 {
-	qse_cint_t c = xli->sio.last.c;
+	qse_cint_t c = xli->rio.last.c;
 
 	if (c == QSE_T('#'))
 	{
@@ -274,24 +274,24 @@ static int end_include (qse_xli_t* xli, int noeof)
 	int x;
 	qse_xli_io_arg_t* cur;
 
-	if (xli->sio.inp == &xli->sio.arg) return 0; /* no include */
+	if (xli->rio.inp == &xli->rio.top) return 0; /* no include */
 
 
 	/* if it is an included file, close it and
 	 * retry to read a character from an outer file */
 
-	x = xli->sio.impl (
+	x = xli->rio.impl (
 		xli, QSE_XLI_IO_CLOSE, 
-		xli->sio.inp, QSE_NULL, 0);
+		xli->rio.inp, QSE_NULL, 0);
 
 	/* if closing has failed, still destroy the
 	 * sio structure first as normal and return
 	 * the failure below. this way, the caller 
 	 * does not call QSE_XLI_SIO_CLOSE on 
-	 * xli->sio.inp again. */
+	 * xli->rio.inp again. */
 
-	cur = xli->sio.inp;
-	xli->sio.inp = xli->sio.inp->prev;
+	cur = xli->rio.inp;
+	xli->rio.inp = xli->rio.inp->prev;
 
 	QSE_ASSERT (cur->name != QSE_NULL);
 	QSE_MMGR_FREE (xli->mmgr, cur);
@@ -308,7 +308,7 @@ static int end_include (qse_xli_t* xli, int noeof)
 		return -1;
 	}
 
-	xli->sio.last = xli->sio.inp->last;
+	xli->rio.last = xli->rio.inp->last;
 	return 1; /* ended the included file successfully */
 }
 
@@ -322,8 +322,8 @@ static int begin_include (qse_xli_t* xli)
 	if (link == QSE_NULL) goto oops;
 
 	qse_strncpy ((qse_char_t*)(link + 1), QSE_STR_PTR(xli->tok.name), QSE_STR_LEN(xli->tok.name));
-	link->link = xli->sio_names;
-	xli->sio_names = link;
+	link->link = xli->rio_names;
+	xli->rio_names = link;
 
 	arg = (qse_xli_io_arg_t*) qse_xli_callocmem (xli, QSE_SIZEOF(*arg));
 	if (arg == QSE_NULL) goto oops;
@@ -333,9 +333,9 @@ static int begin_include (qse_xli_t* xli)
 	arg->colm = 1;
 
 	/* let the argument's prev point field to the current */
-	arg->prev = xli->sio.inp; 
+	arg->prev = xli->rio.inp; 
 
-	if (xli->sio.impl (xli, QSE_XLI_IO_OPEN, arg, QSE_NULL, 0) <= -1)
+	if (xli->rio.impl (xli, QSE_XLI_IO_OPEN, arg, QSE_NULL, 0) <= -1)
 	{
 		if (xli->errnum == QSE_XLI_ENOERR)
 			qse_xli_seterrnum (xli, QSE_XLI_EIOUSR, QSE_NULL); 
@@ -343,7 +343,7 @@ static int begin_include (qse_xli_t* xli)
 	}
 
 	/* i update the current pointer after opening is successful */
-	xli->sio.inp = arg;
+	xli->rio.inp = arg;
 	/* xli->parse.depth.incl++; */
 
 	/* read in the first character in the included file. 
@@ -353,7 +353,7 @@ static int begin_include (qse_xli_t* xli)
 	{
 		end_include (xli, 1); 
 		/* i don't jump to oops since i've called 
-		 * end_include() where xli->sio.inp/arg is freed. */
+		 * end_include() where xli->rio.inp/arg is freed. */
 		return -1;
 	}
 
@@ -368,7 +368,7 @@ static int begin_include (qse_xli_t* xli)
 
 oops:
 	/* i don't need to free 'link' since it's linked to
-	 * xli->sio_names that's freed at the beginning of qse_xli_read()
+	 * xli->rio_names that's freed at the beginning of qse_xli_read()
 	 * or by qse_xli_fini() */
 	if (arg) QSE_MMGR_FREE (xli->mmgr, arg);
 	return -1;
@@ -390,11 +390,11 @@ retry:
 	while (n >= 1);
 
 	qse_str_clear (tok->name);
-	tok->loc.file = xli->sio.last.file;
-	tok->loc.line = xli->sio.last.line;
-	tok->loc.colm = xli->sio.last.colm;
+	tok->loc.file = xli->rio.last.file;
+	tok->loc.line = xli->rio.last.line;
+	tok->loc.colm = xli->rio.last.colm;
 
-	c = xli->sio.last.c;
+	c = xli->rio.last.c;
 
 	if (c == QSE_CHAR_EOF) 
 	{
@@ -402,7 +402,7 @@ retry:
 		if (n <= -1) return -1;
 		if (n >= 1) 
 		{
-			/*xli->sio.last = xli->sio.inp->last;*/
+			/*xli->rio.last = xli->rio.inp->last;*/
 			/* mark that i'm retrying after end of an included file */
 			skip_semicolon_after_include = 1; 
 			goto retry;
@@ -610,11 +610,21 @@ static int read_pair (qse_xli_t* xli)
 
 		if (MATCH (xli, TOK_SQSTR) || MATCH (xli, TOK_DQSTR) || MATCH (xli, TOK_IDENT))
 		{
+			qse_xli_str_t* curstrseg;
+
+pair = qse_xli_insertpairwithstr (xli, parlist, QSE_NULL, key, name, QSE_STR_CSTR(xli->tok.name));
+if (pair == QSE_NULL) goto oops;
+
+
+			curstrseg = (qse_xli_str_t*)pair->val;
+
+#if 0
 			if (qse_str_ncpy (xli->tmp[0], QSE_STR_PTR(xli->tok.name), QSE_STR_LEN(xli->tok.name) + 1) == (qse_size_t)-1)
 			{
 				qse_xli_seterrnum (xli, QSE_XLI_ENOMEM, QSE_NULL);
 				goto oops;
 			}
+#endif
 
 			if (get_token (xli) <= -1) goto oops;
 			if (MATCH(xli, TOK_COMMA))
@@ -630,20 +640,28 @@ static int read_pair (qse_xli_t* xli)
 						goto oops;
 					}
 
+
+#if 0
 					if (qse_str_ncat (xli->tmp[0], QSE_STR_PTR(xli->tok.name), QSE_STR_LEN(xli->tok.name) + 1) == (qse_size_t)-1)
 					{
 						qse_xli_seterrnum (xli, QSE_XLI_ENOMEM, QSE_NULL);
 						goto oops;
 					}
+#endif
+
+curstrseg = qse_xli_addnextsegtostr (xli, curstrseg, QSE_STR_CSTR(xli->tok.name));
+if (curstrseg == QSE_NULL) goto oops;
 
 					if (get_token (xli) <= -1) goto oops; /* skip the value */
 				}
 				while (MATCH (xli, TOK_COMMA));
 			}
 			
+#if 0
 			pair = qse_xli_insertpairwithstr (
 				xli, parlist, QSE_NULL, key, name, QSE_STR_CSTR(xli->tmp[0]));
 			if (pair == QSE_NULL) goto oops;
+#endif
 
 			/* semicolon is mandatory for a string */
 			if (!MATCH (xli, TOK_SEMICOLON))
@@ -710,22 +728,33 @@ oops:
 	return -1;
 }
 
-static int read_list (qse_xli_t* xli, qse_xli_list_t* parlist)
+static qse_xli_list_link_t* make_list_link (qse_xli_t* xli, qse_xli_list_t* parlist)
 {
-	qse_xli_list_link_t* link = QSE_NULL;
+	qse_xli_list_link_t* link;
 
 	link = (qse_xli_list_link_t*) qse_xli_callocmem (xli, QSE_SIZEOF(*link));
-	if (link == QSE_NULL) goto oops;
+	if (link == QSE_NULL) return QSE_NULL;
 
 	link->list = parlist;
 	link->next = xli->parlink;
 	xli->parlink = link;
 
+	return link;	
+}
+
+static void free_list_link (qse_xli_t* xli, qse_xli_list_link_t* link)
+{
+	xli->parlink = link->next;
+	qse_xli_freemem (xli, link);
+}
+
+static int __read_list (qse_xli_t* xli)
+{
 	while (1)
 	{
 		if (MATCH (xli, TOK_XINCLUDE))
 		{
-			if (get_token(xli) <= -1) goto oops;
+			if (get_token(xli) <= -1) return -1;
 
 			if (!MATCH(xli,TOK_SQSTR) && !MATCH(xli,TOK_DQSTR))
 			{
@@ -733,15 +762,15 @@ static int read_list (qse_xli_t* xli, qse_xli_list_t* parlist)
 				return -1;
 			}
 
-			if (begin_include (xli) <= -1) goto oops;
+			if (begin_include (xli) <= -1) return -1;
 		}
 		else if (MATCH (xli, TOK_IDENT))
 		{
-			if (read_pair (xli) <= -1) goto oops;
+			if (read_pair (xli) <= -1) return -1;
 		}
 		else if (MATCH (xli, TOK_TEXT))
 		{
-			if (get_token(xli) <= -1) goto oops;
+			if (get_token(xli) <= -1) return -1;
 		}
 		else 
 		{
@@ -749,29 +778,54 @@ static int read_list (qse_xli_t* xli, qse_xli_list_t* parlist)
 		}
 	}
 
-	QSE_ASSERT (link == xli->parlink);
-	xli->parlink = link->next;
-	qse_xli_freemem (xli, link);
-
 	return 0;
-
-oops:
-	if (link)
-	{
-		QSE_ASSERT (link == xli->parlink);
-		xli->parlink = link->next;
-		qse_xli_freemem (xli, link);
-	}
-	return -1;
 }
 
-void qse_xli_clearsionames (qse_xli_t* xli)
+static int read_list (qse_xli_t* xli, qse_xli_list_t* parlist)
+{
+	qse_xli_list_link_t* link;
+
+	link = make_list_link (xli, parlist);
+	if (link == QSE_NULL) return -1;
+
+	if (__read_list (xli) <= -1) 
+	{
+		free_list_link (xli, link);
+		return -1;
+	}
+
+	QSE_ASSERT (link == xli->parlink);
+	free_list_link (xli, link);
+
+	return 0;
+}
+
+static int read_root_list (qse_xli_t* xli)
+{
+	qse_xli_list_link_t* link;
+
+	link = make_list_link (xli, &xli->root);
+	if (link == QSE_NULL) return -1;
+
+	if (get_char (xli) <= -1 || get_token (xli) <= -1 || __read_list (xli) <= -1)
+	{
+		free_list_link (xli, link);
+		return -1;
+	}
+
+	QSE_ASSERT (link == xli->parlink);
+	free_list_link (xli, link);
+
+	return 0;
+}
+
+void qse_xli_clearrionames (qse_xli_t* xli)
 {
 	qse_link_t* cur;
-	while (xli->sio_names)
+	while (xli->rio_names)
 	{
-		cur = xli->sio_names;
-		xli->sio_names = cur->link;
+		cur = xli->rio_names;
+		xli->rio_names = cur->link;
 		QSE_MMGR_FREE (xli->mmgr, cur);
 	}
 }
@@ -786,14 +840,14 @@ int qse_xli_read (qse_xli_t* xli, qse_xli_io_impl_t io)
 		return -1;
 	}
 
-	QSE_MEMSET (&xli->sio, 0, QSE_SIZEOF(xli->sio));
-	xli->sio.impl = io;
-	xli->sio.arg.line = 1;
-	xli->sio.arg.colm = 1;
-	xli->sio.inp = &xli->sio.arg;
-	qse_xli_clearsionames (xli);
+	QSE_MEMSET (&xli->rio, 0, QSE_SIZEOF(xli->rio));
+	xli->rio.impl = io;
+	xli->rio.top.line = 1;
+	xli->rio.top.colm = 1;
+	xli->rio.inp = &xli->rio.top;
+	qse_xli_clearrionames (xli);
 
-	n = xli->sio.impl (xli, QSE_XLI_IO_OPEN, xli->sio.inp, QSE_NULL, 0);
+	n = xli->rio.impl (xli, QSE_XLI_IO_OPEN, xli->rio.inp, QSE_NULL, 0);
 	if (n <= -1)
 	{
 		if (xli->errnum == QSE_XLI_ENOERR)
@@ -802,8 +856,7 @@ int qse_xli_read (qse_xli_t* xli, qse_xli_io_impl_t io)
 	}
 	/* the input stream is open now */
 
-	if (get_char (xli) <= -1 || get_token (xli) <= -1) goto oops;
-	if (read_list (xli, &xli->root) <= -1) goto oops;
+	if (read_root_list (xli) <= -1) goto oops;
 
 	QSE_ASSERT (xli->parlink == QSE_NULL);
 
@@ -813,7 +866,7 @@ int qse_xli_read (qse_xli_t* xli, qse_xli_io_impl_t io)
 		goto oops;
 	}
 
-	QSE_ASSERT (xli->sio.inp == &xli->sio.arg);
+	QSE_ASSERT (xli->rio.inp == &xli->rio.top);
 	close_current_stream (xli);
 	return 0;
 
@@ -821,17 +874,17 @@ oops:
 	/* an error occurred and control has reached here
 	 * probably, some included files might not have been 
 	 * closed. close them */
-	while (xli->sio.inp != &xli->sio.arg)
+	while (xli->rio.inp != &xli->rio.top)
 	{
 		qse_xli_io_arg_t* prev;
 
 		/* nothing much to do about a close error */
 		close_current_stream (xli);
 
-		prev = xli->sio.inp->prev;
-		QSE_ASSERT (xli->sio.inp->name != QSE_NULL);
-		QSE_MMGR_FREE (xli->mmgr, xli->sio.inp);
-		xli->sio.inp = prev;
+		prev = xli->rio.inp->prev;
+		QSE_ASSERT (xli->rio.inp->name != QSE_NULL);
+		QSE_MMGR_FREE (xli->mmgr, xli->rio.inp);
+		xli->rio.inp = prev;
 	}
 	
 	close_current_stream (xli);

@@ -108,12 +108,16 @@ static int close_current_stream (qse_xli_t* xli, int* org_depth)
 	}
 
 	xli->wio.inp = arg->prev;
-	if (org_depth)
+	if (arg == &xli->wio.top)
 	{
-		*org_depth = (arg == &xli->wio.top)? 0: (((arg_data_t*)(arg + 1))->org_depth);
+		if (org_depth) *org_depth = 0;			
+	}
+	else
+	{
+		if (org_depth) *org_depth = ((arg_data_t*)(arg + 1))->org_depth;
+		qse_xli_freemem (xli, arg);
 	}
 
-	qse_xli_freemem (xli, arg);
 	return 0;
 }
 
@@ -180,7 +184,7 @@ static int write_list (qse_xli_t* xli, qse_xli_list_t* list, int depth)
 						qse_xli_str_t* str = (qse_xli_str_t*)pair->val;
 						if (write_to_current_stream (xli, QSE_T(" = \""), 4, 0) <= -1 ||
 						    write_to_current_stream (xli, str->ptr, str->len, 1) <= -1 ||
-						    write_to_current_stream (xli, QSE_T("\";"), 2, 0) <= -1) return -1;
+						    write_to_current_stream (xli, QSE_T("\";\n"), 3, 0) <= -1) return -1;
 						break;	
 					}
 
@@ -197,7 +201,14 @@ static int write_list (qse_xli_t* xli, qse_xli_list_t* list, int depth)
 
 			case QSE_XLI_TEXT:
 			{
+				int i;
 				const qse_char_t* str = ((qse_xli_text_t*)curatom)->ptr;
+
+				for (i = 0; i < depth; i++) 
+				{
+					if (write_to_current_stream (xli, QSE_T("\t"), 1, 0) <= -1) return -1;
+				}
+
 				if (write_to_current_stream (xli, QSE_T("#"), 1, 0) <= -1 ||
 				    write_to_current_stream (xli, str, qse_strlen(str), 0) <= -1 ||
 				    write_to_current_stream (xli, QSE_T("\n"), 1, 0) <= -1) return -1;
@@ -206,11 +217,17 @@ static int write_list (qse_xli_t* xli, qse_xli_list_t* list, int depth)
 
 			case QSE_XLI_FILE:
 			{
+				int i;
 				const qse_char_t* path = ((qse_xli_file_t*)curatom)->path;
+
+				for (i = 0; i < depth; i++) 
+				{
+					if (write_to_current_stream (xli, QSE_T("\t"), 1, 0) <= -1) return -1;
+				}
 
 				if (write_to_current_stream (xli, QSE_T("@include \""), 10, 0) <= -1 ||
 				    write_to_current_stream (xli, path, qse_strlen(path), 1) <= -1 ||
-				    write_to_current_stream (xli, QSE_T("\""), 1, 0) <= -1) return -1;
+				    write_to_current_stream (xli, QSE_T("\";\n"), 3, 0) <= -1) return -1;
 				
 				if (open_new_stream (xli, ((qse_xli_file_t*)curatom)->path, depth) <= -1) return -1;
 				depth = 0;
@@ -230,13 +247,11 @@ int qse_xli_write (qse_xli_t* xli, qse_xli_io_impl_t io)
 {
 	int n;
 
-#if 0
 	if (io == QSE_NULL)
 	{
 		qse_xli_seterrnum (xli, QSE_XLI_EINVAL, QSE_NULL);
 		return -1;
 	}
-#endif
 
 	QSE_MEMSET (&xli->wio, 0, QSE_SIZEOF(xli->wio));
 	xli->wio.impl = io;
