@@ -221,7 +221,7 @@ static int handle_args (int argc, qse_char_t* argv[])
 
 #if defined(QSE_BUILD_DEBUG)
 			case QSE_T('X'):
-                    g_failmalloc = qse_strtoulong (opt.arg);
+				g_failmalloc = qse_strtoulong (opt.arg);
 				break;
 #endif
 
@@ -230,8 +230,8 @@ static int handle_args (int argc, qse_char_t* argv[])
 				if (qse_strcmp(opt.lngopt, QSE_T("version")) == 0)
 				{
 					print_version ();
-                         goto done;
-                    }
+					goto done;
+				}
 				else if (qse_strcmp(opt.lngopt, QSE_T("infile-encoding")) == 0)
 				{
 					g_infile_cmgr = qse_findcmgr (opt.arg);
@@ -413,10 +413,10 @@ static int xli_main (int argc, qse_char_t* argv[])
 	}
 
 
-/* TODO: qse_xli_writestd??? */
-qse_xli_write (xli, QSE_NULL);
-
-	ret = 0;
+	out.type = QSE_XLI_IOSTD_FILE;
+	out.u.file.path = g_output_file? g_output_file: QSE_T("-");
+	out.u.file.cmgr = g_outfile_cmgr;
+	ret = qse_xli_writestd (xli, &out);
 
 oops:
 	if (xli) qse_xli_close (xli);

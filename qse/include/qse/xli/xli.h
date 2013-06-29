@@ -133,7 +133,8 @@ struct qse_xli_str_t
 {
 	QSE_XLI_VAL_HDR;
 	const qse_char_t* ptr;
-	qse_size_t        len; /* take note that qse_strlen(ptr) != len */
+	qse_size_t        len; 
+	qse_xli_str_t*    next;
 };
 
 #define QSE_XLI_ATOM_HDR \
@@ -532,6 +533,13 @@ QSE_EXPORT qse_size_t qse_xli_getnumpairsbyname (
 	const qse_xli_list_t* list,
 	const qse_char_t*     name 
 );
+
+QSE_EXPORT qse_xli_str_t* qse_xli_addnextsegtostr (
+        qse_xli_t*        xli, 
+	qse_xli_str_t*    str,
+	const qse_cstr_t* value
+);
+
 
 QSE_EXPORT void qse_xli_clear (
 	qse_xli_t* xli

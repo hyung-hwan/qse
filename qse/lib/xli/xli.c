@@ -94,7 +94,7 @@ void qse_xli_fini (qse_xli_t* xli)
 		if (xli->tmp[--i]) qse_str_close (xli->tmp[i]);
 	}
 
-	qse_xli_clearsionames (xli);
+	qse_xli_clearrionames (xli);
 }
 
 qse_mmgr_t* qse_xli_getmmgr (qse_xli_t* xli)
@@ -284,6 +284,23 @@ qse_xli_pair_t* qse_xli_insertpairwithstr (
 	tmp = qse_xli_insertpair (xli, parent, peer, key, name, (qse_xli_val_t*)val);	
 	if (tmp == QSE_NULL) qse_xli_freemem (xli, val);
 	return tmp;
+}
+
+qse_xli_str_t* qse_xli_addnextsegtostr (
+	qse_xli_t* xli, qse_xli_str_t* str, const qse_cstr_t* value)
+{
+	qse_xli_str_t* val;
+
+	val = qse_xli_callocmem (xli, QSE_SIZEOF(*val) + ((value->len  + 1) * QSE_SIZEOF(*value->ptr)));
+	if (val == QSE_NULL) return QSE_NULL;
+
+	val->type = QSE_XLI_STR;
+	qse_strncpy ((qse_char_t*)(val + 1), value->ptr, value->len);
+	val->ptr = (const qse_char_t*)(val + 1);
+	val->len = value->len;
+		
+	str->next = val;
+	return str->next;
 }
 
 qse_xli_text_t* qse_xli_inserttext (

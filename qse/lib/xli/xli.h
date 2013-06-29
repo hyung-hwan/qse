@@ -68,10 +68,10 @@ struct qse_xli_t
 	{
 		qse_xli_io_impl_t impl; /* input handler */
 		qse_xli_io_lxc_t  last;	
-		qse_xli_io_arg_t  arg; /* for top level */
+		qse_xli_io_arg_t  top; /* for top level */
 		qse_xli_io_arg_t* inp; /* current */
-	} sio;
-	qse_link_t* sio_names;
+	} rio;
+	qse_link_t* rio_names;
 
 	struct 
 	{
@@ -93,7 +93,7 @@ void qse_xli_fini (qse_xli_t* xli);
 const qse_char_t* qse_xli_dflerrstr (
      const qse_xli_t* xli, qse_xli_errnum_t errnum);
 
-void qse_xli_clearsionames (qse_xli_t* xli);
+void qse_xli_clearrionames (qse_xli_t* xli);
 
 #if defined(__cplusplus)
 }
