@@ -145,13 +145,12 @@ static int write_to_current_stream (qse_xli_t* xli, const qse_char_t* ptr, qse_s
 		{
 			if (arg->b.len + 2 > QSE_COUNTOF(arg->b.buf) && flush (xli, arg) <= -1) return -1;
 			arg->b.buf[arg->b.len++] = QSE_T('\\');
-			arg->b.buf[arg->b.len++] = ptr[i];
 		}
 		else
 		{
 			if (arg->b.len + 1 > QSE_COUNTOF(arg->b.buf) && flush (xli, arg) <= -1) return -1;
-			arg->b.buf[arg->b.len++] = ptr[i];
 		}
+		arg->b.buf[arg->b.len++] = ptr[i];
 	}
 
 	return 0;
@@ -177,10 +176,10 @@ static int write_list (qse_xli_t* xli, qse_xli_list_t* list, int depth)
 
 				if (write_to_current_stream (xli, pair->key, qse_strlen(pair->key), 0) <= -1) return -1;
 
-				if (pair->name) 
+				if (pair->alias) 
 				{
 					if (write_to_current_stream (xli, QSE_T(" \""), 2, 0) <= -1 ||
-					    write_to_current_stream (xli, pair->name, qse_strlen(pair->name), 1) <= -1 ||
+					    write_to_current_stream (xli, pair->alias, qse_strlen(pair->alias), 1) <= -1 ||
 					    write_to_current_stream (xli, QSE_T("\""), 1, 0) <= -1) return -1;
 				}
 

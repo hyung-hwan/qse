@@ -52,17 +52,9 @@ void qse_xli_close (qse_xli_t* xli)
 
 int qse_xli_init (qse_xli_t* xli, qse_mmgr_t* mmgr)
 {
-	qse_size_t i;
-
 	QSE_MEMSET (xli, 0, QSE_SIZEOF(*xli));
 	xli->mmgr = mmgr;
 	xli->errstr = qse_xli_dflerrstr;
-
-	for (i = 0; i < QSE_COUNTOF(xli->tmp); i++)
-	{
-		xli->tmp[i] = qse_str_open (mmgr, 0, 128);
-		if (xli->tmp[i] == QSE_NULL) goto oops;
-	}
 
 	xli->tok.name = qse_str_open (mmgr, 0, 128);
 	if (xli->tok.name == QSE_NULL) goto oops;
@@ -74,25 +66,13 @@ int qse_xli_init (qse_xli_t* xli, qse_mmgr_t* mmgr)
 oops:
 	qse_xli_seterrnum (xli, QSE_XLI_ENOMEM, QSE_NULL);
 	if (xli->tok.name) qse_str_close (xli->tok.name);
-	
-	for (i = QSE_COUNTOF(xli->tmp); i > 0; )
-	{
-		if (xli->tmp[--i]) qse_str_close (xli->tmp[i]);
-	}
 	return -1;
 }
 
 void qse_xli_fini (qse_xli_t* xli)
 {
-	qse_size_t i;
-
 	qse_xli_clear (xli);
 	qse_str_close (xli->tok.name);
-
-	for (i = QSE_COUNTOF(xli->tmp); i > 0; )
-	{
-		if (xli->tmp[--i]) qse_str_close (xli->tmp[i]);
-	}
 
 	qse_xli_clearrionames (xli);
 	qse_xli_clearwionames (xli);
@@ -181,7 +161,6 @@ qse_xli_list_t* qse_xli_getroot (qse_xli_t* xli)
 	return &xli->root;
 }
 
-
 /* ------------------------------------------------------ */
 
 static void insert_atom (
@@ -218,19 +197,19 @@ static void insert_atom (
 
 qse_xli_pair_t* qse_xli_insertpair (
 	qse_xli_t* xli, qse_xli_list_t* parent, qse_xli_atom_t* peer,
-	const qse_char_t* key, const qse_char_t* name, qse_xli_val_t* value)
+	const qse_char_t* key, const qse_char_t* alias, qse_xli_val_t* value)
 {
 	qse_xli_pair_t* pair;
 	qse_size_t klen, nlen;
 	qse_char_t* kptr, * nptr;
 
 	klen = qse_strlen (key);
-	nlen = name? qse_strlen (name): 0;
+	nlen = alias? qse_strlen (alias): 0;
 
 	pair = qse_xli_callocmem (xli, 
 		QSE_SIZEOF(*pair) + 
 		((klen + 1) * QSE_SIZEOF(*key)) + 
-		((nlen + 1) * QSE_SIZEOF(*name)));
+		((nlen + 1) * QSE_SIZEOF(*alias)));
 	if (pair == QSE_NULL) return QSE_NULL;
 
 	kptr = (qse_char_t*)(pair + 1);
@@ -238,11 +217,11 @@ qse_xli_pair_t* qse_xli_insertpair (
 
 	pair->type = QSE_XLI_PAIR;
 	pair->key = kptr;
-	if (name) 
+	if (alias) 
 	{
 		nptr = kptr + klen + 1;
-		qse_strcpy (nptr, name);
-		pair->name = nptr;
+		qse_strcpy (nptr, alias);
+		pair->alias = nptr;
 	}
 	pair->val = value;  /* this assumes it points to a dynamically allocated atom  */
 
@@ -252,7 +231,7 @@ qse_xli_pair_t* qse_xli_insertpair (
 
 qse_xli_pair_t* qse_xli_insertpairwithemptylist (
 	qse_xli_t* xli, qse_xli_list_t* parent, qse_xli_atom_t* peer,
-	const qse_char_t* key, const qse_char_t* name)
+	const qse_char_t* key, const qse_char_t* alias)
 {
 	qse_xli_list_t* val;
 	qse_xli_pair_t* tmp;
@@ -261,14 +240,14 @@ qse_xli_pair_t* qse_xli_insertpairwithemptylist (
 	if (val == QSE_NULL) return QSE_NULL;
 
 	val->type = QSE_XLI_LIST;
-	tmp = qse_xli_insertpair (xli, parent, peer, key, name, (qse_xli_val_t*)val);	
+	tmp = qse_xli_insertpair (xli, parent, peer, key, alias, (qse_xli_val_t*)val);	
 	if (tmp == QSE_NULL) qse_xli_freemem (xli, val);
 	return tmp;
 }
 
 qse_xli_pair_t* qse_xli_insertpairwithstr (
 	qse_xli_t* xli, qse_xli_list_t* parent, qse_xli_atom_t* peer,
-	const qse_char_t* key, const qse_char_t* name, const qse_cstr_t* value)
+	const qse_char_t* key, const qse_char_t* alias, const qse_cstr_t* value)
 {
 	qse_xli_str_t* val;
 	qse_xli_pair_t* tmp;
@@ -282,7 +261,7 @@ qse_xli_pair_t* qse_xli_insertpairwithstr (
 	val->ptr = (const qse_char_t*)(val + 1);
 	val->len = value->len;
 
-	tmp = qse_xli_insertpair (xli, parent, peer, key, name, (qse_xli_val_t*)val);	
+	tmp = qse_xli_insertpair (xli, parent, peer, key, alias, (qse_xli_val_t*)val);	
 	if (tmp == QSE_NULL) qse_xli_freemem (xli, val);
 	return tmp;
 }
@@ -398,9 +377,9 @@ void qse_xli_clear (qse_xli_t* xli)
 	free_list (xli, &xli->root);
 }
 
-static qse_size_t count_pair_byname (
+static qse_size_t count_pair_byalias (
 	qse_xli_t* xli, const qse_xli_list_t* list, 
-	const qse_cstr_t* key, const qse_cstr_t* name)
+	const qse_cstr_t* key, const qse_cstr_t* alias)
 {
 	qse_xli_atom_t* p;
 	qse_size_t count = 0;
@@ -414,8 +393,8 @@ static qse_size_t count_pair_byname (
 			qse_xli_pair_t* pair = (qse_xli_pair_t*)p;
 			if (qse_strxcmp (key->ptr, key->len, pair->key) == 0) 
 			{
-				if (name == QSE_NULL || 
-				    qse_strxcmp (name->ptr, name->len, pair->name) == 0) count++;
+				if (alias == QSE_NULL || 
+				    qse_strxcmp (alias->ptr, alias->len, pair->alias) == 0) count++;
 			}
 		}
 
@@ -425,9 +404,9 @@ static qse_size_t count_pair_byname (
 	return count;
 }
 
-static qse_xli_pair_t* find_pair_byname (
+static qse_xli_pair_t* find_pair_byalias (
 	qse_xli_t* xli, const qse_xli_list_t* list, 
-	const qse_cstr_t* key, const qse_cstr_t* name)
+	const qse_cstr_t* key, const qse_cstr_t* alias)
 {
 	qse_xli_atom_t* p;
 
@@ -440,8 +419,8 @@ static qse_xli_pair_t* find_pair_byname (
 			qse_xli_pair_t* pair = (qse_xli_pair_t*)p;
 			if (qse_strxcmp (key->ptr, key->len, pair->key) == 0) 
 			{
-				if (name == QSE_NULL || 
-				    qse_strxcmp (name->ptr, name->len, pair->name) == 0) return pair;
+				if (alias == QSE_NULL || 
+				    qse_strxcmp (alias->ptr, alias->len, pair->alias) == 0) return pair;
 			}
 		}
 
@@ -478,7 +457,7 @@ static qse_xli_pair_t* find_pair_byindex (
 	return QSE_NULL;
 }
 
-qse_xli_pair_t* qse_xli_findpairbyname (qse_xli_t* xli, const qse_xli_list_t* list, const qse_char_t* name)
+qse_xli_pair_t* qse_xli_findpairbyalias (qse_xli_t* xli, const qse_xli_list_t* list, const qse_char_t* alias)
 {
 	const qse_char_t* ptr;
 	const qse_xli_list_t* curlist;
@@ -487,7 +466,7 @@ qse_xli_pair_t* qse_xli_findpairbyname (qse_xli_t* xli, const qse_xli_list_t* li
 
 	curlist = list? list: &xli->root;
 
-	ptr = name;
+	ptr = alias;
 	while (1)
 	{
 		seg.ptr = ptr;
@@ -500,7 +479,7 @@ qse_xli_pair_t* qse_xli_findpairbyname (qse_xli_t* xli, const qse_xli_list_t* li
 			/* check the type of curlist. this check is needed
 			 * because of the unconditional switching at the bottom of the 
 			 * this loop. this implementation strategy has been chosen
-			 * to provide the segment name easily. */
+			 * to provide the segment alias easily. */
 			goto noent;
 		}
 
@@ -540,7 +519,7 @@ qse_xli_pair_t* qse_xli_findpairbyname (qse_xli_t* xli, const qse_xli_list_t* li
 	
 				if (*ptr != QSE_T(']')) goto inval;
 
-				pair = find_pair_byname (xli, curlist, &seg, &idx);
+				pair = find_pair_byalias (xli, curlist, &seg, &idx);
 				if (pair == QSE_NULL) 
 				{
 					seg.len += idx.len + 2; /* adjustment for error message */
@@ -559,7 +538,7 @@ qse_xli_pair_t* qse_xli_findpairbyname (qse_xli_t* xli, const qse_xli_list_t* li
 				if (*ptr != cc) goto inval;
 				if (*++ptr != QSE_T(']')) goto inval;
 
-				pair = find_pair_byname (xli, curlist, &seg, &idx);
+				pair = find_pair_byalias (xli, curlist, &seg, &idx);
 				if (pair == QSE_NULL) 
 				{
 					seg.len += idx.len + 4; /* adjustment for error message */
@@ -575,7 +554,7 @@ qse_xli_pair_t* qse_xli_findpairbyname (qse_xli_t* xli, const qse_xli_list_t* li
 		}
 		else
 		{
-			pair = find_pair_byname (xli, curlist, &seg, QSE_NULL);
+			pair = find_pair_byalias (xli, curlist, &seg, QSE_NULL);
 			if (pair == QSE_NULL) goto noent;
 
 			if (*ptr == QSE_T('\0')) break; /* no more segments */
@@ -587,7 +566,7 @@ qse_xli_pair_t* qse_xli_findpairbyname (qse_xli_t* xli, const qse_xli_list_t* li
 
 		/* switch to the value regardless of its type.
 		 * check if it is a list in the beginning of the loop
-		 * just after having gotten the next segment name */
+		 * just after having gotten the next segment alias */
 		curlist = (qse_xli_list_t*)pair->val;
 	}
 
@@ -602,7 +581,7 @@ noent:
 	return QSE_NULL;
 }
 
-qse_size_t qse_xli_getnumpairsbyname (qse_xli_t* xli, const qse_xli_list_t* list, const qse_char_t* name)
+qse_size_t qse_xli_getnumpairsbyalias (qse_xli_t* xli, const qse_xli_list_t* list, const qse_char_t* alias)
 {
 	const qse_char_t* ptr;
 	const qse_xli_list_t* curlist;
@@ -611,7 +590,7 @@ qse_size_t qse_xli_getnumpairsbyname (qse_xli_t* xli, const qse_xli_list_t* list
 
 	curlist = list? list: &xli->root;
 
-	ptr = name;
+	ptr = alias;
 	while (1)
 	{
 		seg.ptr = ptr;
@@ -624,7 +603,7 @@ qse_size_t qse_xli_getnumpairsbyname (qse_xli_t* xli, const qse_xli_list_t* list
 			/* check the type of curlist. this check is needed
 			 * because of the unconditional switching at the bottom of the 
 			 * this loop. this implementation strategy has been chosen
-			 * to provide the segment name easily. */
+			 * to provide the segment alias easily. */
 			goto noent;
 		}
 
@@ -664,7 +643,7 @@ qse_size_t qse_xli_getnumpairsbyname (qse_xli_t* xli, const qse_xli_list_t* list
 	
 				if (*ptr != QSE_T(']')) goto inval;
 
-				pair = find_pair_byname (xli, curlist, &seg, &idx);
+				pair = find_pair_byalias (xli, curlist, &seg, &idx);
 				if (pair == QSE_NULL) 
 				{
 					seg.len += idx.len + 2; /* adjustment for error message */
@@ -683,7 +662,7 @@ qse_size_t qse_xli_getnumpairsbyname (qse_xli_t* xli, const qse_xli_list_t* list
 				if (*ptr != cc) goto inval;
 				if (*++ptr != QSE_T(']')) goto inval;
 
-				pair = find_pair_byname (xli, curlist, &seg, &idx);
+				pair = find_pair_byalias (xli, curlist, &seg, &idx);
 				if (pair == QSE_NULL) 
 				{
 					seg.len += idx.len + 4; /* adjustment for error message */
@@ -703,16 +682,16 @@ qse_size_t qse_xli_getnumpairsbyname (qse_xli_t* xli, const qse_xli_list_t* list
 		}
 		else
 		{
-			pair = find_pair_byname (xli, curlist, &seg, QSE_NULL);
+			pair = find_pair_byalias (xli, curlist, &seg, QSE_NULL);
 			if (pair == QSE_NULL) goto noent;
 
 			if (*ptr == QSE_T('\0')) 
 			{
-				return count_pair_byname (xli, curlist, &seg, QSE_NULL);
+				return count_pair_byalias (xli, curlist, &seg, QSE_NULL);
 			}
 			else
 			{
-				pair = find_pair_byname (xli, curlist, &seg, QSE_NULL);
+				pair = find_pair_byalias (xli, curlist, &seg, QSE_NULL);
 				if (pair == QSE_NULL) goto noent;
 			}
 		}
@@ -723,7 +702,7 @@ qse_size_t qse_xli_getnumpairsbyname (qse_xli_t* xli, const qse_xli_list_t* list
 
 		/* switch to the value regardless of its type.
 		 * check if it is a list in the beginning of the loop
-		 * just after having gotten the next segment name */
+		 * just after having gotten the next segment alias */
 		curlist = (qse_xli_list_t*)pair->val;
 	}
 
@@ -775,7 +754,6 @@ qse_char_t* qse_xli_dupflatstr (qse_xli_t* xli, qse_xli_str_t* str, qse_size_t* 
 		x += (cur->len + 1);	
 	}
 	tmp[x] = QSE_T('\0'); 
-
 
 	if (len) *len = x;
 	if (nsegs) *nsegs = y;
