@@ -79,6 +79,7 @@ struct qse_xli_t
 		qse_xli_io_arg_t  top; /* for top level */
 		qse_xli_io_arg_t* inp; /* current */
 	} wio;
+	qse_link_t* wio_names;
 };
 
 
@@ -94,6 +95,7 @@ const qse_char_t* qse_xli_dflerrstr (
      const qse_xli_t* xli, qse_xli_errnum_t errnum);
 
 void qse_xli_clearrionames (qse_xli_t* xli);
+void qse_xli_clearwionames (qse_xli_t* xli);
 
 #if defined(__cplusplus)
 }
