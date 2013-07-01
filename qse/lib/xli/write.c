@@ -60,20 +60,27 @@ static int open_new_stream (qse_xli_t* xli, const qse_char_t* path, int old_dept
 	}
 	else
 	{
+		qse_link_t* link;
 		qse_size_t plen;
 		arg_data_t* arg_data;
 
 		plen = qse_strlen (path);
 
-		arg = (qse_xli_io_arg_t*) qse_xli_callocmem (xli, 
-			QSE_SIZEOF(*arg) + QSE_SIZEOF(*arg_data) + (plen + 1) * QSE_SIZEOF(*path));
+		link = (qse_link_t*) qse_xli_callocmem (xli, 
+			QSE_SIZEOF(*link) + QSE_SIZEOF(qse_char_t) * (plen + 1));
+		if (link == QSE_NULL) return -1;
+
+		qse_strcpy ((qse_char_t*)(link + 1), path);
+		link->link = xli->wio_names;
+		xli->wio_names = link;
+
+		arg = (qse_xli_io_arg_t*) qse_xli_callocmem (xli, QSE_SIZEOF(*arg) + QSE_SIZEOF(*arg_data));
 		if (arg == QSE_NULL) return -1;
 
 		arg_data = (arg_data_t*)(arg + 1);
 		arg_data->org_depth = old_depth;
-		
-		qse_strcpy ((qse_char_t*)(arg_data + 1), path);
-		arg->name = (const qse_char_t*)(arg_data + 1);
+
+		arg->name = (const qse_char_t*)(link + 1);
 		arg->prev = xli->wio.inp;
 	}
 
@@ -82,7 +89,11 @@ static int open_new_stream (qse_xli_t* xli, const qse_char_t* path, int old_dept
 	{
 		if (xli->errnum == QSE_XLI_ENOERR)
 			qse_xli_seterrnum (xli, QSE_XLI_EIOUSR, QSE_NULL); 
-		if (arg != &xli->wio.top) qse_xli_freemem (xli, arg);
+		if (arg != &xli->wio.top) 
+		{
+			qse_xli_freemem (xli, arg);
+			/* don't clean up 'link' since it's linked to xli->wio_names */
+		}
 		return -1;
 	}
 
@@ -182,16 +193,26 @@ static int write_list (qse_xli_t* xli, qse_xli_list_t* list, int depth)
 					case QSE_XLI_STR:
 					{
 						qse_xli_str_t* str = (qse_xli_str_t*)pair->val;
-						if (write_to_current_stream (xli, QSE_T(" = \""), 4, 0) <= -1 ||
-						    write_to_current_stream (xli, str->ptr, str->len, 1) <= -1 ||
-						    write_to_current_stream (xli, QSE_T("\";\n"), 3, 0) <= -1) return -1;
+
+						if (write_to_current_stream (xli, QSE_T(" = "), 3, 0) <= -1) return -1;
+						while (1)
+						{
+							if (write_to_current_stream (xli, QSE_T("\""), 1, 0) <= -1 ||
+							    write_to_current_stream (xli, str->ptr, str->len, 1) <= -1 ||
+							    write_to_current_stream (xli, QSE_T("\""), 1, 0) <= -1) return -1;
+							if (!str->next) break;
+
+							if (write_to_current_stream (xli, QSE_T(", "), 2, 0) <= -1) return -1;
+							str = str->next;
+						}
+						if (write_to_current_stream (xli, QSE_T(";\n"), 2, 0) <= -1) return -1;
 						break;	
 					}
 
 					case QSE_XLI_LIST:
 					{
 						if (write_to_current_stream (xli, QSE_T(" {\n"), 3, 0) <= -1 ||
-						    write_list (xli, pair->val, ++depth) <= -1 ||
+						    write_list (xli, (qse_xli_list_t*)pair->val, ++depth) <= -1 ||
 						    write_to_current_stream (xli, QSE_T("}\n"), 2, 0) <= -1) return -1;
 						break;
 					}
@@ -243,6 +264,17 @@ static int write_list (qse_xli_t* xli, qse_xli_list_t* list, int depth)
 	return 0;
 }
 
+void qse_xli_clearwionames (qse_xli_t* xli)
+{
+	qse_link_t* cur;
+	while (xli->wio_names)
+	{
+		cur = xli->wio_names;
+		xli->wio_names = cur->link;
+		QSE_MMGR_FREE (xli->mmgr, cur);
+	}
+}
+
 int qse_xli_write (qse_xli_t* xli, qse_xli_io_impl_t io)
 {
 	int n;
@@ -256,7 +288,7 @@ int qse_xli_write (qse_xli_t* xli, qse_xli_io_impl_t io)
 	QSE_MEMSET (&xli->wio, 0, QSE_SIZEOF(xli->wio));
 	xli->wio.impl = io;
 	xli->wio.inp = &xli->wio.top;
-	/*qse_xli_clearwionames (xli);*/
+	qse_xli_clearwionames (xli);
 
 	/* open the top level stream */
 	if (open_new_stream (xli, QSE_NULL, 0) <= -1) return -1;

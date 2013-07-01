@@ -95,6 +95,7 @@ void qse_xli_fini (qse_xli_t* xli)
 	}
 
 	qse_xli_clearrionames (xli);
+	qse_xli_clearwionames (xli);
 }
 
 qse_mmgr_t* qse_xli_getmmgr (qse_xli_t* xli)
