@@ -25,6 +25,12 @@ static int get_char (qse_xli_t* xli);
 static int get_token (qse_xli_t* xli);
 static int read_list (qse_xli_t* xli, qse_xli_list_t* list);
 
+
+enum
+{
+	TOK_STATUS_ENABLE_NSTR = (1 << 0)
+};
+
 static int close_current_stream (qse_xli_t* xli)
 {
 	qse_ssize_t n;
@@ -51,6 +57,7 @@ enum tok_t
 	TOK_COMMA,
 	TOK_DQSTR,
 	TOK_SQSTR,
+	TOK_NSTR,
 	TOK_IDENT,
 	TOK_TEXT,
 
@@ -458,12 +465,10 @@ retry:
 		type = classify_ident (xli, QSE_STR_CSTR(tok->name));
 		SET_TOKEN_TYPE (xli, tok, type);
 	}
-	else if (c == QSE_T('\'') || c == QSE_T('\"'))
+	else if (c == QSE_T('\''))
 	{
 		/* single-quoted string - no escaping */
-		qse_cint_t cc = c;
-
-		SET_TOKEN_TYPE (xli, tok, ((cc == QSE_T('\''))? TOK_SQSTR: TOK_DQSTR));
+		SET_TOKEN_TYPE (xli, tok, TOK_SQSTR);
 
 		while (1)
 		{
@@ -476,7 +481,7 @@ retry:
 				return -1;
 			}
 
-			if (c == cc)
+			if (c == QSE_T('\''))
 			{
 				/* terminating quote */
 				GET_CHAR (xli);
@@ -485,6 +490,58 @@ retry:
 
 			ADD_TOKEN_CHAR (xli, tok, c);
 		}
+	}
+	else if (c == QSE_T('\"'))
+	{
+		/* double-quoted string - support escaping */
+		int escaped = 0;
+
+		SET_TOKEN_TYPE (xli, tok, TOK_DQSTR);
+
+		while (1)
+		{
+			GET_CHAR_TO (xli, c);
+
+			if (c == QSE_CHAR_EOF)
+			{
+				/* the string is not closed */
+				qse_xli_seterror (xli, QSE_XLI_ESTRNC, QSE_NULL, &xli->tok.loc);
+				return -1;
+			}
+
+			if (!escaped)
+			{
+				if (c == QSE_T('\\')) 
+				{
+					escaped = 1;
+					continue;
+				}
+
+				if (c == QSE_T('\"'))
+				{
+					/* terminating quote */
+					GET_CHAR (xli);
+					break;
+				}
+
+				ADD_TOKEN_CHAR (xli, tok, c);
+			}
+			else
+			{
+				ADD_TOKEN_CHAR (xli, tok, c);
+				escaped = 0;
+			}
+		}
+	}
+	else if ((xli->tok_status & TOK_STATUS_ENABLE_NSTR) && QSE_ISDIGIT(c))
+	{
+		SET_TOKEN_TYPE (xli, tok, TOK_NSTR);
+		do
+		{
+			ADD_TOKEN_CHAR (xli, tok, c);
+			GET_CHAR_TO (xli, c);
+		}
+		while (QSE_ISDIGIT(c));
 	}
 	else
 	{
@@ -570,12 +627,14 @@ static int read_pair (qse_xli_t* xli)
 		goto oops;
 	}
 
+	xli->tok_status |= TOK_STATUS_ENABLE_NSTR;
+
 	if (get_token (xli) <= -1) goto oops;
 
-	if  (xli->opt.trait & QSE_XLI_KEYNAME)
+	if  (xli->opt.trait & QSE_XLI_KEYALIAS)
 	{
 		/* the name part must be unique for the same key(s) */
-		if (MATCH (xli, TOK_IDENT) || MATCH (xli, TOK_DQSTR) || MATCH (xli, TOK_SQSTR))
+		if (MATCH (xli, TOK_IDENT) || MATCH (xli, TOK_DQSTR) || MATCH (xli, TOK_SQSTR) || MATCH(xli, TOK_NSTR))
 		{
 			qse_xli_atom_t* atom;
 
@@ -583,9 +642,9 @@ static int read_pair (qse_xli_t* xli)
 			while (atom)
 			{
 				if (atom->type == QSE_XLI_PAIR &&
-				    ((qse_xli_pair_t*)atom)->name && 
+				    ((qse_xli_pair_t*)atom)->alias && 
 				    qse_strcmp (((qse_xli_pair_t*)atom)->key, key) == 0 &&
-				    qse_strcmp (((qse_xli_pair_t*)atom)->name, QSE_STR_PTR(xli->tok.name)) == 0)
+				    qse_strcmp (((qse_xli_pair_t*)atom)->alias, QSE_STR_PTR(xli->tok.name)) == 0)
 				{
 					qse_xli_seterror (xli, QSE_XLI_EEXIST, QSE_STR_CSTR(xli->tok.name), &xli->tok.loc);
 					goto oops;
@@ -608,7 +667,7 @@ static int read_pair (qse_xli_t* xli)
 	{
 		if (get_token (xli) <= -1) goto oops;
 
-		if (MATCH (xli, TOK_SQSTR) || MATCH (xli, TOK_DQSTR) || MATCH (xli, TOK_IDENT))
+		if (MATCH (xli, TOK_SQSTR) || MATCH (xli, TOK_DQSTR) || MATCH(xli, TOK_NSTR) || MATCH (xli, TOK_IDENT))
 		{
 			qse_xli_str_t* curstrseg;
 
@@ -626,7 +685,7 @@ static int read_pair (qse_xli_t* xli)
 				{
 					if (get_token (xli) <= -1) goto oops; /* skip the comma */
 
-					if (!MATCH (xli, TOK_SQSTR) && !MATCH (xli, TOK_DQSTR) && !MATCH (xli, TOK_IDENT))
+					if (!MATCH (xli, TOK_SQSTR) && !MATCH (xli, TOK_DQSTR) && !MATCH (xli, TOK_NSTR) && !MATCH (xli, TOK_IDENT))
 					{
 						qse_xli_seterror (xli, QSE_XLI_ESYNTAX, QSE_NULL, &xli->tok.loc);
 						goto oops;
@@ -656,9 +715,12 @@ static int read_pair (qse_xli_t* xli)
 			qse_xli_seterror (xli, QSE_XLI_EPAVAL, QSE_STR_CSTR(xli->tok.name), &xli->tok.loc);
 			goto oops;	
 		}
+
 	}
 	else if (MATCH (xli, TOK_LBRACE))
 	{
+		xli->tok_status &= ~TOK_STATUS_ENABLE_NSTR;
+
 		if (get_token (xli) <= -1) goto oops;
 
 		/* insert a pair with an empty list */
@@ -684,8 +746,10 @@ static int read_pair (qse_xli_t* xli)
 	}
 	else if (MATCH (xli, TOK_SEMICOLON))
 	{
+		xli->tok_status &= ~TOK_STATUS_ENABLE_NSTR;
+
 		/* no value has been specified for the pair */
-		pair = qse_xli_insertpair (xli, parlist, QSE_NULL, key, name, &xli->xnil);
+		pair = qse_xli_insertpair (xli, parlist, QSE_NULL, key, name, (qse_xli_val_t*)&xli->xnil);
 		if (pair == QSE_NULL) goto oops;
 
 		/* skip the semicolon */
@@ -702,6 +766,7 @@ static int read_pair (qse_xli_t* xli)
 	return 0;
 	
 oops:
+	xli->tok_status &= ~TOK_STATUS_ENABLE_NSTR;
 	if (name) QSE_MMGR_FREE (xli->mmgr, name);
 	if (key) QSE_MMGR_FREE (xli->mmgr, key);
 	return -1;

@@ -74,7 +74,7 @@ typedef enum qse_xli_opt_t qse_xli_opt_t;
 enum qse_xli_trait_t
 {
 	QSE_XLI_KEYNODUP = (1 << 1),
-	QSE_XLI_KEYNAME  = (1 << 2),
+	QSE_XLI_KEYALIAS = (1 << 2),
 
 	QSE_XLI_KEEPTEXT = (1 << 3), /**< keep comment text */
 	QSE_XLI_KEEPFILE = (1 << 4), /**< keep inclusion file info */
@@ -152,7 +152,7 @@ struct qse_xli_pair_t
 {
 	QSE_XLI_ATOM_HDR;
 	const qse_char_t* key;
-	const qse_char_t* name; 
+	const qse_char_t* alias; 
 	qse_xli_val_t* val;
 };
 
@@ -477,7 +477,7 @@ QSE_EXPORT qse_xli_pair_t* qse_xli_insertpair (
 	qse_xli_list_t*   list,
 	qse_xli_atom_t*   peer,
 	const qse_char_t* key,
-	const qse_char_t* name,
+	const qse_char_t* alias,
 	qse_xli_val_t*    val
 );
 
@@ -486,7 +486,7 @@ QSE_EXPORT qse_xli_pair_t* qse_xli_insertpairwithemptylist (
 	qse_xli_list_t*   list,
 	qse_xli_atom_t*   peer,
 	const qse_char_t* key,
-	const qse_char_t* name
+	const qse_char_t* alias
 );
 
 QSE_EXPORT qse_xli_pair_t* qse_xli_insertpairwithstr (
@@ -494,7 +494,7 @@ QSE_EXPORT qse_xli_pair_t* qse_xli_insertpairwithstr (
 	qse_xli_list_t*   list,
 	qse_xli_atom_t*   peer,
 	const qse_char_t* key,
-	const qse_char_t* name,
+	const qse_char_t* alias,
 	const qse_cstr_t* value
 );
 
@@ -522,18 +522,23 @@ QSE_EXPORT qse_xli_list_t* qse_xli_getroot (
 	qse_xli_t* xli
 );
 
-QSE_EXPORT qse_xli_pair_t* qse_xli_findpairbyname (
+QSE_EXPORT qse_xli_pair_t* qse_xli_findpairbyalias (
 	qse_xli_t*            xli,
 	const qse_xli_list_t* list,
-	const qse_char_t*     name
+	const qse_char_t*     alias
 );
 
-QSE_EXPORT qse_size_t qse_xli_getnumpairsbyname (
+QSE_EXPORT qse_size_t qse_xli_getnumpairsbyalias (
 	qse_xli_t*            xli,
 	const qse_xli_list_t* list,
-	const qse_char_t*     name 
+	const qse_char_t*     alias 
 );
 
+/**
+ * The qse_xli_addsegtostr() function creates a new string segment made of
+ * the character string pointed to by \a value and chains it to the XLI string
+ * pointed to by \a str.
+ */
 QSE_EXPORT qse_xli_str_t* qse_xli_addsegtostr (
         qse_xli_t*        xli, 
 	qse_xli_str_t*    str,

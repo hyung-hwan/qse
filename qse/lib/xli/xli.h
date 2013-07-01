@@ -59,11 +59,11 @@ struct qse_xli_t
 	qse_xli_ecb_t* ecb;
 
 	qse_xli_nil_t xnil;
-	qse_xli_list_t  root;
+	qse_xli_list_t root;
 	qse_xli_list_link_t* parlink;
 
-	qse_str_t* tmp[1];
 	qse_xli_tok_t tok;
+	int tok_status;
 	struct
 	{
 		qse_xli_io_impl_t impl; /* input handler */

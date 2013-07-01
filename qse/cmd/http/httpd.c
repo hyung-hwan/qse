@@ -846,8 +846,8 @@ static int load_loccfg (qse_httpd_t* httpd, qse_xli_list_t* list, loccfg_t* cfg)
 
 	for (i = 0; i < QSE_COUNTOF(loc_xcfg_items); i++)
 	{
-		pair = qse_xli_findpairbyname (httpd_xtn->xli, list, loc_xcfg_items[i].x);
-		if (!pair) pair = qse_xli_findpairbyname (httpd_xtn->xli, QSE_NULL, loc_xcfg_items[i].y);
+		pair = qse_xli_findpairbyalias (httpd_xtn->xli, list, loc_xcfg_items[i].x);
+		if (!pair) pair = qse_xli_findpairbyalias (httpd_xtn->xli, QSE_NULL, loc_xcfg_items[i].y);
 		if (pair && pair->val->type == QSE_XLI_STR)
 		{
 			cfg->xcfg[i] = qse_httpd_strntombsdup (httpd, ((qse_xli_str_t*)pair->val)->ptr, ((qse_xli_str_t*)pair->val)->len);
@@ -860,8 +860,8 @@ static int load_loccfg (qse_httpd_t* httpd, qse_xli_list_t* list, loccfg_t* cfg)
 		}
 	}
 
-	pair = qse_xli_findpairbyname (httpd_xtn->xli, list, QSE_T("index"));
-	if (!pair) pair = qse_xli_findpairbyname (httpd_xtn->xli, QSE_NULL, QSE_T("server-default.index"));
+	pair = qse_xli_findpairbyalias (httpd_xtn->xli, list, QSE_T("index"));
+	if (!pair) pair = qse_xli_findpairbyalias (httpd_xtn->xli, QSE_NULL, QSE_T("server-default.index"));
 	if (pair && pair->val->type == QSE_XLI_STR)
 	{
 		qse_char_t* duptmp;
@@ -886,8 +886,8 @@ static int load_loccfg (qse_httpd_t* httpd, qse_xli_list_t* list, loccfg_t* cfg)
 		cfg->index.count = count;
 	}
 
-	pair = qse_xli_findpairbyname (httpd_xtn->xli, list, QSE_T("cgi"));
-	if (!pair) pair = qse_xli_findpairbyname (httpd_xtn->xli, QSE_NULL, QSE_T("server-default.cgi"));
+	pair = qse_xli_findpairbyalias (httpd_xtn->xli, list, QSE_T("cgi"));
+	if (!pair) pair = qse_xli_findpairbyalias (httpd_xtn->xli, QSE_NULL, QSE_T("server-default.cgi"));
 	if (pair && pair->val->type == QSE_XLI_LIST)
 	{
 		/* TODO: more sanity check... this can be done with xli schema... if supported */
@@ -897,7 +897,7 @@ static int load_loccfg (qse_httpd_t* httpd, qse_xli_list_t* list, loccfg_t* cfg)
 			if (atom->type != QSE_XLI_PAIR) continue;
 
 			pair = (qse_xli_pair_t*)atom;
-			if (pair->key && pair->name && 
+			if (pair->key && pair->alias && 
 			    (pair->val->type == QSE_XLI_NIL || pair->val->type == QSE_XLI_STR))
 			{
 				struct cgi_t* cgi;
@@ -916,7 +916,7 @@ static int load_loccfg (qse_httpd_t* httpd, qse_xli_list_t* list, loccfg_t* cfg)
 				}
 
 				cgi->type = type;
-				cgi->spec = qse_httpd_strtombsdup (httpd, pair->name);
+				cgi->spec = qse_httpd_strtombsdup (httpd, pair->alias);
 				if (!cgi->spec)
 				{
 					qse_httpd_freemem (httpd, cgi);
@@ -963,8 +963,8 @@ static int load_loccfg (qse_httpd_t* httpd, qse_xli_list_t* list, loccfg_t* cfg)
 		}	
 	}
 
-	pair = qse_xli_findpairbyname (httpd_xtn->xli, list, QSE_T("auth-rule"));
-	if (!pair) pair = qse_xli_findpairbyname (httpd_xtn->xli, QSE_NULL, QSE_T("server-default.auth-rule"));
+	pair = qse_xli_findpairbyalias (httpd_xtn->xli, list, QSE_T("auth-rule"));
+	if (!pair) pair = qse_xli_findpairbyalias (httpd_xtn->xli, QSE_NULL, QSE_T("server-default.auth-rule"));
 	if (pair && pair->val->type == QSE_XLI_LIST)
 	{
 		qse_xli_list_t* auth_rule_list = (qse_xli_list_t*)pair->val;
@@ -978,10 +978,10 @@ static int load_loccfg (qse_httpd_t* httpd, qse_xli_list_t* list, loccfg_t* cfg)
 				struct auth_rule_t* auth_rule;
 				int type;
 
-				if (qse_strcmp (pair->key, QSE_T("prefix")) == 0 && pair->name) type = AUTH_RULE_PREFIX;
-				else if (qse_strcmp (pair->key, QSE_T("suffix")) == 0 && pair->name) type = AUTH_RULE_SUFFIX;
-				else if (qse_strcmp (pair->key, QSE_T("name")) == 0 && pair->name) type = AUTH_RULE_NAME;
-				else if (qse_strcmp (pair->key, QSE_T("other")) == 0 && !pair->name) type = AUTH_RULE_OTHER;
+				if (qse_strcmp (pair->key, QSE_T("prefix")) == 0 && pair->alias) type = AUTH_RULE_PREFIX;
+				else if (qse_strcmp (pair->key, QSE_T("suffix")) == 0 && pair->alias) type = AUTH_RULE_SUFFIX;
+				else if (qse_strcmp (pair->key, QSE_T("name")) == 0 && pair->alias) type = AUTH_RULE_NAME;
+				else if (qse_strcmp (pair->key, QSE_T("other")) == 0 && !pair->alias) type = AUTH_RULE_OTHER;
 				else continue;
 
 				auth_rule = qse_httpd_callocmem (httpd, QSE_SIZEOF(*auth_rule));
@@ -992,9 +992,9 @@ static int load_loccfg (qse_httpd_t* httpd, qse_xli_list_t* list, loccfg_t* cfg)
 				}
 
 				auth_rule->type = type;
-				if (pair->name)
+				if (pair->alias)
 				{
-					auth_rule->spec = qse_httpd_strtombsdup (httpd, pair->name);
+					auth_rule->spec = qse_httpd_strtombsdup (httpd, pair->alias);
 					if (!auth_rule->spec)
 					{
 						qse_httpd_freemem (httpd, auth_rule);
@@ -1015,8 +1015,8 @@ static int load_loccfg (qse_httpd_t* httpd, qse_xli_list_t* list, loccfg_t* cfg)
 		}	
 	}
 
-	pair = qse_xli_findpairbyname (httpd_xtn->xli, list, QSE_T("mime"));
-	if (!pair) pair = qse_xli_findpairbyname (httpd_xtn->xli, QSE_NULL, QSE_T("server-default.mime"));
+	pair = qse_xli_findpairbyalias (httpd_xtn->xli, list, QSE_T("mime"));
+	if (!pair) pair = qse_xli_findpairbyalias (httpd_xtn->xli, QSE_NULL, QSE_T("server-default.mime"));
 	if (pair && pair->val->type == QSE_XLI_LIST)
 	{
 		qse_xli_list_t* mimelist = (qse_xli_list_t*)pair->val;
@@ -1030,10 +1030,10 @@ static int load_loccfg (qse_httpd_t* httpd, qse_xli_list_t* list, loccfg_t* cfg)
 				struct mime_t* mime;
 				int type;
 
-				if (qse_strcmp (pair->key, QSE_T("prefix")) == 0 && pair->name) type = MIME_PREFIX;
-				else if (qse_strcmp (pair->key, QSE_T("suffix")) == 0 && pair->name) type = MIME_SUFFIX;
-				else if (qse_strcmp (pair->key, QSE_T("name")) == 0 && pair->name) type = MIME_NAME;
-				else if (qse_strcmp (pair->key, QSE_T("other")) == 0 && !pair->name) type = MIME_OTHER;
+				if (qse_strcmp (pair->key, QSE_T("prefix")) == 0 && pair->alias) type = MIME_PREFIX;
+				else if (qse_strcmp (pair->key, QSE_T("suffix")) == 0 && pair->alias) type = MIME_SUFFIX;
+				else if (qse_strcmp (pair->key, QSE_T("name")) == 0 && pair->alias) type = MIME_NAME;
+				else if (qse_strcmp (pair->key, QSE_T("other")) == 0 && !pair->alias) type = MIME_OTHER;
 				else continue;
 
 				mime = qse_httpd_callocmem (httpd, QSE_SIZEOF(*mime));
@@ -1044,7 +1044,7 @@ static int load_loccfg (qse_httpd_t* httpd, qse_xli_list_t* list, loccfg_t* cfg)
 				}
 
 				mime->type = type;
-				mime->spec = qse_httpd_strtombsdup (httpd, pair->name);
+				mime->spec = qse_httpd_strtombsdup (httpd, pair->alias);
 				if (!mime->spec)
 				{
 					qse_httpd_freemem (httpd, mime);
@@ -1072,8 +1072,8 @@ static int load_loccfg (qse_httpd_t* httpd, qse_xli_list_t* list, loccfg_t* cfg)
 
 	for (i = 0; i < 2;  i++)
 	{
-		pair = qse_xli_findpairbyname (httpd_xtn->xli, list, loc_acc_items[i].x);
-		if (!pair) pair = qse_xli_findpairbyname (httpd_xtn->xli, QSE_NULL, loc_acc_items[i].y);
+		pair = qse_xli_findpairbyalias (httpd_xtn->xli, list, loc_acc_items[i].x);
+		if (!pair) pair = qse_xli_findpairbyalias (httpd_xtn->xli, QSE_NULL, loc_acc_items[i].y);
 		if (pair && pair->val->type == QSE_XLI_LIST)
 		{
 			qse_xli_list_t* acclist = (qse_xli_list_t*)pair->val;
@@ -1089,10 +1089,10 @@ static int load_loccfg (qse_httpd_t* httpd, qse_xli_list_t* list, loccfg_t* cfg)
 					qse_size_t len;
 					int type, value;
 	
-					if (qse_strcmp (pair->key, QSE_T("prefix")) == 0 && pair->name) type = ACCESS_PREFIX;
-					else if (qse_strcmp (pair->key, QSE_T("suffix")) == 0 && pair->name) type = ACCESS_SUFFIX;
-					else if (qse_strcmp (pair->key, QSE_T("name")) == 0 && pair->name) type = ACCESS_NAME;
-					else if (qse_strcmp (pair->key, QSE_T("other")) == 0 && !pair->name) type = ACCESS_OTHER;
+					if (qse_strcmp (pair->key, QSE_T("prefix")) == 0 && pair->alias) type = ACCESS_PREFIX;
+					else if (qse_strcmp (pair->key, QSE_T("suffix")) == 0 && pair->alias) type = ACCESS_SUFFIX;
+					else if (qse_strcmp (pair->key, QSE_T("name")) == 0 && pair->alias) type = ACCESS_NAME;
+					else if (qse_strcmp (pair->key, QSE_T("other")) == 0 && !pair->alias) type = ACCESS_OTHER;
 					else continue;
 	
 					tmp = ((qse_xli_str_t*)pair->val)->ptr;
@@ -1111,9 +1111,9 @@ static int load_loccfg (qse_httpd_t* httpd, qse_xli_list_t* list, loccfg_t* cfg)
 					}
 	
 					acc->type = type;
-					if (pair->name)
+					if (pair->alias)
 					{
-						acc->spec = qse_httpd_strtombsdup (httpd, pair->name);
+						acc->spec = qse_httpd_strtombsdup (httpd, pair->alias);
 						if (!acc->spec)
 						{
 							qse_httpd_freemem (httpd, acc);
@@ -1208,8 +1208,8 @@ static int load_server_config (qse_httpd_t* httpd, qse_httpd_server_t* server, q
 	{
 		qse_xli_pair_t* pair;
 
-		pair = qse_xli_findpairbyname (httpd_xtn->xli, list, scfg_items[i].x);
-		if (!pair) pair = qse_xli_findpairbyname (httpd_xtn->xli, QSE_NULL, scfg_items[i].y);
+		pair = qse_xli_findpairbyalias (httpd_xtn->xli, list, scfg_items[i].x);
+		if (!pair) pair = qse_xli_findpairbyalias (httpd_xtn->xli, QSE_NULL, scfg_items[i].y);
 		if (pair && pair->val->type == QSE_XLI_STR)
 		{
 			server_xtn->scfg[i] = qse_httpd_strntombsdup (httpd, ((qse_xli_str_t*)pair->val)->ptr, ((qse_xli_str_t*)pair->val)->len);
@@ -1223,7 +1223,7 @@ static int load_server_config (qse_httpd_t* httpd, qse_httpd_server_t* server, q
 	}
 
 	/* load host/location specific configuration */
-	host_count = qse_xli_getnumpairsbyname (httpd_xtn->xli, list, QSE_T("host"));
+	host_count = qse_xli_getnumpairsbyalias (httpd_xtn->xli, list, QSE_T("host"));
 	if (host_count <= 0) return 0; /* nothing to load */
 
 	QSE_ASSERT (server_xtn->cfgtab == QSE_NULL);
@@ -1246,15 +1246,15 @@ static int load_server_config (qse_httpd_t* httpd, qse_httpd_server_t* server, q
 		qse_char_t buf[32];
 
 		qse_sprintf (buf, QSE_COUNTOF(buf), QSE_T("host[%d]"), i);
-		host = qse_xli_findpairbyname (httpd_xtn->xli, list, buf);
+		host = qse_xli_findpairbyalias (httpd_xtn->xli, list, buf);
 		if (!host) break;
 
-		if (host->val->type == QSE_XLI_LIST && host->name) 
+		if (host->val->type == QSE_XLI_LIST && host->alias) 
 		{
-			loc_count = qse_xli_getnumpairsbyname (httpd_xtn->xli, (qse_xli_list_t*)host->val, QSE_T("location"));
+			loc_count = qse_xli_getnumpairsbyalias (httpd_xtn->xli, (qse_xli_list_t*)host->val, QSE_T("location"));
 
 			if (((hostcfg = qse_httpd_callocmem (httpd, QSE_SIZEOF(*hostcfg))) == QSE_NULL) ||
-			    ((hostcfg->hostname = qse_httpd_strtombsdup (httpd, (host->name[0] == QSE_T('\0')? QSE_T("*"):host->name))) == QSE_NULL)) goto oops;
+			    ((hostcfg->hostname = qse_httpd_strtombsdup (httpd, (host->alias[0] == QSE_T('\0')? QSE_T("*"):host->alias))) == QSE_NULL)) goto oops;
 			
 			for (j = loc_count; j > 0; )
 			{
@@ -1263,10 +1263,10 @@ static int load_server_config (qse_httpd_t* httpd, qse_httpd_server_t* server, q
 				j--;
 
 				qse_sprintf (buf, QSE_COUNTOF(buf), QSE_T("location[%d]"), j);
-				loc = qse_xli_findpairbyname (httpd_xtn->xli, (qse_xli_list_t*)host->val, buf);
+				loc = qse_xli_findpairbyalias (httpd_xtn->xli, (qse_xli_list_t*)host->val, buf);
 				if (!loc) break;
 
-				if (loc->val->type == QSE_XLI_LIST && loc->name) 
+				if (loc->val->type == QSE_XLI_LIST && loc->alias) 
 				{
 					loccfg = qse_httpd_callocmem (httpd, QSE_SIZEOF(*loccfg));
 					if (loccfg == QSE_NULL) goto oops;
@@ -1280,7 +1280,7 @@ static int load_server_config (qse_httpd_t* httpd, qse_httpd_server_t* server, q
 
 					/* clone the location name  */
 					loccfg->locname.ptr = qse_httpd_strtombsdup (httpd, 
-						(loc->name[0] == QSE_T('\0')? QSE_T("/"): loc->name));
+						(loc->alias[0] == QSE_T('\0')? QSE_T("/"): loc->alias));
 					if (loccfg->locname.ptr == QSE_NULL) goto oops;
 
 					loccfg->locname.len = qse_mbslen (loccfg->locname.ptr);
@@ -1335,7 +1335,7 @@ static qse_httpd_server_t* attach_server (qse_httpd_t* httpd, int num, qse_xli_l
 
 	httpd_xtn = qse_httpd_getxtnstd (httpd);
 
-	pair = qse_xli_findpairbyname (httpd_xtn->xli, list, QSE_T("bind"));
+	pair = qse_xli_findpairbyalias (httpd_xtn->xli, list, QSE_T("bind"));
 	if (pair == QSE_NULL || pair->val->type != QSE_XLI_STR)
 	{
 		/* TOOD: logging */
@@ -1351,8 +1351,8 @@ static qse_httpd_server_t* attach_server (qse_httpd_t* httpd, int num, qse_xli_l
 		return QSE_NULL;
 	}
 
-	pair = qse_xli_findpairbyname (httpd_xtn->xli, list, QSE_T("ssl"));
-	if (!pair) pair = qse_xli_findpairbyname (httpd_xtn->xli, QSE_NULL, QSE_T("server-default.ssl"));
+	pair = qse_xli_findpairbyalias (httpd_xtn->xli, list, QSE_T("ssl"));
+	if (!pair) pair = qse_xli_findpairbyalias (httpd_xtn->xli, QSE_NULL, QSE_T("server-default.ssl"));
 	if (pair && pair->val->type == QSE_XLI_STR && 
 	    qse_strxcmp (((qse_xli_str_t*)pair->val)->ptr, ((qse_xli_str_t*)pair->val)->len, QSE_T("yes")) == 0) dope.flags |= QSE_HTTPD_SERVER_SECURE;	
 
@@ -1402,7 +1402,7 @@ static int open_config_file (qse_httpd_t* httpd)
 	}
  
 	qse_xli_getopt (httpd_xtn->xli, QSE_XLI_TRAIT, &trait);
-	trait |= QSE_XLI_KEYNAME;
+	trait |= QSE_XLI_KEYALIAS;
 	qse_xli_setopt (httpd_xtn->xli, QSE_XLI_TRAIT, &trait);
 
 	xli_in.type = QSE_XLI_IOSTD_FILE;
@@ -1440,7 +1440,7 @@ static void set_limit (qse_httpd_t* httpd, const qse_char_t* name, int what)
 
 	httpd_xtn = (httpd_xtn_t*)qse_httpd_getxtnstd (httpd);
 
-	pair = qse_xli_findpairbyname (httpd_xtn->xli, QSE_NULL, name);
+	pair = qse_xli_findpairbyalias (httpd_xtn->xli, QSE_NULL, name);
 	if (pair && pair->val->type == QSE_XLI_STR)
 	{
 #if defined(HAVE_GETRLIMIT) && defined(HAVE_SETRLIMIT)
@@ -1479,7 +1479,7 @@ static int load_config (qse_httpd_t* httpd)
 
 	if (open_config_file (httpd) <= -1) goto oops;
 
-	pair = qse_xli_findpairbyname (httpd_xtn->xli, QSE_NULL, QSE_T("name"));
+	pair = qse_xli_findpairbyalias (httpd_xtn->xli, QSE_NULL, QSE_T("name"));
 	if (pair && pair->val->type == QSE_XLI_STR)
 	{
 		qse_mchar_t* tmp;
@@ -1499,7 +1499,7 @@ static int load_config (qse_httpd_t* httpd)
 	{
 		qse_char_t buf[32];
 		qse_sprintf (buf, QSE_COUNTOF(buf), QSE_T("server[%d]"), i);
-		pair = qse_xli_findpairbyname (httpd_xtn->xli, QSE_NULL, buf);
+		pair = qse_xli_findpairbyalias (httpd_xtn->xli, QSE_NULL, buf);
 		if (pair == QSE_NULL) break;
 
 		if (pair->val->type != QSE_XLI_LIST)
@@ -1529,7 +1529,7 @@ static int load_config (qse_httpd_t* httpd)
 	}
 
 	/* load the global default */
-	pair = qse_xli_findpairbyname (httpd_xtn->xli, QSE_NULL, QSE_T("server-default"));
+	pair = qse_xli_findpairbyalias (httpd_xtn->xli, QSE_NULL, QSE_T("server-default"));
 	if (pair && pair->val->type == QSE_XLI_LIST)
 	{
 		if (load_loccfg (httpd, (qse_xli_list_t*)pair->val, &httpd_xtn->dflcfg) <=  -1)
@@ -1563,7 +1563,7 @@ static void reconf_server (qse_httpd_t* httpd, qse_httpd_server_t* server)
 	{
 		qse_char_t buf[32];
 		qse_sprintf (buf, QSE_COUNTOF(buf), QSE_T("server[%d]"), server_xtn->num);
-		pair = qse_xli_findpairbyname (httpd_xtn->xli, QSE_NULL, buf);
+		pair = qse_xli_findpairbyalias (httpd_xtn->xli, QSE_NULL, buf);
 
 		if (pair && pair->val->type == QSE_XLI_LIST) 
 		{
