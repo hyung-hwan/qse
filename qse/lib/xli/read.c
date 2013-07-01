@@ -824,6 +824,8 @@ int qse_xli_read (qse_xli_t* xli, qse_xli_io_impl_t io)
 	xli->rio.top.line = 1;
 	xli->rio.top.colm = 1;
 	xli->rio.inp = &xli->rio.top;
+
+	qse_xli_seterrnum (xli, QSE_XLI_ENOERR, QSE_NULL); 
 	qse_xli_clearrionames (xli);
 
 	n = xli->rio.impl (xli, QSE_XLI_IO_OPEN, xli->rio.inp, QSE_NULL, 0);
