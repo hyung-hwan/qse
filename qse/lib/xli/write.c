@@ -288,6 +288,8 @@ int qse_xli_write (qse_xli_t* xli, qse_xli_io_impl_t io)
 	QSE_MEMSET (&xli->wio, 0, QSE_SIZEOF(xli->wio));
 	xli->wio.impl = io;
 	xli->wio.inp = &xli->wio.top;
+
+	qse_xli_seterrnum (xli, QSE_XLI_ENOERR, QSE_NULL);
 	qse_xli_clearwionames (xli);
 
 	/* open the top level stream */
