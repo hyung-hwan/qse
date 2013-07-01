@@ -612,19 +612,11 @@ static int read_pair (qse_xli_t* xli)
 		{
 			qse_xli_str_t* curstrseg;
 
-pair = qse_xli_insertpairwithstr (xli, parlist, QSE_NULL, key, name, QSE_STR_CSTR(xli->tok.name));
-if (pair == QSE_NULL) goto oops;
-
+			/* add a new pair with the initial string segment */
+			pair = qse_xli_insertpairwithstr (xli, parlist, QSE_NULL, key, name, QSE_STR_CSTR(xli->tok.name));
+			if (pair == QSE_NULL) goto oops;
 
 			curstrseg = (qse_xli_str_t*)pair->val;
-
-#if 0
-			if (qse_str_ncpy (xli->tmp[0], QSE_STR_PTR(xli->tok.name), QSE_STR_LEN(xli->tok.name) + 1) == (qse_size_t)-1)
-			{
-				qse_xli_seterrnum (xli, QSE_XLI_ENOMEM, QSE_NULL);
-				goto oops;
-			}
-#endif
 
 			if (get_token (xli) <= -1) goto oops;
 			if (MATCH(xli, TOK_COMMA))
@@ -641,27 +633,14 @@ if (pair == QSE_NULL) goto oops;
 					}
 
 
-#if 0
-					if (qse_str_ncat (xli->tmp[0], QSE_STR_PTR(xli->tok.name), QSE_STR_LEN(xli->tok.name) + 1) == (qse_size_t)-1)
-					{
-						qse_xli_seterrnum (xli, QSE_XLI_ENOMEM, QSE_NULL);
-						goto oops;
-					}
-#endif
-
-curstrseg = qse_xli_addnextsegtostr (xli, curstrseg, QSE_STR_CSTR(xli->tok.name));
-if (curstrseg == QSE_NULL) goto oops;
+					/* add an additional segment to the string */
+					curstrseg = qse_xli_addsegtostr (xli, curstrseg, QSE_STR_CSTR(xli->tok.name));
+					if (curstrseg == QSE_NULL) goto oops;
 
 					if (get_token (xli) <= -1) goto oops; /* skip the value */
 				}
 				while (MATCH (xli, TOK_COMMA));
 			}
-			
-#if 0
-			pair = qse_xli_insertpairwithstr (
-				xli, parlist, QSE_NULL, key, name, QSE_STR_CSTR(xli->tmp[0]));
-			if (pair == QSE_NULL) goto oops;
-#endif
 
 			/* semicolon is mandatory for a string */
 			if (!MATCH (xli, TOK_SEMICOLON))

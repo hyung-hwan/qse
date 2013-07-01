@@ -534,12 +534,24 @@ QSE_EXPORT qse_size_t qse_xli_getnumpairsbyname (
 	const qse_char_t*     name 
 );
 
-QSE_EXPORT qse_xli_str_t* qse_xli_addnextsegtostr (
+QSE_EXPORT qse_xli_str_t* qse_xli_addsegtostr (
         qse_xli_t*        xli, 
 	qse_xli_str_t*    str,
 	const qse_cstr_t* value
 );
 
+/**
+ * The qse_xli_dupflatstr() function duplicates the character strings
+ * found in the string list led by \a str and flattens them into a single
+ * character string each of whose segment is delimited by '\0' and the last
+ * segment is delimited by double '\0's.
+ */
+qse_char_t* qse_xli_dupflatstr (
+	qse_xli_t*     xli,
+	qse_xli_str_t* str,
+	qse_size_t*    len,
+	qse_size_t*    nsegs
+);
 
 QSE_EXPORT void qse_xli_clear (
 	qse_xli_t* xli

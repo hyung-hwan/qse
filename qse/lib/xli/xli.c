@@ -286,23 +286,6 @@ qse_xli_pair_t* qse_xli_insertpairwithstr (
 	return tmp;
 }
 
-qse_xli_str_t* qse_xli_addnextsegtostr (
-	qse_xli_t* xli, qse_xli_str_t* str, const qse_cstr_t* value)
-{
-	qse_xli_str_t* val;
-
-	val = qse_xli_callocmem (xli, QSE_SIZEOF(*val) + ((value->len  + 1) * QSE_SIZEOF(*value->ptr)));
-	if (val == QSE_NULL) return QSE_NULL;
-
-	val->type = QSE_XLI_STR;
-	qse_strncpy ((qse_char_t*)(val + 1), value->ptr, value->len);
-	val->ptr = (const qse_char_t*)(val + 1);
-	val->len = value->len;
-		
-	str->next = val;
-	return str->next;
-}
-
 qse_xli_text_t* qse_xli_inserttext (
 	qse_xli_t* xli, qse_xli_list_t* parent, qse_xli_atom_t* peer, const qse_char_t* str)
 {
@@ -369,10 +352,22 @@ static void free_atom (qse_xli_t* xli, qse_xli_atom_t* atom)
 	{
 		qse_xli_pair_t* pair = (qse_xli_pair_t*)atom;
 
-		if (pair->val != &xli->xnil)
+		if ((qse_xli_nil_t*)pair->val != &xli->xnil)
 		{
 			if (pair->val->type == QSE_XLI_LIST)
 				free_list (xli, (qse_xli_list_t*)pair->val);
+			else if (pair->val->type == QSE_XLI_STR)
+			{
+				qse_xli_str_t* cur, * next; 
+
+				cur = ((qse_xli_str_t*)pair->val)->next;
+				while (cur)
+				{
+					next = cur->next;
+					QSE_MMGR_FREE (xli->mmgr, cur);
+					cur = next;
+				}
+			}
 
 			QSE_MMGR_FREE (xli->mmgr, pair->val);
 		}
@@ -744,3 +739,45 @@ noent:
 	return 0;
 }
 
+qse_xli_str_t* qse_xli_addsegtostr (
+	qse_xli_t* xli, qse_xli_str_t* str, const qse_cstr_t* value)
+{
+	qse_xli_str_t* val;
+
+	val = qse_xli_callocmem (xli, QSE_SIZEOF(*val) + ((value->len  + 1) * QSE_SIZEOF(*value->ptr)));
+	if (val == QSE_NULL) return QSE_NULL;
+
+	val->type = QSE_XLI_STR;
+	qse_strncpy ((qse_char_t*)(val + 1), value->ptr, value->len);
+	val->ptr = (const qse_char_t*)(val + 1);
+	val->len = value->len;
+		
+	val->next = str->next;
+	str->next = val;
+	return str->next;
+}
+
+qse_char_t* qse_xli_dupflatstr (qse_xli_t* xli, qse_xli_str_t* str, qse_size_t* len, qse_size_t* nsegs)
+{
+	qse_char_t* tmp;
+	qse_xli_str_t* cur;
+	qse_size_t x, y;
+
+	for (x = 0, cur = str; cur; cur = cur->next) x += (cur->len + 1);
+
+	tmp = qse_xli_allocmem (xli, (x + 1) * QSE_SIZEOF(*tmp));
+	if (tmp == QSE_NULL) return QSE_NULL;
+
+	for (x = 0, y = 0, cur = str; cur; cur = cur->next, y++) 
+	{
+		qse_strncpy (&tmp[x], cur->ptr, cur->len);
+		x += (cur->len + 1);	
+	}
+	tmp[x] = QSE_T('\0'); 
+
+
+	if (len) *len = x;
+	if (nsegs) *nsegs = y;
+
+	return tmp;
+}
