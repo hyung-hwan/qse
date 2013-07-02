@@ -721,8 +721,6 @@ static int read_pair (qse_xli_t* xli)
 	{
 		xli->tok_status &= ~TOK_STATUS_ENABLE_NSTR;
 
-		if (get_token (xli) <= -1) goto oops;
-
 		/* insert a pair with an empty list */
 		pair = qse_xli_insertpairwithemptylist (xli, parlist, QSE_NULL, key, name);
 		if (pair == QSE_NULL) goto oops;
@@ -832,7 +830,10 @@ static int read_list (qse_xli_t* xli, qse_xli_list_t* parlist)
 	link = make_list_link (xli, parlist);
 	if (link == QSE_NULL) return -1;
 
-	if (__read_list (xli) <= -1) 
+	/* get_token() here is to read the token after the left brace.
+	 * it must be called after the xli->parlink has been updated
+	 * in case there are comments at the beginning of the list */
+	if (get_token (xli) <= -1 || __read_list (xli) <= -1) 
 	{
 		free_list_link (xli, link);
 		return -1;
