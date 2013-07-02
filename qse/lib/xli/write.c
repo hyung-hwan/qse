@@ -156,6 +156,32 @@ static int write_to_current_stream (qse_xli_t* xli, const qse_char_t* ptr, qse_s
 	return 0;
 }
 
+static int write_indentation (qse_xli_t* xli, int depth)
+{
+	static const qse_char_t tabs[16] = 
+	{
+		QSE_T('\t'), QSE_T('\t'), QSE_T('\t'), QSE_T('\t'),
+		QSE_T('\t'), QSE_T('\t'), QSE_T('\t'), QSE_T('\t'),
+		QSE_T('\t'), QSE_T('\t'), QSE_T('\t'), QSE_T('\t'),
+		QSE_T('\t'), QSE_T('\t'), QSE_T('\t'), QSE_T('\t')
+	};
+
+	if (depth <= QSE_COUNTOF(tabs))
+	{
+		if (write_to_current_stream (xli, tabs, depth, 0) <= -1) return -1;
+	}
+	else
+	{
+		int i;
+		if (write_to_current_stream (xli, tabs, QSE_COUNTOF(tabs), 0) <= -1) return -1;
+		for (i = QSE_COUNTOF(tabs); i < depth; i++) 
+		{
+			if (write_to_current_stream (xli, QSE_T("\t"), 1, 0) <= -1) return -1;
+		}
+	}
+	return 0;
+}
+
 static int write_list (qse_xli_t* xli, qse_xli_list_t* list, int depth)
 {
 	qse_xli_atom_t* curatom;
@@ -166,15 +192,10 @@ static int write_list (qse_xli_t* xli, qse_xli_list_t* list, int depth)
 		{
 			case QSE_XLI_PAIR:
 			{
-				int i;
 				qse_xli_pair_t* pair = (qse_xli_pair_t*)curatom;
 				
-				for (i = 0; i < depth; i++) 
-				{
-					if (write_to_current_stream (xli, QSE_T("\t"), 1, 0) <= -1) return -1;
-				}
-
-				if (write_to_current_stream (xli, pair->key, qse_strlen(pair->key), 0) <= -1) return -1;
+				if (write_indentation (xli, depth) <= -1 ||
+				    write_to_current_stream (xli, pair->key, qse_strlen(pair->key), 0) <= -1) return -1;
 
 				if (pair->alias) 
 				{
@@ -211,7 +232,8 @@ static int write_list (qse_xli_t* xli, qse_xli_list_t* list, int depth)
 					case QSE_XLI_LIST:
 					{
 						if (write_to_current_stream (xli, QSE_T(" {\n"), 3, 0) <= -1 ||
-						    write_list (xli, (qse_xli_list_t*)pair->val, ++depth) <= -1 ||
+						    write_list (xli, (qse_xli_list_t*)pair->val, depth + 1) <= -1 ||
+						    write_indentation (xli, depth) <= -1 ||
 						    write_to_current_stream (xli, QSE_T("}\n"), 2, 0) <= -1) return -1;
 						break;
 					}
