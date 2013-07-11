@@ -49,7 +49,10 @@ enum qse_xli_errnum_t
 	QSE_XLI_EINCLSTR,/**< '@include' not followed by a string */
 	QSE_XLI_ELXCHR,  /**< invalid character '${0} */
 	QSE_XLI_EXKWNR,  /**< @word '${0}' not recognized */
-	QSE_XLI_EXKWEM   /**< @ not followed by a valid word  */
+	QSE_XLI_EXKWEM,  /**< @ not followed by a valid word  */
+	QSE_XLI_EILKEY,  /**< illegal key '${0}' */
+	QSE_XLI_EILVAL,  /**< illegal value for '${0}' */
+	QSE_XLI_ESTRSEG  /**< too many string segments for '${0}' */
 };
 typedef enum qse_xli_errnum_t qse_xli_errnum_t;
 
@@ -78,6 +81,8 @@ enum qse_xli_trait_t
 
 	QSE_XLI_KEEPTEXT = (1 << 3), /**< keep comment text */
 	QSE_XLI_KEEPFILE = (1 << 4), /**< keep inclusion file info */
+
+	QSE_XLI_VALIDATE = (1 << 5)
 };
 typedef enum qse_xli_trait_t qse_xli_trait_t;
 
@@ -287,10 +292,29 @@ typedef qse_ssize_t (*qse_xli_io_impl_t) (
 	qse_size_t        count
 );
 
+
+enum qse_xli_scm_flag_t
+{
+	QSE_XLI_SCM_REQUIRED  = (1 << 0),
+	QSE_XLI_SCM_VAL_NIL   = (1 << 1),
+	QSE_XLI_SCM_VAL_STR   = (1 << 2),
+	QSE_XLI_SCM_VAL_LIST  = (1 << 3),
+	QSE_XLI_SCM_KEY_NODUP = (1 << 4),
+	QSE_XLI_SCM_KEY_ALIAS = (1 << 5)
+};
+
+struct qse_xli_scm_t
+{
+	int flags;		
+	int str_minseg;
+	int str_maxseg;
+};
+
+typedef struct qse_xli_scm_t qse_xli_scm_t;
+
 #if defined(__cplusplus)
 extern "C" {
 #endif
-
 
 QSE_EXPORT qse_xli_t* qse_xli_open (
 	qse_mmgr_t* mmgr,
@@ -518,20 +542,16 @@ QSE_EXPORT qse_xli_eof_t* qse_xli_inserteof (
 	qse_xli_atom_t* peer
 );
 
-QSE_EXPORT qse_xli_list_t* qse_xli_getroot (
-	qse_xli_t* xli
-);
-
-QSE_EXPORT qse_xli_pair_t* qse_xli_findpairbyalias (
+QSE_EXPORT qse_xli_pair_t* qse_xli_findpairbyname (
 	qse_xli_t*            xli,
 	const qse_xli_list_t* list,
-	const qse_char_t*     alias
+	const qse_char_t*     dotted_name
 );
 
-QSE_EXPORT qse_size_t qse_xli_getnumpairsbyalias (
+QSE_EXPORT qse_size_t qse_xli_getnumpairsbyname (
 	qse_xli_t*            xli,
 	const qse_xli_list_t* list,
-	const qse_char_t*     alias 
+	const qse_char_t*     dotted_name 
 );
 
 /**
@@ -558,10 +578,28 @@ qse_char_t* qse_xli_dupflatstr (
 	qse_size_t*    nsegs
 );
 
+QSE_EXPORT qse_xli_list_t* qse_xli_getroot (
+	qse_xli_t* xli
+);
+
+QSE_EXPORT void qse_xli_clearroot (
+	qse_xli_t* xli
+);
+
+QSE_EXPORT void qse_xli_clearschema (
+	qse_xli_t* xli
+);
+
 QSE_EXPORT void qse_xli_clear (
 	qse_xli_t* xli
 );
 
+QSE_EXPORT int qse_xli_setschema (
+	qse_xli_t*           xli,
+	const qse_char_t*    dotted_name,
+	const qse_xli_scm_t* scm
+);
+			
 QSE_EXPORT int qse_xli_read (
 	qse_xli_t*        xli,
 	qse_xli_io_impl_t io

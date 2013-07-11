@@ -48,7 +48,10 @@ const qse_char_t* qse_xli_dflerrstr (
 		QSE_T("'@include' not followed by a string"),
 		QSE_T("invalid character '${0}'"),
 		QSE_T("'${0}' not recognized"),
-		QSE_T("@ not followed by a valid word")
+		QSE_T("@ not followed by a valid word"),
+		QSE_T("illegal key '${0}'"),
+		QSE_T("illegal value for '${0}'"),
+		QSE_T("too many string segments for '${0}'")
 	};
 
 	return (errnum >= 0 && errnum < QSE_COUNTOF(errstr))?

@@ -23,6 +23,7 @@
 
 #include <qse/xli/xli.h>
 #include <qse/cmn/str.h>
+#include <qse/cmn/rbt.h>
 #include "../cmn/mem.h"
 
 typedef struct qse_xli_tok_t qse_xli_tok_t;
@@ -60,7 +61,11 @@ struct qse_xli_t
 
 	qse_xli_nil_t xnil;
 	qse_xli_list_t root;
-	qse_xli_list_link_t* parlink;
+
+	qse_xli_list_link_t* parlink; /* link that points to the list being read currently */
+
+	qse_str_t* dotted_curkey;
+	qse_rbt_t* schema;
 
 	qse_xli_tok_t tok;
 	int tok_status;
