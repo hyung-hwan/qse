@@ -130,6 +130,7 @@ static void print_usage (QSE_FILE* out, int argc, qse_char_t* argv[])
 	qse_fprintf (out, QSE_T(" --version                 show version\n"));
 	qse_fprintf (out, QSE_T(" -i                 file   specify an input file\n"));
 	qse_fprintf (out, QSE_T(" -o                 file   specify an output file\n"));
+	qse_fprintf (out, QSE_T(" -u                        disallow duplicate keys\n"));
 	qse_fprintf (out, QSE_T(" -a                        allow a key alias\n"));
 	qse_fprintf (out, QSE_T(" -f                        keep file inclusion info\n"));
 	qse_fprintf (out, QSE_T(" -t                        keep comment text\n"));
@@ -159,9 +160,9 @@ static int handle_args (int argc, qse_char_t* argv[])
 	static qse_opt_t opt = 
 	{
 #if defined(QSE_BUILD_DEBUG)
-		QSE_T("hi:o:aftm:X:"),
+		QSE_T("hi:o:uaftvm:X:"),
 #else
-		QSE_T("hi:o:aftm:"),
+		QSE_T("hi:o:uaftvm:"),
 #endif
 		lng
 	};
@@ -203,6 +204,10 @@ static int handle_args (int argc, qse_char_t* argv[])
 				g_output_file = opt.arg;
 				break;
 
+			case QSE_T('u'):
+				g_trait |= QSE_XLI_KEYNODUP;
+				break;
+
 			case QSE_T('a'):
 				g_trait |= QSE_XLI_KEYALIAS;
 				break;
@@ -213,6 +218,10 @@ static int handle_args (int argc, qse_char_t* argv[])
 
 			case QSE_T('t'):
 				g_trait |= QSE_XLI_KEEPTEXT;
+				break;
+
+			case QSE_T('v'):
+				g_trait |= QSE_XLI_VALIDATE;
 				break;
 
 			case QSE_T('m'):
@@ -352,6 +361,12 @@ static int xli_main (int argc, qse_char_t* argv[])
 	in.u.file.path = g_input_file;
 	in.u.file.cmgr = g_infile_cmgr;
 
+{
+qse_xli_scm_t scm;
+scm.flags = QSE_XLI_SCM_VAL_LIST | QSE_XLI_SCM_KEY_NODUP;
+qse_xli_setschema (xli, QSE_T("a.b"), &scm);
+}
+
 	if (qse_xli_readstd (xli, &in) <= -1)
 	{
 		const qse_xli_loc_t* errloc;
@@ -384,7 +399,7 @@ static int xli_main (int argc, qse_char_t* argv[])
 	if (g_lookup_key)
 	{
 		qse_xli_pair_t* pair;
-		pair = qse_xli_findpairbyalias (xli, QSE_NULL, g_lookup_key);
+		pair = qse_xli_findpairbyname (xli, QSE_NULL, g_lookup_key);
 		if (pair == QSE_NULL)
 		{
 			qse_fprintf (QSE_STDERR, 

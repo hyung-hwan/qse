@@ -156,6 +156,7 @@ int qse_gettime (qse_ntime_t* t)
 	struct timeval tv;
 	int n;
 
+	/* TODO: consider using clock_gettime() if it's avaialble.. -lrt may be needed */
 	n = QSE_GETTIMEOFDAY (&tv, QSE_NULL);
 	if (n == -1) return -1;
 
@@ -227,13 +228,12 @@ int qse_settime (const qse_ntime_t* t)
 	tv.tv_usec = QSE_NSEC_TO_USEC(t->nsec);
 
 /*
-#if defined CLOCK_REALTIME && HAVE_CLOCK_SETTIME
+#if defined(CLOCK_REALTIME) && defined(HAVE_CLOCK_SETTIME)
 	{
 		int r = clock_settime (CLOCK_REALTIME, ts);
-		if (r == 0 || errno == EPERM)
-		return r;
+		if (r == 0 || errno == EPERM) return r;
 	}
-#elif HAVE_STIME
+#elif defined(HAVE_STIME)
 	return stime (&ts->tv_sec);
 #else
 */
