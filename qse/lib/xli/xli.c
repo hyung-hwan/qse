@@ -64,6 +64,7 @@ int qse_xli_init (qse_xli_t* xli, qse_mmgr_t* mmgr)
 
 	xli->schema = qse_rbt_open (mmgr, 0, QSE_SIZEOF(qse_char_t), 1);
 	if (xli->schema == QSE_NULL) goto oops;
+	qse_rbt_setstyle (xli->schema, qse_getrbtstyle(QSE_RBT_STYLE_INLINE_COPIERS));
 
 	xli->root.type = QSE_XLI_LIST;
 	xli->xnil.type = QSE_XLI_NIL;
@@ -394,10 +395,6 @@ void qse_xli_clearroot (qse_xli_t* xli)
 	free_list (xli, &xli->root);
 }
 
-void qse_xli_clearschema (qse_xli_t* xli)
-{
-	qse_rbt_clear (xli->schema);
-}
 
 /* ------------------------------------------------------ */
 
@@ -481,7 +478,7 @@ static qse_xli_pair_t* find_pair_by_key_and_index (
 	return QSE_NULL;
 }
 
-qse_xli_pair_t* qse_xli_findpairbyname (qse_xli_t* xli, const qse_xli_list_t* list, const qse_char_t* dotted_name)
+qse_xli_pair_t* qse_xli_findpair (qse_xli_t* xli, const qse_xli_list_t* list, const qse_char_t* pair_name)
 {
 	const qse_char_t* ptr;
 	const qse_xli_list_t* curlist;
@@ -490,7 +487,7 @@ qse_xli_pair_t* qse_xli_findpairbyname (qse_xli_t* xli, const qse_xli_list_t* li
 
 	curlist = list? list: &xli->root;
 
-	ptr = dotted_name;
+	ptr = pair_name;
 	while (1)
 	{
 		seg.ptr = ptr;
@@ -596,7 +593,7 @@ noent:
 	return QSE_NULL;
 }
 
-qse_size_t qse_xli_getnumpairsbyname (qse_xli_t* xli, const qse_xli_list_t* list, const qse_char_t* dotted_name)
+qse_size_t qse_xli_getnumpairs (qse_xli_t* xli, const qse_xli_list_t* list, const qse_char_t* pair_name)
 {
 	const qse_char_t* ptr;
 	const qse_xli_list_t* curlist;
@@ -605,7 +602,7 @@ qse_size_t qse_xli_getnumpairsbyname (qse_xli_t* xli, const qse_xli_list_t* list
 
 	curlist = list? list: &xli->root;
 
-	ptr = dotted_name;
+	ptr = pair_name;
 	while (1)
 	{
 		seg.ptr = ptr;
@@ -768,24 +765,44 @@ qse_char_t* qse_xli_dupflatstr (qse_xli_t* xli, qse_xli_str_t* str, qse_size_t* 
 	return tmp;
 }
 
+/* ------------------------------------------------------ */
 
-int qse_xli_setschema (qse_xli_t* xli, const qse_char_t* dotted_name, const qse_xli_scm_t* scm)
+int qse_xli_definepair (qse_xli_t* xli, const qse_char_t* pair_name, const qse_xli_scm_t* scm)
 {
 	int tmp;
 
-	tmp = scm->flags & (QSE_XLI_SCM_VAL_LIST | QSE_XLI_SCM_VAL_STR | QSE_XLI_SCM_VAL_NIL);
-	if (tmp != QSE_XLI_SCM_VAL_LIST && tmp != QSE_XLI_SCM_VAL_STR && tmp != QSE_XLI_SCM_VAL_NIL)
+	tmp = scm->flags & (QSE_XLI_SCM_VALLIST | QSE_XLI_SCM_VALSTR | QSE_XLI_SCM_VALNIL);
+	if (tmp != QSE_XLI_SCM_VALLIST && tmp != QSE_XLI_SCM_VALSTR && tmp != QSE_XLI_SCM_VALNIL)
 	{
 		/* VAL_LIST, VAL_STR, VAL_NIL can't co-exist */
 		qse_xli_seterrnum (xli, QSE_XLI_EINVAL, QSE_NULL);
 		return -1;
 	}
 
-	if (qse_rbt_upsert (xli->schema, dotted_name, qse_strlen(dotted_name), scm, QSE_SIZEOF(scm)) == QSE_NULL)
+	if (qse_rbt_upsert (xli->schema, pair_name, qse_strlen(pair_name), scm, QSE_SIZEOF(*scm)) == QSE_NULL)
 	{
 		qse_xli_seterrnum (xli, QSE_XLI_ENOMEM, QSE_NULL);
 		return -1;
 	}
 
 	return 0;
+}
+
+int qse_xli_undefinepair (qse_xli_t* xli, const qse_char_t* pair_name)
+{
+	if (qse_rbt_delete (xli->schema, pair_name, qse_strlen(pair_name)) <= -1)
+	{
+		qse_cstr_t ea;
+		ea.ptr = pair_name;
+		ea.len = qse_strlen (ea.ptr);
+		qse_xli_seterrnum (xli, QSE_XLI_ENOENT, &ea);
+		return -1;
+	}
+
+	return 0;
+}
+
+void qse_xli_undefinepairs (qse_xli_t* xli)
+{
+	qse_rbt_clear (xli->schema);
 }

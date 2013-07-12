@@ -600,7 +600,9 @@ static int read_pair (qse_xli_t* xli)
 	qse_xli_pair_t* pair;
 	qse_xli_list_t* parlist;
 	qse_size_t dotted_curkey_len;
+
 	qse_xli_scm_t* scm = QSE_NULL;
+	int key_nodup = 0, key_alias = 0;
 
 	key.ptr = QSE_NULL;
 	name = QSE_NULL;
@@ -608,7 +610,44 @@ static int read_pair (qse_xli_t* xli)
 
 	parlist = xli->parlink->list;
 
-	if (xli->opt.trait & QSE_XLI_KEYNODUP)
+	if (xli->opt.trait & QSE_XLI_KEYNODUP) key_nodup = 1;
+	if (xli->opt.trait & QSE_XLI_KEYALIAS) key_alias = 1;
+		
+	kloc = xli->tok.loc;
+	key.len = QSE_STR_LEN(xli->tok.name);
+	key.ptr = qse_strdup (QSE_STR_PTR(xli->tok.name), xli->mmgr);
+	if (key.ptr == QSE_NULL) 
+	{
+		qse_xli_seterrnum (xli, QSE_XLI_ENOMEM, QSE_NULL); 
+		goto oops;
+	}
+
+	dotted_curkey_len = QSE_STR_LEN (xli->dotted_curkey);
+	if ((dotted_curkey_len > 0 && qse_str_cat (xli->dotted_curkey, QSE_T(".")) == (qse_size_t)-1) ||
+	    qse_str_cat (xli->dotted_curkey, key.ptr) == (qse_size_t)-1)
+	{
+		qse_xli_seterrnum (xli, QSE_XLI_ENOMEM, QSE_NULL); 
+		goto oops;
+	}
+
+	if (xli->opt.trait & QSE_XLI_VALIDATE) 
+	{
+		qse_rbt_pair_t* pair;
+
+		pair = qse_rbt_search (xli->schema, QSE_STR_PTR(xli->dotted_curkey), QSE_STR_LEN(xli->dotted_curkey));
+		if (pair == QSE_NULL)
+		{
+			qse_xli_seterror (xli, QSE_XLI_EUDKEY, (const qse_cstr_t*)&key, &kloc);
+			goto oops;	
+		}
+
+		scm = (qse_xli_scm_t*)QSE_RBT_VPTR(pair);
+
+		if (scm->flags & QSE_XLI_SCM_KEYNODUP) key_nodup = 2;
+		if (scm->flags & QSE_XLI_SCM_KEYALIAS) key_alias = 2;
+	}
+
+	if (key_nodup)
 	{
 		qse_xli_atom_t* atom;
 
@@ -628,47 +667,11 @@ static int read_pair (qse_xli_t* xli)
 		}
 	}
 
-	kloc = xli->tok.loc;
-	key.len = QSE_STR_LEN(xli->tok.name);
-	key.ptr = qse_strdup (QSE_STR_PTR(xli->tok.name), xli->mmgr);
-	if (key.ptr == QSE_NULL) 
-	{
-		qse_xli_seterrnum (xli, QSE_XLI_ENOMEM, QSE_NULL); 
-		goto oops;
-	}
-
-	dotted_curkey_len = QSE_STR_LEN (xli->dotted_curkey);
-	if ((dotted_curkey_len > 0 && qse_str_cat (xli->dotted_curkey, QSE_T(".")) == (qse_size_t)-1) ||
-	    qse_str_cat (xli->dotted_curkey, key.ptr) == (qse_size_t)-1)
-	{
-		qse_xli_seterrnum (xli, QSE_XLI_ENOMEM, QSE_NULL); 
-		goto oops;
-	}
-
-
-	if (xli->opt.trait & QSE_XLI_VALIDATE) 
-	{
-		qse_rbt_pair_t* pair;
-
-		pair = qse_rbt_search (xli->schema, QSE_STR_PTR(xli->dotted_curkey), QSE_STR_LEN(xli->dotted_curkey));
-		if (pair == QSE_NULL)
-		{
-			qse_xli_seterror (xli, QSE_XLI_EILKEY, (const qse_cstr_t*)&key, &kloc);
-			goto oops;	
-		}
-
-		scm = (qse_xli_scm_t*)QSE_RBT_VPTR(pair);
-
-		if (scm->flags & QSE_XLI_SCM_KEY_NODUP)
-		{
-		}
-	}
-
 	xli->tok_status |= TOK_STATUS_ENABLE_NSTR;
 
 	if (get_token (xli) <= -1) goto oops;
 
-	if (xli->opt.trait & QSE_XLI_KEYALIAS)
+	if (key_alias)
 	{
 		/* the name part must be unique for the same key(s) */
 		if (MATCH (xli, TOK_IDENT) || MATCH (xli, TOK_DQSTR) || MATCH (xli, TOK_SQSTR) || MATCH(xli, TOK_NSTR))
@@ -698,6 +701,13 @@ static int read_pair (qse_xli_t* xli)
 
 			if (get_token (xli) <= -1) goto oops;
 		}
+		else if (key_alias == 2)
+		{
+			/* SCM_KEYALIAS is specified for this particular item. Let the alias be required. 
+			 * If KEYALIAS is globally specified with the specific one, it's optional. */
+			qse_xli_seterrnum (xli, QSE_XLI_ENOALI, &key); 
+			goto oops;
+		}
 	}
 
 	if (MATCH (xli, TOK_EQ))
@@ -709,7 +719,7 @@ static int read_pair (qse_xli_t* xli)
 			qse_xli_str_t* curstrseg;
 			qse_size_t segcount = 0;
 
-			if (scm && !(scm->flags & QSE_XLI_SCM_VAL_STR))
+			if (scm && !(scm->flags & QSE_XLI_SCM_VALSTR))
 			{
 				/* check the value type */
 				qse_xli_seterror (xli, QSE_XLI_EILVAL, (const qse_cstr_t*)&key, &kloc);
@@ -775,7 +785,7 @@ static int read_pair (qse_xli_t* xli)
 	}
 	else if (MATCH (xli, TOK_LBRACE))
 	{
-		if (scm && !(scm->flags & QSE_XLI_SCM_VAL_LIST))
+		if (scm && !(scm->flags & QSE_XLI_SCM_VALLIST))
 		{
 			/* check the value type */
 			qse_xli_seterror (xli, QSE_XLI_EILVAL, (const qse_cstr_t*)&key, &kloc);
@@ -809,10 +819,11 @@ static int read_pair (qse_xli_t* xli)
 	}
 	else if (MATCH (xli, TOK_SEMICOLON))
 	{
-		if (scm && !(scm->flags & QSE_XLI_SCM_VAL_NIL))
+		if (scm && !(scm->flags & QSE_XLI_SCM_VALNIL) &&
+		           !((scm->flags & QSE_XLI_SCM_VALSTR) && scm->str_minseg <= 0))
 		{
 			/* check the value type */
-			qse_xli_seterror (xli, QSE_XLI_EILVAL, (const qse_cstr_t*)&key, &kloc);
+			qse_xli_seterror (xli, QSE_XLI_ENOVAL, (const qse_cstr_t*)&key, &kloc);
 			goto oops;	
 		}
 
