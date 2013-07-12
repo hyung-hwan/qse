@@ -57,18 +57,6 @@ enum qse_bool_t
 };
 typedef enum qse_bool_t qse_bool_t;
 
-/**
- * The qse_tri_t type defines a tri-state type that can represent #QSE_ALIVE,
- * #QSE_ZOMBIE, and #QSE_DEAD.
- */
-enum qse_tri_t
-{
-	QSE_ALIVE  = 1,
-	QSE_ZOMBIE = 0,
-	QSE_DEAD   = -1
-};
-typedef enum qse_tri_t qse_tri_t;
-
 /** @typedef qse_int_t
  * The qse_int_t type defines a signed integer type as large as a pointer.
  */
