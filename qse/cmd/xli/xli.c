@@ -484,9 +484,31 @@ for (i = 0; i < QSE_COUNTOF(defs); i++) qse_xli_definepair (xli, defs[i].name, &
 		goto oops;
 	}
 
+	{
+		static qse_cstr_t strs[] =
+		{
+			{ QSE_T("hello"), 5 },
+			{ QSE_T("xli"),   3 },
+			{ QSE_T("world"), 5 }
+		};
+
+		if (qse_xli_insertpairwithstrs (xli, qse_xli_getroot(xli), QSE_NULL, QSE_T("test-key"), QSE_NULL, strs, QSE_COUNTOF(strs)) == QSE_NULL)
+		{
+			qse_fprintf (QSE_STDERR, 
+				QSE_T("ERROR: cannot insert a string pair - %s \n"),
+				qse_xli_geterrmsg(xli)
+			);
+		}
+	}
+
 	if (g_lookup_key)
 	{
 		qse_xli_pair_t* pair;
+		qse_size_t count;
+
+		count = qse_xli_countpairs (xli, QSE_NULL, g_lookup_key);
+		qse_printf (QSE_T("COUNT: %lu\n"), (unsigned long)count);
+
 		pair = qse_xli_findpair (xli, QSE_NULL, g_lookup_key);
 		if (pair == QSE_NULL)
 		{
