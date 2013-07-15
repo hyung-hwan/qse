@@ -1212,7 +1212,7 @@ static int load_server_config (qse_httpd_t* httpd, qse_httpd_server_t* server, q
 	}
 
 	/* load host/location specific configuration */
-	host_count = qse_xli_getnumpairs (httpd_xtn->xli, list, QSE_T("host"));
+	host_count = qse_xli_countpairs (httpd_xtn->xli, list, QSE_T("host"));
 	if (host_count <= 0) return 0; /* nothing to load */
 
 	QSE_ASSERT (server_xtn->cfgtab == QSE_NULL);
@@ -1240,7 +1240,7 @@ static int load_server_config (qse_httpd_t* httpd, qse_httpd_server_t* server, q
 
 		if (host->val->type == QSE_XLI_LIST && host->alias) 
 		{
-			loc_count = qse_xli_getnumpairs (httpd_xtn->xli, (qse_xli_list_t*)host->val, QSE_T("location"));
+			loc_count = qse_xli_countpairs (httpd_xtn->xli, (qse_xli_list_t*)host->val, QSE_T("location"));
 
 			if (((hostcfg = qse_httpd_callocmem (httpd, QSE_SIZEOF(*hostcfg))) == QSE_NULL) ||
 			    ((hostcfg->hostname = qse_httpd_strtombsdup (httpd, (host->alias[0] == QSE_T('\0')? QSE_T("*"):host->alias))) == QSE_NULL)) goto oops;

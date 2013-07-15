@@ -148,7 +148,8 @@ struct qse_xli_str_t
 	qse_xli_atom_type_t type; \
 	qse_xli_atom_t* prev; \
 	qse_xli_atom_t* next; \
-	qse_xli_file_t* file
+	qse_xli_file_t* file; \
+	qse_xli_list_t* super
 
 struct qse_xli_atom_t
 {
@@ -160,7 +161,7 @@ struct qse_xli_pair_t
 	QSE_XLI_ATOM_HDR;
 	const qse_char_t* key;
 	const qse_char_t* alias; 
-	qse_xli_val_t* val;
+	qse_xli_val_t*    val;
 };
 
 struct qse_xli_text_t
@@ -524,6 +525,16 @@ QSE_EXPORT qse_xli_pair_t* qse_xli_insertpairwithstr (
 	const qse_cstr_t* value
 );
 
+QSE_EXPORT qse_xli_pair_t* qse_xli_insertpairwithstrs (
+	qse_xli_t*        xli, 
+	qse_xli_list_t*   list,
+	qse_xli_atom_t*   peer,
+	const qse_char_t* key,
+	const qse_char_t* alias,
+	const qse_cstr_t  value[],
+	qse_size_t        count
+);
+
 QSE_EXPORT qse_xli_text_t* qse_xli_inserttext (
         qse_xli_t* xli,
 	qse_xli_list_t* parent,
@@ -547,13 +558,13 @@ QSE_EXPORT qse_xli_eof_t* qse_xli_inserteof (
 QSE_EXPORT qse_xli_pair_t* qse_xli_findpair (
 	qse_xli_t*            xli,
 	const qse_xli_list_t* list,
-	const qse_char_t*     dotted_name
+	const qse_char_t*     fqpn
 );
 
-QSE_EXPORT qse_size_t qse_xli_getnumpairs (
+QSE_EXPORT qse_size_t qse_xli_countpairs (
 	qse_xli_t*            xli,
 	const qse_xli_list_t* list,
-	const qse_char_t*     dotted_name 
+	const qse_char_t*     fqpn 
 );
 
 /**
@@ -593,15 +604,18 @@ QSE_EXPORT void qse_xli_clear (
 	qse_xli_t* xli
 );
 
+/**
+ * The qse_xli_definepair() function defines a pair structure.
+ */
 QSE_EXPORT int qse_xli_definepair (
 	qse_xli_t*           xli,
-	const qse_char_t*    pair_name,
+	const qse_char_t*    fqpn,
 	const qse_xli_scm_t* scm
 );
 
 QSE_EXPORT int qse_xli_undefinepair (
 	qse_xli_t*           xli,
-	const qse_char_t*    pair_name
+	const qse_char_t*    fqpn
 );
 
 QSE_EXPORT void qse_xli_undefinepairs (
