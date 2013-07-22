@@ -228,6 +228,11 @@ const qse_char_t* qse_rex_geterrmsg (const qse_rex_t* rex)
 	static const qse_char_t* errstr[] = 
 	{
 		QSE_T("no error"),
+		QSE_T("other error"),
+		QSE_T("not implemented"),
+		QSE_T("subsystem error"),
+		QSE_T("internal error that should never have happened"),
+
 		QSE_T("no sufficient memory available"),
 		QSE_T("no expression compiled"),
 		QSE_T("recursion too deep"),
