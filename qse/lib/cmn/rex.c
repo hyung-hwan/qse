@@ -844,10 +844,8 @@ static qse_rex_node_t* comp_occ (comp_t* com, qse_rex_node_t* atom)
 		case QSE_T('{'):
 			if (!(com->rex->option & QSE_REX_NOBOUND))
 			{
-				if (getc_noesc(com) <= -1) 
-					return QSE_NULL;
-				if (occbound(com,atom) <= -1) 
-					return QSE_NULL;
+				if (getc_noesc(com) <= -1 ||
+				    occbound(com,atom) <= -1) return QSE_NULL;
 			}
 			break;
 	}
@@ -1052,11 +1050,11 @@ static qse_rex_node_t* comp_branch (comp_t* c, pair_t* pair)
 					 *        -> ORG(atom) -> Tail
 					 */
 					atom = pseudo_group (c, atom);
-				}
-				if (atom == QSE_NULL) return QSE_NULL;
 			#if 0
-			}
+				}
 			#endif
+				if (atom == QSE_NULL) return QSE_NULL;
+			}
 	
 			if (pair->tail == QSE_NULL) 
 			{
