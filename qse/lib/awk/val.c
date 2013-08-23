@@ -28,13 +28,14 @@
 #define CHUNKSIZE QSE_AWK_VAL_CHUNK_SIZE
 
 static qse_awk_val_nil_t awk_nil = { QSE_AWK_VAL_NIL, 0, 1, 0 };
-static qse_awk_val_str_t awk_zls = { QSE_AWK_VAL_STR, 0, 1, 0,  { QSE_T(""), 0 } };
+static qse_awk_val_str_t awk_zls = { QSE_AWK_VAL_STR, 0, 1, 0, { QSE_T(""), 0 } };
 
 qse_awk_val_t* qse_awk_val_nil = (qse_awk_val_t*)&awk_nil;
 qse_awk_val_t* qse_awk_val_zls = (qse_awk_val_t*)&awk_zls; 
 
 static qse_awk_val_int_t awk_int[] =
 {
+	/* type          ref stat nstr val nde */
 	{ QSE_AWK_VAL_INT, 0, 1, 0, -1, QSE_NULL },
 	{ QSE_AWK_VAL_INT, 0, 1, 0,  0, QSE_NULL },
 	{ QSE_AWK_VAL_INT, 0, 1, 0,  1, QSE_NULL },
@@ -216,7 +217,7 @@ qse_awk_val_t* qse_awk_rtx_makestrvalwithmbs (
 		return QSE_NULL;
 	}
 
-	v = qse_awk_rtx_makestrvalwithcstr (rtx, &tmp);
+	v = qse_awk_rtx_makestrvalwithcstr (rtx, (qse_cstr_t*)&tmp);
 	QSE_AWK_FREE (rtx->awk, tmp.ptr);
 	return v;
 #endif
@@ -268,7 +269,7 @@ qse_awk_val_t* qse_awk_rtx_makestrvalwithmcstr (
 		return QSE_NULL;
 	}
 
-	v = qse_awk_rtx_makestrvalwithcstr (rtx, &tmp);
+	v = qse_awk_rtx_makestrvalwithcstr (rtx, (qse_cstr_t*)&tmp);
 	QSE_AWK_FREE (rtx->awk, tmp.ptr);
 	return v;
 #endif
@@ -438,7 +439,7 @@ qse_awk_val_t* qse_awk_rtx_makenstrvalwithcstr (qse_awk_rtx_t* rtx, const qse_cs
 }
 
 qse_awk_val_t* qse_awk_rtx_makerexval (
-	qse_awk_rtx_t* rtx, const qse_cstr_t* str, void* code)
+	qse_awk_rtx_t* rtx, const qse_cstr_t* str, void* code[2])
 {
 	qse_awk_val_rex_t* val;
 	qse_size_t totsz;
@@ -465,7 +466,8 @@ qse_awk_val_t* qse_awk_rtx_makerexval (
 	val->str.ptr = (qse_char_t*)(val + 1);
 	qse_strncpy (val->str.ptr, str->ptr, str->len);
 
-	val->code = code;
+	val->code[0] = code[0];
+	val->code[1] = code[1];
 
 	return (qse_awk_val_t*)val;
 }
@@ -824,7 +826,7 @@ void qse_awk_rtx_freeval (
 		
 			/* code is just a pointer to a regular expression stored
 			 * in parse tree nodes. so don't free it.
-			qse_awk_freerex (rtx->awk, ((qse_awk_val_rex_t*)val)->code);
+			qse_awk_freerex (rtx->awk, ((qse_awk_val_rex_t*)val)->code[0], ((qse_awk_val_rex_t*)val)->code[1]);
 			 */
 
 			QSE_AWK_FREE (rtx->awk, val);
@@ -895,7 +897,7 @@ void qse_awk_rtx_refdownval_nofree (qse_awk_rtx_t* rtx, qse_awk_val_t* val)
 void qse_awk_rtx_freevalchunk (qse_awk_rtx_t* rtx, qse_awk_val_chunk_t* chunk)
 {
 	while (chunk != QSE_NULL)
-        {
+	{
 		qse_awk_val_chunk_t* next = chunk->next;
 		QSE_AWK_FREE (rtx->awk, chunk);
 		chunk = next;
@@ -1717,7 +1719,7 @@ int qse_awk_rtx_setrefval (qse_awk_rtx_t* rtx, qse_awk_val_ref_t* ref, qse_awk_v
 					qse_awk_rtx_refupval (rtx, val);
 					x = qse_awk_rtx_setrec (
 						rtx, (qse_size_t)ref->adr, 
-						&((qse_awk_val_str_t*)val)->val
+						(qse_cstr_t*)&((qse_awk_val_str_t*)val)->val
 					);
 					qse_awk_rtx_refdownval (rtx, val);
 					return x;
@@ -1730,7 +1732,7 @@ int qse_awk_rtx_setrefval (qse_awk_rtx_t* rtx, qse_awk_val_ref_t* ref, qse_awk_v
 	
 					str.ptr = qse_awk_rtx_valtostrdup (rtx, val, &str.len);
 					qse_awk_rtx_refupval (rtx, val);
-					x = qse_awk_rtx_setrec (rtx, (qse_size_t)ref->adr, &str);
+					x = qse_awk_rtx_setrec (rtx, (qse_size_t)ref->adr, (qse_cstr_t*)&str);
 					qse_awk_rtx_refdownval (rtx, val);
 					QSE_AWK_FREE (rtx->awk, str.ptr);
 					return x;

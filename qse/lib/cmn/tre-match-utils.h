@@ -52,8 +52,6 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#define str_source ((const tre_str_source*)string)
-
 #ifdef TRE_WCHAR
 
 #ifdef TRE_MULTIBYTE
@@ -116,12 +114,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	      }								      \
 	  }								      \
       }									      \
-    else if (type == STR_USER)						      \
-      {									      \
-        pos += pos_add_next;					      	      \
-	str_user_end = str_source->get_next_char(&next_c, &pos_add_next,      \
-                                                 str_source->context);	      \
-      }									      \
   } while(/*CONSTCOND*/0)
 
 #else /* !TRE_MULTIBYTE */
@@ -143,11 +135,6 @@ do {									      \
 		if (len >= 0 && pos >= len) next_c = QSE_T('\0');	\
 		else next_c = *str_wide++;					\
       }									      \
-	else if (type == STR_USER)						      \
-	{									      \
-		pos += pos_add_next;					      	      \
-		str_user_end = str_source->get_next_char(&next_c, &pos_add_next, str_source->context);	      \
-	}	\
 } while(/*CONSTCOND*/0)
 
 #endif /* !TRE_MULTIBYTE */
@@ -156,24 +143,16 @@ do {									      \
 
 /* No wide character or multibyte support. */
 
-#define GET_NEXT_WCHAR()						      \
-  do {									      \
-    prev_c = next_c;							      \
-    if (type == STR_BYTE)						      \
-      {									      \
-	pos++;								      \
-	if (len >= 0 && pos >= len)					      \
-	  next_c = '\0';						      \
-	else								      \
-	  next_c = (unsigned char)(*str_byte++);			      \
-      }									      \
-    else if (type == STR_USER)						      \
-      {									      \
-	pos += pos_add_next;						      \
-	str_user_end = str_source->get_next_char(&next_c, &pos_add_next,      \
-						 str_source->context);	      \
-      }									      \
-  } while(/*CONSTCOND*/0)
+#define GET_NEXT_WCHAR()	\
+	do { \
+		prev_c = next_c; \
+		if (type == STR_BYTE) \
+		{ \
+			pos++; \
+			if (len >= 0 && pos >= len) next_c = '\0'; \
+			else	next_c = (unsigned char)(*str_byte++); \
+		} \
+	} while(/*CONSTCOND*/0)
 
 #endif /* !TRE_WCHAR */
 

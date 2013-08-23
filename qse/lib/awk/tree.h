@@ -155,7 +155,7 @@ struct qse_awk_nde_rex_t
 {
 	QSE_AWK_NDE_HDR;
 	qse_xstr_t  str;
-	void*       code;
+	void*       code[2]; /* [0]: case sensitive, [1]: case insensitive */
 };
 
 /* QSE_AWK_NDE_NAMED, QSE_AWK_NDE_GBL, 

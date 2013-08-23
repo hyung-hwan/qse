@@ -223,12 +223,12 @@ static QSE_INLINE int match_long_rs (
 	qse_awk_errnum_t errnum;
 	int ret;
 
-	QSE_ASSERT (run->gbl.rs != QSE_NULL);
+	QSE_ASSERT (run->gbl.rs[0] != QSE_NULL);
+	QSE_ASSERT (run->gbl.rs[1] != QSE_NULL);
 
 	ret = qse_awk_matchrex (
-		run->awk, run->gbl.rs,
-		((run->gbl.ignorecase)? QSE_REX_IGNORECASE: 0),
-		QSE_STR_CSTR(buf), QSE_STR_CSTR(buf),
+		run->awk, run->gbl.rs[run->gbl.ignorecase], 
+		run->gbl.ignorecase, QSE_STR_CSTR(buf), QSE_STR_CSTR(buf),
 		&match, &errnum);
 	if (ret <= -1)
 	{

@@ -205,15 +205,6 @@ static int tre_match(
 	if (tnfa->have_backrefs || (eflags & REG_BACKTRACKING_MATCHER))
 	{
 		/* The regex has back references, use the backtracking matcher. */
-		if (type == STR_USER)
-		{
-			const tre_str_source *source = string;
-			if (source->rewind == QSE_NULL || source->compare == QSE_NULL)
-				/* The backtracking matcher requires rewind and compare
-				   capabilities from the input stream. */
-				return REG_BADPAT;
-		}
-
 		status = tre_tnfa_run_backtrack (
 			preg->mmgr, tnfa, string, (int)len, type,
 			tags, eflags, &eo);
@@ -265,15 +256,6 @@ int qse_tre_exec (
 {
 	return qse_tre_execx (tre, str, (qse_size_t)-1, pmatch, nmatch, eflags);
 }
-
-#if 0
-int qse_tre_execsrc (
-	const regex_t *preg, const tre_str_source *str,
-	qse_size_t nmatch, regmatch_t pmatch[], int eflags)
-{
-	return tre_match (preg, str, (unsigned)-1, STR_USER, nmatch, pmatch, eflags);
-}
-#endif
 
 qse_tre_errnum_t qse_tre_geterrnum (qse_tre_t* tre)
 {

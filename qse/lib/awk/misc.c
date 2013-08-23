@@ -20,7 +20,7 @@
 
 #include "awk.h"
 
-#define USE_REX 
+/*#define USE_REX */
 
 #if defined(USE_REX)
 #	include <qse/cmn/rex.h>
@@ -892,8 +892,7 @@ qse_char_t* qse_awk_rtx_strxntokbyrex (
 	while (cursub.len > 0)
 	{
 		n = qse_awk_matchrex (
-			rtx->awk, rex, 
-			((rtx->gbl.ignorecase)? QSE_REX_IGNORECASE: 0),
+			rtx->awk, rex, rtx->gbl.ignorecase,
 			&s, &cursub, &match, errnum);
 		if (n == -1) return QSE_NULL;
 		if (n == 0)
@@ -1090,55 +1089,96 @@ static QSE_INLINE int rexerr_to_errnum (int err)
 	}
 }
 
-void* qse_awk_buildrex (
-	qse_awk_t* awk, const qse_char_t* ptn, 
-	qse_size_t len, qse_awk_errnum_t* errnum)
+int qse_awk_buildrex (
+	qse_awk_t* awk, const qse_char_t* ptn, qse_size_t len, 
+	qse_awk_errnum_t* errnum, void** code, void** icode)
 {
 #if defined(USE_REX)
 	qse_rex_errnum_t err;
 	void* p;
 
-	p = qse_buildrex (
-		awk->mmgr, awk->opt.depth.s.rex_build,
-		((awk->opt.trait & QSE_AWK_REXBOUND)? 0: QSE_REX_NOBOUND),
-		ptn, len, &err
-	);
-	if (p == QSE_NULL) *errnum = rexerr_to_errnum(err);
-	return p;
+	if (code || icode)
+	{
+		p = qse_buildrex (
+			awk->mmgr, awk->opt.depth.s.rex_build,
+			((awk->opt.trait & QSE_AWK_REXBOUND)? 0: QSE_REX_NOBOUND),
+			ptn, len, &err
+		);
+		if (p == QSE_NULL) 
+		{
+			*errnum = rexerr_to_errnum(err);
+			return -1;
+		}
+	
+		if (code) *code = p;
+		if (icode) *icode = p;
+	}
+
+	return 0;
 #else
-	qse_tre_t* tre;
+	qse_tre_t* tre = QSE_NULL; 
+	qse_tre_t* itre = QSE_NULL;
 	int opt = QSE_TRE_EXTENDED;
 
-	tre = qse_tre_open (awk->mmgr, 0);
-	if (tre == QSE_NULL)
+	if (code)
 	{
-		*errnum = QSE_AWK_ENOMEM;
-		return QSE_NULL;
-	}
+		tre = qse_tre_open (awk->mmgr, 0);
+		if (tre == QSE_NULL)
+		{
+			*errnum = QSE_AWK_ENOMEM;
+			return -1;
+		}
 
-	/* ignorecase is a compile option for TRE */
-#if 0 /* TODO */
-	if (ignorecase) opt |= QSE_TRE_IGNORECASE; 
-#endif
-	if (!(awk->opt.trait & QSE_AWK_REXBOUND)) opt |= QSE_TRE_NOBOUND;
+		if (!(awk->opt.trait & QSE_AWK_REXBOUND)) opt |= QSE_TRE_NOBOUND;
 
-	if (qse_tre_compx (tre, ptn, len, QSE_NULL, opt) <= -1)
-	{
+		if (qse_tre_compx (tre, ptn, len, QSE_NULL, opt) <= -1)
+		{
 #if 0 /* TODO */
 
-		if (QSE_TRE_ERRNUM(tre) == QSE_TRE_ENOMEM) *errnum = QSE_AWK_ENOMEM;
-		else
-			SETERR1 (awk, QSE_AWK_EREXBL, str->ptr, str->len, loc);
+			if (QSE_TRE_ERRNUM(tre) == QSE_TRE_ENOMEM) *errnum = QSE_AWK_ENOMEM;
+			else
+				SETERR1 (awk, QSE_AWK_EREXBL, str->ptr, str->len, loc);
 #endif
-		*errnum = (QSE_TRE_ERRNUM(tre) == QSE_TRE_ENOMEM)? 
-			QSE_AWK_ENOMEM: QSE_AWK_EREXBL;
-		qse_tre_close (tre);
-		return QSE_NULL;
+			*errnum = (QSE_TRE_ERRNUM(tre) == QSE_TRE_ENOMEM)? 
+				QSE_AWK_ENOMEM: QSE_AWK_EREXBL;
+			qse_tre_close (tre);
+			return -1;
+		}
 	}
 
-	return tre;
+	if (icode) 
+	{
+		itre = qse_tre_open (awk->mmgr, 0);
+		if (itre == QSE_NULL)
+		{
+			if (tre) qse_tre_close (tre);
+			*errnum = QSE_AWK_ENOMEM;
+			return -1;
+		}
+
+		/* ignorecase is a compile option for TRE */
+		if (qse_tre_compx (itre, ptn, len, QSE_NULL, opt | QSE_TRE_IGNORECASE) <= -1)
+		{
+#if 0 /* TODO */
+
+			if (QSE_TRE_ERRNUM(tre) == QSE_TRE_ENOMEM) *errnum = QSE_AWK_ENOMEM;
+			else
+				SETERR1 (awk, QSE_AWK_EREXBL, str->ptr, str->len, loc);
+#endif
+			*errnum = (QSE_TRE_ERRNUM(tre) == QSE_TRE_ENOMEM)? 
+				QSE_AWK_ENOMEM: QSE_AWK_EREXBL;
+			qse_tre_close (itre);
+			if (tre) qse_tre_close (tre);
+			return -1;
+		}
+	}
+
+	if (code) *code = tre;
+	if (icode) *icode = itre;
+	return 0;	
 #endif
 }
+
 
 #if !defined(USE_REX)
 
@@ -1192,7 +1232,7 @@ static int matchtre (
 #endif
 
 int qse_awk_matchrex (
-	qse_awk_t* awk, void* code, int option,
+	qse_awk_t* awk, void* code, int icase,
 	const qse_cstr_t* str, const qse_cstr_t* substr,
 	qse_cstr_t* match, qse_awk_errnum_t* errnum)
 {
@@ -1201,8 +1241,8 @@ int qse_awk_matchrex (
 	qse_rex_errnum_t err;
 
 	x = qse_matchrex (
-		awk->mmgr, awk->opt.depth.s.rex_match,
-		code, option, str, substr, match, &err);
+		awk->mmgr, awk->opt.depth.s.rex_match, code, 
+		(icase? QSE_REX_IGNORECASE: 0), str, substr, match, &err);
 	if (x <= -1) *errnum = rexerr_to_errnum(err);
 	return x;
 #else
@@ -1218,13 +1258,102 @@ int qse_awk_matchrex (
 #endif
 }
 
-void qse_awk_freerex (qse_awk_t* awk, void* code)
+void qse_awk_freerex (qse_awk_t* awk, void* code, void* icode)
 {
+	if (code)
+	{
 #if defined(USE_REX)
-	qse_freerex((awk)->mmgr,code);
+		qse_freerex ((awk)->mmgr, code);
 #else
-	qse_tre_close (code);
+		qse_tre_close (code);
 #endif
+	}
+
+	if (icode && icode != code)
+	{
+#if defined(USE_REX)
+		qse_freerex ((awk)->mmgr, icode);
+#else
+		qse_tre_close (icode);
+#endif
+	}
+}
+
+int qse_awk_rtx_matchrex (
+	qse_awk_rtx_t* rtx, qse_awk_val_t* val,
+	const qse_cstr_t* str, const qse_cstr_t* substr, qse_cstr_t* match)
+{
+	void* code;
+	int icase, x;
+	qse_awk_errnum_t awkerr;
+#if defined(USE_REX)
+	qse_rex_errnum_t rexerr;
+#endif
+
+	icase = rtx->gbl.ignorecase;
+
+	if (val->type == QSE_AWK_VAL_REX)
+	{
+		code = ((qse_awk_val_rex_t*)val)->code[icase];
+	}
+	else if (val->type == QSE_AWK_VAL_STR)
+	{
+		/* build a regular expression */
+		qse_awk_val_str_t* strv = (qse_awk_val_str_t*)val;
+		x = icase? qse_awk_buildrex (rtx->awk, strv->val.ptr, strv->val.len, &awkerr, QSE_NULL, &code):
+		           qse_awk_buildrex (rtx->awk, strv->val.ptr, strv->val.len, &awkerr, &code, QSE_NULL);
+		if (x <= -1)
+		{
+			qse_awk_rtx_seterrnum (rtx, awkerr, QSE_NULL);
+			return -1;
+		}
+	}
+	else 
+	{
+		/* convert to a string and build a regular expression */
+
+		qse_xstr_t tmp;
+		tmp.ptr = qse_awk_rtx_valtostrdup (rtx, val, &tmp.len);
+		if (tmp.ptr == QSE_NULL) return -1;
+
+		x = icase? qse_awk_buildrex (rtx->awk, tmp.ptr, tmp.len, &awkerr, QSE_NULL, &code):
+		           qse_awk_buildrex (rtx->awk, tmp.ptr, tmp.len, &awkerr, &code, QSE_NULL);
+		qse_awk_rtx_freemem (rtx, tmp.ptr);
+		if (x <= -1)
+		{
+			qse_awk_rtx_seterrnum (rtx, awkerr, QSE_NULL);
+			return -1;
+		}
+	}
+	
+#if defined(USE_REX)
+	x = qse_matchrex (
+		rtx->awk->mmgr, rtx->awk->opt.depth.s.rex_match,
+		code, (icase? QSE_REX_IGNORECASE: 0),
+		str, substr, match, &rexerr);
+	if (x <= -1) qse_awk_rtx_seterrnum (rtx, rexerr_to_errnum(rexerr), QSE_NULL);
+#else
+	x = matchtre (
+		rtx->awk, code,
+		((str->ptr == substr->ptr)? QSE_TRE_BACKTRACKING: (QSE_TRE_BACKTRACKING | QSE_TRE_NOTBOL)),
+		substr, match, QSE_NULL, &awkerr
+	);
+	if (x <= -1) qse_awk_rtx_seterrnum (rtx, awkerr, QSE_NULL);
+#endif
+
+	if (val->type == QSE_AWK_VAL_REX) 
+	{
+		/* nothing to free */
+	}
+	else
+	{
+		if (icase) 
+			qse_awk_freerex (rtx->awk, QSE_NULL, code);
+		else
+			qse_awk_freerex (rtx->awk, code, QSE_NULL);
+	}
+
+	return x;
 }
 
 void* qse_awk_rtx_allocmem (qse_awk_rtx_t* rtx, qse_size_t size)

@@ -99,15 +99,6 @@ enum qse_tre_eflag_t
 	QSE_TRE_NOTEOL       = (1 << 2)
 };
 
-typedef struct qse_tre_strsrc_t qse_tre_strsrc_t;
-struct qse_tre_strsrc_t
-{
-	int (*get_next_char) (qse_char_t *c, unsigned int* pos_add, void* context);
-	void (*rewind)(qse_size_t pos, void *context);
-	int (*compare)(qse_size_t pos1, qse_size_t pos2, qse_size_t len, void* context);
-	void* context;
-};
-
 #ifdef __cplusplus
 extern "C" {
 #endif

@@ -307,8 +307,8 @@ struct qse_awk_rtx_t
 
 	struct
 	{
-		void* rs;
-		void* fs;
+		void* rs[2];
+		void* fs[2]; 
 		int ignorecase;
 
 		qse_long_t nr;

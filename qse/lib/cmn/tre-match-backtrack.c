@@ -168,23 +168,18 @@ typedef struct tre_backtrack_struct
   while (/*CONSTCOND*/0)
 
 #define BT_STACK_POP()							      \
-  do									      \
-    {									      \
-      int i;								      \
-      assert(stack->prev);						      \
-      pos = stack->item.pos;						      \
-      if (type == STR_USER)                                                   \
-        str_source->rewind(pos + pos_add_next, str_source->context);          \
-      str_byte = stack->item.str_byte;					      \
-      BT_STACK_WIDE_OUT;						      \
-      state = stack->item.state;					      \
-      next_c = stack->item.next_c;					      \
-      for (i = 0; i < tnfa->num_tags; i++)				      \
-	tags[i] = stack->item.tags[i];					      \
-      BT_STACK_MBSTATE_OUT;						      \
-      stack = stack->prev;						      \
-    }									      \
-  while (/*CONSTCOND*/0)
+	do { \
+		int i;								      \
+		assert(stack->prev);						      \
+		pos = stack->item.pos;						      \
+		str_byte = stack->item.str_byte;					      \
+		BT_STACK_WIDE_OUT;						      \
+		state = stack->item.state;					      \
+		next_c = stack->item.next_c;					      \
+		for (i = 0; i < tnfa->num_tags; i++) tags[i] = stack->item.tags[i]; \
+		BT_STACK_MBSTATE_OUT;						      \
+		stack = stack->prev;						      \
+	} while (/*CONSTCOND*/0)
 
 #undef MIN
 #define MIN(a, b) ((a) <= (b) ? (a) : (b))
@@ -208,7 +203,6 @@ tre_tnfa_run_backtrack(qse_mmgr_t* mmgr, const tre_tnfa_t *tnfa, const void *str
 	int reg_notbol = eflags & REG_NOTBOL;
 	int reg_noteol = eflags & REG_NOTEOL;
 	int reg_newline = tnfa->cflags & REG_NEWLINE;
-	int str_user_end = 0;
 
 	/* These are used to remember the necessary values of the above
 	   variables to return to the position where the current search
@@ -302,8 +296,6 @@ retry:
 
 	state = NULL;
 	pos = pos_start;
-	if (type == STR_USER)
-		str_source->rewind(pos + pos_add_next, str_source->context);
 	GET_NEXT_WCHAR();
 	pos_start = pos;
 	next_c_start = next_c;
@@ -446,15 +438,11 @@ retry:
 
 			if (len < 0)
 			{
-				if (type == STR_USER)
-					result = str_source->compare((unsigned)so, (unsigned)pos,
-					                             (unsigned)bt_len,
-					                             str_source->context);
 #ifdef TRE_WCHAR
-				else if (type == STR_WIDE)
+				if (type == STR_WIDE)
 					result = qse_wcszcmp((const qse_wchar_t*)string + so, str_wide - 1, (size_t)bt_len);
-#endif /* TRE_WCHAR */
 				else
+#endif /* TRE_WCHAR */
 					result = qse_mbszcmp((const char*)string + so, str_byte - 1, (size_t)bt_len);
 			}
 			else if (len - pos < bt_len)
@@ -508,12 +496,7 @@ retry:
 			/* Check for end of string. */
 			if (len < 0)
 			{
-				if (type == STR_USER)
-				{
-					if (str_user_end)
-						goto backtrack;
-				}
-				else if (next_c == QSE_T('\0'))
+				if (next_c == QSE_T('\0'))
 					goto backtrack;
 			}
 			else
@@ -533,8 +516,8 @@ retry:
 			        trans_i->code_min, trans_i->code_max,
 			        trans_i->code_min, trans_i->code_max,
 			        trans_i->assertions, trans_i->state_id));
-			if (trans_i->code_min <= (tre_cint_t)prev_c && 
-			    trans_i->code_max >= (tre_cint_t)prev_c)
+
+			if (trans_i->code_min <= (tre_cint_t)prev_c && trans_i->code_max >= (tre_cint_t)prev_c)
 			{
 				if (trans_i->assertions
 				        && (CHECK_ASSERTIONS(trans_i->assertions)

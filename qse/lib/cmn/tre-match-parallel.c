@@ -325,12 +325,7 @@ tre_tnfa_run_parallel(qse_mmgr_t* mmgr, const tre_tnfa_t *tnfa, const void *stri
 		/* Check for end of string. */
 		if (len < 0)
 		{
-			if (type == STR_USER)
-			{
-				if (str_user_end)
-					break;
-			}
-			else if (next_c == QSE_T('\0'))
+			if (next_c == QSE_T('\0'))
 				break;
 		}
 		else
@@ -408,28 +403,28 @@ tre_tnfa_run_parallel(qse_mmgr_t* mmgr, const tre_tnfa_t *tnfa, const void *stri
 			for (trans_i = reach_i->state; trans_i->state; trans_i++)
 			{
 				/* Does this transition match the input symbol? */
-				if (trans_i->code_min <= (tre_cint_t)prev_c &&
-				    trans_i->code_max >= (tre_cint_t)prev_c)
+				if (trans_i->code_min <= (tre_cint_t)prev_c && trans_i->code_max >= (tre_cint_t)prev_c)
 				{
-					if (trans_i->assertions
-					        && (CHECK_ASSERTIONS(trans_i->assertions)
-					            || CHECK_CHAR_CLASSES(trans_i, tnfa, eflags)))
+					if (trans_i->assertions && 
+					    (CHECK_ASSERTIONS(trans_i->assertions) || 
+					     CHECK_CHAR_CLASSES(trans_i, tnfa, eflags)))
 					{
 						DPRINT(("assertion failed\n"));
 						continue;
 					}
 
 					/* Compute the tags after this transition. */
-					for (i = 0; i < num_tags; i++)
-						tmp_tags[i] = reach_i->tags[i];
+					for (i = 0; i < num_tags; i++) tmp_tags[i] = reach_i->tags[i];
 					tag_i = trans_i->tags;
 					if (tag_i != NULL)
+					{
 						while (*tag_i >= 0)
 						{
 							if (*tag_i < num_tags)
 								tmp_tags[*tag_i] = pos;
 							tag_i++;
 						}
+					}
 
 					if (reach_pos[trans_i->state_id].pos < pos)
 					{
@@ -442,15 +437,12 @@ tre_tnfa_run_parallel(qse_mmgr_t* mmgr, const tre_tnfa_t *tnfa, const void *stri
 						reach_pos[trans_i->state_id].tags = &reach_next_i->tags;
 
 						if (reach_next_i->state == tnfa->final
-						        && (match_eo == -1
-						            || (num_tags > 0
-						                && reach_next_i->tags[0] <= match_tags[0])))
+						        && (match_eo == -1 || (num_tags > 0 && reach_next_i->tags[0] <= match_tags[0])))
 						{
 							DPRINT(("  found match %p\n", trans_i->state));
 							match_eo = pos;
 							new_match = 1;
-							for (i = 0; i < num_tags; i++)
-								match_tags[i] = reach_next_i->tags[i];
+							for (i = 0; i < num_tags; i++) match_tags[i] = reach_next_i->tags[i];
 						}
 						reach_next_i++;
 

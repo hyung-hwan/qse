@@ -88,14 +88,11 @@ tre_add_tag_left(tre_mem_t mem, tre_ast_node_t *node, int tag_id)
 	DPRINT(("add_tag_left: tag %d\n", tag_id));
 
 	c = tre_mem_alloc(mem, sizeof(*c));
-	if (c == NULL)
-		return REG_ESPACE;
+	if (c == NULL) return REG_ESPACE;
 	c->left = tre_ast_new_literal(mem, TAG, tag_id, -1);
-	if (c->left == NULL)
-		return REG_ESPACE;
+	if (c->left == NULL) return REG_ESPACE;
 	c->right = tre_mem_alloc(mem, sizeof(tre_ast_node_t));
-	if (c->right == NULL)
-		return REG_ESPACE;
+	if (c->right == NULL) return REG_ESPACE;
 
 	c->right->obj = node->obj;
 	c->right->type = node->type;
@@ -151,7 +148,6 @@ typedef enum
 	ADDTAGS_AFTER_CAT_RIGHT,
 	ADDTAGS_SET_SUBMATCH_END
 } tre_addtags_symbol_t;
-
 
 typedef struct
 {
@@ -763,8 +759,7 @@ tre_copy_ast(tre_mem_t mem, tre_stack_t *stack, tre_ast_node_t *ast,
 					first_tag = 0;
 				}
 				*result = tre_ast_new_literal(mem, min, max, pos);
-				if (*result == NULL)
-					status = REG_ESPACE;
+				if (*result == NULL) status = REG_ESPACE;
 
 				if (pos > *max_pos)
 					*max_pos = pos;
@@ -1121,8 +1116,7 @@ tre_set_one(tre_mem_t mem, int position, int code_min, int code_max,
 	tre_pos_and_tags_t *new_set;
 
 	new_set = tre_mem_calloc(mem, sizeof(*new_set) * 2);
-	if (new_set == NULL)
-		return NULL;
+	if (new_set == NULL) return NULL;
 
 	new_set[0].position = position;
 	new_set[0].code_min = code_min;
@@ -1150,8 +1144,7 @@ tre_set_union(tre_mem_t mem, tre_pos_and_tags_t *set1, tre_pos_and_tags_t *set2,
 	for (s1 = 0; set1[s1].position >= 0; s1++);
 	for (s2 = 0; set2[s2].position >= 0; s2++);
 	new_set = tre_mem_calloc(mem, sizeof(*new_set) * (s1 + s2 + 1));
-	if (!new_set )
-		return NULL;
+	if (!new_set) return NULL;
 
 	for (s1 = 0; set1[s1].position >= 0; s1++)
 	{
@@ -1395,15 +1388,10 @@ tre_compute_nfl(tre_mem_t mem, tre_stack_t *stack, tre_ast_node_t *tree)
 					/* Back references: nullable = false, firstpos = {i},
 					   lastpos = {i}. */
 					node->nullable = 0;
-					node->firstpos = tre_set_one(mem, lit->position, 0,
-					                             TRE_CHAR_MAX, 0, NULL, -1);
-					if (!node->firstpos)
-						return REG_ESPACE;
-					node->lastpos = tre_set_one(mem, lit->position, 0,
-					                            TRE_CHAR_MAX, 0, NULL,
-					                            (int)lit->code_max);
-					if (!node->lastpos)
-						return REG_ESPACE;
+					node->firstpos = tre_set_one(mem, lit->position, 0, TRE_CHAR_MAX, 0, NULL, -1);
+					if (!node->firstpos) return REG_ESPACE;
+					node->lastpos = tre_set_one(mem, lit->position, 0, TRE_CHAR_MAX, 0, NULL, (int)lit->code_max);
+					if (!node->lastpos) return REG_ESPACE;
 				}
 				else if (lit->code_min < 0)
 				{
@@ -1422,18 +1410,10 @@ tre_compute_nfl(tre_mem_t mem, tre_stack_t *stack, tre_ast_node_t *tree)
 					/* Literal at position i: nullable = false, firstpos = {i},
 					   lastpos = {i}. */
 					node->nullable = 0;
-					node->firstpos =
-					    tre_set_one(mem, lit->position, (int)lit->code_min,
-					                (int)lit->code_max, 0, NULL, -1);
-					if (!node->firstpos)
-						return REG_ESPACE;
-					node->lastpos = tre_set_one(mem, lit->position,
-					                            (int)lit->code_min,
-					                            (int)lit->code_max,
-					                            lit->u.class, lit->neg_classes,
-					                            -1);
-					if (!node->lastpos)
-						return REG_ESPACE;
+					node->firstpos = tre_set_one(mem, lit->position, (int)lit->code_min, (int)lit->code_max, 0, NULL, -1);
+					if (!node->firstpos) return REG_ESPACE;
+					node->lastpos = tre_set_one(mem, lit->position, (int)lit->code_min, (int)lit->code_max, lit->u.class, lit->neg_classes, -1);
+					if (!node->lastpos) return REG_ESPACE;
 				}
 				break;
 			}
@@ -1628,6 +1608,7 @@ tre_make_trans(qse_mmgr_t* mmgr, tre_pos_and_tags_t *p1, tre_pos_and_tags_t *p2,
 	int i, j, k, l, dup, prev_p2_pos;
 
 	if (transitions != NULL)
+	{
 		while (p1->position >= 0)
 		{
 			p2 = orig_p2;
@@ -1814,7 +1795,9 @@ tre_make_trans(qse_mmgr_t* mmgr, tre_pos_and_tags_t *p1, tre_pos_and_tags_t *p2,
 			}
 			p1++;
 		}
+	}
 	else
+	{
 		/* Compute a maximum limit for the number of transitions leaving
 		   from each state. */
 		while (p1->position >= 0)
@@ -1827,6 +1810,7 @@ tre_make_trans(qse_mmgr_t* mmgr, tre_pos_and_tags_t *p1, tre_pos_and_tags_t *p2,
 			}
 			p1++;
 		}
+	}
 	return REG_OK;
 }
 
