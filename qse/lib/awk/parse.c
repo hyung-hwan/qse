@@ -4351,9 +4351,7 @@ static qse_awk_nde_t* parse_primary_rex  (qse_awk_t* awk, const qse_awk_loc_t* x
 	nde->str.ptr = qse_awk_cstrdup (awk, QSE_STR_CSTR(awk->tok.name));
 	if (nde->str.ptr == QSE_NULL) goto oops;
 
-	nde->code = qse_awk_buildrex (
-		awk, QSE_STR_PTR(awk->tok.name), QSE_STR_LEN(awk->tok.name), &errnum);
-	if (nde->code == QSE_NULL)
+	if (qse_awk_buildrex (awk, QSE_STR_PTR(awk->tok.name), QSE_STR_LEN(awk->tok.name), &errnum, &nde->code[0], &nde->code[1]) <= -1)
 	{
 		SETERR_LOC (awk, errnum, xloc);
 		goto oops;
@@ -4365,7 +4363,7 @@ static qse_awk_nde_t* parse_primary_rex  (qse_awk_t* awk, const qse_awk_loc_t* x
 
 oops:
 	QSE_ASSERT (nde != QSE_NULL);
-	if (nde->code) qse_awk_freerex (awk, nde->code);
+	if (nde->code[0]) qse_awk_freerex (awk, nde->code[0], nde->code[1]);
 	if (nde->str.ptr) QSE_AWK_FREE (awk, nde->str.ptr);
 	QSE_AWK_FREE (awk, nde);
 	return QSE_NULL;

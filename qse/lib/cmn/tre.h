@@ -177,7 +177,6 @@ typedef qse_cint_t tre_cint_t;
 #define regex_t qse_tre_t
 #define regmatch_t qse_tre_match_t
 #define reg_errcode_t qse_tre_errnum_t
-#define tre_str_source qse_tre_strsrc_t
 
 
 #define REG_OK       QSE_TRE_ENOERR
@@ -278,7 +277,7 @@ typedef qse_pma_t* tre_mem_t;
 typedef qse_ctype_t tre_ctype_t;
 #define tre_isctype(c,t) QSE_ISCTYPE(c,t)
 
-typedef enum { STR_WIDE, STR_BYTE, STR_MBS, STR_USER } tre_str_type_t;
+typedef enum { STR_WIDE, STR_BYTE, STR_MBS } tre_str_type_t;
 
 /* Returns number of bytes to add to (char *)ptr to make it
    properly aligned for the type. */
@@ -305,6 +304,9 @@ typedef struct tnfa_transition tre_tnfa_transition_t;
 struct tnfa_transition
 {
 	/* Range of accepted characters. */
+	/* QSE indicate that code_min .. code_max is not yet negated for ^ in a bracket */
+	int negate_range;
+	/* END QSE */
 	tre_cint_t code_min;
 	tre_cint_t code_max;
 	/* Pointer to the destination state. */

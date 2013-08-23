@@ -60,11 +60,9 @@ tre_ast_new_node(tre_mem_t mem, tre_ast_type_t type, size_t size)
 	tre_ast_node_t *node;
 
 	node = tre_mem_calloc(mem, sizeof(*node));
-	if (!node)
-		return NULL;
+	if (!node) return NULL;
 	node->obj = tre_mem_calloc(mem, size);
-	if (!node->obj)
-		return NULL;
+	if (!node->obj) return NULL;
 	node->type = type;
 	node->nullable = -1;
 	node->submatch_id = -1;
@@ -72,15 +70,13 @@ tre_ast_new_node(tre_mem_t mem, tre_ast_type_t type, size_t size)
 	return node;
 }
 
-tre_ast_node_t *
-tre_ast_new_literal(tre_mem_t mem, int code_min, int code_max, int position)
+tre_ast_node_t * tre_ast_new_literal(tre_mem_t mem, int code_min, int code_max, int position)
 {
 	tre_ast_node_t *node;
 	tre_literal_t *lit;
 
 	node = tre_ast_new_node(mem, LITERAL, sizeof(tre_literal_t));
-	if (!node)
-		return NULL;
+	if (!node) return NULL;
 	lit = node->obj;
 	lit->code_min = code_min;
 	lit->code_max = code_max;
@@ -97,8 +93,7 @@ tre_ast_new_iter(tre_mem_t mem, tre_ast_node_t *arg, int min, int max,
 	tre_iteration_t *iter;
 
 	node = tre_ast_new_node(mem, ITERATION, sizeof(tre_iteration_t));
-	if (!node)
-		return NULL;
+	if (!node) return NULL;
 	iter = node->obj;
 	iter->arg = arg;
 	iter->min = min;
@@ -115,8 +110,7 @@ tre_ast_new_union(tre_mem_t mem, tre_ast_node_t *left, tre_ast_node_t *right)
 	tre_ast_node_t *node;
 
 	node = tre_ast_new_node(mem, UNION, sizeof(tre_union_t));
-	if (node == NULL)
-		return NULL;
+	if (node == NULL) return NULL;
 	((tre_union_t *)node->obj)->left = left;
 	((tre_union_t *)node->obj)->right = right;
 	node->num_submatches = left->num_submatches + right->num_submatches;
@@ -131,8 +125,7 @@ tre_ast_new_catenation(tre_mem_t mem, tre_ast_node_t *left,
 	tre_ast_node_t *node;
 
 	node = tre_ast_new_node(mem, CATENATION, sizeof(tre_catenation_t));
-	if (node == NULL)
-		return NULL;
+	if (node == NULL) return NULL;
 	((tre_catenation_t *)node->obj)->left = left;
 	((tre_catenation_t *)node->obj)->right = right;
 	node->num_submatches = left->num_submatches + right->num_submatches;

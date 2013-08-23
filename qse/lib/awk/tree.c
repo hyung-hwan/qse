@@ -1305,7 +1305,8 @@ void qse_awk_clrpt (qse_awk_t* awk, qse_awk_nde_t* tree)
 
 			case QSE_AWK_NDE_REX:
 			{
-				qse_awk_freerex (awk, ((qse_awk_nde_rex_t*)p)->code);
+				qse_awk_nde_rex_t* rex = (qse_awk_nde_rex_t*)p;
+				qse_awk_freerex (awk, rex->code[0], rex->code[1]);
 				QSE_AWK_FREE (awk, ((qse_awk_nde_rex_t*)p)->str.ptr);
 				QSE_AWK_FREE (awk, p);
 				break;
@@ -1318,8 +1319,7 @@ void qse_awk_clrpt (qse_awk_t* awk, qse_awk_nde_t* tree)
 			{
 				qse_awk_nde_var_t* px = (qse_awk_nde_var_t*)p;
 				QSE_ASSERT (px->idx == QSE_NULL);
-				if (px->id.name.ptr != QSE_NULL)
-					QSE_AWK_FREE (awk, px->id.name.ptr);
+				if (px->id.name.ptr) QSE_AWK_FREE (awk, px->id.name.ptr);
 				QSE_AWK_FREE (awk, p);
 				break;
 			}

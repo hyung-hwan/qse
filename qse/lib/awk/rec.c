@@ -122,13 +122,8 @@ static int split_record (qse_awk_rtx_t* rtx)
 	}
 	else 
 	{
-		qse_awk_rtx_valtostr_out_t out;
-
-		out.type = QSE_AWK_RTX_VALTOSTR_CPLDUP;
-		if (qse_awk_rtx_valtostr (rtx, fs, &out) <= -1) return -1;
-		
-		fs_ptr = out.u.cpldup.ptr;
-		fs_len = out.u.cpldup.len;
+		fs_ptr = qse_awk_rtx_valtostrdup (rtx, fs, &fs_len);
+		if (fs_ptr == QSE_NULL) return -1;
 		fs_free = fs_ptr;
 	}
 
@@ -178,7 +173,7 @@ static int split_record (qse_awk_rtx_t* rtx)
 					QSE_STR_PTR(&rtx->inrec.line),
 					QSE_STR_LEN(&rtx->inrec.line),
 					p, len, 
-					rtx->gbl.fs, &tok, &errnum
+					rtx->gbl.fs[rtx->gbl.ignorecase], &tok, &errnum
 				); 
 				if (p == QSE_NULL && errnum != QSE_AWK_ENOERR)
 				{
@@ -268,7 +263,7 @@ static int split_record (qse_awk_rtx_t* rtx)
 					QSE_STR_PTR(&rtx->inrec.line),
 					QSE_STR_LEN(&rtx->inrec.line),
 					p, len,
-					rtx->gbl.fs, &tok, &errnum
+					rtx->gbl.fs[rtx->gbl.ignorecase], &tok, &errnum
 				); 
 				if (p == QSE_NULL && errnum != QSE_AWK_ENOERR)
 				{

@@ -110,21 +110,21 @@ typedef struct qse_awk_loc_t qse_awk_loc_t;
  * Three common fields are:
  * - type - type of a value from #qse_awk_val_type_t
  * - ref - reference count
- * - nstr - numeric string marker
+ * - stat - static value 
+ * - nstr - numeric string marker, 1 -> long, 2 -> real
  */
-#if QSE_SIZEOF_INT == 2
-#	define QSE_AWK_VAL_HDR \
-		unsigned int type: 3; \
-		unsigned int ref: 10; \
-		unsigned int stat: 1; \
-		unsigned int nstr: 2
-#else
-#	define QSE_AWK_VAL_HDR \
-		unsigned int type: 3; \
-		unsigned int ref: 26; \
-		unsigned int stat: 1; \
-		unsigned int nstr: 2
-#endif
+/*
+#define QSE_AWK_VAL_HDR \
+	unsigned int type: 3; \
+	unsigned int ref: 26; \
+	unsigned int stat: 1; \
+	unsigned int nstr: 2; 
+*/
+#define QSE_AWK_VAL_HDR \
+	qse_uintptr_t type: 3; \
+	qse_uintptr_t ref: ((QSE_SIZEOF_UINTPTR_T * 8) - 6); \
+	qse_uintptr_t stat: 1; \
+	qse_uintptr_t nstr: 2;
 
 /**
  * The qse_awk_val_t type is an abstract value type. A value commonly contains:
@@ -191,7 +191,7 @@ struct qse_awk_val_rex_t
 {
 	QSE_AWK_VAL_HDR;
 	qse_xstr_t  str;
-	void*       code;
+	void*       code[2];
 };
 typedef struct qse_awk_val_rex_t  qse_awk_val_rex_t;
 
@@ -2388,7 +2388,7 @@ QSE_EXPORT qse_awk_val_t* qse_awk_rtx_makenstrvalwithcstr (
 QSE_EXPORT qse_awk_val_t* qse_awk_rtx_makerexval (
 	qse_awk_rtx_t*    rtx,
 	const qse_cstr_t* str,
-	void*             code
+	void*             code[2]
 );
 
 /**
