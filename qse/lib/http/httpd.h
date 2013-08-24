@@ -80,6 +80,17 @@ struct qse_httpd_t
 	void* mux;
 };
 
+/* qse_httpd_real_task_t is a private type to hide some private fields
+ * from being exposed by qse_httpd_task_t. 
+ */
+typedef struct qse_httpd_real_task_t qse_httpd_real_task_t;
+
+struct qse_httpd_real_task_t
+{
+	qse_httpd_task_t core;
+	qse_httpd_real_task_t* prev;
+	qse_httpd_real_task_t* next;
+};
 
 #define MAX_SEND_SIZE 4096
 
@@ -119,19 +130,19 @@ void qse_httpd_fini (
 qse_httpd_task_t* qse_httpd_entask_err (
 	qse_httpd_t* httpd,
 	qse_httpd_client_t* client,
-     qse_httpd_task_t* pred,
+	qse_httpd_task_t* pred,
 	int code,
 	qse_http_method_t method,
-     const qse_http_version_t* version,
+	const qse_http_version_t* version,
 	int keepalive
 );
 
 qse_httpd_task_t* qse_httpd_entask_nomod (
 	qse_httpd_t* httpd,
 	qse_httpd_client_t* client,
-     qse_httpd_task_t* pred,
-     qse_http_method_t method,
-     const qse_http_version_t* version,
+	qse_httpd_task_t* pred,
+	qse_http_method_t method,
+	const qse_http_version_t* version,
 	int keepalive
 );
 

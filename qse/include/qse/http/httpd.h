@@ -341,20 +341,15 @@ struct qse_httpd_task_trigger_t
 
 struct qse_httpd_task_t
 {
-	/* == PUBLIC  == */
-
 	/* you must not call another entask functions from within 
 	 * an initailizer. you can call entask functions from within 
 	 * a finalizer and a main function. */
-	qse_httpd_task_init_t    init;
-	qse_httpd_task_fini_t    fini;
-	qse_httpd_task_main_t    main;
-	qse_httpd_task_trigger_t trigger[QSE_HTTPD_TASK_TRIGGER_MAX];
-	void*                    ctx;
 
-	/* == PRIVATE  == */
-	qse_httpd_task_t*     prev;
-	qse_httpd_task_t*     next;
+	qse_httpd_task_init_t    init;  /**< [IN] initializer */
+	qse_httpd_task_fini_t    fini;  /**< [IN] finalizer */
+	qse_httpd_task_main_t    main;  /**< [IN] main task function */
+	qse_httpd_task_trigger_t trigger[QSE_HTTPD_TASK_TRIGGER_MAX];
+	void*                    ctx;   /**< [IN OUT] user-defined data */
 };
 
 enum qse_httpd_mate_type_t 
@@ -721,7 +716,10 @@ QSE_EXPORT const qse_mchar_t* qse_httpd_fmtgmtimetobb (
 	int                idx
 );
 
-#define qse_httpd_gettaskxtn(httpd,task) ((void*)(task+1))
+QSE_EXPORT void* qse_httpd_gettaskxtn (
+	qse_httpd_t*            httpd,
+	qse_httpd_task_t*       task
+);
 
 QSE_EXPORT qse_httpd_task_t* qse_httpd_entask (
 	qse_httpd_t*            httpd,
