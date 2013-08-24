@@ -252,13 +252,14 @@ qse_mchar_t* qse_httpd_strntombsdup (qse_httpd_t* httpd, const qse_char_t* str, 
 
 /* --------------------------------------------------- */
 
-static qse_httpd_task_t* enqueue_task (
+static qse_httpd_real_task_t* enqueue_task (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, 
 	qse_httpd_task_t* pred, const qse_httpd_task_t* task,
 	qse_size_t xtnsize)
 {
-	qse_httpd_task_t* new_task;
-
+	qse_httpd_real_task_t* new_task;
+	qse_httpd_real_task_t* real_pred;
+	
 /* TODO: limit check 
 	if (client->task.count >= httpd->limit.client_task_queue)
 	{
@@ -266,17 +267,17 @@ static qse_httpd_task_t* enqueue_task (
 		return -1;
 	}
 */
-	new_task = (qse_httpd_task_t*)
+	new_task = (qse_httpd_real_task_t*)
 		qse_httpd_allocmem (httpd, QSE_SIZEOF(*new_task) + xtnsize);
 	if (new_task == QSE_NULL) return QSE_NULL;
 
 	QSE_MEMSET (new_task, 0, QSE_SIZEOF(*new_task) + xtnsize);
-	*new_task = *task;
+	new_task->core = *task;
 
-	if (new_task->init)
+	if (new_task->core.init)
 	{
 		httpd->errnum = QSE_HTTPD_ENOERR;
-		if (new_task->init (httpd, client, new_task) <= -1)
+		if (new_task->core.init (httpd, client, (qse_httpd_task_t*)new_task) <= -1)
 		{
 			if (httpd->errnum == QSE_HTTPD_ENOERR) 
 				httpd->errnum = QSE_HTTPD_ETASK;
@@ -285,25 +286,26 @@ static qse_httpd_task_t* enqueue_task (
 		}
 	}
 
+	real_pred = (qse_httpd_real_task_t*)pred;
 	if (pred)
 	{
-		new_task->next = pred->next;
-		new_task->prev = pred;
+		new_task->next = real_pred->next;
+		new_task->prev = real_pred;
 
-		if (pred->next) pred->next->prev = new_task;
-		else client->task.tail = new_task;
-		pred->next = new_task;
+		if (real_pred->next) real_pred->next->prev = new_task;
+		else client->task.tail = (qse_httpd_task_t*)new_task;
+		real_pred->next = new_task;
 	}
 	else
 	{
 		new_task->next = QSE_NULL;
-		new_task->prev = client->task.tail;
+		new_task->prev = (qse_httpd_real_task_t*)client->task.tail;
 
 		if (client->task.tail) 
-			client->task.tail->next = new_task;
+			((qse_httpd_real_task_t*)client->task.tail)->next = new_task;
 		else 
-			client->task.head = new_task;
-		client->task.tail = new_task;
+			client->task.head = (qse_httpd_task_t*)new_task;
+		client->task.tail = (qse_httpd_task_t*)new_task;
 	}
 	client->task.count++;
 
@@ -313,7 +315,7 @@ static qse_httpd_task_t* enqueue_task (
 static QSE_INLINE int dequeue_task (
 	qse_httpd_t* httpd, qse_httpd_client_t* client)
 {
-	qse_httpd_task_t* task;
+	qse_httpd_real_task_t* task;
 	qse_size_t i;
 
 	if (client->task.count <= 0) return -1;
@@ -321,11 +323,11 @@ static QSE_INLINE int dequeue_task (
 	task = client->task.head;
 
 	/* clear task triggers from mux if they are registered */
-	for (i = 0; i < QSE_COUNTOF(task->trigger); i++)
+	for (i = 0; i < QSE_COUNTOF(task->core.trigger); i++)
 	{
 		if (client->status & CLIENT_TASK_TRIGGER_IN_MUX(i))
 		{
-			httpd->opt.scb.mux.delhnd (httpd, httpd->mux, task->trigger[i].handle);
+			httpd->opt.scb.mux.delhnd (httpd, httpd->mux, task->core.trigger[i].handle);
 			client->status &= ~CLIENT_TASK_TRIGGER_IN_MUX(i);
 		}
 	}
@@ -340,11 +342,11 @@ static QSE_INLINE int dequeue_task (
 	else
 	{
 		task->next->prev = QSE_NULL;
-		client->task.head = task->next;
+		client->task.head = (qse_httpd_task_t*)task->next;
 	}
 	client->task.count--;
 
-	if (task->fini) task->fini (httpd, client, task);
+	if (task->core.fini) task->core.fini (httpd, client, task);
 	qse_httpd_freemem (httpd, task);
 
 	return 0;
@@ -1189,12 +1191,17 @@ static void purge_idle_clients (qse_httpd_t* httpd)
 /* TODO: */
 }
 
+void* qse_httpd_gettaskxtn (qse_httpd_t* httpd, qse_httpd_task_t* task)
+{
+	return (void*)((qse_httpd_real_task_t*)task + 1);
+}
+
 qse_httpd_task_t* qse_httpd_entask (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, 
 	qse_httpd_task_t* pred, const qse_httpd_task_t* task,
 	qse_size_t xtnsize)
 {
-	qse_httpd_task_t* new_task;
+	qse_httpd_real_task_t* new_task;
 
 	if (client->status & CLIENT_BAD) return QSE_NULL;
 
@@ -1227,7 +1234,7 @@ qse_printf (QSE_T("MUX ADDHND CLIENT RW(ENTASK) %d\n"), client->handle.i);
 		client->status |= CLIENT_HANDLE_IN_MUX; /* READ | WRITE */
 	}
 
-	return new_task;
+	return (qse_httpd_task_t*)new_task;
 }
 
 static int dispatch_mux (
