@@ -11,6 +11,7 @@ noinst_HEADERS = \
 	cp950.h \
 	fs.h \
 	mem.h \
+	str-subst.h \
 	syscall.h \
 	syserr.h \
 	tre.h \
