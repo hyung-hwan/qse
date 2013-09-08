@@ -24,7 +24,7 @@
 #include <qse/types.h>
 #include <qse/macros.h>
 
-/** @file
+/** \file
  * This file provides various functions, types, macros for string manipulation.
  *
  * The #qse_cstr_t type and the #qse_xstr_t defined in <qse/types.h> help you
@@ -126,10 +126,10 @@ struct qse_wcs_t
 };
 
 /**
- * The qse_mbsxsubst_subst_t type defines a callback function
- * for qse_mbsxsubst() to substitue a new value for an identifier @a ident.
+ * The qse_mbssubst_t type defines a callback function for qse_mbsxsubst()
+ * and qse_mbsxnsubst() to substitue a new value for an identifier \a ident.
  */
-typedef qse_mchar_t* (*qse_mbsxsubst_subst_t) (
+typedef qse_mchar_t* (*qse_mbssubst_t) (
 	qse_mchar_t*       buf, 
 	qse_size_t         bsz, 
 	const qse_mcstr_t* ident, 
@@ -137,10 +137,10 @@ typedef qse_mchar_t* (*qse_mbsxsubst_subst_t) (
 );
 
 /**
- * The qse_wcsxsubst_subst_t type defines a callback function
- * for qse_wcsxsubst() to substitue a new value for an identifier @a ident.
+ * The qse_wcssubst_t type defines a callback function for qse_wcsxsubst()
+ * and qse_wcsxnsubst() to substitue a new value for an identifier \a ident.
  */
-typedef qse_wchar_t* (*qse_wcsxsubst_subst_t) (
+typedef qse_wchar_t* (*qse_wcssubst_t) (
 	qse_wchar_t*       buf, 
 	qse_size_t         bsz, 
 	const qse_wcstr_t* ident, 
@@ -148,9 +148,9 @@ typedef qse_wchar_t* (*qse_wcsxsubst_subst_t) (
 );
 
 #if defined(QSE_CHAR_IS_MCHAR)
-#	define qse_strxsubst_subst_t qse_mbsxsubst_subst_t
+#	define qse_strsubst_t qse_mbssubst_t
 #else
-#	define qse_strxsubst_subst_t qse_wcsxsubst_subst_t
+#	define qse_strsubst_t qse_wcssubst_t
 #endif
 
 /* int qse_chartonum (qse_char_t c, int base) */
@@ -500,8 +500,8 @@ QSE_EXPORT qse_size_t qse_wcsput (
 );
 
 /**
- * The qse_mbsxput() function copies the string @a str into the buffer @a buf
- * of the size @a bsz. Unlike qse_strxcpy(), it does not null-terminate the
+ * The qse_mbsxput() function copies the string \a str into the buffer \a buf
+ * of the size \a bsz. Unlike qse_strxcpy(), it does not null-terminate the
  * buffer.
  */
 QSE_EXPORT qse_size_t qse_mbsxput (
@@ -511,8 +511,8 @@ QSE_EXPORT qse_size_t qse_mbsxput (
 );
 
 /**
- * The qse_wcsxput() function copies the string @a str into the buffer @a buf
- * of the size @a bsz. Unlike qse_strxcpy(), it does not null-terminate the
+ * The qse_wcsxput() function copies the string \a str into the buffer \a buf
+ * of the size \a bsz. Unlike qse_strxcpy(), it does not null-terminate the
  * buffer.
  */
 QSE_EXPORT qse_size_t qse_wcsxput (
@@ -550,12 +550,12 @@ QSE_EXPORT qse_size_t qse_wcsxnput (
  * The position specifier is a number enclosed in ${ and }.
  * When ${ is preceeded by a backslash, it is treated literally. 
  * See the example below:
- * @code
+ * \code
  *  qse_char_t buf[256]
  *  qse_char_t* colors[] = { QSE_MT("blue"), QSE_MT("green"), QSE_MT("red") };
  *  qse_mbsfcpy(buf, QSE_MT("RGB: ${2}, ${1}, ${0}"), colors);
- * @endcode
- * @sa qse_mbsfncpy, qse_mbsxfcpy, qse_mbsxfncpy
+ * \endcode
+ * \sa qse_mbsfncpy, qse_mbsxfcpy, qse_mbsxfncpy
  */
 QSE_EXPORT qse_size_t qse_mbsfcpy (
 	qse_mchar_t*       buf,
@@ -568,12 +568,12 @@ QSE_EXPORT qse_size_t qse_mbsfcpy (
  * The position specifier is a number enclosed in ${ and }.
  * When ${ is preceeded by a backslash, it is treated literally. 
  * See the example below:
- * @code
+ * \code
  *  qse_char_t buf[256]
  *  qse_char_t* colors[] = { QSE_WT("blue"), QSE_WT("green"), QSE_WT("red") };
  *  qse_wcsfcpy(buf, QSE_WT("RGB: ${2}, ${1}, ${0}"), colors);
- * @endcode
- * @sa qse_wcsfncpy, qse_wcsxfcpy, qse_wcsxfncpy
+ * \endcode
+ * \sa qse_wcsfncpy, qse_wcsxfcpy, qse_wcsxfncpy
  */
 QSE_EXPORT qse_size_t qse_wcsfcpy (
 	qse_wchar_t*       buf,
@@ -583,9 +583,9 @@ QSE_EXPORT qse_size_t qse_wcsfcpy (
 
 /**
  * The qse_mbsfncpy() function formats a string by position.
- * It differs from qse_mbsfcpy() in that @a str is an array of the 
+ * It differs from qse_mbsfcpy() in that \a str is an array of the 
  * #qse_mcstr_t type.
- * @sa qse_mbsfcpy, qse_mbsxfcpy, qse_mbsxfncpy
+ * \sa qse_mbsfcpy, qse_mbsxfcpy, qse_mbsxfncpy
  */
 QSE_EXPORT qse_size_t qse_mbsfncpy (
 	qse_mchar_t*       buf,
@@ -595,9 +595,9 @@ QSE_EXPORT qse_size_t qse_mbsfncpy (
 
 /**
  * The qse_wcsfncpy() function formats a string by position.
- * It differs from qse_wcsfcpy() in that @a str is an array of the 
+ * It differs from qse_wcsfcpy() in that \a str is an array of the 
  * #qse_wcstr_t type.
- * @sa qse_wcsfcpy, qse_wcsxfcpy, qse_wcsxfncpy
+ * \sa qse_wcsfcpy, qse_wcsxfcpy, qse_wcsxfncpy
  */
 QSE_EXPORT qse_size_t qse_wcsfncpy (
 	qse_wchar_t*       buf,
@@ -607,14 +607,14 @@ QSE_EXPORT qse_size_t qse_wcsfncpy (
 
 /**
  * The qse_mbsxfcpy() function formats a string by position.
- * It differs from qse_strfcpy() in that @a buf is length-bounded of @a bsz
+ * It differs from qse_strfcpy() in that \a buf is length-bounded of \a bsz
  * characters.
- * @code
+ * \code
  *  qse_mchar_t buf[256]
  *  qse_mchar_t* colors[] = { QSE_MT("blue"), QSE_MT("green"), QSE_MT("red") };
  *  qse_mbsxfcpy(buf, QSE_COUNTOF(buf), QSE_MT("RGB: ${2}, ${1}, ${0}"), colors);
- * @endcode
- * @sa qse_mbsfcpy, qse_mbsfncpy, qse_mbsxfncpy
+ * \endcode
+ * \sa qse_mbsfcpy, qse_mbsfncpy, qse_mbsxfncpy
  */
 QSE_EXPORT qse_size_t qse_mbsxfcpy (
 	qse_mchar_t*       buf,
@@ -625,14 +625,14 @@ QSE_EXPORT qse_size_t qse_mbsxfcpy (
 
 /**
  * The qse_wcsxfcpy() function formats a string by position.
- * It differs from qse_wcsfcpy() in that @a buf is length-bounded of @a bsz
+ * It differs from qse_wcsfcpy() in that \a buf is length-bounded of \a bsz
  * characters.
- * @code
+ * \code
  *  qse_char_t buf[256]
  *  qse_char_t* colors[] = { QSE_WT("blue"), QSE_WT("green"), QSE_WT("red") };
  *  qse_wcsxfcpy(buf, QSE_COUNTOF(buf), QSE_WT("RGB: ${2}, ${1}, ${0}"), colors);
- * @endcode
- * @sa qse_wcsfcpy, qse_wcsfncpy, qse_wcsxfncpy
+ * \endcode
+ * \sa qse_wcsfcpy, qse_wcsfncpy, qse_wcsxfncpy
  */
 QSE_EXPORT qse_size_t qse_wcsxfcpy (
 	qse_wchar_t*       buf,
@@ -643,9 +643,9 @@ QSE_EXPORT qse_size_t qse_wcsxfcpy (
 
 /**
  * The qse_mbsxfncpy() function formats a string by position.
- * It differs from qse_strfcpy() in that @a buf is length-bounded of @a bsz
- * characters and @a str is an array of the #qse_mcstr_t type.
- * @sa qse_mbsfcpy, qse_mbsfncpy, qse_mbsxfcpy
+ * It differs from qse_strfcpy() in that \a buf is length-bounded of \a bsz
+ * characters and \a str is an array of the #qse_mcstr_t type.
+ * \sa qse_mbsfcpy, qse_mbsfncpy, qse_mbsxfcpy
  */
 QSE_EXPORT qse_size_t qse_mbsxfncpy (
 	qse_mchar_t*       buf,
@@ -656,9 +656,9 @@ QSE_EXPORT qse_size_t qse_mbsxfncpy (
 
 /**
  * The qse_wcsxfncpy() function formats a string by position.
- * It differs from qse_strfcpy() in that @a buf is length-bounded of @a bsz
- * characters and @a str is an array of the #qse_wcstr_t type.
- * @sa qse_wcsfcpy, qse_wcsfncpy, qse_wcsxfcpy
+ * It differs from qse_strfcpy() in that \a buf is length-bounded of \a bsz
+ * characters and \a str is an array of the #qse_wcstr_t type.
+ * \sa qse_wcsfcpy, qse_wcsfncpy, qse_wcsxfcpy
  */
 QSE_EXPORT qse_size_t qse_wcsxfncpy (
 	qse_wchar_t*       buf,
@@ -680,10 +680,10 @@ QSE_EXPORT qse_size_t qse_wcsxfncpy (
 #endif
 
 /**
- * The qse_mbsxsubst() function expands @a fmt into a buffer @a buf of the size
- * @a bsz by substituting new values for ${} segments within it. The actual
- * substitution is made by invoking the callback function @a subst. 
- * @code
+ * The qse_mbsxsubst() function expands \a fmt into a buffer \a buf of the size
+ * \a bsz by substituting new values for ${} segments within it. The actual
+ * substitution is made by invoking the callback function \a subst. 
+ * \code
  * qse_mchar_t* subst (qse_mchar_t* buf, qse_size_t bsz, const qse_mcstr_t* ident, void* ctx)
  * { 
  *   if (qse_mbsxcmp (ident->ptr, ident->len, QSE_MT("USER")) == 0)
@@ -695,21 +695,30 @@ QSE_EXPORT qse_size_t qse_wcsxfncpy (
  * 
  * qse_mchar_t buf[25];
  * qse_mbsxsubst (buf, i, QSE_MT("user=${USER},group=${GROUP}"), subst, QSE_NULL);
- * @endcode
+ * \endcode
  */
 QSE_EXPORT qse_size_t qse_mbsxsubst (
 	qse_mchar_t*           buf,
 	qse_size_t             bsz,
 	const qse_mchar_t*     fmt,
-	qse_mbsxsubst_subst_t  subst,
+	qse_mbssubst_t         subst,
+	void*                  ctx
+);
+
+QSE_EXPORT qse_size_t qse_mbsxnsubst (
+	qse_mchar_t*           buf,
+	qse_size_t             bsz,
+	const qse_mchar_t*     fmt,
+	qse_size_t             fsz,
+	qse_mbssubst_t         subst,
 	void*                  ctx
 );
 
 /**
- * The qse_wcsxsubst() function expands @a fmt into a buffer @a buf of the size
- * @a bsz by substituting new values for ${} segments within it. The actual
- * substitution is made by invoking the callback function @a subst. 
- * @code
+ * The qse_wcsxsubst() function expands \a fmt into a buffer \a buf of the size
+ * \a bsz by substituting new values for ${} segments within it. The actual
+ * substitution is made by invoking the callback function \a subst. 
+ * \code
  * qse_wchar_t* subst (qse_wchar_t* buf, qse_size_t bsz, const qse_wcstr_t* ident, void* ctx)
  * { 
  *   if (qse_wcsxcmp (ident->ptr, ident->len, QSE_WT("USER")) == 0)
@@ -721,20 +730,31 @@ QSE_EXPORT qse_size_t qse_mbsxsubst (
  * 
  * qse_wchar_t buf[25];
  * qse_wcsxsubst (buf, i, QSE_WT("user=${USER},group=${GROUP}"), subst, QSE_NULL);
- * @endcode
+ * \endcode
  */
 QSE_EXPORT qse_size_t qse_wcsxsubst (
 	qse_wchar_t*           buf,
 	qse_size_t             bsz,
 	const qse_wchar_t*     fmt,
-	qse_wcsxsubst_subst_t  subst,
+	qse_wcssubst_t         subst,
+	void*                  ctx
+);
+
+QSE_EXPORT qse_size_t qse_wcsxnsubst (
+	qse_wchar_t*           buf,
+	qse_size_t             bsz,
+	const qse_wchar_t*     fmt,
+	qse_size_t             fsz,
+	qse_wcssubst_t         subst,
 	void*                  ctx
 );
 
 #if defined(QSE_CHAR_IS_MCHAR)
 #	define qse_strxsubst(buf,bsz,fmt,subst,ctx) qse_mbsxsubst(buf,bsz,fmt,subst,ctx)
+#	define qse_strxnsubst(buf,bsz,fmt,fsz,subst,ctx) qse_mbsxnsubst(buf,bsz,fmt,fsz,subst,ctx)
 #else
 #	define qse_strxsubst(buf,bsz,fmt,subst,ctx) qse_wcsxsubst(buf,bsz,fmt,subst,ctx)
+#	define qse_strxnsubst(buf,bsz,fmt,fsz,subst,ctx) qse_wcsxnsubst(buf,bsz,fmt,fsz,subst,ctx)
 #endif
 
 QSE_EXPORT qse_size_t qse_mbscat (
@@ -880,11 +900,11 @@ QSE_EXPORT int qse_wcsxcasecmp (
  * second string.
  *
  * The following code snippet compares "foo" and "FoO" case-insenstively.
- * @code
+ * \code
  * qse_mbsxncasecmp (QSE_MT("foo"), 3, QSE_MT("FoO"), 3);
- * @endcode
+ * \endcode
  *
- * @return 0 if two strings are equal, 
+ * \return 0 if two strings are equal, 
  *         a positive number if the first string is larger, 
  *         -1 if the second string is larger.
  *
@@ -907,11 +927,11 @@ QSE_EXPORT int qse_mbsxncasecmp (
  * second string.
  *
  * The following code snippet compares "foo" and "FoO" case-insenstively.
- * @code
+ * \code
  * qse_wcsxncasecmp (QSE_WT("foo"), 3, QSE_WT("FoO"), 3);
- * @endcode
+ * \endcode
  *
- * @return 0 if two strings are equal, 
+ * \return 0 if two strings are equal, 
  *         a positive number if the first string is larger, 
  *         -1 if the second string is larger.
  *
@@ -1074,9 +1094,9 @@ QSE_EXPORT qse_wchar_t* qse_wcstradup (
 #endif
 
 /**
- * The qse_mbsstr() function searchs a string @a str for the first occurrence 
- * of a substring @a sub.
- * @return pointer to the first occurrence in @a str if @a sub is found, 
+ * The qse_mbsstr() function searchs a string \a str for the first occurrence 
+ * of a substring \a sub.
+ * \return pointer to the first occurrence in \a str if \a sub is found, 
  *         #QSE_NULL if not.
  */
 QSE_EXPORT qse_mchar_t* qse_mbsstr (
@@ -1085,9 +1105,9 @@ QSE_EXPORT qse_mchar_t* qse_mbsstr (
 );
 
 /**
- * The qse_wcsstr() function searchs a string @a str for the first occurrence 
- * of a substring @a sub.
- * @return pointer to the first occurrence in @a str if @a sub is found, 
+ * The qse_wcsstr() function searchs a string \a str for the first occurrence 
+ * of a substring \a sub.
+ * \return pointer to the first occurrence in \a str if \a sub is found, 
  *         #QSE_NULL if not.
  */
 QSE_EXPORT qse_wchar_t* qse_wcsstr (
@@ -1158,9 +1178,9 @@ QSE_EXPORT qse_wchar_t* qse_wcsxncasestr (
 );
 
 /**
- * The qse_mbsrstr() function searchs a string @a str for the last occurrence 
- * of a substring @a sub.
- * @return pointer to the last occurrence in @a str if @a sub is found, 
+ * The qse_mbsrstr() function searchs a string \a str for the last occurrence 
+ * of a substring \a sub.
+ * \return pointer to the last occurrence in \a str if \a sub is found, 
  *         #QSE_NULL if not.
  */
 QSE_EXPORT qse_mchar_t* qse_mbsrstr (
@@ -1169,9 +1189,9 @@ QSE_EXPORT qse_mchar_t* qse_mbsrstr (
 );
 
 /**
- * The qse_wcsrstr() function searchs a string @a str for the last occurrence 
- * of a substring @a sub.
- * @return pointer to the last occurrence in @a str if @a sub is found, 
+ * The qse_wcsrstr() function searchs a string \a str for the last occurrence 
+ * of a substring \a sub.
+ * \return pointer to the last occurrence in \a str if \a sub is found, 
  *         #QSE_NULL if not.
  */
 QSE_EXPORT qse_wchar_t* qse_wcsrstr (
@@ -1403,7 +1423,7 @@ QSE_EXPORT qse_wchar_t* qse_wcsxrchr (
 
 /**
  * The qse_mbsbeg() function checks if a string begins with a substring.
- * @return pointer to the beginning of a matching beginning, 
+ * \return pointer to the beginning of a matching beginning, 
  *         #SE_NULL if no match is found.
  */
 QSE_EXPORT qse_mchar_t* qse_mbsbeg (
@@ -1413,7 +1433,7 @@ QSE_EXPORT qse_mchar_t* qse_mbsbeg (
 
 /**
  * The qse_wcsbeg() function checks if a string begins with a substring.
- * @return pointer to the beginning of a matching beginning, 
+ * \return pointer to the beginning of a matching beginning, 
  *         #QSE_NULL if no match is found.
  */
 QSE_EXPORT qse_wchar_t* qse_wcsbeg (
@@ -1485,7 +1505,7 @@ QSE_EXPORT qse_wchar_t* qse_wcscasebeg (
 
 /**
  * The qse_mbsend() function checks if a string ends with a substring.
- * @return pointer to the beginning of a matching ending, 
+ * \return pointer to the beginning of a matching ending, 
  *         #SE_NULL if no match is found.
  */
 QSE_EXPORT qse_mchar_t* qse_mbsend (
@@ -1495,7 +1515,7 @@ QSE_EXPORT qse_mchar_t* qse_mbsend (
 
 /**
  * The qse_wcsend() function checks if a string ends with a substring.
- * @return pointer to the beginning of a matching ending, 
+ * \return pointer to the beginning of a matching ending, 
  *         #QSE_NULL if no match is found.
  */
 QSE_EXPORT qse_wchar_t* qse_wcsend (
@@ -1582,9 +1602,9 @@ QSE_EXPORT qse_size_t qse_wcscspn (
 #endif
 
 /*
- * The qse_mbspbrk() function searches @a str1 for the first occurrence of 
- * a character in @a str2.
- * @return pointer to the first occurrence in @a str1 if one is found.
+ * The qse_mbspbrk() function searches \a str1 for the first occurrence of 
+ * a character in \a str2.
+ * \return pointer to the first occurrence in \a str1 if one is found.
  *         QSE_NULL if none is found.
  */
 QSE_EXPORT qse_mchar_t* qse_mbspbrk (
@@ -1610,9 +1630,9 @@ QSE_EXPORT qse_mchar_t* qse_mbsxrpbrk (
 );
 
 /*
- * The qse_wcspbrk() function searches @a str1 for the first occurrence of 
- * a character in @a str2.
- * @return pointer to the first occurrence in @a str1 if one is found.
+ * The qse_wcspbrk() function searches \a str1 for the first occurrence of 
+ * a character in \a str2.
+ * \return pointer to the first occurrence in \a str1 if one is found.
  *         QSE_NULL if none is found.
  */
 QSE_EXPORT qse_wchar_t* qse_wcspbrk (
@@ -1967,25 +1987,25 @@ QSE_EXPORT int qse_wcsspl (
 /**
  * The qse_mbsspltrn() function splits a string translating special 
  * escape sequences.
- * The argument @a trset is a translation character set which is composed
+ * The argument \a trset is a translation character set which is composed
  * of multiple character pairs. An escape character followed by the 
  * first character in a pair is translated into the second character
  * in the pair. If trset is #QSE_NULL, no translation is performed. 
  *
  * Let's translate a sequence of '\n' and '\r' to a new line and a carriage
  * return respectively.
- * @code
+ * \code
  *   nfields = qse_mbsspltrn (
  *       str, QSE_MT(':'), QSE_MT('['), QSE_MT(']'), 
  *       QSE_MT('\\'), QSE_MT("n\nr\r")
  *   );
- * @endcode
+ * \endcode
  * Given [xxx]:[\rabc\ndef]:[] as an input, the example breaks the second 
  * fields to <CR>abc<NL>def where <CR> is a carriage return and <NL> is a 
  * new line.
  *
  * If you don't need translation, you may call qse_mbsspl() instead.
- * @return number of resulting fields on success, -1 on failure
+ * \return number of resulting fields on success, -1 on failure
  */
 QSE_EXPORT int qse_mbsspltrn (
 	qse_mchar_t*       str,
@@ -1999,25 +2019,25 @@ QSE_EXPORT int qse_mbsspltrn (
 /**
  * The qse_wcsspltrn() function splits a string translating special 
  * escape sequences.
- * The argument @a trset is a translation character set which is composed
+ * The argument \a trset is a translation character set which is composed
  * of multiple character pairs. An escape character followed by the 
  * first character in a pair is translated into the second character
  * in the pair. If trset is #QSE_NULL, no translation is performed. 
  *
  * Let's translate a sequence of '\n' and '\r' to a new line and a carriage
  * return respectively.
- * @code
+ * \code
  *   nfields = qse_wcsspltrn (
  *       str, QSE_WT(':'), QSE_WT('['), QSE_WT(']'), 
  *       QSE_WT('\\'), QSE_WT("n\nr\r")
  *   );
- * @endcode
+ * \endcode
  * Given [xxx]:[\rabc\ndef]:[] as an input, the example breaks the second 
  * fields to <CR>abc<NL>def where <CR> is a carriage return and <NL> is a 
  * new line.
  *
  * If you don't need translation, you may call qse_wcsspl() instead.
- * @return number of resulting fields on success, -1 on failure
+ * \return number of resulting fields on success, -1 on failure
  */
 QSE_EXPORT int qse_wcsspltrn (
 	qse_wchar_t*       str,
@@ -2103,12 +2123,12 @@ QSE_EXPORT qse_wchar_t* qse_wcsxntok (
  * spaces, it inserts a QSE_MT('\0') character after the last non-space
  * characters. Take note of this behavior.
  *
- * @code
+ * \code
  * qse_mchar_t a[] = QSE_MT("   this is a test string   ");
  * qse_mbstrmx (a, QSE_MBSTRMX_LEFT|QSE_MBSTRMX_RIGHT);
- * @endcode
+ * \endcode
  *
- * @return pointer to a trimmed string.
+ * \return pointer to a trimmed string.
  */
 QSE_EXPORT qse_mchar_t* qse_mbstrmx (
 	qse_mchar_t* str,   /**< string */
@@ -2135,12 +2155,12 @@ QSE_EXPORT qse_mchar_t* qse_mbsxtrmx (
  * spaces, it inserts a QSE_WT('\0') character after the last non-space
  * characters. Take note of this behavior.
  *
- * @code
+ * \code
  * qse_wchar_t a[] = QSE_WT("   this is a test string   ");
  * qse_wcstrmx (a, QSE_STRTRMX_LEFT|QSE_STRTRMX_RIGHT);
- * @endcode
+ * \endcode
  *
- * @return pointer to a trimmed string.
+ * \return pointer to a trimmed string.
  */
 QSE_EXPORT qse_wchar_t* qse_wcstrmx (
 	qse_wchar_t* str,   /**< string */
@@ -2157,8 +2177,8 @@ QSE_EXPORT qse_wchar_t* qse_wcsxtrmx (
  * The qse_mbstrm() function strips leading spaces and/or trailing
  * spaces off a string. All characters between the first and the last non-space
  * character inclusive are relocated to the beginning of memory pointed to 
- * by @a str; QSE_MT('\0') is inserted after the last non-space character.
- * @return length of the string without leading and trailing spaces.
+ * by \a str; QSE_MT('\0') is inserted after the last non-space character.
+ * \return length of the string without leading and trailing spaces.
  */
 QSE_EXPORT qse_size_t qse_mbstrm (
 	qse_mchar_t* str /**< string */
@@ -2168,8 +2188,8 @@ QSE_EXPORT qse_size_t qse_mbstrm (
  * The qse_wcstrm() function strips leading spaces and/or trailing
  * spaces off a string. All characters between the first and the last non-space
  * character inclusive are relocated to the beginning of memory pointed to 
- * by @a str; QSE_WT('\0') is inserted after the last non-space character.
- * @return length of the string without leading and trailing spaces.
+ * by \a str; QSE_WT('\0') is inserted after the last non-space character.
+ * \return length of the string without leading and trailing spaces.
  */
 QSE_EXPORT qse_size_t qse_wcstrm (
 	qse_wchar_t* str /**< string */
@@ -2179,8 +2199,8 @@ QSE_EXPORT qse_size_t qse_wcstrm (
  * The qse_mbsxtrm() function strips leading spaces and/or trailing
  * spaces off a string. All characters between the first and the last non-space
  * character inclusive are relocated to the beginning of memory pointed to 
- * by @a str; QSE_MT('\0') is inserted after the last non-space character.
- * @return length of the string without leading and trailing spaces.
+ * by \a str; QSE_MT('\0') is inserted after the last non-space character.
+ * \return length of the string without leading and trailing spaces.
  */
 QSE_EXPORT qse_size_t qse_mbsxtrm (
 	qse_mchar_t* str, /**< string */
@@ -2191,8 +2211,8 @@ QSE_EXPORT qse_size_t qse_mbsxtrm (
  * The qse_wcsxtrm() function strips leading spaces and/or trailing
  * spaces off a string. All characters between the first and the last non-space
  * character inclusive are relocated to the beginning of memory pointed to 
- * by @a str; QSE_WT('\0') is inserted after the last non-space character.
- * @return length of the string without leading and trailing spaces.
+ * by \a str; QSE_WT('\0') is inserted after the last non-space character.
+ * \return length of the string without leading and trailing spaces.
  */
 QSE_EXPORT qse_size_t qse_wcsxtrm (
 	qse_wchar_t* str, /**< string */
@@ -2214,7 +2234,7 @@ QSE_EXPORT qse_size_t qse_wcsxtrm (
 /**
  * The qse_mbspac() function folds repeated whitespaces into one as well
  * as stripping leading whitespaces and trailing whitespaces.
- * @return length of the string without leading and trailing spaces.
+ * \return length of the string without leading and trailing spaces.
  */
 QSE_EXPORT qse_size_t qse_mbspac (
 	qse_mchar_t* str /**< string */
@@ -2223,7 +2243,7 @@ QSE_EXPORT qse_size_t qse_mbspac (
 /**
  * The qse_wcspac() function folds repeated whitespaces into one as well
  * as stripping leading whitespaces and trailing whitespaces.
- * @return length of the string without leading and trailing spaces.
+ * \return length of the string without leading and trailing spaces.
  */
 QSE_EXPORT qse_size_t qse_wcspac (
 	qse_wchar_t* str /**< string */
@@ -2233,7 +2253,7 @@ QSE_EXPORT qse_size_t qse_wcspac (
 /**
  * The qse_mbsxpac() function folds repeated whitespaces into one as well
  * as stripping leading whitespaces and trailing whitespaces.
- * @return length of the string without leading and trailing spaces.
+ * \return length of the string without leading and trailing spaces.
  */
 QSE_EXPORT qse_size_t qse_mbsxpac (
 	qse_mchar_t* str, /**< string */
@@ -2243,7 +2263,7 @@ QSE_EXPORT qse_size_t qse_mbsxpac (
 /**
  * The qse_wcsxpac() function folds repeated whitespaces into one as well
  * as stripping leading whitespaces and trailing whitespaces.
- * @return length of the string without leading and trailing spaces.
+ * \return length of the string without leading and trailing spaces.
  */
 QSE_EXPORT qse_size_t qse_wcsxpac (
 	qse_wchar_t* str, /**< string */
@@ -2344,7 +2364,7 @@ QSE_EXPORT void qse_mbs_close (
  * The qse_mbs_init() function initializes a dynamically resizable string
  * If the parameter capa is 0, it doesn't allocate the internal buffer 
  * in advance and always succeeds.
- * @return 0 on success, -1 on failure.
+ * \return 0 on success, -1 on failure.
  */
 QSE_EXPORT int qse_mbs_init (
 	qse_mbs_t*  mbs,
@@ -2369,9 +2389,9 @@ QSE_EXPORT void* qse_mbs_getxtn (
 
 /**
  * The qse_mbs_yield() function assigns the buffer to an variable of the
- * #qse_mxstr_t type and recreate a new buffer of the @a new_capa capacity.
+ * #qse_mxstr_t type and recreate a new buffer of the \a new_capa capacity.
  * The function fails if it fails to allocate a new buffer.
- * @return 0 on success, and -1 on failure.
+ * \return 0 on success, and -1 on failure.
  */
 QSE_EXPORT int qse_mbs_yield (
 	qse_mbs_t*   str,    /**< string */
@@ -2386,7 +2406,7 @@ QSE_EXPORT qse_mchar_t* qse_mbs_yieldptr (
 
 /**
  * The qse_mbs_getsizer() function gets the sizer.
- * @return sizer function set or QSE_NULL if no sizer is set.
+ * \return sizer function set or QSE_NULL if no sizer is set.
  */
 QSE_EXPORT qse_mbs_sizer_t qse_mbs_getsizer (
 	qse_mbs_t* str
@@ -2408,7 +2428,7 @@ QSE_EXPORT void qse_mbs_setsizer (
 /**
  * The qse_mbs_getcapa() function returns the current capacity.
  * You may use QSE_STR_CAPA(str) macro for performance sake.
- * @return current capacity in number of characters.
+ * \return current capacity in number of characters.
  */
 QSE_EXPORT qse_size_t qse_mbs_getcapa (
 	qse_mbs_t* str
@@ -2418,7 +2438,7 @@ QSE_EXPORT qse_size_t qse_mbs_getcapa (
  * The qse_mbs_setcapa() function sets the new capacity. If the new capacity
  * is smaller than the old, the overflowing characters are removed from
  * from the buffer.
- * @return (qse_size_t)-1 on failure, new capacity on success 
+ * \return (qse_size_t)-1 on failure, new capacity on success 
  */
 QSE_EXPORT qse_size_t qse_mbs_setcapa (
 	qse_mbs_t* str,
@@ -2434,7 +2454,7 @@ QSE_EXPORT qse_size_t qse_mbs_getlen (
 
 /**
  * The qse_mbs_setlen() function changes the string length.
- * @return (qse_size_t)-1 on failure, new length on success 
+ * \return (qse_size_t)-1 on failure, new length on success 
  */
 QSE_EXPORT qse_size_t qse_mbs_setlen (
 	qse_mbs_t* str,
@@ -2529,7 +2549,7 @@ QSE_EXPORT void qse_wcs_close (
  * The qse_wcs_init() function initializes a dynamically resizable string
  * If the parameter capa is 0, it doesn't allocate the internal buffer 
  * in advance and always succeeds.
- * @return 0 on success, -1 on failure.
+ * \return 0 on success, -1 on failure.
  */
 QSE_EXPORT int qse_wcs_init (
 	qse_wcs_t*  wcs,
@@ -2554,9 +2574,9 @@ QSE_EXPORT void* qse_wcs_getxtn (
 
 /**
  * The qse_wcs_yield() function assigns the buffer to an variable of the
- * #qse_wxstr_t type and recreate a new buffer of the @a new_capa capacity.
+ * #qse_wxstr_t type and recreate a new buffer of the \a new_capa capacity.
  * The function fails if it fails to allocate a new buffer.
- * @return 0 on success, and -1 on failure.
+ * \return 0 on success, and -1 on failure.
  */
 QSE_EXPORT int qse_wcs_yield (
 	qse_wcs_t*   str,     /**< string */
@@ -2571,7 +2591,7 @@ QSE_EXPORT qse_wchar_t* qse_wcs_yieldptr (
 
 /**
  * The qse_wcs_getsizer() function gets the sizer.
- * @return sizer function set or QSE_NULL if no sizer is set.
+ * \return sizer function set or QSE_NULL if no sizer is set.
  */
 QSE_EXPORT qse_wcs_sizer_t qse_wcs_getsizer (
 	qse_wcs_t* str
@@ -2593,7 +2613,7 @@ QSE_EXPORT void qse_wcs_setsizer (
 /**
  * The qse_wcs_getcapa() function returns the current capacity.
  * You may use QSE_STR_CAPA(str) macro for performance sake.
- * @return current capacity in number of characters.
+ * \return current capacity in number of characters.
  */
 QSE_EXPORT qse_size_t qse_wcs_getcapa (
 	qse_wcs_t* str
@@ -2603,7 +2623,7 @@ QSE_EXPORT qse_size_t qse_wcs_getcapa (
  * The qse_wcs_setcapa() function sets the new capacity. If the new capacity
  * is smaller than the old, the overflowing characters are removed from
  * from the buffer.
- * @return (qse_size_t)-1 on failure, new capacity on success 
+ * \return (qse_size_t)-1 on failure, new capacity on success 
  */
 QSE_EXPORT qse_size_t qse_wcs_setcapa (
 	qse_wcs_t* str,
@@ -2619,7 +2639,7 @@ QSE_EXPORT qse_size_t qse_wcs_getlen (
 
 /**
  * The qse_wcs_setlen() function changes the string length.
- * @return (qse_size_t)-1 on failure, new length on success 
+ * \return (qse_size_t)-1 on failure, new length on success 
  */
 QSE_EXPORT qse_size_t qse_wcs_setlen (
 	qse_wcs_t* str,

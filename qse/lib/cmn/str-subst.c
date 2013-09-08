@@ -20,126 +20,49 @@
 
 #include <qse/cmn/str.h>
 
-qse_size_t qse_mbsxsubst (
-	qse_mchar_t* buf, qse_size_t bsz, const qse_mchar_t* fmt, 
-	qse_mbsxsubst_subst_t subst, void* ctx)
-{
-	qse_mchar_t* b = buf;
-	qse_mchar_t* end = buf + bsz - 1;
-	const qse_mchar_t* f = fmt;
+/* ----------------------------------- */
 
-	if (bsz <= 0) return 0;
+#undef char_t
+#undef cstr_t
+#undef T
+#undef strlen
+#undef scan_dollar
+#undef expand_dollar
+#undef subst_t
+#undef strxsubst
+#undef strxnsubst
 
-	while (*f != QSE_MT('\0'))
-	{
-		if (*f == QSE_MT('\\'))
-		{
-			/* get the escaped character and treat it normally.
-			 * if the escaper is the last character, treat it 
-			 * normally also. */
-			if (f[1] != QSE_MT('\0')) f++;
-		}
-		else if (*f == QSE_MT('$'))
-		{
-			if (f[1] == QSE_MT('{'))
-			{
-				const qse_mchar_t* tmp;
-				qse_mcstr_t ident;
+#define char_t qse_mchar_t
+#define cstr_t qse_mcstr_t
+#define T(x) QSE_MT(x)
+#define strlen qse_mbslen
+#define scan_dollar mbs_scan_dollar
+#define expand_dollar mbs_expand_dollar
+#define subst_t qse_mbssubst_t
+#define strxsubst qse_mbsxsubst
+#define strxnsubst qse_mbsxnsubst
+#include "str-subst.h"
 
-				f += 2; /* skip ${ */ 
-				tmp = f; /* mark the beginning */
+/* ----------------------------------- */
 
-				/* scan an enclosed segment */
-				while (*f != QSE_MT('\0') && *f != QSE_MT('}')) f++;
-	
-				if (*f != QSE_MT('}'))
-				{
-					/* restore to the position of $ */
-					f = tmp - 2;
-					goto normal;
-				}
+#undef char_t
+#undef cstr_t
+#undef T
+#undef strlen
+#undef scan_dollar
+#undef expand_dollar
+#undef subst_t
+#undef strxsubst
+#undef strxnsubst
 
-				f++; /* skip } */
-			
-				ident.ptr = tmp;
-				ident.len = f - tmp - 1;
+#define char_t qse_wchar_t
+#define cstr_t qse_wcstr_t
+#define T(x) QSE_WT(x)
+#define strlen qse_wcslen
+#define scan_dollar wcs_scan_dollar
+#define expand_dollar wcs_expand_dollar
+#define subst_t qse_wcssubst_t
+#define strxsubst qse_wcsxsubst
+#define strxnsubst qse_wcsxnsubst
+#include "str-subst.h"
 
-				b = subst (b, end - b, &ident, ctx);
-				if (b >= end) goto fini;
-
-				continue;
-			}
-			else if (f[1] == QSE_MT('$')) f++;
-		}
-
-	normal:
-		if (b >= end) break;
-		*b++ = *f++;
-	}
-
-fini:
-	*b = QSE_MT('\0');
-	return b - buf;
-}
-
-qse_size_t qse_wcsxsubst (
-	qse_wchar_t* buf, qse_size_t bsz, const qse_wchar_t* fmt, 
-	qse_wcsxsubst_subst_t subst, void* ctx)
-{
-	qse_wchar_t* b = buf;
-	qse_wchar_t* end = buf + bsz - 1;
-	const qse_wchar_t* f = fmt;
-
-	if (bsz <= 0) return 0;
-
-	while (*f != QSE_WT('\0'))
-	{
-		if (*f == QSE_WT('\\'))
-		{
-			/* get the escaped character and treat it normally.
-			 * if the escaper is the last character, treat it 
-			 * normally also. */
-			if (f[1] != QSE_WT('\0')) f++;
-		}
-		else if (*f == QSE_WT('$'))
-		{
-			if (f[1] == QSE_WT('{'))
-			{
-				const qse_wchar_t* tmp;
-				qse_wcstr_t ident;
-
-				f += 2; /* skip ${ */ 
-				tmp = f; /* mark the beginning */
-
-				/* scan an enclosed segment */
-				while (*f != QSE_WT('\0') && *f != QSE_WT('}')) f++;
-	
-				if (*f != QSE_WT('}'))
-				{
-					/* restore to the position of $ */
-					f = tmp - 2;
-					goto normal;
-				}
-
-				f++; /* skip } */
-			
-				ident.ptr = tmp;
-				ident.len = f - tmp - 1;
-
-				b = subst (b, end - b, &ident, ctx);
-				if (b >= end) goto fini;
-
-				continue;
-			}
-			else if (f[1] == QSE_WT('$')) f++;
-		}
-
-	normal:
-		if (b >= end) break;
-		*b++ = *f++;
-	}
-
-fini:
-	*b = QSE_WT('\0');
-	return b - buf;
-}
