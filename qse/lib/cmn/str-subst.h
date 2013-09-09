@@ -122,7 +122,7 @@ qse_size_t strxnsubst (
 	const char_t* f = fmt;
 	const char_t* fend = fmt + fsz;
 
-	if (bsz <= 0) return 0;
+	if (buf != NOBUF && bsz <= 0) return 0;
 
 	while (f < fend)
 	{
@@ -144,8 +144,18 @@ qse_size_t strxnsubst (
 				if (tmp == QSE_NULL || ident.len <= 0) goto normal;
 				f = tmp;
 
-				b = expand_dollar (b, end - b + 1, &ident, &dfl, subst, ctx);
-				if (b >= end) goto fini;
+				if (buf != NOBUF)
+				{
+					b = expand_dollar (b, end - b + 1, &ident, &dfl, subst, ctx);
+					if (b >= end) goto fini;
+				}
+				else
+				{
+					/* the buffer points to NOBUF. */
+					tmp = expand_dollar (buf, bsz, &ident, &dfl, subst, ctx);
+					/* increment b by the length of the expanded string */
+					b += (tmp - buf);
+				}
 
 				continue;
 			}
@@ -157,12 +167,16 @@ qse_size_t strxnsubst (
 		}
 
 	normal:
-		if (b >= end) break;
-		*b++ = *f++;
+		if (buf != NOBUF)
+		{
+			if (b >= end) break;
+			*b = *f;
+		}
+		b++; f++;
 	}
 
 fini:
-	*b = T('\0');
+	if (buf != NOBUF) *b = T('\0');
 	return b - buf;
 }
 
@@ -172,3 +186,4 @@ qse_size_t strxsubst (
 {
 	return strxnsubst (buf, bsz, fmt, strlen(fmt), subst, ctx);
 }
+
