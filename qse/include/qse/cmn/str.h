@@ -125,6 +125,10 @@ struct qse_wcs_t
 	qse_size_t      capa;  /**< buffer capacity */
 };
 
+
+#define QSE_MBSSUBST_NOBUF ((qse_mchar_t*)1)
+#define QSE_WCSSUBST_NOBUF ((qse_wchar_t*)1)
+
 /**
  * The qse_mbssubst_t type defines a callback function for qse_mbsxsubst()
  * and qse_mbsxnsubst() to substitue a new value for an identifier \a ident.
@@ -148,8 +152,10 @@ typedef qse_wchar_t* (*qse_wcssubst_t) (
 );
 
 #if defined(QSE_CHAR_IS_MCHAR)
+#	define QSE_STRSUBST_NOBUF QSE_MBSSUBST_NOBUF
 #	define qse_strsubst_t qse_mbssubst_t
 #else
+#	define QSE_STRSUBST_NOBUF QSE_WCSSUBST_NOBUF
 #	define qse_strsubst_t qse_wcssubst_t
 #endif
 
@@ -696,6 +702,45 @@ QSE_EXPORT qse_size_t qse_wcsxfncpy (
  * qse_mchar_t buf[25];
  * qse_mbsxsubst (buf, i, QSE_MT("user=${USER},group=${GROUP}"), subst, QSE_NULL);
  * \endcode
+ * 
+ * If \a buf is #QSE_MBSSUBST_NOBUF, the function returns the length of the 
+ * resulting string that a buffer large enough would be able to hold. You can 
+ * pass #QSE_MBSSUBST_NOBUF to find out how large a buffer you need to perform 
+ * substitution without truncation. The substitution callback function should 
+ * handle this special case for buffer size prediction. The sample callback shown
+ * above can be extended to return the buffer pointer without actual copying 
+ * if the buffer points to #QSE_MBSSUBST_NOBUF as shown belown.
+ *
+ * \code
+ * qse_mchar_t* subst (qse_mchar_t* buf, qse_size_t bsz, const qse_mcstr_t* ident, void* ctx)
+ * { 
+ *   if (qse_mcsxcmp (ident->ptr, ident->len, QSE_MT("USER")) == 0)
+ *     return buf + (buf == QSE_MBSSUBST_NOBUF? 3: qse_mcsxput (buf, bsz, QSE_MT("sam")));
+ *   else if (qse_mcsxcmp (ident->ptr, ident->len, QSE_MT("GROUP")) == 0)
+ *     return buf + (buf == QSE_MBSSUBST_NOBUF? 6: qse_mcsxput (buf, bsz, QSE_MT("coders")));	
+ *   return buf; 
+ * }
+ * 
+ * len = qse_mbsxsubst (QSE_MBSSUBST_NOBUF, 0, QSE_MT("user=${USER},group=${GROUP}"), subst, QSE_NULL);
+ * buf = malloc (QSE_SIZEOF(qse_mbs_t) * (len + 1));
+ * qse_mbsxsubst (buf, len + 1, QSE_MT("user=${USER},group=${GROUP}"), subst, QSE_NULL);
+ * \endcode
+ *
+ * A ${} segment may contain a default value. For example, the segment 
+ * ${USER:=Unknown} translates to Unknown if the callback function returns 
+ * #QSE_NULL for USER. The default value part may contain ${} segments 
+ * recursively.
+ *
+ * \code
+ * qse_mchar_t* subst (qse_mchar_t* buf, qse_size_t bsz, const qse_mcstr_t* ident, void* ctx)
+ * { 
+ *   if (qse_mbsxcmp (ident->ptr, ident->len, QSE_MT("USER")) == 0)
+ *     return QSE_NULL;
+ *   else if (qse_mbsxcmp (ident->ptr, ident->len, QSE_MT("GROUP")) == 0)
+ *     return buf + (buf == QSE_MBSSUBST_NOBUF? 6: qse_wcsxput (buf, bsz, QSE_MT("coders")));	
+ *   return buf; 
+ * }
+ * \endcode
  */
 QSE_EXPORT qse_size_t qse_mbsxsubst (
 	qse_mchar_t*           buf,
@@ -730,6 +775,44 @@ QSE_EXPORT qse_size_t qse_mbsxnsubst (
  * 
  * qse_wchar_t buf[25];
  * qse_wcsxsubst (buf, i, QSE_WT("user=${USER},group=${GROUP}"), subst, QSE_NULL);
+ * \endcode
+ *
+ * If \a buf is #QSE_WCSSUBST_NOBUF, the function returns the length of the 
+ * resulting string that a buffer large enough would be able to hold. You can 
+ * pass #QSE_WCSSUBST_NOBUF to find out how large a buffer you need to perform 
+ * substitution without truncation. The substitution callback function should 
+ * handle this special case for buffer size prediction. The sample callback shown
+ * above can be extended to return the buffer pointer without actual copying 
+ *
+ * \code
+ * qse_mchar_t* subst (qse_mchar_t* buf, qse_size_t bsz, const qse_wcstr_t* ident, void* ctx)
+ * { 
+ *   if (qse_wcsxcmp (ident->ptr, ident->len, QSE_WT("USER")) == 0)
+ *     return buf + (buf == QSE_WCSSUBST_NOBUF? 3: qse_wcsxput (buf, bsz, QSE_WT("sam")));
+ *   else if (qse_wcsxcmp (ident->ptr, ident->len, QSE_WT("GROUP")) == 0)
+ *     return buf + (buf == QSE_WCSSUBST_NOBUF? 6: qse_wcsxput (buf, bsz, QSE_WT("coders")));	
+ *   return buf; 
+ * }
+ * 
+ * len = qse_wcsxsubst (QSE_WCSSUBST_NOBUF, 0, QSE_WT("user=${USER},group=${GROUP}"), subst, QSE_NULL);
+ * buf = malloc (QSE_SIZEOF(qse_wcs_t) * (len + 1));
+ * qse_wcsxsubst (buf, len + 1, QSE_WT("user=${USER},group=${GROUP}"), subst, QSE_NULL);
+ * \endcode
+ *
+ * A ${} segment may contain a default value. For example, the segment 
+ * ${USER:=Unknown} translates to Unknown if the callback function returns 
+ * #QSE_NULL for USER. The default value part may contain ${} segments 
+ * recursively.
+ *
+ * \code
+ * qse_mchar_t* subst (qse_mchar_t* buf, qse_size_t bsz, const qse_wcstr_t* ident, void* ctx)
+ * { 
+ *   if (qse_wcsxcmp (ident->ptr, ident->len, QSE_WT("USER")) == 0)
+ *     return QSE_NULL;
+ *   else if (qse_wcsxcmp (ident->ptr, ident->len, QSE_WT("GROUP")) == 0)
+ *     return buf + (buf == QSE_WCSSUBST_NOBUF? 6: qse_wcsxput (buf, bsz, QSE_WT("coders")));	
+ *   return buf; 
+ * }
  * \endcode
  */
 QSE_EXPORT qse_size_t qse_wcsxsubst (

@@ -25,6 +25,7 @@
 #undef char_t
 #undef cstr_t
 #undef T
+#undef NOBUF
 #undef strlen
 #undef scan_dollar
 #undef expand_dollar
@@ -35,6 +36,7 @@
 #define char_t qse_mchar_t
 #define cstr_t qse_mcstr_t
 #define T(x) QSE_MT(x)
+#define NOBUF QSE_MBSSUBST_NOBUF
 #define strlen qse_mbslen
 #define scan_dollar mbs_scan_dollar
 #define expand_dollar mbs_expand_dollar
@@ -48,6 +50,7 @@
 #undef char_t
 #undef cstr_t
 #undef T
+#undef NOBUF
 #undef strlen
 #undef scan_dollar
 #undef expand_dollar
@@ -58,6 +61,7 @@
 #define char_t qse_wchar_t
 #define cstr_t qse_wcstr_t
 #define T(x) QSE_WT(x)
+#define NOBUF QSE_WCSSUBST_NOBUF
 #define strlen qse_wcslen
 #define scan_dollar wcs_scan_dollar
 #define expand_dollar wcs_expand_dollar
