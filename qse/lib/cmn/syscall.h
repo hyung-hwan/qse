@@ -372,6 +372,8 @@
 #define QSE_OPENDIR(name) opendir(name)
 #define QSE_CLOSEDIR(dir) closedir(dir)
 #define QSE_REWINDDIR(dir) rewinddir(dir)
+#define QSE_DIRFD(dir) dirfd(dir)
+#define QSE_DIR DIR
 
 #if defined(HAVE_READDIR64)
 	typedef struct dirent64 qse_dirent_t;
