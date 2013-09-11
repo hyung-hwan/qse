@@ -214,7 +214,7 @@ typedef qse_wchar_t* (*qse_wcssubst_t) (
 	 (c>=QSE_MT('a') && c<=QSE_MT('z'))? ((c-QSE_MT('a')+10<base)? (c-QSE_MT('a')+10): base): base)
 
 /* qse_strtonum (const qse_mchar_t* nptr, qse_mchar_t** endptr, int base) */
-#define QSE_MSTRTONUM(value,nptr,endptr,base) do {\
+#define QSE_MBSTONUM(value,nptr,endptr,base) do {\
 	int __ston_f = 0, __ston_v; \
 	const qse_mchar_t* __ston_ptr = nptr; \
 	for (;;) { \
@@ -233,7 +233,7 @@ typedef qse_wchar_t* (*qse_wcssubst_t) (
 } while(0)
 
 /* qse_strxtonum (const qse_mchar_t* nptr, qse_size_t len, qse_mchar_t** endptr, int base) */
-#define QSE_MSTRXTONUM(value,nptr,len,endptr,base) do {\
+#define QSE_MBSXTONUM(value,nptr,len,endptr,base) do {\
 	int __ston_f = 0, __ston_v; \
 	const qse_mchar_t* __ston_ptr = nptr; \
 	const qse_mchar_t* __ston_end = __ston_ptr + len; \
@@ -262,7 +262,7 @@ typedef qse_wchar_t* (*qse_wcssubst_t) (
 	 (c>=QSE_WT('a') && c<=QSE_WT('z'))? ((c-QSE_WT('a')+10<base)? (c-QSE_WT('a')+10): base): base)
 
 /* qse_strtonum (const qse_wchar_t* nptr, qse_wchar_t** endptr, int base) */
-#define QSE_WSTRTONUM(value,nptr,endptr,base) do {\
+#define QSE_WCSTONUM(value,nptr,endptr,base) do {\
 	int __ston_f = 0, __ston_v; \
 	const qse_wchar_t* __ston_ptr = nptr; \
 	for (;;) { \
@@ -281,7 +281,7 @@ typedef qse_wchar_t* (*qse_wcssubst_t) (
 } while(0)
 
 /* qse_strxtonum (const qse_wchar_t* nptr, qse_size_t len, qse_wchar_t** endptr, int base) */
-#define QSE_WSTRXTONUM(value,nptr,len,endptr,base) do {\
+#define QSE_WCSXTONUM(value,nptr,len,endptr,base) do {\
 	int __ston_f = 0, __ston_v; \
 	const qse_wchar_t* __ston_ptr = nptr; \
 	const qse_wchar_t* __ston_end = __ston_ptr + len; \
