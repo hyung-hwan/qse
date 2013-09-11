@@ -71,7 +71,7 @@ struct qse_dir_t
 #elif defined(__DOS__)
 	struct find_t f;
 #else
-	DIR* dp;
+	QSE_DIR* dp;
 #endif
 };
 

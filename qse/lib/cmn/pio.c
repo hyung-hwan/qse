@@ -351,12 +351,12 @@ static int assert_executable (qse_pio_t* pio, const qse_mchar_t* path)
 
 static QSE_INLINE int is_fd_valid (int fd)
 {
-	return fcntl (fd, F_GETFD) != -1 || errno != EBADF;
+	return QSE_FCNTL (fd, F_GETFD, 0) != -1 || errno != EBADF;
 }
 
 static QSE_INLINE int is_fd_valid_and_nocloexec (int fd)
 {
-	int flags = fcntl (fd, F_GETFD);
+	int flags = QSE_FCNTL (fd, F_GETFD, 0);
 	if (flags == -1)
 	{
 		if (errno == EBADF) return 0; /* invalid. return false */
@@ -372,10 +372,45 @@ static int get_highest_fd (void)
 	struct rlimit rlim;
 	int fd = -1;
 
-#if defined(F_MAXFD)
-	fd = fcntl (0, F_MAXFD);
+#if defined(__linux__)
+	QSE_DIR* d;
+
+	/* will getting the highest file descriptor be faster than
+	 * attempting to close any files descriptors less than the 
+	 * system limit? */	
+
+	d = QSE_OPENDIR (QSE_MT("/proc/self/fd"));
+	if (d)
+	{
+		int maxfd = -1;
+		qse_dirent_t* de;
+		while ((de = QSE_READDIR (d)))
+		{
+			qse_long_t l;
+			const qse_mchar_t* endptr;
+
+			if (de->d_name[0] == QSE_MT('.')) continue;
+
+			QSE_MBSTONUM (l, de->d_name, &endptr, 10);
+			if (*endptr == QSE_MT('\0'))
+			{
+				fd = (int)l;
+				if ((qse_long_t)fd == l && fd != QSE_DIRFD(d))
+				{
+					if (fd > maxfd) maxfd = fd;
+				}
+			}
+		}
+
+		QSE_CLOSEDIR (d);
+		return maxfd;
+	}
 #endif
-	if (fd == -1)
+
+#if defined(F_MAXFD)
+	fd = QSE_FCNTL (0, F_MAXFD, 0);
+#endif
+	if (fd <= -1)
 	{
 		if (QSE_GETRLIMIT (RLIMIT_NOFILE, &rlim) <= -1 ||
 		    rlim.rlim_max == RLIM_INFINITY) 
@@ -446,7 +481,7 @@ int qse_pio_init (
 
 	/* DOS not multi-processed. can't support pio */
 
-#elif defined(HAVE_POSIX_SPAWN) && !(defined(QSE_SYSCALL0) && defined(SYS_vfork))
+#elif defined(HAVE_POSIX_SPAWN) && !(defined(QSE_SYSCALL0) && defined(SYS_vfork)) 
 	posix_spawn_file_actions_t fa;
 	int fa_inited = 0;
 	int pserr;
@@ -1271,19 +1306,20 @@ create_process:
 		int fd = get_highest_fd ();
 		while (fd > 2)
 		{
-			if (fd == handle[0] || fd == handle[1] ||
-			    fd == handle[2] || fd == handle[3] ||
-			    fd == handle[4] || fd == handle[5]) continue;
-
-			/* closing attempt on a best-effort basis.
-			 * posix_spawn() fails if the file descriptor added
-			 * with addclose() is closed before posix_spawn().
-			 * addclose() if no FD_CLOEXEC is set or it's unknown. */
-			if (is_fd_valid_and_nocloexec(fd) && 
-			    (pserr = posix_spawn_file_actions_addclose (&fa, fd)) != 0) 
+			if (fd != handle[0] && fd != handle[1] &&
+			    fd != handle[2] && fd != handle[3] &&
+			    fd != handle[4] && fd != handle[5]) 
 			{
-				pio->errnum = syserr_to_errnum (pserr);
-				goto oops;
+				/* closing attempt on a best-effort basis.
+				 * posix_spawn() fails if the file descriptor added
+				 * with addclose() is closed before posix_spawn().
+				 * addclose() if no FD_CLOEXEC is set or it's unknown. */
+				if (is_fd_valid_and_nocloexec(fd) && 
+				    (pserr = posix_spawn_file_actions_addclose (&fa, fd)) != 0) 
+				{
+					pio->errnum = syserr_to_errnum (pserr);
+					goto oops;
+				}
 			}
 			fd--;
 		}
@@ -1398,8 +1434,7 @@ create_process:
 	/* prepare some data before vforking for vfork limitation.
 	 * the child in vfork should not make function calls or 
 	 * change data shared with the parent. */
-	if (!(flags & QSE_PIO_NOCLOEXEC)) 
-		highest_fd = get_highest_fd ();
+	if (!(flags & QSE_PIO_NOCLOEXEC)) highest_fd = get_highest_fd ();
 	envarr = env? qse_env_getarr(env): environ;
 
 	QSE_SYSCALL0 (pid, SYS_vfork);
