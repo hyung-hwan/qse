@@ -221,6 +221,9 @@
 /* Define to 1 if you have the <linux/ethtool.h> header file. */
 #undef HAVE_LINUX_ETHTOOL_H
 
+/* Define to 1 if you have the <linux/netfilter_ipv4.h> header file. */
+#undef HAVE_LINUX_NETFILTER_IPV4_H
+
 /* Define to 1 if you have the <linux/sockios.h> header file. */
 #undef HAVE_LINUX_SOCKIOS_H
 
