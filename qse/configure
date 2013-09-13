@@ -18780,6 +18780,7 @@ _ACEOF
 fi
 
 
+
 ac_fn_c_check_member "$LINENO" "struct ifreq" "ifr_ifindex" "ac_cv_member_struct_ifreq_ifr_ifindex" "#include <sys/types.h>
 	 #include <sys/socket.h>
 	 #ifdef HAVE_NET_IF_H
@@ -18848,6 +18849,20 @@ if test "x$ac_cv_type_struct_if_laddrreq" = xyes; then :
 
 cat >>confdefs.h <<_ACEOF
 #define HAVE_STRUCT_IF_LADDRREQ 1
+_ACEOF
+
+
+fi
+
+
+ac_fn_c_check_member "$LINENO" "struct sockaddr_in6" "sin6_scope_id" "ac_cv_member_struct_sockaddr_in6_sin6_scope_id" "#include <sys/types.h>
+	 #include <sys/socket.h>
+	 #include <netinet/in.h>
+"
+if test "x$ac_cv_member_struct_sockaddr_in6_sin6_scope_id" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_STRUCT_SOCKADDR_IN6_SIN6_SCOPE_ID 1
 _ACEOF
 
 
