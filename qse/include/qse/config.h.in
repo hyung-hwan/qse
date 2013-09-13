@@ -428,6 +428,9 @@
 /* Define to 1 if the system has the type `struct lifreq'. */
 #undef HAVE_STRUCT_LIFREQ
 
+/* Define to 1 if `sin6_scope_id' is a member of `struct sockaddr_in6'. */
+#undef HAVE_STRUCT_SOCKADDR_IN6_SIN6_SCOPE_ID
+
 /* Define to 1 if `st_birthtime' is a member of `struct stat'. */
 #undef HAVE_STRUCT_STAT_ST_BIRTHTIME
 

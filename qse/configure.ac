@@ -281,6 +281,7 @@ AC_CHECK_MEMBERS([struct stat.st_birthtim.tv_nsec])
 AC_CHECK_MEMBERS([struct stat.st_mtimespec.tv_nsec])
 AC_CHECK_MEMBERS([struct stat.st_birthtimespec.tv_nsec])
 
+
 AC_CHECK_MEMBERS([struct ifreq.ifr_ifindex, struct ifreq.ifr_mtu], [], [],
 	[#include <sys/types.h>
 	 #include <sys/socket.h>
@@ -294,6 +295,11 @@ AC_CHECK_TYPES([struct lifconf, struct lifreq, struct if_laddrreq], [], [],
 	 #ifdef HAVE_NET_IF_H
 	 #include <net/if.h>
 	 #endif])
+
+AC_CHECK_MEMBERS([struct sockaddr_in6.sin6_scope_id], [], [],
+	[#include <sys/types.h> 
+	 #include <sys/socket.h> 
+	 #include <netinet/in.h>])
 
 dnl check the size of primitive data types
 AC_CHECK_SIZEOF(char,,[[]])

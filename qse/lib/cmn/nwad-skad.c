@@ -95,7 +95,9 @@ static QSE_INLINE int skad_to_nwad (const sockaddr_t* skad, qse_nwad_t* nwad)
 			QSE_MEMSET (nwad, 0, QSE_SIZEOF(*nwad));
 			nwad->type = QSE_NWAD_IN6;
 			QSE_MEMCPY (&nwad->u.in6.addr, &in->sin6_addr, QSE_SIZEOF(nwad->u.in6.addr));
+		#if defined(HAVE_STRUCT_SOCKADDR_IN6_SIN6_SCOPE_ID)
 			nwad->u.in6.scope = in->sin6_scope_id;
+		#endif
 			nwad->u.in6.port = in->sin6_port;
 			break;
 		}
@@ -141,7 +143,9 @@ static QSE_INLINE int nwad_to_skad (const qse_nwad_t* nwad, sockaddr_t* skad)
 
 			in->sin6_family = AF_INET6;
 			QSE_MEMCPY (&in->sin6_addr, &nwad->u.in6.addr, QSE_SIZEOF(nwad->u.in6.addr));
+		#if defined(HAVE_STRUCT_SOCKADDR_IN6_SIN6_SCOPE_ID)
 			in->sin6_scope_id = nwad->u.in6.scope;
+		#endif
 			in->sin6_port = nwad->u.in6.port;
 #endif
 			break;
