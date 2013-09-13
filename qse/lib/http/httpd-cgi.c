@@ -228,7 +228,7 @@ static int cgi_htrd_peek_script_output (qse_htrd_t* htrd, qse_htre_t* req)
 		qse_mchar_t* endptr;
 
 /* TODO: check the syntax of status value??? if not numeric??? */
-		QSE_MSTRTONUM (nstatus, req->attr.status, &endptr, 10);
+		QSE_MBSTONUM (nstatus, req->attr.status, &endptr, 10);
 
 		snprintf (buf, QSE_COUNTOF(buf), 	
 			QSE_MT("HTTP/%d.%d %d "),

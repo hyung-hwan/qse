@@ -76,7 +76,9 @@
 #	endif
 #	if defined(__linux__)
 #		include <limits.h>
-#		include <linux/netfilter_ipv4.h> /* SO_ORIGINAL_DST */
+#		if defined(HAVE_LINUX_NETFILTER_IPV4_H)
+#			include <linux/netfilter_ipv4.h> /* SO_ORIGINAL_DST */
+#		endif
 #		if !defined(IP_TRANSPARENT)
 #			define IP_TRANSPARENT 19
 #		endif
