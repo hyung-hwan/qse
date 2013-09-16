@@ -43,6 +43,15 @@ struct qse_xli_list_link_t
 	qse_xli_list_t* list;
 };
 
+typedef struct qse_xli_root_list_t qse_xli_root_list_t;
+
+struct qse_xli_root_list_t
+{
+	qse_xli_list_t list;
+	qse_xli_nil_t xnil;
+	qse_mmgr_t* mmgr;
+};
+
 struct qse_xli_t
 {
 	qse_mmgr_t* mmgr;
@@ -60,9 +69,7 @@ struct qse_xli_t
 
 	qse_xli_ecb_t* ecb;
 
-	qse_xli_nil_t xnil;
-	qse_xli_list_t root;
-
+	qse_xli_root_list_t* root;
 	qse_xli_list_link_t* parlink; /* link that points to the list being read currently */
 
 	qse_str_t* dotted_curkey;

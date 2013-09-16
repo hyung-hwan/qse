@@ -317,7 +317,7 @@ int qse_xli_write (qse_xli_t* xli, qse_xli_io_impl_t io)
 	if (open_new_stream (xli, QSE_NULL, 0) <= -1) return -1;
 
 	/* begin writing the root list */
-	n = write_list (xli, &xli->root, 0);
+	n = write_list (xli, &xli->root->list, 0);
 	
 	/* close all open streams. there should be only the
 	 * top-level stream here if there occurred no errors */

@@ -123,7 +123,7 @@ static void print_usage (QSE_FILE* out, int argc, qse_char_t* argv[])
 {
 	const qse_char_t* b = qse_basename (argv[0]);
 
-	qse_fprintf (out, QSE_T("USAGE: %s [options] -f input-file [key]\n"), b);
+	qse_fprintf (out, QSE_T("USAGE: %s [options] -i input-file [key]\n"), b);
 
 	qse_fprintf (out, QSE_T("options as follows:\n"));
 	qse_fprintf (out, QSE_T(" -h/--help                 show this message\n"));
@@ -565,6 +565,7 @@ oops:
 		qse_fprintf (QSE_STDERR, QSE_T("-------------------------------------------------------\n"));
 	}
 #endif
+
 	return ret;
 }
 
