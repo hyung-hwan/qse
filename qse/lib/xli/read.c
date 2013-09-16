@@ -734,7 +734,7 @@ static int read_pair (qse_xli_t* xli)
 			curstrseg = (qse_xli_str_t*)pair->val;
 
 			if (get_token (xli) <= -1) goto oops;
-			if (MATCH(xli, TOK_COMMA))
+			if ((xli->opt.trait & QSE_XLI_MULSEGSTR) && MATCH(xli, TOK_COMMA))
 			{
 				/* multi-segmented string */
 				do
