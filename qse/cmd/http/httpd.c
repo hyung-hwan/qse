@@ -1478,7 +1478,7 @@ static int open_config_file (qse_httpd_t* httpd)
 	}
  
 	qse_xli_getopt (httpd_xtn->xli, QSE_XLI_TRAIT, &trait);
-	trait |= QSE_XLI_VALIDATE;
+	trait |= QSE_XLI_MULSEGSTR | QSE_XLI_VALIDATE;
 	qse_xli_setopt (httpd_xtn->xli, QSE_XLI_TRAIT, &trait);
 
 	for (i = 0; i < QSE_COUNTOF(defs); i++)

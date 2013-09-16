@@ -79,13 +79,14 @@ typedef enum qse_xli_opt_t qse_xli_opt_t;
 
 enum qse_xli_trait_t
 {
-	QSE_XLI_KEYNODUP = (1 << 1),
-	QSE_XLI_KEYALIAS = (1 << 2),
+	QSE_XLI_KEYNODUP  = (1 << 1),
+	QSE_XLI_KEYALIAS  = (1 << 2),
 
-	QSE_XLI_KEEPTEXT = (1 << 3), /**< keep comment text */
-	QSE_XLI_KEEPFILE = (1 << 4), /**< keep inclusion file info */
+	QSE_XLI_KEEPTEXT  = (1 << 3), /**< keep comment text */
+	QSE_XLI_KEEPFILE  = (1 << 4), /**< keep inclusion file info */
 
-	QSE_XLI_VALIDATE = (1 << 5)
+	QSE_XLI_MULSEGSTR = (1 << 5), /**< support multi-segmented string */
+	QSE_XLI_VALIDATE  = (1 << 6)
 };
 typedef enum qse_xli_trait_t qse_xli_trait_t;
 
