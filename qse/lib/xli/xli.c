@@ -109,6 +109,10 @@ int qse_xli_setopt (qse_xli_t* xli, qse_xli_opt_t id, const void* value)
 		case QSE_XLI_TRAIT:
 			xli->opt.trait = *(const int*)value;
 			return 0;
+
+		case QSE_XLI_PAIRXTNSIZE:
+			xli->opt.pair_xtnsize = *(const qse_size_t*)value;	
+			return 0;
 	}
 
 	qse_xli_seterrnum (xli, QSE_XLI_EINVAL, QSE_NULL);
@@ -121,6 +125,10 @@ int qse_xli_getopt (qse_xli_t* xli, qse_xli_opt_t  id, void* value)
 	{
 		case QSE_XLI_TRAIT:
 			*(int*)value = xli->opt.trait;
+			return 0;
+
+		case QSE_XLI_PAIRXTNSIZE:
+			*(qse_size_t*)value = xli->opt.pair_xtnsize;
 			return 0;
 	};
 
@@ -214,12 +222,12 @@ static qse_xli_pair_t* insert_pair (
 	alen = alias? alias->len: 0;
 
 	pair = qse_xli_callocmem (xli, 
-		QSE_SIZEOF(*pair) + 
+		QSE_SIZEOF(*pair) + xli->opt.pair_xtnsize +
 		((key->len + 1) * QSE_SIZEOF(*key->ptr)) + 
 		((alen + 1) * QSE_SIZEOF(*alias->ptr)));
 	if (pair == QSE_NULL) return QSE_NULL;
 
-	kptr = (qse_char_t*)(pair + 1);
+	kptr = (qse_char_t*)((qse_uint8_t*)(pair + 1) + xli->opt.pair_xtnsize);
 	qse_strcpy (kptr, key->ptr);
 
 	pair->type = QSE_XLI_PAIR;
@@ -234,6 +242,11 @@ static qse_xli_pair_t* insert_pair (
 
 	insert_atom (xli, parent, peer, (qse_xli_atom_t*)pair);
 	return pair;
+}
+
+void* qse_xli_getpairxtn (qse_xli_t* xli, qse_xli_pair_t* pair)
+{
+	return (void*)(pair + 1);
 }
 
 qse_xli_pair_t* qse_xli_insertpair (
