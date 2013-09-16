@@ -830,7 +830,7 @@ static int read_pair (qse_xli_t* xli)
 		xli->tok_status &= ~TOK_STATUS_ENABLE_NSTR;
 
 		/* no value has been specified for the pair */
-		pair = qse_xli_insertpair (xli, parlist, QSE_NULL, key.ptr, name, (qse_xli_val_t*)&xli->xnil);
+		pair = qse_xli_insertpair (xli, parlist, QSE_NULL, key.ptr, name, (qse_xli_val_t*)&xli->root->xnil);
 		if (pair == QSE_NULL) goto oops;
 
 		/* skip the semicolon */
@@ -937,7 +937,7 @@ static int read_root_list (qse_xli_t* xli)
 {
 	qse_xli_list_link_t* link;
 
-	link = make_list_link (xli, &xli->root);
+	link = make_list_link (xli, &xli->root->list);
 	if (link == QSE_NULL) return -1;
 
 	if (get_char (xli) <= -1 || get_token (xli) <= -1 || __read_list (xli) <= -1)

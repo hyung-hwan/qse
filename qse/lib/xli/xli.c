@@ -21,9 +21,9 @@
 #include "xli.h"
 #include <qse/cmn/chr.h>
 
-static void free_val (qse_xli_t* xli, qse_xli_val_t* val);
-static void free_list (qse_xli_t* xli, qse_xli_list_t* list);
-static void free_atom (qse_xli_t* xli, qse_xli_atom_t* atom);
+static void free_val (qse_xli_root_list_t* xli, qse_xli_val_t* val);
+static void free_list (qse_xli_root_list_t* xli, qse_xli_list_t* list);
+static void free_atom (qse_xli_root_list_t* xli, qse_xli_atom_t* atom);
 
 qse_xli_t* qse_xli_open (qse_mmgr_t* mmgr, qse_size_t xtnsize)
 {
@@ -70,13 +70,18 @@ int qse_xli_init (qse_xli_t* xli, qse_mmgr_t* mmgr)
 	if (xli->schema == QSE_NULL) goto oops;
 	qse_rbt_setstyle (xli->schema, qse_getrbtstyle(QSE_RBT_STYLE_INLINE_COPIERS));
 
-	xli->root.type = QSE_XLI_LIST;
-	xli->xnil.type = QSE_XLI_NIL;
+	xli->root = QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(*xli->root));
+	if (xli->root == QSE_NULL) goto oops;
+	QSE_MEMSET (xli->root, 0, QSE_SIZEOF(*xli->root));
+	xli->root->list.type = QSE_XLI_LIST;
+	xli->root->xnil.type = QSE_XLI_NIL;
+	xli->root->mmgr = mmgr;
 
 	return 0;
 
 oops:
 	qse_xli_seterrnum (xli, QSE_XLI_ENOMEM, QSE_NULL);
+	if (xli->root) QSE_MMGR_FREE (mmgr, xli->root);
 	if (xli->schema) qse_rbt_close (xli->schema);
 	if (xli->tok.name) qse_str_close (xli->tok.name);
 	if (xli->dotted_curkey) qse_str_close (xli->dotted_curkey);
@@ -86,6 +91,7 @@ oops:
 void qse_xli_fini (qse_xli_t* xli)
 {
 	qse_xli_clear (xli);
+	QSE_MMGR_FREE (xli->mmgr, xli->root);
 
 	qse_rbt_close (xli->schema);
 	qse_str_close (xli->tok.name);
@@ -182,7 +188,7 @@ static void insert_atom (
 	qse_xli_t* xli, qse_xli_list_t* parent, 
 	qse_xli_atom_t* peer, qse_xli_atom_t* atom)
 {
-	if (parent == QSE_NULL) parent = &xli->root;
+	if (parent == QSE_NULL) parent = &xli->root->list;
 
 	if (peer == QSE_NULL)	
 	{
@@ -244,10 +250,6 @@ static qse_xli_pair_t* insert_pair (
 	return pair;
 }
 
-void* qse_xli_getpairxtn (qse_xli_t* xli, qse_xli_pair_t* pair)
-{
-	return (void*)(pair + 1);
-}
 
 qse_xli_pair_t* qse_xli_insertpair (
 	qse_xli_t* xli, qse_xli_list_t* parent, qse_xli_atom_t* peer,
@@ -334,7 +336,7 @@ qse_xli_pair_t* qse_xli_insertpairwithstrs (
 		str = qse_xli_addsegtostr (xli, str, &value[i]);			
 		if (str == QSE_NULL)
 		{
-			free_atom (xli, (qse_xli_atom_t*)tmp);
+			free_atom (xli->root, (qse_xli_atom_t*)tmp);
 			return QSE_NULL;
 		}
 	}
@@ -400,12 +402,12 @@ qse_xli_eof_t* qse_xli_inserteof (
 
 /* ------------------------------------------------------ */
 
-static void free_val (qse_xli_t* xli, qse_xli_val_t* val)
+static void free_val (qse_xli_root_list_t* root, qse_xli_val_t* val)
 {
-	if ((qse_xli_nil_t*)val != &xli->xnil)
+	if ((qse_xli_nil_t*)val != &root->xnil)
 	{
 		if (val->type == QSE_XLI_LIST)
-			free_list (xli, (qse_xli_list_t*)val);
+			free_list (root, (qse_xli_list_t*)val);
 		else if (val->type == QSE_XLI_STR)
 		{
 			qse_xli_str_t* cur, * next; 
@@ -414,22 +416,22 @@ static void free_val (qse_xli_t* xli, qse_xli_val_t* val)
 			while (cur)
 			{
 				next = cur->next;
-				QSE_MMGR_FREE (xli->mmgr, cur);
+				QSE_MMGR_FREE (root->mmgr, cur);
 				cur = next;
 			}
 		}
 
-		QSE_MMGR_FREE (xli->mmgr, val);
+		QSE_MMGR_FREE (root->mmgr, val);
 	}
 }
 
-static void free_atom (qse_xli_t* xli, qse_xli_atom_t* atom)
+static void free_atom (qse_xli_root_list_t* root, qse_xli_atom_t* atom)
 {
-	if (atom->type == QSE_XLI_PAIR) free_val (xli, ((qse_xli_pair_t*)atom)->val);
-	QSE_MMGR_FREE (xli->mmgr, atom);
+	if (atom->type == QSE_XLI_PAIR) free_val (root, ((qse_xli_pair_t*)atom)->val);
+	QSE_MMGR_FREE (root->mmgr, atom);
 }
 
-static void free_list (qse_xli_t* xli, qse_xli_list_t* list)
+static void free_list (qse_xli_root_list_t* root, qse_xli_list_t* list)
 {
 	qse_xli_atom_t* p, * n;
 
@@ -437,17 +439,20 @@ static void free_list (qse_xli_t* xli, qse_xli_list_t* list)
 	while (p)
 	{
 		n = p->next;
-		free_atom (xli, p);	
+		free_atom (root, p);	
 		p = n;
 	}
 
 	list->head = QSE_NULL;
 	list->tail = QSE_NULL;
+
+	/* this doesn't destroy the list itself. 
+	 * the caller must destory the list if necessary. */
 }
 
 void qse_xli_clear (qse_xli_t* xli)
 {
-	free_list (xli, &xli->root);
+	free_list (xli->root, &xli->root->list);
 	qse_rbt_clear (xli->schema);
 
 	qse_xli_seterrnum (xli, QSE_XLI_ENOERR, QSE_NULL);
@@ -457,14 +462,35 @@ void qse_xli_clear (qse_xli_t* xli)
 
 qse_xli_list_t* qse_xli_getroot (qse_xli_t* xli)
 {
-	return &xli->root;
+	/*return &xli->root.list;*/
+	return (qse_xli_list_t*)xli->root;
 }
 
 void qse_xli_clearroot (qse_xli_t* xli)
 {
-	free_list (xli, &xli->root);
+	free_list (xli->root, &xli->root->list);
 }
 
+qse_xli_list_t* qse_xli_yieldroot (qse_xli_t* xli)
+{
+	qse_xli_root_list_t* tmp, * tmp2;
+
+	tmp = QSE_MMGR_ALLOC (xli->mmgr, QSE_SIZEOF(*tmp));
+	if (tmp == QSE_NULL) 
+	{
+		qse_xli_seterrnum (xli, QSE_XLI_ENOMEM, QSE_NULL);
+		return QSE_NULL;
+	}
+
+	QSE_MEMSET (tmp, 0, QSE_SIZEOF(*tmp));
+	tmp->list.type = QSE_XLI_LIST;
+	tmp->xnil.type = QSE_XLI_NIL;
+	tmp->mmgr = xli->mmgr;
+
+	tmp2 = xli->root;
+	xli->root = tmp;
+	return (qse_xli_list_t*)tmp2;
+}
 
 /* ------------------------------------------------------ */
 
@@ -642,7 +668,7 @@ qse_xli_pair_t* qse_xli_findpair (qse_xli_t* xli, const qse_xli_list_t* list, co
 	const qse_xli_list_t* curlist;
 	fqpn_seg_t seg;
 
-	curlist = list? list: &xli->root;
+	curlist = list? list: &xli->root->list;
 
 	ptr = fqpn;
 	while (1)
@@ -705,7 +731,7 @@ qse_size_t qse_xli_countpairs (qse_xli_t* xli, const qse_xli_list_t* list, const
 	const qse_xli_list_t* curlist;
 	fqpn_seg_t seg;
 
-	curlist = list? list: &xli->root;
+	curlist = list? list: &xli->root->list;
 
 	ptr = fqpn;
 	while (1)
@@ -862,7 +888,7 @@ void qse_xli_undefinepairs (qse_xli_t* xli)
 #if 0
 qse_xli_pair_t* qse_xli_getpair (qse_xli_t* xli, const qse_char_t* fqpn)
 {
-	return qse_xli_findpair (xli, &xli->root, fqpn);
+	return qse_xli_findpair (xli, &xli->root->list, fqpn);
 }
 
 qse_xli_pair_t* qse_xli_setpair (qse_xli_t* xli, const qse_char_t* fqpn, const qse_xli_val_t* val) -> str, val, nil
@@ -871,7 +897,7 @@ qse_xli_pair_t* qse_xli_setpair (qse_xli_t* xli, const qse_char_t* fqpn, const q
 	const qse_xli_list_t* curlist;
 	fqpn_seg_t seg;
 
-	curlist = list? list: &xli->root;
+	curlist = list? list: &xli->root->list;
 
 	ptr = fqpn;
 	while (1)
@@ -947,3 +973,15 @@ noent:
 	return QSE_NULL;
 }
 #endif
+
+void* qse_getxlipairxtn (qse_xli_pair_t* pair)
+{
+	return (void*)(pair + 1);
+}
+
+void qse_freexliroot (qse_xli_list_t* root)
+{
+	qse_xli_root_list_t* real_root = (qse_xli_root_list_t*)root;
+	free_list (real_root, &real_root->list);
+	QSE_MMGR_FREE (real_root->mmgr, root);
+}

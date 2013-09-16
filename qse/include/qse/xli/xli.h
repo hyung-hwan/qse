@@ -501,11 +501,6 @@ QSE_EXPORT void qse_xli_freemem (
 	void*      ptr
 );
 
-QSE_EXPORT void* qse_xli_getpairxtn (
-	qse_xli_t*        xli,
-	qse_xli_pair_t*   pair
-);
-
 QSE_EXPORT qse_xli_pair_t* qse_xli_insertpair (
 	qse_xli_t*        xli,
 	qse_xli_list_t*   list,
@@ -606,6 +601,9 @@ QSE_EXPORT void qse_xli_clearroot (
 	qse_xli_t* xli
 );
 
+QSE_EXPORT qse_xli_list_t* qse_xli_yieldroot (
+	qse_xli_t* xli
+);
 
 QSE_EXPORT void qse_xli_clear (
 	qse_xli_t* xli
@@ -637,6 +635,18 @@ QSE_EXPORT int qse_xli_read (
 QSE_EXPORT int qse_xli_write (
 	qse_xli_t*        xli,
 	qse_xli_io_impl_t io
+);
+
+
+QSE_EXPORT void* qse_getxlipairxtn (
+	qse_xli_pair_t* pair
+);
+
+/**
+ * The qse_freexliroot() function frees the root list acquired with qse_xli_yeildroot().
+ */
+QSE_EXPORT void qse_freexliroot (
+	qse_xli_list_t* root
 );
 
 #if defined(__cplusplus)
