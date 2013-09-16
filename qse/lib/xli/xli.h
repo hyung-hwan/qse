@@ -54,7 +54,8 @@ struct qse_xli_t
 
 	struct
 	{
-		int  trait;          
+		int trait;          
+		qse_size_t pair_xtnsize;
 	} opt;
 
 	qse_xli_ecb_t* ecb;

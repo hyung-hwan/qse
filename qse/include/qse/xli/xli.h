@@ -72,7 +72,8 @@ typedef const qse_char_t* (*qse_xli_errstr_t) (
 
 enum qse_xli_opt_t
 {
-	QSE_XLI_TRAIT
+	QSE_XLI_TRAIT,
+	QSE_XLI_PAIRXTNSIZE
 };
 typedef enum qse_xli_opt_t qse_xli_opt_t;
 
@@ -497,6 +498,11 @@ QSE_EXPORT void* qse_xli_callocmem (
 QSE_EXPORT void qse_xli_freemem (
 	qse_xli_t* xli, 
 	void*      ptr
+);
+
+QSE_EXPORT void* qse_xli_getpairxtn (
+	qse_xli_t*        xli,
+	qse_xli_pair_t*   pair
 );
 
 QSE_EXPORT qse_xli_pair_t* qse_xli_insertpair (
