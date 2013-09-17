@@ -49,6 +49,7 @@ const qse_char_t* qse_xli_dflerrstr (
 		QSE_T("invalid character '${0}'"),
 		QSE_T("'${0}' not recognized"),
 		QSE_T("@ not followed by a valid word"),
+		QSE_T("invalid identifier '${0}'"),
 		QSE_T("undefined key '${0}'"),
 		QSE_T("no alias for '${0}'"),
 		QSE_T("illegal value for '${0}'"),
