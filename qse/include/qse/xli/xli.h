@@ -50,6 +50,7 @@ enum qse_xli_errnum_t
 	QSE_XLI_ELXCHR,  /**< invalid character '${0} */
 	QSE_XLI_EXKWNR,  /**< @word '${0}' not recognized */
 	QSE_XLI_EXKWEM,  /**< @ not followed by a valid word  */
+	QSE_XLI_EIDENT,  /**< invalid identifier '${0}' */
 	QSE_XLI_EUDKEY,  /**< undefined key '${0}' */
 	QSE_XLI_ENOALI,  /**< no alias for '${0}' */
 	QSE_XLI_EILVAL,  /**< illegal value for '${0}' */
@@ -86,7 +87,8 @@ enum qse_xli_trait_t
 	QSE_XLI_KEEPFILE  = (1 << 4), /**< keep inclusion file info */
 
 	QSE_XLI_MULSEGSTR = (1 << 5), /**< support multi-segmented string */
-	QSE_XLI_VALIDATE  = (1 << 6)
+	QSE_XLI_LEADDIGIT = (1 << 6), /**< allow a leading digit in an identifier */
+	QSE_XLI_VALIDATE  = (1 << 7)
 };
 typedef enum qse_xli_trait_t qse_xli_trait_t;
 

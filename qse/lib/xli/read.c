@@ -104,6 +104,7 @@ struct kwent_t
 	int type; 
 };
 
+/* note that the keyword must start with @. */
 static kwent_t kwtab[] = 
 {
 	/* keep it sorted by the first field for binary search */
@@ -420,50 +421,84 @@ retry:
 	}	
 	else if (c == QSE_T('@'))
 	{
+		/* keyword/directive - start with @ */
+
 		int type;
 
 		ADD_TOKEN_CHAR (xli, tok, c);
 		GET_CHAR_TO (xli, c);
 
-		if (c != QSE_T('_') && !QSE_ISALPHA (c))
+		if (!QSE_ISALPHA (c))
 		{
-			/* this directive is empty, 
-			 * not followed by a valid word */
+			/* this directive is empty, not followed by a valid word */
 			qse_xli_seterror (xli, QSE_XLI_EXKWEM, QSE_NULL, &xli->tok.loc);
 			return -1;
 		}
 
-		/* expect normal identifier starting with an alphabet */
+		/* expect an identifier starting with an alphabet. the identifier 
+		 * forming a keyword/directory is composed of alphabets. */
 		do 
 		{
 			ADD_TOKEN_CHAR (xli, tok, c);
 			GET_CHAR_TO (xli, c);
 		} 
-		while (c == QSE_T('_') || c == QSE_T('-') || QSE_ISALNUM (c));
+		while (QSE_ISALPHA (c));
 
 		type = classify_ident (xli, QSE_STR_CSTR(tok->name));
 		if (type == TOK_IDENT)
 		{
-			/* this directive is not recognized */
+			/* this keyword/directive is not recognized */
 			qse_xli_seterror (xli, QSE_XLI_EXKWNR, QSE_STR_CSTR(xli->tok.name), &xli->tok.loc);
 			return -1;
 		}
 		SET_TOKEN_TYPE (xli, tok, type);
 	}
-	else if (c == QSE_T('_') || QSE_ISALPHA (c))
+	else if (c == QSE_T('_') || QSE_ISALPHA (c) || 
+	         (!(xli->tok_status & TOK_STATUS_ENABLE_NSTR) &&
+	          (xli->opt.trait & QSE_XLI_LEADDIGIT) && 
+	          QSE_ISDIGIT(c)))
 	{
-		int type;
+		int lead_digit = QSE_ISDIGIT(c);
+		int all_digits = 1;
 
-		/* identifier */
-		do 
+		/* a normal identifier can be composed of wider varieties of characters
+		 * than a keyword/directive */
+		while (1)
 		{
 			ADD_TOKEN_CHAR (xli, tok, c);
 			GET_CHAR_TO (xli, c);
-		} 
-		while (c == QSE_T('_') || c == QSE_T('-') || QSE_ISALNUM (c));
 
-		type = classify_ident (xli, QSE_STR_CSTR(tok->name));
-		SET_TOKEN_TYPE (xli, tok, type);
+			if (c == QSE_T('_') || c == QSE_T('-') || 
+			    c == QSE_T(':') || c == QSE_T('*') ||
+			    c == QSE_T('/') || QSE_ISALPHA (c)) 
+			{
+				all_digits = 0;
+			}
+			else if (lead_digit && QSE_ISDIGIT(c)) 
+			{
+				/* nothing to do */
+			}
+			else break;
+		} 
+
+		if (lead_digit && all_digits)
+		{
+			/* if an identifier begins with a digit, it must contain a non-digits character */
+			qse_xli_seterror (xli, QSE_XLI_EIDENT, QSE_STR_CSTR(xli->tok.name), &xli->tok.loc);
+			return -1;
+		}
+
+		SET_TOKEN_TYPE (xli, tok, TOK_IDENT);
+	}
+	else if ((xli->tok_status & TOK_STATUS_ENABLE_NSTR) && QSE_ISDIGIT(c))
+	{
+		SET_TOKEN_TYPE (xli, tok, TOK_NSTR);
+		do
+		{
+			ADD_TOKEN_CHAR (xli, tok, c);
+			GET_CHAR_TO (xli, c);
+		}
+		while (QSE_ISDIGIT(c));
 	}
 	else if (c == QSE_T('\''))
 	{
@@ -532,16 +567,6 @@ retry:
 				escaped = 0;
 			}
 		}
-	}
-	else if ((xli->tok_status & TOK_STATUS_ENABLE_NSTR) && QSE_ISDIGIT(c))
-	{
-		SET_TOKEN_TYPE (xli, tok, TOK_NSTR);
-		do
-		{
-			ADD_TOKEN_CHAR (xli, tok, c);
-			GET_CHAR_TO (xli, c);
-		}
-		while (QSE_ISDIGIT(c));
 	}
 	else
 	{
@@ -667,6 +692,7 @@ static int read_pair (qse_xli_t* xli)
 		}
 	}
 
+	/* once the key name is read, enable the numeric string for a value */
 	xli->tok_status |= TOK_STATUS_ENABLE_NSTR;
 
 	if (get_token (xli) <= -1) goto oops;
@@ -705,7 +731,7 @@ static int read_pair (qse_xli_t* xli)
 		{
 			/* SCM_KEYALIAS is specified for this particular item. Let the alias be required. 
 			 * If KEYALIAS is globally specified with the specific one, it's optional. */
-			qse_xli_seterrnum (xli, QSE_XLI_ENOALI, &key); 
+			qse_xli_seterrnum (xli, QSE_XLI_ENOALI, (const qse_cstr_t*)&key); 
 			goto oops;
 		}
 	}
@@ -771,6 +797,8 @@ static int read_pair (qse_xli_t* xli)
 				goto oops;	
 			}
 
+			/* semicolon read. turn off NSTR */
+			xli->tok_status &= ~TOK_STATUS_ENABLE_NSTR;
 			if (get_token (xli) <= -1) goto oops;
 		}
 		else

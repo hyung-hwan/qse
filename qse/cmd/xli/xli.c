@@ -135,6 +135,7 @@ static void print_usage (QSE_FILE* out, int argc, qse_char_t* argv[])
 	qse_fprintf (out, QSE_T(" -f                        keep file inclusion info\n"));
 	qse_fprintf (out, QSE_T(" -t                        keep comment text\n"));
 	qse_fprintf (out, QSE_T(" -s                        allow multi-segmented strings\n"));
+	qse_fprintf (out, QSE_T(" -d                        allow a leading digit in identifiers\n"));
 	qse_fprintf (out, QSE_T(" -v                        perform validation\n"));
 	qse_fprintf (out, QSE_T(" -m                 number specify the maximum amount of memory to use in bytes\n"));
 #if defined(QSE_BUILD_DEBUG)
@@ -162,9 +163,9 @@ static int handle_args (int argc, qse_char_t* argv[])
 	static qse_opt_t opt = 
 	{
 #if defined(QSE_BUILD_DEBUG)
-		QSE_T("hi:o:uaftsvm:X:"),
+		QSE_T("hi:o:uaftsdvm:X:"),
 #else
-		QSE_T("hi:o:uaftsvm:"),
+		QSE_T("hi:o:uaftsdvm:"),
 #endif
 		lng
 	};
@@ -224,6 +225,10 @@ static int handle_args (int argc, qse_char_t* argv[])
 
 			case QSE_T('s'):
 				g_trait |= QSE_XLI_MULSEGSTR;
+				break;
+
+			case QSE_T('d'):
+				g_trait |= QSE_XLI_LEADDIGIT;
 				break;
 
 			case QSE_T('v'):
