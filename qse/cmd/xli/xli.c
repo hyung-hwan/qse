@@ -354,7 +354,7 @@ static int xli_main (int argc, qse_char_t* argv[])
 		mmgr = &xma_mmgr;
 	}
 
-	xli = qse_xli_openstdwithmmgr (mmgr, 0);
+	xli = qse_xli_openstdwithmmgr (mmgr, 0, 0);
 	if (xli == QSE_NULL)
 	{
 		qse_fprintf (QSE_STDERR, QSE_T("ERROR: cannot open stream editor\n"));

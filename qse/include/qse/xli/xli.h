@@ -68,13 +68,21 @@ typedef enum qse_xli_errnum_t qse_xli_errnum_t;
  */
 typedef const qse_char_t* (*qse_xli_errstr_t) (
 	const qse_xli_t* xli,   /**< stream editor */
-	qse_xli_errnum_t num    /**< an error number */
+	qse_xli_errnum_t num    /**< error number */
 );
 
 enum qse_xli_opt_t
 {
 	QSE_XLI_TRAIT,
-	QSE_XLI_PAIRXTNSIZE
+
+	QSE_XLI_PAIRXTNSIZE,
+
+	/** 
+	 *  the size of extension area associated with the root list node.
+	 *  you can get the pointer to the extension with qse_getxlirootxtn().
+	 *  the new size set takes effect after the call to qse_xli_yieldroot().
+	 */
+	QSE_XLI_ROOTXTNSIZE
 };
 typedef enum qse_xli_opt_t qse_xli_opt_t;
 
@@ -325,7 +333,8 @@ extern "C" {
 
 QSE_EXPORT qse_xli_t* qse_xli_open (
 	qse_mmgr_t* mmgr,
-	qse_size_t xtnsize
+	qse_size_t xtnsize,
+	qse_size_t rootxtnsize
 );
 
 QSE_EXPORT void qse_xli_close (
@@ -642,6 +651,10 @@ QSE_EXPORT int qse_xli_write (
 
 QSE_EXPORT void* qse_getxlipairxtn (
 	qse_xli_pair_t* pair
+);
+
+QSE_EXPORT void* qse_getxlirootxtn (
+	qse_xli_list_t* root
 );
 
 /**

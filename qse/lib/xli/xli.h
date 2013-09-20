@@ -65,6 +65,7 @@ struct qse_xli_t
 	{
 		int trait;          
 		qse_size_t pair_xtnsize;
+		qse_size_t root_xtnsize;
 	} opt;
 
 	qse_xli_ecb_t* ecb;
@@ -100,7 +101,7 @@ struct qse_xli_t
 extern "C" {
 #endif
 
-int qse_xli_init (qse_xli_t* xli, qse_mmgr_t* mmgr);
+int qse_xli_init (qse_xli_t* xli, qse_mmgr_t* mmgr, qse_size_t rootxtnsize);
 
 void qse_xli_fini (qse_xli_t* xli);
 
