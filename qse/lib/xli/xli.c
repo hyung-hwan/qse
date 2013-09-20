@@ -21,18 +21,19 @@
 #include "xli.h"
 #include <qse/cmn/chr.h>
 
+static qse_xli_root_list_t* make_root (qse_xli_t* xli);
 static void free_val (qse_xli_root_list_t* xli, qse_xli_val_t* val);
 static void free_list (qse_xli_root_list_t* xli, qse_xli_list_t* list);
 static void free_atom (qse_xli_root_list_t* xli, qse_xli_atom_t* atom);
 
-qse_xli_t* qse_xli_open (qse_mmgr_t* mmgr, qse_size_t xtnsize)
+qse_xli_t* qse_xli_open (qse_mmgr_t* mmgr, qse_size_t xtnsize, qse_size_t rootxtnsize)
 {
 	qse_xli_t* xli;
 
 	xli = (qse_xli_t*) QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(qse_xli_t) + xtnsize);
 	if (xli)
 	{
-		if (qse_xli_init (xli, mmgr) <= -1)
+		if (qse_xli_init (xli, mmgr, rootxtnsize) <= -1)
 		{
 			QSE_MMGR_FREE (xli->mmgr, xli);
 			return QSE_NULL;
@@ -54,11 +55,12 @@ void qse_xli_close (qse_xli_t* xli)
 	QSE_MMGR_FREE (xli->mmgr, xli);
 }
 
-int qse_xli_init (qse_xli_t* xli, qse_mmgr_t* mmgr)
+int qse_xli_init (qse_xli_t* xli, qse_mmgr_t* mmgr, qse_size_t rootxtnsize)
 {
 	QSE_MEMSET (xli, 0, QSE_SIZEOF(*xli));
 	xli->mmgr = mmgr;
 	xli->errstr = qse_xli_dflerrstr;
+	xli->opt.root_xtnsize = rootxtnsize;
 
 	xli->dotted_curkey = qse_str_open (mmgr, 0, 128);
 	if (xli->dotted_curkey == QSE_NULL) goto oops;
@@ -70,12 +72,8 @@ int qse_xli_init (qse_xli_t* xli, qse_mmgr_t* mmgr)
 	if (xli->schema == QSE_NULL) goto oops;
 	qse_rbt_setstyle (xli->schema, qse_getrbtstyle(QSE_RBT_STYLE_INLINE_COPIERS));
 
-	xli->root = QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(*xli->root));
+	xli->root = make_root (xli);
 	if (xli->root == QSE_NULL) goto oops;
-	QSE_MEMSET (xli->root, 0, QSE_SIZEOF(*xli->root));
-	xli->root->list.type = QSE_XLI_LIST;
-	xli->root->xnil.type = QSE_XLI_NIL;
-	xli->root->mmgr = mmgr;
 
 	return 0;
 
@@ -119,6 +117,10 @@ int qse_xli_setopt (qse_xli_t* xli, qse_xli_opt_t id, const void* value)
 		case QSE_XLI_PAIRXTNSIZE:
 			xli->opt.pair_xtnsize = *(const qse_size_t*)value;	
 			return 0;
+
+		case QSE_XLI_ROOTXTNSIZE:
+			xli->opt.root_xtnsize = *(const qse_size_t*)value;	
+			return 0;
 	}
 
 	qse_xli_seterrnum (xli, QSE_XLI_EINVAL, QSE_NULL);
@@ -135,6 +137,10 @@ int qse_xli_getopt (qse_xli_t* xli, qse_xli_opt_t  id, void* value)
 
 		case QSE_XLI_PAIRXTNSIZE:
 			*(qse_size_t*)value = xli->opt.pair_xtnsize;
+			return 0;
+
+		case QSE_XLI_ROOTXTNSIZE:
+			*(qse_size_t*)value = xli->opt.root_xtnsize;
 			return 0;
 	};
 
@@ -402,6 +408,25 @@ qse_xli_eof_t* qse_xli_inserteof (
 
 /* ------------------------------------------------------ */
 
+static qse_xli_root_list_t* make_root (qse_xli_t* xli)
+{
+	qse_xli_root_list_t* tmp;
+
+	tmp = QSE_MMGR_ALLOC (xli->mmgr, QSE_SIZEOF(*tmp) + xli->opt.root_xtnsize);
+	if (tmp == QSE_NULL) 
+	{
+		qse_xli_seterrnum (xli, QSE_XLI_ENOMEM, QSE_NULL);
+		return QSE_NULL;
+	}
+
+	QSE_MEMSET (tmp, 0, QSE_SIZEOF(*tmp) + xli->opt.root_xtnsize);
+	tmp->list.type = QSE_XLI_LIST;
+	tmp->xnil.type = QSE_XLI_NIL;
+	tmp->mmgr = xli->mmgr;
+
+	return tmp;
+}
+
 static void free_val (qse_xli_root_list_t* root, qse_xli_val_t* val)
 {
 	if ((qse_xli_nil_t*)val != &root->xnil)
@@ -475,17 +500,8 @@ qse_xli_list_t* qse_xli_yieldroot (qse_xli_t* xli)
 {
 	qse_xli_root_list_t* tmp, * tmp2;
 
-	tmp = QSE_MMGR_ALLOC (xli->mmgr, QSE_SIZEOF(*tmp));
-	if (tmp == QSE_NULL) 
-	{
-		qse_xli_seterrnum (xli, QSE_XLI_ENOMEM, QSE_NULL);
-		return QSE_NULL;
-	}
-
-	QSE_MEMSET (tmp, 0, QSE_SIZEOF(*tmp));
-	tmp->list.type = QSE_XLI_LIST;
-	tmp->xnil.type = QSE_XLI_NIL;
-	tmp->mmgr = xli->mmgr;
+	tmp = make_root (xli);
+	if (tmp == QSE_NULL) return QSE_NULL;
 
 	tmp2 = xli->root;
 	xli->root = tmp;
@@ -977,6 +993,12 @@ noent:
 void* qse_getxlipairxtn (qse_xli_pair_t* pair)
 {
 	return (void*)(pair + 1);
+}
+
+void* qse_getxlirootxtn (qse_xli_list_t* root)
+{
+	qse_xli_root_list_t* real_root = (qse_xli_root_list_t*)root;
+	return (void*)(real_root + 1);
 }
 
 void qse_freexliroot (qse_xli_list_t* root)

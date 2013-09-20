@@ -65,9 +65,9 @@ typedef struct xtn_t
 	qse_xli_ecb_t ecb;
 } xtn_t;
 
-qse_xli_t* qse_xli_openstd (qse_size_t xtnsize)
+qse_xli_t* qse_xli_openstd (qse_size_t xtnsize, qse_size_t rootxtnsize)
 {
-	return qse_xli_openstdwithmmgr (QSE_MMGR_GETDFL(), xtnsize);
+	return qse_xli_openstdwithmmgr (QSE_MMGR_GETDFL(), xtnsize, rootxtnsize);
 }
 
 static void fini_xtn (qse_xli_t* xli)
@@ -80,13 +80,13 @@ static void clear_xtn (qse_xli_t* xli)
 	/* nothing to do */
 }
 
-qse_xli_t* qse_xli_openstdwithmmgr (qse_mmgr_t* mmgr, qse_size_t xtnsize)
+qse_xli_t* qse_xli_openstdwithmmgr (qse_mmgr_t* mmgr, qse_size_t xtnsize, qse_size_t rootxtnsize)
 {
 	qse_xli_t* xli;
 	xtn_t* xtn;
 
 	/* create an object */
-	xli = qse_xli_open (mmgr, QSE_SIZEOF(xtn_t) + xtnsize);
+	xli = qse_xli_open (mmgr, QSE_SIZEOF(xtn_t) + xtnsize, rootxtnsize);
 	if (xli == QSE_NULL) goto oops;
 
 	/* initialize extension */

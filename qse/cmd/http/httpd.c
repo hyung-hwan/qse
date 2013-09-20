@@ -1470,7 +1470,7 @@ static int open_config_file (qse_httpd_t* httpd)
 	httpd_xtn = (httpd_xtn_t*) qse_httpd_getxtnstd (httpd);
 	QSE_ASSERT (httpd_xtn->xli == QSE_NULL);
 
-	httpd_xtn->xli = qse_xli_openstd (0);
+	httpd_xtn->xli = qse_xli_openstd (0, 0);
 	if (httpd_xtn->xli == QSE_NULL)
 	{
 		qse_fprintf (QSE_STDERR, QSE_T("Cannot open xli\n"));
