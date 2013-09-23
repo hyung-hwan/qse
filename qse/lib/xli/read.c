@@ -811,7 +811,7 @@ static int read_pair (qse_xli_t* xli)
 		/* TODO: check against schema */
 
 	}
-	else if (MATCH (xli, TOK_LBRACE))
+	else if (!(xli->opt.trait & QSE_XLI_NOLIST) && MATCH (xli, TOK_LBRACE))
 	{
 		if (scm && !(scm->flags & QSE_XLI_SCM_VALLIST))
 		{
@@ -847,6 +847,12 @@ static int read_pair (qse_xli_t* xli)
 	}
 	else if (MATCH (xli, TOK_SEMICOLON))
 	{
+		if (xli->opt.trait & QSE_XLI_NONIL) 
+		{
+			qse_xli_seterror (xli, QSE_XLI_ENOVAL, (const qse_cstr_t*)&key, &kloc);
+			goto oops;	
+		}
+
 		if (scm && !(scm->flags & QSE_XLI_SCM_VALNIL) &&
 		           !((scm->flags & QSE_XLI_SCM_VALSTR) && scm->str_minseg <= 0))
 		{

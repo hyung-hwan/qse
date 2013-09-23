@@ -96,7 +96,11 @@ enum qse_xli_trait_t
 
 	QSE_XLI_MULSEGSTR = (1 << 5), /**< support multi-segmented string */
 	QSE_XLI_LEADDIGIT = (1 << 6), /**< allow a leading digit in an identifier */
-	QSE_XLI_VALIDATE  = (1 << 7)
+
+	QSE_XLI_NONIL     = (1 << 7), 
+	QSE_XLI_NOLIST    = (1 << 8),
+
+	QSE_XLI_VALIDATE  = (1 << 9)
 };
 typedef enum qse_xli_trait_t qse_xli_trait_t;
 
