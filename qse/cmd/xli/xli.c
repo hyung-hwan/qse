@@ -138,6 +138,7 @@ static void print_usage (QSE_FILE* out, int argc, qse_char_t* argv[])
 	qse_fprintf (out, QSE_T(" -d                        allow a leading digit in identifiers\n"));
 	qse_fprintf (out, QSE_T(" -n                        disallow nil\n"));
 	qse_fprintf (out, QSE_T(" -l                        disallow lists\n"));
+	qse_fprintf (out, QSE_T(" -T                        allow string tags\n"));
 	qse_fprintf (out, QSE_T(" -v                        perform validation\n"));
 	qse_fprintf (out, QSE_T(" -m                 number specify the maximum amount of memory to use in bytes\n"));
 #if defined(QSE_BUILD_DEBUG)
@@ -165,9 +166,9 @@ static int handle_args (int argc, qse_char_t* argv[])
 	static qse_opt_t opt = 
 	{
 #if defined(QSE_BUILD_DEBUG)
-		QSE_T("hi:o:uaftsdnlvm:X:"),
+		QSE_T("hi:o:uaftsdnlTvm:X:"),
 #else
-		QSE_T("hi:o:uaftsdnlvm:"),
+		QSE_T("hi:o:uaftsdnlTvm:"),
 #endif
 		lng
 	};
@@ -239,6 +240,10 @@ static int handle_args (int argc, qse_char_t* argv[])
 
 			case QSE_T('l'):
 				g_trait |= QSE_XLI_NOLIST;
+				break;
+
+			case QSE_T('T'):
+				g_trait |= QSE_XLI_STRTAG;
 				break;
 
 			case QSE_T('v'):

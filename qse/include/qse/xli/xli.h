@@ -46,8 +46,10 @@ enum qse_xli_errnum_t
 	QSE_XLI_ERBRCE,  /**< } expected in place of '${0}' */
 	QSE_XLI_EPAVAL,  /**< pair value expected in place of '${0}' */
 	QSE_XLI_ESTRNC,  /**< string not closed */
+	QSE_XLI_ETAGNC,  /**< string tag not closed */
 	QSE_XLI_EINCLSTR,/**< '@include' not followed by a string */
 	QSE_XLI_ELXCHR,  /**< invalid character '${0} */
+	QSE_XLI_ETAGCHR, /**< invalid tag character '${0} */
 	QSE_XLI_EXKWNR,  /**< @word '${0}' not recognized */
 	QSE_XLI_EXKWEM,  /**< @ not followed by a valid word  */
 	QSE_XLI_EIDENT,  /**< invalid identifier '${0}' */
@@ -100,7 +102,14 @@ enum qse_xli_trait_t
 	QSE_XLI_NONIL     = (1 << 7), 
 	QSE_XLI_NOLIST    = (1 << 8),
 
-	QSE_XLI_VALIDATE  = (1 << 9)
+	/** enable a string tag. a string tag is a bracketed word 
+	 *  placed in front of a string value. for example, 
+	 *    A = [tg] "abc"; 
+	 *  "tg" is stored into the tag field of qse_xli_str_t. 
+	 */
+	QSE_XLI_STRTAG    = (1 << 9), 
+
+	QSE_XLI_VALIDATE  = (1 << 10)
 };
 typedef enum qse_xli_trait_t qse_xli_trait_t;
 
@@ -155,9 +164,10 @@ struct qse_xli_list_t
 struct qse_xli_str_t
 {
 	QSE_XLI_VAL_HDR;
-	const qse_char_t* ptr;
-	qse_size_t        len; 
-	qse_xli_str_t*    next;
+	const qse_char_t*  tag;
+	const qse_char_t*  ptr;
+	qse_size_t         len; 
+	qse_xli_str_t*     next;
 };
 
 #define QSE_XLI_ATOM_HDR \
@@ -539,6 +549,7 @@ QSE_EXPORT qse_xli_pair_t* qse_xli_insertpairwithstr (
 	qse_xli_atom_t*   peer,
 	const qse_char_t* key,
 	const qse_char_t* alias,
+	const qse_char_t* tag,
 	const qse_cstr_t* value
 );
 
@@ -553,14 +564,14 @@ QSE_EXPORT qse_xli_pair_t* qse_xli_insertpairwithstrs (
 );
 
 QSE_EXPORT qse_xli_text_t* qse_xli_inserttext (
-        qse_xli_t* xli,
+	qse_xli_t* xli,
 	qse_xli_list_t* parent,
 	qse_xli_atom_t* peer,
 	const qse_char_t* str
 );
 
 QSE_EXPORT qse_xli_file_t* qse_xli_insertfile (
-        qse_xli_t* xli,
+	qse_xli_t* xli,
 	qse_xli_list_t* parent,
 	qse_xli_atom_t* peer,
 	const qse_char_t* path
@@ -590,8 +601,9 @@ QSE_EXPORT qse_size_t qse_xli_countpairs (
  * pointed to by \a str.
  */
 QSE_EXPORT qse_xli_str_t* qse_xli_addsegtostr (
-        qse_xli_t*        xli, 
+	qse_xli_t*        xli, 
 	qse_xli_str_t*    str,
+	const qse_char_t* tag,
 	const qse_cstr_t* value
 );
 
@@ -599,7 +611,7 @@ QSE_EXPORT qse_xli_str_t* qse_xli_addsegtostr (
  * The qse_xli_dupflatstr() function duplicates the character strings
  * found in the string list led by \a str and flattens them into a single
  * character string each of whose segment is delimited by '\0' and the last
- * segment is delimited by double '\0's.
+ * segment is delimited by double '\0's. The string tags are not included.
  */
 qse_char_t* qse_xli_dupflatstr (
 	qse_xli_t*     xli,

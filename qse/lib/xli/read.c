@@ -60,6 +60,7 @@ enum tok_t
 	TOK_NSTR,
 	TOK_IDENT,
 	TOK_TEXT,
+	TOK_STRTAG,
 
 	__TOKEN_COUNT__
 };
@@ -431,7 +432,7 @@ retry:
 		if (!QSE_ISALPHA (c))
 		{
 			/* this directive is empty, not followed by a valid word */
-			qse_xli_seterror (xli, QSE_XLI_EXKWEM, QSE_NULL, &xli->tok.loc);
+			qse_xli_seterror (xli, QSE_XLI_EXKWEM, QSE_NULL, &tok->loc);
 			return -1;
 		}
 
@@ -448,7 +449,7 @@ retry:
 		if (type == TOK_IDENT)
 		{
 			/* this keyword/directive is not recognized */
-			qse_xli_seterror (xli, QSE_XLI_EXKWNR, QSE_STR_CSTR(xli->tok.name), &xli->tok.loc);
+			qse_xli_seterror (xli, QSE_XLI_EXKWNR, QSE_STR_CSTR(tok->name), &tok->loc);
 			return -1;
 		}
 		SET_TOKEN_TYPE (xli, tok, type);
@@ -484,7 +485,7 @@ retry:
 		if (lead_digit && all_digits)
 		{
 			/* if an identifier begins with a digit, it must contain a non-digits character */
-			qse_xli_seterror (xli, QSE_XLI_EIDENT, QSE_STR_CSTR(xli->tok.name), &xli->tok.loc);
+			qse_xli_seterror (xli, QSE_XLI_EIDENT, QSE_STR_CSTR(tok->name), &tok->loc);
 			return -1;
 		}
 
@@ -512,7 +513,7 @@ retry:
 			if (c == QSE_CHAR_EOF)
 			{
 				/* the string is not closed */
-				qse_xli_seterror (xli, QSE_XLI_ESTRNC, QSE_NULL, &xli->tok.loc);
+				qse_xli_seterror (xli, QSE_XLI_ESTRNC, QSE_NULL, &tok->loc);
 				return -1;
 			}
 
@@ -540,7 +541,7 @@ retry:
 			if (c == QSE_CHAR_EOF)
 			{
 				/* the string is not closed */
-				qse_xli_seterror (xli, QSE_XLI_ESTRNC, QSE_NULL, &xli->tok.loc);
+				qse_xli_seterror (xli, QSE_XLI_ESTRNC, QSE_NULL, &tok->loc);
 				return -1;
 			}
 
@@ -566,6 +567,46 @@ retry:
 				ADD_TOKEN_CHAR (xli, tok, c);
 				escaped = 0;
 			}
+		}
+	}
+	else if ((xli->opt.trait & QSE_XLI_STRTAG) && c == QSE_T('['))
+	{
+		/* a string tag is a bracketed word placed in front of a string value.
+		 *   A = [tg] "abc"; 
+		 * "tg" is stored into the tag field of qse_xli_str_t. 
+		 */
+
+		SET_TOKEN_TYPE (xli, tok, TOK_STRTAG);
+		
+		while (1)
+		{
+			GET_CHAR_TO (xli, c);
+
+			if (c == QSE_CHAR_EOF)
+			{
+				/* the string tag is not closed */
+				qse_xli_seterror (xli, QSE_XLI_ETAGNC, QSE_NULL, &xli->tok.loc);
+				return -1;
+			}
+
+			if (c == QSE_T(']'))
+			{
+				/* terminating quote */
+				GET_CHAR (xli);
+				break;
+			}
+
+			if (!QSE_ISALNUM(c))
+			{
+				qse_char_t cc = (qse_char_t)c;
+				qse_cstr_t ea;
+				ea.ptr = &cc;
+				ea.len = 1;
+				qse_xli_seterror (xli, QSE_XLI_ETAGCHR, &ea, &tok->loc);
+				return -1;
+			}
+
+			ADD_TOKEN_CHAR (xli, tok, c);
 		}
 	}
 	else
@@ -625,12 +666,14 @@ static int read_pair (qse_xli_t* xli)
 	qse_xli_pair_t* pair;
 	qse_xli_list_t* parlist;
 	qse_size_t dotted_curkey_len;
+	qse_char_t* tag;
 
 	qse_xli_scm_t* scm = QSE_NULL;
 	int key_nodup = 0, key_alias = 0;
 
 	key.ptr = QSE_NULL;
 	name = QSE_NULL;
+	tag = QSE_NULL;
 	dotted_curkey_len = (qse_size_t)-1;
 
 	parlist = xli->parlink->list;
@@ -740,6 +783,18 @@ static int read_pair (qse_xli_t* xli)
 	{
 		if (get_token (xli) <= -1) goto oops;
 
+		if (MATCH (xli, TOK_STRTAG))
+		{
+			tag = qse_strxdup (QSE_STR_PTR(xli->tok.name), QSE_STR_LEN(xli->tok.name), xli->mmgr);
+			if (tag == QSE_NULL)
+			{
+				qse_xli_seterrnum (xli, QSE_XLI_ENOMEM, QSE_NULL); 
+				goto oops;
+			}
+
+			if (get_token (xli) <= -1) goto oops;
+		}
+
 		if (MATCH (xli, TOK_SQSTR) || MATCH (xli, TOK_DQSTR) || MATCH(xli, TOK_NSTR) || MATCH (xli, TOK_IDENT))
 		{
 			qse_xli_str_t* curstrseg;
@@ -753,7 +808,7 @@ static int read_pair (qse_xli_t* xli)
 			}
 
 			/* add a new pair with the initial string segment */
-			pair = qse_xli_insertpairwithstr (xli, parlist, QSE_NULL, key.ptr, name, QSE_STR_CSTR(xli->tok.name));
+			pair = qse_xli_insertpairwithstr (xli, parlist, QSE_NULL, key.ptr, name, tag, QSE_STR_CSTR(xli->tok.name));
 			if (pair == QSE_NULL) goto oops;
 
 			segcount++;
@@ -767,6 +822,24 @@ static int read_pair (qse_xli_t* xli)
 				{
 					if (get_token (xli) <= -1) goto oops; /* skip the comma */
 
+					if (tag) 
+					{
+						QSE_MMGR_FREE (xli->mmgr, tag);
+						tag = QSE_NULL;
+					}
+
+					if (MATCH (xli, TOK_STRTAG))
+					{
+						tag = qse_strxdup (QSE_STR_PTR(xli->tok.name), QSE_STR_LEN(xli->tok.name), xli->mmgr);
+						if (tag == QSE_NULL)
+						{
+							qse_xli_seterrnum (xli, QSE_XLI_ENOMEM, QSE_NULL); 
+							goto oops;
+						}
+						
+						if (get_token (xli) <= -1) goto oops; 
+					}
+
 					if (!MATCH (xli, TOK_SQSTR) && !MATCH (xli, TOK_DQSTR) && !MATCH (xli, TOK_NSTR) && !MATCH (xli, TOK_IDENT))
 					{
 						qse_xli_seterror (xli, QSE_XLI_ESYNTAX, QSE_NULL, &xli->tok.loc);
@@ -774,7 +847,7 @@ static int read_pair (qse_xli_t* xli)
 					}
 
 					/* add an additional segment to the string */
-					curstrseg = qse_xli_addsegtostr (xli, curstrseg, QSE_STR_CSTR(xli->tok.name));
+					curstrseg = qse_xli_addsegtostr (xli, curstrseg, tag, QSE_STR_CSTR(xli->tok.name));
 					if (curstrseg == QSE_NULL) goto oops;
 
 					segcount++;
@@ -878,6 +951,7 @@ static int read_pair (qse_xli_t* xli)
 		goto oops;	
 	}
 
+	if (tag) QSE_MMGR_FREE (xli->mmgr, tag);
 	QSE_MMGR_FREE (xli->mmgr, name);
 	QSE_MMGR_FREE (xli->mmgr, key.ptr);
 	qse_str_setlen (xli->dotted_curkey, dotted_curkey_len);
@@ -885,6 +959,7 @@ static int read_pair (qse_xli_t* xli)
 	
 oops:
 	xli->tok_status &= ~TOK_STATUS_ENABLE_NSTR;
+	if (tag) QSE_MMGR_FREE (xli->mmgr, tag);
 	if (name) QSE_MMGR_FREE (xli->mmgr, name);
 	if (key.ptr) QSE_MMGR_FREE (xli->mmgr, key.ptr);
 	if (dotted_curkey_len != (qse_size_t)-1)
