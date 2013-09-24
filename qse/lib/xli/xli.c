@@ -299,12 +299,17 @@ qse_xli_pair_t* qse_xli_insertpairwithemptylist (
 
 qse_xli_pair_t* qse_xli_insertpairwithstr (
 	qse_xli_t* xli, qse_xli_list_t* parent, qse_xli_atom_t* peer,
-	const qse_char_t* key, const qse_char_t* alias, const qse_cstr_t* value)
+	const qse_char_t* key, const qse_char_t* alias, 
+	const qse_char_t* tag, const qse_cstr_t* value)
 {
 	qse_xli_str_t* val;
 	qse_xli_pair_t* tmp;
+	qse_size_t reqlen;
 
-	val = qse_xli_callocmem (xli, QSE_SIZEOF(*val) + ((value->len  + 1) * QSE_SIZEOF(*value->ptr)));
+	reqlen = QSE_SIZEOF(*val) + ((value->len + 1) * QSE_SIZEOF(*value->ptr));
+	if (tag) reqlen += (qse_strlen (tag) + 1) * QSE_SIZEOF(*tag);
+
+	val = qse_xli_callocmem (xli, reqlen);
 	if (val == QSE_NULL) return QSE_NULL;
 
 	val->type = QSE_XLI_STR;
@@ -313,6 +318,12 @@ qse_xli_pair_t* qse_xli_insertpairwithstr (
 	val->ptr = (const qse_char_t*)(val + 1);
 	val->len = value->len;
 
+	if (tag)
+	{
+		val->tag = val->ptr + val->len + 1;
+		qse_strcpy ((qse_char_t*)val->tag, tag);
+	}
+	
 	tmp = qse_xli_insertpair (xli, parent, peer, key, alias, (qse_xli_val_t*)val);	
 	if (tmp == QSE_NULL) qse_xli_freemem (xli, val);
 	return tmp;
@@ -333,13 +344,13 @@ qse_xli_pair_t* qse_xli_insertpairwithstrs (
 		return QSE_NULL;
 	}
 
-	tmp = qse_xli_insertpairwithstr (xli, parent, peer, key, alias, &value[0]);
+	tmp = qse_xli_insertpairwithstr (xli, parent, peer, key, alias, QSE_NULL, &value[0]);
 	if (tmp == QSE_NULL) return QSE_NULL;
 
 	str = (qse_xli_str_t*)tmp->val;
 	for (i = 1; i < count; i++)
 	{
-		str = qse_xli_addsegtostr (xli, str, &value[i]);			
+		str = qse_xli_addsegtostr (xli, str, QSE_NULL, &value[i]);			
 		if (str == QSE_NULL)
 		{
 			free_atom (xli->root, (qse_xli_atom_t*)tmp);
@@ -811,19 +822,28 @@ noent:
 	return 0;
 }
 
-
 qse_xli_str_t* qse_xli_addsegtostr (
-	qse_xli_t* xli, qse_xli_str_t* str, const qse_cstr_t* value)
+	qse_xli_t* xli, qse_xli_str_t* str, const qse_char_t* tag, const qse_cstr_t* value)
 {
 	qse_xli_str_t* val;
+	qse_size_t reqlen;
 
-	val = qse_xli_callocmem (xli, QSE_SIZEOF(*val) + ((value->len  + 1) * QSE_SIZEOF(*value->ptr)));
+	reqlen = QSE_SIZEOF(*val) + ((value->len + 1) * QSE_SIZEOF(*value->ptr));
+	if (tag) reqlen += (qse_strlen (tag) + 1) * QSE_SIZEOF(*tag);
+
+	val = qse_xli_callocmem (xli, reqlen);
 	if (val == QSE_NULL) return QSE_NULL;
 
 	val->type = QSE_XLI_STR;
 	qse_strncpy ((qse_char_t*)(val + 1), value->ptr, value->len);
 	val->ptr = (const qse_char_t*)(val + 1);
 	val->len = value->len;
+
+	if (tag)
+	{
+		val->tag = val->ptr + val->len + 1;
+		qse_strcpy ((qse_char_t*)val->tag, tag);
+	}
 		
 	val->next = str->next;
 	str->next = val;

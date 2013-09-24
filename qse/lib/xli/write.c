@@ -217,6 +217,13 @@ static int write_list (qse_xli_t* xli, qse_xli_list_t* list, int depth)
 						if (write_to_current_stream (xli, QSE_T(" = "), 3, 0) <= -1) return -1;
 						while (1)
 						{
+							if (str->tag)
+							{
+								if (write_to_current_stream (xli, QSE_T("["), 1, 0) <= -1 ||
+								    write_to_current_stream (xli, str->tag, qse_strlen(str->tag), 0) <= -1 || 
+								    write_to_current_stream (xli, QSE_T("]"), 1, 0) <= -1) return -1;
+							}
+						
 							if (write_to_current_stream (xli, QSE_T("\""), 1, 0) <= -1 ||
 							    write_to_current_stream (xli, str->ptr, str->len, 1) <= -1 ||
 							    write_to_current_stream (xli, QSE_T("\""), 1, 0) <= -1) return -1;
