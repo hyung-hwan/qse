@@ -138,7 +138,8 @@ static void print_usage (QSE_FILE* out, int argc, qse_char_t* argv[])
 	qse_fprintf (out, QSE_T(" -d                        allow a leading digit in identifiers\n"));
 	qse_fprintf (out, QSE_T(" -n                        disallow nil\n"));
 	qse_fprintf (out, QSE_T(" -l                        disallow lists\n"));
-	qse_fprintf (out, QSE_T(" -T                        allow string tags\n"));
+	qse_fprintf (out, QSE_T(" -K                        allow key tags\n"));
+	qse_fprintf (out, QSE_T(" -S                        allow string tags\n"));
 	qse_fprintf (out, QSE_T(" -v                        perform validation\n"));
 	qse_fprintf (out, QSE_T(" -m                 number specify the maximum amount of memory to use in bytes\n"));
 #if defined(QSE_BUILD_DEBUG)
@@ -166,9 +167,9 @@ static int handle_args (int argc, qse_char_t* argv[])
 	static qse_opt_t opt = 
 	{
 #if defined(QSE_BUILD_DEBUG)
-		QSE_T("hi:o:uaftsdnlTvm:X:"),
+		QSE_T("hi:o:uaftsdnlKSvm:X:"),
 #else
-		QSE_T("hi:o:uaftsdnlTvm:"),
+		QSE_T("hi:o:uaftsdnlKSvm:"),
 #endif
 		lng
 	};
@@ -242,7 +243,11 @@ static int handle_args (int argc, qse_char_t* argv[])
 				g_trait |= QSE_XLI_NOLIST;
 				break;
 
-			case QSE_T('T'):
+			case QSE_T('K'):
+				g_trait |= QSE_XLI_KEYTAG;
+				break;
+
+			case QSE_T('S'):
 				g_trait |= QSE_XLI_STRTAG;
 				break;
 
@@ -518,7 +523,7 @@ for (i = 0; i < QSE_COUNTOF(defs); i++) qse_xli_definepair (xli, defs[i].name, &
 			{ QSE_T("world"), 5 }
 		};
 
-		if (qse_xli_insertpairwithstrs (xli, qse_xli_getroot(xli), QSE_NULL, QSE_T("test-key"), QSE_NULL, strs, QSE_COUNTOF(strs)) == QSE_NULL)
+		if (qse_xli_insertpairwithstrs (xli, qse_xli_getroot(xli), QSE_NULL, QSE_T("test-key"), QSE_NULL, QSE_NULL, strs, QSE_COUNTOF(strs)) == QSE_NULL)
 		{
 			qse_fprintf (QSE_STDERR, 
 				QSE_T("ERROR: cannot insert a string pair - %s \n"),

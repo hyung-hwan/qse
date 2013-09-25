@@ -194,8 +194,16 @@ static int write_list (qse_xli_t* xli, qse_xli_list_t* list, int depth)
 			{
 				qse_xli_pair_t* pair = (qse_xli_pair_t*)curatom;
 				
-				if (write_indentation (xli, depth) <= -1 ||
-				    write_to_current_stream (xli, pair->key, qse_strlen(pair->key), 0) <= -1) return -1;
+				if (write_indentation (xli, depth) <= -1) return -1;
+
+				if (pair->tag)
+				{
+					if (write_to_current_stream (xli, QSE_T("["), 1, 0) <= -1 ||
+					    write_to_current_stream (xli, pair->tag, qse_strlen(pair->tag), 0) <= -1 || 
+					    write_to_current_stream (xli, QSE_T("]"), 1, 0) <= -1) return -1;
+				}
+						
+				if (write_to_current_stream (xli, pair->key, qse_strlen(pair->key), 0) <= -1) return -1;
 
 				if (pair->alias) 
 				{

@@ -225,18 +225,20 @@ static void insert_atom (
 
 static qse_xli_pair_t* insert_pair (
 	qse_xli_t* xli, qse_xli_list_t* parent, qse_xli_atom_t* peer,
-	const qse_cstr_t* key, const qse_cstr_t* alias, qse_xli_val_t* value)
+	const qse_cstr_t* key, const qse_cstr_t* alias, const qse_cstr_t* keytag, qse_xli_val_t* value)
 {
 	qse_xli_pair_t* pair;
-	qse_size_t alen;
+	qse_size_t alen, tlen;
 	qse_char_t* kptr, * nptr;
 
 	alen = alias? alias->len: 0;
+	tlen = keytag? keytag->len: 0;
 
 	pair = qse_xli_callocmem (xli, 
 		QSE_SIZEOF(*pair) + xli->opt.pair_xtnsize +
 		((key->len + 1) * QSE_SIZEOF(*key->ptr)) + 
-		((alen + 1) * QSE_SIZEOF(*alias->ptr)));
+		((alen + 1) * QSE_SIZEOF(*alias->ptr)) +
+		((tlen + 1) * QSE_SIZEOF(*keytag->ptr)));
 	if (pair == QSE_NULL) return QSE_NULL;
 
 	kptr = (qse_char_t*)((qse_uint8_t*)(pair + 1) + xli->opt.pair_xtnsize);
@@ -250,6 +252,12 @@ static qse_xli_pair_t* insert_pair (
 		qse_strcpy (nptr, alias->ptr);
 		pair->alias = nptr;
 	}
+	if (keytag)
+	{
+		nptr = kptr + key->len + 1 + alen + 1;
+		qse_strcpy (nptr, keytag->ptr);
+		pair->tag = nptr;
+	}
 	pair->val = value; /* take note of no duplication here */
 
 	insert_atom (xli, parent, peer, (qse_xli_atom_t*)pair);
@@ -259,31 +267,35 @@ static qse_xli_pair_t* insert_pair (
 
 qse_xli_pair_t* qse_xli_insertpair (
 	qse_xli_t* xli, qse_xli_list_t* parent, qse_xli_atom_t* peer,
-	const qse_char_t* key, const qse_char_t* alias, qse_xli_val_t* value)
+	const qse_char_t* key, const qse_char_t* alias, 
+	const qse_char_t* keytag, qse_xli_val_t* value)
 {
 	qse_cstr_t k;
+	qse_cstr_t a, * ap = QSE_NULL;
+	qse_cstr_t t, * tp = QSE_NULL;
 
 	k.ptr = key;
 	k.len = qse_strlen (key);
 
 	if (alias)
 	{
-		qse_cstr_t a;
-
 		a.ptr = alias;
 		a.len = qse_strlen (alias);
-
-		return insert_pair (xli, parent, peer, &k, &a, value);
+		ap = &a;
 	}
-	else
+	if (keytag)
 	{
-		return insert_pair (xli, parent, peer, &k, QSE_NULL, value);
+		t.ptr = keytag;
+		t.len = qse_strlen (keytag);
+		tp = &t;
 	}
+
+	return insert_pair (xli, parent, peer, &k, ap, tp, value);
 }
 
 qse_xli_pair_t* qse_xli_insertpairwithemptylist (
 	qse_xli_t* xli, qse_xli_list_t* parent, qse_xli_atom_t* peer,
-	const qse_char_t* key, const qse_char_t* alias)
+	const qse_char_t* key, const qse_char_t* alias, const qse_char_t* keytag)
 {
 	qse_xli_list_t* val;
 	qse_xli_pair_t* tmp;
@@ -292,22 +304,22 @@ qse_xli_pair_t* qse_xli_insertpairwithemptylist (
 	if (val == QSE_NULL) return QSE_NULL;
 
 	val->type = QSE_XLI_LIST;
-	tmp = qse_xli_insertpair (xli, parent, peer, key, alias, (qse_xli_val_t*)val);	
+	tmp = qse_xli_insertpair (xli, parent, peer, key, alias, keytag, (qse_xli_val_t*)val);	
 	if (tmp == QSE_NULL) qse_xli_freemem (xli, val);
 	return tmp;
 }
 
 qse_xli_pair_t* qse_xli_insertpairwithstr (
 	qse_xli_t* xli, qse_xli_list_t* parent, qse_xli_atom_t* peer,
-	const qse_char_t* key, const qse_char_t* alias, 
-	const qse_char_t* tag, const qse_cstr_t* value)
+	const qse_char_t* key, const qse_char_t* alias, const qse_char_t* keytag,
+	const qse_cstr_t* value, const qse_char_t* strtag)
 {
 	qse_xli_str_t* val;
 	qse_xli_pair_t* tmp;
 	qse_size_t reqlen;
 
 	reqlen = QSE_SIZEOF(*val) + ((value->len + 1) * QSE_SIZEOF(*value->ptr));
-	if (tag) reqlen += (qse_strlen (tag) + 1) * QSE_SIZEOF(*tag);
+	if (strtag) reqlen += (qse_strlen (strtag) + 1) * QSE_SIZEOF(*strtag);
 
 	val = qse_xli_callocmem (xli, reqlen);
 	if (val == QSE_NULL) return QSE_NULL;
@@ -318,20 +330,20 @@ qse_xli_pair_t* qse_xli_insertpairwithstr (
 	val->ptr = (const qse_char_t*)(val + 1);
 	val->len = value->len;
 
-	if (tag)
+	if (strtag)
 	{
 		val->tag = val->ptr + val->len + 1;
-		qse_strcpy ((qse_char_t*)val->tag, tag);
+		qse_strcpy ((qse_char_t*)val->tag, strtag);
 	}
 	
-	tmp = qse_xli_insertpair (xli, parent, peer, key, alias, (qse_xli_val_t*)val);	
+	tmp = qse_xli_insertpair (xli, parent, peer, key, alias, keytag, (qse_xli_val_t*)val);	
 	if (tmp == QSE_NULL) qse_xli_freemem (xli, val);
 	return tmp;
 }
 
 qse_xli_pair_t* qse_xli_insertpairwithstrs (
 	qse_xli_t* xli, qse_xli_list_t* parent, qse_xli_atom_t* peer,
-	const qse_char_t* key, const qse_char_t* alias, 
+	const qse_char_t* key, const qse_char_t* alias, const qse_char_t* keytag,
 	const qse_cstr_t value[], qse_size_t count)
 {
 	qse_xli_pair_t* tmp;
@@ -344,7 +356,7 @@ qse_xli_pair_t* qse_xli_insertpairwithstrs (
 		return QSE_NULL;
 	}
 
-	tmp = qse_xli_insertpairwithstr (xli, parent, peer, key, alias, QSE_NULL, &value[0]);
+	tmp = qse_xli_insertpairwithstr (xli, parent, peer, key, alias, keytag, &value[0], QSE_NULL);
 	if (tmp == QSE_NULL) return QSE_NULL;
 
 	str = (qse_xli_str_t*)tmp->val;

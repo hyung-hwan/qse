@@ -40,24 +40,25 @@ enum qse_xli_errnum_t
 	QSE_XLI_EIOFIL,  /**< io error with file '${0}' */
 	QSE_XLI_EIOUSR,  /**< i/o handler error */
 
-	QSE_XLI_ESYNTAX, /**< syntax error */
-	QSE_XLI_ESCOLON, /**< semicolon expected in place of '${0}' */
-	QSE_XLI_ELBREQ,  /**< { or = expected in place of '${0}' */
-	QSE_XLI_ERBRCE,  /**< } expected in place of '${0}' */
-	QSE_XLI_EPAVAL,  /**< pair value expected in place of '${0}' */
-	QSE_XLI_ESTRNC,  /**< string not closed */
-	QSE_XLI_ETAGNC,  /**< string tag not closed */
-	QSE_XLI_EINCLSTR,/**< '@include' not followed by a string */
-	QSE_XLI_ELXCHR,  /**< invalid character '${0} */
-	QSE_XLI_ETAGCHR, /**< invalid tag character '${0} */
-	QSE_XLI_EXKWNR,  /**< @word '${0}' not recognized */
-	QSE_XLI_EXKWEM,  /**< @ not followed by a valid word  */
-	QSE_XLI_EIDENT,  /**< invalid identifier '${0}' */
-	QSE_XLI_EUDKEY,  /**< undefined key '${0}' */
-	QSE_XLI_ENOALI,  /**< no alias for '${0}' */
-	QSE_XLI_EILVAL,  /**< illegal value for '${0}' */
-	QSE_XLI_ENOVAL,  /**< no value for '${0}' */
-	QSE_XLI_ESTRSEG  /**< too many string segments for '${0}' */
+	QSE_XLI_ESYNTAX,  /**< syntax error */
+	QSE_XLI_ESCOLON,  /**< semicolon expected in place of '${0}' */
+	QSE_XLI_ELBREQ,   /**< { or = expected in place of '${0}' */
+	QSE_XLI_ERBRCE,   /**< } expected in place of '${0}' */
+	QSE_XLI_EPAVAL,   /**< pair value expected in place of '${0}' */
+	QSE_XLI_ESTRNC,   /**< string not closed */
+	QSE_XLI_ETAGNC,   /**< string tag not closed */
+	QSE_XLI_EINCLSTR ,/**< '@include' not followed by a string */
+	QSE_XLI_ELXCHR,   /**< invalid character '${0} */
+	QSE_XLI_ETAGCHR,  /**< invalid tag character '${0} */
+	QSE_XLI_EXKWNR,   /**< @word '${0}' not recognized */
+	QSE_XLI_EXKWEM,   /**< @ not followed by a valid word  */
+	QSE_XLI_EIDENT,   /**< invalid identifier '${0}' */
+	QSE_XLI_ENOKEY,   /**< missing key after key tag */
+	QSE_XLI_EUDKEY,   /**< undefined key '${0}' */
+	QSE_XLI_ENOALI,   /**< no alias for '${0}' */
+	QSE_XLI_EILVAL,   /**< illegal value for '${0}' */
+	QSE_XLI_ENOVAL,   /**< no value for '${0}' */
+	QSE_XLI_ESTRSEG   /**< too many string segments for '${0}' */
 };
 typedef enum qse_xli_errnum_t qse_xli_errnum_t;
 
@@ -102,14 +103,19 @@ enum qse_xli_trait_t
 	QSE_XLI_NONIL     = (1 << 7), 
 	QSE_XLI_NOLIST    = (1 << 8),
 
+	/** enable a pair key tag. a pair key tag is a bracketed 
+	 *  word placed in front of a pair key. for example,
+	 *    [tg] A = "abc";
+	 *  "tg" is stored into the tag field of qse_xli_pair_t. */
+	QSE_XLI_KEYTAG    = (1 << 9),
+
 	/** enable a string tag. a string tag is a bracketed word 
 	 *  placed in front of a string value. for example, 
 	 *    A = [tg] "abc"; 
-	 *  "tg" is stored into the tag field of qse_xli_str_t. 
-	 */
-	QSE_XLI_STRTAG    = (1 << 9), 
+	 *  "tg" is stored into the tag field of qse_xli_str_t. */
+	QSE_XLI_STRTAG    = (1 << 10), 
 
-	QSE_XLI_VALIDATE  = (1 << 10)
+	QSE_XLI_VALIDATE  = (1 << 11)
 };
 typedef enum qse_xli_trait_t qse_xli_trait_t;
 
@@ -187,6 +193,7 @@ struct qse_xli_pair_t
 	QSE_XLI_ATOM_HDR;
 	const qse_char_t* key;
 	const qse_char_t* alias; 
+	const qse_char_t* tag;
 	qse_xli_val_t*    val;
 };
 
@@ -206,7 +213,6 @@ struct qse_xli_eof_t
 {
 	QSE_XLI_ATOM_HDR;
 };
-
 
 /**
  * The qse_xli_ecb_close_t type defines the callback function
@@ -532,6 +538,7 @@ QSE_EXPORT qse_xli_pair_t* qse_xli_insertpair (
 	qse_xli_atom_t*   peer,
 	const qse_char_t* key,
 	const qse_char_t* alias,
+	const qse_char_t* keytag,
 	qse_xli_val_t*    val
 );
 
@@ -540,7 +547,8 @@ QSE_EXPORT qse_xli_pair_t* qse_xli_insertpairwithemptylist (
 	qse_xli_list_t*   list,
 	qse_xli_atom_t*   peer,
 	const qse_char_t* key,
-	const qse_char_t* alias
+	const qse_char_t* alias,
+	const qse_char_t* keytag
 );
 
 QSE_EXPORT qse_xli_pair_t* qse_xli_insertpairwithstr (
@@ -549,8 +557,9 @@ QSE_EXPORT qse_xli_pair_t* qse_xli_insertpairwithstr (
 	qse_xli_atom_t*   peer,
 	const qse_char_t* key,
 	const qse_char_t* alias,
-	const qse_char_t* tag,
-	const qse_cstr_t* value
+	const qse_char_t* keytag,
+	const qse_cstr_t* value,
+	const qse_char_t* strtag
 );
 
 QSE_EXPORT qse_xli_pair_t* qse_xli_insertpairwithstrs (
@@ -559,6 +568,7 @@ QSE_EXPORT qse_xli_pair_t* qse_xli_insertpairwithstrs (
 	qse_xli_atom_t*   peer,
 	const qse_char_t* key,
 	const qse_char_t* alias,
+	const qse_char_t* keytag,
 	const qse_cstr_t  value[],
 	qse_size_t        count
 );
@@ -578,7 +588,7 @@ QSE_EXPORT qse_xli_file_t* qse_xli_insertfile (
 );
 
 QSE_EXPORT qse_xli_eof_t* qse_xli_inserteof (
-        qse_xli_t* xli,
+	qse_xli_t* xli,
 	qse_xli_list_t* parent,
 	qse_xli_atom_t* peer
 );

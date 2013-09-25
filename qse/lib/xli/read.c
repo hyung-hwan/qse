@@ -60,7 +60,7 @@ enum tok_t
 	TOK_NSTR,
 	TOK_IDENT,
 	TOK_TEXT,
-	TOK_STRTAG,
+	TOK_TAG,
 
 	__TOKEN_COUNT__
 };
@@ -569,14 +569,14 @@ retry:
 			}
 		}
 	}
-	else if ((xli->opt.trait & QSE_XLI_STRTAG) && c == QSE_T('['))
+	else if ((xli->opt.trait & (QSE_XLI_KEYTAG | QSE_XLI_STRTAG)) && c == QSE_T('['))
 	{
 		/* a string tag is a bracketed word placed in front of a string value.
 		 *   A = [tg] "abc"; 
 		 * "tg" is stored into the tag field of qse_xli_str_t. 
 		 */
 
-		SET_TOKEN_TYPE (xli, tok, TOK_STRTAG);
+		SET_TOKEN_TYPE (xli, tok, TOK_TAG);
 		
 		while (1)
 		{
@@ -596,7 +596,7 @@ retry:
 				break;
 			}
 
-			if (!QSE_ISALNUM(c))
+			if (!QSE_ISALNUM(c) && c != QSE_T('-') && c != QSE_T('_'))
 			{
 				qse_char_t cc = (qse_char_t)c;
 				qse_cstr_t ea;
@@ -658,7 +658,7 @@ static int get_token (qse_xli_t* xli)
 	return get_token_into (xli, &xli->tok);
 }
 
-static int read_pair (qse_xli_t* xli)
+static int read_pair (qse_xli_t* xli, const qse_char_t* keytag)
 {
 	qse_xstr_t key;
 	qse_xli_loc_t kloc;
@@ -666,14 +666,14 @@ static int read_pair (qse_xli_t* xli)
 	qse_xli_pair_t* pair;
 	qse_xli_list_t* parlist;
 	qse_size_t dotted_curkey_len;
-	qse_char_t* tag;
+	qse_char_t* strtag;
 
 	qse_xli_scm_t* scm = QSE_NULL;
 	int key_nodup = 0, key_alias = 0;
 
 	key.ptr = QSE_NULL;
 	name = QSE_NULL;
-	tag = QSE_NULL;
+	strtag = QSE_NULL;
 	dotted_curkey_len = (qse_size_t)-1;
 
 	parlist = xli->parlink->list;
@@ -742,7 +742,7 @@ static int read_pair (qse_xli_t* xli)
 
 	if (key_alias)
 	{
-		/* the name part must be unique for the same key(s) */
+		/* the alias part must be unique for the same key(s) */
 		if (MATCH (xli, TOK_IDENT) || MATCH (xli, TOK_DQSTR) || MATCH (xli, TOK_SQSTR) || MATCH(xli, TOK_NSTR))
 		{
 			qse_xli_atom_t* atom;
@@ -783,10 +783,10 @@ static int read_pair (qse_xli_t* xli)
 	{
 		if (get_token (xli) <= -1) goto oops;
 
-		if (MATCH (xli, TOK_STRTAG))
+		if ((xli->opt.trait & QSE_XLI_STRTAG) && MATCH (xli, TOK_TAG))
 		{
-			tag = qse_strxdup (QSE_STR_PTR(xli->tok.name), QSE_STR_LEN(xli->tok.name), xli->mmgr);
-			if (tag == QSE_NULL)
+			strtag = qse_strxdup (QSE_STR_PTR(xli->tok.name), QSE_STR_LEN(xli->tok.name), xli->mmgr);
+			if (strtag == QSE_NULL)
 			{
 				qse_xli_seterrnum (xli, QSE_XLI_ENOMEM, QSE_NULL); 
 				goto oops;
@@ -808,7 +808,7 @@ static int read_pair (qse_xli_t* xli)
 			}
 
 			/* add a new pair with the initial string segment */
-			pair = qse_xli_insertpairwithstr (xli, parlist, QSE_NULL, key.ptr, name, tag, QSE_STR_CSTR(xli->tok.name));
+			pair = qse_xli_insertpairwithstr (xli, parlist, QSE_NULL, key.ptr, name, keytag, QSE_STR_CSTR(xli->tok.name), strtag);
 			if (pair == QSE_NULL) goto oops;
 
 			segcount++;
@@ -822,16 +822,16 @@ static int read_pair (qse_xli_t* xli)
 				{
 					if (get_token (xli) <= -1) goto oops; /* skip the comma */
 
-					if (tag) 
+					if (strtag) 
 					{
-						QSE_MMGR_FREE (xli->mmgr, tag);
-						tag = QSE_NULL;
+						QSE_MMGR_FREE (xli->mmgr, strtag);
+						strtag = QSE_NULL;
 					}
 
-					if (MATCH (xli, TOK_STRTAG))
+					if ((xli->opt.trait & QSE_XLI_STRTAG) && MATCH (xli, TOK_TAG))
 					{
-						tag = qse_strxdup (QSE_STR_PTR(xli->tok.name), QSE_STR_LEN(xli->tok.name), xli->mmgr);
-						if (tag == QSE_NULL)
+						strtag = qse_strxdup (QSE_STR_PTR(xli->tok.name), QSE_STR_LEN(xli->tok.name), xli->mmgr);
+						if (strtag == QSE_NULL)
 						{
 							qse_xli_seterrnum (xli, QSE_XLI_ENOMEM, QSE_NULL); 
 							goto oops;
@@ -847,7 +847,7 @@ static int read_pair (qse_xli_t* xli)
 					}
 
 					/* add an additional segment to the string */
-					curstrseg = qse_xli_addsegtostr (xli, curstrseg, tag, QSE_STR_CSTR(xli->tok.name));
+					curstrseg = qse_xli_addsegtostr (xli, curstrseg, strtag, QSE_STR_CSTR(xli->tok.name));
 					if (curstrseg == QSE_NULL) goto oops;
 
 					segcount++;
@@ -896,7 +896,7 @@ static int read_pair (qse_xli_t* xli)
 		xli->tok_status &= ~TOK_STATUS_ENABLE_NSTR;
 
 		/* insert a pair with an empty list */
-		pair = qse_xli_insertpairwithemptylist (xli, parlist, QSE_NULL, key.ptr, name);
+		pair = qse_xli_insertpairwithemptylist (xli, parlist, QSE_NULL, key.ptr, name, keytag);
 		if (pair == QSE_NULL) goto oops;
 	
 		if (read_list (xli, (qse_xli_list_t*)pair->val) <= -1) goto oops;
@@ -937,7 +937,7 @@ static int read_pair (qse_xli_t* xli)
 		xli->tok_status &= ~TOK_STATUS_ENABLE_NSTR;
 
 		/* no value has been specified for the pair */
-		pair = qse_xli_insertpair (xli, parlist, QSE_NULL, key.ptr, name, (qse_xli_val_t*)&xli->root->xnil);
+		pair = qse_xli_insertpair (xli, parlist, QSE_NULL, key.ptr, name, keytag, (qse_xli_val_t*)&xli->root->xnil);
 		if (pair == QSE_NULL) goto oops;
 
 		/* skip the semicolon */
@@ -951,7 +951,7 @@ static int read_pair (qse_xli_t* xli)
 		goto oops;	
 	}
 
-	if (tag) QSE_MMGR_FREE (xli->mmgr, tag);
+	if (strtag) QSE_MMGR_FREE (xli->mmgr, strtag);
 	QSE_MMGR_FREE (xli->mmgr, name);
 	QSE_MMGR_FREE (xli->mmgr, key.ptr);
 	qse_str_setlen (xli->dotted_curkey, dotted_curkey_len);
@@ -959,7 +959,7 @@ static int read_pair (qse_xli_t* xli)
 	
 oops:
 	xli->tok_status &= ~TOK_STATUS_ENABLE_NSTR;
-	if (tag) QSE_MMGR_FREE (xli->mmgr, tag);
+	if (strtag) QSE_MMGR_FREE (xli->mmgr, strtag);
 	if (name) QSE_MMGR_FREE (xli->mmgr, name);
 	if (key.ptr) QSE_MMGR_FREE (xli->mmgr, key.ptr);
 	if (dotted_curkey_len != (qse_size_t)-1)
@@ -1003,9 +1003,38 @@ static int __read_list (qse_xli_t* xli)
 
 			if (begin_include (xli) <= -1) return -1;
 		}
+		else if ((xli->opt.trait & QSE_XLI_KEYTAG) && MATCH (xli, TOK_TAG))
+		{
+			qse_char_t* keytag;
+			int x;
+
+			keytag = qse_strxdup (QSE_STR_PTR(xli->tok.name), QSE_STR_LEN(xli->tok.name), xli->mmgr);
+			if (keytag == QSE_NULL)
+			{
+				qse_xli_seterrnum (xli, QSE_XLI_ENOMEM, QSE_NULL); 
+				return -1;
+			}
+
+			if (get_token(xli) <= -1) 
+			{
+				QSE_MMGR_FREE (xli->mmgr, keytag);
+				return -1;
+			}
+
+			if (!MATCH(xli,TOK_IDENT))
+			{
+				QSE_MMGR_FREE (xli->mmgr, keytag);
+				qse_xli_seterror (xli, QSE_XLI_ENOKEY, QSE_NULL, &xli->tok.loc);
+				return -1;
+			}
+
+			x = read_pair (xli, keytag);
+			QSE_MMGR_FREE (xli->mmgr, keytag);
+			if (x <= -1) return -1;
+		}
 		else if (MATCH (xli, TOK_IDENT))
 		{
-			if (read_pair (xli) <= -1) return -1;
+			if (read_pair (xli, QSE_NULL) <= -1) return -1;
 		}
 		else if (MATCH (xli, TOK_TEXT))
 		{
