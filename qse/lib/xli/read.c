@@ -475,7 +475,7 @@ retry:
 			{
 				all_digits = 0;
 			}
-			else if (lead_digit && QSE_ISDIGIT(c)) 
+			else if (QSE_ISDIGIT(c)) 
 			{
 				/* nothing to do */
 			}

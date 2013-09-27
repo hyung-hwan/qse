@@ -173,8 +173,8 @@ typedef qse_wchar_t* (*qse_wcssubst_t) (
 		qse_char_t __ston_c = *__ston_ptr; \
 		if (__ston_c == QSE_T(' ') || \
 		    __ston_c == QSE_T('\t')) { __ston_ptr++; continue; } \
-		if (__ston_c == QSE_T('-')) { __ston_f++; __ston_ptr++; } \
-		if (__ston_c == QSE_T('+')) { __ston_ptr++; } \
+		else if (__ston_c == QSE_T('-')) { __ston_f++; __ston_ptr++; } \
+		else if (__ston_c == QSE_T('+')) { __ston_ptr++; } \
 		break; \
 	} \
 	for (value = 0; (__ston_v = QSE_CHARTONUM(*__ston_ptr, base)) < base; __ston_ptr++) { \
@@ -195,8 +195,8 @@ typedef qse_wchar_t* (*qse_wcssubst_t) (
 		if (__ston_c == QSE_T(' ') || __ston_c == QSE_T('\t')) { \
 			__ston_ptr++; continue; \
 		} \
-		if (__ston_c == QSE_T('-')) { __ston_f++; __ston_ptr++; } \
-		if (__ston_c == QSE_T('+')) { __ston_ptr++; } \
+		else if (__ston_c == QSE_T('-')) { __ston_f++; __ston_ptr++; } \
+		else if (__ston_c == QSE_T('+')) { __ston_ptr++; } \
 		break; \
 	} \
 	for (value = 0; __ston_ptr < __ston_end && \
@@ -221,8 +221,8 @@ typedef qse_wchar_t* (*qse_wcssubst_t) (
 		qse_mchar_t __ston_c = *__ston_ptr; \
 		if (__ston_c == QSE_MT(' ') || \
 		    __ston_c == QSE_MT('\t')) { __ston_ptr++; continue; } \
-		if (__ston_c == QSE_MT('-')) { __ston_f++; __ston_ptr++; } \
-		if (__ston_c == QSE_MT('+')) { __ston_ptr++; } \
+		else if (__ston_c == QSE_MT('-')) { __ston_f++; __ston_ptr++; } \
+		else if (__ston_c == QSE_MT('+')) { __ston_ptr++; } \
 		break; \
 	} \
 	for (value = 0; (__ston_v = QSE_MCHARTONUM(*__ston_ptr, base)) < base; __ston_ptr++) { \
@@ -243,8 +243,8 @@ typedef qse_wchar_t* (*qse_wcssubst_t) (
 		if (__ston_c == QSE_MT(' ') || __ston_c == QSE_MT('\t')) { \
 			__ston_ptr++; continue; \
 		} \
-		if (__ston_c == QSE_MT('-')) { __ston_f++; __ston_ptr++; } \
-		if (__ston_c == QSE_MT('+')) { __ston_ptr++; } \
+		else if (__ston_c == QSE_MT('-')) { __ston_f++; __ston_ptr++; } \
+		else if (__ston_c == QSE_MT('+')) { __ston_ptr++; } \
 		break; \
 	} \
 	for (value = 0; __ston_ptr < __ston_end && \
@@ -269,8 +269,8 @@ typedef qse_wchar_t* (*qse_wcssubst_t) (
 		qse_wchar_t __ston_c = *__ston_ptr; \
 		if (__ston_c == QSE_WT(' ') || \
 		    __ston_c == QSE_WT('\t')) { __ston_ptr++; continue; } \
-		if (__ston_c == QSE_WT('-')) { __ston_f++; __ston_ptr++; } \
-		if (__ston_c == QSE_WT('+')) { __ston_ptr++; } \
+		else if (__ston_c == QSE_WT('-')) { __ston_f++; __ston_ptr++; } \
+		else if (__ston_c == QSE_WT('+')) { __ston_ptr++; } \
 		break; \
 	} \
 	for (value = 0; (__ston_v = QSE_WCHARTONUM(*__ston_ptr, base)) < base; __ston_ptr++) { \
@@ -291,8 +291,8 @@ typedef qse_wchar_t* (*qse_wcssubst_t) (
 		if (__ston_c == QSE_WT(' ') || __ston_c == QSE_WT('\t')) { \
 			__ston_ptr++; continue; \
 		} \
-		if (__ston_c == QSE_WT('-')) { __ston_f++; __ston_ptr++; } \
-		if (__ston_c == QSE_WT('+')) { __ston_ptr++; } \
+		else if (__ston_c == QSE_WT('-')) { __ston_f++; __ston_ptr++; } \
+		else if (__ston_c == QSE_WT('+')) { __ston_ptr++; } \
 		break; \
 	} \
 	for (value = 0; __ston_ptr < __ston_end && \
