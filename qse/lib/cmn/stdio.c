@@ -57,7 +57,7 @@ int qse_vfprintf (QSE_FILE *stream, const qse_char_t* fmt, va_list ap)
 	FILE* fp;
 
 	nf = __adjust_format (fmt);
-	if (nf == NULL) return -1;
+	if (nf == QSE_NULL) return -1;
 
 	fp = STREAM_TO_FILE (stream);
 
@@ -76,7 +76,7 @@ int qse_vprintf (const qse_char_t* fmt, va_list ap)
 	qse_char_t* nf;
 
 	nf = __adjust_format (fmt);
-	if (nf == NULL) return -1;
+	if (nf == QSE_NULL) return -1;
 
 #if defined(QSE_CHAR_IS_MCHAR)
 	n = vfprintf (stdout, nf, ap);
@@ -96,7 +96,7 @@ int qse_fprintf (QSE_FILE* stream, const qse_char_t* fmt, ...)
 	FILE* fp;
 
 	nf = __adjust_format (fmt);
-	if (nf == NULL) return -1;
+	if (nf == QSE_NULL) return -1;
 
 	fp = STREAM_TO_FILE (stream);
 
@@ -119,7 +119,7 @@ int qse_printf (const qse_char_t* fmt, ...)
 	qse_char_t* nf;
 
 	nf = __adjust_format (fmt);
-	if (nf == NULL) return -1;
+	if (nf == QSE_NULL) return -1;
 
 	va_start (ap, fmt);
 #if defined(QSE_CHAR_IS_MCHAR)
@@ -140,7 +140,7 @@ int qse_dprintf (const qse_char_t* fmt, ...)
 	qse_char_t* nf;
 
 	nf = __adjust_format (fmt);
-	if (nf == NULL) return -1;
+	if (nf == QSE_NULL) return -1;
 
 	va_start (ap, fmt);
 #if defined(QSE_CHAR_IS_MCHAR)
@@ -158,7 +158,7 @@ int qse_vsprintf (qse_char_t* buf, qse_size_t size, const qse_char_t* fmt, va_li
 {
 	int n;
 	qse_char_t* nf = __adjust_format (fmt);
-	if (nf == NULL) return -1;
+	if (nf == QSE_NULL) return -1;
 
 #if defined(QSE_CHAR_IS_MCHAR)
 	#if defined(_MSC_VER) || defined(__BORLANDC__) || (defined(__WATCOMC__) && (__WATCOMC__ < 1200)) || defined(HAVE__VSNPRINTF)
@@ -207,10 +207,10 @@ int qse_sprintf (qse_char_t* buf, qse_size_t size, const qse_char_t* fmt, ...)
 			tmp = (qse_char_t*) QSE_MMGR_REALLOC ( \
 				QSE_MMGR_GETDFL(), buf.ptr, \
 				QSE_SIZEOF(qse_char_t) * (buf.cap+256+1)); \
-			if (tmp == NULL) \
+			if (tmp == QSE_NULL) \
 			{ \
 				QSE_MMGR_FREE (QSE_MMGR_GETDFL(), buf.ptr); \
-				return NULL; \
+				return QSE_NULL; \
 			} \
 			buf.ptr = tmp; \
 			buf.cap = buf.cap + 256; \
@@ -236,7 +236,7 @@ static qse_char_t* __adjust_format (const qse_char_t* format)
 
 	buf.ptr = (qse_char_t*) QSE_MMGR_ALLOC (
 		QSE_MMGR_GETDFL(), QSE_SIZEOF(qse_char_t) * (buf.cap+1));
-	if (buf.ptr == NULL) return NULL;
+	if (buf.ptr == QSE_NULL) return QSE_NULL;
 
 	while (*fp != QSE_T('\0')) 
 	{

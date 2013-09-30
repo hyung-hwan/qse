@@ -11,6 +11,7 @@ noinst_HEADERS = \
 	cp950.h \
 	fs.h \
 	mem.h \
+	printf.h \
 	str-subst.h \
 	syscall.h \
 	syserr.h \
@@ -62,6 +63,7 @@ libqsecmn_la_SOURCES = \
 	pma.c \
 	rbt.c \
 	rex.c \
+	printf.c \
 	sio.c \
 	sll.c \
 	slmb.c \
