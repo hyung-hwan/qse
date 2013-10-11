@@ -12,6 +12,7 @@ noinst_HEADERS = \
 	fs.h \
 	mem.h \
 	printf.h \
+	str-join.h \
 	str-subst.h \
 	syscall.h \
 	syserr.h \
@@ -83,6 +84,7 @@ libqsecmn_la_SOURCES = \
 	str-fcpy.c \
 	str-fnmat.c \
 	str-incl.c \
+	str-join.c \
 	str-len.c \
 	str-pac.c \
 	str-pbrk.c \
