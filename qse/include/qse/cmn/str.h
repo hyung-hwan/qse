@@ -914,6 +914,56 @@ QSE_EXPORT qse_size_t qse_wcsxncat (
 #	define qse_strxncat(buf,bsz,str,len) qse_wcsxncat(buf,bsz,str,len)
 #endif
 
+
+/* ---------------------------------------------------- */
+
+QSE_EXPORT qse_size_t qse_mbsjoin (
+	qse_mchar_t* buf, 
+	...
+);
+
+QSE_EXPORT qse_size_t qse_mbsxjoin (
+	qse_mchar_t* buf,
+	qse_size_t   size,
+	...
+);
+
+/*
+ * The qse_wcsjoin() function joins a list of wide-charcter strings into 
+ * a buffer. The list of strings is terminated by QSE_NULL.
+ *
+ * \code
+ *  qse_wcsjoin (x, QSE_T("hello"), QSE_T("world"), QSE_NULL);
+ * \endcode
+ *
+ * \return the number of character in the joined string excluding 
+ *         the terminating null.
+ */
+QSE_EXPORT qse_size_t qse_wcsjoin (
+	qse_wchar_t* buf, 
+	...
+);
+
+QSE_EXPORT qse_size_t qse_wcsxjoin (
+	qse_wchar_t* buf,
+	qse_size_t   size,
+	...
+);
+
+QSE_EXPORT qse_size_t qse_strjoin (
+	qse_char_t* buf, 
+	...
+);
+
+QSE_EXPORT qse_size_t qse_strxjoin (
+	qse_char_t* buf,
+	qse_size_t  size,
+	...
+);
+
+/* ---------------------------------------------------- */
+
+
 QSE_EXPORT int qse_mbscmp (
 	const qse_mchar_t* s1,
 	const qse_mchar_t* s2

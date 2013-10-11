@@ -94,12 +94,12 @@ am__libqsecmn_la_SOURCES_DIST = alg-base64.c alg-rand.c alg-search.c \
 	slmb.c stdio.c str-beg.c str-cat.c str-chr.c str-cnv.c \
 	str-cmp.c str-cpy.c str-del.c str-dup.c str-dynm.c str-dynw.c \
 	str-end.c str-excl.c str-fcpy.c str-fnmat.c str-incl.c \
-	str-len.c str-pac.c str-pbrk.c str-put.c str-rev.c str-rot.c \
-	str-set.c str-spl.c str-spn.c str-str.c str-subst.c str-tok.c \
-	str-trm.c str-word.c task.c time.c tio.c tre.c tre-ast.c \
-	tre-compile.c tre-match-backtrack.c tre-match-parallel.c \
-	tre-parse.c tre-stack.c uri.c utf8.c xma.c uni.c cp949.c \
-	cp950.c
+	str-join.c str-len.c str-pac.c str-pbrk.c str-put.c str-rev.c \
+	str-rot.c str-set.c str-spl.c str-spn.c str-str.c str-subst.c \
+	str-tok.c str-trm.c str-word.c task.c time.c tio.c tre.c \
+	tre-ast.c tre-compile.c tre-match-backtrack.c \
+	tre-match-parallel.c tre-parse.c tre-stack.c uri.c utf8.c \
+	xma.c uni.c cp949.c cp950.c
 @ENABLE_BUNDLED_UNICODE_TRUE@am__objects_1 = uni.lo
 @ENABLE_XCMGRS_TRUE@am__objects_2 = cp949.lo cp950.lo
 am_libqsecmn_la_OBJECTS = alg-base64.lo alg-rand.lo alg-search.lo \
@@ -112,12 +112,13 @@ am_libqsecmn_la_OBJECTS = alg-base64.lo alg-rand.lo alg-search.lo \
 	str-beg.lo str-cat.lo str-chr.lo str-cnv.lo str-cmp.lo \
 	str-cpy.lo str-del.lo str-dup.lo str-dynm.lo str-dynw.lo \
 	str-end.lo str-excl.lo str-fcpy.lo str-fnmat.lo str-incl.lo \
-	str-len.lo str-pac.lo str-pbrk.lo str-put.lo str-rev.lo \
-	str-rot.lo str-set.lo str-spl.lo str-spn.lo str-str.lo \
-	str-subst.lo str-tok.lo str-trm.lo str-word.lo task.lo time.lo \
-	tio.lo tre.lo tre-ast.lo tre-compile.lo tre-match-backtrack.lo \
-	tre-match-parallel.lo tre-parse.lo tre-stack.lo uri.lo utf8.lo \
-	xma.lo $(am__objects_1) $(am__objects_2)
+	str-join.lo str-len.lo str-pac.lo str-pbrk.lo str-put.lo \
+	str-rev.lo str-rot.lo str-set.lo str-spl.lo str-spn.lo \
+	str-str.lo str-subst.lo str-tok.lo str-trm.lo str-word.lo \
+	task.lo time.lo tio.lo tre.lo tre-ast.lo tre-compile.lo \
+	tre-match-backtrack.lo tre-match-parallel.lo tre-parse.lo \
+	tre-stack.lo uri.lo utf8.lo xma.lo $(am__objects_1) \
+	$(am__objects_2)
 libqsecmn_la_OBJECTS = $(am_libqsecmn_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
@@ -369,6 +370,7 @@ noinst_HEADERS = \
 	fs.h \
 	mem.h \
 	printf.h \
+	str-join.h \
 	str-subst.h \
 	syscall.h \
 	syserr.h \
@@ -387,10 +389,10 @@ libqsecmn_la_SOURCES = alg-base64.c alg-rand.c alg-search.c alg-sort.c \
 	pio.c pma.c rbt.c rex.c printf.c sio.c sll.c slmb.c stdio.c \
 	str-beg.c str-cat.c str-chr.c str-cnv.c str-cmp.c str-cpy.c \
 	str-del.c str-dup.c str-dynm.c str-dynw.c str-end.c str-excl.c \
-	str-fcpy.c str-fnmat.c str-incl.c str-len.c str-pac.c \
-	str-pbrk.c str-put.c str-rev.c str-rot.c str-set.c str-spl.c \
-	str-spn.c str-str.c str-subst.c str-tok.c str-trm.c str-word.c \
-	task.c time.c tio.c tre.c tre-ast.c tre-compile.c \
+	str-fcpy.c str-fnmat.c str-incl.c str-join.c str-len.c \
+	str-pac.c str-pbrk.c str-put.c str-rev.c str-rot.c str-set.c \
+	str-spl.c str-spn.c str-str.c str-subst.c str-tok.c str-trm.c \
+	str-word.c task.c time.c tio.c tre.c tre-ast.c tre-compile.c \
 	tre-match-backtrack.c tre-match-parallel.c tre-parse.c \
 	tre-stack.c uri.c utf8.c xma.c $(am__append_1) $(am__append_2)
 libqsecmn_la_LDFLAGS = -version-info 1:0:0 -no-undefined
@@ -540,6 +542,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str-fcpy.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str-fnmat.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str-incl.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str-join.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str-len.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str-pac.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str-pbrk.Plo@am__quote@
