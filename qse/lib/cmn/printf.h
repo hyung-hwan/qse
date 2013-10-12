@@ -59,97 +59,143 @@ static char_t* sprintn (char_t* nbuf, qse_uintmax_t num, int base, int *lenp, in
 	while (num /= base);
 
 	if (lenp) *lenp = p - nbuf;
-	return (p);
+	return p;
 }
 
-#define PCHAR(c) do { \
-	func (c, arg); \
+#undef PUT_CHAR
+#undef PUT_OCHAR
+
+/* TODO: error check */
+#define PUT_CHAR(c) do { \
+	put_char (c, arg); \
 	retval++; \
 } while (0)
 
-#define OPCHAR(c) do { \
-	ofunc (c, arg); \
+#define PUT_OCHAR(c) do { \
+	put_ochar (c, arg); \
 	retval++; \
 } while (0)
 
-int xprintf (char_t const *fmt, void (*func)(char_t, void*), void (*ofunc) (ochar_t, void*), void *arg, va_list ap)
+int xprintf (char_t const *fmt, void (*put_char)(char_t, void*), void (*put_ochar) (ochar_t, void*), void *arg, va_list ap)
 {
 	char_t nbuf[MAXNBUF];
 	const char_t* p, * percent;
 	uchar_t ch; 
 	int n;
 	qse_uintmax_t num;
-	int base, tmp, width, ladjust, sharpflag, neg, sign, dot;
-	int dwidth, upper;
+	int base, tmp, width, neg, sign;
+	int precision, upper;
 	char_t padc, * sp;
 	ochar_t opadc, * osp;
 	int stop = 0, retval = 0;
-	int lm_flag, lm_dflag;
+	int lm_flag, lm_dflag, flagc;
+	int numlen;
 
 	num = 0;
 
-	if (fmt == QSE_NULL) fmt = T("(fmt null)\n");
+	/*if (fmt == QSE_NULL) fmt = T("(fmt null)\n");*/
 
 	while (1)
 	{
-		padc = T(' ');
-		opadc = OT(' ');
 
-		width = 0;
 		while ((ch = (uchar_t)*fmt++) != T('%') || stop) 
 		{
-			if (ch == T('\0')) return (retval);
-			PCHAR(ch);
+			if (ch == T('\0')) return retval;
+			PUT_CHAR(ch);
 		}
 		percent = fmt - 1;
-		ladjust = 0; sharpflag = 0; neg = 0;
-		sign = 0; dot = 0; dwidth = 0; upper = 0;
 
-		lm_flag = 0; lm_dflag = 0;
+		padc = T(' '); opadc = OT(' ');
+		width = 0; precision = 0;
+		neg = 0; sign = 0; upper = 0;
+
+		lm_flag = 0; lm_dflag = 0; flagc = 0; 
 
 reswitch:	
 		switch (ch = (uchar_t)*fmt++) 
 		{
 		case T('%'): /* %% */
-			PCHAR(ch);
+			PUT_CHAR(ch);
 			break;
 
+		/* flag characters */
 		case T('.'):
-			dot = 1;
-			goto reswitch;
-		case T('#'):
-			sharpflag = 1;
-			goto reswitch;
-		case T('+'):
-			sign = 1;
-			goto reswitch;
-		case T('-'):
-			ladjust = 1;
+			flagc |= FLAGC_DOT;
 			goto reswitch;
 
-		case T('*'):
-			if (!dot) 
+		case T('#'): 
+			if (flagc & (FLAGC_WIDTH | FLAGC_DOT)) goto invalid_format;
+			flagc |= FLAGC_SHARP;
+			goto reswitch;
+
+		case T(' '):
+			if (flagc & (FLAGC_WIDTH | FLAGC_DOT)) goto invalid_format;
+			flagc |= FLAGC_SPACE;
+			goto reswitch;
+
+		case T('+'): /* place sign for signed conversion */
+			if (flagc & (FLAGC_WIDTH | FLAGC_DOT)) goto invalid_format;
+			flagc |= FLAGC_SIGN;
+			goto reswitch;
+
+		case T('-'): /* left adjusted */
+			if (flagc & (FLAGC_WIDTH | FLAGC_DOT)) goto invalid_format;
+			if (flagc & FLAGC_DOT)
+			{
+				goto invalid_format;
+			}
+			else
+			{
+				flagc |= FLAGC_LEFTADJ;
+				if (flagc & FLAGC_ZEROPAD)
+				{
+					padc = T(' ');
+					opadc = OT(' ');
+					flagc &= ~FLAGC_ZEROPAD;
+				}
+			}
+			
+			goto reswitch;
+
+		case T('*'): /* take the length from the parameter */
+			if (!(flagc & FLAGC_DOT)) 
 			{
 				width = va_arg(ap, int);
 				if (width < 0) 
 				{
-					ladjust = !ladjust;
+					/*
+					if (flagc & FLAGC_LEFTADJ) 
+						flagc  &= ~FLAGC_LEFTADJ;
+					else
+					*/
+						flagc |= FLAGC_LEFTADJ;
 					width = -width;
 				}
 			} 
 			else 
 			{
-				dwidth = va_arg(ap, int);
+				precision = va_arg(ap, int);
+				if (precision < 0) 
+				{
+					/* if precision is less than 0, 
+					 * treat it as if no .precision is specified */
+					flagc &= ~FLAGC_DOT;
+					precision = 0;
+				}
 			}
 			goto reswitch;
 
-		case T('0'):
-			if (!dot) 
+		case T('0'): /* zero pad */
+			if (flagc & (FLAGC_WIDTH | FLAGC_DOT)) goto invalid_format;
+			if (!(flagc & FLAGC_LEFTADJ))
 			{
 				padc = T('0');
 				opadc = OT('0');
+				flagc |= FLAGC_ZEROPAD;
 				goto reswitch;
 			}
+		/* end of flags characters */
+
 		case T('1'): case T('2'): case T('3'): case T('4'):
 		case T('5'): case T('6'): case T('7'): case T('8'): case T('9'):
 			for (n = 0;; ++fmt) 
@@ -158,32 +204,15 @@ reswitch:
 				ch = *fmt;
 				if (ch < T('0') || ch > T('9')) break;
 			}
-			if (dot) dwidth = n;
-			else width = n;
+			if (flagc & FLAGC_DOT) precision = n;
+			else 
+			{
+				width = n;
+				flagc |= FLAGC_WIDTH;
+			}
 			goto reswitch;
 
-		case T('c'):
-			if (((lm_flag & LF_H) && (QSE_SIZEOF(char_t) > QSE_SIZEOF(ochar_t))) ||
-			    ((lm_flag & LF_L) && (QSE_SIZEOF(char_t) < QSE_SIZEOF(ochar_t)))) goto uppercase_c;
-		lowercase_c:
-			if (QSE_SIZEOF(char_t) < QSE_SIZEOF(int))
-				PCHAR(va_arg(ap, int));
-			else
-				PCHAR(va_arg(ap, char_t));
-			break;
-
-		case T('C'):
-			if (((lm_flag & LF_H) && (QSE_SIZEOF(char_t) < QSE_SIZEOF(ochar_t))) ||
-			    ((lm_flag & LF_L) && (QSE_SIZEOF(char_t) > QSE_SIZEOF(ochar_t)))) goto lowercase_c;
-		uppercase_c:
-			if (QSE_SIZEOF(ochar_t) < QSE_SIZEOF(int))
-				OPCHAR(va_arg(ap, int));
-			else
-				OPCHAR(va_arg(ap, ochar_t));
-			break;
-
-
-/* length modifiers */
+		/* length modifiers */
 		case T('h'): /* short int */
 		case T('l'): /* long int */
 		case T('q'): /* long long int */
@@ -193,10 +222,10 @@ reswitch:
 			if (lm_dflag)
 			{
 				/* error */
-				PCHAR (fmt[-4]);
-				PCHAR (fmt[-3]);
-				PCHAR (fmt[-2]);
-				PCHAR (fmt[-1]);
+				PUT_CHAR (fmt[-4]);
+				PUT_CHAR (fmt[-3]);
+				PUT_CHAR (fmt[-2]);
+				PUT_CHAR (fmt[-1]);
 				break;
 			}
 			else if (lm_flag)
@@ -211,9 +240,9 @@ reswitch:
 				else
 				{
 					/* error */
-					PCHAR (fmt[-3]);
-					PCHAR (fmt[-2]);
-					PCHAR (fmt[-1]);
+					PUT_CHAR (fmt[-3]);
+					PUT_CHAR (fmt[-2]);
+					PUT_CHAR (fmt[-1]);
 					break;
 				}
 			}
@@ -223,7 +252,7 @@ reswitch:
 				goto reswitch;
 			}
 			break;
-/* end of length modifiers */
+		/* end of length modifiers */
 
 		case T('n'):
 			if (lm_flag & LF_J)
@@ -244,14 +273,19 @@ reswitch:
 				*(va_arg(ap, int*)) = retval;
 			break;
 
-		case T('o'):
-			base = 8;
-			goto handle_nosign;
+
+		/* signed integer conversions */
 		case T('d'):
-		case T('i'):
+		case T('i'): /* signed conversion */
 			base = 10;
 			sign = 1;
 			goto handle_sign;
+		/* end of signed integer conversions */
+
+		/* unsigned integer conversions */
+		case T('o'): 
+			base = 8;
+			goto handle_nosign;
 		case T('u'):
 			base = 10;
 			goto handle_nosign;
@@ -260,17 +294,36 @@ reswitch:
 		case T('x'):
 			base = 16;
 			goto handle_nosign;
-		case T('y'):
-			base = 16;
-			sign = 1;
-			goto handle_sign;
+		/* end of unsigned integer conversions */
 
-		case T('p'):
+		case T('p'): /* pointer */
 			base = 16;
-			sharpflag = (width == 0);
-			sign = 0;
-			num = (qse_uintptr_t)va_arg(ap, void *);
+
+			if (width == 0) flagc |= FLAGC_SHARP;
+			else flagc &= ~FLAGC_SHARP;
+
+			num = (qse_uintptr_t)va_arg(ap, void*);
 			goto number;
+
+		case T('c'):
+			if (((lm_flag & LF_H) && (QSE_SIZEOF(char_t) > QSE_SIZEOF(ochar_t))) ||
+			    ((lm_flag & LF_L) && (QSE_SIZEOF(char_t) < QSE_SIZEOF(ochar_t)))) goto uppercase_c;
+		lowercase_c:
+			if (QSE_SIZEOF(char_t) < QSE_SIZEOF(int))
+				PUT_CHAR(va_arg(ap, int));
+			else
+				PUT_CHAR(va_arg(ap, char_t));
+			break;
+
+		case T('C'):
+			if (((lm_flag & LF_H) && (QSE_SIZEOF(char_t) < QSE_SIZEOF(ochar_t))) ||
+			    ((lm_flag & LF_L) && (QSE_SIZEOF(char_t) > QSE_SIZEOF(ochar_t)))) goto lowercase_c;
+		uppercase_c:
+			if (QSE_SIZEOF(ochar_t) < QSE_SIZEOF(int))
+				PUT_OCHAR(va_arg(ap, int));
+			else
+				PUT_OCHAR(va_arg(ap, ochar_t));
+			break;
 
 		case T('s'):
 		{
@@ -279,7 +332,7 @@ reswitch:
 		lowercase_s:
 			sp = va_arg (ap, char_t *);
 			if (sp == QSE_NULL) p = T("(null)");
-			if (!dot) 
+			if (!(flagc & FLAGC_DOT)) 
 			{
 				char_t* p = sp;
 				while (*p) p++;
@@ -287,19 +340,19 @@ reswitch:
 			}
 			else
 			{
-				for (n = 0; n < dwidth && sp[n]; n++) continue;
+				for (n = 0; n < precision && sp[n]; n++) continue;
 			}
 
 			width -= n;
 
-			if (!ladjust && width > 0)
+			if (!(flagc & FLAGC_LEFTADJ) && width > 0)
 			{
-				while (width--) PCHAR(padc);
+				while (width--) PUT_CHAR(padc);
 			}
-			while (n--) PCHAR(*sp++);
-			if (ladjust && width > 0)
+			while (n--) PUT_CHAR(*sp++);
+			if ((flagc & FLAGC_LEFTADJ) && width > 0)
 			{
-				while (width--) PCHAR(padc);
+				while (width--) PUT_CHAR(padc);
 			}
 			break;
 		}
@@ -311,7 +364,7 @@ reswitch:
 		uppercase_s:
 			osp = va_arg (ap, ochar_t*);
 			if (osp == QSE_NULL) osp = OT("(null)");
-			if (!dot)
+			if (!(flagc & FLAGC_DOT)) 
 			{
 				ochar_t* p = osp;
 				while (*p) p++;
@@ -319,19 +372,19 @@ reswitch:
 			}
 			else
 			{
-				for (n = 0; n < dwidth && osp[n]; n++) continue;
+				for (n = 0; n < precision && osp[n]; n++) continue;
 			}
 
 			width -= n;
 
-			if (!ladjust && width > 0)
+			if (!(flagc & FLAGC_LEFTADJ) && width > 0)
 			{
-				while (width--) OPCHAR (opadc);
+				while (width--) PUT_OCHAR (opadc);
 			}
-			while (n--) OPCHAR(*osp++);
-			if (ladjust && width > 0)
+			while (n--) PUT_OCHAR(*osp++);
+			if ((flagc & FLAGC_LEFTADJ) && width > 0)
 			{
-				while (width--) OPCHAR (opadc);
+				while (width--) PUT_OCHAR (opadc);
 			}
 			break;
 		}
@@ -391,46 +444,71 @@ number:
 				num = -(qse_intmax_t)num;
 			}
 			p = sprintn (nbuf, num, base, &tmp, upper);
-			if (sharpflag && num != 0) 
+			if ((flagc & FLAGC_SHARP) && num != 0) 
 			{
 				if (base == 8) tmp++;
 				else if (base == 16) tmp += 2;
 			}
 			if (neg) tmp++;
+			else if (flagc & FLAGC_SIGN) tmp++;
+			else if (flagc & FLAGC_SPACE) tmp++;
 
-			if (!ladjust && padc != T('0') && width && (width -= tmp) > 0)
+			numlen = p - nbuf;
+			if ((flagc & FLAGC_DOT) && precision > numlen) 
 			{
-				while (width--) PCHAR(padc);
+				/* extra zeros fro precision specified */
+				tmp += (precision - numlen);
 			}
-			if (neg) PCHAR(T('-'));
 
-			if (sharpflag && num != 0) 
+			if (!(flagc & FLAGC_LEFTADJ) && !(flagc & FLAGC_ZEROPAD) && width > 0 && (width -= tmp) > 0)
 			{
-				if (base == 8) {
-					PCHAR(T('0'));
+				while (width--) PUT_CHAR(padc);
+			}
+
+			if (neg) PUT_CHAR(T('-'));
+			else if (flagc & FLAGC_SIGN) PUT_CHAR(T('+'));
+			else if (flagc & FLAGC_SPACE) PUT_CHAR(T(' '));
+
+			if ((flagc & FLAGC_SHARP) && num != 0) 
+			{
+				if (base == 8) 
+				{
+					PUT_CHAR(T('0'));
 				} 
 				else if (base == 16) 
 				{
-					PCHAR(T('0'));
-					PCHAR(T('x'));
+					PUT_CHAR(T('0'));
+					PUT_CHAR(T('x'));
 				}
 			}
-			if (!ladjust && width && (width -= tmp) > 0)
+
+			if ((flagc & FLAGC_DOT) && precision > numlen)
 			{
-				while (width--) PCHAR(padc);
+				/* extra zeros for precision specified */
+				while (numlen < precision) 
+				{
+					PUT_CHAR (T('0'));
+					numlen++;
+				}
 			}
 
-			while (*p) PCHAR(*p--);
-
-			if (ladjust && width && (width -= tmp) > 0)
+			if (!(flagc & FLAGC_LEFTADJ) && width > 0 && (width -= tmp) > 0)
 			{
-				while (width--) PCHAR(padc);
+				while (width-- > 0) PUT_CHAR (padc);
+			}
+
+			while (*p) PUT_CHAR(*p--); /* output actual digits */
+
+			if ((flagc & FLAGC_LEFTADJ) && width > 0 && (width -= tmp) > 0)
+			{
+				while (width-- > 0) PUT_CHAR (padc);
 			}
 
 			break;
 
 		default:
-			while (percent < fmt) PCHAR(*percent++);
+invalid_format:
+			while (percent < fmt) PUT_CHAR(*percent++);
 			/*
 			 * Since we ignore an formatting argument it is no
 			 * longer safe to obey the remaining formatting
@@ -442,6 +520,6 @@ number:
 		}
 	}
 }
-#undef PCHAR
-#undef OPCHAR
+#undef PUT_CHAR
+#undef PUT_OCHAR
 

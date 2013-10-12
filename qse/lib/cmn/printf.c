@@ -56,9 +56,21 @@ static struct
 	{ LF_Z, 0 }, /* z */
 };
 
+
+enum 
+{
+	FLAGC_DOT       = (1 << 0),
+	FLAGC_SHARP     = (1 << 1),
+	FLAGC_SIGN      = (1 << 2),
+	FLAGC_SPACE     = (1 << 3),
+	FLAGC_LEFTADJ   = (1 << 4),
+	FLAGC_ZEROPAD   = (1 << 5),
+	FLAGC_WIDTH     = (1 << 6)
+};
+
 #include <stdio.h> /* TODO: remove dependency on this */
 
-static void xputwchar (qse_wchar_t c, void *arg)
+static void put_wchar (qse_wchar_t c, void *arg)
 {
 	qse_cmgr_t* cmgr;
 	qse_mchar_t mbsbuf[QSE_MBLEN_MAX + 1];
@@ -77,7 +89,7 @@ static void xputwchar (qse_wchar_t c, void *arg)
 	}
 }
 
-static void xputmchar (qse_mchar_t c, void *arg)
+static void put_mchar (qse_mchar_t c, void *arg)
 {
 	putchar (c);
 }
@@ -111,14 +123,14 @@ int qse_mprintf (const char_t *fmt, ...)
 	va_list ap;
 	int n;
 	va_start (ap, fmt);
-	n = qse_mxprintf (fmt, xputmchar, xputwchar, QSE_NULL, ap);
+	n = qse_mxprintf (fmt, put_mchar, put_wchar, QSE_NULL, ap);
 	va_end (ap);
 	return n;
 }
 
 int qse_mvprintf (const char_t* fmt, va_list ap)
 {
-	return qse_mxprintf (fmt, xputmchar, xputwchar, QSE_NULL, ap);
+	return qse_mxprintf (fmt, put_mchar, put_wchar, QSE_NULL, ap);
 }
 
 /* ------------------------------------------------------------------ */
@@ -142,7 +154,8 @@ int qse_mvprintf (const char_t* fmt, va_list ap)
 #define sprintn w_sprintn
 #define xprintf qse_wxprintf 
 
-static const qse_wchar_t w_hex2ascii[] = QSE_WT("0123456789abcdefghijklmnopqrstuvwxyz");
+static const qse_wchar_t w_hex2ascii[] = 
+	QSE_WT("0123456789abcdefghijklmnopqrstuvwxyz");
 #define hex2ascii(hex)  (w_hex2ascii[hex])
 
 #include "printf.h"
@@ -152,12 +165,12 @@ int qse_wprintf (const char_t *fmt, ...)
 	va_list ap;
 	int n;
 	va_start (ap, fmt);
-	n = qse_wxprintf (fmt, xputwchar, xputmchar, QSE_NULL, ap);
+	n = qse_wxprintf (fmt, put_wchar, put_mchar, QSE_NULL, ap);
 	va_end (ap);
 	return n;
 }
 
 int qse_wvprintf (const char_t* fmt, va_list ap)
 {
-	return qse_wxprintf (fmt, xputwchar, xputmchar, QSE_NULL, ap);
+	return qse_wxprintf (fmt, put_wchar, put_mchar, QSE_NULL, ap);
 }
