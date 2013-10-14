@@ -1,4 +1,29 @@
-/*-
+/*
+ * $Id$
+ *
+    Copyright 2006-2012 Chung, Hyung-Hwan.
+    This file is part of QSE.
+
+    QSE is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as
+    published by the Free Software Foundation, either version 3 of
+    the License, or (at your option) any later version.
+
+    QSE is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public
+    License along with QSE. If not, see <http://www.gnu.org/licenses/>.
+ */
+
+/*
+ * This file contains a formatted output routine derived from kvprintf() 
+ * of FreeBSD. It has been heavily modified and bug-fixed.
+ */
+
+/*
  * Copyright (c) 1986, 1988, 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
  * (c) UNIX System Laboratories, Inc.
@@ -31,13 +56,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)subr_prf.c	8.3 (Berkeley) 1/21/94
  */
-
-#define NBBY    8               /* number of bits in a byte */
-
-/* Max number conversion buffer length: a u_quad_t in base 2, plus NUL byte. */
-#define MAXNBUF	(QSE_SIZEOF(qse_intmax_t) * NBBY + 1)
 
 /*
  * Put a NUL-terminated ASCII number (base <= 36) in a buffer in reverse
@@ -80,24 +99,17 @@ int xprintf (char_t const *fmt, void (*put_char)(char_t, void*), void (*put_ocha
 {
 	char_t nbuf[MAXNBUF];
 	const char_t* p, * percent;
+	int n, base, tmp, width, neg, sign, precision, upper;
 	uchar_t ch; 
-	int n;
-	qse_uintmax_t num;
-	int base, tmp, width, neg, sign;
-	int precision, upper;
-	char_t padc, * sp;
-	ochar_t opadc, * osp;
+	char_t ach, padc, * sp;
+	ochar_t oach, opadc, * osp;
+	int lm_flag, lm_dflag, flagc, numlen;
+	qse_uintmax_t num = 0;
 	int stop = 0, retval = 0;
-	int lm_flag, lm_dflag, flagc;
-	int numlen;
-
-	num = 0;
-
-	/*if (fmt == QSE_NULL) fmt = T("(fmt null)\n");*/
+	char_t fltbuf[100];
 
 	while (1)
 	{
-
 		while ((ch = (uchar_t)*fmt++) != T('%') || stop) 
 		{
 			if (ch == T('\0')) return retval;
@@ -115,31 +127,33 @@ reswitch:
 		switch (ch = (uchar_t)*fmt++) 
 		{
 		case T('%'): /* %% */
-			PUT_CHAR(ch);
+			ach = ch;
+			goto print_lowercase_c;
 			break;
 
 		/* flag characters */
 		case T('.'):
+			if (flagc & FLAGC_DOT) goto invalid_format;
 			flagc |= FLAGC_DOT;
 			goto reswitch;
 
 		case T('#'): 
-			if (flagc & (FLAGC_WIDTH | FLAGC_DOT)) goto invalid_format;
+			if (flagc & (FLAGC_WIDTH | FLAGC_DOT | FLAGC_LENMOD)) goto invalid_format;
 			flagc |= FLAGC_SHARP;
 			goto reswitch;
 
 		case T(' '):
-			if (flagc & (FLAGC_WIDTH | FLAGC_DOT)) goto invalid_format;
+			if (flagc & (FLAGC_WIDTH | FLAGC_DOT | FLAGC_LENMOD)) goto invalid_format;
 			flagc |= FLAGC_SPACE;
 			goto reswitch;
 
 		case T('+'): /* place sign for signed conversion */
-			if (flagc & (FLAGC_WIDTH | FLAGC_DOT)) goto invalid_format;
+			if (flagc & (FLAGC_WIDTH | FLAGC_DOT | FLAGC_LENMOD)) goto invalid_format;
 			flagc |= FLAGC_SIGN;
 			goto reswitch;
 
 		case T('-'): /* left adjusted */
-			if (flagc & (FLAGC_WIDTH | FLAGC_DOT)) goto invalid_format;
+			if (flagc & (FLAGC_WIDTH | FLAGC_DOT | FLAGC_LENMOD)) goto invalid_format;
 			if (flagc & FLAGC_DOT)
 			{
 				goto invalid_format;
@@ -158,8 +172,25 @@ reswitch:
 			goto reswitch;
 
 		case T('*'): /* take the length from the parameter */
-			if (!(flagc & FLAGC_DOT)) 
+			if (flagc & FLAGC_DOT) 
 			{
+				if (flagc & (FLAGC_STAR2 | FLAGC_PRECISION)) goto invalid_format;
+				flagc |= FLAGC_STAR2;
+
+				precision = va_arg(ap, int);
+				if (precision < 0) 
+				{
+					/* if precision is less than 0, 
+					 * treat it as if no .precision is specified */
+					flagc &= ~FLAGC_DOT;
+					precision = 0;
+				}
+			} 
+			else 
+			{
+				if (flagc & (FLAGC_STAR1 | FLAGC_WIDTH)) goto invalid_format;
+				flagc |= FLAGC_STAR1;
+
 				width = va_arg(ap, int);
 				if (width < 0) 
 				{
@@ -171,23 +202,12 @@ reswitch:
 						flagc |= FLAGC_LEFTADJ;
 					width = -width;
 				}
-			} 
-			else 
-			{
-				precision = va_arg(ap, int);
-				if (precision < 0) 
-				{
-					/* if precision is less than 0, 
-					 * treat it as if no .precision is specified */
-					flagc &= ~FLAGC_DOT;
-					precision = 0;
-				}
 			}
 			goto reswitch;
 
 		case T('0'): /* zero pad */
-			if (flagc & (FLAGC_WIDTH | FLAGC_DOT)) goto invalid_format;
-			if (!(flagc & FLAGC_LEFTADJ))
+			if (flagc & FLAGC_LENMOD) goto invalid_format;
+			if (!(flagc & (FLAGC_DOT | FLAGC_LEFTADJ)))
 			{
 				padc = T('0');
 				opadc = OT('0');
@@ -204,9 +224,15 @@ reswitch:
 				ch = *fmt;
 				if (ch < T('0') || ch > T('9')) break;
 			}
-			if (flagc & FLAGC_DOT) precision = n;
+			if (flagc & FLAGC_DOT) 
+			{
+				if (flagc & FLAGC_STAR2) goto invalid_format;
+				precision = n;
+				flagc |= FLAGC_PRECISION;
+			}
 			else 
 			{
+				if (flagc & FLAGC_STAR1) goto invalid_format;
 				width = n;
 				flagc |= FLAGC_WIDTH;
 			}
@@ -218,15 +244,16 @@ reswitch:
 		case T('q'): /* long long int */
 		case T('j'): /* uintmax_t */
 		case T('z'): /* size_t */
+#if 0
 		case T('t'): /* ptrdiff_t */
+#endif
+			if (lm_flag & LF_LD) goto invalid_format;
+
+			flagc |= FLAGC_LENMOD;
 			if (lm_dflag)
 			{
 				/* error */
-				PUT_CHAR (fmt[-4]);
-				PUT_CHAR (fmt[-3]);
-				PUT_CHAR (fmt[-2]);
-				PUT_CHAR (fmt[-1]);
-				break;
+				goto invalid_format;
 			}
 			else if (lm_flag)
 			{
@@ -240,10 +267,7 @@ reswitch:
 				else
 				{
 					/* error */
-					PUT_CHAR (fmt[-3]);
-					PUT_CHAR (fmt[-2]);
-					PUT_CHAR (fmt[-1]);
-					break;
+					goto invalid_format;
 				}
 			}
 			else 
@@ -252,15 +276,25 @@ reswitch:
 				goto reswitch;
 			}
 			break;
+
+		case T('L'): /* long double */
+			if (flagc & FLAGC_LENMOD) 
+			{
+				/* conflict integral length modifier */
+				goto invalid_format; 
+			}
+			flagc |= FLAGC_LENMOD;
+			lm_flag |= LF_LD;
+			goto reswitch;
 		/* end of length modifiers */
 
 		case T('n'):
 			if (lm_flag & LF_J)
-				*(va_arg(ap, qse_intmax_t *)) = retval;
-#if (QSE_SIZEOF_LONG_LONG > 0)
+				*(va_arg(ap, qse_intmax_t*)) = retval;
+		#if (QSE_SIZEOF_LONG_LONG > 0)
 			else if (lm_flag & LF_Q)
 				*(va_arg(ap, long long int*)) = retval;
-#endif
+		#endif
 			else if (lm_flag & LF_L)
 				*(va_arg(ap, long int*)) = retval;
 			else if (lm_flag & LF_Z)
@@ -277,6 +311,9 @@ reswitch:
 		/* signed integer conversions */
 		case T('d'):
 		case T('i'): /* signed conversion */
+		#if defined(NO_MERCY)
+			if (lm_flag & LF_LD) goto invalid_format;
+		#endif
 			base = 10;
 			sign = 1;
 			goto handle_sign;
@@ -284,19 +321,31 @@ reswitch:
 
 		/* unsigned integer conversions */
 		case T('o'): 
+		#if defined(NO_MERCY)
+			if (lm_flag & LF_LD) goto invalid_format;
+		#endif
 			base = 8;
 			goto handle_nosign;
 		case T('u'):
+		#if defined(NO_MERCY)
+			if (lm_flag & LF_LD) goto invalid_format;
+		#endif
 			base = 10;
 			goto handle_nosign;
 		case T('X'):
 			upper = 1;
 		case T('x'):
+		#if defined(NO_MERCY)
+			if (lm_flag & LF_LD) goto invalid_format;
+		#endif
 			base = 16;
 			goto handle_nosign;
 		/* end of unsigned integer conversions */
 
 		case T('p'): /* pointer */
+		#if defined(NO_MERCY)
+			if (lm_flag & LF_LD) goto invalid_format;
+		#endif
 			base = 16;
 
 			if (width == 0) flagc |= FLAGC_SHARP;
@@ -309,38 +358,58 @@ reswitch:
 			if (((lm_flag & LF_H) && (QSE_SIZEOF(char_t) > QSE_SIZEOF(ochar_t))) ||
 			    ((lm_flag & LF_L) && (QSE_SIZEOF(char_t) < QSE_SIZEOF(ochar_t)))) goto uppercase_c;
 		lowercase_c:
-			if (QSE_SIZEOF(char_t) < QSE_SIZEOF(int))
-				PUT_CHAR(va_arg(ap, int));
-			else
-				PUT_CHAR(va_arg(ap, char_t));
+			ach = QSE_SIZEOF(char_t) < QSE_SIZEOF(int)? va_arg(ap, int): va_arg(ap, char_t);
+
+		print_lowercase_c:	
+			/* precision 0 doesn't kill the letter */
+			width--;
+			if (!(flagc & FLAGC_LEFTADJ) && width > 0)
+			{
+				while (width--) PUT_CHAR (padc);
+			}
+			PUT_CHAR (ach);
+			if ((flagc & FLAGC_LEFTADJ) && width > 0)
+			{
+				while (width--) PUT_CHAR (padc);
+			}
 			break;
 
 		case T('C'):
 			if (((lm_flag & LF_H) && (QSE_SIZEOF(char_t) < QSE_SIZEOF(ochar_t))) ||
 			    ((lm_flag & LF_L) && (QSE_SIZEOF(char_t) > QSE_SIZEOF(ochar_t)))) goto lowercase_c;
 		uppercase_c:
-			if (QSE_SIZEOF(ochar_t) < QSE_SIZEOF(int))
-				PUT_OCHAR(va_arg(ap, int));
-			else
-				PUT_OCHAR(va_arg(ap, ochar_t));
+			oach = QSE_SIZEOF(ochar_t) < QSE_SIZEOF(int)? va_arg(ap, int): va_arg(ap, ochar_t);
+
+			/* precision 0 doesn't kill the letter */
+			width--;
+			if (!(flagc & FLAGC_LEFTADJ) && width > 0)
+			{
+				while (width--) PUT_OCHAR (opadc);
+			}
+			PUT_OCHAR (oach);
+			if ((flagc & FLAGC_LEFTADJ) && width > 0)
+			{
+				while (width--) PUT_OCHAR (opadc);
+			}
 			break;
 
 		case T('s'):
-		{
 			if (((lm_flag & LF_H) && (QSE_SIZEOF(char_t) > QSE_SIZEOF(ochar_t))) ||
 			    ((lm_flag & LF_L) && (QSE_SIZEOF(char_t) < QSE_SIZEOF(ochar_t)))) goto uppercase_s;
 		lowercase_s:
 			sp = va_arg (ap, char_t *);
 			if (sp == QSE_NULL) p = T("(null)");
-			if (!(flagc & FLAGC_DOT)) 
+		
+		print_lowercase_s:
+			if (flagc & FLAGC_DOT)
+			{
+				for (n = 0; n < precision && sp[n]; n++) continue;
+			}
+			else
 			{
 				char_t* p = sp;
 				while (*p) p++;
 				n = p - sp;
-			}
-			else
-			{
-				for (n = 0; n < precision && sp[n]; n++) continue;
 			}
 
 			width -= n;
@@ -355,24 +424,22 @@ reswitch:
 				while (width--) PUT_CHAR(padc);
 			}
 			break;
-		}
 
 		case T('S'):
-		{
 			if (((lm_flag & LF_H) && (QSE_SIZEOF(char_t) < QSE_SIZEOF(ochar_t))) ||
 			    ((lm_flag & LF_L) && (QSE_SIZEOF(char_t) > QSE_SIZEOF(ochar_t)))) goto lowercase_s;
 		uppercase_s:
 			osp = va_arg (ap, ochar_t*);
 			if (osp == QSE_NULL) osp = OT("(null)");
-			if (!(flagc & FLAGC_DOT)) 
+			if (flagc & FLAGC_DOT) 
+			{
+				for (n = 0; n < precision && osp[n]; n++) continue;
+			}
+			else
 			{
 				ochar_t* p = osp;
 				while (*p) p++;
 				n = p - osp;
-			}
-			else
-			{
-				for (n = 0; n < precision && osp[n]; n++) continue;
 			}
 
 			width -= n;
@@ -387,55 +454,134 @@ reswitch:
 				while (width--) PUT_OCHAR (opadc);
 			}
 			break;
+
+		case T('e'):
+		case T('E'):
+		case T('f'):
+		case T('F'):
+		case T('g'):
+		case T('G'):
+		/*
+		case T('a'):
+		case T('A'):
+		*/
+		{
+			qse_mchar_t tmpbuf[100];
+			qse_mchar_t tmpfmt[100];
+			const char_t* xx;
+			const qse_mchar_t* yy;
+			int q;
+
+		#if defined(NO_MERCY)
+			if (lm_flag & ~LF_LD) goto invalid_format;
+		#endif
+			for (xx = percent, q = 0; xx < fmt; xx++) tmpfmt[q++] = *xx;
+			tmpfmt[q] = QSE_MT('\0');
+			if (lm_flag & LF_LD)
+				snprintf (tmpbuf, QSE_SIZEOF(tmpbuf), tmpfmt, va_arg (ap, long double));
+			else
+				snprintf (tmpbuf, QSE_SIZEOF(tmpbuf), tmpfmt, va_arg (ap, double));
+			for (yy = tmpbuf, q = 0; *yy; ) fltbuf[q++] = *yy++;
+			fltbuf[q] = QSE_T('\0');
+			sp = fltbuf;	
+			flagc &= ~FLAGC_DOT;
+			width = 0;
+			precision = 0;
+			goto print_lowercase_s;
+			break;
 		}
 
 handle_nosign:
 			sign = 0;
 			if (lm_flag & LF_J)
-				num = va_arg(ap, qse_uintmax_t);
-#if (QSE_SIZEOF_LONG_LONG > 0)
+			{
+			#if defined(__GNUC__) && \
+			    (QSE_SIZEOF_UINTMAX_T > QSE_SIZEOF_SIZE_T) && \
+			    (QSE_SIZEOF_UINTMAX_T != QSE_SIZEOF_LONG_LONG) && \
+			    (QSE_SIZEOF_UINTMAX_T != QSE_SIZEOF_LONG)
+				/* GCC-compiled binaries crashed when getting qse_uintmax_t with va_arg.
+				 * This is just a work-around for it */
+				int i;
+				for (i = 0, num = 0; i < QSE_SIZEOF(qse_uintmax_t) / QSE_SIZEOF(qse_size_t); i++)
+				{	
+				#if defined(QSE_ENDIAN_BIG)
+					num = num << (8 * QSE_SIZEOF(qse_size_t)) | (va_arg (ap, qse_size_t));
+				#else
+					register int shift = i * QSE_SIZEOF(qse_size_t);
+					qse_size_t x = va_arg (ap, qse_size_t);
+					num |= (qse_uintmax_t)x << (shift * 8);
+				#endif
+				}
+			#else
+				num = va_arg (ap, qse_uintmax_t);
+			#endif
+			}
+			#if (QSE_SIZEOF_LONG_LONG > 0)
 			else if (lm_flag & LF_Q)
-				num = va_arg(ap, unsigned long long int);
-#endif
+				num = va_arg (ap, unsigned long long int);
+			#endif
 
-#if 0
+			#if 0
 			else if (lm_flag & LF_T)
-				num = va_arg(ap, ptrdiff_t);
-#endif
+				num = va_arg (ap, ptrdiff_t);
+			#endif
 
 			else if (lm_flag & LF_L)
-				num = va_arg(ap, long int);
+				num = va_arg (ap, long int);
 			else if (lm_flag & LF_Z)
-				num = va_arg(ap, qse_size_t);
+				num = va_arg (ap, qse_size_t);
 			else if (lm_flag & LF_H)
-				num = (unsigned short int)va_arg(ap, int);
+				num = (unsigned short int)va_arg (ap, int);
 			else if (lm_flag & LF_C)
-				num = (unsigned char)va_arg(ap, int);
+				num = (unsigned char)va_arg (ap, int);
 			else
-				num = va_arg(ap, unsigned int);
+				num = va_arg (ap, unsigned int);
 			goto number;
 
 handle_sign:
 			if (lm_flag & LF_J)
-				num = va_arg(ap, qse_intmax_t);
-#if (QSE_SIZEOF_LONG_LONG > 0)
+			{
+			#if defined(__GNUC__) && \
+			    (QSE_SIZEOF_INTMAX_T > QSE_SIZEOF_SIZE_T) && \
+			    (QSE_SIZEOF_UINTMAX_T != QSE_SIZEOF_LONG_LONG) && \
+			    (QSE_SIZEOF_UINTMAX_T != QSE_SIZEOF_LONG)
+				/* GCC-compiled binraries crashed when getting qse_uintmax_t with va_arg.
+				 * This is just a work-around for it */
+				int i;
+				for (i = 0, num = 0; i < QSE_SIZEOF(qse_intmax_t) / QSE_SIZEOF(qse_size_t); i++)
+				{	
+				#if defined(QSE_ENDIAN_BIG)
+					num = num << (8 * QSE_SIZEOF(qse_size_t)) | (va_arg (ap, qse_size_t));
+				#else
+					register int shift = i * QSE_SIZEOF(qse_size_t);
+					qse_size_t x = va_arg (ap, qse_size_t);
+					num |= (qse_uintmax_t)x << (shift * 8);
+				#endif
+				}
+			#else
+				num = va_arg (ap, qse_intmax_t);
+			#endif
+			}
+
+			#if (QSE_SIZEOF_LONG_LONG > 0)
 			else if (lm_flag & LF_Q)
-				num = va_arg(ap, long long int);
-#endif
-#if 0
+				num = va_arg (ap, long long int);
+			#endif
+
+			#if 0
 			else if (lm_flag & LF_T)
 				num = va_arg(ap, ptrdiff_t);
-#endif
+			#endif
 			else if (lm_flag & LF_L)
-				num = va_arg(ap, long int);
+				num = va_arg (ap, long int);
 			else if (lm_flag & LF_Z)
-				num = va_arg(ap, qse_ssize_t);
+				num = va_arg (ap, qse_ssize_t);
 			else if (lm_flag & LF_H)
-				num = (short int)va_arg(ap, int);
+				num = (short int)va_arg (ap, int);
 			else if (lm_flag & LF_C)
-				num = (char)va_arg(ap, int);
+				num = (char)va_arg (ap, int);
 			else
-				num = va_arg(ap, int);
+				num = va_arg (ap, int);
 
 number:
 			if (sign && (qse_intmax_t)num < 0) 
@@ -503,11 +649,13 @@ number:
 			{
 				while (width-- > 0) PUT_CHAR (padc);
 			}
+			break;
 
+invalid_format:
+			while (percent < fmt) PUT_CHAR(*percent++);
 			break;
 
 		default:
-invalid_format:
 			while (percent < fmt) PUT_CHAR(*percent++);
 			/*
 			 * Since we ignore an formatting argument it is no
