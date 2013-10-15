@@ -291,6 +291,14 @@ QSE_EXPORT int qse_fmtuintmaxtowcs (
 #	define qse_fmtuintmax(b,sz,v,bf,pr,fc,pf) qse_fmtuintmaxtowcs(b,sz,v,bf,pr,fc,pf)
 #endif
 
+QSE_EXPORT int qse_fmtfltmaxtombs (
+	qse_mchar_t* buf, 
+	qse_size_t   bufsize,
+	qse_fltmax_t f,
+	qse_mchar_t  point, 
+	int          digits
+);
+
 #ifdef __cplusplus
 }
 #endif
