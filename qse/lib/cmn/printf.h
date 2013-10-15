@@ -86,16 +86,16 @@ static char_t* sprintn (char_t* nbuf, qse_uintmax_t num, int base, int *lenp, in
 
 /* TODO: error check */
 #define PUT_CHAR(c) do { \
-	put_char (c, arg); \
+	if (put_char (c, arg) <= -1) goto oops; \
 	retval++; \
 } while (0)
 
 #define PUT_OCHAR(c) do { \
-	put_ochar (c, arg); \
+	if (put_ochar (c, arg) <= -1) goto oops; \
 	retval++; \
 } while (0)
 
-int xprintf (char_t const *fmt, void (*put_char)(char_t, void*), void (*put_ochar) (ochar_t, void*), void *arg, va_list ap)
+int xprintf (char_t const *fmt, int (*put_char)(char_t, void*), int (*put_ochar) (ochar_t, void*), void *arg, va_list ap)
 {
 	char_t nbuf[MAXNBUF];
 	const char_t* p, * percent;
@@ -107,6 +107,10 @@ int xprintf (char_t const *fmt, void (*put_char)(char_t, void*), void (*put_ocha
 	qse_uintmax_t num = 0;
 	int stop = 0, retval = 0;
 	char_t fltbuf[100];
+
+	qse_mchar_t fltfmt[64];
+	qse_mchar_t* fltfmtp = QSE_NULL;
+	qse_size_t fltfmtc;
 
 	while (1)
 	{
@@ -397,7 +401,7 @@ reswitch:
 			if (((lm_flag & LF_H) && (QSE_SIZEOF(char_t) > QSE_SIZEOF(ochar_t))) ||
 			    ((lm_flag & LF_L) && (QSE_SIZEOF(char_t) < QSE_SIZEOF(ochar_t)))) goto uppercase_s;
 		lowercase_s:
-			sp = va_arg (ap, char_t *);
+			sp = va_arg (ap, char_t*);
 			if (sp == QSE_NULL) p = T("(null)");
 		
 		print_lowercase_s:
@@ -467,7 +471,8 @@ reswitch:
 		*/
 		{
 			qse_mchar_t tmpbuf[100];
-			qse_mchar_t tmpfmt[100];
+			qse_mchar_t* tmpbufp;
+
 			const char_t* xx;
 			const qse_mchar_t* yy;
 			int q;
@@ -475,12 +480,24 @@ reswitch:
 		#if defined(NO_MERCY)
 			if (lm_flag & ~LF_LD) goto invalid_format;
 		#endif
-			for (xx = percent, q = 0; xx < fmt; xx++) tmpfmt[q++] = *xx;
-			tmpfmt[q] = QSE_MT('\0');
-			if (lm_flag & LF_LD)
-				snprintf (tmpbuf, QSE_SIZEOF(tmpbuf), tmpfmt, va_arg (ap, long double));
+
+			if (fmt - percent < QSE_COUNTOF(fltfmt))
+			{
+				fltfmtp = fltfmt;
+			}
 			else
-				snprintf (tmpbuf, QSE_SIZEOF(tmpbuf), tmpfmt, va_arg (ap, double));
+			{
+				fltfmtp = QSE_MMGR_ALLOC (QSE_MMGR_GETDFL(), QSE_SIZEOF(*fltfmtp) * (fmt - percent + 1));
+				if (fltfmtp == QSE_NULL) goto oops;
+			}
+			for (xx = percent, q = 0; xx < fmt; xx++) fltfmtp[q++] = *xx;
+			fltfmtp[q] = QSE_MT('\0');
+
+			if (lm_flag & LF_LD)
+				snprintf (tmpbuf, QSE_SIZEOF(tmpbuf), fltfmtp, va_arg (ap, long double));
+			else
+				snprintf (tmpbuf, QSE_SIZEOF(tmpbuf), fltfmtp, va_arg (ap, double));
+
 			for (yy = tmpbuf, q = 0; *yy; ) fltbuf[q++] = *yy++;
 			fltbuf[q] = QSE_T('\0');
 			sp = fltbuf;	
@@ -488,7 +505,6 @@ reswitch:
 			width = 0;
 			precision = 0;
 			goto print_lowercase_s;
-			break;
 		}
 
 handle_nosign:
@@ -667,6 +683,13 @@ invalid_format:
 			break;
 		}
 	}
+
+oops:
+	if (fltfmtp && fltfmtp != fltfmt)
+	{
+		QSE_MMGR_FREE (QSE_MMGR_GETDFL(), fltfmtp);
+	}
+	return -1;
 }
 #undef PUT_CHAR
 #undef PUT_OCHAR

@@ -23,6 +23,7 @@
 #include <qse/cmn/str.h>
 #include <qse/cmn/mbwc.h>
 #include <stdarg.h>
+#include "mem.h"
 
 /* number of bits in a byte */
 #define NBBY    8               
@@ -97,7 +98,7 @@ enum
 
 #include <stdio.h> /* TODO: remove dependency on this */
 
-static void put_wchar (qse_wchar_t c, void *arg)
+static int put_wchar (qse_wchar_t c, void *arg)
 {
 	qse_cmgr_t* cmgr;
 	qse_mchar_t mbsbuf[QSE_MBLEN_MAX + 1];
@@ -107,18 +108,22 @@ static void put_wchar (qse_wchar_t c, void *arg)
 	n = cmgr->wctomb (c, mbsbuf, QSE_COUNTOF(mbsbuf));
 	if (n <= 0 || n > QSE_COUNTOF(mbsbuf))
 	{
-		putchar ('?');
+		return (putchar ('?') == EOF)? -1: 0;
 	}
 	else
 	{
 		qse_size_t i;
-		for (i = 0; i < n; i++) putchar (mbsbuf[i]);
+		for (i = 0; i < n; i++) 
+		{
+			if (putchar (mbsbuf[i]) == EOF) return -1;
+		}
+		return 0;
 	}
 }
 
-static void put_mchar (qse_mchar_t c, void *arg)
+static int put_mchar (qse_mchar_t c, void *arg)
 {
-	putchar (c);
+	return (putchar (c) == EOF)? -1: 0;
 }
 
 #undef char_t
