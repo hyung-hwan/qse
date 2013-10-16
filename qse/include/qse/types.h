@@ -481,6 +481,12 @@ typedef qse_int_t qse_intptr_t;
 #	define QSE_SIZEOF_FLTMAX_T QSE_SIZEOF_FLT_T
 #endif
 
+
+/** @typedef qse_ptrdiff_t
+ */
+typedef qse_ssize_t qse_ptrdiff_t;
+#define QSE_SIZEOF_PTRDIFF_T QSE_SIZEOF_SSIZE_T
+
 /** 
  * The qse_mchar_t type defines a multi-byte character type.
  */
