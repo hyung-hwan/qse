@@ -40,10 +40,11 @@ enum
 	LF_J = (1 << 2),
 	LF_L = (1 << 3),
 	LF_Q = (1 << 4),
-	LF_Z = (1 << 5),
+	LF_T = (1 << 5),
+	LF_Z = (1 << 6),
 
 	/* long double */
-	LF_LD = (1 << 6)
+	LF_LD = (1 << 7)
 };
 
 static struct
@@ -71,7 +72,7 @@ static struct
 	{ LF_Q, 0 }, /* q */
 	{ 0,    0 }, /* r */
 	{ 0,    0 }, /* s */
-	{ 0,    0 }, /* t */
+	{ LF_T, 0 }, /* t */
 	{ 0,    0 }, /* u */
 	{ 0,    0 }, /* v */
 	{ 0,    0 }, /* w */
@@ -97,6 +98,10 @@ enum
 };
 
 #include <stdio.h> /* TODO: remove dependency on this */
+#if defined(_MSC_VER) || defined(__BORLANDC__) || (defined(__WATCOMC__) && (__WATCOMC__ < 1200))
+#	define snprintf _snprintf
+#	define vsnprintf _vsnprintf
+#endif
 
 static int put_wchar (qse_wchar_t c, void *arg)
 {
@@ -186,8 +191,7 @@ int qse_mvprintf (const char_t* fmt, va_list ap)
 #define sprintn w_sprintn
 #define xprintf qse_wxprintf 
 
-static const qse_wchar_t w_hex2ascii[] = 
-	QSE_WT("0123456789abcdefghijklmnopqrstuvwxyz");
+static const qse_wchar_t w_hex2ascii[] = QSE_WT("0123456789abcdefghijklmnopqrstuvwxyz");
 #define hex2ascii(hex)  (w_hex2ascii[hex])
 
 #include "printf.h"

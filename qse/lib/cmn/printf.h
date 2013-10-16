@@ -87,15 +87,15 @@ static char_t* sprintn (char_t* nbuf, qse_uintmax_t num, int base, int *lenp, in
 /* TODO: error check */
 #define PUT_CHAR(c) do { \
 	if (put_char (c, arg) <= -1) goto oops; \
-	retval++; \
+	outcnt++; \
 } while (0)
 
 #define PUT_OCHAR(c) do { \
 	if (put_ochar (c, arg) <= -1) goto oops; \
-	retval++; \
+	outcnt++; \
 } while (0)
 
-int xprintf (char_t const *fmt, int (*put_char)(char_t, void*), int (*put_ochar) (ochar_t, void*), void *arg, va_list ap)
+int xprintf (const char_t* fmt, int (*put_char)(char_t, void*), int (*put_ochar) (ochar_t, void*), void *arg, va_list ap)
 {
 	char_t nbuf[MAXNBUF];
 	const char_t* p, * percent;
@@ -105,18 +105,34 @@ int xprintf (char_t const *fmt, int (*put_char)(char_t, void*), int (*put_ochar)
 	ochar_t oach, opadc, * osp;
 	int lm_flag, lm_dflag, flagc, numlen;
 	qse_uintmax_t num = 0;
-	int stop = 0, retval = 0;
-	char_t fltbuf[100];
+	int stop = 0;
+	int outcnt = 0;
 
-	qse_mchar_t fltfmt[64];
-	qse_mchar_t* fltfmtp = QSE_NULL;
-	qse_size_t fltfmtc;
+	struct
+	{
+		qse_mchar_t  sbuf[32];	
+		qse_mchar_t* ptr;
+		qse_size_t   capa;
+	} fltfmt;
+
+	struct
+	{
+		char_t       sbuf[96];	
+		char_t*      ptr;
+		qse_size_t   capa;
+	} fltout;
+
+	fltfmt.ptr  = fltfmt.sbuf;
+	fltfmt.capa = QSE_COUNTOF(fltfmt.sbuf) - 1;
+
+	fltout.ptr  = fltout.sbuf;
+	fltout.capa = QSE_COUNTOF(fltout.sbuf) - 1;
 
 	while (1)
 	{
 		while ((ch = (uchar_t)*fmt++) != T('%') || stop) 
 		{
-			if (ch == T('\0')) return retval;
+			if (ch == T('\0')) goto done;
 			PUT_CHAR(ch);
 		}
 		percent = fmt - 1;
@@ -248,9 +264,7 @@ reswitch:
 		case T('q'): /* long long int */
 		case T('j'): /* uintmax_t */
 		case T('z'): /* size_t */
-#if 0
 		case T('t'): /* ptrdiff_t */
-#endif
 			if (lm_flag & LF_LD) goto invalid_format;
 
 			flagc |= FLAGC_LENMOD;
@@ -293,31 +307,28 @@ reswitch:
 		/* end of length modifiers */
 
 		case T('n'):
-			if (lm_flag & LF_J)
-				*(va_arg(ap, qse_intmax_t*)) = retval;
+			if (lm_flag & LF_J) /* j */
+				*(va_arg(ap, qse_intmax_t*)) = outcnt;
+			else if (lm_flag & LF_Z) /* z */
+				*(va_arg(ap, qse_size_t*)) = outcnt;
 		#if (QSE_SIZEOF_LONG_LONG > 0)
-			else if (lm_flag & LF_Q)
-				*(va_arg(ap, long long int*)) = retval;
+			else if (lm_flag & LF_Q) /* ll */
+				*(va_arg(ap, long long int*)) = outcnt;
 		#endif
-			else if (lm_flag & LF_L)
-				*(va_arg(ap, long int*)) = retval;
-			else if (lm_flag & LF_Z)
-				*(va_arg(ap, qse_size_t*)) = retval;
-			else if (lm_flag & LF_H)
-				*(va_arg(ap, short int*)) = retval;
-			else if (lm_flag & LF_C)
-				*(va_arg(ap, char*)) = retval;
+			else if (lm_flag & LF_L) /* l */
+				*(va_arg(ap, long int*)) = outcnt;
+			else if (lm_flag & LF_H) /* h */
+				*(va_arg(ap, short int*)) = outcnt;
+			else if (lm_flag & LF_C) /* hh */
+				*(va_arg(ap, char*)) = outcnt;
 			else
-				*(va_arg(ap, int*)) = retval;
+				*(va_arg(ap, int*)) = outcnt;
 			break;
 
 
 		/* signed integer conversions */
 		case T('d'):
 		case T('i'): /* signed conversion */
-		#if defined(NO_MERCY)
-			if (lm_flag & LF_LD) goto invalid_format;
-		#endif
 			base = 10;
 			sign = 1;
 			goto handle_sign;
@@ -325,31 +336,19 @@ reswitch:
 
 		/* unsigned integer conversions */
 		case T('o'): 
-		#if defined(NO_MERCY)
-			if (lm_flag & LF_LD) goto invalid_format;
-		#endif
 			base = 8;
 			goto handle_nosign;
 		case T('u'):
-		#if defined(NO_MERCY)
-			if (lm_flag & LF_LD) goto invalid_format;
-		#endif
 			base = 10;
 			goto handle_nosign;
 		case T('X'):
 			upper = 1;
 		case T('x'):
-		#if defined(NO_MERCY)
-			if (lm_flag & LF_LD) goto invalid_format;
-		#endif
 			base = 16;
 			goto handle_nosign;
 		/* end of unsigned integer conversions */
 
 		case T('p'): /* pointer */
-		#if defined(NO_MERCY)
-			if (lm_flag & LF_LD) goto invalid_format;
-		#endif
 			base = 16;
 
 			if (width == 0) flagc |= FLAGC_SHARP;
@@ -470,37 +469,89 @@ reswitch:
 		case T('A'):
 		*/
 		{
-			qse_mchar_t tmpbuf[100];
-			qse_mchar_t* tmpbufp;
-
-			const char_t* xx;
-			const qse_mchar_t* yy;
+			/* let me rely on snprintf until i implement 
+			 * float-point to string conversion */
 			int q;
+			qse_size_t fmtlen;
+			qse_fltmax_t v_fltmax;
+			long double v_ld;
+			double v_d;
 
-		#if defined(NO_MERCY)
-			if (lm_flag & ~LF_LD) goto invalid_format;
-		#endif
-
-			if (fmt - percent < QSE_COUNTOF(fltfmt))
-			{
-				fltfmtp = fltfmt;
-			}
+			if (lm_flag & LF_J)
+				v_fltmax = va_arg (ap, qse_fltmax_t);
+			else if (lm_flag & (LF_LD | LF_L | LF_Q | LF_Z))
+				v_ld = va_arg (ap, long double);
 			else
+				v_d = va_arg (ap, double);
+
+			fmtlen = fmt - percent;
+			if (fmtlen > fltfmt.capa)
 			{
-				fltfmtp = QSE_MMGR_ALLOC (QSE_MMGR_GETDFL(), QSE_SIZEOF(*fltfmtp) * (fmt - percent + 1));
-				if (fltfmtp == QSE_NULL) goto oops;
+				if (fltfmt.ptr == fltfmt.sbuf)
+				{
+					fltfmt.ptr = QSE_MMGR_ALLOC (QSE_MMGR_GETDFL(), QSE_SIZEOF(*fltfmt.ptr) * (fmtlen + 1));
+					if (fltfmt.ptr == QSE_NULL) goto oops;
+				}
+				else
+				{
+					qse_mchar_t* tmpptr;
+
+					tmpptr = QSE_MMGR_REALLOC (QSE_MMGR_GETDFL(), fltfmt.ptr, QSE_SIZEOF(*fltfmt.ptr) * (fmtlen + 1));
+					if (tmpptr == QSE_NULL) goto oops;
+					fltfmt.ptr = tmpptr;
+				}
+
+				fltfmt.capa = fmtlen;
 			}
-			for (xx = percent, q = 0; xx < fmt; xx++) fltfmtp[q++] = *xx;
-			fltfmtp[q] = QSE_MT('\0');
 
-			if (lm_flag & LF_LD)
-				snprintf (tmpbuf, QSE_SIZEOF(tmpbuf), fltfmtp, va_arg (ap, long double));
-			else
-				snprintf (tmpbuf, QSE_SIZEOF(tmpbuf), fltfmtp, va_arg (ap, double));
+			fltfmt.ptr[fmtlen] = QSE_MT('\0');
+			while (fmtlen > 0) 
+			{
+				fmtlen--;
+				fltfmt.ptr[fmtlen] = percent[fmtlen];
+			}
 
-			for (yy = tmpbuf, q = 0; *yy; ) fltbuf[q++] = *yy++;
-			fltbuf[q] = QSE_T('\0');
-			sp = fltbuf;	
+			while (1)
+			{
+				qse_size_t newcapa;
+
+				if (lm_flag & LF_J)
+					q = snprintf ((qse_mchar_t*)fltout.ptr, fltout.capa + 1, fltfmt.ptr, v_fltmax);
+				else if (lm_flag & (LF_LD | LF_L | LF_Q | LF_Z))
+					q = snprintf ((qse_mchar_t*)fltout.ptr, fltout.capa + 1, fltfmt.ptr, v_ld);
+				else
+					q = snprintf ((qse_mchar_t*)fltout.ptr, fltout.capa + 1, fltfmt.ptr, v_d);
+				if (q <= -1) goto oops;
+				if (q <= fltout.capa) break;
+
+				newcapa = fltout.capa * 2;
+				if (fltout.ptr == fltout.sbuf)
+				{
+					fltout.ptr = QSE_MMGR_ALLOC (QSE_MMGR_GETDFL(), QSE_SIZEOF(char_t) * (newcapa + 1));
+					if (fltout.ptr == QSE_NULL) goto oops;
+				}
+				else
+				{
+					char_t* tmpptr;
+
+					tmpptr = QSE_MMGR_REALLOC (QSE_MMGR_GETDFL(), fltout.ptr, QSE_SIZEOF(char_t) * (newcapa + 1));
+					if (tmpptr == QSE_NULL) goto oops;
+					fltout.ptr = tmpptr;
+				}
+				fltout.capa = newcapa;
+			}
+
+			if (QSE_SIZEOF(char_t) != QSE_SIZEOF(qse_mchar_t))
+			{
+				fltout.ptr[q] = T('\0');	
+				while (q > 0)
+				{
+					q--;
+					fltout.ptr[q] = ((qse_mchar_t*)fltout.ptr)[q];	
+				}
+			}
+
+			sp = fltout.ptr;
 			flagc &= ~FLAGC_DOT;
 			width = 0;
 			precision = 0;
@@ -532,20 +583,16 @@ handle_nosign:
 				num = va_arg (ap, qse_uintmax_t);
 			#endif
 			}
+			else if (lm_flag & LF_T)
+				num = va_arg (ap, qse_ptrdiff_t);
+			else if (lm_flag & LF_Z)
+				num = va_arg (ap, qse_size_t);
 			#if (QSE_SIZEOF_LONG_LONG > 0)
 			else if (lm_flag & LF_Q)
 				num = va_arg (ap, unsigned long long int);
 			#endif
-
-			#if 0
-			else if (lm_flag & LF_T)
-				num = va_arg (ap, ptrdiff_t);
-			#endif
-
-			else if (lm_flag & LF_L)
+			else if (lm_flag & (LF_L | LF_LD))
 				num = va_arg (ap, long int);
-			else if (lm_flag & LF_Z)
-				num = va_arg (ap, qse_size_t);
 			else if (lm_flag & LF_H)
 				num = (unsigned short int)va_arg (ap, int);
 			else if (lm_flag & LF_C)
@@ -579,19 +626,16 @@ handle_sign:
 			#endif
 			}
 
+			else if (lm_flag & LF_T)
+				num = va_arg(ap, qse_ptrdiff_t);
+			else if (lm_flag & LF_Z)
+				num = va_arg (ap, qse_ssize_t);
 			#if (QSE_SIZEOF_LONG_LONG > 0)
 			else if (lm_flag & LF_Q)
 				num = va_arg (ap, long long int);
 			#endif
-
-			#if 0
-			else if (lm_flag & LF_T)
-				num = va_arg(ap, ptrdiff_t);
-			#endif
-			else if (lm_flag & LF_L)
+			else if (lm_flag & (LF_L | LF_LD))
 				num = va_arg (ap, long int);
-			else if (lm_flag & LF_Z)
-				num = va_arg (ap, qse_ssize_t);
 			else if (lm_flag & LF_H)
 				num = (short int)va_arg (ap, int);
 			else if (lm_flag & LF_C)
@@ -684,11 +728,18 @@ invalid_format:
 		}
 	}
 
+done:
+	if (fltfmt.ptr != fltfmt.sbuf)
+		QSE_MMGR_FREE (QSE_MMGR_GETDFL(), fltfmt.ptr);
+	if (fltout.ptr != fltout.sbuf)
+		QSE_MMGR_FREE (QSE_MMGR_GETDFL(), fltout.ptr);
+	return outcnt;
+
 oops:
-	if (fltfmtp && fltfmtp != fltfmt)
-	{
-		QSE_MMGR_FREE (QSE_MMGR_GETDFL(), fltfmtp);
-	}
+	if (fltfmt.ptr != fltfmt.sbuf)
+		QSE_MMGR_FREE (QSE_MMGR_GETDFL(), fltfmt.ptr);
+	if (fltout.ptr != fltout.sbuf)
+		QSE_MMGR_FREE (QSE_MMGR_GETDFL(), fltout.ptr);
 	return -1;
 }
 #undef PUT_CHAR
