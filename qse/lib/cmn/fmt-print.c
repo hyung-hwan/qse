@@ -153,19 +153,19 @@ static int put_mchar (qse_mchar_t c, void *arg)
 static const qse_mchar_t m_hex2ascii[] = QSE_MT("0123456789abcdefghijklmnopqrstuvwxyz");
 #define hex2ascii(hex)  (m_hex2ascii[hex])
 
-#include "printf.h"
+#include "fmt-print.h"
 
-int qse_mprintf (const char_t *fmt, ...)
+qse_ssize_t qse_mprintf (const char_t *fmt, ...)
 {
 	va_list ap;
-	int n;
+	qse_ssize_t n;
 	va_start (ap, fmt);
 	n = qse_mxprintf (fmt, put_mchar, put_wchar, QSE_NULL, ap);
 	va_end (ap);
 	return n;
 }
 
-int qse_mvprintf (const char_t* fmt, va_list ap)
+qse_ssize_t qse_mvprintf (const char_t* fmt, va_list ap)
 {
 	return qse_mxprintf (fmt, put_mchar, put_wchar, QSE_NULL, ap);
 }
@@ -194,19 +194,19 @@ int qse_mvprintf (const char_t* fmt, va_list ap)
 static const qse_wchar_t w_hex2ascii[] = QSE_WT("0123456789abcdefghijklmnopqrstuvwxyz");
 #define hex2ascii(hex)  (w_hex2ascii[hex])
 
-#include "printf.h"
+#include "fmt-print.h"
 
-int qse_wprintf (const char_t *fmt, ...)
+qse_ssize_t qse_wprintf (const char_t *fmt, ...)
 {
 	va_list ap;
-	int n;
+	qse_ssize_t n;
 	va_start (ap, fmt);
 	n = qse_wxprintf (fmt, put_wchar, put_mchar, QSE_NULL, ap);
 	va_end (ap);
 	return n;
 }
 
-int qse_wvprintf (const char_t* fmt, va_list ap)
+qse_ssize_t qse_wvprintf (const char_t* fmt, va_list ap)
 {
 	return qse_wxprintf (fmt, put_wchar, put_mchar, QSE_NULL, ap);
 }

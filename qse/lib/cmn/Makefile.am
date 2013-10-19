@@ -9,9 +9,11 @@ lib_LTLIBRARIES = libqsecmn.la
 noinst_HEADERS = \
 	cp949.h \
 	cp950.h \
+	fmt.h \
+	fmt-intmax.h \
+	fmt-print.h \
 	fs.h \
 	mem.h \
-	printf.h \
 	str-join.h \
 	str-subst.h \
 	syscall.h \
@@ -37,7 +39,8 @@ libqsecmn_la_SOURCES = \
 	htb.c \
 	fio.c \
 	fma.c \
-	fmt.c \
+	fmt-intmax.c \
+	fmt-print.c \
 	fs.c \
 	fs-err.c \
 	fs-move.c \
@@ -64,7 +67,6 @@ libqsecmn_la_SOURCES = \
 	pma.c \
 	rbt.c \
 	rex.c \
-	printf.c \
 	sio.c \
 	sll.c \
 	slmb.c \
