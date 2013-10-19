@@ -20,6 +20,7 @@
 
 #include <qse/cmn/sio.h>
 #include "mem.h"
+#include "fmt.h"
 
 #if defined(_WIN32)
 #	include <windows.h> /* for the UGLY hack */
@@ -580,6 +581,56 @@ qse_ssize_t qse_sio_putwcsn (
 	return n;
 }
 
+static int put_wchar (qse_wchar_t c, void *arg)
+{
+	return qse_sio_putwc (arg, c);
+}
+
+static int put_mchar (qse_mchar_t c, void *arg)
+{
+	return qse_sio_putmb (arg, c);
+}
+
+qse_ssize_t qse_sio_putmbsf (qse_sio_t* sio, const qse_mchar_t* fmt, ...)
+{
+	va_list ap;
+	qse_ssize_t x;
+
+	va_start (ap, fmt);
+	x = qse_mxprintf (fmt, put_mchar, put_wchar, sio, ap);
+	va_end (ap);
+
+	return x;
+}
+
+qse_ssize_t qse_sio_putwcsf (qse_sio_t* sio, const qse_wchar_t* fmt, ...)
+{
+	va_list ap;
+	qse_ssize_t x;
+
+	va_start (ap, fmt);
+	x = qse_wxprintf (fmt, put_wchar, put_mchar, sio, ap);
+	va_end (ap);
+
+	return x;
+}
+
+qse_ssize_t qse_sio_putstrf (qse_sio_t* sio, const qse_char_t* fmt, ...)
+{
+	va_list ap;
+	qse_ssize_t x;
+
+	va_start (ap, fmt);
+#if defined(QSE_CHAR_IS_MCHAR)
+	x = qse_mxprintf (fmt, put_mchar, put_wchar, sio, ap);
+#else
+	x = qse_wxprintf (fmt, put_wchar, put_mchar, sio, ap);
+#endif
+	va_end (ap);
+
+	return x;
+}
+
 int qse_sio_getpos (qse_sio_t* sio, qse_sio_pos_t* pos)
 {
 	qse_fio_off_t off;
@@ -666,5 +717,4 @@ static qse_ssize_t file_output (
 
 	return 0;
 }
-
 

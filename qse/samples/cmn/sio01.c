@@ -49,6 +49,7 @@ static int test1 (void)
 		QSE_MMGR_GETDFL(), 0, QSE_SIO_STDOUT, 
 		QSE_SIO_WRITE | QSE_SIO_IGNOREMBWCERR);
 	qse_sio_putwcs (out, unistr);
+	qse_sio_putwcsf (out, QSE_WT ("[%.*s] [%.*s]\n"), (int)qse_wcslen(unistr) - 1, unistr, (int)qse_wcslen(unistr) - 1, unistr);
 	qse_sio_close (out);
 	return 0;
 }
@@ -86,6 +87,8 @@ static int test2 (void)
 	qse_wcstombs (unistr, &wlen, mbsbuf, &mlen);
 
 	qse_sio_putmbs (out, mbsbuf);
+
+	qse_sio_putmbsf (out, QSE_MT ("[%.*s] [%.*s]\n"), (int)qse_mbslen(mbsbuf) - 1, mbsbuf, (int)qse_mbslen(mbsbuf) - 1, mbsbuf);
 	qse_sio_close (out);
 	return 0;
 }

@@ -95,7 +95,7 @@ static char_t* sprintn (char_t* nbuf, qse_uintmax_t num, int base, int *lenp, in
 	outcnt++; \
 } while (0)
 
-int xprintf (const char_t* fmt, int (*put_char)(char_t, void*), int (*put_ochar) (ochar_t, void*), void *arg, va_list ap)
+qse_ssize_t xprintf (const char_t* fmt, int (*put_char)(char_t, void*), int (*put_ochar) (ochar_t, void*), void *arg, va_list ap)
 {
 	char_t nbuf[MAXNBUF];
 	const char_t* p, * percent;
@@ -106,7 +106,7 @@ int xprintf (const char_t* fmt, int (*put_char)(char_t, void*), int (*put_ochar)
 	int lm_flag, lm_dflag, flagc, numlen;
 	qse_uintmax_t num = 0;
 	int stop = 0;
-	int outcnt = 0;
+	qse_ssize_t outcnt = 0;
 
 	struct
 	{
@@ -740,7 +740,7 @@ oops:
 		QSE_MMGR_FREE (QSE_MMGR_GETDFL(), fltfmt.ptr);
 	if (fltout.ptr != fltout.sbuf)
 		QSE_MMGR_FREE (QSE_MMGR_GETDFL(), fltout.ptr);
-	return -1;
+	return (qse_ssize_t)-1;
 }
 #undef PUT_CHAR
 #undef PUT_OCHAR

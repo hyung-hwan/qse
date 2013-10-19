@@ -302,6 +302,24 @@ QSE_EXPORT qse_ssize_t qse_sio_putwcsn (
 	qse_size_t         size
 );
 
+QSE_EXPORT qse_ssize_t qse_sio_putmbsf (
+	qse_sio_t*         sio,
+	const qse_mchar_t* fmt,
+	...
+);
+
+QSE_EXPORT qse_ssize_t qse_sio_putwcsf (
+	qse_sio_t*         sio,
+	const qse_wchar_t* fmt,
+	...
+);
+
+QSE_EXPORT qse_ssize_t qse_sio_putstrf (
+	qse_sio_t*        sio,
+	const qse_char_t* fmt,
+	...
+);
+
 #if defined(QSE_CHAR_IS_MCHAR)
 #	define qse_sio_putc(sio,c) qse_sio_putmb(sio,c)
 #	define qse_sio_putstr(sio,str) qse_sio_putmbs(sio,str)

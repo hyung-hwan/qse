@@ -30,7 +30,7 @@
 #define char_t qse_mchar_t
 #define fmt_uintmax fmt_unsigned_to_mbs
 #define strlen(x) qse_mbslen(x)
-#include "fmt.h"
+#include "fmt-intmax.h"
 
 #undef T
 #undef char_t
@@ -41,7 +41,7 @@
 #define char_t qse_wchar_t
 #define fmt_uintmax fmt_unsigned_to_wcs
 #define strlen(x) qse_wcslen(x)
-#include "fmt.h"
+#include "fmt-intmax.h"
 
 /* ==================== multibyte ===================================== */
 
