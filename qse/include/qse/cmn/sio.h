@@ -211,6 +211,9 @@ QSE_EXPORT qse_ssize_t qse_sio_flush (
 	qse_sio_t* sio
 );
 
+/**
+ * The qse_sio_purge() funtion purges all buffered data without writing.
+ */
 QSE_EXPORT void qse_sio_purge (
 	qse_sio_t* sio
 );
