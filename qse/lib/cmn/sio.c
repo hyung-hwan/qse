@@ -631,6 +631,25 @@ qse_ssize_t qse_sio_putstrf (qse_sio_t* sio, const qse_char_t* fmt, ...)
 	return x;
 }
 
+qse_ssize_t qse_sio_putmbsvf (qse_sio_t* sio, const qse_mchar_t* fmt, va_list ap)
+{
+	return qse_mxprintf (fmt, put_mchar, put_wchar, sio, ap);
+}
+
+qse_ssize_t qse_sio_putwcsvf (qse_sio_t* sio, const qse_wchar_t* fmt, va_list ap)
+{
+	return qse_wxprintf (fmt, put_wchar, put_mchar, sio, ap);
+}
+
+qse_ssize_t qse_sio_putstrvf (qse_sio_t* sio, const qse_char_t* fmt, va_list ap)
+{
+#if defined(QSE_CHAR_IS_MCHAR)
+	return qse_mxprintf (fmt, put_mchar, put_wchar, sio, ap);
+#else
+	return qse_wxprintf (fmt, put_wchar, put_mchar, sio, ap);
+#endif
+}
+
 int qse_sio_getpos (qse_sio_t* sio, qse_sio_pos_t* pos)
 {
 	qse_fio_off_t off;
@@ -803,4 +822,23 @@ qse_ssize_t qse_putstrf (const qse_char_t* fmt, ...)
 	va_end (ap);
 
 	return x;
+}
+
+qse_ssize_t qse_putmbsvf (const qse_mchar_t* fmt, va_list ap)
+{
+	return qse_mxprintf (fmt, put_mchar, put_wchar, sio_stdout, ap);
+}
+
+qse_ssize_t qse_putwcsvf (const qse_wchar_t* fmt, va_list ap)
+{
+	return qse_wxprintf (fmt, put_wchar, put_mchar, sio_stdout, ap);
+}
+
+qse_ssize_t qse_putstrvf (const qse_char_t* fmt, va_list ap)
+{
+#if defined(QSE_CHAR_IS_MCHAR)
+	return qse_mxprintf (fmt, put_mchar, put_wchar, sio_stdout, ap);
+#else
+	return qse_wxprintf (fmt, put_wchar, put_mchar, sio_stdout, ap);
+#endif
 }

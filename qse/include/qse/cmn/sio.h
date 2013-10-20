@@ -29,6 +29,7 @@
 #include <qse/macros.h>
 #include <qse/cmn/fio.h>
 #include <qse/cmn/tio.h>
+#include <stdarg.h>
 
 enum qse_sio_flag_t
 {
@@ -323,6 +324,24 @@ QSE_EXPORT qse_ssize_t qse_sio_putstrf (
 	...
 );
 
+QSE_EXPORT qse_ssize_t qse_sio_putmbsvf (
+	qse_sio_t*         sio,
+	const qse_mchar_t* fmt,
+	va_list            ap
+);
+
+QSE_EXPORT qse_ssize_t qse_sio_putwcsvf (
+	qse_sio_t*         sio,
+	const qse_wchar_t* fmt,
+	va_list            ap
+);
+
+QSE_EXPORT qse_ssize_t qse_sio_putstrvf (
+	qse_sio_t*        sio,
+	const qse_char_t* fmt,
+	va_list           ap
+);
+
 #if defined(QSE_CHAR_IS_MCHAR)
 #	define qse_sio_putc(sio,c) qse_sio_putmb(sio,c)
 #	define qse_sio_putstr(sio,str) qse_sio_putmbs(sio,str)
@@ -376,6 +395,21 @@ QSE_EXPORT qse_ssize_t qse_putwcsf (
 QSE_EXPORT qse_ssize_t qse_putstrf (
 	const qse_char_t* fmt,
 	...
+);
+
+QSE_EXPORT qse_ssize_t qse_putmbsvf (
+	const qse_mchar_t* fmt,
+	va_list            ap
+);
+
+QSE_EXPORT qse_ssize_t qse_putwcsvf (
+	const qse_wchar_t* fmt,
+	va_list            ap
+);
+
+QSE_EXPORT qse_ssize_t qse_putstrvf (
+	const qse_char_t* fmt,
+	va_list           ap
 );
 
 #ifdef __cplusplus

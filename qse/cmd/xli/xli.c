@@ -27,7 +27,6 @@
 #include <qse/cmn/xma.h>
 #include <qse/cmn/path.h>
 #include <qse/cmn/fs.h>
-#include <qse/cmn/stdio.h>
 #include <qse/cmn/main.h>
 #include <qse/cmn/mbwc.h>
 #include <qse/cmn/glob.h>
@@ -120,7 +119,7 @@ static void print_version (void)
 	qse_putstrf (QSE_T("QSEXLI version %hs\n"), QSE_PACKAGE_VERSION);
 }
 
-static void print_usage (QSE_FILE* out, int argc, qse_char_t* argv[])
+static void print_usage (qse_sio_t* out, int argc, qse_char_t* argv[])
 {
 	const qse_char_t* b = qse_basename (argv[0]);
 
@@ -201,7 +200,7 @@ static int handle_args (int argc, qse_char_t* argv[])
 				goto oops;
 
 			case QSE_T('h'):
-				print_usage (QSE_STDOUT, argc, argv);
+				print_usage (qse_getstdout(), argc, argv);
 				goto done;
 
 			case QSE_T('i'):

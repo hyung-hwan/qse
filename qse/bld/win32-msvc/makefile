@@ -74,7 +74,8 @@ DLLQSECMN_OBJECTS =  \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsecmn_htb.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsecmn_fio.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsecmn_fma.obj \
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsecmn_fmt.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsecmn_fmt_intmax.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsecmn_fmt_print.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsecmn_fs.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsecmn_fs_err.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsecmn_fs_move.obj \
@@ -120,6 +121,7 @@ DLLQSECMN_OBJECTS =  \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsecmn_str_fcpy.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsecmn_str_fnmat.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsecmn_str_incl.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsecmn_str_join.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsecmn_str_len.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsecmn_str_pac.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsecmn_str_pbrk.obj \
@@ -169,7 +171,8 @@ LIBQSECMN_OBJECTS =  \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsecmn_htb.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsecmn_fio.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsecmn_fma.obj \
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsecmn_fmt.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsecmn_fmt_intmax.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsecmn_fmt_print.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsecmn_fs.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsecmn_fs_err.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsecmn_fs_move.obj \
@@ -215,6 +218,7 @@ LIBQSECMN_OBJECTS =  \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsecmn_str_fcpy.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsecmn_str_fnmat.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsecmn_str_incl.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsecmn_str_join.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsecmn_str_len.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsecmn_str_pac.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsecmn_str_pbrk.obj \
@@ -1022,8 +1026,11 @@ $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllq
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsecmn_fma.obj: ..\..\lib\cmn\fma.c
 	$(CC) /c /nologo /TC /Fo$@ $(DLLQSECMN_CFLAGS) ..\..\lib\cmn\fma.c
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsecmn_fmt.obj: ..\..\lib\cmn\fmt.c
-	$(CC) /c /nologo /TC /Fo$@ $(DLLQSECMN_CFLAGS) ..\..\lib\cmn\fmt.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsecmn_fmt_intmax.obj: ..\..\lib\cmn\fmt-intmax.c
+	$(CC) /c /nologo /TC /Fo$@ $(DLLQSECMN_CFLAGS) ..\..\lib\cmn\fmt-intmax.c
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsecmn_fmt_print.obj: ..\..\lib\cmn\fmt-print.c
+	$(CC) /c /nologo /TC /Fo$@ $(DLLQSECMN_CFLAGS) ..\..\lib\cmn\fmt-print.c
 
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsecmn_fs.obj: ..\..\lib\cmn\fs.c
 	$(CC) /c /nologo /TC /Fo$@ $(DLLQSECMN_CFLAGS) ..\..\lib\cmn\fs.c
@@ -1160,6 +1167,9 @@ $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllq
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsecmn_str_incl.obj: ..\..\lib\cmn\str-incl.c
 	$(CC) /c /nologo /TC /Fo$@ $(DLLQSECMN_CFLAGS) ..\..\lib\cmn\str-incl.c
 
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsecmn_str_join.obj: ..\..\lib\cmn\str-join.c
+	$(CC) /c /nologo /TC /Fo$@ $(DLLQSECMN_CFLAGS) ..\..\lib\cmn\str-join.c
+
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsecmn_str_len.obj: ..\..\lib\cmn\str-len.c
 	$(CC) /c /nologo /TC /Fo$@ $(DLLQSECMN_CFLAGS) ..\..\lib\cmn\str-len.c
 
@@ -1289,8 +1299,11 @@ $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libq
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsecmn_fma.obj: ..\..\lib\cmn\fma.c
 	$(CC) /c /nologo /TC /Fo$@ $(LIBQSECMN_CFLAGS) ..\..\lib\cmn\fma.c
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsecmn_fmt.obj: ..\..\lib\cmn\fmt.c
-	$(CC) /c /nologo /TC /Fo$@ $(LIBQSECMN_CFLAGS) ..\..\lib\cmn\fmt.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsecmn_fmt_intmax.obj: ..\..\lib\cmn\fmt-intmax.c
+	$(CC) /c /nologo /TC /Fo$@ $(LIBQSECMN_CFLAGS) ..\..\lib\cmn\fmt-intmax.c
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsecmn_fmt_print.obj: ..\..\lib\cmn\fmt-print.c
+	$(CC) /c /nologo /TC /Fo$@ $(LIBQSECMN_CFLAGS) ..\..\lib\cmn\fmt-print.c
 
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsecmn_fs.obj: ..\..\lib\cmn\fs.c
 	$(CC) /c /nologo /TC /Fo$@ $(LIBQSECMN_CFLAGS) ..\..\lib\cmn\fs.c
@@ -1426,6 +1439,9 @@ $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libq
 
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsecmn_str_incl.obj: ..\..\lib\cmn\str-incl.c
 	$(CC) /c /nologo /TC /Fo$@ $(LIBQSECMN_CFLAGS) ..\..\lib\cmn\str-incl.c
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsecmn_str_join.obj: ..\..\lib\cmn\str-join.c
+	$(CC) /c /nologo /TC /Fo$@ $(LIBQSECMN_CFLAGS) ..\..\lib\cmn\str-join.c
 
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsecmn_str_len.obj: ..\..\lib\cmn\str-len.c
 	$(CC) /c /nologo /TC /Fo$@ $(LIBQSECMN_CFLAGS) ..\..\lib\cmn\str-len.c
