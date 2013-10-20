@@ -29,6 +29,7 @@
 #include <qse/cmn/xma.h>
 #include <qse/cmn/glob.h>
 #include <qse/cmn/stdio.h>
+#include <qse/cmn/fmt.h>
 
 #include <string.h>
 #include <signal.h>
@@ -1230,7 +1231,9 @@ int qse_main (int argc, qse_achar_t* argv[])
 	}
 	else
 	{
-		sprintf (locale, ".%u", (unsigned int)codepage);
+		/* .codepage */
+		qse_fmtuintmaxtombs (locale, QSE_COUNTOF(locale),
+			codepage, 10, -1, QSE_MT('\0'), QSE_MT("."));
 		setlocale (LC_ALL, locale);
 		qse_setdflcmgrbyid (QSE_CMGR_SLMB);
 	}

@@ -718,4 +718,89 @@ static qse_ssize_t file_output (
 	return 0;
 }
 
+static qse_sio_t* sio_stdout = QSE_NULL;
+static qse_sio_t* sio_stderr = QSE_NULL;
 
+int qse_openstdsios (void)
+{
+	if (sio_stdout == QSE_NULL)
+	{	
+		sio_stdout = qse_sio_openstd (QSE_MMGR_GETDFL(), 0, QSE_SIO_STDOUT, 0);
+	}
+	if (sio_stderr == QSE_NULL)
+	{	
+		sio_stderr = qse_sio_openstd (QSE_MMGR_GETDFL(), 0, QSE_SIO_STDERR, 0);
+	}
+
+	if (sio_stdout == QSE_NULL || sio_stderr == QSE_NULL) 
+	{
+		qse_closestdsios ();
+		return -1;
+	}
+
+	return 0;
+}
+
+void qse_closestdsios (void)
+{
+	if (sio_stderr)
+	{
+		qse_sio_close (sio_stderr);
+		sio_stderr = QSE_NULL;
+	}
+	if (sio_stdout)
+	{
+		qse_sio_close (sio_stdout);
+		sio_stdout = QSE_NULL;
+	}
+}
+
+qse_sio_t* qse_getstdout (void)
+{
+	return sio_stdout;
+}
+
+qse_sio_t* qse_getstderr (void)
+{
+	return sio_stderr;
+}
+
+qse_ssize_t qse_putmbsf (const qse_mchar_t* fmt, ...)
+{
+	va_list ap;
+	qse_ssize_t x;
+
+	va_start (ap, fmt);
+	x = qse_mxprintf (fmt, put_mchar, put_wchar, sio_stdout, ap);
+	va_end (ap);
+
+	return x;
+}
+
+qse_ssize_t qse_putwcsf (const qse_wchar_t* fmt, ...)
+{
+	va_list ap;
+	qse_ssize_t x;
+
+	va_start (ap, fmt);
+	x = qse_wxprintf (fmt, put_wchar, put_mchar, sio_stdout, ap);
+	va_end (ap);
+
+	return x;
+}
+
+qse_ssize_t qse_putstrf (const qse_char_t* fmt, ...)
+{
+	va_list ap;
+	qse_ssize_t x;
+
+	va_start (ap, fmt);
+#if defined(QSE_CHAR_IS_MCHAR)
+	x = qse_mxprintf (fmt, put_mchar, put_wchar, sio_stdout, ap);
+#else
+	x = qse_wxprintf (fmt, put_wchar, put_mchar, sio_stdout, ap);
+#endif
+	va_end (ap);
+
+	return x;
+}
