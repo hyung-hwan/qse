@@ -358,6 +358,26 @@ int qse_sio_movetoend (qse_sio_t* sio);
 #endif
 
 
+QSE_EXPORT int qse_openstdsios (void);
+QSE_EXPORT void qse_closestdsios (void);
+QSE_EXPORT qse_sio_t* qse_getstdout (void);
+QSE_EXPORT qse_sio_t* qse_getstderr (void);
+
+QSE_EXPORT qse_ssize_t qse_putmbsf (
+	const qse_mchar_t* fmt,
+	...
+);
+
+QSE_EXPORT qse_ssize_t qse_putwcsf (
+	const qse_wchar_t* fmt,
+	...
+);
+
+QSE_EXPORT qse_ssize_t qse_putstrf (
+	const qse_char_t* fmt,
+	...
+);
+
 #ifdef __cplusplus
 }
 #endif

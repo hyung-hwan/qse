@@ -143,12 +143,12 @@ int main ()
 	}
 	else
 	{
-     	sprintf (locale, ".%u", (unsigned int)codepage);
-     	setlocale (LC_ALL, locale);
+		sprintf (locale, ".%u", (unsigned int)codepage);
+		setlocale (LC_ALL, locale);
 		qse_setdflcmgrbyid (QSE_CMGR_SLMB);
 	}
 #else
-     setlocale (LC_ALL, "");
+	setlocale (LC_ALL, "");
 	qse_setdflcmgrbyid (QSE_CMGR_SLMB);
 #endif
 

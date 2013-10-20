@@ -980,6 +980,7 @@ qse_xli_pair_t* qse_xli_setpair (qse_xli_t* xli, const qse_char_t* fqpn, const q
 
 		if (pair == QSE_NULL) 
 		{
+/* TODO: honor QSE_XLI_VALIDATE.... */
 			/* insert a new item..... */
 			if (*ptr == QSE_T('\0'))
 			{
