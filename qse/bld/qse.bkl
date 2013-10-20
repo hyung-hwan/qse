@@ -156,7 +156,8 @@
 		htb.c 
 		fio.c 
 		fma.c 
-		fmt.c 
+		fmt-intmax.c 
+		fmt-print.c
 		fs.c 
 		fs-err.c 
 		fs-move.c 
@@ -202,6 +203,7 @@
 		str-fcpy.c 
 		str-fnmat.c 
 		str-incl.c 
+		str-join.c 
 		str-len.c 
 		str-pac.c 
 		str-pbrk.c 
