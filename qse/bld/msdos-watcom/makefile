@@ -165,12 +165,12 @@ ____SOURCES_BUNDLED_UNICODE_FILENAMES_OBJECTS =
 ____SOURCES_BUNDLED_UNICODE_FILENAMES_OBJECTS =  &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_uni.obj
 !endif
-__DEBUG_INFO_2 =
+__DEBUG_INFO_3 =
 !ifeq BUILD debug
-__DEBUG_INFO_2 = debug all
+__DEBUG_INFO_3 = debug all
 !endif
 !ifeq BUILD release
-__DEBUG_INFO_2 = 
+__DEBUG_INFO_3 = 
 !endif
 ____DOS_CFLAG_p =
 !ifeq DOS32 CAUSEWAY
@@ -369,6 +369,12 @@ EXEQSEHTTPD_CFLAGS = $(____DOS_CFLAG_p) -i=..\..\include $(CPPFLAGS_BUILD) &
 	-ox $(CPPFLAGS) $(CFLAGS)
 EXEQSEHTTPD_OBJECTS =  &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\exeqsehttpd_httpd.obj
+EXEQSEXLI_CFLAGS = $(____DOS_CFLAG_p) -i=..\..\include $(CPPFLAGS_BUILD) &
+	$(CPPFLAGS_CHAR) $(CPPFLAGS_XCMGRS) $(CPPFLAGS_BUNDLED_UNICODE) &
+	-DQSE_ENABLE_STATIC_MODULE $(CPPFLAGS_TCPV40HDRS) -wx $(__DEBUG_INFO) -bm -ot &
+	-ox $(CPPFLAGS) $(CFLAGS)
+EXEQSEXLI_OBJECTS =  &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\exeqsexli_xli.obj
 LIBQSECMNXX_CXXFLAGS = $(____DOS_CFLAG_p) -i=..\..\include $(CPPFLAGS_BUILD) &
 	$(CPPFLAGS_CHAR) $(CPPFLAGS_XCMGRS) $(CPPFLAGS_BUNDLED_UNICODE) &
 	-DQSE_ENABLE_STATIC_MODULE $(CPPFLAGS_TCPV40HDRS) -wx $(__DEBUG_INFO) -bm -ot &
@@ -398,7 +404,7 @@ $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS) :
 
 ### Targets: ###
 
-all : .SYMBOLIC $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\qsecmn.lib $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\qseawk.lib $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\qsesed.lib $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\qsehttp.lib $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\qsexli.lib $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\qseawk.exe $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\qsesed.exe $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\qsehttpd.exe $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\qsecmnxx.lib $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\qseawkxx.lib $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\qsesedxx.lib
+all : .SYMBOLIC $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\qsecmn.lib $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\qseawk.lib $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\qsesed.lib $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\qsehttp.lib $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\qsexli.lib $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\qseawk.exe $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\qsesed.exe $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\qsehttpd.exe $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\qsexli.exe $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\qsecmnxx.lib $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\qseawkxx.lib $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\qsesedxx.lib
 
 clean : .SYMBOLIC 
 	-if exist $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\*.obj del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\*.obj
@@ -414,6 +420,7 @@ clean : .SYMBOLIC
 	-del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\qseawk.exe
 	-del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\qsesed.exe
 	-del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\qsehttpd.exe
+	-del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\qsexli.exe
 	-del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\qsecmnxx.lib
 	-del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\qseawkxx.lib
 	-del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\qsesedxx.lib
@@ -448,7 +455,7 @@ $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\qseawk.exe :  $(
 	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\exeqseawk.lbc option quiet
 	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\exeqseawk.lbc name $^@
 	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\exeqseawk.lbc option caseexact
-	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\exeqseawk.lbc  $(__DEBUG_INFO_2)  system $(__DOS_LDFLAG) $(LDFLAGS)
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\exeqseawk.lbc  $(__DEBUG_INFO_3)  system $(__DOS_LDFLAG) $(LDFLAGS)
 	@for %i in ($(EXEQSEAWK_OBJECTS)) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\exeqseawk.lbc file %i
 	@for %i in ( $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\qsecmn.lib $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\qseawk.lib  ) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\exeqseawk.lbc library %i
 	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\exeqseawk.lbc
@@ -460,7 +467,7 @@ $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\qsesed.exe :  $(
 	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\exeqsesed.lbc option quiet
 	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\exeqsesed.lbc name $^@
 	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\exeqsesed.lbc option caseexact
-	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\exeqsesed.lbc  $(__DEBUG_INFO_2)  system $(__DOS_LDFLAG) $(LDFLAGS)
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\exeqsesed.lbc  $(__DEBUG_INFO_3)  system $(__DOS_LDFLAG) $(LDFLAGS)
 	@for %i in ($(EXEQSESED_OBJECTS)) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\exeqsesed.lbc file %i
 	@for %i in ( $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\qsecmn.lib $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\qsesed.lib) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\exeqsesed.lbc library %i
 	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\exeqsesed.lbc
@@ -472,12 +479,24 @@ $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\qsehttpd.exe :  
 	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\exeqsehttpd.lbc option quiet
 	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\exeqsehttpd.lbc name $^@
 	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\exeqsehttpd.lbc option caseexact
-	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\exeqsehttpd.lbc  $(__DEBUG_INFO_2)  system $(__DOS_LDFLAG) $(LDFLAGS)
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\exeqsehttpd.lbc  $(__DEBUG_INFO_3)  system $(__DOS_LDFLAG) $(LDFLAGS)
 	@for %i in ($(EXEQSEHTTPD_OBJECTS)) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\exeqsehttpd.lbc file %i
 	@for %i in ( $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\qsecmn.lib $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\qsehttp.lib $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\qsexli.lib  ) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\exeqsehttpd.lbc library %i
 	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\exeqsehttpd.lbc
 	@for %i in (256k) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\exeqsehttpd.lbc option stack=%i
 	wlink @$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\exeqsehttpd.lbc
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\qsexli.exe :  $(EXEQSEXLI_OBJECTS) $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\qsecmn.lib $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\qsexli.lib
+	@%create $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\exeqsexli.lbc
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\exeqsexli.lbc option quiet
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\exeqsexli.lbc name $^@
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\exeqsexli.lbc option caseexact
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\exeqsexli.lbc  $(__DEBUG_INFO_3)  system $(__DOS_LDFLAG) $(LDFLAGS)
+	@for %i in ($(EXEQSEXLI_OBJECTS)) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\exeqsexli.lbc file %i
+	@for %i in ( $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\qsecmn.lib $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\qsexli.lib) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\exeqsexli.lbc library %i
+	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\exeqsexli.lbc
+	@for %i in (256k) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\exeqsexli.lbc option stack=%i
+	wlink @$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\exeqsexli.lbc
 
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\qsecmnxx.lib :  $(LIBQSECMNXX_OBJECTS) $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\qsecmn.lib $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\qsecmn.lib
 	@%create $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmnxx.lbc
@@ -880,6 +899,9 @@ $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\exeqsesed_sed.ob
 
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\exeqsehttpd_httpd.obj :  .AUTODEPEND ..\..\cmd\http\httpd.c
 	$(CC) -bt=dos -zq -fo=$^@ $(EXEQSEHTTPD_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\exeqsexli_xli.obj :  .AUTODEPEND ..\..\cmd\xli\xli.c
+	$(CC) -bt=dos -zq -fo=$^@ $(EXEQSEXLI_CFLAGS) $<
 
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmnxx_Mmgr.obj :  .AUTODEPEND ..\..\lib\cmn\Mmgr.cpp
 	$(CXX) -bt=dos -zq -fo=$^@ $(LIBQSECMNXX_CXXFLAGS) $<

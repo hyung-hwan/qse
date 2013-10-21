@@ -483,6 +483,16 @@
 		<sys-lib>$(SYSLIB_SOCKET2)</sys-lib>
 	</exe>
 
+	<exe id="exeqsexli" template="base">
+		<exename>qsexli</exename>
+		<app-type>console</app-type>
+		<set-srcdir>../../cmd/xli</set-srcdir>
+		<sources>xli.c</sources>
+		<library>libqsecmn</library>
+		<library>libqsexli</library>
+		<!-- <depends>libqsexli</depends> -->
+	</exe>
+
 	<dll id="dllqsecmnxx" template="base,basexx" cond="ENABLE_DLL=='1'">
 		<libname>qsecmnxx</libname>
 		<dllname>qsecmnxx</dllname>

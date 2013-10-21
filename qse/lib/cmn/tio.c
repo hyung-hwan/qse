@@ -576,7 +576,7 @@ qse_ssize_t qse_tio_writembs (
 
 		if (tio->flags & QSE_TIO_NOAUTOFLUSH)
 		{
-			while (mptr[pos]) 
+			while (mptr[pos] != QSE_MT('\0')) 
 			{
 				tio->out.buf.ptr[tio->outbuf_len++] = mptr[pos++];
 				if (tio->outbuf_len >= tio->out.buf.capa &&
@@ -587,7 +587,7 @@ qse_ssize_t qse_tio_writembs (
 		else
 		{
 			int nl = 0;
-			while (mptr[pos]) 
+			while (mptr[pos] != QSE_MT('\0')) 
 			{
 				tio->out.buf.ptr[tio->outbuf_len++] = mptr[pos];
 				if (tio->outbuf_len >= tio->out.buf.capa)
@@ -690,7 +690,7 @@ qse_ssize_t qse_tio_writewcs (
 			/* the buffer is not large enough to 
 			 * convert more. so flush now and continue.
 			 * note that the buffer may not be full though 
-			 * it not large enough in this case */
+			 * it is not large enough in this case */
 			if (qse_tio_flush (tio) <= -1) return -1;
 			nl = 0;
 		}

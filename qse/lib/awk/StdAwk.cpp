@@ -998,7 +998,7 @@ int StdAwk::open_console_out (Console& io)
 			qse_sio_t* sio;
 			sio = open_sio_std (
 				QSE_NULL, io, QSE_SIO_STDOUT,
-				QSE_SIO_WRITE | QSE_SIO_IGNOREMBWCERR);
+				QSE_SIO_WRITE | QSE_SIO_IGNOREMBWCERR | QSE_SIO_LINEBREAK);
 			if (sio == QSE_NULL) return -1;
 
 			if (this->console_cmgr)
@@ -1036,7 +1036,7 @@ int StdAwk::open_console_out (Console& io)
 		}
 
 		if (file[0] == QSE_T('-') && file[1] == QSE_T('\0'))
-			sio = open_sio_std (QSE_NULL, io, QSE_SIO_STDOUT, QSE_SIO_WRITE | QSE_SIO_IGNOREMBWCERR);
+			sio = open_sio_std (QSE_NULL, io, QSE_SIO_STDOUT, QSE_SIO_WRITE | QSE_SIO_IGNOREMBWCERR | QSE_SIO_LINEBREAK);
 		else
 			sio = open_sio (QSE_NULL, io, file, QSE_SIO_WRITE | QSE_SIO_CREATE | QSE_SIO_TRUNCATE | QSE_SIO_IGNOREMBWCERR);
 		if (sio == QSE_NULL) return -1;
@@ -1515,7 +1515,7 @@ int StdAwk::SourceFile::open (Data& io)
 				sio = open_sio_std (
 					io, QSE_NULL, QSE_SIO_STDOUT, 
 					QSE_SIO_WRITE | QSE_SIO_CREATE | 
-					QSE_SIO_TRUNCATE | QSE_SIO_IGNOREMBWCERR);
+					QSE_SIO_TRUNCATE | QSE_SIO_IGNOREMBWCERR | QSE_SIO_LINEBREAK);
 			if (sio == QSE_NULL) return -1;
 		}
 		else

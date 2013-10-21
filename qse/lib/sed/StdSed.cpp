@@ -73,7 +73,7 @@ int StdSed::FileStream::open (Data& io)
 	if (io.getMode() == READ)
 		oflags = QSE_SIO_READ | QSE_SIO_IGNOREMBWCERR;
 	else
-		oflags = QSE_SIO_WRITE | QSE_SIO_CREATE | QSE_SIO_TRUNCATE | QSE_SIO_IGNOREMBWCERR;
+		oflags = QSE_SIO_WRITE | QSE_SIO_CREATE | QSE_SIO_TRUNCATE | QSE_SIO_IGNOREMBWCERR | QSE_SIO_LINEBREAK;
 
 	if (ioname == QSE_NULL)
 	{
