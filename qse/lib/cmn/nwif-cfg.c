@@ -28,12 +28,16 @@
 #	include <ws2tcpip.h>
 #	include <iphlpapi.h> 
 #elif defined(__OS2__)
+#	if defined(TCPV40HDRS)
+#		define BSD_SELECT
+#	endif
 #	include <types.h>
 #	include <sys/socket.h>
 #	include <netinet/in.h>
 #	include <sys/ioctl.h>
 #	include <nerrno.h>
 #	if defined(TCPV40HDRS)
+#		define USE_SELECT
 #		include <sys/select.h>
 #	else
 #		include <unistd.h>

@@ -97,11 +97,22 @@ enum
 	FLAGC_LENMOD    = (1 << 10) /* length modifier */
 };
 
+/* ------------------------------------------------------------------ */
+
+static const qse_mchar_t* m_hex2ascii =
+	QSE_MT("0123456789abcdefghijklmnopqrstuvwxyz");
+static const qse_wchar_t* w_hex2ascii =
+	QSE_WT("0123456789abcdefghijklmnopqrstuvwxyz");
+
+/* ------------------------------------------------------------------ */
+
 #include <stdio.h> /* TODO: remove dependency on this */
 #if defined(_MSC_VER) || defined(__BORLANDC__) || (defined(__WATCOMC__) && (__WATCOMC__ < 1200))
 #	define snprintf _snprintf
 #	define vsnprintf _vsnprintf
 #endif
+
+/* ------------------------------------------------------------------ */
 
 static int put_wchar (qse_wchar_t c, void *arg)
 {
@@ -131,6 +142,8 @@ static int put_mchar (qse_mchar_t c, void *arg)
 	return (putchar (c) == EOF)? -1: 0;
 }
 
+/* ------------------------------------------------------------------ */
+
 #undef char_t
 #undef uchar_t
 #undef ochar_t
@@ -150,7 +163,6 @@ static int put_mchar (qse_mchar_t c, void *arg)
 #define sprintn m_sprintn
 #define xprintf qse_mxprintf 
 
-static const qse_mchar_t m_hex2ascii[] = QSE_MT("0123456789abcdefghijklmnopqrstuvwxyz");
 #define hex2ascii(hex)  (m_hex2ascii[hex])
 
 #include "fmt-print.h"
@@ -191,7 +203,6 @@ qse_ssize_t qse_mvprintf (const char_t* fmt, va_list ap)
 #define sprintn w_sprintn
 #define xprintf qse_wxprintf 
 
-static const qse_wchar_t w_hex2ascii[] = QSE_WT("0123456789abcdefghijklmnopqrstuvwxyz");
 #define hex2ascii(hex)  (w_hex2ascii[hex])
 
 #include "fmt-print.h"

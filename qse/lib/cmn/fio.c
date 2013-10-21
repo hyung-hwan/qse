@@ -73,6 +73,18 @@ typedef DWORD WINAPI (*getmappedfilename_t) (
 
 #elif defined(__OS2__)
 
+#if defined(__WATCOMC__) && (__WATCOMC__ <= 1100) && !defined(LONGLONG_INCLUDED)
+typedef struct _LONGLONG {
+	ULONG ulLo;
+	LONG  ulHi;
+} LONGLONG, *PLONGLONG;
+
+typedef struct _ULONGLONG {
+	ULONG ulLo;
+	ULONG ulHi;
+} ULONGLONG, *PULONGLONG;
+#endif
+
 typedef APIRET APIENTRY (*dosopenl_t) (
 	PSZ pszFileName,
 	PHFILE pHf,

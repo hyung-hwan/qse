@@ -28,6 +28,9 @@
 #	include <windows.h>
 #	define  USE_SELECT
 #elif defined(__OS2__)
+#	if defined(TCPV40HDRS)
+#		define  BSD_SELECT
+#	endif
 #	include <types.h>
 #	include <sys/socket.h>
 #	include <netinet/in.h>
