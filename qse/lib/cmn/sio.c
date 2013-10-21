@@ -36,7 +36,7 @@
 enum
 {
 	STATUS_UTF8_CONSOLE = (1 << 0),
-	STATUS_LINE_BREAK = (1 << 1)
+	STATUS_LINE_BREAK   = (1 << 1)
 };
 
 static qse_ssize_t file_input (
@@ -427,10 +427,18 @@ qse_ssize_t qse_sio_putmb (qse_sio_t* sio, qse_mchar_t c)
 	qse_ssize_t n;
 
 	sio->errnum = QSE_SIO_ENOERR;
+
+#if defined(__OS2__)
+	if (c == QSE_MT('\n') && (sio->status & STATUS_LINE_BREAK))
+		n = qse_tio_writembs (&sio->tio.io, QSE_MT("\r\n"), 2);
+	else
+		n = qse_tio_writembs (&sio->tio.io, &c, 1);
+#else
 	n = qse_tio_writembs (&sio->tio.io, &c, 1);
+#endif
+
 	if (n <= -1 && sio->errnum == QSE_SIO_ENOERR) 
 		sio->errnum = tio_errnum_to_sio_errnum (&sio->tio.io);
-
 	return n;
 }
 
@@ -439,7 +447,14 @@ qse_ssize_t qse_sio_putwc (qse_sio_t* sio, qse_wchar_t c)
 	qse_ssize_t n;
 
 	sio->errnum = QSE_SIO_ENOERR;
+#if defined(__OS2__)
+	if (c == QSE_WT('\n') && (sio->status & STATUS_LINE_BREAK))
+		n = qse_tio_writewcs (&sio->tio.io, QSE_WT("\r\n"), 2);
+	else
+		n = qse_tio_writewcs (&sio->tio.io, &c, 1);
+#else
 	n = qse_tio_writewcs (&sio->tio.io, &c, 1);
+#endif
 	if (n <= -1 && sio->errnum == QSE_SIO_ENOERR) 
 		sio->errnum = tio_errnum_to_sio_errnum (&sio->tio.io);
 
@@ -453,6 +468,15 @@ qse_ssize_t qse_sio_putmbs (qse_sio_t* sio, const qse_mchar_t* str)
 #if defined(_WIN32)
 	/* Using WriteConsoleA() didn't help at all.
 	 * so I don't implement any hacks here */
+#elif defined(__OS2__)
+	if (sio->status & STATUS_LINE_BREAK)
+	{
+		for (n = 0; n < QSE_TYPE_MAX(qse_ssize_t) && str[n] != QSE_MT('\0'); n++)
+		{
+			if ((n = qse_sio_putmb (sio, str[n])) <= -1) return n;
+		}
+		return n;
+	}
 #endif
 
 	sio->errnum = QSE_SIO_ENOERR;
@@ -471,6 +495,16 @@ qse_ssize_t qse_sio_putmbsn (
 #if defined(_WIN32)
 	/* Using WriteConsoleA() didn't help at all.
 	 * so I don't implement any hacks here */
+#elif defined(__OS2__)
+	if (sio->status & STATUS_LINE_BREAK)
+	{
+		if (size > QSE_TYPE_MAX(qse_ssize_t)) size = QSE_TYPE_MAX(qse_ssize_t);
+		for (n = 0; n < size; n++)
+		{
+			if (qse_sio_putmb (sio, str[n]) <= -1) return -1;
+		}
+		return n;
+	}
 #endif
 
 	sio->errnum = QSE_SIO_ENOERR;
@@ -512,6 +546,15 @@ qse_ssize_t qse_sio_putwcs (qse_sio_t* sio, const qse_wchar_t* str)
 			}
 		}
 		return cur - str;	
+	}
+#elif defined(__OS2__)
+	if (sio->status & STATUS_LINE_BREAK)
+	{
+		for (n = 0; n < QSE_TYPE_MAX(qse_ssize_t) && str[n] != QSE_WT('\0'); n++)
+		{
+			if (qse_sio_putwc (sio, str[n]) <= -1) return -1;
+		}
+		return n;
 	}
 #endif
 
@@ -574,7 +617,16 @@ qse_ssize_t qse_sio_putwcsn (
 		}
 		return cur - str;
 	}	
-
+#elif defined(__OS2__) 
+	if (sio->status & STATUS_LINE_BREAK)
+	{
+		if (size > QSE_TYPE_MAX(qse_ssize_t)) size = QSE_TYPE_MAX(qse_ssize_t);
+		for (n = 0; n < size; n++)
+		{
+			if (qse_sio_putwc (sio, str[n]) <= -1) return -1;
+		}
+		return n;
+	}
 #endif
 
 	sio->errnum = QSE_SIO_ENOERR;
@@ -586,26 +638,12 @@ qse_ssize_t qse_sio_putwcsn (
 
 static int put_wchar (qse_wchar_t c, void *arg)
 {
-#if defined(__OS2__)
-	if (c == QSE_WT('\n') && (((qse_sio_t*)arg)->status & STATUS_LINE_BREAK))
-		return qse_sio_putwcs ((qse_sio_t*)arg, QSE_WT("\r\n"));
-	else
-		return qse_sio_putwc ((qse_sio_t*)arg, c);
-#else
 	return qse_sio_putwc ((qse_sio_t*)arg, c);
-#endif
 }
 
 static int put_mchar (qse_mchar_t c, void *arg)
 {
-#if defined(__OS2__)
-	if (c == QSE_MT('\n') && (((qse_sio_t*)arg)->status & STATUS_LINE_BREAK))
-		return qse_sio_putmbs ((qse_sio_t*)arg, QSE_MT("\r\n"));
-	else
-		return qse_sio_putmb ((qse_sio_t*)arg, c);
-#else
 	return qse_sio_putmb ((qse_sio_t*)arg, c);
-#endif
 }
 
 qse_ssize_t qse_sio_putmbsf (qse_sio_t* sio, const qse_mchar_t* fmt, ...)
@@ -718,7 +756,6 @@ int qse_sio_seek (qse_sio_t* sio, qse_sio_seek_t pos)
 static qse_ssize_t file_input (
 	qse_tio_t* tio, qse_tio_cmd_t cmd, void* buf, qse_size_t size)
 {
-
 	if (cmd == QSE_TIO_DATA) 
 	{
 		qse_ssize_t n;

@@ -954,7 +954,7 @@ static qse_ssize_t sf_out (
 						/* no path name or - -> stdout */
 						xtn->s.out.u.file.sio = open_sio_std (
 							awk, QSE_SIO_STDOUT, 
-							QSE_SIO_WRITE | QSE_SIO_IGNOREMBWCERR
+							QSE_SIO_WRITE | QSE_SIO_IGNOREMBWCERR | QSE_SIO_LINEBREAK
 						);
 						if (xtn->s.out.u.file.sio == QSE_NULL) return -1;
 					}
@@ -1623,7 +1623,7 @@ static int open_rio_console (qse_awk_rtx_t* rtx, qse_awk_rio_arg_t* riod)
 			{
 				sio = open_sio_std_rtx (
 					rtx, QSE_SIO_STDOUT,
-					QSE_SIO_WRITE | QSE_SIO_IGNOREMBWCERR
+					QSE_SIO_WRITE | QSE_SIO_IGNOREMBWCERR | QSE_SIO_LINEBREAK
 				);
 				if (sio == QSE_NULL) return -1;
 
@@ -1654,7 +1654,7 @@ static int open_rio_console (qse_awk_rtx_t* rtx, qse_awk_rio_arg_t* riod)
 			sio = (file[0] == QSE_T('-') && file[1] == QSE_T('\0'))?
 				open_sio_std_rtx (
 					rtx, QSE_SIO_STDOUT,
-					QSE_SIO_WRITE | QSE_SIO_IGNOREMBWCERR):
+					QSE_SIO_WRITE | QSE_SIO_IGNOREMBWCERR | QSE_SIO_LINEBREAK):
 				open_sio_rtx (
 					rtx, file, 
 					QSE_SIO_WRITE | QSE_SIO_CREATE | 

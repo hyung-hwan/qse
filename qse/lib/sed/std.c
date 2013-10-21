@@ -306,7 +306,8 @@ static int open_output_stream (qse_sed_t* sed, qse_sed_io_arg_t* arg, qse_sed_io
 					QSE_SIO_WRITE |
 					QSE_SIO_CREATE |
 					QSE_SIO_TRUNCATE |
-					QSE_SIO_IGNOREMBWCERR
+					QSE_SIO_IGNOREMBWCERR |
+					QSE_SIO_LINEBREAK
 				);
 			}
 			else
@@ -635,7 +636,8 @@ static qse_ssize_t x_out (
 						QSE_SIO_WRITE |
 						QSE_SIO_CREATE |
 						QSE_SIO_TRUNCATE |
-						QSE_SIO_IGNOREMBWCERR
+						QSE_SIO_IGNOREMBWCERR |
+						QSE_SIO_LINEBREAK
 					);
 					if (sio == QSE_NULL) return -1;
 					arg->handle = sio;
