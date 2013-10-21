@@ -623,7 +623,7 @@ QSE_EXPORT qse_xli_str_t* qse_xli_addsegtostr (
  * character string each of whose segment is delimited by '\0' and the last
  * segment is delimited by double '\0's. The string tags are not included.
  */
-qse_char_t* qse_xli_dupflatstr (
+QSE_EXPORT qse_char_t* qse_xli_dupflatstr (
 	qse_xli_t*     xli,
 	qse_xli_str_t* str,
 	qse_size_t*    len,

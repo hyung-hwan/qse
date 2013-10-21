@@ -37,6 +37,7 @@ enum qse_sio_flag_t
 	 * qse_fio_flag_t enumerators. you can use values between
 	 * (1<<0) and (1<<7) inclusive reserved in qse_fio_flag_t.
 	 * the range is represented by QSE_FIO_RESERVED. */
+	QSE_SIO_LINEBREAK     = (1 << 0), /* expand \n to a system line-break convention if necessary */
 	QSE_SIO_IGNOREMBWCERR = (1 << 1),
 	QSE_SIO_NOAUTOFLUSH   = (1 << 2),
 	QSE_SIO_KEEPPATH      = (1 << 3),
@@ -116,7 +117,7 @@ struct qse_sio_t
 
 	qse_char_t* path;
 
-#if defined(_WIN32)
+#if defined(_WIN32) || defined(__OS2__)
 	int status;
 #endif
 };

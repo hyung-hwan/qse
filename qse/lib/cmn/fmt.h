@@ -24,22 +24,32 @@
 #include <qse/cmn/fmt.h>
 #include <stdarg.h>
 
+typedef int (*qse_printf_mchar_t) (
+	qse_mchar_t c,
+	void*       ctx
+);
+
+typedef int (*qse_printf_wchar_t) (
+	qse_mchar_t c,
+	void*       ctx
+);
+
 #ifdef __cplusplus
 extern {
 #endif
 
 qse_ssize_t qse_mxprintf (
 	const qse_mchar_t* fmt,
-	int              (*put_mchar) (qse_mchar_t, void*),
-	int              (*put_wchar) (qse_wchar_t, void*),
+	qse_printf_mchar_t put_mchar,
+	qse_printf_wchar_t put_wchar,
 	void*              arg,
 	va_list            ap
 );
 
 qse_ssize_t qse_wxprintf (
 	const qse_wchar_t* fmt,
-	int              (*put_wchar) (qse_wchar_t, void*),
-	int              (*put_mchar) (qse_mchar_t, void*),
+	qse_printf_wchar_t put_wchar,
+	qse_printf_mchar_t put_mchar,
 	void*              arg,
 	va_list            ap
 );

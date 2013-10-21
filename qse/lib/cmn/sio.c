@@ -35,9 +35,9 @@
 /* internal status codes */
 enum
 {
-	STATUS_UTF8_CONSOLE = (1 << 0)
+	STATUS_UTF8_CONSOLE = (1 << 0),
+	STATUS_LINE_BREAK = (1 << 1)
 };
-
 
 static qse_ssize_t file_input (
 	qse_tio_t* tio, qse_tio_cmd_t cmd, void* buf, qse_size_t size);
@@ -208,6 +208,9 @@ int qse_sio_init (
 		goto oops03;
 	}
 
+#if defined(__OS2__)
+	if (flags & QSE_SIO_LINEBREAK) sio->status |= STATUS_LINE_BREAK;
+#endif
 	return 0;
 
 oops03:
@@ -583,12 +586,26 @@ qse_ssize_t qse_sio_putwcsn (
 
 static int put_wchar (qse_wchar_t c, void *arg)
 {
-	return qse_sio_putwc (arg, c);
+#if defined(__OS2__)
+	if (c == QSE_WT('\n') && (((qse_sio_t*)arg)->status & STATUS_LINE_BREAK))
+		return qse_sio_putwcs ((qse_sio_t*)arg, QSE_WT("\r\n"));
+	else
+		return qse_sio_putwc ((qse_sio_t*)arg, c);
+#else
+	return qse_sio_putwc ((qse_sio_t*)arg, c);
+#endif
 }
 
 static int put_mchar (qse_mchar_t c, void *arg)
 {
-	return qse_sio_putmb (arg, c);
+#if defined(__OS2__)
+	if (c == QSE_MT('\n') && (((qse_sio_t*)arg)->status & STATUS_LINE_BREAK))
+		return qse_sio_putmbs ((qse_sio_t*)arg, QSE_MT("\r\n"));
+	else
+		return qse_sio_putmb ((qse_sio_t*)arg, c);
+#else
+	return qse_sio_putmb ((qse_sio_t*)arg, c);
+#endif
 }
 
 qse_ssize_t qse_sio_putmbsf (qse_sio_t* sio, const qse_mchar_t* fmt, ...)
@@ -737,6 +754,8 @@ static qse_ssize_t file_output (
 	return 0;
 }
 
+/* ---------------------------------------------------------- */
+
 static qse_sio_t* sio_stdout = QSE_NULL;
 static qse_sio_t* sio_stderr = QSE_NULL;
 
@@ -744,11 +763,11 @@ int qse_openstdsios (void)
 {
 	if (sio_stdout == QSE_NULL)
 	{	
-		sio_stdout = qse_sio_openstd (QSE_MMGR_GETDFL(), 0, QSE_SIO_STDOUT, 0);
+		sio_stdout = qse_sio_openstd (QSE_MMGR_GETDFL(), 0, QSE_SIO_STDOUT, QSE_SIO_LINEBREAK);
 	}
 	if (sio_stderr == QSE_NULL)
 	{	
-		sio_stderr = qse_sio_openstd (QSE_MMGR_GETDFL(), 0, QSE_SIO_STDERR, 0);
+		sio_stderr = qse_sio_openstd (QSE_MMGR_GETDFL(), 0, QSE_SIO_STDERR, QSE_SIO_LINEBREAK);
 	}
 
 	if (sio_stdout == QSE_NULL || sio_stderr == QSE_NULL) 
