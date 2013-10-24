@@ -84,18 +84,17 @@ static char_t* sprintn (char_t* nbuf, qse_uintmax_t num, int base, int *lenp, in
 #undef PUT_CHAR
 #undef PUT_OCHAR
 
-/* TODO: error check */
 #define PUT_CHAR(c) do { \
-	if (put_char (c, arg) <= -1) goto oops; \
-	outcnt++; \
+	if (data->put_char (c, data->ctx) <= -1) goto oops; \
+	data->count++; \
 } while (0)
 
 #define PUT_OCHAR(c) do { \
-	if (put_ochar (c, arg) <= -1) goto oops; \
-	outcnt++; \
+	if (data->put_ochar (c, data->ctx) <= -1) goto oops; \
+	data->count++; \
 } while (0)
 
-qse_ssize_t xprintf (const char_t* fmt, int (*put_char)(char_t, void*), int (*put_ochar) (ochar_t, void*), void *arg, va_list ap)
+int fmtout (const char_t* fmt, qse_fmtout_t* data, va_list ap)
 {
 	char_t nbuf[MAXNBUF];
 	const char_t* p, * percent;
@@ -106,7 +105,8 @@ qse_ssize_t xprintf (const char_t* fmt, int (*put_char)(char_t, void*), int (*pu
 	int lm_flag, lm_dflag, flagc, numlen;
 	qse_uintmax_t num = 0;
 	int stop = 0;
-	qse_ssize_t outcnt = 0;
+
+	data->count = 0;
 
 	struct
 	{
@@ -133,7 +133,7 @@ qse_ssize_t xprintf (const char_t* fmt, int (*put_char)(char_t, void*), int (*pu
 		while ((ch = (uchar_t)*fmt++) != T('%') || stop) 
 		{
 			if (ch == T('\0')) goto done;
-			PUT_CHAR(ch);
+			PUT_CHAR (ch);
 		}
 		percent = fmt - 1;
 
@@ -308,21 +308,21 @@ reswitch:
 
 		case T('n'):
 			if (lm_flag & LF_J) /* j */
-				*(va_arg(ap, qse_intmax_t*)) = outcnt;
+				*(va_arg(ap, qse_intmax_t*)) = data->count;
 			else if (lm_flag & LF_Z) /* z */
-				*(va_arg(ap, qse_size_t*)) = outcnt;
+				*(va_arg(ap, qse_size_t*)) = data->count;
 		#if (QSE_SIZEOF_LONG_LONG > 0)
 			else if (lm_flag & LF_Q) /* ll */
-				*(va_arg(ap, long long int*)) = outcnt;
+				*(va_arg(ap, long long int*)) = data->count;
 		#endif
 			else if (lm_flag & LF_L) /* l */
-				*(va_arg(ap, long int*)) = outcnt;
+				*(va_arg(ap, long int*)) = data->count;
 			else if (lm_flag & LF_H) /* h */
-				*(va_arg(ap, short int*)) = outcnt;
+				*(va_arg(ap, short int*)) = data->count;
 			else if (lm_flag & LF_C) /* hh */
-				*(va_arg(ap, char*)) = outcnt;
+				*(va_arg(ap, char*)) = data->count;
 			else
-				*(va_arg(ap, int*)) = outcnt;
+				*(va_arg(ap, int*)) = data->count;
 			break;
 
 
@@ -733,7 +733,7 @@ done:
 		QSE_MMGR_FREE (QSE_MMGR_GETDFL(), fltfmt.ptr);
 	if (fltout.ptr != fltout.sbuf)
 		QSE_MMGR_FREE (QSE_MMGR_GETDFL(), fltout.ptr);
-	return outcnt;
+	return 0;
 
 oops:
 	if (fltfmt.ptr != fltfmt.sbuf)

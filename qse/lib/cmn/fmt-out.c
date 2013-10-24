@@ -24,6 +24,11 @@
 #include <qse/cmn/mbwc.h>
 #include <stdarg.h>
 #include "mem.h"
+#include "fmt.h"
+
+#include <stdio.h> /* for snrintf() */
+/* TODO: remove stdio.h once snprintf gets replaced by own 
+floting-point conversion implementation*/
 
 /* number of bits in a byte */
 #define NBBY    8               
@@ -106,44 +111,6 @@ static const qse_wchar_t* w_hex2ascii =
 
 /* ------------------------------------------------------------------ */
 
-#include <stdio.h> /* TODO: remove dependency on this */
-#if defined(_MSC_VER) || defined(__BORLANDC__) || (defined(__WATCOMC__) && (__WATCOMC__ < 1200))
-#	define snprintf _snprintf
-#	define vsnprintf _vsnprintf
-#endif
-
-/* ------------------------------------------------------------------ */
-
-static int put_wchar (qse_wchar_t c, void *arg)
-{
-	qse_cmgr_t* cmgr;
-	qse_mchar_t mbsbuf[QSE_MBLEN_MAX + 1];
-	qse_size_t n;
-
-	cmgr = qse_getdflcmgr ();
-	n = cmgr->wctomb (c, mbsbuf, QSE_COUNTOF(mbsbuf));
-	if (n <= 0 || n > QSE_COUNTOF(mbsbuf))
-	{
-		return (putchar ('?') == EOF)? -1: 0;
-	}
-	else
-	{
-		qse_size_t i;
-		for (i = 0; i < n; i++) 
-		{
-			if (putchar (mbsbuf[i]) == EOF) return -1;
-		}
-		return 0;
-	}
-}
-
-static int put_mchar (qse_mchar_t c, void *arg)
-{
-	return (putchar (c) == EOF)? -1: 0;
-}
-
-/* ------------------------------------------------------------------ */
-
 #undef char_t
 #undef uchar_t
 #undef ochar_t
@@ -152,7 +119,9 @@ static int put_mchar (qse_mchar_t c, void *arg)
 #undef toupper
 #undef hex2ascii
 #undef sprintn
-#undef xprintf
+#undef put_char
+#undef put_ochar
+#undef fmtout
 
 #define char_t qse_mchar_t
 #define uchar_t qse_mchar_t
@@ -161,26 +130,13 @@ static int put_mchar (qse_mchar_t c, void *arg)
 #define OT(x) QSE_WT(x)
 #define toupper QSE_TOUPPER
 #define sprintn m_sprintn
-#define xprintf qse_mxprintf 
+#define put_char put_mchar
+#define put_ochar put_wchar
+#define fmtout qse_mfmtout
 
 #define hex2ascii(hex)  (m_hex2ascii[hex])
 
-#include "fmt-print.h"
-
-qse_ssize_t qse_mprintf (const char_t *fmt, ...)
-{
-	va_list ap;
-	qse_ssize_t n;
-	va_start (ap, fmt);
-	n = qse_mxprintf (fmt, put_mchar, put_wchar, QSE_NULL, ap);
-	va_end (ap);
-	return n;
-}
-
-qse_ssize_t qse_mvprintf (const char_t* fmt, va_list ap)
-{
-	return qse_mxprintf (fmt, put_mchar, put_wchar, QSE_NULL, ap);
-}
+#include "fmt-out.h"
 
 /* ------------------------------------------------------------------ */
 
@@ -192,7 +148,9 @@ qse_ssize_t qse_mvprintf (const char_t* fmt, va_list ap)
 #undef toupper
 #undef hex2ascii
 #undef sprintn
-#undef xprintf
+#undef put_char
+#undef put_ochar
+#undef fmtout
 
 #define char_t qse_wchar_t
 #define uchar_t qse_wchar_t
@@ -201,23 +159,11 @@ qse_ssize_t qse_mvprintf (const char_t* fmt, va_list ap)
 #define OT(x) QSE_MT(x)
 #define toupper QSE_TOWUPPER
 #define sprintn w_sprintn
-#define xprintf qse_wxprintf 
+#define put_char put_wchar
+#define put_ochar put_mchar
+#define fmtout qse_wfmtout
 
 #define hex2ascii(hex)  (w_hex2ascii[hex])
 
-#include "fmt-print.h"
+#include "fmt-out.h"
 
-qse_ssize_t qse_wprintf (const char_t *fmt, ...)
-{
-	va_list ap;
-	qse_ssize_t n;
-	va_start (ap, fmt);
-	n = qse_wxprintf (fmt, put_wchar, put_mchar, QSE_NULL, ap);
-	va_end (ap);
-	return n;
-}
-
-qse_ssize_t qse_wvprintf (const char_t* fmt, va_list ap)
-{
-	return qse_wxprintf (fmt, put_wchar, put_mchar, QSE_NULL, ap);
-}

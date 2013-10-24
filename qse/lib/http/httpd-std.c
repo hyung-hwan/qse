@@ -668,6 +668,11 @@ static int server_open (qse_httpd_t* httpd, qse_httpd_server_t* server)
 	flag = 1;
 	setsockopt (fd, SOL_SOCKET, SO_REUSEADDR, (void*)&flag, QSE_SIZEOF(flag));
 	#endif
+	
+	#if defined(SO_REUSEPORT)
+	flag = 1;	
+	setsockopt (fd, SOL_SOCKET, SO_REUSEPORT, (void*)&flag, QSE_SIZEOF(flag));
+	#endif
 
 /* TODO: linux. use capset() to set required capabilities just in case */
 	#if defined(IP_TRANSPARENT)

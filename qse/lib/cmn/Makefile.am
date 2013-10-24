@@ -11,9 +11,11 @@ noinst_HEADERS = \
 	cp950.h \
 	fmt.h \
 	fmt-intmax.h \
-	fmt-print.h \
+	fmt-out.h \
 	fs.h \
 	mem.h \
+	str-fcpy.h \
+	str-fmt.h \
 	str-join.h \
 	str-subst.h \
 	syscall.h \
@@ -40,7 +42,7 @@ libqsecmn_la_SOURCES = \
 	fio.c \
 	fma.c \
 	fmt-intmax.c \
-	fmt-print.c \
+	fmt-out.c \
 	fs.c \
 	fs-err.c \
 	fs-move.c \
@@ -84,6 +86,7 @@ libqsecmn_la_SOURCES = \
 	str-end.c \
 	str-excl.c \
 	str-fcpy.c \
+	str-fmt.c \
 	str-fnmat.c \
 	str-incl.c \
 	str-join.c \
