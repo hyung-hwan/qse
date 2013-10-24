@@ -636,12 +636,12 @@ qse_ssize_t qse_sio_putwcsn (
 	return n;
 }
 
-static int put_wchar (qse_wchar_t c, void *arg)
+static int put_wchar (qse_wchar_t c, void* arg)
 {
 	return qse_sio_putwc ((qse_sio_t*)arg, c);
 }
 
-static int put_mchar (qse_mchar_t c, void *arg)
+static int put_mchar (qse_mchar_t c, void* arg)
 {
 	return qse_sio_putmb ((qse_sio_t*)arg, c);
 }
@@ -650,59 +650,90 @@ qse_ssize_t qse_sio_putmbsf (qse_sio_t* sio, const qse_mchar_t* fmt, ...)
 {
 	va_list ap;
 	qse_ssize_t x;
+	qse_fmtout_t fo;
+
+	fo.limit = QSE_TYPE_MAX(qse_ssize_t);
+	fo.ctx = sio;
+	fo.put_mchar = put_mchar;
+	fo.put_wchar = put_wchar;
 
 	va_start (ap, fmt);
-	x = qse_mxprintf (fmt, put_mchar, put_wchar, sio, ap);
+	x = qse_mfmtout (fmt, &fo, ap);
 	va_end (ap);
 
-	return x;
+	return (x <= -1)? -1: fo.count;
 }
 
 qse_ssize_t qse_sio_putwcsf (qse_sio_t* sio, const qse_wchar_t* fmt, ...)
 {
 	va_list ap;
-	qse_ssize_t x;
+	int x;
+	qse_fmtout_t fo;
+
+	fo.limit = QSE_TYPE_MAX(qse_ssize_t);
+	fo.ctx = sio;
+	fo.put_mchar = put_mchar;
+	fo.put_wchar = put_wchar;
 
 	va_start (ap, fmt);
-	x = qse_wxprintf (fmt, put_wchar, put_mchar, sio, ap);
+	x = qse_wfmtout (fmt, &fo, ap);
 	va_end (ap);
 
-	return x;
+	return (x <= -1)? -1: fo.count;
 }
 
 qse_ssize_t qse_sio_putstrf (qse_sio_t* sio, const qse_char_t* fmt, ...)
 {
 	va_list ap;
-	qse_ssize_t x;
+	int x;
+	qse_fmtout_t fo;
+
+	fo.limit = QSE_TYPE_MAX(qse_ssize_t);
+	fo.ctx = sio;
+	fo.put_mchar = put_mchar;
+	fo.put_wchar = put_wchar;
 
 	va_start (ap, fmt);
-#if defined(QSE_CHAR_IS_MCHAR)
-	x = qse_mxprintf (fmt, put_mchar, put_wchar, sio, ap);
-#else
-	x = qse_wxprintf (fmt, put_wchar, put_mchar, sio, ap);
-#endif
+	x = qse_fmtout (fmt, &fo, ap);
 	va_end (ap);
 
-	return x;
+	return (x <= -1)? -1: fo.count;
 }
 
 qse_ssize_t qse_sio_putmbsvf (qse_sio_t* sio, const qse_mchar_t* fmt, va_list ap)
 {
-	return qse_mxprintf (fmt, put_mchar, put_wchar, sio, ap);
+	qse_fmtout_t fo;
+
+	fo.limit = QSE_TYPE_MAX(qse_ssize_t);
+	fo.ctx = sio;
+	fo.put_mchar = put_mchar;
+	fo.put_wchar = put_wchar;
+
+	return (qse_mfmtout (fmt, &fo, ap) <= -1)? -1: fo.count;
 }
 
 qse_ssize_t qse_sio_putwcsvf (qse_sio_t* sio, const qse_wchar_t* fmt, va_list ap)
 {
-	return qse_wxprintf (fmt, put_wchar, put_mchar, sio, ap);
+	qse_fmtout_t fo;
+
+	fo.limit = QSE_TYPE_MAX(qse_ssize_t);
+	fo.ctx = sio;
+	fo.put_mchar = put_mchar;
+	fo.put_wchar = put_wchar;
+
+	return (qse_wfmtout (fmt, &fo, ap) <= -1)? -1: fo.count;
 }
 
 qse_ssize_t qse_sio_putstrvf (qse_sio_t* sio, const qse_char_t* fmt, va_list ap)
 {
-#if defined(QSE_CHAR_IS_MCHAR)
-	return qse_mxprintf (fmt, put_mchar, put_wchar, sio, ap);
-#else
-	return qse_wxprintf (fmt, put_wchar, put_mchar, sio, ap);
-#endif
+	qse_fmtout_t fo;
+
+	fo.limit = QSE_TYPE_MAX(qse_ssize_t);
+	fo.ctx = sio;
+	fo.put_mchar = put_mchar;
+	fo.put_wchar = put_wchar;
+
+	return (qse_fmtout (fmt, &fo, ap) <= -1)? -1: fo.count;
 }
 
 int qse_sio_getpos (qse_sio_t* sio, qse_sio_pos_t* pos)
@@ -843,58 +874,89 @@ qse_sio_t* qse_getstderr (void)
 qse_ssize_t qse_putmbsf (const qse_mchar_t* fmt, ...)
 {
 	va_list ap;
-	qse_ssize_t x;
+	int x;
+	qse_fmtout_t fo;
+
+	fo.limit = QSE_TYPE_MAX(qse_ssize_t);
+	fo.ctx = sio_stdout;
+	fo.put_mchar = put_mchar;
+	fo.put_wchar = put_wchar;
 
 	va_start (ap, fmt);
-	x = qse_mxprintf (fmt, put_mchar, put_wchar, sio_stdout, ap);
+	x = qse_mfmtout (fmt, &fo, ap);
 	va_end (ap);
 
-	return x;
+	return (x <= -1)? -1: fo.count;
 }
 
 qse_ssize_t qse_putwcsf (const qse_wchar_t* fmt, ...)
 {
 	va_list ap;
-	qse_ssize_t x;
+	int x;
+	qse_fmtout_t fo;
+
+	fo.limit = QSE_TYPE_MAX(qse_ssize_t);
+	fo.ctx = sio_stdout;
+	fo.put_mchar = put_mchar;
+	fo.put_wchar = put_wchar;
 
 	va_start (ap, fmt);
-	x = qse_wxprintf (fmt, put_wchar, put_mchar, sio_stdout, ap);
+	x = qse_wfmtout (fmt, &fo, ap);
 	va_end (ap);
 
-	return x;
+	return (x <= -1)? -1: fo.count;
 }
 
 qse_ssize_t qse_putstrf (const qse_char_t* fmt, ...)
 {
 	va_list ap;
-	qse_ssize_t x;
+	int x;
+	qse_fmtout_t fo;
+
+	fo.limit = QSE_TYPE_MAX(qse_ssize_t);
+	fo.ctx = sio_stdout;
+	fo.put_mchar = put_mchar;
+	fo.put_wchar = put_wchar;
 
 	va_start (ap, fmt);
-#if defined(QSE_CHAR_IS_MCHAR)
-	x = qse_mxprintf (fmt, put_mchar, put_wchar, sio_stdout, ap);
-#else
-	x = qse_wxprintf (fmt, put_wchar, put_mchar, sio_stdout, ap);
-#endif
+	x = qse_fmtout (fmt, &fo, ap);
 	va_end (ap);
 
-	return x;
+	return (x <= -1)? -1: fo.count;
 }
 
 qse_ssize_t qse_putmbsvf (const qse_mchar_t* fmt, va_list ap)
 {
-	return qse_mxprintf (fmt, put_mchar, put_wchar, sio_stdout, ap);
+	qse_fmtout_t fo;
+
+	fo.limit = QSE_TYPE_MAX(qse_ssize_t);
+	fo.ctx = sio_stdout;
+	fo.put_mchar = put_mchar;
+	fo.put_wchar = put_wchar;
+
+	return (qse_mfmtout (fmt, &fo, ap) <= -1)? -1: fo.count;
 }
 
 qse_ssize_t qse_putwcsvf (const qse_wchar_t* fmt, va_list ap)
 {
-	return qse_wxprintf (fmt, put_wchar, put_mchar, sio_stdout, ap);
+	qse_fmtout_t fo;
+
+	fo.limit = QSE_TYPE_MAX(qse_ssize_t);
+	fo.ctx = sio_stdout;
+	fo.put_mchar = put_mchar;
+	fo.put_wchar = put_wchar;
+
+	return (qse_wfmtout (fmt, &fo, ap) <= -1)? -1: fo.count;
 }
 
 qse_ssize_t qse_putstrvf (const qse_char_t* fmt, va_list ap)
 {
-#if defined(QSE_CHAR_IS_MCHAR)
-	return qse_mxprintf (fmt, put_mchar, put_wchar, sio_stdout, ap);
-#else
-	return qse_wxprintf (fmt, put_wchar, put_mchar, sio_stdout, ap);
-#endif
+	qse_fmtout_t fo;
+
+	fo.limit = QSE_TYPE_MAX(qse_ssize_t);
+	fo.ctx = sio_stdout;
+	fo.put_mchar = put_mchar;
+	fo.put_wchar = put_wchar;
+
+	return (qse_fmtout (fmt, &fo, ap) <= -1)? -1: fo.count;
 }

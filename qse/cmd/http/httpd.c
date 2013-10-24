@@ -1,7 +1,6 @@
 
 #include <qse/http/stdhttpd.h>
 #include <qse/xli/stdxli.h>
-#include <qse/cmn/stdio.h>
 #include <qse/cmn/main.h>
 #include <qse/cmn/str.h>
 #include <qse/cmn/mem.h>
@@ -47,6 +46,9 @@
 #if defined(HAVE_SYS_RESOURCE_H)
 #	include <sys/resource.h>
 #endif
+
+#define QSE_STDOUT qse_getstdout()
+#define QSE_STDERR qse_getstderr()
 
 /* --------------------------------------------------------------------- */
 
@@ -853,8 +855,8 @@ static int load_loccfg (qse_httpd_t* httpd, qse_xli_list_t* list, loccfg_t* cfg)
 			cfg->xcfg[i] = qse_httpd_strntombsdup (httpd, ((qse_xli_str_t*)pair->val)->ptr, ((qse_xli_str_t*)pair->val)->len);
 			if (cfg->xcfg[i] == QSE_NULL) 
 			{
-				/*qse_printf (QSE_T("ERROR in copying - %s\n"), qse_httpd_geterrmsg (httpd));*/
-				qse_printf (QSE_T("ERROR in copying\n"));
+				/*qse_putstrf (QSE_T("ERROR in copying - %s\n"), qse_httpd_geterrmsg (httpd));*/
+				qse_putstrf (QSE_T("ERROR in copying\n"));
 				return -1;
 			}
 		}
@@ -870,7 +872,7 @@ static int load_loccfg (qse_httpd_t* httpd, qse_xli_list_t* list, loccfg_t* cfg)
 		duptmp = qse_xli_dupflatstr (httpd_xtn->xli, (qse_xli_str_t*)pair->val, &duplen, &count);
 		if (duptmp == QSE_NULL)
 		{
-			qse_printf (QSE_T("ERROR: memory failure in copying index\n"));
+			qse_putstrf (QSE_T("ERROR: memory failure in copying index\n"));
 			return -1;
 		}
 
@@ -879,7 +881,7 @@ static int load_loccfg (qse_httpd_t* httpd, qse_xli_list_t* list, loccfg_t* cfg)
 
 		if (cfg->index.files == QSE_NULL) 
 		{
-			qse_printf (QSE_T("ERROR: memory failure in copying index\n"));
+			qse_putstrf (QSE_T("ERROR: memory failure in copying index\n"));
 			return -1;
 		}
 
@@ -908,7 +910,7 @@ static int load_loccfg (qse_httpd_t* httpd, qse_xli_list_t* list, loccfg_t* cfg)
 			cgi = qse_httpd_callocmem (httpd, QSE_SIZEOF(*cgi));
 			if (cgi == QSE_NULL)
 			{
-				qse_printf (QSE_T("ERROR: memory failure in copying cgi\n"));
+				qse_putstrf (QSE_T("ERROR: memory failure in copying cgi\n"));
 				return -1;
 			}
 
@@ -917,7 +919,7 @@ static int load_loccfg (qse_httpd_t* httpd, qse_xli_list_t* list, loccfg_t* cfg)
 			if (!cgi->spec)
 			{
 				qse_httpd_freemem (httpd, cgi);
-				qse_printf (QSE_T("ERROR: memory failure in copying cgi name\n"));
+				qse_putstrf (QSE_T("ERROR: memory failure in copying cgi name\n"));
 				return -1;
 			}
 			if (pair->val->type == QSE_XLI_STR) 
@@ -940,7 +942,7 @@ static int load_loccfg (qse_httpd_t* httpd, qse_xli_list_t* list, loccfg_t* cfg)
 						{
 							qse_httpd_freemem (httpd, cgi->spec);
 							qse_httpd_freemem (httpd, cgi);
-							qse_printf (QSE_T("ERROR: memory failure in copying cgi shebang\n"));
+							qse_putstrf (QSE_T("ERROR: memory failure in copying cgi shebang\n"));
 							return -1;
 						}
 					}
@@ -982,7 +984,7 @@ static int load_loccfg (qse_httpd_t* httpd, qse_xli_list_t* list, loccfg_t* cfg)
 			auth_rule = qse_httpd_callocmem (httpd, QSE_SIZEOF(*auth_rule));
 			if (auth_rule == QSE_NULL)
 			{
-				qse_printf (QSE_T("ERROR: memory failure in copying auth-rule\n"));
+				qse_putstrf (QSE_T("ERROR: memory failure in copying auth-rule\n"));
 				return -1;
 			}
 
@@ -993,7 +995,7 @@ static int load_loccfg (qse_httpd_t* httpd, qse_xli_list_t* list, loccfg_t* cfg)
 				if (!auth_rule->spec)
 				{
 					qse_httpd_freemem (httpd, auth_rule);
-					qse_printf (QSE_T("ERROR: memory failure in copying auth-rule\n"));
+					qse_putstrf (QSE_T("ERROR: memory failure in copying auth-rule\n"));
 					return -1;
 				}
 			}
@@ -1032,7 +1034,7 @@ static int load_loccfg (qse_httpd_t* httpd, qse_xli_list_t* list, loccfg_t* cfg)
 			mime = qse_httpd_callocmem (httpd, QSE_SIZEOF(*mime));
 			if (mime == QSE_NULL)
 			{
-				qse_printf (QSE_T("ERROR: memory failure in copying mime\n"));
+				qse_putstrf (QSE_T("ERROR: memory failure in copying mime\n"));
 				return -1;
 			}
 
@@ -1041,7 +1043,7 @@ static int load_loccfg (qse_httpd_t* httpd, qse_xli_list_t* list, loccfg_t* cfg)
 			if (!mime->spec)
 			{
 				qse_httpd_freemem (httpd, mime);
-				qse_printf (QSE_T("ERROR: memory failure in copying mime\n"));
+				qse_putstrf (QSE_T("ERROR: memory failure in copying mime\n"));
 				return -1;
 			}
 
@@ -1050,7 +1052,7 @@ static int load_loccfg (qse_httpd_t* httpd, qse_xli_list_t* list, loccfg_t* cfg)
 			{
 				qse_httpd_freemem (httpd, mime->spec);
 				qse_httpd_freemem (httpd, mime);
-				qse_printf (QSE_T("ERROR: memory failure in copying mime\n"));
+				qse_putstrf (QSE_T("ERROR: memory failure in copying mime\n"));
 				return -1;
 			}
 
@@ -1097,7 +1099,7 @@ static int load_loccfg (qse_httpd_t* httpd, qse_xli_list_t* list, loccfg_t* cfg)
 				acc = qse_httpd_callocmem (httpd, QSE_SIZEOF(*acc));
 				if (acc == QSE_NULL)
 				{
-					qse_printf (QSE_T("ERROR: memory failure in copying acc\n"));
+					qse_putstrf (QSE_T("ERROR: memory failure in copying acc\n"));
 					return -1;
 				}
 
@@ -1108,7 +1110,7 @@ static int load_loccfg (qse_httpd_t* httpd, qse_xli_list_t* list, loccfg_t* cfg)
 					if (!acc->spec)
 					{
 						qse_httpd_freemem (httpd, acc);
-						qse_printf (QSE_T("ERROR: memory failure in copying access\n"));
+						qse_putstrf (QSE_T("ERROR: memory failure in copying access\n"));
 						return -1;
 					}
 				}
@@ -1129,7 +1131,7 @@ static int load_loccfg (qse_httpd_t* httpd, qse_xli_list_t* list, loccfg_t* cfg)
 	/* TODO: perform more sanity check */
 	if (qse_mbschr (cfg->xcfg[XCFG_AUTH], QSE_MT(':')) == QSE_NULL)
 	{
-		qse_printf (QSE_T("WARNING: no colon in the auth string - [%hs]\n"), cfg->xcfg[XCFG_AUTH]);
+		qse_putstrf (QSE_T("WARNING: no colon in the auth string - [%hs]\n"), cfg->xcfg[XCFG_AUTH]);
 	}
 #endif
 
@@ -1205,8 +1207,8 @@ static int load_server_config (qse_httpd_t* httpd, qse_httpd_server_t* server, q
 			server_xtn->scfg[i] = qse_httpd_strntombsdup (httpd, ((qse_xli_str_t*)pair->val)->ptr, ((qse_xli_str_t*)pair->val)->len);
 			if (server_xtn->scfg[i] == QSE_NULL) 
 			{
-				/*qse_printf (QSE_T("ERROR in copying - %s\n"), qse_httpd_geterrmsg (httpd));*/
-				qse_printf (QSE_T("ERROR in copying\n"));
+				/*qse_putstrf (QSE_T("ERROR in copying - %s\n"), qse_httpd_geterrmsg (httpd));*/
+				qse_putstrf (QSE_T("ERROR in copying\n"));
 				return -1;
 			}
 		}
@@ -1329,7 +1331,7 @@ static qse_httpd_server_t* attach_server (qse_httpd_t* httpd, int num, qse_xli_l
 	if (pair == QSE_NULL || pair->val->type != QSE_XLI_STR)
 	{
 		/* TOOD: logging */
-		qse_printf (QSE_T("WARNING: no value or invalid value specified for bind\n"));
+		qse_putstrf (QSE_T("WARNING: no value or invalid value specified for bind\n"));
 		return QSE_NULL;
 	}
 
@@ -1337,7 +1339,7 @@ static qse_httpd_server_t* attach_server (qse_httpd_t* httpd, int num, qse_xli_l
 	if (qse_strntonwad (((qse_xli_str_t*)pair->val)->ptr, ((qse_xli_str_t*)pair->val)->len, &dope.nwad) <= -1)
 	{
 		/*  TOOD: logging */
-		qse_printf (QSE_T("WARNING: invalid value for bind - %s\n"), ((qse_xli_str_t*)pair->val)->ptr);
+		qse_putstrf (QSE_T("WARNING: invalid value for bind - %s\n"), ((qse_xli_str_t*)pair->val)->ptr);
 		return QSE_NULL;
 	}
 
@@ -1351,7 +1353,7 @@ static qse_httpd_server_t* attach_server (qse_httpd_t* httpd, int num, qse_xli_l
 	if (xserver == QSE_NULL) 
 	{
 		/* TODO: logging */
-		qse_printf (QSE_T("WARNING: failed to attach server\n"));
+		qse_putstrf (QSE_T("WARNING: failed to attach server\n"));
 		return QSE_NULL;
 	}
 
@@ -1474,7 +1476,7 @@ static int open_config_file (qse_httpd_t* httpd)
 	httpd_xtn->xli = qse_xli_openstd (0, 0);
 	if (httpd_xtn->xli == QSE_NULL)
 	{
-		qse_fprintf (QSE_STDERR, QSE_T("Cannot open xli\n"));
+		qse_sio_putstrf (QSE_STDERR, QSE_T("Cannot open xli\n"));
 		return -1;
 	}
  
@@ -1486,7 +1488,7 @@ static int open_config_file (qse_httpd_t* httpd)
 	{
 		if (qse_xli_definepair (httpd_xtn->xli, defs[i].name, &defs[i].scm) <= -1)
 		{
-			qse_fprintf (QSE_STDERR, QSE_T("Cannot define %s - %s\n"), defs[i].name, qse_xli_geterrmsg(httpd_xtn->xli));
+			qse_sio_putstrf (QSE_STDERR, QSE_T("Cannot define %s - %s\n"), defs[i].name, qse_xli_geterrmsg(httpd_xtn->xli));
 			qse_xli_close (httpd_xtn->xli);
 			httpd_xtn->xli = QSE_NULL;
 			return -1;
@@ -1505,12 +1507,12 @@ static int open_config_file (qse_httpd_t* httpd)
 
 		if (errloc->line > 0 || errloc->colm > 0)
 		{
-			qse_fprintf (QSE_STDERR, QSE_T("Cannot load %s at line %lu column %lu - %s\n"), 
+			qse_sio_putstrf (QSE_STDERR, QSE_T("Cannot load %s at line %lu column %lu - %s\n"), 
 				xli_in.u.file.path, (unsigned long int)errloc->line, (unsigned long int)errloc->colm, qse_xli_geterrmsg(httpd_xtn->xli));
 		}
 		else
 		{
-			qse_fprintf (QSE_STDERR, QSE_T("Cannot load %s - %s\n"), xli_in.u.file.path, qse_xli_geterrmsg(httpd_xtn->xli));
+			qse_sio_putstrf (QSE_STDERR, QSE_T("Cannot load %s - %s\n"), xli_in.u.file.path, qse_xli_geterrmsg(httpd_xtn->xli));
 		}
 
 		qse_xli_close (httpd_xtn->xli);
@@ -1609,7 +1611,7 @@ static int load_config (qse_httpd_t* httpd)
 
 		if (pair->val->type != QSE_XLI_LIST)
 		{
-			qse_fprintf (QSE_STDERR, QSE_T("WARNING: non-list value for server\n"));
+			qse_sio_putstrf (QSE_STDERR, QSE_T("WARNING: non-list value for server\n"));
 		}
 		else
 		{
@@ -1620,7 +1622,7 @@ static int load_config (qse_httpd_t* httpd)
 			{
 				if (load_server_config (httpd, server, (qse_xli_list_t*)pair->val) <= -1)
 				{
-					qse_fprintf (QSE_STDERR, QSE_T("failed to load configuration from %s\n"), httpd_xtn->cfgfile);
+					qse_sio_putstrf (QSE_STDERR, QSE_T("failed to load configuration from %s\n"), httpd_xtn->cfgfile);
 					goto oops;
 				}
 			}
@@ -1629,7 +1631,7 @@ static int load_config (qse_httpd_t* httpd)
 
 	if (i == 0)
 	{
-		qse_fprintf (QSE_STDERR, QSE_T("No valid server specified in %s\n"), httpd_xtn->cfgfile);
+		qse_sio_putstrf (QSE_STDERR, QSE_T("No valid server specified in %s\n"), httpd_xtn->cfgfile);
 		goto oops;
 	}
 
@@ -1639,7 +1641,7 @@ static int load_config (qse_httpd_t* httpd)
 	{
 		if (load_loccfg (httpd, (qse_xli_list_t*)pair->val, &httpd_xtn->dflcfg) <=  -1)
 		{
-			qse_fprintf (QSE_STDERR, QSE_T("failed to load configuration from %s\n"), httpd_xtn->cfgfile);
+			qse_sio_putstrf (QSE_STDERR, QSE_T("failed to load configuration from %s\n"), httpd_xtn->cfgfile);
 			goto oops;
 		}
 	}
@@ -1713,27 +1715,27 @@ static void logact_httpd (qse_httpd_t* httpd, const qse_httpd_act_t* act)
 	switch (act->code)
 	{
 		case QSE_HTTPD_CATCH_MERRMSG:
-			qse_printf (QSE_T("ERROR: %hs\n"), act->u.merrmsg);
+			qse_putstrf (QSE_T("ERROR: %hs\n"), act->u.merrmsg);
 			break;
 
 		case QSE_HTTPD_CATCH_MDBGMSG:
-			qse_printf (QSE_T("DEBUG: %hs\n"), act->u.mdbgmsg);
+			qse_putstrf (QSE_T("DEBUG: %hs\n"), act->u.mdbgmsg);
 			break;
 
 		case QSE_HTTPD_ACCEPT_CLIENT:
 			qse_nwadtostr (&act->u.client->local_addr, tmp, QSE_COUNTOF(tmp), QSE_NWADTOSTR_ALL);
 			qse_nwadtostr (&act->u.client->orgdst_addr, tmp2, QSE_COUNTOF(tmp2), QSE_NWADTOSTR_ALL);
 			qse_nwadtostr (&act->u.client->remote_addr, tmp3, QSE_COUNTOF(tmp3), QSE_NWADTOSTR_ALL);
-			qse_printf (QSE_T("accepted client %s(%s) from %s\n"), tmp, tmp2, tmp3);
+			qse_putstrf (QSE_T("accepted client %s(%s) from %s\n"), tmp, tmp2, tmp3);
 
 		case QSE_HTTPD_PURGE_CLIENT:
 			qse_nwadtostr (&act->u.client->remote_addr, tmp, QSE_COUNTOF(tmp), QSE_NWADTOSTR_ALL);
-			qse_printf (QSE_T("purged client - %s\n"), tmp);
+			qse_putstrf (QSE_T("purged client - %s\n"), tmp);
 			break;		
 
 		case QSE_HTTPD_READERR_CLIENT:
 			qse_nwadtostr (&act->u.client->remote_addr, tmp, QSE_COUNTOF(tmp), QSE_NWADTOSTR_ALL);
-			qse_printf (QSE_T("failed to read client - %s\n"), tmp);
+			qse_putstrf (QSE_T("failed to read client - %s\n"), tmp);
 			break;		
 	}
 }
@@ -1741,23 +1743,23 @@ static void logact_httpd (qse_httpd_t* httpd, const qse_httpd_act_t* act)
 /* --------------------------------------------------------------------- */
 static void print_version (void)
 {
-	qse_printf (QSE_T("QSEHTTPD version %hs\n"), QSE_PACKAGE_VERSION);
+	qse_putstrf (QSE_T("QSEHTTPD version %hs\n"), QSE_PACKAGE_VERSION);
 }
 
-static void print_usage (QSE_FILE* out, int argc, qse_char_t* argv[])
+static void print_usage (qse_sio_t* out, int argc, qse_char_t* argv[])
 {
 	const qse_char_t* b = qse_basename (argv[0]);
 
-	qse_fprintf (out, QSE_T("USAGE: %s [options] -c file\n"), b);
-	qse_fprintf (out, QSE_T("       %s [options] --config-file file\n"), b);
+	qse_sio_putstrf (out, QSE_T("USAGE: %s [options] -c file\n"), b);
+	qse_sio_putstrf (out, QSE_T("       %s [options] --config-file file\n"), b);
 
-	qse_fprintf (out, QSE_T("options as follows:\n"));
-	qse_fprintf (out, QSE_T(" -h/--help                 show this message\n"));
-	qse_fprintf (out, QSE_T(" --version                 show version\n"));
-	qse_fprintf (out, QSE_T(" -c/--config-file file     specify a configuration file\n"));
-	qse_fprintf (out, QSE_T(" -d/--daemon               run in the background\n"));
-	qse_fprintf (out, QSE_T(" -n               string   specify a process name if supported\n"));
-	qse_fprintf (out, QSE_T(" -x                        output debugging messages\n"));
+	qse_sio_putstrf (out, QSE_T("options as follows:\n"));
+	qse_sio_putstrf (out, QSE_T(" -h/--help                 show this message\n"));
+	qse_sio_putstrf (out, QSE_T(" --version                 show version\n"));
+	qse_sio_putstrf (out, QSE_T(" -c/--config-file file     specify a configuration file\n"));
+	qse_sio_putstrf (out, QSE_T(" -d/--daemon               run in the background\n"));
+	qse_sio_putstrf (out, QSE_T(" -n               string   specify a process name if supported\n"));
+	qse_sio_putstrf (out, QSE_T(" -x                        output debugging messages\n"));
 }
 
 static int handle_args (int argc, qse_char_t* argv[])
@@ -1785,14 +1787,14 @@ static int handle_args (int argc, qse_char_t* argv[])
 				goto wrongusage;
 
 			case QSE_T('?'):
-				qse_fprintf (QSE_STDERR, 
+				qse_sio_putstrf (QSE_STDERR, 
 					QSE_T("ERROR: bad option - %c\n"),
 					opt.opt
 				);
 				goto wrongusage;
 
 			case QSE_T(':'):
-				qse_fprintf (QSE_STDERR, 
+				qse_sio_putstrf (QSE_STDERR, 
 					QSE_T("ERROR: bad parameter for %c\n"),
 					opt.opt
 				);
@@ -1880,7 +1882,7 @@ static int httpd_main (int argc, qse_char_t* argv[])
 	httpd = qse_httpd_openstd (QSE_SIZEOF(httpd_xtn_t));
 	if (httpd == QSE_NULL)
 	{
-		qse_fprintf (QSE_STDERR, QSE_T("ERROR: Cannot open httpd\n"));
+		qse_sio_putstrf (QSE_STDERR, QSE_T("ERROR: Cannot open httpd\n"));
 		goto oops;
 	}
 
@@ -1896,7 +1898,7 @@ static int httpd_main (int argc, qse_char_t* argv[])
 	{
 		if (daemonize (1) <= -1)
 		{
-			qse_fprintf (QSE_STDERR, QSE_T("ERROR: Cannot daemonize\n"));
+			qse_sio_putstrf (QSE_STDERR, QSE_T("ERROR: Cannot daemonize\n"));
 			goto oops;
 		}
 	}
@@ -1927,7 +1929,7 @@ static int httpd_main (int argc, qse_char_t* argv[])
 	restore_signal_handlers ();
 	g_httpd = QSE_NULL;
 
-	if (ret <= -1) qse_fprintf (QSE_STDERR, QSE_T("Httpd error - %d\n"), qse_httpd_geterrnum (httpd));
+	if (ret <= -1) qse_sio_putstrf (QSE_STDERR, QSE_T("Httpd error - %d\n"), qse_httpd_geterrnum (httpd));
 
 oops:
 	if (httpd) qse_httpd_close (httpd);
@@ -1942,6 +1944,13 @@ int qse_main (int argc, qse_achar_t* argv[])
 	char locale[100];
 	UINT codepage;
 	WSADATA wsadata;
+#else
+	/* nothing */
+#endif
+
+	qse_openstdsios ();
+
+#if defined(_WIN32)
 
 	codepage = GetConsoleOutputCP();
 	if (codepage == CP_UTF8)
@@ -1960,7 +1969,7 @@ int qse_main (int argc, qse_achar_t* argv[])
 
 	if (WSAStartup (MAKEWORD(2,0), &wsadata) != 0)
 	{
-		qse_fprintf (QSE_STDERR, QSE_T("Failed to start up winsock\n"));
+		qse_sio_putstrf (QSE_STDERR, QSE_T("Failed to start up winsock\n"));
 		return -1;
 	}
 
@@ -1989,5 +1998,6 @@ int qse_main (int argc, qse_achar_t* argv[])
 	WSACleanup ();	
 #endif
 
+	qse_closestdsios ();
 	return ret;
 }

@@ -685,6 +685,46 @@ QSE_EXPORT qse_size_t qse_wcsxfncpy (
 #	define qse_strxfncpy(buf,bsz,fmt,str)  qse_wcsxfncpy(buf,bsz,fmt,str)
 #endif
 
+
+QSE_EXPORT qse_size_t qse_mbsfmt (
+	qse_mchar_t*       buf,
+	const qse_mchar_t* fmt,
+	...
+);
+
+QSE_EXPORT qse_size_t qse_mbsxfmt (
+	qse_mchar_t*       buf,
+	qse_size_t         bsz,
+	const qse_mchar_t* fmt,
+	...
+);
+
+QSE_EXPORT qse_size_t qse_wcsfmt (
+	qse_wchar_t*       buf,
+	const qse_wchar_t* fmt,
+	...
+);
+
+QSE_EXPORT qse_size_t qse_wcsxfmt (
+	qse_wchar_t*       buf,
+	qse_size_t         bsz,
+	const qse_wchar_t* fmt,
+	...
+);
+
+QSE_EXPORT qse_size_t qse_strfmt (
+	qse_char_t*       buf,
+	const qse_char_t* fmt,
+	...
+);
+
+QSE_EXPORT qse_size_t qse_strxfmt (
+	qse_char_t*       buf,
+	qse_size_t        bsz,
+	const qse_char_t* fmt,
+	...
+);
+
 /**
  * The qse_mbsxsubst() function expands \a fmt into a buffer \a buf of the size
  * \a bsz by substituting new values for ${} segments within it. The actual

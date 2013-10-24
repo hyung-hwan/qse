@@ -24,35 +24,48 @@
 #include <qse/cmn/fmt.h>
 #include <stdarg.h>
 
-typedef int (*qse_printf_mchar_t) (
+typedef int (*qse_fmtout_mchar_t) (
 	qse_mchar_t c,
 	void*       ctx
 );
 
-typedef int (*qse_printf_wchar_t) (
-	qse_mchar_t c,
+typedef int (*qse_fmtout_wchar_t) (
+	qse_wchar_t c,
 	void*       ctx
 );
+
+struct qse_fmtout_t
+{
+	qse_size_t         count;     /* out */
+	qse_size_t         limit;     /* in */
+	void*              ctx;       /* in */
+	qse_fmtout_mchar_t put_mchar; /* in */
+	qse_fmtout_wchar_t put_wchar; /* in */
+};
+
+typedef struct qse_fmtout_t qse_fmtout_t;
 
 #ifdef __cplusplus
-extern {
+extern "C" {
 #endif
 
-qse_ssize_t qse_mxprintf (
+int qse_mfmtout (
 	const qse_mchar_t* fmt,
-	qse_printf_mchar_t put_mchar,
-	qse_printf_wchar_t put_wchar,
-	void*              arg,
+	qse_fmtout_t*      data,
 	va_list            ap
 );
 
-qse_ssize_t qse_wxprintf (
+int qse_wfmtout (
 	const qse_wchar_t* fmt,
-	qse_printf_wchar_t put_wchar,
-	qse_printf_mchar_t put_mchar,
-	void*              arg,
+	qse_fmtout_t*      data,
 	va_list            ap
 );
+
+#if defined(QSE_CHAR_IS_MCHAR)
+#	define qse_fmtout(fmt,fo,ap) qse_mfmtout(fmt,fo,ap)
+#else
+#	define qse_fmtout(fmt,fo,ap) qse_wfmtout(fmt,fo,ap)
+#endif
 
 #ifdef __cplusplus
 }
