@@ -653,7 +653,7 @@ qse_ssize_t qse_tio_writembs (
 		 * buffer. note that this flushes characters after nl also.*/
 		if (nl && qse_tio_flush (tio) <= -1) return -1;
 
-		/* returns the number multi-bytes characters handled */
+		/* returns the number multi-byte characters handled */
 		return xptr - mptr;
 	}
 }
