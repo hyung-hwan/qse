@@ -81,17 +81,21 @@ static char_t* sprintn (char_t* nbuf, qse_uintmax_t num, int base, int *lenp, in
 	return p;
 }
 
-#undef PUT_CHAR
-#undef PUT_OCHAR
+/* NOTE: data output is aborted if the data limit is reached or 
+ *       I/O error occurs  */
 
 #define PUT_CHAR(c) do { \
-	if (data->put_char (c, data->ctx) <= -1) goto oops; \
-	data->count++; \
+	int xx; \
+	if (data->count >= data->limit) goto done; \
+	if ((xx = data->put_char (c, data->ctx)) <= -1) goto oops; \
+	data->count += xx; \
 } while (0)
 
 #define PUT_OCHAR(c) do { \
-	if (data->put_ochar (c, data->ctx) <= -1) goto oops; \
-	data->count++; \
+	int xx; \
+	if (data->count >= data->limit) goto done; \
+	if ((xx = data->put_ochar (c, data->ctx)) <= -1) goto oops; \
+	data->count += xx; \
 } while (0)
 
 int fmtout (const char_t* fmt, qse_fmtout_t* data, va_list ap)
@@ -101,7 +105,7 @@ int fmtout (const char_t* fmt, qse_fmtout_t* data, va_list ap)
 	int n, base, tmp, width, neg, sign, precision, upper;
 	uchar_t ch; 
 	char_t ach, padc, * sp;
-	ochar_t oach, opadc, * osp;
+	ochar_t oach, * osp;
 	int lm_flag, lm_dflag, flagc, numlen;
 	qse_uintmax_t num = 0;
 	int stop = 0;
@@ -137,7 +141,7 @@ int fmtout (const char_t* fmt, qse_fmtout_t* data, va_list ap)
 		}
 		percent = fmt - 1;
 
-		padc = T(' '); opadc = OT(' ');
+		padc = T(' '); 
 		width = 0; precision = 0;
 		neg = 0; sign = 0; upper = 0;
 
@@ -184,7 +188,6 @@ reswitch:
 				if (flagc & FLAGC_ZEROPAD)
 				{
 					padc = T(' ');
-					opadc = OT(' ');
 					flagc &= ~FLAGC_ZEROPAD;
 				}
 			}
@@ -230,7 +233,6 @@ reswitch:
 			if (!(flagc & (FLAGC_DOT | FLAGC_LEFTADJ)))
 			{
 				padc = T('0');
-				opadc = OT('0');
 				flagc |= FLAGC_ZEROPAD;
 				goto reswitch;
 			}
@@ -358,6 +360,8 @@ reswitch:
 			goto number;
 
 		case T('c'):
+			/* zerpad must not take effect for 'c' */
+			if (flagc & FLAGC_ZEROPAD) padc = QSE_T(' '); 
 			if (((lm_flag & LF_H) && (QSE_SIZEOF(char_t) > QSE_SIZEOF(ochar_t))) ||
 			    ((lm_flag & LF_L) && (QSE_SIZEOF(char_t) < QSE_SIZEOF(ochar_t)))) goto uppercase_c;
 		lowercase_c:
@@ -378,6 +382,8 @@ reswitch:
 			break;
 
 		case T('C'):
+			/* zerpad must not take effect for 'C' */
+			if (flagc & FLAGC_ZEROPAD) padc = QSE_T(' ');
 			if (((lm_flag & LF_H) && (QSE_SIZEOF(char_t) < QSE_SIZEOF(ochar_t))) ||
 			    ((lm_flag & LF_L) && (QSE_SIZEOF(char_t) > QSE_SIZEOF(ochar_t)))) goto lowercase_c;
 		uppercase_c:
@@ -387,22 +393,24 @@ reswitch:
 			width--;
 			if (!(flagc & FLAGC_LEFTADJ) && width > 0)
 			{
-				while (width--) PUT_OCHAR (opadc);
+				while (width--) PUT_CHAR (padc);
 			}
 			PUT_OCHAR (oach);
 			if ((flagc & FLAGC_LEFTADJ) && width > 0)
 			{
-				while (width--) PUT_OCHAR (opadc);
+				while (width--) PUT_CHAR (padc);
 			}
 			break;
 
 		case T('s'):
+			/* zerpad must not take effect for 's' */
+			if (flagc & FLAGC_ZEROPAD) padc = QSE_T(' ');
 			if (((lm_flag & LF_H) && (QSE_SIZEOF(char_t) > QSE_SIZEOF(ochar_t))) ||
 			    ((lm_flag & LF_L) && (QSE_SIZEOF(char_t) < QSE_SIZEOF(ochar_t)))) goto uppercase_s;
 		lowercase_s:
 			sp = va_arg (ap, char_t*);
 			if (sp == QSE_NULL) p = T("(null)");
-		
+
 		print_lowercase_s:
 			if (flagc & FLAGC_DOT)
 			{
@@ -416,7 +424,7 @@ reswitch:
 			}
 
 			width -= n;
-
+		
 			if (!(flagc & FLAGC_LEFTADJ) && width > 0)
 			{
 				while (width--) PUT_CHAR(padc);
@@ -429,9 +437,12 @@ reswitch:
 			break;
 
 		case T('S'):
+			/* zerpad must not take effect for 'S' */
+			if (flagc & FLAGC_ZEROPAD) padc = QSE_T(' ');
 			if (((lm_flag & LF_H) && (QSE_SIZEOF(char_t) < QSE_SIZEOF(ochar_t))) ||
 			    ((lm_flag & LF_L) && (QSE_SIZEOF(char_t) > QSE_SIZEOF(ochar_t)))) goto lowercase_s;
 		uppercase_s:
+
 			osp = va_arg (ap, ochar_t*);
 			if (osp == QSE_NULL) osp = OT("(null)");
 			if (flagc & FLAGC_DOT) 
@@ -449,12 +460,12 @@ reswitch:
 
 			if (!(flagc & FLAGC_LEFTADJ) && width > 0)
 			{
-				while (width--) PUT_OCHAR (opadc);
+				while (width--) PUT_CHAR (padc);
 			}
 			while (n--) PUT_OCHAR(*osp++);
 			if ((flagc & FLAGC_LEFTADJ) && width > 0)
 			{
-				while (width--) PUT_OCHAR (opadc);
+				while (width--) PUT_CHAR (padc);
 			}
 			break;
 
