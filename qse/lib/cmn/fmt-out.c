@@ -116,11 +116,11 @@ static const qse_wchar_t* w_hex2ascii =
 #undef ochar_t
 #undef T
 #undef OT
+#undef CONV_MAX
 #undef toupper
 #undef hex2ascii
 #undef sprintn
-#undef put_char
-#undef put_ochar
+#undef fmtout_t
 #undef fmtout
 
 #define char_t qse_mchar_t
@@ -128,10 +128,10 @@ static const qse_wchar_t* w_hex2ascii =
 #define ochar_t qse_wchar_t
 #define T(x) QSE_MT(x)
 #define OT(x) QSE_WT(x)
+#define CONV_MAX QSE_MBLEN_MAX
 #define toupper QSE_TOUPPER
 #define sprintn m_sprintn
-#define put_char put_mchar
-#define put_ochar put_wchar
+#define fmtout_t qse_mfmtout_t
 #define fmtout qse_mfmtout
 
 #define hex2ascii(hex)  (m_hex2ascii[hex])
@@ -145,11 +145,11 @@ static const qse_wchar_t* w_hex2ascii =
 #undef ochar_t
 #undef T
 #undef OT
+#undef CONV_MAX
 #undef toupper
 #undef hex2ascii
 #undef sprintn
-#undef put_char
-#undef put_ochar
+#undef fmtout_t
 #undef fmtout
 
 #define char_t qse_wchar_t
@@ -157,10 +157,10 @@ static const qse_wchar_t* w_hex2ascii =
 #define ochar_t qse_mchar_t
 #define T(x) QSE_WT(x)
 #define OT(x) QSE_MT(x)
+#define CONV_MAX 1
 #define toupper QSE_TOWUPPER
 #define sprintn w_sprintn
-#define put_char put_wchar
-#define put_ochar put_mchar
+#define fmtout_t qse_wfmtout_t
 #define fmtout qse_wfmtout
 
 #define hex2ascii(hex)  (w_hex2ascii[hex])

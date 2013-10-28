@@ -1237,7 +1237,7 @@ static int load_server_config (qse_httpd_t* httpd, qse_httpd_server_t* server, q
 		qse_xli_pair_t* host;
 		qse_char_t buf[32];
 
-		qse_sprintf (buf, QSE_COUNTOF(buf), QSE_T("host[%d]"), i);
+		qse_strxfmt (buf, QSE_COUNTOF(buf), QSE_T("host[%d]"), i);
 		host = qse_xli_findpair (httpd_xtn->xli, list, buf);
 		if (!host) break;
 
@@ -1254,7 +1254,7 @@ static int load_server_config (qse_httpd_t* httpd, qse_httpd_server_t* server, q
 
 				j--;
 
-				qse_sprintf (buf, QSE_COUNTOF(buf), QSE_T("location[%d]"), j);
+				qse_strxfmt (buf, QSE_COUNTOF(buf), QSE_T("location[%d]"), j);
 				loc = qse_xli_findpair (httpd_xtn->xli, (qse_xli_list_t*)host->val, buf);
 				if (!loc) break;
 
@@ -1605,7 +1605,7 @@ static int load_config (qse_httpd_t* httpd)
 	for (i = 0; ; i++)
 	{
 		qse_char_t buf[32];
-		qse_sprintf (buf, QSE_COUNTOF(buf), QSE_T("server[%d]"), i);
+		qse_strxfmt (buf, QSE_COUNTOF(buf), QSE_T("server[%d]"), i);
 		pair = qse_xli_findpair (httpd_xtn->xli, QSE_NULL, buf);
 		if (pair == QSE_NULL) break;
 
@@ -1669,7 +1669,7 @@ static void reconf_server (qse_httpd_t* httpd, qse_httpd_server_t* server)
 	if (httpd_xtn->xli)
 	{
 		qse_char_t buf[32];
-		qse_sprintf (buf, QSE_COUNTOF(buf), QSE_T("server[%d]"), server_xtn->num);
+		qse_strxfmt (buf, QSE_COUNTOF(buf), QSE_T("server[%d]"), server_xtn->num);
 		pair = qse_xli_findpair (httpd_xtn->xli, QSE_NULL, buf);
 
 		if (pair && pair->val->type == QSE_XLI_LIST) 

@@ -84,21 +84,17 @@ static char_t* sprintn (char_t* nbuf, qse_uintmax_t num, int base, int *lenp, in
 /* NOTE: data output is aborted if the data limit is reached or 
  *       I/O error occurs  */
 
+#undef PUT_CHAR
+
 #define PUT_CHAR(c) do { \
 	int xx; \
 	if (data->count >= data->limit) goto done; \
-	if ((xx = data->put_char (c, data->ctx)) <= -1) goto oops; \
+	if ((xx = data->put (c, data->ctx)) <= -1) goto oops; \
+	if (xx == 0) goto done; \
 	data->count += xx; \
 } while (0)
 
-#define PUT_OCHAR(c) do { \
-	int xx; \
-	if (data->count >= data->limit) goto done; \
-	if ((xx = data->put_ochar (c, data->ctx)) <= -1) goto oops; \
-	data->count += xx; \
-} while (0)
-
-int fmtout (const char_t* fmt, qse_fmtout_t* data, va_list ap)
+int fmtout (const char_t* fmt, fmtout_t* data, va_list ap)
 {
 	char_t nbuf[MAXNBUF];
 	const char_t* p, * percent;
@@ -106,11 +102,10 @@ int fmtout (const char_t* fmt, qse_fmtout_t* data, va_list ap)
 	uchar_t ch; 
 	char_t ach, padc, * sp;
 	ochar_t oach, * osp;
+	qse_size_t oslen, slen;
 	int lm_flag, lm_dflag, flagc, numlen;
 	qse_uintmax_t num = 0;
 	int stop = 0;
-
-	data->count = 0;
 
 	struct
 	{
@@ -125,6 +120,8 @@ int fmtout (const char_t* fmt, qse_fmtout_t* data, va_list ap)
 		char_t*      ptr;
 		qse_size_t   capa;
 	} fltout;
+
+	data->count = 0;
 
 	fltfmt.ptr  = fltfmt.sbuf;
 	fltfmt.capa = QSE_COUNTOF(fltfmt.sbuf) - 1;
@@ -389,13 +386,36 @@ reswitch:
 		uppercase_c:
 			oach = QSE_SIZEOF(ochar_t) < QSE_SIZEOF(int)? va_arg(ap, int): va_arg(ap, ochar_t);
 
+			oslen = 1;
+			if (data->conv (&oach, &oslen, QSE_NULL, &slen, data->ctx) <= -1)
+			{
+				/* conversion error */
+				goto oops;
+			}
+
 			/* precision 0 doesn't kill the letter */
-			width--;
+			width -= slen;
 			if (!(flagc & FLAGC_LEFTADJ) && width > 0)
 			{
 				while (width--) PUT_CHAR (padc);
 			}
-			PUT_OCHAR (oach);
+
+			{
+				char_t conv_buf[CONV_MAX]; 
+				qse_size_t i, conv_len;
+
+				oslen = 1;
+				conv_len = QSE_COUNTOF(conv_buf);
+
+				/* this must not fail since the dry-run above was successful */
+				data->conv (&oach, &oslen, conv_buf, &conv_len, data->ctx);
+
+				for (i = 0; i < conv_len; i++)
+				{
+					PUT_CHAR (conv_buf[i]);
+				}
+			}
+
 			if ((flagc & FLAGC_LEFTADJ) && width > 0)
 			{
 				while (width--) PUT_CHAR (padc);
@@ -414,13 +434,11 @@ reswitch:
 		print_lowercase_s:
 			if (flagc & FLAGC_DOT)
 			{
-				for (n = 0; n < precision && sp[n]; n++) continue;
+				for (n = 0; n < precision && sp[n]; n++);
 			}
 			else
 			{
-				char_t* p = sp;
-				while (*p) p++;
-				n = p - sp;
+				for (n = 0; sp[n]; n++);
 			}
 
 			width -= n;
@@ -445,24 +463,57 @@ reswitch:
 
 			osp = va_arg (ap, ochar_t*);
 			if (osp == QSE_NULL) osp = OT("(null)");
-			if (flagc & FLAGC_DOT) 
+
+			/* get the length */
+			for (oslen = 0; osp[oslen]; oslen++);
+
+			if (data->conv (osp, &oslen, QSE_NULL, &slen, data->ctx) <= -1)
 			{
-				for (n = 0; n < precision && osp[n]; n++) continue;
-			}
-			else
-			{
-				ochar_t* p = osp;
-				while (*p) p++;
-				n = p - osp;
+				/* conversion error */
+				goto oops;
 			}
 
+			/* slen hold the length after conversion */
+			n = slen;
+			if ((flagc & FLAGC_DOT) && precision < slen) n = precision;
 			width -= n;
 
 			if (!(flagc & FLAGC_LEFTADJ) && width > 0)
 			{
 				while (width--) PUT_CHAR (padc);
 			}
-			while (n--) PUT_OCHAR(*osp++);
+
+			{
+				char_t conv_buf[CONV_MAX]; 
+				qse_size_t i, conv_len, src_len, tot_len = 0;
+				while (n > 0)
+				{
+					QSE_ASSERT (oslen > tot_len);
+
+				#if CONV_MAX == 1
+					src_len = oslen - tot_len;
+				#else
+					src_len = 1;
+				#endif
+					conv_len = QSE_COUNTOF(conv_buf);
+
+					/* this must not fail since the dry-run above was successful */
+					data->conv (&osp[tot_len], &src_len, conv_buf, &conv_len, data->ctx);
+					tot_len += src_len;
+
+					/* stop outputting if a converted character can't be printed 
+					 * in its entirety (limited by precision). but this is not an error */
+					if (n < conv_len) break; 
+
+					for (i = 0; i < conv_len; i++)
+					{
+						PUT_CHAR (conv_buf[i]);
+					}
+
+					n -= conv_len;
+				}
+			}
+			
 			if ((flagc & FLAGC_LEFTADJ) && width > 0)
 			{
 				while (width--) PUT_CHAR (padc);
@@ -754,5 +805,4 @@ oops:
 	return (qse_ssize_t)-1;
 }
 #undef PUT_CHAR
-#undef PUT_OCHAR
 

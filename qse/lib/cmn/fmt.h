@@ -45,19 +45,72 @@ struct qse_fmtout_t
 
 typedef struct qse_fmtout_t qse_fmtout_t;
 
+
+
+typedef int (*qse_mfmtout_put_t) (
+	qse_mchar_t c,
+	void*       ctx
+);
+
+/* convert a wide string to a multi-byte string */
+typedef int (*qse_mfmtout_conv_t) (
+	const qse_wchar_t* wcs,
+	qse_size_t*        wcslen,
+	qse_mchar_t*       mbs,
+	qse_size_t*        mbslen,
+	void*              ctx
+);
+
+struct qse_mfmtout_t
+{
+	qse_size_t         count;     /* out */
+	qse_size_t         limit;     /* in */
+	void*              ctx;       /* in */
+	qse_mfmtout_put_t  put;       /* in */
+	qse_mfmtout_conv_t conv;      /* in */
+};
+
+typedef struct qse_mfmtout_t qse_mfmtout_t;
+
+typedef int (*qse_wfmtout_put_t) (
+	qse_wchar_t c,
+	void*       ctx
+);
+
+/* convert a multi-byte string to a wide string */
+typedef int (*qse_wfmtout_conv_t) (
+	const qse_mchar_t* mbs,
+	qse_size_t*        mbslen,
+	qse_wchar_t*       wcs,
+	qse_size_t*        wcslen,
+	void*              ctx
+);
+
+struct qse_wfmtout_t
+{
+	qse_size_t         count;     /* out */
+	qse_size_t         limit;     /* in */
+	void*              ctx;       /* in */
+	qse_wfmtout_put_t  put;       /* in */
+	qse_wfmtout_conv_t conv;      /* in */
+};
+
+
+typedef struct qse_wfmtout_t qse_wfmtout_t;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 int qse_mfmtout (
 	const qse_mchar_t* fmt,
-	qse_fmtout_t*      data,
+	qse_mfmtout_t*     data,
 	va_list            ap
 );
 
 int qse_wfmtout (
 	const qse_wchar_t* fmt,
-	qse_fmtout_t*      data,
+	qse_wfmtout_t*     data,
 	va_list            ap
 );
 

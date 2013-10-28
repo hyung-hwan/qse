@@ -712,18 +712,14 @@ QSE_EXPORT qse_size_t qse_wcsxfmt (
 	...
 );
 
-QSE_EXPORT qse_size_t qse_strfmt (
-	qse_char_t*       buf,
-	const qse_char_t* fmt,
-	...
-);
 
-QSE_EXPORT qse_size_t qse_strxfmt (
-	qse_char_t*       buf,
-	qse_size_t        bsz,
-	const qse_char_t* fmt,
-	...
-);
+#if defined(QSE_CHAR_IS_MCHAR)
+#	define qse_strfmt qse_mbsfmt
+#	define qse_strxfmt qse_mbsxfmt
+#else
+#	define qse_strfmt qse_wcsfmt
+#	define qse_strxfmt qse_wcsxfmt
+#endif
 
 /**
  * The qse_mbsxsubst() function expands \a fmt into a buffer \a buf of the size
