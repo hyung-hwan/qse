@@ -23,7 +23,7 @@ qse_size_t strfmt (char_t* buf, const char_t* fmt, ...)
 {
 	buf_t b;
 	va_list ap;
-	qse_fmtout_t fo;
+	fmtout_t fo;
 
 	b.ptr = buf;
 	b.len = 0;
@@ -31,8 +31,8 @@ qse_size_t strfmt (char_t* buf, const char_t* fmt, ...)
 
 	fo.limit = QSE_TYPE_MAX(qse_size_t) - 1;
 	fo.ctx = &b;
-	fo.put_mchar = output_mchar;
-	fo.put_wchar = output_wchar;
+	fo.put = put_char;
+	fo.conv = conv_char;
 
 	/* no error must be returned by fmtout since
 	 * the callback function never fails. */
@@ -42,14 +42,15 @@ qse_size_t strfmt (char_t* buf, const char_t* fmt, ...)
 
 	b.ptr[b.len] = T('\0');
 
-	return fo.count;
+	/*return fo.count;*/
+	return b.len;
 }
 
 qse_size_t strxfmt (char_t* buf, qse_size_t len, const char_t* fmt, ...)
 {
 	buf_t b;
 	va_list ap;
-	qse_fmtout_t fo;
+	fmtout_t fo;
 
 	b.ptr = buf;
 	b.len = 0;
@@ -63,8 +64,8 @@ qse_size_t strxfmt (char_t* buf, qse_size_t len, const char_t* fmt, ...)
 
 	fo.limit = QSE_TYPE_MAX(qse_size_t) - 1;
 	fo.ctx = &b;
-	fo.put_mchar = output_mchar;
-	fo.put_wchar = output_wchar;
+	fo.put = put_char;
+	fo.conv = conv_char;
 
 	/* no error must be returned by fmtout since
 	 * the callback function never fails. */
@@ -74,6 +75,7 @@ qse_size_t strxfmt (char_t* buf, qse_size_t len, const char_t* fmt, ...)
 
 	if (len > 0) b.ptr[b.len] = T('\0');
 
-	return fo.count;
+	/*return fo.count;*/
+	return b.len;
 }
 

@@ -43,7 +43,6 @@
 #endif
 
 #include <stdlib.h> /* getenv */
-#include <qse/cmn/stdio.h> /* qse_sprintf */
 
 static int fnc_fork (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
@@ -552,7 +551,7 @@ static int fnc_getnwifcfg (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 				md[4].key.ptr = QSE_T("ethw");
 				md[4].key.len = 4;
 				md[4].type = QSE_AWK_VAL_MAP_DATA_STR;
-				qse_sprintf (ethw, QSE_COUNTOF(ethw), QSE_T("%02X:%02X:%02X:%02X:%02X:%02X"), 
+				qse_strxfmt (ethw, QSE_COUNTOF(ethw), QSE_T("%02X:%02X:%02X:%02X:%02X:%02X"), 
 					cfg.ethw[0], cfg.ethw[1], cfg.ethw[2], cfg.ethw[3], cfg.ethw[4], cfg.ethw[5]);
 				md[4].vptr = ethw;
 

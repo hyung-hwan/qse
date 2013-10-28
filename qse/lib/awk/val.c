@@ -22,7 +22,7 @@
 #include <qse/cmn/mbwc.h>
 
 #ifdef DEBUG_VAL
-#include <qse/cmn/stdio.h>
+#include <qse/cmn/sio.h>
 #endif
 
 #define CHUNKSIZE QSE_AWK_VAL_CHUNK_SIZE
@@ -140,7 +140,7 @@ qse_awk_val_t* qse_awk_rtx_makeintval (qse_awk_rtx_t* rtx, qse_long_t v)
 	val->nde = QSE_NULL;
 
 #ifdef DEBUG_VAL
-	qse_dprintf (QSE_T("makeintval => %ld [%p]\n"), (long)v, val);
+	qse_errputstrf (QSE_T("makeintval => %ld [%p]\n"), (long)v, val);
 #endif
 	return (qse_awk_val_t*)val;
 }
@@ -196,7 +196,7 @@ qse_awk_val_t* qse_awk_rtx_makefltval (qse_awk_rtx_t* rtx, qse_flt_t v)
 	val->nde = QSE_NULL;
 
 #ifdef DEBUG_VAL
-	qse_dprintf (QSE_T("makefltval => %Lf [%p]\n"), (double)v, val);
+	qse_errputstrf (QSE_T("makefltval => %Lf [%p]\n"), (double)v, val);
 #endif
 	return (qse_awk_val_t*)val;
 }
@@ -342,7 +342,7 @@ init:
 	qse_strncpy (val->val.ptr, str->ptr, str->len);
 
 #ifdef DEBUG_VAL
-	qse_dprintf (QSE_T("makestrval => %p\n"), val);
+	qse_errputstrf (QSE_T("makestrval => %p\n"), val);
 #endif
 	return (qse_awk_val_t*)val;
 }
@@ -402,7 +402,7 @@ init:
 	qse_strncpy (&val->val.ptr[len1], str2, len2);
 
 #ifdef DEBUG_VAL
-	qse_dprintf (QSE_T("makestrval2 => %p\n"), val);
+	qse_errputstrf (QSE_T("makestrval2 => %p\n"), val);
 #endif
 	return (qse_awk_val_t*)val;
 }
@@ -477,9 +477,9 @@ static void free_mapval (qse_htb_t* map, void* dptr, qse_size_t dlen)
 	qse_awk_rtx_t* rtx = *(qse_awk_rtx_t**)QSE_XTN(map);
 
 #ifdef DEBUG_VAL
-	qse_dprintf (QSE_T("refdown in map free..."));
+	qse_errputstrf (QSE_T("refdown in map free..."));
 	qse_awk_dprintval (rtx, dptr);
-	qse_dprintf (QSE_T("\n"));
+	qse_errputstrf (QSE_T("\n"));
 #endif
 
 	qse_awk_rtx_refdownval (rtx, dptr);
@@ -489,9 +489,9 @@ static void same_mapval (qse_htb_t* map, void* dptr, qse_size_t dlen)
 {
 	qse_awk_rtx_t* run = *(qse_awk_rtx_t**)QSE_XTN(map);
 #ifdef DEBUG_VAL
-	qse_dprintf (QSE_T("refdown nofree in map free..."));
+	qse_errputstrf (QSE_T("refdown nofree in map free..."));
 	qse_awk_dprintval (run, dptr);
-	qse_dprintf (QSE_T("\n"));
+	qse_errputstrf (QSE_T("\n"));
 #endif
 	qse_awk_rtx_refdownval_nofree (run, dptr);
 }
@@ -765,9 +765,9 @@ void qse_awk_rtx_freeval (
 	if (IS_STATICVAL(val)) return;
 
 #ifdef DEBUG_VAL
-	qse_dprintf (QSE_T("freeing [cache=%d] ... "), cache);
+	qse_errputstrf (QSE_T("freeing [cache=%d] ... "), cache);
 	qse_awk_dprintval (rtx, val);
-	qse_dprintf (QSE_T("\n"));
+	qse_errputstrf (QSE_T("\n"));
 #endif
 
 	switch (val->type)
@@ -857,9 +857,9 @@ void qse_awk_rtx_refupval (qse_awk_rtx_t* rtx, qse_awk_val_t* val)
 	if (IS_STATICVAL(val)) return;
 
 #ifdef DEBUG_VAL
-	qse_dprintf (QSE_T("ref up [ptr=%p] [count=%d] "), val, (int)val->ref);
+	qse_errputstrf (QSE_T("ref up [ptr=%p] [count=%d] "), val, (int)val->ref);
 	qse_awk_dprintval (rtx, val);
-	qse_dprintf (QSE_T("\n"));
+	qse_errputstrf (QSE_T("\n"));
 #endif
 
 	val->ref++;
@@ -870,9 +870,9 @@ void qse_awk_rtx_refdownval (qse_awk_rtx_t* rtx, qse_awk_val_t* val)
 	if (IS_STATICVAL(val)) return;
 
 #ifdef DEBUG_VAL
-	qse_dprintf (QSE_T("ref down [ptr=%p] [count=%d]\n"), val, (int)val->ref);
+	qse_errputstrf (QSE_T("ref down [ptr=%p] [count=%d]\n"), val, (int)val->ref);
 	qse_awk_dprintval (rtx, val);
-	qse_dprintf (QSE_T("\n"));
+	qse_errputstrf (QSE_T("\n"));
 #endif
 
 	QSE_ASSERTX (val->ref > 0, 
@@ -1402,7 +1402,7 @@ int qse_awk_rtx_valtostr (
 
 
 #ifdef DEBUG_VAL
-	qse_dprintf (
+	qse_errputstrf (
 		QSE_T(">>WRONG VALUE TYPE [%d] in qse_awk_rtx_valtostr\n"), 
 		v->type
 	);
@@ -1569,7 +1569,7 @@ int qse_awk_rtx_valtonum (
 	}
 
 #ifdef DEBUG_VAL
-	qse_dprintf (
+	qse_errputstrf (
 		QSE_T(">>WRONG VALUE TYPE [%d] in qse_awk_rtx_valtonum()\n"),
 		v->type
 	);
@@ -1669,7 +1669,7 @@ qse_long_t qse_awk_rtx_hashval (qse_awk_rtx_t* rtx, qse_awk_val_t* v)
 		default:
 
 #ifdef DEBUG_VAL
-			qse_dprintf (
+			qse_errputstrf (
 				QSE_T(">>WRONG VALUE TYPE [%d] in qse_awk_rtx_hashval()\n"), 
 				v->type
 			);

@@ -319,12 +319,6 @@ QSE_EXPORT qse_ssize_t qse_sio_putwcsf (
 	...
 );
 
-QSE_EXPORT qse_ssize_t qse_sio_putstrf (
-	qse_sio_t*        sio,
-	const qse_char_t* fmt,
-	...
-);
-
 QSE_EXPORT qse_ssize_t qse_sio_putmbsvf (
 	qse_sio_t*         sio,
 	const qse_mchar_t* fmt,
@@ -337,20 +331,18 @@ QSE_EXPORT qse_ssize_t qse_sio_putwcsvf (
 	va_list            ap
 );
 
-QSE_EXPORT qse_ssize_t qse_sio_putstrvf (
-	qse_sio_t*        sio,
-	const qse_char_t* fmt,
-	va_list           ap
-);
-
 #if defined(QSE_CHAR_IS_MCHAR)
 #	define qse_sio_putc(sio,c) qse_sio_putmb(sio,c)
 #	define qse_sio_putstr(sio,str) qse_sio_putmbs(sio,str)
 #	define qse_sio_putstrn(sio,str,size) qse_sio_putmbsn(sio,str,size)
+#	define qse_sio_putstrf qse_sio_putmbsf
+#	define qse_sio_putstrvf(sio,fmt,ap) qse_sio_putmbsvf(sio,fmt,ap)
 #else
 #	define qse_sio_putc(sio,c) qse_sio_putwc(sio,c)
 #	define qse_sio_putstr(sio,str) qse_sio_putwcs(sio,str)
 #	define qse_sio_putstrn(sio,str,size) qse_sio_putwcsn(sio,str,size)
+#	define qse_sio_putstrf qse_sio_putwcsf
+#	define qse_sio_putstrvf(sio,fmt,ap) qse_sio_putwcsvf(sio,fmt,ap)
 #endif
 
 /**
@@ -393,11 +385,6 @@ QSE_EXPORT qse_ssize_t qse_putwcsf (
 	...
 );
 
-QSE_EXPORT qse_ssize_t qse_putstrf (
-	const qse_char_t* fmt,
-	...
-);
-
 QSE_EXPORT qse_ssize_t qse_putmbsvf (
 	const qse_mchar_t* fmt,
 	va_list            ap
@@ -408,10 +395,37 @@ QSE_EXPORT qse_ssize_t qse_putwcsvf (
 	va_list            ap
 );
 
-QSE_EXPORT qse_ssize_t qse_putstrvf (
-	const qse_char_t* fmt,
-	va_list           ap
+QSE_EXPORT qse_ssize_t qse_errputmbsf (
+	const qse_mchar_t* fmt,
+	...
 );
+
+QSE_EXPORT qse_ssize_t qse_errputwcsf (
+	const qse_wchar_t* fmt,
+	...
+);
+
+QSE_EXPORT qse_ssize_t qse_errputmbsvf (
+	const qse_mchar_t* fmt,
+	va_list            ap
+);
+
+QSE_EXPORT qse_ssize_t qse_errputwcsvf (
+	const qse_wchar_t* fmt,
+	va_list            ap
+);
+
+#if defined(QSE_CHAR_IS_MCHAR)
+#	define qse_putstrf qse_putmbsf
+#	define qse_putstrvf(fmt,ap) qse_putmbsvf(fmt,ap)
+#	define qse_errputstrf qse_errputmbsf
+#	define qse_errputstrvf(fmt,ap) qse_errputmbsvf(fmt,ap)
+#else
+#	define qse_putstrf qse_putwcsf
+#	define qse_putstrvf(fmt,ap) qse_putwcsvf(fmt,ap)
+#	define qse_errputstrf qse_errputwcsf
+#	define qse_errputstrvf(fmt,ap) qse_errputwcsvf(fmt,ap)
+#endif
 
 #ifdef __cplusplus
 }

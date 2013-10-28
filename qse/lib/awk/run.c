@@ -22,7 +22,7 @@
 #include <qse/cmn/fmt.h>
 
 #ifdef DEBUG_RUN
-#include <qse/cmn/stdio.h>
+#include <qse/cmn/sio.h>
 #endif
 
 #define PRINT_IOERR -99
@@ -1889,7 +1889,7 @@ static int run_block0 (qse_awk_rtx_t* rtx, qse_awk_nde_blk_t* nde)
 	nlcls = nde->nlcls;
 
 #ifdef DEBUG_RUN
-	qse_dprintf (
+	qse_errputstrf (
 		QSE_T("securing space for local variables nlcls = %d\n"), 
 		(int)nlcls);
 #endif
@@ -1911,7 +1911,7 @@ static int run_block0 (qse_awk_rtx_t* rtx, qse_awk_nde_blk_t* nde)
 	}
 
 #ifdef DEBUG_RUN
-	qse_dprintf (QSE_T("executing block statements\n"));
+	qse_errputstrf (QSE_T("executing block statements\n"));
 #endif
 
 	while (p != QSE_NULL && rtx->exit_level == EXIT_NONE)
@@ -1926,7 +1926,7 @@ static int run_block0 (qse_awk_rtx_t* rtx, qse_awk_nde_blk_t* nde)
 
 	/* pop off local variables */
 #ifdef DEBUG_RUN
-	qse_dprintf (QSE_T("popping off local variables\n"));
+	qse_errputstrf (QSE_T("popping off local variables\n"));
 #endif
 	nlcls = nde->nlcls;
 	while (nlcls > 0)
@@ -3759,7 +3759,7 @@ retry:
 	if (str == QSE_NULL) return QSE_NULL;
 
 #ifdef DEBUG_RUN
-	qse_dprintf (QSE_T("**** index str=>%s, map->ref=%d, map->type=%d\n"), 
+	qse_errputstrf (QSE_T("**** index str=>%s, map->ref=%d, map->type=%d\n"), 
 		str, (int)map->ref, (int)map->type);
 #endif
 
@@ -5708,7 +5708,7 @@ static qse_awk_val_t* __eval_call (
 	saved_stack_top = run->stack_top;
 
 #ifdef DEBUG_RUN
-	qse_dprintf (QSE_T("setting up function stack frame top=%ld base=%ld\n"), 
+	qse_errputstrf (QSE_T("setting up function stack frame top=%ld base=%ld\n"), 
 		(long)run->stack_top, (long)run->stack_base);
 #endif
 	if (__raw_push(run,(void*)run->stack_base) == -1) 
@@ -5775,7 +5775,7 @@ static qse_awk_val_t* __eval_call (
 	RTX_STACK_NARGS(run) = (void*)nargs;
 	
 #ifdef DEBUG_RUN
-	qse_dprintf (QSE_T("running function body\n"));
+	qse_errputstrf (QSE_T("running function body\n"));
 #endif
 
 	if (fun != QSE_NULL)
@@ -5825,7 +5825,7 @@ static qse_awk_val_t* __eval_call (
 	/* refdown args in the run.stack */
 	nargs = (qse_size_t)RTX_STACK_NARGS(run);
 #ifdef DEBUG_RUN
-	qse_dprintf (QSE_T("block run complete nargs = %d\n"), (int)nargs); 
+	qse_errputstrf (QSE_T("block run complete nargs = %d\n"), (int)nargs); 
 #endif
 
 	for (i = 0; i < nargs; i++)
@@ -5834,7 +5834,7 @@ static qse_awk_val_t* __eval_call (
 	}
 
 #ifdef DEBUG_RUN
-	qse_dprintf (QSE_T("got return value\n"));
+	qse_errputstrf (QSE_T("got return value\n"));
 #endif
 
 	v = RTX_STACK_RETVAL(run);
@@ -5889,7 +5889,7 @@ static qse_awk_val_t* __eval_call (
 	if (run->exit_level == EXIT_FUNCTION) run->exit_level = EXIT_NONE;
 
 #ifdef DEBUG_RUN
-	qse_dprintf (QSE_T("returning from function top=%ld, base=%ld\n"),
+	qse_errputstrf (QSE_T("returning from function top=%ld, base=%ld\n"),
 		(long)run->stack_top, (long)run->stack_base); 
 #endif
 	return (n == -1)? QSE_NULL: v;
@@ -6583,7 +6583,7 @@ read_again:
 	}
 
 #ifdef DEBUG_RUN
-	qse_dprintf (QSE_T("record len = %d str=[%.*s]\n"), 
+	qse_errputstrf (QSE_T("record len = %d str=[%.*s]\n"), 
 		(int)QSE_STR_LEN(buf), (int)QSE_STR_LEN(buf), QSE_STR_PTR(buf));
 #endif
 	if (n == 0) 

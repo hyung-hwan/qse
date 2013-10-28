@@ -19,14 +19,8 @@
  */
 
 #include <qse/cmn/str.h>
+#include <qse/cmn/mbwc.h>
 #include "fmt.h"
-
-struct wbuf_t
-{
-	qse_wchar_t* ptr;
-	qse_size_t   len;
-	qse_size_t   capa;
-};
 
 struct mbuf_t
 {
@@ -34,34 +28,53 @@ struct mbuf_t
 	qse_size_t   len;
 	qse_size_t   capa;
 };
-
-typedef struct wbuf_t wbuf_t;
 typedef struct mbuf_t mbuf_t;
 
-static int put_wchar_to_wbuf (qse_wchar_t c, void* arg)
+struct wbuf_t
 {
-	qse_fmtout_t* fo = (qse_fmtout_t*)arg;
-	wbuf_t* buf = (wbuf_t*)fo->ctx;
-	if (buf->len < buf->capa) buf->ptr[buf->len++] = c;
-	return 1;
+	qse_wchar_t* ptr;
+	qse_size_t   len;
+	qse_size_t   capa;
+};
+typedef struct wbuf_t wbuf_t;
+
+
+static int put_mchar (qse_mchar_t c, void* ctx)
+{
+	mbuf_t* buf = (mbuf_t*)ctx;
+	if (buf->len < buf->capa) 
+	{
+		buf->ptr[buf->len++] = c;
+		return 1;
+	}
+
+	return 0; /* stop. but no error */
 }
 
-static int put_mchar_to_mbuf (qse_mchar_t c, void* arg)
+static int put_wchar (qse_wchar_t c, void* ctx)
 {
-	qse_fmtout_t* fo = (qse_fmtout_t*)arg;
-	mbuf_t* buf = (mbuf_t*)fo->ctx;
-	if (buf->len < buf->capa) buf->ptr[buf->len++] = c;
-	return 1;
+	wbuf_t* buf = (wbuf_t*)ctx;
+	if (buf->len < buf->capa) 
+	{
+		buf->ptr[buf->len++] = c;
+		return 1;
+	}
+
+	return 0; /* stop. but no error */
 }
 
-static int put_wchar_to_mbuf (qse_wchar_t c, void* arg)
+static int wcs_to_mbs (
+	const qse_wchar_t* wcs, qse_size_t* wcslen,
+	qse_mchar_t* mbs, qse_size_t* mbslen, void* ctx)
 {
-	return 1;
+	return qse_wcsntombsnwithcmgr (wcs, wcslen, mbs, mbslen, qse_getdflcmgr());
 }
 
-static int put_mchar_to_wbuf (qse_mchar_t c, void* arg)
+static int mbs_to_wcs (
+	const qse_mchar_t* mbs, qse_size_t* mbslen, 
+	qse_wchar_t* wcs, qse_size_t* wcslen, void* ctx)
 {
-	return 1;
+	return qse_mbsntowcsnwithcmgr (mbs, mbslen, wcs, wcslen, qse_getdflcmgr());
 }
 
 /* ----------------------------------- */
@@ -69,18 +82,20 @@ static int put_mchar_to_wbuf (qse_mchar_t c, void* arg)
 #undef T
 #undef char_t
 #undef buf_t
+#undef fmtout_t
 #undef fmtout
-#undef output_char
-#undef output_ochar
+#undef put_char
+#undef conv_char
 #undef strfmt
 #undef strxfmt
 
 #define T(x) QSE_MT(x)
 #define char_t qse_mchar_t
 #define buf_t mbuf_t
+#define fmtout_t qse_mfmtout_t
 #define fmtout qse_mfmtout
-#define output_mchar put_mchar_to_mbuf
-#define output_wchar put_wchar_to_mbuf
+#define put_char put_mchar
+#define conv_char wcs_to_mbs
 #define strfmt qse_mbsfmt
 #define strxfmt qse_mbsxfmt
 #include "str-fmt.h"
@@ -90,47 +105,21 @@ static int put_mchar_to_wbuf (qse_mchar_t c, void* arg)
 #undef T
 #undef char_t
 #undef buf_t
+#undef fmtout_t
 #undef fmtout
-#undef output_mchar
-#undef output_wchar
+#undef put_char
+#undef conv_char
 #undef strfmt
 #undef strxfmt
 
 #define T(x) QSE_WT(x)
 #define char_t qse_wchar_t
 #define buf_t wbuf_t
+#define fmtout_t qse_wfmtout_t
 #define fmtout qse_wfmtout
-#define output_mchar put_mchar_to_wbuf
-#define output_wchar put_wchar_to_wbuf
-#define strfmtx qse_wcsfmt
-#define strxfmtx qse_wcsxfmt
+#define put_char put_wchar
+#define conv_char mbs_to_wcs
+#define strfmt qse_wcsfmt
+#define strxfmt qse_wcsxfmt
 #include "str-fmt.h"
 
-
-/* ----------------------------------- */
-
-#undef T
-#undef char_t
-#undef buf_t
-#undef fmtout
-#undef output_mchar
-#undef output_wchar
-#undef strfmt
-#undef strxfmt
-
-#define T(x) QSE_T(x)
-#define char_t qse_char_t
-#if defined(QSE_CHAR_IS_MCHAR)
-#	define buf_t mbuf_t
-#	define output_mchar put_mchar_to_mbuf
-#	define output_wchar put_wchar_to_mbuf
-#	define fmtout qse_mfmtout
-#else
-#	define buf_t wbuf_t
-#	define output_mchar put_mchar_to_wbuf
-#	define output_wchar put_wchar_to_wbuf
-#	define fmtout qse_wfmtout
-#endif
-#define strfmt qse_strfmt
-#define strxfmt qse_strxfmt
-#include "str-fmt.h"
