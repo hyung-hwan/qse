@@ -692,6 +692,21 @@ QSE_EXPORT qse_size_t qse_mbsfmt (
 	...
 );
 
+/**
+ * The qse_mbsxfmt() function writes a formatted string into the buffer \a buf
+ * of the size \a bsz using the format \a fmt and the variable arguments. It
+ * doesn't write more than bsz characters including the terminating null 
+ * chracter. If \a buf is #QSE_NULL, no characters are written to the buffer.
+ * If conversion from a wide character string fails, the formatting is aborted
+ * and the output buffer gets null-terminated.
+ * 
+ * \return 
+ *   It returns the number of characters written to the buffer excluding the 
+ *   terminating null. When \a buf is #QSE_NULL, it returns the number of 
+ *   characters that would have been written excluding the terminating null
+ *   if \a buf has not been #QSE_NULL. If conversion from a wide-character 
+ *   string failure, it returns (qse_size_t)-1.
+ */
 QSE_EXPORT qse_size_t qse_mbsxfmt (
 	qse_mchar_t*       buf,
 	qse_size_t         bsz,
@@ -705,6 +720,21 @@ QSE_EXPORT qse_size_t qse_wcsfmt (
 	...
 );
 
+/**
+ * The qse_wcsxfmt() function writes a formatted string into the buffer \a buf
+ * of the size \a bsz using the format \a fmt and the variable arguments. It
+ * doesn't write more than bsz characters including the terminating null 
+ * chracter. If \a buf is #QSE_NULL, no characters are written to the buffer.
+ * If conversion from a multi-byte string fails, the formatting is aborted and
+ * the output buffer gets null-terminated.
+ * 
+ * \return 
+ *   It returns the number of characters written to the buffer excluding the 
+ *   terminating null. When \a buf is #QSE_NULL, it returns the number of 
+ *   characters that would have been written excluding the terminating null
+ *   if \a buf has not been #QSE_NULL. If conversion from a multi-byte string
+ *   fails, it returns (qse_size_t)-1.
+ */
 QSE_EXPORT qse_size_t qse_wcsxfmt (
 	qse_wchar_t*       buf,
 	qse_size_t         bsz,

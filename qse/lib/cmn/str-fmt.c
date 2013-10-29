@@ -42,25 +42,46 @@ typedef struct wbuf_t wbuf_t;
 static int put_mchar (qse_mchar_t c, void* ctx)
 {
 	mbuf_t* buf = (mbuf_t*)ctx;
-	if (buf->len < buf->capa) 
+
+	/* do not copy but return success if the buffer pointer 
+	 * points to NULL. this is to let the caller specify
+	 * NULL as a buffer to get the length required for the
+	 * full formatting excluding the terminating NULL. 
+	 * The actual length required is the return value + 1. */
+	if (buf->ptr == QSE_NULL) 
+	{
+		buf->len++;
+		return 1;
+	}
+	else if (buf->len < buf->capa) 
 	{
 		buf->ptr[buf->len++] = c;
 		return 1;
 	}
 
-	return 0; /* stop. but no error */
+	/* buffer is full stop. but no error */
+	return 0;
 }
 
 static int put_wchar (qse_wchar_t c, void* ctx)
 {
 	wbuf_t* buf = (wbuf_t*)ctx;
+
+	/* do not copy but return success if the buffer pointer 
+	 * points to NULL. this is to let the caller specify
+	 * NULL as a buffer to get the length required for the
+	 * full formatting excluding the terminating NULL. 
+	 * The actual length required is the return value + 1. */
+	if (buf->ptr == QSE_NULL) return 1;
+
 	if (buf->len < buf->capa) 
 	{
 		buf->ptr[buf->len++] = c;
 		return 1;
 	}
 
-	return 0; /* stop. but no error */
+	/* buffer is full stop. but no error */
+	return 0; 
 }
 
 static int wcs_to_mbs (
