@@ -24,6 +24,7 @@ qse_size_t strfmt (char_t* buf, const char_t* fmt, ...)
 	buf_t b;
 	va_list ap;
 	fmtout_t fo;
+	int x;
 
 	b.ptr = buf;
 	b.len = 0;
@@ -34,15 +35,23 @@ qse_size_t strfmt (char_t* buf, const char_t* fmt, ...)
 	fo.put = put_char;
 	fo.conv = conv_char;
 
-	/* no error must be returned by fmtout since
-	 * the callback function never fails. */
+	/* no I/O error must occurred by fmtout but there can be
+	 * encoding conversion error by fmtout */
 	va_start (ap, fmt);
-	fmtout (fmt, &fo, ap);
+	x = fmtout (fmt, &fo, ap);
 	va_end (ap);
 
+	/* fmtout must produce no I/O error but it can produce
+	 * an encoding conversion error. if you didn't use a conversion
+	 * specifier that requires encoding conversion (%S, %C, etc), 
+	 * you don't need to worry about an error. */
+
+	/* null-terminate regardless of error */
 	b.ptr[b.len] = T('\0');
 
-	/*return fo.count;*/
+	if (x <= -1) return QSE_TYPE_MAX(qse_size_t);
+
+	QSE_ASSERT (fo.count == b.len);
 	return b.len;
 }
 
@@ -51,6 +60,7 @@ qse_size_t strxfmt (char_t* buf, qse_size_t len, const char_t* fmt, ...)
 	buf_t b;
 	va_list ap;
 	fmtout_t fo;
+	int x;
 
 	b.ptr = buf;
 	b.len = 0;
@@ -67,15 +77,20 @@ qse_size_t strxfmt (char_t* buf, qse_size_t len, const char_t* fmt, ...)
 	fo.put = put_char;
 	fo.conv = conv_char;
 
-	/* no error must be returned by fmtout since
-	 * the callback function never fails. */
 	va_start (ap, fmt);
-	fmtout (fmt, &fo, ap);
+	x = fmtout (fmt, &fo, ap);
 	va_end (ap);
 
-	if (len > 0) b.ptr[b.len] = T('\0');
+	/* fmtout must produce no I/O error but it can produce
+	 * an encoding conversion error. if you didn't use a conversion
+	 * specifier that requires encoding conversion (%S, %C, etc), 
+	 * you don't need to worry about an error. */
 
-	/*return fo.count;*/
+	/* null-terminate regardless of error */
+	if (len > 0) b.ptr[b.len] = T('\0'); 
+	if (x <= -1) return QSE_TYPE_MAX(qse_size_t);
+
+	QSE_ASSERT (fo.count == b.len);
 	return b.len;
 }
 

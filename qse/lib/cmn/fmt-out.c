@@ -27,6 +27,9 @@
 #include "fmt.h"
 
 #include <stdio.h> /* for snrintf() */
+#if defined(_MSC_VER) || defined(__BORLANDC__) || (defined(__WATCOMC__) && (__WATCOMC__ < 1200))
+#	define snprintf _snprintf 
+#endif
 /* TODO: remove stdio.h once snprintf gets replaced by own 
 floting-point conversion implementation*/
 

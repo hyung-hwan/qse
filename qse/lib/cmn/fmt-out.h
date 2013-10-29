@@ -91,7 +91,7 @@ static char_t* sprintn (char_t* nbuf, qse_uintmax_t num, int base, int *lenp, in
 	if (data->count >= data->limit) goto done; \
 	if ((xx = data->put (c, data->ctx)) <= -1) goto oops; \
 	if (xx == 0) goto done; \
-	data->count += xx; \
+	data->count++; \
 } while (0)
 
 int fmtout (const char_t* fmt, fmtout_t* data, va_list ap)

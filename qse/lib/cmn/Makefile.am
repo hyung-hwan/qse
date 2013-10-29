@@ -14,6 +14,7 @@ noinst_HEADERS = \
 	fmt-out.h \
 	fs.h \
 	mem.h \
+	str-dyn.h \
 	str-fcpy.h \
 	str-fmt.h \
 	str-join.h \
@@ -81,8 +82,7 @@ libqsecmn_la_SOURCES = \
 	str-cpy.c \
 	str-del.c \
 	str-dup.c \
-	str-dynm.c \
-	str-dynw.c \
+	str-dyn.c \
 	str-end.c \
 	str-excl.c \
 	str-fcpy.c \
