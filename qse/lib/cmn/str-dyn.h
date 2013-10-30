@@ -20,6 +20,8 @@
 
 #include <qse/cmn/str.h>
 #include "mem.h"
+#include "fmt.h"
+#include <stdarg.h>
 
 str_t* str_open (qse_mmgr_t* mmgr, qse_size_t xtnsize, qse_size_t capa)
 {
@@ -71,7 +73,7 @@ int str_init (str_t* str, qse_mmgr_t* mmgr, qse_size_t capa)
 
 void str_fini (str_t* str)
 {
-	if (str->val.ptr != QSE_NULL) QSE_MMGR_FREE (str->mmgr, str->val.ptr);
+	if (str->val.ptr) QSE_MMGR_FREE (str->mmgr, str->val.ptr);
 }
 
 qse_mmgr_t* str_getmmgr (str_t* mbs)
@@ -424,3 +426,53 @@ qse_size_t str_pac (str_t* str)
 }
 
 
+qse_size_t str_fmt (str_t* str, const char_t* fmt, ...)
+{
+	return (qse_size_t)-1;
+}
+
+qse_size_t str_fcat (str_t* str, const char_t* fmt, ...)
+{
+	va_list ap;
+	fmtout_t fo;
+	int x;
+	qse_size_t old_len, inc;
+
+	old_len = str->val.len;
+
+	fo.limit = QSE_TYPE_MAX(qse_size_t) - 1;
+	fo.ctx = str;
+	fo.put = str->val.ptr? put_char: put_char_null;
+	fo.conv = conv_char;
+
+	va_start (ap, fmt);
+	x = fmtout (fmt, &fo, ap);
+	va_end (ap);
+
+	if (x <= -1)
+	{
+		str->val.len = old_len;
+		return (qse_size_t)-1;
+	}
+	
+	if (str->val.ptr == QSE_NULL || str->val.len - old_len < fo.count)
+	{
+		str->val.len = old_len;
+
+		/* resizing is required */
+		x = resize_for_ncat (str, fo.count);
+
+		if (x <= -1) return (qse_size_t)-1;
+		if (x >= 1)
+		{
+			fo.put = put_char;
+
+			va_start (ap, fmt);
+			x = fmtout (fmt, &fo, ap);
+			va_end (ap);
+		}
+	}
+
+	str->val.ptr[str->val.len] = T('\0');
+	return str->val.len;
+}

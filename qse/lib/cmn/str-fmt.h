@@ -32,7 +32,7 @@ qse_size_t strfmt (char_t* buf, const char_t* fmt, ...)
 
 	fo.limit = QSE_TYPE_MAX(qse_size_t) - 1;
 	fo.ctx = &b;
-	fo.put = put_char;
+	fo.put = b.ptr? put_char: put_char_null;
 	fo.conv = conv_char;
 
 	/* no I/O error must occurred by fmtout but there can be
@@ -47,12 +47,14 @@ qse_size_t strfmt (char_t* buf, const char_t* fmt, ...)
 	 * you don't need to worry about an error. */
 
 	/* null-terminate regardless of error */
-	b.ptr[b.len] = T('\0');
+	if (b.ptr) 
+	{
+		QSE_ASSERT (fo.count == b.len);
+		b.ptr[b.len] = T('\0');
+	}
 
 	if (x <= -1) return QSE_TYPE_MAX(qse_size_t);
-
-	QSE_ASSERT (fo.count == b.len);
-	return b.len;
+	return fo.count;
 }
 
 qse_size_t strxfmt (char_t* buf, qse_size_t len, const char_t* fmt, ...)
@@ -74,7 +76,7 @@ qse_size_t strxfmt (char_t* buf, qse_size_t len, const char_t* fmt, ...)
 
 	fo.limit = QSE_TYPE_MAX(qse_size_t) - 1;
 	fo.ctx = &b;
-	fo.put = put_char;
+	fo.put = b.ptr? put_char: put_char_null;
 	fo.conv = conv_char;
 
 	va_start (ap, fmt);
@@ -87,10 +89,13 @@ qse_size_t strxfmt (char_t* buf, qse_size_t len, const char_t* fmt, ...)
 	 * you don't need to worry about an error. */
 
 	/* null-terminate regardless of error */
-	if (len > 0) b.ptr[b.len] = T('\0'); 
-	if (x <= -1) return QSE_TYPE_MAX(qse_size_t);
+	if (b.ptr)
+	{
+		QSE_ASSERT (fo.count == b.len);
+		if (len > 0) b.ptr[b.len] = T('\0'); 
+	}
 
-	QSE_ASSERT (fo.count == b.len);
-	return b.len;
+	if (x <= -1) return QSE_TYPE_MAX(qse_size_t);
+	return fo.count;
 }
 
