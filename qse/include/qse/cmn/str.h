@@ -2736,6 +2736,12 @@ QSE_EXPORT qse_size_t qse_mbs_fcat (
 	...
 );
 
+QSE_EXPORT qse_size_t qse_mbs_fmt (
+	qse_mbs_t*         str,
+	const qse_mchar_t* fmt,
+	...
+);
+
 /**
  * The qse_wcs_open() function creates a dynamically resizable wide-character
  * string.
@@ -2927,6 +2933,12 @@ QSE_EXPORT qse_size_t qse_wcs_fcat (
 	...
 );
 
+QSE_EXPORT qse_size_t qse_wcs_fmt (
+	qse_wcs_t*         str,
+	const qse_wchar_t* fmt,
+	...
+);
+
 #if defined(QSE_CHAR_IS_MCHAR)
 #	define qse_str_setmmgr(str,mmgr)    qse_mbs_wetmmgr(str,mmgr)
 #	define qse_str_getmmgr(str)         qse_mbs_getmmgr(str)
@@ -2955,6 +2967,7 @@ QSE_EXPORT qse_size_t qse_wcs_fcat (
 #	define qse_str_trm(str)             qse_mbs_trm(str)
 #	define qse_str_pac(str)             qse_mbs_pac(str)
 #	define qse_str_fcat                 qse_mbs_fcat
+#	define qse_str_fmt                  qse_mbs_fmt
 #else
 #	define qse_str_setmmgr(str,mmgr)    qse_wcs_wetmmgr(str,mmgr)
 #	define qse_str_getmmgr(str)         qse_wcs_getmmgr(str)
@@ -2983,6 +2996,7 @@ QSE_EXPORT qse_size_t qse_wcs_fcat (
 #	define qse_str_trm(str)             qse_wcs_trm(str)
 #	define qse_str_pac(str)             qse_wcs_pac(str)
 #	define qse_str_fcat                 qse_wcs_fcat
+#	define qse_str_fmt                  qse_wcs_fmt
 #endif
 
 
