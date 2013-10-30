@@ -32,17 +32,31 @@ static int put_wchar_null (qse_wchar_t c, void* ctx)
 	return 1;
 }
 
-static int put_mchar (qse_mchar_t c, void* ctx)
+static int put_mchar_check (qse_mchar_t c, void* ctx)
 {
 	qse_mbs_t* str = (qse_mbs_t*)ctx;
 	if (str->val.len < str->capa) str->val.ptr[str->val.len++] = c;
 	return 1;
 }
 
-static int put_wchar (qse_wchar_t c, void* ctx)
+static int put_wchar_check (qse_wchar_t c, void* ctx)
 {
 	qse_wcs_t* str = (qse_wcs_t*)ctx;
 	if (str->val.len < str->capa) str->val.ptr[str->val.len++] = c;
+	return 1; 
+}
+
+static int put_mchar_nocheck (qse_mchar_t c, void* ctx)
+{
+	qse_mbs_t* str = (qse_mbs_t*)ctx;
+	str->val.ptr[str->val.len++] = c;
+	return 1;
+}
+
+static int put_wchar_nocheck (qse_wchar_t* c, void* ctx)
+{
+	qse_wcs_t* str = (qse_wcs_t*)ctx;
+	str->val.ptr[str->val.len++] = c;
 	return 1; 
 }
 
@@ -73,7 +87,8 @@ static int mbs_to_wcs (
 #undef fmtout_t
 #undef fmtout
 #undef put_char_null
-#undef put_char
+#undef put_char_check
+#undef put_char_nocheck
 #undef conv_char
 #undef str_t
 #undef str_open
@@ -104,7 +119,9 @@ static int mbs_to_wcs (
 #undef str_trm
 #undef str_pac
 #undef str_fmt
+#undef str_vfmt
 #undef str_fcat
+#undef str_vfcat
 
 #define char_t qse_mchar_t
 #define xstr_t qse_mxstr_t
@@ -117,7 +134,8 @@ static int mbs_to_wcs (
 #define fmtout_t qse_mfmtout_t
 #define fmtout qse_mfmtout
 #define put_char_null put_mchar_null
-#define put_char put_mchar
+#define put_char_check put_mchar_check
+#define put_char_nocheck put_mchar_nocheck
 #define conv_char wcs_to_mbs
 #define str_t qse_mbs_t
 #define str_open qse_mbs_open 
@@ -148,7 +166,9 @@ static int mbs_to_wcs (
 #define str_trm qse_mbs_trm 
 #define str_pac qse_mbs_pac 
 #define str_fmt qse_mbs_fmt 
+#define str_vfmt qse_mbs_vfmt 
 #define str_fcat qse_mbs_fcat 
+#define str_vfcat qse_mbs_vfcat 
 #include "str-dyn.h"
 
 /* -------------------------------------------------------- */
@@ -164,7 +184,8 @@ static int mbs_to_wcs (
 #undef fmtout_t
 #undef fmtout
 #undef put_char_null
-#undef put_char
+#undef put_char_check
+#undef put_char_nocheck
 #undef conv_char
 #undef str_t
 #undef str_open
@@ -195,7 +216,9 @@ static int mbs_to_wcs (
 #undef str_trm
 #undef str_pac
 #undef str_fmt
+#undef str_vfmt
 #undef str_fcat
+#undef str_vfcat
 
 #define char_t qse_wchar_t
 #define xstr_t qse_wxstr_t
@@ -208,7 +231,8 @@ static int mbs_to_wcs (
 #define fmtout_t qse_wfmtout_t
 #define fmtout qse_wfmtout
 #define put_char_null put_wchar_null
-#define put_char put_wchar
+#define put_char_check put_wchar_check
+#define put_char_nocheck put_wchar_nocheck
 #define conv_char mbs_to_wcs
 #define str_t qse_wcs_t
 #define str_open qse_wcs_open 
@@ -239,5 +263,7 @@ static int mbs_to_wcs (
 #define str_trm qse_wcs_trm 
 #define str_pac qse_wcs_pac 
 #define str_fmt qse_wcs_fmt 
+#define str_vfmt qse_wcs_vfmt 
 #define str_fcat qse_wcs_fcat 
+#define str_vfcat qse_wcs_vfcat 
 #include "str-dyn.h"
