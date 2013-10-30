@@ -19,7 +19,48 @@
  */
 
 #include <qse/cmn/str.h>
+#include <qse/cmn/mbwc.h>
 #include "mem.h"
+
+static int put_mchar_null (qse_mchar_t c, void* ctx)
+{
+	return 1;
+}
+
+static int put_wchar_null (qse_wchar_t c, void* ctx)
+{
+	return 1;
+}
+
+static int put_mchar (qse_mchar_t c, void* ctx)
+{
+	qse_mbs_t* str = (qse_mbs_t*)ctx;
+	if (str->val.len < str->capa) str->val.ptr[str->val.len++] = c;
+	return 1;
+}
+
+static int put_wchar (qse_wchar_t c, void* ctx)
+{
+	qse_wcs_t* str = (qse_wcs_t*)ctx;
+	if (str->val.len < str->capa) str->val.ptr[str->val.len++] = c;
+	return 1; 
+}
+
+static int wcs_to_mbs (
+	const qse_wchar_t* wcs, qse_size_t* wcslen,
+	qse_mchar_t* mbs, qse_size_t* mbslen, void* ctx)
+{
+	return qse_wcsntombsnwithcmgr (wcs, wcslen, mbs, mbslen, qse_getdflcmgr());
+}
+
+static int mbs_to_wcs (
+	const qse_mchar_t* mbs, qse_size_t* mbslen, 
+	qse_wchar_t* wcs, qse_size_t* wcslen, void* ctx)
+{
+	return qse_mbsntowcsnwithcmgr (mbs, mbslen, wcs, wcslen, qse_getdflcmgr());
+}
+
+/* -------------------------------------------------------- */
 
 #undef char_t
 #undef xstr_t
@@ -29,6 +70,11 @@
 #undef strncpy
 #undef strxpac
 #undef strxtrm
+#undef fmtout_t
+#undef fmtout
+#undef put_char_null
+#undef put_char
+#undef conv_char
 #undef str_t
 #undef str_open
 #undef str_close
@@ -57,6 +103,8 @@
 #undef str_del
 #undef str_trm
 #undef str_pac
+#undef str_fmt
+#undef str_fcat
 
 #define char_t qse_mchar_t
 #define xstr_t qse_mxstr_t
@@ -66,6 +114,11 @@
 #define strncpy(x,y,z) qse_mbsncpy(x,y,z)
 #define strxpac(x,y) qse_mbsxpac(x,y)
 #define strxtrm(x,y) qse_mbsxtrm(x,y)
+#define fmtout_t qse_mfmtout_t
+#define fmtout qse_mfmtout
+#define put_char_null put_mchar_null
+#define put_char put_mchar
+#define conv_char wcs_to_mbs
 #define str_t qse_mbs_t
 #define str_open qse_mbs_open 
 #define str_close qse_mbs_close 
@@ -94,6 +147,8 @@
 #define str_del qse_mbs_del 
 #define str_trm qse_mbs_trm 
 #define str_pac qse_mbs_pac 
+#define str_fmt qse_mbs_fmt 
+#define str_fcat qse_mbs_fcat 
 #include "str-dyn.h"
 
 /* -------------------------------------------------------- */
@@ -106,6 +161,11 @@
 #undef strncpy
 #undef strxpac
 #undef strxtrm
+#undef fmtout_t
+#undef fmtout
+#undef put_char_null
+#undef put_char
+#undef conv_char
 #undef str_t
 #undef str_open
 #undef str_close
@@ -134,6 +194,8 @@
 #undef str_del
 #undef str_trm
 #undef str_pac
+#undef str_fmt
+#undef str_fcat
 
 #define char_t qse_wchar_t
 #define xstr_t qse_wxstr_t
@@ -143,6 +205,11 @@
 #define strncpy(x,y,z) qse_wcsncpy(x,y,z)
 #define strxpac(x,y) qse_wcsxpac(x,y)
 #define strxtrm(x,y) qse_wcsxtrm(x,y)
+#define fmtout_t qse_wfmtout_t
+#define fmtout qse_wfmtout
+#define put_char_null put_wchar_null
+#define put_char put_wchar
+#define conv_char mbs_to_wcs
 #define str_t qse_wcs_t
 #define str_open qse_wcs_open 
 #define str_close qse_wcs_close 
@@ -171,4 +238,6 @@
 #define str_del qse_wcs_del 
 #define str_trm qse_wcs_trm 
 #define str_pac qse_wcs_pac 
+#define str_fmt qse_wcs_fmt 
+#define str_fcat qse_wcs_fcat 
 #include "str-dyn.h"

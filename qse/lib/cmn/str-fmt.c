@@ -39,21 +39,21 @@ struct wbuf_t
 typedef struct wbuf_t wbuf_t;
 
 
+static int put_mchar_null (qse_mchar_t c, void* ctx)
+{
+	return 1;
+}
+
+static int put_wchar_null (qse_wchar_t c, void* ctx)
+{
+	return 1;
+}
+
 static int put_mchar (qse_mchar_t c, void* ctx)
 {
 	mbuf_t* buf = (mbuf_t*)ctx;
 
-	/* do not copy but return success if the buffer pointer 
-	 * points to NULL. this is to let the caller specify
-	 * NULL as a buffer to get the length required for the
-	 * full formatting excluding the terminating NULL. 
-	 * The actual length required is the return value + 1. */
-	if (buf->ptr == QSE_NULL) 
-	{
-		buf->len++;
-		return 1;
-	}
-	else if (buf->len < buf->capa) 
+	if (buf->len < buf->capa) 
 	{
 		buf->ptr[buf->len++] = c;
 		return 1;
@@ -66,13 +66,6 @@ static int put_mchar (qse_mchar_t c, void* ctx)
 static int put_wchar (qse_wchar_t c, void* ctx)
 {
 	wbuf_t* buf = (wbuf_t*)ctx;
-
-	/* do not copy but return success if the buffer pointer 
-	 * points to NULL. this is to let the caller specify
-	 * NULL as a buffer to get the length required for the
-	 * full formatting excluding the terminating NULL. 
-	 * The actual length required is the return value + 1. */
-	if (buf->ptr == QSE_NULL) return 1;
 
 	if (buf->len < buf->capa) 
 	{
@@ -105,6 +98,7 @@ static int mbs_to_wcs (
 #undef buf_t
 #undef fmtout_t
 #undef fmtout
+#undef put_char_null
 #undef put_char
 #undef conv_char
 #undef strfmt
@@ -115,6 +109,7 @@ static int mbs_to_wcs (
 #define buf_t mbuf_t
 #define fmtout_t qse_mfmtout_t
 #define fmtout qse_mfmtout
+#define put_char_null put_mchar_null
 #define put_char put_mchar
 #define conv_char wcs_to_mbs
 #define strfmt qse_mbsfmt
@@ -128,6 +123,7 @@ static int mbs_to_wcs (
 #undef buf_t
 #undef fmtout_t
 #undef fmtout
+#undef put_char_null
 #undef put_char
 #undef conv_char
 #undef strfmt
@@ -138,6 +134,7 @@ static int mbs_to_wcs (
 #define buf_t wbuf_t
 #define fmtout_t qse_wfmtout_t
 #define fmtout qse_wfmtout
+#define put_char_null put_wchar_null
 #define put_char put_wchar
 #define conv_char mbs_to_wcs
 #define strfmt qse_wcsfmt
