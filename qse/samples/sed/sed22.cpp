@@ -1,6 +1,5 @@
 #include <qse/sed/StdSed.hpp>
 #include <qse/cmn/main.h>
-#include <qse/cmn/sio.h>
 #include <iostream>
 #include "sed00.h"
 
@@ -67,6 +66,8 @@ int sed_main (int argc, qse_char_t* argv[])
 
 int qse_main (int argc, qse_achar_t* argv[])
 {
+	int x;
 	init_sed_sample_locale ();
-	return qse_runmain (argc, argv, sed_main);
+	x = qse_runmain (argc, argv, sed_main);
+	return x;
 }

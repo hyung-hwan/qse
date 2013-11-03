@@ -27,7 +27,6 @@
 #include <qse/cmn/nwio.h>
 #include <qse/cmn/path.h>
 #include <qse/cmn/alg.h>
-#include <qse/cmn/stdio.h>
 #include "awk.h"
 
 #include <stdlib.h>

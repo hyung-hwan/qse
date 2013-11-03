@@ -25,8 +25,6 @@
 
 #include <qse/http/httpd.h>
 
-#include <qse/cmn/stdio.h> /* TODO: remove this.. only for debugging at this moment */
-
 struct qse_httpd_t
 {
 	qse_mmgr_t* mmgr;

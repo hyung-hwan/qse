@@ -17666,8 +17666,6 @@ done
 
 LIBS="$OLDLIBS"
 
-if test "${platform_win32}" = "no"
-then
 	for ac_func in quadmath_snprintf
 do :
   ac_fn_c_check_func "$LINENO" "quadmath_snprintf" "ac_cv_func_quadmath_snprintf"
@@ -17774,7 +17772,6 @@ fi
 done
 
 	LIBS="$OLDLIBS"
-fi
 
 
 for ac_func in connect gethostbyname

@@ -54,9 +54,6 @@
 #	include <signal.h>
 #endif
 
-#define QSE_STDOUT qse_getstdout()
-#define QSE_STDERR qse_getstderr()
-
 static struct
 {
 	qse_sed_iostd_t* io;
@@ -142,46 +139,46 @@ static qse_mmgr_t xma_mmgr =
 
 static void print_version (void)
 {
-	qse_putstrf (QSE_T("QSESED version %hs\n"), QSE_PACKAGE_VERSION);
+	qse_printf (QSE_T("QSESED version %hs\n"), QSE_PACKAGE_VERSION);
 }
 
 static void print_usage (qse_sio_t* out, int argc, qse_char_t* argv[])
 {
 	const qse_char_t* b = qse_basename (argv[0]);
 
-	qse_sio_putstrf (out, QSE_T("USAGE: %s [options] script [file]\n"), b);
-	qse_sio_putstrf (out, QSE_T("       %s [options] -f script-file [file]\n"), b);
-	qse_sio_putstrf (out, QSE_T("       %s [options] -e script [file]\n"), b);
+	qse_fprintf (out, QSE_T("USAGE: %s [options] script [file]\n"), b);
+	qse_fprintf (out, QSE_T("       %s [options] -f script-file [file]\n"), b);
+	qse_fprintf (out, QSE_T("       %s [options] -e script [file]\n"), b);
 
-	qse_sio_putstrf (out, QSE_T("options as follows:\n"));
-	qse_sio_putstrf (out, QSE_T(" -h/--help                 show this message\n"));
-	qse_sio_putstrf (out, QSE_T(" --version                 show version\n"));
-	qse_sio_putstrf (out, QSE_T(" -n                        disable auto-print\n"));
-	qse_sio_putstrf (out, QSE_T(" -e                 script specify a script\n"));
-	qse_sio_putstrf (out, QSE_T(" -f                 file   specify a script file\n"));
-	qse_sio_putstrf (out, QSE_T(" -o                 file   specify an output file\n"));
-	qse_sio_putstrf (out, QSE_T(" -r                        use the extended regular expression\n"));
-	qse_sio_putstrf (out, QSE_T(" -R                        enable non-standard extensions to the regular\n"));
-	qse_sio_putstrf (out, QSE_T("                           expression\n"));
-	qse_sio_putstrf (out, QSE_T(" -i                        perform in-place editing. imply -s\n"));
-	qse_sio_putstrf (out, QSE_T(" -s                        process input files separately\n"));
-	qse_sio_putstrf (out, QSE_T(" -a                        perform strict address and label check\n"));
-	qse_sio_putstrf (out, QSE_T(" -b                        allow extended address formats\n"));
-	qse_sio_putstrf (out, QSE_T("                           <start~step>,<start,+line>,<start,~line>,<0,/regex/>\n"));
-	qse_sio_putstrf (out, QSE_T(" -x                        allow text on the same line as c, a, i\n"));
-	qse_sio_putstrf (out, QSE_T(" -y                        ensure a newline at text end\n"));
-	qse_sio_putstrf (out, QSE_T(" -m                 number specify the maximum amount of memory to use in bytes\n"));
-	qse_sio_putstrf (out, QSE_T(" -w                        expand file wildcards\n"));
+	qse_fprintf (out, QSE_T("options as follows:\n"));
+	qse_fprintf (out, QSE_T(" -h/--help                 show this message\n"));
+	qse_fprintf (out, QSE_T(" --version                 show version\n"));
+	qse_fprintf (out, QSE_T(" -n                        disable auto-print\n"));
+	qse_fprintf (out, QSE_T(" -e                 script specify a script\n"));
+	qse_fprintf (out, QSE_T(" -f                 file   specify a script file\n"));
+	qse_fprintf (out, QSE_T(" -o                 file   specify an output file\n"));
+	qse_fprintf (out, QSE_T(" -r                        use the extended regular expression\n"));
+	qse_fprintf (out, QSE_T(" -R                        enable non-standard extensions to the regular\n"));
+	qse_fprintf (out, QSE_T("                           expression\n"));
+	qse_fprintf (out, QSE_T(" -i                        perform in-place editing. imply -s\n"));
+	qse_fprintf (out, QSE_T(" -s                        process input files separately\n"));
+	qse_fprintf (out, QSE_T(" -a                        perform strict address and label check\n"));
+	qse_fprintf (out, QSE_T(" -b                        allow extended address formats\n"));
+	qse_fprintf (out, QSE_T("                           <start~step>,<start,+line>,<start,~line>,<0,/regex/>\n"));
+	qse_fprintf (out, QSE_T(" -x                        allow text on the same line as c, a, i\n"));
+	qse_fprintf (out, QSE_T(" -y                        ensure a newline at text end\n"));
+	qse_fprintf (out, QSE_T(" -m                 number specify the maximum amount of memory to use in bytes\n"));
+	qse_fprintf (out, QSE_T(" -w                        expand file wildcards\n"));
 #if defined(QSE_ENABLE_SEDTRACER)
-	qse_sio_putstrf (out, QSE_T(" -t                        print command traces\n"));
+	qse_fprintf (out, QSE_T(" -t                        print command traces\n"));
 #endif
 #if defined(QSE_BUILD_DEBUG)
-	qse_sio_putstrf (out, QSE_T(" -X                 number fail the number'th memory allocation\n"));
+	qse_fprintf (out, QSE_T(" -X                 number fail the number'th memory allocation\n"));
 #endif
 #if defined(QSE_CHAR_IS_WCHAR)
-     qse_sio_putstrf (out, QSE_T(" --script-encoding  string specify script file encoding name\n"));
-     qse_sio_putstrf (out, QSE_T(" --infile-encoding  string specify input file encoding name\n"));
-     qse_sio_putstrf (out, QSE_T(" --outfile-encoding string specify output file encoding name\n"));
+     qse_fprintf (out, QSE_T(" --script-encoding  string specify script file encoding name\n"));
+     qse_fprintf (out, QSE_T(" --infile-encoding  string specify input file encoding name\n"));
+     qse_fprintf (out, QSE_T(" --outfile-encoding string specify output file encoding name\n"));
 #endif
 }
 
@@ -197,7 +194,7 @@ static int add_script (const qse_char_t* str, int mem)
 			QSE_SIZEOF(*g_script.io) * (g_script.capa + 16 + 1));
 		if (tmp == QSE_NULL) 
 		{
-			qse_sio_putstrf (QSE_STDERR, QSE_T("ERROR: out of memory while processing %s\n"), str);
+			qse_fprintf (QSE_STDERR, QSE_T("ERROR: out of memory while processing %s\n"), str);
 			return -1;
 		}
 
@@ -268,7 +265,7 @@ static int handle_args (int argc, qse_char_t* argv[])
 				goto oops;
 
 			case QSE_T('?'):
-				qse_sio_putstrf (QSE_STDERR, 
+				qse_fprintf (QSE_STDERR, 
 					QSE_T("ERROR: bad option - %c\n"),
 					opt.opt
 				);
@@ -276,7 +273,7 @@ static int handle_args (int argc, qse_char_t* argv[])
 				goto oops;
 
 			case QSE_T(':'):
-				qse_sio_putstrf (QSE_STDERR, 
+				qse_fprintf (QSE_STDERR, 
 					QSE_T("ERROR: bad parameter for %c\n"),
 					opt.opt
 				);
@@ -370,7 +367,7 @@ static int handle_args (int argc, qse_char_t* argv[])
 					g_script_cmgr = qse_findcmgr (opt.arg);
 					if (g_script_cmgr == QSE_NULL)
 					{
-						qse_sio_putstrf (QSE_STDERR, QSE_T("ERROR: unknown script encoding - %s\n"), opt.arg);
+						qse_fprintf (QSE_STDERR, QSE_T("ERROR: unknown script encoding - %s\n"), opt.arg);
 						goto oops;
 					}
 				}
@@ -379,7 +376,7 @@ static int handle_args (int argc, qse_char_t* argv[])
 					g_infile_cmgr = qse_findcmgr (opt.arg);
 					if (g_infile_cmgr == QSE_NULL)
 					{
-						qse_sio_putstrf (QSE_STDERR, QSE_T("ERROR: unknown input file encoding - %s\n"), opt.arg);
+						qse_fprintf (QSE_STDERR, QSE_T("ERROR: unknown input file encoding - %s\n"), opt.arg);
 						goto oops;
 					}
 				}
@@ -388,7 +385,7 @@ static int handle_args (int argc, qse_char_t* argv[])
 					g_outfile_cmgr = qse_findcmgr (opt.arg);
 					if (g_outfile_cmgr == QSE_NULL)
 					{
-						qse_sio_putstrf (QSE_STDERR, QSE_T("ERROR: unknown output file encoding - %s\n"), opt.arg);
+						qse_fprintf (QSE_STDERR, QSE_T("ERROR: unknown output file encoding - %s\n"), opt.arg);
 						goto oops;
 					}
 				}
@@ -427,7 +424,7 @@ void print_exec_error (qse_sed_t* sed)
 	const qse_sed_loc_t* errloc = qse_sed_geterrloc(sed);
 	if (errloc->line > 0 || errloc->colm > 0)
 	{
-		qse_sio_putstrf (QSE_STDERR, 
+		qse_fprintf (QSE_STDERR, 
 			QSE_T("ERROR: cannot execute - %s at line %lu column %lu\n"),
 			qse_sed_geterrmsg(sed),
 			(unsigned long)errloc->line,
@@ -436,7 +433,7 @@ void print_exec_error (qse_sed_t* sed)
 	}
 	else
 	{
-		qse_sio_putstrf (QSE_STDERR, 
+		qse_fprintf (QSE_STDERR, 
 			QSE_T("ERROR: cannot execute - %s\n"),
 			qse_sed_geterrmsg(sed)
 		);
@@ -569,16 +566,16 @@ static void trace_exec (qse_sed_t* sed, qse_sed_tracer_op_t op, const qse_sed_cm
 	switch (op)
 	{
 		case QSE_SED_TRACER_READ:
-			/*qse_sio_putstrf (QSE_STDERR, QSE_T("reading...\n"));*/
+			/*qse_fprintf (QSE_STDERR, QSE_T("reading...\n"));*/
 			break;
 		case QSE_SED_TRACER_WRITE:
-			/*qse_sio_putstrf (QSE_STDERR, QSE_T("wrting...\n"));*/
+			/*qse_fprintf (QSE_STDERR, QSE_T("wrting...\n"));*/
 			break;
 
 		/* TODO: use function to get hold space and pattern space and print them */
 
 		case QSE_SED_TRACER_MATCH:
-			qse_sio_putstrf (QSE_STDERR, QSE_T("%s:%lu [%c] MA\n"), 
+			qse_fprintf (QSE_STDERR, QSE_T("%s:%lu [%c] MA\n"), 
 				((cmd->lid && cmd->lid[0])? cmd->lid: QSE_T("<<UNKNOWN>>")), 
 				(unsigned long)cmd->loc.line,
 				cmd->type
@@ -586,7 +583,7 @@ static void trace_exec (qse_sed_t* sed, qse_sed_tracer_op_t op, const qse_sed_cm
 			break;
 
 		case QSE_SED_TRACER_EXEC:
-			qse_sio_putstrf (QSE_STDERR, QSE_T("%s:%lu [%c] EC\n"), 
+			qse_fprintf (QSE_STDERR, QSE_T("%s:%lu [%c] EC\n"), 
 				((cmd->lid && cmd->lid[0])? cmd->lid: QSE_T("<<UNKNOWN>>")), 
 				(unsigned long)cmd->loc.line,
 				cmd->type
@@ -711,7 +708,7 @@ static int sed_main (int argc, qse_char_t* argv[])
 		xma_mmgr.ctx = qse_xma_open (QSE_MMGR_GETDFL(), 0, g_memlimit);
 		if (xma_mmgr.ctx == QSE_NULL)
 		{
-			qse_putstrf (QSE_T("ERROR: cannot open memory heap\n"));
+			qse_printf (QSE_T("ERROR: cannot open memory heap\n"));
 			goto oops;
 		}
 		mmgr = &xma_mmgr;
@@ -722,13 +719,13 @@ static int sed_main (int argc, qse_char_t* argv[])
 		fs = qse_fs_open (mmgr, 0);
 		if (fs == QSE_NULL)
 		{
-			qse_sio_putstrf (QSE_STDERR, QSE_T("ERROR: cannot open file system handler\n"));
+			qse_fprintf (QSE_STDERR, QSE_T("ERROR: cannot open file system handler\n"));
 			goto oops;
 		}
 
 		if (qse_fs_chdir (fs, QSE_T(".")) <= -1)
 		{
-			qse_sio_putstrf (QSE_STDERR, 
+			qse_fprintf (QSE_STDERR, 
 				QSE_T("ERROR: cannot change direcotry in file system handler\n"));
 			goto oops;
 		}
@@ -737,7 +734,7 @@ static int sed_main (int argc, qse_char_t* argv[])
 	sed = qse_sed_openstdwithmmgr (mmgr, 0);
 	if (sed == QSE_NULL)
 	{
-		qse_sio_putstrf (QSE_STDERR, QSE_T("ERROR: cannot open stream editor\n"));
+		qse_fprintf (QSE_STDERR, QSE_T("ERROR: cannot open stream editor\n"));
 		goto oops;
 	}
 
@@ -766,7 +763,7 @@ static int sed_main (int argc, qse_char_t* argv[])
 
 		if (errloc->line > 0 || errloc->colm > 0)
 		{
-			qse_sio_putstrf (QSE_STDERR, 
+			qse_fprintf (QSE_STDERR, 
 				QSE_T("ERROR: cannot compile %s - %s at line %lu column %lu\n"),
 				target,
 				qse_sed_geterrmsg(sed),
@@ -776,7 +773,7 @@ static int sed_main (int argc, qse_char_t* argv[])
 		}
 		else
 		{
-			qse_sio_putstrf (QSE_STDERR, 
+			qse_fprintf (QSE_STDERR, 
 				QSE_T("ERROR: cannot compile %s - %s\n"),
 				target,
 				qse_sed_geterrmsg(sed)
@@ -819,7 +816,7 @@ static int sed_main (int argc, qse_char_t* argv[])
 			);
 			if (out_file.u.sio == QSE_NULL)
 			{
-				qse_sio_putstrf (QSE_STDERR, QSE_T("ERROR: cannot open %s\n"), g_output_file);
+				qse_fprintf (QSE_STDERR, QSE_T("ERROR: cannot open %s\n"), g_output_file);
 				goto oops;
 			}
 
@@ -830,7 +827,7 @@ static int sed_main (int argc, qse_char_t* argv[])
 		/* perform wild-card expansions for non-unix platforms */
 		if (expand_wildcards (argc - g_infile_pos, &argv[g_infile_pos], g_wildcard, &xarg) <= -1)
 		{
-			qse_sio_putstrf (QSE_STDERR, QSE_T("ERROR: out of memory\n"));
+			qse_fprintf (QSE_STDERR, QSE_T("ERROR: out of memory\n"));
 			goto oops;
 		}
 
@@ -852,7 +849,7 @@ static int sed_main (int argc, qse_char_t* argv[])
 				tmpl_tmpfile = qse_strdup2 (in[0].u.file.path, QSE_T(".XXXX"),  qse_sed_getmmgr(sed));
 				if (tmpl_tmpfile == QSE_NULL)
 				{
-					qse_sio_putstrf (QSE_STDERR, QSE_T("ERROR: out of memory\n"));
+					qse_fprintf (QSE_STDERR, QSE_T("ERROR: out of memory\n"));
 					goto oops;
 				}
 
@@ -872,7 +869,7 @@ static int sed_main (int argc, qse_char_t* argv[])
 				{
 					if (retried) 
 					{
-						qse_sio_putstrf (QSE_STDERR, QSE_T("ERROR: cannot open %s\n"), tmpl_tmpfile);
+						qse_fprintf (QSE_STDERR, QSE_T("ERROR: cannot open %s\n"), tmpl_tmpfile);
 						QSE_MMGR_FREE (qse_sed_getmmgr(sed), tmpl_tmpfile);
 						goto oops;
 					}
@@ -883,7 +880,7 @@ static int sed_main (int argc, qse_char_t* argv[])
 						tmpl_tmpfile = qse_strdup (QSE_T("TMP-XXXX"),  qse_sed_getmmgr(sed));
 						if (tmpl_tmpfile == QSE_NULL)
 						{
-							qse_sio_putstrf (QSE_STDERR, QSE_T("ERROR: out of memory\n"));
+							qse_fprintf (QSE_STDERR, QSE_T("ERROR: out of memory\n"));
 							goto oops;
 						}
 						retried = 1;
@@ -915,7 +912,7 @@ static int sed_main (int argc, qse_char_t* argv[])
 
 				if (qse_fs_move (fs, tmpl_tmpfile, in[0].u.file.path) <= -1)
 				{
-					qse_sio_putstrf (QSE_STDERR, QSE_T("ERROR: cannot rename %s to %s. not deleting %s\n"), 
+					qse_fprintf (QSE_STDERR, QSE_T("ERROR: cannot rename %s to %s. not deleting %s\n"), 
 						tmpl_tmpfile, in[0].u.file.path, tmpl_tmpfile);
 					QSE_MMGR_FREE (qse_sed_getmmgr(sed), tmpl_tmpfile);
 					goto oops;
@@ -945,14 +942,14 @@ static int sed_main (int argc, qse_char_t* argv[])
 			/* perform wild-card expansions for non-unix platforms */
 			if (expand_wildcards (argc - g_infile_pos, &argv[g_infile_pos], g_wildcard, &xarg) <= -1)
 			{
-				qse_sio_putstrf (QSE_STDERR, QSE_T("ERROR: out of memory\n"));
+				qse_fprintf (QSE_STDERR, QSE_T("ERROR: out of memory\n"));
 				goto oops;
 			}
 
 			in = QSE_MMGR_ALLOC (qse_sed_getmmgr(sed), QSE_SIZEOF(*in) * (xarg.size + 1));
 			if (in == QSE_NULL)
 			{
-				qse_sio_putstrf (QSE_STDERR, QSE_T("ERROR: out of memory\n"));
+				qse_fprintf (QSE_STDERR, QSE_T("ERROR: out of memory\n"));
 				goto oops;
 			}
 
@@ -1010,13 +1007,13 @@ oops:
 #if defined(QSE_BUILD_DEBUG)
 	if (g_failmalloc > 0)
 	{
-		qse_sio_putstrf (QSE_STDERR, QSE_T("\n"));
-		qse_sio_putstrf (QSE_STDERR, QSE_T("-[MALLOC COUNTS]---------------------------------------\n"));
-		qse_sio_putstrf (QSE_STDERR, QSE_T("ALLOC: %lu FREE: %lu: REALLOC: %lu\n"), 
+		qse_fprintf (QSE_STDERR, QSE_T("\n"));
+		qse_fprintf (QSE_STDERR, QSE_T("-[MALLOC COUNTS]---------------------------------------\n"));
+		qse_fprintf (QSE_STDERR, QSE_T("ALLOC: %lu FREE: %lu: REALLOC: %lu\n"), 
 			(unsigned long)debug_mmgr_alloc_count,
 			(unsigned long)debug_mmgr_free_count,
 			(unsigned long)debug_mmgr_realloc_count);
-		qse_sio_putstrf (QSE_STDERR, QSE_T("-------------------------------------------------------\n"));
+		qse_fprintf (QSE_STDERR, QSE_T("-------------------------------------------------------\n"));
 	}
 #endif
 	return ret;

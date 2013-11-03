@@ -12,7 +12,7 @@ LDFLAGS_ALL_COMMON = -L. -L../cmn -version-info 1:0:0 -no-undefined
 
 CPPFLAGS_LIB_COMMON = $(CPPFLAGS_ALL_COMMON) $(LTDLINCL)
 LDFLAGS_LIB_COMMON = $(LDFLAGS_ALL_COMMON) 
-LIBADD_LIB_COMMON = -lqsecmn $(LIBM) $(LIBLTDL)
+LIBADD_LIB_COMMON = -lqsecmn $(LIBM) $(LIBLTDL) 
 
 if WIN32
 # you must adjust the value of DEFAULT_MODPOSTFIX according 
@@ -33,7 +33,7 @@ lib_LTLIBRARIES += libqseawkxx.la
 libqseawkxx_la_SOURCES = Awk.cpp StdAwk.cpp
 libqseawkxx_la_CPPFLAGS = $(CPPFLAGS_LIB_COMMON)
 libqseawkxx_la_LDFLAGS = $(LDFLAGS_LIB_COMMON)
-libqseawkxx_la_LIBADD = -lqseawk -lqsecmnxx $(LIBADD_LIB_COMMON)
+libqseawkxx_la_LIBADD = -lqseawk -lqsecmnxx -lqseawk -lqsecmn $(LIBADD_LIB_COMMON) 
 endif
 
 if ENABLE_STATIC_MODULE
