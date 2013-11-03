@@ -427,6 +427,15 @@ QSE_EXPORT qse_ssize_t qse_errputwcsvf (
 #	define qse_errputstrvf(fmt,ap) qse_errputwcsvf(fmt,ap)
 #endif
 
+/* Some convenience macros */
+#define QSE_STDOUT (qse_getstdout())
+#define QSE_STDERR (qse_getstderr())
+#define qse_printf qse_putstrf
+#define qse_vprintf qse_putstrvf
+#define qse_fprintf qse_sio_putstrf 
+#define qse_vfprintf qse_sio_putstrvf 
+
+
 #ifdef __cplusplus
 }
 #endif

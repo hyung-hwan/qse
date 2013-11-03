@@ -1,6 +1,6 @@
 #include <qse/sed/stdsed.h>
 #include <qse/cmn/main.h>
-#include <qse/cmn/stdio.h>
+#include <qse/cmn/sio.h>
 #include "sed00.h"
 
 static int sed_main (int argc, qse_char_t* argv[])
@@ -62,6 +62,10 @@ oops:
 
 int qse_main (int argc, qse_achar_t* argv[])
 {
+     int x;
+	qse_openstdsios ();
 	init_sed_sample_locale ();
-	return qse_runmain (argc, argv, sed_main);
+	x = qse_runmain (argc, argv, sed_main);
+	qse_closestdsios ();
+	return x;
 }

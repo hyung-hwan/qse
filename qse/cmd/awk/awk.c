@@ -59,9 +59,6 @@
 #	define USE_LTDL
 #endif
 
-#define QSE_STDOUT qse_getstdout()
-#define QSE_STDERR qse_getstderr()
-
 static qse_awk_rtx_t* app_rtx = QSE_NULL;
 static int app_debug = 0;
 
@@ -358,14 +355,14 @@ static void on_statement (qse_awk_rtx_t* rtx, qse_awk_nde_t* nde)
 
 static void print_version (void)
 {
-	qse_sio_putstrf (QSE_STDOUT, QSE_T("QSEAWK version %hs\n"), QSE_PACKAGE_VERSION);
+	qse_fprintf (QSE_STDOUT, QSE_T("QSEAWK version %hs\n"), QSE_PACKAGE_VERSION);
 }
 
 static void print_error (const qse_char_t* fmt, ...)
 {
 	va_list va;
 
-	qse_sio_putstrf (QSE_STDERR, QSE_T("ERROR: "));
+	qse_fprintf (QSE_STDERR, QSE_T("ERROR: "));
 	va_start (va, fmt);
 	qse_sio_putstrvf (QSE_STDERR, fmt, va);
 	va_end (va);
@@ -401,35 +398,35 @@ static void print_usage (qse_sio_t* out, const qse_char_t* argv0)
 	int j;
 	const qse_char_t* b = qse_basename (argv0);
 
-	qse_sio_putstrf (out, QSE_T("USAGE: %s [options] -f sourcefile [ -- ] [datafile]*\n"), b);
-	qse_sio_putstrf (out, QSE_T("       %s [options] [ -- ] sourcestring [datafile]*\n"), b);
-	qse_sio_putstrf (out, QSE_T("Where options are:\n"));
-	qse_sio_putstrf (out, QSE_T(" -h/--help                         print this message\n"));
-	qse_sio_putstrf (out, QSE_T(" --version                         print version\n"));
-	qse_sio_putstrf (out, QSE_T(" -D                                show extra information\n"));
-	qse_sio_putstrf (out, QSE_T(" -c/--call            name         call a function instead of entering\n"));
-	qse_sio_putstrf (out, QSE_T("                                   the pattern-action loop. [datafile]* is\n"));
-	qse_sio_putstrf (out, QSE_T("                                   passed to the function as parameters\n"));
-	qse_sio_putstrf (out, QSE_T(" -f/--file            sourcefile   set the source script file\n"));
-	qse_sio_putstrf (out, QSE_T(" -d/--deparsed-file   deparsedfile set the deparsing output file\n"));
-	qse_sio_putstrf (out, QSE_T(" -F/--field-separator string       set a field separator(FS)\n"));
-	qse_sio_putstrf (out, QSE_T(" -v/--assign          var=value    add a global variable with a value\n"));
-	qse_sio_putstrf (out, QSE_T(" -m/--memory-limit    number       limit the memory usage (bytes)\n"));
-	qse_sio_putstrf (out, QSE_T(" -w                                expand datafile wildcards\n"));
+	qse_fprintf (out, QSE_T("USAGE: %s [options] -f sourcefile [ -- ] [datafile]*\n"), b);
+	qse_fprintf (out, QSE_T("       %s [options] [ -- ] sourcestring [datafile]*\n"), b);
+	qse_fprintf (out, QSE_T("Where options are:\n"));
+	qse_fprintf (out, QSE_T(" -h/--help                         print this message\n"));
+	qse_fprintf (out, QSE_T(" --version                         print version\n"));
+	qse_fprintf (out, QSE_T(" -D                                show extra information\n"));
+	qse_fprintf (out, QSE_T(" -c/--call            name         call a function instead of entering\n"));
+	qse_fprintf (out, QSE_T("                                   the pattern-action loop. [datafile]* is\n"));
+	qse_fprintf (out, QSE_T("                                   passed to the function as parameters\n"));
+	qse_fprintf (out, QSE_T(" -f/--file            sourcefile   set the source script file\n"));
+	qse_fprintf (out, QSE_T(" -d/--deparsed-file   deparsedfile set the deparsing output file\n"));
+	qse_fprintf (out, QSE_T(" -F/--field-separator string       set a field separator(FS)\n"));
+	qse_fprintf (out, QSE_T(" -v/--assign          var=value    add a global variable with a value\n"));
+	qse_fprintf (out, QSE_T(" -m/--memory-limit    number       limit the memory usage (bytes)\n"));
+	qse_fprintf (out, QSE_T(" -w                                expand datafile wildcards\n"));
 	
 #if defined(QSE_BUILD_DEBUG)
-	qse_sio_putstrf (out, QSE_T(" -X                   number       fail the number'th memory allocation\n"));
+	qse_fprintf (out, QSE_T(" -X                   number       fail the number'th memory allocation\n"));
 #endif
 #if defined(QSE_CHAR_IS_WCHAR)
-	qse_sio_putstrf (out, QSE_T(" --script-encoding    string       specify script file encoding name\n"));
-	qse_sio_putstrf (out, QSE_T(" --console-encoding   string       specify console encoding name\n"));
+	qse_fprintf (out, QSE_T(" --script-encoding    string       specify script file encoding name\n"));
+	qse_fprintf (out, QSE_T(" --console-encoding   string       specify console encoding name\n"));
 #endif
-	qse_sio_putstrf (out, QSE_T(" --modern                          run in the modern mode(default)\n"));
-	qse_sio_putstrf (out, QSE_T(" --classic                         run in the classic mode\n"));
+	qse_fprintf (out, QSE_T(" --modern                          run in the modern mode(default)\n"));
+	qse_fprintf (out, QSE_T(" --classic                         run in the classic mode\n"));
 
 	for (j = 0; opttab[j].name; j++)
 	{
-		qse_sio_putstrf (out, 
+		qse_fprintf (out, 
 			QSE_T(" --%-18s on/off       %s\n"), 
 			opttab[j].name, opttab[j].desc);
 	}
@@ -1016,7 +1013,7 @@ static int awk_main (int argc, qse_char_t* argv[])
 		xma_mmgr.ctx = qse_xma_open (QSE_MMGR_GETDFL(), 0, arg.memlimit);
 		if (xma_mmgr.ctx == QSE_NULL)
 		{
-			qse_putstrf (QSE_T("ERROR: cannot open memory heap\n"));
+			qse_printf (QSE_T("ERROR: cannot open memory heap\n"));
 			goto oops;
 		}
 		mmgr = &xma_mmgr;
@@ -1026,7 +1023,7 @@ static int awk_main (int argc, qse_char_t* argv[])
 	/*awk = qse_awk_openstd (0);*/
 	if (awk == QSE_NULL)
 	{
-		qse_putstrf (QSE_T("ERROR: cannot open awk\n"));
+		qse_printf (QSE_T("ERROR: cannot open awk\n"));
 		goto oops;
 	}
 
@@ -1122,13 +1119,13 @@ oops:
 #if defined(QSE_BUILD_DEBUG)
 	if (arg.failmalloc > 0)
 	{
-		qse_sio_putstrf (QSE_STDERR, QSE_T("\n"));
-		qse_sio_putstrf (QSE_STDERR, QSE_T("-[MALLOC COUNTS]---------------------------------------\n"));
-		qse_sio_putstrf (QSE_STDERR, QSE_T("ALLOC: %lu FREE: %lu: REALLOC: %lu\n"), 
+		qse_fprintf (QSE_STDERR, QSE_T("\n"));
+		qse_fprintf (QSE_STDERR, QSE_T("-[MALLOC COUNTS]---------------------------------------\n"));
+		qse_fprintf (QSE_STDERR, QSE_T("ALLOC: %lu FREE: %lu: REALLOC: %lu\n"), 
 			(unsigned long)debug_mmgr_alloc_count,
 			(unsigned long)debug_mmgr_free_count,
 			(unsigned long)debug_mmgr_realloc_count);
-		qse_sio_putstrf (QSE_STDERR, QSE_T("-------------------------------------------------------\n"));
+		qse_fprintf (QSE_STDERR, QSE_T("-------------------------------------------------------\n"));
 	}
 #endif
 

@@ -34,7 +34,7 @@
  * @code
  * #include <qse/cmn/rbt.h>
  * #include <qse/cmn/mem.h>
- * #include <qse/cmn/stdio.h>
+ * #include <qse/cmn/sio.h>
  * 
  * static qse_rbt_walk_t walk (qse_rbt_t* rbt, qse_rbt_pair_t* pair, void* ctx)
  * {

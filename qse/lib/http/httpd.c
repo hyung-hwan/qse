@@ -23,8 +23,7 @@
 #include <qse/cmn/chr.h>
 #include <qse/cmn/str.h>
 #include <qse/cmn/mbwc.h>
-
-#include <qse/cmn/stdio.h>
+#include <qse/cmn/sio.h>
 
 typedef struct htrd_xtn_t htrd_xtn_t;
 

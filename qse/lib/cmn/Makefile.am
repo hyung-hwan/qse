@@ -73,7 +73,6 @@ libqsecmn_la_SOURCES = \
 	sio.c \
 	sll.c \
 	slmb.c \
-	stdio.c \
 	str-beg.c \
 	str-cat.c \
 	str-chr.c \
