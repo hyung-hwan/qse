@@ -156,9 +156,6 @@ protected:
 	void* reallocMem (void* ptr, size_t n);
 	void  freeMem    (void* ptr);
 
-	int vsprintf (char_t* buf, size_t size,
-	              const char_t* fmt, va_list arg);
-
 	flt_t pow (flt_t x, flt_t y);
 	flt_t mod (flt_t x, flt_t y);
 	flt_t sin (flt_t x);

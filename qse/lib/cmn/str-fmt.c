@@ -103,6 +103,8 @@ static int mbs_to_wcs (
 #undef conv_char
 #undef strfmt
 #undef strxfmt
+#undef strvfmt
+#undef strxvfmt
 
 #define T(x) QSE_MT(x)
 #define char_t qse_mchar_t
@@ -114,6 +116,8 @@ static int mbs_to_wcs (
 #define conv_char wcs_to_mbs
 #define strfmt qse_mbsfmt
 #define strxfmt qse_mbsxfmt
+#define strvfmt qse_mbsvfmt
+#define strxvfmt qse_mbsxvfmt
 #include "str-fmt.h"
 
 /* ----------------------------------- */
@@ -128,6 +132,8 @@ static int mbs_to_wcs (
 #undef conv_char
 #undef strfmt
 #undef strxfmt
+#undef strvfmt
+#undef strxvfmt
 
 #define T(x) QSE_WT(x)
 #define char_t qse_wchar_t
@@ -139,5 +145,7 @@ static int mbs_to_wcs (
 #define conv_char mbs_to_wcs
 #define strfmt qse_wcsfmt
 #define strxfmt qse_wcsxfmt
+#define strvfmt qse_wcsvfmt
+#define strxvfmt qse_wcsxvfmt
 #include "str-fmt.h"
 

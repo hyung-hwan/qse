@@ -53,7 +53,7 @@ static int put_mchar_nocheck (qse_mchar_t c, void* ctx)
 	return 1;
 }
 
-static int put_wchar_nocheck (qse_wchar_t* c, void* ctx)
+static int put_wchar_nocheck (qse_wchar_t c, void* ctx)
 {
 	qse_wcs_t* str = (qse_wcs_t*)ctx;
 	str->val.ptr[str->val.len++] = c;

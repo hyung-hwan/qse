@@ -1280,9 +1280,6 @@ protected:
 	/// @}
 
 	// primitive handlers 
-	virtual int    vsprintf (char_t* buf, size_t size,
-	                         const char_t* fmt, va_list arg) = 0;
-
 	virtual flt_t pow (flt_t x, flt_t y) = 0;
 	virtual flt_t mod (flt_t x, flt_t y) = 0;
 	virtual flt_t sin (flt_t x) = 0;
@@ -1320,8 +1317,6 @@ protected:
 	static int functionHandler (rtx_t* rtx, const fnc_info_t* fi);
 
 
-	static int   sprintf (awk_t* awk, char_t* buf, size_t size,
-	                      const char_t* fmt, ...);
 	static flt_t pow     (awk_t* awk, flt_t x, flt_t y);
 	static flt_t mod     (awk_t* awk, flt_t x, flt_t y);
 	static flt_t sin     (awk_t* awk, flt_t x);

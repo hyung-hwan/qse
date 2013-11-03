@@ -19,10 +19,9 @@
  */
 
 
-qse_size_t strfmt (char_t* buf, const char_t* fmt, ...)
+qse_size_t strvfmt (char_t* buf, const char_t* fmt, va_list ap)
 {
 	buf_t b;
-	va_list ap;
 	fmtout_t fo;
 	int x;
 
@@ -37,9 +36,7 @@ qse_size_t strfmt (char_t* buf, const char_t* fmt, ...)
 
 	/* no I/O error must occurred by fmtout but there can be
 	 * encoding conversion error by fmtout */
-	va_start (ap, fmt);
 	x = fmtout (fmt, &fo, ap);
-	va_end (ap);
 
 	/* fmtout must produce no I/O error but it can produce
 	 * an encoding conversion error. if you didn't use a conversion
@@ -57,10 +54,21 @@ qse_size_t strfmt (char_t* buf, const char_t* fmt, ...)
 	return fo.count;
 }
 
-qse_size_t strxfmt (char_t* buf, qse_size_t len, const char_t* fmt, ...)
+qse_size_t strfmt (char_t* buf, const char_t* fmt, ...)
+{
+	qse_size_t x;
+	va_list ap;
+
+	va_start (ap, fmt);
+	x = strvfmt (buf, fmt, ap);
+	va_end (ap);
+
+	return x;
+}
+
+qse_size_t strxvfmt (char_t* buf, qse_size_t len, const char_t* fmt, va_list ap)
 {
 	buf_t b;
-	va_list ap;
 	fmtout_t fo;
 	int x;
 
@@ -79,9 +87,7 @@ qse_size_t strxfmt (char_t* buf, qse_size_t len, const char_t* fmt, ...)
 	fo.put = b.ptr? put_char: put_char_null;
 	fo.conv = conv_char;
 
-	va_start (ap, fmt);
 	x = fmtout (fmt, &fo, ap);
-	va_end (ap);
 
 	/* fmtout must produce no I/O error but it can produce
 	 * an encoding conversion error. if you didn't use a conversion
@@ -99,3 +105,14 @@ qse_size_t strxfmt (char_t* buf, qse_size_t len, const char_t* fmt, ...)
 	return fo.count;
 }
 
+qse_size_t strxfmt (char_t* buf, qse_size_t len, const char_t* fmt, ...)
+{
+	qse_size_t x;
+	va_list ap;
+
+	va_start (ap, fmt);
+	x = strxvfmt (buf, len, fmt, ap);
+	va_end (ap);
+
+	return x;
+}

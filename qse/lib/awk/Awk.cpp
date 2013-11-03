@@ -1110,7 +1110,6 @@ int Awk::open ()
 	qse_awk_prm_t prm;
 
 	QSE_MEMSET (&prm, 0, QSE_SIZEOF(prm));
-	prm.sprintf  = sprintf;
 	prm.math.pow = pow;
 	prm.math.mod = mod;
 	prm.math.sin = sin;
@@ -1994,18 +1993,6 @@ int Awk::functionHandler (rtx_t* rtx, const fnc_info_t* fi)
 	return rxtn->run->awk->dispatch_function (rxtn->run, fi);
 }	
 	
-int Awk::sprintf (awk_t* awk, char_t* buf, size_t size,
-                  const char_t* fmt, ...)
-{
-	xtn_t* xtn = (xtn_t*) QSE_XTN (awk);
-
-	va_list ap;
-	va_start (ap, fmt);
-	int n = xtn->awk->vsprintf (buf, size, fmt, ap);
-	va_end (ap);
-	return n;
-}
-
 Awk::flt_t Awk::pow (awk_t* awk, flt_t x, flt_t y)
 {
 	xtn_t* xtn = (xtn_t*) QSE_XTN (awk);

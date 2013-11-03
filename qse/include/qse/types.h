@@ -456,7 +456,7 @@ typedef qse_int_t qse_intptr_t;
  * The qse_flt_t type defines the largest floating-pointer number type
  * naturally supported.
  */
-#if defined(__FreeBSD__)
+#if defined(__FreeBSD__) || defined(__MINGW32__)
 	/* TODO: check if the support for long double is complete.
 	 *       if so, use long double for qse_flt_t */
 	typedef double qse_flt_t;
@@ -473,14 +473,15 @@ typedef qse_int_t qse_intptr_t;
  * The qse_fltmax_t type defines the largest floating-pointer number type
  * ever supported.
  */
-#if QSE_SIZEOF__FLOAT128 > QSE_SIZEOF_FLT_T
+#if QSE_SIZEOF___FLOAT128 >= QSE_SIZEOF_FLT_T
+	/* the size of long double may be equal to the size of __float128
+	 * for alignment on some platforms */
 	typedef __float128 qse_fltmax_t;
 #	define QSE_SIZEOF_FLTMAX_T QSE_SIZEOF___FLOAT128
 #else
 	typedef qse_flt_t qse_fltmax_t;
 #	define QSE_SIZEOF_FLTMAX_T QSE_SIZEOF_FLT_T
 #endif
-
 
 /** @typedef qse_ptrdiff_t
  */

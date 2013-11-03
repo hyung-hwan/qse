@@ -103,6 +103,10 @@ case "$host" in
 *-*-mingw*|*-*-cygwin*)
 	#CFLAGS="$CFLAGS -D_WIN32_WINNT=0x0400"
 	platform_win32=yes
+	;;
+*)
+	platform_win32=no
+	;;
 esac
 AM_CONDITIONAL(WIN32, test "${platform_win32}" = "yes" )
 
@@ -121,7 +125,7 @@ AC_CHECK_HEADERS([net/if.h net/if_dl.h], [], [], [
 	#include <sys/types.h>
 	#include <sys/socket.h>])
 AC_CHECK_HEADERS([sys/stropts.h sys/macstat.h linux/ethtool.h linux/sockios.h])
-AC_CHECK_HEADERS([crt_externs.h sys/prctl.h uci.h])
+AC_CHECK_HEADERS([quadmath.h crt_externs.h sys/prctl.h uci.h])
 
 dnl check data types
 AC_CHECK_TYPE([wchar_t], 
@@ -151,6 +155,36 @@ AC_CHECK_FUNCS([powl fmodl sinl cosl tanl atanl atan2l logl log10l expl sqrtl ce
 AC_CHECK_FUNCS([pow fmod sin cos tan atan atan2 log log10 exp sqrt ceil floor round])
 AC_CHECK_FUNCS([powf fmodf sinf cosf tanf atanf atan2f logf log10f expf sqrtf ceilf floorf roundf])
 LIBS="$OLDLIBS"
+
+if test "${platform_win32}" = "no" 
+then
+	AC_CHECK_FUNCS([quadmath_snprintf])
+	if test "$ac_cv_func_quadmath_snprintf" = "no"
+	then
+		OLDLIBS="$LIBS"
+		LIBS="$LIBM $LIBS"
+		AC_CHECK_FUNCS([quadmath_snprintf])
+		LIBS="$OLDLIBS"
+	
+		if test "$ac_cv_func_quadmath_snprintf" = "no"
+		then
+			AC_CHECK_LIB([quadmath], [quadmath_snprintf], [
+				QUADMATH_LIBS="-lquadmath"
+				LIBM="$LIBM -lquadmath"
+				AC_DEFINE(HAVE_QUADMATH_SNPRINTF, 1)
+			])
+		else
+			QUADMATH_LIBS="$LIBM"
+		fi
+	fi
+
+	OLDLIBS="$LIBS"
+	LIBS="$LIBM $LIBS"
+	AC_CHECK_FUNCS([powq fmodq sinq cosq tanq atanq atan2q logq log10q expq sqrtq ceilq floorq roundq])
+	AC_CHECK_FUNCS([strtoflt128])
+	LIBS="$OLDLIBS"
+fi
+AC_SUBST(QUADMATH_LIBS)
 
 dnl OLDLIBS="$LIBS"
 dnl AC_SEARCH_LIBS([connect], [socket])

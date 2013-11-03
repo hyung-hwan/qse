@@ -341,10 +341,14 @@ static int print_expr (qse_awk_t* awk, qse_awk_nde_t* nde)
 			}
 			else
 			{
-				qse_char_t buf[64];
-				qse_awk_sprintflt (
-					awk, buf, QSE_COUNTOF(buf), 
-					((qse_awk_nde_flt_t*)nde)->val);
+				qse_char_t buf[96];
+
+				qse_strxfmt (
+					buf, QSE_COUNTOF(buf), 
+					QSE_T("%zf"), 
+					((qse_awk_nde_flt_t*)nde)->val
+				);
+
 				PUT_SRCSTR (awk, buf);
 			}
 			break;

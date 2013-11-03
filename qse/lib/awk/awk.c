@@ -118,7 +118,6 @@ qse_awk_t* qse_awk_open (qse_mmgr_t* mmgr, qse_size_t xtnsize, qse_awk_prm_t* pr
 
 	/* progagate the primitive functions */
 	QSE_ASSERT (prm             != QSE_NULL);
-	QSE_ASSERT (prm->sprintf    != QSE_NULL);
 	QSE_ASSERT (prm->math.pow   != QSE_NULL);
 	QSE_ASSERT (prm->math.sin   != QSE_NULL);
 	QSE_ASSERT (prm->math.cos   != QSE_NULL);
@@ -130,7 +129,6 @@ qse_awk_t* qse_awk_open (qse_mmgr_t* mmgr, qse_size_t xtnsize, qse_awk_prm_t* pr
 	QSE_ASSERT (prm->math.exp   != QSE_NULL);
 	QSE_ASSERT (prm->math.sqrt  != QSE_NULL);
 	if (prm             == QSE_NULL || 
-	    prm->sprintf    == QSE_NULL ||
 	    prm->math.pow   == QSE_NULL ||
 	    prm->math.sin   == QSE_NULL ||
 	    prm->math.cos   == QSE_NULL ||

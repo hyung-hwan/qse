@@ -396,14 +396,6 @@ typedef struct qse_awk_fun_t qse_awk_fun_t;
 
 /* ------------------------------------------------------------------------ */
 
-typedef int (*qse_awk_sprintf_t) (
-	qse_awk_t*        awk,
-	qse_char_t*       buf,
-	qse_size_t        size, 
-	const qse_char_t* fmt,
-	...
-);
-
 typedef qse_flt_t (*qse_awk_math1_t) (
 	qse_awk_t* awk,
 	qse_flt_t x
@@ -651,8 +643,6 @@ typedef qse_ssize_t (*qse_awk_rio_impl_t) (
  */
 struct qse_awk_prm_t
 {
-	qse_awk_sprintf_t sprintf;
-
 	struct
 	{
 		qse_awk_math2_t pow; /**< floating-point power function */

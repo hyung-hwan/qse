@@ -425,8 +425,6 @@ qse_size_t str_pac (str_t* str)
 	return str->val.len;
 }
 
-
-
 qse_size_t str_vfcat (str_t* str, const char_t* fmt, va_list ap)
 {
 	va_list orgap;
@@ -471,50 +469,6 @@ qse_size_t str_vfcat (str_t* str, const char_t* fmt, va_list ap)
 
 qse_size_t str_fcat (str_t* str, const char_t* fmt, ...)
 {
-#if 0
-	va_list ap;
-	fmtout_t fo;
-	int x;
-	qse_size_t old_len, inc;
-
-	old_len = str->val.len;
-
-	fo.limit = QSE_TYPE_MAX(qse_size_t) - 1;
-	fo.ctx = str;
-	fo.put = str->val.ptr? put_char: put_char_null;
-	fo.conv = conv_char;
-
-	va_start (ap, fmt);
-	x = fmtout (fmt, &fo, ap);
-	va_end (ap);
-
-	if (x <= -1)
-	{
-		str->val.len = old_len;
-		return (qse_size_t)-1;
-	}
-	
-	if (str->val.ptr == QSE_NULL || str->val.len - old_len < fo.count)
-	{
-		str->val.len = old_len;
-
-		/* resizing is required */
-		x = resize_for_ncat (str, fo.count);
-
-		if (x <= -1) return (qse_size_t)-1;
-		if (x >= 1)
-		{
-			fo.put = put_char;
-
-			va_start (ap, fmt);
-			x = fmtout (fmt, &fo, ap);
-			va_end (ap);
-		}
-	}
-
-	str->val.ptr[str->val.len] = T('\0');
-	return str->val.len;
-#endif
 	qse_size_t x;
 	va_list ap;
 
