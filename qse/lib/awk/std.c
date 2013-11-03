@@ -30,12 +30,14 @@
 #include <qse/cmn/htb.h>
 #include <qse/cmn/env.h>
 #include <qse/cmn/alg.h>
-#include <qse/cmn/stdio.h> /* TODO: remove dependency on qse_vsprintf */
 #include "../cmn/mem.h"
 
 #include <stdarg.h>
 #include <stdlib.h>
 #include <math.h>
+#if defined(HAVE_QUADMATH_H)
+#	include <quadmath.h>
+#endif
 
 #if defined(_WIN32)
 #	include <windows.h>
@@ -299,20 +301,6 @@ static qse_flt_t custom_awk_sqrt (qse_awk_t* awk, qse_flt_t x)
 #endif
 }
 
-static int custom_awk_sprintf (
-	qse_awk_t* awk, qse_char_t* buf, qse_size_t size, 
-	const qse_char_t* fmt, ...)
-{
-	int n;
-
-	va_list ap;
-	va_start (ap, fmt);
-	n = qse_vsprintf (buf, size, fmt, ap);
-	va_end (ap);
-
-	return n;
-}
-
 static void* custom_awk_modopen (qse_awk_t* awk, const qse_awk_mod_spec_t* spec)
 {
 #if defined(QSE_ENABLE_STATIC_MODULE)
@@ -540,8 +528,6 @@ qse_awk_t* qse_awk_openstdwithmmgr (qse_mmgr_t* mmgr, qse_size_t xtnsize)
 	qse_awk_t* awk;
 	qse_awk_prm_t prm;
 	xtn_t* xtn;
-
-	prm.sprintf  = custom_awk_sprintf;
 
 	prm.math.pow = custom_awk_pow;
 	prm.math.mod = custom_awk_mod;

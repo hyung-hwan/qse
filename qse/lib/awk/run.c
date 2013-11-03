@@ -7290,7 +7290,7 @@ wp_mod_main:
 			qse_flt_t r;
 			int n;
 	
-			FMT_CHAR (QSE_T('L'));
+			FMT_CHAR (QSE_T('z'));
 			FMT_CHAR (fmt[i]);
 
 			if (args == QSE_NULL)
@@ -7325,31 +7325,11 @@ wp_mod_main:
 			qse_awk_rtx_refdownval (rtx, v);
 			if (n <= -1) return QSE_NULL;
 
-			do
+			if (qse_str_fcat (out, QSE_STR_PTR(fbu), r) == (qse_size_t)-1)
 			{
-				n = rtx->awk->prm.sprintf (
-					rtx->awk,
-					rtx->format.tmp.ptr,
-					rtx->format.tmp.len,
-					QSE_STR_PTR(fbu),
-				#if defined(__MINGW32__)
-					(double)r
-				#else
-					(long double)r
-				#endif
-				);
-					
-				if (n == -1)
-				{
-					GROW (&rtx->format.tmp);
-					continue;
-				}
-
-				break;
+				SETERR_COD (rtx, QSE_AWK_ENOMEM);
+				return QSE_NULL;
 			}
-			while (1);
-
-			OUT_STR (rtx->format.tmp.ptr, n);
 		}
 		else if (fmt[i] == QSE_T('c')) 
 		{

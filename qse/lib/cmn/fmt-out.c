@@ -30,7 +30,10 @@
 #if defined(_MSC_VER) || defined(__BORLANDC__) || (defined(__WATCOMC__) && (__WATCOMC__ < 1200))
 #	define snprintf _snprintf 
 #endif
-/* TODO: remove stdio.h once snprintf gets replaced by own 
+#if defined(HAVE_QUADMATH_H)
+#	include <quadmath.h> /* for quadmath_snprintf */
+#endif
+/* TODO: remove stdio.h and quadmath.h once snprintf gets replaced by own 
 floting-point conversion implementation*/
 
 /* number of bits in a byte */
@@ -52,7 +55,9 @@ enum
 	LF_Z = (1 << 6),
 
 	/* long double */
-	LF_LD = (1 << 7)
+	LF_LD = (1 << 7),
+	/* __float128 */
+	LF_QD = (1 << 8)
 };
 
 static struct
@@ -93,9 +98,9 @@ static struct
 enum 
 {
 	FLAGC_DOT       = (1 << 0),
-	FLAGC_SHARP     = (1 << 1),
-	FLAGC_SIGN      = (1 << 2),
-	FLAGC_SPACE     = (1 << 3),
+	FLAGC_SPACE     = (1 << 1),
+	FLAGC_SHARP     = (1 << 2),
+	FLAGC_SIGN      = (1 << 3),
 	FLAGC_LEFTADJ   = (1 << 4),
 	FLAGC_ZEROPAD   = (1 << 5),
 	FLAGC_WIDTH     = (1 << 6),

@@ -39,11 +39,17 @@
 /* Define to 1 if you have the `atan2l' function. */
 #undef HAVE_ATAN2L
 
+/* Define to 1 if you have the `atan2q' function. */
+#undef HAVE_ATAN2Q
+
 /* Define to 1 if you have the `atanf' function. */
 #undef HAVE_ATANF
 
 /* Define to 1 if you have the `atanl' function. */
 #undef HAVE_ATANL
+
+/* Define to 1 if you have the `atanq' function. */
+#undef HAVE_ATANQ
 
 /* Define to 1 if you have the `backtrace' function. */
 #undef HAVE_BACKTRACE
@@ -60,6 +66,9 @@
 /* Define to 1 if you have the `ceill' function. */
 #undef HAVE_CEILL
 
+/* Define to 1 if you have the `ceilq' function. */
+#undef HAVE_CEILQ
+
 /* Define to 1 if you have the `closedir' function. */
 #undef HAVE_CLOSEDIR
 
@@ -74,6 +83,9 @@
 
 /* Define to 1 if you have the `cosl' function. */
 #undef HAVE_COSL
+
+/* Define to 1 if you have the `cosq' function. */
+#undef HAVE_COSQ
 
 /* Define to 1 if you have the <crt_externs.h> header file. */
 #undef HAVE_CRT_EXTERNS_H
@@ -131,6 +143,9 @@
 /* Define to 1 if you have the `expl' function. */
 #undef HAVE_EXPL
 
+/* Define to 1 if you have the `expq' function. */
+#undef HAVE_EXPQ
+
 /* Define to 1 if you have the <fcntl.h> header file. */
 #undef HAVE_FCNTL_H
 
@@ -146,6 +161,9 @@
 /* Define to 1 if you have the `floorl' function. */
 #undef HAVE_FLOORL
 
+/* Define to 1 if you have the `floorq' function. */
+#undef HAVE_FLOORQ
+
 /* Define to 1 if you have the `fmod' function. */
 #undef HAVE_FMOD
 
@@ -154,6 +172,9 @@
 
 /* Define to 1 if you have the `fmodl' function. */
 #undef HAVE_FMODL
+
+/* Define to 1 if you have the `fmodq' function. */
+#undef HAVE_FMODQ
 
 /* Define to 1 if you have the `fork' function. */
 #undef HAVE_FORK
@@ -239,11 +260,17 @@
 /* Define to 1 if you have the `log10l' function. */
 #undef HAVE_LOG10L
 
+/* Define to 1 if you have the `log10q' function. */
+#undef HAVE_LOG10Q
+
 /* Define to 1 if you have the `logf' function. */
 #undef HAVE_LOGF
 
 /* Define to 1 if you have the `logl' function. */
 #undef HAVE_LOGL
+
+/* Define to 1 if you have the `logq' function. */
+#undef HAVE_LOGQ
 
 /* Define to 1 if you have the `lseek64' function. */
 #undef HAVE_LSEEK64
@@ -305,6 +332,9 @@
 /* Define to 1 if you have the `powl' function. */
 #undef HAVE_POWL
 
+/* Define to 1 if you have the `powq' function. */
+#undef HAVE_POWQ
+
 /* Define to 1 if you have the `prctl' function. */
 #undef HAVE_PRCTL
 
@@ -316,6 +346,12 @@
 
 /* Have PTHREAD_PRIO_INHERIT. */
 #undef HAVE_PTHREAD_PRIO_INHERIT
+
+/* Define to 1 if you have the <quadmath.h> header file. */
+#undef HAVE_QUADMATH_H
+
+/* Define to 1 if you have the `quadmath_snprintf' function. */
+#undef HAVE_QUADMATH_SNPRINTF
 
 /* Define to 1 if you have the `readdir' function. */
 #undef HAVE_READDIR
@@ -331,6 +367,9 @@
 
 /* Define to 1 if you have the `roundl' function. */
 #undef HAVE_ROUNDL
+
+/* Define to 1 if you have the `roundq' function. */
+#undef HAVE_ROUNDQ
 
 /* Define to 1 if you have the `select' function. */
 #undef HAVE_SELECT
@@ -368,6 +407,9 @@
 /* Define to 1 if you have the `sinl' function. */
 #undef HAVE_SINL
 
+/* Define to 1 if you have the `sinq' function. */
+#undef HAVE_SINQ
+
 /* Define it socklen_t typedef is in sys/socket.h. */
 #undef HAVE_SOCKLEN_T
 
@@ -382,6 +424,9 @@
 
 /* Define to 1 if you have the `sqrtl' function. */
 #undef HAVE_SQRTL
+
+/* Define to 1 if you have the `sqrtq' function. */
+#undef HAVE_SQRTQ
 
 /* ssl support */
 #undef HAVE_SSL
@@ -412,6 +457,9 @@
 
 /* Define to 1 if you have the `strlcpy' function. */
 #undef HAVE_STRLCPY
+
+/* Define to 1 if you have the `strtoflt128' function. */
+#undef HAVE_STRTOFLT128
 
 /* Define to 1 if `d_type' is a member of `struct dirent'. */
 #undef HAVE_STRUCT_DIRENT_D_TYPE
@@ -522,6 +570,9 @@
 
 /* Define to 1 if you have the `tanl' function. */
 #undef HAVE_TANL
+
+/* Define to 1 if you have the `tanq' function. */
+#undef HAVE_TANQ
 
 /* Define to 1 if you have the `timegm' function. */
 #undef HAVE_TIMEGM

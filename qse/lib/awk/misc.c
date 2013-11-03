@@ -164,7 +164,7 @@ qse_long_t qse_awk_strxtolong (
 
 
 /*
- * qse_awk_strtoreal is almost a replica of strtod.
+ * qse_awk_strtoflt is almost a replica of strtod.
  *
  * strtod.c --
  *
@@ -184,7 +184,7 @@ qse_long_t qse_awk_strxtolong (
 
 #define MAX_EXPONENT 511
 
-qse_flt_t qse_awk_strtoreal (qse_awk_t* awk, const qse_char_t* str)
+qse_flt_t qse_awk_strtoflt (qse_awk_t* awk, const qse_char_t* str)
 {
 	/* 
 	 * Table giving binary powers of 10. Entry is 10^2^i.  
@@ -1383,17 +1383,3 @@ void qse_awk_rtx_freemem (qse_awk_rtx_t* rtx, void* ptr)
 	QSE_AWK_FREE (rtx->awk, ptr);
 }
 
-int qse_awk_sprintflt (
-	qse_awk_t* awk, qse_char_t* buf, qse_size_t len, qse_flt_t num)
-{
-	return awk->prm.sprintf (
-		awk, buf, len,
-	#if QSE_SIZEOF_LONG_DOUBLE > 0
-		QSE_T("%Lf"), (long double)num
-	#elif QSE_SIZEOF_DOUBLE > 0
-		QSE_T("%f"), (double)num
-	#else
-		#error unsupported size	
-	#endif
-	);
-}

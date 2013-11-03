@@ -1163,11 +1163,6 @@ void  StdAwk::freeMem (void* ptr)
 }
 
 // miscellaneous primitive
-int StdAwk::vsprintf (
-	char_t* buf, size_t size, const char_t* fmt, va_list arg) 
-{
-	return qse_vsprintf (buf, size, fmt, arg);
-}
 
 StdAwk::flt_t StdAwk::pow (flt_t x, flt_t y) 
 { 

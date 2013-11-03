@@ -126,9 +126,8 @@ if ENABLE_XCMGRS
 libqsecmn_la_SOURCES += cp949.c cp950.c
 endif
 
-
 libqsecmn_la_LDFLAGS = -version-info 1:0:0 -no-undefined
-libqsecmn_la_LIBADD = $(SOCKET_LIBS)
+libqsecmn_la_LIBADD = $(SOCKET_LIBS) $(QUADMATH_LIBS)
 
 if ENABLE_CXX
 

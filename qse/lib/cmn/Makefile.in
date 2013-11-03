@@ -84,7 +84,8 @@ am__uninstall_files_from_dir = { \
 am__installdirs = "$(DESTDIR)$(libdir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
 am__DEPENDENCIES_1 =
-libqsecmn_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
+libqsecmn_la_DEPENDENCIES = $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
 am__libqsecmn_la_SOURCES_DIST = alg-base64.c alg-rand.c alg-search.c \
 	alg-sort.c assert.c chr.c dir.c dll.c env.c gdl.c htb.c fio.c \
 	fma.c fmt-intmax.c fmt-out.c fs.c fs-err.c fs-move.c glob.c \
@@ -286,6 +287,7 @@ QSE_SIZEOF_OFF_T = @QSE_SIZEOF_OFF_T@
 QSE_SIZEOF_SHORT = @QSE_SIZEOF_SHORT@
 QSE_SIZEOF_VOID_P = @QSE_SIZEOF_VOID_P@
 QSE_SIZEOF_WCHAR_T = @QSE_SIZEOF_WCHAR_T@
+QUADMATH_LIBS = @QUADMATH_LIBS@
 RANLIB = @RANLIB@
 RM = @RM@
 RMDIR = @RMDIR@
@@ -402,7 +404,7 @@ libqsecmn_la_SOURCES = alg-base64.c alg-rand.c alg-search.c alg-sort.c \
 	tre-match-parallel.c tre-parse.c tre-stack.c uri.c utf8.c \
 	xma.c $(am__append_1) $(am__append_2)
 libqsecmn_la_LDFLAGS = -version-info 1:0:0 -no-undefined
-libqsecmn_la_LIBADD = $(SOCKET_LIBS)
+libqsecmn_la_LIBADD = $(SOCKET_LIBS) $(QUADMATH_LIBS)
 @ENABLE_CXX_TRUE@libqsecmnxx_la_SOURCES = \
 @ENABLE_CXX_TRUE@	Mmgr.cpp StdMmgr.cpp
 

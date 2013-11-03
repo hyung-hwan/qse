@@ -20,12 +20,7 @@
 
 #include "httpd.h"
 #include <qse/cmn/str.h>
-#include <qse/cmn/fmt.h>
 #include "../cmn/mem.h"
-
-#include <stdarg.h>
-#include <stdio.h> /* TODO: remove this */
-
 
 /* TODO:
  * many functions in this file use qse_size_t.
@@ -115,61 +110,27 @@ qse_httpd_task_t* qse_httpd_entaskformat (
 	task_format_t data;
 
 	va_list ap;
-	qse_mchar_t n[2];
 	qse_mchar_t* buf;
 	int bytes_req, l;
 
 	va_start (ap, fmt);
-	bytes_req = vsnprintf (n, 1, fmt, ap);
+	bytes_req = qse_mbsxvfmt (QSE_NULL, 0, fmt, ap);
 	va_end (ap);
 
-	if (bytes_req == -1) 
+	buf = (qse_mchar_t*) qse_httpd_allocmem (
+		httpd, (bytes_req + 1) * QSE_SIZEOF(*buf));
+	if (buf == QSE_NULL) return QSE_NULL;
+
+	va_start (ap, fmt);
+	l = qse_mbsxvfmt (buf, bytes_req + 1, fmt, ap);
+	va_end (ap);
+
+	if (l != bytes_req) 
 	{
-		qse_size_t capa = 256;
-
-		buf = (qse_mchar_t*) qse_httpd_allocmem (
-			httpd, (capa + 1) * QSE_SIZEOF(*buf));
-		if (buf == QSE_NULL) return QSE_NULL;
-
-		/* an old vsnprintf behaves differently from C99 standard.
-		 * thus, it returns -1 when it can't write all the input given. */
-		for (;;) 
-		{
-			va_start (ap, fmt);
-			l = vsnprintf (buf, capa + 1, fmt, ap);
-			va_end (ap);
-
-			if (l == -1)
-			{
-				qse_httpd_freemem (httpd, buf);
-
-				capa = capa * 2;
-				buf = (qse_mchar_t*) qse_httpd_allocmem (httpd, (capa + 1) * QSE_SIZEOF(*buf));
-				if (buf == QSE_NULL) return QSE_NULL;
-			}
-			else break;
-		}
-	}
-	else 
-	{
-		/* vsnprintf returns the number of characters that would 
-		 * have been written not including the terminating '\0' 
-		 * if the _data buffer were large enough */
-		buf = (qse_mchar_t*) qse_httpd_allocmem (
-			httpd, (bytes_req + 1) * QSE_SIZEOF(*buf));
-		if (buf == QSE_NULL) return QSE_NULL;
-
-		va_start (ap, fmt);
-		l = vsnprintf (buf, bytes_req + 1, fmt, ap);
-		va_end (ap);
-
-		if (l != bytes_req) 
-		{
-			/* something got wrong ... */
-			qse_httpd_freemem (httpd, buf);
-			httpd->errnum = QSE_HTTPD_EINTERN;
-			return QSE_NULL;
-		}
+		/* something got wrong ... */
+		qse_httpd_freemem (httpd, buf);
+		httpd->errnum = QSE_HTTPD_EINTERN;
+		return QSE_NULL;
 	}
 
 	QSE_MEMSET (&data, 0, QSE_SIZEOF(data));

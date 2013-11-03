@@ -23,6 +23,7 @@
 
 #include <qse/types.h>
 #include <qse/macros.h>
+#include <stdarg.h>
 
 /** \file
  * This file provides various functions, types, macros for string manipulation.
@@ -692,6 +693,12 @@ QSE_EXPORT qse_size_t qse_mbsfmt (
 	...
 );
 
+QSE_EXPORT qse_size_t qse_mbsvfmt (
+	qse_mchar_t*       buf,
+	const qse_mchar_t* fmt,
+	va_list            ap
+);
+
 /**
  * The qse_mbsxfmt() function writes a formatted string into the buffer \a buf
  * of the size \a bsz using the format \a fmt and the variable arguments. It
@@ -714,10 +721,23 @@ QSE_EXPORT qse_size_t qse_mbsxfmt (
 	...
 );
 
+QSE_EXPORT qse_size_t qse_mbsxvfmt (
+	qse_mchar_t*       buf,
+	qse_size_t         bsz,
+	const qse_mchar_t* fmt,
+	va_list            ap
+);
+
 QSE_EXPORT qse_size_t qse_wcsfmt (
 	qse_wchar_t*       buf,
 	const qse_wchar_t* fmt,
 	...
+);
+
+QSE_EXPORT qse_size_t qse_wcsvfmt (
+	qse_wchar_t*       buf,
+	const qse_wchar_t* fmt,
+	va_list            ap
 );
 
 /**
@@ -742,13 +762,24 @@ QSE_EXPORT qse_size_t qse_wcsxfmt (
 	...
 );
 
+QSE_EXPORT qse_size_t qse_wcsxvfmt (
+	qse_wchar_t*       buf,
+	qse_size_t         bsz,
+	const qse_wchar_t* fmt,
+	va_list            ap
+);
+
 
 #if defined(QSE_CHAR_IS_MCHAR)
 #	define qse_strfmt qse_mbsfmt
+#	define qse_strvfmt qse_mbsvfmt
 #	define qse_strxfmt qse_mbsxfmt
+#	define qse_strxvfmt qse_mbsxvfmt
 #else
 #	define qse_strfmt qse_wcsfmt
+#	define qse_strvfmt qse_wcsvfmt
 #	define qse_strxfmt qse_wcsxfmt
+#	define qse_strxvfmt qse_wcsxvfmt
 #endif
 
 /**

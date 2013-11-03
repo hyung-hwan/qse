@@ -264,7 +264,7 @@ reswitch:
 		case T('j'): /* uintmax_t */
 		case T('z'): /* size_t */
 		case T('t'): /* ptrdiff_t */
-			if (lm_flag & LF_LD) goto invalid_format;
+			if (lm_flag & (LF_LD | LF_QD)) goto invalid_format;
 
 			flagc |= FLAGC_LENMOD;
 			if (lm_dflag)
@@ -297,12 +297,23 @@ reswitch:
 		case T('L'): /* long double */
 			if (flagc & FLAGC_LENMOD) 
 			{
-				/* conflict integral length modifier */
+				/* conflict with other length modifier */
 				goto invalid_format; 
 			}
 			flagc |= FLAGC_LENMOD;
 			lm_flag |= LF_LD;
 			goto reswitch;
+
+		case T('Q'): /* __float128 */
+			if (flagc & FLAGC_LENMOD)
+			{
+				/* conflict with other length modifier */
+				goto invalid_format; 
+			}
+			flagc |= FLAGC_LENMOD;
+			lm_flag |= LF_QD;
+			goto reswitch;
+			
 		/* end of length modifiers */
 
 		case T('n'):
@@ -320,6 +331,8 @@ reswitch:
 				*(va_arg(ap, short int*)) = data->count;
 			else if (lm_flag & LF_C) /* hh */
 				*(va_arg(ap, char*)) = data->count;
+			else if (flagc & FLAGC_LENMOD)
+				goto oops;
 			else
 				*(va_arg(ap, int*)) = data->count;
 			break;
@@ -531,20 +544,62 @@ reswitch:
 		case T('A'):
 		*/
 		{
-			/* let me rely on snprintf until i implement 
-			 * float-point to string conversion */
+			/* let me rely on snprintf until i implement float-point to string conversion */
 			int q;
 			qse_size_t fmtlen;
-			qse_fltmax_t v_fltmax;
+		#if (QSE_SIZEOF___FLOAT128 > 0) && defined(HAVE_QUADMATH_SNPRINTF)
+			__float128 v_qd;
+		#endif
 			long double v_ld;
 			double v_d;
+			int dtype = 0;
 
 			if (lm_flag & LF_J)
-				v_fltmax = va_arg (ap, qse_fltmax_t);
-			else if (lm_flag & (LF_LD | LF_L | LF_Q | LF_Z))
+			{
+			#if (QSE_SIZEOF___FLOAT128 > 0) && defined(HAVE_QUADMATH_SNPRINTF) && (QSE_SIZEOF_FLTMAX_T == QSE_SIZEOF___FLOAT128)
+				v_qd = va_arg (ap, qse_fltmax_t);
+				dtype = LF_QD;
+			#elif QSE_SIZEOF_FLTMAX_T == QSE_SIZEOF_LONG_DOUBLE
+				v_ld = va_arg (ap, qse_fltmax_t);
+				dtype = LF_LD;
+			#elif QSE_SIZEOF_FLTMAX_T == QSE_SIZEOF_DOUBLE
+				v_d = va_arg (ap, qse_fltmax_t);
+			#else
+				#error Unsupported qse_flt_t
+			#endif
+			}
+			else if (lm_flag & LF_Z)
+			{
+				/* qse_flt_t is limited to double or long double */
+			#if QSE_SIZEOF_FLT_T == QSE_SIZEOF_LONG_DOUBLE
+				v_ld = va_arg (ap, qse_flt_t);
+				dtype = LF_LD;
+			#elif QSE_SIZEOF_FLT_T == QSE_SIZEOF_DOUBLE
+				v_d = va_arg (ap, qse_flt_t);
+			#else
+				#error Unsupported qse_flt_t
+			#endif
+			}
+			else if (lm_flag & (LF_LD | LF_L))
+			{
 				v_ld = va_arg (ap, long double);
+				dtype = LF_LD;
+			}
+		#if (QSE_SIZEOF___FLOAT128 > 0) && defined(HAVE_QUADMATH_SNPRINTF)
+			else if (lm_flag & (LF_QD | LF_Q))
+			{
+				v_qd = va_arg (ap, __float128);	
+				dtype = LF_QD;
+			}
+		#endif
+			else if (flagc & FLAGC_LENMOD)
+			{
+				goto oops;
+			}
 			else
+			{
 				v_d = va_arg (ap, double);
+			}
 
 			fmtlen = fmt - percent;
 			if (fmtlen > fltfmt.capa)
@@ -566,27 +621,59 @@ reswitch:
 				fltfmt.capa = fmtlen;
 			}
 
-			fltfmt.ptr[fmtlen] = QSE_MT('\0');
-			while (fmtlen > 0) 
+			/* compose back the format specifier */
+			fmtlen = 0;
+			fltfmt.ptr[fmtlen++] = QSE_MT('%');
+			if (flagc & FLAGC_SPACE) fltfmt.ptr[fmtlen++] = QSE_T(' ');
+			if (flagc & FLAGC_SHARP) fltfmt.ptr[fmtlen++] = QSE_T('#');
+			if (flagc & FLAGC_SIGN) fltfmt.ptr[fmtlen++] = QSE_T('+');
+			if (flagc & FLAGC_LEFTADJ) fltfmt.ptr[fmtlen++] = QSE_T('-');
+			if (flagc & FLAGC_ZEROPAD) fltfmt.ptr[fmtlen++] = QSE_T('0');
+
+			if (flagc & FLAGC_STAR1) fltfmt.ptr[fmtlen++] = QSE_T('*');
+			else if (flagc & FLAGC_WIDTH) 
 			{
-				fmtlen--;
-				fltfmt.ptr[fmtlen] = percent[fmtlen];
+				fmtlen += qse_fmtuintmaxtombs (	
+					&fltfmt.ptr[fmtlen], fltfmt.capa - fmtlen, 
+					width, 10, -1, QSE_MT('\0'), QSE_NULL);
 			}
+			if (flagc & FLAGC_DOT) fltfmt.ptr[fmtlen++] = QSE_T('.');
+			if (flagc & FLAGC_STAR2) fltfmt.ptr[fmtlen++] = QSE_T('*');
+			else if (flagc & FLAGC_PRECISION) 
+			{
+				fmtlen += qse_fmtuintmaxtombs (	
+					&fltfmt.ptr[fmtlen], fltfmt.capa - fmtlen, 
+					precision, 10, -1, QSE_MT('\0'), QSE_NULL);
+			}
+
+			if (dtype == LF_LD)
+				fltfmt.ptr[fmtlen++] = QSE_MT('L');
+			#if (QSE_SIZEOF___FLOAT128 > 0)
+			else if (dtype == LF_QD)
+				fltfmt.ptr[fmtlen++] = QSE_MT('Q');
+			#endif
+
+			fltfmt.ptr[fmtlen++] = ch;
+			fltfmt.ptr[fmtlen] = QSE_MT('\0');
 
 			while (1)
 			{
 				qse_size_t newcapa;
 
-				if (lm_flag & LF_J)
-					q = snprintf ((qse_mchar_t*)fltout.ptr, fltout.capa + 1, fltfmt.ptr, v_fltmax);
-				else if (lm_flag & (LF_LD | LF_L | LF_Q | LF_Z))
+				if (dtype == LF_LD)
 					q = snprintf ((qse_mchar_t*)fltout.ptr, fltout.capa + 1, fltfmt.ptr, v_ld);
+			#if (QSE_SIZEOF___FLOAT128 > 0) && defined(HAVE_QUADMATH_SNPRINTF)
+				else if (dtype == LF_QD)
+					q = quadmath_snprintf ((qse_mchar_t*)fltout.ptr, fltout.capa + 1, fltfmt.ptr, v_qd);
+			#endif
 				else
 					q = snprintf ((qse_mchar_t*)fltout.ptr, fltout.capa + 1, fltfmt.ptr, v_d);
 				if (q <= -1) goto oops;
 				if (q <= fltout.capa) break;
 
 				newcapa = fltout.capa * 2;
+				if (newcapa < q) newcapa = q;
+
 				if (fltout.ptr == fltout.sbuf)
 				{
 					fltout.ptr = QSE_MMGR_ALLOC (QSE_MMGR_GETDFL(), QSE_SIZEOF(char_t) * (newcapa + 1));

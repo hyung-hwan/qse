@@ -86,14 +86,6 @@ int qse_awk_rtx_matchrex (
 	qse_cstr_t* match
 );
 
-int qse_awk_sprintflt (
-	qse_awk_t*  awk,
-	qse_char_t* buf,
-	qse_size_t  len,
-	qse_flt_t   num
-);
-
-
 #ifdef __cplusplus
 }
 #endif
