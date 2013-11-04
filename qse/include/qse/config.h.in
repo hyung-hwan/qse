@@ -607,6 +607,9 @@
 /* Define to 1 if you have the <utime.h> header file. */
 #undef HAVE_UTIME_H
 
+/* va_copy is available */
+#undef HAVE_VA_COPY
+
 /* Define to 1 if you have the `vfork' function. */
 #undef HAVE_VFORK
 
@@ -642,6 +645,9 @@
 
 /* Define to 1 if you have the `_vsnwprintf' function. */
 #undef HAVE__VSNWPRINTF
+
+/* __va_copy is available */
+#undef HAVE___VA_COPY
 
 /* Define if the OS needs help to load dependent libraries for dlopen(). */
 #undef LTDL_DLOPEN_DEPLIBS

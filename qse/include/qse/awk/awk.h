@@ -35,6 +35,12 @@
  * - consider something like ${1:3,5} => $1, $2, $3, and $5 concatenated
  */
 
+#if defined(QSE_AWK_USE_FLTMAX_T)
+typedef qse_flt_t qse_awk_fltmax_t;
+#else
+typedef qse_flt_t qse_awk_flt_t;
+#endif
+
 /** \struct qse_awk_t
  * The #qse_awk_t type defines an AWK interpreter. It provides an interface
  * to parse an AWK script and run it to manipulate input and output data.
@@ -167,8 +173,8 @@ typedef struct qse_awk_val_int_t qse_awk_val_int_t;
 struct qse_awk_val_flt_t
 {
 	QSE_AWK_VAL_HDR;
-	qse_flt_t val;
-	void*     nde;
+	qse_awk_flt_t val;
+	void*         nde;
 };
 typedef struct qse_awk_val_flt_t qse_awk_val_flt_t;
 
@@ -396,15 +402,15 @@ typedef struct qse_awk_fun_t qse_awk_fun_t;
 
 /* ------------------------------------------------------------------------ */
 
-typedef qse_flt_t (*qse_awk_math1_t) (
+typedef qse_awk_flt_t (*qse_awk_math1_t) (
 	qse_awk_t* awk,
-	qse_flt_t x
+	qse_awk_flt_t x
 );
 
-typedef qse_flt_t (*qse_awk_math2_t) (
+typedef qse_awk_flt_t (*qse_awk_math2_t) (
 	qse_awk_t* awk,
-	qse_flt_t x, 
-	qse_flt_t y
+	qse_awk_flt_t x, 
+	qse_awk_flt_t y
 );
 
 /* ------------------------------------------------------------------------ */
@@ -853,7 +859,7 @@ struct qse_awk_mod_sym_int_t
 
 struct qse_awk_mod_sym_flt_t
 {
-	qse_flt_t val;
+	qse_awk_flt_t val;
 };
 
 struct qse_awk_mod_sym_t
@@ -1845,7 +1851,7 @@ QSE_EXPORT qse_long_t qse_awk_strxtolong (
  * The qse_awk_strxtoflt() function converts a string to a floating-point
  * number.
  */
-QSE_EXPORT qse_flt_t qse_awk_strxtoflt (
+QSE_EXPORT qse_awk_flt_t qse_awk_strxtoflt (
 	qse_awk_t*         awk,
 	const qse_char_t*  str,
 	qse_size_t         len, 
@@ -2274,7 +2280,7 @@ QSE_EXPORT qse_awk_val_t* qse_awk_rtx_makeintval (
  */
 QSE_EXPORT qse_awk_val_t* qse_awk_rtx_makefltval (
 	qse_awk_rtx_t* rtx,
-	qse_flt_t      v
+	qse_awk_flt_t  v
 );
 
 /**
@@ -2646,7 +2652,7 @@ QSE_EXPORT qse_wchar_t* qse_awk_rtx_valtowcsdup (
  *
  * \code
  * qse_long_t l;
- * qse_flt_t r;
+ * qse_awk_flt_t r;
  * int n;
  * n = qse_awk_rtx_valtonum (v, &l, &r);
  * if (n <= -1) error ();
@@ -2661,7 +2667,7 @@ QSE_EXPORT int qse_awk_rtx_valtonum (
 	qse_awk_rtx_t*       rtx,
 	const qse_awk_val_t* val,
 	qse_long_t*          l,
-	qse_flt_t*          r
+	qse_awk_flt_t*       r
 );
 
 QSE_EXPORT int qse_awk_rtx_valtolong (
@@ -2673,7 +2679,7 @@ QSE_EXPORT int qse_awk_rtx_valtolong (
 QSE_EXPORT int qse_awk_rtx_valtoflt (
 	qse_awk_rtx_t*       rtx,
 	const qse_awk_val_t* val,
-	qse_flt_t*           r
+	qse_awk_flt_t*       r
 );
 
 /**
@@ -2696,7 +2702,7 @@ QSE_EXPORT int qse_awk_rtx_strtonum (
 	const qse_char_t* ptr, /**< points to a string to convert */
 	qse_size_t        len, /**< number of characters in a string */
 	qse_long_t*       l,   /**< stores a converted integer */
-	qse_flt_t*        r    /**< stores a converted floating-poing number */
+	qse_awk_flt_t*    r    /**< stores a converted floating-poing number */
 );
 
 /**

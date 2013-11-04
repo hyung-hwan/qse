@@ -4207,7 +4207,7 @@ static int __cmp_int_str (
 	if (rtx->awk->opt.trait & QSE_AWK_NCMPONSTR || right->nstr /*> 0*/)
 	{
 		qse_long_t ll;
-		qse_flt_t rr;
+		qse_awk_flt_t rr;
 
 		n = qse_awk_rtx_strtonum (
 			rtx, 1, 
@@ -4293,7 +4293,7 @@ static int __cmp_flt_str (
 	if (rtx->awk->opt.trait & QSE_AWK_NCMPONSTR || right->nstr /*> 0*/)
 	{
 		const qse_char_t* end;
-		qse_flt_t rr;
+		qse_awk_flt_t rr;
 
 		rr = qse_awk_strxtoflt (
 			rtx->awk,
@@ -4388,7 +4388,7 @@ static int __cmp_str_str (
 		}
 		else 
 		{
-			qse_flt_t rr;
+			qse_awk_flt_t rr;
 
 			QSE_ASSERT (rs->nstr == 2);
 
@@ -4401,7 +4401,7 @@ static int __cmp_str_str (
 	}
 	else
 	{
-		qse_flt_t ll;
+		qse_awk_flt_t ll;
 
 		QSE_ASSERT (ls->nstr == 2);
 
@@ -4420,7 +4420,7 @@ static int __cmp_str_str (
 		}
 		else 
 		{
-			qse_flt_t rr;
+			qse_awk_flt_t rr;
 
 			QSE_ASSERT (rs->nstr == 2);
 
@@ -4605,7 +4605,7 @@ static qse_awk_val_t* eval_binop_plus (
 {
 	int n1, n2, n3;
 	qse_long_t l1, l2;
-	qse_flt_t r1, r2;
+	qse_awk_flt_t r1, r2;
 
 	n1 = qse_awk_rtx_valtonum (rtx, left, &l1, &r1);
 	n2 = qse_awk_rtx_valtonum (rtx, right, &l2, &r2);
@@ -4626,9 +4626,9 @@ static qse_awk_val_t* eval_binop_plus (
 	QSE_ASSERT (n3 >= 0 && n3 <= 3);
 
 	return (n3 == 0)? qse_awk_rtx_makeintval(rtx,(qse_long_t)l1+(qse_long_t)l2):
-	       (n3 == 1)? qse_awk_rtx_makefltval(rtx,(qse_flt_t)r1+(qse_flt_t)l2):
-	       (n3 == 2)? qse_awk_rtx_makefltval(rtx,(qse_flt_t)l1+(qse_flt_t)r2):
-	                  qse_awk_rtx_makefltval(rtx,(qse_flt_t)r1+(qse_flt_t)r2);
+	       (n3 == 1)? qse_awk_rtx_makefltval(rtx,(qse_awk_flt_t)r1+(qse_awk_flt_t)l2):
+	       (n3 == 2)? qse_awk_rtx_makefltval(rtx,(qse_awk_flt_t)l1+(qse_awk_flt_t)r2):
+	                  qse_awk_rtx_makefltval(rtx,(qse_awk_flt_t)r1+(qse_awk_flt_t)r2);
 }
 
 static qse_awk_val_t* eval_binop_minus (
@@ -4636,7 +4636,7 @@ static qse_awk_val_t* eval_binop_minus (
 {
 	int n1, n2, n3;
 	qse_long_t l1, l2;
-	qse_flt_t r1, r2;
+	qse_awk_flt_t r1, r2;
 
 	n1 = qse_awk_rtx_valtonum (rtx, left, &l1, &r1);
 	n2 = qse_awk_rtx_valtonum (rtx, right, &l2, &r2);
@@ -4650,9 +4650,9 @@ static qse_awk_val_t* eval_binop_minus (
 	n3 = n1 + (n2 << 1);
 	QSE_ASSERT (n3 >= 0 && n3 <= 3);
 	return (n3 == 0)? qse_awk_rtx_makeintval(rtx,(qse_long_t)l1-(qse_long_t)l2):
-	       (n3 == 1)? qse_awk_rtx_makefltval(rtx,(qse_flt_t)r1-(qse_flt_t)l2):
-	       (n3 == 2)? qse_awk_rtx_makefltval(rtx,(qse_flt_t)l1-(qse_flt_t)r2):
-	                  qse_awk_rtx_makefltval(rtx,(qse_flt_t)r1-(qse_flt_t)r2);
+	       (n3 == 1)? qse_awk_rtx_makefltval(rtx,(qse_awk_flt_t)r1-(qse_awk_flt_t)l2):
+	       (n3 == 2)? qse_awk_rtx_makefltval(rtx,(qse_awk_flt_t)l1-(qse_awk_flt_t)r2):
+	                  qse_awk_rtx_makefltval(rtx,(qse_awk_flt_t)r1-(qse_awk_flt_t)r2);
 }
 
 static qse_awk_val_t* eval_binop_mul (
@@ -4660,7 +4660,7 @@ static qse_awk_val_t* eval_binop_mul (
 {
 	int n1, n2, n3;
 	qse_long_t l1, l2;
-	qse_flt_t r1, r2;
+	qse_awk_flt_t r1, r2;
 
 	n1 = qse_awk_rtx_valtonum (rtx, left, &l1, &r1);
 	n2 = qse_awk_rtx_valtonum (rtx, right, &l2, &r2);
@@ -4674,9 +4674,9 @@ static qse_awk_val_t* eval_binop_mul (
 	n3 = n1 + (n2 << 1);
 	QSE_ASSERT (n3 >= 0 && n3 <= 3);
 	return (n3 == 0)? qse_awk_rtx_makeintval(rtx,(qse_long_t)l1*(qse_long_t)l2):
-	       (n3 == 1)? qse_awk_rtx_makefltval(rtx,(qse_flt_t)r1*(qse_flt_t)l2):
-	       (n3 == 2)? qse_awk_rtx_makefltval(rtx,(qse_flt_t)l1*(qse_flt_t)r2):
-	                  qse_awk_rtx_makefltval(rtx,(qse_flt_t)r1*(qse_flt_t)r2);
+	       (n3 == 1)? qse_awk_rtx_makefltval(rtx,(qse_awk_flt_t)r1*(qse_awk_flt_t)l2):
+	       (n3 == 2)? qse_awk_rtx_makefltval(rtx,(qse_awk_flt_t)l1*(qse_awk_flt_t)r2):
+	                  qse_awk_rtx_makefltval(rtx,(qse_awk_flt_t)r1*(qse_awk_flt_t)r2);
 }
 
 static qse_awk_val_t* eval_binop_div (
@@ -4684,7 +4684,7 @@ static qse_awk_val_t* eval_binop_div (
 {
 	int n1, n2, n3;
 	qse_long_t l1, l2;
-	qse_flt_t r1, r2;
+	qse_awk_flt_t r1, r2;
 	qse_awk_val_t* res;
 
 	n1 = qse_awk_rtx_valtonum (rtx, left, &l1, &r1);
@@ -4714,23 +4714,23 @@ static qse_awk_val_t* eval_binop_div (
 			else
 			{
 				res = qse_awk_rtx_makefltval (
-					rtx, (qse_flt_t)l1 / (qse_flt_t)l2);
+					rtx, (qse_awk_flt_t)l1 / (qse_awk_flt_t)l2);
 			}
 			break;
 
 		case 1:
 			res = qse_awk_rtx_makefltval (
-				rtx, (qse_flt_t)r1 / (qse_flt_t)l2);
+				rtx, (qse_awk_flt_t)r1 / (qse_awk_flt_t)l2);
 			break;
 
 		case 2:
 			res = qse_awk_rtx_makefltval (
-				rtx, (qse_flt_t)l1 / (qse_flt_t)r2);
+				rtx, (qse_awk_flt_t)l1 / (qse_awk_flt_t)r2);
 			break;
 
 		case 3:
 			res = qse_awk_rtx_makefltval (
-				rtx, (qse_flt_t)r1 / (qse_flt_t)r2);
+				rtx, (qse_awk_flt_t)r1 / (qse_awk_flt_t)r2);
 			break;
 	}
 
@@ -4742,7 +4742,7 @@ static qse_awk_val_t* eval_binop_idiv (
 {
 	int n1, n2, n3;
 	qse_long_t l1, l2;
-	qse_flt_t r1, r2, quo;
+	qse_awk_flt_t r1, r2, quo;
 	qse_awk_val_t* res;
 
 	n1 = qse_awk_rtx_valtonum (rtx, left, &l1, &r1);
@@ -4768,17 +4768,17 @@ static qse_awk_val_t* eval_binop_idiv (
 			break;
 
 		case 1:
-			quo = (qse_flt_t)r1 / (qse_flt_t)l2;
+			quo = (qse_awk_flt_t)r1 / (qse_awk_flt_t)l2;
 			res = qse_awk_rtx_makeintval (rtx, (qse_long_t)quo);
 			break;
 
 		case 2:
-			quo = (qse_flt_t)l1 / (qse_flt_t)r2;
+			quo = (qse_awk_flt_t)l1 / (qse_awk_flt_t)r2;
 			res = qse_awk_rtx_makeintval (rtx, (qse_long_t)quo);
 			break;
 
 		case 3:
-			quo = (qse_flt_t)r1 / (qse_flt_t)r2;
+			quo = (qse_awk_flt_t)r1 / (qse_awk_flt_t)r2;
 			res = qse_awk_rtx_makeintval (rtx, (qse_long_t)quo);
 			break;
 	}
@@ -4791,7 +4791,7 @@ static qse_awk_val_t* eval_binop_mod (
 {
 	int n1, n2, n3;
 	qse_long_t l1, l2;
-	qse_flt_t r1, r2;
+	qse_awk_flt_t r1, r2;
 	qse_awk_val_t* res;
 
 	QSE_ASSERTX (rtx->awk->prm.math.mod != QSE_NULL,
@@ -4822,21 +4822,21 @@ static qse_awk_val_t* eval_binop_mod (
 		case 1:
 			res = qse_awk_rtx_makefltval (rtx,
 				rtx->awk->prm.math.mod (
-					rtx->awk, (qse_flt_t)r1, (qse_flt_t)l2)
+					rtx->awk, (qse_awk_flt_t)r1, (qse_awk_flt_t)l2)
 			);
 			break;
 
 		case 2:
 			res = qse_awk_rtx_makefltval (rtx,
 				rtx->awk->prm.math.mod (
-					rtx->awk, (qse_flt_t)l1, (qse_flt_t)r2)
+					rtx->awk, (qse_awk_flt_t)l1, (qse_awk_flt_t)r2)
 			);
 			break;
 
 		case 3:
 			res = qse_awk_rtx_makefltval (rtx,
 				rtx->awk->prm.math.mod (
-					rtx->awk, (qse_flt_t)r1, (qse_flt_t)r2)
+					rtx->awk, (qse_awk_flt_t)r1, (qse_awk_flt_t)r2)
 			);
 			break;
 	}
@@ -4849,7 +4849,7 @@ static qse_awk_val_t* eval_binop_exp (
 {
 	int n1, n2, n3;
 	qse_long_t l1, l2;
-	qse_flt_t r1, r2;
+	qse_awk_flt_t r1, r2;
 	qse_awk_val_t* res;
 
 	n1 = qse_awk_rtx_valtonum (rtx, left, &l1, &r1);
@@ -4879,7 +4879,7 @@ static qse_awk_val_t* eval_binop_exp (
 			}
 			else
 			{
-				qse_flt_t v = 1.0;
+				qse_awk_flt_t v = 1.0;
 				l2 *= -1;
 				while (l2-- > 0) v /= l1;
 				res = qse_awk_rtx_makefltval (rtx, v);
@@ -4890,7 +4890,7 @@ static qse_awk_val_t* eval_binop_exp (
 			/* left - real, right - int */
 			if (l2 >= 0)
 			{
-				qse_flt_t v = 1.0;
+				qse_awk_flt_t v = 1.0;
 				while (l2-- > 0) v *= r1;
 				res = qse_awk_rtx_makefltval (rtx, v);
 			}
@@ -4901,7 +4901,7 @@ static qse_awk_val_t* eval_binop_exp (
 			}
 			else
 			{
-				qse_flt_t v = 1.0;
+				qse_awk_flt_t v = 1.0;
 				l2 *= -1;
 				while (l2-- > 0) v /= r1;
 				res = qse_awk_rtx_makefltval (rtx, v);
@@ -4913,7 +4913,7 @@ static qse_awk_val_t* eval_binop_exp (
 			res = qse_awk_rtx_makefltval (
 				rtx, 
 				rtx->awk->prm.math.pow (
-					rtx->awk, (qse_flt_t)l1, (qse_flt_t)r2
+					rtx->awk, (qse_awk_flt_t)l1, (qse_awk_flt_t)r2
 				)
 			);
 			break;
@@ -4923,7 +4923,7 @@ static qse_awk_val_t* eval_binop_exp (
 			res = qse_awk_rtx_makefltval (
 				rtx,
 				rtx->awk->prm.math.pow (
-					rtx->awk, (qse_flt_t)r1,(qse_flt_t)r2
+					rtx->awk, (qse_awk_flt_t)r1,(qse_awk_flt_t)r2
 				)
 			);
 			break;
@@ -5079,7 +5079,7 @@ static qse_awk_val_t* eval_unary (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 	qse_awk_nde_exp_t* exp = (qse_awk_nde_exp_t*)nde;
 	int n;
 	qse_long_t l;
-	qse_flt_t r;
+	qse_awk_flt_t r;
 
 	QSE_ASSERT (
 		exp->type == QSE_AWK_NDE_EXP_UNR);
@@ -5191,7 +5191,7 @@ static qse_awk_val_t* eval_incpre (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 		}
 		else if (left->type == QSE_AWK_VAL_FLT)
 		{
-			qse_flt_t r = ((qse_awk_val_flt_t*)left)->val;
+			qse_awk_flt_t r = ((qse_awk_val_flt_t*)left)->val;
 			res = qse_awk_rtx_makefltval (run, r + 1.0);
 			if (res == QSE_NULL) 
 			{
@@ -5203,7 +5203,7 @@ static qse_awk_val_t* eval_incpre (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 		else
 		{
 			qse_long_t v1;
-			qse_flt_t v2;
+			qse_awk_flt_t v2;
 			int n;
 
 			n = qse_awk_rtx_valtonum (run, left, &v1, &v2);
@@ -5247,7 +5247,7 @@ static qse_awk_val_t* eval_incpre (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 		}
 		else if (left->type == QSE_AWK_VAL_FLT)
 		{
-			qse_flt_t r = ((qse_awk_val_flt_t*)left)->val;
+			qse_awk_flt_t r = ((qse_awk_val_flt_t*)left)->val;
 			res = qse_awk_rtx_makefltval (run, r - 1.0);
 			if (res == QSE_NULL) 
 			{
@@ -5259,7 +5259,7 @@ static qse_awk_val_t* eval_incpre (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 		else
 		{
 			qse_long_t v1;
-			qse_flt_t v2;
+			qse_awk_flt_t v2;
 			int n;
 
 			n = qse_awk_rtx_valtonum (run, left, &v1, &v2);
@@ -5355,7 +5355,7 @@ static qse_awk_val_t* eval_incpst (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 		}
 		else if (left->type == QSE_AWK_VAL_FLT)
 		{
-			qse_flt_t r = ((qse_awk_val_flt_t*)left)->val;
+			qse_awk_flt_t r = ((qse_awk_val_flt_t*)left)->val;
 			res = qse_awk_rtx_makefltval (run, r);
 			if (res == QSE_NULL) 
 			{
@@ -5376,7 +5376,7 @@ static qse_awk_val_t* eval_incpst (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 		else
 		{
 			qse_long_t v1;
-			qse_flt_t v2;
+			qse_awk_flt_t v2;
 			int n;
 
 			n = qse_awk_rtx_valtonum (run, left, &v1, &v2);
@@ -5452,7 +5452,7 @@ static qse_awk_val_t* eval_incpst (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 		}
 		else if (left->type == QSE_AWK_VAL_FLT)
 		{
-			qse_flt_t r = ((qse_awk_val_flt_t*)left)->val;
+			qse_awk_flt_t r = ((qse_awk_val_flt_t*)left)->val;
 			res = qse_awk_rtx_makefltval (run, r);
 			if (res == QSE_NULL) 
 			{
@@ -5473,7 +5473,7 @@ static qse_awk_val_t* eval_incpst (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 		else
 		{
 			qse_long_t v1;
-			qse_flt_t v2;
+			qse_awk_flt_t v2;
 			int n;
 
 			n = qse_awk_rtx_valtonum (run, left, &v1, &v2);
@@ -7287,10 +7287,14 @@ wp_mod_main:
 		         fmt[i] == QSE_T('f'))
 		{
 			qse_awk_val_t* v;
-			qse_flt_t r;
+			qse_awk_flt_t r;
 			int n;
 	
+		#if defined(QSE_AWK_USE_FLTMAX_T)
+			FMT_CHAR (QSE_T('j'));
+		#else
 			FMT_CHAR (QSE_T('z'));
+		#endif
 			FMT_CHAR (fmt[i]);
 
 			if (args == QSE_NULL)

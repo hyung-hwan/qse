@@ -145,7 +145,7 @@ qse_awk_val_t* qse_awk_rtx_makeintval (qse_awk_rtx_t* rtx, qse_long_t v)
 	return (qse_awk_val_t*)val;
 }
 
-qse_awk_val_t* qse_awk_rtx_makefltval (qse_awk_rtx_t* rtx, qse_flt_t v)
+qse_awk_val_t* qse_awk_rtx_makefltval (qse_awk_rtx_t* rtx, qse_awk_flt_t v)
 {
 	qse_awk_val_flt_t* val;
 
@@ -420,7 +420,7 @@ qse_awk_val_t* qse_awk_rtx_makenstrvalwithcstr (qse_awk_rtx_t* rtx, const qse_cs
 	int x;
 	qse_awk_val_t* v;
 	qse_long_t l;
-	qse_flt_t r;
+	qse_awk_flt_t r;
 
 	x = qse_awk_rtx_strtonum (rtx, 1, str->ptr, str->len, &l, &r);
 	v = qse_awk_rtx_makestrvalwithcstr (rtx, str);
@@ -592,7 +592,7 @@ qse_awk_val_t* qse_awk_rtx_makemapvalwithdata (qse_awk_rtx_t* rtx, qse_awk_val_m
 				break;
 
 			case QSE_AWK_VAL_MAP_DATA_FLT:
-				tmp = qse_awk_rtx_makefltval (rtx, *(qse_flt_t*)p->vptr);
+				tmp = qse_awk_rtx_makefltval (rtx, *(qse_awk_flt_t*)p->vptr);
 				break;
 
 			case QSE_AWK_VAL_MAP_DATA_STR:
@@ -1472,7 +1472,7 @@ qse_wchar_t* qse_awk_rtx_valtowcsdup (
 }
 
 static int val_ref_to_num (
-	qse_awk_rtx_t* rtx, const qse_awk_val_ref_t* ref, qse_long_t* l, qse_flt_t* r)
+	qse_awk_rtx_t* rtx, const qse_awk_val_ref_t* ref, qse_long_t* l, qse_awk_flt_t* r)
 {
 	switch (ref->id)
 	{
@@ -1530,7 +1530,7 @@ static int val_ref_to_num (
 
 
 int qse_awk_rtx_valtonum (
-	qse_awk_rtx_t* rtx, const qse_awk_val_t* v, qse_long_t* l, qse_flt_t* r)
+	qse_awk_rtx_t* rtx, const qse_awk_val_t* v, qse_long_t* l, qse_awk_flt_t* r)
 {
 	switch (v->type)
 	{
@@ -1583,7 +1583,7 @@ int qse_awk_rtx_valtolong (
 	qse_awk_rtx_t* rtx, const qse_awk_val_t* v, qse_long_t* l)
 {
 	int n;
-	qse_flt_t r;
+	qse_awk_flt_t r;
 
 	n = qse_awk_rtx_valtonum (rtx, v, l, &r);
 	if (n == 1) 
@@ -1596,13 +1596,13 @@ int qse_awk_rtx_valtolong (
 }
 
 int qse_awk_rtx_valtoflt (
-	qse_awk_rtx_t* rtx, const qse_awk_val_t* v, qse_flt_t* r)
+	qse_awk_rtx_t* rtx, const qse_awk_val_t* v, qse_awk_flt_t* r)
 {
 	int n;
 	qse_long_t l;
 
 	n = qse_awk_rtx_valtonum (rtx, v, &l, r);
-	if (n == 0) *r = (qse_flt_t)l;
+	if (n == 0) *r = (qse_awk_flt_t)l;
 	else if (n == 1) n = 0;
 
 	return n;
@@ -1611,7 +1611,7 @@ int qse_awk_rtx_valtoflt (
 int qse_awk_rtx_strtonum (
 	qse_awk_rtx_t* rtx, int strict,
 	const qse_char_t* ptr, qse_size_t len, 
-	qse_long_t* l, qse_flt_t* r)
+	qse_long_t* l, qse_awk_flt_t* r)
 {
 	const qse_char_t* endptr;
 

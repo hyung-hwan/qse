@@ -1339,7 +1339,7 @@ static int fnc_math_1 (
 {
 	qse_size_t nargs;
 	qse_awk_val_t* a0;
-	qse_flt_t rv;
+	qse_awk_flt_t rv;
 	qse_awk_val_t* r;
 	int n;
 
@@ -1363,7 +1363,7 @@ static int fnc_math_2 (
 {
 	qse_size_t nargs;
 	qse_awk_val_t* a0, * a1;
-	qse_flt_t rv0, rv1;
+	qse_awk_flt_t rv0, rv1;
 	qse_awk_val_t* r;
 	int n;
 
