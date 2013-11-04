@@ -335,6 +335,32 @@ AC_CHECK_MEMBERS([struct sockaddr_in6.sin6_scope_id], [], [],
 	 #include <sys/socket.h> 
 	 #include <netinet/in.h>])
 
+AC_TRY_LINK(
+	[#include <stdarg.h>],
+	[
+		va_list x, y;
+		va_copy(x,y);
+	],
+	[
+		AC_MSG_RESULT(yes)
+		AC_DEFINE([HAVE_VA_COPY], [1], [va_copy is available])
+	],
+	[AC_MSG_RESULT(no)]
+)
+
+AC_TRY_LINK(
+	[#include <stdarg.h>],
+	[
+		va_list x, y;
+		__va_copy(x,y); 
+	],
+	[
+		AC_MSG_RESULT(yes)
+		AC_DEFINE([HAVE___VA_COPY], [1], [__va_copy is available])
+	],
+	[AC_MSG_RESULT(no)]
+)
+
 dnl check the size of primitive data types
 AC_CHECK_SIZEOF(char,,[[]])
 AC_CHECK_SIZEOF(short,,[[]])

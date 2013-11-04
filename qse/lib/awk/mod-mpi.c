@@ -99,7 +99,7 @@ static int fnc_reduce (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
 	qse_awk_val_t* retv;
 	qse_long_t opidx, lv;
-	qse_flt_t rv;
+	qse_awk_flt_t rv;
 	int n;
 
 	static MPI_Op optab[] =
@@ -125,7 +125,7 @@ static int fnc_reduce (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	}
 	else
 	{
-		qse_flt_t fout;
+		qse_awk_flt_t fout;
 		if (MPI_Allreduce (&rv, &fout, 1, MPI_LONG_DOUBLE, optab[opidx], MPI_COMM_WORLD) != MPI_SUCCESS) goto softfail;
 		retv = qse_awk_rtx_makefltval (rtx, fout);
 	}

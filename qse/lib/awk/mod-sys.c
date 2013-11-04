@@ -375,7 +375,7 @@ static int fnc_getegid (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 static int fnc_sleep (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
 	qse_long_t lv;
-	qse_flt_t fv;
+	qse_awk_flt_t fv;
 	qse_awk_val_t* retv;
 	int rx;
 

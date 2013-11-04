@@ -345,7 +345,11 @@ static int print_expr (qse_awk_t* awk, qse_awk_nde_t* nde)
 
 				qse_strxfmt (
 					buf, QSE_COUNTOF(buf), 
+				#if defined(QSE_AWK_USE_FLTMAX_T)
+					QSE_T("%jf"),
+				#else
 					QSE_T("%zf"), 
+				#endif
 					((qse_awk_nde_flt_t*)nde)->val
 				);
 

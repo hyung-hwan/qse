@@ -22,6 +22,14 @@
 #include <qse/cmn/mbwc.h>
 #include "mem.h"
 
+#if !defined(HAVE_VA_COPY)
+#	if defined(HAVE___VA_COPY)
+#		define va_copy(dst,src) __va_copy((dst),(src))
+#	else
+#		define va_copy(dst,src) QSE_MEMCPY(&(dst),&(src),QSE_SIZEOF(va_list))
+#	endif
+#endif
+
 static int put_mchar_null (qse_mchar_t c, void* ctx)
 {
 	return 1;

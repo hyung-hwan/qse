@@ -137,7 +137,7 @@ struct qse_awk_nde_int_t
 struct qse_awk_nde_flt_t
 {
 	QSE_AWK_NDE_HDR;
-	qse_flt_t   val;
+	qse_awk_flt_t   val;
 	qse_char_t* str;
 	qse_size_t  len;
 };

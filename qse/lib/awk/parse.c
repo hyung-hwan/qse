@@ -3254,7 +3254,7 @@ static qse_awk_nde_t* parse_expr_withdc (
 union folded_t
 {
 	qse_long_t l;
-	qse_flt_t r;
+	qse_awk_flt_t r;
 };
 typedef union folded_t folded_t;
 
@@ -3288,8 +3288,8 @@ static int fold_constants_for_binop (
 			case QSE_AWK_BINOP_DIV:
 				if (INT_BINOP_INT(left,%,right))
 				{
-					folded->r = (qse_flt_t)((qse_awk_nde_int_t*)left)->val / 
-					            (qse_flt_t)((qse_awk_nde_int_t*)right)->val;
+					folded->r = (qse_awk_flt_t)((qse_awk_nde_int_t*)left)->val / 
+					            (qse_awk_flt_t)((qse_awk_nde_int_t*)right)->val;
 					fold = QSE_AWK_NDE_FLT;
 					break;
 				}
@@ -3371,7 +3371,7 @@ static int fold_constants_for_binop (
 
 			case QSE_AWK_BINOP_IDIV:
 				folded->l = (qse_long_t)
-					((qse_flt_t)((qse_awk_nde_int_t*)left)->val / 
+					((qse_awk_flt_t)((qse_awk_nde_int_t*)left)->val / 
 					 ((qse_awk_nde_flt_t*)right)->val);
 				fold = QSE_AWK_NDE_INT;
 				break;
@@ -3379,7 +3379,7 @@ static int fold_constants_for_binop (
 			case QSE_AWK_BINOP_MOD:
 				folded->r = awk->prm.math.mod (
 					awk, 
-					(qse_flt_t)((qse_awk_nde_int_t*)left)->val, 
+					(qse_awk_flt_t)((qse_awk_nde_int_t*)left)->val, 
 					((qse_awk_nde_flt_t*)right)->val
 				);
 				break;
@@ -3414,7 +3414,7 @@ static int fold_constants_for_binop (
 			case QSE_AWK_BINOP_IDIV:
 				folded->l = (qse_long_t)
 					(((qse_awk_nde_int_t*)left)->val / 
-					 (qse_flt_t)((qse_awk_nde_int_t*)right)->val);
+					 (qse_awk_flt_t)((qse_awk_nde_int_t*)right)->val);
 				fold = QSE_AWK_NDE_INT;
 				break;
 
@@ -3422,7 +3422,7 @@ static int fold_constants_for_binop (
 				folded->r = awk->prm.math.mod (
 					awk, 
 					((qse_awk_nde_flt_t*)left)->val, 
-					(qse_flt_t)((qse_awk_nde_int_t*)right)->val
+					(qse_awk_flt_t)((qse_awk_nde_int_t*)right)->val
 				);
 				break;
 
@@ -3473,7 +3473,7 @@ static qse_awk_nde_t* new_int_node (
 }
 
 static qse_awk_nde_t* new_flt_node (
-	qse_awk_t* awk, qse_flt_t rv, const qse_awk_loc_t* loc)
+	qse_awk_t* awk, qse_awk_flt_t rv, const qse_awk_loc_t* loc)
 {
 	qse_awk_nde_flt_t* tmp;
 
@@ -3502,7 +3502,7 @@ static QSE_INLINE void update_int_node (
 }
 
 static QSE_INLINE void update_flt_node (
-	qse_awk_t* awk, qse_awk_nde_flt_t* node, qse_flt_t rv)
+	qse_awk_t* awk, qse_awk_nde_flt_t* node, qse_awk_flt_t rv)
 {
 	node->val = rv;
 	if (node->str)
