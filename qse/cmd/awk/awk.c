@@ -812,7 +812,7 @@ static int comparg (int argc, qse_char_t* argv[], struct arg_t* arg)
 	for (i = 0; i < isfl ; i++) 
 	{
 		if (isf[i].type == QSE_AWK_PARSESTD_FILE)
-			isf[isfl].u.file.cmgr = arg->script_cmgr;
+			isf[i].u.file.cmgr = arg->script_cmgr;
 	}
 
 	isf[isfl].type = QSE_AWK_PARSESTD_NULL;
@@ -1225,7 +1225,6 @@ int qse_main (int argc, qse_achar_t* argv[])
 	/* nothing special */
 #endif
 
-	qse_openstdsios ();
 
 #if defined(_WIN32)
 	codepage = GetConsoleOutputCP();	
@@ -1256,7 +1255,9 @@ int qse_main (int argc, qse_achar_t* argv[])
 
 	open_mpi (&mpi, argc, argv);
 	
+	qse_openstdsios ();
 	ret = qse_runmain (argc, argv, awk_main);
+	qse_closestdsios ();
 
 	close_mpi (&mpi);
 
@@ -1264,7 +1265,6 @@ int qse_main (int argc, qse_achar_t* argv[])
 	WSACleanup ();
 #endif
 
-	qse_closestdsios ();
 	return ret;
 }
 

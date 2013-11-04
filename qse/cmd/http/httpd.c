@@ -1945,8 +1945,6 @@ int qse_main (int argc, qse_achar_t* argv[])
 	/* nothing */
 #endif
 
-	qse_openstdsios ();
-
 #if defined(_WIN32)
 
 	codepage = GetConsoleOutputCP();
@@ -1980,7 +1978,9 @@ int qse_main (int argc, qse_achar_t* argv[])
 	SSL_library_init ();
 #endif
 
+	qse_openstdsios ();
 	ret = qse_runmain (argc, argv, httpd_main);
+	qse_closestdsios ();
 
 #if defined(HAVE_SSL)
 	/* ERR_remove_state() should be called for each thread if the application is thread */
@@ -1995,6 +1995,5 @@ int qse_main (int argc, qse_achar_t* argv[])
 	WSACleanup ();	
 #endif
 
-	qse_closestdsios ();
 	return ret;
 }
