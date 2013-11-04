@@ -1029,8 +1029,6 @@ int qse_main (int argc, qse_achar_t* argv[])
 	/* nothing */
 #endif
 
-	qse_openstdsios ();
-
 #if defined(_WIN32)
 	codepage = GetConsoleOutputCP();	
 	if (codepage == CP_UTF8)
@@ -1051,9 +1049,10 @@ int qse_main (int argc, qse_achar_t* argv[])
 	qse_setdflcmgrbyid (QSE_CMGR_SLMB);
 #endif
 
+	qse_openstdsios ();
 	ret = qse_runmain (argc, argv, sed_main);
-
 	qse_closestdsios ();
+
 	return ret;
 }
 

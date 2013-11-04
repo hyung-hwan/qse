@@ -1914,16 +1914,16 @@ static int __build_environ (
 
 			*eq = QSE_MT('\0');
 
-			kptr = qse_mbstowcsdup (envarr[count], &klen, rtx->awk->mmgr); 
-			vptr = qse_mbstowcsdup (eq + 1, QSE_NULL, rtx->awk->mmgr);
+			/* mbstowcsdup() may fail for invalid encoding. as the environment 
+			 * variaables are not under control, call mbstowcsalldup() instead 
+			 * to go on despite encoding failure */
+			kptr = qse_mbstowcsalldup (envarr[count], &klen, rtx->awk->mmgr); 
+			vptr = qse_mbstowcsalldup (eq + 1, QSE_NULL, rtx->awk->mmgr);
 			if (kptr == QSE_NULL || vptr == QSE_NULL)
 			{
 				if (kptr) QSE_MMGR_FREE (rtx->awk->mmgr, kptr);
 				qse_awk_rtx_refdownval (rtx, v_env);
 
-				/* mbstowcsdup() may fail for invalid encoding.
-				 * so setting the error code to ENOMEM may not
-				 * be really accurate */
 				qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL); 
 				return -1;
 			}			
@@ -1942,9 +1942,6 @@ static int __build_environ (
 				if (kptr) QSE_MMGR_FREE (rtx->awk->mmgr, kptr);
 				qse_awk_rtx_refdownval (rtx, v_env);
 
-				/* mbstowcsdup() may fail for invalid encoding.
-				 * so setting the error code to ENOMEM may not
-				 * be really accurate */
 				qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
 				return -1;
 			}			
