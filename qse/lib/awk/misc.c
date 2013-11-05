@@ -182,6 +182,13 @@ qse_long_t qse_awk_strxtolong (
  * express or implied warranty.
  */
 
+/*
+ *                double(64bits)    extended(80-bits)    quadruple(128-bits)
+ *  exponent      11 bits           15 bits              15 bits
+ *  fraction      52 bits           63 bits              112 bits
+ *  sign          1 bit             1 bit                1 bit
+ *  integer                         1 bit
+ */         
 #define MAX_EXPONENT 511
 
 qse_awk_flt_t qse_awk_strtoflt (qse_awk_t* awk, const qse_char_t* str)
@@ -199,10 +206,10 @@ qse_awk_flt_t qse_awk_strtoflt (qse_awk_t* awk, const qse_char_t* str)
 	qse_awk_flt_t fraction, dbl_exp, * d;
 	const qse_char_t* p;
 	qse_cint_t c;
-	int exp = 0;		/* Esseonent read from "EX" field */
+	int exp = 0;		/* Exponent read from "EX" field */
 
 	/* 
-	 * Esseonent that derives from the fractional part.  Under normal 
+	 * Exponent that derives from the fractional part.  Under normal 
 	 * circumstatnces, it is the negative of the number of digits in F.
 	 * However, if I is very long, the last digits of I get dropped 
 	 * (otherwise a long I with a large negative exponent could cause an
@@ -391,10 +398,10 @@ qse_awk_flt_t qse_awk_strxtoflt (
 	qse_awk_flt_t fraction, dbl_exp, * d;
 	const qse_char_t* p, * end;
 	qse_cint_t c;
-	int exp = 0; /* Esseonent read from "EX" field */
+	int exp = 0; /* Exponent read from "EX" field */
 
 	/* 
-	 * Esseonent that derives from the fractional part.  Under normal 
+	 * Exponent that derives from the fractional part.  Under normal 
 	 * circumstatnces, it is the negative of the number of digits in F.
 	 * However, if I is very long, the last digits of I get dropped 
 	 * (otherwise a long I with a large negative exponent could cause an

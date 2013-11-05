@@ -3999,7 +3999,7 @@ int qse_sed_exec (qse_sed_t* sed, qse_sed_io_impl_t inf, qse_sed_io_impl_t outf)
 
 	while (!sed->e.stopreq)
 	{
-#if defined(QSE_ENABLE_SEDTRACER)
+#if defined(QSE_ENABLE_SED_TRACER)
 		if (sed->opt.tracer) sed->opt.tracer (sed, QSE_SED_TRACER_READ, QSE_NULL);
 #endif
 
@@ -4020,7 +4020,7 @@ int qse_sed_exec (qse_sed_t* sed, qse_sed_io_impl_t inf, qse_sed_io_impl_t outf)
 
 			while (c != &sed->cmd.over)
 			{
-#if defined(QSE_ENABLE_SEDTRACER)
+#if defined(QSE_ENABLE_SED_TRACER)
 				if (sed->opt.tracer) sed->opt.tracer (sed, QSE_SED_TRACER_MATCH, c);
 #endif
 
@@ -4034,7 +4034,7 @@ int qse_sed_exec (qse_sed_t* sed, qse_sed_io_impl_t inf, qse_sed_io_impl_t outf)
 					continue;
 				}
 
-#if defined(QSE_ENABLE_SEDTRACER)
+#if defined(QSE_ENABLE_SED_TRACER)
 				if (sed->opt.tracer) sed->opt.tracer (sed, QSE_SED_TRACER_EXEC, c);
 #endif
 				j = exec_cmd (sed, c);
@@ -4053,7 +4053,7 @@ int qse_sed_exec (qse_sed_t* sed, qse_sed_io_impl_t inf, qse_sed_io_impl_t outf)
 			}
 		}
 
-#if defined(QSE_ENABLE_SEDTRACER)
+#if defined(QSE_ENABLE_SED_TRACER)
 		if (sed->opt.tracer) sed->opt.tracer (sed, QSE_SED_TRACER_WRITE, QSE_NULL);
 #endif
 		if (emit_output (sed, 0) <= -1) { ret = -1; goto done; }

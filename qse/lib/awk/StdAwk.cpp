@@ -1168,7 +1168,7 @@ void  StdAwk::freeMem (void* ptr)
 
 StdAwk::flt_t StdAwk::pow (flt_t x, flt_t y) 
 { 
-#if defined(QSE_AWK_USE_FLTMAX_T) && defined(HAVE_POWQ)
+#if defined(QSE_USE_AWK_FLTMAX) && defined(HAVE_POWQ)
 	return ::powq (x, y);
 #elif defined(HAVE_POWL) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
 	return ::powl (x, y);
@@ -1183,7 +1183,7 @@ StdAwk::flt_t StdAwk::pow (flt_t x, flt_t y)
 
 StdAwk::flt_t StdAwk::mod (flt_t x, flt_t y) 
 { 
-#if defined(QSE_AWK_USE_FLTMAX_T) && defined(HAVE_FMODQ)
+#if defined(QSE_USE_AWK_FLTMAX) && defined(HAVE_FMODQ)
 	return ::fmodq (x, y);
 #elif defined(HAVE_FMODL) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
 	return ::fmodl (x, y);
@@ -1198,7 +1198,7 @@ StdAwk::flt_t StdAwk::mod (flt_t x, flt_t y)
 
 StdAwk::flt_t StdAwk::sin (flt_t x)
 { 
-#if defined(QSE_AWK_USE_FLTMAX_T) && defined(HAVE_SINQ)
+#if defined(QSE_USE_AWK_FLTMAX) && defined(HAVE_SINQ)
 	return ::sinq (x);
 #elif defined(HAVE_SINL) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
 	return ::sinl (x);
@@ -1213,7 +1213,7 @@ StdAwk::flt_t StdAwk::sin (flt_t x)
 
 StdAwk::flt_t StdAwk::cos (flt_t x)
 { 
-#if defined(QSE_AWK_USE_FLTMAX_T) && defined(HAVE_COSQ)
+#if defined(QSE_USE_AWK_FLTMAX) && defined(HAVE_COSQ)
 	return ::cosq (x);
 #elif defined(HAVE_COSL) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
 	return ::cosl (x);
@@ -1228,7 +1228,7 @@ StdAwk::flt_t StdAwk::cos (flt_t x)
 
 StdAwk::flt_t StdAwk::tan (flt_t x)
 { 
-#if defined(QSE_AWK_USE_FLTMAX_T) && defined(HAVE_TANQ)
+#if defined(QSE_USE_AWK_FLTMAX) && defined(HAVE_TANQ)
 	return ::tanq (x);
 #elif defined(HAVE_TANL) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
 	return ::tanl (x);
@@ -1243,7 +1243,7 @@ StdAwk::flt_t StdAwk::tan (flt_t x)
 
 StdAwk::flt_t StdAwk::atan (flt_t x)
 { 
-#if defined(QSE_AWK_USE_FLTMAX_T) && defined(HAVE_ATANQ)
+#if defined(QSE_USE_AWK_FLTMAX) && defined(HAVE_ATANQ)
 	return ::atanq (x);
 #elif defined(HAVE_ATANL) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
 	return ::atanl (x);
@@ -1258,7 +1258,7 @@ StdAwk::flt_t StdAwk::atan (flt_t x)
 
 StdAwk::flt_t StdAwk::atan2 (flt_t x, flt_t y) 
 { 
-#if defined(QSE_AWK_USE_FLTMAX_T) && defined(HAVE_ATAN2Q)
+#if defined(QSE_USE_AWK_FLTMAX) && defined(HAVE_ATAN2Q)
 	return ::atan2q (x, y);
 #elif defined(HAVE_ATAN2L) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
 	return ::atan2l (x, y);
@@ -1274,7 +1274,7 @@ StdAwk::flt_t StdAwk::atan2 (flt_t x, flt_t y)
 StdAwk::flt_t StdAwk::log (flt_t x)
 { 
 	/* natural logarithm */
-#if defined(QSE_AWK_USE_FLTMAX_T) && defined(HAVE_LOGQ)
+#if defined(QSE_USE_AWK_FLTMAX) && defined(HAVE_LOGQ)
 	return ::logq (x);
 #elif defined(HAVE_LOGL) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
 	return ::logl (x);
@@ -1290,7 +1290,7 @@ StdAwk::flt_t StdAwk::log (flt_t x)
 StdAwk::flt_t StdAwk::log10 (flt_t x)
 { 
 	/* common logarithm */
-#if defined(QSE_AWK_USE_FLTMAX_T) && defined(HAVE_LOG10Q)
+#if defined(QSE_USE_AWK_FLTMAX) && defined(HAVE_LOG10Q)
 	return ::log10q (x);
 #elif defined(HAVE_LOG10L) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
 	return ::log10l (x);
@@ -1305,7 +1305,7 @@ StdAwk::flt_t StdAwk::log10 (flt_t x)
 
 StdAwk::flt_t StdAwk::exp (flt_t x)
 { 
-#if defined(QSE_AWK_USE_FLTMAX_T) && defined(HAVE_EXPQ)
+#if defined(QSE_USE_AWK_FLTMAX) && defined(HAVE_EXPQ)
 	return ::expq (x);
 #elif defined(HAVE_EXPL) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
 	return ::expl (x);
@@ -1320,7 +1320,7 @@ StdAwk::flt_t StdAwk::exp (flt_t x)
 
 StdAwk::flt_t StdAwk::sqrt (flt_t x)
 { 
-#if defined(QSE_AWK_USE_FLTMAX_T) && defined(HAVE_SQRTQ)
+#if defined(QSE_USE_AWK_FLTMAX) && defined(HAVE_SQRTQ)
 	return ::sqrtq (x);
 #elif defined(HAVE_SQRTL) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
 	return ::sqrtl (x);

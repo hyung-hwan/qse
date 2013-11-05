@@ -44,8 +44,12 @@ public:
 	typedef qse_htb_t htb_t;
 	typedef qse_htb_pair_t pair_t;
 
-	/** Defines a primitive handle */
+	// define a primitive handle 
 	typedef qse_awk_t awk_t;
+
+	// redefine flt_t. To access Types::flt_t, use the fully qualified 
+	// name as it's overriding Types::flt_t. 
+	typedef qse_awk_flt_t flt_t; 
 
 	typedef qse_awk_loc_t loc_t;
 	typedef qse_awk_errnum_t errnum_t;

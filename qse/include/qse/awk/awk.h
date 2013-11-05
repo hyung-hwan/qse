@@ -35,8 +35,8 @@
  * - consider something like ${1:3,5} => $1, $2, $3, and $5 concatenated
  */
 
-#if defined(QSE_AWK_USE_FLTMAX_T)
-typedef qse_flt_t qse_awk_fltmax_t;
+#if defined(QSE_USE_AWK_FLTMAX)
+typedef qse_fltmax_t qse_awk_flt_t;
 #else
 typedef qse_flt_t qse_awk_flt_t;
 #endif
