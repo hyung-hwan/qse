@@ -716,7 +716,7 @@
 #undef QSE_ENABLE_BUNDLED_UNICODE
 
 /* enable qse_sed_setexectracer() */
-#undef QSE_ENABLE_SEDTRACER
+#undef QSE_ENABLE_SED_TRACER
 
 /* link modules statically into the main library */
 #undef QSE_ENABLE_STATIC_MODULE
@@ -822,6 +822,9 @@
 
 /* sizeof(__int8) */
 #undef QSE_SIZEOF___INT8
+
+/* use qse_fltmax_t for floating-point numbers in AWK */
+#undef QSE_USE_AWK_FLTMAX
 
 /* use the syscall() function to invoke a system call */
 #undef QSE_USE_SYSCALL

@@ -7290,7 +7290,7 @@ wp_mod_main:
 			qse_awk_flt_t r;
 			int n;
 	
-		#if defined(QSE_AWK_USE_FLTMAX_T)
+		#if defined(QSE_USE_AWK_FLTMAX)
 			FMT_CHAR (QSE_T('j'));
 		#else
 			FMT_CHAR (QSE_T('z'));

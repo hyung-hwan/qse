@@ -560,11 +560,24 @@ then
 	[CXXFLAGS="$CXXFLAGS $PTHREAD_CFLAGS"]
 fi
 
-AC_ARG_ENABLE([sedtracer], [AS_HELP_STRING([--enable-sedtracer],[enable qse_sed_setexectracer() (default. yes)])],
-	enable_sedtracer_is=$enableval,enable_sedtracer_is=yes)
-if test "${enable_sedtracer_is}" = "yes"
+AC_ARG_ENABLE([awk-fltmax], 
+	[AS_HELP_STRING([--enable-awk-fltmax],[use qse_fltmax_t for floating-point numbers in AWK (default. no)])],
+	enable_awk_fltmax_is=$enableval,
+	enable_awk_fltmax_is=no
+)
+if test "${enable_awk_fltmax_is}" = "yes"
 then
-	AC_DEFINE([QSE_ENABLE_SEDTRACER],[],[enable qse_sed_setexectracer()])
+	AC_DEFINE([QSE_USE_AWK_FLTMAX],[],[use qse_fltmax_t for floating-point numbers in AWK])
+fi
+
+AC_ARG_ENABLE([sed-tracer],
+	[AS_HELP_STRING([--enable-sed-tracer],[enable qse_sed_setexectracer() (default. yes)])],
+	enable_sed_tracer_is=$enableval,
+	enable_sed_tracer_is=yes
+)
+if test "${enable_sed_tracer_is}" = "yes"
+then
+	AC_DEFINE([QSE_ENABLE_SED_TRACER],[],[enable qse_sed_setexectracer()])
 fi
 
 AC_MSG_CHECKING([for socklen_t in sys/socket.h])
