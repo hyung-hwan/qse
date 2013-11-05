@@ -151,10 +151,10 @@ int StdAwk::open ()
 
 	qse_ntime_t now;
 
-	this->seed = (qse_gettime(&now) <= -1)? 0u: ((long_t)now.sec + (long_t)now.nsec);
+	this->seed = (qse_gettime(&now) <= -1)? 0u: ((int_t)now.sec + (int_t)now.nsec);
 	/* i don't care if the seed becomes negative or overflows.
 	 * i just convert the signed value to the unsigned one. */
-	this->prand = (qse_ulong_t)(this->seed * this->seed * this->seed);
+	this->prand = (uint_t)(this->seed * this->seed * this->seed);
 	/* make sure that the actual seeding is not 0 */
 	if (this->prand == 0) this->prand++;
 
@@ -230,7 +230,7 @@ int StdAwk::build_argcv (Run* run)
 			this->runarg.ptr[i].len, true) <= -1) return -1;
 	}
 		
-	run->setGlobal (this->gbl_argc, (long_t)this->runarg.len);
+	run->setGlobal (this->gbl_argc, (int_t)this->runarg.len);
 	run->setGlobal (this->gbl_argv, argv);
 	return 0;
 }
@@ -343,9 +343,15 @@ int StdAwk::make_additional_globals (Run* run)
 int StdAwk::rand (Run& run, Value& ret, Value* args, size_t nargs,
 	const char_t* name, size_t len)
 {
-#define RANDV_MAX QSE_TYPE_MAX(long_t)
+#define RANDV_MAX QSE_TYPE_MAX(int_t)
+
+#if defined(QSE_USE_AWK_INTMAX)
+	this->prand = qse_randxsuintmax (this->prand);
+#else
 	this->prand = qse_randxsulong (this->prand);
-     long_t randv = this->prand % RANDV_MAX;
+#endif
+
+     int_t randv = this->prand % RANDV_MAX;
 	return ret.setFlt ((flt_t)randv / RANDV_MAX);
 #undef RANDV_MAX 
 }
@@ -353,14 +359,14 @@ int StdAwk::rand (Run& run, Value& ret, Value* args, size_t nargs,
 int StdAwk::srand (Run& run, Value& ret, Value* args, size_t nargs,
 	const char_t* name, size_t len)
 {
-	long_t prevSeed = (long_t)this->seed;
+	int_t prevSeed = (int_t)this->seed;
 
 	qse_ntime_t now;
 
 	if (nargs <= 0)
 	{
 		this->seed = (qse_gettime (&now) <= -1)?
-			(this->seed * this->seed): ((long_t)now.sec + (long_t)now.nsec);
+			(this->seed * this->seed): ((int_t)now.sec + (int_t)now.nsec);
 	}
 	else
 	{
@@ -369,11 +375,11 @@ int StdAwk::srand (Run& run, Value& ret, Value* args, size_t nargs,
 
 	/* i don't care if the seed becomes negative or overflows.
 	 * i just convert the signed value to the unsigned one. */
-	this->prand = (qse_ulong_t)(this->seed * this->seed * this->seed);
+	this->prand = (uint_t)(this->seed * this->seed * this->seed);
 	/* make sure that the actual seeding is not 0 */
 	if (this->prand == 0) this->prand++;
 
-	return ret.setInt ((long_t)prevSeed);
+	return ret.setInt ((int_t)prevSeed);
 }
 
 int StdAwk::system (Run& run, Value& ret, Value* args, size_t nargs,
@@ -383,15 +389,15 @@ int StdAwk::system (Run& run, Value& ret, Value* args, size_t nargs,
 	const char_t* ptr = args[0].toStr(&l);
 
 #if defined(_WIN32)
-	return ret.setInt ((long_t)::_tsystem(ptr));
+	return ret.setInt ((int_t)::_tsystem(ptr));
 #elif defined(QSE_CHAR_IS_MCHAR)
-	return ret.setInt ((long_t)::system(ptr));
+	return ret.setInt ((int_t)::system(ptr));
 #else
 
 	qse_mchar_t* mbs;
 	mbs = qse_wcstombsdup (ptr, QSE_NULL, ((Awk*)run)->getMmgr());
 	if (mbs == QSE_NULL) return -1;
-	int n = ret.setInt ((long_t)::system(mbs));
+	int n = ret.setInt ((int_t)::system(mbs));
 	QSE_MMGR_FREE (((Awk*)run)->getMmgr(), mbs);
 	return n;
 #endif
@@ -464,13 +470,13 @@ int StdAwk::setioattr (
 	    qse_strxchr (ptr[1], l[1], QSE_T('\0')) ||
 	    qse_strxchr (ptr[2], l[2], QSE_T('\0')))
 	{
-		return ret.setInt ((long_t)-1);
+		return ret.setInt ((int_t)-1);
 	}
 	
 	int tmout;
 	if ((tmout = timeout_code (ptr[1])) >= 0)
 	{
-		long_t lv;
+		int_t lv;
 		flt_t fv;
 		int n;
 
@@ -488,11 +494,11 @@ int StdAwk::setioattr (
 		else
 		{
 			qse_awk_flt_t nsec;
-			ioattr->tmout[tmout].sec = (qse_long_t)fv;
+			ioattr->tmout[tmout].sec = (qse_int_t)fv;
 			nsec = fv - ioattr->tmout[tmout].sec;
 			ioattr->tmout[tmout].nsec = QSE_SEC_TO_NSEC(nsec);
 		}
-		return ret.setInt ((long_t)0);
+		return ret.setInt ((int_t)0);
 	}
 #if defined(QSE_CHAR_IS_WCHAR)
 	else if (qse_strcasecmp (ptr[1], QSE_T("codepage")) == 0)
@@ -504,7 +510,7 @@ int StdAwk::setioattr (
 		else
 		{
 			cmgr = qse_findcmgr (ptr[2]);
-			if (cmgr == QSE_NULL) return ret.setInt ((long_t)-1);
+			if (cmgr == QSE_NULL) return ret.setInt ((int_t)-1);
 		}
 		
 		ioattr = find_or_make_ioattr (ptr[0], l[0]);
@@ -518,7 +524,7 @@ int StdAwk::setioattr (
 	else
 	{
 		// unknown attribute name
-		return ret.setInt ((long_t)-1);
+		return ret.setInt ((int_t)-1);
 	}
 }
 
@@ -546,7 +552,7 @@ int StdAwk::getioattr (
 		if ((tmout = timeout_code(ptr[1])) >= 0)
 		{
 			if (ioattr->tmout[tmout].nsec == 0)
-				xx = args[2].setInt ((long_t)ioattr->tmout[tmout].sec);
+				xx = args[2].setInt ((int_t)ioattr->tmout[tmout].sec);
 			else
 				xx = args[2].setFlt ((qse_awk_flt_t)ioattr->tmout[tmout].sec + QSE_NSEC_TO_SEC((qse_awk_flt_t)ioattr->tmout[tmout].nsec));
 		}
@@ -559,7 +565,7 @@ int StdAwk::getioattr (
 	}
 
 	// unknown attribute name or errors
-	return ret.setInt ((long_t)xx);
+	return ret.setInt ((int_t)xx);
 }
 
 int StdAwk::open_nwio (Pipe& io, int flags, void* nwad)
@@ -919,7 +925,7 @@ int StdAwk::open_console_in (Console& io)
 		
 		// ok to find ARGV[this->runarg_index] as ARGV[0]
 		// has been skipped.
-		ibuflen = qse_awk_longtostr (
+		ibuflen = qse_awk_inttostr (
 			rtx->awk, this->runarg_index, 
 			10, QSE_NULL,
 			ibuf, QSE_COUNTOF(ibuf)

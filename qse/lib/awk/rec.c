@@ -337,7 +337,7 @@ static int split_record (qse_awk_rtx_t* rtx)
 	if (fs_free != QSE_NULL) QSE_AWK_FREE (rtx->awk, fs_free);
 
 	/* set the number of fields */
-	v = qse_awk_rtx_makeintval (rtx, (qse_long_t)rtx->inrec.nflds);
+	v = qse_awk_rtx_makeintval (rtx, (qse_awk_int_t)rtx->inrec.nflds);
 	if (v == QSE_NULL) return -1;
 
 	qse_awk_rtx_refupval (rtx, v);
@@ -510,7 +510,7 @@ static int recomp_record_fields (
 
 	if (((qse_awk_val_int_t*)v)->val != max)
 	{
-		v = qse_awk_rtx_makeintval (run, (qse_long_t)max);
+		v = qse_awk_rtx_makeintval (run, (qse_awk_int_t)max);
 		if (v == QSE_NULL) return -1;
 
 		qse_awk_rtx_refupval (run, v);

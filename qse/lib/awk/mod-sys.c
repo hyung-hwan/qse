@@ -46,7 +46,7 @@
 
 static int fnc_fork (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
-	qse_long_t pid;
+	qse_awk_int_t pid;
 	qse_awk_val_t* retv;
 
 #if defined(_WIN32)
@@ -74,13 +74,13 @@ static int fnc_fork (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 
 static int fnc_wait (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
-	qse_long_t pid;
+	qse_awk_int_t pid;
 	qse_awk_val_t* retv;
 	int rx;
 
 /* TODO: handle more parameters */
 
-	rx = qse_awk_rtx_valtolong (rtx, qse_awk_rtx_getarg (rtx, 0), &pid);
+	rx = qse_awk_rtx_valtoint (rtx, qse_awk_rtx_getarg (rtx, 0), &pid);
 	if (rx >= 0)
 	{
 #if defined(_WIN32)
@@ -106,12 +106,12 @@ static int fnc_wait (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 
 static int fnc_kill (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
-	qse_long_t pid, sig;
+	qse_awk_int_t pid, sig;
 	qse_awk_val_t* retv;
 	int rx;
 
-	if (qse_awk_rtx_valtolong (rtx, qse_awk_rtx_getarg (rtx, 0), &pid) <= -1 ||
-	    qse_awk_rtx_valtolong (rtx, qse_awk_rtx_getarg (rtx, 1), &sig) <= -1)
+	if (qse_awk_rtx_valtoint (rtx, qse_awk_rtx_getarg (rtx, 0), &pid) <= -1 ||
+	    qse_awk_rtx_valtoint (rtx, qse_awk_rtx_getarg (rtx, 1), &sig) <= -1)
 	{
 		rx = -1;
 	}
@@ -140,7 +140,7 @@ static int fnc_kill (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 
 static int fnc_getpgrp (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
-	qse_long_t pid;
+	qse_awk_int_t pid;
 	qse_awk_val_t* retv;
 
 #if defined(_WIN32)
@@ -168,7 +168,7 @@ static int fnc_getpgrp (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 
 static int fnc_getpid (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
-	qse_long_t pid;
+	qse_awk_int_t pid;
 	qse_awk_val_t* retv;
 
 #if defined(_WIN32)
@@ -225,7 +225,7 @@ static int fnc_gettid (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	#endif
 #endif
 
-	retv = qse_awk_rtx_makeintval (rtx, (qse_long_t)pid);
+	retv = qse_awk_rtx_makeintval (rtx, (qse_awk_int_t)pid);
 	if (retv == QSE_NULL) return -1;
 
 	qse_awk_rtx_setretval (rtx, retv);
@@ -234,7 +234,7 @@ static int fnc_gettid (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 
 static int fnc_getppid (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
-	qse_long_t pid;
+	qse_awk_int_t pid;
 	qse_awk_val_t* retv;
 
 #if defined(_WIN32)
@@ -262,7 +262,7 @@ static int fnc_getppid (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 
 static int fnc_getuid (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
-	qse_long_t uid;
+	qse_awk_int_t uid;
 	qse_awk_val_t* retv;
 
 #if defined(_WIN32)
@@ -290,7 +290,7 @@ static int fnc_getuid (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 
 static int fnc_getgid (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
-	qse_long_t gid;
+	qse_awk_int_t gid;
 	qse_awk_val_t* retv;
 
 #if defined(_WIN32)
@@ -318,7 +318,7 @@ static int fnc_getgid (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 
 static int fnc_geteuid (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
-	qse_long_t uid;
+	qse_awk_int_t uid;
 	qse_awk_val_t* retv;
 
 #if defined(_WIN32)
@@ -346,7 +346,7 @@ static int fnc_geteuid (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 
 static int fnc_getegid (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
-	qse_long_t gid;
+	qse_awk_int_t gid;
 	qse_awk_val_t* retv;
 
 #if defined(_WIN32)
@@ -374,7 +374,7 @@ static int fnc_getegid (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 
 static int fnc_sleep (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
-	qse_long_t lv;
+	qse_awk_int_t lv;
 	qse_awk_flt_t fv;
 	qse_awk_val_t* retv;
 	int rx;
@@ -409,20 +409,20 @@ static int fnc_sleep (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 		rx = 0;
 #elif defined(__DOS__)
 		/* no high-resolution sleep() is available */
-		rx = sleep ((qse_long_t)fv);	
+		rx = sleep ((qse_awk_int_t)fv);	
 #elif defined(HAVE_NANOSLEEP)
 		struct timespec req;
-		req.tv_sec = (qse_long_t)fv;
+		req.tv_sec = (qse_awk_int_t)fv;
 		req.tv_nsec = QSE_SEC_TO_NSEC(fv - req.tv_sec);
 		rx = nanosleep (&req, QSE_NULL);
 #elif defined(HAVE_SELECT)
 		struct timeval req;
-		req.tv_sec = (qse_long_t)fv;
+		req.tv_sec = (qse_awk_int_t)fv;
 		req.tv_nsec = QSE_SEC_TO_USEC(fv - req.tv_sec);
 		rx = select (0, QSE_NULL, QSE_NULL, QSE_NULL, &req);
 #else
 		/* no high-resolution sleep() is available */
-		rx = sleep ((qse_long_t)fv);	
+		rx = sleep ((qse_awk_int_t)fv);	
 #endif
 	}
 
@@ -455,7 +455,7 @@ static int fnc_settime (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 
 	now.nsec = 0;
 
-	if (qse_awk_rtx_valtolong (rtx, qse_awk_rtx_getarg (rtx, 0), &now.sec) <= -1 ||
+	if (qse_awk_rtx_valtoint (rtx, qse_awk_rtx_getarg (rtx, 0), &now.sec) <= -1 ||
 	    qse_settime (&now) <= -1) rx = -1;
 	else rx = 0;
 
@@ -504,10 +504,10 @@ static int fnc_getnwifcfg (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	out.u.cplcpy.len = QSE_COUNTOF(cfg.name);
 	if (qse_awk_rtx_valtostr (rtx, qse_awk_rtx_getarg (rtx, 0), &out) >= 0)
 	{
-		qse_long_t type;
+		qse_awk_int_t type;
 		int rx;
 
-		rx = qse_awk_rtx_valtolong (rtx, qse_awk_rtx_getarg (rtx, 1), &type);
+		rx = qse_awk_rtx_valtoint (rtx, qse_awk_rtx_getarg (rtx, 1), &type);
 		if (rx >= 0)
 		{
 			cfg.type = type;
@@ -515,7 +515,7 @@ static int fnc_getnwifcfg (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 			if (qse_getnwifcfg (&cfg) >= 0)
 			{
 				/* make a map value containg configuration */	
-				qse_long_t index, mtu;
+				qse_awk_int_t index, mtu;
 				qse_char_t addr[128];
 				qse_char_t mask[128];
 				qse_char_t ethw[32];

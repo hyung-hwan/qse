@@ -173,8 +173,8 @@ protected:
      void* modsym (void* handle, const char_t* name);
 
 protected:
-	qse_long_t seed; 
-	qse_ulong_t prand;
+	int_t seed; 
+	uint_t prand;
 	qse_htb_t cmgrtab;
 	bool cmgrtab_inited;
 

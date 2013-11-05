@@ -122,8 +122,8 @@ typedef struct xtn_t
 
 typedef struct rxtn_t
 {
-	qse_long_t seed;	
-	qse_ulong_t prand; /* last random value returned */
+	qse_awk_int_t seed;	
+	qse_awk_uint_t prand; /* last random value returned */
 
 	struct
 	{
@@ -1551,7 +1551,7 @@ static int open_rio_console (qse_awk_rtx_t* rtx, qse_awk_rio_arg_t* riod)
 			map = ((qse_awk_val_map_t*)argv)->map;
 			QSE_ASSERT (map != QSE_NULL);
 			
-			ibuflen = qse_awk_longtostr (
+			ibuflen = qse_awk_inttostr (
 				rtx->awk, rxtn->c.in.index + 1, 10, QSE_NULL,
 				ibuf, QSE_COUNTOF(ibuf));
 
@@ -1781,7 +1781,7 @@ static int build_argcv (
 	qse_awk_val_t* v_argc;
 	qse_awk_val_t* v_argv;
 	qse_awk_val_t* v_tmp;
-	qse_char_t key[QSE_SIZEOF(qse_long_t)*8+2];
+	qse_char_t key[QSE_SIZEOF(qse_awk_int_t)*8+2];
 	qse_size_t key_len;
 
 	v_argv = qse_awk_rtx_makemapval (rtx);
@@ -1832,7 +1832,7 @@ static int build_argcv (
 				return -1;
 			}
 
-			key_len = qse_awk_longtostr (
+			key_len = qse_awk_inttostr (
 				rtx->awk, argc, 10,
 				QSE_NULL, key, QSE_COUNTOF(key));
 			QSE_ASSERT (key_len != (qse_size_t)-1);
@@ -1852,7 +1852,7 @@ static int build_argcv (
 	}
 	else argc = 1;
 
-	v_argc = qse_awk_rtx_makeintval (rtx, (qse_long_t)argc);
+	v_argc = qse_awk_rtx_makeintval (rtx, (qse_awk_int_t)argc);
 	if (v_argc == QSE_NULL)
 	{
 		qse_awk_rtx_refdownval (rtx, v_argv);
@@ -2089,10 +2089,10 @@ qse_awk_rtx_t* qse_awk_rtx_openstd (
 	rxtn->ecb.close = fini_rxtn;
 	qse_awk_rtx_pushecb (rtx, &rxtn->ecb);
 
-	rxtn->seed = (qse_gettime (&now) <= -1)? 0u: ((qse_long_t)now.sec + (qse_long_t)now.nsec);
+	rxtn->seed = (qse_gettime (&now) <= -1)? 0u: ((qse_awk_int_t)now.sec + (qse_awk_int_t)now.nsec);
 	/* i don't care if the seed becomes negative or overflows.
 	 * i just convert the signed value to the unsigned one. */
-	rxtn->prand = (qse_ulong_t)(rxtn->seed * rxtn->seed * rxtn->seed);
+	rxtn->prand = (qse_awk_uint_t)(rxtn->seed * rxtn->seed * rxtn->seed);
 	/* make sure that the actual seeding is not 0 */
 	if (rxtn->prand == 0) rxtn->prand++;
 
@@ -2143,14 +2143,18 @@ void* qse_awk_rtx_getxtnstd (qse_awk_rtx_t* rtx)
 
 static int fnc_rand (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
-#define RANDV_MAX QSE_TYPE_MAX(qse_long_t)
+#define RANDV_MAX QSE_TYPE_MAX(qse_awk_int_t)
 	qse_awk_val_t* r;
-	qse_long_t randv;
+	qse_awk_int_t randv;
 	rxtn_t* rxtn;
 
 	rxtn = (rxtn_t*) QSE_XTN (rtx);
 
+#if defined(QSE_USE_AWK_INTMAX)
+	rxtn->prand = qse_randxsuintmax (rxtn->prand);
+#else
 	rxtn->prand = qse_randxsulong (rxtn->prand);
+#endif
 	randv = rxtn->prand % RANDV_MAX;
 
 	r = qse_awk_rtx_makefltval (rtx, (qse_awk_flt_t)randv / RANDV_MAX);
@@ -2165,10 +2169,10 @@ static int fnc_srand (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
 	qse_size_t nargs;
 	qse_awk_val_t* a0;
-	qse_long_t lv;
+	qse_awk_int_t lv;
 	qse_awk_val_t* r;
 	int n;
-	qse_long_t prev;
+	qse_awk_int_t prev;
 	qse_ntime_t now;
 	rxtn_t* rxtn;
 
@@ -2181,18 +2185,18 @@ static int fnc_srand (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	if (nargs <= 0)
 	{
 		rxtn->seed = (qse_gettime (&now) <= -1)? 
-			(rxtn->seed * rxtn->seed): ((qse_long_t)now.sec + (qse_long_t)now.nsec);
+			(rxtn->seed * rxtn->seed): ((qse_awk_int_t)now.sec + (qse_awk_int_t)now.nsec);
 	}
 	else
 	{
 		a0 = qse_awk_rtx_getarg (rtx, 0);
-		n = qse_awk_rtx_valtolong (rtx, a0, &lv);
+		n = qse_awk_rtx_valtoint (rtx, a0, &lv);
 		if (n <= -1) return -1;
 		rxtn->seed = lv;
 	}
 	/* i don't care if the seed becomes negative or overflows.
 	 * i just convert the signed value to the unsigned one. */
-	rxtn->prand = (qse_ulong_t)(rxtn->seed * rxtn->seed * rxtn->seed);
+	rxtn->prand = (qse_awk_uint_t)(rxtn->seed * rxtn->seed * rxtn->seed);
 	/* make sure that the actual seeding is not 0 */
 	if (rxtn->prand == 0) rxtn->prand++;
 
@@ -2253,7 +2257,7 @@ static int fnc_system (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 skip_system:
 	if (v->type != QSE_AWK_VAL_STR) QSE_AWK_FREE (rtx->awk, str);
 
-	v = qse_awk_rtx_makeintval (rtx, (qse_long_t)n);
+	v = qse_awk_rtx_makeintval (rtx, (qse_awk_int_t)n);
 	if (v == QSE_NULL) return -1;
 
 	qse_awk_rtx_setretval (rtx, v);
@@ -2355,7 +2359,7 @@ static int fnc_setioattr (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	{
 		ioattr_t* ioattr;
 
-		qse_long_t l;
+		qse_awk_int_t l;
 		qse_awk_flt_t r;
 		int x;
 
@@ -2379,7 +2383,7 @@ static int fnc_setioattr (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 		else if (x >= 1)
 		{
 			qse_awk_flt_t nsec;
-			ioattr->tmout[tmout].sec = (qse_long_t)r;
+			ioattr->tmout[tmout].sec = (qse_awk_int_t)r;
 			nsec = r - ioattr->tmout[tmout].sec;
 			ioattr->tmout[tmout].nsec = QSE_SEC_TO_NSEC(nsec);
 		}
@@ -2432,7 +2436,7 @@ done:
 
 	if (ret >= 0)
 	{
-		v[0] = qse_awk_rtx_makeintval (rtx, (qse_long_t)fret);
+		v[0] = qse_awk_rtx_makeintval (rtx, (qse_awk_int_t)fret);
 		if (v[0] == QSE_NULL) return -1;
 		qse_awk_rtx_setretval (rtx, v[0]);
 	}

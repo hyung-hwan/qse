@@ -3253,7 +3253,7 @@ static qse_awk_nde_t* parse_expr_withdc (
 
 union folded_t
 {
-	qse_long_t l;
+	qse_awk_int_t l;
 	qse_awk_flt_t r;
 };
 typedef union folded_t folded_t;
@@ -3330,7 +3330,7 @@ static int fold_constants_for_binop (
 				break;
 
 			case QSE_AWK_BINOP_IDIV:
-				folded->l = (qse_long_t)FLT_BINOP_FLT(left,/,right);
+				folded->l = (qse_awk_int_t)FLT_BINOP_FLT(left,/,right);
 				fold = QSE_AWK_NDE_INT;
 				break;
 
@@ -3370,7 +3370,7 @@ static int fold_constants_for_binop (
 				break;
 
 			case QSE_AWK_BINOP_IDIV:
-				folded->l = (qse_long_t)
+				folded->l = (qse_awk_int_t)
 					((qse_awk_flt_t)((qse_awk_nde_int_t*)left)->val / 
 					 ((qse_awk_nde_flt_t*)right)->val);
 				fold = QSE_AWK_NDE_INT;
@@ -3412,7 +3412,7 @@ static int fold_constants_for_binop (
 				break;
 
 			case QSE_AWK_BINOP_IDIV:
-				folded->l = (qse_long_t)
+				folded->l = (qse_awk_int_t)
 					(((qse_awk_nde_int_t*)left)->val / 
 					 (qse_awk_flt_t)((qse_awk_nde_int_t*)right)->val);
 				fold = QSE_AWK_NDE_INT;
@@ -3456,7 +3456,7 @@ static qse_awk_nde_t* new_exp_bin_node (
 }
 
 static qse_awk_nde_t* new_int_node (
-	qse_awk_t* awk, qse_long_t lv, const qse_awk_loc_t* loc)
+	qse_awk_t* awk, qse_awk_int_t lv, const qse_awk_loc_t* loc)
 {
 	qse_awk_nde_int_t* tmp;
 
@@ -3490,7 +3490,7 @@ static qse_awk_nde_t* new_flt_node (
 }
 
 static QSE_INLINE void update_int_node (
-	qse_awk_t* awk, qse_awk_nde_int_t* node, qse_long_t lv)
+	qse_awk_t* awk, qse_awk_nde_int_t* node, qse_awk_int_t lv)
 {
 	node->val = lv;
 	if (node->str)
@@ -3948,7 +3948,7 @@ static qse_awk_nde_t* parse_unary (qse_awk_t* awk, const qse_awk_loc_t* xloc)
 				break;
 
 			case QSE_AWK_UNROP_BNOT:
-				folded.l = ~((qse_long_t)((qse_awk_nde_flt_t*)left)->val);
+				folded.l = ~((qse_awk_int_t)((qse_awk_nde_flt_t*)left)->val);
 				fold = QSE_AWK_NDE_INT;
 				break;
 
@@ -4228,7 +4228,7 @@ static qse_awk_nde_t* parse_primary_int  (qse_awk_t* awk, const qse_awk_loc_t* x
 	/* create the node for the literal */
 	nde = (qse_awk_nde_int_t*)new_int_node (
 		awk, 
-		qse_awk_strxtolong (awk, 
+		qse_awk_strxtoint (awk, 
 			QSE_STR_PTR(awk->tok.name),
 			QSE_STR_LEN(awk->tok.name), 
 			0, QSE_NULL
@@ -6304,8 +6304,8 @@ static int deparse (qse_awk_t* awk)
 			}
 			else
 			{
-				len = qse_awk_longtostr (
-					awk, (qse_long_t)i, 
+				len = qse_awk_inttostr (
+					awk, (qse_awk_int_t)i, 
 					10, QSE_T("__g"), tmp, QSE_COUNTOF(tmp));
 				QSE_ASSERT (len != (qse_size_t)-1);
 				if (qse_awk_putsrcstrn (awk, tmp, len) <= -1)
@@ -6329,8 +6329,8 @@ static int deparse (qse_awk_t* awk)
 		}
 		else
 		{
-			len = qse_awk_longtostr (	
-				awk, (qse_long_t)i, 
+			len = qse_awk_inttostr (	
+				awk, (qse_awk_int_t)i, 
 				10, QSE_T("__g"), tmp, QSE_COUNTOF(tmp));
 			QSE_ASSERT (len != (qse_size_t)-1);
 			if (qse_awk_putsrcstrn (awk, tmp, len) <= -1)
@@ -6500,7 +6500,7 @@ static qse_htb_walk_t deparse_func (
 
 	for (i = 0; i < fun->nargs; ) 
 	{
-		n = qse_awk_longtostr (
+		n = qse_awk_inttostr (
 			df->awk, i++, 10, 
 			QSE_T("__p"), df->tmp, df->tmp_len);
 		QSE_ASSERT (n != (qse_size_t)-1);

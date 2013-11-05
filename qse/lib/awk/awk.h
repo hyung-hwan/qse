@@ -311,8 +311,8 @@ struct qse_awk_rtx_t
 		void* fs[2]; 
 		int ignorecase;
 
-		qse_long_t nr;
-		qse_long_t fnr;
+		qse_awk_int_t nr;
+		qse_awk_int_t fnr;
 
 		qse_xstr_t convfmt;
 		qse_xstr_t ofmt;

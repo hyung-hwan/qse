@@ -164,7 +164,7 @@ int Awk::Console::setFileName (const char_t* name)
 	}
 }
 
-int Awk::Console::setFNR (long_t fnr)
+int Awk::Console::setFNR (int_t fnr)
 {
 	val_t* tmp;
 	int n;
@@ -196,7 +196,7 @@ const Awk::char_t* Awk::Value::getEmptyStr()
 	return EMPTY_STRING;
 }
 
-Awk::Value::IntIndex::IntIndex (long_t x)
+Awk::Value::IntIndex::IntIndex (int_t x)
 {
 	ptr = buf;
 	len = 0;
@@ -204,8 +204,8 @@ Awk::Value::IntIndex::IntIndex (long_t x)
 #define NTOC(n) (QSE_T("0123456789")[n])
 
 	int base = 10;
-	long_t last = x % base;
-	long_t y = 0;
+	int_t last = x % base;
+	int_t y = 0;
 	int dig = 0;
 
 	if (x < 0) buf[len++] = QSE_T('-');
@@ -361,9 +361,9 @@ void Awk::Value::clear ()
 	}
 }
 
-Awk::Value::operator Awk::long_t () const
+Awk::Value::operator Awk::int_t () const
 {
-	long_t v;
+	int_t v;
 	if (getInt (&v) <= -1) v = 0;
 	return v;
 }
@@ -383,15 +383,15 @@ Awk::Value::operator const Awk::char_t* () const
 	return ptr;
 }
 
-int Awk::Value::getInt (long_t* v) const
+int Awk::Value::getInt (int_t* v) const
 {
-	long_t lv = 0;
+	int_t lv = 0;
 
 	QSE_ASSERT (this->val != QSE_NULL);
 
 	if (run != QSE_NULL)
 	{
-		int n = qse_awk_rtx_valtolong (this->run->rtx, this->val, &lv);
+		int n = qse_awk_rtx_valtoint (this->run->rtx, this->val, &lv);
 		if (n <= -1) 
 		{
 			run->awk->retrieveError (this->run);
@@ -423,7 +423,7 @@ int Awk::Value::getFlt (flt_t* v) const
 	return 0;
 }
 
-int Awk::Value::getNum (long_t* lv, flt_t* fv) const
+int Awk::Value::getNum (int_t* lv, flt_t* fv) const
 {
 	QSE_ASSERT (this->val != QSE_NULL);
 
@@ -521,7 +521,7 @@ int Awk::Value::setVal (Run* r, val_t* v)
 	return 0;
 }
 
-int Awk::Value::setInt (long_t v)
+int Awk::Value::setInt (int_t v)
 {
 	if (this->run == QSE_NULL) 
 	{
@@ -532,7 +532,7 @@ int Awk::Value::setInt (long_t v)
 	return setInt (this->run, v);
 }
 
-int Awk::Value::setInt (Run* r, long_t v)
+int Awk::Value::setInt (Run* r, int_t v)
 {
 	val_t* tmp;
 	tmp = qse_awk_rtx_makeintval (r->rtx, v);
@@ -696,13 +696,13 @@ int Awk::Value::setIndexedVal (Run* r, const Index& idx, val_t* v)
 	return 0;
 }
 
-int Awk::Value::setIndexedInt (const Index& idx, long_t v)
+int Awk::Value::setIndexedInt (const Index& idx, int_t v)
 {
 	if (run == QSE_NULL) return -1;
 	return setIndexedInt (run, idx, v);
 }
 
-int Awk::Value::setIndexedInt (Run* r, const Index& idx, long_t v)
+int Awk::Value::setIndexedInt (Run* r, const Index& idx, int_t v)
 {
 	val_t* tmp = qse_awk_rtx_makeintval (r->rtx, v);
 	if (tmp == QSE_NULL) 
@@ -943,7 +943,7 @@ void Awk::Run::setErrorWithMessage (
 	qse_awk_rtx_seterrinf (this->rtx, &errinf);
 }
 
-int Awk::Run::setGlobal (int id, long_t v)
+int Awk::Run::setGlobal (int id, int_t v)
 {
 	QSE_ASSERT (this->rtx != QSE_NULL);
 

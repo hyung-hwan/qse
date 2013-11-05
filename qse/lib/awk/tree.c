@@ -316,7 +316,7 @@ static int print_expr (qse_awk_t* awk, qse_awk_nde_t* nde)
 				 *   8  -9223372036854775808                     19  1
 				 *  16  -170141183460469231731687303715884105728 39  1
 				 */
-				qse_char_t buf[QSE_SIZEOF(qse_long_t) * 3 + 2]; 
+				qse_char_t buf[QSE_SIZEOF(qse_awk_int_t) * 3 + 2]; 
 
 				qse_fmtintmax (
 					buf, QSE_COUNTOF(buf),
@@ -423,12 +423,12 @@ static int print_expr (qse_awk_t* awk, qse_awk_nde_t* nde)
 
 		case QSE_AWK_NDE_ARG:
 		{
-			qse_char_t tmp[QSE_SIZEOF(qse_long_t)*8+2]; 
+			qse_char_t tmp[QSE_SIZEOF(qse_awk_int_t)*8+2]; 
 			qse_size_t n;
 			qse_awk_nde_var_t* px = (qse_awk_nde_var_t*)nde;
 			QSE_ASSERT (px->id.idxa != (qse_size_t)-1);
 
-			n = qse_awk_longtostr (
+			n = qse_awk_inttostr (
 				awk,
 				px->id.idxa, 
 				10, QSE_NULL, tmp, QSE_COUNTOF(tmp)
@@ -449,7 +449,7 @@ static int print_expr (qse_awk_t* awk, qse_awk_nde_t* nde)
 			QSE_ASSERT (px->idx != QSE_NULL);
 
 			PUT_SRCSTR (awk, QSE_T("__p"));
-			n = qse_awk_longtostr (
+			n = qse_awk_inttostr (
 				awk,
 				px->id.idxa, 10, QSE_NULL,
 				awk->tmp.fmt, QSE_COUNTOF(awk->tmp.fmt)
@@ -504,11 +504,11 @@ static int print_expr (qse_awk_t* awk, qse_awk_nde_t* nde)
 				}
 				else
 				{
-					qse_char_t tmp[QSE_SIZEOF(qse_long_t)*8+2]; 
+					qse_char_t tmp[QSE_SIZEOF(qse_awk_int_t)*8+2]; 
 					qse_size_t n;
 
 					PUT_SRCSTR (awk, QSE_T("__g"));
-					n = qse_awk_longtostr (
+					n = qse_awk_inttostr (
 						awk,
 						px->id.idxa, 
 						10, 
@@ -545,11 +545,11 @@ static int print_expr (qse_awk_t* awk, qse_awk_nde_t* nde)
 				}
 				else
 				{
-					qse_char_t tmp[QSE_SIZEOF(qse_long_t)*8+2]; 
+					qse_char_t tmp[QSE_SIZEOF(qse_awk_int_t)*8+2]; 
 					qse_size_t n;
 
 					PUT_SRCSTR (awk, QSE_T("__g"));
-					n = qse_awk_longtostr (
+					n = qse_awk_inttostr (
 						awk,
 						px->id.idxa, 
 						10, 
@@ -579,7 +579,7 @@ static int print_expr (qse_awk_t* awk, qse_awk_nde_t* nde)
 			if (px->id.idxa != (qse_size_t)-1) 
 			{
 				PUT_SRCSTR (awk, QSE_T("__l"));
-				n = qse_awk_longtostr (
+				n = qse_awk_inttostr (
 					awk,
 					px->id.idxa,
 					10, 
@@ -605,7 +605,7 @@ static int print_expr (qse_awk_t* awk, qse_awk_nde_t* nde)
 			if (px->id.idxa != (qse_size_t)-1) 
 			{
 				PUT_SRCSTR (awk, QSE_T("__l"));
-				n = qse_awk_longtostr (
+				n = qse_awk_inttostr (
 					awk,
 					px->id.idxa,
 					10,
@@ -759,7 +759,7 @@ static int print_stmt (qse_awk_t* awk, qse_awk_nde_t* p, int depth)
 				for (i = 0; i < px->nlcls - 1; i++) 
 				{
 					PUT_SRCSTR (awk, QSE_T("__l"));
-					n = qse_awk_longtostr (
+					n = qse_awk_inttostr (
 						awk,
 						i, 
 						10,
@@ -772,7 +772,7 @@ static int print_stmt (qse_awk_t* awk, qse_awk_nde_t* p, int depth)
 				}
 
 				PUT_SRCSTR (awk, QSE_T("__l"));
-				n = qse_awk_longtostr (
+				n = qse_awk_inttostr (
 					awk,
 					i, 
 					10,

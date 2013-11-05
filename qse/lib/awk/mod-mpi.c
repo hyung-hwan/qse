@@ -57,7 +57,7 @@ static int fnc_rank (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 static int fnc_hash (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
 	qse_awk_val_t* retv;
-	qse_long_t hv;
+	qse_awk_int_t hv;
 
 	hv = qse_awk_rtx_hashval (rtx, qse_awk_rtx_getarg (rtx, 0));
 
@@ -71,10 +71,10 @@ static int fnc_hash (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 static int fnc_assign (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
 	qse_awk_val_t* retv;
-	qse_long_t limit;
+	qse_awk_int_t limit;
 	int rx;
 
-	rx = qse_awk_rtx_valtolong (rtx, qse_awk_rtx_getarg (rtx, 0), &limit);
+	rx = qse_awk_rtx_valtoint (rtx, qse_awk_rtx_getarg (rtx, 0), &limit);
 	if (rx >= 0)
 	{
 		qse_awk_nrflt_t nrflt;
@@ -98,7 +98,7 @@ static int fnc_assign (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 static int fnc_reduce (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
 	qse_awk_val_t* retv;
-	qse_long_t opidx, lv;
+	qse_awk_int_t opidx, lv;
 	qse_awk_flt_t rv;
 	int n;
 
@@ -112,14 +112,14 @@ static int fnc_reduce (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 		MPI_LOR
 	};
 
-	if (qse_awk_rtx_valtolong (rtx, qse_awk_rtx_getarg (rtx, 1), &opidx) <= -1 ||
+	if (qse_awk_rtx_valtoint (rtx, qse_awk_rtx_getarg (rtx, 1), &opidx) <= -1 ||
 	   (opidx < 0 || opidx >= QSE_COUNTOF(optab)) || 
 	   (n = qse_awk_rtx_valtonum (rtx, qse_awk_rtx_getarg (rtx, 0), &lv, &rv)) <= -1) goto softfail;
 
-/* TODO: determine it to be MPI_LONG or MPI_INT, OR MPI_LONG_LONG_INT depending on the size of qse_long_t */
+/* TODO: determine it to be MPI_LONG or MPI_INT, OR MPI_LONG_LONG_INT depending on the size of qse_awk_int_t */
 	if (n == 0) 
 	{
-		qse_long_t lout;
+		qse_awk_int_t lout;
 		if (MPI_Allreduce (&lv, &lout, 1, MPI_LONG_LONG_INT, optab[opidx], MPI_COMM_WORLD) != MPI_SUCCESS) goto softfail;
 		retv = qse_awk_rtx_makeintval (rtx, lout);
 	}

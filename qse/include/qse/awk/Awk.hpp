@@ -49,7 +49,9 @@ public:
 
 	// redefine flt_t. To access Types::flt_t, use the fully qualified 
 	// name as it's overriding Types::flt_t. 
-	typedef qse_awk_flt_t flt_t; 
+	typedef qse_awk_flt_t  flt_t; 
+	typedef qse_awk_int_t  int_t; 
+	typedef qse_awk_uint_t uint_t; 
 
 	typedef qse_awk_loc_t loc_t;
 	typedef qse_awk_errnum_t errnum_t;
@@ -490,7 +492,7 @@ public:
 		Mode getMode () const;
 
 		int setFileName (const char_t* name);
-		int setFNR (long_t fnr);
+		int setFNR (int_t fnr);
 
 	protected:
 		char_t* filename;
@@ -583,7 +585,7 @@ public:
 		class QSE_EXPORT IntIndex: public Index
 		{
 		public:
-			IntIndex (long_t num);
+			IntIndex (int_t num);
 
 		protected:
 			// 2^32: 4294967296
@@ -593,7 +595,7 @@ public:
 			// -(2^64/2): -9223372036854775808
 			// -(2^128/2): -170141183460469231731687303715884105728
 		#if QSE_SIZEOF_LONG_T > 16
-		#	error SIZEOF(qse_long_t) TOO LARGE. 
+		#	error SIZEOF(int_t) TOO LARGE. 
 		#	error INCREASE THE BUFFER SIZE TO SUPPORT IT.
 		#elif QSE_SIZEOF_LONG_T == 16
 			char_t buf[41];
@@ -676,7 +678,7 @@ public:
 		void clear ();
 
 		operator val_t* () const { return val; }
-		operator long_t () const;
+		operator int_t () const;
 		operator flt_t () const;
 		operator const char_t* () const;
 
@@ -685,9 +687,9 @@ public:
 			return operator val_t* ();
 		}
 
-		long_t toInt () const
+		int_t toInt () const
 		{
-			return operator long_t ();
+			return operator int_t ();
 		}
 
 		flt_t toFlt () const
@@ -710,16 +712,16 @@ public:
 			return p;
 		}
 
-		int getInt (long_t* v) const;
+		int getInt (int_t* v) const;
 		int getFlt (flt_t* v) const;
-		int getNum (long_t* lv, flt_t* fv) const;
+		int getNum (int_t* lv, flt_t* fv) const;
 		int getStr (const char_t** str, size_t* len) const;
 
 		int setVal (val_t* v);
 		int setVal (Run* r, val_t* v);
 
-		int setInt (long_t v);
-		int setInt (Run* r, long_t v);
+		int setInt (int_t v);
+		int setInt (Run* r, int_t v);
 		int setFlt (flt_t v);
 		int setFlt (Run* r, flt_t v);
 		int setStr (const char_t* str, size_t len, bool numeric = false);
@@ -740,13 +742,13 @@ public:
 
 		int setIndexedInt (
 			const Index& idx,
-			long_t       v
+			int_t       v
 		);
 
 		int setIndexedInt (
 			Run* r,
 			const Index& idx,
-			long_t v);
+			int_t v);
 
 		int setIndexedFlt (
 			const Index&  idx,
@@ -884,7 +886,7 @@ public:
 		/// to @a v.
 		/// @return 0 on success, -1 on failure
 		///
-		int setGlobal (int id, long_t v);
+		int setGlobal (int id, int_t v);
 
 		/// 
 		/// The setGlobal() function sets the value of a global 

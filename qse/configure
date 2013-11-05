@@ -839,6 +839,7 @@ enable_syscall
 enable_debug
 enable_cxx
 enable_reentrant
+enable_awk_intmax
 enable_awk_fltmax
 enable_sed_tracer
 '
@@ -1498,6 +1499,7 @@ Optional Features:
   --enable-cxx            build the library for C++ if a C++ compiler is
                           available (default. yes)
   --enable-reentrant      add thread options (default. no)
+  --enable-awk-intmax     use qse_intmax_t for integers in AWK (default. no)
   --enable-awk-fltmax     use qse_fltmax_t for floating-point numbers in AWK
                           (default. no)
   --enable-sed-tracer     enable qse_sed_setexectracer() (default. yes)
@@ -18985,6 +18987,8 @@ _ACEOF
 fi
 
 
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for va_copy" >&5
+$as_echo_n "checking for va_copy... " >&6; }
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 #include <stdarg.h>
@@ -19015,6 +19019,8 @@ fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
 
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for __va_copy" >&5
+$as_echo_n "checking for __va_copy... " >&6; }
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 #include <stdarg.h>
@@ -21006,6 +21012,21 @@ if test "$enable_reentrant_is" = "yes"
 then
 	CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
 	CXXFLAGS="$CXXFLAGS $PTHREAD_CFLAGS"
+fi
+
+# Check whether --enable-awk-intmax was given.
+if test "${enable_awk_intmax+set}" = set; then :
+  enableval=$enable_awk_intmax; enable_awk_intmax_is=$enableval
+else
+  enable_awk_intmax_is=no
+
+fi
+
+if test "${enable_awk_intmax_is}" = "yes"
+then
+
+$as_echo "#define QSE_USE_AWK_INTMAX /**/" >>confdefs.h
+
 fi
 
 # Check whether --enable-awk-fltmax was given.

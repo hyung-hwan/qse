@@ -826,6 +826,9 @@
 /* use qse_fltmax_t for floating-point numbers in AWK */
 #undef QSE_USE_AWK_FLTMAX
 
+/* use qse_intmax_t for integers in AWK */
+#undef QSE_USE_AWK_INTMAX
+
 /* use the syscall() function to invoke a system call */
 #undef QSE_USE_SYSCALL
 

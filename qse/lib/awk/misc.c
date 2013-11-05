@@ -76,11 +76,11 @@ qse_char_t* qse_awk_cstrdup (qse_awk_t* awk, const qse_cstr_t* s)
 	return ptr;
 }
 
-qse_long_t qse_awk_strxtolong (
+qse_awk_int_t qse_awk_strxtoint (
 	qse_awk_t* awk, const qse_char_t* str, qse_size_t len,
 	int base, const qse_char_t** endptr)
 {
-	qse_long_t n = 0;
+	qse_awk_int_t n = 0;
 	const qse_char_t* p;
 	const qse_char_t* end;
 	qse_size_t rem;
@@ -581,11 +581,11 @@ done:
 	return (negative)? -fraction: fraction;
 }
 
-qse_size_t qse_awk_longtostr (
-	qse_awk_t* awk, qse_long_t value, 
+qse_size_t qse_awk_inttostr (
+	qse_awk_t* awk, qse_awk_int_t value, 
 	int radix, const qse_char_t* prefix, qse_char_t* buf, qse_size_t size)
 {
-	qse_long_t t, rem;
+	qse_awk_int_t t, rem;
 	qse_size_t len, ret, i;
 	qse_size_t prefix_len;
 
