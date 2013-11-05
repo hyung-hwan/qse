@@ -158,7 +158,19 @@ QSE_EXPORT qse_uint64_t qse_randxs64 (
 );
 #endif
 
-#if (QSE_SIZEOF_ULONG_T == QSE_SIZEOF_UINT64_T)
+#if (QSE_SIZEOF_UINT128_T > 0)
+/**
+ * The qse_randxs128() function implements the xorshift random number generator
+ * by George Marsaglia. 
+ */
+QSE_EXPORT qse_uint128_t qse_randxs128 (
+	qse_uint128_t seed
+);
+#endif
+
+#if (QSE_SIZEOF_ULONG_T == QSE_SIZEOF_UINT128_T)
+#	define qse_randxsulong(seed) qse_randxs128(seed)
+#elif (QSE_SIZEOF_ULONG_T == QSE_SIZEOF_UINT64_T)
 #	define qse_randxsulong(seed) qse_randxs64(seed)
 #elif (QSE_SIZEOF_ULONG_T == QSE_SIZEOF_UINT32_T)
 #	define qse_randxsulong(seed) qse_randxs32(seed)
@@ -166,10 +178,22 @@ QSE_EXPORT qse_uint64_t qse_randxs64 (
 #	error Unsupported
 #endif
 
-#if (QSE_SIZEOF_UINT_T == QSE_SIZEOF_UINT64_T)
+#if (QSE_SIZEOF_UINT_T == QSE_SIZEOF_UINT128_T)
+#	define qse_randxsuint(seed) qse_randxs128(seed)
+#elif (QSE_SIZEOF_UINT_T == QSE_SIZEOF_UINT64_T)
 #	define qse_randxsuint(seed) qse_randxs64(seed)
 #elif (QSE_SIZEOF_UINT_T == QSE_SIZEOF_UINT32_T)
 #	define qse_randxsuint(seed) qse_randxs32(seed)
+#else
+#	error Unsupported
+#endif
+
+#if (QSE_SIZEOF_UINTMAX_T == QSE_SIZEOF_UINT128_T)
+#	define qse_randxsuintmax(seed) qse_randxs128(seed)
+#elif (QSE_SIZEOF_UINTMAX_T == QSE_SIZEOF_UINT64_T)
+#	define qse_randxsuintmax(seed) qse_randxs64(seed)
+#elif (QSE_SIZEOF_UINTMAX_T == QSE_SIZEOF_UINT32_T)
+#	define qse_randxsuintmax(seed) qse_randxs32(seed)
 #else
 #	error Unsupported
 #endif

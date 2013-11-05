@@ -84,7 +84,7 @@ static int index_or_rindex (qse_awk_rtx_t* rtx, int rindex)
 	qse_awk_val_t* a0, * a1;
 	qse_char_t* str0, * str1, * ptr;
 	qse_size_t len0, len1;
-	qse_long_t idx, boundary = 1;
+	qse_awk_int_t idx, boundary = 1;
 
 	nargs = qse_awk_rtx_getnargs (rtx);
 	a0 = qse_awk_rtx_getarg (rtx, 0);
@@ -101,7 +101,7 @@ static int index_or_rindex (qse_awk_rtx_t* rtx, int rindex)
 		int n;
 
 		a2 = qse_awk_rtx_getarg (rtx, 2);
-		n = qse_awk_rtx_valtolong (rtx, a2, &boundary);
+		n = qse_awk_rtx_valtoint (rtx, a2, &boundary);
 		if (n <= -1) return -1;
 	}
 
@@ -155,7 +155,7 @@ static int index_or_rindex (qse_awk_rtx_t* rtx, int rindex)
 			QSE_NULL: qse_strxnstr (&str0[boundary-1], len0-boundary+1, str1, len1);
 	}
 
-	idx = (ptr == QSE_NULL)? 0: ((qse_long_t)(ptr-str0) + 1);
+	idx = (ptr == QSE_NULL)? 0: ((qse_awk_int_t)(ptr-str0) + 1);
 
 	if (a0->type != QSE_AWK_VAL_STR) qse_awk_rtx_freemem (rtx, str0);
 	if (a1->type != QSE_AWK_VAL_STR) qse_awk_rtx_freemem (rtx, str1);

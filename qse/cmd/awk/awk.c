@@ -349,7 +349,7 @@ static void dprint_return (qse_awk_rtx_t* rtx, qse_awk_val_t* ret)
 #ifdef ENABLE_CALLBACK
 static void on_statement (qse_awk_rtx_t* rtx, qse_awk_nde_t* nde)
 {
-	dprint (QSE_T("running %d at line %d\n"), (int)nde->type, (int)nde->loc.line);
+	dprint (QSE_T("running %d at line %zu\n"), (int)nde->type, (qse_size_t)nde->loc.line);
 }
 #endif
 
@@ -864,10 +864,10 @@ static void print_awkerr (qse_awk_t* awk)
 	const qse_awk_loc_t* loc = qse_awk_geterrloc (awk);
 
 	print_error ( 
-		QSE_T("CODE %d LINE %u COLUMN %u %s%s%s- %s\n"), 
+		QSE_T("CODE %d LINE %zu COLUMN %zu %s%s%s- %s\n"), 
 		qse_awk_geterrnum(awk),
-		(unsigned int)loc->line,
-		(unsigned int)loc->colm,
+		(qse_size_t)loc->line,
+		(qse_size_t)loc->colm,
 		((loc->file == QSE_NULL)? QSE_T(""): QSE_T("FILE ")),
 		((loc->file == QSE_NULL)? QSE_T(""): loc->file),
 		((loc->file == QSE_NULL)? QSE_T(""): QSE_T(" ")),
@@ -880,10 +880,10 @@ static void print_rtxerr (qse_awk_rtx_t* rtx)
 	const qse_awk_loc_t* loc = qse_awk_rtx_geterrloc (rtx);
 
 	print_error (
-		QSE_T("CODE %d LINE %u COLUMN %u %s%s%s- %s\n"),
+		QSE_T("CODE %d LINE %zu COLUMN %zu %s%s%s- %s\n"),
 		qse_awk_rtx_geterrnum(rtx),
-		(unsigned int)loc->line,
-		(unsigned int)loc->colm,
+		(qse_size_t)loc->line,
+		(qse_size_t)loc->colm,
 		((loc->file == QSE_NULL)? QSE_T(""): QSE_T("FILE ")),
 		((loc->file == QSE_NULL)? QSE_T(""): loc->file),
 		((loc->file == QSE_NULL)? QSE_T(""): QSE_T(" ")),
@@ -1095,13 +1095,13 @@ static int awk_main (int argc, qse_char_t* argv[])
 
 	if (retv)
 	{
-		qse_long_t tmp;
+		qse_awk_int_t tmp;
 
 		qse_awk_rtx_refdownval (rtx, retv);
 		if (app_debug) dprint_return (rtx, retv);
 
 		ret = 0;
-		if (qse_awk_rtx_valtolong (rtx, retv, &tmp) >= 0) ret = tmp;
+		if (qse_awk_rtx_valtoint (rtx, retv, &tmp) >= 0) ret = tmp;
 	}
 	else
 	{

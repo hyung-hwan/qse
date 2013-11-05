@@ -335,6 +335,7 @@ AC_CHECK_MEMBERS([struct sockaddr_in6.sin6_scope_id], [], [],
 	 #include <sys/socket.h> 
 	 #include <netinet/in.h>])
 
+AC_MSG_CHECKING([for va_copy])
 AC_TRY_LINK(
 	[#include <stdarg.h>],
 	[
@@ -348,6 +349,7 @@ AC_TRY_LINK(
 	[AC_MSG_RESULT(no)]
 )
 
+AC_MSG_CHECKING([for __va_copy])
 AC_TRY_LINK(
 	[#include <stdarg.h>],
 	[
@@ -558,6 +560,16 @@ if test "$enable_reentrant_is" = "yes"
 then
 	[CFLAGS="$CFLAGS $PTHREAD_CFLAGS"]
 	[CXXFLAGS="$CXXFLAGS $PTHREAD_CFLAGS"]
+fi
+
+AC_ARG_ENABLE([awk-intmax], 
+	[AS_HELP_STRING([--enable-awk-intmax],[use qse_intmax_t for integers in AWK (default. no)])],
+	enable_awk_intmax_is=$enableval,
+	enable_awk_intmax_is=no
+)
+if test "${enable_awk_intmax_is}" = "yes"
+then
+	AC_DEFINE([QSE_USE_AWK_INTMAX],[],[use qse_intmax_t for integers in AWK])
 fi
 
 AC_ARG_ENABLE([awk-fltmax], 

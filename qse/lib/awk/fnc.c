@@ -296,7 +296,7 @@ skip_close:
 
 	if (a0->type != QSE_AWK_VAL_STR) QSE_AWK_FREE (rtx->awk, name);
 
-	v = qse_awk_rtx_makeintval (rtx, (qse_long_t)n);
+	v = qse_awk_rtx_makeintval (rtx, (qse_awk_int_t)n);
 	if (v == QSE_NULL) return -1;
 
 	qse_awk_rtx_setretval (rtx, v);
@@ -434,7 +434,7 @@ static int fnc_fflush (qse_awk_rtx_t* run, const qse_awk_fnc_info_t* fi)
 		if (a0->type != QSE_AWK_VAL_STR) QSE_AWK_FREE (run->awk, str0);
 	}
 
-	a0 = qse_awk_rtx_makeintval (run, (qse_long_t)n);
+	a0 = qse_awk_rtx_makeintval (run, (qse_awk_int_t)n);
 	if (a0 == QSE_NULL) return -1;
 
 	qse_awk_rtx_setretval (run, a0);
@@ -447,7 +447,7 @@ static int fnc_index (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	qse_awk_val_t* a0, * a1;
 	qse_char_t* str0, * str1, * ptr;
 	qse_size_t len0, len1;
-	qse_long_t idx, start = 1;
+	qse_awk_int_t idx, start = 1;
 
 	nargs = qse_awk_rtx_getnargs (rtx);
 	QSE_ASSERT (nargs >= 2 && nargs <= 3);
@@ -461,7 +461,7 @@ static int fnc_index (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 		int n;
 
 		a2 = qse_awk_rtx_getarg (rtx, 2);
-		n = qse_awk_rtx_valtolong (rtx, a2, &start);
+		n = qse_awk_rtx_valtoint (rtx, a2, &start);
 		if (n <= -1) return -1;
 	}
 
@@ -500,7 +500,7 @@ static int fnc_index (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	          qse_strxncasestr (&str0[start-1], len0-start+1, str1, len1):
 	          qse_strxnstr (&str0[start-1], len0-start+1, str1, len1);
 
-	idx = (ptr == QSE_NULL)? 0: ((qse_long_t)(ptr-str0) + 1);
+	idx = (ptr == QSE_NULL)? 0: ((qse_awk_int_t)(ptr-str0) + 1);
 
 	if (a0->type != QSE_AWK_VAL_STR) QSE_AWK_FREE (rtx->awk, str0);
 	if (a1->type != QSE_AWK_VAL_STR) QSE_AWK_FREE (rtx->awk, str1);
@@ -562,7 +562,7 @@ static int fnc_substr (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	qse_awk_val_t* a0, * a1, * a2, * r;
 	qse_char_t* str;
 	qse_size_t len;
-	qse_long_t lindex, lcount;
+	qse_awk_int_t lindex, lcount;
 	int n;
 
 	nargs = qse_awk_rtx_getnargs (rtx);
@@ -583,17 +583,17 @@ static int fnc_substr (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 		if (str == QSE_NULL) return -1;
 	}
 
-	n = qse_awk_rtx_valtolong (rtx, a1, &lindex);
+	n = qse_awk_rtx_valtoint (rtx, a1, &lindex);
 	if (n <= -1) 
 	{
 		if (a0->type != QSE_AWK_VAL_STR) QSE_AWK_FREE (rtx->awk, str);
 		return -1;
 	}
 
-	if (a2 == QSE_NULL) lcount = (qse_long_t)len;
+	if (a2 == QSE_NULL) lcount = (qse_awk_int_t)len;
 	else 
 	{
-		n = qse_awk_rtx_valtolong (rtx, a2, &lcount);
+		n = qse_awk_rtx_valtoint (rtx, a2, &lcount);
 		if (n <= -1) 
 		{
 			if (a0->type != QSE_AWK_VAL_STR) 
@@ -603,13 +603,13 @@ static int fnc_substr (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	}
 
 	lindex = lindex - 1;
-	if (lindex >= (qse_long_t)len) lindex = (qse_long_t)len;
+	if (lindex >= (qse_awk_int_t)len) lindex = (qse_awk_int_t)len;
 	else if (lindex < 0) lindex = 0;
 
 	if (lcount < 0) lcount = 0;
-	else if (lcount > (qse_long_t)len - lindex) 
+	else if (lcount > (qse_awk_int_t)len - lindex) 
 	{
-		lcount = (qse_long_t)len - lindex;
+		lcount = (qse_awk_int_t)len - lindex;
 	}
 
 	r = qse_awk_rtx_makestrval (rtx, &str[lindex], (qse_size_t)lcount);
@@ -637,7 +637,7 @@ static int fnc_split (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	void* fs_rex_free = QSE_NULL;
 
 	qse_cstr_t tok;
-	qse_long_t nflds;
+	qse_awk_int_t nflds;
 
 	qse_awk_errnum_t errnum;
 	int x;
@@ -743,7 +743,7 @@ static int fnc_split (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 
 	while (p != QSE_NULL)
 	{
-		qse_char_t key_buf[QSE_SIZEOF(qse_long_t)*8+2];
+		qse_char_t key_buf[QSE_SIZEOF(qse_awk_int_t)*8+2];
 		qse_size_t key_len;
 
 		if (fs.len <= 1)
@@ -779,7 +779,7 @@ static int fnc_split (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 		if (t2 == QSE_NULL) goto oops;
 
 		/* put it into the map */
-		key_len = qse_awk_longtostr (
+		key_len = qse_awk_inttostr (
 			rtx->awk, ++nflds, 10, QSE_NULL, key_buf, QSE_COUNTOF(key_buf));
 		QSE_ASSERT (key_len != (qse_size_t)-1);
 
@@ -899,7 +899,7 @@ static int fnc_toupper (qse_awk_rtx_t* run, const qse_awk_fnc_info_t* fi)
 	return 0;
 }
 
-static int __substitute (qse_awk_rtx_t* run, qse_long_t max_count)
+static int __substitute (qse_awk_rtx_t* run, qse_awk_int_t max_count)
 {
 	qse_size_t nargs;
 	qse_awk_val_t* a0, * a1, * a2, * v;
@@ -919,7 +919,7 @@ static int __substitute (qse_awk_rtx_t* run, qse_long_t max_count)
 
 	qse_cstr_t mat, pmat, cur;
 
-	qse_long_t sub_count;
+	qse_awk_int_t sub_count;
 
 	nargs = qse_awk_rtx_getnargs (run);
 	QSE_ASSERT (nargs >= 2 && nargs <= 3);
@@ -1176,7 +1176,7 @@ static int fnc_match (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	qse_awk_val_t* a0, * a1;
 	qse_char_t* str0;
 	qse_size_t len0;
-	qse_long_t idx, start = 1;
+	qse_awk_int_t idx, start = 1;
 	int n;
 	qse_cstr_t mat;
 
@@ -1206,7 +1206,7 @@ static int fnc_match (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 		{
 			/* if the 3rd parameter is not an array,
 			 * it is treated as a match start index */
-			n = qse_awk_rtx_valtolong (rtx, a2, &start);
+			n = qse_awk_rtx_valtoint (rtx, a2, &start);
 			if (n <= -1) return -1;
 		}
 	}
@@ -1240,7 +1240,7 @@ static int fnc_match (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 
 	if (a0->type != QSE_AWK_VAL_STR) QSE_AWK_FREE (rtx->awk, str0);
 
-	idx = (n == 0)? 0: ((qse_long_t)(mat.ptr-str0) + 1);
+	idx = (n == 0)? 0: ((qse_awk_int_t)(mat.ptr-str0) + 1);
 
 	a0 = qse_awk_rtx_makeintval (rtx, idx);
 	if (a0 == QSE_NULL) return -1;
@@ -1248,7 +1248,7 @@ static int fnc_match (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	qse_awk_rtx_refupval (rtx, a0);
 
 	a1 = qse_awk_rtx_makeintval (rtx, 
-		((n == 0)? (qse_long_t)-1: (qse_long_t)mat.len));
+		((n == 0)? (qse_awk_int_t)-1: (qse_awk_int_t)mat.len));
 	if (a1 == QSE_NULL)
 	{
 		qse_awk_rtx_refdownval (rtx, a0);
@@ -1427,7 +1427,7 @@ static int fnc_int (qse_awk_rtx_t* run, const qse_awk_fnc_info_t* fi)
 {
 	qse_size_t nargs;
 	qse_awk_val_t* a0;
-	qse_long_t lv;
+	qse_awk_int_t lv;
 	qse_awk_val_t* r;
 	int n;
 
@@ -1436,7 +1436,7 @@ static int fnc_int (qse_awk_rtx_t* run, const qse_awk_fnc_info_t* fi)
 
 	a0 = qse_awk_rtx_getarg (run, 0);
 
-	n = qse_awk_rtx_valtolong (run, a0, &lv);
+	n = qse_awk_rtx_valtoint (run, a0, &lv);
 	if (n <= -1) return -1;
 
 	r = qse_awk_rtx_makeintval (run, lv);

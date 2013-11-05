@@ -85,3 +85,20 @@ qse_uint64_t qse_randxs64 (qse_uint64_t seed)
 	return x;
 }
 #endif
+
+#if (QSE_SIZEOF_UINT128_T > 0)
+qse_uint128_t qse_randxs128 (qse_uint128_t seed)
+{
+	qse_uint128_t x;
+
+	QSE_ASSERT (seed != 0);
+
+	x = seed;
+
+	x ^= (x << 42);
+	x ^= (x >> 71);
+	x ^= (x << 3);
+
+	return x;
+}
+#endif

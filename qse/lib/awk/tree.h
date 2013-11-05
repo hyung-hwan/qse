@@ -128,18 +128,18 @@ struct qse_awk_nde_pos_t
 struct qse_awk_nde_int_t
 {
 	QSE_AWK_NDE_HDR;
-	qse_long_t  val;
-	qse_char_t* str; 
-	qse_size_t  len;
+	qse_awk_int_t val;
+	qse_char_t*   str; 
+	qse_size_t    len;
 };
 
 /* QSE_AWK_NDE_FLT */
 struct qse_awk_nde_flt_t
 {
 	QSE_AWK_NDE_HDR;
-	qse_awk_flt_t   val;
-	qse_char_t* str;
-	qse_size_t  len;
+	qse_awk_flt_t val;
+	qse_char_t*   str;
+	qse_size_t    len;
 };
 
 /* QSE_AWK_NDE_STR */

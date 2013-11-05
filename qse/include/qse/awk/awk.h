@@ -35,6 +35,14 @@
  * - consider something like ${1:3,5} => $1, $2, $3, and $5 concatenated
  */
 
+#if defined(QSE_USE_AWK_INTMAX)
+typedef qse_intmax_t qse_awk_int_t;
+typedef qse_uintmax_t qse_awk_uint_t;
+#else
+typedef qse_long_t qse_awk_int_t;
+typedef qse_ulong_t qse_awk_uint_t;
+#endif
+
 #if defined(QSE_USE_AWK_FLTMAX)
 typedef qse_fltmax_t qse_awk_flt_t;
 #else
@@ -117,7 +125,7 @@ typedef struct qse_awk_loc_t qse_awk_loc_t;
  * - type - type of a value from #qse_awk_val_type_t
  * - ref - reference count
  * - stat - static value 
- * - nstr - numeric string marker, 1 -> long, 2 -> real
+ * - nstr - numeric string marker, 1 -> integer, 2 -> floating-point number
  */
 /*
 #define QSE_AWK_VAL_HDR \
@@ -161,8 +169,8 @@ typedef struct qse_awk_val_nil_t  qse_awk_val_nil_t;
 struct qse_awk_val_int_t
 {
 	QSE_AWK_VAL_HDR;
-	qse_long_t val;
-	void*      nde;
+	qse_awk_int_t val;
+	void*         nde;
 };
 typedef struct qse_awk_val_int_t qse_awk_val_int_t;
 
@@ -854,7 +862,7 @@ typedef struct qse_awk_mod_sym_flt_t qse_awk_mod_sym_flt_t;
 
 struct qse_awk_mod_sym_int_t
 {
-	qse_long_t val;
+	qse_awk_int_t val;
 };
 
 struct qse_awk_mod_sym_flt_t
@@ -1406,9 +1414,9 @@ typedef struct qse_awk_rtx_valtostr_out_t qse_awk_rtx_valtostr_out_t;
 /* record filter using NR */
 struct qse_awk_nrflt_t
 {
-	qse_long_t limit;
-	qse_long_t size;
-	qse_long_t rank;
+	qse_awk_int_t limit;
+	qse_awk_int_t size;
+	qse_awk_int_t rank;
 };
 typedef struct qse_awk_nrflt_t qse_awk_nrflt_t;
 
@@ -1837,9 +1845,9 @@ QSE_EXPORT qse_char_t* qse_awk_cstrdup (
 );
 
 /**
- * The qse_awk_strxtolong() function converts a string to an integer.
+ * The qse_awk_strxtoint() function converts a string to an integer.
  */
-QSE_EXPORT qse_long_t qse_awk_strxtolong (
+QSE_EXPORT qse_awk_int_t qse_awk_strxtoint (
 	qse_awk_t*         awk,
 	const qse_char_t*  str,
 	qse_size_t         len,
@@ -1859,11 +1867,11 @@ QSE_EXPORT qse_awk_flt_t qse_awk_strxtoflt (
 );
 
 /**
- * The qse_awk_longtostr() functon convers an integer to a string.
+ * The qse_awk_longtostr() functon converts an integer to a string.
  */
-QSE_EXPORT qse_size_t qse_awk_longtostr (
+QSE_EXPORT qse_size_t qse_awk_inttostr (
 	qse_awk_t*        awk,
-	qse_long_t        value,
+	qse_awk_int_t     value,
 	int               radix,
 	const qse_char_t* prefix,
 	qse_char_t*       buf,
@@ -2271,7 +2279,7 @@ QSE_EXPORT qse_awk_val_t* qse_awk_rtx_makenilval (
  */
 QSE_EXPORT qse_awk_val_t* qse_awk_rtx_makeintval (
 	qse_awk_rtx_t* rtx,
-	qse_long_t     v
+	qse_awk_int_t  v
 );
 
 /**
@@ -2642,7 +2650,7 @@ QSE_EXPORT qse_wchar_t* qse_awk_rtx_valtowcsdup (
 
 /**
  * The qse_awk_rtx_valtonum() function converts a value to a number. 
- * If the value is converted to a long number, it is stored in the memory
+ * If the value is converted to an integer, it is stored in the memory
  * pointed to by l and 0 is returned. If the value is converted to a real 
  * number, it is stored in the memory pointed to by r and 1 is returned.
  * The function never fails as long as \a val points to a valid value.
@@ -2651,29 +2659,29 @@ QSE_EXPORT qse_wchar_t* qse_awk_rtx_valtowcsdup (
  * if it is an integer or a floating-point number.
  *
  * \code
- * qse_long_t l;
+ * qse_awk_int_t l;
  * qse_awk_flt_t r;
  * int n;
  * n = qse_awk_rtx_valtonum (v, &l, &r);
  * if (n <= -1) error ();
- * else if (n == 0) print_long (l);
- * else if (n >= 1) print_real (r);
+ * else if (n == 0) print_int (l);
+ * else if (n >= 1) print_flt (r);
  * \endcode
  *
- * \return -1 on failure, 0 if converted to a long number, 1 if converted to 
+ * \return -1 on failure, 0 if converted to an integer, 1 if converted to 
  *         a floating-point number.
  */
 QSE_EXPORT int qse_awk_rtx_valtonum (
 	qse_awk_rtx_t*       rtx,
 	const qse_awk_val_t* val,
-	qse_long_t*          l,
+	qse_awk_int_t*       l,
 	qse_awk_flt_t*       r
 );
 
-QSE_EXPORT int qse_awk_rtx_valtolong (
+QSE_EXPORT int qse_awk_rtx_valtoint (
 	qse_awk_rtx_t*       rtx,
 	const qse_awk_val_t* val,
-	qse_long_t*          l
+	qse_awk_int_t*       l
 );
 
 QSE_EXPORT int qse_awk_rtx_valtoflt (
@@ -2701,7 +2709,7 @@ QSE_EXPORT int qse_awk_rtx_strtonum (
 	int               strict, /**< determines to perform strict check */
 	const qse_char_t* ptr, /**< points to a string to convert */
 	qse_size_t        len, /**< number of characters in a string */
-	qse_long_t*       l,   /**< stores a converted integer */
+	qse_awk_int_t*    l,   /**< stores a converted integer */
 	qse_awk_flt_t*    r    /**< stores a converted floating-poing number */
 );
 
@@ -2709,7 +2717,7 @@ QSE_EXPORT int qse_awk_rtx_strtonum (
  * The qse_awk_rtx_hashval() function hashes a simple value
  * to a positive integer. It returns -1 for a inhashable value.
  */
-QSE_EXPORT qse_long_t qse_awk_rtx_hashval (
+QSE_EXPORT qse_awk_int_t qse_awk_rtx_hashval (
 	qse_awk_rtx_t* rtx,
 	qse_awk_val_t* v
 );
