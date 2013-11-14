@@ -442,6 +442,26 @@ then
 	)
 fi
 
+dnl Some compilers doesn't seem to have full support for __float128 
+dnl even if the type is available.
+if test ${ac_cv_sizeof___float128} -gt 0
+then
+	AC_MSG_CHECKING([__float128 with linking])
+	AC_TRY_LINK(
+		[#include <stdio.h>],
+		[
+			__float128 x, y, z;
+			z = x * y + x;
+			printf ("%p", (char*)(int)z);
+		],
+		[AC_MSG_RESULT(yes)],
+		[
+			AC_MSG_RESULT(no)
+			ac_cv_sizeof___float128=0
+		]
+	)
+fi
+
 AC_DEFINE_UNQUOTED(QSE_SIZEOF_CHAR, ${ac_cv_sizeof_char}, [sizeof(char)])
 AC_DEFINE_UNQUOTED(QSE_SIZEOF_SHORT, ${ac_cv_sizeof_short}, [sizeof(short)])
 AC_DEFINE_UNQUOTED(QSE_SIZEOF_INT, ${ac_cv_sizeof_int}, [sizeof(int)])
