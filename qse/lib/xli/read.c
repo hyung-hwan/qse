@@ -462,8 +462,8 @@ retry:
 		int lead_digit = QSE_ISDIGIT(c);
 		int all_digits = 1;
 
-		/* a normal identifier can be composed of wider varieties of characters
-		 * than a keyword/directive */
+		/* a normal identifier can be composed of wider varieties of 
+		 * characters than a keyword/directive */
 		while (1)
 		{
 			ADD_TOKEN_CHAR (xli, tok, c);
@@ -596,7 +596,9 @@ retry:
 				break;
 			}
 
-			if (!QSE_ISALNUM(c) && c != QSE_T('-') && c != QSE_T('_'))
+			if (!QSE_ISALNUM(c) && c != QSE_T('-') && c != QSE_T('_') && 
+			    c != QSE_T(':') && c != QSE_T('*') && c != QSE_T('/') && 
+			    c != QSE_T(',') && c != QSE_T('.') && c != QSE_T('|'))
 			{
 				qse_char_t cc = (qse_char_t)c;
 				qse_cstr_t ea;
