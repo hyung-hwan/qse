@@ -1,7 +1,7 @@
 #include <qse/cmn/mem.h>
 #include <qse/cmn/str.h>
 #include <qse/cmn/dll.h>
-#include <qse/cmn/stdio.h>
+#include <qse/cmn/sio.h>
 
 
 #define R(f) \
@@ -48,7 +48,7 @@ static int test1 ()
 	{
 		qse_dll_pushtail (s1, x[i], qse_strlen(x[i]));
 	}
-	qse_printf (QSE_T("s1 holding [%d] nodes\n"), QSE_DLL_SIZE(s1));
+	qse_printf (QSE_T("s1 holding [%zu] nodes\n"), QSE_DLL_SIZE(s1));
 	qse_dll_walk (s1, walk_dll, QSE_NULL);
 		
 
@@ -57,7 +57,7 @@ static int test1 ()
 	{
 		qse_dll_delete (s1, p);
 	}
-	qse_printf (QSE_T("s1 holding [%d] nodes\n"), QSE_DLL_SIZE(s1));
+	qse_printf (QSE_T("s1 holding [%zu] nodes\n"), QSE_DLL_SIZE(s1));
 	qse_dll_walk (s1, walk_dll, QSE_NULL);
 
 	qse_dll_close (s1);
@@ -90,7 +90,7 @@ static int test2 ()
 	{
 		qse_dll_pushtail (s1, x[i], qse_strlen(x[i]));
 	}
-	qse_printf (QSE_T("s1 holding [%d] nodes\n"), QSE_DLL_SIZE(s1));
+	qse_printf (QSE_T("s1 holding [%zu] nodes\n"), QSE_DLL_SIZE(s1));
 	qse_dll_rwalk (s1, rwalk_dll, QSE_NULL);
 		
 
@@ -99,67 +99,20 @@ static int test2 ()
 	{
 		qse_dll_delete (s1, p);
 	}
-	qse_printf (QSE_T("s1 holding [%d] nodes\n"), QSE_DLL_SIZE(s1));
+	qse_printf (QSE_T("s1 holding [%zu] nodes\n"), QSE_DLL_SIZE(s1));
 	qse_dll_rwalk (s1, rwalk_dll, QSE_NULL);
 
 	qse_dll_close (s1);
 	return 0;
 }
 
-typedef struct item_t item_t;
-struct item_t
-{
-	int a;
-	int b;
-};
-QSE_DLL_DEFINE_SIMPLE (item_t);
-
-static int test3 ()
-{
-	qse_size_t n;
-	QSE_DLL_TYPE(item_t) ii;
-	QSE_DLL_NODE_TYPE(item_t) x[30];
-	QSE_DLL_NODE_TYPE(item_t)* p;
-
-	QSE_DLL_INIT(&ii);
-
-	for (n = 0; n < QSE_COUNTOF(x); n++)
-	{
-		x[n].data.a = n;
-		x[n].data.b = n * 2;
-	}
-
-	for (n = 0; n < QSE_COUNTOF(x)/2; n++)
-	{
-		QSE_DLL_ADDHEAD (&ii, &x[n]);
-	}
-
-	for (; n < QSE_COUNTOF(x); n++)
-	{
-		QSE_DLL_ADDTAIL (&ii, &x[n]);
-	}
-
-	qse_printf (QSE_T("total %d items\n"), (int)QSE_DLL_SIZE (&ii));
-	for (p = QSE_DLL_HEAD(&ii); QSE_DLL_ISMEMBER(&ii,p); p = p->next)
-	{
-		qse_printf (QSE_T("%d %d\n"), p->data.a, p->data.b);
-	}
-
-	QSE_DLL_UNCHAIN (&ii, QSE_DLL_TAIL(&ii)->prev);
-	QSE_DLL_DELHEAD (&ii);
-	qse_printf (QSE_T("total %d items. printing in reverse\n"), (int)QSE_DLL_SIZE (&ii));
-	for (p = QSE_DLL_TAIL(&ii); QSE_DLL_ISMEMBER(&ii,p); p = p->prev)
-	{
-		qse_printf (QSE_T("%d %d\n"), p->data.a, p->data.b);
-	}
-	QSE_DLL_FINI (&ii);
-	return 0;
-}
-
 int main ()
 {
+	qse_openstdsios ();
+
 	R (test1);
 	R (test2);
-	R (test3);
+
+	qse_closestdsios ();
 	return 0;
 }

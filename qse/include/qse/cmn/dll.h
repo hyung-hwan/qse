@@ -29,114 +29,7 @@
 #include <qse/macros.h>
 #include <qse/cmn/gdl.h>
 
-#define QSE_DLL_DEFINE(list_type,node_type,data_define,manage_define) \
-	typedef struct list_type list_type; \
-	typedef struct node_type node_type; \
-	struct node_type \
-	{ \
-		node_type* prev; \
-		node_type* next; \
-		data_define \
-	}; \
-	struct list_type \
-	{ \
-		node_type   gdl; \
-		qse_size_t  size; \
-		manage_define \
-	}
-
-#define QSE_DLL_TYPE(data_type) qse_dll_ ## data_type ## _t
-#define QSE_DLL_NODE_TYPE(data_type) qse_dll_ ## data_type ## _node_t
-
-/**
- * The QSE_DLL_DEFINE_SIMPLE macro defines a doubly-linked list type for data
- * of the @a data_type type.
- */
-#define QSE_DLL_DEFINE_SIMPLE(data_type) \
-	QSE_DLL_DEFINE ( \
-		QSE_DLL_TYPE(data_type), \
-		QSE_DLL_NODE_TYPE(data_type), \
-		data_type data;, \
-	)
-
-/**
- * The QSE_DLL_DEFINE_MANAGED macro defines a doubly-linked list type for data
- * of the @a data_type type.
- */
-#define QSE_DLL_DEFINE_MANAGED(data_type,manage_type) \
-	QSE_DLL_DEFINE ( \
-		QSE_DLL_TYPE(data_type), \
-		QSE_DLL_NODE_TYPE(data_type), \
-		data_type data;, \
-		manage_type data; \
-	)
-
-#define QSE_DLL_INIT(dll) \
-	QSE_BLOCK ( \
-		QSE_GDL_INIT(&(dll)->gdl); \
-		(dll)->size = 0; \
-	)
-
-#define QSE_DLL_FINI(dll) QSE_DLL_CLEAR(dll)
-
-#define QSE_DLL_CHAIN(dll,p,x,n)  \
-	QSE_BLOCK ( \
-		QSE_GDL_CHAIN ((qse_gdl_t*)p, (qse_gdl_t*)x, (qse_gdl_t*)n); \
-		(dll)->size++; \
-	)
-
-#define QSE_DLL_UNCHAIN(dll,x) \
-	QSE_BLOCK ( \
-		QSE_GDL_UNCHAIN ((qse_gdl_t*)x); \
-		(dll)->size--; \
-	)
-
-#define QSE_DLL_CLEAR(dll) \
-	QSE_BLOCK ( \
-		while (!QSE_DLL_ISEMPTY(dll)) QSE_DLL_DELHEAD(dll); \
-	)
-
-/**
- * The QSE_DLL_ISEMPTY macro determines if a list @a dll is empty 
- */
-#define QSE_DLL_ISEMPTY(dll) QSE_GDL_ISEMPTY(&(dll)->gdl)
-
-/**
- * The QSE_DLL_ISMEMBER macro determines if a node @a x is a member
- * of a list @a dll.
- */
-#define QSE_DLL_ISMEMBER(dll,x) ((x) != &(dll)->gdl)
-
-#define QSE_DLL_HEAD(dll) QSE_GDL_HEAD(&(dll)->gdl)
-#define QSE_DLL_TAIL(dll) QSE_GDL_TAIL(&(dll)->gdl)
 #define QSE_DLL_SIZE(dll) ((const qse_size_t)(dll)->size)
-
-/**
- * The QSE_DLL_ADDHEAD macro add a member node @a x to the head of 
- * the list @a dll.
- */
-#define QSE_DLL_ADDHEAD(dll,x) \
-	QSE_DLL_CHAIN(dll,&(dll)->gdl,x,QSE_DLL_HEAD(dll))
-
-/**
- * The QSE_DLL_ADDHEAD macro add a member node @a x to the tail of 
- * the list @a dll.
- */
-#define QSE_DLL_ADDTAIL(dll,x) \
-	QSE_DLL_CHAIN(dll,QSE_DLL_TAIL(dll),x,&(dll)->gdl)
-
-/**
- * The QSE_DLL_DELHEAD macro deletes the head node.
- */
-#define QSE_DLL_DELHEAD(dll) \
-	QSE_DLL_UNCHAIN(dll,QSE_DLL_HEAD(dll))
-
-/**
- * The QSE_DLL_DELTAIL macro deletes the tail node.
- */
-#define QSE_DLL_DELTAIL(dll) \
-	QSE_DLL_UNCHAIN(dll,QSE_DLL_TAIL(dll))
-		
 
 /* ----------- more general implementation below ----------------- */
 enum qse_dll_walk_t
@@ -193,8 +86,9 @@ typedef qse_dll_walk_t (*qse_dll_walker_t) (
 struct qse_dll_node_t
 {
 	/* the first two fields in sync with qse_gdl_t */
-	qse_dll_node_t* prev;
-	qse_dll_node_t* next;
+	/*qse_dll_node_t* prev;
+	qse_dll_node_t* next;*/
+	qse_gdl_link_t  link;
 	/* data */
 	qse_xptl_t      val;
 };
@@ -206,7 +100,8 @@ struct qse_dll_t
 {
 	qse_mmgr_t* mmgr;
 
-	qse_dll_node_t gdl;
+	/*qse_dll_node_t gdl;*/
+	qse_gdl_t      gdl;
 	qse_size_t     size;
 
 	qse_byte_t       scale;  

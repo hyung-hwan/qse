@@ -1097,15 +1097,15 @@ static qse_awk_nde_t* parse_function (qse_awk_t* awk)
 	/* note that i'm assigning to rederr in the 'if' conditions below.
  	 * i'm not checking equality */
 	    /* check if it is a builtin function */
-	if ((qse_awk_findfnc (awk, &name) != QSE_NULL && (rederr = QSE_AWK_EFNCRED)) ||
+	if ((qse_awk_findfnc (awk, (const qse_cstr_t*)&name) != QSE_NULL && (rederr = QSE_AWK_EFNCRED)) ||
 	    /* check if it has already been defined as a function */
 	    (qse_htb_search (awk->tree.funs, name.ptr, name.len) != QSE_NULL && (rederr = QSE_AWK_EFUNRED)) ||
 	    /* check if it conflicts with a named variable */
 	    (qse_htb_search (awk->parse.named, name.ptr, name.len) != QSE_NULL && (rederr = QSE_AWK_EVARRED)) ||
 	    /* check if it coincides to be a global variable name */
-	    (((g = find_global (awk, &name)) != QSE_LDA_NIL) && (rederr = QSE_AWK_EGBLRED)))
+	    (((g = find_global (awk, (const qse_cstr_t*)&name)) != QSE_LDA_NIL) && (rederr = QSE_AWK_EGBLRED)))
 	{
-		qse_awk_seterror (awk, rederr, &name, &awk->tok.loc);
+		qse_awk_seterror (awk, rederr, (const qse_cstr_t*)&name, &awk->tok.loc);
 		return QSE_NULL;
 	}
 
@@ -1947,7 +1947,7 @@ static qse_awk_t* collect_locals (
 
 		/* check if it conflicts with a builtin function name 
 		 * function f() { local length; } */
-		if (qse_awk_findfnc (awk, &lcl) != QSE_NULL)
+		if (qse_awk_findfnc (awk, (const qse_cstr_t*)&lcl) != QSE_NULL)
 		{
 			SETERR_ARG_LOC (
 				awk, QSE_AWK_EFNCRED, 
@@ -2000,7 +2000,7 @@ static qse_awk_t* collect_locals (
 		}
 
 		/* check if it conflicts with global variable names */
-		n = find_global (awk, &lcl);
+		n = find_global (awk, (const qse_cstr_t*)&lcl);
 		if (n != QSE_LDA_NIL)
 		{
 			if (n < awk->tree.ngbls_base)
@@ -4211,7 +4211,7 @@ static QSE_INLINE int isfunname (qse_awk_t* awk, const qse_xstr_t* name)
 
 static QSE_INLINE int isfnname (qse_awk_t* awk, const qse_xstr_t* name)
 {
-	if (qse_awk_findfnc (awk, name) != QSE_NULL) 
+	if (qse_awk_findfnc (awk, (const qse_cstr_t*)name) != QSE_NULL) 
 	{
 		/* implicit function */
 		return FNTYPE_FNC;
@@ -4856,7 +4856,7 @@ static qse_awk_nde_t* parse_primary_ident_noseg (
 	qse_awk_nde_t* nde = QSE_NULL;
 
 	/* check if name is an intrinsic function name */
-	fnc = qse_awk_findfnc (awk, name);
+	fnc = qse_awk_findfnc (awk, (const qse_cstr_t*)name);
 	if (fnc)
 	{
 		if (MATCH(awk,TOK_LPAREN))
@@ -5668,17 +5668,6 @@ static int get_string (
 	return 0;
 }
 
-static int get_charstr (qse_awk_t* awk, qse_awk_tok_t* tok, qse_char_t c)
-{
-	if (awk->sio.last.c != QSE_T('\"')) 
-	{
-		/* the starting quote has been consumed before this function
-		 * has been called */
-		ADD_TOKEN_CHAR (awk, tok, awk->sio.last.c);
-	}
-	return get_string (awk, QSE_T('\"'), QSE_T('\\'), 0, 0, tok);
-}
-
 static int get_rexstr (qse_awk_t* awk, qse_awk_tok_t* tok)
 {
 	if (awk->sio.last.c == QSE_T('/')) 
@@ -6067,7 +6056,6 @@ retry:
 	{
 		/* double-quoted string */
 		SET_TOKEN_TYPE (awk, tok, TOK_STR);
-		/*if (get_charstr(awk, tok, c) <= -1) return -1;*/
 		if (get_string (awk, c, QSE_T('\\'), 0, 0, tok) <= -1) return -1;
 	}
 	else if (c == QSE_T('\''))

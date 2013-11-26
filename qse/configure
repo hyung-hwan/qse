@@ -655,6 +655,7 @@ CHAR_MODE
 PACKAGE_VERSION_PATCH
 PACKAGE_VERSION_MINOR
 PACKAGE_VERSION_MAJOR
+QUADMATH_LIBS
 HAVE_LIBUCI_FALSE
 HAVE_LIBUCI_TRUE
 UCI_LIBS
@@ -667,7 +668,6 @@ SSL_LIBS
 UNICOWS_LIBS
 SENDFILE_LIBS
 SOCKET_LIBS
-QUADMATH_LIBS
 LIBM
 WIN32_FALSE
 WIN32_TRUE
@@ -17671,114 +17671,6 @@ done
 
 LIBS="$OLDLIBS"
 
-	for ac_func in quadmath_snprintf
-do :
-  ac_fn_c_check_func "$LINENO" "quadmath_snprintf" "ac_cv_func_quadmath_snprintf"
-if test "x$ac_cv_func_quadmath_snprintf" = xyes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_QUADMATH_SNPRINTF 1
-_ACEOF
-
-fi
-done
-
-	if test "$ac_cv_func_quadmath_snprintf" = "no"
-	then
-		OLDLIBS="$LIBS"
-		LIBS="$LIBM $LIBS"
-		for ac_func in quadmath_snprintf
-do :
-  ac_fn_c_check_func "$LINENO" "quadmath_snprintf" "ac_cv_func_quadmath_snprintf"
-if test "x$ac_cv_func_quadmath_snprintf" = xyes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_QUADMATH_SNPRINTF 1
-_ACEOF
-
-fi
-done
-
-		LIBS="$OLDLIBS"
-
-		if test "$ac_cv_func_quadmath_snprintf" = "no"
-		then
-			{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for quadmath_snprintf in -lquadmath" >&5
-$as_echo_n "checking for quadmath_snprintf in -lquadmath... " >&6; }
-if ${ac_cv_lib_quadmath_quadmath_snprintf+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lquadmath  $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char quadmath_snprintf ();
-int
-main ()
-{
-return quadmath_snprintf ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_quadmath_quadmath_snprintf=yes
-else
-  ac_cv_lib_quadmath_quadmath_snprintf=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_quadmath_quadmath_snprintf" >&5
-$as_echo "$ac_cv_lib_quadmath_quadmath_snprintf" >&6; }
-if test "x$ac_cv_lib_quadmath_quadmath_snprintf" = xyes; then :
-
-				QUADMATH_LIBS="-lquadmath"
-				LIBM="$LIBM -lquadmath"
-				$as_echo "#define HAVE_QUADMATH_SNPRINTF 1" >>confdefs.h
-
-
-fi
-
-		else
-			QUADMATH_LIBS="$LIBM"
-		fi
-	fi
-
-	OLDLIBS="$LIBS"
-	LIBS="$LIBM $LIBS"
-	for ac_func in powq fmodq sinq cosq tanq atanq atan2q logq log10q expq sqrtq ceilq floorq roundq
-do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
-  cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
-_ACEOF
-
-fi
-done
-
-	for ac_func in strtoflt128
-do :
-  ac_fn_c_check_func "$LINENO" "strtoflt128" "ac_cv_func_strtoflt128"
-if test "x$ac_cv_func_strtoflt128" = xyes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_STRTOFLT128 1
-_ACEOF
-
-fi
-done
-
-	LIBS="$OLDLIBS"
-
-
 for ac_func in connect gethostbyname
 do :
   as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
@@ -20113,6 +20005,117 @@ fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
 fi
+
+if test ${ac_cv_sizeof___float128} -gt 0
+then
+	for ac_func in quadmath_snprintf
+do :
+  ac_fn_c_check_func "$LINENO" "quadmath_snprintf" "ac_cv_func_quadmath_snprintf"
+if test "x$ac_cv_func_quadmath_snprintf" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_QUADMATH_SNPRINTF 1
+_ACEOF
+
+fi
+done
+
+	if test "$ac_cv_func_quadmath_snprintf" = "no"
+	then
+		OLDLIBS="$LIBS"
+		LIBS="$LIBM $LIBS"
+		for ac_func in quadmath_snprintf
+do :
+  ac_fn_c_check_func "$LINENO" "quadmath_snprintf" "ac_cv_func_quadmath_snprintf"
+if test "x$ac_cv_func_quadmath_snprintf" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_QUADMATH_SNPRINTF 1
+_ACEOF
+
+fi
+done
+
+		LIBS="$OLDLIBS"
+
+		if test "$ac_cv_func_quadmath_snprintf" = "no"
+		then
+			{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for quadmath_snprintf in -lquadmath" >&5
+$as_echo_n "checking for quadmath_snprintf in -lquadmath... " >&6; }
+if ${ac_cv_lib_quadmath_quadmath_snprintf+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lquadmath  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char quadmath_snprintf ();
+int
+main ()
+{
+return quadmath_snprintf ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_quadmath_quadmath_snprintf=yes
+else
+  ac_cv_lib_quadmath_quadmath_snprintf=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_quadmath_quadmath_snprintf" >&5
+$as_echo "$ac_cv_lib_quadmath_quadmath_snprintf" >&6; }
+if test "x$ac_cv_lib_quadmath_quadmath_snprintf" = xyes; then :
+
+				QUADMATH_LIBS="-lquadmath"
+				LIBM="$LIBM -lquadmath"
+				$as_echo "#define HAVE_QUADMATH_SNPRINTF 1" >>confdefs.h
+
+
+fi
+
+		else
+			QUADMATH_LIBS="$LIBM"
+		fi
+	fi
+
+	OLDLIBS="$LIBS"
+	LIBS="$LIBM $LIBS"
+	for ac_func in powq fmodq sinq cosq tanq atanq atan2q logq log10q expq sqrtq ceilq floorq roundq
+do :
+  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
+ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
+if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  cat >>confdefs.h <<_ACEOF
+#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+_ACEOF
+
+fi
+done
+
+	for ac_func in strtoflt128
+do :
+  ac_fn_c_check_func "$LINENO" "strtoflt128" "ac_cv_func_strtoflt128"
+if test "x$ac_cv_func_strtoflt128" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_STRTOFLT128 1
+_ACEOF
+
+fi
+done
+
+	LIBS="$OLDLIBS"
+fi
+
 
 
 cat >>confdefs.h <<_ACEOF

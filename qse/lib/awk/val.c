@@ -1564,7 +1564,7 @@ int qse_awk_rtx_valtonum (
 
 		case QSE_AWK_VAL_REF:
 		{
-			return val_ref_to_num (rtx, (qse_awk_val_str_t*)v, l, r);
+			return val_ref_to_num (rtx, (qse_awk_val_ref_t*)v, l, r);
 		}
 	}
 
