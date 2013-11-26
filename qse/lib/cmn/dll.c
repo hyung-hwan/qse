@@ -79,7 +79,7 @@ int qse_dll_init (qse_dll_t* dll, qse_mmgr_t* mmgr)
 	dll->comper = default_comper;
 	dll->copier = QSE_DLL_COPIER_SIMPLE;
 
-	QSE_DLL_INIT (dll);
+	QSE_GDL_INIT (&dll->gdl);
 	return 0;
 }
 
@@ -154,12 +154,14 @@ qse_size_t qse_dll_getsize (qse_dll_t* dll)
 
 qse_dll_node_t* qse_dll_gethead (qse_dll_t* dll)
 {
-	return QSE_DLL_HEAD(dll);
+	if (QSE_GDL_ISEMPTY(&dll->gdl)) return QSE_NULL;
+	return QSE_GDL_CONTAINER(QSE_GDL_HEAD(&dll->gdl), qse_dll_node_t, link);
 }
 
 qse_dll_node_t* qse_dll_gettail (qse_dll_t* dll)
 {
-	return QSE_DLL_TAIL(dll);
+	if (QSE_GDL_ISEMPTY(&dll->gdl)) return QSE_NULL;
+	return QSE_GDL_CONTAINER(QSE_GDL_TAIL(&dll->gdl), qse_dll_node_t, link);
 }
 
 static qse_dll_node_t* alloc_node (qse_dll_t* dll, void* dptr, qse_size_t dlen)
@@ -212,16 +214,19 @@ static QSE_INLINE void free_node (qse_dll_t* dll, qse_dll_node_t* node)
 qse_dll_node_t* qse_dll_search (
 	qse_dll_t* dll, qse_dll_node_t* pos, const void* dptr, qse_size_t dlen)
 {
-	if (pos == QSE_NULL) pos = QSE_DLL_HEAD(dll);
+	if (QSE_GDL_ISEMPTY(&dll->gdl)) return QSE_NULL;
 
-	while (QSE_DLL_ISMEMBER(dll,pos))
+	if (pos == QSE_NULL) 
+		pos = QSE_GDL_CONTAINER (QSE_GDL_HEAD(&dll->gdl), qse_dll_node_t, link);
+
+	while (QSE_GDL_ISLINK (&dll->gdl, &pos->link))
 	{
 		if (dll->comper (dll, DPTR(pos), DLEN(pos), dptr, dlen) == 0)
 		{
 			return pos;
 		}
 
-		pos = pos->next;
+		pos = QSE_GDL_CONTAINER (QSE_GDL_NEXT(&pos->link), qse_dll_node_t, link);
 	}	
 
 	return QSE_NULL;
@@ -230,16 +235,18 @@ qse_dll_node_t* qse_dll_search (
 qse_dll_node_t* qse_dll_rsearch (
 	qse_dll_t* dll, qse_dll_node_t* pos, const void* dptr, qse_size_t dlen)
 {
-	if (pos == QSE_NULL) pos = QSE_DLL_TAIL(dll);
+	if (QSE_GDL_ISEMPTY(&dll->gdl)) return QSE_NULL;
+	if (pos == QSE_NULL) 
+		pos = QSE_GDL_CONTAINER (QSE_GDL_TAIL(&dll->gdl), qse_dll_node_t, link);
 
-	while (QSE_DLL_ISMEMBER(dll,pos))
+	while (QSE_GDL_ISLINK (&dll->gdl, &pos->link))
 	{
 		if (dll->comper (dll, DPTR(pos), DLEN(pos), dptr, dlen) == 0)
 		{
 			return pos;
 		}
 
-		pos = pos->prev;
+		pos = QSE_GDL_CONTAINER (QSE_GDL_PREV(&pos->link), qse_dll_node_t, link);
 	}	
 
 	return QSE_NULL;
@@ -254,12 +261,14 @@ qse_dll_node_t* qse_dll_insert (
 		if (pos == QSE_NULL)
 		{
 			/* insert at the end */
-			QSE_DLL_ADDTAIL (dll, n);
+			QSE_GDL_APPEND (&dll->gdl, &n->link);
+			dll->size++;
 		}
 		else
 		{
 			/* insert in front of the positional node */
-			QSE_DLL_CHAIN (dll, pos->prev, n, pos);
+			QSE_GDL_CHAIN (&dll->gdl, QSE_GDL_PREV(&pos->link), &n->link, &pos->link);
+			dll->size++;
 		}
 	}
 
@@ -268,58 +277,58 @@ qse_dll_node_t* qse_dll_insert (
 
 void qse_dll_delete (qse_dll_t* dll, qse_dll_node_t* pos)
 {
-	if (pos == QSE_NULL || !QSE_DLL_ISMEMBER(dll,pos)) return;
-	QSE_DLL_UNCHAIN (dll, pos);
+	if (pos == QSE_NULL || !QSE_GDL_ISLINK(&dll->gdl,&pos->link)) return;
+
+	QSE_GDL_UNCHAIN (&dll->gdl, &pos->link);
 	free_node (dll, pos);
+	dll->size--;
 }
 
 void qse_dll_clear (qse_dll_t* dll)
 {
-	while (!QSE_DLL_ISEMPTY(dll))
+	while (!QSE_GDL_ISEMPTY(&dll->gdl))
 	{
-		qse_dll_delete (dll, QSE_DLL_HEAD(dll));
+		qse_dll_delete (dll, QSE_GDL_CONTAINER (QSE_GDL_HEAD(&dll->gdl), qse_dll_node_t, link));
 	}
 }
 
 void qse_dll_walk (qse_dll_t* dll, qse_dll_walker_t walker, void* ctx)
 {
-	qse_dll_node_t* n = QSE_DLL_HEAD(dll);
+	qse_gdl_link_t* n = QSE_GDL_HEAD (&dll->gdl);
 	qse_dll_walk_t w = QSE_DLL_WALK_FORWARD;
 
-	while (QSE_DLL_ISMEMBER(dll,n))
+	while (QSE_GDL_ISLINK(&dll->gdl,n))
 	{
-		qse_dll_node_t* nxt = n->next;
-		qse_dll_node_t* prv = n->prev;
+		qse_gdl_link_t tmp = *n;
 
-		w = walker (dll, n, ctx);
+		w = walker (dll, QSE_GDL_CONTAINER (n, qse_dll_node_t, link), ctx);
 
-		if (w == QSE_DLL_WALK_FORWARD) n = nxt;
-		else if (w == QSE_DLL_WALK_BACKWARD) n = prv;
+		if (w == QSE_DLL_WALK_FORWARD) n = QSE_GDL_NEXT (&tmp);
+		else if (w == QSE_DLL_WALK_BACKWARD) n = QSE_GDL_PREV (&tmp);
 		else break;
 	}
 }
 
 void qse_dll_rwalk (qse_dll_t* dll, qse_dll_walker_t walker, void* ctx)
 {
-	qse_dll_node_t* n = QSE_DLL_TAIL(dll);
+	qse_gdl_link_t* n = QSE_GDL_TAIL (&dll->gdl);
 	qse_dll_walk_t w = QSE_DLL_WALK_BACKWARD;
 
-	while (QSE_DLL_ISMEMBER(dll,n))
+	while (QSE_GDL_ISLINK(&dll->gdl,n))
 	{
-		qse_dll_node_t* nxt = n->next;
-		qse_dll_node_t* prv = n->prev;
+		qse_gdl_link_t tmp = *n;
 
-		w = walker (dll, n, ctx);
+		w = walker (dll, QSE_GDL_CONTAINER (n, qse_dll_node_t, link), ctx);
 
-		if (w == QSE_DLL_WALK_FORWARD) n = nxt;
-		else if (w == QSE_DLL_WALK_BACKWARD) n = prv;
+		if (w == QSE_DLL_WALK_FORWARD) n = QSE_GDL_NEXT (&tmp);
+		else if (w == QSE_DLL_WALK_BACKWARD) n = QSE_GDL_PREV (&tmp);
 		else break;
 	}
 }
 
 qse_dll_node_t* qse_dll_pushhead (qse_dll_t* dll, void* data, qse_size_t size)
 {
-	return qse_dll_insert (dll, QSE_DLL_HEAD(dll), data, size);
+	return qse_dll_insert (dll, QSE_GDL_CONTAINER (QSE_GDL_HEAD (&dll->gdl), qse_dll_node_t, link), data, size);
 }
 
 qse_dll_node_t* qse_dll_pushtail (qse_dll_t* dll, void* data, qse_size_t size)
@@ -329,14 +338,14 @@ qse_dll_node_t* qse_dll_pushtail (qse_dll_t* dll, void* data, qse_size_t size)
 
 void qse_dll_pophead (qse_dll_t* dll)
 {
-	QSE_ASSERT (!QSE_DLL_ISEMPTY(dll));
-	QSE_DLL_DELHEAD (dll);
+	QSE_ASSERT (!QSE_GDL_ISEMPTY(&dll->gdl));
+	qse_dll_delete (dll, QSE_GDL_CONTAINER (QSE_GDL_HEAD (&dll->gdl), qse_dll_node_t, link));
 }
 
 void qse_dll_poptail (qse_dll_t* dll)
 {
-	QSE_ASSERT (!QSE_DLL_ISEMPTY(dll));
-	QSE_DLL_DELTAIL (dll);
+	QSE_ASSERT (!QSE_GDL_ISEMPTY(&dll->gdl));
+	qse_dll_delete (dll, QSE_GDL_CONTAINER (QSE_GDL_TAIL (&dll->gdl), qse_dll_node_t, link));
 }
 
 

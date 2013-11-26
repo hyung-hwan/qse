@@ -20,14 +20,25 @@
 
 #include <qse/cmn/gdl.h>
 
-void qse_gdl_chain (qse_gdl_t* p, qse_gdl_t* x, qse_gdl_t* n)
+void qse_gdl_chain (qse_gdl_t* gdl, qse_gdl_link_t* prev, qse_gdl_link_t* x, qse_gdl_link_t* next)
 {
-	x->prev = p; x->next = n; n->prev = x; p->next = x;
+	x->prev = prev;
+	x->next = next; 
+	next->prev = x; 
+	prev->next = x;
 }
 
-void qse_gdl_unchain (qse_gdl_t* x)
+void qse_gdl_unchain (qse_gdl_t* gdl, qse_gdl_link_t* x)
 {
-	qse_gdl_t* p = x->prev;
-	qse_gdl_t* n = x->next;
+	qse_gdl_link_t* p = x->prev;
+	qse_gdl_link_t* n = x->next;
 	n->prev = p; p->next = n;
+}
+
+void qse_gdl_replace (qse_gdl_t* gdl, qse_gdl_link_t* old_link, qse_gdl_link_t* new_link)
+{
+	new_link->next = old_link->next;
+	new_link->next->prev = new_link;
+	new_link->prev = old_link->prev;
+	new_link->prev->next = new_link;
 }

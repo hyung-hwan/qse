@@ -156,36 +156,6 @@ AC_CHECK_FUNCS([pow fmod sin cos tan atan atan2 log log10 exp sqrt ceil floor ro
 AC_CHECK_FUNCS([powf fmodf sinf cosf tanf atanf atan2f logf log10f expf sqrtf ceilf floorf roundf])
 LIBS="$OLDLIBS"
 
-dnl if test "${platform_win32}" = "no" 
-dnl then
-	AC_CHECK_FUNCS([quadmath_snprintf])
-	if test "$ac_cv_func_quadmath_snprintf" = "no"
-	then
-		OLDLIBS="$LIBS"
-		LIBS="$LIBM $LIBS"
-		AC_CHECK_FUNCS([quadmath_snprintf])
-		LIBS="$OLDLIBS"
-	
-		if test "$ac_cv_func_quadmath_snprintf" = "no"
-		then
-			AC_CHECK_LIB([quadmath], [quadmath_snprintf], [
-				QUADMATH_LIBS="-lquadmath"
-				LIBM="$LIBM -lquadmath"
-				AC_DEFINE(HAVE_QUADMATH_SNPRINTF, 1)
-			])
-		else
-			QUADMATH_LIBS="$LIBM"
-		fi
-	fi
-
-	OLDLIBS="$LIBS"
-	LIBS="$LIBM $LIBS"
-	AC_CHECK_FUNCS([powq fmodq sinq cosq tanq atanq atan2q logq log10q expq sqrtq ceilq floorq roundq])
-	AC_CHECK_FUNCS([strtoflt128])
-	LIBS="$OLDLIBS"
-dnl fi
-AC_SUBST(QUADMATH_LIBS)
-
 dnl OLDLIBS="$LIBS"
 dnl AC_SEARCH_LIBS([connect], [socket])
 dnl LIBS="$OLDLIBS"
@@ -461,6 +431,36 @@ then
 		]
 	)
 fi
+
+if test ${ac_cv_sizeof___float128} -gt 0
+then
+	AC_CHECK_FUNCS([quadmath_snprintf])
+	if test "$ac_cv_func_quadmath_snprintf" = "no"
+	then
+		OLDLIBS="$LIBS"
+		LIBS="$LIBM $LIBS"
+		AC_CHECK_FUNCS([quadmath_snprintf])
+		LIBS="$OLDLIBS"
+	
+		if test "$ac_cv_func_quadmath_snprintf" = "no"
+		then
+			AC_CHECK_LIB([quadmath], [quadmath_snprintf], [
+				QUADMATH_LIBS="-lquadmath"
+				LIBM="$LIBM -lquadmath"
+				AC_DEFINE(HAVE_QUADMATH_SNPRINTF, 1)
+			])
+		else
+			QUADMATH_LIBS="$LIBM"
+		fi
+	fi
+
+	OLDLIBS="$LIBS"
+	LIBS="$LIBM $LIBS"
+	AC_CHECK_FUNCS([powq fmodq sinq cosq tanq atanq atan2q logq log10q expq sqrtq ceilq floorq roundq])
+	AC_CHECK_FUNCS([strtoflt128])
+	LIBS="$OLDLIBS"
+fi
+AC_SUBST(QUADMATH_LIBS)
 
 AC_DEFINE_UNQUOTED(QSE_SIZEOF_CHAR, ${ac_cv_sizeof_char}, [sizeof(char)])
 AC_DEFINE_UNQUOTED(QSE_SIZEOF_SHORT, ${ac_cv_sizeof_short}, [sizeof(short)])
