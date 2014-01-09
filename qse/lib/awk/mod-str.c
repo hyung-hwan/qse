@@ -20,6 +20,7 @@
 
 #include "mod-str.h"
 #include <qse/cmn/str.h>
+#include <qse/cmn/chr.h>
 #include "../cmn/mem.h"
 
 static int fnc_normspace (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
@@ -176,6 +177,106 @@ static int fnc_rindex (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	return index_or_rindex (rtx, 1);
 }
 
+
+static int is_class (qse_awk_rtx_t* rtx, qse_ctype_t ctype)
+{
+	qse_awk_val_t* a0;
+	qse_char_t* str0;
+	qse_size_t len0;
+	int tmp = 1;
+
+	a0 = qse_awk_rtx_getarg (rtx, 0);
+
+	if (a0->type == QSE_AWK_VAL_STR)
+	{
+		str0 = ((qse_awk_val_str_t*)a0)->val.ptr;
+		len0 = ((qse_awk_val_str_t*)a0)->val.len;
+	}
+	else
+	{
+		str0 = qse_awk_rtx_valtostrdup (rtx, a0, &len0);
+		if (str0 == QSE_NULL) return -1;
+	}
+
+	
+	
+	while (len0 > 0)
+	{
+		if (!qse_isctype(str0[--len0], ctype)) 
+		{
+			tmp = 0;
+			break;
+		}
+	}
+	if (a0->type != QSE_AWK_VAL_STR) qse_awk_rtx_freemem (rtx, str0);
+
+	a0 = qse_awk_rtx_makeintval (rtx, tmp);
+	if (a0 == QSE_NULL) return -1;
+
+	qse_awk_rtx_setretval (rtx, a0);
+	return 0;
+}
+
+static int fnc_isalnum (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	return is_class (rtx, QSE_CTYPE_ALNUM);
+}
+
+static int fnc_isalpha (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	return is_class (rtx, QSE_CTYPE_ALPHA);
+}
+
+static int fnc_isblank (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	return is_class (rtx, QSE_CTYPE_BLANK);
+}
+
+static int fnc_iscntrl (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	return is_class (rtx, QSE_CTYPE_CNTRL);
+}
+
+static int fnc_isdigit (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	return is_class (rtx, QSE_CTYPE_DIGIT);
+}
+
+static int fnc_isgraph (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	return is_class (rtx, QSE_CTYPE_GRAPH);
+}
+
+static int fnc_islower (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	return is_class (rtx, QSE_CTYPE_LOWER);
+}
+
+static int fnc_isprint (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	return is_class (rtx, QSE_CTYPE_PRINT);
+}
+
+static int fnc_ispunct (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	return is_class (rtx, QSE_CTYPE_PUNCT);
+}
+
+static int fnc_isspace (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	return is_class (rtx, QSE_CTYPE_SPACE);
+}
+
+static int fnc_isupper (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	return is_class (rtx, QSE_CTYPE_UPPER);
+}
+
+static int fnc_isxdigit (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	return is_class (rtx, QSE_CTYPE_XDIGIT);
+}
+
 typedef struct fnctab_t fnctab_t;
 struct fnctab_t
 {
@@ -187,6 +288,18 @@ static fnctab_t fnctab[] =
 {
 	/* keep this table sorted for binary search in query(). */
 	{ QSE_T("index"),     { { 2, 3, QSE_NULL }, fnc_index,     0 } },
+	{ QSE_T("isalnum"),   { { 1, 1, QSE_NULL }, fnc_isalnum,   0 } },
+	{ QSE_T("isalpha"),   { { 1, 1, QSE_NULL }, fnc_isalpha,   0 } },
+	{ QSE_T("isblank"),   { { 1, 1, QSE_NULL }, fnc_isblank,   0 } },
+	{ QSE_T("iscntrl"),   { { 1, 1, QSE_NULL }, fnc_iscntrl,   0 } },
+	{ QSE_T("isdigit"),   { { 1, 1, QSE_NULL }, fnc_isdigit,   0 } },
+	{ QSE_T("isgraph"),   { { 1, 1, QSE_NULL }, fnc_isgraph,   0 } },
+	{ QSE_T("islower"),   { { 1, 1, QSE_NULL }, fnc_islower,   0 } },
+	{ QSE_T("isprint"),   { { 1, 1, QSE_NULL }, fnc_isprint,   0 } },
+	{ QSE_T("ispunct"),   { { 1, 1, QSE_NULL }, fnc_ispunct,   0 } },
+	{ QSE_T("isspace"),   { { 1, 1, QSE_NULL }, fnc_isspace,   0 } },
+	{ QSE_T("isupper"),   { { 1, 1, QSE_NULL }, fnc_isupper,   0 } },
+	{ QSE_T("isxdigit"),  { { 1, 1, QSE_NULL }, fnc_isxdigit,  0 } },
 	{ QSE_T("ltrim"),     { { 1, 1, QSE_NULL }, fnc_ltrim,     0 } },
 	{ QSE_T("normspace"), { { 1, 1, QSE_NULL }, fnc_normspace, 0 } },
 	{ QSE_T("rindex"),    { { 2, 3, QSE_NULL }, fnc_rindex,    0 } },
