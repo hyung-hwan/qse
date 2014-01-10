@@ -183,7 +183,7 @@ static int is_class (qse_awk_rtx_t* rtx, qse_ctype_t ctype)
 	qse_awk_val_t* a0;
 	qse_char_t* str0;
 	qse_size_t len0;
-	int tmp = 1;
+	int tmp;
 
 	a0 = qse_awk_rtx_getarg (rtx, 0);
 
@@ -198,17 +198,22 @@ static int is_class (qse_awk_rtx_t* rtx, qse_ctype_t ctype)
 		if (str0 == QSE_NULL) return -1;
 	}
 
-	
-	
-	while (len0 > 0)
+	if (len0 <= 0) tmp = 0;
+	else
 	{
-		if (!qse_isctype(str0[--len0], ctype)) 
+		tmp = 1;
+		do
 		{
-			tmp = 0;
-			break;
+			len0--;
+			if (!qse_isctype(str0[len0], ctype)) 
+			{
+				tmp = 0;
+				break;
+			}
 		}
+		while (len0 > 0);
+		if (a0->type != QSE_AWK_VAL_STR) qse_awk_rtx_freemem (rtx, str0);
 	}
-	if (a0->type != QSE_AWK_VAL_STR) qse_awk_rtx_freemem (rtx, str0);
 
 	a0 = qse_awk_rtx_makeintval (rtx, tmp);
 	if (a0 == QSE_NULL) return -1;
