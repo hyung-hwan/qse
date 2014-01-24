@@ -1,7 +1,7 @@
 /*
  * $Id: types.h 560 2011-09-06 14:18:36Z hyunghwan.chung $
  *
-    Copyright 2006-2012 Chung, Hyung-Hwan.
+    Copyright 2006-2014 Chung, Hyung-Hwan.
     This file is part of QSE.
 
     QSE is free software: you can redistribute it and/or modify
@@ -66,58 +66,58 @@ typedef enum qse_bool_t qse_bool_t;
 #if (defined(hpux) || defined(__hpux) || defined(__hpux__) || \
      (defined(__APPLE__) && defined(__MACH__))) && \
     (QSE_SIZEOF_VOID_P == QSE_SIZEOF_LONG)
-	typedef long qse_int_t;
+	typedef signed long qse_int_t;
 	typedef unsigned long qse_uint_t;
 	#define QSE_SIZEOF_INT_T QSE_SIZEOF_LONG
 	#define QSE_SIZEOF_UINT_T QSE_SIZEOF_LONG
 #elif defined(__SPU__) && (QSE_SIZEOF_VOID_P == QSE_SIZEOF_LONG)
-	typedef long qse_int_t;
+	typedef signed long qse_int_t;
 	typedef unsigned long qse_uint_t;
 	#define QSE_SIZEOF_INT_T QSE_SIZEOF_LONG
 	#define QSE_SIZEOF_UINT_T QSE_SIZEOF_LONG
 #elif QSE_SIZEOF_VOID_P == QSE_SIZEOF_INT
-	typedef int qse_int_t;
+	typedef signed int qse_int_t;
 	typedef unsigned int qse_uint_t;
 	#define QSE_SIZEOF_INT_T QSE_SIZEOF_INT
 	#define QSE_SIZEOF_UINT_T QSE_SIZEOF_INT
 #elif QSE_SIZEOF_VOID_P == QSE_SIZEOF_LONG
-	typedef long qse_int_t;
+	typedef signed long qse_int_t;
 	typedef unsigned long qse_uint_t;
 	#define QSE_SIZEOF_INT_T QSE_SIZEOF_LONG
 	#define QSE_SIZEOF_UINT_T QSE_SIZEOF_LONG
 #elif QSE_SIZEOF_VOID_P == QSE_SIZEOF_LONG_LONG
-	typedef long long qse_int_t;
+	typedef signed long long qse_int_t;
 	typedef unsigned long long qse_uint_t;
 	#define QSE_SIZEOF_INT_T QSE_SIZEOF_LONG_LONG
 	#define QSE_SIZEOF_UINT_T QSE_SIZEOF_LONG_LONG
 #elif QSE_SIZEOF_VOID_P == QSE_SIZEOF___INT32
-	typedef __int32 qse_int_t;
+	typedef signed __int32 qse_int_t;
 	typedef unsigned __int32 qse_uint_t;
 	#define QSE_SIZEOF_INT_T QSE_SIZEOF___INT32
 	#define QSE_SIZEOF_UINT_T QSE_SIZEOF___INT32
 #elif QSE_SIZEOF_VOID_P == QSE_SIZEOF___INT32_T
 	typedef __int32_t qse_int_t;
-	typedef unsigned __int32_t qse_uint_t;
+	typedef __uint32_t qse_uint_t;
 	#define QSE_SIZEOF_INT_T QSE_SIZEOF___INT32_T
 	#define QSE_SIZEOF_UINT_T QSE_SIZEOF___INT32_T
 #elif QSE_SIZEOF_VOID_P == QSE_SIZEOF___INT64
-	typedef __int64 qse_int_t;
+	typedef signed __int64 qse_int_t;
 	typedef unsigned __int64 qse_uint_t;
 	#define QSE_SIZEOF_INT_T QSE_SIZEOF___INT64
 	#define QSE_SIZEOF_UINT_T QSE_SIZEOF___INT64
 #elif QSE_SIZEOF_VOID_P == QSE_SIZEOF___INT64_T
 	typedef __int64_t qse_int_t;
-	typedef unsigned __int64_t qse_uint_t;
+	typedef __uint64_t qse_uint_t;
 	#define QSE_SIZEOF_INT_T QSE_SIZEOF___INT64_T
 	#define QSE_SIZEOF_UINT_T QSE_SIZEOF___INT64_T
 #elif QSE_SIZEOF_VOID_P == QSE_SIZEOF___INT128
-	typedef __int128 qse_int_t;
+	typedef signed __int128 qse_int_t;
 	typedef unsigned __int128 qse_uint_t;
 	#define QSE_SIZEOF_INT_T QSE_SIZEOF___INT128
 	#define QSE_SIZEOF_UINT_T QSE_SIZEOF___INT128
 #elif QSE_SIZEOF_VOID_P == QSE_SIZEOF___INT128_T
 	typedef __int128_t qse_int_t;
-	typedef unsigned __int128_t qse_uint_t;
+	typedef __uint128_t qse_uint_t;
 	#define QSE_SIZEOF_INT_T QSE_SIZEOF___INT128_T
 	#define QSE_SIZEOF_UINT_T QSE_SIZEOF___INT128_T
 #else
@@ -131,27 +131,27 @@ typedef enum qse_bool_t qse_bool_t;
  * The qse_ulong_t type defines the largest unsigned integer type supported.
  */
 #if QSE_SIZEOF_LONG >= QSE_SIZEOF_LONG_LONG
-	typedef long qse_long_t;
+	typedef signed long qse_long_t;
 	typedef unsigned long qse_ulong_t;
 	#define QSE_SIZEOF_LONG_T QSE_SIZEOF_LONG
 	#define QSE_SIZEOF_ULONG_T QSE_SIZEOF_LONG
 #elif QSE_SIZEOF_LONG_LONG > 0
-	typedef long long qse_long_t;
+	typedef signed long long qse_long_t;
 	typedef unsigned long long qse_ulong_t;
 	#define QSE_SIZEOF_LONG_T QSE_SIZEOF_LONG_LONG
 	#define QSE_SIZEOF_ULONG_T QSE_SIZEOF_LONG_LONG
 #elif QSE_SIZEOF___INT64 > 0
-	typedef __int64 qse_long_t;
+	typedef signed __int64 qse_long_t;
 	typedef unsigned __int64 qse_ulong_t;
 	#define QSE_SIZEOF_LONG_T QSE_SIZEOF___INT64
 	#define QSE_SIZEOF_ULONG_T QSE_SIZEOF___INT64
 #elif QSE_SIZEOF___INT64_T > 0
 	typedef __int64_t qse_long_t;
-	typedef unsigned __int64_t qse_ulong_t;
+	typedef __uint64_t qse_ulong_t;
 	#define QSE_SIZEOF_LONG_T QSE_SIZEOF___INT64_T
 	#define QSE_SIZEOF_ULONG_T QSE_SIZEOF___INT64_T
 #else
-	typedef long qse_long_t;
+	typedef signed long qse_long_t;
 	typedef unsigned long qse_ulong_t;
 	#define QSE_SIZEOF_LONG_T QSE_SIZEOF_LONG
 	#define QSE_SIZEOF_ULONG_T QSE_SIZEOF_LONG
@@ -171,12 +171,12 @@ typedef enum qse_bool_t qse_bool_t;
 #if QSE_SIZEOF_CHAR == 1
 #	define QSE_HAVE_INT8_T
 #	define QSE_HAVE_UINT8_T
-	typedef char qse_int8_t;
+	typedef signed char qse_int8_t;
 	typedef unsigned char qse_uint8_t;
 #elif QSE_SIZEOF___INT8 == 1
 #	define QSE_HAVE_INT8_T
 #	define QSE_HAVE_UINT8_T
-	typedef __int8 qse_int8_t;
+	typedef signed __int8 qse_int8_t;
 	typedef unsigned __int8 qse_uint8_t;
 #elif QSE_SIZEOF___INT8_T == 1
 #	define QSE_HAVE_INT8_T
@@ -206,12 +206,12 @@ typedef enum qse_bool_t qse_bool_t;
 #if QSE_SIZEOF_SHORT == 2
 #	define QSE_HAVE_INT16_T
 #	define QSE_HAVE_UINT16_T
-	typedef short qse_int16_t;
+	typedef signed short qse_int16_t;
 	typedef unsigned short qse_uint16_t;
 #elif QSE_SIZEOF___INT16 == 2
 #	define QSE_HAVE_INT16_T
 #	define QSE_HAVE_UINT16_T
-	typedef __int16 qse_int16_t;
+	typedef signed __int16 qse_int16_t;
 	typedef unsigned __int16 qse_uint16_t;
 #elif QSE_SIZEOF___INT16_T == 2
 #	define QSE_HAVE_INT16_T
@@ -241,17 +241,17 @@ typedef enum qse_bool_t qse_bool_t;
 #if QSE_SIZEOF_INT == 4
 #	define QSE_HAVE_INT32_T
 #	define QSE_HAVE_UINT32_T
-	typedef int qse_int32_t;
+	typedef signed int qse_int32_t;
 	typedef unsigned int qse_uint32_t;
 #elif QSE_SIZEOF_LONG == 4
 #	define QSE_HAVE_INT32_T
 #	define QSE_HAVE_UINT32_T
-	typedef long qse_int32_t;
+	typedef signed long qse_int32_t;
 	typedef unsigned long qse_uint32_t;
 #elif QSE_SIZEOF___INT32 == 4
 #	define QSE_HAVE_INT32_T
 #	define QSE_HAVE_UINT32_T
-	typedef __int32 qse_int32_t;
+	typedef signed __int32 qse_int32_t;
 	typedef unsigned __int32 qse_uint32_t;
 #elif QSE_SIZEOF___INT32_T == 4
 #	define QSE_HAVE_INT32_T
@@ -281,22 +281,22 @@ typedef enum qse_bool_t qse_bool_t;
 #if QSE_SIZEOF_INT == 8
 #	define QSE_HAVE_INT64_T
 #	define QSE_HAVE_UINT64_T
-	typedef int qse_int64_t;
+	typedef signed int qse_int64_t;
 	typedef unsigned int qse_uint64_t;
 #elif QSE_SIZEOF_LONG == 8
 #	define QSE_HAVE_INT64_T
 #	define QSE_HAVE_UINT64_T
-	typedef long qse_int64_t;
+	typedef signed long qse_int64_t;
 	typedef unsigned long qse_uint64_t;
 #elif QSE_SIZEOF_LONG_LONG == 8
 #	define QSE_HAVE_INT64_T
 #	define QSE_HAVE_UINT64_T
-	typedef long long qse_int64_t;
+	typedef signed long long qse_int64_t;
 	typedef unsigned long long qse_uint64_t;
 #elif QSE_SIZEOF___INT64 == 8
 #	define QSE_HAVE_INT64_T
 #	define QSE_HAVE_UINT64_T
-	typedef __int64 qse_int64_t;
+	typedef signed __int64 qse_int64_t;
 	typedef unsigned __int64 qse_uint64_t;
 #elif QSE_SIZEOF___INT64_T == 8
 #	define QSE_HAVE_INT64_T
@@ -320,22 +320,22 @@ typedef enum qse_bool_t qse_bool_t;
 #if QSE_SIZEOF_INT == 16
 #	define QSE_HAVE_INT128_T
 #	define QSE_HAVE_UINT128_T
-	typedef int qse_int128_t;
+	typedef signed int qse_int128_t;
 	typedef unsigned int qse_uint128_t;
 #elif QSE_SIZEOF_LONG == 16
 #	define QSE_HAVE_INT128_T
 #	define QSE_HAVE_UINT128_T
-	typedef long qse_int128_t;
+	typedef signed long qse_int128_t;
 	typedef unsigned long qse_uint128_t;
 #elif QSE_SIZEOF_LONG_LONG == 16
 #	define QSE_HAVE_INT128_T
 #	define QSE_HAVE_UINT128_T
-	typedef long long qse_int128_t;
+	typedef signed long long qse_int128_t;
 	typedef unsigned long long qse_uint128_t;
 #elif QSE_SIZEOF___INT128 == 16
 #	define QSE_HAVE_INT128_T
 #	define QSE_HAVE_UINT128_T
-	typedef __int128 qse_int128_t;
+	typedef signed __int128 qse_int128_t;
 	typedef unsigned __int128 qse_uint128_t;
 #elif (QSE_SIZEOF___INT128_T == 16)
 #	define QSE_HAVE_INT128_T
