@@ -171,6 +171,7 @@ struct qse_sed_cmd_t
 			unsigned short g: 1; /* global */
 			unsigned short p: 1; /* print */
 			unsigned short i: 1; /* case insensitive */
+			unsigned short k: 1; /* kill unmatched portion */
 		} subst;
 
 		/* translation set for the y command */

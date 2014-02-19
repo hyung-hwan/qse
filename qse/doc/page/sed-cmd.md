@@ -186,7 +186,9 @@ with *repl*. An ampersand(&) in *repl* refers to the matching substring.
    with *rex*
  - *p* prints pattern space if a successful replacement was made
  - *w* file writes pattern space to *file* if a successful replacement 
-      was made. It, if specified, should be the last option.
+   was made. It, if specified, should be the last option.
+ - *k* removes(kills) unmached portions from the pattern space. It is
+   useful for partial extraction.
 
 ### y/src/dst/ ###
 Replaces all occurrences of characters in *src* with characters in *dst*.
@@ -235,6 +237,18 @@ first and the first line last.
 
 ### s/[[:space:]]{2,}/ /g ###
 Compacts whitespaces if #QSE_SED_EXTENDEDREX is on.
+
+### s/[0-9]/&/gk ###
+Extract all digits.
+
+	$ echo "Q123Q456" | qsesed -r 's/[0-9]+/&/gk'
+	123456
+
+### s/[0-9]+/&/2k ###
+Extract the second number.
+
+	$ echo "Q123Q456" | qsesed -r 's/[0-9]+/&/2k'
+	456
 
 ### C/d:,f3,1/ ###
 Prints the third field and the first field from a colon separated text.
