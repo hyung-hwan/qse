@@ -1,0 +1,212 @@
+/*
+ * $Id$
+ *
+    Copyright 2006-2014 Chung, Hyung-Hwan.
+    This file is part of QSE.
+
+    QSE is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as 
+    published by the Free Software Foundation, either version 3 of 
+    the License, or (at your option) any later version.
+
+    QSE is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public 
+    License along with QSE. If not, see <http://www.gnu.org/licenses/>.
+ */
+
+#include "mod-str.h"
+#include <qse/sed/stdsed.h>
+#include "../cmn/mem.h"
+
+#if 0
+static int fnc_errno (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	uctx_list_t* list;
+	qse_awk_val_t* retv;
+
+	list = rtx_to_list (rtx, fi);
+
+	retv = qse_awk_rtx_makeintval (rtx, list->errnum);
+	if (retv == QSE_NULL) return -1;
+
+	qse_awk_rtx_setretval (rtx, retv);
+	return 0;
+}
+
+static qse_char_t* errmsg[] =
+{
+	QSE_T("no error"),
+	QSE_T("out of memory"),
+	QSE_T("invalid data"),
+	QSE_T("not found"),
+	QSE_T("I/O error"),
+	QSE_T("parse error"),
+	QSE_T("duplicate data"),
+	QSE_T("unknown error")
+};
+
+static int fnc_errstr (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	uctx_list_t* list;
+	qse_awk_val_t* retv;
+	qse_awk_int_t errnum;
+
+	list = rtx_to_list (rtx, fi);
+
+	if (qse_awk_rtx_getnargs (rtx) <= 0 ||
+	    qse_awk_rtx_valtoint (rtx, qse_awk_rtx_getarg (rtx, 0), &errnum) <= -1)
+	{
+		errnum = list->errnum;
+	}
+
+	if (errnum < 0 || errnum >= QSE_COUNTOF(errmsg)) errnum = QSE_COUNTOF(errmsg) - 1;
+
+	retv = qse_awk_rtx_makestrvalwithstr (rtx, errmsg[errnum]);
+	if (retv == QSE_NULL) return -1;
+
+	qse_awk_rtx_setretval (rtx, retv);
+	return 0;
+}
+#endif
+
+static int fnc_file_to_file (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	qse_sed_t* sed = QSE_NULL;
+	qse_awk_val_t* retv;
+	qse_awk_val_t* a[3];
+	qse_char_t* str[3];
+	qse_size_t len[3];
+	int i = 0, ret = 0;
+
+	/* result = sed::file_to_file ("s/ABC/123/g", input_file, output_file [, option_string]) */
+
+	sed = qse_sed_openstdwithmmgr (qse_awk_rtx_getmmgr(rtx), 0);
+	if (sed == QSE_NULL) 
+	{
+		ret = -2;
+		goto oops;
+	}
+
+/* TODO qse_set_opt (TRAIT) using the optional parameter */
+
+	for (i = 0; i < 3; i++)
+	{
+		a[i] = qse_awk_rtx_getarg (rtx, i);
+		str[i] = qse_awk_rtx_getvalstr (rtx, a[i], &len[i]);
+		if (str[i] == QSE_NULL) 
+		{
+			ret = -2;
+			goto oops;
+		}
+	}
+
+	if (qse_sed_compstdstrx (sed, str[0], len[0]) <= -1) 
+	{
+		ret = -3; /* compile error */
+		goto oops;
+	}
+
+	if (qse_sed_execstdfile (sed, str[1], str[2], QSE_NULL) <= -1) 
+	{
+		ret = -4;
+		goto oops;
+	}
+
+oops:
+	retv = qse_awk_rtx_makeintval (rtx, ret);
+	if (retv == QSE_NULL) retv = qse_awk_rtx_makeintval (rtx, -1);
+
+	while (i > 0)
+	{
+		--i;
+		qse_awk_rtx_freevalstr (rtx, a[i], str[i]);
+	}
+
+	if (sed) qse_sed_close (sed);
+	qse_awk_rtx_setretval (rtx, retv);
+	return 0;
+}
+
+static int fnc_str_to_str (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	return -1;
+}
+
+typedef struct fnctab_t fnctab_t;
+struct fnctab_t
+{
+	const qse_char_t* name;
+	qse_awk_mod_sym_fnc_t info;
+};
+
+static fnctab_t fnctab[] =
+{
+	/* keep this table sorted for binary search in query(). */
+	{ QSE_T("file_to_file"),  { { 3, 3, QSE_NULL },    fnc_file_to_file,  0 } },
+	{ QSE_T("str_to_str"),    { { 3, 3, QSE_T("vvr")}, fnc_str_to_str,    0 } }
+};
+
+static int query (qse_awk_mod_t* mod, qse_awk_t* awk, const qse_char_t* name, qse_awk_mod_sym_t* sym)
+{
+	qse_cstr_t ea;
+	int left, right, mid, n;
+
+	left = 0; right = QSE_COUNTOF(fnctab) - 1;
+
+	while (left <= right)
+	{
+		mid = (left + right) / 2;
+
+		n = qse_strcmp (fnctab[mid].name, name);
+		if (n > 0) right = mid - 1; 
+		else if (n < 0) left = mid + 1;
+		else
+		{
+			sym->type = QSE_AWK_MOD_FNC;
+			sym->u.fnc = fnctab[mid].info;
+			return 0;
+		}
+	}
+
+
+	ea.ptr = name;
+	ea.len = qse_strlen(name);
+	qse_awk_seterror (awk, QSE_AWK_ENOENT, &ea, QSE_NULL);
+	return -1;
+}
+
+/* TODO: proper resource management */
+
+static int init (qse_awk_mod_t* mod, qse_awk_rtx_t* rtx)
+{
+	return 0;
+}
+
+static void fini (qse_awk_mod_t* mod, qse_awk_rtx_t* rtx)
+{
+	/* TODO: anything */
+}
+
+static void unload (qse_awk_mod_t* mod, qse_awk_t* awk)
+{
+	/* TODO: anything */
+}
+
+int qse_awk_mod_sed (qse_awk_mod_t* mod, qse_awk_t* awk)
+{
+	mod->query = query;
+	mod->unload = unload;
+
+	mod->init = init;
+	mod->fini = fini;
+	/*
+	mod->ctx...
+	 */
+
+	return 0;
+}
+

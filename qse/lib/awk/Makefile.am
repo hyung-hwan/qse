@@ -43,6 +43,7 @@ if ENABLE_STATIC_MODULE
 ##################################################
 libqseawk_la_SOURCES += \
 	mod-dir.c mod-dir.h \
+	mod-sed.c mod-sed.h \
 	mod-str.c mod-str.h \
 	mod-sys.c mod-sys.h
 
@@ -73,6 +74,12 @@ libqseawk_dir_la_SOURCES = mod-dir.c mod-dir.h
 libqseawk_dir_la_CPPFLAGS = $(CPPFLAGS_MOD_COMMON)
 libqseawk_dir_la_LDFLAGS = $(LDFLAGS_MOD_COMMON)
 libqseawk_dir_la_LIBADD = $(LIBADD_MOD_COMMON)
+
+modexec_LTLIBRARIES += libqseawk-sed.la
+libqseawk_sed_la_SOURCES = mod-sed.c mod-sed.h
+libqseawk_sed_la_CPPFLAGS = $(CPPFLAGS_MOD_COMMON)
+libqseawk_sed_la_LDFLAGS = $(LDFLAGS_MOD_COMMON) -L../sed
+libqseawk_sed_la_LIBADD = $(LIBADD_MOD_COMMON) -lqsesed
 
 modexec_LTLIBRARIES += libqseawk-str.la
 libqseawk_str_la_SOURCES = mod-str.c mod-str.h

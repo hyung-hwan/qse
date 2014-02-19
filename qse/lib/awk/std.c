@@ -1561,13 +1561,13 @@ static int open_rio_console (qse_awk_rtx_t* rtx, qse_awk_rio_arg_t* riod)
 			v = QSE_HTB_VPTR(pair);
 			QSE_ASSERT (v != QSE_NULL);
 
-			as.ptr = qse_awk_rtx_valtostrdup (rtx, v, &as.len);
+			as.ptr = qse_awk_rtx_getvalstr (rtx, v, &as.len);
 			if (as.ptr == QSE_NULL) return -1;
 
 			if (as.len == 0)
 			{
 				/* the name is empty */
-				qse_awk_rtx_freemem (rtx, as.ptr);
+				qse_awk_rtx_freevalstr (rtx, v, as.ptr);
 				rxtn->c.in.index++;
 				goto nextfile;
 			}
@@ -1584,7 +1584,7 @@ static int open_rio_console (qse_awk_rtx_t* rtx, qse_awk_rio_arg_t* riod)
 
 				qse_awk_rtx_seterrnum (rtx, QSE_AWK_EIONMNL, &errarg);
 
-				qse_awk_rtx_freemem (rtx, as.ptr);
+				qse_awk_rtx_freevalstr (rtx, v, as.ptr);
 				return -1;
 			}
 
@@ -1597,7 +1597,7 @@ static int open_rio_console (qse_awk_rtx_t* rtx, qse_awk_rio_arg_t* riod)
 					QSE_SIO_READ | QSE_SIO_IGNOREMBWCERR);
 			if (sio == QSE_NULL)
 			{
-				qse_awk_rtx_freemem (rtx, as.ptr);
+				qse_awk_rtx_freevalstr (rtx, v, as.ptr);
 				return -1;
 			}
 
@@ -1607,11 +1607,11 @@ static int open_rio_console (qse_awk_rtx_t* rtx, qse_awk_rio_arg_t* riod)
 				rtx, file, qse_strlen(file)) <= -1)
 			{
 				qse_sio_close (sio);
-				qse_awk_rtx_freemem (rtx, as.ptr);
+				qse_awk_rtx_freevalstr (rtx, v, as.ptr);
 				return -1;
 			}
 
-			qse_awk_rtx_freemem (rtx, as.ptr);
+			qse_awk_rtx_freevalstr (rtx, v, as.ptr);
 			riod->handle = sio;
 
 			/* increment the counter of files successfully opened */
@@ -2209,22 +2209,14 @@ static int fnc_srand (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 
 static int fnc_system (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
-	qse_awk_val_t* v;
+	qse_awk_val_t* v, * a0;
 	qse_char_t* str;
 	qse_size_t len;
 	int n = 0;
 
-	v = qse_awk_rtx_getarg (rtx, 0);
-	if (v->type == QSE_AWK_VAL_STR)
-	{
-		str = ((qse_awk_val_str_t*)v)->val.ptr;
-		len = ((qse_awk_val_str_t*)v)->val.len;
-	}
-	else
-	{
-		str = qse_awk_rtx_valtostrdup (rtx, v, &len);
-		if (str == QSE_NULL) return -1;
-	}
+	a0 = qse_awk_rtx_getarg (rtx, 0);
+	str = qse_awk_rtx_getvalstr (rtx, a0, &len);
+	if (str == QSE_NULL) return -1;
 
 	/* the target name contains a null character.
 	 * make system return -1 */
@@ -2255,7 +2247,7 @@ static int fnc_system (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 #endif
 
 skip_system:
-	if (v->type != QSE_AWK_VAL_STR) QSE_AWK_FREE (rtx->awk, str);
+	qse_awk_rtx_freevalstr (rtx, a0, str);
 
 	v = qse_awk_rtx_makeintval (rtx, (qse_awk_int_t)n);
 	if (v == QSE_NULL) return -1;
@@ -2333,19 +2325,11 @@ static int fnc_setioattr (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	for (i = 0; i < 3; i++)
 	{
 		v[i] = qse_awk_rtx_getarg (rtx, i);
-		if (v[i]->type == QSE_AWK_VAL_STR)
+		ptr[i] = qse_awk_rtx_getvalstr (rtx, v[i], &len[i]);
+		if (ptr[i] == QSE_NULL) 
 		{
-			ptr[i] = ((qse_awk_val_str_t*)v[i])->val.ptr;
-			len[i] = ((qse_awk_val_str_t*)v[i])->val.len;
-		}
-		else
-		{
-			ptr[i] = qse_awk_rtx_valtostrdup (rtx, v[i], &len[i]);
-			if (ptr[i] == QSE_NULL) 
-			{
-				ret = -1;
-				goto done;
-			}
+			ret = -1;
+			goto done;
 		}
 
 		if (qse_strxchr (ptr[i], len[i], QSE_T('\0')))
@@ -2430,8 +2414,7 @@ done:
 	while (i > 0)
 	{
 		i--;
-		if (v[i]->type != QSE_AWK_VAL_STR) 
-			QSE_AWK_FREE (rtx->awk, ptr[i]);
+		qse_awk_rtx_freevalstr (rtx, v[i], ptr[i]);
 	}
 
 	if (ret >= 0)
@@ -2463,19 +2446,11 @@ static int fnc_getioattr (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	for (i = 0; i < 2; i++)
 	{
 		v[i] = qse_awk_rtx_getarg (rtx, i);
-		if (v[i]->type == QSE_AWK_VAL_STR)
+		ptr[i] = qse_awk_rtx_getvalstr (rtx, v[i], &len[i]);
+		if (ptr[i] == QSE_NULL) 
 		{
-			ptr[i] = ((qse_awk_val_str_t*)v[i])->val.ptr;
-			len[i] = ((qse_awk_val_str_t*)v[i])->val.len;
-		}
-		else
-		{
-			ptr[i] = qse_awk_rtx_valtostrdup (rtx, v[i], &len[i]);
-			if (ptr[i] == QSE_NULL) 
-			{
-				ret = -1;
-				goto done;
-			}
+			ret = -1;
+			goto done;
 		}
 
 		if (qse_strxchr (ptr[i], len[i], QSE_T('\0'))) goto done;
@@ -2521,7 +2496,7 @@ done:
 	while (i > 0)
 	{
 		i--;
-		if (v[i]->type != QSE_AWK_VAL_STR) QSE_AWK_FREE (rtx->awk, ptr[i]);
+		qse_awk_rtx_freevalstr (rtx, v[i], ptr[i]);
 	}
 
 	if (ret >= 0)

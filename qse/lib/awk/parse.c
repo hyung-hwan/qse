@@ -6585,6 +6585,7 @@ int qse_awk_putsrcstrn (
 #include "mod-dir.h"
 #include "mod-str.h"
 #include "mod-sys.h"
+#include "mod-sed.h"
 #if defined(HAVE_MPI)
 #	include "mod-mpi.h"
 #endif
@@ -6608,6 +6609,7 @@ static struct
 #if defined(HAVE_MPI)
 	{ QSE_T("mpi"), qse_awk_mod_mpi },
 #endif
+	{ QSE_T("sed"), qse_awk_mod_sed },
 	{ QSE_T("str"), qse_awk_mod_str },
 	{ QSE_T("sys"), qse_awk_mod_sys },
 #if defined(HAVE_UCI)

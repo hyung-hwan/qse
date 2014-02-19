@@ -21,9 +21,9 @@
 #include "awk.h"
 #include <qse/cmn/fmt.h>
 
-#ifdef DEBUG_RUN
+//#ifdef DEBUG_RUN
 #include <qse/cmn/sio.h>
-#endif
+//#endif
 
 #define PRINT_IOERR -99
 
@@ -4965,49 +4965,26 @@ static qse_awk_val_t* eval_binop_match0 (
 	const qse_awk_loc_t* lloc, const qse_awk_loc_t* rloc, int ret)
 {
 	qse_awk_val_t* res;
+	qse_xstr_t out;
 	int n;
 
-	if (left->type == QSE_AWK_VAL_STR)
-	{
-		n = qse_awk_rtx_matchrex (
-			rtx, right, 
-			xstr_to_cstr(&((qse_awk_val_str_t*)left)->val),
-			xstr_to_cstr(&((qse_awk_val_str_t*)left)->val), QSE_NULL);
-		if (n <= -1) 
-		{
-			ADJERR_LOC (rtx, lloc);
-			return QSE_NULL;
-		}
+	out.ptr = qse_awk_rtx_getvalstr (rtx, left, &out.len);
+	if (out.ptr == QSE_NULL) return QSE_NULL;
 
-		res = qse_awk_rtx_makeintval (rtx, (n == ret));
-		if (res == QSE_NULL) 
-		{
-			ADJERR_LOC (rtx, lloc);
-			return QSE_NULL;
-		}
+	n = qse_awk_rtx_matchrex (rtx, right, &out, &out, QSE_NULL);
+	qse_awk_rtx_freevalstr (rtx, left, out.ptr);
+
+	if (n <= -1) 
+	{
+		ADJERR_LOC (rtx, lloc);
+		return QSE_NULL;
 	}
-	else
+
+	res = qse_awk_rtx_makeintval (rtx, (n == ret));
+	if (res == QSE_NULL) 
 	{
-		qse_xstr_t out;
-
-		out.ptr = qse_awk_rtx_valtostrdup (rtx, left, &out.len);
-		if (out.ptr == QSE_NULL) return QSE_NULL;
-
-		n = qse_awk_rtx_matchrex (rtx, right, &out, &out, QSE_NULL);
-		QSE_AWK_FREE (rtx->awk, out.ptr);
-
-		if (n <= -1) 
-		{
-			ADJERR_LOC (rtx, lloc);
-			return QSE_NULL;
-		}
-
-		res = qse_awk_rtx_makeintval (rtx, (n == ret));
-		if (res == QSE_NULL) 
-		{
-			ADJERR_LOC (rtx, lloc);
-			return QSE_NULL;
-		}
+		ADJERR_LOC (rtx, lloc);
+		return QSE_NULL;
 	}
 
 	return res;

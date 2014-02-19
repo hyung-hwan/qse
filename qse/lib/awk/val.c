@@ -1471,6 +1471,31 @@ qse_wchar_t* qse_awk_rtx_valtowcsdup (
 #endif
 }
 
+qse_char_t* qse_awk_rtx_getvalstr (
+	qse_awk_rtx_t* rtx, const qse_awk_val_t* v, qse_size_t* len)
+{
+	if (v->type == QSE_AWK_VAL_STR)
+	{
+		if (len) *len = ((qse_awk_val_str_t*)v)->val.len;
+		return ((qse_awk_val_str_t*)v)->val.ptr;
+	}
+	else
+	{
+		return qse_awk_rtx_valtostrdup (rtx, v, len);
+	}
+}
+
+void qse_awk_rtx_freevalstr (
+	qse_awk_rtx_t* rtx, const qse_awk_val_t* v, qse_char_t* str)
+{
+	if (v->type != QSE_AWK_VAL_STR && 
+	    str != ((qse_awk_val_str_t*)v)->val.ptr)
+	{
+		qse_awk_rtx_freemem (rtx, str);
+	}
+}
+
+
 static int val_ref_to_num (
 	qse_awk_rtx_t* rtx, const qse_awk_val_ref_t* ref, qse_awk_int_t* l, qse_awk_flt_t* r)
 {
