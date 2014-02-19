@@ -1383,6 +1383,11 @@ static int get_subst (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 			cmd->u.subst.g = 1;
 			NXTSC_GOTO (sed, c, oops);
 		}
+		else if (c == QSE_T('k')) 
+		{
+			cmd->u.subst.k = 1;
+			NXTSC_GOTO (sed, c, oops);
+		}
 		else if (c >= QSE_T('0') && c <= QSE_T('9'))
 		{
 			unsigned long occ;
@@ -2833,13 +2838,17 @@ static int do_subst (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 
 		if (n == 0) 
 		{
-			/* no more match found */
-			if (qse_str_ncat (
-				&sed->e.txt.scratch,
-				cur.ptr, cur.len) == (qse_size_t)-1)
+			/* no more match found or substitution occurrence matched.
+			 * copy the remaining portion and finish */
+			if (!cmd->u.subst.k)
 			{
-				SETERR0 (sed, QSE_SED_ENOMEM, QSE_NULL);
-				return -1;
+				/* copy the remaining portion */
+				m = qse_str_ncat (&sed->e.txt.scratch, cur.ptr, cur.len);
+				if (m == (qse_size_t)-1)
+				{
+					SETERR0 (sed, QSE_SED_ENOMEM, QSE_NULL);
+					return -1;
+				}
 			}
 			break;
 		}
@@ -2854,11 +2863,16 @@ static int do_subst (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 
 		if (max_count > 0 && sub_count + 1 != max_count)
 		{
-			if (cur.ptr < str_end)
+			/* substition occurrence specified.
+			 * but this is not the occurrence yet */
+
+			if (!cmd->u.subst.k && cur.ptr < str_end)
 			{
+				/* copy the unmatched portion and the matched portion
+				 * together as if the matched portion was not matched */
 				m = qse_str_ncat (
 					&sed->e.txt.scratch,
-					cur.ptr, mat.ptr-cur.ptr+mat.len
+					cur.ptr, mat.ptr - cur.ptr + mat.len
 				);
 				if (m == (qse_size_t)-1)
 				{
@@ -2869,12 +2883,14 @@ static int do_subst (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 		}
 		else
 		{
+			/* perform actual substitution */
+
 			repl = 1;
 
-			if (cur.ptr < str_end)
+			if (!cmd->u.subst.k && cur.ptr < str_end)
 			{
 				m = qse_str_ncat (
-					&sed->e.txt.scratch, cur.ptr, mat.ptr-cur.ptr
+					&sed->e.txt.scratch, cur.ptr, mat.ptr - cur.ptr
 				);
 				if (m == (qse_size_t)-1)
 				{
@@ -2902,8 +2918,10 @@ static int do_subst (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 					else
 					{
 #endif
-						/* the know speical characters have been escaped
-						 * in get_subst(). so i don't call trans_escaped() here */
+						/* Known speical characters have been escaped
+						 * in get_subst(). so i don't call trans_escaped() here. 
+						 * It's a normal character that's escaped. 
+						 * For example, \1 is just 1. and \M is just M. */
 						m = qse_str_ccat (&sed->e.txt.scratch, nc);
 #ifndef USE_REX
 					}
