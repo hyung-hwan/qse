@@ -937,13 +937,13 @@ int StdAwk::open_console_in (Console& io)
 		v = (qse_awk_val_t*)QSE_HTB_VPTR(pair);
 		QSE_ASSERT (v != QSE_NULL);
 
-		as.ptr = qse_awk_rtx_valtostrdup (rtx, v, &as.len);
+		as.ptr = qse_awk_rtx_getvalstr (rtx, v, &as.len);
 		if (as.ptr == QSE_NULL) return -1;
 
 		if (as.len == 0)
 		{
 			/* the name is empty */
-			qse_awk_rtx_freemem (rtx, as.ptr);
+			qse_awk_rtx_freevalstr (rtx, v, as.ptr);
 			this->runarg_index++;
 			goto nextfile;
 		}
@@ -955,7 +955,7 @@ int StdAwk::open_console_in (Console& io)
 			arg.ptr = as.ptr;
 			arg.len = qse_strlen (as.ptr);
 			((Run*)io)->setError (QSE_AWK_EIONMNL, &arg);
-			qse_awk_rtx_freemem (rtx, as.ptr);
+			qse_awk_rtx_freevalstr (rtx, v, as.ptr);
 			return -1;
 		}
 
@@ -967,21 +967,20 @@ int StdAwk::open_console_in (Console& io)
 			sio = open_sio (QSE_NULL, io, file, QSE_SIO_READ | QSE_SIO_IGNOREMBWCERR);
 		if (sio == QSE_NULL) 
 		{
-			qse_awk_rtx_freemem (rtx, as.ptr);
+			qse_awk_rtx_freevalstr (rtx, v, as.ptr);
 			return -1;
 		}
 		
 		if (qse_awk_rtx_setfilename (rtx, file, qse_strlen(file)) <= -1)
 		{
 			qse_sio_close (sio);
-			qse_awk_rtx_freemem (rtx, as.ptr);
+			qse_awk_rtx_freevalstr (rtx, v, as.ptr);
 			return -1;
 		}
 
-		qse_awk_rtx_freemem (rtx, as.ptr);
+		qse_awk_rtx_freevalstr (rtx, v, as.ptr);
 
-		if (this->console_cmgr) 
-			qse_sio_setcmgr (sio, this->console_cmgr);
+		if (this->console_cmgr) qse_sio_setcmgr (sio, this->console_cmgr);
 
 		io.setHandle (sio);
 

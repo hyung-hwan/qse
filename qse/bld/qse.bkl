@@ -236,7 +236,7 @@
 	</set>
 
 	<set var="SOURCES_STATIC_AWK_MODULE">
-		<if cond="ENABLE_STATIC_MODULE=='1'">mod-dir.c mod-str.c mod-sys.c</if>
+		<if cond="ENABLE_STATIC_MODULE=='1'">mod-dir.c mod-sed.c mod-str.c mod-sys.c</if>
 	</set>
 
 	<set var="SOURCES_LIBQSEAWK">
@@ -347,6 +347,23 @@
 		<sys-lib>$(SYSLIB_SOCKET2)</sys-lib>
 	</lib>
 
+	<dll id="dllqsesed" template="base" cond="ENABLE_DLL=='1'">
+		<libname>qsesed</libname>
+		<dllname>qsesed</dllname>
+		<set-srcdir>../../lib/sed</set-srcdir>
+		<sources>$(SOURCES_LIBQSESED)</sources>
+		<library>libqsecmn</library>
+		<depends>dllqsecmn</depends>
+	</dll>
+
+	<lib id="libqsesed" template="base" cond="ENABLE_DLL=='0'">
+		<libname>qsesed</libname>
+		<set-srcdir>../../lib/sed</set-srcdir>
+		<sources>$(SOURCES_LIBQSESED)</sources>
+		<library>libqsecmn</library>
+		<depends>libqsecmn</depends>
+	</lib>
+
 	<dll id="dllqseawk" template="base" cond="ENABLE_DLL=='1'">
 		<libname>qseawk</libname>
 		<dllname>qseawk</dllname>
@@ -373,6 +390,18 @@
 		<depends>dllqseawk</depends>
 	</dll>
 
+	<dll id="modqseawksed" template="base" cond="ENABLE_STATIC_MODULE=='0'">
+		<dllname>$(AWKMODPREFIX)sed$(AWKMODPOSTFIX)</dllname>
+		<libname>$(AWKMODPREFIX)sed$(AWKMODPOSTFIX)</libname>
+		<set-srcdir>../../lib/awk</set-srcdir>
+		<sources>mod-sed.c</sources>
+		<library>libqsecmn</library>
+		<library>libqseawk</library>
+		<library>libqsesed</library>
+		<depends>dllqseawk</depends>
+		<depends>dllqsesed</depends>
+	</dll>
+
 	<dll id="modqseawkstr" template="base" cond="ENABLE_STATIC_MODULE=='0'">
 		<dllname>$(AWKMODPREFIX)str$(AWKMODPOSTFIX)</dllname>
 		<libname>$(AWKMODPREFIX)str$(AWKMODPOSTFIX)</libname>
@@ -392,23 +421,6 @@
 		<library>libqseawk</library>
 		<depends>dllqseawk</depends>
 	</dll>
-
-	<dll id="dllqsesed" template="base" cond="ENABLE_DLL=='1'">
-		<libname>qsesed</libname>
-		<dllname>qsesed</dllname>
-		<set-srcdir>../../lib/sed</set-srcdir>
-		<sources>$(SOURCES_LIBQSESED)</sources>
-		<library>libqsecmn</library>
-		<depends>dllqsecmn</depends>
-	</dll>
-
-	<lib id="libqsesed" template="base" cond="ENABLE_DLL=='0'">
-		<libname>qsesed</libname>
-		<set-srcdir>../../lib/sed</set-srcdir>
-		<sources>$(SOURCES_LIBQSESED)</sources>
-		<library>libqsecmn</library>
-		<depends>libqsecmn</depends>
-	</lib>
 
 	<dll id="dllqsehttp" template="base" cond="ENABLE_DLL=='1'">
 		<libname>qsehttp</libname>

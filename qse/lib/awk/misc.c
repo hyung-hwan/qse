@@ -1303,29 +1303,17 @@ int qse_awk_rtx_matchrex (
 	{
 		code = ((qse_awk_val_rex_t*)val)->code[icase];
 	}
-	else if (val->type == QSE_AWK_VAL_STR)
-	{
-		/* build a regular expression */
-		qse_awk_val_str_t* strv = (qse_awk_val_str_t*)val;
-		x = icase? qse_awk_buildrex (rtx->awk, strv->val.ptr, strv->val.len, &awkerr, QSE_NULL, &code):
-		           qse_awk_buildrex (rtx->awk, strv->val.ptr, strv->val.len, &awkerr, &code, QSE_NULL);
-		if (x <= -1)
-		{
-			qse_awk_rtx_seterrnum (rtx, awkerr, QSE_NULL);
-			return -1;
-		}
-	}
 	else 
 	{
 		/* convert to a string and build a regular expression */
-
 		qse_xstr_t tmp;
-		tmp.ptr = qse_awk_rtx_valtostrdup (rtx, val, &tmp.len);
+
+		tmp.ptr = qse_awk_rtx_getvalstr (rtx, val, &tmp.len);
 		if (tmp.ptr == QSE_NULL) return -1;
 
 		x = icase? qse_awk_buildrex (rtx->awk, tmp.ptr, tmp.len, &awkerr, QSE_NULL, &code):
 		           qse_awk_buildrex (rtx->awk, tmp.ptr, tmp.len, &awkerr, &code, QSE_NULL);
-		qse_awk_rtx_freemem (rtx, tmp.ptr);
+		qse_awk_rtx_freevalstr (rtx, val, tmp.ptr);
 		if (x <= -1)
 		{
 			qse_awk_rtx_seterrnum (rtx, awkerr, QSE_NULL);

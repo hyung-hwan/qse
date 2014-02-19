@@ -170,6 +170,17 @@ QSE_EXPORT int qse_sed_compstdstr (
 );
 
 /**
+ * The qse_sed_compstd() function compiles a sed script of the 
+ * length @a script_len pointed to by @a script.
+ * @return 0 on success, -1 on failure
+ */
+QSE_EXPORT int qse_sed_compstdstrx (
+	qse_sed_t*        sed, 
+	const qse_char_t* script,
+	qse_size_t        script_len
+);
+
+/**
  * The qse_sed_execstd() function executes a compiled script
  * over input streams @a in and an output stream @a out.
  *

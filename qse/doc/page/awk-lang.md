@@ -984,4 +984,66 @@ Now you run the following script on a UTF-8 console of a Linux box.
 Note that 你 has been converted to a question mark since the letter is
 not supported by cp949.
 
+
+Modules
+-------
+QSEAWK supports various external modules.
+
+## String ##
+
+The *str* module provides an extensive set of string manipulation functions.
+
+- str::index
+- str::isalnum
+- str::isalpha
+- str::isblank
+- str::iscntrl
+- str::isdigit
+- str::isgraph
+- str::islower
+- str::isprint
+- str::ispunct
+- str::isspace
+- str::isupper
+- str::isxdigit
+- str::ltrim
+- str::normspace
+- str::rindex
+- str::rtrim
+- str::trim
+
+## Directory ##
+
+The *dir* module provides an interface to read file names in a specified directory.
+
+- dir::open
+- dir::close
+- dir::read
+- dir::reset	
+- dir::errno
+- dir::errstr
+
+~~~~~{.awk}
+ BEGIN { 
+     x = dir::open (".");  
+     while ((dir::read(x, file)) > 0) print file;
+     dir::close(x); 
+ }'
+~~~~~
+
+## SED ##
+
+The *sed* module provides built-in sed capabilities.
+
+- sed::file_to_file
+- sed::str_to_str
+
+~~~~~{.awk}
+ BEGIN { 
+    sed::file_to_file ("s/[a-z]/#/g", "in.txt", "out.txt");
+ }'
+~~~~~
+
+
 [awkbook]: http://cm.bell-labs.com/cm/cs/awkbook/ 
+

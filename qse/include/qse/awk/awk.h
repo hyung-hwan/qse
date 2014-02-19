@@ -2648,6 +2648,33 @@ QSE_EXPORT qse_wchar_t* qse_awk_rtx_valtowcsdup (
 	qse_size_t*          len  /**< result length */
 );
 
+
+/**
+ * The qse_awk_rtx_getvalstr() function returns a string
+ * pointer converted from a value \a val. If the value 
+ * type is #QSE_AWK_VAL_STR, it simply returns the internal
+ * pointer without duplication. Otherwise, it calls
+ * qse_awk_rtx_valtostrdup(). The length of the returned
+ * string is stored into the location pointed to by \a len.
+ */
+QSE_EXPORT qse_char_t* qse_awk_rtx_getvalstr (
+	qse_awk_rtx_t*       rtx, /**< runtime context */
+	const qse_awk_val_t* val, /**< value to convert */
+	qse_size_t*          len  /**< result length */
+);
+
+/**
+ * The qse_awk_rtx_freevalstr() function frees the memory pointed 
+ * to by \a str if \a val is not of the #QSE_AWK_VAL_STR type. 
+ * This function expects a value pointer and a string pointer
+ * passed to and returned by qse_awk_rtx_getvalstr() respectively.
+ */
+QSE_EXPORT void qse_awk_rtx_freevalstr (
+	qse_awk_rtx_t*       rtx, /**< runtime context */
+	const qse_awk_val_t* val, /**< value to convert */
+	qse_char_t*          str  /**< string pointer */
+);
+
 /**
  * The qse_awk_rtx_valtonum() function converts a value to a number. 
  * If the value is converted to an integer, it is stored in the memory

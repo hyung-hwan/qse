@@ -371,16 +371,18 @@ static int fnc_dir_open (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	qse_awk_int_t ret;
 	qse_char_t* path;
 	qse_awk_val_t* retv;
+	qse_awk_val_t* a0;
 
 	list = rtx_to_list (rtx, fi);
 
-	path = qse_awk_rtx_valtostrdup (rtx, qse_awk_rtx_getarg (rtx, 0), QSE_NULL);
+	a0 = qse_awk_rtx_getarg (rtx, 0);
+	path = qse_awk_rtx_getvalstr (rtx, a0, QSE_NULL);
 	if (path)
 	{
 		node = new_dir_node (rtx, list, path);
 		if (node) ret = node->id;
 		else ret = -1;
-		qse_awk_rtx_freemem (rtx, path);
+		qse_awk_rtx_freevalstr (rtx, a0, path);
 	}
 	else
 	{
@@ -440,11 +442,14 @@ static int fnc_dir_reset (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	}
 	else
 	{
-		path = qse_awk_rtx_valtostrdup (rtx, qse_awk_rtx_getarg(rtx, 1), QSE_NULL);
+		qse_awk_val_t* a1;
+
+		a1 = qse_awk_rtx_getarg (rtx, 1);
+		path = qse_awk_rtx_getvalstr (rtx, a1, QSE_NULL);
 		if (path)
 		{
 			ret = reset_byid (rtx, list, id, path);
-			qse_awk_rtx_freemem (rtx, path);
+			qse_awk_rtx_freevalstr (rtx, a1, path);
 		}
 		else
 		{
