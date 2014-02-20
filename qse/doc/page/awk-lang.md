@@ -1028,20 +1028,22 @@ The *dir* module provides an interface to read file names in a specified directo
      x = dir::open (".");  
      while ((dir::read(x, file)) > 0) print file;
      dir::close(x); 
- }'
+ }
 ~~~~~
 
 ## SED ##
 
 The *sed* module provides built-in sed capabilities.
 
-- sed::file_to_file
-- sed::str_to_str
+- sed::file_to_file (script-string, input-file, output-file [, option-string])
+- sed::str_to_str (script-string, input-string, output-variable, [, option-string])
+- sed::errstr (error-number)
 
 ~~~~~{.awk}
  BEGIN { 
-    sed::file_to_file ("s/[a-z]/#/g", "in.txt", "out.txt");
- }'
+    x = sed::file_to_file ("s/[a-z]/#/g", "in.txt", "out.txt");
+    if (x <= -1) printf ("ERROR: %s\n"), sed::errstr(x));
+ }
 ~~~~~
 
 

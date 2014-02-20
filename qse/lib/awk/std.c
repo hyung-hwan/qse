@@ -52,7 +52,9 @@
 #	define INCL_DOSERRORS
 #    include <os2.h>
 #elif defined(__DOS__)
-#	include <cwdllfnc.h>
+#	if !defined(QSE_ENABLE_STATIC_MODULE)
+#		include <cwdllfnc.h>
+#	endif
 #else
 #	include <unistd.h>
 #	include <ltdl.h>

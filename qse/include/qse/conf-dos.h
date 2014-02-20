@@ -35,8 +35,11 @@
 #	define QSE_SIZEOF_SHORT       2
 #	define QSE_SIZEOF_INT         4
 #	define QSE_SIZEOF_LONG        4
-#	define QSE_SIZEOF_LONG_LONG   8
-
+#	if (__WATCOMC__ < 1200)
+#		define QSE_SIZEOF_LONG_LONG   0
+#	else
+#		define QSE_SIZEOF_LONG_LONG   8
+#	endif
 #	define QSE_SIZEOF_VOID_P      4
 #	define QSE_SIZEOF_FLOAT       4
 #	define QSE_SIZEOF_DOUBLE      8

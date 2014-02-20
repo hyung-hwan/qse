@@ -115,5 +115,15 @@
 #define QSE_SIZEOF_MBSTATE_T   24 
 #define QSE_MBLEN_MAX          8
 
+/* these two have only to be large enough */
+#define QSE_SIZEOF_STRUCT_SOCKADDR_IN 32
+#define QSE_SIZEOF_STRUCT_SOCKADDR_IN6 64
+
+#if !defined(QSE_CHAR_IS_WCHAR) && !defined(QSE_CHAR_IS_MCHAR)
+#	define QSE_CHAR_IS_WCHAR      1
+#endif
+
+#undef QSE_ENABLE_BUNDLED_UNICODE
+#define QSE_ENABLE_BUNDLED_UNICODE 1
 
 #include <qse/conf-inf.h>

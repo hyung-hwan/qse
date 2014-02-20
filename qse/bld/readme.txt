@@ -14,6 +14,12 @@ using the Watcom C/C++ compiler, you can do this.
  - cd os2-watcom
  - wmake BUILD=debug CHAR=wchar
 
+To build a proteced-mode debug binary for the causeway Dos extender with the 
+default wide-charcter type using the Watcom C/C++ compiler, you can do this.
+
+ - cd msdos-watcom
+ - wmake BUILD=debug CHAR=wchar DOS32=CAUSEWAY
+
 Use relevant native tools for other supported environments.
 
 You can execute the following commands to regenerate the makefiles.

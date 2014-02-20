@@ -25,6 +25,15 @@
 #    include <winsock2.h>
 #    include <ws2tcpip.h> /* sockaddr_in6 */
 #    include <windows.h>
+#	if (defined(__WATCOMC__) && (__WATCOMC__ < 1200))
+		/* the header files shipped with watcom 11 doesn't contain
+		 * proper inet6 support. note using the compiler version
+		 * in the contidional isn't that good idea since you 
+		 * can use newer header files with this old compiler.
+		 * never mind it for the time being.
+           */
+#		undef AF_INET6
+#	endif
 #elif defined(__OS2__)
 #	include <types.h>
 #	include <sys/socket.h>

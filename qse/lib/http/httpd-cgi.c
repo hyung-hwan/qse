@@ -26,6 +26,9 @@
 #include <qse/cmn/path.h>
 
 #include <stdio.h> /* TODO: remove this */
+#if defined(_MSC_VER) || defined(__BORLANDC__) || (defined(__WATCOMC__) && (__WATCOMC__ < 1200))
+#	define snprintf _snprintf 
+#endif
 
 typedef struct task_cgi_arg_t task_cgi_arg_t;
 struct task_cgi_arg_t 

@@ -22,6 +22,18 @@
 #include <qse/cmn/mbwc.h>
 #include "mem.h"
 
+#if !defined(QSE_HAVE_CONFIG_H)
+#	if defined(_WIN32) || defined(__OS2__) || defined(__DOS__)
+#		if (defined(__WATCOMC__) && (__WATCOMC__ < 1200))
+#			undef HAVE_VA_COPY
+#			undef HAVE___VA_COPY
+#		else
+#			define HAVE_VA_COPY
+#			define HAVE___VA_COPY
+#		endif
+#	endif
+#endif
+
 #if !defined(HAVE_VA_COPY)
 #	if defined(HAVE___VA_COPY)
 #		define va_copy(dst,src) __va_copy((dst),(src))

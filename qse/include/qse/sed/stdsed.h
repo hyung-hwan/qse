@@ -24,7 +24,7 @@
 #include <qse/sed/sed.h>
 #include <qse/cmn/sio.h>
 
-/** @file
+/** \file
  * This file defines easier-to-use helper interface for a stream editor.
  * If you don't care about the details of memory management and I/O handling,
  * you can choose to use the helper functions provided here. It is  
@@ -99,7 +99,7 @@ extern "C" {
  * The qse_sed_openstd() function creates a stream editor with the default
  * memory manager and initializes it. Use qse_sed_getxtnstd() to get the 
  * pointer to the extension area. Do not use qse_sed_getxtn() for this.
- * @return pointer to a stream editor on success, #QSE_NULL on failure.
+ * \return pointer to a stream editor on success, #QSE_NULL on failure.
  */
 QSE_EXPORT qse_sed_t* qse_sed_openstd (
 	qse_size_t xtnsize  /**< extension size in bytes */
@@ -110,7 +110,7 @@ QSE_EXPORT qse_sed_t* qse_sed_openstd (
  * user-defined memory manager. It is equivalent to qse_sed_openstd(), 
  * except that you can specify your own memory manager.Use qse_sed_getxtnstd(), 
  * not qse_sed_getxtn() to get the pointer to the extension area.
- * @return pointer to a stream editor on success, #QSE_NULL on failure.
+ * \return pointer to a stream editor on success, #QSE_NULL on failure.
  */
 QSE_EXPORT qse_sed_t* qse_sed_openstdwithmmgr (
 	qse_mmgr_t* mmgr,    /**< memory manager */
@@ -131,11 +131,11 @@ QSE_EXPORT void* qse_sed_getxtnstd (
  * an array of stream resources. The end of the array is indicated
  * by an element whose type is #QSE_SED_IOSTD_NULL. However, the type
  * of the first element shall not be #QSE_SED_IOSTD_NULL. The output 
- * parameter @a count is set to the count of stream resources 
- * opened on both success and failure. You can pass #QSE_NULL to @a
+ * parameter \a count is set to the count of stream resources 
+ * opened on both success and failure. You can pass #QSE_NULL to \a
  * count if the count is not needed.
  *
- * @return 0 on success, -1 on failure
+ * \return 0 on success, -1 on failure
  */
 QSE_EXPORT int qse_sed_compstd (
 	qse_sed_t*        sed,  /**< stream editor */
@@ -145,13 +145,13 @@ QSE_EXPORT int qse_sed_compstd (
 
 /**
  * The qse_sed_compstdfile() function compiles a sed script from
- * a single file @a infile.  If @a infile is #QSE_NULL, it reads
+ * a single file \a infile.  If \a infile is #QSE_NULL, it reads
  * the script from the standard input.
  * When #QSE_CHAR_IS_WCHAR is defined, it converts the multibyte 
- * sequences in the file @a infile to wide characters via the 
- * #qse_cmgr_t interface @a cmgr. If @a cmgr is #QSE_NULL, it uses 
+ * sequences in the file \a infile to wide characters via the 
+ * #qse_cmgr_t interface \a cmgr. If \a cmgr is #QSE_NULL, it uses 
  * the default interface. It calls cmgr->mbtowc() for conversion.
- * @return 0 on success, -1 on failure
+ * \return 0 on success, -1 on failure
  */
 QSE_EXPORT int qse_sed_compstdfile (
 	qse_sed_t*        sed, 
@@ -160,9 +160,9 @@ QSE_EXPORT int qse_sed_compstdfile (
 );
 
 /**
- * The qse_sed_compstd() function compiles a sed script stored
- * in a null-terminated string pointed to by @a script.
- * @return 0 on success, -1 on failure
+ * The qse_sed_compstdstr() function compiles a sed script stored
+ * in a null-terminated string pointed to by \a script.
+ * \return 0 on success, -1 on failure
  */
 QSE_EXPORT int qse_sed_compstdstr (
 	qse_sed_t*        sed, 
@@ -170,30 +170,29 @@ QSE_EXPORT int qse_sed_compstdstr (
 );
 
 /**
- * The qse_sed_compstd() function compiles a sed script of the 
- * length @a script_len pointed to by @a script.
- * @return 0 on success, -1 on failure
+ * The qse_sed_compstdxstr() function compiles a sed script of the 
+ * length \a script->len pointed to by \a script->ptr.
+ * \return 0 on success, -1 on failure
  */
-QSE_EXPORT int qse_sed_compstdstrx (
+QSE_EXPORT int qse_sed_compstdxstr (
 	qse_sed_t*        sed, 
-	const qse_char_t* script,
-	qse_size_t        script_len
+	const qse_xstr_t* script
 );
 
 /**
  * The qse_sed_execstd() function executes a compiled script
- * over input streams @a in and an output stream @a out.
+ * over input streams \a in and an output stream \a out.
  *
- * If @a in is not #QSE_NULL, it must point to an array of stream 
+ * If \a in is not #QSE_NULL, it must point to an array of stream 
  * resources whose end is indicated by an element with #QSE_SED_IOSTD_NULL
- * type. However, the type of the first element @ in[0].type show not
+ * type. However, the type of the first element \a in[0].type show not
  * be #QSE_SED_IOSTD_NULL. It requires at least 1 valid resource to be 
  * included in the array.
  *
- * If @a in is #QSE_NULL, the standard console input is used.
- * If @a out is #QSE_NULL, the standard console output is used.
+ * If \a in is #QSE_NULL, the standard console input is used.
+ * If \a out is #QSE_NULL, the standard console output is used.
  *
- * @return 0 on success, -1 on failure
+ * \return 0 on success, -1 on failure
  */
 QSE_EXPORT int qse_sed_execstd (
 	qse_sed_t*       sed,
@@ -203,17 +202,35 @@ QSE_EXPORT int qse_sed_execstd (
 
 /**
  * The qse_sed_execstdfile() function executes a compiled script
- * a single input file @a infile and a single output file @a outfile.
+ * over a single input file \a infile and a single output file \a 
+ * outfile.
  *
- * If @a infile is #QSE_NULL, the standard console input is used.
- * If @a outfile is #QSE_NULL, the standard console output is used.
+ * If \a infile is #QSE_NULL, the standard console input is used.
+ * If \a outfile is #QSE_NULL, the standard console output is used.
  *
- * @return 0 on success, -1 on failure
+ * \return 0 on success, -1 on failure
  */
 QSE_EXPORT int qse_sed_execstdfile (
      qse_sed_t*        sed,
 	const qse_char_t* infile,
 	const qse_char_t* outfile,
+	qse_cmgr_t*       cmgr
+);
+
+
+/**
+ * The qse_sed_execstdfile() function executes a compiled script
+ * over a single input string \a instr and a dynamically allocated buffer.
+ * It copies the buffer pointer and length to the location pointed to
+ * by \a outstr on success. The buffer pointer copied to \a outstr
+ * must be released with qse_sed_freemem().
+ *
+ * \return 0 on success, -1 on failure
+ */
+QSE_EXPORT int qse_sed_execstdxstr (
+     qse_sed_t*        sed,
+	const qse_xstr_t* instr,
+     qse_xstr_t*       outstr,
 	qse_cmgr_t*       cmgr
 );
 
