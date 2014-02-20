@@ -2321,6 +2321,15 @@ QSE_EXPORT qse_awk_val_t* qse_awk_rtx_makestrvalwithwcs (
 );
 
 /**
+ * The qse_awk_rtx_makestrvalwithxstr() function creates a string value.
+ * \return value on success, #QSE_NULL on failure
+ */
+QSE_EXPORT qse_awk_val_t* qse_awk_rtx_makestrvalwithxstr (
+	qse_awk_rtx_t*    rtx,
+	const qse_xstr_t* str
+);
+
+/**
  * The qse_awk_rtx_makestrvalwithcstr() function creates a string value.
  * \return value on success, #QSE_NULL on failure
  */

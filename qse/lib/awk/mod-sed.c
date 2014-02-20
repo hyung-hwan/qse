@@ -18,7 +18,7 @@
     License along with QSE. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "mod-str.h"
+#include "mod-sed.h"
 #include <qse/sed/stdsed.h>
 #include "../cmn/mem.h"
 
@@ -51,10 +51,10 @@ static qse_char_t* errmsg[] =
 
 static int fnc_errstr (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
-	uctx_list_t* list;
 	qse_awk_val_t* retv;
 	qse_awk_int_t errnum;
 
+/*
 	list = rtx_to_list (rtx, fi);
 
 	if (qse_awk_rtx_getnargs (rtx) <= 0 ||
@@ -62,6 +62,11 @@ static int fnc_errstr (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	{
 		errnum = list->errnum;
 	}
+*/
+
+	ret = qse_awk_rtx_valtoint (rtx, qse_awk_rtx_getarg (rtx, 0), &id);
+	if (ret <= -1) errnum = -1;
+
 
 	if (errnum < 0 || errnum >= QSE_COUNTOF(errmsg)) errnum = QSE_COUNTOF(errmsg) - 1;
 
@@ -78,8 +83,7 @@ static int fnc_file_to_file (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	qse_sed_t* sed = QSE_NULL;
 	qse_awk_val_t* retv;
 	qse_awk_val_t* a[3];
-	qse_char_t* str[3];
-	qse_size_t len[3];
+	qse_xstr_t xstr[3];
 	int i = 0, ret = 0;
 
 	/* result = sed::file_to_file ("s/ABC/123/g", input_file, output_file [, option_string]) */
@@ -96,21 +100,21 @@ static int fnc_file_to_file (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	for (i = 0; i < 3; i++)
 	{
 		a[i] = qse_awk_rtx_getarg (rtx, i);
-		str[i] = qse_awk_rtx_getvalstr (rtx, a[i], &len[i]);
-		if (str[i] == QSE_NULL) 
+		xstr[i].ptr = qse_awk_rtx_getvalstr (rtx, a[i], &xstr[i].len);
+		if (xstr[i].ptr == QSE_NULL) 
 		{
 			ret = -2;
 			goto oops;
 		}
 	}
 
-	if (qse_sed_compstdstrx (sed, str[0], len[0]) <= -1) 
+	if (qse_sed_compstdxstr (sed, &xstr[0]) <= -1) 
 	{
 		ret = -3; /* compile error */
 		goto oops;
 	}
 
-	if (qse_sed_execstdfile (sed, str[1], str[2], QSE_NULL) <= -1) 
+	if (qse_sed_execstdfile (sed, xstr[1].ptr, xstr[2].ptr, QSE_NULL) <= -1) 
 	{
 		ret = -4;
 		goto oops;
@@ -123,7 +127,7 @@ oops:
 	while (i > 0)
 	{
 		--i;
-		qse_awk_rtx_freevalstr (rtx, a[i], str[i]);
+		qse_awk_rtx_freevalstr (rtx, a[i], xstr[i].ptr);
 	}
 
 	if (sed) qse_sed_close (sed);
@@ -133,7 +137,76 @@ oops:
 
 static int fnc_str_to_str (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
-	return -1;
+	qse_sed_t* sed = QSE_NULL;
+	qse_awk_val_t* retv;
+	qse_awk_val_t* a[2], * tmp;
+	qse_xstr_t xstr[2];
+	qse_xstr_t outstr;
+	int i = 0, ret = 0, n;
+
+	sed = qse_sed_openstdwithmmgr (qse_awk_rtx_getmmgr(rtx), 0);
+	if (sed == QSE_NULL) 
+	{
+		ret = -2;
+		goto oops;
+	}
+
+/* TODO qse_set_opt (TRAIT) using the optional parameter */
+
+	for (i = 0; i < 2; i++)
+	{
+		a[i] = qse_awk_rtx_getarg (rtx, i);
+		xstr[i].ptr = qse_awk_rtx_getvalstr (rtx, a[i], &xstr[i].len);
+		if (xstr[i].ptr == QSE_NULL) 
+		{
+			ret = -2;
+			goto oops;
+		}
+	}
+
+	if (qse_sed_compstdxstr (sed, &xstr[0]) <= -1) 
+	{
+		ret = -3; /* compile error */
+		goto oops;
+	}
+
+	if (qse_sed_execstdxstr (sed, &xstr[1], &outstr, QSE_NULL) <= -1) 
+	{
+		ret = -4;
+		goto oops;
+	}
+
+	tmp = qse_awk_rtx_makestrvalwithxstr (rtx, &outstr);
+	qse_sed_freemem (sed, outstr.ptr);
+
+	if (!tmp)
+	{
+		ret = -1;
+		goto oops;
+	}
+
+	qse_awk_rtx_refupval (rtx, tmp);
+	n = qse_awk_rtx_setrefval (rtx, qse_awk_rtx_getarg (rtx, 2), tmp);
+	qse_awk_rtx_refdownval (rtx, tmp);
+	if (n <= -1)
+	{
+		ret = -5;
+		goto oops;
+	}
+
+oops:
+	retv = qse_awk_rtx_makeintval (rtx, ret);
+	if (retv == QSE_NULL) retv = qse_awk_rtx_makeintval (rtx, -1);
+
+	while (i > 0)
+	{
+		--i;
+		qse_awk_rtx_freevalstr (rtx, a[i], xstr[i].ptr);
+	}
+
+	if (sed) qse_sed_close (sed);
+	qse_awk_rtx_setretval (rtx, retv);
+	return 0;
 }
 
 typedef struct fnctab_t fnctab_t;
@@ -171,7 +244,6 @@ static int query (qse_awk_mod_t* mod, qse_awk_t* awk, const qse_char_t* name, qs
 			return 0;
 		}
 	}
-
 
 	ea.ptr = name;
 	ea.len = qse_strlen(name);

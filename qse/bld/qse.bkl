@@ -157,7 +157,7 @@
 		fio.c 
 		fma.c 
 		fmt-intmax.c 
-		fmt-print.c
+		fmt-out.c
 		fs.c 
 		fs-err.c 
 		fs-move.c 
@@ -187,7 +187,6 @@
 		sio.c 
 		sll.c 
 		slmb.c 
-		stdio.c 
 		str-beg.c 
 		str-cat.c 
 		str-chr.c 
@@ -196,11 +195,11 @@
 		str-cpy.c 
 		str-del.c 
 		str-dup.c 
-		str-dynm.c 
-		str-dynw.c 
+		str-dyn.c 
 		str-end.c 
 		str-excl.c 
 		str-fcpy.c 
+		str-fmt.c
 		str-fnmat.c 
 		str-incl.c 
 		str-join.c 
@@ -309,6 +308,13 @@
 	</set>
 	<set var="SYSLIB_SOCKET2">
 		<if cond="PLATFORM_OS2=='1' and TCPV40HDRS=='on'">so32dll</if>
+	</set>
+
+	<!-- =========================================================
+	 EXTRA LIBRARY TO LINK 
+	 ========================================================= -->
+	<set var="EXTLIB_FOR_QSEAWK">
+		<if cond="ENABLE_STATIC_MODULE=='1'">libqsesed</if>
 	</set>
 
 	<!-- =========================================================
@@ -468,6 +474,7 @@
 		<library>libqsecmn</library>
 		<library>libqseawk</library>
 		<!-- <depends>libqseawk</depends> -->
+		<library>$(EXTLIB_FOR_QSEAWK)</library>
 		<sys-lib>$(SYSLIB_SOCKET)</sys-lib>
 		<sys-lib>$(SYSLIB_SOCKET2)</sys-lib>
 	</exe>

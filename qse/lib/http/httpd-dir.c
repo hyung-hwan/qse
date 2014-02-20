@@ -24,6 +24,9 @@
 #include <qse/cmn/fmt.h>
 
 #include <stdio.h> /* TODO: remove this */
+#if defined(_MSC_VER) || defined(__BORLANDC__) || (defined(__WATCOMC__) && (__WATCOMC__ < 1200))
+#	define snprintf _snprintf 
+#endif
 
 typedef struct task_dir_t task_dir_t;
 struct task_dir_t

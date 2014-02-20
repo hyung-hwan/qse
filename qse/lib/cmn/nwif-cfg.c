@@ -26,7 +26,7 @@
 #if defined(_WIN32)
 #	include <winsock2.h>
 #	include <ws2tcpip.h>
-#	include <iphlpapi.h> 
+/*#	include <iphlpapi.h> */
 #elif defined(__OS2__)
 #	if defined(TCPV40HDRS)
 #		define BSD_SELECT

@@ -48,7 +48,9 @@
 #	define INCL_DOSERRORS
 #	include <os2.h>
 #elif defined(__DOS__)
-#	include <cwdllfnc.h>
+#	if !defined(QSE_ENABLE_STATIC_MODULE)
+#		include <cwdllfnc.h>
+#	endif
 #else
 #    include <unistd.h>
 #    include <ltdl.h>
@@ -1340,7 +1342,13 @@ StdAwk::flt_t StdAwk::sqrt (flt_t x)
 
 void* StdAwk::modopen (const mod_spec_t* spec)
 {
-#if defined(USE_LTDL)
+#if defined(QSE_ENABLE_STATIC_MODULE)
+	/* this won't be called at all when modules are linked into
+	 * the main library. */
+	this->setError (QSE_AWK_ENOIMPL);
+	return QSE_NULL;
+
+#elif defined(USE_LTDL)
 
 	void* h;
 	qse_mchar_t* modpath;
@@ -1470,7 +1478,10 @@ void* StdAwk::modopen (const mod_spec_t* spec)
 
 void StdAwk::modclose (void* handle)
 {
-#if defined(USE_LTDL)
+#if defined(QSE_ENABLE_STATIC_MODULE)
+	/* this won't be called at all when modules are linked into
+	 * the main library. */
+#elif defined(USE_LTDL)
 	lt_dlclose ((lt_dlhandle)handle);
 #elif defined(_WIN32)
 	FreeLibrary ((HMODULE)handle);
@@ -1499,7 +1510,11 @@ void* StdAwk::modsym (void* handle, const qse_char_t* name)
 	}
 #endif
 
-#if defined(USE_LTDL)
+#if defined(QSE_ENABLE_STATIC_MODULE)
+	/* this won't be called at all when modules are linked into
+	 * the main library. */
+	s = QSE_NULL;
+#elif defined(USE_LTDL)
 	s = lt_dlsym ((lt_dlhandle)handle, mname);
 #elif defined(_WIN32)
 	s = (void*)GetProcAddress ((HMODULE)handle, mname);

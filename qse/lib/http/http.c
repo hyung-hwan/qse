@@ -25,6 +25,9 @@
 #include "../cmn/mem.h"
 
 #include <stdio.h> /* for snprintf. TODO: remove this. */
+#if defined(_MSC_VER) || defined(__BORLANDC__) || (defined(__WATCOMC__) && (__WATCOMC__ < 1200))
+#	define snprintf _snprintf 
+#endif
 
 int qse_comparehttpversions (
 	const qse_http_version_t* v1,
@@ -376,10 +379,6 @@ qse_mchar_t* qse_fmthttptime (
 	qse_gmtime (nt, &bt);
 
 /* TODO: avoid using snprintf () */
-
-#if defined(_MSC_VER) || defined(__BORLANDC__) || (defined(__WATCOMC__) && (__WATCOMC__ < 1200))
-#	define snprintf _snprintf 
-#endif
 
 	snprintf (
 		buf, bufsz,

@@ -92,6 +92,10 @@
 #endif
 
 #include <stdio.h> /* TODO: remove this */
+#if defined(_MSC_VER) || defined(__BORLANDC__) || (defined(__WATCOMC__) && (__WATCOMC__ < 1200))
+#	define snprintf _snprintf 
+#endif
+
 
 #define DEFAULT_PORT        80
 #define DEFAULT_SECURE_PORT 443

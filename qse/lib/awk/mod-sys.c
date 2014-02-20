@@ -389,7 +389,12 @@ static int fnc_sleep (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 		DosSleep ((ULONG)QSE_SEC_TO_MSEC(lv));
 		rx = 0;
 #elif defined(__DOS__)
-		rx = sleep (lv);	
+		#if (defined(__WATCOMC__) && (__WATCOMC__ < 1200))
+			sleep (lv);	
+			rx = 0;
+		#else
+			rx = sleep (lv);	
+		#endif
 #elif defined(HAVE_NANOSLEEP)
 		struct timespec req;
 		req.tv_sec = lv;
@@ -409,7 +414,12 @@ static int fnc_sleep (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 		rx = 0;
 #elif defined(__DOS__)
 		/* no high-resolution sleep() is available */
-		rx = sleep ((qse_awk_int_t)fv);	
+		#if (defined(__WATCOMC__) && (__WATCOMC__ < 1200))
+			sleep ((qse_awk_int_t)fv);	
+			rx = 0;
+		#else
+			rx = sleep ((qse_awk_int_t)fv);	
+		#endif;
 #elif defined(HAVE_NANOSLEEP)
 		struct timespec req;
 		req.tv_sec = (qse_awk_int_t)fv;

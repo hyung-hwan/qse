@@ -73,7 +73,7 @@ typedef DWORD WINAPI (*getmappedfilename_t) (
 
 #elif defined(__OS2__)
 
-#if defined(__WATCOMC__) && (__WATCOMC__ <= 1100) && !defined(LONGLONG_INCLUDED)
+#if defined(__WATCOMC__) && (__WATCOMC__ < 1200) && !defined(LONGLONG_INCLUDED)
 typedef struct _LONGLONG {
 	ULONG ulLo;
 	LONG  ulHi;
