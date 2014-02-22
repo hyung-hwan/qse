@@ -739,6 +739,24 @@ qse_awk_val_t* qse_awk_rtx_makerefval (
 
 	return (qse_awk_val_t*)val;
 }
+qse_awk_val_t* qse_awk_rtx_makefunval (
+	qse_awk_rtx_t* rtx, const qse_awk_fun_t* fun)
+{
+	qse_awk_val_fun_t* val;
+
+	val = (qse_awk_val_fun_t*) QSE_AWK_ALLOC (
+		rtx->awk, QSE_SIZEOF(qse_awk_val_fun_t));
+	if (val == QSE_NULL)
+	{
+		qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
+		return QSE_NULL;
+	}
+
+	val->type = QSE_AWK_VAL_FUN;
+	val->fun = fun;
+
+	return (qse_awk_val_t*)val;
+}
 
 /* 
  * if shared objects link a static library, statically defined objects

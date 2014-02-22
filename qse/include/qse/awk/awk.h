@@ -315,6 +315,7 @@ struct qse_awk_val_map_data_t
 
 typedef struct qse_awk_val_map_data_t qse_awk_val_map_data_t;
 
+
 /* ------------------------------------------------------------------------ */
 
 /**
@@ -407,6 +408,13 @@ struct qse_awk_fun_t
 	qse_awk_nde_t* body;
 };
 typedef struct qse_awk_fun_t qse_awk_fun_t;
+
+struct qse_awk_val_fun_t
+{
+	QSE_AWK_VAL_HDR;
+	qse_awk_fun_t* fun;
+};
+typedef struct qse_awk_val_fun_t  qse_awk_val_fun_t;
 
 /* ------------------------------------------------------------------------ */
 
@@ -1359,7 +1367,8 @@ enum qse_awk_val_type_t
 	QSE_AWK_VAL_REX  = 4, /**< regular expression */
 	QSE_AWK_VAL_MAP  = 5, /**< map */
 
-	QSE_AWK_VAL_REF  = 6  /**< reference to other types */
+	QSE_AWK_VAL_REF  = 6, /**< reference to other types */
+	QSE_AWK_VAL_FUN  = 7
 };
 
 /**
@@ -2484,6 +2493,11 @@ QSE_EXPORT qse_awk_val_t* qse_awk_rtx_makerefval (
 	qse_awk_rtx_t*  rtx,
 	int             id,
 	qse_awk_val_t** adr
+);
+
+QSE_EXPORT qse_awk_val_t* qse_awk_rtx_makefunval (
+	qse_awk_rtx_t*       rtx,
+	const qse_awk_fun_t* fun
 );
 
 /**
