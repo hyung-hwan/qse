@@ -21,9 +21,9 @@
 #include "awk.h"
 #include <qse/cmn/fmt.h>
 
-//#ifdef DEBUG_RUN
+#ifdef DEBUG_RUN
 #include <qse/cmn/sio.h>
-//#endif
+#endif
 
 #define PRINT_IOERR -99
 
