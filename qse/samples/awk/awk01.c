@@ -1,5 +1,4 @@
 #include <qse/awk/stdawk.h>
-#include <qse/cmn/stdio.h>
 
 static const qse_char_t* script = QSE_T("BEGIN { print \"hello, world\"; }");
 
@@ -10,6 +9,8 @@ int main ()
 	qse_awk_val_t* retv;
 	qse_awk_parsestd_t psin[2];
 	int ret = -1;
+
+	qse_openstdsios ();
 
 	/* create an awk object */
 	awk = qse_awk_openstd (0);
@@ -69,5 +70,6 @@ oops:
 	/* destroy the awk object */
 	if (awk) qse_awk_close (awk);
 
+	qse_closestdsios ();
 	return ret;
 }

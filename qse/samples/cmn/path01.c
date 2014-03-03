@@ -1,9 +1,9 @@
 #include <qse/cmn/path.h>
-#include <qse/cmn/stdio.h>
 #include <qse/cmn/main.h>
 #include <qse/cmn/mbwc.h>
 #include <qse/cmn/str.h>
 #include <qse/cmn/mem.h>
+#include <qse/cmn/sio.h>
 
 #include <locale.h>
 #if defined(_WIN32)
@@ -65,6 +65,8 @@ static int path_main (int argc, qse_char_t* argv[])
 
 int qse_main (int argc, qse_achar_t* argv[])
 {
+	int x;
+
 #if defined(_WIN32)
  	char locale[100];
 	UINT codepage = GetConsoleOutputCP();	
@@ -80,9 +82,13 @@ int qse_main (int argc, qse_achar_t* argv[])
 		qse_setdflcmgrbyid (QSE_CMGR_SLMB);
 	}
 #else
-     setlocale (LC_ALL, "");
+	setlocale (LC_ALL, "");
 	qse_setdflcmgrbyid (QSE_CMGR_SLMB);
 #endif
-	return qse_runmain (argc, argv, path_main);
+
+        qse_openstdsios ();
+	x = qse_runmain (argc, argv, path_main);
+        qse_closestdsios ();
+	return x;
 }
 
