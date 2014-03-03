@@ -1,7 +1,6 @@
 #include <qse/awk/stdawk.h>
 #include <qse/cmn/str.h>
 #include <qse/cmn/main.h>
-#include <qse/cmn/stdio.h>
 #include "awk00.h"
 
 /* i'll print records with the second field grater than 4. 
@@ -154,7 +153,11 @@ oops:
 
 int qse_main (int argc, qse_achar_t* argv[])
 {
-	extern void init_awk_sample_locale (void);
+	int x;
+
+	qse_openstdsios ();
 	init_awk_sample_locale ();
-	return qse_runmain (argc, argv, awk_main);
+	x = qse_runmain (argc, argv, awk_main);
+	qse_closestdsios ();
+	return x;
 }
