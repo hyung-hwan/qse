@@ -68,10 +68,16 @@ static QSE_INLINE_ALWAYS qse_size_t szlog2 (qse_size_t n)
 #define BITS (QSE_SIZEOF_SIZE_T * 8)
 	int x = BITS - 1;
 
-#if QSE_SIZEOF_SIZE_T >= 32
+#if QSE_SIZEOF_SIZE_T >= 128
 #	error qse_size_t too large. unsupported platform
 #endif
 
+#if QSE_SIZEOF_SIZE_T >= 64
+	if ((n & (~(qse_size_t)0 << (BITS-128))) == 0) { x -= 256; n <<= 256; }
+#endif
+#if QSE_SIZEOF_SIZE_T >= 32
+	if ((n & (~(qse_size_t)0 << (BITS-128))) == 0) { x -= 128; n <<= 128; }
+#endif
 #if QSE_SIZEOF_SIZE_T >= 16
 	if ((n & (~(qse_size_t)0 << (BITS-64))) == 0) { x -= 64; n <<= 64; }
 #endif
@@ -151,7 +157,7 @@ int qse_xma_init (qse_xma_t* xma, qse_mmgr_t* mmgr, qse_size_t zonesize)
 
 	QSE_MEMSET (xma, 0, QSE_SIZEOF(*xma));
 	xma->mmgr = mmgr;
-	xma->bdec = szlog2(FIXED*ALIGN); /* precalculate the decrement value */
+	xma->bdec = szlog2(FIXED * ALIGN); /* precalculate the decrement value */
 
 	/* at this point, the 'free' chunk is a only block available */
 
