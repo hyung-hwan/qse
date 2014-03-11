@@ -170,13 +170,11 @@ oops:
 
 void StdAwk::close () 
 {
-#if defined(QSE_CHAR_IS_WCHAR)
 	if (this->cmgrtab_inited) 
 	{
 		qse_htb_fini (&this->cmgrtab);
 		this->cmgrtab_inited = false;
 	}
-#endif
 
 	clearConsoleOutputs ();
 	Awk::close ();
