@@ -50,13 +50,14 @@ host_triplet = @host@
 @ENABLE_STATIC_MODULE_TRUE@	mod-str.c mod-str.h \
 @ENABLE_STATIC_MODULE_TRUE@	mod-sys.c mod-sys.h
 
-@ENABLE_STATIC_MODULE_TRUE@@HAVE_C_MPI_TRUE@am__append_5 = mod-mpi.c mod-mpi.h
-@ENABLE_STATIC_MODULE_TRUE@@HAVE_C_MPI_TRUE@am__append_6 = $(MPI_CFLAGS)
-@ENABLE_STATIC_MODULE_TRUE@@HAVE_C_MPI_TRUE@am__append_7 = $(MPI_CLDFLAGS)
-@ENABLE_STATIC_MODULE_TRUE@@HAVE_LIBUCI_TRUE@am__append_8 = mod-uci.c mod-uci.h
-@ENABLE_STATIC_MODULE_TRUE@@HAVE_LIBUCI_TRUE@am__append_9 = $(UCI_LIBS)
-@ENABLE_STATIC_MODULE_FALSE@@HAVE_C_MPI_TRUE@am__append_10 = libqseawk-mpi.la
-@ENABLE_STATIC_MODULE_FALSE@@HAVE_LIBUCI_TRUE@am__append_11 = libqseawk-uci.la
+@ENABLE_STATIC_MODULE_TRUE@am__append_5 = -lqsesed
+@ENABLE_STATIC_MODULE_TRUE@@HAVE_C_MPI_TRUE@am__append_6 = mod-mpi.c mod-mpi.h
+@ENABLE_STATIC_MODULE_TRUE@@HAVE_C_MPI_TRUE@am__append_7 = $(MPI_CFLAGS)
+@ENABLE_STATIC_MODULE_TRUE@@HAVE_C_MPI_TRUE@am__append_8 = $(MPI_CLDFLAGS)
+@ENABLE_STATIC_MODULE_TRUE@@HAVE_LIBUCI_TRUE@am__append_9 = mod-uci.c mod-uci.h
+@ENABLE_STATIC_MODULE_TRUE@@HAVE_LIBUCI_TRUE@am__append_10 = $(UCI_LIBS)
+@ENABLE_STATIC_MODULE_FALSE@@HAVE_C_MPI_TRUE@am__append_11 = libqseawk-mpi.la
+@ENABLE_STATIC_MODULE_FALSE@@HAVE_LIBUCI_TRUE@am__append_12 = libqseawk-uci.la
 subdir = lib/awk
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -179,7 +180,7 @@ libqseawk_uci_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
 am__DEPENDENCIES_2 = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 @ENABLE_STATIC_MODULE_TRUE@@HAVE_LIBUCI_TRUE@am__DEPENDENCIES_3 = $(am__DEPENDENCIES_1)
 libqseawk_la_DEPENDENCIES = $(am__DEPENDENCIES_2) \
-	$(am__DEPENDENCIES_3)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_3)
 am__libqseawk_la_SOURCES_DIST = awk.c err.c tree.c parse.c run.c rec.c \
 	val.c fnc.c misc.c rio.c std.c awk.h err.h rio.h val.h fnc.h \
 	misc.h parse.h run.h tree.h mod-dir.c mod-dir.h mod-sed.c \
@@ -459,11 +460,12 @@ LIBADD_LIB_COMMON = -lqsecmn $(LIBM) $(LIBLTDL)
 lib_LTLIBRARIES = libqseawk.la $(am__append_3)
 libqseawk_la_SOURCES = awk.c err.c tree.c parse.c run.c rec.c val.c \
 	fnc.c misc.c rio.c std.c awk.h err.h rio.h val.h fnc.h misc.h \
-	parse.h run.h tree.h $(am__append_4) $(am__append_5) \
-	$(am__append_8)
-libqseawk_la_CPPFLAGS = $(CPPFLAGS_LIB_COMMON) $(am__append_6)
-libqseawk_la_LDFLAGS = $(LDFLAGS_LIB_COMMON) $(am__append_7)
-libqseawk_la_LIBADD = $(LIBADD_LIB_COMMON) $(am__append_9)
+	parse.h run.h tree.h $(am__append_4) $(am__append_6) \
+	$(am__append_9)
+libqseawk_la_CPPFLAGS = $(CPPFLAGS_LIB_COMMON) $(am__append_7)
+libqseawk_la_LDFLAGS = $(LDFLAGS_LIB_COMMON) $(am__append_8)
+libqseawk_la_LIBADD = $(LIBADD_LIB_COMMON) $(am__append_5) \
+	$(am__append_10)
 @ENABLE_CXX_TRUE@libqseawkxx_la_SOURCES = Awk.cpp StdAwk.cpp
 @ENABLE_CXX_TRUE@libqseawkxx_la_CPPFLAGS = $(CPPFLAGS_LIB_COMMON)
 @ENABLE_CXX_TRUE@libqseawkxx_la_LDFLAGS = $(LDFLAGS_LIB_COMMON)
@@ -478,8 +480,8 @@ libqseawk_la_LIBADD = $(LIBADD_LIB_COMMON) $(am__append_9)
 @ENABLE_STATIC_MODULE_FALSE@modexecdir = $(libdir)
 @ENABLE_STATIC_MODULE_FALSE@modexec_LTLIBRARIES = libqseawk-dir.la \
 @ENABLE_STATIC_MODULE_FALSE@	libqseawk-sed.la libqseawk-str.la \
-@ENABLE_STATIC_MODULE_FALSE@	libqseawk-sys.la $(am__append_10) \
-@ENABLE_STATIC_MODULE_FALSE@	$(am__append_11)
+@ENABLE_STATIC_MODULE_FALSE@	libqseawk-sys.la $(am__append_11) \
+@ENABLE_STATIC_MODULE_FALSE@	$(am__append_12)
 @ENABLE_STATIC_MODULE_FALSE@libqseawk_dir_la_SOURCES = mod-dir.c mod-dir.h
 @ENABLE_STATIC_MODULE_FALSE@libqseawk_dir_la_CPPFLAGS = $(CPPFLAGS_MOD_COMMON)
 @ENABLE_STATIC_MODULE_FALSE@libqseawk_dir_la_LDFLAGS = $(LDFLAGS_MOD_COMMON)

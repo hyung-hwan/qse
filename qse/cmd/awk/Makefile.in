@@ -41,6 +41,8 @@ host_triplet = @host@
 @WIN32_FALSE@am__append_2 = -DDEFAULT_MODPREFIX=\"$(libdir)/libqseawk-\" -DDEFAULT_MODPOSTFIX=\"\"
 bin_PROGRAMS = qseawk$(EXEEXT)
 @WCHAR_TRUE@@WIN32_TRUE@am__append_3 = $(UNICOWS_LIBS)
+@ENABLE_STATIC_MODULE_TRUE@am__append_4 = -L../../lib/sed
+@ENABLE_STATIC_MODULE_TRUE@am__append_5 = -lqsesed
 subdir = cmd/awk
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -63,7 +65,7 @@ qseawk_OBJECTS = $(am_qseawk_OBJECTS)
 am__DEPENDENCIES_1 =
 @WCHAR_TRUE@@WIN32_TRUE@am__DEPENDENCIES_2 = $(am__DEPENDENCIES_1)
 qseawk_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_2)
+	$(am__DEPENDENCIES_2) $(am__DEPENDENCIES_1)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
@@ -280,8 +282,9 @@ AUTOMAKE_OPTIONS = nostdinc
 AM_CPPFLAGS = -I$(top_builddir)/include -I$(top_srcdir)/include \
 	$(LTDLINCL) $(am__append_1) $(am__append_2)
 qseawk_SOURCES = awk.c
-qseawk_LDFLAGS = -L../../lib/awk -L../../lib/cmn 
-qseawk_LDADD = -lqseawk -lqsecmn $(LIBM) $(LIBLTDL) $(am__append_3)
+qseawk_LDFLAGS = -L../../lib/awk -L../../lib/cmn $(am__append_4)
+qseawk_LDADD = -lqseawk -lqsecmn $(LIBM) $(LIBLTDL) $(am__append_3) \
+	$(am__append_5)
 all: all-am
 
 .SUFFIXES:

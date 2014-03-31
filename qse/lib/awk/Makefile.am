@@ -46,6 +46,7 @@ libqseawk_la_SOURCES += \
 	mod-sed.c mod-sed.h \
 	mod-str.c mod-str.h \
 	mod-sys.c mod-sys.h
+libqseawk_la_LIBADD += -lqsesed
 
 if HAVE_C_MPI
 libqseawk_la_SOURCES += mod-mpi.c mod-mpi.h
