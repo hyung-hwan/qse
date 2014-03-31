@@ -134,8 +134,12 @@ qse_size_t qse_utf8touc (
 					for (i = 1; i < cur->length; i++)
 					{
 						/* in utf8, trailing bytes are all
-						 * set with 0x80. if not, invalid */
-						if (!(utf8[i] & 0x80)) return 0; 
+						 * set with 0x80. 
+						 *
+						 *   10XXXXXX & 11000000 => 10000000
+						 *
+						 * if not, invalid. */
+						if ((utf8[i] & 0xC0) != 0x80) return 0; 
 						w = (w << 6) | (utf8[i] & 0x3F);
 					}
 					*uc = w;
@@ -145,8 +149,12 @@ qse_size_t qse_utf8touc (
 					for (i = 1; i < cur->length; i++)
 					{
 						/* in utf8, trailing bytes are all
-						 * set with 0x80. if not, invalid */
-						if (!(utf8[i] & 0x80)) return 0; 
+						 * set with 0x80. 
+						 *
+						 *   10XXXXXX & 11000000 => 10000000
+						 *
+						 * if not, invalid. */
+						if ((utf8[i] & 0xC0) != 0x80) return 0; 
 					}
 				}
 			}

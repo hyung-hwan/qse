@@ -50,7 +50,7 @@ enum tok_t
 	TOK_DIV_ASSN,
 	TOK_IDIV_ASSN,
 	TOK_MOD_ASSN,
-	TOK_EXP_ASSN,
+	TOK_EXP_ASSN, /* ^ - exponentiation */
 	TOK_CONCAT_ASSN,
 	TOK_RS_ASSN,
 	TOK_LS_ASSN,
@@ -67,10 +67,10 @@ enum tok_t
 	TOK_LT,
 	TOK_GE,
 	TOK_GT,
-	TOK_MA,   /* match */
-	TOK_NM,   /* not match */
-	TOK_LNOT, /* logical negation ! */
-	TOK_BQUOTE,  /* ` */
+	TOK_MA,   /* ~ - match */
+	TOK_NM,   /* !~ -  not match */
+	TOK_LNOT, /* ! - logical negation */
+	TOK_BQUOTE,  /* ` - is-defined */
 	TOK_PLUS,
 	TOK_PLUSPLUS,
 	TOK_MINUS,
@@ -82,9 +82,9 @@ enum tok_t
 	TOK_LOR,
 	TOK_LAND,
 	TOK_BOR,
-	TOK_BXOR,
+	TOK_BXOR, /* ^^ - bitwise-xor */
 	TOK_BAND,
-	TOK_BNOT, /* used for unary bitwise-not and regex match */
+	TOK_BNOT, /* ~~ - used for unary bitwise-not */
 	TOK_RS,
 	TOK_LS,
 	TOK_IN,
