@@ -42,7 +42,7 @@
 #	undef QSE_HAVE_INLINE
 #endif
 
-#if defined(__GNUC__)
+#if defined(__GNUC__) && defined(__GNUC_GNU_INLINE__)
 #	define QSE_INLINE_ALWAYS inline __attribute__((__always_inline__))
 #	define QSE_HAVE_INLINE_ALWAYS
 #elif defined(_MSC_VER) || (defined(__CC_ARM) || defined(__ARMCC__))
@@ -53,7 +53,7 @@
 #	undef QSE_HAVE_INLINE_ALWAYS
 #endif
 
-#if defined(__GNUC__)
+#if defined(__GNUC__) && defined(__GNUC_GNU_INLINE__)
 #	define QSE_INLINE_NEVER inline __attribute__((__noinline__))
 #	define QSE_HAVE_INLINE_NEVER
 #elif (defined(__CC_ARM) || defined(__ARMCC__))

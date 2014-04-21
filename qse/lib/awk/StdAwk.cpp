@@ -501,7 +501,8 @@ int StdAwk::setioattr (
 		return ret.setInt ((int_t)0);
 	}
 #if defined(QSE_CHAR_IS_WCHAR)
-	else if (qse_strcasecmp (ptr[1], QSE_T("codepage")) == 0)
+	else if (qse_strcasecmp (ptr[1], QSE_T("codepage")) == 0 ||
+	         qse_strcasecmp (ptr[1], QSE_T("encoding")) == 0)
 	{
 		ioattr_t* ioattr;
 		qse_cmgr_t* cmgr;
@@ -557,7 +558,8 @@ int StdAwk::getioattr (
 				xx = args[2].setFlt ((qse_awk_flt_t)ioattr->tmout[tmout].sec + QSE_NSEC_TO_SEC((qse_awk_flt_t)ioattr->tmout[tmout].nsec));
 		}
 	#if defined(QSE_CHAR_IS_WCHAR)
-		else if (qse_strcasecmp (ptr[1], QSE_T("codepage")) == 0)
+		else if (qse_strcasecmp (ptr[1], QSE_T("codepage")) == 0 ||
+		         qse_strcasecmp (ptr[1], QSE_T("encoding")) == 0)
 		{
 			xx = args[2].setStr (ioattr->cmgr_name);
 		}
