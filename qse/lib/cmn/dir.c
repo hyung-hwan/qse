@@ -695,6 +695,7 @@ static int read_dir_to_tbuf (qse_dir_t* dir, void** name)
 	}
 	#endif	
 
+	return 1;
 	/* ------------------------------------------------------------------- */
 
 #endif
