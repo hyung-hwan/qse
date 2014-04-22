@@ -18,6 +18,22 @@
     License along with QSE. If not, see <http://www.gnu.org/licenses/>.
  */
 
+
+/*
+BEGIN {
+	x = dir::open ("/etc", dir::SORT); # dir::open ("/etc", 0)
+	if (x <= -1) {
+		print "cannot open";
+		return -1;
+	}
+
+	while (dir::read(x, q) > 0) {
+		print q;
+	}
+	dir::close (x);
+}
+*/
+
 #include "mod-dir.h"
 #include <qse/cmn/str.h>
 #include <qse/cmn/rbt.h>
@@ -104,7 +120,7 @@ static int awk_err_to_errnum (qse_awk_errnum_t num)
 	}
 }
 
-static dir_node_t* new_dir_node (qse_awk_rtx_t* rtx, dir_list_t* list, const qse_char_t* path)
+static dir_node_t* new_dir_node (qse_awk_rtx_t* rtx, dir_list_t* list, const qse_char_t* path, qse_awk_int_t flags)
 {
 	/* create a new context node and append it to the list tail */
 	dir_node_t* node;
@@ -123,7 +139,7 @@ static dir_node_t* new_dir_node (qse_awk_rtx_t* rtx, dir_list_t* list, const qse
 		}
 	}
 
-	node->ctx = qse_dir_open (qse_awk_rtx_getmmgr(rtx), 0, path, 0, &oe);
+	node->ctx = qse_dir_open (qse_awk_rtx_getmmgr(rtx), 0, path, flags, &oe);
 	if (!node->ctx) 
 	{
 		list->errnum = dir_err_to_errnum (oe);
@@ -372,6 +388,7 @@ static int fnc_dir_open (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	qse_char_t* path;
 	qse_awk_val_t* retv;
 	qse_awk_val_t* a0;
+	qse_awk_int_t flags = 0;
 
 	list = rtx_to_list (rtx, fi);
 
@@ -379,13 +396,21 @@ static int fnc_dir_open (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	path = qse_awk_rtx_getvalstr (rtx, a0, QSE_NULL);
 	if (path)
 	{
-		node = new_dir_node (rtx, list, path);
+		if (qse_awk_rtx_getnargs (rtx) >= 2 &&
+	            qse_awk_rtx_valtoint (rtx, qse_awk_rtx_getarg (rtx, 1), &flags) <= -1)
+		{
+			qse_awk_rtx_freevalstr (rtx, a0, path);
+			goto oops;
+		}
+
+		node = new_dir_node (rtx, list, path, flags);
 		if (node) ret = node->id;
 		else ret = -1;
 		qse_awk_rtx_freevalstr (rtx, a0, path);
 	}
 	else
 	{
+	oops:
 		list->errnum = awk_err_to_errnum (qse_awk_rtx_geterrnum (rtx));
 		ret = -1;
 	}
@@ -498,14 +523,28 @@ struct fnctab_t
 	qse_awk_mod_sym_fnc_t info;
 };
 
+typedef struct inttab_t inttab_t;
+struct inttab_t
+{
+	const qse_char_t* name;
+	qse_awk_mod_sym_int_t info;
+};
+
+
 static fnctab_t fnctab[] =
 {
 	{ QSE_T("close"),       { { 1, 1, QSE_NULL    }, fnc_dir_close,      0 } },
 	{ QSE_T("errno"),       { { 0, 0, QSE_NULL    }, fnc_dir_errno,      0 } },
 	{ QSE_T("errstr"),      { { 0, 1, QSE_NULL    }, fnc_dir_errstr,     0 } },
-	{ QSE_T("open"),        { { 1, 1, QSE_NULL    }, fnc_dir_open,       0 } },
+	{ QSE_T("open"),        { { 1, 2, QSE_NULL    }, fnc_dir_open,       0 } },
 	{ QSE_T("read"),        { { 2, 2, QSE_T("vr") }, fnc_dir_read,       0 } },
 	{ QSE_T("reset"),       { { 2, 2, QSE_NULL    }, fnc_dir_reset,      0 } },
+};
+
+static inttab_t inttab[] =
+{
+	/* keep this table sorted for binary search in query(). */
+	{ QSE_T("SORT"), { QSE_DIR_SORT } }
 };
 
 /* ------------------------------------------------------------------------ */
@@ -528,6 +567,22 @@ static int query (qse_awk_mod_t* mod, qse_awk_t* awk, const qse_char_t* name, qs
 		{
 			sym->type = QSE_AWK_MOD_FNC;
 			sym->u.fnc = fnctab[mid].info;
+			return 0;
+		}
+	}
+
+	left = 0; right = QSE_COUNTOF(inttab) - 1;
+	while (left <= right)
+	{
+		mid = (left + right) / 2;
+
+		n = qse_strcmp (inttab[mid].name, name);
+		if (n > 0) right = mid - 1;
+		else if (n < 0) left = mid + 1;
+		else
+		{
+			sym->type = QSE_AWK_MOD_INT;
+			sym->u.in = inttab[mid].info;
 			return 0;
 		}
 	}

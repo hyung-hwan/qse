@@ -47,6 +47,10 @@
 #else
 #	include <sys/socket.h>
 #	include <netinet/in.h>
+
+#	if defined(QSE_SIZEOF_STRUCT_SOCKADDR_IN6) && (QSE_SIZEOF_STRUCT_SOCKADDR_IN6 == 0)
+#		undef AF_INET6
+#	endif
 #endif
 
 union sockaddr_t
