@@ -45,6 +45,11 @@
 #	include <starlet.h> /* (SYS$...) */
 #	include <ssdef.h> /* (SS$...) */
 #	include <lib$routines.h> /* (lib$...) */
+#elif defined(macintosh)
+#	include <Process.h>
+#	include <Dialogs.h>
+#	include <TextUtils.h>
+#	include <qse/cmn/str.h>
 #else
 #	include "syscall.h"
 #endif
@@ -91,10 +96,41 @@ void qse_assert_failed (
 	const qse_char_t* expr, const qse_char_t* desc, 
 	const qse_char_t* file, qse_size_t line)
 {
+#if defined(macintosh)
+	/* note 'desc' is not used for macintosh at this moment.
+	 * TODO: include 'desc' in the message */
+
+	Str255 ptitle;
+	Str255 ptext;
+	SInt16 res;
+
+	{
+		qse_mchar_t tmp[256];
+
+	#if defined(QSE_CHAR_IS_MCHAR)
+		qse_mbsxfmt (tmp, QSE_COUNTOF(tmp), QSE_MT("ASSERTION FAILURE AT FILE %hs LINE %lu"), file, (unsigned long)line);
+	#else
+		qse_mbsxfmt (tmp, QSE_COUNTOF(tmp), QSE_MT("ASSERTION FAILURE AT FILE %ls LINE %lu"), file, (unsigned long)line);
+	#endif
+		CopyCStringToPascal (tmp, ptitle);
+
+	#if defined(QSE_CHAR_IS_MCHAR)
+		CopyCStringToPascal (expr, ptext);
+	#else
+		qse_mbsxfmt (tmp, QSE_COUNTOF(tmp), QSE_MT("%ls"), expr);
+		CopyCStringToPascal (tmp, ptext);
+	#endif
+	}
+
+	InitCursor ();
+	StandardAlert (kAlertStopAlert, ptitle, ptext, nil, &res);
+
+#else  /* macintosh */
+
 #if defined(HAVE_BACKTRACE)
-	void *btarray[128];
+	void* btarray[128];
 	qse_size_t btsize, i;
-	char **btsyms;
+	char** btsyms;
 #endif
 	qse_sio_t* sio, siobuf;
 
@@ -158,6 +194,7 @@ void qse_assert_failed (
 	qse_sio_putmbs (sio, QSE_MT("================================================================================\n"));
 	qse_sio_flush (sio);
 	qse_sio_fini (sio);
+#endif /* macintosh */
 
 #if defined(_WIN32)
 	ExitProcess (249);
@@ -176,6 +213,8 @@ void qse_assert_failed (
 	/* this won't be reached since lib$stop() terminates the process */
 	sys$exit (SS$_ABORT); /* this condition code can be shown with 
 	                       * 'show symbol $status' from the command-line. */
+#elif defined(macintosh)
+	ExitToShell ();
 #else
 	QSE_KILL (QSE_GETPID(), SIGABRT);
 	QSE_EXIT (1);
