@@ -301,6 +301,12 @@
 	<!-- =========================================================
 	 CONDITIONAL SYSTEM LIBRARIES
 	 ========================================================= -->
+	<set var="SYSLIB_1">
+		<if cond="PLATFORM_WIN32=='1'">kernel32</if>
+	</set>
+	<set var="SYSLIB_2">
+		<if cond="PLATFORM_WIN32=='1'">user32</if>
+	</set>
 	<set var="SYSLIB_SOCKET">
 		<if cond="PLATFORM_WIN32=='1'">ws2_32</if>
 		<if cond="PLATFORM_OS2=='1' and TCPV40HDRS=='on'">tcp32dll</if>
@@ -341,6 +347,8 @@
 		<dllname>qsecmn</dllname>
 		<set-srcdir>../../lib/cmn</set-srcdir>
 		<sources>$(SOURCES_LIBQSECMN)</sources>
+		<sys-lib>$(SYSLIB_1)</sys-lib>
+		<sys-lib>$(SYSLIB_2)</sys-lib>
 		<sys-lib>$(SYSLIB_SOCKET)</sys-lib>
 		<sys-lib>$(SYSLIB_SOCKET2)</sys-lib>
 	</dll>
@@ -349,6 +357,8 @@
 		<libname>qsecmn</libname>
 		<set-srcdir>../../lib/cmn</set-srcdir>
 		<sources>$(SOURCES_LIBQSECMN)</sources>
+		<sys-lib>$(SYSLIB_1)</sys-lib>
+		<sys-lib>$(SYSLIB_2)</sys-lib>
 		<sys-lib>$(SYSLIB_SOCKET)</sys-lib>
 		<sys-lib>$(SYSLIB_SOCKET2)</sys-lib>
 	</lib>
@@ -377,6 +387,8 @@
 		<sources>$(SOURCES_LIBQSEAWK)</sources>
 		<library>libqsecmn</library>
 		<depends>dllqsecmn</depends>
+		<sys-lib>$(SYSLIB_1)</sys-lib>
+		<sys-lib>$(SYSLIB_2)</sys-lib>
 	</dll>
 
 	<lib id="libqseawk" template="base" cond="ENABLE_DLL=='0'">
@@ -426,6 +438,8 @@
 		<library>libqsecmn</library>
 		<library>libqseawk</library>
 		<depends>dllqseawk</depends>
+		<sys-lib>$(SYSLIB_1)</sys-lib>
+		<sys-lib>$(SYSLIB_2)</sys-lib>
 	</dll>
 
 	<dll id="dllqsehttp" template="base" cond="ENABLE_DLL=='1'">
@@ -435,6 +449,8 @@
 		<sources>$(SOURCES_LIBQSEHTTP)</sources>
 		<library>libqsecmn</library>
 		<depends>dllqsecmn</depends>
+		<sys-lib>$(SYSLIB_1)</sys-lib>
+		<sys-lib>$(SYSLIB_2)</sys-lib>
 		<sys-lib>$(SYSLIB_SOCKET)</sys-lib>
 		<sys-lib>$(SYSLIB_SOCKET2)</sys-lib>
 	</dll>
@@ -445,6 +461,8 @@
 		<sources>$(SOURCES_LIBQSEHTTP)</sources>
 		<library>libqsecmn</library>
 		<depends>libqsecmn</depends>
+		<sys-lib>$(SYSLIB_1)</sys-lib>
+		<sys-lib>$(SYSLIB_2)</sys-lib>
 		<sys-lib>$(SYSLIB_SOCKET)</sys-lib>
 		<sys-lib>$(SYSLIB_SOCKET2)</sys-lib>
 	</lib>
@@ -475,6 +493,8 @@
 		<library>libqseawk</library>
 		<!-- <depends>libqseawk</depends> -->
 		<library>$(EXTLIB_FOR_QSEAWK)</library>
+		<sys-lib>$(SYSLIB_1)</sys-lib>
+		<sys-lib>$(SYSLIB_2)</sys-lib>
 		<sys-lib>$(SYSLIB_SOCKET)</sys-lib>
 		<sys-lib>$(SYSLIB_SOCKET2)</sys-lib>
 	</exe>
@@ -498,6 +518,8 @@
 		<library>libqsehttp</library>
 		<!-- <depends>libqsehttp</depends> -->
 		<library>libqsexli</library>
+		<sys-lib>$(SYSLIB_1)</sys-lib>
+		<sys-lib>$(SYSLIB_2)</sys-lib>
 		<sys-lib>$(SYSLIB_SOCKET)</sys-lib>
 		<sys-lib>$(SYSLIB_SOCKET2)</sys-lib>
 	</exe>

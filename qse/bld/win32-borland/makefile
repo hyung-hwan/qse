@@ -789,7 +789,7 @@ clean:
 !if "$(SHARED)" == "on"
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\qsecmn.dll: $(DLLQSECMN_OBJECTS)
 	ilink32 -Tpd -q  -L$(BCCDIR)\lib -L$(BCCDIR)\lib\psdk $(__DEBUG_INFO)  $(LDFLAGS) @&&|
-	c0d32.obj $(DLLQSECMN_OBJECTS),$@,, ws2_32.lib  import32.lib cw32mt.lib,,
+	c0d32.obj $(DLLQSECMN_OBJECTS),$@,, kernel32.lib user32.lib ws2_32.lib  import32.lib cw32mt.lib,,
 |
 	implib -f $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\qsecmn $@
 !endif
@@ -821,7 +821,7 @@ $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\qses
 !if "$(SHARED)" == "on"
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\qseawk.dll: $(DLLQSEAWK_OBJECTS) $(__libqsecmn___depname) $(__dllqsecmn___depname)
 	ilink32 -Tpd -q  -L$(BCCDIR)\lib -L$(BCCDIR)\lib\psdk $(__DEBUG_INFO)  $(LDFLAGS) @&&|
-	c0d32.obj $(DLLQSEAWK_OBJECTS),$@,, $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\qsecmn.lib import32.lib cw32mt.lib,,
+	c0d32.obj $(DLLQSEAWK_OBJECTS),$@,, $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\qsecmn.lib kernel32.lib user32.lib import32.lib cw32mt.lib,,
 |
 	implib -f $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\qseawk $@
 !endif
@@ -861,7 +861,7 @@ $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\qsea
 !if "$(SHARED)" == "on"
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\qseawk-sys.dll: $(MODQSEAWKSYS_OBJECTS) $(__libqsecmn___depname) $(__libqseawk___depname) $(__dllqseawk___depname)
 	ilink32 -Tpd -q  -L$(BCCDIR)\lib -L$(BCCDIR)\lib\psdk $(__DEBUG_INFO)  $(LDFLAGS) @&&|
-	c0d32.obj $(MODQSEAWKSYS_OBJECTS),$@,, $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\qsecmn.lib $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\qseawk.lib import32.lib cw32mt.lib,,
+	c0d32.obj $(MODQSEAWKSYS_OBJECTS),$@,, $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\qsecmn.lib $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\qseawk.lib kernel32.lib user32.lib import32.lib cw32mt.lib,,
 |
 	implib -f $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\qseawk-sys $@
 !endif
@@ -869,7 +869,7 @@ $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\qsea
 !if "$(SHARED)" == "on"
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\qsehttp.dll: $(DLLQSEHTTP_OBJECTS) $(__libqsecmn___depname) $(__dllqsecmn___depname)
 	ilink32 -Tpd -q  -L$(BCCDIR)\lib -L$(BCCDIR)\lib\psdk $(__DEBUG_INFO)  $(LDFLAGS) @&&|
-	c0d32.obj $(DLLQSEHTTP_OBJECTS),$@,, $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\qsecmn.lib ws2_32.lib  import32.lib cw32mt.lib,,
+	c0d32.obj $(DLLQSEHTTP_OBJECTS),$@,, $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\qsecmn.lib kernel32.lib user32.lib ws2_32.lib  import32.lib cw32mt.lib,,
 |
 	implib -f $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\qsehttp $@
 !endif
@@ -900,7 +900,7 @@ $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\qsex
 
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\qseawk.exe: $(EXEQSEAWK_OBJECTS) $(__libqsecmn___depname) $(__libqseawk___depname) $(__EXTLIB_FOR_QSEAWK_DEP)
 	ilink32 -Tpe -q  -L$(BCCDIR)\lib -L$(BCCDIR)\lib\psdk $(__DEBUG_INFO)  -ap $(LDFLAGS) @&&|
-	c0x32.obj $(EXEQSEAWK_OBJECTS),$@,, $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\qsecmn.lib $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\qseawk.lib $(VAR) ws2_32.lib  import32.lib cw32mt.lib,,
+	c0x32.obj $(EXEQSEAWK_OBJECTS),$@,, $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\qsecmn.lib $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\qseawk.lib $(VAR) kernel32.lib user32.lib ws2_32.lib  import32.lib cw32mt.lib,,
 |
 
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\qsesed.exe: $(EXEQSESED_OBJECTS) $(__libqsecmn___depname) $(VAR)
@@ -910,7 +910,7 @@ $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\qses
 
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\qsehttpd.exe: $(EXEQSEHTTPD_OBJECTS) $(__libqsecmn___depname) $(__libqsehttp___depname) $(__libqsexli___depname)
 	ilink32 -Tpe -q  -L$(BCCDIR)\lib -L$(BCCDIR)\lib\psdk $(__DEBUG_INFO)  -ap $(LDFLAGS) @&&|
-	c0x32.obj $(EXEQSEHTTPD_OBJECTS),$@,, $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\qsecmn.lib $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\qsehttp.lib $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\qsexli.lib ws2_32.lib  import32.lib cw32mt.lib,,
+	c0x32.obj $(EXEQSEHTTPD_OBJECTS),$@,, $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\qsecmn.lib $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\qsehttp.lib $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\qsexli.lib kernel32.lib user32.lib ws2_32.lib  import32.lib cw32mt.lib,,
 |
 
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\qsexli.exe: $(EXEQSEXLI_OBJECTS) $(__libqsecmn___depname) $(__libqsexli___depname)
