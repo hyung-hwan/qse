@@ -132,13 +132,13 @@ typedef struct qse_awk_loc_t qse_awk_loc_t;
 	unsigned int type: 3; \
 	unsigned int ref: 26; \
 	unsigned int stat: 1; \
-	unsigned int nstr: 2; 
+	unsigned int nstr: 2
 */
 #define QSE_AWK_VAL_HDR \
 	qse_uintptr_t type: 3; \
 	qse_uintptr_t ref: ((QSE_SIZEOF_UINTPTR_T * 8) - 6); \
 	qse_uintptr_t stat: 1; \
-	qse_uintptr_t nstr: 2;
+	qse_uintptr_t nstr: 2
 
 /**
  * The qse_awk_val_t type is an abstract value type. A value commonly contains:

@@ -127,12 +127,43 @@ void qse_assert_failed (
 
 #else  /* macintosh */
 
+
 #if defined(HAVE_BACKTRACE)
 	void* btarray[128];
 	qse_size_t btsize, i;
 	char** btsyms;
 #endif
 	qse_sio_t* sio, siobuf;
+
+
+	#if defined(_WIN32)
+	{
+		HANDLE stderr;
+
+		stderr = GetStdHandle (STD_ERROR_HANDLE);
+		if (stderr != INVALID_HANDLE_VALUE)
+		{
+			DWORD mode;
+			if (GetConsoleMode (stderr, &mode) == FALSE)
+				stderr = INVALID_HANDLE_VALUE;
+		}
+
+		if (stderr == INVALID_HANDLE_VALUE)
+		{
+			/* Use a message box if stderr is not available */
+
+			qse_char_t tmp[512];
+			qse_strxfmt (tmp, QSE_COUNTOF(tmp), 
+				QSE_T("FILE %s LINE %lu - %s%s%s"), 
+				file, line, expr, 
+				(desc? QSE_T("\n\n"): QSE_T("")),
+				(desc? desc: QSE_T(""))
+			);
+			MessageBox (QSE_NULL, tmp, QSE_T("ASSERTION FAILURE"), MB_OK | MB_ICONERROR);
+			goto done;
+		}
+	}
+	#endif
 
 	sio = &siobuf;
 	qse_sio_initstd (
@@ -196,6 +227,7 @@ void qse_assert_failed (
 	qse_sio_fini (sio);
 #endif /* macintosh */
 
+done:
 #if defined(_WIN32)
 	ExitProcess (249);
 #elif defined(__OS2__)

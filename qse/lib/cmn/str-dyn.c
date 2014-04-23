@@ -24,7 +24,7 @@
 
 #if !defined(QSE_HAVE_CONFIG_H)
 #	if defined(_WIN32) || defined(__OS2__) || defined(__DOS__)
-#		if (defined(__WATCOMC__) && (__WATCOMC__ < 1200))
+#		if (defined(__WATCOMC__) && (__WATCOMC__ < 1200)) || defined(__BORLANDC__)
 #			undef HAVE_VA_COPY
 #			undef HAVE___VA_COPY
 #		else
