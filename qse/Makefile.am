@@ -9,4 +9,4 @@ SUBDIRS = libltdl include lib cmd
 DIST_SUBDIRS = $(SUBDIRS) regress samples doc tools
 
 distclean-local:
-	$(RM) -r autom4te.cache
+	$(RM) -r $(top_srcdir)/autom4te.cache
