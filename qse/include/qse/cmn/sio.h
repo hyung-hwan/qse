@@ -88,10 +88,15 @@ typedef enum qse_sio_errnum_t qse_sio_errnum_t;
 typedef qse_fio_off_t qse_sio_pos_t;
 typedef qse_fio_hnd_t qse_sio_hnd_t;
 typedef qse_fio_std_t qse_sio_std_t;
+typedef qse_fio_ori_t qse_sio_ori_t;
 
 #define QSE_SIO_STDIN  QSE_FIO_STDIN
 #define QSE_SIO_STDOUT QSE_FIO_STDOUT
 #define QSE_SIO_STDERR QSE_FIO_STDERR
+
+#define QSE_SIO_BEGIN   QSE_FIO_BEGIN
+#define QSE_SIO_CURRENT QSE_FIO_CURRENT
+#define QSE_SIO_END     QSE_FIO_END
 
 /**
  * The qse_sio_t type defines a simple text stream over a file. It also
@@ -214,9 +219,9 @@ QSE_EXPORT qse_ssize_t qse_sio_flush (
 );
 
 /**
- * The qse_sio_purge() funtion purges all buffered data without writing.
+ * The qse_sio_drain() funtion purges all buffered data without writing.
  */
-QSE_EXPORT void qse_sio_purge (
+QSE_EXPORT void qse_sio_drain (
 	qse_sio_t* sio
 );
 
@@ -346,7 +351,7 @@ QSE_EXPORT qse_ssize_t qse_sio_putwcsvf (
 #endif
 
 /**
- * The qse_sio_getpos() gets the current position in a stream.
+ * The qse_sio_getpos() function gets the current position in a stream.
  * Note that it may not return the desired postion due to buffering.
  * @return 0 on success, -1 on failure
  */
@@ -356,7 +361,7 @@ QSE_EXPORT int qse_sio_getpos (
 );
 
 /**
- * The qse_sio_setpos() changes the current position in a stream.
+ * The qse_sio_setpos() function changes the current position in a stream.
  * @return 0 on success, -1 on failure
  */
 QSE_EXPORT int qse_sio_setpos (
@@ -364,11 +369,21 @@ QSE_EXPORT int qse_sio_setpos (
 	qse_sio_pos_t pos    /**< position */
 );
 
-#if 0
-int qse_sio_rewind (qse_sio_t* sio);
-int qse_sio_movetoend (qse_sio_t* sio);
-#endif
+QSE_EXPORT int qse_sio_truncate (
+	qse_sio_t*    sio,
+	qse_sio_pos_t pos
+);
 
+/**
+ * The qse_sio_seek() function repositions the current file offset.
+ * Upon success, \a pos is adjusted to the new offset from the beginning
+ * of the file.
+ */
+QSE_EXPORT int qse_sio_seek (
+	qse_sio_t*     sio, 
+	qse_sio_pos_t* pos,
+	qse_sio_ori_t  origin
+);
 
 QSE_EXPORT int qse_openstdsios (void);
 QSE_EXPORT void qse_closestdsios (void);

@@ -343,7 +343,7 @@ qse_ssize_t qse_tio_flush (qse_tio_t* tio)
 	return (qse_ssize_t)count;
 }
 
-void qse_tio_purge (qse_tio_t* tio)
+void qse_tio_drain (qse_tio_t* tio)
 {
 	tio->status &= ~(STATUS_INPUT_ILLSEQ | STATUS_INPUT_EOF);
 	tio->inbuf_cur = 0;

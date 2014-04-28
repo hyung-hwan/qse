@@ -2,7 +2,6 @@
 #include <qse/cmn/mbwc.h>
 #include <qse/cmn/mem.h>
 #include <qse/cmn/fmt.h>
-#include <qse/cmn/stdio.h>
 #include <locale.h>
 
 #if defined(_WIN32)
@@ -160,7 +159,7 @@ int main ()
 		qse_setdflcmgrbyid (QSE_CMGR_SLMB);
 	}
 #else
-     setlocale (LC_ALL, "");
+	setlocale (LC_ALL, "");
 	qse_setdflcmgrbyid (QSE_CMGR_SLMB);
 #endif
 

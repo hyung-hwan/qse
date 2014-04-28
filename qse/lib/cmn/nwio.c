@@ -908,9 +908,9 @@ qse_ssize_t qse_nwio_flush (qse_nwio_t* nwio)
 	return n;
 }
 
-void qse_nwio_purge (qse_nwio_t* nwio)
+void qse_nwio_drain (qse_nwio_t* nwio)
 {
-	if (nwio->tio) qse_tio_purge (nwio->tio);
+	if (nwio->tio) qse_tio_drain (nwio->tio);
 }
 
 /* ---------------------------------------------------------- */

@@ -247,9 +247,9 @@ QSE_EXPORT qse_ssize_t qse_tio_flush (
 );
 
 /**
- * The qse_tio_purge() function empties input and output buffers.
+ * The qse_tio_drain() function empties input and output buffers.
  */
-QSE_EXPORT void qse_tio_purge (
+QSE_EXPORT void qse_tio_drain (
 	qse_tio_t* tio
 );
 
