@@ -312,9 +312,9 @@ qse_ssize_t qse_sio_flush (qse_sio_t* sio)
 	return n;
 }
 
-void qse_sio_purge (qse_sio_t* sio)
+void qse_sio_drain (qse_sio_t* sio)
 {
-	qse_tio_purge (&sio->tio.io);
+	qse_tio_drain (&sio->tio.io);
 }
 
 qse_ssize_t qse_sio_getmb (qse_sio_t* sio, qse_mchar_t* c)
@@ -725,6 +725,8 @@ int qse_sio_getpos (qse_sio_t* sio, qse_sio_pos_t* pos)
 {
 	qse_fio_off_t off;
 
+	if (qse_sio_flush(sio) <= -1) return -1;
+	
 	off = qse_fio_seek (&sio->file, 0, QSE_FIO_CURRENT);
 	if (off == (qse_fio_off_t)-1) 
 	{
@@ -741,6 +743,7 @@ int qse_sio_setpos (qse_sio_t* sio, qse_sio_pos_t pos)
    	qse_fio_off_t off;
 
 	if (qse_sio_flush(sio) <= -1) return -1;
+	
 	off = qse_fio_seek (&sio->file, pos, QSE_FIO_BEGIN);
 	if (off == (qse_fio_off_t)-1)
 	{
@@ -751,23 +754,23 @@ int qse_sio_setpos (qse_sio_t* sio, qse_sio_pos_t pos)
 	return 0;
 }
 
-#if 0
-int qse_sio_seek (qse_sio_t* sio, qse_sio_seek_t pos)
+int qse_sio_truncate (qse_sio_t* sio, qse_sio_pos_t pos)
 {
-	/* TODO: write this function - more flexible positioning ....
-	 *       can move to the end of the stream also.... */
-
 	if (qse_sio_flush(sio) <= -1) return -1;
-	return (qse_fio_seek (&sio->file, 
-		0, QSE_FIO_END) == (qse_fio_off_t)-1)? -1: 0;
-
-	/* TODO: write this function */
-	if (qse_sio_flush(sio) <= -1) return -1;
-	return (qse_fio_seek (&sio->file, 
-		0, QSE_FIO_BEGIN) == (qse_fio_off_t)-1)? -1: 0;
-
+	return qse_fio_truncate (&sio->file, pos);
 }
-#endif
+
+int qse_sio_seek (qse_sio_t* sio, qse_sio_pos_t* pos, qse_sio_ori_t origin)
+{
+	qse_fio_off_t x;
+	
+	if (qse_sio_flush(sio) <= -1) return -1;
+	x = qse_fio_seek (&sio->file, *pos, origin);
+	if (x == (qse_fio_off_t)-1) return -1;
+	
+	*pos = x;
+	return 0;
+}
 
 static qse_ssize_t file_input (
 	qse_tio_t* tio, qse_tio_cmd_t cmd, void* buf, qse_size_t size)

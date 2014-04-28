@@ -346,10 +346,10 @@ QSE_EXPORT qse_ssize_t qse_pio_flush (
 );
 
 /**
- * The qse_pio_purge() drops unflushed input and output data in the 
+ * The qse_pio_drain() drops unflushed input and output data in the 
  * buffer. 
  */
-QSE_EXPORT void qse_pio_purge (
+QSE_EXPORT void qse_pio_drain (
 	qse_pio_t*    pio, /**< pio object */
 	qse_pio_hid_t hid  /**< handle ID */
 );

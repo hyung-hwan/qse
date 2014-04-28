@@ -194,7 +194,7 @@ QSE_EXPORT qse_ssize_t qse_nwio_flush (
 	qse_nwio_t*  nwio
 );
 
-QSE_EXPORT void qse_nwio_purge (
+QSE_EXPORT void qse_nwio_drain (
 	qse_nwio_t*  nwio
 );
 

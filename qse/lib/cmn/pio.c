@@ -2183,9 +2183,9 @@ qse_ssize_t qse_pio_flush (qse_pio_t* pio, qse_pio_hid_t hid)
 	return n;
 }
 
-void qse_pio_purge (qse_pio_t* pio, qse_pio_hid_t hid)
+void qse_pio_drain (qse_pio_t* pio, qse_pio_hid_t hid)
 {
-	if (pio->pin[hid].tio) qse_tio_purge (pio->pin[hid].tio);
+	if (pio->pin[hid].tio) qse_tio_drain (pio->pin[hid].tio);
 }
 
 void qse_pio_end (qse_pio_t* pio, qse_pio_hid_t hid)
