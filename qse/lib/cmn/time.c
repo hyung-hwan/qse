@@ -152,6 +152,15 @@ int qse_gettime (qse_ntime_t* t)
 	t->nsec = QSE_MSEC_TO_NSEC(dt.hsecond * 10);
 	return 0;
 
+#elif defined(macintosh)
+	unsigned long tv;
+	
+	GetDateTime (&tv);
+	
+	t->sec = tv;
+	tv->nsec = 0;
+	
+	return 0;
 #else
 	struct timeval tv;
 	int n;

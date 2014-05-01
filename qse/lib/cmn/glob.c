@@ -34,6 +34,8 @@
 #elif defined(__DOS__) 
 #	include <dos.h>
 #	include <errno.h>
+#elif defined(macintosh)
+#	include <Files.h>
 #else
 #	include "syscall.h"
 #endif
@@ -155,6 +157,21 @@ static int path_exists (glob_t* g, const qse_char_t* name)
 	       (errno == ENOENT)? 0: -1;
 	/* ------------------------------------------------------------------- */
 
+#elif defined(macintosh)
+	HFileInfo fpb;
+	const qse_mchar_t* mptr;
+
+#if defined(QSE_CHAR_IS_MCHAR)
+	mptr = name;
+#else
+	mptr = wcs_to_mbuf (g, name, &g->mbuf);
+	if (mptr == QSE_NULL) return -1;
+#endif
+
+	QSE_MEMSET (&fpb, 0, QSE_SIZEOF(fpb));
+	fpb.ioNamePtr = (unsigned char*)mptr;
+	
+	return (PBGetCatInfoSync ((CInfoPBRec*)&fpb) == noErr)? 1: 0;
 #else
 
 	/* ------------------------------------------------------------------- */

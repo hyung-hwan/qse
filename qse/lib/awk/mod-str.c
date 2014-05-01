@@ -262,6 +262,31 @@ static int fnc_isxdigit (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	return is_class (rtx, QSE_CTYPE_XDIGIT);
 }
 
+static int fnc_value (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	/* return the numeric value for the first character */
+	qse_xstr_t path;
+	qse_awk_val_t* retv;
+	qse_awk_val_t* a0;
+
+	a0 = qse_awk_rtx_getarg(rtx, 0);
+
+	path.ptr = qse_awk_rtx_getvalstr (rtx, a0, &path.len);
+	if (path.ptr && path.len >= 1)
+	{
+	#if defined(QSE_CHAR_IS_MCHAR)
+		/* typecasting in case qse_mchar_t is signed */
+		retv = qse_awk_rtx_makeintval (rtx, (unsigned char)path.ptr[0]);
+	#else
+		retv = qse_awk_rtx_makeintval (rtx, path.ptr[0]);
+	#endif
+		qse_awk_rtx_freevalstr (rtx, a0, path.ptr);
+		if (retv) qse_awk_rtx_setretval (rtx, retv);
+	}
+
+	return 0;
+}
+
 typedef struct fnctab_t fnctab_t;
 struct fnctab_t
 {
@@ -289,7 +314,8 @@ static fnctab_t fnctab[] =
 	{ QSE_T("normspace"), { { 1, 1, QSE_NULL }, fnc_normspace, 0 } },
 	{ QSE_T("rindex"),    { { 2, 3, QSE_NULL }, fnc_rindex,    0 } },
 	{ QSE_T("rtrim"),     { { 1, 1, QSE_NULL }, fnc_rtrim,     0 } },
-	{ QSE_T("trim"),      { { 1, 1, QSE_NULL }, fnc_trim,      0 } }
+	{ QSE_T("trim"),      { { 1, 1, QSE_NULL }, fnc_trim,      0 } },
+	{ QSE_T("value"),     { { 1, 1, QSE_NULL }, fnc_value,     0 } }
 };
 
 static int query (qse_awk_mod_t* mod, qse_awk_t* awk, const qse_char_t* name, qse_awk_mod_sym_t* sym)
