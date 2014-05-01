@@ -28,6 +28,9 @@
 #		define HAVE_MBRLEN
 #		define HAVE_MBRTOWC
 #		define HAVE_WCRTOMB
+#	elif defined(macintosh) && defined(__MWERKS__)
+#		define HAVE_WCHAR_H
+#		define HAVE_STDLIB_H
 #	endif
 #endif
 
@@ -92,8 +95,10 @@ qse_size_t qse_slwcrtoslmb (
 	}
 
 	return n; /* number of bytes written to the buffer */
+
 #else
-	#error #### NOT SUPPORTED ####
+	/* not supported */
+	return 0;
 #endif
 }
 
@@ -168,8 +173,10 @@ qse_size_t qse_slmbrtoslwc (
 	if (n == (size_t)-1) return 0; /* invalid sequence */
 	if (n == (size_t)-2) return mbl + 1; /* incomplete sequence */
 	return (qse_size_t)n;
+
 #else
-	#error #### NOT SUPPORTED ####
+	/* not supported */
+	return 0;
 #endif
 }
 
@@ -247,7 +254,8 @@ qse_size_t qse_slmbrlen (
 	return (qse_size_t)n;
 	#endif
 #else
-	#error #### NOT SUPPORTED ####
+	/* not supported */
+	return 0;
 #endif
 }
 
@@ -283,9 +291,10 @@ qse_size_t qse_slmblenmax (void)
 #if defined(_WIN32)
 	/* Windows doesn't handle utf8 properly even when your code page
 	 * is CP_UTF8(65001). you should use functions in utf8.c for utf8 
-	 * handleing on windows. 2 is the maximum for DBCS encodings. */
+	 * handling on windows. 2 is the maximum for DBCS encodings. */
 	return 2; 
 #else
 	return MB_CUR_MAX;
 #endif
 }
+
