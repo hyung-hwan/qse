@@ -23,10 +23,6 @@
 static int fnc_close   (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi);
 static int fnc_fflush  (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi);
 static int fnc_index   (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi);
-static int fnc_length  (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi);
-static int fnc_split   (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi);
-static int fnc_tolower (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi);
-static int fnc_toupper (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi);
 static int fnc_gsub    (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi);
 static int fnc_sub     (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi);
 static int fnc_match   (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi);
@@ -68,7 +64,7 @@ static qse_awk_fnc_t sysfnctab[] =
 	{ {QSE_T("index"),   5}, 0, { {2,     3, QSE_NULL},     fnc_index,            0 }, QSE_NULL},
 	{ {QSE_T("substr"),  6}, 0, { {2,     3, QSE_NULL},     qse_awk_fnc_substr,   0 }, QSE_NULL},
 	{ {QSE_T("length"),  6}, 1, { {0,     1, QSE_NULL},     qse_awk_fnc_length,   0 }, QSE_NULL},
-	{ {QSE_T("split"),   5}, 0, { {2,     3, QSE_T("vrx")}, fnc_split,            0 }, QSE_NULL},
+	{ {QSE_T("split"),   5}, 0, { {2,     3, QSE_T("vrx")}, qse_awk_fnc_split,    0 }, QSE_NULL},
 	{ {QSE_T("tolower"), 7}, 0, { {1,     1, QSE_NULL},     qse_awk_fnc_tolower,  0 }, QSE_NULL},
 	{ {QSE_T("toupper"), 7}, 0, { {1,     1, QSE_NULL},     qse_awk_fnc_toupper,  0 }, QSE_NULL},
 	{ {QSE_T("gsub"),    4}, 0, { {2,     3, QSE_T("xvr")}, fnc_gsub,             0 }, QSE_NULL},
@@ -570,7 +566,7 @@ int qse_awk_fnc_substr (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	return 0;
 }
 
-static int fnc_split (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+int qse_awk_fnc_split (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
 	qse_size_t nargs;
 	qse_awk_val_t* a0, * a1, * a2, * t1, * t2;
