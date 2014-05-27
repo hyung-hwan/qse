@@ -428,7 +428,7 @@ static int fnc_sleep (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 #elif defined(HAVE_SELECT)
 		struct timeval req;
 		req.tv_sec = (qse_awk_int_t)fv;
-		req.tv_nsec = QSE_SEC_TO_USEC(fv - req.tv_sec);
+		req.tv_usec = QSE_SEC_TO_USEC(fv - req.tv_sec);
 		rx = select (0, QSE_NULL, QSE_NULL, QSE_NULL, &req);
 #else
 		/* no high-resolution sleep() is available */
