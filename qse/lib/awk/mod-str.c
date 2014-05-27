@@ -294,9 +294,15 @@ struct fnctab_t
 	qse_awk_mod_sym_fnc_t info;
 };
 
+/* TODO: match. let str::match() change str::RLENGTH and str::RSTART */
+/* TODO: index. reuse fnc_index() in fnc.c */
+
+#define A_MAX QSE_TYPE_MAX(int)
+
 static fnctab_t fnctab[] =
 {
 	/* keep this table sorted for binary search in query(). */
+	{ QSE_T("gsub"),      { { 2, 3, QSE_T("xvr")},  qse_awk_fnc_gsub,      0 } },
 	{ QSE_T("index"),     { { 2, 3, QSE_NULL },     fnc_index,             0 } },
 	{ QSE_T("isalnum"),   { { 1, 1, QSE_NULL },     fnc_isalnum,           0 } },
 	{ QSE_T("isalpha"),   { { 1, 1, QSE_NULL },     fnc_isalpha,           0 } },
@@ -312,10 +318,13 @@ static fnctab_t fnctab[] =
 	{ QSE_T("isxdigit"),  { { 1, 1, QSE_NULL },     fnc_isxdigit,          0 } },
 	{ QSE_T("length"),    { { 1, 1, QSE_NULL },     qse_awk_fnc_length,    0 } },
 	{ QSE_T("ltrim"),     { { 1, 1, QSE_NULL },     fnc_ltrim,             0 } },
+	{ QSE_T("match"),     { { 2, 3, QSE_T("vxv") }, qse_awk_fnc_match,     0 } },
 	{ QSE_T("normspace"), { { 1, 1, QSE_NULL },     fnc_normspace,         0 } },
+	{ QSE_T("printf"),    { { 1, A_MAX, QSE_NULL }, qse_awk_fnc_sprintf,   0 } },
 	{ QSE_T("rindex"),    { { 2, 3, QSE_NULL },     fnc_rindex,            0 } },
 	{ QSE_T("rtrim"),     { { 1, 1, QSE_NULL },     fnc_rtrim,             0 } },
 	{ QSE_T("split"),     { { 2, 3, QSE_T("vrx") }, qse_awk_fnc_split,     0 } },
+	{ QSE_T("sub"),       { { 2, 3, QSE_T("xvr") }, qse_awk_fnc_sub,       0 } },
 	{ QSE_T("substr"),    { { 2, 3, QSE_NULL },     qse_awk_fnc_substr,    0 } },
 	{ QSE_T("tolower"),   { { 1, 1, QSE_NULL },     qse_awk_fnc_tolower,   0 } },
 	{ QSE_T("toupper"),   { { 1, 1, QSE_NULL },     qse_awk_fnc_toupper,   0 } },
