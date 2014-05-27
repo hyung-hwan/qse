@@ -22,6 +22,7 @@
 #include <qse/cmn/str.h>
 #include <qse/cmn/chr.h>
 #include "../cmn/mem.h"
+#include "fnc.h"
 
 static int fnc_normspace (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
@@ -163,8 +164,7 @@ static int fnc_index (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 static int fnc_rindex (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
 	return index_or_rindex (rtx, 1);
-}
-
+}       
 
 static int is_class (qse_awk_rtx_t* rtx, qse_ctype_t ctype)
 {
@@ -297,25 +297,29 @@ struct fnctab_t
 static fnctab_t fnctab[] =
 {
 	/* keep this table sorted for binary search in query(). */
-	{ QSE_T("index"),     { { 2, 3, QSE_NULL }, fnc_index,     0 } },
-	{ QSE_T("isalnum"),   { { 1, 1, QSE_NULL }, fnc_isalnum,   0 } },
-	{ QSE_T("isalpha"),   { { 1, 1, QSE_NULL }, fnc_isalpha,   0 } },
-	{ QSE_T("isblank"),   { { 1, 1, QSE_NULL }, fnc_isblank,   0 } },
-	{ QSE_T("iscntrl"),   { { 1, 1, QSE_NULL }, fnc_iscntrl,   0 } },
-	{ QSE_T("isdigit"),   { { 1, 1, QSE_NULL }, fnc_isdigit,   0 } },
-	{ QSE_T("isgraph"),   { { 1, 1, QSE_NULL }, fnc_isgraph,   0 } },
-	{ QSE_T("islower"),   { { 1, 1, QSE_NULL }, fnc_islower,   0 } },
-	{ QSE_T("isprint"),   { { 1, 1, QSE_NULL }, fnc_isprint,   0 } },
-	{ QSE_T("ispunct"),   { { 1, 1, QSE_NULL }, fnc_ispunct,   0 } },
-	{ QSE_T("isspace"),   { { 1, 1, QSE_NULL }, fnc_isspace,   0 } },
-	{ QSE_T("isupper"),   { { 1, 1, QSE_NULL }, fnc_isupper,   0 } },
-	{ QSE_T("isxdigit"),  { { 1, 1, QSE_NULL }, fnc_isxdigit,  0 } },
-	{ QSE_T("ltrim"),     { { 1, 1, QSE_NULL }, fnc_ltrim,     0 } },
-	{ QSE_T("normspace"), { { 1, 1, QSE_NULL }, fnc_normspace, 0 } },
-	{ QSE_T("rindex"),    { { 2, 3, QSE_NULL }, fnc_rindex,    0 } },
-	{ QSE_T("rtrim"),     { { 1, 1, QSE_NULL }, fnc_rtrim,     0 } },
-	{ QSE_T("trim"),      { { 1, 1, QSE_NULL }, fnc_trim,      0 } },
-	{ QSE_T("value"),     { { 1, 1, QSE_NULL }, fnc_value,     0 } }
+	{ QSE_T("index"),     { { 2, 3, QSE_NULL }, fnc_index,             0 } },
+	{ QSE_T("isalnum"),   { { 1, 1, QSE_NULL }, fnc_isalnum,           0 } },
+	{ QSE_T("isalpha"),   { { 1, 1, QSE_NULL }, fnc_isalpha,           0 } },
+	{ QSE_T("isblank"),   { { 1, 1, QSE_NULL }, fnc_isblank,           0 } },
+	{ QSE_T("iscntrl"),   { { 1, 1, QSE_NULL }, fnc_iscntrl,           0 } },
+	{ QSE_T("isdigit"),   { { 1, 1, QSE_NULL }, fnc_isdigit,           0 } },
+	{ QSE_T("isgraph"),   { { 1, 1, QSE_NULL }, fnc_isgraph,           0 } },
+	{ QSE_T("islower"),   { { 1, 1, QSE_NULL }, fnc_islower,           0 } },
+	{ QSE_T("isprint"),   { { 1, 1, QSE_NULL }, fnc_isprint,           0 } },
+	{ QSE_T("ispunct"),   { { 1, 1, QSE_NULL }, fnc_ispunct,           0 } },
+	{ QSE_T("isspace"),   { { 1, 1, QSE_NULL }, fnc_isspace,           0 } },
+	{ QSE_T("isupper"),   { { 1, 1, QSE_NULL }, fnc_isupper,           0 } },
+	{ QSE_T("isxdigit"),  { { 1, 1, QSE_NULL }, fnc_isxdigit,          0 } },
+	{ QSE_T("length"),    { { 1, 1, QSE_NULL }, qse_awk_fnc_length,    0 } },
+	{ QSE_T("ltrim"),     { { 1, 1, QSE_NULL }, fnc_ltrim,             0 } },
+	{ QSE_T("normspace"), { { 1, 1, QSE_NULL }, fnc_normspace,         0 } },
+	{ QSE_T("rindex"),    { { 2, 3, QSE_NULL }, fnc_rindex,            0 } },
+	{ QSE_T("rtrim"),     { { 1, 1, QSE_NULL }, fnc_rtrim,             0 } },
+	{ QSE_T("substr"),    { { 2, 3, QSE_NULL }, qse_awk_fnc_substr,    0 } },
+	{ QSE_T("tolower"),   { { 1, 1, QSE_NULL }, qse_awk_fnc_tolower,   0 } },
+	{ QSE_T("toupper"),   { { 1, 1, QSE_NULL }, qse_awk_fnc_toupper,   0 } },
+	{ QSE_T("trim"),      { { 1, 1, QSE_NULL }, fnc_trim,              0 } },
+	{ QSE_T("value"),     { { 1, 1, QSE_NULL }, fnc_value,             0 } }
 };
 
 static int query (qse_awk_mod_t* mod, qse_awk_t* awk, const qse_char_t* name, qse_awk_mod_sym_t* sym)
