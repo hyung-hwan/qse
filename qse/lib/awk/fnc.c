@@ -487,58 +487,6 @@ static int index_or_rindex (qse_awk_rtx_t* rtx, int rindex)
 
 int qse_awk_fnc_index (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
-/*
-	qse_size_t nargs;
-	qse_awk_val_t* a0, * a1, * v;
-	qse_char_t* str0, * str1, * ptr;
-	qse_size_t len0, len1;
-	qse_awk_int_t idx, start = 1;
-
-	nargs = qse_awk_rtx_getnargs (rtx);
-	QSE_ASSERT (nargs >= 2 && nargs <= 3);
-	
-	a0 = qse_awk_rtx_getarg (rtx, 0);
-	a1 = qse_awk_rtx_getarg (rtx, 1);
-
-	if (nargs >= 3) 
-	{
-		qse_awk_val_t* a2;
-		int n;
-
-		a2 = qse_awk_rtx_getarg (rtx, 2);
-		n = qse_awk_rtx_valtoint (rtx, a2, &start);
-		if (n <= -1) return -1;
-	}
-
-	str0 = qse_awk_rtx_getvalstr (rtx, a0, &len0);
-	if (str0 == QSE_NULL) return -1;
-
-	str1 = qse_awk_rtx_getvalstr (rtx, a1, &len1);
-	if (str1 == QSE_NULL)
-	{
-		qse_awk_rtx_freevalstr (rtx, a0, str0);
-		return -1;
-	}
-
-	if (start == 0) start = 1;
-	else if (start < 0) start = len0 + start + 1;
-
-	ptr = (start > len0 || start <= 0)? QSE_NULL:
-	      (rtx->gbl.ignorecase)?
-	          qse_strxncasestr (&str0[start-1], len0-start+1, str1, len1):
-	          qse_strxnstr (&str0[start-1], len0-start+1, str1, len1);
-
-	idx = (ptr == QSE_NULL)? 0: ((qse_awk_int_t)(ptr-str0) + 1);
-
-	qse_awk_rtx_freevalstr (rtx, a1, str1);
-	qse_awk_rtx_freevalstr (rtx, a0, str0);
-
-	v = qse_awk_rtx_makeintval (rtx, idx);
-	if (v == QSE_NULL) return -1;
-
-	qse_awk_rtx_setretval (rtx, v);
-	return 0;
-*/
 	return index_or_rindex (rtx, 0);
 }
 
