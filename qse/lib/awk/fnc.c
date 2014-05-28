@@ -22,7 +22,6 @@
  
 static int fnc_close   (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi);
 static int fnc_fflush  (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi);
-static int fnc_index   (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi);
 
 static int fnc_sin     (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi);
 static int fnc_cos     (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi);
@@ -57,7 +56,7 @@ static qse_awk_fnc_t sysfnctab[] =
 	{ {QSE_T("fflush"),  6}, 0, { {0,     1, QSE_NULL},     fnc_fflush,  QSE_AWK_RIO }, QSE_NULL},
 
 	/* string functions */
-	{ {QSE_T("index"),   5}, 0, { {2,     3, QSE_NULL},     fnc_index,            0 }, QSE_NULL},
+	{ {QSE_T("index"),   5}, 0, { {2,     3, QSE_NULL},     qse_awk_fnc_index,    0 }, QSE_NULL},
 	{ {QSE_T("substr"),  6}, 0, { {2,     3, QSE_NULL},     qse_awk_fnc_substr,   0 }, QSE_NULL},
 	{ {QSE_T("length"),  6}, 1, { {0,     1, QSE_NULL},     qse_awk_fnc_length,   0 }, QSE_NULL},
 	{ {QSE_T("split"),   5}, 0, { {2,     3, QSE_T("vrx")}, qse_awk_fnc_split,    0 }, QSE_NULL},
@@ -405,8 +404,90 @@ static int fnc_fflush (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	return 0;
 }
 
-static int fnc_index (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+static int index_or_rindex (qse_awk_rtx_t* rtx, int rindex)
 {
+	/* this is similar to the built-in index() function but doesn't
+	 * care about IGNORECASE. */
+	qse_size_t nargs;
+	qse_awk_val_t* a0, * a1;
+	qse_char_t* str0, * str1, * ptr;
+	qse_size_t len0, len1;
+	qse_awk_int_t idx, boundary = 1;
+
+	nargs = qse_awk_rtx_getnargs (rtx);
+	a0 = qse_awk_rtx_getarg (rtx, 0);
+	a1 = qse_awk_rtx_getarg (rtx, 1);
+
+	/*
+	index ("abc", "d", 3);
+	rindex ("abcdefabcdx", "cd", 8);
+	*/
+
+	if (nargs >= 3) 
+	{
+		qse_awk_val_t* a2;
+		int n;
+
+		a2 = qse_awk_rtx_getarg (rtx, 2);
+		n = qse_awk_rtx_valtoint (rtx, a2, &boundary);
+		if (n <= -1) return -1;
+	}
+
+	str0 = qse_awk_rtx_getvalstr (rtx, a0, &len0);
+	if (str0 == QSE_NULL) return -1;
+
+	str1 = qse_awk_rtx_getvalstr (rtx, a1, &len1);
+	if (str1 == QSE_NULL)
+	{
+		if (a0->type != QSE_AWK_VAL_STR) 
+			qse_awk_rtx_freevalstr (rtx, a0, str0);
+		return -1;
+	}
+
+	if (nargs < 3)
+	{
+		boundary = rindex? len0: 1;
+	}
+	else
+	{
+		if (boundary == 0) boundary = 1;
+		else if (boundary < 0) boundary = len0 + boundary + 1;
+	}
+
+	if (boundary > len0 || boundary <= 0)
+	{
+		ptr = QSE_NULL;
+	}
+	else if (rindex)
+	{
+		/* 'boundary' acts as an end position */
+		ptr = rtx->gbl.ignorecase?
+			qse_strxnrcasestr (&str0[0], boundary, str1, len1):
+			qse_strxnrstr (&str0[0], boundary, str1, len1);
+	}
+	else
+	{
+		/* 'boundary' acts as an start position */
+		ptr = rtx->gbl.ignorecase?
+			qse_strxncasestr (&str0[boundary-1], len0-boundary+1, str1, len1):
+			qse_strxnstr (&str0[boundary-1], len0-boundary+1, str1, len1);
+	}
+
+	idx = (ptr == QSE_NULL)? 0: ((qse_awk_int_t)(ptr-str0) + 1);
+
+	qse_awk_rtx_freevalstr (rtx, a1, str1);
+	qse_awk_rtx_freevalstr (rtx, a0, str0);
+
+	a0 = qse_awk_rtx_makeintval (rtx, idx);
+	if (a0 == QSE_NULL) return -1;
+
+	qse_awk_rtx_setretval (rtx, a0);
+	return 0;
+}
+
+int qse_awk_fnc_index (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+/*
 	qse_size_t nargs;
 	qse_awk_val_t* a0, * a1, * v;
 	qse_char_t* str0, * str1, * ptr;
@@ -457,6 +538,13 @@ static int fnc_index (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 
 	qse_awk_rtx_setretval (rtx, v);
 	return 0;
+*/
+	return index_or_rindex (rtx, 0);
+}
+
+int qse_awk_fnc_rindex (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	return index_or_rindex (rtx, 1);
 }
 
 int qse_awk_fnc_length (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)

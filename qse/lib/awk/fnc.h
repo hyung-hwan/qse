@@ -42,6 +42,8 @@ extern "C" {
 
 qse_awk_fnc_t* qse_awk_findfnc (qse_awk_t* awk, const qse_cstr_t* name);
 
+int qse_awk_fnc_index   (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi);
+int qse_awk_fnc_rindex  (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi);
 int qse_awk_fnc_length  (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi);
 int qse_awk_fnc_substr  (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi);
 int qse_awk_fnc_split   (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi);
