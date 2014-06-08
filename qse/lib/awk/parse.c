@@ -6583,6 +6583,7 @@ int qse_awk_putsrcstrn (
 
 /* let's hardcode module information */
 #include "mod-dir.h"
+#include "mod-math.h"
 #include "mod-str.h"
 #include "mod-sys.h"
 #include "mod-sed.h"
@@ -6605,15 +6606,16 @@ static struct
 	int (*modload) (qse_awk_mod_t* mod, qse_awk_t* awk);
 } static_modtab[] = 
 {
-	{ QSE_T("dir"), qse_awk_mod_dir },
+	{ QSE_T("dir"),  qse_awk_mod_dir },
+	{ QSE_T("math"), qse_awk_mod_math },
 #if defined(HAVE_MPI)
-	{ QSE_T("mpi"), qse_awk_mod_mpi },
+	{ QSE_T("mpi"),  qse_awk_mod_mpi },
 #endif
-	{ QSE_T("sed"), qse_awk_mod_sed },
-	{ QSE_T("str"), qse_awk_mod_str },
-	{ QSE_T("sys"), qse_awk_mod_sys },
+	{ QSE_T("sed"),  qse_awk_mod_sed },
+	{ QSE_T("str"),  qse_awk_mod_str },
+	{ QSE_T("sys"),  qse_awk_mod_sys },
 #if defined(HAVE_UCI)
-	{ QSE_T("uci"), qse_awk_mod_uci }
+	{ QSE_T("uci"),  qse_awk_mod_uci }
 #endif
 };
 #endif

@@ -261,23 +261,29 @@ void* Awk::Value::operator new[] (size_t n, Run* run) throw ()
 #if !defined(__BORLANDC__) && !defined(__WATCOMC__)
 void Awk::Value::operator delete (void* ptr, Run* run) 
 {
+	// this placement delete is to be called when the constructor 
+	// throws an exception and it's caught by the caller.
 	qse_awk_rtx_freemem (run->rtx, (char*)ptr-QSE_SIZEOF(run));
 }
 
 void Awk::Value::operator delete[] (void* ptr, Run* run) 
 {
+	// this placement delete is to be called when the constructor 
+	// throws an exception and it's caught by the caller.
 	qse_awk_rtx_freemem (run->rtx, (char*)ptr-QSE_SIZEOF(run));
 }
 #endif
 
 void Awk::Value::operator delete (void* ptr) 
 {
+	// this delete is to be called for normal destruction.
 	void* p = (char*)ptr-QSE_SIZEOF(Run*);
 	qse_awk_rtx_freemem ((*(Run**)p)->rtx, p);
 }
 
 void Awk::Value::operator delete[] (void* ptr) 
 {
+	// this delete is to be called for normal destruction.
 	void* p = (char*)ptr-QSE_SIZEOF(Run*);
 	qse_awk_rtx_freemem ((*(Run**)p)->rtx, p);
 }
