@@ -19,7 +19,7 @@
  */
 
 #include <qse/awk/StdAwk.hpp>
-#include <qse/cmn/stdio.h>
+#include <qse/cmn/sio.h>
 #include <qse/cmn/main.h>
 #include <qse/cmn/mbwc.h>
 
@@ -151,23 +151,32 @@ static int awk_main (int argc, qse_char_t* argv[])
 
 int qse_main (int argc, qse_achar_t* argv[])
 {
-#if defined(_WIN32)
-	char locale[100];
-	UINT codepage = GetConsoleOutputCP();	
-	if (codepage == CP_UTF8)
+	int x;
+
+	qse_openstdsios ();
+
 	{
-		/*SetConsoleOUtputCP (CP_UTF8);*/
-		qse_setdflcmgrbyid (QSE_CMGR_UTF8);
-	}
-	else
-	{
-		sprintf (locale, ".%u", (unsigned int)codepage);
-		setlocale (LC_ALL, locale);
+	#if defined(_WIN32)
+		char locale[100];
+		UINT codepage = GetConsoleOutputCP();	
+		if (codepage == CP_UTF8)
+		{
+			/*SetConsoleOUtputCP (CP_UTF8);*/
+			qse_setdflcmgrbyid (QSE_CMGR_UTF8);
+		}
+		else
+		{
+			sprintf (locale, ".%u", (unsigned int)codepage);
+			setlocale (LC_ALL, locale);
+			qse_setdflcmgrbyid (QSE_CMGR_SLMB);
+		}
+	#else
+		setlocale (LC_ALL, "");
 		qse_setdflcmgrbyid (QSE_CMGR_SLMB);
+	#endif
 	}
-#else
-	setlocale (LC_ALL, "");
-	qse_setdflcmgrbyid (QSE_CMGR_SLMB);
-#endif
-	return qse_runmain (argc,argv,awk_main);
+
+	x = qse_runmain (argc,argv,awk_main);
+	qse_closestdsios ();
+	return x;
 }

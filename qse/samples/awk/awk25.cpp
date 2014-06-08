@@ -22,7 +22,7 @@
 #include <qse/cmn/opt.h>
 #include <qse/cmn/main.h>
 #include <qse/cmn/mbwc.h>
-#include <qse/cmn/stdio.h>
+#include <qse/cmn/sio.h>
 #include <cstring>
 
 #include <locale.h>
@@ -84,7 +84,7 @@ public:
 			return -1;
 		}
 
-		long_t x = args[0].toInt();
+		Awk::int_t x = args[0].toInt();
 
 		/*Value arg;
 		if (run.getGlobal(idLastSleep, arg) == 0)
@@ -263,7 +263,7 @@ static void unset_signal (void)
 #endif
 }
 
-static void print_usage (QSE_FILE* out, const qse_char_t* argv0)
+static void print_usage (qse_sio_t* out, const qse_char_t* argv0)
 {
 	qse_fprintf (out, QSE_T("USAGE: %s [options] -f sourcefile [ -- ] [datafile]*\n"), argv0);
 	qse_fprintf (out, QSE_T("       %s [options] [ -- ] sourcestring [datafile]*\n"), argv0);
@@ -444,34 +444,38 @@ int qse_main (int argc, qse_achar_t* argv[])
 {
 	int ret;
 
-#if defined(_WIN32)
-	char locale[100];
-	UINT codepage;
-	WSADATA wsadata;
+	qse_openstdsios ();
 
-	codepage = GetConsoleOutputCP();	
-	if (codepage == CP_UTF8)
 	{
-		/*SetConsoleOUtputCP (CP_UTF8);*/
-		qse_setdflcmgrbyid (QSE_CMGR_UTF8);
-	}
-	else
-	{
-		sprintf (locale, ".%u", (unsigned int)codepage);
-		setlocale (LC_ALL, locale);
+	#if defined(_WIN32)
+		char locale[100];
+		UINT codepage;
+		WSADATA wsadata;
+	
+		codepage = GetConsoleOutputCP();	
+		if (codepage == CP_UTF8)
+		{
+			/*SetConsoleOUtputCP (CP_UTF8);*/
+			qse_setdflcmgrbyid (QSE_CMGR_UTF8);
+		}
+		else
+		{
+			sprintf (locale, ".%u", (unsigned int)codepage);
+			setlocale (LC_ALL, locale);
+			qse_setdflcmgrbyid (QSE_CMGR_SLMB);
+		}
+	
+		if (WSAStartup (MAKEWORD(2,0), &wsadata) != 0)
+		{
+			print_error (QSE_T("Failed to start up winsock\n"));
+			return -1;
+		}
+	
+	#else
+		setlocale (LC_ALL, "");
 		qse_setdflcmgrbyid (QSE_CMGR_SLMB);
+	#endif
 	}
-
-	if (WSAStartup (MAKEWORD(2,0), &wsadata) != 0)
-	{
-		print_error (QSE_T("Failed to start up winsock\n"));
-		return -1;
-	}
-
-#else
-	setlocale (LC_ALL, "");
-	qse_setdflcmgrbyid (QSE_CMGR_SLMB);
-#endif
 
 	ret = qse_runmain (argc, argv, awk_main);
 
@@ -479,5 +483,6 @@ int qse_main (int argc, qse_achar_t* argv[])
 	WSACleanup ();
 #endif
 
+	qse_closestdsios ();
 	return ret;
 }

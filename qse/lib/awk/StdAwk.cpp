@@ -31,8 +31,11 @@
 
 #include <stdlib.h>
 #include <math.h>
+
 #if defined(HAVE_QUADMATH_H)
+extern "C" { // some gcc distros don't have extern "C" declared in the header file.
 #	include <quadmath.h>
+}
 #endif
 
 #if defined(_WIN32)

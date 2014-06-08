@@ -19,7 +19,7 @@
  */
 
 #include <qse/awk/StdAwk.hpp>
-#include <qse/cmn/stdio.h>
+#include <qse/cmn/sio.h>
 #include <qse/cmn/main.h>
 #include <qse/cmn/mbwc.h>
 #include <qse/cmn/str.h>
@@ -95,7 +95,7 @@ protected:
 		return -1; 
 	} 
 
-	ssize_t read (StdAwk::Console& io, StdAwk::char_t* data, size_t size) 
+	StdAwk::ssize_t read (StdAwk::Console& io, StdAwk::char_t* data, size_t size) 
 	{
 		if (this->inptr >= this->inend) return 0; // EOF
 		size_t x = qse_strxncpy (data, size, inptr, inend - inptr);
@@ -103,7 +103,7 @@ protected:
 		return x;
 	}
 
-	ssize_t write (StdAwk::Console& io, const StdAwk::char_t* data, size_t size) 
+	StdAwk::ssize_t write (StdAwk::Console& io, const StdAwk::char_t* data, size_t size) 
 	{
 		try { this->output.append (data, size); }
 		catch (...) 
@@ -217,24 +217,31 @@ static int awk_main (int argc, qse_char_t* argv[])
 
 int qse_main (int argc, qse_achar_t* argv[])
 {
-#if defined(_WIN32)
-	char locale[100];
-	UINT codepage = GetConsoleOutputCP();	
-	if (codepage == CP_UTF8)
-	{
-		/*SetConsoleOUtputCP (CP_UTF8);*/
-		qse_setdflcmgrbyid (QSE_CMGR_UTF8);
-	}
-	else
-	{
-		sprintf (locale, ".%u", (unsigned int)codepage);
-		setlocale (LC_ALL, locale);
-		qse_setdflcmgrbyid (QSE_CMGR_SLMB);
-	}
-#else
-	setlocale (LC_ALL, "");
-	qse_setdflcmgrbyid (QSE_CMGR_SLMB);
-#endif
+	int x;
+	qse_openstdsios ();
 
-	return qse_runmain (argc,argv,awk_main);
+	{
+	#if defined(_WIN32)
+		char locale[100];
+		UINT codepage = GetConsoleOutputCP();	
+		if (codepage == CP_UTF8)
+		{
+			/*SetConsoleOUtputCP (CP_UTF8);*/
+			qse_setdflcmgrbyid (QSE_CMGR_UTF8);
+		}
+		else
+		{
+			sprintf (locale, ".%u", (unsigned int)codepage);
+			setlocale (LC_ALL, locale);
+			qse_setdflcmgrbyid (QSE_CMGR_SLMB);
+		}
+	#else
+		setlocale (LC_ALL, "");
+		qse_setdflcmgrbyid (QSE_CMGR_SLMB);
+	#endif
+	}
+
+	x = qse_runmain (argc,argv,awk_main);
+	qse_closestdsios ();
+	return x;
 }

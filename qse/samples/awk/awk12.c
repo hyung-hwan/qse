@@ -1,5 +1,5 @@
 #include <qse/awk/stdawk.h>
-#include <qse/cmn/stdio.h>
+#include <qse/cmn/sio.h>
 
 /* this sample produces 8 text files containing multiplication chart. */
 
@@ -25,16 +25,18 @@ int main ()
 
 	const qse_char_t* output_files[] = 
 	{
-		QSE_T("awk09.out.2"),
-		QSE_T("awk09.out.3"),
-		QSE_T("awk09.out.4"),
-		QSE_T("awk09.out.5"),
-		QSE_T("awk09.out.6"),
-		QSE_T("awk09.out.7"),
-		QSE_T("awk09.out.8"),
-		QSE_T("awk09.out.9"),
+		QSE_T("awk12.out.2"),
+		QSE_T("awk12.out.3"),
+		QSE_T("awk12.out.4"),
+		QSE_T("awk12.out.5"),
+		QSE_T("awk12.out.6"),
+		QSE_T("awk12.out.7"),
+		QSE_T("awk12.out.8"),
+		QSE_T("awk12.out.9"),
 		QSE_NULL
 	};
+
+	qse_openstdsios ();
 
 	awk = qse_awk_openstd (0);
 	if (awk == QSE_NULL)  
@@ -62,7 +64,7 @@ int main ()
 	rtx = qse_awk_rtx_openstd (
 		awk, 
 		0,
-		QSE_T("awk09"),
+		QSE_T("awk12"),
 		QSE_NULL, /* stdin */
 		output_files,
 		QSE_NULL  /* default cmgr */
@@ -88,6 +90,8 @@ int main ()
 oops:
 	if (rtx != QSE_NULL) qse_awk_rtx_close (rtx);
 	if (awk != QSE_NULL) qse_awk_close (awk);
+
+	qse_closestdsios ();
 	return ret;
 }
 

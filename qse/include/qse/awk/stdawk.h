@@ -22,7 +22,6 @@
 #define _QSE_AWK_STDAWK_H_
 
 #include <qse/awk/awk.h>
-#include <qse/cmn/sio.h>
 
 /** \file
  * This file defines functions and data types that help you create

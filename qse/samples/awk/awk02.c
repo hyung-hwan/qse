@@ -1,5 +1,6 @@
 #include <qse/awk/stdawk.h>
 #include <qse/cmn/str.h>
+#include <qse/cmn/sio.h>
 #include <qse/cmn/main.h>
 #include "awk00.h"
 

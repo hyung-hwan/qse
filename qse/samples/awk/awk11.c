@@ -19,7 +19,7 @@
  */
 
 #include <qse/awk/stdawk.h>
-#include <qse/cmn/stdio.h>
+#include <qse/cmn/sio.h>
 
 const qse_char_t* src = QSE_T("BEGIN { print \"hello, world\" | \"dir\"; }");
 
@@ -72,6 +72,8 @@ int main ()
 	qse_awk_parsestd_t psin[2];
 	int ret = -1;
 
+	qse_openstdsios ();
+
 	awk = qse_awk_openstd (0);
 	if (awk == QSE_NULL)  
 	{
@@ -122,6 +124,8 @@ int main ()
 oops:
 	if (rtx != QSE_NULL) qse_awk_rtx_close (rtx);
 	if (awk != QSE_NULL) qse_awk_close (awk);
+
+	qse_closestdsios ();
 	return ret;
 }
 

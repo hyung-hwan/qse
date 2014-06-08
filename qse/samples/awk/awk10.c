@@ -1,8 +1,8 @@
 #include <qse/awk/stdawk.h>
+#include <qse/cmn/sio.h>
 #include <qse/cmn/main.h>
 #include <qse/cmn/mem.h>
 #include <qse/cmn/path.h>
-#include <qse/cmn/stdio.h>
 #include "awk00.h"
 
 static const qse_char_t* src = QSE_T(
@@ -146,6 +146,10 @@ oops:
 
 int qse_main (int argc, qse_achar_t* argv[])
 {
+	int x;
+	qse_openstdsios ();
 	init_awk_sample_locale ();
-	return qse_runmain (argc, argv, awk_main);
+	x = qse_runmain (argc, argv, awk_main);
+	qse_closestdsios ();
+	return x;
 }
