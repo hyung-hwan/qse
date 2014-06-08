@@ -320,6 +320,7 @@ LIBQSEAWK_OBJECTS =  &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqseawk_rio.obj &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqseawk_std.obj &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqseawk_mod_dir.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqseawk_mod_math.obj &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqseawk_mod_sed.obj &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqseawk_mod_str.obj &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqseawk_mod_sys.obj
@@ -826,6 +827,9 @@ $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqseawk_std.ob
 	$(CC) -bt=dos -zq -fo=$^@ $(LIBQSEAWK_CFLAGS) $<
 
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqseawk_mod_dir.obj :  .AUTODEPEND ..\..\lib\awk\mod-dir.c
+	$(CC) -bt=dos -zq -fo=$^@ $(LIBQSEAWK_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqseawk_mod_math.obj :  .AUTODEPEND ..\..\lib\awk\mod-math.c
 	$(CC) -bt=dos -zq -fo=$^@ $(LIBQSEAWK_CFLAGS) $<
 
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqseawk_mod_sed.obj :  .AUTODEPEND ..\..\lib\awk\mod-sed.c

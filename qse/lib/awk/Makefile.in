@@ -63,6 +63,7 @@ host_triplet = @host@
 ##################################################
 @ENABLE_STATIC_MODULE_TRUE@am__append_4 = \
 @ENABLE_STATIC_MODULE_TRUE@	mod-dir.c mod-dir.h \
+@ENABLE_STATIC_MODULE_TRUE@	mod-math.c mod-math.h \
 @ENABLE_STATIC_MODULE_TRUE@	mod-sed.c mod-sed.h \
 @ENABLE_STATIC_MODULE_TRUE@	mod-str.c mod-str.h \
 @ENABLE_STATIC_MODULE_TRUE@	mod-sys.c mod-sys.h
@@ -136,6 +137,18 @@ libqseawk_dir_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
 	-o $@
 @ENABLE_STATIC_MODULE_FALSE@am_libqseawk_dir_la_rpath = -rpath \
 @ENABLE_STATIC_MODULE_FALSE@	$(modexecdir)
+@ENABLE_STATIC_MODULE_FALSE@libqseawk_math_la_DEPENDENCIES =  \
+@ENABLE_STATIC_MODULE_FALSE@	$(am__DEPENDENCIES_1)
+am__libqseawk_math_la_SOURCES_DIST = mod-math.c mod-math.h
+@ENABLE_STATIC_MODULE_FALSE@am_libqseawk_math_la_OBJECTS =  \
+@ENABLE_STATIC_MODULE_FALSE@	libqseawk_math_la-mod-math.lo
+libqseawk_math_la_OBJECTS = $(am_libqseawk_math_la_OBJECTS)
+libqseawk_math_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
+	$(AM_CFLAGS) $(CFLAGS) $(libqseawk_math_la_LDFLAGS) $(LDFLAGS) \
+	-o $@
+@ENABLE_STATIC_MODULE_FALSE@am_libqseawk_math_la_rpath = -rpath \
+@ENABLE_STATIC_MODULE_FALSE@	$(modexecdir)
 @ENABLE_STATIC_MODULE_FALSE@@HAVE_C_MPI_TRUE@libqseawk_mpi_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
 am__libqseawk_mpi_la_SOURCES_DIST = mod-mpi.c mod-mpi.h
 @ENABLE_STATIC_MODULE_FALSE@@HAVE_C_MPI_TRUE@am_libqseawk_mpi_la_OBJECTS = libqseawk_mpi_la-mod-mpi.lo
@@ -201,10 +214,11 @@ libqseawk_la_DEPENDENCIES = $(am__DEPENDENCIES_2) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_3)
 am__libqseawk_la_SOURCES_DIST = awk.c err.c tree.c parse.c run.c rec.c \
 	val.c fnc.c misc.c rio.c std.c awk.h err.h rio.h val.h fnc.h \
-	misc.h parse.h run.h tree.h mod-dir.c mod-dir.h mod-sed.c \
-	mod-sed.h mod-str.c mod-str.h mod-sys.c mod-sys.h mod-mpi.c \
-	mod-mpi.h mod-uci.c mod-uci.h
+	misc.h parse.h run.h tree.h mod-dir.c mod-dir.h mod-math.c \
+	mod-math.h mod-sed.c mod-sed.h mod-str.c mod-str.h mod-sys.c \
+	mod-sys.h mod-mpi.c mod-mpi.h mod-uci.c mod-uci.h
 @ENABLE_STATIC_MODULE_TRUE@am__objects_1 = libqseawk_la-mod-dir.lo \
+@ENABLE_STATIC_MODULE_TRUE@	libqseawk_la-mod-math.lo \
 @ENABLE_STATIC_MODULE_TRUE@	libqseawk_la-mod-sed.lo \
 @ENABLE_STATIC_MODULE_TRUE@	libqseawk_la-mod-str.lo \
 @ENABLE_STATIC_MODULE_TRUE@	libqseawk_la-mod-sys.lo
@@ -271,11 +285,13 @@ am__v_CXXLD_0 = @echo "  CXXLD " $@;
 AM_V_GEN = $(am__v_GEN_@AM_V@)
 am__v_GEN_ = $(am__v_GEN_@AM_DEFAULT_V@)
 am__v_GEN_0 = @echo "  GEN   " $@;
-SOURCES = $(libqseawk_dir_la_SOURCES) $(libqseawk_mpi_la_SOURCES) \
-	$(libqseawk_sed_la_SOURCES) $(libqseawk_str_la_SOURCES) \
-	$(libqseawk_sys_la_SOURCES) $(libqseawk_uci_la_SOURCES) \
-	$(libqseawk_la_SOURCES) $(libqseawkxx_la_SOURCES)
+SOURCES = $(libqseawk_dir_la_SOURCES) $(libqseawk_math_la_SOURCES) \
+	$(libqseawk_mpi_la_SOURCES) $(libqseawk_sed_la_SOURCES) \
+	$(libqseawk_str_la_SOURCES) $(libqseawk_sys_la_SOURCES) \
+	$(libqseawk_uci_la_SOURCES) $(libqseawk_la_SOURCES) \
+	$(libqseawkxx_la_SOURCES)
 DIST_SOURCES = $(am__libqseawk_dir_la_SOURCES_DIST) \
+	$(am__libqseawk_math_la_SOURCES_DIST) \
 	$(am__libqseawk_mpi_la_SOURCES_DIST) \
 	$(am__libqseawk_sed_la_SOURCES_DIST) \
 	$(am__libqseawk_str_la_SOURCES_DIST) \
@@ -502,13 +518,17 @@ libqseawk_la_LIBADD = $(LIBADD_LIB_COMMON) $(am__append_5) \
 @ENABLE_STATIC_MODULE_FALSE@LIBADD_MOD_COMMON = -lqseawk -lqsecmn
 @ENABLE_STATIC_MODULE_FALSE@modexecdir = $(libdir)
 @ENABLE_STATIC_MODULE_FALSE@modexec_LTLIBRARIES = libqseawk-dir.la \
-@ENABLE_STATIC_MODULE_FALSE@	libqseawk-sed.la libqseawk-str.la \
-@ENABLE_STATIC_MODULE_FALSE@	libqseawk-sys.la $(am__append_11) \
-@ENABLE_STATIC_MODULE_FALSE@	$(am__append_12)
+@ENABLE_STATIC_MODULE_FALSE@	libqseawk-math.la libqseawk-sed.la \
+@ENABLE_STATIC_MODULE_FALSE@	libqseawk-str.la libqseawk-sys.la \
+@ENABLE_STATIC_MODULE_FALSE@	$(am__append_11) $(am__append_12)
 @ENABLE_STATIC_MODULE_FALSE@libqseawk_dir_la_SOURCES = mod-dir.c mod-dir.h
 @ENABLE_STATIC_MODULE_FALSE@libqseawk_dir_la_CPPFLAGS = $(CPPFLAGS_MOD_COMMON)
 @ENABLE_STATIC_MODULE_FALSE@libqseawk_dir_la_LDFLAGS = $(LDFLAGS_MOD_COMMON)
 @ENABLE_STATIC_MODULE_FALSE@libqseawk_dir_la_LIBADD = $(LIBADD_MOD_COMMON)
+@ENABLE_STATIC_MODULE_FALSE@libqseawk_math_la_SOURCES = mod-math.c mod-math.h
+@ENABLE_STATIC_MODULE_FALSE@libqseawk_math_la_CPPFLAGS = $(CPPFLAGS_MOD_COMMON)
+@ENABLE_STATIC_MODULE_FALSE@libqseawk_math_la_LDFLAGS = $(LDFLAGS_MOD_COMMON)
+@ENABLE_STATIC_MODULE_FALSE@libqseawk_math_la_LIBADD = $(LIBADD_MOD_COMMON)
 @ENABLE_STATIC_MODULE_FALSE@libqseawk_sed_la_SOURCES = mod-sed.c mod-sed.h
 @ENABLE_STATIC_MODULE_FALSE@libqseawk_sed_la_CPPFLAGS = $(CPPFLAGS_MOD_COMMON)
 @ENABLE_STATIC_MODULE_FALSE@libqseawk_sed_la_LDFLAGS = $(LDFLAGS_MOD_COMMON) -L../sed
@@ -629,6 +649,8 @@ clean-modexecLTLIBRARIES:
 	done
 libqseawk-dir.la: $(libqseawk_dir_la_OBJECTS) $(libqseawk_dir_la_DEPENDENCIES) $(EXTRA_libqseawk_dir_la_DEPENDENCIES) 
 	$(AM_V_CCLD)$(libqseawk_dir_la_LINK) $(am_libqseawk_dir_la_rpath) $(libqseawk_dir_la_OBJECTS) $(libqseawk_dir_la_LIBADD) $(LIBS)
+libqseawk-math.la: $(libqseawk_math_la_OBJECTS) $(libqseawk_math_la_DEPENDENCIES) $(EXTRA_libqseawk_math_la_DEPENDENCIES) 
+	$(AM_V_CCLD)$(libqseawk_math_la_LINK) $(am_libqseawk_math_la_rpath) $(libqseawk_math_la_OBJECTS) $(libqseawk_math_la_LIBADD) $(LIBS)
 libqseawk-mpi.la: $(libqseawk_mpi_la_OBJECTS) $(libqseawk_mpi_la_DEPENDENCIES) $(EXTRA_libqseawk_mpi_la_DEPENDENCIES) 
 	$(AM_V_CCLD)$(libqseawk_mpi_la_LINK) $(am_libqseawk_mpi_la_rpath) $(libqseawk_mpi_la_OBJECTS) $(libqseawk_mpi_la_LIBADD) $(LIBS)
 libqseawk-sed.la: $(libqseawk_sed_la_OBJECTS) $(libqseawk_sed_la_DEPENDENCIES) $(EXTRA_libqseawk_sed_la_DEPENDENCIES) 
@@ -656,6 +678,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqseawk_la-fnc.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqseawk_la-misc.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqseawk_la-mod-dir.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqseawk_la-mod-math.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqseawk_la-mod-mpi.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqseawk_la-mod-sed.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqseawk_la-mod-str.Plo@am__quote@
@@ -668,6 +691,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqseawk_la-std.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqseawk_la-tree.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqseawk_la-val.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqseawk_math_la-mod-math.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqseawk_mpi_la-mod-mpi.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqseawk_sed_la-mod-sed.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqseawk_str_la-mod-str.Plo@am__quote@
@@ -703,6 +727,13 @@ libqseawk_dir_la-mod-dir.lo: mod-dir.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='mod-dir.c' object='libqseawk_dir_la-mod-dir.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libqseawk_dir_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libqseawk_dir_la-mod-dir.lo `test -f 'mod-dir.c' || echo '$(srcdir)/'`mod-dir.c
+
+libqseawk_math_la-mod-math.lo: mod-math.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libqseawk_math_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libqseawk_math_la-mod-math.lo -MD -MP -MF $(DEPDIR)/libqseawk_math_la-mod-math.Tpo -c -o libqseawk_math_la-mod-math.lo `test -f 'mod-math.c' || echo '$(srcdir)/'`mod-math.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libqseawk_math_la-mod-math.Tpo $(DEPDIR)/libqseawk_math_la-mod-math.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='mod-math.c' object='libqseawk_math_la-mod-math.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libqseawk_math_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libqseawk_math_la-mod-math.lo `test -f 'mod-math.c' || echo '$(srcdir)/'`mod-math.c
 
 libqseawk_mpi_la-mod-mpi.lo: mod-mpi.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libqseawk_mpi_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libqseawk_mpi_la-mod-mpi.lo -MD -MP -MF $(DEPDIR)/libqseawk_mpi_la-mod-mpi.Tpo -c -o libqseawk_mpi_la-mod-mpi.lo `test -f 'mod-mpi.c' || echo '$(srcdir)/'`mod-mpi.c
@@ -822,6 +853,13 @@ libqseawk_la-mod-dir.lo: mod-dir.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='mod-dir.c' object='libqseawk_la-mod-dir.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libqseawk_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libqseawk_la-mod-dir.lo `test -f 'mod-dir.c' || echo '$(srcdir)/'`mod-dir.c
+
+libqseawk_la-mod-math.lo: mod-math.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libqseawk_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libqseawk_la-mod-math.lo -MD -MP -MF $(DEPDIR)/libqseawk_la-mod-math.Tpo -c -o libqseawk_la-mod-math.lo `test -f 'mod-math.c' || echo '$(srcdir)/'`mod-math.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libqseawk_la-mod-math.Tpo $(DEPDIR)/libqseawk_la-mod-math.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='mod-math.c' object='libqseawk_la-mod-math.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libqseawk_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libqseawk_la-mod-math.lo `test -f 'mod-math.c' || echo '$(srcdir)/'`mod-math.c
 
 libqseawk_la-mod-sed.lo: mod-sed.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libqseawk_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libqseawk_la-mod-sed.lo -MD -MP -MF $(DEPDIR)/libqseawk_la-mod-sed.Tpo -c -o libqseawk_la-mod-sed.lo `test -f 'mod-sed.c' || echo '$(srcdir)/'`mod-sed.c

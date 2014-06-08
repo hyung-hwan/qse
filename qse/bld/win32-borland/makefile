@@ -331,6 +331,12 @@ MODQSEAWKDIR_CFLAGS = -I$(BCCDIR)\include -I..\..\include $(CPPFLAGS_BUILD) \
 	$(CPPFLAGS) $(CFLAGS)
 MODQSEAWKDIR_OBJECTS =  \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\modqseawkdir_mod_dir.obj
+MODQSEAWKMATH_CFLAGS = -I$(BCCDIR)\include -I..\..\include $(CPPFLAGS_BUILD) \
+	$(CPPFLAGS_CHAR) $(CPPFLAGS_XCMGRS) $(CPPFLAGS_BUNDLED_UNICODE) \
+	$(CPPFLAGS_STATIC_MODULE) $(CPPFLAGS_TCPV40HDRS) $(__DEBUG_INFO) -tWM -O2 \
+	$(CPPFLAGS) $(CFLAGS)
+MODQSEAWKMATH_OBJECTS =  \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\modqseawkmath_mod_math.obj
 MODQSEAWKSED_CFLAGS = -I$(BCCDIR)\include -I..\..\include $(CPPFLAGS_BUILD) \
 	$(CPPFLAGS_CHAR) $(CPPFLAGS_XCMGRS) $(CPPFLAGS_BUNDLED_UNICODE) \
 	$(CPPFLAGS_STATIC_MODULE) $(CPPFLAGS_TCPV40HDRS) $(__DEBUG_INFO) -tWM -O2 \
@@ -571,6 +577,7 @@ __dllqseawk___depname = \
 !if "$(SHARED)" == "off"
 ____SOURCES_STATIC_AWK_MODULE_FILENAMES_OBJECTS =  \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqseawk_mod_dir.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqseawk_mod_math.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqseawk_mod_sed.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqseawk_mod_str.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqseawk_mod_sys.obj
@@ -582,6 +589,7 @@ __libqseawk___depname = \
 !if "$(SHARED)" == "off"
 ____SOURCES_STATIC_AWK_MODULE_FILENAMES_1_OBJECTS =  \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqseawk_mod_dir.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqseawk_mod_math.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqseawk_mod_sed.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqseawk_mod_str.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqseawk_mod_sys.obj
@@ -589,6 +597,10 @@ ____SOURCES_STATIC_AWK_MODULE_FILENAMES_1_OBJECTS =  \
 !if "$(SHARED)" == "on"
 __modqseawkdir___depname = \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\qseawk-dir.dll
+!endif
+!if "$(SHARED)" == "on"
+__modqseawkmath___depname = \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\qseawk-math.dll
 !endif
 !if "$(SHARED)" == "on"
 __modqseawksed___depname = \
@@ -663,7 +675,7 @@ $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS):
 
 ### Targets: ###
 
-all: $(__dllqsecmn___depname) $(__libqsecmn___depname) $(__dllqsesed___depname) $(VAR) $(__dllqseawk___depname) $(__libqseawk___depname) $(__modqseawkdir___depname) $(__modqseawksed___depname) $(__modqseawkstr___depname) $(__modqseawksys___depname) $(__dllqsehttp___depname) $(__libqsehttp___depname) $(__dllqsexli___depname) $(__libqsexli___depname) $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\qseawk.exe $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\qsesed.exe $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\qsehttpd.exe $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\qsexli.exe $(__dllqsecmnxx___depname) $(__libqsecmnxx___depname) $(__dllqseawkxx___depname) $(__libqseawkxx___depname) $(__dllqsesedxx___depname) $(__libqsesedxx___depname)
+all: $(__dllqsecmn___depname) $(__libqsecmn___depname) $(__dllqsesed___depname) $(VAR) $(__dllqseawk___depname) $(__libqseawk___depname) $(__modqseawkdir___depname) $(__modqseawkmath___depname) $(__modqseawksed___depname) $(__modqseawkstr___depname) $(__modqseawksys___depname) $(__dllqsehttp___depname) $(__libqsehttp___depname) $(__dllqsexli___depname) $(__libqsexli___depname) $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\qseawk.exe $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\qsesed.exe $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\qsehttpd.exe $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\qsexli.exe $(__dllqsecmnxx___depname) $(__libqsecmnxx___depname) $(__dllqseawkxx___depname) $(__libqseawkxx___depname) $(__dllqsesedxx___depname) $(__libqsesedxx___depname)
 
 clean: 
 	-if exist $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\*.obj del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\*.obj
@@ -700,6 +712,13 @@ clean:
 	-if exist $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\qseawk-dir.ilf del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\qseawk-dir.ilf
 	-if exist $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\qseawk-dir.ils del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\qseawk-dir.ils
 	-if exist $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\qseawk-dir.lib del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\qseawk-dir.lib
+	-if exist $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\qseawk-math.dll del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\qseawk-math.dll
+	-if exist $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\qseawk-math.tds del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\qseawk-math.tds
+	-if exist $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\qseawk-math.ilc del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\qseawk-math.ilc
+	-if exist $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\qseawk-math.ild del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\qseawk-math.ild
+	-if exist $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\qseawk-math.ilf del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\qseawk-math.ilf
+	-if exist $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\qseawk-math.ils del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\qseawk-math.ils
+	-if exist $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\qseawk-math.lib del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\qseawk-math.lib
 	-if exist $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\qseawk-sed.dll del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\qseawk-sed.dll
 	-if exist $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\qseawk-sed.tds del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\qseawk-sed.tds
 	-if exist $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\qseawk-sed.ilc del $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\qseawk-sed.ilc
@@ -840,6 +859,14 @@ $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\qsea
 	c0d32.obj $(MODQSEAWKDIR_OBJECTS),$@,, $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\qsecmn.lib $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\qseawk.lib import32.lib cw32mt.lib,,
 |
 	implib -f $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\qseawk-dir $@
+!endif
+
+!if "$(SHARED)" == "on"
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\qseawk-math.dll: $(MODQSEAWKMATH_OBJECTS) $(__libqsecmn___depname) $(__libqseawk___depname) $(__dllqseawk___depname)
+	ilink32 -Tpd -q  -L$(BCCDIR)\lib -L$(BCCDIR)\lib\psdk $(__DEBUG_INFO)  $(LDFLAGS) @&&|
+	c0d32.obj $(MODQSEAWKMATH_OBJECTS),$@,, $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\qsecmn.lib $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\qseawk.lib import32.lib cw32mt.lib,,
+|
+	implib -f $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\qseawk-math $@
 !endif
 
 !if "$(SHARED)" == "on"
@@ -1560,6 +1587,9 @@ $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllq
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqseawk_mod_dir.obj: ..\..\lib\awk\mod-dir.c
 	$(CC) -q -c -P- -o$@ $(DLLQSEAWK_CFLAGS) ..\..\lib\awk\mod-dir.c
 
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqseawk_mod_math.obj: ..\..\lib\awk\mod-math.c
+	$(CC) -q -c -P- -o$@ $(DLLQSEAWK_CFLAGS) ..\..\lib\awk\mod-math.c
+
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqseawk_mod_sed.obj: ..\..\lib\awk\mod-sed.c
 	$(CC) -q -c -P- -o$@ $(DLLQSEAWK_CFLAGS) ..\..\lib\awk\mod-sed.c
 
@@ -1605,6 +1635,9 @@ $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libq
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqseawk_mod_dir.obj: ..\..\lib\awk\mod-dir.c
 	$(CC) -q -c -P- -o$@ $(LIBQSEAWK_CFLAGS) ..\..\lib\awk\mod-dir.c
 
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqseawk_mod_math.obj: ..\..\lib\awk\mod-math.c
+	$(CC) -q -c -P- -o$@ $(LIBQSEAWK_CFLAGS) ..\..\lib\awk\mod-math.c
+
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqseawk_mod_sed.obj: ..\..\lib\awk\mod-sed.c
 	$(CC) -q -c -P- -o$@ $(LIBQSEAWK_CFLAGS) ..\..\lib\awk\mod-sed.c
 
@@ -1616,6 +1649,9 @@ $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libq
 
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\modqseawkdir_mod_dir.obj: ..\..\lib\awk\mod-dir.c
 	$(CC) -q -c -P- -o$@ $(MODQSEAWKDIR_CFLAGS) ..\..\lib\awk\mod-dir.c
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\modqseawkmath_mod_math.obj: ..\..\lib\awk\mod-math.c
+	$(CC) -q -c -P- -o$@ $(MODQSEAWKMATH_CFLAGS) ..\..\lib\awk\mod-math.c
 
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\modqseawksed_mod_sed.obj: ..\..\lib\awk\mod-sed.c
 	$(CC) -q -c -P- -o$@ $(MODQSEAWKSED_CFLAGS) ..\..\lib\awk\mod-sed.c
