@@ -1,4 +1,5 @@
 #include <qse/awk/stdawk.h>
+#include <qse/cmn/sio.h>
 
 static const qse_char_t* script = QSE_T("BEGIN { print \"hello, world\"; }");
 

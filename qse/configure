@@ -20676,7 +20676,7 @@ fi
 
 
 test "${HAVE_CXX}" = "yes" || enable_cxx_is="no"
-test "${HAVE_CXX_NAMESPACE_STD}" = "yes" || enable_cxx_is="no"
+test "${ax_cv_cxx_have_std_namespace}" = "yes" || enable_cxx_is="no"
 
  if test "${enable_cxx_is}" = "yes" ; then
   ENABLE_CXX_TRUE=

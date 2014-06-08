@@ -578,9 +578,9 @@ AC_ARG_ENABLE([cxx],
 )
 
 dnl disable c++ if no c++ compiler was found
-[test "${HAVE_CXX}" = "yes" || enable_cxx_is="no"]
+test "${HAVE_CXX}" = "yes" || enable_cxx_is="no"
 dnl disable c++ if the compiler is too old.
-[test "${HAVE_CXX_NAMESPACE_STD}" = "yes" || enable_cxx_is="no"]
+test "${ax_cv_cxx_have_std_namespace}" = "yes" || enable_cxx_is="no"
 
 AM_CONDITIONAL(ENABLE_CXX, test "${enable_cxx_is}" = "yes" )
 

@@ -1,5 +1,5 @@
 #include <qse/awk/StdAwk.hpp>
-#include <qse/cmn/stdio.h>
+#include <qse/cmn/sio.h>
 #include <string>
 
 #if defined(QSE_CHAR_IS_WCHAR)
@@ -170,6 +170,7 @@ int main (int argc, char* argv[])
 {
 	MyAwk awk;
 
+	qse_openstdsios ();
 	int ret = awk.open ();
 	if (ret >= 0) ret = run_awk (awk);
 
@@ -180,6 +181,7 @@ int main (int argc, char* argv[])
 	}
 
 	awk.close ();
+	qse_closestdsios ();
 	return ret;
 }
 

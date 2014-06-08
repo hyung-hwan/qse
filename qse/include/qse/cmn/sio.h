@@ -449,6 +449,7 @@ QSE_EXPORT qse_ssize_t qse_errputwcsvf (
 #define qse_vprintf qse_putstrvf
 #define qse_fprintf qse_sio_putstrf 
 #define qse_vfprintf qse_sio_putstrvf 
+#define qse_fflush qse_sio_flush
 
 
 #ifdef __cplusplus
