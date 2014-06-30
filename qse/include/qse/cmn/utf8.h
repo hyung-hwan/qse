@@ -79,7 +79,7 @@ qse_size_t qse_utf8touc (
 );
 
 /**
- * The qse_utf8lenmax() function scans at most @a size bytes from the @a utf8 
+ * The qse_utf8len() function scans at most @a size bytes from the @a utf8 
  * sequence and returns the number of bytes needed to form a single unicode
  * character.
  * @return
