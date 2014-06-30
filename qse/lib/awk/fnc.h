@@ -64,6 +64,11 @@ int qse_awk_fnc_log10   (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi);
 int qse_awk_fnc_exp     (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi);
 int qse_awk_fnc_sqrt    (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi);
 
+
+int qse_awk_fnc_math_1 (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi, qse_awk_math1_t f);
+int qse_awk_fnc_math_2 (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi, qse_awk_math2_t f);
+
+
 #ifdef __cplusplus
 }
 #endif

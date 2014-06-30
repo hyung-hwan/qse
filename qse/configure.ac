@@ -154,9 +154,9 @@ AC_CHECK_FUNCS([_vsnprintf _vsnwprintf])
 
 OLDLIBS="$LIBS"
 LIBS="$LIBM $LIBS"
-AC_CHECK_FUNCS([powl fmodl sinl cosl tanl atanl atan2l logl log10l expl sqrtl ceill floorl roundl])
-AC_CHECK_FUNCS([pow fmod sin cos tan atan atan2 log log10 exp sqrt ceil floor round])
-AC_CHECK_FUNCS([powf fmodf sinf cosf tanf atanf atan2f logf log10f expf sqrtf ceilf floorf roundf])
+AC_CHECK_FUNCS([powl fmodl sinl cosl tanl sinhl coshl tanhl asinl acosl atanl atan2l logl log10l expl sqrtl ceill floorl roundl])
+AC_CHECK_FUNCS([pow fmod sin cos tan sinh cosh tanh asin acos atan atan2 log log10 exp sqrt ceil floor round])
+AC_CHECK_FUNCS([powf fmodf sinf cosf tanf sinhf coshf tanhf asinf acosf atanf atan2f logf log10f expf sqrtf ceilf floorf roundf])
 LIBS="$OLDLIBS"
 
 dnl OLDLIBS="$LIBS"
@@ -459,7 +459,7 @@ then
 
 	OLDLIBS="$LIBS"
 	LIBS="$LIBM $LIBS"
-	AC_CHECK_FUNCS([powq fmodq sinq cosq tanq atanq atan2q logq log10q expq sqrtq ceilq floorq roundq])
+	AC_CHECK_FUNCS([powq fmodq sinq cosq tanq sinhq coshq tanhq asinq acosq atanq atan2q logq log10q expq sqrtq ceilq floorq roundq])
 	AC_CHECK_FUNCS([strtoflt128])
 	LIBS="$OLDLIBS"
 fi

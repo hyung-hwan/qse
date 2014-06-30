@@ -24,6 +24,188 @@
 #include "../cmn/mem.h"
 #include "fnc.h"
 
+
+#include <math.h>
+#if defined(HAVE_QUADMATH_H)
+#	include <quadmath.h>
+#endif
+
+#if !defined(QSE_HAVE_CONFIG_H)
+#	if defined(_WIN32) || defined(__OS2__) || defined(__DOS__)
+#		define HAVE_CEIL
+#		define HAVE_FLOOR
+#		define HAVE_ROUND
+#		define HAVE_SINH
+#		define HAVE_COSH
+#		define HAVE_TANH
+#		define HAVE_ASIN
+#		define HAVE_ACOS
+#	endif
+#endif
+
+static qse_awk_flt_t math_ceil (qse_awk_t* awk, qse_awk_flt_t x)
+{
+#if defined(QSE_USE_AWK_FLTMAX) && defined(HAVE_CEILQ)
+	return ceilq (x);
+#elif defined(HAVE_CEILL) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
+	return ceill (x);
+#elif defined(HAVE_CEIL)
+	return ceil (x);
+#elif defined(HAVE_CEILF)
+	return ceilf (x);
+#else
+	#error ### no ceil function available ###
+#endif
+}
+
+static qse_awk_flt_t math_floor (qse_awk_t* awk, qse_awk_flt_t x)
+{
+#if defined(QSE_USE_AWK_FLTMAX) && defined(HAVE_FLOORQ)
+	return floorq (x);
+#elif defined(HAVE_FLOORL) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
+	return floorl (x);
+#elif defined(HAVE_FLOOR)
+	return floor (x);
+#elif defined(HAVE_FLOORF)
+	return floorf (x);
+#else
+	#error ### no floor function available ###
+#endif
+}
+
+static qse_awk_flt_t math_round (qse_awk_t* awk, qse_awk_flt_t x)
+{
+#if defined(QSE_USE_AWK_FLTMAX) && defined(HAVE_ROUNDQ)
+	return roundq (x);
+#elif defined(HAVE_ROUNDL) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
+	return roundl (x);
+#elif defined(HAVE_ROUND)
+	return round (x);
+#elif defined(HAVE_ROUNDF)
+	return roundf (x);
+#else
+	#error ### no round function available ###
+#endif
+}
+
+static qse_awk_flt_t math_sinh (qse_awk_t* awk, qse_awk_flt_t x)
+{
+#if defined(QSE_USE_AWK_FLTMAX) && defined(HAVE_SINHQ)
+	return sinhq (x);
+#elif defined(HAVE_SINHL) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
+	return sinhl (x);
+#elif defined(HAVE_SINH)
+	return sinh (x);
+#elif defined(HAVE_SINHF)
+	return sinhf (x);
+#else
+	#error ### no sinh function available ###
+#endif
+}
+
+static qse_awk_flt_t math_cosh (qse_awk_t* awk, qse_awk_flt_t x)
+{
+#if defined(QSE_USE_AWK_FLTMAX) && defined(HAVE_COSHQ)
+	return coshq (x);
+#elif defined(HAVE_COSHL) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
+	return coshl (x);
+#elif defined(HAVE_COSH)
+	return cosh (x);
+#elif defined(HAVE_COSHF)
+	return coshf (x);
+#else
+	#error ### no cosh function available ###
+#endif
+}
+
+static qse_awk_flt_t math_tanh (qse_awk_t* awk, qse_awk_flt_t x)
+{
+#if defined(QSE_USE_AWK_FLTMAX) && defined(HAVE_TANHQ)
+	return tanhq (x);
+#elif defined(HAVE_TANHL) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
+	return tanhl (x);
+#elif defined(HAVE_TANH)
+	return tanh (x);
+#elif defined(HAVE_TANHF)
+	return tanhf (x);
+#else
+	#error ### no tanh function available ###
+#endif
+}
+
+static qse_awk_flt_t math_asin (qse_awk_t* awk, qse_awk_flt_t x)
+{
+#if defined(QSE_USE_AWK_FLTMAX) && defined(HAVE_ASINQ)
+	return asinq (x);
+#elif defined(HAVE_ASINL) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
+	return asinl (x);
+#elif defined(HAVE_ASIN)
+	return asin (x);
+#elif defined(HAVE_ASINF)
+	return asinf (x);
+#else
+	#error ### no asin function available ###
+#endif
+}
+
+static qse_awk_flt_t math_acos (qse_awk_t* awk, qse_awk_flt_t x)
+{
+#if defined(QSE_USE_AWK_FLTMAX) && defined(HAVE_ACOSQ)
+	return acosq (x);
+#elif defined(HAVE_ACOSL) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
+	return acosl (x);
+#elif defined(HAVE_ACOS)
+	return acos (x);
+#elif defined(HAVE_ACOSF)
+	return acosf (x);
+#else
+	#error ### no acos function available ###
+#endif
+}
+
+static int fnc_ceil (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	return qse_awk_fnc_math_1 (rtx, fi, math_ceil);
+}
+
+static int fnc_floor (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	return qse_awk_fnc_math_1 (rtx, fi, math_floor);
+}
+
+static int fnc_round (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	return qse_awk_fnc_math_1 (rtx, fi, math_round);
+}
+
+static int fnc_sinh (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	return qse_awk_fnc_math_1 (rtx, fi, math_sinh);
+}
+
+static int fnc_cosh (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	return qse_awk_fnc_math_1 (rtx, fi, math_cosh);
+}
+
+static int fnc_tanh (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	return qse_awk_fnc_math_1 (rtx, fi, math_tanh);
+}
+
+static int fnc_asin (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	return qse_awk_fnc_math_1 (rtx, fi, math_asin);
+}
+
+static int fnc_acos (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	return qse_awk_fnc_math_1 (rtx, fi, math_acos);
+}
+
+/* ---------------------------------------------------------------- */
+
+
 typedef struct fnctab_t fnctab_t;
 struct fnctab_t
 {
@@ -34,16 +216,23 @@ struct fnctab_t
 static fnctab_t fnctab[] =
 {
 	/* keep this table sorted for binary search in query(). */
+	{ QSE_T("acos"),    { { 1, 1, QSE_NULL },     fnc_acos,             0 } },
+	{ QSE_T("asin"),    { { 1, 1, QSE_NULL },     fnc_asin,             0 } },
 	{ QSE_T("atan"),    { { 1, 1, QSE_NULL },     qse_awk_fnc_atan,     0 } },
 	{ QSE_T("atan2"),   { { 2, 2, QSE_NULL },     qse_awk_fnc_atan2,    0 } },
+	{ QSE_T("ceil"),    { { 1, 1, QSE_NULL },     fnc_ceil,             0 } },
 	{ QSE_T("cos"),     { { 1, 1, QSE_NULL },     qse_awk_fnc_cos,      0 } },
+	{ QSE_T("cosh"),    { { 1, 1, QSE_NULL },     fnc_cosh,             0 } },
 	{ QSE_T("exp"),     { { 1, 1, QSE_NULL },     qse_awk_fnc_exp,      0 } },
+	{ QSE_T("floor"),   { { 1, 1, QSE_NULL },     fnc_floor,            0 } },
 	{ QSE_T("log"),     { { 1, 1, QSE_NULL },     qse_awk_fnc_log,      0 } },
 	{ QSE_T("log10"),   { { 1, 1, QSE_NULL },     qse_awk_fnc_log10,    0 } },
+	{ QSE_T("round"),   { { 1, 1, QSE_NULL },     fnc_round,            0 } },
 	{ QSE_T("sin"),     { { 1, 1, QSE_NULL },     qse_awk_fnc_sin,      0 } },
+	{ QSE_T("sinh"),    { { 1, 1, QSE_NULL },     fnc_sinh,             0 } },
 	{ QSE_T("sqrt"),    { { 1, 1, QSE_NULL },     qse_awk_fnc_sqrt,     0 } },
 	{ QSE_T("tan"),     { { 1, 1, QSE_NULL },     qse_awk_fnc_tan,      0 } },
-
+	{ QSE_T("tanh"),    { { 1, 1, QSE_NULL },     fnc_tanh,             0 } }
 };
 
 static int query (qse_awk_mod_t* mod, qse_awk_t* awk, const qse_char_t* name, qse_awk_mod_sym_t* sym)

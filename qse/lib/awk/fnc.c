@@ -1269,7 +1269,7 @@ oops:
 	return -1;
 }
 
-static int fnc_math_1 (
+int qse_awk_fnc_math_1 (
 	qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi, qse_awk_math1_t f)
 {
 	qse_size_t nargs;
@@ -1293,7 +1293,7 @@ static int fnc_math_1 (
 	return 0;
 }
 
-static int fnc_math_2 (
+int qse_awk_fnc_math_2 (
 	qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi, qse_awk_math2_t f)
 {
 	qse_size_t nargs;
@@ -1323,47 +1323,47 @@ static int fnc_math_2 (
 
 int qse_awk_fnc_sin (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
-	return fnc_math_1 (rtx, fi, rtx->awk->prm.math.sin);
+	return qse_awk_fnc_math_1 (rtx, fi, rtx->awk->prm.math.sin);
 }
 
 int qse_awk_fnc_cos (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
-	return fnc_math_1 (rtx, fi, rtx->awk->prm.math.cos);
+	return qse_awk_fnc_math_1 (rtx, fi, rtx->awk->prm.math.cos);
 }
 
 int qse_awk_fnc_tan (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
-	return fnc_math_1 (rtx, fi, rtx->awk->prm.math.tan);
+	return qse_awk_fnc_math_1 (rtx, fi, rtx->awk->prm.math.tan);
 }
 
 int qse_awk_fnc_atan (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
-	return fnc_math_1 (rtx, fi, rtx->awk->prm.math.atan);
+	return qse_awk_fnc_math_1 (rtx, fi, rtx->awk->prm.math.atan);
 }
 
 int qse_awk_fnc_atan2 (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
-	return fnc_math_2 (rtx, fi, rtx->awk->prm.math.atan2);
+	return qse_awk_fnc_math_2 (rtx, fi, rtx->awk->prm.math.atan2);
 }
 
 int qse_awk_fnc_log (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
-	return fnc_math_1 (rtx, fi, rtx->awk->prm.math.log);
+	return qse_awk_fnc_math_1 (rtx, fi, rtx->awk->prm.math.log);
 }
 
 int qse_awk_fnc_log10 (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
-	return fnc_math_1 (rtx, fi, rtx->awk->prm.math.log10);
+	return qse_awk_fnc_math_1 (rtx, fi, rtx->awk->prm.math.log10);
 }
 
 int qse_awk_fnc_exp (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
-	return fnc_math_1 (rtx, fi, rtx->awk->prm.math.exp);
+	return qse_awk_fnc_math_1 (rtx, fi, rtx->awk->prm.math.exp);
 }
 
 int qse_awk_fnc_sqrt (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
-	return fnc_math_1 (rtx, fi, rtx->awk->prm.math.sqrt);
+	return qse_awk_fnc_math_1 (rtx, fi, rtx->awk->prm.math.sqrt);
 }
 
 static int fnc_int (qse_awk_rtx_t* run, const qse_awk_fnc_info_t* fi)
