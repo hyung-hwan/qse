@@ -119,26 +119,10 @@ qse_awk_t* qse_awk_open (qse_mmgr_t* mmgr, qse_size_t xtnsize, qse_awk_prm_t* pr
 	/* progagate the primitive functions */
 	QSE_ASSERT (prm             != QSE_NULL);
 	QSE_ASSERT (prm->math.pow   != QSE_NULL);
-	QSE_ASSERT (prm->math.sin   != QSE_NULL);
-	QSE_ASSERT (prm->math.cos   != QSE_NULL);
-	QSE_ASSERT (prm->math.tan   != QSE_NULL);
-	QSE_ASSERT (prm->math.atan  != QSE_NULL);
-	QSE_ASSERT (prm->math.atan2 != QSE_NULL);
-	QSE_ASSERT (prm->math.log   != QSE_NULL);
-	QSE_ASSERT (prm->math.log10 != QSE_NULL);
-	QSE_ASSERT (prm->math.exp   != QSE_NULL);
-	QSE_ASSERT (prm->math.sqrt  != QSE_NULL);
-	if (prm             == QSE_NULL || 
-	    prm->math.pow   == QSE_NULL ||
-	    prm->math.sin   == QSE_NULL ||
-	    prm->math.cos   == QSE_NULL ||
-	    prm->math.tan   == QSE_NULL ||
-	    prm->math.atan  == QSE_NULL ||
-	    prm->math.atan2 == QSE_NULL ||
-	    prm->math.log   == QSE_NULL ||
-	    prm->math.log10 == QSE_NULL ||
-	    prm->math.exp   == QSE_NULL ||
-	    prm->math.sqrt  == QSE_NULL)
+	QSE_ASSERT (prm->math.mod   != QSE_NULL);
+	if (prm           == QSE_NULL || 
+	    prm->math.pow == QSE_NULL ||
+	    prm->math.mod == QSE_NULL)
 	{
 		QSE_AWK_FREE (awk, awk);
 		return QSE_NULL;

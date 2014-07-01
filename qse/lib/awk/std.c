@@ -63,15 +63,6 @@
 #	if defined(_WIN32) || defined(__OS2__) || defined(__DOS__)
 #		define HAVE_POW
 #		define HAVE_FMOD
-#		define HAVE_SIN
-#		define HAVE_COS
-#		define HAVE_TAN
-#		define HAVE_ATAN
-#		define HAVE_ATAN2
-#		define HAVE_LOG
-#		define HAVE_LOG10
-#		define HAVE_EXP
-#		define HAVE_SQRT
 #	endif
 #endif
 
@@ -185,141 +176,6 @@ static qse_awk_flt_t custom_awk_mod (qse_awk_t* awk, qse_awk_flt_t x, qse_awk_fl
 	return fmodf (x, y);
 #else
 	#error ### no fmod function available ###
-#endif
-}
-
-static qse_awk_flt_t custom_awk_sin (qse_awk_t* awk, qse_awk_flt_t x)
-{
-#if defined(QSE_USE_AWK_FLTMAX) && defined(HAVE_SINQ)
-	return sinq (x);
-#elif defined(HAVE_SINL) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
-	return sinl (x);
-#elif defined(HAVE_SIN)
-	return sin (x);
-#elif defined(HAVE_SINF)
-	return sinf (x);
-#else
-	#error ### no sin function available ###
-#endif
-}
-
-static qse_awk_flt_t custom_awk_cos (qse_awk_t* awk, qse_awk_flt_t x)
-{
-#if defined(QSE_USE_AWK_FLTMAX) && defined(HAVE_COSQ)
-	return cosq (x);
-#elif defined(HAVE_COSL) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
-	return cosl (x);
-#elif defined(HAVE_COS)
-	return cos (x);
-#elif defined(HAVE_COSF)
-	return cosf (x);
-#else
-	#error ### no cos function available ###
-#endif
-}
-
-static qse_awk_flt_t custom_awk_tan (qse_awk_t* awk, qse_awk_flt_t x)
-{
-#if defined(QSE_USE_AWK_FLTMAX) && defined(HAVE_TANQ)
-	return tanq (x);
-#elif defined(HAVE_TANL) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
-	return tanl (x);
-#elif defined(HAVE_TAN)
-	return tan (x);
-#elif defined(HAVE_TANF)
-	return tanf (x);
-#else
-	#error ### no tan function available ###
-#endif
-}
-
-static qse_awk_flt_t custom_awk_atan (qse_awk_t* awk, qse_awk_flt_t x)
-{
-#if defined(QSE_USE_AWK_FLTMAX) && defined(HAVE_ATANQ)
-	return atanq (x);
-#elif defined(HAVE_ATANL) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
-	return atanl (x);
-#elif defined(HAVE_ATAN)
-	return atan (x);
-#elif defined(HAVE_ATANF)
-	return atanf (x);
-#else
-	#error ### no atan function available ###
-#endif
-}
-
-static qse_awk_flt_t custom_awk_atan2 (qse_awk_t* awk, qse_awk_flt_t x, qse_awk_flt_t y)
-{
-#if defined(QSE_USE_AWK_FLTMAX) && defined(HAVE_ATAN2Q)
-	return atan2q (x, y);
-#elif defined(HAVE_ATAN2L) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
-	return atan2l (x, y);
-#elif defined(HAVE_ATAN2)
-	return atan2 (x, y);
-#elif defined(HAVE_ATAN2F)
-	return atan2f (x, y);
-#else
-	#error ### no atan2 function available ###
-#endif
-}
-
-static qse_awk_flt_t custom_awk_log (qse_awk_t* awk, qse_awk_flt_t x)
-{
-#if defined(QSE_USE_AWK_FLTMAX) && defined(HAVE_LOGQ)
-	return logq (x);
-#elif defined(HAVE_LOGL) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
-	return logl (x);
-#elif defined(HAVE_LOG)
-	return log (x);
-#elif defined(HAVE_LOGF)
-	return logf (x);
-#else
-	#error ### no log function available ###
-#endif
-}
-
-static qse_awk_flt_t custom_awk_log10 (qse_awk_t* awk, qse_awk_flt_t x)
-{
-#if defined(QSE_USE_AWK_FLTMAX) && defined(HAVE_LOG10Q)
-	return log10q (x);
-#elif defined(HAVE_LOG10L) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
-	return log10l (x);
-#elif defined(HAVE_LOG10)
-	return log10 (x);
-#elif defined(HAVE_LOG10F)
-	return log10f (x);
-#else
-	#error ### no log10 function available ###
-#endif
-}
-
-static qse_awk_flt_t custom_awk_exp (qse_awk_t* awk, qse_awk_flt_t x)
-{
-#if defined(QSE_USE_AWK_FLTMAX) && defined(HAVE_EXPQ)
-	return expq (x);
-#elif defined(HAVE_EXPL) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
-	return expl (x);
-#elif defined(HAVE_EXP)
-	return exp (x);
-#elif defined(HAVE_EXPF)
-	return expf (x);
-#else
-	#error ### no exp function available ###
-#endif
-}
-
-static qse_awk_flt_t custom_awk_sqrt (qse_awk_t* awk, qse_awk_flt_t x)
-{
-#if defined(QSE_USE_AWK_FLTMAX) && defined(HAVE_SQRTQ)
-	return sqrtq (x);
-#elif defined(HAVE_SQRTL) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
-	return sqrtl (x);
-#elif defined(HAVE_SQRT)
-	return sqrt (x);
-#elif defined(HAVE_SQRTF)
-	return sqrtf (x);
-#else
-	#error ### no sqrt function available ###
 #endif
 }
 
@@ -553,15 +409,6 @@ qse_awk_t* qse_awk_openstdwithmmgr (qse_mmgr_t* mmgr, qse_size_t xtnsize)
 
 	prm.math.pow = custom_awk_pow;
 	prm.math.mod = custom_awk_mod;
-	prm.math.sin = custom_awk_sin;
-	prm.math.cos = custom_awk_cos;
-	prm.math.tan = custom_awk_tan;
-	prm.math.atan = custom_awk_atan;
-	prm.math.atan2 = custom_awk_atan2;
-	prm.math.log = custom_awk_log;
-	prm.math.log10 = custom_awk_log10;
-	prm.math.exp = custom_awk_exp;
-	prm.math.sqrt = custom_awk_sqrt;
 
 	prm.modopen = custom_awk_modopen;
 	prm.modclose = custom_awk_modclose;

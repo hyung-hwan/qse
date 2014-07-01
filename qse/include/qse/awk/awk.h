@@ -669,15 +669,6 @@ struct qse_awk_prm_t
 	{
 		qse_awk_math2_t pow; /**< floating-point power function */
 		qse_awk_math2_t mod; /**< floating-point remainder function */
-		qse_awk_math1_t sin;
-		qse_awk_math1_t cos;
-		qse_awk_math1_t tan;
-		qse_awk_math1_t atan;
-		qse_awk_math2_t atan2;
-		qse_awk_math1_t log;
-		qse_awk_math1_t log10;
-		qse_awk_math1_t exp;
-		qse_awk_math1_t sqrt;
 	} math;
 
 	qse_awk_modopen_t modopen;
@@ -786,6 +777,16 @@ struct qse_awk_fnc_spec_t
 		qse_size_t min; /**< min. numbers of argument for a function */
 		qse_size_t max; /**< max. numbers of argument for a function */
 		const qse_char_t* spec;
+		/**< argument specifier 
+		 * if min is greater than max, spec points to an external module
+		 * name where the function is found. otherwise, spec can be QSE_NULL
+		 * to indicate all arguments are passed by value or point to a
+		 * argument specification string composed of 'max' characters.
+		 * Each character can be one of:
+		 *  - v: value
+		 *  - r: reference
+		 *  - x:regular expression
+		 */
 	} arg;
 
 	/** pointer to the function implementing this function */

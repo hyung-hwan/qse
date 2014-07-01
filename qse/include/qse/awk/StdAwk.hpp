@@ -158,15 +158,6 @@ protected:
 
 	flt_t pow (flt_t x, flt_t y);
 	flt_t mod (flt_t x, flt_t y);
-	flt_t sin (flt_t x);
-	flt_t cos (flt_t x);
-	flt_t tan (flt_t x);
-	flt_t atan (flt_t x);
-	flt_t atan2 (flt_t x, flt_t y);
-	flt_t log (flt_t x);
-	flt_t log10 (flt_t x);
-	flt_t exp (flt_t x);
-	flt_t sqrt (flt_t x);
 
      void* modopen (const mod_spec_t* spec);
      void  modclose (void* handle);

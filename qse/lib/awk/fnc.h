@@ -33,7 +33,9 @@ struct qse_awk_fnc_t
 	           * this ia mainly for the weird length() function */
 
 	qse_awk_fnc_spec_t spec;
-	qse_awk_mod_t* mod; /* if it's associated to a module */
+	const qse_char_t* owner; /* set this to a module name if a built-in function is located in a module */
+
+	qse_awk_mod_t* mod; /* set by the engine to a valid pointer if it's associated to a module */
 };
 
 #ifdef __cplusplus
@@ -53,21 +55,6 @@ int qse_awk_fnc_sub     (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi);
 int qse_awk_fnc_tolower (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi);
 int qse_awk_fnc_toupper (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi);
 int qse_awk_fnc_sprintf (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi);
-
-int qse_awk_fnc_sin     (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi);
-int qse_awk_fnc_cos     (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi);
-int qse_awk_fnc_tan     (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi);
-int qse_awk_fnc_atan    (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi);
-int qse_awk_fnc_atan2   (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi);
-int qse_awk_fnc_log     (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi);
-int qse_awk_fnc_log10   (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi);
-int qse_awk_fnc_exp     (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi);
-int qse_awk_fnc_sqrt    (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi);
-
-
-int qse_awk_fnc_math_1 (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi, qse_awk_math1_t f);
-int qse_awk_fnc_math_2 (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi, qse_awk_math2_t f);
-
 
 #ifdef __cplusplus
 }
