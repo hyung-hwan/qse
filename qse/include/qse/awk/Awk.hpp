@@ -1288,15 +1288,6 @@ protected:
 	// primitive handlers 
 	virtual flt_t pow (flt_t x, flt_t y) = 0;
 	virtual flt_t mod (flt_t x, flt_t y) = 0;
-	virtual flt_t sin (flt_t x) = 0;
-	virtual flt_t cos (flt_t x) = 0;
-	virtual flt_t tan (flt_t x) = 0;
-	virtual flt_t atan (flt_t x) = 0;
-	virtual flt_t atan2 (flt_t x, flt_t y) = 0;
-	virtual flt_t log (flt_t x) = 0;
-	virtual flt_t log10 (flt_t x) = 0;
-	virtual flt_t exp (flt_t x) = 0;
-	virtual flt_t sqrt (flt_t x) = 0;
 
 	virtual void* modopen (const mod_spec_t* spec) = 0;
 	virtual void  modclose (void* handle) = 0;
@@ -1325,15 +1316,6 @@ protected:
 
 	static flt_t pow     (awk_t* awk, flt_t x, flt_t y);
 	static flt_t mod     (awk_t* awk, flt_t x, flt_t y);
-	static flt_t sin     (awk_t* awk, flt_t x);
-	static flt_t cos     (awk_t* awk, flt_t x);
-	static flt_t tan     (awk_t* awk, flt_t x);
-	static flt_t atan    (awk_t* awk, flt_t x);
-	static flt_t atan2   (awk_t* awk, flt_t x, flt_t y);
-	static flt_t log     (awk_t* awk, flt_t x);
-	static flt_t log10   (awk_t* awk, flt_t x);
-	static flt_t exp     (awk_t* awk, flt_t x);
-	static flt_t sqrt    (awk_t* awk, flt_t x);
 
 	static void* modopen  (awk_t* awk, const mod_spec_t* spec);
 	static void  modclose (awk_t* awk, void* handle);

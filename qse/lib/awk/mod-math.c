@@ -40,8 +40,71 @@
 #		define HAVE_TANH
 #		define HAVE_ASIN
 #		define HAVE_ACOS
+
+#		define HAVE_SIN
+#		define HAVE_COS
+#		define HAVE_TAN
+#		define HAVE_ATAN
+#		define HAVE_ATAN2
+#		define HAVE_LOG
+#		define HAVE_LOG10
+#		define HAVE_EXP
+#		define HAVE_SQRT
 #	endif
 #endif
+
+static int fnc_math_1 (
+	qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi, qse_awk_math1_t f)
+{
+	qse_size_t nargs;
+	qse_awk_val_t* a0;
+	qse_awk_flt_t rv;
+	qse_awk_val_t* r;
+	int n;
+
+	nargs = qse_awk_rtx_getnargs (rtx);
+	QSE_ASSERT (nargs == 1);
+
+	a0 = qse_awk_rtx_getarg (rtx, 0);
+
+	n = qse_awk_rtx_valtoflt (rtx, a0, &rv);
+	if (n <= -1) return -1;
+
+	r = qse_awk_rtx_makefltval (rtx, f (qse_awk_rtx_getawk(rtx), rv));
+	if (r == QSE_NULL) return -1;
+
+	qse_awk_rtx_setretval (rtx, r);
+	return 0;
+}
+
+static int fnc_math_2 (
+	qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi, qse_awk_math2_t f)
+{
+	qse_size_t nargs;
+	qse_awk_val_t* a0, * a1;
+	qse_awk_flt_t rv0, rv1;
+	qse_awk_val_t* r;
+	int n;
+
+	nargs = qse_awk_rtx_getnargs (rtx);
+	QSE_ASSERT (nargs == 2);
+
+	a0 = qse_awk_rtx_getarg (rtx, 0);
+	a1 = qse_awk_rtx_getarg (rtx, 1);
+
+	n = qse_awk_rtx_valtoflt (rtx, a0, &rv0);
+	if (n <= -1) return -1;
+
+	n = qse_awk_rtx_valtoflt (rtx, a1, &rv1);
+	if (n <= -1) return -1;
+
+	r = qse_awk_rtx_makefltval (rtx, f (qse_awk_rtx_getawk(rtx), rv0, rv1));
+	if (r == QSE_NULL) return -1;
+
+	qse_awk_rtx_setretval (rtx, r);
+	return 0;
+}
+
 
 static qse_awk_flt_t math_ceil (qse_awk_t* awk, qse_awk_flt_t x)
 {
@@ -163,48 +226,236 @@ static qse_awk_flt_t math_acos (qse_awk_t* awk, qse_awk_flt_t x)
 #endif
 }
 
+/* ----------------------------------------------------------------------- */
+
+
+static qse_awk_flt_t math_sin (qse_awk_t* awk, qse_awk_flt_t x)
+{
+#if defined(QSE_USE_AWK_FLTMAX) && defined(HAVE_SINQ)
+	return sinq (x);
+#elif defined(HAVE_SINL) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
+	return sinl (x);
+#elif defined(HAVE_SIN)
+	return sin (x);
+#elif defined(HAVE_SINF)
+	return sinf (x);
+#else
+	#error ### no sin function available ###
+#endif
+}
+
+static qse_awk_flt_t math_cos (qse_awk_t* awk, qse_awk_flt_t x)
+{
+#if defined(QSE_USE_AWK_FLTMAX) && defined(HAVE_COSQ)
+	return cosq (x);
+#elif defined(HAVE_COSL) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
+	return cosl (x);
+#elif defined(HAVE_COS)
+	return cos (x);
+#elif defined(HAVE_COSF)
+	return cosf (x);
+#else
+	#error ### no cos function available ###
+#endif
+}
+
+static qse_awk_flt_t math_tan (qse_awk_t* awk, qse_awk_flt_t x)
+{
+#if defined(QSE_USE_AWK_FLTMAX) && defined(HAVE_TANQ)
+	return tanq (x);
+#elif defined(HAVE_TANL) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
+	return tanl (x);
+#elif defined(HAVE_TAN)
+	return tan (x);
+#elif defined(HAVE_TANF)
+	return tanf (x);
+#else
+	#error ### no tan function available ###
+#endif
+}
+
+static qse_awk_flt_t math_atan (qse_awk_t* awk, qse_awk_flt_t x)
+{
+#if defined(QSE_USE_AWK_FLTMAX) && defined(HAVE_ATANQ)
+	return atanq (x);
+#elif defined(HAVE_ATANL) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
+	return atanl (x);
+#elif defined(HAVE_ATAN)
+	return atan (x);
+#elif defined(HAVE_ATANF)
+	return atanf (x);
+#else
+	#error ### no atan function available ###
+#endif
+}
+
+static qse_awk_flt_t math_atan2 (qse_awk_t* awk, qse_awk_flt_t x, qse_awk_flt_t y)
+{
+#if defined(QSE_USE_AWK_FLTMAX) && defined(HAVE_ATAN2Q)
+	return atan2q (x, y);
+#elif defined(HAVE_ATAN2L) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
+	return atan2l (x, y);
+#elif defined(HAVE_ATAN2)
+	return atan2 (x, y);
+#elif defined(HAVE_ATAN2F)
+	return atan2f (x, y);
+#else
+	#error ### no atan2 function available ###
+#endif
+}
+
+static qse_awk_flt_t math_log (qse_awk_t* awk, qse_awk_flt_t x)
+{
+#if defined(QSE_USE_AWK_FLTMAX) && defined(HAVE_LOGQ)
+	return logq (x);
+#elif defined(HAVE_LOGL) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
+	return logl (x);
+#elif defined(HAVE_LOG)
+	return log (x);
+#elif defined(HAVE_LOGF)
+	return logf (x);
+#else
+	#error ### no log function available ###
+#endif
+}
+
+static qse_awk_flt_t math_log10 (qse_awk_t* awk, qse_awk_flt_t x)
+{
+#if defined(QSE_USE_AWK_FLTMAX) && defined(HAVE_LOG10Q)
+	return log10q (x);
+#elif defined(HAVE_LOG10L) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
+	return log10l (x);
+#elif defined(HAVE_LOG10)
+	return log10 (x);
+#elif defined(HAVE_LOG10F)
+	return log10f (x);
+#else
+	#error ### no log10 function available ###
+#endif
+}
+
+static qse_awk_flt_t math_exp (qse_awk_t* awk, qse_awk_flt_t x)
+{
+#if defined(QSE_USE_AWK_FLTMAX) && defined(HAVE_EXPQ)
+	return expq (x);
+#elif defined(HAVE_EXPL) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
+	return expl (x);
+#elif defined(HAVE_EXP)
+	return exp (x);
+#elif defined(HAVE_EXPF)
+	return expf (x);
+#else
+	#error ### no exp function available ###
+#endif
+}
+
+static qse_awk_flt_t math_sqrt (qse_awk_t* awk, qse_awk_flt_t x)
+{
+#if defined(QSE_USE_AWK_FLTMAX) && defined(HAVE_SQRTQ)
+	return sqrtq (x);
+#elif defined(HAVE_SQRTL) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
+	return sqrtl (x);
+#elif defined(HAVE_SQRT)
+	return sqrt (x);
+#elif defined(HAVE_SQRTF)
+	return sqrtf (x);
+#else
+	#error ### no sqrt function available ###
+#endif
+}
+
+/* ----------------------------------------------------------------------- */
+
 static int fnc_ceil (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
-	return qse_awk_fnc_math_1 (rtx, fi, math_ceil);
+	return fnc_math_1 (rtx, fi, math_ceil);
 }
 
 static int fnc_floor (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
-	return qse_awk_fnc_math_1 (rtx, fi, math_floor);
+	return fnc_math_1 (rtx, fi, math_floor);
 }
 
 static int fnc_round (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
-	return qse_awk_fnc_math_1 (rtx, fi, math_round);
+	return fnc_math_1 (rtx, fi, math_round);
 }
 
 static int fnc_sinh (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
-	return qse_awk_fnc_math_1 (rtx, fi, math_sinh);
+	return fnc_math_1 (rtx, fi, math_sinh);
 }
 
 static int fnc_cosh (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
-	return qse_awk_fnc_math_1 (rtx, fi, math_cosh);
+	return fnc_math_1 (rtx, fi, math_cosh);
 }
 
 static int fnc_tanh (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
-	return qse_awk_fnc_math_1 (rtx, fi, math_tanh);
+	return fnc_math_1 (rtx, fi, math_tanh);
 }
 
 static int fnc_asin (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
-	return qse_awk_fnc_math_1 (rtx, fi, math_asin);
+	return fnc_math_1 (rtx, fi, math_asin);
 }
 
 static int fnc_acos (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
-	return qse_awk_fnc_math_1 (rtx, fi, math_acos);
+	return fnc_math_1 (rtx, fi, math_acos);
 }
 
-/* ---------------------------------------------------------------- */
 
+/* ----------------------------------------------------------------------- */
+
+static int fnc_sin (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	return fnc_math_1 (rtx, fi, math_sin);
+}
+
+static int fnc_cos (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	return fnc_math_1 (rtx, fi, math_cos);
+}
+
+static int fnc_tan (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	return fnc_math_1 (rtx, fi, math_tan);
+}
+
+static int fnc_atan (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	return fnc_math_1 (rtx, fi, math_atan);
+}
+
+static int fnc_atan2 (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	return fnc_math_2 (rtx, fi, math_atan2);
+}
+
+static int fnc_log (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	return fnc_math_1 (rtx, fi, math_log);
+}
+
+static int fnc_log10 (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	return fnc_math_1 (rtx, fi, math_log10);
+}
+
+static int fnc_exp (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	return fnc_math_1 (rtx, fi, math_exp);
+}
+
+static int fnc_sqrt (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	return fnc_math_1 (rtx, fi, math_sqrt);
+}
+
+
+/* ----------------------------------------------------------------------- */
 
 typedef struct fnctab_t fnctab_t;
 struct fnctab_t
@@ -216,23 +467,23 @@ struct fnctab_t
 static fnctab_t fnctab[] =
 {
 	/* keep this table sorted for binary search in query(). */
-	{ QSE_T("acos"),    { { 1, 1, QSE_NULL },     fnc_acos,             0 } },
-	{ QSE_T("asin"),    { { 1, 1, QSE_NULL },     fnc_asin,             0 } },
-	{ QSE_T("atan"),    { { 1, 1, QSE_NULL },     qse_awk_fnc_atan,     0 } },
-	{ QSE_T("atan2"),   { { 2, 2, QSE_NULL },     qse_awk_fnc_atan2,    0 } },
-	{ QSE_T("ceil"),    { { 1, 1, QSE_NULL },     fnc_ceil,             0 } },
-	{ QSE_T("cos"),     { { 1, 1, QSE_NULL },     qse_awk_fnc_cos,      0 } },
-	{ QSE_T("cosh"),    { { 1, 1, QSE_NULL },     fnc_cosh,             0 } },
-	{ QSE_T("exp"),     { { 1, 1, QSE_NULL },     qse_awk_fnc_exp,      0 } },
-	{ QSE_T("floor"),   { { 1, 1, QSE_NULL },     fnc_floor,            0 } },
-	{ QSE_T("log"),     { { 1, 1, QSE_NULL },     qse_awk_fnc_log,      0 } },
-	{ QSE_T("log10"),   { { 1, 1, QSE_NULL },     qse_awk_fnc_log10,    0 } },
-	{ QSE_T("round"),   { { 1, 1, QSE_NULL },     fnc_round,            0 } },
-	{ QSE_T("sin"),     { { 1, 1, QSE_NULL },     qse_awk_fnc_sin,      0 } },
-	{ QSE_T("sinh"),    { { 1, 1, QSE_NULL },     fnc_sinh,             0 } },
-	{ QSE_T("sqrt"),    { { 1, 1, QSE_NULL },     qse_awk_fnc_sqrt,     0 } },
-	{ QSE_T("tan"),     { { 1, 1, QSE_NULL },     qse_awk_fnc_tan,      0 } },
-	{ QSE_T("tanh"),    { { 1, 1, QSE_NULL },     fnc_tanh,             0 } }
+	{ QSE_T("acos"),    { { 1, 1, QSE_NULL },     fnc_acos,       0 } },
+	{ QSE_T("asin"),    { { 1, 1, QSE_NULL },     fnc_asin,       0 } },
+	{ QSE_T("atan"),    { { 1, 1, QSE_NULL },     fnc_atan,       0 } },
+	{ QSE_T("atan2"),   { { 2, 2, QSE_NULL },     fnc_atan2,      0 } },
+	{ QSE_T("ceil"),    { { 1, 1, QSE_NULL },     fnc_ceil,       0 } },
+	{ QSE_T("cos"),     { { 1, 1, QSE_NULL },     fnc_cos,        0 } },
+	{ QSE_T("cosh"),    { { 1, 1, QSE_NULL },     fnc_cosh,       0 } },
+	{ QSE_T("exp"),     { { 1, 1, QSE_NULL },     fnc_exp,        0 } },
+	{ QSE_T("floor"),   { { 1, 1, QSE_NULL },     fnc_floor,      0 } },
+	{ QSE_T("log"),     { { 1, 1, QSE_NULL },     fnc_log,        0 } },
+	{ QSE_T("log10"),   { { 1, 1, QSE_NULL },     fnc_log10,      0 } },
+	{ QSE_T("round"),   { { 1, 1, QSE_NULL },     fnc_round,      0 } },
+	{ QSE_T("sin"),     { { 1, 1, QSE_NULL },     fnc_sin,        0 } },
+	{ QSE_T("sinh"),    { { 1, 1, QSE_NULL },     fnc_sinh,       0 } },
+	{ QSE_T("sqrt"),    { { 1, 1, QSE_NULL },     fnc_sqrt,       0 } },
+	{ QSE_T("tan"),     { { 1, 1, QSE_NULL },     fnc_tan,        0 } },
+	{ QSE_T("tanh"),    { { 1, 1, QSE_NULL },     fnc_tanh,       0 } }
 };
 
 static int query (qse_awk_mod_t* mod, qse_awk_t* awk, const qse_char_t* name, qse_awk_mod_sym_t* sym)

@@ -242,6 +242,10 @@ static qse_awk_nde_t* parse_fncall (
 	qse_awk_t* awk, const qse_xstr_t* name,
 	qse_awk_fnc_t* fnc, const qse_awk_loc_t* xloc, int noarg);
 
+static qse_awk_nde_t* parse_primary_ident_segs (
+	qse_awk_t* awk, const qse_awk_loc_t* xloc, const qse_xstr_t* full, 
+	const qse_xstr_t segs[], int nsegs);
+
 static int get_token (qse_awk_t* awk);
 static int preget_token (qse_awk_t* awk);
 static int get_rexstr (qse_awk_t* awk, qse_awk_tok_t* tok);
@@ -3091,6 +3095,7 @@ static qse_awk_nde_t* parse_expr_basic (
 	if (nde == QSE_NULL) return QSE_NULL;
 
 	if (MATCH(awk,TOK_QUEST))
+	if (MATCH(awk,TOK_QUEST))
 	{ 
 		qse_awk_loc_t eloc;
 		qse_awk_nde_cnd_t* cnd;
@@ -4859,24 +4864,36 @@ static qse_awk_nde_t* parse_primary_ident_noseg (
 	fnc = qse_awk_findfnc (awk, (const qse_cstr_t*)name);
 	if (fnc)
 	{
-		if (MATCH(awk,TOK_LPAREN))
+		if (MATCH(awk,TOK_LPAREN) || fnc->dfl0)
 		{
-			nde = parse_fncall (awk, name, fnc, xloc, 0);
+			if (fnc->spec.arg.min > fnc->spec.arg.max)
+			{
+				/* this intrinsic function is located in the specificed module.
+				 * convert the function call to a module call. i do this to 
+				 * exclude some instrinsic functions from the main engine. 
+				 *  e.g) sin -> math::sin
+				 *       cos -> math::cos 
+				 */
+				qse_xstr_t segs[2];
+
+				QSE_ASSERT (fnc->spec.arg.spec != QSE_NULL);
+
+				segs[0].ptr = (qse_char_t*)fnc->spec.arg.spec;
+				segs[0].len = qse_strlen(fnc->spec.arg.spec);
+				segs[1] = *name;
+
+				return parse_primary_ident_segs (awk, xloc, name, segs, 2);
+			}
+
+			/* fnc->dfl0 means that the function can be called without ().
+			 * i.e. length */
+			nde = parse_fncall (awk, name, fnc, xloc, (fnc->dfl0? 1: 0));
 		}
 		else
 		{
-			if (fnc->dfl0)
-			{
-				/* handles a function that assumes () 
-				 * when () is missing. i.e. length */
-				nde = parse_fncall (awk, name, fnc, xloc, 1);
-			}
-			else
-			{
-				/* an intrinsic function should be in the form 
-		 		 * of the function call */
-				SETERR_TOK (awk, QSE_AWK_ELPAREN);
-			}
+			/* an intrinsic function should be in the form 
+		 	 * of the function call */
+			SETERR_TOK (awk, QSE_AWK_ELPAREN);
 		}
 	}
 	/* now we know that name is a normal identifier. */
@@ -5016,6 +5033,8 @@ static qse_awk_nde_t* parse_primary_ident_segs (
 	qse_awk_t* awk, const qse_awk_loc_t* xloc, const qse_xstr_t* full, 
 	const qse_xstr_t segs[], int nsegs)
 {
+	/* parse xxx::yyy */
+
 	qse_awk_nde_t* nde = QSE_NULL;
 	qse_awk_mod_t* mod;
 	qse_awk_mod_sym_t sym;
@@ -5251,12 +5270,12 @@ static qse_awk_nde_t* parse_hashidx (
 		switch (fnname)
 		{
 			case FNTYPE_FNC:
-				SETERR_ARG_LOC (	
+				SETERR_ARG_LOC (
 					awk, QSE_AWK_EFNCRED, name->ptr, name->len, xloc);
 				goto exit_func;
 
 			case FNTYPE_FUN:
-				SETERR_ARG_LOC (	
+				SETERR_ARG_LOC (
 					awk, QSE_AWK_EFUNRED, name->ptr, name->len, xloc);
 				goto exit_func;
 		}

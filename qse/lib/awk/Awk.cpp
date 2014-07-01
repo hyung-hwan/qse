@@ -1118,15 +1118,6 @@ int Awk::open ()
 	QSE_MEMSET (&prm, 0, QSE_SIZEOF(prm));
 	prm.math.pow = pow;
 	prm.math.mod = mod;
-	prm.math.sin = sin;
-	prm.math.cos = cos;
-	prm.math.tan = tan;
-	prm.math.atan = atan;
-	prm.math.atan2 = atan2;
-	prm.math.log = log;
-	prm.math.log10 = log10;
-	prm.math.exp = exp;
-	prm.math.sqrt = sqrt;
 	prm.modopen  = modopen;
 	prm.modclose = modclose;
 	prm.modsym  = modsym;
@@ -2009,60 +2000,6 @@ Awk::flt_t Awk::mod (awk_t* awk, flt_t x, flt_t y)
 {
 	xtn_t* xtn = (xtn_t*) QSE_XTN (awk);
 	return xtn->awk->mod (x, y);
-}
-
-Awk::flt_t Awk::sin (awk_t* awk, flt_t x)
-{
-	xtn_t* xtn = (xtn_t*) QSE_XTN (awk);
-	return xtn->awk->sin (x);
-}
-
-Awk::flt_t Awk::cos (awk_t* awk, flt_t x)
-{
-	xtn_t* xtn = (xtn_t*) QSE_XTN (awk);
-	return xtn->awk->cos (x);
-}
-
-Awk::flt_t Awk::tan (awk_t* awk, flt_t x)
-{
-	xtn_t* xtn = (xtn_t*) QSE_XTN (awk);
-	return xtn->awk->tan (x);
-}
-
-Awk::flt_t Awk::atan (awk_t* awk, flt_t x)
-{
-	xtn_t* xtn = (xtn_t*) QSE_XTN (awk);
-	return xtn->awk->atan (x);
-}
-
-Awk::flt_t Awk::atan2 (awk_t* awk, flt_t x, flt_t y)
-{
-	xtn_t* xtn = (xtn_t*) QSE_XTN (awk);
-	return xtn->awk->atan2 (x, y);
-}
-
-Awk::flt_t Awk::log (awk_t* awk, flt_t x)
-{
-	xtn_t* xtn = (xtn_t*) QSE_XTN (awk);
-	return xtn->awk->log (x);
-}
-
-Awk::flt_t Awk::log10 (awk_t* awk, flt_t x)
-{
-	xtn_t* xtn = (xtn_t*) QSE_XTN (awk);
-	return xtn->awk->log10 (x);
-}
-
-Awk::flt_t Awk::exp (awk_t* awk, flt_t x)
-{
-	xtn_t* xtn = (xtn_t*) QSE_XTN (awk);
-	return xtn->awk->exp (x);
-}
-
-Awk::flt_t Awk::sqrt (awk_t* awk, flt_t x)
-{
-	xtn_t* xtn = (xtn_t*) QSE_XTN (awk);
-	return xtn->awk->sqrt (x);
 }
 
 void* Awk::modopen (awk_t* awk, const mod_spec_t* spec)

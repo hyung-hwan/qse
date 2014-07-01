@@ -38,6 +38,9 @@ static int fnc_int     (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi);
  * If the first character of the specifer is 'R', all
  * parameters are passed by reference regarless of the remaining
  * chracters.
+ * 
+ * NOTE: If min is greater than max, the specifier indicate the 
+ * name of the module  where the function is located.
  */
 static qse_awk_fnc_t sysfnctab[] = 
 {
@@ -61,15 +64,15 @@ static qse_awk_fnc_t sysfnctab[] =
 	{ {QSE_T("sprintf"), 7}, 0, { {1, A_MAX, QSE_NULL},     qse_awk_fnc_sprintf,  0 }, QSE_NULL},
 
 	/* math functions */
-	{ {QSE_T("sin"),     3}, 0, { {1,     1, QSE_NULL},     qse_awk_fnc_sin,      0 }, QSE_NULL},
-	{ {QSE_T("cos"),     3}, 0, { {1,     1, QSE_NULL},     qse_awk_fnc_cos,      0 }, QSE_NULL},
-	{ {QSE_T("tan"),     3}, 0, { {1,     1, QSE_NULL},     qse_awk_fnc_tan,      0 }, QSE_NULL},
-	{ {QSE_T("atan"),    4}, 0, { {1,     1, QSE_NULL},     qse_awk_fnc_atan,     0 }, QSE_NULL},
-	{ {QSE_T("atan2"),   5}, 0, { {2,     2, QSE_NULL},     qse_awk_fnc_atan2,    0 }, QSE_NULL},
-	{ {QSE_T("log"),     3}, 0, { {1,     1, QSE_NULL},     qse_awk_fnc_log,      0 }, QSE_NULL},
-	{ {QSE_T("log10"),   5}, 0, { {1,     1, QSE_NULL},     qse_awk_fnc_log10,    0 }, QSE_NULL},
-	{ {QSE_T("exp"),     3}, 0, { {1,     1, QSE_NULL},     qse_awk_fnc_exp,      0 }, QSE_NULL},
-	{ {QSE_T("sqrt"),    4}, 0, { {1,     1, QSE_NULL},     qse_awk_fnc_sqrt,     0 }, QSE_NULL}
+	{ {QSE_T("sin"),     3}, 0, { {A_MAX, 0, QSE_T("math") },   QSE_NULL,         0 }, QSE_NULL},
+	{ {QSE_T("cos"),     3}, 0, { {A_MAX, 0, QSE_T("math") },   QSE_NULL,         0 }, QSE_NULL},
+	{ {QSE_T("tan"),     3}, 0, { {A_MAX, 0, QSE_T("math") },   QSE_NULL,         0 }, QSE_NULL},
+	{ {QSE_T("atan"),    4}, 0, { {A_MAX, 0, QSE_T("math") },   QSE_NULL,         0 }, QSE_NULL},
+	{ {QSE_T("atan2"),   5}, 0, { {A_MAX, 0, QSE_T("math") },   QSE_NULL,         0 }, QSE_NULL},
+	{ {QSE_T("log"),     3}, 0, { {A_MAX, 0, QSE_T("math") },   QSE_NULL,         0 }, QSE_NULL},
+	{ {QSE_T("log10"),   5}, 0, { {A_MAX, 0, QSE_T("math") },   QSE_NULL,         0 }, QSE_NULL},
+	{ {QSE_T("exp"),     3}, 0, { {A_MAX, 0, QSE_T("math") },   QSE_NULL,         0 }, QSE_NULL},
+	{ {QSE_T("sqrt"),    4}, 0, { {A_MAX, 0, QSE_T("math") },   QSE_NULL,         0 }, QSE_NULL}
 };
 
 qse_awk_fnc_t* qse_awk_addfnc (qse_awk_t* awk, const qse_char_t* name, const qse_awk_fnc_spec_t* spec)
@@ -1267,103 +1270,6 @@ oops:
 	if (fbu_inited) qse_str_fini (&fbu);
 	if (out_inited) qse_str_fini (&out);
 	return -1;
-}
-
-int qse_awk_fnc_math_1 (
-	qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi, qse_awk_math1_t f)
-{
-	qse_size_t nargs;
-	qse_awk_val_t* a0;
-	qse_awk_flt_t rv;
-	qse_awk_val_t* r;
-	int n;
-
-	nargs = qse_awk_rtx_getnargs (rtx);
-	QSE_ASSERT (nargs == 1);
-
-	a0 = qse_awk_rtx_getarg (rtx, 0);
-
-	n = qse_awk_rtx_valtoflt (rtx, a0, &rv);
-	if (n <= -1) return -1;
-
-	r = qse_awk_rtx_makefltval (rtx, f (rtx->awk, rv));
-	if (r == QSE_NULL) return -1;
-
-	qse_awk_rtx_setretval (rtx, r);
-	return 0;
-}
-
-int qse_awk_fnc_math_2 (
-	qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi, qse_awk_math2_t f)
-{
-	qse_size_t nargs;
-	qse_awk_val_t* a0, * a1;
-	qse_awk_flt_t rv0, rv1;
-	qse_awk_val_t* r;
-	int n;
-
-	nargs = qse_awk_rtx_getnargs (rtx);
-	QSE_ASSERT (nargs == 2);
-
-	a0 = qse_awk_rtx_getarg (rtx, 0);
-	a1 = qse_awk_rtx_getarg (rtx, 1);
-
-	n = qse_awk_rtx_valtoflt (rtx, a0, &rv0);
-	if (n <= -1) return -1;
-
-	n = qse_awk_rtx_valtoflt (rtx, a1, &rv1);
-	if (n <= -1) return -1;
-
-	r = qse_awk_rtx_makefltval (rtx, f (rtx->awk, rv0, rv1));
-	if (r == QSE_NULL) return -1;
-
-	qse_awk_rtx_setretval (rtx, r);
-	return 0;
-}
-
-int qse_awk_fnc_sin (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
-{
-	return qse_awk_fnc_math_1 (rtx, fi, rtx->awk->prm.math.sin);
-}
-
-int qse_awk_fnc_cos (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
-{
-	return qse_awk_fnc_math_1 (rtx, fi, rtx->awk->prm.math.cos);
-}
-
-int qse_awk_fnc_tan (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
-{
-	return qse_awk_fnc_math_1 (rtx, fi, rtx->awk->prm.math.tan);
-}
-
-int qse_awk_fnc_atan (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
-{
-	return qse_awk_fnc_math_1 (rtx, fi, rtx->awk->prm.math.atan);
-}
-
-int qse_awk_fnc_atan2 (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
-{
-	return qse_awk_fnc_math_2 (rtx, fi, rtx->awk->prm.math.atan2);
-}
-
-int qse_awk_fnc_log (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
-{
-	return qse_awk_fnc_math_1 (rtx, fi, rtx->awk->prm.math.log);
-}
-
-int qse_awk_fnc_log10 (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
-{
-	return qse_awk_fnc_math_1 (rtx, fi, rtx->awk->prm.math.log10);
-}
-
-int qse_awk_fnc_exp (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
-{
-	return qse_awk_fnc_math_1 (rtx, fi, rtx->awk->prm.math.exp);
-}
-
-int qse_awk_fnc_sqrt (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
-{
-	return qse_awk_fnc_math_1 (rtx, fi, rtx->awk->prm.math.sqrt);
 }
 
 static int fnc_int (qse_awk_rtx_t* run, const qse_awk_fnc_info_t* fi)
