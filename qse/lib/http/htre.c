@@ -108,7 +108,7 @@ void qse_htre_clear (qse_htre_t* re)
 }
 
 int qse_htre_setstrfromcstr (
-	qse_htre_t* re, qse_mbs_t* str, const qse_mcstr_t* cstr)
+	qse_htre_t* re, qse_mbs_t* str, const qse_mxstr_t* cstr)
 {
 	return (qse_mbs_ncpy (str, cstr->ptr, cstr->len) == (qse_size_t)-1)? -1: 0;
 }

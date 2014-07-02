@@ -490,7 +490,7 @@ QSE_EXPORT void qse_xli_geterror (
 QSE_EXPORT void qse_xli_seterrnum (
 	qse_xli_t*        xli,    /**< stream editor */
 	qse_xli_errnum_t  errnum, /**< error number */
-	const qse_cstr_t* errarg  /**< argument for formatting error message */
+	const qse_xstr_t* errarg  /**< argument for formatting error message */
 );
 
 /**
@@ -512,7 +512,7 @@ QSE_EXPORT void qse_xli_seterrmsg (
 QSE_EXPORT void qse_xli_seterror (
 	qse_xli_t*           xli,    /**< stream editor */
 	qse_xli_errnum_t     errnum, /**< error number */
-	const qse_cstr_t*    errarg, /**< array of arguments for formatting 
+	const qse_xstr_t*    errarg, /**< array of arguments for formatting 
 	                              *   an error message */
 	const qse_xli_loc_t* errloc  /**< error location */
 );
@@ -558,7 +558,7 @@ QSE_EXPORT qse_xli_pair_t* qse_xli_insertpairwithstr (
 	const qse_char_t* key,
 	const qse_char_t* alias,
 	const qse_char_t* keytag,
-	const qse_cstr_t* value,
+	const qse_xstr_t* value,
 	const qse_char_t* strtag
 );
 
@@ -569,7 +569,7 @@ QSE_EXPORT qse_xli_pair_t* qse_xli_insertpairwithstrs (
 	const qse_char_t* key,
 	const qse_char_t* alias,
 	const qse_char_t* keytag,
-	const qse_cstr_t  value[],
+	const qse_xstr_t  value[],
 	qse_size_t        count
 );
 
@@ -614,7 +614,7 @@ QSE_EXPORT qse_xli_str_t* qse_xli_addsegtostr (
 	qse_xli_t*        xli, 
 	qse_xli_str_t*    str,
 	const qse_char_t* tag,
-	const qse_cstr_t* value
+	const qse_xstr_t* value
 );
 
 /**

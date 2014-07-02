@@ -618,8 +618,7 @@ struct qse_link_t
 
 /**
  * The qse_mxstr_t type defines a structure combining a pointer to a character
- * string and the number of characters. It is designed to be interchangeable
- * with the #qse_mcstr_t type except the constness on the @a ptr field.
+ * string and the number of characters. 
  */
 struct qse_mxstr_t
 {
@@ -630,8 +629,7 @@ typedef struct qse_mxstr_t qse_mxstr_t;
 
 /**
  * The qse_wxstr_t type defines a structure combining a pointer to a character
- * string and the number of characters. It is designed to be interchangeable
- * with the #qse_wcstr_t type except the constness on the @a ptr field.
+ * string and the number of characters.
  */
 struct qse_wxstr_t
 {
@@ -640,49 +638,11 @@ struct qse_wxstr_t
 };
 typedef struct qse_wxstr_t qse_wxstr_t;
 
-/**
- * The qse_mcstr_t type defines a structure combining a pointer to
- * a constant character string and the number of characters.
- * It is designed to be interchangeable with the #qse_mxstr_t type
- * except the constness on the @a ptr field.
- */
-struct qse_mcstr_t
-{
-	const qse_mchar_t* ptr; /**< pointer to a const character string */
-	qse_size_t         len; /**< the number of characters */
-};
-typedef struct qse_mcstr_t qse_mcstr_t;
-
-/**
- * The qse_wcstr_t type defines a structure combining a pointer to
- * a constant character string and the number of characters.
- * It is designed to be interchangeable with the #qse_wxstr_t type
- * except the constness on the @a ptr field.
- */
-struct qse_wcstr_t
-{
-	const qse_wchar_t* ptr; /**< pointer to a const character string */
-	qse_size_t         len; /**< the number of characters */
-};
-typedef struct qse_wcstr_t qse_wcstr_t;
-
 #if defined(QSE_CHAR_IS_MCHAR)
 	typedef qse_mxstr_t qse_xstr_t;
-	typedef qse_mcstr_t qse_cstr_t;
 #else
 	typedef qse_wxstr_t qse_xstr_t;
-	typedef qse_wcstr_t qse_cstr_t;
 #endif
-
-/** 
- * The qse_cptl_t type defines a pair type of a constant pointer and a length.
- */
-struct qse_cptl_t
-{
-	const void* ptr; /**< pointer */
-	qse_size_t  len; /**< length */
-};
-typedef struct qse_cptl_t qse_cptl_t;
 
 /** 
  * The qse_xptl_t type defines a pair type of a pointer and a length.

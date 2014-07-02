@@ -50,7 +50,7 @@ do { qse_sed_seterror (sed, num, QSE_NULL, loc); } while (0)
 
 #define SETERR1(sed,num,argp,argl,loc) \
 do { \
-	qse_cstr_t __ea__; \
+	qse_xstr_t __ea__; \
 	__ea__.ptr = argp; __ea__.len = argl; \
 	qse_sed_seterror (sed, num, &__ea__, loc); \
 } while (0)
@@ -216,7 +216,7 @@ int qse_sed_getopt (qse_sed_t* sed, qse_sed_opt_t  id, void* value)
 }
 
 static void* build_rex (
-	qse_sed_t* sed, const qse_cstr_t* str, 
+	qse_sed_t* sed, const qse_xstr_t* str, 
 	int ignorecase, const qse_sed_loc_t* loc)
 {
 #if defined(USE_REX)
@@ -317,8 +317,8 @@ static QSE_INLINE void free_rex (qse_sed_t* sed, void* rex)
 #if !defined(USE_REX)
 static int matchtre (
 	qse_sed_t* sed, qse_tre_t* tre, int opt, 
-	const qse_cstr_t* str, qse_cstr_t* mat,
-	qse_cstr_t submat[9], const qse_sed_loc_t* loc)
+	const qse_xstr_t* str, qse_xstr_t* mat,
+	qse_xstr_t submat[9], const qse_sed_loc_t* loc)
 {
 #if defined(QSE_CHAR_IS_MCHAR) && defined(USE_REGEX)
 	regmatch_t match[10];
@@ -912,7 +912,7 @@ static QSE_INLINE void* compile_rex_address (qse_sed_t* sed, qse_char_t rxend)
 		NXTSC (sed, peeped, QSE_NULL); /* consume the character peeped */
 	}
 
-	return build_rex (sed, QSE_STR_CSTR(&sed->tmp.rex), ignorecase, &sed->src.loc);
+	return build_rex (sed, QSE_STR_XSTR(&sed->tmp.rex), ignorecase, &sed->src.loc);
 }
 
 static qse_sed_adr_t* get_address (qse_sed_t* sed, qse_sed_adr_t* a, int extended)
@@ -1441,7 +1441,7 @@ static int get_subst (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 	else
 	{
 		cmd->u.subst.rex = build_rex (
-			sed, QSE_STR_CSTR(t[0]), 
+			sed, QSE_STR_XSTR(t[0]), 
 			cmd->u.subst.i, &sed->src.loc);
 		if (cmd->u.subst.rex == QSE_NULL) goto oops;
 	}
@@ -2728,7 +2728,7 @@ static int emit_appends (qse_sed_t* sed)
 	return 0;
 }
 
-static const qse_char_t* trim_line (qse_sed_t* sed, qse_cstr_t* str)
+static const qse_char_t* trim_line (qse_sed_t* sed, qse_xstr_t* str)
 {
 	const qse_char_t* lineterm;
 
@@ -2756,14 +2756,14 @@ static const qse_char_t* trim_line (qse_sed_t* sed, qse_cstr_t* str)
 
 static int do_subst (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 {
-	qse_cstr_t mat, pmat;
+	qse_xstr_t mat, pmat;
 	int opt = 0, repl = 0, n;
 #if defined(USE_REX)
 	qse_rex_errnum_t errnum;
 #endif
 	const qse_char_t* lineterm;
 
-	qse_cstr_t str, cur;
+	qse_xstr_t str, cur;
 	const qse_char_t* str_end;
 	qse_size_t m, i, max_count, sub_count;
 
@@ -2790,7 +2790,7 @@ static int do_subst (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 	while (cur.ptr <= str_end)
 	{
 #ifndef USE_REX
-		qse_cstr_t submat[9];
+		qse_xstr_t submat[9];
 		QSE_MEMSET (submat, 0, QSE_SIZEOF(submat));
 #endif
 
@@ -3017,7 +3017,7 @@ static int do_subst (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 }
 
 static int split_into_fields_for_cut (
-	qse_sed_t* sed, qse_sed_cmd_t* cmd, const qse_cstr_t* str)
+	qse_sed_t* sed, qse_sed_cmd_t* cmd, const qse_xstr_t* str)
 {
 	qse_size_t i, x = 0, xl = 0;
 
@@ -3058,7 +3058,7 @@ static int split_into_fields_for_cut (
 
 			if (x >= sed->e.cutf.cflds)
 			{
-				qse_cstr_t* tmp;
+				qse_xstr_t* tmp;
 				qse_size_t nsz;
 
 				nsz = sed->e.cutf.cflds;
@@ -3100,7 +3100,7 @@ static int do_cut (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 {
 	qse_sed_cut_sel_t* b;
 	const qse_char_t* lineterm;
-	qse_cstr_t str;
+	qse_xstr_t str;
 	int out_state;
 
 	qse_str_clear (&sed->e.txt.scratch);
@@ -3245,9 +3245,9 @@ static int match_a (qse_sed_t* sed, qse_sed_cmd_t* cmd, qse_sed_adr_t* a)
 #if defined(USE_REX)
 			int n;
 			qse_rex_errnum_t errnum;
-			qse_cstr_t match;
+			qse_xstr_t match;
 #endif
-			qse_cstr_t line;
+			qse_xstr_t line;
 			void* rex;
 
 			QSE_ASSERT (a->u.rex != QSE_NULL);
@@ -4188,7 +4188,7 @@ void qse_sed_freemem (qse_sed_t* sed, void* ptr)
 }
 
 
-void qse_sed_getspace (qse_sed_t* sed, qse_sed_space_t space, qse_cstr_t* str)
+void qse_sed_getspace (qse_sed_t* sed, qse_sed_space_t space, qse_xstr_t* str)
 {
 	switch (space)
 	{

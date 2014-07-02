@@ -504,7 +504,7 @@ static int fnc_dir_read  (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	}
 	else
 	{
-		ret = read_byid (rtx, list, id, qse_awk_rtx_getarg (rtx, 1));
+		ret = read_byid (rtx, list, id, (qse_awk_val_ref_t*)qse_awk_rtx_getarg (rtx, 1));
 		if (ret == -9999) return -1;
 	}
 
@@ -551,7 +551,7 @@ static inttab_t inttab[] =
 
 static int query (qse_awk_mod_t* mod, qse_awk_t* awk, const qse_char_t* name, qse_awk_mod_sym_t* sym)
 {
-	qse_cstr_t ea;
+	qse_xstr_t ea;
 	int left, right, mid, n;
 
 	left = 0; right = QSE_COUNTOF(fnctab) - 1;
@@ -587,7 +587,7 @@ static int query (qse_awk_mod_t* mod, qse_awk_t* awk, const qse_char_t* name, qs
 		}
 	}
 
-	ea.ptr = name;
+	ea.ptr = (qse_char_t*)name;
 	ea.len = qse_strlen(name);
 	qse_awk_seterror (awk, QSE_AWK_ENOENT, &ea, QSE_NULL);
 	return -1;

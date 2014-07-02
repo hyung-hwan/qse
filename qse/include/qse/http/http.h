@@ -176,7 +176,7 @@ QSE_EXPORT qse_http_method_t qse_mbstohttpmethod (
 );
 
 QSE_EXPORT qse_http_method_t qse_mcstrtohttpmethod (
-	const qse_mcstr_t* name
+	const qse_mxstr_t* name
 );
 
 QSE_EXPORT int qse_parsehttprange (

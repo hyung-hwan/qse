@@ -105,7 +105,7 @@ void qse_xli_geterror (
 }
 
 void qse_xli_seterrnum (
-	qse_xli_t* xli, qse_xli_errnum_t errnum, const qse_cstr_t* errarg)
+	qse_xli_t* xli, qse_xli_errnum_t errnum, const qse_xstr_t* errarg)
 {
 	qse_xli_seterror (xli, errnum, errarg, QSE_NULL);
 }
@@ -122,7 +122,7 @@ void qse_xli_seterrmsg (
 
 void qse_xli_seterror (
 	qse_xli_t* xli, qse_xli_errnum_t errnum,
-	const qse_cstr_t* errarg, const qse_xli_loc_t* errloc)
+	const qse_xstr_t* errarg, const qse_xli_loc_t* errloc)
 {
 	const qse_char_t* errfmt;
 

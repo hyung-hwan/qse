@@ -234,7 +234,7 @@ qse_mchar_t* qse_wcsatombsdup (
 }
 
 qse_mchar_t* qse_wcsnatombsdup (
-	const qse_wcstr_t wcs[], qse_size_t* mbslen, qse_mmgr_t* mmgr)
+	const qse_wxstr_t wcs[], qse_size_t* mbslen, qse_mmgr_t* mmgr)
 {
 	return qse_wcsnatombsdupwithcmgr (wcs, mbslen, mmgr, dfl_cmgr);
 }

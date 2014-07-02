@@ -76,7 +76,7 @@ struct qse_httpd_serverstd_realm_t
 typedef struct qse_httpd_serverstd_auth_t qse_httpd_serverstd_auth_t;
 struct qse_httpd_serverstd_auth_t
 {
-	qse_mcstr_t key;
+	qse_mxstr_t key;
 	int authok;
 };
 

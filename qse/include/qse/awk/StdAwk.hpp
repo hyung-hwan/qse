@@ -59,7 +59,7 @@ public:
 
 	protected:
 		const char_t* name;
-		qse_cstr_t dir;
+		qse_xstr_t dir;
 		qse_cmgr_t* cmgr;
 	};
 

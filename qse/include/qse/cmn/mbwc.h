@@ -240,7 +240,7 @@ QSE_EXPORT qse_mchar_t* qse_wcsatombsdupwithcmgr (
 
 
 QSE_EXPORT qse_mchar_t* qse_wcsnatombsdupwithcmgr (
-	const qse_wcstr_t wcs[],
+	const qse_wxstr_t wcs[],
 	qse_size_t*       mbslen,
 	qse_mmgr_t*       mmgr,
 	qse_cmgr_t*       cmgr
@@ -454,7 +454,7 @@ QSE_EXPORT qse_mchar_t* qse_wcsatombsdup (
 );
 
 QSE_EXPORT qse_mchar_t* qse_wcsnatombsdup (
-	const qse_wcstr_t wcs[],
+	const qse_wxstr_t wcs[],
 	qse_size_t*       mbslen,
 	qse_mmgr_t*       mmgr
 );

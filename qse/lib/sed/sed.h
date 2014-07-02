@@ -201,8 +201,8 @@ struct qse_sed_t
 		{
 			qse_size_t  nflds; /**< the number of fields */
 			qse_size_t  cflds; /**< capacity of flds field */
-			qse_cstr_t  sflds[128]; /**< static field buffer */
-			qse_cstr_t* flds;
+			qse_xstr_t  sflds[128]; /**< static field buffer */
+			qse_xstr_t* flds;
 			int delimited;
 		} cutf;
 

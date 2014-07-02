@@ -101,7 +101,7 @@ struct arg_t
 struct gvmv_t
 {
 	int         idx;
-	qse_cstr_t  str;
+	qse_xstr_t  str;
 };
 
 static void dprint (const qse_char_t* fmt, ...)
@@ -280,7 +280,7 @@ static qse_htb_walk_t set_global (
 	qse_awk_rtx_t* rtx = (qse_awk_rtx_t*)arg;
 	struct gvmv_t* gvmv = (struct gvmv_t*)QSE_HTB_VPTR(pair);
 
-	v = qse_awk_rtx_makenstrvalwithcstr (rtx, &gvmv->str);
+	v = qse_awk_rtx_makenstrvalwithxstr (rtx, &gvmv->str);
 	if (v == QSE_NULL) return QSE_HTB_WALK_STOP;
 
 	qse_awk_rtx_refupval (rtx, v);
@@ -434,7 +434,7 @@ static void print_usage (qse_sio_t* out, const qse_char_t* argv0)
 
 /* ---------------------------------------------------------------------- */
 
-static int collect_into_xarg (const qse_cstr_t* path, void* ctx)
+static int collect_into_xarg (const qse_xstr_t* path, void* ctx)
 {
 	xarg_t* xarg = (xarg_t*)ctx;
 
@@ -477,7 +477,7 @@ static void purge_xarg (xarg_t* xarg)
 static int expand_wildcard (int argc, qse_char_t* argv[], int glob, xarg_t* xarg)
 {
 	int i;
-	qse_cstr_t tmp;
+	qse_xstr_t tmp;
 
 	for (i = 0; i < argc; i++)
 	{
