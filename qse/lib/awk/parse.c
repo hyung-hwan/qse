@@ -5691,14 +5691,15 @@ static int get_rexstr (qse_awk_t* awk, qse_awk_tok_t* tok)
 {
 	if (awk->sio.last.c == QSE_T('/')) 
 	{
-		/* this part of the function is different from get_charstr
-		 * because of the way this function is called. 
+		/* handle an empty regular expression.
+		 *
 		 * this condition is met when the input is //.
 		 * the first / has been tokenized to TOK_DIV already.
 		 * if TOK_DIV is seen as a primary, this function is called.
 		 * as the token buffer has been cleared by the caller and
 		 * the token type is set to TOK_REX, this function can
-		 * just return after reading the next character */
+		 * just return after reading the next character.
+		 * see parse_primary_rex(). */
 		GET_CHAR (awk);
 		return 0;
 	}
