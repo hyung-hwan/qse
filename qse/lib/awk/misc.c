@@ -1182,10 +1182,9 @@ int qse_awk_buildrex (
 
 	if (code) *code = tre;
 	if (icode) *icode = itre;
-	return 0;	
+	return 0;
 #endif
 }
-
 
 #if !defined(USE_REX)
 
