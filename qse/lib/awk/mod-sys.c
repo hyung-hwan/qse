@@ -461,13 +461,18 @@ static int fnc_settime (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
 	qse_awk_val_t* retv;
 	qse_ntime_t now;
+	qse_awk_int_t tmp;
 	int rx;
 
 	now.nsec = 0;
 
-	if (qse_awk_rtx_valtoint (rtx, qse_awk_rtx_getarg (rtx, 0), &now.sec) <= -1 ||
-	    qse_settime (&now) <= -1) rx = -1;
-	else rx = 0;
+	if (qse_awk_rtx_valtoint (rtx, qse_awk_rtx_getarg (rtx, 0), &tmp) <= -1) rx = -1;
+	else
+	{
+		now.sec = tmp;
+		if (qse_settime (&now) <= -1) rx = -1;
+		else rx = 0;
+	}
 
 	retv = qse_awk_rtx_makeintval (rtx, rx);
 	if (retv == QSE_NULL) return -1;
@@ -578,7 +583,7 @@ static int fnc_getnwifcfg (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 				{
 					int x;
 					qse_awk_rtx_refupval (rtx, tmp);
-					x = qse_awk_rtx_setrefval (rtx, qse_awk_rtx_getarg (rtx, 2), tmp);
+					x = qse_awk_rtx_setrefval (rtx, (qse_awk_val_ref_t*)qse_awk_rtx_getarg (rtx, 2), tmp);
 					qse_awk_rtx_refdownval (rtx, tmp);
 					if (x <= -1) return -1;
 					ret = 0;
@@ -676,7 +681,7 @@ static inttab_t inttab[] =
 
 static int query (qse_awk_mod_t* mod, qse_awk_t* awk, const qse_char_t* name, qse_awk_mod_sym_t* sym)
 {
-	qse_cstr_t ea;
+	qse_xstr_t ea;
 	int left, right, mid, n;
 
 	left = 0; right = QSE_COUNTOF(fnctab) - 1;
@@ -712,7 +717,7 @@ static int query (qse_awk_mod_t* mod, qse_awk_t* awk, const qse_char_t* name, qs
 		}
 	}
 
-	ea.ptr = name;
+	ea.ptr = (qse_char_t*)name;
 	ea.len = qse_strlen(name);
 	qse_awk_seterror (awk, QSE_AWK_ENOENT, &ea, QSE_NULL);
 	return -1;

@@ -594,12 +594,12 @@ int Awk::Value::setStr (Run* r, const char_t* str, size_t len, bool numeric)
 {
 	val_t* tmp;
 
-	cstr_t cstr;
-	cstr.ptr = str;
+	xstr_t cstr;
+	cstr.ptr = (char_t*)str;
 	cstr.len = len;
 
-	tmp = numeric? qse_awk_rtx_makenstrvalwithcstr (r->rtx, &cstr):
-	               qse_awk_rtx_makestrvalwithcstr (r->rtx, &cstr);
+	tmp = numeric? qse_awk_rtx_makenstrvalwithxstr (r->rtx, &cstr):
+	               qse_awk_rtx_makestrvalwithxstr (r->rtx, &cstr);
 	if (tmp == QSE_NULL)
 	{
 		r->awk->retrieveError (r);
@@ -757,12 +757,12 @@ int Awk::Value::setIndexedStr (
 {
 	val_t* tmp;
 
-	cstr_t cstr;
-	cstr.ptr = str;
+	xstr_t cstr;
+	cstr.ptr = (char_t*)str;
 	cstr.len = len;
 
-	tmp = numeric? qse_awk_rtx_makenstrvalwithcstr (r->rtx, &cstr):
-	               qse_awk_rtx_makestrvalwithcstr (r->rtx, &cstr);
+	tmp = numeric? qse_awk_rtx_makenstrvalwithxstr (r->rtx, &cstr):
+	               qse_awk_rtx_makestrvalwithxstr (r->rtx, &cstr);
 	if (tmp == QSE_NULL) 
 	{
 		r->awk->retrieveError (r);
@@ -928,7 +928,7 @@ const Awk::char_t* Awk::Run::getErrorMessage () const
 	return qse_awk_rtx_geterrmsg (this->rtx);
 }
 
-void Awk::Run::setError (errnum_t code, const cstr_t* args, const loc_t* loc)
+void Awk::Run::setError (errnum_t code, const xstr_t* args, const loc_t* loc)
 {
 	QSE_ASSERT (this->rtx != QSE_NULL);
 	qse_awk_rtx_seterror (this->rtx, code, args, loc);
@@ -1049,7 +1049,7 @@ const Awk::char_t* Awk::getErrorMessage () const
 	return this->errinf.msg;
 }
 
-void Awk::setError (errnum_t code, const cstr_t* args, const loc_t* loc)
+void Awk::setError (errnum_t code, const xstr_t* args, const loc_t* loc)
 {
 	if (awk != QSE_NULL)
 	{
@@ -1371,7 +1371,7 @@ int Awk::dispatch_function (Run* run, const fnc_info_t* fi)
 	pair = qse_htb_search (functionMap, fi->name.ptr, fi->name.len);
 	if (pair == QSE_NULL) 
 	{
-		run->setError (QSE_AWK_EFUNNF, (cstr_t*)&fi->name);
+		run->setError (QSE_AWK_EFUNNF, &fi->name);
 		return -1;
 	}
 

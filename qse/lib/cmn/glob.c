@@ -386,7 +386,7 @@ static int handle_non_wild_segments (glob_t* g, segment_t* seg)
 		if (!seg->next && path_exists(g, QSE_STR_PTR(&g->path)) > 0)
 		{
 			/* reached the last segment. match if the path exists */
-			if (g->cbimpl (QSE_STR_CSTR(&g->path), g->cbctx) <= -1) return -1;
+			if (g->cbimpl (QSE_STR_XSTR(&g->path), g->cbctx) <= -1) return -1;
 			g->expanded = 1;
 		}
 	}
@@ -492,7 +492,7 @@ entry:
 					}
 					else
 					{
-						if (g->cbimpl (QSE_STR_CSTR(&g->path), g->cbctx) <= -1) goto oops;
+						if (g->cbimpl (QSE_STR_XSTR(&g->path), g->cbctx) <= -1) goto oops;
 						g->expanded = 1;
 					}
 				}

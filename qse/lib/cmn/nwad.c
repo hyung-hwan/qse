@@ -61,7 +61,7 @@ int qse_mbsntonwad (const qse_mchar_t* str, qse_size_t len, qse_nwad_t* nwad)
 {
 	const qse_mchar_t* p;
 	const qse_mchar_t* end;
-	qse_mcstr_t tmp;
+	qse_mxstr_t tmp;
 	qse_nwad_t tmpad;
 
 	QSE_MEMSET (&tmpad, 0, QSE_SIZEOF(tmpad));
@@ -227,7 +227,7 @@ int qse_wcsntonwad (const qse_wchar_t* str, qse_size_t len, qse_nwad_t* nwad)
 {
 	const qse_wchar_t* p;
 	const qse_wchar_t* end;
-	qse_wcstr_t tmp;
+	qse_wxstr_t tmp;
 	qse_nwad_t tmpad;
 
 	QSE_MEMSET (&tmpad, 0, QSE_SIZEOF(tmpad));

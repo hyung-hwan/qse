@@ -77,7 +77,7 @@ struct pafv
 
 #define SETERR_ARG_LOC(rtx,code,ep,el,loc) \
 	do { \
-		qse_cstr_t __ea; \
+		qse_xstr_t __ea; \
 		__ea.len = (el); __ea.ptr = (ep); \
 		qse_awk_rtx_seterror ((rtx), (code), &__ea, (loc)); \
 	} while (0)
@@ -261,19 +261,6 @@ typedef qse_awk_val_t* (*binop_func_t) (
 	qse_awk_rtx_t* run, qse_awk_val_t* left, qse_awk_val_t* right);
 typedef qse_awk_val_t* (*eval_expr_t) (qse_awk_rtx_t* run, qse_awk_nde_t* nde);
 
-#ifdef NDEBUG
-#	define xstr_to_cstr(xstr) ((qse_cstr_t*)xstr)
-#else
-static QSE_INLINE qse_cstr_t* xstr_to_cstr (qse_xstr_t* xstr)
-{
-	/* i use this function to typecast qse_cstr_t* to 
-	 * qse_xstr_t* instead of direct typecasting.
-	 * it is just to let the compiler emit some warnings 
-	 * if the data type of the actual parameter happened to
-	 * haved changed to something else. */ 
-	return (qse_cstr_t*)xstr;
-}
-#endif
 
 QSE_INLINE qse_size_t qse_awk_rtx_getnargs (qse_awk_rtx_t* run)
 {
@@ -355,13 +342,13 @@ static int set_global (
 			if (var)
 			{
 				/* global variable */
-				SETERR_ARGX_LOC (rtx, errnum, xstr_to_cstr(&var->id.name), &var->loc);
+				SETERR_ARGX_LOC (rtx, errnum, &var->id.name, &var->loc);
 			}
 			else
 			{
 				/* qse_awk_rtx_setgbl() has been called */
-				qse_cstr_t ea;
-				ea.ptr = qse_awk_getgblname (rtx->awk, idx, &ea.len);
+				qse_xstr_t ea;
+				ea.ptr = (qse_char_t*)qse_awk_getgblname (rtx->awk, idx, &ea.len);
 				SETERR_ARGX (rtx, errnum, &ea);
 			}
 
@@ -380,8 +367,8 @@ static int set_global (
 
 /* TODO: use global variable attribute. can it be a map? can it be a scalar? is it read-only???? */
 
-			qse_cstr_t ea;
-			ea.ptr = qse_awk_getgblname (rtx->awk, idx, &ea.len);
+			qse_xstr_t ea;
+			ea.ptr = (qse_char_t*)qse_awk_getgblname (rtx->awk, idx, &ea.len);
 			SETERR_ARGX (rtx, QSE_AWK_ENSCALARTOMAP, &ea);
 			return -1;
 		}
@@ -1540,9 +1527,9 @@ qse_awk_fun_t* qse_awk_rtx_findfun (qse_awk_rtx_t* rtx, const qse_char_t* name)
 
 	if (pair == QSE_NULL)
 	{
-		qse_cstr_t nm;
+		qse_xstr_t nm;
 
-		nm.ptr = name;
+		nm.ptr = (qse_char_t*)name;
 		nm.len = qse_strlen(name);
 
 		SETERR_ARGX (rtx, QSE_AWK_EFUNNF, &nm);
@@ -2618,7 +2605,7 @@ static int run_delete_named (qse_awk_rtx_t* rtx, qse_awk_nde_var_t* var)
 		{
 			SETERR_ARGX_LOC (
 				rtx, QSE_AWK_ENOTDEL, 
-				xstr_to_cstr(&var->id.name), &var->loc);
+				&var->id.name, &var->loc);
 			return -1;
 		}
 
@@ -2717,7 +2704,7 @@ static int run_delete_unnamed (qse_awk_rtx_t* rtx, qse_awk_nde_var_t* var)
 		{
 			SETERR_ARGX_LOC (
 				rtx, QSE_AWK_ENOTDEL,
-				xstr_to_cstr(&var->id.name), &var->loc);
+				&var->id.name, &var->loc);
 			return -1;
 		}
 
@@ -3227,7 +3214,7 @@ static qse_awk_val_t* eval_expression (qse_awk_rtx_t* rtx, qse_awk_nde_t* nde)
 
 	if (v->type == QSE_AWK_VAL_REX)
 	{
-		qse_cstr_t vs;
+		qse_xstr_t vs;
 		int opt = 0;
 
 		/* special case where a regular expression is used in
@@ -3526,14 +3513,14 @@ static qse_awk_val_t* do_assignment_nonidx (
 					qse_awk_errnum_t errnum;
 					errnum = (val->type == QSE_AWK_VAL_MAP)? 
 						QSE_AWK_ENMAPTOMAP: QSE_AWK_ENMAPTOSCALAR;
-					SETERR_ARGX_LOC (run, errnum, xstr_to_cstr(&var->id.name), &var->loc);
+					SETERR_ARGX_LOC (run, errnum, &var->id.name, &var->loc);
 					return QSE_NULL;
 				}
 				else if (val->type == QSE_AWK_VAL_MAP)
 				{
 					/* old value is not a map but a new value is a map.
 					 * a map cannot be assigned to a variable if FLEXMAP is off. */
-					SETERR_ARGX_LOC (run, QSE_AWK_EMAPTONVAR, xstr_to_cstr(&var->id.name), &var->loc);
+					SETERR_ARGX_LOC (run, QSE_AWK_EMAPTONVAR, &var->id.name, &var->loc);
 					return QSE_NULL;
 				}
 			}
@@ -3572,14 +3559,14 @@ static qse_awk_val_t* do_assignment_nonidx (
 					qse_awk_errnum_t errnum;
 					errnum = (val->type == QSE_AWK_VAL_MAP)? 
 						QSE_AWK_ENMAPTOMAP: QSE_AWK_ENMAPTOSCALAR;
-					SETERR_ARGX_LOC (run, errnum, xstr_to_cstr(&var->id.name), &var->loc);
+					SETERR_ARGX_LOC (run, errnum, &var->id.name, &var->loc);
 					return QSE_NULL;
 				}
 				else if (val->type == QSE_AWK_VAL_MAP)
 				{
 					/* old value is not a map but a new value is a map.
 					 * a map cannot be assigned to a variable if FLEXMAP is off. */
-					SETERR_ARGX_LOC (run, QSE_AWK_EMAPTONVAR, xstr_to_cstr(&var->id.name), &var->loc);
+					SETERR_ARGX_LOC (run, QSE_AWK_EMAPTONVAR, &var->id.name, &var->loc);
 					return QSE_NULL;
 				}
 			}
@@ -3602,14 +3589,14 @@ static qse_awk_val_t* do_assignment_nonidx (
 					qse_awk_errnum_t errnum;
 					errnum = (val->type == QSE_AWK_VAL_MAP)? 
 						QSE_AWK_ENMAPTOMAP: QSE_AWK_ENMAPTOSCALAR;
-					SETERR_ARGX_LOC (run, errnum, xstr_to_cstr(&var->id.name), &var->loc);
+					SETERR_ARGX_LOC (run, errnum, &var->id.name, &var->loc);
 					return QSE_NULL;
 				}
 				else if (val->type == QSE_AWK_VAL_MAP)
 				{
 					/* old value is not a map but a new value is a map.
 					 * a map cannot be assigned to a variable if FLEXMAP is off. */
-					SETERR_ARGX_LOC (run, QSE_AWK_EMAPTONVAR, xstr_to_cstr(&var->id.name), &var->loc);
+					SETERR_ARGX_LOC (run, QSE_AWK_EMAPTONVAR, &var->id.name, &var->loc);
 					return QSE_NULL;
 				}
 			}
@@ -5573,7 +5560,7 @@ static qse_awk_val_t* eval_fun_ex (
 	{
 		SETERR_ARGX_LOC (
 			rtx, QSE_AWK_EFUNNF,
-			xstr_to_cstr(&call->u.fun.name), &nde->loc);
+			&call->u.fun.name, &nde->loc);
 		return QSE_NULL;
 	}
 
@@ -5784,8 +5771,7 @@ static qse_awk_val_t* __eval_call (
 					 * fix it */ 
 					SETERR_ARGX_LOC (
 						run, QSE_AWK_EFNCIMPL, 
-						xstr_to_cstr(&call->u.fnc.info.name),
-						&nde->loc
+						&call->u.fnc.info.name, &nde->loc
 					);
 				}
 				else
@@ -6472,14 +6458,14 @@ read_console_again:
 		if (p->var == QSE_NULL)
 		{
 			/* set $0 with the input value */
-			x = qse_awk_rtx_setrec (rtx, 0, QSE_STR_CSTR(buf));
+			x = qse_awk_rtx_setrec (rtx, 0, QSE_STR_XSTR(buf));
 			if (x <= -1) return QSE_NULL;
 		}
 		else
 		{
 			qse_awk_val_t* v;
 
-			v = qse_awk_rtx_makestrvalwithcstr (rtx, QSE_STR_CSTR(buf));
+			v = qse_awk_rtx_makestrvalwithxstr (rtx, QSE_STR_XSTR(buf));
 			if (v == QSE_NULL)
 			{
 				ADJERR_LOC (rtx, &nde->loc);
@@ -6578,7 +6564,7 @@ read_again:
 		}
 	}
 
-	if (qse_awk_rtx_setrec (rtx, 0, QSE_STR_CSTR(buf)) <= -1 ||
+	if (qse_awk_rtx_setrec (rtx, 0, QSE_STR_XSTR(buf)) <= -1 ||
 	    update_fnr (rtx, rtx->gbl.fnr + 1, rtx->gbl.nr + 1) <= -1) return -1;
 
 	return 1;
@@ -6660,7 +6646,7 @@ static int shorten_record (qse_awk_rtx_t* run, qse_size_t nflds)
 	if (ofs_free != QSE_NULL) QSE_AWK_FREE (run->awk, ofs_free);
 	if (nflds > 1) qse_awk_rtx_refdownval (run, v);
 
-	v = (qse_awk_val_t*) qse_awk_rtx_makestrvalwithcstr (run, QSE_STR_CSTR(&tmp));
+	v = (qse_awk_val_t*) qse_awk_rtx_makestrvalwithxstr (run, QSE_STR_XSTR(&tmp));
 	if (v == QSE_NULL) 
 	{
 		qse_str_fini (&tmp);

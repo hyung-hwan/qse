@@ -77,7 +77,7 @@ const qse_char_t* qse_awk_getgblname (
 void qse_awk_getkwname (
 	qse_awk_t*     awk,
 	qse_awk_kwid_t id, 
-	qse_cstr_t*    s
+	qse_xstr_t*    s
 );
 
 int qse_awk_initgbls (

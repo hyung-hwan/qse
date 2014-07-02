@@ -101,7 +101,7 @@ typedef struct kwent_t kwent_t;
 
 struct kwent_t 
 { 
-	qse_cstr_t name;
+	qse_xstr_t name;
 	int type; 
 };
 
@@ -198,7 +198,7 @@ static int skip_comment (qse_xli_t* xli, qse_xli_tok_t* tok)
 	return 0; 
 }
 
-static int classify_ident (qse_xli_t* xli, const qse_cstr_t* name)
+static int classify_ident (qse_xli_t* xli, const qse_xstr_t* name)
 {
 	/* perform binary search */
 
@@ -445,11 +445,11 @@ retry:
 		} 
 		while (QSE_ISALPHA (c));
 
-		type = classify_ident (xli, QSE_STR_CSTR(tok->name));
+		type = classify_ident (xli, QSE_STR_XSTR(tok->name));
 		if (type == TOK_IDENT)
 		{
 			/* this keyword/directive is not recognized */
-			qse_xli_seterror (xli, QSE_XLI_EXKWNR, QSE_STR_CSTR(tok->name), &tok->loc);
+			qse_xli_seterror (xli, QSE_XLI_EXKWNR, QSE_STR_XSTR(tok->name), &tok->loc);
 			return -1;
 		}
 		SET_TOKEN_TYPE (xli, tok, type);
@@ -485,7 +485,7 @@ retry:
 		if (lead_digit && all_digits)
 		{
 			/* if an identifier begins with a digit, it must contain a non-digits character */
-			qse_xli_seterror (xli, QSE_XLI_EIDENT, QSE_STR_CSTR(tok->name), &tok->loc);
+			qse_xli_seterror (xli, QSE_XLI_EIDENT, QSE_STR_XSTR(tok->name), &tok->loc);
 			return -1;
 		}
 
@@ -601,7 +601,7 @@ retry:
 			    c != QSE_T(',') && c != QSE_T('.') && c != QSE_T('|'))
 			{
 				qse_char_t cc = (qse_char_t)c;
-				qse_cstr_t ea;
+				qse_xstr_t ea;
 				ea.ptr = &cc;
 				ea.len = 1;
 				qse_xli_seterror (xli, QSE_XLI_ETAGCHR, &ea, &tok->loc);
@@ -620,7 +620,7 @@ retry:
 			/* not handled yet */
 			if (c == QSE_T('\0'))
 			{
-				qse_cstr_t ea;
+				qse_xstr_t ea;
 				ea.ptr = QSE_T("<NUL>");
 				ea.len = 5;
 				qse_xli_seterror (xli, QSE_XLI_ELXCHR, &ea, &tok->loc);
@@ -628,7 +628,7 @@ retry:
 			else
 			{
 				qse_char_t cc = (qse_char_t)c;
-				qse_cstr_t ea;
+				qse_xstr_t ea;
 				ea.ptr = &cc;
 				ea.len = 1;
 				qse_xli_seterror (xli, QSE_XLI_ELXCHR, &ea, &tok->loc);
@@ -648,7 +648,7 @@ retry:
 	if (skip_semicolon_after_include)
 	{
 		/* semiclon has not been skipped yet */
-		qse_xli_seterror (xli, QSE_XLI_ESCOLON, QSE_STR_CSTR(tok->name), &tok->loc);
+		qse_xli_seterror (xli, QSE_XLI_ESCOLON, QSE_STR_XSTR(tok->name), &tok->loc);
 		return -1;
 	}
 
@@ -707,7 +707,7 @@ static int read_pair (qse_xli_t* xli, const qse_char_t* keytag)
 		pair = qse_rbt_search (xli->schema, QSE_STR_PTR(xli->dotted_curkey), QSE_STR_LEN(xli->dotted_curkey));
 		if (pair == QSE_NULL)
 		{
-			qse_xli_seterror (xli, QSE_XLI_EUDKEY, (const qse_cstr_t*)&key, &kloc);
+			qse_xli_seterror (xli, QSE_XLI_EUDKEY, (const qse_xstr_t*)&key, &kloc);
 			goto oops;	
 		}
 
@@ -729,7 +729,7 @@ static int read_pair (qse_xli_t* xli, const qse_char_t* keytag)
 			if (atom->type == QSE_XLI_PAIR &&
 			    qse_strcmp (((qse_xli_pair_t*)atom)->key, QSE_STR_PTR(xli->tok.name)) == 0)
 			{
-				qse_xli_seterror (xli, QSE_XLI_EEXIST, QSE_STR_CSTR(xli->tok.name), &xli->tok.loc);
+				qse_xli_seterror (xli, QSE_XLI_EEXIST, QSE_STR_XSTR(xli->tok.name), &xli->tok.loc);
 				goto oops;
 			}
 
@@ -757,7 +757,7 @@ static int read_pair (qse_xli_t* xli, const qse_char_t* keytag)
 				    qse_strcmp (((qse_xli_pair_t*)atom)->key, key.ptr) == 0 &&
 				    qse_strcmp (((qse_xli_pair_t*)atom)->alias, QSE_STR_PTR(xli->tok.name)) == 0)
 				{
-					qse_xli_seterror (xli, QSE_XLI_EEXIST, QSE_STR_CSTR(xli->tok.name), &xli->tok.loc);
+					qse_xli_seterror (xli, QSE_XLI_EEXIST, QSE_STR_XSTR(xli->tok.name), &xli->tok.loc);
 					goto oops;
 				}
 				atom = atom->prev;
@@ -776,7 +776,7 @@ static int read_pair (qse_xli_t* xli, const qse_char_t* keytag)
 		{
 			/* SCM_KEYALIAS is specified for this particular item. Let the alias be required. 
 			 * If KEYALIAS is globally specified with the specific one, it's optional. */
-			qse_xli_seterrnum (xli, QSE_XLI_ENOALI, (const qse_cstr_t*)&key); 
+			qse_xli_seterrnum (xli, QSE_XLI_ENOALI, (const qse_xstr_t*)&key); 
 			goto oops;
 		}
 	}
@@ -805,12 +805,12 @@ static int read_pair (qse_xli_t* xli, const qse_char_t* keytag)
 			if (scm && !(scm->flags & QSE_XLI_SCM_VALSTR))
 			{
 				/* check the value type */
-				qse_xli_seterror (xli, QSE_XLI_EILVAL, (const qse_cstr_t*)&key, &kloc);
+				qse_xli_seterror (xli, QSE_XLI_EILVAL, (const qse_xstr_t*)&key, &kloc);
 				goto oops;	
 			}
 
 			/* add a new pair with the initial string segment */
-			pair = qse_xli_insertpairwithstr (xli, parlist, QSE_NULL, key.ptr, name, keytag, QSE_STR_CSTR(xli->tok.name), strtag);
+			pair = qse_xli_insertpairwithstr (xli, parlist, QSE_NULL, key.ptr, name, keytag, QSE_STR_XSTR(xli->tok.name), strtag);
 			if (pair == QSE_NULL) goto oops;
 
 			segcount++;
@@ -849,7 +849,7 @@ static int read_pair (qse_xli_t* xli, const qse_char_t* keytag)
 					}
 
 					/* add an additional segment to the string */
-					curstrseg = qse_xli_addsegtostr (xli, curstrseg, strtag, QSE_STR_CSTR(xli->tok.name));
+					curstrseg = qse_xli_addsegtostr (xli, curstrseg, strtag, QSE_STR_XSTR(xli->tok.name));
 					if (curstrseg == QSE_NULL) goto oops;
 
 					segcount++;
@@ -861,14 +861,14 @@ static int read_pair (qse_xli_t* xli, const qse_char_t* keytag)
 			/* semicolon is mandatory for a string */
 			if (!MATCH (xli, TOK_SEMICOLON))
 			{
-				qse_xli_seterror (xli, QSE_XLI_ESCOLON, QSE_STR_CSTR(xli->tok.name), &xli->tok.loc);
+				qse_xli_seterror (xli, QSE_XLI_ESCOLON, QSE_STR_XSTR(xli->tok.name), &xli->tok.loc);
 				goto oops;
 			}
 
 			if (scm && (segcount < scm->str_minseg || segcount > scm->str_maxseg))
 			{
 				/* too many string segments for the key */
-				qse_xli_seterror (xli, QSE_XLI_ESTRSEG, (const qse_cstr_t*)&key, &kloc);
+				qse_xli_seterror (xli, QSE_XLI_ESTRSEG, (const qse_xstr_t*)&key, &kloc);
 				goto oops;	
 			}
 
@@ -878,7 +878,7 @@ static int read_pair (qse_xli_t* xli, const qse_char_t* keytag)
 		}
 		else
 		{
-			qse_xli_seterror (xli, QSE_XLI_EPAVAL, QSE_STR_CSTR(xli->tok.name), &xli->tok.loc);
+			qse_xli_seterror (xli, QSE_XLI_EPAVAL, QSE_STR_XSTR(xli->tok.name), &xli->tok.loc);
 			goto oops;	
 		}
 
@@ -891,7 +891,7 @@ static int read_pair (qse_xli_t* xli, const qse_char_t* keytag)
 		if (scm && !(scm->flags & QSE_XLI_SCM_VALLIST))
 		{
 			/* check the value type */
-			qse_xli_seterror (xli, QSE_XLI_EILVAL, (const qse_cstr_t*)&key, &kloc);
+			qse_xli_seterror (xli, QSE_XLI_EILVAL, (const qse_xstr_t*)&key, &kloc);
 			goto oops;	
 		}
 
@@ -905,7 +905,7 @@ static int read_pair (qse_xli_t* xli, const qse_char_t* keytag)
 		
 		if (!MATCH (xli, TOK_RBRACE))
 		{
-			qse_xli_seterror (xli, QSE_XLI_ERBRCE, QSE_STR_CSTR(xli->tok.name), &xli->tok.loc);
+			qse_xli_seterror (xli, QSE_XLI_ERBRCE, QSE_STR_XSTR(xli->tok.name), &xli->tok.loc);
 			goto oops;
 		}
 
@@ -924,7 +924,7 @@ static int read_pair (qse_xli_t* xli, const qse_char_t* keytag)
 	{
 		if (xli->opt.trait & QSE_XLI_NONIL) 
 		{
-			qse_xli_seterror (xli, QSE_XLI_ENOVAL, (const qse_cstr_t*)&key, &kloc);
+			qse_xli_seterror (xli, QSE_XLI_ENOVAL, (const qse_xstr_t*)&key, &kloc);
 			goto oops;	
 		}
 
@@ -932,7 +932,7 @@ static int read_pair (qse_xli_t* xli, const qse_char_t* keytag)
 		           !((scm->flags & QSE_XLI_SCM_VALSTR) && scm->str_minseg <= 0))
 		{
 			/* check the value type */
-			qse_xli_seterror (xli, QSE_XLI_ENOVAL, (const qse_cstr_t*)&key, &kloc);
+			qse_xli_seterror (xli, QSE_XLI_ENOVAL, (const qse_xstr_t*)&key, &kloc);
 			goto oops;	
 		}
 
@@ -949,7 +949,7 @@ static int read_pair (qse_xli_t* xli, const qse_char_t* keytag)
 	}
 	else
 	{
-		qse_xli_seterror (xli, QSE_XLI_ELBREQ, QSE_STR_CSTR(xli->tok.name), &xli->tok.loc);
+		qse_xli_seterror (xli, QSE_XLI_ELBREQ, QSE_STR_XSTR(xli->tok.name), &xli->tok.loc);
 		goto oops;	
 	}
 

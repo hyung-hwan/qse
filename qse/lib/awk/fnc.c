@@ -80,9 +80,9 @@ qse_awk_fnc_t* qse_awk_addfnc (qse_awk_t* awk, const qse_char_t* name, const qse
 	qse_awk_fnc_t* fnc;
 	qse_size_t fnc_size;
 	qse_size_t speclen;
-	qse_cstr_t ncs;
+	qse_xstr_t ncs;
 
-	ncs.ptr = name;
+	ncs.ptr = (qse_char_t*)name;
 	ncs.len = qse_strlen (name);
 
 	if (ncs.len <= 0)
@@ -134,9 +134,9 @@ qse_awk_fnc_t* qse_awk_addfnc (qse_awk_t* awk, const qse_char_t* name, const qse
 
 int qse_awk_delfnc (qse_awk_t* awk, const qse_char_t* name)
 {
-	qse_cstr_t ncs;
+	qse_xstr_t ncs;
 
-	ncs.ptr = name;
+	ncs.ptr = (qse_char_t*)name;
 	ncs.len = qse_strlen (name);
 
 	if (qse_htb_delete (awk->fnc.user, ncs.ptr, ncs.len) <= -1)
@@ -153,7 +153,7 @@ void qse_awk_clrfnc (qse_awk_t* awk)
 	qse_htb_clear (awk->fnc.user);
 }
 
-qse_awk_fnc_t* qse_awk_findfnc (qse_awk_t* awk, const qse_cstr_t* name)
+qse_awk_fnc_t* qse_awk_findfnc (qse_awk_t* awk, const qse_xstr_t* name)
 {
 	qse_htb_pair_t* pair;
 	int i;
@@ -598,14 +598,14 @@ int qse_awk_fnc_split (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	qse_size_t nargs;
 	qse_awk_val_t* a0, * a1, * a2, * t1, * t2;
 
-	qse_cstr_t str, fs;
+	qse_xstr_t str, fs;
 	qse_char_t* str_free = QSE_NULL, * fs_free = QSE_NULL;
 	const qse_char_t* p;
 	qse_size_t str_left, org_len;
 	void* fs_rex = QSE_NULL; 
 	void* fs_rex_free = QSE_NULL;
 
-	qse_cstr_t tok;
+	qse_xstr_t tok;
 	qse_awk_int_t nflds;
 
 	qse_awk_errnum_t errnum;
@@ -743,8 +743,8 @@ int qse_awk_fnc_split (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 
 		/* create the field string - however, the split function must
 		 * create a numeric string if the string is a number */
-		/*t2 = qse_awk_rtx_makestrvalwithcstr (rtx, &tok);*/
-		t2 = qse_awk_rtx_makenstrvalwithcstr (rtx, &tok);
+		/*t2 = qse_awk_rtx_makestrvalwithxstr (rtx, &tok);*/
+		t2 = qse_awk_rtx_makenstrvalwithxstr (rtx, &tok);
 		if (t2 == QSE_NULL) goto oops;
 
 		/* put it into the map */
@@ -811,7 +811,7 @@ int qse_awk_fnc_tolower (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 
 	for (i = 0; i < str.len; i++) str.ptr[i] = QSE_AWK_TOLOWER (rtx->awk, str.ptr[i]);	
 
-	r = qse_awk_rtx_makestrvalwithcstr (rtx, (qse_cstr_t*)&str);
+	r = qse_awk_rtx_makestrvalwithxstr (rtx, &str);
 	if (r == QSE_NULL)
 	{
 		qse_awk_rtx_freevalstr (rtx, a0, str.ptr);
@@ -840,7 +840,7 @@ int qse_awk_fnc_toupper (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 
 	for (i = 0; i < str.len; i++) str.ptr[i] = QSE_AWK_TOUPPER (rtx->awk, str.ptr[i]);	
 
-	r = qse_awk_rtx_makestrvalwithcstr (rtx, (qse_cstr_t*)&str);
+	r = qse_awk_rtx_makestrvalwithxstr (rtx, &str);
 	if (r == QSE_NULL)
 	{
 		qse_awk_rtx_freevalstr (rtx, a0, str.ptr);
@@ -857,7 +857,7 @@ static int __substitute (qse_awk_rtx_t* run, qse_awk_int_t max_count)
 	qse_size_t nargs;
 	qse_awk_val_t* a0, * a1, * a2, * v;
 
-	qse_cstr_t s0, s1, s2;
+	qse_xstr_t s0, s1, s2;
 	const qse_char_t* s2_end;
 
 	qse_char_t* s0_free = QSE_NULL;
@@ -870,7 +870,7 @@ static int __substitute (qse_awk_rtx_t* run, qse_awk_int_t max_count)
 	qse_str_t new;
 	int new_inited = 0;
 
-	qse_cstr_t mat, pmat, cur;
+	qse_xstr_t mat, pmat, cur;
 
 	qse_awk_int_t sub_count;
 
@@ -1070,14 +1070,14 @@ static int __substitute (qse_awk_rtx_t* run, qse_awk_int_t max_count)
 		if (a2 == QSE_NULL)
 		{
 			int n;
-			n = qse_awk_rtx_setrec (run, 0, QSE_STR_CSTR(&new));
+			n = qse_awk_rtx_setrec (run, 0, QSE_STR_XSTR(&new));
 			if (n <= -1) goto oops;
 		}
 		else 
 		{
 			int n;
 
-			v = qse_awk_rtx_makestrvalwithcstr (run, QSE_STR_CSTR(&new));
+			v = qse_awk_rtx_makestrvalwithxstr (run, QSE_STR_XSTR(&new));
 			if (v == QSE_NULL) goto oops;
 			qse_awk_rtx_refupval (run, v);
 			n = qse_awk_rtx_setrefval (run, (qse_awk_val_ref_t*)a2, v);
@@ -1131,7 +1131,7 @@ int qse_awk_fnc_match (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	qse_size_t len0;
 	qse_awk_int_t idx, start = 1;
 	int n;
-	qse_cstr_t mat;
+	qse_xstr_t mat;
 
 	nargs = qse_awk_rtx_getnargs (rtx);
 	QSE_ASSERT (nargs >= 2 && nargs <= 3);
@@ -1173,7 +1173,7 @@ int qse_awk_fnc_match (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	if (start > len0 || start <= 0) n = 0;
 	else
 	{
-		qse_cstr_t tmp;
+		qse_xstr_t tmp;
 
 		/*TODO: must use str0,len0? */
 		tmp.ptr = str0 + start - 1;
@@ -1258,7 +1258,7 @@ int qse_awk_fnc_sprintf (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	qse_awk_rtx_freevalstr (rtx, a0, cs0.ptr);
 	if (x.ptr == QSE_NULL) goto oops;
 	
-	a0 = qse_awk_rtx_makestrvalwithcstr (rtx, (qse_cstr_t*)&x);
+	a0 = qse_awk_rtx_makestrvalwithxstr (rtx, &x);
 	if (a0 == QSE_NULL)  goto oops;
 
 	qse_str_fini (&fbu);

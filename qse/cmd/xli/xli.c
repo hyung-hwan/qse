@@ -516,7 +516,7 @@ for (i = 0; i < QSE_COUNTOF(defs); i++) qse_xli_definepair (xli, defs[i].name, &
 	}
 
 	{
-		static qse_cstr_t strs[] =
+		static const qse_xstr_t strs[] =
 		{
 			{ QSE_T("hello"), 5 },
 			{ QSE_T("xli"),   3 },

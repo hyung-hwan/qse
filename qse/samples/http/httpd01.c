@@ -1,6 +1,6 @@
 
 #include <qse/http/httpd.h>
-#include <qse/cmn/stdio.h>
+#include <qse/cmn/sio.h>
 #include <qse/cmn/main.h>
 #include <qse/cmn/str.h>
 #include <qse/cmn/mem.h>
@@ -104,30 +104,33 @@ int qse_main (int argc, qse_achar_t* argv[])
 {
 	int ret;
 
+	qse_openstdsios ();
+
 #if defined(_WIN32)
-	char locale[100];
-	UINT codepage;
-	WSADATA wsadata;
-
-	codepage = GetConsoleOutputCP();
-	if (codepage == CP_UTF8)
 	{
-		/*SetConsoleOUtputCP (CP_UTF8);*/
-		qse_setdflcmgrbyid (QSE_CMGR_UTF8);
-	}
-	else
-	{
-		sprintf (locale, ".%u", (unsigned int)codepage);
-		setlocale (LC_ALL, locale);
-		qse_setdflcmgrbyid (QSE_CMGR_SLMB);
-	}
+		char locale[100];
+		UINT codepage;
+		WSADATA wsadata;
 
-	if (WSAStartup (MAKEWORD(2,0), &wsadata) != 0)
-	{
-		qse_fprintf (QSE_STDERR, QSE_T("Failed to start up winsock\n"));
-		return -1;
-	}
+		codepage = GetConsoleOutputCP();
+		if (codepage == CP_UTF8)
+		{
+			/*SetConsoleOUtputCP (CP_UTF8);*/
+			qse_setdflcmgrbyid (QSE_CMGR_UTF8);
+		}
+		else
+		{
+			sprintf (locale, ".%u", (unsigned int)codepage);
+			setlocale (LC_ALL, locale);
+			qse_setdflcmgrbyid (QSE_CMGR_SLMB);
+		}
 
+		if (WSAStartup (MAKEWORD(2,0), &wsadata) != 0)
+		{
+			qse_fprintf (QSE_STDERR, QSE_T("Failed to start up winsock\n"));
+			return -1;
+		}
+	}
 #else
 	setlocale (LC_ALL, "");
 	qse_setdflcmgrbyid (QSE_CMGR_SLMB);
@@ -152,6 +155,7 @@ int qse_main (int argc, qse_achar_t* argv[])
 	WSACleanup ();
 #endif
 
+	qse_closestdsios ();
 	return ret;
 }
 

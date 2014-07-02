@@ -186,7 +186,7 @@ static int fnc_str_to_str (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	}
 
 	qse_awk_rtx_refupval (rtx, tmp);
-	n = qse_awk_rtx_setrefval (rtx, qse_awk_rtx_getarg (rtx, 2), tmp);
+	n = qse_awk_rtx_setrefval (rtx, (qse_awk_val_ref_t*)qse_awk_rtx_getarg (rtx, 2), tmp);
 	qse_awk_rtx_refdownval (rtx, tmp);
 	if (n <= -1)
 	{
@@ -225,7 +225,7 @@ static fnctab_t fnctab[] =
 
 static int query (qse_awk_mod_t* mod, qse_awk_t* awk, const qse_char_t* name, qse_awk_mod_sym_t* sym)
 {
-	qse_cstr_t ea;
+	qse_xstr_t ea;
 	int left, right, mid, n;
 
 	left = 0; right = QSE_COUNTOF(fnctab) - 1;
@@ -245,7 +245,7 @@ static int query (qse_awk_mod_t* mod, qse_awk_t* awk, const qse_char_t* name, qs
 		}
 	}
 
-	ea.ptr = name;
+	ea.ptr = (qse_char_t*)name;
 	ea.len = qse_strlen(name);
 	qse_awk_seterror (awk, QSE_AWK_ENOENT, &ea, QSE_NULL);
 	return -1;

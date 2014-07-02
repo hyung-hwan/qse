@@ -29,32 +29,32 @@ typedef struct qse_wuri_t qse_wuri_t;
 
 struct qse_muri_t
 {
-	qse_mcstr_t scheme;
+	qse_mxstr_t scheme;
 	struct
 	{
-		qse_mcstr_t user;
-		qse_mcstr_t pass;
+		qse_mxstr_t user;
+		qse_mxstr_t pass;
 	} auth;
-	qse_mcstr_t host;
-	qse_mcstr_t port;
-	qse_mcstr_t path;
-	qse_mcstr_t query;
-	qse_mcstr_t frag;
+	qse_mxstr_t host;
+	qse_mxstr_t port;
+	qse_mxstr_t path;
+	qse_mxstr_t query;
+	qse_mxstr_t frag;
 };
 
 struct qse_wuri_t
 {
-	qse_wcstr_t scheme;
+	qse_wxstr_t scheme;
 	struct
 	{
-		qse_wcstr_t user;
-		qse_wcstr_t pass;
+		qse_wxstr_t user;
+		qse_wxstr_t pass;
 	} auth;
-	qse_wcstr_t host;
-	qse_wcstr_t port;
-	qse_wcstr_t path;
-	qse_wcstr_t query;
-	qse_wcstr_t frag;
+	qse_wxstr_t host;
+	qse_wxstr_t port;
+	qse_wxstr_t path;
+	qse_wxstr_t query;
+	qse_wxstr_t frag;
 };
 
 enum qse_mbstouri_flag_t

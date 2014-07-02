@@ -193,7 +193,7 @@ static inttab_t inttab[] =
 
 static int query (qse_awk_mod_t* mod, qse_awk_t* awk, const qse_char_t* name, qse_awk_mod_sym_t* sym)
 {
-	qse_cstr_t ea;
+	qse_xstr_t ea;
      int left, right, mid, n;
 
 	left = 0; right = QSE_COUNTOF(fnctab) - 1;

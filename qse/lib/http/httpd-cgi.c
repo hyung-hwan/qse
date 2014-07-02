@@ -33,11 +33,11 @@
 typedef struct task_cgi_arg_t task_cgi_arg_t;
 struct task_cgi_arg_t 
 {
-	qse_mcstr_t path;
-	qse_mcstr_t script;
-	qse_mcstr_t suffix;
-	qse_mcstr_t root;
-	qse_mcstr_t shebang;
+	qse_mxstr_t path;
+	qse_mxstr_t script;
+	qse_mxstr_t suffix;
+	qse_mxstr_t root;
+	qse_mxstr_t shebang;
 	int nph;
 	qse_htre_t* req;
 };

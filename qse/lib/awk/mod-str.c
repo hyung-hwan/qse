@@ -248,7 +248,7 @@ static fnctab_t fnctab[] =
 
 static int query (qse_awk_mod_t* mod, qse_awk_t* awk, const qse_char_t* name, qse_awk_mod_sym_t* sym)
 {
-	qse_cstr_t ea;
+	qse_xstr_t ea;
 	int left, right, mid, n;
 
 	left = 0; right = QSE_COUNTOF(fnctab) - 1;
@@ -286,7 +286,7 @@ static int query (qse_awk_mod_t* mod, qse_awk_t* awk, const qse_char_t* name, qs
      }
 #endif
 
-	ea.ptr = name;
+	ea.ptr = (qse_char_t*)name;
 	ea.len = qse_strlen(name);
 	qse_awk_seterror (awk, QSE_AWK_ENOENT, &ea, QSE_NULL);
 	return -1;

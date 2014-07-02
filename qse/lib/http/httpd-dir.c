@@ -31,10 +31,10 @@
 typedef struct task_dir_t task_dir_t;
 struct task_dir_t
 {
-	qse_mcstr_t        path;
-	qse_mcstr_t        qpath;
-	qse_mcstr_t        head;
-	qse_mcstr_t        foot;
+	qse_mxstr_t        path;
+	qse_mxstr_t        qpath;
+	qse_mxstr_t        head;
+	qse_mxstr_t        foot;
 	qse_http_version_t version;
 	int                keepalive;
 	int                method;
@@ -48,10 +48,10 @@ struct task_dseg_t
 	int                keepalive;
 	int                chunked;
 	
-	qse_mcstr_t path;
-	qse_mcstr_t qpath;
-	qse_mcstr_t head;
-	qse_mcstr_t foot;
+	qse_mxstr_t path;
+	qse_mxstr_t qpath;
+	qse_mxstr_t head;
+	qse_mxstr_t foot;
 	qse_ubi_t handle;
 	qse_httpd_dirent_t dent;
 

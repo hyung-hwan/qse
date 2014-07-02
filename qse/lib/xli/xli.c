@@ -225,7 +225,7 @@ static void insert_atom (
 
 static qse_xli_pair_t* insert_pair (
 	qse_xli_t* xli, qse_xli_list_t* parent, qse_xli_atom_t* peer,
-	const qse_cstr_t* key, const qse_cstr_t* alias, const qse_cstr_t* keytag, qse_xli_val_t* value)
+	const qse_xstr_t* key, const qse_xstr_t* alias, const qse_xstr_t* keytag, qse_xli_val_t* value)
 {
 	qse_xli_pair_t* pair;
 	qse_size_t alen, tlen;
@@ -270,9 +270,9 @@ qse_xli_pair_t* qse_xli_insertpair (
 	const qse_char_t* key, const qse_char_t* alias, 
 	const qse_char_t* keytag, qse_xli_val_t* value)
 {
-	qse_cstr_t k;
-	qse_cstr_t a, * ap = QSE_NULL;
-	qse_cstr_t t, * tp = QSE_NULL;
+	qse_xstr_t k;
+	qse_xstr_t a, * ap = QSE_NULL;
+	qse_xstr_t t, * tp = QSE_NULL;
 
 	k.ptr = key;
 	k.len = qse_strlen (key);
@@ -312,7 +312,7 @@ qse_xli_pair_t* qse_xli_insertpairwithemptylist (
 qse_xli_pair_t* qse_xli_insertpairwithstr (
 	qse_xli_t* xli, qse_xli_list_t* parent, qse_xli_atom_t* peer,
 	const qse_char_t* key, const qse_char_t* alias, const qse_char_t* keytag,
-	const qse_cstr_t* value, const qse_char_t* strtag)
+	const qse_xstr_t* value, const qse_char_t* strtag)
 {
 	qse_xli_str_t* val;
 	qse_xli_pair_t* tmp;
@@ -344,7 +344,7 @@ qse_xli_pair_t* qse_xli_insertpairwithstr (
 qse_xli_pair_t* qse_xli_insertpairwithstrs (
 	qse_xli_t* xli, qse_xli_list_t* parent, qse_xli_atom_t* peer,
 	const qse_char_t* key, const qse_char_t* alias, const qse_char_t* keytag,
-	const qse_cstr_t value[], qse_size_t count)
+	const qse_xstr_t value[], qse_size_t count)
 {
 	qse_xli_pair_t* tmp;
 	qse_xli_str_t* str;
@@ -534,7 +534,7 @@ qse_xli_list_t* qse_xli_yieldroot (qse_xli_t* xli)
 /* ------------------------------------------------------ */
 
 static qse_size_t count_pairs_by_key (
-	qse_xli_t* xli, const qse_xli_list_t* list, const qse_cstr_t* key)
+	qse_xli_t* xli, const qse_xli_list_t* list, const qse_xstr_t* key)
 {
 	qse_xli_atom_t* p;
 	qse_size_t count = 0;
@@ -557,7 +557,7 @@ static qse_size_t count_pairs_by_key (
 
 static qse_xli_pair_t* find_pair_by_key_and_alias (
 	qse_xli_t* xli, const qse_xli_list_t* list, 
-	const qse_cstr_t* key, const qse_cstr_t* alias)
+	const qse_xstr_t* key, const qse_xstr_t* alias)
 {
 	qse_xli_atom_t* p;
 
@@ -583,7 +583,7 @@ static qse_xli_pair_t* find_pair_by_key_and_alias (
 
 static qse_xli_pair_t* find_pair_by_key_and_index (
 	qse_xli_t* xli, const qse_xli_list_t* list, 
-	const qse_cstr_t* key, qse_size_t index)
+	const qse_xstr_t* key, qse_size_t index)
 {
 	qse_xli_atom_t* p;
 	qse_size_t count = 0;
@@ -611,8 +611,8 @@ static qse_xli_pair_t* find_pair_by_key_and_index (
 
 struct fqpn_seg_t
 {
-	qse_cstr_t ki; /* key + index */
-	qse_cstr_t key;
+	qse_xstr_t ki; /* key + index */
+	qse_xstr_t key;
 	enum
 	{
 		FQPN_SEG_IDX_NONE,
@@ -623,7 +623,7 @@ struct fqpn_seg_t
 	union
 	{
 		qse_size_t number;
-		qse_cstr_t alias;	
+		qse_xstr_t alias;	
 	} idx;
 };
 
@@ -835,7 +835,7 @@ noent:
 }
 
 qse_xli_str_t* qse_xli_addsegtostr (
-	qse_xli_t* xli, qse_xli_str_t* str, const qse_char_t* tag, const qse_cstr_t* value)
+	qse_xli_t* xli, qse_xli_str_t* str, const qse_char_t* tag, const qse_xstr_t* value)
 {
 	qse_xli_str_t* val;
 	qse_size_t reqlen;
@@ -917,7 +917,7 @@ int qse_xli_undefinepair (qse_xli_t* xli, const qse_char_t* fqpn)
 {
 	if (qse_rbt_delete (xli->schema, fqpn, qse_strlen(fqpn)) <= -1)
 	{
-		qse_cstr_t ea;
+		qse_xstr_t ea;
 		ea.ptr = fqpn;
 		ea.len = qse_strlen (ea.ptr);
 		qse_xli_seterrnum (xli, QSE_XLI_ENOENT, &ea);

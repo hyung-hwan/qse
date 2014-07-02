@@ -561,7 +561,7 @@ QSE_EXPORT void qse_sed_geterror (
 QSE_EXPORT void qse_sed_seterrnum (
 	qse_sed_t*        sed,    /**< stream editor */
 	qse_sed_errnum_t  errnum, /**< error number */
-	const qse_cstr_t* errarg  /**< argument for formatting error message */
+	const qse_xstr_t* errarg  /**< argument for formatting error message */
 );
 
 /**
@@ -583,7 +583,7 @@ QSE_EXPORT void qse_sed_seterrmsg (
 QSE_EXPORT void qse_sed_seterror (
 	qse_sed_t*           sed,    /**< stream editor */
 	qse_sed_errnum_t     errnum, /**< error number */
-	const qse_cstr_t*    errarg, /**< array of arguments for formatting 
+	const qse_xstr_t*    errarg, /**< array of arguments for formatting 
 	                              *   an error message */
 	const qse_sed_loc_t* errloc  /**< error location */
 );
@@ -722,7 +722,7 @@ QSE_EXPORT void qse_sed_freemem (
 QSE_EXPORT void qse_sed_getspace (
 	qse_sed_t*      sed,
 	qse_sed_space_t space,
-	qse_cstr_t*     str
+	qse_xstr_t*     str
 );
 
 #ifdef __cplusplus

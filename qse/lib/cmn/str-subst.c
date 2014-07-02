@@ -23,7 +23,7 @@
 /* ----------------------------------- */
 
 #undef char_t
-#undef cstr_t
+#undef xstr_t
 #undef T
 #undef NOBUF
 #undef strlen
@@ -34,7 +34,7 @@
 #undef strxnsubst
 
 #define char_t qse_mchar_t
-#define cstr_t qse_mcstr_t
+#define xstr_t qse_mxstr_t
 #define T(x) QSE_MT(x)
 #define NOBUF QSE_MBSSUBST_NOBUF
 #define strlen qse_mbslen
@@ -48,7 +48,7 @@
 /* ----------------------------------- */
 
 #undef char_t
-#undef cstr_t
+#undef xstr_t
 #undef T
 #undef NOBUF
 #undef strlen
@@ -59,7 +59,7 @@
 #undef strxnsubst
 
 #define char_t qse_wchar_t
-#define cstr_t qse_wcstr_t
+#define xstr_t qse_wxstr_t
 #define T(x) QSE_WT(x)
 #define NOBUF QSE_WCSSUBST_NOBUF
 #define strlen qse_wcslen

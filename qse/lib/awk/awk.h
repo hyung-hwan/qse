@@ -88,7 +88,7 @@ struct qse_awk_tree_t
 {
 	qse_size_t ngbls; /* total number of globals */
 	qse_size_t ngbls_base; /* number of intrinsic globals */
-	qse_cstr_t cur_fun;
+	qse_xstr_t cur_fun;
 	qse_htb_t* funs; /* awk function map */
 
 	qse_awk_nde_t* begin;

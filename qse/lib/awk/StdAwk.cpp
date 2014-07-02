@@ -81,8 +81,8 @@ static qse_sio_t* open_sio (Awk* awk, StdAwk::Run* run, const qse_char_t* file, 
 	sio = qse_sio_open ((run? ((Awk*)*run)->getMmgr(): awk->getMmgr()), 0, file, flags);
 	if (sio == QSE_NULL)
 	{
-		qse_cstr_t ea;
-		ea.ptr = file;
+		qse_xstr_t ea;
+		ea.ptr = (StdAwk::char_t*)file;
 		ea.len = qse_strlen (file);
 		if (run) run->setError (QSE_AWK_EOPEN, &ea);
 		else awk->setError (QSE_AWK_EOPEN, &ea);
@@ -93,7 +93,7 @@ static qse_sio_t* open_sio (Awk* awk, StdAwk::Run* run, const qse_char_t* file, 
 static qse_sio_t* open_sio_std (Awk* awk, StdAwk::Run* run, qse_sio_std_t std, int flags)
 {
 	qse_sio_t* sio;
-	static const qse_char_t* std_names[] =
+	static const StdAwk::char_t* std_names[] =
 	{
 		QSE_T("stdin"),
 		QSE_T("stdout"),
@@ -104,8 +104,8 @@ static qse_sio_t* open_sio_std (Awk* awk, StdAwk::Run* run, qse_sio_std_t std, i
 	sio = qse_sio_openstd ((run? ((Awk*)*run)->getMmgr(): awk->getMmgr()), 0, std, flags);
 	if (sio == QSE_NULL)
 	{
-		qse_cstr_t ea;
-		ea.ptr = std_names[std];
+		qse_xstr_t ea;
+		ea.ptr = (StdAwk::char_t*)std_names[std];
 		ea.len = qse_strlen (std_names[std]);
 		if (run) run->setError (QSE_AWK_EOPEN, &ea);
 		else awk->setError (QSE_AWK_EOPEN, &ea);
@@ -898,8 +898,8 @@ int StdAwk::open_console_in (Console& io)
 
 		if (qse_strlen(file) != this->runarg.ptr[this->runarg_index].len)
 		{
-			cstr_t arg;
-			arg.ptr = file;
+			xstr_t arg;
+			arg.ptr = (char_t*)file;
 			arg.len = qse_strlen (arg.ptr);
 			((Run*)io)->setError (QSE_AWK_EIONMNL, &arg);
 			return -1;
@@ -947,7 +947,7 @@ int StdAwk::open_console_in (Console& io)
 		if (qse_strlen(as.ptr) < as.len)
 		{
 			/* the name contains one or more '\0' */
-			cstr_t arg;
+			xstr_t arg;
 			arg.ptr = as.ptr;
 			arg.len = qse_strlen (as.ptr);
 			((Run*)io)->setError (QSE_AWK_EIONMNL, &arg);
@@ -1031,8 +1031,8 @@ int StdAwk::open_console_out (Console& io)
 
 		if (qse_strlen(file) != this->ofile.ptr[this->ofile_index].len)
 		{	
-			cstr_t arg;
-			arg.ptr = file;
+			xstr_t arg;
+			arg.ptr = (char_t*)file;
 			arg.len = qse_strlen (arg.ptr);
 			((Run*)io)->setError (QSE_AWK_EIONMNL, &arg);
 			return -1;

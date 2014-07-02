@@ -111,7 +111,7 @@ void qse_sed_geterror (
 }
 
 void qse_sed_seterrnum (
-	qse_sed_t* sed, qse_sed_errnum_t errnum, const qse_cstr_t* errarg)
+	qse_sed_t* sed, qse_sed_errnum_t errnum, const qse_xstr_t* errarg)
 {
 	qse_sed_seterror (sed, errnum, errarg, QSE_NULL);
 }
@@ -128,7 +128,7 @@ void qse_sed_seterrmsg (
 
 void qse_sed_seterror (
 	qse_sed_t* sed, qse_sed_errnum_t errnum,
-	const qse_cstr_t* errarg, const qse_sed_loc_t* errloc)
+	const qse_xstr_t* errarg, const qse_sed_loc_t* errloc)
 {
 	const qse_char_t* errfmt;
 

@@ -15,8 +15,8 @@ static int rex_main (int argc, qse_char_t* argv[])
 {
 	qse_rex_t* rex;
 	qse_rex_node_t* start;
-	qse_cstr_t str;
-	qse_cstr_t matstr;
+	qse_xstr_t str;
+	qse_xstr_t matstr;
 	int n;
 
 	if (argc != 3)

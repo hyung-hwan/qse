@@ -146,7 +146,7 @@ public:
 	///
 	void setError (
 		errnum_t      code, ///< error code
-		const cstr_t* args  = QSE_NULL, ///< message formatting 
+		const xstr_t* args  = QSE_NULL, ///< message formatting 
 		                                ///  argument array
 		const loc_t*  loc   = QSE_NULL  ///< error location
 	);
@@ -525,7 +525,7 @@ public:
 		///
 		/// The Index class encapsulates an index of an arrayed value.
 		///
-		class QSE_EXPORT Index: protected qse_cstr_t
+		class QSE_EXPORT Index: protected qse_xstr_t
 		{
 		public:
 			friend class Value;
@@ -533,33 +533,21 @@ public:
 			/// The Index() function creates an empty array index.
 			Index ()
 			{
-				this->ptr = Value::getEmptyStr();
+				this->ptr = (char_t*)Value::getEmptyStr();
 				this->len = 0;
 			}
 
 			/// The Index() function creates a string array index.
 			Index (const char_t* ptr, size_t len)
 			{
-				this->ptr = ptr;
+				this->ptr = (char_t*)ptr;
 				this->len = len;
-			}
-
-			void set (const qse_cstr_t* x)
-			{
-				this->ptr = x->ptr;
-				this->len = x->len;
 			}
 
 			void set (const qse_xstr_t* x)
 			{
 				this->ptr = x->ptr;
 				this->len = x->len;
-			}
-
-			Index& operator= (const qse_cstr_t* x)
-			{
-				this->set (x);
-				return *this;
 			}
 
 			Index& operator= (const qse_xstr_t* x)
@@ -870,7 +858,7 @@ public:
 
 		void setError (
 			errnum_t      code, 
-			const cstr_t* args = QSE_NULL,
+			const xstr_t* args = QSE_NULL,
 			const loc_t*  loc  = QSE_NULL
 		);
 

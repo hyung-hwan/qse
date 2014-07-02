@@ -64,7 +64,7 @@ qse_size_t strfcpy (
 }
 
 qse_size_t strfncpy (
-	char_t* buf, const char_t* fmt, const cstr_t str[])
+	char_t* buf, const char_t* fmt, const xstr_t str[])
 {
 	char_t* b = buf;
 	const char_t* f = fmt;
@@ -181,7 +181,7 @@ fini:
 
 qse_size_t strxfncpy (
 	char_t* buf, qse_size_t bsz, 
-	const char_t* fmt, const cstr_t str[])
+	const char_t* fmt, const xstr_t str[])
 {
 	char_t* b = buf;
 	char_t* end = buf + bsz - 1;

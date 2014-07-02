@@ -31,7 +31,7 @@
 typedef struct task_file_t task_file_t;
 struct task_file_t
 {
-	qse_mcstr_t path;
+	qse_mxstr_t path;
 
 	qse_http_version_t version;
 	int                keepalive;
@@ -41,7 +41,7 @@ struct task_file_t
 	{
 		struct
 		{
-			qse_mcstr_t mime;
+			qse_mxstr_t mime;
 			qse_mchar_t if_none_match[ETAG_LEN_MAX + 1];
 			qse_ntime_t if_modified_since;
 			qse_http_range_t range;

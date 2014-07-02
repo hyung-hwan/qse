@@ -70,8 +70,6 @@ public:
 	/** redefines a floating-point number */
 	typedef qse_flt_t flt_t;
 
-	/** redefines a structure of a constant character pointer and length */
-	typedef qse_cstr_t cstr_t;
 	/** redefines a structure of a character pointer and length */
 	typedef qse_xstr_t  xstr_t;
 };

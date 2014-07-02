@@ -114,7 +114,7 @@ static qse_sio_t* open_sio (qse_xli_t* xli, const qse_char_t* file, int flags)
 	sio = qse_sio_open (xli->mmgr, 0, file, flags);
 	if (sio == QSE_NULL)
 	{
-		qse_cstr_t errarg;
+		qse_xstr_t errarg;
 		errarg.ptr = file;
 		errarg.len = qse_strlen(file);
 		qse_xli_seterrnum (xli, QSE_XLI_EIOFIL, &errarg);
@@ -122,7 +122,7 @@ static qse_sio_t* open_sio (qse_xli_t* xli, const qse_char_t* file, int flags)
 	return sio;
 }
 
-static qse_cstr_t sio_std_names[] =
+static qse_xstr_t sio_std_names[] =
 {
 	{ QSE_T("stdin"),   5 },
 	{ QSE_T("stdout"),  6 },
@@ -232,7 +232,7 @@ static qse_ssize_t sf_in_open (qse_xli_t* xli, qse_xli_io_arg_t* arg, xtn_t* xtn
 		if (dbuf) QSE_MMGR_FREE (xli->mmgr, dbuf);
 		if (arg->handle == QSE_NULL)
 		{
-			qse_cstr_t ea;
+			qse_xstr_t ea;
 			ea.ptr = arg->name;
 			ea.len = qse_strlen(ea.ptr);
 			qse_xli_seterrnum (xli, QSE_XLI_EIOFIL, &ea);
@@ -290,7 +290,7 @@ static qse_ssize_t sf_in_read (
 				n = qse_sio_getstrn (arg->handle, data, size);
 				if (n <= -1)
 				{
-					qse_cstr_t ea;
+					qse_xstr_t ea;
 					ea.ptr = xtn->s.in.x->u.file.path;
 					if (ea.ptr == QSE_NULL) ea.ptr = sio_std_names[QSE_SIO_STDIN].ptr;
 					ea.len = qse_strlen(ea.ptr);
@@ -326,7 +326,7 @@ static qse_ssize_t sf_in_read (
 		n = qse_sio_getstrn (arg->handle, data, size);
 		if (n <= -1)
 		{
-			qse_cstr_t ea;
+			qse_xstr_t ea;
 			ea.ptr = arg->name;
 			ea.len = qse_strlen(ea.ptr);
 			qse_xli_seterrnum (xli, QSE_XLI_EIOFIL, &ea);
@@ -459,7 +459,7 @@ static qse_ssize_t sf_out_open (qse_xli_t* xli, qse_xli_io_arg_t* arg, xtn_t* xt
 		if (dbuf) QSE_MMGR_FREE (xli->mmgr, dbuf);
 		if (arg->handle == QSE_NULL)
 		{
-			qse_cstr_t ea;
+			qse_xstr_t ea;
 			ea.ptr = arg->name;
 			ea.len = qse_strlen(ea.ptr);
 			qse_xli_seterrnum (xli, QSE_XLI_EIOFIL, &ea);
@@ -517,7 +517,7 @@ static qse_ssize_t sf_out_write (
 				n = qse_sio_putstrn (arg->handle, data, size);
 				if (n <= -1)
 				{
-					qse_cstr_t ea;
+					qse_xstr_t ea;
 					ea.ptr = xtn->s.out.x->u.file.path;
 					if (ea.ptr == QSE_NULL) ea.ptr = sio_std_names[QSE_SIO_STDOUT].ptr;
 					ea.len = qse_strlen(ea.ptr);
@@ -555,7 +555,7 @@ static qse_ssize_t sf_out_write (
 		n = qse_sio_putstrn (arg->handle, data, size);
 		if (n <= -1)
 		{
-			qse_cstr_t ea;
+			qse_xstr_t ea;
 			ea.ptr = arg->name;
 			ea.len = qse_strlen(ea.ptr);
 			qse_xli_seterrnum (xli, QSE_XLI_EIOFIL, &ea);

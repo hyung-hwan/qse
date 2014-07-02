@@ -219,7 +219,7 @@ static QSE_INLINE int resolve_rs (
 static QSE_INLINE int match_long_rs (
 	qse_awk_rtx_t* run, qse_str_t* buf, qse_awk_rio_arg_t* p)
 {
-	qse_cstr_t match;
+	qse_xstr_t match;
 	qse_awk_errnum_t errnum;
 	int ret;
 
@@ -228,7 +228,7 @@ static QSE_INLINE int match_long_rs (
 
 	ret = qse_awk_matchrex (
 		run->awk, run->gbl.rs[run->gbl.ignorecase], 
-		run->gbl.ignorecase, QSE_STR_CSTR(buf), QSE_STR_CSTR(buf),
+		run->gbl.ignorecase, QSE_STR_XSTR(buf), QSE_STR_XSTR(buf),
 		&match, &errnum);
 	if (ret <= -1)
 	{
