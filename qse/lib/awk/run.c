@@ -77,7 +77,7 @@ struct pafv
 
 #define SETERR_ARG_LOC(rtx,code,ep,el,loc) \
 	do { \
-		qse_xstr_t __ea; \
+		qse_cstr_t __ea; \
 		__ea.len = (el); __ea.ptr = (ep); \
 		qse_awk_rtx_seterror ((rtx), (code), &__ea, (loc)); \
 	} while (0)
@@ -278,7 +278,7 @@ QSE_INLINE qse_awk_val_t* qse_awk_rtx_getgbl (qse_awk_rtx_t* run, int id)
 	return RTX_STACK_GBL (run, id);
 }
 
-const qse_xstr_t* qse_awk_rtx_getsubsep (qse_awk_rtx_t* run)
+const qse_cstr_t* qse_awk_rtx_getsubsep (qse_awk_rtx_t* run)
 {
 	return &run->gbl.subsep;
 }
@@ -347,7 +347,7 @@ static int set_global (
 			else
 			{
 				/* qse_awk_rtx_setgbl() has been called */
-				qse_xstr_t ea;
+				qse_cstr_t ea;
 				ea.ptr = (qse_char_t*)qse_awk_getgblname (rtx->awk, idx, &ea.len);
 				SETERR_ARGX (rtx, errnum, &ea);
 			}
@@ -367,7 +367,7 @@ static int set_global (
 
 /* TODO: use global variable attribute. can it be a map? can it be a scalar? is it read-only???? */
 
-			qse_xstr_t ea;
+			qse_cstr_t ea;
 			ea.ptr = (qse_char_t*)qse_awk_getgblname (rtx->awk, idx, &ea.len);
 			SETERR_ARGX (rtx, QSE_AWK_ENSCALARTOMAP, &ea);
 			return -1;
@@ -578,7 +578,7 @@ static int set_global (
 
 		case QSE_AWK_GBL_RS:
 		{
-			qse_xstr_t rss;
+			qse_cstr_t rss;
 
 			if (val->type == QSE_AWK_VAL_STR)
 			{
@@ -1527,7 +1527,7 @@ qse_awk_fun_t* qse_awk_rtx_findfun (qse_awk_rtx_t* rtx, const qse_char_t* name)
 
 	if (pair == QSE_NULL)
 	{
-		qse_xstr_t nm;
+		qse_cstr_t nm;
 
 		nm.ptr = (qse_char_t*)name;
 		nm.len = qse_strlen(name);
@@ -3214,7 +3214,7 @@ static qse_awk_val_t* eval_expression (qse_awk_rtx_t* rtx, qse_awk_nde_t* nde)
 
 	if (v->type == QSE_AWK_VAL_REX)
 	{
-		qse_xstr_t vs;
+		qse_cstr_t vs;
 		int opt = 0;
 
 		/* special case where a regular expression is used in
@@ -3767,7 +3767,7 @@ static qse_awk_val_t* do_assignment_pos (
 {
 	qse_awk_val_t* v;
 	qse_awk_int_t lv;
-	qse_xstr_t str;
+	qse_cstr_t str;
 	int n;
 
 	v = eval_expression (run, pos->val);
@@ -4952,7 +4952,7 @@ static qse_awk_val_t* eval_binop_match0 (
 	const qse_awk_loc_t* lloc, const qse_awk_loc_t* rloc, int ret)
 {
 	qse_awk_val_t* res;
-	qse_xstr_t out;
+	qse_cstr_t out;
 	int n;
 
 	out.ptr = qse_awk_rtx_getvalstr (rtx, left, &out.len);
@@ -6726,7 +6726,7 @@ static qse_char_t* idxnde_to_str (
 	{
 		/* multidimensional index */
 		qse_str_t idxstr;
-		qse_xstr_t tmp;
+		qse_cstr_t tmp;
 		qse_awk_rtx_valtostr_out_t out;
 
 		out.type = QSE_AWK_RTX_VALTOSTR_STRPCAT;

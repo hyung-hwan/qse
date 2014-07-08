@@ -191,7 +191,7 @@ static int find_rio_in (
 }
 
 static QSE_INLINE int resolve_rs (
-	qse_awk_rtx_t* rtx, qse_awk_val_t* rs, qse_xstr_t* rrs)
+	qse_awk_rtx_t* rtx, qse_awk_val_t* rs, qse_cstr_t* rrs)
 {
 	int ret = 0;
 
@@ -219,7 +219,7 @@ static QSE_INLINE int resolve_rs (
 static QSE_INLINE int match_long_rs (
 	qse_awk_rtx_t* run, qse_str_t* buf, qse_awk_rio_arg_t* p)
 {
-	qse_xstr_t match;
+	qse_cstr_t match;
 	qse_awk_errnum_t errnum;
 	int ret;
 
@@ -294,7 +294,7 @@ int qse_awk_rtx_readio (
 	int ret;
 
 	qse_awk_val_t* rs;
-	qse_xstr_t rrs;
+	qse_cstr_t rrs;
 
 	qse_size_t line_len = 0;
 	qse_char_t c = QSE_T('\0'), pc;

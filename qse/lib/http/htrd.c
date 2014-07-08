@@ -187,7 +187,7 @@ void qse_htrd_fini (qse_htrd_t* htrd)
 static qse_mchar_t* parse_initial_line (qse_htrd_t* htrd, qse_mchar_t* line)
 {
 	qse_mchar_t* p = line;
-	qse_mxstr_t tmp;
+	qse_mcstr_t tmp;
 
 #if 0
 	/* ignore leading spaces excluding crlf */
@@ -294,7 +294,7 @@ static qse_mchar_t* parse_initial_line (qse_htrd_t* htrd, qse_mchar_t* line)
 #if 0
 		qse_mchar_t* out;
 #endif
-		qse_mxstr_t param;
+		qse_mcstr_t param;
 
 		/* skip spaces */
 		do p++; while (is_space_octet(*p));
@@ -1501,9 +1501,9 @@ int qse_htrd_halt (qse_htrd_t* htrd)
 }
 
 #if 0
-int qse_htrd_scanqparam (qse_htrd_t* htrd, const qse_mxstr_t* cstr)
+int qse_htrd_scanqparam (qse_htrd_t* htrd, const qse_mcstr_t* cstr)
 {
-	qse_mxstr_t key, val;
+	qse_mcstr_t key, val;
 	const qse_mchar_t* p, * end;
 	qse_mchar_t* out;
 

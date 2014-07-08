@@ -98,7 +98,7 @@ static int awk_main (int argc, qse_char_t* argv[])
 		iptr = qse_awk_rtx_getfirstmapvalitr (rtx, rtv, &itr);
 		while (iptr)
 		{
-			qse_xstr_t str;
+			qse_cstr_t str;
 
 			/* #QSE_AWK_VAL_MAP_ITR_VAL returns the value part */
 			str.ptr = qse_awk_rtx_valtostrdup (
@@ -125,7 +125,7 @@ static int awk_main (int argc, qse_char_t* argv[])
 	{
 		/* if it is a plain value, convert it to a string
 		 * and print it */
-		qse_xstr_t str;
+		qse_cstr_t str;
 
 		str.ptr = qse_awk_rtx_valtostrdup (rtx, rtv, &str.len);
 		if (str.ptr == QSE_NULL)

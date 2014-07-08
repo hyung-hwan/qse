@@ -30,7 +30,7 @@ static int fnc_normspace (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	 * - trim leading and trailing spaces
 	 * - replace a series of spaces to a single space
 	 */
-	qse_xstr_t path;
+	qse_cstr_t path;
 	qse_awk_val_t* retv;
 	qse_awk_val_t* a0;
 
@@ -50,7 +50,7 @@ static int fnc_normspace (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 
 static int trim (qse_awk_rtx_t* rtx, int flags)
 {
-	qse_xstr_t path;
+	qse_cstr_t path;
 	qse_char_t* npath;
 	qse_awk_val_t* retv;
 	qse_awk_val_t* a0;
@@ -181,7 +181,7 @@ static int fnc_isxdigit (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 static int fnc_value (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
 	/* return the numeric value for the first character */
-	qse_xstr_t path;
+	qse_cstr_t path;
 	qse_awk_val_t* retv;
 	qse_awk_val_t* a0;
 
@@ -248,7 +248,7 @@ static fnctab_t fnctab[] =
 
 static int query (qse_awk_mod_t* mod, qse_awk_t* awk, const qse_char_t* name, qse_awk_mod_sym_t* sym)
 {
-	qse_xstr_t ea;
+	qse_cstr_t ea;
 	int left, right, mid, n;
 
 	left = 0; right = QSE_COUNTOF(fnctab) - 1;

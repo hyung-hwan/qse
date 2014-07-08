@@ -603,7 +603,7 @@ struct xarg_t
 
 typedef struct xarg_t xarg_t;
 
-static int collect_into_xarg (const qse_xstr_t* path, void* ctx)
+static int collect_into_xarg (const qse_cstr_t* path, void* ctx)
 {
 	xarg_t* xarg = (xarg_t*)ctx;
 
@@ -644,7 +644,7 @@ static void purge_xarg (xarg_t* xarg)
 static int expand_wildcards (int argc, qse_char_t* argv[], int glob, xarg_t* xarg)
 {
 	int i;
-	qse_xstr_t tmp;
+	qse_cstr_t tmp;
 
 	for (i = 0; i < argc; i++)
 	{

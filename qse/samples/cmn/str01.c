@@ -122,7 +122,7 @@ static int test3 ()
 static int test4 ()
 {
 	qse_str_t s1;
-	qse_xstr_t out;
+	qse_cstr_t out;
 
 	qse_str_init (&s1, QSE_MMGR_GETDFL(), 0);
 
@@ -236,7 +236,7 @@ static int test12 (void)
 	return 0;
 }
 
-qse_char_t* subst (qse_char_t* buf, qse_size_t bsz, const qse_xstr_t* ident, void* ctx)
+qse_char_t* subst (qse_char_t* buf, qse_size_t bsz, const qse_cstr_t* ident, void* ctx)
 {
 	if (qse_strxcmp (ident->ptr, ident->len, QSE_T("USER")) == 0)
 	{

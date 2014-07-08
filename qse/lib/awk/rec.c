@@ -22,10 +22,10 @@
 
 static int split_record (qse_awk_rtx_t* run);
 static int recomp_record_fields (
-	qse_awk_rtx_t* run, qse_size_t lv, const qse_xstr_t* str);
+	qse_awk_rtx_t* run, qse_size_t lv, const qse_cstr_t* str);
 
 int qse_awk_rtx_setrec (
-	qse_awk_rtx_t* run, qse_size_t idx, const qse_xstr_t* str)
+	qse_awk_rtx_t* run, qse_size_t idx, const qse_cstr_t* str)
 {
 	qse_awk_val_t* v;
 
@@ -94,7 +94,7 @@ int qse_awk_rtx_setrec (
 
 static int split_record (qse_awk_rtx_t* rtx)
 {
-	qse_xstr_t tok;
+	qse_cstr_t tok;
 	qse_char_t* p, * px;
 	qse_size_t len, nflds;
 	qse_awk_val_t* v, * fs;
@@ -390,7 +390,7 @@ int qse_awk_rtx_clrrec (qse_awk_rtx_t* run, int skip_inrec_line)
 }
 
 static int recomp_record_fields (
-	qse_awk_rtx_t* run, qse_size_t lv, const qse_xstr_t* str)
+	qse_awk_rtx_t* run, qse_size_t lv, const qse_cstr_t* str)
 {
 	qse_awk_val_t* v;
 	qse_size_t max, i, nflds;

@@ -391,7 +391,7 @@ void qse_awk_setprm (qse_awk_t* awk, const qse_awk_prm_t* prm)
 	awk->prm = *prm;
 }
 
-static int dup_str_opt (qse_awk_t* awk, const void* value, qse_xstr_t* tmp)
+static int dup_str_opt (qse_awk_t* awk, const void* value, qse_cstr_t* tmp)
 {
 	if (value)
 	{
@@ -423,7 +423,7 @@ int qse_awk_setopt (qse_awk_t* awk, qse_awk_opt_t id, const void* value)
 		case QSE_AWK_MODPREFIX:
 		case QSE_AWK_MODPOSTFIX:
 		{
-			qse_xstr_t tmp;
+			qse_cstr_t tmp;
 			int idx;
 
 			if (dup_str_opt (awk, value, &tmp) <= -1) return -1;
@@ -438,7 +438,7 @@ int qse_awk_setopt (qse_awk_t* awk, qse_awk_opt_t id, const void* value)
 
 		case QSE_AWK_INCLUDEDIRS:
 		{
-			qse_xstr_t tmp;
+			qse_cstr_t tmp;
 			if (dup_str_opt (awk, value, &tmp) <= -1) return -1;
 			if (awk->opt.incldirs.ptr)
 				QSE_MMGR_FREE (awk->mmgr, awk->opt.incldirs.ptr);

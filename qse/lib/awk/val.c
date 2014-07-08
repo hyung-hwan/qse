@@ -202,7 +202,7 @@ qse_awk_val_t* qse_awk_rtx_makefltval (qse_awk_rtx_t* rtx, qse_awk_flt_t v)
 }
 
 qse_awk_val_t* qse_awk_rtx_makestrvalwithxstr (
-	qse_awk_rtx_t* rtx, const qse_xstr_t* str)
+	qse_awk_rtx_t* rtx, const qse_cstr_t* str)
 {
 	qse_awk_val_str_t* val = QSE_NULL;
 	qse_size_t rlen = str->len;
@@ -256,7 +256,7 @@ qse_awk_val_t* qse_awk_rtx_makestrvalwithmbs (
 	return qse_awk_rtx_makestrval (rtx, mbs, qse_mbslen(mbs));
 #else
 	qse_awk_val_t* v;
-	qse_wxstr_t tmp;
+	qse_wcstr_t tmp;
 
 	tmp.ptr = qse_mbstowcsdup (mbs, &tmp.len, rtx->awk->mmgr);
 	if (tmp.ptr == QSE_NULL)
@@ -276,7 +276,7 @@ qse_awk_val_t* qse_awk_rtx_makestrvalwithwcs (
 {
 #if defined(QSE_CHAR_IS_MCHAR)
 	qse_awk_val_t* v;
-	qse_mxstr_t tmp;
+	qse_mcstr_t tmp;
 
 	tmp.ptr = qse_wcstombsdup (wcs, &tmp.len, rtx->awk->mmgr);
 	if (tmp.ptr == QSE_NULL)
@@ -300,13 +300,13 @@ qse_awk_val_t* qse_awk_rtx_makestrvalwithstr (
 }
 
 qse_awk_val_t* qse_awk_rtx_makestrvalwithmxstr (
-	qse_awk_rtx_t* rtx, const qse_mxstr_t* mxstr)
+	qse_awk_rtx_t* rtx, const qse_mcstr_t* mxstr)
 {
 #if defined(QSE_CHAR_IS_MCHAR)
 	return qse_awk_rtx_makestrvalwithxstr (rtx, mxstr);
 #else
 	qse_awk_val_t* v;
-	qse_wxstr_t tmp;
+	qse_wcstr_t tmp;
 	qse_size_t mbslen;
 
 	mbslen = mxstr->len;
@@ -324,11 +324,11 @@ qse_awk_val_t* qse_awk_rtx_makestrvalwithmxstr (
 }
 
 qse_awk_val_t* qse_awk_rtx_makestrvalwithwxstr (
-	qse_awk_rtx_t* rtx, const qse_wxstr_t* wxstr)
+	qse_awk_rtx_t* rtx, const qse_wcstr_t* wxstr)
 {
 #if defined(QSE_CHAR_IS_MCHAR)
 	qse_awk_val_t* v;
-	qse_mxstr_t tmp;
+	qse_mcstr_t tmp;
 	qse_size_t wcslen;
 
 	wcslen = wxstr->len;
@@ -350,7 +350,7 @@ qse_awk_val_t* qse_awk_rtx_makestrvalwithwxstr (
 qse_awk_val_t* qse_awk_rtx_makestrval (
 	qse_awk_rtx_t* rtx, const qse_char_t* str, qse_size_t len)
 {
-	qse_xstr_t xstr;
+	qse_cstr_t xstr;
 	xstr.ptr = (qse_char_t*)str;
 	xstr.len = len;
 	return qse_awk_rtx_makestrvalwithxstr (rtx, &xstr);
@@ -409,13 +409,13 @@ init:
 
 qse_awk_val_t* qse_awk_rtx_makenstrvalwithstr (qse_awk_rtx_t* rtx, const qse_char_t* str)
 {
-	qse_xstr_t xstr;
+	qse_cstr_t xstr;
 	xstr.ptr = (qse_char_t*)str;
 	xstr.len = qse_strlen(str);
 	return qse_awk_rtx_makenstrvalwithxstr (rtx, &xstr);
 }
 
-qse_awk_val_t* qse_awk_rtx_makenstrvalwithxstr (qse_awk_rtx_t* rtx, const qse_xstr_t* str)
+qse_awk_val_t* qse_awk_rtx_makenstrvalwithxstr (qse_awk_rtx_t* rtx, const qse_cstr_t* str)
 {
 	int x;
 	qse_awk_val_t* v;
@@ -439,7 +439,7 @@ qse_awk_val_t* qse_awk_rtx_makenstrvalwithxstr (qse_awk_rtx_t* rtx, const qse_xs
 }
 
 qse_awk_val_t* qse_awk_rtx_makerexval (
-	qse_awk_rtx_t* rtx, const qse_xstr_t* str, void* code[2])
+	qse_awk_rtx_t* rtx, const qse_cstr_t* str, void* code[2])
 {
 	qse_awk_val_rex_t* val;
 	qse_size_t totsz;
@@ -609,17 +609,17 @@ qse_awk_val_t* qse_awk_rtx_makemapvalwithdata (qse_awk_rtx_t* rtx, qse_awk_val_m
 					
 			case QSE_AWK_VAL_MAP_DATA_XSTR:
 			case QSE_AWK_VAL_MAP_DATA_CSTR:
-				tmp = qse_awk_rtx_makestrvalwithxstr (rtx, (qse_xstr_t*)p->vptr);
+				tmp = qse_awk_rtx_makestrvalwithxstr (rtx, (qse_cstr_t*)p->vptr);
 				break;
 
 			case QSE_AWK_VAL_MAP_DATA_MXSTR:
 			case QSE_AWK_VAL_MAP_DATA_MCSTR:
-				tmp = qse_awk_rtx_makestrvalwithmxstr (rtx, (qse_mxstr_t*)p->vptr);
+				tmp = qse_awk_rtx_makestrvalwithmxstr (rtx, (qse_mcstr_t*)p->vptr);
 				break;
 
 			case QSE_AWK_VAL_MAP_DATA_WXSTR:
 			case QSE_AWK_VAL_MAP_DATA_WCSTR:
-				tmp = qse_awk_rtx_makestrvalwithwxstr (rtx, (qse_wxstr_t*)p->vptr);
+				tmp = qse_awk_rtx_makestrvalwithwxstr (rtx, (qse_wcstr_t*)p->vptr);
 				break;
 
 			default:
@@ -1770,7 +1770,7 @@ int qse_awk_rtx_setrefval (qse_awk_rtx_t* rtx, qse_awk_val_ref_t* ref, qse_awk_v
 
 				default:
 				{
-					qse_xstr_t str;
+					qse_cstr_t str;
 					int x;
 	
 					str.ptr = qse_awk_rtx_valtostrdup (rtx, val, &str.len);

@@ -69,7 +69,7 @@ qse_char_t* qse_awk_strxdup (qse_awk_t* awk, const qse_char_t* s, qse_size_t l)
 	return ptr;
 }
 
-qse_char_t* qse_awk_cstrdup (qse_awk_t* awk, const qse_xstr_t* s)
+qse_char_t* qse_awk_cstrdup (qse_awk_t* awk, const qse_cstr_t* s)
 {
 	qse_char_t* ptr = qse_cstrdup (s, awk->mmgr);
 	if (ptr == QSE_NULL) qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);
@@ -661,7 +661,7 @@ qse_size_t qse_awk_inttostr (
 
 qse_char_t* qse_awk_rtx_strtok (
 	qse_awk_rtx_t* rtx, const qse_char_t* s, 
-	const qse_char_t* delim, qse_xstr_t* tok)
+	const qse_char_t* delim, qse_cstr_t* tok)
 {
 	return qse_awk_rtx_strxntok (
 		rtx, s, qse_strlen(s), delim, qse_strlen(delim), tok);
@@ -669,7 +669,7 @@ qse_char_t* qse_awk_rtx_strtok (
 
 qse_char_t* qse_awk_rtx_strxtok (
 	qse_awk_rtx_t* rtx, const qse_char_t* s, qse_size_t len,
-	const qse_char_t* delim, qse_xstr_t* tok)
+	const qse_char_t* delim, qse_cstr_t* tok)
 {
 	return qse_awk_rtx_strxntok (
 		rtx, s, len, delim, qse_strlen(delim), tok);
@@ -678,7 +678,7 @@ qse_char_t* qse_awk_rtx_strxtok (
 qse_char_t* qse_awk_rtx_strntok (
 	qse_awk_rtx_t* rtx, const qse_char_t* s, 
 	const qse_char_t* delim, qse_size_t delim_len,
-	qse_xstr_t* tok)
+	qse_cstr_t* tok)
 {
 	return qse_awk_rtx_strxntok (
 		rtx, s, qse_strlen(s), delim, delim_len, tok);
@@ -686,7 +686,7 @@ qse_char_t* qse_awk_rtx_strntok (
 
 qse_char_t* qse_awk_rtx_strxntok (
 	qse_awk_rtx_t* rtx, const qse_char_t* s, qse_size_t len,
-	const qse_char_t* delim, qse_size_t delim_len, qse_xstr_t* tok)
+	const qse_char_t* delim, qse_size_t delim_len, qse_cstr_t* tok)
 {
 	const qse_char_t* p = s, *d;
 	const qse_char_t* end = s + len;	
@@ -880,12 +880,12 @@ qse_char_t* qse_awk_rtx_strxntokbyrex (
 	qse_awk_rtx_t* rtx, 
 	const qse_char_t* str, qse_size_t len,
 	const qse_char_t* substr, qse_size_t sublen,
-	void* rex, qse_xstr_t* tok,
+	void* rex, qse_cstr_t* tok,
 	qse_awk_errnum_t* errnum)
 {
 	int n;
 	qse_size_t i;
-	qse_xstr_t match, s, cursub, realsub;
+	qse_cstr_t match, s, cursub, realsub;
 
 	s.ptr = (qse_char_t*)str;
 	s.len = len;
@@ -989,7 +989,7 @@ exit_loop:
 qse_char_t* qse_awk_rtx_strxnfld (
 	qse_awk_rtx_t* rtx, qse_char_t* str, qse_size_t len,
 	qse_char_t fs, qse_char_t ec, qse_char_t lq, qse_char_t rq,
-	qse_xstr_t* tok)
+	qse_cstr_t* tok)
 {
 	qse_char_t* p = str;
 	qse_char_t* end = str + len;
@@ -1190,8 +1190,8 @@ int qse_awk_buildrex (
 
 static int matchtre (
 	qse_awk_t* awk, qse_tre_t* tre, int opt, 
-	const qse_xstr_t* str, qse_xstr_t* mat, 
-	qse_xstr_t submat[9], qse_awk_errnum_t* errnum)
+	const qse_cstr_t* str, qse_cstr_t* mat, 
+	qse_cstr_t submat[9], qse_awk_errnum_t* errnum)
 {
 	int n;
 	qse_tre_match_t match[10] = { { 0, 0 }, };
@@ -1239,8 +1239,8 @@ static int matchtre (
 
 int qse_awk_matchrex (
 	qse_awk_t* awk, void* code, int icase,
-	const qse_xstr_t* str, const qse_xstr_t* substr,
-	qse_xstr_t* match, qse_awk_errnum_t* errnum)
+	const qse_cstr_t* str, const qse_cstr_t* substr,
+	qse_cstr_t* match, qse_awk_errnum_t* errnum)
 {
 #if defined(USE_REX)
 	int x;
@@ -1287,7 +1287,7 @@ void qse_awk_freerex (qse_awk_t* awk, void* code, void* icode)
 
 int qse_awk_rtx_matchrex (
 	qse_awk_rtx_t* rtx, qse_awk_val_t* val,
-	const qse_xstr_t* str, const qse_xstr_t* substr, qse_xstr_t* match)
+	const qse_cstr_t* str, const qse_cstr_t* substr, qse_cstr_t* match)
 {
 	void* code;
 	int icase, x;
@@ -1305,7 +1305,7 @@ int qse_awk_rtx_matchrex (
 	else 
 	{
 		/* convert to a string and build a regular expression */
-		qse_xstr_t tmp;
+		qse_cstr_t tmp;
 
 		tmp.ptr = qse_awk_rtx_getvalstr (rtx, val, &tmp.len);
 		if (tmp.ptr == QSE_NULL) return -1;

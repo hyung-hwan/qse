@@ -5,7 +5,7 @@
 
 static void trace_exec (qse_sed_t* sed, qse_sed_tracer_op_t op, qse_sed_cmd_t* cmd)
 {
-	qse_xstr_t h, p;
+	qse_cstr_t h, p;
 
 	qse_sed_getspace (sed, QSE_SED_SPACE_HOLD, &h);
 	qse_sed_getspace (sed, QSE_SED_SPACE_PATTERN, &p);

@@ -214,7 +214,7 @@ void qse_awk_geterror (
 }
 
 void qse_awk_seterrnum (
-	qse_awk_t* awk, qse_awk_errnum_t errnum, const qse_xstr_t* errarg)
+	qse_awk_t* awk, qse_awk_errnum_t errnum, const qse_cstr_t* errarg)
 {
 	qse_awk_seterror (awk, errnum, errarg, QSE_NULL);
 }
@@ -225,7 +225,7 @@ void qse_awk_seterrinf (qse_awk_t* awk, const qse_awk_errinf_t* errinf)
 }
 
 void qse_awk_seterror (
-	qse_awk_t* awk, qse_awk_errnum_t errnum, const qse_xstr_t* errarg,
+	qse_awk_t* awk, qse_awk_errnum_t errnum, const qse_cstr_t* errarg,
 	const qse_awk_loc_t* errloc)
 {
 	const qse_char_t* errfmt;
@@ -283,7 +283,7 @@ void qse_awk_rtx_geterror (
 }
 
 void qse_awk_rtx_seterrnum (
-	qse_awk_rtx_t* rtx, qse_awk_errnum_t errnum, const qse_xstr_t* errarg)
+	qse_awk_rtx_t* rtx, qse_awk_errnum_t errnum, const qse_cstr_t* errarg)
 {
 	qse_awk_rtx_seterror (rtx, errnum, errarg, 0);
 }
@@ -294,7 +294,7 @@ void qse_awk_rtx_seterrinf (qse_awk_rtx_t* rtx, const qse_awk_errinf_t* errinf)
 }
 
 void qse_awk_rtx_seterror (
-	qse_awk_rtx_t* rtx, qse_awk_errnum_t errnum, const qse_xstr_t* errarg,
+	qse_awk_rtx_t* rtx, qse_awk_errnum_t errnum, const qse_cstr_t* errarg,
 	const qse_awk_loc_t* errloc)
 {
 	const qse_char_t* errfmt;

@@ -617,31 +617,31 @@ struct qse_link_t
 };
 
 /**
- * The qse_mxstr_t type defines a structure combining a pointer to a character
+ * The qse_mcstr_t type defines a structure combining a pointer to a character
  * string and the number of characters. 
  */
-struct qse_mxstr_t
+struct qse_mcstr_t
 {
 	qse_mchar_t* ptr; /**< pointer to a character string */
 	qse_size_t   len; /**< the number of characters */
 };
-typedef struct qse_mxstr_t qse_mxstr_t;
+typedef struct qse_mcstr_t qse_mcstr_t;
 
 /**
- * The qse_wxstr_t type defines a structure combining a pointer to a character
+ * The qse_wcstr_t type defines a structure combining a pointer to a character
  * string and the number of characters.
  */
-struct qse_wxstr_t
+struct qse_wcstr_t
 {
 	qse_wchar_t* ptr; /**< pointer to a character string */
 	qse_size_t   len; /**< the number of characters */
 };
-typedef struct qse_wxstr_t qse_wxstr_t;
+typedef struct qse_wcstr_t qse_wcstr_t;
 
 #if defined(QSE_CHAR_IS_MCHAR)
-	typedef qse_mxstr_t qse_xstr_t;
+	typedef qse_mcstr_t qse_cstr_t;
 #else
-	typedef qse_wxstr_t qse_xstr_t;
+	typedef qse_wcstr_t qse_cstr_t;
 #endif
 
 /** 

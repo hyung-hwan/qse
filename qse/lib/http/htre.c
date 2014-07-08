@@ -108,13 +108,13 @@ void qse_htre_clear (qse_htre_t* re)
 }
 
 int qse_htre_setstrfromcstr (
-	qse_htre_t* re, qse_mbs_t* str, const qse_mxstr_t* cstr)
+	qse_htre_t* re, qse_mbs_t* str, const qse_mcstr_t* cstr)
 {
 	return (qse_mbs_ncpy (str, cstr->ptr, cstr->len) == (qse_size_t)-1)? -1: 0;
 }
 
 int qse_htre_setstrfromxstr (
-	qse_htre_t* re, qse_mbs_t* str, const qse_mxstr_t* xstr)
+	qse_htre_t* re, qse_mbs_t* str, const qse_mcstr_t* xstr)
 {
 	return (qse_mbs_ncpy (str, xstr->ptr, xstr->len) == (qse_size_t)-1)? -1: 0;
 }

@@ -86,7 +86,7 @@ void* str_getxtn (str_t* mbs)
 	return QSE_XTN (mbs);
 }
 
-int str_yield (str_t* str, xstr_t* buf, qse_size_t newcapa)
+int str_yield (str_t* str, cstr_t* buf, qse_size_t newcapa)
 {
 	char_t* tmp;
 
@@ -114,7 +114,7 @@ int str_yield (str_t* str, xstr_t* buf, qse_size_t newcapa)
 
 char_t* str_yieldptr (str_t* str, qse_size_t newcapa)
 {
-	xstr_t mx;
+	cstr_t mx;
 	if (str_yield (str, &mx, newcapa) <= -1) return QSE_NULL;
 	return mx.ptr;
 }

@@ -142,7 +142,7 @@ static qse_sio_t* open_sio_file (qse_sed_t* sed, const qse_char_t* file, int fla
 	sio = qse_sio_open (sed->mmgr, 0, file, flags);
 	if (sio == QSE_NULL)
 	{
-		qse_xstr_t ea;
+		qse_cstr_t ea;
 		ea.ptr = file;
 		ea.len = qse_strlen (file);
 		qse_sed_seterrnum (sed, QSE_SED_EIOFIL, &ea);
@@ -170,7 +170,7 @@ static qse_sio_t* open_sio_std (qse_sed_t* sed, qse_sio_std_t std, int flags)
 	sio = qse_sio_openstd (sed->mmgr, 0, std, flags);
 	if (sio == QSE_NULL)
 	{
-		qse_xstr_t ea;
+		qse_cstr_t ea;
 		ea.ptr = sio_std_names[std].ptr;
 		ea.len = sio_std_names[std].len;
 		qse_sed_seterrnum (sed, QSE_SED_EIOFIL, &ea);
@@ -389,7 +389,7 @@ static qse_ssize_t read_input_stream (
 			{
 				if (io->type == QSE_SED_IOSTD_FILE)
 				{
-					qse_xstr_t ea;
+					qse_cstr_t ea;
 					if (io->u.file.path)
 					{
 						ea.ptr = io->u.file.path;
@@ -440,7 +440,7 @@ static qse_ssize_t read_input_stream (
 			/* failed to open the next input stream */
 			if (next->type == QSE_SED_IOSTD_FILE)
 			{
-				qse_xstr_t ea;
+				qse_cstr_t ea;
 				if (next->u.file.path)
 				{
 					ea.ptr = next->u.file.path;
@@ -578,7 +578,7 @@ static qse_ssize_t x_in (
 					n = qse_sio_getstrn (arg->handle, buf, len);
 					if (n <= -1)
 					{
-						qse_xstr_t ea;
+						qse_cstr_t ea;
 						ea.ptr = sio_std_names[QSE_SIO_STDIN].ptr;
 						ea.len = sio_std_names[QSE_SIO_STDIN].len;
 						qse_sed_seterrnum (sed, QSE_SED_EIOFIL, &ea);
@@ -594,7 +594,7 @@ static qse_ssize_t x_in (
 				n = qse_sio_getstrn (arg->handle, buf, len);
 				if (n <= -1)
 				{
-					qse_xstr_t ea;
+					qse_cstr_t ea;
 					ea.ptr = arg->path;
 					ea.len = qse_strlen (arg->path);
 					qse_sed_seterrnum (sed, QSE_SED_EIOFIL, &ea);
@@ -691,7 +691,7 @@ static qse_ssize_t x_out (
 					n = qse_sio_putstrn (arg->handle, dat, len);
 					if (n <= -1)
 					{
-						qse_xstr_t ea;
+						qse_cstr_t ea;
 						ea.ptr = sio_std_names[QSE_SIO_STDOUT].ptr;
 						ea.len = sio_std_names[QSE_SIO_STDOUT].len;
 						qse_sed_seterrnum (sed, QSE_SED_EIOFIL, &ea);
@@ -719,7 +719,7 @@ static qse_ssize_t x_out (
 						n = qse_sio_putstrn (arg->handle, dat, len);
 						if (n <= -1)
 						{
-							qse_xstr_t ea;
+							qse_cstr_t ea;
 							if (io->u.file.path)
 							{
 								ea.ptr = io->u.file.path;
@@ -742,7 +742,7 @@ static qse_ssize_t x_out (
 				n = qse_sio_putstrn (arg->handle, dat, len);
 				if (n <= -1)
 				{
-					qse_xstr_t ea;
+					qse_cstr_t ea;
 					ea.ptr = arg->path;
 					ea.len = qse_strlen(arg->path);
 					qse_sed_seterrnum (sed, QSE_SED_EIOFIL, &ea);
@@ -849,7 +849,7 @@ int qse_sed_compstdstr (qse_sed_t* sed, const qse_char_t* script)
 	return qse_sed_compstd (sed, in, QSE_NULL);
 }
 
-int qse_sed_compstdxstr (qse_sed_t* sed, const qse_xstr_t* script)
+int qse_sed_compstdxstr (qse_sed_t* sed, const qse_cstr_t* script)
 {
 	qse_sed_iostd_t in[2];
 
@@ -889,8 +889,8 @@ int qse_sed_execstdfile (
 }
 
 int qse_sed_execstdxstr (
-	qse_sed_t* sed, const qse_xstr_t* instr,
-	qse_xstr_t* outstr, qse_cmgr_t* cmgr)
+	qse_sed_t* sed, const qse_cstr_t* instr,
+	qse_cstr_t* outstr, qse_cmgr_t* cmgr)
 {
 	qse_sed_iostd_t in[2];
 	qse_sed_iostd_t out;

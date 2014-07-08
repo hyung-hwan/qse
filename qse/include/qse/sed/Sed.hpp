@@ -246,7 +246,7 @@ public:
 	///
 	void setError (
 		errnum_t      num,             ///< error number
-		const xstr_t* args = QSE_NULL, ///< string array for formatting
+		const cstr_t* args = QSE_NULL, ///< string array for formatting
 		                               ///  an error message
 		const loc_t*  loc = QSE_NULL   ///< error location
 	);

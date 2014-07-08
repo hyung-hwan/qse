@@ -346,7 +346,7 @@ static int handle_non_wild_segments (glob_t* g, segment_t* seg)
 			/* if the segment contains escape sequences,
 			 * strip the escape letters off the segment */
 
-			qse_xstr_t tmp;
+			qse_cstr_t tmp;
 			qse_size_t i;
 			int escaped = 0;
 

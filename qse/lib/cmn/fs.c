@@ -38,7 +38,7 @@
 typedef struct info_t info_t;
 struct info_t
 {
-	qse_xstr_t name;
+	qse_cstr_t name;
 
 #if defined(_WIN32)
 	HANDLE handle;

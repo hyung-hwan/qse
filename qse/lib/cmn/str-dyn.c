@@ -97,7 +97,7 @@ static int mbs_to_wcs (
 /* -------------------------------------------------------- */
 
 #undef char_t
-#undef xstr_t
+#undef cstr_t
 #undef str_sizer_t
 #undef T
 #undef strlen
@@ -144,7 +144,7 @@ static int mbs_to_wcs (
 #undef str_vfcat
 
 #define char_t qse_mchar_t
-#define xstr_t qse_mxstr_t
+#define cstr_t qse_mcstr_t
 #define str_sizer_t qse_mbs_sizer_t
 #define T(x) QSE_MT(x)
 #define strlen(x) qse_mbslen(x)
@@ -194,7 +194,7 @@ static int mbs_to_wcs (
 /* -------------------------------------------------------- */
 
 #undef char_t
-#undef xstr_t
+#undef cstr_t
 #undef str_sizer_t
 #undef T
 #undef strlen
@@ -241,7 +241,7 @@ static int mbs_to_wcs (
 #undef str_vfcat
 
 #define char_t qse_wchar_t
-#define xstr_t qse_wxstr_t
+#define cstr_t qse_wcstr_t
 #define str_sizer_t qse_wcs_sizer_t
 #define T(x) QSE_WT(x)
 #define strlen(x) qse_wcslen(x)

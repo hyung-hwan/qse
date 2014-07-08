@@ -455,7 +455,7 @@ static qse_sio_t* open_sio (qse_awk_t* awk, const qse_char_t* file, int flags)
 	sio = qse_sio_open (awk->mmgr, 0, file, flags);
 	if (sio == QSE_NULL)
 	{
-		qse_xstr_t errarg;
+		qse_cstr_t errarg;
 		errarg.ptr = (qse_char_t*)file;
 		errarg.len = qse_strlen(file);
 		qse_awk_seterrnum (awk, QSE_AWK_EOPEN, &errarg);
@@ -469,7 +469,7 @@ static qse_sio_t* open_sio_rtx (qse_awk_rtx_t* rtx, const qse_char_t* file, int 
 	sio = qse_sio_open (rtx->awk->mmgr, 0, file, flags);
 	if (sio == QSE_NULL)
 	{
-		qse_xstr_t errarg;
+		qse_cstr_t errarg;
 		errarg.ptr = (qse_char_t*)file;
 		errarg.len = qse_strlen(file);
 		qse_awk_rtx_seterrnum (rtx, QSE_AWK_EOPEN, &errarg);
@@ -477,7 +477,7 @@ static qse_sio_t* open_sio_rtx (qse_awk_rtx_t* rtx, const qse_char_t* file, int 
 	return sio;
 }
 
-static qse_xstr_t sio_std_names[] =
+static qse_cstr_t sio_std_names[] =
 {
 	{ QSE_T("stdin"),   5 },
 	{ QSE_T("stdout"),  6 },
@@ -632,7 +632,7 @@ static qse_ssize_t sf_in_open (
 		if (dbuf) QSE_MMGR_FREE (awk->mmgr, dbuf);
 		if (arg->handle == QSE_NULL)
 		{
-			qse_xstr_t ea;
+			qse_cstr_t ea;
 			ea.ptr = (qse_char_t*)arg->name;
 			ea.len = qse_strlen(ea.ptr);
 			qse_awk_seterrnum (awk, QSE_AWK_EOPEN, &ea);
@@ -692,7 +692,7 @@ static qse_ssize_t sf_in_read (
 				n = qse_sio_getstrn (arg->handle, data, size);
 				if (n <= -1)
 				{
-					qse_xstr_t ea;
+					qse_cstr_t ea;
 					ea.ptr = (qse_char_t*)xtn->s.in.x[xtn->s.in.xindex].u.file.path;
 					if (ea.ptr == QSE_NULL) ea.ptr = sio_std_names[QSE_SIO_STDIN].ptr;
 					ea.len = qse_strlen(ea.ptr);
@@ -756,7 +756,7 @@ static qse_ssize_t sf_in_read (
 		n = qse_sio_getstrn (arg->handle, data, size);
 		if (n <= -1)
 		{
-			qse_xstr_t ea;
+			qse_cstr_t ea;
 			ea.ptr = (qse_char_t*)arg->name;
 			ea.len = qse_strlen(ea.ptr);
 			qse_awk_seterrnum (awk, QSE_AWK_EREAD, &ea);
@@ -870,7 +870,7 @@ static qse_ssize_t sf_out (
 					n = qse_sio_putstrn (xtn->s.out.u.file.sio, data, size);
 					if (n <= -1)
 					{
-						qse_xstr_t ea;
+						qse_cstr_t ea;
 						ea.ptr = (qse_char_t*)xtn->s.out.x->u.file.path;
 						if (ea.ptr == QSE_NULL) ea.ptr = sio_std_names[QSE_SIO_STDOUT].ptr;
 						ea.len = qse_strlen(ea.ptr);
@@ -1249,7 +1249,7 @@ static qse_ssize_t awk_rio_file (
 			handle = qse_sio_open (rtx->awk->mmgr, 0, riod->name, flags);
 			if (handle == QSE_NULL) 
 			{
-				qse_xstr_t errarg;
+				qse_cstr_t errarg;
 				errarg.ptr = riod->name;
 				errarg.len = qse_strlen(riod->name);
 				qse_awk_rtx_seterrnum (rtx, QSE_AWK_EOPEN, &errarg);
@@ -1350,7 +1350,7 @@ static int open_rio_console (qse_awk_rtx_t* rtx, qse_awk_rio_arg_t* riod)
 			qse_char_t ibuf[128];
 			qse_size_t ibuflen;
 			qse_awk_val_t* v;
-			qse_xstr_t as;
+			qse_cstr_t as;
 
 		nextfile:
 			file = rxtn->c.in.files[rxtn->c.in.index];
@@ -1422,7 +1422,7 @@ static int open_rio_console (qse_awk_rtx_t* rtx, qse_awk_rio_arg_t* riod)
 			if (qse_strlen(as.ptr) < as.len)
 			{
 				/* the name contains one or more '\0' */
-				qse_xstr_t errarg;
+				qse_cstr_t errarg;
 
 				errarg.ptr = as.ptr;
 				/* use this length not to contains '\0'

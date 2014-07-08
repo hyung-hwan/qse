@@ -186,7 +186,7 @@ QSE_EXPORT int qse_htrd_halt (
 
 QSE_EXPORT int qse_htrd_scanqparam (
 	qse_htrd_t*        http,
-	const qse_mxstr_t* cstr
+	const qse_mcstr_t* cstr
 );
 
 #ifdef __cplusplus

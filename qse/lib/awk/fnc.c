@@ -80,7 +80,7 @@ qse_awk_fnc_t* qse_awk_addfnc (qse_awk_t* awk, const qse_char_t* name, const qse
 	qse_awk_fnc_t* fnc;
 	qse_size_t fnc_size;
 	qse_size_t speclen;
-	qse_xstr_t ncs;
+	qse_cstr_t ncs;
 
 	ncs.ptr = (qse_char_t*)name;
 	ncs.len = qse_strlen (name);
@@ -134,7 +134,7 @@ qse_awk_fnc_t* qse_awk_addfnc (qse_awk_t* awk, const qse_char_t* name, const qse
 
 int qse_awk_delfnc (qse_awk_t* awk, const qse_char_t* name)
 {
-	qse_xstr_t ncs;
+	qse_cstr_t ncs;
 
 	ncs.ptr = (qse_char_t*)name;
 	ncs.len = qse_strlen (name);
@@ -153,7 +153,7 @@ void qse_awk_clrfnc (qse_awk_t* awk)
 	qse_htb_clear (awk->fnc.user);
 }
 
-qse_awk_fnc_t* qse_awk_findfnc (qse_awk_t* awk, const qse_xstr_t* name)
+qse_awk_fnc_t* qse_awk_findfnc (qse_awk_t* awk, const qse_cstr_t* name)
 {
 	qse_htb_pair_t* pair;
 	int i;
@@ -598,14 +598,14 @@ int qse_awk_fnc_split (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	qse_size_t nargs;
 	qse_awk_val_t* a0, * a1, * a2, * t1, * t2;
 
-	qse_xstr_t str, fs;
+	qse_cstr_t str, fs;
 	qse_char_t* str_free = QSE_NULL, * fs_free = QSE_NULL;
 	const qse_char_t* p;
 	qse_size_t str_left, org_len;
 	void* fs_rex = QSE_NULL; 
 	void* fs_rex_free = QSE_NULL;
 
-	qse_xstr_t tok;
+	qse_cstr_t tok;
 	qse_awk_int_t nflds;
 
 	qse_awk_errnum_t errnum;
@@ -799,7 +799,7 @@ int qse_awk_fnc_tolower (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	qse_size_t nargs;
 	qse_size_t i;
 	qse_awk_val_t* a0, * r;
-	qse_xstr_t str;
+	qse_cstr_t str;
 
 	nargs = qse_awk_rtx_getnargs (rtx);
 	QSE_ASSERT (nargs == 1);
@@ -828,7 +828,7 @@ int qse_awk_fnc_toupper (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	qse_size_t nargs;
 	qse_size_t i;
 	qse_awk_val_t* a0, * r;
-	qse_xstr_t str;
+	qse_cstr_t str;
 
 	nargs = qse_awk_rtx_getnargs (rtx);
 	QSE_ASSERT (nargs == 1);
@@ -857,7 +857,7 @@ static int __substitute (qse_awk_rtx_t* run, qse_awk_int_t max_count)
 	qse_size_t nargs;
 	qse_awk_val_t* a0, * a1, * a2, * v;
 
-	qse_xstr_t s0, s1, s2;
+	qse_cstr_t s0, s1, s2;
 	const qse_char_t* s2_end;
 
 	qse_char_t* s0_free = QSE_NULL;
@@ -870,7 +870,7 @@ static int __substitute (qse_awk_rtx_t* run, qse_awk_int_t max_count)
 	qse_str_t new;
 	int new_inited = 0;
 
-	qse_xstr_t mat, pmat, cur;
+	qse_cstr_t mat, pmat, cur;
 
 	qse_awk_int_t sub_count;
 
@@ -1131,7 +1131,7 @@ int qse_awk_fnc_match (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	qse_size_t len0;
 	qse_awk_int_t idx, start = 1;
 	int n;
-	qse_xstr_t mat;
+	qse_cstr_t mat;
 
 	nargs = qse_awk_rtx_getnargs (rtx);
 	QSE_ASSERT (nargs >= 2 && nargs <= 3);
@@ -1173,7 +1173,7 @@ int qse_awk_fnc_match (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	if (start > len0 || start <= 0) n = 0;
 	else
 	{
-		qse_xstr_t tmp;
+		qse_cstr_t tmp;
 
 		/*TODO: must use str0,len0? */
 		tmp.ptr = str0 + start - 1;
@@ -1229,8 +1229,8 @@ int qse_awk_fnc_sprintf (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	qse_awk_val_t* a0;
 	qse_str_t out, fbu;
 	int out_inited = 0, fbu_inited = 0;
-	qse_xstr_t cs0;
-	qse_xstr_t x;
+	qse_cstr_t cs0;
+	qse_cstr_t x;
 
 	nargs = qse_awk_rtx_getnargs (rtx);
 	QSE_ASSERT (nargs > 0);

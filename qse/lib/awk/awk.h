@@ -88,7 +88,7 @@ struct qse_awk_tree_t
 {
 	qse_size_t ngbls; /* total number of globals */
 	qse_size_t ngbls_base; /* number of intrinsic globals */
-	qse_xstr_t cur_fun;
+	qse_cstr_t cur_fun;
 	qse_htb_t* funs; /* awk function map */
 
 	qse_awk_nde_t* begin;
@@ -123,8 +123,8 @@ struct qse_awk_t
 	struct
 	{
 		int trait;
-		qse_xstr_t mod[2];
-		qse_xstr_t incldirs;
+		qse_cstr_t mod[2];
+		qse_cstr_t incldirs;
 
 		union
 		{
@@ -314,11 +314,11 @@ struct qse_awk_rtx_t
 		qse_awk_int_t nr;
 		qse_awk_int_t fnr;
 
-		qse_xstr_t convfmt;
-		qse_xstr_t ofmt;
-		qse_xstr_t ofs;
-		qse_xstr_t ors;
-		qse_xstr_t subsep;
+		qse_cstr_t convfmt;
+		qse_cstr_t ofmt;
+		qse_cstr_t ofs;
+		qse_cstr_t ors;
+		qse_cstr_t subsep;
 	} gbl;
 
 	/* rio chain */

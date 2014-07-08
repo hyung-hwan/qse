@@ -27,19 +27,19 @@ extern "C" {
 
 qse_char_t* qse_awk_rtx_strtok (
 	qse_awk_rtx_t* rtx, const qse_char_t* s, 
-	const qse_char_t* delim, qse_xstr_t* tok);
+	const qse_char_t* delim, qse_cstr_t* tok);
 
 qse_char_t* qse_awk_rtx_strxtok (
 	qse_awk_rtx_t* rtx, const qse_char_t* s, qse_size_t len,
-	const qse_char_t* delim, qse_xstr_t* tok);
+	const qse_char_t* delim, qse_cstr_t* tok);
 
 qse_char_t* qse_awk_rtx_strntok (
 	qse_awk_rtx_t* rtx, const qse_char_t* s, 
-	const qse_char_t* delim, qse_size_t delim_len, qse_xstr_t* tok);
+	const qse_char_t* delim, qse_size_t delim_len, qse_cstr_t* tok);
 
 qse_char_t* qse_awk_rtx_strxntok (
 	qse_awk_rtx_t* rtx, const qse_char_t* s, qse_size_t len,
-	const qse_char_t* delim, qse_size_t delim_len, qse_xstr_t* tok);
+	const qse_char_t* delim, qse_size_t delim_len, qse_cstr_t* tok);
 
 qse_char_t* qse_awk_rtx_strxntokbyrex (
 	qse_awk_rtx_t*    rtx, 
@@ -48,7 +48,7 @@ qse_char_t* qse_awk_rtx_strxntokbyrex (
 	const qse_char_t* substr,
 	qse_size_t        sublen,
 	void*             rex,
-	qse_xstr_t*       tok,
+	qse_cstr_t*       tok,
 	qse_awk_errnum_t* errnum
 );
 
@@ -60,7 +60,7 @@ qse_char_t* qse_awk_rtx_strxnfld (
 	qse_char_t     lq,
 	qse_char_t     rq,
 	qse_char_t     ec,
-	qse_xstr_t*    tok
+	qse_cstr_t*    tok
 );
 
 int qse_awk_buildrex (
@@ -74,16 +74,16 @@ int qse_awk_buildrex (
 
 int qse_awk_matchrex (
 	qse_awk_t* awk, void* code, int icase,
-	const qse_xstr_t* str, const qse_xstr_t* substr,
-	qse_xstr_t* match, qse_awk_errnum_t* errnum
+	const qse_cstr_t* str, const qse_cstr_t* substr,
+	qse_cstr_t* match, qse_awk_errnum_t* errnum
 );
 
 void qse_awk_freerex (qse_awk_t* awk, void* code, void* icode);
 
 int qse_awk_rtx_matchrex (
 	qse_awk_rtx_t* rtx, qse_awk_val_t* val,
-	const qse_xstr_t* str, const qse_xstr_t* substr,
-	qse_xstr_t* match
+	const qse_cstr_t* str, const qse_cstr_t* substr,
+	qse_cstr_t* match
 );
 
 #ifdef __cplusplus

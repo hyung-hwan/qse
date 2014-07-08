@@ -112,7 +112,7 @@ Sed::errnum_t Sed::getErrorNumber () const
 	return (sed == QSE_NULL)? QSE_SED_ENOERR: qse_sed_geterrnum (sed);
 }
 
-void Sed::setError (errnum_t err, const xstr_t* args, const loc_t* loc)
+void Sed::setError (errnum_t err, const cstr_t* args, const loc_t* loc)
 {
 	QSE_ASSERT (sed != QSE_NULL);
 	qse_sed_seterror (sed, err, args, loc);

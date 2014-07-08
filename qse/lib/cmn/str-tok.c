@@ -22,7 +22,7 @@
 #include <qse/cmn/chr.h>
 
 qse_mchar_t* qse_mbstok (
-	const qse_mchar_t* s, const qse_mchar_t* delim, qse_mxstr_t* tok)
+	const qse_mchar_t* s, const qse_mchar_t* delim, qse_mcstr_t* tok)
 {
 	const qse_mchar_t* p = s, *d;
 	const qse_mchar_t* sp = QSE_NULL, * ep = QSE_NULL;
@@ -98,7 +98,7 @@ exit_loop:
 
 qse_mchar_t* qse_mbsxtok (
 	const qse_mchar_t* s, qse_size_t len,
-	const qse_mchar_t* delim, qse_mxstr_t* tok)
+	const qse_mchar_t* delim, qse_mcstr_t* tok)
 {
 	const qse_mchar_t* p = s, *d;
 	const qse_mchar_t* end = s + len;	
@@ -178,7 +178,7 @@ exit_loop:
 
 qse_mchar_t* qse_mbsxntok (
 	const qse_mchar_t* s, qse_size_t len,
-	const qse_mchar_t* delim, qse_size_t delim_len, qse_mxstr_t* tok)
+	const qse_mchar_t* delim, qse_size_t delim_len, qse_mcstr_t* tok)
 {
 	const qse_mchar_t* p = s, *d;
 	const qse_mchar_t* end = s + len;	
@@ -259,7 +259,7 @@ exit_loop:
 
 
 qse_wchar_t* qse_wcstok (
-	const qse_wchar_t* s, const qse_wchar_t* delim, qse_wxstr_t* tok)
+	const qse_wchar_t* s, const qse_wchar_t* delim, qse_wcstr_t* tok)
 {
 	const qse_wchar_t* p = s, *d;
 	const qse_wchar_t* sp = QSE_NULL, * ep = QSE_NULL;
@@ -335,7 +335,7 @@ exit_loop:
 
 qse_wchar_t* qse_wcsxtok (
 	const qse_wchar_t* s, qse_size_t len,
-	const qse_wchar_t* delim, qse_wxstr_t* tok)
+	const qse_wchar_t* delim, qse_wcstr_t* tok)
 {
 	const qse_wchar_t* p = s, *d;
 	const qse_wchar_t* end = s + len;	
@@ -415,7 +415,7 @@ exit_loop:
 
 qse_wchar_t* qse_wcsxntok (
 	const qse_wchar_t* s, qse_size_t len,
-	const qse_wchar_t* delim, qse_size_t delim_len, qse_wxstr_t* tok)
+	const qse_wchar_t* delim, qse_size_t delim_len, qse_wcstr_t* tok)
 {
 	const qse_wchar_t* p = s, *d;
 	const qse_wchar_t* end = s + len;	

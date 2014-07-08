@@ -92,7 +92,7 @@ qse_mchar_t* qse_mbsadup (const qse_mchar_t* str[], qse_size_t* len, qse_mmgr_t*
 	return buf;
 }
 
-qse_mchar_t* qse_mcstrdup (const qse_mxstr_t* str, qse_mmgr_t* mmgr)
+qse_mchar_t* qse_mcstrdup (const qse_mcstr_t* str, qse_mmgr_t* mmgr)
 {
 	qse_mchar_t* buf;
 
@@ -106,7 +106,7 @@ qse_mchar_t* qse_mcstrdup (const qse_mxstr_t* str, qse_mmgr_t* mmgr)
 	return buf;
 }
 
-qse_mchar_t* qse_mcstradup (const qse_mxstr_t str[], qse_size_t* len, qse_mmgr_t* mmgr)
+qse_mchar_t* qse_mcstradup (const qse_mcstr_t str[], qse_size_t* len, qse_mmgr_t* mmgr)
 {
 	qse_mchar_t* buf, * ptr;
 	qse_size_t i;
@@ -201,7 +201,7 @@ qse_wchar_t* qse_wcsadup (const qse_wchar_t* str[], qse_size_t* len, qse_mmgr_t*
 	return buf;
 }
 
-qse_wchar_t* qse_wcstrdup (const qse_wxstr_t* str, qse_mmgr_t* mmgr)
+qse_wchar_t* qse_wcstrdup (const qse_wcstr_t* str, qse_mmgr_t* mmgr)
 {
 	qse_wchar_t* buf;
 
@@ -215,7 +215,7 @@ qse_wchar_t* qse_wcstrdup (const qse_wxstr_t* str, qse_mmgr_t* mmgr)
 	return buf;
 }
 
-qse_wchar_t* qse_wcstradup (const qse_wxstr_t str[], qse_size_t* len, qse_mmgr_t* mmgr)
+qse_wchar_t* qse_wcstradup (const qse_wcstr_t str[], qse_size_t* len, qse_mmgr_t* mmgr)
 {
 	qse_wchar_t* buf, * ptr;
 	qse_size_t i;

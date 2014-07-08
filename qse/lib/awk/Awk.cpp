@@ -594,7 +594,7 @@ int Awk::Value::setStr (Run* r, const char_t* str, size_t len, bool numeric)
 {
 	val_t* tmp;
 
-	xstr_t cstr;
+	cstr_t cstr;
 	cstr.ptr = (char_t*)str;
 	cstr.len = len;
 
@@ -757,7 +757,7 @@ int Awk::Value::setIndexedStr (
 {
 	val_t* tmp;
 
-	xstr_t cstr;
+	cstr_t cstr;
 	cstr.ptr = (char_t*)str;
 	cstr.len = len;
 
@@ -928,7 +928,7 @@ const Awk::char_t* Awk::Run::getErrorMessage () const
 	return qse_awk_rtx_geterrmsg (this->rtx);
 }
 
-void Awk::Run::setError (errnum_t code, const xstr_t* args, const loc_t* loc)
+void Awk::Run::setError (errnum_t code, const cstr_t* args, const loc_t* loc)
 {
 	QSE_ASSERT (this->rtx != QSE_NULL);
 	qse_awk_rtx_seterror (this->rtx, code, args, loc);
@@ -1049,7 +1049,7 @@ const Awk::char_t* Awk::getErrorMessage () const
 	return this->errinf.msg;
 }
 
-void Awk::setError (errnum_t code, const xstr_t* args, const loc_t* loc)
+void Awk::setError (errnum_t code, const cstr_t* args, const loc_t* loc)
 {
 	if (awk != QSE_NULL)
 	{
@@ -1497,12 +1497,12 @@ int Awk::xstrs_t::add (awk_t* awk, const char_t* arg, size_t len)
 {
 	if (this->len >= this->capa)
 	{
-		qse_xstr_t* ptr;
+		qse_cstr_t* ptr;
 		size_t capa = this->capa;
 
 		capa += 64;
-		ptr = (qse_xstr_t*) qse_awk_reallocmem (
-			awk, this->ptr, QSE_SIZEOF(qse_xstr_t)*(capa+1));
+		ptr = (qse_cstr_t*) qse_awk_reallocmem (
+			awk, this->ptr, QSE_SIZEOF(qse_cstr_t)*(capa+1));
 		if (ptr == QSE_NULL) return -1;
 
 		this->ptr = ptr;

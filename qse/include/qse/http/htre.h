@@ -169,13 +169,13 @@ QSE_EXPORT void qse_htre_clear (
 QSE_EXPORT int qse_htre_setstrfromcstr (
 	qse_htre_t*        re,
 	qse_mbs_t*         str,
-	const qse_mxstr_t* cstr
+	const qse_mcstr_t* cstr
 );
 
 QSE_EXPORT int qse_htre_setstrfromxstr (
 	qse_htre_t*        re,
 	qse_mbs_t*         str,
-	const qse_mxstr_t* xstr
+	const qse_mcstr_t* xstr
 );
 
 QSE_EXPORT const qse_htre_hdrval_t* qse_htre_getheaderval (

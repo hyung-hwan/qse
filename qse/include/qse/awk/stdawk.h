@@ -79,7 +79,7 @@ struct qse_awk_parsestd_t
 		 * ptr field with qse_awk_freemem() once you're done with it to 
 		 * avoid memory leaks. 
 		 */
-		qse_xstr_t str;
+		qse_cstr_t str;
 	} u;
 };
 
