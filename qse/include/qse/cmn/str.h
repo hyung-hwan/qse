@@ -28,7 +28,7 @@
 /** \file
  * This file provides various functions, types, macros for string manipulation.
  *
- * The #qse_xstr_t type and the #qse_xstr_t defined in <qse/types.h> help you
+ * The #qse_cstr_t type and the #qse_cstr_t defined in <qse/types.h> help you
  * deal with a string pointer and length in a structure.
  */
 
@@ -76,7 +76,7 @@ typedef qse_size_t (*qse_wcs_sizer_t) (
 );
 
 #if defined(QSE_CHAR_IS_MCHAR)
-#	define QSE_STR_XSTR(s)     ((qse_xstr_t*)QSE_MBS_XSTR(s))
+#	define QSE_STR_XSTR(s)     ((qse_cstr_t*)QSE_MBS_XSTR(s))
 #	define QSE_STR_LEN(s)      QSE_MBS_LEN(s)
 #	define QSE_STR_PTR(s)      QSE_MBS_PTR(s)
 #	define QSE_STR_CPTR(s,idx) QSE_MBS_CPTR(s,idx)
@@ -86,7 +86,7 @@ typedef qse_size_t (*qse_wcs_sizer_t) (
 #	define qse_str_t           qse_mbs_t
 #	define qse_str_sizer_t     qse_mbs_sizer_t
 #else
-#	define QSE_STR_XSTR(s)     ((qse_xstr_t*)QSE_WCS_XSTR(s))
+#	define QSE_STR_XSTR(s)     ((qse_cstr_t*)QSE_WCS_XSTR(s))
 #	define QSE_STR_LEN(s)      QSE_WCS_LEN(s)
 #	define QSE_STR_PTR(s)      QSE_WCS_PTR(s)
 #	define QSE_STR_CPTR(s,idx) QSE_WCS_CPTR(s,idx)
@@ -105,7 +105,7 @@ struct qse_mbs_t
 {
 	qse_mmgr_t*     mmgr;
 	qse_mbs_sizer_t sizer; /**< buffer resizer function */
-	qse_mxstr_t     val;   /**< buffer/string pointer and lengh */
+	qse_mcstr_t     val;   /**< buffer/string pointer and lengh */
 	qse_size_t      capa;  /**< buffer capacity */
 };
 
@@ -116,7 +116,7 @@ struct qse_wcs_t
 {
 	qse_mmgr_t*     mmgr;
 	qse_wcs_sizer_t sizer; /**< buffer resizer function */
-	qse_wxstr_t     val;   /**< buffer/string pointer and lengh */
+	qse_wcstr_t     val;   /**< buffer/string pointer and lengh */
 	qse_size_t      capa;  /**< buffer capacity */
 };
 
@@ -131,7 +131,7 @@ struct qse_wcs_t
 typedef qse_mchar_t* (*qse_mbssubst_t) (
 	qse_mchar_t*       buf, 
 	qse_size_t         bsz, 
-	const qse_mxstr_t* ident, 
+	const qse_mcstr_t* ident, 
 	void*              ctx
 );
 
@@ -142,7 +142,7 @@ typedef qse_mchar_t* (*qse_mbssubst_t) (
 typedef qse_wchar_t* (*qse_wcssubst_t) (
 	qse_wchar_t*       buf, 
 	qse_size_t         bsz, 
-	const qse_wxstr_t* ident, 
+	const qse_wcstr_t* ident, 
 	void*              ctx
 );
 
@@ -585,25 +585,25 @@ QSE_EXPORT qse_size_t qse_wcsfcpy (
 /**
  * The qse_mbsfncpy() function formats a string by position.
  * It differs from qse_mbsfcpy() in that \a str is an array of the 
- * #qse_mxstr_t type.
+ * #qse_mcstr_t type.
  * \sa qse_mbsfcpy, qse_mbsxfcpy, qse_mbsxfncpy
  */
 QSE_EXPORT qse_size_t qse_mbsfncpy (
 	qse_mchar_t*       buf,
 	const qse_mchar_t* fmt,
-	const qse_mxstr_t  str[]
+	const qse_mcstr_t  str[]
 );
 
 /**
  * The qse_wcsfncpy() function formats a string by position.
  * It differs from qse_wcsfcpy() in that \a str is an array of the 
- * #qse_wxstr_t type.
+ * #qse_wcstr_t type.
  * \sa qse_wcsfcpy, qse_wcsxfcpy, qse_wcsxfncpy
  */
 QSE_EXPORT qse_size_t qse_wcsfncpy (
 	qse_wchar_t*       buf,
 	const qse_wchar_t* fmt,
-	const qse_wxstr_t  str[]
+	const qse_wcstr_t  str[]
 );
 
 /**
@@ -645,27 +645,27 @@ QSE_EXPORT qse_size_t qse_wcsxfcpy (
 /**
  * The qse_mbsxfncpy() function formats a string by position.
  * It differs from qse_strfcpy() in that \a buf is length-bounded of \a bsz
- * characters and \a str is an array of the #qse_mxstr_t type.
+ * characters and \a str is an array of the #qse_mcstr_t type.
  * \sa qse_mbsfcpy, qse_mbsfncpy, qse_mbsxfcpy
  */
 QSE_EXPORT qse_size_t qse_mbsxfncpy (
 	qse_mchar_t*       buf,
 	qse_size_t         bsz, 
 	const qse_mchar_t* fmt,
-	const qse_mxstr_t  str[]
+	const qse_mcstr_t  str[]
 );
 
 /**
  * The qse_wcsxfncpy() function formats a string by position.
  * It differs from qse_strfcpy() in that \a buf is length-bounded of \a bsz
- * characters and \a str is an array of the #qse_wxstr_t type.
+ * characters and \a str is an array of the #qse_wcstr_t type.
  * \sa qse_wcsfcpy, qse_wcsfncpy, qse_wcsxfcpy
  */
 QSE_EXPORT qse_size_t qse_wcsxfncpy (
 	qse_wchar_t*       buf,
 	qse_size_t         bsz, 
 	const qse_wchar_t* fmt,
-	const qse_wxstr_t  str[]
+	const qse_wcstr_t  str[]
 );
 
 #if defined(QSE_CHAR_IS_MCHAR)
@@ -781,7 +781,7 @@ QSE_EXPORT qse_size_t qse_wcsxvfmt (
  * \a bsz by substituting new values for ${} segments within it. The actual
  * substitution is made by invoking the callback function \a subst. 
  * \code
- * qse_mchar_t* subst (qse_mchar_t* buf, qse_size_t bsz, const qse_mxstr_t* ident, void* ctx)
+ * qse_mchar_t* subst (qse_mchar_t* buf, qse_size_t bsz, const qse_mcstr_t* ident, void* ctx)
  * { 
  *   if (qse_mbsxcmp (ident->ptr, ident->len, QSE_MT("USER")) == 0)
  *     return buf + qse_mbsxput (buf, bsz, QSE_MT("sam"));	
@@ -803,7 +803,7 @@ QSE_EXPORT qse_size_t qse_wcsxvfmt (
  * if the buffer points to #QSE_MBSSUBST_NOBUF as shown belown.
  *
  * \code
- * qse_mchar_t* subst (qse_mchar_t* buf, qse_size_t bsz, const qse_mxstr_t* ident, void* ctx)
+ * qse_mchar_t* subst (qse_mchar_t* buf, qse_size_t bsz, const qse_mcstr_t* ident, void* ctx)
  * { 
  *   if (qse_mcsxcmp (ident->ptr, ident->len, QSE_MT("USER")) == 0)
  *     return buf + (buf == QSE_MBSSUBST_NOBUF? 3: qse_mcsxput (buf, bsz, QSE_MT("sam")));
@@ -823,7 +823,7 @@ QSE_EXPORT qse_size_t qse_wcsxvfmt (
  * recursively.
  *
  * \code
- * qse_mchar_t* subst (qse_mchar_t* buf, qse_size_t bsz, const qse_mxstr_t* ident, void* ctx)
+ * qse_mchar_t* subst (qse_mchar_t* buf, qse_size_t bsz, const qse_mcstr_t* ident, void* ctx)
  * { 
  *   if (qse_mbsxcmp (ident->ptr, ident->len, QSE_MT("USER")) == 0)
  *     return QSE_NULL;
@@ -855,7 +855,7 @@ QSE_EXPORT qse_size_t qse_mbsxnsubst (
  * \a bsz by substituting new values for ${} segments within it. The actual
  * substitution is made by invoking the callback function \a subst. 
  * \code
- * qse_wchar_t* subst (qse_wchar_t* buf, qse_size_t bsz, const qse_wxstr_t* ident, void* ctx)
+ * qse_wchar_t* subst (qse_wchar_t* buf, qse_size_t bsz, const qse_wcstr_t* ident, void* ctx)
  * { 
  *   if (qse_wcsxcmp (ident->ptr, ident->len, QSE_WT("USER")) == 0)
  *     return buf + qse_wcsxput (buf, bsz, QSE_WT("sam"));	
@@ -876,7 +876,7 @@ QSE_EXPORT qse_size_t qse_mbsxnsubst (
  * above can be extended to return the buffer pointer without actual copying 
  *
  * \code
- * qse_mchar_t* subst (qse_mchar_t* buf, qse_size_t bsz, const qse_wxstr_t* ident, void* ctx)
+ * qse_mchar_t* subst (qse_mchar_t* buf, qse_size_t bsz, const qse_wcstr_t* ident, void* ctx)
  * { 
  *   if (qse_wcsxcmp (ident->ptr, ident->len, QSE_WT("USER")) == 0)
  *     return buf + (buf == QSE_WCSSUBST_NOBUF? 3: qse_wcsxput (buf, bsz, QSE_WT("sam")));
@@ -896,7 +896,7 @@ QSE_EXPORT qse_size_t qse_mbsxnsubst (
  * recursively.
  *
  * \code
- * qse_mchar_t* subst (qse_mchar_t* buf, qse_size_t bsz, const qse_wxstr_t* ident, void* ctx)
+ * qse_mchar_t* subst (qse_mchar_t* buf, qse_size_t bsz, const qse_wcstr_t* ident, void* ctx)
  * { 
  *   if (qse_wcsxcmp (ident->ptr, ident->len, QSE_WT("USER")) == 0)
  *     return QSE_NULL;
@@ -1288,23 +1288,23 @@ QSE_EXPORT qse_wchar_t* qse_wcsadup (
 #endif
 
 QSE_EXPORT qse_mchar_t* qse_mcstrdup (
-	const qse_mxstr_t* str,
+	const qse_mcstr_t* str,
 	qse_mmgr_t*        mmgr
 );
 
 QSE_EXPORT qse_mchar_t* qse_mcstradup (
-	const qse_mxstr_t str[],
+	const qse_mcstr_t str[],
 	qse_size_t*       len,
 	qse_mmgr_t*       mmgr
 );
 
 QSE_EXPORT qse_wchar_t* qse_wcstrdup (
-	const qse_wxstr_t* str,
+	const qse_wcstr_t* str,
 	qse_mmgr_t*        mmgr
 );
 
 QSE_EXPORT qse_wchar_t* qse_wcstradup (
-	const qse_wxstr_t str[],
+	const qse_wcstr_t str[],
 	qse_size_t*       len,
 	qse_mmgr_t*       mmgr
 );
@@ -2284,14 +2284,14 @@ QSE_EXPORT int qse_wcsspltrn (
 QSE_EXPORT qse_mchar_t* qse_mbstok (
 	const qse_mchar_t* s,
 	const qse_mchar_t* delim, 
-	qse_mxstr_t*       tok
+	qse_mcstr_t*       tok
 );
 
 QSE_EXPORT qse_mchar_t* qse_mbsxtok (
 	const qse_mchar_t* s,
 	qse_size_t         len,
 	const qse_mchar_t* delim,
-	qse_mxstr_t*       tok
+	qse_mcstr_t*       tok
 );
 
 QSE_EXPORT qse_mchar_t* qse_mbsxntok (
@@ -2299,20 +2299,20 @@ QSE_EXPORT qse_mchar_t* qse_mbsxntok (
 	qse_size_t         len,
 	const qse_mchar_t* delim,
 	qse_size_t         delim_len, 
-	qse_mxstr_t*       tok
+	qse_mcstr_t*       tok
 );
 
 QSE_EXPORT qse_wchar_t* qse_wcstok (
 	const qse_wchar_t* s,
 	const qse_wchar_t* delim, 
-	qse_wxstr_t*       tok
+	qse_wcstr_t*       tok
 );
 
 QSE_EXPORT qse_wchar_t* qse_wcsxtok (
 	const qse_wchar_t* s,
 	qse_size_t         len,
 	const qse_wchar_t* delim,
-	qse_wxstr_t*       tok
+	qse_wcstr_t*       tok
 );
 
 QSE_EXPORT qse_wchar_t* qse_wcsxntok (
@@ -2320,7 +2320,7 @@ QSE_EXPORT qse_wchar_t* qse_wcsxntok (
 	qse_size_t         len,
 	const qse_wchar_t* delim,
 	qse_size_t         delim_len, 
-	qse_wxstr_t*       tok
+	qse_wcstr_t*       tok
 );
 
 #if defined(QSE_CHAR_IS_MCHAR)
@@ -2613,13 +2613,13 @@ QSE_EXPORT void* qse_mbs_getxtn (
 
 /**
  * The qse_mbs_yield() function assigns the buffer to an variable of the
- * #qse_mxstr_t type and recreate a new buffer of the \a new_capa capacity.
+ * #qse_mcstr_t type and recreate a new buffer of the \a new_capa capacity.
  * The function fails if it fails to allocate a new buffer.
  * \return 0 on success, and -1 on failure.
  */
 QSE_EXPORT int qse_mbs_yield (
 	qse_mbs_t*   str,    /**< string */
-	qse_mxstr_t* buf,    /**< buffer pointer */
+	qse_mcstr_t* buf,    /**< buffer pointer */
 	qse_size_t   newcapa /**< new capacity */
 );
 
@@ -2810,13 +2810,13 @@ QSE_EXPORT void* qse_wcs_getxtn (
 
 /**
  * The qse_wcs_yield() function assigns the buffer to an variable of the
- * #qse_wxstr_t type and recreate a new buffer of the \a new_capa capacity.
+ * #qse_wcstr_t type and recreate a new buffer of the \a new_capa capacity.
  * The function fails if it fails to allocate a new buffer.
  * \return 0 on success, and -1 on failure.
  */
 QSE_EXPORT int qse_wcs_yield (
 	qse_wcs_t*   str,     /**< string */
-	qse_wxstr_t* buf,     /**< buffer pointer */
+	qse_wcstr_t* buf,     /**< buffer pointer */
 	qse_size_t   new_capa /**< new capacity */
 );
 

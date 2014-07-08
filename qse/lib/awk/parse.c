@@ -177,7 +177,7 @@ struct binmap_t
 static int parse_progunit (qse_awk_t* awk);
 static qse_awk_t* collect_globals (qse_awk_t* awk);
 static void adjust_static_globals (qse_awk_t* awk);
-static qse_size_t find_global (qse_awk_t* awk, const qse_xstr_t* name);
+static qse_size_t find_global (qse_awk_t* awk, const qse_cstr_t* name);
 static qse_awk_t* collect_locals (
 	qse_awk_t* awk, qse_size_t nlcls, int istop);
 
@@ -237,14 +237,14 @@ static qse_awk_nde_t* parse_primary_ident (
 	qse_awk_t* awk, const qse_awk_loc_t* xloc);
 
 static qse_awk_nde_t* parse_hashidx (
-	qse_awk_t* awk, const qse_xstr_t* name, const qse_awk_loc_t* xloc);
+	qse_awk_t* awk, const qse_cstr_t* name, const qse_awk_loc_t* xloc);
 static qse_awk_nde_t* parse_fncall (
-	qse_awk_t* awk, const qse_xstr_t* name,
+	qse_awk_t* awk, const qse_cstr_t* name,
 	qse_awk_fnc_t* fnc, const qse_awk_loc_t* xloc, int noarg);
 
 static qse_awk_nde_t* parse_primary_ident_segs (
-	qse_awk_t* awk, const qse_awk_loc_t* xloc, const qse_xstr_t* full, 
-	const qse_xstr_t segs[], int nsegs);
+	qse_awk_t* awk, const qse_awk_loc_t* xloc, const qse_cstr_t* full, 
+	const qse_cstr_t segs[], int nsegs);
 
 static int get_token (qse_awk_t* awk);
 static int preget_token (qse_awk_t* awk);
@@ -252,7 +252,7 @@ static int get_rexstr (qse_awk_t* awk, qse_awk_tok_t* tok);
 
 static int skip_spaces (qse_awk_t* awk);
 static int skip_comment (qse_awk_t* awk);
-static int classify_ident (qse_awk_t* awk, const qse_xstr_t* name);
+static int classify_ident (qse_awk_t* awk, const qse_cstr_t* name);
 
 static int deparse (qse_awk_t* awk);
 static qse_htb_walk_t deparse_func (
@@ -261,14 +261,14 @@ static int put_char (qse_awk_t* awk, qse_char_t c);
 static int flush_out (qse_awk_t* awk);
 
 static qse_awk_mod_t* query_module (
-	qse_awk_t* awk, const qse_xstr_t segs[], int nsegs,
+	qse_awk_t* awk, const qse_cstr_t segs[], int nsegs,
 	qse_awk_mod_sym_t* sym);
 
 typedef struct kwent_t kwent_t;
 
 struct kwent_t 
 { 
-	qse_xstr_t name;
+	qse_cstr_t name;
 	int type; 
 	int trait; /* the entry is valid when this option is set */
 };
@@ -419,7 +419,7 @@ static global_t gtab[] =
 
 #define SETERR_ARG_LOC(awk,code,ep,el,loc) \
 	do { \
-		qse_xstr_t __ea; \
+		qse_cstr_t __ea; \
 		__ea.len = (el); __ea.ptr = (ep); \
 		qse_awk_seterror ((awk), (code), &__ea, (loc)); \
 	} while (0)
@@ -523,7 +523,7 @@ const qse_char_t* qse_awk_getgblname (
 	return QSE_LDA_DPTR(awk->parse.gbls,idx);
 }
 
-void qse_awk_getkwname (qse_awk_t* awk, qse_awk_kwid_t id, qse_xstr_t* s)
+void qse_awk_getkwname (qse_awk_t* awk, qse_awk_kwid_t id, qse_cstr_t* s)
 {
 	*s = kwtab[id].name;
 }
@@ -1075,7 +1075,7 @@ static int parse_progunit (qse_awk_t* awk)
 
 static qse_awk_nde_t* parse_function (qse_awk_t* awk)
 {
-	qse_xstr_t name;
+	qse_cstr_t name;
 	qse_awk_nde_t* body;
 	qse_awk_fun_t* fun;
 	qse_size_t nargs, g;
@@ -1666,7 +1666,7 @@ static void adjust_static_globals (qse_awk_t* awk)
 	}
 }
 
-static qse_size_t get_global (qse_awk_t* awk, const qse_xstr_t* name)
+static qse_size_t get_global (qse_awk_t* awk, const qse_cstr_t* name)
 {
 	qse_size_t i;
 	qse_lda_t* gbls = awk->parse.gbls;
@@ -1683,7 +1683,7 @@ static qse_size_t get_global (qse_awk_t* awk, const qse_xstr_t* name)
 	return QSE_LDA_NIL;
 }
 
-static qse_size_t find_global (qse_awk_t* awk, const qse_xstr_t* name)
+static qse_size_t find_global (qse_awk_t* awk, const qse_cstr_t* name)
 {
 	qse_size_t i;
 	qse_lda_t* gbls = awk->parse.gbls;
@@ -1699,7 +1699,7 @@ static qse_size_t find_global (qse_awk_t* awk, const qse_xstr_t* name)
 }
 
 static int add_global (
-	qse_awk_t* awk, const qse_xstr_t* name,
+	qse_awk_t* awk, const qse_cstr_t* name,
 	qse_awk_loc_t* xloc, int disabled)
 {
 	qse_size_t ngbls;
@@ -1785,7 +1785,7 @@ static int add_global (
 int qse_awk_addgbl (qse_awk_t* awk, const qse_char_t* name)
 {
 	int n;
-	qse_xstr_t ncs;
+	qse_cstr_t ncs;
 
 	ncs.ptr = (qse_char_t*)name;
 	ncs.len = qse_strlen(name);;
@@ -1817,7 +1817,7 @@ int qse_awk_addgbl (qse_awk_t* awk, const qse_char_t* name)
 int qse_awk_delgbl (qse_awk_t* awk, const qse_char_t* name)
 {
 	qse_size_t n;
-	qse_xstr_t ncs;
+	qse_cstr_t ncs;
 
 	ncs.ptr = (qse_char_t*)name;
 	ncs.len = qse_strlen (name);
@@ -1855,7 +1855,7 @@ int qse_awk_delgbl (qse_awk_t* awk, const qse_char_t* name)
 int qse_awk_findgbl (qse_awk_t* awk, const qse_char_t* name)
 {
 	qse_size_t n;
-	qse_xstr_t ncs;
+	qse_cstr_t ncs;
 
 	ncs.ptr = (qse_char_t*)name;
 	ncs.len = qse_strlen (name);
@@ -1938,7 +1938,7 @@ static qse_awk_t* collect_locals (
 
 	while (1) 
 	{
-		qse_xstr_t lcl;
+		qse_cstr_t lcl;
 		qse_size_t n;
 
 		if (!MATCH(awk,TOK_IDENT)) 
@@ -4183,7 +4183,7 @@ static qse_awk_nde_t* parse_increment (qse_awk_t* awk, const qse_awk_loc_t* xloc
 #define FNTYPE_FNC 1
 #define FNTYPE_FUN 2
 
-static QSE_INLINE int isfunname (qse_awk_t* awk, const qse_xstr_t* name)
+static QSE_INLINE int isfunname (qse_awk_t* awk, const qse_cstr_t* name)
 {
 	/* check if it is an awk function being processed currently */
 	if (awk->tree.cur_fun.ptr)
@@ -4214,7 +4214,7 @@ static QSE_INLINE int isfunname (qse_awk_t* awk, const qse_xstr_t* name)
 	return FNTYPE_UNKNOWN;
 }
 
-static QSE_INLINE int isfnname (qse_awk_t* awk, const qse_xstr_t* name)
+static QSE_INLINE int isfnname (qse_awk_t* awk, const qse_cstr_t* name)
 {
 	if (qse_awk_findfnc (awk, name) != QSE_NULL) 
 	{
@@ -4759,7 +4759,7 @@ oops:
 
 static qse_awk_nde_t* parse_variable (
 	qse_awk_t* awk, const qse_awk_loc_t* xloc, qse_awk_nde_type_t type,
-	const qse_xstr_t* name, qse_size_t idxa)
+	const qse_cstr_t* name, qse_size_t idxa)
 {
 	qse_awk_nde_var_t* nde;
 
@@ -4800,7 +4800,7 @@ static qse_awk_nde_t* parse_variable (
 }
 
 static int dup_ident_and_get_next (
-	qse_awk_t* awk, const qse_awk_loc_t* xloc, qse_xstr_t* name, int max)
+	qse_awk_t* awk, const qse_awk_loc_t* xloc, qse_cstr_t* name, int max)
 {
 	int nsegs = 0;
 
@@ -4854,7 +4854,7 @@ oops:
 }
 
 static qse_awk_nde_t* parse_primary_ident_noseg (
-	qse_awk_t* awk, const qse_awk_loc_t* xloc, const qse_xstr_t* name)
+	qse_awk_t* awk, const qse_awk_loc_t* xloc, const qse_cstr_t* name)
 {
 	qse_awk_fnc_t* fnc;
 	qse_size_t idxa;
@@ -4874,7 +4874,7 @@ static qse_awk_nde_t* parse_primary_ident_noseg (
 				 *  e.g) sin -> math::sin
 				 *       cos -> math::cos 
 				 */
-				qse_xstr_t segs[2];
+				qse_cstr_t segs[2];
 
 				QSE_ASSERT (fnc->spec.arg.spec != QSE_NULL);
 
@@ -5030,8 +5030,8 @@ static qse_awk_nde_t* parse_primary_ident_noseg (
 }
 
 static qse_awk_nde_t* parse_primary_ident_segs (
-	qse_awk_t* awk, const qse_awk_loc_t* xloc, const qse_xstr_t* full, 
-	const qse_xstr_t segs[], int nsegs)
+	qse_awk_t* awk, const qse_awk_loc_t* xloc, const qse_cstr_t* full, 
+	const qse_cstr_t segs[], int nsegs)
 {
 	/* parse xxx::yyy */
 
@@ -5098,7 +5098,7 @@ static qse_awk_nde_t* parse_primary_ident (
 	qse_awk_t* awk, const qse_awk_loc_t* xloc)
 {
 	qse_awk_nde_t* nde = QSE_NULL;
-	qse_xstr_t name[2]; /* TODO: support more than 2 segments??? */
+	qse_cstr_t name[2]; /* TODO: support more than 2 segments??? */
 	int nsegs;
 
 	QSE_ASSERT (MATCH(awk,TOK_IDENT));
@@ -5113,7 +5113,7 @@ static qse_awk_nde_t* parse_primary_ident (
 	}
 	else
 	{
-		qse_xstr_t full; /* full name including :: */
+		qse_cstr_t full; /* full name including :: */
 		qse_size_t capa;
 		int i;
 
@@ -5152,7 +5152,7 @@ static qse_awk_nde_t* parse_primary_ident (
 }
 
 static qse_awk_nde_t* parse_hashidx (
-	qse_awk_t* awk, const qse_xstr_t* name, const qse_awk_loc_t* xloc)
+	qse_awk_t* awk, const qse_cstr_t* name, const qse_awk_loc_t* xloc)
 {
 	qse_awk_nde_t* idx, * tmp, * last;
 	qse_awk_nde_var_t* nde;
@@ -5303,7 +5303,7 @@ exit_func:
 }
 
 static qse_awk_nde_t* parse_fncall (
-	qse_awk_t* awk, const qse_xstr_t* name, 
+	qse_awk_t* awk, const qse_cstr_t* name, 
 	qse_awk_fnc_t* fnc, const qse_awk_loc_t* xloc, int noarg)
 {
 	qse_awk_nde_t* head, * curr, * nde;
@@ -6214,7 +6214,7 @@ static int preget_token (qse_awk_t* awk)
 	}
 }
 
-static int classify_ident (qse_awk_t* awk, const qse_xstr_t* name)
+static int classify_ident (qse_awk_t* awk, const qse_cstr_t* name)
 {
 	/* perform binary search */
 
@@ -6266,7 +6266,7 @@ static int deparse (qse_awk_t* awk)
 	struct deparse_func_t df;
 	int n = 0; 
 	qse_ssize_t op;
-	qse_xstr_t kw;
+	qse_cstr_t kw;
 
 	QSE_ASSERT (awk->sio.outf != QSE_NULL);
 
@@ -6376,7 +6376,7 @@ static int deparse (qse_awk_t* awk)
 
 	for (nde = awk->tree.begin; nde != QSE_NULL; nde = nde->next)
 	{
-		qse_xstr_t kw;
+		qse_cstr_t kw;
 
 		qse_awk_getkwname (awk, QSE_AWK_KWID_BEGIN, &kw);
 
@@ -6438,7 +6438,7 @@ static int deparse (qse_awk_t* awk)
 
 	for (nde = awk->tree.end; nde != QSE_NULL; nde = nde->next)
 	{
-		qse_xstr_t kw;
+		qse_cstr_t kw;
 
 		qse_awk_getkwname (awk, QSE_AWK_KWID_END, &kw);
 
@@ -6480,7 +6480,7 @@ static qse_htb_walk_t deparse_func (
 	struct deparse_func_t* df = (struct deparse_func_t*)arg;
 	qse_awk_fun_t* fun = (qse_awk_fun_t*)QSE_HTB_VPTR(pair);
 	qse_size_t i, n;
-	qse_xstr_t kw;
+	qse_cstr_t kw;
 
 	QSE_ASSERT (qse_strxncmp (QSE_HTB_KPTR(pair), QSE_HTB_KLEN(pair), fun->name.ptr, fun->name.len) == 0);
 
@@ -6641,13 +6641,13 @@ static struct
 #endif
 
 static qse_awk_mod_t* query_module (
-	qse_awk_t* awk, const qse_xstr_t segs[], int nsegs,
+	qse_awk_t* awk, const qse_cstr_t segs[], int nsegs,
 	qse_awk_mod_sym_t* sym)
 {
 
 	qse_rbt_pair_t* pair;
 	qse_awk_mod_data_t* mdp;
-	qse_xstr_t ea;
+	qse_cstr_t ea;
 	int n;
 
 	QSE_ASSERT (nsegs == 2);

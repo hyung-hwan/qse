@@ -35,7 +35,7 @@ static qse_sio_t* open_sio (StdSed::Stream::Data& io, const qse_char_t* file, in
 	sio = qse_sio_open (((StdSed::sed_t*)io)->mmgr, 0, file, flags);
 	if (sio == QSE_NULL)
 	{
-		qse_xstr_t ea;
+		qse_cstr_t ea;
 		ea.ptr = (StdSed::char_t*)file;
 		ea.len = qse_strlen (file);
 		((Sed*)io)->setError (QSE_SED_EIOFIL, &ea);
@@ -56,7 +56,7 @@ static qse_sio_t* open_sio_std (StdSed::Stream::Data& io, qse_sio_std_t std, int
 	sio = qse_sio_openstd (((StdSed::sed_t*)io)->mmgr, 0, std, flags);
 	if (sio == QSE_NULL)
 	{
-		qse_xstr_t ea;
+		qse_cstr_t ea;
 		ea.ptr = (StdSed::char_t*)std_names[std];
 		ea.len = qse_strlen (std_names[std]);
 		((Sed*)io)->setError (QSE_SED_EIOFIL, &ea);
@@ -124,7 +124,7 @@ StdSed::ssize_t StdSed::FileStream::read (Data& io, char_t* buf, size_t len)
 			// if writing to outfile, set the error message
 			// explicitly. other cases are handled by 
 			// the caller in sed.c.
-			qse_xstr_t ea;
+			qse_cstr_t ea;
 			ea.ptr = (char_t*)infile;
 			ea.len = qse_strlen (infile);
 			((Sed*)io)->setError (QSE_SED_EIOFIL, &ea);
@@ -145,7 +145,7 @@ StdSed::ssize_t StdSed::FileStream::write (Data& io, const char_t* buf, size_t l
 			// if writing to outfile, set the error message
 			// explicitly. other cases are handled by 
 			// the caller in sed.c.
-			qse_xstr_t ea;
+			qse_cstr_t ea;
 			ea.ptr = (char_t*)outfile;
 			ea.len = qse_strlen (outfile);
 			((Sed*)io)->setError (QSE_SED_EIOFIL, &ea);

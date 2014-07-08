@@ -18,12 +18,12 @@
     License along with QSE. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#if !defined(char_t) && !defined(xstr_t) && !defined(strxsubst)
+#if !defined(char_t) && !defined(cstr_t) && !defined(strxsubst)
 #	error Never include this file
 #endif
 
 static const char_t* scan_dollar (
-	const char_t* f, qse_size_t l, xstr_t* ident, xstr_t* dfl, int depth)
+	const char_t* f, qse_size_t l, cstr_t* ident, cstr_t* dfl, int depth)
 {
 	const char_t* end = f + l;
 
@@ -89,7 +89,7 @@ static const char_t* scan_dollar (
 }
 
 static char_t* expand_dollar (
-	char_t* buf, qse_size_t bsz, const xstr_t* ident, const xstr_t* dfl,
+	char_t* buf, qse_size_t bsz, const cstr_t* ident, const cstr_t* dfl,
 	subst_t subst, void* ctx)
 {
 	char_t* tmp;
@@ -138,7 +138,7 @@ qse_size_t strxnsubst (
 			if (*(f + 1) == T('{'))
 			{
 				const char_t* tmp;
-				xstr_t ident, dfl;
+				cstr_t ident, dfl;
 
 				tmp = scan_dollar (f, fend - f, &ident, &dfl, 0);
 				if (tmp == QSE_NULL || ident.len <= 0) goto normal;

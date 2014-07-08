@@ -82,7 +82,7 @@ struct qse_sed_iostd_t
 		 * the ptr field with qse_sed_freemem() once you're done with it
 	      * to avoid memory leaks. 
            */
-		qse_xstr_t        str;
+		qse_cstr_t        str;
 
 		/** pre-opened sio stream */
 		qse_sio_t*        sio;
@@ -176,7 +176,7 @@ QSE_EXPORT int qse_sed_compstdstr (
  */
 QSE_EXPORT int qse_sed_compstdxstr (
 	qse_sed_t*        sed, 
-	const qse_xstr_t* script
+	const qse_cstr_t* script
 );
 
 /**
@@ -229,8 +229,8 @@ QSE_EXPORT int qse_sed_execstdfile (
  */
 QSE_EXPORT int qse_sed_execstdxstr (
      qse_sed_t*        sed,
-	const qse_xstr_t* instr,
-     qse_xstr_t*       outstr,
+	const qse_cstr_t* instr,
+     qse_cstr_t*       outstr,
 	qse_cmgr_t*       cmgr
 );
 

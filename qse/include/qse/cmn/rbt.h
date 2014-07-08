@@ -438,7 +438,7 @@ QSE_EXPORT qse_rbt_pair_t* qse_rbt_update (
  *   qse_rbt_t* rbt, qse_rbt_pair_t* pair,
  *   void* kptr, qse_size_t klen, void* ctx)
  * {
- *   qse_xstr_t* v = (qse_xstr_t*)ctx;
+ *   qse_cstr_t* v = (qse_cstr_t*)ctx;
  *   if (pair == QSE_NULL)
  *   {
  *     // no existing key for the key 
@@ -490,7 +490,7 @@ QSE_EXPORT qse_rbt_pair_t* qse_rbt_update (
  * 
  *   for (i = 0; i < QSE_COUNTOF(vals); i++)
  *   {
- *     qse_xstr_t ctx;
+ *     qse_cstr_t ctx;
  *     ctx.ptr = vals[i]; ctx.len = qse_strlen(vals[i]);
  *     qse_rbt_cbsert (s1,
  *       keys[i%QSE_COUNTOF(keys)], qse_strlen(keys[i%QSE_COUNTOF(keys)]),

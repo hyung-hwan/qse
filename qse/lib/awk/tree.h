@@ -154,7 +154,7 @@ struct qse_awk_nde_str_t
 struct qse_awk_nde_rex_t
 {
 	QSE_AWK_NDE_HDR;
-	qse_xstr_t  str;
+	qse_cstr_t  str;
 	void*       code[2]; /* [0]: case sensitive, [1]: case insensitive */
 };
 
@@ -167,7 +167,7 @@ struct qse_awk_nde_var_t
 	QSE_AWK_NDE_HDR;
 	struct 
 	{
-		qse_xstr_t name;
+		qse_cstr_t name;
 		qse_size_t idxa;
 	} id;
 	qse_awk_nde_t* idx; /* QSE_NULL for non-XXXXIDX */
@@ -181,7 +181,7 @@ struct qse_awk_nde_fncall_t
 	{
 		struct
 		{
-			qse_xstr_t name;
+			qse_cstr_t name;
 		} fun;
 
 		/* minimum information of a intrinsic function 

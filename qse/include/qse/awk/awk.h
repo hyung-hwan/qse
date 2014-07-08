@@ -193,7 +193,7 @@ typedef struct qse_awk_val_flt_t qse_awk_val_flt_t;
 struct qse_awk_val_str_t
 {
 	QSE_AWK_VAL_HDR;
-	qse_xstr_t  val;
+	qse_cstr_t  val;
 };
 typedef struct qse_awk_val_str_t  qse_awk_val_str_t;
 
@@ -204,7 +204,7 @@ typedef struct qse_awk_val_str_t  qse_awk_val_str_t;
 struct qse_awk_val_rex_t
 {
 	QSE_AWK_VAL_HDR;
-	qse_xstr_t  str;
+	qse_cstr_t  str;
 	void*       code[2];
 };
 typedef struct qse_awk_val_rex_t  qse_awk_val_rex_t;
@@ -271,7 +271,7 @@ typedef struct qse_awk_val_map_itr_t qse_awk_val_map_itr_t;
  * of a map value.
  */
 #define QSE_AWK_VAL_MAP_ITR_KEY(itr) \
-	((const qse_xstr_t*)QSE_HTB_KPTL((itr)->pair))
+	((const qse_cstr_t*)QSE_HTB_KPTL((itr)->pair))
 
 /**
  * The #QSE_AWK_VAL_MAP_ITR_VAL macro get the pointer to the value part 
@@ -308,7 +308,7 @@ typedef enum qse_awk_val_map_data_type_t qse_awk_val_map_data_type_t;
  */
 struct qse_awk_val_map_data_t
 {
-	qse_xstr_t                   key;
+	qse_cstr_t                   key;
 	qse_awk_val_map_data_type_t  type;
 	void*                        vptr;
 };
@@ -403,7 +403,7 @@ struct qse_awk_nde_t
  */
 struct qse_awk_fun_t
 {
-	qse_xstr_t     name;
+	qse_cstr_t     name;
 	qse_size_t     nargs;
 	qse_awk_nde_t* body;
 };
@@ -810,7 +810,7 @@ typedef struct qse_awk_mod_sym_t qse_awk_mod_sym_t;
 
 struct qse_awk_fnc_info_t
 {
-	qse_xstr_t name;
+	qse_cstr_t name;
 
 	/** #QSE_NULL if the function is not registered from module */
 	qse_awk_mod_t* mod; 
@@ -1411,9 +1411,9 @@ struct qse_awk_rtx_valtostr_out_t
 
 	union
 	{
-		qse_xstr_t  cpl;
-		qse_xstr_t  cplcpy;
-		qse_xstr_t  cpldup;  /* need to free cpldup.ptr */
+		qse_cstr_t  cpl;
+		qse_cstr_t  cplcpy;
+		qse_cstr_t  cpldup;  /* need to free cpldup.ptr */
 		qse_str_t*  strp;
 		qse_str_t*  strpcat;
 	} u;
@@ -1600,7 +1600,7 @@ QSE_EXPORT void qse_awk_geterrinf (
 QSE_EXPORT void qse_awk_seterrnum (
 	qse_awk_t*        awk,    /**< awk */
 	qse_awk_errnum_t  errnum, /**< error number */
-	const qse_xstr_t* errarg  /**< argument array for formatting 
+	const qse_cstr_t* errarg  /**< argument array for formatting 
 	                           *   an error message */
 );
 
@@ -1630,7 +1630,7 @@ QSE_EXPORT void qse_awk_geterror (
 QSE_EXPORT void qse_awk_seterror (
 	qse_awk_t*           awk,    /**< awk */
 	qse_awk_errnum_t     errnum, /**< error number */
-	const qse_xstr_t*    errarg, /**< argument array for formatting 
+	const qse_cstr_t*    errarg, /**< argument array for formatting 
 	                              *   an error message */
 	const qse_awk_loc_t* errloc  /**< error location */
 );
@@ -1851,7 +1851,7 @@ QSE_EXPORT qse_char_t* qse_awk_strxdup (
  */
 QSE_EXPORT qse_char_t* qse_awk_cstrdup (
 	qse_awk_t*        awk, /**< awk */
-	const qse_xstr_t* str  /**< string */
+	const qse_cstr_t* str  /**< string */
 );
 
 /**
@@ -2078,7 +2078,7 @@ QSE_EXPORT qse_awk_val_t* qse_awk_rtx_getarg (
  * pointer to the internal value of SUBSEP. It's a specialized
  * version of qse_awk_rtx_getgbl (rtx, QSE_AWK_GBL_SUBSEP).
  */
-QSE_EXPORT const qse_xstr_t* qse_awk_rtx_getsubsep (
+QSE_EXPORT const qse_cstr_t* qse_awk_rtx_getsubsep (
 	qse_awk_rtx_t* rtx  /**< runtime context */
 );
 
@@ -2223,7 +2223,7 @@ QSE_EXPORT void qse_awk_rtx_geterror (
 QSE_EXPORT void qse_awk_rtx_seterrnum (
 	qse_awk_rtx_t*    rtx,    /**< runtime context */
 	qse_awk_errnum_t  errnum, /**< error number */
-	const qse_xstr_t* errarg  /**< arguments to format error message */
+	const qse_cstr_t* errarg  /**< arguments to format error message */
 );
 
 /** 
@@ -2240,7 +2240,7 @@ QSE_EXPORT void qse_awk_rtx_seterrinf (
 QSE_EXPORT void qse_awk_rtx_seterror (
 	qse_awk_rtx_t*       rtx,    /**< runtime context */
 	qse_awk_errnum_t     errnum, /**< error number */
-	const qse_xstr_t*    errarg, /**< argument array for formatting 
+	const qse_cstr_t*    errarg, /**< argument array for formatting 
 	                              *   an error message */
 	const qse_awk_loc_t* errloc  /**< error line */
 );
@@ -2261,7 +2261,7 @@ QSE_EXPORT int qse_awk_rtx_clrrec (
 QSE_EXPORT int qse_awk_rtx_setrec (
 	qse_awk_rtx_t*    rtx, /**< runtime context */
 	qse_size_t        idx, /**< 0 for $0, N for $N */
-	const qse_xstr_t* str  /**< string */
+	const qse_cstr_t* str  /**< string */
 );
 
 /**
@@ -2336,17 +2336,17 @@ QSE_EXPORT qse_awk_val_t* qse_awk_rtx_makestrvalwithwcs (
  */
 QSE_EXPORT qse_awk_val_t* qse_awk_rtx_makestrvalwithxstr (
 	qse_awk_rtx_t*    rtx,
-	const qse_xstr_t* str
+	const qse_cstr_t* str
 );
 
 QSE_EXPORT qse_awk_val_t* qse_awk_rtx_makestrvalwithmxstr (
 	qse_awk_rtx_t*     rtx,
-	const qse_mxstr_t* mxstr
+	const qse_mcstr_t* mxstr
 );
 
 QSE_EXPORT qse_awk_val_t* qse_awk_rtx_makestrvalwithwxstr (
 	qse_awk_rtx_t*     rtx,
-	const qse_wxstr_t* wxstr
+	const qse_wcstr_t* wxstr
 );
 
 /**
@@ -2392,7 +2392,7 @@ QSE_EXPORT qse_awk_val_t* qse_awk_rtx_makenstrvalwithstr (
  */
 QSE_EXPORT qse_awk_val_t* qse_awk_rtx_makenstrvalwithxstr (
 	qse_awk_rtx_t*    rtx,
-	const qse_xstr_t* str 
+	const qse_cstr_t* str 
 );
 
 /**
@@ -2401,7 +2401,7 @@ QSE_EXPORT qse_awk_val_t* qse_awk_rtx_makenstrvalwithxstr (
  */
 QSE_EXPORT qse_awk_val_t* qse_awk_rtx_makerexval (
 	qse_awk_rtx_t*    rtx,
-	const qse_xstr_t* str,
+	const qse_cstr_t* str,
 	void*             code[2]
 );
 

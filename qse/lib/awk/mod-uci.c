@@ -573,8 +573,8 @@ static int getoption_byid (
 							count = 1;
 							uci_foreach_element(&uo->v.list, tmp) 
 							{
-								const qse_xstr_t* subsep;
-								qse_xstr_t k[4];
+								const qse_cstr_t* subsep;
+								qse_cstr_t k[4];
 								qse_char_t idxbuf[64];
 								qse_char_t* kp;
 								qse_size_t kl;
@@ -1329,7 +1329,7 @@ static fnctab_t fnctab[] =
 
 static int query (qse_awk_mod_t* mod, qse_awk_t* awk, const qse_char_t* name, qse_awk_mod_sym_t* sym)
 {
-	qse_xstr_t ea;
+	qse_cstr_t ea;
 	int left, right, mid, n;
 
 	left = 0; right = QSE_COUNTOF(fnctab) - 1;

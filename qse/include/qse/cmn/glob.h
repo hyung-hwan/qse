@@ -30,7 +30,7 @@
  */
 
 typedef int (*qse_glob_cbimpl_t) (
-	const qse_xstr_t* path,
+	const qse_cstr_t* path,
 	void*             cbctx
 );
 

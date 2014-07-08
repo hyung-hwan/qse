@@ -276,9 +276,9 @@ QSE_EXPORT qse_rex_node_t* qse_rex_comp (
 
 QSE_EXPORT int qse_rex_exec (
 	qse_rex_t*        rex,
-	const qse_xstr_t* str, 
-	const qse_xstr_t* substr,
-	qse_xstr_t*       matstr
+	const qse_cstr_t* str, 
+	const qse_cstr_t* substr,
+	qse_cstr_t*       matstr
 );
 
 
@@ -296,9 +296,9 @@ QSE_EXPORT int qse_matchrex (
 	qse_size_t         depth,
 	void*              code, 
 	int                option,
-	const qse_xstr_t*  str,
-	const qse_xstr_t*  substr,
-	qse_xstr_t*        match,	
+	const qse_cstr_t*  str,
+	const qse_cstr_t*  substr,
+	qse_cstr_t*        match,	
 	qse_rex_errnum_t*  errnum
 );
 

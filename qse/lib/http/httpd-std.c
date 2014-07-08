@@ -110,7 +110,7 @@ struct server_xtn_t
 	qse_httpd_serverstd_freersrc_t freersrc;
 
 	/* temporary buffer to handle authorization */
-	qse_mxstr_t auth;
+	qse_mcstr_t auth;
 };
 
 static void set_httpd_callbacks (qse_httpd_t* httpd);

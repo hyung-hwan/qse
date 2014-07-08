@@ -323,7 +323,7 @@ static qse_htb_pair_t* test5_cbserter (
 	qse_htb_t* htb, qse_htb_pair_t* pair, 
 	void* kptr, qse_size_t klen, void* ctx)
 {
-	qse_xstr_t* v = (qse_xstr_t*)ctx;
+	qse_cstr_t* v = (qse_cstr_t*)ctx;
 	if (pair == QSE_NULL)
 	{
 		/* no existing key for the key */
@@ -388,7 +388,7 @@ static int test5 ()
 
 	for (i = 0; i < QSE_COUNTOF(vals); i++)
 	{
-		qse_xstr_t ctx;
+		qse_cstr_t ctx;
 
 		qse_printf (QSE_T("setting a key [%s] and a value [%s]: "), keys[i%QSE_COUNTOF(keys)], vals[i]);
 

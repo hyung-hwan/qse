@@ -146,7 +146,7 @@ struct access_t
 typedef struct loccfg_t loccfg_t;
 struct loccfg_t
 {
-	qse_mxstr_t locname;
+	qse_mcstr_t locname;
 
 	qse_mchar_t* xcfg[XCFG_MAX];
 	int root_is_nwad;

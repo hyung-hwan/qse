@@ -154,19 +154,19 @@ struct qse_sed_cmd_t
 	union
 	{
 		/* text for the a, i, c commands */
-		qse_xstr_t text;  
+		qse_cstr_t text;  
 
 		/* file name for r, w, R, W */
-		qse_xstr_t file;
+		qse_cstr_t file;
 
 		/* data for the s command */
 		struct
 		{
 			void* rex; /* regular expression */
-			qse_xstr_t rpl;  /* replacement */
+			qse_cstr_t rpl;  /* replacement */
 
 			/* flags */
-			qse_xstr_t file; /* file name for w */
+			qse_cstr_t file; /* file name for w */
 			unsigned short occ;
 			unsigned short g: 1; /* global */
 			unsigned short p: 1; /* print */
@@ -175,12 +175,12 @@ struct qse_sed_cmd_t
 		} subst;
 
 		/* translation set for the y command */
-		qse_xstr_t transet;
+		qse_cstr_t transet;
 
 		/* branch target for b and t */
 		struct
 		{
-			qse_xstr_t label;
+			qse_cstr_t label;
 			qse_sed_cmd_t* target;
 		} branch;
 
@@ -561,7 +561,7 @@ QSE_EXPORT void qse_sed_geterror (
 QSE_EXPORT void qse_sed_seterrnum (
 	qse_sed_t*        sed,    /**< stream editor */
 	qse_sed_errnum_t  errnum, /**< error number */
-	const qse_xstr_t* errarg  /**< argument for formatting error message */
+	const qse_cstr_t* errarg  /**< argument for formatting error message */
 );
 
 /**
@@ -583,7 +583,7 @@ QSE_EXPORT void qse_sed_seterrmsg (
 QSE_EXPORT void qse_sed_seterror (
 	qse_sed_t*           sed,    /**< stream editor */
 	qse_sed_errnum_t     errnum, /**< error number */
-	const qse_xstr_t*    errarg, /**< array of arguments for formatting 
+	const qse_cstr_t*    errarg, /**< array of arguments for formatting 
 	                              *   an error message */
 	const qse_sed_loc_t* errloc  /**< error location */
 );
@@ -722,7 +722,7 @@ QSE_EXPORT void qse_sed_freemem (
 QSE_EXPORT void qse_sed_getspace (
 	qse_sed_t*      sed,
 	qse_sed_space_t space,
-	qse_xstr_t*     str
+	qse_cstr_t*     str
 );
 
 #ifdef __cplusplus

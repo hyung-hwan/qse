@@ -35,7 +35,7 @@
 typedef qse_mbs_t qse_htob_t;
 
 /* octet string */
-typedef qse_mxstr_t qse_htos_t;
+typedef qse_mcstr_t qse_htos_t;
 
 /**
  * The qse_http_version_t type defines http version.
@@ -176,7 +176,7 @@ QSE_EXPORT qse_http_method_t qse_mbstohttpmethod (
 );
 
 QSE_EXPORT qse_http_method_t qse_mcstrtohttpmethod (
-	const qse_mxstr_t* name
+	const qse_mcstr_t* name
 );
 
 QSE_EXPORT int qse_parsehttprange (

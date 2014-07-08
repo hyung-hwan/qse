@@ -83,7 +83,7 @@ static int fnc_file_to_file (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	qse_sed_t* sed = QSE_NULL;
 	qse_awk_val_t* retv;
 	qse_awk_val_t* a[3];
-	qse_xstr_t xstr[3];
+	qse_cstr_t xstr[3];
 	int i = 0, ret = 0;
 
 	/* result = sed::file_to_file ("s/ABC/123/g", input_file, output_file [, option_string]) */
@@ -140,8 +140,8 @@ static int fnc_str_to_str (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	qse_sed_t* sed = QSE_NULL;
 	qse_awk_val_t* retv;
 	qse_awk_val_t* a[2], * tmp;
-	qse_xstr_t xstr[2];
-	qse_xstr_t outstr;
+	qse_cstr_t xstr[2];
+	qse_cstr_t outstr;
 	int i = 0, ret = 0, n;
 
 	sed = qse_sed_openstdwithmmgr (qse_awk_rtx_getmmgr(rtx), 0);
@@ -225,7 +225,7 @@ static fnctab_t fnctab[] =
 
 static int query (qse_awk_mod_t* mod, qse_awk_t* awk, const qse_char_t* name, qse_awk_mod_sym_t* sym)
 {
-	qse_xstr_t ea;
+	qse_cstr_t ea;
 	int left, right, mid, n;
 
 	left = 0; right = QSE_COUNTOF(fnctab) - 1;

@@ -146,7 +146,7 @@ public:
 	///
 	void setError (
 		errnum_t      code, ///< error code
-		const xstr_t* args  = QSE_NULL, ///< message formatting 
+		const cstr_t* args  = QSE_NULL, ///< message formatting 
 		                                ///  argument array
 		const loc_t*  loc   = QSE_NULL  ///< error location
 	);
@@ -525,7 +525,7 @@ public:
 		///
 		/// The Index class encapsulates an index of an arrayed value.
 		///
-		class QSE_EXPORT Index: protected qse_xstr_t
+		class QSE_EXPORT Index: protected qse_cstr_t
 		{
 		public:
 			friend class Value;
@@ -544,13 +544,13 @@ public:
 				this->len = len;
 			}
 
-			void set (const qse_xstr_t* x)
+			void set (const qse_cstr_t* x)
 			{
 				this->ptr = x->ptr;
 				this->len = x->len;
 			}
 
-			Index& operator= (const qse_xstr_t* x)
+			Index& operator= (const qse_cstr_t* x)
 			{
 				this->set (x);
 				return *this;
@@ -821,7 +821,7 @@ public:
 
 		mutable struct
 		{	
-			qse_xstr_t str;
+			qse_cstr_t str;
 		} cached;
 
 	public:
@@ -858,7 +858,7 @@ public:
 
 		void setError (
 			errnum_t      code, 
-			const xstr_t* args = QSE_NULL,
+			const cstr_t* args = QSE_NULL,
 			const loc_t*  loc  = QSE_NULL
 		);
 
@@ -1335,7 +1335,7 @@ protected:
 		int add (awk_t* awk, const char_t* arg, size_t len);
 		void clear (awk_t* awk);
 
-		qse_xstr_t* ptr;
+		qse_cstr_t* ptr;
 		size_t      len;
 		size_t      capa;
 	};

@@ -22,7 +22,7 @@
 
 #undef T
 #undef char_t
-#undef xstr_t
+#undef cstr_t
 #undef strfcpy
 #undef strfncpy
 #undef strxfcpy
@@ -30,7 +30,7 @@
 
 #define T(x) QSE_MT(x)
 #define char_t qse_mchar_t
-#define xstr_t qse_mxstr_t
+#define cstr_t qse_mcstr_t
 #define strfcpy qse_mbsfcpy
 #define strfncpy qse_mbsfncpy
 #define strxfcpy qse_mbsxfcpy
@@ -41,7 +41,7 @@
 
 #undef T
 #undef char_t
-#undef xstr_t
+#undef cstr_t
 #undef strfcpy
 #undef strfncpy
 #undef strxfcpy
@@ -49,7 +49,7 @@
 
 #define T(x) QSE_WT(x)
 #define char_t qse_wchar_t
-#define xstr_t qse_wxstr_t
+#define cstr_t qse_wcstr_t
 #define strfcpy qse_wcsfcpy
 #define strfncpy qse_wcsfncpy
 #define strxfcpy qse_wcsxfcpy

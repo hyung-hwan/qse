@@ -169,7 +169,7 @@ qse_http_method_t qse_mbstohttpmethod (const qse_mchar_t* name)
 	return QSE_HTTP_OTHER;
 }
 
-qse_http_method_t qse_mcstrtohttpmethod (const qse_mxstr_t* name)
+qse_http_method_t qse_mcstrtohttpmethod (const qse_mcstr_t* name)
 {
 	/* perform binary search */
 

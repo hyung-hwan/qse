@@ -101,7 +101,7 @@ struct arg_t
 struct gvmv_t
 {
 	int         idx;
-	qse_xstr_t  str;
+	qse_cstr_t  str;
 };
 
 static void dprint (const qse_char_t* fmt, ...)
@@ -434,7 +434,7 @@ static void print_usage (qse_sio_t* out, const qse_char_t* argv0)
 
 /* ---------------------------------------------------------------------- */
 
-static int collect_into_xarg (const qse_xstr_t* path, void* ctx)
+static int collect_into_xarg (const qse_cstr_t* path, void* ctx)
 {
 	xarg_t* xarg = (xarg_t*)ctx;
 
@@ -477,7 +477,7 @@ static void purge_xarg (xarg_t* xarg)
 static int expand_wildcard (int argc, qse_char_t* argv[], int glob, xarg_t* xarg)
 {
 	int i;
-	qse_xstr_t tmp;
+	qse_cstr_t tmp;
 
 	for (i = 0; i < argc; i++)
 	{

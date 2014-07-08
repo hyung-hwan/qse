@@ -156,7 +156,7 @@ static int print_tabs (qse_awk_t* awk, int depth)
 
 static int print_printx (qse_awk_t* awk, qse_awk_nde_print_t* px)
 {
-	qse_xstr_t kw;
+	qse_cstr_t kw;
 
 	if (px->type == QSE_AWK_NDE_PRINT) 
 	{
@@ -188,7 +188,7 @@ static int print_printx (qse_awk_t* awk, qse_awk_nde_print_t* px)
 
 static int print_expr (qse_awk_t* awk, qse_awk_nde_t* nde)
 {
-	qse_xstr_t kw;
+	qse_cstr_t kw;
 	
 	switch (nde->type) 
 	{
@@ -727,7 +727,7 @@ static int print_expr_list (qse_awk_t* awk, qse_awk_nde_t* tree)
 static int print_stmt (qse_awk_t* awk, qse_awk_nde_t* p, int depth)
 {
 	qse_size_t i;
-	qse_xstr_t kw;
+	qse_cstr_t kw;
 
 	switch (p->type) 
 	{
