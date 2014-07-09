@@ -1769,11 +1769,12 @@ static int __build_environ (
 			if (kptr == QSE_NULL || vptr == QSE_NULL)
 			{
 				if (kptr) QSE_MMGR_FREE (rtx->awk->mmgr, kptr);
+				if (vptr) QSE_MMGR_FREE (rtx->awk->mmgr, vptr);
 				qse_awk_rtx_refdownval (rtx, v_env);
 
 				qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL); 
 				return -1;
-			}			
+			}
 
 			*eq = QSE_MT('=');
 		#else
@@ -1787,6 +1788,7 @@ static int __build_environ (
 			if (kptr == QSE_NULL || vptr == QSE_NULL)
 			{
 				if (kptr) QSE_MMGR_FREE (rtx->awk->mmgr, kptr);
+				if (vptr) QSE_MMGR_FREE (rtx->awk->mmgr, vptr);
 				qse_awk_rtx_refdownval (rtx, v_env);
 
 				qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);

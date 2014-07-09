@@ -904,13 +904,30 @@ qse_htb_walk_t add_global (qse_htb_t* map, qse_htb_pair_t* pair, void* arg)
 	return QSE_HTB_WALK_FORWARD;
 }
 
+
+static void* xma_alloc (qse_mmgr_t* mmgr, qse_size_t size)
+{
+	return qse_xma_alloc (mmgr->ctx, size);
+}
+
+static void* xma_realloc (qse_mmgr_t* mmgr, void* ptr, qse_size_t size)
+{
+	return qse_xma_realloc (mmgr->ctx, ptr, size);
+}
+
+static void xma_free (qse_mmgr_t* mmgr, void* ptr)
+{
+	qse_xma_free (mmgr->ctx, ptr);
+}
+
 static qse_mmgr_t xma_mmgr = 
 {
-	(qse_mmgr_alloc_t)qse_xma_alloc,
-	(qse_mmgr_realloc_t)qse_xma_realloc,
-	(qse_mmgr_free_t)qse_xma_free,
+	xma_alloc,
+	xma_realloc,
+	xma_free,
 	QSE_NULL
 };
+
 
 #if defined(QSE_BUILD_DEBUG)
 static qse_ulong_t debug_mmgr_count = 0;
@@ -918,10 +935,10 @@ static qse_ulong_t debug_mmgr_alloc_count = 0;
 static qse_ulong_t debug_mmgr_realloc_count = 0;
 static qse_ulong_t debug_mmgr_free_count = 0;
 
-static void* debug_mmgr_alloc (void* ctx, qse_size_t size)
+static void* debug_mmgr_alloc (qse_mmgr_t* mmgr, qse_size_t size)
 {
 	void* ptr;
-	struct arg_t* arg = (struct arg_t*)ctx;
+	struct arg_t* arg = (struct arg_t*)mmgr->ctx;
 	debug_mmgr_count++;
 	if (debug_mmgr_count % arg->failmalloc == 0) return QSE_NULL;
 	ptr = malloc (size);
@@ -929,10 +946,10 @@ static void* debug_mmgr_alloc (void* ctx, qse_size_t size)
 	return ptr;
 }
 
-static void* debug_mmgr_realloc (void* ctx, void* ptr, qse_size_t size)
+static void* debug_mmgr_realloc (qse_mmgr_t* mmgr, void* ptr, qse_size_t size)
 {
 	void* rptr;
-	struct arg_t* arg = (struct arg_t*)ctx;
+	struct arg_t* arg = (struct arg_t*)mmgr->ctx;
 	debug_mmgr_count++;
 	if (debug_mmgr_count % arg->failmalloc == 0) return QSE_NULL;
 	rptr = realloc (ptr, size);
@@ -944,7 +961,7 @@ static void* debug_mmgr_realloc (void* ctx, void* ptr, qse_size_t size)
 	return rptr;
 }
 
-static void debug_mmgr_free (void* ctx, void* ptr)
+static void debug_mmgr_free (qse_mmgr_t* mmgr, void* ptr)
 {
 	debug_mmgr_free_count++;
 	free (ptr);
@@ -1004,7 +1021,7 @@ static int awk_main (int argc, qse_char_t* argv[])
 	if (arg.failmalloc > 0)
 	{
 		debug_mmgr.ctx = &arg;
-		mmgr = &debug_mmgr;	
+		mmgr = &debug_mmgr;
 	}
 	else 
 #endif

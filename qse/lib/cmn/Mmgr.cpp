@@ -24,19 +24,19 @@
 QSE_BEGIN_NAMESPACE(QSE)
 /////////////////////////////////
 
-void* Mmgr::alloc_mem (void* ctx, size_t n) 
+void* Mmgr::alloc_mem (mmgr_t* mmgr, size_t n) 
 {
-	return ((Mmgr*)ctx)->allocMem (n);
+	return ((Mmgr*)mmgr->ctx)->allocMem (n);
 }
 
-void* Mmgr::realloc_mem (void* ctx, void* ptr, size_t n) 
+void* Mmgr::realloc_mem (mmgr_t* mmgr, void* ptr, size_t n) 
 {
-	return ((Mmgr*)ctx)->reallocMem (ptr, n);
+	return ((Mmgr*)mmgr->ctx)->reallocMem (ptr, n);
 }
 
-void Mmgr::free_mem (void* ctx, void* ptr) 
+void Mmgr::free_mem (mmgr_t* mmgr, void* ptr) 
 {
-	((Mmgr*)ctx)->freeMem (ptr);
+	((Mmgr*)mmgr->ctx)->freeMem (ptr);
 }
 
 /////////////////////////////////

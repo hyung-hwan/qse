@@ -67,7 +67,7 @@ static qse_ulong_t debug_mmgr_alloc_count = 0;
 static qse_ulong_t debug_mmgr_realloc_count = 0;
 static qse_ulong_t debug_mmgr_free_count = 0;
 
-static void* debug_mmgr_alloc (void* ctx, qse_size_t size)
+static void* debug_mmgr_alloc (qse_mmgr_t* mmgr, qse_size_t size)
 {
 	void* ptr;
 	debug_mmgr_count++;
@@ -77,7 +77,7 @@ static void* debug_mmgr_alloc (void* ctx, qse_size_t size)
 	return ptr;
 }
 
-static void* debug_mmgr_realloc (void* ctx, void* ptr, qse_size_t size)
+static void* debug_mmgr_realloc (qse_mmgr_t* mmgr, void* ptr, qse_size_t size)
 {
 	void* rptr;
 	debug_mmgr_count++;
@@ -91,7 +91,7 @@ static void* debug_mmgr_realloc (void* ctx, void* ptr, qse_size_t size)
 	return rptr;
 }
 
-static void debug_mmgr_free (void* ctx, void* ptr)
+static void debug_mmgr_free (qse_mmgr_t* mmgr, void* ptr)
 {
 	debug_mmgr_free_count++;
 	free (ptr);
@@ -106,11 +106,26 @@ static qse_mmgr_t debug_mmgr =
 };
 #endif
 
+static void* xma_alloc (qse_mmgr_t* mmgr, qse_size_t size)
+{
+	return qse_xma_alloc (mmgr->ctx, size);
+}
+
+static void* xma_realloc (qse_mmgr_t* mmgr, void* ptr, qse_size_t size)
+{
+	return qse_xma_realloc (mmgr->ctx, ptr, size);
+}
+
+static void xma_free (qse_mmgr_t* mmgr, void* ptr)
+{
+	qse_xma_free (mmgr->ctx, ptr);
+}
+
 static qse_mmgr_t xma_mmgr = 
 {
-	(qse_mmgr_alloc_t)qse_xma_alloc,
-	(qse_mmgr_realloc_t)qse_xma_realloc,
-	(qse_mmgr_free_t)qse_xma_free,
+	xma_alloc,
+	xma_realloc,
+	xma_free,
 	QSE_NULL
 };
 

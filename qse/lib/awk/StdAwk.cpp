@@ -262,6 +262,7 @@ int StdAwk::__build_environ (Run* run, void* envptr)
 			if (kptr == QSE_NULL || vptr == QSE_NULL)
 			{
 				if (kptr) QSE_MMGR_FREE (mmgr, kptr);
+				if (vptr) QSE_MMGR_FREE (mmgr, vptr);
 
 				/* mbstowcsdup() may fail for invalid encoding.
 				 * so setting the error code to ENOMEM may not
@@ -282,6 +283,7 @@ int StdAwk::__build_environ (Run* run, void* envptr)
 			if (kptr == QSE_NULL || vptr == QSE_NULL)
 			{
 				if (kptr) QSE_MMGR_FREE (mmgr, kptr);
+				if (vptr) QSE_MMGR_FREE (mmgr, vptr);
 
 				/* mbstowcsdup() may fail for invalid encoding.
 				 * so setting the error code to ENOMEM may not
