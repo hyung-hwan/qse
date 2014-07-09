@@ -22,6 +22,12 @@
 
 #if defined(_WIN32)
 #	include <windows.h>
+/*
+#elif defined(__OS2__)
+#	define INCL_DOSMEMMGR
+#	include <os2.h>
+#	include <bsememf.h>
+*/
 #else
 #	include <stdlib.h>
 #endif
@@ -439,7 +445,7 @@ void* qse_memrmem (const void* hs, qse_size_t hl, const void* nd, qse_size_t nl)
 	return QSE_NULL;
 }
 
-static void* mmgr_alloc (void* data, qse_size_t n)
+static void* mmgr_alloc (qse_mmgr_t* mmgr, qse_size_t n)
 {
 #if defined(_WIN32)
 	HANDLE heap;
@@ -452,7 +458,7 @@ static void* mmgr_alloc (void* data, qse_size_t n)
 #endif
 }
 
-static void* mmgr_realloc (void* data, void* ptr, qse_size_t n)
+static void* mmgr_realloc (qse_mmgr_t* mmgr, void* ptr, qse_size_t n)
 {
 #if defined(_WIN32)
 	HANDLE heap;
@@ -466,7 +472,7 @@ static void* mmgr_realloc (void* data, void* ptr, qse_size_t n)
 #endif
 }
 
-static void mmgr_free (void* data, void* ptr)
+static void mmgr_free (qse_mmgr_t* mmgr, void* ptr)
 {
 #if defined(_WIN32)
 	HANDLE heap;

@@ -90,17 +90,17 @@ protected:
 	///
 	/// bridge function from the #qse_mmgr_t type the allocMem() function.
 	///
-	static void* alloc_mem (void* ctx, size_t n);
+	static void* alloc_mem (mmgr_t* mmgr, size_t n);
 
 	///
 	/// bridge function from the #qse_mmgr_t type the reallocMem() function.
 	///
-	static void* realloc_mem (void* ctx, void* ptr, size_t n);
+	static void* realloc_mem (mmgr_t* mmgr, void* ptr, size_t n);
 
 	///
 	/// bridge function from the #qse_mmgr_t type the freeMem() function.
 	///
-	static void  free_mem (void* ctx, void* ptr);
+	static void  free_mem (mmgr_t* mmgr, void* ptr);
 };
 
 /////////////////////////////////

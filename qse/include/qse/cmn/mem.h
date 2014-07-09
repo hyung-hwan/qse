@@ -42,18 +42,18 @@
  * The QSE_MMGR_ALLOC() macro allocates a memory block of the @a size bytes
  * using the @a mmgr memory manager.
  */
-#define QSE_MMGR_ALLOC(mmgr,size) ((mmgr)->alloc((mmgr)->ctx,size))
+#define QSE_MMGR_ALLOC(mmgr,size) ((mmgr)->alloc(mmgr,size))
 
 /**
  * The QSE_MMGR_REALLOC() macro resizes a memory block pointed to by @a ptr 
  * to the @a size bytes using the @a mmgr memory manager.
  */
-#define QSE_MMGR_REALLOC(mmgr,ptr,size) ((mmgr)->realloc((mmgr)->ctx,ptr,size))
+#define QSE_MMGR_REALLOC(mmgr,ptr,size) ((mmgr)->realloc(mmgr,ptr,size))
 
 /** 
  * The QSE_MMGR_FREE() macro deallocates the memory block pointed to by @a ptr.
  */
-#define QSE_MMGR_FREE(mmgr,ptr) ((mmgr)->free((mmgr)->ctx,ptr))
+#define QSE_MMGR_FREE(mmgr,ptr) ((mmgr)->free(mmgr,ptr))
 
 #ifdef __cplusplus
 extern "C" {

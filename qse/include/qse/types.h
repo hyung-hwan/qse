@@ -654,20 +654,23 @@ struct qse_xptl_t
 };
 typedef struct qse_xptl_t qse_xptl_t;
 
+
+typedef struct qse_mmgr_t qse_mmgr_t;
+
 /** 
  * allocate a memory chunk of the size @a n.
  * @return pointer to a memory chunk on success, QSE_NULL on failure.
  */
-typedef void* (*qse_mmgr_alloc_t)   (void* ctx, qse_size_t n);
+typedef void* (*qse_mmgr_alloc_t)   (qse_mmgr_t* mmgr, qse_size_t n);
 /** 
  * resize a memory chunk pointed to by @a ptr to the size @a n.
  * @return pointer to a memory chunk on success, QSE_NULL on failure.
  */
-typedef void* (*qse_mmgr_realloc_t) (void* ctx, void* ptr, qse_size_t n);
+typedef void* (*qse_mmgr_realloc_t) (qse_mmgr_t* mmgr, void* ptr, qse_size_t n);
 /**
  * free a memory chunk pointed to by @a ptr.
  */
-typedef void  (*qse_mmgr_free_t)    (void* ctx, void* ptr);
+typedef void  (*qse_mmgr_free_t)    (qse_mmgr_t* mmgr, void* ptr);
 
 /**
  * The qse_mmgr_t type defines the memory management interface.
@@ -687,7 +690,6 @@ struct qse_mmgr_t
 	qse_mmgr_free_t    free;    /**< disposal function */
 	void*              ctx;     /**< user-defined data pointer */
 };
-typedef struct qse_mmgr_t qse_mmgr_t;
 
 typedef qse_size_t (*qse_cmgr_mbtowc_t) (
 	const qse_mchar_t* mb, 
