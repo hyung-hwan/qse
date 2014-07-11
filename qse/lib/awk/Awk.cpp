@@ -1623,7 +1623,7 @@ int Awk::addFunction (
 	spec.arg.min = minArgs;
 	spec.arg.max = maxArgs;
 	spec.arg.spec = argSpec;
-	spec.impl = functionHandler;
+	spec.impl = this->functionHandler;
 	spec.trait = validOpts;
 
 	qse_awk_fnc_t* fnc = qse_awk_addfnc (awk, name, &spec);

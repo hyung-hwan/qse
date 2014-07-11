@@ -802,7 +802,7 @@ static int sed_main (int argc, qse_char_t* argv[])
 #endif
 
 	qse_memset (&xarg, 0, QSE_SIZEOF(xarg));
-	xarg.mmgr = qse_sed_getmmgr(sed);	
+	xarg.mmgr = qse_sed_getmmgr(sed);
 	xarg_inited = 1;
 
 	if (g_separate && g_infile_pos > 0)

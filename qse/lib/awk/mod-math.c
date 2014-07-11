@@ -21,6 +21,8 @@
 #include "mod-str.h"
 #include <qse/cmn/str.h>
 #include <qse/cmn/chr.h>
+#include <qse/cmn/alg.h>
+#include <qse/cmn/time.h>
 #include "../cmn/mem.h"
 #include "fnc.h"
 
@@ -52,6 +54,12 @@
 #		define HAVE_SQRT
 #	endif
 #endif
+
+typedef struct modctx_t
+{
+	qse_awk_int_t seed;	
+	qse_awk_uint_t prand; /* last random value returned */
+} modctx_t;
 
 static int fnc_math_1 (
 	qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi, qse_awk_math1_t f)
@@ -454,6 +462,73 @@ static int fnc_sqrt (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	return fnc_math_1 (rtx, fi, math_sqrt);
 }
 
+/* ----------------------------------------------------------------------- */
+
+static int fnc_rand (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+#define RANDV_MAX QSE_TYPE_MAX(qse_awk_int_t)
+	qse_awk_val_t* r;
+	qse_awk_int_t randv;
+	modctx_t* modctx;
+
+	modctx = (modctx_t*)fi->mod->ctx;
+
+#if defined(QSE_USE_AWK_INTMAX)
+	modctx->prand = qse_randxsuintmax (modctx->prand);
+#else
+	modctx->prand = qse_randxsulong (modctx->prand);
+#endif
+	randv = modctx->prand % RANDV_MAX;
+
+	r = qse_awk_rtx_makefltval (rtx, (qse_awk_flt_t)randv / RANDV_MAX);
+	if (r == QSE_NULL) return -1;
+
+	qse_awk_rtx_setretval (rtx, r);
+	return 0;
+#undef RANDV_MAX
+}
+
+static int fnc_srand (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	qse_size_t nargs;
+	qse_awk_val_t* a0;
+	qse_awk_int_t lv;
+	qse_awk_val_t* r;
+	int n;
+	qse_awk_int_t prev;
+	qse_ntime_t now;
+	modctx_t* modctx;
+
+	modctx = (modctx_t*)fi->mod->ctx;
+	nargs = qse_awk_rtx_getnargs (rtx);
+	QSE_ASSERT (nargs == 0 || nargs == 1);
+
+	prev = modctx->seed;
+
+	if (nargs <= 0)
+	{
+		modctx->seed = (qse_gettime (&now) <= -1)? 
+			(modctx->seed * modctx->seed): ((qse_awk_int_t)now.sec + (qse_awk_int_t)now.nsec);
+	}
+	else
+	{
+		a0 = qse_awk_rtx_getarg (rtx, 0);
+		n = qse_awk_rtx_valtoint (rtx, a0, &lv);
+		if (n <= -1) return -1;
+		modctx->seed = lv;
+	}
+	/* i don't care if the seed becomes negative or overflows.
+	 * i just convert the signed value to the unsigned one. */
+	modctx->prand = (qse_awk_uint_t)(modctx->seed * modctx->seed * modctx->seed);
+	/* make sure that the actual seeding is not 0 */
+	if (modctx->prand == 0) modctx->prand++;
+
+	r = qse_awk_rtx_makeintval (rtx, prev);
+	if (r == QSE_NULL) return -1;
+
+	qse_awk_rtx_setretval (rtx, r);
+	return 0;
+}
 
 /* ----------------------------------------------------------------------- */
 
@@ -478,10 +553,12 @@ static fnctab_t fnctab[] =
 	{ QSE_T("floor"),   { { 1, 1, QSE_NULL },     fnc_floor,      0 } },
 	{ QSE_T("log"),     { { 1, 1, QSE_NULL },     fnc_log,        0 } },
 	{ QSE_T("log10"),   { { 1, 1, QSE_NULL },     fnc_log10,      0 } },
+	{ QSE_T("rand"),    { { 0, 0, QSE_NULL },     fnc_rand,       0 } },
 	{ QSE_T("round"),   { { 1, 1, QSE_NULL },     fnc_round,      0 } },
 	{ QSE_T("sin"),     { { 1, 1, QSE_NULL },     fnc_sin,        0 } },
 	{ QSE_T("sinh"),    { { 1, 1, QSE_NULL },     fnc_sinh,       0 } },
 	{ QSE_T("sqrt"),    { { 1, 1, QSE_NULL },     fnc_sqrt,       0 } },
+	{ QSE_T("srand"),   { { 0, 1, QSE_NULL },     fnc_srand,      0 } },
 	{ QSE_T("tan"),     { { 1, 1, QSE_NULL },     fnc_tan,        0 } },
 	{ QSE_T("tanh"),    { { 1, 1, QSE_NULL },     fnc_tanh,       0 } }
 };
@@ -541,27 +618,44 @@ static int init (qse_awk_mod_t* mod, qse_awk_rtx_t* rtx)
 
 static void fini (qse_awk_mod_t* mod, qse_awk_rtx_t* rtx)
 {
-	/* TODO: 
-	for (each pid for rtx) kill (pid, SIGKILL);
-	for (each pid for rtx) waitpid (pid, QSE_NULL, 0);
-	*/
+	/* TODO: anything */
 }
 
 static void unload (qse_awk_mod_t* mod, qse_awk_t* awk)
 {
-	/* TODO: anything */
+	modctx_t* modctx;
+
+	modctx = (modctx_t*)mod->ctx;
+	qse_awk_freemem (awk, modctx);
 }
 
 int qse_awk_mod_math (qse_awk_mod_t* mod, qse_awk_t* awk)
 {
+	modctx_t* modctx;
+	qse_ntime_t now;
+
+	modctx = qse_awk_allocmem (awk, QSE_SIZEOF(*modctx));
+	if (modctx == QSE_NULL) 
+	{
+		qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);
+		return -1;
+	}
+
+	QSE_MEMSET (modctx, 0, QSE_SIZEOF(*modctx));
+
+	modctx->seed = (qse_gettime (&now) <= -1)? 0u: ((qse_awk_int_t)now.sec + (qse_awk_int_t)now.nsec);
+	/* i don't care if the seed becomes negative or overflows.
+	 * i just convert the signed value to the unsigned one. */
+	modctx->prand = (qse_awk_uint_t)(modctx->seed * modctx->seed * modctx->seed);
+	/* make sure that the actual seeding is not 0 */
+	if (modctx->prand == 0) modctx->prand++;
+
 	mod->query = query;
 	mod->unload = unload;
 
 	mod->init = init;
 	mod->fini = fini;
-	/*
-	mod->ctx...
-	 */
+	mod->ctx = modctx;
 
 	return 0;
 }

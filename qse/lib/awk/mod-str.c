@@ -301,10 +301,7 @@ static int init (qse_awk_mod_t* mod, qse_awk_rtx_t* rtx)
 
 static void fini (qse_awk_mod_t* mod, qse_awk_rtx_t* rtx)
 {
-	/* TODO: 
-	for (each pid for rtx) kill (pid, SIGKILL);
-	for (each pid for rtx) waitpid (pid, QSE_NULL, 0);
-	*/
+	/* TODO: anything */
 }
 
 static void unload (qse_awk_mod_t* mod, qse_awk_t* awk)

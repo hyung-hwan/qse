@@ -23,11 +23,13 @@
 #include <qse/cmn/time.h>
 #include <qse/cmn/nwif.h>
 #include <qse/cmn/nwad.h>
+#include <qse/cmn/mbwc.h>
 #include "../cmn/mem.h"
 
 #if defined(_WIN32)
 #	include <windows.h>
 #	include <process.h>
+#	include <tchar.h>
 #elif defined(__OS2__)
 #	define INCL_DOSPROCESS
 #	define INCL_DOSEXCEPTIONS
@@ -42,7 +44,7 @@
 #	endif
 #endif
 
-#include <stdlib.h> /* getenv */
+#include <stdlib.h> /* getenv, system */
 
 static int fnc_fork (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
@@ -597,6 +599,56 @@ static int fnc_getnwifcfg (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	return 0;
 }
 
+static int fnc_system (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	qse_awk_val_t* v, * a0;
+	qse_char_t* str;
+	qse_size_t len;
+	int n = 0;
+
+	a0 = qse_awk_rtx_getarg (rtx, 0);
+	str = qse_awk_rtx_getvalstr (rtx, a0, &len);
+	if (str == QSE_NULL) return -1;
+
+	/* the target name contains a null character.
+	 * make system return -1 */
+	if (qse_strxchr (str, len, QSE_T('\0')))
+	{
+		n = -1;
+		goto skip_system;
+	}
+
+#if defined(_WIN32)
+	n = _tsystem (str);
+#elif defined(QSE_CHAR_IS_MCHAR)
+	n = system (str);
+#else
+
+	{
+		qse_mchar_t* mbs;
+		mbs = qse_wcstombsdup (str, QSE_NULL, qse_awk_rtx_getmmgr(rtx));
+		if (mbs == QSE_NULL) 
+		{
+			n = -1;
+			goto skip_system;
+		}
+		n = system (mbs);
+		qse_awk_rtx_freemem (rtx, mbs);
+	}
+
+#endif
+
+skip_system:
+	qse_awk_rtx_freevalstr (rtx, a0, str);
+
+	v = qse_awk_rtx_makeintval (rtx, (qse_awk_int_t)n);
+	if (v == QSE_NULL) return -1;
+
+	qse_awk_rtx_setretval (rtx, v);
+	return 0;
+}
+
+
 typedef struct fnctab_t fnctab_t;
 struct fnctab_t
 {
@@ -630,6 +682,7 @@ static fnctab_t fnctab[] =
 	{ QSE_T("kill"),       { { 2, 2, QSE_NULL     }, fnc_kill,       0  } },
 	{ QSE_T("settime"),    { { 1, 1, QSE_NULL     }, fnc_settime,    0  } },
 	{ QSE_T("sleep"),      { { 1, 1, QSE_NULL     }, fnc_sleep,      0  } },
+	{ QSE_T("system"),     { { 1, 1, QSE_NULL     }, fnc_system,     0  } },
 	{ QSE_T("wait"),       { { 1, 1, QSE_NULL     }, fnc_wait,       0  } }
 };
 
