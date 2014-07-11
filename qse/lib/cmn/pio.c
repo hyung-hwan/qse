@@ -90,10 +90,7 @@ qse_pio_t* qse_pio_open (
 			QSE_MMGR_FREE (mmgr, pio);
 			pio = QSE_NULL;
 		}
-		else
-		{
-			QSE_MEMSET (pio + 1, 0, xtnsize);
-		}
+		else QSE_MEMSET (QSE_XTN(pio), 0, xtnsize);
 	}
 
 	return pio;

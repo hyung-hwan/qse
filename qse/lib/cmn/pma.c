@@ -60,7 +60,7 @@ qse_pma_t* qse_pma_open (qse_mmgr_t* mmgr, qse_size_t xtnsize)
 		return QSE_NULL;
 	}
 
-	QSE_MEMSET (pma + 1, 0, xtnsize);
+	QSE_MEMSET (QSE_XTN(pma), 0, xtnsize);
 	return pma;
 }
 

@@ -1122,10 +1122,11 @@ int Awk::open ()
 	prm.modclose = modclose;
 	prm.modsym  = modsym;
 
-	awk = qse_awk_open (this->getMmgr(), QSE_SIZEOF(xtn_t), &prm);
+	qse_awk_errnum_t errnum;
+	awk = qse_awk_open (this->getMmgr(), QSE_SIZEOF(xtn_t), &prm, &errnum);
 	if (awk == QSE_NULL)
 	{
-		setError (QSE_AWK_ENOMEM);
+		this->setError (errnum);
 		return -1;
 	}
 
@@ -1145,7 +1146,7 @@ int Awk::open ()
 		qse_awk_close (awk);
 		awk = QSE_NULL;
 
-		setError (QSE_AWK_ENOMEM);
+		this->setError (QSE_AWK_ENOMEM);
 		return -1;
 	}
 

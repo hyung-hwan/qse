@@ -96,7 +96,8 @@ extern "C" {
  * over qse_awk_open() if you don't need finer-grained customization.
  */
 QSE_EXPORT qse_awk_t* qse_awk_openstd (
-	qse_size_t xtnsize  /**< extension size in bytes */
+	qse_size_t        xtnsize,  /**< extension size in bytes */
+	qse_awk_errnum_t* errnum    /**< pointer to an error number variable */
 );
 
 /**
@@ -105,8 +106,9 @@ QSE_EXPORT qse_awk_t* qse_awk_openstd (
  * except that you can specify your own memory manager.
  */
 QSE_EXPORT qse_awk_t* qse_awk_openstdwithmmgr (
-	qse_mmgr_t* mmgr,    /**< memory manager */
-	qse_size_t  xtnsize  /**< extension size in bytes */
+	qse_mmgr_t*       mmgr,     /**< memory manager */
+	qse_size_t        xtnsize,  /**< extension size in bytes */
+	qse_awk_errnum_t* errnum    /**< pointer to an error number variable */
 );
 
 /**

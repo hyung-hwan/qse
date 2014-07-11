@@ -379,9 +379,9 @@ static void* custom_awk_modsym (qse_awk_t* awk, void* handle, const qse_char_t* 
 static int add_globals (qse_awk_t* awk);
 static int add_functions (qse_awk_t* awk);
 
-qse_awk_t* qse_awk_openstd (qse_size_t xtnsize)
+qse_awk_t* qse_awk_openstd (qse_size_t xtnsize, qse_awk_errnum_t* errnum)
 {
-	return qse_awk_openstdwithmmgr (QSE_MMGR_GETDFL(), xtnsize);
+	return qse_awk_openstdwithmmgr (QSE_MMGR_GETDFL(), xtnsize, errnum);
 }
 
 static void fini_xtn (qse_awk_t* awk)
@@ -397,7 +397,7 @@ static void clear_xtn (qse_awk_t* awk)
 	/* nothing to do */
 }
 
-qse_awk_t* qse_awk_openstdwithmmgr (qse_mmgr_t* mmgr, qse_size_t xtnsize)
+qse_awk_t* qse_awk_openstdwithmmgr (qse_mmgr_t* mmgr, qse_size_t xtnsize, qse_awk_errnum_t* errnum)
 {
 	qse_awk_t* awk;
 	qse_awk_prm_t prm;
@@ -411,7 +411,7 @@ qse_awk_t* qse_awk_openstdwithmmgr (qse_mmgr_t* mmgr, qse_size_t xtnsize)
 	prm.modsym = custom_awk_modsym;
 
 	/* create an object */
-	awk = qse_awk_open (mmgr, QSE_SIZEOF(xtn_t) + xtnsize, &prm);
+	awk = qse_awk_open (mmgr, QSE_SIZEOF(xtn_t) + xtnsize, &prm, errnum);
 	if (awk == QSE_NULL) return QSE_NULL;
 
 	/* initialize extension */

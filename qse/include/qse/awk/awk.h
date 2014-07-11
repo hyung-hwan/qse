@@ -1435,7 +1435,7 @@ extern "C" {
 #endif
 
 /**
- * The qse_awk_open() function creates a new qse_awk_t object. The object 
+ * The qse_awk_open() function creates a new #qse_awk_t object. The object 
  * created can be passed to other qse_awk_xxx() functions and is valid until 
  * it is destroyed with the qse_awk_close() function. The function saves the 
  * memory manager pointer while it copies the contents of the primitive 
@@ -1451,24 +1451,28 @@ extern "C" {
  *        &mmgr, // NOT OK because the contents of mmgr is 
  *               // invalidated when dummy() returns. 
  *        0, 
- *        &prm   // OK 
+ *        &prm,  // OK 
+ *        QSE_NULL
  *     );
  * }
  * \endcode
  *
+ * Upon failure, it stores the error number to a variable pointed to 
+ * by \a errnum. if \a errnum is #QSE_NULL, no error number is stored.
+ *
  * \return a pointer to a qse_awk_t object on success, #QSE_NULL on failure.
  */
 QSE_EXPORT qse_awk_t* qse_awk_open ( 
-	qse_mmgr_t*    mmgr,    /**< memory manager */
-	qse_size_t     xtnsize, /**< extension size in bytes */
-	qse_awk_prm_t* prm      /**< pointer to a primitive function structure */
+	qse_mmgr_t*          mmgr,    /**< memory manager */
+	qse_size_t           xtnsize, /**< extension size in bytes */
+	const qse_awk_prm_t* prm,     /**< pointer to a primitive function structure */
+	qse_awk_errnum_t*    errnum   /**< pointer to an error number varaible */
 );
 
 /**
  *  The qse_awk_close() function destroys a qse_awk_t object.
- * \return 0 on success, -1 on failure 
  */
-QSE_EXPORT int qse_awk_close (
+QSE_EXPORT void qse_awk_close (
 	qse_awk_t* awk /**< awk */
 );
 
@@ -1512,10 +1516,9 @@ QSE_EXPORT void qse_awk_setprm (
  * reuse a qse_awk_t instance that finished being used, you may call 
  * qse_awk_clear() instead of destroying and creating a new
  * #qse_awk_t instance using qse_awk_close() and qse_awk_open().
- *
- * \return 0 on success, -1 on failure
+
  */
-QSE_EXPORT int qse_awk_clear (
+QSE_EXPORT void qse_awk_clear (
 	qse_awk_t* awk 
 );
 

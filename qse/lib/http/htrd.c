@@ -127,17 +127,16 @@ qse_htrd_t* qse_htrd_open (qse_mmgr_t* mmgr, qse_size_t xtnsize)
 {
 	qse_htrd_t* htrd;
 
-	htrd = (qse_htrd_t*) QSE_MMGR_ALLOC (
-		mmgr, QSE_SIZEOF(qse_htrd_t) + xtnsize
-	);
-	if (htrd == QSE_NULL) return QSE_NULL;
-
-	if (qse_htrd_init (htrd, mmgr) <= -1)
+	htrd = (qse_htrd_t*) QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(qse_htrd_t) + xtnsize);
+	if (htrd)
 	{
-		QSE_MMGR_FREE (htrd->mmgr, htrd);
-		return QSE_NULL;
+		if (qse_htrd_init (htrd, mmgr) <= -1)
+		{
+			QSE_MMGR_FREE (mmgr, htrd);
+			return QSE_NULL;
+		}
+		else QSE_MEMSET (QSE_XTN(htrd), 0, xtnsize);
 	}
-
 	return htrd;
 }
 

@@ -116,20 +116,21 @@ static dossetfilesizel_t dos_set_file_size_l = QSE_NULL;
 #endif
 
 qse_fio_t* qse_fio_open (
-	qse_mmgr_t* mmgr, qse_size_t ext,
+	qse_mmgr_t* mmgr, qse_size_t xtnsize,
 	const qse_char_t* path, int flags, int mode)
 {
 	qse_fio_t* fio;
 
-	fio = QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(qse_fio_t) + ext);
-	if (fio == QSE_NULL) return QSE_NULL;
-
-	if (qse_fio_init (fio, mmgr, path, flags, mode) <= -1)
+	fio = QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(qse_fio_t) + xtnsize);
+	if (fio)
 	{
-		QSE_MMGR_FREE (mmgr, fio);
-		return QSE_NULL;
+		if (qse_fio_init (fio, mmgr, path, flags, mode) <= -1)
+		{
+			QSE_MMGR_FREE (mmgr, fio);
+			return QSE_NULL;
+		}
+		else QSE_MEMSET (QSE_XTN(fio), 0, xtnsize);
 	}
-
 	return fio;
 }
 

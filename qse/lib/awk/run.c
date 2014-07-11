@@ -1653,7 +1653,7 @@ oops:
 	{
 		qse_awk_rtx_refdownval (rtx, v[--i]);
 	}
-	QSE_MMGR_FREE  (rtx->awk->mmgr, v);
+	QSE_AWK_FREE  (rtx->awk, v);
 	return ret;
 }
 

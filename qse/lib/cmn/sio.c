@@ -103,15 +103,15 @@ qse_sio_t* qse_sio_open (
 	qse_sio_t* sio;
 
 	sio = QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(qse_sio_t) + xtnsize);
-	if (sio == QSE_NULL) return QSE_NULL;
-
-	if (qse_sio_init (sio, mmgr, file, flags) <= -1)
+	if (sio)
 	{
-		QSE_MMGR_FREE (mmgr, sio);
-		return QSE_NULL;
+		if (qse_sio_init (sio, mmgr, file, flags) <= -1)
+		{
+			QSE_MMGR_FREE (mmgr, sio);
+			return QSE_NULL;
+		}
+		else QSE_MEMSET (QSE_XTN(sio), 0, xtnsize);
 	}
-
-	QSE_MEMSET (sio + 1, 0, xtnsize);
 	return sio;
 }
 

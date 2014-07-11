@@ -35,7 +35,7 @@ qse_xli_t* qse_xli_open (qse_mmgr_t* mmgr, qse_size_t xtnsize, qse_size_t rootxt
 	{
 		if (qse_xli_init (xli, mmgr, rootxtnsize) <= -1)
 		{
-			QSE_MMGR_FREE (xli->mmgr, xli);
+			QSE_MMGR_FREE (mmgr, xli);
 			return QSE_NULL;
 		}
 		else QSE_MEMSET (QSE_XTN(xli), 0, xtnsize);
@@ -78,11 +78,11 @@ int qse_xli_init (qse_xli_t* xli, qse_mmgr_t* mmgr, qse_size_t rootxtnsize)
 	return 0;
 
 oops:
-	qse_xli_seterrnum (xli, QSE_XLI_ENOMEM, QSE_NULL);
 	if (xli->root) QSE_MMGR_FREE (mmgr, xli->root);
 	if (xli->schema) qse_rbt_close (xli->schema);
 	if (xli->tok.name) qse_str_close (xli->tok.name);
 	if (xli->dotted_curkey) qse_str_close (xli->dotted_curkey);
+	qse_xli_seterrnum (xli, QSE_XLI_ENOMEM, QSE_NULL);
 	return -1;
 }
 

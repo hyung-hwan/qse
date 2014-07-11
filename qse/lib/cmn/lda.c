@@ -92,11 +92,11 @@ static QSE_INLINE slot_t* alloc_slot (lda_t* lda, void* dptr, size_t dlen)
 	return n;
 }
 
-lda_t* qse_lda_open (mmgr_t* mmgr, size_t ext, size_t capa)
+lda_t* qse_lda_open (mmgr_t* mmgr, size_t xtnsize, size_t capa)
 {
 	lda_t* lda;
 
-	lda = QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(lda_t) + ext);
+	lda = QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(lda_t) + xtnsize);
 	if (lda == QSE_NULL) return QSE_NULL;
 
 	if (qse_lda_init (lda, mmgr, capa) <= -1)
@@ -105,6 +105,7 @@ lda_t* qse_lda_open (mmgr_t* mmgr, size_t ext, size_t capa)
 		return QSE_NULL;
 	}
 
+	QSE_MEMSET (QSE_XTN(lda), 0, xtnsize);
 	return lda;
 }
 

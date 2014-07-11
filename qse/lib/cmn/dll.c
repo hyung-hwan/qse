@@ -58,7 +58,7 @@ qse_dll_t* qse_dll_open (qse_mmgr_t* mmgr, qse_size_t xtnsize)
 		return QSE_NULL;
 	}
 
-	QSE_MEMSET (dll + 1, 0, xtnsize);
+	QSE_MEMSET (QSE_XTN(dll), 0, xtnsize);
 	return dll;
 }
 
