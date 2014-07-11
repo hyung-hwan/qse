@@ -115,13 +115,6 @@ protected:
 	int __build_environ (Run* run, void* envptr);
 
 	// intrinsic functions 
-	int rand (Run& run, Value& ret, Value* args, size_t nargs,
-		const char_t* name, size_t len);
-	int srand (Run& run, Value& ret, Value* args, size_t nargs,
-		const char_t* name, size_t len);
-	int system (Run& run, Value& ret, Value* args, size_t nargs,
-		const char_t* name, size_t len);
-
 	qse_cmgr_t* getcmgr (const char_t* ioname);
 
 	int setioattr (Run& run, Value& ret, Value* args, size_t nargs,
@@ -159,13 +152,11 @@ protected:
 	flt_t pow (flt_t x, flt_t y);
 	flt_t mod (flt_t x, flt_t y);
 
-     void* modopen (const mod_spec_t* spec);
-     void  modclose (void* handle);
-     void* modsym (void* handle, const char_t* name);
+	void* modopen (const mod_spec_t* spec);
+	void  modclose (void* handle);
+	void* modsym (void* handle, const char_t* name);
 
 protected:
-	int_t seed; 
-	uint_t prand;
 	qse_htb_t cmgrtab;
 	bool cmgrtab_inited;
 

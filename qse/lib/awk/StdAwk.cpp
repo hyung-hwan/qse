@@ -26,7 +26,6 @@
 #include <qse/cmn/sio.h>
 #include <qse/cmn/nwio.h>
 #include <qse/cmn/path.h>
-#include <qse/cmn/alg.h>
 #include "awk.h"
 
 #include <stdlib.h>
@@ -128,11 +127,11 @@ int StdAwk::open ()
 		goto oops;
 	}
 
-	if (addFunction (QSE_T("rand"),       0, 0, QSE_NULL,     (FunctionHandler)&StdAwk::rand,      0) <= -1 ||
-	    addFunction (QSE_T("srand"),      0, 1, QSE_NULL,     (FunctionHandler)&StdAwk::srand,     0) <= -1 ||
-	    addFunction (QSE_T("system"),     1, 1, QSE_NULL,     (FunctionHandler)&StdAwk::system,    0) <= -1 ||
-	    addFunction (QSE_T("setioattr"),  3, 3, QSE_NULL,     (FunctionHandler)&StdAwk::setioattr, QSE_AWK_RIO) <= -1 ||
-	    addFunction (QSE_T("getioattr"),  3, 3, QSE_T("vvr"), (FunctionHandler)&StdAwk::getioattr, QSE_AWK_RIO) <= -1)
+	if (addFunction (QSE_T("rand"),       1, 0, QSE_T("math"),   QSE_NULL,                            0) <= -1 ||
+	    addFunction (QSE_T("srand"),      1, 0, QSE_T("math"),   QSE_NULL,                            0) <= -1 ||
+	    addFunction (QSE_T("system"),     1, 0, QSE_T("sys"),    QSE_NULL,                            0) <= -1 ||
+	    addFunction (QSE_T("setioattr"),  3, 3, QSE_NULL,        (FunctionHandler)&StdAwk::setioattr, QSE_AWK_RIO) <= -1 ||
+	    addFunction (QSE_T("getioattr"),  3, 3, QSE_T("vvr"),    (FunctionHandler)&StdAwk::getioattr, QSE_AWK_RIO) <= -1)
 	{
 		goto oops;
 	}
@@ -144,15 +143,6 @@ int StdAwk::open ()
 	 * and lt_dlexit() at the library level. */
 	if (lt_dlinit() != 0) goto oops;
 #endif
-
-	qse_ntime_t now;
-
-	this->seed = (qse_gettime(&now) <= -1)? 0u: ((int_t)now.sec + (int_t)now.nsec);
-	/* i don't care if the seed becomes negative or overflows.
-	 * i just convert the signed value to the unsigned one. */
-	this->prand = (uint_t)(this->seed * this->seed * this->seed);
-	/* make sure that the actual seeding is not 0 */
-	if (this->prand == 0) this->prand++;
 
 	this->cmgrtab_inited = false;
 	return 0;
@@ -334,69 +324,6 @@ int StdAwk::make_additional_globals (Run* run)
 	    build_environ (run) <= -1) return -1;
 	    
 	return 0;
-}
-
-int StdAwk::rand (Run& run, Value& ret, Value* args, size_t nargs,
-	const char_t* name, size_t len)
-{
-#define RANDV_MAX QSE_TYPE_MAX(int_t)
-
-#if defined(QSE_USE_AWK_INTMAX)
-	this->prand = qse_randxsuintmax (this->prand);
-#else
-	this->prand = qse_randxsulong (this->prand);
-#endif
-
-     int_t randv = this->prand % RANDV_MAX;
-	return ret.setFlt ((flt_t)randv / RANDV_MAX);
-#undef RANDV_MAX 
-}
-
-int StdAwk::srand (Run& run, Value& ret, Value* args, size_t nargs,
-	const char_t* name, size_t len)
-{
-	int_t prevSeed = (int_t)this->seed;
-
-	qse_ntime_t now;
-
-	if (nargs <= 0)
-	{
-		this->seed = (qse_gettime (&now) <= -1)?
-			(this->seed * this->seed): ((int_t)now.sec + (int_t)now.nsec);
-	}
-	else
-	{
-		this->seed = args[0].toInt();
-	}
-
-	/* i don't care if the seed becomes negative or overflows.
-	 * i just convert the signed value to the unsigned one. */
-	this->prand = (uint_t)(this->seed * this->seed * this->seed);
-	/* make sure that the actual seeding is not 0 */
-	if (this->prand == 0) this->prand++;
-
-	return ret.setInt ((int_t)prevSeed);
-}
-
-int StdAwk::system (Run& run, Value& ret, Value* args, size_t nargs,
-	const char_t* name, size_t len)
-{
-	size_t l;
-	const char_t* ptr = args[0].toStr(&l);
-
-#if defined(_WIN32)
-	return ret.setInt ((int_t)::_tsystem(ptr));
-#elif defined(QSE_CHAR_IS_MCHAR)
-	return ret.setInt ((int_t)::system(ptr));
-#else
-
-	qse_mchar_t* mbs;
-	mbs = qse_wcstombsdup (ptr, QSE_NULL, ((Awk*)run)->getMmgr());
-	if (mbs == QSE_NULL) return -1;
-	int n = ret.setInt ((int_t)::system(mbs));
-	QSE_MMGR_FREE (((Awk*)run)->getMmgr(), mbs);
-	return n;
-#endif
 }
 
 qse_cmgr_t* StdAwk::getcmgr (const char_t* ioname)

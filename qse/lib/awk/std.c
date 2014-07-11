@@ -29,7 +29,6 @@
 #include <qse/cmn/path.h>
 #include <qse/cmn/htb.h>
 #include <qse/cmn/env.h>
-#include <qse/cmn/alg.h>
 #include "../cmn/mem.h"
 
 #include <stdarg.h>
@@ -113,9 +112,6 @@ typedef struct xtn_t
 
 typedef struct rxtn_t
 {
-	qse_awk_int_t seed;	
-	qse_awk_uint_t prand; /* last random value returned */
-
 	struct
 	{
 		struct {
@@ -1903,7 +1899,6 @@ qse_awk_rtx_t* qse_awk_rtx_openstd (
 	qse_awk_rio_t rio;
 	rxtn_t* rxtn;
 	xtn_t* xtn;
-	qse_ntime_t now;
 
 	xtn = (xtn_t*)QSE_XTN (awk);
 
@@ -1937,13 +1932,6 @@ qse_awk_rtx_t* qse_awk_rtx_openstd (
 
 	rxtn->ecb.close = fini_rxtn;
 	qse_awk_rtx_pushecb (rtx, &rxtn->ecb);
-
-	rxtn->seed = (qse_gettime (&now) <= -1)? 0u: ((qse_awk_int_t)now.sec + (qse_awk_int_t)now.nsec);
-	/* i don't care if the seed becomes negative or overflows.
-	 * i just convert the signed value to the unsigned one. */
-	rxtn->prand = (qse_awk_uint_t)(rxtn->seed * rxtn->seed * rxtn->seed);
-	/* make sure that the actual seeding is not 0 */
-	if (rxtn->prand == 0) rxtn->prand++;
 
 	rxtn->c.in.files = icf;
 	rxtn->c.in.index = 0;
@@ -1990,120 +1978,6 @@ void* qse_awk_rtx_getxtnstd (qse_awk_rtx_t* rtx)
 	return (void*)((rxtn_t*)QSE_XTN(rtx) + 1);
 }
 
-static int fnc_rand (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
-{
-#define RANDV_MAX QSE_TYPE_MAX(qse_awk_int_t)
-	qse_awk_val_t* r;
-	qse_awk_int_t randv;
-	rxtn_t* rxtn;
-
-	rxtn = (rxtn_t*) QSE_XTN (rtx);
-
-#if defined(QSE_USE_AWK_INTMAX)
-	rxtn->prand = qse_randxsuintmax (rxtn->prand);
-#else
-	rxtn->prand = qse_randxsulong (rxtn->prand);
-#endif
-	randv = rxtn->prand % RANDV_MAX;
-
-	r = qse_awk_rtx_makefltval (rtx, (qse_awk_flt_t)randv / RANDV_MAX);
-	if (r == QSE_NULL) return -1;
-
-	qse_awk_rtx_setretval (rtx, r);
-	return 0;
-#undef RANDV_MAX
-}
-
-static int fnc_srand (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
-{
-	qse_size_t nargs;
-	qse_awk_val_t* a0;
-	qse_awk_int_t lv;
-	qse_awk_val_t* r;
-	int n;
-	qse_awk_int_t prev;
-	qse_ntime_t now;
-	rxtn_t* rxtn;
-
-	rxtn = (rxtn_t*) QSE_XTN (rtx);
-	nargs = qse_awk_rtx_getnargs (rtx);
-	QSE_ASSERT (nargs == 0 || nargs == 1);
-
-	prev = rxtn->seed;
-
-	if (nargs <= 0)
-	{
-		rxtn->seed = (qse_gettime (&now) <= -1)? 
-			(rxtn->seed * rxtn->seed): ((qse_awk_int_t)now.sec + (qse_awk_int_t)now.nsec);
-	}
-	else
-	{
-		a0 = qse_awk_rtx_getarg (rtx, 0);
-		n = qse_awk_rtx_valtoint (rtx, a0, &lv);
-		if (n <= -1) return -1;
-		rxtn->seed = lv;
-	}
-	/* i don't care if the seed becomes negative or overflows.
-	 * i just convert the signed value to the unsigned one. */
-	rxtn->prand = (qse_awk_uint_t)(rxtn->seed * rxtn->seed * rxtn->seed);
-	/* make sure that the actual seeding is not 0 */
-	if (rxtn->prand == 0) rxtn->prand++;
-
-	r = qse_awk_rtx_makeintval (rtx, prev);
-	if (r == QSE_NULL) return -1;
-
-	qse_awk_rtx_setretval (rtx, r);
-	return 0;
-}
-
-static int fnc_system (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
-{
-	qse_awk_val_t* v, * a0;
-	qse_char_t* str;
-	qse_size_t len;
-	int n = 0;
-
-	a0 = qse_awk_rtx_getarg (rtx, 0);
-	str = qse_awk_rtx_getvalstr (rtx, a0, &len);
-	if (str == QSE_NULL) return -1;
-
-	/* the target name contains a null character.
-	 * make system return -1 */
-	if (qse_strxchr (str, len, QSE_T('\0')))
-	{
-		n = -1;
-		goto skip_system;
-	}
-
-#if defined(_WIN32)
-	n = _tsystem (str);
-#elif defined(QSE_CHAR_IS_MCHAR)
-	n = system (str);
-#else
-
-	{
-		qse_mchar_t* mbs;
-		mbs = qse_wcstombsdup (str, QSE_NULL, rtx->awk->mmgr);
-		if (mbs == QSE_NULL) 
-		{
-			n = -1;
-			goto skip_system;
-		}
-		n = system (mbs);
-		QSE_AWK_FREE (rtx->awk, mbs);
-	}
-
-#endif
-
-skip_system:
-	qse_awk_rtx_freevalstr (rtx, a0, str);
-
-	v = qse_awk_rtx_makeintval (rtx, (qse_awk_int_t)n);
-	if (v == QSE_NULL) return -1;
-
-	qse_awk_rtx_setretval (rtx, v);
-	return 0;
-}
 
 static int timeout_code (const qse_char_t* name)
 {
@@ -2407,11 +2281,14 @@ struct fnctab_t
 
 static struct fnctab_t fnctab[] =
 {
-	{ QSE_T("rand"),      { {0, 0, QSE_NULL},     fnc_rand,      0           } },
-	{ QSE_T("srand"),     { {0, 1, QSE_NULL},     fnc_srand,     0           } },
-	{ QSE_T("system"),    { {1, 1, QSE_NULL},     fnc_system ,   0           } },
-	{ QSE_T("setioattr"), { {3, 3, QSE_NULL},     fnc_setioattr, QSE_AWK_RIO } },
-	{ QSE_T("getioattr"), { {3, 3, QSE_T("vvr")}, fnc_getioattr, QSE_AWK_RIO } }
+	/* additional aliases to module functions */
+	{ QSE_T("rand"),      { {1, 0, QSE_T("math")},  QSE_NULL,      0           } },
+	{ QSE_T("srand"),     { {1, 0, QSE_T("math")},  QSE_NULL,      0           } },
+	{ QSE_T("system"),    { {1, 0, QSE_T("sys")},   QSE_NULL ,     0           } }, 
+
+	/* additional functions */
+	{ QSE_T("setioattr"), { {3, 3, QSE_NULL},       fnc_setioattr, QSE_AWK_RIO } },
+	{ QSE_T("getioattr"), { {3, 3, QSE_T("vvr")},   fnc_getioattr, QSE_AWK_RIO } }
 };
 
 static int add_functions (qse_awk_t* awk)

@@ -2089,7 +2089,7 @@ static qse_awk_nde_t* parse_if (qse_awk_t* awk, const qse_awk_loc_t* xloc)
 		goto oops;
 	}
 
-/* TODO: optimization. if you know 'tese' evaluates to true or false,
+/* TODO: optimization. if you know 'test' evaluates to true or false,
  *       you can drop the 'if' statement and take either the 'then_part'
  *       or 'else_part'. */
 
