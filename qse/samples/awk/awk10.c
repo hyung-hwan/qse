@@ -74,7 +74,7 @@ static int awk_main (int argc, qse_char_t* argv[])
 	qse_awk_fnc_spec_t spec;
 
 	/* create an awk object */
-	awk = qse_awk_openstd (0);
+	awk = qse_awk_openstd (0, QSE_NULL);
 	if (awk == QSE_NULL)  
 	{
 		qse_fprintf (QSE_STDERR, QSE_T("ERROR: cannot open awk\n"));

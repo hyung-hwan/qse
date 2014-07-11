@@ -131,11 +131,11 @@ int qse_rex_init (qse_rex_t* rex, qse_mmgr_t* mmgr, qse_rex_node_t* code)
 	return 0;
 }
 
-qse_rex_t* qse_rex_open (qse_mmgr_t* mmgr, qse_size_t xtn, qse_rex_node_t* code)
+qse_rex_t* qse_rex_open (qse_mmgr_t* mmgr, qse_size_t xtnsize, qse_rex_node_t* code)
 {
 	qse_rex_t* rex;
 
-	rex = (qse_rex_t*) QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(qse_rex_t) + xtn);
+	rex = (qse_rex_t*) QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(qse_rex_t) + xtnsize);
 	if (rex == QSE_NULL) return QSE_NULL;
 
 	if (qse_rex_init (rex, mmgr, code) <= -1)
@@ -144,6 +144,7 @@ qse_rex_t* qse_rex_open (qse_mmgr_t* mmgr, qse_size_t xtn, qse_rex_node_t* code)
 		return QSE_NULL;
 	}
 
+	QSE_MEMSET (QSE_XTN(rex), 0, xtnsize);
 	return rex;
 }
 

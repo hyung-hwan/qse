@@ -40,7 +40,7 @@ qse_upxd_t* qse_upxd_open (qse_mmgr_t* mmgr, qse_size_t xtnsize)
 
 	if (qse_upxd_init (upxd, mmgr) <= -1)
 	{
-		QSE_MMGR_FREE (upxd->mmgr, upxd);
+		QSE_MMGR_FREE (mmgr, upxd);
 		return QSE_NULL;
 	}
 

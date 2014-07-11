@@ -35,15 +35,16 @@ qse_tio_t* qse_tio_open (qse_mmgr_t* mmgr, qse_size_t xtnsize, int flags)
 	qse_tio_t* tio;
 
 	tio = QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(qse_tio_t) + xtnsize);
-	if (tio == QSE_NULL) return QSE_NULL;
-
-	if (qse_tio_init (tio, mmgr, flags) <= -1)
+	if (tio)
 	{
-		QSE_MMGR_FREE (mmgr, tio);
-		return QSE_NULL;
-	}
+		if (qse_tio_init (tio, mmgr, flags) <= -1)
+		{
+			QSE_MMGR_FREE (mmgr, tio);
+			return QSE_NULL;
+		}
 
-	QSE_MEMSET (tio + 1, 0, xtnsize);
+		else QSE_MEMSET (QSE_XTN(tio), 0, xtnsize);
+	}
 	return tio;
 }
 

@@ -35,7 +35,7 @@ qse_tre_t* qse_tre_open (qse_mmgr_t* mmgr, qse_size_t xtnsize)
 		return QSE_NULL;
 	}
 
-	QSE_MEMSET (tre + 1, 0, xtnsize);
+	QSE_MEMSET (QSE_XTN(tre), 0, xtnsize);
 	return tre;
 }
 

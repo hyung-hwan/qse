@@ -1036,7 +1036,7 @@ static int awk_main (int argc, qse_char_t* argv[])
 		mmgr = &xma_mmgr;
 	}
 
-	awk = qse_awk_openstdwithmmgr (mmgr, 0);
+	awk = qse_awk_openstdwithmmgr (mmgr, 0, QSE_NULL);
 	/*awk = qse_awk_openstd (0);*/
 	if (awk == QSE_NULL)
 	{

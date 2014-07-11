@@ -43,18 +43,18 @@ qse_httpd_t* qse_httpd_open (qse_mmgr_t* mmgr, qse_size_t xtnsize)
 {
 	qse_httpd_t* httpd;
 
-	httpd = (qse_httpd_t*) QSE_MMGR_ALLOC (
-		mmgr, QSE_SIZEOF(*httpd) + xtnsize
-	);
-	if (httpd == QSE_NULL) return QSE_NULL;
-
-	if (qse_httpd_init (httpd, mmgr) <= -1)
+	httpd = (qse_httpd_t*) QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(qse_httpd_t) + xtnsize);
+	if (httpd)
 	{
-		QSE_MMGR_FREE (httpd->mmgr, httpd);
-		return QSE_NULL;
+
+		if (qse_httpd_init (httpd, mmgr) <= -1)
+		{
+			QSE_MMGR_FREE (mmgr, httpd);
+			return QSE_NULL;
+		}
+		else QSE_MEMSET (QSE_XTN(httpd), 0, xtnsize);
 	}
 
-	QSE_MEMSET (httpd + 1, 0, xtnsize);
 	return httpd;
 }
 

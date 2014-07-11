@@ -619,7 +619,7 @@ oops:
 			prev = awk->sio.inp->prev;
 
 			QSE_ASSERT (awk->sio.inp->name != QSE_NULL);
-			QSE_MMGR_FREE (awk->mmgr, awk->sio.inp);
+			QSE_AWK_FREE (awk, awk->sio.inp);
 
 			awk->sio.inp = prev;
 		}
@@ -660,7 +660,7 @@ void qse_awk_clearsionames (qse_awk_t* awk)
 	{
 		cur = awk->sio_names;
 		awk->sio_names = cur->link;
-		QSE_MMGR_FREE (awk->mmgr, cur);
+		QSE_AWK_FREE (awk, cur);
 	}
 }
 
@@ -726,7 +726,7 @@ static int end_include (qse_awk_t* awk)
 	awk->sio.inp = awk->sio.inp->prev;
 
 	QSE_ASSERT (cur->name != QSE_NULL);
-	QSE_MMGR_FREE (awk->mmgr, cur);
+	QSE_AWK_FREE (awk, cur);
 	awk->parse.depth.incl--;
 
 	if (x != 0)
@@ -822,7 +822,7 @@ static int begin_include (qse_awk_t* awk)
 oops:
 	/* i don't need to free 'link'  here since it's linked to awk->sio_names
 	 * that's freed at the beginning of qse_awk_parse() or by qse_awk_close(). */
-	if (arg) QSE_MMGR_FREE (awk->mmgr, arg);
+	if (arg) QSE_AWK_FREE (awk, arg);
 	return -1;
 }
 
@@ -5135,7 +5135,7 @@ static qse_awk_nde_t* parse_primary_ident (
 			{
 				/* the FNC node takes the full name but other 
 				 * nodes don't. so i need to free it. i know it's ugly. */
-				QSE_MMGR_FREE (awk->mmgr, full.ptr);
+				QSE_AWK_FREE (awk, full.ptr);
 			}
 		}
 		else

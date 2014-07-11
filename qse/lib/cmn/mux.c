@@ -249,8 +249,9 @@ qse_mux_t* qse_mux_open (
 			QSE_MMGR_FREE (mmgr, mux);
 			mux = QSE_NULL;
 		}
-		else QSE_MEMSET (mux + 1, 0, xtnsize);
+		else QSE_MEMSET (QSE_XTN(mux), 0, xtnsize);
 	}
+	else if (errnum) *errnum = QSE_MUX_ENOMEM;
 
 	return mux;
 }

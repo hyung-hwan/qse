@@ -45,15 +45,16 @@ qse_env_t* qse_env_open (qse_mmgr_t* mmgr, qse_size_t xtnsize, int fromcurenv)
 	qse_env_t* env;
 
 	env = QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(qse_env_t) + xtnsize);
-	if (env == QSE_NULL) return QSE_NULL;
-
-	if (qse_env_init (env, mmgr, fromcurenv) <= -1)
+	if (env)
 	{
-		QSE_MMGR_FREE (mmgr, env);
-		return QSE_NULL;
+		if (qse_env_init (env, mmgr, fromcurenv) <= -1)
+		{
+			QSE_MMGR_FREE (mmgr, env);
+			return QSE_NULL;
+		}
+		else QSE_MEMSET (QSE_XTN(env), 0, xtnsize);
 	}
 
-	QSE_MEMSET (env + 1, 0, xtnsize);
 	return env;
 }
 

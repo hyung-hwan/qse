@@ -102,10 +102,7 @@ qse_dir_t* qse_dir_open (
 		}
 		else QSE_MEMSET (dir + 1, 0, xtnsize);
 	}
-	else
-	{
-		if (errnum) *errnum = QSE_DIR_ENOMEM;
-	}
+	else if (errnum) *errnum = QSE_DIR_ENOMEM;
 
 	return dir;
 }

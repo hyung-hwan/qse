@@ -37,7 +37,7 @@ str_t* str_open (qse_mmgr_t* mmgr, qse_size_t xtnsize, qse_size_t capa)
 		}
 		else
 		{
-			QSE_MEMSET (str + 1, 0, xtnsize);
+			QSE_MEMSET (QSE_XTN(str), 0, xtnsize);
 		}
 	}
 	return str;
