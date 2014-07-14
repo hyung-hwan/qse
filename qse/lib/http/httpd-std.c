@@ -1977,6 +1977,8 @@ static int process_request (
 {
 	qse_httpd_task_t* task;
 	server_xtn_t* server_xtn;
+	qse_http_method_t mth;
+	qse_httpd_rsrc_t rsrc;
 
 	server_xtn = (server_xtn_t*)qse_httpd_getserverxtn (httpd, client->server);
 
@@ -2008,31 +2010,40 @@ if (qse_htre_getcontentlen(req) > 0)
 }
 #endif
 
+	mth = qse_htre_getqmethodtype(req);
+
 	if (peek)
 	{
-		qse_httpd_rsrc_t rsrc;
-
 		/* determine what to do once the header fields are all received.
 		 * i don't want to delay this until the contents are received.
 		 * if you don't like this behavior, you must implement your own
 		 * callback function for request handling. */
 
 #if 0
-/* TODO support X-HTTP-Method-Override */
-	if (data.method == QSE_HTTP_POST)
-	{
-		tmp = qse_htre_getheaderval(req, QSE_MT("X-HTTP-Method-Override"));
-		if (tmp)
+		/* TODO support X-HTTP-Method-Override */
+		if (data.method == QSE_HTTP_POST)
 		{
-			/*while (tmp->next) tmp = tmp->next;*/ /* get the last value */
-			data.method = qse_mbstohttpmethod (tmp->ptr);
+			tmp = qse_htre_getheaderval(req, QSE_MT("X-HTTP-Method-Override"));
+			if (tmp)
+			{
+				/*while (tmp->next) tmp = tmp->next;*/ /* get the last value */
+				data.method = qse_mbstohttpmethod (tmp->ptr);
+			}
 		}
-	}
 #endif
 
-		if (qse_htre_getqmethodtype(req) == QSE_HTTP_POST &&
-		    !(req->attr.flags & QSE_HTRE_ATTR_LENGTH) &&
-		    !(req->attr.flags & QSE_HTRE_ATTR_CHUNKED))
+		if (mth == QSE_HTTP_CONNECT)
+		{
+			/* CONNECT method must not have content set. 
+			 * however, arrange to discard it if so. 
+			 *
+			 * NOTE: CONNECT is implemented to ignore many headers like
+			 *       'Expect: 100-continue' and 'Connection: keep-alive'. */
+			qse_httpd_discardcontent (httpd, req);
+		}
+		else if (mth == QSE_HTTP_POST &&
+		         !(req->attr.flags & QSE_HTRE_ATTR_LENGTH) &&
+		         !(req->attr.flags & QSE_HTRE_ATTR_CHUNKED))
 		{
 			/* POST without Content-Length nor not chunked */
 			req->attr.flags &= ~QSE_HTRE_ATTR_KEEPALIVE;
@@ -2058,9 +2069,12 @@ if (qse_htre_getcontentlen(req) > 0)
 		{
 			task = QSE_NULL;
 
-			/* inject '100 continue' first if it is needed */
 			if ((rsrc.flags & QSE_HTTPD_RSRC_100_CONTINUE) && 
-			    (task = qse_httpd_entaskcontinue (httpd, client, task, req)) == QSE_NULL) goto oops;
+			    (task = qse_httpd_entaskcontinue (httpd, client, task, req)) == QSE_NULL) 
+			{
+				/* inject '100 continue' first if it is needed */
+				goto oops;
+			}
 
 			/* arrange the actual resource to be returned */
 			task = qse_httpd_entaskrsrc (httpd, client, task, &rsrc, req);
@@ -2079,7 +2093,32 @@ if (qse_htre_getcontentlen(req) > 0)
 	{
 		/* contents are all received */
 
-		if (req->attr.flags & QSE_HTRE_ATTR_PROXIED)
+		if (mth == QSE_HTTP_CONNECT)
+		{
+printf ("SWITCHING HTRD TO DUMMY....\n");
+			/* Switch the http read to a dummy mode so that the subsqeuent
+			 * input is just treaet as connects to the request just completed */
+			qse_htrd_setoption (client->htrd, qse_htrd_getoption(client->htrd) | QSE_HTRD_DUMMY);
+
+			if (server_xtn->makersrc (httpd, client, req, &rsrc) <= -1)
+			{
+				/* failed to make a resource. just send the internal server error.
+				 * the makersrc handler can return a negative number to return 
+				 * '500 Internal Server Error'. If it wants to return a specific
+				 * error code, it should return 0 with the QSE_HTTPD_RSRC_ERR
+				 * resource. */
+				task = qse_httpd_entaskerr (httpd, client, QSE_NULL, 500, req);
+			}
+			else
+			{
+				/* arrange the actual resource to be returned */
+				task = qse_httpd_entaskrsrc (httpd, client, QSE_NULL, &rsrc, req);
+				server_xtn->freersrc (httpd, client, req, &rsrc);
+			}
+
+			if (task == QSE_NULL) goto oops;
+		}
+		else if (req->attr.flags & QSE_HTRE_ATTR_PROXIED)
 		{
 			/* the contents should be proxied. 
 			 * do nothing locally */
@@ -2087,11 +2126,11 @@ if (qse_htre_getcontentlen(req) > 0)
 		else
 		{
 			/* when the request is handled locally, 
-			 * there's nothing special to do here */		
+			 * there's nothing special to do here */
 		}
 	}
 
-	if (!(req->attr.flags & QSE_HTRE_ATTR_KEEPALIVE))
+	if (!(req->attr.flags & QSE_HTRE_ATTR_KEEPALIVE) || mth == QSE_HTTP_CONNECT)
 	{
 		if (!peek)
 		{
@@ -2286,7 +2325,7 @@ static qse_mchar_t* merge_paths (
 	ta[idx++] = base;
 	if (path[0] != QSE_MT('\0'))
 	{
-		ta[idx++] = QSE_MT("/");	
+		ta[idx++] = QSE_MT("/");
 		ta[idx++] = path;
 	}
 	ta[idx++] = QSE_NULL;
@@ -2483,6 +2522,7 @@ static int make_resource (
 {
 	server_xtn_t* server_xtn;
 	struct rsrc_tmp_t tmp;
+	qse_http_method_t mth;
 
 	qse_httpd_stat_t st;
 	int n, stx, acc;
@@ -2495,15 +2535,36 @@ static int make_resource (
 
 	server_xtn = qse_httpd_getserverxtn (httpd, client->server);
 
+	mth = qse_htre_getqmethodtype (req);
+	if (mth == QSE_HTTP_CONNECT)
+	{
+		/* TODO: query if CONNECT is allowed */
+		/* TODO: Proxy-Authorization???? */
+		target->type = QSE_HTTPD_RSRC_PROXY;
+		target->u.proxy.raw = 1;
+
+		if (qse_mbstonwad (qse_htre_getqpath(req), &target->u.proxy.dst) <= -1) return -1;
+		target->u.proxy.src.type = target->u.proxy.dst.type;
+
+		/* mark that this request is going to be proxied. */
+		/*req->attr.flags |= QSE_HTRE_ATTR_PROXIED;*/
+		return 0;
+	}
+
 	if (server_xtn->query (httpd, client->server, req, QSE_NULL, QSE_HTTPD_SERVERSTD_ROOT, &tmp.root) <= -1) return -1;
 	switch (tmp.root.type)
 	{
 		case QSE_HTTPD_SERVERSTD_ROOT_NWAD:
 			/* proxy the request */
 			target->type = QSE_HTTPD_RSRC_PROXY;
-			/*target->u.proxy.dst = client->orgdst_addr;*/
-			target->u.proxy.dst = tmp.root.u.nwad;
+			target->u.proxy.raw = 0;
+
+			/* transparent proxy may do the following
+			target->u.proxy.dst = client->orgdst_addr; 
 			target->u.proxy.src = client->remote_addr;
+			*/
+			target->u.proxy.dst = tmp.root.u.nwad;
+			target->u.proxy.src.type = target->u.proxy.dst.type;
 
 			/* mark that this request is going to be proxied. */
 			req->attr.flags |= QSE_HTRE_ATTR_PROXIED;
@@ -2630,7 +2691,7 @@ auth_ok:
 		tmp.final_match = 1;
 
 		if (st.isdir)
-		{	
+		{
 			/* it is a directory */
 			if (tmp.index.count > 0)
 			{
@@ -2869,7 +2930,7 @@ static int query_server (
 					*(const qse_mchar_t**)result = mimetab[i].type;
 					return 0;
 				}
-			}			
+			}
 
 			*(const qse_mchar_t**)result = QSE_NULL;
 			return 0;

@@ -477,6 +477,14 @@ struct qse_httpd_rsrc_cgi_t
 	int nph;
 };
 
+typedef struct qse_httpd_rsrc_proxy_t qse_httpd_rsrc_proxy_t;
+struct qse_httpd_rsrc_proxy_t
+{
+	qse_nwad_t dst;
+	qse_nwad_t src;
+	int raw;
+};
+
 typedef struct qse_httpd_rsrc_dir_t qse_httpd_rsrc_dir_t;
 struct qse_httpd_rsrc_dir_t
 {
@@ -511,21 +519,17 @@ struct qse_httpd_rsrc_t
 			const qse_mchar_t* mime;
 		} file;
 
-		struct
-		{
-			qse_nwad_t dst;
-			qse_nwad_t src;
-		} proxy;
+		qse_httpd_rsrc_proxy_t proxy;
 
 		struct
 		{
 			const qse_mchar_t* dst;
-		} reloc;	
+		} reloc;
 
 		struct
 		{
 			const qse_mchar_t* dst;
-		} redir;	
+		} redir;
 
 		struct
 		{
@@ -758,15 +762,15 @@ QSE_EXPORT qse_httpd_task_t* qse_httpd_entasktext (
 );
 
 QSE_EXPORT qse_httpd_task_t* qse_httpd_entaskerr (
-     qse_httpd_t*              httpd,
+	qse_httpd_t*              httpd,
 	qse_httpd_client_t*       client,
 	qse_httpd_task_t*         pred,
-     int                       code, 
+	int                       code, 
 	qse_htre_t*               req
 );
 
 QSE_EXPORT qse_httpd_task_t* qse_httpd_entaskcontinue (
-     qse_httpd_t*              httpd,
+	qse_httpd_t*              httpd,
 	qse_httpd_client_t*       client,
 	qse_httpd_task_t*         pred,
 	qse_htre_t*               req
@@ -776,7 +780,7 @@ QSE_EXPORT qse_httpd_task_t* qse_httpd_entaskcontinue (
  * The qse_httpd_entaskauth() function adds a basic authorization task.
  */
 QSE_EXPORT qse_httpd_task_t* qse_httpd_entaskauth (
-     qse_httpd_t*              httpd,
+	qse_httpd_t*              httpd,
 	qse_httpd_client_t*       client,
 	qse_httpd_task_t*         pred,
 	const qse_mchar_t*        realm,
@@ -784,7 +788,7 @@ QSE_EXPORT qse_httpd_task_t* qse_httpd_entaskauth (
 );
 
 QSE_EXPORT qse_httpd_task_t* qse_httpd_entaskreloc (
-     qse_httpd_t*              httpd,
+	qse_httpd_t*              httpd,
 	qse_httpd_client_t*       client,
 	qse_httpd_task_t*         pred,
 	const qse_mchar_t*        dst,
@@ -792,7 +796,7 @@ QSE_EXPORT qse_httpd_task_t* qse_httpd_entaskreloc (
 );
 
 QSE_EXPORT qse_httpd_task_t* qse_httpd_entaskredir (
-     qse_httpd_t*              httpd,
+	qse_httpd_t*              httpd,
 	qse_httpd_client_t*       client,
 	qse_httpd_task_t*         pred,
 	const qse_mchar_t*        dst,
@@ -801,7 +805,7 @@ QSE_EXPORT qse_httpd_task_t* qse_httpd_entaskredir (
 
 
 QSE_EXPORT qse_httpd_task_t* qse_httpd_entasknomod (
-     qse_httpd_t*              httpd,
+	qse_httpd_t*              httpd,
 	qse_httpd_client_t*       client,
 	qse_httpd_task_t*         pred,
 	qse_htre_t*               req
@@ -833,20 +837,19 @@ QSE_EXPORT qse_httpd_task_t* qse_httpd_entaskfile (
 );
 
 QSE_EXPORT qse_httpd_task_t* qse_httpd_entaskcgi (
-	qse_httpd_t*              httpd,
-	qse_httpd_client_t*       client,
-	qse_httpd_task_t*         pred,
-	qse_httpd_rsrc_cgi_t*     cgi,
-	qse_htre_t*               req
+	qse_httpd_t*                    httpd,
+	qse_httpd_client_t*             client,
+	qse_httpd_task_t*               pred,
+	const qse_httpd_rsrc_cgi_t*     cgi,
+	qse_htre_t*                     req
 );
 
 QSE_EXPORT qse_httpd_task_t* qse_httpd_entaskproxy (
-	qse_httpd_t*            httpd,
-	qse_httpd_client_t*     client,
-	qse_httpd_task_t*       pred,
-	const qse_nwad_t*       dst,
-	const qse_nwad_t*       src,
-	qse_htre_t*             req
+	qse_httpd_t*                  httpd,
+	qse_httpd_client_t*           client,
+	qse_httpd_task_t*             pred,
+	const qse_httpd_rsrc_proxy_t* proxy,
+	qse_htre_t*                   req
 );
 
 /* -------------------------------------------- */

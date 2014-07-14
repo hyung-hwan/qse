@@ -319,7 +319,7 @@ static QSE_INLINE int dequeue_task (
 
 	if (client->task.count <= 0) return -1;
 
-	task = client->task.head;
+	task = (qse_httpd_real_task_t*)client->task.head;
 
 	/* clear task triggers from mux if they are registered */
 	for (i = 0; i < QSE_COUNTOF(task->core.trigger); i++)
@@ -333,7 +333,7 @@ static QSE_INLINE int dequeue_task (
 
 	/* --------------------------------------------------- */
 
-	if (task == client->task.tail)
+	if (task == (qse_httpd_real_task_t*)client->task.tail)
 	{
 		client->task.head = QSE_NULL;
 		client->task.tail = QSE_NULL;
@@ -345,7 +345,7 @@ static QSE_INLINE int dequeue_task (
 	}
 	client->task.count--;
 
-	if (task->core.fini) task->core.fini (httpd, client, task);
+	if (task->core.fini) task->core.fini (httpd, client, (qse_httpd_task_t*)task);
 	qse_httpd_freemem (httpd, task);
 
 	return 0;
@@ -816,7 +816,7 @@ qse_printf (QSE_T("]\n"));
 		if (httpd->errnum == QSE_HTTPD_ENOERR)
 		{
 			if (client->htrd->errnum == QSE_HTRD_EBADRE || 
-			    client->htrd->errnum == QSE_HTRD_EBADHDR)
+				client->htrd->errnum == QSE_HTRD_EBADHDR)
 				httpd->errnum = QSE_HTTPD_EBADREQ;
 			else httpd->errnum = QSE_HTTPD_ENOMEM; /* TODO: better translate error code */
 		}
@@ -829,10 +829,10 @@ for (i = 0; i < m; i++) qse_printf (QSE_T("%hc"), buf[i]);
 }
 qse_printf (QSE_T("]\n"));
 #endif
-
-
 		return -1;
 	}
+
+
 #if 0
 qse_printf (QSE_T("!!!!!FEEDING OK OK OK OK %d from %d\n"), (int)m, (int)client->handle.i);
 #endif
@@ -1370,7 +1370,7 @@ qse_mchar_t* qse_httpd_escapehtml (qse_httpd_t* httpd, const qse_mchar_t* str)
 	qse_mchar_t* ptr, * buf;
 	qse_size_t reqlen = 0;
 
-	for (ptr = str; *ptr != QSE_MT('\0'); ptr++) 
+	for (ptr = (qse_mchar_t*)str; *ptr != QSE_MT('\0'); ptr++) 
 	{
 		switch (*ptr)
 		{
@@ -1389,7 +1389,7 @@ qse_mchar_t* qse_httpd_escapehtml (qse_httpd_t* httpd, const qse_mchar_t* str)
 		}
 	}
 
-	if (ptr - str == reqlen) return str; /* no escaping is needed */
+	if (ptr - str == reqlen) return (qse_mchar_t*)str; /* no escaping is needed */
 
 	buf = qse_httpd_allocmem (httpd, QSE_SIZEOF(*buf) * (reqlen + 1));
 	if (buf == QSE_NULL) return QSE_NULL;

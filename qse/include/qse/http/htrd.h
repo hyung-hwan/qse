@@ -56,7 +56,8 @@ enum qse_htrd_option_t
 	QSE_HTRD_REQUEST         = (1 << 4), /**< parse input as a request */
 	QSE_HTRD_RESPONSE        = (1 << 5), /**< parse input as a response */
 	QSE_HTRD_TRAILERS        = (1 << 6), /**< store trailers in a separate table */
-	QSE_HTRD_STRICT          = (1 << 7)  /**< be more picky */
+	QSE_HTRD_STRICT          = (1 << 7), /**< be more picky */
+	QSE_HTRD_DUMMY           = (1 << 8)  /**< be dummy */
 };
 
 typedef enum qse_htrd_option_t qse_htrd_option_t;

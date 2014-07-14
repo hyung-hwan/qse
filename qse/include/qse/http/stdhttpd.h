@@ -169,9 +169,9 @@ QSE_EXPORT qse_httpd_server_t* qse_httpd_attachserverstd (
 QSE_EXPORT qse_httpd_server_t* qse_httpd_attachserverstdwithuri (
 	qse_httpd_t*                 httpd,
 	const qse_char_t*            uri,
-	qse_httpd_server_detach_t    detach,	
-	qse_httpd_server_impede_t    impede,	
-	qse_httpd_serverstd_query_t  query,	
+	qse_httpd_server_detach_t    detach,
+	qse_httpd_server_impede_t    impede,
+	qse_httpd_serverstd_query_t  query,
 	qse_size_t                   xtnsize
 );
 #endif

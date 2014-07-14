@@ -62,7 +62,7 @@ struct qse_htre_t
 	enum
 	{
 		QSE_HTRE_Q,
-		QSE_HTRE_S	
+		QSE_HTRE_S
 	} type;
 
 	/* version */

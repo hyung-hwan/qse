@@ -262,7 +262,7 @@ static int cgi_htrd_peek_script_output (qse_htrd_t* htrd, qse_htre_t* req)
 		location = qse_htre_getheaderval (req, QSE_MT("Location"));
 		if (location)
 		{
-			snprintf (buf, QSE_COUNTOF(buf), 	
+			snprintf (buf, QSE_COUNTOF(buf),
 				QSE_MT("HTTP/%d.%d 301 Moved Permanently\r\n"),
 				cgi->version.major, cgi->version.minor
 			);
@@ -277,7 +277,7 @@ static int cgi_htrd_peek_script_output (qse_htrd_t* htrd, qse_htre_t* req)
 		}
 		else
 		{
-			snprintf (buf, QSE_COUNTOF(buf), 	
+			snprintf (buf, QSE_COUNTOF(buf),
 				QSE_MT("HTTP/%d.%d 200 OK\r\n"),
 				cgi->version.major, cgi->version.minor
 			);
@@ -755,7 +755,7 @@ static int task_init_cgi (
 	cgi->version = *qse_htre_getversion(arg->req);
 	cgi->keepalive = (arg->req->attr.flags & QSE_HTRE_ATTR_KEEPALIVE);
 	cgi->nph = arg->nph;
-	cgi->req = QSE_NULL;	
+	cgi->req = QSE_NULL;
 
 	content_length = 0;
 	if (arg->req->state & QSE_HTRE_DISCARDED) goto done;
@@ -1519,7 +1519,7 @@ qse_httpd_task_t* qse_httpd_entaskcgi (
 	qse_httpd_t* httpd,
 	qse_httpd_client_t* client,
 	qse_httpd_task_t* pred,
-	qse_httpd_rsrc_cgi_t* cgi,
+	const qse_httpd_rsrc_cgi_t* cgi,
 	qse_htre_t* req)
 {
 	qse_httpd_task_t task;

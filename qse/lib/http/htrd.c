@@ -837,6 +837,10 @@ qse_mchar_t* parse_header_field (
 	 * the continuation */
 	if (is_purespace_octet (*++p))
 	{
+		/* RFC: HTTP/1.0 headers may be folded onto multiple lines if 
+		 * each continuation line begins with a space or horizontal tab. 
+		 * All linear whitespace, including folding, has the same semantics 
+		 * as SP. */
 		qse_mchar_t* cpydst;
 
 		cpydst = p - 1;
@@ -1091,6 +1095,13 @@ int qse_htrd_feed (qse_htrd_t* htrd, const qse_mchar_t* req, qse_size_t len)
 
 	QSE_ASSERT (len > 0);
 
+	if (htrd->option & QSE_HTRD_DUMMY)
+	{
+		/* treat everything as contents.
+		 * i don't care about headers or whatsoever. */
+		return push_content (htrd, req, len);
+	}
+
 	/* does this goto drop code maintainability? */
 	if (htrd->fed.s.need > 0) 
 	{
@@ -1117,7 +1128,7 @@ int qse_htrd_feed (qse_htrd_t* htrd, const qse_mchar_t* req, qse_size_t len)
 			goto dechunk_get_trailers;
 	}
 
-	htrd->clean = 0; /* mark that the htrd is in need of some data */
+	htrd->clean = 0; /* mark that htrd is in need of some data */
 
 	while (ptr < end)
 	{
@@ -1196,7 +1207,7 @@ int qse_htrd_feed (qse_htrd_t* htrd, const qse_mchar_t* req, qse_size_t len)
 						 */
 						if (ptr < end && push_content (htrd, ptr, end - ptr) <= -1) return -1;
 
-						/* i don't really know if it is really completed 	
+						/* i don't really know if it is really completed 
 						 * with content. QSE_HTRD_PEEKONLY is not compatible
 						 * with the completed state. anyway, let me complete
 						 * it. */
@@ -1213,12 +1224,12 @@ int qse_htrd_feed (qse_htrd_t* htrd, const qse_mchar_t* req, qse_size_t len)
 					{
 						/* transfer-encoding: chunked */
 						QSE_ASSERT (!(htrd->re.attr.flags & QSE_HTRE_ATTR_LENGTH));
-	
+
 					dechunk_start:
 						htrd->fed.s.chunk.phase = GET_CHUNK_LEN;
 						htrd->fed.s.chunk.len = 0;
 						htrd->fed.s.chunk.count = 0;
-	
+
 					dechunk_resume:
 						ptr = getchunklen (htrd, ptr, end - ptr);
 						if (ptr == QSE_NULL) return -1;
@@ -1242,7 +1253,7 @@ int qse_htrd_feed (qse_htrd_t* htrd, const qse_mchar_t* req, qse_size_t len)
 						dechunk_get_trailers:
 							ptr = get_trailing_headers (htrd, ptr, end);
 							if (ptr == QSE_NULL) return -1;
-	
+
 							if (htrd->fed.s.chunk.phase == GET_CHUNK_TRAILERS)
 							{
 								/* still in the same state.
@@ -1330,7 +1341,7 @@ int qse_htrd_feed (qse_htrd_t* htrd, const qse_mchar_t* req, qse_size_t len)
 					{
 						QSE_ASSERT (htrd->fed.s.need == 0);
 						htrd->fed.s.chunk.phase = GET_CHUNK_CRLF;
-	
+
 					dechunk_crlf:
 						while (ptr < end && is_space_octet(*ptr)) ptr++;
 						if (ptr < end)
@@ -1339,12 +1350,12 @@ int qse_htrd_feed (qse_htrd_t* htrd, const qse_mchar_t* req, qse_size_t len)
 							{
 								/* end of chunk data. */
 								ptr++;
-	
+
 								/* more octets still available. 
 								 * let it decode the next chunk 
 								 */
 								if (ptr < end) goto dechunk_start; 
-							
+
 								/* no more octets available after 
 								 * chunk data. the chunk state variables
 								 * need to be reset when a jump is made
@@ -1418,6 +1429,17 @@ qse_printf (QSE_T("CONTENT_LENGTH %d, RAW HEADER LENGTH %d\n"),
 
 					clear_feed (htrd);
 					if (ptr >= end) return 0; /* no more feeds to handle */
+
+					if (htrd->option & QSE_HTRD_DUMMY)
+					{
+						/* once the mode changes to RAW in a callback,
+						 * left-over is pused as contents */
+						if (ptr < end)
+							return push_content (htrd, ptr, end - ptr);
+						else
+							return 0;
+					}
+
 
 					/* let ptr point to the next character to LF or 
 					 * the optional contents */

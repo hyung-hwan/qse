@@ -356,9 +356,10 @@ static int make_resource (
 		else
 		{
 			rsrc->type = QSE_HTTPD_RSRC_PROXY;
+			rsrc->u.proxy.raw = 0;
 			rsrc->u.proxy.dst = client->orgdst_addr;
 			rsrc->u.proxy.src = client->remote_addr;
-	
+
 			if (rsrc->u.proxy.src.type == QSE_NWAD_IN4)
 				rsrc->u.proxy.src.u.in4.port = 0; /* reset the port to 0. */
 			else if (rsrc->u.proxy.src.type == QSE_NWAD_IN6)
@@ -1658,7 +1659,7 @@ static void reconf_server (qse_httpd_t* httpd, qse_httpd_server_t* server)
 	server_xtn_t* server_xtn;
 	qse_xli_pair_t* pair;
 
-	/* reconfigure the server when the server is impeded. */
+	/* reconfigure the server when the server is impeded in sig_reconf(). */
 
 	httpd_xtn = qse_httpd_getxtnstd (httpd);
 	server_xtn = qse_httpd_getserverstdxtn (httpd, server);
@@ -1680,6 +1681,8 @@ static void reconf_server (qse_httpd_t* httpd, qse_httpd_server_t* server)
 static void impede_httpd (qse_httpd_t* httpd)
 {
 	httpd_xtn_t* httpd_xtn;
+
+	/* reconfigure the server when the server is impeded in sig_reconf(). */
 
 	httpd_xtn = qse_httpd_getxtnstd (httpd);
 
