@@ -398,7 +398,7 @@ qse_httpd_task_t* qse_httpd_entaskrsrc (
 			break;
 	
 		case QSE_HTTPD_RSRC_PROXY:
-			task = qse_httpd_entaskproxy (httpd, client, pred, &rsrc->u.proxy.dst, &rsrc->u.proxy.src, req);
+			task = qse_httpd_entaskproxy (httpd, client, pred, &rsrc->u.proxy, req);
 			break;
 
 		case QSE_HTTPD_RSRC_RELOC:
