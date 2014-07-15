@@ -480,9 +480,9 @@ struct qse_httpd_rsrc_cgi_t
 typedef struct qse_httpd_rsrc_proxy_t qse_httpd_rsrc_proxy_t;
 struct qse_httpd_rsrc_proxy_t
 {
-	qse_nwad_t dst;
-	qse_nwad_t src;
-	int raw;
+	qse_nwad_t dst; /* remote destination address to connect to */
+	qse_nwad_t src; /* local binding address */
+	int raw; /* raw or normal */
 };
 
 typedef struct qse_httpd_rsrc_dir_t qse_httpd_rsrc_dir_t;
