@@ -37,8 +37,6 @@ struct task_proxy_t
 	int init_failed;
 	qse_httpd_t* httpd;
 
-	const qse_mchar_t* host;
-
 	int method;
 	qse_http_version_t version;
 	int keepalive; /* taken from the request */
@@ -197,12 +195,18 @@ static int proxy_snatch_client_input_raw (
 	task = (qse_httpd_task_t*)ctx;
 	proxy = (task_proxy_t*)task->ctx;
 
+	/* this function is never called with ptr of QSE_NULL
+	 * because this callback is set manually after the request
+	 * has been discarded or completed in task_init_proxy() and
+	 * qse_htre_completecontent or qse-htre_discardcontent() is 
+	 * not called again. Unlinkw proxy_snatch_client_input(), 
+	 * it doesn't care about EOF indicated by ptr of QSE_NULL. */
 	if (ptr && !(proxy->reqflags & PROXY_REQ_FWDERR))
 	{
 		if (qse_mbs_ncat (proxy->reqfwdbuf, ptr, len) == (qse_size_t)-1)
 		{
 			proxy->httpd->errnum = QSE_HTTPD_ENOMEM;
-		return -1;
+			return -1;
 		}
 
 		task->trigger[0].mask |= QSE_HTTPD_TASK_TRIGGER_WRITE;
@@ -732,6 +736,8 @@ to the head all the time..  grow the buffer to a certain limit. */
 	}
 }
 
+/* ------------------------------------------------------------------------ */
+
 static int task_init_proxy (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
 {
@@ -776,7 +782,6 @@ static int task_init_proxy (
 
 		/* the caller must make sure that the actual content is discarded or completed
 		 * and the following data is treated as contents */
-printf ("proxy req = %p %d %d\n", arg->req, (arg->req->state & QSE_HTRE_DISCARDED), (arg->req->state&  QSE_HTRE_COMPLETED));
 		QSE_ASSERT (arg->req->state & (QSE_HTRE_DISCARDED | QSE_HTRE_COMPLETED));
 		QSE_ASSERT (qse_htrd_getoption(client->htrd) & QSE_HTRD_DUMMY);
 
@@ -946,6 +951,8 @@ qse_printf (QSE_T("GOING TO PROXY [%hs]\n"), QSE_MBS_PTR(proxy->reqfwdbuf));
 	return 0;
 
 oops:
+
+printf ("init_proxy failed...........................................\n");
 	/* since a new task can't be added in the initializer,
 	 * i mark that initialization failed and let task_main_proxy()
 	 * add an error task */
@@ -961,11 +968,14 @@ oops:
 	return 0;
 }
 
+/* ------------------------------------------------------------------------ */
+
 static void task_fini_proxy (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
 {
 	task_proxy_t* proxy = (task_proxy_t*)task->ctx;
 
+printf ("task_fini_proxy.................\n");
 	if (proxy->peer_status & PROXY_PEER_OPEN) 
 		httpd->opt.scb.peer.close (httpd, &proxy->peer);
 
@@ -975,6 +985,8 @@ static void task_fini_proxy (
 	if (proxy->req) qse_htre_unsetconcb (proxy->req);
 }
 
+/* ------------------------------------------------------------------------ */
+
 static int task_main_proxy_5 (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
 {
@@ -982,7 +994,7 @@ static int task_main_proxy_5 (
 	qse_ssize_t n;
 
 #if 0
-qse_printf (QSE_T("task_main_proxy_5 trigger[0].mask=%d trigger[1].mask=%d trigger[2].mask=%d\n"), 
+printf ("task_main_proxy_5 trigger[0].mask=%d trigger[1].mask=%d trigger[2].mask=%d\n", 
 	task->trigger[0].mask, task->trigger[1].mask, task->trigger[2].mask);
 #endif
 
@@ -993,7 +1005,7 @@ qse_printf (QSE_T("task_main_proxy_5 trigger[0].mask=%d trigger[1].mask=%d trigg
 	}
 	else if (task->trigger[0].mask & QSE_HTTPD_TASK_TRIGGER_WRITABLE)
 	{
-		/* if the peer side is writable */
+		/* if the peer side is writable while the client side is not readable*/
 		proxy_forward_client_input_to_peer (httpd, task, 1);
 	}
 
@@ -1030,8 +1042,8 @@ static int task_main_proxy_4 (
 {
 	task_proxy_t* proxy = (task_proxy_t*)task->ctx;
 	
-#if 0
-qse_printf (QSE_T("task_main_proxy_4 trigger[0].mask=%d trigger[1].mask=%d trigger[2].mask=%d\n"), 
+#if 1
+printf ("task_main_proxy_4 trigger[0].mask=%d trigger[1].mask=%d trigger[2].mask=%d\n", 
 	task->trigger[0].mask, task->trigger[1].mask, task->trigger[2].mask);
 #endif
 
@@ -1067,8 +1079,11 @@ qse_printf (QSE_T("task_main_proxy_4 trigger[0].mask=%d trigger[1].mask=%d trigg
 			}
 			if (n == 0)
 			{
+				/* peer closed connection */
 				if (proxy->resflags & PROXY_RES_PEER_LENGTH) 
 				{
+					QSE_ASSERT (!proxy->raw);
+
 					if (proxy->peer_output_received < proxy->peer_output_length)
 					{
 						if (httpd->opt.trait & QSE_HTTPD_LOGACT) 
@@ -1076,10 +1091,25 @@ qse_printf (QSE_T("task_main_proxy_4 trigger[0].mask=%d trigger[1].mask=%d trigg
 						return -1;
 					}
 				}
-				
+
 				task->main = task_main_proxy_5;
+
+				/* nothing to read from peer. set the mask to 0 */
 				task->trigger[0].mask = 0;
+			
+				/* arrange to be called if the client side is writable */
 				task->trigger[2].mask |= QSE_HTTPD_TASK_TRIGGER_WRITE;
+
+				if (proxy->raw)
+				{
+					/* peer connection has been closed.
+					 * so no more forwarding from the client to the peer 
+					 * is possible. get rid of the content callback on the
+					 * client side. */
+					qse_htre_unsetconcb (proxy->req);
+					proxy->req = QSE_NULL; 
+				}
+
 				return 1;
 			}
 
@@ -1088,6 +1118,8 @@ qse_printf (QSE_T("task_main_proxy_4 trigger[0].mask=%d trigger[1].mask=%d trigg
 	
 			if (proxy->resflags & PROXY_RES_PEER_LENGTH) 
 			{
+				QSE_ASSERT (!proxy->raw);
+
 				if (proxy->peer_output_received > proxy->peer_output_length)
 				{
 					/* proxy returning too much data... something is wrong in PROXY */
@@ -1208,16 +1240,18 @@ static int task_main_proxy_2 (
 	int http_errnum = 500;
 
 #if 0
-qse_printf (QSE_T("task_main_proxy_2 trigger[0].mask=%d trigger[1].mask=%d trigger[2].mask=%d\n"), 
+printf ("task_main_proxy_2 trigger[0].mask=%d trigger[1].mask=%d trigger[2].mask=%d\n", 
 	task->trigger[0].mask, task->trigger[1].mask, task->trigger[2].mask);
 #endif
 
 	if (task->trigger[2].mask & QSE_HTTPD_TASK_TRIGGER_READABLE)
 	{
+		/* client is readable */
 		proxy_forward_client_input_to_peer (httpd, task, 0);
 	}
 	else if (task->trigger[0].mask & QSE_HTTPD_TASK_TRIGGER_WRITABLE)
 	{
+		/* client is not readable but peer is writable */
 		proxy_forward_client_input_to_peer (httpd, task, 1);
 	}
 
@@ -1342,7 +1376,6 @@ for (i = 0; i < proxy->buflen; i++) qse_printf (QSE_T("%hc"), proxy->buf[i]);
 qse_printf (QSE_T("]\n"));
 #endif
 
-		
 		if (qse_htrd_feed (proxy->peer_htrd, proxy->buf, proxy->buflen) <= -1)
 		{
 			if (httpd->opt.trait & QSE_HTTPD_LOGACT) 
@@ -1413,7 +1446,6 @@ static int task_main_proxy_1 (
 	int http_errnum = 500;
 
 	/* wait for peer to get connected */
-
 	if (task->trigger[0].mask & QSE_HTTPD_TASK_TRIGGER_READABLE ||
 	    task->trigger[0].mask & QSE_HTTPD_TASK_TRIGGER_WRITABLE)
 	{
@@ -1438,7 +1470,6 @@ static int task_main_proxy_1 (
 		if (n >= 1) 
 		{
 			/* connected to the peer now */
-
 			proxy->peer_status |= PROXY_PEER_CONNECTED;
 
 			if (proxy->req)
@@ -1461,9 +1492,25 @@ static int task_main_proxy_1 (
 			}
 
 			if (proxy->raw)
-				task->main  = task_main_proxy_4;
+			{
+printf ("SWITCHING TO PROXY 3...%p\n", proxy->req);
+				if (qse_mbs_fmt (proxy->res, QSE_MT("HTTP/%d.%d 200 Connection established\r\n\r\n"), 
+				                 (int)proxy->version.major, (int)proxy->version.minor) == (qse_size_t)-1) 
+				{
+					proxy->httpd->errnum = QSE_HTTPD_ENOMEM;
+					goto oops;
+				}
+				proxy->res_pending = QSE_MBS_LEN(proxy->res) - proxy->res_consumed;
+
+				/* arrange to be called if the client side is writable.
+				 * it must write the injected response. */
+				task->trigger[2].mask |= QSE_HTTPD_TASK_TRIGGER_WRITE;
+				task->main  = task_main_proxy_3;
+			}
 			else
+			{
 				task->main = task_main_proxy_2;
+			}
 		}
 	}
 
@@ -1544,7 +1591,28 @@ static int task_main_proxy (
 				task->trigger[0].mask |= QSE_HTTPD_TASK_TRIGGER_WRITE;
 			}
 		}
-		task->main = task_main_proxy_2;
+
+		if (proxy->raw)
+		{
+/* TODO: write response */
+			/* inject http response */
+			if (qse_mbs_fmt (proxy->res, QSE_MT("HTTP/%d.%d 200 Connection established\r\n\r\n"), 
+			                 (int)proxy->version.major, (int)proxy->version.minor) == (qse_size_t)-1) 
+			{
+				proxy->httpd->errnum = QSE_HTTPD_ENOMEM;
+				goto oops;
+			}
+			proxy->res_pending = QSE_MBS_LEN(proxy->res) - proxy->res_consumed;
+
+			/* arrange to be called if the client side is writable.
+			 * it must write the injected response. */
+			task->trigger[2].mask |= QSE_HTTPD_TASK_TRIGGER_WRITE;
+			task->main = task_main_proxy_3;
+		}
+		else
+		{
+			task->main = task_main_proxy_2;
+		}
 	}
 
 	return 1;
@@ -1565,6 +1633,8 @@ oops:
 		httpd, client, task, http_errnum, 
 		proxy->method, &proxy->version, proxy->keepalive) == QSE_NULL)? -1: 0;
 }
+
+/* ------------------------------------------------------------------------ */
 
 qse_httpd_task_t* qse_httpd_entaskproxy (
 	qse_httpd_t* httpd,

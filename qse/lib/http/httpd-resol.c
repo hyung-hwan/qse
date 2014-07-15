@@ -29,9 +29,8 @@
 typedef struct task_resol_arg_t task_resol_arg_t;
 struct task_resol_arg_t 
 {
-	const qse_mchar_t* path;
-	qse_htre_t* req;
-	int nph;
+	const qse_mchar_t* host;
+	const qse_htre_t* req;
 };
 
 typedef struct task_resol_t task_resol_t;
@@ -40,20 +39,31 @@ struct task_resol_t
 	int init_failed;
 	qse_httpd_t* httpd;
 
-	const qse_mchar_t* path;
+	int method;
 	qse_http_version_t version;
 	int keepalive; /* taken from the request */
+
+	qse_mchar_t* host;
 };
 
 static int task_init_resol (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
 {
 	task_resol_t* resol;
+	task_resol_arg_t* arg;
 
 	resol = (task_resol_t*)qse_httpd_gettaskxtn (httpd, task);
+	arg = (task_resol_arg_t*)task->ctx;
 
 	QSE_MEMSET (resol, 0, QSE_SIZEOF(*resol));
 	resol->httpd = httpd;
+
+	resol->method = qse_htre_getqmethodtype(arg->req);
+	resol->version = *qse_htre_getversion(arg->req);
+	resol->keepalive = (arg->req->attr.flags & QSE_HTRE_ATTR_KEEPALIVE);
+
+	resol->host = (qse_mchar_t*)(resol + 1);
+	qse_mbscpy (resol->host, arg->host);
 
 	task->ctx = resol;
 	return 0;
@@ -68,6 +78,11 @@ static void task_fini_resol (
 static int task_main_resol (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
 {
+/*	dns.open ();
+
+	dns.send (...);
+
+	dns.close ();*/
 	return 0;
 }
 
@@ -75,10 +90,14 @@ qse_httpd_task_t* qse_httpd_entaskresol (
 	qse_httpd_t* httpd,
 	qse_httpd_client_t* client,
 	qse_httpd_task_t* pred, 
-	const qse_mchar_t* host)
+	const qse_mchar_t* host,
+	qse_htre_t* req)
 {
 	qse_httpd_task_t task;
 	task_resol_arg_t arg;
+
+	arg.host = host;
+	arg.req = req;
 
 	QSE_MEMSET (&task, 0, QSE_SIZEOF(task));
 	task.init = task_init_resol;
@@ -87,7 +106,7 @@ qse_httpd_task_t* qse_httpd_entaskresol (
 	task.ctx = &arg;
 
 	return qse_httpd_entask (
-		httpd, client, pred, &task, QSE_SIZEOF(task_resol_t)
+		httpd, client, pred, &task, QSE_SIZEOF(task_resol_t) + qse_mbslen(host) + 1
 	);
 }
 

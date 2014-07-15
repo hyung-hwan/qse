@@ -1126,10 +1126,15 @@ static void dispatch_muxcb (qse_mux_t* mux, const qse_mux_evt_t* evt)
 {
 	mux_xtn_t* xtn;
 	qse_ubi_t ubi;
+	int mask = 0;
 
 	xtn = qse_mux_getxtn (mux);
 	ubi.i = evt->hnd;
-	xtn->cbfun (xtn->httpd, mux, ubi, evt->mask, evt->data);
+
+	if (evt->mask & QSE_MUX_IN) mask |= QSE_HTTPD_MUX_READ;
+	if (evt->mask & QSE_MUX_OUT) mask |= QSE_HTTPD_MUX_WRITE;
+
+	xtn->cbfun (xtn->httpd, mux, ubi, mask, evt->data);
 }
 
 static void* mux_open (qse_httpd_t* httpd, qse_httpd_muxcb_t cbfun)
@@ -1158,9 +1163,9 @@ static void mux_close (qse_httpd_t* httpd, void* vmux)
 static int mux_addhnd (
 	qse_httpd_t* httpd, void* vmux, qse_ubi_t handle, int mask, void* data)
 {
-	qse_mux_evt_t evt;	
+	qse_mux_evt_t evt;
 
-	evt.hnd = handle.i;	
+	evt.hnd = handle.i;
 	evt.mask = 0;
 	if (mask & QSE_HTTPD_MUX_READ) evt.mask |= QSE_MUX_IN;
 	if (mask & QSE_HTTPD_MUX_WRITE) evt.mask |= QSE_MUX_OUT;
@@ -1177,8 +1182,8 @@ static int mux_addhnd (
 
 static int mux_delhnd (qse_httpd_t* httpd, void* vmux, qse_ubi_t handle)
 {
-	qse_mux_evt_t evt;	
-	evt.hnd = handle.i;	
+	qse_mux_evt_t evt;
+	evt.hnd = handle.i;
 	if (qse_mux_delete ((qse_mux_t*)vmux, &evt) <= -1)
 	{
 		qse_httpd_seterrnum (httpd, muxerr_to_errnum(qse_mux_geterrnum((qse_mux_t*)vmux)));
@@ -2041,53 +2046,57 @@ if (qse_htre_getcontentlen(req) > 0)
 			 *       'Expect: 100-continue' and 'Connection: keep-alive'. */
 			qse_httpd_discardcontent (httpd, req);
 		}
-		else if (mth == QSE_HTTP_POST &&
-		         !(req->attr.flags & QSE_HTRE_ATTR_LENGTH) &&
-		         !(req->attr.flags & QSE_HTRE_ATTR_CHUNKED))
+		else 
 		{
-			/* POST without Content-Length nor not chunked */
-			req->attr.flags &= ~QSE_HTRE_ATTR_KEEPALIVE;
-			qse_httpd_discardcontent (httpd, req);
-			task = qse_httpd_entaskerr (httpd, client, QSE_NULL, 411, req);
-			if (task) 
+			if (mth == QSE_HTTP_POST &&
+				!(req->attr.flags & QSE_HTRE_ATTR_LENGTH) &&
+				!(req->attr.flags & QSE_HTRE_ATTR_CHUNKED))
 			{
-				/* 411 Length Required - can't keep alive. Force disconnect */
-				task = qse_httpd_entaskdisconnect (httpd, client, QSE_NULL);
+				/* POST without Content-Length nor not chunked */
+				req->attr.flags &= ~QSE_HTRE_ATTR_KEEPALIVE;
+				qse_httpd_discardcontent (httpd, req);
+				task = qse_httpd_entaskerr (httpd, client, QSE_NULL, 411, req);
+				if (task) 
+				{
+					/* 411 Length Required - can't keep alive. Force disconnect */
+					task = qse_httpd_entaskdisconnect (httpd, client, QSE_NULL);
+				}
 			}
-		}
-		else if (server_xtn->makersrc (httpd, client, req, &rsrc) <= -1)
-		{
-			/* failed to make a resource. just send the internal server error.
-			 * the makersrc handler can return a negative number to return 
-			 * '500 Internal Server Error'. If it wants to return a specific
-			 * error code, it should return 0 with the QSE_HTTPD_RSRC_ERR
-			 * resource. */
-			qse_httpd_discardcontent (httpd, req);
-			task = qse_httpd_entaskerr (httpd, client, QSE_NULL, 500, req);
-		}
-		else
-		{
-			task = QSE_NULL;
-
-			if ((rsrc.flags & QSE_HTTPD_RSRC_100_CONTINUE) && 
-			    (task = qse_httpd_entaskcontinue (httpd, client, task, req)) == QSE_NULL) 
+			else if (server_xtn->makersrc (httpd, client, req, &rsrc) <= -1)
 			{
-				/* inject '100 continue' first if it is needed */
-				goto oops;
+				/* failed to make a resource. just send the internal server error.
+				 * the makersrc handler can return a negative number to return 
+				 * '500 Internal Server Error'. If it wants to return a specific
+				 * error code, it should return 0 with the QSE_HTTPD_RSRC_ERR
+				 * resource. */
+				qse_httpd_discardcontent (httpd, req);
+				task = qse_httpd_entaskerr (httpd, client, QSE_NULL, 500, req);
+			}
+			else
+			{
+				task = QSE_NULL;
+
+				if ((rsrc.flags & QSE_HTTPD_RSRC_100_CONTINUE) && 
+					(task = qse_httpd_entaskcontinue (httpd, client, task, req)) == QSE_NULL) 
+				{
+					/* inject '100 continue' first if it is needed */
+					goto oops;
+				}
+
+				/* arrange the actual resource to be returned */
+				task = qse_httpd_entaskrsrc (httpd, client, task, &rsrc, req);
+				server_xtn->freersrc (httpd, client, req, &rsrc);
+
+				/* if the resource is indicating to return an error,
+				 * discard the contents since i won't return them */
+				if (rsrc.type == QSE_HTTPD_RSRC_ERR) 
+				{ 
+					qse_httpd_discardcontent (httpd, req); 
+				}
 			}
 
-			/* arrange the actual resource to be returned */
-			task = qse_httpd_entaskrsrc (httpd, client, task, &rsrc, req);
-			server_xtn->freersrc (httpd, client, req, &rsrc);
-
-			/* if the resource is indicating to return an error,
-			 * discard the contents since i won't return them */
-			if (rsrc.type == QSE_HTTPD_RSRC_ERR) 
-			{ 
-				qse_httpd_discardcontent (httpd, req); 
-			}
+			if (task == QSE_NULL) goto oops;
 		}
-		if (task == QSE_NULL) goto oops;
 	}
 	else
 	{
@@ -2095,13 +2104,14 @@ if (qse_htre_getcontentlen(req) > 0)
 
 		if (mth == QSE_HTTP_CONNECT)
 		{
-printf ("SWITCHING HTRD TO DUMMY....\n");
+printf ("SWITCHING HTRD TO DUMMY.... %s\n", qse_htre_getqpath(req));
 			/* Switch the http read to a dummy mode so that the subsqeuent
 			 * input is just treaet as connects to the request just completed */
 			qse_htrd_setoption (client->htrd, qse_htrd_getoption(client->htrd) | QSE_HTRD_DUMMY);
 
 			if (server_xtn->makersrc (httpd, client, req, &rsrc) <= -1)
 			{
+printf ("CANOT MAKE RESOURCE.... %s\n", qse_htre_getqpath(req));
 				/* failed to make a resource. just send the internal server error.
 				 * the makersrc handler can return a negative number to return 
 				 * '500 Internal Server Error'. If it wants to return a specific
@@ -2236,7 +2246,7 @@ static qse_httpd_scb_t httpd_system_callbacks =
 	/* directory operation */
 	{ dir_stat,
 	  dir_make,
-       dir_purge,
+	  dir_purge,
 	  dir_open,
 	  dir_close,
 	  dir_read
@@ -2547,7 +2557,7 @@ static int make_resource (
 		target->u.proxy.src.type = target->u.proxy.dst.type;
 
 		/* mark that this request is going to be proxied. */
-		/*req->attr.flags |= QSE_HTRE_ATTR_PROXIED;*/
+		req->attr.flags |= QSE_HTRE_ATTR_PROXIED;
 		return 0;
 	}
 
@@ -3116,5 +3126,5 @@ void* qse_httpd_getserverstdxtn (qse_httpd_t* httpd, qse_httpd_server_t* server)
 
 int qse_httpd_loopstd (qse_httpd_t* httpd)
 {
-	return qse_httpd_loop (httpd);	
+	return qse_httpd_loop (httpd);
 }
