@@ -374,7 +374,7 @@ static int putfile_snatch_client_input (
 
 		/* since there is no more to read from the client side.
 		 * the trigger is not needed any more. */
-		task->trigger[0].mask = 0;
+		task->trigger.v[0].mask = 0;
 	}
 	else if (!(file->u.put.flags & PUTFILE_WRITE_FAILED))
 	{
@@ -476,8 +476,8 @@ static int task_main_putfile_2 (
 		 * QSE_NULL when snatching is over in putfile_snatch_client_input().
 		 * i set a trigger so that the task is executed
 		 * while there is input from the client side  */
-		task->trigger[0].mask = QSE_HTTPD_TASK_TRIGGER_READ;
-		task->trigger[0].handle = client->handle;
+		task->trigger.v[0].mask = QSE_HTTPD_TASK_TRIGGER_READ;
+		task->trigger.v[0].handle = client->handle;
 		return 1; /* trigger me when a client sends data  */
 	}
 
