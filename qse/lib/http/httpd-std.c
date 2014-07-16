@@ -363,7 +363,6 @@ static qse_httpd_errnum_t direrr_to_errnum (qse_dir_errnum_t e)
 
 /* ------------------------------------------------------------------- */
 
-#define MAX_SEND_SIZE 4096
 
 static QSE_INLINE qse_ssize_t __send_file (
 	qse_httpd_t* httpd, int out_fd, qse_ubi_t in_fd, 
@@ -1961,6 +1960,28 @@ static void client_closed (qse_httpd_t* httpd, qse_httpd_client_t* client)
 	}
 }
 
+
+/* ------------------------------------------------------------------- */
+static int dns_open (qse_httpd_t* httpd, qse_httpd_dns_t* dns)
+{
+	return -1;
+}
+
+static void dns_close (qse_httpd_t* httpd, qse_httpd_dns_t* dns)
+{
+}
+
+static int dns_recv (qse_httpd_t* httpd, qse_httpd_dns_t* dns)
+{
+	return 0;
+}
+
+static int dns_send (qse_httpd_t* httpd, qse_httpd_dns_t* dns, const qse_mchar_t* name, qse_httpd_resol_t resol, void* ctx)
+{
+	return 0;
+}
+
+
 /* ------------------------------------------------------------------- */
 #if 0
 static qse_htb_walk_t walk (qse_htb_t* htb, qse_htb_pair_t* pair, void* ctx)
@@ -2260,7 +2281,14 @@ static qse_httpd_scb_t httpd_system_callbacks =
 	  client_send,
 	  client_sendfile,
 	  client_accepted,
-	  client_closed }
+	  client_closed },
+
+
+	/* dns */
+	{ dns_open,
+	  dns_close,
+	  dns_recv,
+	  dns_send }
 };
 
 static qse_httpd_rcb_t httpd_request_callbacks =
@@ -2549,12 +2577,23 @@ static int make_resource (
 	if (mth == QSE_HTTP_CONNECT)
 	{
 		/* TODO: query if CONNECT is allowed */
+		/* TODO: check on what conditions CONNECT is allowed.  */
+		/* TODO: disallow connecting back to self */
 		/* TODO: Proxy-Authorization???? */
-		target->type = QSE_HTTPD_RSRC_PROXY;
-		target->u.proxy.raw = 1;
 
-		if (qse_mbstonwad (qse_htre_getqpath(req), &target->u.proxy.dst) <= -1) return -1;
-		target->u.proxy.src.type = target->u.proxy.dst.type;
+		target->type = QSE_HTTPD_RSRC_PROXY;
+		target->u.proxy.flags |= QSE_HTTPD_RSRC_PROXY_RAW;
+
+		if (qse_mbstonwad (qse_htre_getqpath(req), &target->u.proxy.dst.nwad) <= -1) 
+		{
+			target->u.proxy.flags |= QSE_HTTPD_RSRC_PROXY_DST_STR;
+			target->u.proxy.dst.str = qse_htre_getqpath(req);
+		}
+		else
+		{
+			/* make the source binding type the same as destination */
+			target->u.proxy.src.nwad.type = target->u.proxy.dst.nwad.type;
+		}
 
 		/* mark that this request is going to be proxied. */
 		req->attr.flags |= QSE_HTRE_ATTR_PROXIED;
@@ -2567,14 +2606,14 @@ static int make_resource (
 		case QSE_HTTPD_SERVERSTD_ROOT_NWAD:
 			/* proxy the request */
 			target->type = QSE_HTTPD_RSRC_PROXY;
-			target->u.proxy.raw = 0;
+			target->u.proxy.flags = 0;
 
 			/* transparent proxy may do the following
 			target->u.proxy.dst = client->orgdst_addr; 
 			target->u.proxy.src = client->remote_addr;
 			*/
-			target->u.proxy.dst = tmp.root.u.nwad;
-			target->u.proxy.src.type = target->u.proxy.dst.type;
+			target->u.proxy.dst.nwad = tmp.root.u.nwad;
+			target->u.proxy.src.nwad.type = target->u.proxy.dst.nwad.type;
 
 			/* mark that this request is going to be proxied. */
 			req->attr.flags |= QSE_HTRE_ATTR_PROXIED;

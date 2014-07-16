@@ -314,7 +314,7 @@ static int daemonize (int devnull)
 	if (devnull)
 	{
 		/* redirect stdin/out/err to /dev/null */
-		int fd = open ("/dev/null", O_RDWR);	
+		int fd = open ("/dev/null", O_RDWR);
 		if (fd >= 0)
 		{
 			dup2 (fd, 0);
@@ -356,14 +356,14 @@ static int make_resource (
 		else
 		{
 			rsrc->type = QSE_HTTPD_RSRC_PROXY;
-			rsrc->u.proxy.raw = 0;
-			rsrc->u.proxy.dst = client->orgdst_addr;
-			rsrc->u.proxy.src = client->remote_addr;
+			rsrc->u.proxy.flags = 0;
+			rsrc->u.proxy.dst.nwad = client->orgdst_addr;
+			rsrc->u.proxy.src.nwad = client->remote_addr;
 
-			if (rsrc->u.proxy.src.type == QSE_NWAD_IN4)
-				rsrc->u.proxy.src.u.in4.port = 0; /* reset the port to 0. */
-			else if (rsrc->u.proxy.src.type == QSE_NWAD_IN6)
-				rsrc->u.proxy.src.u.in6.port = 0; /* reset the port to 0. */
+			if (rsrc->u.proxy.src.nwad.type == QSE_NWAD_IN4)
+				rsrc->u.proxy.src.nwad.u.in4.port = 0; /* reset the port to 0. */
+			else if (rsrc->u.proxy.src.nwad.type == QSE_NWAD_IN6)
+				rsrc->u.proxy.src.nwad.u.in6.port = 0; /* reset the port to 0. */
 		}
 
 		return 0;
@@ -1727,16 +1727,17 @@ static void logact_httpd (qse_httpd_t* httpd, const qse_httpd_act_t* act)
 			qse_nwadtostr (&act->u.client->orgdst_addr, tmp2, QSE_COUNTOF(tmp2), QSE_NWADTOSTR_ALL);
 			qse_nwadtostr (&act->u.client->remote_addr, tmp3, QSE_COUNTOF(tmp3), QSE_NWADTOSTR_ALL);
 			qse_printf (QSE_T("accepted client %s(%s) from %s\n"), tmp, tmp2, tmp3);
+			break;
 
 		case QSE_HTTPD_PURGE_CLIENT:
 			qse_nwadtostr (&act->u.client->remote_addr, tmp, QSE_COUNTOF(tmp), QSE_NWADTOSTR_ALL);
 			qse_printf (QSE_T("purged client - %s\n"), tmp);
-			break;		
+			break;
 
 		case QSE_HTTPD_READERR_CLIENT:
 			qse_nwadtostr (&act->u.client->remote_addr, tmp, QSE_COUNTOF(tmp), QSE_NWADTOSTR_ALL);
 			qse_printf (QSE_T("failed to read client - %s\n"), tmp);
-			break;		
+			break;
 	}
 }
 

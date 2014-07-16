@@ -32,6 +32,7 @@ typedef struct qse_httpd_t        qse_httpd_t;
 typedef struct qse_httpd_mate_t   qse_httpd_mate_t;
 typedef struct qse_httpd_server_t qse_httpd_server_t;
 typedef struct qse_httpd_client_t qse_httpd_client_t;
+typedef struct qse_httpd_dns_t    qse_httpd_dns_t;
 
 enum qse_httpd_errnum_t
 {
@@ -119,6 +120,12 @@ struct qse_httpd_dirent_t
 	const qse_mchar_t* name;
 	qse_httpd_stat_t   stat;
 };
+
+typedef void (*qse_httpd_resol_t) (
+	qse_httpd_t*      httpd,
+	const qse_nwad_t* nwad,
+	void*             ctx
+);
 
 typedef struct qse_httpd_scb_t qse_httpd_scb_t;
 struct qse_httpd_scb_t
@@ -235,6 +242,14 @@ struct qse_httpd_scb_t
 			qse_httpd_t* httpd,
 			qse_httpd_client_t* client);  /* optional */
 	} client;
+
+	struct
+	{
+		int (*open) (qse_httpd_t* httpd, qse_httpd_dns_t* dns);
+		void (*close) (qse_httpd_t* httpd, qse_httpd_dns_t* dns);
+		int (*recv) (qse_httpd_t* httpd, qse_httpd_dns_t* dns);
+		int (*send) (qse_httpd_t* httpd, qse_httpd_dns_t* dns, const qse_mchar_t* name, qse_httpd_resol_t resol, void* ctx);
+	} dns;
 };
 
 /* -------------------------------------------------------------------------- */
@@ -322,6 +337,11 @@ typedef int (*qse_httpd_task_main_t) (
 	qse_httpd_task_t*   task
 );
 
+enum qse_httpd_task_trigger_flag_t
+{
+	QSE_HTTPD_TASK_TRIGGER_INACTIVE = (1 << 0)
+};
+
 enum qse_httpd_task_trigger_mask_t
 {
 	QSE_HTTPD_TASK_TRIGGER_READ      = (1 << 0),
@@ -330,32 +350,37 @@ enum qse_httpd_task_trigger_mask_t
 	QSE_HTTPD_TASK_TRIGGER_WRITABLE  = (1 << 3)
 };
 
+#define QSE_HTTPD_TASK_TRIGGER_MAX 3
+
 typedef struct qse_httpd_task_trigger_t qse_httpd_task_trigger_t;
 struct qse_httpd_task_trigger_t
 {
-	int       mask; /* QSE_HTTPD_TASK_TRIGGER_READ | QSE_HTTPD_TASK_TRIGGER_WRITE */
-	qse_ubi_t handle;
+	
+	int flags; /**< [IN] bitwise-ORed of #qse_httpd_task_trigger_flag_t enumerators*/
+	struct
+	{
+		int       mask; /* QSE_HTTPD_TASK_TRIGGER_READ | QSE_HTTPD_TASK_TRIGGER_WRITE */
+		qse_ubi_t handle;
+	} v[QSE_HTTPD_TASK_TRIGGER_MAX];
 };
-
-#define QSE_HTTPD_TASK_TRIGGER_MAX 3
 
 struct qse_httpd_task_t
 {
 	/* you must not call another entask functions from within 
 	 * an initailizer. you can call entask functions from within 
 	 * a finalizer and a main function. */
-
 	qse_httpd_task_init_t    init;  /**< [IN] initializer */
 	qse_httpd_task_fini_t    fini;  /**< [IN] finalizer */
 	qse_httpd_task_main_t    main;  /**< [IN] main task function */
-	qse_httpd_task_trigger_t trigger[QSE_HTTPD_TASK_TRIGGER_MAX];
+	qse_httpd_task_trigger_t trigger;
 	void*                    ctx;   /**< [IN OUT] user-defined data */
 };
 
 enum qse_httpd_mate_type_t 
 {
 	QSE_HTTPD_SERVER,
-	QSE_HTTPD_CLIENT
+	QSE_HTTPD_CLIENT,
+	QSE_HTTPD_DNS
 };
 typedef enum qse_httpd_mate_type_t  qse_httpd_mate_type_t;
 
@@ -387,7 +412,7 @@ struct qse_httpd_client_t
 	/* == PRIVATE == */
 	qse_htrd_t*              htrd;
 	int                      status;
-	qse_httpd_task_trigger_t trigger[QSE_HTTPD_TASK_TRIGGER_MAX];
+	qse_httpd_task_trigger_t trigger;
 	qse_ntime_t              last_active;
 
 	qse_httpd_client_t*      prev;
@@ -441,6 +466,16 @@ struct qse_httpd_server_t
 	qse_httpd_server_t*   prev;
 };
 
+
+struct qse_httpd_dns_t
+{
+	/* == PRIVATE == */
+	QSE_HTTPD_MATE_HDR;
+
+	/* == PUBLIC == */
+	qse_ubi_t handle;
+	void* ctx;
+};
 /* -------------------------------------------------------------------------- */
 
 /**
@@ -477,12 +512,25 @@ struct qse_httpd_rsrc_cgi_t
 	int nph;
 };
 
+enum qse_httpd_rsrc_proxy_flag_t
+{
+	QSE_HTTPD_RSRC_PROXY_RAW     = (1 << 0),
+	QSE_HTTPD_RSRC_PROXY_DST_STR = (1 << 1)
+};
+
 typedef struct qse_httpd_rsrc_proxy_t qse_httpd_rsrc_proxy_t;
 struct qse_httpd_rsrc_proxy_t
 {
-	qse_nwad_t dst; /* remote destination address to connect to */
-	qse_nwad_t src; /* local binding address */
-	int raw; /* raw or normal */
+	int flags; /* bitwise-ORed of qse_httpd_rsrc_proxy_flag_t enumerators */
+	union
+	{
+		qse_nwad_t nwad; 
+	} src; /* local binding address */
+	union
+	{
+		qse_nwad_t nwad;
+		const qse_mchar_t* str;
+	} dst; /* remote destination address to connect to */
 };
 
 typedef struct qse_httpd_rsrc_dir_t qse_httpd_rsrc_dir_t;
@@ -564,6 +612,7 @@ struct qse_httpd_ecb_t
 	/* internal use only. don't touch this field */
 	qse_httpd_ecb_t* next;
 };
+
 
 #ifdef __cplusplus
 extern "C" {
@@ -900,6 +949,15 @@ QSE_EXPORT qse_mchar_t* qse_httpd_escapehtml (
 	qse_httpd_t*        httpd, 
 	const qse_mchar_t*  str
 );
+
+
+QSE_EXPORT int qse_httpd_resolname (
+	qse_httpd_t*       httpd,
+	const qse_mchar_t* name,
+	qse_httpd_resol_t  resol,
+	void*              ctx
+);
+
 
 #ifdef __cplusplus
 }
