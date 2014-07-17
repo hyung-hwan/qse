@@ -281,6 +281,7 @@ typedef void (*qse_httpd_impede_t) (
 enum qse_httpd_act_code_t 
 {
 	QSE_HTTPD_CATCH_MERRMSG,
+	QSE_HTTPD_CATCH_MWARNMSG,
 	QSE_HTTPD_CATCH_MDBGMSG,
 	QSE_HTTPD_ACCEPT_CLIENT,
 	QSE_HTTPD_PURGE_CLIENT,
@@ -295,6 +296,7 @@ struct qse_httpd_act_t
 	{
 		qse_httpd_client_t* client;
 		qse_mchar_t merrmsg[128];
+		qse_mchar_t mwarnmsg[128];
 		qse_mchar_t mdbgmsg[128];
 	} u;
 };

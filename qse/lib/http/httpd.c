@@ -920,7 +920,7 @@ static int update_mux_for_current_task (qse_httpd_t* httpd, qse_httpd_client_t* 
 	for (i = 0; i < QSE_COUNTOF(task->trigger.v); i++)
 	{
 		task->trigger.v[i].mask &= ~(QSE_HTTPD_TASK_TRIGGER_READABLE | 
-		                           QSE_HTTPD_TASK_TRIGGER_WRITABLE);
+		                             QSE_HTTPD_TASK_TRIGGER_WRITABLE);
 	}
 
 	if (QSE_MEMCMP (&client->trigger, &task->trigger, QSE_SIZEOF(client->trigger)) != 0 ||
@@ -932,6 +932,52 @@ static int update_mux_for_current_task (qse_httpd_t* httpd, qse_httpd_client_t* 
 		int expected_client_handle_mux_mask_from_trigger = 0;
 		int expected_client_handle_mux_mask;
 		int expected_client_handle_mux_status;
+
+		if ((client->trigger.flags & QSE_HTTPD_TASK_TRIGGER_INACTIVE) != 
+		    (task->trigger.flags & QSE_HTTPD_TASK_TRIGGER_INACTIVE))
+		{
+			if (task->trigger.flags & QSE_HTTPD_TASK_TRIGGER_INACTIVE)
+			{
+				/* active to inactive */
+
+printf ("ACTIVE TO INACTIVE....\n");
+				for (i = 0; i < QSE_COUNTOF(task->trigger.v); i++)
+				{
+					if (client->status & CLIENT_TASK_TRIGGER_RW_IN_MUX(i))
+					{
+						httpd->opt.scb.mux.delhnd (httpd, httpd->mux, client->trigger.v[i].handle);
+						client->status &= ~CLIENT_TASK_TRIGGER_RW_IN_MUX(i);
+					}
+				}
+
+				if (client->status & CLIENT_HANDLE_RW_IN_MUX)
+				{
+					httpd->opt.scb.mux.delhnd (httpd, httpd->mux, client->handle);
+					client->status &= ~CLIENT_HANDLE_RW_IN_MUX;
+				}
+
+				/* save the task trigger information */
+				client->trigger = task->trigger;
+				return 0;
+			}
+
+printf ("INACTIVE TO ACTIVE....\n");
+			/* inactive to active . go on*/
+		}
+		else 
+		{
+			if (task->trigger.flags & QSE_HTTPD_TASK_TRIGGER_INACTIVE)
+			{
+printf ("INACTIVE TO INACTIVE....\n");
+				/* inactive to inactive.
+				 * save the trigger as the trigger handle and masks could change */
+				client->trigger = task->trigger;
+				return 0;
+			}
+
+printf ("ACTIVE TO ACTIVE....\n");
+			/* active to active. go on */
+		}
 
 		/* delete previous trigger handles */
 		for (i = 0; i < QSE_COUNTOF(task->trigger.v); i++)
@@ -1391,6 +1437,7 @@ int qse_httpd_loop (qse_httpd_t* httpd)
 
 	httpd->stopreq = 0;
 	httpd->impedereq = 0;
+	httpd->dnsactive = 0;
 
 	/* system callbacks and request callbacks must be set before the call to this function */
 	QSE_ASSERT (httpd->opt.scb.mux.open && httpd->opt.scb.mux.close && httpd->opt.scb.mux.poll);
@@ -1404,19 +1451,26 @@ int qse_httpd_loop (qse_httpd_t* httpd)
 
 	if (activate_dns (httpd) <= -1)
 	{
-		httpd->opt.scb.mux.close (httpd, httpd->mux);
-		return -1;
+		if (httpd->opt.trait & QSE_HTTPD_LOGACT)
+		{
+			qse_httpd_act_t msg;
+			qse_size_t len;
+			msg.code = QSE_HTTPD_CATCH_MWARNMSG;
+			qse_mbscpy (msg.u.mwarnmsg, QSE_MT("cannot activate dns"));
+			httpd->opt.rcb.logact (httpd, &msg);
+		}
 	}
+	else httpd->dnsactive = 1;
 
 	if (activate_servers (httpd) <= -1) 
 	{
-		deactivate_dns (httpd);
+		if (httpd->dnsactive) deactivate_dns (httpd);
 		httpd->opt.scb.mux.close (httpd, httpd->mux);
 		return -1;
 	}
 	if (httpd->server.nactive <= 0)
 	{
-		deactivate_dns (httpd);
+		if (httpd->dnsactive) deactivate_dns (httpd);
 		httpd->opt.scb.mux.close (httpd, httpd->mux);
 
 		httpd->errnum = QSE_HTTPD_ENOSVR;
@@ -1451,7 +1505,9 @@ int qse_httpd_loop (qse_httpd_t* httpd)
 
 	purge_client_list (httpd);
 	deactivate_servers (httpd);
-	deactivate_dns (httpd);
+
+	if (httpd->dnsactive) deactivate_dns (httpd);
+
 	httpd->opt.scb.mux.close (httpd, httpd->mux);
 	return xret;
 }
@@ -1575,7 +1631,9 @@ int qse_httpd_resolname (qse_httpd_t* httpd, const qse_mchar_t* name, qse_httpd_
 	/* TODO: find the name in cache */
 
 	/* not found in the cache */
-	httpd->opt.scb.dns.send (httpd, &httpd->dns, name, resol, ctx);
-	resol (httpd, QSE_NULL, ctx);
-	return 0;
+printf ("dns_send.........................\n");
+	return httpd->opt.scb.dns.send (httpd, &httpd->dns, name, resol, ctx);
+
+/*	resol (httpd, QSE_NULL, ctx);
+	return 0;*/
 }

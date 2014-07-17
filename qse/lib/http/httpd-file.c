@@ -638,7 +638,5 @@ qse_httpd_task_t* qse_httpd_entaskfile (
 			qse_htre_discardcontent (req);
 			return qse_httpd_entaskerr (httpd, client, pred, 405, req);
 	}
-
-
 }
 

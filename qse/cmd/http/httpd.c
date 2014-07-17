@@ -1431,8 +1431,8 @@ static int open_config_file (qse_httpd_t* httpd)
 		{ QSE_T("server.ssl"),                              { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
 		{ QSE_T("server.ssl-cert-file"),                    { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
 		{ QSE_T("server.ssl-key-file"),                     { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
-		{ QSE_T("server.host"),                             { QSE_XLI_SCM_VALLIST | QSE_XLI_SCM_KEYALIAS, 0, 0     }  },
-		{ QSE_T("server.host.location"),                    { QSE_XLI_SCM_VALLIST | QSE_XLI_SCM_KEYALIAS, 0, 0     }  },
+		{ QSE_T("server.host"),                             { QSE_XLI_SCM_VALLIST | QSE_XLI_SCM_KEYALIAS, 0, 0      }  },
+		{ QSE_T("server.host.location"),                    { QSE_XLI_SCM_VALLIST | QSE_XLI_SCM_KEYALIAS, 0, 0      }  },
 		{ QSE_T("server.host.location.root"),               { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 0, 1      }  },
 		{ QSE_T("server.host.location.realm"),              { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 0, 1      }  },
 		{ QSE_T("server.host.location.auth"),               { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
@@ -1716,6 +1716,10 @@ static void logact_httpd (qse_httpd_t* httpd, const qse_httpd_act_t* act)
 	{
 		case QSE_HTTPD_CATCH_MERRMSG:
 			qse_printf (QSE_T("ERROR: %hs\n"), act->u.merrmsg);
+			break;
+
+		case QSE_HTTPD_CATCH_MWARNMSG:
+			qse_printf (QSE_T("WARNING: %hs\n"), act->u.mwarnmsg);
 			break;
 
 		case QSE_HTTPD_CATCH_MDBGMSG:

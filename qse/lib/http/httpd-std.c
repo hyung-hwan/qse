@@ -673,7 +673,7 @@ static int server_open (qse_httpd_t* httpd, qse_httpd_server_t* server)
 	#endif
 	
 	#if defined(SO_REUSEPORT)
-	flag = 1;	
+	flag = 1;
 	setsockopt (fd, SOL_SOCKET, SO_REUSEPORT, (void*)&flag, QSE_SIZEOF(flag));
 	#endif
 
@@ -1962,22 +1962,290 @@ static void client_closed (qse_httpd_t* httpd, qse_httpd_client_t* client)
 
 
 /* ------------------------------------------------------------------- */
+typedef struct dns_ctx_t dns_ctx_t;
+typedef struct dns_req_t dns_req_t;
+typedef struct dns_hdr_t dns_hdr_t;
+typedef struct dns_qtrail_t dns_qtrail_t;
+
+struct dns_ctx_t
+{
+	qse_skad_t skad;
+	int skadlen;
+
+	qse_uint16_t seq;
+	dns_req_t* reqs[1024]; /* TOOD: choose the right size */
+};
+
+struct dns_req_t
+{
+	qse_mchar_t* name;
+	qse_httpd_resol_t resol;
+	void* ctx;
+	dns_req_t* next;
+};
+
+enum
+{
+	DNS_OPCODE_QUERY = 0,
+	DNS_OPCODE_IQUERY = 1,
+	DNS_OPCODE_STATUS = 2,
+	DNS_OPCODE_NOTIFY = 4,
+	DNS_OPCODE_UPDATE = 5,
+
+	DNS_RCODE_NOERROR = 0,
+	DNS_RCODE_FORMERR = 1,
+	DNS_RCODE_SERVFAIL = 2,
+	DNS_RCODE_NXDOMAIN = 3,
+	DNS_RCODE_NOTIMPL = 4,
+	DNS_RCODE_REFUSED = 5,
+
+	DNS_QTYPE_A = 1,
+	DNS_QTYPE_NS = 2,
+	DNS_QTYPE_CNAME = 5,
+	DNS_QTYPE_SOA = 6,
+	DNS_QTYPE_PTR = 12,
+	DNS_QTYPE_MX = 15,
+	DNS_QTYPE_TXT = 16,
+	DNS_QTYPE_AAAA = 28,
+	DNS_QTYPE_OPT = 41,
+	DNS_QTYPE_ANY = 255,
+
+	DNS_QCLASS_IN = 1, /* internet */
+	DNS_QCLASS_CH = 3, /* chaos */
+	DNS_QCLASS_HS = 4, /* hesiod */
+	DNS_QCLASS_NONE = 254,
+	DNS_QCLASS_ANY = 255
+};
+
+#include <qse/pack1.h>
+struct dns_hdr_t
+{
+	qse_uint16_t id;
+
+#if defined(QSE_ENDIAN_BIG)
+	qse_uint16_t qr: 1; /* question or response  */
+	qse_uint16_t opcode: 4; 
+	qse_uint16_t aa: 1; /* authoritative answer */
+	qse_uint16_t tc: 1; /* truncated message */
+	qse_uint16_t rd: 1; /* recursion desired */
+
+	qse_uint16_t ra: 1; /* recursion available */
+	qse_uint16_t z: 1; 
+	qse_uint16_t ad: 1;
+	qse_uint16_t cd: 1;
+	qse_uint16_t rcode: 4;
+#else
+	qse_uint16_t rd: 1;
+	qse_uint16_t tc: 1;
+	qse_uint16_t aa: 1;
+	qse_uint16_t opcode: 4;
+	qse_uint16_t qr: 1;
+
+	qse_uint16_t rocde: 4;
+	qse_uint16_t cd: 1;
+	qse_uint16_t ad: 1;
+	qse_uint16_t z: 1; 
+	qse_uint16_t ra: 1;
+#endif
+
+	qse_uint16_t qdcount; /* questions */
+	qse_uint16_t ancount; /* answers */
+	qse_uint16_t nscount; /* name servers */
+	qse_uint16_t arcount; /* additional resource */
+};
+
+struct dns_qtrail_t
+{
+	qse_uint16_t qtype;
+	qse_uint16_t qclass;
+};
+#include <qse/unpack.h>
+
+
+static qse_size_t to_dn (const qse_mchar_t* str, qse_uint8_t* buf, qse_size_t bufsz)
+{
+	qse_uint8_t* bp = buf, * be = buf + bufsz;
+
+	//QSE_ASSERT (QSE_SIZEOF(qse_uint8_t) == QSE_SIZEOF(qse_mchar_t));
+
+	if (*str != QSE_MT('\0'))
+	{
+		const qse_mchar_t* ep = str;
+
+		do
+		{
+			qse_uint8_t* lp;
+
+			if (bp < be) lp = bp++;
+			else lp = QSE_NULL;
+
+			str = ep;
+			while (*ep != QSE_MT('\0') && *ep != QSE_MT('.'))
+			{
+				if (bp < be) *bp++ = *ep; 
+				ep++;
+			}
+			if (ep - str > 63) return 0;
+			if (lp) *lp = (qse_uint8_t)(ep - str);
+
+			if (*ep == QSE_MT('\0')) break;
+			ep++;
+		}
+		while (1);
+	}
+
+	if (bp < be) *bp++ = 0;
+	return bp - buf;
+}
+
+
+int init_dns_query (qse_uint8_t* buf, qse_size_t len, const qse_mchar_t* name, int qtype, qse_uint16_t seq)
+{
+	dns_hdr_t* hdr;
+	dns_qtrail_t* qtrail;
+	qse_size_t x;
+
+	if (len < QSE_SIZEOF(*hdr)) return -1;
+
+	QSE_MEMSET (buf, 0, len);
+	hdr = (dns_hdr_t*)buf;
+	hdr->id = qse_hton16(seq);
+	hdr->opcode = DNS_OPCODE_QUERY; 
+	hdr->rd = 1;  /* recursion desired*/
+	hdr->qdcount = qse_hton16(1); /* 1 question */
+
+	len -= QSE_SIZEOF(*hdr);
+	
+	x = to_dn (name, (qse_uint8_t*)(hdr + 1), len);
+	if (x <= 0) return -1;
+	len -= x;
+
+	if (len < QSE_SIZEOF(*qtrail)) return -1;
+	qtrail = (dns_qtrail_t*)((qse_uint8_t*)(hdr + 1) + x);
+
+	qtrail->qtype = qse_hton16(qtype);
+	qtrail->qclass = qse_hton16(DNS_QCLASS_IN);
+	return QSE_SIZEOF(*hdr) + x + QSE_SIZEOF(*qtrail);
+}
+
 static int dns_open (qse_httpd_t* httpd, qse_httpd_dns_t* dns)
 {
+#if defined(__DOS__)
+	qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
 	return -1;
+#else
+	int fd = -1, flag;
+	qse_nwad_t nwad;
+	dns_ctx_t* dc;
+
+	dc = (dns_ctx_t*) qse_httpd_callocmem (httpd, QSE_SIZEOF(dns_ctx_t));
+	if (dc == NULL) goto oops;
+
+/* TODO: get this from configuration??? or /etc/resolv.conf */
+	if (qse_mbstonwad ("8.8.8.8:53", &nwad) <= -1)
+	{
+		qse_httpd_seterrnum (httpd, QSE_HTTPD_EINVAL);
+		goto oops;
+	}
+
+	dc->skadlen = qse_nwadtoskad (&nwad, &dc->skad);
+	if (dc->skadlen <= -1)
+	{
+		qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
+		return -1;
+	}
+
+	fd = socket (qse_skadfamily(&dc->skad), SOCK_DGRAM, IPPROTO_UDP);
+	if (fd <= -1) goto oops;
+
+	#if defined(FD_CLOEXEC)
+	flag = fcntl (fd, F_GETFD);
+	if (flag >= 0) fcntl (fd, F_SETFD, flag | FD_CLOEXEC);
+	#endif
+
+	#if defined(SO_REUSEADDR)
+	flag = 1;
+	setsockopt (fd, SOL_SOCKET, SO_REUSEADDR, (void*)&flag, QSE_SIZEOF(flag));
+	#endif
+	
+	#if defined(SO_REUSEPORT)
+	flag = 1;
+	setsockopt (fd, SOL_SOCKET, SO_REUSEPORT, (void*)&flag, QSE_SIZEOF(flag));
+	#endif
+
+	dns->handle.i = fd;
+	dns->ctx = dc;
+	return 0;
+
+oops:
+	if (fd >= 0) 
+	{
+	#if defined(_WIN32)
+		closesocket (fd);
+	#elif defined(__OS2__)
+		soclose (fd);
+	#else
+		QSE_CLOSE (fd);
+	#endif
+	}
+
+	if (dc) qse_httpd_freemem (httpd, dc);
+	return -1;
+
+#endif
 }
 
 static void dns_close (qse_httpd_t* httpd, qse_httpd_dns_t* dns)
 {
+#if defined(_WIN32)
+	closesocket (dns->handle.i);
+#elif defined(__OS2__)
+	soclose (dns->handle.i);
+#elif defined(__DOS__)
+	/* TODO: */
+#else
+	QSE_CLOSE (dns->handle.i);
+#endif
+
+	qse_httpd_freemem (httpd, dns->ctx);
 }
 
 static int dns_recv (qse_httpd_t* httpd, qse_httpd_dns_t* dns)
 {
+	dns_ctx_t* dc = (dns_ctx_t*)dns->ctx;
+	qse_skad_t fromaddr;
+	socklen_t fromlen; /* TODO: change type */
+	qse_uint8_t buf[384];
+
+printf ("RECV....\n");
+
+	fromlen = QSE_SIZEOF(fromaddr);
+	recvfrom (dns->handle.i, buf, QSE_SIZEOF(buf), 0, &fromaddr, &fromlen);
 	return 0;
 }
 
 static int dns_send (qse_httpd_t* httpd, qse_httpd_dns_t* dns, const qse_mchar_t* name, qse_httpd_resol_t resol, void* ctx)
 {
+	qse_uint32_t seq;
+	dns_ctx_t* dc = (dns_ctx_t*)dns->ctx;
+	qse_uint8_t buf_a[384], buf_aaaa[384];
+	int buf_a_len, buf_aaaa_len;
+
+	seq = dc->seq;
+	seq = (seq + 1) % QSE_COUNTOF(dc->reqs);
+	dc->seq = seq;
+
+	buf_a_len = init_dns_query (buf_a, QSE_SIZEOF(buf_a), name, DNS_QTYPE_A, seq);
+	buf_aaaa_len = init_dns_query (buf_aaaa, QSE_SIZEOF(buf_aaaa), name, DNS_QTYPE_AAAA, seq);
+	if (buf_a_len <= -1 || buf_aaaa_len <= -1)
+	{
+		qse_httpd_seterrnum (httpd, QSE_HTTPD_EINVAL);
+		return -1;
+	}
+
+printf ("SENDING......\n");
+	sendto (dns->handle.i, buf_a, buf_a_len, 0, (struct sockaddr*)&dc->skad, dc->skadlen);
+	sendto (dns->handle.i, buf_aaaa, buf_aaaa_len, 0, (struct sockaddr*)&dc->skad, dc->skadlen);
 	return 0;
 }
 
