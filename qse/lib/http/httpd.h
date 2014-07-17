@@ -31,7 +31,6 @@ struct qse_httpd_t
 	qse_httpd_errnum_t errnum;
 	qse_httpd_ecb_t* ecb; /* event callbacks */
 
-
 	struct
 	{
 		int trait;
@@ -43,6 +42,7 @@ struct qse_httpd_t
 
 	int stopreq: 1;
 	int impedereq: 1;
+	int dnsactive: 1;
 
 	qse_mchar_t sname[128]; /* server name for the server header */
 	qse_mchar_t gtbuf[10][64]; /* GMT time buffers */
