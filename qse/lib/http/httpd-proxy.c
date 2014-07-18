@@ -40,6 +40,7 @@ struct task_proxy_t
 #define PROXY_UNKNOWN_PEER_NWAD (1 << 3)
 	int flags;
 	qse_httpd_t* httpd;
+	qse_httpd_client_t* client;
 
 	int method;
 	qse_http_version_t version;
@@ -756,6 +757,7 @@ static int task_init_proxy (
 
 	QSE_MEMSET (proxy, 0, QSE_SIZEOF(*proxy));
 	proxy->httpd = httpd;
+	proxy->client = client;
 
 	proxy->method = qse_htre_getqmethodtype(arg->req);
 	proxy->version = *qse_htre_getversion(arg->req);
@@ -1537,7 +1539,7 @@ oops:
 	return (qse_httpd_entask_err (httpd, client, task, http_errnum, proxy->method, &proxy->version, proxy->keepalive) == QSE_NULL)? -1: 0;
 }
 
-static void on_peer_name_resolved (qse_httpd_t* httpd, const qse_nwad_t* nwad, void* ctx)
+static void on_peer_name_resolved (qse_httpd_t* httpd, const qse_mchar_t* name, const qse_nwad_t* nwad, void* ctx)
 {
 	qse_httpd_task_t* task = (qse_httpd_task_t*)ctx;
 	task_proxy_t* proxy = (task_proxy_t*)task->ctx;
@@ -1551,6 +1553,10 @@ static void on_peer_name_resolved (qse_httpd_t* httpd, const qse_nwad_t* nwad, v
 		/* resolved successfully */
 		proxy->flags &= ~PROXY_RESOL_PEER_NAME;
 		proxy->peer.nwad = *nwad;
+
+/*TODO: set port number .... */
+proxy->peer.nwad.u.in4.port = qse_hton16(80);
+
 		if (proxy->peer.local.type == QSE_NWAD_NX)
 			proxy->peer.local.type = proxy->peer.nwad.type;
 	}
@@ -1559,6 +1565,16 @@ static void on_peer_name_resolved (qse_httpd_t* httpd, const qse_nwad_t* nwad, v
 		/* resolution failure. */
 		proxy->flags |= PROXY_INIT_FAILED | PROXY_UNKNOWN_PEER_NWAD;
 	}
+
+/* TODO: do something about this... */
+task->trigger.v[2].handle = proxy->client->handle;
+task->trigger.v[2].mask |= QSE_HTTPD_TASK_TRIGGER_WRITE;
+	if (qse_httpd_activatetasktrigger (httpd, proxy->client, task) <= -1)
+	{
+		proxy->flags |= PROXY_INIT_FAILED;
+	}
+
+printf ("XXXXXXXXXXXXXXXXXXXXXXXXXX PEER NAME RESOLVED.....\n");
 }
 
 static int task_main_proxy (
@@ -1579,10 +1595,15 @@ static int task_main_proxy (
 	{
 		/* arrange to resolve a host name and return */
 		QSE_ASSERT (proxy->peer_name != QSE_NULL);
-		task->trigger.flags |= QSE_HTTPD_TASK_TRIGGER_INACTIVE;
-		if (qse_httpd_resolname (httpd, proxy->peer_name, on_peer_name_resolved, task)) goto oops;
+		if (qse_httpd_inactivatetasktrigger (httpd, client, task) <= -1 ||
+		    qse_httpd_resolname (httpd, proxy->peer_name, on_peer_name_resolved, task)) goto oops;
 		return 1;
 	}
+
+/* TODO: do something abotu this */
+printf ("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXx\n");
+task->trigger.v[2].mask = 0;
+
 
 	if (!(proxy->flags & PROXY_RAW))
 	{
@@ -1624,6 +1645,7 @@ static int task_main_proxy (
 
 	if (n == 0)
 	{
+printf ("PEER 00000000000000000000\n");
 		/* peer not connected yet */
 		task->trigger.v[0].mask |= QSE_HTTPD_TASK_TRIGGER_WRITE;
 		task->main = task_main_proxy_1;
@@ -1631,6 +1653,7 @@ static int task_main_proxy (
 	else
 	{
 		/* peer connected already */
+printf ("PEER 111111111111111111111\n");
 		proxy->peer_status |= PROXY_PEER_CONNECTED;
 		if (proxy->req)
 		{

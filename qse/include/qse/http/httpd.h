@@ -122,9 +122,10 @@ struct qse_httpd_dirent_t
 };
 
 typedef void (*qse_httpd_resol_t) (
-	qse_httpd_t*      httpd,
-	const qse_nwad_t* nwad,
-	void*             ctx
+	qse_httpd_t*       httpd,
+	const qse_mchar_t* name,
+	const qse_nwad_t*  nwad,
+	void*              ctx
 );
 
 typedef struct qse_httpd_scb_t qse_httpd_scb_t;
