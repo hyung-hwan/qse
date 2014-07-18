@@ -1965,7 +1965,8 @@ static void client_closed (qse_httpd_t* httpd, qse_httpd_client_t* client)
 typedef struct dns_ctx_t dns_ctx_t;
 typedef struct dns_req_t dns_req_t;
 typedef struct dns_hdr_t dns_hdr_t;
-typedef struct dns_qtrail_t dns_qtrail_t;
+typedef struct dns_qdtrail_t dns_qdtrail_t;
+typedef struct dns_antrail_t dns_antrail_t;
 
 struct dns_ctx_t
 {
@@ -1978,9 +1979,20 @@ struct dns_ctx_t
 
 struct dns_req_t
 {
+	qse_uint16_t seq;
+
 	qse_mchar_t* name;
+	qse_uint8_t* dn;
+	qse_size_t dnlen;
+
 	qse_httpd_resol_t resol;
 	void* ctx;
+
+	qse_uint8_t qa[384];
+	qse_uint8_t qaaaa[384];
+	int qalen;
+	int qaaaalen;
+
 	dns_req_t* next;
 };
 
@@ -2041,7 +2053,7 @@ struct dns_hdr_t
 	qse_uint16_t opcode: 4;
 	qse_uint16_t qr: 1;
 
-	qse_uint16_t rocde: 4;
+	qse_uint16_t rcode: 4;
 	qse_uint16_t cd: 1;
 	qse_uint16_t ad: 1;
 	qse_uint16_t z: 1; 
@@ -2054,55 +2066,89 @@ struct dns_hdr_t
 	qse_uint16_t arcount; /* additional resource */
 };
 
-struct dns_qtrail_t
+struct dns_qdtrail_t
 {
 	qse_uint16_t qtype;
 	qse_uint16_t qclass;
 };
+
+struct dns_antrail_t
+{
+	qse_uint16_t qtype;
+	qse_uint16_t qclass;
+	qse_uint32_t ttl;
+	qse_uint16_t dlen; /* data length */
+};
 #include <qse/unpack.h>
 
+
+#define DN_AT_END(ptr) (ptr[0] == QSE_MT('\0') || (ptr[0] == QSE_MT('.') && ptr[1] == QSE_MT('\0')))
 
 static qse_size_t to_dn (const qse_mchar_t* str, qse_uint8_t* buf, qse_size_t bufsz)
 {
 	qse_uint8_t* bp = buf, * be = buf + bufsz;
 
-	//QSE_ASSERT (QSE_SIZEOF(qse_uint8_t) == QSE_SIZEOF(qse_mchar_t));
+	QSE_ASSERT (QSE_SIZEOF(qse_uint8_t) == QSE_SIZEOF(qse_mchar_t));
 
-	if (*str != QSE_MT('\0'))
+	if (!DN_AT_END(str))
 	{
-		const qse_mchar_t* ep = str;
+		qse_uint8_t* lp;
+		qse_size_t len;
+		const qse_mchar_t* seg;
+		const qse_mchar_t* cur = str - 1;
 
 		do
 		{
-			qse_uint8_t* lp;
-
 			if (bp < be) lp = bp++;
 			else lp = QSE_NULL;
 
-			str = ep;
-			while (*ep != QSE_MT('\0') && *ep != QSE_MT('.'))
+			seg = ++cur;
+			while (*cur != QSE_MT('\0') && *cur != QSE_MT('.'))
 			{
-				if (bp < be) *bp++ = *ep; 
-				ep++;
+				if (bp < be) *bp++ = *cur; 
+				cur++;
 			}
-			if (ep - str > 63) return 0;
-			if (lp) *lp = (qse_uint8_t)(ep - str);
+			len = cur - seg;
+			if (len <= 0 || len > 63) return 0;
 
-			if (*ep == QSE_MT('\0')) break;
-			ep++;
+			if (lp) *lp = (qse_uint8_t)len;
 		}
-		while (1);
+		while (!DN_AT_END(cur));
 	}
 
 	if (bp < be) *bp++ = 0;
 	return bp - buf;
 }
 
+static qse_size_t dn_length (qse_uint8_t* ptr, qse_size_t len)
+{
+	qse_uint8_t* curptr;
+	qse_size_t curlen, seglen;
+
+	curptr = ptr;
+	curlen = len;
+
+	do
+	{
+		if (curlen <= 0) return 0;
+
+		seglen = *curptr++;
+		curlen = curlen - 1;
+		if (seglen == 0) break;
+		else if (seglen > curlen || seglen > 63) return 0;
+
+		curptr += seglen;
+		curlen -= seglen;
+	}
+	while (1);
+
+	return curptr - ptr;
+}
 
 int init_dns_query (qse_uint8_t* buf, qse_size_t len, const qse_mchar_t* name, int qtype, qse_uint16_t seq)
 {
 	dns_hdr_t* hdr;
-	dns_qtrail_t* qtrail;
+	dns_qdtrail_t* qdtrail;
 	qse_size_t x;
 
 	if (len < QSE_SIZEOF(*hdr)) return -1;
@@ -2120,12 +2166,12 @@ int init_dns_query (qse_uint8_t* buf, qse_size_t len, const qse_mchar_t* name, i
 	if (x <= 0) return -1;
 	len -= x;
 
-	if (len < QSE_SIZEOF(*qtrail)) return -1;
-	qtrail = (dns_qtrail_t*)((qse_uint8_t*)(hdr + 1) + x);
+	if (len < QSE_SIZEOF(*qdtrail)) return -1;
+	qdtrail = (dns_qdtrail_t*)((qse_uint8_t*)(hdr + 1) + x);
 
-	qtrail->qtype = qse_hton16(qtype);
-	qtrail->qclass = qse_hton16(DNS_QCLASS_IN);
-	return QSE_SIZEOF(*hdr) + x + QSE_SIZEOF(*qtrail);
+	qdtrail->qtype = qse_hton16(qtype);
+	qdtrail->qclass = qse_hton16(DNS_QCLASS_IN);
+	return QSE_SIZEOF(*hdr) + x + QSE_SIZEOF(*qdtrail);
 }
 
 static int dns_open (qse_httpd_t* httpd, qse_httpd_dns_t* dns)
@@ -2216,11 +2262,135 @@ static int dns_recv (qse_httpd_t* httpd, qse_httpd_dns_t* dns)
 	qse_skad_t fromaddr;
 	socklen_t fromlen; /* TODO: change type */
 	qse_uint8_t buf[384];
+	qse_ssize_t len;
+	dns_hdr_t* hdr;
 
 printf ("RECV....\n");
 
 	fromlen = QSE_SIZEOF(fromaddr);
-	recvfrom (dns->handle.i, buf, QSE_SIZEOF(buf), 0, &fromaddr, &fromlen);
+	len = recvfrom (dns->handle.i, buf, QSE_SIZEOF(buf), 0, (struct sockaddr*)&fromaddr, &fromlen);
+
+/* TODO: check if fromaddr matches the dc->skad... */
+
+	if (len >= QSE_SIZEOF(*hdr))
+	{
+		qse_uint16_t id, qdcount, ancount;
+
+		hdr = (dns_hdr_t*)buf;
+		id = qse_ntoh16(hdr->id);
+		qdcount = qse_ntoh16(hdr->qdcount);
+		ancount = qse_ntoh16(hdr->ancount);
+
+printf ("%d qdcount %d ancount %d\n", id, qdcount, ancount);
+		if (id >= 0 && id < QSE_COUNTOF(dc->reqs) && hdr->qr && hdr->opcode == DNS_OPCODE_QUERY && qdcount >= 1)
+		{
+			qse_uint8_t* plptr = (qse_uint8_t*)(hdr + 1);
+			qse_size_t pllen = len - QSE_SIZEOF(*hdr);
+			qse_uint8_t i, dnlen;
+			dns_req_t* req = QSE_NULL;
+			qse_size_t reclen;
+
+printf ("finding match req...\n");
+			for (i = 0; i < qdcount; i++)
+			{
+				dnlen = dn_length (plptr, pllen);
+				if (dnlen <= 0) goto done; /* invalid dn name */
+
+				reclen = dnlen + QSE_SIZEOF(dns_qdtrail_t);
+				if (pllen < reclen) goto done;
+printf ("1111111111111111111111\n");
+				if (!req)
+				{
+					dns_qdtrail_t* qdtrail = (dns_qdtrail_t*)(plptr + dnlen);
+					for (req = dc->reqs[id]; req; req = req->next)
+					{
+printf ("checking req... %d %d\n",(int)req->dnlen, (int)dnlen);
+						if (req->dnlen == dnlen && 
+						    QSE_MEMCMP (req->dn, plptr, req->dnlen) == 0 &&
+						    qdtrail->qclass == qse_hton16(DNS_QCLASS_IN) &&
+						    (qdtrail->qtype == qse_hton16(DNS_QTYPE_A) || qdtrail->qtype == qse_hton16(DNS_QTYPE_AAAA)))
+						{
+							/* found a matching request */
+printf ("found matching req...\n");
+							break;
+						}
+					}
+				}
+
+				plptr += reclen; 
+				pllen -= reclen;
+			}
+
+			if (!req) goto done;
+			
+			if (hdr->rcode == DNS_RCODE_NOERROR && ancount > 0)
+			{
+				dns_antrail_t* antrail;
+				qse_uint16_t qtype, anlen;
+
+printf ("checking answers.... pllen => %d\n", pllen);
+				for (i = 0; i < ancount; i++)
+				{
+					if (pllen < 1) goto done;
+					if (*plptr > 63) dnlen = 2;
+					else
+					{
+						dnlen = dn_length (plptr, pllen);
+printf ("........... %d\n", dnlen);
+						if (dnlen <= 0) goto done; /* invalid dn name */
+					}
+
+printf ("111111111111111111111111111\n");
+					reclen = dnlen + QSE_SIZEOF(dns_antrail_t);
+					if (pllen < reclen) goto done;
+
+					antrail = (dns_antrail_t*)(plptr + dnlen);
+					reclen += qse_ntoh16(antrail->dlen);
+					if (pllen < reclen) goto done;
+
+					qtype = qse_ntoh16(antrail->qtype);
+					anlen = qse_ntoh16(antrail->dlen);
+
+printf ("XXXXXXXXXXXXXXXXXxx\n");
+					if (antrail->qclass == qse_hton16(DNS_QCLASS_IN))
+					{
+						if (qtype == DNS_QTYPE_A && anlen == 4)
+						{
+							qse_nwad_t nwad;
+
+							QSE_MEMSET (&nwad, 0, QSE_SIZEOF(nwad));
+							nwad.type = QSE_NWAD_IN4;
+							QSE_MEMCPY (&nwad.u.in4.addr, antrail + 1, 4);
+printf ("invoking resoll with ipv4 \n");
+							req->resol (httpd, req->name, &nwad, req->ctx);
+/* TODO: delete req from dc ... */
+							goto done;
+						}
+						else if (qtype == DNS_QTYPE_AAAA || anlen == 16)
+						{
+							qse_nwad_t nwad;
+
+							QSE_MEMSET (&nwad, 0, QSE_SIZEOF(nwad));
+							nwad.type = QSE_NWAD_IN6;
+							QSE_MEMCPY (&nwad.u.in6.addr,  antrail + 1, 16);
+printf ("invoking resoll with ipv6 \n");
+							req->resol (httpd, req->name, &nwad, req->ctx);
+/* TODO:delete req from dc*/
+							goto done;
+						}
+					}
+
+					plptr += reclen;
+					pllen -= reclen;
+				}
+			}
+
+			/*req->resol (httpd, req->name, QSE_NULL, req->ctx);*//* TODO: handle this better */
+		}
+		
+	}
+
+done:
 	return 0;
 }
 
@@ -2228,27 +2398,59 @@ static int dns_send (qse_httpd_t* httpd, qse_httpd_dns_t* dns, const qse_mchar_t
 {
 	qse_uint32_t seq;
 	dns_ctx_t* dc = (dns_ctx_t*)dns->ctx;
-	qse_uint8_t buf_a[384], buf_aaaa[384];
-	int buf_a_len, buf_aaaa_len;
+	dns_req_t* req;
+	qse_size_t name_len;
 
 	seq = dc->seq;
 	seq = (seq + 1) % QSE_COUNTOF(dc->reqs);
 	dc->seq = seq;
 
-	buf_a_len = init_dns_query (buf_a, QSE_SIZEOF(buf_a), name, DNS_QTYPE_A, seq);
-	buf_aaaa_len = init_dns_query (buf_aaaa, QSE_SIZEOF(buf_aaaa), name, DNS_QTYPE_AAAA, seq);
-	if (buf_a_len <= -1 || buf_aaaa_len <= -1)
+	name_len = qse_mbslen(name);
+
+	/* dn is at most as long as the source length + 2.
+     *  a.bb.ccc => 1a2bb3ccc0  => +2
+     *  a.bb.ccc. => 1a2bb3ccc0  => +1 */
+	req = qse_httpd_callocmem (httpd, QSE_SIZEOF(*req) + (name_len + 1) + (name_len + 2));
+	if (req == QSE_NULL) return  -1;
+
+	req->seq = seq;
+	req->name = (qse_mchar_t*)(req + 1);
+	req->dn = (qse_uint8_t*)(req->name + name_len + 1);
+
+	qse_mbscpy (req->name, name);
+	req->dnlen = to_dn (name, req->dn, name_len + 2);
+	if (req->dnlen <= 0)
 	{
 		qse_httpd_seterrnum (httpd, QSE_HTTPD_EINVAL);
+		qse_httpd_freemem (httpd,req);
+		return -1;
+	}
+	req->resol = resol;
+	req->ctx = ctx;
+
+	req->qalen = init_dns_query (req->qa, QSE_SIZEOF(req->qa), name, DNS_QTYPE_A, seq);
+	req->qaaaalen = init_dns_query (req->qaaaa, QSE_SIZEOF(req->qaaaa), name, DNS_QTYPE_AAAA, seq);
+	if (req->qalen <= -1 || req->qaaaalen <= -1)
+	{
+		qse_httpd_seterrnum (httpd, QSE_HTTPD_EINVAL);
+		qse_httpd_freemem (httpd,req);
 		return -1;
 	}
 
 printf ("SENDING......\n");
-	sendto (dns->handle.i, buf_a, buf_a_len, 0, (struct sockaddr*)&dc->skad, dc->skadlen);
-	sendto (dns->handle.i, buf_aaaa, buf_aaaa_len, 0, (struct sockaddr*)&dc->skad, dc->skadlen);
+	if (sendto (dns->handle.i, req->qa, req->qalen, 0, (struct sockaddr*)&dc->skad, dc->skadlen) != req->qalen ||
+	    sendto (dns->handle.i, req->qaaaa, req->qaaaalen, 0, (struct sockaddr*)&dc->skad, dc->skadlen) != req->qaaaalen)
+	{
+		qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
+		qse_httpd_freemem (httpd, req);
+		return -1;
+	}
+
+	req->next = dc->reqs[seq];
+	dc->reqs[seq] = req;
+
 	return 0;
 }
-
 
 /* ------------------------------------------------------------------- */
 #if 0

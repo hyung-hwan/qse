@@ -923,6 +923,7 @@ static int update_mux_for_current_task (qse_httpd_t* httpd, qse_httpd_client_t* 
 		                             QSE_HTTPD_TASK_TRIGGER_WRITABLE);
 	}
 
+printf ("update_mux_for_current_task..............\n");
 	if (QSE_MEMCMP (&client->trigger, &task->trigger, QSE_SIZEOF(client->trigger)) != 0 ||
 	    ((client->status & CLIENT_MUTE) && !(client->status & CLIENT_MUTE_DELETED)))
 	{
@@ -1207,7 +1208,7 @@ static int invoke_client_task (
 	for (i = 0; i < QSE_COUNTOF(task->trigger.v); i++)
 	{
 		task->trigger.v[i].mask &= ~(QSE_HTTPD_TASK_TRIGGER_READABLE | 
-		                           QSE_HTTPD_TASK_TRIGGER_WRITABLE);
+		                             QSE_HTTPD_TASK_TRIGGER_WRITABLE);
 
 		if (task->trigger.v[i].handle.i == handle.i) /* TODO: no direct comparision */
 		{
@@ -1637,3 +1638,16 @@ printf ("dns_send.........................\n");
 /*	resol (httpd, QSE_NULL, ctx);
 	return 0;*/
 }
+
+int qse_httpd_activatetasktrigger (qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
+{
+	task->trigger.flags &= ~QSE_HTTPD_TASK_TRIGGER_INACTIVE;
+	return update_mux_for_current_task (httpd, client, task);
+}
+
+int qse_httpd_inactivatetasktrigger (qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
+{
+	task->trigger.flags |= QSE_HTTPD_TASK_TRIGGER_INACTIVE;
+	return update_mux_for_current_task (httpd, client, task);
+}
+
