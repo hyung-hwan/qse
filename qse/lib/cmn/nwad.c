@@ -52,6 +52,20 @@ void qse_clearnwad (qse_nwad_t* nwad, qse_nwad_type_t type)
 	nwad->type = type;
 }
 
+void qse_setnwadport (qse_nwad_t* nwad, qse_uint16_t port)
+{
+	switch (nwad->type)
+	{
+		case QSE_NWAD_IN4:
+			nwad->u.in4.port = port;
+			break;
+
+		case QSE_NWAD_IN6:
+			nwad->u.in4.port = port;
+			break;
+	}
+}
+
 int qse_mbstonwad (const qse_mchar_t* str, qse_nwad_t* nwad)
 {
 	return qse_mbsntonwad (str, qse_mbslen(str), nwad);

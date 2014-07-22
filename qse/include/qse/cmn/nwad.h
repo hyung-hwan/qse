@@ -105,6 +105,12 @@ QSE_EXPORT void qse_clearnwad (
 	qse_nwad_type_t type
 );
 
+QSE_EXPORT void qse_setnwadport (
+	qse_nwad_t*  nwad,
+	qse_uint16_t port
+);
+
+
 QSE_EXPORT int qse_mbstonwad (
 	const qse_mchar_t* mbs,
 	qse_nwad_t*        nwad

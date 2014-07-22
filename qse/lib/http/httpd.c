@@ -727,34 +727,6 @@ qse_httpd_server_t* qse_httpd_getprevserver (qse_httpd_t* httpd, qse_httpd_serve
 
 /* ----------------------------------------------------------------------- */
 
-#if 0
-qse_httpd_dns_t* qse_httpd_attachdns (qse_httpd_t* httpd, qse_httpd_dns_dope_t* dns, qse_size_t xtnsize)
-{
-	qse_httpd_dns_t* dns;
-
-	dns = qse_httpd_callocmem (httpd, QSE_SIZEOF(*dns) + xtnsize);
-	if (dns == QSE_NULL) return QSE_NULL;
-
-	dns->type = QSE_HTTPD_SERVER;
-	/* copy the dns dope */
-	dns->dope = *dope;
-	/* and correct some fields in case the dope contains invalid stuffs */
-	dns->dope.flags &= ~QSE_HTTPD_SERVER_ACTIVE;
-
-	/* chain the dns to the tail of the list */
-	dns->prev = httpd->dns.list.tail;
-	dns->next = QSE_NULL;
-	if (httpd->dns.list.tail)
-		httpd->dns.list.tail->next = dns;
-	else
-		httpd->dns.list.head = dns;
-	httpd->dns.list.tail = dns;
-	httpd->dns.navail++;
-	
-	return dns;
-}
-#endif
-
 static int activate_dns (qse_httpd_t* httpd)
 {
 	if (httpd->opt.scb.dns.open (httpd, &httpd->dns) <= -1) return -1;
@@ -767,7 +739,6 @@ static int activate_dns (qse_httpd_t* httpd)
 		return -1;
 	}
 
-	//httpd->dns = dns;
 	return 0;
 }
 
@@ -909,6 +880,19 @@ qse_printf (QSE_T("!!!!!FEEDING OK OK OK OK %d from %d\n"), (int)m, (int)client-
 	return 0;
 }
 
+static void clear_trigger_mask_result (qse_httpd_task_t* task)
+{
+	qse_size_t i;
+
+	task->trigger.cmask &=  ~(QSE_HTTPD_TASK_TRIGGER_READABLE | 
+	                          QSE_HTTPD_TASK_TRIGGER_WRITABLE);
+	for (i = 0; i < QSE_COUNTOF(task->trigger.v); i++)
+	{
+		task->trigger.v[i].mask &= ~(QSE_HTTPD_TASK_TRIGGER_READABLE | 
+		                             QSE_HTTPD_TASK_TRIGGER_WRITABLE);
+	}
+}
+
 static int update_mux_for_current_task (qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
 {
 	qse_size_t i;
@@ -917,11 +901,8 @@ static int update_mux_for_current_task (qse_httpd_t* httpd, qse_httpd_client_t* 
 	 * that something can go wrong if the task handler plays
 	 * with the trigger field in an unexpected manner. 
 	 */
-	for (i = 0; i < QSE_COUNTOF(task->trigger.v); i++)
-	{
-		task->trigger.v[i].mask &= ~(QSE_HTTPD_TASK_TRIGGER_READABLE | 
-		                             QSE_HTTPD_TASK_TRIGGER_WRITABLE);
-	}
+
+	clear_trigger_mask_result (task);
 
 printf ("update_mux_for_current_task..............\n");
 	if (QSE_MEMCMP (&client->trigger, &task->trigger, QSE_SIZEOF(client->trigger)) != 0 ||
@@ -930,7 +911,6 @@ printf ("update_mux_for_current_task..............\n");
 		/* manipulate muxtiplexer settings if there are trigger changes */
 
 		int has_trigger = 0;
-		int expected_client_handle_mux_mask_from_trigger = 0;
 		int expected_client_handle_mux_mask;
 		int expected_client_handle_mux_status;
 
@@ -996,15 +976,13 @@ printf ("ACTIVE TO ACTIVE....\n");
 			int expected_trigger_mux_mask = 0;
 			int expected_trigger_mux_status = 0;
 
+			if (task->trigger.v[i].handle.i == client->handle.i) continue; /* TODO: no direct comparision */
+
 			if (task->trigger.v[i].mask & QSE_HTTPD_TASK_TRIGGER_READ) 
 			{
-				if (task->trigger.v[i].handle.i != client->handle.i || !(client->status & CLIENT_MUTE))
-				{
-					expected_trigger_mux_mask |= QSE_HTTPD_MUX_READ;
-					expected_trigger_mux_status |= CLIENT_TASK_TRIGGER_READ_IN_MUX(i);
-				}
+				expected_trigger_mux_mask |= QSE_HTTPD_MUX_READ;
+				expected_trigger_mux_status |= CLIENT_TASK_TRIGGER_READ_IN_MUX(i);
 			}
-
 			if (task->trigger.v[i].mask & QSE_HTTPD_TASK_TRIGGER_WRITE) 
 			{
 				expected_trigger_mux_mask |= QSE_HTTPD_MUX_WRITE;
@@ -1014,52 +992,52 @@ printf ("ACTIVE TO ACTIVE....\n");
 			if (expected_trigger_mux_mask)
 			{
 				has_trigger = 1;
-
-				if (task->trigger.v[i].handle.i == client->handle.i) /* TODO: no direct comparsion */
-				{
-					/* if the client handle is included in the trigger,
-					 * delay its manipulation until the loop is over.
-					 * instead, just remember what mask is requested */
-					expected_client_handle_mux_mask_from_trigger |= expected_trigger_mux_mask;
-				}
-				else
-				{
-					if (httpd->opt.scb.mux.addhnd (httpd, httpd->mux, task->trigger.v[i].handle, expected_trigger_mux_mask, client) <= -1) 
-					{
-						return -1;
-					}
-					client->status |= expected_trigger_mux_status;
-				}
+				if (httpd->opt.scb.mux.addhnd (httpd, httpd->mux, task->trigger.v[i].handle, expected_trigger_mux_mask, client) <= -1) return -1;
+				client->status |= expected_trigger_mux_status;
 			}
 		}
 
-		expected_client_handle_mux_mask = QSE_HTTPD_MUX_READ;
-		expected_client_handle_mux_status = CLIENT_HANDLE_READ_IN_MUX; 
+		/* client-side handle is registered for both reading and 
+		 * writing when the task is executed for the first time.
+		 * see update_mux_for_next_task() for this.
+		 *
+		 * starting from the second call, the client-side handle
+		 * is registered for writing if it's explicitly requested.
+		 * it's always registered for reading if not for CLIENT_MUTE.
+		 *
+		 * this means that QSE_HTTP_TASK_TRIGGER_READ set or clear
+		 * in task->trigger.cmask is not honored.
+		 */
 
-		if (expected_client_handle_mux_mask_from_trigger)
+		expected_client_handle_mux_mask = 0;
+		expected_client_handle_mux_status = 0;
+		if (task->trigger.cmask & QSE_HTTPD_TASK_TRIGGER_WRITE) 
 		{
-			expected_client_handle_mux_mask |= expected_client_handle_mux_mask_from_trigger;
-			if (expected_client_handle_mux_mask_from_trigger & QSE_HTTPD_MUX_WRITE)
-				expected_client_handle_mux_status |= CLIENT_HANDLE_READ_IN_MUX;
-			if (expected_client_handle_mux_mask_from_trigger & QSE_HTTPD_MUX_WRITE)
-				expected_client_handle_mux_status |= CLIENT_HANDLE_WRITE_IN_MUX;
-		}
-
-		if (!expected_client_handle_mux_status && !has_trigger)
-		{
-			/* if there is no trigger and the client handle is to be excluded
-			 * from reading and writing, writing should be enabled. */
-			expected_client_handle_mux_status |= CLIENT_HANDLE_WRITE_IN_MUX;
 			expected_client_handle_mux_mask |= QSE_HTTPD_MUX_WRITE;
+			expected_client_handle_mux_status |= CLIENT_HANDLE_WRITE_IN_MUX;
 		}
 
 		if (client->status & CLIENT_MUTE)
 		{
-			/* readking should be excluded from mux if the client-side has 
+			/* reading should be excluded from mux if the client-side has 
 			 * been closed */
 			client->status |= CLIENT_MUTE_DELETED;
-			expected_client_handle_mux_mask &= ~QSE_HTTPD_MUX_READ;
-			expected_client_handle_mux_status &= ~CLIENT_HANDLE_READ_IN_MUX;
+		}
+		else
+		{
+			if (task->trigger.cmask & QSE_HTTPD_TASK_TRIGGER_READ)
+			{
+				expected_client_handle_mux_mask |= QSE_HTTPD_MUX_READ;
+				expected_client_handle_mux_status |= CLIENT_HANDLE_READ_IN_MUX; 
+			}
+		}
+
+		if (!expected_client_handle_mux_mask && !has_trigger)
+		{
+			/* if there is no trigger and the client handle is to be excluded
+			 * from reading and writing, writing should be enabled. */
+			expected_client_handle_mux_mask |= QSE_HTTPD_MUX_WRITE;
+			expected_client_handle_mux_status |= CLIENT_HANDLE_WRITE_IN_MUX;
 		}
 
 		if ((client->status & CLIENT_HANDLE_RW_IN_MUX) != expected_client_handle_mux_status)
@@ -1067,9 +1045,11 @@ printf ("ACTIVE TO ACTIVE....\n");
 			httpd->opt.scb.mux.delhnd (httpd, httpd->mux, client->handle);
 			client->status &= ~CLIENT_HANDLE_RW_IN_MUX;
 
-			QSE_ASSERT (expected_client_handle_mux_status & CLIENT_HANDLE_RW_IN_MUX);
-			if (httpd->opt.scb.mux.addhnd (httpd, httpd->mux, client->handle, expected_client_handle_mux_mask, client) <= -1) return -1;
-			client->status |= expected_client_handle_mux_status;
+			if (expected_client_handle_mux_mask)
+			{
+				if (httpd->opt.scb.mux.addhnd (httpd, httpd->mux, client->handle, expected_client_handle_mux_mask, client) <= -1) return -1;
+				client->status |= expected_client_handle_mux_status;
+			}
 		}
 
 		/* save the task trigger information */
@@ -1079,59 +1059,30 @@ printf ("ACTIVE TO ACTIVE....\n");
 	return 0;
 }
 
-static int update_mux_for_new_task (qse_httpd_t* httpd, qse_httpd_client_t* client)
-{
-	/* this task is the first task to activate.
-	 *
-	 * the client handle should be in mux for reading at this phase.
-	 * a new task should be invoked at least once regardless of the
-	 * data availablility(read) on the client side. arrange to invoke
-	 * this task so long as the client-side handle is writable as well
-	 * as when data is available for reading. */
-
-	int expected_mux_mask;
-	int expected_mux_status;
-
-	QSE_ASSERT (client->status & CLIENT_HANDLE_RW_IN_MUX);
-
-	expected_mux_mask = QSE_HTTPD_MUX_READ | QSE_HTTPD_MUX_WRITE;
-	expected_mux_status = CLIENT_HANDLE_RW_IN_MUX;
-
-	if ((client->status & CLIENT_HANDLE_RW_IN_MUX) != expected_mux_status)
-	{
-		/* no updating is needed if the client handle is in mux for 
-		 * both reading and writing. if not, the handle must be 
-		 * re-registered for both reading and writing. */
-		 
-		httpd->opt.scb.mux.delhnd (httpd, httpd->mux, client->handle);
-		client->status &= ~CLIENT_HANDLE_RW_IN_MUX;
-
-	#if 0
-	printf ("MUX ADDHND CLIENT RW(ENTASK) %d\n", client->handle.i);
-	#endif
-
-		QSE_ASSERT (expected_mux_status & CLIENT_HANDLE_RW_IN_MUX);
-		if (httpd->opt.scb.mux.addhnd (httpd, httpd->mux, client->handle, expected_mux_mask, client) <= -1) return -1;
-		client->status |= expected_mux_status;
-	}
-
-	return 0;
-}
-
 static int update_mux_for_next_task (qse_httpd_t* httpd, qse_httpd_client_t* client)
 {
+	/* A new task should be invoked at least once regardless of the
+	 * data availablility(read) on the client side. Arrange to invoke
+	 * this task so long as the client-side handle is readable or writable. */
+
+	qse_httpd_task_t* task;
 	int expected_mux_mask;
 	int expected_mux_status;
+	int expected_trigger_cmask;
 
+printf ("update_mux_for_next_task\n");
 	expected_mux_mask = QSE_HTTPD_MUX_READ;
 	expected_mux_status = CLIENT_HANDLE_READ_IN_MUX;
+	expected_trigger_cmask = QSE_HTTPD_TASK_TRIGGER_READ;
 
-	if (client->task.head) 
+	task = client->task.head;
+	if (task)
 	{
 		/* there is a pending task. arrange to trigger it as if it is 
 		 * just entasked. */
 		expected_mux_mask |= QSE_HTTPD_MUX_WRITE;
 		expected_mux_status |= CLIENT_HANDLE_WRITE_IN_MUX;
+		expected_trigger_cmask |= QSE_HTTPD_TASK_TRIGGER_WRITE;
 
 		if (client->status & CLIENT_MUTE)
 		{
@@ -1139,11 +1090,13 @@ static int update_mux_for_next_task (qse_httpd_t* httpd, qse_httpd_client_t* cli
 			 * from the side any more. so exclude reading */
 			expected_mux_mask &= ~QSE_HTTPD_MUX_READ;
 			expected_mux_status &= ~CLIENT_HANDLE_READ_IN_MUX;
+			expected_trigger_cmask &= ~QSE_HTTPD_TASK_TRIGGER_READ;
 		}
 	}
 	else 
 	{
-		/* there is no pending task to invoke */
+		/* there is no pending task to invoke. */
+
 		if (client->status & CLIENT_MUTE)
 		{
 			/* and this client has closed connection previously.
@@ -1164,6 +1117,7 @@ static int update_mux_for_next_task (qse_httpd_t* httpd, qse_httpd_client_t* cli
 		client->status |= expected_mux_status;
 	}
 
+	if (task) task->trigger.cmask = expected_trigger_cmask;
 	return 0;
 }
 
@@ -1173,11 +1127,13 @@ static int invoke_client_task (
 {
 	qse_httpd_task_t* task;
 	qse_size_t i;
-	int n, trigger_fired, client_handle_writable;
+	int n, trigger_fired;
 
 /* TODO: handle comparison callback ... */
 	if (handle.i == client->handle.i && (mask & QSE_HTTPD_MUX_READ)) /* TODO: no direct comparision */
 	{
+		/* keep reading from the client-side as long as
+		 * it's readable. */
 		if (!(client->status & CLIENT_MUTE) && 
 		    read_from_client (httpd, client) <= -1) 
 		{
@@ -1189,45 +1145,59 @@ static int invoke_client_task (
 		}
 	}
 
-	/* this client doesn't have any task */
 	task = client->task.head;
 	if (task == QSE_NULL) 
 	{
+		/* this client doesn't have any task */
 		if (client->status & CLIENT_MUTE)
 		{
-			/* handle this delayed client disconnection */
+			/* handle the delayed client disconnection */
 			return -1;
 		}
-
 		return 0;
 	}
 
 	trigger_fired = 0;
-	client_handle_writable = 0;
 
-	for (i = 0; i < QSE_COUNTOF(task->trigger.v); i++)
+	clear_trigger_mask_result (task);
+	if (handle.i == client->handle.i) /* TODO: no direct comparison */
 	{
-		task->trigger.v[i].mask &= ~(QSE_HTTPD_TASK_TRIGGER_READABLE | 
-		                             QSE_HTTPD_TASK_TRIGGER_WRITABLE);
-
-		if (task->trigger.v[i].handle.i == handle.i) /* TODO: no direct comparision */
+		if (mask & QSE_HTTPD_MUX_READ)
 		{
-			if (mask & QSE_HTTPD_MUX_READ)
+			/*QSE_ASSERT (task->trigger.cmask & QSE_HTTPD_TASK_TRIGGER_READ);*/
+			task->trigger.cmask |= QSE_HTTPD_TASK_TRIGGER_READABLE;
+			trigger_fired = 1;
+		}
+		if (mask & QSE_HTTPD_MUX_WRITE)
+		{
+			/*QSE_ASSERT (task->trigger.cmask & QSE_HTTPD_TASK_TRIGGER_WRITE);*/
+			task->trigger.cmask |= QSE_HTTPD_TASK_TRIGGER_WRITABLE;
+			trigger_fired = 1;
+		}
+	}
+	else
+	{
+		for (i = 0; i < QSE_COUNTOF(task->trigger.v); i++)
+		{
+			if (task->trigger.v[i].handle.i == handle.i) /* TODO: no direct comparision */
 			{
-				QSE_ASSERT (task->trigger.v[i].mask & QSE_HTTPD_TASK_TRIGGER_READ);
-				trigger_fired = 1;
-				task->trigger.v[i].mask |= QSE_HTTPD_TASK_TRIGGER_READABLE;
-			}
-			if (mask & QSE_HTTPD_MUX_WRITE)
-			{
-				QSE_ASSERT (task->trigger.v[i].mask & QSE_HTTPD_TASK_TRIGGER_WRITE);
-				trigger_fired = 1;
-				task->trigger.v[i].mask |= QSE_HTTPD_TASK_TRIGGER_WRITABLE;
-				if (handle.i == client->handle.i) client_handle_writable = 1; /* TODO: no direct comparison */
+				if (mask & QSE_HTTPD_MUX_READ)
+				{
+					QSE_ASSERT (task->trigger.v[i].mask & QSE_HTTPD_TASK_TRIGGER_READ);
+					task->trigger.v[i].mask |= QSE_HTTPD_TASK_TRIGGER_READABLE;
+					trigger_fired = 1;
+				}
+				if (mask & QSE_HTTPD_MUX_WRITE)
+				{
+					QSE_ASSERT (task->trigger.v[i].mask & QSE_HTTPD_TASK_TRIGGER_WRITE);
+					task->trigger.v[i].mask |= QSE_HTTPD_TASK_TRIGGER_WRITABLE;
+					trigger_fired = 1;
+				}
 			}
 		}
 	}
-	if (trigger_fired && !client_handle_writable)
+
+	if (trigger_fired && !(task->trigger.cmask & QSE_HTTPD_TASK_TRIGGER_WRITABLE))
 	{
 		/* the task is invoked for triggers. 
 		 * check if the client handle is writable */
@@ -1240,6 +1210,10 @@ static int invoke_client_task (
 			 * performing the actual task */
 			return 0;
 		}
+
+		/* WRITABLE can be set without WRITE as this is the result of 
+		 * the additional writability check. */
+		task->trigger.cmask |= QSE_HTTPD_TASK_TRIGGER_WRITABLE;
 	}
 
 	n = task->main (httpd, client, task);
@@ -1253,7 +1227,7 @@ static int invoke_client_task (
 		/* update the multiplexer settings */
 		n = update_mux_for_next_task (httpd, client);
 
-		/* reset the task trigger */
+		/* reset the task trigger remembered */
 		QSE_MEMSET (&client->trigger, 0, QSE_SIZEOF(client->trigger));
 	}
 	else if (n > 0)
@@ -1375,16 +1349,9 @@ qse_httpd_task_t* qse_httpd_entask (
 	}
 	else if (new_task->prev == QSE_NULL)
 	{
-		
-		/* this task is the first task to activate.
-		 *
-		 * the client handle should be in mux for reading at this phase.
-		 * a new task should be invoked at least once regardless of the
-		 * data availablility(read) on the client side. arrange to invoke
-		 * this task so long as the client-side handle is writable as well
-		 * as when data is available for reading. */
+		/* this task is the first task to activate. */
 
-		if (update_mux_for_new_task (httpd, client) <= -1)
+		if (update_mux_for_next_task (httpd, client) <= -1)
 		{
 			/*purge_client (httpd, client);*/
 			client->status |= CLIENT_BAD;
@@ -1641,12 +1608,35 @@ printf ("dns_send.........................\n");
 
 int qse_httpd_activatetasktrigger (qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
 {
+	int x, org_cmask;
+
+printf ("activate ..$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$..\n");
+	/* don't do anything if it's active */
+	if (!(task->trigger.flags & QSE_HTTPD_TASK_TRIGGER_INACTIVE)) return 0;
+
+printf ("activate reakly....\n");
+	/* when task trigger is inactive, no handle are registered
+	 * into mux. update_mux_for_current_task adds the client handle
+	 * to mux for reading only if writing is not requested explicitly.
+	 * if no data is available for reading, the task can never be
+	 * called after activation. so let's request writing here.
+	 */
+	QSE_ASSERT (!(client->status & CLIENT_HANDLE_RW_IN_MUX));
+	org_cmask = task->trigger.cmask;
+	task->trigger.cmask |= QSE_HTTPD_TASK_TRIGGER_WRITE;
+
 	task->trigger.flags &= ~QSE_HTTPD_TASK_TRIGGER_INACTIVE;
-	return update_mux_for_current_task (httpd, client, task);
+
+	x = update_mux_for_current_task (httpd, client, task);
+
+	task->trigger.cmask = org_cmask;
+	return x;
 }
 
 int qse_httpd_inactivatetasktrigger (qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
 {
+	if (task->trigger.flags & QSE_HTTPD_TASK_TRIGGER_INACTIVE) return 0;
+
 	task->trigger.flags |= QSE_HTTPD_TASK_TRIGGER_INACTIVE;
 	return update_mux_for_current_task (httpd, client, task);
 }

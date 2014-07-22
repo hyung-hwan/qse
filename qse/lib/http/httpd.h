@@ -143,6 +143,18 @@ qse_httpd_task_t* qse_httpd_entask_nomod (
 	int keepalive
 );
 
+int qse_httpd_activatetasktrigger (
+	qse_httpd_t* httpd,
+	qse_httpd_client_t* client,
+	qse_httpd_task_t* task
+);
+
+int qse_httpd_inactivatetasktrigger (
+	qse_httpd_t* httpd,
+	qse_httpd_client_t* client,
+	qse_httpd_task_t* task
+);
+
 #ifdef __cplusplus
 }
 #endif

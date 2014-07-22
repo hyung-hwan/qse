@@ -1979,7 +1979,10 @@ struct dns_ctx_t
 
 struct dns_req_t
 {
-	qse_uint16_t seq;
+#define DNS_REQ_A_ERROR (1 << 0)
+#define DNS_REQ_AAAA_ERROR (1 << 1)
+	int flags;
+	qse_uint16_t seqa, seqaaaa;
 
 	qse_mchar_t* name;
 	qse_uint8_t* dn;
@@ -2274,20 +2277,22 @@ printf ("RECV....\n");
 
 	if (len >= QSE_SIZEOF(*hdr))
 	{
-		qse_uint16_t id, qdcount, ancount;
+		qse_uint16_t id, qdcount, ancount, xid;
 
 		hdr = (dns_hdr_t*)buf;
 		id = qse_ntoh16(hdr->id);
 		qdcount = qse_ntoh16(hdr->qdcount);
 		ancount = qse_ntoh16(hdr->ancount);
 
+		xid = (id >= QSE_COUNTOF(dc->reqs))? (id - QSE_COUNTOF(dc->reqs)): id;
+
 printf ("%d qdcount %d ancount %d\n", id, qdcount, ancount);
-		if (id >= 0 && id < QSE_COUNTOF(dc->reqs) && hdr->qr && hdr->opcode == DNS_OPCODE_QUERY && qdcount >= 1)
+		if (id >= 0 && id < QSE_COUNTOF(dc->reqs) * 2 && hdr->qr && hdr->opcode == DNS_OPCODE_QUERY && qdcount >= 1)
 		{
 			qse_uint8_t* plptr = (qse_uint8_t*)(hdr + 1);
 			qse_size_t pllen = len - QSE_SIZEOF(*hdr);
 			qse_uint8_t i, dnlen;
-			dns_req_t* req = QSE_NULL;
+			dns_req_t* req = QSE_NULL, * preq = QSE_NULL;
 			qse_size_t reclen;
 
 printf ("finding match req...\n");
@@ -2302,7 +2307,7 @@ printf ("1111111111111111111111\n");
 				if (!req)
 				{
 					dns_qdtrail_t* qdtrail = (dns_qdtrail_t*)(plptr + dnlen);
-					for (req = dc->reqs[id]; req; req = req->next)
+					for (preq = QSE_NULL, req = dc->reqs[xid]; req; preq = req, req = req->next)
 					{
 printf ("checking req... %d %d\n",(int)req->dnlen, (int)dnlen);
 						if (req->dnlen == dnlen && 
@@ -2322,13 +2327,13 @@ printf ("found matching req...\n");
 			}
 
 			if (!req) goto done;
-			
+
 			if (hdr->rcode == DNS_RCODE_NOERROR && ancount > 0)
 			{
 				dns_antrail_t* antrail;
 				qse_uint16_t qtype, anlen;
 
-printf ("checking answers.... pllen => %d\n", pllen);
+printf ("checking answers.... pllen => %d\n", (int)pllen);
 				for (i = 0; i < ancount; i++)
 				{
 					if (pllen < 1) goto done;
@@ -2340,7 +2345,6 @@ printf ("........... %d\n", dnlen);
 						if (dnlen <= 0) goto done; /* invalid dn name */
 					}
 
-printf ("111111111111111111111111111\n");
 					reclen = dnlen + QSE_SIZEOF(dns_antrail_t);
 					if (pllen < reclen) goto done;
 
@@ -2351,7 +2355,6 @@ printf ("111111111111111111111111111\n");
 					qtype = qse_ntoh16(antrail->qtype);
 					anlen = qse_ntoh16(antrail->dlen);
 
-printf ("XXXXXXXXXXXXXXXXXxx\n");
 					if (antrail->qclass == qse_hton16(DNS_QCLASS_IN))
 					{
 						if (qtype == DNS_QTYPE_A && anlen == 4)
@@ -2363,7 +2366,12 @@ printf ("XXXXXXXXXXXXXXXXXxx\n");
 							QSE_MEMCPY (&nwad.u.in4.addr, antrail + 1, 4);
 printf ("invoking resoll with ipv4 \n");
 							req->resol (httpd, req->name, &nwad, req->ctx);
-/* TODO: delete req from dc ... */
+
+							/* delete the request from dc */
+							if (preq) preq->next = req->next;
+							else dc->reqs[xid] = req->next;
+							qse_httpd_freemem (httpd, req);
+
 							goto done;
 						}
 						else if (qtype == DNS_QTYPE_AAAA || anlen == 16)
@@ -2375,13 +2383,33 @@ printf ("invoking resoll with ipv4 \n");
 							QSE_MEMCPY (&nwad.u.in6.addr,  antrail + 1, 16);
 printf ("invoking resoll with ipv6 \n");
 							req->resol (httpd, req->name, &nwad, req->ctx);
-/* TODO:delete req from dc*/
+
+							/* delete the request from dc */
+							if (preq) preq->next = req->next;
+							else dc->reqs[xid] = req->next;
+							qse_httpd_freemem (httpd, req);
+
 							goto done;
 						}
 					}
 
 					plptr += reclen;
 					pllen -= reclen;
+				}
+			}
+			else
+			{
+				if (id == req->seqa) req->flags |= DNS_REQ_A_ERROR;
+				else if (id == req->seqaaaa) req->flags |= DNS_REQ_AAAA_ERROR;
+
+				if ((req->flags & (DNS_REQ_A_ERROR | DNS_REQ_AAAA_ERROR)) == (DNS_REQ_A_ERROR | DNS_REQ_AAAA_ERROR))
+				{
+					req->resol (httpd, req->name, QSE_NULL, req->ctx);
+
+					/* delete the request from dc */
+					if (preq) preq->next = req->next;
+					else dc->reqs[xid] = req->next;
+					qse_httpd_freemem (httpd, req);
 				}
 			}
 
@@ -2413,7 +2441,8 @@ static int dns_send (qse_httpd_t* httpd, qse_httpd_dns_t* dns, const qse_mchar_t
 	req = qse_httpd_callocmem (httpd, QSE_SIZEOF(*req) + (name_len + 1) + (name_len + 2));
 	if (req == QSE_NULL) return  -1;
 
-	req->seq = seq;
+	req->seqa = seq;
+	req->seqaaaa = seq + QSE_COUNTOF(dc->reqs); /* this must not go beyond the qse_uint16_t max */
 	req->name = (qse_mchar_t*)(req + 1);
 	req->dn = (qse_uint8_t*)(req->name + name_len + 1);
 
@@ -2427,9 +2456,9 @@ static int dns_send (qse_httpd_t* httpd, qse_httpd_dns_t* dns, const qse_mchar_t
 	}
 	req->resol = resol;
 	req->ctx = ctx;
-
-	req->qalen = init_dns_query (req->qa, QSE_SIZEOF(req->qa), name, DNS_QTYPE_A, seq);
-	req->qaaaalen = init_dns_query (req->qaaaa, QSE_SIZEOF(req->qaaaa), name, DNS_QTYPE_AAAA, seq);
+	
+	req->qalen = init_dns_query (req->qa, QSE_SIZEOF(req->qa), name, DNS_QTYPE_A, req->seqa);
+	req->qaaaalen = init_dns_query (req->qaaaa, QSE_SIZEOF(req->qaaaa), name, DNS_QTYPE_AAAA, req->seqaaaa);
 	if (req->qalen <= -1 || req->qaaaalen <= -1)
 	{
 		qse_httpd_seterrnum (httpd, QSE_HTTPD_EINVAL);
