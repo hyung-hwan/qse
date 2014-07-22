@@ -476,8 +476,9 @@ static int task_main_putfile_2 (
 		 * QSE_NULL when snatching is over in putfile_snatch_client_input().
 		 * i set a trigger so that the task is executed
 		 * while there is input from the client side  */
-		task->trigger.v[0].mask = QSE_HTTPD_TASK_TRIGGER_READ;
-		task->trigger.v[0].handle = client->handle;
+		/*task->trigger.v[0].mask = QSE_HTTPD_TASK_TRIGGER_READ;
+		task->trigger.v[0].handle = client->handle;*/
+		task->trigger.cmask = QSE_HTTPD_TASK_TRIGGER_READ;
 		return 1; /* trigger me when a client sends data  */
 	}
 

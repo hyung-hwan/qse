@@ -23,6 +23,7 @@
 #include "../cmn/mem.h"
 #include <qse/cmn/str.h>
 #include <qse/cmn/fmt.h>
+#include <qse/cmn/hton.h>
 
 typedef struct task_proxy_arg_t task_proxy_arg_t;
 struct task_proxy_arg_t 
@@ -49,7 +50,9 @@ struct task_proxy_t
 
 	qse_htrd_t* peer_htrd;
 
-	const qse_mchar_t* peer_name;
+	qse_mchar_t* peer_name;
+	qse_uint16_t peer_port;
+
 	qse_httpd_peer_t peer;
 #define PROXY_PEER_OPEN      (1 << 0)
 #define PROXY_PEER_CONNECTED (1 << 1)
@@ -268,7 +271,7 @@ else qse_printf (QSE_T("!!!PROXY SNATCHING DONE\n"));
 
 		/* since there is no more to read from the client side.
 		 * the relay trigger is not needed any more. */
-		task->trigger.v[2].mask = 0;
+		task->trigger.cmask &= ~QSE_HTTPD_TASK_TRIGGER_READ;
 
 		if (QSE_MBS_LEN(proxy->reqfwdbuf) > 0 && 
 		    (proxy->peer_status & PROXY_PEER_CONNECTED) &&
@@ -738,7 +741,7 @@ to the head all the time..  grow the buffer to a certain limit. */
 		 * clear the read and write triggers.
 		 */
 		task->trigger.v[0].mask &= ~QSE_HTTPD_TASK_TRIGGER_WRITE; /* peer */
-		task->trigger.v[2].mask = 0; /* client-side */
+		task->trigger.cmask &= ~QSE_HTTPD_TASK_TRIGGER_READ; /* client-side */
 	}
 }
 
@@ -767,9 +770,29 @@ static int task_init_proxy (
 	proxy->peer.local = arg->rsrc->src.nwad;
 	if (arg->rsrc->flags & QSE_HTTPD_RSRC_PROXY_DST_STR)
 	{
+		qse_mchar_t* colon;
+
 		proxy->flags |= PROXY_RESOL_PEER_NAME;
-		proxy->peer_name = (const qse_mchar_t*)(proxy + 1);
-		qse_mbscpy ((qse_mchar_t*)proxy->peer_name, arg->rsrc->dst.str);
+		proxy->peer_name = (qse_mchar_t*)(proxy + 1);
+		qse_mbscpy (proxy->peer_name, arg->rsrc->dst.str);
+
+		colon = qse_mbschr (proxy->peer_name, QSE_MT(':'));
+		if (colon) 
+		{
+			qse_mchar_t* endptr;
+
+			/* handle a port number after the colon sign */
+			*colon = QSE_MT('\0');
+			QSE_MBSTONUM (proxy->peer_port, colon + 1, &endptr, 10);
+
+			/* TODO: check if *endptr is QSE_T('\0')? */
+		}
+		else
+		{
+			/*proxy->peer_port = 443;*/
+			qse_httpd_seterrnum (httpd, QSE_HTTPD_EINVAL);
+			goto oops;
+		}
 	}
 	else
 	{
@@ -1014,10 +1037,10 @@ static int task_main_proxy_5 (
 
 #if 0
 printf ("task_main_proxy_5 trigger[0].mask=%d trigger[1].mask=%d trigger[2].mask=%d\n", 
-	task->trigger.v[0].mask, task->trigger.v[1].mask, task->trigger.v[2].mask);
+	task->trigger.v[0].mask, task->trigger.v[1].mask, task->trigger.cmask);
 #endif
 
-	if (task->trigger.v[2].mask & QSE_HTTPD_TASK_TRIGGER_READABLE)
+	if (task->trigger.cmask & QSE_HTTPD_TASK_TRIGGER_READABLE)
 	{
 		/* if the client side is readable */
 		proxy_forward_client_input_to_peer (httpd, task, 0);
@@ -1028,8 +1051,8 @@ printf ("task_main_proxy_5 trigger[0].mask=%d trigger[1].mask=%d trigger[2].mask
 		proxy_forward_client_input_to_peer (httpd, task, 1);
 	}
 
-	if (!(task->trigger.v[2].mask & QSE_HTTPD_TASK_TRIGGER_WRITE) ||
-	    (task->trigger.v[2].mask & QSE_HTTPD_TASK_TRIGGER_WRITABLE))
+	if (/*!(task->trigger.cmask & QSE_HTTPD_TASK_TRIGGER_WRITE) ||*/
+	    (task->trigger.cmask & QSE_HTTPD_TASK_TRIGGER_WRITABLE))
 	{
 		if (proxy->buflen > 0)
 		{
@@ -1063,10 +1086,10 @@ static int task_main_proxy_4 (
 	
 #if 1
 printf ("task_main_proxy_4 trigger[0].mask=%d trigger[1].mask=%d trigger[2].mask=%d\n", 
-	task->trigger.v[0].mask, task->trigger.v[1].mask, task->trigger.v[2].mask);
+	task->trigger.v[0].mask, task->trigger.v[1].mask, task->trigger.cmask);
 #endif
 
-	if (task->trigger.v[2].mask & QSE_HTTPD_TASK_TRIGGER_READABLE)
+	if (task->trigger.cmask & QSE_HTTPD_TASK_TRIGGER_READABLE)
 	{
 		proxy_forward_client_input_to_peer (httpd, task, 0);
 	}
@@ -1117,7 +1140,7 @@ printf ("task_main_proxy_4 trigger[0].mask=%d trigger[1].mask=%d trigger[2].mask
 				task->trigger.v[0].mask = 0;
 			
 				/* arrange to be called if the client side is writable */
-				task->trigger.v[2].mask |= QSE_HTTPD_TASK_TRIGGER_WRITE;
+				task->trigger.cmask |= QSE_HTTPD_TASK_TRIGGER_WRITE;
 
 				if (proxy->flags & PROXY_RAW)
 				{
@@ -1151,7 +1174,7 @@ printf ("task_main_proxy_4 trigger[0].mask=%d trigger[1].mask=%d trigger[2].mask
 					/* proxy has finished reading all */
 					task->main = task_main_proxy_5;
 					task->trigger.v[0].mask = 0;
-					task->trigger.v[2].mask |= QSE_HTTPD_TASK_TRIGGER_WRITE;
+					task->trigger.cmask |= QSE_HTTPD_TASK_TRIGGER_WRITE;
 					return 1;
 				}
 			}
@@ -1188,10 +1211,10 @@ static int task_main_proxy_3 (
 
 #if  0
 qse_printf (QSE_T("task_main_proxy_3 trigger[0].mask=%d trigger[1].mask=%d trigger[2].mask=%d\n"), 
-	task->trigger.v[0].mask, task->trigger.v[1].mask, task->trigger.v[2].mask);
+	task->trigger.v[0].mask, task->trigger.v[1].mask, task->trigger.cmask);
 #endif
 
-	if (task->trigger.v[2].mask & QSE_HTTPD_TASK_TRIGGER_READABLE)
+	if (task->trigger.cmask & QSE_HTTPD_TASK_TRIGGER_READABLE)
 	{
 		proxy_forward_client_input_to_peer (httpd, task, 0);
 	}
@@ -1200,8 +1223,8 @@ qse_printf (QSE_T("task_main_proxy_3 trigger[0].mask=%d trigger[1].mask=%d trigg
 		proxy_forward_client_input_to_peer (httpd, task, 1);
 	}
 
-	if (!(task->trigger.v[2].mask & QSE_HTTPD_TASK_TRIGGER_WRITE) ||
-	    (task->trigger.v[2].mask & QSE_HTTPD_TASK_TRIGGER_WRITABLE))
+	if (/*!(task->trigger.cmask & QSE_HTTPD_TASK_TRIGGER_WRITE) ||*/
+	    (task->trigger.cmask & QSE_HTTPD_TASK_TRIGGER_WRITABLE))
 	{
 		qse_ssize_t n;
 		qse_size_t count;
@@ -1230,20 +1253,27 @@ qse_printf (QSE_T("task_main_proxy_3 trigger[0].mask=%d trigger[1].mask=%d trigg
 
 		if (proxy->res_pending <= 0)
 		{
+			/* all data received from the peer so far(including those injected)
+  			 * have been sent back to the client-side */
+
 			qse_mbs_clear (proxy->res);
 			proxy->res_consumed = 0;
 
 			if ((proxy->resflags & PROXY_RES_CLIENT_CHUNK) ||
 			    ((proxy->resflags & PROXY_RES_PEER_LENGTH) && proxy->peer_output_received >= proxy->peer_output_length))
 			{
+				/* received all contents */
 				task->main = task_main_proxy_5;
-				task->trigger.v[2].mask |= QSE_HTTPD_TASK_TRIGGER_WRITE;
+				task->trigger.cmask |= QSE_HTTPD_TASK_TRIGGER_WRITE;
 			}
 			else
 			{
-				/* arrange to read the remaining contents from the peer */
+				/* there are still more to read from the peer.
+				 * arrange to read the remaining contents from the peer */
 				task->main = task_main_proxy_4;
-				task->trigger.v[2].mask &= ~QSE_HTTPD_TASK_TRIGGER_WRITE;
+				/* nothing to write in proxy->res. so clear WRITE from the
+				 * client side */
+				task->trigger.cmask &= ~QSE_HTTPD_TASK_TRIGGER_WRITE;
 			}
 			return 1;
 		}
@@ -1259,11 +1289,11 @@ static int task_main_proxy_2 (
 	int http_errnum = 500;
 
 #if 0
-printf ("task_main_proxy_2 trigger[0].mask=%d trigger[1].mask=%d trigger[2].mask=%d\n", 
-	task->trigger.v[0].mask, task->trigger.v[1].mask, task->trigger.v[2].mask);
+printf ("task_main_proxy_2 trigger[0].mask=%d trigger[1].mask=%d cmask=%d\n", 
+	task->trigger.v[0].mask, task->trigger.v[1].mask, task->trigger.cmask);
 #endif
 
-	if (task->trigger.v[2].mask & QSE_HTTPD_TASK_TRIGGER_READABLE)
+	if (task->trigger.cmask & QSE_HTTPD_TASK_TRIGGER_READABLE)
 	{
 		/* client is readable */
 		proxy_forward_client_input_to_peer (httpd, task, 0);
@@ -1274,8 +1304,8 @@ printf ("task_main_proxy_2 trigger[0].mask=%d trigger[1].mask=%d trigger[2].mask
 		proxy_forward_client_input_to_peer (httpd, task, 1);
 	}
 
-	if (!(task->trigger.v[2].mask & QSE_HTTPD_TASK_TRIGGER_WRITE) ||
-	    (task->trigger.v[2].mask & QSE_HTTPD_TASK_TRIGGER_WRITABLE))
+	if (/*!(task->trigger.cmask & QSE_HTTPD_TASK_TRIGGER_WRITE) ||*/
+	    (task->trigger.cmask & QSE_HTTPD_TASK_TRIGGER_WRITABLE))
 	{
 		if (proxy->res_pending > 0)
 		{
@@ -1295,16 +1325,6 @@ printf ("task_main_proxy_2 trigger[0].mask=%d trigger[1].mask=%d trigger[2].mask
 
 			count = proxy->res_pending;
 			if (count > MAX_SEND_SIZE) count = MAX_SEND_SIZE;
-
-#if 0
-qse_printf (QSE_T("[proxy_2 sending %d bytes (index %d)] ["), 
-	(int)count, (int)proxy->res_consumed);
-{
-int i;
-for (i = 0; i < count; i++) qse_printf (QSE_T("%hc"), QSE_MBS_CHAR(proxy->res,proxy->res_consumed+i));
-}
-qse_printf (QSE_T("]\n"));
-#endif
 
 			n = httpd->opt.scb.client.send (
 				httpd, client, 
@@ -1326,8 +1346,12 @@ qse_printf (QSE_T("]\n"));
 			{
 				/* '100 Continue' and payload received together
 				 * has all been relayed back. no need for writability
-				 * check of the client side */
-				task->trigger.v[2].mask &= ~QSE_HTTPD_TASK_TRIGGER_WRITE;
+				 * check of the client side as there's nothing to write.
+				 * when something is read from the peer and proxy->res
+				 * becomes loaded, this cmask is added with WRITE
+				 * in the 'if' block below that takes care of reading
+				 * from the peer. */
+				task->trigger.cmask &= ~QSE_HTTPD_TASK_TRIGGER_WRITE;
 			}
 		}
 	}
@@ -1373,7 +1397,7 @@ qse_printf (QSE_T("]\n"));
 					 * case. call qse_htrd_halt() for this. */
 					qse_htrd_halt (proxy->peer_htrd);
 					task->main = task_main_proxy_3;
-					task->trigger.v[2].mask |= QSE_HTTPD_TASK_TRIGGER_WRITE;
+					task->trigger.cmask |= QSE_HTTPD_TASK_TRIGGER_WRITE;
 					return 1;
 				}
 
@@ -1408,24 +1432,27 @@ qse_printf (QSE_T("]\n"));
 		{
 			if (proxy->resflags & PROXY_RES_RECEIVED_RESCON)
 			{
+				/* received the contents in full */
 				QSE_ASSERT (proxy->resflags & PROXY_RES_CLIENT_CHUNK);
 				task->main = task_main_proxy_3;
-				task->trigger.v[2].mask |= QSE_HTTPD_TASK_TRIGGER_WRITE;
+				task->trigger.cmask |= QSE_HTTPD_TASK_TRIGGER_WRITE;
 			}
 			else if (proxy->resflags & PROXY_RES_AWAIT_RESCON)
 			{
+				/* waiting for contents */
 				QSE_ASSERT (proxy->resflags & PROXY_RES_CLIENT_CHUNK);
-				task->trigger.v[2].mask |= QSE_HTTPD_TASK_TRIGGER_WRITE;
+				task->trigger.cmask |= QSE_HTTPD_TASK_TRIGGER_WRITE;
 			}
 			else if (proxy->resflags & PROXY_RES_RECEIVED_RESHDR)
 			{
 				/* the actual response header has been received 
 				 * with or without '100 continue'. you can
 				 * check it with proxy->resflags & PROXY_RES_RECEIVED_100 */
+
 				if (proxy->resflags & PROXY_RES_CLIENT_CHUNK)
 				{
 					proxy->resflags |= PROXY_RES_AWAIT_RESCON;
-					task->trigger.v[2].mask |= QSE_HTTPD_TASK_TRIGGER_WRITE;
+					task->trigger.cmask |= QSE_HTTPD_TASK_TRIGGER_WRITE;
 				}
 				else
 				{
@@ -1434,14 +1461,14 @@ qse_printf (QSE_T("TRAILING DATA=%d, [%hs]\n"), (int)QSE_MBS_LEN(proxy->res), QS
 #endif
 					/* switch to the next phase */
 					task->main = task_main_proxy_3;
-					task->trigger.v[2].mask |= QSE_HTTPD_TASK_TRIGGER_WRITE;
+					task->trigger.cmask |= QSE_HTTPD_TASK_TRIGGER_WRITE;
 				}
 			}
 			else if (proxy->resflags & PROXY_RES_RECEIVED_100) 
 			{
 				/* 100 continue has been received but 
 				 * the actual response has not. */
-				task->trigger.v[2].mask |= QSE_HTTPD_TASK_TRIGGER_WRITE;
+				task->trigger.cmask |= QSE_HTTPD_TASK_TRIGGER_WRITE;
 			}
 			else
 			{
@@ -1461,6 +1488,10 @@ oops:
 static int task_main_proxy_1 (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
 {
+	/* scheduling of this function is made in task_main_proxy() if
+	 * the connection to the peer isn't established. this function should
+	 * check the connection state to the peer. */
+
 	task_proxy_t* proxy = (task_proxy_t*)task->ctx;
 	int http_errnum = 500;
 
@@ -1490,10 +1521,11 @@ static int task_main_proxy_1 (
 		{
 			/* connected to the peer now */
 			proxy->peer_status |= PROXY_PEER_CONNECTED;
-
 			if (proxy->req)
 			{
-				task->trigger.v[2].mask = QSE_HTTPD_TASK_TRIGGER_READ;
+				/* need to read from the client-side as
+				 * the content has not been received in full. */
+				task->trigger.cmask |= QSE_HTTPD_TASK_TRIGGER_READ;
 			}
 
 			task->trigger.v[0].mask &= ~QSE_HTTPD_TASK_TRIGGER_WRITE;
@@ -1523,7 +1555,7 @@ static int task_main_proxy_1 (
 
 				/* arrange to be called if the client side is writable.
 				 * it must write the injected response. */
-				task->trigger.v[2].mask |= QSE_HTTPD_TASK_TRIGGER_WRITE;
+				task->trigger.cmask |= QSE_HTTPD_TASK_TRIGGER_WRITE;
 				task->main  = task_main_proxy_3;
 			}
 			else
@@ -1546,16 +1578,13 @@ static void on_peer_name_resolved (qse_httpd_t* httpd, const qse_mchar_t* name, 
 
 	QSE_ASSERT (proxy->flags & PROXY_RESOL_PEER_NAME);
 
-	task->trigger.flags &= ~QSE_HTTPD_TASK_TRIGGER_INACTIVE;
-
 	if (nwad)
 	{
 		/* resolved successfully */
 		proxy->flags &= ~PROXY_RESOL_PEER_NAME;
 		proxy->peer.nwad = *nwad;
 
-/*TODO: set port number .... */
-proxy->peer.nwad.u.in4.port = qse_hton16(80);
+		qse_setnwadport (&proxy->peer.nwad, qse_hton16(proxy->peer_port));
 
 		if (proxy->peer.local.type == QSE_NWAD_NX)
 			proxy->peer.local.type = proxy->peer.nwad.type;
@@ -1566,9 +1595,6 @@ proxy->peer.nwad.u.in4.port = qse_hton16(80);
 		proxy->flags |= PROXY_INIT_FAILED | PROXY_UNKNOWN_PEER_NWAD;
 	}
 
-/* TODO: do something about this... */
-task->trigger.v[2].handle = proxy->client->handle;
-task->trigger.v[2].mask |= QSE_HTTPD_TASK_TRIGGER_WRITE;
 	if (qse_httpd_activatetasktrigger (httpd, proxy->client, task) <= -1)
 	{
 		proxy->flags |= PROXY_INIT_FAILED;
@@ -1599,11 +1625,6 @@ static int task_main_proxy (
 		    qse_httpd_resolname (httpd, proxy->peer_name, on_peer_name_resolved, task)) goto oops;
 		return 1;
 	}
-
-/* TODO: do something abotu this */
-printf ("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXx\n");
-task->trigger.v[2].mask = 0;
-
 
 	if (!(proxy->flags & PROXY_RAW))
 	{
@@ -1641,23 +1662,25 @@ task->trigger.v[2].mask = 0;
 	proxy->peer_status |= PROXY_PEER_OPEN;
 	task->trigger.v[0].mask = QSE_HTTPD_TASK_TRIGGER_READ;
 	task->trigger.v[0].handle = proxy->peer.handle;
-	task->trigger.v[2].handle = client->handle;
+	/*task->trigger.cmask = QSE_HTTPD_TASK_TRIGGER_READ;*/
+	task->trigger.cmask = 0;
 
 	if (n == 0)
 	{
-printf ("PEER 00000000000000000000\n");
 		/* peer not connected yet */
+		/*task->trigger.cmask &= ~QSE_HTTPD_TASK_TRIGGER_READ;*/
 		task->trigger.v[0].mask |= QSE_HTTPD_TASK_TRIGGER_WRITE;
 		task->main = task_main_proxy_1;
 	}
 	else
 	{
 		/* peer connected already */
-printf ("PEER 111111111111111111111\n");
 		proxy->peer_status |= PROXY_PEER_CONNECTED;
 		if (proxy->req)
 		{
-			task->trigger.v[2].mask = QSE_HTTPD_TASK_TRIGGER_READ;
+			/* need to read from the client-side as
+			 * the content has not been received in full. */
+			task->trigger.cmask = QSE_HTTPD_TASK_TRIGGER_READ;
 		}
 
 		if (QSE_MBS_LEN(proxy->reqfwdbuf) > 0)
@@ -1682,7 +1705,7 @@ printf ("PEER 111111111111111111111\n");
 
 			/* arrange to be called if the client side is writable.
 			 * it must write the injected response. */
-			task->trigger.v[2].mask |= QSE_HTTPD_TASK_TRIGGER_WRITE;
+			task->trigger.cmask |= QSE_HTTPD_TASK_TRIGGER_WRITE;
 			task->main = task_main_proxy_3;
 		}
 		else
