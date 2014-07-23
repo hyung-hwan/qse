@@ -251,7 +251,8 @@ QSE_EXPORT qse_ssize_t qse_sio_getmbsn (
  * The qse_sio_getwcs() function reads at most @a size - 1 characters 
  * from the stream @a sio into the buffer @a buf. If a new line or EOF
  * is encountered, it stops reading from the stream. It null-terminates
- * the buffer if @a size is greater than 0. */
+ * the buffer if @a size is greater than 0. 
+ */
 QSE_EXPORT qse_ssize_t qse_sio_getwcs (
 	qse_sio_t*   sio,
 	qse_wchar_t* buf,

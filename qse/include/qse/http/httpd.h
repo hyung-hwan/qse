@@ -56,6 +56,7 @@ enum qse_httpd_errnum_t
 	QSE_HTTPD_ENOBUF,  /* no buffer available */
 	QSE_HTTPD_EDISCON, /* client disconnnected */
 	QSE_HTTPD_EBADREQ, /* bad request */
+	QSE_HTTPD_ENODNS,  /* dns service not activated */
 	QSE_HTTPD_ETASK
 };
 typedef enum qse_httpd_errnum_t qse_httpd_errnum_t;
@@ -77,7 +78,9 @@ enum qse_httpd_trait_t
 	QSE_HTTPD_CGINOCLOEXEC = (1 << 2),
 	QSE_HTTPD_CGINOCHUNKED = (1 << 3),
 	QSE_HTTPD_PROXYNOVIA   = (1 << 4),
-	QSE_HTTPD_LOGACT       = (1 << 5)
+	QSE_HTTPD_LOGACT       = (1 << 5),
+	QSE_HTTPD_DNSNOA       = (1 << 6),
+	QSE_HTTPD_DNSNOAAAA    = (1 << 7),
 };
 typedef enum qse_httpd_trait_t qse_httpd_trait_t;
 
@@ -358,9 +361,7 @@ enum qse_httpd_task_trigger_mask_t
 typedef struct qse_httpd_task_trigger_t qse_httpd_task_trigger_t;
 struct qse_httpd_task_trigger_t
 {
-	
 	int flags; /**< [IN] bitwise-ORed of #qse_httpd_task_trigger_flag_t enumerators*/
-
 	int cmask; /* client mask - QSE_HTTPD_TASK_TRIGGER_READ | QSE_HTTPD_TASK_TRIGGER_WRITE */
 	struct
 	{

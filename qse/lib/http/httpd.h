@@ -25,6 +25,9 @@
 
 #include <qse/http/httpd.h>
 
+#define QSE_HTTPD_DEFAULT_PORT        80
+#define QSE_HTTPD_DEFAULT_SECURE_PORT 443
+#define QSE_HTTPD_DEFAULT_DNS_PORT    53
 struct qse_httpd_t
 {
 	qse_mmgr_t* mmgr;

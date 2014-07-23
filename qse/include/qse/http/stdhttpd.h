@@ -23,7 +23,6 @@
 
 #include <qse/http/httpd.h>
 
-
 typedef int (*qse_httpd_serverstd_makersrc_t) (
 	qse_httpd_t*        httpd,
 	qse_httpd_client_t* client,
@@ -196,7 +195,8 @@ QSE_EXPORT void* qse_httpd_getserverstdxtn (
 );
 
 QSE_EXPORT int qse_httpd_loopstd (
-	qse_httpd_t*       httpd
+	qse_httpd_t*       httpd,
+	const qse_nwad_t*  dnsnwad
 );
 
 #ifdef __cplusplus

@@ -89,7 +89,7 @@ struct qse_htre_t
 				const qse_mchar_t* str;
 			} code;
 			const qse_mchar_t* mesg;
-		} s;	
+		} s;
 	} u;
 
 	/* special attributes derived from the header */

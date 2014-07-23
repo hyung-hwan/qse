@@ -32,6 +32,7 @@
 #include <qse/cmn/mux.h>
 #include <qse/cmn/dir.h>
 #include <qse/cmn/fio.h>
+#include <qse/cmn/sio.h>
 
 #define STAT_REG   1
 #define STAT_DIR   2
@@ -95,10 +96,6 @@
 #if defined(_MSC_VER) || defined(__BORLANDC__) || (defined(__WATCOMC__) && (__WATCOMC__ < 1200))
 #	define snprintf _snprintf 
 #endif
-
-
-#define DEFAULT_PORT        80
-#define DEFAULT_SECURE_PORT 443
 
 typedef struct server_xtn_t server_xtn_t;
 struct server_xtn_t
@@ -536,6 +533,7 @@ struct httpd_xtn_t
 	SSL_CTX* ssl_ctx;
 #endif
 	qse_httpd_ecb_t ecb;
+	qse_nwad_t dnsnwad;
 };
 
 #if defined(HAVE_SSL)
@@ -632,7 +630,7 @@ qse_httpd_t* qse_httpd_openstdwithmmgr (qse_mmgr_t* mmgr, qse_size_t xtnsize)
 	xtn->ecb.close = cleanup_standard_httpd;
 	qse_httpd_pushecb (httpd, &xtn->ecb);
 
-	return httpd;	
+	return httpd;
 }
 
 void* qse_httpd_getxtnstd (qse_httpd_t* httpd)
@@ -1979,8 +1977,8 @@ struct dns_ctx_t
 
 struct dns_req_t
 {
-#define DNS_REQ_A_ERROR (1 << 0)
-#define DNS_REQ_AAAA_ERROR (1 << 1)
+#define DNS_REQ_A_NX (1 << 0)
+#define DNS_REQ_AAAA_NX (1 << 1)
 	int flags;
 	qse_uint16_t seqa, seqaaaa;
 
@@ -2186,22 +2184,73 @@ static int dns_open (qse_httpd_t* httpd, qse_httpd_dns_t* dns)
 	int fd = -1, flag;
 	qse_nwad_t nwad;
 	dns_ctx_t* dc;
+	httpd_xtn_t* httpd_xtn;
+
+	httpd_xtn = qse_httpd_getxtn (httpd);
 
 	dc = (dns_ctx_t*) qse_httpd_callocmem (httpd, QSE_SIZEOF(dns_ctx_t));
 	if (dc == NULL) goto oops;
 
-/* TODO: get this from configuration??? or /etc/resolv.conf */
-	if (qse_mbstonwad ("8.8.8.8:53", &nwad) <= -1)
+/* TODO: add static cache entries from /etc/hosts */
+
+	nwad = httpd_xtn->dnsnwad;
+	if (nwad.type == QSE_NWAD_NX)
+	{
+		qse_sio_t* sio;
+	#if defined(_WIN32)
+		/* TODO: */
+	#elif defined(__OS2__)
+		/* TODO: */
+	#else
+		/* TODO: read /etc/resolv.conf???? */
+	#endif
+
+		sio = qse_sio_open (qse_httpd_getmmgr(httpd), 0, QSE_T("/etc/resolv.conf"), QSE_SIO_READ);
+		if (sio)
+		{
+			qse_mchar_t buf[128];
+			qse_ssize_t len;
+			qse_mcstr_t tok;
+			qse_mchar_t* ptr;
+			qse_mchar_t* end;
+
+			while (1)
+			{
+				len = qse_sio_getmbsn (sio, buf, QSE_COUNTOF(buf));
+				if (len <= 0) break;
+
+				end = buf + len;
+				ptr = buf;
+
+				ptr = qse_mbsxtok (ptr, end - ptr, QSE_MT(" \t"), &tok);
+				if (ptr && qse_mbsxcmp (tok.ptr, tok.len, QSE_MT("nameserver")) == 0)
+				{
+					ptr = qse_mbsxtok (ptr, end - ptr, QSE_MT(" \t"), &tok);
+					if (qse_mbsntonwad (tok.ptr, tok.len, &nwad) >= 0) break;
+				}
+			}
+			qse_sio_close (sio);
+		}
+	}
+
+	if (qse_getnwadport(&nwad) == 0) 
+		qse_setnwadport (&nwad, qse_hton16(QSE_HTTPD_DEFAULT_DNS_PORT));
+
+	dc->skadlen = qse_nwadtoskad (&nwad, &dc->skad);
+	if (dc->skadlen <= -1)
 	{
 		qse_httpd_seterrnum (httpd, QSE_HTTPD_EINVAL);
 		goto oops;
 	}
 
-	dc->skadlen = qse_nwadtoskad (&nwad, &dc->skad);
-	if (dc->skadlen <= -1)
+	if (httpd->opt.trait & QSE_HTTPD_LOGACT)
 	{
-		qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
-		return -1;
+		qse_httpd_act_t msg;
+		qse_size_t pos;
+		msg.code = QSE_HTTPD_CATCH_MDBGMSG;
+		pos = qse_mbsxcpy (msg.u.mdbgmsg, QSE_COUNTOF(msg.u.mdbgmsg), "nameserver set to ");
+		qse_nwadtombs (&nwad, &msg.u.mdbgmsg[pos], QSE_COUNTOF(msg.u.mdbgmsg) - pos, QSE_NWADTOMBS_ALL);
+		httpd->opt.rcb.logact (httpd, &msg);
 	}
 
 	fd = socket (qse_skadfamily(&dc->skad), SOCK_DGRAM, IPPROTO_UDP);
@@ -2274,6 +2323,7 @@ printf ("RECV....\n");
 	len = recvfrom (dns->handle.i, buf, QSE_SIZEOF(buf), 0, (struct sockaddr*)&fromaddr, &fromlen);
 
 /* TODO: check if fromaddr matches the dc->skad... */
+/* TODO: dns caching .... */
 
 	if (len >= QSE_SIZEOF(*hdr))
 	{
@@ -2303,13 +2353,11 @@ printf ("finding match req...\n");
 
 				reclen = dnlen + QSE_SIZEOF(dns_qdtrail_t);
 				if (pllen < reclen) goto done;
-printf ("1111111111111111111111\n");
 				if (!req)
 				{
 					dns_qdtrail_t* qdtrail = (dns_qdtrail_t*)(plptr + dnlen);
 					for (preq = QSE_NULL, req = dc->reqs[xid]; req; preq = req, req = req->next)
 					{
-printf ("checking req... %d %d\n",(int)req->dnlen, (int)dnlen);
 						if (req->dnlen == dnlen && 
 						    QSE_MEMCMP (req->dn, plptr, req->dnlen) == 0 &&
 						    qdtrail->qclass == qse_hton16(DNS_QCLASS_IN) &&
@@ -2399,10 +2447,10 @@ printf ("invoking resoll with ipv6 \n");
 			}
 			else
 			{
-				if (id == req->seqa) req->flags |= DNS_REQ_A_ERROR;
-				else if (id == req->seqaaaa) req->flags |= DNS_REQ_AAAA_ERROR;
+				if (id == req->seqa) req->flags |= DNS_REQ_A_NX;
+				else if (id == req->seqaaaa) req->flags |= DNS_REQ_AAAA_NX;
 
-				if ((req->flags & (DNS_REQ_A_ERROR | DNS_REQ_AAAA_ERROR)) == (DNS_REQ_A_ERROR | DNS_REQ_AAAA_ERROR))
+				if ((req->flags & (DNS_REQ_A_NX | DNS_REQ_AAAA_NX)) == (DNS_REQ_A_NX | DNS_REQ_AAAA_NX))
 				{
 					req->resol (httpd, req->name, QSE_NULL, req->ctx);
 
@@ -2456,9 +2504,17 @@ static int dns_send (qse_httpd_t* httpd, qse_httpd_dns_t* dns, const qse_mchar_t
 	}
 	req->resol = resol;
 	req->ctx = ctx;
-	
-	req->qalen = init_dns_query (req->qa, QSE_SIZEOF(req->qa), name, DNS_QTYPE_A, req->seqa);
-	req->qaaaalen = init_dns_query (req->qaaaa, QSE_SIZEOF(req->qaaaa), name, DNS_QTYPE_AAAA, req->seqaaaa);
+
+	if (!(httpd->opt.trait & QSE_HTTPD_DNSNOA))
+		req->qalen = init_dns_query (req->qa, QSE_SIZEOF(req->qa), name, DNS_QTYPE_A, req->seqa);
+	else
+		req->flags |= DNS_REQ_A_NX;
+
+	if (!(httpd->opt.trait & QSE_HTTPD_DNSNOAAAA))
+		req->qaaaalen = init_dns_query (req->qaaaa, QSE_SIZEOF(req->qaaaa), name, DNS_QTYPE_AAAA, req->seqaaaa);
+	else
+		req->flags |= DNS_REQ_AAAA_NX;
+
 	if (req->qalen <= -1 || req->qaaaalen <= -1)
 	{
 		qse_httpd_seterrnum (httpd, QSE_HTTPD_EINVAL);
@@ -2466,9 +2522,8 @@ static int dns_send (qse_httpd_t* httpd, qse_httpd_dns_t* dns, const qse_mchar_t
 		return -1;
 	}
 
-printf ("SENDING......\n");
-	if (sendto (dns->handle.i, req->qa, req->qalen, 0, (struct sockaddr*)&dc->skad, dc->skadlen) != req->qalen ||
-	    sendto (dns->handle.i, req->qaaaa, req->qaaaalen, 0, (struct sockaddr*)&dc->skad, dc->skadlen) != req->qaaaalen)
+	if ((req->qalen > 0 && sendto (dns->handle.i, req->qa, req->qalen, 0, (struct sockaddr*)&dc->skad, dc->skadlen) != req->qalen) ||
+	    (req->qaaaalen > 0 && sendto (dns->handle.i, req->qaaaa, req->qaaaalen, 0, (struct sockaddr*)&dc->skad, dc->skadlen) != req->qaaaalen))
 	{
 		qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
 		qse_httpd_freemem (httpd, req);
@@ -2513,6 +2568,17 @@ static int process_request (
 	 * the decoded query path is made available in the
 	 * non-peek mode as well */
 	if (peek) qse_perdechttpstr (qse_htre_getqpath(req), qse_htre_getqpath(req));
+
+
+	if (peek && (httpd->opt.trait & QSE_HTTPD_LOGACT))
+	{
+/* TODO: improve logging */
+		qse_httpd_act_t msg;
+		msg.code = QSE_HTTPD_CATCH_MDBGMSG;
+		qse_mbsxfmt (msg.u.mdbgmsg, QSE_COUNTOF(msg.u.mdbgmsg), 
+			QSE_MT("%s %s"), qse_htre_getqmethodname(req), qse_htre_getqpath(req));
+		httpd->opt.rcb.logact (httpd, &msg);
+	}
 
 #if 0
 qse_printf (QSE_T("================================\n"));
@@ -2564,6 +2630,8 @@ if (qse_htre_getcontentlen(req) > 0)
 			 *
 			 * NOTE: CONNECT is implemented to ignore many headers like
 			 *       'Expect: 100-continue' and 'Connection: keep-alive'. */
+
+/* TODO: CHECK if CONNECT is allowed ... */
 			qse_httpd_discardcontent (httpd, req);
 		}
 		else 
@@ -2626,7 +2694,8 @@ if (qse_htre_getcontentlen(req) > 0)
 		{
 printf ("SWITCHING HTRD TO DUMMY.... %s\n", qse_htre_getqpath(req));
 			/* Switch the http read to a dummy mode so that the subsqeuent
-			 * input is just treaet as connects to the request just completed */
+			 * input(request) is just treated as data to the request just 
+			 * completed */
 			qse_htrd_setoption (client->htrd, qse_htrd_getoption(client->htrd) | QSE_HTRD_DUMMY);
 
 			if (server_xtn->makersrc (httpd, client, req, &rsrc) <= -1)
@@ -3091,12 +3160,57 @@ static int make_resource (
 		else
 		{
 			/* make the source binding type the same as destination */
+			/* no default port for raw proxying */
 			target->u.proxy.src.nwad.type = target->u.proxy.dst.nwad.type;
 		}
 
 		/* mark that this request is going to be proxied. */
 		req->attr.flags |= QSE_HTRE_ATTR_PROXIED;
 		return 0;
+	}
+
+
+	/* htrd compacts double slashes to a single slash.
+	 * so inspect if the query path begins with http:/ instead of http:// */
+	/*if (qse_mbszcasecmp (tmp.qpath, QSE_MT("http://"), 7) == 0)*/
+	if (qse_mbszcasecmp (tmp.qpath, QSE_MT("http:/"), 6) == 0)
+	{
+/* TODO: check if proxying is allowed.... */
+			qse_mchar_t* host, * slash;
+
+			/*host = tmp.qpath + 6;*/
+			host = tmp.qpath + 6;
+			slash = qse_mbschr (host, QSE_MT('/'));
+
+			if (slash && slash - host > 0)
+			{
+				target->type = QSE_HTTPD_RSRC_PROXY;
+				target->u.proxy.flags = 0;
+
+				if (qse_mbsntonwad (host, slash - host, &target->u.proxy.dst.nwad) <= -1) 
+				{
+/* TODO: refrain from manipulating the request like this */
+					QSE_MEMMOVE (host - 1, host, slash - host); 
+					slash[-1] = QSE_MT('\0');
+
+					target->u.proxy.flags |= QSE_HTTPD_RSRC_PROXY_DST_STR;
+					target->u.proxy.dst.str = host - 1;
+				}
+				else
+				{
+					/* make the source binding type the same as destination */
+					if (qse_getnwadport(&target->u.proxy.dst.nwad) == 0)
+						qse_setnwadport (&target->u.proxy.dst.nwad, qse_hton16(80));
+					target->u.proxy.src.nwad.type = target->u.proxy.dst.nwad.type;
+				}
+
+/* TODO: refrain from manipulating the request like this */
+				req->u.q.path = slash; /* TODO: use setqpath or something... */
+
+				/* mark that this request is going to be proxied. */
+				req->attr.flags |= QSE_HTRE_ATTR_PROXIED;
+				return 0;
+			}
 	}
 
 	if (server_xtn->query (httpd, client->server, req, QSE_NULL, QSE_HTTPD_SERVERSTD_ROOT, &tmp.root) <= -1) return -1;
@@ -3556,8 +3670,8 @@ qse_httpd_server_t* qse_httpd_attachserverstdwithuri (
 	}
 	else if (qse_strxcasecmp (xuri.scheme.ptr, xuri.scheme.len, QSE_T("https")) == 0) 
 	{
-		server.flags |= QSE_HTTPD_SERVER_SECURE;
-		default_port = DEFAULT_SECURE_PORT;
+		server.flags |= QSE_HTTPD_QSE_HTTPD_SERVER_SECURE;
+		default_port = QSE_HTTPD_DEFAULT_SECURE_PORT;
 	}
 	else goto invalid;
 
@@ -3583,7 +3697,7 @@ qse_httpd_server_t* qse_httpd_attachserverstdwithuri (
 	if (server.docroot.ptr && qse_ismbsdriveabspath((const qse_mchar_t*)server.docroot.ptr + 1))
 	{
 		/* if the path name is something like /C:/xxx on support platforms ... */
-		server.docroot.ptr++;	
+		server.docroot.ptr++;
 		server.docroot.len--;
 	}
 	server.realm = xuri.frag;
@@ -3662,7 +3776,14 @@ void* qse_httpd_getserverstdxtn (qse_httpd_t* httpd, qse_httpd_server_t* server)
 
 /* ------------------------------------------------------------------- */
 
-int qse_httpd_loopstd (qse_httpd_t* httpd)
+int qse_httpd_loopstd (qse_httpd_t* httpd, const qse_nwad_t* dnsnwad)
 {
+	httpd_xtn_t* httpd_xtn = qse_httpd_getxtn (httpd);
+
+	if (dnsnwad)
+		httpd_xtn->dnsnwad = *dnsnwad;
+	else
+		httpd_xtn->dnsnwad.type = QSE_NWAD_NX;
+
 	return qse_httpd_loop (httpd);
 }

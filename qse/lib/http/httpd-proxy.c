@@ -789,9 +789,8 @@ static int task_init_proxy (
 		}
 		else
 		{
-			/*proxy->peer_port = 443;*/
-			qse_httpd_seterrnum (httpd, QSE_HTTPD_EINVAL);
-			goto oops;
+			if (proxy->flags & PROXY_RAW) proxy->peer_port = QSE_HTTPD_DEFAULT_SECURE_PORT;
+			else proxy->peer_port = QSE_HTTPD_DEFAULT_PORT;
 		}
 	}
 	else

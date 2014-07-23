@@ -1912,7 +1912,7 @@ static int httpd_main (int argc, qse_char_t* argv[])
 	setup_signal_handlers ();
 
 	qse_httpd_getopt (httpd, QSE_HTTPD_TRAIT, &trait);
-	trait |= QSE_HTTPD_CGIERRTONUL | QSE_HTTPD_LOGACT;
+	trait |= QSE_HTTPD_CGIERRTONUL | QSE_HTTPD_LOGACT | QSE_HTTPD_DNSNOAAAA;
 	qse_httpd_setopt (httpd, QSE_HTTPD_TRAIT, &trait);
 
 	tmout.sec = 10;
@@ -1929,7 +1929,7 @@ static int httpd_main (int argc, qse_char_t* argv[])
 	if (g_debug) rcb.logact = logact_httpd; /* i don't remember old logging handler */
 	qse_httpd_setopt (httpd, QSE_HTTPD_RCB, &rcb);
 	
-	ret = qse_httpd_loopstd (httpd);
+	ret = qse_httpd_loopstd (httpd, QSE_NULL);
 
 	restore_signal_handlers ();
 	g_httpd = QSE_NULL;
