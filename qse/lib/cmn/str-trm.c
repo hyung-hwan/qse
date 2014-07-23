@@ -200,7 +200,7 @@ qse_size_t qse_mbstrm (qse_mchar_t* str)
 	{
 		e[1] = QSE_MT('\0');
 		if (str != s)
-			QSE_MEMCPY (str, s, (e - s + 2) * QSE_SIZEOF(*str));
+			QSE_MEMMOVE (str, s, (e - s + 2) * QSE_SIZEOF(*str));
 		return e - s + 1;
 	}
 
@@ -228,7 +228,7 @@ qse_size_t qse_mbsxtrm (qse_mchar_t* str, qse_size_t len)
 		/* do not insert a terminating null */
 		/*e[1] = QSE_MT('\0');*/
 		if (str != s)
-			QSE_MEMCPY (str, s, (e - s + 2) * QSE_SIZEOF(*str));
+			QSE_MEMMOVE (str, s, (e - s + 2) * QSE_SIZEOF(*str));
 		return e - s + 1;
 	}
 
@@ -256,7 +256,7 @@ qse_size_t qse_wcstrm (qse_wchar_t* str)
 	{
 		e[1] = QSE_MT('\0');
 		if (str != s)
-			QSE_MEMCPY (str, s, (e - s + 2) * QSE_SIZEOF(*str));
+			QSE_MEMMOVE (str, s, (e - s + 2) * QSE_SIZEOF(*str));
 		return e - s + 1;
 	}
 
@@ -284,7 +284,7 @@ qse_size_t qse_wcsxtrm (qse_wchar_t* str, qse_size_t len)
 		/* do not insert a terminating null */
 		/*e[1] = QSE_MT('\0');*/
 		if (str != s)
-			QSE_MEMCPY (str, s, (e - s + 2) * QSE_SIZEOF(*str));
+			QSE_MEMMOVE (str, s, (e - s + 2) * QSE_SIZEOF(*str));
 		return e - s + 1;
 	}
 

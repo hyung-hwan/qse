@@ -1461,6 +1461,8 @@ int qse_httpd_loop (qse_httpd_t* httpd)
 			}
 		}
 
+/* TODO: add timer and execute scheduled events here. */
+
 		purge_bad_clients (httpd);
 		purge_idle_clients (httpd);
 
@@ -1600,10 +1602,13 @@ int qse_httpd_resolname (qse_httpd_t* httpd, const qse_mchar_t* name, qse_httpd_
 
 	/* not found in the cache */
 printf ("dns_send.........................\n");
-	return httpd->opt.scb.dns.send (httpd, &httpd->dns, name, resol, ctx);
+	if (!httpd->dnsactive) 
+	{
+		qse_httpd_seterrnum (httpd, QSE_HTTPD_ENODNS);
+		return -1;
+	}
 
-/*	resol (httpd, QSE_NULL, ctx);
-	return 0;*/
+	return httpd->opt.scb.dns.send (httpd, &httpd->dns, name, resol, ctx);
 }
 
 int qse_httpd_activatetasktrigger (qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)

@@ -48,7 +48,7 @@ int qse_nwadequal (const qse_nwad_t* x, const qse_nwad_t* y)
 
 void qse_clearnwad (qse_nwad_t* nwad, qse_nwad_type_t type)
 {
-	QSE_MEMSET (nwad,  0, QSE_SIZEOF(*nwad));
+	QSE_MEMSET (nwad, 0, QSE_SIZEOF(*nwad));
 	nwad->type = type;
 }
 
@@ -61,8 +61,23 @@ void qse_setnwadport (qse_nwad_t* nwad, qse_uint16_t port)
 			break;
 
 		case QSE_NWAD_IN6:
-			nwad->u.in4.port = port;
+			nwad->u.in6.port = port;
 			break;
+	}
+}
+
+qse_uint16_t qse_getnwadport (qse_nwad_t* nwad)
+{
+	switch (nwad->type)
+	{
+		case QSE_NWAD_IN4:
+			return nwad->u.in4.port;
+
+		case QSE_NWAD_IN6:
+			return nwad->u.in6.port;
+
+		default:
+			return 0;
 	}
 }
 

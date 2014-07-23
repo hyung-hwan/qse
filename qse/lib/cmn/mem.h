@@ -25,6 +25,7 @@
 
 #ifdef MINIMIZE_PLATFORM_DEPENDENCY
 #	define QSE_MEMCPY(dst,src,len)  qse_memcpy(dst,src,len)
+#	define QSE_MEMMOVE(dst,src,len) qse_memmove(dst,src,len)
 #	define QSE_MEMCMP(p1,p2,len)    qse_memcmp(p1,p2,len)
 #	define QSE_MEMSET(dst,val,len)  qse_memset(dst,val,len)
 #	define QSE_MEMBYTE(s,val,len)   qse_membyte(s,val,len)
@@ -34,6 +35,7 @@
 #else
 #	include <string.h>
 #	define QSE_MEMCPY(dst,src,len)  memcpy(dst,src,len)
+#	define QSE_MEMMOVE(dst,src,len) memmove(dst,src,len)
 #	define QSE_MEMCMP(p1,p2,len)    memcmp(p1,p2,len)
 #	define QSE_MEMSET(dst,val,len)  memset(dst,val,len)
 #	define QSE_MEMBYTE(s,val,len)   memchr(s,val,len)
