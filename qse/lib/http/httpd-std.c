@@ -1960,42 +1960,18 @@ static void client_closed (qse_httpd_t* httpd, qse_httpd_client_t* client)
 
 
 /* ------------------------------------------------------------------- */
+#define DNS_MAX_DN_LEN 255 /* full domain name length in binary form (i.e. 3xyz2eu0) */
+#define DNS_MAX_MSG_LEN 512  /* basic dns only. no EDNS0. so 512 at most */
+
+#define DNS_MIN_TTL 10
+#define DNS_MAX_TTL 120 /* TODO: make these configurable... */
+
 typedef struct dns_ctx_t dns_ctx_t;
 typedef struct dns_req_t dns_req_t;
+typedef struct dns_ans_t dns_ans_t;
 typedef struct dns_hdr_t dns_hdr_t;
 typedef struct dns_qdtrail_t dns_qdtrail_t;
 typedef struct dns_antrail_t dns_antrail_t;
-
-struct dns_ctx_t
-{
-	qse_skad_t skad;
-	int skadlen;
-
-	qse_uint16_t seq;
-	dns_req_t* reqs[1024]; /* TOOD: choose the right size */
-};
-
-struct dns_req_t
-{
-#define DNS_REQ_A_NX (1 << 0)
-#define DNS_REQ_AAAA_NX (1 << 1)
-	int flags;
-	qse_uint16_t seqa, seqaaaa;
-
-	qse_mchar_t* name;
-	qse_uint8_t* dn;
-	qse_size_t dnlen;
-
-	qse_httpd_resol_t resol;
-	void* ctx;
-
-	qse_uint8_t qa[384];
-	qse_uint8_t qaaaa[384];
-	int qalen;
-	int qaaaalen;
-
-	dns_req_t* next;
-};
 
 enum
 {
@@ -2082,6 +2058,50 @@ struct dns_antrail_t
 };
 #include <qse/unpack.h>
 
+
+struct dns_ctx_t
+{
+	qse_httpd_t* httpd;
+
+	qse_skad_t skad;
+	int skadlen;
+
+	qse_uint16_t seq;
+	dns_req_t* reqs[1024]; /* TOOD: choose the right size */
+	dns_ans_t* anss[1024];
+};
+
+struct dns_req_t
+{
+	qse_mchar_t* name;
+
+#define DNS_REQ_A_NX (1 << 0)
+#define DNS_REQ_AAAA_NX (1 << 1)
+	int flags;
+	qse_uint16_t seqa, seqaaaa;
+
+	qse_uint8_t* dn;
+	qse_size_t dnlen;
+
+	qse_httpd_resol_t resol;
+	void* ctx;
+
+	qse_uint8_t qa[DNS_MAX_DN_LEN + QSE_SIZEOF(dns_hdr_t) + QSE_SIZEOF(dns_qdtrail_t)];
+	qse_uint8_t qaaaa[DNS_MAX_DN_LEN  + QSE_SIZEOF(dns_hdr_t) + QSE_SIZEOF(dns_qdtrail_t)];
+	int qalen;
+	int qaaaalen;
+
+	dns_req_t* next;
+};
+
+struct dns_ans_t
+{
+	qse_mchar_t* name; 
+	qse_nwad_t nwad;
+	qse_int64_t age;
+	qse_uint32_t ttl;
+	dns_ans_t* next;
+};
 
 #define DN_AT_END(ptr) (ptr[0] == QSE_MT('\0') || (ptr[0] == QSE_MT('.') && ptr[1] == QSE_MT('\0')))
 
@@ -2191,6 +2211,8 @@ static int dns_open (qse_httpd_t* httpd, qse_httpd_dns_t* dns)
 	dc = (dns_ctx_t*) qse_httpd_callocmem (httpd, QSE_SIZEOF(dns_ctx_t));
 	if (dc == NULL) goto oops;
 
+	dc->httpd = httpd;
+
 /* TODO: add static cache entries from /etc/hosts */
 
 	nwad = httpd_xtn->dnsnwad;
@@ -2198,7 +2220,7 @@ static int dns_open (qse_httpd_t* httpd, qse_httpd_dns_t* dns)
 	{
 		qse_sio_t* sio;
 	#if defined(_WIN32)
-		/* TODO: */
+		/* TODO: windns.h dnsapi.lib DnsQueryConfig... */
 	#elif defined(__OS2__)
 		/* TODO: */
 	#else
@@ -2295,6 +2317,31 @@ oops:
 
 static void dns_close (qse_httpd_t* httpd, qse_httpd_dns_t* dns)
 {
+	dns_ctx_t* dc = (dns_ctx_t*)dns->ctx;
+	qse_size_t i;
+
+	for (i = 0; i < QSE_COUNTOF(dc->reqs); i++)
+	{
+		dns_req_t* next_req;
+		while (dc->reqs[i])
+		{
+			next_req = dc->reqs[i]->next;
+			qse_httpd_freemem (httpd, dc->reqs[i]);
+			dc->reqs[i] = next_req;
+		}
+	}
+
+	for (i = 0; i < QSE_COUNTOF(dc->anss); i++)
+	{
+		dns_ans_t* next_ans;
+		while (dc->anss[i])
+		{
+			next_ans = dc->anss[i]->next;
+			qse_httpd_freemem (httpd, dc->anss[i]);
+			dc->anss[i] = next_ans;
+		}
+	}
+
 #if defined(_WIN32)
 	closesocket (dns->handle.i);
 #elif defined(__OS2__)
@@ -2308,22 +2355,112 @@ static void dns_close (qse_httpd_t* httpd, qse_httpd_dns_t* dns)
 	qse_httpd_freemem (httpd, dns->ctx);
 }
 
+static unsigned long dns_hash_name (const qse_mchar_t *str)
+{
+	qse_size_t h = 0;
+	while (*str) h = ((h << 5) + h) ^ *str++;
+	return h;
+}
+
+static void dns_cache_answer (dns_ctx_t* dc, dns_req_t* req, const qse_nwad_t* nwad, qse_uint32_t ttl)
+{
+	dns_ans_t* ans, * prv, * cur;
+	qse_size_t hid;
+	qse_ntime_t now;
+
+/* TODO: implement the maximum number of entries in cache... */
+
+	/* i use the given request as a space to hold an answer.
+	 * the following assertion must be met for this to work */
+	QSE_ASSERT (QSE_SIZEOF(dns_req_t) >= QSE_SIZEOF(dns_ans_t));
+
+	qse_gettime (&now);
+
+	ans = (dns_ans_t*)req; /* shadow the request with an answer */
+	if (nwad) ans->nwad = *nwad; /* positive */
+	else ans->nwad.type = QSE_NWAD_NX; /* negative */
+	ans->age = now.sec; /* the granularity of a second should be good enough */
+
+	if (ttl < DNS_MIN_TTL) ttl = DNS_MIN_TTL; /* TODO: use configured value */
+	else if (ttl > DNS_MAX_TTL) ttl = DNS_MAX_TTL;
+
+	ans->ttl = ttl;
+	hid = dns_hash_name (req->name) % QSE_COUNTOF(dc->anss);
+
+	prv = QSE_NULL;
+	cur = dc->anss[hid];
+	while (cur)
+	{
+		if (qse_mbscasecmp(cur->name, ans->name) == 0)
+		{
+			ans->next = cur->next;
+			if (prv) prv->next = ans;
+			else dc->anss[hid] = ans;
+			qse_httpd_freemem (dc->httpd, cur);
+			return;
+		}
+
+		prv = cur;
+		cur = cur->next;
+	}
+	ans->next = dc->anss[hid];
+	dc->anss[hid] = ans;
+}
+
+static dns_ans_t* dns_get_answer_from_cache (dns_ctx_t* dc, const qse_mchar_t* name)
+{
+	dns_ans_t* prv, * cur;
+	qse_size_t hid;
+	qse_ntime_t now;
+
+	hid = dns_hash_name (name) % QSE_COUNTOF(dc->anss);
+
+	qse_gettime (&now);
+
+	prv = QSE_NULL;
+	cur = dc->anss[hid];
+	while (cur)
+	{
+		if (qse_mbscasecmp(cur->name, name) == 0)
+		{
+			if (cur->age + cur->ttl < now.sec)
+			{
+				/* entry expired. evict the entry from the cache */
+				if (prv) prv->next = cur->next;
+				else dc->anss[hid] = cur->next;
+				qse_httpd_freemem (dc->httpd, cur);
+				break;
+			}
+
+			return cur;
+		}
+
+		prv = cur;
+		cur = cur->next;
+	}
+
+	return QSE_NULL;
+}
+
 static int dns_recv (qse_httpd_t* httpd, qse_httpd_dns_t* dns)
 {
 	dns_ctx_t* dc = (dns_ctx_t*)dns->ctx;
+
 	qse_skad_t fromaddr;
 	socklen_t fromlen; /* TODO: change type */
-	qse_uint8_t buf[384];
+
+	qse_uint8_t buf[DNS_MAX_MSG_LEN];
 	qse_ssize_t len;
 	dns_hdr_t* hdr;
 
-printf ("RECV....\n");
+printf ("DNS_RECV....\n");
+
+/* TODO: delete requests that're not replied at all for long time */
 
 	fromlen = QSE_SIZEOF(fromaddr);
 	len = recvfrom (dns->handle.i, buf, QSE_SIZEOF(buf), 0, (struct sockaddr*)&fromaddr, &fromlen);
 
 /* TODO: check if fromaddr matches the dc->skad... */
-/* TODO: dns caching .... */
 
 	if (len >= QSE_SIZEOF(*hdr))
 	{
@@ -2345,7 +2482,7 @@ printf ("%d qdcount %d ancount %d\n", id, qdcount, ancount);
 			dns_req_t* req = QSE_NULL, * preq = QSE_NULL;
 			qse_size_t reclen;
 
-printf ("finding match req...\n");
+			/* inspect the question section */
 			for (i = 0; i < qdcount; i++)
 			{
 				dnlen = dn_length (plptr, pllen);
@@ -2364,7 +2501,6 @@ printf ("finding match req...\n");
 						    (qdtrail->qtype == qse_hton16(DNS_QTYPE_A) || qdtrail->qtype == qse_hton16(DNS_QTYPE_AAAA)))
 						{
 							/* found a matching request */
-printf ("found matching req...\n");
 							break;
 						}
 					}
@@ -2374,14 +2510,14 @@ printf ("found matching req...\n");
 				pllen -= reclen;
 			}
 
-			if (!req) goto done;
+			if (!req) goto done; /* no matching request for the question */
 
 			if (hdr->rcode == DNS_RCODE_NOERROR && ancount > 0)
 			{
 				dns_antrail_t* antrail;
 				qse_uint16_t qtype, anlen;
 
-printf ("checking answers.... pllen => %d\n", (int)pllen);
+				/* inspect the answer section */
 				for (i = 0; i < ancount; i++)
 				{
 					if (pllen < 1) goto done;
@@ -2389,7 +2525,6 @@ printf ("checking answers.... pllen => %d\n", (int)pllen);
 					else
 					{
 						dnlen = dn_length (plptr, pllen);
-printf ("........... %d\n", dnlen);
 						if (dnlen <= 0) goto done; /* invalid dn name */
 					}
 
@@ -2403,39 +2538,38 @@ printf ("........... %d\n", dnlen);
 					qtype = qse_ntoh16(antrail->qtype);
 					anlen = qse_ntoh16(antrail->dlen);
 
-					if (antrail->qclass == qse_hton16(DNS_QCLASS_IN))
+					if (qse_ntoh16(antrail->qclass) == DNS_QCLASS_IN)
 					{
+						qse_nwad_t nwad;
+
+						nwad.type = QSE_NWAD_NX;
+
 						if (qtype == DNS_QTYPE_A && anlen == 4)
 						{
-							qse_nwad_t nwad;
-
 							QSE_MEMSET (&nwad, 0, QSE_SIZEOF(nwad));
 							nwad.type = QSE_NWAD_IN4;
 							QSE_MEMCPY (&nwad.u.in4.addr, antrail + 1, 4);
 printf ("invoking resoll with ipv4 \n");
-							req->resol (httpd, req->name, &nwad, req->ctx);
-
-							/* delete the request from dc */
-							if (preq) preq->next = req->next;
-							else dc->reqs[xid] = req->next;
-							qse_httpd_freemem (httpd, req);
-
-							goto done;
 						}
-						else if (qtype == DNS_QTYPE_AAAA || anlen == 16)
+						else if (qtype == DNS_QTYPE_AAAA && anlen == 16)
 						{
-							qse_nwad_t nwad;
-
 							QSE_MEMSET (&nwad, 0, QSE_SIZEOF(nwad));
 							nwad.type = QSE_NWAD_IN6;
-							QSE_MEMCPY (&nwad.u.in6.addr,  antrail + 1, 16);
+							QSE_MEMCPY (&nwad.u.in6.addr, antrail + 1, 16);
 printf ("invoking resoll with ipv6 \n");
+
+						}
+
+						if (nwad.type != QSE_NWAD_NX)
+						{
 							req->resol (httpd, req->name, &nwad, req->ctx);
 
-							/* delete the request from dc */
+							/* detach the request off dc->reqs */
 							if (preq) preq->next = req->next;
 							else dc->reqs[xid] = req->next;
-							qse_httpd_freemem (httpd, req);
+
+							/*qse_httpd_freemem (httpd, req);*/
+							dns_cache_answer (dc, req, &nwad, qse_ntoh32(antrail->ttl));
 
 							goto done;
 						}
@@ -2445,23 +2579,25 @@ printf ("invoking resoll with ipv6 \n");
 					pllen -= reclen;
 				}
 			}
-			else
+
+
+			/* no good answer have been found */
+			if (id == req->seqa) req->flags |= DNS_REQ_A_NX;
+			else if (id == req->seqaaaa) req->flags |= DNS_REQ_AAAA_NX;
+
+			if ((req->flags & (DNS_REQ_A_NX | DNS_REQ_AAAA_NX)) == (DNS_REQ_A_NX | DNS_REQ_AAAA_NX))
 			{
-				if (id == req->seqa) req->flags |= DNS_REQ_A_NX;
-				else if (id == req->seqaaaa) req->flags |= DNS_REQ_AAAA_NX;
+				/* both ipv4 and ipv6 address are unresolvable */
 
-				if ((req->flags & (DNS_REQ_A_NX | DNS_REQ_AAAA_NX)) == (DNS_REQ_A_NX | DNS_REQ_AAAA_NX))
-				{
-					req->resol (httpd, req->name, QSE_NULL, req->ctx);
+				req->resol (httpd, req->name, QSE_NULL, req->ctx);
 
-					/* delete the request from dc */
-					if (preq) preq->next = req->next;
-					else dc->reqs[xid] = req->next;
-					qse_httpd_freemem (httpd, req);
-				}
+				/* detach the request off dc->reqs */
+				if (preq) preq->next = req->next;
+				else dc->reqs[xid] = req->next;
+
+				/*qse_httpd_freemem (httpd, req);*/
+				dns_cache_answer (dc, req, QSE_NULL, DNS_MIN_TTL);
 			}
-
-			/*req->resol (httpd, req->name, QSE_NULL, req->ctx);*//* TODO: handle this better */
 		}
 		
 	}
@@ -2476,7 +2612,18 @@ static int dns_send (qse_httpd_t* httpd, qse_httpd_dns_t* dns, const qse_mchar_t
 	dns_ctx_t* dc = (dns_ctx_t*)dns->ctx;
 	dns_req_t* req;
 	qse_size_t name_len;
+	dns_ans_t* ans;
 
+printf ("finding answer in cache...\n");
+	ans = dns_get_answer_from_cache (dc, name);
+	if (ans)
+	{
+printf ("found answer in cache...\n");
+		resol (httpd, name, ((ans->nwad.type == QSE_NWAD_NX)? QSE_NULL: &ans->nwad), ctx);
+		return 0;
+	}
+
+printf ("found XXXXX in cache...\n");
 	seq = dc->seq;
 	seq = (seq + 1) % QSE_COUNTOF(dc->reqs);
 	dc->seq = seq;
@@ -3169,7 +3316,6 @@ static int make_resource (
 		return 0;
 	}
 
-
 	/* htrd compacts double slashes to a single slash.
 	 * so inspect if the query path begins with http:/ instead of http:// */
 	/*if (qse_mbszcasecmp (tmp.qpath, QSE_MT("http://"), 7) == 0)*/
@@ -3190,6 +3336,7 @@ static int make_resource (
 				if (qse_mbsntonwad (host, slash - host, &target->u.proxy.dst.nwad) <= -1) 
 				{
 /* TODO: refrain from manipulating the request like this */
+
 					QSE_MEMMOVE (host - 1, host, slash - host); 
 					slash[-1] = QSE_MT('\0');
 

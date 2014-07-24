@@ -904,7 +904,7 @@ static int update_mux_for_current_task (qse_httpd_t* httpd, qse_httpd_client_t* 
 
 	clear_trigger_mask_result (task);
 
-printf ("update_mux_for_current_task..............\n");
+/*printf ("update_mux_for_current_task..............\n");*/
 	if (QSE_MEMCMP (&client->trigger, &task->trigger, QSE_SIZEOF(client->trigger)) != 0 ||
 	    ((client->status & CLIENT_MUTE) && !(client->status & CLIENT_MUTE_DELETED)))
 	{
@@ -1070,7 +1070,7 @@ static int update_mux_for_next_task (qse_httpd_t* httpd, qse_httpd_client_t* cli
 	int expected_mux_status;
 	int expected_trigger_cmask;
 
-printf ("update_mux_for_next_task\n");
+/*printf ("update_mux_for_next_task\n");*/
 	expected_mux_mask = QSE_HTTPD_MUX_READ;
 	expected_mux_status = CLIENT_HANDLE_READ_IN_MUX;
 	expected_trigger_cmask = QSE_HTTPD_TASK_TRIGGER_READ;
@@ -1422,7 +1422,6 @@ int qse_httpd_loop (qse_httpd_t* httpd)
 		if (httpd->opt.trait & QSE_HTTPD_LOGACT)
 		{
 			qse_httpd_act_t msg;
-			qse_size_t len;
 			msg.code = QSE_HTTPD_CATCH_MWARNMSG;
 			qse_mbscpy (msg.u.mwarnmsg, QSE_MT("cannot activate dns"));
 			httpd->opt.rcb.logact (httpd, &msg);
@@ -1601,7 +1600,7 @@ int qse_httpd_resolname (qse_httpd_t* httpd, const qse_mchar_t* name, qse_httpd_
 	/* TODO: find the name in cache */
 
 	/* not found in the cache */
-printf ("dns_send.........................\n");
+printf ("DNS_SEND.........................\n");
 	if (!httpd->dnsactive) 
 	{
 		qse_httpd_seterrnum (httpd, QSE_HTTPD_ENODNS);
@@ -1615,11 +1614,9 @@ int qse_httpd_activatetasktrigger (qse_httpd_t* httpd, qse_httpd_client_t* clien
 {
 	int x, org_cmask;
 
-printf ("activate ..$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$..\n");
 	/* don't do anything if it's active */
 	if (!(task->trigger.flags & QSE_HTTPD_TASK_TRIGGER_INACTIVE)) return 0;
 
-printf ("activate reakly....\n");
 	/* when task trigger is inactive, no handle are registered
 	 * into mux. update_mux_for_current_task adds the client handle
 	 * to mux for reading only if writing is not requested explicitly.
