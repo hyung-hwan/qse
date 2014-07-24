@@ -20079,6 +20079,7 @@ done
 
 		if test "$ac_cv_func_quadmath_snprintf" = "no"
 		then
+
 			{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for quadmath_snprintf in -lquadmath" >&5
 $as_echo_n "checking for quadmath_snprintf in -lquadmath... " >&6; }
 if ${ac_cv_lib_quadmath_quadmath_snprintf+:} false; then :
@@ -20124,14 +20125,23 @@ if test "x$ac_cv_lib_quadmath_quadmath_snprintf" = xyes; then :
 
 fi
 
+
+			if test "$ac_cv_lib_quadmath_quadmath_snprintf" = "no"
+			then
+
+				ac_cv_sizeof___float128=0
+			fi
+
 		else
 			QUADMATH_LIBS="$LIBM"
 		fi
 	fi
 
-	OLDLIBS="$LIBS"
-	LIBS="$LIBM $LIBS"
-	for ac_func in powq fmodq sinq cosq tanq sinhq coshq tanhq asinq acosq atanq atan2q logq log10q expq sqrtq ceilq floorq roundq
+	if test ${ac_cv_sizeof___float128} -gt 0
+	then
+		OLDLIBS="$LIBS"
+		LIBS="$LIBM $LIBS"
+		for ac_func in powq fmodq sinq cosq tanq sinhq coshq tanhq asinq acosq atanq atan2q logq log10q expq sqrtq ceilq floorq roundq
 do :
   as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
 ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
@@ -20143,7 +20153,7 @@ _ACEOF
 fi
 done
 
-	for ac_func in strtoflt128
+		for ac_func in strtoflt128
 do :
   ac_fn_c_check_func "$LINENO" "strtoflt128" "ac_cv_func_strtoflt128"
 if test "x$ac_cv_func_strtoflt128" = xyes; then :
@@ -20154,7 +20164,8 @@ _ACEOF
 fi
 done
 
-	LIBS="$OLDLIBS"
+		LIBS="$OLDLIBS"
+	fi
 fi
 
 

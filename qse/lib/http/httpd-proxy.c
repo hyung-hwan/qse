@@ -1016,7 +1016,6 @@ static void task_fini_proxy (
 {
 	task_proxy_t* proxy = (task_proxy_t*)task->ctx;
 
-printf ("task_fini_proxy.................\n");
 	if (proxy->peer_status & PROXY_PEER_OPEN) 
 		httpd->opt.scb.peer.close (httpd, &proxy->peer);
 
@@ -1083,7 +1082,7 @@ static int task_main_proxy_4 (
 {
 	task_proxy_t* proxy = (task_proxy_t*)task->ctx;
 	
-#if 1
+#if 0
 printf ("task_main_proxy_4 trigger[0].mask=%d trigger[1].mask=%d trigger[2].mask=%d\n", 
 	task->trigger.v[0].mask, task->trigger.v[1].mask, task->trigger.cmask);
 #endif
@@ -1577,12 +1576,13 @@ static void on_peer_name_resolved (qse_httpd_t* httpd, const qse_mchar_t* name, 
 
 	QSE_ASSERT (proxy->flags & PROXY_RESOL_PEER_NAME);
 
+	proxy->flags &= ~PROXY_RESOL_PEER_NAME;
+
 	if (nwad)
 	{
 		/* resolved successfully */
-		proxy->flags &= ~PROXY_RESOL_PEER_NAME;
+		
 		proxy->peer.nwad = *nwad;
-
 		qse_setnwadport (&proxy->peer.nwad, qse_hton16(proxy->peer_port));
 
 		if (proxy->peer.local.type == QSE_NWAD_NX)
@@ -1620,8 +1620,21 @@ static int task_main_proxy (
 	{
 		/* arrange to resolve a host name and return */
 		QSE_ASSERT (proxy->peer_name != QSE_NULL);
-		if (qse_httpd_inactivatetasktrigger (httpd, client, task) <= -1 ||
-		    qse_httpd_resolname (httpd, proxy->peer_name, on_peer_name_resolved, task)) goto oops;
+
+		if (qse_httpd_resolname (httpd, proxy->peer_name, on_peer_name_resolved, task) <= -1) goto oops;
+
+		/* if the name could be resolved without sending a request 
+		 * in qse_httpd_resolname(), on_peer_name_resolve would be 
+		 * called. */
+		if (proxy->flags & PROXY_INIT_FAILED) 
+		{
+			if (proxy->flags & PROXY_UNKNOWN_PEER_NWAD) http_errnum = 404; /* 404 Not Found */
+			goto oops;
+		}
+
+		if ((proxy->flags & PROXY_RESOL_PEER_NAME) && 
+		    qse_httpd_inactivatetasktrigger (httpd, client, task) <= -1) goto oops;
+
 		return 1;
 	}
 

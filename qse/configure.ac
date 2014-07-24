@@ -435,6 +435,9 @@ then
 	)
 fi
 
+dnl Quadmath functions may not be in the default c library.
+dnl Find a library containing them. Disable the float128 type
+dnl if they are not available.
 if test ${ac_cv_sizeof___float128} -gt 0
 then
 	AC_CHECK_FUNCS([quadmath_snprintf])
@@ -447,21 +450,36 @@ then
 	
 		if test "$ac_cv_func_quadmath_snprintf" = "no"
 		then
+			dnl quadmath_snprintf not avalable in the 
+			dnl standard math lib.
+
 			AC_CHECK_LIB([quadmath], [quadmath_snprintf], [
 				QUADMATH_LIBS="-lquadmath"
 				LIBM="$LIBM -lquadmath"
 				AC_DEFINE(HAVE_QUADMATH_SNPRINTF, 1)
 			])
+
+			if test "$ac_cv_lib_quadmath_quadmath_snprintf" = "no"
+			then
+				dnl quadmath_snprintf not avalable in the 
+				dnl quadmath lib.
+
+				ac_cv_sizeof___float128=0
+			fi
+
 		else
 			QUADMATH_LIBS="$LIBM"
 		fi
 	fi
 
-	OLDLIBS="$LIBS"
-	LIBS="$LIBM $LIBS"
-	AC_CHECK_FUNCS([powq fmodq sinq cosq tanq sinhq coshq tanhq asinq acosq atanq atan2q logq log10q expq sqrtq ceilq floorq roundq])
-	AC_CHECK_FUNCS([strtoflt128])
-	LIBS="$OLDLIBS"
+	if test ${ac_cv_sizeof___float128} -gt 0
+	then
+		OLDLIBS="$LIBS"
+		LIBS="$LIBM $LIBS"
+		AC_CHECK_FUNCS([powq fmodq sinq cosq tanq sinhq coshq tanhq asinq acosq atanq atan2q logq log10q expq sqrtq ceilq floorq roundq])
+		AC_CHECK_FUNCS([strtoflt128])
+		LIBS="$OLDLIBS"
+	fi
 fi
 AC_SUBST(QUADMATH_LIBS)
 
