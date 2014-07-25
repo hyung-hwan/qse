@@ -25,6 +25,16 @@
 #include <qse/cmn/fmt.h>
 #include <qse/cmn/path.h>
 
+#if defined(_WIN32)
+	/* nothing */
+#elif defined(__OS2__)
+	/* nothing */
+#elif defined(__DOS__)
+	/* nothing */
+#else
+#	include "../cmn/syscall.h"
+#endif
+
 #include <stdio.h> /* TODO: remove this */
 #if defined(_MSC_VER) || defined(__BORLANDC__) || (defined(__WATCOMC__) && (__WATCOMC__ < 1200))
 #	define snprintf _snprintf 
@@ -78,7 +88,7 @@ struct task_cgi_t
 	int          resflags;
 	qse_mbs_t*   res;
 	qse_mchar_t* res_ptr;
-	qse_size_t   res_left;	
+	qse_size_t   res_left;
 
 	/* content-length that CGI returned */
 	qse_size_t script_output_length; /* TODO: a script maybe be able to output more than the maximum value of qse_size_t */
@@ -103,6 +113,8 @@ struct cgi_client_req_hdr_ctx_t
 	qse_httpd_t* httpd;
 	qse_env_t* env;
 };
+
+
 
 static int cgi_capture_client_header (
 	qse_htre_t* req, const qse_mchar_t* key, const qse_htre_hdrval_t* val, void* ctx)
@@ -637,57 +649,50 @@ static void cgi_forward_client_input_to_script (
 			/* normal forwarding */
 			qse_ssize_t n;
 
-			if (writable) goto forward;
-
-			n = httpd->opt.scb.mux.writable (
-				httpd, qse_pio_gethandleasubi (&cgi->pio, QSE_PIO_IN), 0);
-			if (n >= 1)
-			{
-			forward:
-				/* writable */
-				n = qse_pio_write (
-					&cgi->pio, QSE_PIO_IN,
-					QSE_MBS_PTR(cgi->reqfwdbuf),
-					QSE_MBS_LEN(cgi->reqfwdbuf)
-				);
-				if (n > 0) 
-				{
-/* TODO: improve performance.. instead of copying the remaing part 
-to the head all the time..  grow the buffer to a certain limit. */
-					qse_mbs_del (cgi->reqfwdbuf, 0, n);
-					if (QSE_MBS_LEN(cgi->reqfwdbuf) <= 0)
-					{
-						if (cgi->reqflags & CGI_REQ_GOTALL) goto done;
-						else task->trigger.v[1].mask = 0; /* pipe output to child */
-					}
-				}
-			}
-
+			n = qse_pio_write (
+				&cgi->pio, QSE_PIO_IN,
+				QSE_MBS_PTR(cgi->reqfwdbuf),
+				QSE_MBS_LEN(cgi->reqfwdbuf)
+			);
 			if (n <= -1)
 			{
-				if (cgi->httpd->opt.trait & QSE_HTTPD_LOGACT) 
-					log_cgi_script_error (cgi, QSE_MT("cgi pio write error - "));
-
-				cgi->reqflags |= CGI_REQ_FWDERR;
-				qse_mbs_clear (cgi->reqfwdbuf); 
-
-				if (!(cgi->reqflags & CGI_REQ_GOTALL))
+				if (qse_pio_geterrnum(&cgi->pio) != QSE_PIO_EAGAIN)
 				{
-					QSE_ASSERT (cgi->req);
-					qse_htre_discardcontent (cgi->req);
+					if (cgi->httpd->opt.trait & QSE_HTTPD_LOGACT) 
+						log_cgi_script_error (cgi, QSE_MT("cgi pio write error - "));
 
-					/* NOTE: 
-					 *  this qse_htre_discardcontent() invokes
-					 *  cgi_snatch_client_input() 
-					 *  which sets cgi->req to QSE_NULL
-					 *  and toggles on CGI_REQ_GOTALL. */
-					QSE_ASSERT (!cgi->req);
-					QSE_ASSERT (cgi->reqflags & CGI_REQ_GOTALL);
+					cgi->reqflags |= CGI_REQ_FWDERR;
+					qse_mbs_clear (cgi->reqfwdbuf); 
+
+					if (!(cgi->reqflags & CGI_REQ_GOTALL))
+					{
+						QSE_ASSERT (cgi->req);
+						qse_htre_discardcontent (cgi->req);
+
+						/* NOTE: 
+						 *  this qse_htre_discardcontent() invokes
+						 *  cgi_snatch_client_input() 
+						 *  which sets cgi->req to QSE_NULL
+						 *  and toggles on CGI_REQ_GOTALL. */
+						QSE_ASSERT (!cgi->req);
+						QSE_ASSERT (cgi->reqflags & CGI_REQ_GOTALL);
+					}
+
+					/* mark the end of input to the child explicitly. */
+					qse_pio_end (&cgi->pio, QSE_PIO_IN);
+					task->trigger.v[1].mask = 0; /* pipe output to child */
 				}
-
-				/* mark the end of input to the child explicitly. */
-				qse_pio_end (&cgi->pio, QSE_PIO_IN);
-				task->trigger.v[1].mask = 0; /* pipe output to child */
+			}
+			else if (n > 0) 
+			{
+/* TODO: improve performance.. instead of copying the remaing part 
+to the head all the time..  grow the buffer to a certain limit. */
+				qse_mbs_del (cgi->reqfwdbuf, 0, n);
+				if (QSE_MBS_LEN(cgi->reqfwdbuf) <= 0)
+				{
+					if (cgi->reqflags & CGI_REQ_GOTALL) goto done;
+					else task->trigger.v[1].mask = 0; /* pipe output to child */
+				}
 			}
 		}
 	}
@@ -953,10 +958,18 @@ static QSE_INLINE qse_ssize_t cgi_read_script_output_to_buffer (
 		&cgi->buf[cgi->buflen], 
 		QSE_SIZEOF(cgi->buf) - cgi->buflen
 	);
-	if (n > 0) cgi->buflen += n;
+	if (n <= -1)
+	{
+		if (qse_pio_geterrnum(&cgi->pio) != QSE_PIO_EAGAIN)
+		{
+			if (cgi->httpd->opt.trait & QSE_HTTPD_LOGACT) 
+				log_cgi_script_error (cgi, QSE_MT("cgi pio read error - "));
+			return -1;
+		}
 
-	if (n <= -1 && cgi->httpd->opt.trait & QSE_HTTPD_LOGACT) 
-		log_cgi_script_error (cgi, QSE_MT("cgi pio read error - "));
+		n = -999;
+	}
+	else if (n > 0) cgi->buflen += n;
 
 	return n;
 }
@@ -966,15 +979,24 @@ static QSE_INLINE qse_ssize_t cgi_write_script_output_to_client (
 {
 	qse_ssize_t n;
 
+	QSE_ASSERT (cgi->buflen > 0);
+
+	httpd->errnum = QSE_HTTPD_ENOERR;
 	n = httpd->opt.scb.client.send (httpd, client, cgi->buf, cgi->buflen);
-	if (n > 0)
+	if (n <= -1)
+	{
+		if (httpd->errnum != QSE_HTTPD_EAGAIN)
+		{
+			if (cgi->httpd->opt.trait & QSE_HTTPD_LOGACT) 
+				log_cgi_script_error (cgi, QSE_MT("cgi write error to client - "));
+		}
+		else n = 0;
+	}
+	else if (n > 0)
 	{
 		QSE_MEMCPY (&cgi->buf[0], &cgi->buf[n], cgi->buflen - n);
 		cgi->buflen -= n;
 	}
-
-	if (n <= -1 && cgi->httpd->opt.trait & QSE_HTTPD_LOGACT) 
-		log_cgi_script_error (cgi, QSE_MT("cgi write error to client - "));
 
 	return n;
 }
@@ -998,16 +1020,12 @@ static int task_main_cgi_5 (
 		}
 	}
 
-	if (/*!(task->trigger.cmask & QSE_HTTPD_TASK_TRIGGER_WRITE) ||*/
-	    (task->trigger.cmask & QSE_HTTPD_TASK_TRIGGER_WRITABLE))
+	if (/*(task->trigger.cmask & QSE_HTTPD_TASK_TRIGGER_WRITABLE) && */ cgi->buflen > 0)
 	{
-		if (cgi->buflen > 0)
+		if (cgi_write_script_output_to_client (httpd, client, cgi) <= -1)
 		{
-			if (cgi_write_script_output_to_client (httpd, client, cgi) <= -1)
-			{
-				/* can't return internal server error any more... */
-				return -1;
-			}
+			/* can't return internal server error any more... */
+			return -1;
 		}
 	}
 
@@ -1042,9 +1060,21 @@ static int task_main_cgi_4_nph (
 	{
 		if (cgi->buflen < QSE_SIZEOF(cgi->buf))
 		{
-			n = cgi_read_script_output_to_buffer (httpd, client, cgi);
-			if (n <= -1) return -1; /* TODO: logging */
-			if (n == 0) 
+			n = qse_pio_read (
+				&cgi->pio, QSE_PIO_OUT,
+				&cgi->buf[cgi->buflen], 
+				QSE_SIZEOF(cgi->buf) - cgi->buflen
+			);
+			if (n <= -1)
+			{
+				if (qse_pio_geterrnum(&cgi->pio) != QSE_PIO_EAGAIN)
+				{
+					if (cgi->httpd->opt.trait & QSE_HTTPD_LOGACT) 
+						log_cgi_script_error (cgi, QSE_MT("cgi pio read error - "));
+					return -1;
+				}
+			}
+			else if (n == 0)
 			{
 				/* switch to the next phase */
 				task->main = task_main_cgi_5;
@@ -1052,10 +1082,10 @@ static int task_main_cgi_4_nph (
 				task->trigger.cmask |= QSE_HTTPD_TASK_TRIGGER_WRITE;
 				return 1;
 			}
+			else cgi->buflen += n;
 		}
 
-		QSE_ASSERT (cgi->buflen > 0);
-		if (cgi_write_script_output_to_client (httpd, client, cgi) <= -1) return -1;
+		if (cgi->buflen > 0 && cgi_write_script_output_to_client (httpd, client, cgi) <= -1) return -1;
 	}
 
 	return 1;
@@ -1110,11 +1140,14 @@ printf ("task_main_cgi_4 trigger[0].mask=%d trigger[1].mask=%d cmask=%d\n",
 				);
 				if (n <= -1)
 				{
-					if (cgi->httpd->opt.trait & QSE_HTTPD_LOGACT) 
-						log_cgi_script_error (cgi, QSE_MT("cgi pio read error - "));
-					return -1;
+					if (qse_pio_geterrnum(&cgi->pio) != QSE_PIO_EAGAIN)
+					{
+						if (cgi->httpd->opt.trait & QSE_HTTPD_LOGACT) 
+							log_cgi_script_error (cgi, QSE_MT("cgi pio read error - "));
+						return -1;
+					}
 				}
-				if (n == 0) 
+				else if (n == 0) 
 				{
 					/* the cgi script closed the output */
 					cgi->buf[cgi->buflen++] = QSE_MT('0');
@@ -1128,34 +1161,36 @@ printf ("task_main_cgi_4 trigger[0].mask=%d trigger[1].mask=%d cmask=%d\n",
 					task->trigger.cmask |= QSE_HTTPD_TASK_TRIGGER_WRITE;
 					return 1;
 				}
-	
-				/* set the chunk length. if the length string is less 
-				 * than 4 digits, the right side of the string is filled
-				 * with space letters. for example, the chunk length line
-				 * for the length 10 will be "A   \r\n". */
-				cgi->buflen += qse_fmtuintmaxtombs (
-					&cgi->buf[cgi->buflen], CHLEN_RESERVE - 2 + 1,
-					n, 16 | QSE_FMTUINTMAXTOMBS_UPPERCASE | QSE_FMTUINTMAXTOMBS_FILLRIGHT, 
-					-1, QSE_MT(' '), QSE_NULL
-				); 
-				cgi->buf[cgi->buflen++] = QSE_MT('\r');
-				cgi->buf[cgi->buflen++] = QSE_MT('\n');
-
-				cgi->buflen += n; /* +n for the data read above */
-
-				/* set the trailing CR & LF for a chunk */
-				cgi->buf[cgi->buflen++] = QSE_MT('\r');
-				cgi->buf[cgi->buflen++] = QSE_MT('\n');
-	
-				cgi->script_output_received += n;
-
-				if ((cgi->resflags & CGI_RES_SCRIPT_LENGTH) &&
-				    cgi->script_output_received > cgi->script_output_length)
+				else
 				{
-					/* cgi returning too much data... something is wrong in CGI */
-					if (cgi->httpd->opt.trait & QSE_HTTPD_LOGACT) 
-						log_cgi_script_error (cgi, QSE_MT("cgi redundant output - "));
-					return -1;
+					/* set the chunk length. if the length string is less 
+					 * than 4 digits, the right side of the string is filled
+					 * with space letters. for example, the chunk length line
+					 * for the length 10 will be "A   \r\n". */
+					cgi->buflen += qse_fmtuintmaxtombs (
+						&cgi->buf[cgi->buflen], CHLEN_RESERVE - 2 + 1,
+						n, 16 | QSE_FMTUINTMAXTOMBS_UPPERCASE | QSE_FMTUINTMAXTOMBS_FILLRIGHT, 
+						-1, QSE_MT(' '), QSE_NULL
+					); 
+					cgi->buf[cgi->buflen++] = QSE_MT('\r');
+					cgi->buf[cgi->buflen++] = QSE_MT('\n');
+
+					cgi->buflen += n; /* +n for the data read above */
+
+					/* set the trailing CR & LF for a chunk */
+					cgi->buf[cgi->buflen++] = QSE_MT('\r');
+					cgi->buf[cgi->buflen++] = QSE_MT('\n');
+		
+					cgi->script_output_received += n;
+
+					if ((cgi->resflags & CGI_RES_SCRIPT_LENGTH) &&
+					    cgi->script_output_received > cgi->script_output_length)
+					{
+						/* cgi returning too much data... something is wrong in CGI */
+						if (cgi->httpd->opt.trait & QSE_HTTPD_LOGACT) 
+							log_cgi_script_error (cgi, QSE_MT("cgi redundant output - "));
+						return -1;
+					}
 				}
 			}
 		}
@@ -1163,9 +1198,21 @@ printf ("task_main_cgi_4 trigger[0].mask=%d trigger[1].mask=%d cmask=%d\n",
 		{
 			if (cgi->buflen < QSE_SIZEOF(cgi->buf))
 			{
-				n = cgi_read_script_output_to_buffer (httpd, client, cgi);
-				if (n <= -1) return -1; /* TODO: logging */
-				if (n == 0) 
+				n = qse_pio_read (
+					&cgi->pio, QSE_PIO_OUT,
+					&cgi->buf[cgi->buflen], 
+					QSE_SIZEOF(cgi->buf) - cgi->buflen
+				);
+				if (n <= -1)
+				{
+					if (qse_pio_geterrnum(&cgi->pio) != QSE_PIO_EAGAIN)
+					{
+						if (cgi->httpd->opt.trait & QSE_HTTPD_LOGACT) 
+							log_cgi_script_error (cgi, QSE_MT("cgi pio read error - "));
+						return -1;
+					}
+				}
+				else if (n == 0) 
 				{
 					/* switch to the next phase */
 					task->main = task_main_cgi_5;
@@ -1173,15 +1220,17 @@ printf ("task_main_cgi_4 trigger[0].mask=%d trigger[1].mask=%d cmask=%d\n",
 					task->trigger.cmask |= QSE_HTTPD_TASK_TRIGGER_WRITE;
 					return 1;
 				}
-
-				cgi->script_output_received += n;
-				if ((cgi->resflags & CGI_RES_SCRIPT_LENGTH) &&
-				    cgi->script_output_received > cgi->script_output_length)
+				else
 				{
-					/* cgi returning too much data... something is wrong in CGI */
-					if (cgi->httpd->opt.trait & QSE_HTTPD_LOGACT) 
-						log_cgi_script_error (cgi, QSE_MT("cgi redundant output - "));
-					return -1;
+					cgi->script_output_received += n;
+					if ((cgi->resflags & CGI_RES_SCRIPT_LENGTH) &&
+						cgi->script_output_received > cgi->script_output_length)
+					{
+						/* cgi returning too much data... something is wrong in CGI */
+						if (cgi->httpd->opt.trait & QSE_HTTPD_LOGACT) 
+							log_cgi_script_error (cgi, QSE_MT("cgi redundant output - "));
+						return -1;
+					}
 				}
 			}
 		}
@@ -1189,8 +1238,7 @@ printf ("task_main_cgi_4 trigger[0].mask=%d trigger[1].mask=%d cmask=%d\n",
 		/* the main loop invokes the task function only if the client 
 		 * side is writable. it should be safe to write whenever
 		 * this task function is called. */
-		QSE_ASSERT (cgi->buflen > 0);
-		if (cgi_write_script_output_to_client (httpd, client, cgi) <= -1) return -1;
+		if (cgi->buflen > 0 && cgi_write_script_output_to_client (httpd, client, cgi) <= -1) return -1;
 	}
 
 	return 1;
@@ -1226,51 +1274,52 @@ printf ("task_main_cgi_3 trigger[0].mask=%d trigger[1].mask=%d cmask=%d\n",
 
 	/* send the partial reponse received with the initial line and headers
 	 * so long as the client-side handle is writable... */
-	if (/*!(task->trigger.cmask & QSE_HTTPD_TASK_TRIGGER_WRITE) ||*/
-	    (task->trigger.cmask & QSE_HTTPD_TASK_TRIGGER_WRITABLE))
+	if (/*(task->trigger.cmask & QSE_HTTPD_TASK_TRIGGER_WRITABLE) && */ cgi->res_left > 0)
 	{
-		count = MAX_SEND_SIZE;
-		if (count >= cgi->res_left) count = cgi->res_left;
+		count = cgi->res_left;
+		if (count >= MAX_SEND_SIZE) count = MAX_SEND_SIZE;
 
-		if (count > 0)
+		httpd->errnum = QSE_HTTPD_ENOERR;
+		n = httpd->opt.scb.client.send (httpd, client, cgi->res_ptr, count);
+		if (n <= -1) 
 		{
-			n = httpd->opt.scb.client.send (httpd, client, cgi->res_ptr, count);
-			if (n <= -1) 
+			if (httpd->errnum != QSE_HTTPD_EAGAIN)
 			{
 				if (cgi->httpd->opt.trait & QSE_HTTPD_LOGACT) 
 					log_cgi_script_error (cgi, QSE_MT("cgi initial write error to client - "));
 				return -1;
 			}
-
+		}
+		else if (n > 0)
+		{
 			cgi->res_ptr += n;
 			cgi->res_left -= n;
-		}
 
-		if (cgi->res_left <= 0) 
-		{
-			qse_mbs_clear (cgi->res);
-
-			if ((cgi->resflags & CGI_RES_SCRIPT_LENGTH) &&
-			    cgi->script_output_received >= cgi->script_output_length)
+			if (cgi->res_left <= 0) 
 			{
-				/* if a cgi script specified the content length
-				 * and it has emitted as much as the length,
-				 * i don't wait for the script to finish.
-				 * one potential side-effect is that the script
-				 * can be killed prematurely if it wants to do
-				 * something extra after having done so.
-				 * however, a CGI script shouln't do that... */ 
-				task->main = task_main_cgi_5;
-				task->trigger.cmask |= QSE_HTTPD_TASK_TRIGGER_WRITE;
-			}
-			else
-			{
-				task->main = task_main_cgi_4;
-				task->trigger.cmask &= ~QSE_HTTPD_TASK_TRIGGER_WRITE;
-			}
-			return 1;
-		}
+				qse_mbs_clear (cgi->res);
 
+				if ((cgi->resflags & CGI_RES_SCRIPT_LENGTH) &&
+				    cgi->script_output_received >= cgi->script_output_length)
+				{
+					/* if a cgi script specified the content length
+					 * and it has emitted as much as the length,
+					 * i don't wait for the script to finish.
+					 * one potential side-effect is that the script
+					 * can be killed prematurely if it wants to do
+					 * something extra after having done so.
+					 * however, a CGI script shouln't do that... */ 
+					task->main = task_main_cgi_5;
+					task->trigger.cmask |= QSE_HTTPD_TASK_TRIGGER_WRITE;
+				}
+				else
+				{
+					task->main = task_main_cgi_4;
+					task->trigger.cmask &= ~QSE_HTTPD_TASK_TRIGGER_WRITE;
+				}
+				return 1;
+			}
+		}
 	}
 
 	return 1; /* more work to do */
@@ -1320,12 +1369,15 @@ printf ("task_main_cgi_2 trigger[0].mask=%d trigger[1].mask=%d cmask=%d\n",
 		);
 		if (n <= -1)
 		{
-			/* can't return internal server error any more... */
-			if (cgi->httpd->opt.trait & QSE_HTTPD_LOGACT) 
-				log_cgi_script_error (cgi, QSE_MT("cgi pio read error - "));
-			goto oops;
+			if (qse_pio_geterrnum(&cgi->pio) != QSE_PIO_EAGAIN)
+			{
+				/* can't return internal server error any more... */
+				if (cgi->httpd->opt.trait & QSE_HTTPD_LOGACT) 
+					log_cgi_script_error (cgi, QSE_MT("cgi pio read error - "));
+				goto oops;
+			}
 		}
-		if (n == 0) 
+		else if (n == 0) 
 		{
 			/* end of output from cgi before it has seen a header.
 			 * the cgi script must be crooked. */
@@ -1333,16 +1385,22 @@ printf ("task_main_cgi_2 trigger[0].mask=%d trigger[1].mask=%d cmask=%d\n",
 				log_cgi_script_error (cgi, QSE_MT("cgi premature eof - "));
 			goto oops;
 		}
-		cgi->buflen += n;
-
-		if (qse_htrd_feed (cgi->script_htrd, cgi->buf, cgi->buflen) <= -1)
+		else
 		{
-			if (cgi->httpd->opt.trait & QSE_HTTPD_LOGACT) 
-				log_cgi_script_error (cgi, QSE_MT("cgi feed error - "));
-			goto oops;
+			cgi->buflen += n;
 		}
 
-		cgi->buflen = 0;
+		if (cgi->buflen > 0)
+		{
+			if (qse_htrd_feed (cgi->script_htrd, cgi->buf, cgi->buflen) <= -1)
+			{
+				if (cgi->httpd->opt.trait & QSE_HTTPD_LOGACT) 
+					log_cgi_script_error (cgi, QSE_MT("cgi feed error - "));
+				goto oops;
+			}
+
+			cgi->buflen = 0;
+		}
 
 		if (QSE_MBS_LEN(cgi->res) > 0)
 		{
@@ -1410,7 +1468,11 @@ static int task_main_cgi (
 		if (cgi->res == QSE_NULL) goto oops;
 	}
 
-	pio_options = QSE_PIO_READOUT | QSE_PIO_WRITEIN | QSE_PIO_MBSCMD;
+	/* <<WARNING>>
+	 *  QSE_PIO_INNOBLOCK and QSE_PIO_OUTNONBLOCK are not supported
+	 *   on non-unix/linux platforms. so the CGI task can only be
+	 *   used on unix/linux platforms */
+	pio_options = QSE_PIO_READOUT | QSE_PIO_WRITEIN | QSE_PIO_MBSCMD | QSE_PIO_INNOBLOCK | QSE_PIO_OUTNOBLOCK;
 	if (httpd->opt.trait & QSE_HTTPD_CGIERRTONUL)
 		pio_options |= QSE_PIO_ERRTONUL;
 	else
@@ -1446,8 +1508,9 @@ static int task_main_cgi (
 
 		goto oops;
 	}
+
 	cgi->pio_inited = 1;
-	
+
 	/* set the trigger that the main loop can use this
 	 * handle for multiplexing 
 	 *

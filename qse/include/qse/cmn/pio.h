@@ -39,7 +39,7 @@ enum qse_pio_flag_t
 {
 	/** enable text based I/O. */
 	QSE_PIO_TEXT          = (1 << 0),
-     QSE_PIO_IGNOREMBWCERR = (1 << 1),
+	QSE_PIO_IGNOREMBWCERR = (1 << 1),
 	QSE_PIO_NOAUTOFLUSH   = (1 << 2),
 
 	/** execute the command via a system shell 
@@ -67,7 +67,7 @@ enum qse_pio_flag_t
 	QSE_PIO_READERR       = (1 << 10),
 
 	/** redirect stderr to stdout (2>&1, require #QSE_PIO_READOUT) */
-	QSE_PIO_ERRTOOUT      = (1 << 11),	
+	QSE_PIO_ERRTOOUT      = (1 << 11),
 	/** redirect stdout to stderr (1>&2, require #QSE_PIO_READERR) */
 	QSE_PIO_OUTTOERR      = (1 << 12),
 
@@ -92,7 +92,14 @@ enum qse_pio_flag_t
 	/** return immediately from qse_pio_wait() if a child has not exited */
 	QSE_PIO_WAITNOBLOCK   = (1 << 23),
 	/** do not wait again if waitpid has been interrupted */
-	QSE_PIO_WAITNORETRY   = (1 << 24)
+	QSE_PIO_WAITNORETRY   = (1 << 24),
+
+	/** put stdin to non-blocking mode (only on supported platforms) */
+	QSE_PIO_INNOBLOCK   = (1 << 25),
+	/** put stdout to non-blocking mode (only on supported platforms)*/
+	QSE_PIO_OUTNOBLOCK  = (1 << 26),
+	/** put stderr to non-blocking mode (only on supported platforms) */
+	QSE_PIO_ERRNOBLOCK  = (1 << 27)
 };
 
 /**

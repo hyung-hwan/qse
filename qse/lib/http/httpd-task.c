@@ -90,13 +90,19 @@ static int task_main_format (
 	count = MAX_SEND_SIZE;
 	if (count >= ctx->left) count = ctx->left;
 
+	httpd->errnum = QSE_HTTPD_ENOERR;
 	n = httpd->opt.scb.client.send (httpd, client, ctx->ptr, count);
-	if (n <= -1) return -1;
+	if (n <= -1) 
+	{
+		if (httpd->errnum != QSE_HTTPD_EAGAIN) return -1;
+	}
+	else if (n > 0)
+	{
+		ctx->left -= n;
+		if (ctx->left <= 0) return 0;
+		ctx->ptr += n;
+	}
 
-	ctx->left -= n;
-	if (ctx->left <= 0) return 0;
-
-	ctx->ptr += n;
 	return 1; /* more work to do */
 }
 

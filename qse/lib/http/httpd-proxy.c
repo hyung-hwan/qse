@@ -658,8 +658,7 @@ static qse_htrd_recbs_t proxy_peer_htrd_cbs =
 	proxy_htrd_handle_peer_output
 };
 
-static void proxy_forward_client_input_to_peer (
-	qse_httpd_t* httpd, qse_httpd_task_t* task, int writable)
+static void proxy_forward_client_input_to_peer (qse_httpd_t* httpd, qse_httpd_task_t* task)
 {
 	task_proxy_t* proxy = (task_proxy_t*)task->ctx;
 
@@ -680,56 +679,48 @@ static void proxy_forward_client_input_to_peer (
 			/* normal forwarding */
 			qse_ssize_t n;
 
-			if (writable) goto forward;
-
-			n = httpd->opt.scb.mux.writable (httpd, proxy->peer.handle, 0);
-#if 0
-if (n == 0) qse_printf (QSE_T("PROXY FORWARD: @@@@@@@@@NOT WRITABLE\n"));
-#endif
-			if (n >= 1)
-			{
-			forward:
-				/* writable */
 #if 0
 qse_printf (QSE_T("PROXY FORWARD: @@@@@@@@@@WRITING[%.*hs]\n"),
 	(int)QSE_MBS_LEN(proxy->reqfwdbuf),
 	QSE_MBS_PTR(proxy->reqfwdbuf));
 #endif
-				n = httpd->opt.scb.peer.send (
-					httpd, &proxy->peer,
-					QSE_MBS_PTR(proxy->reqfwdbuf),
-					QSE_MBS_LEN(proxy->reqfwdbuf)
-				);
-
-/* TODO: improve performance.. instead of copying the remaing part 
-to the head all the time..  grow the buffer to a certain limit. */
-				if (n > 0) 
-				{
-					qse_mbs_del (proxy->reqfwdbuf, 0, n);
-					if (QSE_MBS_LEN(proxy->reqfwdbuf) <= 0)
-					{
-						if (proxy->req == QSE_NULL) goto done;
-						else task->trigger.v[0].mask &= ~QSE_HTTPD_TASK_TRIGGER_WRITE;
-					}
-				}
-			}
+			httpd->errnum = QSE_HTTPD_ENOERR;
+			n = httpd->opt.scb.peer.send (
+				httpd, &proxy->peer,
+				QSE_MBS_PTR(proxy->reqfwdbuf),
+				QSE_MBS_LEN(proxy->reqfwdbuf)
+			);
 
 			if (n <= -1)
 			{
-				if (httpd->opt.trait & QSE_HTTPD_LOGACT) 
-					log_proxy_error (proxy, "proxy send-to-peer error - ");
-
-				proxy->reqflags |= PROXY_REQ_FWDERR;
-				qse_mbs_clear (proxy->reqfwdbuf); 
-				if (proxy->req) 
+				if (httpd->errnum != QSE_HTTPD_EAGAIN)
 				{
-					qse_htre_discardcontent (proxy->req);
-					/* NOTE: proxy->req may be set to QSE_NULL
-					 *       in proxy_snatch_client_input() triggered by
-					 *       qse_htre_discardcontent() */
-				}
+					if (httpd->opt.trait & QSE_HTTPD_LOGACT) 
+						log_proxy_error (proxy, "proxy send-to-peer error - ");
 
-				task->trigger.v[0].mask &= ~QSE_HTTPD_TASK_TRIGGER_WRITE; /* peer */
+					proxy->reqflags |= PROXY_REQ_FWDERR;
+					qse_mbs_clear (proxy->reqfwdbuf); 
+					if (proxy->req) 
+					{
+						qse_htre_discardcontent (proxy->req);
+						/* NOTE: proxy->req may be set to QSE_NULL
+						 *       in proxy_snatch_client_input() triggered by
+						 *       qse_htre_discardcontent() */
+					}
+
+					task->trigger.v[0].mask &= ~QSE_HTTPD_TASK_TRIGGER_WRITE; /* peer */
+				}
+			}
+			else if (n > 0) 
+			{
+/* TODO: improve performance.. instead of copying the remaing part 
+to the head all the time..  grow the buffer to a certain limit. */
+				qse_mbs_del (proxy->reqfwdbuf, 0, n);
+				if (QSE_MBS_LEN(proxy->reqfwdbuf) <= 0)
+				{
+					if (proxy->req == QSE_NULL) goto done;
+					else task->trigger.v[0].mask &= ~QSE_HTTPD_TASK_TRIGGER_WRITE;
+				}
 			}
 		}
 	}
@@ -1038,6 +1029,7 @@ printf ("task_main_proxy_5 trigger[0].mask=%d trigger[1].mask=%d trigger[2].mask
 	task->trigger.v[0].mask, task->trigger.v[1].mask, task->trigger.cmask);
 #endif
 
+#if 0
 	if (task->trigger.cmask & QSE_HTTPD_TASK_TRIGGER_READABLE)
 	{
 		/* if the client side is readable */
@@ -1048,23 +1040,30 @@ printf ("task_main_proxy_5 trigger[0].mask=%d trigger[1].mask=%d trigger[2].mask
 		/* if the peer side is writable while the client side is not readable*/
 		proxy_forward_client_input_to_peer (httpd, task, 1);
 	}
+#endif
+	proxy_forward_client_input_to_peer (httpd, task);
 
-	if (/*!(task->trigger.cmask & QSE_HTTPD_TASK_TRIGGER_WRITE) ||*/
-	    (task->trigger.cmask & QSE_HTTPD_TASK_TRIGGER_WRITABLE))
+	if (/*(task->trigger.cmask & QSE_HTTPD_TASK_TRIGGER_WRITABLE) && */ proxy->buflen > 0)
 	{
-		if (proxy->buflen > 0)
-		{
-			/* TODO: check if proxy outputs more than content-length if it is set... */
+		/* wrote to the client socket as long as there's something to
+		 * write. it's safe to do so as the socket is non-blocking. 
+		 * i commented out the check in the 'if' condition above */
 
-			n = httpd->opt.scb.client.send (httpd, client, proxy->buf, proxy->buflen);
-			if (n <= -1)
+		/* TODO: check if proxy outputs more than content-length if it is set... */
+		httpd->errnum = QSE_HTTPD_ENOERR;
+		n = httpd->opt.scb.client.send (httpd, client, proxy->buf, proxy->buflen);
+		if (n <= -1)
+		{
+			if (httpd->errnum != QSE_HTTPD_EAGAIN)
 			{
 				/* can't return internal server error any more... */
 				if (httpd->opt.trait & QSE_HTTPD_LOGACT) 
 					log_proxy_error (proxy, "proxy send-to-client error - ");
 				return -1;
 			}
-
+		}
+		else if (n > 0)
+		{
 			QSE_MEMCPY (&proxy->buf[0], &proxy->buf[n], proxy->buflen - n);
 			proxy->buflen -= n;
 		}
@@ -1087,6 +1086,8 @@ printf ("task_main_proxy_4 trigger[0].mask=%d trigger[1].mask=%d trigger[2].mask
 	task->trigger.v[0].mask, task->trigger.v[1].mask, task->trigger.cmask);
 #endif
 
+	proxy_forward_client_input_to_peer (httpd, task);
+/*
 	if (task->trigger.cmask & QSE_HTTPD_TASK_TRIGGER_READABLE)
 	{
 		proxy_forward_client_input_to_peer (httpd, task, 0);
@@ -1095,64 +1096,69 @@ printf ("task_main_proxy_4 trigger[0].mask=%d trigger[1].mask=%d trigger[2].mask
 	{
 		proxy_forward_client_input_to_peer (httpd, task, 1);
 	}
+*/
 
-	if (task->trigger.v[0].mask & QSE_HTTPD_TASK_TRIGGER_READABLE)
+	if ((task->trigger.v[0].mask & QSE_HTTPD_TASK_TRIGGER_READABLE) &&
+	    proxy->buflen < QSE_SIZEOF(proxy->buf))
 	{
 		qse_ssize_t n;
 
-		if (proxy->buflen < QSE_SIZEOF(proxy->buf))
+		/* reading from the peer */
+		httpd->errnum = QSE_HTTPD_ENOERR;
+		n = httpd->opt.scb.peer.recv (
+			httpd, &proxy->peer,
+			&proxy->buf[proxy->buflen], 
+			QSE_SIZEOF(proxy->buf) - proxy->buflen
+		);
+		if (n <= -1)
 		{
-			/* reading from the peer */
-
-			httpd->errnum = QSE_HTTPD_ENOERR;
-			n = httpd->opt.scb.peer.recv (
-				httpd, &proxy->peer,
-				&proxy->buf[proxy->buflen], 
-				QSE_SIZEOF(proxy->buf) - proxy->buflen
-			);
-			if (n <= -1)
+			/* can't return internal server error any more... */
+			if (httpd->errnum != QSE_HTTPD_EAGAIN)
 			{
-				/* can't return internal server error any more... */
 				if (httpd->opt.trait & QSE_HTTPD_LOGACT) 
 					log_proxy_error (proxy, "proxy recv-from-peer error - ");
 				return -1;
 			}
-			if (n == 0)
+
+			/* carry on as if recv was't called at all */
+		}
+		else if (n == 0)
+		{
+			/* peer closed connection */
+			if (proxy->resflags & PROXY_RES_PEER_LENGTH) 
 			{
-				/* peer closed connection */
-				if (proxy->resflags & PROXY_RES_PEER_LENGTH) 
+				QSE_ASSERT (!(proxy->flags & PROXY_RAW));
+
+				if (proxy->peer_output_received < proxy->peer_output_length)
 				{
-					QSE_ASSERT (!(proxy->flags & PROXY_RAW));
-
-					if (proxy->peer_output_received < proxy->peer_output_length)
-					{
-						if (httpd->opt.trait & QSE_HTTPD_LOGACT) 
-							log_proxy_error (proxy, "proxy premature eof - ");
-						return -1;
-					}
+					if (httpd->opt.trait & QSE_HTTPD_LOGACT) 
+						log_proxy_error (proxy, "proxy premature eof - ");
+					return -1;
 				}
-
-				task->main = task_main_proxy_5;
-
-				/* nothing to read from peer. set the mask to 0 */
-				task->trigger.v[0].mask = 0;
-			
-				/* arrange to be called if the client side is writable */
-				task->trigger.cmask |= QSE_HTTPD_TASK_TRIGGER_WRITE;
-
-				if (proxy->flags & PROXY_RAW)
-				{
-					/* peer connection has been closed.
-					 * so no more forwarding from the client to the peer 
-					 * is possible. get rid of the content callback on the
-					 * client side. */
-					qse_htre_unsetconcb (proxy->req);
-					proxy->req = QSE_NULL; 
-				}
-
-				return 1;
 			}
 
+			task->main = task_main_proxy_5;
+
+			/* nothing to read from peer. set the mask to 0 */
+			task->trigger.v[0].mask = 0;
+		
+			/* arrange to be called if the client side is writable */
+			task->trigger.cmask |= QSE_HTTPD_TASK_TRIGGER_WRITE;
+
+			if (proxy->flags & PROXY_RAW)
+			{
+				/* peer connection has been closed.
+				 * so no more forwarding from the client to the peer 
+				 * is possible. get rid of the content callback on the
+				 * client side. */
+				qse_htre_unsetconcb (proxy->req);
+				proxy->req = QSE_NULL; 
+			}
+
+			return 1;
+		}
+		else
+		{
 			proxy->buflen += n;
 			proxy->peer_output_received += n;
 	
@@ -1177,21 +1183,33 @@ printf ("task_main_proxy_4 trigger[0].mask=%d trigger[1].mask=%d trigger[2].mask
 				}
 			}
 		}
+	}
 
+	if (proxy->buflen)
+	{
 		/* the main loop invokes the task function only if the client 
 		 * side is writable. it should be safe to write whenever
-		 * this task function is called. */
+		 * this task function is called. even if it's not writable,
+		 * it should still be ok as the client socket is non-blocking. */
+		qse_ssize_t n;
+
+		httpd->errnum = QSE_HTTPD_ENOERR;
 		n = httpd->opt.scb.client.send (httpd, client, proxy->buf, proxy->buflen);
 		if (n <= -1)
 		{
-			/* can't return internal server error any more... */
-			if (httpd->opt.trait & QSE_HTTPD_LOGACT)
-				log_proxy_error (proxy, "proxy send-to-client error - ");
-			return -1;
+			if (httpd->errnum != QSE_HTTPD_EAGAIN)
+			{
+				/* can't return internal server error any more... */
+				if (httpd->opt.trait & QSE_HTTPD_LOGACT)
+					log_proxy_error (proxy, "proxy send-to-client error - ");
+				return -1;
+			}
 		}
-	
-		QSE_MEMCPY (&proxy->buf[0], &proxy->buf[n], proxy->buflen - n);
-		proxy->buflen -= n;
+		else if (n > 0)
+		{
+			QSE_MEMCPY (&proxy->buf[0], &proxy->buf[n], proxy->buflen - n);
+			proxy->buflen -= n;
+		}
 	}
 
 	return 1;
@@ -1212,6 +1230,8 @@ qse_printf (QSE_T("task_main_proxy_3 trigger[0].mask=%d trigger[1].mask=%d trigg
 	task->trigger.v[0].mask, task->trigger.v[1].mask, task->trigger.cmask);
 #endif
 
+	proxy_forward_client_input_to_peer (httpd, task);
+/*
 	if (task->trigger.cmask & QSE_HTTPD_TASK_TRIGGER_READABLE)
 	{
 		proxy_forward_client_input_to_peer (httpd, task, 0);
@@ -1220,60 +1240,68 @@ qse_printf (QSE_T("task_main_proxy_3 trigger[0].mask=%d trigger[1].mask=%d trigg
 	{
 		proxy_forward_client_input_to_peer (httpd, task, 1);
 	}
+*/
 
-	if (/*!(task->trigger.cmask & QSE_HTTPD_TASK_TRIGGER_WRITE) ||*/
-	    (task->trigger.cmask & QSE_HTTPD_TASK_TRIGGER_WRITABLE))
+	if (/*(task->trigger.cmask & QSE_HTTPD_TASK_TRIGGER_WRITABLE) &&*/ proxy->res_pending > 0)
 	{
+		/* the client socket is non-blocking. so attempt to send
+		 * so long as there's something to send regardless of writability 
+		 * of the client socket. see the check commented out in the 'if'
+		 * condition above.*/
+
 		qse_ssize_t n;
 		qse_size_t count;
 
 		count = proxy->res_pending;
 		if (count > MAX_SEND_SIZE) count = MAX_SEND_SIZE;
 
-		if (count > 0)
+		httpd->errnum = QSE_HTTPD_ENOERR;
+		n = httpd->opt.scb.client.send (
+			httpd, client, 
+			&QSE_MBS_CHAR(proxy->res,proxy->res_consumed), 
+			count
+		);
+		if (n <= -1) 
 		{
-			n = httpd->opt.scb.client.send (
-				httpd, client, 
-				&QSE_MBS_CHAR(proxy->res,proxy->res_consumed), 
-				count
-			);
-			if (n <= -1) 
+			if (httpd->errnum != QSE_HTTPD_EAGAIN)
 			{
 				if (httpd->opt.trait & QSE_HTTPD_LOGACT) 
 					log_proxy_error (proxy, "proxy send-to-client error - ");
 				return -1;
 			}
-
+		}
+		else if (n > 0)
+		{
 			proxy->resflags |= PROXY_RES_EVER_SENTBACK;
 			proxy->res_consumed += n;
 			proxy->res_pending -= n;
-		}
 
-		if (proxy->res_pending <= 0)
-		{
-			/* all data received from the peer so far(including those injected)
-  			 * have been sent back to the client-side */
-
-			qse_mbs_clear (proxy->res);
-			proxy->res_consumed = 0;
-
-			if ((proxy->resflags & PROXY_RES_CLIENT_CHUNK) ||
-			    ((proxy->resflags & PROXY_RES_PEER_LENGTH) && proxy->peer_output_received >= proxy->peer_output_length))
+			if (proxy->res_pending <= 0)
 			{
-				/* received all contents */
-				task->main = task_main_proxy_5;
-				task->trigger.cmask |= QSE_HTTPD_TASK_TRIGGER_WRITE;
+				/* all data received from the peer so far(including those injected)
+				 * have been sent back to the client-side */
+
+				qse_mbs_clear (proxy->res);
+				proxy->res_consumed = 0;
+
+				if ((proxy->resflags & PROXY_RES_CLIENT_CHUNK) ||
+					((proxy->resflags & PROXY_RES_PEER_LENGTH) && proxy->peer_output_received >= proxy->peer_output_length))
+				{
+					/* received all contents */
+					task->main = task_main_proxy_5;
+					task->trigger.cmask |= QSE_HTTPD_TASK_TRIGGER_WRITE;
+				}
+				else
+				{
+					/* there are still more to read from the peer.
+					 * arrange to read the remaining contents from the peer */
+					task->main = task_main_proxy_4;
+					/* nothing to write in proxy->res. so clear WRITE from the
+					 * client side */
+					task->trigger.cmask &= ~QSE_HTTPD_TASK_TRIGGER_WRITE;
+				}
+				return 1;
 			}
-			else
-			{
-				/* there are still more to read from the peer.
-				 * arrange to read the remaining contents from the peer */
-				task->main = task_main_proxy_4;
-				/* nothing to write in proxy->res. so clear WRITE from the
-				 * client side */
-				task->trigger.cmask &= ~QSE_HTTPD_TASK_TRIGGER_WRITE;
-			}
-			return 1;
 		}
 	}
 
@@ -1291,6 +1319,8 @@ printf ("task_main_proxy_2 trigger[0].mask=%d trigger[1].mask=%d cmask=%d\n",
 	task->trigger.v[0].mask, task->trigger.v[1].mask, task->trigger.cmask);
 #endif
 
+	proxy_forward_client_input_to_peer (httpd, task);
+#if 0
 	if (task->trigger.cmask & QSE_HTTPD_TASK_TRIGGER_READABLE)
 	{
 		/* client is readable */
@@ -1301,41 +1331,46 @@ printf ("task_main_proxy_2 trigger[0].mask=%d trigger[1].mask=%d cmask=%d\n",
 		/* client is not readable but peer is writable */
 		proxy_forward_client_input_to_peer (httpd, task, 1);
 	}
+#endif
 
-	if (/*!(task->trigger.cmask & QSE_HTTPD_TASK_TRIGGER_WRITE) ||*/
-	    (task->trigger.cmask & QSE_HTTPD_TASK_TRIGGER_WRITABLE))
+	if (/*(task->trigger.cmask & QSE_HTTPD_TASK_TRIGGER_WRITABLE) && */ proxy->res_pending > 0)
 	{
-		if (proxy->res_pending > 0)
+		/* the 'if' condition becomes true only if '100 Continue'
+		 * is received without an actual reply in a previous call to 
+		 * qse_htrd_feed() far below. Since the actual reply is not
+		 * received yet, i just want to read more while relaying 
+		 * '100 Continue' to the client. 
+		 *
+		 * attempt to write to the client regardless of writability of
+		 * the cleint socket as it is non-blocking. see the check commented
+		 * in the 'if' condition above. */
+
+		qse_ssize_t n;
+		qse_size_t count;
+
+		QSE_ASSERT ((proxy->resflags & PROXY_RES_AWAIT_RESHDR) || 
+		            (proxy->resflags & PROXY_RES_CLIENT_CHUNK));
+
+		count = proxy->res_pending;
+		if (count > MAX_SEND_SIZE) count = MAX_SEND_SIZE;
+
+		httpd->errnum = QSE_HTTPD_ENOERR;
+		n = httpd->opt.scb.client.send (
+			httpd, client, 
+			QSE_MBS_CPTR(proxy->res,proxy->res_consumed), 
+			count
+		);
+		if (n <= -1) 
 		{
-			/* the 'if' condition becomes true only if '100 Continue'
-			 * is received without an actual reply in a previous call to 
-			 * qse_htrd_feed() below. Since the actual reply is not
-			 * received yet, i just want to read more while realying 
-			 * '100 Continue' to the client. this task handler is called
-			 * only if the client side handle is writable. i can safely
-			 * write to the client without a check. */
-	
-			qse_ssize_t n;
-			qse_size_t count;
-	
-			QSE_ASSERT ((proxy->resflags & PROXY_RES_AWAIT_RESHDR) || 
-			            (proxy->resflags & PROXY_RES_CLIENT_CHUNK));
-
-			count = proxy->res_pending;
-			if (count > MAX_SEND_SIZE) count = MAX_SEND_SIZE;
-
-			n = httpd->opt.scb.client.send (
-				httpd, client, 
-				QSE_MBS_CPTR(proxy->res,proxy->res_consumed), 
-				count
-			);
-			if (n <= -1) 
+			if (httpd->errnum != QSE_HTTPD_EAGAIN)
 			{
 				if (httpd->opt.trait & QSE_HTTPD_LOGACT) 
 					log_proxy_error (proxy, "proxy send-to-client error - ");
 				goto oops;
 			}
-
+		}
+		else if (n > 0)
+		{
 			proxy->resflags |= PROXY_RES_EVER_SENTBACK;
 			proxy->res_consumed += n;
 			proxy->res_pending -= n;
@@ -1367,16 +1402,19 @@ printf ("task_main_proxy_2 trigger[0].mask=%d trigger[1].mask=%d cmask=%d\n",
 		);
 		if (n <= -1)
 		{
-			if (httpd->opt.trait & QSE_HTTPD_LOGACT) 
-				log_proxy_error (proxy, "proxy recv-from-peer error - ");
-			goto oops;
+			if (httpd->errnum != QSE_HTTPD_EAGAIN)
+			{
+				if (httpd->opt.trait & QSE_HTTPD_LOGACT) 
+					log_proxy_error (proxy, "proxy recv-from-peer error - ");
+				goto oops;
+			}
 		}
-		if (n == 0) 
+		else if (n == 0) 
 		{
 			if (!(proxy->resflags & PROXY_RES_RECEIVED_RESHDR))
 			{
 				/* end of output from peer before it has seen a header.
-				 * the proxy peer must be crooked. */
+				 * the proxy peer must be bad. */
 
 				if (httpd->opt.trait & QSE_HTTPD_LOGACT) 
 					log_proxy_error (proxy, "proxy premature eof - ");
@@ -1405,8 +1443,10 @@ printf ("task_main_proxy_2 trigger[0].mask=%d trigger[1].mask=%d cmask=%d\n",
 				goto oops;
 			}
 		}
-
-		proxy->buflen += n;
+		else 
+		{
+			proxy->buflen += n;
+		}
 
 #if 0
 qse_printf (QSE_T("#####PROXY FEEDING %d [\n"), (int)proxy->buflen);
@@ -1416,15 +1456,17 @@ for (i = 0; i < proxy->buflen; i++) qse_printf (QSE_T("%hc"), proxy->buf[i]);
 }
 qse_printf (QSE_T("]\n"));
 #endif
-
-		if (qse_htrd_feed (proxy->peer_htrd, proxy->buf, proxy->buflen) <= -1)
+		if (proxy->buflen > 0)
 		{
-			if (httpd->opt.trait & QSE_HTTPD_LOGACT) 
-				log_proxy_error (proxy, "proxy feed error - ");
-			goto oops;
-		}
+			if (qse_htrd_feed (proxy->peer_htrd, proxy->buf, proxy->buflen) <= -1)
+			{
+				if (httpd->opt.trait & QSE_HTTPD_LOGACT) 
+					log_proxy_error (proxy, "proxy feed error - ");
+				goto oops;
+			}
 
-		proxy->buflen = 0;
+			proxy->buflen = 0;
+		}
 
 		if (QSE_MBS_LEN(proxy->res) > 0)
 		{
@@ -1530,7 +1572,7 @@ static int task_main_proxy_1 (
 			if (QSE_MBS_LEN(proxy->reqfwdbuf) > 0)
 			{
 				/* forward the initial part of the input to the peer */
-				proxy_forward_client_input_to_peer (httpd, task, 0);
+				proxy_forward_client_input_to_peer (httpd, task);
 				if (QSE_MBS_LEN(proxy->reqfwdbuf) > 0)
 				{
 					/* there are still more to forward in the buffer
@@ -1697,7 +1739,7 @@ static int task_main_proxy (
 
 		if (QSE_MBS_LEN(proxy->reqfwdbuf) > 0)
 		{
-			proxy_forward_client_input_to_peer (httpd, task, 0);
+			proxy_forward_client_input_to_peer (httpd, task);
 			if (QSE_MBS_LEN(proxy->reqfwdbuf) > 0)
 			{
 				task->trigger.v[0].mask |= QSE_HTTPD_TASK_TRIGGER_WRITE;

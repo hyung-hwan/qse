@@ -93,12 +93,19 @@ static int task_main_getfseg (
 	count = MAX_SEND_SIZE;
 	if (count >= ctx->left) count = ctx->left;
 
+	httpd->errnum = QSE_HTTPD_ENOERR;
 	n = httpd->opt.scb.client.sendfile (
 		httpd, client, ctx->handle, &ctx->offset, count);
 	if (n <= -1) 
 	{
 /* HANDLE EGAIN specially??? */
-		return -1; /* TODO: any logging */
+		if (httpd->errnum != QSE_HTTPD_EAGAIN)
+		{
+			/* TODO: logging */
+			return -1; 
+		}
+
+		goto more_work;
 	}
 
 	if (n == 0 && count > 0)
@@ -108,12 +115,13 @@ static int task_main_getfseg (
 		 * So let's return an error here so that the main loop abort 
 		 * the connection. */
 /* TODO: any logging....??? */
-		return -1;	
+		return -1;
 	}
 
 	ctx->left -= n;
 	if (ctx->left <= 0) return 0;
 
+more_work:
 	return 1; /* more work to do */
 }
 

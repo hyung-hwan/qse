@@ -429,6 +429,22 @@ static int get_highest_fd (void)
 
 #endif
 
+static int set_pipe_nonblock (qse_pio_t* pio, qse_pio_hnd_t fd, int enabled)
+{
+#if defined(O_NONBLOCK)
+
+	int flag = QSE_FCNTL (fd, F_GETFL, 0);
+	if (flag >= 0) flag = QSE_FCNTL (fd, F_SETFL, (enabled? (flag | O_NONBLOCK): (flag & ~O_NONBLOCK)));
+	if (flag <= -1) pio->errnum = syserr_to_errnum (errno);
+	return flag;
+
+#else
+	pio->errnum = QSE_PIO_ENOIMPL;
+	return -1;
+#endif
+}
+
+
 int qse_pio_init (
 	qse_pio_t* pio, qse_mmgr_t* mmgr, const qse_char_t* cmd, 
 	qse_env_t* env, int flags)
@@ -1785,6 +1801,13 @@ create_process:
 
 #endif
 
+	if (((flags & QSE_PIO_INNOBLOCK) && set_pipe_nonblock(pio, handle[1], 1) <= -1) ||
+	    ((flags & QSE_PIO_OUTNOBLOCK) && set_pipe_nonblock(pio, handle[2], 1) <= -1) ||
+	    ((flags & QSE_PIO_ERRNOBLOCK) && set_pipe_nobnlock(pio, handle[4], 1) <= -1))
+	{
+		goto oops;
+	}
+
 	/* store back references */
 	pio->pin[QSE_PIO_IN].self = pio;
 	pio->pin[QSE_PIO_OUT].self = pio;
@@ -1794,6 +1817,7 @@ create_process:
 	pio->pin[QSE_PIO_IN].handle = handle[1];
 	pio->pin[QSE_PIO_OUT].handle = handle[2];
 	pio->pin[QSE_PIO_ERR].handle = handle[4];
+
 
 	if (flags & QSE_PIO_TEXT)
 	{
@@ -1882,17 +1906,17 @@ oops:
 	}
 	for (i = minidx; i < maxidx; i++) 
 	{
-    		if (handle[i] != QSE_PIO_HND_NIL) QSE_CLOSE (handle[i]);
+		if (handle[i] != QSE_PIO_HND_NIL) QSE_CLOSE (handle[i]);
 	}
 #elif defined(QSE_SYSCALL0) && defined(SYS_vfork)
 	for (i = minidx; i < maxidx; i++) 
 	{
-    		if (handle[i] != QSE_PIO_HND_NIL) QSE_CLOSE (handle[i]);
+		if (handle[i] != QSE_PIO_HND_NIL) QSE_CLOSE (handle[i]);
 	}
 #else
 	for (i = minidx; i < maxidx; i++) 
 	{
-    		if (handle[i] != QSE_PIO_HND_NIL) QSE_CLOSE (handle[i]);
+		if (handle[i] != QSE_PIO_HND_NIL) QSE_CLOSE (handle[i]);
 	}
 #endif
 
