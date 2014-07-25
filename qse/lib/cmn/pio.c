@@ -1803,7 +1803,7 @@ create_process:
 
 	if (((flags & QSE_PIO_INNOBLOCK) && set_pipe_nonblock(pio, handle[1], 1) <= -1) ||
 	    ((flags & QSE_PIO_OUTNOBLOCK) && set_pipe_nonblock(pio, handle[2], 1) <= -1) ||
-	    ((flags & QSE_PIO_ERRNOBLOCK) && set_pipe_nobnlock(pio, handle[4], 1) <= -1))
+	    ((flags & QSE_PIO_ERRNOBLOCK) && set_pipe_nonblock(pio, handle[4], 1) <= -1))
 	{
 		goto oops;
 	}
