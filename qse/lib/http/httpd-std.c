@@ -235,7 +235,7 @@ static qse_httpd_errnum_t skerr_to_errnum (int e)
 			return QSE_HTTPD_EPIPE;
 
 		case EAGAIN:
-#if defined(EWEOULDBLOCK) && defined(EAGAIN) && EWOULDBLOCK != EAGAIN
+#if defined(EWEOULDBLOCK) && defined(EAGAIN) && (EWOULDBLOCK != EAGAIN)
 		case EWOULDBLOCK:
 #endif
 			return QSE_HTTPD_EAGAIN;
