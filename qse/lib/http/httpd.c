@@ -921,7 +921,7 @@ static int update_mux_for_current_task (qse_httpd_t* httpd, qse_httpd_client_t* 
 			{
 				/* active to inactive */
 
-printf ("ACTIVE TO INACTIVE....\n");
+/*printf ("ACTIVE TO INACTIVE....\n");*/
 				for (i = 0; i < QSE_COUNTOF(task->trigger.v); i++)
 				{
 					if (client->status & CLIENT_TASK_TRIGGER_RW_IN_MUX(i))
@@ -942,21 +942,21 @@ printf ("ACTIVE TO INACTIVE....\n");
 				return 0;
 			}
 
-printf ("INACTIVE TO ACTIVE....\n");
+/*printf ("INACTIVE TO ACTIVE....\n");*/
 			/* inactive to active . go on*/
 		}
 		else 
 		{
 			if (task->trigger.flags & QSE_HTTPD_TASK_TRIGGER_INACTIVE)
 			{
-printf ("INACTIVE TO INACTIVE....\n");
+/*printf ("INACTIVE TO INACTIVE....\n");*/
 				/* inactive to inactive.
 				 * save the trigger as the trigger handle and masks could change */
 				client->trigger = task->trigger;
 				return 0;
 			}
 
-printf ("ACTIVE TO ACTIVE....\n");
+/*printf ("ACTIVE TO ACTIVE....\n");*/
 			/* active to active. go on */
 		}
 
@@ -1183,13 +1183,23 @@ static int invoke_client_task (
 			{
 				if (mask & QSE_HTTPD_MUX_READ)
 				{
-					QSE_ASSERT (task->trigger.v[i].mask & QSE_HTTPD_TASK_TRIGGER_READ);
+					/*QSE_ASSERT (task->trigger.v[i].mask & QSE_HTTPD_TASK_TRIGGER_READ);*/
+					/* the assertion above may be false if a task for the same 
+					 * trigger set was called earlier by a qse_mux_poll() call.
+					 * and the task has changed some masks.
+					 *
+					 * for instance, you put handle A and B in to a trigger.
+					 * if the task is triggered for A but the task may change
+					 * the mask for B. the task may get executed for B by 
+					 * the same qse_mux_poll() call. 
+					 */
+
 					task->trigger.v[i].mask |= QSE_HTTPD_TASK_TRIGGER_READABLE;
 					trigger_fired = 1;
 				}
 				if (mask & QSE_HTTPD_MUX_WRITE)
 				{
-					QSE_ASSERT (task->trigger.v[i].mask & QSE_HTTPD_TASK_TRIGGER_WRITE);
+					/*QSE_ASSERT (task->trigger.v[i].mask & QSE_HTTPD_TASK_TRIGGER_WRITE);*/
 					task->trigger.v[i].mask |= QSE_HTTPD_TASK_TRIGGER_WRITABLE;
 					trigger_fired = 1;
 				}

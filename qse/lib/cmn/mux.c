@@ -439,6 +439,26 @@ qse_mux_errnum_t qse_mux_geterrnum (qse_mux_t* mux)
 int qse_mux_insert (qse_mux_t* mux, const qse_mux_evt_t* evt)
 {
 #if defined(USE_SELECT)
+	/* nothing */
+#elif defined(USE_KQUEUE)
+	struct kevent chlist[2];
+	int count = 0;
+#elif defined(USE_EPOLL)
+	struct epoll_event ev;
+#elif defined(__OS2__)
+	/* nothing */
+#else
+	/* nothing */
+#endif
+
+	/* sanity check */
+	if (!(evt->mask & (QSE_MUX_IN | QSE_MUX_OUT)) || evt->hnd < 0) 
+	{
+		mux->errnum = QSE_MUX_EINVAL;
+		return -1;
+	}
+
+#if defined(USE_SELECT)
 
 	/* TODO: windows seems to return a pretty high file descriptors
 	 *       using an array to store information may not be so effcient.
@@ -482,9 +502,6 @@ int qse_mux_insert (qse_mux_t* mux, const qse_mux_evt_t* evt)
 	return 0;
 
 #elif defined(USE_KQUEUE)
-	struct kevent chlist[2];
-	int count = 0;
-
 	/* TODO: study if it is better to put 'evt' to the udata 
 	 *       field of chlist? */
 
@@ -502,11 +519,7 @@ int qse_mux_insert (qse_mux_t* mux, const qse_mux_evt_t* evt)
 		count++;
 	}
 
-	if (count == 0 || evt->hnd < 0)
-	{
-		mux->errnum = QSE_MUX_EINVAL;
-		return -1;
-	}
+	QSE_ASSERT (count > 0);
 
 	if (evt->hnd >= mux->me.ubound)
 	{
@@ -550,17 +563,12 @@ int qse_mux_insert (qse_mux_t* mux, const qse_mux_evt_t* evt)
 	return 0;
 
 #elif defined(USE_EPOLL)
-	struct epoll_event ev;
 
 	QSE_MEMSET (&ev, 0, QSE_SIZEOF(ev));
 	if (evt->mask & QSE_MUX_IN) ev.events |= EPOLLIN;
 	if (evt->mask & QSE_MUX_OUT) ev.events |= EPOLLOUT;
 
-	if (ev.events == 0 || evt->hnd < 0)
-	{
-		mux->errnum = QSE_MUX_EINVAL;
-		return -1;
-	}
+	QSE_ASSERT (ev.events != 0);
 
 	if (evt->hnd >= mux->me.ubound)
 	{
@@ -937,13 +945,13 @@ int qse_mux_poll (qse_mux_t* mux, const qse_ntime_t* tmout)
 		if (mux->ee.ptr[i].events & EPOLLIN) xevt.mask |= QSE_MUX_IN;
 		if (mux->ee.ptr[i].events & EPOLLOUT) xevt.mask |= QSE_MUX_OUT;
 
-		if (mux->ee.ptr[i].events & EPOLLHUP)
+		if (mux->ee.ptr[i].events & (EPOLLHUP | EPOLLERR))
 		{
 			if (evt->mask & QSE_MUX_IN) xevt.mask |= QSE_MUX_IN;
 			if (evt->mask & QSE_MUX_OUT) xevt.mask |= QSE_MUX_OUT;
 		}
 
-		mux->evtfun (mux, &xevt);
+		if (xevt.mask > 0) mux->evtfun (mux, &xevt);
 	}
 
 	return nfds;

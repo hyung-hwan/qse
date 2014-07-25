@@ -53,13 +53,18 @@ static int task_main_text (
 	if (count >= ctx->left) count = ctx->left;
 
 /* TODO: do i need to add code to skip this send if count is 0? */
+	httpd->errnum = QSE_HTTPD_ENOERR;
 	n = httpd->opt.scb.client.send (httpd, client, ctx->ptr, count);
-	if (n <= -1) return -1;
-
-	ctx->left -= n;
-	if (ctx->left <= 0) return 0;
-
-	ctx->ptr += n;
+	if (n <= -1) 
+	{
+		if (httpd->errnum != QSE_HTTPD_EAGAIN) return -1;
+	}
+	else if (n > 0)
+	{
+		ctx->left -= n;
+		if (ctx->left <= 0) return 0;
+		ctx->ptr += n;
+	}
 	return 1; /* more work to do */
 }
 

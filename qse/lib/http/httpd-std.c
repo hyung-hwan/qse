@@ -135,6 +135,9 @@ static qse_httpd_errnum_t skerr_to_errnum (DWORD e)
 		case WSAEINTR:
 			return QSE_HTTPD_EINTR;
 
+		case WASEWOULDBLOCK:
+			return QSE_HTTPD_EAGAIN;
+
 		case WSAECONNREFUSED:
 		case WSAENETUNREACH:
 		case WSAEHOSTUNREACH:
@@ -179,6 +182,9 @@ static qse_httpd_errnum_t skerr_to_errnum (int e)
 
 		case SOCEPIPE:
 			return QSE_HTTPD_EPIPE;
+
+		case SOCEAGAIN:
+			return QSE_HTTPD_EAGAIN;
 
 		case SOCECONNREFUSED:
 		case SOCENETUNREACH:
@@ -229,6 +235,9 @@ static qse_httpd_errnum_t skerr_to_errnum (int e)
 			return QSE_HTTPD_EPIPE;
 
 		case EAGAIN:
+#if defined(EWEOULDBLOCK) && defined(EAGAIN) && EWOULDBLOCK != EAGAIN
+		case EWOULDBLOCK:
+#endif
 			return QSE_HTTPD_EAGAIN;
 
 #if defined(ECONNREFUSED) || defined(ENETUNREACH) || defined(EHOSTUNREACH) || defined(EHOSTDOWN)
@@ -259,68 +268,68 @@ static qse_httpd_errnum_t skerr_to_errnum (int e)
 
 static qse_httpd_errnum_t muxerr_to_errnum (qse_mux_errnum_t e)
 {
-     switch (e)
-     {
-          case QSE_MUX_ENOMEM:
-               return QSE_HTTPD_ENOMEM;
+	switch (e)
+	{
+		case QSE_MUX_ENOMEM:
+			return QSE_HTTPD_ENOMEM;
 
-          case QSE_MUX_EINVAL:
-               return QSE_HTTPD_EINVAL;
+		case QSE_MUX_EINVAL:
+			return QSE_HTTPD_EINVAL;
 
-          case QSE_MUX_EACCES:
-               return QSE_HTTPD_EACCES;
+		case QSE_MUX_EACCES:
+			return QSE_HTTPD_EACCES;
 
-          case QSE_MUX_ENOENT:
-               return QSE_HTTPD_ENOENT;
+		case QSE_MUX_ENOENT:
+			return QSE_HTTPD_ENOENT;
 
-          case QSE_MUX_EEXIST:
-               return QSE_HTTPD_EEXIST;
+		case QSE_MUX_EEXIST:
+			return QSE_HTTPD_EEXIST;
 
-          case QSE_MUX_EINTR:
-               return QSE_HTTPD_EINTR;
+		case QSE_MUX_EINTR:
+			return QSE_HTTPD_EINTR;
 
-          case QSE_MUX_EPIPE:
-               return QSE_HTTPD_EPIPE;
+		case QSE_MUX_EPIPE:
+			return QSE_HTTPD_EPIPE;
 
-          case QSE_MUX_EAGAIN:
-               return QSE_HTTPD_EAGAIN;
+		case QSE_MUX_EAGAIN:
+			return QSE_HTTPD_EAGAIN;
 
-          default:
-               return QSE_HTTPD_ESYSERR;
-     }
+		default:
+			return QSE_HTTPD_ESYSERR;
+	}
 }
 
 static qse_httpd_errnum_t fioerr_to_errnum (qse_fio_errnum_t e)
 {
-     switch (e)
-     {
-          case QSE_FIO_ENOMEM:
-               return QSE_HTTPD_ENOMEM;
+	switch (e)
+	{
+		case QSE_FIO_ENOMEM:
+			return QSE_HTTPD_ENOMEM;
 
-          case QSE_FIO_EINVAL:
-               return QSE_HTTPD_EINVAL;
+		case QSE_FIO_EINVAL:
+			return QSE_HTTPD_EINVAL;
 
-          case QSE_FIO_EACCES:
-               return QSE_HTTPD_EACCES;
+		case QSE_FIO_EACCES:
+			return QSE_HTTPD_EACCES;
 
-          case QSE_FIO_ENOENT:
-               return QSE_HTTPD_ENOENT;
+		case QSE_FIO_ENOENT:
+			return QSE_HTTPD_ENOENT;
 
-          case QSE_FIO_EEXIST:
-               return QSE_HTTPD_EEXIST;
+		case QSE_FIO_EEXIST:
+			return QSE_HTTPD_EEXIST;
 
-          case QSE_FIO_EINTR:
-               return QSE_HTTPD_EINTR;
+		case QSE_FIO_EINTR:
+			return QSE_HTTPD_EINTR;
 
-          case QSE_FIO_EPIPE:
-               return QSE_HTTPD_EPIPE;
+		case QSE_FIO_EPIPE:
+			return QSE_HTTPD_EPIPE;
 
-          case QSE_FIO_EAGAIN:
-               return QSE_HTTPD_EAGAIN;
+		case QSE_FIO_EAGAIN:
+			return QSE_HTTPD_EAGAIN;
 
-          default:
-               return QSE_HTTPD_ESYSERR;
-     }
+		default:
+			return QSE_HTTPD_ESYSERR;
+	}
 }
 
 static qse_httpd_errnum_t direrr_to_errnum (qse_dir_errnum_t e)
@@ -488,7 +497,7 @@ static QSE_INLINE qse_ssize_t __send_file_ssl (
 	if (offset && (foff = qse_fio_seek (in_fd.ptr, *offset, QSE_FIO_BEGIN)) != *offset)  
 	{
 		if (foff == (qse_foff_t)-1) 	
-			qse_httpd_seterrnum (httpd, fioerr_to_errnum(qse_fio_geterrnum(in_fd.ptr)));	
+			qse_httpd_seterrnum (httpd, fioerr_to_errnum(qse_fio_geterrnum(in_fd.ptr)));
 		else
 			qse_httpd_seterrnum (httpd, QSE_HTTPD_ESYSERR);
 		return (qse_ssize_t)-1;
@@ -514,7 +523,7 @@ static QSE_INLINE qse_ssize_t __send_file_ssl (
 	}
 	else if (ret <= -1)
 	{
-		qse_httpd_seterrnum (httpd, fioerr_to_errnum(qse_fio_geterrnum(in_fd.ptr)));	
+		qse_httpd_seterrnum (httpd, fioerr_to_errnum(qse_fio_geterrnum(in_fd.ptr)));
 	}
 
 	return ret;
@@ -640,13 +649,86 @@ void* qse_httpd_getxtnstd (qse_httpd_t* httpd)
 
 /* ------------------------------------------------------------------- */
 
+#if defined(_WIN32)
+	typedef SOCKET sock_t;
+#	define SOCK_INIT INVALID_SOCKET
+#else
+	typedef int sock_t;
+#	define SOCK_INIT -1
+#endif
+#if !defined(HAVE_SOCKLEN_T)
+	typedef int socklen_t;
+#endif
+
+static QSE_INLINE int is_valid_socket (sock_t fd)
+{
+#if defined(_WIN32)
+	return fd != INVALID_SOCKET;
+#else
+	return fd >= 0;
+#endif
+}
+
+static QSE_INLINE void close_socket (sock_t fd)
+{
+#if defined(_WIN32)
+	closesocket (fd);
+#elif defined(__OS2__)
+	soclose (fd);
+#elif defined(__DOS__)
+	/* TODO: */
+#else
+	QSE_CLOSE (fd);
+#endif
+}
+
+static int set_socket_nonblock (qse_httpd_t* httpd, sock_t fd, int enabled)
+{
+#if defined(_WIN32)
+	if (ioctlsocket (fd, FIONBIO, &enabled) == SOCKET_ERROR) 
+	{
+		qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
+		return -1;
+	}
+
+	return 0;
+
+#elif defined(__OS2__)
+
+	if (ioctl (fd, FIONBIO, (char*)&enabled, sizeof(enabled)) <= -1) 
+	{
+		qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
+		return -1;
+	}
+	return 0;
+
+#elif defined(O_NONBLOCK)
+
+	int flag = fcntl (fd, F_GETFL);
+	if (flag >= 0) flag = fcntl (fd, F_SETFL, (enabled? (flag | O_NONBLOCK): (flag & ~O_NONBLOCK)));
+	if (flag <= -1)
+	{
+		qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
+		return -1;
+	}
+	return 0;
+#else
+
+	qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
+	return -1;
+#endif
+
+}
+
+/* ------------------------------------------------------------------- */
+
 static int server_open (qse_httpd_t* httpd, qse_httpd_server_t* server)
 {
 #if defined(__DOS__)
 	qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
 	return -1;
 #else
-	int fd = -1, flag;
+	sock_t fd = SOCK_INIT, flag;
 	qse_skad_t addr;
 	int addrsize;
 
@@ -658,7 +740,11 @@ static int server_open (qse_httpd_t* httpd, qse_httpd_server_t* server)
 	}
 
 	fd = socket (qse_skadfamily(&addr), SOCK_STREAM, IPPROTO_TCP);
-	if (fd <= -1) goto oops;
+	if (!is_valid_socket(fd)) 
+	{
+		qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
+		goto oops;
+	}
 
 	#if defined(FD_CLOEXEC)
 	flag = fcntl (fd, F_GETFD);
@@ -720,6 +806,7 @@ static int server_open (qse_httpd_t* httpd, qse_httpd_server_t* server)
 		if (len <= 0 || setsockopt (fd, SOL_SOCKET, SO_BINDTODEVICE, tmp, len) <= -1)
 		{
 			/* TODO: logging ... */
+			qse_httpd_seterrnum (httpd, ((len <= 0)? QSE_HTTPD_EINVAL: SKERR_TO_ERRNUM()));
 			goto oops;
 		}
 	#endif
@@ -735,50 +822,44 @@ static int server_open (qse_httpd_t* httpd, qse_httpd_server_t* server)
 		{
 			int on = 1;
 			setsockopt (fd, IPPROTO_IPV6, IPV6_V6ONLY, &on, sizeof(on));
-			if (bind (fd, (struct sockaddr*)&addr, addrsize) <= -1)  goto oops;
+			if (bind (fd, (struct sockaddr*)&addr, addrsize) <= -1)  
+			{
+				qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
+				goto oops;
+			}
 		}
-		else goto oops;
+		else 
+		{
+			qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
+			goto oops;
+		}
 	#else
+
+		qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
 		goto oops;
 	#endif
 	}
 
-	if (listen (fd, 10) <= -1) goto oops;
+	if (listen (fd, 10) <= -1) 
+	{
+		qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
+		goto oops;
+	}
 
-	#if defined(O_NONBLOCK)
-	flag = fcntl (fd, F_GETFL);
-	if (flag >= 0) fcntl (fd, F_SETFL, flag | O_NONBLOCK);
-	#endif
+	if (set_socket_nonblock (httpd, fd, 1) <= -1) goto oops;
 
 	server->handle.i = fd;
 	return 0;
 
 oops:
-	qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
-	#if defined(_WIN32)
-	if (fd != INVALID_SOCKET) closesocket (fd);
-	#elif defined(__OS2__)
-	if (fd >= 0) soclose (fd);
-	#elif defined(__DOS__)
-		/* TODO: */
-	#else
-	if (fd >= 0) QSE_CLOSE (fd);
-	#endif
+	if (is_valid_socket(fd)) close_socket (fd);
 	return -1;
 #endif
 }
 
 static void server_close (qse_httpd_t* httpd, qse_httpd_server_t* server)
 {
-#if defined(_WIN32)
-	closesocket (server->handle.i);
-#elif defined(__OS2__)
-	soclose (server->handle.i);
-#elif defined(__DOS__)
-	/* TODO: */
-#else
-	QSE_CLOSE (server->handle.i);
-#endif
+	close_socket (server->handle.i);
 }
 
 static int server_accept (
@@ -790,29 +871,25 @@ static int server_accept (
 
 #else
 	qse_skad_t addr;
-
-	#if defined(HAVE_SOCKLEN_T)
 	socklen_t addrlen;
-	#else
-	int addrlen;
-	#endif
-	int fd, flag;
+	sock_t fd = SOCK_INIT;
+	int flag;
 
 	addrlen = QSE_SIZEOF(addr);
 	fd = accept (server->handle.i, (struct sockaddr*)&addr, &addrlen);
-	if (fd <= -1)
+	if (!is_valid_socket(fd)) 
 	{
 		qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
-		return -1;
+		goto oops;
 	}
 
 	#if 0
+/* TODO: implement maximum number of client per server??? */
 	if (fd >= FD_SETSIZE)
 	{
 qse_fprintf (QSE_STDERR, QSE_T("Error: too many client?\n"));
 		/*TODO: qse_httpd_seterrnum (httpd, QSE_HTTPD_EXXXXX);*/
-		QSE_CLOSE (fd);
-		return -1;
+		goto oops;
 	}
 	#endif
 
@@ -821,10 +898,7 @@ qse_fprintf (QSE_STDERR, QSE_T("Error: too many client?\n"));
 	if (flag >= 0) fcntl (fd, F_SETFD, flag | FD_CLOEXEC);
 	#endif
 
-	#if defined(O_NONBLOCK)
-	flag = fcntl (fd, F_GETFL);
-	if (flag >= 0) fcntl (fd, F_SETFL, flag | O_NONBLOCK);
-	#endif
+	if (set_socket_nonblock (httpd, fd, 1) <= -1) goto oops;
 
 	if (qse_skadtonwad (&addr, &client->remote_addr) <= -1)
 	{
@@ -867,6 +941,10 @@ qse_fprintf (QSE_STDERR, QSE_T("Error: too many client?\n"));
 
 	client->handle.i = fd;
 	return 0;
+
+oops:
+	if (is_valid_socket(fd)) close_socket (fd);
+	return -1;
 #endif
 }
 
@@ -885,17 +963,14 @@ static int peer_open (qse_httpd_t* httpd, qse_httpd_peer_t* peer)
 	qse_skad_t connaddr, bindaddr;
 	int connaddrsize, bindaddrsize;
 	int connected = 1;
+	sock_t fd = SOCK_INIT;
 #if defined(_WIN32)
-	SOCKET fd = -1; 
 	unsigned long cmd;
 #elif defined(__OS2__)
-	int fd = -1; 
 	int cmd;
 #elif defined(__DOS__)
-	int fd = -1; 
 	int flag;
 #else
-	int fd = -1; 
 	int flag;
 #endif
 
@@ -908,7 +983,11 @@ static int peer_open (qse_httpd_t* httpd, qse_httpd_peer_t* peer)
 	}
 
 	fd = socket (qse_skadfamily(&connaddr), SOCK_STREAM, IPPROTO_TCP);
-	if (fd <= -1) goto oops;
+	if (!is_valid_socket(fd)) 
+	{
+		qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
+		goto oops;
+	}
 
 	#if defined(IP_TRANSPARENT)
 	flag = 1;
@@ -921,72 +1000,58 @@ static int peer_open (qse_httpd_t* httpd, qse_httpd_peer_t* peer)
 		/* TODO: some logging for this failure though */
 	}
 
-#if defined(_WIN32)
-	cmd = 1;
-	if (ioctlsocket(fd, FIONBIO, &cmd) == SOCKET_ERROR) goto oops;
-
-	if (connect (fd, (struct sockaddr*)&connaddr, connaddrsize) <= -1)
-	{
-		if (WSAGetLastError() != WSAEWOULDBLOCK) goto oops;
-		connected = 0;
-	}
-
-	cmd = 0;
-	if (ioctlsocket(fd, FIONBIO, &cmd) == SOCKET_ERROR) goto oops;
-
-#elif defined(__OS2__)
-
-	cmd = 1;
-	if (ioctl(fd, FIONBIO, (char*)&cmd, QSE_SIZEOF(cmd)) == -1) goto oops;
-
-	if (connect (fd, (struct sockaddr*)&connaddr, connaddrsize) == -1)
-	{
-		if (sock_errno() != SOCEINPROGRESS) goto oops;
-		connected = 0;
-	}
-
-	cmd = 0;
-	if (ioctl(fd, FIONBIO, (char*)&cmd, QSE_SIZEOF(cmd)) == -1) goto oops;
-
-#elif defined(__DOS__)
-
-	/* TODO: */
-
-#else
-
 	#if defined(FD_CLOEXEC)
 	flag = fcntl (fd, F_GETFD);
 	if (flag >= 0) fcntl (fd, F_SETFD, flag | FD_CLOEXEC);
 	#endif
 
-	flag = fcntl (fd, F_GETFL);
-	if (flag >= 0) fcntl (fd, F_SETFL, flag | O_NONBLOCK);
+	if (set_socket_nonblock (httpd, fd, 1) <= -1) goto oops;
 
+#if defined(_WIN32)
 	if (connect (fd, (struct sockaddr*)&connaddr, connaddrsize) <= -1)
 	{
-		if (errno != EINPROGRESS) goto oops;
+		if (WSAGetLastError() != WSAEWOULDBLOCK) 
+		{
+			qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
+			goto oops;
+		}
 		connected = 0;
 	}
 
-	/* restore flags */
-	if (fcntl (fd, F_SETFL, flag) <= -1) goto oops;
+#elif defined(__OS2__)
+	if (connect (fd, (struct sockaddr*)&connaddr, connaddrsize) == -1)
+	{
+		if (sock_errno() != SOCEINPROGRESS) 
+		{
+			qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
+			goto oops;
+		}
+		connected = 0;
+	}
+#elif defined(__DOS__)
 
+	/* TODO: */
+
+#else
+	if (connect (fd, (struct sockaddr*)&connaddr, connaddrsize) <= -1)
+	{
+		if (errno != EINPROGRESS) 
+		{
+			qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
+			goto oops;
+		}
+		connected = 0;
+	}
 #endif
+
+	/*if (set_socket_nonblock (httpd, fd, 0) <= -1) goto oops;*/
 
 	peer->handle.i = fd;
 	return connected;
 
 oops:
 	qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
-#if defined(_WIN32)
-	if (fd != INVALID_SOCKET) closesocket (fd);
-#elif defined(__OS2__)
-	if (fd >= 0) soclose (fd);
-#elif defined(__DOS__)
-	/* TODO: */
-#else
-	if (fd >= 0) QSE_CLOSE (fd);
-#endif
+	if (is_valid_socket(fd)) close_socket (fd);
 	return -1;
 
 	/* -------------------------------------------------------------------- */
@@ -995,15 +1060,7 @@ oops:
 
 static void peer_close (qse_httpd_t* httpd, qse_httpd_peer_t* peer)
 {
-#if defined(_WIN32)
-	closesocket (peer->handle.i);
-#elif defined(__OS2__)
-	soclose (peer->handle.i);
-#elif defined(__DOS__)
-	/* TODO: */
-#else
-	QSE_CLOSE (peer->handle.i);
-#endif
+	close_socket (peer->handle.i);
 }
 
 static int peer_connected (qse_httpd_t* httpd, qse_httpd_peer_t* peer)
@@ -1057,11 +1114,7 @@ static int peer_connected (qse_httpd_t* httpd, qse_httpd_peer_t* peer)
 
 #else
 
-	#if defined(HAVE_SOCKLEN_T)
 	socklen_t len;
-	#else
-	int len;
-	#endif
 	int ret;
 
 	len = QSE_SIZEOF(ret);
@@ -1747,26 +1800,22 @@ static int dir_read (qse_httpd_t* httpd, qse_ubi_t handle, qse_httpd_dirent_t* d
 #	define SHUT_RDWR 2
 #endif
 
-static void client_close (
-	qse_httpd_t* httpd, qse_httpd_client_t* client)
+static void client_close (qse_httpd_t* httpd, qse_httpd_client_t* client)
 {
 
 #if defined(_WIN32)
 	shutdown (client->handle.i, SHUT_RDWR);
-	closesocket (client->handle.i);
 #elif defined(__OS2__)
 	shutdown (client->handle.i, SHUT_RDWR);
-	soclose (client->handle.i);
 #elif defined(__DOS__)
 	/* TODO: */
 #else
 	shutdown (client->handle.i, SHUT_RDWR);
-	QSE_CLOSE (client->handle.i);
 #endif
+	close_socket (client->handle.i);
 }
 
-static void client_shutdown (
-	qse_httpd_t* httpd, qse_httpd_client_t* client)
+static void client_shutdown (qse_httpd_t* httpd, qse_httpd_client_t* client)
 {
 #if defined(_WIN32)
 	shutdown (client->handle.i, SHUT_RDWR);
@@ -2201,7 +2250,8 @@ static int dns_open (qse_httpd_t* httpd, qse_httpd_dns_t* dns)
 	qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
 	return -1;
 #else
-	int fd = -1, flag;
+	sock_t fd = SOCK_INIT; 
+	int flag;
 	qse_nwad_t nwad;
 	dns_ctx_t* dc;
 	httpd_xtn_t* httpd_xtn;
@@ -2276,7 +2326,11 @@ static int dns_open (qse_httpd_t* httpd, qse_httpd_dns_t* dns)
 	}
 
 	fd = socket (qse_skadfamily(&dc->skad), SOCK_DGRAM, IPPROTO_UDP);
-	if (fd <= -1) goto oops;
+	if (!is_valid_socket(fd)) 
+	{
+		qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
+		goto oops;
+	}
 
 	#if defined(FD_CLOEXEC)
 	flag = fcntl (fd, F_GETFD);
@@ -2293,22 +2347,14 @@ static int dns_open (qse_httpd_t* httpd, qse_httpd_dns_t* dns)
 	setsockopt (fd, SOL_SOCKET, SO_REUSEPORT, (void*)&flag, QSE_SIZEOF(flag));
 	#endif
 
+	if (set_socket_nonblock (httpd, fd, 1) <= -1) goto oops;
+	
 	dns->handle.i = fd;
 	dns->ctx = dc;
 	return 0;
 
 oops:
-	if (fd >= 0) 
-	{
-	#if defined(_WIN32)
-		closesocket (fd);
-	#elif defined(__OS2__)
-		soclose (fd);
-	#else
-		QSE_CLOSE (fd);
-	#endif
-	}
-
+	if (is_valid_socket(fd)) close_socket (fd);
 	if (dc) qse_httpd_freemem (httpd, dc);
 	return -1;
 
@@ -2447,7 +2493,7 @@ static int dns_recv (qse_httpd_t* httpd, qse_httpd_dns_t* dns)
 	dns_ctx_t* dc = (dns_ctx_t*)dns->ctx;
 
 	qse_skad_t fromaddr;
-	socklen_t fromlen; /* TODO: change type */
+	socklen_t fromlen;
 
 	qse_uint8_t buf[DNS_MAX_MSG_LEN];
 	qse_ssize_t len;
@@ -2614,16 +2660,13 @@ static int dns_send (qse_httpd_t* httpd, qse_httpd_dns_t* dns, const qse_mchar_t
 	qse_size_t name_len;
 	dns_ans_t* ans;
 
-printf ("finding answer in cache...\n");
 	ans = dns_get_answer_from_cache (dc, name);
 	if (ans)
 	{
-printf ("found answer in cache...\n");
 		resol (httpd, name, ((ans->nwad.type == QSE_NWAD_NX)? QSE_NULL: &ans->nwad), ctx);
 		return 0;
 	}
 
-printf ("found XXXXX in cache...\n");
 	seq = dc->seq;
 	seq = (seq + 1) % QSE_COUNTOF(dc->reqs);
 	dc->seq = seq;
