@@ -2761,10 +2761,22 @@ QSE_EXPORT qse_size_t qse_mbs_fcat (
 	...
 );
 
+QSE_EXPORT qse_size_t qse_mbs_vfcat (
+	qse_mbs_t*         str,
+	const qse_mchar_t* fmt,
+	va_list            ap
+);
+
 QSE_EXPORT qse_size_t qse_mbs_fmt (
 	qse_mbs_t*         str,
 	const qse_mchar_t* fmt,
 	...
+);
+
+QSE_EXPORT qse_size_t qse_mbs_vfmt (
+	qse_mbs_t*         str,
+	const qse_mchar_t* fmt,
+	va_list            ap
 );
 
 /**
@@ -2992,7 +3004,9 @@ QSE_EXPORT qse_size_t qse_wcs_fmt (
 #	define qse_str_trm(str)             qse_mbs_trm(str)
 #	define qse_str_pac(str)             qse_mbs_pac(str)
 #	define qse_str_fcat                 qse_mbs_fcat
+#	define qse_str_vfcat                qse_mbs_vfcat
 #	define qse_str_fmt                  qse_mbs_fmt
+#	define qse_str_vfmt                 qse_mbs_vfmt
 #else
 #	define qse_str_setmmgr(str,mmgr)    qse_wcs_wetmmgr(str,mmgr)
 #	define qse_str_getmmgr(str)         qse_wcs_getmmgr(str)
@@ -3021,7 +3035,9 @@ QSE_EXPORT qse_size_t qse_wcs_fmt (
 #	define qse_str_trm(str)             qse_wcs_trm(str)
 #	define qse_str_pac(str)             qse_wcs_pac(str)
 #	define qse_str_fcat                 qse_wcs_fcat
+#	define qse_str_vfcat                qse_wcs_vfcat
 #	define qse_str_fmt                  qse_wcs_fmt
+#	define qse_str_vfmt                 qse_wcs_vfmt
 #endif
 
 
