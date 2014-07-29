@@ -39,6 +39,9 @@ struct task_proxy_t
 #define PROXY_RAW               (1 << 1)
 #define PROXY_RESOL_PEER_NAME   (1 << 2)
 #define PROXY_UNKNOWN_PEER_NWAD (1 << 3)
+#define PROXY_X_FORWARDED_FOR   (1 << 4)
+#define PROXY_VIA               (1 << 5)
+#define PROXY_VIA_RETURNING     (1 << 6)
 	int flags;
 	qse_httpd_t* httpd;
 	qse_httpd_client_t* client;
@@ -137,9 +140,60 @@ static int proxy_add_header_to_buffer (
 	return 0;
 }
 
+static int proxy_add_header_to_buffer_with_extra_data (
+	task_proxy_t* proxy, qse_mbs_t* buf, const qse_mchar_t* key, const qse_htre_hdrval_t* val, 
+	const qse_mchar_t* fmt, ...)
+{
+	va_list ap;
+
+	QSE_ASSERT (val != QSE_NULL);
+
+	/* NOTE: append the extra data to each value */
+	do
+	{
+		va_start (ap, fmt);
+		if (qse_mbs_cat (buf, key) == (qse_size_t)-1 ||
+		    qse_mbs_cat (buf, QSE_MT(": ")) == (qse_size_t)-1 ||
+		    qse_mbs_cat (buf, val->ptr) == (qse_size_t)-1 ||
+		    (fmt && qse_mbs_vfcat (buf, fmt, ap) == (qse_size_t)-1) || 
+		    qse_mbs_cat (buf, QSE_MT("\r\n")) == (qse_size_t)-1) 
+		{
+			va_end (ap);
+			proxy->httpd->errnum = QSE_HTTPD_ENOMEM;
+			return -1;
+		}
+
+		va_end (ap);
+		val = val->next;
+	}
+	while (val);
+
+	return 0;
+}
+
 static int proxy_capture_peer_header (qse_htre_t* req, const qse_mchar_t* key, const qse_htre_hdrval_t* val, void* ctx)
 {
 	task_proxy_t* proxy = (task_proxy_t*)ctx;
+
+	if (!(proxy->httpd->opt.trait & QSE_HTTPD_PROXYNOVIA) && !(proxy->flags & PROXY_VIA_RETURNING))
+	{
+		if (qse_mbscasecmp (key, QSE_MT("Via")) == 0)
+		{
+			qse_mchar_t extra[128];
+
+			proxy->flags |= PROXY_VIA_RETURNING;
+			qse_nwadtombs (&proxy->client->local_addr, extra, QSE_COUNTOF(extra), QSE_NWADTOMBS_ALL);
+
+			return proxy_add_header_to_buffer_with_extra_data (
+				proxy, proxy->res, key, val, 
+				QSE_MT(", %d.%d %hs (%hs)"), 
+				(int)proxy->version.major,
+				(int)proxy->version.minor, 
+				extra,
+				qse_httpd_getname(proxy->httpd));
+		}
+	}
+
 
 	if (qse_mbscasecmp (key, QSE_MT("Connection")) != 0 &&
 	    qse_mbscasecmp (key, QSE_MT("Transfer-Encoding")) != 0)
@@ -167,6 +221,43 @@ static int proxy_capture_peer_trailer (qse_htre_t* req, const qse_mchar_t* key, 
 static int proxy_capture_client_header (qse_htre_t* req, const qse_mchar_t* key, const qse_htre_hdrval_t* val, void* ctx)
 {
 	task_proxy_t* proxy = (task_proxy_t*)ctx;
+
+	
+	if (!(proxy->flags & PROXY_X_FORWARDED_FOR))
+	{
+		if (qse_mbscasecmp (key, QSE_MT("X-Forwarded-For")) == 0)
+		{
+			/* append to X-Forwarded-For if it exists in the header.
+			 * note that it add a comma even if the existing value is empty.
+			 * actually, no such value must be sent in by a well-behaving
+			 * client/proxy/load-balancer, etc. */
+			qse_mchar_t extra[128];
+
+			proxy->flags |= PROXY_X_FORWARDED_FOR;
+			qse_nwadtombs (&proxy->client->remote_addr, extra, QSE_COUNTOF(extra), QSE_NWADTOMBS_ALL);
+
+			return proxy_add_header_to_buffer_with_extra_data (proxy, proxy->reqfwdbuf, key, val, QSE_MT(", %hs"), extra);
+		}
+	}
+
+	if (!(proxy->httpd->opt.trait & QSE_HTTPD_PROXYNOVIA) && !(proxy->flags & PROXY_VIA))
+	{
+		if (qse_mbscasecmp (key, QSE_MT("Via")) == 0)
+		{
+			qse_mchar_t extra[128];
+
+			proxy->flags |= PROXY_VIA;
+			qse_nwadtombs (&proxy->client->local_addr, extra, QSE_COUNTOF(extra), QSE_NWADTOMBS_ALL);
+
+			return proxy_add_header_to_buffer_with_extra_data (
+				proxy, proxy->reqfwdbuf, key, val, 
+				QSE_MT(", %d.%d %hs (%hs)"), 
+				(int)proxy->version.major,
+				(int)proxy->version.minor, 
+				extra,
+				qse_httpd_getname(proxy->httpd));
+		}
+	}
 
 	if (qse_mbscasecmp (key, QSE_MT("Transfer-Encoding")) != 0 &&
 	    qse_mbscasecmp (key, QSE_MT("Content-Length")) != 0)
@@ -539,17 +630,6 @@ static int proxy_htrd_peek_peer_output (qse_htrd_t* htrd, qse_htre_t* res)
 		}
 		/* end initial line */
 
-		if (!(httpd->opt.trait & QSE_HTTPD_PROXYNOVIA) && qse_htre_getscodeval(res) != 100)
-		{
-			/* add the Via: header into the response if it is not 100. */
-			if (qse_mbs_cat (proxy->res, QSE_MT("Via: ")) == (qse_size_t)-1 ||
-			    qse_mbs_cat (proxy->res, qse_httpd_getname (httpd)) == (qse_size_t)-1 ||
-			    qse_mbs_cat (proxy->res, QSE_MT("\r\n")) == (qse_size_t)-1) 
-			{
-				httpd->errnum = QSE_HTTPD_ENOMEM;
-				return -1; 
-			}
-		}
 
 		if (proxy->resflags & PROXY_RES_PEER_LENGTH_FAKE)
 		{
@@ -587,7 +667,30 @@ static int proxy_htrd_peek_peer_output (qse_htrd_t* htrd, qse_htre_t* res)
 		}
 
 		if (qse_htre_walkheaders (res, proxy_capture_peer_header, proxy) <= -1) return -1;
+
+		if (!(httpd->opt.trait & QSE_HTTPD_PROXYNOVIA) && !(proxy->flags & PROXY_VIA_RETURNING) && qse_htre_getscodeval(res) != 100)
+		{
+			/* add the Via: header into the response if it is not 100. */
+			qse_size_t tmp;
+			qse_mchar_t extra[128];
+			qse_http_version_t v;
+
+			proxy->flags |= PROXY_VIA_RETURNING;
+
+			v = *qse_htre_getversion(res);
+			qse_nwadtombs (&proxy->client->local_addr, extra, QSE_COUNTOF(extra), QSE_NWADTOMBS_ALL);
+			tmp = qse_mbs_fcat (
+				proxy->res, QSE_MT("Via: %d.%d %hs (%hs)\r\n"), 
+				(int)v.major, (int)v.minor,
+				extra, qse_httpd_getname(httpd));
+			if (tmp == (qse_size_t)-1) 
+			{
+				httpd->errnum = QSE_HTTPD_ENOMEM;
+				return -1; 
+			}
+		}
 		/* end of headers */
+
 		if (qse_mbs_cat (proxy->res, QSE_MT("\r\n")) == (qse_size_t)-1) return -1; 
 
 		/* content body begins here */
@@ -834,10 +937,26 @@ static int task_init_proxy (
 			if (qse_mbs_cat (proxy->reqfwdbuf, QSE_MT("?")) == (qse_size_t)-1 ||
 			    qse_mbs_cat (proxy->reqfwdbuf, qse_htre_getqparam(arg->req)) == (qse_size_t)-1) goto oops;
 		}
+
 		if (qse_mbs_cat (proxy->reqfwdbuf, QSE_MT(" ")) == (qse_size_t)-1 ||
 		    qse_mbs_cat (proxy->reqfwdbuf, qse_htre_getverstr(arg->req)) == (qse_size_t)-1 ||
 		    qse_mbs_cat (proxy->reqfwdbuf, QSE_MT("\r\n")) == (qse_size_t)-1 ||
 		    qse_htre_walkheaders (arg->req, proxy_capture_client_header, proxy) <= -1) goto oops;
+
+		if (!(proxy->flags & PROXY_X_FORWARDED_FOR))
+		{
+			/* X-Forwarded-For is not added by proxy_capture_client_header() 
+			 * above. I don't care if it's included in the trailer. */
+			qse_mchar_t extra[128];
+
+			proxy->flags |= PROXY_X_FORWARDED_FOR;
+
+			qse_nwadtombs (&proxy->client->remote_addr, extra, QSE_COUNTOF(extra), QSE_NWADTOMBS_ALL);
+
+			if (qse_mbs_cat (proxy->reqfwdbuf, QSE_MT("X-Forwarded-For: ")) == (qse_size_t)-1 ||
+			    qse_mbs_cat (proxy->reqfwdbuf, extra) == (qse_size_t)-1 ||
+			    qse_mbs_cat (proxy->reqfwdbuf, QSE_MT("\r\n")) == (qse_size_t)-1) goto oops;
+		}
 
 		proxy->resflags |= PROXY_RES_AWAIT_RESHDR;
 		if ((arg->req->attr.flags & QSE_HTRE_ATTR_EXPECT100) &&
@@ -846,12 +965,21 @@ static int task_init_proxy (
 			proxy->resflags |= PROXY_RES_AWAIT_100;
 		}
 
-		if (!(httpd->opt.trait & QSE_HTTPD_PROXYNOVIA))
+		if (!(httpd->opt.trait & QSE_HTTPD_PROXYNOVIA) && !(proxy->flags & PROXY_VIA))
 		{
 			/* add the Via: header into the request */
-			if (qse_mbs_cat (proxy->reqfwdbuf, QSE_MT("Via: ")) == (qse_size_t)-1 ||
-			    qse_mbs_cat (proxy->reqfwdbuf, qse_httpd_getname (httpd)) == (qse_size_t)-1 ||
-			    qse_mbs_cat (proxy->reqfwdbuf, QSE_MT("\r\n")) == (qse_size_t)-1) goto oops;
+			qse_size_t tmp;
+			qse_mchar_t extra[128];
+
+			proxy->flags |= PROXY_VIA;
+
+			qse_nwadtombs (&proxy->client->local_addr, extra, QSE_COUNTOF(extra), QSE_NWADTOMBS_ALL);
+			tmp = qse_mbs_fcat (
+				proxy->reqfwdbuf, QSE_MT("Via: %d.%d %hs (%hs)\r\n"), 
+				(int)proxy->version.major, (int)proxy->version.minor, 
+				extra, qse_httpd_getname(httpd));
+			if (tmp == (qse_size_t)-1) goto oops;
+
 		}
 
 		if (arg->req->state & QSE_HTRE_DISCARDED)
