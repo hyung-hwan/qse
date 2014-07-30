@@ -114,12 +114,13 @@ enum qse_httpd_serverstd_query_code_t
 	QSE_HTTPD_SERVERSTD_DIRHEAD,        /* const qse_mchar_t* */
 	QSE_HTTPD_SERVERSTD_DIRFOOT,        /* const qse_mchar_t* */
 
+	QSE_HTTPD_SERVERSTD_PSEUDONYM,      /* const qse_mchar_t*, pseudonym to use in Via: */
+
 	QSE_HTTPD_SERVERSTD_INDEX,          /* qse_httpd_serverstd_index_t */
 	QSE_HTTPD_SERVERSTD_CGI,            /* qse_httpd_serverstd_cgi_t */
 	QSE_HTTPD_SERVERSTD_MIME,           /* const qse_mchar_t* */
 	QSE_HTTPD_SERVERSTD_DIRACC,         /* int (http error code) */
-	QSE_HTTPD_SERVERSTD_FILEACC,        /* int (http error code) */
-
+	QSE_HTTPD_SERVERSTD_FILEACC         /* int (http error code) */
 };
 typedef enum qse_httpd_serverstd_query_code_t qse_httpd_serverstd_query_code_t;
 

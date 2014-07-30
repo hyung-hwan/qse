@@ -51,6 +51,7 @@ struct task_proxy_t
 	int keepalive; /* taken from the request */
 	int raw;
 
+	qse_mchar_t* pseudonym;
 	qse_htrd_t* peer_htrd;
 
 	qse_mchar_t* peer_name;
@@ -180,16 +181,26 @@ static int proxy_capture_peer_header (qse_htre_t* req, const qse_mchar_t* key, c
 		if (qse_mbscasecmp (key, QSE_MT("Via")) == 0)
 		{
 			qse_mchar_t extra[128];
+			const qse_mchar_t* pseudonym;
 
 			proxy->flags |= PROXY_VIA_RETURNING;
-			qse_nwadtombs (&proxy->client->local_addr, extra, QSE_COUNTOF(extra), QSE_NWADTOMBS_ALL);
+
+			if (proxy->pseudonym[0])
+			{
+				pseudonym = proxy->pseudonym;
+			}
+			else
+			{
+				qse_nwadtombs (&proxy->client->local_addr, extra, QSE_COUNTOF(extra), QSE_NWADTOMBS_ALL);
+				pseudonym = extra;
+			}
 
 			return proxy_add_header_to_buffer_with_extra_data (
 				proxy, proxy->res, key, val, 
 				QSE_MT(", %d.%d %hs (%hs)"), 
 				(int)proxy->version.major,
 				(int)proxy->version.minor, 
-				extra,
+				pseudonym,
 				qse_httpd_getname(proxy->httpd));
 		}
 	}
@@ -245,16 +256,25 @@ static int proxy_capture_client_header (qse_htre_t* req, const qse_mchar_t* key,
 		if (qse_mbscasecmp (key, QSE_MT("Via")) == 0)
 		{
 			qse_mchar_t extra[128];
+			const qse_mchar_t* pseudonym;
 
 			proxy->flags |= PROXY_VIA;
-			qse_nwadtombs (&proxy->client->local_addr, extra, QSE_COUNTOF(extra), QSE_NWADTOMBS_ALL);
+			if (proxy->pseudonym[0])
+			{
+				pseudonym = proxy->pseudonym;
+			}
+			else
+			{
+				qse_nwadtombs (&proxy->client->local_addr, extra, QSE_COUNTOF(extra), QSE_NWADTOMBS_ALL);
+				pseudonym = extra;
+			}
 
 			return proxy_add_header_to_buffer_with_extra_data (
 				proxy, proxy->reqfwdbuf, key, val, 
 				QSE_MT(", %d.%d %hs (%hs)"), 
 				(int)proxy->version.major,
 				(int)proxy->version.minor, 
-				extra,
+				pseudonym,
 				qse_httpd_getname(proxy->httpd));
 		}
 	}
@@ -673,16 +693,26 @@ static int proxy_htrd_peek_peer_output (qse_htrd_t* htrd, qse_htre_t* res)
 			/* add the Via: header into the response if it is not 100. */
 			qse_size_t tmp;
 			qse_mchar_t extra[128];
+			const qse_mchar_t* pseudonym;
 			qse_http_version_t v;
 
 			proxy->flags |= PROXY_VIA_RETURNING;
 
 			v = *qse_htre_getversion(res);
-			qse_nwadtombs (&proxy->client->local_addr, extra, QSE_COUNTOF(extra), QSE_NWADTOMBS_ALL);
+			if (proxy->pseudonym[0])
+			{
+				pseudonym = proxy->pseudonym;
+			}
+			else
+			{
+				qse_nwadtombs (&proxy->client->local_addr, extra, QSE_COUNTOF(extra), QSE_NWADTOMBS_ALL);
+				pseudonym = extra;
+			}
+
 			tmp = qse_mbs_fcat (
 				proxy->res, QSE_MT("Via: %d.%d %hs (%hs)\r\n"), 
 				(int)v.major, (int)v.minor,
-				extra, qse_httpd_getname(httpd));
+				pseudonym, qse_httpd_getname(httpd));
 			if (tmp == (qse_size_t)-1) 
 			{
 				httpd->errnum = QSE_HTTPD_ENOMEM;
@@ -860,6 +890,17 @@ static int task_init_proxy (
 	proxy->version = *qse_htre_getversion(arg->req);
 	proxy->keepalive = (arg->req->attr.flags & QSE_HTRE_ATTR_KEEPALIVE);
 
+	proxy->pseudonym = (qse_mchar_t*)(proxy + 1);
+	if (arg->rsrc->pseudonym)
+	{
+		len = qse_mbscpy (proxy->pseudonym, arg->rsrc->pseudonym);
+	}
+	else
+	{
+		proxy->pseudonym[0] = QSE_MT('\0');
+		len = 0;
+	}
+
 	if (arg->rsrc->flags & QSE_HTTPD_RSRC_PROXY_RAW) proxy->flags |= PROXY_RAW;
 	proxy->peer.local = arg->rsrc->src.nwad;
 	if (arg->rsrc->flags & QSE_HTTPD_RSRC_PROXY_DST_STR)
@@ -867,7 +908,7 @@ static int task_init_proxy (
 		qse_mchar_t* colon;
 
 		proxy->flags |= PROXY_RESOL_PEER_NAME;
-		proxy->peer_name = (qse_mchar_t*)(proxy + 1);
+		proxy->peer_name = proxy->pseudonym + len + 1;
 		qse_mbscpy (proxy->peer_name, arg->rsrc->dst.str);
 
 		colon = qse_mbschr (proxy->peer_name, QSE_MT(':'));
@@ -970,14 +1011,23 @@ static int task_init_proxy (
 			/* add the Via: header into the request */
 			qse_size_t tmp;
 			qse_mchar_t extra[128];
+			const qse_mchar_t* pseudonym;
 
 			proxy->flags |= PROXY_VIA;
 
-			qse_nwadtombs (&proxy->client->local_addr, extra, QSE_COUNTOF(extra), QSE_NWADTOMBS_ALL);
+			if (proxy->pseudonym[0])
+			{
+				pseudonym = proxy->pseudonym;
+			}
+			else
+			{
+				qse_nwadtombs (&proxy->client->local_addr, extra, QSE_COUNTOF(extra), QSE_NWADTOMBS_ALL);
+				pseudonym = extra;
+			}
 			tmp = qse_mbs_fcat (
 				proxy->reqfwdbuf, QSE_MT("Via: %d.%d %hs (%hs)\r\n"), 
 				(int)proxy->version.major, (int)proxy->version.minor, 
-				extra, qse_httpd_getname(httpd));
+				pseudonym, qse_httpd_getname(httpd));
 			if (tmp == (qse_size_t)-1) goto oops;
 
 		}
@@ -1931,8 +1981,14 @@ qse_httpd_task_t* qse_httpd_entaskproxy (
 	arg.rsrc = proxy;
 	arg.req = req;
 	
+	if (proxy->pseudonym)
+		xtnsize += qse_mbslen (proxy->pseudonym) + 1;
+	else
+		xtnsize += 1;
+
 	if (proxy->flags & QSE_HTTPD_RSRC_PROXY_DST_STR)
-		xtnsize = qse_mbslen (proxy->dst.str) + 1;
+		xtnsize += qse_mbslen (proxy->dst.str) + 1;
+
 
 	QSE_MEMSET (&task, 0, QSE_SIZEOF(task));
 	task.init = task_init_proxy;
