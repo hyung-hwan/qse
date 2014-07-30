@@ -537,6 +537,8 @@ struct qse_httpd_rsrc_proxy_t
 		qse_nwad_t nwad;
 		const qse_mchar_t* str;
 	} dst; /* remote destination address to connect to */
+
+	const qse_mchar_t* pseudonym; /* pseudonym to use in Via: */
 };
 
 typedef struct qse_httpd_rsrc_dir_t qse_httpd_rsrc_dir_t;

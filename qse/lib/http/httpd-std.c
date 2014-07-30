@@ -3354,6 +3354,10 @@ static int make_resource (
 			target->u.proxy.src.nwad.type = target->u.proxy.dst.nwad.type;
 		}
 
+		/* pseudonym for raw proxying should not be useful. set it for consistency */
+		if (server_xtn->query (httpd, client->server, QSE_NULL, QSE_NULL, QSE_HTTPD_SERVERSTD_PSEUDONYM, &target->u.proxy.pseudonym) <= -1) 
+			target->u.proxy.pseudonym = QSE_NULL;
+
 		/* mark that this request is going to be proxied. */
 		req->attr.flags |= QSE_HTRE_ATTR_PROXIED;
 		return 0;
@@ -3394,6 +3398,9 @@ static int make_resource (
 					target->u.proxy.src.nwad.type = target->u.proxy.dst.nwad.type;
 				}
 
+				if (server_xtn->query (httpd, client->server, QSE_NULL, QSE_NULL, QSE_HTTPD_SERVERSTD_PSEUDONYM, &target->u.proxy.pseudonym) <= -1) 
+					target->u.proxy.pseudonym = QSE_NULL;
+
 /* TODO: refrain from manipulating the request like this */
 				req->u.q.path = slash; /* TODO: use setqpath or something... */
 
@@ -3417,6 +3424,9 @@ static int make_resource (
 			*/
 			target->u.proxy.dst.nwad = tmp.root.u.nwad;
 			target->u.proxy.src.nwad.type = target->u.proxy.dst.nwad.type;
+
+			if (server_xtn->query (httpd, client->server, QSE_NULL, QSE_NULL, QSE_HTTPD_SERVERSTD_PSEUDONYM, &target->u.proxy.pseudonym) <= -1) 
+				target->u.proxy.pseudonym = QSE_NULL;
 
 			/* mark that this request is going to be proxied. */
 			req->attr.flags |= QSE_HTRE_ATTR_PROXIED;
@@ -3809,6 +3819,10 @@ static int query_server (
 			}
 			return 0;
 		}
+
+		case QSE_HTTPD_SERVERSTD_PSEUDONYM:
+			*(const qse_mchar_t**)result = QSE_NULL;
+			return  0;
 	}
 
 	qse_httpd_seterrnum (httpd, QSE_HTTPD_EINVAL);

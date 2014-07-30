@@ -72,6 +72,7 @@ enum
 	XCFG_DIRFOOT,
 	XCFG_ERRHEAD,
 	XCFG_ERRFOOT,
+	XCFG_PSEUDONYM,
 	XCFG_MAX
 };
 
@@ -593,6 +594,10 @@ static int query_server (
 			*(const qse_mchar_t**)result = loccfg->xcfg[XCFG_ERRFOOT];
 			return 0;
 
+		case QSE_HTTPD_SERVERSTD_PSEUDONYM:
+			*(const qse_mchar_t**)result = loccfg->xcfg[XCFG_PSEUDONYM];
+			return 0;
+
 		case QSE_HTTPD_SERVERSTD_INDEX:
 			((qse_httpd_serverstd_index_t*)result)->count = loccfg->index.count;
 			((qse_httpd_serverstd_index_t*)result)->files = loccfg->index.files;
@@ -731,6 +736,7 @@ static struct
 	{ QSE_T("dir-foot"),    QSE_T("server-default.dir-foot") },
 	{ QSE_T("error-head"),  QSE_T("server-default.error-head") },
 	{ QSE_T("error-foot"),  QSE_T("server-default.error-foot") },
+	{ QSE_T("pseudonym"),   QSE_T("server-default.pseudonym") }
 };
 
 static struct 
@@ -1425,6 +1431,7 @@ static int open_config_file (qse_httpd_t* httpd)
 		{ QSE_T("server-default.dir-foot"),           { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
 		{ QSE_T("server-default.error-head"),         { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
 		{ QSE_T("server-default.error-foot"),         { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
+		{ QSE_T("server-default.pseudonym"),          { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
 
 		{ QSE_T("server"),                                  { QSE_XLI_SCM_VALLIST,                        0, 0      }  },
 		{ QSE_T("server.bind"),                             { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
@@ -1464,7 +1471,8 @@ static int open_config_file (qse_httpd_t* httpd)
 		{ QSE_T("server.host.location.dir-head"),           { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
 		{ QSE_T("server.host.location.dir-foot"),           { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
 		{ QSE_T("server.host.location.error-head"),         { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
-		{ QSE_T("server.host.location.error-foot"),         { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  }
+		{ QSE_T("server.host.location.error-foot"),         { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
+		{ QSE_T("server.host.location.pseudonym"),          { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  }
 	};
 
 
