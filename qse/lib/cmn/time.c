@@ -501,3 +501,33 @@ int qse_timelocal (const qse_btime_t* bt, qse_ntime_t* nt)
 	nt->nsec = 0;
 	return 0;
 }
+
+void qse_addtime (const qse_ntime_t* x, const qse_ntime_t* y, qse_ntime_t* z)
+{
+	QSE_ASSERT (x->nsec < QSE_NSECS_PER_SEC);
+	QSE_ASSERT (y->nsec < QSE_NSECS_PER_SEC);
+
+	z->sec = x->sec + y->sec;
+	z->nsec = x->nsec + y->nsec;
+
+	if (z->nsec >= QSE_NSECS_PER_SEC)
+	{
+		z->sec = z->sec + 1;
+		z->nsec = z->nsec - QSE_NSECS_PER_SEC;
+	}
+}
+
+void qse_subtime (const qse_ntime_t* x, const qse_ntime_t* y, qse_ntime_t* z)
+{
+	QSE_ASSERT (x->nsec < QSE_NSECS_PER_SEC);
+	QSE_ASSERT (y->nsec < QSE_NSECS_PER_SEC);
+
+	z->sec = x->sec - y->sec;
+	z->nsec = x->nsec - y->nsec;
+
+	if (z->nsec < 0)
+	{
+		z->sec = z->sec - 1;
+		z->nsec = z->nsec + QSE_NSECS_PER_SEC;
+	}
+}
