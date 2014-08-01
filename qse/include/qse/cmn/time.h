@@ -110,6 +110,11 @@ struct qse_btime_t
 	/*int offset;*/
 };
 
+#define qse_cleartime(x) ((x)->tv = (x)->nsec = 0);
+#define qse_cmptime(x,y) \
+	(((x)->sec == (y)->sec)? ((x)->nsec - (y)->nsec): \
+	                         ((x)->sec -  (y)->sec))
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -138,7 +143,7 @@ QSE_EXPORT int qse_gmtime (
 );
 
 /**
- * The qse_localtime() converts numeric time to broken-down time 
+ * The qse_localtime() function converts numeric time to broken-down time 
  */
 QSE_EXPORT int qse_localtime (
 	const qse_ntime_t*  nt, 
@@ -146,8 +151,8 @@ QSE_EXPORT int qse_localtime (
 ); 
 
 /**
- * The qse_timegm() converts broken-down time to numeric time. It is the 
- * inverse of qse_gmtime(). It is useful if the broken-down time is in UTC
+ * The qse_timegm() function converts broken-down time to numeric time. It is 
+ * the inverse of qse_gmtime(). It is useful if the broken-down time is in UTC
  * and the local environment is not.
  */
 QSE_EXPORT int qse_timegm (
@@ -162,6 +167,24 @@ QSE_EXPORT int qse_timegm (
 QSE_EXPORT int qse_timelocal (
 	const qse_btime_t* bt,
 	qse_ntime_t*       nt
+);
+
+/**
+ * The qse_addtime() function adds x and y and stores the result in z 
+ */
+QSE_EXPORT void qse_addtime (
+	const qse_ntime_t* x,
+	const qse_ntime_t* y,
+	qse_ntime_t*       z
+);
+
+/**
+ * The qse_subtime()  function subtract y from x and stores the result in z.
+ */
+QSE_EXPORT void qse_subtime (
+	const qse_ntime_t* x,
+	const qse_ntime_t* y,
+	qse_ntime_t*       z
 );
 
 #ifdef __cplusplus
