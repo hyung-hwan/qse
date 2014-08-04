@@ -41,6 +41,7 @@ pkginclude_HEADERS = \
 	task.h \
 	time.h \
 	tio.h \
+	tmr.h \
 	tre.h \
 	uni.h \
 	uri.h \

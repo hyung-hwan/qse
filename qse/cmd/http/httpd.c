@@ -624,7 +624,7 @@ static int query_server (
 					    (cgi->type == CGI_NAME && qse_mbscmp (xpath_base, cgi->spec) == 0))
 					{
 						scgi->cgi = 1;
-						scgi->nph = cgi->nph;		
+						scgi->nph = cgi->nph;
 						scgi->shebang = cgi->shebang;
 						return 0;
 					}

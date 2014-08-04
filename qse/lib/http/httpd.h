@@ -33,6 +33,7 @@ struct qse_httpd_t
 	qse_mmgr_t* mmgr;
 	qse_httpd_errnum_t errnum;
 	qse_httpd_ecb_t* ecb; /* event callbacks */
+	qse_tmr_t* tmr;
 
 	struct
 	{

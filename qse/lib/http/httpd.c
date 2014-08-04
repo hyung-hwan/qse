@@ -26,6 +26,7 @@
 #include <qse/cmn/sio.h>
 
 typedef struct htrd_xtn_t htrd_xtn_t;
+typedef struct tmr_xtn_t tmr_xtn_t;
 
 struct htrd_xtn_t
 {
@@ -46,7 +47,6 @@ qse_httpd_t* qse_httpd_open (qse_mmgr_t* mmgr, qse_size_t xtnsize)
 	httpd = (qse_httpd_t*) QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(qse_httpd_t) + xtnsize);
 	if (httpd)
 	{
-
 		if (qse_httpd_init (httpd, mmgr) <= -1)
 		{
 			QSE_MMGR_FREE (mmgr, httpd);
@@ -74,6 +74,8 @@ int qse_httpd_init (qse_httpd_t* httpd, qse_mmgr_t* mmgr)
 	QSE_MEMSET (httpd, 0, QSE_SIZEOF(*httpd));
 
 	httpd->mmgr = mmgr;
+	httpd->tmr = qse_tmr_open (mmgr, 0, 2048);
+	if (httpd->tmr == QSE_NULL) return -1;
 
 	qse_mbscpy (httpd->sname, QSE_MT("QSE-HTTPD " QSE_PACKAGE_VERSION));
 
@@ -86,6 +88,7 @@ int qse_httpd_init (qse_httpd_t* httpd, qse_mmgr_t* mmgr)
 void qse_httpd_fini (qse_httpd_t* httpd)
 {
 	free_server_list (httpd);
+	qse_tmr_close (httpd->tmr);
 }
 
 void qse_httpd_stop (qse_httpd_t* httpd)
@@ -379,11 +382,23 @@ static qse_htrd_recbs_t htrd_recbs =
 };
 
 /* ----------------------------------------------------------------------- */
+static void tmr_idle_updated (qse_tmr_t* tmr, qse_size_t old_index, qse_size_t new_index, void* ctx);
+static void check_if_client_is_idle (qse_tmr_t* tmr, const qse_ntime_t* now, void* ctx);
 
-static qse_httpd_client_t* new_client (
-	qse_httpd_t* httpd, qse_httpd_client_t* tmpl)
+static void mark_bad_client (qse_httpd_client_t* client)
+{
+	if (!(client->status & CLIENT_BAD))
+	{
+		client->status |= CLIENT_BAD;
+		client->bad_next = client->server->httpd->client.bad;
+		client->server->httpd->client.bad = client;
+	}
+}
+
+static qse_httpd_client_t* new_client (qse_httpd_t* httpd, qse_httpd_client_t* tmpl)
 {
 	qse_httpd_client_t* client;
+	qse_tmr_event_t idle_event;
 	htrd_xtn_t* xtn;
 
 	client = qse_httpd_allocmem (httpd, QSE_SIZEOF(*client));
@@ -399,6 +414,24 @@ static qse_httpd_client_t* new_client (
 		qse_httpd_freemem (httpd, client);
 		return QSE_NULL;
 	}
+
+	qse_gettime (&idle_event.when);
+	qse_addtime (&idle_event.when, &httpd->opt.idle_limit, &idle_event.when);
+	idle_event.ctx = client;
+	idle_event.handler = check_if_client_is_idle;
+	idle_event.updater = tmr_idle_updated;
+
+/*TODO: */ client->tmr_dns = QSE_TMR_INVALID;
+
+	client->tmr_idle = qse_tmr_insert (httpd->tmr, &idle_event);
+	if (client->tmr_idle == QSE_TMR_INVALID)
+	{
+		httpd->errnum = QSE_HTTPD_ENOMEM;
+		qse_htrd_close (client->htrd);
+		qse_httpd_freemem (httpd, client);
+		return QSE_NULL;
+	}
+printf ("tmr_insert %d\n", (int)client->tmr_idle);
 
 	qse_htrd_setoption (client->htrd, QSE_HTRD_REQUEST | QSE_HTRD_TRAILERS | QSE_HTRD_CANONQPATH);
 
@@ -448,6 +481,18 @@ qse_printf (QSE_T("Debug: CLOSING SOCKET %d\n"), client->handle.i);
 		httpd->opt.scb.client.closed (httpd, client);
 	
 	httpd->opt.scb.client.close (httpd, client);
+
+	if (client->tmr_idle != QSE_TMR_INVALID)
+	{
+		qse_tmr_remove (httpd->tmr, client->tmr_idle);
+		client->tmr_idle = QSE_TMR_INVALID;
+	}
+
+	if (client->tmr_dns != QSE_TMR_INVALID)
+	{
+		qse_tmr_remove (httpd->tmr, client->tmr_dns);
+		client->tmr_dns = QSE_TMR_INVALID;
+	}
 
 	qse_httpd_freemem (httpd, client);
 }
@@ -579,6 +624,51 @@ printf ("MUX ADDHND CLIENT READ %d\n", client->handle.i);
 	return 0;
 }
 
+
+static void tmr_idle_updated (qse_tmr_t* tmr, qse_size_t old_index, qse_size_t new_index, void* ctx)
+{
+printf ("tmr_idle updated %d %d\n", (int)old_index, (int)new_index);
+	qse_httpd_client_t* client = (qse_httpd_client_t*)ctx;
+	QSE_ASSERT (client->tmr_idle == old_index);
+	client->tmr_idle = new_index;
+}
+
+static void check_if_client_is_idle (qse_tmr_t* tmr, const qse_ntime_t* now, void* ctx)
+{
+	qse_httpd_client_t* client = (qse_httpd_client_t*)ctx;
+
+printf ("check if client is idle...\n");
+	if (qse_cmptime(now, &client->last_active) >= 0)
+	{
+		qse_ntime_t diff;
+		qse_subtime (now, &client->last_active, &diff);
+		if (qse_cmptime(&diff, &client->server->httpd->opt.idle_limit) >= 0)
+		{
+			/* this client is idle */
+printf ("client is idle purging....\n");
+			purge_client (client->server->httpd, client);
+		}
+		else
+		{
+			qse_tmr_event_t idle_event;
+
+			/*qse_gettime (&idle_event.when);*/
+			idle_event.when = *now;
+			qse_addtime (&idle_event.when, &client->server->httpd->opt.idle_limit, &idle_event.when);
+			idle_event.ctx = client;
+			idle_event.handler = check_if_client_is_idle;
+			idle_event.updater = tmr_idle_updated;
+
+			/* the timer must have been deleted when this callback is called. */
+			QSE_ASSERT (client->tmr_idle == QSE_TMR_INVALID); 
+			client->tmr_idle = qse_tmr_insert (tmr, &idle_event);
+			if (client->tmr_idle == QSE_TMR_INVALID) mark_bad_client (client);
+
+printf ("client is not idle rescheduling.....%d\n", (int)client->tmr_idle);
+		}
+	}
+}
+
 /* ----------------------------------------------------------------------- */
 
 static void deactivate_servers (qse_httpd_t* httpd)
@@ -603,6 +693,8 @@ static int activate_servers (qse_httpd_t* httpd)
 
 	for (server = httpd->server.list.head; server; server = server->next)
 	{
+		QSE_ASSERT (server->httpd == httpd);
+
 		if (httpd->opt.scb.server.open (httpd, server) <= -1)
 		{
 			qse_char_t buf[64];
@@ -672,6 +764,7 @@ qse_httpd_server_t* qse_httpd_attachserver (
 	/* and correct some fields in case the dope contains invalid stuffs */
 	server->dope.flags &= ~QSE_HTTPD_SERVER_ACTIVE;
 
+	server->httpd = httpd;
 	/* chain the server to the tail of the list */
 	server->prev = httpd->server.list.tail;
 	server->next = QSE_NULL;
@@ -1284,9 +1377,7 @@ static int perform_client_task (
 
 oops:
 	/*purge_client (httpd, client);*/
-	client->status |= CLIENT_BAD;
-	client->bad_next = httpd->client.bad;
-	httpd->client.bad = client;
+	mark_bad_client (client);
 	return -1;
 }
 
@@ -1312,31 +1403,6 @@ static void purge_bad_clients (qse_httpd_t* httpd)
 	}
 }
 
-static void purge_idle_clients (qse_httpd_t* httpd)
-{
-	qse_httpd_client_t* client;
-	qse_httpd_client_t* next_client;
-	qse_ntime_t now;
-
-	qse_gettime (&now);
-
-	client = httpd->client.list.head;
-	while (client)
-	{
-		next_client = client->next;
-
-		/* TODO: check the nsec part */
-		if (now.sec <= client->last_active.sec) break;
-		if (now.sec - client->last_active.sec < httpd->opt.idle_limit.sec) break; 
-
-		purge_client (httpd, client);
-		client = next_client;
-	}
-
-/* TODO: */
-}
-
-
 void* qse_httpd_gettaskxtn (qse_httpd_t* httpd, qse_httpd_task_t* task)
 {
 	return (void*)((qse_httpd_real_task_t*)task + 1);
@@ -1355,7 +1421,7 @@ qse_httpd_task_t* qse_httpd_entask (
 	if (new_task == QSE_NULL) 
 	{
 		/*purge_client (httpd, client);*/
-		client->status |= CLIENT_BAD;
+		mark_bad_client (client);
 	}
 	else if (new_task->prev == QSE_NULL)
 	{
@@ -1364,7 +1430,7 @@ qse_httpd_task_t* qse_httpd_entask (
 		if (update_mux_for_next_task (httpd, client) <= -1)
 		{
 			/*purge_client (httpd, client);*/
-			client->status |= CLIENT_BAD;
+			mark_bad_client (client);
 
 			/* call dequeue_task() to get new_task removed. this works
 			 * because it is the only task. the task finalizer is also 
@@ -1399,7 +1465,8 @@ static int dispatch_mux (
 
 int qse_httpd_loop (qse_httpd_t* httpd)
 {
-	int xret;
+	int xret, count;
+	qse_ntime_t tmout;
 
 	QSE_ASSERTX (httpd->server.list.head != QSE_NULL,
 		"Add listeners before calling qse_httpd_loop()");
@@ -1458,9 +1525,8 @@ int qse_httpd_loop (qse_httpd_t* httpd)
 
 	while (!httpd->stopreq)
 	{
-		int count;
-
-		count = httpd->opt.scb.mux.poll (httpd, httpd->mux, &httpd->opt.tmout);
+		if (qse_tmr_gettmout (httpd->tmr, QSE_NULL, &tmout) <= -1) tmout = httpd->opt.tmout;
+		count = httpd->opt.scb.mux.poll (httpd, httpd->mux, &tmout);
 		if (count <= -1) 
 		{
 			if (httpd->errnum != QSE_HTTPD_EINTR)
@@ -1470,10 +1536,8 @@ int qse_httpd_loop (qse_httpd_t* httpd)
 			}
 		}
 
-/* TODO: add timer and execute scheduled events here. */
-
+		qse_tmr_fire (httpd->tmr, QSE_NULL);
 		purge_bad_clients (httpd);
-		purge_idle_clients (httpd);
 
 		if (httpd->impedereq)
 		{
@@ -1488,6 +1552,7 @@ int qse_httpd_loop (qse_httpd_t* httpd)
 	if (httpd->dnsactive) deactivate_dns (httpd);
 
 	httpd->opt.scb.mux.close (httpd, httpd->mux);
+	qse_tmr_clear (httpd->tmr);
 	return xret;
 }
 

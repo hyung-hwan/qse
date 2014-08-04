@@ -106,6 +106,7 @@ libqsecmn_la_SOURCES = \
 	task.c \
 	time.c \
 	tio.c \
+	tmr.c \
 	tre.c \
 	tre-ast.c \
 	tre-compile.c \
