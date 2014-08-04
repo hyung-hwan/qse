@@ -504,8 +504,8 @@ int qse_timelocal (const qse_btime_t* bt, qse_ntime_t* nt)
 
 void qse_addtime (const qse_ntime_t* x, const qse_ntime_t* y, qse_ntime_t* z)
 {
-	QSE_ASSERT (x->nsec < QSE_NSECS_PER_SEC);
-	QSE_ASSERT (y->nsec < QSE_NSECS_PER_SEC);
+	QSE_ASSERT (x->nsec >= 0 && x->nsec < QSE_NSECS_PER_SEC);
+	QSE_ASSERT (y->nsec >= 0 && y->nsec < QSE_NSECS_PER_SEC);
 
 	z->sec = x->sec + y->sec;
 	z->nsec = x->nsec + y->nsec;
@@ -519,8 +519,8 @@ void qse_addtime (const qse_ntime_t* x, const qse_ntime_t* y, qse_ntime_t* z)
 
 void qse_subtime (const qse_ntime_t* x, const qse_ntime_t* y, qse_ntime_t* z)
 {
-	QSE_ASSERT (x->nsec < QSE_NSECS_PER_SEC);
-	QSE_ASSERT (y->nsec < QSE_NSECS_PER_SEC);
+	QSE_ASSERT (x->nsec >= 0 && x->nsec < QSE_NSECS_PER_SEC);
+	QSE_ASSERT (y->nsec >= 0 && y->nsec < QSE_NSECS_PER_SEC);
 
 	z->sec = x->sec - y->sec;
 	z->nsec = x->nsec - y->nsec;

@@ -110,7 +110,7 @@ struct qse_btime_t
 	/*int offset;*/
 };
 
-#define qse_cleartime(x) ((x)->tv = (x)->nsec = 0);
+#define qse_cleartime(x) ((x)->sec = (x)->nsec = 0);
 #define qse_cmptime(x,y) \
 	(((x)->sec == (y)->sec)? ((x)->nsec - (y)->nsec): \
 	                         ((x)->sec -  (y)->sec))

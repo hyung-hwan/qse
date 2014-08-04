@@ -27,6 +27,7 @@
 #include <qse/http/htrd.h>
 #include <qse/cmn/nwad.h>
 #include <qse/cmn/time.h>
+#include <qse/cmn/tmr.h>
 
 typedef struct qse_httpd_t        qse_httpd_t;
 typedef struct qse_httpd_mate_t   qse_httpd_mate_t;
@@ -421,6 +422,9 @@ struct qse_httpd_client_t
 	qse_httpd_task_trigger_t trigger;
 	qse_ntime_t              last_active;
 
+	qse_size_t               tmr_idle;
+	qse_size_t               tmr_dns;
+
 	qse_httpd_client_t*      prev;
 	qse_httpd_client_t*      next;
  
@@ -468,6 +472,7 @@ struct qse_httpd_server_t
 	qse_ubi_t  handle;
 
 	/* private  */
+	qse_httpd_t*          httpd;
 	qse_httpd_server_t*   next;
 	qse_httpd_server_t*   prev;
 };

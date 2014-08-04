@@ -115,7 +115,7 @@ am__libqsecmn_la_SOURCES_DIST = alg-base64.c alg-rand.c alg-search.c \
 	str-fcpy.c str-fmt.c str-fnmat.c str-incl.c str-join.c \
 	str-len.c str-pac.c str-pbrk.c str-put.c str-rev.c str-rot.c \
 	str-set.c str-spl.c str-spn.c str-str.c str-subst.c str-tok.c \
-	str-trm.c str-word.c task.c time.c tio.c tre.c tre-ast.c \
+	str-trm.c str-word.c task.c time.c tio.c tmr.c tre.c tre-ast.c \
 	tre-compile.c tre-match-backtrack.c tre-match-parallel.c \
 	tre-parse.c tre-stack.c uri.c utf8.c xma.c uni.c cp949.c \
 	cp950.c
@@ -134,7 +134,7 @@ am_libqsecmn_la_OBJECTS = alg-base64.lo alg-rand.lo alg-search.lo \
 	str-join.lo str-len.lo str-pac.lo str-pbrk.lo str-put.lo \
 	str-rev.lo str-rot.lo str-set.lo str-spl.lo str-spn.lo \
 	str-str.lo str-subst.lo str-tok.lo str-trm.lo str-word.lo \
-	task.lo time.lo tio.lo tre.lo tre-ast.lo tre-compile.lo \
+	task.lo time.lo tio.lo tmr.lo tre.lo tre-ast.lo tre-compile.lo \
 	tre-match-backtrack.lo tre-match-parallel.lo tre-parse.lo \
 	tre-stack.lo uri.lo utf8.lo xma.lo $(am__objects_1) \
 	$(am__objects_2)
@@ -422,7 +422,7 @@ libqsecmn_la_SOURCES = alg-base64.c alg-rand.c alg-search.c alg-sort.c \
 	str-fcpy.c str-fmt.c str-fnmat.c str-incl.c str-join.c \
 	str-len.c str-pac.c str-pbrk.c str-put.c str-rev.c str-rot.c \
 	str-set.c str-spl.c str-spn.c str-str.c str-subst.c str-tok.c \
-	str-trm.c str-word.c task.c time.c tio.c tre.c tre-ast.c \
+	str-trm.c str-word.c task.c time.c tio.c tmr.c tre.c tre-ast.c \
 	tre-compile.c tre-match-backtrack.c tre-match-parallel.c \
 	tre-parse.c tre-stack.c uri.c utf8.c xma.c $(am__append_1) \
 	$(am__append_2)
@@ -591,6 +591,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/task.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/time.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tio.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tmr.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tre-ast.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tre-compile.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tre-match-backtrack.Plo@am__quote@
