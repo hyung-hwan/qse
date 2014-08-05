@@ -20,9 +20,6 @@
 
 #include <qse/types.h>
 #include <qse/macros.h>
-
-#if !defined(NDEBUG)
-
 #include <qse/cmn/sio.h>
 #include "mem.h"
 
@@ -252,6 +249,4 @@ done:
 	QSE_EXIT (1);
 #endif
 }
-
-#endif
 
