@@ -142,6 +142,16 @@ enum qse_httpd_serverstd_opt_t
 };
 typedef enum qse_httpd_serverstd_opt_t qse_httpd_serverstd_opt_t;
 
+#define QSE_HTTPD_DNSSTD_DEFAULT_TMOUT 10
+
+struct qse_httpd_dnsstd_t
+{
+	qse_nwad_t nwad;
+	qse_ntime_t tmout;
+};
+
+typedef struct qse_httpd_dnsstd_t qse_httpd_dnsstd_t;
+
 #if defined(__cplusplus)
 extern "C" {
 #endif
@@ -196,8 +206,8 @@ QSE_EXPORT void* qse_httpd_getserverstdxtn (
 );
 
 QSE_EXPORT int qse_httpd_loopstd (
-	qse_httpd_t*       httpd,
-	const qse_nwad_t*  dnsnwad
+	qse_httpd_t*              httpd,
+	const qse_httpd_dnsstd_t* dns
 );
 
 #ifdef __cplusplus

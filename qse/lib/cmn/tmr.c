@@ -85,9 +85,11 @@ void* qse_tmr_getxtn (qse_tmr_t* tmr)
 void qse_tmr_clear (qse_tmr_t* tmr)
 {
 	tmr->size = 0;
+
+/* TOOD: use tmr_remove for notification.... */
 }
 
-static qse_size_t sift_up (qse_tmr_t* tmr, qse_size_t index)
+static qse_size_t sift_up (qse_tmr_t* tmr, qse_size_t index, int notify)
 {
 	qse_size_t parent;
 
@@ -109,15 +111,18 @@ static qse_size_t sift_up (qse_tmr_t* tmr, qse_size_t index)
 		}
 		while (index > 0 && YOUNGER_THAN(&item, &tmr->event[parent]));
 
+		/* we send no notification if the item is added with qse_tmr_insert()
+		 * or updated with qse_tmr_update(). the caller of the funnctions must
+		 * reply on the return value. */
 		tmr->event[index] = item;
-		if (index != old_index)
+		if (notify && index != old_index)
 			tmr->event[index].updater (tmr, old_index, index, tmr->event[index].ctx);
 	}
 
 	return index;
 }
 
-static qse_size_t sift_down (qse_tmr_t* tmr, qse_size_t index)
+static qse_size_t sift_down (qse_tmr_t* tmr, qse_size_t index, int notify)
 {
 	qse_size_t base = tmr->size / 2;
 
@@ -152,7 +157,7 @@ static qse_size_t sift_down (qse_tmr_t* tmr, qse_size_t index)
 		while (index < base);
 		
 		tmr->event[index] = item;
-		if (index != old_index)
+		if (notify && index != old_index)
 			tmr->event[index].updater (tmr, old_index, index, tmr->event[index].ctx);
 	}
 
@@ -165,22 +170,24 @@ void qse_tmr_remove (qse_tmr_t* tmr, qse_size_t index)
 
 	QSE_ASSERT (index < tmr->size);
 
+printf ("tmr_remove.....>>>>>>>>>>>>size=>%d index=>%d\n", (int)tmr->size, (int)index);
 	item = tmr->event[index];
 	tmr->event[index].updater (tmr, index, QSE_TMR_INVALID, tmr->event[index].ctx);
+
 	tmr->size = tmr->size - 1;
-	if (tmr->size > 0)
+	if (tmr->size > 0 && index != tmr->size)
 	{
 		tmr->event[index] = tmr->event[tmr->size];
 		tmr->event[index].updater (tmr, tmr->size, index, tmr->event[index].ctx);
-		YOUNGER_THAN(&tmr->event[index], &item)? sift_up(tmr, index): sift_down(tmr, index);
+		YOUNGER_THAN(&tmr->event[index], &item)? sift_up(tmr, index, 1): sift_down(tmr, index, 1);
 	}
 }
-
 
 qse_size_t qse_tmr_insert (qse_tmr_t* tmr, const qse_tmr_event_t* event)
 {
 	qse_size_t index = tmr->size;
 
+printf ("tmr_insert ......size => %d\n", (int)tmr->size);
 	if (index >= tmr->capa)
 	{
 		qse_tmr_event_t* tmp;
@@ -196,7 +203,7 @@ qse_size_t qse_tmr_insert (qse_tmr_t* tmr, const qse_tmr_event_t* event)
 
 	tmr->size = tmr->size + 1;
 	tmr->event[index] = *event;
-	return sift_up (tmr, index);
+	return sift_up (tmr, index, 0);
 }
 
 qse_size_t qse_tmr_update (qse_tmr_t* tmr, qse_size_t index, const qse_tmr_event_t* event)
@@ -205,7 +212,7 @@ qse_size_t qse_tmr_update (qse_tmr_t* tmr, qse_size_t index, const qse_tmr_event
 
 	item = tmr->event[index];
 	tmr->event[index] = *event;
-	return YOUNGER_THAN(event, &item)? sift_up (tmr, index): sift_down (tmr, index);
+	return YOUNGER_THAN(event, &item)? sift_up (tmr, index, 0): sift_down (tmr, index, 0);
 }
 
 qse_size_t qse_tmr_fire (qse_tmr_t* tmr, const qse_ntime_t* tm)
@@ -245,5 +252,7 @@ int qse_tmr_gettmout (qse_tmr_t* tmr, const qse_ntime_t* tm, qse_ntime_t* tmout)
 
 	qse_subtime (&tmr->event[0].when, &now, tmout);
 	if (tmout->sec < 0) qse_cleartime (tmout);
+
+	return 0;
 }
 

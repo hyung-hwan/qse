@@ -423,7 +423,6 @@ struct qse_httpd_client_t
 	qse_ntime_t              last_active;
 
 	qse_size_t               tmr_idle;
-	qse_size_t               tmr_dns;
 
 	qse_httpd_client_t*      prev;
 	qse_httpd_client_t*      next;

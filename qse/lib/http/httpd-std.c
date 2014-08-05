@@ -542,7 +542,7 @@ struct httpd_xtn_t
 	SSL_CTX* ssl_ctx;
 #endif
 	qse_httpd_ecb_t ecb;
-	qse_nwad_t dnsnwad;
+	qse_httpd_dnsstd_t dns;
 };
 
 #if defined(HAVE_SSL)
@@ -612,9 +612,10 @@ static void fini_xtn_ssl (httpd_xtn_t* xtn)
 
 static void cleanup_standard_httpd (qse_httpd_t* httpd)
 {
-#if defined(HAVE_SSL)
 	httpd_xtn_t* xtn;
 	xtn = (httpd_xtn_t*)qse_httpd_getxtn (httpd);
+
+#if defined(HAVE_SSL)
 	if (xtn->ssl_ctx) fini_xtn_ssl (xtn);
 #endif
 }
@@ -656,6 +657,7 @@ void* qse_httpd_getxtnstd (qse_httpd_t* httpd)
 	typedef int sock_t;
 #	define SOCK_INIT -1
 #endif
+
 #if !defined(HAVE_SOCKLEN_T)
 	typedef int socklen_t;
 #endif
@@ -2140,6 +2142,9 @@ struct dns_req_t
 	int qalen;
 	int qaaaalen;
 
+	dns_ctx_t* dc;
+	qse_size_t tmr_tmout;
+
 	dns_req_t* next;
 };
 
@@ -2265,7 +2270,7 @@ static int dns_open (qse_httpd_t* httpd, qse_httpd_dns_t* dns)
 
 /* TODO: add static cache entries from /etc/hosts */
 
-	nwad = httpd_xtn->dnsnwad;
+	nwad = httpd_xtn->dns.nwad;
 	if (nwad.type == QSE_NWAD_NX)
 	{
 		qse_sio_t* sio;
@@ -2361,6 +2366,15 @@ oops:
 #endif
 }
 
+static void dns_remove_tmr_tmout (dns_req_t* req)
+{
+	if (req->tmr_tmout != QSE_TMR_INVALID)
+	{
+		qse_tmr_remove (req->dc->httpd->tmr, req->tmr_tmout);
+		req->tmr_tmout = QSE_TMR_INVALID;
+	}
+}
+
 static void dns_close (qse_httpd_t* httpd, qse_httpd_dns_t* dns)
 {
 	dns_ctx_t* dc = (dns_ctx_t*)dns->ctx;
@@ -2372,6 +2386,7 @@ static void dns_close (qse_httpd_t* httpd, qse_httpd_dns_t* dns)
 		while (dc->reqs[i])
 		{
 			next_req = dc->reqs[i]->next;
+			dns_remove_tmr_tmout (dc->reqs[i]);
 			qse_httpd_freemem (httpd, dc->reqs[i]);
 			dc->reqs[i] = next_req;
 		}
@@ -2520,7 +2535,7 @@ printf ("DNS_RECV....\n");
 		xid = (id >= QSE_COUNTOF(dc->reqs))? (id - QSE_COUNTOF(dc->reqs)): id;
 
 printf ("%d qdcount %d ancount %d\n", id, qdcount, ancount);
-		if (id >= 0 && id < QSE_COUNTOF(dc->reqs) * 2 && hdr->qr && hdr->opcode == DNS_OPCODE_QUERY && qdcount >= 1)
+		if (xid >= 0 && xid < QSE_COUNTOF(dc->reqs) && hdr->qr && hdr->opcode == DNS_OPCODE_QUERY && qdcount >= 1)
 		{
 			qse_uint8_t* plptr = (qse_uint8_t*)(hdr + 1);
 			qse_size_t pllen = len - QSE_SIZEOF(*hdr);
@@ -2603,11 +2618,11 @@ printf ("invoking resoll with ipv4 \n");
 							nwad.type = QSE_NWAD_IN6;
 							QSE_MEMCPY (&nwad.u.in6.addr, antrail + 1, 16);
 printf ("invoking resoll with ipv6 \n");
-
 						}
 
 						if (nwad.type != QSE_NWAD_NX)
 						{
+							dns_remove_tmr_tmout (req);
 							req->resol (httpd, req->name, &nwad, req->ctx);
 
 							/* detach the request off dc->reqs */
@@ -2626,7 +2641,6 @@ printf ("invoking resoll with ipv6 \n");
 				}
 			}
 
-
 			/* no good answer have been found */
 			if (id == req->seqa) req->flags |= DNS_REQ_A_NX;
 			else if (id == req->seqaaaa) req->flags |= DNS_REQ_AAAA_NX;
@@ -2634,7 +2648,7 @@ printf ("invoking resoll with ipv6 \n");
 			if ((req->flags & (DNS_REQ_A_NX | DNS_REQ_AAAA_NX)) == (DNS_REQ_A_NX | DNS_REQ_AAAA_NX))
 			{
 				/* both ipv4 and ipv6 address are unresolvable */
-
+				dns_remove_tmr_tmout (req);
 				req->resol (httpd, req->name, QSE_NULL, req->ctx);
 
 				/* detach the request off dc->reqs */
@@ -2645,21 +2659,65 @@ printf ("invoking resoll with ipv6 \n");
 				dns_cache_answer (dc, req, QSE_NULL, DNS_MIN_TTL);
 			}
 		}
-		
 	}
 
 done:
 	return 0;
 }
 
+static void tmr_dns_tmout_updated (qse_tmr_t* tmr, qse_size_t old_index, qse_size_t new_index, void* ctx)
+{
+	dns_req_t* req = (dns_req_t*)ctx;
+
+printf (">>tmr_dns_tmout_updated %d %d\n", (int)req->tmr_tmout, (int)old_index);
+	QSE_ASSERT (req->tmr_tmout == old_index);
+	req->tmr_tmout = new_index;
+}
+
+static void tmr_dns_tmout_handle (qse_tmr_t* tmr, const qse_ntime_t* now, void* ctx)
+{
+	/* destory the unanswered request if timed out */
+	dns_req_t* req = (dns_req_t*)ctx;
+	dns_req_t* preq, * xreq;
+	qse_uint16_t xid;
+
+printf ("dns timed out....\n");
+	xid = req->seqa; 
+	QSE_ASSERT (xid >= 0 && QSE_COUNTOF(req->dc->reqs));
+/* TODO: doubly linked list??? speed up ??? */
+	for (preq = QSE_NULL, xreq = req->dc->reqs[xid]; xreq; preq = xreq, xreq = xreq->next)
+	{
+		if (req == xreq) break;
+	}
+
+	QSE_ASSERT (req == xreq);
+	/* detach the request off dc->reqs */
+	if (preq) preq->next = req->next;
+	else req->dc->reqs[xid] = req->next;
+
+	QSE_ASSERT (req->tmr_tmout == QSE_TMR_INVALID);
+
+	/* dns timed out. report that name resolution failed */
+	req->resol (req->dc->httpd, req->name, QSE_NULL, req->ctx);
+
+	/* i don't cache the items that have timed out */
+	qse_httpd_freemem (req->dc->httpd, req);
+	
+}
+
 static int dns_send (qse_httpd_t* httpd, qse_httpd_dns_t* dns, const qse_mchar_t* name, qse_httpd_resol_t resol, void* ctx)
 {
-	qse_uint32_t seq;
 	dns_ctx_t* dc = (dns_ctx_t*)dns->ctx;
+	httpd_xtn_t* httpd_xtn = qse_httpd_getxtn (httpd);
+
+	qse_uint32_t seq;
 	dns_req_t* req;
 	qse_size_t name_len;
 	dns_ans_t* ans;
+	qse_tmr_event_t tmout_event;
+	
 
+printf ("DNS REALLY SENING>>>>>>>>>>>>>>>>>>>>>>>\n");
 	ans = dns_get_answer_from_cache (dc, name);
 	if (ans)
 	{
@@ -2712,17 +2770,37 @@ static int dns_send (qse_httpd_t* httpd, qse_httpd_dns_t* dns, const qse_mchar_t
 		return -1;
 	}
 
-	if ((req->qalen > 0 && sendto (dns->handle.i, req->qa, req->qalen, 0, (struct sockaddr*)&dc->skad, dc->skadlen) != req->qalen) ||
-	    (req->qaaaalen > 0 && sendto (dns->handle.i, req->qaaaa, req->qaaaalen, 0, (struct sockaddr*)&dc->skad, dc->skadlen) != req->qaaaalen))
+	qse_gettime (&tmout_event.when);
+	qse_addtime (&tmout_event.when, &httpd_xtn->dns.tmout, &tmout_event.when);
+	tmout_event.ctx = req;
+	tmout_event.handler = tmr_dns_tmout_handle;
+	tmout_event.updater = tmr_dns_tmout_updated;
+	
+printf ("ABOUT TO REGISTER TMR_TMOUT...\n");
+	req->tmr_tmout = qse_tmr_insert (httpd->tmr, &tmout_event);
+	if (req->tmr_tmout == QSE_TMR_INVALID)
 	{
 		qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
 		qse_httpd_freemem (httpd, req);
 		return -1;
 	}
+printf ("???? initial tmr_tmout => %d\n", (int)req->tmr_tmout);
 
+	if ((req->qalen > 0 && sendto (dns->handle.i, req->qa, req->qalen, 0, (struct sockaddr*)&dc->skad, dc->skadlen) != req->qalen) ||
+	    (req->qaaaalen > 0 && sendto (dns->handle.i, req->qaaaa, req->qaaaalen, 0, (struct sockaddr*)&dc->skad, dc->skadlen) != req->qaaaalen))
+	{
+		qse_tmr_remove (httpd->tmr, req->tmr_tmout);
+		req->tmr_tmout = QSE_TMR_INVALID;
+		qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
+		qse_httpd_freemem (httpd, req);
+		return -1;
+	}
+
+	req->dc = dc;
 	req->next = dc->reqs[seq];
 	dc->reqs[seq] = req;
 
+printf ("DNS REALLY SENT>>>>>>>>>>>>>>>>>>>>>>>\n");
 	return 0;
 }
 
@@ -3980,14 +4058,19 @@ void* qse_httpd_getserverstdxtn (qse_httpd_t* httpd, qse_httpd_server_t* server)
 
 /* ------------------------------------------------------------------- */
 
-int qse_httpd_loopstd (qse_httpd_t* httpd, const qse_nwad_t* dnsnwad)
+int qse_httpd_loopstd (qse_httpd_t* httpd, const qse_httpd_dnsstd_t* dns)
 {
 	httpd_xtn_t* httpd_xtn = qse_httpd_getxtn (httpd);
 
-	if (dnsnwad)
-		httpd_xtn->dnsnwad = *dnsnwad;
+	if (dns)
+	{
+		httpd_xtn->dns = *dns;
+	}
 	else
-		httpd_xtn->dnsnwad.type = QSE_NWAD_NX;
+	{
+		httpd_xtn->dns.nwad.type = QSE_NWAD_NX;
+		httpd_xtn->dns.tmout.sec = QSE_HTTPD_DNSSTD_DEFAULT_TMOUT;
+	}
 
 	return qse_httpd_loop (httpd);
 }

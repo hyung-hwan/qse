@@ -287,19 +287,22 @@
 #	define QSE_STRUCT_FIELD(id,value) value
 #endif
 
+
+/**
+ * The QSE_XTN() macro is a convenience macro to retrieve the pointer to 
+ * extension space located at the end of an object. The type of the object
+ * should be known in advance for it to work properly.
+ */
+#define QSE_XTN(obj) ((void*)(obj + 1))
+
+/* ---------------------------------------------------------------------- 
+ * ASSERTION 
+ * ---------------------------------------------------------------------- */
+
 #ifdef NDEBUG
 #	define QSE_ASSERT(expr) ((void)0)
 #	define QSE_ASSERTX(expr,desc) ((void)0)
 #else
-#	ifdef __cplusplus
-		extern "C" {
-#	endif
-		QSE_EXPORT void qse_assert_failed (
-        		const qse_char_t* expr, const qse_char_t* desc,
-        		const qse_char_t* file, qse_size_t line);
-#	ifdef __cplusplus
-		}
-#	endif
 
 #	define QSE_ASSERT(expr) (void)((expr) || \
 		(qse_assert_failed (QSE_T(#expr), QSE_NULL, QSE_T(__FILE__), __LINE__), 0))
@@ -308,17 +311,23 @@
 #endif
 
 #ifdef __cplusplus
+extern "C" {
+#endif
+QSE_EXPORT void qse_assert_failed (
+	const qse_char_t* expr, const qse_char_t* desc,
+	const qse_char_t* file, qse_size_t line);
+#ifdef __cplusplus
+}
+#endif
+
+/* ---------------------------------------------------------------------- 
+ * C++ NAMESPACE
+ * ---------------------------------------------------------------------- */
+#ifdef __cplusplus
 #	define QSE_BEGIN_NAMESPACE(x)    namespace x {
 #	define QSE_END_NAMESPACE(x)      }
 #	define QSE_BEGIN_NAMESPACE2(x,y) namespace x { namespace y {
 #	define QSE_END_NAMESPACE2(y,x)   }}
 #endif
-
-/**
- * The QSE_XTN() macro is a convenience macro to retrieve the pointer to 
- * extension space located at the end of an object. The type of the object
- * should be known in advance for it to work properly.
- */
-#define QSE_XTN(obj) ((void*)(obj + 1))
 
 #endif

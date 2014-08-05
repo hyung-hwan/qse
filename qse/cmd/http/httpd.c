@@ -2008,7 +2008,7 @@ int qse_main (int argc, qse_achar_t* argv[])
 #endif
 
 #if defined(_WIN32)
-	WSACleanup ();	
+	WSACleanup ();
 #endif
 
 	return ret;

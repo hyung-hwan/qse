@@ -383,10 +383,11 @@ static qse_htrd_recbs_t htrd_recbs =
 
 /* ----------------------------------------------------------------------- */
 static void tmr_idle_updated (qse_tmr_t* tmr, qse_size_t old_index, qse_size_t new_index, void* ctx);
-static void check_if_client_is_idle (qse_tmr_t* tmr, const qse_ntime_t* now, void* ctx);
+static void tmr_idle_handle (qse_tmr_t* tmr, const qse_ntime_t* now, void* ctx);
 
 static void mark_bad_client (qse_httpd_client_t* client)
 {
+	/* you can call this function multiple times */
 	if (!(client->status & CLIENT_BAD))
 	{
 		client->status |= CLIENT_BAD;
@@ -418,10 +419,8 @@ static qse_httpd_client_t* new_client (qse_httpd_t* httpd, qse_httpd_client_t* t
 	qse_gettime (&idle_event.when);
 	qse_addtime (&idle_event.when, &httpd->opt.idle_limit, &idle_event.when);
 	idle_event.ctx = client;
-	idle_event.handler = check_if_client_is_idle;
+	idle_event.handler = tmr_idle_handle;
 	idle_event.updater = tmr_idle_updated;
-
-/*TODO: */ client->tmr_dns = QSE_TMR_INVALID;
 
 	client->tmr_idle = qse_tmr_insert (httpd->tmr, &idle_event);
 	if (client->tmr_idle == QSE_TMR_INVALID)
@@ -486,12 +485,6 @@ qse_printf (QSE_T("Debug: CLOSING SOCKET %d\n"), client->handle.i);
 	{
 		qse_tmr_remove (httpd->tmr, client->tmr_idle);
 		client->tmr_idle = QSE_TMR_INVALID;
-	}
-
-	if (client->tmr_dns != QSE_TMR_INVALID)
-	{
-		qse_tmr_remove (httpd->tmr, client->tmr_dns);
-		client->tmr_dns = QSE_TMR_INVALID;
 	}
 
 	qse_httpd_freemem (httpd, client);
@@ -627,13 +620,13 @@ printf ("MUX ADDHND CLIENT READ %d\n", client->handle.i);
 
 static void tmr_idle_updated (qse_tmr_t* tmr, qse_size_t old_index, qse_size_t new_index, void* ctx)
 {
-printf ("tmr_idle updated %d %d\n", (int)old_index, (int)new_index);
 	qse_httpd_client_t* client = (qse_httpd_client_t*)ctx;
+printf ("tmr_idle updated old_index %d new_index %d tmr_idle %d\n", (int)old_index, (int)new_index, (int)client->tmr_idle);
 	QSE_ASSERT (client->tmr_idle == old_index);
 	client->tmr_idle = new_index;
 }
 
-static void check_if_client_is_idle (qse_tmr_t* tmr, const qse_ntime_t* now, void* ctx)
+static void tmr_idle_handle (qse_tmr_t* tmr, const qse_ntime_t* now, void* ctx)
 {
 	qse_httpd_client_t* client = (qse_httpd_client_t*)ctx;
 
@@ -656,7 +649,7 @@ printf ("client is idle purging....\n");
 			idle_event.when = *now;
 			qse_addtime (&idle_event.when, &client->server->httpd->opt.idle_limit, &idle_event.when);
 			idle_event.ctx = client;
-			idle_event.handler = check_if_client_is_idle;
+			idle_event.handler = tmr_idle_handle;
 			idle_event.updater = tmr_idle_updated;
 
 			/* the timer must have been deleted when this callback is called. */
@@ -1474,6 +1467,8 @@ int qse_httpd_loop (qse_httpd_t* httpd)
 	QSE_ASSERTX (httpd->client.list.head == QSE_NULL,
 		"No client should exist when this loop is started");
 
+	QSE_ASSERT (QSE_TMR_SIZE(httpd->tmr) == 0);
+
 	if (httpd->server.list.head == QSE_NULL) 
 	{
 		httpd->errnum = QSE_HTTPD_EINVAL;
@@ -1552,7 +1547,8 @@ int qse_httpd_loop (qse_httpd_t* httpd)
 	if (httpd->dnsactive) deactivate_dns (httpd);
 
 	httpd->opt.scb.mux.close (httpd, httpd->mux);
-	qse_tmr_clear (httpd->tmr);
+
+	QSE_ASSERT (QSE_TMR_SIZE(httpd->tmr) == 0);
 	return xret;
 }
 
