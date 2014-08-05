@@ -142,12 +142,20 @@ enum qse_httpd_serverstd_opt_t
 };
 typedef enum qse_httpd_serverstd_opt_t qse_httpd_serverstd_opt_t;
 
-#define QSE_HTTPD_DNSSTD_DEFAULT_TMOUT 10
+#define QSE_HTTPD_DNSSTD_DEFAULT_TMOUT        3
+#define QSE_HTTPD_DNSSTD_DEFAULT_RESENDS      2
+#define QSE_HTTPD_DNSSTD_DEFAULT_CACHE_TTL    120
+#define QSE_HTTPD_DNSSTD_DEFAULT_CACHE_NEGTTL 10
+#define QSE_HTTPD_DNSSTD_DEFAULT_CACHE_MINTTL 2
 
 struct qse_httpd_dnsstd_t
 {
 	qse_nwad_t nwad;
 	qse_ntime_t tmout;
+	qse_uint32_t resends;
+	qse_uint32_t cache_ttl;
+	qse_uint32_t cache_minttl; /* minimum ttl */
+	qse_uint32_t cache_negttl; /* negative ttl */
 };
 
 typedef struct qse_httpd_dnsstd_t qse_httpd_dnsstd_t;

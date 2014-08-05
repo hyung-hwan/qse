@@ -35,13 +35,14 @@ struct task_proxy_arg_t
 typedef struct task_proxy_t task_proxy_t;
 struct task_proxy_t
 {
-#define PROXY_INIT_FAILED       (1 << 0)
-#define PROXY_RAW               (1 << 1)
-#define PROXY_RESOL_PEER_NAME   (1 << 2)
-#define PROXY_UNKNOWN_PEER_NWAD (1 << 3)
-#define PROXY_X_FORWARDED_FOR   (1 << 4)
-#define PROXY_VIA               (1 << 5)
-#define PROXY_VIA_RETURNING     (1 << 6)
+#define PROXY_INIT_FAILED          (1 << 0)
+#define PROXY_RAW                  (1 << 1)
+#define PROXY_RESOLVE_PEER_NAME    (1 << 2)
+#define PROXY_PEER_NAME_RESOLVED   (1 << 3)
+#define PROXY_PEER_NAME_UNRESOLVED (1 << 4)
+#define PROXY_X_FORWARDED_FOR      (1 << 5)
+#define PROXY_VIA                  (1 << 6)
+#define PROXY_VIA_RETURNING        (1 << 7)
 	int flags;
 	qse_httpd_t* httpd;
 	qse_httpd_client_t* client;
@@ -907,7 +908,7 @@ static int task_init_proxy (
 	{
 		qse_mchar_t* colon;
 
-		proxy->flags |= PROXY_RESOL_PEER_NAME;
+		proxy->flags |= PROXY_RESOLVE_PEER_NAME;
 		proxy->peer_name = proxy->pseudonym + len + 1;
 		qse_mbscpy (proxy->peer_name, arg->rsrc->dst.str);
 
@@ -1794,9 +1795,10 @@ static void on_peer_name_resolved (qse_httpd_t* httpd, const qse_mchar_t* name, 
 	qse_httpd_task_t* task = (qse_httpd_task_t*)ctx;
 	task_proxy_t* proxy = (task_proxy_t*)task->ctx;
 
-	QSE_ASSERT (proxy->flags & PROXY_RESOL_PEER_NAME);
+	QSE_ASSERT (proxy->flags & PROXY_RESOLVE_PEER_NAME);
+	QSE_ASSERT (!(proxy->flags & (PROXY_PEER_NAME_RESOLVED | PROXY_PEER_NAME_UNRESOLVED)));
 
-	proxy->flags &= ~PROXY_RESOL_PEER_NAME;
+	proxy->flags &= ~PROXY_RESOLVE_PEER_NAME;
 
 	if (nwad)
 	{
@@ -1807,11 +1809,13 @@ static void on_peer_name_resolved (qse_httpd_t* httpd, const qse_mchar_t* name, 
 
 		if (proxy->peer.local.type == QSE_NWAD_NX)
 			proxy->peer.local.type = proxy->peer.nwad.type;
+
+		proxy->flags |= PROXY_PEER_NAME_RESOLVED;
 	}
 	else
 	{
 		/* resolution failure. */
-		proxy->flags |= PROXY_INIT_FAILED | PROXY_UNKNOWN_PEER_NWAD;
+		proxy->flags |= PROXY_INIT_FAILED | PROXY_PEER_NAME_UNRESOLVED;
 	}
 
 	if (qse_httpd_activatetasktrigger (httpd, proxy->client, task) <= -1)
@@ -1832,13 +1836,28 @@ static int task_main_proxy (
 
 	if (proxy->flags & PROXY_INIT_FAILED) 
 	{
-		if (proxy->flags & PROXY_UNKNOWN_PEER_NWAD) http_errnum = 404; /* 404 Not Found */
+		if (proxy->flags & PROXY_PEER_NAME_UNRESOLVED) http_errnum = 404; /* 404 Not Found */
 		goto oops;
 	}
 
-	if (proxy->flags & PROXY_RESOL_PEER_NAME)
+#if 0
+	if (proxy->flags & PROXY_REWRITE_URL)
+	{
+		if (qse_httpd_rewriteurl (httpd, proxy->url, on_url_rewritten, task) <= -1) goto oops;
+
+		if (proxy->flags & PROXY_INIT_FAILED) goto oops;
+		
+		if ((proxy->flags & PROXY_RESOL_REWRITE_URL) && 
+		    qse_httpd_inactivatetasktrigger (httpd, client, task) <= -1) goto oops;
+
+		return 1;
+	}
+#endif
+
+	if (proxy->flags & PROXY_RESOLVE_PEER_NAME)
 	{
 		/* arrange to resolve a host name and return */
+
 		QSE_ASSERT (proxy->peer_name != QSE_NULL);
 
 		if (qse_httpd_resolname (httpd, proxy->peer_name, on_peer_name_resolved, task) <= -1) goto oops;
@@ -1848,11 +1867,12 @@ static int task_main_proxy (
 		 * called. */
 		if (proxy->flags & PROXY_INIT_FAILED) 
 		{
-			if (proxy->flags & PROXY_UNKNOWN_PEER_NWAD) http_errnum = 404; /* 404 Not Found */
+			if (proxy->flags & PROXY_PEER_NAME_UNRESOLVED) http_errnum = 404; /* 404 Not Found */
 			goto oops;
 		}
 
-		if ((proxy->flags & PROXY_RESOL_PEER_NAME) && 
+		/* peer name is not resolved yet. */
+		if (!(proxy->flags & PROXY_PEER_NAME_RESOLVED) && 
 		    qse_httpd_inactivatetasktrigger (httpd, client, task) <= -1) goto oops;
 
 		return 1;

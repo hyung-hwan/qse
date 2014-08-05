@@ -185,6 +185,7 @@ static qse_httpd_task_t* entask_status (
 	switch (code)
 	{
 		case 301:
+		case 302:
 		case 307:
 		{
 			status_reloc_t* reloc;

@@ -170,7 +170,6 @@ void qse_tmr_remove (qse_tmr_t* tmr, qse_size_t index)
 
 	QSE_ASSERT (index < tmr->size);
 
-printf ("tmr_remove.....>>>>>>>>>>>>size=>%d index=>%d\n", (int)tmr->size, (int)index);
 	item = tmr->event[index];
 	tmr->event[index].updater (tmr, index, QSE_TMR_INVALID, tmr->event[index].ctx);
 
@@ -187,7 +186,6 @@ qse_size_t qse_tmr_insert (qse_tmr_t* tmr, const qse_tmr_event_t* event)
 {
 	qse_size_t index = tmr->size;
 
-printf ("tmr_insert ......size => %d\n", (int)tmr->size);
 	if (index >= tmr->capa)
 	{
 		qse_tmr_event_t* tmp;

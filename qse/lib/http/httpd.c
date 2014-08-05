@@ -1681,6 +1681,13 @@ printf ("DNS_SEND.........................\n");
 	return httpd->opt.scb.dns.send (httpd, &httpd->dns, name, resol, ctx);
 }
 
+#if 0
+int qse_httpd_rewriteurl (qse_httpd_t* httpd, const qse_mchar_t* url, qse_httpd_rewrite_t rewrite, void* ctx)
+{
+	return httpd->opt.scb.url.send (httpd, &httpd->dns, name, resol, ctx);
+}
+#endif
+
 int qse_httpd_activatetasktrigger (qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
 {
 	int x, org_cmask;

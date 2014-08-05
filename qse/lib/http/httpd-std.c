@@ -2113,6 +2113,7 @@ struct dns_antrail_t
 struct dns_ctx_t
 {
 	qse_httpd_t* httpd;
+	qse_httpd_dns_t* dns;
 
 	qse_skad_t skad;
 	int skadlen;
@@ -2144,6 +2145,7 @@ struct dns_req_t
 
 	dns_ctx_t* dc;
 	qse_size_t tmr_tmout;
+	int resends;
 
 	dns_req_t* next;
 };
@@ -2267,6 +2269,7 @@ static int dns_open (qse_httpd_t* httpd, qse_httpd_dns_t* dns)
 	if (dc == NULL) goto oops;
 
 	dc->httpd = httpd;
+	dc->dns = dns;
 
 /* TODO: add static cache entries from /etc/hosts */
 
@@ -2506,6 +2509,7 @@ static dns_ans_t* dns_get_answer_from_cache (dns_ctx_t* dc, const qse_mchar_t* n
 static int dns_recv (qse_httpd_t* httpd, qse_httpd_dns_t* dns)
 {
 	dns_ctx_t* dc = (dns_ctx_t*)dns->ctx;
+	httpd_xtn_t* httpd_xtn;
 
 	qse_skad_t fromaddr;
 	socklen_t fromlen;
@@ -2516,7 +2520,7 @@ static int dns_recv (qse_httpd_t* httpd, qse_httpd_dns_t* dns)
 
 printf ("DNS_RECV....\n");
 
-/* TODO: delete requests that're not replied at all for long time */
+	httpd_xtn = qse_httpd_getxtn (httpd);
 
 	fromlen = QSE_SIZEOF(fromaddr);
 	len = recvfrom (dns->handle.i, buf, QSE_SIZEOF(buf), 0, (struct sockaddr*)&fromaddr, &fromlen);
@@ -2534,7 +2538,6 @@ printf ("DNS_RECV....\n");
 
 		xid = (id >= QSE_COUNTOF(dc->reqs))? (id - QSE_COUNTOF(dc->reqs)): id;
 
-printf ("%d qdcount %d ancount %d\n", id, qdcount, ancount);
 		if (xid >= 0 && xid < QSE_COUNTOF(dc->reqs) && hdr->qr && hdr->opcode == DNS_OPCODE_QUERY && qdcount >= 1)
 		{
 			qse_uint8_t* plptr = (qse_uint8_t*)(hdr + 1);
@@ -2622,6 +2625,8 @@ printf ("invoking resoll with ipv6 \n");
 
 						if (nwad.type != QSE_NWAD_NX)
 						{
+							int ttl;
+
 							dns_remove_tmr_tmout (req);
 							req->resol (httpd, req->name, &nwad, req->ctx);
 
@@ -2630,7 +2635,10 @@ printf ("invoking resoll with ipv6 \n");
 							else dc->reqs[xid] = req->next;
 
 							/*qse_httpd_freemem (httpd, req);*/
-							dns_cache_answer (dc, req, &nwad, qse_ntoh32(antrail->ttl));
+							ttl = httpd_xtn->dns.cache_ttl;
+							if (ttl > qse_ntoh32(antrail->ttl)) ttl = qse_ntoh32(antrail->ttl);
+							if (ttl < httpd_xtn->dns.cache_minttl) ttl = httpd_xtn->dns.cache_minttl;
+							dns_cache_answer (dc, req, &nwad, ttl);
 
 							goto done;
 						}
@@ -2656,7 +2664,7 @@ printf ("invoking resoll with ipv6 \n");
 				else dc->reqs[xid] = req->next;
 
 				/*qse_httpd_freemem (httpd, req);*/
-				dns_cache_answer (dc, req, QSE_NULL, DNS_MIN_TTL);
+				dns_cache_answer (dc, req, QSE_NULL, httpd_xtn->dns.cache_negttl);
 			}
 		}
 	}
@@ -2677,9 +2685,43 @@ printf (">>tmr_dns_tmout_updated %d %d\n", (int)req->tmr_tmout, (int)old_index);
 static void tmr_dns_tmout_handle (qse_tmr_t* tmr, const qse_ntime_t* now, void* ctx)
 {
 	/* destory the unanswered request if timed out */
+
 	dns_req_t* req = (dns_req_t*)ctx;
 	dns_req_t* preq, * xreq;
 	qse_uint16_t xid;
+
+	/* when this handler is called, the event should be removed from the timer */
+	QSE_ASSERT (req->tmr_tmout == QSE_TMR_INVALID);
+
+/* TODO: resend?? + reschedule?? */
+	if (req->resends > 0)
+	{
+		httpd_xtn_t* httpd_xtn;
+		qse_tmr_event_t tmout_event;
+
+		httpd_xtn = qse_httpd_getxtn (req->dc->httpd);
+
+		qse_gettime (&tmout_event.when);
+		qse_addtime (&tmout_event.when, &httpd_xtn->dns.tmout, &tmout_event.when);
+		tmout_event.ctx = req;
+		tmout_event.handler = tmr_dns_tmout_handle;
+		tmout_event.updater = tmr_dns_tmout_updated;
+
+		if ((!(req->flags & DNS_REQ_A_NX) && req->qalen > 0 && sendto (req->dc->dns->handle.i, req->qa, req->qalen, 0, (struct sockaddr*)&req->dc->skad, req->dc->skadlen) != req->qalen) ||
+			(!(req->flags & DNS_REQ_AAAA_NX) && req->qaaaalen > 0 && sendto (req->dc->dns->handle.i, req->qaaaa, req->qaaaalen, 0, (struct sockaddr*)&req->dc->skad, req->dc->skadlen) != req->qaaaalen))
+		{
+			/* error. fall thru */
+		}
+		else
+		{
+			req->tmr_tmout = qse_tmr_insert (req->dc->httpd->tmr, &tmout_event);
+			if (req->tmr_tmout != QSE_TMR_INVALID)
+			{
+				req->resends--;
+				return; /* resend ok */
+			}
+		}
+	}
 
 printf ("dns timed out....\n");
 	xid = req->seqa; 
@@ -2690,32 +2732,32 @@ printf ("dns timed out....\n");
 		if (req == xreq) break;
 	}
 
+	/* this request that timed out must be inside the request list */
 	QSE_ASSERT (req == xreq);
+
 	/* detach the request off dc->reqs */
 	if (preq) preq->next = req->next;
 	else req->dc->reqs[xid] = req->next;
-
-	QSE_ASSERT (req->tmr_tmout == QSE_TMR_INVALID);
 
 	/* dns timed out. report that name resolution failed */
 	req->resol (req->dc->httpd, req->name, QSE_NULL, req->ctx);
 
 	/* i don't cache the items that have timed out */
 	qse_httpd_freemem (req->dc->httpd, req);
-	
 }
 
 static int dns_send (qse_httpd_t* httpd, qse_httpd_dns_t* dns, const qse_mchar_t* name, qse_httpd_resol_t resol, void* ctx)
 {
 	dns_ctx_t* dc = (dns_ctx_t*)dns->ctx;
-	httpd_xtn_t* httpd_xtn = qse_httpd_getxtn (httpd);
+	httpd_xtn_t* httpd_xtn;
 
 	qse_uint32_t seq;
 	dns_req_t* req;
 	qse_size_t name_len;
 	dns_ans_t* ans;
 	qse_tmr_event_t tmout_event;
-	
+
+	httpd_xtn = qse_httpd_getxtn (httpd);
 
 printf ("DNS REALLY SENING>>>>>>>>>>>>>>>>>>>>>>>\n");
 	ans = dns_get_answer_from_cache (dc, name);
@@ -2775,8 +2817,7 @@ printf ("DNS REALLY SENING>>>>>>>>>>>>>>>>>>>>>>>\n");
 	tmout_event.ctx = req;
 	tmout_event.handler = tmr_dns_tmout_handle;
 	tmout_event.updater = tmr_dns_tmout_updated;
-	
-printf ("ABOUT TO REGISTER TMR_TMOUT...\n");
+
 	req->tmr_tmout = qse_tmr_insert (httpd->tmr, &tmout_event);
 	if (req->tmr_tmout == QSE_TMR_INVALID)
 	{
@@ -2784,7 +2825,7 @@ printf ("ABOUT TO REGISTER TMR_TMOUT...\n");
 		qse_httpd_freemem (httpd, req);
 		return -1;
 	}
-printf ("???? initial tmr_tmout => %d\n", (int)req->tmr_tmout);
+	req->resends = httpd_xtn->dns.resends;
 
 	if ((req->qalen > 0 && sendto (dns->handle.i, req->qa, req->qalen, 0, (struct sockaddr*)&dc->skad, dc->skadlen) != req->qalen) ||
 	    (req->qaaaalen > 0 && sendto (dns->handle.i, req->qaaaa, req->qaaaalen, 0, (struct sockaddr*)&dc->skad, dc->skadlen) != req->qaaaalen))
@@ -2836,7 +2877,6 @@ static int process_request (
 	 * the decoded query path is made available in the
 	 * non-peek mode as well */
 	if (peek) qse_perdechttpstr (qse_htre_getqpath(req), qse_htre_getqpath(req));
-
 
 	if (peek && (httpd->opt.trait & QSE_HTTPD_LOGACT))
 	{
@@ -4070,6 +4110,11 @@ int qse_httpd_loopstd (qse_httpd_t* httpd, const qse_httpd_dnsstd_t* dns)
 	{
 		httpd_xtn->dns.nwad.type = QSE_NWAD_NX;
 		httpd_xtn->dns.tmout.sec = QSE_HTTPD_DNSSTD_DEFAULT_TMOUT;
+		httpd_xtn->dns.tmout.nsec = 0;
+		httpd_xtn->dns.resends = QSE_HTTPD_DNSSTD_DEFAULT_RESENDS;
+		httpd_xtn->dns.cache_ttl = QSE_HTTPD_DNSSTD_DEFAULT_CACHE_TTL;
+		httpd_xtn->dns.cache_minttl = QSE_HTTPD_DNSSTD_DEFAULT_CACHE_MINTTL;
+		httpd_xtn->dns.cache_negttl = QSE_HTTPD_DNSSTD_DEFAULT_CACHE_NEGTTL;
 	}
 
 	return qse_httpd_loop (httpd);
