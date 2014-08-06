@@ -27,7 +27,7 @@
 
 #define QSE_HTTPD_DEFAULT_PORT        80
 #define QSE_HTTPD_DEFAULT_SECURE_PORT 443
-#define QSE_HTTPD_DEFAULT_DNS_PORT    53
+
 struct qse_httpd_t
 {
 	qse_mmgr_t* mmgr;
@@ -47,6 +47,7 @@ struct qse_httpd_t
 	int stopreq: 1;
 	int impedereq: 1;
 	int dnsactive: 1;
+	int ursactive: 1;
 
 	qse_mchar_t sname[128]; /* server name for the server header */
 	qse_mchar_t gtbuf[10][64]; /* GMT time buffers */
@@ -81,6 +82,7 @@ struct qse_httpd_t
 
 	void* mux;
 	qse_httpd_dns_t dns;
+	qse_httpd_urs_t urs;
 };
 
 /* qse_httpd_real_task_t is a private type to hide some private fields
