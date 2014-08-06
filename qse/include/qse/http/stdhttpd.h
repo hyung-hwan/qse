@@ -142,6 +142,7 @@ enum qse_httpd_serverstd_opt_t
 };
 typedef enum qse_httpd_serverstd_opt_t qse_httpd_serverstd_opt_t;
 
+#define QSE_HTTPD_DNSSTD_DEFAULT_PORT         53
 #define QSE_HTTPD_DNSSTD_DEFAULT_TMOUT        3
 #define QSE_HTTPD_DNSSTD_DEFAULT_RESENDS      2
 #define QSE_HTTPD_DNSSTD_DEFAULT_CACHE_TTL    120
@@ -159,6 +160,18 @@ struct qse_httpd_dnsstd_t
 };
 
 typedef struct qse_httpd_dnsstd_t qse_httpd_dnsstd_t;
+
+#define QSE_HTTPD_URSSTD_DEFAULT_PORT    94
+#define QSE_HTTPD_URSSTD_DEFAULT_TMOUT   10
+#define QSE_HTTPD_URSSTD_DEFAULT_RESENDS 0
+
+struct qse_httpd_ursstd_t
+{
+	qse_nwad_t nwad;
+	qse_ntime_t tmout;
+	qse_uint32_t resends;
+};
+typedef struct qse_httpd_ursstd_t qse_httpd_ursstd_t;
 
 #if defined(__cplusplus)
 extern "C" {

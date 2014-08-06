@@ -382,7 +382,7 @@ static qse_htrd_recbs_t htrd_recbs =
 };
 
 /* ----------------------------------------------------------------------- */
-static void tmr_idle_updated (qse_tmr_t* tmr, qse_size_t old_index, qse_size_t new_index, void* ctx);
+static void tmr_idle_update (qse_tmr_t* tmr, qse_size_t old_index, qse_size_t new_index, void* ctx);
 static void tmr_idle_handle (qse_tmr_t* tmr, const qse_ntime_t* now, void* ctx);
 
 static void mark_bad_client (qse_httpd_client_t* client)
@@ -420,7 +420,7 @@ static qse_httpd_client_t* new_client (qse_httpd_t* httpd, qse_httpd_client_t* t
 	qse_addtime (&idle_event.when, &httpd->opt.idle_limit, &idle_event.when);
 	idle_event.ctx = client;
 	idle_event.handler = tmr_idle_handle;
-	idle_event.updater = tmr_idle_updated;
+	idle_event.updater = tmr_idle_update;
 
 	client->tmr_idle = qse_tmr_insert (httpd->tmr, &idle_event);
 	if (client->tmr_idle == QSE_TMR_INVALID)
@@ -618,7 +618,7 @@ printf ("MUX ADDHND CLIENT READ %d\n", client->handle.i);
 }
 
 
-static void tmr_idle_updated (qse_tmr_t* tmr, qse_size_t old_index, qse_size_t new_index, void* ctx)
+static void tmr_idle_update (qse_tmr_t* tmr, qse_size_t old_index, qse_size_t new_index, void* ctx)
 {
 	qse_httpd_client_t* client = (qse_httpd_client_t*)ctx;
 printf ("tmr_idle updated old_index %d new_index %d tmr_idle %d\n", (int)old_index, (int)new_index, (int)client->tmr_idle);
@@ -650,7 +650,7 @@ printf ("client is idle purging....\n");
 			qse_addtime (&idle_event.when, &client->server->httpd->opt.idle_limit, &idle_event.when);
 			idle_event.ctx = client;
 			idle_event.handler = tmr_idle_handle;
-			idle_event.updater = tmr_idle_updated;
+			idle_event.updater = tmr_idle_update;
 
 			/* the timer must have been deleted when this callback is called. */
 			QSE_ASSERT (client->tmr_idle == QSE_TMR_INVALID); 
@@ -832,6 +832,29 @@ static void deactivate_dns (qse_httpd_t* httpd)
 {
 	httpd->opt.scb.mux.delhnd (httpd, httpd->mux, httpd->dns.handle);
 	httpd->opt.scb.dns.close (httpd, &httpd->dns);
+}
+/* ----------------------------------------------------------------------- */
+
+static int activate_urs (qse_httpd_t* httpd)
+{
+/* TODO: how to disable URS??? */
+	if (httpd->opt.scb.urs.open (httpd, &httpd->urs) <= -1) return -1;
+
+	httpd->urs.type = QSE_HTTPD_URS;
+
+	if (httpd->opt.scb.mux.addhnd (httpd, httpd->mux, httpd->urs.handle, QSE_HTTPD_MUX_READ, &httpd->urs) <= -1) 
+	{
+		httpd->opt.scb.urs.close (httpd, &httpd->urs);
+		return -1;
+	}
+
+	return 0;
+}
+
+static void deactivate_urs (qse_httpd_t* httpd)
+{
+	httpd->opt.scb.mux.delhnd (httpd, httpd->mux, httpd->urs.handle);
+	httpd->opt.scb.urs.close (httpd, &httpd->urs);
 }
 
 /* ----------------------------------------------------------------------- */
@@ -1384,6 +1407,16 @@ static int perform_dns (qse_httpd_t* httpd, void* mux, qse_ubi_t handle, int mas
 	return httpd->opt.scb.dns.recv (httpd, dns);
 }
 
+static int perform_urs (qse_httpd_t* httpd, void* mux, qse_ubi_t handle, int mask, void* cbarg)
+{
+	qse_httpd_urs_t* urs = (qse_httpd_urs_t*)cbarg;
+
+	QSE_ASSERT (mask & QSE_HTTPD_MUX_READ);
+	QSE_ASSERT (&httpd->urs == urs);
+
+	return httpd->opt.scb.urs.recv (httpd, urs);
+}
+
 static void purge_bad_clients (qse_httpd_t* httpd)
 {
 	qse_httpd_client_t* client;
@@ -1450,6 +1483,9 @@ static int dispatch_mux (
 
 		case QSE_HTTPD_DNS:
 			return perform_dns (httpd, mux, handle, mask, cbarg);
+
+		case QSE_HTTPD_URS:
+			return perform_urs (httpd, mux, handle, mask, cbarg);
 	}
 
 	httpd->errnum = QSE_HTTPD_EINTERN;
@@ -1501,6 +1537,18 @@ int qse_httpd_loop (qse_httpd_t* httpd)
 	}
 	else httpd->dnsactive = 1;
 
+	if (activate_urs (httpd) <= -1)
+	{
+		if (httpd->opt.trait & QSE_HTTPD_LOGACT)
+		{
+			qse_httpd_act_t msg;
+			msg.code = QSE_HTTPD_CATCH_MWARNMSG;
+			qse_mbscpy (msg.u.mwarnmsg, QSE_MT("cannot activate urs"));
+			httpd->opt.rcb.logact (httpd, &msg);
+		}
+	}
+	else httpd->ursactive = 1;
+
 	if (activate_servers (httpd) <= -1) 
 	{
 		if (httpd->dnsactive) deactivate_dns (httpd);
@@ -1544,6 +1592,7 @@ int qse_httpd_loop (qse_httpd_t* httpd)
 	purge_client_list (httpd);
 	deactivate_servers (httpd);
 
+	if (httpd->ursactive) deactivate_urs (httpd);
 	if (httpd->dnsactive) deactivate_dns (httpd);
 
 	httpd->opt.scb.mux.close (httpd, httpd->mux);
@@ -1684,7 +1733,7 @@ printf ("DNS_SEND.........................\n");
 #if 0
 int qse_httpd_rewriteurl (qse_httpd_t* httpd, const qse_mchar_t* url, qse_httpd_rewrite_t rewrite, void* ctx)
 {
-	return httpd->opt.scb.url.send (httpd, &httpd->dns, name, resol, ctx);
+	return httpd->opt.scb.urs.send (httpd, &httpd->dns, name, resol, ctx);
 }
 #endif
 

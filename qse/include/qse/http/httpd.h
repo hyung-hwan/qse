@@ -34,6 +34,7 @@ typedef struct qse_httpd_mate_t   qse_httpd_mate_t;
 typedef struct qse_httpd_server_t qse_httpd_server_t;
 typedef struct qse_httpd_client_t qse_httpd_client_t;
 typedef struct qse_httpd_dns_t    qse_httpd_dns_t;
+typedef struct qse_httpd_urs_t    qse_httpd_urs_t;
 
 enum qse_httpd_errnum_t
 {
@@ -129,6 +130,13 @@ typedef void (*qse_httpd_resol_t) (
 	qse_httpd_t*       httpd,
 	const qse_mchar_t* name,
 	const qse_nwad_t*  nwad,
+	void*              ctx
+);
+
+typedef void (*qse_httpd_rewrite_t) (
+	qse_httpd_t*       httpd,
+	const qse_mchar_t* url,
+	const qse_mchar_t* new_url,
 	void*              ctx
 );
 
@@ -255,6 +263,14 @@ struct qse_httpd_scb_t
 		int (*recv) (qse_httpd_t* httpd, qse_httpd_dns_t* dns);
 		int (*send) (qse_httpd_t* httpd, qse_httpd_dns_t* dns, const qse_mchar_t* name, qse_httpd_resol_t resol, void* ctx);
 	} dns;
+
+	struct
+	{
+		int (*open) (qse_httpd_t* httpd, qse_httpd_urs_t* urs);
+		void (*close) (qse_httpd_t* httpd, qse_httpd_urs_t* urs);
+		int (*recv) (qse_httpd_t* httpd, qse_httpd_urs_t* urs);
+		int (*send) (qse_httpd_t* httpd, qse_httpd_urs_t* urs, const qse_mchar_t* url, qse_httpd_rewrite_t rewrite, void* ctx);
+	} urs;
 };
 
 /* -------------------------------------------------------------------------- */
@@ -387,7 +403,8 @@ enum qse_httpd_mate_type_t
 {
 	QSE_HTTPD_SERVER,
 	QSE_HTTPD_CLIENT,
-	QSE_HTTPD_DNS
+	QSE_HTTPD_DNS,
+	QSE_HTTPD_URS
 };
 typedef enum qse_httpd_mate_type_t  qse_httpd_mate_type_t;
 
@@ -486,6 +503,17 @@ struct qse_httpd_dns_t
 	qse_ubi_t handle;
 	void* ctx;
 };
+
+struct qse_httpd_urs_t
+{
+	/* PRIVATE == */
+	QSE_HTTPD_MATE_HDR;
+
+	/* == PUBLIC == */
+	qse_ubi_t handle;
+	void* ctx;
+};
+
 /* -------------------------------------------------------------------------- */
 
 /**
