@@ -228,7 +228,8 @@ QSE_EXPORT void* qse_httpd_getserverstdxtn (
 
 QSE_EXPORT int qse_httpd_loopstd (
 	qse_httpd_t*              httpd,
-	const qse_httpd_dnsstd_t* dns
+	const qse_httpd_dnsstd_t* dns,
+	const qse_httpd_ursstd_t* urs
 );
 
 #ifdef __cplusplus

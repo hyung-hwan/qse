@@ -59,6 +59,7 @@ enum qse_httpd_errnum_t
 	QSE_HTTPD_EDISCON, /* client disconnnected */
 	QSE_HTTPD_EBADREQ, /* bad request */
 	QSE_HTTPD_ENODNS,  /* dns service not activated */
+	QSE_HTTPD_ENOURS,  /* urs service not activated */
 	QSE_HTTPD_ETASK
 };
 typedef enum qse_httpd_errnum_t qse_httpd_errnum_t;
@@ -261,7 +262,8 @@ struct qse_httpd_scb_t
 		int (*open) (qse_httpd_t* httpd, qse_httpd_dns_t* dns);
 		void (*close) (qse_httpd_t* httpd, qse_httpd_dns_t* dns);
 		int (*recv) (qse_httpd_t* httpd, qse_httpd_dns_t* dns);
-		int (*send) (qse_httpd_t* httpd, qse_httpd_dns_t* dns, const qse_mchar_t* name, qse_httpd_resol_t resol, void* ctx);
+		int (*send) (qse_httpd_t* httpd, qse_httpd_dns_t* dns,
+		             const qse_mchar_t* name, qse_httpd_resol_t resol, void* ctx);
 	} dns;
 
 	struct
@@ -269,7 +271,8 @@ struct qse_httpd_scb_t
 		int (*open) (qse_httpd_t* httpd, qse_httpd_urs_t* urs);
 		void (*close) (qse_httpd_t* httpd, qse_httpd_urs_t* urs);
 		int (*recv) (qse_httpd_t* httpd, qse_httpd_urs_t* urs);
-		int (*send) (qse_httpd_t* httpd, qse_httpd_urs_t* urs, const qse_mchar_t* url, qse_httpd_rewrite_t rewrite, void* ctx);
+		int (*send) (qse_httpd_t* httpd, qse_httpd_urs_t* urs, 
+		             const qse_mchar_t* url, qse_httpd_rewrite_t rewrite, void* ctx);
 	} urs;
 };
 
@@ -439,7 +442,7 @@ struct qse_httpd_client_t
 	qse_httpd_task_trigger_t trigger;
 	qse_ntime_t              last_active;
 
-	qse_size_t               tmr_idle;
+	qse_tmr_index_t          tmr_idle;
 
 	qse_httpd_client_t*      prev;
 	qse_httpd_client_t*      next;
@@ -552,14 +555,18 @@ struct qse_httpd_rsrc_cgi_t
 
 enum qse_httpd_rsrc_proxy_flag_t
 {
-	QSE_HTTPD_RSRC_PROXY_RAW     = (1 << 0),
-	QSE_HTTPD_RSRC_PROXY_DST_STR = (1 << 1)
+	QSE_HTTPD_RSRC_PROXY_RAW         = (1 << 0),
+	QSE_HTTPD_RSRC_PROXY_DST_STR     = (1 << 1),
+	QSE_HTTPD_RSRC_PROXY_TRANSPARENT = (1 << 2),
+	QSE_HTTPD_RSRC_PROXY_URS         = (1 << 3) /* url rewriting enabled */
 };
 
 typedef struct qse_httpd_rsrc_proxy_t qse_httpd_rsrc_proxy_t;
 struct qse_httpd_rsrc_proxy_t
 {
 	int flags; /* bitwise-ORed of qse_httpd_rsrc_proxy_flag_t enumerators */
+
+	const qse_mchar_t* host; /* host name part that were in the original request url */
 	union
 	{
 		qse_nwad_t nwad; 
@@ -990,12 +997,18 @@ QSE_EXPORT qse_mchar_t* qse_httpd_escapehtml (
 	const qse_mchar_t*  str
 );
 
-
 QSE_EXPORT int qse_httpd_resolname (
 	qse_httpd_t*       httpd,
 	const qse_mchar_t* name,
 	qse_httpd_resol_t  resol,
 	void*              ctx
+);
+
+QSE_EXPORT int qse_httpd_rewriteurl (
+	qse_httpd_t*         ttpd,
+	const qse_mchar_t*   url,
+	qse_httpd_rewrite_t  rewrite,
+	void*                ctx
 );
 
 

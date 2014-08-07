@@ -65,6 +65,7 @@ static int task_main_text (
 		if (ctx->left <= 0) return 0;
 		ctx->ptr += n;
 	}
+
 	return 1; /* more work to do */
 }
 
