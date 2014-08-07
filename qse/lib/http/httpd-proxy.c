@@ -37,12 +37,15 @@ struct task_proxy_t
 {
 #define PROXY_INIT_FAILED          (1 << 0)
 #define PROXY_RAW                  (1 << 1)
-#define PROXY_RESOLVE_PEER_NAME    (1 << 2)
-#define PROXY_PEER_NAME_RESOLVED   (1 << 3)
-#define PROXY_PEER_NAME_UNRESOLVED (1 << 4)
-#define PROXY_X_FORWARDED_FOR      (1 << 5)
-#define PROXY_VIA                  (1 << 6)
-#define PROXY_VIA_RETURNING        (1 << 7)
+#define PROXY_TRANSPARENT          (1 << 2)
+#define PROXY_RESOLVE_PEER_NAME    (1 << 3)
+#define PROXY_PEER_NAME_RESOLVED   (1 << 4)
+#define PROXY_PEER_NAME_UNRESOLVED (1 << 5)
+#define PROXY_REWRITE_URL          (1 << 6)
+#define PROXY_URL_REWRITTEN        (1 << 7)
+#define PROXY_X_FORWARDED_FOR      (1 << 8) /* X-Forwarded-For added */
+#define PROXY_VIA                  (1 << 9) /* Via added to the request */
+#define PROXY_VIA_RETURNING        (1 << 10) /* Via added to the response */
 	int flags;
 	qse_httpd_t* httpd;
 	qse_httpd_client_t* client;
@@ -50,8 +53,8 @@ struct task_proxy_t
 	int method;
 	qse_http_version_t version;
 	int keepalive; /* taken from the request */
-	int raw;
 
+	qse_mchar_t* url_to_rewrite;
 	qse_mchar_t* pseudonym;
 	qse_htrd_t* peer_htrd;
 
@@ -66,8 +69,9 @@ struct task_proxy_t
 #define PROXY_REQ_FWDERR     (1 << 0)
 #define PROXY_REQ_FWDCHUNKED (1 << 1)
 	int          reqflags;
-	qse_htre_t*  req; /* original client request associated with this */
+	qse_htre_t*  req; /* set to original client request associated with this if necessary */
 	qse_mbs_t*   reqfwdbuf; /* content from the request */
+	const qse_mchar_t* host;
 
 	qse_mbs_t*   res;
 	qse_size_t   res_consumed;
@@ -234,8 +238,7 @@ static int proxy_capture_client_header (qse_htre_t* req, const qse_mchar_t* key,
 {
 	task_proxy_t* proxy = (task_proxy_t*)ctx;
 
-	
-	if (!(proxy->flags & PROXY_X_FORWARDED_FOR))
+	if (!(proxy->flags & (PROXY_TRANSPARENT | PROXY_X_FORWARDED_FOR)))
 	{
 		if (qse_mbscasecmp (key, QSE_MT("X-Forwarded-For")) == 0)
 		{
@@ -246,7 +249,7 @@ static int proxy_capture_client_header (qse_htre_t* req, const qse_mchar_t* key,
 			qse_mchar_t extra[128];
 
 			proxy->flags |= PROXY_X_FORWARDED_FOR;
-			qse_nwadtombs (&proxy->client->remote_addr, extra, QSE_COUNTOF(extra), QSE_NWADTOMBS_ALL);
+			qse_nwadtombs (&proxy->client->remote_addr, extra, QSE_COUNTOF(extra), QSE_NWADTOMBS_ADDR);
 
 			return proxy_add_header_to_buffer_with_extra_data (proxy, proxy->reqfwdbuf, key, val, QSE_MT(", %hs"), extra);
 		}
@@ -903,6 +906,41 @@ static int task_init_proxy (
 	}
 
 	if (arg->rsrc->flags & QSE_HTTPD_RSRC_PROXY_RAW) proxy->flags |= PROXY_RAW;
+	if (arg->rsrc->flags & QSE_HTTPD_RSRC_PROXY_TRANSPARENT) proxy->flags |= PROXY_TRANSPARENT;
+
+	if (arg->rsrc->flags & QSE_HTTPD_RSRC_PROXY_URS)
+	{
+#if 0
+		const qse_mchar_t* qpath;
+		const qse_mchar_t* metnam;
+		const qse_htre_hdrval_t* hosthv;
+		qse_mchar_t cliaddrbuf[128];
+
+		/* URL client-ip/client-fqdn ident method  */
+		qpath = qse_htre_getqpath(htreq);
+		method = qse_htre_getqmethodtype(htreq);
+		metnam = qse_httpmethodtombs(method);
+		hosthv = qse_htre_getheaderval(htreq, QSE_MT("Host"));
+		if (hosthv) printf ("hosthv -> %s\n", hosthv->ptr);
+		qse_nwadtombs (&client->remote_addr, cliaddrbuf, QSE_COUNTOF(cliaddrbuf), QSE_NWADTOMBS_ADDR);
+#endif
+
+		/* enable url rewriting */
+		proxy->flags |= PROXY_REWRITE_URL;
+
+#if 0
+		/* TODO: build URL TO REWRITE */
+		if (method == QSE_HTTP_CONNECT)
+			url_len = qse_mbsxfmt (QSE_NULL, 0, QSE_MT("%s %s/- - %s"), qpath, cliaddrbuf, metnam);
+		else if (host)
+			url_len = qse_mbsxfmt (QSE_NULL, 0, QSE_MT("http://%s%s %s/- - %s"), host, qpath, cliaddrbuf, metnam);
+		else if (hosthv)
+			url_len = qse_mbsxfmt (QSE_NULL, 0, QSE_MT("http://%s%s %s/- - %s"), hosthv->ptr, qpath, cliaddrbuf, metnam);
+		else
+			url_len = qse_mbsxfmt (QSE_NULL, 0, QSE_MT("%s %s/- - %s"), qpath, cliaddrbuf, metnam);
+#endif
+	}
+
 	proxy->peer.local = arg->rsrc->src.nwad;
 	if (arg->rsrc->flags & QSE_HTTPD_RSRC_PROXY_DST_STR)
 	{
@@ -938,7 +976,6 @@ static int task_init_proxy (
 	else proxy->peer.local.type = arg->rsrc->dst.type;*/
 
 	proxy->req = QSE_NULL;
-
 /* -------------------------------------------------------------------- 
  * TODO: compose headers to send to peer and push them to fwdbuf... 
  * TODO: also change the content length check logic below...
@@ -950,6 +987,7 @@ static int task_init_proxy (
 	proxy->reqfwdbuf = qse_mbs_open (httpd->mmgr, 0, (len < 512? 512: len));
 	if (proxy->reqfwdbuf == QSE_NULL) goto oops;
 
+	proxy->host = arg->rsrc->host;
 	if (proxy->flags & PROXY_RAW)
 	{
 /* TODO: when connect is attempted, no keep-alive must be hornored. 
@@ -985,7 +1023,7 @@ static int task_init_proxy (
 		    qse_mbs_cat (proxy->reqfwdbuf, QSE_MT("\r\n")) == (qse_size_t)-1 ||
 		    qse_htre_walkheaders (arg->req, proxy_capture_client_header, proxy) <= -1) goto oops;
 
-		if (!(proxy->flags & PROXY_X_FORWARDED_FOR))
+		if (!(proxy->flags & (PROXY_TRANSPARENT | PROXY_X_FORWARDED_FOR)))
 		{
 			/* X-Forwarded-For is not added by proxy_capture_client_header() 
 			 * above. I don't care if it's included in the trailer. */
@@ -993,7 +1031,7 @@ static int task_init_proxy (
 
 			proxy->flags |= PROXY_X_FORWARDED_FOR;
 
-			qse_nwadtombs (&proxy->client->remote_addr, extra, QSE_COUNTOF(extra), QSE_NWADTOMBS_ALL);
+			qse_nwadtombs (&proxy->client->remote_addr, extra, QSE_COUNTOF(extra), QSE_NWADTOMBS_ADDR);
 
 			if (qse_mbs_cat (proxy->reqfwdbuf, QSE_MT("X-Forwarded-For: ")) == (qse_size_t)-1 ||
 			    qse_mbs_cat (proxy->reqfwdbuf, extra) == (qse_size_t)-1 ||
@@ -1144,7 +1182,7 @@ static int task_init_proxy (
 		{
 			/* set up a callback to be called when the request content
 			 * is fed to the htrd reader. qse_htre_addcontent() that 
-			* htrd calls invokes this callback. */
+			 * htrd calls invokes this callback. */
 			proxy->req = arg->req;
 			qse_htre_setconcb (proxy->req, proxy_snatch_client_input, task);
 		}
@@ -1311,7 +1349,7 @@ printf ("task_main_proxy_4 trigger[0].mask=%d trigger[1].mask=%d trigger[2].mask
 				if (proxy->peer_output_received < proxy->peer_output_length)
 				{
 					if (httpd->opt.trait & QSE_HTTPD_LOGACT) 
-						log_proxy_error (proxy, "proxy premature eof - ");
+						log_proxy_error (proxy, "proxy premature eof(content) - ");
 					return -1;
 				}
 			}
@@ -1594,9 +1632,8 @@ printf ("task_main_proxy_2 trigger[0].mask=%d trigger[1].mask=%d cmask=%d\n",
 			{
 				/* end of output from peer before it has seen a header.
 				 * the proxy peer must be bad. */
-
 				if (httpd->opt.trait & QSE_HTTPD_LOGACT) 
-					log_proxy_error (proxy, "proxy premature eof - ");
+					log_proxy_error (proxy, "proxy premature eof(header) - ");
 
 				if (!(proxy->resflags & PROXY_RES_RECEIVED_100)) http_errnum = 502;
 				goto oops;
@@ -1618,7 +1655,7 @@ printf ("task_main_proxy_2 trigger[0].mask=%d trigger[1].mask=%d cmask=%d\n",
 
 				/* premature eof from the peer */
 				if (httpd->opt.trait & QSE_HTTPD_LOGACT) 
-					log_proxy_error (proxy, "proxy premature eof - ");
+					log_proxy_error (proxy, "proxy no content(chunked) - ");
 				goto oops;
 			}
 		}
@@ -1826,6 +1863,21 @@ static void on_peer_name_resolved (qse_httpd_t* httpd, const qse_mchar_t* name, 
 printf ("XXXXXXXXXXXXXXXXXXXXXXXXXX PEER NAME RESOLVED.....\n");
 }
 
+static void on_url_rewritten (qse_httpd_t* httpd, const qse_mchar_t* url, const qse_mchar_t* new_url, void* ctx)
+{
+	qse_httpd_task_t* task = (qse_httpd_task_t*)ctx;
+	task_proxy_t* proxy = (task_proxy_t*)task->ctx;
+
+/* TODO: HANDLE THIS PROPERLY */
+	proxy->flags |= PROXY_INIT_FAILED;
+printf ("XXXXXXXXXXXXXXXXXXXXXXXXXX URL REWRITTEN ....\n");
+
+	if (qse_httpd_activatetasktrigger (httpd, proxy->client, task) <= -1)
+	{
+		proxy->flags |= PROXY_INIT_FAILED;
+	}
+}
+
 static int task_main_proxy (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
 {
@@ -1840,19 +1892,18 @@ static int task_main_proxy (
 		goto oops;
 	}
 
-#if 0
 	if (proxy->flags & PROXY_REWRITE_URL)
 	{
-		if (qse_httpd_rewriteurl (httpd, proxy->url, on_url_rewritten, task) <= -1) goto oops;
+		/* note that url_to_rewrite is URL + extra information. */
+		if (qse_httpd_rewriteurl (httpd, proxy->url_to_rewrite, on_url_rewritten, task) <= -1) goto oops;
 
 		if (proxy->flags & PROXY_INIT_FAILED) goto oops;
 		
-		if ((proxy->flags & PROXY_RESOL_REWRITE_URL) && 
+		if ((proxy->flags & PROXY_REWRITE_URL) && 
 		    qse_httpd_inactivatetasktrigger (httpd, client, task) <= -1) goto oops;
 
 		return 1;
 	}
-#endif
 
 	if (proxy->flags & PROXY_RESOLVE_PEER_NAME)
 	{
@@ -2000,7 +2051,7 @@ qse_httpd_task_t* qse_httpd_entaskproxy (
 
 	arg.rsrc = proxy;
 	arg.req = req;
-	
+
 	if (proxy->pseudonym)
 		xtnsize += qse_mbslen (proxy->pseudonym) + 1;
 	else
@@ -2008,7 +2059,6 @@ qse_httpd_task_t* qse_httpd_entaskproxy (
 
 	if (proxy->flags & QSE_HTTPD_RSRC_PROXY_DST_STR)
 		xtnsize += qse_mbslen (proxy->dst.str) + 1;
-
 
 	QSE_MEMSET (&task, 0, QSE_SIZEOF(task));
 	task.init = task_init_proxy;

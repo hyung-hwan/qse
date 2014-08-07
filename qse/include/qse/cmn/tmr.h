@@ -25,6 +25,7 @@
 
 typedef struct qse_tmr_t qse_tmr_t;
 typedef struct qse_tmr_event_t qse_tmr_event_t;
+typedef qse_size_t qse_tmr_index_t;
 
 typedef void (*qse_tmr_handler_t) (
 	qse_tmr_t*         tmr,
@@ -33,10 +34,10 @@ typedef void (*qse_tmr_handler_t) (
 );
 
 typedef void (*qse_tmr_updater_t) (
-	qse_tmr_t*   tmr,
-	qse_size_t   old_index,
-	qse_size_t   new_index,
-	void*        ctx
+	qse_tmr_t*        tmr,
+	qse_tmr_index_t   old_index,
+	qse_tmr_index_t   new_index,
+	void*             ctx
 );
 
 struct qse_tmr_t
@@ -55,7 +56,7 @@ struct qse_tmr_event_t
 	qse_tmr_updater_t  updater;
 };
 
-#define QSE_TMR_INVALID ((qse_size_t)-1)
+#define QSE_TMR_INVALID_INDEX ((qse_size_t)-1)
 
 #define QSE_TMR_SIZE(tmr) ((tmr)->size)
 #define QSE_TMR_CAPA(tmr) ((tmr)->capa);
@@ -99,23 +100,23 @@ QSE_EXPORT void qse_tmr_clear (
 /**
  * The qse_tmr_insert() function schedules a new event.
  *
- * \return #QSE_TMR_INVALID on failure, valid index on success.
+ * \return #QSE_TMR_INVALID_INDEX on failure, valid index on success.
  */
 
-QSE_EXPORT qse_size_t qse_tmr_insert (
+QSE_EXPORT qse_tmr_index_t qse_tmr_insert (
 	qse_tmr_t*             tmr,
 	const qse_tmr_event_t* event
 );
 
 QSE_EXPORT qse_size_t qse_tmr_update (
 	qse_tmr_t*             tmr,
-	qse_size_t             index,
+	qse_tmr_index_t        index,
 	const qse_tmr_event_t* event
 );
 
 QSE_EXPORT void qse_tmr_remove (
-	qse_tmr_t* tmr,
-	qse_size_t index
+	qse_tmr_t*      tmr,
+	qse_tmr_index_t index
 );
 
 QSE_EXPORT qse_size_t qse_tmr_fire (

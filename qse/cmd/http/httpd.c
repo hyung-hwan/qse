@@ -1937,7 +1937,13 @@ static int httpd_main (int argc, qse_char_t* argv[])
 	if (g_debug) rcb.logact = logact_httpd; /* i don't remember old logging handler */
 	qse_httpd_setopt (httpd, QSE_HTTPD_RCB, &rcb);
 
-	ret = qse_httpd_loopstd (httpd, QSE_NULL);
+/* TODO: read from configuration... */
+{
+qse_httpd_ursstd_t urs;
+qse_memset (&urs, 0, QSE_SIZEOF(urs));
+qse_mbstonwad ("[::1]:97", &urs.nwad);
+	ret = qse_httpd_loopstd (httpd, QSE_NULL, &urs);
+}
 
 	restore_signal_handlers ();
 	g_httpd = QSE_NULL;

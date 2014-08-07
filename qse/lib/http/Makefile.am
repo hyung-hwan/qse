@@ -17,6 +17,8 @@ libqsehttp_la_SOURCES = \
 	httpd-file.c \
 	httpd-proxy.c \
 	httpd-std.c \
+	httpd-std-dns.h \
+	httpd-std-urs.h \
 	httpd-task.c \
 	httpd-text.c \
 	upxd.c

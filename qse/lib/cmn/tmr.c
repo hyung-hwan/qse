@@ -55,20 +55,25 @@ void qse_tmr_close (qse_tmr_t* tmr)
 
 int qse_tmr_init (qse_tmr_t* tmr, qse_mmgr_t* mmgr, qse_size_t capa)
 {
+	qse_tmr_event_t* tmp;
+
 	QSE_MEMSET (tmr, 0, QSE_SIZEOF(*tmr));
 
 	if (capa <= 0) capa = 1;
 
-	tmr->event = QSE_MMGR_ALLOC (mmgr, capa * QSE_SIZEOF(*tmr->event));
-	if (tmr->event == QSE_NULL) return -1;
+	tmp = QSE_MMGR_ALLOC (mmgr, capa * QSE_SIZEOF(*tmp));
+	if (tmp == QSE_NULL) return -1;
 
 	tmr->mmgr = mmgr;
 	tmr->capa = capa;
+	tmr->event = tmp;
+
 	return 0;
 }
 
 void qse_tmr_fini (qse_tmr_t* tmr)
 {
+	qse_tmr_clear (tmr);
 	if (tmr->event) QSE_MMGR_FREE (tmr->mmgr, tmr->event);
 }
 
@@ -84,12 +89,10 @@ void* qse_tmr_getxtn (qse_tmr_t* tmr)
 
 void qse_tmr_clear (qse_tmr_t* tmr)
 {
-	tmr->size = 0;
-
-/* TOOD: use tmr_remove for notification.... */
+	while (tmr->size > 0) qse_tmr_remove (tmr, 0);
 }
 
-static qse_size_t sift_up (qse_tmr_t* tmr, qse_size_t index, int notify)
+static qse_tmr_index_t sift_up (qse_tmr_t* tmr, qse_tmr_index_t index, int notify)
 {
 	qse_size_t parent;
 
@@ -122,7 +125,7 @@ static qse_size_t sift_up (qse_tmr_t* tmr, qse_size_t index, int notify)
 	return index;
 }
 
-static qse_size_t sift_down (qse_tmr_t* tmr, qse_size_t index, int notify)
+static qse_tmr_index_t sift_down (qse_tmr_t* tmr, qse_tmr_index_t index, int notify)
 {
 	qse_size_t base = tmr->size / 2;
 
@@ -164,14 +167,14 @@ static qse_size_t sift_down (qse_tmr_t* tmr, qse_size_t index, int notify)
 	return index;
 }
 
-void qse_tmr_remove (qse_tmr_t* tmr, qse_size_t index)
+void qse_tmr_remove (qse_tmr_t* tmr, qse_tmr_index_t index)
 {
 	qse_tmr_event_t item;
 
 	QSE_ASSERT (index < tmr->size);
 
 	item = tmr->event[index];
-	tmr->event[index].updater (tmr, index, QSE_TMR_INVALID, tmr->event[index].ctx);
+	tmr->event[index].updater (tmr, index, QSE_TMR_INVALID_INDEX, tmr->event[index].ctx);
 
 	tmr->size = tmr->size - 1;
 	if (tmr->size > 0 && index != tmr->size)
@@ -182,9 +185,9 @@ void qse_tmr_remove (qse_tmr_t* tmr, qse_size_t index)
 	}
 }
 
-qse_size_t qse_tmr_insert (qse_tmr_t* tmr, const qse_tmr_event_t* event)
+qse_tmr_index_t qse_tmr_insert (qse_tmr_t* tmr, const qse_tmr_event_t* event)
 {
-	qse_size_t index = tmr->size;
+	qse_tmr_index_t index = tmr->size;
 
 	if (index >= tmr->capa)
 	{
@@ -192,8 +195,8 @@ qse_size_t qse_tmr_insert (qse_tmr_t* tmr, const qse_tmr_event_t* event)
 		qse_size_t new_capa;
 
 		new_capa = tmr->capa * 2;
-		tmp = QSE_MMGR_REALLOC (tmr->mmgr, tmr->event, new_capa);
-		if (tmp == QSE_NULL) return QSE_TMR_INVALID;
+		tmp = QSE_MMGR_REALLOC (tmr->mmgr, tmr->event, new_capa * QSE_SIZEOF(*tmp));
+		if (tmp == QSE_NULL) return QSE_TMR_INVALID_INDEX;
 
 		tmr->event = tmp;
 		tmr->capa = new_capa;

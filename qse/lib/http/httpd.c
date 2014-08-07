@@ -382,7 +382,7 @@ static qse_htrd_recbs_t htrd_recbs =
 };
 
 /* ----------------------------------------------------------------------- */
-static void tmr_idle_update (qse_tmr_t* tmr, qse_size_t old_index, qse_size_t new_index, void* ctx);
+static void tmr_idle_update (qse_tmr_t* tmr, qse_tmr_index_t old_index, qse_tmr_index_t new_index, void* ctx);
 static void tmr_idle_handle (qse_tmr_t* tmr, const qse_ntime_t* now, void* ctx);
 
 static void mark_bad_client (qse_httpd_client_t* client)
@@ -398,22 +398,22 @@ static void mark_bad_client (qse_httpd_client_t* client)
 
 static qse_httpd_client_t* new_client (qse_httpd_t* httpd, qse_httpd_client_t* tmpl)
 {
-	qse_httpd_client_t* client;
+	qse_httpd_client_t* client = QSE_NULL;
 	qse_tmr_event_t idle_event;
 	htrd_xtn_t* xtn;
 
 	client = qse_httpd_allocmem (httpd, QSE_SIZEOF(*client));
-	if (client == QSE_NULL) return QSE_NULL;
+	if (client == QSE_NULL) goto oops;
 
 	QSE_MEMSET (client, 0, QSE_SIZEOF(*client));
+	client->tmr_idle = QSE_TMR_INVALID_INDEX;
 
 	client->type = QSE_HTTPD_CLIENT;
 	client->htrd = qse_htrd_open (httpd->mmgr, QSE_SIZEOF(*xtn));
 	if (client->htrd == QSE_NULL) 
 	{
 		httpd->errnum = QSE_HTTPD_ENOMEM;
-		qse_httpd_freemem (httpd, client);
-		return QSE_NULL;
+		goto oops;
 	}
 
 	qse_gettime (&idle_event.when);
@@ -422,15 +422,7 @@ static qse_httpd_client_t* new_client (qse_httpd_t* httpd, qse_httpd_client_t* t
 	idle_event.handler = tmr_idle_handle;
 	idle_event.updater = tmr_idle_update;
 
-	client->tmr_idle = qse_tmr_insert (httpd->tmr, &idle_event);
-	if (client->tmr_idle == QSE_TMR_INVALID)
-	{
-		httpd->errnum = QSE_HTTPD_ENOMEM;
-		qse_htrd_close (client->htrd);
-		qse_httpd_freemem (httpd, client);
-		return QSE_NULL;
-	}
-printf ("tmr_insert %d\n", (int)client->tmr_idle);
+	if (qse_httpd_inserttimerevent (httpd, &idle_event, &client->tmr_idle) <= -1) goto oops;
 
 	qse_htrd_setoption (client->htrd, QSE_HTRD_REQUEST | QSE_HTRD_TRAILERS | QSE_HTRD_CANONQPATH);
 
@@ -446,13 +438,27 @@ printf ("tmr_insert %d\n", (int)client->tmr_idle);
 	client->server = tmpl->server;
 	client->initial_ifindex = tmpl->initial_ifindex;
 
-	xtn = (htrd_xtn_t*)qse_htrd_getxtn (client->htrd);	
+	xtn = (htrd_xtn_t*)qse_htrd_getxtn (client->htrd);
 	xtn->httpd = httpd;
 	xtn->client = client;
 
 	qse_htrd_setrecbs (client->htrd, &htrd_recbs);
 
 	return client;
+
+oops:
+	if (client) 
+	{
+		if (client->tmr_idle != QSE_TMR_INVALID_INDEX) 
+		{
+			qse_httpd_removetimerevent (httpd, client->tmr_idle);
+			/* cleint->tmr_idle = QSE_TMR_INVALID_INDEX; */
+		}
+		if (client->htrd) qse_htrd_close (client->htrd);
+		qse_httpd_freemem (httpd, client);
+	}
+
+	return QSE_NULL;
 }
 
 static void free_client (
@@ -474,18 +480,18 @@ qse_printf (QSE_T("Debug: CLOSING SOCKET %d\n"), client->handle.i);
 		client->status &= ~CLIENT_HANDLE_RW_IN_MUX;
 	}
 
+	if (client->tmr_idle != QSE_TMR_INVALID_INDEX)
+	{
+		qse_httpd_removetimerevent (httpd, client->tmr_idle);
+		client->tmr_idle = QSE_TMR_INVALID_INDEX;
+	}
+
 	/* note that client.closed is not a counterpart to client.accepted. 
 	 * so it is called even if client.close() failed. */
 	if (httpd->opt.scb.client.closed)
 		httpd->opt.scb.client.closed (httpd, client);
 	
 	httpd->opt.scb.client.close (httpd, client);
-
-	if (client->tmr_idle != QSE_TMR_INVALID)
-	{
-		qse_tmr_remove (httpd->tmr, client->tmr_idle);
-		client->tmr_idle = QSE_TMR_INVALID;
-	}
 
 	qse_httpd_freemem (httpd, client);
 }
@@ -618,7 +624,7 @@ printf ("MUX ADDHND CLIENT READ %d\n", client->handle.i);
 }
 
 
-static void tmr_idle_update (qse_tmr_t* tmr, qse_size_t old_index, qse_size_t new_index, void* ctx)
+static void tmr_idle_update (qse_tmr_t* tmr, qse_tmr_index_t old_index, qse_tmr_index_t new_index, void* ctx)
 {
 	qse_httpd_client_t* client = (qse_httpd_client_t*)ctx;
 printf ("tmr_idle updated old_index %d new_index %d tmr_idle %d\n", (int)old_index, (int)new_index, (int)client->tmr_idle);
@@ -645,6 +651,9 @@ printf ("client is idle purging....\n");
 		{
 			qse_tmr_event_t idle_event;
 
+printf ("client is NOT idle....\n");
+			QSE_ASSERT (client->server->httpd->tmr == tmr);
+
 			/*qse_gettime (&idle_event.when);*/
 			idle_event.when = *now;
 			qse_addtime (&idle_event.when, &client->server->httpd->opt.idle_limit, &idle_event.when);
@@ -653,11 +662,9 @@ printf ("client is idle purging....\n");
 			idle_event.updater = tmr_idle_update;
 
 			/* the timer must have been deleted when this callback is called. */
-			QSE_ASSERT (client->tmr_idle == QSE_TMR_INVALID); 
-			client->tmr_idle = qse_tmr_insert (tmr, &idle_event);
-			if (client->tmr_idle == QSE_TMR_INVALID) mark_bad_client (client);
-
-printf ("client is not idle rescheduling.....%d\n", (int)client->tmr_idle);
+			QSE_ASSERT (client->tmr_idle == QSE_TMR_INVALID_INDEX); 
+			if (qse_httpd_inserttimerevent (client->server->httpd, &idle_event, &client->tmr_idle) <= -1)
+				mark_bad_client (client);
 		}
 	}
 }
@@ -1730,12 +1737,16 @@ printf ("DNS_SEND.........................\n");
 	return httpd->opt.scb.dns.send (httpd, &httpd->dns, name, resol, ctx);
 }
 
-#if 0
 int qse_httpd_rewriteurl (qse_httpd_t* httpd, const qse_mchar_t* url, qse_httpd_rewrite_t rewrite, void* ctx)
 {
-	return httpd->opt.scb.urs.send (httpd, &httpd->dns, name, resol, ctx);
+	if (!httpd->ursactive)
+	{
+		qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOURS);
+		return -1;
+	}
+
+	return httpd->opt.scb.urs.send (httpd, &httpd->urs, url, rewrite, ctx);
 }
-#endif
 
 int qse_httpd_activatetasktrigger (qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
 {
@@ -1770,3 +1781,20 @@ int qse_httpd_inactivatetasktrigger (qse_httpd_t* httpd, qse_httpd_client_t* cli
 	return update_mux_for_current_task (httpd, client, task);
 }
 
+int qse_httpd_inserttimerevent (qse_httpd_t* httpd, const qse_tmr_event_t* event, qse_tmr_index_t* index)
+{
+	qse_tmr_index_t tmp = qse_tmr_insert (httpd->tmr, event);
+	if (tmp == QSE_TMR_INVALID_INDEX)
+	{
+		qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOMEM);
+		return -1;
+	}
+
+	*index = tmp;
+	return 0;
+}
+
+void qse_httpd_removetimerevent (qse_httpd_t* httpd, qse_tmr_index_t index)
+{
+	qse_tmr_remove (httpd->tmr, index);
+}
