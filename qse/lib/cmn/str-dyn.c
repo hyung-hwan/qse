@@ -136,6 +136,7 @@ static int mbs_to_wcs (
 #undef str_ccat
 #undef str_nccat
 #undef str_del
+#undef str_amend
 #undef str_trm
 #undef str_pac
 #undef str_fmt
@@ -173,22 +174,23 @@ static int mbs_to_wcs (
 #define str_getlen qse_mbs_getlen 
 #define str_setlen qse_mbs_setlen 
 #define str_clear qse_mbs_clear 
-#define str_swap qse_mbs_swap 
-#define str_cpy qse_mbs_cpy 
-#define str_ncpy qse_mbs_ncpy 
-#define str_cat qse_mbs_cat 
-#define resize_for_ncat resize_for_mbs_ncat 
-#define str_ncat qse_mbs_ncat 
-#define str_nrcat qse_mbs_nrcat 
-#define str_ccat qse_mbs_ccat 
-#define str_nccat qse_mbs_nccat 
-#define str_del qse_mbs_del 
-#define str_trm qse_mbs_trm 
-#define str_pac qse_mbs_pac 
-#define str_fmt qse_mbs_fmt 
-#define str_vfmt qse_mbs_vfmt 
-#define str_fcat qse_mbs_fcat 
-#define str_vfcat qse_mbs_vfcat 
+#define str_swap qse_mbs_swap
+#define str_cpy qse_mbs_cpy
+#define str_ncpy qse_mbs_ncpy
+#define str_cat qse_mbs_cat
+#define resize_for_ncat resize_for_mbs_ncat
+#define str_ncat qse_mbs_ncat
+#define str_nrcat qse_mbs_nrcat
+#define str_ccat qse_mbs_ccat
+#define str_nccat qse_mbs_nccat
+#define str_del qse_mbs_del
+#define str_amend qse_mbs_amend
+#define str_trm qse_mbs_trm
+#define str_pac qse_mbs_pac
+#define str_fmt qse_mbs_fmt
+#define str_vfmt qse_mbs_vfmt
+#define str_fcat qse_mbs_fcat
+#define str_vfcat qse_mbs_vfcat
 #include "str-dyn.h"
 
 /* -------------------------------------------------------- */
@@ -233,6 +235,7 @@ static int mbs_to_wcs (
 #undef str_ccat
 #undef str_nccat
 #undef str_del
+#undef str_amend
 #undef str_trm
 #undef str_pac
 #undef str_fmt
@@ -280,6 +283,7 @@ static int mbs_to_wcs (
 #define str_ccat qse_wcs_ccat 
 #define str_nccat qse_wcs_nccat 
 #define str_del qse_wcs_del 
+#define str_amend qse_wcs_amend 
 #define str_trm qse_wcs_trm 
 #define str_pac qse_wcs_pac 
 #define str_fmt qse_wcs_fmt 

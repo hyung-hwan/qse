@@ -2747,6 +2747,13 @@ QSE_EXPORT qse_size_t qse_mbs_del (
 	qse_size_t size
 );
 
+QSE_EXPORT qse_size_t qse_mbs_amend (
+	qse_mbs_t*         str,
+	qse_size_t         index,
+	qse_size_t         size,
+	const qse_mchar_t* repl
+);
+
 QSE_EXPORT qse_size_t qse_mbs_trm (
 	qse_mbs_t* str
 );
@@ -2956,6 +2963,19 @@ QSE_EXPORT qse_size_t qse_wcs_del (
 	qse_size_t size
 );
 
+/**
+ * The qse_wcs_amend() function is a versatile string editing function.
+ * It selects a string segment as long as \a size characters starting from
+ * the \a index position and changes it to the replacement string \a repl. 
+ * \return (qse_size_t)-1 on failure, string length on success.
+ */
+QSE_EXPORT qse_size_t qse_wcs_amend (
+	qse_wcs_t*         str,
+	qse_size_t         index,
+	qse_size_t         size,
+	const qse_wchar_t* repl
+);
+
 QSE_EXPORT qse_size_t qse_wcs_trm (
 	qse_wcs_t* str
 );
@@ -3001,6 +3021,7 @@ QSE_EXPORT qse_size_t qse_wcs_fmt (
 #	define qse_str_ccat(str,c)          qse_mbs_ccat(str,c)
 #	define qse_str_nccat(str,c,len)     qse_mbs_nccat(str,c,len)
 #	define qse_str_del(str,index,size)  qse_mbs_del(str,index,size)
+#	define qse_str_amend(str,index,size,repl)  qse_mbs_amend(str,index,size,repl)
 #	define qse_str_trm(str)             qse_mbs_trm(str)
 #	define qse_str_pac(str)             qse_mbs_pac(str)
 #	define qse_str_fcat                 qse_mbs_fcat
@@ -3032,6 +3053,7 @@ QSE_EXPORT qse_size_t qse_wcs_fmt (
 #	define qse_str_ccat(str,c)          qse_wcs_ccat(str,c)
 #	define qse_str_nccat(str,c,len)     qse_wcs_nccat(str,c,len)
 #	define qse_str_del(str,index,size)  qse_wcs_del(str,index,size)
+#	define qse_str_amend(str,index,size,repl)  qse_wcs_amend(str,index,size,repl)
 #	define qse_str_trm(str)             qse_wcs_trm(str)
 #	define qse_str_pac(str)             qse_wcs_pac(str)
 #	define qse_str_fcat                 qse_wcs_fcat

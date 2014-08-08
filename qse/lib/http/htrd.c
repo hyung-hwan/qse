@@ -194,11 +194,11 @@ static qse_mchar_t* parse_initial_line (qse_htrd_t* htrd, qse_mchar_t* line)
 #endif
 
 	/* the method should start with an alphabet */
-	if (!is_upalpha_octet(*p)) goto badre;
+	if (!is_alpha_octet(*p)) goto badre;
 
 	/* get the method name */
 	tmp.ptr = p;
-	do { p++; } while (is_upalpha_octet(*p));
+	do { p++; } while (is_alpha_octet(*p));
 	tmp.len = p - tmp.ptr;
 
 	htrd->re.type = QSE_HTRE_Q;
@@ -390,7 +390,19 @@ static qse_mchar_t* parse_initial_line (qse_htrd_t* htrd, qse_mchar_t* line)
 #endif
 
 		if (htrd->option & QSE_HTRD_CANONQPATH)
-			qse_canonmbspath (htrd->re.u.q.path, htrd->re.u.q.path, 0);
+		{
+			qse_mchar_t* qpath = htrd->re.u.q.path;
+
+			/* if the url begins with xxx://,
+			 * skip xxx:/ and canonicalize from the second slash */
+			while (is_alpha_octet(*qpath)) qpath++;
+			if (qse_mbszcmp (qpath, QSE_MT("://"), 3) == 0)
+				qpath = qpath + 2; /* set the position to the second / in :// */
+			else
+				qpath = htrd->re.u.q.path;
+
+			qse_canonmbspath (qpath, qpath, 0);
+		}
 	
 		/* skip spaces after the url part */
 		do { p++; } while (is_space_octet(*p));
@@ -1181,7 +1193,7 @@ int qse_htrd_feed (qse_htrd_t* htrd, const qse_mchar_t* req, qse_size_t len)
 					htrd->fed.s.crlf = 0;
 					/* reset the raw request length */
 					htrd->fed.s.plen = 0;
-	
+
 					if (parse_initial_line_and_headers (htrd, req, ptr - req) <= -1) return -1;
 
 					/* compelete request header is received */
