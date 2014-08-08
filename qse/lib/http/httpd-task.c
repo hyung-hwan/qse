@@ -158,14 +158,8 @@ qse_httpd_task_t* qse_httpd_entaskformat (
 
 /*------------------------------------------------------------------------*/
 
-typedef struct status_reloc_t status_reloc_t;
-struct status_reloc_t
-{
-	const qse_mchar_t* dst;
-	int redir;
-};
 
-static qse_httpd_task_t* entask_status (
+qse_httpd_task_t* qse_httpd_entask_status (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, 
 	qse_httpd_task_t* pred, int code, void* extra,
 	qse_http_method_t method, const qse_http_version_t* version, 
@@ -188,8 +182,8 @@ static qse_httpd_task_t* entask_status (
 		case 302:
 		case 307:
 		{
-			status_reloc_t* reloc;
-			reloc = (status_reloc_t*)extra;
+			qse_httpd_status_reloc_t* reloc;
+			reloc = (qse_httpd_status_reloc_t*)extra;
 			extrapre = QSE_MT("Location: ");
 			extrapst = reloc->redir? QSE_MT("/\r\n"): QSE_MT("\r\n");
 			extraval = reloc->dst;
@@ -237,14 +231,14 @@ qse_httpd_task_t* qse_httpd_entask_err (
 	qse_httpd_task_t* pred, int code,
 	qse_http_method_t method, const qse_http_version_t* version, int keepalive)
 {
-	return entask_status (httpd, client, pred, code, QSE_NULL, method, version, keepalive);
+	return qse_httpd_entask_status (httpd, client, pred, code, QSE_NULL, method, version, keepalive);
 }
 
 qse_httpd_task_t* qse_httpd_entaskerr (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, 
 	qse_httpd_task_t* pred, int code, qse_htre_t* req)
 {
-	return entask_status (
+	return qse_httpd_entask_status (
 		httpd, client, pred, code, QSE_NULL, 
 		qse_htre_getqmethodtype(req), 
 		qse_htre_getversion(req), 
@@ -270,7 +264,7 @@ qse_httpd_task_t* qse_httpd_entaskauth (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, 
 	qse_httpd_task_t* pred, const qse_mchar_t* realm, qse_htre_t* req)
 {
-	return entask_status (
+	return qse_httpd_entask_status (
 		httpd, client, pred, 401, (void*)realm, 
 		qse_htre_getqmethodtype(req),
 		qse_htre_getversion(req), 
@@ -284,12 +278,12 @@ qse_httpd_task_t* qse_httpd_entaskreloc (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, 
 	qse_httpd_task_t* pred, const qse_mchar_t* dst, qse_htre_t* req)
 {
-	status_reloc_t reloc;
+	qse_httpd_status_reloc_t reloc;
 
 	reloc.dst = dst;
 	reloc.redir = 0;
 
-	return entask_status (
+	return qse_httpd_entask_status (
 		httpd, client, pred, 301, (void*)&reloc,
 		qse_htre_getqmethodtype(req), 
 		qse_htre_getversion(req), 
@@ -300,12 +294,12 @@ qse_httpd_task_t* qse_httpd_entaskredir (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, 
 	qse_httpd_task_t* pred, const qse_mchar_t* dst, qse_htre_t* req)
 {
-	status_reloc_t reloc;
+	qse_httpd_status_reloc_t reloc;
 
 	reloc.dst = dst;
 	reloc.redir = 1;
 
-	return entask_status (
+	return qse_httpd_entask_status (
 		httpd, client, pred, 301, (void*)&reloc,
 		qse_htre_getqmethodtype(req), 
 		qse_htre_getversion(req), 
@@ -318,7 +312,7 @@ qse_httpd_task_t* qse_httpd_entask_nomod (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* pred, 
 	qse_http_method_t method, const qse_http_version_t* version, int keepalive)
 {
-	return entask_status (
+	return qse_httpd_entask_status (
 		httpd, client, pred, 304, QSE_NULL, method, version, keepalive);
 }
 
@@ -326,7 +320,7 @@ qse_httpd_task_t* qse_httpd_entasknomod (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, 
 	qse_httpd_task_t* pred, qse_htre_t* req)
 {
-	return entask_status (
+	return qse_httpd_entask_status (
 		httpd, client, pred, 304, QSE_NULL, 
 		qse_htre_getqmethodtype(req), 
 		qse_htre_getversion(req), 

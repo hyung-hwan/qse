@@ -2656,20 +2656,21 @@ static int make_resource (
 		if (server_xtn->query (httpd, client->server, QSE_NULL, QSE_NULL, QSE_HTTPD_SERVERSTD_PSEUDONYM, &target->u.proxy.pseudonym) <= -1) 
 			target->u.proxy.pseudonym = QSE_NULL;
 
+/******************************************************************/
+/*TODO: load this from configuration. reamove this after debugging */
+//target->u.proxy.flags |= QSE_HTTPD_RSRC_PROXY_URS;
+/******************************************************************/
 		/* mark that this request is going to be proxied. */
 		req->attr.flags |= QSE_HTRE_ATTR_PROXIED;
 		return 0;
 	}
 
-	/* htrd compacts double slashes to a single slash.
-	 * so inspect if the query path begins with http:/ instead of http:// */
-	/*if (qse_mbszcasecmp (tmp.qpath, QSE_MT("http://"), 7) == 0)*/
-	if (qse_mbszcasecmp (tmp.qpath, QSE_MT("http:/"), 6) == 0)
+	if (qse_mbszcasecmp (tmp.qpath, QSE_MT("http://"), 7) == 0)
 	{
 /* TODO: check if proxying is allowed.... */
 			qse_mchar_t* host, * slash;
 
-			host = tmp.qpath + 6;
+			host = tmp.qpath + 7;
 			slash = qse_mbschr (host, QSE_MT('/'));
 
 			if (slash && slash - host > 0)
@@ -2702,10 +2703,9 @@ static int make_resource (
 /* TODO: refrain from manipulating the request like this */
 				req->u.q.path = slash; /* TODO: use setqpath or something... */
 
-
 /******************************************************************/
 /*TODO: load this from configuration. reamove this after debugging */
-//target->u.proxy.flags |= QSE_HTTPD_RSRC_PROXY_URS;
+target->u.proxy.flags |= QSE_HTTPD_RSRC_PROXY_URS;
 /******************************************************************/
 
 				/* mark that this request is going to be proxied. */

@@ -153,7 +153,7 @@ qse_size_t str_setcapa (str_t* str, qse_size_t capa)
 			str->mmgr, QSE_SIZEOF(char_t)*(capa+1));
 		if (tmp == QSE_NULL) return (qse_size_t)-1;
 
-		if (str->val.ptr != QSE_NULL)
+		if (str->val.ptr)
 		{
 			qse_size_t ncopy = (str->val.len <= capa)? str->val.len: capa;
 			QSE_MEMCPY (tmp, str->val.ptr, 
@@ -185,7 +185,7 @@ qse_size_t str_setlen (str_t* str, qse_size_t len)
 	if (len < str->val.len) 
 	{
 		str->val.len = len;
-		str->val.ptr[len] = T('\0');	
+		str->val.ptr[len] = T('\0');
 		return len;
 	}
 
@@ -203,7 +203,7 @@ qse_size_t str_setlen (str_t* str, qse_size_t len)
 void str_clear (str_t* str)
 {
 	str->val.len = 0;
-	if (str->val.ptr != QSE_NULL)
+	if (str->val.ptr)
 	{
 		QSE_ASSERT (str->capa >= 1);
 		str->val.ptr[0] = T('\0');
@@ -385,7 +385,7 @@ qse_size_t str_nccat (str_t* str, char_t c, qse_size_t len)
 
 qse_size_t str_del (str_t* str, qse_size_t index, qse_size_t size)
 {
-	if (str->val.ptr != QSE_NULL && index < str->val.len && size > 0)
+	if (str->val.ptr && index < str->val.len && size > 0)
 	{
 		qse_size_t nidx = index + size;
 		if (nidx >= str->val.len)
@@ -405,9 +405,33 @@ qse_size_t str_del (str_t* str, qse_size_t index, qse_size_t size)
 	return str->val.len;
 }
 
+qse_size_t str_amend (str_t* str, qse_size_t pos, qse_size_t len, const char_t* repl)
+{
+	qse_size_t max_len;
+	qse_size_t repl_len = strlen(repl);
+
+	if (pos >= str->val.len) pos = str->val.len;
+	max_len = str->val.len - pos;
+	if (len > max_len) len = max_len;
+
+	if (len > repl_len)
+	{
+		str_del (str, pos, len - repl_len);
+	}
+	else if (len < repl_len)
+	{
+		qse_size_t old_str_len = str->val.len;
+		if (str_setlen (str, str->val.len + repl_len - len) == (qse_size_t)-1) return (qse_size_t)-1;
+		QSE_MEMMOVE (&str->val.ptr[pos + repl_len], &str->val.ptr[pos + len], QSE_SIZEOF(*repl) * (old_str_len - (pos + len)));
+	}
+
+	if (repl_len > 0) QSE_MEMMOVE (&str->val.ptr[pos], repl, QSE_SIZEOF(*repl) * repl_len); 
+	return str->val.len;
+}
+
 qse_size_t str_trm (str_t* str)
 {
-	if (str->val.ptr != QSE_NULL)
+	if (str->val.ptr)
 	{
 		str->val.len = strxtrm (str->val.ptr, str->val.len);
 	}
@@ -417,7 +441,7 @@ qse_size_t str_trm (str_t* str)
 
 qse_size_t str_pac (str_t* str)
 {
-	if (str->val.ptr != QSE_NULL)
+	if (str->val.ptr)
 	{
 		str->val.len = strxpac (str->val.ptr, str->val.len);
 	}

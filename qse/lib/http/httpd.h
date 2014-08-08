@@ -97,6 +97,13 @@ struct qse_httpd_real_task_t
 	qse_httpd_real_task_t* next;
 };
 
+typedef struct qse_httpd_status_reloc_t qse_httpd_status_reloc_t;
+struct qse_httpd_status_reloc_t
+{
+	const qse_mchar_t* dst;
+	int redir;
+};
+
 #define MAX_SEND_SIZE 4096
 #define MAX_RECV_SIZE 4096
 
@@ -128,6 +135,17 @@ int qse_httpd_init (
 
 void qse_httpd_fini (
 	qse_httpd_t* httpd
+);
+
+qse_httpd_task_t* qse_httpd_entask_status (
+	qse_httpd_t* httpd,
+	qse_httpd_client_t* client, 
+	qse_httpd_task_t* pred,
+	int code,
+	void* extra,
+	qse_http_method_t method,
+	const qse_http_version_t* version, 
+	int keepalive
 );
 
 qse_httpd_task_t* qse_httpd_entask_err (
