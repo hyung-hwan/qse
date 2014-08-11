@@ -943,7 +943,7 @@ static int task_init_proxy (
 	{
 		const qse_mchar_t* qpath;
 		const qse_mchar_t* metnam;
-		const qse_mchar_t* host_ptr;
+		const qse_mchar_t* host_ptr = QSE_NULL;
 		qse_mchar_t cliaddrbuf[128];
 		qse_size_t total_len;
 

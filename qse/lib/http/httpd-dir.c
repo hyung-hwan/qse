@@ -606,11 +606,11 @@ qse_httpd_task_t* qse_httpd_entaskdir (
 				/* create a directory listing task */
 				qse_httpd_task_t task, * x;
 
-				data.path.ptr = dir->path;
+				data.path.ptr = (qse_mchar_t*)dir->path;
 				data.path.len = qse_mbslen(data.path.ptr);
 				data.qpath.ptr = qse_htre_getqpath(req);
 				data.qpath.len = qse_mbslen(data.qpath.ptr);
-				data.head.ptr = dir->head? dir->head: QSE_MT("<style type='text/css'>body { background-color:#d0e4fe; font-size: 0.9em; } div.header { font-weight: bold; margin-bottom: 5px; } div.footer { border-top: 1px solid #99AABB; text-align: right; } table { font-size: 0.9em; } td { white-space: nowrap; } td.size { text-align: right; }</style>");
+				data.head.ptr = dir->head? (qse_mchar_t*)dir->head: QSE_MT("<style type='text/css'>body { background-color:#d0e4fe; font-size: 0.9em; } div.header { font-weight: bold; margin-bottom: 5px; } div.footer { border-top: 1px solid #99AABB; text-align: right; } table { font-size: 0.9em; } td { white-space: nowrap; } td.size { text-align: right; }</style>");
 				data.head.len = qse_mbslen(data.head.ptr);
 				data.foot.ptr = dir->foot? dir->foot: qse_httpd_getname(httpd);
 				data.foot.len = qse_mbslen(data.foot.ptr);

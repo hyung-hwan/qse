@@ -41,7 +41,9 @@ enum qse_httpd_serverstd_root_type_t
 {
 	QSE_HTTPD_SERVERSTD_ROOT_PATH,
 	QSE_HTTPD_SERVERSTD_ROOT_NWAD,
-	QSE_HTTPD_SERVERSTD_ROOT_TEXT
+	QSE_HTTPD_SERVERSTD_ROOT_TEXT,
+	QSE_HTTPD_SERVERSTD_ROOT_PROXY,
+	QSE_HTTPD_SERVERSTD_ROOT_ERROR
 }; 
 typedef enum qse_httpd_serverstd_root_type_t qse_httpd_serverstd_root_type_t;
 
@@ -56,12 +58,21 @@ struct qse_httpd_serverstd_root_t
 			const qse_mchar_t* val;
 			qse_size_t rpl;  /* replacement length */
 		} path;
+
 		qse_nwad_t nwad;
+
 		struct
 		{
 			const qse_mchar_t* ptr;
 			const qse_mchar_t* mime;
 		} text;
+
+		struct qse_httpd_rsrc_proxy_t proxy;
+
+		struct
+		{
+			int code; /* http error code */
+		} error;
 	} u;
 };
 
@@ -101,37 +112,51 @@ struct qse_httpd_serverstd_ssl_t
 	const qse_mchar_t* keyfile;
 };
 
+typedef struct qse_httpd_serverstd_proxy_t qse_httpd_serverstd_proxy_t;
+struct qse_httpd_serverstd_proxy_t
+{
+	int tproxy: 1;
+	const qse_mchar_t* pseudonym;
+};
+
 enum qse_httpd_serverstd_query_code_t
 {
-	QSE_HTTPD_SERVERSTD_SSL,            /* qse_httpd_serverstd_ssl_t */
+	QSE_HTTPD_SERVERSTD_SSL,             /* qse_httpd_serverstd_ssl_t */
 
-	QSE_HTTPD_SERVERSTD_ROOT,           /* qse_httpd_serverstd_root_t */
-	QSE_HTTPD_SERVERSTD_REALM,          /* qse_httpd_serverstd_realm_t */
-	QSE_HTTPD_SERVERSTD_AUTH,           /* qse_httpd_serverstd_auth_t */
-	QSE_HTTPD_SERVERSTD_ERRHEAD,        /* const qse_mchar_t* */
-	QSE_HTTPD_SERVERSTD_ERRFOOT,        /* const qse_mchar_t* */
+	QSE_HTTPD_SERVERSTD_ROOT,            /* qse_httpd_serverstd_root_t */
+	QSE_HTTPD_SERVERSTD_REALM,           /* qse_httpd_serverstd_realm_t */
+	QSE_HTTPD_SERVERSTD_AUTH,            /* qse_httpd_serverstd_auth_t */
+	QSE_HTTPD_SERVERSTD_ERRHEAD,         /* const qse_mchar_t* */
+	QSE_HTTPD_SERVERSTD_ERRFOOT,         /* const qse_mchar_t* */
 
-	QSE_HTTPD_SERVERSTD_DIRHEAD,        /* const qse_mchar_t* */
-	QSE_HTTPD_SERVERSTD_DIRFOOT,        /* const qse_mchar_t* */
+	QSE_HTTPD_SERVERSTD_DIRHEAD,         /* const qse_mchar_t* */
+	QSE_HTTPD_SERVERSTD_DIRFOOT,         /* const qse_mchar_t* */
 
-	QSE_HTTPD_SERVERSTD_PSEUDONYM,      /* const qse_mchar_t*, pseudonym to use in Via: */
+	QSE_HTTPD_SERVERSTD_PSEUDONYM,       /* const qse_mchar_t*, pseudonym to use in Via: */
 
-	QSE_HTTPD_SERVERSTD_INDEX,          /* qse_httpd_serverstd_index_t */
-	QSE_HTTPD_SERVERSTD_CGI,            /* qse_httpd_serverstd_cgi_t */
-	QSE_HTTPD_SERVERSTD_MIME,           /* const qse_mchar_t* */
-	QSE_HTTPD_SERVERSTD_DIRACC,         /* int (http error code) */
-	QSE_HTTPD_SERVERSTD_FILEACC         /* int (http error code) */
+	QSE_HTTPD_SERVERSTD_INDEX,           /* qse_httpd_serverstd_index_t */
+	QSE_HTTPD_SERVERSTD_CGI,             /* qse_httpd_serverstd_cgi_t */
+	QSE_HTTPD_SERVERSTD_MIME,            /* const qse_mchar_t* */
+	QSE_HTTPD_SERVERSTD_DIRACC,          /* int (http error code) */
+	QSE_HTTPD_SERVERSTD_FILEACC          /* int (http error code) */
 };
 typedef enum qse_httpd_serverstd_query_code_t qse_httpd_serverstd_query_code_t;
 
 
+struct qse_httpd_serverstd_query_info_t
+{
+	qse_htre_t* req;
+	qse_mchar_t* xpath; /* query path combined with document root */
+};
+typedef struct qse_httpd_serverstd_query_info_t qse_httpd_serverstd_query_info_t;
+
+
 typedef int (*qse_httpd_serverstd_query_t) (
-	qse_httpd_t*                     httpd, 
-	qse_httpd_server_t*              server,
-	qse_htre_t*                      req,
-	const qse_mchar_t*               xpath,
-	qse_httpd_serverstd_query_code_t code,
-	void*                            result
+	qse_httpd_t*                             httpd, 
+	qse_httpd_server_t*                      server,
+	qse_httpd_serverstd_query_code_t         code,
+	const qse_httpd_serverstd_query_info_t*  info,
+	void*                                    result
 );
 
 enum qse_httpd_serverstd_opt_t

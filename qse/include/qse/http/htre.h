@@ -78,17 +78,17 @@ struct qse_htre_t
 				qse_http_method_t type;
 				const qse_mchar_t* name;
 			} method;
-			const qse_mchar_t* path;
-			const qse_mchar_t* param;
+			qse_mchar_t* path;
+			qse_mchar_t* param;
 		} q;
 		struct
 		{
 			struct
 			{
 				int val;
-				const qse_mchar_t* str;
+				qse_mchar_t* str;
 			} code;
-			const qse_mchar_t* mesg;
+			qse_mchar_t* mesg;
 		} s;
 	} u;
 

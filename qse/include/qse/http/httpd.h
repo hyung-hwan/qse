@@ -528,7 +528,7 @@ enum qse_httpd_rsrc_type_t
 	QSE_HTTPD_RSRC_AUTH,
 	QSE_HTTPD_RSRC_CGI,
 	QSE_HTTPD_RSRC_DIR,
-	QSE_HTTPD_RSRC_ERR,
+	QSE_HTTPD_RSRC_ERROR,
 	QSE_HTTPD_RSRC_FILE,
 	QSE_HTTPD_RSRC_PROXY,
 	QSE_HTTPD_RSRC_RELOC,
@@ -606,7 +606,7 @@ struct qse_httpd_rsrc_t
 		struct
 		{
 			int code;
-		} err;
+		} error;
 
 		struct
 		{
