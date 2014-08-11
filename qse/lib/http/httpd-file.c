@@ -539,7 +539,7 @@ qse_httpd_task_t* qse_httpd_entaskfile (
 	qse_size_t xtnsize;
 
 	QSE_MEMSET (&data, 0, QSE_SIZEOF(data));
-	data.path.ptr = path;
+	data.path.ptr = (qse_mchar_t*)path;
 	data.path.len = qse_mbslen(path);
 	data.version = *qse_htre_getversion(req);
 	data.keepalive = (req->attr.flags & QSE_HTRE_ATTR_KEEPALIVE);
@@ -563,7 +563,7 @@ qse_httpd_task_t* qse_httpd_entaskfile (
 
 			if (mime)
 			{
-				data.u.get.mime.ptr = mime;
+				data.u.get.mime.ptr = (qse_mchar_t*)mime;
 				data.u.get.mime.len = qse_mbslen(mime);
 				xtnsize += data.u.get.mime.len + 1;
 			}

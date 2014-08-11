@@ -554,14 +554,14 @@ static int init_xtn_ssl (qse_httpd_t* httpd, qse_httpd_server_t* server)
 	xtn = (httpd_xtn_t*)qse_httpd_getxtn (httpd);
 	server_xtn = (server_xtn_t*)qse_httpd_getserverxtn (httpd, server);
 
-	if (server_xtn->query (httpd, server, QSE_NULL, QSE_NULL, QSE_HTTPD_SERVERSTD_SSL, &ssl) <= -1)
+	if (server_xtn->query (httpd, server, QSE_HTTPD_SERVERSTD_SSL, QSE_NULL, &ssl) <= -1)
 	{
 		return -1;
 	}
 
 	if (ssl.certfile == QSE_NULL || ssl.keyfile == QSE_NULL)
 	{
-		qse_httpd_seterrnum (httpd, QSE_HTTPD_EINVAL);	
+		qse_httpd_seterrnum (httpd, QSE_HTTPD_EINVAL);
 		return -1;
 	}
 
@@ -2126,7 +2126,7 @@ if (qse_htre_getcontentlen(req) > 0)
 				/* failed to make a resource. just send the internal server error.
 				 * the makersrc handler can return a negative number to return 
 				 * '500 Internal Server Error'. If it wants to return a specific
-				 * error code, it should return 0 with the QSE_HTTPD_RSRC_ERR
+				 * error code, it should return 0 with the QSE_HTTPD_RSRC_ERROR
 				 * resource. */
 				qse_httpd_discardcontent (httpd, req);
 				task = qse_httpd_entaskerr (httpd, client, QSE_NULL, 500, req);
@@ -2148,7 +2148,7 @@ if (qse_htre_getcontentlen(req) > 0)
 
 				/* if the resource is indicating to return an error,
 				 * discard the contents since i won't return them */
-				if (rsrc.type == QSE_HTTPD_RSRC_ERR) 
+				if (rsrc.type == QSE_HTTPD_RSRC_ERROR) 
 				{ 
 					qse_httpd_discardcontent (httpd, req); 
 				}
@@ -2175,7 +2175,7 @@ printf ("CANOT MAKE RESOURCE.... %s\n", qse_htre_getqpath(req));
 				/* failed to make a resource. just send the internal server error.
 				 * the makersrc handler can return a negative number to return 
 				 * '500 Internal Server Error'. If it wants to return a specific
-				 * error code, it should return 0 with the QSE_HTTPD_RSRC_ERR
+				 * error code, it should return 0 with the QSE_HTTPD_RSRC_ERROR
 				 * resource. */
 				task = qse_httpd_entaskerr (httpd, client, QSE_NULL, 500, req);
 			}
@@ -2237,10 +2237,10 @@ static int format_error (
 
 	server_xtn = qse_httpd_getserverxtn (httpd, client->server);
 
-	if (server_xtn->query (httpd, client->server, QSE_NULL, QSE_NULL, QSE_HTTPD_SERVERSTD_ERRHEAD, &head) <= -1) head = QSE_NULL;
+	if (server_xtn->query (httpd, client->server, QSE_HTTPD_SERVERSTD_ERRHEAD, QSE_NULL, &head) <= -1) head = QSE_NULL;
 	if (head == QSE_NULL) head = QSE_MT("<style type='text/css'>body { background-color:#d0e4fe; font-size: 0.9em; } div.header { font-weight: bold; margin-bottom: 5px; } div.footer { border-top: 1px solid #99AABB; text-align: right; }</style>");
 
-	if (server_xtn->query (httpd, client->server, QSE_NULL, QSE_NULL, QSE_HTTPD_SERVERSTD_ERRFOOT, &foot) <= -1) foot = QSE_NULL;
+	if (server_xtn->query (httpd, client->server, QSE_HTTPD_SERVERSTD_ERRFOOT, QSE_NULL, &foot) <= -1) foot = QSE_NULL;
 	if (foot == QSE_NULL) foot = qse_httpd_getname(httpd);
 
 	msg = qse_httpstatustombs(code);
@@ -2486,8 +2486,15 @@ static int attempt_cgi (
 
 	if (tmp->final_match)
 	{
+		qse_httpd_serverstd_query_info_t qinfo;
+
 		/* it is a final match. tmp->xpath is tmp->root + tmp->qpath  */
-		if (server_xtn->query (httpd, client->server, req, tmp->xpath, QSE_HTTPD_SERVERSTD_CGI, &cgi) >= 0 && cgi.cgi)
+
+		QSE_MEMSET (&qinfo, 0, QSE_SIZEOF(qinfo));
+		qinfo.req = req;
+		qinfo.xpath = tmp->xpath;
+
+		if (server_xtn->query (httpd, client->server, QSE_HTTPD_SERVERSTD_CGI, &qinfo, &cgi) >= 0 && cgi.cgi)
 		{
 			if (tmp->idxfile)
 			{
@@ -2555,7 +2562,13 @@ static int attempt_cgi (
 
 					if (!st.isdir)
 					{
-						if (server_xtn->query (httpd, client->server, req, tmp->xpath, QSE_HTTPD_SERVERSTD_CGI, &cgi) >= 0 && cgi.cgi)
+						qse_httpd_serverstd_query_info_t qinfo;
+
+						QSE_MEMSET (&qinfo, 0, QSE_SIZEOF(qinfo));
+						qinfo.req = req;
+						qinfo.xpath = tmp->xpath;
+
+						if (server_xtn->query (httpd, client->server, QSE_HTTPD_SERVERSTD_CGI, &qinfo, &cgi) >= 0 && cgi.cgi)
 						{
 							/* the script name is composed of the orginal query path.
 							 * the pointer held in 'slash' is valid for tmp->qpath as
@@ -2620,6 +2633,8 @@ static int make_resource (
 	qse_httpd_stat_t st;
 	int n, stx, acc;
 
+	qse_httpd_serverstd_query_info_t qinfo;
+
 	QSE_MEMSET (&tmp, 0, QSE_SIZEOF(tmp));
 	tmp.qpath = qse_htre_getqpath(req);
 	tmp.qpath_len = qse_mbslen (tmp.qpath);
@@ -2628,6 +2643,10 @@ static int make_resource (
 
 	server_xtn = qse_httpd_getserverxtn (httpd, client->server);
 
+	QSE_MEMSET (&qinfo, 0, QSE_SIZEOF(qinfo));
+	qinfo.req = req;
+
+#if 0
 	mth = qse_htre_getqmethodtype (req);
 	if (mth == QSE_HTTP_CONNECT)
 	{
@@ -2653,7 +2672,7 @@ static int make_resource (
 		}
 
 		/* pseudonym for raw proxying should not be useful. but set it for consistency */
-		if (server_xtn->query (httpd, client->server, QSE_NULL, QSE_NULL, QSE_HTTPD_SERVERSTD_PSEUDONYM, &target->u.proxy.pseudonym) <= -1) 
+		if (server_xtn->query (httpd, client->server, QSE_HTTPD_SERVERSTD_PSEUDONYM, &qinfo, &target->u.proxy.pseudonym) <= -1) 
 			target->u.proxy.pseudonym = QSE_NULL;
 
 /******************************************************************/
@@ -2693,11 +2712,11 @@ static int make_resource (
 				{
 					/* make the source binding type the same as destination */
 					if (qse_getnwadport(&target->u.proxy.dst.nwad) == 0)
-						qse_setnwadport (&target->u.proxy.dst.nwad, qse_hton16(80));
+						qse_setnwadport (&target->u.proxy.dst.nwad, qse_hton16(QSE_HTTPD_DEFAULT_PORT));
 					target->u.proxy.src.nwad.type = target->u.proxy.dst.nwad.type;
 				}
 
-				if (server_xtn->query (httpd, client->server, QSE_NULL, QSE_NULL, QSE_HTTPD_SERVERSTD_PSEUDONYM, &target->u.proxy.pseudonym) <= -1) 
+				if (server_xtn->query (httpd, client->server, QSE_HTTPD_SERVERSTD_PSEUDONYM, &qinfo, &target->u.proxy.pseudonym) <= -1) 
 					target->u.proxy.pseudonym = QSE_NULL;
 
 /* TODO: refrain from manipulating the request like this */
@@ -2705,7 +2724,7 @@ static int make_resource (
 
 /******************************************************************/
 /*TODO: load this from configuration. reamove this after debugging */
-target->u.proxy.flags |= QSE_HTTPD_RSRC_PROXY_URS;
+//target->u.proxy.flags |= QSE_HTTPD_RSRC_PROXY_URS;
 /******************************************************************/
 
 				/* mark that this request is going to be proxied. */
@@ -2714,7 +2733,9 @@ target->u.proxy.flags |= QSE_HTTPD_RSRC_PROXY_URS;
 			}
 	}
 
-	if (server_xtn->query (httpd, client->server, req, QSE_NULL, QSE_HTTPD_SERVERSTD_ROOT, &tmp.root) <= -1) return -1;
+#endif
+
+	if (server_xtn->query (httpd, client->server, QSE_HTTPD_SERVERSTD_ROOT, &qinfo, &tmp.root) <= -1) return -1;
 	switch (tmp.root.type)
 	{
 		case QSE_HTTPD_SERVERSTD_ROOT_NWAD:
@@ -2730,7 +2751,7 @@ target->u.proxy.flags |= QSE_HTTPD_RSRC_PROXY_URS;
 			target->u.proxy.dst.nwad = tmp.root.u.nwad;
 			target->u.proxy.src.nwad.type = target->u.proxy.dst.nwad.type;
 
-			if (server_xtn->query (httpd, client->server, QSE_NULL, QSE_NULL, QSE_HTTPD_SERVERSTD_PSEUDONYM, &target->u.proxy.pseudonym) <= -1) 
+			if (server_xtn->query (httpd, client->server, QSE_HTTPD_SERVERSTD_PSEUDONYM, &qinfo, &target->u.proxy.pseudonym) <= -1) 
 				target->u.proxy.pseudonym = QSE_NULL;
 
 			/* mark that this request is going to be proxied. */
@@ -2742,13 +2763,24 @@ target->u.proxy.flags |= QSE_HTTPD_RSRC_PROXY_URS;
 			target->u.text.ptr = tmp.root.u.text.ptr;
 			target->u.text.mime = tmp.root.u.text.mime;
 			return 0;
+
+		case QSE_HTTPD_SERVERSTD_ROOT_PROXY:
+			target->type = QSE_HTTPD_RSRC_PROXY;
+			target->u.proxy = tmp.root.u.proxy;
+			req->attr.flags |= QSE_HTRE_ATTR_PROXIED;
+			return 0;
+
+		case QSE_HTTPD_SERVERSTD_ROOT_ERROR:
+			target->type = QSE_HTTPD_RSRC_ERROR;
+			target->u.error.code = tmp.root.u.error.code;
+			return 0;
 	}
 
 	/* handle the request locally */
 	QSE_ASSERT (tmp.root.type == QSE_HTTPD_SERVERSTD_ROOT_PATH);
 
-	if (server_xtn->query (httpd, client->server, req, QSE_NULL, QSE_HTTPD_SERVERSTD_REALM, &tmp.realm) <= -1 ||
-	    server_xtn->query (httpd, client->server, req, QSE_NULL, QSE_HTTPD_SERVERSTD_INDEX, &tmp.index) <= -1)
+	if (server_xtn->query (httpd, client->server, QSE_HTTPD_SERVERSTD_REALM, &qinfo, &tmp.realm) <= -1 ||
+	    server_xtn->query (httpd, client->server, QSE_HTTPD_SERVERSTD_INDEX, &qinfo, &tmp.index) <= -1)
 	{
 		return -1;
 	}
@@ -2792,7 +2824,7 @@ target->u.proxy.flags |= QSE_HTTPD_RSRC_PROXY_URS;
 
 				tmp.auth.key.ptr = server_xtn->auth.ptr;
 				tmp.auth.key.len = authl2;
-	    			if (server_xtn->query (httpd, client->server, req, QSE_NULL, QSE_HTTPD_SERVERSTD_AUTH, &tmp.auth) >= 0 && tmp.auth.authok) goto auth_ok;
+				if (server_xtn->query (httpd, client->server, QSE_HTTPD_SERVERSTD_AUTH, &qinfo, &tmp.auth) >= 0 && tmp.auth.authok) goto auth_ok;
 			}
 		}
 
@@ -2825,8 +2857,8 @@ auth_ok:
 		{
 			/* Expectation Failed */
 			qse_htre_discardcontent (req);
-			target->type = QSE_HTTPD_RSRC_ERR;
-			target->u.err.code = 417;
+			target->type = QSE_HTTPD_RSRC_ERROR;
+			target->u.error.code = 417;
 			return 0;
 		}
 	}
@@ -2891,12 +2923,14 @@ auth_ok:
 				}
 			}
 
+			qinfo.xpath = tmp.xpath;
+
 			/* it is a directory - should i allow it? */
-			if (server_xtn->query (httpd, client->server, req, tmp.xpath, QSE_HTTPD_SERVERSTD_DIRACC, &target->u.err.code) <= -1) target->u.err.code = 500;
-			if (target->u.err.code < 200 || target->u.err.code > 299)
+			if (server_xtn->query (httpd, client->server, QSE_HTTPD_SERVERSTD_DIRACC, &qinfo, &target->u.error.code) <= -1) target->u.error.code = 500;
+			if (target->u.error.code < 200 || target->u.error.code > 299)
 			{
 				qse_htre_discardcontent (req);
-				target->type = QSE_HTTPD_RSRC_ERR;
+				target->type = QSE_HTTPD_RSRC_ERROR;
 				/* free xpath since it won't be used */
 				QSE_MMGR_FREE (httpd->mmgr, tmp.xpath);
 			}
@@ -2913,8 +2947,8 @@ auth_ok:
 			{
 				target->type = QSE_HTTPD_RSRC_DIR;
 				target->u.dir.path = tmp.xpath;
-				if (server_xtn->query (httpd, client->server, req, tmp.xpath, QSE_HTTPD_SERVERSTD_DIRHEAD, &target->u.dir.head) <= -1) target->u.dir.head = QSE_NULL;
-				if (server_xtn->query (httpd, client->server, req, tmp.xpath, QSE_HTTPD_SERVERSTD_DIRFOOT, &target->u.dir.foot) <= -1) target->u.dir.foot = QSE_NULL;
+				if (server_xtn->query (httpd, client->server, QSE_HTTPD_SERVERSTD_DIRHEAD, &qinfo, &target->u.dir.head) <= -1) target->u.dir.head = QSE_NULL;
+				if (server_xtn->query (httpd, client->server, QSE_HTTPD_SERVERSTD_DIRFOOT, &qinfo, &target->u.dir.foot) <= -1) target->u.dir.foot = QSE_NULL;
 			}
 		}
 		else
@@ -2937,18 +2971,19 @@ auth_ok:
 		}
 		if (n >= 1) return 0;
 
-		acc = (tmp.idxfile || !qse_mbsend(tmp.qpath, QSE_MT("/")))? 
-			QSE_HTTPD_SERVERSTD_FILEACC: QSE_HTTPD_SERVERSTD_DIRACC;
+		qinfo.xpath = tmp.xpath;
 
 		/* check file's access permission */
-		if (server_xtn->query (httpd, client->server, req, tmp.xpath, acc, &target->u.err.code) <= -1) target->u.err.code = 500;
+		acc = (tmp.idxfile || !qse_mbsend(tmp.qpath, QSE_MT("/")))? 
+			QSE_HTTPD_SERVERSTD_FILEACC: QSE_HTTPD_SERVERSTD_DIRACC;
+		if (server_xtn->query (httpd, client->server, acc, &qinfo, &target->u.error.code) <= -1) target->u.error.code = 500;
 
-		if (target->u.err.code < 200 || target->u.err.code > 299)
+		if (target->u.error.code < 200 || target->u.error.code > 299)
 		{
 			/* free xpath since it won't be used */
 			qse_htre_discardcontent (req);
 			QSE_MMGR_FREE (httpd->mmgr, tmp.xpath);
-			target->type = QSE_HTTPD_RSRC_ERR;
+			target->type = QSE_HTTPD_RSRC_ERROR;
 		}
 		else
 		{
@@ -2970,15 +3005,15 @@ auth_ok:
 				target->type = QSE_HTTPD_RSRC_DIR;
 				target->u.dir.path = tmp.xpath;
 
-				if (server_xtn->query (httpd, client->server, req, tmp.xpath, QSE_HTTPD_SERVERSTD_DIRHEAD, &target->u.dir.head) <= -1) target->u.dir.head = QSE_NULL;
-				if (server_xtn->query (httpd, client->server, req, tmp.xpath, QSE_HTTPD_SERVERSTD_DIRFOOT, &target->u.dir.foot) <= -1) target->u.dir.foot = QSE_NULL;
+				if (server_xtn->query (httpd, client->server, QSE_HTTPD_SERVERSTD_DIRHEAD, &qinfo, &target->u.dir.head) <= -1) target->u.dir.head = QSE_NULL;
+				if (server_xtn->query (httpd, client->server, QSE_HTTPD_SERVERSTD_DIRFOOT, &qinfo, &target->u.dir.foot) <= -1) target->u.dir.foot = QSE_NULL;
 			}
 			else
 			{
 				target->type = QSE_HTTPD_RSRC_FILE;
 				target->u.file.path = tmp.xpath;
 
-				if (server_xtn->query (httpd, client->server, req, tmp.xpath, QSE_HTTPD_SERVERSTD_MIME, &target->u.file.mime) <= -1)
+				if (server_xtn->query (httpd, client->server, QSE_HTTPD_SERVERSTD_MIME, &qinfo, &target->u.file.mime) <= -1)
 				{
 					/* don't care about failure */
 					target->u.file.mime = QSE_NULL;
@@ -3026,8 +3061,9 @@ static struct cgi_tab_t cgitab[] =
 
 static int query_server (
 	qse_httpd_t* httpd, qse_httpd_server_t* server, 
-	qse_htre_t* req, const qse_mchar_t* xpath,
-	qse_httpd_serverstd_query_code_t code, void* result)
+	qse_httpd_serverstd_query_code_t code, 
+	const qse_httpd_serverstd_query_info_t* qinfo,
+	void* result)
 {
 	qse_size_t i;
 
@@ -3077,7 +3113,7 @@ static int query_server (
 			qse_httpd_serverstd_cgi_t* cgi = (qse_httpd_serverstd_cgi_t*)result;
 			for (i = 0; i < QSE_COUNTOF(cgitab); i++)
 			{
-				if (qse_mbsend (xpath, cgitab[i].suffix))
+				if (qse_mbsend (qinfo->xpath, cgitab[i].suffix))
 				{
 					QSE_MEMCPY (cgi, &cgitab[i].cgi, QSE_SIZEOF(*cgi));
 					return 0;
@@ -3092,7 +3128,7 @@ static int query_server (
 			/* TODO: binary search if the table is large */
 			for (i = 0; i < QSE_COUNTOF(mimetab); i++)
 			{
-				if (qse_mbsend (xpath, mimetab[i].suffix))
+				if (qse_mbsend (qinfo->xpath, mimetab[i].suffix))
 				{
 					*(const qse_mchar_t**)result = mimetab[i].type;
 					return 0;
@@ -3108,7 +3144,7 @@ static int query_server (
 			/* i don't allow PUT or DELET by default.
 			 * override this query result if you want to change
 			 * the behavior. */
-			switch (qse_htre_getqmethodtype(req))
+			switch (qse_htre_getqmethodtype(qinfo->req))
 			{
 				case QSE_HTTP_OPTIONS:
 				case QSE_HTTP_HEAD:

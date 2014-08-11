@@ -58,11 +58,11 @@ struct task_cgi_t
 	int init_failed;
 	qse_httpd_t* httpd;
 
-	const qse_mchar_t* path;
-	const qse_mchar_t* script;
-	const qse_mchar_t* suffix;
-	const qse_mchar_t* root;
-	const qse_mchar_t* shebang;
+	qse_mchar_t* path;
+	qse_mchar_t* script;
+	qse_mchar_t* suffix;
+	qse_mchar_t* root;
+	qse_mchar_t* shebang;
 
 	int method;
 	qse_http_version_t version;
@@ -1601,16 +1601,16 @@ qse_httpd_task_t* qse_httpd_entaskcgi (
 	if (rsrc.root == QSE_NULL) rsrc.root = QSE_MT("");
 	if (rsrc.shebang == QSE_NULL) rsrc.shebang = QSE_MT("");
 
-	arg.path.ptr = rsrc.path;
+	arg.path.ptr = (qse_mchar_t*)rsrc.path;
 	arg.path.len = qse_mbslen(rsrc.path);
-	arg.script.ptr = rsrc.script;
+	arg.script.ptr = (qse_mchar_t*)rsrc.script;
 	arg.script.len = qse_mbslen(rsrc.script);
-	arg.suffix.ptr = rsrc.suffix;
+	arg.suffix.ptr = (qse_mchar_t*)rsrc.suffix;
 	arg.suffix.len = qse_mbslen(rsrc.suffix);
-	arg.root.ptr = rsrc.root;
+	arg.root.ptr = (qse_mchar_t*)rsrc.root;
 	arg.root.len = qse_mbslen(rsrc.root);
 	arg.nph = rsrc.nph;
-	arg.shebang.ptr = rsrc.shebang;
+	arg.shebang.ptr = (qse_mchar_t*)rsrc.shebang;
 	arg.shebang.len = qse_mbslen(rsrc.shebang);
 	arg.req = req;
 
