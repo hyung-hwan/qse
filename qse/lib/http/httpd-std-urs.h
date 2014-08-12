@@ -53,6 +53,7 @@ struct urs_ctx_t
 
 	qse_skad_t skad;
 	int skadlen;
+	int urs_socket;
 
 	qse_uint16_t seq; /* TODO: change to uint32_t??? */
 	urs_req_t* reqs[1024]; /* TOOD: choose the right size */
@@ -72,6 +73,10 @@ struct urs_req_t
 	void* ctx;
 
 	urs_ctx_t* dc;
+	qse_skad_t urs_skad;
+	int urs_skadlen;
+	int urs_socket;
+
 	qse_tmr_index_t tmr_tmout;
 	int resends;
 
@@ -86,8 +91,6 @@ static int urs_open (qse_httpd_t* httpd, qse_httpd_urs_t* urs)
 	qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
 	return -1;
 #else
-	sock_t fd = SOCK_INIT; 
-	int flag;
 	qse_nwad_t nwad;
 	urs_ctx_t* dc;
 	httpd_xtn_t* httpd_xtn;
@@ -127,49 +130,40 @@ static int urs_open (qse_httpd_t* httpd, qse_httpd_urs_t* urs)
 		httpd->opt.rcb.logact (httpd, &msg);
 	}
 
-	fd = socket (qse_skadfamily(&dc->skad), SOCK_DGRAM, IPPROTO_UDP);
-	if (!is_valid_socket(fd)) 
+	urs->handle[0].i = open_udp_socket (httpd, AF_INET);
+#if defined(AF_INET6)
+	urs->handle[1].i = open_udp_socket (httpd, AF_INET6);
+#endif
+	if (!is_valid_socket(urs->handle[0].i) && 
+	    !is_valid_socket(urs->handle[1].i))
 	{
-		qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
 		goto oops;
 	}
 
-/* TODO: set socket send/recv buffer size. it's needed as urs may be long */
+	if (nwad.type == QSE_NWAD_IN4)
+		dc->urs_socket = urs->handle[0].i;
+	else
+		dc->urs_socket = urs->handle[1].i;
 
-	#if defined(FD_CLOEXEC)
-	flag = fcntl (fd, F_GETFD);
-	if (flag >= 0) fcntl (fd, F_SETFD, flag | FD_CLOEXEC);
-	#endif
+	urs->handle_count = 2;
 
-	#if defined(SO_REUSEADDR)
-	flag = 1;
-	setsockopt (fd, SOL_SOCKET, SO_REUSEADDR, (void*)&flag, QSE_SIZEOF(flag));
-	#endif
-	
-	#if defined(SO_REUSEPORT)
-	flag = 1;
-	setsockopt (fd, SOL_SOCKET, SO_REUSEPORT, (void*)&flag, QSE_SIZEOF(flag));
-	#endif
-
-	if (set_socket_nonblock (httpd, fd, 1) <= -1) goto oops;
-	
-	urs->handle.i = fd;
 	urs->ctx = dc;
 	return 0;
 
 oops:
-	if (is_valid_socket(fd)) close_socket (fd);
+	if (is_valid_socket(urs->handle[0].i)) close_socket (urs->handle[0].i);
+	if (is_valid_socket(urs->handle[1].i)) close_socket (urs->handle[1].i);
 	if (dc) qse_httpd_freemem (httpd, dc);
 	return -1;
 
 #endif
 }
 
-static void urs_remove_tmr_tmout (urs_req_t* req)
+static void urs_remove_tmr_tmout (qse_httpd_t* httpd, urs_req_t* req)
 {
 	if (req->tmr_tmout != QSE_TMR_INVALID_INDEX)
 	{
-		qse_httpd_removetimerevent (req->dc->httpd, req->tmr_tmout);
+		qse_httpd_removetimerevent (httpd, req->tmr_tmout);
 		req->tmr_tmout = QSE_TMR_INVALID_INDEX;
 	}
 }
@@ -185,7 +179,7 @@ static void urs_close (qse_httpd_t* httpd, qse_httpd_urs_t* urs)
 		while (dc->reqs[i])
 		{
 			next_req = dc->reqs[i]->next;
-			urs_remove_tmr_tmout (dc->reqs[i]);
+			urs_remove_tmr_tmout (httpd, dc->reqs[i]);
 			qse_httpd_freemem (httpd, dc->reqs[i]);
 			dc->reqs[i] = next_req;
 			dc->req_count--;
@@ -194,12 +188,17 @@ static void urs_close (qse_httpd_t* httpd, qse_httpd_urs_t* urs)
 
 	QSE_ASSERT (dc->req_count == 0);
 
-	close_socket (urs->handle.i);
+	for (i = 0; i < urs->handle_count; i++) 
+	{
+		if (is_valid_socket(urs->handle[i].i)) 
+			close_socket (urs->handle[i].i);
+	}
+
 	qse_httpd_freemem (httpd, urs->ctx);
 }
 
 
-static int urs_recv (qse_httpd_t* httpd, qse_httpd_urs_t* urs)
+static int urs_recv (qse_httpd_t* httpd, qse_httpd_urs_t* urs, qse_ubi_t handle)
 {
 	urs_ctx_t* dc = (urs_ctx_t*)urs->ctx;
 	httpd_xtn_t* httpd_xtn;
@@ -217,7 +216,7 @@ printf ("URS_RECV....\n");
 	httpd_xtn = qse_httpd_getxtn (httpd);
 
 	fromlen = QSE_SIZEOF(fromaddr);
-	len = recvfrom (urs->handle.i, dc->rcvbuf, QSE_SIZEOF(dc->rcvbuf) - 1, 0, (struct sockaddr*)&fromaddr, &fromlen);
+	len = recvfrom (handle.i, dc->rcvbuf, QSE_SIZEOF(dc->rcvbuf) - 1, 0, (struct sockaddr*)&fromaddr, &fromlen);
 
 /* TODO: check if fromaddr matches the dc->skad... */
 
@@ -232,7 +231,7 @@ printf ("URS_RECV....\n");
 			{
 				pkt->url[qse_ntoh16(pkt->hdr.len)] = QSE_MT('\0');
 
-				urs_remove_tmr_tmout (req);
+				urs_remove_tmr_tmout (httpd, req);
 				req->rewrite (httpd, req->pkt->url, pkt->url, req->ctx);
 
 				/* detach the request off dc->reqs */
@@ -287,7 +286,7 @@ static void tmr_urs_tmout_handle (qse_tmr_t* tmr, const qse_ntime_t* now, void* 
 		tmout_event.handler = tmr_urs_tmout_handle;
 		tmout_event.updater = tmr_urs_tmout_update;
 
-		if (sendto (dc->urs->handle.i, req->pkt, req->pktlen, 0, (struct sockaddr*)&dc->skad, dc->skadlen) != req->pktlen)
+		if (sendto (req->urs_socket, req->pkt, req->pktlen, 0, (struct sockaddr*)&dc->skad, dc->skadlen) != req->pktlen)
 		{
 			/* error. fall thru */
 		}
@@ -321,7 +320,7 @@ printf ("urs timed out....\n");
 	dc->req_count--;
 }
 
-static int urs_send (qse_httpd_t* httpd, qse_httpd_urs_t* urs, const qse_mchar_t* url, qse_httpd_rewrite_t rewrite, void* ctx)
+static int urs_send (qse_httpd_t* httpd, qse_httpd_urs_t* urs, const qse_mchar_t* url, qse_httpd_rewrite_t rewrite, const qse_nwad_t* urs_server, void* ctx)
 {
 	urs_ctx_t* dc = (urs_ctx_t*)urs->ctx;
 	httpd_xtn_t* httpd_xtn;
@@ -374,6 +373,27 @@ printf ("URS REALLY SENING>>>>>>>>>>>>>>>>>>>>>>>\n");
 	req->ctx = ctx;
 	req->resends = httpd_xtn->urs.resends;
 
+	if (urs_server) 
+	{
+		req->urs_skadlen = qse_nwadtoskad (urs_server, &req->urs_skad);
+		if (req->urs_skadlen <= -1)
+		{
+			qse_httpd_seterrnum (httpd, QSE_HTTPD_EINVAL);
+			goto oops;
+		}
+
+		if (urs_server->type == QSE_NWAD_IN4)
+			req->urs_socket = urs->handle[0].i;
+		else 
+			req->urs_socket = urs->handle[1].i;
+	}
+	else
+	{
+		req->urs_skad = dc->skad;
+		req->urs_skadlen = dc->skadlen;
+		req->urs_socket = dc->urs_socket;
+	}
+
 	qse_gettime (&tmout_event.when);
 	qse_addtime (&tmout_event.when, &httpd_xtn->urs.tmout, &tmout_event.when);
 	tmout_event.ctx = req;
@@ -381,7 +401,7 @@ printf ("URS REALLY SENING>>>>>>>>>>>>>>>>>>>>>>>\n");
 	tmout_event.updater = tmr_urs_tmout_update;
 	if (qse_httpd_inserttimerevent (httpd, &tmout_event, &req->tmr_tmout) <= -1) goto oops;
 
-	if (sendto (urs->handle.i, req->pkt, req->pktlen, 0, (struct sockaddr*)&dc->skad, dc->skadlen) != req->pktlen)
+	if (sendto (req->urs_socket, req->pkt, req->pktlen, 0, (struct sockaddr*)&dc->skad, dc->skadlen) != req->pktlen)
 	{
 		qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
 		goto oops;
@@ -403,7 +423,7 @@ printf ("URS REALLY SENT>>>>>>>>>>>>>>>>>>>>>>>\n");
 oops:
 	if (req)
 	{
-		urs_remove_tmr_tmout (req);
+		urs_remove_tmr_tmout (httpd, req);
 		qse_httpd_freemem (httpd, req);
 	}
 	return -1;

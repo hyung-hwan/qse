@@ -112,13 +112,6 @@ struct qse_httpd_serverstd_ssl_t
 	const qse_mchar_t* keyfile;
 };
 
-typedef struct qse_httpd_serverstd_proxy_t qse_httpd_serverstd_proxy_t;
-struct qse_httpd_serverstd_proxy_t
-{
-	int tproxy: 1;
-	const qse_mchar_t* pseudonym;
-};
-
 enum qse_httpd_serverstd_query_code_t
 {
 	QSE_HTTPD_SERVERSTD_SSL,             /* qse_httpd_serverstd_ssl_t */

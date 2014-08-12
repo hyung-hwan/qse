@@ -822,14 +822,31 @@ qse_httpd_server_t* qse_httpd_getprevserver (qse_httpd_t* httpd, qse_httpd_serve
 
 static int activate_dns (qse_httpd_t* httpd)
 {
+	int i;
+
+	QSE_MEMSET (&httpd->dns, 0, QSE_SIZEOF(httpd->dns));
+	for (i = 0; i < QSE_COUNTOF(httpd->dns.handle); i++)
+		httpd->dns.handle[i].i = -1;
+
 	if (httpd->opt.scb.dns.open (httpd, &httpd->dns) <= -1) return -1;
 
 	httpd->dns.type = QSE_HTTPD_DNS;
 
-	if (httpd->opt.scb.mux.addhnd (httpd, httpd->mux, httpd->dns.handle, QSE_HTTPD_MUX_READ, &httpd->dns) <= -1) 
+	for (i = 0; i < httpd->dns.handle_count; i++)
 	{
-		httpd->opt.scb.dns.close (httpd, &httpd->dns);
-		return -1;
+		if (httpd->dns.handle[i].i >= 0)
+		{
+			if (httpd->opt.scb.mux.addhnd (httpd, httpd->mux, httpd->dns.handle[i], QSE_HTTPD_MUX_READ, &httpd->dns) <= -1) 
+			{
+				while (i > 0)
+				{
+					qse_ubi_t handle = httpd->dns.handle[--i];
+					if (handle.i >= 0) httpd->opt.scb.mux.delhnd (httpd, httpd->mux, handle);
+				}
+				httpd->opt.scb.dns.close (httpd, &httpd->dns);
+				return -1;
+			}
+		}
 	}
 
 	return 0;
@@ -837,7 +854,14 @@ static int activate_dns (qse_httpd_t* httpd)
 
 static void deactivate_dns (qse_httpd_t* httpd)
 {
-	httpd->opt.scb.mux.delhnd (httpd, httpd->mux, httpd->dns.handle);
+	int i;
+
+	for (i = 0; i < httpd->dns.handle_count; i++)
+	{
+		if (httpd->dns.handle[i].i >= 0)
+			httpd->opt.scb.mux.delhnd (httpd, httpd->mux, httpd->dns.handle[i]);
+	}
+
 	httpd->opt.scb.dns.close (httpd, &httpd->dns);
 }
 /* ----------------------------------------------------------------------- */
@@ -845,14 +869,28 @@ static void deactivate_dns (qse_httpd_t* httpd)
 static int activate_urs (qse_httpd_t* httpd)
 {
 /* TODO: how to disable URS??? */
+	int i;
+
+	QSE_MEMSET (&httpd->urs, 0, QSE_SIZEOF(httpd->urs));
+	for (i = 0; i < QSE_COUNTOF(httpd->urs.handle); i++)
+		httpd->urs.handle[i].i = -1;
+
 	if (httpd->opt.scb.urs.open (httpd, &httpd->urs) <= -1) return -1;
 
 	httpd->urs.type = QSE_HTTPD_URS;
 
-	if (httpd->opt.scb.mux.addhnd (httpd, httpd->mux, httpd->urs.handle, QSE_HTTPD_MUX_READ, &httpd->urs) <= -1) 
+	for (i = 0; i < httpd->dns.handle_count; i++)
 	{
-		httpd->opt.scb.urs.close (httpd, &httpd->urs);
-		return -1;
+		if (httpd->opt.scb.mux.addhnd (httpd, httpd->mux, httpd->urs.handle[i], QSE_HTTPD_MUX_READ, &httpd->urs) <= -1) 
+		{
+			while (i > 0) 
+			{
+				qse_ubi_t handle = httpd->urs.handle[--i];
+				httpd->opt.scb.mux.delhnd (httpd, httpd->mux, handle);
+			}
+			httpd->opt.scb.urs.close (httpd, &httpd->urs);
+			return -1;
+		}
 	}
 
 	return 0;
@@ -860,7 +898,14 @@ static int activate_urs (qse_httpd_t* httpd)
 
 static void deactivate_urs (qse_httpd_t* httpd)
 {
-	httpd->opt.scb.mux.delhnd (httpd, httpd->mux, httpd->urs.handle);
+	int i;
+
+	for (i = 0; i < httpd->urs.handle_count; i++)
+	{
+		if (httpd->urs.handle[i].i >= 0)
+			httpd->opt.scb.mux.delhnd (httpd, httpd->mux, httpd->urs.handle[i]);
+	}
+
 	httpd->opt.scb.urs.close (httpd, &httpd->urs);
 }
 
@@ -1411,7 +1456,7 @@ static int perform_dns (qse_httpd_t* httpd, void* mux, qse_ubi_t handle, int mas
 	QSE_ASSERT (mask & QSE_HTTPD_MUX_READ);
 	QSE_ASSERT (&httpd->dns == dns);
 
-	return httpd->opt.scb.dns.recv (httpd, dns);
+	return httpd->opt.scb.dns.recv (httpd, dns, handle);
 }
 
 static int perform_urs (qse_httpd_t* httpd, void* mux, qse_ubi_t handle, int mask, void* cbarg)
@@ -1421,7 +1466,7 @@ static int perform_urs (qse_httpd_t* httpd, void* mux, qse_ubi_t handle, int mas
 	QSE_ASSERT (mask & QSE_HTTPD_MUX_READ);
 	QSE_ASSERT (&httpd->urs == urs);
 
-	return httpd->opt.scb.urs.recv (httpd, urs);
+	return httpd->opt.scb.urs.recv (httpd, urs, handle);
 }
 
 static void purge_bad_clients (qse_httpd_t* httpd)
@@ -1722,7 +1767,7 @@ qse_mchar_t* qse_httpd_escapehtml (qse_httpd_t* httpd, const qse_mchar_t* str)
 
 /* ----------------------------------------------------------------------- */
 
-int qse_httpd_resolname (qse_httpd_t* httpd, const qse_mchar_t* name, qse_httpd_resol_t resol, void* ctx)
+int qse_httpd_resolname (qse_httpd_t* httpd, const qse_mchar_t* name, qse_httpd_resol_t resol, const qse_nwad_t* dns_server, void* ctx)
 {
 	/* TODO: find the name in cache */
 
@@ -1734,10 +1779,10 @@ printf ("DNS_SEND.........................\n");
 		return -1;
 	}
 
-	return httpd->opt.scb.dns.send (httpd, &httpd->dns, name, resol, ctx);
+	return httpd->opt.scb.dns.send (httpd, &httpd->dns, name, resol, dns_server, ctx);
 }
 
-int qse_httpd_rewriteurl (qse_httpd_t* httpd, const qse_mchar_t* url, qse_httpd_rewrite_t rewrite, void* ctx)
+int qse_httpd_rewriteurl (qse_httpd_t* httpd, const qse_mchar_t* url, qse_httpd_rewrite_t rewrite, const qse_nwad_t* urs_server, void* ctx)
 {
 	if (!httpd->ursactive)
 	{
@@ -1745,7 +1790,7 @@ int qse_httpd_rewriteurl (qse_httpd_t* httpd, const qse_mchar_t* url, qse_httpd_
 		return -1;
 	}
 
-	return httpd->opt.scb.urs.send (httpd, &httpd->urs, url, rewrite, ctx);
+	return httpd->opt.scb.urs.send (httpd, &httpd->urs, url, rewrite, urs_server, ctx);
 }
 
 int qse_httpd_activatetasktrigger (qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
