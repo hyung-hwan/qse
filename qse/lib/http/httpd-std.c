@@ -650,10 +650,10 @@ void* qse_httpd_getxtnstd (qse_httpd_t* httpd)
 
 #if defined(_WIN32)
 	typedef SOCKET sock_t;
-#	define SOCK_INIT INVALID_SOCKET
+#	define SOCK_INVALID INVALID_SOCKET
 #else
 	typedef int sock_t;
-#	define SOCK_INIT -1
+#	define SOCK_INVALID -1
 #endif
 
 #if !defined(HAVE_SOCKLEN_T)
@@ -720,6 +720,42 @@ static int set_socket_nonblock (qse_httpd_t* httpd, sock_t fd, int enabled)
 
 }
 
+static sock_t open_udp_socket (qse_httpd_t* httpd, int domain)
+{
+	sock_t fd;
+	int flag;
+
+	fd = socket (domain, SOCK_DGRAM, IPPROTO_UDP);
+	if (!is_valid_socket(fd)) 
+	{
+		qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
+		goto oops;
+	}
+
+	#if defined(FD_CLOEXEC)
+	flag = fcntl (fd, F_GETFD);
+	if (flag >= 0) fcntl (fd, F_SETFD, flag | FD_CLOEXEC);
+	#endif
+
+	#if defined(SO_REUSEADDR)
+	flag = 1;
+	setsockopt (fd, SOL_SOCKET, SO_REUSEADDR, (void*)&flag, QSE_SIZEOF(flag));
+	#endif
+
+	#if defined(SO_REUSEPORT)
+	flag = 1;
+	setsockopt (fd, SOL_SOCKET, SO_REUSEPORT, (void*)&flag, QSE_SIZEOF(flag));
+	#endif
+
+	if (set_socket_nonblock (httpd, fd, 1) <= -1) goto oops;
+
+	return fd;
+
+oops:
+	if (is_valid_socket(fd)) close_socket (fd);
+	return SOCK_INVALID;
+}
+
 /* ------------------------------------------------------------------- */
 
 static int server_open (qse_httpd_t* httpd, qse_httpd_server_t* server)
@@ -728,7 +764,7 @@ static int server_open (qse_httpd_t* httpd, qse_httpd_server_t* server)
 	qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
 	return -1;
 #else
-	sock_t fd = SOCK_INIT, flag;
+	sock_t fd = SOCK_INVALID, flag;
 	qse_skad_t addr;
 	int addrsize;
 
@@ -872,7 +908,7 @@ static int server_accept (
 #else
 	qse_skad_t addr;
 	socklen_t addrlen;
-	sock_t fd = SOCK_INIT;
+	sock_t fd = SOCK_INVALID;
 	int flag;
 
 	addrlen = QSE_SIZEOF(addr);
@@ -963,7 +999,7 @@ static int peer_open (qse_httpd_t* httpd, qse_httpd_peer_t* peer)
 	qse_skad_t connaddr, bindaddr;
 	int connaddrsize, bindaddrsize;
 	int connected = 1;
-	sock_t fd = SOCK_INIT;
+	sock_t fd = SOCK_INVALID;
 #if defined(_WIN32)
 	unsigned long cmd;
 #elif defined(__OS2__)
@@ -2815,7 +2851,7 @@ static int make_resource (
 
 					server_xtn->auth.ptr = tptr;
 					/* the maximum capacity that can hold the largest authorization value */
-					server_xtn->auth.len = authl;	 
+					server_xtn->auth.len = authl;
 				}
 
 				/* decoding a base64-encoded string result in a shorter value than the input.

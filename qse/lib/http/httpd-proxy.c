@@ -38,19 +38,21 @@ struct task_proxy_t
 #define PROXY_INIT_FAILED          (1 << 0)
 #define PROXY_RAW                  (1 << 1)
 #define PROXY_TRANSPARENT          (1 << 2)
-#define PROXY_OUTBAND_PEER_NAME    (1 << 3) /* the peer_name pointer points to
+#define PROXY_DNS_SERVER           (1 << 3) /* dns server address specified */
+#define PROXY_URS_SERVER           (1 << 4) /* urs server address specified */
+#define PROXY_OUTBAND_PEER_NAME    (1 << 5) /* the peer_name pointer points to
                                                a separate memory chunk outside
                                                the task_proxy_t chunk. explicit
                                                deallocatin is required */
-#define PROXY_RESOLVE_PEER_NAME    (1 << 4)
-#define PROXY_PEER_NAME_RESOLVED   (1 << 5)
-#define PROXY_PEER_NAME_UNRESOLVED (1 << 6)
-#define PROXY_REWRITE_URL          (1 << 7)
-#define PROXY_URL_REWRITTEN        (1 << 8)
-#define PROXY_URL_REDIRECTED       (1 << 9)
-#define PROXY_X_FORWARDED_FOR      (1 << 10) /* X-Forwarded-For added */
-#define PROXY_VIA                  (1 << 11) /* Via added to the request */
-#define PROXY_VIA_RETURNING        (1 << 12) /* Via added to the response */
+#define PROXY_RESOLVE_PEER_NAME    (1 << 6)
+#define PROXY_PEER_NAME_RESOLVED   (1 << 7)
+#define PROXY_PEER_NAME_UNRESOLVED (1 << 8)
+#define PROXY_REWRITE_URL          (1 << 9)
+#define PROXY_URL_REWRITTEN        (1 << 10)
+#define PROXY_URL_REDIRECTED       (1 << 11)
+#define PROXY_X_FORWARDED_FOR      (1 << 12) /* X-Forwarded-For added */
+#define PROXY_VIA                  (1 << 13) /* Via added to the request */
+#define PROXY_VIA_RETURNING        (1 << 14) /* Via added to the response */
 	int flags;
 	qse_httpd_t* httpd;
 	qse_httpd_client_t* client;
@@ -64,6 +66,8 @@ struct task_proxy_t
 	qse_size_t qpath_pos_in_reqfwdbuf;
 	qse_size_t qpath_len_in_reqfwdbuf;
 
+	qse_nwad_t dns_server;
+	qse_nwad_t urs_server;
 	qse_mchar_t* pseudonym;
 	qse_htrd_t* peer_htrd;
 
@@ -939,7 +943,18 @@ static int task_init_proxy (
 	if (arg->rsrc->flags & QSE_HTTPD_RSRC_PROXY_RAW) proxy->flags |= PROXY_RAW;
 	if (arg->rsrc->flags & QSE_HTTPD_RSRC_PROXY_TRANSPARENT) proxy->flags |= PROXY_TRANSPARENT;
 
-	if (arg->rsrc->flags & QSE_HTTPD_RSRC_PROXY_URS)
+	if (arg->rsrc->flags & QSE_HTTPD_RSRC_PROXY_DNS_SERVER)
+	{
+		proxy->flags |= PROXY_DNS_SERVER;
+		proxy->dns_server = arg->rsrc->dns_server;
+	}
+	if (arg->rsrc->flags & QSE_HTTPD_RSRC_PROXY_URS_SERVER)
+	{
+		proxy->flags |= PROXY_URS_SERVER;
+		proxy->urs_server = arg->rsrc->urs_server;
+	}
+
+	if (arg->rsrc->flags & QSE_HTTPD_RSRC_PROXY_ENABLE_URS)
 	{
 		const qse_mchar_t* qpath;
 		const qse_mchar_t* metnam;
@@ -2063,7 +2078,8 @@ static int task_main_proxy (
 	if (proxy->flags & PROXY_REWRITE_URL)
 	{
 		/* note that url_to_rewrite is URL + extra information. */
-		if (qse_httpd_rewriteurl (httpd, proxy->url_to_rewrite, on_url_rewritten, task) <= -1) goto oops;
+		if (qse_httpd_rewriteurl (httpd, proxy->url_to_rewrite, on_url_rewritten, 
+		                          ((proxy->flags & PROXY_URS_SERVER)? &proxy->urs_server: QSE_NULL), task) <= -1) goto oops;
 
 		if (proxy->flags & PROXY_INIT_FAILED) goto oops;
 		
@@ -2079,7 +2095,8 @@ static int task_main_proxy (
 
 		QSE_ASSERT (proxy->peer_name != QSE_NULL);
 
-		if (qse_httpd_resolname (httpd, proxy->peer_name, on_peer_name_resolved, task) <= -1) goto oops;
+		if (qse_httpd_resolname (httpd, proxy->peer_name, on_peer_name_resolved, 
+		                         ((proxy->flags & PROXY_DNS_SERVER)? &proxy->dns_server: QSE_NULL), task) <= -1) goto oops;
 
 		/* if the name could be resolved without sending a request 
 		 * in qse_httpd_resolname(), on_peer_name_resolve would be 

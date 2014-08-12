@@ -261,18 +261,20 @@ struct qse_httpd_scb_t
 	{
 		int (*open) (qse_httpd_t* httpd, qse_httpd_dns_t* dns);
 		void (*close) (qse_httpd_t* httpd, qse_httpd_dns_t* dns);
-		int (*recv) (qse_httpd_t* httpd, qse_httpd_dns_t* dns);
+		int (*recv) (qse_httpd_t* httpd, qse_httpd_dns_t* dns, qse_ubi_t handle);
 		int (*send) (qse_httpd_t* httpd, qse_httpd_dns_t* dns,
-		             const qse_mchar_t* name, qse_httpd_resol_t resol, void* ctx);
+		             const qse_mchar_t* name, qse_httpd_resol_t resol,
+		             const qse_nwad_t* dns_server, void* ctx);
 	} dns;
 
 	struct
 	{
 		int (*open) (qse_httpd_t* httpd, qse_httpd_urs_t* urs);
 		void (*close) (qse_httpd_t* httpd, qse_httpd_urs_t* urs);
-		int (*recv) (qse_httpd_t* httpd, qse_httpd_urs_t* urs);
+		int (*recv) (qse_httpd_t* httpd, qse_httpd_urs_t* urs, qse_ubi_t handle);
 		int (*send) (qse_httpd_t* httpd, qse_httpd_urs_t* urs, 
-		             const qse_mchar_t* url, qse_httpd_rewrite_t rewrite, void* ctx);
+		             const qse_mchar_t* url, qse_httpd_rewrite_t rewrite,
+		             const qse_nwad_t* urs_server, void* ctx);
 	} urs;
 };
 
@@ -503,7 +505,8 @@ struct qse_httpd_dns_t
 	QSE_HTTPD_MATE_HDR;
 
 	/* == PUBLIC == */
-	qse_ubi_t handle;
+	qse_ubi_t handle[5];
+	int handle_count;
 	void* ctx;
 };
 
@@ -513,7 +516,8 @@ struct qse_httpd_urs_t
 	QSE_HTTPD_MATE_HDR;
 
 	/* == PUBLIC == */
-	qse_ubi_t handle;
+	qse_ubi_t handle[5];
+	int handle_count;
 	void* ctx;
 };
 
@@ -558,7 +562,9 @@ enum qse_httpd_rsrc_proxy_flag_t
 	QSE_HTTPD_RSRC_PROXY_RAW         = (1 << 0),
 	QSE_HTTPD_RSRC_PROXY_DST_STR     = (1 << 1),
 	QSE_HTTPD_RSRC_PROXY_TRANSPARENT = (1 << 2),
-	QSE_HTTPD_RSRC_PROXY_URS         = (1 << 3) /* url rewriting enabled */
+	QSE_HTTPD_RSRC_PROXY_ENABLE_URS  = (1 << 3), /* url rewriting enabled */
+	QSE_HTTPD_RSRC_PROXY_DNS_SERVER  = (1 << 4),
+	QSE_HTTPD_RSRC_PROXY_URS_SERVER  = (1 << 5)
 };
 
 typedef struct qse_httpd_rsrc_proxy_t qse_httpd_rsrc_proxy_t;
@@ -576,6 +582,9 @@ struct qse_httpd_rsrc_proxy_t
 		qse_nwad_t nwad;
 		const qse_mchar_t* str;
 	} dst; /* remote destination address to connect to */
+
+	qse_nwad_t dns_server;
+	qse_nwad_t urs_server;
 
 	const qse_mchar_t* pseudonym; /* pseudonym to use in Via: */
 };
@@ -1001,6 +1010,7 @@ QSE_EXPORT int qse_httpd_resolname (
 	qse_httpd_t*       httpd,
 	const qse_mchar_t* name,
 	qse_httpd_resol_t  resol,
+	const qse_nwad_t*  dns_server,
 	void*              ctx
 );
 
@@ -1008,6 +1018,7 @@ QSE_EXPORT int qse_httpd_rewriteurl (
 	qse_httpd_t*         ttpd,
 	const qse_mchar_t*   url,
 	qse_httpd_rewrite_t  rewrite,
+	const qse_nwad_t*   urs_server,
 	void*                ctx
 );
 

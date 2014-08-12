@@ -459,6 +459,19 @@ static int get_server_root (
 	qpath = qse_htre_getqpath(qinfo->req);
 
 	qse_memset (root, 0, QSE_SIZEOF(*root));
+
+	if (loccfg->proxy.dns_nwad.type != QSE_NWAD_NX)
+	{
+		root->u.proxy.dns_server = loccfg->proxy.dns_nwad;
+		root->u.proxy.flags |= QSE_HTTPD_RSRC_PROXY_DNS_SERVER;
+	}
+
+	if (loccfg->proxy.urs_nwad.type != QSE_NWAD_NX)
+	{
+		root->u.proxy.urs_server = loccfg->proxy.urs_nwad;
+		root->u.proxy.flags |= QSE_HTTPD_RSRC_PROXY_URS_SERVER;
+	}
+
 	if (mth == QSE_HTTP_CONNECT)
 	{
 		if (loccfg->proxy.allow_connect)
@@ -537,6 +550,8 @@ static int get_server_root (
 			return 0;
 		}
 	}
+
+
 
 	if (loccfg->root_is_nwad)
 	{
@@ -878,43 +893,6 @@ found:
 
 /* --------------------------------------------------------------------- */
 
-static struct
-{
-	const qse_char_t* x;
-	const qse_char_t* y;
-} scfg_items[] =
-{
-	{ QSE_T("ssl-cert-file"),  QSE_T("server-default.ssl-cert-file") },
-	{ QSE_T("ssl-key-file"),   QSE_T("server-default.ssl-key-file") }
-};
-
-static struct 
-{
-	const qse_char_t* x;
-	const qse_char_t* y;
-} loc_xcfg_items[] =
-{
-	{ QSE_T("root"),        QSE_T("server-default.root") },
-	{ QSE_T("realm"),       QSE_T("server-default.realm") },
-	{ QSE_T("auth"),        QSE_T("server-default.auth") },
-	{ QSE_T("dir-head"),    QSE_T("server-default.dir-head") },
-	{ QSE_T("dir-foot"),    QSE_T("server-default.dir-foot") },
-	{ QSE_T("error-head"),  QSE_T("server-default.error-head") },
-	{ QSE_T("error-foot"),  QSE_T("server-default.error-foot") },
-	{ QSE_T("pseudonym"),   QSE_T("server-default.pseudonym") }
-};
-
-/* local access items */
-static struct 
-{
-	const qse_char_t* x;
-	const qse_char_t* y;
-} loc_acc_items[] = 
-{
-	{ QSE_T("dir-access"), QSE_T("server-default.dir-access") },
-	{ QSE_T("file-access"), QSE_T("server-default.file-access") }
-};
-
 static void free_loccfg_contents (qse_httpd_t* httpd, loccfg_t* loccfg)
 {
 	qse_size_t i, j;
@@ -1013,75 +991,26 @@ static int get_boolean (const qse_xli_str_t* v)
 	        qse_strxcasecmp (v->ptr, v->len, QSE_T("on")) == 0);
 }
 
-static int load_loccfg_proxy (qse_httpd_t* httpd, qse_xli_t* xli, qse_xli_list_t* list, loccfg_t* cfg)
+static int load_loccfg_basic (qse_httpd_t* httpd, qse_xli_t* xli, qse_xli_list_t* list, loccfg_t* cfg)
 {
+	static struct 
+	{
+		const qse_char_t* x;
+		const qse_char_t* y;
+	} loc_xcfg_items[] =
+	{
+		{ QSE_T("root"),        QSE_T("server-default.root") },
+		{ QSE_T("realm"),       QSE_T("server-default.realm") },
+		{ QSE_T("auth"),        QSE_T("server-default.auth") },
+		{ QSE_T("dir-head"),    QSE_T("server-default.dir-head") },
+		{ QSE_T("dir-foot"),    QSE_T("server-default.dir-foot") },
+		{ QSE_T("error-head"),  QSE_T("server-default.error-head") },
+		{ QSE_T("error-foot"),  QSE_T("server-default.error-foot") },
+		{ QSE_T("pseudonym"),   QSE_T("server-default.pseudonym") }
+	};
+
+	int i;
 	qse_xli_pair_t* pair;
-	qse_xli_list_t* proxy = QSE_NULL;
-	qse_xli_list_t* default_proxy = QSE_NULL;
-	/*qse_xli_atom_t* atom;*/
-
-	pair = qse_xli_findpair (xli, list, QSE_T("proxy"));
-	if (pair) 
-	{
-		QSE_ASSERT (pair->val->type == QSE_XLI_LIST);
-		proxy = (qse_xli_list_t*)pair->val;
-	}
-
-	pair = qse_xli_findpair (xli, QSE_NULL, QSE_T("server-default.proxy"));
-	if (pair)
-	{
-		QSE_ASSERT (pair->val->type == QSE_XLI_LIST);
-		default_proxy = (qse_xli_list_t*)pair->val;
-	}
-
-
-	pair = QSE_NULL;
-	if (proxy) pair = qse_xli_findpair (xli, proxy, QSE_T("http")); /* server.host[].location[].proxy.http */
-	if (!pair && default_proxy) pair = qse_xli_findpair (xli, default_proxy, QSE_T("http")); /* server-default.proxy.http */
-	if (pair) cfg->proxy.allow_http = get_boolean ((qse_xli_str_t*)pair->val);
-
-	pair = QSE_NULL;
-	if (proxy) pair = qse_xli_findpair (xli, proxy, QSE_T("connect"));
-	if (!pair && default_proxy) pair = qse_xli_findpair (xli, default_proxy, QSE_T("connect"));
-	if (pair) cfg->proxy.allow_connect = get_boolean ((qse_xli_str_t*)pair->val);
-
-	pair = QSE_NULL;
-	if (proxy) pair = qse_xli_findpair (xli, proxy, QSE_T("dns-server"));
-	if (!pair && default_proxy) pair = qse_xli_findpair (xli, default_proxy, QSE_T("dns-server"));
-	if (pair) 
-	{
-		qse_xli_str_t* str = (qse_xli_str_t*)pair->val;
-		if (qse_strtonwad (str->ptr, &cfg->proxy.dns_nwad) <= -1)
-		{
-			qse_printf (QSE_T("ERROR: invalid address for proxy dns - %s"), str->ptr);
-			return -1;
-		}
-	}
-
-	pair = QSE_NULL;
-	if (proxy) pair = qse_xli_findpair (xli, proxy, QSE_T("urs-server"));
-	if (!pair && default_proxy) pair = qse_xli_findpair (xli, default_proxy, QSE_T("urs-server"));
-	if (pair)
-	{
-		qse_xli_str_t* str = (qse_xli_str_t*)pair->val;
-		if (qse_strtonwad (str->ptr, &cfg->proxy.urs_nwad) <= -1)
-		{
-			qse_printf (QSE_T("ERROR: invalid address for proxy urs - %s"), str->ptr);
-			return -1;
-		}
-	}
-
-	return 0;
-}
-
-static int load_loccfg (qse_httpd_t* httpd, qse_xli_t* xli, qse_xli_list_t* list, loccfg_t* cfg)
-{
-	qse_size_t i;
-	qse_xli_pair_t* pair;
-	qse_xli_atom_t* atom;
-	/*httpd_xtn_t* httpd_xtn;
-
-	httpd_xtn = qse_httpd_getxtnstd (httpd);*/
 
 	for (i = 0; i < QSE_COUNTOF(loc_xcfg_items); i++)
 	{
@@ -1098,6 +1027,13 @@ static int load_loccfg (qse_httpd_t* httpd, qse_xli_t* xli, qse_xli_list_t* list
 			}
 		}
 	}
+
+	return 0;
+}
+
+static int load_loccfg_index (qse_httpd_t* httpd, qse_xli_t* xli, qse_xli_list_t* list, loccfg_t* cfg)
+{
+	qse_xli_pair_t* pair;
 
 	pair = qse_xli_findpair (xli, list, QSE_T("index"));
 	if (!pair) pair = qse_xli_findpair (xli, QSE_NULL, QSE_T("server-default.index"));
@@ -1124,6 +1060,14 @@ static int load_loccfg (qse_httpd_t* httpd, qse_xli_t* xli, qse_xli_list_t* list
 
 		cfg->index.count = count;
 	}
+
+	return 0;
+}
+
+static int load_loccfg_cgi (qse_httpd_t* httpd, qse_xli_t* xli, qse_xli_list_t* list, loccfg_t* cfg)
+{
+	qse_xli_pair_t* pair;
+	qse_xli_atom_t* atom;
 
 	pair = qse_xli_findpair (xli, list, QSE_T("cgi"));
 	if (!pair) pair = qse_xli_findpair (xli, QSE_NULL, QSE_T("server-default.cgi"));
@@ -1198,6 +1142,14 @@ static int load_loccfg (qse_httpd_t* httpd, qse_xli_t* xli, qse_xli_list_t* list
 		}
 	}
 
+	return 0;
+}
+
+static int load_loccfg_authrule (qse_httpd_t* httpd, qse_xli_t* xli, qse_xli_list_t* list, loccfg_t* cfg)
+{
+	qse_xli_pair_t* pair;
+	qse_xli_atom_t* atom;
+
 	pair = qse_xli_findpair (xli, list, QSE_T("auth-rule"));
 	if (!pair) pair = qse_xli_findpair (xli, QSE_NULL, QSE_T("server-default.auth-rule"));
 	if (pair && pair->val->type == QSE_XLI_LIST)
@@ -1247,6 +1199,16 @@ static int load_loccfg (qse_httpd_t* httpd, qse_xli_t* xli, qse_xli_list_t* list
 			cfg->auth_rule[type].tail = auth_rule;
 		}
 	}
+
+	/* TODO: support multiple auth entries  */
+
+	return 0;
+}
+
+static int load_loccfg_mime (qse_httpd_t* httpd, qse_xli_t* xli, qse_xli_list_t* list, loccfg_t* cfg)
+{
+	qse_xli_pair_t* pair;
+	qse_xli_atom_t* atom;
 
 	pair = qse_xli_findpair (xli, list, QSE_T("mime"));
 	if (!pair) pair = qse_xli_findpair (xli, QSE_NULL, QSE_T("server-default.mime"));
@@ -1300,6 +1262,26 @@ static int load_loccfg (qse_httpd_t* httpd, qse_xli_t* xli, qse_xli_list_t* list
 			cfg->mime[type].tail = mime;
 		}
 	}	
+
+	return 0;
+}
+
+static int load_loccfg_access (qse_httpd_t* httpd, qse_xli_t* xli, qse_xli_list_t* list, loccfg_t* cfg)
+{
+	/* local access items */
+	static struct 
+	{
+		const qse_char_t* x;
+		const qse_char_t* y;
+	} loc_acc_items[] = 
+	{
+		{ QSE_T("dir-access"), QSE_T("server-default.dir-access") },
+		{ QSE_T("file-access"), QSE_T("server-default.file-access") }
+	};
+
+	int i;
+	qse_xli_pair_t* pair;
+	qse_xli_atom_t* atom;
 
 	for (i = 0; i < 2;  i++)
 	{
@@ -1362,10 +1344,82 @@ static int load_loccfg (qse_httpd_t* httpd, qse_xli_t* xli, qse_xli_list_t* list
 		}	
 	}
 
-	if (load_loccfg_proxy (httpd, xli, list, cfg) <= -1) return -1;
+	return 0;
+}
 
-	/* TODO: support multiple auth entries here and above */
+static int load_loccfg_proxy (qse_httpd_t* httpd, qse_xli_t* xli, qse_xli_list_t* list, loccfg_t* cfg)
+{
+	qse_xli_pair_t* pair;
+	qse_xli_list_t* proxy = QSE_NULL;
+	qse_xli_list_t* default_proxy = QSE_NULL;
 
+	pair = qse_xli_findpair (xli, list, QSE_T("proxy"));
+	if (pair) 
+	{
+		QSE_ASSERT (pair->val->type == QSE_XLI_LIST);
+		proxy = (qse_xli_list_t*)pair->val;
+	}
+
+	pair = qse_xli_findpair (xli, QSE_NULL, QSE_T("server-default.proxy"));
+	if (pair)
+	{
+		QSE_ASSERT (pair->val->type == QSE_XLI_LIST);
+		default_proxy = (qse_xli_list_t*)pair->val;
+	}
+
+
+	pair = QSE_NULL;
+	if (proxy) pair = qse_xli_findpair (xli, proxy, QSE_T("http")); /* server.host[].location[].proxy.http */
+	if (!pair && default_proxy) pair = qse_xli_findpair (xli, default_proxy, QSE_T("http")); /* server-default.proxy.http */
+	if (pair) cfg->proxy.allow_http = get_boolean ((qse_xli_str_t*)pair->val);
+
+	pair = QSE_NULL;
+	if (proxy) pair = qse_xli_findpair (xli, proxy, QSE_T("connect"));
+	if (!pair && default_proxy) pair = qse_xli_findpair (xli, default_proxy, QSE_T("connect"));
+	if (pair) cfg->proxy.allow_connect = get_boolean ((qse_xli_str_t*)pair->val);
+
+	pair = QSE_NULL;
+	if (proxy) pair = qse_xli_findpair (xli, proxy, QSE_T("dns-server"));
+	if (!pair && default_proxy) pair = qse_xli_findpair (xli, default_proxy, QSE_T("dns-server"));
+	if (pair) 
+	{
+		qse_xli_str_t* str = (qse_xli_str_t*)pair->val;
+		if (qse_strtonwad (str->ptr, &cfg->proxy.dns_nwad) <= -1)
+		{
+			qse_printf (QSE_T("ERROR: invalid address for proxy dns - %s"), str->ptr);
+			return -1;
+		}
+	}
+
+	pair = QSE_NULL;
+	if (proxy) pair = qse_xli_findpair (xli, proxy, QSE_T("urs-server"));
+	if (!pair && default_proxy) pair = qse_xli_findpair (xli, default_proxy, QSE_T("urs-server"));
+	if (pair)
+	{
+		qse_xli_str_t* str = (qse_xli_str_t*)pair->val;
+		if (qse_strtonwad (str->ptr, &cfg->proxy.urs_nwad) <= -1)
+		{
+			qse_printf (QSE_T("ERROR: invalid address for proxy urs - %s"), str->ptr);
+			return -1;
+		}
+	}
+
+	return 0;
+}
+
+static int load_loccfg (qse_httpd_t* httpd, qse_xli_t* xli, qse_xli_list_t* list, loccfg_t* cfg)
+{
+	/*httpd_xtn_t* httpd_xtn;
+
+	httpd_xtn = qse_httpd_getxtnstd (httpd);*/
+
+	if (load_loccfg_basic (httpd, xli, list, cfg) <= -1 ||
+	    load_loccfg_index (httpd, xli, list, cfg) <= -1 ||
+	    load_loccfg_cgi (httpd, xli, list, cfg) <= -1 ||
+	    load_loccfg_authrule (httpd, xli, list, cfg) <= -1 ||
+	    load_loccfg_mime (httpd, xli, list, cfg) <= -1 ||
+	    load_loccfg_access (httpd, xli, list, cfg) <= -1 ||
+	    load_loccfg_proxy (httpd, xli, list, cfg) <= -1) return -1;
 
 #if 0
 	/* TODO: perform more sanity check */
@@ -1415,6 +1469,16 @@ static int load_server_config (qse_httpd_t* httpd, qse_httpd_server_t* server, q
 	server_xtn_t* server_xtn;
 	server_hostcfg_t* hostcfg;
 	loccfg_t* loccfg;
+
+	static struct
+	{
+		const qse_char_t* x;
+		const qse_char_t* y;
+	} scfg_items[] =
+	{
+		{ QSE_T("ssl-cert-file"),  QSE_T("server-default.ssl-cert-file") },
+		{ QSE_T("ssl-key-file"),   QSE_T("server-default.ssl-key-file") }
+	};
 
 	static qse_htb_style_t cfgtab_style =
 	{
