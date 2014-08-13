@@ -58,8 +58,8 @@ enum qse_httpd_errnum_t
 	QSE_HTTPD_ENOBUF,  /* no buffer available */
 	QSE_HTTPD_EDISCON, /* client disconnnected */
 	QSE_HTTPD_EBADREQ, /* bad request */
-	QSE_HTTPD_ENODNS,  /* dns service not activated */
-	QSE_HTTPD_ENOURS,  /* urs service not activated */
+	QSE_HTTPD_ENODNS,  /* dns service not activated/enabled or no valid dns server specified */
+	QSE_HTTPD_ENOURS,  /* urs service not activated/enabled or no valid urs server specified */
 	QSE_HTTPD_ETASK
 };
 typedef enum qse_httpd_errnum_t qse_httpd_errnum_t;
@@ -125,6 +125,15 @@ struct qse_httpd_dirent_t
 {
 	const qse_mchar_t* name;
 	qse_httpd_stat_t   stat;
+};
+
+typedef struct qse_httpd_natr_t qse_httpd_natr_t;
+
+struct qse_httpd_natr_t
+{
+	qse_nwad_t nwad;
+	qse_ntime_t tmout;
+	int retries;
 };
 
 typedef void (*qse_httpd_resol_t) (
@@ -264,7 +273,7 @@ struct qse_httpd_scb_t
 		int (*recv) (qse_httpd_t* httpd, qse_httpd_dns_t* dns, qse_ubi_t handle);
 		int (*send) (qse_httpd_t* httpd, qse_httpd_dns_t* dns,
 		             const qse_mchar_t* name, qse_httpd_resol_t resol,
-		             const qse_nwad_t* dns_server, void* ctx);
+		             const qse_httpd_natr_t* dns_server, void* ctx);
 	} dns;
 
 	struct
@@ -274,7 +283,7 @@ struct qse_httpd_scb_t
 		int (*recv) (qse_httpd_t* httpd, qse_httpd_urs_t* urs, qse_ubi_t handle);
 		int (*send) (qse_httpd_t* httpd, qse_httpd_urs_t* urs, 
 		             const qse_mchar_t* url, qse_httpd_rewrite_t rewrite,
-		             const qse_nwad_t* urs_server, void* ctx);
+		             const qse_httpd_natr_t* urs_server, void* ctx);
 	} urs;
 };
 
@@ -459,6 +468,22 @@ struct qse_httpd_client_t
 	} task;
 };
 
+/* client->status */
+#define QSE_HTTPD_CLIENT_BAD                    (1 << 0)
+#define QSE_HTTPD_CLIENT_READY                  (1 << 1)
+#define QSE_HTTPD_CLIENT_INTERCEPTED            (1 << 2)
+#define QSE_HTTPD_CLIENT_SECURE                 (1 << 3)
+#define QSE_HTTPD_CLIENT_PENDING                (1 << 4)
+#define QSE_HTTPD_CLIENT_MUTE                   (1 << 5)
+#define QSE_HTTPD_CLIENT_MUTE_DELETED           (1 << 6)
+#define QSE_HTTPD_CLIENT_HANDLE_READ_IN_MUX     (1 << 7)
+#define QSE_HTTPD_CLIENT_HANDLE_WRITE_IN_MUX    (1 << 8)
+#define QSE_HTTPD_CLIENT_HANDLE_RW_IN_MUX       (QSE_HTTPD_CLIENT_HANDLE_READ_IN_MUX | QSE_HTTPD_CLIENT_HANDLE_WRITE_IN_MUX)
+
+#define QSE_HTTPD_CLIENT_TASK_TRIGGER_READ_IN_MUX(i) (1 << ((i) + 9))
+#define QSE_HTTPD_CLIENT_TASK_TRIGGER_WRITE_IN_MUX(i) (1 << ((i) + 9  + QSE_HTTPD_TASK_TRIGGER_MAX))
+#define QSE_HTTPD_CLIENT_TASK_TRIGGER_RW_IN_MUX(i) (QSE_HTTPD_CLIENT_TASK_TRIGGER_READ_IN_MUX(i) | QSE_HTTPD_CLIENT_TASK_TRIGGER_WRITE_IN_MUX(i))
+
 enum qse_httpd_server_flag_t
 {
 	QSE_HTTPD_SERVER_ACTIVE     = (1 << 0),
@@ -559,12 +584,13 @@ struct qse_httpd_rsrc_cgi_t
 
 enum qse_httpd_rsrc_proxy_flag_t
 {
-	QSE_HTTPD_RSRC_PROXY_RAW         = (1 << 0),
-	QSE_HTTPD_RSRC_PROXY_DST_STR     = (1 << 1),
-	QSE_HTTPD_RSRC_PROXY_TRANSPARENT = (1 << 2),
-	QSE_HTTPD_RSRC_PROXY_ENABLE_URS  = (1 << 3), /* url rewriting enabled */
-	QSE_HTTPD_RSRC_PROXY_DNS_SERVER  = (1 << 4),
-	QSE_HTTPD_RSRC_PROXY_URS_SERVER  = (1 << 5)
+	QSE_HTTPD_RSRC_PROXY_RAW         = (1 << 0), /* raw proxying. set this for CONNECT */
+	QSE_HTTPD_RSRC_PROXY_TRANSPARENT = (1 << 1),
+	QSE_HTTPD_RSRC_PROXY_DST_STR     = (1 << 2), /* destination is an unresovled string pointed to by dst.str */
+	QSE_HTTPD_RSRC_PROXY_ENABLE_DNS  = (1 << 3), /* dns service enabled */
+	QSE_HTTPD_RSRC_PROXY_ENABLE_URS  = (1 << 4), /* url rewriting enabled */
+	QSE_HTTPD_RSRC_PROXY_DNS_SERVER  = (1 << 5), /* dns address specified */
+	QSE_HTTPD_RSRC_PROXY_URS_SERVER  = (1 << 6)  /* urs address specified */
 };
 
 typedef struct qse_httpd_rsrc_proxy_t qse_httpd_rsrc_proxy_t;
@@ -583,8 +609,8 @@ struct qse_httpd_rsrc_proxy_t
 		const qse_mchar_t* str;
 	} dst; /* remote destination address to connect to */
 
-	qse_nwad_t dns_server;
-	qse_nwad_t urs_server;
+	qse_httpd_natr_t dns_server;
+	qse_httpd_natr_t urs_server;
 
 	const qse_mchar_t* pseudonym; /* pseudonym to use in Via: */
 };
@@ -1007,19 +1033,19 @@ QSE_EXPORT qse_mchar_t* qse_httpd_escapehtml (
 );
 
 QSE_EXPORT int qse_httpd_resolname (
-	qse_httpd_t*       httpd,
-	const qse_mchar_t* name,
-	qse_httpd_resol_t  resol,
-	const qse_nwad_t*  dns_server,
-	void*              ctx
+	qse_httpd_t*            httpd,
+	const qse_mchar_t*      name,
+	qse_httpd_resol_t       resol,
+	const qse_httpd_natr_t* dns_server,
+	void*                   ctx
 );
 
 QSE_EXPORT int qse_httpd_rewriteurl (
-	qse_httpd_t*         ttpd,
-	const qse_mchar_t*   url,
-	qse_httpd_rewrite_t  rewrite,
-	const qse_nwad_t*   urs_server,
-	void*                ctx
+	qse_httpd_t*            httpd,
+	const qse_mchar_t*      url,
+	qse_httpd_rewrite_t     rewrite,
+	const qse_httpd_natr_t* urs_server,
+	void*                   ctx
 );
 
 
