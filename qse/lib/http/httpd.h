@@ -107,21 +107,6 @@ struct qse_httpd_status_reloc_t
 #define MAX_SEND_SIZE 4096
 #define MAX_RECV_SIZE 4096
 
-/* client->status */
-#define CLIENT_BAD                    (1 << 0)
-#define CLIENT_READY                  (1 << 1)
-#define CLIENT_SECURE                 (1 << 2)
-#define CLIENT_PENDING                (1 << 3)
-#define CLIENT_MUTE                   (1 << 4)
-#define CLIENT_MUTE_DELETED           (1 << 5)
-#define CLIENT_HANDLE_READ_IN_MUX     (1 << 6)
-#define CLIENT_HANDLE_WRITE_IN_MUX    (1 << 7)
-#define CLIENT_HANDLE_RW_IN_MUX       (CLIENT_HANDLE_READ_IN_MUX | CLIENT_HANDLE_WRITE_IN_MUX)
-
-#define CLIENT_TASK_TRIGGER_READ_IN_MUX(i) (1 << ((i) + 8))
-#define CLIENT_TASK_TRIGGER_WRITE_IN_MUX(i) (1 << ((i) + 8  + QSE_HTTPD_TASK_TRIGGER_MAX))
-#define CLIENT_TASK_TRIGGER_RW_IN_MUX(i) (CLIENT_TASK_TRIGGER_READ_IN_MUX(i) | CLIENT_TASK_TRIGGER_WRITE_IN_MUX(i))
-
 #ifdef __cplusplus
 extern "C" {
 #endif

@@ -76,9 +76,10 @@ struct urs_req_t
 	qse_skad_t urs_skad;
 	int urs_skadlen;
 	int urs_socket;
+	int urs_retries;
+	qse_ntime_t urs_tmout;
 
 	qse_tmr_index_t tmr_tmout;
-	int resends;
 
 	urs_req_t* prev;
 	urs_req_t* next;
@@ -104,28 +105,15 @@ static int urs_open (qse_httpd_t* httpd, qse_httpd_urs_t* urs)
 	dc->urs = urs;
 
 	nwad = httpd_xtn->urs.nwad;
-	if (nwad.type == QSE_NWAD_NX)
-	{
-		qse_httpd_seterrnum (httpd, QSE_HTTPD_EINVAL);
-		goto oops;
-	}
-
-	if (qse_getnwadport(&nwad) == 0) 
+	if (nwad.type != QSE_NWAD_NX && qse_getnwadport(&nwad) == 0) 
 		qse_setnwadport (&nwad, qse_hton16(QSE_HTTPD_URSSTD_DEFAULT_PORT));
-
-	dc->skadlen = qse_nwadtoskad (&nwad, &dc->skad);
-	if (dc->skadlen <= -1)
-	{
-		qse_httpd_seterrnum (httpd, QSE_HTTPD_EINVAL);
-		goto oops;
-	}
 
 	if (httpd->opt.trait & QSE_HTTPD_LOGACT)
 	{
 		qse_httpd_act_t msg;
 		qse_size_t pos;
 		msg.code = QSE_HTTPD_CATCH_MDBGMSG;
-		pos = qse_mbsxcpy (msg.u.mdbgmsg, QSE_COUNTOF(msg.u.mdbgmsg), "ursserver set to ");
+		pos = qse_mbsxcpy (msg.u.mdbgmsg, QSE_COUNTOF(msg.u.mdbgmsg), "default ursserver set to ");
 		qse_nwadtombs (&nwad, &msg.u.mdbgmsg[pos], QSE_COUNTOF(msg.u.mdbgmsg) - pos, QSE_NWADTOMBS_ALL);
 		httpd->opt.rcb.logact (httpd, &msg);
 	}
@@ -140,10 +128,21 @@ static int urs_open (qse_httpd_t* httpd, qse_httpd_urs_t* urs)
 		goto oops;
 	}
 
-	if (nwad.type == QSE_NWAD_IN4)
-		dc->urs_socket = urs->handle[0].i;
+	/* carry on regardless of success or failure */
+	dc->skadlen = qse_nwadtoskad (&nwad, &dc->skad);
+
+	/* determine which socket to use when sending a request to the server */
+	if (dc->skadlen >= 0)
+	{
+		if (nwad.type == QSE_NWAD_IN4)
+			dc->urs_socket = urs->handle[0].i;
+		else
+			dc->urs_socket = urs->handle[1].i;
+	}
 	else
-		dc->urs_socket = urs->handle[1].i;
+	{
+		dc->urs_socket = SOCK_INVALID;
+	}
 
 	urs->handle_count = 2;
 
@@ -273,7 +272,7 @@ static void tmr_urs_tmout_handle (qse_tmr_t* tmr, const qse_ntime_t* now, void* 
 	/* ---------------------------------------------------------------
 	 * resend 
 	 *---------------------------------------------------------------- */
-	if (req->resends > 0)
+	if (req->urs_retries > 0)
 	{
 		httpd_xtn_t* httpd_xtn;
 		qse_tmr_event_t tmout_event;
@@ -281,12 +280,12 @@ static void tmr_urs_tmout_handle (qse_tmr_t* tmr, const qse_ntime_t* now, void* 
 		httpd_xtn = qse_httpd_getxtn (dc->httpd);
 
 		qse_gettime (&tmout_event.when);
-		qse_addtime (&tmout_event.when, &httpd_xtn->urs.tmout, &tmout_event.when);
+		qse_addtime (&tmout_event.when, &req->urs_tmout, &tmout_event.when);
 		tmout_event.ctx = req;
 		tmout_event.handler = tmr_urs_tmout_handle;
 		tmout_event.updater = tmr_urs_tmout_update;
 
-		if (sendto (req->urs_socket, req->pkt, req->pktlen, 0, (struct sockaddr*)&dc->skad, dc->skadlen) != req->pktlen)
+		if (sendto (req->urs_socket, req->pkt, req->pktlen, 0, (struct sockaddr*)&req->urs_skad, req->urs_skadlen) != req->pktlen)
 		{
 			/* error. fall thru */
 		}
@@ -295,7 +294,7 @@ static void tmr_urs_tmout_handle (qse_tmr_t* tmr, const qse_ntime_t* now, void* 
 			QSE_ASSERT (tmr == dc->httpd->tmr);
 			if (qse_httpd_inserttimerevent (dc->httpd, &tmout_event, &req->tmr_tmout) >= 0)
 			{
-				req->resends--;
+				req->urs_retries--;
 				return; /* resend ok */
 			}
 		}
@@ -320,7 +319,7 @@ printf ("urs timed out....\n");
 	dc->req_count--;
 }
 
-static int urs_send (qse_httpd_t* httpd, qse_httpd_urs_t* urs, const qse_mchar_t* url, qse_httpd_rewrite_t rewrite, const qse_nwad_t* urs_server, void* ctx)
+static int urs_send (qse_httpd_t* httpd, qse_httpd_urs_t* urs, const qse_mchar_t* url, qse_httpd_rewrite_t rewrite, const qse_httpd_natr_t* urs_server, void* ctx)
 {
 	urs_ctx_t* dc = (urs_ctx_t*)urs->ctx;
 	httpd_xtn_t* httpd_xtn;
@@ -371,37 +370,49 @@ printf ("URS REALLY SENING>>>>>>>>>>>>>>>>>>>>>>>\n");
 
 	req->rewrite = rewrite;
 	req->ctx = ctx;
-	req->resends = httpd_xtn->urs.resends;
 
-	if (urs_server) 
+	req->urs_retries = httpd_xtn->urs.retries;
+	req->urs_tmout = httpd_xtn->urs.tmout;
+
+	if (urs_server)
 	{
-		req->urs_skadlen = qse_nwadtoskad (urs_server, &req->urs_skad);
-		if (req->urs_skadlen <= -1)
-		{
-			qse_httpd_seterrnum (httpd, QSE_HTTPD_EINVAL);
-			goto oops;
-		}
+		if (urs_server->retries >= 0) req->urs_retries = urs_server->retries;
+		if (urs_server->tmout.sec >= 0) req->urs_tmout = urs_server->tmout;
 
-		if (urs_server->type == QSE_NWAD_IN4)
+		req->urs_skadlen = qse_nwadtoskad (&urs_server->nwad, &req->urs_skad);
+		if (req->urs_skadlen <= -1) goto default_urs_server;
+
+		if (urs_server->nwad.type == QSE_NWAD_IN4)
 			req->urs_socket = urs->handle[0].i;
 		else 
 			req->urs_socket = urs->handle[1].i;
 	}
 	else
 	{
-		req->urs_skad = dc->skad;
-		req->urs_skadlen = dc->skadlen;
-		req->urs_socket = dc->urs_socket;
+	default_urs_server:
+		if (dc->skadlen >= 0)
+		{
+			/* the default url rewrite server address set in urs_open
+			* is valid. */
+			req->urs_skad = dc->skad;
+			req->urs_skadlen = dc->skadlen;
+			req->urs_socket = dc->urs_socket;
+		}
+		else
+		{
+			qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOURS);
+			goto oops;
+		}
 	}
 
 	qse_gettime (&tmout_event.when);
-	qse_addtime (&tmout_event.when, &httpd_xtn->urs.tmout, &tmout_event.when);
+	qse_addtime (&tmout_event.when, &req->urs_tmout, &tmout_event.when);
 	tmout_event.ctx = req;
 	tmout_event.handler = tmr_urs_tmout_handle;
 	tmout_event.updater = tmr_urs_tmout_update;
 	if (qse_httpd_inserttimerevent (httpd, &tmout_event, &req->tmr_tmout) <= -1) goto oops;
 
-	if (sendto (req->urs_socket, req->pkt, req->pktlen, 0, (struct sockaddr*)&dc->skad, dc->skadlen) != req->pktlen)
+	if (sendto (req->urs_socket, req->pkt, req->pktlen, 0, (struct sockaddr*)&req->urs_skad, req->urs_skadlen) != req->pktlen)
 	{
 		qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
 		goto oops;

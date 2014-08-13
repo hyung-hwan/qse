@@ -80,6 +80,9 @@
 #		if defined(HAVE_LINUX_NETFILTER_IPV4_H)
 #			include <linux/netfilter_ipv4.h> /* SO_ORIGINAL_DST */
 #		endif
+#		if !defined(SO_ORIGINAL_DST)
+#			define SO_ORIGINAL_DST 80
+#		endif
 #		if !defined(IP_TRANSPARENT)
 #			define IP_TRANSPARENT 19
 #		endif
@@ -965,6 +968,9 @@ qse_fprintf (QSE_STDERR, QSE_T("Error: too many client?\n"));
 	client->orgdst_addr = client->local_addr;
 	#endif
 
+/* TODO: how to set intercepted when TPROXY is used? */
+	if (!qse_nwadequal(&client->orgdst_addr, &client->local_addr))
+		client->status |= QSE_HTTPD_CLIENT_INTERCEPTED;
 
 	#if 0
 	client->initial_ifindex = resolve_ifindex (fd, client->local_addr);
@@ -1011,12 +1017,13 @@ static int peer_open (qse_httpd_t* httpd, qse_httpd_peer_t* peer)
 #endif
 
 	connaddrsize = qse_nwadtoskad (&peer->nwad, &connaddr);
-	bindaddrsize = qse_nwadtoskad (&peer->local, &bindaddr);
-	if (connaddrsize <= -1 || bindaddrsize <= -1)
+	if (connaddrsize <= -1)
 	{
 		qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
 		return -1;
 	}
+
+	bindaddrsize = qse_nwadtoskad (&peer->local, &bindaddr);
 
 	fd = socket (qse_skadfamily(&connaddr), SOCK_STREAM, IPPROTO_TCP);
 	if (!is_valid_socket(fd)) 
@@ -1025,12 +1032,14 @@ static int peer_open (qse_httpd_t* httpd, qse_httpd_peer_t* peer)
 		goto oops;
 	}
 
+/* TODO: set transparent and bind only if the server is transparent */
 	#if defined(IP_TRANSPARENT)
 	flag = 1;
 	setsockopt (fd, SOL_IP, IP_TRANSPARENT, &flag, QSE_SIZEOF(flag));
 	#endif
 
-	if (bind (fd, (struct sockaddr*)&bindaddr, bindaddrsize) <= -1) 
+	if (bindaddrsize >= 0 &&
+	    bind (fd, (struct sockaddr*)&bindaddr, bindaddrsize) <= -1) 
 	{
 		/* i won't care about binding faiulre */
 		/* TODO: some logging for this failure though */
@@ -1868,7 +1877,7 @@ static qse_ssize_t client_recv (
 	qse_httpd_t* httpd, qse_httpd_client_t* client,
 	qse_mchar_t* buf, qse_size_t bufsize)
 {
-	if (client->status & CLIENT_SECURE)
+	if (client->status & QSE_HTTPD_CLIENT_SECURE)
 	{
 	#if defined(HAVE_SSL)
 		int ret = SSL_read (client->handle2.ptr, buf, bufsize);
@@ -1882,9 +1891,9 @@ static qse_ssize_t client_recv (
 		}
 
 		if (SSL_pending (client->handle2.ptr) > 0) 
-			client->status |= CLIENT_PENDING;
+			client->status |= QSE_HTTPD_CLIENT_PENDING;
 		else
-			client->status &= ~CLIENT_PENDING;
+			client->status &= ~QSE_HTTPD_CLIENT_PENDING;
 
 		return ret;
 	#else
@@ -1910,7 +1919,7 @@ static qse_ssize_t client_send (
 	qse_httpd_t* httpd, qse_httpd_client_t* client,
 	const qse_mchar_t* buf, qse_size_t bufsize)
 {
-	if (client->status & CLIENT_SECURE)
+	if (client->status & QSE_HTTPD_CLIENT_SECURE)
 	{
 	#if defined(HAVE_SSL)
 		int ret = SSL_write (client->handle2.ptr, buf, bufsize);
@@ -1945,7 +1954,7 @@ static qse_ssize_t client_sendfile (
 	qse_httpd_t* httpd, qse_httpd_client_t* client,
 	qse_ubi_t handle, qse_foff_t* offset, qse_size_t count)
 {
-	if (client->status & CLIENT_SECURE)
+	if (client->status & QSE_HTTPD_CLIENT_SECURE)
 	{
 		return __send_file_ssl (httpd, client->handle2.ptr, handle, offset, count);
 	}
@@ -1958,7 +1967,7 @@ static qse_ssize_t client_sendfile (
 static int client_accepted (qse_httpd_t* httpd, qse_httpd_client_t* client)
 {
 
-	if (client->status & CLIENT_SECURE)
+	if (client->status & QSE_HTTPD_CLIENT_SECURE)
 	{
 	#if defined(HAVE_SSL)
 		int ret;
@@ -2031,7 +2040,7 @@ static int client_accepted (qse_httpd_t* httpd, qse_httpd_client_t* client)
 
 static void client_closed (qse_httpd_t* httpd, qse_httpd_client_t* client)
 {
-	if (client->status & CLIENT_SECURE)
+	if (client->status & QSE_HTTPD_CLIENT_SECURE)
 	{
 	#if defined(HAVE_SSL)
 		if (client->handle2.ptr)
@@ -2664,7 +2673,6 @@ static int make_resource (
 {
 	server_xtn_t* server_xtn;
 	struct rsrc_tmp_t tmp;
-	qse_http_method_t mth;
 
 	qse_httpd_stat_t st;
 	int n, stx, acc;
@@ -2681,119 +2689,11 @@ static int make_resource (
 
 	QSE_MEMSET (&qinfo, 0, QSE_SIZEOF(qinfo));
 	qinfo.req = req;
-
-#if 0
-	mth = qse_htre_getqmethodtype (req);
-	if (mth == QSE_HTTP_CONNECT)
-	{
-		/* TODO: query if CONNECT is allowed */
-		/* TODO: check on what conditions CONNECT is allowed.  */
-		/* TODO: disallow connecting back to self */
-		/* TODO: Proxy-Authorization???? */
-
-		target->type = QSE_HTTPD_RSRC_PROXY;
-		target->u.proxy.flags |= QSE_HTTPD_RSRC_PROXY_RAW;
-		target->u.proxy.host = QSE_NULL;
-
-		if (qse_mbstonwad (qse_htre_getqpath(req), &target->u.proxy.dst.nwad) <= -1) 
-		{
-			target->u.proxy.flags |= QSE_HTTPD_RSRC_PROXY_DST_STR;
-			target->u.proxy.dst.str = qse_htre_getqpath(req);
-		}
-		else
-		{
-			/* make the source binding type the same as destination */
-			/* no default port for raw proxying */
-			target->u.proxy.src.nwad.type = target->u.proxy.dst.nwad.type;
-		}
-
-		/* pseudonym for raw proxying should not be useful. but set it for consistency */
-		if (server_xtn->query (httpd, client->server, QSE_HTTPD_SERVERSTD_PSEUDONYM, &qinfo, &target->u.proxy.pseudonym) <= -1) 
-			target->u.proxy.pseudonym = QSE_NULL;
-
-/******************************************************************/
-/*TODO: load this from configuration. reamove this after debugging */
-//target->u.proxy.flags |= QSE_HTTPD_RSRC_PROXY_URS;
-/******************************************************************/
-		/* mark that this request is going to be proxied. */
-		req->attr.flags |= QSE_HTRE_ATTR_PROXIED;
-		return 0;
-	}
-
-	if (qse_mbszcasecmp (tmp.qpath, QSE_MT("http://"), 7) == 0)
-	{
-/* TODO: check if proxying is allowed.... */
-			qse_mchar_t* host, * slash;
-
-			host = tmp.qpath + 7;
-			slash = qse_mbschr (host, QSE_MT('/'));
-
-			if (slash && slash - host > 0)
-			{
-				target->type = QSE_HTTPD_RSRC_PROXY;
-				target->u.proxy.flags = 0;
-
-/* TODO: refrain from manipulating the request like this */
-				QSE_MEMMOVE (host - 1, host, slash - host); 
-				slash[-1] = QSE_MT('\0');
-				host = host - 1;
-				target->u.proxy.host = host;
-
-				if (qse_mbstonwad (host, &target->u.proxy.dst.nwad) <= -1) 
-				{
-					target->u.proxy.flags |= QSE_HTTPD_RSRC_PROXY_DST_STR;
-					target->u.proxy.dst.str = host;
-				}
-				else
-				{
-					/* make the source binding type the same as destination */
-					if (qse_getnwadport(&target->u.proxy.dst.nwad) == 0)
-						qse_setnwadport (&target->u.proxy.dst.nwad, qse_hton16(QSE_HTTPD_DEFAULT_PORT));
-					target->u.proxy.src.nwad.type = target->u.proxy.dst.nwad.type;
-				}
-
-				if (server_xtn->query (httpd, client->server, QSE_HTTPD_SERVERSTD_PSEUDONYM, &qinfo, &target->u.proxy.pseudonym) <= -1) 
-					target->u.proxy.pseudonym = QSE_NULL;
-
-/* TODO: refrain from manipulating the request like this */
-				req->u.q.path = slash; /* TODO: use setqpath or something... */
-
-/******************************************************************/
-/*TODO: load this from configuration. reamove this after debugging */
-//target->u.proxy.flags |= QSE_HTTPD_RSRC_PROXY_URS;
-/******************************************************************/
-
-				/* mark that this request is going to be proxied. */
-				req->attr.flags |= QSE_HTRE_ATTR_PROXIED;
-				return 0;
-			}
-	}
-
-#endif
+	qinfo.client = client;
 
 	if (server_xtn->query (httpd, client->server, QSE_HTTPD_SERVERSTD_ROOT, &qinfo, &tmp.root) <= -1) return -1;
 	switch (tmp.root.type)
 	{
-		case QSE_HTTPD_SERVERSTD_ROOT_NWAD:
-			/* proxy the request */
-			target->type = QSE_HTTPD_RSRC_PROXY;
-			target->u.proxy.flags = 0;
-			target->u.proxy.host = QSE_NULL;
-			
-			/* transparent proxy may do the following
-			target->u.proxy.dst = client->orgdst_addr; 
-			target->u.proxy.src = client->remote_addr;
-			*/
-			target->u.proxy.dst.nwad = tmp.root.u.nwad;
-			target->u.proxy.src.nwad.type = target->u.proxy.dst.nwad.type;
-
-			if (server_xtn->query (httpd, client->server, QSE_HTTPD_SERVERSTD_PSEUDONYM, &qinfo, &target->u.proxy.pseudonym) <= -1) 
-				target->u.proxy.pseudonym = QSE_NULL;
-
-			/* mark that this request is going to be proxied. */
-			req->attr.flags |= QSE_HTRE_ATTR_PROXIED;
-			return 0;
-
 		case QSE_HTTPD_SERVERSTD_ROOT_TEXT:
 			target->type = QSE_HTTPD_RSRC_TEXT;
 			target->u.text.ptr = tmp.root.u.text.ptr;
@@ -3196,10 +3096,6 @@ static int query_server (
 			}
 			return 0;
 		}
-
-		case QSE_HTTPD_SERVERSTD_PSEUDONYM:
-			*(const qse_mchar_t**)result = QSE_NULL;
-			return  0;
 	}
 
 	qse_httpd_seterrnum (httpd, QSE_HTTPD_EINVAL);
@@ -3361,6 +3257,7 @@ int qse_httpd_loopstd (qse_httpd_t* httpd, const qse_httpd_dnsstd_t* dns, const 
 {
 	httpd_xtn_t* httpd_xtn = qse_httpd_getxtn (httpd);
 
+	/* default dns server info */
 	if (dns)
 	{
 		httpd_xtn->dns = *dns;
@@ -3370,12 +3267,13 @@ int qse_httpd_loopstd (qse_httpd_t* httpd, const qse_httpd_dnsstd_t* dns, const 
 		httpd_xtn->dns.nwad.type = QSE_NWAD_NX;
 		httpd_xtn->dns.tmout.sec = QSE_HTTPD_DNSSTD_DEFAULT_TMOUT;
 		httpd_xtn->dns.tmout.nsec = 0;
-		httpd_xtn->dns.resends = QSE_HTTPD_DNSSTD_DEFAULT_RESENDS;
+		httpd_xtn->dns.retries = QSE_HTTPD_DNSSTD_DEFAULT_RETRIES;
 		httpd_xtn->dns.cache_ttl = QSE_HTTPD_DNSSTD_DEFAULT_CACHE_TTL;
 		httpd_xtn->dns.cache_minttl = QSE_HTTPD_DNSSTD_DEFAULT_CACHE_MINTTL;
 		httpd_xtn->dns.cache_negttl = QSE_HTTPD_DNSSTD_DEFAULT_CACHE_NEGTTL;
 	}
 
+	/* default urs server info */
 	if (urs)
 	{
 		httpd_xtn->urs = *urs;
@@ -3385,8 +3283,9 @@ int qse_httpd_loopstd (qse_httpd_t* httpd, const qse_httpd_dnsstd_t* dns, const 
 		httpd_xtn->urs.nwad.type = QSE_NWAD_NX;
 		httpd_xtn->urs.tmout.sec = QSE_HTTPD_URSSTD_DEFAULT_TMOUT;
 		httpd_xtn->urs.tmout.nsec = 0;
-		httpd_xtn->urs.resends = QSE_HTTPD_URSSTD_DEFAULT_RESENDS;
+		httpd_xtn->urs.retries = QSE_HTTPD_URSSTD_DEFAULT_RETRIES;
 	}
 
+	/* main loop */
 	return qse_httpd_loop (httpd);
 }

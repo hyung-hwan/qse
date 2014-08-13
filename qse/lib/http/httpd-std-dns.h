@@ -165,9 +165,10 @@ struct dns_req_t
 	qse_skad_t dns_skad;
 	int dns_skadlen;
 	int dns_socket;
+	int dns_retries;
+	qse_ntime_t dns_tmout;
 
 	qse_tmr_index_t tmr_tmout;
-	int resends;
 
 	dns_req_t* next;
 	dns_req_t* prev;
@@ -343,22 +344,15 @@ static int dns_open (qse_httpd_t* httpd, qse_httpd_dns_t* dns)
 		}
 	}
 
-	if (qse_getnwadport(&nwad) == 0) 
+	if (nwad.type != QSE_NWAD_NX && qse_getnwadport(&nwad) == 0) 
 		qse_setnwadport (&nwad, qse_hton16(QSE_HTTPD_DNSSTD_DEFAULT_PORT));
-
-	dc->skadlen = qse_nwadtoskad (&nwad, &dc->skad);
-	if (dc->skadlen <= -1)
-	{
-		qse_httpd_seterrnum (httpd, QSE_HTTPD_EINVAL);
-		goto oops;
-	}
 
 	if (httpd->opt.trait & QSE_HTTPD_LOGACT)
 	{
 		qse_httpd_act_t msg;
 		qse_size_t pos;
 		msg.code = QSE_HTTPD_CATCH_MDBGMSG;
-		pos = qse_mbsxcpy (msg.u.mdbgmsg, QSE_COUNTOF(msg.u.mdbgmsg), "global nameserver set to ");
+		pos = qse_mbsxcpy (msg.u.mdbgmsg, QSE_COUNTOF(msg.u.mdbgmsg), "default nameserver set to ");
 		qse_nwadtombs (&nwad, &msg.u.mdbgmsg[pos], QSE_COUNTOF(msg.u.mdbgmsg) - pos, QSE_NWADTOMBS_ALL);
 		httpd->opt.rcb.logact (httpd, &msg);
 	}
@@ -373,10 +367,21 @@ static int dns_open (qse_httpd_t* httpd, qse_httpd_dns_t* dns)
 		goto oops;
 	}
 
-	if (nwad.type == QSE_NWAD_IN4)
-		dc->dns_socket = dns->handle[0].i;
+	/* carry on regardless of success or failure */
+	dc->skadlen = qse_nwadtoskad (&nwad, &dc->skad);
+
+	/* determine which socket to use when sending a request to the server */
+	if (dc->skadlen >=  0)
+	{
+		if (nwad.type == QSE_NWAD_IN4)
+			dc->dns_socket = dns->handle[0].i;
+		else
+			dc->dns_socket = dns->handle[1].i;
+	}
 	else
-		dc->dns_socket = dns->handle[1].i;
+	{
+		dc->dns_socket = SOCK_INVALID;
+	}
 
 	dns->handle_count = 2;
 	dns->ctx = dc;
@@ -736,7 +741,7 @@ printf (">>tmr_dns_tmout_handle  req->>%p\n", req);
 	/* ---------------------------------------------------------------
 	 * resend 
 	 *---------------------------------------------------------------- */
-	if (req->resends > 0)
+	if (req->dns_retries > 0)
 	{
 		httpd_xtn_t* httpd_xtn;
 		qse_tmr_event_t tmout_event;
@@ -744,7 +749,7 @@ printf (">>tmr_dns_tmout_handle  req->>%p\n", req);
 		httpd_xtn = qse_httpd_getxtn (dc->httpd);
 
 		qse_gettime (&tmout_event.when);
-		qse_addtime (&tmout_event.when, &httpd_xtn->dns.tmout, &tmout_event.when);
+		qse_addtime (&tmout_event.when, &req->dns_tmout, &tmout_event.when);
 		tmout_event.ctx = req;
 		tmout_event.handler = tmr_dns_tmout_handle;
 		tmout_event.updater = tmr_dns_tmout_update;
@@ -759,7 +764,7 @@ printf (">>tmr_dns_tmout_handle  req->>%p\n", req);
 			QSE_ASSERT (tmr == dc->httpd->tmr);
 			if (qse_httpd_inserttimerevent (dc->httpd, &tmout_event, &req->tmr_tmout) >= 0)
 			{
-				req->resends--;
+				req->dns_retries--;
 				return; /* resend ok */
 			}
 		}
@@ -788,7 +793,7 @@ printf (">>tmr_dns_tmout_handle  req->>%p\n", req);
 	dc->req_count--;
 }
 
-static int dns_send (qse_httpd_t* httpd, qse_httpd_dns_t* dns, const qse_mchar_t* name, qse_httpd_resol_t resol, const qse_nwad_t* dns_server, void* ctx)
+static int dns_send (qse_httpd_t* httpd, qse_httpd_dns_t* dns, const qse_mchar_t* name, qse_httpd_resol_t resol, const qse_httpd_natr_t* dns_server, void* ctx)
 {
 	dns_ctx_t* dc = (dns_ctx_t*)dns->ctx;
 	httpd_xtn_t* httpd_xtn;
@@ -866,33 +871,32 @@ printf ("DNS REALLY SENING>>>>>>>>>>>>>>>>>>>>>>>\n");
 		goto oops;
 	}
 
-	if (dns_server) 
-	{
-printf ("GETTING DNS_SERVER XXXXXXXXXXXXXXXXXXXXXXX\n");
-		req->dns_skadlen = qse_nwadtoskad (dns_server, &req->dns_skad);
-		if (req->dns_skadlen <= -1)
-		{
-			qse_httpd_seterrnum (httpd, QSE_HTTPD_EINVAL);
-			goto oops;
-		}
+	req->dns_retries = httpd_xtn->dns.retries;
+	req->dns_tmout = httpd_xtn->dns.tmout;
 
-		if (dns_server->type == QSE_NWAD_IN4)
+	if (dns_server)
+	{
+		if (dns_server->retries >= 0) req->dns_retries = dns_server->retries;
+		if (dns_server->tmout.sec >= 0) req->dns_tmout = dns_server->tmout;
+
+		req->dns_skadlen = qse_nwadtoskad (&dns_server->nwad, &req->dns_skad);
+		if (req->dns_skadlen <= -1) goto default_dns_server;
+
+		if (dns_server->nwad.type == QSE_NWAD_IN4)
 			req->dns_socket = dns->handle[0].i;
 		else 
 			req->dns_socket = dns->handle[1].i;
 	}
 	else
 	{
-printf ("GETTING DNS_SERVER XXXXXXXXXXXXXXXXXXXXXXX GLOBAL XXXXXXXXXXXXXXXXXXXXXX\n");
+	default_dns_server:
 		req->dns_skad = dc->skad;
 		req->dns_skadlen = dc->skadlen;
 		req->dns_socket = dc->dns_socket;
 	}
 
-	req->resends = httpd_xtn->dns.resends;
-
 	qse_gettime (&tmout_event.when);
-	qse_addtime (&tmout_event.when, &httpd_xtn->dns.tmout, &tmout_event.when);
+	qse_addtime (&tmout_event.when, &req->dns_tmout, &tmout_event.when);
 	tmout_event.ctx = req;
 	tmout_event.handler = tmr_dns_tmout_handle;
 	tmout_event.updater = tmr_dns_tmout_update;

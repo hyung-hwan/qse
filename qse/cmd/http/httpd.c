@@ -73,7 +73,6 @@ enum
 	XCFG_DIRFOOT,
 	XCFG_ERRHEAD,
 	XCFG_ERRFOOT,
-	XCFG_PSEUDONYM,
 	XCFG_MAX
 };
 
@@ -186,10 +185,17 @@ struct loccfg_t
 
 	struct
 	{
-		int allow_http: 1;
-		int allow_connect: 1;
+		unsigned int allow_http: 1;
+		unsigned int allow_connect: 1;
+		unsigned int dns_enabled: 1;
+		unsigned int urs_enabled: 1;
 		qse_nwad_t dns_nwad; /* TODO: multiple dns */
 		qse_nwad_t urs_nwad; /* TODO: multiple urs */
+		int dns_timeout;
+		int dns_retries;
+		int urs_timeout;
+		int urs_retries;
+		const qse_mchar_t pseudonym[128]; /* TODO: good size? */
 	} proxy;
 
 	loccfg_t* next;
@@ -354,9 +360,19 @@ static int make_resource (
 
 	server_xtn = qse_httpd_getserverstdxtn (httpd, client->server);
 
+#if 0
 	if (server_xtn->tproxy)
 	{
-		if (qse_nwadequal(&client->orgdst_addr, &client->local_addr)) /* both equal and error */
+		if (client->status & QSE_HTTPD_CLIENT_INTERCEPTED)
+		{
+			rsrc->type = QSE_HTTPD_RSRC_PROXY;
+			rsrc->u.proxy.flags = 0;
+			rsrc->u.proxy.dst.nwad = client->orgdst_addr;
+			rsrc->u.proxy.src.nwad = client->remote_addr;
+
+			qse_setnwadport (&rsrc->u.proxy.src.nwad, 0);
+		}
+		else
 		{
 			/* TODO: implement a better check that the
 			 *       destination is not one of the local addresses */
@@ -364,23 +380,12 @@ static int make_resource (
 			rsrc->type = QSE_HTTPD_RSRC_ERROR;
 			rsrc->u.error.code = 500;
 		}
-		else
-		{
-			rsrc->type = QSE_HTTPD_RSRC_PROXY;
-			rsrc->u.proxy.flags = 0;
-			rsrc->u.proxy.dst.nwad = client->orgdst_addr;
-			rsrc->u.proxy.src.nwad = client->remote_addr;
-
-			if (rsrc->u.proxy.src.nwad.type == QSE_NWAD_IN4)
-				rsrc->u.proxy.src.nwad.u.in4.port = 0; /* reset the port to 0. */
-			else if (rsrc->u.proxy.src.nwad.type == QSE_NWAD_IN6)
-				rsrc->u.proxy.src.nwad.u.in6.port = 0; /* reset the port to 0. */
-		}
 
 		return 0;
 	}
 	else
 	{
+#endif
 		if (server_xtn->orgmakersrc (httpd, client, req, rsrc) <= -1) return -1;
 		if (server_xtn->nodir && rsrc->type == QSE_HTTPD_RSRC_DIR)
 		{
@@ -390,7 +395,9 @@ static int make_resource (
 			rsrc->u.error.code = 403;
 		}
 		return 0;
+#if 0
 	}
+#endif
 }
 
 static void free_resource (
@@ -401,14 +408,18 @@ static void free_resource (
 
 	server_xtn = qse_httpd_getserverstdxtn (httpd, client->server);
 
+#if 0
 	if (server_xtn->tproxy)
 	{
 		/* nothing to do */
 	}
 	else
 	{
+#endif
 		server_xtn->orgfreersrc (httpd, client, req, rsrc);
+#if 0
 	}
+#endif
 }
 /* --------------------------------------------------------------------- */
 
@@ -460,28 +471,33 @@ static int get_server_root (
 
 	qse_memset (root, 0, QSE_SIZEOF(*root));
 
-	if (loccfg->proxy.dns_nwad.type != QSE_NWAD_NX)
+	if ((qinfo->client->status & QSE_HTTPD_CLIENT_INTERCEPTED) /*&&
+	    loccfg->proxy.allow_intercept */)
 	{
-		root->u.proxy.dns_server = loccfg->proxy.dns_nwad;
-		root->u.proxy.flags |= QSE_HTTPD_RSRC_PROXY_DNS_SERVER;
-	}
+		root->type = QSE_HTTPD_SERVERSTD_ROOT_PROXY;
+		root->u.proxy.dst.nwad = qinfo->client->orgdst_addr;
+		/* if TPROXY is used, set the source to the original source.
+		root->u.proxy.src.nwad = qinfo->client->remote_addr;
+		qse_setnwadport (&root->u.proxy.src.nwad, 0);*/
 
-	if (loccfg->proxy.urs_nwad.type != QSE_NWAD_NX)
-	{
-		root->u.proxy.urs_server = loccfg->proxy.urs_nwad;
-		root->u.proxy.flags |= QSE_HTTPD_RSRC_PROXY_URS_SERVER;
+		if (mth == QSE_HTTP_CONNECT) 
+			root->u.proxy.flags |= QSE_HTTPD_RSRC_PROXY_RAW;
+		else if (loccfg->proxy.pseudonym[0]) 
+			root->u.proxy.pseudonym = loccfg->proxy.pseudonym;
+
+		goto proxy_ok;
 	}
 
 	if (mth == QSE_HTTP_CONNECT)
 	{
 		if (loccfg->proxy.allow_connect)
 		{
-			/* TODO: check on what conditions CONNECT is allowed.  */
 			/* TODO: disallow connecting back to self */
 			/* TODO: Proxy-Authorization???? */
 
 			root->type = QSE_HTTPD_SERVERSTD_ROOT_PROXY;
 			root->u.proxy.flags |= QSE_HTTPD_RSRC_PROXY_RAW;
+			/* no pseudonym for RAW proxying */
 
 			if (qse_mbstonwad(qpath, &root->u.proxy.dst.nwad) <= -1) 
 			{
@@ -494,7 +510,8 @@ static int get_server_root (
 				/* no default port for raw proxying */
 				root->u.proxy.src.nwad.type = root->u.proxy.dst.nwad.type;
 			}
-			return 0;
+
+			goto proxy_ok;
 		}
 		else
 		{
@@ -504,44 +521,45 @@ static int get_server_root (
 		}
 	}
 
-	if (loccfg->proxy.allow_http)
+	if (loccfg->proxy.allow_http &&
+	    qse_mbszcasecmp (qpath, QSE_MT("http://"), 7) == 0)
 	{
-		if (qse_mbszcasecmp (qpath, QSE_MT("http://"), 7) == 0)
+		qse_mchar_t* host, * slash;
+
+		host = qpath + 7;
+		slash = qse_mbschr (host, QSE_MT('/'));
+
+		if (slash && slash - host > 0)
 		{
-			qse_mchar_t* host, * slash;
+/* TODO: refrain from manipulating the request like this */
 
-			host = qpath + 7;
-			slash = qse_mbschr (host, QSE_MT('/'));
+			root->type = QSE_HTTPD_SERVERSTD_ROOT_PROXY;
 
-			if (slash && slash - host > 0)
+			if (loccfg->proxy.pseudonym[0]) 
+				root->u.proxy.pseudonym = loccfg->proxy.pseudonym;
+
+			qse_memmove (host - 1, host, slash - host); 
+			slash[-1] = QSE_MT('\0');
+			host = host - 1;
+			root->u.proxy.host = host;
+
+			if (qse_mbstonwad (host, &root->u.proxy.dst.nwad) <= -1) 
 			{
-	/* TODO: refrain from manipulating the request like this */
-
-				root->type = QSE_HTTPD_SERVERSTD_ROOT_PROXY;
-
-				qse_memmove (host - 1, host, slash - host); 
-				slash[-1] = QSE_MT('\0');
-				host = host - 1;
-				root->u.proxy.host = host;
-
-				if (qse_mbstonwad (host, &root->u.proxy.dst.nwad) <= -1) 
-				{
-					root->u.proxy.flags |= QSE_HTTPD_RSRC_PROXY_DST_STR;
-					root->u.proxy.dst.str = host;
-				}
-				else
-				{
-					/* make the source binding type the same as destination */
-					if (qse_getnwadport(&root->u.proxy.dst.nwad) == 0)
-						qse_setnwadport (&root->u.proxy.dst.nwad, qse_hton16(80));
-					root->u.proxy.src.nwad.type = root->u.proxy.dst.nwad.type;
-				}
-
-	/* TODO: refrain from manipulating the request like this */
-				qinfo->req->u.q.path = slash; /* TODO: use setqpath or something... */
-
-				return 0;
+				root->u.proxy.flags |= QSE_HTTPD_RSRC_PROXY_DST_STR;
+				root->u.proxy.dst.str = host;
 			}
+			else
+			{
+				/* make the source binding type the same as destination */
+				if (qse_getnwadport(&root->u.proxy.dst.nwad) == 0)
+					qse_setnwadport (&root->u.proxy.dst.nwad, qse_hton16(80));
+				root->u.proxy.src.nwad.type = root->u.proxy.dst.nwad.type;
+			}
+
+/* TODO: refrain from manipulating the request like this */
+			qinfo->req->u.q.path = slash; /* TODO: use setqpath or something... */
+
+			goto proxy_ok;
 		}
 		else
 		{
@@ -550,19 +568,43 @@ static int get_server_root (
 			return 0;
 		}
 	}
-
-
 
 	if (loccfg->root_is_nwad)
 	{
-		root->type = QSE_HTTPD_SERVERSTD_ROOT_NWAD;
-		root->u.nwad = loccfg->root_nwad;
+		/* simple forwarding. it's not controlled by proxy.http or proxy.connect  */
+		root->type = QSE_HTTPD_SERVERSTD_ROOT_PROXY;
+
+		root->u.proxy.dst.nwad = loccfg->root_nwad;
+		root->u.proxy.src.nwad.type = root->u.proxy.dst.nwad.type;
+
+		if (loccfg->proxy.pseudonym[0]) 
+			root->u.proxy.pseudonym = loccfg->proxy.pseudonym;
+
+		goto proxy_ok;
 	}
-	else
+	
+	/* local file system */
+	root->type = QSE_HTTPD_SERVERSTD_ROOT_PATH;
+	root->u.path.val = loccfg->xcfg[XCFG_ROOT];
+	root->u.path.rpl = loccfg->locname.len;
+	return 0;
+
+
+proxy_ok:
+	if (loccfg->proxy.dns_enabled)
 	{
-		root->type = QSE_HTTPD_SERVERSTD_ROOT_PATH;
-		root->u.path.val = loccfg->xcfg[XCFG_ROOT];
-		root->u.path.rpl = loccfg->locname.len;
+		root->u.proxy.flags |= QSE_HTTPD_RSRC_PROXY_ENABLE_DNS | QSE_HTTPD_RSRC_PROXY_DNS_SERVER;
+		root->u.proxy.dns_server.nwad = loccfg->proxy.dns_nwad;
+		root->u.proxy.dns_server.tmout.sec = loccfg->proxy.dns_timeout;
+		root->u.proxy.dns_server.retries = loccfg->proxy.dns_retries;
+	}
+
+	if (loccfg->proxy.urs_enabled)
+	{
+		root->u.proxy.flags |= QSE_HTTPD_RSRC_PROXY_ENABLE_URS | QSE_HTTPD_RSRC_PROXY_URS_SERVER;
+		root->u.proxy.urs_server.nwad = loccfg->proxy.urs_nwad;
+		root->u.proxy.urs_server.tmout.sec = loccfg->proxy.urs_timeout;
+		root->u.proxy.urs_server.retries = loccfg->proxy.urs_retries;
 	}
 
 	return 0;
@@ -598,20 +640,30 @@ static int query_server (
 			const qse_mchar_t* host = QSE_NULL;
 			const qse_mchar_t* qpath;
 			qse_http_method_t mth;
+			const qse_htre_hdrval_t* hosthdr;
 
 			mth = qse_htre_getqmethodtype (qinfo->req);
 			qpath = qse_htre_getqpath (qinfo->req);
 			if (mth == QSE_HTTP_CONNECT) 
 			{
+				qse_nwad_t nwad;
+
 				/* the query path for CONNECT is not a path name, but 
 				 * a host name. the path is adjusted to the root directory. */
 				host = qpath;
 				qpath = QSE_MT("/");
+
+				if (qse_mbstonwad (host, &nwad) >= 0)
+				{
+					/* the host is a numeric. try he Host: header.
+					 * i expect the values of the host and qpath variables
+					 * are maintained if Host: is not found after goto. */
+					goto try_host; 
+				}
 			}
 			else
 			{
-				const qse_htre_hdrval_t* hosthdr;
-
+			try_host:
 				hosthdr = qse_htre_getheaderval (qinfo->req, QSE_MT("Host"));
 				if (hosthdr) 
 				{
@@ -684,19 +736,6 @@ found:
 			#endif
 
 			return get_server_root (httpd, server, loccfg, qinfo, result);
-/*
-			if (loccfg->root_is_nwad)
-			{
-				((qse_httpd_serverstd_root_t*)result)->type = QSE_HTTPD_SERVERSTD_ROOT_NWAD;
-				((qse_httpd_serverstd_root_t*)result)->u.nwad = loccfg->root_nwad;
-			}
-			else
-			{
-				((qse_httpd_serverstd_root_t*)result)->type = QSE_HTTPD_SERVERSTD_ROOT_PATH;
-				((qse_httpd_serverstd_root_t*)result)->u.path.val = loccfg->xcfg[XCFG_ROOT];
-				((qse_httpd_serverstd_root_t*)result)->u.path.rpl = loccfg->locname.len;
-			}
-			return 0;*/
 
 		case QSE_HTTPD_SERVERSTD_REALM:
 		{
@@ -772,10 +811,6 @@ found:
 
 		case QSE_HTTPD_SERVERSTD_ERRFOOT:
 			*(const qse_mchar_t**)result = loccfg->xcfg[XCFG_ERRFOOT];
-			return 0;
-
-		case QSE_HTTPD_SERVERSTD_PSEUDONYM:
-			*(const qse_mchar_t**)result = loccfg->xcfg[XCFG_PSEUDONYM];
 			return 0;
 
 		case QSE_HTTPD_SERVERSTD_INDEX:
@@ -991,6 +1026,12 @@ static int get_boolean (const qse_xli_str_t* v)
 	        qse_strxcasecmp (v->ptr, v->len, QSE_T("on")) == 0);
 }
 
+static int get_integer (const qse_xli_str_t* v)
+{
+/* TODO: be more strict */
+	return qse_strxtoi (v->ptr, v->len);
+}
+
 static int load_loccfg_basic (qse_httpd_t* httpd, qse_xli_t* xli, qse_xli_list_t* list, loccfg_t* cfg)
 {
 	static struct 
@@ -1005,8 +1046,7 @@ static int load_loccfg_basic (qse_httpd_t* httpd, qse_xli_t* xli, qse_xli_list_t
 		{ QSE_T("dir-head"),    QSE_T("server-default.dir-head") },
 		{ QSE_T("dir-foot"),    QSE_T("server-default.dir-foot") },
 		{ QSE_T("error-head"),  QSE_T("server-default.error-head") },
-		{ QSE_T("error-foot"),  QSE_T("server-default.error-foot") },
-		{ QSE_T("pseudonym"),   QSE_T("server-default.pseudonym") }
+		{ QSE_T("error-foot"),  QSE_T("server-default.error-foot") }
 	};
 
 	int i;
@@ -1379,6 +1419,30 @@ static int load_loccfg_proxy (qse_httpd_t* httpd, qse_xli_t* xli, qse_xli_list_t
 	if (pair) cfg->proxy.allow_connect = get_boolean ((qse_xli_str_t*)pair->val);
 
 	pair = QSE_NULL;
+	if (proxy) pair = qse_xli_findpair (xli, proxy, QSE_T("pseudonym"));
+	if (!pair && default_proxy) pair = qse_xli_findpair (xli, default_proxy, QSE_T("pseudonym"));
+	if (pair) 
+	{
+		qse_xli_str_t* str = (qse_xli_str_t*)pair->val;
+
+	#if defined(QSE_CHAR_IS_MCHAR)
+		qse_mbsxcpy (cfg->proxy.pseudonym, QSE_COUNTOF(cfg->proxy.pseudonym), str->ptr);
+	#else
+		qse_size_t wcslen, mbslen = QSE_COUNTOF(cfg->proxy.pseudonym);
+		if (qse_wcstombs (str->ptr, &wcslen, cfg->proxy.pseudonym, &mbslen) <= -1)
+		{
+			qse_printf (QSE_T("ERROR: invalid pseudonym for proxy - %s"), str->ptr);
+			return -1;
+		}
+	#endif
+	}
+
+	pair = QSE_NULL;
+	if (proxy) pair = qse_xli_findpair (xli, proxy, QSE_T("dns-enabled"));
+	if (!pair && default_proxy) pair = qse_xli_findpair (xli, default_proxy, QSE_T("dns-enabled"));
+	if (pair) cfg->proxy.dns_enabled = get_boolean ((qse_xli_str_t*)pair->val);
+
+	pair = QSE_NULL;
 	if (proxy) pair = qse_xli_findpair (xli, proxy, QSE_T("dns-server"));
 	if (!pair && default_proxy) pair = qse_xli_findpair (xli, default_proxy, QSE_T("dns-server"));
 	if (pair) 
@@ -1392,6 +1456,25 @@ static int load_loccfg_proxy (qse_httpd_t* httpd, qse_xli_t* xli, qse_xli_list_t
 	}
 
 	pair = QSE_NULL;
+	if (proxy) pair = qse_xli_findpair (xli, proxy, QSE_T("dns-timeout"));
+	if (!pair && default_proxy) pair = qse_xli_findpair (xli, default_proxy, QSE_T("dns-timeout"));
+	if (pair) cfg->proxy.dns_timeout = get_integer ((qse_xli_str_t*)pair->val);
+	else cfg->proxy.dns_timeout = -1;
+
+	pair = QSE_NULL;
+	if (proxy) pair = qse_xli_findpair (xli, proxy, QSE_T("dns-retries"));
+	if (!pair && default_proxy) pair = qse_xli_findpair (xli, default_proxy, QSE_T("dns-retries"));
+	if (pair) cfg->proxy.dns_retries = get_integer ((qse_xli_str_t*)pair->val);
+	else cfg->proxy.dns_retries = -1;
+
+
+
+	pair = QSE_NULL;
+	if (proxy) pair = qse_xli_findpair (xli, proxy, QSE_T("urs-enabled"));
+	if (!pair && default_proxy) pair = qse_xli_findpair (xli, default_proxy, QSE_T("urs-enabled"));
+	if (pair) cfg->proxy.urs_enabled = get_boolean ((qse_xli_str_t*)pair->val);
+
+	pair = QSE_NULL;
 	if (proxy) pair = qse_xli_findpair (xli, proxy, QSE_T("urs-server"));
 	if (!pair && default_proxy) pair = qse_xli_findpair (xli, default_proxy, QSE_T("urs-server"));
 	if (pair)
@@ -1403,6 +1486,18 @@ static int load_loccfg_proxy (qse_httpd_t* httpd, qse_xli_t* xli, qse_xli_list_t
 			return -1;
 		}
 	}
+
+	pair = QSE_NULL;
+	if (proxy) pair = qse_xli_findpair (xli, proxy, QSE_T("urs-timeout"));
+	if (!pair && default_proxy) pair = qse_xli_findpair (xli, default_proxy, QSE_T("urs-timeout"));
+	if (pair) cfg->proxy.urs_timeout = get_integer ((qse_xli_str_t*)pair->val);
+	else cfg->proxy.urs_timeout = -1;
+
+	pair = QSE_NULL;
+	if (proxy) pair = qse_xli_findpair (xli, proxy, QSE_T("urs-retries"));
+	if (!pair && default_proxy) pair = qse_xli_findpair (xli, default_proxy, QSE_T("urs-retries"));
+	if (pair) cfg->proxy.urs_retries = get_integer ((qse_xli_str_t*)pair->val);
+	else cfg->proxy.urs_retries = -1;
 
 	return 0;
 }
@@ -1731,14 +1826,15 @@ static int open_config_file (qse_httpd_t* httpd)
 		{ QSE_T("server-default.dir-foot"),           { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
 		{ QSE_T("server-default.error-head"),         { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
 		{ QSE_T("server-default.error-foot"),         { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
-		{ QSE_T("server-default.pseudonym"),          { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
 		{ QSE_T("server-default.proxy"),                    { QSE_XLI_SCM_VALLIST | QSE_XLI_SCM_KEYNODUP, 0, 0      }  },
 		{ QSE_T("server-default.proxy.http"),               { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
 		{ QSE_T("server-default.proxy.connect"),            { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
 		{ QSE_T("server-default.proxy.pseudonym"),          { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
+		{ QSE_T("server-default.proxy.dns-enabled"),        { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
 		{ QSE_T("server-default.proxy.dns-server"),         { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
 		{ QSE_T("server-default.proxy.dns-timeout"),        { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
 		{ QSE_T("server-default.proxy.dns-retries"),        { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
+		{ QSE_T("server-default.proxy.urs-enabled"),        { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
 		{ QSE_T("server-default.proxy.urs-server"),         { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
 		{ QSE_T("server-default.proxy.urs-timeout"),        { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
 		{ QSE_T("server-default.proxy.urs-retries"),        { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
@@ -1782,15 +1878,15 @@ static int open_config_file (qse_httpd_t* httpd)
 		{ QSE_T("server.host.location.dir-foot"),           { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
 		{ QSE_T("server.host.location.error-head"),         { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
 		{ QSE_T("server.host.location.error-foot"),         { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
-		{ QSE_T("server.host.location.pseudonym"),          { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
-
 		{ QSE_T("server.host.location.proxy"),              { QSE_XLI_SCM_VALLIST | QSE_XLI_SCM_KEYNODUP, 0, 0      }  },
 		{ QSE_T("server.host.location.proxy.http"),         { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
 		{ QSE_T("server.host.location.proxy.connect"),      { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
 		{ QSE_T("server.host.location.proxy.pseudonym"),    { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
+		{ QSE_T("server.host.location.proxy.dns-enabled"),  { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
 		{ QSE_T("server.host.location.proxy.dns-server"),   { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
 		{ QSE_T("server.host.location.proxy.dns-timeout"),  { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
 		{ QSE_T("server.host.location.proxy.dns-retries"),  { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
+		{ QSE_T("server.host.location.proxy.urs-enabled"),  { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
 		{ QSE_T("server.host.location.proxy.urs-server"),   { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
 		{ QSE_T("server.host.location.proxy.urs-timeout"),  { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
 		{ QSE_T("server.host.location.proxy.urs-retries"),  { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
@@ -2258,13 +2354,7 @@ static int httpd_main (int argc, qse_char_t* argv[])
 	if (g_debug) rcb.logact = logact_httpd; /* i don't remember old logging handler */
 	qse_httpd_setopt (httpd, QSE_HTTPD_RCB, &rcb);
 
-/* TODO: read from configuration... */
-{
-qse_httpd_ursstd_t urs;
-qse_memset (&urs, 0, QSE_SIZEOF(urs));
-qse_mbstonwad ("[::1]:97", &urs.nwad);
-	ret = qse_httpd_loopstd (httpd, QSE_NULL, &urs);
-}
+	ret = qse_httpd_loopstd (httpd, QSE_NULL, QSE_NULL);
 
 	restore_signal_handlers ();
 	g_httpd = QSE_NULL;

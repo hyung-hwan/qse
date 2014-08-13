@@ -40,7 +40,6 @@ typedef void (*qse_httpd_serverstd_freersrc_t) (
 enum qse_httpd_serverstd_root_type_t
 {
 	QSE_HTTPD_SERVERSTD_ROOT_PATH,
-	QSE_HTTPD_SERVERSTD_ROOT_NWAD,
 	QSE_HTTPD_SERVERSTD_ROOT_TEXT,
 	QSE_HTTPD_SERVERSTD_ROOT_PROXY,
 	QSE_HTTPD_SERVERSTD_ROOT_ERROR
@@ -58,8 +57,6 @@ struct qse_httpd_serverstd_root_t
 			const qse_mchar_t* val;
 			qse_size_t rpl;  /* replacement length */
 		} path;
-
-		qse_nwad_t nwad;
 
 		struct
 		{
@@ -125,8 +122,6 @@ enum qse_httpd_serverstd_query_code_t
 	QSE_HTTPD_SERVERSTD_DIRHEAD,         /* const qse_mchar_t* */
 	QSE_HTTPD_SERVERSTD_DIRFOOT,         /* const qse_mchar_t* */
 
-	QSE_HTTPD_SERVERSTD_PSEUDONYM,       /* const qse_mchar_t*, pseudonym to use in Via: */
-
 	QSE_HTTPD_SERVERSTD_INDEX,           /* qse_httpd_serverstd_index_t */
 	QSE_HTTPD_SERVERSTD_CGI,             /* qse_httpd_serverstd_cgi_t */
 	QSE_HTTPD_SERVERSTD_MIME,            /* const qse_mchar_t* */
@@ -138,6 +133,7 @@ typedef enum qse_httpd_serverstd_query_code_t qse_httpd_serverstd_query_code_t;
 
 struct qse_httpd_serverstd_query_info_t
 {
+	qse_httpd_client_t* client;
 	qse_htre_t* req;
 	qse_mchar_t* xpath; /* query path combined with document root */
 };
@@ -162,7 +158,7 @@ typedef enum qse_httpd_serverstd_opt_t qse_httpd_serverstd_opt_t;
 
 #define QSE_HTTPD_DNSSTD_DEFAULT_PORT         53
 #define QSE_HTTPD_DNSSTD_DEFAULT_TMOUT        3
-#define QSE_HTTPD_DNSSTD_DEFAULT_RESENDS      2
+#define QSE_HTTPD_DNSSTD_DEFAULT_RETRIES      2
 #define QSE_HTTPD_DNSSTD_DEFAULT_CACHE_TTL    120
 #define QSE_HTTPD_DNSSTD_DEFAULT_CACHE_NEGTTL 10
 #define QSE_HTTPD_DNSSTD_DEFAULT_CACHE_MINTTL 2
@@ -171,7 +167,7 @@ struct qse_httpd_dnsstd_t
 {
 	qse_nwad_t nwad;
 	qse_ntime_t tmout;
-	qse_uint32_t resends;
+	qse_uint32_t retries;
 	qse_uint32_t cache_ttl;
 	qse_uint32_t cache_minttl; /* minimum ttl */
 	qse_uint32_t cache_negttl; /* negative ttl */
@@ -181,13 +177,13 @@ typedef struct qse_httpd_dnsstd_t qse_httpd_dnsstd_t;
 
 #define QSE_HTTPD_URSSTD_DEFAULT_PORT    94
 #define QSE_HTTPD_URSSTD_DEFAULT_TMOUT   10
-#define QSE_HTTPD_URSSTD_DEFAULT_RESENDS 0
+#define QSE_HTTPD_URSSTD_DEFAULT_RETRIES 0
 
 struct qse_httpd_ursstd_t
 {
 	qse_nwad_t nwad;
 	qse_ntime_t tmout;
-	qse_uint32_t resends;
+	qse_uint32_t retries;
 };
 typedef struct qse_httpd_ursstd_t qse_httpd_ursstd_t;
 

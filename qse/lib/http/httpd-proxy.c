@@ -66,8 +66,8 @@ struct task_proxy_t
 	qse_size_t qpath_pos_in_reqfwdbuf;
 	qse_size_t qpath_len_in_reqfwdbuf;
 
-	qse_nwad_t dns_server;
-	qse_nwad_t urs_server;
+	qse_httpd_natr_t dns_server;
+	qse_httpd_natr_t urs_server;
 	qse_mchar_t* pseudonym;
 	qse_htrd_t* peer_htrd;
 
@@ -943,15 +943,36 @@ static int task_init_proxy (
 	if (arg->rsrc->flags & QSE_HTTPD_RSRC_PROXY_RAW) proxy->flags |= PROXY_RAW;
 	if (arg->rsrc->flags & QSE_HTTPD_RSRC_PROXY_TRANSPARENT) proxy->flags |= PROXY_TRANSPARENT;
 
-	if (arg->rsrc->flags & QSE_HTTPD_RSRC_PROXY_DNS_SERVER)
+	proxy->peer.local = arg->rsrc->src.nwad;
+	if (arg->rsrc->flags & QSE_HTTPD_RSRC_PROXY_DST_STR)
 	{
-		proxy->flags |= PROXY_DNS_SERVER;
-		proxy->dns_server = arg->rsrc->dns_server;
+		if (arg->rsrc->flags & QSE_HTTPD_RSRC_PROXY_ENABLE_DNS)
+		{
+/* TODO: get pseudonym from parameter... */
+			proxy->peer_name = proxy->pseudonym + len + 1;
+
+			qse_mbscpy (proxy->peer_name, arg->rsrc->dst.str);
+			adjust_peer_name_and_port (proxy);
+
+			proxy->flags |= PROXY_RESOLVE_PEER_NAME;
+			if (arg->rsrc->flags & QSE_HTTPD_RSRC_PROXY_DNS_SERVER)
+			{
+				/* dns server specified */
+				proxy->flags |= PROXY_DNS_SERVER;
+				proxy->dns_server = arg->rsrc->dns_server;
+			}
+		}
+		else
+		{
+			/* dns service is requried to resolve the destination.
+			 * but it's not enabled */
+			httpd->errnum = QSE_HTTPD_ENODNS;
+			goto oops;
+		}
 	}
-	if (arg->rsrc->flags & QSE_HTTPD_RSRC_PROXY_URS_SERVER)
+	else
 	{
-		proxy->flags |= PROXY_URS_SERVER;
-		proxy->urs_server = arg->rsrc->urs_server;
+		proxy->peer.nwad = arg->rsrc->dst.nwad;
 	}
 
 	if (arg->rsrc->flags & QSE_HTTPD_RSRC_PROXY_ENABLE_URS)
@@ -1000,23 +1021,14 @@ static int task_init_proxy (
 printf (">>>>>>>>>>>>>>>>>>>>>>>> [%s] <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n", proxy->url_to_rewrite);
 		/* enable url rewriting */
 		proxy->flags |= PROXY_REWRITE_URL;
-	}
 
-	proxy->peer.local = arg->rsrc->src.nwad;
-	if (arg->rsrc->flags & QSE_HTTPD_RSRC_PROXY_DST_STR)
-	{
-		proxy->flags |= PROXY_RESOLVE_PEER_NAME;
-		proxy->peer_name = proxy->pseudonym + len + 1;
-		qse_mbscpy (proxy->peer_name, arg->rsrc->dst.str);
-		adjust_peer_name_and_port (proxy);
+		if (arg->rsrc->flags & QSE_HTTPD_RSRC_PROXY_URS_SERVER)
+		{
+			/* urs server address specified */
+			proxy->flags |= PROXY_URS_SERVER;
+			proxy->urs_server = arg->rsrc->urs_server;
+		}
 	}
-	else
-	{
-		proxy->peer.nwad = arg->rsrc->dst.nwad;
-	}
-
-	/*if (arg->rsrc->src) proxy->peer.local = arg->rsrc->src;
-	else proxy->peer.local.type = arg->rsrc->dst.type;*/
 
 	proxy->req = QSE_NULL;
 /* -------------------------------------------------------------------- 
@@ -1028,7 +1040,7 @@ printf (">>>>>>>>>>>>>>>>>>>>>>>> [%s] <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n", proxy
 	len = MAX_SEND_SIZE;
 
 	proxy->reqfwdbuf = qse_mbs_open (httpd->mmgr, 0, (len < 512? 512: len));
-	if (proxy->reqfwdbuf == QSE_NULL) goto oops;
+	if (proxy->reqfwdbuf == QSE_NULL) goto nomem_oops;
 
 	proxy->host = arg->rsrc->host;
 	if (proxy->flags & PROXY_RAW)
@@ -1052,22 +1064,22 @@ printf (">>>>>>>>>>>>>>>>>>>>>>>> [%s] <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n", proxy
 		 * received from the client */
 
 		if (qse_mbs_cat (proxy->reqfwdbuf, qse_htre_getqmethodname(arg->req)) == (qse_size_t)-1 ||
-			qse_mbs_cat (proxy->reqfwdbuf, QSE_MT(" ")) == (qse_size_t)-1) goto oops;
-
+			qse_mbs_cat (proxy->reqfwdbuf, QSE_MT(" ")) == (qse_size_t)-1) goto nomem_oops;
+		
 		proxy->qpath_pos_in_reqfwdbuf = QSE_STR_LEN(proxy->reqfwdbuf);
-		if (qse_mbs_cat (proxy->reqfwdbuf, qse_htre_getqpath(arg->req)) == (qse_size_t)-1) goto oops;
+		if (qse_mbs_cat (proxy->reqfwdbuf, qse_htre_getqpath(arg->req)) == (qse_size_t)-1) goto nomem_oops;
 		proxy->qpath_len_in_reqfwdbuf = QSE_STR_LEN(proxy->reqfwdbuf) - proxy->qpath_pos_in_reqfwdbuf;
 
 		if (qse_htre_getqparam(arg->req))
 		{
 			if (qse_mbs_cat (proxy->reqfwdbuf, QSE_MT("?")) == (qse_size_t)-1 ||
-			    qse_mbs_cat (proxy->reqfwdbuf, qse_htre_getqparam(arg->req)) == (qse_size_t)-1) goto oops;
+			    qse_mbs_cat (proxy->reqfwdbuf, qse_htre_getqparam(arg->req)) == (qse_size_t)-1) goto nomem_oops;
 		}
 
 		if (qse_mbs_cat (proxy->reqfwdbuf, QSE_MT(" ")) == (qse_size_t)-1 ||
 		    qse_mbs_cat (proxy->reqfwdbuf, qse_htre_getverstr(arg->req)) == (qse_size_t)-1 ||
 		    qse_mbs_cat (proxy->reqfwdbuf, QSE_MT("\r\n")) == (qse_size_t)-1 ||
-		    qse_htre_walkheaders (arg->req, proxy_capture_client_header, proxy) <= -1) goto oops;
+		    qse_htre_walkheaders (arg->req, proxy_capture_client_header, proxy) <= -1) goto nomem_oops;
 
 		if (!(proxy->flags & (PROXY_TRANSPARENT | PROXY_X_FORWARDED_FOR)))
 		{
@@ -1081,7 +1093,7 @@ printf (">>>>>>>>>>>>>>>>>>>>>>>> [%s] <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n", proxy
 
 			if (qse_mbs_cat (proxy->reqfwdbuf, QSE_MT("X-Forwarded-For: ")) == (qse_size_t)-1 ||
 			    qse_mbs_cat (proxy->reqfwdbuf, extra) == (qse_size_t)-1 ||
-			    qse_mbs_cat (proxy->reqfwdbuf, QSE_MT("\r\n")) == (qse_size_t)-1) goto oops;
+			    qse_mbs_cat (proxy->reqfwdbuf, QSE_MT("\r\n")) == (qse_size_t)-1) goto nomem_oops;
 		}
 
 		proxy->resflags |= PROXY_RES_AWAIT_RESHDR;
@@ -1113,7 +1125,7 @@ printf (">>>>>>>>>>>>>>>>>>>>>>>> [%s] <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n", proxy
 				proxy->reqfwdbuf, QSE_MT("Via: %d.%d %hs (%hs)\r\n"), 
 				(int)proxy->version.major, (int)proxy->version.minor, 
 				pseudonym, qse_httpd_getname(httpd));
-			if (tmp == (qse_size_t)-1) goto oops;
+			if (tmp == (qse_size_t)-1) goto nomem_oops;
 		}
 
 		if (arg->req->state & QSE_HTRE_DISCARDED)
@@ -1124,11 +1136,11 @@ printf (">>>>>>>>>>>>>>>>>>>>>>>> [%s] <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n", proxy
 			{
 				/* i don't add chunk traiers if the 
 				 * request content has been discarded */
-				if (qse_mbs_cat (proxy->reqfwdbuf, QSE_MT("Content-Length: 0\r\n\r\n")) == (qse_size_t)-1) goto oops;
+				if (qse_mbs_cat (proxy->reqfwdbuf, QSE_MT("Content-Length: 0\r\n\r\n")) == (qse_size_t)-1) goto nomem_oops;
 			}
 			else
 			{
-				if (qse_mbs_cat (proxy->reqfwdbuf, QSE_MT("\r\n")) == (qse_size_t)-1) goto oops;
+				if (qse_mbs_cat (proxy->reqfwdbuf, QSE_MT("\r\n")) == (qse_size_t)-1) goto nomem_oops;
 			}
 		}
 		else if (arg->req->state & QSE_HTRE_COMPLETED)
@@ -1136,7 +1148,7 @@ printf (">>>>>>>>>>>>>>>>>>>>>>>> [%s] <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n", proxy
 			if (arg->req->attr.flags & QSE_HTRE_ATTR_CHUNKED)
 			{
 				/* add trailers if any */
-				if (qse_htre_walktrailers (arg->req, proxy_capture_client_trailer, proxy) <= -1) goto oops;
+				if (qse_htre_walktrailers (arg->req, proxy_capture_client_trailer, proxy) <= -1) goto nomem_oops;
 			}
 
 			len = qse_htre_getcontentlen(arg->req);
@@ -1153,18 +1165,18 @@ printf (">>>>>>>>>>>>>>>>>>>>>>>> [%s] <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n", proxy
 				 * even if the original request dones't contain it */
 				if (qse_mbs_cat (proxy->reqfwdbuf, QSE_MT("Content-Length: ")) == (qse_size_t)-1 ||
 				    qse_mbs_cat (proxy->reqfwdbuf, buf) == (qse_size_t)-1 ||
-				    qse_mbs_cat (proxy->reqfwdbuf, QSE_MT("\r\n\r\n")) == (qse_size_t)-1) goto oops;
+				    qse_mbs_cat (proxy->reqfwdbuf, QSE_MT("\r\n\r\n")) == (qse_size_t)-1) goto nomem_oops;
 
 				if (len > 0)
 				{
 					/* content */
 					ptr = qse_htre_getcontentptr(arg->req);
-					if (qse_mbs_ncat (proxy->reqfwdbuf, ptr, len) == (qse_size_t)-1) goto oops;
+					if (qse_mbs_ncat (proxy->reqfwdbuf, ptr, len) == (qse_size_t)-1) goto nomem_oops;
 				}
 			}
 			else
 			{
-				if (qse_mbs_cat (proxy->reqfwdbuf, QSE_MT("\r\n")) == (qse_size_t)-1) goto oops;
+				if (qse_mbs_cat (proxy->reqfwdbuf, QSE_MT("\r\n")) == (qse_size_t)-1) goto nomem_oops;
 			}
 		}
 		else if (arg->req->attr.flags & QSE_HTRE_ATTR_LENGTH)
@@ -1178,14 +1190,14 @@ printf (">>>>>>>>>>>>>>>>>>>>>>>> [%s] <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n", proxy
 
 			if (qse_mbs_cat (proxy->reqfwdbuf, QSE_MT("Content-Length: ")) == (qse_size_t)-1 ||
 			    qse_mbs_cat (proxy->reqfwdbuf, buf) == (qse_size_t)-1 ||
-			    qse_mbs_cat (proxy->reqfwdbuf, QSE_MT("\r\n\r\n")) == (qse_size_t)-1) goto oops;
+			    qse_mbs_cat (proxy->reqfwdbuf, QSE_MT("\r\n\r\n")) == (qse_size_t)-1) goto nomem_oops;
 
 			len = qse_htre_getcontentlen(arg->req);
 			if (len > 0)
 			{
 				/* content received so far */
 				ptr = qse_htre_getcontentptr(arg->req);
-				if (qse_mbs_ncat (proxy->reqfwdbuf, ptr, len) == (qse_size_t)-1) goto oops;
+				if (qse_mbs_ncat (proxy->reqfwdbuf, ptr, len) == (qse_size_t)-1) goto nomem_oops;
 			}
 
 			snatch_needed = 1;
@@ -1199,7 +1211,7 @@ printf (">>>>>>>>>>>>>>>>>>>>>>>> [%s] <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n", proxy
 
 			proxy->reqflags |= PROXY_REQ_FWDCHUNKED;
 			if (qse_mbs_cat (proxy->reqfwdbuf, QSE_MT("Transfer-Encoding: chunked\r\n")) == (qse_size_t)-1 ||
-			    qse_mbs_cat (proxy->reqfwdbuf, QSE_MT("\r\n")) == (qse_size_t)-1 /* end of header */) goto oops; 
+			    qse_mbs_cat (proxy->reqfwdbuf, QSE_MT("\r\n")) == (qse_size_t)-1 /* end of header */) goto nomem_oops; 
 
 			len = qse_htre_getcontentlen(arg->req);
 			if (len > 0)
@@ -1217,7 +1229,7 @@ printf (">>>>>>>>>>>>>>>>>>>>>>>> [%s] <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n", proxy
 				if (qse_mbs_cat (proxy->reqfwdbuf, buf) == (qse_size_t)-1 ||
 				    qse_mbs_cat (proxy->reqfwdbuf, QSE_MT("\r\n")) == (qse_size_t)-1 ||
 				    qse_mbs_ncat (proxy->reqfwdbuf, ptr, len) == (qse_size_t)-1 ||
-				    qse_mbs_cat (proxy->reqfwdbuf, QSE_MT("\r\n")) == (qse_size_t)-1) goto oops;
+				    qse_mbs_cat (proxy->reqfwdbuf, QSE_MT("\r\n")) == (qse_size_t)-1) goto nomem_oops;
 			}
 
 			snatch_needed = 1;
@@ -1243,6 +1255,10 @@ qse_printf (QSE_T("GOING TO PROXY [%hs]\n"), QSE_MBS_PTR(proxy->reqfwdbuf));
 	task->ctx = proxy;
 	return 0;
 
+nomem_oops:
+	httpd->errnum = QSE_HTTPD_ENOMEM;
+	/* goto oops */
+
 oops:
 
 printf ("init_proxy failed...........................................\n");
@@ -1267,7 +1283,7 @@ printf ("init_proxy failed...........................................\n");
 	proxy->flags |= PROXY_INIT_FAILED;
 	task->ctx = proxy;
 
-	httpd->errnum = QSE_HTTPD_ENOMEM;
+	
 	return 0;
 }
 
@@ -1924,9 +1940,6 @@ static void on_url_rewritten (qse_httpd_t* httpd, const qse_mchar_t* url, const 
 	qse_httpd_task_t* task = (qse_httpd_task_t*)ctx;
 	task_proxy_t* proxy = (task_proxy_t*)task->ctx;
 
-//new_url = "302:http://www.google.com/login.html";
-//new_url = "127.0.0.1:443";
-new_url = "http://www.google.com/a/b/c";
 	if (new_url)
 	{
 		qse_nwad_t nwad;
@@ -1997,7 +2010,7 @@ new_url = "http://www.google.com/a/b/c";
 				QSE_ASSERT (QSE_STR_LEN(proxy->reqfwdbuf) > 0);
 
 				/* TODO: Host rewriting?? */
-/* TODO: Host rewriting - to support it, headers must be made available thru request cloning. 
+			/* TODO: Host rewriting - to support it, headers must be made available thru request cloning. 
 			 *                        the request may not be valid after task_init_proxy */
 
 				if (qse_mbszcasecmp (new_url, QSE_MT("http://"), 7) == 0)
