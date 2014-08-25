@@ -377,11 +377,7 @@ int qse_nwio_init (
 	int flags, const qse_nwio_tmout_t* tmout)
 {
 	qse_skad_t addr;
-#if defined(HAVE_SOCKLEN_T)
-	socklen_t addrlen;
-#else
-	int addrlen;
-#endif
+	qse_sck_len_t addrlen;
 	int family, type, tmp;
 
 	QSE_MEMSET (nwio, 0, QSE_SIZEOF(*nwio));
@@ -744,11 +740,7 @@ int qse_nwio_init (
 			if (wait_for_data (nwio, &nwio->tmout.c, 1) <= -1) goto oops;
 			else 
 			{
-			#if defined(HAVE_SOCKLEN_T)
-				socklen_t xlen;
-			#else
-				int xlen;
-			#endif
+				qse_sck_len_t xlen;
 				xlen = QSE_SIZEOF(xret);
 				if (getsockopt (nwio->handle, SOL_SOCKET, SO_ERROR, (char*)&xret, &xlen) <= -1)
 				{
@@ -766,7 +758,7 @@ int qse_nwio_init (
 		{
 			xret = connect (nwio->handle, (struct sockaddr*)&addr, addrlen);
 			if (xret <= -1)
-			{	
+			{
 				nwio->errnum = skerr_to_errnum (errno);
 				goto oops;
 			}
@@ -810,18 +802,7 @@ oops:
 		nwio->tio = QSE_NULL;
 	}
 
-#if defined(_WIN32)
-	if (nwio->handle != INVALID_SOCKET) closesocket (nwio->handle);
-
-#elif defined(__OS2__)
-	if (nwio->handle >= 0) soclose (nwio->handle);
-
-#elif defined(__DOS__)
-	/* TODO: */
-
-#else
-	if (nwio->handle >= 0) QSE_CLOSE (nwio->handle);
-#endif
+	if (qse_isvalidsckhnd(nwio->handle)) qse_closesckhnd (nwio->handle);
 	return -1;
 }
 
@@ -835,15 +816,7 @@ void qse_nwio_fini (qse_nwio_t* nwio)
 		nwio->tio = QSE_NULL;
 	}
 
-#if defined(_WIN32)
-	closesocket (nwio->handle);
-#elif defined(__OS2__)
-	/* TODO: */
-#elif defined(__DOS__)
-	/* TODO: */
-#else
-	QSE_CLOSE (nwio->handle);
-#endif
+	qse_closesckhnd (nwio->handle);
 }
 
 qse_mmgr_t* qse_nwio_getmmgr (qse_nwio_t* nwio)
@@ -1031,11 +1004,7 @@ reread:
 	if (nwio->status & STATUS_UDP_CONNECT)
 	{
 		qse_skad_t addr;
-#if defined(HAVE_SOCKLEN_T)
-		socklen_t addrlen;
-#else
-		int addrlen;
-#endif
+		qse_sck_len_t addrlen;
 
 		addrlen = QSE_SIZEOF(addr);
 

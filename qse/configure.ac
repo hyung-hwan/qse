@@ -123,7 +123,7 @@ AC_CHECK_HEADERS([stddef.h wchar.h wctype.h errno.h signal.h fcntl.h dirent.h])
 AC_CHECK_HEADERS([time.h sys/time.h utime.h spawn.h execinfo.h ucontext.h])
 AC_CHECK_HEADERS([sys/resource.h sys/wait.h sys/syscall.h sys/ioctl.h])
 AC_CHECK_HEADERS([sys/sendfile.h sys/epoll.h sys/event.h])
-AC_CHECK_HEADERS([sys/sysctl.h sys/socket.h sys/sockio.h ifaddrs.h linux/netfilter_ipv4.h])
+AC_CHECK_HEADERS([sys/sysctl.h sys/socket.h sys/sockio.h ifaddrs.h linux/netfilter_ipv4.h netinet/sctp.h])
 AC_CHECK_HEADERS([net/if.h net/if_dl.h], [], [], [
 	#include <sys/types.h>
 	#include <sys/socket.h>])
@@ -132,8 +132,8 @@ AC_CHECK_HEADERS([quadmath.h crt_externs.h sys/prctl.h uci.h])
 
 dnl check data types
 AC_CHECK_TYPE([wchar_t], 
-	[AC_DEFINE([HAVE_WCHAR_T_IN_STDDEF_H],
-	           [],[wchar_t is available in stddef.h])],
+	[ AC_DEFINE([HAVE_WCHAR_T_IN_STDDEF_H],
+	           [],[wchar_t is available in stddef.h]) ],
 	[],
 	[#include <stddef.h>])
 
@@ -368,20 +368,44 @@ AX_CHECK_NUMVALOF(MB_LEN_MAX,[32],[#include <limits.h>])
 
 if test "${platform_win32}" == "yes"
 then
-AC_CHECK_SIZEOF(struct sockaddr_in,,[
-	#include <winsock2.h>
-	#include <ws2tcpip.h>])
-AC_CHECK_SIZEOF(struct sockaddr_in6,, [
-	#include <winsock2.h>
-	#include <ws2tcpip.h>])
+	AC_CHECK_SIZEOF(struct sockaddr_in,,[
+		#include <winsock2.h>
+		#include <ws2tcpip.h>])
+	AC_CHECK_SIZEOF(struct sockaddr_in6,,[
+		#include <winsock2.h>
+		#include <ws2tcpip.h>])
+	AC_CHECK_SIZEOF(socklen_t,, [
+		#include <winsock2.h>
+		#include <ws2tcpip.h>])
+
+	if test ${ac_cv_sizeof_socklen_t} -gt 0
+	then
+		AX_CHECK_SIGN([socklen_t],
+			[ AC_DEFINE(QSE_SOCKLEN_T_IS_SIGNED, 1, [Define if socklen_t is signed]) ],
+			[ AS_ECHO_N("") ],
+			[#include <winsock2.h>
+			 #include <ws2tcpip.h>])
+	fi
 else
-AC_CHECK_SIZEOF(struct sockaddr_in,,[
-	#include <sys/socket.h>
-	#include <netinet/in.h>])
-AC_CHECK_SIZEOF(struct sockaddr_in6,, [
-	#include <sys/socket.h>
-	#include <netinet/in.h>])
+	AC_CHECK_SIZEOF(struct sockaddr_in,,[
+		#include <sys/socket.h>
+		#include <netinet/in.h>])
+	AC_CHECK_SIZEOF(struct sockaddr_in6,,[
+		#include <sys/socket.h>
+		#include <netinet/in.h>])
+	AC_CHECK_SIZEOF(socklen_t,, [
+		#include <sys/socket.h>
+		#include <netinet/in.h>])
+
+	if test ${ac_cv_sizeof_socklen_t} -gt 0
+	then
+		AX_CHECK_SIGN([socklen_t],
+			[ AC_DEFINE(QSE_SOCKLEN_T_IS_SIGNED, 1, [Define if socklen_t is signed]) ],
+			[ AS_ECHO_N("") ],
+			[#include <sys/socket.h>])
+	fi
 fi
+
 
 dnl gcc 3.4.3 on opensolaris x86 gave this warning without -msse or 
 dnl something similar.
@@ -483,6 +507,7 @@ then
 fi
 AC_SUBST(QUADMATH_LIBS)
 
+
 AC_DEFINE_UNQUOTED(QSE_SIZEOF_CHAR, ${ac_cv_sizeof_char}, [sizeof(char)])
 AC_DEFINE_UNQUOTED(QSE_SIZEOF_SHORT, ${ac_cv_sizeof_short}, [sizeof(short)])
 AC_DEFINE_UNQUOTED(QSE_SIZEOF_INT, ${ac_cv_sizeof_int}, [sizeof(int)])
@@ -509,6 +534,8 @@ AC_DEFINE_UNQUOTED(QSE_MBLEN_MAX, ${ax_cv_numvalof_MB_LEN_MAX}, [MB_LEN_MAX])
 
 AC_DEFINE_UNQUOTED(QSE_SIZEOF_STRUCT_SOCKADDR_IN, ${ac_cv_sizeof_struct_sockaddr_in}, [sizeof(struct sockaddr_in)])
 AC_DEFINE_UNQUOTED(QSE_SIZEOF_STRUCT_SOCKADDR_IN6, ${ac_cv_sizeof_struct_sockaddr_in6}, [sizeof(struct sockaddr_in6)])
+AC_DEFINE_UNQUOTED(QSE_SIZEOF_SOCKLEN_T, ${ac_cv_sizeof_socklen_t}, [sizeof(socklen_t)])
+
 
 qse_package_version_major="`echo ${PACKAGE_VERSION} | cut -d. -f1`"
 qse_package_version_minor="`echo ${PACKAGE_VERSION} | cut -d. -f2`"
@@ -640,15 +667,6 @@ if test "${enable_sed_tracer_is}" = "yes"
 then
 	AC_DEFINE([QSE_ENABLE_SED_TRACER],[],[enable qse_sed_setexectracer()])
 fi
-
-AC_MSG_CHECKING([for socklen_t in sys/socket.h])
-AC_TRY_COMPILE([#define _POSIX_PII_SOCKET
-#include <sys/types.h>
-#include <sys/socket.h>], [socklen_t x = 5;],
-	[AC_DEFINE(HAVE_SOCKLEN_T, 1, [Define it socklen_t typedef is in sys/socket.h.])
-	AC_MSG_RESULT(yes)],
-	[AC_MSG_RESULT(no)]
-)
 
 if test "${enable_shared}" = "no" -a "${enable_static}" = "yes"
 then

@@ -52,12 +52,13 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-bin_PROGRAMS = qsehttpd$(EXEEXT)
+bin_PROGRAMS = qsehttpd$(EXEEXT) qseursd$(EXEEXT)
 @WCHAR_TRUE@@WIN32_TRUE@am__append_1 = $(UNICOWS_LIBS)
 subdir = cmd/http
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/argz.m4 \
+	$(top_srcdir)/m4/ax_check_sign.m4 \
 	$(top_srcdir)/m4/ax_cxx_namespace.m4 \
 	$(top_srcdir)/m4/ax_numval.m4 $(top_srcdir)/m4/ax_pthread.m4 \
 	$(top_srcdir)/m4/libtool.m4 $(top_srcdir)/m4/ltdl.m4 \
@@ -83,6 +84,12 @@ am__v_lt_0 = --silent
 qsehttpd_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(qsehttpd_LDFLAGS) $(LDFLAGS) -o $@
+am_qseursd_OBJECTS = ursd.$(OBJEXT)
+qseursd_OBJECTS = $(am_qseursd_OBJECTS)
+qseursd_DEPENDENCIES =
+qseursd_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
+	$(qseursd_LDFLAGS) $(LDFLAGS) -o $@
 DEFAULT_INCLUDES = 
 depcomp = $(SHELL) $(top_srcdir)/ac/depcomp
 am__depfiles_maybe = depfiles
@@ -109,8 +116,8 @@ am__v_CCLD_0 = @echo "  CCLD  " $@;
 AM_V_GEN = $(am__v_GEN_@AM_V@)
 am__v_GEN_ = $(am__v_GEN_@AM_DEFAULT_V@)
 am__v_GEN_0 = @echo "  GEN   " $@;
-SOURCES = $(qsehttpd_SOURCES)
-DIST_SOURCES = $(qsehttpd_SOURCES)
+SOURCES = $(qsehttpd_SOURCES) $(qseursd_SOURCES)
+DIST_SOURCES = $(qsehttpd_SOURCES) $(qseursd_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -332,6 +339,9 @@ qsecfg_DATA = httpd.conf httpd-mime.conf
 qsehttpd_SOURCES = httpd.c
 qsehttpd_LDFLAGS = -L../../lib/xli -L../../lib/http -L../../lib/cmn 
 qsehttpd_LDADD = -lqsexli -lqsehttp -lqsecmn $(am__append_1)
+qseursd_SOURCES = ursd.c
+qseursd_LDFLAGS = -L../../lib/cmn 
+qseursd_LDADD = -lqsecmn 
 EXTRA_DIST = $(qsecfg_DATA)
 all: all-am
 
@@ -416,6 +426,9 @@ clean-binPROGRAMS:
 qsehttpd$(EXEEXT): $(qsehttpd_OBJECTS) $(qsehttpd_DEPENDENCIES) $(EXTRA_qsehttpd_DEPENDENCIES) 
 	@rm -f qsehttpd$(EXEEXT)
 	$(AM_V_CCLD)$(qsehttpd_LINK) $(qsehttpd_OBJECTS) $(qsehttpd_LDADD) $(LIBS)
+qseursd$(EXEEXT): $(qseursd_OBJECTS) $(qseursd_DEPENDENCIES) $(EXTRA_qseursd_DEPENDENCIES) 
+	@rm -f qseursd$(EXEEXT)
+	$(AM_V_CCLD)$(qseursd_LINK) $(qseursd_OBJECTS) $(qseursd_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -424,6 +437,7 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/httpd.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ursd.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<

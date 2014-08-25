@@ -61,6 +61,7 @@
 	/* these two have only to be large enough */
 #	define QSE_SIZEOF_STRUCT_SOCKADDR_IN 32
 #	define QSE_SIZEOF_STRUCT_SOCKADDR_IN6 64
+#	define QSE_SIZEOF_SOCKLEN_T 4
 
 #	if !defined(QSE_CHAR_IS_WCHAR) && !defined(QSE_CHAR_IS_MCHAR)
 #		define QSE_CHAR_IS_WCHAR      1
@@ -100,6 +101,7 @@
 	/* these two have only to be large enough */
 #	define QSE_SIZEOF_STRUCT_SOCKADDR_IN 32
 #	define QSE_SIZEOF_STRUCT_SOCKADDR_IN6 64
+#	define QSE_SIZEOF_SOCKLEN_T 4
 
 #	if !defined(QSE_CHAR_IS_WCHAR) && !defined(QSE_CHAR_IS_MCHAR)
 #		define QSE_CHAR_IS_WCHAR      1

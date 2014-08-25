@@ -30,6 +30,7 @@
 #include <qse/cmn/tio.h>
 #include <qse/cmn/nwad.h>
 #include <qse/cmn/time.h>
+#include <qse/cmn/sck.h>
 
 enum qse_nwio_flag_t
 {
@@ -82,16 +83,7 @@ struct qse_nwio_tmout_t
 
 typedef struct qse_nwio_tmout_t qse_nwio_tmout_t;
 
-#if defined(_WIN32)
-	typedef qse_uintptr_t qse_nwio_hnd_t;
-#elif defined(__OS2__)
-     typedef int qse_nwio_hnd_t;
-#elif defined(__DOS__)
-     typedef int qse_nwio_hnd_t;
-#else
-     typedef int qse_nwio_hnd_t;
-#endif
-
+typedef qse_sck_hnd_t qse_nwio_hnd_t;
 typedef struct qse_nwio_t qse_nwio_t;
 
 /**
@@ -102,7 +94,7 @@ struct qse_nwio_t
 	qse_mmgr_t*        mmgr;
 	int                flags;
 	qse_nwio_errnum_t  errnum;
-	qse_nwio_tmout_t tmout;
+	qse_nwio_tmout_t   tmout;
 	qse_nwio_hnd_t     handle;
 	qse_tio_t*         tio;
 	int                status;

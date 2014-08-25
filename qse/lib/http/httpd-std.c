@@ -33,6 +33,7 @@
 #include <qse/cmn/dir.h>
 #include <qse/cmn/fio.h>
 #include <qse/cmn/sio.h>
+#include <qse/cmn/sck.h>
 
 #define STAT_REG   1
 #define STAT_DIR   2
@@ -86,6 +87,9 @@
 #		if !defined(IP_TRANSPARENT)
 #			define IP_TRANSPARENT 19
 #		endif
+#	endif
+#	if defined(HAVE_NETINET_SCTP_H)
+#		include <netinet/sctp.h>
 #	endif
 #endif
 
@@ -651,41 +655,7 @@ void* qse_httpd_getxtnstd (qse_httpd_t* httpd)
 
 /* ------------------------------------------------------------------- */
 
-#if defined(_WIN32)
-	typedef SOCKET sock_t;
-#	define SOCK_INVALID INVALID_SOCKET
-#else
-	typedef int sock_t;
-#	define SOCK_INVALID -1
-#endif
-
-#if !defined(HAVE_SOCKLEN_T)
-	typedef int socklen_t;
-#endif
-
-static QSE_INLINE int is_valid_socket (sock_t fd)
-{
-#if defined(_WIN32)
-	return fd != INVALID_SOCKET;
-#else
-	return fd >= 0;
-#endif
-}
-
-static QSE_INLINE void close_socket (sock_t fd)
-{
-#if defined(_WIN32)
-	closesocket (fd);
-#elif defined(__OS2__)
-	soclose (fd);
-#elif defined(__DOS__)
-	/* TODO: */
-#else
-	QSE_CLOSE (fd);
-#endif
-}
-
-static int set_socket_nonblock (qse_httpd_t* httpd, sock_t fd, int enabled)
+static int set_socket_nonblock (qse_httpd_t* httpd, qse_sck_hnd_t fd, int enabled)
 {
 #if defined(_WIN32)
 	if (ioctlsocket (fd, FIONBIO, &enabled) == SOCKET_ERROR) 
@@ -723,13 +693,13 @@ static int set_socket_nonblock (qse_httpd_t* httpd, sock_t fd, int enabled)
 
 }
 
-static sock_t open_udp_socket (qse_httpd_t* httpd, int domain)
+static qse_sck_hnd_t open_udp_socket (qse_httpd_t* httpd, int domain, int type, int proto)
 {
-	sock_t fd;
+	qse_sck_hnd_t fd;
 	int flag;
 
-	fd = socket (domain, SOCK_DGRAM, IPPROTO_UDP);
-	if (!is_valid_socket(fd)) 
+	fd = socket (domain, type, proto);
+	if (!qse_isvalidsckhnd(fd)) 
 	{
 		qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
 		goto oops;
@@ -750,13 +720,34 @@ static sock_t open_udp_socket (qse_httpd_t* httpd, int domain)
 	setsockopt (fd, SOL_SOCKET, SO_REUSEPORT, (void*)&flag, QSE_SIZEOF(flag));
 	#endif
 
+	#if defined(IPV6_V6ONLY)
+	if (domain == AF_INET6)
+	{
+		flag = 1;
+		setsockopt (fd, IPPROTO_IPV6, IPV6_V6ONLY, (void*)&flag, QSE_SIZEOF(flag));
+	}
+	#endif
+
 	if (set_socket_nonblock (httpd, fd, 1) <= -1) goto oops;
+
+
+	if (proto == IPPROTO_SCTP)
+	{
+		struct sctp_initmsg im;
+
+		QSE_MEMSET (&im, 0, QSE_SIZEOF(im));
+		im.sinit_num_ostreams = 1;
+		im.sinit_max_instreams = 1;
+		im.sinit_max_attempts = 1;
+
+		if (setsockopt (fd, SOL_SCTP, SCTP_INITMSG, &im, QSE_SIZEOF(im)) <= -1) goto oops;
+	}
 
 	return fd;
 
 oops:
-	if (is_valid_socket(fd)) close_socket (fd);
-	return SOCK_INVALID;
+	if (qse_isvalidsckhnd(fd)) qse_closesckhnd (fd);
+	return QSE_INVALID_SCKHND;
 }
 
 /* ------------------------------------------------------------------- */
@@ -767,7 +758,7 @@ static int server_open (qse_httpd_t* httpd, qse_httpd_server_t* server)
 	qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
 	return -1;
 #else
-	sock_t fd = SOCK_INVALID, flag;
+	qse_sck_hnd_t fd = QSE_INVALID_SCKHND, flag;
 	qse_skad_t addr;
 	int addrsize;
 
@@ -779,7 +770,7 @@ static int server_open (qse_httpd_t* httpd, qse_httpd_server_t* server)
 	}
 
 	fd = socket (qse_skadfamily(&addr), SOCK_STREAM, IPPROTO_TCP);
-	if (!is_valid_socket(fd)) 
+	if (!qse_isvalidsckhnd(fd)) 
 	{
 		qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
 		goto oops;
@@ -861,24 +852,15 @@ static int server_open (qse_httpd_t* httpd, qse_httpd_server_t* server)
 		{
 			int on = 1;
 			setsockopt (fd, IPPROTO_IPV6, IPV6_V6ONLY, &on, sizeof(on));
-			if (bind (fd, (struct sockaddr*)&addr, addrsize) <= -1)  
-			{
-				qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
-				goto oops;
-			}
+			if (bind (fd, (struct sockaddr*)&addr, addrsize) == 0) goto bind_ok;
 		}
-		else 
-		{
-			qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
-			goto oops;
-		}
-	#else
+	#endif
 
 		qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
 		goto oops;
-	#endif
 	}
 
+bind_ok:
 	if (listen (fd, 10) <= -1) 
 	{
 		qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
@@ -891,14 +873,14 @@ static int server_open (qse_httpd_t* httpd, qse_httpd_server_t* server)
 	return 0;
 
 oops:
-	if (is_valid_socket(fd)) close_socket (fd);
+	if (qse_isvalidsckhnd(fd)) qse_closesckhnd (fd);
 	return -1;
 #endif
 }
 
 static void server_close (qse_httpd_t* httpd, qse_httpd_server_t* server)
 {
-	close_socket (server->handle.i);
+	qse_closesckhnd (server->handle.i);
 }
 
 static int server_accept (
@@ -910,13 +892,13 @@ static int server_accept (
 
 #else
 	qse_skad_t addr;
-	socklen_t addrlen;
-	sock_t fd = SOCK_INVALID;
+	qse_sck_len_t addrlen;
+	qse_sck_hnd_t fd = QSE_INVALID_SCKHND;
 	int flag;
 
 	addrlen = QSE_SIZEOF(addr);
 	fd = accept (server->handle.i, (struct sockaddr*)&addr, &addrlen);
-	if (!is_valid_socket(fd)) 
+	if (!qse_isvalidsckhnd(fd)) 
 	{
 		qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
 		goto oops;
@@ -985,7 +967,7 @@ qse_fprintf (QSE_STDERR, QSE_T("Error: too many client?\n"));
 	return 0;
 
 oops:
-	if (is_valid_socket(fd)) close_socket (fd);
+	if (qse_isvalidsckhnd(fd)) qse_closesckhnd (fd);
 	return -1;
 #endif
 }
@@ -1005,7 +987,8 @@ static int peer_open (qse_httpd_t* httpd, qse_httpd_peer_t* peer)
 	qse_skad_t connaddr, bindaddr;
 	int connaddrsize, bindaddrsize;
 	int connected = 1;
-	sock_t fd = SOCK_INVALID;
+	qse_sck_hnd_t fd = QSE_INVALID_SCKHND;
+
 #if defined(_WIN32)
 	unsigned long cmd;
 #elif defined(__OS2__)
@@ -1026,7 +1009,7 @@ static int peer_open (qse_httpd_t* httpd, qse_httpd_peer_t* peer)
 	bindaddrsize = qse_nwadtoskad (&peer->local, &bindaddr);
 
 	fd = socket (qse_skadfamily(&connaddr), SOCK_STREAM, IPPROTO_TCP);
-	if (!is_valid_socket(fd)) 
+	if (!qse_isvalidsckhnd(fd)) 
 	{
 		qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
 		goto oops;
@@ -1038,6 +1021,7 @@ static int peer_open (qse_httpd_t* httpd, qse_httpd_peer_t* peer)
 	setsockopt (fd, SOL_IP, IP_TRANSPARENT, &flag, QSE_SIZEOF(flag));
 	#endif
 
+	/* don't use invalid binding address */
 	if (bindaddrsize >= 0 &&
 	    bind (fd, (struct sockaddr*)&bindaddr, bindaddrsize) <= -1) 
 	{
@@ -1096,7 +1080,7 @@ static int peer_open (qse_httpd_t* httpd, qse_httpd_peer_t* peer)
 
 oops:
 	qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
-	if (is_valid_socket(fd)) close_socket (fd);
+	if (qse_isvalidsckhnd(fd)) qse_closesckhnd (fd);
 	return -1;
 
 	/* -------------------------------------------------------------------- */
@@ -1105,7 +1089,7 @@ oops:
 
 static void peer_close (qse_httpd_t* httpd, qse_httpd_peer_t* peer)
 {
-	close_socket (peer->handle.i);
+	qse_closesckhnd (peer->handle.i);
 }
 
 static int peer_connected (qse_httpd_t* httpd, qse_httpd_peer_t* peer)
@@ -1159,7 +1143,7 @@ static int peer_connected (qse_httpd_t* httpd, qse_httpd_peer_t* peer)
 
 #else
 
-	socklen_t len;
+	qse_sck_len_t len;
 	int ret;
 
 	len = QSE_SIZEOF(ret);
@@ -1857,7 +1841,7 @@ static void client_close (qse_httpd_t* httpd, qse_httpd_client_t* client)
 #else
 	shutdown (client->handle.i, SHUT_RDWR);
 #endif
-	close_socket (client->handle.i);
+	qse_closesckhnd (client->handle.i);
 }
 
 static void client_shutdown (qse_httpd_t* httpd, qse_httpd_client_t* client)

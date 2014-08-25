@@ -188,7 +188,7 @@ struct loccfg_t
 		unsigned int allow_http: 1;
 		unsigned int allow_connect: 1;
 		unsigned int dns_enabled: 1;
-		unsigned int urs_enabled: 1;
+		unsigned int urs_enabled: 2;
 		qse_nwad_t dns_nwad; /* TODO: multiple dns */
 		qse_nwad_t urs_nwad; /* TODO: multiple urs */
 		int dns_timeout;
@@ -1466,8 +1466,6 @@ static int load_loccfg_proxy (qse_httpd_t* httpd, qse_xli_t* xli, qse_xli_list_t
 	if (!pair && default_proxy) pair = qse_xli_findpair (xli, default_proxy, QSE_T("dns-retries"));
 	if (pair) cfg->proxy.dns_retries = get_integer ((qse_xli_str_t*)pair->val);
 	else cfg->proxy.dns_retries = -1;
-
-
 
 	pair = QSE_NULL;
 	if (proxy) pair = qse_xli_findpair (xli, proxy, QSE_T("urs-enabled"));

@@ -70,6 +70,7 @@ libqsecmn_la_SOURCES = \
 	pma.c \
 	rbt.c \
 	rex.c \
+	sck.c \
 	sio.c \
 	sll.c \
 	slmb.c \
