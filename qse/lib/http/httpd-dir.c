@@ -545,7 +545,7 @@ static QSE_INLINE int task_main_getdir (
 				qse_httpd_reqsum_t reqsum;
 
 				acc.remote = remote;
-				acc.qpath = qpath;	
+				acc.qpath = qpath;
 				acc.status = 200;
 				acc.version =  ...;
 				acc.method =  ...;

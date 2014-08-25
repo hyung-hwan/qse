@@ -350,6 +350,9 @@
 /* Define to 1 if you have the <ndir.h> header file, and it defines `DIR'. */
 #undef HAVE_NDIR_H
 
+/* Define to 1 if you have the <netinet/sctp.h> header file. */
+#undef HAVE_NETINET_SCTP_H
+
 /* Define to 1 if you have the <net/if_dl.h> header file. */
 #undef HAVE_NET_IF_DL_H
 
@@ -460,9 +463,6 @@
 
 /* Define to 1 if you have the `sinq' function. */
 #undef HAVE_SINQ
-
-/* Define it socklen_t typedef is in sys/socket.h. */
-#undef HAVE_SOCKLEN_T
 
 /* Define to 1 if you have the <spawn.h> header file. */
 #undef HAVE_SPAWN_H
@@ -853,6 +853,9 @@
 /* sizeof(short) */
 #undef QSE_SIZEOF_SHORT
 
+/* sizeof(socklen_t) */
+#undef QSE_SIZEOF_SOCKLEN_T
+
 /* sizeof(struct sockaddr_in) */
 #undef QSE_SIZEOF_STRUCT_SOCKADDR_IN
 
@@ -885,6 +888,9 @@
 
 /* sizeof(__int8) */
 #undef QSE_SIZEOF___INT8
+
+/* Define if socklen_t is signed */
+#undef QSE_SOCKLEN_T_IS_SIGNED
 
 /* use qse_fltmax_t for floating-point numbers in AWK */
 #undef QSE_USE_AWK_FLTMAX
@@ -927,6 +933,9 @@
 
 /* The size of `short', as computed by sizeof. */
 #undef SIZEOF_SHORT
+
+/* The size of `socklen_t', as computed by sizeof. */
+#undef SIZEOF_SOCKLEN_T
 
 /* The size of `struct sockaddr_in', as computed by sizeof. */
 #undef SIZEOF_STRUCT_SOCKADDR_IN

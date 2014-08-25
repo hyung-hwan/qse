@@ -55,6 +55,7 @@ subdir = lib/http
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/argz.m4 \
+	$(top_srcdir)/m4/ax_check_sign.m4 \
 	$(top_srcdir)/m4/ax_cxx_namespace.m4 \
 	$(top_srcdir)/m4/ax_numval.m4 $(top_srcdir)/m4/ax_pthread.m4 \
 	$(top_srcdir)/m4/libtool.m4 $(top_srcdir)/m4/ltdl.m4 \
@@ -345,7 +346,7 @@ libqsehttp_la_SOURCES = \
 	upxd.c
 
 libqsehttp_la_LDFLAGS = -L../cmn -version-info 1:0:0 -no-undefined
-libqsehttp_la_LIBADD = -lqsecmn $(SOCKET_LIBS) $(SENDFILE_LIBS) $(SSL_LIBS)
+libqsehttp_la_LIBADD = -lqsecmn $(SOCKET_LIBS) $(SENDFILE_LIBS) $(SSL_LIBS) 
 all: all-am
 
 .SUFFIXES:

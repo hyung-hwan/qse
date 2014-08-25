@@ -24,5 +24,5 @@ libqsehttp_la_SOURCES = \
 	upxd.c
 
 libqsehttp_la_LDFLAGS = -L../cmn -version-info 1:0:0 -no-undefined
-libqsehttp_la_LIBADD = -lqsecmn $(SOCKET_LIBS) $(SENDFILE_LIBS) $(SSL_LIBS)
+libqsehttp_la_LIBADD = -lqsecmn $(SOCKET_LIBS) $(SENDFILE_LIBS) $(SSL_LIBS) 
 

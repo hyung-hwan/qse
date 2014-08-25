@@ -33,10 +33,10 @@ typedef struct urs_req_t urs_req_t;
 #include <qse/pack1.h>
 struct urs_hdr_t
 {
-	qse_uint16_t seq; /* in network-byte order */
-	qse_uint16_t rcode; /* response code */
-	qse_uint32_t qusum;/* checksum of url in the request */
-	qse_uint16_t len; /* url length in network-byte order */
+	qse_uint16_t seq;    /* in network-byte order */
+	qse_uint16_t rcode;  /* response code */
+	qse_uint32_t urlsum; /* checksum of url in the request */
+	qse_uint16_t urllen; /* url length in network-byte order */
 };
 
 struct urs_pkt_t
@@ -95,6 +95,7 @@ static int urs_open (qse_httpd_t* httpd, qse_httpd_urs_t* urs)
 	qse_nwad_t nwad;
 	urs_ctx_t* dc;
 	httpd_xtn_t* httpd_xtn;
+	int type, proto = IPPROTO_SCTP;
 
 	httpd_xtn = qse_httpd_getxtn (httpd);
 
@@ -118,12 +119,14 @@ static int urs_open (qse_httpd_t* httpd, qse_httpd_urs_t* urs)
 		httpd->opt.rcb.logact (httpd, &msg);
 	}
 
-	urs->handle[0].i = open_udp_socket (httpd, AF_INET);
+	type = (proto == IPPROTO_SCTP)? SOCK_SEQPACKET: SOCK_DGRAM;
+	
+	urs->handle[0].i = open_udp_socket (httpd, AF_INET, type, proto);
 #if defined(AF_INET6)
-	urs->handle[1].i = open_udp_socket (httpd, AF_INET6);
+	urs->handle[1].i = open_udp_socket (httpd, AF_INET6, type, proto);
 #endif
-	if (!is_valid_socket(urs->handle[0].i) && 
-	    !is_valid_socket(urs->handle[1].i))
+
+	if (!qse_isvalidsckhnd(urs->handle[0].i) && !qse_isvalidsckhnd(urs->handle[1].i))
 	{
 		goto oops;
 	}
@@ -141,17 +144,23 @@ static int urs_open (qse_httpd_t* httpd, qse_httpd_urs_t* urs)
 	}
 	else
 	{
-		dc->urs_socket = SOCK_INVALID;
+		dc->urs_socket = QSE_INVALID_SCKHND;
 	}
 
+	if (proto == IPPROTO_SCTP)
+	{
+/* TODO: error ahndleing */
+		if (qse_isvalidsckhnd(urs->handle[0].i)) listen (urs->handle[0].i, 99);
+		if (qse_isvalidsckhnd(urs->handle[1].i)) listen (urs->handle[1].i, 99);
+	}
 	urs->handle_count = 2;
 
 	urs->ctx = dc;
 	return 0;
 
 oops:
-	if (is_valid_socket(urs->handle[0].i)) close_socket (urs->handle[0].i);
-	if (is_valid_socket(urs->handle[1].i)) close_socket (urs->handle[1].i);
+	if (qse_isvalidsckhnd(urs->handle[0].i)) qse_closesckhnd (urs->handle[0].i);
+	if (qse_isvalidsckhnd(urs->handle[1].i)) qse_closesckhnd (urs->handle[1].i);
 	if (dc) qse_httpd_freemem (httpd, dc);
 	return -1;
 
@@ -189,8 +198,8 @@ static void urs_close (qse_httpd_t* httpd, qse_httpd_urs_t* urs)
 
 	for (i = 0; i < urs->handle_count; i++) 
 	{
-		if (is_valid_socket(urs->handle[i].i)) 
-			close_socket (urs->handle[i].i);
+		if (qse_isvalidsckhnd(urs->handle[i].i)) 
+			qse_closesckhnd (urs->handle[i].i);
 	}
 
 	qse_httpd_freemem (httpd, urs->ctx);
@@ -220,15 +229,16 @@ printf ("URS_RECV....\n");
 /* TODO: check if fromaddr matches the dc->skad... */
 
 	pkt = (urs_pkt_t*)dc->rcvbuf;
-	if (len >= QSE_SIZEOF(pkt->hdr) &&  len >= QSE_SIZEOF(pkt->hdr) + qse_ntoh16(pkt->hdr.len))
+	if (len >= QSE_SIZEOF(pkt->hdr) &&  len >= QSE_SIZEOF(pkt->hdr) + qse_ntoh16(pkt->hdr.urllen))
 	{
 		xid = qse_ntoh16(pkt->hdr.seq) % QSE_COUNTOF(dc->reqs);
 
 		for (req = dc->reqs[xid]; req; req = req->next)
 		{
-			if (req->pkt->hdr.seq == pkt->hdr.seq && req->pkt->hdr.qusum == pkt->hdr.qusum)
+			if (req->pkt->hdr.seq == pkt->hdr.seq && req->pkt->hdr.urlsum == pkt->hdr.urlsum)
 			{
-				pkt->url[qse_ntoh16(pkt->hdr.len)] = QSE_MT('\0');
+				/* null-terminate the url for easier processing */
+				pkt->url[qse_ntoh16(pkt->hdr.urllen)] = QSE_MT('\0');
 
 				urs_remove_tmr_tmout (httpd, req);
 				req->rewrite (httpd, req->pkt->url, pkt->url, req->ctx);
@@ -329,10 +339,9 @@ static int urs_send (qse_httpd_t* httpd, qse_httpd_urs_t* urs, const qse_mchar_t
 	urs_req_t* req = QSE_NULL;
 	qse_size_t url_len;
 	qse_tmr_event_t tmout_event;
+	
 
 	httpd_xtn = qse_httpd_getxtn (httpd);
-
-printf ("URS REALLY SENING>>>>>>>>>>>>>>>>>>>>>>>\n");
 
 	if (dc->req_count >= QSE_COUNTOF(dc->reqs))
 	{
@@ -361,8 +370,8 @@ printf ("URS REALLY SENING>>>>>>>>>>>>>>>>>>>>>>>\n");
 	req->pkt = (urs_pkt_t*)(req + 1);
 
 	req->pkt->hdr.seq = qse_hton16(seq);
-	req->pkt->hdr.len = qse_hton16(url_len);
-	req->pkt->hdr.qusum = hash_string (url);
+	req->pkt->hdr.urllen = qse_hton16(url_len);
+	req->pkt->hdr.urlsum = hash_string (url);
 	qse_mbscpy (req->pkt->url, url);
 
 	/* -1 to exclude the terminating '\0' as urs_pkt_t has url[1]. */
@@ -411,6 +420,21 @@ printf ("URS REALLY SENING>>>>>>>>>>>>>>>>>>>>>>>\n");
 	tmout_event.handler = tmr_urs_tmout_handle;
 	tmout_event.updater = tmr_urs_tmout_update;
 	if (qse_httpd_inserttimerevent (httpd, &tmout_event, &req->tmr_tmout) <= -1) goto oops;
+
+/*
+  {
+  struct msghdr msg;
+	struct iovec iov;
+	QSE_MEMSET (&msg, 0, QSE_SIZEOF(msg));
+	msg.msg_name = &req->urs_skad;
+	msg.msg_namelen = req->urs_skadlen;
+	iov.iov_base = req->pkt;
+	iov.iov_len = req->pktlen;
+	msg.msg_iov = &iov;
+	msg.msg_iovlen = 1;
+	if (sendmsg (req->urs_socket, &msg, 0) != req->pktlen) 
+}
+*/
 
 	if (sendto (req->urs_socket, req->pkt, req->pktlen, 0, (struct sockaddr*)&req->urs_skad, req->urs_skadlen) != req->pktlen)
 	{

@@ -357,12 +357,11 @@ static int dns_open (qse_httpd_t* httpd, qse_httpd_dns_t* dns)
 		httpd->opt.rcb.logact (httpd, &msg);
 	}
 
-	dns->handle[0].i = open_udp_socket (httpd, AF_INET);
+	dns->handle[0].i = open_udp_socket (httpd, AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 #if defined(AF_INET6)
-	dns->handle[1].i = open_udp_socket (httpd, AF_INET6);
+	dns->handle[1].i = open_udp_socket (httpd, AF_INET6, SOCK_DGRAM, IPPROTO_UDP);
 #endif
-	if (!is_valid_socket(dns->handle[0].i) && 
-	    !is_valid_socket(dns->handle[1].i))
+	if (!qse_isvalidsckhnd(dns->handle[0].i) && !qse_isvalidsckhnd(dns->handle[1].i))
 	{
 		goto oops;
 	}
@@ -380,7 +379,7 @@ static int dns_open (qse_httpd_t* httpd, qse_httpd_dns_t* dns)
 	}
 	else
 	{
-		dc->dns_socket = SOCK_INVALID;
+		dc->dns_socket = QSE_INVALID_SCKHND;
 	}
 
 	dns->handle_count = 2;
@@ -389,8 +388,8 @@ static int dns_open (qse_httpd_t* httpd, qse_httpd_dns_t* dns)
 	return 0;
 
 oops:
-	if (is_valid_socket(dns->handle[0].i)) close_socket (dns->handle[0].i);
-	if (is_valid_socket(dns->handle[1].i)) close_socket (dns->handle[1].i);
+	if (qse_isvalidsckhnd(dns->handle[0].i)) qse_closesckhnd (dns->handle[0].i);
+	if (qse_isvalidsckhnd(dns->handle[1].i)) qse_closesckhnd (dns->handle[1].i);
 	if (dc) qse_httpd_freemem (httpd, dc);
 	return -1;
 
@@ -441,8 +440,8 @@ static void dns_close (qse_httpd_t* httpd, qse_httpd_dns_t* dns)
 
 	for (i = 0; i < dns->handle_count; i++) 
 	{
-		if (is_valid_socket(dns->handle[i].i))
-			close_socket (dns->handle[i].i);
+		if (qse_isvalidsckhnd(dns->handle[i].i))
+			qse_closesckhnd (dns->handle[i].i);
 	}
 	qse_httpd_freemem (httpd, dns->ctx);
 }

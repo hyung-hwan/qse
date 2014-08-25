@@ -8,7 +8,7 @@ AM_CPPFLAGS = \
 qsecfgdir = $(sysconfdir)/qse
 qsecfg_DATA = httpd.conf httpd-mime.conf
 
-bin_PROGRAMS = qsehttpd
+bin_PROGRAMS = qsehttpd qseursd
 
 qsehttpd_SOURCES = httpd.c
 qsehttpd_LDFLAGS = -L../../lib/xli -L../../lib/http -L../../lib/cmn 
@@ -19,5 +19,9 @@ if WCHAR
 qsehttpd_LDADD += $(UNICOWS_LIBS)
 endif
 endif
+
+qseursd_SOURCES = ursd.c
+qseursd_LDFLAGS = -L../../lib/cmn 
+qseursd_LDADD = -lqsecmn 
 
 EXTRA_DIST = $(qsecfg_DATA)

@@ -34,6 +34,7 @@ pkginclude_HEADERS = \
 	pma.h \
 	rbt.h \
 	rex.h \
+	sck.h \
 	sio.h \
 	sll.h \
 	slmb.h \

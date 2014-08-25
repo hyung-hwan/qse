@@ -83,7 +83,7 @@ enum qse_httpd_trait_t
 	QSE_HTTPD_PROXYNOVIA   = (1 << 4),
 	QSE_HTTPD_LOGACT       = (1 << 5),
 	QSE_HTTPD_DNSNOA       = (1 << 6),
-	QSE_HTTPD_DNSNOAAAA    = (1 << 7),
+	QSE_HTTPD_DNSNOAAAA    = (1 << 7)
 };
 typedef enum qse_httpd_trait_t qse_httpd_trait_t;
 
@@ -131,9 +131,9 @@ typedef struct qse_httpd_natr_t qse_httpd_natr_t;
 
 struct qse_httpd_natr_t
 {
-	qse_nwad_t nwad;
+	qse_nwad_t  nwad;
 	qse_ntime_t tmout;
-	int retries;
+	int         retries;
 };
 
 typedef void (*qse_httpd_resol_t) (
@@ -584,13 +584,13 @@ struct qse_httpd_rsrc_cgi_t
 
 enum qse_httpd_rsrc_proxy_flag_t
 {
-	QSE_HTTPD_RSRC_PROXY_RAW         = (1 << 0), /* raw proxying. set this for CONNECT */
-	QSE_HTTPD_RSRC_PROXY_TRANSPARENT = (1 << 1),
-	QSE_HTTPD_RSRC_PROXY_DST_STR     = (1 << 2), /* destination is an unresovled string pointed to by dst.str */
-	QSE_HTTPD_RSRC_PROXY_ENABLE_DNS  = (1 << 3), /* dns service enabled */
-	QSE_HTTPD_RSRC_PROXY_ENABLE_URS  = (1 << 4), /* url rewriting enabled */
-	QSE_HTTPD_RSRC_PROXY_DNS_SERVER  = (1 << 5), /* dns address specified */
-	QSE_HTTPD_RSRC_PROXY_URS_SERVER  = (1 << 6)  /* urs address specified */
+	QSE_HTTPD_RSRC_PROXY_RAW             = (1 << 0), /* raw proxying. set this for CONNECT */
+	QSE_HTTPD_RSRC_PROXY_TRANSPARENT     = (1 << 1),
+	QSE_HTTPD_RSRC_PROXY_DST_STR         = (1 << 2), /* destination is an unresovled string pointed to by dst.str */
+	QSE_HTTPD_RSRC_PROXY_ENABLE_DNS      = (1 << 3), /* dns service enabled (udp) */
+	QSE_HTTPD_RSRC_PROXY_ENABLE_URS      = (1 << 4), /* url rewriting enabled (udp) */
+	QSE_HTTPD_RSRC_PROXY_DNS_SERVER      = (1 << 5), /* dns address specified */
+	QSE_HTTPD_RSRC_PROXY_URS_SERVER      = (1 << 6), /* urs address specified */
 };
 
 typedef struct qse_httpd_rsrc_proxy_t qse_httpd_rsrc_proxy_t;
