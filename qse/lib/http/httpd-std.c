@@ -730,10 +730,11 @@ static qse_sck_hnd_t open_udp_socket (qse_httpd_t* httpd, int domain, int type, 
 
 	if (set_socket_nonblock (httpd, fd, 1) <= -1) goto oops;
 
-
+#if 1
 	if (proto == IPPROTO_SCTP)
 	{
 		struct sctp_initmsg im;
+		struct sctp_paddrparams hb;
 
 		QSE_MEMSET (&im, 0, QSE_SIZEOF(im));
 		im.sinit_num_ostreams = 1;
@@ -741,7 +742,15 @@ static qse_sck_hnd_t open_udp_socket (qse_httpd_t* httpd, int domain, int type, 
 		im.sinit_max_attempts = 1;
 
 		if (setsockopt (fd, SOL_SCTP, SCTP_INITMSG, &im, QSE_SIZEOF(im)) <= -1) goto oops;
+
+		QSE_MEMSET (&hb, 0, QSE_SIZEOF(hb));
+		hb.spp_flags = SPP_HB_ENABLE;
+		hb.spp_hbinterval = 5000;
+		hb.spp_pathmaxrxt = 1;
+
+		if (setsockopt (fd, SOL_SCTP, SCTP_PEER_ADDR_PARAMS, &hb, QSE_SIZEOF(hb)) <= -1) goto oops;
 	}
+#endif
 
 	return fd;
 

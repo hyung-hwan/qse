@@ -85,8 +85,91 @@ void* qse_memcpy (void* dst, const void* src, qse_size_t n)
 	while (n-- > 0) *d++ = *s++;
 	return dst;
 
-#else
+#elif defined(__GNUC__) && (defined(__x86_64) || defined(__amd64))
 
+	/* i don't really care about alignments for x86-64 at this moment. fix it later */
+
+	__asm__ volatile (
+		"cld\n\t"
+		"rep movsq\n"
+		: /* no output */
+		:"D" (dst), "S" (src), "c" (n >> 3)  /* input: %rdi = d, %rsi = src, %rcx = n / 8 */
+		:"memory"
+	);
+
+	__asm__ volatile (
+		"rep movsb\n" 
+		: /* no output */
+		:"c" (n & 7)  /* %rcx = n % 8, use existing %rdi and %rsi */
+		:"memory", "%rdi", "%rsi"
+	);
+
+	return dst;
+
+	#if 0
+	qse_byte_t* d = dst;
+
+	__asm__ volatile (
+		"cld\n\t"
+		"rep movsq\n"
+		: "=D" (d), "=S" (src)  /* output: d = %rdi, src = %rsi */
+		:"0" (d), "1" (src), "c" (n >> 3)  /* input: %rdi = d, %rsi = src, %rcx = n / 8 */
+		:"memory"
+	);
+
+	__asm__ volatile (
+		"rep movsb"
+		: /* no output */
+		:"D" (d), "S" (src), "c" (n & 7)  /* input: %rdi = d, %rsi = src, %rcx = n % 8 */
+		:"memory"
+	);
+
+	return dst;
+	#endif
+
+#elif defined(__GNUC__) && (defined(__i386) || defined(i386))
+
+	/* i don't really care about alignments for x86 at this moment. fix it later */
+
+	__asm__ volatile (
+		"cld\n\t"
+		"rep movsl\n"
+		: /* no output */
+		:"D" (dst), "S" (src), "c" (n >> 2)  /* input: %edi = d, %esi = src, %ecx = n / 8 */
+		:"memory"
+	);
+
+	__asm__ volatile (
+		"rep movsb\n" 
+		: /* no output */
+		:"c" (n & 3)  /* %rcx = n % 8, use existing %edi and %esi */
+		:"memory", "%edi", "%esi"
+	);
+
+	return dst;
+
+	#if 0
+	qse_byte_t* d = dst;
+
+	__asm__ volatile (
+		"cld\n\t"
+		"rep movsl\n"
+		:"=D" (d), "=S" (src) /* output: d = %edi, src = %esi */
+		:"0" (d), "1" (src), "c" (n >> 2)  /* input: %edi = d, %esi = src, %ecx = n / 4 */
+		:"memory"
+	);
+
+	__asm__ volatile (
+		"rep movsb\n"
+		:
+		:"D" (d), "S" (src), "c" (n & 3)  /* input: %edi = d, %esi = src, %ecx = n % 4 */
+		:"memory"
+	);
+
+	return dst;
+	#endif
+
+#else
 	qse_byte_t* d;
 	qse_byte_t* s;
 
@@ -207,8 +290,81 @@ void* qse_memset (void* dst, int val, qse_size_t n)
 	while (n-- > 0) *d++ = (qse_byte_t)val;
 	return dst;
 	
-#else
+#elif defined(__GNUC__) && (defined(__x86_64) || defined(__amd64))
 
+	/* i don't really care about alignments for x86-64 at this moment. fix it later */
+
+	qse_byte_t* d = dst;
+
+	__asm__ volatile ("cld\n");
+
+	if (n >= 8)
+	{
+		qse_size_t qw = (qse_byte_t)val;
+		if (qw)
+		{
+			qw = (qw << 8) | (qse_byte_t)val;
+			qw = (qw << 8) | (qse_byte_t)val;
+			qw = (qw << 8) | (qse_byte_t)val;
+			qw = (qw << 8) | (qse_byte_t)val;
+			qw = (qw << 8) | (qse_byte_t)val;
+			qw = (qw << 8) | (qse_byte_t)val;
+			qw = (qw << 8) | (qse_byte_t)val;
+		}
+
+		__asm__ volatile (
+			"rep stosq\n"
+			:"=D" (d) /* output: d = %rdi */
+			:"0" (d), "a" (qw), "c" (n >> 3)  /* input: %rdi = d, %rax = qw, %rcx = n / 8 */
+			:"memory"
+		);
+	}
+
+	__asm__ volatile (
+		"rep stosb\n"
+		: /* no output */
+		:"D" (d), "a" (val), "c" (n & 7)  /* input: %rdi = d, %rax = src, %rcx = n % 8 */
+		:"memory"
+	);
+
+	return dst;
+
+#elif defined(__GNUC__) && (defined(__i386) || defined(i386))
+
+	/* i don't really care about alignments for x86 at this moment. fix it later */
+
+	qse_byte_t* d = dst;
+
+	__asm__ volatile ("cld\n");
+
+	if (n >= 4)
+	{
+		qse_size_t dw = (qse_byte_t)val;
+		if (dw)
+		{
+			dw = (dw << 8) | (qse_byte_t)val;
+			dw = (dw << 8) | (qse_byte_t)val;
+			dw = (dw << 8) | (qse_byte_t)val;
+		}
+
+		__asm__ volatile (
+			"rep stosl\n"
+			:"=D" (d) /* output: d = %edi */
+			:"0" (d), "a" (dw), "c" (n >> 2)  /* input: %edi = d, %eax = dw, %ecx = n / 4 */
+			:"memory"
+		);
+	}
+
+	__asm__ volatile (
+		"rep stosb\n"
+		: /* no output */ 
+		:"D" (d), "a" (val), "c" (n & 3)  /* input: %edi = d, %eax = src, %ecx = n % 4 */
+		:"memory"
+	);
+
+	return dst;
+
+#else
 	qse_byte_t* d;
 	qse_size_t rem;
 

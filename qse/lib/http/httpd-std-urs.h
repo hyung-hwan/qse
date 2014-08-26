@@ -36,7 +36,7 @@ struct urs_hdr_t
 	qse_uint16_t seq;    /* in network-byte order */
 	qse_uint16_t rcode;  /* response code */
 	qse_uint32_t urlsum; /* checksum of url in the request */
-	qse_uint16_t urllen; /* url length in network-byte order */
+	qse_uint16_t pktlen; /* packet header size + url length */
 };
 
 struct urs_pkt_t
@@ -59,8 +59,8 @@ struct urs_ctx_t
 	urs_req_t* reqs[1024]; /* TOOD: choose the right size */
 	qse_uint16_t req_count;
 
-	qse_uint8_t rcvbuf[URS_MAX_URL_LEN + QSE_SIZEOF(urs_pkt_t)];
-	qse_uint8_t fmtbuf[URS_MAX_URL_LEN + QSE_SIZEOF(urs_pkt_t)];
+	qse_uint8_t rcvbuf[QSE_SIZEOF(urs_hdr_t) + URS_MAX_URL_LEN + 1];
+	qse_uint8_t fmtbuf[QSE_SIZEOF(urs_hdr_t) + URS_MAX_URL_LEN + 1];
 };
 
 struct urs_req_t
@@ -95,7 +95,7 @@ static int urs_open (qse_httpd_t* httpd, qse_httpd_urs_t* urs)
 	qse_nwad_t nwad;
 	urs_ctx_t* dc;
 	httpd_xtn_t* httpd_xtn;
-	int type, proto = IPPROTO_SCTP;
+	int type, proto = IPPROTO_UDP; //IPPROTO_SCTP;
 
 	httpd_xtn = qse_httpd_getxtn (httpd);
 
@@ -147,12 +147,14 @@ static int urs_open (qse_httpd_t* httpd, qse_httpd_urs_t* urs)
 		dc->urs_socket = QSE_INVALID_SCKHND;
 	}
 
+#if 0
 	if (proto == IPPROTO_SCTP)
 	{
 /* TODO: error ahndleing */
 		if (qse_isvalidsckhnd(urs->handle[0].i)) listen (urs->handle[0].i, 99);
 		if (qse_isvalidsckhnd(urs->handle[1].i)) listen (urs->handle[1].i, 99);
 	}
+#endif
 	urs->handle_count = 2;
 
 	urs->ctx = dc;
@@ -215,7 +217,7 @@ static int urs_recv (qse_httpd_t* httpd, qse_httpd_urs_t* urs, qse_ubi_t handle)
 	socklen_t fromlen;
 
 	qse_uint16_t xid;
-	qse_ssize_t len;
+	qse_ssize_t len, url_len;
 	urs_pkt_t* pkt;
 	urs_req_t* req;
 
@@ -229,29 +231,34 @@ printf ("URS_RECV....\n");
 /* TODO: check if fromaddr matches the dc->skad... */
 
 	pkt = (urs_pkt_t*)dc->rcvbuf;
-	if (len >= QSE_SIZEOF(pkt->hdr) &&  len >= QSE_SIZEOF(pkt->hdr) + qse_ntoh16(pkt->hdr.urllen))
+	if (len >= QSE_SIZEOF(urs_hdr_t))
 	{
-		xid = qse_ntoh16(pkt->hdr.seq) % QSE_COUNTOF(dc->reqs);
-
-		for (req = dc->reqs[xid]; req; req = req->next)
+		pkt->hdr.pktlen = qse_ntoh16(pkt->hdr.pktlen);
+		if (len == pkt->hdr.pktlen)
 		{
-			if (req->pkt->hdr.seq == pkt->hdr.seq && req->pkt->hdr.urlsum == pkt->hdr.urlsum)
+			url_len = pkt->hdr.pktlen - QSE_SIZEOF(urs_hdr_t);
+			xid = qse_ntoh16(pkt->hdr.seq) % QSE_COUNTOF(dc->reqs);
+
+			for (req = dc->reqs[xid]; req; req = req->next)
 			{
-				/* null-terminate the url for easier processing */
-				pkt->url[qse_ntoh16(pkt->hdr.urllen)] = QSE_MT('\0');
+				if (req->pkt->hdr.seq == pkt->hdr.seq && req->pkt->hdr.urlsum == pkt->hdr.urlsum)
+				{
+					/* null-terminate the url for easier processing */
+					pkt->url[url_len] = QSE_MT('\0');
 
-				urs_remove_tmr_tmout (httpd, req);
-				req->rewrite (httpd, req->pkt->url, pkt->url, req->ctx);
+					urs_remove_tmr_tmout (httpd, req);
+					req->rewrite (httpd, req->pkt->url, pkt->url, req->ctx);
 
-				/* detach the request off dc->reqs */
-				if (req == dc->reqs[xid]) dc->reqs[xid] = req->next;
-				else req->prev->next = req->next;
-				if (req->next) req->next->prev = req->prev;
+					/* detach the request off dc->reqs */
+					if (req == dc->reqs[xid]) dc->reqs[xid] = req->next;
+					else req->prev->next = req->next;
+					if (req->next) req->next->prev = req->prev;
 
-				qse_httpd_freemem (httpd, req);
-				dc->req_count--;
+					qse_httpd_freemem (httpd, req);
+					dc->req_count--;
 
-				break;
+					break;
+				}
 			}
 		}
 	}
@@ -362,20 +369,18 @@ static int urs_send (qse_httpd_t* httpd, qse_httpd_urs_t* urs, const qse_mchar_t
 
 	xid = seq % QSE_COUNTOF(dc->reqs); 
 
-	req = qse_httpd_callocmem (httpd, QSE_SIZEOF(*req) + url_len + QSE_SIZEOF(urs_pkt_t));
+	req = qse_httpd_callocmem (httpd, QSE_SIZEOF(*req) + QSE_SIZEOF(urs_hdr_t) + url_len + 1);
 	if (req == QSE_NULL) goto oops;
 
 	req->tmr_tmout = QSE_TMR_INVALID_INDEX;
 	req->seq = seq;
 	req->pkt = (urs_pkt_t*)(req + 1);
+	req->pktlen = QSE_SIZEOF(urs_hdr_t) + url_len;
 
 	req->pkt->hdr.seq = qse_hton16(seq);
-	req->pkt->hdr.urllen = qse_hton16(url_len);
+	req->pkt->hdr.pktlen = qse_hton16(req->pktlen);
 	req->pkt->hdr.urlsum = hash_string (url);
 	qse_mbscpy (req->pkt->url, url);
-
-	/* -1 to exclude the terminating '\0' as urs_pkt_t has url[1]. */
-	req->pktlen = QSE_SIZEOF(urs_pkt_t) + url_len - 1; 
 
 	req->rewrite = rewrite;
 	req->ctx = ctx;
