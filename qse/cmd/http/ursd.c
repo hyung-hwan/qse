@@ -75,7 +75,7 @@ struct urs_hdr_t
 	qse_uint16_t seq; /* in network-byte order */
 	qse_uint16_t rcode; /* response code */
 	qse_uint32_t urlsum;/* checksum of url in the request */
-	qse_uint16_t urllen; /* url length in network-byte order */
+	qse_uint16_t pktlen; /* url length in network-byte order */
 };
 
 struct urs_pkt_t
@@ -85,8 +85,16 @@ struct urs_pkt_t
 };
 #include <qse/unpack.h>
 
-typedef struct xpio_t xpio_t;
+typedef struct xreq_t xreq_t;
+struct xreq_t
+{
+	qse_skad_t from;
+	qse_sck_len_t fromlen;
+	qse_uint8_t* data;
+	xreq_t* next;
+};
 
+typedef struct xpio_t xpio_t;
 struct xpio_t
 {
 	qse_pio_t* pio;
@@ -110,11 +118,14 @@ struct ursd_t
 	qse_size_t nfree;
 
 	xpio_t* xpios;
-	xpio_t* free;
-	xpio_t* busy;
+	xpio_t* free_xpio;
+	xpio_t* busy_xpio;
 
 	qse_sck_hnd_t sck;
 	qse_mux_t* mux;
+
+	xreq_t* head;
+	xreq_t* tail;
 };
 
 
@@ -135,16 +146,16 @@ static void chain_to_free_list (ursd_t* ursd, xpio_t* xpio)
 {
 	xpio->busy = 0;
 	xpio->prev = QSE_NULL;
-	xpio->next = ursd->free;
-	if (ursd->free) ursd->free->prev = xpio;
-	ursd->free = xpio;
+	xpio->next = ursd->free_xpio;
+	if (ursd->free_xpio) ursd->free_xpio->prev = xpio;
+	ursd->free_xpio = xpio;
 	ursd->nfree++;
 }
 
 static xpio_t* dechain_from_free_list (ursd_t* ursd, xpio_t* xpio)
 {
 	if (xpio->next) xpio->next->prev = xpio->prev;
-	if (xpio == ursd->free) ursd->free = xpio->next;
+	if (xpio == ursd->free_xpio) ursd->free_xpio = xpio->next;
 	else xpio->prev->next = xpio->next;
 	ursd->nfree--;
 	return xpio;
@@ -154,19 +165,24 @@ static void chain_to_busy_list (ursd_t* ursd, xpio_t* xpio)
 {
 	xpio->busy = 1;
 	xpio->prev = QSE_NULL;
-	xpio->next = ursd->busy;
-	if (ursd->busy) ursd->busy->prev = xpio;
-	ursd->busy = xpio;
+	xpio->next = ursd->busy_xpio;
+	if (ursd->busy_xpio) ursd->busy_xpio->prev = xpio;
+	ursd->busy_xpio = xpio;
 }
 
 static xpio_t* dechain_from_busy_list (ursd_t* ursd, xpio_t* xpio)
 {
 	if (xpio->next) xpio->next->prev = xpio->prev;
 
-	if (xpio == ursd->busy) ursd->busy = xpio->next;
+	if (xpio == ursd->busy_xpio) ursd->busy_xpio = xpio->next;
 	else xpio->prev->next = xpio->next;
 	
 	return xpio;
+}
+
+static xreq_t* enqueue_request (ursd_t* ursd, urs_pkt_t* pkt)
+{
+	return QSE_NULL;
 }
 
 static int insert_to_mux (qse_mux_t* mux, qse_mux_hnd_t handle, int type, int index)
@@ -191,15 +207,16 @@ static int delete_from_mux (qse_mux_t* mux, qse_mux_hnd_t handle, int type, int 
 	return qse_mux_delete (mux, &evt);
 }
 
-static qse_sck_hnd_t open_server_socket (int type, int proto, const qse_nwad_t* bindnwad)
+static qse_sck_hnd_t open_server_socket (int proto, const qse_nwad_t* bindnwad)
 {
 	qse_sck_hnd_t s = QSE_INVALID_SCKHND;
 	qse_skad_t skad;
 	qse_sck_len_t skad_len;
-	int family, flag;
+	int family, type, flag;
 
 	skad_len = qse_nwadtoskad (bindnwad, &skad);
 	family = qse_skadfamily(&skad);
+	type = (proto == IPPROTO_SCTP)? SOCK_SEQPACKET: SOCK_DGRAM;
 
 	s = socket (family, type, proto);
 	if (!qse_isvalidsckhnd(s))
@@ -237,10 +254,11 @@ static qse_sck_hnd_t open_server_socket (int type, int proto, const qse_nwad_t* 
 bind_ok:
 	if (proto == IPPROTO_SCTP)
 	{
-#if 0
+#if 1
 		struct sctp_initmsg im;
+		struct sctp_paddrparams hb;
 
-		memset (&im, 0, QSE_SIZEOF(im));
+		qse_memset (&im, 0, QSE_SIZEOF(im));
 		im.sinit_num_ostreams = 1;
 		im.sinit_max_instreams = 1;
 		im.sinit_max_attempts = 1;
@@ -250,6 +268,13 @@ bind_ok:
 			fprintf (stderr, "cannot set sctp initmsg option\n");
 			goto oops;
 		}
+
+		qse_memset (&hb, 0, QSE_SIZEOF(hb));
+		hb.spp_flags = SPP_HB_ENABLE;
+		hb.spp_hbinterval = 5000;
+		hb.spp_pathmaxrxt = 1;
+
+		if (setsockopt (s, SOL_SCTP, SCTP_PEER_ADDR_PARAMS, &hb, QSE_SIZEOF(hb)) <= -1) goto oops;
 #endif
 
 		if (listen (s, 99) <= -1)
@@ -266,18 +291,18 @@ oops:
 	return QSE_INVALID_SCKHND;
 }
 
-static void schedule_request (ursd_t* ursd, urs_pkt_t* pkt, int pktsize, const qse_skad_t* skad, qse_sck_len_t skadlen)
+static void schedule_request (ursd_t* ursd, urs_pkt_t* pkt, const qse_skad_t* skad, qse_sck_len_t skadlen)
 {
-	if (ursd->free)
+	if (ursd->free_xpio)
 	{
-		xpio_t* xpio = dechain_from_free_list (ursd, ursd->free);
+		xpio_t* xpio = dechain_from_free_list (ursd, ursd->free_xpio);
 
 		xpio->req.from = *skad;
 		xpio->req.fromlen = skadlen;
-		memcpy (xpio->req.buf, pkt, QSE_SIZEOF(urs_hdr_t)); /* copy header */
-printf ("XPIO WRITNG TO PIPE %p %d\n", xpio, qse_skadfamily(skad));
-		qse_pio_write (xpio->pio, QSE_PIO_IN, pkt->url, qse_ntoh16(pkt->hdr.urllen)); /* TODO: erro ahndlig */
+		qse_memcpy (xpio->req.buf, pkt, QSE_SIZEOF(urs_hdr_t)); /* copy header */
 
+printf ("XPIO WRITNG TO PIPE %p %d\n", xpio, qse_skadfamily(skad));
+		qse_pio_write (xpio->pio, QSE_PIO_IN, pkt->url, pkt->hdr.pktlen - QSE_SIZEOF(urs_hdr_t)); /* TODO: error handling */
 		chain_to_busy_list (ursd, xpio);
 	}
 	else
@@ -306,17 +331,20 @@ static void dispatch_mux_event (qse_mux_t* mux, const qse_mux_evt_t* evt)
 	{
 		ssize_t x;
 
+		skad_len = QSE_SIZEOF(skad);
 		x = recvfrom (evt->hnd, buf, QSE_SIZEOF(buf), 0, (struct sockaddr*)&skad, &skad_len);
+
+printf ("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXx\n");
 /* TODO: error handling */
 		if (x >= QSE_SIZEOF(urs_hdr_t))
 		{
 			urs_pkt_t* pkt = (urs_pkt_t*)buf;
-			qse_uint16_t len = qse_ntoh16(pkt->hdr.urllen);
 
-			if (QSE_SIZEOF(urs_hdr_t) + len == x)
+			pkt->hdr.pktlen = qse_ntoh16(pkt->hdr.pktlen); /* change the byte order */
+			if (pkt->hdr.pktlen == x)
 			{
-				printf ("%d %d [[[%s]]]\n", len, x, pkt->url);
-				schedule_request (mux_xtn->ursd, pkt, x, &skad, skad_len);
+				printf ("%d [[[%.*s]]]\n", (int)x, (int)(pkt->hdr.pktlen - QSE_SIZEOF(urs_hdr_t)), pkt->url);
+				schedule_request (mux_xtn->ursd, pkt, &skad, skad_len);
 			}
 		}
 	}
@@ -326,20 +354,35 @@ static void dispatch_mux_event (qse_mux_t* mux, const qse_mux_evt_t* evt)
 		urs_pkt_t* pkt;
 		xpio_t* xpio = &mux_xtn->ursd->xpios[index];
 
-		pkt = (urs_pkt_t*)xpio->req.buf;
-printf ("XPIO READING TO PIPE %p\n", xpio);
-		x = qse_pio_read (xpio->pio, QSE_PIO_OUT, pkt->url, QSE_SIZEOF(xpio->req.buf) - QSE_SIZEOF(urs_hdr_t));
-
-		pkt->hdr.urllen = qse_hton16(x);
-printf ("READ %d bytes from pipes [%s]\n", x, pkt->url);
-		sendto (mux_xtn->ursd->sck, pkt, QSE_SIZEOF(urs_hdr_t) + x, 0, &xpio->req.from, xpio->req.fromlen);
-
-/* TODO: error handling */
-
 		if (xpio->busy)
 		{
+			pkt = (urs_pkt_t*)xpio->req.buf;
+
+			x = qse_pio_read (xpio->pio, QSE_PIO_OUT, pkt->url, QSE_SIZEOF(xpio->req.buf) - QSE_SIZEOF(urs_hdr_t));
+printf ("READ %d bytes from pipes [%.*s]\n", (int)x, (int)x, pkt->url);
+
+			x += QSE_SIZEOF(urs_hdr_t); /* add up the header size */
+			if (x > QSE_TYPE_MAX(qse_uint16_t))
+			{
+				/* ERROR HANDLING - it's returning too long data */
+			}
+
+			pkt->hdr.pktlen = qse_hton16(x); /* change the byte order */
+			sendto (mux_xtn->ursd->sck, pkt, x, 0, (struct sockaddr*)&xpio->req.from, xpio->req.fromlen);
+
+	/* TODO: error handling */
+
+			/* TODO: if there is a pending request, use this xpio to send request... */
+
 			dechain_from_busy_list (mux_xtn->ursd, xpio);
 			chain_to_free_list (mux_xtn->ursd, xpio);
+		}
+		else 
+		{
+			/* something is wrong. if the child process writes something 
+			 * while it's not given any input. restart this process */
+
+			/* TODO: */
 		}
 	}
 }
@@ -365,7 +408,7 @@ static int init_ursd (ursd_t* ursd, int npios, const qse_char_t* cmdline, const 
 		goto oops;
 	}
 
-	ursd->sck = open_server_socket (SOCK_SEQPACKET, IPPROTO_SCTP, &bindnwad);
+	ursd->sck = open_server_socket (/*IPPROTO_SCTP*/IPPROTO_UDP, &bindnwad);
 
 	ursd->xpios = calloc (npios, QSE_SIZEOF(xpio_t));
 	if (ursd->xpios == QSE_NULL) 
@@ -506,7 +549,6 @@ int qse_main (int argc, qse_achar_t* argv[])
 	qse_openstdsios ();
 	ret = qse_runmain (argc, argv, httpd_main);
 	qse_closestdsios ();
-
 
 
 #if defined(_WIN32)
