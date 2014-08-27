@@ -4887,7 +4887,7 @@ static qse_awk_nde_t* parse_primary_ident_noseg (
 
 			/* fnc->dfl0 means that the function can be called without ().
 			 * i.e. length */
-			nde = parse_fncall (awk, name, fnc, xloc, (fnc->dfl0? 1: 0));
+			nde = parse_fncall (awk, name, fnc, xloc, ((!MATCH(awk,TOK_LPAREN) && fnc->dfl0)? 1: 0));
 		}
 		else
 		{
