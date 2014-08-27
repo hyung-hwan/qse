@@ -1946,6 +1946,7 @@ static void on_url_rewritten (qse_httpd_t* httpd, const qse_mchar_t* url, const 
 
 		proxy->flags &= ~PROXY_REWRITE_URL;
 
+printf ("XXXXXXXXXXXXXXXXXXXXXXXXXX URL REWRITTEN TO [%s].....\n", new_url);
 		if (new_url[0] == QSE_MT('\0'))
 		{
 			/* no change. carry on */

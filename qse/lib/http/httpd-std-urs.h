@@ -221,10 +221,11 @@ static int urs_recv (qse_httpd_t* httpd, qse_httpd_urs_t* urs, qse_ubi_t handle)
 	urs_pkt_t* pkt;
 	urs_req_t* req;
 
-printf ("URS_RECV....\n");
+printf ("URS_RECV............................................\n");
 
 	httpd_xtn = qse_httpd_getxtn (httpd);
 
+/* TODO: use recvmsg with MSG_ERRQUEUE... set socket option IP_RECVERR... */
 	fromlen = QSE_SIZEOF(fromaddr);
 	len = recvfrom (handle.i, dc->rcvbuf, QSE_SIZEOF(dc->rcvbuf) - 1, 0, (struct sockaddr*)&fromaddr, &fromlen);
 
@@ -348,6 +349,7 @@ static int urs_send (qse_httpd_t* httpd, qse_httpd_urs_t* urs, const qse_mchar_t
 	qse_tmr_event_t tmout_event;
 	
 
+printf ("... URS_SEND.....................\n");
 	httpd_xtn = qse_httpd_getxtn (httpd);
 
 	if (dc->req_count >= QSE_COUNTOF(dc->reqs))
