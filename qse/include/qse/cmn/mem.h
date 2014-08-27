@@ -94,7 +94,7 @@ QSE_EXPORT void* qse_memmove (
 QSE_EXPORT void* qse_memset (
 	void*       dst, /**< destination memory block */
 	int         val, /**< value fill the memory block with */
-	qse_size_t   n   /**< number of bytes to fill */
+	qse_size_t  n   /**< number of bytes to fill */
 );
 
 /**
