@@ -730,9 +730,9 @@ static qse_sck_hnd_t open_udp_socket (qse_httpd_t* httpd, int domain, int type, 
 
 	if (set_socket_nonblock (httpd, fd, 1) <= -1) goto oops;
 
-#if 1
 	if (proto == IPPROTO_SCTP)
 	{
+	#if defined(SOL_SCTP)
 		struct sctp_initmsg im;
 		struct sctp_paddrparams hb;
 
@@ -749,8 +749,8 @@ static qse_sck_hnd_t open_udp_socket (qse_httpd_t* httpd, int domain, int type, 
 		hb.spp_pathmaxrxt = 1;
 
 		if (setsockopt (fd, SOL_SCTP, SCTP_PEER_ADDR_PARAMS, &hb, QSE_SIZEOF(hb)) <= -1) goto oops;
+	#endif
 	}
-#endif
 
 	return fd;
 
