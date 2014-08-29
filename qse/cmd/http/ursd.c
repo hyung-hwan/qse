@@ -223,7 +223,7 @@ static qse_sck_hnd_t open_server_socket (int proto, const qse_nwad_t* bindnwad)
 bind_ok:
 	if (proto == IPPROTO_SCTP)
 	{
-#if 1
+	#if defined(SOL_SCTP)
 		struct sctp_initmsg im;
 		struct sctp_paddrparams hb;
 
@@ -244,7 +244,7 @@ bind_ok:
 		hb.spp_pathmaxrxt = 1;
 
 		if (setsockopt (s, SOL_SCTP, SCTP_PEER_ADDR_PARAMS, &hb, QSE_SIZEOF(hb)) <= -1) goto oops;
-#endif
+	#endif
 
 		if (listen (s, 99) <= -1)
 		{
