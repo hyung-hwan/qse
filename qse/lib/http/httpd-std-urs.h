@@ -220,6 +220,7 @@ static int urs_recv (qse_httpd_t* httpd, qse_httpd_urs_t* urs, qse_ubi_t handle)
 	qse_ssize_t len, url_len;
 	urs_pkt_t* pkt;
 	urs_req_t* req;
+	qse_mchar_t* spc;
 
 printf ("URS_RECV............................................\n");
 
@@ -246,6 +247,10 @@ printf ("URS_RECV............................................\n");
 				{
 					/* null-terminate the url for easier processing */
 					pkt->url[url_len] = QSE_MT('\0');
+
+					/* drop trailers starting from the first space onwards */
+					spc = qse_mbschr (pkt->url, QSE_MT(' '));
+					if (spc) *spc = QSE_MT('\0');
 
 					urs_remove_tmr_tmout (httpd, req);
 					req->rewrite (httpd, req->pkt->url, pkt->url, req->ctx);

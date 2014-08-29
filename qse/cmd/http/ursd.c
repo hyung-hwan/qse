@@ -726,34 +726,38 @@ static void dispatch_mux_event (qse_mux_t* mux, const qse_mux_evt_t* evt)
 					/* read failure or end of input */
 					rewriter->faulty = 1;
 					release_rewriter (mux_xtn->ursd, rewriter, 1);
+					/* TODO: error logging */
 				}
-
-				rewriter->req.outlen += x;
-				if (rewriter->req.outlen > maxoutlen)
+				else
 				{
-					/* the rewriter returns too long a result */
-					rewriter->faulty = 1;
-					release_rewriter (mux_xtn->ursd, rewriter, 1);
-				}
+					rewriter->req.outlen += x;
 
 qse_printf (QSE_T("READ %d, %d bytes from pipes [%.*hs]\n"), (int)x, (int)rewriter->req.outlen, (int)rewriter->req.outlen, pkt->url);
 
-				if (pkt->url[rewriter->req.outlen - 1] == QSE_MT('\n'))
-				{
-					/* the last byte is a new line. i don't really care about
-					 * new lines in the middle of data. the rewriter must 
-					 * keep to the protocol. */
+					if (rewriter->req.outlen > maxoutlen)
+					{
+						/* the rewriter returns too long a result */
+						rewriter->faulty = 1;
+						release_rewriter (mux_xtn->ursd, rewriter, 1);
+						/* TODO: error logging */
+					}
+					else if (pkt->url[rewriter->req.outlen - 1] == QSE_MT('\n'))
+					{
+						/* the last byte is a new line. i don't really care about
+						 * new lines in the middle of data. the rewriter must 
+						 * keep to the protocol. */
 
-					/* add up the header size. -1 to exclude '\n' */
-					rewriter->req.outlen += QSE_SIZEOF(urs_hdr_t) - 1;
+						/* add up the header size. -1 to exclude '\n' */
+						rewriter->req.outlen += QSE_SIZEOF(urs_hdr_t) - 1;
 
-					pkt->hdr.pktlen = qse_hton16(rewriter->req.outlen); /* change the byte order */
-					sendto (mux_xtn->ursd->sck, pkt, rewriter->req.outlen, 0, (struct sockaddr*)&rewriter->req.from, rewriter->req.fromlen);
-					/* TODO: error logging */
-					/* sendto() to the socket can be blocking. if the socket side is too busy, there's no reason for rewriter to be as busy.
-					 * it can wait a while. think about it. */
+						pkt->hdr.pktlen = qse_hton16(rewriter->req.outlen); /* change the byte order */
+						sendto (mux_xtn->ursd->sck, pkt, rewriter->req.outlen, 0, (struct sockaddr*)&rewriter->req.from, rewriter->req.fromlen);
+						/* TODO: error logging */
+						/* sendto() to the socket can be blocking. if the socket side is too busy, there's no reason for rewriter to be as busy.
+						 * it can wait a while. think about it. */
 
-					release_rewriter (mux_xtn->ursd, rewriter, 0);
+						release_rewriter (mux_xtn->ursd, rewriter, 0);
+					}
 				}
 
 /* TODO: is the complete output is not received within time, some actions must be taken. timer based... rewrite timeout */
