@@ -1029,7 +1029,7 @@ static int get_boolean (const qse_xli_str_t* v)
 static int get_integer (const qse_xli_str_t* v)
 {
 /* TODO: be more strict */
-	return qse_strxtoi (v->ptr, v->len);
+	return qse_strxtoi (v->ptr, v->len, 10);
 }
 
 static int load_loccfg_basic (qse_httpd_t* httpd, qse_xli_t* xli, qse_xli_list_t* list, loccfg_t* cfg)
@@ -1984,7 +1984,7 @@ static void set_limit (qse_httpd_t* httpd, const qse_char_t* name, int what)
 				if (qse_strxcmp (str, len, QSE_T("unlimited")) == 0)
 					lim.rlim_cur = RLIM_INFINITY;
 				else
-					lim.rlim_cur = qse_strtoui (((qse_xli_str_t*)pair->val)->ptr);
+					lim.rlim_cur = qse_strtoui (((qse_xli_str_t*)pair->val)->ptr, 10);
 				if (setrlimit (what, &lim) <= -1)
 				{
 					/* TODO: warning */

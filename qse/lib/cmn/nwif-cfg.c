@@ -21,6 +21,7 @@
 #include <qse/cmn/nwif.h>
 #include <qse/cmn/str.h>
 #include <qse/cmn/mbwc.h>
+#include <qse/cmn/sio.h>
 #include "mem.h"
 
 #if defined(_WIN32)
@@ -286,24 +287,81 @@ void qse_freenwifcfg (qse_nwifcfg_t* cfg)
 #if defined(__linux)
 static void read_proc_net_if_inet6 (qse_nwifcfg_t* cfg, struct ifreq* ifr)
 {
-#if 0
+	/*
+     *
+	 * # cat /proc/net/if_inet6
+	 * 00000000000000000000000000000001 01 80 10 80 lo
+	 * +------------------------------+ ++ ++ ++ ++ ++
+	 * |                                |  |  |  |  |
+	 * 1                                2  3  4  5  6
+	 * 
+	 * 1. IPv6 address displayed in 32 hexadecimal chars without colons as separator
+	 * 2. Netlink device number (interface index) in hexadecimal (see “ip addr” , too)
+	 * 3. Prefix length in hexadecimal
+	 * 4. Scope value (see kernel source “ include/net/ipv6.h” and “net/ipv6/addrconf.c” for more)
+	 * 5. Interface flags (see “include/linux/rtnetlink.h” and “net/ipv6/addrconf.c” for more)
+	 * 6. Device name
+	 */
+
 	qse_sio_t* sio;
 	qse_mchar_t line[128];
+	qse_mchar_t* ptr, * ptr2;
+	qse_ssize_t len;
+	qse_mcstr_t tok[6];
+	int count, index;
 
 	/* TODO */
+
 	sio = qse_sio_open (QSE_MMGR_GETDFL(), 0, 
-		QSE_T("proc/net/if_inet6"), QSE_SIO_IGNOREMBWCERR | QSE_SIO_READ); 
+		QSE_T("/proc/net/if_inet6"), QSE_SIO_IGNOREMBWCERR | QSE_SIO_READ); 
 	if (sio)
 	{
-		qse_ssize_t x;
+		
 		while (1)
 		{
-			x = qse_sio_getmbs (sio, line, QSE_COUNTOF(line));
-			if (x == -1) break;
+			len = qse_sio_getmbs (sio, line, QSE_COUNTOF(line));
+			if (len <= 0) break;
+
+			count = 0;
+			ptr = line;
+
+			while (ptr && count < 6)
+			{
+				ptr2 = qse_mbsxtok (ptr, len, QSE_MT(" \t"), &tok[count]);
+
+				len -= ptr2 - ptr;
+				ptr = ptr2;
+				count++;
+			}
+
+			if (count >= 6)
+			{
+				index = qse_mbsxtoi (tok[1].ptr, tok[1].len, 16);
+				if (index == cfg->index)
+				{
+					int ti;
+
+					if (qse_mbshextobin (tok[0].ptr, tok[0].len, cfg->addr.u.in6.addr.value, QSE_COUNTOF(cfg->addr.u.in6.addr.value)) <= -1) break;
+
+					/* tok[3] is the scope type, not the actual scope. 
+					 * i leave this code for reference only.
+					cfg->addr.u.in6.scope = qse_mbsxtoi (tok[3].ptr, tok[3].len, 16); */
+			
+
+					cfg->addr.type = QSE_NWAD_IN6;
+
+					ti = qse_mbsxtoi (tok[2].ptr, tok[0].len, 16);
+					qse_prefixtoip6ad (ti, &cfg->mask.u.in6.addr);
+
+					cfg->mask.type = QSE_NWAD_IN6;
+					goto done;
+				}
+			}
 		}
+
+	done:
 		qse_sio_close (sio);
 	}
-#endif
 }
 #endif
 
@@ -385,7 +443,7 @@ static int get_nwifcfg (int s, qse_nwifcfg_t* cfg, struct ifreq* ifr)
 	qse_size_t ml, wl;
 	
 	#if defined(SIOCGIFINDEX)
-	if (ioctl (s, SIOCGIFINDEX, ifr) <= -1) return -1;		
+	if (ioctl (s, SIOCGIFINDEX, ifr) <= -1) return -1;
 	#if defined(HAVE_STRUCT_IFREQ_IFR_IFINDEX)
 	cfg->index = ifr->ifr_ifindex;
 	#else
@@ -497,12 +555,14 @@ static int get_nwifcfg (int s, qse_nwifcfg_t* cfg, struct ifreq* ifr)
 #elif defined(SIOCGIFADDR)
 
 	#if defined(SIOCGIFINDEX)
-	if (ioctl (s, SIOCGIFINDEX, ifr) <= -1) return -1;		
+	if (ioctl (s, SIOCGIFINDEX, ifr) <= -1) return -1;
+
 	#if defined(HAVE_STRUCT_IFREQ_IFR_IFINDEX)
 	cfg->index = ifr->ifr_ifindex;
 	#else
 	cfg->index = ifr->ifr_index;
 	#endif
+
 	#else
 	cfg->index = 0;
 	#endif
@@ -537,13 +597,12 @@ static int get_nwifcfg (int s, qse_nwifcfg_t* cfg, struct ifreq* ifr)
 		qse_skadtonwad (&ifr->ifr_addr, &cfg->mask);
 
 	#if defined(__linux)
-	if (cfg->addr.type == QSE_NWAD_NX && cfg->mask.type == QSE_NWAD_NX)
+	if (cfg->addr.type == QSE_NWAD_NX && cfg->mask.type == QSE_NWAD_NX && cfg->type == QSE_NWIFCFG_IN6)
 	{
 		/* access /proc/net/if_inet6 */
 		read_proc_net_if_inet6 (cfg, ifr);
 	}
 	#endif
-		
 
 	if ((cfg->flags & QSE_NWIFCFG_BCAST) &&
 	    ioctl (s, SIOCGIFBRDADDR, ifr) >= 0)

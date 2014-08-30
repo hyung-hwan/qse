@@ -2,6 +2,7 @@
 
 #include "awk00.h"
 #include <qse/cmn/mbwc.h>
+#include <qse/cmn/fmt.h>
 
 #include <locale.h>
 #if defined(_WIN32)
@@ -20,7 +21,8 @@ void init_awk_sample_locale (void)
 	}
 	else
 	{
-		sprintf (locale, ".%u", (unsigned int)codepage);
+		qse_fmtuintmaxtombs (locale, QSE_COUNTOF(locale),
+			codepage, 10, -1, QSE_MT('\0'), QSE_MT("."));
 		setlocale (LC_ALL, locale);
 		qse_setdflcmgrbyid (QSE_CMGR_SLMB);
 	}

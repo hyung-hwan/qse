@@ -686,7 +686,7 @@ static int comparg (int argc, qse_char_t* argv[], struct arg_t* arg)
 
 			case QSE_T('m'):
 			{
-				arg->memlimit = qse_strtoulong (opt.arg);
+				arg->memlimit = qse_strtoulong (opt.arg, 10);
 				break;
 			}
 
@@ -699,7 +699,7 @@ static int comparg (int argc, qse_char_t* argv[], struct arg_t* arg)
 #if defined(QSE_BUILD_DEBUG)
 			case QSE_T('X'):
 			{
-				arg->failmalloc = qse_strtoulong (opt.arg);
+				arg->failmalloc = qse_strtoulong (opt.arg, 10);
 				break;
 			}
 #endif
