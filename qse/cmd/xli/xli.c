@@ -271,12 +271,12 @@ static int handle_args (int argc, qse_char_t* argv[])
 				break;
 
 			case QSE_T('m'):
-				g_memlimit = qse_strtoulong (opt.arg);
+				g_memlimit = qse_strtoulong (opt.arg, 10);
 				break;
 
 #if defined(QSE_BUILD_DEBUG)
 			case QSE_T('X'):
-				g_failmalloc = qse_strtoulong (opt.arg);
+				g_failmalloc = qse_strtoulong (opt.arg, 10);
 				break;
 #endif
 

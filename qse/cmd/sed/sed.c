@@ -357,7 +357,7 @@ static int handle_args (int argc, qse_char_t* argv[])
 #endif
  
 			case QSE_T('m'):
-				g_memlimit = qse_strtoulong (opt.arg);
+				g_memlimit = qse_strtoulong (opt.arg, 10);
 				break;
 
 			case QSE_T('w'):
@@ -366,7 +366,7 @@ static int handle_args (int argc, qse_char_t* argv[])
 
 #if defined(QSE_BUILD_DEBUG)
 			case QSE_T('X'):
-                    g_failmalloc = qse_strtoulong (opt.arg);
+				g_failmalloc = qse_strtoulong (opt.arg, 10);
 				break;
 #endif
 
@@ -375,8 +375,8 @@ static int handle_args (int argc, qse_char_t* argv[])
 				if (qse_strcmp(opt.lngopt, QSE_T("version")) == 0)
 				{
 					print_version ();
-                         goto done;
-                    }
+					goto done;
+				}
 				else if (qse_strcmp(opt.lngopt, QSE_T("script-encoding")) == 0)
 				{
 					g_script_cmgr = qse_findcmgr (opt.arg);

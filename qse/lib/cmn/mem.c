@@ -526,7 +526,7 @@ int qse_memcmp (const void* s1, const void* s2, qse_size_t n)
 #endif
 }
 
-void* qse_memchr (const void* s, int val, qse_size_t n)
+void* qse_membyte (const void* s, int val, qse_size_t n)
 {
 	const qse_byte_t* x = (const qse_byte_t*)s;
 
@@ -539,7 +539,7 @@ void* qse_memchr (const void* s, int val, qse_size_t n)
 	return QSE_NULL;
 }
 
-void* qse_memrchr (const void* s, int val, qse_size_t n)
+void* qse_memrbyte (const void* s, int val, qse_size_t n)
 {
 	const qse_byte_t* x = (qse_byte_t*)s + n - 1;
 

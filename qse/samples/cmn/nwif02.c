@@ -1,9 +1,10 @@
 #include <qse/cmn/nwif.h>
 #include <qse/cmn/mbwc.h>
 #include <qse/cmn/main.h>
-#include <qse/cmn/stdio.h>
+#include <qse/cmn/sio.h>
 #include <qse/cmn/mem.h>
 #include <qse/cmn/str.h>
+#include <qse/cmn/fmt.h>
 
 #include <locale.h>
 #if defined(_WIN32)
@@ -78,6 +79,8 @@ static int test_main (int argc, qse_char_t* argv[])
 
 int qse_main (int argc, qse_achar_t* argv[])
 {
+	int ret;
+
 #if defined(_WIN32)
 	char locale[100];
 	UINT codepage = GetConsoleOutputCP();	
@@ -88,14 +91,19 @@ int qse_main (int argc, qse_achar_t* argv[])
 	}
 	else
 	{
-     	sprintf (locale, ".%u", (unsigned int)codepage);
-     	setlocale (LC_ALL, locale);
+		qse_fmtuintmaxtombs (locale, QSE_COUNTOF(locale),
+			codepage, 10, -1, QSE_MT('\0'), QSE_MT("."));
+		setlocale (LC_ALL, locale);
 		qse_setdflcmgrbyid (QSE_CMGR_SLMB);
 	}
 #else
-     setlocale (LC_ALL, "");
+	setlocale (LC_ALL, "");
 	qse_setdflcmgrbyid (QSE_CMGR_SLMB);
 #endif
-     return qse_runmain (argc, argv, test_main);
+	qse_openstdsios ();
+	ret = qse_runmain (argc, argv, test_main);
+	qse_closestdsios ();
+
+	return ret;
 }
 

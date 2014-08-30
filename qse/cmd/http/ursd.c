@@ -934,7 +934,7 @@ static int httpd_main (int argc, qse_char_t* argv[])
 	signal (SIGHUP, handle_signal);
 	signal (SIGPIPE, SIG_IGN);
 
-	if (init_ursd (&ursd, qse_strtoi(argv[2]), argv[1], argv[3]) <= -1) goto oops;
+	if (init_ursd (&ursd, qse_strtoi(argv[2], 10), argv[1], argv[3]) <= -1) goto oops;
 	ursd_inited = 1;
 
 	while (!g_stop_requested)

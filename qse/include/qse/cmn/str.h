@@ -1896,78 +1896,250 @@ QSE_EXPORT qse_wchar_t* qse_wcsxrpbrk (
 /* 
  * string conversion
  */
-QSE_EXPORT int qse_strtoi (
-	const qse_char_t* str
+QSE_EXPORT int qse_mbstoi (
+	const qse_mchar_t* str,
+	int               base
 );
 
-QSE_EXPORT long qse_strtol (
-	const qse_char_t* str
+QSE_EXPORT long qse_mbstol (
+	const qse_mchar_t* str,
+	int               base
 );
 
-QSE_EXPORT unsigned int qse_strtoui (
-	const qse_char_t* str
+QSE_EXPORT unsigned int qse_mbstoui (
+	const qse_mchar_t* str,
+	int               base
 );
 
-QSE_EXPORT unsigned long qse_strtoul (
-	const qse_char_t* str
+QSE_EXPORT unsigned long qse_mbstoul (
+	const qse_mchar_t* str,
+	int               base
 );
 
-QSE_EXPORT int qse_strxtoi (
-	const qse_char_t* str,
-	qse_size_t        len
+QSE_EXPORT int qse_mbsxtoi (
+	const qse_mchar_t* str,
+	qse_size_t        len,
+	int               base
 );
 
-QSE_EXPORT long qse_strxtol (
-	const qse_char_t* str,
-	qse_size_t        len
+QSE_EXPORT long qse_mbsxtol (
+	const qse_mchar_t* str,
+	qse_size_t        len,
+	int               base
 );
 
-QSE_EXPORT unsigned int qse_strxtoui (
-	const qse_char_t* str,
-	qse_size_t        len
+QSE_EXPORT unsigned int qse_mbsxtoui (
+	const qse_mchar_t* str,
+	qse_size_t        len,
+	int               base
 );
 
-QSE_EXPORT unsigned long qse_strxtoul (
-	const qse_char_t* str,
-	qse_size_t        len
+QSE_EXPORT unsigned long qse_mbsxtoul (
+	const qse_mchar_t* str,
+	qse_size_t        len,
+	int               base
 );
 
-QSE_EXPORT qse_int_t qse_strtoint (
-	const qse_char_t* str
+QSE_EXPORT qse_int_t qse_mbstoint (
+	const qse_mchar_t* str,
+	int               base
 );
 
-QSE_EXPORT qse_long_t qse_strtolong (
-	const qse_char_t* str
+QSE_EXPORT qse_long_t qse_mbstolong (
+	const qse_mchar_t* str,
+	int               base
 );
 
-QSE_EXPORT qse_uint_t qse_strtouint (
-	const qse_char_t* str
+QSE_EXPORT qse_uint_t qse_mbstouint (
+	const qse_mchar_t* str,
+	int               base
 );
 
-QSE_EXPORT qse_ulong_t qse_strtoulong (
-	const qse_char_t* str
+QSE_EXPORT qse_ulong_t qse_mbstoulong (
+	const qse_mchar_t* str,
+	int               base
 );
 
-QSE_EXPORT qse_int_t qse_strxtoint (
-	const qse_char_t* str, qse_size_t len
+QSE_EXPORT qse_int_t qse_mbsxtoint (
+	const qse_mchar_t* str, 
+	qse_size_t        len,
+	int               base
 );
 
-QSE_EXPORT qse_long_t qse_strxtolong (
-	const qse_char_t* str,
-	qse_size_t        len
+QSE_EXPORT qse_long_t qse_mbsxtolong (
+	const qse_mchar_t* str,
+	qse_size_t        len,
+	int               base
 );
 
-QSE_EXPORT qse_uint_t qse_strxtouint (
-	const qse_char_t* str,
-	qse_size_t        len
+QSE_EXPORT qse_uint_t qse_mbsxtouint (
+	const qse_mchar_t* str,
+	qse_size_t        len,
+	int               base
 );
 
-QSE_EXPORT qse_ulong_t qse_strxtoulong (
-	const qse_char_t* str,
-	qse_size_t        len
+QSE_EXPORT qse_ulong_t qse_mbsxtoulong (
+	const qse_mchar_t* str,
+	qse_size_t        len,
+	int               base
 );
 
 
+
+QSE_EXPORT int qse_wcstoi (
+	const qse_wchar_t* str,
+	int               base
+);
+
+QSE_EXPORT long qse_wcstol (
+	const qse_wchar_t* str,
+	int               base
+);
+
+QSE_EXPORT unsigned int qse_wcstoui (
+	const qse_wchar_t* str,
+	int               base
+);
+
+QSE_EXPORT unsigned long qse_wcstoul (
+	const qse_wchar_t* str,
+	int               base
+);
+
+QSE_EXPORT int qse_wcsxtoi (
+	const qse_wchar_t* str,
+	qse_size_t        len,
+	int               base
+);
+
+QSE_EXPORT long qse_wcsxtol (
+	const qse_wchar_t* str,
+	qse_size_t        len,
+	int               base
+);
+
+QSE_EXPORT unsigned int qse_wcsxtoui (
+	const qse_wchar_t* str,
+	qse_size_t        len,
+	int               base
+);
+
+QSE_EXPORT unsigned long qse_wcsxtoul (
+	const qse_wchar_t* str,
+	qse_size_t        len,
+	int               base
+);
+
+QSE_EXPORT qse_int_t qse_wcstoint (
+	const qse_wchar_t* str,
+	int               base
+);
+
+QSE_EXPORT qse_long_t qse_wcstolong (
+	const qse_wchar_t* str,
+	int               base
+);
+
+QSE_EXPORT qse_uint_t qse_wcstouint (
+	const qse_wchar_t* str,
+	int               base
+);
+
+QSE_EXPORT qse_ulong_t qse_wcstoulong (
+	const qse_wchar_t* str,
+	int               base
+);
+
+QSE_EXPORT qse_int_t qse_wcsxtoint (
+	const qse_wchar_t* str, 
+	qse_size_t        len,
+	int               base
+);
+
+QSE_EXPORT qse_long_t qse_wcsxtolong (
+	const qse_wchar_t* str,
+	qse_size_t        len,
+	int               base
+);
+
+QSE_EXPORT qse_uint_t qse_wcsxtouint (
+	const qse_wchar_t* str,
+	qse_size_t         len,
+	int                base
+);
+
+QSE_EXPORT qse_ulong_t qse_wcsxtoulong (
+	const qse_wchar_t* str,
+	qse_size_t         len,
+	int                base
+);
+
+#if defined(QSE_CHAR_IS_MCHAR)
+
+#	define qse_strtoi(str,base) qse_mbstoi(str,base)
+#	define qse_strtol(str,base) qse_mbstol(str,base)
+#	define qse_strtoui(str,base) qse_mbstoui(str,base)
+#	define qse_strtoul(str,base) qse_mbstoul(str,base)
+
+#	define qse_strxtoi(str,len,base) qse_mbsxtoi(str,len,base)
+#	define qse_strxtol(str,len,base) qse_mbsxtol(str,len,base)
+#	define qse_strxtoui(str,len,base) qse_mbsxtoui(str,len,base)
+#	define qse_strxtoul(str,len,base) qse_mbsxtoul(str,len,base)
+
+#	define qse_strtoint(str,base) qse_mbstoint(str,base)
+#	define qse_strtolong(str,base) qse_mbstolong(str,base)
+#	define qse_strtouint(str,base) qse_mbstouint(str,base)
+#	define qse_strtoulong(str,base) qse_mbstoulong(str,base)
+
+#	define qse_strxtoint(str,len,base) qse_mbsxtoint(str,len,base)
+#	define qse_strxtolong(str,len,base) qse_mbsxtolong(str,len,base)
+#	define qse_strxtouint(str,len,base) qse_mbsxtouint(str,len,base)
+#	define qse_strxtoulong(str,len,base) qse_mbsxtoulong(str,len,base)
+
+#else
+
+#	define qse_strtoi(str,base) qse_wcstoi(str,base)
+#	define qse_strtol(str,base) qse_wcstol(str,base)
+#	define qse_strtoui(str,base) qse_wcstoui(str,base)
+#	define qse_strtoul(str,base) qse_wcstoul(str,base)
+
+#	define qse_strxtoi(str,len,base) qse_wcsxtoi(str,len,base)
+#	define qse_strxtol(str,len,base) qse_wcsxtol(str,len,base)
+#	define qse_strxtoui(str,len,base) qse_wcsxtoui(str,len,base)
+#	define qse_strxtoul(str,len,base) qse_wcsxtoul(str,len,base)
+
+#	define qse_strtoint(str,base) qse_wcstoint(str,base)
+#	define qse_strtolong(str,base) qse_wcstolong(str,base)
+#	define qse_strtouint(str,base) qse_wcstouint(str,base)
+#	define qse_strtoulong(str,base) qse_wcstoulong(str,base)
+
+#	define qse_strxtoint(str,len,base) qse_wcsxtoint(str,len,base)
+#	define qse_strxtolong(str,len,base) qse_wcsxtolong(str,len,base)
+#	define qse_strxtouint(str,len,base) qse_wcsxtouint(str,len,base)
+#	define qse_strxtoulong(str,len,base) qse_wcsxtoulong(str,len,base)
+
+#endif
+
+
+QSE_EXPORT int qse_mbshextobin (
+	const qse_mchar_t* hex,
+	qse_size_t         hexlen,
+	qse_uint8_t*       buf,
+	qse_size_t         buflen
+);
+
+QSE_EXPORT int qse_wcshextobin (
+	const qse_wchar_t* hex,
+	qse_size_t         hexlen,
+	qse_uint8_t*       buf,
+	qse_size_t         buflen
+);
+
+#if defined(QSE_CHAR_IS_MCHAR)
+#	define qse_strhextobin(hex,hexlen,buf,buflen) qse_mbshextobin(hex,hexlen,buf,buflen)
+#else
+#	define qse_strhextobin(hex,hexlen,buf,buflen) qse_wcshextobin(hex,hexlen,buf,buflen)
+#endif
 
 QSE_EXPORT qse_size_t qse_mbsdel (
 	qse_mchar_t* str, 

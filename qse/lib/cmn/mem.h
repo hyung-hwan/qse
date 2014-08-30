@@ -23,6 +23,8 @@
 
 #include <qse/cmn/mem.h>
 
+#define MINIMIZE_PLATFORM_DEPENDENCY
+
 #ifdef MINIMIZE_PLATFORM_DEPENDENCY
 #	define QSE_MEMCPY(dst,src,len)  qse_memcpy(dst,src,len)
 #	define QSE_MEMMOVE(dst,src,len) qse_memmove(dst,src,len)
