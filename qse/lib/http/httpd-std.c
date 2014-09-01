@@ -2317,6 +2317,7 @@ static qse_size_t hash_string (const qse_mchar_t *str)
 
 #include "httpd-std-dns.h"
 #include "httpd-std-urs.h"
+
 /* ------------------------------------------------------------------- */
 
 static qse_httpd_scb_t httpd_system_callbacks =
@@ -2324,13 +2325,15 @@ static qse_httpd_scb_t httpd_system_callbacks =
 	/* server */
 	{ server_open,
 	  server_close,
-	  server_accept },
+	  server_accept
+	},
 
 	{ peer_open,
 	  peer_close,
 	  peer_connected,
 	  peer_recv,
-	  peer_send },
+	  peer_send
+	},
 
 	/* multiplexer */
 	{ mux_open,
@@ -2369,19 +2372,23 @@ static qse_httpd_scb_t httpd_system_callbacks =
 	  client_send,
 	  client_sendfile,
 	  client_accepted,
-	  client_closed },
+	  client_closed
+	},
 
 	/* dns */
 	{ dns_open,
 	  dns_close,
 	  dns_recv,
-	  dns_send },
+	  dns_send
+	},
 
 	/* urs */
 	{ urs_open,
 	  urs_close,
 	  urs_recv,
-	  urs_send }
+	  urs_send,
+	  urs_prerewrite
+	}
 };
 
 static qse_httpd_rcb_t httpd_request_callbacks =
@@ -3282,3 +3289,4 @@ int qse_httpd_loopstd (qse_httpd_t* httpd, const qse_httpd_dnsstd_t* dns, const 
 	/* main loop */
 	return qse_httpd_loop (httpd);
 }
+

@@ -90,10 +90,10 @@ typedef enum qse_httpd_trait_t qse_httpd_trait_t;
 typedef struct qse_httpd_stat_t qse_httpd_stat_t;
 struct qse_httpd_stat_t
 {
-	int        isdir;
-	qse_long_t dev;
-	qse_long_t ino;
-	qse_foff_t size;
+	int         isdir;
+	qse_long_t  dev;
+	qse_long_t  ino;
+	qse_foff_t  size;
 	qse_ntime_t mtime;
 };
 
@@ -145,9 +145,57 @@ typedef void (*qse_httpd_resol_t) (
 
 typedef void (*qse_httpd_rewrite_t) (
 	qse_httpd_t*       httpd,
-	const qse_mchar_t* url,
+	/* optional original URL. if the original URL is not 
+	 * avaialble,it can be set to #QSE_NULL */
+	const qse_mchar_t* url,     
+	/* rewritten URL */
 	const qse_mchar_t* new_url,
+	/* content data pointer */
 	void*              ctx
+);
+
+
+
+
+typedef int (*qse_httpd_urs_open_t) (
+	qse_httpd_t*     httpd, 
+	qse_httpd_urs_t* urs
+);
+
+typedef void (*qse_httpd_urs_close_t) (
+	qse_httpd_t*     httpd,
+	qse_httpd_urs_t* urs
+);
+
+typedef int (*qse_httpd_urs_recv_t) (
+	qse_httpd_t*     httpd,
+	qse_httpd_urs_t* urs,
+	qse_ubi_t        handle
+);
+
+typedef int (*qse_httpd_urs_send_t) (
+	qse_httpd_t*            httpd,
+	qse_httpd_urs_t*        urs, 
+	const qse_mchar_t*      url,
+	qse_httpd_rewrite_t     rewrite,
+	const qse_httpd_natr_t* urs_server,
+	void*                   ctx
+);
+
+/* on success, url must point to a null-teminated string which 
+ * can be freed with qse_httpd_freemem() when not needed anymore.
+ * the return value of 0 indicates that the string is the final 
+ * rewriting result and no sending to urs-server is required.
+ * if the return value is greater than 0, the string sent to the
+ * urs-server for the actual rewriting. a negative return value
+ * indicates failure. 
+ */
+typedef int (*qse_httpd_urs_prerewrite_t) (
+	qse_httpd_t*        httpd, 
+	qse_httpd_client_t* client,
+	qse_htre_t*         req,
+	const qse_mchar_t*  host,
+	qse_mchar_t**       url
 );
 
 typedef struct qse_httpd_scb_t qse_httpd_scb_t;
@@ -278,12 +326,11 @@ struct qse_httpd_scb_t
 
 	struct
 	{
-		int (*open) (qse_httpd_t* httpd, qse_httpd_urs_t* urs);
-		void (*close) (qse_httpd_t* httpd, qse_httpd_urs_t* urs);
-		int (*recv) (qse_httpd_t* httpd, qse_httpd_urs_t* urs, qse_ubi_t handle);
-		int (*send) (qse_httpd_t* httpd, qse_httpd_urs_t* urs, 
-		             const qse_mchar_t* url, qse_httpd_rewrite_t rewrite,
-		             const qse_httpd_natr_t* urs_server, void* ctx);
+		qse_httpd_urs_open_t open;
+		qse_httpd_urs_close_t close;
+		qse_httpd_urs_recv_t recv;
+		qse_httpd_urs_send_t send;
+		qse_httpd_urs_prerewrite_t prerewrite;
 	} urs;
 };
 
@@ -598,7 +645,6 @@ struct qse_httpd_rsrc_proxy_t
 {
 	int flags; /* bitwise-ORed of qse_httpd_rsrc_proxy_flag_t enumerators */
 
-	const qse_mchar_t* host; /* host name part that were in the original request url */
 	union
 	{
 		qse_nwad_t nwad; 
@@ -606,13 +652,22 @@ struct qse_httpd_rsrc_proxy_t
 	union
 	{
 		qse_nwad_t nwad;
-		const qse_mchar_t* str;
+
+		/* turn QSE_HTTPD_RSRC_PROXY_DST_STR on in flags and set the
+		 * destination host name to the str field. if the bit is not set
+		 * nwad field is used. */
+		const qse_mchar_t* str; 
 	} dst; /* remote destination address to connect to */
 
 	qse_httpd_natr_t dns_server;
 	qse_httpd_natr_t urs_server;
 
-	const qse_mchar_t* pseudonym; /* pseudonym to use in Via: */
+	/* optional pseudonym to use for Via: */
+	const qse_mchar_t* pseudonym;
+
+	/* optional host name. it's preferred over the Host header in some 
+	 * contexts. */
+	const qse_mchar_t* host;
 };
 
 typedef struct qse_httpd_rsrc_dir_t qse_httpd_rsrc_dir_t;

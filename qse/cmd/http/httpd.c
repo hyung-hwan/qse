@@ -195,7 +195,7 @@ struct loccfg_t
 		int dns_retries;
 		int urs_timeout;
 		int urs_retries;
-		const qse_mchar_t pseudonym[128]; /* TODO: good size? */
+		qse_mchar_t pseudonym[128]; /* TODO: good size? */
 	} proxy;
 
 	loccfg_t* next;
@@ -224,6 +224,7 @@ struct server_xtn_t
 	qse_httpd_serverstd_freersrc_t orgfreersrc;
 	qse_httpd_serverstd_query_t orgquery;
 
+	
 	qse_htb_t* cfgtab;
 };
 
@@ -234,9 +235,10 @@ struct httpd_xtn_t
 {
 	const  qse_char_t* cfgfile;
 	qse_xli_t* xli;
-	qse_httpd_impede_t orgimpede;
+	qse_httpd_impede_t org_impede;
 	int impede_code;
 
+	qse_httpd_urs_prerewrite_t org_urs_prerewrite;
 	loccfg_t dflcfg;
 };
 
@@ -538,6 +540,10 @@ static int get_server_root (
 			if (loccfg->proxy.pseudonym[0]) 
 				root->u.proxy.pseudonym = loccfg->proxy.pseudonym;
 
+			/* move the host name part backward by 1 byte to make a room for
+			 * terminating null. An orginal input of http://www.yahoo.com/ab/cd
+			 * becomes http:/www.yahoo.com\0ab/cd. host gets to point to the 
+			 * www.yahoo.com. qpath(qinfo->req.u.q.path) is updated to ab/cd. */
 			qse_memmove (host - 1, host, slash - host); 
 			slash[-1] = QSE_MT('\0');
 			host = host - 1;
@@ -588,7 +594,6 @@ static int get_server_root (
 	root->u.path.val = loccfg->xcfg[XCFG_ROOT];
 	root->u.path.rpl = loccfg->locname.len;
 	return 0;
-
 
 proxy_ok:
 	if (loccfg->proxy.dns_enabled)
@@ -2125,15 +2130,26 @@ static void impede_httpd (qse_httpd_t* httpd)
 	}
 
 	/* chain-call the orignal impedence function */
-	if (httpd_xtn->orgimpede) httpd_xtn->orgimpede (httpd);
+	if (httpd_xtn->org_impede) httpd_xtn->org_impede (httpd);
 }
+
+static int prerewrite_url (qse_httpd_t* httpd, qse_httpd_client_t* client, qse_htre_t* req, const qse_mchar_t* host, qse_mchar_t** url)
+{
+	httpd_xtn_t* httpd_xtn;
+
+	httpd_xtn = qse_httpd_getxtnstd (httpd);
+
+/* TODO: override prerewrite url */
+	return httpd_xtn->org_urs_prerewrite (httpd, client, req, host, url);
+}
+
 
 static void logact_httpd (qse_httpd_t* httpd, const qse_httpd_act_t* act)
 {
-	httpd_xtn_t* httpd_xtn;
+	/*httpd_xtn_t* httpd_xtn;*/
 	qse_char_t tmp[128], tmp2[128], tmp3[128];
 
-	httpd_xtn = qse_httpd_getxtnstd (httpd);
+	/*httpd_xtn = qse_httpd_getxtnstd (httpd);*/
 
 	switch (act->code)
 	{
@@ -2302,6 +2318,7 @@ static int httpd_main (int argc, qse_char_t* argv[])
 	int trait, ret;
 	qse_httpd_rcb_t rcb;
 	qse_httpd_ecb_t ecb;
+	qse_httpd_scb_t scb;
 
 	ret = handle_args (argc, argv);
 	if (ret <= -1) return -1;
@@ -2346,8 +2363,13 @@ static int httpd_main (int argc, qse_char_t* argv[])
 	tmout.nsec = 0;
 	qse_httpd_setopt (httpd, QSE_HTTPD_IDLELIMIT, &tmout);
 
+	qse_httpd_getopt (httpd, QSE_HTTPD_SCB, &scb);
+	httpd_xtn->org_urs_prerewrite = scb.urs.prerewrite;
+	scb.urs.prerewrite = prerewrite_url;
+	qse_httpd_setopt (httpd, QSE_HTTPD_SCB, &scb);
+
 	qse_httpd_getopt (httpd, QSE_HTTPD_RCB, &rcb);
-	httpd_xtn->orgimpede = rcb.impede;
+	httpd_xtn->org_impede = rcb.impede;
 	rcb.impede = impede_httpd; /* executed when qse_httpd_impede() is called */
 	if (g_debug) rcb.logact = logact_httpd; /* i don't remember old logging handler */
 	qse_httpd_setopt (httpd, QSE_HTTPD_RCB, &rcb);

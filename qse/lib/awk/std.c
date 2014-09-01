@@ -277,6 +277,9 @@ static void* custom_awk_modopen (qse_awk_t* awk, const qse_awk_mod_spec_t* spec)
 
 #elif defined(__DOS__)
 
+	/* the DOS code here is not generic enough. it's for a specific
+	 * dos-extender only. the best is to enable QSE_ENABLE_STATIC_MODULE
+	 * when building for DOS. */
 	void* h;
 	qse_mchar_t* modpath;
 	const qse_char_t* tmp[4];
