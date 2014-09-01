@@ -48,11 +48,12 @@ struct task_proxy_t
 #define PROXY_PEER_NAME_RESOLVED   (1 << 7)
 #define PROXY_PEER_NAME_UNRESOLVED (1 << 8)
 #define PROXY_REWRITE_URL          (1 << 9)
-#define PROXY_URL_REWRITTEN        (1 << 10)
-#define PROXY_URL_REDIRECTED       (1 << 11)
-#define PROXY_X_FORWARDED_FOR      (1 << 12) /* X-Forwarded-For added */
-#define PROXY_VIA                  (1 << 13) /* Via added to the request */
-#define PROXY_VIA_RETURNING        (1 << 14) /* Via added to the response */
+#define PROXY_URL_PREREWRITTEN     (1 << 10) /* URL has been prerewritten in prerewrite(). */
+#define PROXY_URL_REWRITTEN        (1 << 11)
+#define PROXY_URL_REDIRECTED       (1 << 12)
+#define PROXY_X_FORWARDED_FOR      (1 << 13) /* X-Forwarded-For added */
+#define PROXY_VIA                  (1 << 14) /* Via added to the request */
+#define PROXY_VIA_RETURNING        (1 << 15) /* Via added to the response */
 	int flags;
 	qse_httpd_t* httpd;
 	qse_httpd_client_t* client;
@@ -84,7 +85,6 @@ struct task_proxy_t
 	int          reqflags;
 	qse_htre_t*  req; /* set to original client request associated with this if necessary */
 	qse_mbs_t*   reqfwdbuf; /* content from the request */
-	const qse_mchar_t* host;
 
 	qse_mbs_t*   res;
 	qse_size_t   res_consumed;
@@ -894,12 +894,11 @@ static void adjust_peer_name_and_port (task_proxy_t* proxy)
 	colon = qse_mbschr (proxy->peer_name, QSE_MT(':'));
 	if (colon) 
 	{
-		qse_mchar_t* endptr;
 		/* handle a port number after the colon sign */
-
 		*colon = QSE_MT('\0');
-		QSE_MBSTONUM (proxy->peer_port, colon + 1, &endptr, 10);
-		/* TODO: check if *endptr is QSE_T('\0')? */
+		proxy->peer_port = qse_mbstoui (colon + 1, 10);
+		/* TODO: check if there is a garbage after the port number.
+		 *       check if the port number has overflown */
 	}
 	else
 	{
@@ -948,7 +947,6 @@ static int task_init_proxy (
 	{
 		if (arg->rsrc->flags & QSE_HTTPD_RSRC_PROXY_ENABLE_DNS)
 		{
-/* TODO: get pseudonym from parameter... */
 			proxy->peer_name = proxy->pseudonym + len + 1;
 
 			qse_mbscpy (proxy->peer_name, arg->rsrc->dst.str);
@@ -977,50 +975,18 @@ static int task_init_proxy (
 
 	if (arg->rsrc->flags & QSE_HTTPD_RSRC_PROXY_ENABLE_URS)
 	{
-		const qse_mchar_t* qpath;
-		const qse_mchar_t* metnam;
-		const qse_mchar_t* host_ptr = QSE_NULL;
-		qse_mchar_t cliaddrbuf[128];
-		qse_size_t total_len;
-
-		qpath = qse_htre_getqpath(arg->req);
-		metnam = qse_httpmethodtombs(proxy->method);
-
-		total_len = qse_mbslen(qpath) + qse_mbslen(metnam);
-
-		if (arg->rsrc->host)
-		{
-			host_ptr = arg->rsrc->host;
-			total_len += qse_mbslen(host_ptr);
-		}
-		else 
-		{
-			const qse_htre_hdrval_t* hosthv;
-			hosthv = qse_htre_getheaderval(arg->req, QSE_MT("Host"));
-			if (hosthv)
-			{
-				/* the first host header only */
-				host_ptr = hosthv->ptr;
-				total_len += hosthv->len;
-			}
-		}
-
-		total_len += qse_nwadtombs (&client->remote_addr, cliaddrbuf, QSE_COUNTOF(cliaddrbuf), QSE_NWADTOMBS_ADDR);
-
-		total_len += 128; /* extra space */
-
-		proxy->url_to_rewrite = qse_httpd_allocmem (httpd, total_len);
-		if (proxy->url_to_rewrite == QSE_NULL) goto oops;
-
-		/* URL client-ip/client-fqdn ident method  */
-		if (proxy->method != QSE_HTTP_CONNECT && host_ptr)
-			qse_mbsxfmt (proxy->url_to_rewrite, total_len, QSE_MT("http://%s%s %s/- - %s"), host_ptr, qpath, cliaddrbuf, metnam);
-		else
-			qse_mbsxfmt (proxy->url_to_rewrite, total_len, QSE_MT("%s %s/- - %s"), qpath, cliaddrbuf, metnam);
+		int x = httpd->opt.scb.urs.prerewrite (httpd, client, arg->req, arg->rsrc->host, &proxy->url_to_rewrite);
+		if (x <= -1) goto oops;
 
 printf (">>>>>>>>>>>>>>>>>>>>>>>> [%s] <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n", proxy->url_to_rewrite);
 		/* enable url rewriting */
 		proxy->flags |= PROXY_REWRITE_URL;
+		if (x == 0) 
+		{
+			/* prerewrite() indicates that proxy->url_to_rewrite is the final
+			 * rewriting result and no futher rewriting is required */
+			proxy->flags |= PROXY_URL_PREREWRITTEN;
+		}
 
 		if (arg->rsrc->flags & QSE_HTTPD_RSRC_PROXY_URS_SERVER)
 		{
@@ -1042,7 +1008,6 @@ printf (">>>>>>>>>>>>>>>>>>>>>>>> [%s] <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n", proxy
 	proxy->reqfwdbuf = qse_mbs_open (httpd->mmgr, 0, (len < 512? 512: len));
 	if (proxy->reqfwdbuf == QSE_NULL) goto nomem_oops;
 
-	proxy->host = arg->rsrc->host;
 	if (proxy->flags & PROXY_RAW)
 	{
 /* TODO: when connect is attempted, no keep-alive must be hornored. 
@@ -2091,14 +2056,24 @@ static int task_main_proxy (
 
 	if (proxy->flags & PROXY_REWRITE_URL)
 	{
-		/* note that url_to_rewrite is URL + extra information. */
-		if (qse_httpd_rewriteurl (httpd, proxy->url_to_rewrite, on_url_rewritten, 
-		                          ((proxy->flags & PROXY_URS_SERVER)? &proxy->urs_server: QSE_NULL), task) <= -1) goto oops;
+		if (proxy->flags & PROXY_URL_PREREWRITTEN)
+		{
+			/* proxy->url_to_rewrite is the final rewritten URL by prerewrite(). 
+			 * pass QSE_NULL as the second parameter to on_url_rewritten() to
+			 * indicate that the original URL is not known */
+			on_url_rewritten (httpd, QSE_NULL, proxy->url_to_rewrite, task);
+		}
+		else
+		{
+			/* note that url_to_rewrite is URL + extra information. */
+			if (qse_httpd_rewriteurl (httpd, proxy->url_to_rewrite, on_url_rewritten, 
+									  ((proxy->flags & PROXY_URS_SERVER)? &proxy->urs_server: QSE_NULL), task) <= -1) goto oops;
 
-		if (proxy->flags & PROXY_INIT_FAILED) goto oops;
-		
-		if ((proxy->flags & PROXY_REWRITE_URL) && 
-		    qse_httpd_inactivatetasktrigger (httpd, client, task) <= -1) goto oops;
+			if (proxy->flags & PROXY_INIT_FAILED) goto oops;
+			
+			if ((proxy->flags & PROXY_REWRITE_URL) && 
+			    qse_httpd_inactivatetasktrigger (httpd, client, task) <= -1) goto oops;
+		}
 
 		return 1;
 	}

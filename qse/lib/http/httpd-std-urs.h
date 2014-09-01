@@ -476,3 +476,55 @@ oops:
 	return -1;
 }
 
+static int urs_prerewrite (qse_httpd_t* httpd, qse_httpd_client_t* client, qse_htre_t* req, const qse_mchar_t* host, qse_mchar_t** url)
+{
+	const qse_mchar_t* qpath;
+	int mtype;
+	const qse_mchar_t* mname;
+
+	const qse_mchar_t* host_ptr = QSE_NULL;
+	qse_mchar_t cliaddrbuf[128];
+	qse_size_t total_len;
+	qse_mchar_t* url_to_rewrite;
+
+	qpath = qse_htre_getqpath(req);
+	mtype = qse_htre_getqmethodtype(req);
+	mname = qse_htre_getqmethodname(req);
+
+	total_len = qse_mbslen(qpath) + qse_mbslen(mname);
+
+	if (host)
+	{
+		/* use the host name set explicitly by the caller */
+		host_ptr = host;
+		total_len += qse_mbslen(host_ptr);
+	}
+	else 
+	{
+		/* find the host name in the http header */
+		const qse_htre_hdrval_t* hosthv;
+		hosthv = qse_htre_getheaderval(req, QSE_MT("Host"));
+		if (hosthv)
+		{
+			/* the first host header only */
+			host_ptr = hosthv->ptr;
+			total_len += hosthv->len;
+		}
+	}
+
+	total_len += qse_nwadtombs (&client->remote_addr, cliaddrbuf, QSE_COUNTOF(cliaddrbuf), QSE_NWADTOMBS_ADDR);
+
+	total_len += 128; /* extra space */
+
+	url_to_rewrite = qse_httpd_allocmem (httpd, total_len);
+	if (url_to_rewrite == QSE_NULL) return -1;
+
+	/* URL client-ip/client-fqdn ident method  */
+	if (mtype != QSE_HTTP_CONNECT && host_ptr)
+		qse_mbsxfmt (url_to_rewrite, total_len, QSE_MT("http://%s%s %s/- - %s"), host_ptr, qpath, cliaddrbuf, mname);
+	else
+		qse_mbsxfmt (url_to_rewrite, total_len, QSE_MT("%s %s/- - %s"), qpath, cliaddrbuf, mname);
+
+	*url = url_to_rewrite;
+	return 1;
+}
