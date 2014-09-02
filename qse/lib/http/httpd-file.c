@@ -207,7 +207,7 @@ static QSE_INLINE int task_main_getfile (
 			httpd, client, x, http_errnum, 
 			file->method, &file->version, file->keepalive);
 		goto no_file_send;
-	}	
+	}
 	fileopen = 1;
 
 	if (file->u.get.range.type != QSE_HTTP_RANGE_NONE)

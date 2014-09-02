@@ -2139,6 +2139,7 @@ static int prerewrite_url (qse_httpd_t* httpd, qse_httpd_client_t* client, qse_h
 
 	httpd_xtn = qse_httpd_getxtnstd (httpd);
 
+printf ("PREREWRITING.....................\n");
 /* TODO: override prerewrite url */
 	return httpd_xtn->org_urs_prerewrite (httpd, client, req, host, url);
 }

@@ -1041,6 +1041,17 @@ printf (">>>>>>>>>>>>>>>>>>>>>>>> [%s] <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n", proxy
 			    qse_mbs_cat (proxy->reqfwdbuf, qse_htre_getqparam(arg->req)) == (qse_size_t)-1) goto nomem_oops;
 		}
 
+#if 0
+{
+/* KT FILTERING WORKAROUND POC. KT seems to check the Host: the first packet
+ * only.I add 1500 byte space octets between the URL and the HTTP version string.
+ * the header is likely to be placed in the second packet. it seems to work. */
+qse_mchar_t spc[1500];
+QSE_MEMSET (spc, QSE_MT(' '), QSE_COUNTOF(spc));
+qse_mbs_ncat (proxy->reqfwdbuf, spc, QSE_COUNTOF(spc));
+}
+#endif
+
 		if (qse_mbs_cat (proxy->reqfwdbuf, QSE_MT(" ")) == (qse_size_t)-1 ||
 		    qse_mbs_cat (proxy->reqfwdbuf, qse_htre_getverstr(arg->req)) == (qse_size_t)-1 ||
 		    qse_mbs_cat (proxy->reqfwdbuf, QSE_MT("\r\n")) == (qse_size_t)-1 ||
