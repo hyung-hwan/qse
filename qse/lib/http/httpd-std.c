@@ -413,7 +413,7 @@ static QSE_INLINE qse_ssize_t __send_file (
 
 	qse_ssize_t ret;
 	qse_fio_hnd_t fh;
-	
+
 	fh = qse_fio_gethandle (in_fd.ptr);
 	ret = sendfile64 (out_fd, fh, offset, count);
 	if (ret <= -1) qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
@@ -461,14 +461,14 @@ on failure xfer != ret.
 
 #else
 
-	qse_mchar_t buf[MAX_SEND_SIZE];
+	qse_mchar_t buf[MAX_SEND_SIZE]; /* TODO: move this into client, server, or httpd */
 	qse_ssize_t ret;
 	qse_foff_t foff;
 
 	if (offset && (foff = qse_fio_seek (in_fd.ptr, *offset, QSE_FIO_BEGIN)) != *offset)  
 	{
 		if (foff == (qse_foff_t)-1)
-			qse_httpd_seterrnum (httpd, fioerr_to_errnum(qse_fio_geterrnum(in_fd.ptr)));	
+			qse_httpd_seterrnum (httpd, fioerr_to_errnum(qse_fio_geterrnum(in_fd.ptr)));
 		else
 			qse_httpd_seterrnum (httpd, QSE_HTTPD_ESYSERR);
 		return (qse_ssize_t)-1;
@@ -1829,36 +1829,16 @@ static int dir_read (qse_httpd_t* httpd, qse_ubi_t handle, qse_httpd_dirent_t* d
 }
 
 /* ------------------------------------------------------------------- */
-#if !defined(SHUT_RDWR)
-#	define SHUT_RDWR 2
-#endif
 
 static void client_close (qse_httpd_t* httpd, qse_httpd_client_t* client)
 {
-
-#if defined(_WIN32)
-	shutdown (client->handle.i, SHUT_RDWR);
-#elif defined(__OS2__)
-	shutdown (client->handle.i, SHUT_RDWR);
-#elif defined(__DOS__)
-	/* TODO: */
-#else
-	shutdown (client->handle.i, SHUT_RDWR);
-#endif
+	qse_shutsckhnd (client->handle.i, QSE_SHUTSCKHND_RW);
 	qse_closesckhnd (client->handle.i);
 }
 
 static void client_shutdown (qse_httpd_t* httpd, qse_httpd_client_t* client)
 {
-#if defined(_WIN32)
-	shutdown (client->handle.i, SHUT_RDWR);
-#elif defined(__OS2__)
-	shutdown (client->handle.i, SHUT_RDWR);
-#elif defined(__DOS__)
-	/* TODO: */
-#else
-	shutdown (client->handle.i, SHUT_RDWR);
-#endif
+	qse_shutsckhnd (client->handle.i, QSE_SHUTSCKHND_RW);
 }
 
 static qse_ssize_t client_recv (
@@ -1954,7 +1934,6 @@ static qse_ssize_t client_sendfile (
 
 static int client_accepted (qse_httpd_t* httpd, qse_httpd_client_t* client)
 {
-
 	if (client->status & QSE_HTTPD_CLIENT_SECURE)
 	{
 	#if defined(HAVE_SSL)

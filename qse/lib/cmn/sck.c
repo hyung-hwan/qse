@@ -51,6 +51,10 @@
 #endif
 
 
+#if !defined(SHUT_RDWR)
+#	define SHUT_RDWR 2
+#endif
+
 QSE_INLINE int qse_isvalidsckhnd (qse_sck_hnd_t handle)
 {
 #if defined(_WIN32)
@@ -79,6 +83,22 @@ QSE_INLINE void qse_closesckhnd (qse_sck_hnd_t handle)
 	QSE_CLOSE (handle);
 #endif
 }
+
+QSE_INLINE void qse_shutsckhnd (qse_sck_hnd_t handle, qse_shutsckhnd_how_t how)
+{
+	static int how_v[] = { SHUT_RD, SHUT_WR, SHUT_RDWR };
+
+#if defined(_WIN32)
+	shutdown (handle, how_v[how]);
+#elif defined(__OS2__)
+	shutdown (handle, how_v[how]);
+#elif defined(__DOS__)
+	/* TODO: */
+#else
+	shutdown (handle, how_v[how]);
+#endif
+}
+
 
 #if 0
 qse_sck_hnd_t

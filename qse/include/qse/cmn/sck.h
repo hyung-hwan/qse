@@ -55,6 +55,14 @@
 	typedef int qse_sck_len_t;
 #endif
 
+enum qse_shutsckhnd_how_t
+{
+	QSE_SHUTSCKHND_R  = 0,
+	QSE_SHUTSCKHND_W  = 1,
+	QSE_SHUTSCKHND_RW = 2
+};
+typedef enum qse_shutsckhnd_how_t qse_shutsckhnd_how_t;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -65,6 +73,12 @@ QSE_EXPORT int qse_isvalidsckhnd (
 
 QSE_EXPORT void qse_closesckhnd (
 	qse_sck_hnd_t handle
+);
+
+
+QSE_EXPORT void qse_shutsckhnd (
+	qse_sck_hnd_t        handle,
+	qse_shutsckhnd_how_t how
 );
 
 #ifdef __cplusplus
