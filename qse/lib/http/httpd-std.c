@@ -375,7 +375,7 @@ static qse_httpd_errnum_t direrr_to_errnum (qse_dir_errnum_t e)
 /* ------------------------------------------------------------------- */
 
 static QSE_INLINE qse_ssize_t __send_file (
-	qse_httpd_t* httpd, int out_fd, qse_ubi_t in_fd, 
+	qse_httpd_t* httpd, qse_sck_hnd_t out_fd, qse_ubi_t in_fd, 
 	qse_foff_t* offset, qse_size_t count)
 {
 	/* TODO: os2 warp 4.5 has send_file. support it??? load it dynamically??? */
@@ -387,12 +387,14 @@ static QSE_INLINE qse_ssize_t __send_file (
 #elif defined(HAVE_SENDFILE) && defined(HAVE_SENDFILE64)
 
 	qse_ssize_t ret;
-	qse_ubi_t infd = qse_fio_gethandleasubi (in_fd.ptr);
+	qse_fio_hnd_t fh;
+
+	fh = qse_fio_gethandle (in_fd.ptr);
 
 	#if !defined(_LP64) && (QSE_SIZEOF_VOID_P<8) && defined(HAVE_SENDFILE64)
-	ret =  sendfile64 (out_fd, infd.i, offset, count);
+	ret =  sendfile64 (out_fd, fh, offset, count);
 	#else
-	ret =  sendfile (out_fd, infd.i, offset, count);
+	ret =  sendfile (out_fd, fh, offset, count);
 	#endif
 	if (ret <= -1) qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
 	return ret;
@@ -400,19 +402,26 @@ static QSE_INLINE qse_ssize_t __send_file (
 #elif defined(HAVE_SENDFILE)
 
 	qse_ssize_t ret;
-	qse_ubi_t infd = qse_fio_gethandleasubi (in_fd.ptr);
-	ret = sendfile (out_fd, infd.i, offset, count);
+	qse_fio_hnd_t fh;
+
+	fh = qse_fio_gethandle (in_fd.ptr);
+	ret = sendfile (out_fd, fh, offset, count);
 	if (ret <= -1) qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
 	return ret;
 
 #elif defined(HAVE_SENDFILE64)
+
 	qse_ssize_t ret;
-	qse_ubi_t infd = qse_fio_gethandleasubi (in_fd.ptr);
-	ret = sendfile64 (out_fd, in_fd.i, offset, count);
+	qse_fio_hnd_t fh;
+	
+	fh = qse_fio_gethandle (in_fd.ptr);
+	ret = sendfile64 (out_fd, fh, offset, count);
 	if (ret <= -1) qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
 	return ret;
 
 #elif defined(HAVE_SENDFILEV) || defined(HAVE_SENDFILEV64)
+
+	/* solaris */
 
 	#if !defined(_LP64) && (QSE_SIZEOF_VOID_P<8) && defined(HAVE_SENDFILE64)
 	struct sendfilevec64 vec;
@@ -458,7 +467,7 @@ on failure xfer != ret.
 
 	if (offset && (foff = qse_fio_seek (in_fd.ptr, *offset, QSE_FIO_BEGIN)) != *offset)  
 	{
-		if (foff == (qse_foff_t)-1) 	
+		if (foff == (qse_foff_t)-1)
 			qse_httpd_seterrnum (httpd, fioerr_to_errnum(qse_fio_geterrnum(in_fd.ptr)));	
 		else
 			qse_httpd_seterrnum (httpd, QSE_HTTPD_ESYSERR);
@@ -478,7 +487,7 @@ on failure xfer != ret.
 	}
 	else if (ret <= -1)
 	{
-		qse_httpd_seterrnum (httpd, fioerr_to_errnum(qse_fio_geterrnum(in_fd.ptr)));	
+		qse_httpd_seterrnum (httpd, fioerr_to_errnum(qse_fio_geterrnum(in_fd.ptr)));
 	}
 
 	return ret;
@@ -500,7 +509,7 @@ static QSE_INLINE qse_ssize_t __send_file_ssl (
 	
 	if (offset && (foff = qse_fio_seek (in_fd.ptr, *offset, QSE_FIO_BEGIN)) != *offset)  
 	{
-		if (foff == (qse_foff_t)-1) 	
+		if (foff == (qse_foff_t)-1)
 			qse_httpd_seterrnum (httpd, fioerr_to_errnum(qse_fio_geterrnum(in_fd.ptr)));
 		else
 			qse_httpd_seterrnum (httpd, QSE_HTTPD_ESYSERR);
@@ -1547,29 +1556,32 @@ static int file_purge (qse_httpd_t* httpd, const qse_mchar_t* path)
 #endif
 }
 
+static qse_fio_t* __open_file (qse_httpd_t* httpd, const qse_mchar_t* path, int fio_flags, int fio_mode)
+{
+	qse_fio_t* fio;
+
+	fio = qse_httpd_allocmem (httpd, QSE_SIZEOF(*fio));
+	if (fio == QSE_NULL) return QSE_NULL;
+
+	if (qse_fio_init (fio, httpd->mmgr, (const qse_char_t*)path, fio_flags, fio_mode) <= -1)
+	{
+		qse_httpd_seterrnum (httpd, fioerr_to_errnum(qse_fio_geterrnum(fio)));
+		qse_httpd_freemem (httpd, fio);
+		return QSE_NULL;
+	}
+
+	return fio;
+}
+
 static int file_ropen (
 	qse_httpd_t* httpd, const qse_mchar_t* path, qse_ubi_t* handle)
 {
 	qse_fio_t* fio;
 
-	fio = QSE_MMGR_ALLOC (httpd->mmgr, QSE_SIZEOF(*fio));
-	if (fio == QSE_NULL)
-	{
-		qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOMEM);
-		return -1;
-	}
-
-	if (qse_fio_init (
-		fio, httpd->mmgr, (const qse_char_t*)path,
-		QSE_FIO_READ | QSE_FIO_MBSPATH, 0) <= -1)
-	{
-		qse_httpd_seterrnum (httpd, fioerr_to_errnum(qse_fio_geterrnum(fio)));	
-		QSE_MMGR_FREE (httpd->mmgr, fio);
-		return -1;
-	}
+	fio = __open_file (httpd, path, QSE_FIO_READ | QSE_FIO_MBSPATH, 0);
+	if (fio == QSE_NULL) return -1;
 
 	handle->ptr = fio;
-
 	if (httpd->opt.trait & QSE_HTTPD_LOGACT)
 	{
 		qse_httpd_act_t msg;
@@ -1579,8 +1591,8 @@ static int file_ropen (
 		qse_mbsxcpy (&msg.u.mdbgmsg[pos], QSE_COUNTOF(msg.u.mdbgmsg) - pos, path);
 		httpd->opt.rcb.logact (httpd, &msg);
 	}
-	return 0;
 
+	return 0;
 }
 
 static int file_wopen (
@@ -1589,25 +1601,10 @@ static int file_wopen (
 {
 	qse_fio_t* fio;
 
-	fio = QSE_MMGR_ALLOC (httpd->mmgr, QSE_SIZEOF(*fio));
-	if (fio == QSE_NULL)
-	{
-		qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOMEM);
-		return -1;
-	}
-
-	if (qse_fio_init (
-		fio, httpd->mmgr, (const qse_char_t*)path, 
-		QSE_FIO_WRITE | QSE_FIO_CREATE | 
-		QSE_FIO_TRUNCATE | QSE_FIO_MBSPATH, 0644) <= -1)
-	{
-		qse_httpd_seterrnum (httpd, fioerr_to_errnum(qse_fio_geterrnum(fio)));	
-		QSE_MMGR_FREE (httpd->mmgr, fio);
-		return -1;
-	}
+	fio = __open_file (httpd, path, QSE_FIO_WRITE | QSE_FIO_CREATE | QSE_FIO_TRUNCATE | QSE_FIO_MBSPATH, 0644);
+	if (fio == QSE_NULL) return -1;
 
 	handle->ptr = fio;
-
 	if (httpd->opt.trait & QSE_HTTPD_LOGACT)
 	{
 		qse_httpd_act_t msg;
@@ -1624,26 +1621,24 @@ static int file_wopen (
 static void file_close (qse_httpd_t* httpd, qse_ubi_t handle)
 {
 	qse_fio_fini (handle.ptr);
-	QSE_MMGR_FREE (httpd->mmgr, handle.ptr);
+	qse_httpd_freemem (httpd, handle.ptr);
 }
 
 static qse_ssize_t file_read (
-	qse_httpd_t* httpd, qse_ubi_t handle,
-	qse_mchar_t* buf, qse_size_t len)
+	qse_httpd_t* httpd, qse_ubi_t handle, qse_mchar_t* buf, qse_size_t len)
 {
 	qse_ssize_t n;
 	n = qse_fio_read (handle.ptr, buf, len);
-	if (n <= -1) qse_httpd_seterrnum (httpd, fioerr_to_errnum(qse_fio_geterrnum(handle.ptr)));	
+	if (n <= -1) qse_httpd_seterrnum (httpd, fioerr_to_errnum(qse_fio_geterrnum(handle.ptr)));
 	return n;
 }
 
 static qse_ssize_t file_write (
-	qse_httpd_t* httpd, qse_ubi_t handle,
-	const qse_mchar_t* buf, qse_size_t len)
+	qse_httpd_t* httpd, qse_ubi_t handle, const qse_mchar_t* buf, qse_size_t len)
 {
 	qse_ssize_t n;
 	n = qse_fio_write (handle.ptr, buf, len);
-	if (n <= -1) qse_httpd_seterrnum (httpd, fioerr_to_errnum(qse_fio_geterrnum(handle.ptr)));	
+	if (n <= -1) qse_httpd_seterrnum (httpd, fioerr_to_errnum(qse_fio_geterrnum(handle.ptr)));
 	return n;
 }
 
