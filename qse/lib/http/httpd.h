@@ -52,6 +52,8 @@ struct qse_httpd_t
 	qse_mchar_t sname[128]; /* server name for the server header */
 	qse_mchar_t gtbuf[10][64]; /* GMT time buffers */
 
+	qse_httpd_mod_t* modlist;
+
 	struct
 	{
 		struct

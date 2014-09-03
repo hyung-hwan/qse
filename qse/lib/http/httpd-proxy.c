@@ -2072,7 +2072,7 @@ static int task_main_proxy (
 			/* proxy->url_to_rewrite is the final rewritten URL by prerewrite(). 
 			 * pass QSE_NULL as the second parameter to on_url_rewritten() to
 			 * indicate that the original URL is not known */
-			on_url_rewritten (httpd, QSE_NULL, proxy->url_to_rewrite, task);
+			on_url_rewritten (httpd, QSE_NULL, (proxy->url_to_rewrite? proxy->url_to_rewrite: QSE_MT("")), task);
 		}
 		else
 		{
