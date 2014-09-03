@@ -67,10 +67,12 @@ typedef enum qse_httpd_errnum_t qse_httpd_errnum_t;
 enum qse_httpd_opt_t
 {
 	QSE_HTTPD_TRAIT,
-	QSE_HTTPD_SCB,
-	QSE_HTTPD_RCB,
 	QSE_HTTPD_TMOUT,
-	QSE_HTTPD_IDLELIMIT
+	QSE_HTTPD_IDLELIMIT,
+	QSE_HTTPD_MODPREFIX,
+	QSE_HTTPD_MODPOSTFIX,
+	QSE_HTTPD_SCB,
+	QSE_HTTPD_RCB
 };
 typedef enum qse_httpd_opt_t qse_httpd_opt_t;
 
@@ -1127,6 +1129,16 @@ QSE_EXPORT int qse_httpd_rewriteurl (
 	void*                   ctx
 );
 
+
+QSE_EXPORT int qse_httpd_loadmod (
+	qse_httpd_t*      httpd,
+	const qse_char_t* name
+);
+
+QSE_EXPORT qse_httpd_mod_t* qse_httpd_findmod (
+	qse_httpd_t*      httpd,
+	const qse_char_t* name
+);
 
 #ifdef __cplusplus
 }

@@ -123,6 +123,27 @@ void* qse_httpd_getxtn (qse_httpd_t* httpd)
 	return QSE_XTN (httpd);
 }
 
+static int dup_str_opt (qse_httpd_t* httpd, const void* value, qse_cstr_t* tmp)
+{
+	if (value)
+	{
+		tmp->ptr = qse_strdup (value, httpd->mmgr);
+		if (tmp->ptr == QSE_NULL)
+		{
+			qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOMEM);
+			return -1;
+		}
+		tmp->len = qse_strlen (tmp->ptr);
+	}
+	else
+	{
+		tmp->ptr = QSE_NULL;
+		tmp->len = 0;
+	}
+
+	return 0;
+}
+
 int qse_httpd_getopt (qse_httpd_t* httpd, qse_httpd_opt_t id, void* value)
 {
 	switch (id)
@@ -131,20 +152,25 @@ int qse_httpd_getopt (qse_httpd_t* httpd, qse_httpd_opt_t id, void* value)
 			*(int*)value = httpd->opt.trait;
 			return 0;
 
-		case QSE_HTTPD_SCB:
-			*(qse_httpd_scb_t*)value = httpd->opt.scb;
-			return 0;
-
-		case QSE_HTTPD_RCB:
-			*(qse_httpd_rcb_t*)value = httpd->opt.rcb;
-			return 0;
-
 		case QSE_HTTPD_TMOUT:
 			*(qse_ntime_t*)value = httpd->opt.tmout;
 			return 0;
 
 		case QSE_HTTPD_IDLELIMIT:
 			*(qse_ntime_t*)value = httpd->opt.idle_limit;
+			return 0;
+
+		case QSE_HTTPD_MODPREFIX:
+		case QSE_HTTPD_MODPOSTFIX:
+			*(const qse_char_t**)value = httpd->opt.mod[id - QSE_HTTPD_MODPREFIX].ptr;
+			return 0;
+
+		case QSE_HTTPD_SCB:
+			*(qse_httpd_scb_t*)value = httpd->opt.scb;
+			return 0;
+
+		case QSE_HTTPD_RCB:
+			*(qse_httpd_rcb_t*)value = httpd->opt.rcb;
 			return 0;
 	}
 
@@ -160,6 +186,29 @@ int qse_httpd_setopt (qse_httpd_t* httpd, qse_httpd_opt_t id, const void* value)
 			httpd->opt.trait = *(const int*)value;
 			return 0;
 
+		case QSE_HTTPD_TMOUT:
+			httpd->opt.tmout = *(qse_ntime_t*)value;
+			return 0;
+
+		case QSE_HTTPD_IDLELIMIT:
+			httpd->opt.idle_limit = *(qse_ntime_t*)value;
+			return 0;
+
+		case QSE_HTTPD_MODPREFIX:
+		case QSE_HTTPD_MODPOSTFIX:
+		{
+			qse_cstr_t tmp;
+			int idx;
+
+			if (dup_str_opt (httpd, value, &tmp) <= -1) return -1;
+
+			idx = id - QSE_HTTPD_MODPREFIX;
+			if (httpd->opt.mod[idx].ptr) QSE_MMGR_FREE (httpd->mmgr, httpd->opt.mod[idx].ptr);
+
+			httpd->opt.mod[idx] = tmp;
+			return 0;
+		}
+
 		case QSE_HTTPD_SCB:
 			httpd->opt.scb = *(qse_httpd_scb_t*)value;
 			return 0;
@@ -168,13 +217,7 @@ int qse_httpd_setopt (qse_httpd_t* httpd, qse_httpd_opt_t id, const void* value)
 			httpd->opt.rcb = *(qse_httpd_rcb_t*)value;
 			return 0;
 
-		case QSE_HTTPD_TMOUT:
-			httpd->opt.tmout = *(qse_ntime_t*)value;
-			return 0;
-
-		case QSE_HTTPD_IDLELIMIT:
-			httpd->opt.idle_limit = *(qse_ntime_t*)value;
-			return 0;
+		
 	}
 
 	httpd->errnum = QSE_HTTPD_EINVAL;
