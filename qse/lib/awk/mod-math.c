@@ -155,7 +155,45 @@ static qse_awk_flt_t math_round (qse_awk_t* awk, qse_awk_flt_t x)
 #elif defined(HAVE_ROUNDF)
 	return roundf (x);
 #else
-	#error ### no round function available ###
+
+	qse_flt_t f, d;
+
+	f = math_floor (awk, x);
+	d = x - f; /* get fraction */
+
+	if (d > (qse_awk_flt_t)0.5)
+	{
+		/* round up to the nearest */
+		f =  f + (qse_awk_flt_t)1.0;
+	}
+	else if (d == (qse_awk_flt_t)0.5)
+	{
+	#if 1
+		/* round half away from zero */
+		if (x >= 0)
+		{
+			f = x + (qse_awk_flt_t)0.5;
+		}
+		else
+		{
+			f = x - (qse_awk_flt_t)0.5;
+		}
+	#else
+		/* round half to even - C99's rint() does this, i guess. */
+		d = f - (qse_awk_flt_t)2.0 * math_floor(awk, f * (qse_awk_flt_t)0.5);
+		if (d == (qse_awk_flt_t)1.0) f =  f + (qse_awk_flt_t)1.0;
+	#endif
+	}
+
+	/* this implementation doesn't keep the signbit for -0.0.
+	 * The signbit() function defined in C99 may get used to
+	 * preserve the sign bit. but this is a fall-back rountine
+	 * for a system without round also defined in C99. 
+	 * don't get annoyed by the lost sign bit for the value of 0.0.
+	 */
+
+	return f;
+	
 #endif
 }
 

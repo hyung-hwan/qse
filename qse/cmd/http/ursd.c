@@ -183,7 +183,12 @@ static qse_sck_hnd_t open_server_socket (int proto, const qse_nwad_t* bindnwad)
 
 	skad_len = qse_nwadtoskad (bindnwad, &skad);
 	family = qse_skadfamily(&skad);
+
+#if defined(IPPROTO_SCTP)
 	type = (proto == IPPROTO_SCTP)? SOCK_SEQPACKET: SOCK_DGRAM;
+#else
+	type = SOCK_DGRAM;
+#endif
 
 	s = socket (family, type, proto);
 	if (!qse_isvalidsckhnd(s))
@@ -221,9 +226,10 @@ static qse_sck_hnd_t open_server_socket (int proto, const qse_nwad_t* bindnwad)
 	}
 
 bind_ok:
+	#if defined(IPPROTO_SCTP)
 	if (proto == IPPROTO_SCTP)
 	{
-	#if defined(SOL_SCTP)
+		#if defined(SOL_SCTP)
 		struct sctp_initmsg im;
 		struct sctp_paddrparams hb;
 
@@ -244,7 +250,7 @@ bind_ok:
 		hb.spp_pathmaxrxt = 1;
 
 		if (setsockopt (s, SOL_SCTP, SCTP_PEER_ADDR_PARAMS, &hb, QSE_SIZEOF(hb)) <= -1) goto oops;
-	#endif
+		#endif
 
 		if (listen (s, 99) <= -1)
 		{
@@ -252,6 +258,7 @@ bind_ok:
 			goto oops;
 		}
 	}
+	#endif
 
 	return s;
 

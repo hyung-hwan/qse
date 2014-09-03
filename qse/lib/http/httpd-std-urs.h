@@ -119,7 +119,11 @@ static int urs_open (qse_httpd_t* httpd, qse_httpd_urs_t* urs)
 		httpd->opt.rcb.logact (httpd, &msg);
 	}
 
+#if defined(IPPROTO_SCTP)
 	type = (proto == IPPROTO_SCTP)? SOCK_SEQPACKET: SOCK_DGRAM;
+#else
+	type = SOCK_DGRAM;
+#endif
 	
 	urs->handle[0].i = open_udp_socket (httpd, AF_INET, type, proto);
 #if defined(AF_INET6)
