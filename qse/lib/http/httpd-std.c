@@ -2294,6 +2294,7 @@ static qse_size_t hash_string (const qse_mchar_t *str)
 	return h;
 }
 
+#include "httpd-std-mod.h"
 #include "httpd-std-dns.h"
 #include "httpd-std-urs.h"
 
@@ -2301,72 +2302,87 @@ static qse_size_t hash_string (const qse_mchar_t *str)
 
 static qse_httpd_scb_t httpd_system_callbacks =
 {
-	/* server */
-	{ server_open,
-	  server_close,
-	  server_accept
+	/* module */
+	{
+		mod_open,
+		mod_close,
+		mod_symbol
 	},
 
-	{ peer_open,
-	  peer_close,
-	  peer_connected,
-	  peer_recv,
-	  peer_send
+	/* server */
+	{ 
+		server_open,
+		server_close,
+		server_accept
+	},
+
+	{ 
+		peer_open,
+		peer_close,
+		peer_connected,
+		peer_recv,
+		peer_send
 	},
 
 	/* multiplexer */
-	{ mux_open,
-	  mux_close,
-	  mux_addhnd,
-	  mux_delhnd,
-	  mux_poll,
+	{ 
+		mux_open,
+		mux_close,
+		mux_addhnd,
+		mux_delhnd,
+		mux_poll,
 
-	  mux_readable,
-	  mux_writable
+		mux_readable,
+		mux_writable
 	},
 
 	/* file operation */
-	{ file_stat,
-	  file_purge,
-	  file_ropen,
-	  file_wopen,
-	  file_close,
-	  file_read,
-	  file_write
+	{
+		file_stat,
+		file_purge,
+		file_ropen,
+		file_wopen,
+		file_close,
+		file_read,
+		file_write
 	},
 
 	/* directory operation */
-	{ dir_stat,
-	  dir_make,
-	  dir_purge,
-	  dir_open,
-	  dir_close,
-	  dir_read
+	{
+		dir_stat,
+		dir_make,
+		dir_purge,
+		dir_open,
+		dir_close,
+		dir_read
 	},
 
 	/* client connection */
-	{ client_close,
-	  client_shutdown,
-	  client_recv,
-	  client_send,
-	  client_sendfile,
-	  client_accepted,
-	  client_closed
+	{ 
+		client_close,
+		client_shutdown,
+		client_recv,
+		client_send,
+		client_sendfile,
+		client_accepted,
+		client_closed
 	},
 
 	/* dns */
-	{ dns_open,
-	  dns_close,
-	  dns_recv,
-	  dns_send
+	{
+		dns_open,
+		dns_close,
+		dns_recv,
+		dns_send
 	},
 
 	/* urs */
-	{ urs_open,
-	  urs_close,
-	  urs_recv,
-	  urs_send,
-	  urs_prerewrite
+	{
+		urs_open,
+		urs_close,
+		urs_recv,
+		urs_send,
+		urs_prerewrite
 	}
 };
 

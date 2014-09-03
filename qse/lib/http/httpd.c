@@ -37,6 +37,7 @@ struct htrd_xtn_t
 static void free_server_list (qse_httpd_t* httpd);
 static int perform_client_task (
 	qse_httpd_t* httpd, void* mux, qse_ubi_t handle, int mask, void* cbarg);
+static void unload_all_modules (qse_httpd_t* httpd);
 
 qse_http_version_t qse_http_v11 = { 1, 1 };
 
@@ -89,6 +90,7 @@ void qse_httpd_fini (qse_httpd_t* httpd)
 {
 	free_server_list (httpd);
 	qse_tmr_close (httpd->tmr);
+	unload_all_modules (httpd);
 }
 
 void qse_httpd_stop (qse_httpd_t* httpd)
@@ -1843,4 +1845,62 @@ int qse_httpd_inserttimerevent (qse_httpd_t* httpd, const qse_tmr_event_t* event
 void qse_httpd_removetimerevent (qse_httpd_t* httpd, qse_tmr_index_t index)
 {
 	qse_tmr_remove (httpd->tmr, index);
+}
+
+
+static void unload_all_modules (qse_httpd_t* httpd)
+{
+	qse_httpd_mod_t* mod;
+
+	while (httpd->modlist)
+	{
+		mod = httpd->modlist;
+		httpd->modlist = mod->next;
+
+/* call fini */
+		httpd->opt.scb.mod.close (httpd, mod);
+		qse_httpd_freemem (httpd, mod);
+	}
+}
+
+int qse_httpd_loadmod (qse_httpd_t* httpd, const qse_char_t* name)
+{
+	qse_httpd_mod_t* mod;
+	qse_size_t name_len;
+
+/* TODO: no singly linked list speed up */
+	name_len = qse_strlen(name);
+
+	mod = qse_httpd_allocmem (httpd, QSE_SIZEOF(*mod) + name_len + 1);
+	if (mod == QSE_NULL) return -1;
+
+	QSE_MEMSET (mod, 0, QSE_SIZEOF(*mod));
+	mod->name = mod + 1;
+	qse_strcpy (mod->name, name);
+
+	if (httpd->opt.scb.mod.open (httpd, mod) <= -1) 
+	{
+		qse_httpd_freemem (httpd, mod);
+		return -1;
+	}
+
+/* TODO: find init and execute it. if it fails, unload it. */
+
+	mod->next = httpd->modlist;
+	httpd->modlist = mod;
+
+	return 0;
+}
+
+qse_httpd_mod_t* qse_httpd_findmod (qse_httpd_t* httpd, const qse_char_t* name)
+{
+	qse_httpd_mod_t* mod;
+
+/* TODO: no sequential search. speed up */
+	for (mod = httpd->modlist; mod;  mod = mod->next)
+	{
+		if (qse_strcmp (mod->name, name) == 0) return mod;
+	}
+
+	return QSE_NULL;
 }

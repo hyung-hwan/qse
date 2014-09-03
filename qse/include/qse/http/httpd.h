@@ -87,6 +87,20 @@ enum qse_httpd_trait_t
 };
 typedef enum qse_httpd_trait_t qse_httpd_trait_t;
 
+
+typedef struct qse_httpd_mod_t qse_httpd_mod_t;
+struct qse_httpd_mod_t
+{
+	/* set before mod.open() */
+	qse_char_t* name;
+
+	/* manipulatable by the implementer */
+	void* handle;
+
+	/* private */
+	qse_httpd_mod_t* next;
+};
+
 typedef struct qse_httpd_stat_t qse_httpd_stat_t;
 struct qse_httpd_stat_t
 {
@@ -155,8 +169,6 @@ typedef void (*qse_httpd_rewrite_t) (
 );
 
 
-
-
 typedef int (*qse_httpd_urs_open_t) (
 	qse_httpd_t*     httpd, 
 	qse_httpd_urs_t* urs
@@ -182,13 +194,21 @@ typedef int (*qse_httpd_urs_send_t) (
 	void*                   ctx
 );
 
-/* on success, url must point to a null-teminated string which 
- * can be freed with qse_httpd_freemem() when not needed anymore.
- * the return value of 0 indicates that the string is the final 
- * rewriting result and no sending to urs-server is required.
- * if the return value is greater than 0, the string sent to the
- * urs-server for the actual rewriting. a negative return value
- * indicates failure. 
+/* Success is indicated by a positive return value including 0. 
+ * When it's 0, url must point to #QSE_NULL or a null-teminated 
+ * string. When it's greater than 0, url must point to a null-terminated
+ * string. The null-terminated string is freed with qse_httpd_freemem()
+ * when not needed. 
+ * 
+ * The return value of 0 indicates that the string is the final 
+ * rewriting result and no sending to urs-server is required. The URL of 
+ * #QSE_NULL , when the return value is 0, indicates that no translation
+ * is required. 
+ *
+ * If the return value is greater than 0, the string is sent to the
+ * urs-server for the actual rewriting. 
+ * 
+ * A negative return value indicates failure. 
  */
 typedef int (*qse_httpd_urs_prerewrite_t) (
 	qse_httpd_t*        httpd, 
@@ -201,6 +221,13 @@ typedef int (*qse_httpd_urs_prerewrite_t) (
 typedef struct qse_httpd_scb_t qse_httpd_scb_t;
 struct qse_httpd_scb_t
 {
+	struct
+	{
+		int (*open) (qse_httpd_t* httpd, qse_httpd_mod_t* mod);
+		void (*close) (qse_httpd_t* httpd, qse_httpd_mod_t* mod);
+		void* (*symbol) (qse_httpd_t* httpd, qse_httpd_mod_t* mod, const qse_char_t* name);
+	} mod; /* module */
+
 	struct
 	{
 		int (*open) (qse_httpd_t* httpd, qse_httpd_server_t* server);
@@ -233,17 +260,13 @@ struct qse_httpd_scb_t
 		int   (*delhnd) (qse_httpd_t* httpd, void* mux, qse_ubi_t handle);
 		int   (*poll)   (qse_httpd_t* httpd, void* mux, const qse_ntime_t* tmout);
 
-		int (*readable) (
-			qse_httpd_t* httpd, qse_ubi_t handle, const qse_ntime_t* tmout);
-		int (*writable) (
-			qse_httpd_t* httpd, qse_ubi_t handle, const qse_ntime_t* tmout);
+		int (*readable) (qse_httpd_t* httpd, qse_ubi_t handle, const qse_ntime_t* tmout);
+		int (*writable) (qse_httpd_t* httpd, qse_ubi_t handle, const qse_ntime_t* tmout);
 	} mux;
 
 	struct
 	{
-		int (*stat) (
-			qse_httpd_t* httpd, const qse_mchar_t* path, 
-			qse_httpd_stat_t* stat);
+		int (*stat) (qse_httpd_t* httpd, const qse_mchar_t* path, qse_httpd_stat_t* stat);
 		int (*purge) (qse_httpd_t* httpd, const qse_mchar_t* path);
 			
 		int (*ropen) (
@@ -749,6 +772,7 @@ struct qse_httpd_ecb_t
 	/* internal use only. don't touch this field */
 	qse_httpd_ecb_t* next;
 };
+
 
 
 #ifdef __cplusplus
