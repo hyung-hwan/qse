@@ -430,8 +430,11 @@ static QSE_INLINE qse_ssize_t __send_file (
 	#endif
 	size_t xfer;
 	ssize_t ret;
+	qse_fio_hnd_t fh;
 
-	vec.sfv_fd = in_fd.i;
+	fh = qse_fio_gethandle(in_fd.ptr);
+
+	vec.sfv_fd = fh;
 	vec.sfv_flag = 0;
 	if (offset)
 	{
@@ -439,7 +442,7 @@ static QSE_INLINE qse_ssize_t __send_file (
 	}
 	else
 	{
-		vec.sfv_off = QSE_LSEEK (in_fd.i, 0, SEEK_CUR); 
+		vec.sfv_off = QSE_LSEEK (fh, 0, SEEK_CUR); 
 		if (vec.sfv_off == (off_t)-1) return (qse_ssize_t)-1;
 	}
 	vec.sfv_len = count;
@@ -739,9 +742,10 @@ static qse_sck_hnd_t open_udp_socket (qse_httpd_t* httpd, int domain, int type, 
 
 	if (set_socket_nonblock (httpd, fd, 1) <= -1) goto oops;
 
+	#if defined(IPPROTO_SCTP)
 	if (proto == IPPROTO_SCTP)
 	{
-	#if defined(SOL_SCTP)
+		#if defined(SOL_SCTP)
 		struct sctp_initmsg im;
 		struct sctp_paddrparams hb;
 
@@ -758,8 +762,9 @@ static qse_sck_hnd_t open_udp_socket (qse_httpd_t* httpd, int domain, int type, 
 		hb.spp_pathmaxrxt = 1;
 
 		if (setsockopt (fd, SOL_SCTP, SCTP_PEER_ADDR_PARAMS, &hb, QSE_SIZEOF(hb)) <= -1) goto oops;
-	#endif
+		#endif
 	}
+	#endif
 
 	return fd;
 
