@@ -38,10 +38,11 @@ struct qse_httpd_t
 	struct
 	{
 		int trait;
-		qse_httpd_scb_t scb; /* system callbacks */
-		qse_httpd_rcb_t rcb; /* request callbacks */
 		qse_ntime_t tmout; /* poll timeout */
 		qse_ntime_t idle_limit; 
+		qse_cstr_t mod[2]; /* module prefix and postfix */
+		qse_httpd_scb_t scb; /* system callbacks */
+		qse_httpd_rcb_t rcb; /* request callbacks */
 	} opt;
 
 	int stopreq: 1;
