@@ -975,7 +975,12 @@ static int task_init_proxy (
 
 	if (arg->rsrc->flags & QSE_HTTPD_RSRC_PROXY_ENABLE_URS)
 	{
-		int x = httpd->opt.scb.urs.prerewrite (httpd, client, arg->req, arg->rsrc->host, &proxy->url_to_rewrite);
+		int x;
+
+		if (arg->rsrc->urs_prerewrite_mod && arg->rsrc->urs_prerewrite_mod->urs_prerewrite)
+			x = arg->rsrc->urs_prerewrite_mod->urs_prerewrite (arg->rsrc->urs_prerewrite_mod, client, arg->req, arg->rsrc->host, &proxy->url_to_rewrite);
+		else
+			x = httpd->opt.scb.urs.prerewrite (httpd, client, arg->req, arg->rsrc->host, &proxy->url_to_rewrite);
 		if (x <= -1) goto oops;
 
 printf (">>>>>>>>>>>>>>>>>>>>>>>> [%s] <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n", proxy->url_to_rewrite);

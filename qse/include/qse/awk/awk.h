@@ -847,10 +847,10 @@ typedef void (*qse_awk_mod_fini_t) (
 struct qse_awk_mod_t
 {
 	qse_awk_mod_query_t  query;
-	qse_awk_mod_unload_t unload;
+	qse_awk_mod_unload_t unload; /* unload the module */
 
-	qse_awk_mod_init_t   init;
-	qse_awk_mod_fini_t   fini;
+	qse_awk_mod_init_t   init; /* per-rtx initialization */
+	qse_awk_mod_fini_t   fini; /* per-rtx finalization */
 
 	void*                ctx;
 };

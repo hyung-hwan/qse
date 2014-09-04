@@ -197,6 +197,7 @@ struct loccfg_t
 		int dns_retries;
 		int urs_timeout;
 		int urs_retries;
+		qse_httpd_mod_t* urs_prerewrite_mod;
 		qse_mchar_t pseudonym[128]; /* TODO: good size? */
 	} proxy;
 
@@ -214,7 +215,6 @@ struct server_hostcfg_t
 typedef struct server_xtn_t server_xtn_t;
 struct server_xtn_t
 {
-	int tproxy;
 	int nodir; /* no directory listing */
 
 	int num;
@@ -363,44 +363,15 @@ static int make_resource (
 
 	server_xtn = qse_httpd_getserverstdxtn (httpd, client->server);
 
-#if 0
-	if (server_xtn->tproxy)
+	if (server_xtn->orgmakersrc (httpd, client, req, rsrc) <= -1) return -1;
+	if (server_xtn->nodir && rsrc->type == QSE_HTTPD_RSRC_DIR)
 	{
-		if (client->status & QSE_HTTPD_CLIENT_INTERCEPTED)
-		{
-			rsrc->type = QSE_HTTPD_RSRC_PROXY;
-			rsrc->u.proxy.flags = 0;
-			rsrc->u.proxy.dst.nwad = client->orgdst_addr;
-			rsrc->u.proxy.src.nwad = client->remote_addr;
-
-			qse_setnwadport (&rsrc->u.proxy.src.nwad, 0);
-		}
-		else
-		{
-			/* TODO: implement a better check that the
-			 *       destination is not one of the local addresses */
-
-			rsrc->type = QSE_HTTPD_RSRC_ERROR;
-			rsrc->u.error.code = 500;
-		}
-
-		return 0;
+		/* prohibit no directory listing */
+		server_xtn->orgfreersrc (httpd, client, req, rsrc);
+		rsrc->type = QSE_HTTPD_RSRC_ERROR;
+		rsrc->u.error.code = 403;
 	}
-	else
-	{
-#endif
-		if (server_xtn->orgmakersrc (httpd, client, req, rsrc) <= -1) return -1;
-		if (server_xtn->nodir && rsrc->type == QSE_HTTPD_RSRC_DIR)
-		{
-			/* prohibit no directory listing */
-			server_xtn->orgfreersrc (httpd, client, req, rsrc);
-			rsrc->type = QSE_HTTPD_RSRC_ERROR;
-			rsrc->u.error.code = 403;
-		}
-		return 0;
-#if 0
-	}
-#endif
+	return 0;
 }
 
 static void free_resource (
@@ -410,19 +381,7 @@ static void free_resource (
 	server_xtn_t* server_xtn;
 
 	server_xtn = qse_httpd_getserverstdxtn (httpd, client->server);
-
-#if 0
-	if (server_xtn->tproxy)
-	{
-		/* nothing to do */
-	}
-	else
-	{
-#endif
-		server_xtn->orgfreersrc (httpd, client, req, rsrc);
-#if 0
-	}
-#endif
+	server_xtn->orgfreersrc (httpd, client, req, rsrc);
 }
 /* --------------------------------------------------------------------- */
 
@@ -477,6 +436,8 @@ static int get_server_root (
 	if ((qinfo->client->status & QSE_HTTPD_CLIENT_INTERCEPTED) /*&&
 	    loccfg->proxy.allow_intercept */)
 	{
+		/* transparent proxying */
+
 		root->type = QSE_HTTPD_SERVERSTD_ROOT_PROXY;
 		root->u.proxy.dst.nwad = qinfo->client->orgdst_addr;
 		/* if TPROXY is used, set the source to the original source.
@@ -611,6 +572,7 @@ proxy_ok:
 		root->u.proxy.urs_server.nwad = loccfg->proxy.urs_nwad;
 		root->u.proxy.urs_server.tmout.sec = loccfg->proxy.urs_timeout;
 		root->u.proxy.urs_server.retries = loccfg->proxy.urs_retries;
+		root->u.proxy.urs_prerewrite_mod = loccfg->proxy.urs_prerewrite_mod;
 	}
 
 	return 0;
@@ -1413,7 +1375,6 @@ static int load_loccfg_proxy (qse_httpd_t* httpd, qse_xli_t* xli, qse_xli_list_t
 		default_proxy = (qse_xli_list_t*)pair->val;
 	}
 
-
 	pair = QSE_NULL;
 	if (proxy) pair = qse_xli_findpair (xli, proxy, QSE_T("http")); /* server.host[].location[].proxy.http */
 	if (!pair && default_proxy) pair = qse_xli_findpair (xli, default_proxy, QSE_T("http")); /* server-default.proxy.http */
@@ -1502,6 +1463,16 @@ static int load_loccfg_proxy (qse_httpd_t* httpd, qse_xli_t* xli, qse_xli_list_t
 	if (!pair && default_proxy) pair = qse_xli_findpair (xli, default_proxy, QSE_T("urs-retries"));
 	if (pair) cfg->proxy.urs_retries = get_integer ((qse_xli_str_t*)pair->val);
 	else cfg->proxy.urs_retries = -1;
+
+	pair = QSE_NULL;
+	if (proxy) pair = qse_xli_findpair (xli, proxy, QSE_T("urs-prerewrite-hook"));
+	if (!pair && default_proxy) pair = qse_xli_findpair (xli, default_proxy, QSE_T("urs-prerewrite-hook"));
+	if (pair) 
+	{
+		cfg->proxy.urs_prerewrite_mod = qse_httpd_findmod (httpd, ((qse_xli_str_t*)pair->val)->ptr);
+		if (!cfg->proxy.urs_prerewrite_mod)
+			qse_printf (QSE_T("WARNING: urs-prerewrite-hook not found - %s\n"), ((qse_xli_str_t*)pair->val)->ptr); 
+	}
 
 	return 0;
 }
@@ -1823,115 +1794,116 @@ static int open_config_file (qse_httpd_t* httpd)
 		qse_xli_scm_t scm;
 	} defs[] =
 	{
-		{ QSE_T("name"),                                      { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
-		{ QSE_T("max-nofile"),                                { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
-		{ QSE_T("max-nproc"),                                 { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
+		{ QSE_T("name"),                                             { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
+		{ QSE_T("max-nofile"),                                       { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
+		{ QSE_T("max-nproc"),                                        { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
 
-		{ QSE_T("hooks"),                                     { QSE_XLI_SCM_VALLIST | QSE_XLI_SCM_KEYNODUP, 0, 0      }  },
-		{ QSE_T("hooks.module"),                              { QSE_XLI_SCM_VALLIST | QSE_XLI_SCM_KEYALIAS, 0, 0      }  },
-		{ QSE_T("hooks.module.file"),                         { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
-		/*{ QSE_T("hooks.module.config"),                       { QSE_XLI_SCM_VALLIST | QSE_XLI_SCM_KEYNODUP | QSE_SLI_SCM_SKIPVALIDATE, 0, 0      }  },*/
+		{ QSE_T("hooks"),                                            { QSE_XLI_SCM_VALLIST | QSE_XLI_SCM_KEYNODUP, 0, 0      }  },
+		{ QSE_T("hooks.module"),                                     { QSE_XLI_SCM_VALLIST | QSE_XLI_SCM_KEYALIAS, 0, 0      }  },
+		{ QSE_T("hooks.module.file"),                                { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
+		/*{ QSE_T("hooks.module.config"),                              { QSE_XLI_SCM_VALLIST | QSE_XLI_SCM_KEYNODUP | QSE_SLI_SCM_SKIPVALIDATE, 0, 0      }  },*/
 
-		{ QSE_T("server-default"),                            { QSE_XLI_SCM_VALLIST | QSE_XLI_SCM_KEYNODUP, 0, 0      }  },
-		{ QSE_T("server-default.ssl-cert-file"),              { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
-		{ QSE_T("server-default.ssl-key-file"),               { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
-		{ QSE_T("server-default.root"),                       { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
-		{ QSE_T("server-default.realm"),                      { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 0, 1      }  },
-		{ QSE_T("server-default.auth"),                       { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 0, 1      }  },
-		{ QSE_T("server-default.index"),                      { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 0xFFFF }  },
-		{ QSE_T("server-default.auth-rule"),                  { QSE_XLI_SCM_VALLIST | QSE_XLI_SCM_KEYNODUP, 0, 0      }  },
-		{ QSE_T("server-default.auth-rule.prefix"),           { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYALIAS, 1, 1      }  },
-		{ QSE_T("server-default.auth-rule.suffix"),           { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYALIAS, 1, 1      }  },
-		{ QSE_T("server-default.auth-rule.name"),             { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYALIAS, 1, 1      }  },
-		{ QSE_T("server-default.auth-rule.other"),            { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
-		{ QSE_T("server-default.cgi"),                        { QSE_XLI_SCM_VALLIST | QSE_XLI_SCM_KEYNODUP, 0, 0      }  },
-		{ QSE_T("server-default.cgi.prefix"),                 { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYALIAS, 0, 2      }  },
-		{ QSE_T("server-default.cgi.suffix"),                 { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYALIAS, 0, 2      }  },
-		{ QSE_T("server-default.cgi.name"),                   { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYALIAS, 0, 2      }  },
-		{ QSE_T("server-default.mime"),                       { QSE_XLI_SCM_VALLIST | QSE_XLI_SCM_KEYNODUP, 0, 0      }  },
-		{ QSE_T("server-default.mime.prefix"),                { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYALIAS, 1, 1      }  },
-		{ QSE_T("server-default.mime.suffix"),                { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYALIAS, 1, 1      }  },
-		{ QSE_T("server-default.mime.name"),                  { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYALIAS, 1, 1      }  },
-		{ QSE_T("server-default.mime.other"),                 { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
-		{ QSE_T("server-default.dir-access"),                 { QSE_XLI_SCM_VALLIST | QSE_XLI_SCM_KEYNODUP, 0, 0      }  },
-		{ QSE_T("server-default.dir-access.prefix"),          { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYALIAS, 1, 1      }  },
-		{ QSE_T("server-default.dir-access.suffix"),          { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYALIAS, 1, 1      }  },
-		{ QSE_T("server-default.dir-access.name"),            { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYALIAS, 1, 1      }  },
-		{ QSE_T("server-default.dir-access.other"),           { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
-		{ QSE_T("server-default.file-access"),                { QSE_XLI_SCM_VALLIST | QSE_XLI_SCM_KEYNODUP, 0, 0      }  },
-		{ QSE_T("server-default.file-access.prefix"),         { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYALIAS, 1, 1      }  },
-		{ QSE_T("server-default.file-access.suffix"),         { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYALIAS, 1, 1      }  },
-		{ QSE_T("server-default.file-access.name"),           { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYALIAS, 1, 1      }  },
-		{ QSE_T("server-default.file-access.other"),          { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
-		{ QSE_T("server-default.dir-head"),                   { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
-		{ QSE_T("server-default.dir-foot"),                   { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
-		{ QSE_T("server-default.error-head"),                 { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
-		{ QSE_T("server-default.error-foot"),                 { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
-		{ QSE_T("server-default.proxy"),                      { QSE_XLI_SCM_VALLIST | QSE_XLI_SCM_KEYNODUP, 0, 0      }  },
-		{ QSE_T("server-default.proxy.http"),                 { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
-		{ QSE_T("server-default.proxy.connect"),              { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
-		{ QSE_T("server-default.proxy.pseudonym"),            { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
-		{ QSE_T("server-default.proxy.dns-enabled"),          { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
-		{ QSE_T("server-default.proxy.dns-server"),           { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
-		{ QSE_T("server-default.proxy.dns-timeout"),          { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
-		{ QSE_T("server-default.proxy.dns-retries"),          { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
-		{ QSE_T("server-default.proxy.urs-enabled"),          { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
-		{ QSE_T("server-default.proxy.urs-server"),           { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
-		{ QSE_T("server-default.proxy.urs-timeout"),          { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
-		{ QSE_T("server-default.proxy.urs-retries"),          { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
+		{ QSE_T("server-default"),                                   { QSE_XLI_SCM_VALLIST | QSE_XLI_SCM_KEYNODUP, 0, 0      }  },
+		{ QSE_T("server-default.ssl-cert-file"),                     { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
+		{ QSE_T("server-default.ssl-key-file"),                      { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
+		{ QSE_T("server-default.root"),                              { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
+		{ QSE_T("server-default.realm"),                             { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 0, 1      }  },
+		{ QSE_T("server-default.auth"),                              { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 0, 1      }  },
+		{ QSE_T("server-default.index"),                             { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 0xFFFF }  },
+		{ QSE_T("server-default.auth-rule"),                         { QSE_XLI_SCM_VALLIST | QSE_XLI_SCM_KEYNODUP, 0, 0      }  },
+		{ QSE_T("server-default.auth-rule.prefix"),                  { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYALIAS, 1, 1      }  },
+		{ QSE_T("server-default.auth-rule.suffix"),                  { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYALIAS, 1, 1      }  },
+		{ QSE_T("server-default.auth-rule.name"),                    { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYALIAS, 1, 1      }  },
+		{ QSE_T("server-default.auth-rule.other"),                   { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
+		{ QSE_T("server-default.cgi"),                               { QSE_XLI_SCM_VALLIST | QSE_XLI_SCM_KEYNODUP, 0, 0      }  },
+		{ QSE_T("server-default.cgi.prefix"),                        { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYALIAS, 0, 2      }  },
+		{ QSE_T("server-default.cgi.suffix"),                        { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYALIAS, 0, 2      }  },
+		{ QSE_T("server-default.cgi.name"),                          { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYALIAS, 0, 2      }  },
+		{ QSE_T("server-default.mime"),                              { QSE_XLI_SCM_VALLIST | QSE_XLI_SCM_KEYNODUP, 0, 0      }  },
+		{ QSE_T("server-default.mime.prefix"),                       { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYALIAS, 1, 1      }  },
+		{ QSE_T("server-default.mime.suffix"),                       { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYALIAS, 1, 1      }  },
+		{ QSE_T("server-default.mime.name"),                         { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYALIAS, 1, 1      }  },
+		{ QSE_T("server-default.mime.other"),                        { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
+		{ QSE_T("server-default.dir-access"),                        { QSE_XLI_SCM_VALLIST | QSE_XLI_SCM_KEYNODUP, 0, 0      }  },
+		{ QSE_T("server-default.dir-access.prefix"),                 { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYALIAS, 1, 1      }  },
+		{ QSE_T("server-default.dir-access.suffix"),                 { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYALIAS, 1, 1      }  },
+		{ QSE_T("server-default.dir-access.name"),                   { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYALIAS, 1, 1      }  },
+		{ QSE_T("server-default.dir-access.other"),                  { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
+		{ QSE_T("server-default.file-access"),                       { QSE_XLI_SCM_VALLIST | QSE_XLI_SCM_KEYNODUP, 0, 0      }  },
+		{ QSE_T("server-default.file-access.prefix"),                { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYALIAS, 1, 1      }  },
+		{ QSE_T("server-default.file-access.suffix"),                { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYALIAS, 1, 1      }  },
+		{ QSE_T("server-default.file-access.name"),                  { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYALIAS, 1, 1      }  },
+		{ QSE_T("server-default.file-access.other"),                 { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
+		{ QSE_T("server-default.dir-head"),                          { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
+		{ QSE_T("server-default.dir-foot"),                          { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
+		{ QSE_T("server-default.error-head"),                        { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
+		{ QSE_T("server-default.error-foot"),                        { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
+		{ QSE_T("server-default.proxy"),                             { QSE_XLI_SCM_VALLIST | QSE_XLI_SCM_KEYNODUP, 0, 0      }  },
+		{ QSE_T("server-default.proxy.http"),                        { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
+		{ QSE_T("server-default.proxy.connect"),                     { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
+		{ QSE_T("server-default.proxy.pseudonym"),                   { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
+		{ QSE_T("server-default.proxy.dns-enabled"),                 { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
+		{ QSE_T("server-default.proxy.dns-server"),                  { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
+		{ QSE_T("server-default.proxy.dns-timeout"),                 { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
+		{ QSE_T("server-default.proxy.dns-retries"),                 { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
+		{ QSE_T("server-default.proxy.urs-enabled"),                 { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
+		{ QSE_T("server-default.proxy.urs-server"),                  { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
+		{ QSE_T("server-default.proxy.urs-timeout"),                 { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
+		{ QSE_T("server-default.proxy.urs-retries"),                 { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
+		{ QSE_T("server-default.proxy.urs-prerewrite-hook"),         { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
 
-		{ QSE_T("server"),                                    { QSE_XLI_SCM_VALLIST,                        0, 0      }  },
-		{ QSE_T("server.bind"),                               { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
-		{ QSE_T("server.ssl"),                                { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
-		{ QSE_T("server.ssl-cert-file"),                      { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
-		{ QSE_T("server.ssl-key-file"),                       { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
-		{ QSE_T("server.host"),                               { QSE_XLI_SCM_VALLIST | QSE_XLI_SCM_KEYALIAS, 0, 0      }  },
-		{ QSE_T("server.host.location"),                      { QSE_XLI_SCM_VALLIST | QSE_XLI_SCM_KEYALIAS, 0, 0      }  },
-		{ QSE_T("server.host.location.root"),                 { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 0, 1      }  },
-		{ QSE_T("server.host.location.realm"),                { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 0, 1      }  },
-		{ QSE_T("server.host.location.auth"),                 { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
-		{ QSE_T("server.host.location.index"),                { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 0xFFFF }  },
-		{ QSE_T("server.host.location.auth-rule"),            { QSE_XLI_SCM_VALLIST | QSE_XLI_SCM_KEYNODUP, 0, 0      }  },
-		{ QSE_T("server.host.location.auth-rule.prefix"),     { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYALIAS, 1, 1      }  },
-		{ QSE_T("server.host.location.auth-rule.suffix"),     { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYALIAS, 1, 1      }  },
-		{ QSE_T("server.host.location.auth-rule.name"),       { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYALIAS, 1, 1      }  },
-		{ QSE_T("server.host.location.auth-rule.other"),      { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
-		{ QSE_T("server.host.location.cgi"),                  { QSE_XLI_SCM_VALLIST | QSE_XLI_SCM_KEYNODUP, 0, 0      }  },
-		{ QSE_T("server.host.location.cgi.prefix"),           { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYALIAS, 0, 2      }  },
-		{ QSE_T("server.host.location.cgi.suffix"),           { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYALIAS, 0, 2      }  },
-		{ QSE_T("server.host.location.cgi.name"),             { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYALIAS, 0, 2      }  },
-		{ QSE_T("server.host.location.mime"),                 { QSE_XLI_SCM_VALLIST | QSE_XLI_SCM_KEYNODUP, 0, 0      }  },
-		{ QSE_T("server.host.location.mime.prefix"),          { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYALIAS, 1, 1      }  },
-		{ QSE_T("server.host.location.mime.suffix"),          { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYALIAS, 1, 1      }  },
-		{ QSE_T("server.host.location.mime.name"),            { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYALIAS, 1, 1      }  },
-		{ QSE_T("server.host.location.mime.other"),           { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
-		{ QSE_T("server.host.location.dir-access"),           { QSE_XLI_SCM_VALLIST | QSE_XLI_SCM_KEYNODUP, 0, 0      }  },
-		{ QSE_T("server.host.location.dir-access.prefix"),    { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYALIAS, 1, 1      }  },
-		{ QSE_T("server.host.location.dir-access.suffix"),    { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYALIAS, 1, 1      }  },
-		{ QSE_T("server.host.location.dir-access.name"),      { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYALIAS, 1, 1      }  },
-		{ QSE_T("server.host.location.dir-access.other"),     { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
-		{ QSE_T("server.host.location.file-access"),          { QSE_XLI_SCM_VALLIST | QSE_XLI_SCM_KEYNODUP, 0, 0      }  },
-		{ QSE_T("server.host.location.file-access.prefix"),   { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYALIAS, 1, 1      }  },
-		{ QSE_T("server.host.location.file-access.suffix"),   { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYALIAS, 1, 1      }  },
-		{ QSE_T("server.host.location.file-access.name"),     { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYALIAS, 1, 1      }  },
-		{ QSE_T("server.host.location.file-access.other"),    { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
-		{ QSE_T("server.host.location.dir-head"),             { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
-		{ QSE_T("server.host.location.dir-foot"),             { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
-		{ QSE_T("server.host.location.error-head"),           { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
-		{ QSE_T("server.host.location.error-foot"),           { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
-		{ QSE_T("server.host.location.proxy"),                { QSE_XLI_SCM_VALLIST | QSE_XLI_SCM_KEYNODUP, 0, 0      }  },
-		{ QSE_T("server.host.location.proxy.http"),           { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
-		{ QSE_T("server.host.location.proxy.connect"),        { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
-		{ QSE_T("server.host.location.proxy.pseudonym"),      { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
-		{ QSE_T("server.host.location.proxy.dns-enabled"),    { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
-		{ QSE_T("server.host.location.proxy.dns-server"),     { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
-		{ QSE_T("server.host.location.proxy.dns-timeout"),    { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
-		{ QSE_T("server.host.location.proxy.dns-retries"),    { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
-		{ QSE_T("server.host.location.proxy.urs-enabled"),    { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
-		{ QSE_T("server.host.location.proxy.urs-server"),     { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
-		{ QSE_T("server.host.location.proxy.urs-timeout"),    { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
-		{ QSE_T("server.host.location.proxy.urs-retries"),    { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
-		{ QSE_T("server.host.location.proxy.urs-prerewrite"), { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  }
+		{ QSE_T("server"),                                           { QSE_XLI_SCM_VALLIST,                        0, 0      }  },
+		{ QSE_T("server.bind"),                                      { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
+		{ QSE_T("server.ssl"),                                       { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
+		{ QSE_T("server.ssl-cert-file"),                             { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
+		{ QSE_T("server.ssl-key-file"),                              { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
+		{ QSE_T("server.host"),                                      { QSE_XLI_SCM_VALLIST | QSE_XLI_SCM_KEYALIAS, 0, 0      }  },
+		{ QSE_T("server.host.location"),                             { QSE_XLI_SCM_VALLIST | QSE_XLI_SCM_KEYALIAS, 0, 0      }  },
+		{ QSE_T("server.host.location.root"),                        { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 0, 1      }  },
+		{ QSE_T("server.host.location.realm"),                       { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 0, 1      }  },
+		{ QSE_T("server.host.location.auth"),                        { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
+		{ QSE_T("server.host.location.index"),                       { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 0xFFFF }  },
+		{ QSE_T("server.host.location.auth-rule"),                   { QSE_XLI_SCM_VALLIST | QSE_XLI_SCM_KEYNODUP, 0, 0      }  },
+		{ QSE_T("server.host.location.auth-rule.prefix"),            { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYALIAS, 1, 1      }  },
+		{ QSE_T("server.host.location.auth-rule.suffix"),            { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYALIAS, 1, 1      }  },
+		{ QSE_T("server.host.location.auth-rule.name"),              { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYALIAS, 1, 1      }  },
+		{ QSE_T("server.host.location.auth-rule.other"),             { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
+		{ QSE_T("server.host.location.cgi"),                         { QSE_XLI_SCM_VALLIST | QSE_XLI_SCM_KEYNODUP, 0, 0      }  },
+		{ QSE_T("server.host.location.cgi.prefix"),                  { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYALIAS, 0, 2      }  },
+		{ QSE_T("server.host.location.cgi.suffix"),                  { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYALIAS, 0, 2      }  },
+		{ QSE_T("server.host.location.cgi.name"),                    { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYALIAS, 0, 2      }  },
+		{ QSE_T("server.host.location.mime"),                        { QSE_XLI_SCM_VALLIST | QSE_XLI_SCM_KEYNODUP, 0, 0      }  },
+		{ QSE_T("server.host.location.mime.prefix"),                 { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYALIAS, 1, 1      }  },
+		{ QSE_T("server.host.location.mime.suffix"),                 { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYALIAS, 1, 1      }  },
+		{ QSE_T("server.host.location.mime.name"),                   { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYALIAS, 1, 1      }  },
+		{ QSE_T("server.host.location.mime.other"),                  { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
+		{ QSE_T("server.host.location.dir-access"),                  { QSE_XLI_SCM_VALLIST | QSE_XLI_SCM_KEYNODUP, 0, 0      }  },
+		{ QSE_T("server.host.location.dir-access.prefix"),           { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYALIAS, 1, 1      }  },
+		{ QSE_T("server.host.location.dir-access.suffix"),           { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYALIAS, 1, 1      }  },
+		{ QSE_T("server.host.location.dir-access.name"),             { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYALIAS, 1, 1      }  },
+		{ QSE_T("server.host.location.dir-access.other"),            { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
+		{ QSE_T("server.host.location.file-access"),                 { QSE_XLI_SCM_VALLIST | QSE_XLI_SCM_KEYNODUP, 0, 0      }  },
+		{ QSE_T("server.host.location.file-access.prefix"),          { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYALIAS, 1, 1      }  },
+		{ QSE_T("server.host.location.file-access.suffix"),          { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYALIAS, 1, 1      }  },
+		{ QSE_T("server.host.location.file-access.name"),            { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYALIAS, 1, 1      }  },
+		{ QSE_T("server.host.location.file-access.other"),           { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
+		{ QSE_T("server.host.location.dir-head"),                    { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
+		{ QSE_T("server.host.location.dir-foot"),                    { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
+		{ QSE_T("server.host.location.error-head"),                  { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
+		{ QSE_T("server.host.location.error-foot"),                  { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
+		{ QSE_T("server.host.location.proxy"),                       { QSE_XLI_SCM_VALLIST | QSE_XLI_SCM_KEYNODUP, 0, 0      }  },
+		{ QSE_T("server.host.location.proxy.http"),                  { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
+		{ QSE_T("server.host.location.proxy.connect"),               { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
+		{ QSE_T("server.host.location.proxy.pseudonym"),             { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
+		{ QSE_T("server.host.location.proxy.dns-enabled"),           { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
+		{ QSE_T("server.host.location.proxy.dns-server"),            { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
+		{ QSE_T("server.host.location.proxy.dns-timeout"),           { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
+		{ QSE_T("server.host.location.proxy.dns-retries"),           { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
+		{ QSE_T("server.host.location.proxy.urs-enabled"),           { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
+		{ QSE_T("server.host.location.proxy.urs-server"),            { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
+		{ QSE_T("server.host.location.proxy.urs-timeout"),           { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
+		{ QSE_T("server.host.location.proxy.urs-retries"),           { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
+		{ QSE_T("server.host.location.proxy.urs-prerewrite-hook"),   { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  }
 	};
 
 
