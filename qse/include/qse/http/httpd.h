@@ -89,15 +89,55 @@ enum qse_httpd_trait_t
 };
 typedef enum qse_httpd_trait_t qse_httpd_trait_t;
 
+#if !defined(QSE_HTTPD_DEFAULT_MODPREFIX)
+#	if defined(_WIN32)
+#		define QSE_HTTPD_DEFAULT_MODPREFIX "qsehttpd-"
+#	elif defined(__OS2__)
+#		define QSE_HTTPD_DEFAULT_MODPREFIX "htd-"
+#	elif defined(__DOS__)
+#		define QSE_HTTPD_DEFAULT_MODPREFIX "htd-"
+#	else
+#		define QSE_HTTPD_DEFAULT_MODPREFIX "libqsehttpd-"
+#	endif
+#endif
+
+#if !defined(QSE_HTTPD_DEFAULT_MODPOSTFIX)
+#	define QSE_HTTPD_DEFAULT_MODPOSTFIX ""
+#endif
 
 typedef struct qse_httpd_mod_t qse_httpd_mod_t;
+
+typedef int (*qse_httpd_mod_load_t) (
+	qse_httpd_mod_t* mod
+);
+
+typedef int (*qse_httpd_mod_unload_t) (
+	qse_httpd_mod_t* mod
+);
+
+typedef int (*qse_httpd_mod_urs_prerewrite_t) (
+	qse_httpd_mod_t*    mod,
+	qse_httpd_client_t* client,
+	qse_htre_t*         req,
+	const qse_mchar_t*  host,
+	qse_mchar_t**       url
+);
+
 struct qse_httpd_mod_t
 {
-	/* set before mod.open() */
-	qse_char_t* name;
+	/* set before mod.open(). 
+	 * mod.open() and other callbacks can refer to these. */
+	qse_httpd_t* httpd;
+	qse_char_t* name; /* portable module name */
+	qse_char_t* fullname; /* name to use when loading module from the system. */
 
-	/* manipulatable by the implementer */
-	void* handle;
+	/* mod.open() may set this */
+	void* handle; /* mod.open() can set this */
+
+	/* module's entry point may set these items */
+	void* ctx; 
+	qse_httpd_mod_unload_t unload;
+	qse_httpd_mod_urs_prerewrite_t urs_prerewrite;
 
 	/* private */
 	qse_httpd_mod_t* next;
@@ -686,6 +726,7 @@ struct qse_httpd_rsrc_proxy_t
 
 	qse_httpd_natr_t dns_server;
 	qse_httpd_natr_t urs_server;
+	qse_httpd_mod_t* urs_prerewrite_mod;
 
 	/* optional pseudonym to use for Via: */
 	const qse_mchar_t* pseudonym;

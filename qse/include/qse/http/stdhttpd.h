@@ -64,7 +64,7 @@ struct qse_httpd_serverstd_root_t
 			const qse_mchar_t* mime;
 		} text;
 
-		struct qse_httpd_rsrc_proxy_t proxy;
+		qse_httpd_rsrc_proxy_t proxy;
 
 		struct
 		{

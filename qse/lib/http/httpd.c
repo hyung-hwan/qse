@@ -217,7 +217,6 @@ int qse_httpd_setopt (qse_httpd_t* httpd, qse_httpd_opt_t id, const void* value)
 			httpd->opt.rcb = *(qse_httpd_rcb_t*)value;
 			return 0;
 
-		
 	}
 
 	httpd->errnum = QSE_HTTPD_EINVAL;
@@ -1900,7 +1899,7 @@ static void unload_all_modules (qse_httpd_t* httpd)
 		mod = httpd->modlist;
 		httpd->modlist = mod->next;
 
-/* call fini */
+		if (mod->unload) mod->unload (mod);
 		httpd->opt.scb.mod.close (httpd, mod);
 		qse_httpd_freemem (httpd, mod);
 	}
@@ -1909,29 +1908,87 @@ static void unload_all_modules (qse_httpd_t* httpd)
 int qse_httpd_loadmod (qse_httpd_t* httpd, const qse_char_t* name)
 {
 	qse_httpd_mod_t* mod;
-	qse_size_t name_len;
+	qse_size_t name_len, prefix_len, postfix_len, fullname_len;
+	const qse_char_t* prefix, * postfix;
+	qse_char_t* entry_point_name;
+	qse_httpd_mod_load_t load;
 
 /* TODO: no singly linked list speed up */
+
 	name_len = qse_strlen(name);
 
-	mod = qse_httpd_allocmem (httpd, QSE_SIZEOF(*mod) + name_len + 1);
+	if (httpd->opt.mod[0].len > 0)
+	{
+		prefix = httpd->opt.mod[0].ptr;
+		prefix_len = httpd->opt.mod[0].len;
+	}
+	else
+	{
+		prefix = QSE_T(QSE_HTTPD_DEFAULT_MODPREFIX);
+		prefix_len = qse_strlen(prefix);
+	}
+
+	if (httpd->opt.mod[1].len > 0)
+	{
+		postfix = httpd->opt.mod[1].ptr;
+		postfix_len = httpd->opt.mod[1].len;
+	}
+	else
+	{
+		postfix = QSE_T(QSE_HTTPD_DEFAULT_MODPOSTFIX);
+		postfix_len = qse_strlen(postfix);
+	}
+
+	/* 
+	 * +15: length of _qse_httpd_mod_
+	 * +2: _\0
+	 */
+	fullname_len = prefix_len + name_len + postfix_len;
+	mod = qse_httpd_allocmem (httpd, QSE_SIZEOF(*mod) + (name_len + 1 + fullname_len + 1 + 15 + name_len + 2) * QSE_SIZEOF(qse_char_t));
 	if (mod == QSE_NULL) return -1;
 
 	QSE_MEMSET (mod, 0, QSE_SIZEOF(*mod));
-	mod->name = mod + 1;
-	qse_strcpy (mod->name, name);
 
+	mod->name = (qse_char_t*)(mod + 1);
+	mod->fullname = mod->name + name_len + 1;
+	entry_point_name = mod->fullname + fullname_len + 1;
+	qse_strcpy (mod->name, name);
+	qse_strjoin (mod->fullname, prefix, name, postfix, QSE_NULL);
+	qse_strjoin (entry_point_name, QSE_T("_qse_httpd_mod_"), name, QSE_NULL);
+
+printf ("%ls %ls %ls\n", mod->name, mod->fullname, entry_point_name);
 	if (httpd->opt.scb.mod.open (httpd, mod) <= -1) 
 	{
+printf ("FAIL => %ls %ls %ls\n", mod->name, mod->fullname, entry_point_name);
 		qse_httpd_freemem (httpd, mod);
 		return -1;
 	}
 
-/* TODO: find init and execute it. if it fails, unload it. */
+printf ("OK => %ls %ls %ls\n", mod->name, mod->fullname, entry_point_name);
+	/* attempt qse_httpd_mod_xxx */
+	load = httpd->opt.scb.mod.symbol (httpd, mod, &entry_point_name[1]);
+	if (!load)
+	{
+		/* attempt _qse_awk_mod_xxx */
+		load = httpd->opt.scb.mod.symbol (httpd, mod, &entry_point_name[0]);
+		if (!load)
+		{
+			/* attempt qse_awk_mod_xxx_ */
+			entry_point_name[15 + name_len] = QSE_T('_');
+			entry_point_name[15 + name_len + 1] = QSE_T('\0');
+			load = httpd->opt.scb.mod.symbol (httpd, mod, &entry_point_name[1]);
+		}
+	}
+
+	if (load == QSE_NULL || load (mod) <= -1)
+	{
+		httpd->opt.scb.mod.close (httpd, mod);
+		qse_httpd_freemem (httpd, mod);
+		return -1;
+	}
 
 	mod->next = httpd->modlist;
 	httpd->modlist = mod;
-
 	return 0;
 }
 
