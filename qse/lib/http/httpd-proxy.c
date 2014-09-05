@@ -1913,7 +1913,16 @@ static void on_peer_name_resolved (qse_httpd_t* httpd, const qse_mchar_t* name, 
 		proxy->flags |= PROXY_INIT_FAILED;
 	}
 
-printf ("XXXXXXXXXXXXXXXXXXXXXXXXXX PEER NAME RESOLVED.....\n");
+
+{
+if (proxy->flags & PROXY_PEER_NAME_RESOLVED)
+{
+qse_mchar_t xxxx[128];
+qse_nwadtombs (&proxy->peer.nwad, xxxx, 128, QSE_NWADTOMBS_ALL);
+printf ("XXXXXXXXXXXXXXXXXXXXXXXXXX PEER NAME RESOLVED.....TO [%s]\n", xxxx);
+}
+}
+
 }
 
 static void on_url_rewritten (qse_httpd_t* httpd, const qse_mchar_t* url, const qse_mchar_t* new_url, void* ctx)
@@ -2023,9 +2032,18 @@ printf ("XXXXXXXXXXXXXXXXXXXXXXXXXX URL REWRITTEN TO [%s].....\n", new_url);
 							goto fail;
 						}
 
-						proxy->flags |= PROXY_RESOLVE_PEER_NAME | PROXY_OUTBAND_PEER_NAME;
-						proxy->peer_name = tmp;
-						adjust_peer_name_and_port (proxy);
+						if (qse_mbstonwad (tmp, &nwad) <= -1)
+						{
+							proxy->flags |= PROXY_RESOLVE_PEER_NAME | PROXY_OUTBAND_PEER_NAME;
+							proxy->peer_name = tmp;
+							adjust_peer_name_and_port (proxy);
+						}
+						else
+						{
+							proxy->peer.nwad = nwad;
+							proxy->flags |= PROXY_URL_REWRITTEN;
+							proxy->flags &= ~PROXY_RESOLVE_PEER_NAME; /* skip dns */
+						}
 					}
 				}
 
