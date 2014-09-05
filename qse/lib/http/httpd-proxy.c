@@ -64,8 +64,8 @@ struct task_proxy_t
 
 	qse_httpd_task_t* task;
 	qse_mchar_t* url_to_rewrite;
-	qse_size_t qpath_pos_in_reqfwdbuf;
-	qse_size_t qpath_len_in_reqfwdbuf;
+	qse_size_t qpath_pos_in_reqfwdbuf; /* position where qpath begins */
+	qse_size_t qpath_len_in_reqfwdbuf; /* length of qpath + qparams */
 
 	qse_httpd_natr_t dns_server;
 	qse_httpd_natr_t urs_server;
@@ -1038,13 +1038,15 @@ printf (">>>>>>>>>>>>>>>>>>>>>>>> [%s] <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n", proxy
 		
 		proxy->qpath_pos_in_reqfwdbuf = QSE_STR_LEN(proxy->reqfwdbuf);
 		if (qse_mbs_cat (proxy->reqfwdbuf, qse_htre_getqpath(arg->req)) == (qse_size_t)-1) goto nomem_oops;
-		proxy->qpath_len_in_reqfwdbuf = QSE_STR_LEN(proxy->reqfwdbuf) - proxy->qpath_pos_in_reqfwdbuf;
 
 		if (qse_htre_getqparam(arg->req))
 		{
 			if (qse_mbs_cat (proxy->reqfwdbuf, QSE_MT("?")) == (qse_size_t)-1 ||
 			    qse_mbs_cat (proxy->reqfwdbuf, qse_htre_getqparam(arg->req)) == (qse_size_t)-1) goto nomem_oops;
 		}
+
+		/* length must include the parameters also */
+		proxy->qpath_len_in_reqfwdbuf = QSE_STR_LEN(proxy->reqfwdbuf) - proxy->qpath_pos_in_reqfwdbuf;
 
 #if 0
 {
@@ -2043,6 +2045,11 @@ printf ("XXXXXXXXXXXXXXXXXXXXXXXXXX URL REWRITTEN TO [%s].....\n", new_url);
 							proxy->peer.nwad = nwad;
 							proxy->flags |= PROXY_URL_REWRITTEN;
 							proxy->flags &= ~PROXY_RESOLVE_PEER_NAME; /* skip dns */
+{
+qse_mchar_t xxxx[128];
+qse_nwadtombs (&proxy->peer.nwad, xxxx, 128, QSE_NWADTOMBS_ALL);
+printf ("XXXXXXXXXXXXXXXXXXXXXXXXXX PEER NAME RESOLVED.....TO [%s] IN URLREWRITING NEW_URL[%s] %d %d\n", xxxx, new_url, (int)proxy->qpath_pos_in_reqfwdbuf, (int)proxy->qpath_len_in_reqfwdbuf);
+}
 						}
 					}
 				}
