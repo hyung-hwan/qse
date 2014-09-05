@@ -1,8 +1,16 @@
 AUTOMAKE_OPTIONS = nostdinc
 
-AM_CPPFLAGS = \
+CPPFLAGS_ALL_COMMON = \
 	-I$(top_builddir)/include \
 	-I$(top_srcdir)/include
+
+if WIN32
+# you must adjust the value of DEFAULT_MODPOSTFIX according 
+# to the first number in -version-info below
+CPPFLAGS_HTTPD_MOD = -DQSE_HTTPD_DEFAULT_MODPREFIX=\"libqsehttpd-\" -DQSE_HTTPD_DEFAULT_MODPOSTFIX=\"-1\"
+else
+CPPFLAGS_HTTPD_MOD = -DQSE_HTTPD_DEFAULT_MODPREFIX=\"$(libdir)/libqsehttpd-\" -DQSE_HTTPD_DEFAULT_MODPOSTFIX=\"\"
+endif
 
 lib_LTLIBRARIES = libqsehttp.la
 libqsehttp_la_SOURCES = \
@@ -24,6 +32,7 @@ libqsehttp_la_SOURCES = \
 	httpd-text.c \
 	upxd.c
 
-libqsehttp_la_LDFLAGS = -L../cmn -version-info 1:0:0 -no-undefined
-libqsehttp_la_LIBADD = -lqsecmn $(SOCKET_LIBS) $(SENDFILE_LIBS) $(SSL_LIBS) 
+libqsehttp_la_CPPFLAGS = $(CPPFLAGS_ALL_COMMON) $(CPPFLAGS_HTTPD_MOD) $(LTDLINCL)
+libqsehttp_la_LDFLAGS = -L../cmn -version-info 1:0:0 -no-undefined 
+libqsehttp_la_LIBADD = -lqsecmn $(SOCKET_LIBS) $(SENDFILE_LIBS) $(SSL_LIBS) $(LIBLTDL)
 

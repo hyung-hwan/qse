@@ -46,6 +46,10 @@
 #	define EPOCH_DIFF_YEARS (QSE_EPOCH_YEAR-QSE_EPOCH_YEAR_WIN)
 #	define EPOCH_DIFF_DAYS  ((qse_long_t)EPOCH_DIFF_YEARS*365+EPOCH_DIFF_YEARS/4-3)
 #	define EPOCH_DIFF_SECS  ((qse_long_t)EPOCH_DIFF_DAYS*24*60*60)
+#	if defined(QSE_HAVE_CONFIG_H)
+#		include <ltdl.h>
+#			define USE_LTDL
+#	endif
 
 #elif defined(__OS2__)
 #	include <types.h>
@@ -91,6 +95,10 @@
 #	if defined(HAVE_NETINET_SCTP_H)
 #		include <netinet/sctp.h>
 #	endif
+
+#	include <unistd.h>
+#	include <ltdl.h>
+#	define USE_LTDL
 #endif
 
 #if defined(HAVE_SSL)
@@ -635,6 +643,10 @@ static void cleanup_standard_httpd (qse_httpd_t* httpd)
 #if defined(HAVE_SSL)
 	if (xtn->ssl_ctx) fini_xtn_ssl (xtn);
 #endif
+
+#if defined(USE_LTDL)
+	lt_dlexit ();
+#endif
 }
 
 qse_httpd_t* qse_httpd_openstd (qse_size_t xtnsize)
@@ -651,6 +663,18 @@ qse_httpd_t* qse_httpd_openstdwithmmgr (qse_mmgr_t* mmgr, qse_size_t xtnsize)
 	if (httpd == QSE_NULL) return QSE_NULL;
 
 	xtn = (httpd_xtn_t*)qse_httpd_getxtn (httpd);
+
+#if defined(USE_LTDL)
+	/* lt_dlinit() can be called more than once and 
+	 * lt_dlexit() shuts down libltdl if it's called as many times as
+	 * corresponding lt_dlinit(). so it's safe to call lt_dlinit()
+	 * and lt_dlexit() at the library level. */
+	if (lt_dlinit () != 0)
+	{
+		qse_httpd_close (httpd);
+		return QSE_NULL;
+	}
+#endif
 
 	set_httpd_callbacks (httpd);
 

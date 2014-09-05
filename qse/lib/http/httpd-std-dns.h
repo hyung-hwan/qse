@@ -293,6 +293,9 @@ static int dns_open (qse_httpd_t* httpd, qse_httpd_dns_t* dns)
 
 	httpd_xtn = qse_httpd_getxtn (httpd);
 
+	dns->handle[0].i = QSE_INVALID_SCKHND;
+	dns->handle[1].i = QSE_INVALID_SCKHND;
+
 	dc = (dns_ctx_t*) qse_httpd_callocmem (httpd, QSE_SIZEOF(dns_ctx_t));
 	if (dc == NULL) goto oops;
 
@@ -383,6 +386,9 @@ static int dns_open (qse_httpd_t* httpd, qse_httpd_dns_t* dns)
 	}
 
 	dns->handle_count = 2;
+	if (qse_isvalidsckhnd(dns->handle[0].i)) dns->handle_mask |= (1 << 0);
+	if (qse_isvalidsckhnd(dns->handle[1].i)) dns->handle_mask |= (1 << 1);
+
 	dns->ctx = dc;
 
 	return 0;
@@ -438,11 +444,8 @@ static void dns_close (qse_httpd_t* httpd, qse_httpd_dns_t* dns)
 		}
 	}
 
-	for (i = 0; i < dns->handle_count; i++) 
-	{
-		if (qse_isvalidsckhnd(dns->handle[i].i))
-			qse_closesckhnd (dns->handle[i].i);
-	}
+	if (qse_isvalidsckhnd(dns->handle[0].i)) qse_closesckhnd (dns->handle[0].i);
+	if (qse_isvalidsckhnd(dns->handle[1].i)) qse_closesckhnd (dns->handle[1].i);
 	qse_httpd_freemem (httpd, dns->ctx);
 }
 

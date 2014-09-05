@@ -99,10 +99,14 @@ am__installdirs = "$(DESTDIR)$(libdir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
 am__DEPENDENCIES_1 =
 libqsehttp_la_DEPENDENCIES = $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
-am_libqsehttp_la_OBJECTS = http.lo htre.lo htrd.lo httpd.lo \
-	httpd-cgi.lo httpd-dir.lo httpd-file.lo httpd-proxy.lo \
-	httpd-std.lo httpd-task.lo httpd-text.lo upxd.lo
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_libqsehttp_la_OBJECTS = libqsehttp_la-http.lo libqsehttp_la-htre.lo \
+	libqsehttp_la-htrd.lo libqsehttp_la-httpd.lo \
+	libqsehttp_la-httpd-cgi.lo libqsehttp_la-httpd-dir.lo \
+	libqsehttp_la-httpd-file.lo libqsehttp_la-httpd-proxy.lo \
+	libqsehttp_la-httpd-std.lo libqsehttp_la-httpd-task.lo \
+	libqsehttp_la-httpd-text.lo libqsehttp_la-upxd.lo
 libqsehttp_la_OBJECTS = $(am_libqsehttp_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
@@ -322,10 +326,15 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AUTOMAKE_OPTIONS = nostdinc
-AM_CPPFLAGS = \
+CPPFLAGS_ALL_COMMON = \
 	-I$(top_builddir)/include \
 	-I$(top_srcdir)/include
 
+@WIN32_FALSE@CPPFLAGS_HTTPD_MOD = -DQSE_HTTPD_DEFAULT_MODPREFIX=\"$(libdir)/libqsehttpd-\" -DQSE_HTTPD_DEFAULT_MODPOSTFIX=\"\"
+
+# you must adjust the value of DEFAULT_MODPOSTFIX according 
+# to the first number in -version-info below
+@WIN32_TRUE@CPPFLAGS_HTTPD_MOD = -DQSE_HTTPD_DEFAULT_MODPREFIX=\"libqsehttpd-\" -DQSE_HTTPD_DEFAULT_MODPOSTFIX=\"-1\"
 lib_LTLIBRARIES = libqsehttp.la
 libqsehttp_la_SOURCES = \
 	httpd.h \
@@ -346,8 +355,9 @@ libqsehttp_la_SOURCES = \
 	httpd-text.c \
 	upxd.c
 
-libqsehttp_la_LDFLAGS = -L../cmn -version-info 1:0:0 -no-undefined
-libqsehttp_la_LIBADD = -lqsecmn $(SOCKET_LIBS) $(SENDFILE_LIBS) $(SSL_LIBS) 
+libqsehttp_la_CPPFLAGS = $(CPPFLAGS_ALL_COMMON) $(CPPFLAGS_HTTPD_MOD) $(LTDLINCL)
+libqsehttp_la_LDFLAGS = -L../cmn -version-info 1:0:0 -no-undefined 
+libqsehttp_la_LIBADD = -lqsecmn $(SOCKET_LIBS) $(SENDFILE_LIBS) $(SSL_LIBS) $(LIBLTDL)
 all: all-am
 
 .SUFFIXES:
@@ -423,18 +433,18 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/htrd.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/htre.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/http.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/httpd-cgi.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/httpd-dir.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/httpd-file.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/httpd-proxy.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/httpd-std.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/httpd-task.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/httpd-text.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/httpd.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/upxd.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqsehttp_la-htrd.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqsehttp_la-htre.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqsehttp_la-http.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqsehttp_la-httpd-cgi.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqsehttp_la-httpd-dir.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqsehttp_la-httpd-file.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqsehttp_la-httpd-proxy.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqsehttp_la-httpd-std.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqsehttp_la-httpd-task.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqsehttp_la-httpd-text.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqsehttp_la-httpd.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqsehttp_la-upxd.Plo@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
@@ -456,6 +466,90 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LTCOMPILE) -c -o $@ $<
+
+libqsehttp_la-http.lo: http.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libqsehttp_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libqsehttp_la-http.lo -MD -MP -MF $(DEPDIR)/libqsehttp_la-http.Tpo -c -o libqsehttp_la-http.lo `test -f 'http.c' || echo '$(srcdir)/'`http.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libqsehttp_la-http.Tpo $(DEPDIR)/libqsehttp_la-http.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='http.c' object='libqsehttp_la-http.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libqsehttp_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libqsehttp_la-http.lo `test -f 'http.c' || echo '$(srcdir)/'`http.c
+
+libqsehttp_la-htre.lo: htre.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libqsehttp_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libqsehttp_la-htre.lo -MD -MP -MF $(DEPDIR)/libqsehttp_la-htre.Tpo -c -o libqsehttp_la-htre.lo `test -f 'htre.c' || echo '$(srcdir)/'`htre.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libqsehttp_la-htre.Tpo $(DEPDIR)/libqsehttp_la-htre.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='htre.c' object='libqsehttp_la-htre.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libqsehttp_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libqsehttp_la-htre.lo `test -f 'htre.c' || echo '$(srcdir)/'`htre.c
+
+libqsehttp_la-htrd.lo: htrd.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libqsehttp_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libqsehttp_la-htrd.lo -MD -MP -MF $(DEPDIR)/libqsehttp_la-htrd.Tpo -c -o libqsehttp_la-htrd.lo `test -f 'htrd.c' || echo '$(srcdir)/'`htrd.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libqsehttp_la-htrd.Tpo $(DEPDIR)/libqsehttp_la-htrd.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='htrd.c' object='libqsehttp_la-htrd.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libqsehttp_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libqsehttp_la-htrd.lo `test -f 'htrd.c' || echo '$(srcdir)/'`htrd.c
+
+libqsehttp_la-httpd.lo: httpd.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libqsehttp_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libqsehttp_la-httpd.lo -MD -MP -MF $(DEPDIR)/libqsehttp_la-httpd.Tpo -c -o libqsehttp_la-httpd.lo `test -f 'httpd.c' || echo '$(srcdir)/'`httpd.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libqsehttp_la-httpd.Tpo $(DEPDIR)/libqsehttp_la-httpd.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='httpd.c' object='libqsehttp_la-httpd.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libqsehttp_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libqsehttp_la-httpd.lo `test -f 'httpd.c' || echo '$(srcdir)/'`httpd.c
+
+libqsehttp_la-httpd-cgi.lo: httpd-cgi.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libqsehttp_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libqsehttp_la-httpd-cgi.lo -MD -MP -MF $(DEPDIR)/libqsehttp_la-httpd-cgi.Tpo -c -o libqsehttp_la-httpd-cgi.lo `test -f 'httpd-cgi.c' || echo '$(srcdir)/'`httpd-cgi.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libqsehttp_la-httpd-cgi.Tpo $(DEPDIR)/libqsehttp_la-httpd-cgi.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='httpd-cgi.c' object='libqsehttp_la-httpd-cgi.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libqsehttp_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libqsehttp_la-httpd-cgi.lo `test -f 'httpd-cgi.c' || echo '$(srcdir)/'`httpd-cgi.c
+
+libqsehttp_la-httpd-dir.lo: httpd-dir.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libqsehttp_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libqsehttp_la-httpd-dir.lo -MD -MP -MF $(DEPDIR)/libqsehttp_la-httpd-dir.Tpo -c -o libqsehttp_la-httpd-dir.lo `test -f 'httpd-dir.c' || echo '$(srcdir)/'`httpd-dir.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libqsehttp_la-httpd-dir.Tpo $(DEPDIR)/libqsehttp_la-httpd-dir.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='httpd-dir.c' object='libqsehttp_la-httpd-dir.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libqsehttp_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libqsehttp_la-httpd-dir.lo `test -f 'httpd-dir.c' || echo '$(srcdir)/'`httpd-dir.c
+
+libqsehttp_la-httpd-file.lo: httpd-file.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libqsehttp_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libqsehttp_la-httpd-file.lo -MD -MP -MF $(DEPDIR)/libqsehttp_la-httpd-file.Tpo -c -o libqsehttp_la-httpd-file.lo `test -f 'httpd-file.c' || echo '$(srcdir)/'`httpd-file.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libqsehttp_la-httpd-file.Tpo $(DEPDIR)/libqsehttp_la-httpd-file.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='httpd-file.c' object='libqsehttp_la-httpd-file.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libqsehttp_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libqsehttp_la-httpd-file.lo `test -f 'httpd-file.c' || echo '$(srcdir)/'`httpd-file.c
+
+libqsehttp_la-httpd-proxy.lo: httpd-proxy.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libqsehttp_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libqsehttp_la-httpd-proxy.lo -MD -MP -MF $(DEPDIR)/libqsehttp_la-httpd-proxy.Tpo -c -o libqsehttp_la-httpd-proxy.lo `test -f 'httpd-proxy.c' || echo '$(srcdir)/'`httpd-proxy.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libqsehttp_la-httpd-proxy.Tpo $(DEPDIR)/libqsehttp_la-httpd-proxy.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='httpd-proxy.c' object='libqsehttp_la-httpd-proxy.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libqsehttp_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libqsehttp_la-httpd-proxy.lo `test -f 'httpd-proxy.c' || echo '$(srcdir)/'`httpd-proxy.c
+
+libqsehttp_la-httpd-std.lo: httpd-std.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libqsehttp_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libqsehttp_la-httpd-std.lo -MD -MP -MF $(DEPDIR)/libqsehttp_la-httpd-std.Tpo -c -o libqsehttp_la-httpd-std.lo `test -f 'httpd-std.c' || echo '$(srcdir)/'`httpd-std.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libqsehttp_la-httpd-std.Tpo $(DEPDIR)/libqsehttp_la-httpd-std.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='httpd-std.c' object='libqsehttp_la-httpd-std.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libqsehttp_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libqsehttp_la-httpd-std.lo `test -f 'httpd-std.c' || echo '$(srcdir)/'`httpd-std.c
+
+libqsehttp_la-httpd-task.lo: httpd-task.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libqsehttp_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libqsehttp_la-httpd-task.lo -MD -MP -MF $(DEPDIR)/libqsehttp_la-httpd-task.Tpo -c -o libqsehttp_la-httpd-task.lo `test -f 'httpd-task.c' || echo '$(srcdir)/'`httpd-task.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libqsehttp_la-httpd-task.Tpo $(DEPDIR)/libqsehttp_la-httpd-task.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='httpd-task.c' object='libqsehttp_la-httpd-task.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libqsehttp_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libqsehttp_la-httpd-task.lo `test -f 'httpd-task.c' || echo '$(srcdir)/'`httpd-task.c
+
+libqsehttp_la-httpd-text.lo: httpd-text.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libqsehttp_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libqsehttp_la-httpd-text.lo -MD -MP -MF $(DEPDIR)/libqsehttp_la-httpd-text.Tpo -c -o libqsehttp_la-httpd-text.lo `test -f 'httpd-text.c' || echo '$(srcdir)/'`httpd-text.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libqsehttp_la-httpd-text.Tpo $(DEPDIR)/libqsehttp_la-httpd-text.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='httpd-text.c' object='libqsehttp_la-httpd-text.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libqsehttp_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libqsehttp_la-httpd-text.lo `test -f 'httpd-text.c' || echo '$(srcdir)/'`httpd-text.c
+
+libqsehttp_la-upxd.lo: upxd.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libqsehttp_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libqsehttp_la-upxd.lo -MD -MP -MF $(DEPDIR)/libqsehttp_la-upxd.Tpo -c -o libqsehttp_la-upxd.lo `test -f 'upxd.c' || echo '$(srcdir)/'`upxd.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libqsehttp_la-upxd.Tpo $(DEPDIR)/libqsehttp_la-upxd.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='upxd.c' object='libqsehttp_la-upxd.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libqsehttp_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libqsehttp_la-upxd.lo `test -f 'upxd.c' || echo '$(srcdir)/'`upxd.c
 
 mostlyclean-libtool:
 	-rm -f *.lo
