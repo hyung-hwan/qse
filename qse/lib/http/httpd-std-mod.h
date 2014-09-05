@@ -1,44 +1,60 @@
 
 
-static int mod_open (qse_httpd_t* httpd, qse_httpd_mod_t* mod)
+static void* mod_open (qse_httpd_t* httpd, const qse_char_t* sysname)
 {
 #if defined(USE_LTDL)
 	void* h;
+	qse_mchar_t* modpath;
 
-	h = lt_dlopenext (mod->fullname);
-	if (h == QSE_NULL) 
+	#if defined(QSE_CHAR_IS_MCHAR)
+	modpath = sysname;
+	#else
+	modpath = qse_wcstombsdup (sysname, QSE_NULL, httpd->mmgr);
+	if (!modpath)
 	{
-		qse_httpd_seterrnum (httpd, syserr_to_errnum(errno));
-		return -1;
+		qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOMEM);
+		return QSE_NULL;
 	}
+	#endif
 
-	mod->handle = h;
-	return 0;
+	h = lt_dlopenext (modpath);
+	if (!h) qse_httpd_seterrnum (httpd, syserr_to_errnum(errno));
 
+	#if defined(QSE_CHAR_IS_MCHAR)
+	/* do nothing */
+	#else
+	QSE_MMGR_FREE (httpd->mmgr, modpath);
+	#endif
+
+	return h;
 
 #elif defined(_WIN32)
 
 	HMODULE h;
 
+	h = LoadLibrary (sysname);
+	if (!h) qse_httpd_seterrnum (httpd, syserr_to_errnum(GetLastError());
+
 	QSE_ASSERT (QSE_SIZEOF(h) <= QSE_SIZEOF(void*));
-
-	h = LoadLibrary (mod->fullname);
-	if (h == QSE_NULL) 
-	{
-		qse_httpd_seterrnum (httpd, syserr_to_errnum(GetLastError()));
-		return -1;
-	}
-
-	mod->handle = h;
-	return 0;
+	return h;
 
 #elif defined(__OS2__)
 
 	HMODULE h;
+	qse_mchar_t* modpath;
 	char errbuf[CCHMAXPATH];
 	APIRET rc;
 
-	QSE_ASSERT (QSE_SIZEOF(h) <= QSE_SIZEOF(void*));
+	#if defined(QSE_CHAR_IS_MCHAR)
+	modpath = sysname;
+	#else
+	modpath = qse_wcstombsdup (sysname, QSE_NULL, httpd->mmgr);
+	if (!modpath)
+	{
+		qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOMEM);
+		return QSE_NULL;
+	}
+	#endif
 
 	/* DosLoadModule() seems to have severe limitation on 
 	 * the file name it can load (max-8-letters.xxx) */
@@ -46,18 +62,17 @@ static int mod_open (qse_httpd_t* httpd, qse_httpd_mod_t* mod)
 	if (rc != NO_ERROR) 
 	{
 		qse_httpd_seterrnum (httpd, syserr_to_errnum(rc));
-		return -1;
+		h = QSE_NULL;
 	}
 
-	if (h == QSE_NULL) 
-	{
-		qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOENT); /* is this error code ok? */
-		return -1;
-	}
+	#if defined(QSE_CHAR_IS_MCHAR)
+	/* do nothing */
+	#else
+	QSE_MMGR_FREE (httpd->mmgr, modpath);
+	#endif
 
-	mod->handle = h;
-	return 0;
-
+	QSE_ASSERT (QSE_SIZEOF(h) <= QSE_SIZEOF(void*));
+	return h;
 
 #elif defined(__DOS__)
 
@@ -65,39 +80,53 @@ static int mod_open (qse_httpd_t* httpd, qse_httpd_mod_t* mod)
 	 * dos-extender only. the best is to enable QSE_ENABLE_STATIC_MODULE
 	 * when building for DOS. */
 	void* h;
+	qse_mchar_t* modpath;
+
+	#if defined(QSE_CHAR_IS_MCHAR)
+	modpath = sysname;
+	#else
+	modpath = qse_wcstombsdup (sysname, QSE_NULL, httpd->mmgr);
+	if (!modpath)
+	{
+		qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOMEM);
+		return QSE_NULL;
+	}
+	#endif
 
 	h = LoadModule (modpath);
-	if (h == QSE_NULL) 
-	{
-		qse_httpd_seterrnum (httpd, syserr_to_errnum(errno));
-		return -1;
-	}
+	if (!h) qse_httpd_seterrnum (httpd, syserr_to_errnum(errno));
 
-	mod->handle = h;
-	return 0;
+	#if defined(QSE_CHAR_IS_MCHAR)
+	/* do nothing */
+	#else
+	QSE_MMGR_FREE (httpd->mmgr, modpath);
+	#endif
+
+	QSE_ASSERT (QSE_SIZEOF(h) <= QSE_SIZEOF(void*));
+	return h;
 
 #else
 	qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
-	return -1;
+	return QSE_NULL;
 #endif
 }
 
-static void mod_close (qse_httpd_t* httpd, qse_httpd_mod_t* mod)
+static void mod_close (qse_httpd_t* httpd, void* handle)
 {
 #if defined(USE_LTDL)
-	lt_dlclose (mod->handle);
+	lt_dlclose (handle);
 #elif defined(_WIN32)
-	FreeLibrary ((HMODULE)mod->handle);
+	FreeLibrary ((HMODULE)handle);
 #elif defined(__OS2__)
-	DosFreeModule ((HMODULE)mod->handle);
+	DosFreeModule ((HMODULE)handle);
 #elif defined(__DOS__)
-	FreeModule (mod->handle);
+	FreeModule (handle);
 #else
 	/* nothing to do */
 #endif
 }
 
-static void* mod_symbol (qse_httpd_t* httpd, qse_httpd_mod_t* handle, const qse_char_t* name)
+static void* mod_symbol (qse_httpd_t* httpd, void* handle, const qse_char_t* name)
 {
 	void* s;
 	qse_mchar_t* mname;
@@ -114,15 +143,15 @@ static void* mod_symbol (qse_httpd_t* httpd, qse_httpd_mod_t* handle, const qse_
 #endif
 
 #if defined(USE_LTDL)
-	s = lt_dlsym (mod->handle, mname);
+	s = lt_dlsym (handle, mname);
 	if (s == QSE_NULL) qse_httpd_seterrnum (httpd, syserr_to_errnum(errno));
 #elif defined(_WIN32)
-	s = GetProcAddress ((HMODULE)mod->handle, mname);
+	s = GetProcAddress ((HMODULE)handle, mname);
 	if (s == QSE_NULL) qse_httpd_seterrnum (httpd, syserr_to_errnum(GetLastError()));
 #elif defined(__OS2__)
 	{
 		APIRET rc;
-		rc = DosQueryProcAddr ((HMODULE)mod->handle, 0, mname, (PFN*)&s);
+		rc = DosQueryProcAddr ((HMODULE)handle, 0, mname, (PFN*)&s);
 		if (rc != NO_ERROR) 
 		{
 			qse_httpd_seterrnum (httpd, syserr_to_errnum(rc));
@@ -130,7 +159,7 @@ static void* mod_symbol (qse_httpd_t* httpd, qse_httpd_mod_t* handle, const qse_
 		}
 	}
 #elif defined(__DOS__)
-	s = GetProcAddress (mod->handle, mname);
+	s = GetProcAddress (handle, mname);
 	if (s == QSE_NULL) qse_httpd_seterrnum (httpd, syserr_to_errnum(errno));
 #else
 	s = QSE_NULL;

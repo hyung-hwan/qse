@@ -50,6 +50,19 @@
 		<if cond="PLATFORM_UNIX=='1'"></if>
 	</set>
 
+	<set var="HTTPDMODPREFIX">
+		<if cond="PLATFORM_WIN32=='1'">qsehttpd-</if>
+		<if cond="PLATFORM_OS2=='1'">httpd-</if>
+		<if cond="PLATFORM_MSDOS=='1'">httpd-</if>
+		<if cond="PLATFORM_UNIX=='1'">libqsehttpd-</if>
+	</set>
+	<set var="HTTPDMODPOSTFIX">
+		<if cond="PLATFORM_WIN32=='1'"></if>
+		<if cond="PLATFORM_OS2=='1'"></if>
+		<if cond="PLATFORM_MSDOS=='1'"></if>
+		<if cond="PLATFORM_UNIX=='1'"></if>
+	</set>
+
 	<!-- =========================================================
 	 Varibles to use as conditionals
 	 ========================================================= -->

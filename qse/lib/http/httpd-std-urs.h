@@ -99,6 +99,9 @@ static int urs_open (qse_httpd_t* httpd, qse_httpd_urs_t* urs)
 
 	httpd_xtn = qse_httpd_getxtn (httpd);
 
+	urs->handle[0].i = QSE_INVALID_SCKHND;
+	urs->handle[1].i = QSE_INVALID_SCKHND;
+
 	dc = (urs_ctx_t*) qse_httpd_callocmem (httpd, QSE_SIZEOF(urs_ctx_t));
 	if (dc == NULL) goto oops;
 
@@ -124,7 +127,7 @@ static int urs_open (qse_httpd_t* httpd, qse_httpd_urs_t* urs)
 #else
 	type = SOCK_DGRAM;
 #endif
-	
+
 	urs->handle[0].i = open_udp_socket (httpd, AF_INET, type, proto);
 #if defined(AF_INET6)
 	urs->handle[1].i = open_udp_socket (httpd, AF_INET6, type, proto);
@@ -159,7 +162,10 @@ static int urs_open (qse_httpd_t* httpd, qse_httpd_urs_t* urs)
 		if (qse_isvalidsckhnd(urs->handle[1].i)) listen (urs->handle[1].i, 99);
 	}
 #endif
+
 	urs->handle_count = 2;
+	if (qse_isvalidsckhnd(urs->handle[0].i)) urs->handle_mask |= (1 << 0);
+	if (qse_isvalidsckhnd(urs->handle[1].i)) urs->handle_mask |= (1 << 1);
 
 	urs->ctx = dc;
 	return 0;
@@ -202,12 +208,8 @@ static void urs_close (qse_httpd_t* httpd, qse_httpd_urs_t* urs)
 
 	QSE_ASSERT (dc->req_count == 0);
 
-	for (i = 0; i < urs->handle_count; i++) 
-	{
-		if (qse_isvalidsckhnd(urs->handle[i].i)) 
-			qse_closesckhnd (urs->handle[i].i);
-	}
-
+	if (qse_isvalidsckhnd(urs->handle[0].i)) qse_closesckhnd (urs->handle[0].i);
+	if (qse_isvalidsckhnd(urs->handle[1].i)) qse_closesckhnd (urs->handle[1].i);
 	qse_httpd_freemem (httpd, urs->ctx);
 }
 

@@ -30,13 +30,13 @@
 #	define QSE_INVALID_SCKHND (~(qse_sck_hnd_t)0)
 #elif defined(__OS2__)
 	typedef int qse_sck_hnd_t;
-#	define QSE_INVALID_SCKHND -1
+#	define QSE_INVALID_SCKHND (-1)
 #elif defined(__DOS__)
 	typedef int qse_sck_hnd_t;
-#	define QSE_INVALID_SCKHND -1
+#	define QSE_INVALID_SCKHND (-1)
 #else
 	typedef int qse_sck_hnd_t;
-#	define QSE_INVALID_SCKHND -1
+#	define QSE_INVALID_SCKHND (-1)
 #endif
 
 #if (QSE_SIZEOF_SOCKLEN_T == QSE_SIZEOF_INT)

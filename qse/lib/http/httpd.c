@@ -25,6 +25,23 @@
 #include <qse/cmn/mbwc.h>
 #include <qse/cmn/sio.h>
 
+
+#if !defined(QSE_HTTPD_DEFAULT_MODPREFIX)
+#	if defined(_WIN32)
+#		define QSE_HTTPD_DEFAULT_MODPREFIX "qsehttpd-"
+#	elif defined(__OS2__)
+#		define QSE_HTTPD_DEFAULT_MODPREFIX "htd-"
+#	elif defined(__DOS__)
+#		define QSE_HTTPD_DEFAULT_MODPREFIX "htd-"
+#	else
+#		define QSE_HTTPD_DEFAULT_MODPREFIX "libqsehttpd-"
+#	endif
+#endif
+
+#if !defined(QSE_HTTPD_DEFAULT_MODPOSTFIX)
+#	define QSE_HTTPD_DEFAULT_MODPOSTFIX ""
+#endif
+
 typedef struct htrd_xtn_t htrd_xtn_t;
 typedef struct tmr_xtn_t tmr_xtn_t;
 
@@ -61,11 +78,6 @@ qse_httpd_t* qse_httpd_open (qse_mmgr_t* mmgr, qse_size_t xtnsize)
 
 void qse_httpd_close (qse_httpd_t* httpd)
 {
-	qse_httpd_ecb_t* ecb;
-
-	for (ecb = httpd->ecb; ecb; ecb = ecb->next)
-		if (ecb->close) ecb->close (httpd);
-
 	qse_httpd_fini (httpd);
 	QSE_MMGR_FREE (httpd->mmgr, httpd);
 }
@@ -88,9 +100,15 @@ int qse_httpd_init (qse_httpd_t* httpd, qse_mmgr_t* mmgr)
 
 void qse_httpd_fini (qse_httpd_t* httpd)
 {
+	qse_httpd_ecb_t* ecb;
+
+	unload_all_modules (httpd);
+
+	for (ecb = httpd->ecb; ecb; ecb = ecb->next)
+		if (ecb->close) ecb->close (httpd);
+
 	free_server_list (httpd);
 	qse_tmr_close (httpd->tmr);
-	unload_all_modules (httpd);
 }
 
 void qse_httpd_stop (qse_httpd_t* httpd)
@@ -878,14 +896,15 @@ static int activate_dns (qse_httpd_t* httpd)
 
 	for (i = 0; i < httpd->dns.handle_count; i++)
 	{
-		if (httpd->dns.handle[i].i >= 0)
+		if (httpd->dns.handle_mask & (1 << i))
 		{
 			if (httpd->opt.scb.mux.addhnd (httpd, httpd->mux, httpd->dns.handle[i], QSE_HTTPD_MUX_READ, &httpd->dns) <= -1) 
 			{
 				while (i > 0)
 				{
-					qse_ubi_t handle = httpd->dns.handle[--i];
-					if (handle.i >= 0) httpd->opt.scb.mux.delhnd (httpd, httpd->mux, handle);
+					--i;
+					if (httpd->dns.handle_mask & (1 << i))
+						httpd->opt.scb.mux.delhnd (httpd, httpd->mux, httpd->dns.handle[i]);
 				}
 				httpd->opt.scb.dns.close (httpd, &httpd->dns);
 				return -1;
@@ -902,7 +921,7 @@ static void deactivate_dns (qse_httpd_t* httpd)
 
 	for (i = 0; i < httpd->dns.handle_count; i++)
 	{
-		if (httpd->dns.handle[i].i >= 0)
+		if (httpd->dns.handle_mask & (1 << i))
 			httpd->opt.scb.mux.delhnd (httpd, httpd->mux, httpd->dns.handle[i]);
 	}
 
@@ -912,12 +931,9 @@ static void deactivate_dns (qse_httpd_t* httpd)
 
 static int activate_urs (qse_httpd_t* httpd)
 {
-/* TODO: how to disable URS??? */
 	int i;
 
 	QSE_MEMSET (&httpd->urs, 0, QSE_SIZEOF(httpd->urs));
-	for (i = 0; i < QSE_COUNTOF(httpd->urs.handle); i++)
-		httpd->urs.handle[i].i = -1;
 
 	if (httpd->opt.scb.urs.open (httpd, &httpd->urs) <= -1) return -1;
 
@@ -925,15 +941,19 @@ static int activate_urs (qse_httpd_t* httpd)
 
 	for (i = 0; i < httpd->dns.handle_count; i++)
 	{
-		if (httpd->opt.scb.mux.addhnd (httpd, httpd->mux, httpd->urs.handle[i], QSE_HTTPD_MUX_READ, &httpd->urs) <= -1) 
+		if (httpd->urs.handle_mask & (1 << i))
 		{
-			while (i > 0) 
+			if (httpd->opt.scb.mux.addhnd (httpd, httpd->mux, httpd->urs.handle[i], QSE_HTTPD_MUX_READ, &httpd->urs) <= -1) 
 			{
-				qse_ubi_t handle = httpd->urs.handle[--i];
-				httpd->opt.scb.mux.delhnd (httpd, httpd->mux, handle);
+				while (i > 0) 
+				{
+					--i;
+					if (httpd->urs.handle_mask & (1 << i))
+						httpd->opt.scb.mux.delhnd (httpd, httpd->mux, httpd->urs.handle[i]);
+				}
+				httpd->opt.scb.urs.close (httpd, &httpd->urs);
+				return -1;
 			}
-			httpd->opt.scb.urs.close (httpd, &httpd->urs);
-			return -1;
 		}
 	}
 
@@ -946,7 +966,7 @@ static void deactivate_urs (qse_httpd_t* httpd)
 
 	for (i = 0; i < httpd->urs.handle_count; i++)
 	{
-		if (httpd->urs.handle[i].i >= 0)
+		if (httpd->urs.handle_mask & (1 << i))
 			httpd->opt.scb.mux.delhnd (httpd, httpd->mux, httpd->urs.handle[i]);
 	}
 
@@ -1900,7 +1920,7 @@ static void unload_all_modules (qse_httpd_t* httpd)
 		httpd->modlist = mod->next;
 
 		if (mod->unload) mod->unload (mod);
-		httpd->opt.scb.mod.close (httpd, mod);
+		httpd->opt.scb.mod.close (httpd, mod->handle  );
 		qse_httpd_freemem (httpd, mod);
 	}
 }
@@ -1944,11 +1964,10 @@ int qse_httpd_loadmod (qse_httpd_t* httpd, const qse_char_t* name)
 	 * +2: _\0
 	 */
 	fullname_len = prefix_len + name_len + postfix_len;
-	mod = qse_httpd_allocmem (httpd, QSE_SIZEOF(*mod) + (name_len + 1 + fullname_len + 1 + 15 + name_len + 2) * QSE_SIZEOF(qse_char_t));
+	mod = qse_httpd_callocmem (httpd, QSE_SIZEOF(*mod) + (name_len + 1 + fullname_len + 1 + 15 + name_len + 2) * QSE_SIZEOF(qse_char_t));
 	if (mod == QSE_NULL) return -1;
 
-	QSE_MEMSET (mod, 0, QSE_SIZEOF(*mod));
-
+	mod->httpd = httpd;
 	mod->name = (qse_char_t*)(mod + 1);
 	mod->fullname = mod->name + name_len + 1;
 	entry_point_name = mod->fullname + fullname_len + 1;
@@ -1956,33 +1975,31 @@ int qse_httpd_loadmod (qse_httpd_t* httpd, const qse_char_t* name)
 	qse_strjoin (mod->fullname, prefix, name, postfix, QSE_NULL);
 	qse_strjoin (entry_point_name, QSE_T("_qse_httpd_mod_"), name, QSE_NULL);
 
-printf ("%ls %ls %ls\n", mod->name, mod->fullname, entry_point_name);
-	if (httpd->opt.scb.mod.open (httpd, mod) <= -1) 
+	mod->handle = httpd->opt.scb.mod.open (httpd, mod->fullname);
+	if (!mod->handle)
 	{
-printf ("FAIL => %ls %ls %ls\n", mod->name, mod->fullname, entry_point_name);
 		qse_httpd_freemem (httpd, mod);
 		return -1;
 	}
 
-printf ("OK => %ls %ls %ls\n", mod->name, mod->fullname, entry_point_name);
 	/* attempt qse_httpd_mod_xxx */
-	load = httpd->opt.scb.mod.symbol (httpd, mod, &entry_point_name[1]);
+	load = httpd->opt.scb.mod.symbol (httpd, mod->handle, &entry_point_name[1]);
 	if (!load)
 	{
 		/* attempt _qse_awk_mod_xxx */
-		load = httpd->opt.scb.mod.symbol (httpd, mod, &entry_point_name[0]);
+		load = httpd->opt.scb.mod.symbol (httpd, mod->handle, &entry_point_name[0]);
 		if (!load)
 		{
 			/* attempt qse_awk_mod_xxx_ */
 			entry_point_name[15 + name_len] = QSE_T('_');
 			entry_point_name[15 + name_len + 1] = QSE_T('\0');
-			load = httpd->opt.scb.mod.symbol (httpd, mod, &entry_point_name[1]);
+			load = httpd->opt.scb.mod.symbol (httpd, mod->handle, &entry_point_name[1]);
 		}
 	}
 
 	if (load == QSE_NULL || load (mod) <= -1)
 	{
-		httpd->opt.scb.mod.close (httpd, mod);
+		httpd->opt.scb.mod.close (httpd, mod->handle);
 		qse_httpd_freemem (httpd, mod);
 		return -1;
 	}

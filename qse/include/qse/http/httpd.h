@@ -89,21 +89,7 @@ enum qse_httpd_trait_t
 };
 typedef enum qse_httpd_trait_t qse_httpd_trait_t;
 
-#if !defined(QSE_HTTPD_DEFAULT_MODPREFIX)
-#	if defined(_WIN32)
-#		define QSE_HTTPD_DEFAULT_MODPREFIX "qsehttpd-"
-#	elif defined(__OS2__)
-#		define QSE_HTTPD_DEFAULT_MODPREFIX "htd-"
-#	elif defined(__DOS__)
-#		define QSE_HTTPD_DEFAULT_MODPREFIX "htd-"
-#	else
-#		define QSE_HTTPD_DEFAULT_MODPREFIX "libqsehttpd-"
-#	endif
-#endif
 
-#if !defined(QSE_HTTPD_DEFAULT_MODPOSTFIX)
-#	define QSE_HTTPD_DEFAULT_MODPOSTFIX ""
-#endif
 
 typedef struct qse_httpd_mod_t qse_httpd_mod_t;
 
@@ -111,7 +97,7 @@ typedef int (*qse_httpd_mod_load_t) (
 	qse_httpd_mod_t* mod
 );
 
-typedef int (*qse_httpd_mod_unload_t) (
+typedef void (*qse_httpd_mod_unload_t) (
 	qse_httpd_mod_t* mod
 );
 
@@ -125,22 +111,21 @@ typedef int (*qse_httpd_mod_urs_prerewrite_t) (
 
 struct qse_httpd_mod_t
 {
-	/* set before mod.open(). 
-	 * mod.open() and other callbacks can refer to these. */
+	/* private */
+	qse_httpd_mod_t* next;
+	void* handle; /* set to the return value of mod.open() */
+
+	/* module may access these fields for rererence  */
 	qse_httpd_t* httpd;
 	qse_char_t* name; /* portable module name */
 	qse_char_t* fullname; /* name to use when loading module from the system. */
-
-	/* mod.open() may set this */
-	void* handle; /* mod.open() can set this */
 
 	/* module's entry point may set these items */
 	void* ctx; 
 	qse_httpd_mod_unload_t unload;
 	qse_httpd_mod_urs_prerewrite_t urs_prerewrite;
 
-	/* private */
-	qse_httpd_mod_t* next;
+	/* more fields will get added here for expansion in the future. */
 };
 
 typedef struct qse_httpd_stat_t qse_httpd_stat_t;
@@ -265,9 +250,9 @@ struct qse_httpd_scb_t
 {
 	struct
 	{
-		int (*open) (qse_httpd_t* httpd, qse_httpd_mod_t* mod);
-		void (*close) (qse_httpd_t* httpd, qse_httpd_mod_t* mod);
-		void* (*symbol) (qse_httpd_t* httpd, qse_httpd_mod_t* mod, const qse_char_t* name);
+		void* (*open) (qse_httpd_t* httpd, const qse_char_t* fullname);
+		void (*close) (qse_httpd_t* httpd, void* handle);
+		void* (*symbol) (qse_httpd_t* httpd, void* handle, const qse_char_t* name);
 	} mod; /* module */
 
 	struct
@@ -643,7 +628,13 @@ struct qse_httpd_dns_t
 
 	/* == PUBLIC == */
 	qse_ubi_t handle[5];
-	int handle_count;
+
+	/* the number of effective slots in the handle array */
+	int handle_count; 
+	
+	/* handle validity mask. for example, if handle[2] is valid, (1 << 2) must be set. */
+	unsigned long handle_mask; 
+
 	void* ctx;
 };
 
@@ -655,6 +646,7 @@ struct qse_httpd_urs_t
 	/* == PUBLIC == */
 	qse_ubi_t handle[5];
 	int handle_count;
+	unsigned long handle_mask;
 	void* ctx;
 };
 
