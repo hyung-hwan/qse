@@ -195,6 +195,7 @@ struct loccfg_t
 		qse_nwad_t urs_nwad; /* TODO: multiple urs */
 		int dns_timeout;
 		int dns_retries;
+		int dns_query_type;
 		int urs_timeout;
 		int urs_retries;
 		qse_httpd_mod_t* urs_prerewrite_mod;
@@ -1433,6 +1434,14 @@ static int load_loccfg_proxy (qse_httpd_t* httpd, qse_xli_t* xli, qse_xli_list_t
 	if (!pair && default_proxy) pair = qse_xli_findpair (xli, default_proxy, QSE_T("dns-retries"));
 	if (pair) cfg->proxy.dns_retries = get_integer ((qse_xli_str_t*)pair->val);
 	else cfg->proxy.dns_retries = -1;
+
+#if 0
+	pair = QSE_NULL;
+	if (proxy) pair = qse_xli_findpair (xli, proxy, QSE_T("dns-query-type"));
+	if (!pair && default_proxy) pair = qse_xli_findpair (xli, default_proxy, QSE_T("dns-query-type"));
+	if (pair) cfg->proxy.dns_retries = parse_dns_query_type ((qse_xli_str_t*)pair->val);
+	else cfg->proxy.dns_flag
+#endif
 
 	pair = QSE_NULL;
 	if (proxy) pair = qse_xli_findpair (xli, proxy, QSE_T("urs-enabled"));
