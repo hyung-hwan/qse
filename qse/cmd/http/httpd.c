@@ -2154,16 +2154,17 @@ static int prerewrite_url (qse_httpd_t* httpd, qse_httpd_client_t* client, qse_h
 	httpd_xtn = qse_httpd_getxtnstd (httpd);
 
 printf ("PREREWRITING.....................\n");
+/*
 	if (qse_htre_getqmethodtype(req) == QSE_HTTP_CONNECT) 
 	{
 		*url = QSE_NULL;
 		return 0;
 	}
+*/
 
 /* TODO: override prerewrite url */
 	return httpd_xtn->org_urs_prerewrite (httpd, client, req, host, url);
 }
-
 
 static void logact_httpd (qse_httpd_t* httpd, const qse_httpd_act_t* act)
 {

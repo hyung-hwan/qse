@@ -110,6 +110,8 @@ struct qse_httpd_status_reloc_t
 #define MAX_SEND_SIZE 4096
 #define MAX_RECV_SIZE 4096
 
+#define MAX_NWAD_TEXT_SIZE 96
+
 #ifdef __cplusplus
 extern "C" {
 #endif

@@ -487,17 +487,31 @@ static int urs_prerewrite (qse_httpd_t* httpd, qse_httpd_client_t* client, qse_h
 	const qse_mchar_t* qpath;
 	int mtype;
 	const qse_mchar_t* mname;
+	const qse_mchar_t* quest;
+	const qse_mchar_t* qparam;
+	const qse_mchar_t* proto;
 
 	const qse_mchar_t* host_ptr = QSE_NULL;
-	qse_mchar_t cliaddrbuf[128];
+	qse_mchar_t cliaddrbuf[MAX_NWAD_TEXT_SIZE];
 	qse_size_t total_len;
 	qse_mchar_t* url_to_rewrite;
 
 	qpath = qse_htre_getqpath(req);
+	qparam = qse_htre_getqparam(req);
 	mtype = qse_htre_getqmethodtype(req);
 	mname = qse_htre_getqmethodname(req);
 
 	total_len = qse_mbslen(qpath) + qse_mbslen(mname);
+	if (qparam) 
+	{
+		quest = QSE_MT("?");
+		total_len = total_len + 1 + qse_mbslen(qparam);
+	}
+	else 
+	{
+		qparam = QSE_MT("");
+		quest = QSE_MT("");
+	}
 
 	if (host)
 	{
@@ -519,17 +533,24 @@ static int urs_prerewrite (qse_httpd_t* httpd, qse_httpd_client_t* client, qse_h
 	}
 
 	total_len += qse_nwadtombs (&client->remote_addr, cliaddrbuf, QSE_COUNTOF(cliaddrbuf), QSE_NWADTOMBS_ADDR);
-
 	total_len += 128; /* extra space */
 
 	url_to_rewrite = qse_httpd_allocmem (httpd, total_len);
 	if (url_to_rewrite == QSE_NULL) return -1;
 
-	/* URL client-ip/client-fqdn ident method  */
-	if (mtype != QSE_HTTP_CONNECT && host_ptr)
-		qse_mbsxfmt (url_to_rewrite, total_len, QSE_MT("http://%s%s %s/- - %s"), host_ptr, qpath, cliaddrbuf, mname);
+	
+	if (mtype == QSE_HTTP_CONNECT || !host_ptr) 
+	{
+		host_ptr = QSE_MT("");
+		proto = QSE_MT("");
+	}
 	else
-		qse_mbsxfmt (url_to_rewrite, total_len, QSE_MT("%s %s/- - %s"), qpath, cliaddrbuf, mname);
+	{
+		proto = QSE_MT("http://");
+	}
+
+	/* URL client-ip/client-fqdn ident method  */
+	qse_mbsxfmt (url_to_rewrite, total_len, QSE_MT("%s%s%s%s%s %s/- - %s"), proto, host_ptr, qpath, quest, qparam, cliaddrbuf, mname);
 
 	*url = url_to_rewrite;
 	return 1;
