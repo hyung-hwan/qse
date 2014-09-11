@@ -189,6 +189,7 @@ struct loccfg_t
 	{
 		unsigned int allow_http: 1;
 		unsigned int allow_connect: 1;
+		unsigned int allow_intercept: 1;
 		unsigned int dns_enabled: 1;
 		unsigned int urs_enabled: 2;
 		qse_nwad_t dns_nwad; /* TODO: multiple dns */
@@ -434,23 +435,31 @@ static int get_server_root (
 
 	qse_memset (root, 0, QSE_SIZEOF(*root));
 
-	if ((qinfo->client->status & QSE_HTTPD_CLIENT_INTERCEPTED) /*&&
-	    loccfg->proxy.allow_intercept */)
+	if (qinfo->client->status & QSE_HTTPD_CLIENT_INTERCEPTED)
 	{
 		/* transparent proxying */
 
-		root->type = QSE_HTTPD_SERVERSTD_ROOT_PROXY;
-		root->u.proxy.dst.nwad = qinfo->client->orgdst_addr;
-		/* if TPROXY is used, set the source to the original source.
-		root->u.proxy.src.nwad = qinfo->client->remote_addr;
-		qse_setnwadport (&root->u.proxy.src.nwad, 0);*/
+		if (loccfg->proxy.allow_intercept)
+		{
+			root->type = QSE_HTTPD_SERVERSTD_ROOT_PROXY;
+			root->u.proxy.dst.nwad = qinfo->client->orgdst_addr;
+			/* if TPROXY is used, set the source to the original source.
+			root->u.proxy.src.nwad = qinfo->client->remote_addr;
+			qse_setnwadport (&root->u.proxy.src.nwad, 0);*/
 
-		if (mth == QSE_HTTP_CONNECT) 
-			root->u.proxy.flags |= QSE_HTTPD_RSRC_PROXY_RAW;
-		else if (loccfg->proxy.pseudonym[0]) 
-			root->u.proxy.pseudonym = loccfg->proxy.pseudonym;
+			if (mth == QSE_HTTP_CONNECT) 
+				root->u.proxy.flags |= QSE_HTTPD_RSRC_PROXY_RAW;
+			else if (loccfg->proxy.pseudonym[0]) 
+				root->u.proxy.pseudonym = loccfg->proxy.pseudonym;
 
-		goto proxy_ok;
+			goto proxy_ok;
+		}
+		else
+		{
+			root->type = QSE_HTTPD_SERVERSTD_ROOT_ERROR;
+			root->u.error.code = 403; /* forbidden */
+			return 0;
+		}
 	}
 
 	if (mth == QSE_HTTP_CONNECT)
@@ -1410,6 +1419,11 @@ static int load_loccfg_proxy (qse_httpd_t* httpd, qse_xli_t* xli, qse_xli_list_t
 	if (pair) cfg->proxy.allow_connect = get_boolean ((qse_xli_str_t*)pair->val);
 
 	pair = QSE_NULL;
+	if (proxy) pair = qse_xli_findpair (xli, proxy, QSE_T("intercept"));
+	if (!pair && default_proxy) pair = qse_xli_findpair (xli, default_proxy, QSE_T("intercept"));
+	if (pair) cfg->proxy.allow_intercept = get_boolean ((qse_xli_str_t*)pair->val);
+
+	pair = QSE_NULL;
 	if (proxy) pair = qse_xli_findpair (xli, proxy, QSE_T("pseudonym"));
 	if (!pair && default_proxy) pair = qse_xli_findpair (xli, default_proxy, QSE_T("pseudonym"));
 	if (pair) 
@@ -1875,6 +1889,7 @@ static int open_config_file (qse_httpd_t* httpd)
 		{ QSE_T("server-default.proxy"),                             { QSE_XLI_SCM_VALLIST | QSE_XLI_SCM_KEYNODUP, 0, 0      }  },
 		{ QSE_T("server-default.proxy.http"),                        { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
 		{ QSE_T("server-default.proxy.connect"),                     { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
+		{ QSE_T("server-default.proxy.intercept"),                   { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
 		{ QSE_T("server-default.proxy.pseudonym"),                   { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
 		{ QSE_T("server-default.proxy.dns-enabled"),                 { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
 		{ QSE_T("server-default.proxy.dns-server"),                  { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
@@ -1929,6 +1944,7 @@ static int open_config_file (qse_httpd_t* httpd)
 		{ QSE_T("server.host.location.proxy"),                       { QSE_XLI_SCM_VALLIST | QSE_XLI_SCM_KEYNODUP, 0, 0      }  },
 		{ QSE_T("server.host.location.proxy.http"),                  { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
 		{ QSE_T("server.host.location.proxy.connect"),               { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
+		{ QSE_T("server.host.location.proxy.intercept"),               { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
 		{ QSE_T("server.host.location.proxy.pseudonym"),             { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
 		{ QSE_T("server.host.location.proxy.dns-enabled"),           { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
 		{ QSE_T("server.host.location.proxy.dns-server"),            { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
