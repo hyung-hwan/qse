@@ -795,7 +795,7 @@ printf (">>tmr_dns_tmout_handle  req->>%p\n", req);
 	dc->req_count--;
 }
 
-static int dns_send (qse_httpd_t* httpd, qse_httpd_dns_t* dns, const qse_mchar_t* name, qse_httpd_resol_t resol, const qse_httpd_natr_t* dns_server, void* ctx)
+static int dns_send (qse_httpd_t* httpd, qse_httpd_dns_t* dns, const qse_mchar_t* name, qse_httpd_resol_t resol, const qse_httpd_dns_server_t* dns_server, void* ctx)
 {
 	dns_ctx_t* dc = (dns_ctx_t*)dns->ctx;
 	httpd_xtn_t* httpd_xtn;
@@ -857,12 +857,13 @@ printf ("DNS REALLY SENING>>>>>>>>>>>>>>>>>>>>>>>\n");
 	req->resol = resol;
 	req->ctx = ctx;
 
-	if (!(httpd->opt.trait & QSE_HTTPD_DNSNOA))
+
+	if (dns_server->flags & QSE_HTTPD_DNS_SERVER_A)
 		req->qalen = init_dns_query (req->qa, QSE_SIZEOF(req->qa), name, DNS_QTYPE_A, req->seqa);
 	else
 		req->flags |= DNS_REQ_A_NX;
 
-	if (!(httpd->opt.trait & QSE_HTTPD_DNSNOAAAA))
+	if (dns_server->flags & QSE_HTTPD_DNS_SERVER_AAAA)
 		req->qaaaalen = init_dns_query (req->qaaaa, QSE_SIZEOF(req->qaaaa), name, DNS_QTYPE_AAAA, req->seqaaaa);
 	else
 		req->flags |= DNS_REQ_AAAA_NX;

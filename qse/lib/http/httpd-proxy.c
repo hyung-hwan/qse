@@ -67,8 +67,8 @@ struct task_proxy_t
 	qse_size_t qpath_pos_in_reqfwdbuf; /* position where qpath begins */
 	qse_size_t qpath_len_in_reqfwdbuf; /* length of qpath + qparams */
 
-	qse_httpd_natr_t dns_server;
-	qse_httpd_natr_t urs_server;
+	qse_httpd_dns_server_t dns_server;
+	qse_httpd_urs_server_t urs_server;
 	qse_mchar_t* pseudonym;
 	qse_htrd_t* peer_htrd;
 

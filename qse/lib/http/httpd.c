@@ -1831,11 +1831,8 @@ qse_mchar_t* qse_httpd_escapehtml (qse_httpd_t* httpd, const qse_mchar_t* str)
 
 /* ----------------------------------------------------------------------- */
 
-int qse_httpd_resolname (qse_httpd_t* httpd, const qse_mchar_t* name, qse_httpd_resol_t resol, const qse_httpd_natr_t* dns_server, void* ctx)
+int qse_httpd_resolname (qse_httpd_t* httpd, const qse_mchar_t* name, qse_httpd_resol_t resol, const qse_httpd_dns_server_t* dns_server, void* ctx)
 {
-	/* TODO: find the name in cache */
-
-	/* not found in the cache */
 printf ("DNS_SEND.........................\n");
 	if (!httpd->dnsactive) 
 	{
@@ -1847,7 +1844,7 @@ printf ("DNS_SEND.........................\n");
 	return httpd->opt.scb.dns.send (httpd, &httpd->dns, name, resol, dns_server, ctx);
 }
 
-int qse_httpd_rewriteurl (qse_httpd_t* httpd, const qse_mchar_t* url, qse_httpd_rewrite_t rewrite, const qse_httpd_natr_t* urs_server, void* ctx)
+int qse_httpd_rewriteurl (qse_httpd_t* httpd, const qse_mchar_t* url, qse_httpd_rewrite_t rewrite, const qse_httpd_urs_server_t* urs_server, void* ctx)
 {
 	if (!httpd->ursactive)
 	{

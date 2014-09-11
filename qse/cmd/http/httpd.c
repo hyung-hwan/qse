@@ -195,7 +195,7 @@ struct loccfg_t
 		qse_nwad_t urs_nwad; /* TODO: multiple urs */
 		int dns_timeout;
 		int dns_retries;
-		int dns_query_type;
+		int dns_queries;
 		int urs_timeout;
 		int urs_retries;
 		qse_httpd_mod_t* urs_prerewrite_mod;
@@ -565,6 +565,7 @@ proxy_ok:
 		root->u.proxy.dns_server.nwad = loccfg->proxy.dns_nwad;
 		root->u.proxy.dns_server.tmout.sec = loccfg->proxy.dns_timeout;
 		root->u.proxy.dns_server.retries = loccfg->proxy.dns_retries;
+		root->u.proxy.dns_server.flags = loccfg->proxy.dns_queries;
 	}
 
 	if (loccfg->proxy.urs_enabled)
@@ -1001,6 +1002,27 @@ static int get_integer (const qse_xli_str_t* v)
 	return qse_strxtoi (v->ptr, v->len, 10);
 }
 
+static int parse_dns_query_types (qse_httpd_t* httpd, const qse_xli_str_t* str)
+{
+	int flags = 0;
+
+	while (str)
+	{
+		if (qse_strxcasecmp (str->ptr, str->len, QSE_T("a")) == 0) flags |= QSE_HTTPD_DNS_SERVER_A;
+		else if (qse_strxcasecmp (str->ptr, str->len, QSE_T("aaaa")) == 0) flags |= QSE_HTTPD_DNS_SERVER_AAAA;
+		else 
+		{
+			qse_printf (QSE_T("ERROR: invalid dns query type for proxy dns - %s\n"), str->ptr);
+			return -1;
+		}
+
+		str = str->next;
+	}
+
+	return flags;
+}
+
+
 static int load_loccfg_basic (qse_httpd_t* httpd, qse_xli_t* xli, qse_xli_list_t* list, loccfg_t* cfg)
 {
 	static struct 
@@ -1356,6 +1378,7 @@ static int load_loccfg_access (qse_httpd_t* httpd, qse_xli_t* xli, qse_xli_list_
 	return 0;
 }
 
+
 static int load_loccfg_proxy (qse_httpd_t* httpd, qse_xli_t* xli, qse_xli_list_t* list, loccfg_t* cfg)
 {
 	qse_xli_pair_t* pair;
@@ -1435,13 +1458,15 @@ static int load_loccfg_proxy (qse_httpd_t* httpd, qse_xli_t* xli, qse_xli_list_t
 	if (pair) cfg->proxy.dns_retries = get_integer ((qse_xli_str_t*)pair->val);
 	else cfg->proxy.dns_retries = -1;
 
-#if 0
 	pair = QSE_NULL;
-	if (proxy) pair = qse_xli_findpair (xli, proxy, QSE_T("dns-query-type"));
-	if (!pair && default_proxy) pair = qse_xli_findpair (xli, default_proxy, QSE_T("dns-query-type"));
-	if (pair) cfg->proxy.dns_retries = parse_dns_query_type ((qse_xli_str_t*)pair->val);
-	else cfg->proxy.dns_flag
-#endif
+	if (proxy) pair = qse_xli_findpair (xli, proxy, QSE_T("dns-queries"));
+	if (!pair && default_proxy) pair = qse_xli_findpair (xli, default_proxy, QSE_T("dns-queries"));
+	if (pair) 
+	{
+		cfg->proxy.dns_queries = parse_dns_query_types (httpd, (qse_xli_str_t*)pair->val);
+		if (cfg->proxy.dns_queries <= -1) return -1;
+	}
+	else cfg->proxy.dns_queries = QSE_HTTPD_DNS_SERVER_A | QSE_HTTPD_DNS_SERVER_AAAA;
 
 	pair = QSE_NULL;
 	if (proxy) pair = qse_xli_findpair (xli, proxy, QSE_T("urs-enabled"));
@@ -1855,6 +1880,7 @@ static int open_config_file (qse_httpd_t* httpd)
 		{ QSE_T("server-default.proxy.dns-server"),                  { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
 		{ QSE_T("server-default.proxy.dns-timeout"),                 { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
 		{ QSE_T("server-default.proxy.dns-retries"),                 { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
+		{ QSE_T("server-default.proxy.dns-queries"),                 { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 0, 0xFFFF }  },
 		{ QSE_T("server-default.proxy.urs-enabled"),                 { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
 		{ QSE_T("server-default.proxy.urs-server"),                  { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
 		{ QSE_T("server-default.proxy.urs-timeout"),                 { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
@@ -1908,6 +1934,7 @@ static int open_config_file (qse_httpd_t* httpd)
 		{ QSE_T("server.host.location.proxy.dns-server"),            { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
 		{ QSE_T("server.host.location.proxy.dns-timeout"),           { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
 		{ QSE_T("server.host.location.proxy.dns-retries"),           { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
+		{ QSE_T("server.host.location.proxy.dns-queries"),           { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 0, 0xFFFF }  },
 		{ QSE_T("server.host.location.proxy.urs-enabled"),           { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
 		{ QSE_T("server.host.location.proxy.urs-server"),            { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
 		{ QSE_T("server.host.location.proxy.urs-timeout"),           { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
@@ -2383,7 +2410,7 @@ static int httpd_main (int argc, qse_char_t* argv[])
 	setup_signal_handlers ();
 
 	qse_httpd_getopt (httpd, QSE_HTTPD_TRAIT, &trait);
-	trait |= QSE_HTTPD_CGIERRTONUL | QSE_HTTPD_LOGACT | QSE_HTTPD_DNSNOAAAA; /* TODO: make NOAAAA configurable */
+	trait |= QSE_HTTPD_CGIERRTONUL | QSE_HTTPD_LOGACT;
 	qse_httpd_setopt (httpd, QSE_HTTPD_TRAIT, &trait);
 
 	tmout.sec = 10;
