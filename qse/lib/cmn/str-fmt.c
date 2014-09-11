@@ -77,6 +77,35 @@ static int put_wchar (qse_wchar_t c, void* ctx)
 	return 0; 
 }
 
+static int put_mchar_strict (qse_mchar_t c, void* ctx)
+{
+	mbuf_t* buf = (mbuf_t*)ctx;
+
+	if (buf->len < buf->capa) 
+	{
+		buf->ptr[buf->len++] = c;
+		return 1;
+	}
+
+	/* buffer is full stop. return error */
+	return -1;
+}
+
+static int put_wchar_strict (qse_wchar_t c, void* ctx)
+{
+	wbuf_t* buf = (wbuf_t*)ctx;
+
+	if (buf->len < buf->capa) 
+	{
+		buf->ptr[buf->len++] = c;
+		return 1;
+	}
+
+	/* buffer is full stop. return error */
+	return -1; 
+}
+
+
 static int wcs_to_mbs (
 	const qse_wchar_t* wcs, qse_size_t* wcslen,
 	qse_mchar_t* mbs, qse_size_t* mbslen, void* ctx)
@@ -135,6 +164,35 @@ static int mbs_to_wcs (
 #undef strvfmt
 #undef strxvfmt
 
+#define T(x) QSE_MT(x)
+#define char_t qse_mchar_t
+#define buf_t mbuf_t
+#define fmtout_t qse_mfmtout_t
+#define fmtout qse_mfmtout
+#define put_char_null put_mchar_null
+#define put_char put_mchar_strict
+#define conv_char wcs_to_mbs
+#define strfmt qse_mbsfmts
+#define strxfmt qse_mbsxfmts
+#define strvfmt qse_mbsvfmts
+#define strxvfmt qse_mbsxvfmts
+#include "str-fmt.h"
+
+/* ----------------------------------- */
+
+#undef T
+#undef char_t
+#undef buf_t
+#undef fmtout_t
+#undef fmtout
+#undef put_char_null
+#undef put_char
+#undef conv_char
+#undef strfmt
+#undef strxfmt
+#undef strvfmt
+#undef strxvfmt
+
 #define T(x) QSE_WT(x)
 #define char_t qse_wchar_t
 #define buf_t wbuf_t
@@ -149,3 +207,31 @@ static int mbs_to_wcs (
 #define strxvfmt qse_wcsxvfmt
 #include "str-fmt.h"
 
+/* ----------------------------------- */
+
+#undef T
+#undef char_t
+#undef buf_t
+#undef fmtout_t
+#undef fmtout
+#undef put_char_null
+#undef put_char
+#undef conv_char
+#undef strfmt
+#undef strxfmt
+#undef strvfmt
+#undef strxvfmt
+
+#define T(x) QSE_WT(x)
+#define char_t qse_wchar_t
+#define buf_t wbuf_t
+#define fmtout_t qse_wfmtout_t
+#define fmtout qse_wfmtout
+#define put_char_null put_wchar_null
+#define put_char put_wchar_strict
+#define conv_char mbs_to_wcs
+#define strfmt qse_wcsfmts
+#define strxfmt qse_wcsxfmts
+#define strvfmt qse_wcsvfmts
+#define strxvfmt qse_wcsxvfmts
+#include "str-fmt.h"

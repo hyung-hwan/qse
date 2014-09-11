@@ -35,11 +35,6 @@
 #	include "../cmn/syscall.h"
 #endif
 
-#include <stdio.h> /* TODO: remove this */
-#if defined(_MSC_VER) || defined(__BORLANDC__) || (defined(__WATCOMC__) && (__WATCOMC__ < 1200))
-#	define snprintf _snprintf 
-#endif
-
 typedef struct task_cgi_arg_t task_cgi_arg_t;
 struct task_cgi_arg_t 
 {
@@ -238,19 +233,11 @@ static int cgi_htrd_peek_script_output (qse_htrd_t* htrd, qse_htre_t* req)
 
 	if (req->attr.status)
 	{
-		qse_mchar_t buf[128];
 		int nstatus;
 		qse_mchar_t* endptr;
 
 /* TODO: check the syntax of status value??? if not numeric??? */
 		QSE_MBSTONUM (nstatus, req->attr.status, &endptr, 10);
-
-		snprintf (buf, QSE_COUNTOF(buf), 
-			QSE_MT("HTTP/%d.%d %d "),
-			cgi->version.major, 
-			cgi->version.minor, 
-			nstatus
-		);
 
 		/* 
 		Would it need this kind of extra work?
@@ -258,7 +245,7 @@ static int cgi_htrd_peek_script_output (qse_htrd_t* htrd, qse_htre_t* req)
 		if (*endptr == QSE_MT('\0')) ....
 		*/
 
-		if (qse_mbs_cat (cgi->res, buf) == (qse_size_t)-1 ||
+		if (qse_mbs_fcat (cgi->res, QSE_MT("HTTP/%d.%d %d "), cgi->version.major, cgi->version.minor, nstatus) == (qse_size_t)-1 ||
 		    qse_mbs_cat (cgi->res, endptr) == (qse_size_t)-1 ||
 		    qse_mbs_cat (cgi->res, QSE_MT("\r\n")) == (qse_size_t)-1) 
 		{
@@ -269,16 +256,12 @@ static int cgi_htrd_peek_script_output (qse_htrd_t* htrd, qse_htre_t* req)
 	else 
 	{
 		const qse_htre_hdrval_t* location;
-		qse_mchar_t buf[128];
 
 		location = qse_htre_getheaderval (req, QSE_MT("Location"));
 		if (location)
 		{
-			snprintf (buf, QSE_COUNTOF(buf),
-				QSE_MT("HTTP/%d.%d 301 Moved Permanently\r\n"),
-				cgi->version.major, cgi->version.minor
-			);
-			if (qse_mbs_cat (cgi->res, buf) == (qse_size_t)-1) 
+			if (qse_mbs_fcat (cgi->res, QSE_MT("HTTP/%d.%d 301 Moved Permanently\r\n"),
+			                  cgi->version.major, cgi->version.minor) == (qse_size_t)-1) 
 			{
 				cgi->httpd->errnum = QSE_HTTPD_ENOMEM;
 				return -1;
@@ -289,11 +272,8 @@ static int cgi_htrd_peek_script_output (qse_htrd_t* htrd, qse_htre_t* req)
 		}
 		else
 		{
-			snprintf (buf, QSE_COUNTOF(buf),
-				QSE_MT("HTTP/%d.%d 200 OK\r\n"),
-				cgi->version.major, cgi->version.minor
-			);
-			if (qse_mbs_cat (cgi->res, buf) == (qse_size_t)-1) 
+			if (qse_mbs_fcat (cgi->res, QSE_MT("HTTP/%d.%d 200 OK\r\n"),
+			                  cgi->version.major, cgi->version.minor) == (qse_size_t)-1) 
 			{
 				cgi->httpd->errnum = QSE_HTTPD_ENOMEM;
 				return -1;
@@ -467,7 +447,7 @@ static int cgi_add_env (
 #endif
 
 	qse_env_insertmbs (env, QSE_MT("GATEWAY_INTERFACE"), QSE_MT("CGI/1.1"));
-	snprintf (buf, QSE_COUNTOF(buf), QSE_MT("HTTP/%d.%d"), (int)v->major, (int)v->minor);
+	qse_mbsxfmt (buf, QSE_COUNTOF(buf), QSE_MT("HTTP/%d.%d"), (int)v->major, (int)v->minor);
 	qse_env_insertmbs (env, QSE_MT("SERVER_PROTOCOL"), buf);
 
 	qse_env_insertmbs (env, QSE_MT("SCRIPT_FILENAME"), path);

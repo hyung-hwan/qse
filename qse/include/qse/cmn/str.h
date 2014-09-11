@@ -706,7 +706,7 @@ QSE_EXPORT qse_size_t qse_mbsvfmt (
  *   terminating null. When \a buf is #QSE_NULL, it returns the number of 
  *   characters that would have been written excluding the terminating null
  *   if \a buf has not been #QSE_NULL. If conversion from a wide-character 
- *   string failure, it returns (qse_size_t)-1.
+ *   string fails, it returns (qse_size_t)-1.
  */
 QSE_EXPORT qse_size_t qse_mbsxfmt (
 	qse_mchar_t*       buf,
@@ -716,6 +716,36 @@ QSE_EXPORT qse_size_t qse_mbsxfmt (
 );
 
 QSE_EXPORT qse_size_t qse_mbsxvfmt (
+	qse_mchar_t*       buf,
+	qse_size_t         bsz,
+	const qse_mchar_t* fmt,
+	va_list            ap
+);
+
+QSE_EXPORT qse_size_t qse_mbsfmts (
+	qse_mchar_t*       buf,
+	const qse_mchar_t* fmt,
+	...
+);
+
+QSE_EXPORT qse_size_t qse_mbsvfmts (
+	qse_mchar_t*       buf,
+	const qse_mchar_t* fmt,
+	va_list            ap
+);
+
+/**
+ * The qse_mbsxfmt() function behaves the same as qse_mbsxfmt() except
+ * that it returns (qse_size_t)-1 if the buffer is not large enough. 
+ */
+QSE_EXPORT qse_size_t qse_mbsxfmts (
+	qse_mchar_t*       buf,
+	qse_size_t         bsz,
+	const qse_mchar_t* fmt,
+	...
+);
+
+QSE_EXPORT qse_size_t qse_mbsxvfmts (
 	qse_mchar_t*       buf,
 	qse_size_t         bsz,
 	const qse_mchar_t* fmt,
@@ -763,17 +793,56 @@ QSE_EXPORT qse_size_t qse_wcsxvfmt (
 	va_list            ap
 );
 
+QSE_EXPORT qse_size_t qse_wcsfmts (
+	qse_wchar_t*       buf,
+	const qse_wchar_t* fmt,
+	...
+);
+
+QSE_EXPORT qse_size_t qse_wcsvfmts (
+	qse_wchar_t*       buf,
+	const qse_wchar_t* fmt,
+	va_list            ap
+);
+
+/**
+ * The qse_wcsxfmts() function behaves the same as qse_wcsxfmt() except
+ * that it returns (qse_size_t)-1 if the buffer is not large enough.
+ */
+QSE_EXPORT qse_size_t qse_wcsxfmts (
+	qse_wchar_t*       buf,
+	qse_size_t         bsz,
+	const qse_wchar_t* fmt,
+	...
+);
+
+QSE_EXPORT qse_size_t qse_wcsxvfmts (
+	qse_wchar_t*       buf,
+	qse_size_t         bsz,
+	const qse_wchar_t* fmt,
+	va_list            ap
+);
 
 #if defined(QSE_CHAR_IS_MCHAR)
 #	define qse_strfmt qse_mbsfmt
 #	define qse_strvfmt qse_mbsvfmt
 #	define qse_strxfmt qse_mbsxfmt
 #	define qse_strxvfmt qse_mbsxvfmt
+
+#	define qse_strfmts qse_mbsfmts
+#	define qse_strvfmts qse_mbsvfmts
+#	define qse_strxfmts qse_mbsxfmts
+#	define qse_strxvfmts qse_mbsxvfmts
 #else
 #	define qse_strfmt qse_wcsfmt
 #	define qse_strvfmt qse_wcsvfmt
 #	define qse_strxfmt qse_wcsxfmt
 #	define qse_strxvfmt qse_wcsxvfmt
+
+#	define qse_strfmts qse_wcsfmts
+#	define qse_strvfmts qse_wcsvfmts
+#	define qse_strxfmts qse_wcsxfmts
+#	define qse_strxvfmts qse_wcsxvfmts
 #endif
 
 /**

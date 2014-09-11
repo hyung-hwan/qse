@@ -23,11 +23,6 @@
 #include <qse/cmn/str.h>
 #include <qse/cmn/fmt.h>
 
-#include <stdio.h> /* TODO: remove this */
-#if defined(_MSC_VER) || defined(__BORLANDC__) || (defined(__WATCOMC__) && (__WATCOMC__ < 1200))
-#	define snprintf _snprintf 
-#endif
-
 typedef struct task_dir_t task_dir_t;
 struct task_dir_t
 {
@@ -141,14 +136,14 @@ static void fill_chunk_length (task_dseg_t* ctx)
 	while (ctx->buf[ctx->bufpos] == QSE_MT(' ')) ctx->bufpos++;
 }
 
-static int format_dirent (
+static qse_size_t format_dirent (
 	qse_httpd_t* httpd, 
 	qse_httpd_client_t* client, 
 	const qse_httpd_dirent_t* dirent,
 	qse_mchar_t* buf, int bufsz)
 {
 /* TODO: page encoding?? utf-8??? or derive name from cmgr or current locale??? */
-	int n;
+	qse_size_t x;
 
 	qse_mchar_t* encname;
 	qse_mchar_t* escname;
@@ -176,9 +171,9 @@ static int format_dirent (
 	}
 
 	qse_localtime (&dirent->stat.mtime, &bt);
-	snprintf (tmbuf, QSE_COUNTOF(tmbuf),
+	qse_mbsxfmt (tmbuf, QSE_COUNTOF(tmbuf),
 		QSE_MT("%04d-%02d-%02d %02d:%02d:%02d"),
-        		bt.year + QSE_BTIME_YEAR_BASE, bt.mon + 1, bt.mday,
+		bt.year + QSE_BTIME_YEAR_BASE, bt.mon + 1, bt.mday,
 		bt.hour, bt.min, bt.sec);
 
 	if (dirent->stat.isdir)
@@ -193,7 +188,7 @@ static int format_dirent (
 		);
 	}
 
-	n = snprintf (
+	x = qse_mbsxfmts (
 		buf, bufsz,
 		QSE_MT("<tr><td class='name'><a href='%s%s' class='%s'>%s%s</a></td><td class='time'>%s</td><td class='size'>%s</td></tr>\n"),
 		encname,
@@ -207,28 +202,24 @@ static int format_dirent (
 	if (escname != dirent->name) qse_httpd_freemem (httpd, escname);
 	if (encname != dirent->name) QSE_MMGR_FREE (httpd->mmgr, encname);
 
-	if (n <= -1 || n >= bufsz)
-	{
-		httpd->errnum = QSE_HTTPD_ENOBUF;
-		return -1;
-	}
-
-	return n;
+	if (x == (qse_size_t)-1) httpd->errnum = QSE_HTTPD_ENOBUF;
+	return x;
 }
 
 static int add_footer (qse_httpd_t* httpd, qse_httpd_client_t* client, task_dseg_t* ctx)
 {
-	int x, rem;
+	qse_size_t x;
+	int rem;
 
-	rem = ctx->chunked? (ctx->buflen - 5): ctx->buflen;
+	rem = ctx->chunked? (ctx->bufrem - 5): ctx->bufrem;
 	if (rem < 1)
 	{
 		httpd->errnum = QSE_HTTPD_ENOBUF;
 		return -1;
 	}
 
-	x = snprintf (&ctx->buf[ctx->buflen], rem, QSE_MT("</table></div>\n<div class='footer'>%s</div>\n</body></html>"), ctx->foot.ptr);
-	if (x <= -1 || x >= rem) 
+	x = qse_mbsxfmts (&ctx->buf[ctx->buflen], rem, QSE_MT("</table></div>\n<div class='footer'>%s</div>\n</body></html>"), ctx->foot.ptr);
+	if (x == (qse_size_t)-1) 
 	{
 		httpd->errnum = QSE_HTTPD_ENOBUF;
 		return -1;
@@ -257,7 +248,7 @@ static int task_main_dseg (
 {
 	task_dseg_t* ctx = (task_dseg_t*)task->ctx;
 	qse_ssize_t n;
-	int x;
+	qse_size_t x;
 
 	if (ctx->bufpos < ctx->buflen) 
 	{
@@ -335,17 +326,14 @@ static int task_main_dseg (
 		qpath_esc = qse_httpd_escapehtml (httpd, ctx->qpath.ptr);
 		if (qpath_esc == QSE_NULL) return -1;
 
-		x = snprintf (&ctx->buf[ctx->buflen], ctx->bufrem,
+		x = qse_mbsxfmts (&ctx->buf[ctx->buflen], ctx->bufrem,
 			QSE_MT("<html><head>%s</head>\n<body>\n<div class='header'>%s</div>\n<div class='body'><table>%s"), ctx->head.ptr, qpath_esc,
 			(is_root? QSE_MT(""): QSE_MT("<tr><td class='name'><a href='../' class='dir'>..</a></td><td class='time'></td><td class='size'></td></tr>\n"))
 		);
 
 		if (qpath_esc != ctx->qpath.ptr) qse_httpd_freemem (httpd, qpath_esc);
 
-#if 0
-		if (x <= -1)
-#endif
-		if (x <= -1 || x >= ctx->bufrem)
+		if (x == (qse_size_t)-1)
 		{
 			/* return an error if the buffer is too small to 
 			 * hold the header(httpd->errnum == QSE_HTTPD_ENOBUF).
@@ -371,7 +359,7 @@ static int task_main_dseg (
 	else 
 	{
 		if (httpd->opt.scb.dir.read (httpd, ctx->handle, &ctx->dent) <= 0)
-			ctx->state |= DIRENT_NOMORE;	
+			ctx->state |= DIRENT_NOMORE;
 	}
 
 	do
@@ -391,15 +379,14 @@ static int task_main_dseg (
 				ctx->state |= FOOTER_PENDING;
 			}
 			else if (ctx->chunked) fill_chunk_length (ctx);
-			break;	
+			break;
 		}
-
 
 		if (qse_mbscmp (ctx->dent.name, QSE_MT(".")) != 0 &&
 		    qse_mbscmp (ctx->dent.name, QSE_MT("..")) != 0)
 		{
 			x = format_dirent (httpd, client, &ctx->dent, &ctx->buf[ctx->buflen], ctx->bufrem); 
-			if (x <= -1)
+			if (x == (qse_size_t)-1)
 			{
 				/* buffer not large enough to hold this entry */
 				if (ctx->dcount <= 0) 
@@ -445,7 +432,7 @@ send_dirlist:
 	if (n <= -1) return -1;
 
 	/* NOTE if (n == 0), it will enter an infinite loop */
-		
+
 	ctx->bufpos += n;
 	return (ctx->bufpos < ctx->buflen || (ctx->state & FOOTER_PENDING) || !(ctx->state & DIRENT_NOMORE))? 1: 0;
 }
@@ -669,7 +656,7 @@ qse_httpd_task_t* qse_httpd_entaskdir (
 				status = (httpd->errnum == QSE_HTTPD_ENOENT)? 404:
 				         (httpd->errnum == QSE_HTTPD_EACCES)? 403: 500;
 			}
-				
+
 			return qse_httpd_entaskerr (httpd, client, pred, status, req);
 		}
 

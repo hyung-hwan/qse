@@ -199,7 +199,7 @@ qse_httpd_task_t* qse_httpd_entask_status (
 		case 205:
 		case 206:
 			/* nothing to do */
-			break;	
+			break;
 
 		default:
 			if (method != QSE_HTTP_HEAD &&
