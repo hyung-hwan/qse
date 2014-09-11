@@ -107,11 +107,6 @@
 #	include <openssl/engine.h>
 #endif
 
-#include <stdio.h> /* TODO: remove this */
-#if defined(_MSC_VER) || defined(__BORLANDC__) || (defined(__WATCOMC__) && (__WATCOMC__ < 1200))
-#	define snprintf _snprintf 
-#endif
-
 typedef struct server_xtn_t server_xtn_t;
 struct server_xtn_t
 {
@@ -2142,8 +2137,6 @@ if (qse_htre_getcontentlen(req) > 0)
 			 *
 			 * NOTE: CONNECT is implemented to ignore many headers like
 			 *       'Expect: 100-continue' and 'Connection: keep-alive'. */
-
-/* TODO: CHECK if CONNECT is allowed ... */
 			qse_httpd_discardcontent (httpd, req);
 		}
 		else 
@@ -2272,7 +2265,7 @@ static int poke_request (
 static int format_error (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, int code, qse_mchar_t* buf, int bufsz)
 {
-	int n;
+	qse_size_t n;
 	server_xtn_t* server_xtn;
 	const qse_mchar_t* head, * foot, * msg;
 
@@ -2286,17 +2279,16 @@ static int format_error (
 
 	msg = qse_httpstatustombs(code);
 
-/* TODO: use my own version of snprintf replacement */
-	n = snprintf (buf, bufsz,
+	n = qse_mbsxfmts (buf, bufsz,
 		QSE_MT("<html><head>%s<title>%s</title></head><body><div class='header'>HTTP ERROR</div><div class='body'>%d %s</div><div class='footer'>%s</div></body></html>"), 
 		head, msg, code, msg, foot);
-	if (n < 0 || n >= bufsz) 
+	if (n == (qse_size_t)-1)
 	{
 		httpd->errnum = QSE_HTTPD_ENOBUF;
 		return -1;
 	}
 
-	return n;
+	return 0;
 }
 
 static void impede_httpd (qse_httpd_t* httpd)

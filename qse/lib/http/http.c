@@ -24,11 +24,6 @@
 #include <qse/cmn/htb.h>
 #include "../cmn/mem.h"
 
-#include <stdio.h> /* for snprintf. TODO: remove this. */
-#if defined(_MSC_VER) || defined(__BORLANDC__) || (defined(__WATCOMC__) && (__WATCOMC__ < 1200))
-#	define snprintf _snprintf 
-#endif
-
 int qse_comparehttpversions (
 	const qse_http_version_t* v1,
 	const qse_http_version_t* v2)
@@ -378,9 +373,7 @@ qse_mchar_t* qse_fmthttptime (
 
 	qse_gmtime (nt, &bt);
 
-/* TODO: avoid using snprintf () */
-
-	snprintf (
+	qse_mbsxfmt (
 		buf, bufsz,
 		QSE_MT("%s, %d %s %d %02d:%02d:%02d GMT"),
 		wday_name[bt.wday].s,
