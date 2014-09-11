@@ -420,7 +420,7 @@ printf ("... URS_SEND.....................\n");
 		if (dc->skadlen >= 0)
 		{
 			/* the default url rewrite server address set in urs_open
-			* is valid. */
+			 * is valid. */
 			req->urs_skad = dc->skad;
 			req->urs_skadlen = dc->skadlen;
 			req->urs_socket = dc->urs_socket;

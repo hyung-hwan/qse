@@ -806,6 +806,7 @@ static int dns_send (qse_httpd_t* httpd, qse_httpd_dns_t* dns, const qse_mchar_t
 	qse_size_t name_len;
 	dns_ans_t* ans;
 	qse_tmr_event_t tmout_event;
+	int dns_flags;
 
 	httpd_xtn = qse_httpd_getxtn (httpd);
 
@@ -857,25 +858,9 @@ printf ("DNS REALLY SENING>>>>>>>>>>>>>>>>>>>>>>>\n");
 	req->resol = resol;
 	req->ctx = ctx;
 
-
-	if (dns_server->flags & QSE_HTTPD_DNS_SERVER_A)
-		req->qalen = init_dns_query (req->qa, QSE_SIZEOF(req->qa), name, DNS_QTYPE_A, req->seqa);
-	else
-		req->flags |= DNS_REQ_A_NX;
-
-	if (dns_server->flags & QSE_HTTPD_DNS_SERVER_AAAA)
-		req->qaaaalen = init_dns_query (req->qaaaa, QSE_SIZEOF(req->qaaaa), name, DNS_QTYPE_AAAA, req->seqaaaa);
-	else
-		req->flags |= DNS_REQ_AAAA_NX;
-
-	if (req->qalen <= -1 || req->qaaaalen <= -1)
-	{
-		qse_httpd_seterrnum (httpd, QSE_HTTPD_EINVAL);
-		goto oops;
-	}
-
 	req->dns_retries = httpd_xtn->dns.retries;
 	req->dns_tmout = httpd_xtn->dns.tmout;
+	dns_flags = QSE_HTTPD_DNS_SERVER_A | QSE_HTTPD_DNS_SERVER_AAAA;
 
 	if (dns_server)
 	{
@@ -889,6 +874,8 @@ printf ("DNS REALLY SENING>>>>>>>>>>>>>>>>>>>>>>>\n");
 			req->dns_socket = dns->handle[0].i;
 		else 
 			req->dns_socket = dns->handle[1].i;
+
+		dns_flags = dns_server->flags;
 	}
 	else
 	{
@@ -896,6 +883,22 @@ printf ("DNS REALLY SENING>>>>>>>>>>>>>>>>>>>>>>>\n");
 		req->dns_skad = dc->skad;
 		req->dns_skadlen = dc->skadlen;
 		req->dns_socket = dc->dns_socket;
+	}
+
+	if (dns_flags & QSE_HTTPD_DNS_SERVER_A)
+		req->qalen = init_dns_query (req->qa, QSE_SIZEOF(req->qa), name, DNS_QTYPE_A, req->seqa);
+	else
+		req->flags |= DNS_REQ_A_NX;
+
+	if (dns_flags & QSE_HTTPD_DNS_SERVER_AAAA)
+		req->qaaaalen = init_dns_query (req->qaaaa, QSE_SIZEOF(req->qaaaa), name, DNS_QTYPE_AAAA, req->seqaaaa);
+	else
+		req->flags |= DNS_REQ_AAAA_NX;
+
+	if (req->qalen <= -1 || req->qaaaalen <= -1)
+	{
+		qse_httpd_seterrnum (httpd, QSE_HTTPD_EINVAL);
+		goto oops;
 	}
 
 	qse_gettime (&tmout_event.when);
