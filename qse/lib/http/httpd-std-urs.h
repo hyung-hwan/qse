@@ -348,7 +348,7 @@ printf ("urs timed out....\n");
 	dc->req_count--;
 }
 
-static int urs_send (qse_httpd_t* httpd, qse_httpd_urs_t* urs, const qse_mchar_t* url, qse_httpd_rewrite_t rewrite, const qse_httpd_natr_t* urs_server, void* ctx)
+static int urs_send (qse_httpd_t* httpd, qse_httpd_urs_t* urs, const qse_mchar_t* url, qse_httpd_rewrite_t rewrite, const qse_httpd_urs_server_t* urs_server, void* ctx)
 {
 	urs_ctx_t* dc = (urs_ctx_t*)urs->ctx;
 	httpd_xtn_t* httpd_xtn;
