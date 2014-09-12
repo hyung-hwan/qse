@@ -153,7 +153,7 @@ struct dns_req_t
 	qse_uint8_t* dn;
 	qse_size_t dnlen;
 
-	qse_httpd_resol_t resol;
+	qse_httpd_resolve_t resol;
 	void* ctx;
 
 	qse_uint8_t qa[DNS_MAX_DN_LEN + QSE_SIZEOF(dns_hdr_t) + QSE_SIZEOF(dns_qdtrail_t)];
@@ -795,7 +795,7 @@ printf (">>tmr_dns_tmout_handle  req->>%p\n", req);
 	dc->req_count--;
 }
 
-static int dns_send (qse_httpd_t* httpd, qse_httpd_dns_t* dns, const qse_mchar_t* name, qse_httpd_resol_t resol, const qse_httpd_dns_server_t* dns_server, void* ctx)
+static int dns_send (qse_httpd_t* httpd, qse_httpd_dns_t* dns, const qse_mchar_t* name, qse_httpd_resolve_t resol, const qse_httpd_dns_server_t* dns_server, void* ctx)
 {
 	dns_ctx_t* dc = (dns_ctx_t*)dns->ctx;
 	httpd_xtn_t* httpd_xtn;
@@ -942,3 +942,11 @@ oops:
 	}
 	return -1;
 }
+
+
+static int dns_preresolve (qse_httpd_t* httpd, qse_httpd_client_t* client, const qse_mchar_t* host, qse_nwad_t* nwad)
+{
+	/* do nothing */
+	return 1; /* unhandled */
+}
+
