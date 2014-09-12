@@ -1947,13 +1947,20 @@ printf ("XXXXXXXXXXXXXXXXXXXXXXXXXX URL REWRITTEN TO [%s].....\n", new_url);
 		{
 			/* if a network address is returned, change the peer address only */
 			/* TODO: prevent proxying to self */
+
+			if (qse_getnwadport(&nwad) == 0) 
+			{
+				/* i don't care if new_url is X.X.X.X:0 or just X.X.X.X */
+				qse_setnwadport (&nwad, qse_hton16(QSE_HTTPD_DEFAULT_PORT));
+			}
+
 			proxy->peer.nwad = nwad;
 			proxy->flags |= PROXY_URL_REWRITTEN;
 			proxy->flags &= ~PROXY_RESOLVE_PEER_NAME; /* skip dns */
 		}
 		else if (new_url[0] >= QSE_MT('0') && new_url[0] <= QSE_MT('9'))
 		{
-			/* redirection */
+			/* check if it begins with redirection code followed by a colon */
 			int redir_code = 0;
 			qse_httpd_status_reloc_t reloc;
 			const qse_mchar_t* nuptr = new_url;
@@ -1963,7 +1970,11 @@ printf ("XXXXXXXXXXXXXXXXXXXXXXXXXX URL REWRITTEN TO [%s].....\n", new_url);
 				nuptr++;
 			} 
 			while (*nuptr >= QSE_MT('0') && *nuptr <= QSE_MT('9'));
-			if (*nuptr != QSE_MT(':'))  goto fail;
+			if (*nuptr != QSE_MT(':'))  
+			{
+				/* no colon is found after digits. it's probably a normal url */
+				goto normal_url;
+			}
 			if (redir_code != 301 && redir_code != 302 && redir_code != 307) redir_code = 301;
 			nuptr++;
 
@@ -1981,6 +1992,7 @@ printf ("XXXXXXXXXXXXXXXXXXXXXXXXXX URL REWRITTEN TO [%s].....\n", new_url);
 		}
 		else
 		{
+		normal_url:
 			if (proxy->flags & PROXY_RAW)
 			{
 				qse_mchar_t* tmp;
@@ -2042,6 +2054,12 @@ printf ("XXXXXXXXXXXXXXXXXXXXXXXXXX URL REWRITTEN TO [%s].....\n", new_url);
 						}
 						else
 						{
+							if (qse_getnwadport(&nwad) == 0) 
+							{
+								/* i don't care if tmp is X.X.X.X:0 or just X.X.X.X */
+								qse_setnwadport (&nwad, qse_hton16(QSE_HTTPD_DEFAULT_PORT));
+							}
+
 							proxy->peer.nwad = nwad;
 							proxy->flags |= PROXY_URL_REWRITTEN;
 							proxy->flags &= ~PROXY_RESOLVE_PEER_NAME; /* skip dns */
@@ -2050,6 +2068,9 @@ qse_mchar_t xxxx[128];
 qse_nwadtombs (&proxy->peer.nwad, xxxx, 128, QSE_NWADTOMBS_ALL);
 printf ("XXXXXXXXXXXXXXXXXXXXXXXXXX PEER NAME RESOLVED.....TO [%s] IN URLREWRITING NEW_URL[%s] %d %d\n", xxxx, new_url, (int)proxy->qpath_pos_in_reqfwdbuf, (int)proxy->qpath_len_in_reqfwdbuf);
 }
+
+							/* the temporary string is not used. kill it */
+							qse_httpd_freemem (httpd, tmp);
 						}
 					}
 				}

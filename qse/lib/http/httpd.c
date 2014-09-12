@@ -491,7 +491,8 @@ static qse_httpd_client_t* new_client (qse_httpd_t* httpd, qse_httpd_client_t* t
 	/* copy the public fields, 
 	 * keep the private fields initialized at 0 */
 	client->status = tmpl->status;
-	if (httpd->opt.scb.client.accepted == QSE_NULL) client->status |= QSE_HTTPD_CLIENT_READY;
+	if (httpd->opt.scb.client.accepted == QSE_NULL) 
+		client->status |= QSE_HTTPD_CLIENT_READY;
 	client->handle = tmpl->handle;
 	client->handle2 = tmpl->handle2;
 	client->remote_addr = tmpl->remote_addr;
@@ -610,6 +611,21 @@ static void move_client_to_tail (qse_httpd_t* httpd, qse_httpd_client_t* client)
 	}
 }
 
+#if 0
+static int is_client_allowed (qse_httpd_t* httpd, qse_httpd_client_t* client)
+{
+	qse_httpd_mod_t* mod;
+
+/* TODO: no sequential search. speed up */
+	for (mod = httpd->modlist; mod;  mod = mod->next)
+	{
+		if (mod->new_client) mod->new_client (httpd, client);
+	}
+
+	return 0;
+}
+#endif
+
 static int accept_client (
 	qse_httpd_t* httpd, void* mux, qse_ubi_t handle, int mask, void* cbarg)
 {
@@ -642,6 +658,14 @@ qse_printf (QSE_T("failed to accept from server [%s] [%d]\n"), tmp, server->hand
 		if (server->dope.flags & QSE_HTTPD_SERVER_SECURE) clibuf.status |= QSE_HTTPD_CLIENT_SECURE;
 		clibuf.server = server;
 
+#if 0
+		if (is_client_allowed (httpd, &clibuf) <= -1)
+		{
+			httpd->opt.scb.client.close (httpd, &clibuf);
+			return -1;
+		}
+#endif
+
 		client = new_client (httpd, &clibuf);
 		if (client == QSE_NULL)
 		{
@@ -649,9 +673,6 @@ qse_printf (QSE_T("failed to accept from server [%s] [%d]\n"), tmp, server->hand
 			return -1;
 		}
 
-#if 0
-printf ("MUX ADDHND CLIENT READ %d\n", client->handle.i);
-#endif
 		if (httpd->opt.scb.mux.addhnd (httpd, mux, client->handle, QSE_HTTPD_MUX_READ, client) <= -1)
 		{
 			free_client (httpd, client);
@@ -682,6 +703,7 @@ printf ("MUX ADDHND CLIENT READ %d\n", client->handle.i);
 			httpd->opt.rcb.logact (httpd, &msg);
 		}
 	}
+
 	return 0;
 }
 
