@@ -538,7 +538,6 @@ static int urs_prerewrite (qse_httpd_t* httpd, qse_httpd_client_t* client, qse_h
 	url_to_rewrite = qse_httpd_allocmem (httpd, total_len);
 	if (url_to_rewrite == QSE_NULL) return -1;
 
-	
 	if (mtype == QSE_HTTP_CONNECT || !host_ptr) 
 	{
 		host_ptr = QSE_MT("");

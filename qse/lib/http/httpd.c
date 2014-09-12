@@ -1853,7 +1853,7 @@ qse_mchar_t* qse_httpd_escapehtml (qse_httpd_t* httpd, const qse_mchar_t* str)
 
 /* ----------------------------------------------------------------------- */
 
-int qse_httpd_resolname (qse_httpd_t* httpd, const qse_mchar_t* name, qse_httpd_resol_t resol, const qse_httpd_dns_server_t* dns_server, void* ctx)
+int qse_httpd_resolvename (qse_httpd_t* httpd, const qse_mchar_t* name, qse_httpd_resolve_t resol, const qse_httpd_dns_server_t* dns_server, void* ctx)
 {
 printf ("DNS_SEND.........................\n");
 	if (!httpd->dnsactive) 
@@ -1861,7 +1861,6 @@ printf ("DNS_SEND.........................\n");
 		qse_httpd_seterrnum (httpd, QSE_HTTPD_ENODNS);
 		return -1;
 	}
-
 
 	return httpd->opt.scb.dns.send (httpd, &httpd->dns, name, resol, dns_server, ctx);
 }

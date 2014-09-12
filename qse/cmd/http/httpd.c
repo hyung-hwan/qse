@@ -198,6 +198,7 @@ struct loccfg_t
 		int dns_queries;
 		int urs_timeout;
 		int urs_retries;
+		qse_httpd_mod_t* dns_preresolve_mod;
 		qse_httpd_mod_t* urs_prerewrite_mod;
 		qse_mchar_t pseudonym[128]; /* TODO: good size? */
 	} proxy;
@@ -574,6 +575,7 @@ proxy_ok:
 		root->u.proxy.dns_server.tmout.sec = loccfg->proxy.dns_timeout;
 		root->u.proxy.dns_server.retries = loccfg->proxy.dns_retries;
 		root->u.proxy.dns_server.flags = loccfg->proxy.dns_queries;
+		root->u.proxy.dns_preresolve_mod = loccfg->proxy.dns_preresolve_mod;
 	}
 
 	if (loccfg->proxy.urs_enabled)
@@ -1482,6 +1484,16 @@ static int load_loccfg_proxy (qse_httpd_t* httpd, qse_xli_t* xli, qse_xli_list_t
 	else cfg->proxy.dns_queries = QSE_HTTPD_DNS_SERVER_A | QSE_HTTPD_DNS_SERVER_AAAA;
 
 	pair = QSE_NULL;
+	if (proxy) pair = qse_xli_findpair (xli, proxy, QSE_T("dns-preresolve-hook"));
+	if (!pair && default_proxy) pair = qse_xli_findpair (xli, default_proxy, QSE_T("dns-preresolve-hook"));
+	if (pair) 
+	{
+		cfg->proxy.dns_preresolve_mod = qse_httpd_findmod (httpd, ((qse_xli_str_t*)pair->val)->ptr);
+		if (!cfg->proxy.dns_preresolve_mod)
+			qse_printf (QSE_T("WARNING: dns-preresolve-hook not found - %s\n"), ((qse_xli_str_t*)pair->val)->ptr); 
+	}
+
+	pair = QSE_NULL;
 	if (proxy) pair = qse_xli_findpair (xli, proxy, QSE_T("urs-enabled"));
 	if (!pair && default_proxy) pair = qse_xli_findpair (xli, default_proxy, QSE_T("urs-enabled"));
 	if (pair) cfg->proxy.urs_enabled = get_boolean ((qse_xli_str_t*)pair->val);
@@ -1895,6 +1907,7 @@ static int open_config_file (qse_httpd_t* httpd)
 		{ QSE_T("server-default.proxy.dns-timeout"),                 { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
 		{ QSE_T("server-default.proxy.dns-retries"),                 { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
 		{ QSE_T("server-default.proxy.dns-queries"),                 { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 0, 0xFFFF }  },
+		{ QSE_T("server-default.proxy.dns-preresolve-hook"),         { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
 		{ QSE_T("server-default.proxy.urs-enabled"),                 { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
 		{ QSE_T("server-default.proxy.urs-server"),                  { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
 		{ QSE_T("server-default.proxy.urs-timeout"),                 { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
@@ -1943,13 +1956,14 @@ static int open_config_file (qse_httpd_t* httpd)
 		{ QSE_T("server.host.location.proxy"),                       { QSE_XLI_SCM_VALLIST | QSE_XLI_SCM_KEYNODUP, 0, 0      }  },
 		{ QSE_T("server.host.location.proxy.http"),                  { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
 		{ QSE_T("server.host.location.proxy.connect"),               { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
-		{ QSE_T("server.host.location.proxy.intercept"),               { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
+		{ QSE_T("server.host.location.proxy.intercept"),             { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
 		{ QSE_T("server.host.location.proxy.pseudonym"),             { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
 		{ QSE_T("server.host.location.proxy.dns-enabled"),           { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
 		{ QSE_T("server.host.location.proxy.dns-server"),            { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
 		{ QSE_T("server.host.location.proxy.dns-timeout"),           { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
 		{ QSE_T("server.host.location.proxy.dns-retries"),           { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
 		{ QSE_T("server.host.location.proxy.dns-queries"),           { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 0, 0xFFFF }  },
+		{ QSE_T("server.host.location.proxy.dns-preresolve-hook"),   { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
 		{ QSE_T("server.host.location.proxy.urs-enabled"),           { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
 		{ QSE_T("server.host.location.proxy.urs-server"),            { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
 		{ QSE_T("server.host.location.proxy.urs-timeout"),           { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },

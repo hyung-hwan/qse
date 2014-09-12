@@ -99,6 +99,13 @@ typedef void (*qse_httpd_mod_unload_t) (
 	qse_httpd_mod_t* mod
 );
 
+typedef int (*qse_httpd_mod_dns_preresolve_t) (
+	qse_httpd_mod_t*    mod,
+	qse_httpd_client_t* client,
+	const qse_mchar_t*  host,
+	qse_nwad_t*         nwad
+);
+
 typedef int (*qse_httpd_mod_urs_prerewrite_t) (
 	qse_httpd_mod_t*    mod,
 	qse_httpd_client_t* client,
@@ -121,6 +128,7 @@ struct qse_httpd_mod_t
 	/* module's entry point may set these items */
 	void* ctx; 
 	qse_httpd_mod_unload_t unload;
+	qse_httpd_mod_dns_preresolve_t dns_preresolve;
 	qse_httpd_mod_urs_prerewrite_t urs_prerewrite;
 
 	/* more fields will get added here for expansion in the future. */
@@ -196,7 +204,7 @@ struct qse_httpd_urs_server_t
 
 /* -------------------------------------------------------------------------- */
 
-typedef void (*qse_httpd_resol_t) (
+typedef void (*qse_httpd_resolve_t) (
 	qse_httpd_t*       httpd,
 	const qse_mchar_t* name,
 	const qse_nwad_t*  nwad,
@@ -212,6 +220,14 @@ typedef void (*qse_httpd_rewrite_t) (
 	const qse_mchar_t* new_url,
 	/* content data pointer */
 	void*              ctx
+);
+
+
+typedef int (*qse_httpd_dns_preresolve_t) (
+	qse_httpd_t*        httpd, 
+	qse_httpd_client_t* client,
+	const qse_mchar_t*  host,
+	qse_nwad_t*         nwad
 );
 
 
@@ -389,8 +405,10 @@ struct qse_httpd_scb_t
 		void (*close) (qse_httpd_t* httpd, qse_httpd_dns_t* dns);
 		int (*recv) (qse_httpd_t* httpd, qse_httpd_dns_t* dns, qse_ubi_t handle);
 		int (*send) (qse_httpd_t* httpd, qse_httpd_dns_t* dns,
-		             const qse_mchar_t* name, qse_httpd_resol_t resol,
+		             const qse_mchar_t* name, qse_httpd_resolve_t resol,
 		             const qse_httpd_dns_server_t* dns_server, void* ctx);
+
+		qse_httpd_dns_preresolve_t preresolve;
 	} dns;
 
 	struct
@@ -737,6 +755,7 @@ struct qse_httpd_rsrc_proxy_t
 
 	qse_httpd_dns_server_t dns_server;
 	qse_httpd_urs_server_t urs_server;
+	qse_httpd_mod_t* dns_preresolve_mod;
 	qse_httpd_mod_t* urs_prerewrite_mod;
 
 	/* optional pseudonym to use for Via: */
@@ -1165,10 +1184,10 @@ QSE_EXPORT qse_mchar_t* qse_httpd_escapehtml (
 	const qse_mchar_t*  str
 );
 
-QSE_EXPORT int qse_httpd_resolname (
+QSE_EXPORT int qse_httpd_resolvename (
 	qse_httpd_t*                  httpd,
 	const qse_mchar_t*            name,
-	qse_httpd_resol_t             resol,
+	qse_httpd_resolve_t           resol,
 	const qse_httpd_dns_server_t* dns_server,
 	void*                         ctx
 );

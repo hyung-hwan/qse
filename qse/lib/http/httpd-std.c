@@ -2389,7 +2389,8 @@ static qse_httpd_scb_t httpd_system_callbacks =
 		dns_open,
 		dns_close,
 		dns_recv,
-		dns_send
+		dns_send,
+		dns_preresolve
 	},
 
 	/* urs */

@@ -72,6 +72,7 @@ struct task_proxy_t
 	qse_mchar_t* pseudonym;
 	qse_htrd_t* peer_htrd;
 
+	qse_httpd_mod_t* dns_preresolve_mod;
 	qse_mchar_t* peer_name;
 	qse_uint16_t peer_port;
 
@@ -948,9 +949,9 @@ static int task_init_proxy (
 		if (arg->rsrc->flags & QSE_HTTPD_RSRC_PROXY_ENABLE_DNS)
 		{
 			proxy->peer_name = proxy->pseudonym + len + 1;
-
 			qse_mbscpy (proxy->peer_name, arg->rsrc->dst.str);
 			adjust_peer_name_and_port (proxy);
+			proxy->dns_preresolve_mod = arg->rsrc->dns_preresolve_mod;
 
 			proxy->flags |= PROXY_RESOLVE_PEER_NAME;
 			if (arg->rsrc->flags & QSE_HTTPD_RSRC_PROXY_DNS_SERVER)
@@ -989,7 +990,7 @@ printf (">>>>>>>>>>>>>>>>>>>>>>>> [%s] <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n", proxy
 		if (x == 0) 
 		{
 			/* prerewrite() indicates that proxy->url_to_rewrite is the final
-			 * rewriting result and no futher rewriting is required */
+			 * rewriting result and no further rewriting is required */
 			proxy->flags |= PROXY_URL_PREREWRITTEN;
 		}
 
@@ -2129,7 +2130,7 @@ static int task_main_proxy (
 		{
 			/* note that url_to_rewrite is URL + extra information. */
 			if (qse_httpd_rewriteurl (httpd, proxy->url_to_rewrite, on_url_rewritten, 
-									  ((proxy->flags & PROXY_URS_SERVER)? &proxy->urs_server: QSE_NULL), task) <= -1) goto oops;
+			                          ((proxy->flags & PROXY_URS_SERVER)? &proxy->urs_server: QSE_NULL), task) <= -1) goto oops;
 
 			if (proxy->flags & PROXY_INIT_FAILED) goto oops;
 			
@@ -2143,14 +2144,31 @@ static int task_main_proxy (
 	if (proxy->flags & PROXY_RESOLVE_PEER_NAME)
 	{
 		/* arrange to resolve a host name and return */
-
+		int x;
 		QSE_ASSERT (proxy->peer_name != QSE_NULL);
 
-		if (qse_httpd_resolname (httpd, proxy->peer_name, on_peer_name_resolved, 
-		                         ((proxy->flags & PROXY_DNS_SERVER)? &proxy->dns_server: QSE_NULL), task) <= -1) goto oops;
+		if (proxy->dns_preresolve_mod && proxy->dns_preresolve_mod->dns_preresolve)
+			x = proxy->dns_preresolve_mod->dns_preresolve (proxy->dns_preresolve_mod, client, proxy->peer_name, &proxy->peer.nwad);
+		else
+			x = httpd->opt.scb.dns.preresolve (httpd, client, proxy->peer_name, &proxy->peer.nwad);
+		if (x <= -1) goto oops;
+
+		if (x == 0)
+		{
+			/* preresolve() indicates that proxy->peer.nwad contains the
+			 * final address. no actual dns resolution is required */
+			proxy->flags |= PROXY_PEER_NAME_RESOLVED;
+			proxy->flags &= ~PROXY_RESOLVE_PEER_NAME;
+			qse_setnwadport (&proxy->peer.nwad, qse_hton16(proxy->peer_port));
+		}
+		else
+		{
+			x = qse_httpd_resolvename (httpd, proxy->peer_name, on_peer_name_resolved, ((proxy->flags & PROXY_DNS_SERVER)? &proxy->dns_server: QSE_NULL), task);
+			if (x <= -1) goto oops;
+		}
 
 		/* if the name could be resolved without sending a request 
-		 * in qse_httpd_resolname(), on_peer_name_resolve would be 
+		 * in qse_httpd_resolvename(), on_peer_name_resolve would be 
 		 * called. */
 		if (proxy->flags & PROXY_INIT_FAILED) 
 		{
