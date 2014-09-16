@@ -99,8 +99,8 @@ static int urs_open (qse_httpd_t* httpd, qse_httpd_urs_t* urs)
 
 	httpd_xtn = qse_httpd_getxtn (httpd);
 
-	urs->handle[0].i = QSE_INVALID_SCKHND;
-	urs->handle[1].i = QSE_INVALID_SCKHND;
+	urs->handle[0] = QSE_INVALID_SCKHND;
+	urs->handle[1] = QSE_INVALID_SCKHND;
 
 	dc = (urs_ctx_t*) qse_httpd_callocmem (httpd, QSE_SIZEOF(urs_ctx_t));
 	if (dc == NULL) goto oops;
@@ -128,12 +128,12 @@ static int urs_open (qse_httpd_t* httpd, qse_httpd_urs_t* urs)
 	type = SOCK_DGRAM;
 #endif
 
-	urs->handle[0].i = open_udp_socket (httpd, AF_INET, type, proto);
+	urs->handle[0] = open_udp_socket (httpd, AF_INET, type, proto);
 #if defined(AF_INET6)
-	urs->handle[1].i = open_udp_socket (httpd, AF_INET6, type, proto);
+	urs->handle[1] = open_udp_socket (httpd, AF_INET6, type, proto);
 #endif
 
-	if (!qse_isvalidsckhnd(urs->handle[0].i) && !qse_isvalidsckhnd(urs->handle[1].i))
+	if (!qse_isvalidsckhnd(urs->handle[0]) && !qse_isvalidsckhnd(urs->handle[1]))
 	{
 		goto oops;
 	}
@@ -145,9 +145,9 @@ static int urs_open (qse_httpd_t* httpd, qse_httpd_urs_t* urs)
 	if (dc->skadlen >= 0)
 	{
 		if (nwad.type == QSE_NWAD_IN4)
-			dc->urs_socket = urs->handle[0].i;
+			dc->urs_socket = urs->handle[0];
 		else
-			dc->urs_socket = urs->handle[1].i;
+			dc->urs_socket = urs->handle[1];
 	}
 	else
 	{
@@ -158,21 +158,21 @@ static int urs_open (qse_httpd_t* httpd, qse_httpd_urs_t* urs)
 	if (proto == IPPROTO_SCTP)
 	{
 /* TODO: error ahndleing */
-		if (qse_isvalidsckhnd(urs->handle[0].i)) listen (urs->handle[0].i, 99);
-		if (qse_isvalidsckhnd(urs->handle[1].i)) listen (urs->handle[1].i, 99);
+		if (qse_isvalidsckhnd(urs->handle[0])) listen (urs->handle[0], 99);
+		if (qse_isvalidsckhnd(urs->handle[1])) listen (urs->handle[1], 99);
 	}
 #endif
 
 	urs->handle_count = 2;
-	if (qse_isvalidsckhnd(urs->handle[0].i)) urs->handle_mask |= (1 << 0);
-	if (qse_isvalidsckhnd(urs->handle[1].i)) urs->handle_mask |= (1 << 1);
+	if (qse_isvalidsckhnd(urs->handle[0])) urs->handle_mask |= (1 << 0);
+	if (qse_isvalidsckhnd(urs->handle[1])) urs->handle_mask |= (1 << 1);
 
 	urs->ctx = dc;
 	return 0;
 
 oops:
-	if (qse_isvalidsckhnd(urs->handle[0].i)) qse_closesckhnd (urs->handle[0].i);
-	if (qse_isvalidsckhnd(urs->handle[1].i)) qse_closesckhnd (urs->handle[1].i);
+	if (qse_isvalidsckhnd(urs->handle[0])) qse_closesckhnd (urs->handle[0]);
+	if (qse_isvalidsckhnd(urs->handle[1])) qse_closesckhnd (urs->handle[1]);
 	if (dc) qse_httpd_freemem (httpd, dc);
 	return -1;
 
@@ -208,13 +208,13 @@ static void urs_close (qse_httpd_t* httpd, qse_httpd_urs_t* urs)
 
 	QSE_ASSERT (dc->req_count == 0);
 
-	if (qse_isvalidsckhnd(urs->handle[0].i)) qse_closesckhnd (urs->handle[0].i);
-	if (qse_isvalidsckhnd(urs->handle[1].i)) qse_closesckhnd (urs->handle[1].i);
+	if (qse_isvalidsckhnd(urs->handle[0])) qse_closesckhnd (urs->handle[0]);
+	if (qse_isvalidsckhnd(urs->handle[1])) qse_closesckhnd (urs->handle[1]);
 	qse_httpd_freemem (httpd, urs->ctx);
 }
 
 
-static int urs_recv (qse_httpd_t* httpd, qse_httpd_urs_t* urs, qse_ubi_t handle)
+static int urs_recv (qse_httpd_t* httpd, qse_httpd_urs_t* urs, qse_httpd_hnd_t handle)
 {
 	urs_ctx_t* dc = (urs_ctx_t*)urs->ctx;
 	httpd_xtn_t* httpd_xtn;
@@ -234,7 +234,7 @@ printf ("URS_RECV............................................\n");
 
 /* TODO: use recvmsg with MSG_ERRQUEUE... set socket option IP_RECVERR... */
 	fromlen = QSE_SIZEOF(fromaddr);
-	len = recvfrom (handle.i, dc->rcvbuf, QSE_SIZEOF(dc->rcvbuf) - 1, 0, (struct sockaddr*)&fromaddr, &fromlen);
+	len = recvfrom (handle, dc->rcvbuf, QSE_SIZEOF(dc->rcvbuf) - 1, 0, (struct sockaddr*)&fromaddr, &fromlen);
 
 /* TODO: check if fromaddr matches the dc->skad... */
 
@@ -410,9 +410,9 @@ printf ("... URS_SEND.....................\n");
 		if (req->urs_skadlen <= -1) goto default_urs_server;
 
 		if (urs_server->nwad.type == QSE_NWAD_IN4)
-			req->urs_socket = urs->handle[0].i;
+			req->urs_socket = urs->handle[0];
 		else 
-			req->urs_socket = urs->handle[1].i;
+			req->urs_socket = urs->handle[1];
 	}
 	else
 	{

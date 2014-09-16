@@ -234,9 +234,6 @@ QSE_EXPORT qse_fio_hnd_t qse_fio_gethandle (
 	const qse_fio_t* fio
 );
 
-QSE_EXPORT qse_ubi_t qse_fio_gethandleasubi (
-	const qse_fio_t* fio
-);
 
 /**
  * The qse_fio_seek() function changes the current file position.

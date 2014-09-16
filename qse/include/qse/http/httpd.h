@@ -36,6 +36,8 @@ typedef struct qse_httpd_client_t qse_httpd_client_t;
 typedef struct qse_httpd_dns_t    qse_httpd_dns_t;
 typedef struct qse_httpd_urs_t    qse_httpd_urs_t;
 
+typedef qse_intptr_t qse_httpd_hnd_t;
+
 enum qse_httpd_errnum_t
 {
 	QSE_HTTPD_ENOERR,
@@ -86,8 +88,6 @@ enum qse_httpd_trait_t
 	QSE_HTTPD_LOGACT       = (1 << 5)
 };
 typedef enum qse_httpd_trait_t qse_httpd_trait_t;
-
-
 
 typedef struct qse_httpd_mod_t qse_httpd_mod_t;
 
@@ -149,7 +149,7 @@ struct qse_httpd_peer_t
 {
 	qse_nwad_t nwad;
 	qse_nwad_t local; /* local side address facing the peer */
-	qse_ubi_t  handle;
+	qse_httpd_hnd_t  handle;
 };
 
 enum qse_httpd_mux_mask_t
@@ -161,7 +161,7 @@ enum qse_httpd_mux_mask_t
 typedef int (*qse_httpd_muxcb_t) (
 	qse_httpd_t* httpd,
 	void*        mux,
-	qse_ubi_t    handle,
+	qse_httpd_hnd_t    handle,
 	int          mask, /* ORed of qse_httpd_mux_mask_t */
 	void*        cbarg
 );
@@ -244,7 +244,7 @@ typedef void (*qse_httpd_urs_close_t) (
 typedef int (*qse_httpd_urs_recv_t) (
 	qse_httpd_t*     httpd,
 	qse_httpd_urs_t* urs,
-	qse_ubi_t        handle
+	qse_httpd_hnd_t        handle
 );
 
 typedef int (*qse_httpd_urs_send_t) (
@@ -318,12 +318,12 @@ struct qse_httpd_scb_t
 	{
 		void* (*open)   (qse_httpd_t* httpd, qse_httpd_muxcb_t muxcb);
 		void  (*close)  (qse_httpd_t* httpd, void* mux);
-		int   (*addhnd) (qse_httpd_t* httpd, void* mux, qse_ubi_t handle, int mask, void* cbarg);
-		int   (*delhnd) (qse_httpd_t* httpd, void* mux, qse_ubi_t handle);
+		int   (*addhnd) (qse_httpd_t* httpd, void* mux, qse_httpd_hnd_t handle, int mask, void* cbarg);
+		int   (*delhnd) (qse_httpd_t* httpd, void* mux, qse_httpd_hnd_t handle);
 		int   (*poll)   (qse_httpd_t* httpd, void* mux, const qse_ntime_t* tmout);
 
-		int (*readable) (qse_httpd_t* httpd, qse_ubi_t handle, const qse_ntime_t* tmout);
-		int (*writable) (qse_httpd_t* httpd, qse_ubi_t handle, const qse_ntime_t* tmout);
+		int (*readable) (qse_httpd_t* httpd, qse_httpd_hnd_t handle, const qse_ntime_t* tmout);
+		int (*writable) (qse_httpd_t* httpd, qse_httpd_hnd_t handle, const qse_ntime_t* tmout);
 	} mux;
 
 	struct
@@ -333,17 +333,17 @@ struct qse_httpd_scb_t
 			
 		int (*ropen) (
 			qse_httpd_t* httpd, const qse_mchar_t* path, 
-			qse_ubi_t* handle);
+			qse_httpd_hnd_t* handle);
 		int (*wopen) (
 			qse_httpd_t* httpd, const qse_mchar_t* path, 
-			qse_ubi_t* handle);
-		void (*close) (qse_httpd_t* httpd, qse_ubi_t handle);
+			qse_httpd_hnd_t* handle);
+		void (*close) (qse_httpd_t* httpd, qse_httpd_hnd_t handle);
 
 		qse_ssize_t (*read) (
-			qse_httpd_t* httpd, qse_ubi_t handle,
+			qse_httpd_t* httpd, qse_httpd_hnd_t handle,
 			qse_mchar_t* buf, qse_size_t len);
 		qse_ssize_t (*write) (
-			qse_httpd_t* httpd, qse_ubi_t handle,
+			qse_httpd_t* httpd, qse_httpd_hnd_t handle,
 			const qse_mchar_t* buf, qse_size_t len);
 	} file;
 
@@ -357,10 +357,10 @@ struct qse_httpd_scb_t
 
 		int (*open) (
 			qse_httpd_t* httpd, const qse_mchar_t* path, 
-			qse_ubi_t* handle);
-		void (*close) (qse_httpd_t* httpd, qse_ubi_t handle);
+			qse_httpd_hnd_t* handle);
+		void (*close) (qse_httpd_t* httpd, qse_httpd_hnd_t handle);
 		int (*read) (
-			qse_httpd_t* httpd, qse_ubi_t handle,
+			qse_httpd_t* httpd, qse_httpd_hnd_t handle,
 			qse_httpd_dirent_t* ent);
 	} dir;
 
@@ -388,7 +388,7 @@ struct qse_httpd_scb_t
 		qse_ssize_t (*sendfile) (
 			qse_httpd_t* httpd,
 			qse_httpd_client_t* client,
-			qse_ubi_t handle, qse_foff_t* offset, qse_size_t count);
+			qse_httpd_hnd_t handle, qse_foff_t* offset, qse_size_t count);
 
 		/* event notification */
 		int (*accepted) (
@@ -403,7 +403,7 @@ struct qse_httpd_scb_t
 	{
 		int (*open) (qse_httpd_t* httpd, qse_httpd_dns_t* dns);
 		void (*close) (qse_httpd_t* httpd, qse_httpd_dns_t* dns);
-		int (*recv) (qse_httpd_t* httpd, qse_httpd_dns_t* dns, qse_ubi_t handle);
+		int (*recv) (qse_httpd_t* httpd, qse_httpd_dns_t* dns, qse_httpd_hnd_t handle);
 		int (*send) (qse_httpd_t* httpd, qse_httpd_dns_t* dns,
 		             const qse_mchar_t* name, qse_httpd_resolve_t resol,
 		             const qse_httpd_dns_server_t* dns_server, void* ctx);
@@ -531,7 +531,7 @@ struct qse_httpd_task_trigger_t
 	struct
 	{
 		int       mask; /* QSE_HTTPD_TASK_TRIGGER_READ | QSE_HTTPD_TASK_TRIGGER_WRITE */
-		qse_ubi_t handle;
+		qse_httpd_hnd_t handle;
 	} v[QSE_HTTPD_TASK_TRIGGER_MAX];
 };
 
@@ -573,8 +573,8 @@ struct qse_httpd_client_t
 	QSE_HTTPD_MATE_HDR;
 
 	/* == PUBLIC  == */
-	qse_ubi_t                handle;
-	qse_ubi_t                handle2;
+	qse_httpd_hnd_t          handle;
+	qse_httpd_hnd_t          handle2;
 	qse_nwad_t               remote_addr;
 	qse_nwad_t               local_addr;
 	qse_nwad_t               orgdst_addr;
@@ -649,7 +649,7 @@ struct qse_httpd_server_t
 	qse_httpd_server_dope_t dope;
 
 	/* set by server.open callback */
-	qse_ubi_t  handle;
+	qse_httpd_hnd_t  handle;
 
 	/* private  */
 	qse_httpd_t*          httpd;
@@ -664,7 +664,7 @@ struct qse_httpd_dns_t
 	QSE_HTTPD_MATE_HDR;
 
 	/* == PUBLIC == */
-	qse_ubi_t handle[5];
+	qse_httpd_hnd_t handle[5];
 
 	/* the number of effective slots in the handle array */
 	int handle_count; 
@@ -681,7 +681,7 @@ struct qse_httpd_urs_t
 	QSE_HTTPD_MATE_HDR;
 
 	/* == PUBLIC == */
-	qse_ubi_t handle[5];
+	qse_httpd_hnd_t handle[5];
 	int handle_count;
 	unsigned long handle_mask;
 	void* ctx;

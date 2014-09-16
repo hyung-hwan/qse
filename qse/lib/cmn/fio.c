@@ -938,25 +938,6 @@ qse_fio_hnd_t qse_fio_gethandle (const qse_fio_t* fio)
 	return fio->handle;
 }
 
-qse_ubi_t qse_fio_gethandleasubi (const qse_fio_t* fio)
-{
-	qse_ubi_t handle;
-
-#if defined(_WIN32)
-	handle.ptr = fio->handle;
-#elif defined(__OS2__)
-	handle.ul = fio->handle;
-#elif defined(__DOS__)
-	handle.i = fio->handle;
-#elif defined(vms) || defined(__vms)
-	handle.ptr = fio->handle;
-#else
-	handle.i = fio->handle;
-#endif
-
-	return handle;
-}
-
 qse_fio_off_t qse_fio_seek (
 	qse_fio_t* fio, qse_fio_off_t offset, qse_fio_ori_t origin)
 {

@@ -1498,8 +1498,8 @@ static int task_main_cgi (
 	 * writes it back to the client. so add a trigger for
 	 * checking the data availability from the child process */
 	task->trigger.v[0].mask = QSE_HTTPD_TASK_TRIGGER_READ;
-	task->trigger.v[0].handle = qse_pio_gethandleasubi (&cgi->pio, QSE_PIO_OUT);
-	task->trigger.v[1].handle = qse_pio_gethandleasubi (&cgi->pio, QSE_PIO_IN);
+	task->trigger.v[0].handle = qse_pio_gethandle (&cgi->pio, QSE_PIO_OUT);
+	task->trigger.v[1].handle = qse_pio_gethandle (&cgi->pio, QSE_PIO_IN);
 	task->trigger.cmask = 0;
 
 	if (cgi->reqfwdbuf)

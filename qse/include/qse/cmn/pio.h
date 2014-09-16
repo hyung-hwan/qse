@@ -300,16 +300,6 @@ QSE_EXPORT qse_pio_hnd_t qse_pio_gethandle (
 );
 
 /**
- * The qse_pio_gethandleasubi() function gets a pipe handle wrapped 
- * in the #qse_ubi_t type.
- * @return pipe handle
- */
-QSE_EXPORT qse_ubi_t qse_pio_gethandleasubi (
-	const qse_pio_t* pio, /**< pio object */
-	qse_pio_hid_t    hid  /**< handle ID */
-);
-
-/**
  * The qse_pio_getchild() function gets a process handle.
  * @return process handle
  */

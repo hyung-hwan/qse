@@ -33,7 +33,7 @@ struct task_dir_t
 	qse_http_version_t version;
 	int                keepalive;
 	int                method;
-	qse_ubi_t          handle;
+	qse_httpd_hnd_t          handle;
 };
 
 typedef struct task_dseg_t task_dseg_t;
@@ -47,7 +47,7 @@ struct task_dseg_t
 	qse_mcstr_t qpath;
 	qse_mcstr_t head;
 	qse_mcstr_t foot;
-	qse_ubi_t handle;
+	qse_httpd_hnd_t handle;
 	qse_httpd_dirent_t dent;
 
 #define HEADER_ADDED   (1 << 0)
@@ -439,7 +439,7 @@ send_dirlist:
 
 static qse_httpd_task_t* entask_directory_segment (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, 
-	qse_httpd_task_t* pred, qse_ubi_t handle, task_dir_t* dir)
+	qse_httpd_task_t* pred, qse_httpd_hnd_t handle, task_dir_t* dir)
 {
 	qse_httpd_task_t task;
 	task_dseg_t data;

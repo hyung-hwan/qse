@@ -167,11 +167,6 @@ QSE_EXPORT qse_nwio_hnd_t qse_nwio_gethandle (
 	const qse_nwio_t* nwio
 );
 
-QSE_EXPORT qse_ubi_t qse_nwio_gethandleasubi (
-	const qse_nwio_t* nwio
-);
-
-
 QSE_EXPORT qse_cmgr_t* qse_nwio_getcmgr (
 	qse_nwio_t* nwio
 );
