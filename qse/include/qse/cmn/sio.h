@@ -201,10 +201,6 @@ QSE_EXPORT qse_sio_hnd_t qse_sio_gethandle (
 	const qse_sio_t* sio
 );
 
-QSE_EXPORT qse_ubi_t qse_sio_gethandleasubi (
-	const qse_sio_t* sio
-);
-
 /** 
  * The qse_sio_getpath() returns the file path used to open the stream.
  * It returns #QSE_NULL if #QSE_SIO_HANDLE was on or #QSE_SIO_KEEPPATH 

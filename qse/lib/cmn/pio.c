@@ -1966,23 +1966,6 @@ qse_pio_hnd_t qse_pio_gethandle (const qse_pio_t* pio, qse_pio_hid_t hid)
 	return pio->pin[hid].handle;
 }
 
-qse_ubi_t qse_pio_gethandleasubi (const qse_pio_t* pio, qse_pio_hid_t hid)
-{
-	qse_ubi_t handle;
-
-#if defined(_WIN32)
-	handle.ptr = pio->pin[hid].handle;
-#elif defined(__OS2__)
-	handle.ul = pio->pin[hid].handle;
-#elif defined(__DOS__)
-	handle.i = pio->pin[hid].handle;
-#else
-	handle.i = pio->pin[hid].handle;
-#endif
-
-	return handle;
-}
-
 qse_pio_pid_t qse_pio_getchild (const qse_pio_t* pio)
 {
 	return pio->child;

@@ -290,11 +290,6 @@ qse_sio_hnd_t qse_sio_gethandle (const qse_sio_t* sio)
 	return QSE_FIO_HANDLE(&sio->file);
 }
 
-qse_ubi_t qse_sio_gethandleasubi (const qse_sio_t* sio)
-{
-	return qse_fio_gethandleasubi (&sio->file);
-}
-
 const qse_char_t* qse_sio_getpath (qse_sio_t* sio)
 {
 	/* this path is valid if QSE_SIO_HANDLE is off and QSE_SIO_KEEPPATH is on */

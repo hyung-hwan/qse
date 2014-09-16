@@ -52,7 +52,7 @@ struct task_file_t
 			int flags;
 			int status;
 			qse_htre_t* req;
-			qse_ubi_t handle;
+			qse_httpd_hnd_t handle;
 		} put;
 	} u;
 };
@@ -62,7 +62,7 @@ struct task_file_t
 typedef struct task_getfseg_t task_getfseg_t;
 struct task_getfseg_t
 {
-	qse_ubi_t handle;
+	qse_httpd_hnd_t handle;
 	qse_foff_t left;
 	qse_foff_t offset;
 };
@@ -128,11 +128,11 @@ more_work:
 static qse_httpd_task_t* entask_getfseg (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, 
 	qse_httpd_task_t* pred,
-	qse_ubi_t handle, qse_foff_t offset, qse_foff_t size)
+	qse_httpd_hnd_t handle, qse_foff_t offset, qse_foff_t size)
 {
 	qse_httpd_task_t task;
 	task_getfseg_t data;
-	
+
 	QSE_MEMSET (&data, 0, QSE_SIZEOF(data));
 	data.handle = handle;
 	data.offset = offset;
@@ -175,7 +175,7 @@ static QSE_INLINE int task_main_getfile (
 {
 	task_file_t* file;
 	qse_httpd_task_t* x;
-	qse_ubi_t handle;
+	qse_httpd_hnd_t handle;
 	int fileopen = 0;
 	qse_httpd_stat_t st;
 
@@ -267,8 +267,7 @@ static QSE_INLINE int task_main_getfile (
 		{
 			if (file->method == QSE_HTTP_HEAD) goto no_file_send;
 			x = entask_getfseg (
-				httpd, client, x,
-				handle, 
+				httpd, client, x, handle, 
 				file->u.get.range.from, 
 				(file->u.get.range.to - file->u.get.range.from + 1)
 			);
@@ -338,7 +337,7 @@ no_file_send:
 
 /*------------------------------------------------------------------------*/
 
-static int write_file (qse_httpd_t* httpd, qse_ubi_t handle, const qse_mchar_t* ptr, qse_size_t len)
+static int write_file (qse_httpd_t* httpd, qse_httpd_hnd_t handle, const qse_mchar_t* ptr, qse_size_t len)
 {
 	qse_ssize_t n;
 	qse_size_t pos = 0;

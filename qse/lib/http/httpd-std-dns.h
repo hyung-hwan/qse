@@ -293,8 +293,8 @@ static int dns_open (qse_httpd_t* httpd, qse_httpd_dns_t* dns)
 
 	httpd_xtn = qse_httpd_getxtn (httpd);
 
-	dns->handle[0].i = QSE_INVALID_SCKHND;
-	dns->handle[1].i = QSE_INVALID_SCKHND;
+	dns->handle[0] = QSE_INVALID_SCKHND;
+	dns->handle[1] = QSE_INVALID_SCKHND;
 
 	dc = (dns_ctx_t*) qse_httpd_callocmem (httpd, QSE_SIZEOF(dns_ctx_t));
 	if (dc == NULL) goto oops;
@@ -360,11 +360,11 @@ static int dns_open (qse_httpd_t* httpd, qse_httpd_dns_t* dns)
 		httpd->opt.rcb.logact (httpd, &msg);
 	}
 
-	dns->handle[0].i = open_udp_socket (httpd, AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+	dns->handle[0] = open_udp_socket (httpd, AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 #if defined(AF_INET6)
-	dns->handle[1].i = open_udp_socket (httpd, AF_INET6, SOCK_DGRAM, IPPROTO_UDP);
+	dns->handle[1] = open_udp_socket (httpd, AF_INET6, SOCK_DGRAM, IPPROTO_UDP);
 #endif
-	if (!qse_isvalidsckhnd(dns->handle[0].i) && !qse_isvalidsckhnd(dns->handle[1].i))
+	if (!qse_isvalidsckhnd(dns->handle[0]) && !qse_isvalidsckhnd(dns->handle[1]))
 	{
 		goto oops;
 	}
@@ -376,9 +376,9 @@ static int dns_open (qse_httpd_t* httpd, qse_httpd_dns_t* dns)
 	if (dc->skadlen >=  0)
 	{
 		if (nwad.type == QSE_NWAD_IN4)
-			dc->dns_socket = dns->handle[0].i;
+			dc->dns_socket = dns->handle[0];
 		else
-			dc->dns_socket = dns->handle[1].i;
+			dc->dns_socket = dns->handle[1];
 	}
 	else
 	{
@@ -386,16 +386,16 @@ static int dns_open (qse_httpd_t* httpd, qse_httpd_dns_t* dns)
 	}
 
 	dns->handle_count = 2;
-	if (qse_isvalidsckhnd(dns->handle[0].i)) dns->handle_mask |= (1 << 0);
-	if (qse_isvalidsckhnd(dns->handle[1].i)) dns->handle_mask |= (1 << 1);
+	if (qse_isvalidsckhnd(dns->handle[0])) dns->handle_mask |= (1 << 0);
+	if (qse_isvalidsckhnd(dns->handle[1])) dns->handle_mask |= (1 << 1);
 
 	dns->ctx = dc;
 
 	return 0;
 
 oops:
-	if (qse_isvalidsckhnd(dns->handle[0].i)) qse_closesckhnd (dns->handle[0].i);
-	if (qse_isvalidsckhnd(dns->handle[1].i)) qse_closesckhnd (dns->handle[1].i);
+	if (qse_isvalidsckhnd(dns->handle[0])) qse_closesckhnd (dns->handle[0]);
+	if (qse_isvalidsckhnd(dns->handle[1])) qse_closesckhnd (dns->handle[1]);
 	if (dc) qse_httpd_freemem (httpd, dc);
 	return -1;
 
@@ -444,8 +444,8 @@ static void dns_close (qse_httpd_t* httpd, qse_httpd_dns_t* dns)
 		}
 	}
 
-	if (qse_isvalidsckhnd(dns->handle[0].i)) qse_closesckhnd (dns->handle[0].i);
-	if (qse_isvalidsckhnd(dns->handle[1].i)) qse_closesckhnd (dns->handle[1].i);
+	if (qse_isvalidsckhnd(dns->handle[0])) qse_closesckhnd (dns->handle[0]);
+	if (qse_isvalidsckhnd(dns->handle[1])) qse_closesckhnd (dns->handle[1]);
 	qse_httpd_freemem (httpd, dns->ctx);
 }
 
@@ -533,7 +533,7 @@ static dns_ans_t* dns_get_answer_from_cache (dns_ctx_t* dc, const qse_mchar_t* n
 	return QSE_NULL;
 }
 
-static int dns_recv (qse_httpd_t* httpd, qse_httpd_dns_t* dns, qse_ubi_t handle)
+static int dns_recv (qse_httpd_t* httpd, qse_httpd_dns_t* dns, qse_httpd_hnd_t handle)
 {
 	dns_ctx_t* dc = (dns_ctx_t*)dns->ctx;
 	httpd_xtn_t* httpd_xtn;
@@ -563,7 +563,7 @@ printf ("DNS_RECV....\n");
 	httpd_xtn = qse_httpd_getxtn (httpd);
 
 	fromlen = QSE_SIZEOF(fromaddr);
-	len = recvfrom (handle.i, buf, QSE_SIZEOF(buf), 0, (struct sockaddr*)&fromaddr, &fromlen);
+	len = recvfrom (handle, buf, QSE_SIZEOF(buf), 0, (struct sockaddr*)&fromaddr, &fromlen);
 
 	if (len < QSE_SIZEOF(*hdr)) goto done; /* packet too small */
 
@@ -871,9 +871,9 @@ printf ("DNS REALLY SENING>>>>>>>>>>>>>>>>>>>>>>>\n");
 		if (req->dns_skadlen <= -1) goto default_dns_server;
 
 		if (dns_server->nwad.type == QSE_NWAD_IN4)
-			req->dns_socket = dns->handle[0].i;
+			req->dns_socket = dns->handle[0];
 		else 
-			req->dns_socket = dns->handle[1].i;
+			req->dns_socket = dns->handle[1];
 
 		dns_flags = dns_server->flags;
 	}

@@ -53,7 +53,7 @@ struct htrd_xtn_t
 
 static void free_server_list (qse_httpd_t* httpd);
 static int perform_client_task (
-	qse_httpd_t* httpd, void* mux, qse_ubi_t handle, int mask, void* cbarg);
+	qse_httpd_t* httpd, void* mux, qse_httpd_hnd_t handle, int mask, void* cbarg);
 static void unload_all_modules (qse_httpd_t* httpd);
 
 qse_http_version_t qse_http_v11 = { 1, 1 };
@@ -391,7 +391,7 @@ static QSE_INLINE int dequeue_task (
 	{
 		if (client->status & QSE_HTTPD_CLIENT_TASK_TRIGGER_RW_IN_MUX(i))
 		{
-			QSE_ASSERT (task->core.trigger.v[i].handle.i != client->handle.i);
+			QSE_ASSERT (task->core.trigger.v[i].handle != client->handle);
 			httpd->opt.scb.mux.delhnd (httpd, httpd->mux, task->core.trigger.v[i].handle);
 			client->status &= ~QSE_HTTPD_CLIENT_TASK_TRIGGER_RW_IN_MUX(i);
 		}
@@ -627,7 +627,7 @@ static int is_client_allowed (qse_httpd_t* httpd, qse_httpd_client_t* client)
 #endif
 
 static int accept_client (
-	qse_httpd_t* httpd, void* mux, qse_ubi_t handle, int mask, void* cbarg)
+	qse_httpd_t* httpd, void* mux, qse_httpd_hnd_t handle, int mask, void* cbarg)
 {
 	qse_httpd_server_t* server;
 	qse_httpd_client_t clibuf;
@@ -647,7 +647,7 @@ static int accept_client (
 /* TODO: proper logging */
 qse_char_t tmp[128];
 qse_nwadtostr (&server->dope.nwad, tmp, QSE_COUNTOF(tmp), QSE_NWADTOSTR_ALL);
-qse_printf (QSE_T("failed to accept from server [%s] [%d]\n"), tmp, server->handle.i);
+qse_printf (QSE_T("failed to accept from server [%s] [%d]\n"), tmp, server->handle);
 #endif
 
 			return -1;
@@ -909,9 +909,6 @@ static int activate_dns (qse_httpd_t* httpd)
 	int i;
 
 	QSE_MEMSET (&httpd->dns, 0, QSE_SIZEOF(httpd->dns));
-	for (i = 0; i < QSE_COUNTOF(httpd->dns.handle); i++)
-		httpd->dns.handle[i].i = -1;
-
 	if (httpd->opt.scb.dns.open (httpd, &httpd->dns) <= -1) return -1;
 
 	httpd->dns.type = QSE_HTTPD_DNS;
@@ -956,7 +953,6 @@ static int activate_urs (qse_httpd_t* httpd)
 	int i;
 
 	QSE_MEMSET (&httpd->urs, 0, QSE_SIZEOF(httpd->urs));
-
 	if (httpd->opt.scb.urs.open (httpd, &httpd->urs) <= -1) return -1;
 
 	httpd->urs.type = QSE_HTTPD_URS;
@@ -1035,7 +1031,7 @@ reread:
 	else if (m == 0)
 	{
 #if 0
-qse_printf (QSE_T("Debug: connection closed %d\n"), client->handle.i);
+qse_printf (QSE_T("Debug: connection closed %d\n"), client->handle);
 #endif
 		/* reading from the client returned 0. this typically
 		 * happens when the client closes the connection or
@@ -1051,14 +1047,14 @@ qse_printf (QSE_T("Debug: connection closed %d\n"), client->handle.i);
 			 * http reader is not waiting for any more feeds.  */
 			client->status |= QSE_HTTPD_CLIENT_MUTE;
 #if 0
-qse_printf (QSE_T(">>>>> Marking client %d as MUTE\n"), client->handle.i);
+qse_printf (QSE_T(">>>>> Marking client %d as MUTE\n"), client->handle);
 #endif
 			return 0;
 		}
 		else
 		{
 #if 0
-qse_printf (QSE_T(">>>>> Returning failure for client %d\n"), client->handle.i);
+qse_printf (QSE_T(">>>>> Returning failure for client %d\n"), client->handle);
 #endif
 			httpd->errnum = QSE_HTTPD_EDISCON;
 			return -1;
@@ -1066,7 +1062,7 @@ qse_printf (QSE_T(">>>>> Returning failure for client %d\n"), client->handle.i);
 	}
 	
 #if 0
-qse_printf (QSE_T("!!!!!FEEDING %d from %d ["), (int)m, (int)client->handle.i);
+qse_printf (QSE_T("!!!!!FEEDING %d from %d ["), (int)m, (int)client->handle);
 #if !defined(__WATCOMC__)
 {
 int i;
@@ -1091,7 +1087,7 @@ qse_printf (QSE_T("]\n"));
 		}
 	
 #if 0
-qse_printf (QSE_T("Error: http error while processing %d ["), (int)client->handle.i);
+qse_printf (QSE_T("Error: http error while processing %d ["), (int)client->handle);
 {
 int i;
 for (i = 0; i < m; i++) qse_printf (QSE_T("%hc"), buf[i]);
@@ -1103,7 +1099,7 @@ qse_printf (QSE_T("]\n"));
 
 
 #if 0
-qse_printf (QSE_T("!!!!!FEEDING OK OK OK OK %d from %d\n"), (int)m, (int)client->handle.i);
+qse_printf (QSE_T("!!!!!FEEDING OK OK OK OK %d from %d\n"), (int)m, (int)client->handle);
 #endif
 
 	if (client->status & QSE_HTTPD_CLIENT_PENDING) 
@@ -1223,7 +1219,7 @@ static int update_mux_for_current_task (qse_httpd_t* httpd, qse_httpd_client_t* 
 			int expected_trigger_mux_mask = 0;
 			int expected_trigger_mux_status = 0;
 
-			if (task->trigger.v[i].handle.i == client->handle.i) continue; /* TODO: no direct comparision */
+			if (task->trigger.v[i].handle == client->handle) continue; 
 
 			if (task->trigger.v[i].mask & QSE_HTTPD_TASK_TRIGGER_READ) 
 			{
@@ -1370,14 +1366,13 @@ static int update_mux_for_next_task (qse_httpd_t* httpd, qse_httpd_client_t* cli
 
 static int invoke_client_task (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, 
-	qse_ubi_t handle, int mask)
+	qse_httpd_hnd_t handle, int mask)
 {
 	qse_httpd_task_t* task;
 	qse_size_t i;
 	int n, trigger_fired;
 
-/* TODO: handle comparison callback ... */
-	if (handle.i == client->handle.i && (mask & QSE_HTTPD_MUX_READ)) /* TODO: no direct comparision */
+	if (handle == client->handle && (mask & QSE_HTTPD_MUX_READ)) 
 	{
 		/* keep reading from the client-side as long as
 		 * it's readable. */
@@ -1407,7 +1402,7 @@ static int invoke_client_task (
 	trigger_fired = 0;
 
 	clear_trigger_mask_result (task);
-	if (handle.i == client->handle.i) /* TODO: no direct comparison */
+	if (handle == client->handle)
 	{
 		if (mask & QSE_HTTPD_MUX_READ)
 		{
@@ -1426,7 +1421,7 @@ static int invoke_client_task (
 	{
 		for (i = 0; i < QSE_COUNTOF(task->trigger.v); i++)
 		{
-			if (task->trigger.v[i].handle.i == handle.i) /* TODO: no direct comparision */
+			if (task->trigger.v[i].handle == handle)
 			{
 				if (mask & QSE_HTTPD_MUX_READ)
 				{
@@ -1496,7 +1491,7 @@ static int invoke_client_task (
 }
 
 static int perform_client_task (
-	qse_httpd_t* httpd, void* mux, qse_ubi_t handle, int mask, void* cbarg)
+	qse_httpd_t* httpd, void* mux, qse_httpd_hnd_t handle, int mask, void* cbarg)
 {
 	qse_httpd_client_t* client;
 
@@ -1535,7 +1530,7 @@ oops:
 	return -1;
 }
 
-static int perform_dns (qse_httpd_t* httpd, void* mux, qse_ubi_t handle, int mask, void* cbarg)
+static int perform_dns (qse_httpd_t* httpd, void* mux, qse_httpd_hnd_t handle, int mask, void* cbarg)
 {
 	qse_httpd_dns_t* dns = (qse_httpd_dns_t*)cbarg;
 
@@ -1545,7 +1540,7 @@ static int perform_dns (qse_httpd_t* httpd, void* mux, qse_ubi_t handle, int mas
 	return httpd->opt.scb.dns.recv (httpd, dns, handle);
 }
 
-static int perform_urs (qse_httpd_t* httpd, void* mux, qse_ubi_t handle, int mask, void* cbarg)
+static int perform_urs (qse_httpd_t* httpd, void* mux, qse_httpd_hnd_t handle, int mask, void* cbarg)
 {
 	qse_httpd_urs_t* urs = (qse_httpd_urs_t*)cbarg;
 
@@ -1609,7 +1604,7 @@ qse_httpd_task_t* qse_httpd_entask (
 }
 
 static int dispatch_mux (
-	qse_httpd_t* httpd, void* mux, qse_ubi_t handle, int mask, void* cbarg)
+	qse_httpd_t* httpd, void* mux, qse_httpd_hnd_t handle, int mask, void* cbarg)
 {
 	switch (((qse_httpd_mate_t*)cbarg)->type)
 	{

@@ -107,6 +107,15 @@
 #	include <openssl/engine.h>
 #endif
 
+
+#define HANDLE_TO_FIO(x) ((qse_fio_t*)(x))
+#define FIO_TO_HANDLE(x) ((qse_httpd_hnd_t)(x))
+
+#if defined(HAVE_SSL)
+#define HANDLE_TO_SSL(x) ((SSL*)(x))
+#define SSL_TO_HANDLE(x) ((qse_httpd_hnd_t)(x))
+#endif
+
 typedef struct server_xtn_t server_xtn_t;
 struct server_xtn_t
 {
@@ -378,7 +387,7 @@ static qse_httpd_errnum_t direrr_to_errnum (qse_dir_errnum_t e)
 /* ------------------------------------------------------------------- */
 
 static QSE_INLINE qse_ssize_t __send_file (
-	qse_httpd_t* httpd, qse_sck_hnd_t out_fd, qse_ubi_t in_fd, 
+	qse_httpd_t* httpd, qse_sck_hnd_t out_fd, qse_httpd_hnd_t in_fd, 
 	qse_foff_t* offset, qse_size_t count)
 {
 	/* TODO: os2 warp 4.5 has send_file. support it??? load it dynamically??? */
@@ -392,7 +401,7 @@ static QSE_INLINE qse_ssize_t __send_file (
 	qse_ssize_t ret;
 	qse_fio_hnd_t fh;
 
-	fh = qse_fio_gethandle (in_fd.ptr);
+	fh = qse_fio_gethandle (HANDLE_TO_FIO(in_fd));
 
 	#if !defined(_LP64) && (QSE_SIZEOF_VOID_P<8) && defined(HAVE_SENDFILE64)
 	ret =  sendfile64 (out_fd, fh, offset, count);
@@ -407,7 +416,7 @@ static QSE_INLINE qse_ssize_t __send_file (
 	qse_ssize_t ret;
 	qse_fio_hnd_t fh;
 
-	fh = qse_fio_gethandle (in_fd.ptr);
+	fh = qse_fio_gethandle (HANDLE_TO_FIO(in_fd));
 	ret = sendfile (out_fd, fh, offset, count);
 	if (ret <= -1) qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
 	return ret;
@@ -417,7 +426,7 @@ static QSE_INLINE qse_ssize_t __send_file (
 	qse_ssize_t ret;
 	qse_fio_hnd_t fh;
 
-	fh = qse_fio_gethandle (in_fd.ptr);
+	fh = qse_fio_gethandle (HANDLE_TO_FIO(in_fd));
 	ret = sendfile64 (out_fd, fh, offset, count);
 	if (ret <= -1) qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
 	return ret;
@@ -435,7 +444,7 @@ static QSE_INLINE qse_ssize_t __send_file (
 	ssize_t ret;
 	qse_fio_hnd_t fh;
 
-	fh = qse_fio_gethandle(in_fd.ptr);
+	fh = qse_fio_gethandle (HANDLE_TO_FIO(in_fd));
 
 	vec.sfv_fd = fh;
 	vec.sfv_flag = 0;
@@ -471,17 +480,17 @@ on failure xfer != ret.
 	qse_ssize_t ret;
 	qse_foff_t foff;
 
-	if (offset && (foff = qse_fio_seek (in_fd.ptr, *offset, QSE_FIO_BEGIN)) != *offset)  
+	if (offset && (foff = qse_fio_seek (HANDLE_TO_FIO(in_fd), *offset, QSE_FIO_BEGIN)) != *offset)  
 	{
 		if (foff == (qse_foff_t)-1)
-			qse_httpd_seterrnum (httpd, fioerr_to_errnum(qse_fio_geterrnum(in_fd.ptr)));
+			qse_httpd_seterrnum (httpd, fioerr_to_errnum(qse_fio_geterrnum(HANDLE_TO_FIO(in_fd))));
 		else
 			qse_httpd_seterrnum (httpd, QSE_HTTPD_ESYSERR);
 		return (qse_ssize_t)-1;
 	}
 
 	if (count > QSE_COUNTOF(buf)) count = QSE_COUNTOF(buf);
-	ret = qse_fio_read (in_fd.ptr, buf, count);
+	ret = qse_fio_read (HANDLE_TO_FIO(in_fd), buf, count);
 	if (ret > 0)
 	{
 		ret = send (out_fd, buf, ret, 0);
@@ -493,7 +502,7 @@ on failure xfer != ret.
 	}
 	else if (ret <= -1)
 	{
-		qse_httpd_seterrnum (httpd, fioerr_to_errnum(qse_fio_geterrnum(in_fd.ptr)));
+		qse_httpd_seterrnum (httpd, fioerr_to_errnum(qse_fio_geterrnum(HANDLE_TO_FIO(in_fd))));
 	}
 
 	return ret;
@@ -504,7 +513,7 @@ on failure xfer != ret.
 /* ------------------------------------------------------------------- */
 
 static QSE_INLINE qse_ssize_t __send_file_ssl (
-	qse_httpd_t* httpd, void* xout, qse_ubi_t in_fd, 
+	qse_httpd_t* httpd, void* xout, qse_httpd_hnd_t in_fd, 
 	qse_foff_t* offset, qse_size_t count)
 {
 #if defined(HAVE_SSL)
@@ -513,17 +522,17 @@ static QSE_INLINE qse_ssize_t __send_file_ssl (
 	qse_foff_t foff;
 	SSL* out = (SSL*)xout;
 	
-	if (offset && (foff = qse_fio_seek (in_fd.ptr, *offset, QSE_FIO_BEGIN)) != *offset)  
+	if (offset && (foff = qse_fio_seek (HANDLE_TO_FIO(in_fd), *offset, QSE_FIO_BEGIN)) != *offset)  
 	{
 		if (foff == (qse_foff_t)-1)
-			qse_httpd_seterrnum (httpd, fioerr_to_errnum(qse_fio_geterrnum(in_fd.ptr)));
+			qse_httpd_seterrnum (httpd, fioerr_to_errnum(qse_fio_geterrnum(HANDLE_TO_FIO(in_fd))));
 		else
 			qse_httpd_seterrnum (httpd, QSE_HTTPD_ESYSERR);
 		return (qse_ssize_t)-1;
 	}
 
 	if (count > QSE_COUNTOF(buf)) count = QSE_COUNTOF(buf);
-	ret = qse_fio_read (in_fd.ptr, buf, count);
+	ret = qse_fio_read (HANDLE_TO_FIO(in_fd), buf, count);
 	if (ret > 0)
 	{
 		ret = SSL_write (out, buf, count);
@@ -542,7 +551,7 @@ static QSE_INLINE qse_ssize_t __send_file_ssl (
 	}
 	else if (ret <= -1)
 	{
-		qse_httpd_seterrnum (httpd, fioerr_to_errnum(qse_fio_geterrnum(in_fd.ptr)));
+		qse_httpd_seterrnum (httpd, fioerr_to_errnum(qse_fio_geterrnum(HANDLE_TO_FIO(in_fd))));
 	}
 
 	return ret;
@@ -911,7 +920,7 @@ bind_ok:
 
 	if (set_socket_nonblock (httpd, fd, 1) <= -1) goto oops;
 
-	server->handle.i = fd;
+	server->handle = fd;
 	return 0;
 
 oops:
@@ -922,7 +931,7 @@ oops:
 
 static void server_close (qse_httpd_t* httpd, qse_httpd_server_t* server)
 {
-	qse_closesckhnd (server->handle.i);
+	qse_closesckhnd (server->handle);
 }
 
 static int server_accept (
@@ -939,7 +948,7 @@ static int server_accept (
 	int flag;
 
 	addrlen = QSE_SIZEOF(addr);
-	fd = accept (server->handle.i, (struct sockaddr*)&addr, &addrlen);
+	fd = accept (server->handle, (struct sockaddr*)&addr, &addrlen);
 	if (!qse_isvalidsckhnd(fd)) 
 	{
 		qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
@@ -1005,7 +1014,7 @@ qse_fprintf (QSE_STDERR, QSE_T("Error: too many client?\n"));
 	}
 	#endif
 
-	client->handle.i = fd;
+	client->handle = fd;
 	return 0;
 
 oops:
@@ -1117,7 +1126,7 @@ static int peer_open (qse_httpd_t* httpd, qse_httpd_peer_t* peer)
 
 	/*if (set_socket_nonblock (httpd, fd, 0) <= -1) goto oops;*/
 
-	peer->handle.i = fd;
+	peer->handle = fd;
 	return connected;
 
 oops:
@@ -1131,7 +1140,7 @@ oops:
 
 static void peer_close (qse_httpd_t* httpd, qse_httpd_peer_t* peer)
 {
-	qse_closesckhnd (peer->handle.i);
+	qse_closesckhnd (peer->handle);
 }
 
 static int peer_connected (qse_httpd_t* httpd, qse_httpd_peer_t* peer)
@@ -1141,7 +1150,7 @@ static int peer_connected (qse_httpd_t* httpd, qse_httpd_peer_t* peer)
 	DWORD ret;
 
 	len = QSE_SIZEOF(ret);
-	if (getsockopt (peer->handle.i, SOL_SOCKET, SO_ERROR, (char*)&ret, &len) == SOCKET_ERROR) 
+	if (getsockopt (peer->handle, SOL_SOCKET, SO_ERROR, (char*)&ret, &len) == SOCKET_ERROR) 
 	{
 		qse_httpd_seterrnum (httpd, skerr_to_errnum (ret));
 		return -1;
@@ -1162,7 +1171,7 @@ static int peer_connected (qse_httpd_t* httpd, qse_httpd_peer_t* peer)
 	int ret;
 
 	len = QSE_SIZEOF(ret);
-	if (getsockopt (peer->handle.i, SOL_SOCKET, SO_ERROR, (char*)&ret, &len) == -1)
+	if (getsockopt (peer->handle, SOL_SOCKET, SO_ERROR, (char*)&ret, &len) == -1)
 	{
 		qse_httpd_seterrnum (httpd, skerr_to_errnum (ret));
 		return -1;
@@ -1189,7 +1198,7 @@ static int peer_connected (qse_httpd_t* httpd, qse_httpd_peer_t* peer)
 	int ret;
 
 	len = QSE_SIZEOF(ret);
-	if (getsockopt (peer->handle.i, SOL_SOCKET, SO_ERROR, &ret, &len) <= -1) 
+	if (getsockopt (peer->handle, SOL_SOCKET, SO_ERROR, &ret, &len) <= -1) 
 	{
 		qse_httpd_seterrnum (httpd, skerr_to_errnum (ret));
 		return -1;
@@ -1214,7 +1223,7 @@ static qse_ssize_t peer_recv (
 	qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
 	return -1;
 #else
-	qse_ssize_t ret = recv (peer->handle.i, buf, bufsize, 0);
+	qse_ssize_t ret = recv (peer->handle, buf, bufsize, 0);
 	if (ret <= -1) qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
 	return ret;
 #endif
@@ -1228,7 +1237,7 @@ static qse_ssize_t peer_send (
 	qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
 	return -1;
 #else
-	qse_ssize_t ret = send (peer->handle.i, buf, bufsize, 0);
+	qse_ssize_t ret = send (peer->handle, buf, bufsize, 0);
 	if (ret <= -1) qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
 	return ret;
 #endif
@@ -1246,16 +1255,16 @@ struct mux_xtn_t
 static void dispatch_muxcb (qse_mux_t* mux, const qse_mux_evt_t* evt)
 {
 	mux_xtn_t* xtn;
-	qse_ubi_t ubi;
+	qse_httpd_hnd_t handle;
 	int mask = 0;
 
 	xtn = qse_mux_getxtn (mux);
-	ubi.i = evt->hnd;
+	handle = evt->hnd;
 
 	if (evt->mask & QSE_MUX_IN) mask |= QSE_HTTPD_MUX_READ;
 	if (evt->mask & QSE_MUX_OUT) mask |= QSE_HTTPD_MUX_WRITE;
 
-	xtn->cbfun (xtn->httpd, mux, ubi, mask, evt->data);
+	xtn->cbfun (xtn->httpd, mux, handle, mask, evt->data);
 }
 
 static void* mux_open (qse_httpd_t* httpd, qse_httpd_muxcb_t cbfun)
@@ -1282,11 +1291,11 @@ static void mux_close (qse_httpd_t* httpd, void* vmux)
 }
 
 static int mux_addhnd (
-	qse_httpd_t* httpd, void* vmux, qse_ubi_t handle, int mask, void* data)
+	qse_httpd_t* httpd, void* vmux, qse_httpd_hnd_t handle, int mask, void* data)
 {
 	qse_mux_evt_t evt;
 
-	evt.hnd = handle.i;
+	evt.hnd = handle;
 	evt.mask = 0;
 	if (mask & QSE_HTTPD_MUX_READ) evt.mask |= QSE_MUX_IN;
 	if (mask & QSE_HTTPD_MUX_WRITE) evt.mask |= QSE_MUX_OUT;
@@ -1301,10 +1310,10 @@ static int mux_addhnd (
 	return 0;
 }
 
-static int mux_delhnd (qse_httpd_t* httpd, void* vmux, qse_ubi_t handle)
+static int mux_delhnd (qse_httpd_t* httpd, void* vmux, qse_httpd_hnd_t handle)
 {
 	qse_mux_evt_t evt;
-	evt.hnd = handle.i;
+	evt.hnd = handle;
 	if (qse_mux_delete ((qse_mux_t*)vmux, &evt) <= -1)
 	{
 		qse_httpd_seterrnum (httpd, muxerr_to_errnum(qse_mux_geterrnum((qse_mux_t*)vmux)));
@@ -1324,13 +1333,13 @@ static int mux_poll (qse_httpd_t* httpd, void* vmux, const qse_ntime_t* tmout)
 	return 0;
 }
 
-static int mux_readable (qse_httpd_t* httpd, qse_ubi_t handle, const qse_ntime_t* tmout)
+static int mux_readable (qse_httpd_t* httpd, qse_httpd_hnd_t handle, const qse_ntime_t* tmout)
 {
 #if defined(__OS2__) && !defined(TCPV40HDRS)
 	long tv;
 
 	tv = tmout? QSE_SECNSEC_TO_MSEC (tmout->sec, tmout->nsec): -1;
-	return os2_select (&handle.i, 1, 0, 0, tv);
+	return os2_select (&handle, 1, 0, 0, tv);
 
 #elif defined(__DOS__)
 
@@ -1342,7 +1351,7 @@ static int mux_readable (qse_httpd_t* httpd, qse_ubi_t handle, const qse_ntime_t
 	struct timeval tv, * tvp;
 
 	FD_ZERO (&r);
-	FD_SET (handle.i, &r);
+	FD_SET (handle, &r);
 
 	if (tmout)
 	{
@@ -1352,16 +1361,16 @@ static int mux_readable (qse_httpd_t* httpd, qse_ubi_t handle, const qse_ntime_t
 	}
 	else tvp = QSE_NULL;
 
-	return select (handle.i + 1, &r, QSE_NULL, QSE_NULL, tvp);
+	return select (handle + 1, &r, QSE_NULL, QSE_NULL, tvp);
 #endif
 }
 
-static int mux_writable (qse_httpd_t* httpd, qse_ubi_t handle, const qse_ntime_t* tmout)
+static int mux_writable (qse_httpd_t* httpd, qse_httpd_hnd_t handle, const qse_ntime_t* tmout)
 {
 #if defined(__OS2__) && !defined(TCPV40HDRS)
 	long tv;
 	tv = tmout? QSE_SECNSEC_TO_MSEC (tmout->sec, tmout->nsec): -1;
-	return os2_select (&handle.i, 0, 1, 0, tv);
+	return os2_select (&handle, 0, 1, 0, tv);
 
 #elif defined(__DOS__)
 
@@ -1373,7 +1382,7 @@ static int mux_writable (qse_httpd_t* httpd, qse_ubi_t handle, const qse_ntime_t
 	struct timeval tv, * tvp;
 
 	FD_ZERO (&w);
-	FD_SET (handle.i, &w);
+	FD_SET (handle, &w);
 
 	if (tmout)
 	{
@@ -1383,7 +1392,7 @@ static int mux_writable (qse_httpd_t* httpd, qse_ubi_t handle, const qse_ntime_t
 	}
 	else tvp = QSE_NULL;
 
-	return select (handle.i + 1, QSE_NULL, &w, QSE_NULL, tvp);
+	return select (handle + 1, QSE_NULL, &w, QSE_NULL, tvp);
 #endif
 }
 
@@ -1598,14 +1607,14 @@ static qse_fio_t* __open_file (qse_httpd_t* httpd, const qse_mchar_t* path, int 
 }
 
 static int file_ropen (
-	qse_httpd_t* httpd, const qse_mchar_t* path, qse_ubi_t* handle)
+	qse_httpd_t* httpd, const qse_mchar_t* path, qse_httpd_hnd_t* handle)
 {
 	qse_fio_t* fio;
 
 	fio = __open_file (httpd, path, QSE_FIO_READ | QSE_FIO_MBSPATH, 0);
 	if (fio == QSE_NULL) return -1;
 
-	handle->ptr = fio;
+	*handle = FIO_TO_HANDLE(fio);
 	if (httpd->opt.trait & QSE_HTTPD_LOGACT)
 	{
 		qse_httpd_act_t msg;
@@ -1621,14 +1630,14 @@ static int file_ropen (
 
 static int file_wopen (
 	qse_httpd_t* httpd, const qse_mchar_t* path,
-	qse_ubi_t* handle)
+	qse_httpd_hnd_t* handle)
 {
 	qse_fio_t* fio;
 
 	fio = __open_file (httpd, path, QSE_FIO_WRITE | QSE_FIO_CREATE | QSE_FIO_TRUNCATE | QSE_FIO_MBSPATH, 0644);
 	if (fio == QSE_NULL) return -1;
 
-	handle->ptr = fio;
+	*handle = FIO_TO_HANDLE(fio);
 	if (httpd->opt.trait & QSE_HTTPD_LOGACT)
 	{
 		qse_httpd_act_t msg;
@@ -1642,27 +1651,27 @@ static int file_wopen (
 	return 0;
 }
 
-static void file_close (qse_httpd_t* httpd, qse_ubi_t handle)
+static void file_close (qse_httpd_t* httpd, qse_httpd_hnd_t handle)
 {
-	qse_fio_fini (handle.ptr);
-	qse_httpd_freemem (httpd, handle.ptr);
+	qse_fio_fini (HANDLE_TO_FIO(handle));
+	qse_httpd_freemem (httpd, HANDLE_TO_FIO(handle));
 }
 
 static qse_ssize_t file_read (
-	qse_httpd_t* httpd, qse_ubi_t handle, qse_mchar_t* buf, qse_size_t len)
+	qse_httpd_t* httpd, qse_httpd_hnd_t handle, qse_mchar_t* buf, qse_size_t len)
 {
 	qse_ssize_t n;
-	n = qse_fio_read (handle.ptr, buf, len);
-	if (n <= -1) qse_httpd_seterrnum (httpd, fioerr_to_errnum(qse_fio_geterrnum(handle.ptr)));
+	n = qse_fio_read (HANDLE_TO_FIO(handle), buf, len);
+	if (n <= -1) qse_httpd_seterrnum (httpd, fioerr_to_errnum(qse_fio_geterrnum(HANDLE_TO_FIO(handle))));
 	return n;
 }
 
 static qse_ssize_t file_write (
-	qse_httpd_t* httpd, qse_ubi_t handle, const qse_mchar_t* buf, qse_size_t len)
+	qse_httpd_t* httpd, qse_httpd_hnd_t handle, const qse_mchar_t* buf, qse_size_t len)
 {
 	qse_ssize_t n;
-	n = qse_fio_write (handle.ptr, buf, len);
-	if (n <= -1) qse_httpd_seterrnum (httpd, fioerr_to_errnum(qse_fio_geterrnum(handle.ptr)));
+	n = qse_fio_write (HANDLE_TO_FIO(handle), buf, len);
+	if (n <= -1) qse_httpd_seterrnum (httpd, fioerr_to_errnum(qse_fio_geterrnum(HANDLE_TO_FIO(handle))));
 	return n;
 }
 
@@ -1759,7 +1768,10 @@ struct dir_t
 	qse_dir_t* dp;
 };
 
-static int dir_open (qse_httpd_t* httpd, const qse_mchar_t* path, qse_ubi_t* handle)
+#define HANDLE_TO_DIR(x) ((dir_t*)(x))
+#define DIR_TO_HANDLE(x) ((qse_httpd_hnd_t)(x))
+
+static int dir_open (qse_httpd_t* httpd, const qse_mchar_t* path, qse_httpd_hnd_t* handle)
 {
 	dir_t* d;
 	qse_dir_errnum_t direrrnum;
@@ -1803,15 +1815,15 @@ static int dir_open (qse_httpd_t* httpd, const qse_mchar_t* path, qse_ubi_t* han
 		httpd->opt.rcb.logact (httpd, &msg);
 	}
 
-	handle->ptr = d;
+	*handle = DIR_TO_HANDLE(d);
 	return 0;
 }
 
-static void dir_close (qse_httpd_t* httpd, qse_ubi_t handle)
+static void dir_close (qse_httpd_t* httpd, qse_httpd_hnd_t handle)
 {
 	dir_t* d;
 
-	d = (dir_t*)handle.ptr;
+	d = HANDLE_TO_DIR(handle);
 
 	qse_dir_close (d->dp);
 
@@ -1819,14 +1831,14 @@ static void dir_close (qse_httpd_t* httpd, qse_ubi_t handle)
 	QSE_MMGR_FREE (httpd->mmgr, d);
 }
 
-static int dir_read (qse_httpd_t* httpd, qse_ubi_t handle, qse_httpd_dirent_t* dirent)
+static int dir_read (qse_httpd_t* httpd, qse_httpd_hnd_t handle, qse_httpd_dirent_t* dirent)
 {
 	dir_t* d;
 	qse_dir_ent_t de;
 	qse_mchar_t* fpath;
 	int n;
 
-	d = (dir_t*)handle.ptr;
+	d = HANDLE_TO_DIR(handle);
 
 	n = qse_dir_read (d->dp, &de);
 	if (n <= -1)
@@ -1856,13 +1868,13 @@ static int dir_read (qse_httpd_t* httpd, qse_ubi_t handle, qse_httpd_dirent_t* d
 
 static void client_close (qse_httpd_t* httpd, qse_httpd_client_t* client)
 {
-	qse_shutsckhnd (client->handle.i, QSE_SHUTSCKHND_RW);
-	qse_closesckhnd (client->handle.i);
+	qse_shutsckhnd (client->handle, QSE_SHUTSCKHND_RW);
+	qse_closesckhnd (client->handle);
 }
 
 static void client_shutdown (qse_httpd_t* httpd, qse_httpd_client_t* client)
 {
-	qse_shutsckhnd (client->handle.i, QSE_SHUTSCKHND_RW);
+	qse_shutsckhnd (client->handle, QSE_SHUTSCKHND_RW);
 }
 
 static qse_ssize_t client_recv (
@@ -1872,17 +1884,17 @@ static qse_ssize_t client_recv (
 	if (client->status & QSE_HTTPD_CLIENT_SECURE)
 	{
 	#if defined(HAVE_SSL)
-		int ret = SSL_read (client->handle2.ptr, buf, bufsize);
+		int ret = SSL_read (HANDLE_TO_SSL(client->handle2), buf, bufsize);
 		if (ret <= -1)
 		{
-			int err = SSL_get_error(client->handle2.ptr,ret);
+			int err = SSL_get_error(HANDLE_TO_SSL(client->handle2),ret);
 			if (err == SSL_ERROR_WANT_READ || err == SSL_ERROR_WANT_WRITE)
 				qse_httpd_seterrnum (httpd, QSE_HTTPD_EAGAIN);
 			else
 				qse_httpd_seterrnum (httpd, QSE_HTTPD_ESYSERR);
 		}
 
-		if (SSL_pending (client->handle2.ptr) > 0) 
+		if (SSL_pending (HANDLE_TO_SSL(client->handle2)) > 0) 
 			client->status |= QSE_HTTPD_CLIENT_PENDING;
 		else
 			client->status &= ~QSE_HTTPD_CLIENT_PENDING;
@@ -1900,7 +1912,7 @@ static qse_ssize_t client_recv (
 		return -1;
 	#else
 		qse_ssize_t ret;
-		ret = recv (client->handle.i, buf, bufsize, 0);
+		ret = recv (client->handle, buf, bufsize, 0);
 		if (ret <= -1) qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
 		return ret;
 	#endif
@@ -1914,10 +1926,10 @@ static qse_ssize_t client_send (
 	if (client->status & QSE_HTTPD_CLIENT_SECURE)
 	{
 	#if defined(HAVE_SSL)
-		int ret = SSL_write (client->handle2.ptr, buf, bufsize);
+		int ret = SSL_write (HANDLE_TO_SSL(client->handle2), buf, bufsize);
 		if (ret <= -1)
 		{
-			int err = SSL_get_error(client->handle2.ptr,ret);
+			int err = SSL_get_error(HANDLE_TO_SSL(client->handle2),ret);
 			if (err == SSL_ERROR_WANT_READ || err == SSL_ERROR_WANT_WRITE)
 				qse_httpd_seterrnum (httpd, QSE_HTTPD_EAGAIN);
 			else
@@ -1935,7 +1947,7 @@ static qse_ssize_t client_send (
 		qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
 		return -1;
 	#else
-		qse_ssize_t ret = send (client->handle.i, buf, bufsize, 0);
+		qse_ssize_t ret = send (client->handle, buf, bufsize, 0);
 		if (ret <= -1) qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
 		return ret;
 	#endif
@@ -1944,15 +1956,15 @@ static qse_ssize_t client_send (
 
 static qse_ssize_t client_sendfile (
 	qse_httpd_t* httpd, qse_httpd_client_t* client,
-	qse_ubi_t handle, qse_foff_t* offset, qse_size_t count)
+	qse_httpd_hnd_t handle, qse_foff_t* offset, qse_size_t count)
 {
 	if (client->status & QSE_HTTPD_CLIENT_SECURE)
 	{
-		return __send_file_ssl (httpd, client->handle2.ptr, handle, offset, count);
+		return __send_file_ssl (httpd, HANDLE_TO_SSL(client->handle2), handle, offset, count);
 	}
 	else
 	{
-		return __send_file (httpd, client->handle.i, handle, offset, count);
+		return __send_file (httpd, client->handle, handle, offset, count);
 	}
 }
 
@@ -1974,20 +1986,21 @@ static int client_accepted (qse_httpd_t* httpd, qse_httpd_client_t* client)
 				return -1;
 			}
 		}
-	
-		QSE_ASSERT (xtn->ssl_ctx != QSE_NULL);
 
-		if (client->handle2.ptr)
+		QSE_ASSERT (xtn->ssl_ctx != QSE_NULL);
+		QSE_ASSERT (QSE_SIZEOF(client->handle2) >= QSE_SIZEOF(ssl));
+
+		if (HANDLE_TO_SSL(client->handle2))
 		{
-			ssl = client->handle2.ptr;
+			ssl = HANDLE_TO_SSL(client->handle2);
 		}
 		else
 		{
 			ssl = SSL_new (xtn->ssl_ctx);
 			if (ssl == QSE_NULL) return -1;
 
-			client->handle2.ptr = ssl;
-			if (SSL_set_fd (ssl, client->handle.i) == 0)
+			client->handle2 = SSL_TO_HANDLE(ssl);
+			if (SSL_set_fd (ssl, client->handle) == 0)
 			{
 				/* don't free ssl here since client_closed()
 				 * will free it */
@@ -2000,8 +2013,7 @@ static int client_accepted (qse_httpd_t* httpd, qse_httpd_client_t* client)
 		ret = SSL_accept (ssl);
 		if (ret <= 0)
 		{
-			int err;
-			err = SSL_get_error(ssl,ret);
+			int err = SSL_get_error(ssl, ret);
 			if (err == SSL_ERROR_WANT_READ || err == SSL_ERROR_WANT_WRITE)
 			{
 				/* handshaking isn't complete. */
@@ -2034,10 +2046,10 @@ static void client_closed (qse_httpd_t* httpd, qse_httpd_client_t* client)
 	if (client->status & QSE_HTTPD_CLIENT_SECURE)
 	{
 	#if defined(HAVE_SSL)
-		if (client->handle2.ptr)
+		if ((SSL*)client->handle2)
 		{
-			SSL_shutdown ((SSL*)client->handle2.ptr); /* is this needed? */
-			SSL_free ((SSL*)client->handle2.ptr);
+			SSL_shutdown ((SSL*)client->handle2); /* is this needed? */
+			SSL_free ((SSL*)client->handle2);
 		}
 	#endif
 	}

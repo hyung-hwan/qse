@@ -28,6 +28,8 @@
 
 typedef struct qse_upxd_t qse_upxd_t;
 
+typedef qse_intptr_t qse_upxd_hnd_t;
+
 enum qse_upxd_errnum_t
 {
 	QSE_UPXD_ENOERR,
@@ -52,7 +54,7 @@ typedef struct qse_upxd_session_t qse_upxd_session_t;
 typedef struct qse_upxd_sock_t  qse_upxd_sock_t;
 struct qse_upxd_sock_t
 {
-	qse_ubi_t         handle;
+	qse_upxd_hnd_t         handle;
 	qse_nwad_t        bind;
 	const qse_char_t* dev;
 	qse_nwad_t        from;
@@ -89,7 +91,7 @@ struct qse_upxd_session_t
 typedef int (*qse_upxd_muxcb_t) (
 	qse_upxd_t* upxd,
 	void*       mux,
-	qse_ubi_t   handle,
+	qse_upxd_hnd_t   handle,
 	void*       cbarg
 );
 
@@ -121,9 +123,9 @@ struct qse_upxd_cbs_t
 		void* (*open) (qse_upxd_t* upxd);
 		void (*close) (qse_upxd_t* upxd, void* mux);
 		int (*addhnd) (
-			qse_upxd_t* upxd, void* mux, qse_ubi_t handle,
+			qse_upxd_t* upxd, void* mux, qse_upxd_hnd_t handle,
 			qse_upxd_muxcb_t cbfun, void* cbarg);
-		int (*delhnd) (qse_upxd_t* upxd, void* mux, qse_ubi_t handle);
+		int (*delhnd) (qse_upxd_t* upxd, void* mux, qse_upxd_hnd_t handle);
 		int (*poll) (qse_upxd_t* upxd, void* mux, qse_ntime_t timeout);
 	} mux;
 };

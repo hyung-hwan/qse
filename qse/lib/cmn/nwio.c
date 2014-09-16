@@ -849,22 +849,6 @@ qse_nwio_hnd_t qse_nwio_gethandle (const qse_nwio_t* nwio)
 	return nwio->handle;
 }
 
-qse_ubi_t qse_nwio_gethandleasubi (const qse_nwio_t* nwio)
-{
-	qse_ubi_t ubi;
-
-#if defined(_WIN32)
-	ubi.intptr = nwio->handle;
-#elif defined(__OS2__)
-	ubi.i = nwio->handle;
-#elif defined(__DOS__)
-	ubi.i = nwio->handle;
-#else
-	ubi.i = nwio->handle;
-#endif
-	return ubi;
-}
-
 qse_ssize_t qse_nwio_flush (qse_nwio_t* nwio)
 {
 	qse_ssize_t n;

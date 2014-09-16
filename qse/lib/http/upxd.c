@@ -115,7 +115,7 @@ QSE_INLINE void qse_upxd_freemem (qse_upxd_t* upxd, void* ptr)
 
 
 static int perform_session_task (
-	qse_upxd_t* upxd, void* mux, qse_ubi_t handle, void* cbarg)
+	qse_upxd_t* upxd, void* mux, qse_upxd_hnd_t handle, void* cbarg)
 {
 	qse_upxd_server_session_t* session;
 	qse_upxd_server_t* server;
@@ -154,7 +154,7 @@ static int perform_session_task (
 }
 
 static int perform_server_task (
-	qse_upxd_t* upxd, void* mux, qse_ubi_t handle, void* cbarg)
+	qse_upxd_t* upxd, void* mux, qse_upxd_hnd_t handle, void* cbarg)
 {
 	qse_upxd_server_t* server;
 	qse_upxd_server_session_t* session;
