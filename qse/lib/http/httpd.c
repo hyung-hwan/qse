@@ -1690,12 +1690,14 @@ int qse_httpd_loop (qse_httpd_t* httpd)
 	if (activate_servers (httpd) <= -1) 
 	{
 		if (httpd->dnsactive) deactivate_dns (httpd);
+		if (httpd->ursactive) deactivate_urs (httpd);
 		httpd->opt.scb.mux.close (httpd, httpd->mux);
 		return -1;
 	}
 	if (httpd->server.nactive <= 0)
 	{
 		if (httpd->dnsactive) deactivate_dns (httpd);
+		if (httpd->ursactive) deactivate_urs (httpd);
 		httpd->opt.scb.mux.close (httpd, httpd->mux);
 
 		httpd->errnum = QSE_HTTPD_ENOSVR;

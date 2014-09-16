@@ -2194,7 +2194,7 @@ static void impede_httpd (qse_httpd_t* httpd)
 	httpd_xtn = qse_httpd_getxtnstd (httpd);
 
 	if (open_config_file (httpd) >= 0)
-	{		
+	{
 		qse_httpd_server_t* server;
 
 		server = qse_httpd_getfirstserver (httpd);
