@@ -242,7 +242,7 @@ qse_httpd_task_t* qse_httpd_entaskerr (
 		httpd, client, pred, code, QSE_NULL, 
 		qse_htre_getqmethodtype(req), 
 		qse_htre_getversion(req), 
-		(req->attr.flags & QSE_HTRE_ATTR_KEEPALIVE)
+		(req->flags & QSE_HTRE_ATTR_KEEPALIVE)
 	);
 }
 
@@ -268,7 +268,7 @@ qse_httpd_task_t* qse_httpd_entaskauth (
 		httpd, client, pred, 401, (void*)realm, 
 		qse_htre_getqmethodtype(req),
 		qse_htre_getversion(req), 
-		(req->attr.flags & QSE_HTRE_ATTR_KEEPALIVE));
+		(req->flags & QSE_HTRE_ATTR_KEEPALIVE));
 }
 
 
@@ -287,7 +287,7 @@ qse_httpd_task_t* qse_httpd_entaskreloc (
 		httpd, client, pred, 301, (void*)&reloc,
 		qse_htre_getqmethodtype(req), 
 		qse_htre_getversion(req), 
-		(req->attr.flags & QSE_HTRE_ATTR_KEEPALIVE));
+		(req->flags & QSE_HTRE_ATTR_KEEPALIVE));
 }
 
 qse_httpd_task_t* qse_httpd_entaskredir (
@@ -303,7 +303,7 @@ qse_httpd_task_t* qse_httpd_entaskredir (
 		httpd, client, pred, 301, (void*)&reloc,
 		qse_htre_getqmethodtype(req), 
 		qse_htre_getversion(req), 
-		(req->attr.flags & QSE_HTRE_ATTR_KEEPALIVE));
+		(req->flags & QSE_HTRE_ATTR_KEEPALIVE));
 }
 
 /*------------------------------------------------------------------------*/
@@ -324,7 +324,7 @@ qse_httpd_task_t* qse_httpd_entasknomod (
 		httpd, client, pred, 304, QSE_NULL, 
 		qse_htre_getqmethodtype(req), 
 		qse_htre_getversion(req), 
-		(req->attr.flags & QSE_HTRE_ATTR_KEEPALIVE));
+		(req->flags & QSE_HTRE_ATTR_KEEPALIVE));
 }
 
 /*------------------------------------------------------------------------*/
@@ -340,7 +340,7 @@ qse_httpd_task_t* qse_httpd_entaskallow (
 
 	msg = qse_httpstatustombs (code);
 	version = qse_htre_getversion(req);
-	keepalive = (req->attr.flags & QSE_HTRE_ATTR_KEEPALIVE);
+	keepalive = (req->flags & QSE_HTRE_ATTR_KEEPALIVE);
 	return qse_httpd_entaskformat (
 		httpd, client, pred,
 		QSE_MT("HTTP/%d.%d %d %s\r\nServer: %s\r\nDate: %s\r\nConnection: %s\r\nAllow: %s\r\nContent-Length: 0\r\n\r\n"),

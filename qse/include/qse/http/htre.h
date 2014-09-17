@@ -92,16 +92,19 @@ struct qse_htre_t
 		} s;
 	} u;
 
-	/* special attributes derived from the header */
-	struct
-	{
+	
 #define QSE_HTRE_ATTR_CHUNKED   (1 << 0)
 #define QSE_HTRE_ATTR_LENGTH    (1 << 1)
 #define QSE_HTRE_ATTR_KEEPALIVE (1 << 2)
 #define QSE_HTRE_ATTR_EXPECT    (1 << 3)
 #define QSE_HTRE_ATTR_EXPECT100 (1 << 4)
 #define QSE_HTRE_ATTR_PROXIED   (1 << 5)
-		int flags;
+#define QSE_HTRE_QPATH_PERDEC   (1 << 6) /* the qpath has been percent-decoded */
+	int flags;
+
+	/* special attributes derived from the header */
+	struct
+	{
 		qse_size_t content_length;
 		const qse_mchar_t* status; /* for cgi */
 	} attr;
@@ -229,6 +232,10 @@ QSE_EXPORT void qse_htre_setconcb (
 	qse_htre_t*      re,
 	qse_htre_concb_t concb, 
 	void*            ctx
+);
+
+QSE_EXPORT int qse_htre_perdecqpath (
+	qse_htre_t*      req
 );
 
 #ifdef __cplusplus

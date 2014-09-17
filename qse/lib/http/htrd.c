@@ -444,7 +444,7 @@ static qse_mchar_t* parse_initial_line (qse_htrd_t* htrd, qse_mchar_t* line)
 	if (htrd->re.version.major > 1 || 
 	    (htrd->re.version.major == 1 && htrd->re.version.minor >= 1))
 	{
-		htrd->re.attr.flags |= QSE_HTRE_ATTR_KEEPALIVE;
+		htrd->re.flags |= QSE_HTRE_ATTR_KEEPALIVE;
 	}
 
 	return ++p;
@@ -500,14 +500,14 @@ static int capture_connection (qse_htrd_t* htrd, qse_htb_pair_t* pair)
 	n = qse_mbscmp (val->ptr, QSE_MT("close"));
 	if (n == 0)
 	{
-		htrd->re.attr.flags &= ~QSE_HTRE_ATTR_KEEPALIVE;
+		htrd->re.flags &= ~QSE_HTRE_ATTR_KEEPALIVE;
 		return 0;
 	}
 
 	n = qse_mbscmp (val->ptr, QSE_MT("keep-alive"));
 	if (n == 0)
 	{
-		htrd->re.attr.flags |= QSE_HTRE_ATTR_KEEPALIVE;
+		htrd->re.flags |= QSE_HTRE_ATTR_KEEPALIVE;
 		return 0;
 	}
 
@@ -523,7 +523,7 @@ static int capture_connection (qse_htrd_t* htrd, qse_htb_pair_t* pair)
 	if (htrd->re.version.major < 1  || 
 	    (htrd->re.version.major == 1 && htrd->re.version.minor <= 0))
 	{
-		htrd->re.attr.flags &= ~QSE_HTRE_ATTR_KEEPALIVE;
+		htrd->re.flags &= ~QSE_HTRE_ATTR_KEEPALIVE;
 	}
 	return 0;
 }
@@ -568,7 +568,7 @@ static int capture_content_length (qse_htrd_t* htrd, qse_htb_pair_t* pair)
 		return -1;
 	}
 
-	if ((htrd->re.attr.flags & QSE_HTRE_ATTR_CHUNKED) && len > 0)
+	if ((htrd->re.flags & QSE_HTRE_ATTR_CHUNKED) && len > 0)
 	{
 		/* content-length is greater than 0 
 		 * while transfer-encoding: chunked is specified. */
@@ -576,7 +576,7 @@ static int capture_content_length (qse_htrd_t* htrd, qse_htb_pair_t* pair)
 		return -1;
 	}
 
-	htrd->re.attr.flags |= QSE_HTRE_ATTR_LENGTH;
+	htrd->re.flags |= QSE_HTRE_ATTR_LENGTH;
 	htrd->re.attr.content_length = len;
 	return 0;
 }
@@ -586,14 +586,14 @@ static int capture_expect (qse_htrd_t* htrd, qse_htb_pair_t* pair)
 	qse_htre_hdrval_t* val;
 
 	/* Expect is included */
-	htrd->re.attr.flags |= QSE_HTRE_ATTR_EXPECT; 
+	htrd->re.flags |= QSE_HTRE_ATTR_EXPECT; 
 
 	val = QSE_HTB_VPTR(pair);
 	while (val) 
 	{	
 		/* Expect: 100-continue is included */
 		if (qse_mbscasecmp (val->ptr, QSE_MT("100-continue")) == 0)
-			htrd->re.attr.flags |= QSE_HTRE_ATTR_EXPECT100; 
+			htrd->re.flags |= QSE_HTRE_ATTR_EXPECT100; 
 		val = val->next;
 	}
 
@@ -623,13 +623,13 @@ static int capture_transfer_encoding (qse_htrd_t* htrd, qse_htb_pair_t* pair)
 	if (n == 0)
 	{
 		/* if (htrd->re.attr.content_length > 0) */
-		if (htrd->re.attr.flags & QSE_HTRE_ATTR_LENGTH)
+		if (htrd->re.flags & QSE_HTRE_ATTR_LENGTH)
 		{
 			/* both content-length and 'transfer-encoding: chunked' are specified. */
 			goto badre;
 		}
 
-		htrd->re.attr.flags |= QSE_HTRE_ATTR_CHUNKED;
+		htrd->re.flags |= QSE_HTRE_ATTR_CHUNKED;
 		return 0;
 	}
 
@@ -1232,10 +1232,10 @@ int qse_htrd_feed (qse_htrd_t* htrd, const qse_mchar_t* req, qse_size_t len)
 					}
 
 					/* carry on processing content body fed together with the header */
-					if (htrd->re.attr.flags & QSE_HTRE_ATTR_CHUNKED)
+					if (htrd->re.flags & QSE_HTRE_ATTR_CHUNKED)
 					{
 						/* transfer-encoding: chunked */
-						QSE_ASSERT (!(htrd->re.attr.flags & QSE_HTRE_ATTR_LENGTH));
+						QSE_ASSERT (!(htrd->re.flags & QSE_HTRE_ATTR_LENGTH));
 
 					dechunk_start:
 						htrd->fed.s.chunk.phase = GET_CHUNK_LEN;
@@ -1279,8 +1279,8 @@ int qse_htrd_feed (qse_htrd_t* htrd, const qse_mchar_t* req, qse_size_t len)
 						/* we need to read as many octets as
 						 * Content-Length */
 						if ((htrd->option & QSE_HTRD_RESPONSE) && 
-						    !(htrd->re.attr.flags & QSE_HTRE_ATTR_LENGTH) &&
-						    !(htrd->re.attr.flags & QSE_HTRE_ATTR_KEEPALIVE))
+						    !(htrd->re.flags & QSE_HTRE_ATTR_LENGTH) &&
+						    !(htrd->re.flags & QSE_HTRE_ATTR_KEEPALIVE))
 						{
 							/* for a response, no content-length and 
 							 * no chunk are specified and 'connection' 

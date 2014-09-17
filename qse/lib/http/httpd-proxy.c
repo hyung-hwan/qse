@@ -575,7 +575,7 @@ static int proxy_htrd_peek_peer_output (qse_htrd_t* htrd, qse_htre_t* res)
 		proxy->resflags |= PROXY_RES_RECEIVED_RESHDR;
 
 		keepalive = proxy->keepalive;
-		if (res->attr.flags & QSE_HTRE_ATTR_LENGTH)
+		if (res->flags & QSE_HTRE_ATTR_LENGTH)
 		{
 			/* the response from the peer is length based */
 			proxy->resflags |= PROXY_RES_PEER_LENGTH;
@@ -601,7 +601,7 @@ static int proxy_htrd_peek_peer_output (qse_htrd_t* htrd, qse_htre_t* res)
 				/* chunk response when writing back to client */
 				proxy->resflags |= PROXY_RES_CLIENT_CHUNK;
 
-				if (res->attr.flags & QSE_HTRE_ATTR_CHUNKED)
+				if (res->flags & QSE_HTRE_ATTR_CHUNKED)
 				{
 					/* mark the peer output is chunked */
 					proxy->resflags |= PROXY_RES_PEER_CHUNK;
@@ -623,7 +623,7 @@ static int proxy_htrd_peek_peer_output (qse_htrd_t* htrd, qse_htre_t* res)
 				/* and push the actual disconnection task */
 				if (qse_httpd_entaskdisconnect (httpd, xtn->client, xtn->task) == QSE_NULL) return -1;
 
-				if (res->attr.flags & QSE_HTRE_ATTR_CHUNKED)
+				if (res->flags & QSE_HTRE_ATTR_CHUNKED)
 					proxy->resflags |= PROXY_RES_PEER_CHUNK;
 				else
 					proxy->resflags |= PROXY_RES_PEER_CLOSE;
@@ -925,7 +925,7 @@ static int task_init_proxy (
 
 	proxy->method = qse_htre_getqmethodtype(arg->req);
 	proxy->version = *qse_htre_getversion(arg->req);
-	proxy->keepalive = (arg->req->attr.flags & QSE_HTRE_ATTR_KEEPALIVE);
+	proxy->keepalive = (arg->req->flags & QSE_HTRE_ATTR_KEEPALIVE);
 
 	proxy->task = task; /* needed for url rewriting */
 
@@ -1030,6 +1030,7 @@ printf (">>>>>>>>>>>>>>>>>>>>>>>> [%s] <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n", proxy
 	else
 	{
 		int snatch_needed = 0;
+		
 
 		/* compose a request to send to the peer using the request
 		 * received from the client */
@@ -1038,7 +1039,26 @@ printf (">>>>>>>>>>>>>>>>>>>>>>>> [%s] <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n", proxy
 			qse_mbs_cat (proxy->reqfwdbuf, QSE_MT(" ")) == (qse_size_t)-1) goto nomem_oops;
 		
 		proxy->qpath_pos_in_reqfwdbuf = QSE_STR_LEN(proxy->reqfwdbuf);
-		if (qse_mbs_cat (proxy->reqfwdbuf, qse_htre_getqpath(arg->req)) == (qse_size_t)-1) goto nomem_oops;
+		if (arg->req->flags & QSE_HTRE_QPATH_PERDEC)
+		{
+			/* the query path has been percent-decoded. so encode it back */
+			qse_mchar_t* qpath, * qpath_enc;
+			qse_size_t x;
+
+			qpath = qse_htre_getqpath(arg->req);
+			qpath_enc = qse_perenchttpstrdup (QSE_PERENCHTTPSTR_KEEP_SLASH, qpath, httpd->mmgr);
+			if (qpath_enc == QSE_NULL) goto nomem_oops;
+
+			x = qse_mbs_cat (proxy->reqfwdbuf, qpath_enc);
+			QSE_MMGR_FREE (httpd->mmgr, qpath_enc);
+
+			if (x == (qse_size_t)-1) goto nomem_oops;
+		}
+		else
+		{
+			/* the query path doesn't require encoding or it's never decoded */
+			if (qse_mbs_cat (proxy->reqfwdbuf, qse_htre_getqpath(arg->req)) == (qse_size_t)-1) goto nomem_oops;
+		}
 
 		if (qse_htre_getqparam(arg->req))
 		{
@@ -1081,7 +1101,7 @@ qse_mbs_ncat (proxy->reqfwdbuf, spc, QSE_COUNTOF(spc));
 		}
 
 		proxy->resflags |= PROXY_RES_AWAIT_RESHDR;
-		if ((arg->req->attr.flags & QSE_HTRE_ATTR_EXPECT100) &&
+		if ((arg->req->flags & QSE_HTRE_ATTR_EXPECT100) &&
 		    (arg->req->version.major > 1 || (arg->req->version.major == 1 && arg->req->version.minor >= 1)))
 		{
 			proxy->resflags |= PROXY_RES_AWAIT_100;
@@ -1115,8 +1135,8 @@ qse_mbs_ncat (proxy->reqfwdbuf, spc, QSE_COUNTOF(spc));
 		if (arg->req->state & QSE_HTRE_DISCARDED)
 		{
 			/* no content to add */
-			if ((arg->req->attr.flags & QSE_HTRE_ATTR_LENGTH) || 
-			    (arg->req->attr.flags & QSE_HTRE_ATTR_CHUNKED))
+			if ((arg->req->flags & QSE_HTRE_ATTR_LENGTH) || 
+			    (arg->req->flags & QSE_HTRE_ATTR_CHUNKED))
 			{
 				/* i don't add chunk traiers if the 
 				 * request content has been discarded */
@@ -1129,15 +1149,15 @@ qse_mbs_ncat (proxy->reqfwdbuf, spc, QSE_COUNTOF(spc));
 		}
 		else if (arg->req->state & QSE_HTRE_COMPLETED)
 		{
-			if (arg->req->attr.flags & QSE_HTRE_ATTR_CHUNKED)
+			if (arg->req->flags & QSE_HTRE_ATTR_CHUNKED)
 			{
 				/* add trailers if any */
 				if (qse_htre_walktrailers (arg->req, proxy_capture_client_trailer, proxy) <= -1) goto nomem_oops;
 			}
 
 			len = qse_htre_getcontentlen(arg->req);
-			if (len > 0 || (arg->req->attr.flags & QSE_HTRE_ATTR_LENGTH) || 
-			               (arg->req->attr.flags & QSE_HTRE_ATTR_CHUNKED))
+			if (len > 0 || (arg->req->flags & QSE_HTRE_ATTR_LENGTH) || 
+			               (arg->req->flags & QSE_HTRE_ATTR_CHUNKED))
 			{
 				qse_mchar_t buf[64];
 
@@ -1163,7 +1183,7 @@ qse_mbs_ncat (proxy->reqfwdbuf, spc, QSE_COUNTOF(spc));
 				if (qse_mbs_cat (proxy->reqfwdbuf, QSE_MT("\r\n")) == (qse_size_t)-1) goto nomem_oops;
 			}
 		}
-		else if (arg->req->attr.flags & QSE_HTRE_ATTR_LENGTH)
+		else if (arg->req->flags & QSE_HTRE_ATTR_LENGTH)
 		{
 			/* the Content-Length header field is contained in the request. */
 			qse_mchar_t buf[64];
@@ -1191,7 +1211,7 @@ qse_mbs_ncat (proxy->reqfwdbuf, spc, QSE_COUNTOF(spc));
 			/* if this request is not chunked nor not length based,
 			 * the state should be QSE_HTRE_COMPLETED. so only a
 			 * chunked request should reach here */
-			QSE_ASSERT (arg->req->attr.flags & QSE_HTRE_ATTR_CHUNKED);
+			QSE_ASSERT (arg->req->flags & QSE_HTRE_ATTR_CHUNKED);
 
 			proxy->reqflags |= PROXY_REQ_FWDCHUNKED;
 			if (qse_mbs_cat (proxy->reqfwdbuf, QSE_MT("Transfer-Encoding: chunked\r\n")) == (qse_size_t)-1 ||

@@ -390,12 +390,13 @@ qse_size_t qse_perdechttpstr (const qse_mchar_t* str, qse_mchar_t* buf)
 {
 	const qse_mchar_t* p = str;
 	qse_mchar_t* out = buf;
-	
+	qse_size_t dec_count = 0;
+
 	while (*p != QSE_T('\0'))
 	{
 		if (*p == QSE_MT('%') && *(p+1) != QSE_MT('\0') && *(p+2) != QSE_MT('\0'))
 		{
-			int q =  QSE_MXDIGITTONUM (*(p+1));
+			int q = QSE_MXDIGITTONUM (*(p+1));
 			if (q >= 0)
 			{
 				int w = QSE_MXDIGITTONUM (*(p+2));
@@ -405,57 +406,89 @@ qse_size_t qse_perdechttpstr (const qse_mchar_t* str, qse_mchar_t* buf)
 					 * contains a null character */
 					*out++ = ((q << 4) + w);
 					p += 3;
+					dec_count++;
 					continue;
 				}
 			}
 		}
-
 		*out++ = *p++;
 	}
 
 	*out = QSE_MT('\0');
-	return out - buf;
+	/*return out - buf;*/
+	return dec_count;
 }
 
 #define IS_UNRESERVED(c) \
 	(((c) >= QSE_MT('A') && (c) <= QSE_MT('Z')) || \
 	 ((c) >= QSE_MT('a') && (c) <= QSE_MT('z')) || \
+	 ((c) >= QSE_MT('0') && (c) <= QSE_MT('9')) || \
 	 (c) == QSE_MT('-') || (c) == QSE_T('_') || \
 	 (c) == QSE_MT('.') || (c) == QSE_T('~'))
 
 #define TO_HEX(v) (QSE_MT("0123456789ABCDEF")[(v) & 15])
 
-qse_size_t qse_perenchttpstr (const qse_mchar_t* str, qse_mchar_t* buf)
+qse_size_t qse_perenchttpstr (int opt, const qse_mchar_t* str, qse_mchar_t* buf)
 {
 	const qse_mchar_t* p = str;
 	qse_mchar_t* out = buf;
-	
-	while (*p != QSE_T('\0'))
-	{
-		if (IS_UNRESERVED(*p)) *out++ = *p;
-		else
-		{
-               *out++ = QSE_MT('%');
-               *out++ = TO_HEX (*p >> 4);
-               *out++ = TO_HEX (*p & 15);
-		}
-		p++;
-	}
+	qse_size_t enc_count = 0;
 
+	if (opt & QSE_PERENCHTTPSTR_KEEP_SLASH)
+	{
+		while (*p != QSE_T('\0'))
+		{
+			if (IS_UNRESERVED(*p) || *p == QSE_MT('/')) *out++ = *p;
+			else
+			{
+				*out++ = QSE_MT('%');
+				*out++ = TO_HEX (*p >> 4);
+				*out++ = TO_HEX (*p & 15);
+				enc_count++;
+			}
+			p++;
+		}
+	}
+	else
+	{
+		while (*p != QSE_T('\0'))
+		{
+			if (IS_UNRESERVED(*p)) *out++ = *p;
+			else
+			{
+				*out++ = QSE_MT('%');
+				*out++ = TO_HEX (*p >> 4);
+				*out++ = TO_HEX (*p & 15);
+				enc_count++;
+			}
+			p++;
+		}
+	}
 	*out = QSE_MT('\0');
-	return out - buf;
+	/*return out - buf;*/
+	return enc_count;
 }
 
-qse_mchar_t* qse_perenchttpstrdup (const qse_mchar_t* str, qse_mmgr_t* mmgr)
+qse_mchar_t* qse_perenchttpstrdup (int opt, const qse_mchar_t* str, qse_mmgr_t* mmgr)
 {
 	qse_mchar_t* buf;
 	qse_size_t len = 0;
 	qse_size_t count = 0;
 	
 	/* count the number of characters that should be encoded */
-	for (len = 0; str[len] != QSE_T('\0'); len++)
+	if (opt & QSE_PERENCHTTPSTR_KEEP_SLASH)
 	{
-		if (!IS_UNRESERVED(str[len])) count++;
+		for (len = 0; str[len] != QSE_T('\0'); len++)
+		{
+			if (!IS_UNRESERVED(str[len]) && str[len] != QSE_MT('/')) count++;
+		}
+	}
+	else
+	{
+		for (len = 0; str[len] != QSE_T('\0'); len++)
+		{
+			if (!IS_UNRESERVED(str[len])) count++;
+		}
 	}
 
 	/* if there are no characters to escape, just return the original string */
@@ -466,7 +499,7 @@ qse_mchar_t* qse_perenchttpstrdup (const qse_mchar_t* str, qse_mmgr_t* mmgr)
 	if (buf == QSE_NULL) return QSE_NULL;
 
 	/* perform actual escaping */
-	qse_perenchttpstr (str, buf);
+	qse_perenchttpstr (opt, str, buf);
 
 	return buf;
 }

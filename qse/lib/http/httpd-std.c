@@ -2087,7 +2087,7 @@ static int process_request (
 	 * any more. once it's decoded in the peek mode,
 	 * the decoded query path is made available in the
 	 * non-peek mode as well */
-	if (peek) qse_perdechttpstr (qse_htre_getqpath(req), qse_htre_getqpath(req));
+	if (peek) qse_htre_perdecqpath(req);
 
 	if (peek && (httpd->opt.trait & QSE_HTTPD_LOGACT))
 	{
@@ -2154,11 +2154,11 @@ if (qse_htre_getcontentlen(req) > 0)
 		else 
 		{
 			if (mth == QSE_HTTP_POST &&
-				!(req->attr.flags & QSE_HTRE_ATTR_LENGTH) &&
-				!(req->attr.flags & QSE_HTRE_ATTR_CHUNKED))
+				!(req->flags & QSE_HTRE_ATTR_LENGTH) &&
+				!(req->flags & QSE_HTRE_ATTR_CHUNKED))
 			{
 				/* POST without Content-Length nor not chunked */
-				req->attr.flags &= ~QSE_HTRE_ATTR_KEEPALIVE;
+				req->flags &= ~QSE_HTRE_ATTR_KEEPALIVE;
 				qse_httpd_discardcontent (httpd, req);
 				task = qse_httpd_entaskerr (httpd, client, QSE_NULL, 411, req);
 				if (task) 
@@ -2234,7 +2234,7 @@ printf ("CANOT MAKE RESOURCE.... %s\n", qse_htre_getqpath(req));
 
 			if (task == QSE_NULL) goto oops;
 		}
-		else if (req->attr.flags & QSE_HTRE_ATTR_PROXIED)
+		else if (req->flags & QSE_HTRE_ATTR_PROXIED)
 		{
 			/* the contents should be proxied. 
 			 * do nothing locally */
@@ -2246,7 +2246,7 @@ printf ("CANOT MAKE RESOURCE.... %s\n", qse_htre_getqpath(req));
 		}
 	}
 
-	if (!(req->attr.flags & QSE_HTRE_ATTR_KEEPALIVE) || mth == QSE_HTTP_CONNECT)
+	if (!(req->flags & QSE_HTRE_ATTR_KEEPALIVE) || mth == QSE_HTTP_CONNECT)
 	{
 		if (!peek)
 		{
@@ -2727,7 +2727,7 @@ static int make_resource (
 		case QSE_HTTPD_SERVERSTD_ROOT_PROXY:
 			target->type = QSE_HTTPD_RSRC_PROXY;
 			target->u.proxy = tmp.root.u.proxy;
-			req->attr.flags |= QSE_HTRE_ATTR_PROXIED;
+			req->flags |= QSE_HTRE_ATTR_PROXIED;
 			return 0;
 
 		case QSE_HTTPD_SERVERSTD_ROOT_ERROR:
@@ -2797,7 +2797,7 @@ auth_ok:
 
 	/* if authentication is ok or no authentication is required,
 	 * handle 'Expect: 100-continue' if it is contained in the header */
-	if ((req->attr.flags & QSE_HTRE_ATTR_EXPECT) &&
+	if ((req->flags & QSE_HTRE_ATTR_EXPECT) &&
 	    (req->version.major > 1 || (req->version.major == 1 && req->version.minor >= 1)) &&
 	    qse_htre_getcontentlen(req) <= 0)
 	{
@@ -2807,7 +2807,7 @@ auth_ok:
 		 * if the partial or complete content is already received,
 		 * we don't need to send '100 continue'. */
 
-		if (req->attr.flags & QSE_HTRE_ATTR_EXPECT100)
+		if (req->flags & QSE_HTRE_ATTR_EXPECT100)
 		{
 			/* "Expect: 100-continue" in the header.
 			 * mark to return "100 continue" */
