@@ -362,14 +362,8 @@ static QSE_INLINE int is_fd_valid_and_nocloexec (int fd)
 	return !(flags & FD_CLOEXEC)? 1: 0;
 }
 
-static int get_highest_fd (void)
+static int close_unneeded_fds_using_proc (int* excepts, qse_size_t count)
 {
-	/* TODO: consider if reading from /proc/self/fd is 
-	 *       a better idea. */
-	struct rlimit rlim;
-	int fd = -1;
-
-#if defined(__linux__)
 	QSE_DIR* d;
 
 	/* will getting the highest file descriptor be faster than
@@ -377,6 +371,77 @@ static int get_highest_fd (void)
 	 * system limit? */	
 
 	d = QSE_OPENDIR (QSE_MT("/proc/self/fd"));
+	if (!d)
+	{
+		qse_mchar_t buf[64];
+		qse_mbsxfmt (buf, QSE_COUNTOF(buf), QSE_MT("/proc/%d/fd"), QSE_GETPID());
+		d = QSE_OPENDIR (buf);
+	}
+/* TODO: try /dev/fd - FreeBSD, Darwin, OS X*/
+
+	if (d)
+	{
+		qse_dirent_t* de;
+		while ((de = QSE_READDIR (d)))
+		{
+			qse_long_t l;
+			const qse_mchar_t* endptr;
+
+			if (de->d_name[0] == QSE_MT('.')) continue;
+
+			QSE_MBSTONUM (l, de->d_name, &endptr, 10);
+			if (*endptr == QSE_MT('\0'))
+			{
+				int fd = (int)l;
+				if ((qse_long_t)fd == l && fd != QSE_DIRFD(d) && fd > 2)
+				{
+					qse_size_t i;
+
+					for (i = 0; i < count; i++)
+					{
+						if (fd == excepts[i]) goto skip_close;
+					}
+
+					QSE_CLOSE (fd);
+
+				skip_close:
+					;
+				}
+			}
+		}
+
+		QSE_CLOSEDIR (d);
+		return 0;
+	}
+
+	return -1;
+}
+
+static int get_highest_fd (void)
+{
+	struct rlimit rlim;
+	int fd;
+	QSE_DIR* d;
+
+#if defined(F_MAXFD)
+	fd = QSE_FCNTL (0, F_MAXFD, 0);
+	if (fd >= 0) return fd;
+#endif
+
+	/* will getting the highest file descriptor be faster than
+	 * attempting to close any files descriptors less than the 
+	 * system limit? */	
+
+	d = QSE_OPENDIR (QSE_MT("/proc/self/fd"));
+	if (!d)
+	{
+		qse_mchar_t buf[64];
+		qse_mbsxfmt (buf, QSE_COUNTOF(buf), QSE_MT("/proc/%d/fd"), QSE_GETPID());
+		d = QSE_OPENDIR (buf);
+	}
+
+/* TODO: try /dev/fd - FreeBSD, Darwin, OS X*/
+
 	if (d)
 	{
 		int maxfd = -1;
@@ -402,28 +467,22 @@ static int get_highest_fd (void)
 		QSE_CLOSEDIR (d);
 		return maxfd;
 	}
-#endif
 
-#if defined(F_MAXFD)
-	fd = QSE_FCNTL (0, F_MAXFD, 0);
-#endif
-	if (fd <= -1)
+	if (QSE_GETRLIMIT (RLIMIT_NOFILE, &rlim) <= -1 ||
+	    rlim.rlim_max == RLIM_INFINITY) 
 	{
-		if (QSE_GETRLIMIT (RLIMIT_NOFILE, &rlim) <= -1 ||
-		    rlim.rlim_max == RLIM_INFINITY) 
-		{
-		#if defined(HAVE_SYSCONF)
-			fd = sysconf (_SC_OPEN_MAX);
-		#endif
-		}
-		else fd = rlim.rlim_max;
-		if (fd == -1) fd = 1024; /* fallback */
-
-		/* F_MAXFD is the highest fd. but RLIMIT_NOFILE and 
-		 * _SC_OPEN_MAX returnes the maximum number of file 
-		 * descriptors. make adjustment */
-		if (fd > 0) fd--; 
+	#if defined(HAVE_SYSCONF)
+		fd = sysconf (_SC_OPEN_MAX);
+	#endif
 	}
+	else fd = rlim.rlim_max;
+	if (fd == -1) fd = 1024; /* fallback */
+
+	/* F_MAXFD is the highest fd. but RLIMIT_NOFILE and 
+	 * _SC_OPEN_MAX returnes the maximum number of file 
+	 * descriptors. make adjustment */
+	if (fd > 0) fd--; 
+
 	return fd;
 }
 
@@ -1469,6 +1528,8 @@ create_process:
 
 		if (!(flags & QSE_PIO_NOCLOEXEC))
 		{
+			/* cannot call close_unneeded_fds_using_proc() in the vfork() context */
+
 			int fd = highest_fd;
 
 			/* close all other unknown open handles except 
@@ -1661,19 +1722,22 @@ create_process:
 
 		if (!(flags & QSE_PIO_NOCLOEXEC))
 		{
-			int fd = get_highest_fd ();
-
-			/* close all other unknown open handles except 
-			 * stdin/out/err and the pipes. */
-			while (fd > 2)
+			if (close_unneeded_fds_using_proc (handle, 6) <= -1)
 			{
-				if (fd != handle[0] && fd != handle[1] &&
-				    fd != handle[2] && fd != handle[3] &&
-				    fd != handle[4] && fd != handle[5]) 
+				int fd = get_highest_fd ();
+
+				/* close all other unknown open handles except 
+				 * stdin/out/err and the pipes. */
+				while (fd > 2)
 				{
-					QSE_CLOSE (fd);
+					if (fd != handle[0] && fd != handle[1] &&
+						fd != handle[2] && fd != handle[3] &&
+						fd != handle[4] && fd != handle[5]) 
+					{
+						QSE_CLOSE (fd);
+					}
+					fd--;
 				}
-				fd--;
 			}
 		}
 
