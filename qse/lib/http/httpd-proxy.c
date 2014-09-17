@@ -1050,7 +1050,7 @@ printf (">>>>>>>>>>>>>>>>>>>>>>>> [%s] <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n", proxy
 			if (qpath_enc == QSE_NULL) goto nomem_oops;
 
 			x = qse_mbs_cat (proxy->reqfwdbuf, qpath_enc);
-			QSE_MMGR_FREE (httpd->mmgr, qpath_enc);
+			if (qpath != qpath_enc) QSE_MMGR_FREE (httpd->mmgr, qpath_enc);
 
 			if (x == (qse_size_t)-1) goto nomem_oops;
 		}
