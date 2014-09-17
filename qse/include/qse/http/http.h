@@ -154,6 +154,13 @@ struct qse_http_range_t
 };
 typedef struct qse_http_range_t qse_http_range_t;
 
+
+enum qse_perenchttpstr_opt_t
+{
+	QSE_PERENCHTTPSTR_KEEP_SLASH = (1 << 0)
+};
+typedef enum qse_perenchttpstr_opt_t qse_perenchttpstr_opt_t;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -195,20 +202,26 @@ QSE_EXPORT qse_mchar_t* qse_fmthttptime (
 	qse_size_t         bufsz
 );
 
-/* percent-decode a string */
+/* percent-decode a string. 
+ * returns the number of affected characters.
+ * for example, 0 means that no characters in the input required decoding. */
 QSE_EXPORT qse_size_t qse_perdechttpstr (
 	const qse_mchar_t* str, 
 	qse_mchar_t*       buf
 );
 
 
-/* percent-encode a string */
+/* percent-encode a string.
+ * returns the number of affected characters. 
+ * for example, 0 means that no characters in the input required encoding. */
 QSE_EXPORT qse_size_t qse_perenchttpstr (
+	int                opt, /**< 0 or bitwise-OR'ed of #qse_perenchttpstr_opt_t */
 	const qse_mchar_t* str, 
 	qse_mchar_t*       buf
 );
 
 QSE_EXPORT qse_mchar_t* qse_perenchttpstrdup (
+	int                opt, /**< 0 or bitwise-OR'ed of #qse_perenchttpstr_opt_t */
 	const qse_mchar_t* str, 
 	qse_mmgr_t*        mmgr
 );

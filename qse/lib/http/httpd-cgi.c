@@ -304,7 +304,7 @@ static int cgi_htrd_peek_script_output (qse_htrd_t* htrd, qse_htre_t* req)
 	}
 
 	keepalive = cgi->keepalive;
-	if (req->attr.flags & QSE_HTRE_ATTR_LENGTH)
+	if (req->flags & QSE_HTRE_ATTR_LENGTH)
 	{
 		cgi->resflags |= CGI_RES_SCRIPT_LENGTH;
 		cgi->script_output_length = req->attr.content_length;
@@ -730,7 +730,7 @@ static int task_init_cgi (
 
 	cgi->method = qse_htre_getqmethodtype(arg->req);
 	cgi->version = *qse_htre_getversion(arg->req);
-	cgi->keepalive = (arg->req->attr.flags & QSE_HTRE_ATTR_KEEPALIVE);
+	cgi->keepalive = (arg->req->flags & QSE_HTRE_ATTR_KEEPALIVE);
 	cgi->nph = arg->nph;
 	cgi->req = QSE_NULL;
 
@@ -747,7 +747,7 @@ static int task_init_cgi (
 	}
 
 	if (!(arg->req->state & QSE_HTRE_COMPLETED) &&
-	    !(arg->req->attr.flags & QSE_HTRE_ATTR_LENGTH))
+	    !(arg->req->flags & QSE_HTRE_ATTR_LENGTH))
 	{
 		/* if the request is not completed and doesn't have
 		 * content-length set, it's not really possible to
@@ -821,8 +821,8 @@ static int task_init_cgi (
 			 * should reach here. if content-length is set
 			 * the length should match len. */
 			QSE_ASSERT (len > 0);
-			QSE_ASSERT (!(arg->req->attr.flags & QSE_HTRE_ATTR_LENGTH) ||
-			            ((arg->req->attr.flags & QSE_HTRE_ATTR_LENGTH) && 
+			QSE_ASSERT (!(arg->req->flags & QSE_HTRE_ATTR_LENGTH) ||
+			            ((arg->req->flags & QSE_HTRE_ATTR_LENGTH) && 
 			             arg->req->attr.content_length == len));
 			cgi->reqflags |= CGI_REQ_GOTALL;
 			content_length = len;
@@ -848,7 +848,7 @@ static int task_init_cgi (
 			cgi->req = arg->req; 
 			qse_htre_setconcb (cgi->req, cgi_snatch_client_input, task);
 
-			QSE_ASSERT (arg->req->attr.flags & QSE_HTRE_ATTR_LENGTH);
+			QSE_ASSERT (arg->req->flags & QSE_HTRE_ATTR_LENGTH);
 			content_length = arg->req->attr.content_length;
 		}
 	}

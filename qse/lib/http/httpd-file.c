@@ -541,7 +541,7 @@ qse_httpd_task_t* qse_httpd_entaskfile (
 	data.path.ptr = (qse_mchar_t*)path;
 	data.path.len = qse_mbslen(path);
 	data.version = *qse_htre_getversion(req);
-	data.keepalive = (req->attr.flags & QSE_HTRE_ATTR_KEEPALIVE);
+	data.keepalive = (req->flags & QSE_HTRE_ATTR_KEEPALIVE);
 	data.method = qse_htre_getqmethodtype(req);
 
 	xtnsize = QSE_SIZEOF(task_file_t) + data.path.len + 1;

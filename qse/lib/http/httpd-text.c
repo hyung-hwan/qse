@@ -112,7 +112,7 @@ qse_httpd_task_t* qse_httpd_entasktext (
 		version->major, version->minor,
 		qse_httpd_getname (httpd),
 		qse_httpd_fmtgmtimetobb (httpd, QSE_NULL, 0),
-		((req->attr.flags & QSE_HTRE_ATTR_KEEPALIVE)? QSE_MT("keep-alive"): QSE_MT("close")),
+		((req->flags & QSE_HTRE_ATTR_KEEPALIVE)? QSE_MT("keep-alive"): QSE_MT("close")),
 		mime, b_tlen
 	);
 	if (pred == QSE_NULL) return QSE_NULL;

@@ -39,22 +39,22 @@ int qse_htre_init (qse_htre_t* re, qse_mmgr_t* mmgr)
 {
 	static qse_htb_style_t style =
 	{
-          {
-               QSE_HTB_COPIER_DEFAULT,
-               QSE_HTB_COPIER_DEFAULT
-          },
-          {
-               QSE_HTB_FREEER_DEFAULT,
-               free_hdrval
-          },
-          QSE_HTB_COMPER_DEFAULT,
-          QSE_HTB_KEEPER_DEFAULT,
-          QSE_HTB_SIZER_DEFAULT,
-          QSE_HTB_HASHER_DEFAULT
+		{
+			QSE_HTB_COPIER_DEFAULT,
+			QSE_HTB_COPIER_DEFAULT
+		},
+		{
+			QSE_HTB_FREEER_DEFAULT,
+			free_hdrval
+		},
+		QSE_HTB_COMPER_DEFAULT,
+		QSE_HTB_KEEPER_DEFAULT,
+		QSE_HTB_SIZER_DEFAULT,
+		QSE_HTB_HASHER_DEFAULT
 	};
 
 	QSE_MEMSET (re, 0, QSE_SIZEOF(*re));
-	re->mmgr = mmgr;	
+	re->mmgr = mmgr;
 
 	if (qse_htb_init (&re->hdrtab, mmgr, 60, 70, 1, 1) <= -1) return -1;
 	if (qse_htb_init (&re->trailers, mmgr, 20, 70, 1, 1) <= -1) return -1;
@@ -264,3 +264,11 @@ void qse_htre_setconcb (qse_htre_t* re, qse_htre_concb_t concb, void* ctx)
 	re->concb_ctx = ctx;
 }
 
+int qse_htre_perdecqpath (qse_htre_t* re)
+{
+	/* percent decode the query path */
+	if (re->type != QSE_HTRE_Q || (re->flags & QSE_HTRE_QPATH_PERDEC)) return -1;
+	if (qse_perdechttpstr ((re)->u.q.path, (re)->u.q.path) > 0)
+		re->flags |= QSE_HTRE_QPATH_PERDEC;
+	return 0;
+}

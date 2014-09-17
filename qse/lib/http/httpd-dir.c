@@ -155,7 +155,7 @@ static qse_size_t format_dirent (
 	 *       a lot of file names to escape. */
 
 	/* perform percent-encoding for the anchor */
-	encname = qse_perenchttpstrdup (dirent->name, httpd->mmgr);
+	encname = qse_perenchttpstrdup (0, dirent->name, httpd->mmgr);
 	if (encname == QSE_NULL)
 	{
 		httpd->errnum = QSE_HTTPD_ENOMEM;
@@ -602,7 +602,7 @@ qse_httpd_task_t* qse_httpd_entaskdir (
 				data.foot.ptr = dir->foot? dir->foot: qse_httpd_getname(httpd);
 				data.foot.len = qse_mbslen(data.foot.ptr);
 				data.version = *qse_htre_getversion(req);
-				data.keepalive = (req->attr.flags & QSE_HTRE_ATTR_KEEPALIVE);
+				data.keepalive = (req->flags & QSE_HTRE_ATTR_KEEPALIVE);
 				data.method = method;
 
 				QSE_MEMSET (&task, 0, QSE_SIZEOF(task));
