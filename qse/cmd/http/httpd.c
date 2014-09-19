@@ -754,7 +754,6 @@ found:
 			/* qinfo->xpath is not available for the REALM query in the std implementation.
 			 * let me check if it's available in case the implementation changes */
 			apath = qinfo->xpath? qinfo->xpath: qse_htre_getqpath (qinfo->req);
-printf ("apth in READM QUERY [%s]\n", apath);
 			if (apath)
 			{
 				const qse_mchar_t* base;

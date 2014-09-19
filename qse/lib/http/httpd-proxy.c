@@ -224,7 +224,6 @@ static int proxy_capture_peer_header (qse_htre_t* req, const qse_mchar_t* key, c
 		}
 	}
 
-
 	if (qse_mbscasecmp (key, QSE_MT("Connection")) != 0 &&
 	    qse_mbscasecmp (key, QSE_MT("Transfer-Encoding")) != 0)
 	{
