@@ -1547,7 +1547,7 @@ static int file_stat (
 	 * for a file. it is mainly used to get a file size and timestamps
 	 * of a regular file. so it should fail for a non-regular file.
 	 * note that STAT_REG is passed to stat_file for it */
-	return stat_file (httpd, path, hst, STAT_REG);	
+	return stat_file (httpd, path, hst, STAT_REG);
 }
 
 static int file_purge (qse_httpd_t* httpd, const qse_mchar_t* path)
@@ -2444,10 +2444,13 @@ static void free_resource (
 				QSE_MMGR_FREE (httpd->mmgr, (qse_mchar_t*)target->u.cgi.suffix);
 			if (target->u.cgi.script != qpath) 
 				QSE_MMGR_FREE (httpd->mmgr, (qse_mchar_t*)target->u.cgi.script);
-			if (target->u.cgi.path != qpath)
-				QSE_MMGR_FREE (httpd->mmgr, (qse_mchar_t*)target->u.cgi.path);
-			if (target->u.cgi.shebang)
-				QSE_MMGR_FREE (httpd->mmgr, (qse_mchar_t*)target->u.cgi.shebang);
+			if (!(target->u.cgi.flags & QSE_HTTPD_RSRC_CGI_FNC))
+			{
+				if (target->u.cgi.path != qpath)
+					QSE_MMGR_FREE (httpd->mmgr, (qse_mchar_t*)target->u.cgi.path);
+				if (target->u.cgi.shebang)
+					QSE_MMGR_FREE (httpd->mmgr, (qse_mchar_t*)target->u.cgi.shebang);
+			}
 
 			break;
 
@@ -2457,18 +2460,13 @@ static void free_resource (
 			break;
 
 		case QSE_HTTPD_RSRC_FILE:
-			if (target->u.cgi.path != qpath)
-				QSE_MMGR_FREE (httpd->mmgr, (qse_mchar_t*)target->u.cgi.path);
+			if (target->u.file.path != qpath)
+				QSE_MMGR_FREE (httpd->mmgr, (qse_mchar_t*)target->u.file.path);
 			break;
 
 		case QSE_HTTPD_RSRC_RELOC:
 			if (target->u.reloc.dst != qpath)
 				QSE_MMGR_FREE (httpd->mmgr, (qse_mchar_t*)target->u.reloc.dst);
-			break;
-
-		case QSE_HTTPD_RSRC_REDIR:
-			if (target->u.redir.dst != qpath)
-				QSE_MMGR_FREE (httpd->mmgr, (qse_mchar_t*)target->u.redir.dst);
 			break;
 
 		default:
@@ -2573,21 +2571,18 @@ static int attempt_cgi (
 				#endif
 
 				/* create a relocation resource */
+				QSE_MEMSET (target, 0, QSE_SIZEOF(*target));
 				target->type = QSE_HTTPD_RSRC_RELOC;
 				target->u.reloc.dst = merge_paths (httpd, tmp->qpath, tmp->idxfile);
 				if (target->u.reloc.dst == QSE_NULL) goto oops;
+
 				/* free tmp->xpath here upon success since it's not used for relocation.
-				 * it is freed by the called upon failure so the 'oops' part don't free it */
+				 * upon failure, it is freed by the caller. so the 'oops' part 
+				 * of this function doesn't free it. */
 				QSE_MMGR_FREE (httpd->mmgr, tmp->xpath);
 				return 1;
 			}
 			else script = (qse_mchar_t*)tmp->qpath;
-
-			if (cgi.shebang)
-			{
-				shebang = qse_mbsdup (cgi.shebang, httpd->mmgr);
-				if (shebang == QSE_NULL) goto oops;
-			}
 
 			goto bingo;
 		}
@@ -2619,14 +2614,13 @@ static int attempt_cgi (
 					 */
 					merge_paths_to_buf (httpd, tmp->root.u.path.val, tmp->qpath_rp, slash - tmp->qpath_rp, tmp->xpath);
 					xpath_changed = 1;
-	
+
 					stx = stat_file (httpd, tmp->xpath, &st, 0);
 					if (stx <= -1) 
 					{
-						/* stop at the current segment if stating fails. 
-						 * if the current semgment can't be stat-ed, it's not likely that
-						 * the next segment can be successfully stat-ed */
-						break; 
+						/* instead of stopping here, let's give a non-existent 
+						 * segment to be a virtual cgi script(function pointer). */
+						st.isdir = 0;
 					}
 
 					if (!st.isdir)
@@ -2636,9 +2630,16 @@ static int attempt_cgi (
 						QSE_MEMSET (&qinfo, 0, QSE_SIZEOF(qinfo));
 						qinfo.req = req;
 						qinfo.xpath = tmp->xpath;
+						qinfo.xpath_nx = (stx <= -1);
 
 						if (server_xtn->query (httpd, client->server, QSE_HTTPD_SERVERSTD_CGI, &qinfo, &cgi) >= 0 && cgi.cgi)
 						{
+							if (cgi.fncptr == QSE_NULL && stx <= -1) 
+							{
+								/* normal cgi script must exist. */
+								break;
+							}
+
 							/* the script name is composed of the orginal query path.
 							 * the pointer held in 'slash' is valid for tmp->qpath as
 							 * tmp->qpath_rp is at most the tail part of tmp->qpath. */
@@ -2646,14 +2647,16 @@ static int attempt_cgi (
 							suffix = qse_mbsdup (slash, httpd->mmgr);
 							if (!script || !suffix) goto oops;
 
-							if (cgi.shebang)
-							{
-								shebang = qse_mbsdup (cgi.shebang, httpd->mmgr);
-								if (shebang == QSE_NULL) goto oops;
-							}
-
 							goto bingo;
 						}
+					}
+
+					if (stx <= -1) 
+					{
+						/* stop at the current segment if stat() fails. 
+						 * if the current segment can't be stat-ed, it's not likely that
+						 * the next segment can be stat-ed successfully */
+						break;
 					}
 				}
 
@@ -2661,8 +2664,40 @@ static int attempt_cgi (
 			}
 			else 
 			{
-				/* no more slash is found. the last segement doesn't have to be checked 
-				 * here since it's attempted by the caller. */
+				/* no more slash is found. this is the last segment.
+				 * the caller has called stat() against the last segment
+				 * before having called this function. so it's known
+				 * that the path disn't exist.
+				 * 
+				 * however, a virtual cgi script may not exist. a check
+				 * for it is still required here */
+				
+				qse_httpd_serverstd_query_info_t qinfo;
+
+				if (xpath_changed)
+				{
+					/* restore the tmp->xpath to the original value by 
+					 * combining the full path with the document root. */
+					merge_paths_to_buf (httpd, tmp->root.u.path.val, tmp->qpath_rp, (qse_size_t)-1, tmp->xpath);
+					xpath_changed = 0;
+				}
+
+				QSE_MEMSET (&qinfo, 0, QSE_SIZEOF(qinfo));
+				qinfo.req = req;
+				qinfo.xpath = tmp->xpath;
+				qinfo.xpath_nx = 1;
+
+				if (server_xtn->query (httpd, client->server, QSE_HTTPD_SERVERSTD_CGI, &qinfo, &cgi) >= 0 && cgi.cgi && cgi.fncptr)
+				{
+					/* virtual cgi script */
+					script = qse_mbsdup (tmp->qpath, httpd->mmgr);
+					if (!script) goto oops;
+					suffix = QSE_NULL;
+
+					goto bingo;
+				}
+
+				/* not a virtual cgi script. just break */
 				break;
 			}
 		}
@@ -2675,12 +2710,32 @@ static int attempt_cgi (
 
 bingo:
 	target->type = QSE_HTTPD_RSRC_CGI;
-	target->u.cgi.nph = cgi.nph;
-	target->u.cgi.path = tmp->xpath;
+	target->u.cgi.flags = 0;
+	if (cgi.nph) target->u.cgi.flags |= QSE_HTTPD_RSRC_CGI_NPH;
+
+	if (cgi.fncptr) 
+	{
+		/* the type casting here is guly */
+		target->u.cgi.path = (qse_mchar_t*)cgi.fncptr;
+		target->u.cgi.shebang = cgi.shebang;
+		target->u.cgi.flags |= QSE_HTTPD_RSRC_CGI_FNC;
+	}
+	else 
+	{
+		if (cgi.shebang)
+		{
+			shebang = qse_mbsdup (cgi.shebang, httpd->mmgr);
+			if (shebang == QSE_NULL) goto oops;
+		}
+
+		target->u.cgi.path = tmp->xpath;
+		target->u.cgi.shebang = shebang;
+	}
+
 	target->u.cgi.script = script;
 	target->u.cgi.suffix = suffix;
 	target->u.cgi.root = tmp->root.u.path.val;
-	target->u.cgi.shebang = shebang;
+
 	return 1;
 
 oops:
@@ -2739,6 +2794,13 @@ static int make_resource (
 	/* handle the request locally */
 	QSE_ASSERT (tmp.root.type == QSE_HTTPD_SERVERSTD_ROOT_PATH);
 
+/*****************************************************************************
+ * BUG BUG BUG !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1
+ * TODO: calling the realm query here is wrong especially if the prefix path is resolved to a cgi.
+ * for example, /abc/def/test.cgi/x/y/z, 
+ * when this function queries for REALM, it's not known that /abc/def/test.cgi is a cgi script.
+
+ *****************************************************************************/
 	if (server_xtn->query (httpd, client->server, QSE_HTTPD_SERVERSTD_REALM, &qinfo, &tmp.realm) <= -1 ||
 	    server_xtn->query (httpd, client->server, QSE_HTTPD_SERVERSTD_INDEX, &qinfo, &tmp.index) <= -1)
 	{
@@ -2877,7 +2939,7 @@ auth_ok:
 						tmp.xpath = tpath;
 						tmp.idxfile = ptr;
 						goto attempt_file;
-					}	
+					}
 
 					QSE_MMGR_FREE (httpd->mmgr, tpath);
 				}
@@ -2898,8 +2960,9 @@ auth_ok:
 			{
 				/* the query path doesn't end with a slash. so redirect it  */
 				qse_htre_discardcontent (req);
-				target->type = QSE_HTTPD_RSRC_REDIR;
-				target->u.redir.dst = tmp.qpath;
+				target->type = QSE_HTTPD_RSRC_RELOC;
+				target->u.reloc.flags = QSE_HTTPD_RSRC_RELOC_APPENDSLASH | QSE_HTTPD_RSRC_RELOC_PERMANENT;
+				target->u.reloc.dst = tmp.qpath;
 				/* free xpath since it won't be used */
 				QSE_MMGR_FREE (httpd->mmgr, tmp.xpath);
 			}
@@ -2929,7 +2992,16 @@ auth_ok:
 			QSE_MMGR_FREE (httpd->mmgr, tmp.xpath);
 			return -1;
 		}
-		if (n >= 1) return 0;
+		if (n >= 1) 
+		{
+			if (target->u.cgi.flags & QSE_HTTPD_RSRC_CGI_FNC)
+			{
+				/* tmp.xpath is not set to target->u.cgi.path when
+				 * this flag is set. it must be deallocated */
+				QSE_MMGR_FREE (httpd->mmgr, tmp.xpath);
+			}
+			return 0;
+		}
 
 		qinfo.xpath = tmp.xpath;
 
@@ -3015,8 +3087,8 @@ struct cgi_tab_t
 };
 static struct cgi_tab_t cgitab[] =
 {
-	{ QSE_MT(".cgi"), { 1, 0, QSE_NULL } },
-	{ QSE_MT(".nph"), { 1, 1, QSE_NULL } },
+	{ QSE_MT(".cgi"), { 1, 0, QSE_NULL, QSE_NULL } },
+	{ QSE_MT(".nph"), { 1, 1, QSE_NULL, QSE_NULL } },
 };
 
 static int query_server (
@@ -3071,12 +3143,18 @@ static int query_server (
 		case QSE_HTTPD_SERVERSTD_CGI:
 		{
 			qse_httpd_serverstd_cgi_t* cgi = (qse_httpd_serverstd_cgi_t*)result;
-			for (i = 0; i < QSE_COUNTOF(cgitab); i++)
+
+			if (!qinfo->xpath_nx) 
 			{
-				if (qse_mbsend (qinfo->xpath, cgitab[i].suffix))
+				/* this standard implementation supports a normal cgi script only */
+
+				for (i = 0; i < QSE_COUNTOF(cgitab); i++)
 				{
-					QSE_MEMCPY (cgi, &cgitab[i].cgi, QSE_SIZEOF(*cgi));
-					return 0;
+					if (qse_mbsend (qinfo->xpath, cgitab[i].suffix))
+					{
+						QSE_MEMCPY (cgi, &cgitab[i].cgi, QSE_SIZEOF(*cgi));
+						return 0;
+					}
 				}
 			}
 

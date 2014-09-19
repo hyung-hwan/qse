@@ -178,14 +178,16 @@ qse_httpd_task_t* qse_httpd_entask_status (
 	msg = qse_httpstatustombs (code);
 	switch (code)
 	{
-		case 301:
-		case 302:
-		case 307:
+		case 301: /* Moved Permanently */ 
+		case 302: /* Found */
+		case 303: /* See Other (since HTTP/1.1) */
+		case 307: /* Temporary Redirect (since HTTP/1.1) */
+		case 308: /* Permanent Redirect (Experimental RFC; RFC 7238) */
 		{
-			qse_httpd_status_reloc_t* reloc;
-			reloc = (qse_httpd_status_reloc_t*)extra;
+			qse_httpd_rsrc_reloc_t* reloc;
+			reloc = (qse_httpd_rsrc_reloc_t*)extra;
 			extrapre = QSE_MT("Location: ");
-			extrapst = reloc->redir? QSE_MT("/\r\n"): QSE_MT("\r\n");
+			extrapst = (reloc->flags & QSE_HTTPD_RSRC_RELOC_APPENDSLASH)? QSE_MT("/\r\n"): QSE_MT("\r\n");
 			extraval = reloc->dst;
 			break;
 		}
@@ -276,31 +278,22 @@ qse_httpd_task_t* qse_httpd_entaskauth (
 
 qse_httpd_task_t* qse_httpd_entaskreloc (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, 
-	qse_httpd_task_t* pred, const qse_mchar_t* dst, qse_htre_t* req)
+	qse_httpd_task_t* pred, const qse_httpd_rsrc_reloc_t* reloc, qse_htre_t* req)
 {
-	qse_httpd_status_reloc_t reloc;
+	int code;
 
-	reloc.dst = dst;
-	reloc.redir = 0;
+	if (reloc->flags & QSE_HTTPD_RSRC_RELOC_KEEPMETHOD)
+	{
+		code = (reloc->flags & QSE_HTTPD_RSRC_RELOC_PERMANENT)? 308: 307;
+	}
+	else
+	{
+		/* NOTE: 302 can be 303 for HTTP/1.1 */
+		code = (reloc->flags & QSE_HTTPD_RSRC_RELOC_PERMANENT)? 301: 302;
+	}
 
 	return qse_httpd_entask_status (
-		httpd, client, pred, 301, (void*)&reloc,
-		qse_htre_getqmethodtype(req), 
-		qse_htre_getversion(req), 
-		(req->flags & QSE_HTRE_ATTR_KEEPALIVE));
-}
-
-qse_httpd_task_t* qse_httpd_entaskredir (
-	qse_httpd_t* httpd, qse_httpd_client_t* client, 
-	qse_httpd_task_t* pred, const qse_mchar_t* dst, qse_htre_t* req)
-{
-	qse_httpd_status_reloc_t reloc;
-
-	reloc.dst = dst;
-	reloc.redir = 1;
-
-	return qse_httpd_entask_status (
-		httpd, client, pred, 301, (void*)&reloc,
+		httpd, client, pred, code, (void*)reloc,
 		qse_htre_getqmethodtype(req), 
 		qse_htre_getversion(req), 
 		(req->flags & QSE_HTRE_ATTR_KEEPALIVE));
@@ -403,11 +396,7 @@ qse_httpd_task_t* qse_httpd_entaskrsrc (
 			break;
 
 		case QSE_HTTPD_RSRC_RELOC:
-			task = qse_httpd_entaskreloc (httpd, client, pred, rsrc->u.reloc.dst, req);
-			break;
-
-		case QSE_HTTPD_RSRC_REDIR:
-			task = qse_httpd_entaskredir (httpd, client, pred, rsrc->u.redir.dst, req);
+			task = qse_httpd_entaskreloc (httpd, client, pred, &rsrc->u.reloc, req);
 			break;
 
 		case QSE_HTTPD_RSRC_TEXT:

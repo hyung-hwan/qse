@@ -357,6 +357,33 @@ static int daemonize (int devnull)
 
 /* --------------------------------------------------------------------- */
 
+int xxxx (void* ctx, qse_env_char_t** envir)
+{
+	extern char** environ;
+char buf[1000];
+char* cl;
+int cl_i = 0;
+	environ = envir;
+	printf ("Content-Type: text/html\n\n");
+	printf ("<html><body><pre>\n");
+	system ("ls -laF /tmp");
+	printf ("--------------------\n");
+	system ("printenv");
+ cl = getenv("CONTENT_LENGTH");
+if (cl) cl_i = atoi(cl);
+//if (cl_i)
+//{
+while (fgets (buf, sizeof(buf), stdin) != NULL)
+{
+printf ("%s", buf);
+}
+//}
+//	system ("while read xxx; do echo $xxx; done; echo 123 456 789");
+	printf ("</pre></body></html>\n");
+
+	return 0;
+}
+
 static int make_resource (
 	qse_httpd_t* httpd, qse_httpd_client_t* client,
 	qse_htre_t* req, qse_httpd_rsrc_t* rsrc)
@@ -406,7 +433,7 @@ static loccfg_t* find_loccfg (
 		for (loccfg = hostcfg->loccfg; loccfg; loccfg = loccfg->next)
 		{
 			QSE_ASSERT (loccfg->locname.len > 0);
-				if (qse_mbsbeg (qpath, loccfg->locname.ptr) && 
+			if (qse_mbsbeg (qpath, loccfg->locname.ptr) && 
 			    (loccfg->locname.ptr[loccfg->locname.len - 1] == QSE_MT('/') ||
 			    qpath[loccfg->locname.len] == QSE_MT('/') || 
 			    qpath[loccfg->locname.len] == QSE_MT('\0'))) 
@@ -708,10 +735,10 @@ found:
 			if (qse_mbscmp (qse_htre_getqpath(qinfo->req), QSE_MT("/version")) == 0)
 			{
 				/* return static text without inspecting further */
-				((qse_httpd_serverstd_root_t*)result)->type = QSE_HTTPD_SERVERSTD_ROOT_TEXT;
+			
+				/*((qse_httpd_serverstd_root_t*)result)->type = QSE_HTTPD_SERVERSTD_ROOT_TEXT;
 				((qse_httpd_serverstd_root_t*)result)->u.text.ptr = QSE_MT(QSE_PACKAGE_NAME " " QSE_PACKAGE_VERSION);
-				((qse_httpd_serverstd_root_t*)result)->u.text.mime = QSE_MT("text/plain");
-			}
+				((qse_httpd_serverstd_root_t*)result)->u.text.mime = QSE_MT("text/plain");*/
 			else
 			#endif
 
@@ -724,7 +751,10 @@ found:
 
 			((qse_httpd_serverstd_realm_t*)result)->name = loccfg->xcfg[XCFG_REALM];
 
+			/* qinfo->xpath is not available for the REALM query in the std implementation.
+			 * let me check if it's available in case the implementation changes */
 			apath = qinfo->xpath? qinfo->xpath: qse_htre_getqpath (qinfo->req);
+printf ("apth in READM QUERY [%s]\n", apath);
 			if (apath)
 			{
 				const qse_mchar_t* base;
@@ -803,25 +833,44 @@ found:
 			qse_size_t i;
 			qse_httpd_serverstd_cgi_t* scgi;
 			const qse_mchar_t* xpath_base;
+			qse_mchar_t* qpath;
 
-			xpath_base = qse_mbsbasename (qinfo->xpath);
+			qpath = qse_htre_getqpath(qinfo->req);
 
 			scgi = (qse_httpd_serverstd_cgi_t*)result;
 			qse_memset (scgi, 0, QSE_SIZEOF(*scgi));
 
-			for (i = 0; i < QSE_COUNTOF(loccfg->cgi); i++)
+#if 1
+printf ("qinfo->xpath ####### [%s] %d [%s]\n", qinfo->xpath, qinfo->xpath_nx, qpath);
+			//if (qse_mbscmp (qinfo->xpath, QSE_MT("/tmp/version.cgi")) == 0)
+			if (qse_mbscmp (qpath, QSE_MT("/local/version.cgi")) == 0)
 			{
-				struct cgi_t* cgi;
-				for (cgi = loccfg->cgi[i].head; cgi; cgi = cgi->next)
+				scgi->cgi = 1;
+				scgi->nph = 0;
+				scgi->fncptr = xxxx;
+				scgi->shebang = QSE_NULL;
+				return 0;
+			}
+#endif
+
+
+			if (!qinfo->xpath_nx)
+			{
+				xpath_base = qse_mbsbasename (qinfo->xpath);
+				for (i = 0; i < QSE_COUNTOF(loccfg->cgi); i++)
 				{
-					if ((cgi->type == CGI_PREFIX && qse_mbsbeg (xpath_base, cgi->spec)) ||
-					    (cgi->type == CGI_SUFFIX && qse_mbsend (xpath_base, cgi->spec)) ||
-					    (cgi->type == CGI_NAME && qse_mbscmp (xpath_base, cgi->spec) == 0))
+					struct cgi_t* cgi;
+					for (cgi = loccfg->cgi[i].head; cgi; cgi = cgi->next)
 					{
-						scgi->cgi = 1;
-						scgi->nph = cgi->nph;
-						scgi->shebang = cgi->shebang;
-						return 0;
+						if ((cgi->type == CGI_PREFIX && qse_mbsbeg (xpath_base, cgi->spec)) ||
+						    (cgi->type == CGI_SUFFIX && qse_mbsend (xpath_base, cgi->spec)) ||
+						    (cgi->type == CGI_NAME && qse_mbscmp (xpath_base, cgi->spec) == 0))
+						{
+							scgi->cgi = 1;
+							scgi->nph = cgi->nph;
+							scgi->shebang = cgi->shebang;
+							return 0;
+						}
 					}
 				}
 			}
@@ -874,7 +923,7 @@ found:
 					id = (code == QSE_HTTPD_SERVERSTD_DIRACC)? 0: 1;
 		
 					xpath_base = qse_mbsbasename (qinfo->xpath);
-		
+
 					*(int*)result = 200;
 					for (i = 0; i < QSE_COUNTOF(loccfg->access[id]); i++)
 					{

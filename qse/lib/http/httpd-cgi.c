@@ -44,6 +44,7 @@ struct task_cgi_arg_t
 	qse_mcstr_t root;
 	qse_mcstr_t shebang;
 	int nph;
+	qse_httpd_fnc_t fnc;
 	qse_htre_t* req;
 };
 
@@ -63,6 +64,7 @@ struct task_cgi_t
 	qse_http_version_t version;
 	int keepalive; /* taken from the request */
 	int nph;
+	qse_pio_fnc_t fnc;
 
 	qse_htrd_t* script_htrd;
 	qse_env_t* env;
@@ -705,7 +707,7 @@ static int task_init_cgi (
 	qse_size_t len;
 	const qse_mchar_t* ptr;
 	const qse_htre_hdrval_t* tmp;
-	
+
 	cgi = (task_cgi_t*)qse_httpd_gettaskxtn (httpd, task);
 	arg = (task_cgi_arg_t*)task->ctx;
 
@@ -733,6 +735,12 @@ static int task_init_cgi (
 	cgi->keepalive = (arg->req->flags & QSE_HTRE_ATTR_KEEPALIVE);
 	cgi->nph = arg->nph;
 	cgi->req = QSE_NULL;
+	if (arg->fnc.ptr) 
+	{
+		/* the function pointer is set */
+		cgi->fnc.ptr = arg->fnc.ptr;
+		cgi->fnc.ctx = arg->fnc.ctx;
+	}
 
 	content_length = 0;
 	if (arg->req->state & QSE_HTRE_DISCARDED) goto done;
@@ -1432,6 +1440,7 @@ static int task_main_cgi (
 		cgi_script_htrd_xtn_t* xtn;
 		cgi->script_htrd = qse_htrd_open (httpd->mmgr, QSE_SIZEOF(cgi_script_htrd_xtn_t));
 		if (cgi->script_htrd == QSE_NULL) goto oops;
+
 		xtn = (cgi_script_htrd_xtn_t*) qse_htrd_getxtn (cgi->script_htrd);
 		xtn->cgi = cgi;
 		xtn->task = task;
@@ -1460,22 +1469,30 @@ static int task_main_cgi (
 	if (httpd->opt.trait & QSE_HTTPD_CGINOCLOEXEC) 
 		pio_options |= QSE_PIO_NOCLOEXEC;
 
-	if (cgi->shebang[0] != QSE_MT('\0'))
+	if (cgi->fnc.ptr)
 	{
-		const qse_mchar_t* tmp[4];
-		tmp[0] = cgi->shebang;
-		tmp[1] = QSE_MT(" ");
-		tmp[2] = cgi->path;
-		tmp[3] = QSE_NULL;
-		xpath = qse_mbsadup (tmp, QSE_NULL, httpd->mmgr);
-		if (xpath == QSE_NULL) goto oops;
+		xpath = (qse_mchar_t*)&cgi->fnc;
+		pio_options |= QSE_PIO_FNCCMD;
 	}
-	else xpath = cgi->path;
+	else
+	{
+		if (cgi->shebang[0] != QSE_MT('\0'))
+		{
+			const qse_mchar_t* tmp[4];
+			tmp[0] = cgi->shebang;
+			tmp[1] = QSE_MT(" ");
+			tmp[2] = cgi->path;
+			tmp[3] = QSE_NULL;
+			xpath = qse_mbsadup (tmp, QSE_NULL, httpd->mmgr);
+			if (xpath == QSE_NULL) goto oops;
+		}
+		else xpath = cgi->path;
+	}
 
 	x = qse_pio_init (
 		&cgi->pio, httpd->mmgr, (const qse_char_t*)xpath,
 		cgi->env, pio_options);
-	if (xpath != cgi->path) QSE_MMGR_FREE (httpd->mmgr, xpath);
+	if (xpath != cgi->path && xpath != &cgi->fnc) QSE_MMGR_FREE (httpd->mmgr, xpath);
 
 	if (x <= -1)
 	{
@@ -1539,6 +1556,12 @@ static int task_main_cgi (
 			}
 		}
 	}
+	else
+	{
+		/* no forwarding buffer. the request should not send any contents
+		 * to the cgi script. close the input to the script */
+		qse_pio_end (&cgi->pio, QSE_PIO_IN);
+	}
 
 	task->main = cgi->nph? task_main_cgi_4_nph: task_main_cgi_2;
 	return 1;
@@ -1575,11 +1598,35 @@ qse_httpd_task_t* qse_httpd_entaskcgi (
 	task_cgi_arg_t arg;
 	qse_httpd_rsrc_cgi_t rsrc;
 
+	QSE_MEMSET (&arg, 0, QSE_SIZEOF(arg));
+
 	rsrc = *cgi;
+	if (rsrc.flags & QSE_HTTPD_RSRC_CGI_FNC)
+	{
+		/* rsrc.script must carry a pointer to qse_pio_fnc_t */
+		if (rsrc.script == QSE_NULL || ((qse_pio_fnc_t*)rsrc.script)->ptr == QSE_NULL)
+		{
+			httpd->errnum = QSE_HTTPD_EINVAL;
+			return QSE_NULL;
+		}
+
+		arg.fnc.ptr = (qse_httpd_fncptr_t)rsrc.path;
+		arg.fnc.ctx = (void*)rsrc.shebang;
+
+		/* reset the script to an empty string for less interference 
+		 * with code handling normal script */
+		rsrc.path = QSE_MT("");
+		rsrc.shebang = QSE_MT("");
+	}
+	else
+	{
+		QSE_ASSERT (rsrc.path != QSE_NULL);
+		if (rsrc.shebang == QSE_NULL) rsrc.shebang = QSE_MT("");
+	}
+
 	if (rsrc.script == QSE_NULL) rsrc.script = qse_htre_getqpath(req);
 	if (rsrc.suffix == QSE_NULL) rsrc.suffix = QSE_MT("");
 	if (rsrc.root == QSE_NULL) rsrc.root = QSE_MT("");
-	if (rsrc.shebang == QSE_NULL) rsrc.shebang = QSE_MT("");
 
 	arg.path.ptr = (qse_mchar_t*)rsrc.path;
 	arg.path.len = qse_mbslen(rsrc.path);
@@ -1589,7 +1636,7 @@ qse_httpd_task_t* qse_httpd_entaskcgi (
 	arg.suffix.len = qse_mbslen(rsrc.suffix);
 	arg.root.ptr = (qse_mchar_t*)rsrc.root;
 	arg.root.len = qse_mbslen(rsrc.root);
-	arg.nph = rsrc.nph;
+	arg.nph = ((rsrc.flags & QSE_HTTPD_RSRC_CGI_NPH) != 0);
 	arg.shebang.ptr = (qse_mchar_t*)rsrc.shebang;
 	arg.shebang.len = qse_mbslen(rsrc.shebang);
 	arg.req = req;

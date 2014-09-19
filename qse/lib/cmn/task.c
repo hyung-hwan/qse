@@ -316,7 +316,7 @@ qse_task_slice_t* qse_task_create (
 	tmp = ((qse_uint8_t*)(slice + 1)) + stksize - QSE_SIZEOF(void*);
 
 	tmp = (qse_uint8_t*)tmp - QSE_SIZEOF(void*);
-	*(void**)tmp = NULL; /* t1 */
+	*(void**)tmp = QSE_NULL; /* t1 */
 
 	tmp = (qse_uint8_t*)tmp - QSE_SIZEOF(void*);
 	*(void**)tmp = slice; /* t2 */

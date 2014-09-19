@@ -1983,7 +1983,7 @@ printf ("XXXXXXXXXXXXXXXXXXXXXXXXXX URL REWRITTEN TO [%s].....\n", new_url);
 		{
 			/* check if it begins with redirection code followed by a colon */
 			int redir_code = 0;
-			qse_httpd_status_reloc_t reloc;
+			qse_httpd_rsrc_reloc_t reloc;
 			const qse_mchar_t* nuptr = new_url;
 			do
 			{
@@ -1996,11 +1996,14 @@ printf ("XXXXXXXXXXXXXXXXXXXXXXXXXX URL REWRITTEN TO [%s].....\n", new_url);
 				/* no colon is found after digits. it's probably a normal url */
 				goto normal_url;
 			}
-			if (redir_code != 301 && redir_code != 302 && redir_code != 307) redir_code = 301;
+			if (redir_code != 301 && redir_code != 302 && redir_code != 303 && 
+			    redir_code != 307 && redir_code != 308) redir_code = 302;
 			nuptr++;
 
+			/* relocation code is given explictly, no slash appending is needed.
+			 * use qse_httpd_entask_status() rather than qse_httpd_entaskreloc(). */
+			reloc.flags = 0; 
 			reloc.dst = nuptr;
-			reloc.redir = 0; /* don't want to append extra / */
 
 			if (qse_httpd_entask_status (
 				httpd, proxy->client, proxy->task, redir_code, &reloc,

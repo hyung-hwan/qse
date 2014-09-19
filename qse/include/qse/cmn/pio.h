@@ -59,6 +59,10 @@ enum qse_pio_flag_t
 	 *  them to prevent inheritance. */
 	QSE_PIO_NOCLOEXEC     = (1 << 5),
 
+	/** indidate that the command to qse_pio_open() is a pointer to
+	 *  #qse_pio_fnc_t. supported on unix/linux only */
+	QSE_PIO_FNCCMD        = (1 << 6),
+
 	/** write to stdin of a child process */
 	QSE_PIO_WRITEIN       = (1 << 8),
 	/** read stdout of a child process */
@@ -112,6 +116,16 @@ enum qse_pio_hid_t
 	QSE_PIO_ERR = 2  /**< stderr of a child process */
 };
 typedef enum qse_pio_hid_t qse_pio_hid_t;
+
+
+typedef int (*qse_pio_fncptr_t) (void* ctx, qse_env_char_t** envir);
+
+typedef struct qse_pio_fnc_t qse_pio_fnc_t;
+struct qse_pio_fnc_t
+{
+	qse_pio_fncptr_t ptr;
+	void* ctx;
+};
 
 /**
  * The qse_pio_errnum_t type defines error numbers.
@@ -176,6 +190,7 @@ struct qse_pio_pin_t
 	qse_tio_t*    tio;
 	qse_pio_t*    self;	
 };
+
 
 /**
  * The qse_pio_t type defines a structure to store status for piped I/O

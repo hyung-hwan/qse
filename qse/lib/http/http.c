@@ -56,6 +56,7 @@ const qse_mchar_t* qse_httpstatustombs (int code)
 		case 304: msg = QSE_MT("Not Modified"); break;
 		case 305: msg = QSE_MT("Use Proxy"); break;
 		case 307: msg = QSE_MT("Temporary Redirect"); break;
+		case 308: msg = QSE_MT("Permanent Redirect"); break;
 
 		case 400: msg = QSE_MT("Bad Request"); break;
 		case 401: msg = QSE_MT("Unauthorized"); break;

@@ -90,9 +90,17 @@ struct qse_httpd_serverstd_auth_t
 typedef struct qse_httpd_serverstd_cgi_t qse_httpd_serverstd_cgi_t;
 struct qse_httpd_serverstd_cgi_t
 {
-	int cgi: 1;
-	int nph: 1;
-	const qse_mchar_t* shebang; /* optional, can be #QSE_NULL */
+	unsigned int cgi: 1;
+	unsigned int nph: 1;
+
+	/* optional, can be #QSE_NULL. */
+	qse_httpd_fncptr_t fncptr;
+
+	/* optional, can be #QSE_NULL. if fncptr not #QSE_NULL, shebang is
+	 * interpreted as void* and used as a context pointer to fnc. 
+	 * if fncptr is #QSE_NULL, it provides a pointer to the path 
+	 * to the program interpreter for executing a cgi script. */
+	const qse_mchar_t* shebang; 
 };
 
 typedef struct qse_httpd_serverstd_index_t qse_httpd_serverstd_index_t;
@@ -135,7 +143,22 @@ struct qse_httpd_serverstd_query_info_t
 {
 	qse_httpd_client_t* client;
 	qse_htre_t* req;
-	qse_mchar_t* xpath; /* query path combined with document root */
+
+	/** 
+	 * set to a query path combined with document root for these query types.
+	 * - #QSE_HTTPD_SERVERSTD_CGI
+	 * - #QSE_HTTPD_SERVERSTD_MIME
+	 * - #QSE_HTTPD_SERVERSTD_DIRACC
+	 * - #QSE_HTTPD_SERVERSTD_FILEACC
+	 * - #QSE_HTTPD_SERVERSTD_DIRHEAD
+	 * - #QSE_HTTPD_SERVERSTD_DIRFOOT
+	 *
+	 * set to #QSE_NULL for other query types.
+	 */
+	qse_mchar_t* xpath;
+ 
+	/** indiates that stat() failed over xpath when it's not #QSE_NULL. */
+	int xpath_nx;
 };
 typedef struct qse_httpd_serverstd_query_info_t qse_httpd_serverstd_query_info_t;
 
