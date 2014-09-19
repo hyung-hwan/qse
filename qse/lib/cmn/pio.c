@@ -376,8 +376,8 @@ static int close_unneeded_fds_using_proc (int* excepts, qse_size_t count)
 		qse_mchar_t buf[64];
 		qse_mbsxfmt (buf, QSE_COUNTOF(buf), QSE_MT("/proc/%d/fd"), QSE_GETPID());
 		d = QSE_OPENDIR (buf);
+		if (!d) d = QSE_OPENDIR (QSE_MT("/dev/fd")); /* Darwin, FreeBSD */
 	}
-/* TODO: try /dev/fd - FreeBSD, Darwin, OS X*/
 
 	if (d)
 	{
@@ -438,9 +438,8 @@ static int get_highest_fd (void)
 		qse_mchar_t buf[64];
 		qse_mbsxfmt (buf, QSE_COUNTOF(buf), QSE_MT("/proc/%d/fd"), QSE_GETPID());
 		d = QSE_OPENDIR (buf);
+		if (!d) d = QSE_OPENDIR (QSE_MT("/dev/fd")); /* Darwin, FreeBSD */
 	}
-
-/* TODO: try /dev/fd - FreeBSD, Darwin, OS X*/
 
 	if (d)
 	{
@@ -476,7 +475,7 @@ static int get_highest_fd (void)
 	#endif
 	}
 	else fd = rlim.rlim_max;
-	if (fd == -1) fd = 1024; /* fallback */
+	if (fd <= -1) fd = 1024; /* fallback */
 
 	/* F_MAXFD is the highest fd. but RLIMIT_NOFILE and 
 	 * _SC_OPEN_MAX returnes the maximum number of file 
@@ -484,6 +483,152 @@ static int get_highest_fd (void)
 	if (fd > 0) fd--; 
 
 	return fd;
+}
+
+
+static qse_pio_pid_t standard_fork_and_exec (qse_pio_t* pio, int pipes[], param_t* param, qse_env_t* env)
+{
+	qse_pio_pid_t pid;
+
+#if defined(HAVE_CRT_EXTERNS_H)
+#	define environ (*(_NSGetEnviron()))
+#else
+	extern char** environ;
+#endif
+
+	pid = QSE_FORK();
+	if (pid <= -1) 
+	{
+		pio->errnum = QSE_PIO_EINVAL;
+		return -1;
+	}
+
+	if (pid == 0)
+	{
+		/* child */
+		qse_pio_hnd_t devnull = -1;
+
+		if (!(pio->flags & QSE_PIO_NOCLOEXEC))
+		{
+			if (close_unneeded_fds_using_proc (pipes, 6) <= -1)
+			{
+				int fd = get_highest_fd ();
+
+				/* close all other unknown open handles except 
+				 * stdin/out/err and the pipes. */
+				while (fd > 2)
+				{
+					if (fd != pipes[0] && fd != pipes[1] &&
+						fd != pipes[2] && fd != pipes[3] &&
+						fd != pipes[4] && fd != pipes[5]) 
+					{
+						QSE_CLOSE (fd);
+					}
+					fd--;
+				}
+			}
+		}
+
+		if (pio->flags & QSE_PIO_WRITEIN)
+		{
+			/* child should read */
+			QSE_CLOSE (pipes[1]);
+			pipes[1] = QSE_PIO_HND_NIL;
+			if (QSE_DUP2 (pipes[0], 0) <= -1) goto child_oops;
+			QSE_CLOSE (pipes[0]);
+			pipes[0] = QSE_PIO_HND_NIL;
+		}
+
+		if (pio->flags & QSE_PIO_READOUT)
+		{
+			/* child should write */
+			QSE_CLOSE (pipes[2]);
+			pipes[2] = QSE_PIO_HND_NIL;
+			if (QSE_DUP2 (pipes[3], 1) <= -1) goto child_oops;
+
+			if (pio->flags & QSE_PIO_ERRTOOUT)
+			{
+				if (QSE_DUP2 (pipes[3], 2) <= -1) goto child_oops;
+			}
+
+			QSE_CLOSE (pipes[3]); 
+			pipes[3] = QSE_PIO_HND_NIL;
+		}
+
+		if (pio->flags & QSE_PIO_READERR)
+		{
+			/* child should write */
+			QSE_CLOSE (pipes[4]); 
+			pipes[4] = QSE_PIO_HND_NIL;
+			if (QSE_DUP2 (pipes[5], 2) <= -1) goto child_oops;
+
+			if (pio->flags & QSE_PIO_OUTTOERR)
+			{
+				if (QSE_DUP2 (pipes[5], 1) <= -1) goto child_oops;
+			}
+
+			QSE_CLOSE (pipes[5]);
+			pipes[5] = QSE_PIO_HND_NIL;
+		}
+
+		if ((pio->flags & QSE_PIO_INTONUL) || 
+		    (pio->flags & QSE_PIO_OUTTONUL) ||
+		    (pio->flags & QSE_PIO_ERRTONUL))
+		{
+		#if defined(O_LARGEFILE)
+			devnull = QSE_OPEN (QSE_MT("/dev/null"), O_RDWR|O_LARGEFILE, 0);
+		#else
+			devnull = QSE_OPEN (QSE_MT("/dev/null"), O_RDWR, 0);
+		#endif
+			if (devnull <= -1) goto child_oops;
+		}
+
+		if ((pio->flags & QSE_PIO_INTONUL)  &&
+		    QSE_DUP2(devnull,0) <= -1) goto child_oops;
+		if ((pio->flags & QSE_PIO_OUTTONUL) &&
+		    QSE_DUP2(devnull,1) <= -1) goto child_oops;
+		if ((pio->flags & QSE_PIO_ERRTONUL) &&
+		    QSE_DUP2(devnull,2) <= -1) goto child_oops;
+
+		if ((pio->flags & QSE_PIO_INTONUL) || 
+		    (pio->flags & QSE_PIO_OUTTONUL) ||
+		    (pio->flags & QSE_PIO_ERRTONUL)) 
+		{
+			QSE_CLOSE (devnull);
+			devnull = -1;
+		}
+
+		if (pio->flags & QSE_PIO_DROPIN) QSE_CLOSE(0);
+		if (pio->flags & QSE_PIO_DROPOUT) QSE_CLOSE(1);
+		if (pio->flags & QSE_PIO_DROPERR) QSE_CLOSE(2);
+
+
+		if (pio->flags & QSE_PIO_FNCCMD)
+		{
+			/* -----------------------------------------------
+			 * the function pointer to execute has been given.
+			 * -----------------------------------------------*/
+			qse_pio_fnc_t* fnc = (qse_pio_fnc_t*)param;
+			int retx;
+
+			retx = fnc->ptr (fnc->ctx, (env? qse_env_getarr(env): environ));
+			if (devnull >= 0) QSE_CLOSE (devnull);
+			QSE_EXIT (retx);
+		}
+		else
+		{
+			QSE_EXECVE (param->argv[0], param->argv, (env? qse_env_getarr(env): environ));
+
+			/* if exec fails, free 'param' parameter which is an inherited pointer */
+			free_param (pio, param); 
+		}
+
+	child_oops:
+		if (devnull >= 0) QSE_CLOSE (devnull);
+		QSE_EXIT (128);
+	}
+
+	return pid;
 }
 
 #endif
@@ -1006,7 +1151,7 @@ create_process:
 		DosClose (old_out); old_out = QSE_PIO_HND_NIL;
 		DosClose (old_in); old_in = QSE_PIO_HND_NIL;
 		goto oops;
-	}    	
+	}
 
 	/* we must not let our own stdin/out/err duplicated 
 	 * into old_in/out/err be inherited */
@@ -1200,462 +1345,11 @@ create_process:
 	pio->child = child_rc.codeTerminate;
 
 #elif defined(__DOS__)
-		
+
 	/* DOS not multi-processed. can't support pio */
 	pio->errnum = QSE_PIO_ENOIMPL;
 	return -1;
 
-#elif defined(HAVE_POSIX_SPAWN) && !(defined(QSE_SYSCALL0) && defined(SYS_vfork))
-	if (flags & QSE_PIO_WRITEIN)
-	{
-		if (QSE_PIPE(&handle[0]) <= -1) 
-		{
-			pio->errnum = syserr_to_errnum (errno);
-			goto oops;
-		}
-		minidx = 0; maxidx = 1;
-	}
-
-	if (flags & QSE_PIO_READOUT)
-	{
-		if (QSE_PIPE(&handle[2]) <= -1) 
-		{
-			pio->errnum = syserr_to_errnum (errno);
-			goto oops;
-		}
-		if (minidx == -1) minidx = 2;
-		maxidx = 3;
-	}
-
-	if (flags & QSE_PIO_READERR)
-	{
-		if (QSE_PIPE(&handle[4]) <= -1) 
-		{
-			pio->errnum = syserr_to_errnum (errno);
-			goto oops;
-		}
-		if (minidx == -1) minidx = 4;
-		maxidx = 5;
-	}
-
-	if (maxidx == -1) 
-	{
-		pio->errnum = QSE_PIO_EINVAL;
-		goto oops;
-	}
-
-	if ((pserr = posix_spawn_file_actions_init (&fa)) != 0) 
-	{
-		pio->errnum = syserr_to_errnum (pserr);
-		goto oops;
-	}
-	fa_inited = 1;
-
-	if (flags & QSE_PIO_WRITEIN)
-	{
-		/* child should read */
-		if ((pserr = posix_spawn_file_actions_addclose (&fa, handle[1])) != 0) 
-		{
-			pio->errnum = syserr_to_errnum (pserr);
-			goto oops;
-		}
-		if ((pserr = posix_spawn_file_actions_adddup2 (&fa, handle[0], 0)) != 0)
-		{
-			pio->errnum = syserr_to_errnum (pserr);
-			goto oops;
-		}
-		if ((pserr = posix_spawn_file_actions_addclose (&fa, handle[0])) != 0) 
-		{
-			pio->errnum = syserr_to_errnum (pserr);
-			goto oops;
-		}
-	}
-
-	if (flags & QSE_PIO_READOUT)
-	{
-		/* child should write */
-		if ((pserr = posix_spawn_file_actions_addclose (&fa, handle[2])) != 0)
-		{
-			pio->errnum = syserr_to_errnum (pserr);
-			goto oops;
-		}
-		if ((pserr = posix_spawn_file_actions_adddup2 (&fa, handle[3], 1)) != 0)
-		{
-			pio->errnum = syserr_to_errnum (pserr);
-			goto oops;
-		}
-		if ((flags & QSE_PIO_ERRTOOUT) &&
-		    (pserr = posix_spawn_file_actions_adddup2 (&fa, handle[3], 2)) != 0)
-		{
-			pio->errnum = syserr_to_errnum (pserr);
-			goto oops;
-		}
-		if ((pserr = posix_spawn_file_actions_addclose (&fa, handle[3])) != 0)
-		{
-			pio->errnum = syserr_to_errnum (pserr);
-			goto oops;
-		}
-	}
-
-	if (flags & QSE_PIO_READERR)
-	{
-		/* child should write */
-		if ((pserr = posix_spawn_file_actions_addclose (&fa, handle[4])) != 0)
-		{
-			pio->errnum = syserr_to_errnum (pserr);
-			goto oops;
-		}
-		if ((pserr = posix_spawn_file_actions_adddup2 (&fa, handle[5], 2)) != 0)
-		{
-			pio->errnum = syserr_to_errnum (pserr);
-			goto oops;
-		}
-		if ((flags & QSE_PIO_OUTTOERR) &&
-		    (pserr = posix_spawn_file_actions_adddup2 (&fa, handle[5], 1)) != 0)
-		{
-			pio->errnum = syserr_to_errnum (pserr);
-			goto oops;
-		}
-		if ((pserr = posix_spawn_file_actions_addclose (&fa, handle[5])) != 0) 
-		{
-			pio->errnum = syserr_to_errnum (pserr);
-			goto oops;
-		}
-	}
-
-	{
-		int oflags = O_RDWR;
-	#if defined(O_LARGEFILE)
-		oflags |= O_LARGEFILE;
-	#endif
-
-		if ((flags & QSE_PIO_INTONUL) &&
-		    (pserr = posix_spawn_file_actions_addopen (&fa, 0, QSE_MT("/dev/null"), oflags, 0)) != 0)
-		{
-			pio->errnum = syserr_to_errnum (pserr);
-			goto oops;
-		}
-		if ((flags & QSE_PIO_OUTTONUL) &&
-		    (pserr = posix_spawn_file_actions_addopen (&fa, 1, QSE_MT("/dev/null"), oflags, 0)) != 0)
-		{
-			pio->errnum = syserr_to_errnum (pserr);
-			goto oops;
-		}
-		if ((flags & QSE_PIO_ERRTONUL) &&
-		    (pserr = posix_spawn_file_actions_addopen (&fa, 2, QSE_MT("/dev/null"), oflags, 0)) != 0)
-		{
-			pio->errnum = syserr_to_errnum (pserr);
-			goto oops;
-		}
-	}
-
-	/* there remains the chance of race condition that
-	 * 0, 1, 2 can be closed between addclose() and posix_spawn().
-	 * so checking the file descriptors with is_fd_valid() is
-	 * just on the best-effort basis.
-	 */
-	if ((flags & QSE_PIO_DROPIN) && is_fd_valid(0) &&
-	    (pserr = posix_spawn_file_actions_addclose (&fa, 0)) != 0) 
-	{
-		pio->errnum = syserr_to_errnum (pserr);
-		goto oops;
-	}
-	if ((flags & QSE_PIO_DROPOUT) && is_fd_valid(1) &&
-	    (pserr = posix_spawn_file_actions_addclose (&fa, 1)) != 0) 
-	{
-		pio->errnum = syserr_to_errnum (pserr);
-		goto oops;
-	}
-	if ((flags & QSE_PIO_DROPERR) && is_fd_valid(2) &&
-	    (pserr = posix_spawn_file_actions_addclose (&fa, 2)) != 0)
-	{
-		pio->errnum = syserr_to_errnum (pserr);
-		goto oops;
-	}
-
-	if (!(flags & QSE_PIO_NOCLOEXEC))
-	{
-		int fd = get_highest_fd ();
-		while (fd > 2)
-		{
-			if (fd != handle[0] && fd != handle[1] &&
-			    fd != handle[2] && fd != handle[3] &&
-			    fd != handle[4] && fd != handle[5]) 
-			{
-				/* closing attempt on a best-effort basis.
-				 * posix_spawn() fails if the file descriptor added
-				 * with addclose() is closed before posix_spawn().
-				 * addclose() if no FD_CLOEXEC is set or it's unknown. */
-				if (is_fd_valid_and_nocloexec(fd) && 
-				    (pserr = posix_spawn_file_actions_addclose (&fa, fd)) != 0) 
-				{
-					pio->errnum = syserr_to_errnum (pserr);
-					goto oops;
-				}
-			}
-			fd--;
-		}
-	}
-
-	if (make_param (pio, cmd, flags, &param) <= -1) goto oops;
-
-	/* check if the command(the command requested or /bin/sh) is 
-	 * exectuable to return an error without trying to execute it
-	 * though this check alone isn't sufficient */
-	if (assert_executable (pio, param.argv[0]) <= -1)
-	{
-		free_param (pio, &param); 
-		goto oops;
-	}
-
-	posix_spawnattr_init (&psattr);
-#if defined(__linux)
-#if !defined(POSIX_SPAWN_USEVFORK)
-#	define POSIX_SPAWN_USEVFORK 0x40
-#endif
-	posix_spawnattr_setflags (&psattr, POSIX_SPAWN_USEVFORK);
-#endif
-
-	pserr = posix_spawn(
-		&pid, param.argv[0], &fa, &psattr, param.argv,
-		(env? qse_env_getarr(env): environ));
-
-#if defined(__linux)
-	posix_spawnattr_destroy (&psattr);
-#endif
-
-	free_param (pio, &param); 
-	if (fa_inited) 
-	{
-		posix_spawn_file_actions_destroy (&fa);
-		fa_inited = 0;
-	}
-	if (pserr != 0) 
-	{
-		pio->errnum = syserr_to_errnum (pserr);
-		goto oops;
-	}
-
-	pio->child = pid;
-	if (flags & QSE_PIO_WRITEIN)
-	{
-		QSE_CLOSE (handle[0]);
-		handle[0] = QSE_PIO_HND_NIL;
-	}
-	if (flags & QSE_PIO_READOUT)
-	{
-		QSE_CLOSE (handle[3]);
-		handle[3] = QSE_PIO_HND_NIL;
-	}
-	if (flags & QSE_PIO_READERR)
-	{
-		QSE_CLOSE (handle[5]);
-		handle[5] = QSE_PIO_HND_NIL;
-	}
-
-#elif defined(QSE_SYSCALL0) && defined(SYS_vfork)
-	if (flags & QSE_PIO_WRITEIN)
-	{
-		if (QSE_PIPE(&handle[0]) <= -1) 
-		{
-			pio->errnum = syserr_to_errnum (errno);
-			goto oops;
-		}
-		minidx = 0; maxidx = 1;
-	}
-
-	if (flags & QSE_PIO_READOUT)
-	{
-		if (QSE_PIPE(&handle[2]) <= -1) 
-		{
-			pio->errnum = syserr_to_errnum (errno);
-			goto oops;
-		}
-		if (minidx == -1) minidx = 2;
-		maxidx = 3;
-	}
-
-	if (flags & QSE_PIO_READERR)
-	{
-		if (QSE_PIPE(&handle[4]) <= -1) 
-		{
-			pio->errnum = syserr_to_errnum (errno);
-			goto oops;
-		}
-		if (minidx == -1) minidx = 4;
-		maxidx = 5;
-	}
-
-	if (maxidx == -1) 
-	{
-		pio->errnum = QSE_PIO_EINVAL;
-		goto oops;
-	}
-
-	if (make_param (pio, cmd, flags, &param) <= -1) goto oops;
-
-	/* check if the command(the command requested or /bin/sh) is 
-	 * exectuable to return an error without trying to execute it
-	 * though this check alone isn't sufficient */
-	if (assert_executable (pio, param.argv[0]) <= -1)
-	{
-		free_param (pio, &param); 
-		goto oops;
-	}
-
-	/* prepare some data before vforking for vfork limitation.
-	 * the child in vfork should not make function calls or 
-	 * change data shared with the parent. */
-	if (!(flags & QSE_PIO_NOCLOEXEC)) highest_fd = get_highest_fd ();
-	envarr = env? qse_env_getarr(env): environ;
-
-	QSE_SYSCALL0 (pid, SYS_vfork);
-	if (pid <= -1) 
-	{
-		pio->errnum = QSE_PIO_EINVAL;
-		free_param (pio, &param);
-		goto oops;
-	}
-
-	if (pid == 0)
-	{
-		/* the child after vfork should not make function calls.
-		 * since the system call like close() are also normal
-		 * functions, i have to use assembly macros to make
-		 * system calls. */
-
-		qse_pio_hnd_t devnull = -1;
-
-		if (!(flags & QSE_PIO_NOCLOEXEC))
-		{
-			/* cannot call close_unneeded_fds_using_proc() in the vfork() context */
-
-			int fd = highest_fd;
-
-			/* close all other unknown open handles except 
-			 * stdin/out/err and the pipes. */
-			while (fd > 2)
-			{
-				if (fd != handle[0] && fd != handle[1] &&
-				    fd != handle[2] && fd != handle[3] &&
-				    fd != handle[4] && fd != handle[5]) 
-				{
-					QSE_SYSCALL1 (dummy, SYS_close, fd);
-				}
-				fd--;
-			}
-		}
-
-		if (flags & QSE_PIO_WRITEIN)
-		{
-			/* child should read */
-			QSE_SYSCALL1 (dummy, SYS_close, handle[1]);
-			QSE_SYSCALL2 (dummy, SYS_dup2, handle[0], 0);
-			if (dummy <= -1) goto child_oops;
-			QSE_SYSCALL1 (dummy, SYS_close, handle[0]);
-		}
-
-		if (flags & QSE_PIO_READOUT)
-		{
-			/* child should write */
-			QSE_SYSCALL1 (dummy, SYS_close, handle[2]);
-			QSE_SYSCALL2 (dummy, SYS_dup2, handle[3], 1);
-			if (dummy <= -1) goto child_oops;
-
-			if (flags & QSE_PIO_ERRTOOUT)
-			{
-				QSE_SYSCALL2 (dummy, SYS_dup2, handle[3], 2);
-				if (dummy <= -1) goto child_oops;
-			}
-
-			QSE_SYSCALL1 (dummy, SYS_close, handle[3]);
-		}
-
-		if (flags & QSE_PIO_READERR)
-		{
-			/* child should write */
-			QSE_SYSCALL1 (dummy, SYS_close, handle[4]);
-			QSE_SYSCALL2 (dummy, SYS_dup2, handle[5], 2);
-			if (dummy <= -1) goto child_oops;
-
-			if (flags & QSE_PIO_OUTTOERR)
-			{
-				QSE_SYSCALL2 (dummy, SYS_dup2, handle[5], 1);
-				if (dummy <= -1) goto child_oops;
-			}
-
-			QSE_SYSCALL1 (dummy, SYS_close, handle[5]);
-		}
-
-		if ((flags & QSE_PIO_INTONUL) || 
-		    (flags & QSE_PIO_OUTTONUL) ||
-		    (flags & QSE_PIO_ERRTONUL))
-		{
-		#if defined(O_LARGEFILE)
-			QSE_SYSCALL3 (devnull, SYS_open, QSE_MT("/dev/null"), O_RDWR|O_LARGEFILE, 0);
-		#else
-			QSE_SYSCALL3 (devnull, SYS_open, QSE_MT("/dev/null"), O_RDWR, 0);
-		#endif
-			if (devnull <= -1) goto child_oops;
-		}
-
-		if (flags & QSE_PIO_INTONUL)
-		{
-			QSE_SYSCALL2 (dummy, SYS_dup2, devnull, 0);
-			if (dummy <= -1) goto child_oops;
-		}
-		if (flags & QSE_PIO_OUTTONUL)
-		{
-			QSE_SYSCALL2 (dummy, SYS_dup2, devnull, 1);
-			if (dummy <= -1) goto child_oops;
-		}
-		if (flags & QSE_PIO_ERRTONUL)
-		{
-			QSE_SYSCALL2 (dummy, SYS_dup2, devnull, 2);
-			if (dummy <= -1) goto child_oops;
-		}
-
-		if ((flags & QSE_PIO_INTONUL) || 
-		    (flags & QSE_PIO_OUTTONUL) ||
-		    (flags & QSE_PIO_ERRTONUL)) 
-		{
-			QSE_SYSCALL1 (dummy, SYS_close, devnull);
-			devnull = -1;
-		}
-
-		if (flags & QSE_PIO_DROPIN) QSE_SYSCALL1 (dummy, SYS_close, 0);
-		if (flags & QSE_PIO_DROPOUT) QSE_SYSCALL1 (dummy, SYS_close, 1);
-		if (flags & QSE_PIO_DROPERR) QSE_SYSCALL1 (dummy, SYS_close, 2);
-
-		QSE_SYSCALL3 (dummy, SYS_execve, param.argv[0], param.argv, envarr);
-		/*free_param (pio, &param); don't free this in the vfork version */
-
-	child_oops:
-		if (devnull >= 0) QSE_SYSCALL1 (dummy, SYS_close, devnull);
-		QSE_SYSCALL1 (dummy, SYS_exit, 128);
-	}
-
-	/* parent */
-	free_param (pio, &param);
-	pio->child = pid;
-
-	if (flags & QSE_PIO_WRITEIN)
-	{
-		QSE_CLOSE (handle[0]);
-		handle[0] = QSE_PIO_HND_NIL;
-	}
-
-	if (flags & QSE_PIO_READOUT)
-	{
-		QSE_CLOSE (handle[3]);
-		handle[3] = QSE_PIO_HND_NIL;
-	}
-
-	if (flags & QSE_PIO_READERR)
-	{
-		QSE_CLOSE (handle[5]);
-		handle[5] = QSE_PIO_HND_NIL;
-	}
 #else
 
 	if (flags & QSE_PIO_WRITEIN)
@@ -1696,136 +1390,384 @@ create_process:
 		goto oops;
 	}
 
-	if (make_param (pio, cmd, flags, &param) <= -1) goto oops;
-
-	/* check if the command(the command requested or /bin/sh) is 
-	 * exectuable to return an error without trying to execute it
-	 * though this check alone isn't sufficient */
-	if (assert_executable (pio, param.argv[0]) <= -1)
+	if (pio->flags & QSE_PIO_FNCCMD)
 	{
-		free_param (pio, &param); 
-		goto oops;
+		/* i know i'm abusing typecasting here.
+		 * cmd is supposed to be qse_pio_fnc_t*, anyway */
+		pid = standard_fork_and_exec (pio, handle, (param_t*)cmd, env);
+		if (pid <= -1) goto oops;
+		pio->child = pid;
 	}
-
-	pid = QSE_FORK();
-	if (pid <= -1) 
+	else
 	{
-		pio->errnum = QSE_PIO_EINVAL;
-		free_param (pio, &param);
-		goto oops;
-	}
+	#if defined(HAVE_POSIX_SPAWN) && !(defined(QSE_SYSCALL0) && defined(SYS_vfork))
 
-	if (pid == 0)
-	{
-		/* child */
-		qse_pio_hnd_t devnull = -1;
+		if ((pserr = posix_spawn_file_actions_init (&fa)) != 0) 
+		{
+			pio->errnum = syserr_to_errnum (pserr);
+			goto oops;
+		}
+		fa_inited = 1;
+
+		if (flags & QSE_PIO_WRITEIN)
+		{
+			/* child should read */
+			if ((pserr = posix_spawn_file_actions_addclose (&fa, handle[1])) != 0) 
+			{
+				pio->errnum = syserr_to_errnum (pserr);
+				goto oops;
+			}
+			if ((pserr = posix_spawn_file_actions_adddup2 (&fa, handle[0], 0)) != 0)
+			{
+				pio->errnum = syserr_to_errnum (pserr);
+				goto oops;
+			}
+			if ((pserr = posix_spawn_file_actions_addclose (&fa, handle[0])) != 0) 
+			{
+				pio->errnum = syserr_to_errnum (pserr);
+				goto oops;
+			}
+		}
+
+		if (flags & QSE_PIO_READOUT)
+		{
+			/* child should write */
+			if ((pserr = posix_spawn_file_actions_addclose (&fa, handle[2])) != 0)
+			{
+				pio->errnum = syserr_to_errnum (pserr);
+				goto oops;
+			}
+			if ((pserr = posix_spawn_file_actions_adddup2 (&fa, handle[3], 1)) != 0)
+			{
+				pio->errnum = syserr_to_errnum (pserr);
+				goto oops;
+			}
+			if ((flags & QSE_PIO_ERRTOOUT) &&
+				(pserr = posix_spawn_file_actions_adddup2 (&fa, handle[3], 2)) != 0)
+			{
+				pio->errnum = syserr_to_errnum (pserr);
+				goto oops;
+			}
+			if ((pserr = posix_spawn_file_actions_addclose (&fa, handle[3])) != 0)
+			{
+				pio->errnum = syserr_to_errnum (pserr);
+				goto oops;
+			}
+		}
+
+		if (flags & QSE_PIO_READERR)
+		{
+			/* child should write */
+			if ((pserr = posix_spawn_file_actions_addclose (&fa, handle[4])) != 0)
+			{
+				pio->errnum = syserr_to_errnum (pserr);
+				goto oops;
+			}
+			if ((pserr = posix_spawn_file_actions_adddup2 (&fa, handle[5], 2)) != 0)
+			{
+				pio->errnum = syserr_to_errnum (pserr);
+				goto oops;
+			}
+			if ((flags & QSE_PIO_OUTTOERR) &&
+				(pserr = posix_spawn_file_actions_adddup2 (&fa, handle[5], 1)) != 0)
+			{
+				pio->errnum = syserr_to_errnum (pserr);
+				goto oops;
+			}
+			if ((pserr = posix_spawn_file_actions_addclose (&fa, handle[5])) != 0) 
+			{
+				pio->errnum = syserr_to_errnum (pserr);
+				goto oops;
+			}
+		}
+
+		{
+			int oflags = O_RDWR;
+		#if defined(O_LARGEFILE)
+			oflags |= O_LARGEFILE;
+		#endif
+
+			if ((flags & QSE_PIO_INTONUL) &&
+			    (pserr = posix_spawn_file_actions_addopen (&fa, 0, QSE_MT("/dev/null"), oflags, 0)) != 0)
+			{
+				pio->errnum = syserr_to_errnum (pserr);
+				goto oops;
+			}
+			if ((flags & QSE_PIO_OUTTONUL) &&
+			    (pserr = posix_spawn_file_actions_addopen (&fa, 1, QSE_MT("/dev/null"), oflags, 0)) != 0)
+			{
+				pio->errnum = syserr_to_errnum (pserr);
+				goto oops;
+			}
+			if ((flags & QSE_PIO_ERRTONUL) &&
+			    (pserr = posix_spawn_file_actions_addopen (&fa, 2, QSE_MT("/dev/null"), oflags, 0)) != 0)
+			{
+				pio->errnum = syserr_to_errnum (pserr);
+				goto oops;
+			}
+		}
+
+		/* there remains the chance of race condition that
+		 * 0, 1, 2 can be closed between addclose() and posix_spawn().
+		 * so checking the file descriptors with is_fd_valid() is
+		 * just on the best-effort basis.
+		 */
+		if ((flags & QSE_PIO_DROPIN) && is_fd_valid(0) &&
+		    (pserr = posix_spawn_file_actions_addclose (&fa, 0)) != 0) 
+		{
+			pio->errnum = syserr_to_errnum (pserr);
+			goto oops;
+		}
+		if ((flags & QSE_PIO_DROPOUT) && is_fd_valid(1) &&
+		    (pserr = posix_spawn_file_actions_addclose (&fa, 1)) != 0) 
+		{
+			pio->errnum = syserr_to_errnum (pserr);
+			goto oops;
+		}
+		if ((flags & QSE_PIO_DROPERR) && is_fd_valid(2) &&
+		    (pserr = posix_spawn_file_actions_addclose (&fa, 2)) != 0)
+		{
+			pio->errnum = syserr_to_errnum (pserr);
+			goto oops;
+		}
 
 		if (!(flags & QSE_PIO_NOCLOEXEC))
 		{
-			if (close_unneeded_fds_using_proc (handle, 6) <= -1)
+			int fd = get_highest_fd ();
+			while (fd > 2)
 			{
-				int fd = get_highest_fd ();
+				if (fd != handle[0] && fd != handle[1] &&
+				    fd != handle[2] && fd != handle[3] &&
+				    fd != handle[4] && fd != handle[5]) 
+				{
+					/* closing attempt on a best-effort basis.
+					 * posix_spawn() fails if the file descriptor added
+					 * with addclose() is closed before posix_spawn().
+					 * addclose() if no FD_CLOEXEC is set or it's unknown. */
+					if (is_fd_valid_and_nocloexec(fd) && 
+					    (pserr = posix_spawn_file_actions_addclose (&fa, fd)) != 0) 
+					{
+						pio->errnum = syserr_to_errnum (pserr);
+						goto oops;
+					}
+				}
+				fd--;
+			}
+		}
+
+		if (make_param (pio, cmd, flags, &param) <= -1) goto oops;
+
+		/* check if the command(the command requested or /bin/sh) is 
+		 * exectuable to return an error without trying to execute it
+		 * though this check alone isn't sufficient */
+		if (assert_executable (pio, param.argv[0]) <= -1)
+		{
+			free_param (pio, &param); 
+			goto oops;
+		}
+
+		posix_spawnattr_init (&psattr);
+
+		#if defined(__linux)
+		#if !defined(POSIX_SPAWN_USEVFORK)
+		#	define POSIX_SPAWN_USEVFORK 0x40
+		#endif
+		posix_spawnattr_setflags (&psattr, POSIX_SPAWN_USEVFORK);
+		#endif
+
+		pserr = posix_spawn(
+			&pid, param.argv[0], &fa, &psattr, param.argv,
+			(env? qse_env_getarr(env): environ));
+
+		#if defined(__linux)
+		posix_spawnattr_destroy (&psattr);
+		#endif
+
+		free_param (pio, &param); 
+		if (fa_inited) 
+		{
+			posix_spawn_file_actions_destroy (&fa);
+			fa_inited = 0;
+		}
+		if (pserr != 0) 
+		{
+			pio->errnum = syserr_to_errnum (pserr);
+			goto oops;
+		}
+
+		pio->child = pid;
+
+	#elif defined(QSE_SYSCALL0) && defined(SYS_vfork)
+
+		if (make_param (pio, cmd, flags, &param) <= -1) goto oops;
+
+		/* check if the command(the command requested or /bin/sh) is 
+		 * exectuable to return an error without trying to execute it
+		 * though this check alone isn't sufficient */
+		if (assert_executable (pio, param.argv[0]) <= -1)
+		{
+			free_param (pio, &param); 
+			goto oops;
+		}
+
+		/* prepare some data before vforking for vfork limitation.
+		 * the child in vfork should not make function calls or 
+		 * change data shared with the parent. */
+		if (!(flags & QSE_PIO_NOCLOEXEC)) highest_fd = get_highest_fd ();
+		envarr = env? qse_env_getarr(env): environ;
+
+		QSE_SYSCALL0 (pid, SYS_vfork);
+		if (pid <= -1) 
+		{
+			pio->errnum = QSE_PIO_EINVAL;
+			free_param (pio, &param);
+			goto oops;
+		}
+
+		if (pid == 0)
+		{
+			/* the child after vfork should not make function calls.
+			 * since the system call like close() are also normal
+			 * functions, i have to use assembly macros to make
+			 * system calls. */
+
+			qse_pio_hnd_t devnull = -1;
+
+			if (!(flags & QSE_PIO_NOCLOEXEC))
+			{
+				/* cannot call close_unneeded_fds_using_proc() in the vfork() context */
+
+				int fd = highest_fd;
 
 				/* close all other unknown open handles except 
 				 * stdin/out/err and the pipes. */
 				while (fd > 2)
 				{
 					if (fd != handle[0] && fd != handle[1] &&
-						fd != handle[2] && fd != handle[3] &&
-						fd != handle[4] && fd != handle[5]) 
+					    fd != handle[2] && fd != handle[3] &&
+					    fd != handle[4] && fd != handle[5]) 
 					{
-						QSE_CLOSE (fd);
+						QSE_SYSCALL1 (dummy, SYS_close, fd);
 					}
 					fd--;
 				}
 			}
-		}
 
-		if (flags & QSE_PIO_WRITEIN)
-		{
-			/* child should read */
-			QSE_CLOSE (handle[1]);
-			handle[1] = QSE_PIO_HND_NIL;
-			if (QSE_DUP2 (handle[0], 0) <= -1) goto child_oops;
-			QSE_CLOSE (handle[0]);
-			handle[0] = QSE_PIO_HND_NIL;
-		}
-
-		if (flags & QSE_PIO_READOUT)
-		{
-			/* child should write */
-			QSE_CLOSE (handle[2]);
-			handle[2] = QSE_PIO_HND_NIL;
-			if (QSE_DUP2 (handle[3], 1) <= -1) goto child_oops;
-
-			if (flags & QSE_PIO_ERRTOOUT)
+			if (flags & QSE_PIO_WRITEIN)
 			{
-				if (QSE_DUP2 (handle[3], 2) <= -1) goto child_oops;
+				/* child should read */
+				QSE_SYSCALL1 (dummy, SYS_close, handle[1]);
+				QSE_SYSCALL2 (dummy, SYS_dup2, handle[0], 0);
+				if (dummy <= -1) goto child_oops;
+				QSE_SYSCALL1 (dummy, SYS_close, handle[0]);
 			}
 
-			QSE_CLOSE (handle[3]); 
-			handle[3] = QSE_PIO_HND_NIL;
-		}
-
-		if (flags & QSE_PIO_READERR)
-		{
-			/* child should write */
-			QSE_CLOSE (handle[4]); 
-			handle[4] = QSE_PIO_HND_NIL;
-			if (QSE_DUP2 (handle[5], 2) <= -1) goto child_oops;
-
-			if (flags & QSE_PIO_OUTTOERR)
+			if (flags & QSE_PIO_READOUT)
 			{
-				if (QSE_DUP2 (handle[5], 1) <= -1) goto child_oops;
+				/* child should write */
+				QSE_SYSCALL1 (dummy, SYS_close, handle[2]);
+				QSE_SYSCALL2 (dummy, SYS_dup2, handle[3], 1);
+				if (dummy <= -1) goto child_oops;
+
+				if (flags & QSE_PIO_ERRTOOUT)
+				{
+					QSE_SYSCALL2 (dummy, SYS_dup2, handle[3], 2);
+					if (dummy <= -1) goto child_oops;
+				}
+
+				QSE_SYSCALL1 (dummy, SYS_close, handle[3]);
 			}
 
-			QSE_CLOSE (handle[5]);
-			handle[5] = QSE_PIO_HND_NIL;
+			if (flags & QSE_PIO_READERR)
+			{
+				/* child should write */
+				QSE_SYSCALL1 (dummy, SYS_close, handle[4]);
+				QSE_SYSCALL2 (dummy, SYS_dup2, handle[5], 2);
+				if (dummy <= -1) goto child_oops;
+
+				if (flags & QSE_PIO_OUTTOERR)
+				{
+					QSE_SYSCALL2 (dummy, SYS_dup2, handle[5], 1);
+					if (dummy <= -1) goto child_oops;
+				}
+
+				QSE_SYSCALL1 (dummy, SYS_close, handle[5]);
+			}
+
+			if (flags & (QSE_PIO_INTONUL | QSE_PIO_OUTTONUL | QSE_PIO_ERRTONUL))
+			{
+			#if defined(O_LARGEFILE)
+				QSE_SYSCALL3 (devnull, SYS_open, QSE_MT("/dev/null"), O_RDWR|O_LARGEFILE, 0);
+			#else
+				QSE_SYSCALL3 (devnull, SYS_open, QSE_MT("/dev/null"), O_RDWR, 0);
+			#endif
+				if (devnull <= -1) goto child_oops;
+			}
+
+			if (flags & QSE_PIO_INTONUL)
+			{
+				QSE_SYSCALL2 (dummy, SYS_dup2, devnull, 0);
+				if (dummy <= -1) goto child_oops;
+			}
+			if (flags & QSE_PIO_OUTTONUL)
+			{
+				QSE_SYSCALL2 (dummy, SYS_dup2, devnull, 1);
+				if (dummy <= -1) goto child_oops;
+			}
+			if (flags & QSE_PIO_ERRTONUL)
+			{
+				QSE_SYSCALL2 (dummy, SYS_dup2, devnull, 2);
+				if (dummy <= -1) goto child_oops;
+			}
+
+			if (flags & (QSE_PIO_INTONUL | QSE_PIO_OUTTONUL | QSE_PIO_ERRTONUL))
+			{
+				QSE_SYSCALL1 (dummy, SYS_close, devnull);
+				devnull = -1;
+			}
+
+			if (flags & QSE_PIO_DROPIN) QSE_SYSCALL1 (dummy, SYS_close, 0);
+			if (flags & QSE_PIO_DROPOUT) QSE_SYSCALL1 (dummy, SYS_close, 1);
+			if (flags & QSE_PIO_DROPERR) QSE_SYSCALL1 (dummy, SYS_close, 2);
+
+			QSE_SYSCALL3 (dummy, SYS_execve, param.argv[0], param.argv, envarr);
+			/*free_param (pio, &param); don't free this in the vfork version */
+
+		child_oops:
+			if (devnull >= 0) QSE_SYSCALL1 (dummy, SYS_close, devnull);
+			QSE_SYSCALL1 (dummy, SYS_exit, 128);
 		}
 
-		if ((flags & QSE_PIO_INTONUL) || 
-		    (flags & QSE_PIO_OUTTONUL) ||
-		    (flags & QSE_PIO_ERRTONUL))
+		/* parent */
+		free_param (pio, &param);
+		pio->child = pid;
+
+	#else
+
+		if (make_param (pio, cmd, flags, &param) <= -1) goto oops;
+
+		/* check if the command(the command requested or /bin/sh) is 
+		 * exectuable to return an error without trying to execute it
+		 * though this check alone isn't sufficient */
+		if (assert_executable (pio, param.argv[0]) <= -1)
 		{
-		#if defined(O_LARGEFILE)
-			devnull = QSE_OPEN (QSE_MT("/dev/null"), O_RDWR|O_LARGEFILE, 0);
-		#else
-			devnull = QSE_OPEN (QSE_MT("/dev/null"), O_RDWR, 0);
-		#endif
-			if (devnull <= -1) goto child_oops;
+			free_param (pio, &param); 
+			goto oops;
 		}
 
-		if ((flags & QSE_PIO_INTONUL)  &&
-		    QSE_DUP2(devnull,0) <= -1) goto child_oops;
-		if ((flags & QSE_PIO_OUTTONUL) &&
-		    QSE_DUP2(devnull,1) <= -1) goto child_oops;
-		if ((flags & QSE_PIO_ERRTONUL) &&
-		    QSE_DUP2(devnull,2) <= -1) goto child_oops;
-
-		if ((flags & QSE_PIO_INTONUL) || 
-		    (flags & QSE_PIO_OUTTONUL) ||
-		    (flags & QSE_PIO_ERRTONUL)) 
+		pid = standard_fork_and_exec (pio, handle, &param, env);
+		if (pid <= -1)
 		{
-			QSE_CLOSE (devnull);
-			devnull = -1;
+			free_param (pio, &param);
+			goto oops;
 		}
 
-		if (flags & QSE_PIO_DROPIN) QSE_CLOSE(0);
-		if (flags & QSE_PIO_DROPOUT) QSE_CLOSE(1);
-		if (flags & QSE_PIO_DROPERR) QSE_CLOSE(2);
+		/* parent */
+		free_param (pio, &param);
+		pio->child = pid;
+	#endif
 
-		/*if (make_param (pio, cmd, flags, &param) <= -1) goto child_oops;*/
-		QSE_EXECVE (param.argv[0], param.argv, (env? qse_env_getarr(env): environ));
-		free_param (pio, &param); 
-
-	child_oops:
-		if (devnull >= 0) QSE_CLOSE (devnull);
-		QSE_EXIT (128);
 	}
-
-	/* parent */
-	free_param (pio, &param);
-	pio->child = pid;
 
 	if (flags & QSE_PIO_WRITEIN)
 	{
@@ -1862,7 +1804,6 @@ create_process:
 		QSE_CLOSE (handle[5]);
 		handle[5] = QSE_PIO_HND_NIL;
 	}
-
 #endif
 
 	if (((flags & QSE_PIO_INNOBLOCK) && set_pipe_nonblock(pio, handle[1], 1) <= -1) ||
@@ -1957,7 +1898,7 @@ oops:
 #elif defined(__OS2__)
 	for (i = minidx; i < maxidx; i++) 
 	{
-    		if (handle[i] != QSE_PIO_HND_NIL) DosClose (handle[i]);
+		if (handle[i] != QSE_PIO_HND_NIL) DosClose (handle[i]);
 	}
 #elif defined(__DOS__)
 

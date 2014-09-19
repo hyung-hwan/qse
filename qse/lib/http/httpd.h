@@ -100,13 +100,6 @@ struct qse_httpd_real_task_t
 	qse_httpd_real_task_t* next;
 };
 
-typedef struct qse_httpd_status_reloc_t qse_httpd_status_reloc_t;
-struct qse_httpd_status_reloc_t
-{
-	const qse_mchar_t* dst;
-	int redir;
-};
-
 #define MAX_SEND_SIZE 4096
 #define MAX_RECV_SIZE 4096
 

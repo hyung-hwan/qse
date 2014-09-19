@@ -28,6 +28,8 @@
 #include <qse/cmn/nwad.h>
 #include <qse/cmn/time.h>
 #include <qse/cmn/tmr.h>
+#include <qse/cmn/env.h>
+
 
 typedef struct qse_httpd_t        qse_httpd_t;
 typedef struct qse_httpd_mate_t   qse_httpd_mate_t;
@@ -689,6 +691,19 @@ struct qse_httpd_urs_t
 
 /* -------------------------------------------------------------------------- */
 
+/* ensure to define qse_httpd_fncptr_t to the same as 
+ * qse_pio_fncptr_t in <qse/cmn/pio.h> */
+typedef int (*qse_httpd_fncptr_t) (void* ctx, qse_env_char_t** envir);
+
+typedef struct qse_httpd_fnc_t qse_httpd_fnc_t;
+struct qse_httpd_fnc_t
+{
+	qse_httpd_fncptr_t ptr;
+	void* ctx;
+};
+
+/* -------------------------------------------------------------------------- */
+
 /**
  * The qse_httpd_rsrc_type_t defines the resource type than can 
  * be entasked with qse_httpd_entaskrsrc().
@@ -702,7 +717,6 @@ enum qse_httpd_rsrc_type_t
 	QSE_HTTPD_RSRC_FILE,
 	QSE_HTTPD_RSRC_PROXY,
 	QSE_HTTPD_RSRC_RELOC,
-	QSE_HTTPD_RSRC_REDIR,
 	QSE_HTTPD_RSRC_TEXT
 };
 typedef enum qse_httpd_rsrc_type_t qse_httpd_rsrc_type_t;
@@ -711,16 +725,39 @@ enum qse_httpd_rsrc_flag_t
 {
 	QSE_HTTPD_RSRC_100_CONTINUE = (1 << 0)
 };
+typedef enum qse_httpd_rsrc_flag_t qse_httpd_rsrc_flag_t;
+
+enum qse_httpd_rsrc_cgi_flag_t
+{
+	/* non-parsed header */
+	QSE_HTTPD_RSRC_CGI_NPH = (1 << 0), 
+
+	/* 'path' points to qse_httpd_fncptr_t && 'shebang' points to its context */
+	QSE_HTTPD_RSRC_CGI_FNC = (1 << 1)
+};
+typedef enum qse_httpd_rsrc_cgi_flag_t qse_httpd_rsrc_cgi_flag_t;
+
 
 typedef struct qse_httpd_rsrc_cgi_t qse_httpd_rsrc_cgi_t;
 struct qse_httpd_rsrc_cgi_t
 {
-	const qse_mchar_t* path;
-	const qse_mchar_t* script;
-	const qse_mchar_t* suffix;
+	/* bitwised-ORed of #qse_httpd_rsrc_cgi_flag_t */
+	int flags;
+
+	/* script path resolved against file system */
+	const qse_mchar_t* path; 
+
+	/* script path as in qpath */
+	const qse_mchar_t* script; 
+
+	/* trailing part of qpath excluding the script path.
+	 * for a qpath of /tmp/abc.cgi/a/b/c, if /tmp/abc.cgi is a script path,
+	 * /a/b/c forms the suffix.*/
+	const qse_mchar_t* suffix; 
+
 	const qse_mchar_t* root;
+
 	const qse_mchar_t* shebang; 
-	int nph;
 };
 
 enum qse_httpd_rsrc_proxy_flag_t
@@ -733,6 +770,7 @@ enum qse_httpd_rsrc_proxy_flag_t
 	QSE_HTTPD_RSRC_PROXY_DNS_SERVER      = (1 << 5), /* dns address specified */
 	QSE_HTTPD_RSRC_PROXY_URS_SERVER      = (1 << 6), /* urs address specified */
 };
+typedef enum qse_httpd_rsrc_proxy_flag_t qse_httpd_rsrc_proxy_flag_t;
 
 typedef struct qse_httpd_rsrc_proxy_t qse_httpd_rsrc_proxy_t;
 struct qse_httpd_rsrc_proxy_t
@@ -774,6 +812,21 @@ struct qse_httpd_rsrc_dir_t
 	const qse_mchar_t* foot;
 };
 
+enum qse_httpd_rsrc_reloc_flag_t
+{
+	QSE_HTTPD_RSRC_RELOC_PERMANENT = (1 << 0),
+	QSE_HTTPD_RSRC_RELOC_KEEPMETHOD = (1 << 1),
+	QSE_HTTPD_RSRC_RELOC_APPENDSLASH = (1 << 2)
+};
+typedef enum qse_httpd_rsrc_reloc_flag_t qse_httpd_rsrc_reloc_flag_t;
+
+typedef struct qse_httpd_rsrc_reloc_t qse_httpd_rsrc_reloc_t;
+struct qse_httpd_rsrc_reloc_t
+{
+	int flags;
+	const qse_mchar_t* dst;
+};
+
 typedef struct qse_httpd_rsrc_t qse_httpd_rsrc_t;
 struct qse_httpd_rsrc_t
 {
@@ -802,15 +855,7 @@ struct qse_httpd_rsrc_t
 
 		qse_httpd_rsrc_proxy_t proxy;
 
-		struct
-		{
-			const qse_mchar_t* dst;
-		} reloc;
-
-		struct
-		{
-			const qse_mchar_t* dst;
-		} redir;
+		qse_httpd_rsrc_reloc_t reloc;
 
 		struct
 		{
@@ -1071,21 +1116,12 @@ QSE_EXPORT qse_httpd_task_t* qse_httpd_entaskauth (
 );
 
 QSE_EXPORT qse_httpd_task_t* qse_httpd_entaskreloc (
-	qse_httpd_t*              httpd,
-	qse_httpd_client_t*       client,
-	qse_httpd_task_t*         pred,
-	const qse_mchar_t*        dst,
-	qse_htre_t*               req
+	qse_httpd_t*                  httpd,
+	qse_httpd_client_t*           client,
+	qse_httpd_task_t*             pred,
+	const qse_httpd_rsrc_reloc_t* reloc,
+	qse_htre_t*                   req
 );
-
-QSE_EXPORT qse_httpd_task_t* qse_httpd_entaskredir (
-	qse_httpd_t*              httpd,
-	qse_httpd_client_t*       client,
-	qse_httpd_task_t*         pred,
-	const qse_mchar_t*        dst,
-	qse_htre_t*               req
-);
-
 
 QSE_EXPORT qse_httpd_task_t* qse_httpd_entasknomod (
 	qse_httpd_t*              httpd,

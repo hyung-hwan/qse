@@ -437,7 +437,7 @@ static qse_wchar_t* get_env (qse_env_t* env, const qse_wchar_t* name, int* free)
 				*free = 0;
 				return eq + 1;
 			}
-			p++;	
+			p++;
 		}
 	}
 	*/
@@ -464,10 +464,10 @@ static qse_wchar_t* get_env (qse_env_t* env, const qse_wchar_t* name, int* free)
 
 			QSE_MMGR_FREE (env->mmgr, dup);
 
-			p++;	
+			p++;
 		}
 	}
-				
+
 	return 0;
 }
 
@@ -494,10 +494,10 @@ static qse_mchar_t* get_env (qse_env_t* env, const qse_mchar_t* name, int* free)
 				*free = 0;
 				return eq + 1;
 			}
-			p++;	
+			p++;
 		}
 	}
-				
+
 	return 0;
 }
 #endif
@@ -587,14 +587,14 @@ static int load_curenv (qse_env_t* env)
 		if (*envstr != QSE_WT('=') &&
 		    add_envstrw (env, envstr) <= -1) { ret = -1; goto done; }
 		envstr += qse_wcslen (envstr) + 1;
-	}		
+	}
 #else
 	while (*envstr != QSE_MT('\0'))
 	{
 		if (*envstr != QSE_MT('=') &&
 		    add_envstrm (env, envstr) <= -1) { ret = -1; goto done; }
 		envstr += qse_mbslen (envstr) + 1;
-	}		
+	}
 #endif
 
 done:
@@ -614,7 +614,7 @@ done:
 		while (*p)
 		{
 			if (add_envstrw (env, *p) <= -1) return -1;
-			p++;	
+			p++;
 		}
 	}
 	*/
@@ -635,11 +635,10 @@ done:
 			QSE_MMGR_FREE (env->mmgr, dup);
 			if (n <= -1) return -1;
 
-			p++;	
+			p++;
 		}
 	}
-				
-				
+
 	return 0;
 
 #else
@@ -656,10 +655,10 @@ done:
 		while (*p)
 		{
 			if (add_envstrm (env, *p) <= -1) return -1;
-			p++;	
+			p++;
 		}
 	}
-				
+
 	return 0;
 #endif
 }
