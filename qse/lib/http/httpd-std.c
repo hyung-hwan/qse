@@ -2154,8 +2154,8 @@ if (qse_htre_getcontentlen(req) > 0)
 		else 
 		{
 			if (mth == QSE_HTTP_POST &&
-				!(req->flags & QSE_HTRE_ATTR_LENGTH) &&
-				!(req->flags & QSE_HTRE_ATTR_CHUNKED))
+			    !(req->flags & QSE_HTRE_ATTR_LENGTH) &&
+			    !(req->flags & QSE_HTRE_ATTR_CHUNKED))
 			{
 				/* POST without Content-Length nor not chunked */
 				req->flags &= ~QSE_HTRE_ATTR_KEEPALIVE;
@@ -2181,8 +2181,8 @@ if (qse_htre_getcontentlen(req) > 0)
 			{
 				task = QSE_NULL;
 
-				if ((rsrc.flags & QSE_HTTPD_RSRC_100_CONTINUE) && 
-					(task = qse_httpd_entaskcontinue (httpd, client, task, req)) == QSE_NULL) 
+				if ((rsrc.flags & QSE_HTTPD_RSRC_100_CONTINUE) &&
+				    (task = qse_httpd_entaskcontinue (httpd, client, task, req)) == QSE_NULL) 
 				{
 					/* inject '100 continue' first if it is needed */
 					goto oops;

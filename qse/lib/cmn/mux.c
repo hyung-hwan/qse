@@ -46,6 +46,7 @@
 
 #elif defined(__DOS__)
 #	include <errno.h>
+
 #else
 #	include <unistd.h>
 #	include <fcntl.h>
@@ -53,7 +54,11 @@
 #	if defined(HAVE_SYS_TIME_H)
 #		include <sys/time.h>
 #	endif
-#	if defined(HAVE_SYS_EVENT_H) && defined(HAVE_KQUEUE) && defined(HAVE_KEVENT)
+
+#	if defined(QSE_MUX_USE_SELECT)
+		/* you can set QSE_MUX_USE_SELECT to force using select() */
+#		define USE_SELECT
+#	elif defined(HAVE_SYS_EVENT_H) && defined(HAVE_KQUEUE) && defined(HAVE_KEVENT)
 #		include <sys/event.h>
 #		define USE_KQUEUE
 #	elif defined(HAVE_SYS_EPOLL_H)
@@ -61,9 +66,11 @@
 #		if defined(HAVE_EPOLL_CREATE)
 #			define USE_EPOLL
 #		endif
+/*
 #	elif defined(HAVE_POLL_H)
-		/* TODO */
+		TODO: IMPLEMENT THIS
 #		define USE_POLL
+*/
 #	else
 #		define USE_SELECT
 #	endif

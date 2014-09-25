@@ -537,7 +537,7 @@ static int get_server_root (
 			root->type = QSE_HTTPD_SERVERSTD_ROOT_PROXY;
 
 			if (loccfg->proxy.pseudonym[0]) 
-				root->u.proxy.pseudonym = loccfg->proxy.pseudonym;
+			    root->u.proxy.pseudonym = loccfg->proxy.pseudonym;
 
 			/* move the host name part backward by 1 byte to make a room for
 			 * terminating null. An orginal input of http://www.yahoo.com/ab/cd
@@ -1877,7 +1877,7 @@ static int load_hook_modules (qse_httpd_t* httpd, qse_xli_list_t* hook_list)
 		pair = qse_xli_findpair (httpd_xtn->xli, (qse_xli_list_t*)pair->val, QSE_T("file"));
 		if (pair == QSE_NULL)
 		{
-				/* TODO: log warning when file is not found in module */
+			/* TODO: log warning when file is not found in module */
 		}
 		else
 		{

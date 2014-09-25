@@ -137,6 +137,15 @@
    */
 #undef HAVE_DIRENT_H
 
+/* Define to 1 if you have the `dirfd' function. */
+#undef HAVE_DIRFD
+
+/* Define to 1 if `dd_fd' is a member of `DIR'. */
+#undef HAVE_DIR_DD_FD
+
+/* Define to 1 if `d_fd' is a member of `DIR'. */
+#undef HAVE_DIR_D_FD
+
 /* Define if you have the GNU dld library. */
 #undef HAVE_DLD
 

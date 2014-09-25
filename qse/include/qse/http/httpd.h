@@ -683,7 +683,9 @@ struct qse_httpd_urs_t
 	QSE_HTTPD_MATE_HDR;
 
 	/* == PUBLIC == */
-	qse_httpd_hnd_t handle[5];
+
+	/* urs.open() can set the followings */
+	qse_httpd_hnd_t handle[5]; 
 	int handle_count;
 	unsigned long handle_mask;
 	void* ctx;
