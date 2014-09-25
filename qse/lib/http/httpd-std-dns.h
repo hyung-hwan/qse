@@ -184,7 +184,7 @@ struct dns_ans_t
 	 * this condition is required for reusing the dns_req_t chunk
 	 * when caching an answer without allocating another chunk. */
 	qse_nwad_t nwad;
-	qse_int64_t age;
+	qse_long_t age;
 	qse_uint32_t ttl;
 	dns_ans_t* next;
 };
@@ -539,7 +539,7 @@ static int dns_recv (qse_httpd_t* httpd, qse_httpd_dns_t* dns, qse_httpd_hnd_t h
 	httpd_xtn_t* httpd_xtn;
 
 	qse_skad_t fromaddr;
-	socklen_t fromlen;
+	qse_sck_len_t fromlen;
 
 	qse_uint8_t buf[DNS_MAX_MSG_LEN];
 	qse_ssize_t len;

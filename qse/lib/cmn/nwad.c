@@ -604,7 +604,7 @@ qse_size_t qse_nwadtowcs (
 					if (flags & QSE_NWADTOMBS_ADDR)
 					{
 						if (xlen + 1 >= len) goto done;
-						buf[xlen++] = QSE_WT(']');	
+						buf[xlen++] = QSE_WT(']');
 
 						if (xlen + 1 >= len) goto done;
 						buf[xlen++] = QSE_WT(':');

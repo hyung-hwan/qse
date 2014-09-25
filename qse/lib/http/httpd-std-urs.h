@@ -95,12 +95,13 @@ static int urs_open (qse_httpd_t* httpd, qse_httpd_urs_t* urs)
 	qse_nwad_t nwad;
 	urs_ctx_t* dc;
 	httpd_xtn_t* httpd_xtn;
-	int type, proto = IPPROTO_UDP; //IPPROTO_SCTP;
+	int type, proto = IPPROTO_UDP; /*IPPROTO_SCTP*/
 
 	httpd_xtn = qse_httpd_getxtn (httpd);
 
 	urs->handle[0] = QSE_INVALID_SCKHND;
 	urs->handle[1] = QSE_INVALID_SCKHND;
+	urs->handle[2] = QSE_INVALID_SCKHND;
 
 	dc = (urs_ctx_t*) qse_httpd_callocmem (httpd, QSE_SIZEOF(urs_ctx_t));
 	if (dc == NULL) goto oops;
@@ -132,6 +133,7 @@ static int urs_open (qse_httpd_t* httpd, qse_httpd_urs_t* urs)
 #if defined(AF_INET6)
 	urs->handle[1] = open_udp_socket (httpd, AF_INET6, type, proto);
 #endif
+	/*urs->handle[2] = open_unix_socket (httpd, AF_UNIX, SOCK_DGRAM);*/
 
 	if (!qse_isvalidsckhnd(urs->handle[0]) && !qse_isvalidsckhnd(urs->handle[1]))
 	{
@@ -160,12 +162,14 @@ static int urs_open (qse_httpd_t* httpd, qse_httpd_urs_t* urs)
 /* TODO: error ahndleing */
 		if (qse_isvalidsckhnd(urs->handle[0])) listen (urs->handle[0], 99);
 		if (qse_isvalidsckhnd(urs->handle[1])) listen (urs->handle[1], 99);
+		/* handle[2] is a unix socket. no special handling for SCTP */
 	}
 #endif
 
-	urs->handle_count = 2;
+	urs->handle_count = 3;
 	if (qse_isvalidsckhnd(urs->handle[0])) urs->handle_mask |= (1 << 0);
 	if (qse_isvalidsckhnd(urs->handle[1])) urs->handle_mask |= (1 << 1);
+	if (qse_isvalidsckhnd(urs->handle[2])) urs->handle_mask |= (1 << 2);
 
 	urs->ctx = dc;
 	return 0;
@@ -173,6 +177,7 @@ static int urs_open (qse_httpd_t* httpd, qse_httpd_urs_t* urs)
 oops:
 	if (qse_isvalidsckhnd(urs->handle[0])) qse_closesckhnd (urs->handle[0]);
 	if (qse_isvalidsckhnd(urs->handle[1])) qse_closesckhnd (urs->handle[1]);
+	if (qse_isvalidsckhnd(urs->handle[2])) qse_closesckhnd (urs->handle[2]);
 	if (dc) qse_httpd_freemem (httpd, dc);
 	return -1;
 
@@ -210,6 +215,7 @@ static void urs_close (qse_httpd_t* httpd, qse_httpd_urs_t* urs)
 
 	if (qse_isvalidsckhnd(urs->handle[0])) qse_closesckhnd (urs->handle[0]);
 	if (qse_isvalidsckhnd(urs->handle[1])) qse_closesckhnd (urs->handle[1]);
+	if (qse_isvalidsckhnd(urs->handle[2])) qse_closesckhnd (urs->handle[2]);
 	qse_httpd_freemem (httpd, urs->ctx);
 }
 
@@ -220,7 +226,7 @@ static int urs_recv (qse_httpd_t* httpd, qse_httpd_urs_t* urs, qse_httpd_hnd_t h
 	httpd_xtn_t* httpd_xtn;
 
 	qse_skad_t fromaddr;
-	socklen_t fromlen;
+	qse_sck_len_t fromlen;
 
 	qse_uint16_t xid;
 	qse_ssize_t len, url_len;
@@ -358,7 +364,6 @@ static int urs_send (qse_httpd_t* httpd, qse_httpd_urs_t* urs, const qse_mchar_t
 	urs_req_t* req = QSE_NULL;
 	qse_size_t url_len;
 	qse_tmr_event_t tmout_event;
-	
 
 printf ("... URS_SEND.....................\n");
 	httpd_xtn = qse_httpd_getxtn (httpd);

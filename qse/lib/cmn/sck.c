@@ -51,6 +51,14 @@
 #endif
 
 
+#if !defined(SHUT_RD)
+#	define SHUT_RD 0
+#endif
+
+#if !defined(SHUT_WR)
+#	define SHUT_WR 1
+#endif
+
 #if !defined(SHUT_RDWR)
 #	define SHUT_RDWR 2
 #endif

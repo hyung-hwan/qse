@@ -29,7 +29,8 @@ enum qse_nwad_type_t
 {
 	QSE_NWAD_NX, /* non-existent */
 	QSE_NWAD_IN4,
-	QSE_NWAD_IN6
+	QSE_NWAD_IN6,
+	QSE_NWAD_LOCAL
 };
 typedef enum qse_nwad_type_t qse_nwad_type_t;
 
@@ -51,7 +52,13 @@ struct qse_nwad_t
 			qse_uint16_t port;
 			qse_ip6ad_t  addr;
 			qse_uint32_t scope;
-		} in6;	
+		} in6;
+
+		struct
+		{
+			/* no port number. path is the address */
+			qse_uint8_t path[64]; 
+		} local;
 	} u;	
 };
 
@@ -69,6 +76,7 @@ enum qse_nwadtostr_flag_t
 #define QSE_NWADTOMBS_ALL  QSE_NWADTOSTR_ALL
 #define QSE_NWADTOWCS_ALL  QSE_NWADTOSTR_ALL
 };
+typedef enum qse_nwadtostr_flag_t qse_nwadtostr_flag_t;
 
 typedef struct qse_skad_t qse_skad_t;
 

@@ -17575,7 +17575,7 @@ _ACEOF
 fi
 done
 
-for ac_func in lseek64 stat64 fstat64 lstat64 ftruncate64 readdir64
+for ac_func in lseek64 stat64 fstat64 lstat64 ftruncate64 readdir64 dirfd
 do :
   as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
 ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
@@ -18779,6 +18779,27 @@ _ACEOF
 
 fi
 
+
+ac_fn_c_check_member "$LINENO" "DIR" "d_fd" "ac_cv_member_DIR_d_fd" "#include <dirent.h>
+"
+if test "x$ac_cv_member_DIR_d_fd" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DIR_D_FD 1
+_ACEOF
+
+
+fi
+ac_fn_c_check_member "$LINENO" "DIR" "dd_fd" "ac_cv_member_DIR_dd_fd" "#include <dirent.h>
+"
+if test "x$ac_cv_member_DIR_dd_fd" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DIR_DD_FD 1
+_ACEOF
+
+
+fi
 
 ac_fn_c_check_member "$LINENO" "struct stat" "st_birthtime" "ac_cv_member_struct_stat_st_birthtime" "$ac_includes_default"
 if test "x$ac_cv_member_struct_stat_st_birthtime" = xyes; then :

@@ -376,7 +376,13 @@ static int close_unneeded_fds_using_proc (int* excepts, qse_size_t count)
 		qse_mchar_t buf[64];
 		qse_mbsxfmt (buf, QSE_COUNTOF(buf), QSE_MT("/proc/%d/fd"), QSE_GETPID());
 		d = QSE_OPENDIR (buf);
+	#if !defined(_SCO_DS)
+		/* on SCO OpenServer, a range of file descriptors starting from 0 are
+		 * listed under /dev/fd regardless of opening state. And some high 
+		 * numbered descriptors are not listed all. not reliable */
+
 		if (!d) d = QSE_OPENDIR (QSE_MT("/dev/fd")); /* Darwin, FreeBSD */
+	#endif
 	}
 
 	if (d)

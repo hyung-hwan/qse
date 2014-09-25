@@ -372,7 +372,15 @@
 #define QSE_OPENDIR(name) opendir(name)
 #define QSE_CLOSEDIR(dir) closedir(dir)
 #define QSE_REWINDDIR(dir) rewinddir(dir)
-#define QSE_DIRFD(dir) dirfd(dir)
+#if defined(HAVE_DIRFD)
+#	define QSE_DIRFD(dir) dirfd(dir)
+#elif defined(HAVE_DIR_DD_FD)
+#	define QSE_DIRFD(dir) ((dir)->dd_fd)
+#elif defined(HAVE_DIR_D_FD)
+#	define QSE_DIRFD(dir) ((dir)->d_fd)
+#else
+#	error OUCH!!! NO DIRFD AVAILABLE
+#endif
 #define QSE_DIR DIR
 
 #if defined(HAVE_READDIR64)
