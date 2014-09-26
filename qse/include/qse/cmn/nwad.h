@@ -107,6 +107,9 @@ struct qse_skad_t
 #endif
 	/* TODO: is this large enough?? */
 	qse_uint8_t data[QSE_SKAD_DATA_SIZE];
+
+	/* dummy member to secure extra space and force structure alignment */
+	qse_uintptr_t dummy; 
 };
 
 #ifdef __cplusplus

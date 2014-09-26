@@ -957,7 +957,7 @@ static int activate_urs (qse_httpd_t* httpd)
 
 	httpd->urs.type = QSE_HTTPD_URS;
 
-	for (i = 0; i < httpd->dns.handle_count; i++)
+	for (i = 0; i < httpd->urs.handle_count; i++)
 	{
 		if (httpd->urs.handle_mask & (1 << i))
 		{

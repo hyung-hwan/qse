@@ -133,11 +133,24 @@ static int urs_open (qse_httpd_t* httpd, qse_httpd_urs_t* urs)
 #if defined(AF_INET6)
 	urs->handle[1] = open_udp_socket (httpd, AF_INET6, type, proto);
 #endif
-	/*urs->handle[2] = open_unix_socket (httpd, AF_UNIX, SOCK_DGRAM);*/
+	urs->handle[2] = open_udp_socket (httpd, AF_UNIX, type, 0);
 
-	if (!qse_isvalidsckhnd(urs->handle[0]) && !qse_isvalidsckhnd(urs->handle[1]))
+	if (!qse_isvalidsckhnd(urs->handle[0]) && 
+	    !qse_isvalidsckhnd(urs->handle[1]) &&
+	    !qse_isvalidsckhnd(urs->handle[2]))
 	{
 		goto oops;
+	}
+
+	if (qse_isvalidsckhnd(urs->handle[2]))
+	{
+		struct sockaddr_un addr;
+		QSE_MEMSET (&addr, 0, QSE_SIZEOF(addr));
+		addr.sun_family = AF_UNIX;
+		qse_mbsxfmt (addr.sun_path, QSE_COUNTOF(addr.sun_path), QSE_MT("/tmp/qsehttpd-%d.urs.sock"), (int)QSE_GETPID());
+		QSE_UNLINK (addr.sun_path);
+		bind (urs->handle[2], (struct sockaddr*)&addr, QSE_SIZEOF(addr));
+/* TOOD: unlink this socket in urs_close() also... */
 	}
 
 	/* carry on regardless of success or failure */
@@ -146,10 +159,21 @@ static int urs_open (qse_httpd_t* httpd, qse_httpd_urs_t* urs)
 	/* determine which socket to use when sending a request to the server */
 	if (dc->skadlen >= 0)
 	{
-		if (nwad.type == QSE_NWAD_IN4)
-			dc->urs_socket = urs->handle[0];
-		else
-			dc->urs_socket = urs->handle[1];
+		switch (nwad.type)
+		{
+			case QSE_NWAD_IN4:
+				dc->urs_socket = urs->handle[0];
+				break;
+			case QSE_NWAD_IN6:
+				dc->urs_socket = urs->handle[1];
+				break;
+			case QSE_NWAD_LOCAL:
+				dc->urs_socket = urs->handle[2];
+				break;
+			default:
+				dc->urs_socket = QSE_INVALID_SCKHND;
+				break;
+		}
 	}
 	else
 	{
@@ -414,10 +438,20 @@ printf ("... URS_SEND.....................\n");
 		req->urs_skadlen = qse_nwadtoskad (&urs_server->nwad, &req->urs_skad);
 		if (req->urs_skadlen <= -1) goto default_urs_server;
 
-		if (urs_server->nwad.type == QSE_NWAD_IN4)
-			req->urs_socket = urs->handle[0];
-		else 
-			req->urs_socket = urs->handle[1];
+		switch (urs_server->nwad.type)
+		{
+			case QSE_NWAD_IN4:
+				req->urs_socket = urs->handle[0];
+				break;
+			case QSE_NWAD_IN6:
+				req->urs_socket = urs->handle[1];
+				break;
+			case QSE_NWAD_LOCAL:
+				req->urs_socket = urs->handle[2];
+				break;
+			default:
+				goto default_urs_server;
+		}
 	}
 	else
 	{
