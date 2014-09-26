@@ -871,6 +871,9 @@
 /* sizeof(struct sockaddr_in6) */
 #undef QSE_SIZEOF_STRUCT_SOCKADDR_IN6
 
+/* sizeof(struct sockaddr_un) */
+#undef QSE_SIZEOF_STRUCT_SOCKADDR_UN
+
 /* sizeof(void*) */
 #undef QSE_SIZEOF_VOID_P
 
@@ -951,6 +954,9 @@
 
 /* The size of `struct sockaddr_in6', as computed by sizeof. */
 #undef SIZEOF_STRUCT_SOCKADDR_IN6
+
+/* The size of `struct sockaddr_un', as computed by sizeof. */
+#undef SIZEOF_STRUCT_SOCKADDR_UN
 
 /* The size of `void *', as computed by sizeof. */
 #undef SIZEOF_VOID_P

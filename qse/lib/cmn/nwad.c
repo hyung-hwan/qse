@@ -23,6 +23,7 @@
 #include <qse/cmn/nwif.h>
 #include <qse/cmn/str.h>
 #include <qse/cmn/fmt.h>
+#include <qse/cmn/mbwc.h>
 #include "mem.h"
 
 int qse_nwadequal (const qse_nwad_t* x, const qse_nwad_t* y)
@@ -39,6 +40,9 @@ int qse_nwadequal (const qse_nwad_t* x, const qse_nwad_t* y)
 			return (x->u.in6.port == y->u.in6.port &&
 			        x->u.in6.scope == y->u.in6.scope &&
 			        QSE_MEMCMP (&x->u.in6.addr, &y->u.in6.addr, QSE_SIZEOF(x->u.in6.addr)) == 0)? 1: 0;
+
+		case QSE_NWAD_LOCAL:
+			return qse_strcmp (x->u.local.path, y->u.local.path) == 0;
 
 		default: 
 			/* can't compare */
@@ -63,6 +67,10 @@ void qse_setnwadport (qse_nwad_t* nwad, qse_uint16_t port)
 		case QSE_NWAD_IN6:
 			nwad->u.in6.port = port;
 			break;
+
+		case QSE_NWAD_LOCAL:
+			/* no port for QSE_NWAD_LOCAL */
+			break;
 	}
 }
 
@@ -76,6 +84,7 @@ qse_uint16_t qse_getnwadport (qse_nwad_t* nwad)
 		case QSE_NWAD_IN6:
 			return nwad->u.in6.port;
 
+		case QSE_NWAD_LOCAL:
 		default:
 			return 0;
 	}
@@ -99,6 +108,22 @@ int qse_mbsntonwad (const qse_mchar_t* str, qse_size_t len, qse_nwad_t* nwad)
 	end = str + len;
 
 	if (p >= end) return -1;
+
+	if (*p == QSE_MT('/'))
+	{
+		/* support the absolute path only */
+	#if defined(QSE_CHAR_IS_MCHAR)
+		qse_mbsxncpy (tmpad.u.local.path, QSE_COUNTOF(tmpad.u.local.path), str, len);
+	#else
+		qse_size_t mbslen = len;
+		qse_size_t wcslen = QSE_COUNTOF(tmpad.u.local.path) - 1;
+		if (qse_mbsntowcsn (str, &mbslen, tmpad.u.local.path, &wcslen) <= -1) return -1;
+		tmpad.u.local.path[wcslen] = QSE_WT('\0');
+	#endif
+
+		tmpad.type = QSE_NWAD_LOCAL;
+		goto done;
+	}
 
 	if (*p == QSE_MT('['))
 	{
@@ -265,6 +290,23 @@ int qse_wcsntonwad (const qse_wchar_t* str, qse_size_t len, qse_nwad_t* nwad)
 	end = str + len;
 
 	if (p >= end) return -1;
+
+	if (*p == QSE_WT('/'))
+	{
+		/* support the absolute path only */
+	#if defined(QSE_CHAR_IS_MCHAR)
+		qse_size_t wcslen = len;
+		qse_size_t mbslen = QSE_COUNTOF(tmpad.u.local.path) - 1;
+		if (qse_wcsntombsn (str, &wcslen, tmpad.u.local.path, &mbslen) <= -1) return -1;
+		tmpad.u.local.path[mbslen] = QSE_MT('\0');
+	#else
+		qse_wcsxncpy (tmpad.u.local.path, QSE_COUNTOF(tmpad.u.local.path), str, len);
+	#endif
+
+		tmpad.type = QSE_NWAD_LOCAL;
+		qse_wcsxncpy (tmpad.u.local.path, QSE_COUNTOF(tmpad.u.local.path), str, len);
+		goto done;
+	}
 
 	if (*p == QSE_WT('['))
 	{
@@ -497,7 +539,7 @@ qse_size_t qse_nwadtombs (
 					if (flags & QSE_NWADTOMBS_ADDR)
 					{
 						if (xlen + 1 >= len) goto done;
-						buf[xlen++] = QSE_MT(']');	
+						buf[xlen++] = QSE_MT(']');
 
 						if (xlen + 1 >= len) goto done;
 						buf[xlen++] = QSE_MT(':');
@@ -513,6 +555,20 @@ qse_size_t qse_nwadtombs (
 
 			break;
 
+		case QSE_NWAD_LOCAL:
+			if (flags & QSE_NWADTOMBS_ADDR)
+			{
+			#if defined(QSE_CHAR_IS_MCHAR)
+				xlen = qse_mbsxcpy (buf, len, nwad->u.local.path)
+			#else
+				qse_size_t wcslen, mbslen = len;
+				qse_wcstombs (nwad->u.local.path, &wcslen, buf, &mbslen);
+				/* i don't care about conversion errors */
+				xlen = mbslen;
+			#endif
+			}
+
+			break;
 	}
 
 done:
@@ -620,6 +676,18 @@ qse_size_t qse_nwadtowcs (
 
 			break;
 
+		case QSE_NWAD_LOCAL:
+			if (flags & QSE_NWADTOMBS_ADDR)
+			{
+			#if defined(QSE_CHAR_IS_MCHAR)
+				qse_size_t wcslen = len, mbslen;
+				qse_mbstowcs (nwad->u.local.path, &mbslen, buf, &wcslen);
+				/* i don't care about conversion errors */
+				xlen = wcslen;
+			#else
+				xlen = qse_wcsxcpy (buf, len, nwad->u.local.path);
+			#endif
+			}
 	}
 
 done:

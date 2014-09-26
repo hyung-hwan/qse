@@ -375,6 +375,9 @@ then
 	AC_CHECK_SIZEOF(struct sockaddr_in6,,[
 		#include <winsock2.h>
 		#include <ws2tcpip.h>])
+	AC_CHECK_SIZEOF(struct sockaddr_un,,[
+		#include <winsock2.h>
+		#include <ws2tcpip.h>])
 	AC_CHECK_SIZEOF(socklen_t,, [
 		#include <winsock2.h>
 		#include <ws2tcpip.h>])
@@ -394,6 +397,9 @@ else
 	AC_CHECK_SIZEOF(struct sockaddr_in6,,[
 		#include <sys/socket.h>
 		#include <netinet/in.h>])
+	AC_CHECK_SIZEOF(struct sockaddr_un,,[
+		#include <sys/socket.h>
+		#include <sys/un.h>])
 	AC_CHECK_SIZEOF(socklen_t,, [
 		#include <sys/socket.h>
 		#include <netinet/in.h>])
@@ -535,6 +541,7 @@ AC_DEFINE_UNQUOTED(QSE_MBLEN_MAX, ${ax_cv_numvalof_MB_LEN_MAX}, [MB_LEN_MAX])
 
 AC_DEFINE_UNQUOTED(QSE_SIZEOF_STRUCT_SOCKADDR_IN, ${ac_cv_sizeof_struct_sockaddr_in}, [sizeof(struct sockaddr_in)])
 AC_DEFINE_UNQUOTED(QSE_SIZEOF_STRUCT_SOCKADDR_IN6, ${ac_cv_sizeof_struct_sockaddr_in6}, [sizeof(struct sockaddr_in6)])
+AC_DEFINE_UNQUOTED(QSE_SIZEOF_STRUCT_SOCKADDR_UN, ${ac_cv_sizeof_struct_sockaddr_un}, [sizeof(struct sockaddr_un)])
 AC_DEFINE_UNQUOTED(QSE_SIZEOF_SOCKLEN_T, ${ac_cv_sizeof_socklen_t}, [sizeof(socklen_t)])
 
 
