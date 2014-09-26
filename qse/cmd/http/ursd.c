@@ -189,6 +189,12 @@ static qse_sck_hnd_t open_server_socket (int proto, const qse_nwad_t* bindnwad)
 	type = SOCK_DGRAM;
 #endif
 
+	if (bindnwad->type == QSE_NWAD_LOCAL) 
+	{
+		proto = 0;
+		/* TODO: delete sun_path */
+	}
+
 	s = socket (family, type, proto);
 	if (!qse_isvalidsckhnd(s))
 	{

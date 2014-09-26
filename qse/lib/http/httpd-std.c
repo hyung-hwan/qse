@@ -74,6 +74,7 @@
 #	include "../cmn/syscall.h"
 #	include <sys/socket.h>
 #	include <netinet/in.h>
+#	include <sys/un.h>
 #	if defined(HAVE_SYS_SENDFILE_H)
 #		include <sys/sendfile.h>
 #	endif
@@ -846,10 +847,9 @@ static int server_open (qse_httpd_t* httpd, qse_httpd_server_t* server)
 	{
 		/* TODO: logging. warning only */
 		/* this is not a hard failure */
-qse_printf (QSE_STDERR, QSE_T("Failed to enable SO_REUSEPORT\n"));
+qse_fprintf (QSE_STDERR, QSE_T("Failed to enable SO_REUSEPORT\n"));
 	}
 	#endif
-	
 
 
 /* TODO: linux. use capset() to set required capabilities just in case */
