@@ -22,16 +22,16 @@
 #include "mem.h"
 
 #if defined(_WIN32)
-#    include <winsock2.h>
-#    include <ws2tcpip.h> /* sockaddr_in6 */
-#    include <windows.h>
+#	include <winsock2.h>
+#	include <ws2tcpip.h> /* sockaddr_in6 */
+#	include <windows.h>
 #	if (defined(__WATCOMC__) && (__WATCOMC__ < 1200))
 		/* the header files shipped with watcom 11 doesn't contain
 		 * proper inet6 support. note using the compiler version
 		 * in the contidional isn't that good idea since you 
 		 * can use newer header files with this old compiler.
 		 * never mind it for the time being.
-           */
+		 */
 #		undef AF_INET6
 #	endif
 #elif defined(__OS2__)
@@ -47,20 +47,29 @@
 #else
 #	include <sys/socket.h>
 #	include <netinet/in.h>
+#	include <sys/un.h>
 
-#	if defined(QSE_SIZEOF_STRUCT_SOCKADDR_IN6) && (QSE_SIZEOF_STRUCT_SOCKADDR_IN6 == 0)
+#	if defined(QSE_SIZEOF_STRUCT_SOCKADDR_IN6) && (QSE_SIZEOF_STRUCT_SOCKADDR_IN6 <= 0)
 #		undef AF_INET6
 #	endif
+
+#	if defined(QSE_SIZEOF_STRUCT_SOCKADDR_UN) && (QSE_SIZEOF_STRUCT_SOCKADDR_UN <= 0)
+#		undef AF_UNIX
+#	endif
+
 #endif
 
 union sockaddr_t
 {
-#if defined(AF_INET) || defined(AF_INET6)
+#if defined(AF_INET) || defined(AF_INET6) || defined(AF_UNIX)
 	#if defined(AF_INET)
 	struct sockaddr_in in4;
 	#endif
 	#if defined(AF_INET6)
 	struct sockaddr_in6 in6;
+	#endif
+	#if defined(AF_UNIX)
+	struct sockaddr_un un;
 	#endif
 #else
 	int dummy;
@@ -73,6 +82,8 @@ typedef union sockaddr_t sockaddr_t;
 #	define FAMILY(x) (((struct sockaddr_in*)(x))->sin_family)
 #elif defined(AF_INET6)
 #	define FAMILY(x) (((struct sockaddr_in6*)(x))->sin6_family)
+#elif defined(AF_UNIX)
+#	define FAMILY(x) (((struct sockaddr_un*)(x))->sun_family)
 #else
 #	define FAMILY(x) (-1)
 #endif
@@ -116,6 +127,28 @@ static QSE_INLINE int skad_to_nwad (const sockaddr_t* skad, qse_nwad_t* nwad)
 		}
 #endif
 
+#if defined(AF_UNIX)
+		case AF_UNIX:
+		{
+			struct sockaddr_un* un;
+			un = (struct sockaddr_un*)skad;
+			addrsize = QSE_SIZEOF(*un);
+
+			QSE_MEMSET (nwad, 0, QSE_SIZEOF(*nwad));
+			nwad->type = QSE_NWAD_LOCAL;
+		#if defined(QSE_CHAR_IS_MCHAR)
+			qse_mbsxcpy (nwad->u.local.path, QSE_COUNTOF(nwad->u.local.path), un->sun_path);
+		#else
+			{
+				qse_size_t wcslen, mbslen;
+				mbslen = QSE_COUNTOF(nwad->u.local.path);
+				qse_wcstombs (un->sun_path, &wcslen, nwad->u.local.path, &mbslen);
+				/* don't care about conversion errors */
+			}
+		#endif
+			break;
+		}
+#endif
 		default:
 			break;
 	}
@@ -163,6 +196,33 @@ static QSE_INLINE int nwad_to_skad (const qse_nwad_t* nwad, sockaddr_t* skad)
 #endif
 			break;
 		}
+
+
+		case QSE_NWAD_LOCAL:
+		{
+#if defined(AF_UNIX)
+			struct sockaddr_un* un;
+
+			un = (struct sockaddr_un*)skad;
+			addrsize = QSE_SIZEOF(*un);
+			QSE_MEMSET (un, 0, addrsize);
+
+			un->sun_family = AF_UNIX;
+		#if defined(QSE_CHAR_IS_MCHAR)
+			qse_mbsxcpy (un->sun_path, QSE_COUNTOF(un->sun_path), nwad->u.local.path);
+		#else
+			{
+				qse_size_t wcslen, mbslen;
+				mbslen = QSE_COUNTOF(un->sun_path);
+				qse_wcstombs (nwad->u.local.path, &wcslen, un->sun_path, &mbslen);
+				/* don't care about conversion errors */
+			}
+
+		#endif
+#endif
+			break;
+		}
+
 	}
 
 	return addrsize;

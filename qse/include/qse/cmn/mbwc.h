@@ -64,7 +64,7 @@ extern "C" {
 #endif
 
 /**
- * The qse_findcmgrbyid() function returns a built-in cmgr for a given @a id.
+ * The qse_findcmgrbyid() function returns a built-in cmgr for a given \a id.
  */
 QSE_EXPORT qse_cmgr_t* qse_findcmgrbyid (
 	qse_cmgr_id_t id
@@ -72,8 +72,8 @@ QSE_EXPORT qse_cmgr_t* qse_findcmgrbyid (
 
 /**
  * The qse_getfindcmgr() function find a built-in cmgr matching a given 
- * @a name and returns it. It returns #QSE_NULL if no match is found.
- * The @a name can be one of "slmb", "utf8", "mb8", "cp949", "cp950", and an 
+ * \a name and returns it. It returns #QSE_NULL if no match is found.
+ * The \a name can be one of "slmb", "utf8", "mb8", "cp949", "cp950", and an 
  * empty string. Calling this function with an empty string is the same
  * as calling qse_getdflcmgr().
  */
@@ -102,7 +102,7 @@ QSE_EXPORT void qse_setdflcmgr (
 
 /**
  * The qse_setdflcmgrbyid() function finds a built-in
- * cmgr for the @a id and sets it as a default cmgr.
+ * cmgr for the \a id and sets it as a default cmgr.
  */
 QSE_EXPORT void qse_setdflcmgrbyid (
 	qse_cmgr_id_t id
@@ -254,9 +254,9 @@ QSE_EXPORT qse_mchar_t* qse_wcsnatombsdupwithcmgr (
  * The qse_mbstowcs() function converts a null-terminated multibyte string to
  * a wide character string.
  *
- * It never returns -2 if @a wcs is #QSE_NULL.
+ * It never returns -2 if \a wcs is #QSE_NULL.
  *
- * @code
+ * \code
  *  const qse_mchar_t* mbs = QSE_MT("a multibyte string");
  *  qse_wchar_t wcs[100];
  *  qse_size_t wcslen = QSE_COUNTOF(buf), n;
@@ -264,12 +264,12 @@ QSE_EXPORT qse_mchar_t* qse_wcsnatombsdupwithcmgr (
  *  int n;
  *  n = qse_mbstowcs (mbs, &mbslen, wcs, &wcslen);
  *  if (n <= -1) { invalid/incomplenete sequence or buffer to small }
- * @endcode
+ * \endcode
  *
- * @return 0 on success. 
- *         -1 if @a mbs contains an illegal character.
+ * \return 0 on success. 
+ *         -1 if \a mbs contains an illegal character.
  *         -2 if the wide-character string buffer is too small.
- *         -3 if @a mbs is not a complete sequence.
+ *         -3 if \a mbs is not a complete sequence.
  */
 QSE_EXPORT int qse_mbstowcs (
 	const qse_mchar_t* mbs,    /**< [in] multibyte string to convert */
@@ -280,6 +280,11 @@ QSE_EXPORT int qse_mbstowcs (
 	                                number of characters in the buffer for out */
 );
 
+/**
+ * The qse_mbstowcsall() functions behaves like qse_mbstowcs() except
+ * it converts an invalid sequence or an incomplete sequence to a question
+ * mark. it never returns -1 or -3.
+ */
 QSE_EXPORT int qse_mbstowcsall (
 	const qse_mchar_t* mbs,    /**< [in] multibyte string to convert */
 	qse_size_t*        mbslen, /**< [out] number of multibyte characters
@@ -293,12 +298,12 @@ QSE_EXPORT int qse_mbstowcsall (
  * The qse_mbsntowcsn() function converts a multibyte string to a 
  * wide character string.
  *
- * It never returns -2 if @a wcs is #QSE_NULL.
+ * It never returns -2 if \a wcs is #QSE_NULL.
  *
- * @return 0 on success. 
- *         -1 if @a mbs contains an illegal character.
+ * \return 0 on success. 
+ *         -1 if \a mbs contains an illegal character.
  *         -2 if the wide-character string buffer is too small.
- *         -3 if @a mbs is not a complete sequence.
+ *         -3 if \a mbs is not a complete sequence.
  */
 QSE_EXPORT int qse_mbsntowcsn (
 	const qse_mchar_t* mbs,
@@ -316,7 +321,7 @@ QSE_EXPORT int qse_mbsntowcsnall (
 
 /**
  * The qse_mbsntowcsnupto() function is the same as qse_mbsntowcsn()
- * except that it stops once it has processed the @a stopper character.
+ * except that it stops once it has processed the \a stopper character.
  */
 QSE_EXPORT int qse_mbsntowcsnupto (
 	const qse_mchar_t* mbs,
@@ -366,22 +371,22 @@ QSE_EXPORT qse_wchar_t* qse_mbsatowcsalldup (
 
 /**
  * The qse_wcstombs() function converts a null-terminated wide character 
- * string @a wcs to a multibyte string and writes it into the buffer pointed to
- * by @a mbs, but not more than @a mbslen bytes including the terminating null.
+ * string \a wcs to a multibyte string and writes it into the buffer pointed to
+ * by \a mbs, but not more than \a mbslen bytes including the terminating null.
  * 
- * Upon return, @a mbslen is modifed to the actual bytes written to @a mbs
- * excluding the terminating null; @a wcslen is modifed to the number of
+ * Upon return, \a mbslen is modified to the actual bytes written to \a mbs
+ * excluding the terminating null; \a wcslen is modified to the number of
  * wide characters converted.
  *
- * You may pass #QSE_NULL for @a mbs to dry-run conversion or to get the 
+ * You may pass #QSE_NULL for \a mbs to dry-run conversion or to get the 
  * required buffer size for conversion. -2 is never returned in this case.
  *
- * @return 
+ * \return 
  * - 0 on full conversion, 
  * - -1 on no or partial conversion for an illegal character encountered,
  * - -2 on no or partial conversion for a small buffer.
  *
- * @code
+ * \code
  *   const qse_wchar_t* wcs = QSE_T("hello");
  *   qse_mchar_t mbs[10];
  *   qse_size_t wcslen;
@@ -391,7 +396,7 @@ QSE_EXPORT qse_wchar_t* qse_mbsatowcsalldup (
  *   {
  *      // conversion error
  *   }
- * @endcode
+ * \endcode
  */
 QSE_EXPORT int qse_wcstombs (
 	const qse_wchar_t* wcs,    /**< [in] wide-character string to convert*/
@@ -402,27 +407,27 @@ QSE_EXPORT int qse_wcstombs (
 );
 	
 /**
- * The qse_wcsntombsn() function converts the first @a wcslen characters from 
- * a wide character string @a wcs to a multibyte string and writes it to a 
- * buffer @a mbs not more than @a mbslen bytes. 
+ * The qse_wcsntombsn() function converts the first \a wcslen characters from 
+ * a wide character string \a wcs to a multibyte string and writes it to a 
+ * buffer \a mbs not more than \a mbslen bytes. 
  *
- * Upon return, it modifies @a mbslen to the actual bytes written to @a mbs
- * and @a wcslen to the number of wide characters converted.
+ * Upon return, it modifies \a mbslen to the actual bytes written to \a mbs
+ * and \a wcslen to the number of wide characters converted.
  * 
- * You may pass #QSE_NULL for @a mbs to dry-run conversion or to get the 
+ * You may pass #QSE_NULL for \a mbs to dry-run conversion or to get the 
  * required buffer size for conversion.
  *
  * 0 is returned on full conversion. The number of wide characters handled
- * is stored into @a wcslen and the number of produced multibyte characters
- * is stored into @a mbslen. -1 is returned if an illegal character is 
+ * is stored into \a wcslen and the number of produced multibyte characters
+ * is stored into \a mbslen. -1 is returned if an illegal character is 
  * encounterd during conversion and -2 is returned if the buffer is not 
  * large enough to perform full conversion. however, the number of wide 
- * characters handled so far stored into @a wcslen and the number of produced 
- * multibyte characters so far stored into @a mbslen are still valid.
- * If @a mbs is #QSE_NULL, -2 is never returned.
+ * characters handled so far stored into \a wcslen and the number of produced 
+ * multibyte characters so far stored into \a mbslen are still valid.
+ * If \a mbs is #QSE_NULL, -2 is never returned.
  * 
- * @return 0 on success, 
- *         -1 if @a wcs contains an illegal character,
+ * \return 0 on success, 
+ *         -1 if \a wcs contains an illegal character,
  *         -2 if the multibyte string buffer is too small.
  */
 QSE_EXPORT int qse_wcsntombsn (

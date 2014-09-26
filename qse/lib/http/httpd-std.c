@@ -107,6 +107,9 @@
 #	include <openssl/engine.h>
 #endif
 
+#if defined(__linux) && !defined(SO_REUSEPORT)
+#	define SO_REUSEPORT 15
+#endif
 
 #define HANDLE_TO_FIO(x) ((qse_fio_t*)(x))
 #define FIO_TO_HANDLE(x) ((qse_httpd_hnd_t)(x))
@@ -836,11 +839,18 @@ static int server_open (qse_httpd_t* httpd, qse_httpd_server_t* server)
 	flag = 1;
 	setsockopt (fd, SOL_SOCKET, SO_REUSEADDR, (void*)&flag, QSE_SIZEOF(flag));
 	#endif
-	
+
 	#if defined(SO_REUSEPORT)
 	flag = 1;
-	setsockopt (fd, SOL_SOCKET, SO_REUSEPORT, (void*)&flag, QSE_SIZEOF(flag));
+	if (setsockopt (fd, SOL_SOCKET, SO_REUSEPORT, &flag, QSE_SIZEOF(flag)) <= -1)
+	{
+		/* TODO: logging. warning only */
+		/* this is not a hard failure */
+qse_printf (QSE_STDERR, QSE_T("Failed to enable SO_REUSEPORT\n"));
+	}
 	#endif
+	
+
 
 /* TODO: linux. use capset() to set required capabilities just in case */
 	#if defined(IP_TRANSPARENT)
@@ -875,6 +885,7 @@ static int server_open (qse_httpd_t* httpd, qse_httpd_server_t* server)
 	flag = 1;
 	setsockopt (fd, SOL_IP, IP_TRANSPARENT, &flag, QSE_SIZEOF(flag));
 	#endif
+
 
 	if (server->dope.flags & QSE_HTTPD_SERVER_BINDTONWIF)
 	{

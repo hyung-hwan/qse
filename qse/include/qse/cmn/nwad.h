@@ -57,7 +57,11 @@ struct qse_nwad_t
 		struct
 		{
 			/* no port number. path is the address */
-			qse_uint8_t path[64]; 
+ 
+			/* note: 128 is chosen based on common path length in existing
+			 *       systems. most systems have different sizes. some 
+			 *       trailers may get truncated, when itconverted to skad. */
+			qse_char_t path[128]; 
 		} local;
 	} u;	
 };
@@ -82,17 +86,27 @@ typedef struct qse_skad_t qse_skad_t;
 
 struct qse_skad_t
 {
-	/* TODO: is this large enough?? */
-#if (QSE_SIZEOF_STRUCT_SOCKADDR_IN > 0) && \
-    (QSE_SIZEOF_STRUCT_SOCKADDR_IN >= QSE_SIZEOF_STRUCT_SOCKADDR_IN6)
-	qse_uint8_t data[QSE_SIZEOF_STRUCT_SOCKADDR_IN];
-#elif (QSE_SIZEOF_STRUCT_SOCKADDR_IN6 > 0) && \
-      (QSE_SIZEOF_STRUCT_SOCKADDR_IN6 >= QSE_SIZEOF_STRUCT_SOCKADDR_IN)
-	qse_uint8_t data[QSE_SIZEOF_STRUCT_SOCKADDR_IN6];
-#else
-	/* no sockaddr_xxx is available */
-	qse_uint8_t data[QSE_SIZEOF(qse_nwad_t)];
+#define QSE_SKAD_DATA_SIZE 0
+
+#if (QSE_SIZEOF_STRUCT_SOCKADDR_IN > QSE_SKAD_DATA_SIZE)
+#	undef QSE_SKAD_DATA_SIZE
+#	define QSE_SKAD_DATA_SIZE QSE_SIZEOF_STRUCT_SOCKADDR_IN
 #endif
+#if (QSE_SIZEOF_STRUCT_SOCKADDR_IN6 > QSE_SKAD_DATA_SIZE)
+#	undef QSE_SKAD_DATA_SIZE
+#	define QSE_SKAD_DATA_SIZE QSE_SIZEOF_STRUCT_SOCKADDR_IN6
+#endif
+#if (QSE_SIZEOF_STRUCT_SOCKADDR_UN > QSE_SKAD_DATA_SIZE)
+#	undef QSE_SKAD_DATA_SIZE
+#	define QSE_SKAD_DATA_SIZE QSE_SIZEOF_STRUCT_SOCKADDR_UN
+#endif
+
+#if (QSE_SKAD_DATA_SIZE == 0)
+#	undef QSE_SKAD_DATA_SIZE
+#	define QSE_SKAD_DATA_SIZE QSE_SIZEOF(qse_nwad_t)
+#endif
+	/* TODO: is this large enough?? */
+	qse_uint8_t data[QSE_SKAD_DATA_SIZE];
 };
 
 #ifdef __cplusplus
