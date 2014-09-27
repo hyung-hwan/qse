@@ -99,7 +99,10 @@ struct qse_mux_t
 
 	int kq;
 
-	/* event list: TODO: find the optimal size or make it auto-scalable */
+	/* kevent() places the events into the event list up to the limit specified.
+	 * this implementation passes the 'evlist' array to kevent() upon polling.
+	 * what is the best array size?
+	 * TODO: find the optimal size or make it auto-scalable. */
 	struct kevent evlist[512]; 
 	int size;
 	struct
@@ -296,7 +299,7 @@ int qse_mux_init (
 	mux->kq = kqueue ();
 	#endif
 	if (mux->kq <= -1)
-	{	
+	{
 		mux->errnum = skerr_to_errnum (errno);
 		return -1;
 	}
@@ -708,7 +711,7 @@ int qse_mux_delete (qse_mux_t* mux, const qse_mux_evt_t* evt)
 	}
 
 	mevt = mux->me.ptr[evt->hnd];
-	if (mevt->hnd != evt->hnd) 
+	if (!mevt || mevt->hnd != evt->hnd) 
 	{
 		/* already deleted??? */
 		mux->errnum = QSE_MUX_EINVAL;
@@ -756,7 +759,7 @@ done:
 	}
 
 	mevt = mux->me.ptr[evt->hnd];
-	if (mevt->hnd != evt->hnd) 
+	if (!mevt || mevt->hnd != evt->hnd) 
 	{
 		/* already deleted??? */
 		mux->errnum = QSE_MUX_EINVAL;
@@ -814,7 +817,7 @@ done:
 	}
 
 	mevt = mux->me.ptr[evt->hnd];
-	if (mevt->hnd != evt->hnd) 
+	if (!mevt || mevt->hnd != evt->hnd) 
 	{
 		/* already deleted??? */
 		mux->errnum = QSE_MUX_EINVAL;
@@ -889,8 +892,7 @@ int qse_mux_poll (qse_mux_t* mux, const qse_ntime_t* tmout)
 	ts.tv_nsec = tmout->nsec;
 
 	/* wait for events */
-	nevs = kevent (mux->kq, QSE_NULL, 0, 
-		mux->evlist, QSE_COUNTOF(mux->evlist), &ts);
+	nevs = kevent (mux->kq, QSE_NULL, 0, mux->evlist, QSE_COUNTOF(mux->evlist), &ts);
 	if (nevs <= -1) 
 	{
 		mux->errnum = skerr_to_errnum(errno);
