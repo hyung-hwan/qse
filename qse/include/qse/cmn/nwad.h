@@ -36,6 +36,8 @@ typedef enum qse_nwad_type_t qse_nwad_type_t;
 
 typedef struct qse_nwad_t qse_nwad_t;
 
+#define QSE_NWAD_LOCAL_MAX_PATH 128
+
 struct qse_nwad_t
 {
 	qse_nwad_type_t type;
@@ -61,7 +63,7 @@ struct qse_nwad_t
 			/* note: 128 is chosen based on common path length in existing
 			 *       systems. most systems have different sizes. some 
 			 *       trailers may get truncated, when itconverted to skad. */
-			qse_char_t path[128]; 
+			qse_char_t path[QSE_NWAD_LOCAL_MAX_PATH]; 
 		} local;
 	} u;	
 };

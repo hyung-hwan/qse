@@ -109,15 +109,15 @@ int qse_mbsntonwad (const qse_mchar_t* str, qse_size_t len, qse_nwad_t* nwad)
 
 	if (p >= end) return -1;
 
-	if (*p == QSE_MT('/'))
+	if (*p == QSE_MT('@') && len >= 2)
 	{
-		/* support the absolute path only */
+		/* the string begins with @. it's a local name */
 	#if defined(QSE_CHAR_IS_MCHAR)
-		qse_mbsxncpy (tmpad.u.local.path, QSE_COUNTOF(tmpad.u.local.path), str, len);
+		qse_mbsxncpy (tmpad.u.local.path, QSE_COUNTOF(tmpad.u.local.path), p + 1, len - 1);
 	#else
-		qse_size_t mbslen = len;
+		qse_size_t mbslen = len - 1;
 		qse_size_t wcslen = QSE_COUNTOF(tmpad.u.local.path) - 1;
-		if (qse_mbsntowcsn (str, &mbslen, tmpad.u.local.path, &wcslen) <= -1) return -1;
+		if (qse_mbsntowcsn (p + 1, &mbslen, tmpad.u.local.path, &wcslen) <= -1) return -1;
 		tmpad.u.local.path[wcslen] = QSE_WT('\0');
 	#endif
 
@@ -291,20 +291,19 @@ int qse_wcsntonwad (const qse_wchar_t* str, qse_size_t len, qse_nwad_t* nwad)
 
 	if (p >= end) return -1;
 
-	if (*p == QSE_WT('/'))
+	if (*p == QSE_WT('@') && len >= 2)
 	{
-		/* support the absolute path only */
+		/* the string begins with @. it's a local name */
 	#if defined(QSE_CHAR_IS_MCHAR)
-		qse_size_t wcslen = len;
+		qse_size_t wcslen = len - 1;
 		qse_size_t mbslen = QSE_COUNTOF(tmpad.u.local.path) - 1;
-		if (qse_wcsntombsn (str, &wcslen, tmpad.u.local.path, &mbslen) <= -1) return -1;
+		if (qse_wcsntombsn (p + 1, &wcslen, tmpad.u.local.path, &mbslen) <= -1) return -1;
 		tmpad.u.local.path[mbslen] = QSE_MT('\0');
 	#else
-		qse_wcsxncpy (tmpad.u.local.path, QSE_COUNTOF(tmpad.u.local.path), str, len);
+		qse_wcsxncpy (tmpad.u.local.path, QSE_COUNTOF(tmpad.u.local.path), p + 1, len - 1);
 	#endif
 
 		tmpad.type = QSE_NWAD_LOCAL;
-		qse_wcsxncpy (tmpad.u.local.path, QSE_COUNTOF(tmpad.u.local.path), str, len);
 		goto done;
 	}
 
@@ -558,13 +557,21 @@ qse_size_t qse_nwadtombs (
 		case QSE_NWAD_LOCAL:
 			if (flags & QSE_NWADTOMBS_ADDR)
 			{
+				if (xlen + 1 >= len) goto done;
+				buf[xlen++] = QSE_MT('@');
+
 			#if defined(QSE_CHAR_IS_MCHAR)
-				xlen = qse_mbsxcpy (buf, len, nwad->u.local.path)
+				if (xlen + 1 >= len) goto done;
+				xlen += qse_mbsxcpy (&buf[xlen], len - xlen, nwad->u.local.path)
 			#else
-				qse_size_t wcslen, mbslen = len;
-				qse_wcstombs (nwad->u.local.path, &wcslen, buf, &mbslen);
-				/* i don't care about conversion errors */
-				xlen = mbslen;
+				if (xlen + 1 >= len) goto done;
+				else
+				{
+					qse_size_t wcslen, mbslen = len - xlen;
+					qse_wcstombs (nwad->u.local.path, &wcslen, &buf[xlen], &mbslen);
+					/* i don't care about conversion errors */
+					xlen += mbslen;
+				}
 			#endif
 			}
 
@@ -679,13 +686,21 @@ qse_size_t qse_nwadtowcs (
 		case QSE_NWAD_LOCAL:
 			if (flags & QSE_NWADTOMBS_ADDR)
 			{
+				if (xlen + 1 >= len) goto done;
+				buf[xlen++] = QSE_WT('@');
+
 			#if defined(QSE_CHAR_IS_MCHAR)
-				qse_size_t wcslen = len, mbslen;
-				qse_mbstowcs (nwad->u.local.path, &mbslen, buf, &wcslen);
-				/* i don't care about conversion errors */
-				xlen = wcslen;
+				if (xlen + 1 >= len) goto done;
+				else
+				{
+					qse_size_t wcslen = len - xlen, mbslen;
+					qse_mbstowcs (nwad->u.local.path, &mbslen, &buf[xlen], &wcslen);
+					/* i don't care about conversion errors */
+					xlen += wcslen;
+				}
 			#else
-				xlen = qse_wcsxcpy (buf, len, nwad->u.local.path);
+				if (xlen + 1 >= len) goto done;
+				xlen += qse_wcsxcpy (&buf[xlen], len - xlen, nwad->u.local.path);
 			#endif
 			}
 	}

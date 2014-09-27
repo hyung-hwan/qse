@@ -229,6 +229,12 @@ static qse_sck_hnd_t open_server_socket (int proto, const qse_nwad_t* bindnwad)
 		goto oops;
 		
 	}
+	else
+	{
+		qse_char_t buf[512];
+		qse_nwadtostr (bindnwad, buf, QSE_COUNTOF(buf), QSE_NWADTOSTR_ALL);
+		qse_printf (QSE_T("binding address: %s\n"), buf);
+	}
 
 bind_ok:
 	#if defined(IPPROTO_SCTP)
