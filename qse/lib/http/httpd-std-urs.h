@@ -53,7 +53,7 @@ struct urs_ctx_t
 
 	qse_skad_t skad;
 	int skadlen;
-	int urs_socket;
+	int urs_socket; /* default urs socket to use */
 
 	qse_uint16_t seq; /* TODO: change to uint32_t??? */
 	urs_req_t* reqs[1024]; /* TOOD: choose the right size */
@@ -61,6 +61,10 @@ struct urs_ctx_t
 
 	qse_uint8_t rcvbuf[QSE_SIZEOF(urs_hdr_t) + URS_MAX_URL_LEN + 1];
 	qse_uint8_t fmtbuf[QSE_SIZEOF(urs_hdr_t) + URS_MAX_URL_LEN + 1];
+
+#if defined(AF_UNIX)
+	struct sockaddr_un unix_bind_addr;
+#endif
 };
 
 struct urs_req_t
@@ -133,7 +137,34 @@ static int urs_open (qse_httpd_t* httpd, qse_httpd_urs_t* urs)
 #if defined(AF_INET6)
 	urs->handle[1] = open_udp_socket (httpd, AF_INET6, type, proto);
 #endif
+#if defined(AF_UNIX)
 	urs->handle[2] = open_udp_socket (httpd, AF_UNIX, type, 0);
+#endif
+
+	if (qse_isvalidsckhnd(urs->handle[2]))
+	{
+	#if defined(AF_UNIX)
+		qse_ntime_t now;
+
+		qse_gettime (&now);
+
+		QSE_MEMSET (&dc->unix_bind_addr, 0, QSE_SIZEOF(dc->unix_bind_addr));
+		dc->unix_bind_addr.sun_family = AF_UNIX;
+	/* TODO: safer way to bind. what if the file name collides? */
+		qse_mbsxfmt (
+			dc->unix_bind_addr.sun_path, 
+			QSE_COUNTOF(dc->unix_bind_addr.sun_path),
+			QSE_MT("/tmp/.urs-%d-%ld-%ld"), 
+			(int)QSE_GETPID(), (long int)now.sec, (long int)now.nsec 
+		);
+		QSE_UNLINK (dc->unix_bind_addr.sun_path);
+		if (bind (urs->handle[2], (struct sockaddr*)&dc->unix_bind_addr, QSE_SIZEOF(dc->unix_bind_addr)) <= -1)
+		{
+			qse_closesckhnd (urs->handle[2]);
+			urs->handle[2] = QSE_INVALID_SCKHND;
+		}
+	#endif
+	}
 
 	if (!qse_isvalidsckhnd(urs->handle[0]) && 
 	    !qse_isvalidsckhnd(urs->handle[1]) &&
@@ -142,21 +173,10 @@ static int urs_open (qse_httpd_t* httpd, qse_httpd_urs_t* urs)
 		goto oops;
 	}
 
-	if (qse_isvalidsckhnd(urs->handle[2]))
-	{
-		struct sockaddr_un addr;
-		QSE_MEMSET (&addr, 0, QSE_SIZEOF(addr));
-		addr.sun_family = AF_UNIX;
-		qse_mbsxfmt (addr.sun_path, QSE_COUNTOF(addr.sun_path), QSE_MT("/tmp/qsehttpd-%d.urs.sock"), (int)QSE_GETPID());
-		QSE_UNLINK (addr.sun_path);
-		bind (urs->handle[2], (struct sockaddr*)&addr, QSE_SIZEOF(addr));
-/* TOOD: unlink this socket in urs_close() also... */
-	}
-
 	/* carry on regardless of success or failure */
 	dc->skadlen = qse_nwadtoskad (&nwad, &dc->skad);
 
-	/* determine which socket to use when sending a request to the server */
+	/* determine which socket to use when sending a request to the default server */
 	if (dc->skadlen >= 0)
 	{
 		switch (nwad.type)
@@ -183,7 +203,7 @@ static int urs_open (qse_httpd_t* httpd, qse_httpd_urs_t* urs)
 #if 0
 	if (proto == IPPROTO_SCTP)
 	{
-/* TODO: error ahndleing */
+/* TODO: error handling */
 		if (qse_isvalidsckhnd(urs->handle[0])) listen (urs->handle[0], 99);
 		if (qse_isvalidsckhnd(urs->handle[1])) listen (urs->handle[1], 99);
 		/* handle[2] is a unix socket. no special handling for SCTP */
@@ -201,7 +221,13 @@ static int urs_open (qse_httpd_t* httpd, qse_httpd_urs_t* urs)
 oops:
 	if (qse_isvalidsckhnd(urs->handle[0])) qse_closesckhnd (urs->handle[0]);
 	if (qse_isvalidsckhnd(urs->handle[1])) qse_closesckhnd (urs->handle[1]);
-	if (qse_isvalidsckhnd(urs->handle[2])) qse_closesckhnd (urs->handle[2]);
+	if (qse_isvalidsckhnd(urs->handle[2])) 
+	{
+		qse_closesckhnd (urs->handle[2]);
+	#if defined(AF_UNIX)
+		QSE_UNLINK (dc->unix_bind_addr.sun_path);
+	#endif
+	}
 	if (dc) qse_httpd_freemem (httpd, dc);
 	return -1;
 
@@ -239,7 +265,13 @@ static void urs_close (qse_httpd_t* httpd, qse_httpd_urs_t* urs)
 
 	if (qse_isvalidsckhnd(urs->handle[0])) qse_closesckhnd (urs->handle[0]);
 	if (qse_isvalidsckhnd(urs->handle[1])) qse_closesckhnd (urs->handle[1]);
-	if (qse_isvalidsckhnd(urs->handle[2])) qse_closesckhnd (urs->handle[2]);
+	if (qse_isvalidsckhnd(urs->handle[2])) 
+	{
+		qse_closesckhnd (urs->handle[2]);
+	#if defined(AF_UNIX)
+		QSE_UNLINK (dc->unix_bind_addr.sun_path);
+	#endif
+	}
 	qse_httpd_freemem (httpd, urs->ctx);
 }
 

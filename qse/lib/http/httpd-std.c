@@ -75,6 +75,12 @@
 #	include <sys/socket.h>
 #	include <netinet/in.h>
 #	include <sys/un.h>
+#	if defined(QSE_SIZEOF_STRUCT_SOCKADDR_IN6) && (QSE_SIZEOF_STRUCT_SOCKADDR_IN6 <= 0)
+#		undef AF_INET6
+#	endif
+#	if defined(QSE_SIZEOF_STRUCT_SOCKADDR_UN) && (QSE_SIZEOF_STRUCT_SOCKADDR_UN <= 0)
+#		undef AF_UNIX
+#	endif
 #	if defined(HAVE_SYS_SENDFILE_H)
 #		include <sys/sendfile.h>
 #	endif
