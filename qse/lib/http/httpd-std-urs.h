@@ -151,15 +151,15 @@ static int urs_open (qse_httpd_t* httpd, qse_httpd_urs_t* urs)
 		QSE_MEMSET (&dc->unix_bind_addr, 0, QSE_SIZEOF(dc->unix_bind_addr));
 		dc->unix_bind_addr.sun_family = AF_UNIX;
 	/* TODO: safer way to bind. what if the file name collides? */
+
 		qse_mbsxfmt (
 			dc->unix_bind_addr.sun_path, 
 			QSE_COUNTOF(dc->unix_bind_addr.sun_path),
-			QSE_MT("/tmp/.urs-%d-%ld-%ld"), 
-			(int)QSE_GETPID(), (long int)now.sec, (long int)now.nsec 
-		);
+			QSE_MT("/tmp/.urs-%x-%zx"), (int)QSE_GETPID(), (qse_size_t)dc);
 		QSE_UNLINK (dc->unix_bind_addr.sun_path);
 		if (bind (urs->handle[2], (struct sockaddr*)&dc->unix_bind_addr, QSE_SIZEOF(dc->unix_bind_addr)) <= -1)
 		{
+			qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
 			qse_closesckhnd (urs->handle[2]);
 			urs->handle[2] = QSE_INVALID_SCKHND;
 		}
@@ -170,6 +170,8 @@ static int urs_open (qse_httpd_t* httpd, qse_httpd_urs_t* urs)
 	    !qse_isvalidsckhnd(urs->handle[1]) &&
 	    !qse_isvalidsckhnd(urs->handle[2]))
 	{
+		/* don't set the error number here.
+		 * open_udp_socket() or bind() above should set the error number */
 		goto oops;
 	}
 
@@ -191,6 +193,7 @@ static int urs_open (qse_httpd_t* httpd, qse_httpd_urs_t* urs)
 				dc->urs_socket = urs->handle[2];
 				break;
 			default:
+				/* unsupported address for the default server */
 				dc->urs_socket = QSE_INVALID_SCKHND;
 				break;
 		}

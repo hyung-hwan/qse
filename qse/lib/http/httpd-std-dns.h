@@ -366,19 +366,32 @@ static int dns_open (qse_httpd_t* httpd, qse_httpd_dns_t* dns)
 #endif
 	if (!qse_isvalidsckhnd(dns->handle[0]) && !qse_isvalidsckhnd(dns->handle[1]))
 	{
+		/* don't set the error number here.
+		 * open_udp_socket() should set it */
 		goto oops;
 	}
 
 	/* carry on regardless of success or failure */
 	dc->skadlen = qse_nwadtoskad (&nwad, &dc->skad);
 
-	/* determine which socket to use when sending a request to the server */
+	/* determine which socket to use when sending a request to the default server */
 	if (dc->skadlen >=  0)
 	{
-		if (nwad.type == QSE_NWAD_IN4)
-			dc->dns_socket = dns->handle[0];
-		else
-			dc->dns_socket = dns->handle[1];
+		switch (nwad.type)
+		{
+			case QSE_NWAD_IN4:
+				dc->dns_socket = dns->handle[0];
+				break;
+
+			case QSE_NWAD_IN6:
+				dc->dns_socket = dns->handle[1];
+				break;
+
+			default:
+				/* unsupported address type for the default server */
+				dc->dns_socket = QSE_INVALID_SCKHND;
+				break;
+		}
 	}
 	else
 	{
@@ -870,10 +883,18 @@ printf ("DNS REALLY SENING>>>>>>>>>>>>>>>>>>>>>>>\n");
 		req->dns_skadlen = qse_nwadtoskad (&dns_server->nwad, &req->dns_skad);
 		if (req->dns_skadlen <= -1) goto default_dns_server;
 
-		if (dns_server->nwad.type == QSE_NWAD_IN4)
-			req->dns_socket = dns->handle[0];
-		else 
-			req->dns_socket = dns->handle[1];
+		switch (dns_server->nwad.type)
+		{
+			case QSE_NWAD_IN4:
+				req->dns_socket = dns->handle[0];
+				break;
+			case QSE_NWAD_IN6:
+				req->dns_socket = dns->handle[1];
+				break;
+			default:
+				qse_httpd_seterrnum (httpd, QSE_HTTPD_EINVAL);
+				goto oops;
+		}
 
 		dns_flags = dns_server->flags;
 	}
