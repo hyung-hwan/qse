@@ -384,12 +384,12 @@ static int dns_open (qse_httpd_t* httpd, qse_httpd_dns_t* dns)
 
 		QSE_MEMSET (&dc->unix_bind_addr, 0, QSE_SIZEOF(dc->unix_bind_addr));
 		dc->unix_bind_addr.sun_family = AF_UNIX;
-	/* TODO: safer way to bind. what if the file name collides? */
 
+		/* TODO: make the location(/tmp) or the prefix(.dns-) of the socket file configurable??? */
 		qse_mbsxfmt (
 			dc->unix_bind_addr.sun_path, 
 			QSE_COUNTOF(dc->unix_bind_addr.sun_path),
-			QSE_MT("/tmp/.dns-%x-%zx"), (int)QSE_GETPID(), (qse_size_t)dc);
+			QSE_MT("/tmp/.dns-%x-%lu"), (int)QSE_GETPID(), (unsigned long int)dns->handle[2]);
 		QSE_UNLINK (dc->unix_bind_addr.sun_path);
 		if (bind (dns->handle[2], (struct sockaddr*)&dc->unix_bind_addr, QSE_SIZEOF(dc->unix_bind_addr)) <= -1)
 		{
