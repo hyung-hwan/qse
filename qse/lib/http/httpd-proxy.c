@@ -296,8 +296,11 @@ static int proxy_capture_client_header (qse_htre_t* req, const qse_mchar_t* key,
 		}
 	}
 
+/* EXPERIMENTAL: REMOVE HEADERS.
+ * FOR EXAMPLE, You can remove Referer to make analysis systems harder time */
 	if (qse_mbscasecmp (key, QSE_MT("Transfer-Encoding")) != 0 &&
-	    qse_mbscasecmp (key, QSE_MT("Content-Length")) != 0)
+	    qse_mbscasecmp (key, QSE_MT("Content-Length")) != 0 /* EXPERIMENTAL */ /* &&
+	    qse_mbscasecmp (key, QSE_MT("Referer")) != 0*/)
 	{
 		return proxy_add_header_to_buffer (proxy, proxy->reqfwdbuf, key, val);
 	}
@@ -983,7 +986,6 @@ static int task_init_proxy (
 			x = httpd->opt.scb.urs.prerewrite (httpd, client, arg->req, arg->rsrc->host, &proxy->url_to_rewrite);
 		if (x <= -1) goto oops;
 
-printf (">>>>>>>>>>>>>>>>>>>>>>>> [%s] <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n", proxy->url_to_rewrite);
 		/* enable url rewriting */
 		proxy->flags |= PROXY_REWRITE_URL;
 		if (x == 0) 
@@ -1070,6 +1072,7 @@ printf (">>>>>>>>>>>>>>>>>>>>>>>> [%s] <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n", proxy
 
 #if 0
 {
+/* EXPERIMENTAL */
 /* KT FILTERING WORKAROUND POC. KT seems to check the Host: the first packet
  * only.I add 1500 byte space octets between the URL and the HTTP version string.
  * the header is likely to be placed in the second packet. it seems to work. */
@@ -1941,7 +1944,7 @@ if (proxy->flags & PROXY_PEER_NAME_RESOLVED)
 {
 qse_mchar_t xxxx[128];
 qse_nwadtombs (&proxy->peer.nwad, xxxx, 128, QSE_NWADTOMBS_ALL);
-printf ("XXXXXXXXXXXXXXXXXXXXXXXXXX PEER NAME RESOLVED.....TO [%s]\n", xxxx);
+printf ("XXXXXXXXXXXXXXXXXXXXXXXXXX [%s] PEER NAME RESOLVED.....TO [%s]\n", name, xxxx);
 }
 }
 

@@ -424,7 +424,6 @@ static int urs_send (qse_httpd_t* httpd, qse_httpd_urs_t* urs, const qse_mchar_t
 	qse_size_t url_len;
 	qse_tmr_event_t tmout_event;
 
-printf ("... URS_SEND.....................\n");
 	httpd_xtn = qse_httpd_getxtn (httpd);
 
 	if (dc->req_count >= QSE_COUNTOF(dc->reqs))
@@ -532,7 +531,12 @@ printf ("... URS_SEND.....................\n");
 	if (sendto (req->urs_socket, req->pkt, req->pktlen, 0, (struct sockaddr*)&req->urs_skad, req->urs_skadlen) != req->pktlen)
 	{
 		qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
-		goto oops;
+printf ("URS SENDTO FAILURE........................\n"); /* TODO: logging */
+
+		/* it looks like the EAGAIN is frequently seen on a unix datagram socket
+		 * even with increased SO_SNDBUF size. */
+		if (httpd->errnum != QSE_HTTPD_EAGAIN || req->urs_retries <= 0) goto oops;
+		/* goto oops; */
 	}
 
 	req->dc = dc;
@@ -545,7 +549,6 @@ printf ("... URS_SEND.....................\n");
 	/* increment the number of pending requests */
 	dc->req_count++;
 
-printf ("URS REALLY SENT>>>>>>>>>>>>>>>>>>>>>>>\n");
 	return 0;
 
 oops:

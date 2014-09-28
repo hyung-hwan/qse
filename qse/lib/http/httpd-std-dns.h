@@ -881,8 +881,6 @@ static int dns_send (qse_httpd_t* httpd, qse_httpd_dns_t* dns, const qse_mchar_t
 
 	httpd_xtn = qse_httpd_getxtn (httpd);
 
-printf ("DNS REALLY SENING>>>>>>>>>>>>>>>>>>>>>>>\n");
-
 	ans = dns_get_answer_from_cache (dc, name);
 	if (ans)
 	{
@@ -994,7 +992,8 @@ printf ("DNS REALLY SENING>>>>>>>>>>>>>>>>>>>>>>>\n");
 	    (req->qaaaalen > 0 && sendto (req->dns_socket, req->qaaaa, req->qaaaalen, 0, (struct sockaddr*)&req->dns_skad, req->dns_skadlen) != req->qaaaalen))
 	{
 		qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
-		goto oops;
+		if (httpd->errnum != QSE_HTTPD_EAGAIN || req->dns_retries <= 0) goto oops;
+		/*goto oops;*/
 	}
 
 	/* NOTE: 
@@ -1013,7 +1012,6 @@ printf ("DNS REALLY SENING>>>>>>>>>>>>>>>>>>>>>>>\n");
 	/* increment the number of pending requests */
 	dc->req_count++;
 
-printf ("DNS REALLY SENT>>>>>>>>>>>>>>>>>>>>>>>\n");
 	return 0;
 
 oops:
