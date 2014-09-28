@@ -150,12 +150,12 @@ static int urs_open (qse_httpd_t* httpd, qse_httpd_urs_t* urs)
 
 		QSE_MEMSET (&dc->unix_bind_addr, 0, QSE_SIZEOF(dc->unix_bind_addr));
 		dc->unix_bind_addr.sun_family = AF_UNIX;
-	/* TODO: safer way to bind. what if the file name collides? */
 
+		/* TODO: make the location(/tmp) or the prefix(.urs-) of the socket file configurable??? */
 		qse_mbsxfmt (
 			dc->unix_bind_addr.sun_path, 
 			QSE_COUNTOF(dc->unix_bind_addr.sun_path),
-			QSE_MT("/tmp/.urs-%x-%zx"), (int)QSE_GETPID(), (qse_size_t)dc);
+			QSE_MT("/tmp/.urs-%x-%lu"), (int)QSE_GETPID(), (unsigned long int)urs->handle[2]);
 		QSE_UNLINK (dc->unix_bind_addr.sun_path);
 		if (bind (urs->handle[2], (struct sockaddr*)&dc->unix_bind_addr, QSE_SIZEOF(dc->unix_bind_addr)) <= -1)
 		{
