@@ -743,7 +743,7 @@ static int set_socket_nonblock (qse_httpd_t* httpd, qse_sck_hnd_t fd, int enable
 
 }
 
-static qse_sck_hnd_t open_udp_socket (qse_httpd_t* httpd, int domain, int type, int proto)
+static qse_sck_hnd_t open_client_socket (qse_httpd_t* httpd, int domain, int type, int proto)
 {
 	qse_sck_hnd_t fd;
 	int flag;
@@ -765,10 +765,12 @@ static qse_sck_hnd_t open_udp_socket (qse_httpd_t* httpd, int domain, int type, 
 	setsockopt (fd, SOL_SOCKET, SO_REUSEADDR, (void*)&flag, QSE_SIZEOF(flag));
 	#endif
 
+	/* client socket may not need this 
 	#if defined(SO_REUSEPORT)
 	flag = 1;
 	setsockopt (fd, SOL_SOCKET, SO_REUSEPORT, (void*)&flag, QSE_SIZEOF(flag));
 	#endif
+	*/
 
 	#if defined(IPV6_V6ONLY)
 	if (domain == AF_INET6)

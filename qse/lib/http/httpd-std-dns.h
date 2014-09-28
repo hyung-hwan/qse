@@ -139,6 +139,10 @@ struct dns_ctx_t
 	qse_uint16_t n_qcin; /* DNS_QCLASS_IN in network byte order */
 	qse_uint16_t n_qta; /* DNS_QTYPE_A in network byte order */
 	qse_uint16_t n_qtaaaa; /* DNS_QTYPE_AAAA in network byte order */
+
+#if defined(AF_UNIX)
+	struct sockaddr_un unix_bind_addr;
+#endif
 };
 
 struct dns_req_t
@@ -310,7 +314,10 @@ static int dns_open (qse_httpd_t* httpd, qse_httpd_dns_t* dns)
 	nwad = httpd_xtn->dns.nwad;
 	if (nwad.type == QSE_NWAD_NX)
 	{
+		/* read the system dns configuration */
+
 		qse_sio_t* sio;
+
 	#if defined(_WIN32)
 		/* TODO: windns.h dnsapi.lib DnsQueryConfig... */
 	#elif defined(__OS2__)
@@ -360,14 +367,46 @@ static int dns_open (qse_httpd_t* httpd, qse_httpd_dns_t* dns)
 		httpd->opt.rcb.logact (httpd, &msg);
 	}
 
-	dns->handle[0] = open_udp_socket (httpd, AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+	dns->handle[0] = open_client_socket (httpd, AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 #if defined(AF_INET6)
-	dns->handle[1] = open_udp_socket (httpd, AF_INET6, SOCK_DGRAM, IPPROTO_UDP);
+	dns->handle[1] = open_client_socket (httpd, AF_INET6, SOCK_DGRAM, IPPROTO_UDP);
 #endif
-	if (!qse_isvalidsckhnd(dns->handle[0]) && !qse_isvalidsckhnd(dns->handle[1]))
+#if defined(AF_UNIX)
+	dns->handle[2] = open_client_socket (httpd, AF_UNIX, SOCK_DGRAM, 0);
+#endif
+
+	if (qse_isvalidsckhnd(dns->handle[2]))
+	{
+	#if defined(AF_UNIX)
+		qse_ntime_t now;
+
+		qse_gettime (&now);
+
+		QSE_MEMSET (&dc->unix_bind_addr, 0, QSE_SIZEOF(dc->unix_bind_addr));
+		dc->unix_bind_addr.sun_family = AF_UNIX;
+	/* TODO: safer way to bind. what if the file name collides? */
+
+		qse_mbsxfmt (
+			dc->unix_bind_addr.sun_path, 
+			QSE_COUNTOF(dc->unix_bind_addr.sun_path),
+			QSE_MT("/tmp/.dns-%x-%zx"), (int)QSE_GETPID(), (qse_size_t)dc);
+		QSE_UNLINK (dc->unix_bind_addr.sun_path);
+		if (bind (dns->handle[2], (struct sockaddr*)&dc->unix_bind_addr, QSE_SIZEOF(dc->unix_bind_addr)) <= -1)
+		{
+			qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
+			qse_closesckhnd (dns->handle[2]);
+			dns->handle[2] = QSE_INVALID_SCKHND;
+		}
+	#endif
+	}
+
+
+	if (!qse_isvalidsckhnd(dns->handle[0]) &&
+	    !qse_isvalidsckhnd(dns->handle[1]) &&
+	    !qse_isvalidsckhnd(dns->handle[2]))
 	{
 		/* don't set the error number here.
-		 * open_udp_socket() should set it */
+		 * open_client_socket() should set it */
 		goto oops;
 	}
 
@@ -387,6 +426,10 @@ static int dns_open (qse_httpd_t* httpd, qse_httpd_dns_t* dns)
 				dc->dns_socket = dns->handle[1];
 				break;
 
+			case QSE_NWAD_LOCAL:
+				dc->dns_socket = dns->handle[2];
+				break;
+
 			default:
 				/* unsupported address type for the default server */
 				dc->dns_socket = QSE_INVALID_SCKHND;
@@ -398,9 +441,10 @@ static int dns_open (qse_httpd_t* httpd, qse_httpd_dns_t* dns)
 		dc->dns_socket = QSE_INVALID_SCKHND;
 	}
 
-	dns->handle_count = 2;
+	dns->handle_count = 3;
 	if (qse_isvalidsckhnd(dns->handle[0])) dns->handle_mask |= (1 << 0);
 	if (qse_isvalidsckhnd(dns->handle[1])) dns->handle_mask |= (1 << 1);
+	if (qse_isvalidsckhnd(dns->handle[2])) dns->handle_mask |= (1 << 2);
 
 	dns->ctx = dc;
 
@@ -409,6 +453,13 @@ static int dns_open (qse_httpd_t* httpd, qse_httpd_dns_t* dns)
 oops:
 	if (qse_isvalidsckhnd(dns->handle[0])) qse_closesckhnd (dns->handle[0]);
 	if (qse_isvalidsckhnd(dns->handle[1])) qse_closesckhnd (dns->handle[1]);
+	if (qse_isvalidsckhnd(dns->handle[2]))
+	{
+		qse_closesckhnd (dns->handle[2]);
+	#if defined(AF_UNIX)
+		QSE_UNLINK (dc->unix_bind_addr.sun_path);
+	#endif
+	}
 	if (dc) qse_httpd_freemem (httpd, dc);
 	return -1;
 
@@ -459,6 +510,13 @@ static void dns_close (qse_httpd_t* httpd, qse_httpd_dns_t* dns)
 
 	if (qse_isvalidsckhnd(dns->handle[0])) qse_closesckhnd (dns->handle[0]);
 	if (qse_isvalidsckhnd(dns->handle[1])) qse_closesckhnd (dns->handle[1]);
+	if (qse_isvalidsckhnd(dns->handle[2]))
+	{
+		qse_closesckhnd (dns->handle[2]);
+	#if defined(AF_UNIX)
+		QSE_UNLINK (dc->unix_bind_addr.sun_path);
+	#endif
+	}
 	qse_httpd_freemem (httpd, dns->ctx);
 }
 
@@ -891,9 +949,12 @@ printf ("DNS REALLY SENING>>>>>>>>>>>>>>>>>>>>>>>\n");
 			case QSE_NWAD_IN6:
 				req->dns_socket = dns->handle[1];
 				break;
+			case QSE_NWAD_LOCAL:
+				req->dns_socket = dns->handle[2];
+				break;
 			default:
-				qse_httpd_seterrnum (httpd, QSE_HTTPD_EINVAL);
-				goto oops;
+				/* TODO: should it return failure with QSE_HTTPD_EINVAL? */
+				goto default_dns_server;
 		}
 
 		dns_flags = dns_server->flags;
@@ -963,7 +1024,6 @@ oops:
 	}
 	return -1;
 }
-
 
 static int dns_preresolve (qse_httpd_t* httpd, qse_httpd_client_t* client, const qse_mchar_t* host, qse_nwad_t* nwad)
 {

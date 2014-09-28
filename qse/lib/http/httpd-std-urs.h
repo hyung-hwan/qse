@@ -133,12 +133,12 @@ static int urs_open (qse_httpd_t* httpd, qse_httpd_urs_t* urs)
 	type = SOCK_DGRAM;
 #endif
 
-	urs->handle[0] = open_udp_socket (httpd, AF_INET, type, proto);
+	urs->handle[0] = open_client_socket (httpd, AF_INET, type, proto);
 #if defined(AF_INET6)
-	urs->handle[1] = open_udp_socket (httpd, AF_INET6, type, proto);
+	urs->handle[1] = open_client_socket (httpd, AF_INET6, type, proto);
 #endif
 #if defined(AF_UNIX)
-	urs->handle[2] = open_udp_socket (httpd, AF_UNIX, type, 0);
+	urs->handle[2] = open_client_socket (httpd, AF_UNIX, type, 0);
 #endif
 
 	if (qse_isvalidsckhnd(urs->handle[2]))
@@ -171,7 +171,7 @@ static int urs_open (qse_httpd_t* httpd, qse_httpd_urs_t* urs)
 	    !qse_isvalidsckhnd(urs->handle[2]))
 	{
 		/* don't set the error number here.
-		 * open_udp_socket() or bind() above should set the error number */
+		 * open_client_socket() or bind() above should set the error number */
 		goto oops;
 	}
 
@@ -485,6 +485,7 @@ printf ("... URS_SEND.....................\n");
 				req->urs_socket = urs->handle[2];
 				break;
 			default:
+				/* TODO: should it return failure with QSE_HTTPD_EINVAL? */
 				goto default_urs_server;
 		}
 	}
