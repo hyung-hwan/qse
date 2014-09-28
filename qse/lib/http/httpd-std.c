@@ -772,13 +772,23 @@ static qse_sck_hnd_t open_client_socket (qse_httpd_t* httpd, int domain, int typ
 	#endif
 	*/
 
-	#if defined(IPV6_V6ONLY)
+	#if defined(AF_INET6) && defined(IPV6_V6ONLY)
 	if (domain == AF_INET6)
 	{
 		flag = 1;
 		setsockopt (fd, IPPROTO_IPV6, IPV6_V6ONLY, (void*)&flag, QSE_SIZEOF(flag));
 	}
 	#endif
+
+	/*
+	#if defined(AF_UNIX)
+	if (domain == AF_UNIX)
+	{
+		flag = 1000000;
+		setsockopt (fd, SOL_SOCKET, SO_SNDBUF,  (void*)&flag, QSE_SIZEOF(flag));
+	}
+	#endif
+ 	*/
 
 	if (set_socket_nonblock (httpd, fd, 1) <= -1) goto oops;
 
