@@ -382,9 +382,19 @@ static void tmr_urs_tmout_handle (qse_tmr_t* tmr, const qse_ntime_t* now, void* 
 		if (sendto (req->urs_socket, req->pkt, req->pktlen, 0, (struct sockaddr*)&req->urs_skad, req->urs_skadlen) != req->pktlen)
 		{
 			/* error. fall thru */
+			qse_httpd_seterrnum (dc->httpd, SKERR_TO_ERRNUM());
+
+			/* Unix datagram socket seems to fail with EAGAIN often 
+			 * even with increased SO_SNDBUF size. */
+			if (dc->httpd->errnum == QSE_HTTPD_EAGAIN && req->urs_retries > 1)
+			{
+				/* TODO: check writability of req->urs_socket instead of just retrying... */
+				goto send_ok;
+			}
 		}
 		else
 		{
+		send_ok:
 			QSE_ASSERT (tmr == dc->httpd->tmr);
 			if (qse_httpd_inserttimerevent (dc->httpd, &tmout_event, &req->tmr_tmout) >= 0)
 			{
@@ -533,12 +543,18 @@ static int urs_send (qse_httpd_t* httpd, qse_httpd_urs_t* urs, const qse_mchar_t
 		qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
 printf ("URS SENDTO FAILURE........................\n"); /* TODO: logging */
 
-		/* it looks like the EAGAIN is frequently seen on a unix datagram socket
+		/* Unix datagram socket seems to fail with EAGAIN often 
 		 * even with increased SO_SNDBUF size. */
-		if (httpd->errnum != QSE_HTTPD_EAGAIN || req->urs_retries <= 0) goto oops;
-		/* goto oops; */
+		if (httpd->errnum == QSE_HTTPD_EAGAIN && req->urs_retries > 0)
+		{
+			/* TODO: check writability of req->urs_socket instead of just retrying... */
+			goto send_ok;
+		}
+
+		goto oops;
 	}
 
+send_ok:
 	req->dc = dc;
 
 	/* link the request to the front of the chain */
@@ -548,7 +564,6 @@ printf ("URS SENDTO FAILURE........................\n"); /* TODO: logging */
 
 	/* increment the number of pending requests */
 	dc->req_count++;
-
 	return 0;
 
 oops:
