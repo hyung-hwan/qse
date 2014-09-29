@@ -831,9 +831,18 @@ printf (">>tmr_dns_tmout_handle  req->>%p\n", req);
 			(!(req->flags & DNS_REQ_AAAA_NX) && req->qaaaalen > 0 && sendto (req->dns_socket, req->qaaaa, req->qaaaalen, 0, (struct sockaddr*)&req->dns_skad, req->dns_skadlen) != req->qaaaalen))
 		{
 			/* resend failed. fall thru and destroy the request*/
+
+			/* Unix datagram socket seems to fail with EAGAIN often 
+			 * even with increased SO_SNDBUF size. */
+			if (dc->httpd->errnum == QSE_HTTPD_EAGAIN && req->dns_retries > 1)
+			{
+				/* TODO: check writability of req->urs_socket instead of just retrying... */
+				goto send_ok;
+			}
 		}
 		else
 		{
+		send_ok:
 			QSE_ASSERT (tmr == dc->httpd->tmr);
 			if (qse_httpd_inserttimerevent (dc->httpd, &tmout_event, &req->tmr_tmout) >= 0)
 			{
@@ -992,10 +1001,19 @@ static int dns_send (qse_httpd_t* httpd, qse_httpd_dns_t* dns, const qse_mchar_t
 	    (req->qaaaalen > 0 && sendto (req->dns_socket, req->qaaaa, req->qaaaalen, 0, (struct sockaddr*)&req->dns_skad, req->dns_skadlen) != req->qaaaalen))
 	{
 		qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
-		if (httpd->errnum != QSE_HTTPD_EAGAIN || req->dns_retries <= 0) goto oops;
-		/*goto oops;*/
+		/* Unix datagram socket seems to fail with EAGAIN often 
+		 * even with increased SO_SNDBUF size. */
+		if (httpd->errnum == QSE_HTTPD_EAGAIN && req->dns_retries > 0)
+		{
+			/* TODO: check writability of req->urs_socket instead of just retrying... */
+			goto send_ok;
+		}
+
+		goto oops;
+		
 	}
 
+send_ok:
 	/* NOTE: 
 	 *  if the sequence number is repeated before it timed out or resolved,
 	 *  the newer request gets chained together with the older one.
