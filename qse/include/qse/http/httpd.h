@@ -612,12 +612,15 @@ struct qse_httpd_client_t
 #define QSE_HTTPD_CLIENT_PENDING                (1 << 4)
 #define QSE_HTTPD_CLIENT_MUTE                   (1 << 5)
 #define QSE_HTTPD_CLIENT_MUTE_DELETED           (1 << 6)
-#define QSE_HTTPD_CLIENT_HANDLE_READ_IN_MUX     (1 << 7)
-#define QSE_HTTPD_CLIENT_HANDLE_WRITE_IN_MUX    (1 << 8)
+#define QSE_HTTPD_CLIENT_PROTOCOL_SWITCHED      (1 << 7) /* 101 Switching Protocols has been received */
+#define QSE_HTTPD_CLIENT_HANDLE_READ_IN_MUX     (1 << 8)
+#define QSE_HTTPD_CLIENT_HANDLE_WRITE_IN_MUX    (1 << 9)
 #define QSE_HTTPD_CLIENT_HANDLE_RW_IN_MUX       (QSE_HTTPD_CLIENT_HANDLE_READ_IN_MUX | QSE_HTTPD_CLIENT_HANDLE_WRITE_IN_MUX)
 
-#define QSE_HTTPD_CLIENT_TASK_TRIGGER_READ_IN_MUX(i) (1 << ((i) + 9))
-#define QSE_HTTPD_CLIENT_TASK_TRIGGER_WRITE_IN_MUX(i) (1 << ((i) + 9  + QSE_HTTPD_TASK_TRIGGER_MAX))
+/* 'i' must be between 0 and QSE_HTTPD_TASK_TRIGGER_MAX - 1.
+ * Be careful about potential overflown when QSE_HTTPD_TASK_TRIGGER_MAX is too large. */
+#define QSE_HTTPD_CLIENT_TASK_TRIGGER_READ_IN_MUX(i) (1 << ((i) + 10))
+#define QSE_HTTPD_CLIENT_TASK_TRIGGER_WRITE_IN_MUX(i) (1 << ((i) + 10  + QSE_HTTPD_TASK_TRIGGER_MAX))
 #define QSE_HTTPD_CLIENT_TASK_TRIGGER_RW_IN_MUX(i) (QSE_HTTPD_CLIENT_TASK_TRIGGER_READ_IN_MUX(i) | QSE_HTTPD_CLIENT_TASK_TRIGGER_WRITE_IN_MUX(i))
 
 enum qse_httpd_server_flag_t
@@ -626,6 +629,7 @@ enum qse_httpd_server_flag_t
 	QSE_HTTPD_SERVER_SECURE     = (1 << 1),
 	QSE_HTTPD_SERVER_BINDTONWIF = (1 << 2)
 };
+typedef enum qse_httpd_server_flag_t qse_httpd_server_flag_t;
 
 typedef void (*qse_httpd_server_detach_t) (
 	qse_httpd_t*        httpd,
@@ -633,7 +637,6 @@ typedef void (*qse_httpd_server_detach_t) (
 );
 
 typedef struct qse_httpd_server_dope_t qse_httpd_server_dope_t;
-
 struct qse_httpd_server_dope_t
 {
 	int          flags; /* bitwise-ORed of qse_httpd_server_flag_t */

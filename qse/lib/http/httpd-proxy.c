@@ -45,15 +45,17 @@ struct task_proxy_t
                                                the task_proxy_t chunk. explicit
                                                deallocatin is required */
 #define PROXY_RESOLVE_PEER_NAME    (1 << 6)
-#define PROXY_PEER_NAME_RESOLVED   (1 << 7)
-#define PROXY_PEER_NAME_UNRESOLVED (1 << 8)
-#define PROXY_REWRITE_URL          (1 << 9)
-#define PROXY_URL_PREREWRITTEN     (1 << 10) /* URL has been prerewritten in prerewrite(). */
-#define PROXY_URL_REWRITTEN        (1 << 11)
-#define PROXY_URL_REDIRECTED       (1 << 12)
-#define PROXY_X_FORWARDED_FOR      (1 << 13) /* X-Forwarded-For added */
-#define PROXY_VIA                  (1 << 14) /* Via added to the request */
-#define PROXY_VIA_RETURNING        (1 << 15) /* Via added to the response */
+#define PROXY_PEER_NAME_RESOLVING  (1 << 7)
+#define PROXY_PEER_NAME_RESOLVED   (1 << 8)
+#define PROXY_PEER_NAME_UNRESOLVED (1 << 9)
+#define PROXY_REWRITE_URL          (1 << 10)
+#define PROXY_URL_REWRITING        (1 << 11)
+#define PROXY_URL_PREREWRITTEN     (1 << 12) /* URL has been prerewritten in prerewrite(). */
+#define PROXY_URL_REWRITTEN        (1 << 13)
+#define PROXY_URL_REDIRECTED       (1 << 14)
+#define PROXY_X_FORWARDED_FOR      (1 << 15) /* X-Forwarded-For added */
+#define PROXY_VIA                  (1 << 16) /* Via added to the request */
+#define PROXY_VIA_RETURNING        (1 << 17) /* Via added to the response */
 	int flags;
 	qse_httpd_t* httpd;
 	qse_httpd_client_t* client;
@@ -297,7 +299,7 @@ static int proxy_capture_client_header (qse_htre_t* req, const qse_mchar_t* key,
 	}
 
 /* EXPERIMENTAL: REMOVE HEADERS.
- * FOR EXAMPLE, You can remove Referer to make analysis systems harder time */
+ * FOR EXAMPLE, You can remove Referer or forge it to give analysis systems harder time  */
 	if (qse_mbscasecmp (key, QSE_MT("Transfer-Encoding")) != 0 &&
 	    qse_mbscasecmp (key, QSE_MT("Content-Length")) != 0 /* EXPERIMENTAL */ /* &&
 	    qse_mbscasecmp (key, QSE_MT("Referer")) != 0*/)
@@ -367,11 +369,6 @@ static int proxy_snatch_client_input (
 
 	task = (qse_httpd_task_t*)ctx;
 	proxy = (task_proxy_t*)task->ctx;
-
-#if 0
-if (ptr) qse_printf (QSE_T("!!!PROXY SNATCHING [%.*hs]\n"), len, ptr);
-else qse_printf (QSE_T("!!!PROXY SNATCHING DONE\n"));
-#endif
 
 	if (ptr == QSE_NULL)
 	{
@@ -448,9 +445,6 @@ else qse_printf (QSE_T("!!!PROXY SNATCHING DONE\n"));
 		}
 
 		task->trigger.v[0].mask |= QSE_HTTPD_TASK_TRIGGER_WRITE;
-#if 0
-qse_printf (QSE_T("!!!PROXY SNATCHED [%.*hs]\n"), len, ptr);
-#endif
 	}
 
 	return 0;
@@ -481,13 +475,9 @@ static int proxy_snatch_peer_output (
 
 	if (ptr == QSE_NULL)
 	{
-		/* content completed */
+		/* content completed. got the entire response */
 
 		QSE_ASSERT (len == 0);
-
-#if 0
-qse_printf (QSE_T("PROXY GOT ALL RESPONSE>>>>>>>\n"));
-#endif
 
 		if (qse_mbs_cat (proxy->res, QSE_MT("0\r\n")) == (qse_size_t)-1 ||
 		    qse_htre_walktrailers (req, proxy_capture_peer_trailer, proxy) <= -1 ||
@@ -673,18 +663,11 @@ static int proxy_htrd_peek_peer_output (qse_htrd_t* htrd, qse_htre_t* res)
 
 		if (proxy->resflags & PROXY_RES_PEER_LENGTH_FAKE)
 		{
-			qse_mchar_t buf[64];
-
 			/* length should be added by force.
 			 * let me add Content-Length event if it's 0 
 			 * for less code */
-			qse_fmtuintmaxtombs (
-				buf, QSE_COUNTOF(buf),
-				proxy->peer_output_length, 
-				10, -1, QSE_MT('\0'), QSE_NULL);
-
 			if (qse_mbs_cat (proxy->res, QSE_MT("Content-Length: ")) == (qse_size_t)-1 ||
-			    qse_mbs_cat (proxy->res, buf) == (qse_size_t)-1 ||
+			    qse_mbs_fcat (proxy->res, QSE_MT("%zu"), (qse_size_t)proxy->peer_output_length) == (qse_size_t)-1 ||
 			    qse_mbs_cat (proxy->res, QSE_MT("\r\n")) == (qse_size_t)-1)
 			{
 				httpd->errnum = QSE_HTTPD_ENOMEM;
@@ -948,8 +931,13 @@ static int task_init_proxy (
 	proxy->peer.local = arg->rsrc->src.nwad;
 	if (arg->rsrc->flags & QSE_HTTPD_RSRC_PROXY_DST_STR)
 	{
+		/* the destination given is a string.
+		 * arrange to make a DNS query in task_main_proxy() */
+
 		if (arg->rsrc->flags & QSE_HTTPD_RSRC_PROXY_ENABLE_DNS)
 		{
+			/* dns service is enabled. carry on with the arrangement */
+
 			proxy->peer_name = proxy->pseudonym + len + 1;
 			qse_mbscpy (proxy->peer_name, arg->rsrc->dst.str);
 			adjust_peer_name_and_port (proxy);
@@ -1031,7 +1019,6 @@ static int task_init_proxy (
 	else
 	{
 		int snatch_needed = 0;
-		
 
 		/* compose a request to send to the peer using the request
 		 * received from the client */
@@ -1911,9 +1898,10 @@ static void on_peer_name_resolved (qse_httpd_t* httpd, const qse_mchar_t* name, 
 	task_proxy_t* proxy = (task_proxy_t*)task->ctx;
 
 	QSE_ASSERT (proxy->flags & PROXY_RESOLVE_PEER_NAME);
+	QSE_ASSERT (proxy->flags & PROXY_PEER_NAME_RESOLVING);
 	QSE_ASSERT (!(proxy->flags & (PROXY_PEER_NAME_RESOLVED | PROXY_PEER_NAME_UNRESOLVED)));
 
-	proxy->flags &= ~PROXY_RESOLVE_PEER_NAME;
+	proxy->flags &= ~(PROXY_RESOLVE_PEER_NAME | PROXY_PEER_NAME_RESOLVING);
 
 	if (nwad)
 	{
@@ -1959,7 +1947,7 @@ static void on_url_rewritten (qse_httpd_t* httpd, const qse_mchar_t* url, const 
 	{
 		qse_nwad_t nwad;
 
-		proxy->flags &= ~PROXY_REWRITE_URL;
+		proxy->flags &= ~(PROXY_REWRITE_URL | PROXY_URL_REWRITING);
 
 printf ("XXXXXXXXXXXXXXXXXXXXXXXXXX URL REWRITTEN TO [%s].....\n", new_url);
 		if (new_url[0] == QSE_MT('\0'))
@@ -2153,24 +2141,35 @@ static int task_main_proxy (
 		}
 		else
 		{
-			/* note that url_to_rewrite is URL + extra information. */
-			if (qse_httpd_rewriteurl (httpd, proxy->url_to_rewrite, on_url_rewritten, 
-			                          ((proxy->flags & PROXY_URS_SERVER)? &proxy->urs_server: QSE_NULL), task) <= -1) goto oops;
+			if (!(proxy->flags & PROXY_URL_REWRITING))
+			{
+				/* note that url_to_rewrite is URL + extra information. */
+				proxy->flags |= PROXY_URL_REWRITING; /* to prevent double calls */
 
-			if (proxy->flags & PROXY_INIT_FAILED) goto oops;
+				if (qse_httpd_rewriteurl (httpd, proxy->url_to_rewrite, on_url_rewritten, 
+				                          ((proxy->flags & PROXY_URS_SERVER)? &proxy->urs_server: QSE_NULL), task) <= -1) goto oops;
+
+				if (proxy->flags & PROXY_INIT_FAILED) goto oops;
 			
-			if ((proxy->flags & PROXY_REWRITE_URL) && 
-			    qse_httpd_inactivatetasktrigger (httpd, client, task) <= -1) goto oops;
+				if ((proxy->flags & PROXY_REWRITE_URL) && 
+				    qse_httpd_inactivatetasktrigger (httpd, client, task) <= -1) goto oops;
+			}
 		}
 
-		return 1;
+		return 1; /* not finished yet */
 	}
 
 	if (proxy->flags & PROXY_RESOLVE_PEER_NAME)
 	{
 		/* arrange to resolve a host name and return */
 		int x;
+
 		QSE_ASSERT (proxy->peer_name != QSE_NULL);
+
+		if (proxy->flags & PROXY_PEER_NAME_RESOLVING)
+		{
+			return 1; /* not finished yet */
+		}
 
 		if (proxy->dns_preresolve_mod && proxy->dns_preresolve_mod->dns_preresolve)
 			x = proxy->dns_preresolve_mod->dns_preresolve (proxy->dns_preresolve_mod, client, proxy->peer_name, &proxy->peer.nwad);
@@ -2188,6 +2187,17 @@ static int task_main_proxy (
 		}
 		else
 		{
+			/* this function can be called more than once if a socket 
+			 * descriptor appears multiple times in the event result 
+			 * of a single event polling cycle in the main loop.
+			 * e.g.) the mux implementation doesn't collapse multiple events
+			 *       for a socket descriptor into 1 event.
+			 * 
+			 * if this happens, qse_http_resolvename() can be called 
+			 * multiple times.
+			 */
+			proxy->flags |= PROXY_PEER_NAME_RESOLVING; 
+
 			x = qse_httpd_resolvename (httpd, proxy->peer_name, on_peer_name_resolved, ((proxy->flags & PROXY_DNS_SERVER)? &proxy->dns_server: QSE_NULL), task);
 			if (x <= -1) goto oops;
 		}
@@ -2205,7 +2215,7 @@ static int task_main_proxy (
 		if (!(proxy->flags & PROXY_PEER_NAME_RESOLVED) && 
 		    qse_httpd_inactivatetasktrigger (httpd, client, task) <= -1) goto oops;
 
-		return 1;
+		return 1; /* not finished yet */
 	}
 
 	if (!(proxy->flags & PROXY_RAW))

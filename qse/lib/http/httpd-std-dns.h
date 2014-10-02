@@ -782,7 +782,7 @@ resolved:
 	else req->prev->next = req->next;
 	if (req->next) req->next->prev = req->prev;
 
-	/* cache the negative answer instead of destroying it */
+	/* cache the answer instead of destroying it */
 	dns_cache_answer (dc, req, resolved_nwad, cache_ttl);
 	dc->req_count--;
 
