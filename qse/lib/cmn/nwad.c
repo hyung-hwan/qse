@@ -562,7 +562,7 @@ qse_size_t qse_nwadtombs (
 
 			#if defined(QSE_CHAR_IS_MCHAR)
 				if (xlen + 1 >= len) goto done;
-				xlen += qse_mbsxcpy (&buf[xlen], len - xlen, nwad->u.local.path)
+				xlen += qse_mbsxcpy (&buf[xlen], len - xlen, nwad->u.local.path);
 			#else
 				if (xlen + 1 >= len) goto done;
 				else
