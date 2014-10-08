@@ -21,32 +21,34 @@
 #include <qse/cmn/str.h>
 #include <qse/cmn/chr.h>
 
-const qse_mchar_t* qse_mbsword (
-	const qse_mchar_t* str, const qse_mchar_t* word)
+#define IS_MDELIM(x,delim) (QSE_ISMSPACE(x) || (x) == delim)
+#define IS_WDELIM(x,delim) (QSE_ISWSPACE(x) || (x) == delim)
+
+const qse_mchar_t* qse_mbsword (const qse_mchar_t* str, const qse_mchar_t* word, qse_mchar_t extra_delim)
 {
 	/* find a full word in a string */
 
 	const qse_mchar_t* ptr = str;
 
+	if (extra_delim == QSE_MT('\0')) extra_delim = QSE_MT(' ');
 	do
 	{
 		const qse_mchar_t* s;
 
-		while (QSE_ISMSPACE(*ptr)) ptr++;
+		while (IS_MDELIM(*ptr,extra_delim)) ptr++;
 		if (*ptr == QSE_MT('\0')) return QSE_NULL;
 
 		s = ptr;
-		while (*ptr != QSE_MT('\0') && !QSE_ISMSPACE(*ptr)) ptr++;
+		while (*ptr != QSE_MT('\0') && !IS_MDELIM(*ptr,extra_delim)) ptr++;
 
-		if (qse_mbsxcmp (s, ptr-s, word) == 0) return s;
+		if (qse_mbsxcmp (s, ptr - s, word) == 0) return s;
 	}
 	while (*ptr != QSE_MT('\0'));
 
 	return QSE_NULL;
 }
 
-const qse_mchar_t* qse_mbsxword (
-	const qse_mchar_t* str, qse_size_t len, const qse_mchar_t* word)
+const qse_mchar_t* qse_mbsxword (const qse_mchar_t* str, qse_size_t len, const qse_mchar_t* word, qse_mchar_t extra_delim)
 {
 	/* find a full word in a string */
 
@@ -54,93 +56,93 @@ const qse_mchar_t* qse_mbsxword (
 	const qse_mchar_t* end = str + len;
 	const qse_mchar_t* s;
 
+	if (extra_delim == QSE_MT('\0')) extra_delim = QSE_MT(' ');
 	do
 	{
-		while (ptr < end && QSE_ISMSPACE(*ptr)) ptr++;
+		while (ptr < end && IS_MDELIM(*ptr,extra_delim)) ptr++;
 		if (ptr >= end) return QSE_NULL;
 
 		s = ptr;
-		while (ptr < end && !QSE_ISMSPACE(*ptr)) ptr++;
+		while (ptr < end && !IS_MDELIM(*ptr,extra_delim)) ptr++;
 
-		if (qse_mbsxcmp (s, ptr-s, word) == 0) return s;
+		if (qse_mbsxcmp (s, ptr - s, word) == 0) return s;
 	}
 	while (ptr < end);
 
 	return QSE_NULL;
 }
 
-const qse_mchar_t* qse_mbscaseword (
-	const qse_mchar_t* str, const qse_mchar_t* word)
+const qse_mchar_t* qse_mbscaseword (const qse_mchar_t* str, const qse_mchar_t* word, qse_mchar_t extra_delim)
 {
 	/* find a full word in a string */
 
 	const qse_mchar_t* ptr = str;
 
+	if (extra_delim == QSE_MT('\0')) extra_delim = QSE_MT(' ');
 	do
 	{
 		const qse_mchar_t* s;
 
-		while (QSE_ISMSPACE(*ptr)) ptr++;
+		while (IS_MDELIM(*ptr,extra_delim)) ptr++;
 		if (*ptr == QSE_MT('\0')) return QSE_NULL;
 
 		s = ptr;
-		while (*ptr != QSE_MT('\0') && !QSE_ISMSPACE(*ptr)) ptr++;
+		while (*ptr != QSE_MT('\0') && !IS_MDELIM(*ptr,extra_delim)) ptr++;
 
-		if (qse_mbsxcasecmp (s, ptr-s, word) == 0) return s;
+		if (qse_mbsxcasecmp (s, ptr - s, word) == 0) return s;
 	}
 	while (*ptr != QSE_MT('\0'));
 
 	return QSE_NULL;
 }
 
-const qse_mchar_t* qse_mbsxcaseword (
-	const qse_mchar_t* str, qse_size_t len, const qse_mchar_t* word)
+const qse_mchar_t* qse_mbsxcaseword (const qse_mchar_t* str, qse_size_t len, const qse_mchar_t* word, qse_mchar_t extra_delim)
 {
 	const qse_mchar_t* ptr = str;
 	const qse_mchar_t* end = str + len;
 	const qse_mchar_t* s;
 
+	if (extra_delim == QSE_MT('\0')) extra_delim = QSE_MT(' ');
 	do
 	{
-		while (ptr < end && QSE_ISMSPACE(*ptr)) ptr++;
+		while (ptr < end && IS_MDELIM(*ptr,extra_delim)) ptr++;
 		if (ptr >= end) return QSE_NULL;
 
 		s = ptr;
-		while (ptr < end && !QSE_ISMSPACE(*ptr)) ptr++;
+		while (ptr < end && !IS_MDELIM(*ptr,extra_delim)) ptr++;
 
-		if (qse_mbsxcasecmp (s, ptr-s, word) == 0) return s;
+		if (qse_mbsxcasecmp (s, ptr - s, word) == 0) return s;
 	}
 	while (ptr < end);
 
 	return QSE_NULL;
 }
 
-const qse_wchar_t* qse_wcsword (
-	const qse_wchar_t* str, const qse_wchar_t* word)
+const qse_wchar_t* qse_wcsword (const qse_wchar_t* str, const qse_wchar_t* word, qse_wchar_t extra_delim)
 {
 	/* find a full word in a string */
 
 	const qse_wchar_t* ptr = str;
 
+	if (extra_delim == QSE_WT('\0')) extra_delim = QSE_WT(' ');
 	do
 	{
 		const qse_wchar_t* s;
 
-		while (QSE_ISWSPACE(*ptr)) ptr++;
+		while (IS_WDELIM(*ptr,extra_delim)) ptr++;
 		if (*ptr == QSE_WT('\0')) return QSE_NULL;
 
 		s = ptr;
-		while (*ptr != QSE_WT('\0') && !QSE_ISWSPACE(*ptr)) ptr++;
+		while (*ptr != QSE_WT('\0') && !IS_WDELIM(*ptr,extra_delim)) ptr++;
 
-		if (qse_wcsxcmp (s, ptr-s, word) == 0) return s;
+		if (qse_wcsxcmp (s, ptr - s, word) == 0) return s;
 	}
 	while (*ptr != QSE_WT('\0'));
 
 	return QSE_NULL;
 }
 
-const qse_wchar_t* qse_wcsxword (
-	const qse_wchar_t* str, qse_size_t len, const qse_wchar_t* word)
+const qse_wchar_t* qse_wcsxword (const qse_wchar_t* str, qse_size_t len, const qse_wchar_t* word, qse_wchar_t extra_delim)
 {
 	/* find a full word in a string */
 
@@ -148,61 +150,62 @@ const qse_wchar_t* qse_wcsxword (
 	const qse_wchar_t* end = str + len;
 	const qse_wchar_t* s;
 
+	if (extra_delim == QSE_WT('\0')) extra_delim = QSE_WT(' ');
 	do
 	{
-		while (ptr < end && QSE_ISWSPACE(*ptr)) ptr++;
+		while (ptr < end && IS_WDELIM(*ptr,extra_delim)) ptr++;
 		if (ptr >= end) return QSE_NULL;
 
 		s = ptr;
-		while (ptr < end && !QSE_ISWSPACE(*ptr)) ptr++;
+		while (ptr < end && !IS_WDELIM(*ptr,extra_delim)) ptr++;
 
-		if (qse_wcsxcmp (s, ptr-s, word) == 0) return s;
+		if (qse_wcsxcmp (s, ptr - s, word) == 0) return s;
 	}
 	while (ptr < end);
 
 	return QSE_NULL;
 }
 
-const qse_wchar_t* qse_wcscaseword (
-	const qse_wchar_t* str, const qse_wchar_t* word)
+const qse_wchar_t* qse_wcscaseword (const qse_wchar_t* str, const qse_wchar_t* word, qse_wchar_t extra_delim)
 {
 	/* find a full word in a string */
 
 	const qse_wchar_t* ptr = str;
 
+	if (extra_delim == QSE_WT('\0')) extra_delim = QSE_WT(' ');
 	do
 	{
 		const qse_wchar_t* s;
 
-		while (QSE_ISWSPACE(*ptr)) ptr++;
+		while (IS_WDELIM(*ptr,extra_delim)) ptr++;
 		if (*ptr == QSE_WT('\0')) return QSE_NULL;
 
 		s = ptr;
-		while (*ptr != QSE_WT('\0') && !QSE_ISWSPACE(*ptr)) ptr++;
+		while (*ptr != QSE_WT('\0') && !IS_WDELIM(*ptr,extra_delim)) ptr++;
 
-		if (qse_wcsxcasecmp (s, ptr-s, word) == 0) return s;
+		if (qse_wcsxcasecmp (s, ptr - s, word) == 0) return s;
 	}
 	while (*ptr != QSE_WT('\0'));
 
 	return QSE_NULL;
 }
 
-const qse_wchar_t* qse_wcsxcaseword (
-	const qse_wchar_t* str, qse_size_t len, const qse_wchar_t* word)
+const qse_wchar_t* qse_wcsxcaseword (const qse_wchar_t* str, qse_size_t len, const qse_wchar_t* word, qse_wchar_t extra_delim)
 {
 	const qse_wchar_t* ptr = str;
 	const qse_wchar_t* end = str + len;
 	const qse_wchar_t* s;
 
+	if (extra_delim == QSE_WT('\0')) extra_delim = QSE_WT(' ');
 	do
 	{
-		while (ptr < end && QSE_ISWSPACE(*ptr)) ptr++;
+		while (ptr < end && IS_WDELIM(*ptr,extra_delim)) ptr++;
 		if (ptr >= end) return QSE_NULL;
 
 		s = ptr;
-		while (ptr < end && !QSE_ISWSPACE(*ptr)) ptr++;
+		while (ptr < end && !IS_WDELIM(*ptr,extra_delim)) ptr++;
 
-		if (qse_wcsxcasecmp (s, ptr-s, word) == 0) return s;
+		if (qse_wcsxcasecmp (s, ptr - s, word) == 0) return s;
 	}
 	while (ptr < end);
 

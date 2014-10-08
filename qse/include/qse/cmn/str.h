@@ -1584,40 +1584,52 @@ QSE_EXPORT qse_wchar_t* qse_wcsxnrcasestr (
 
 const qse_mchar_t* qse_mbsword (
 	const qse_mchar_t* str,
-	const qse_mchar_t* word
+	const qse_mchar_t* word,
+	qse_mchar_t        extra_delim
 );
 
 const qse_wchar_t* qse_wcsword (
 	const qse_wchar_t* str,
-	const qse_wchar_t* word
+	const qse_wchar_t* word,
+	qse_wchar_t        extra_delim
 );
 
 /**
  * The qse_mbsxword() function finds a whole word in a string.
+ * The word can be delimited by white spaces or an extra delimiter
+ * \a extra_delim. Pass QSE_MT('\0') if no extra delimiter is
+ * needed.
  */
 const qse_mchar_t* qse_mbsxword (
 	const qse_mchar_t* str,
 	qse_size_t         len,
-	const qse_mchar_t* word
+	const qse_mchar_t* word,
+	qse_mchar_t        extra_delim
 );
 
 /**
  * The qse_wcsxword() function finds a whole word in a string.
+ * The word can be delimited by white spaces or an extra delimiter
+ * \a extra_delim. Pass QSE_WT('\0') if no extra delimiter is
+ * needed.
  */
 const qse_wchar_t* qse_wcsxword (
 	const qse_wchar_t* str,
 	qse_size_t         len,
-	const qse_wchar_t* word
+	const qse_wchar_t* word,
+	qse_wchar_t        extra_delim
 );
 
 const qse_mchar_t* qse_mbscaseword (
 	const qse_mchar_t* str,
-	const qse_mchar_t* word
+	const qse_mchar_t* word,
+	qse_mchar_t        extra_delim
 );
 
 const qse_wchar_t* qse_wcscaseword (
 	const qse_wchar_t* str,
-	const qse_wchar_t* word
+	const qse_wchar_t* word,
+	qse_wchar_t        extra_delim
 );
 
 /**
@@ -1627,7 +1639,8 @@ const qse_wchar_t* qse_wcscaseword (
 const qse_mchar_t* qse_mbsxcaseword (
 	const qse_mchar_t* str,
 	qse_size_t         len,
-	const qse_mchar_t* word
+	const qse_mchar_t* word,
+	qse_mchar_t        extra_delim
 );
 
 /**
@@ -1637,19 +1650,20 @@ const qse_mchar_t* qse_mbsxcaseword (
 const qse_wchar_t* qse_wcsxcaseword (
 	const qse_wchar_t* str,
 	qse_size_t         len,
-	const qse_wchar_t* word
+	const qse_wchar_t* word,
+	qse_wchar_t        extra_delim
 );
 
 #if defined(QSE_CHAR_IS_MCHAR)
-#	define qse_strword(str,word)          qse_mbsword(str,word)
-#	define qse_strxword(str,len,word)     qse_mbsxword(str,len,word)
-#	define qse_strcaseword(str,word)      qse_mbscaseword(str,word)
-#	define qse_strxcaseword(str,len,word) qse_mbsxcaseword(str,len,word)
+#	define qse_strword(str,word,edelim)          qse_mbsword(str,word,edelim)
+#	define qse_strxword(str,len,word,edelim)     qse_mbsxword(str,len,word,edelim)
+#	define qse_strcaseword(str,word,edelim)      qse_mbscaseword(str,word,edelim)
+#	define qse_strxcaseword(str,len,word,edelim) qse_mbsxcaseword(str,len,word,edelim)
 #else
-#	define qse_strword(str,word)          qse_wcsword(str,word)
-#	define qse_strxword(str,len,word)     qse_wcsxword(str,len,word)
-#	define qse_strcaseword(str,word)      qse_wcscaseword(str,word)
-#	define qse_strxcaseword(str,len,word) qse_wcsxcaseword(str,len,word)
+#	define qse_strword(str,word,edelim)          qse_wcsword(str,word,edelim)
+#	define qse_strxword(str,len,word,edelim)     qse_wcsxword(str,len,word,edelim)
+#	define qse_strcaseword(str,word,edelim)      qse_wcscaseword(str,word,edelim)
+#	define qse_strxcaseword(str,len,word,edelim) qse_wcsxcaseword(str,len,word,edelim)
 #endif
 
 /**
