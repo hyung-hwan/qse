@@ -685,10 +685,21 @@ static int proxy_htrd_peek_peer_output (qse_htrd_t* htrd, qse_htre_t* res)
 			}
 		}
 
-		if (qse_mbs_cat (proxy->res, (keepalive? QSE_MT("Connection: keep-alive\r\n"): QSE_MT("Connection: close\r\n"))) == (qse_size_t)-1) 
+		if ((proxy->flags & PROXY_UPGRADE_REQUESTED) && qse_htre_getscodeval(res) == 101) 
 		{
-			httpd->errnum = QSE_HTTPD_ENOMEM;
-			return -1;
+			if (qse_mbs_cat (proxy->res, QSE_MT("Connection: Upgrade\r\n")) == (qse_size_t)-1)
+			{
+				httpd->errnum = QSE_HTTPD_ENOMEM;
+				return -1;
+			}
+		}
+		else
+		{
+			if (qse_mbs_cat (proxy->res, (keepalive? QSE_MT("Connection: keep-alive\r\n"): QSE_MT("Connection: close\r\n"))) == (qse_size_t)-1) 
+			{
+				httpd->errnum = QSE_HTTPD_ENOMEM;
+				return -1;
+			}
 		}
 
 		if (qse_htre_walkheaders (res, proxy_capture_peer_header, proxy) <= -1) return -1;
@@ -778,38 +789,39 @@ static int proxy_htrd_peek_peer_output (qse_htrd_t* htrd, qse_htre_t* res)
 			/* arrange to store further contents received to proxy->res */
 			qse_htre_setconcb (res, proxy_snatch_peer_output, xtn->task);
 		}
+
+		if (proxy->flags & PROXY_UPGRADE_REQUESTED)
+		{
+			QSE_ASSERT (proxy->req != QSE_NULL);
+
+			if (qse_htre_getscodeval(res) == 101) 
+			{
+				/* Unlike raw proxying entasked for CONNECT for which disconnection
+				 * is supposed to be scheduled by the caller, protocol upgrade
+				 * can be requested over a normal http stream. A stream whose 
+				 * protocol has been switched must not be sustained after the
+				 * task is over. */
+				if (qse_httpd_entaskdisconnect (httpd, proxy->client, xtn->task) == QSE_NULL) return -1;
+				proxy->flags |= PROXY_PROTOCOL_SWITCHED;
+			}
+			else
+			{
+				/* the update request is not granted. restore the reader
+				 * to the original state so that HTTP packets can be handled
+				 * later on. */
+				qse_htrd_undummify (proxy->client->htrd);
+				qse_htre_unsetconcb (proxy->req);
+				proxy->req = QSE_NULL;
+			}
+
+			/* let the reader accept data to be fed */
+			qse_htrd_resume (proxy->client->htrd);
+
+			/*task->trigger.v[0].mask &= ~QSE_HTTPD_TASK_TRIGGER_WRITE;*/ /* peer */
+			proxy->task->trigger.cmask |= QSE_HTTPD_TASK_TRIGGER_READ; /* client-side */
+		}
 	}
 
-	if (proxy->flags & PROXY_UPGRADE_REQUESTED)
-	{
-		QSE_ASSERT (proxy->req != QSE_NULL);
-
-		if (qse_htre_getscodeval(res) == 101) 
-		{
-			/* Unlike raw proxying entasked for CONNECT for which disconnection
-			 * is supposed to be scheduled by the caller, protocol upgrade
-			 * can be requested over a normal http stream. A stream whose 
-			 * protocol has been switched must not be sustained after the
-			 * task is over. */
-			if (qse_httpd_entaskdisconnect (httpd, proxy->client, xtn->task) == QSE_NULL) return -1;
-			proxy->flags |= PROXY_PROTOCOL_SWITCHED;
-		}
-		else
-		{
-			/* the update request is not granted. restore the reader
-			 * to the original state so that HTTP packets can be handled
-			 * later on. */
-			qse_htrd_undummify (proxy->client->htrd);
-			qse_htre_unsetconcb (proxy->req);
-			proxy->req = QSE_NULL;
-		}
-
-		/* let the reader accept data to be fed */
-		qse_htrd_resume (proxy->client->htrd);
-
-		/*task->trigger.v[0].mask &= ~QSE_HTTPD_TASK_TRIGGER_WRITE;*/ /* peer */
-		proxy->task->trigger.cmask |= QSE_HTTPD_TASK_TRIGGER_READ; /* client-side */
-	}
 
 	proxy->res_pending = QSE_MBS_LEN(proxy->res) - proxy->res_consumed;
 	return 0;
