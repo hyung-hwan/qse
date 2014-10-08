@@ -53,9 +53,12 @@ struct task_proxy_t
 #define PROXY_URL_PREREWRITTEN     (1 << 12) /* URL has been prerewritten in prerewrite(). */
 #define PROXY_URL_REWRITTEN        (1 << 13)
 #define PROXY_URL_REDIRECTED       (1 << 14)
-#define PROXY_X_FORWARDED_FOR      (1 << 15) /* X-Forwarded-For added */
-#define PROXY_VIA                  (1 << 16) /* Via added to the request */
-#define PROXY_VIA_RETURNING        (1 << 17) /* Via added to the response */
+#define PROXY_X_FORWARDED_FOR      (1 << 15) /* X-Forwarded-For: added */
+#define PROXY_VIA                  (1 << 16) /* Via: added to the request */
+#define PROXY_VIA_RETURNING        (1 << 17) /* Via: added to the response */
+#define PROXY_UPGRADE_REQUESTED    (1 << 18)
+#define PROXY_PROTOCOL_SWITCHED    (1 << 19)
+#define PROXY_GOT_BAD_REQUEST      (1 << 20)
 	int flags;
 	qse_httpd_t* httpd;
 	qse_httpd_client_t* client;
@@ -340,8 +343,8 @@ static int proxy_snatch_client_input_raw (
 	/* this function is never called with ptr of QSE_NULL
 	 * because this callback is set manually after the request
 	 * has been discarded or completed in task_init_proxy() and
-	 * qse_htre_completecontent or qse-htre_discardcontent() is 
-	 * not called again. Unlinkw proxy_snatch_client_input(), 
+	 * qse_htre_completecontent() or qse_htre_discardcontent() is 
+	 * not called again. Unlike proxy_snatch_client_input(), 
 	 * it doesn't care about EOF indicated by ptr of QSE_NULL. */
 	if (ptr && !(proxy->reqflags & PROXY_REQ_FWDERR))
 	{
@@ -660,7 +663,6 @@ static int proxy_htrd_peek_peer_output (qse_htrd_t* htrd, qse_htre_t* res)
 		}
 		/* end initial line */
 
-
 		if (proxy->resflags & PROXY_RES_PEER_LENGTH_FAKE)
 		{
 			/* length should be added by force.
@@ -778,6 +780,37 @@ static int proxy_htrd_peek_peer_output (qse_htrd_t* htrd, qse_htre_t* res)
 		}
 	}
 
+	if (proxy->flags & PROXY_UPGRADE_REQUESTED)
+	{
+		QSE_ASSERT (proxy->req != QSE_NULL);
+
+		if (qse_htre_getscodeval(res) == 101) 
+		{
+			/* Unlike raw proxying entasked for CONNECT for which disconnection
+			 * is supposed to be scheduled by the caller, protocol upgrade
+			 * can be requested over a normal http stream. A stream whose 
+			 * protocol has been switched must not be sustained after the
+			 * task is over. */
+			if (qse_httpd_entaskdisconnect (httpd, proxy->client, xtn->task) == QSE_NULL) return -1;
+			proxy->flags |= PROXY_PROTOCOL_SWITCHED;
+		}
+		else
+		{
+			/* the update request is not granted. restore the reader
+			 * to the original state so that HTTP packets can be handled
+			 * later on. */
+			qse_htrd_undummify (proxy->client->htrd);
+			qse_htre_unsetconcb (proxy->req);
+			proxy->req = QSE_NULL;
+		}
+
+		/* let the reader accept data to be fed */
+		qse_htrd_resume (proxy->client->htrd);
+
+		/*task->trigger.v[0].mask &= ~QSE_HTTPD_TASK_TRIGGER_WRITE;*/ /* peer */
+		proxy->task->trigger.cmask |= QSE_HTTPD_TASK_TRIGGER_READ; /* client-side */
+	}
+
 	proxy->res_pending = QSE_MBS_LEN(proxy->res) - proxy->res_consumed;
 	return 0;
 }
@@ -815,11 +848,6 @@ static void proxy_forward_client_input_to_peer (qse_httpd_t* httpd, qse_httpd_ta
 			/* normal forwarding */
 			qse_ssize_t n;
 
-#if 0
-qse_printf (QSE_T("PROXY FORWARD: @@@@@@@@@@WRITING[%.*hs]\n"),
-	(int)QSE_MBS_LEN(proxy->reqfwdbuf),
-	QSE_MBS_PTR(proxy->reqfwdbuf));
-#endif
 			httpd->errnum = QSE_HTTPD_ENOERR;
 			n = httpd->opt.scb.peer.send (
 				httpd, &proxy->peer,
@@ -854,13 +882,15 @@ to the head all the time..  grow the buffer to a certain limit. */
 				qse_mbs_del (proxy->reqfwdbuf, 0, n);
 				if (QSE_MBS_LEN(proxy->reqfwdbuf) <= 0)
 				{
-					if (proxy->req == QSE_NULL) goto done;
-					else task->trigger.v[0].mask &= ~QSE_HTTPD_TASK_TRIGGER_WRITE;
+					/* the forwarding buffer is emptied after sending. */
+					if (!proxy->req) goto done;
+					task->trigger.v[0].mask &= ~QSE_HTTPD_TASK_TRIGGER_WRITE;
+					
 				}
 			}
 		}
 	}
-	else if (proxy->req == QSE_NULL)
+	else if (!proxy->req)
 	{
 	done:
 		/* there is nothing to read from the client side and
@@ -1011,7 +1041,7 @@ static int task_init_proxy (
 		/* the caller must make sure that the actual content is discarded or completed
 		 * and the following data is treated as contents */
 		QSE_ASSERT (arg->req->state & (QSE_HTRE_DISCARDED | QSE_HTRE_COMPLETED));
-		QSE_ASSERT (qse_htrd_getoption(client->htrd) & QSE_HTRD_DUMMY);
+		/*QSE_ASSERT (qse_htrd_getoption(client->htrd) & QSE_HTRD_DUMMY);*/
 
 		proxy->req = arg->req;
 		qse_htre_setconcb (proxy->req, proxy_snatch_client_input_raw, task);
@@ -1228,13 +1258,55 @@ qse_mbs_ncat (proxy->reqfwdbuf, spc, QSE_COUNTOF(spc));
 			snatch_needed = 1;
 		}
 
-		if (snatch_needed)
+		if (qse_htre_getheaderval(arg->req, QSE_MT("Upgrade")))
 		{
-			/* set up a callback to be called when the request content
-			 * is fed to the htrd reader. qse_htre_addcontent() that 
-			 * htrd calls invokes this callback. */
+			/* Upgrade: is found in the request header */
+			const qse_htre_hdrval_t* hv;
+			hv = qse_htre_getheaderval(arg->req, QSE_MT("Connection"));
+			while (hv)
+			{
+				if (qse_mbscaseword (hv->ptr, QSE_MT("Upgrade"), QSE_MT(','))) break;
+				hv = hv->next;
+			}
+
+			if (!hv) goto no_upgrade;
+
+			if (snatch_needed)
+			{
+				/* The upgrade request can't have contents.
+				 * Not allowing contents makes implementation easier. */
+				httpd->errnum = QSE_HTTPD_EBADREQ;
+				proxy->flags |= PROXY_GOT_BAD_REQUEST;
+				goto oops;
+			}
+
+			/* cause feeding of client data to fail. i do this because
+			 * it's unknown if upgrade will get granted or not. 
+			 * if it's granted, the client input should be treated
+			 * as an octet string. If not, it should still be handled
+			 * as HTTP. */
+			qse_htrd_suspend (client->htrd);
+
+			/* prearrange to not parse client input when feeding is resumed */
+			qse_htrd_dummify (client->htrd);
+
+			proxy->flags |= PROXY_UPGRADE_REQUESTED;
 			proxy->req = arg->req;
-			qse_htre_setconcb (proxy->req, proxy_snatch_client_input, task);
+
+			/* prearrange to capature client input when feeding is resumed */
+			qse_htre_setconcb (proxy->req, proxy_snatch_client_input_raw, proxy->task);
+		}
+		else 
+		{
+		no_upgrade:
+			if (snatch_needed)
+			{
+				/* set up a callback to be called when the request content
+				 * is fed to the htrd reader. qse_htre_addcontent() that 
+				 * htrd calls invokes this callback. */
+				proxy->req = arg->req;
+				qse_htre_setconcb (proxy->req, proxy_snatch_client_input, task);
+			}
 		}
 	}
 
@@ -1253,9 +1325,6 @@ nomem_oops:
 	/* goto oops */
 
 oops:
-
-printf ("init_proxy failed...........................................\n");
-	
 	/* since a new task can't be added in the initializer,
 	 * i mark that initialization failed and let task_main_proxy()
 	 * add an error task */
@@ -1276,7 +1345,6 @@ printf ("init_proxy failed...........................................\n");
 	proxy->flags |= PROXY_INIT_FAILED;
 	task->ctx = proxy;
 
-	
 	return 0;
 }
 
@@ -1289,6 +1357,16 @@ static void task_fini_proxy (
 
 	if (proxy->peer_status & PROXY_PEER_OPEN) 
 		httpd->opt.scb.peer.close (httpd, &proxy->peer);
+
+	if ((proxy->flags & (PROXY_UPGRADE_REQUESTED | PROXY_PROTOCOL_SWITCHED)) == PROXY_UPGRADE_REQUESTED)
+	{
+		/* upgrade requested but protocol switching not completed yet.
+		 * this can happen because dummification is performed before
+		 * the 101 response is received. */
+
+		/* no harm to call this multiple times */
+		qse_htrd_undummify (proxy->client->htrd); 
+	}
 
 	if (proxy->res) qse_mbs_close (proxy->res);
 	if (proxy->peer_htrd) qse_htrd_close (proxy->peer_htrd);
@@ -1311,24 +1389,12 @@ printf ("task_main_proxy_5 trigger[0].mask=%d trigger[1].mask=%d trigger[2].mask
 	task->trigger.v[0].mask, task->trigger.v[1].mask, task->trigger.cmask);
 #endif
 
-#if 0
-	if (task->trigger.cmask & QSE_HTTPD_TASK_TRIGGER_READABLE)
-	{
-		/* if the client side is readable */
-		proxy_forward_client_input_to_peer (httpd, task, 0);
-	}
-	else if (task->trigger.v[0].mask & QSE_HTTPD_TASK_TRIGGER_WRITABLE)
-	{
-		/* if the peer side is writable while the client side is not readable*/
-		proxy_forward_client_input_to_peer (httpd, task, 1);
-	}
-#endif
 	proxy_forward_client_input_to_peer (httpd, task);
 
 	if (/*(task->trigger.cmask & QSE_HTTPD_TASK_TRIGGER_WRITABLE) && */ proxy->buflen > 0)
 	{
-		/* wrote to the client socket as long as there's something to
-		 * write. it's safe to do so as the socket is non-blocking. 
+		/* write to the client socket as long as there's something.
+		 * it's safe to do so as the socket is non-blocking. 
 		 * i commented out the check in the 'if' condition above */
 
 		/* TODO: check if proxy outputs more than content-length if it is set... */
@@ -1352,7 +1418,7 @@ printf ("task_main_proxy_5 trigger[0].mask=%d trigger[1].mask=%d trigger[2].mask
 	}
 
 	/* if forwarding didn't finish, something is not really right... 
-	 * so long as the output from CGI is finished, no more forwarding
+	 * so long as the output from peer is finished, no more forwarding
 	 * is performed */
 	return (proxy->buflen > 0 || proxy->req ||
 	        (proxy->reqfwdbuf && QSE_MBS_LEN(proxy->reqfwdbuf) > 0))? 1: 0;
@@ -1362,23 +1428,13 @@ static int task_main_proxy_4 (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
 {
 	task_proxy_t* proxy = (task_proxy_t*)task->ctx;
-	
+
 #if 0
-printf ("task_main_proxy_4 trigger[0].mask=%d trigger[1].mask=%d trigger[2].mask=%d\n", 
+printf ("task_main_proxy_4 trigger[0].mask=%d trigger[1].mask=%d trigger.cmask=%d\n", 
 	task->trigger.v[0].mask, task->trigger.v[1].mask, task->trigger.cmask);
 #endif
 
 	proxy_forward_client_input_to_peer (httpd, task);
-/*
-	if (task->trigger.cmask & QSE_HTTPD_TASK_TRIGGER_READABLE)
-	{
-		proxy_forward_client_input_to_peer (httpd, task, 0);
-	}
-	else if (task->trigger.v[0].mask & QSE_HTTPD_TASK_TRIGGER_WRITABLE)
-	{
-		proxy_forward_client_input_to_peer (httpd, task, 1);
-	}
-*/
 
 	if ((task->trigger.v[0].mask & QSE_HTTPD_TASK_TRIGGER_READABLE) &&
 	    proxy->buflen < QSE_SIZEOF(proxy->buf))
@@ -1436,6 +1492,12 @@ printf ("task_main_proxy_4 trigger[0].mask=%d trigger[1].mask=%d trigger[2].mask
 				qse_htre_unsetconcb (proxy->req);
 				proxy->req = QSE_NULL; 
 			}
+			else if (proxy->flags & PROXY_PROTOCOL_SWITCHED)
+			{
+				qse_htrd_undummify (proxy->client->htrd); 
+				qse_htre_unsetconcb (proxy->req);
+				proxy->req = QSE_NULL; 
+			}
 
 			return 1;
 		}
@@ -1443,7 +1505,7 @@ printf ("task_main_proxy_4 trigger[0].mask=%d trigger[1].mask=%d trigger[2].mask
 		{
 			proxy->buflen += n;
 			proxy->peer_output_received += n;
-	
+
 			if (proxy->resflags & PROXY_RES_PEER_LENGTH) 
 			{
 				QSE_ASSERT (!(proxy->flags & PROXY_RAW));
@@ -1507,22 +1569,12 @@ static int task_main_proxy_3 (
 
 	task_proxy_t* proxy = (task_proxy_t*)task->ctx;
 
-#if  0
-qse_printf (QSE_T("task_main_proxy_3 trigger[0].mask=%d trigger[1].mask=%d trigger[2].mask=%d\n"), 
+#if 0
+printf ("task_main_proxy_3 trigger[0].mask=%d trigger[1].mask=%d trigger[2].mask=%d\n", 
 	task->trigger.v[0].mask, task->trigger.v[1].mask, task->trigger.cmask);
 #endif
 
 	proxy_forward_client_input_to_peer (httpd, task);
-/*
-	if (task->trigger.cmask & QSE_HTTPD_TASK_TRIGGER_READABLE)
-	{
-		proxy_forward_client_input_to_peer (httpd, task, 0);
-	}
-	else if (task->trigger.v[0].mask & QSE_HTTPD_TASK_TRIGGER_WRITABLE)
-	{
-		proxy_forward_client_input_to_peer (httpd, task, 1);
-	}
-*/
 
 	if (/*(task->trigger.cmask & QSE_HTTPD_TASK_TRIGGER_WRITABLE) &&*/ proxy->res_pending > 0)
 	{
@@ -1566,6 +1618,12 @@ qse_printf (QSE_T("task_main_proxy_3 trigger[0].mask=%d trigger[1].mask=%d trigg
 				qse_mbs_clear (proxy->res);
 				proxy->res_consumed = 0;
 
+				if (proxy->flags & PROXY_PROTOCOL_SWITCHED) 
+				{
+					task->trigger.cmask |= QSE_HTTPD_TASK_TRIGGER_READ;
+					goto read_more;
+				}
+			
 				if ((proxy->resflags & PROXY_RES_CLIENT_CHUNK) ||
 					((proxy->resflags & PROXY_RES_PEER_LENGTH) && proxy->peer_output_received >= proxy->peer_output_length))
 				{
@@ -1575,6 +1633,7 @@ qse_printf (QSE_T("task_main_proxy_3 trigger[0].mask=%d trigger[1].mask=%d trigg
 				}
 				else
 				{
+				read_more:
 					/* there are still more to read from the peer.
 					 * arrange to read the remaining contents from the peer */
 					task->main = task_main_proxy_4;
@@ -1596,24 +1655,7 @@ static int task_main_proxy_2 (
 	task_proxy_t* proxy = (task_proxy_t*)task->ctx;
 	int http_errnum = 500;
 
-#if 0
-printf ("task_main_proxy_2 trigger[0].mask=%d trigger[1].mask=%d cmask=%d\n", 
-	task->trigger.v[0].mask, task->trigger.v[1].mask, task->trigger.cmask);
-#endif
-
 	proxy_forward_client_input_to_peer (httpd, task);
-#if 0
-	if (task->trigger.cmask & QSE_HTTPD_TASK_TRIGGER_READABLE)
-	{
-		/* client is readable */
-		proxy_forward_client_input_to_peer (httpd, task, 0);
-	}
-	else if (task->trigger.v[0].mask & QSE_HTTPD_TASK_TRIGGER_WRITABLE)
-	{
-		/* client is not readable but peer is writable */
-		proxy_forward_client_input_to_peer (httpd, task, 1);
-	}
-#endif
 
 	if (/*(task->trigger.cmask & QSE_HTTPD_TASK_TRIGGER_WRITABLE) && */ proxy->res_pending > 0)
 	{
@@ -1624,8 +1666,8 @@ printf ("task_main_proxy_2 trigger[0].mask=%d trigger[1].mask=%d cmask=%d\n",
 		 * '100 Continue' to the client. 
 		 *
 		 * attempt to write to the client regardless of writability of
-		 * the cleint socket as it is non-blocking. see the check commented
-		 * in the 'if' condition above. */
+		 * the cleint socket as it is non-blocking. see the check commented 
+		 * out in the 'if' condition above. */
 
 		qse_ssize_t n;
 		qse_size_t count;
@@ -1729,14 +1771,6 @@ printf ("task_main_proxy_2 trigger[0].mask=%d trigger[1].mask=%d cmask=%d\n",
 			proxy->buflen += n;
 		}
 
-#if 0
-qse_printf (QSE_T("#####PROXY FEEDING %d [\n"), (int)proxy->buflen);
-{
-int i;
-for (i = 0; i < proxy->buflen; i++) qse_printf (QSE_T("%hc"), proxy->buf[i]);
-}
-qse_printf (QSE_T("]\n"));
-#endif
 		if (proxy->buflen > 0)
 		{
 			if (qse_htrd_feed (proxy->peer_htrd, proxy->buf, proxy->buflen) <= -1)
@@ -1749,7 +1783,13 @@ qse_printf (QSE_T("]\n"));
 			proxy->buflen = 0;
 		}
 
-		if (QSE_MBS_LEN(proxy->res) > 0)
+		if (proxy->flags & PROXY_PROTOCOL_SWITCHED)
+		{
+			task->trigger.cmask = QSE_HTTPD_TASK_TRIGGER_READ;
+			if (QSE_MBS_LEN(proxy->res) > 0) task->trigger.cmask |= QSE_HTTPD_TASK_TRIGGER_WRITE;
+			task->main = task_main_proxy_3;
+		}
+		else if (QSE_MBS_LEN(proxy->res) > 0)
 		{
 			if (proxy->resflags & PROXY_RES_RECEIVED_RESCON)
 			{
@@ -1842,10 +1882,17 @@ static int task_main_proxy_1 (
 		{
 			/* connected to the peer now */
 			proxy->peer_status |= PROXY_PEER_CONNECTED;
-			if (proxy->req)
+			if (!(proxy->flags & PROXY_UPGRADE_REQUESTED) && proxy->req)
 			{
 				/* need to read from the client-side as
-				 * the content has not been received in full. */
+				 * the content has not been received in full. 
+				 *
+				 * proxy->req is set to the original request when snatching is
+				 * required. it's also set to the original request when protocol
+				 * upgrade is requested. however, a upgrade request containing
+				 * contents is treated as a bad request. so i don't arrange
+				 * to read from the client side when PROXY_UPGRADE_REQUESTED
+				 * is on. */
 				task->trigger.cmask |= QSE_HTTPD_TASK_TRIGGER_READ;
 			}
 
@@ -2124,7 +2171,12 @@ static int task_main_proxy (
 
 	if (proxy->flags & PROXY_INIT_FAILED) 
 	{
-		if (proxy->flags & PROXY_PEER_NAME_UNRESOLVED) http_errnum = 404; /* 404 Not Found */
+		if (proxy->flags & PROXY_GOT_BAD_REQUEST) 
+		{
+			http_errnum = 400; /* 400 Bad Request */
+			proxy->keepalive = 0; /* force Connect: close in the response */
+		}
+		else if (proxy->flags & PROXY_PEER_NAME_UNRESOLVED) http_errnum = 404; /* 404 Not Found */
 		goto oops;
 	}
 
@@ -2194,7 +2246,7 @@ static int task_main_proxy (
 			 *       for a socket descriptor into 1 event.
 			 * 
 			 * if this happens, qse_http_resolvename() can be called 
-			 * multiple times.
+			 * multiple times. set this flag to prevent double resolution.
 			 */
 			proxy->flags |= PROXY_PEER_NAME_RESOLVING; 
 
@@ -2268,10 +2320,18 @@ static int task_main_proxy (
 	{
 		/* peer connected already */
 		proxy->peer_status |= PROXY_PEER_CONNECTED;
-		if (proxy->req)
+		if (!(proxy->flags & PROXY_UPGRADE_REQUESTED) && proxy->req)
 		{
 			/* need to read from the client-side as
-			 * the content has not been received in full. */
+			 * the content has not been received in full. 
+			 *
+			 * proxy->req is set to the original request when snatching is
+			 * required. it's also set to the original request when protocol
+			 * upgrade is requested. however, a upgrade request containing
+			 * contents is treated as a bad request. so i don't arrange
+			 * to read from the client side when PROXY_UPGRADE_REQUESTED
+			 * is on.
+			 */
 			task->trigger.cmask = QSE_HTTPD_TASK_TRIGGER_READ;
 		}
 

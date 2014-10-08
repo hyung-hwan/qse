@@ -504,4 +504,3 @@ qse_mchar_t* qse_perenchttpstrdup (int opt, const qse_mchar_t* str, qse_mmgr_t* 
 
 	return buf;
 }
-

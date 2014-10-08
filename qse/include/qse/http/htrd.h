@@ -38,7 +38,8 @@ enum qse_htrd_errnum_t
 	QSE_HTRD_EBADRE,
 	QSE_HTRD_EBADHDR,
 	QSE_HTRD_ERECBS,
-	QSE_HTRD_ECONCB
+	QSE_HTRD_ECONCB,
+	QSE_HTRD_ESUSPENDED
 };
 
 typedef enum qse_htrd_errnum_t qse_htrd_errnum_t;
@@ -56,8 +57,7 @@ enum qse_htrd_option_t
 	QSE_HTRD_REQUEST         = (1 << 4), /**< parse input as a request */
 	QSE_HTRD_RESPONSE        = (1 << 5), /**< parse input as a response */
 	QSE_HTRD_TRAILERS        = (1 << 6), /**< store trailers in a separate table */
-	QSE_HTRD_STRICT          = (1 << 7), /**< be more picky */
-	QSE_HTRD_DUMMY           = (1 << 8)  /**< be dummy */
+	QSE_HTRD_STRICT          = (1 << 7)  /**< be more picky */
 };
 
 typedef enum qse_htrd_option_t qse_htrd_option_t;
@@ -75,6 +75,7 @@ struct qse_htrd_t
 	qse_mmgr_t* mmgr;
 	qse_htrd_errnum_t errnum;
 	int option;
+	int flags;
 
 	const qse_htrd_recbs_t* recbs;
 
@@ -149,7 +150,7 @@ QSE_EXPORT void qse_htrd_clear (
 );
 
 QSE_EXPORT int qse_htrd_getoption (
-	qse_htrd_t* htrd	
+	qse_htrd_t* htrd
 );
 
 QSE_EXPORT void qse_htrd_setoption (
@@ -182,6 +183,22 @@ QSE_EXPORT int qse_htrd_feed (
  * connection is closed.
  */ 
 QSE_EXPORT int qse_htrd_halt (
+	qse_htrd_t* htrd
+);
+
+QSE_EXPORT void qse_htrd_suspend (
+	qse_htrd_t* htrd
+);
+
+QSE_EXPORT void qse_htrd_resume (
+	qse_htrd_t* htrd
+);
+
+QSE_EXPORT void  qse_htrd_dummify (
+	qse_htrd_t* htrd
+);
+
+QSE_EXPORT void qse_htrd_undummify (
 	qse_htrd_t* htrd
 );
 

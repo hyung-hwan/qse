@@ -792,9 +792,6 @@ resolved:
 static void tmr_dns_tmout_update (qse_tmr_t* tmr, qse_tmr_index_t old_index, qse_tmr_index_t new_index, void* ctx)
 {
 	dns_req_t* req = (dns_req_t*)ctx;
-
-printf (">>tmr_dns_tmout_updated  req->>%p\n", req);
-printf (">>tmr_dns_tmout_updated existing->%d, old->%d new->%d\n", (int)req->tmr_tmout, (int)old_index, (int)new_index);
 	QSE_ASSERT (req->tmr_tmout == old_index);
 	req->tmr_tmout = new_index;
 }

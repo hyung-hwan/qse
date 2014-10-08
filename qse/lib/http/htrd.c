@@ -25,7 +25,12 @@
 
 static const qse_mchar_t NUL = QSE_MT('\0');
 
+/* for htrd->fed.s.flags */
 #define CONSUME_UNTIL_CLOSE (1 << 0)
+
+/* for htrd->flags */
+#define FEEDING_SUSPENDED   (1 << 0)
+#define FEEDING_DUMMIFIED   (1 << 1)
 
 static QSE_INLINE int is_whspace_octet (qse_mchar_t c)
 {
@@ -457,6 +462,7 @@ badre:
 void qse_htrd_clear (qse_htrd_t* htrd)
 {
 	clear_feed (htrd);
+	htrd->flags = 0;
 }
 
 qse_mmgr_t* qse_htrd_getmmgr (qse_htrd_t* htrd)
@@ -491,21 +497,21 @@ void qse_htrd_setrecbs (qse_htrd_t* htrd, const qse_htrd_recbs_t* recbs)
 
 static int capture_connection (qse_htrd_t* htrd, qse_htb_pair_t* pair)
 {
-	int n;
 	qse_htre_hdrval_t* val;
 
 	val = QSE_HTB_VPTR(pair);
 	while (val->next) val = val->next;
 
-	n = qse_mbscmp (val->ptr, QSE_MT("close"));
-	if (n == 0)
+	/* The value for Connection: may get comma-separated. 
+	 * so use qse_mbscaseword() instead of qse_mbscmp(). */
+
+	if (qse_mbscaseword (val->ptr, QSE_MT("close"), QSE_MT(',')))
 	{
 		htrd->re.flags &= ~QSE_HTRE_ATTR_KEEPALIVE;
 		return 0;
 	}
 
-	n = qse_mbscmp (val->ptr, QSE_MT("keep-alive"));
-	if (n == 0)
+	if (qse_mbscaseword (val->ptr, QSE_MT("keep-alive"), QSE_MT(',')))
 	{
 		htrd->re.flags |= QSE_HTRE_ATTR_KEEPALIVE;
 		return 0;
@@ -758,7 +764,7 @@ static qse_htb_pair_t* hdr_cbserter (
 		 * character is used by Set-Cookie in a way that conflicts with 
 		 * such folding.
 		 * 	
-		 * So i just maintain the list of valuea for a key instead of
+		 * So i just maintain the list of values for a key instead of
 		 * folding them.
 		 */
 
@@ -826,7 +832,7 @@ qse_mchar_t* parse_header_field (
 			{
 				/* ignore a line without a colon */
 				p++;
-				return p;		
+				return p;
 			}
 		}
 		goto badhdr;
@@ -945,7 +951,6 @@ static QSE_INLINE int parse_initial_line_and_headers (
 	}
 	while (1);
 
-		
 	return 0;
 }
 
@@ -1061,10 +1066,10 @@ static const qse_mchar_t* get_trailing_headers (
 					{
 						while (is_whspace_octet(*p)) p++;
 						if (*p == '\0') break;
-	
+
 						/* TODO: return error if protocol is 0.9.
 						 * HTTP/0.9 must not get headers... */
-	
+
 						p = parse_header_field (
 							htrd, p, 
 							((htrd->option & QSE_HTRD_TRAILERS)? &htrd->re.trailers: &htrd->re.hdrtab)
@@ -1107,7 +1112,14 @@ int qse_htrd_feed (qse_htrd_t* htrd, const qse_mchar_t* req, qse_size_t len)
 
 	QSE_ASSERT (len > 0);
 
-	if (htrd->option & QSE_HTRD_DUMMY)
+	if (htrd->flags & FEEDING_SUSPENDED)
+	{
+		htrd->errnum = QSE_HTRD_ESUSPENDED;
+		return -1;
+	}
+
+	/*if (htrd->option & QSE_HTRD_DUMMY)*/
+	if (htrd->flags & FEEDING_DUMMIFIED)
 	{
 		/* treat everything as contents.
 		 * i don't care about headers or whatsoever. */
@@ -1159,13 +1171,13 @@ int qse_htrd_feed (qse_htrd_t* htrd, const qse_mchar_t* req, qse_size_t len)
 
 		switch (b)
 		{
-			case '\0':
+			case QSE_MT('\0'):
 				/* guarantee that the request does not contain
 				 * a null character */
 				htrd->errnum = QSE_HTRD_EBADRE;
 				return -1;
 
-			case '\n':
+			case QSE_MT('\n'):
 			{
 				if (htrd->fed.s.crlf <= 1) 
 				{
@@ -1302,7 +1314,6 @@ int qse_htrd_feed (qse_htrd_t* htrd, const qse_mchar_t* req, qse_size_t len)
 						{
 							htrd->fed.s.need = htrd->re.attr.content_length;
 						}
-				
 					}
 
 					if (htrd->fed.s.need > 0)
@@ -1348,7 +1359,7 @@ int qse_htrd_feed (qse_htrd_t* htrd, const qse_mchar_t* req, qse_size_t len)
 								htrd->fed.s.need = 0;
 						}
 					}
-	
+
 					if (htrd->fed.s.chunk.phase == GET_CHUNK_DATA)
 					{
 						QSE_ASSERT (htrd->fed.s.need == 0);
@@ -1358,7 +1369,7 @@ int qse_htrd_feed (qse_htrd_t* htrd, const qse_mchar_t* req, qse_size_t len)
 						while (ptr < end && is_space_octet(*ptr)) ptr++;
 						if (ptr < end)
 						{
-							if (*ptr == '\n') 
+							if (*ptr == QSE_MT('\n')) 
 							{
 								/* end of chunk data. */
 								ptr++;
@@ -1442,10 +1453,17 @@ qse_printf (QSE_T("CONTENT_LENGTH %d, RAW HEADER LENGTH %d\n"),
 					clear_feed (htrd);
 					if (ptr >= end) return 0; /* no more feeds to handle */
 
-					if (htrd->option & QSE_HTRD_DUMMY)
+					if (htrd->flags & FEEDING_SUSPENDED)
+					{
+						htrd->errnum = QSE_HTRD_ESUSPENDED;
+						return -1;
+					}
+
+					/*if (htrd->option & QSE_HTRD_DUMMY)*/
+					if (htrd->flags & FEEDING_DUMMIFIED)
 					{
 						/* once the mode changes to RAW in a callback,
-						 * left-over is pused as contents */
+						 * left-over is pushed as contents */
 						if (ptr < end)
 							return push_content (htrd, ptr, end - ptr);
 						else
@@ -1466,7 +1484,7 @@ qse_printf (QSE_T("CONTENT_LENGTH %d, RAW HEADER LENGTH %d\n"),
 				break;
 			}
 
-			case '\r':
+			case QSE_MT('\r'):
 				if (htrd->fed.s.crlf == 0 || htrd->fed.s.crlf == 2) 
 					htrd->fed.s.crlf++;
 				else htrd->fed.s.crlf = 1;
@@ -1531,6 +1549,26 @@ int qse_htrd_halt (qse_htrd_t* htrd)
 	}
 
 	return 0;
+}
+
+void qse_htrd_suspend (qse_htrd_t* htrd)
+{
+	htrd->flags |= FEEDING_SUSPENDED;
+}
+
+void qse_htrd_resume (qse_htrd_t* htrd)
+{
+	htrd->flags &= ~FEEDING_SUSPENDED;
+}
+
+void qse_htrd_dummify (qse_htrd_t* htrd)
+{
+	htrd->flags |= FEEDING_DUMMIFIED;
+}
+
+void qse_htrd_undummify (qse_htrd_t* htrd)
+{
+	htrd->flags &= ~FEEDING_DUMMIFIED;
 }
 
 #if 0

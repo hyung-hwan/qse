@@ -711,7 +711,6 @@ qse_printf (QSE_T("failed to accept from server [%s] [%d]\n"), tmp, server->hand
 static void tmr_idle_update (qse_tmr_t* tmr, qse_tmr_index_t old_index, qse_tmr_index_t new_index, void* ctx)
 {
 	qse_httpd_client_t* client = (qse_httpd_client_t*)ctx;
-printf ("tmr_idle updated old_index %d new_index %d tmr_idle %d\n", (int)old_index, (int)new_index, (int)client->tmr_idle);
 	QSE_ASSERT (client->tmr_idle == old_index);
 	client->tmr_idle = new_index;
 }
@@ -720,7 +719,6 @@ static void tmr_idle_handle (qse_tmr_t* tmr, const qse_ntime_t* now, void* ctx)
 {
 	qse_httpd_client_t* client = (qse_httpd_client_t*)ctx;
 
-printf ("check if client is idle...\n");
 	if (qse_cmptime(now, &client->last_active) >= 0)
 	{
 		qse_ntime_t diff;
@@ -728,14 +726,12 @@ printf ("check if client is idle...\n");
 		if (qse_cmptime(&diff, &client->server->httpd->opt.idle_limit) >= 0)
 		{
 			/* this client is idle */
-printf ("client is idle purging....\n");
 			purge_client (client->server->httpd, client);
 		}
 		else
 		{
 			qse_tmr_event_t idle_event;
 
-printf ("client is NOT idle....\n");
 			QSE_ASSERT (client->server->httpd->tmr == tmr);
 
 			/*qse_gettime (&idle_event.when);*/

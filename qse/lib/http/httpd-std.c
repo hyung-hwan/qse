@@ -2242,7 +2242,7 @@ printf ("SWITCHING HTRD TO DUMMY.... %s\n", qse_htre_getqpath(req));
 			/* Switch the http read to a dummy mode so that the subsqeuent
 			 * input(request) is just treated as data to the request just 
 			 * completed */
-			qse_htrd_setoption (client->htrd, qse_htrd_getoption(client->htrd) | QSE_HTRD_DUMMY);
+			qse_htrd_dummify (client->htrd);
 
 			if (server_xtn->makersrc (httpd, client, req, &rsrc) <= -1)
 			{
