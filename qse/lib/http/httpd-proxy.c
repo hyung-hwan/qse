@@ -796,6 +796,13 @@ static int proxy_htrd_peek_peer_output (qse_htrd_t* htrd, qse_htre_t* res)
 
 			if (qse_htre_getscodeval(res) == 101) 
 			{
+				if (proxy->resflags & PROXY_RES_PEER_LENGTH) 
+				{
+					/* the response to 'Upgrade' must not contain contents */
+					if (proxy->peer_output_length > 0) goto no_upgrade;
+					else proxy->resflags &= ~PROXY_RES_PEER_LENGTH;
+				}
+
 				/* Unlike raw proxying entasked for CONNECT for which disconnection
 				 * is supposed to be scheduled by the caller, protocol upgrade
 				 * can be requested over a normal http stream. A stream whose 
@@ -806,6 +813,7 @@ static int proxy_htrd_peek_peer_output (qse_htrd_t* htrd, qse_htre_t* res)
 			}
 			else
 			{
+			no_upgrade:
 				/* the update request is not granted. restore the reader
 				 * to the original state so that HTTP packets can be handled
 				 * later on. */
@@ -1518,7 +1526,7 @@ printf ("task_main_proxy_4 trigger[0].mask=%d trigger[1].mask=%d trigger.cmask=%
 			proxy->buflen += n;
 			proxy->peer_output_received += n;
 
-			if (proxy->resflags & PROXY_RES_PEER_LENGTH) 
+			if (proxy->resflags & PROXY_RES_PEER_LENGTH)
 			{
 				QSE_ASSERT (!(proxy->flags & PROXY_RAW));
 
