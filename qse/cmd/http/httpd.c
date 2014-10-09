@@ -465,7 +465,6 @@ static int get_server_root (
 	if (qinfo->client->status & QSE_HTTPD_CLIENT_INTERCEPTED)
 	{
 		/* transparent proxying */
-
 		if (loccfg->proxy.allow_intercept)
 		{
 			root->type = QSE_HTTPD_SERVERSTD_ROOT_PROXY;
@@ -589,6 +588,7 @@ static int get_server_root (
 	}
 	
 	/* local file system */
+
 	root->type = QSE_HTTPD_SERVERSTD_ROOT_PATH;
 	root->u.path.val = loccfg->xcfg[XCFG_ROOT];
 	root->u.path.rpl = loccfg->locname.len;

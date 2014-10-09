@@ -1833,7 +1833,7 @@ static int dir_open (qse_httpd_t* httpd, const qse_mchar_t* path, qse_httpd_hnd_
 		QSE_MMGR_FREE (httpd->mmgr, d);
 		return -1;
 	}
-		
+
 	if (httpd->opt.trait & QSE_HTTPD_LOGACT)
 	{
 		qse_httpd_act_t msg;
@@ -2510,7 +2510,7 @@ static qse_mchar_t* merge_paths (
 	qse_mchar_t* xpath;
 	const qse_mchar_t* ta[4];
 	qse_size_t idx = 0;
-		
+
 	ta[idx++] = base;
 	if (path[0] != QSE_MT('\0'))
 	{
@@ -2553,11 +2553,17 @@ static void merge_paths_to_buf (
 
 struct rsrc_tmp_t
 {
-	const qse_mchar_t* qpath;
+	const qse_mchar_t* qpath; /* query path in the request */
 	const qse_mchar_t* idxfile;
 	qse_mchar_t* xpath;
 
 	qse_size_t qpath_len;
+
+	/* pointer to the first query path segment excluding the location name.
+	 * for example, if a query path /a/b/c matches a location '/a',
+	 * it points to '/b/c'. '/a' is replaced by the document root.
+	 * and '/b/c' is concatenated to the document root. if the document
+	 * root is '/var/www', the final path becomes /var/www/b/c'.  */
 	const qse_mchar_t* qpath_rp;
 
 	qse_httpd_serverstd_root_t root;
@@ -2616,7 +2622,7 @@ static int attempt_cgi (
 			goto bingo;
 		}
 	}
-	else
+	else if (tmp->qpath_rp[0] != QSE_MT('\0'))
 	{
 		/* inspect each segment from the head. */
 		const qse_mchar_t* ptr;
@@ -2828,6 +2834,16 @@ static int make_resource (
 	/* handle the request locally */
 	QSE_ASSERT (tmp.root.type == QSE_HTTPD_SERVERSTD_ROOT_PATH);
 
+	if (tmp.qpath[0] != QSE_MT('/'))
+	{
+		/* this implementation doesn't accept a query path 
+		 * not beginning with a slash when handling the request
+		 * locally. */
+		target->type = QSE_HTTPD_RSRC_ERROR;
+		target->u.error.code = 400;
+		return 0;
+	}
+
 /*****************************************************************************
  * BUG BUG BUG !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1
  * TODO: calling the realm query here is wrong especially if the prefix path is resolved to a cgi.
@@ -2844,6 +2860,16 @@ static int make_resource (
 	/* default to the root directory. */
 	if (!tmp.root.u.path.val) tmp.root.u.path.val = QSE_MT("/"); 
 
+	/* query path /a/b/c
+	 * location matched /a/b
+	 * rpl is set to 4(/a/b). rpl, in fact, can't be larger than the query length.
+	 * qpath_rp points to /c in /a/b/c
+	 *
+	 * query path /
+	 * location matched /
+	 * rpl is set to 1.
+	 * qpath_rp points to an empty string (pointer a null character in the query path)
+	 */ 
 	tmp.qpath_rp = (tmp.root.u.path.rpl >= tmp.qpath_len)? 
 		&tmp.qpath[tmp.qpath_len]: &tmp.qpath[tmp.root.u.path.rpl];
 
