@@ -635,6 +635,10 @@ static int urs_prerewrite (qse_httpd_t* httpd, qse_httpd_client_t* client, qse_h
 		host_ptr = QSE_MT("");
 		proto = QSE_MT("");
 	}
+	else if (client->status & QSE_HTTPD_CLIENT_SECURE)
+	{
+		proto = QSE_MT("https://");
+	}
 	else
 	{
 		proto = QSE_MT("http://");
