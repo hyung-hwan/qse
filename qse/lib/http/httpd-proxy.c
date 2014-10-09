@@ -1865,7 +1865,7 @@ qse_printf (QSE_T("TRAILING DATA=%d, [%hs]\n"), (int)QSE_MBS_LEN(proxy->res), QS
 
 oops:
 	if (proxy->resflags & PROXY_RES_EVER_SENTBACK) return -1;
-	return (qse_httpd_entask_err (httpd, client, task, http_errnum, proxy->method, &proxy->version, proxy->keepalive) == QSE_NULL)? -1: 0;
+	return (qse_httpd_entask_error (httpd, client, task, http_errnum, proxy->method, &proxy->version, proxy->keepalive) == QSE_NULL)? -1: 0;
 }
 
 static int task_main_proxy_1 (
@@ -1958,7 +1958,7 @@ static int task_main_proxy_1 (
 	return 1;
 
 oops:
-	return (qse_httpd_entask_err (httpd, client, task, http_errnum, proxy->method, &proxy->version, proxy->keepalive) == QSE_NULL)? -1: 0;
+	return (qse_httpd_entask_error (httpd, client, task, http_errnum, proxy->method, &proxy->version, proxy->keepalive) == QSE_NULL)? -1: 0;
 }
 
 static void on_peer_name_resolved (qse_httpd_t* httpd, const qse_mchar_t* name, const qse_nwad_t* nwad, void* ctx)
@@ -2062,7 +2062,7 @@ printf ("XXXXXXXXXXXXXXXXXXXXXXXXXX URL REWRITTEN TO [%s].....\n", new_url);
 			/* relocation code is given explictly, no slash appending is needed.
 			 * use qse_httpd_entask_status() rather than qse_httpd_entaskreloc(). */
 			reloc.flags = 0; 
-			reloc.dst = nuptr;
+			reloc.target = nuptr;
 
 			if (qse_httpd_entask_status (
 				httpd, proxy->client, proxy->task, redir_code, &reloc,
@@ -2402,7 +2402,7 @@ oops:
 		proxy->peer_htrd = QSE_NULL;
 	}
 
-	return (qse_httpd_entask_err (
+	return (qse_httpd_entask_error (
 		httpd, client, task, http_errnum, 
 		proxy->method, &proxy->version, proxy->keepalive) == QSE_NULL)? -1: 0;
 }

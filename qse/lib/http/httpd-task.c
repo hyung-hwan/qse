@@ -188,7 +188,7 @@ qse_httpd_task_t* qse_httpd_entask_status (
 			reloc = (qse_httpd_rsrc_reloc_t*)extra;
 			extrapre = QSE_MT("Location: ");
 			extrapst = (reloc->flags & QSE_HTTPD_RSRC_RELOC_APPENDSLASH)? QSE_MT("/\r\n"): QSE_MT("\r\n");
-			extraval = reloc->dst;
+			extraval = reloc->target;
 			break;
 		}
 
@@ -228,7 +228,7 @@ qse_httpd_task_t* qse_httpd_entask_status (
 }
 /*------------------------------------------------------------------------*/
 
-qse_httpd_task_t* qse_httpd_entask_err (
+qse_httpd_task_t* qse_httpd_entask_error (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, 
 	qse_httpd_task_t* pred, int code,
 	qse_http_method_t method, const qse_http_version_t* version, int keepalive)
@@ -236,7 +236,7 @@ qse_httpd_task_t* qse_httpd_entask_err (
 	return qse_httpd_entask_status (httpd, client, pred, code, QSE_NULL, method, version, keepalive);
 }
 
-qse_httpd_task_t* qse_httpd_entaskerr (
+qse_httpd_task_t* qse_httpd_entaskerror (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, 
 	qse_httpd_task_t* pred, int code, qse_htre_t* req)
 {
@@ -384,7 +384,7 @@ qse_httpd_task_t* qse_httpd_entaskrsrc (
 			break;
 
 		case QSE_HTTPD_RSRC_ERROR:
-			task = qse_httpd_entaskerr (httpd, client, pred, rsrc->u.error.code, req);
+			task = qse_httpd_entaskerror (httpd, client, pred, rsrc->u.error.code, req);
 			break;
 
 		case QSE_HTTPD_RSRC_FILE:

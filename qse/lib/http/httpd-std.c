@@ -2189,7 +2189,7 @@ if (qse_htre_getcontentlen(req) > 0)
 				/* POST without Content-Length nor not chunked */
 				req->flags &= ~QSE_HTRE_ATTR_KEEPALIVE;
 				qse_httpd_discardcontent (httpd, req);
-				task = qse_httpd_entaskerr (httpd, client, QSE_NULL, 411, req);
+				task = qse_httpd_entaskerror (httpd, client, QSE_NULL, 411, req);
 				if (task) 
 				{
 					/* 411 Length Required - can't keep alive. Force disconnect */
@@ -2204,7 +2204,7 @@ if (qse_htre_getcontentlen(req) > 0)
 				 * error code, it should return 0 with the QSE_HTTPD_RSRC_ERROR
 				 * resource. */
 				qse_httpd_discardcontent (httpd, req);
-				task = qse_httpd_entaskerr (httpd, client, QSE_NULL, 500, req);
+				task = qse_httpd_entaskerror (httpd, client, QSE_NULL, 500, req);
 			}
 			else
 			{
@@ -2252,7 +2252,7 @@ printf ("CANOT MAKE RESOURCE.... %s\n", qse_htre_getqpath(req));
 				 * '500 Internal Server Error'. If it wants to return a specific
 				 * error code, it should return 0 with the QSE_HTTPD_RSRC_ERROR
 				 * resource. */
-				task = qse_httpd_entaskerr (httpd, client, QSE_NULL, 500, req);
+				task = qse_httpd_entaskerror (httpd, client, QSE_NULL, 500, req);
 			}
 			else
 			{
@@ -2494,8 +2494,8 @@ static void free_resource (
 			break;
 
 		case QSE_HTTPD_RSRC_RELOC:
-			if (target->u.reloc.dst != qpath)
-				QSE_MMGR_FREE (httpd->mmgr, (qse_mchar_t*)target->u.reloc.dst);
+			if (target->u.reloc.target != qpath)
+				QSE_MMGR_FREE (httpd->mmgr, (qse_mchar_t*)target->u.reloc.target);
 			break;
 
 		default:
@@ -2608,8 +2608,8 @@ static int attempt_cgi (
 				/* create a relocation resource */
 				QSE_MEMSET (target, 0, QSE_SIZEOF(*target));
 				target->type = QSE_HTTPD_RSRC_RELOC;
-				target->u.reloc.dst = merge_paths (httpd, tmp->qpath, tmp->idxfile);
-				if (target->u.reloc.dst == QSE_NULL) goto oops;
+				target->u.reloc.target = merge_paths (httpd, tmp->qpath, tmp->idxfile);
+				if (target->u.reloc.target == QSE_NULL) goto oops;
 
 				/* free tmp->xpath here upon success since it's not used for relocation.
 				 * upon failure, it is freed by the caller. so the 'oops' part 
@@ -3022,7 +3022,7 @@ auth_ok:
 				qse_htre_discardcontent (req);
 				target->type = QSE_HTTPD_RSRC_RELOC;
 				target->u.reloc.flags = QSE_HTTPD_RSRC_RELOC_APPENDSLASH | QSE_HTTPD_RSRC_RELOC_PERMANENT;
-				target->u.reloc.dst = tmp.qpath;
+				target->u.reloc.target = tmp.qpath;
 				/* free xpath since it won't be used */
 				QSE_MMGR_FREE (httpd->mmgr, tmp.xpath);
 			}
@@ -3089,8 +3089,8 @@ auth_ok:
 
 				/* create a relocation resource */
 				target->type = QSE_HTTPD_RSRC_RELOC;
-				target->u.reloc.dst = merge_paths (httpd, tmp.qpath, tmp.idxfile);
-				if (target->u.reloc.dst == QSE_NULL) return -1;
+				target->u.reloc.target = merge_paths (httpd, tmp.qpath, tmp.idxfile);
+				if (target->u.reloc.target == QSE_NULL) return -1;
 			}
 			else if (acc == QSE_HTTPD_SERVERSTD_DIRACC)
 			{
