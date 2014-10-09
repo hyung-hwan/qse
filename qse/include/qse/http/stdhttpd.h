@@ -42,6 +42,7 @@ enum qse_httpd_serverstd_root_type_t
 	QSE_HTTPD_SERVERSTD_ROOT_PATH,
 	QSE_HTTPD_SERVERSTD_ROOT_TEXT,
 	QSE_HTTPD_SERVERSTD_ROOT_PROXY,
+	QSE_HTTPD_SERVERSTD_ROOT_RELOC,
 	QSE_HTTPD_SERVERSTD_ROOT_ERROR
 }; 
 typedef enum qse_httpd_serverstd_root_type_t qse_httpd_serverstd_root_type_t;
@@ -65,6 +66,7 @@ struct qse_httpd_serverstd_root_t
 		} text;
 
 		qse_httpd_rsrc_proxy_t proxy;
+		qse_httpd_rsrc_reloc_t reloc;
 
 		struct
 		{

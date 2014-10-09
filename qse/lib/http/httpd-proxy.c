@@ -56,9 +56,10 @@ struct task_proxy_t
 #define PROXY_X_FORWARDED_FOR      (1 << 15) /* X-Forwarded-For: added */
 #define PROXY_VIA                  (1 << 16) /* Via: added to the request */
 #define PROXY_VIA_RETURNING        (1 << 17) /* Via: added to the response */
-#define PROXY_UPGRADE_REQUESTED    (1 << 18)
-#define PROXY_PROTOCOL_SWITCHED    (1 << 19)
-#define PROXY_GOT_BAD_REQUEST      (1 << 20)
+#define PROXY_ALLOW_UPGRADE        (1 << 18)
+#define PROXY_UPGRADE_REQUESTED    (1 << 19)
+#define PROXY_PROTOCOL_SWITCHED    (1 << 20)
+#define PROXY_GOT_BAD_REQUEST      (1 << 21)
 	int flags;
 	qse_httpd_t* httpd;
 	qse_httpd_client_t* client;
@@ -977,6 +978,7 @@ static int task_init_proxy (
 
 	if (arg->rsrc->flags & QSE_HTTPD_RSRC_PROXY_RAW) proxy->flags |= PROXY_RAW;
 	if (arg->rsrc->flags & QSE_HTTPD_RSRC_PROXY_TRANSPARENT) proxy->flags |= PROXY_TRANSPARENT;
+	if (arg->rsrc->flags & QSE_HTTPD_RSRC_PROXY_ALLOW_UPGRADE) proxy->flags |= PROXY_ALLOW_UPGRADE;
 
 	proxy->peer.local = arg->rsrc->src.nwad;
 	if (arg->rsrc->flags & QSE_HTTPD_RSRC_PROXY_DST_STR)
@@ -1278,7 +1280,7 @@ qse_mbs_ncat (proxy->reqfwdbuf, spc, QSE_COUNTOF(spc));
 			snatch_needed = 1;
 		}
 
-		if (qse_htre_getheaderval(arg->req, QSE_MT("Upgrade")))
+		if ((proxy->flags & PROXY_ALLOW_UPGRADE) && qse_htre_getheaderval(arg->req, QSE_MT("Upgrade")))
 		{
 			/* Upgrade: is found in the request header */
 			const qse_htre_hdrval_t* hv;
