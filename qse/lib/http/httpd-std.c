@@ -2814,6 +2814,11 @@ static int make_resource (
 			req->flags |= QSE_HTRE_ATTR_PROXIED;
 			return 0;
 
+		case QSE_HTTPD_SERVERSTD_ROOT_RELOC:
+			target->type = QSE_HTTPD_RSRC_RELOC;
+			target->u.reloc = tmp.root.u.reloc;
+			return 0;
+
 		case QSE_HTTPD_SERVERSTD_ROOT_ERROR:
 			target->type = QSE_HTTPD_RSRC_ERROR;
 			target->u.error.code = tmp.root.u.error.code;
