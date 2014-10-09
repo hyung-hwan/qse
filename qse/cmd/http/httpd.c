@@ -188,7 +188,7 @@ struct loccfg_t
 	{
 		unsigned int allow_http: 1;
 		unsigned int allow_connect: 1;
-		unsigned int allow_intercept: 1;
+		unsigned int allow_intercept: 2; /* 0: no, 1: proxy, 2: local */
 		unsigned int allow_upgrade: 1;
 		unsigned int dns_enabled: 1;
 		unsigned int urs_enabled: 1;
@@ -465,7 +465,13 @@ static int get_server_root (
 	if (qinfo->client->status & QSE_HTTPD_CLIENT_INTERCEPTED)
 	{
 		/* transparent proxying */
-		if (loccfg->proxy.allow_intercept)
+		if (loccfg->proxy.allow_intercept <= 0)
+		{
+			root->type = QSE_HTTPD_SERVERSTD_ROOT_ERROR;
+			root->u.error.code = 403; /* forbidden */
+			return 0;
+		}
+		else if (loccfg->proxy.allow_intercept <= 1)
 		{
 			root->type = QSE_HTTPD_SERVERSTD_ROOT_PROXY;
 			root->u.proxy.dst.nwad = qinfo->client->orgdst_addr;
@@ -479,12 +485,6 @@ static int get_server_root (
 				root->u.proxy.pseudonym = loccfg->proxy.pseudonym;
 
 			goto proxy_ok;
-		}
-		else
-		{
-			root->type = QSE_HTTPD_SERVERSTD_ROOT_ERROR;
-			root->u.error.code = 403; /* forbidden */
-			return 0;
 		}
 	}
 
@@ -1059,6 +1059,15 @@ static int get_boolean (const qse_xli_str_t* v)
 	        qse_strxcasecmp (v->ptr, v->len, QSE_T("on")) == 0);
 }
 
+static int get_intercept (const qse_xli_str_t* v)
+{
+	if (qse_strxcasecmp (v->ptr, v->len, QSE_T("local")) == 0) return 2;
+	if (qse_strxcasecmp (v->ptr, v->len, QSE_T("proxy")) == 0 ||
+	    qse_strxcasecmp (v->ptr, v->len, QSE_T("yes")) == 0 ||
+	    qse_strxcasecmp (v->ptr, v->len, QSE_T("on")) == 0) return 1;
+	return 0;
+}
+
 static int get_integer (const qse_xli_str_t* v)
 {
 /* TODO: be more strict */
@@ -1474,7 +1483,7 @@ static int load_loccfg_proxy (qse_httpd_t* httpd, qse_xli_t* xli, qse_xli_list_t
 	pair = QSE_NULL;
 	if (proxy) pair = qse_xli_findpair (xli, proxy, QSE_T("intercept"));
 	if (!pair && default_proxy) pair = qse_xli_findpair (xli, default_proxy, QSE_T("intercept"));
-	if (pair) cfg->proxy.allow_intercept = get_boolean ((qse_xli_str_t*)pair->val);
+	if (pair) cfg->proxy.allow_intercept = get_intercept ((qse_xli_str_t*)pair->val);
 
 	pair = QSE_NULL;
 	if (proxy) pair = qse_xli_findpair (xli, proxy, QSE_T("upgrade"));
