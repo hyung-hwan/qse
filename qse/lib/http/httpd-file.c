@@ -191,7 +191,7 @@ static QSE_INLINE int task_main_getfile (
 		int http_errnum;
 		http_errnum = (httpd->errnum == QSE_HTTPD_ENOENT)? 404:
 		              (httpd->errnum == QSE_HTTPD_EACCES)? 403: 500;
-		x = qse_httpd_entask_err (
+		x = qse_httpd_entask_error (
 			httpd, client, x, http_errnum, 
 			file->method, &file->version, file->keepalive);
 		goto no_file_send;
@@ -203,7 +203,7 @@ static QSE_INLINE int task_main_getfile (
 		int http_errnum;
 		http_errnum = (httpd->errnum == QSE_HTTPD_ENOENT)? 404:
 		              (httpd->errnum == QSE_HTTPD_EACCES)? 403: 500;
-		x = qse_httpd_entask_err (
+		x = qse_httpd_entask_error (
 			httpd, client, x, http_errnum, 
 			file->method, &file->version, file->keepalive);
 		goto no_file_send;
@@ -226,7 +226,7 @@ static QSE_INLINE int task_main_getfile (
 
 		if (file->u.get.range.from >= st.size)
 		{
-			x = qse_httpd_entask_err (
+			x = qse_httpd_entask_error (
 				httpd, client, x, 416, file->method, &file->version, file->keepalive);
 			goto no_file_send;
 		}
@@ -491,7 +491,7 @@ static int task_main_putfile_2 (
 
 	/* snatching is over. writing error may have occurred as well.
 	 * file->u.put.status should hold a proper status code */
-	if (qse_httpd_entask_err (
+	if (qse_httpd_entask_error (
 		httpd, client, task, file->u.put.status,
 		file->method, &file->version, file->keepalive) == QSE_NULL) return -1;
 	return 0; /* no more data to read. task over */
@@ -516,7 +516,7 @@ static int task_main_putfile (
 	 * note: if initialization error occurred and there is contents for the
 	 * client to send, this reply may get to the client before it finishes 
 	 * sending the contents. */
-	if (qse_httpd_entask_err (
+	if (qse_httpd_entask_error (
 		httpd, client, task, file->u.put.status,
 		file->method, &file->version, file->keepalive) == QSE_NULL) return -1;
 	return 0; /* task over */
@@ -603,7 +603,7 @@ qse_httpd_task_t* qse_httpd_entaskfile (
 				/*while (tmp->next) tmp = tmp->next;*/ /* get the last value */
 				if (qse_parsehttprange (tmp->ptr, &data.u.get.range) <= -1)
 				{
-					return qse_httpd_entaskerr (httpd, client, pred, 416, req);
+					return qse_httpd_entaskerror (httpd, client, pred, 416, req);
 				}
 			}
 			else 
@@ -638,13 +638,13 @@ qse_httpd_task_t* qse_httpd_entaskfile (
 				         (httpd->errnum == QSE_HTTPD_EACCES)? 403: 500;
 			}
 				
-			return qse_httpd_entaskerr (httpd, client, pred, status, req);
+			return qse_httpd_entaskerror (httpd, client, pred, status, req);
 		}
 
 		default:
 			/* Method not allowed */
 			qse_htre_discardcontent (req);
-			return qse_httpd_entaskerr (httpd, client, pred, 405, req);
+			return qse_httpd_entaskerror (httpd, client, pred, 405, req);
 	}
 }
 

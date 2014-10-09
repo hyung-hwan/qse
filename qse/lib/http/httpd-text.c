@@ -102,7 +102,7 @@ qse_httpd_task_t* qse_httpd_entasktext (
 
 		default:
 			/* Method not allowed */
-			return qse_httpd_entaskerr (httpd, client, pred, 405, req);
+			return qse_httpd_entaskerror (httpd, client, pred, 405, req);
 	}
 
 	qse_fmtuintmaxtombs (b_tlen, QSE_COUNTOF(b_tlen), tlen, 10, -1, QSE_MT('\0'), QSE_NULL);

@@ -586,7 +586,7 @@ qse_httpd_task_t* qse_httpd_entaskdir (
 				int status;
 				status = (httpd->errnum == QSE_HTTPD_ENOENT)? 404:
 					    (httpd->errnum == QSE_HTTPD_EACCES)? 403: 500;
-				return qse_httpd_entaskerr (httpd, client, pred, status, req);
+				return qse_httpd_entaskerror (httpd, client, pred, status, req);
 			}
 			else
 			{
@@ -643,7 +643,7 @@ qse_httpd_task_t* qse_httpd_entaskdir (
 				}
 			}
 				
-			return qse_httpd_entaskerr (httpd, client, pred, status, req);
+			return qse_httpd_entaskerror (httpd, client, pred, status, req);
 		}
 
 
@@ -657,11 +657,11 @@ qse_httpd_task_t* qse_httpd_entaskdir (
 				         (httpd->errnum == QSE_HTTPD_EACCES)? 403: 500;
 			}
 
-			return qse_httpd_entaskerr (httpd, client, pred, status, req);
+			return qse_httpd_entaskerror (httpd, client, pred, status, req);
 		}
 
 		default:
 			/* Method not allowed */
-			return qse_httpd_entaskerr (httpd, client, pred, 405, req);
+			return qse_httpd_entaskerror (httpd, client, pred, 405, req);
 	}
 }

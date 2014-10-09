@@ -152,8 +152,20 @@ struct loccfg_t
 
 	qse_mchar_t* xcfg[XCFG_MAX];
 
-	int root_is_nwad;
-	qse_nwad_t root_nwad;
+	enum
+	{
+		ROOT_TYPE_PATH = 0,
+		ROOT_TYPE_NWAD,
+		ROOT_TYPE_RELOC,
+		ROOT_TYPE_ERROR
+	} root_type;
+	union
+	{
+		qse_nwad_t nwad;
+		int error_code;
+		qse_httpd_rsrc_reloc_t reloc;
+	} root;
+
 	struct
 	{
 		qse_size_t count;
@@ -521,6 +533,7 @@ static int get_server_root (
 		}
 	}
 
+/* TODO: handle https:// .... */
 	if (loccfg->proxy.allow_http &&
 	    qse_mbszcasecmp (qpath, QSE_MT("http://"), 7) == 0)
 	{
@@ -573,25 +586,44 @@ static int get_server_root (
 		}
 	}
 
-	if (loccfg->root_is_nwad)
+	switch (loccfg->root_type)
 	{
-		/* simple forwarding. it's not controlled by proxy.http or proxy.connect  */
-		root->type = QSE_HTTPD_SERVERSTD_ROOT_PROXY;
+		case ROOT_TYPE_NWAD:
+			/* simple forwarding. it's not controlled by proxy.http or proxy.connect  */
+			root->type = QSE_HTTPD_SERVERSTD_ROOT_PROXY;
 
-		root->u.proxy.dst.nwad = loccfg->root_nwad;
-		root->u.proxy.src.nwad.type = root->u.proxy.dst.nwad.type;
+			root->u.proxy.dst.nwad = loccfg->root.nwad;
+			root->u.proxy.src.nwad.type = root->u.proxy.dst.nwad.type;
 
-		if (loccfg->proxy.pseudonym[0]) 
-			root->u.proxy.pseudonym = loccfg->proxy.pseudonym;
+			if (loccfg->proxy.pseudonym[0]) 
+				root->u.proxy.pseudonym = loccfg->proxy.pseudonym;
 
-		goto proxy_ok;
+			goto proxy_ok;
+
+		case ROOT_TYPE_RELOC:
+			root->type = QSE_HTTPD_SERVERSTD_ROOT_RELOC;
+			root->u.reloc.flags = loccfg->root.reloc.flags;
+			root->u.reloc.target = qse_mbsdup (loccfg->root.reloc.target, qse_httpd_getmmgr(httpd));
+			if (root->u.reloc.target == QSE_NULL)
+			{
+				root->type = QSE_HTTPD_SERVERSTD_ROOT_ERROR;
+				root->u.error.code = 500; /* internal server error */
+			}
+			break;
+
+		case ROOT_TYPE_ERROR:
+			root->type = QSE_HTTPD_SERVERSTD_ROOT_ERROR;
+			root->u.error.code = loccfg->root.error_code;
+			break;
+
+		default:
+			/* local file system */
+			root->type = QSE_HTTPD_SERVERSTD_ROOT_PATH;
+			root->u.path.val = loccfg->xcfg[XCFG_ROOT];
+			root->u.path.rpl = loccfg->locname.len;
+			break;
 	}
-	
-	/* local file system */
 
-	root->type = QSE_HTTPD_SERVERSTD_ROOT_PATH;
-	root->u.path.val = loccfg->xcfg[XCFG_ROOT];
-	root->u.path.rpl = loccfg->locname.len;
 	return 0;
 
 proxy_ok:
@@ -1624,11 +1656,70 @@ static int load_loccfg (qse_httpd_t* httpd, qse_xli_t* xli, qse_xli_list_t* list
 	}
 #endif
 
-	if (cfg->xcfg[XCFG_ROOT] && qse_mbstonwad (cfg->xcfg[XCFG_ROOT], &cfg->root_nwad) >= 0) 
+	cfg->root_type = ROOT_TYPE_PATH; /* default type */
+
+	if (cfg->xcfg[XCFG_ROOT])
 	{
-		cfg->root_is_nwad = 1;
+		/* check if the root value is special */
+		const qse_mchar_t* root = cfg->xcfg[XCFG_ROOT];
+
+		if (root[0] == QSE_MT('<') && QSE_ISMDIGIT(root[1]))
+		{
+			int code = 0;
+
+			root++;
+			while (QSE_ISMDIGIT(*root))
+			{
+				code = code * 10 + (*root - QSE_MT('0'));
+				root++;
+			}
+
+			if (code >= 400 && code <= 599 && root[0] == QSE_MT('>') && root[1] == QSE_MT('\0'))
+			{
+				cfg->root_type = ROOT_TYPE_ERROR;
+				cfg->root.error_code = code;
+				goto done;
+			}
+
+			if ((code == 301 || code == 302 || code == 303 || code == 307 || code == 308) && *root == QSE_MT('>'))
+			{
+				root++;
+				if (QSE_ISMPRINT(*root))
+				{
+					cfg->root_type = ROOT_TYPE_RELOC;
+					cfg->root.reloc.flags = 0;
+					switch (code)
+					{
+						case 308:
+							cfg->root.reloc.flags |= QSE_HTTPD_RSRC_RELOC_PERMANENT;
+							/* fall thru */
+						case 307:
+							cfg->root.reloc.flags |= QSE_HTTPD_RSRC_RELOC_KEEPMETHOD;
+							break;
+
+						case 301:
+							cfg->root.reloc.flags |= QSE_HTTPD_RSRC_RELOC_PERMANENT;
+							break;
+					}
+					cfg->root.reloc.target = root;
+					goto done;
+				}
+			}
+		}
+
+		if (qse_mbstonwad (cfg->xcfg[XCFG_ROOT], &cfg->root.nwad) >= 0) 
+		{
+			if (cfg->root.nwad.type != QSE_NWAD_IN4 && cfg->root.nwad.type != QSE_NWAD_IN6)
+			{
+				qse_printf (QSE_T("ERROR: invalid address for root - [%hs]\n"), cfg->xcfg[XCFG_ROOT]);
+				return -1;
+			}
+			cfg->root_type = ROOT_TYPE_NWAD;
+			goto done;
+		}
 	}
 
+done:
 	return 0;
 }
 

@@ -830,7 +830,7 @@ typedef struct qse_httpd_rsrc_reloc_t qse_httpd_rsrc_reloc_t;
 struct qse_httpd_rsrc_reloc_t
 {
 	int flags; /**< 0 or bitwise-ORed of #qse_httpd_rsrc_reloc_flag_t */
-	const qse_mchar_t* dst;
+	const qse_mchar_t* target;
 };
 
 typedef struct qse_httpd_rsrc_t qse_httpd_rsrc_t;
@@ -848,7 +848,7 @@ struct qse_httpd_rsrc_t
 		qse_httpd_rsrc_cgi_t cgi;
 		qse_httpd_rsrc_dir_t dir;
 
-		struct
+		struct 
 		{
 			int code;
 		} error;
@@ -1095,11 +1095,11 @@ QSE_EXPORT qse_httpd_task_t* qse_httpd_entasktext (
 	qse_htre_t*             req
 );
 
-QSE_EXPORT qse_httpd_task_t* qse_httpd_entaskerr (
+QSE_EXPORT qse_httpd_task_t* qse_httpd_entaskerror (
 	qse_httpd_t*              httpd,
 	qse_httpd_client_t*       client,
 	qse_httpd_task_t*         pred,
-	int                       code, 
+	int                       code,
 	qse_htre_t*               req
 );
 
