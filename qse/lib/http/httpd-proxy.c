@@ -1141,18 +1141,11 @@ qse_mbs_ncat (proxy->reqfwdbuf, spc, QSE_COUNTOF(spc));
 			    qse_mbs_cat (proxy->reqfwdbuf, extra) == (qse_size_t)-1 ||
 			    qse_mbs_cat (proxy->reqfwdbuf, QSE_MT("\r\n")) == (qse_size_t)-1) goto nomem_oops;
 
-			/* client's port number */
-			qse_nwadtombs (&proxy->client->remote_addr, extra, QSE_COUNTOF(extra), QSE_NWADTOMBS_PORT);
-			if (qse_mbs_cat (proxy->reqfwdbuf, QSE_MT("X-Forwarded-Port: ")) == (qse_size_t)-1 ||
-			    qse_mbs_cat (proxy->reqfwdbuf, extra) == (qse_size_t)-1 ||
-			    qse_mbs_cat (proxy->reqfwdbuf, QSE_MT("\r\n")) == (qse_size_t)-1) goto nomem_oops;
-
 			/* client's protocol*/
 			if (qse_mbs_cat (proxy->reqfwdbuf, QSE_MT("X-Forwarded-Proto: ")) == (qse_size_t)-1 ||
 			    qse_mbs_cat (proxy->reqfwdbuf, ((client->status & QSE_HTTPD_CLIENT_SECURE)? QSE_MT("https"): QSE_MT("http"))) == (qse_size_t)-1 ||
 			    qse_mbs_cat (proxy->reqfwdbuf, QSE_MT("\r\n")) == (qse_size_t)-1) goto nomem_oops;
 		}
-
 
 		proxy->resflags |= PROXY_RES_AWAIT_RESHDR;
 		if ((arg->req->flags & QSE_HTRE_ATTR_EXPECT100) &&
