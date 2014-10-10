@@ -56,11 +56,11 @@ struct task_proxy_t
 #define PROXY_X_FORWARDED_FOR      (1 << 15) /* X-Forwarded-For: added */
 #define PROXY_VIA                  (1 << 16) /* Via: added to the request */
 #define PROXY_VIA_RETURNING        (1 << 17) /* Via: added to the response */
-#define PROXY_ALLOW_UPGRADE        (1 << 18)
+#define PROXY_ALLOW_UPGRADE        (1 << 28)
 #define PROXY_UPGRADE_REQUESTED    (1 << 19)
 #define PROXY_PROTOCOL_SWITCHED    (1 << 20)
 #define PROXY_GOT_BAD_REQUEST      (1 << 21)
-	int flags;
+	unsigned int flags;
 	qse_httpd_t* httpd;
 	qse_httpd_client_t* client;
 
@@ -257,6 +257,7 @@ static int proxy_capture_client_header (qse_htre_t* req, const qse_mchar_t* key,
 {
 	task_proxy_t* proxy = (task_proxy_t*)ctx;
 
+#if 0
 	if (!(proxy->flags & (PROXY_TRANSPARENT | PROXY_X_FORWARDED_FOR)))
 	{
 		if (qse_mbscasecmp (key, QSE_MT("X-Forwarded-For")) == 0)
@@ -273,6 +274,7 @@ static int proxy_capture_client_header (qse_htre_t* req, const qse_mchar_t* key,
 			return proxy_add_header_to_buffer_with_extra_data (proxy, proxy->reqfwdbuf, key, val, QSE_MT(", %hs"), extra);
 		}
 	}
+#endif
 
 	if (!(proxy->httpd->opt.trait & QSE_HTTPD_PROXYNOVIA) && !(proxy->flags & PROXY_VIA))
 	{
@@ -1126,20 +1128,31 @@ qse_mbs_ncat (proxy->reqfwdbuf, spc, QSE_COUNTOF(spc));
 		    qse_mbs_cat (proxy->reqfwdbuf, QSE_MT("\r\n")) == (qse_size_t)-1 ||
 		    qse_htre_walkheaders (arg->req, proxy_capture_client_header, proxy) <= -1) goto nomem_oops;
 
-		if (!(proxy->flags & (PROXY_TRANSPARENT | PROXY_X_FORWARDED_FOR)))
+		/*if (!(proxy->flags & (PROXY_TRANSPARENT | PROXY_X_FORWARDED_FOR)))*/
+		if (!(proxy->flags & PROXY_TRANSPARENT))
 		{
 			/* X-Forwarded-For is not added by proxy_capture_client_header() 
 			 * above. I don't care if it's included in the trailer. */
 			qse_mchar_t extra[128];
 
-			proxy->flags |= PROXY_X_FORWARDED_FOR;
-
+			/* client's ip address */
 			qse_nwadtombs (&proxy->client->remote_addr, extra, QSE_COUNTOF(extra), QSE_NWADTOMBS_ADDR);
-
 			if (qse_mbs_cat (proxy->reqfwdbuf, QSE_MT("X-Forwarded-For: ")) == (qse_size_t)-1 ||
 			    qse_mbs_cat (proxy->reqfwdbuf, extra) == (qse_size_t)-1 ||
 			    qse_mbs_cat (proxy->reqfwdbuf, QSE_MT("\r\n")) == (qse_size_t)-1) goto nomem_oops;
+
+			/* client's port number */
+			qse_nwadtombs (&proxy->client->remote_addr, extra, QSE_COUNTOF(extra), QSE_NWADTOMBS_PORT);
+			if (qse_mbs_cat (proxy->reqfwdbuf, QSE_MT("X-Forwarded-Port: ")) == (qse_size_t)-1 ||
+			    qse_mbs_cat (proxy->reqfwdbuf, extra) == (qse_size_t)-1 ||
+			    qse_mbs_cat (proxy->reqfwdbuf, QSE_MT("\r\n")) == (qse_size_t)-1) goto nomem_oops;
+
+			/* client's protocol*/
+			if (qse_mbs_cat (proxy->reqfwdbuf, QSE_MT("X-Forwarded-Proto: ")) == (qse_size_t)-1 ||
+			    qse_mbs_cat (proxy->reqfwdbuf, ((client->status & QSE_HTTPD_CLIENT_SECURE)? QSE_MT("https"): QSE_MT("http"))) == (qse_size_t)-1 ||
+			    qse_mbs_cat (proxy->reqfwdbuf, QSE_MT("\r\n")) == (qse_size_t)-1) goto nomem_oops;
 		}
+
 
 		proxy->resflags |= PROXY_RES_AWAIT_RESHDR;
 		if ((arg->req->flags & QSE_HTRE_ATTR_EXPECT100) &&
