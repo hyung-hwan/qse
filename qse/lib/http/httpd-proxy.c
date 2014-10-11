@@ -201,6 +201,7 @@ static int proxy_capture_peer_header (qse_htre_t* req, const qse_mchar_t* key, c
 {
 	task_proxy_t* proxy = (task_proxy_t*)ctx;
 
+#if 0
 	if (!(proxy->httpd->opt.trait & QSE_HTTPD_PROXYNOVIA) && !(proxy->flags & PROXY_VIA_RETURNING))
 	{
 		if (qse_mbscasecmp (key, QSE_MT("Via")) == 0)
@@ -229,6 +230,7 @@ static int proxy_capture_peer_header (qse_htre_t* req, const qse_mchar_t* key, c
 				qse_httpd_getname(proxy->httpd));
 		}
 	}
+#endif
 
 	if (qse_mbscasecmp (key, QSE_MT("Connection")) != 0 &&
 	    qse_mbscasecmp (key, QSE_MT("Transfer-Encoding")) != 0)
@@ -258,9 +260,9 @@ static int proxy_capture_client_header (qse_htre_t* req, const qse_mchar_t* key,
 	task_proxy_t* proxy = (task_proxy_t*)ctx;
 
 #if 0
-	if (!(proxy->flags & (PROXY_TRANSPARENT | PROXY_X_FORWARDED_FOR)))
+	if (!(proxy->flags & PROXY_TRANSPARENT))
 	{
-		if (qse_mbscasecmp (key, QSE_MT("X-Forwarded-For")) == 0)
+		if (!(proxy->flags & PROXY_X_FORWARDED_FOR) && qse_mbscasecmp (key, QSE_MT("X-Forwarded-For")) == 0)
 		{
 			/* append to X-Forwarded-For if it exists in the header.
 			 * note that it add a comma even if the existing value is empty.
@@ -274,7 +276,7 @@ static int proxy_capture_client_header (qse_htre_t* req, const qse_mchar_t* key,
 			return proxy_add_header_to_buffer_with_extra_data (proxy, proxy->reqfwdbuf, key, val, QSE_MT(", %hs"), extra);
 		}
 	}
-#endif
+
 
 	if (!(proxy->httpd->opt.trait & QSE_HTTPD_PROXYNOVIA) && !(proxy->flags & PROXY_VIA))
 	{
@@ -303,6 +305,7 @@ static int proxy_capture_client_header (qse_htre_t* req, const qse_mchar_t* key,
 				qse_httpd_getname(proxy->httpd));
 		}
 	}
+#endif
 
 /* EXPERIMENTAL: REMOVE HEADERS.
  * FOR EXAMPLE, You can remove Referer or forge it to give analysis systems harder time  */
@@ -1145,6 +1148,9 @@ qse_mbs_ncat (proxy->reqfwdbuf, spc, QSE_COUNTOF(spc));
 			if (qse_mbs_cat (proxy->reqfwdbuf, QSE_MT("X-Forwarded-Proto: ")) == (qse_size_t)-1 ||
 			    qse_mbs_cat (proxy->reqfwdbuf, ((client->status & QSE_HTTPD_CLIENT_SECURE)? QSE_MT("https"): QSE_MT("http"))) == (qse_size_t)-1 ||
 			    qse_mbs_cat (proxy->reqfwdbuf, QSE_MT("\r\n")) == (qse_size_t)-1) goto nomem_oops;
+
+/* TODO: support the Forwarded header in RFC7239.
+ * Forwarded: for=xxx;by=xxx;prot=xxxx */
 		}
 
 		proxy->resflags |= PROXY_RES_AWAIT_RESHDR;

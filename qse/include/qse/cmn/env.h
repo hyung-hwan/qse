@@ -143,6 +143,20 @@ QSE_EXPORT int qse_env_insertmbsa (
 	const qse_mchar_t* value[]
 );
 
+/**
+ * The qse_env_appendwcs() function appends an extra value to the last item
+ * in the environment list.
+ */
+int qse_env_appendwcs (
+	qse_env_t*         env,
+	const qse_wchar_t* value
+);
+
+int qse_env_appendmbs (
+	qse_env_t*         env,
+	const qse_mchar_t* value
+);
+
 QSE_EXPORT int qse_env_deletewcs (
 	qse_env_t*         env,
 	const qse_wchar_t* name
@@ -156,10 +170,12 @@ QSE_EXPORT int qse_env_deletembs (
 #if defined(QSE_CHAR_IS_MCHAR)
 #	define qse_env_insert(env,name,value) qse_env_insertmbs(env,name,value)
 #	define qse_env_inserta(env,name,value) qse_env_insertmbsa(env,name,value)
+#	define qse_env_append(env,value) qse_env_appendmbs(env,value)
 #	define qse_env_delete(env,name) qse_env_deletembs(env,name)
 #else
 #	define qse_env_insert(env,name,value) qse_env_insertwcs(env,name,value)
 #	define qse_env_inserta(env,name,value) qse_env_insertwcsa(env,name,value)
+#	define qse_env_append(env,value) qse_env_appendwcs(env,value)
 #	define qse_env_delete(env,name) qse_env_deletewcs(env,name)
 #endif
 

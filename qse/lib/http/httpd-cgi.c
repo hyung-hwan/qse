@@ -111,8 +111,6 @@ struct cgi_client_req_hdr_ctx_t
 	qse_env_t* env;
 };
 
-
-
 static int cgi_capture_client_header (
 	qse_htre_t* req, const qse_mchar_t* key, const qse_htre_hdrval_t* val, void* ctx)
 {
@@ -140,8 +138,6 @@ static int cgi_capture_client_header (
 			if (*ptr == QSE_MT('-')) *ptr = '_';
 		}
 
-		/* insert the last value only */
-		while (val->next) val = val->next;
 		ret = qse_env_insertmbs (hdrctx->env, http_key, val->ptr);
 		if (ret <= -1) 
 		{
@@ -149,8 +145,18 @@ static int cgi_capture_client_header (
 			hdrctx->httpd->errnum = QSE_HTTPD_ENOMEM;
 			return -1;
 		}
-
 		QSE_MMGR_FREE (req->mmgr, http_key);
+
+		/* append values with the same key */
+		while ((val = val->next))
+		{
+			if (qse_env_appendmbs (hdrctx->env, QSE_MT(", ")) <= -1 ||
+			    qse_env_appendmbs (hdrctx->env, val->ptr) <= -1)
+			{
+				hdrctx->httpd->errnum = QSE_HTTPD_ENOMEM;
+				return -1;
+			}
+		}
 	}
 
 	return 0;
@@ -442,19 +448,20 @@ static int cgi_add_env (
 	qparam = qse_htre_getqparam(req);
 
 #ifdef _WIN32
-	qse_env_insert (env, QSE_T("PATH"), QSE_NULL);
+	if (qse_env_insert (env, QSE_T("PATH"), QSE_NULL) <= -1) goto oops_nomem;
 #else
-	qse_env_insertmbs (env, QSE_MT("LANG"), QSE_NULL);
-	qse_env_insertmbs (env, QSE_MT("PATH"), QSE_NULL);
+	if (qse_env_insertmbs (env, QSE_MT("LANG"), QSE_NULL) <= -1 ||
+	    qse_env_insertmbs (env, QSE_MT("PATH"), QSE_NULL)) goto oops_nomem;
 #endif
 
-	qse_env_insertmbs (env, QSE_MT("GATEWAY_INTERFACE"), QSE_MT("CGI/1.1"));
+	if (qse_env_insertmbs (env, QSE_MT("GATEWAY_INTERFACE"), QSE_MT("CGI/1.1")) <= -1) goto oops_nomem;
 	qse_mbsxfmt (buf, QSE_COUNTOF(buf), QSE_MT("HTTP/%d.%d"), (int)v->major, (int)v->minor);
-	qse_env_insertmbs (env, QSE_MT("SERVER_PROTOCOL"), buf);
+	if (qse_env_insertmbs (env, QSE_MT("SERVER_PROTOCOL"), buf) <= -1) goto oops_nomem;
 
-	qse_env_insertmbs (env, QSE_MT("SCRIPT_FILENAME"), path);
-	qse_env_insertmbs (env, QSE_MT("SCRIPT_NAME"), script);
-	qse_env_insertmbs (env, QSE_MT("DOCUMENT_ROOT"), root);
+	if (qse_env_insertmbs (env, QSE_MT("SCRIPT_FILENAME"), path) <= -1 ||
+	    qse_env_insertmbs (env, QSE_MT("SCRIPT_NAME"), script) <= -1 ||
+	    qse_env_insertmbs (env, QSE_MT("DOCUMENT_ROOT"), root) <= -1) goto oops_nomem;
+
 	if (suffix && suffix[0] != QSE_MT('\0')) 
 	{
 		const qse_mchar_t* tmp[3];
@@ -468,40 +475,50 @@ static int cgi_add_env (
 		if (tr) 
 		{
 			qse_canonmbspath (tr, tr, 0);
-			qse_env_insertmbs (env, QSE_MT("PATH_TRANSLATED"), tr);
+			if (qse_env_insertmbs (env, QSE_MT("PATH_TRANSLATED"), tr) <= -1) 
+			{
+				QSE_MMGR_FREE (httpd->mmgr, tr);
+				goto oops_nomem;
+			}
 			QSE_MMGR_FREE (httpd->mmgr, tr);
 		}
-		qse_env_insertmbs (env, QSE_MT("PATH_INFO"), suffix);
+		if (qse_env_insertmbs (env, QSE_MT("PATH_INFO"), suffix) <= -1) goto  oops_nomem;
 	}
 
-	qse_env_insertmbs (env, QSE_MT("REQUEST_METHOD"), qse_htre_getqmethodname(req));
-	qse_env_insertmbs (env, QSE_MT("REQUEST_URI"), qse_htre_getqpath(req));
-	if (qparam) qse_env_insertmbs (env, QSE_MT("QUERY_STRING"), qparam);
+	if (qse_env_insertmbs (env, QSE_MT("REQUEST_METHOD"), qse_htre_getqmethodname(req)) <= -1 ||
+	    qse_env_insertmbs (env, QSE_MT("REQUEST_URI"), qse_htre_getqpath(req)) <= -1) goto oops_nomem;
+
+	if (qparam && qse_env_insertmbs (env, QSE_MT("QUERY_STRING"), qparam) <= -1) goto oops_nomem;
 
 	qse_fmtuintmaxtombs (buf, QSE_COUNTOF(buf), content_length, 10, -1, QSE_MT('\0'), QSE_NULL);
-	qse_env_insertmbs (env, QSE_MT("CONTENT_LENGTH"), buf);
-	if (content_type) qse_env_insertmbs (env, QSE_MT("CONTENT_TYPE"), content_type);
+	if (qse_env_insertmbs (env, QSE_MT("CONTENT_LENGTH"), buf) <= -1) goto oops_nomem;
+	if (content_type && qse_env_insertmbs (env, QSE_MT("CONTENT_TYPE"), content_type) <= -1) goto oops_nomem;
 
-	if (chunked) qse_env_insertmbs (env, QSE_MT("TRANSFER_ENCODING"), QSE_MT("chunked"));
+	if (chunked && qse_env_insertmbs (env, QSE_MT("TRANSFER_ENCODING"), QSE_MT("chunked")) <= 1) goto oops_nomem;
 
-	qse_env_insertmbs (env, "SERVER_SOFTWARE", qse_httpd_getname(httpd));
+	if (qse_env_insertmbs (env, "SERVER_SOFTWARE", qse_httpd_getname(httpd)) <= -1) goto oops_nomem;
 	qse_nwadtombs (&client->local_addr, buf, QSE_COUNTOF(buf), QSE_NWADTOMBS_PORT);
-	qse_env_insertmbs (env, QSE_MT("SERVER_PORT"), buf);
+	if (qse_env_insertmbs (env, QSE_MT("SERVER_PORT"), buf) <= -1) goto oops_nomem;
 	qse_nwadtombs (&client->local_addr, buf, QSE_COUNTOF(buf), QSE_NWADTOMBS_ADDR);
-	qse_env_insertmbs (env, QSE_MT("SERVER_ADDR"), buf);
-	qse_env_insertmbs (env, QSE_MT("SERVER_NAME"), buf); /* TODO:  convert it to a host name */
+	if (qse_env_insertmbs (env, QSE_MT("SERVER_ADDR"), buf) <= -1) goto oops_nomem;
+	if (qse_env_insertmbs (env, QSE_MT("SERVER_NAME"), buf) <= -1) goto oops_nomem; /* TODO:  convert it to a host name */
 
 	qse_nwadtombs (&client->remote_addr, buf, QSE_COUNTOF(buf), QSE_NWADTOMBS_PORT);
-	qse_env_insertmbs (env, QSE_MT("REMOTE_PORT"), buf);
+	if (qse_env_insertmbs (env, QSE_MT("REMOTE_PORT"), buf) <= -1) goto oops_nomem;
 	qse_nwadtombs (&client->remote_addr, buf, QSE_COUNTOF(buf), QSE_NWADTOMBS_ADDR);
-	qse_env_insertmbs (env, QSE_MT("REMOTE_ADDR"), buf);
+	if (qse_env_insertmbs (env, QSE_MT("REMOTE_ADDR"), buf) <= -1) goto oops_nomem;
 
 	ctx.httpd = httpd;
 	ctx.env = env;
-	if (qse_htre_walkheaders (req, cgi_capture_client_header, &ctx) <= -1) return -1;
-	if (qse_htre_walktrailers (req, cgi_capture_client_header, &ctx) <= -1) return -1;
+	if (qse_htre_walkheaders (req, cgi_capture_client_header, &ctx) <= -1 ||
+	    qse_htre_walktrailers (req, cgi_capture_client_header, &ctx) <= -1) goto oops;
 
 	return 0;
+
+oops_nomem:
+	httpd->errnum = QSE_HTTPD_ENOMEM;
+oops:
+	return -1;
 }
 
 static int cgi_snatch_client_input (
