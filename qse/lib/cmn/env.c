@@ -182,12 +182,10 @@ static int insertw (qse_env_t* env, const qse_wchar_t* name, const qse_wchar_t* 
 	nl = qse_wcslen (name);
 	for (i = 0, vl = 0; value[i]; i++) vl += qse_wcslen(value[i]);
 	
-	if (env->arr.len >= env->arr.capa &&
-	    expandarr(env) <= -1) return -1;
+	if (env->arr.len >= env->arr.capa && expandarr(env) <= -1) return -1;
 
 	tl = nl + 1 + vl + 1; /* name = value '\0' */
-	if (env->str.len + tl > env->str.capa &&
-	    expandstr (env, tl) <= -1) return -1;
+	if (env->str.len + tl > env->str.capa && expandstr (env, tl) <= -1) return -1;
 
 	env->arr.ptr[env->arr.len++] = &env->str.ptr[env->str.len];
 	env->arr.ptr[env->arr.len] = QSE_NULL;
@@ -201,16 +199,42 @@ static int insertw (qse_env_t* env, const qse_wchar_t* name, const qse_wchar_t* 
 	return 0;
 }
 
+static int appendw (qse_env_t* env, const qse_wchar_t* value[])
+{
+	/* append more values to the last item in the environment */
+
+	qse_size_t vl, i;
+
+	/* no item in the environment */
+	if (env->arr.len <= 0) return -1;
+	QSE_ASSERT (env->str.len > 0);
+
+	/* get the length of the values concatenated */
+	for (i = 0, vl = 0; value[i]; i++) vl += qse_wcslen(value[i]);
+
+	/* expand the string buffer if it's not large enough to hold additional values */
+	if (env->str.len + vl > env->str.capa && expandstr (env, vl) <= -1) return -1;
+
+	env->str.len--; /* decrement to override the terminating null */
+
+	/* copy additional values */
+	for (i = 0; value[i]; i++)
+		env->str.len += qse_wcscpy (&env->str.ptr[env->str.len], value[i]);
+
+	/* terminate the string buffer */
+	env->str.ptr[++env->str.len] = QSE_WT('\0');
+
+	return 0;
+}
+
 static int add_envstrw (qse_env_t* env, const qse_wchar_t* nv)
 {
 	qse_size_t tl;
 	
-	if (env->arr.len >= env->arr.capa &&
-	    expandarr(env) <= -1) return -1;
+	if (env->arr.len >= env->arr.capa && expandarr(env) <= -1) return -1;
 
 	tl = qse_wcslen(nv) + 1;
-	if (env->str.len + tl > env->str.capa &&
-	    expandstr (env, tl) <= -1) return -1;
+	if (env->str.len + tl > env->str.capa && expandstr (env, tl) <= -1) return -1;
 
 	env->arr.ptr[env->arr.len++] = &env->str.ptr[env->str.len];
 	env->arr.ptr[env->arr.len] = QSE_NULL;
@@ -262,12 +286,10 @@ static int insertm (qse_env_t* env, const qse_mchar_t* name, const qse_mchar_t* 
 	nl = qse_mbslen (name);
 	for (i = 0, vl = 0; value[i]; i++) vl += qse_mbslen(value[i]);
 
-	if (env->arr.len >= env->arr.capa &&
-	    expandarr(env) <= -1) return -1;
+	if (env->arr.len >= env->arr.capa && expandarr(env) <= -1) return -1;
 
 	tl = nl + 1 + vl + 1; /* name = value '\0' */
-	if (env->str.len + tl > env->str.capa &&
-	    expandstr (env, tl) <= -1) return -1;
+	if (env->str.len + tl > env->str.capa && expandstr (env, tl) <= -1) return -1;
 
 	env->arr.ptr[env->arr.len++] = &env->str.ptr[env->str.len];
 	env->arr.ptr[env->arr.len] = QSE_NULL;
@@ -281,16 +303,42 @@ static int insertm (qse_env_t* env, const qse_mchar_t* name, const qse_mchar_t* 
 	return 0;
 }
 
+static int appendm (qse_env_t* env, const qse_mchar_t* value[])
+{
+	/* append more values to the last item in the environment */
+
+	qse_size_t vl, i;
+
+	/* no item in the environment */
+	if (env->arr.len <= 0) return -1;
+	QSE_ASSERT (env->str.len > 0);
+
+	/* get the length of the values concatenated */
+	for (i = 0, vl = 0; value[i]; i++) vl += qse_mbslen(value[i]);
+
+	/* expand the string buffer if it's not large enough to hold additional values */
+	if (env->str.len + vl > env->str.capa && expandstr (env, vl) <= -1) return -1;
+
+	env->str.len--; /* decrement to override the terminating null */
+
+	/* copy additional values */
+	for (i = 0; value[i]; i++)
+		env->str.len += qse_mbscpy (&env->str.ptr[env->str.len], value[i]);
+
+	/* terminate the string buffer */
+	env->str.ptr[++env->str.len] = QSE_MT('\0');
+
+	return 0;
+}
+
 static int add_envstrm (qse_env_t* env, const qse_mchar_t* nv)
 {
 	qse_size_t tl;
 	
-	if (env->arr.len >= env->arr.capa &&
-	    expandarr(env) <= -1) return -1;
+	if (env->arr.len >= env->arr.capa && expandarr(env) <= -1) return -1;
 
 	tl = qse_mbslen(nv) + 1;
-	if (env->str.len + tl > env->str.capa &&
-	    expandstr (env, tl) <= -1) return -1;
+	if (env->str.len + tl > env->str.capa && expandstr (env, tl) <= -1) return -1;
 
 	env->arr.ptr[env->arr.len++] = &env->str.ptr[env->str.len];
 	env->arr.ptr[env->arr.len] = QSE_NULL;
@@ -363,6 +411,26 @@ static QSE_INLINE int insert_wcs (
 #endif
 }
 
+static QSE_INLINE int append_wcs (qse_env_t* env, const qse_wchar_t* value[])
+{
+#if defined(QSE_ENV_CHAR_IS_WCHAR)
+	/* no conversion -> wchar */
+	return appendw (env, name, value);
+#else
+	/* convert wchar to mchar */
+	qse_mchar_t* valuedup[2];
+	int n;
+
+	valuedup[0] = qse_wcsatombsdup (value, QSE_NULL, env->mmgr); /* TODO: ignore mbwcerr */
+	if (valuedup == QSE_NULL) return -1;
+	valuedup[1] = QSE_NULL;
+	n = appendm (env, valuedup);
+	QSE_MMGR_FREE (env->mmgr, valuedup[0]);
+
+	return n;
+#endif
+}
+
 static QSE_INLINE int insert_mbs (
 	qse_env_t* env, const qse_mchar_t* name, const qse_mchar_t* value[])
 {
@@ -389,7 +457,26 @@ static QSE_INLINE int insert_mbs (
 	/* no conversion -> mchar */
 	return insertm (env, name, value);
 #endif
+}
 
+static QSE_INLINE int append_mbs (qse_env_t* env, const qse_mchar_t* value[])
+{
+#if defined(QSE_ENV_CHAR_IS_WCHAR)
+	/* convert mchar to wchar */
+	qse_wchar_t* valuedup[2];
+	int n;
+
+	valuedup[0] = qse_mbsatowcsalldup (value, QSE_NULL, env->mmgr); 
+	if (valuedup[0] == QSE_NULL) return -1;
+	valuedup[1] = QSE_NULL;
+	n = appendw (env, namedup, valuedup);
+	QSE_MMGR_FREE (env->mmgr, valuedup[0]);
+
+	return n;
+#else
+	/* no conversion -> mchar */
+	return appendm (env, value);
+#endif
 }
 
 #if defined(_WIN32) 
@@ -629,7 +716,7 @@ done:
 			qse_wchar_t* dup;
 			int n;
 
-			dup = qse_mbstowcsdup (*p, env->mmgr); /* TODO: ignroe mbwcerr */
+			dup = qse_mbstowcsdup (*p, env->mmgr); /* TODO: ignore mbwcerr */
 			if (dup == QSE_NULL) return -1;
 			n = add_envstrw (env, dup);
 			QSE_MMGR_FREE (env->mmgr, dup);
@@ -701,6 +788,22 @@ int qse_env_insertmbsa (
 	qse_env_t* env, const qse_mchar_t* name, const qse_mchar_t* value[])
 {
 	return value? insert_mbs (env, name, value): insert_sys_mbs (env, name);
+}
+
+int qse_env_appendwcs (qse_env_t* env, const qse_wchar_t* value)
+{
+	const qse_wchar_t* va[2];
+	va[0] = value;
+	va[1] = QSE_NULL;
+	return append_wcs (env, va);
+}
+
+int qse_env_appendmbs (qse_env_t* env, const qse_mchar_t* value)
+{
+	const qse_mchar_t* va[2];
+	va[0] = value;
+	va[1] = QSE_NULL;
+	return append_mbs (env, va);
 }
 
 int qse_env_deletewcs (qse_env_t* env, const qse_wchar_t* name)

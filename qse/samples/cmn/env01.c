@@ -1,7 +1,7 @@
 #include <qse/cmn/env.h>
 #include <qse/cmn/mem.h>
 #include <qse/cmn/str.h>
-#include <qse/cmn/stdio.h>
+#include <qse/cmn/sio.h>
 
 #define R(f) \
 	do { \
@@ -106,7 +106,11 @@ static int test3 (void)
 
 	env = qse_env_open (QSE_MMGR_GETDFL(), 0, 0);
 
+	qse_printf (QSE_T("appending to PATH => %d\n"), qse_env_append (env, QSE_T("xxx"))); /* this should fail as there's no item in the environment */
 	qse_printf (QSE_T("inserting PATH => %d\n"), qse_env_insert (env, QSE_T("PATH"), QSE_NULL));
+	qse_printf (QSE_T("appending to PATH => %d\n"), qse_env_append (env, QSE_T(":/usr/xxx/bin:/tmp/bin:/var/lib/qse/bin/sbin/test/bin")));
+	qse_printf (QSE_T("appending to PATH => %d\n"), qse_env_append (env, QSE_T("")));
+
 	qse_printf (QSE_T("inserting HOME => %d\n"), qse_env_insertmbs (env, QSE_MT("HOME"), QSE_NULL));
 	qse_printf (QSE_T("inserting USER => %d\n"), qse_env_insertwcs (env, QSE_WT("USER"), QSE_NULL));
 	qse_printf (QSE_T("inserting WHAT => %d\n"), qse_env_insert (env, QSE_T("WHAT"), QSE_NULL));
@@ -120,8 +124,12 @@ static int test3 (void)
 }
 int main ()
 {
+	qse_openstdsios();
+
 	R (test1);
 	R (test2);
 	R (test3);
+
+	qse_closestdsios();
 	return 0;
 }
