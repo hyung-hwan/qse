@@ -150,7 +150,7 @@ static int cgi_capture_client_header (
 		/* append values with the same key */
 		while ((val = val->next))
 		{
-			if (qse_env_appendmbs (hdrctx->env, QSE_MT(", ")) <= -1 ||
+			if (qse_env_appendmbs (hdrctx->env, QSE_MT(",")) <= -1 ||
 			    qse_env_appendmbs (hdrctx->env, val->ptr) <= -1)
 			{
 				hdrctx->httpd->errnum = QSE_HTTPD_ENOMEM;
