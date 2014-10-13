@@ -769,12 +769,13 @@ enum qse_httpd_rsrc_proxy_flag_t
 {
 	QSE_HTTPD_RSRC_PROXY_RAW             = (1 << 0), /* raw proxying. set this for CONNECT */
 	QSE_HTTPD_RSRC_PROXY_TRANSPARENT     = (1 << 1),
-	QSE_HTTPD_RSRC_PROXY_ALLOW_UPGRADE   = (1 << 2),
-	QSE_HTTPD_RSRC_PROXY_DST_STR         = (1 << 3), /* destination is an unresovled string pointed to by dst.str */
-	QSE_HTTPD_RSRC_PROXY_ENABLE_DNS      = (1 << 4), /* dns service enabled (udp) */
-	QSE_HTTPD_RSRC_PROXY_ENABLE_URS      = (1 << 5), /* url rewriting enabled (udp) */
-	QSE_HTTPD_RSRC_PROXY_DNS_SERVER      = (1 << 6), /* dns address specified */
-	QSE_HTTPD_RSRC_PROXY_URS_SERVER      = (1 << 7), /* urs address specified */
+	QSE_HTTPD_RSRC_PROXY_ALLOW_UPGRADE   = (1 << 2), /* allow protocol upgrade */
+	QSE_HTTPD_RSRC_PROXY_X_FORWARDED     = (1 << 3), /* add x-forwarded-for and x-forwarded-proto */
+	QSE_HTTPD_RSRC_PROXY_DST_STR         = (1 << 4), /* destination is an unresovled string pointed to by dst.str */
+	QSE_HTTPD_RSRC_PROXY_ENABLE_DNS      = (1 << 5), /* dns service enabled (udp) */
+	QSE_HTTPD_RSRC_PROXY_ENABLE_URS      = (1 << 6), /* url rewriting enabled (udp) */
+	QSE_HTTPD_RSRC_PROXY_DNS_SERVER      = (1 << 7), /* dns address specified */
+	QSE_HTTPD_RSRC_PROXY_URS_SERVER      = (1 << 8), /* urs address specified */
 };
 typedef enum qse_httpd_rsrc_proxy_flag_t qse_httpd_rsrc_proxy_flag_t;
 
