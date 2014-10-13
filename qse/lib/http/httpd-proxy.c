@@ -53,10 +53,10 @@ struct task_proxy_t
 #define PROXY_URL_PREREWRITTEN     (1 << 12) /* URL has been prerewritten in prerewrite(). */
 #define PROXY_URL_REWRITTEN        (1 << 13)
 #define PROXY_URL_REDIRECTED       (1 << 14)
-#define PROXY_X_FORWARDED_FOR      (1 << 15) /* X-Forwarded-For: added */
+#define PROXY_X_FORWARDED          (1 << 15) /* Add X-Forwarded-For and X-Forwarded-Proto */
 #define PROXY_VIA                  (1 << 16) /* Via: added to the request */
 #define PROXY_VIA_RETURNING        (1 << 17) /* Via: added to the response */
-#define PROXY_ALLOW_UPGRADE        (1 << 28)
+#define PROXY_ALLOW_UPGRADE        (1 << 18)
 #define PROXY_UPGRADE_REQUESTED    (1 << 19)
 #define PROXY_PROTOCOL_SWITCHED    (1 << 20)
 #define PROXY_GOT_BAD_REQUEST      (1 << 21)
@@ -259,58 +259,11 @@ static int proxy_capture_client_header (qse_htre_t* req, const qse_mchar_t* key,
 {
 	task_proxy_t* proxy = (task_proxy_t*)ctx;
 
-#if 0
-	if (!(proxy->flags & PROXY_TRANSPARENT))
-	{
-		if (!(proxy->flags & PROXY_X_FORWARDED_FOR) && qse_mbscasecmp (key, QSE_MT("X-Forwarded-For")) == 0)
-		{
-			/* append to X-Forwarded-For if it exists in the header.
-			 * note that it add a comma even if the existing value is empty.
-			 * actually, no such value must be sent in by a well-behaving
-			 * client/proxy/load-balancer, etc. */
-			qse_mchar_t extra[128];
-
-			proxy->flags |= PROXY_X_FORWARDED_FOR;
-			qse_nwadtombs (&proxy->client->remote_addr, extra, QSE_COUNTOF(extra), QSE_NWADTOMBS_ADDR);
-
-			return proxy_add_header_to_buffer_with_extra_data (proxy, proxy->reqfwdbuf, key, val, QSE_MT(", %hs"), extra);
-		}
-	}
-
-
-	if (!(proxy->httpd->opt.trait & QSE_HTTPD_PROXYNOVIA) && !(proxy->flags & PROXY_VIA))
-	{
-		if (qse_mbscasecmp (key, QSE_MT("Via")) == 0)
-		{
-			qse_mchar_t extra[128];
-			const qse_mchar_t* pseudonym;
-
-			proxy->flags |= PROXY_VIA;
-			if (proxy->pseudonym[0])
-			{
-				pseudonym = proxy->pseudonym;
-			}
-			else
-			{
-				qse_nwadtombs (&proxy->client->local_addr, extra, QSE_COUNTOF(extra), QSE_NWADTOMBS_ALL);
-				pseudonym = extra;
-			}
-
-			return proxy_add_header_to_buffer_with_extra_data (
-				proxy, proxy->reqfwdbuf, key, val, 
-				QSE_MT(", %d.%d %hs (%hs)"), 
-				(int)proxy->version.major,
-				(int)proxy->version.minor, 
-				pseudonym,
-				qse_httpd_getname(proxy->httpd));
-		}
-	}
-#endif
-
 /* EXPERIMENTAL: REMOVE HEADERS.
  * FOR EXAMPLE, You can remove Referer or forge it to give analysis systems harder time  */
 	if (qse_mbscasecmp (key, QSE_MT("Transfer-Encoding")) != 0 &&
-	    qse_mbscasecmp (key, QSE_MT("Content-Length")) != 0 /* EXPERIMENTAL */ /* &&
+	    qse_mbscasecmp (key, QSE_MT("Content-Length")) != 0 &&
+	    qse_mbscasecmp (key, QSE_MT("Proxy-Connection")) != 0 /* EXPERIMENTAL */ /* &&
 	    qse_mbscasecmp (key, QSE_MT("Referer")) != 0*/)
 	{
 		return proxy_add_header_to_buffer (proxy, proxy->reqfwdbuf, key, val);
@@ -325,7 +278,8 @@ static int proxy_capture_client_trailer (qse_htre_t* req, const qse_mchar_t* key
 
 	if (qse_mbscasecmp (key, QSE_MT("Transfer-Encoding")) != 0 &&
 	    qse_mbscasecmp (key, QSE_MT("Content-Length")) != 0 &&
-	    qse_mbscasecmp (key, QSE_MT("Connection")) != 0)
+	    qse_mbscasecmp (key, QSE_MT("Connection")) != 0 &&
+	    qse_mbscasecmp (key, QSE_MT("Proxy-Connection")) != 0)
 	{
 		return proxy_add_header_to_buffer (proxy, proxy->reqfwdbuf, key, val);
 	}
@@ -983,6 +937,7 @@ static int task_init_proxy (
 
 	if (arg->rsrc->flags & QSE_HTTPD_RSRC_PROXY_RAW) proxy->flags |= PROXY_RAW;
 	if (arg->rsrc->flags & QSE_HTTPD_RSRC_PROXY_TRANSPARENT) proxy->flags |= PROXY_TRANSPARENT;
+	if (arg->rsrc->flags & QSE_HTTPD_RSRC_PROXY_X_FORWARDED) proxy->flags |= PROXY_X_FORWARDED;
 	if (arg->rsrc->flags & QSE_HTTPD_RSRC_PROXY_ALLOW_UPGRADE) proxy->flags |= PROXY_ALLOW_UPGRADE;
 
 	proxy->peer.local = arg->rsrc->src.nwad;
@@ -1131,11 +1086,8 @@ qse_mbs_ncat (proxy->reqfwdbuf, spc, QSE_COUNTOF(spc));
 		    qse_mbs_cat (proxy->reqfwdbuf, QSE_MT("\r\n")) == (qse_size_t)-1 ||
 		    qse_htre_walkheaders (arg->req, proxy_capture_client_header, proxy) <= -1) goto nomem_oops;
 
-		/*if (!(proxy->flags & (PROXY_TRANSPARENT | PROXY_X_FORWARDED_FOR)))*/
-		if (!(proxy->flags & PROXY_TRANSPARENT))
+		if ((proxy->flags & (PROXY_TRANSPARENT | PROXY_X_FORWARDED)) == PROXY_X_FORWARDED)
 		{
-			/* X-Forwarded-For is not added by proxy_capture_client_header() 
-			 * above. I don't care if it's included in the trailer. */
 			qse_mchar_t extra[128];
 
 			/* client's ip address */

@@ -631,6 +631,7 @@ static int init_xtn_ssl (qse_httpd_t* httpd, qse_httpd_server_t* server)
 	}
 
 
+	/* TODO: SSL_CTX_set_verify(); SSL_CTX_set_verify_depth() */
 	/* TODO: CRYPTO_set_id_callback (); */
 	/* TODO: CRYPTO_set_locking_callback (); */
 

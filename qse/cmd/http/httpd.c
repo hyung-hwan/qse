@@ -204,6 +204,7 @@ struct loccfg_t
 		unsigned int allow_upgrade: 1;
 		unsigned int dns_enabled: 1;
 		unsigned int urs_enabled: 1;
+		unsigned int x_forwarded: 1;
 		qse_nwad_t dns_nwad; /* TODO: multiple dns */
 		qse_nwad_t urs_nwad; /* TODO: multiple urs */
 		int dns_timeout;
@@ -644,6 +645,11 @@ proxy_ok:
 		root->u.proxy.urs_server.tmout.sec = loccfg->proxy.urs_timeout;
 		root->u.proxy.urs_server.retries = loccfg->proxy.urs_retries;
 		root->u.proxy.urs_prerewrite_mod = loccfg->proxy.urs_prerewrite_mod;
+	}
+
+	if (loccfg->proxy.x_forwarded)
+	{
+		root->u.proxy.flags |= QSE_HTTPD_RSRC_PROXY_X_FORWARDED;
 	}
 
 	if (loccfg->proxy.allow_upgrade)
@@ -1523,6 +1529,11 @@ static int load_loccfg_proxy (qse_httpd_t* httpd, qse_xli_t* xli, qse_xli_list_t
 	if (pair) cfg->proxy.allow_upgrade = get_boolean ((qse_xli_str_t*)pair->val);
 
 	pair = QSE_NULL;
+	if (proxy) pair = qse_xli_findpair (xli, proxy, QSE_T("x-forwarded"));
+	if (!pair && default_proxy) pair = qse_xli_findpair (xli, default_proxy, QSE_T("x-forwarded"));
+	if (pair) cfg->proxy.x_forwarded = get_boolean ((qse_xli_str_t*)pair->val);
+
+	pair = QSE_NULL;
 	if (proxy) pair = qse_xli_findpair (xli, proxy, QSE_T("pseudonym"));
 	if (!pair && default_proxy) pair = qse_xli_findpair (xli, default_proxy, QSE_T("pseudonym"));
 	if (pair) 
@@ -2059,6 +2070,7 @@ static int open_config_file (qse_httpd_t* httpd)
 		{ QSE_T("server-default.proxy.connect"),                     { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
 		{ QSE_T("server-default.proxy.intercept"),                   { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
 		{ QSE_T("server-default.proxy.upgrade"),                     { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
+		{ QSE_T("server-default.proxy.x-forwarded"),                 { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
 		{ QSE_T("server-default.proxy.pseudonym"),                   { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
 		{ QSE_T("server-default.proxy.dns-enabled"),                 { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
 		{ QSE_T("server-default.proxy.dns-server"),                  { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
@@ -2115,7 +2127,8 @@ static int open_config_file (qse_httpd_t* httpd)
 		{ QSE_T("server.host.location.proxy.http"),                  { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
 		{ QSE_T("server.host.location.proxy.connect"),               { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
 		{ QSE_T("server.host.location.proxy.intercept"),             { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
-		{ QSE_T("server.host.location.proxy.upgrade"),             { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
+		{ QSE_T("server.host.location.proxy.upgrade"),               { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
+		{ QSE_T("server.host.location.proxy.x-forwarded"),           { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
 		{ QSE_T("server.host.location.proxy.pseudonym"),             { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
 		{ QSE_T("server.host.location.proxy.dns-enabled"),           { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
 		{ QSE_T("server.host.location.proxy.dns-server"),            { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
