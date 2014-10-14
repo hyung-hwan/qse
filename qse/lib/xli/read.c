@@ -806,7 +806,7 @@ static int read_pair (qse_xli_t* xli, const qse_char_t* keytag)
 			{
 				/* check the value type */
 				qse_xli_seterror (xli, QSE_XLI_EILVAL, (const qse_cstr_t*)&key, &kloc);
-				goto oops;	
+				goto oops;
 			}
 
 			/* add a new pair with the initial string segment */
@@ -892,7 +892,7 @@ static int read_pair (qse_xli_t* xli, const qse_char_t* keytag)
 		{
 			/* check the value type */
 			qse_xli_seterror (xli, QSE_XLI_EILVAL, (const qse_cstr_t*)&key, &kloc);
-			goto oops;	
+			goto oops;
 		}
 
 		xli->tok_status &= ~TOK_STATUS_ENABLE_NSTR;
@@ -925,7 +925,7 @@ static int read_pair (qse_xli_t* xli, const qse_char_t* keytag)
 		if (xli->opt.trait & QSE_XLI_NONIL) 
 		{
 			qse_xli_seterror (xli, QSE_XLI_ENOVAL, (const qse_cstr_t*)&key, &kloc);
-			goto oops;	
+			goto oops;
 		}
 
 		if (scm && !(scm->flags & QSE_XLI_SCM_VALNIL) &&
@@ -950,7 +950,7 @@ static int read_pair (qse_xli_t* xli, const qse_char_t* keytag)
 	else
 	{
 		qse_xli_seterror (xli, QSE_XLI_ELBREQ, QSE_STR_XSTR(xli->tok.name), &xli->tok.loc);
-		goto oops;	
+		goto oops;
 	}
 
 	if (strtag) QSE_MMGR_FREE (xli->mmgr, strtag);
@@ -980,7 +980,7 @@ static qse_xli_list_link_t* make_list_link (qse_xli_t* xli, qse_xli_list_t* parl
 	link->next = xli->parlink;
 	xli->parlink = link;
 
-	return link;	
+	return link;
 }
 
 static void free_list_link (qse_xli_t* xli, qse_xli_list_link_t* link)
