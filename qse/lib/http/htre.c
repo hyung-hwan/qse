@@ -93,6 +93,7 @@ void qse_htre_clear (qse_htre_t* re)
 	}
 
 	re->state = 0;
+	re->flags = 0;
 
 	QSE_MEMSET (&re->version, 0, QSE_SIZEOF(re->version));
 	QSE_MEMSET (&re->attr, 0, QSE_SIZEOF(re->attr));
@@ -104,7 +105,6 @@ void qse_htre_clear (qse_htre_t* re)
 #if 0 
 	qse_mbs_clear (&re->iniline);
 #endif
-	re->state = 0;
 }
 
 int qse_htre_setstrfromcstr (
@@ -268,7 +268,9 @@ int qse_htre_perdecqpath (qse_htre_t* re)
 {
 	/* percent decode the query path */
 	if (re->type != QSE_HTRE_Q || (re->flags & QSE_HTRE_QPATH_PERDEC)) return -1;
-	if (qse_perdechttpstr ((re)->u.q.path, (re)->u.q.path) > 0)
+	if (qse_perdechttpstr (re->u.q.path, re->u.q.path) > 0)
+	{
 		re->flags |= QSE_HTRE_QPATH_PERDEC;
+	}
 	return 0;
 }

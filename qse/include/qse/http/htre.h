@@ -40,6 +40,7 @@ enum qse_htre_state_t
 	QSE_HTRE_DISCARDED = (1 << 0), /** content has been discarded */
 	QSE_HTRE_COMPLETED = (1 << 1)  /** complete content has been seen */
 };
+typedef enum qse_htre_state_t qse_htre_state_t;
 
 typedef int (*qse_htre_concb_t) (
 	qse_htre_t*        re,
@@ -92,7 +93,6 @@ struct qse_htre_t
 		} s;
 	} u;
 
-	
 #define QSE_HTRE_ATTR_CHUNKED   (1 << 0)
 #define QSE_HTRE_ATTR_LENGTH    (1 << 1)
 #define QSE_HTRE_ATTR_KEEPALIVE (1 << 2)
@@ -120,7 +120,7 @@ struct qse_htre_t
 	qse_htre_concb_t concb;
 	void* concb_ctx;
 
-	/* ORed of qse_htre_state_t */
+	/* bitwise-ORed of qse_htre_state_t */
 	int state;
 };
 
