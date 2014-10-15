@@ -58,7 +58,8 @@ enum qse_httpd_errnum_t
 	QSE_HTTPD_EAGAIN,
 
 	QSE_HTTPD_ENOSVR,  /* no active servers */
-	QSE_HTTPD_ECONN,
+	QSE_HTTPD_ECONN,   /* connection failure */
+	QSE_HTTPD_ESCONN,  /* secure connection failure */
 	QSE_HTTPD_ENOBUF,  /* no buffer available */
 	QSE_HTTPD_EDISCON, /* client disconnnected */
 	QSE_HTTPD_EBADREQ, /* bad request */
@@ -146,12 +147,31 @@ struct qse_httpd_stat_t
 	qse_ntime_t mtime;
 };
 
+enum qse_httpd_peer_flag_t
+{
+	QSE_HTTPD_PEER_SECURE = (1 << 0),
+
+	/* ---------------------------------- */
+
+	/* indicate the underlying socket is connected. internal use only. don't set it */
+	QSE_HTTPD_PEER_CONNECTED = (1 << 20),
+	
+	/* internal use only */
+	QSE_HTTPD_PEER_PENDING = (1 << 21),
+
+	/* all internal enumerators */
+	QSE_HTTPD_PEER_ALL_INTERNALS = (QSE_HTTPD_PEER_CONNECTED | QSE_HTTPD_PEER_PENDING)
+};
+typedef enum qse_httpd_peer_flag_t qse_httpd_peer_flag_t;
+
 typedef struct qse_httpd_peer_t qse_httpd_peer_t;
 struct qse_httpd_peer_t
 {
+	int flags; /* 0 or bitwised-OR'ed of qse_httpd_peer_flag_t enumerators */
 	qse_nwad_t nwad;
 	qse_nwad_t local; /* local side address facing the peer */
-	qse_httpd_hnd_t  handle;
+	qse_httpd_hnd_t handle;
+	qse_httpd_hnd_t handle2;
 };
 
 enum qse_httpd_mux_mask_t
@@ -529,7 +549,7 @@ typedef struct qse_httpd_task_trigger_t qse_httpd_task_trigger_t;
 struct qse_httpd_task_trigger_t
 {
 	int flags; /**< [IN] bitwise-ORed of #qse_httpd_task_trigger_flag_t enumerators*/
-	int cmask; /* client mask - QSE_HTTPD_TASK_TRIGGER_READ | QSE_HTTPD_TASK_TRIGGER_WRITE */
+	unsigned int cmask; /* client mask - QSE_HTTPD_TASK_TRIGGER_READ | QSE_HTTPD_TASK_TRIGGER_WRITE */
 	struct
 	{
 		int       mask; /* QSE_HTTPD_TASK_TRIGGER_READ | QSE_HTTPD_TASK_TRIGGER_WRITE */
@@ -772,10 +792,11 @@ enum qse_httpd_rsrc_proxy_flag_t
 	QSE_HTTPD_RSRC_PROXY_ALLOW_UPGRADE   = (1 << 2), /* allow protocol upgrade */
 	QSE_HTTPD_RSRC_PROXY_X_FORWARDED     = (1 << 3), /* add x-forwarded-for and x-forwarded-proto */
 	QSE_HTTPD_RSRC_PROXY_DST_STR         = (1 << 4), /* destination is an unresovled string pointed to by dst.str */
-	QSE_HTTPD_RSRC_PROXY_ENABLE_DNS      = (1 << 5), /* dns service enabled (udp) */
-	QSE_HTTPD_RSRC_PROXY_ENABLE_URS      = (1 << 6), /* url rewriting enabled (udp) */
-	QSE_HTTPD_RSRC_PROXY_DNS_SERVER      = (1 << 7), /* dns address specified */
-	QSE_HTTPD_RSRC_PROXY_URS_SERVER      = (1 << 8), /* urs address specified */
+	QSE_HTTPD_RSRC_PROXY_DST_SECURE      = (1 << 5), /* use secure connection to destination */
+	QSE_HTTPD_RSRC_PROXY_ENABLE_DNS      = (1 << 6), /* dns service enabled (udp) */
+	QSE_HTTPD_RSRC_PROXY_ENABLE_URS      = (1 << 7), /* url rewriting enabled (udp) */
+	QSE_HTTPD_RSRC_PROXY_DNS_SERVER      = (1 << 8), /* dns address specified */
+	QSE_HTTPD_RSRC_PROXY_URS_SERVER      = (1 << 9), /* urs address specified */
 };
 typedef enum qse_httpd_rsrc_proxy_flag_t qse_httpd_rsrc_proxy_flag_t;
 

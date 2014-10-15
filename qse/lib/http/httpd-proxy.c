@@ -35,31 +35,31 @@ struct task_proxy_arg_t
 typedef struct task_proxy_t task_proxy_t;
 struct task_proxy_t
 {
-#define PROXY_INIT_FAILED          (1 << 0)
-#define PROXY_RAW                  (1 << 1)
-#define PROXY_TRANSPARENT          (1 << 2)
-#define PROXY_DNS_SERVER           (1 << 3) /* dns server address specified */
-#define PROXY_URS_SERVER           (1 << 4) /* urs server address specified */
-#define PROXY_OUTBAND_PEER_NAME    (1 << 5) /* the peer_name pointer points to
+#define PROXY_INIT_FAILED          (1u << 0)
+#define PROXY_RAW                  (1u << 1)
+#define PROXY_TRANSPARENT          (1u << 2)
+#define PROXY_DNS_SERVER           (1u << 3) /* dns server address specified */
+#define PROXY_URS_SERVER           (1u << 4) /* urs server address specified */
+#define PROXY_OUTBAND_PEER_NAME    (1u << 5) /* the peer_name pointer points to
                                                a separate memory chunk outside
                                                the task_proxy_t chunk. explicit
                                                deallocatin is required */
-#define PROXY_RESOLVE_PEER_NAME    (1 << 6)
-#define PROXY_PEER_NAME_RESOLVING  (1 << 7)
-#define PROXY_PEER_NAME_RESOLVED   (1 << 8)
-#define PROXY_PEER_NAME_UNRESOLVED (1 << 9)
-#define PROXY_REWRITE_URL          (1 << 10)
-#define PROXY_URL_REWRITING        (1 << 11)
-#define PROXY_URL_PREREWRITTEN     (1 << 12) /* URL has been prerewritten in prerewrite(). */
-#define PROXY_URL_REWRITTEN        (1 << 13)
-#define PROXY_URL_REDIRECTED       (1 << 14)
-#define PROXY_X_FORWARDED          (1 << 15) /* Add X-Forwarded-For and X-Forwarded-Proto */
-#define PROXY_VIA                  (1 << 16) /* Via: added to the request */
-#define PROXY_VIA_RETURNING        (1 << 17) /* Via: added to the response */
-#define PROXY_ALLOW_UPGRADE        (1 << 18)
-#define PROXY_UPGRADE_REQUESTED    (1 << 19)
-#define PROXY_PROTOCOL_SWITCHED    (1 << 20)
-#define PROXY_GOT_BAD_REQUEST      (1 << 21)
+#define PROXY_RESOLVE_PEER_NAME    (1u << 6)
+#define PROXY_PEER_NAME_RESOLVING  (1u << 7)
+#define PROXY_PEER_NAME_RESOLVED   (1u << 8)
+#define PROXY_PEER_NAME_UNRESOLVED (1u << 9)
+#define PROXY_REWRITE_URL          (1u << 10)
+#define PROXY_URL_REWRITING        (1u << 11)
+#define PROXY_URL_PREREWRITTEN     (1u << 12) /* URL has been prerewritten in prerewrite(). */
+#define PROXY_URL_REWRITTEN        (1u << 13)
+#define PROXY_URL_REDIRECTED       (1u << 14)
+#define PROXY_X_FORWARDED          (1u << 15) /* Add X-Forwarded-For and X-Forwarded-Proto */
+#define PROXY_VIA                  (1u << 16) /* Via: added to the request */
+#define PROXY_VIA_RETURNING        (1u << 17) /* Via: added to the response */
+#define PROXY_ALLOW_UPGRADE        (1u << 18)
+#define PROXY_UPGRADE_REQUESTED    (1u << 19)
+#define PROXY_PROTOCOL_SWITCHED    (1u << 20)
+#define PROXY_GOT_BAD_REQUEST      (1u << 21)
 	unsigned int flags;
 	qse_httpd_t* httpd;
 	qse_httpd_client_t* client;
@@ -899,7 +899,13 @@ static void adjust_peer_name_and_port (task_proxy_t* proxy)
 	else
 	{
 		if (proxy->flags & PROXY_RAW) proxy->peer_port = QSE_HTTPD_DEFAULT_SECURE_PORT;
-		else proxy->peer_port = QSE_HTTPD_DEFAULT_PORT;
+		else 
+		{
+			if (proxy->peer.flags & QSE_HTTPD_PEER_SECURE)
+				proxy->peer_port = QSE_HTTPD_DEFAULT_SECURE_PORT;
+			else
+				proxy->peer_port = QSE_HTTPD_DEFAULT_PORT;
+		}
 	}
 }
 
@@ -939,6 +945,8 @@ static int task_init_proxy (
 	if (arg->rsrc->flags & QSE_HTTPD_RSRC_PROXY_TRANSPARENT) proxy->flags |= PROXY_TRANSPARENT;
 	if (arg->rsrc->flags & QSE_HTTPD_RSRC_PROXY_X_FORWARDED) proxy->flags |= PROXY_X_FORWARDED;
 	if (arg->rsrc->flags & QSE_HTTPD_RSRC_PROXY_ALLOW_UPGRADE) proxy->flags |= PROXY_ALLOW_UPGRADE;
+
+	if (arg->rsrc->flags & QSE_HTTPD_RSRC_PROXY_DST_SECURE) proxy->peer.flags |= QSE_HTTPD_PEER_SECURE;
 
 	proxy->peer.local = arg->rsrc->src.nwad;
 	if (arg->rsrc->flags & QSE_HTTPD_RSRC_PROXY_DST_STR)
@@ -1414,6 +1422,7 @@ static int task_main_proxy_4 (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
 {
 	task_proxy_t* proxy = (task_proxy_t*)task->ctx;
+	qse_ssize_t n;
 
 #if 0
 printf ("task_main_proxy_4 trigger[0].mask=%d trigger[1].mask=%d trigger.cmask=%d\n", 
@@ -1425,8 +1434,7 @@ printf ("task_main_proxy_4 trigger[0].mask=%d trigger[1].mask=%d trigger.cmask=%
 	if ((task->trigger.v[0].mask & QSE_HTTPD_TASK_TRIGGER_READABLE) &&
 	    proxy->buflen < QSE_SIZEOF(proxy->buf))
 	{
-		qse_ssize_t n;
-
+	reread:
 		/* reading from the peer */
 		httpd->errnum = QSE_HTTPD_ENOERR;
 		n = httpd->opt.scb.peer.recv (
@@ -1521,7 +1529,6 @@ printf ("task_main_proxy_4 trigger[0].mask=%d trigger[1].mask=%d trigger.cmask=%
 		 * side is writable. it should be safe to write whenever
 		 * this task function is called. even if it's not writable,
 		 * it should still be ok as the client socket is non-blocking. */
-		qse_ssize_t n;
 
 		httpd->errnum = QSE_HTTPD_ENOERR;
 		n = httpd->opt.scb.client.send (httpd, client, proxy->buf, proxy->buflen);
@@ -1540,6 +1547,24 @@ printf ("task_main_proxy_4 trigger[0].mask=%d trigger[1].mask=%d trigger.cmask=%
 			QSE_MEMCPY (&proxy->buf[0], &proxy->buf[n], proxy->buflen - n);
 			proxy->buflen -= n;
 		}
+	}
+
+	if (proxy->peer.flags & QSE_HTTPD_PEER_PENDING)
+	{
+		/* this QSE_HTTPD_CLIENT_PENDING thing is a dirty hack for SSL.
+		 * In SSL, data is transmitted in a record. a record can be
+		 * as large as 16K bytes since its length field is 2 bytes.
+		 * If SSL_read() has a record but it's given a smaller buffer
+		 * than the actual record, the next call to select() won't return. 
+		 * there is no data to read at the socket layer. SSL_pending() can 
+		 * tell you the amount of data in the SSL buffer. I try to consume
+		 * the pending data if the client.recv handler has set QSE_HTTPD_CLIENT_PENDING. */
+
+		/* BUG BUG BUG.
+		 * it jumps back to read more. If the client-side is not writable,
+		 * unnecessary loop is made between this 'goto' and the target label. 
+		 * HOW SHOULD I SOLVE THIS? USE A BIG BUFFER AS LARGE AS 16K? */
+		/*if (proxy->buflen < QSE_SIZEOF(proxy->buf))*/ goto reread;
 	}
 
 	return 1;
@@ -2059,17 +2084,20 @@ printf ("XXXXXXXXXXXXXXXXXXXXXXXXXX URL REWRITTEN TO [%s].....\n", new_url);
 			}
 			else
 			{
+				int proto_len;
+
 				QSE_ASSERT (QSE_STR_LEN(proxy->reqfwdbuf) > 0);
 
 				/* TODO: Host rewriting?? */
 			/* TODO: Host rewriting - to support it, headers must be made available thru request cloning. 
 			 *                        the request may not be valid after task_init_proxy */
 
-				if (qse_mbszcasecmp (new_url, QSE_MT("http://"), 7) == 0)
+				if (qse_mbszcasecmp (new_url, QSE_MT("http://"), (proto_len = 7)) == 0 ||
+				    qse_mbszcasecmp (new_url, QSE_MT("https://"), (proto_len = 8)) == 0)
 				{
 					const qse_mchar_t* host;
 
-					host = new_url + 7;
+					host = new_url + proto_len;
 					if (host[0] != QSE_MT('/') && host[0] != QSE_MT('\0'))
 					{
 						const qse_mchar_t* slash;
@@ -2093,6 +2121,12 @@ printf ("XXXXXXXXXXXXXXXXXXXXXXXXXX URL REWRITTEN TO [%s].....\n", new_url);
 							goto fail;
 						}
 
+/* TODO: antything todo when http is rewritten to HTTPS or vice versa */
+						if (proto_len == 8)
+							proxy->peer.flags |= QSE_HTTPD_PEER_SECURE;
+						else
+							proxy->peer.flags &= ~QSE_HTTPD_PEER_SECURE;
+
 						if (qse_mbstonwad (tmp, &nwad) <= -1)
 						{
 							proxy->flags |= PROXY_RESOLVE_PEER_NAME | PROXY_OUTBAND_PEER_NAME;
@@ -2104,7 +2138,7 @@ printf ("XXXXXXXXXXXXXXXXXXXXXXXXXX URL REWRITTEN TO [%s].....\n", new_url);
 							if (qse_getnwadport(&nwad) == 0) 
 							{
 								/* i don't care if tmp is X.X.X.X:0 or just X.X.X.X */
-								qse_setnwadport (&nwad, qse_hton16(QSE_HTTPD_DEFAULT_PORT));
+								qse_setnwadport (&nwad, qse_hton16(proto_len == 8? QSE_HTTPD_DEFAULT_SECURE_PORT: QSE_HTTPD_DEFAULT_PORT));
 							}
 
 							proxy->peer.nwad = nwad;

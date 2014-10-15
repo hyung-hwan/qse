@@ -1103,12 +1103,11 @@ qse_printf (QSE_T("!!!!!FEEDING OK OK OK OK %d from %d\n"), (int)m, (int)client-
 		/* this QSE_HTTPD_CLIENT_PENDING thing is a dirty hack for SSL.
 		 * In SSL, data is transmitted in a record. a record can be
 		 * as large as 16K bytes since its length field is 2 bytes.
-		 * If SSL_read() has record a record but it's given a
-		 * smaller buffer than the actuaal record, the next call
-		 * to select() won't return. there is no data to read
-		 * at the socket layer. SSL_pending() can tell you the
-		 * amount of data in the SSL buffer. I try to consume
-		 * the pending data if the client.recv handler set QSE_HTTPD_CLIENT_PENDING.
+		 * If SSL_read() has a record but it's given a smaller buffer
+		 * than the actual record, the next call to select() won't return. 
+		 * there is no data to read at the socket layer. SSL_pending() can 
+		 * tell you the amount of data in the SSL buffer. I try to consume
+		 * the pending data if the client.recv handler has set QSE_HTTPD_CLIENT_PENDING.
 		 *
 		 * TODO: Investigate if there is any starvation issues.
 		 *       What if a single client never stops sending? 

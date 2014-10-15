@@ -577,7 +577,8 @@ typedef struct httpd_xtn_t httpd_xtn_t;
 struct httpd_xtn_t
 {
 #if defined(HAVE_SSL)
-	SSL_CTX* ssl_ctx;
+	SSL_CTX* ssl_client_ctx;
+	SSL_CTX* ssl_peer_ctx;
 #endif
 	qse_httpd_ecb_t ecb;
 	qse_httpd_dnsstd_t dns;
@@ -587,7 +588,8 @@ struct httpd_xtn_t
 #if defined(HAVE_SSL)
 static int init_xtn_ssl (qse_httpd_t* httpd, qse_httpd_server_t* server)
 {
-	SSL_CTX* ctx;
+/* BUG BUG BUG. SSL context for client must exist inside the seerver, i guess */
+	SSL_CTX* client_ctx = QSE_NULL;
 	httpd_xtn_t* xtn;
 	server_xtn_t* server_xtn;
 	qse_httpd_serverstd_ssl_t ssl;
@@ -597,24 +599,28 @@ static int init_xtn_ssl (qse_httpd_t* httpd, qse_httpd_server_t* server)
 
 	if (server_xtn->query (httpd, server, QSE_HTTPD_SERVERSTD_SSL, QSE_NULL, &ssl) <= -1)
 	{
-		return -1;
+		goto oops;
 	}
 
 	if (ssl.certfile == QSE_NULL || ssl.keyfile == QSE_NULL)
 	{
 		qse_httpd_seterrnum (httpd, QSE_HTTPD_EINVAL);
-		return -1;
+		goto oops;
 	}
 
-	ctx = SSL_CTX_new (SSLv23_server_method());
-	if (ctx == QSE_NULL) return -1;
+	client_ctx = SSL_CTX_new (SSLv23_server_method());
+	if (!client_ctx) 
+	{
+		qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOMEM);
+		goto oops;
+	}
 
 	/*SSL_CTX_set_info_callback(ctx,ssl_info_callback);*/
 
-	if (SSL_CTX_use_certificate_file (ctx, ssl.certfile, SSL_FILETYPE_PEM) == 0 ||
-	    SSL_CTX_use_PrivateKey_file (ctx, ssl.keyfile, SSL_FILETYPE_PEM) == 0 ||
-	    SSL_CTX_check_private_key (ctx) == 0 /*||
-	    SSL_CTX_use_certificate_chain_file (ctx, chainfile) == 0*/)
+	if (SSL_CTX_use_certificate_file (client_ctx, ssl.certfile, SSL_FILETYPE_PEM) == 0 ||
+	    SSL_CTX_use_PrivateKey_file (client_ctx, ssl.keyfile, SSL_FILETYPE_PEM) == 0 ||
+	    SSL_CTX_check_private_key (client_ctx) == 0 /*||
+	    SSL_CTX_use_certificate_chain_file (client_ctx, chainfile) == 0*/)
 	{
 		if (httpd->opt.trait & QSE_HTTPD_LOGACT)
 		{
@@ -626,25 +632,60 @@ static int init_xtn_ssl (qse_httpd_t* httpd, qse_httpd_server_t* server)
 			httpd->opt.rcb.logact (httpd, &msg);
 		}
 
-		SSL_CTX_free (ctx);
-		return -1;
+		qse_httpd_seterrnum (httpd, QSE_HTTPD_EINVAL); /* TODO: define a better error code */
+		goto oops;
 	}
-
 
 	/* TODO: SSL_CTX_set_verify(); SSL_CTX_set_verify_depth() */
 	/* TODO: CRYPTO_set_id_callback (); */
 	/* TODO: CRYPTO_set_locking_callback (); */
+	SSL_CTX_set_read_ahead (client_ctx, 0);
 
-	SSL_CTX_set_read_ahead (ctx, 0);
-	xtn->ssl_ctx = ctx;
+	xtn->ssl_client_ctx = client_ctx;
+
 	return 0;
+
+oops:
+	if (client_ctx) SSL_CTX_free (client_ctx);
+	return -1;
 }
 
 static void fini_xtn_ssl (httpd_xtn_t* xtn)
 {
 	/* TODO: CRYPTO_set_id_callback (QSE_NULL); */
 	/* TODO: CRYPTO_set_locking_callback (QSE_NULL); */
-	SSL_CTX_free (xtn->ssl_ctx);
+	SSL_CTX_free (xtn->ssl_client_ctx);
+}
+
+static int init_xtn_peer_ssl (qse_httpd_t* httpd)
+{
+	SSL_CTX* peer_ctx = QSE_NULL;
+	httpd_xtn_t* xtn;
+
+	xtn = (httpd_xtn_t*)qse_httpd_getxtn (httpd);
+
+	peer_ctx = SSL_CTX_new (SSLv23_client_method());
+	if (!peer_ctx) 
+	{
+		qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOMEM);
+		goto oops;
+	}
+
+	xtn->ssl_peer_ctx = peer_ctx;
+
+printf ("SSL PEER CTX ============>%p\n", xtn->ssl_peer_ctx);
+	return 0;
+
+oops:
+	if (peer_ctx) SSL_CTX_free (peer_ctx);
+	return -1;
+}
+
+static void fini_xtn_peer_ssl (httpd_xtn_t* xtn)
+{
+	/* TODO: CRYPTO_set_id_callback (QSE_NULL); */
+	/* TODO: CRYPTO_set_locking_callback (QSE_NULL); */
+	SSL_CTX_free (xtn->ssl_peer_ctx);
 }
 #endif
 
@@ -656,7 +697,8 @@ static void cleanup_standard_httpd (qse_httpd_t* httpd)
 	xtn = (httpd_xtn_t*)qse_httpd_getxtn (httpd);
 
 #if defined(HAVE_SSL)
-	if (xtn->ssl_ctx) fini_xtn_ssl (xtn);
+	if (xtn->ssl_peer_ctx) fini_xtn_peer_ssl (xtn);
+	if (xtn->ssl_client_ctx) fini_xtn_ssl (xtn);
 #endif
 
 #if defined(USE_LTDL)
@@ -1069,6 +1111,10 @@ static int peer_open (qse_httpd_t* httpd, qse_httpd_peer_t* peer)
 	int connaddrsize, bindaddrsize;
 	int connected = 1;
 	qse_sck_hnd_t fd = QSE_INVALID_SCKHND;
+	SSL* ssl = QSE_NULL;
+	httpd_xtn_t* xtn;
+
+	xtn = (httpd_xtn_t*) qse_httpd_getxtn (httpd);
 
 #if defined(_WIN32)
 	unsigned long cmd;
@@ -1079,6 +1125,9 @@ static int peer_open (qse_httpd_t* httpd, qse_httpd_peer_t* peer)
 #else
 	int flag;
 #endif
+	
+	/* turn off internally used bits */
+	peer->flags &= ~QSE_HTTPD_PEER_ALL_INTERNALS;
 
 	connaddrsize = qse_nwadtoskad (&peer->nwad, &connaddr);
 	if (connaddrsize <= -1)
@@ -1117,6 +1166,33 @@ static int peer_open (qse_httpd_t* httpd, qse_httpd_peer_t* peer)
 
 	if (set_socket_nonblock (httpd, fd, 1) <= -1) goto oops;
 
+	if (peer->flags & QSE_HTTPD_PEER_SECURE)
+	{
+	#if defined(HAVE_SSL)
+		if (!xtn->ssl_peer_ctx)
+		{
+			/* TODO: peer ssl initialization doesn't have to be delayed... */
+			if (init_xtn_peer_ssl (httpd) <= -1) goto oops;
+		}
+
+		ssl = SSL_new (xtn->ssl_peer_ctx);
+		if (ssl == QSE_NULL) 
+		{
+			qse_httpd_seterrnum (httpd, QSE_HTTPD_ESYSERR); /* TODO: better error code */
+			goto oops;
+		}
+
+		if (SSL_set_fd (ssl, fd) == 0) 
+		{
+			qse_httpd_seterrnum (httpd, QSE_HTTPD_ESYSERR); /* TODO: better error code */
+			goto oops;
+		}
+	#else
+		qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
+		goto oops;
+	#endif
+	}
+
 #if defined(_WIN32)
 	if (connect (fd, (struct sockaddr*)&connaddr, connaddrsize) <= -1)
 	{
@@ -1154,13 +1230,48 @@ static int peer_open (qse_httpd_t* httpd, qse_httpd_peer_t* peer)
 	}
 #endif
 
-	/*if (set_socket_nonblock (httpd, fd, 0) <= -1) goto oops;*/
+	if ((peer->flags & QSE_HTTPD_PEER_SECURE) && connected)
+	{
+	#if defined(HAVE_SSL)
+		int ret = SSL_connect (ssl);
+		if (ret <= 0)
+		{
+			int err = SSL_get_error(ssl, ret);
+			if (err == SSL_ERROR_WANT_READ || err == SSL_ERROR_WANT_WRITE)
+			{
+				/* handshaking isn't complete. */
+				peer->flags |= QSE_HTTPD_PEER_CONNECTED;
+				connected = 0; /* not fully connected yet */
+			}
+			else
+			{
+				qse_httpd_seterrnum (httpd, QSE_HTTPD_ESCONN);
+				goto oops;
+			}
+		}
+		else
+		{
+			peer->flags |= QSE_HTTPD_PEER_CONNECTED;
+			/* socket connected + ssl connected */
+		}
+	#endif
+	}
 
+	/* take note the socket handle is in the non-blocking mode here */
 	peer->handle = fd;
+	if (peer->flags & QSE_HTTPD_PEER_SECURE)
+	{
+	#if defined(HAVE_SSL)
+		peer->handle2 = SSL_TO_HANDLE(ssl);
+	#endif
+	}
 	return connected;
 
 oops:
 	qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
+#if defined(HAVE_SSL)
+	if (ssl) SSL_free (ssl);
+#endif
 	if (qse_isvalidsckhnd(fd)) qse_closesckhnd (fd);
 	return -1;
 
@@ -1170,10 +1281,16 @@ oops:
 
 static void peer_close (qse_httpd_t* httpd, qse_httpd_peer_t* peer)
 {
+	if (peer->flags & QSE_HTTPD_PEER_SECURE)
+	{
+	#if defined(HAVE_SSL)
+		SSL_free (HANDLE_TO_SSL(peer->handle2));
+	#endif
+	}
 	qse_closesckhnd (peer->handle);
 }
 
-static int peer_connected (qse_httpd_t* httpd, qse_httpd_peer_t* peer)
+static int is_peer_socket_connected (qse_httpd_t* httpd, qse_httpd_peer_t* peer)
 {
 #if defined(_WIN32)
 	int len;
@@ -1245,32 +1362,122 @@ static int peer_connected (qse_httpd_t* httpd, qse_httpd_peer_t* peer)
 #endif
 }
 
+static int is_peer_connected_securely (qse_httpd_t* httpd, qse_httpd_peer_t* peer)
+{
+	int ret = SSL_connect (HANDLE_TO_SSL(peer->handle2));
+	if (ret <= 0)
+	{
+		int err = SSL_get_error(HANDLE_TO_SSL(peer->handle2), ret);
+		if (err == SSL_ERROR_WANT_READ || err == SSL_ERROR_WANT_WRITE)
+		{
+			/* handshaking isn't complete. */
+			return 0; /* not connected */
+		}
+		else
+		{
+			qse_httpd_seterrnum (httpd, QSE_HTTPD_ESCONN);
+			return -1;
+		}
+	}
+	return 1;
+}
+
+static int peer_connected (qse_httpd_t* httpd, qse_httpd_peer_t* peer)
+{
+	if (peer->flags & QSE_HTTPD_PEER_SECURE)
+	{
+		if (peer->flags & QSE_HTTPD_PEER_CONNECTED)
+		{
+			return is_peer_connected_securely (httpd, peer);
+		}
+		else
+		{
+			int ret = is_peer_socket_connected (httpd, peer);
+			if (ret <= 0) return ret;
+			peer->flags |= QSE_HTTPD_PEER_CONNECTED;
+			return 0;
+		}
+	}
+	else
+	{
+		return is_peer_socket_connected (httpd, peer);
+	}
+}
+
 static qse_ssize_t peer_recv (
 	qse_httpd_t* httpd, qse_httpd_peer_t* peer,
 	qse_mchar_t* buf, qse_size_t bufsize)
 {
-#if defined(__DOS__)
-	qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
-	return -1;
-#else
-	qse_ssize_t ret = recv (peer->handle, buf, bufsize, 0);
-	if (ret <= -1) qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
-	return ret;
-#endif
+	if (peer->flags & QSE_HTTPD_PEER_SECURE)
+	{
+	#if defined(HAVE_SSL)
+		int ret = SSL_read (HANDLE_TO_SSL(peer->handle2), buf, bufsize);
+		if (ret <= -1)
+		{
+			int err = SSL_get_error(HANDLE_TO_SSL(peer->handle2),ret);
+			if (err == SSL_ERROR_WANT_READ || err == SSL_ERROR_WANT_WRITE)
+				qse_httpd_seterrnum (httpd, QSE_HTTPD_EAGAIN);
+			else
+				qse_httpd_seterrnum (httpd, QSE_HTTPD_ESYSERR);
+		}
+
+		if (SSL_pending (HANDLE_TO_SSL(peer->handle2)) > 0) 
+			peer->flags |= QSE_HTTPD_PEER_PENDING;
+		else
+			peer->flags &= ~QSE_HTTPD_PEER_PENDING;
+
+		return ret;
+	#else
+		qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
+		return -1;
+	#endif
+	}
+	else
+	{
+	#if defined(__DOS__)
+		qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
+		return -1;
+	#else
+		qse_ssize_t ret = recv (peer->handle, buf, bufsize, 0);
+		if (ret <= -1) qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
+		return ret;
+	#endif
+	}
 }
 
 static qse_ssize_t peer_send (
 	qse_httpd_t* httpd, qse_httpd_peer_t* peer,
 	const qse_mchar_t* buf, qse_size_t bufsize)
 {
-#if defined(__DOS__)
-	qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
-	return -1;
-#else
-	qse_ssize_t ret = send (peer->handle, buf, bufsize, 0);
-	if (ret <= -1) qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
-	return ret;
-#endif
+	if (peer->flags & QSE_HTTPD_PEER_SECURE)
+	{
+	#if defined(HAVE_SSL)
+		int ret = SSL_write (HANDLE_TO_SSL(peer->handle2), buf, bufsize);
+		if (ret <= -1)
+		{
+			int err = SSL_get_error(HANDLE_TO_SSL(peer->handle2),ret);
+			if (err == SSL_ERROR_WANT_READ || err == SSL_ERROR_WANT_WRITE)
+				qse_httpd_seterrnum (httpd, QSE_HTTPD_EAGAIN);
+			else
+				qse_httpd_seterrnum (httpd, QSE_HTTPD_ESYSERR);
+		}
+		return ret;
+	#else
+		qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
+		return -1;
+	#endif
+	}
+	else
+	{
+	#if defined(__DOS__)
+		qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
+		return -1;
+	#else
+		qse_ssize_t ret = send (peer->handle, buf, bufsize, 0);
+		if (ret <= -1) qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
+		return ret;
+	#endif
+	}
 }
 
 /* ------------------------------------------------------------------- */
@@ -2008,7 +2215,7 @@ static int client_accepted (qse_httpd_t* httpd, qse_httpd_client_t* client)
 		httpd_xtn_t* xtn;
 
 		xtn = (httpd_xtn_t*) qse_httpd_getxtn (httpd);
-		if (!xtn->ssl_ctx)
+		if (!xtn->ssl_client_ctx)
 		{
 			/* delayed initialization of ssl */
 			if (init_xtn_ssl (httpd, client->server) <= -1) 
@@ -2017,7 +2224,7 @@ static int client_accepted (qse_httpd_t* httpd, qse_httpd_client_t* client)
 			}
 		}
 
-		QSE_ASSERT (xtn->ssl_ctx != QSE_NULL);
+		QSE_ASSERT (xtn->ssl_client_ctx != QSE_NULL);
 		QSE_ASSERT (QSE_SIZEOF(client->handle2) >= QSE_SIZEOF(ssl));
 
 		if (HANDLE_TO_SSL(client->handle2))
@@ -2026,7 +2233,7 @@ static int client_accepted (qse_httpd_t* httpd, qse_httpd_client_t* client)
 		}
 		else
 		{
-			ssl = SSL_new (xtn->ssl_ctx);
+			ssl = SSL_new (xtn->ssl_client_ctx);
 			if (ssl == QSE_NULL) return -1;
 
 			client->handle2 = SSL_TO_HANDLE(ssl);
@@ -2058,7 +2265,8 @@ static int client_accepted (qse_httpd_t* httpd, qse_httpd_client_t* client)
 				httpd->opt.rcb.logact (httpd, &msg);
 			}
 
-			/* SSL_free (ssl); */
+			/* client_closed() free this. no SSL_free() here.
+			SSL_free (ssl); */
 			return -1;
 		}
 

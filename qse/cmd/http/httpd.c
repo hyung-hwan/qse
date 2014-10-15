@@ -199,6 +199,7 @@ struct loccfg_t
 	struct
 	{
 		unsigned int allow_http: 1;
+		unsigned int allow_https: 1;
 		unsigned int allow_connect: 1;
 		unsigned int allow_intercept: 2; /* 0: no, 1: proxy, 2: local */
 		unsigned int allow_upgrade: 1;
@@ -468,6 +469,7 @@ static int get_server_root (
 {
 	qse_http_method_t mth;
 	qse_mchar_t* qpath;
+	int proto_len;
 
 	qse_memset (root, 0, QSE_SIZEOF(*root));
 	mth = qse_htre_getqmethodtype (qinfo->req);
@@ -534,13 +536,12 @@ static int get_server_root (
 		}
 	}
 
-/* TODO: handle https:// .... */
-	if (loccfg->proxy.allow_http &&
-	    qse_mbszcasecmp (qpath, QSE_MT("http://"), 7) == 0)
+	if ((loccfg->proxy.allow_http && qse_mbszcasecmp (qpath, QSE_MT("http://"), (proto_len = 7)) == 0) ||
+	    (loccfg->proxy.allow_https && qse_mbszcasecmp (qpath, QSE_MT("https://"), (proto_len = 8)) == 0))
 	{
 		qse_mchar_t* host, * slash;
 
-		host = qpath + 7;
+		host = qpath + proto_len;
 		slash = qse_mbschr (host, QSE_MT('/'));
 
 		if (slash && slash - host > 0)
@@ -561,6 +562,7 @@ static int get_server_root (
 			host = host - 1;
 			root->u.proxy.host = host;
 
+			if (proto_len == 8) root->u.proxy.flags |= QSE_HTTPD_RSRC_PROXY_DST_SECURE;
 			if (qse_mbstonwad (host, &root->u.proxy.dst.nwad) <= -1) 
 			{
 				root->u.proxy.flags |= QSE_HTTPD_RSRC_PROXY_DST_STR;
@@ -576,7 +578,6 @@ static int get_server_root (
 
 /* TODO: refrain from manipulating the request like this */
 			qinfo->req->u.q.path = slash; /* TODO: use setqpath or something... */
-
 			goto proxy_ok;
 		}
 		else
@@ -1514,6 +1515,11 @@ static int load_loccfg_proxy (qse_httpd_t* httpd, qse_xli_t* xli, qse_xli_list_t
 	if (pair) cfg->proxy.allow_http = get_boolean ((qse_xli_str_t*)pair->val);
 
 	pair = QSE_NULL;
+	if (proxy) pair = qse_xli_findpair (xli, proxy, QSE_T("https")); /* server.host[].location[].proxy.https */
+	if (!pair && default_proxy) pair = qse_xli_findpair (xli, default_proxy, QSE_T("https")); /* server-default.proxy.https */
+	if (pair) cfg->proxy.allow_https = get_boolean ((qse_xli_str_t*)pair->val);
+
+	pair = QSE_NULL;
 	if (proxy) pair = qse_xli_findpair (xli, proxy, QSE_T("connect"));
 	if (!pair && default_proxy) pair = qse_xli_findpair (xli, default_proxy, QSE_T("connect"));
 	if (pair) cfg->proxy.allow_connect = get_boolean ((qse_xli_str_t*)pair->val);
@@ -2067,6 +2073,7 @@ static int open_config_file (qse_httpd_t* httpd)
 		{ QSE_T("server-default.error-foot"),                        { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
 		{ QSE_T("server-default.proxy"),                             { QSE_XLI_SCM_VALLIST | QSE_XLI_SCM_KEYNODUP, 0, 0      }  },
 		{ QSE_T("server-default.proxy.http"),                        { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
+		{ QSE_T("server-default.proxy.https"),                       { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
 		{ QSE_T("server-default.proxy.connect"),                     { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
 		{ QSE_T("server-default.proxy.intercept"),                   { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
 		{ QSE_T("server-default.proxy.upgrade"),                     { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
@@ -2125,6 +2132,7 @@ static int open_config_file (qse_httpd_t* httpd)
 		{ QSE_T("server.host.location.error-foot"),                  { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
 		{ QSE_T("server.host.location.proxy"),                       { QSE_XLI_SCM_VALLIST | QSE_XLI_SCM_KEYNODUP, 0, 0      }  },
 		{ QSE_T("server.host.location.proxy.http"),                  { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
+		{ QSE_T("server.host.location.proxy.https"),                 { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
 		{ QSE_T("server.host.location.proxy.connect"),               { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
 		{ QSE_T("server.host.location.proxy.intercept"),             { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
 		{ QSE_T("server.host.location.proxy.upgrade"),               { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
