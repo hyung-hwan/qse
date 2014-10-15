@@ -100,8 +100,8 @@ struct qse_httpd_real_task_t
 	qse_httpd_real_task_t* next;
 };
 
-#define MAX_SEND_SIZE 4096
-#define MAX_RECV_SIZE 4096
+#define MAX_SEND_SIZE (4096 * 4)
+#define MAX_RECV_SIZE (4096 * 2)
 
 #define MAX_NWAD_TEXT_SIZE 96
 
