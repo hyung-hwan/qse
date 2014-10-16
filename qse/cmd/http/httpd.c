@@ -480,15 +480,18 @@ static int get_server_root (
 
 	if (qinfo->client->status & QSE_HTTPD_CLIENT_INTERCEPTED)
 	{
+printf ("intercepted....\n");
 		/* transparent proxying */
 		if (loccfg->proxy.allow_intercept <= 0)
 		{
+printf ("intercepted. not allowed...\n");
 			root->type = QSE_HTTPD_SERVERSTD_ROOT_ERROR;
 			root->u.error.code = 403; /* forbidden */
 			return 0;
 		}
 		else if (loccfg->proxy.allow_intercept <= 1)
 		{
+printf ("intercepted. not allowed to go thru...\n");
 			root->type = QSE_HTTPD_SERVERSTD_ROOT_PROXY;
 			root->u.proxy.dst.nwad = qinfo->client->orgdst_addr;
 			/* if TPROXY is used, set the source to the original source.
@@ -502,6 +505,7 @@ static int get_server_root (
 
 			goto proxy_ok;
 		}
+printf ("intercepted. to be handled locally ...\n");
 	}
 
 	if (mth == QSE_HTTP_CONNECT)
@@ -537,6 +541,7 @@ static int get_server_root (
 		}
 	}
 
+printf ("qpath ===> [%s]\n",qpath);
 	if ((loccfg->proxy.allow_http && qse_mbszcasecmp (qpath, QSE_MT("http://"), (proto_len = 7)) == 0) ||
 	    (loccfg->proxy.allow_https && qse_mbszcasecmp (qpath, QSE_MT("https://"), (proto_len = 8)) == 0))
 	{
