@@ -1635,7 +1635,7 @@ int qse_httpd_loop (qse_httpd_t* httpd)
 
 	if (httpd->server.list.head == QSE_NULL) 
 	{
-		httpd->errnum = QSE_HTTPD_EINVAL;
+		httpd->errnum = QSE_HTTPD_ENOSVR;
 		return -1;
 	}
 

@@ -156,6 +156,7 @@ struct loccfg_t
 	{
 		ROOT_TYPE_PATH = 0,
 		ROOT_TYPE_NWAD,
+		ROOT_TYPE_NWAD_SECURE,
 		ROOT_TYPE_RELOC,
 		ROOT_TYPE_ERROR
 	} root_type;
@@ -234,9 +235,9 @@ struct server_xtn_t
 {
 	int nodir; /* no directory listing */
 
-	int num;
-	qse_nwad_t bind;
-	int secure;
+	int num; /* the server number in the xli configuration */
+	qse_nwad_t bind; /* binding address */
+	int secure; /* ssl */
 	qse_mchar_t* scfg[SCFG_MAX];
 
 	qse_httpd_serverstd_makersrc_t orgmakersrc;
@@ -590,8 +591,11 @@ static int get_server_root (
 
 	switch (loccfg->root_type)
 	{
+		case ROOT_TYPE_NWAD_SECURE:
+			root->u.proxy.flags |= QSE_HTTPD_RSRC_PROXY_DST_SECURE;
+			/* fall thru */
 		case ROOT_TYPE_NWAD:
-			/* simple forwarding. it's not controlled by proxy.http or proxy.connect  */
+			/* simple forwarding. it's not controlled by proxy.http, proxy.https or proxy.connect  */
 			root->type = QSE_HTTPD_SERVERSTD_ROOT_PROXY;
 
 			root->u.proxy.dst.nwad = loccfg->root.nwad;
@@ -1679,6 +1683,7 @@ static int load_loccfg (qse_httpd_t* httpd, qse_xli_t* xli, qse_xli_list_t* list
 	{
 		/* check if the root value is special */
 		const qse_mchar_t* root = cfg->xcfg[XCFG_ROOT];
+		int proto_len = 0;
 
 		if (root[0] == QSE_MT('<') && QSE_ISMDIGIT(root[1]))
 		{
@@ -1722,16 +1727,31 @@ static int load_loccfg (qse_httpd_t* httpd, qse_xli_t* xli, qse_xli_list_t* list
 					goto done;
 				}
 			}
+
+			root = cfg->xcfg[XCFG_ROOT];
+		}
+		else
+		{
+			if (qse_mbszcasecmp (root, QSE_MT("http://"), (proto_len = 7)) == 0 ||
+			    qse_mbszcasecmp (root, QSE_MT("https://"), (proto_len = 8)) == 0) 
+			{
+				root += proto_len;
+			}
+			else
+			{
+				proto_len = 0;
+			}
 		}
 
-		if (qse_mbstonwad (cfg->xcfg[XCFG_ROOT], &cfg->root.nwad) >= 0) 
+		if (qse_mbstonwad (root, &cfg->root.nwad) >= 0) 
 		{
 			if (cfg->root.nwad.type != QSE_NWAD_IN4 && cfg->root.nwad.type != QSE_NWAD_IN6)
 			{
 				qse_printf (QSE_T("ERROR: invalid address for root - [%hs]\n"), cfg->xcfg[XCFG_ROOT]);
 				return -1;
 			}
-			cfg->root_type = ROOT_TYPE_NWAD;
+
+			cfg->root_type = (proto_len == 8)? ROOT_TYPE_NWAD_SECURE: ROOT_TYPE_NWAD;
 			goto done;
 		}
 	}
