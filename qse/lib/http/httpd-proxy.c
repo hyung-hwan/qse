@@ -1884,7 +1884,7 @@ static int task_main_proxy_1 (
 			         httpd->errnum == QSE_HTTPD_ECONN) http_errnum = 403;
 
 			if (httpd->opt.trait & QSE_HTTPD_LOGACT) 
-				log_proxy_error (proxy, "proxy connect error - ");
+				log_proxy_error (proxy, "proxy peer connect error - ");
 
 			goto oops;
 		}
@@ -2309,6 +2309,12 @@ static int task_main_proxy (
 	proxy->res_consumed = 0;
 	proxy->res_pending = 0;
 
+
+{
+char buf[100];
+qse_nwadtombs (&proxy->peer.nwad, buf, QSE_COUNTOF(buf), QSE_NWADTOMBS_ALL);
+printf ("OPENDING PEER: [%s]\n", buf);
+}
 	httpd->errnum = QSE_HTTPD_ENOERR;
 	n = httpd->opt.scb.peer.open (httpd, &proxy->peer);
 	if (n <= -1)
@@ -2319,7 +2325,7 @@ static int task_main_proxy (
 		         httpd->errnum == QSE_HTTPD_ECONN) http_errnum = 403;
 
 		if (httpd->opt.trait & QSE_HTTPD_LOGACT) 
-			log_proxy_error (proxy, "proxy connect error - ");
+			log_proxy_error (proxy, "proxy peer initial connect error - ");
 		goto oops;
 	}
 
