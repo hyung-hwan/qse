@@ -674,7 +674,7 @@ struct qse_httpd_server_t
 	qse_httpd_server_dope_t dope;
 
 	/* set by server.open callback */
-	qse_httpd_hnd_t  handle;
+	qse_httpd_hnd_t handle;
 
 	/* private  */
 	qse_httpd_t*          httpd;

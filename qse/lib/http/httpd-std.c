@@ -135,6 +135,10 @@ struct server_xtn_t
 	qse_httpd_serverstd_makersrc_t makersrc;
 	qse_httpd_serverstd_freersrc_t freersrc;
 
+#if defined(HAVE_SSL)
+	SSL_CTX* ssl_ctx;
+#endif
+
 	/* temporary buffer to handle authorization */
 	qse_mcstr_t auth;
 };
@@ -577,7 +581,6 @@ typedef struct httpd_xtn_t httpd_xtn_t;
 struct httpd_xtn_t
 {
 #if defined(HAVE_SSL)
-	SSL_CTX* ssl_client_ctx;
 	SSL_CTX* ssl_peer_ctx;
 #endif
 	qse_httpd_ecb_t ecb;
@@ -586,15 +589,12 @@ struct httpd_xtn_t
 };
 
 #if defined(HAVE_SSL)
-static int init_xtn_ssl (qse_httpd_t* httpd, qse_httpd_server_t* server)
+static int init_server_ssl (qse_httpd_t* httpd, qse_httpd_server_t* server)
 {
-/* BUG BUG BUG. SSL context for client must exist inside the seerver, i guess */
-	SSL_CTX* client_ctx = QSE_NULL;
-	httpd_xtn_t* xtn;
+	SSL_CTX* ssl_ctx = QSE_NULL;
 	server_xtn_t* server_xtn;
 	qse_httpd_serverstd_ssl_t ssl;
 
-	xtn = (httpd_xtn_t*)qse_httpd_getxtn (httpd);
 	server_xtn = (server_xtn_t*)qse_httpd_getserverxtn (httpd, server);
 
 	if (server_xtn->query (httpd, server, QSE_HTTPD_SERVERSTD_SSL, QSE_NULL, &ssl) <= -1)
@@ -604,23 +604,23 @@ static int init_xtn_ssl (qse_httpd_t* httpd, qse_httpd_server_t* server)
 
 	if (ssl.certfile == QSE_NULL || ssl.keyfile == QSE_NULL)
 	{
-		qse_httpd_seterrnum (httpd, QSE_HTTPD_EINVAL);
+		httpd->errnum = QSE_HTTPD_EINVAL;
 		goto oops;
 	}
 
-	client_ctx = SSL_CTX_new (SSLv23_server_method());
-	if (!client_ctx) 
+	ssl_ctx = SSL_CTX_new (SSLv23_server_method());
+	if (!ssl_ctx) 
 	{
-		qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOMEM);
+		httpd->errnum = QSE_HTTPD_ESYSERR;
 		goto oops;
 	}
 
 	/*SSL_CTX_set_info_callback(ctx,ssl_info_callback);*/
 
-	if (SSL_CTX_use_certificate_file (client_ctx, ssl.certfile, SSL_FILETYPE_PEM) == 0 ||
-	    SSL_CTX_use_PrivateKey_file (client_ctx, ssl.keyfile, SSL_FILETYPE_PEM) == 0 ||
-	    SSL_CTX_check_private_key (client_ctx) == 0 /*||
-	    SSL_CTX_use_certificate_chain_file (client_ctx, chainfile) == 0*/)
+	if (SSL_CTX_use_certificate_file (ssl_ctx, ssl.certfile, SSL_FILETYPE_PEM) == 0 ||
+	    SSL_CTX_use_PrivateKey_file (ssl_ctx, ssl.keyfile, SSL_FILETYPE_PEM) == 0 ||
+	    SSL_CTX_check_private_key (ssl_ctx) == 0 /*||
+	    SSL_CTX_use_certificate_chain_file (ssl_ctx, chainfile) == 0*/)
 	{
 		if (httpd->opt.trait & QSE_HTTPD_LOGACT)
 		{
@@ -632,29 +632,29 @@ static int init_xtn_ssl (qse_httpd_t* httpd, qse_httpd_server_t* server)
 			httpd->opt.rcb.logact (httpd, &msg);
 		}
 
-		qse_httpd_seterrnum (httpd, QSE_HTTPD_EINVAL); /* TODO: define a better error code */
+		httpd->errnum = QSE_HTTPD_ESYSERR; /* TODO: define a better error code */
 		goto oops;
 	}
 
 	/* TODO: SSL_CTX_set_verify(); SSL_CTX_set_verify_depth() */
 	/* TODO: CRYPTO_set_id_callback (); */
 	/* TODO: CRYPTO_set_locking_callback (); */
-	SSL_CTX_set_read_ahead (client_ctx, 0);
+	SSL_CTX_set_read_ahead (ssl_ctx, 0);
 
-	xtn->ssl_client_ctx = client_ctx;
+	server_xtn->ssl_ctx = ssl_ctx;
 
 	return 0;
 
 oops:
-	if (client_ctx) SSL_CTX_free (client_ctx);
+	if (ssl_ctx) SSL_CTX_free (ssl_ctx);
 	return -1;
 }
 
-static void fini_xtn_ssl (httpd_xtn_t* xtn)
+static void fini_server_ssl (server_xtn_t* xtn)
 {
 	/* TODO: CRYPTO_set_id_callback (QSE_NULL); */
 	/* TODO: CRYPTO_set_locking_callback (QSE_NULL); */
-	SSL_CTX_free (xtn->ssl_client_ctx);
+	SSL_CTX_free (xtn->ssl_ctx);
 }
 
 static int init_xtn_peer_ssl (qse_httpd_t* httpd)
@@ -667,13 +667,11 @@ static int init_xtn_peer_ssl (qse_httpd_t* httpd)
 	peer_ctx = SSL_CTX_new (SSLv23_client_method());
 	if (!peer_ctx) 
 	{
-		qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOMEM);
+		httpd->errnum = QSE_HTTPD_ESYSERR;
 		goto oops;
 	}
 
 	xtn->ssl_peer_ctx = peer_ctx;
-
-printf ("SSL PEER CTX ============>%p\n", xtn->ssl_peer_ctx);
 	return 0;
 
 oops:
@@ -698,7 +696,6 @@ static void cleanup_standard_httpd (qse_httpd_t* httpd)
 
 #if defined(HAVE_SSL)
 	if (xtn->ssl_peer_ctx) fini_xtn_peer_ssl (xtn);
-	if (xtn->ssl_client_ctx) fini_xtn_ssl (xtn);
 #endif
 
 #if defined(USE_LTDL)
@@ -713,11 +710,14 @@ qse_httpd_t* qse_httpd_openstd (qse_size_t xtnsize)
 
 qse_httpd_t* qse_httpd_openstdwithmmgr (qse_mmgr_t* mmgr, qse_size_t xtnsize)
 {
-	qse_httpd_t* httpd;
-	httpd_xtn_t* xtn;
+	qse_httpd_t* httpd = QSE_NULL;
+	httpd_xtn_t* xtn = QSE_NULL;
+#if defined(USE_LTDL)
+	int lt_dlinited = 0;
+#endif
 
 	httpd = qse_httpd_open (mmgr, QSE_SIZEOF(httpd_xtn_t) + xtnsize);
-	if (httpd == QSE_NULL) return QSE_NULL;
+	if (httpd == QSE_NULL) goto oops;
 
 	xtn = (httpd_xtn_t*)qse_httpd_getxtn (httpd);
 
@@ -726,11 +726,12 @@ qse_httpd_t* qse_httpd_openstdwithmmgr (qse_mmgr_t* mmgr, qse_size_t xtnsize)
 	 * lt_dlexit() shuts down libltdl if it's called as many times as
 	 * corresponding lt_dlinit(). so it's safe to call lt_dlinit()
 	 * and lt_dlexit() at the library level. */
-	if (lt_dlinit () != 0)
-	{
-		qse_httpd_close (httpd);
-		return QSE_NULL;
-	}
+	if (lt_dlinit () != 0) goto oops;
+	lt_dlinited = 1;
+#endif
+
+#if defined(HAVE_SSL)
+	if (init_xtn_peer_ssl (httpd) <= -1) goto oops;
 #endif
 
 	set_httpd_callbacks (httpd);
@@ -739,6 +740,16 @@ qse_httpd_t* qse_httpd_openstdwithmmgr (qse_mmgr_t* mmgr, qse_size_t xtnsize)
 	qse_httpd_pushecb (httpd, &xtn->ecb);
 
 	return httpd;
+
+oops:
+#if defined(HAVE_SSL)
+	if (xtn && xtn->ssl_peer_ctx) fini_xtn_peer_ssl (xtn);
+#endif
+#if defined(USE_LTDL)
+	if (lt_dlinited) lt_dlexit ();
+#endif
+	if (httpd) qse_httpd_close (httpd);
+	return QSE_NULL;
 }
 
 void* qse_httpd_getxtnstd (qse_httpd_t* httpd)
@@ -1169,11 +1180,7 @@ static int peer_open (qse_httpd_t* httpd, qse_httpd_peer_t* peer)
 	if (peer->flags & QSE_HTTPD_PEER_SECURE)
 	{
 	#if defined(HAVE_SSL)
-		if (!xtn->ssl_peer_ctx)
-		{
-			/* TODO: peer ssl initialization doesn't have to be delayed... */
-			if (init_xtn_peer_ssl (httpd) <= -1) goto oops;
-		}
+		QSE_ASSERT (xtn->ssl_peer_ctx != QSE_NULL);
 
 		ssl = SSL_new (xtn->ssl_peer_ctx);
 		if (ssl == QSE_NULL) 
@@ -2212,19 +2219,18 @@ static int client_accepted (qse_httpd_t* httpd, qse_httpd_client_t* client)
 	#if defined(HAVE_SSL)
 		int ret;
 		SSL* ssl;
-		httpd_xtn_t* xtn;
+		server_xtn_t* server_xtn;
 
-		xtn = (httpd_xtn_t*) qse_httpd_getxtn (httpd);
-		if (!xtn->ssl_client_ctx)
+		server_xtn = (server_xtn_t*)qse_httpd_getserverxtn (httpd, client->server);
+
+		
+		if (!server_xtn->ssl_ctx)
 		{
-			/* delayed initialization of ssl */
-			if (init_xtn_ssl (httpd, client->server) <= -1) 
-			{
-				return -1;
-			}
+			/* performed the delayed ssl initialization */
+			if (init_server_ssl (httpd, client->server) <= -1) return -1;
 		}
 
-		QSE_ASSERT (xtn->ssl_client_ctx != QSE_NULL);
+		QSE_ASSERT (server_xtn->ssl_ctx != QSE_NULL);
 		QSE_ASSERT (QSE_SIZEOF(client->handle2) >= QSE_SIZEOF(ssl));
 
 		if (HANDLE_TO_SSL(client->handle2))
@@ -2233,14 +2239,19 @@ static int client_accepted (qse_httpd_t* httpd, qse_httpd_client_t* client)
 		}
 		else
 		{
-			ssl = SSL_new (xtn->ssl_client_ctx);
-			if (ssl == QSE_NULL) return -1;
+			ssl = SSL_new (server_xtn->ssl_ctx);
+			if (ssl == QSE_NULL) 
+			{
+				httpd->errnum = QSE_HTTPD_ESYSERR;
+				return -1;
+			}
 
 			client->handle2 = SSL_TO_HANDLE(ssl);
 			if (SSL_set_fd (ssl, client->handle) == 0)
 			{
 				/* don't free ssl here since client_closed()
 				 * will free it */
+				httpd->errnum = QSE_HTTPD_ESYSERR;
 				return -1;
 			}
 
@@ -3335,6 +3346,10 @@ static void detach_server (qse_httpd_t* httpd, qse_httpd_server_t* server)
 	server_xtn = (server_xtn_t*) qse_httpd_getserverxtn (httpd, server);
 	if (server_xtn->detach) server_xtn->detach (httpd, server);
 	if (server_xtn->auth.ptr) QSE_MMGR_FREE (httpd->mmgr, server_xtn->auth.ptr);
+
+#if defined(HAVE_SSL)
+	if (server_xtn->ssl_ctx) fini_server_ssl (server_xtn);
+#endif
 }
 
 struct mime_tab_t
@@ -3481,18 +3496,38 @@ qse_httpd_server_t* qse_httpd_attachserverstd (
 	server_xtn_t* server_xtn;
 
 	xdope = *dope;
+	/* detach_server() is called when the server is detached */
 	xdope.detach = detach_server;
 
 	xserver = qse_httpd_attachserver (httpd, &xdope, QSE_SIZEOF(*server_xtn) + xtnsize);
 	if (xserver == QSE_NULL) return QSE_NULL;
 
 	server_xtn = qse_httpd_getserverxtn (httpd, xserver);
+	QSE_MEMSET (server_xtn, 0, QSE_SIZEOF(*server_xtn));
 
+	/* chain the original detach function */
 	server_xtn->detach = dope->detach;
 
 	server_xtn->query = query_server;
 	server_xtn->makersrc = make_resource;
 	server_xtn->freersrc = free_resource;
+
+	/* init_server_ssl() queries the server instance for the SSL key and cert files.
+	 * the standard query handler 'query_server' returns failure for this.
+	 * the actual handler can be set with qse_httpd_setserverstdopt().
+	 * calling init_server_ssl() causes server attachment to fail for this reason.
+	 * so initialization of ssl must be delayed. So the call is commented out.
+	if (init_server_ssl (httpd, xserver) <= -1)
+	{
+		/ * reset server_xtn->detach as i want detach_server() to 
+		 * skip calling dope->detach. dope->detach should be called
+		 * upon detachment only if qse_httpd_attachserverstd() has
+		 * been successful. * /
+		server_xtn->detach = QSE_NULL;
+		qse_httpd_detachserver (httpd, xserver);
+		xserver = QSE_NULL;
+	}
+	*/
 
 	return xserver;
 }
