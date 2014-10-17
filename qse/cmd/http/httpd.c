@@ -157,12 +157,15 @@ struct loccfg_t
 		ROOT_TYPE_PATH = 0,
 		ROOT_TYPE_NWAD,
 		ROOT_TYPE_NWAD_SECURE,
+		ROOT_TYPE_HOST,
+		ROOT_TYPE_HOST_SECURE,
 		ROOT_TYPE_RELOC,
 		ROOT_TYPE_ERROR
 	} root_type;
 	union
 	{
 		qse_nwad_t nwad;
+		const qse_mchar_t* host;
 		int error_code;
 		qse_httpd_rsrc_reloc_t reloc;
 	} root;
@@ -609,6 +612,16 @@ printf ("qpath ===> [%s]\n",qpath);
 			if (loccfg->proxy.pseudonym[0]) 
 				root->u.proxy.pseudonym = loccfg->proxy.pseudonym;
 
+			goto proxy_ok;
+
+		case ROOT_TYPE_HOST_SECURE:
+			root->u.proxy.flags |= QSE_HTTPD_RSRC_PROXY_DST_SECURE;
+		case ROOT_TYPE_HOST:
+			root->type = QSE_HTTPD_SERVERSTD_ROOT_PROXY;
+			root->u.proxy.dst.str = loccfg->root.host;
+			root->u.proxy.flags |= QSE_HTTPD_RSRC_PROXY_DST_STR;
+			if (loccfg->proxy.pseudonym[0]) 
+				root->u.proxy.pseudonym = loccfg->proxy.pseudonym;
 			goto proxy_ok;
 
 		case ROOT_TYPE_RELOC:
@@ -1757,6 +1770,13 @@ static int load_loccfg (qse_httpd_t* httpd, qse_xli_t* xli, qse_xli_list_t* list
 			}
 
 			cfg->root_type = (proto_len == 8)? ROOT_TYPE_NWAD_SECURE: ROOT_TYPE_NWAD;
+			goto done;
+		}
+		else if (proto_len > 0 && *root != QSE_MT('\0'))
+		{
+			/* it begins with http:// or https:// */
+			cfg->root_type = (proto_len == 8)? ROOT_TYPE_HOST_SECURE: ROOT_TYPE_HOST;
+			cfg->root.host = root;
 			goto done;
 		}
 	}
