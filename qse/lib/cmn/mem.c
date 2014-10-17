@@ -133,14 +133,14 @@ void* qse_memcpy (void* dst, const void* src, qse_size_t n)
 
 	__asm__ volatile (
 		"cld\n\t"
-		"rep movsl\n"
+		"rep\n\tmovsl\n"
 		: /* no output */
 		:"D" (dst), "S" (src), "c" (n >> 2)  /* input: %edi = d, %esi = src, %ecx = n / 8 */
 		:"memory"
 	);
 
 	__asm__ volatile (
-		"rep movsb\n" 
+		"rep\n\tmovsb\n" 
 		: /* no output */
 		:"c" (n & 3)  /* %rcx = n % 8, use existing %edi and %esi */
 		:"memory", "%edi", "%esi"
@@ -348,7 +348,7 @@ void* qse_memset (void* dst, int val, qse_size_t n)
 		}
 
 		__asm__ volatile (
-			"rep stosl\n"
+			"rep\n\tstosl\n"
 			:"=D" (d) /* output: d = %edi */
 			:"0" (d), "a" (dw), "c" (n >> 2)  /* input: %edi = d, %eax = dw, %ecx = n / 4 */
 			:"memory"
@@ -356,7 +356,7 @@ void* qse_memset (void* dst, int val, qse_size_t n)
 	}
 
 	__asm__ volatile (
-		"rep stosb\n"
+		"rep\n\tstosb\n"
 		: /* no output */ 
 		:"D" (d), "a" (val), "c" (n & 3)  /* input: %edi = d, %eax = src, %ecx = n % 4 */
 		:"memory"

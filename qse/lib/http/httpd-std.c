@@ -534,7 +534,7 @@ static QSE_INLINE qse_ssize_t __send_file_ssl (
 	qse_mchar_t buf[MAX_SEND_SIZE];
 	qse_ssize_t ret;
 	qse_foff_t foff;
-	SSL* out = (SSL*)xout;
+	SSL* out = HANDLE_TO_SSL((qse_sck_hnd_t)xout);
 	
 	if (offset && (foff = qse_fio_seek (HANDLE_TO_FIO(in_fd), *offset, QSE_FIO_BEGIN)) != *offset)  
 	{
@@ -1118,14 +1118,15 @@ static int peer_open (qse_httpd_t* httpd, qse_httpd_peer_t* peer)
 
 	/* -------------------------------------------------------------------- */
 
+	httpd_xtn_t* xtn;
 	qse_skad_t connaddr, bindaddr;
 	int connaddrsize, bindaddrsize;
 	int connected = 1;
 	qse_sck_hnd_t fd = QSE_INVALID_SCKHND;
-	SSL* ssl = QSE_NULL;
-	httpd_xtn_t* xtn;
 
-	xtn = (httpd_xtn_t*) qse_httpd_getxtn (httpd);
+#if defined(HAVE_SSL)
+	SSL* ssl = QSE_NULL;
+#endif
 
 #if defined(_WIN32)
 	unsigned long cmd;
@@ -1136,6 +1137,8 @@ static int peer_open (qse_httpd_t* httpd, qse_httpd_peer_t* peer)
 #else
 	int flag;
 #endif
+
+	xtn = (httpd_xtn_t*) qse_httpd_getxtn (httpd);
 	
 	/* turn off internally used bits */
 	peer->flags &= ~QSE_HTTPD_PEER_ALL_INTERNALS;
@@ -1371,6 +1374,7 @@ static int is_peer_socket_connected (qse_httpd_t* httpd, qse_httpd_peer_t* peer)
 
 static int is_peer_connected_securely (qse_httpd_t* httpd, qse_httpd_peer_t* peer)
 {
+#if defined(HAVE_SSL)
 	int ret = SSL_connect (HANDLE_TO_SSL(peer->handle2));
 	if (ret <= 0)
 	{
@@ -1387,6 +1391,10 @@ static int is_peer_connected_securely (qse_httpd_t* httpd, qse_httpd_peer_t* pee
 		}
 	}
 	return 1;
+#else
+	qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
+	return -1;
+#endif
 }
 
 static int peer_connected (qse_httpd_t* httpd, qse_httpd_peer_t* peer)
@@ -2204,7 +2212,7 @@ static qse_ssize_t client_sendfile (
 {
 	if (client->status & QSE_HTTPD_CLIENT_SECURE)
 	{
-		return __send_file_ssl (httpd, HANDLE_TO_SSL(client->handle2), handle, offset, count);
+		return __send_file_ssl (httpd, (void*)client->handle2, handle, offset, count);
 	}
 	else
 	{
