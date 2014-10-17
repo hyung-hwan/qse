@@ -15,6 +15,8 @@
 #include <signal.h>
 #include <locale.h>
 
+#include <stdio.h> /* TODO: remove this header file */
+
 #if defined(_WIN32)
 #	include <winsock2.h>
 #	include <windows.h>
@@ -377,6 +379,7 @@ static int daemonize (int devnull)
 
 int xxxx (void* ctx, qse_env_char_t** envir)
 {
+/* NOTE: this is for experiment only */
 	extern char** environ;
 char buf[1000];
 char* cl;
