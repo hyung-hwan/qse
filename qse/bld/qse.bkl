@@ -322,6 +322,7 @@
 		<if cond="PLATFORM_WIN32=='1'">user32</if>
 	</set>
 	<set var="SYSLIB_SOCKET">
+		<if cond="PLATFORM_MSDOS=='1'">wattcpwf</if> <!-- watt-32 flat model -->
 		<if cond="PLATFORM_WIN32=='1'">ws2_32</if>
 		<if cond="PLATFORM_OS2=='1' and TCPV40HDRS=='on'">tcp32dll</if>
 		<if cond="PLATFORM_OS2=='1' and TCPV40HDRS=='off'">tcpip32</if>
