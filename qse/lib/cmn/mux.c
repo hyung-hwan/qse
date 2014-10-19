@@ -46,6 +46,9 @@
 
 #elif defined(__DOS__)
 #	include <errno.h>
+#	include <tcp.h> /* watt-32 */
+#	define select select_s
+#	define USE_SELECT
 
 #else
 #	include <unistd.h>

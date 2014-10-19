@@ -72,8 +72,12 @@
 #	undef AF_UNIX
 
 #elif defined(__DOS__)
-	/* TODO */
+
 #	include <errno.h>
+#	include <tcp.h> /* watt-32 */
+
+#	define select select_s /* TODO: is this correct? */
+#	undef AF_UNIX
 
 #else
 #	include "../cmn/syscall.h"
@@ -237,15 +241,16 @@ static qse_httpd_errnum_t skerr_to_errnum (int e)
 
 #define SKERR_TO_ERRNUM() skerr_to_errnum(sock_errno())
 
+/*
 #elif defined(__DOS__)
 static qse_httpd_errnum_t skerr_to_errnum (int e)
 {
-	/* TODO: */
+	/ * TODO: * /
 	return QSE_HTTPD_ESYSERR;
 }
 
 #define SKERR_TO_ERRNUM() skerr_to_errnum(errno)
-
+*/
 #else
 static qse_httpd_errnum_t skerr_to_errnum (int e)
 {
@@ -411,11 +416,13 @@ static QSE_INLINE qse_ssize_t __send_file (
 {
 	/* TODO: os2 warp 4.5 has send_file. support it??? load it dynamically??? */
 
+/*
 #if defined(__DOS__)
 	qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
 	return -1;
 
-#elif defined(HAVE_SENDFILE) && defined(HAVE_SENDFILE64)
+#el*/
+#if defined(HAVE_SENDFILE) && defined(HAVE_SENDFILE64)
 
 	qse_ssize_t ret;
 	qse_fio_hnd_t fh;
@@ -886,10 +893,10 @@ oops:
 
 static int server_open (qse_httpd_t* httpd, qse_httpd_server_t* server)
 {
-#if defined(__DOS__)
+/*#if defined(__DOS__)
 	qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
 	return -1;
-#else
+#else*/
 	qse_sck_hnd_t fd = QSE_INVALID_SCKHND, flag;
 	qse_skad_t addr;
 	int addrsize;
@@ -1014,7 +1021,7 @@ bind_ok:
 oops:
 	if (qse_isvalidsckhnd(fd)) qse_closesckhnd (fd);
 	return -1;
-#endif
+/*#endif*/
 }
 
 static void server_close (qse_httpd_t* httpd, qse_httpd_server_t* server)
@@ -1025,11 +1032,11 @@ static void server_close (qse_httpd_t* httpd, qse_httpd_server_t* server)
 static int server_accept (
 	qse_httpd_t* httpd, qse_httpd_server_t* server, qse_httpd_client_t* client)
 {
-#if defined(__DOS__)
+/*#if defined(__DOS__)
 	qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
 	return -1;
 
-#else
+#else*/
 	qse_skad_t addr;
 	qse_sck_len_t addrlen;
 	qse_sck_hnd_t fd = QSE_INVALID_SCKHND;
@@ -1047,7 +1054,7 @@ static int server_accept (
 /* TODO: implement maximum number of client per server??? */
 	if (fd >= FD_SETSIZE)
 	{
-qse_fprintf (QSE_STDERR, QSE_T("Error: too many client?\n"));
+printf ("ERROR: too many client?\n");
 		/*TODO: qse_httpd_seterrnum (httpd, QSE_HTTPD_EXXXXX);*/
 		goto oops;
 	}
@@ -1108,18 +1115,18 @@ qse_fprintf (QSE_STDERR, QSE_T("Error: too many client?\n"));
 oops:
 	if (qse_isvalidsckhnd(fd)) qse_closesckhnd (fd);
 	return -1;
-#endif
+/*#endif*/
 }
 
 /* ------------------------------------------------------------------- */
 
 static int peer_open (qse_httpd_t* httpd, qse_httpd_peer_t* peer)
 {
-#if defined(__DOS__)
+/*#if defined(__DOS__)
 	qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
 	return -1;
 
-#else
+#else*/
 
 	/* -------------------------------------------------------------------- */
 
@@ -1229,9 +1236,6 @@ static int peer_open (qse_httpd_t* httpd, qse_httpd_peer_t* peer)
 		}
 		connected = 0;
 	}
-#elif defined(__DOS__)
-
-	/* TODO: */
 
 #else
 	if (connect (fd, (struct sockaddr*)&connaddr, connaddrsize) <= -1)
@@ -1291,7 +1295,7 @@ oops:
 	return -1;
 
 	/* -------------------------------------------------------------------- */
-#endif
+/*#endif*/
 }
 
 static void peer_close (qse_httpd_t* httpd, qse_httpd_peer_t* peer)
@@ -1348,11 +1352,10 @@ static int is_peer_socket_connected (qse_httpd_t* httpd, qse_httpd_peer_t* peer)
 
 	return 1; /* connection completed */
 
-#elif defined(__DOS__)
+/*#elif defined(__DOS__)
 
-	/* TODO */
 	qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
-	return -1;
+	return -1;*/
 
 #else
 
@@ -1454,14 +1457,14 @@ static qse_ssize_t peer_recv (
 	}
 	else
 	{
-	#if defined(__DOS__)
+	/*#if defined(__DOS__)
 		qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
 		return -1;
-	#else
+	#else*/
 		qse_ssize_t ret = recv (peer->handle, buf, bufsize, 0);
 		if (ret <= -1) qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
 		return ret;
-	#endif
+	/*#endif*/
 	}
 }
 
@@ -1489,14 +1492,14 @@ static qse_ssize_t peer_send (
 	}
 	else
 	{
-	#if defined(__DOS__)
+	/*#if defined(__DOS__)
 		qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
 		return -1;
-	#else
+	#else*/
 		qse_ssize_t ret = send (peer->handle, buf, bufsize, 0);
 		if (ret <= -1) qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
 		return ret;
-	#endif
+	/*#endif*/
 	}
 }
 
@@ -1598,10 +1601,10 @@ static int mux_readable (qse_httpd_t* httpd, qse_httpd_hnd_t handle, const qse_n
 	tv = tmout? QSE_SECNSEC_TO_MSEC (tmout->sec, tmout->nsec): -1;
 	return os2_select (&handle, 1, 0, 0, tv);
 
-#elif defined(__DOS__)
+/*#elif defined(__DOS__)
 
 	qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
-	return -1;
+	return -1;*/
 
 #else
 	fd_set r;
@@ -1629,10 +1632,11 @@ static int mux_writable (qse_httpd_t* httpd, qse_httpd_hnd_t handle, const qse_n
 	tv = tmout? QSE_SECNSEC_TO_MSEC (tmout->sec, tmout->nsec): -1;
 	return os2_select (&handle, 0, 1, 0, tv);
 
-#elif defined(__DOS__)
+/*#elif defined(__DOS__)
 
 	qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
 	return -1;
+*/
 
 #else
 	fd_set w;
@@ -2164,15 +2168,15 @@ static qse_ssize_t client_recv (
 	}
 	else
 	{
-	#if defined(__DOS__)
+	/*#if defined(__DOS__)
 		qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
 		return -1;
-	#else
+	#else*/
 		qse_ssize_t ret;
 		ret = recv (client->handle, buf, bufsize, 0);
 		if (ret <= -1) qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
 		return ret;
-	#endif
+	/*#endif*/
 	}
 }
 
@@ -2200,14 +2204,14 @@ static qse_ssize_t client_send (
 	}
 	else
 	{
-	#if defined(__DOS__)
+	/*#if defined(__DOS__)
 		qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
 		return -1;
-	#else
+	#else*/
 		qse_ssize_t ret = send (client->handle, buf, bufsize, 0);
 		if (ret <= -1) qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
 		return ret;
-	#endif
+	/*#endif*/
 	}
 }
 
