@@ -44,17 +44,18 @@ extern "C" {
 
 qse_awk_fnc_t* qse_awk_findfnc (qse_awk_t* awk, const qse_cstr_t* name);
 
-int qse_awk_fnc_index   (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi);
-int qse_awk_fnc_rindex  (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi);
-int qse_awk_fnc_length  (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi);
-int qse_awk_fnc_substr  (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi);
-int qse_awk_fnc_split   (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi);
-int qse_awk_fnc_match   (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi);
-int qse_awk_fnc_gsub    (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi);
-int qse_awk_fnc_sub     (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi);
-int qse_awk_fnc_tolower (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi);
-int qse_awk_fnc_toupper (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi);
-int qse_awk_fnc_sprintf (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi);
+/* EXPORT is required for linking on windows as they are referenced by mod-str.c */
+QSE_EXPORT int qse_awk_fnc_index   (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi);
+QSE_EXPORT int qse_awk_fnc_rindex  (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi);
+QSE_EXPORT int qse_awk_fnc_length  (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi);
+QSE_EXPORT int qse_awk_fnc_substr  (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi);
+QSE_EXPORT int qse_awk_fnc_split   (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi);
+QSE_EXPORT int qse_awk_fnc_match   (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi);
+QSE_EXPORT int qse_awk_fnc_gsub    (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi);
+QSE_EXPORT int qse_awk_fnc_sub     (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi);
+QSE_EXPORT int qse_awk_fnc_tolower (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi);
+QSE_EXPORT int qse_awk_fnc_toupper (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi);
+QSE_EXPORT int qse_awk_fnc_sprintf (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi);
 
 #ifdef __cplusplus
 }

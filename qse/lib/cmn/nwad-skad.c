@@ -25,7 +25,8 @@
 #	include <winsock2.h>
 #	include <ws2tcpip.h> /* sockaddr_in6 */
 #	include <windows.h>
-#	if (defined(__WATCOMC__) && (__WATCOMC__ < 1200))
+#	undef AF_UNIX
+#	if defined(__WATCOMC__) && (__WATCOMC__ < 1200)
 		/* the header files shipped with watcom 11 doesn't contain
 		 * proper inet6 support. note using the compiler version
 		 * in the contidional isn't that good idea since you 
@@ -41,6 +42,7 @@
 	/* though AF_INET6 is defined, there is no support
 	 * for it. so undefine it */
 #	undef AF_INET6
+#	undef AF_UNIX
 #	pragma library("tcpip32.lib")
 #elif defined(__DOS__)
  	/* TODO:  consider watt-32 */

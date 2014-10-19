@@ -415,7 +415,7 @@ static QSE_INLINE int append_wcs (qse_env_t* env, const qse_wchar_t* value[])
 {
 #if defined(QSE_ENV_CHAR_IS_WCHAR)
 	/* no conversion -> wchar */
-	return appendw (env, name, value);
+	return appendw (env, value);
 #else
 	/* convert wchar to mchar */
 	qse_mchar_t* valuedup[2];
@@ -469,7 +469,7 @@ static QSE_INLINE int append_mbs (qse_env_t* env, const qse_mchar_t* value[])
 	valuedup[0] = qse_mbsatowcsalldup (value, QSE_NULL, env->mmgr); 
 	if (valuedup[0] == QSE_NULL) return -1;
 	valuedup[1] = QSE_NULL;
-	n = appendw (env, namedup, valuedup);
+	n = appendw (env, valuedup);
 	QSE_MMGR_FREE (env->mmgr, valuedup[0]);
 
 	return n;

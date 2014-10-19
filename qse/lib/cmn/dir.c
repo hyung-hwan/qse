@@ -128,7 +128,7 @@ qse_dir_errnum_t qse_dir_geterrnum (qse_dir_t* dir)
 	return dir->errnum;
 }
 
-static int compare_dirent (qse_lda_t* lda, const void* dptr1, size_t dlen1, const void* dptr2, size_t dlen2)
+static int compare_dirent (qse_lda_t* lda, const void* dptr1, qse_size_t dlen1, const void* dptr2, qse_size_t dlen2)
 {
 	int n = QSE_MEMCMP (dptr1, dptr2, ((dlen1 < dlen2)? dlen1: dlen2));
 	if (n == 0 && dlen1 != dlen2) n = (dlen1 > dlen2)? 1: -1;

@@ -1582,13 +1582,13 @@ QSE_EXPORT qse_wchar_t* qse_wcsxnrcasestr (
 #	define qse_strxnrcasestr(str,strsz,sub,subsz) qse_wcsxnrcasestr(str,strsz,sub,subsz)
 #endif
 
-const qse_mchar_t* qse_mbsword (
+QSE_EXPORT const qse_mchar_t* qse_mbsword (
 	const qse_mchar_t* str,
 	const qse_mchar_t* word,
 	qse_mchar_t        extra_delim
 );
 
-const qse_wchar_t* qse_wcsword (
+QSE_EXPORT const qse_wchar_t* qse_wcsword (
 	const qse_wchar_t* str,
 	const qse_wchar_t* word,
 	qse_wchar_t        extra_delim
@@ -1600,7 +1600,7 @@ const qse_wchar_t* qse_wcsword (
  * \a extra_delim. Pass QSE_MT('\0') if no extra delimiter is
  * needed.
  */
-const qse_mchar_t* qse_mbsxword (
+QSE_EXPORT const qse_mchar_t* qse_mbsxword (
 	const qse_mchar_t* str,
 	qse_size_t         len,
 	const qse_mchar_t* word,
@@ -1613,20 +1613,20 @@ const qse_mchar_t* qse_mbsxword (
  * \a extra_delim. Pass QSE_WT('\0') if no extra delimiter is
  * needed.
  */
-const qse_wchar_t* qse_wcsxword (
+QSE_EXPORT const qse_wchar_t* qse_wcsxword (
 	const qse_wchar_t* str,
 	qse_size_t         len,
 	const qse_wchar_t* word,
 	qse_wchar_t        extra_delim
 );
 
-const qse_mchar_t* qse_mbscaseword (
+QSE_EXPORT const qse_mchar_t* qse_mbscaseword (
 	const qse_mchar_t* str,
 	const qse_mchar_t* word,
 	qse_mchar_t        extra_delim
 );
 
-const qse_wchar_t* qse_wcscaseword (
+QSE_EXPORT const qse_wchar_t* qse_wcscaseword (
 	const qse_wchar_t* str,
 	const qse_wchar_t* word,
 	qse_wchar_t        extra_delim
@@ -1636,7 +1636,7 @@ const qse_wchar_t* qse_wcscaseword (
  * The qse_mbsxcaseword() function finds a whole word in a string 
  * case-insensitively.
  */
-const qse_mchar_t* qse_mbsxcaseword (
+QSE_EXPORT const qse_mchar_t* qse_mbsxcaseword (
 	const qse_mchar_t* str,
 	qse_size_t         len,
 	const qse_mchar_t* word,
@@ -1647,7 +1647,7 @@ const qse_mchar_t* qse_mbsxcaseword (
  * The qse_wcsxcaseword() function finds a whole word in a string 
  * case-insensitively.
  */
-const qse_wchar_t* qse_wcsxcaseword (
+QSE_EXPORT const qse_wchar_t* qse_wcsxcaseword (
 	const qse_wchar_t* str,
 	qse_size_t         len,
 	const qse_wchar_t* word,

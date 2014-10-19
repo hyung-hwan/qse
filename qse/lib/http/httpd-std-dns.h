@@ -299,6 +299,7 @@ static int dns_open (qse_httpd_t* httpd, qse_httpd_dns_t* dns)
 
 	dns->handle[0] = QSE_INVALID_SCKHND;
 	dns->handle[1] = QSE_INVALID_SCKHND;
+	dns->handle[2] = QSE_INVALID_SCKHND;
 
 	dc = (dns_ctx_t*) qse_httpd_callocmem (httpd, QSE_SIZEOF(dns_ctx_t));
 	if (dc == NULL) goto oops;

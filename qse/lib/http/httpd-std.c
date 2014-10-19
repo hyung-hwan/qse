@@ -51,6 +51,8 @@
 #			define USE_LTDL
 #	endif
 
+#	undef AF_UNIX
+
 #elif defined(__OS2__)
 #	include <types.h>
 #	include <sys/socket.h>
@@ -64,7 +66,10 @@
 #	endif
 #	define INCL_DOSERRORS
 #	define INCL_DOSFILEMGR
+#	define INCL_DOSMODULEMGR
 #	include <os2.h>
+
+#	undef AF_UNIX
 
 #elif defined(__DOS__)
 	/* TODO */
@@ -168,7 +173,7 @@ static qse_httpd_errnum_t skerr_to_errnum (DWORD e)
 		case WSAEINTR:
 			return QSE_HTTPD_EINTR;
 
-		case WASEWOULDBLOCK:
+		case WSAEWOULDBLOCK:
 			return QSE_HTTPD_EAGAIN;
 
 		case WSAECONNREFUSED:
@@ -826,7 +831,7 @@ static qse_sck_hnd_t open_client_socket (qse_httpd_t* httpd, int domain, int typ
 	#endif
 	*/
 
-	#if defined(AF_INET6) && defined(IPV6_V6ONLY)
+	#if defined(AF_INET6) && defined(IPPROTO_IPV6) && defined(IPV6_V6ONLY)
 	if (domain == AF_INET6)
 	{
 		flag = 1;

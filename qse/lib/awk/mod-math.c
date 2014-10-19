@@ -18,7 +18,7 @@
     License along with QSE. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "mod-str.h"
+#include "mod-math.h"
 #include <qse/cmn/str.h>
 #include <qse/cmn/chr.h>
 #include <qse/cmn/alg.h>
@@ -36,7 +36,9 @@
 #	if defined(_WIN32) || defined(__OS2__) || defined(__DOS__)
 #		define HAVE_CEIL
 #		define HAVE_FLOOR
+#		if !defined(__WATCOMC__)
 #		define HAVE_ROUND
+#		endif
 #		define HAVE_SINH
 #		define HAVE_COSH
 #		define HAVE_TANH
