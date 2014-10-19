@@ -378,7 +378,7 @@ static void tmr_urs_tmout_handle (qse_tmr_t* tmr, const qse_ntime_t* now, void* 
 		tmout_event.handler = tmr_urs_tmout_handle;
 		tmout_event.updater = tmr_urs_tmout_update;
 
-		if (sendto (req->urs_socket, req->pkt, req->pktlen, 0, (struct sockaddr*)&req->urs_skad, req->urs_skadlen) != req->pktlen)
+		if (sendto (req->urs_socket, (void*)req->pkt, req->pktlen, 0, (struct sockaddr*)&req->urs_skad, req->urs_skadlen) != req->pktlen)
 		{
 			/* error. fall thru */
 			qse_httpd_seterrnum (dc->httpd, SKERR_TO_ERRNUM());
@@ -537,7 +537,7 @@ static int urs_send (qse_httpd_t* httpd, qse_httpd_urs_t* urs, const qse_mchar_t
 }
 */
 
-	if (sendto (req->urs_socket, req->pkt, req->pktlen, 0, (struct sockaddr*)&req->urs_skad, req->urs_skadlen) != req->pktlen)
+	if (sendto (req->urs_socket, (void*)req->pkt, req->pktlen, 0, (struct sockaddr*)&req->urs_skad, req->urs_skadlen) != req->pktlen)
 	{
 		qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
 printf ("URS SENDTO FAILURE........................\n"); /* TODO: logging */

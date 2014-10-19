@@ -2,7 +2,12 @@
 
 static void* mod_open (qse_httpd_t* httpd, const qse_char_t* sysname)
 {
-#if defined(USE_LTDL)
+#if defined(QSE_ENABLE_STATIC_MODULE)
+
+	qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
+	return QSE_NULL;
+
+#elif defined(USE_LTDL)
 	void* h;
 	qse_mchar_t* modpath;
 
@@ -33,7 +38,7 @@ static void* mod_open (qse_httpd_t* httpd, const qse_char_t* sysname)
 	HMODULE h;
 
 	h = LoadLibrary (sysname);
-	if (!h) qse_httpd_seterrnum (httpd, syserr_to_errnum(GetLastError());
+	if (!h) qse_httpd_seterrnum (httpd, syserr_to_errnum(GetLastError()));
 
 	QSE_ASSERT (QSE_SIZEOF(h) <= QSE_SIZEOF(void*));
 	return h;
@@ -113,7 +118,10 @@ static void* mod_open (qse_httpd_t* httpd, const qse_char_t* sysname)
 
 static void mod_close (qse_httpd_t* httpd, void* handle)
 {
-#if defined(USE_LTDL)
+#if defined(QSE_ENABLE_STATIC_MODULE)
+	/* this won't be called at all when modules are linked into
+	 * the main library. */
+#elif defined(USE_LTDL)
 	lt_dlclose (handle);
 #elif defined(_WIN32)
 	FreeLibrary ((HMODULE)handle);
@@ -142,7 +150,13 @@ static void* mod_symbol (qse_httpd_t* httpd, void* handle, const qse_char_t* nam
 	}
 #endif
 
-#if defined(USE_LTDL)
+
+#if defined(QSE_ENABLE_STATIC_MODULE)
+	/* this won't be called at all when modules are linked into
+	 * the main library. */
+	s = QSE_NULL;
+
+#elif defined(USE_LTDL)
 	s = lt_dlsym (handle, mname);
 	if (s == QSE_NULL) qse_httpd_seterrnum (httpd, syserr_to_errnum(errno));
 #elif defined(_WIN32)

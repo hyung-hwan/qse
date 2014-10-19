@@ -380,6 +380,7 @@ static int daemonize (int devnull)
 int xxxx (void* ctx, qse_env_char_t** envir)
 {
 /* NOTE: this is for experiment only */
+#if 0
 	extern char** environ;
 char buf[1000];
 char* cl;
@@ -400,6 +401,11 @@ printf ("%s", buf);
 }
 /*}
 	system ("while read xxx; do echo $xxx; done; echo 123 456 789");*/
+	printf ("</pre></body></html>\n");
+#endif
+	printf ("Content-Type: text/html\n\n");
+	printf ("<html><body><pre>\n");
+	system ("ls -laF /tmp");
 	printf ("</pre></body></html>\n");
 
 	return 0;

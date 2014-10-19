@@ -783,7 +783,7 @@ static int activate_servers (qse_httpd_t* httpd)
 /*
 			httpd->opt.rcb.log (httpd, 0, QSE_T("cannot activate %s"), buf);
 */
-#if 0
+#if 1
 qse_printf(QSE_T("cannot activate [%s]\n"), buf);
 #endif
 			continue;
@@ -797,7 +797,7 @@ qse_printf(QSE_T("cannot activate [%s]\n"), buf);
 /*
 			httpd->opt.rcb.log (httpd, 0, QSE_T("cannot activate %s - "), buf);
 */
-#if 0
+#if 1
 qse_printf(QSE_T("cannot add handle [%s]\n"), buf);
 #endif
 
@@ -1686,6 +1686,7 @@ int qse_httpd_loop (qse_httpd_t* httpd)
 	}
 	if (httpd->server.nactive <= 0)
 	{
+printf ("no active servers...\n");
 		if (httpd->dnsactive) deactivate_dns (httpd);
 		if (httpd->ursactive) deactivate_urs (httpd);
 		httpd->opt.scb.mux.close (httpd, httpd->mux);
@@ -1694,6 +1695,7 @@ int qse_httpd_loop (qse_httpd_t* httpd)
 		return -1;
 	}
 
+printf ("entering loop... ...\n");
 	xret = 0;
 
 	while (!httpd->stopreq)
@@ -1702,6 +1704,7 @@ int qse_httpd_loop (qse_httpd_t* httpd)
 		count = httpd->opt.scb.mux.poll (httpd, httpd->mux, &tmout);
 		if (count <= -1) 
 		{
+printf ("mux errorr ... ...\n");
 			if (httpd->errnum != QSE_HTTPD_EINTR)
 			{
 				xret = -1; 

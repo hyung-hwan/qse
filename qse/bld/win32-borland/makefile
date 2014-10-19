@@ -133,6 +133,7 @@ DLLQSECMN_OBJECTS =  \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsecmn_pma.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsecmn_rbt.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsecmn_rex.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsecmn_sck.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsecmn_sio.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsecmn_sll.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsecmn_slmb.obj \
@@ -228,6 +229,7 @@ LIBQSECMN_OBJECTS =  \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsecmn_pma.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsecmn_rbt.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsecmn_rex.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsecmn_sck.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsecmn_sio.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsecmn_sll.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsecmn_slmb.obj \
@@ -370,7 +372,6 @@ DLLQSEHTTP_OBJECTS =  \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsehttp_httpd_dir.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsehttp_httpd_file.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsehttp_httpd_proxy.obj \
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsehttp_httpd_resol.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsehttp_httpd_std.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsehttp_httpd_task.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsehttp_httpd_text.obj \
@@ -388,7 +389,6 @@ LIBQSEHTTP_OBJECTS =  \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsehttp_httpd_dir.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsehttp_httpd_file.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsehttp_httpd_proxy.obj \
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsehttp_httpd_resol.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsehttp_httpd_std.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsehttp_httpd_task.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsehttp_httpd_text.obj \
@@ -1118,6 +1118,9 @@ $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllq
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsecmn_rex.obj: ..\..\lib\cmn\rex.c
 	$(CC) -q -c -P- -o$@ $(DLLQSECMN_CFLAGS) ..\..\lib\cmn\rex.c
 
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsecmn_sck.obj: ..\..\lib\cmn\sck.c
+	$(CC) -q -c -P- -o$@ $(DLLQSECMN_CFLAGS) ..\..\lib\cmn\sck.c
+
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsecmn_sio.obj: ..\..\lib\cmn\sio.c
 	$(CC) -q -c -P- -o$@ $(DLLQSECMN_CFLAGS) ..\..\lib\cmn\sio.c
 
@@ -1390,6 +1393,9 @@ $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libq
 
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsecmn_rex.obj: ..\..\lib\cmn\rex.c
 	$(CC) -q -c -P- -o$@ $(LIBQSECMN_CFLAGS) ..\..\lib\cmn\rex.c
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsecmn_sck.obj: ..\..\lib\cmn\sck.c
+	$(CC) -q -c -P- -o$@ $(LIBQSECMN_CFLAGS) ..\..\lib\cmn\sck.c
 
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsecmn_sio.obj: ..\..\lib\cmn\sio.c
 	$(CC) -q -c -P- -o$@ $(LIBQSECMN_CFLAGS) ..\..\lib\cmn\sio.c
@@ -1694,9 +1700,6 @@ $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllq
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsehttp_httpd_proxy.obj: ..\..\lib\http\httpd-proxy.c
 	$(CC) -q -c -P- -o$@ $(DLLQSEHTTP_CFLAGS) ..\..\lib\http\httpd-proxy.c
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsehttp_httpd_resol.obj: ..\..\lib\http\httpd-resol.c
-	$(CC) -q -c -P- -o$@ $(DLLQSEHTTP_CFLAGS) ..\..\lib\http\httpd-resol.c
-
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsehttp_httpd_std.obj: ..\..\lib\http\httpd-std.c
 	$(CC) -q -c -P- -o$@ $(DLLQSEHTTP_CFLAGS) ..\..\lib\http\httpd-std.c
 
@@ -1732,9 +1735,6 @@ $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libq
 
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsehttp_httpd_proxy.obj: ..\..\lib\http\httpd-proxy.c
 	$(CC) -q -c -P- -o$@ $(LIBQSEHTTP_CFLAGS) ..\..\lib\http\httpd-proxy.c
-
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsehttp_httpd_resol.obj: ..\..\lib\http\httpd-resol.c
-	$(CC) -q -c -P- -o$@ $(LIBQSEHTTP_CFLAGS) ..\..\lib\http\httpd-resol.c
 
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsehttp_httpd_std.obj: ..\..\lib\http\httpd-std.c
 	$(CC) -q -c -P- -o$@ $(LIBQSEHTTP_CFLAGS) ..\..\lib\http\httpd-std.c

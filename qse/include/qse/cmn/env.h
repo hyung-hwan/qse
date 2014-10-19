@@ -147,12 +147,12 @@ QSE_EXPORT int qse_env_insertmbsa (
  * The qse_env_appendwcs() function appends an extra value to the last item
  * in the environment list.
  */
-int qse_env_appendwcs (
+QSE_EXPORT int qse_env_appendwcs (
 	qse_env_t*         env,
 	const qse_wchar_t* value
 );
 
-int qse_env_appendmbs (
+QSE_EXPORT int qse_env_appendmbs (
 	qse_env_t*         env,
 	const qse_mchar_t* value
 );
