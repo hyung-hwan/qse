@@ -43,7 +43,14 @@
 #		include <unistd.h>
 #	endif
 #elif defined(__DOS__)
- 	/* TODO:  consider watt-32 */
+#	include <tcp.h>
+#	include <sys/ioctl.h>
+#	define memset QSE_MEMSET /* FD_SET hardcodes memset() */
+#	define select select_s
+#	define USE_SELECT
+	/* SO_RCVTIMEO doesn't work or i don't know how to get it to work. */
+#	undef SO_RCVTIMEO
+#	undef SO_SNDTIMEO
 #else
 #	include "syscall.h"
 #	include <sys/socket.h>
@@ -137,12 +144,12 @@ static qse_nwio_errnum_t skerr_to_errnum (int e)
 	}
 }
 
-#elif defined(__DOS__)
+/*#elif defined(__DOS__)
 static qse_nwio_errnum_t skerr_to_errnum (int e)
 {
-	/* TODO: */
+	
 	return QSE_NWIO_ESYSERR;
-}
+}*/
 #else
 static qse_nwio_errnum_t skerr_to_errnum (int e)
 {
@@ -239,12 +246,12 @@ static int wait_for_data (qse_nwio_t* nwio, const qse_ntime_t* tmout, int what)
 	#else
 	if (xret <= -1)
 	#endif
-	{	
+	{
 	#if defined(_WIN32)
 		nwio->errnum = skerr_to_errnum (WSAGetLastError());
 	#elif defined(__OS2__)
 		nwio->errnum = skerr_to_errnum (sock_errno());
-	#else		
+	#else
 		nwio->errnum = skerr_to_errnum (errno);
 	#endif
 		return -1;
@@ -265,7 +272,7 @@ static int wait_for_data (qse_nwio_t* nwio, const qse_ntime_t* tmout, int what)
 	tmout_msecs = QSE_SECNSEC_TO_MSEC (tmout->sec, tmout->nsec);
 	xret = os2_select (&nwio->handle, count[0], count[1], 0, tmout_msecs);
 	if (xret <= -1)
-	{	
+	{
 		nwio->errnum = skerr_to_errnum (sock_errno());
 		return -1;
 	}
@@ -640,8 +647,120 @@ int qse_nwio_init (
 	}
 
 #elif defined(__DOS__)
-	nwio->errnum = QSE_NWIO_ENOIMPL;
-	return -1;
+
+	nwio->handle = socket (family, type, 0);
+	if (nwio->handle <= -1)
+	{
+		nwio->errnum = skerr_to_errnum (errno);
+		goto oops;
+	}
+
+	if ((flags & QSE_NWIO_TCP) && (flags & QSE_NWIO_KEEPALIVE))
+	{
+		int optval = 1;
+		setsockopt (nwio->handle, SOL_SOCKET, SO_KEEPALIVE, (void*)&optval, QSE_SIZEOF(optval));
+	}
+
+	if (flags & QSE_NWIO_PASSIVE)
+	{
+		qse_nwio_hnd_t handle;
+
+	#if defined(SO_REUSEADDR)
+		if (flags & QSE_NWIO_REUSEADDR)
+		{
+			int optval = 1;
+			setsockopt (nwio->handle, SOL_SOCKET, SO_REUSEADDR, (void*)&optval, QSE_SIZEOF(optval));
+		}
+	#endif
+
+		if (bind (nwio->handle, (struct sockaddr*)&addr, addrlen) <= -1)
+		{
+			nwio->errnum = skerr_to_errnum (errno);
+			goto oops;
+		}
+
+		if (flags & QSE_NWIO_TCP)
+		{
+			if (listen (nwio->handle, 10) <= -1)
+			{
+				nwio->errnum = skerr_to_errnum (errno);
+				goto oops;
+			}
+
+			if (TMOUT_ENABLED(nwio->tmout.a) &&
+			    wait_for_data (nwio, &nwio->tmout.a, 0) <= -1) goto oops;
+
+			handle = accept (nwio->handle, (struct sockaddr*)&addr, &addrlen);
+			if (handle <= -1)
+			{
+				nwio->errnum = skerr_to_errnum (errno);
+				goto oops;
+			}
+
+			close_s (nwio->handle);
+			nwio->handle = handle;
+		}
+		else if (flags & QSE_NWIO_UDP)
+		{
+			nwio->status |= STATUS_UDP_CONNECT;
+		}
+	}
+	else
+	{
+		int xret;
+
+		if (TMOUT_ENABLED(nwio->tmout.c) && (flags & QSE_NWIO_TCP))
+		{
+			int cmd = 1;
+
+			if (ioctlsocket(nwio->handle, FIONBIO, (char*)&cmd) == SOCKET_ERROR) 
+			{
+				nwio->errnum = skerr_to_errnum (errno);
+				goto oops;
+			}
+		}
+
+		xret = connect (nwio->handle, (struct sockaddr*)&addr, addrlen);
+
+		if (TMOUT_ENABLED(nwio->tmout.c) && (flags & QSE_NWIO_TCP))
+		{
+			int cmd = 0;
+
+			if ((xret == SOCKET_ERROR && errno != EWOULDBLOCK) ||
+			    ioctlsocket (nwio->handle, FIONBIO, (char*)&cmd) == SOCKET_ERROR)
+			{
+				nwio->errnum = skerr_to_errnum (errno);
+				goto oops;
+			}
+
+			if (wait_for_data (nwio, &nwio->tmout.c, 1) <= -1) goto oops;
+			else 
+			{
+				int xlen, xerr;
+
+				xlen = QSE_SIZEOF(xerr);
+				if (getsockopt (nwio->handle, SOL_SOCKET, SO_ERROR, (char*)&xerr, &xlen) <= -1)
+				{
+					nwio->errnum = skerr_to_errnum (errno);
+					goto oops;
+				}
+				else if (xerr != 0)
+				{
+					nwio->errnum = skerr_to_errnum (xerr);
+					goto oops;
+				}
+			}
+		}
+		else
+		{
+			if (xret <= -1)
+			{
+				nwio->errnum = skerr_to_errnum (errno);
+				goto oops;
+			}
+		}
+	}
+
 
 #else
 	#if defined(SOCK_CLOEXEC)
@@ -721,8 +840,7 @@ int qse_nwio_init (
 			int orgfl;
 
 			orgfl = fcntl (nwio->handle, F_GETFL, 0);
-			if (orgfl <= -1 ||
-			    fcntl (nwio->handle, F_SETFL, orgfl | O_NONBLOCK) <= -1)
+			if (orgfl <= -1 || fcntl (nwio->handle, F_SETFL, orgfl | O_NONBLOCK) <= -1)
 			{
 				nwio->errnum = skerr_to_errnum (errno);
 				goto oops;
@@ -974,10 +1092,10 @@ static qse_ssize_t nwio_read (qse_nwio_t* nwio, void* buf, qse_size_t size)
 
 	return n;
 
-#elif defined(__DOS__)
+/*#elif defined(__DOS__)
 
 	nwio->errnum = QSE_NWIO_ENOIMPL;
-	return -1;
+	return -1; */
 
 #else
 
@@ -1109,10 +1227,10 @@ static qse_ssize_t nwio_write (qse_nwio_t* nwio, const void* data, qse_size_t si
 	if (n <= -1) nwio->errnum = skerr_to_errnum (sock_errno());
 	return n;
 
-#elif defined(__DOS__)
+/*#elif defined(__DOS__)
 
 	nwio->errnum = QSE_NWIO_ENOIMPL;
-	return -1;
+	return -1;*/
 
 #else
 

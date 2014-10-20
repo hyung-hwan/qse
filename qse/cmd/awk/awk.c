@@ -52,6 +52,7 @@
 #	include <os2.h>
 #elif defined(__DOS__)
 #	include <dos.h>
+#	include <tcp.h> /* watt-32 */
 #else
 #	include <unistd.h>
 #	include <errno.h>
@@ -1238,6 +1239,9 @@ int qse_main (int argc, qse_achar_t* argv[])
 	char locale[100];
 	UINT codepage;
 	WSADATA wsadata;
+#elif defined(__DOS__)
+	extern BOOL _watt_do_exit;
+	int sock_inited = 0;
 #else
 	/* nothing special */
 #endif
@@ -1259,29 +1263,42 @@ int qse_main (int argc, qse_achar_t* argv[])
 		qse_setdflcmgrbyid (QSE_CMGR_SLMB);
 	}
 
-	if (WSAStartup (MAKEWORD(2,0), &wsadata) != 0)
-	{
-		print_error (QSE_T("Failed to start up winsock\n"));
-		return -1;
-	}
-
 #else
 	setlocale (LC_ALL, "");
 	qse_setdflcmgrbyid (QSE_CMGR_SLMB);
 #endif
 
-	open_mpi (&mpi, argc, argv);
-	
 	qse_openstdsios ();
+
+#if defined(_WIN32)
+	if (WSAStartup (MAKEWORD(2,0), &wsadata) != 0)
+	{
+		print_error (QSE_T("Failed to start up winsock\n"));
+		ret = -1;
+		goto oops;
+	}
+#elif defined(__DOS__)
+/* TODO: add an option to skip watt-32 */
+	_watt_do_exit = 0; /* prevent sock_init from exiting upon failure */
+	if (sock_init() != 0)
+		print_error (QSE_T("Failed to initialize watt-32\n"));
+	else sock_inited = 1;
+#endif
+
+	open_mpi (&mpi, argc, argv);
+
 	ret = qse_runmain (argc, argv, awk_main);
-	qse_closestdsios ();
 
 	close_mpi (&mpi);
 
 #if defined(_WIN32)
 	WSACleanup ();
+#elif defined(__DOS__)
+	if (sock_inited) sock_exit ();
 #endif
 
+oops:
+	qse_closestdsios ();
 	return ret;
 }
 

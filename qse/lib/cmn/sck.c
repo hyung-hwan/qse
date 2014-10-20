@@ -40,7 +40,7 @@
 #		include <unistd.h>
 #	endif
 #elif defined(__DOS__)
- 	/* TODO:  consider watt-32 */
+#	include <tcp.h> /* watt-32 */
 #else
 #	include "syscall.h"
 #	include <sys/socket.h>
@@ -72,8 +72,9 @@ QSE_INLINE int qse_isvalidsckhnd (qse_sck_hnd_t handle)
 	return handle >= 0;
 
 #elif defined(__DOS__)
-	/* TODO: */
-	return 0;
+
+	return handle >= 0;
+
 #else
 	return handle >= 0;
 #endif
@@ -86,7 +87,7 @@ QSE_INLINE void qse_closesckhnd (qse_sck_hnd_t handle)
 #elif defined(__OS2__)
 	soclose (handle);
 #elif defined(__DOS__)
-	/* TODO: */
+	close_s (handle);
 #else
 	QSE_CLOSE (handle);
 #endif
@@ -101,7 +102,7 @@ QSE_INLINE void qse_shutsckhnd (qse_sck_hnd_t handle, qse_shutsckhnd_how_t how)
 #elif defined(__OS2__)
 	shutdown (handle, how_v[how]);
 #elif defined(__DOS__)
-	/* TODO: */
+	shutdown (handle, how_v[how]);
 #else
 	shutdown (handle, how_v[how]);
 #endif
@@ -211,7 +212,7 @@ void qse_sck_fini (qse_sck_t* sck)
 #elif defined(__OS2__)
 	soclose (sck->handle);
 #elif defined(__DOS__)
-	/* TODO: */
+	close_s (sck->handle)
 #else
 	QSE_CLOSE (sck->handle);
 #endif

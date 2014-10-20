@@ -29,6 +29,7 @@
 #	include <os2.h>
 #elif defined(__DOS__)
 #	include <dos.h>
+#	include <tcp.h> /* watt-32 */
 #else
 #	include <unistd.h>
 #	include <errno.h>
@@ -2715,6 +2716,8 @@ int qse_main (int argc, qse_achar_t* argv[])
 	char locale[100];
 	UINT codepage;
 	WSADATA wsadata;
+#elif defined(__DOS__)
+	extern BOOL _watt_do_exit;
 #else
 	/* nothing */
 #endif
@@ -2736,15 +2739,28 @@ int qse_main (int argc, qse_achar_t* argv[])
 		qse_setdflcmgrbyid (QSE_CMGR_SLMB);
 	}
 
-	if (WSAStartup (MAKEWORD(2,0), &wsadata) != 0)
-	{
-		qse_fprintf (QSE_STDERR, QSE_T("Failed to start up winsock\n"));
-		return -1;
-	}
-
 #else
 	setlocale (LC_ALL, "");
 	qse_setdflcmgrbyid (QSE_CMGR_SLMB);
+#endif
+
+	qse_openstdsios ();
+
+#if defined(_WIN32)
+	if (WSAStartup (MAKEWORD(2,0), &wsadata) != 0)
+	{
+		qse_fprintf (QSE_STDERR, QSE_T("Failed to start up winsock\n"));
+		ret = -1;
+		goto oops;
+	}
+#elif defined(__DOS__)
+	_watt_do_exit = 0; /* prevent sock_init from exiting upon failure */
+	if (sock_init () != 0)
+	{
+		qse_fprintf (QSE_STDERR, QSE_T("Failed to initialize watt-32\n"));
+		ret = -1;
+		goto oops;
+	}
 #endif
 
 #if defined(HAVE_SSL)    
@@ -2752,9 +2768,7 @@ int qse_main (int argc, qse_achar_t* argv[])
 	SSL_library_init ();
 #endif
 
-	qse_openstdsios ();
 	ret = qse_runmain (argc, argv, httpd_main);
-	qse_closestdsios ();
 
 #if defined(HAVE_SSL)
 	/* ERR_remove_state() should be called for each thread if the application is thread */
@@ -2767,7 +2781,11 @@ int qse_main (int argc, qse_achar_t* argv[])
 
 #if defined(_WIN32)
 	WSACleanup ();
+#elif defined(__DOS__)
+	sock_exit ();
 #endif
 
+oops:
+	qse_closestdsios ();
 	return ret;
 }

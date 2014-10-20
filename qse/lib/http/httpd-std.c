@@ -75,6 +75,7 @@
 
 #	include <errno.h>
 #	include <tcp.h> /* watt-32 */
+#	include <sys/ioctl.h> /* watt-32 */
 
 #	define select select_s /* TODO: is this correct? */
 #	undef AF_UNIX
@@ -791,6 +792,16 @@ static int set_socket_nonblock (qse_httpd_t* httpd, qse_sck_hnd_t fd, int enable
 	}
 	return 0;
 
+#elif defined(__DOS__)
+
+	if (ioctlsocket (fd, FIONBIO, (char*)&enabled) == SOCKET_ERROR) 
+	{
+		qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
+		return -1;
+	}
+
+	return 0;
+
 #elif defined(O_NONBLOCK)
 
 	int flag = fcntl (fd, F_GETFL);
@@ -969,7 +980,6 @@ qse_fprintf (QSE_STDERR, QSE_T("Failed to enable SO_REUSEPORT\n"));
 	flag = 1;
 	setsockopt (fd, SOL_IP, IP_TRANSPARENT, &flag, QSE_SIZEOF(flag));
 	#endif
-
 
 	if (server->dope.flags & QSE_HTTPD_SERVER_BINDTONWIF)
 	{
