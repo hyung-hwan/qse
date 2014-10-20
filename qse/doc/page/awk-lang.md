@@ -771,7 +771,7 @@ success and -1 on failure.
    + codepage: *cp949*, *cp950*, *utf8*, *slmb*, *mb8*
    + ctimeout, atimeout, rtimeout, wtimeout: the number of seconds. effective 
     on socket based streams only. you may use a floating-point number for 
-    lower resoluation than a second. a negative value turns off timeout. 
+    lower resolution than a second. a negative value turns off timeout. 
 
 See this sample that prints the contents of a document encoded in cp949.
 

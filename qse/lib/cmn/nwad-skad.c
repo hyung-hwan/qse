@@ -45,7 +45,8 @@
 #	undef AF_UNIX
 #	pragma library("tcpip32.lib")
 #elif defined(__DOS__)
- 	/* TODO:  consider watt-32 */
+#	include <tcp.h> /* watt-32 */
+#	undef AF_UNIX
 #else
 #	include <sys/socket.h>
 #	include <netinet/in.h>
