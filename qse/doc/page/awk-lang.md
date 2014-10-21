@@ -1,8 +1,11 @@
 QSEAWK Language                                                      {#awk-lang}
 ================================================================================
 
-Overview
---------
+#
+=======
+
+ Overview
+-------------
 
 QSEAWK implements the language described in the 
 [The AWK Programming Language][awkbook] with extensions.
@@ -11,18 +14,69 @@ QSEAWK reads an AWK program, recognizes various tokens contained while skipping
 comments and whitespaces that don't constinute a token, analyses syntax, and
 tranforms them to an internal form for execution.
 
-An QSEAWK program can be composed of the following elements at the top level.
 
- - *BEGIN* blocks
- - *END* blocks
- - pattern-action blocks
- - user-defined functions
- - comments
- - \@global variables
- - \@include statements
 
-The following code snippet is a valid QSEAWK program that print the string
-*hello, world* to the console. it is composed of a single *BEGIN* block.
+ Program Structure
+----------------------
+
+A QSEAWK program can be composed of the following elements at the top level.
+
+ - pattern-action block pair
+ - action block without a pattern
+ - pattern without an action block
+ - user-defined function
+ - \@global variable definition
+ - \@include statement 
+
+However, none of the above is mandatory. QSEAWK accepts an empty program.
+
+A typical pattern-action pair is composed of a pattern and an action block 
+as shown below:
+
+~~~~~{.awk}
+ pattern {
+   statement
+   statement
+   ...
+ }
+~~~~~
+
+A pattern can be one of the followings when specified:
+
+ - expression
+ - first-expression, last-expression
+ - *BEGIN*
+ - *END*
+
+An action block is a series of statements enclosed in a curly bracket pair.
+The *BEGIN* and *END* patterns require an action block while normal patterns
+don't. When no action block is specified for a normal pattern, it is treated
+as if `{ print $0; }` is specified.
+
+QSEAWK executes the action block for the *BEGIN* pattern when it starts 
+executing a program; No start-up action is taken if no *BEGIN* pattern-action 
+pair is specified. If a normal pattern-action pair and/or the *END* 
+pattern-action is specified, it reads the standard input stream. For each input
+line it reads, it checks if a normal pattern expression evaluates to true. For
+each pattern that evaluates to true, it executes the action block specified for
+the pattern. When it reaches the end of the input stream, it executes the 
+action block for the *END* pattern.
+
+QSEAWK allows zero or more *BEGIN* patterns. When multiple *BEGIN* patterns
+are specified, it executes their action blocks in the order they appear in the
+program. The same applies to the *END* patterns and their action blocks. It 
+doesn't read the standard input stream for programs composed of BEGIN
+blocks only whereas it reads the stream as long as there is an action block
+for an END pattern or a normal pattern. It evaluates an empty pattern to true;
+As a result, the action block for an empty pattern is executed for all input
+lines read.
+
+You can compose a pattern range by putting 2 patterns separated by a comma.
+The pattern range evaluates to true once the first expression evaluates to
+true until the last expression evaluates to true.
+
+The following code snippet is a valid QSEAWK program that prints the string
+*hello, world* to the console and exits.
 
 ~~~~~{.awk}
  BEGIN {
@@ -30,43 +84,86 @@ The following code snippet is a valid QSEAWK program that print the string
  }
 ~~~~~
 
-In general, QSEAWK starts executing the *BEGIN* blocks. For each input record
-from an input stream, it executes the pattern-action blocks if the pattern 
-evaluates to true. Finally, it executes the *END* blocks. By default, each
-line in the input stream is an input record. None of these blocks are 
-mandatory. However, a useful program needs at least 1 block to be present.
+This program prints "hello, world" followed by "hello, all" to the console.
 
-For the following input records,
+~~~~~{.awk}
+ BEGIN {
+   print "hello, world";
+ }
+ BEGIN {
+   print "hello, all";
+ }
+~~~~~
+
+For the following text input,
 ~~~~~{.txt}
  abcdefgahijklmn
  1234567890
- opqrstuvwxyz
+ opqrstuvwxyzabc
+ 9876543210
 ~~~~~
 
-this AWK program produces
+this program
 ~~~~~{.awk}
- BEGIN { mr=0; }
- /abc|vwx/ { print $0; mr++; }
+ BEGIN { mr=0; my_nr=0; }
+ /abc/ { print "[" $0 "]"; mr++; }
+ { my_nr++; }
  END { 
    print "total records: " NR; 
+   print "total records selfcounted: " my_nr; 
    print "matching records: " mr; 
  }
 ~~~~~
 
-this output text.
+produces the output text like this:
 ~~~~~{.txt}
- abcdefgahijklmn
- opqrstuvwxyz
- total records: 3
+ [abcdefgahijklmn]
+ [opqrstuvwxyzabc]
+ total records: 4
+ total records selfcounted: 4
  matching records: 2
 ~~~~~
 
-The QSEAWK library provides a capability to use a use a user-defined function
-as an entry point instead of executing these blocks. See \ref awk-embed for 
-how to change the entry point.
+See the table for the order of execution indicated by the number and the result 
+of pattern evaluation enclosed in parenthesis. The action block is executed if
+the evaluation result is true.
 
-Comments
---------
+ |                                   | START-UP | abcdefgahijklmn | 1234567890 | opqrstuvwxyzabc | 9876543210 | SHUTDOWN |
+ |-----------------------------------|----------|-----------------|------------|-----------------|------------|----------|
+ | BEGIN { mr = 0; my_nr=0; }        | 1(true)  |                 |            |                 |            |          |
+ | /abc/ { print "[" $0 "]"; mr++; } |          | 2(true)         | 4(false)   | 6(true)         | 8(false)   |          |
+ | { my_nr++; }                      |          | 3(true)         | 5(true)    | 7(true)         | 9(true)    |          |
+ | END { print ... }                 |          |                 |            |                 |            | 10(true) | 
+
+
+For the same input, this program shows how to use a ranged pattern.
+~~~~~{.awk}
+ /abc/,/stu/ { print "[" $0 "]"; }
+~~~~~
+
+It produces the output text like this:
+~~~~~{.txt}
+ [abcdefgahijklmn]
+ [1234567890]
+ [opqrstuvwxyzabc]
+~~~~~
+
+The regular expression /abc/ matches the first input line and /stu/ matches the
+third input line. So the range is true between the first input line and the
+third input line inclusive.
+
+
+> ### Note ###
+> The QSEAWK engine provides a way to use a user-defined function as an entry
+> point instead of executing pattern-action block pairs. When you choose
+> to use a user-defined function as an entry point, it doesn't execute such 
+> pairs. 
+> Read \ref awk-embed and see qse_awk_rtx_call() and qse_awk_rtx_callfun() for 
+> how to change the entry point programatically.
+
+
+ Comments
+--------------
 
 A single-line comment is introduced by a hash character #, and is terminated at 
 the end of the same line. Additionally, it supports a C-style multi-line comment
@@ -81,8 +178,11 @@ string literals and regular expressions.
  */
 ~~~~~
 
-Tokens
-------
+
+
+
+ Tokens
+------------
 
 When QSEAWK parses a program, it classifies a series of input characters 
 into meaningful tokens. It can extract the smallest meaningful unit through
@@ -96,9 +196,9 @@ a parameter name, or a function name.
  - BEGIN
  - END
  - function
- - @local
- - @global
- - @include
+ - \@local
+ - \@global
+ - \@include
  - if
  - else
  - while
@@ -108,9 +208,9 @@ a parameter name, or a function name.
  - continue
  - return
  - exit
- - @abort
+ - \@abort
  - delete
- - @reset
+ - \@reset
  - next
  - nextfile
  - nextofile
@@ -119,7 +219,7 @@ a parameter name, or a function name.
  - getline
 
 However, these words can be used as normal names in the context of a
-module call.
+module call. For example, mymod::break.
 
 In practice, the predefined names used for built-in commands, functions,
 and variables are treated as if they are reserved since you can't create
@@ -225,6 +325,10 @@ a single-quoted string. The following program prints *awk* in double quotes.
  }
 ~~~~~
 
+If QSEAWK is built with the wide character support disabled, it doesn support
+the \\u and \\U specifiers.
+
+
 ### Regular Expressions ###
 
 A regular expression is enclosed in a pair of forward slashes. The special
@@ -235,62 +339,275 @@ TBD.
 Octal character notation is not supported in a regular expression literal
 since it conflicts with the backreference notation.
 
-### Note ###
-
-QSEAWK forms a token with the lognest valid sequences.
-
-Tokenization cab confusing, especially for the implicit concatention.
-Let's take this as an example.
-
-    0xT
-
-Since 0x not followed by a digit is a valid token, and T is an identifier,
-it is the same expression as 0x concatenated with T (0x @@ T).
+> ### Note ###
+> 
+> QSEAWK forms a token with the lognest valid sequences. Tokenization can be
+> confusing, especially for the implicit concatention. Let's take **0xT** as
+> an example. Since **0x** not followed by a digit is a valid token, and **T**
+> is an identifier, it is the same expression as **0x** concatenated with **T**
+> (0x \@\@ T).
 
 
-Commands
---------
 
-AWK has the following statement constructs.
-- if
-- while
-- for
-- do .. while
-- break
-- continue
-- return
-- exit
-- abort
-- next
-- nextfile
-- nextofile
-- delete
-- reset
-- print
-- printf
-- expression
+ Data Types
+----------------
 
-@subsection awk_litvar LITERAL AND VARIABLE
+QSEAWK supports scalar data types and composite data types. The scalar types
+include nil, numeric, string and  the composite type includes a hashed map.
 
-Value type
-- Scalar
--- String
--- Integer
--- Floating-Pointer number
-- Hashed Map
-- Regular expression
+The nil type is an implicit type and it's used to initialize all unassigned
+variables and values. It's converted to 0 in the numeric context and an empty
+string in the string context. It evaluates to false in the boolean context.
 
-Scalar values are immutable while a hashed map value is mutable.
-A regular expression value is specially treated.
+The numeric types include integers and floating-point numbers. The value can
+be used interchangeablly in most contexts. A number is converted to a string
+in the string context. Automatic conversion occurs whenever necessary depending
+on the context. 
+
+A string contains characters. A string is automatically converted to a number
+in the numeric context.  Conversion from a string to a number takes all valid 
+characters that can form a number token including the integer token and a 
+floating-number token. The remainging characters starting from the first 
+invalid character are ignored. If no valid characters are found, it's converted
+to 0. For example, `"0x20X" / 3` produces 10.6667. The string "0x20X" is 
+converted to an integer 32 and the division is performed producing a 
+floating-pointer number.
+
+You can create a hashed map by assigning a value to a variable indexed with
+a subscript placed within square brackets. You can't convert a hashed map to 
+a scalar type implicitly and explcitly.
+
+A regular expression may or may not be viewed as a data type. You can't assign
+a compiled regular expression into a variable. A regular expression not placed
+on the right-handle side of the **~** operator and the **!~** operator is 
+matched against $0 and evalutes to true or false acccording to the matching
+result. For an expression **a = /abc/**, a holds true or false, not the regular
+expression itself. However, some built-in functions accept compiled regular 
+expressions as arguments if only the functions are designed to do so.
+
+In the boolean context, a numeric value of 0 regardless of its numeric type, 
+an empty string, and a nil value evaluate to false. All other values evaluate
+to true.
+
+> ### Note ###
+> See #qse_awk_fnc_spec_t and #qse_awk_fnc_arg_t to define a function that 
+> can accept a regular expression.
+
+
+
+
+ User-defined Variables
+----------------------------
+
+QSEAWK supports three types of user-defined variables: global, local, named. 
+
+A named variable is a variable created without declaration. It's created
+when it's first referenced and it becomes available globally whereas a global 
+variable and a local variable is created through declaration.
+
+You can declare a global variable using the \@global keyword at the top-level.
+
+~~~~~{.awk}
+ @global var1, var2, ..., varn;
+~~~~~
+
+A global variable can be referenced after it's defined. See this example:
+
+~~~~~{.awk}
+ BEGIN { a = 10; }
+ function print_a () { print a; }
+ @global a;
+ BEGIN { a = 20; }
+ BEGIN { print a; print_a(); }
+~~~~~
+
+The variable a is assigned with 10 on the first line. The global variable
+declaration appears 2 lines down the code. So the variable a on the first 
+and the second line is a named variable. The variable a on the fourth line
+appears after the declaration on the third line. It refers to the global
+variable a. As a result, it prints 20 and 10 when the fifth line is executed.
+
+You can declare a local variable using the \@local keyword inside a function 
+body and an action block. The declaration can be placed at the beginning of
+a block statement.
+
+~~~~~{.awk}
+ @local var1, var2, ... varn;
+~~~~~
+
+A local variable can shade a global variable. See the sample below:
+~~~~~{.awk}
+ @global g1, g2; #declares two global variables g1 and g2
+ BEGIN {
+     @local a1, a2, a3; # declares three local variables 
+     g1 = 300; a1 = 200;
+     {
+          @local a1; # a1 here hides the a1 at the outer scope
+          @local g1; # g1 here hides the global g1
+          a1 = 10; g1 = 5;
+          print a1, g1; # it prints 10 and 5
+     }
+     print a1, g1; # it prints 200 and 300
+ }
+~~~~~
+
+> ### Note ###
+> The QSEAWK engine allows the mixture of named variables and declared variables. 
+> However, the mixture may lead to confusion. Use #QSE_AWK_IMPLICIT and 
+> #QSE_AWK_EXPLICIT to control what to allow and disallow when configuring 
+> the engine.
+
+
+ Built-in Variables
+--------------------------
+
+QSEAWK defines the following built-in variables:
+
+- FS
+- NR
+
+TBD.
+
+### FS ###
+
+If the value for FS begins with a question mark followed by 4 
+additional letters, QSEAWK can split a record with quoted fields 
+delimited by a single-letter separator.
+
+The 4 additional letters are composed of a field separator,
+an escaper, a opening quote, and a closing quote.
+
+See this sample code.
+~~~~~{.awk}
+BEGIN { FS="?:\\[]"; }
+{
+     for (i = 1; i <= NF; i++)
+          print "$" i ": " $i;
+     print "---------------";
+}
+~~~~~
+
+The value of FS in the program above means the following.
+- : is a field separator.
+- a backslash is an escaper.
+- a left bracket is an opening quote.
+- a right bracket is a closing quote.
+
+For the input:
+~~~~~{.txt}
+[fx1]:[fx2]:[f\[x\]3]
+abc:def:[a b c]
+~~~~~
+
+the sample code produces this output text:
+~~~~~{.txt}
+$1: fx1
+$2: fx2
+$3: f[x]3
+---------------
+$1: abc
+$2: def
+$3: a b c
+---------------
+~~~~~
+
+
+ Hashed Map
+---------------
+
+You can store key-values pairs in a hashed map. 
+
+A scalar value is immutable while a hashed map value is mutable.
 
 A variable is tied to a value when it is assigned with a value.
 If the variable is tied to a map value, it can't be assigned again.
-You can use 'reset' to untie the variable from the value, and thus
+You can use \@reset to untie the variable from the value, and thus
 restore the variable to the 'nil' state.
 
-....
+TBD.
 
-@subsection awk_ext_teq TEQ OPERATOR
+> ### Note ###
+> Use #QSE_AWK_FLEXMAP to adjust the switching flexibility of a variable
+> between a scalar value and a hashed map.
+
+
+
+ User-defined Functions
+--------------------------
+
+You can define a function using the following syntax:
+
+~~~~~{.awk}
+function name (arg1, arg2, ..., argn) {
+	statement
+	statement
+	...
+}
+~~~~~
+
+The caller must invoke a function with the same or less number of arguments 
+than the definition. When a function is called with the less number of 
+arguments, the redundant arguments are initialized to a nil value.
+
+You can't define multiple functions with the same name. The function name
+can't confict with named variables and globals variables.
+
+ Built-in Functions
+-------------------------
+
+
+ Function Calls
+-----------------------
+
+You can call a function by referencing a function name with arguments
+enclosed in parenthesis. The basic syntax looks liket this:
+
+~~~~~{.awk}
+ name(arg1, arg2, ..., argn)
+~~~~~
+
+TBD.
+
+> ### Note ####
+> If there is a space between a name and the left parenthesis,
+> the interpretation of the name can be more confusing.
+> Let's consider this program.
+> ~~~~~{.awk}
+>  BEGIN { name (1); }
+>  function name(a) { print a; }
+> ~~~~~
+> When #QSE_AWK_IMPLICIT is on, named variables are allowed. As the function 
+> of the name is not defined before the call, the word **name** on the first 
+> line is treated a named variable. The function defintion on the second
+> line ends up to be a syntax error of redefining a variable as the function
+> definition can't shadow a variable name.
+
+
+### EXTENDED FUNCTIONS ###
+index() and match() can accept the third parameter indicating the position 
+where the search begins. A negative value indicates a position from the back.
+
+~~~~~{.awk}
+ BEGIN {
+    xstr = "abcdefabcdefabcdef";
+    xsub = "abc";
+    xlen = length(xsub);
+
+    i = 1;
+    while ((i = index(xstr, xsub, i)) > 0)
+    {
+       print i, substr(xstr, i, xlen);
+       i += xlen;
+    }
+ }
+~~~~~
+
+
+ Opeartors
+---------------
+
+### TEQ operator ###
+
 
 The === operator compares two values and evaluates to a non-zero value 
 if both have the same internal type and the actual values are the same.
@@ -313,7 +630,6 @@ is not deep-copied but the reference to it is copied.
    print a===b;
  }
 ~~~~~
-
 
 The === operator may be also useful when you want to indicate an error
 with an uninitialized variable. The following code check if the function
@@ -338,29 +654,112 @@ internal type is 'NIL' and
 
 The !== operator is a negated form of the === operator.
 
+ Grouped Expression
+-----------------------------
 
-### Variable Declaration ###
+When #QSE_AWK_TOLERANT is on, you can use a grouped expression without
+the 'in' operator. A grouped expression is a parentheses-enclosed list
+of expressions separated with a comma. Each expression in the group is
+evaluated in the appearing order. The evaluation result of the last 
+expression in the group is returned as that of the group.
 
-Variables declared are accessed directly bypassing the global named map 
-that stores undeclared variables. The keyword \@global introduces a global
-variable and the keyword \@local introduces local variable. Local variable
-declaraion in a block must be located before an expression or a statement 
-appears.
+~~~~~{.awk}
+ BEGIN {
+   c = (1, 2, 9);
+   a=((1*c, 3*c), (3 - c), ((k = 6+(c+1, c+2)), (-7 * c)));
+   print c; # 9;
+   print a; # -63	
+   print k; # 17
+ }
+~~~~~
 
-    @global g1, g2; #declares two global variables g1 and g2
-    BEGIN {
-        @local a1, a2, a3; # declares three local variables 
-        g1 = 300; a1 = 200;
-        {
-             @local a1; # a1 here hides the a1 at the outer scope
-             @local g1; # g1 here hides the global g1
-             a1 = 10; g1 = 5;
-             print a1, g1; # it prints 10 and 5
-        }
-        print a1, g1; # it prints 200 and 300
-    }
 
-To disable named variables, you must turn off #QSE_AWK_IMPLICIT.
+
+
+
+
+ Commands
+--------------------
+
+AWK has the following command statements:
+- if
+- while
+- for
+- do .. while
+- break
+- continue
+- return
+- exit
+- \@abort
+- next
+- nextfile
+- nextofile
+- delete
+- \@reset
+- print
+- printf
+- expression
+
+
+### return ###
+The return statement is valid in pattern-action blocks as well as in functions.
+The execution of a calling block is aborted once the return statement is executed.
+
+~~~~~
+ $ qseawk 'BEGIN { return 20; }' ; echo $?
+ 20
+~~~~~
+
+If #QSE_AWK_FLEXMAP is on, you can return an arrayed value from a function.
+
+~~~~~{.awk}
+ function getarray() {
+   @local a;
+   a["one"] = 1;
+   a["two"] = 2;
+   a["three"] = 3;
+   return a;
+ }
+
+ BEGIN {
+   @local x;
+   x = getarray();
+   for (i in x) print i, x[i];
+ }
+~~~~~
+
+
+### \@reset ###
+The \@reset statement resets a variable back to the unassigned state.
+
+~~~~~{.awk}
+ BEGIN {
+   a[1] = 20;
+   @reset a;
+   print a+0; # print 0
+ }
+~~~~~
+
+> ### Note ###
+> If the QSEAWK engine is configured with #QSE_AWK_FLEXMAP off, you can use
+> the statement over a hashed map variable and assign a scalar value to the
+> variable.
+
+### \@abort ###
+The \@abort statment is similar to the exit statement except that
+it skips executing the END block. You must have #QSE_AWK_ABORT on to be
+able to use this statement.
+
+~~~~~{.awk}
+ BEGIN {
+    print "--- BEGIN ---";
+    @abort 10;
+ }
+ END {
+    print "--- END ---"; # this must not be printed
+ }
+~~~~~
+
 
 ### \@include ###
 
@@ -383,177 +782,20 @@ same as the sample above.
  BEGIN { func_in_abc(); }
 ~~~~~
 
-If #QSE_AWK_NEWLINE is off, the semicolon is required.
-
-### Function Call ###
-
-    name(1);
-
-if there is no space between 'name' and the left parenthesis, the 
-name is treated as a function name.
-
-    name (1);
-
-If there is a space, the name is treated as a function name if the 
-name has been declared as the function or if #QSE_AWK_IMPLICIT is on,
-it may be 'name' concatenated with the expression in the parentheses.
-
-The following is a valid program.
-
-     BEGIN { name (1); }
-     function name(a) { print a; }'
-
-However, in this program, the first 'name' becomes a named global variable.
-so the function declaration with 'name' triggers the variable redefinition 
-error.
-
-    BEGIN { name (1); }
-    function name(a) { print a; }'
-
-### GROUPED EXPRESSION ###
-When #QSE_AWK_TOLERANT is on, you can use a grouped expression without
-the 'in' operator. A grouped expression is a parentheses-enclosed list
-of expressions separated with a comma. Each expression in the group is
-evaluated in the appearing order. The evaluation result of the last 
-expression in the group is returned as that of the group.
-
-~~~~~{.awk}
- BEGIN {
-   c = (1, 2, 9);
-   a=((1*c, 3*c), (3 - c), ((k = 6+(c+1, c+2)), (-7 * c)));
-   print c; # 9;
-   print a; # -63	
-   print k; # 17
- }
-~~~~~
-
-### RETURN ###
-The return statement is valid in pattern-action blocks as well as in functions.
-The execution of a calling block is aborted once the return statement is executed.
-
-~~~~~
- $ qseawk 'BEGIN { return 20; }' ; echo $?
- 20
-~~~~~
-
-If #QSE_AWK_MAPTOVAR is on, you can return an arrayed value from a function.
-
-~~~~~{.awk}
- function getarray() {
-   @local a;
-   a["one"] = 1;
-   a["two"] = 2;
-   a["three"] = 3;
-   return a;
- }
-
- BEGIN {
-   @local x;
-   x = getarray();
-   for (i in x) print i, x[i];
- }
-~~~~~
+> ### Note ###
+> If #QSE_AWK_NEWLINE is off, the semicolon is required.
 
 
-### RESET ###
-The reset statement resets an array variable back to the initial state.
-After that, the array variable can also be used as a scalar variable again.
-You must have #QSE_AWK_RESET on to be able to be able to use this 
-statement.
 
-~~~~~{.awk}
- BEGIN {
-   a[1] = 20;
-   reset a;
-   a = 20; # this is legal
-   print a;
- }
-~~~~~
-
-### ABORT ###
-The abort statment is similar to the exit statement except that
-it skips executing the END block. You must have #QSE_AWK_ABORT on to be
-able to use this statement.
-
-@code
-BEGIN {
-	print "--- BEGIN ---";
-	abort 10;
-}
-END {
-	print "--- END ---"; # this must not be printed
-}
-@endcode
-
-### EXTENDED FUNCTIONS ###
-index() and match() can accept the third parameter indicating the position 
-where the search begins. A negative value indicates a position from the back.
-
-@code
-BEGIN {
-	xstr = "abcdefabcdefabcdef";
-	xsub = "abc";
-	xlen = length(xsub);
-
-	i = 1;
-	while ((i = index(xstr, xsub, i)) > 0)
-	{
-		print i, substr(xstr, i, xlen);
-		i += xlen;
-	}
-}
-@endcode
-
-### EXTENDED FS ###
-
-If the value for FS begins with a question mark followed by 4 
-additional letters, QSEAWK can split a record with quoted fields 
-delimited by a single-letter separator.
-
-The 4 additional letters are composed of a field separator,
-an escaper, a opening quote, and a closing quote.
-
-@code
-$ cat x.awk
-BEGIN { FS="?:\\[]"; }
-{
-     for (i = 1; i <= NF; i++)
-          print "$" i ": " $i;
-     print "---------------";
-}
-@endcode
-
-The value of FS above means the following.
-- : is a field separator.
-- a backslash is an escaper.
-- a left bracket is an opening quote.
-- a right bracket is a closing quote.
-
-See the following output.
-@code
-$ cat x.dat
-[fx1]:[fx2]:[f\[x\]3]
-abc:def:[a b c]
-$ qseawk -f x.awk x.dat
-$1: fx1
-$2: fx2
-$3: f[x]3
----------------
-$1: abc
-$2: def
-$3: a b c
----------------
-@endcode
-	
-
-## Built-in I/O ##
+ Built-in I/O
+-------------------
 
 QSEAWK comes with built-in I/O commands and functions in addition to the 
 implicit input streams for pattern-action blocks. The built-in I/O facility 
 is available only if QSEAWK is set with #QSE_AWK_RIO.
 
 ### getline ###
-	
+
 The *getline* command has multiple forms of usage. It can be used with or 
 without a variable name and can also be associated with a pipe or a file 
 redirection. The default association is the console when no pipe and file 
@@ -568,22 +810,28 @@ $0 also causes changes in *NF* and fields from $1 to $NF.
 
 The sample below reads records from the console and prints them. 
 
-    BEGIN {
-        while (getline > 0) print $0;
-    }
+~~~~~{.awk}
+ BEGIN {
+   while (getline > 0) print $0;
+ }
+~~~~~
 
 It is equivalent to 
 
-    { print $0 } 
+~~~~~{.awk}
+ { print $0 } 
+~~~~~
 
 but performs the task in the *BEGIN* block.
 
 *getline* with a variable reads a record from an associated input stream
 and updates the variable with the value. It updates *FNR* and *NR*, too.
 
-    BEGIN {
-        while (getline line > 0) print line;
-    }
+~~~~~{.awk}
+ BEGIN {
+   while (getline line > 0) print line;
+ }
+~~~~~
 
 You can change the stream association to a pipe or a file. If *getline* or
 *getline variable* is followed by a input redirection operator(<) and 
@@ -591,11 +839,13 @@ an expression, the evaluation result of the expression becomes the name of
 the file to read records from. The file is opened at the first occurrence
 and can be closed with the *close* function.
 
-    BEGIN {
-         filename = "/etc/passwd";
-         while ((getline line < filename) > 0) print line;
-         close (filename);
-    }
+~~~~~{.awk}
+ BEGIN {
+    filename = "/etc/passwd";
+    while ((getline line < filename) > 0) print line;
+    close (filename);
+ }
+~~~~~
 
 When *getline* or *getline variable* is preceded with an expression and a pipe
 operator(|), the evaluation result of the expression becomes the name of 
@@ -603,21 +853,25 @@ the external command to execute. The command is executed at the first occurrence
 and can be terminated with the *close* function. The example below reads
 the output of the *ls -laF* command and prints it to the console.
 
-    BEGIN {
-        procname = "ls -laF";
-        while ((procname | getline line) > 0) print line;
-        close (procname);
-    }
+~~~~~{.awk}
+ BEGIN {
+    procname = "ls -laF";
+    while ((procname | getline line) > 0) print line;
+    close (procname);
+ }
+~~~~~
 
 The two-way pipe operator(||) can also be used to read records from an 
 external command. There is no visible chanages to the end-user in case
 of the example above if you switch the operator.
 
-    BEGIN {
-        procname = "ls -laF";
-        while ((procname || getline line) > 0) print line;
-        close (procname);
-    }
+~~~~~{.awk}
+ BEGIN {
+    procname = "ls -laF";
+    while ((procname || getline line) > 0) print line;
+    close (procname);
+ }
+~~~~~
 
 The *getline* command acts like a function in that it returns a value.
 But you can't place an empty parentheses when no variable name is specified 
@@ -625,15 +879,21 @@ nor can you parenthesize the optional variable name. For example, *getline(a)*
 is different from *getline a* and means the concatenation of the return value 
 of *getline* and the variable *a*. Besides, it is not clear if 
 
-    getline a < b  
+~~~~~{.awk}
+ getline a < b  
+~~~~~
 
 is
 
-    (getline a) < b 
+~~~~~{.awk}
+ (getline a) < b 
+~~~~~
 
 or 
 
-    (getline) (a < b)
+~~~~~{.awk}
+ (getline) (a < b)
+~~~~~
 
 For this reason, you are advised to parenthesize *getline* and its related 
 components to avoid confusion whenever necessary. The example reading into 
@@ -646,7 +906,8 @@ the variable *line* can be made clearer with parenthesization.
 ~~~~~
 
 ### print ###
-**TODO**
+
+TBD.
 
 ### printf ###
 
@@ -658,9 +919,9 @@ a running program.
 ~~~~~{.awk}
  BEGIN {
    a = print "hello, world" > "/dev/null";
-   print a;	
+   print a;
    a = print ("hello, world") > "/dev/null";
-   print a;	
+   print a;
  }
 ~~~~~
 
@@ -940,6 +1201,7 @@ for a list of supported encoding names.
 Let's say you run this simple echoing script on a WIN32 platform that has
 the active code page of 949 and is reachable at the IP address 192.168.2.8.
 
+~~~~~{.awk}
     C:\> chcp
     Active code page: 949
     C:\> type s.awk
@@ -956,9 +1218,11 @@ the active code page of 949 and is reachable at the IP address 192.168.2.8.
     C:\> qseawk -f r.awk
     PEER: 안녕
     PEER: ?好!
+~~~~~
 
 Now you run the following script on a UTF-8 console of a Linux box.
 
+~~~~~{.awk}
     $ echo $LANG
     en_US.UTF-8
     $ cat  c.awk
@@ -980,16 +1244,21 @@ Now you run the following script on a UTF-8 console of a Linux box.
     PEER: 안녕
     > 你好!
     PEER: ?好!
+~~~~~
 
 Note that 你 has been converted to a question mark since the letter is
 not supported by cp949.
 
 
-Modules
--------
+
+
+
+ Modules
+----------------
+
 QSEAWK supports various external modules.
 
-## String ##
+### String ###
 
 The *str* module provides an extensive set of string manipulation functions.
 
@@ -1012,14 +1281,14 @@ The *str* module provides an extensive set of string manipulation functions.
 - str::rtrim
 - str::trim
 
-## Directory ##
+### Directory ###
 
 The *dir* module provides an interface to read file names in a specified directory.
 
 - dir::open
 - dir::close
 - dir::read
-- dir::reset	
+- dir::reset
 - dir::errno
 - dir::errstr
 
@@ -1031,7 +1300,7 @@ The *dir* module provides an interface to read file names in a specified directo
  }
 ~~~~~
 
-## SED ##
+### SED ###
 
 The *sed* module provides built-in sed capabilities.
 

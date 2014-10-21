@@ -766,28 +766,39 @@ typedef int (*qse_awk_fnc_impl_t) (
 );
 
 /**
+ * The qse_awk_fnc_arg_t type defines a structure to describe arguments
+ * to an implicit function.
+ */
+struct qse_awk_fnc_arg_t
+{
+	/** numbers of argument for a function */
+	qse_size_t min; 
+
+	/** numbers of argument for a function */
+	qse_size_t max; 
+
+	/** 
+	 * if min is greater than max, spec points to an external module
+	 * name where the function is found. otherwise, spec can be #QSE_NULL
+	 * to indicate all arguments are passed by value or point to a
+	 * argument specification string composed of 'max' characters.
+	 * Each character can be one of:
+	 *  - v: value
+	 *  - r: reference
+	 *  - x: regular expression
+	 */
+	const qse_char_t* spec;
+};
+typedef struct qse_awk_fnc_arg_t qse_awk_fnc_arg_t;
+
+/**
  * The qse_awk_fnc_spec_t type defines a structure to hold the specification
  * of an intrinsic function or a module function.
  */ 
 struct qse_awk_fnc_spec_t
 {
-	/** parameter specification */
-	struct
-	{
-		qse_size_t min; /**< min. numbers of argument for a function */
-		qse_size_t max; /**< max. numbers of argument for a function */
-		const qse_char_t* spec;
-		/**< argument specifier 
-		 * if min is greater than max, spec points to an external module
-		 * name where the function is found. otherwise, spec can be QSE_NULL
-		 * to indicate all arguments are passed by value or point to a
-		 * argument specification string composed of 'max' characters.
-		 * Each character can be one of:
-		 *  - v: value
-		 *  - r: reference
-		 *  - x:regular expression
-		 */
-	} arg;
+	/** argument descriptor */
+	qse_awk_fnc_arg_t arg;
 
 	/** pointer to the function implementing this function */
 	qse_awk_fnc_impl_t impl;
@@ -1081,7 +1092,7 @@ enum qse_awk_trait_t
 
 	/** treats a map value more flexibly. a function can return
 	 *  a map. you can override a map with a scalar value without 
-	 *  'delete' or '@reset'. 
+	 *  'delete' or '\@reset'. 
 	 */
 	QSE_AWK_FLEXMAP = (1 << 11),
 
