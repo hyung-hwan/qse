@@ -385,7 +385,7 @@ qse_task_slice_t* qse_task_create (
 	 * this approach makes this function thread-unsafe.
 	 */
 
-	/* when qse_task_task_create() is called,
+	/* when qse_task_create() is called,
 	 * setjmp() saves the context and return 0.
 	 *
 	 * subsequently, when longjmp() is made
@@ -395,37 +395,37 @@ qse_task_slice_t* qse_task_create (
 	if (setjmp (((qse_task_slice_t*)tmp)->jmpbuf) != 0)
 	{
 		/* longjmp() is made to here. */
-#if defined(__WATCOMC__)
+	#if defined(__WATCOMC__)
 		tmp = get_slice ();
 
-#elif defined(__GNUC__) && (defined(__x86_64) || defined(__amd64))
+	#elif defined(__GNUC__) && (defined(__x86_64) || defined(__amd64))
 		__asm__ volatile (
 			"movq 0(%%rsp), %0\n"  /* tmp = t2 */
 			: "=r"(tmp)
 		);
-#elif defined(__GNUC__) && (defined(__i386) || defined(i386))
+	#elif defined(__GNUC__) && (defined(__i386) || defined(i386))
 		__asm__ volatile (
 			"movl 0(%%esp), %0\n"  /* tmp = t2 */
 			: "=r"(tmp)
 		);
-#elif defined(__GNUC__) && (defined(__mips) || defined(mips))
+	#elif defined(__GNUC__) && (defined(__mips) || defined(mips))
 		__asm__ volatile (
 			"lw %0, 0($sp)\n"    /* tmp = t2 */
 			: "=r"(tmp)
 		);
-#elif defined(__GNUC__) && defined(__arm__)
+	#elif defined(__GNUC__) && defined(__arm__)
 		__asm__ volatile (
 			"ldr %0, [sp, #0]\n"    /* tmp = t2 */
 			: "=r"(tmp)
 		);
-#endif /* __WATCOMC__ */
+	#endif /* __WATCOMC__ */
 
 		execute_current_slice ((qse_task_slice_t*)tmp);
 		QSE_ASSERT (!"must never reach here....\n");
 	}
 
 	/* restore the stack pointer once i finish saving the longjmp() context.
-	 * this part is reached only when qse_task_task_create() is invoked. */
+	 * this part is reached only when qse_task_create() is invoked. */
 #if defined(__WATCOMC__)
 
 	restore_sp ();
@@ -518,7 +518,7 @@ done:
 }
 
 /* NOTE for __WATCOMC__.
-   when the number of parameters are more than 2 for qse_task_schedule(),
+   when the number of parameters is more than 2 for qse_task_schedule(),
    this setjmp()/longjmp() based tasking didn't work.
 
    if i change this to
