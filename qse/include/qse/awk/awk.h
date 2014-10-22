@@ -135,7 +135,7 @@ typedef struct qse_awk_loc_t qse_awk_loc_t;
 	unsigned int nstr: 2
 */
 #define QSE_AWK_VAL_HDR \
-	qse_uintptr_t type: 3; \
+	qse_uintptr_t v_type: 3; \
 	qse_uintptr_t ref: ((QSE_SIZEOF_UINTPTR_T * 8) - 6); \
 	qse_uintptr_t stat: 1; \
 	qse_uintptr_t nstr: 2
@@ -169,7 +169,7 @@ typedef struct qse_awk_val_nil_t  qse_awk_val_nil_t;
 struct qse_awk_val_int_t
 {
 	QSE_AWK_VAL_HDR;
-	qse_awk_int_t val;
+	qse_awk_int_t i_val;
 	void*         nde;
 };
 typedef struct qse_awk_val_int_t qse_awk_val_int_t;
@@ -1389,6 +1389,7 @@ enum qse_awk_val_type_t
 	QSE_AWK_VAL_REF  = 6, /**< reference to other types */
 	QSE_AWK_VAL_FUN  = 7
 };
+typedef enum qse_awk_val_type_t qse_awk_val_type_t;
 
 /**
  * The values defined are used to set the type field of the 
@@ -2551,6 +2552,10 @@ QSE_EXPORT void qse_awk_rtx_refdownval_nofree (
 	qse_awk_rtx_t* rtx, /**< runtime context */
 	qse_awk_val_t* val  /**< value pointer */
 );
+
+
+#define qse_awk_rtx_getvaltype(rtx,v) ((v)->v_type)
+#define qse_awk_rtx_getintfromval(rtx,v) (((qse_awk_val_int_t*)(v))->i_val)
 
 /**
  * The qse_awk_rtx_valtobool() function converts a value \a val to a boolean

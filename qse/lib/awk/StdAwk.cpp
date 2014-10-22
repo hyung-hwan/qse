@@ -843,7 +843,7 @@ int StdAwk::open_console_in (Console& io)
 		 */
 		argv = qse_awk_rtx_getgbl (rtx, this->gbl_argv);
 		QSE_ASSERT (argv != QSE_NULL);
-		QSE_ASSERT (argv->type == QSE_AWK_VAL_MAP);
+		QSE_ASSERT (qse_awk_rtx_getvaltype (rtx, argv) == QSE_AWK_VAL_MAP);
 
 		map = ((qse_awk_val_map_t*)argv)->map;
 		QSE_ASSERT (map != QSE_NULL);

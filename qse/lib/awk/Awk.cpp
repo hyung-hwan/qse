@@ -455,9 +455,9 @@ int Awk::Value::getStr (const char_t** str, size_t* len) const
 
 	QSE_ASSERT (this->val != QSE_NULL);
 
-	if (this->run != QSE_NULL)
+	if (this->run)
 	{
-		if (this->val->type == QSE_AWK_VAL_STR)
+		if (qse_awk_rtx_getvaltype (this->run->rtx, this->val) == QSE_AWK_VAL_STR)
 		{
 			p = ((qse_awk_val_str_t*)this->val)->val.ptr;
 			l = ((qse_awk_val_str_t*)this->val)->val.len;
@@ -643,7 +643,7 @@ int Awk::Value::setIndexedVal (Run* r, const Index& idx, val_t* v)
 {
 	QSE_ASSERT (r != QSE_NULL);
 
-	if (val->type != QSE_AWK_VAL_MAP)
+	if (qse_awk_rtx_getvaltype (r->rtx, val) != QSE_AWK_VAL_MAP)
 	{
 		// the previous value is not a map. 
 		// a new map value needs to be created first.
@@ -803,7 +803,7 @@ int Awk::Value::setIndexedStr (Run* r, const Index& idx, const char_t* str, bool
 bool Awk::Value::isIndexed () const
 {
 	QSE_ASSERT (val != QSE_NULL);
-	return val->type == QSE_AWK_VAL_MAP;
+	return qse_awk_rtx_getvaltype (this->run->rtx, val) == QSE_AWK_VAL_MAP;
 }
 
 int Awk::Value::getIndexed (const Index& idx, Value* v) const
@@ -811,8 +811,8 @@ int Awk::Value::getIndexed (const Index& idx, Value* v) const
 	QSE_ASSERT (val != QSE_NULL);
 
 	// not a map. v is just nil. not an error 
-	if (val->type != QSE_AWK_VAL_MAP) 
-	{	
+	if (qse_awk_rtx_getvaltype (this->run->rtx, val) != QSE_AWK_VAL_MAP) 
+	{
 		v->clear ();
 		return 0;
 	}
@@ -836,7 +836,7 @@ Awk::Value::IndexIterator Awk::Value::getFirstIndex (Index* idx) const
 {
 	QSE_ASSERT (this->val != QSE_NULL);
 
-	if (this->val->type != QSE_AWK_VAL_MAP) return IndexIterator::END;
+	if (qse_awk_rtx_getvaltype (this->run->rtx, this->val) != QSE_AWK_VAL_MAP) return IndexIterator::END;
 
 	QSE_ASSERT (this->run != QSE_NULL);
 
@@ -856,7 +856,7 @@ Awk::Value::IndexIterator Awk::Value::getNextIndex (
 {
 	QSE_ASSERT (val != QSE_NULL);
 
-	if (val->type != QSE_AWK_VAL_MAP) return IndexIterator::END;
+	if (qse_awk_rtx_getvaltype (this->run->rtx, val) != QSE_AWK_VAL_MAP) return IndexIterator::END;
 
 	QSE_ASSERT (this->run != QSE_NULL);
 
@@ -1399,7 +1399,7 @@ int Awk::dispatch_function (Run* run, const fnc_info_t* fi)
 		int xx;
 		val_t* v = qse_awk_rtx_getarg (run->rtx, i);
 
-		if (v->type == QSE_AWK_VAL_REF)
+		if (qse_awk_rtx_getvaltype (run->rtx, v) == QSE_AWK_VAL_REF)
 		{
 			qse_awk_val_ref_t* ref = (qse_awk_val_ref_t*)v;
 
@@ -1470,7 +1470,7 @@ int Awk::dispatch_function (Run* run, const fnc_info_t* fi)
 				"Do NOT change the run field from function handler");
 
 			val_t* v = qse_awk_rtx_getarg (run->rtx, i);
-			if (v->type == QSE_AWK_VAL_REF)
+			if (qse_awk_rtx_getvaltype (run->rtx, v) == QSE_AWK_VAL_REF)
 			{
 				if (qse_awk_rtx_setrefval (run->rtx, (qse_awk_val_ref_t*)v, args[i].toVal()) <= -1)
 				{
