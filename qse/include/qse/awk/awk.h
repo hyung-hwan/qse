@@ -512,6 +512,11 @@ struct qse_awk_sio_lxc_t
 typedef struct qse_awk_sio_lxc_t qse_awk_sio_lxc_t;
 
 typedef struct qse_awk_sio_arg_t qse_awk_sio_arg_t;
+
+/**
+ * The qse_awk_sio_arg_t type defines a structure to describe the source
+ * stream.
+ */
 struct qse_awk_sio_arg_t 
 {
 	/** 
@@ -699,18 +704,20 @@ typedef struct qse_awk_prm_t qse_awk_prm_t;
  * \code
  * qse_ssize_t in (
  *    qse_awk_t* awk, qse_awk_sio_cmd_t cmd,
+ *    qse_awk_sio_arg_t* arg,
  *    qse_char_t* buf, qse_size_t size)
  * {
- *    if (cmd == QSE_AWK_SIO_OPEN) open input stream;
+ *    if (cmd == QSE_AWK_SIO_OPEN) open input stream of arg->name;
  *    else if (cmd == QSE_AWK_SIO_CLOSE) close input stream;
  *    else read input stream and fill buf up to size characters;
  * }
  *
  * qse_ssize_t out (
  *    qse_awk_t* awk, qse_awk_sio_cmd_t cmd,
+ *    qse_awk_sio_arg_t* arg,
  *    qse_char_t* data, qse_size_t size)
  * {
- *    if (cmd == QSE_AWK_SIO_OPEN) open_output_stream;
+ *    if (cmd == QSE_AWK_SIO_OPEN) open_output_stream of arg->name;
  *    else if (cmd == QSE_AWK_SIO_CLOSE) close_output_stream;
  *    else write data of size characters to output stream;
  * }

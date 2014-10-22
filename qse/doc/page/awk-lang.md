@@ -14,24 +14,27 @@ QSEAWK reads an AWK program, recognizes various tokens contained while skipping
 comments and whitespaces that don't constinute a token, analyses syntax, and
 tranforms them to an internal form for execution.
 
-
-
  Program Structure
-----------------------
+--------------------------
 
-A QSEAWK program can be composed of the following elements at the top level.
+A QSEAWK program is composed of the following elements at the top level.
 
  - pattern-action block pair
- - action block without a pattern
- - pattern without an action block
+   - BEGIN action block pair
+   - END action block pair
+   - action block without a pattern
+   - pattern without an action block
  - user-defined function
- - \@global variable definition
- - \@include statement 
+ - \@global variable declaration
+ - \@include directive
 
 However, none of the above is mandatory. QSEAWK accepts an empty program.
 
-A typical pattern-action pair is composed of a pattern and an action block 
-as shown below:
+ Patter-Action Block Pairs
+--------------------------------
+
+A pattern-action pair is composed of a pattern and an action block as 
+shown below:
 
 ~~~~~{.awk}
  pattern {
@@ -162,8 +165,53 @@ third input line inclusive.
 > how to change the entry point programatically.
 
 
- Comments
---------------
+
+
+ \@include 
+----------------
+
+The \@include directive inserts the contents of the file specified in the
+following string as if they appeared in the source stream being processed.
+
+~~~~~{.awk}
+ @include "abc.awk"
+ BEGIN { func_in_abc (); }
+~~~~~
+
+A semicolon is optional after the included file name. The following is the 
+same as the sample above.
+
+~~~~~{.awk}
+ @include "abc.awk";
+ BEGIN { func_in_abc(); }
+~~~~~
+
+The directive can be used inside a block.
+
+~~~~~{.awk}
+ BEGIN {
+   @include "abc.awk";
+   print var_in_abc;
+ }
+~~~~~
+
+> ### Note ###
+> If #QSE_AWK_NEWLINE is off, a semicolon is required after the string.
+> 
+> See #qse_awk_sio_t for customizing file includsion handling.
+
+
+ Tokens
+------------
+
+When QSEAWK parses a program, it classifies a series of input characters 
+into meaningful tokens. It can extract the smallest meaningful unit through
+this tokenization process. 
+
+### Comments ###
+
+A comment is a part of the program text excluded during tokenization. You can
+put descriptive text about the program in a comment.
 
 A single-line comment is introduced by a hash character #, and is terminated at 
 the end of the same line. Additionally, it supports a C-style multi-line comment
@@ -177,16 +225,6 @@ string literals and regular expressions.
  this line is ignored too.
  */
 ~~~~~
-
-
-
-
- Tokens
-------------
-
-When QSEAWK parses a program, it classifies a series of input characters 
-into meaningful tokens. It can extract the smallest meaningful unit through
-this tokenization process. 
 
 ### Reserved Words ###
 
@@ -374,8 +412,8 @@ converted to an integer 32 and the division is performed producing a
 floating-pointer number.
 
 You can create a hashed map by assigning a value to a variable indexed with
-a subscript placed within square brackets. You can't convert a hashed map to 
-a scalar type implicitly and explcitly.
+a subscript placed within square brackets. A hashed map is converted to its size
+in the numeric context and "#MAP" in the string context.
 
 A regular expression may or may not be viewed as a data type. You can't assign
 a compiled regular expression into a variable. A regular expression not placed
@@ -390,9 +428,15 @@ an empty string, and a nil value evaluate to false. All other values evaluate
 to true.
 
 > ### Note ###
+> The automatic conversion of a hashed map to a number or a string is 
+> disallowed if #QSE_AWK_FLEXMAP is off. This program ends up with an
+> error when it is off.
+> ~~~~~{.awk}
+>   BEGIN  { a[1]=1; a[30]=2; a[4]=4; print ("a=" a); }
+> ~~~~~
+> 
 > See #qse_awk_fnc_spec_t and #qse_awk_fnc_arg_t to define a function that 
 > can accept a regular expression.
-
 
 
 
@@ -453,9 +497,8 @@ A local variable can shade a global variable. See the sample below:
 
 > ### Note ###
 > The QSEAWK engine allows the mixture of named variables and declared variables. 
-> However, the mixture may lead to confusion. Use #QSE_AWK_IMPLICIT and 
-> #QSE_AWK_EXPLICIT to control what to allow and disallow when configuring 
-> the engine.
+> However, the mixture may lead to confusion. Use #QSE_AWK_IMPLICIT to allow
+> named variables when configuring the engine.
 
 
  Built-in Variables
@@ -547,13 +590,18 @@ function name (arg1, arg2, ..., argn) {
 
 The caller must invoke a function with the same or less number of arguments 
 than the definition. When a function is called with the less number of 
-arguments, the redundant arguments are initialized to a nil value.
+arguments, the redundant parameters are initialized to a nil value.
 
 You can't define multiple functions with the same name. The function name
 can't confict with named variables and globals variables.
 
  Built-in Functions
 -------------------------
+
+- index
+- length
+
+TBD.
 
 
  Function Calls
@@ -658,7 +706,7 @@ The !== operator is a negated form of the === operator.
 -----------------------------
 
 When #QSE_AWK_TOLERANT is on, you can use a grouped expression without
-the 'in' operator. A grouped expression is a parentheses-enclosed list
+the **in** operator. A grouped expression is a parentheses-enclosed list
 of expressions separated with a comma. Each expression in the group is
 evaluated in the appearing order. The evaluation result of the last 
 expression in the group is returned as that of the group.
@@ -668,7 +716,7 @@ expression in the group is returned as that of the group.
    c = (1, 2, 9);
    a=((1*c, 3*c), (3 - c), ((k = 6+(c+1, c+2)), (-7 * c)));
    print c; # 9;
-   print a; # -63	
+   print a; # -63
    print k; # 17
  }
 ~~~~~
@@ -761,29 +809,7 @@ able to use this statement.
 ~~~~~
 
 
-### \@include ###
 
-The \@include directive inserts the contents of the object specified in the
-following string, typically a file name, as if they appeared in the source
-stream being processed. The directive can only be used at the outmost scope 
-where global variable declarations, *BEGIN*, *END*, and/or pattern-action 
-blocks appear. 
-
-~~~~~{.awk}
- @include "abc.awk"
- BEGIN { func_in_abc (); }
-~~~~~
-
-A semicolon is optional after the included file name. The following is the 
-same as the sample above.
-
-~~~~~{.awk}
- @include "abc.awk";
- BEGIN { func_in_abc(); }
-~~~~~
-
-> ### Note ###
-> If #QSE_AWK_NEWLINE is off, the semicolon is required.
 
 
 

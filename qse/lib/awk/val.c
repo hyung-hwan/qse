@@ -1605,6 +1605,15 @@ int qse_awk_rtx_valtonum (
 			);
 		}
 
+		case QSE_AWK_VAL_MAP:
+		{
+			if (rtx->awk->opt.trait & QSE_AWK_FLEXMAP)
+			{
+				*l = QSE_HTB_SIZE(((qse_awk_val_map_t*)v)->map);
+				return 0; /* long */
+			}
+		}
+
 		case QSE_AWK_VAL_REF:
 		{
 			return val_ref_to_num (rtx, (qse_awk_val_ref_t*)v, l, r);
