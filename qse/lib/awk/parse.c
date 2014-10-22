@@ -1461,23 +1461,46 @@ static qse_awk_nde_t* parse_block (
 			if (get_token(awk) <= -1) return QSE_NULL;
 		}
 
-		if (!MATCH(awk,TOK_XLOCAL)) break;
-
-		if (get_token(awk) <= -1) 
+		if (MATCH(awk,TOK_XINCLUDE))
 		{
-			qse_lda_delete (
-				awk->parse.lcls, nlcls, 
-				QSE_LDA_SIZE(awk->parse.lcls)-nlcls);
-			return QSE_NULL;
+			/* @include ... */
+			if (awk->opt.depth.s.incl > 0 &&
+			    awk->parse.depth.incl >=  awk->opt.depth.s.incl)
+			{
+				SETERR_LOC (awk, QSE_AWK_EINCLTD, &awk->ptok.loc);
+				return QSE_NULL;
+			}
+		
+			if (get_token(awk) <= -1) return QSE_NULL;
+	
+			if (!MATCH(awk,TOK_STR))
+			{
+				SETERR_LOC (awk, QSE_AWK_EINCLSTR, &awk->ptok.loc);
+				return QSE_NULL;
+			}
+		
+			if (begin_include (awk) <= -1) return QSE_NULL;
 		}
-
-		if (collect_locals (awk, nlcls, istop) == QSE_NULL)
+		else if (MATCH(awk,TOK_XLOCAL))
 		{
-			qse_lda_delete (
-				awk->parse.lcls, nlcls, 
-				QSE_LDA_SIZE(awk->parse.lcls)-nlcls);
-			return QSE_NULL;
+			/* @local ... */
+			if (get_token(awk) <= -1) 
+			{
+				qse_lda_delete (
+					awk->parse.lcls, nlcls, 
+					QSE_LDA_SIZE(awk->parse.lcls)-nlcls);
+				return QSE_NULL;
+			}
+	
+			if (collect_locals (awk, nlcls, istop) == QSE_NULL)
+			{
+				qse_lda_delete (
+					awk->parse.lcls, nlcls, 
+					QSE_LDA_SIZE(awk->parse.lcls)-nlcls);
+				return QSE_NULL;
+			}
 		}
+		else break;
 	}
 
 	/* block body */
@@ -1517,38 +1540,60 @@ static qse_awk_nde_t* parse_block (
 			break;
 		}
 
-		/* parse an actual statement in a block */
+		if (MATCH(awk,TOK_XINCLUDE))
 		{
-			qse_awk_loc_t sloc = awk->tok.loc;
-			nde = parse_statement (awk, &sloc);
+			if (awk->opt.depth.s.incl > 0 &&
+			    awk->parse.depth.incl >=  awk->opt.depth.s.incl)
+			{
+				SETERR_LOC (awk, QSE_AWK_EINCLTD, &awk->ptok.loc);
+				return QSE_NULL;
+			}
+		
+			if (get_token(awk) <= -1) return QSE_NULL;
+	
+			if (!MATCH(awk,TOK_STR))
+			{
+				SETERR_LOC (awk, QSE_AWK_EINCLSTR, &awk->ptok.loc);
+				return QSE_NULL;
+			}
+		
+			if (begin_include (awk) <= -1) return QSE_NULL;
 		}
+		else
+		{
+			/* parse an actual statement in a block */
+			{
+				qse_awk_loc_t sloc = awk->tok.loc;
+				nde = parse_statement (awk, &sloc);
+			}
 
-		if (nde == QSE_NULL) 
-		{
-			qse_lda_delete (
-				awk->parse.lcls, nlcls, 
-				QSE_LDA_SIZE(awk->parse.lcls)-nlcls);
-			if (head != QSE_NULL) qse_awk_clrpt (awk, head);
-			return QSE_NULL;
-		}
+			if (nde == QSE_NULL) 
+			{
+				qse_lda_delete (
+					awk->parse.lcls, nlcls, 
+					QSE_LDA_SIZE(awk->parse.lcls)-nlcls);
+				if (head != QSE_NULL) qse_awk_clrpt (awk, head);
+				return QSE_NULL;
+			}
 
-		/* remove unnecessary statements such as adjacent 
-		 * null statements */
-		if (nde->type == QSE_AWK_NDE_NULL) 
-		{
-			qse_awk_clrpt (awk, nde);
-			continue;
-		}
-		if (nde->type == QSE_AWK_NDE_BLK && 
-		    ((qse_awk_nde_blk_t*)nde)->body == QSE_NULL) 
-		{
-			qse_awk_clrpt (awk, nde);
-			continue;
-		}
+			/* remove unnecessary statements such as adjacent 
+			 * null statements */
+			if (nde->type == QSE_AWK_NDE_NULL) 
+			{
+				qse_awk_clrpt (awk, nde);
+				continue;
+			}
+			if (nde->type == QSE_AWK_NDE_BLK && 
+			    ((qse_awk_nde_blk_t*)nde)->body == QSE_NULL) 
+			{
+				qse_awk_clrpt (awk, nde);
+				continue;
+			}
 			
-		if (curr == QSE_NULL) head = nde;
-		else curr->next = nde;	
-		curr = nde;
+			if (curr == QSE_NULL) head = nde;
+			else curr->next = nde;	
+			curr = nde;
+		}
 	}
 
 	block = (qse_awk_nde_blk_t*) qse_awk_callocmem (awk, QSE_SIZEOF(*block));
