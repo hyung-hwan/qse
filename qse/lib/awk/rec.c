@@ -56,7 +56,7 @@ int qse_awk_rtx_setrec (
 			return -1;
 		}
 
-		QSE_ASSERT (run->inrec.d0->type == QSE_AWK_VAL_NIL);
+		QSE_ASSERT (qse_awk_rtx_getvaltype (run, run->inrec.d0) == QSE_AWK_VAL_NIL);
 		/* d0 should be cleared before the next line is reached
 		 * as it doesn't call qse_awk_rtx_refdownval on run->inrec.d0 */
 		run->inrec.d0 = v;
@@ -98,23 +98,26 @@ static int split_record (qse_awk_rtx_t* rtx)
 	qse_char_t* p, * px;
 	qse_size_t len, nflds;
 	qse_awk_val_t* v, * fs;
+	qse_awk_val_type_t fsvtype;
 	qse_char_t* fs_ptr, * fs_free;
 	qse_size_t fs_len;
 	qse_awk_errnum_t errnum;
 	int how;
-       
+	
+
 	/* inrec should be cleared before split_record is called */
 	QSE_ASSERT (rtx->inrec.nflds == 0);
 
 	/* get FS */
 	fs = qse_awk_rtx_getgbl (rtx, QSE_AWK_GBL_FS);
-	if (fs->type == QSE_AWK_VAL_NIL)
+	fsvtype = qse_awk_rtx_getvaltype (rtx, fs);
+	if (fsvtype == QSE_AWK_VAL_NIL)
 	{
 		fs_ptr = QSE_T(" ");
 		fs_len = 1;
 		fs_free = QSE_NULL;
 	}
-	else if (fs->type == QSE_AWK_VAL_STR)
+	else if (fsvtype == QSE_AWK_VAL_STR)
 	{
 		fs_ptr = ((qse_awk_val_str_t*)fs)->val.ptr;
 		fs_len = ((qse_awk_val_str_t*)fs)->val.len;
@@ -506,9 +509,9 @@ static int recomp_record_fields (
 	}
 
 	v = qse_awk_rtx_getgbl (run, QSE_AWK_GBL_NF);
-	QSE_ASSERT (v->type == QSE_AWK_VAL_INT);
+	QSE_ASSERT (qse_awk_rtx_getvaltype (rtx, v) == QSE_AWK_VAL_INT);
 
-	if (((qse_awk_val_int_t*)v)->val != max)
+	if (qse_awk_rtx_getintfromval (rtx, v)!= max)
 	{
 		v = qse_awk_rtx_makeintval (run, (qse_awk_int_t)max);
 		if (v == QSE_NULL) return -1;

@@ -194,8 +194,12 @@ static QSE_INLINE int resolve_rs (
 	qse_awk_rtx_t* rtx, qse_awk_val_t* rs, qse_cstr_t* rrs)
 {
 	int ret = 0;
+	qse_awk_val_type_t rs_vtype;
 
-	switch (rs->type)
+
+	rs_vtype = qse_awk_rtx_getvaltype (rtx, rs);
+
+	switch (rs_vtype)
 	{
 		case QSE_AWK_VAL_NIL:
 			rrs->ptr = QSE_NULL;
@@ -623,7 +627,7 @@ int qse_awk_rtx_readio (
 		}
 	}
 
-	if (rrs.ptr && rs->type != QSE_AWK_VAL_STR) 
+	if (rrs.ptr && qse_awk_rtx_getvaltype (rtx, rs) != QSE_AWK_VAL_STR) 
 		QSE_AWK_FREE (run->awk, rrs.ptr);
 	qse_awk_rtx_refdownval (run, rs);
 
@@ -637,8 +641,12 @@ int qse_awk_rtx_writeio_val (
 	qse_char_t* str;
 	qse_size_t len;
 	int n;
+	qse_awk_val_type_t vtype;
 
-	if (v->type == QSE_AWK_VAL_STR)
+
+	vtype = qse_awk_rtx_getvaltype (run, v);
+
+	if (vtype == QSE_AWK_VAL_STR)
 	{
 		str = ((qse_awk_val_str_t*)v)->val.ptr;
 		len = ((qse_awk_val_str_t*)v)->val.len;
@@ -657,7 +665,14 @@ int qse_awk_rtx_writeio_val (
 
 	n = qse_awk_rtx_writeio_str (run, out_type, name, str, len);
 
-	if (v->type != QSE_AWK_VAL_STR) QSE_AWK_FREE (run->awk, str);
+	if (vtype == QSE_AWK_VAL_STR) 
+	{
+		/* nothing to free */
+	}
+	else
+	{
+		QSE_AWK_FREE (run->awk, str);
+	}
 	return n;
 }
 

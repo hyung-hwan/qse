@@ -71,7 +71,7 @@ qse_awk_val_t* qse_getawknilval (void)
 
 int qse_awk_rtx_isnilval (qse_awk_rtx_t* rtx, qse_awk_val_t* val)
 {
-	return val->type == QSE_AWK_VAL_NIL;
+	return val->v_type == QSE_AWK_VAL_NIL;
 }
 
 qse_awk_val_t* qse_awk_rtx_makenilval (qse_awk_rtx_t* rtx)
@@ -79,14 +79,50 @@ qse_awk_val_t* qse_awk_rtx_makenilval (qse_awk_rtx_t* rtx)
 	return (qse_awk_val_t*)&awk_nil;
 }
 
+
+#define NUM_TYPE_BITS        2
+#define TYPE_BITS_POINTER    0
+#define TYPE_BITS_QUICKINT   1
+#define TYPE_BITS_RESERVED_1 2
+#define TYPE_BITS_RESERVED_2 3
+#define SIGN_BIT ((qse_uintptr_t)1 << (QSE_SIZEOF(qse_uintptr_t) * 8 - 1))
+
+/* shrink the bit range by 1 more bit to ease signbit handling. 
+ * i want abs(max) == abs(min).
+ * i don't want abs(max) + 1 == abs(min). e.g min: -32768, max: 32767
+ */
+#define QUICKINT_MAX ((~(qse_uintptr_t)0) >> (NUM_TYPE_BITS + 1))
+#define QUICKINT_MIN (-QUICKINT_MAX)
+
+#define IS_QUICKINT(v) ((v) >= QUICKINT_MIN && (v) <= QUICKINT_MAX)
+#define POINTER_TYPE_BITS(p) (((qse_uintptr_t)(p)) | NUM_TYPE_BITS)
+
+static QSE_INLINE qse_awk_val_t* quickint_to_pointer (qse_awk_int_t v)
+{
+	qse_uintptr_t r;
+
+	if (v < 0)
+	{
+		r = (((qse_uintptr_t)-v) << NUM_TYPE_BITS) | TYPE_BITS_QUICKINT | SIGN_BIT;
+	}
+	else
+	{
+		r = ((qse_uintptr_t)v << NUM_TYPE_BITS) | TYPE_BITS_QUICKINT;
+	}
+
+	return (qse_awk_val_t*)r;
+}
+
 qse_awk_val_t* qse_awk_rtx_makeintval (qse_awk_rtx_t* rtx, qse_awk_int_t v)
 {
 	qse_awk_val_int_t* val;
 
-	if (v >= awk_int[0].val && 
-	    v <= awk_int[QSE_COUNTOF(awk_int)-1].val)
+//	if (IS_QUICKINT(v)) return quickint_to_pinter (v);
+
+	if (v >= awk_int[0].i_val && 
+	    v <= awk_int[QSE_COUNTOF(awk_int)-1].i_val)
 	{
-		return (qse_awk_val_t*)&awk_int[v-awk_int[0].val];
+		return (qse_awk_val_t*)&awk_int[v-awk_int[0].i_val];
 	}
 
 	if (rtx->vmgr.ifree == QSE_NULL)
@@ -132,11 +168,11 @@ qse_awk_val_t* qse_awk_rtx_makeintval (qse_awk_rtx_t* rtx, qse_awk_int_t v)
 	val = rtx->vmgr.ifree;
 	rtx->vmgr.ifree = (qse_awk_val_int_t*)val->nde;
 
-	val->type = QSE_AWK_VAL_INT;
+	val->v_type = QSE_AWK_VAL_INT;
 	val->ref = 0;
 	val->stat = 0;
 	val->nstr = 0;
-	val->val = v;
+	val->i_val = v;
 	val->nde = QSE_NULL;
 
 #ifdef DEBUG_VAL
@@ -188,7 +224,7 @@ qse_awk_val_t* qse_awk_rtx_makefltval (qse_awk_rtx_t* rtx, qse_awk_flt_t v)
 	val = rtx->vmgr.rfree;
 	rtx->vmgr.rfree = (qse_awk_val_flt_t*)val->nde;
 
-	val->type = QSE_AWK_VAL_FLT;
+	val->v_type = QSE_AWK_VAL_FLT;
 	val->ref = 0;
 	val->stat = 0;
 	val->nstr = 0;
@@ -235,7 +271,7 @@ qse_awk_val_t* qse_awk_rtx_makestrvalwithxstr (
 #ifdef ENABLE_FEATURE_SCACHE
 init:
 #endif
-	val->type = QSE_AWK_VAL_STR;
+	val->v_type = QSE_AWK_VAL_STR;
 	val->ref = 0;
 	val->stat = 0;
 	val->nstr = 0;
@@ -392,7 +428,7 @@ qse_awk_val_t* qse_awk_rtx_makestrval2 (
 #ifdef ENABLE_FEATURE_SCACHE
 init:
 #endif
-	val->type = QSE_AWK_VAL_STR;
+	val->v_type = QSE_AWK_VAL_STR;
 	val->ref = 0;
 	val->stat = 0;
 	val->nstr = 0;
@@ -457,7 +493,7 @@ qse_awk_val_t* qse_awk_rtx_makerexval (
 		return QSE_NULL;
 	}
 
-	val->type = QSE_AWK_VAL_REX;
+	val->v_type = QSE_AWK_VAL_REX;
 	val->ref = 0;
 	val->stat = 0;
 	val->nstr = 0;
@@ -554,7 +590,7 @@ qse_awk_val_t* qse_awk_rtx_makemapval (qse_awk_rtx_t* rtx)
 		return QSE_NULL;
 	}
 
-	val->type = QSE_AWK_VAL_MAP;
+	val->v_type = QSE_AWK_VAL_MAP;
 	val->ref = 0;
 	val->stat = 0;
 	val->nstr = 0;
@@ -643,7 +679,7 @@ qse_awk_val_t* qse_awk_rtx_setmapvalfld (
 	qse_awk_rtx_t* rtx, qse_awk_val_t* map, 
 	const qse_char_t* kptr, qse_size_t klen, qse_awk_val_t* v)
 {
-	QSE_ASSERT (map->type == QSE_AWK_VAL_MAP);
+	QSE_ASSERT (qse_awk_rtx_getvaltype (rtx, map) == QSE_AWK_VAL_MAP);
 
 	if (qse_htb_upsert (
 		((qse_awk_val_map_t*)map)->map,
@@ -668,7 +704,7 @@ qse_awk_val_t* qse_awk_rtx_getmapvalfld (
 {
 	qse_htb_pair_t* pair;
 
-	QSE_ASSERT (map->type == QSE_AWK_VAL_MAP);
+	QSE_ASSERT (qse_awk_rtx_getvaltype (rtx, map) == QSE_AWK_VAL_MAP);
 
 	pair = qse_htb_search (((qse_awk_val_map_t*)map)->map, kptr, klen);
 	if (pair == QSE_NULL)
@@ -689,18 +725,18 @@ qse_awk_val_t* qse_awk_rtx_getmapvalfld (
 qse_awk_val_map_itr_t* qse_awk_rtx_getfirstmapvalitr (
 	qse_awk_rtx_t* rtx, qse_awk_val_t* map, qse_awk_val_map_itr_t* itr)
 {
-	QSE_ASSERT (map->type == QSE_AWK_VAL_MAP);
-	itr->pair = qse_htb_getfirstpair (
-		((qse_awk_val_map_t*)map)->map, &itr->buckno);
+	QSE_ASSERT (qse_awk_rtx_getvaltype (rtx, map) == QSE_AWK_VAL_MAP);
+
+	itr->pair = qse_htb_getfirstpair (((qse_awk_val_map_t*)map)->map, &itr->buckno);
 	return itr->pair? itr: QSE_NULL;
 }
 
 qse_awk_val_map_itr_t* qse_awk_rtx_getnextmapvalitr (
 	qse_awk_rtx_t* rtx, qse_awk_val_t* map, qse_awk_val_map_itr_t* itr)
 {
-	QSE_ASSERT (map->type == QSE_AWK_VAL_MAP);
-	itr->pair = qse_htb_getnextpair (
-		((qse_awk_val_map_t*)map)->map, itr->pair, &itr->buckno);
+	QSE_ASSERT (qse_awk_rtx_getvaltype (rtx, map) == QSE_AWK_VAL_MAP);
+
+	itr->pair = qse_htb_getnextpair (((qse_awk_val_map_t*)map)->map, itr->pair, &itr->buckno);
 	return itr->pair? itr: QSE_NULL;
 }
 
@@ -724,7 +760,7 @@ qse_awk_val_t* qse_awk_rtx_makerefval (
 		}
 	}
 
-	val->type = QSE_AWK_VAL_REF;
+	val->v_type = QSE_AWK_VAL_REF;
 	val->ref = 0;
 	val->stat = 0;
 	val->nstr = 0;
@@ -746,7 +782,7 @@ qse_awk_val_t* qse_awk_rtx_makefunval (
 		return QSE_NULL;
 	}
 
-	val->type = QSE_AWK_VAL_FUN;
+	val->v_type = QSE_AWK_VAL_FUN;
 	val->fun = (qse_awk_fun_t*)fun;
 
 	return (qse_awk_val_t*)val;
@@ -777,9 +813,20 @@ int qse_awk_rtx_isstaticval (qse_awk_rtx_t* rtx, qse_awk_val_t* val)
 	return IS_STATICVAL(val);
 }
 
-void qse_awk_rtx_freeval (	
-	qse_awk_rtx_t* rtx, qse_awk_val_t* val, int cache)
+void qse_awk_rtx_freeval (qse_awk_rtx_t* rtx, qse_awk_val_t* val, int cache)
 {
+	qse_awk_val_type_t vtype;
+
+	switch (POINTER_TYPE_BITS(val))
+	{
+//		case TYPE_BITS_QUICKINT:
+			/* do nothing */
+//			return;
+
+		default:
+			break;
+	}
+
 	if (IS_STATICVAL(val)) return;
 
 #ifdef DEBUG_VAL
@@ -788,7 +835,8 @@ void qse_awk_rtx_freeval (
 	qse_errputstrf (QSE_T("\n"));
 #endif
 
-	switch (val->type)
+	vtype = qse_awk_rtx_getvaltype (rtx, val);
+	switch (vtype)
 	{
 		case QSE_AWK_VAL_NIL:
 		{
@@ -961,7 +1009,7 @@ static int val_ref_to_bool (
 			/* A reference value is not able to point to another 
 			 * refernce value for the way values are represented
 			 * in QSEAWK */
-			QSE_ASSERT ((*xref)->type != QSE_AWK_VAL_REF); 
+			QSE_ASSERT (qse_awk_rtx_getvaltype (rtx, *xref)!= QSE_AWK_VAL_REF); 
 
 			/* make a recursive call back to the caller */
 			return qse_awk_rtx_valtobool (rtx, *xref);
@@ -969,17 +1017,19 @@ static int val_ref_to_bool (
 	}
 }
 
-
 int qse_awk_rtx_valtobool (qse_awk_rtx_t* rtx, const qse_awk_val_t* val)
 {
+	qse_awk_val_type_t vtype;
+
 	if (val == QSE_NULL) return 0;
 
-	switch (val->type)
+	vtype = qse_awk_rtx_getvaltype (rtx, val);
+	switch (vtype)
 	{
 		case QSE_AWK_VAL_NIL:
 			return 0;
 		case QSE_AWK_VAL_INT:
-			return ((qse_awk_val_int_t*)val)->val != 0;
+			return qse_awk_rtx_getintfromval (rtx, val) != 0;
 		case QSE_AWK_VAL_FLT:
 			return ((qse_awk_val_flt_t*)val)->val != 0.0;
 		case QSE_AWK_VAL_STR:
@@ -987,10 +1037,10 @@ int qse_awk_rtx_valtobool (qse_awk_rtx_t* rtx, const qse_awk_val_t* val)
 		case QSE_AWK_VAL_REX: /* TODO: is this correct? */
 			return ((qse_awk_val_rex_t*)val)->str.len > 0;
 		case QSE_AWK_VAL_MAP:
-			return 0; /* TODO: is this correct? */
+			/* true if the map size is greater than 0. false if not */
+			return QSE_HTB_SIZE(((qse_awk_val_map_t*)val)->map) > 0;
 		case QSE_AWK_VAL_REF:
 			return val_ref_to_bool (rtx, (qse_awk_val_ref_t*)val);
-
 	}
 
 	QSE_ASSERTX (
@@ -1081,19 +1131,20 @@ static int val_int_to_str (
 	qse_awk_rtx_valtostr_out_t* out)
 {
 	qse_char_t* tmp;
-	qse_awk_uint_t t;
 	qse_size_t rlen = 0;
 	int type = out->type & ~QSE_AWK_RTX_VALTOSTR_PRINT;
+	qse_awk_int_t orgval = qse_awk_rtx_getintfromval (rtx, v);
+	qse_awk_uint_t t;
 
-	if (v->val == 0) rlen++;
+	if (orgval == 0) rlen++;
 	else
 	{
 		/* non-zero values */
-		if (v->val < 0) 
+		if (orgval < 0) 
 		{
-			t = v->val * -1; rlen++; 
+			t = orgval * -1; rlen++; 
 		}
-		else t = v->val;
+		else t = orgval;
 		while (t > 0) { rlen++; t /= 10; }
 	}
 
@@ -1179,10 +1230,10 @@ static int val_int_to_str (
 		}
 	}
 
-	if (v->val == 0) tmp[0] = QSE_T('0'); 
+	if (orgval == 0) tmp[0] = QSE_T('0'); 
 	else
 	{
-		t = (v->val < 0)? (v->val * -1): v->val;
+		t = (orgval < 0)? (orgval * -1): orgval;
 
 		/* fill in the buffer with digits */
 		while (t > 0) 
@@ -1192,7 +1243,7 @@ static int val_int_to_str (
 		}
 
 		/* insert the negative sign if necessary */
-		if (v->val < 0) tmp[--rlen] = QSE_T('-');
+		if (orgval < 0) tmp[--rlen] = QSE_T('-');
 	}
 
 	return 0;
@@ -1365,7 +1416,7 @@ static int val_ref_to_str (
 			/* A reference value is not able to point to another 
 			 * refernce value for the way values are represented
 			 * in QSEAWK */
-			QSE_ASSERT ((*xref)->type != QSE_AWK_VAL_REF); 
+			QSE_ASSERT (qse_awk_rtx_getvaltype (rtx, *xref) != QSE_AWK_VAL_REF); 
 
 			/* make a recursive call back to the caller */
 			return qse_awk_rtx_valtostr (rtx, *xref, out);
@@ -1377,7 +1428,9 @@ int qse_awk_rtx_valtostr (
 	qse_awk_rtx_t* rtx, const qse_awk_val_t* v,
 	qse_awk_rtx_valtostr_out_t* out)
 {
-	switch (v->type)
+	qse_awk_val_type_t vtype = qse_awk_rtx_getvaltype (rtx, v);
+
+	switch (vtype)
 	{
 		case QSE_AWK_VAL_NIL:
 		{
@@ -1492,7 +1545,7 @@ qse_wchar_t* qse_awk_rtx_valtowcsdup (
 qse_char_t* qse_awk_rtx_getvalstr (
 	qse_awk_rtx_t* rtx, const qse_awk_val_t* v, qse_size_t* len)
 {
-	if (v->type == QSE_AWK_VAL_STR)
+	if (qse_awk_rtx_getvaltype(rtx, v) == QSE_AWK_VAL_STR)
 	{
 		if (len) *len = ((qse_awk_val_str_t*)v)->val.len;
 		return ((qse_awk_val_str_t*)v)->val.ptr;
@@ -1506,7 +1559,7 @@ qse_char_t* qse_awk_rtx_getvalstr (
 void qse_awk_rtx_freevalstr (
 	qse_awk_rtx_t* rtx, const qse_awk_val_t* v, qse_char_t* str)
 {
-	if (v->type != QSE_AWK_VAL_STR && 
+	if (qse_awk_rtx_getvaltype(rtx, v) != QSE_AWK_VAL_STR && 
 	    str != ((qse_awk_val_str_t*)v)->val.ptr)
 	{
 		qse_awk_rtx_freemem (rtx, str);
@@ -1563,7 +1616,7 @@ static int val_ref_to_num (
 			/* A reference value is not able to point to another 
 			 * refernce value for the way values are represented
 			 * in QSEAWK */
-			QSE_ASSERT ((*xref)->type != QSE_AWK_VAL_REF); 
+			QSE_ASSERT (qse_awk_rtx_getvaltype (rtx, *xref) != QSE_AWK_VAL_REF); 
 
 			/* make a recursive call back to the caller */
 			return qse_awk_rtx_valtonum (rtx, *xref, l, r);
@@ -1575,7 +1628,9 @@ static int val_ref_to_num (
 int qse_awk_rtx_valtonum (
 	qse_awk_rtx_t* rtx, const qse_awk_val_t* v, qse_awk_int_t* l, qse_awk_flt_t* r)
 {
-	switch (v->type)
+	qse_awk_val_type_t vtype = qse_awk_rtx_getvaltype (rtx, v);
+
+	switch (vtype)
 	{
 		case QSE_AWK_VAL_NIL:
 		{
@@ -1585,7 +1640,7 @@ int qse_awk_rtx_valtonum (
 
 		case QSE_AWK_VAL_INT:
 		{
-			*l = ((qse_awk_val_int_t*)v)->val;
+			*l = qse_awk_rtx_getintfromval (rtx, v);
 			return 0; /* long */
 		}
 
@@ -1691,20 +1746,22 @@ static qse_awk_uint_t hash (qse_uint8_t* ptr, qse_size_t len)
 
 qse_awk_int_t qse_awk_rtx_hashval (qse_awk_rtx_t* rtx, qse_awk_val_t* v)
 {
+	qse_awk_val_type_t vtype = qse_awk_rtx_getvaltype (rtx, v);
 	qse_awk_int_t hv;
 
-	switch (v->type)
+	switch (vtype)
 	{
 		case QSE_AWK_VAL_NIL:
 			hv = 0;
 			break;
 
 		case QSE_AWK_VAL_INT:
+		{
+			qse_awk_int_t tmp = qse_awk_rtx_getintfromval (rtx, v);
 			/*hv = ((qse_awk_val_int_t*)v)->val;*/
-			hv = (qse_awk_int_t)hash (
-				(qse_uint8_t*)&((qse_awk_val_int_t*)v)->val,
-				QSE_SIZEOF(((qse_awk_val_int_t*)v)->val));
+			hv = (qse_awk_int_t)hash ((qse_uint8_t*)&tmp, QSE_SIZEOF(tmp));
 			break;
+		}
 
 		case QSE_AWK_VAL_FLT:
 			hv = (qse_awk_int_t)hash (
@@ -1736,14 +1793,16 @@ qse_awk_int_t qse_awk_rtx_hashval (qse_awk_rtx_t* rtx, qse_awk_val_t* v)
 
 int qse_awk_rtx_setrefval (qse_awk_rtx_t* rtx, qse_awk_val_ref_t* ref, qse_awk_val_t* val)
 {
-	if (val->type == QSE_AWK_VAL_REX || val->type == QSE_AWK_VAL_REF)
+	qse_awk_val_type_t vtype = qse_awk_rtx_getvaltype (rtx, val);
+
+	if (vtype == QSE_AWK_VAL_REX || vtype == QSE_AWK_VAL_REF)
 	{
 		/* though it is possible that an intrinsic function handler
 		 * can accept a regular expression withtout evaluation when 'x'
 		 * is specified for the parameter, this function doesn't allow
 		 * regular expression to be set to a reference variable to
 		 * avoid potential chaos. the nature of performing '/rex/ ~ $0' 
-		 * for a regular expression without the match operator 	
+		 * for a regular expression without the match operator
 		 * makes it difficult to be implemented. */
 		qse_awk_rtx_seterrnum (rtx, QSE_AWK_EINVAL, QSE_NULL);
 		return -1;
@@ -1753,13 +1812,12 @@ int qse_awk_rtx_setrefval (qse_awk_rtx_t* rtx, qse_awk_val_ref_t* ref, qse_awk_v
 	{
 		case QSE_AWK_VAL_REF_POS:
 		{
-
-			switch (val->type)
+			switch (vtype)
 			{
 				case QSE_AWK_VAL_MAP:
 					/* a map is assigned to a positional. this is disallowed. */
 					qse_awk_rtx_seterrnum (rtx, QSE_AWK_EMAPTOPOS, QSE_NULL);
-					return -1;	
+					return -1;
 
 				case QSE_AWK_VAL_STR:
 				{
@@ -1799,25 +1857,26 @@ int qse_awk_rtx_setrefval (qse_awk_rtx_t* rtx, qse_awk_val_ref_t* ref, qse_awk_v
 		case QSE_AWK_VAL_REF_GBLIDX:
 		case QSE_AWK_VAL_REF_LCLIDX:
 		case QSE_AWK_VAL_REF_ARGIDX:
-			if (val->type == QSE_AWK_VAL_MAP)
+			if (vtype == QSE_AWK_VAL_MAP)
 			{
 				/* an indexed variable cannot be assigned a map. 
 				 * in other cases, it falls down to the default case. */
 				qse_awk_rtx_seterrnum (rtx, QSE_AWK_EMAPTOIDX, QSE_NULL);
-				return -1;	
+				return -1;
 			}
 			/* fall through */
 
 		default:
 		{
 			qse_awk_val_t** rref;
-          
-			rref = (qse_awk_val_t**)ref->adr;
-			if (val->type == QSE_AWK_VAL_MAP)
+			qse_awk_val_type_t rref_vtype;
+
+			rref = (qse_awk_val_t**)ref->adr; /* old value pointer */
+			rref_vtype = qse_awk_rtx_getvaltype (rtx, *rref); /* old value type */
+			if (vtype == QSE_AWK_VAL_MAP)
 			{
 				/* new value: map, old value: nil or map => ok */
-				if ((*rref)->type != QSE_AWK_VAL_NIL &&
-				    (*rref)->type != QSE_AWK_VAL_MAP)
+				if (rref_vtype != QSE_AWK_VAL_NIL && rref_vtype != QSE_AWK_VAL_MAP)
 				{
 					if (!(rtx->awk->opt.trait & QSE_AWK_FLEXMAP))
 					{
@@ -1830,7 +1889,7 @@ int qse_awk_rtx_setrefval (qse_awk_rtx_t* rtx, qse_awk_val_ref_t* ref, qse_awk_v
 			else
 			{
 				/* new value: scalar, old value: nil or scalar => ok */
-				if ((*rref)->type == QSE_AWK_VAL_MAP)
+				if (rref_vtype == QSE_AWK_VAL_MAP)
 				{
 					if (!(rtx->awk->opt.trait & QSE_AWK_FLEXMAP))
 					{
