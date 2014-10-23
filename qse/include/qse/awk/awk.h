@@ -2525,6 +2525,16 @@ QSE_EXPORT int qse_awk_rtx_isstaticval (
 	qse_awk_val_t* val  /**< value to check */
 );
 
+QSE_EXPORT int qse_awk_rtx_getvaltype (
+	qse_awk_rtx_t* rtx,
+	qse_awk_val_t* val
+);
+
+QSE_EXPORT int qse_awk_rtx_getintfromval (
+	qse_awk_rtx_t* rtx,
+	qse_awk_val_t* val
+);
+
 /**
  * The qse_awk_rtx_refupval() function increments a reference count of a 
  * value \a val.

@@ -86,7 +86,7 @@ static int awk_main (int argc, qse_char_t* argv[])
 		goto oops;
 	}
 
-	if (rtv->type == QSE_AWK_VAL_MAP)
+	if (qse_awk_rtx_getvaltype (rtx, rtv) == QSE_AWK_VAL_MAP)
 	{
 		/* if a returned value is a map, 
 		 * traverse the map and print the key/value pairs. */

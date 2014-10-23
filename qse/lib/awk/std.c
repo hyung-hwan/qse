@@ -1392,7 +1392,7 @@ static int open_rio_console (qse_awk_rtx_t* rtx, qse_awk_rio_arg_t* riod)
 			 */
 			argv = qse_awk_rtx_getgbl (rtx, xtn->gbl_argv);
 			QSE_ASSERT (argv != QSE_NULL);
-			QSE_ASSERT (qse_awk_rtx_getvaltype (rtx, argv) == QSE_AWK_VAL_MAP);
+			QSE_ASSERT (QSE_AWK_RTX_GETVALTYPE (rtx, argv) == QSE_AWK_VAL_MAP);
 
 			map = ((qse_awk_val_map_t*)argv)->map;
 			QSE_ASSERT (map != QSE_NULL);

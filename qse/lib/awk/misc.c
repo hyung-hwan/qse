@@ -1298,7 +1298,7 @@ int qse_awk_rtx_matchrex (
 
 	icase = rtx->gbl.ignorecase;
 
-	if (qse_awk_rtx_getvaltype (rtx, val) == QSE_AWK_VAL_REX)
+	if (QSE_AWK_RTX_GETVALTYPE (rtx, val) == QSE_AWK_VAL_REX)
 	{
 		code = ((qse_awk_val_rex_t*)val)->code[icase];
 	}
@@ -1335,7 +1335,7 @@ int qse_awk_rtx_matchrex (
 	if (x <= -1) qse_awk_rtx_seterrnum (rtx, awkerr, QSE_NULL);
 #endif
 
-	if (qse_awk_rtx_getvaltype(rtx, val) == QSE_AWK_VAL_REX) 
+	if (QSE_AWK_RTX_GETVALTYPE(rtx, val) == QSE_AWK_VAL_REX) 
 	{
 		/* nothing to free */
 	}
