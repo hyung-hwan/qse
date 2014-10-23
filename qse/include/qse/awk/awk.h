@@ -2553,10 +2553,6 @@ QSE_EXPORT void qse_awk_rtx_refdownval_nofree (
 	qse_awk_val_t* val  /**< value pointer */
 );
 
-
-#define qse_awk_rtx_getvaltype(rtx,v) ((v)->v_type)
-#define qse_awk_rtx_getintfromval(rtx,v) (((qse_awk_val_int_t*)(v))->i_val)
-
 /**
  * The qse_awk_rtx_valtobool() function converts a value \a val to a boolean
  * value.

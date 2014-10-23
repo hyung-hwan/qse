@@ -50,6 +50,61 @@ struct qse_awk_val_rchunk_t
 	qse_awk_val_flt_t slot[QSE_AWK_VAL_CHUNK_SIZE];
 };
 
+
+/* 
+ * if shared objects link a static library, statically defined objects
+ * in the static library will be instatiated in the multiple shared objects.
+ *
+ * so equality check with a value pointer doesn't work
+ * if the code crosses the library boundaries. instead, i decided to
+ * add a field to indicate if a value is static.
+ * 
+
+#define IS_STATICVAL(val) \
+	((val) == QSE_NULL || \
+	 (val) == qse_awk_val_nil || \
+	 (val) == qse_awk_val_zls || \
+	 (val) == qse_awk_val_zero || \
+	 (val) == qse_awk_val_one || \
+	 ((val) >= (qse_awk_val_t*)&awk_int[0] && \
+	  (val) <= (qse_awk_val_t*)&awk_int[QSE_COUNTOF(awk_int)-1]))
+*/
+#define IS_STATICVAL(val) ((val)->stat)
+
+
+
+/* qse_awk_val_t pointer encoding assumes that
+ * the 2 least significant bits of a real pointer are all zeros. */
+#define VAL_NUM_TYPE_BITS        2
+#define VAL_MASK_TYPE_BITS       3 
+
+#define VAL_TYPE_BITS_POINTER    0
+#define VAL_TYPE_BITS_QUICKINT   1
+#define VAL_TYPE_BITS_RESERVED_1 2
+#define VAL_TYPE_BITS_RESERVED_2 3
+#define VAL_SIGN_BIT ((qse_uintptr_t)1 << (QSE_SIZEOF_UINTPTR_T * 8 - 1))
+
+/* shrink the bit range by 1 more bit to ease signbit handling. 
+ * i want abs(max) == abs(min).
+ * i don't want abs(max) + 1 == abs(min). e.g min: -32768, max: 32767
+ */
+#define QUICKINT_MAX ((qse_awk_int_t)((~(qse_uintptr_t)0) >> (VAL_NUM_TYPE_BITS + 1)))
+#define QUICKINT_MIN (-QUICKINT_MAX)
+
+#define IS_QUICKINT(i) ((i) >= QUICKINT_MIN && (i) <= QUICKINT_MAX)
+
+#define POINTER_TYPE_BITS(p) (((qse_uintptr_t)(p)) & VAL_MASK_TYPE_BITS)
+#define IS_REAL_POINTER(p) (POINTER_TYPE_BITS(p) == VAL_TYPE_BITS_POINTER)
+#define IS_QUICKINT_POINTER(p) (POINTER_TYPE_BITS(p) == VAL_TYPE_BITS_QUICKINT)
+
+/* sizeof(qse_intptr_t) may not be the same as sizeof(qse_awk_int_t).
+ * so step-by-step type conversions are needed.
+ * e.g) pointer to uintptr_t, uintptr_t to intptr_t, intptr_t to awk_int_t */
+#define GET_QUICKINT_FROM_POINTER(p) (((qse_uintptr_t)(p) & VAL_SIGN_BIT)? -(qse_intptr_t)(((qse_uintptr_t)(p) & ~VAL_SIGN_BIT) >> 2): (qse_intptr_t)((qse_uintptr_t)(p) >> 2))
+
+#define qse_awk_rtx_getvaltype(rtx,p) (IS_QUICKINT_POINTER(p)? QSE_AWK_VAL_INT: (p)->v_type)
+#define qse_awk_rtx_getintfromval(rtx,p) ((IS_QUICKINT_POINTER(p)? (qse_awk_int_t)GET_QUICKINT_FROM_POINTER(p): ((qse_awk_val_int_t*)(p))->i_val))
+
 #ifdef __cplusplus
 extern "C" {
 #endif

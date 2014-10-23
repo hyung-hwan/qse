@@ -3310,7 +3310,7 @@ static qse_awk_val_t* eval_expression0 (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 
 	if (v != QSE_NULL && run->exit_level >= EXIT_GLOBAL)
 	{
-		qse_awk_rtx_refupval (run, v);	
+		qse_awk_rtx_refupval (run, v);
 		qse_awk_rtx_refdownval (run, v);
 
 		/* returns QSE_NULL as if an error occurred but
@@ -4183,6 +4183,7 @@ static int __cmp_int_nil (
 static int __cmp_int_int (
 	qse_awk_rtx_t* run, qse_awk_val_t* left, qse_awk_val_t* right)
 {
+
 	qse_awk_int_t v1 = qse_awk_rtx_getintfromval (rtx, left);
 	qse_awk_int_t v2 = qse_awk_rtx_getintfromval (rtx, right);
 	return (v1 > v2)? 1: ((v1 < v2)? -1: 0);
@@ -6078,7 +6079,7 @@ static qse_awk_val_t* eval_int (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 
 	val = qse_awk_rtx_makeintval (run, ((qse_awk_nde_int_t*)nde)->val);
 	if (val == QSE_NULL) ADJERR_LOC (run, &nde->loc);
-	else ((qse_awk_val_int_t*)val)->nde = nde;
+	else if (IS_REAL_POINTER(val)) ((qse_awk_val_int_t*)val)->nde = nde;
 
 	return val;
 }
