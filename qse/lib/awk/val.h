@@ -102,8 +102,8 @@ struct qse_awk_val_rchunk_t
  * e.g) pointer to uintptr_t, uintptr_t to intptr_t, intptr_t to awk_int_t */
 #define GET_QUICKINT_FROM_POINTER(p) (((qse_uintptr_t)(p) & VAL_SIGN_BIT)? -(qse_intptr_t)(((qse_uintptr_t)(p) & ~VAL_SIGN_BIT) >> 2): (qse_intptr_t)((qse_uintptr_t)(p) >> 2))
 
-#define qse_awk_rtx_getvaltype(rtx,p) (IS_QUICKINT_POINTER(p)? QSE_AWK_VAL_INT: (p)->v_type)
-#define qse_awk_rtx_getintfromval(rtx,p) ((IS_QUICKINT_POINTER(p)? (qse_awk_int_t)GET_QUICKINT_FROM_POINTER(p): ((qse_awk_val_int_t*)(p))->i_val))
+#define QSE_AWK_RTX_GETVALTYPE(rtx,p) (IS_QUICKINT_POINTER(p)? QSE_AWK_VAL_INT: (p)->v_type)
+#define QSE_AWK_RTX_GETINTFROMVAL(rtx,p) ((IS_QUICKINT_POINTER(p)? (qse_awk_int_t)GET_QUICKINT_FROM_POINTER(p): ((qse_awk_val_int_t*)(p))->i_val))
 
 #ifdef __cplusplus
 extern "C" {

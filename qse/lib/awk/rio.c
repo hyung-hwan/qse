@@ -197,7 +197,7 @@ static QSE_INLINE int resolve_rs (
 	qse_awk_val_type_t rs_vtype;
 
 
-	rs_vtype = qse_awk_rtx_getvaltype (rtx, rs);
+	rs_vtype = QSE_AWK_RTX_GETVALTYPE (rtx, rs);
 
 	switch (rs_vtype)
 	{
@@ -627,7 +627,7 @@ int qse_awk_rtx_readio (
 		}
 	}
 
-	if (rrs.ptr && qse_awk_rtx_getvaltype (rtx, rs) != QSE_AWK_VAL_STR) 
+	if (rrs.ptr && QSE_AWK_RTX_GETVALTYPE (rtx, rs) != QSE_AWK_VAL_STR) 
 		QSE_AWK_FREE (run->awk, rrs.ptr);
 	qse_awk_rtx_refdownval (run, rs);
 
@@ -644,7 +644,7 @@ int qse_awk_rtx_writeio_val (
 	qse_awk_val_type_t vtype;
 
 
-	vtype = qse_awk_rtx_getvaltype (run, v);
+	vtype = QSE_AWK_RTX_GETVALTYPE (run, v);
 
 	if (vtype == QSE_AWK_VAL_STR)
 	{

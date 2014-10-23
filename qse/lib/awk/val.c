@@ -658,7 +658,7 @@ qse_awk_val_t* qse_awk_rtx_setmapvalfld (
 	qse_awk_rtx_t* rtx, qse_awk_val_t* map, 
 	const qse_char_t* kptr, qse_size_t klen, qse_awk_val_t* v)
 {
-	QSE_ASSERT (qse_awk_rtx_getvaltype (rtx, map) == QSE_AWK_VAL_MAP);
+	QSE_ASSERT (QSE_AWK_RTX_GETVALTYPE (rtx, map) == QSE_AWK_VAL_MAP);
 
 	if (qse_htb_upsert (
 		((qse_awk_val_map_t*)map)->map,
@@ -683,7 +683,7 @@ qse_awk_val_t* qse_awk_rtx_getmapvalfld (
 {
 	qse_htb_pair_t* pair;
 
-	QSE_ASSERT (qse_awk_rtx_getvaltype (rtx, map) == QSE_AWK_VAL_MAP);
+	QSE_ASSERT (QSE_AWK_RTX_GETVALTYPE (rtx, map) == QSE_AWK_VAL_MAP);
 
 	pair = qse_htb_search (((qse_awk_val_map_t*)map)->map, kptr, klen);
 	if (pair == QSE_NULL)
@@ -704,7 +704,7 @@ qse_awk_val_t* qse_awk_rtx_getmapvalfld (
 qse_awk_val_map_itr_t* qse_awk_rtx_getfirstmapvalitr (
 	qse_awk_rtx_t* rtx, qse_awk_val_t* map, qse_awk_val_map_itr_t* itr)
 {
-	QSE_ASSERT (qse_awk_rtx_getvaltype (rtx, map) == QSE_AWK_VAL_MAP);
+	QSE_ASSERT (QSE_AWK_RTX_GETVALTYPE (rtx, map) == QSE_AWK_VAL_MAP);
 
 	itr->pair = qse_htb_getfirstpair (((qse_awk_val_map_t*)map)->map, &itr->buckno);
 	return itr->pair? itr: QSE_NULL;
@@ -713,7 +713,7 @@ qse_awk_val_map_itr_t* qse_awk_rtx_getfirstmapvalitr (
 qse_awk_val_map_itr_t* qse_awk_rtx_getnextmapvalitr (
 	qse_awk_rtx_t* rtx, qse_awk_val_t* map, qse_awk_val_map_itr_t* itr)
 {
-	QSE_ASSERT (qse_awk_rtx_getvaltype (rtx, map) == QSE_AWK_VAL_MAP);
+	QSE_ASSERT (QSE_AWK_RTX_GETVALTYPE (rtx, map) == QSE_AWK_VAL_MAP);
 
 	itr->pair = qse_htb_getnextpair (((qse_awk_val_map_t*)map)->map, itr->pair, &itr->buckno);
 	return itr->pair? itr: QSE_NULL;
@@ -772,6 +772,17 @@ int QSE_INLINE qse_awk_rtx_isstaticval (qse_awk_rtx_t* rtx, qse_awk_val_t* val)
 	return IS_REAL_POINTER(val) && IS_STATICVAL(val);
 }
 
+int qse_awk_rtx_getvaltype (qse_awk_rtx_t* rtx, qse_awk_val_t* val)
+{
+	return QSE_AWK_RTX_GETVALTYPE (rtx, val);
+}
+
+
+int qse_awk_rtx_getintfromval (qse_awk_rtx_t* rtx, qse_awk_val_t* val)
+{
+	return QSE_AWK_RTX_GETINTFROMVAL (rtx, val);
+}
+
 void qse_awk_rtx_freeval (qse_awk_rtx_t* rtx, qse_awk_val_t* val, int cache)
 {
 	qse_awk_val_type_t vtype;
@@ -786,7 +797,7 @@ void qse_awk_rtx_freeval (qse_awk_rtx_t* rtx, qse_awk_val_t* val, int cache)
 		qse_errputstrf (QSE_T("\n"));
 	#endif
 
-		vtype = qse_awk_rtx_getvaltype (rtx, val);
+		vtype = QSE_AWK_RTX_GETVALTYPE (rtx, val);
 		switch (vtype)
 		{
 			case QSE_AWK_VAL_NIL:
@@ -968,7 +979,7 @@ static int val_ref_to_bool (qse_awk_rtx_t* rtx, const qse_awk_val_ref_t* ref)
 			/* A reference value is not able to point to another 
 			 * refernce value for the way values are represented
 			 * in QSEAWK */
-			QSE_ASSERT (qse_awk_rtx_getvaltype (rtx, *xref)!= QSE_AWK_VAL_REF); 
+			QSE_ASSERT (QSE_AWK_RTX_GETVALTYPE (rtx, *xref)!= QSE_AWK_VAL_REF); 
 
 			/* make a recursive call back to the caller */
 			return qse_awk_rtx_valtobool (rtx, *xref);
@@ -982,13 +993,13 @@ int qse_awk_rtx_valtobool (qse_awk_rtx_t* rtx, const qse_awk_val_t* val)
 
 	if (val == QSE_NULL) return 0;
 
-	vtype = qse_awk_rtx_getvaltype (rtx, val);
+	vtype = QSE_AWK_RTX_GETVALTYPE (rtx, val);
 	switch (vtype)
 	{
 		case QSE_AWK_VAL_NIL:
 			return 0;
 		case QSE_AWK_VAL_INT:
-			return qse_awk_rtx_getintfromval (rtx, val) != 0;
+			return QSE_AWK_RTX_GETINTFROMVAL (rtx, val) != 0;
 		case QSE_AWK_VAL_FLT:
 			return ((qse_awk_val_flt_t*)val)->val != 0.0;
 		case QSE_AWK_VAL_STR:
@@ -1092,7 +1103,7 @@ static int val_int_to_str (
 	qse_char_t* tmp;
 	qse_size_t rlen = 0;
 	int type = out->type & ~QSE_AWK_RTX_VALTOSTR_PRINT;
-	qse_awk_int_t orgval = qse_awk_rtx_getintfromval (rtx, v);
+	qse_awk_int_t orgval = QSE_AWK_RTX_GETINTFROMVAL (rtx, v);
 	qse_awk_uint_t t;
 
 	if (orgval == 0) rlen++;
@@ -1375,7 +1386,7 @@ static int val_ref_to_str (
 			/* A reference value is not able to point to another 
 			 * refernce value for the way values are represented
 			 * in QSEAWK */
-			QSE_ASSERT (qse_awk_rtx_getvaltype (rtx, *xref) != QSE_AWK_VAL_REF); 
+			QSE_ASSERT (QSE_AWK_RTX_GETVALTYPE (rtx, *xref) != QSE_AWK_VAL_REF); 
 
 			/* make a recursive call back to the caller */
 			return qse_awk_rtx_valtostr (rtx, *xref, out);
@@ -1387,7 +1398,7 @@ int qse_awk_rtx_valtostr (
 	qse_awk_rtx_t* rtx, const qse_awk_val_t* v,
 	qse_awk_rtx_valtostr_out_t* out)
 {
-	qse_awk_val_type_t vtype = qse_awk_rtx_getvaltype (rtx, v);
+	qse_awk_val_type_t vtype = QSE_AWK_RTX_GETVALTYPE (rtx, v);
 
 	switch (vtype)
 	{
@@ -1504,7 +1515,7 @@ qse_wchar_t* qse_awk_rtx_valtowcsdup (
 qse_char_t* qse_awk_rtx_getvalstr (
 	qse_awk_rtx_t* rtx, const qse_awk_val_t* v, qse_size_t* len)
 {
-	if (qse_awk_rtx_getvaltype(rtx, v) == QSE_AWK_VAL_STR)
+	if (QSE_AWK_RTX_GETVALTYPE(rtx, v) == QSE_AWK_VAL_STR)
 	{
 		if (len) *len = ((qse_awk_val_str_t*)v)->val.len;
 		return ((qse_awk_val_str_t*)v)->val.ptr;
@@ -1518,7 +1529,7 @@ qse_char_t* qse_awk_rtx_getvalstr (
 void qse_awk_rtx_freevalstr (
 	qse_awk_rtx_t* rtx, const qse_awk_val_t* v, qse_char_t* str)
 {
-	if (qse_awk_rtx_getvaltype(rtx, v) != QSE_AWK_VAL_STR ||
+	if (QSE_AWK_RTX_GETVALTYPE(rtx, v) != QSE_AWK_VAL_STR ||
 	    str != ((qse_awk_val_str_t*)v)->val.ptr)
 	{
 		qse_awk_rtx_freemem (rtx, str);
@@ -1574,7 +1585,7 @@ static int val_ref_to_num (
 			/* A reference value is not able to point to another 
 			 * refernce value for the way values are represented
 			 * in QSEAWK */
-			QSE_ASSERT (qse_awk_rtx_getvaltype (rtx, *xref) != QSE_AWK_VAL_REF); 
+			QSE_ASSERT (QSE_AWK_RTX_GETVALTYPE (rtx, *xref) != QSE_AWK_VAL_REF); 
 
 			/* make a recursive call back to the caller */
 			return qse_awk_rtx_valtonum (rtx, *xref, l, r);
@@ -1586,7 +1597,7 @@ static int val_ref_to_num (
 int qse_awk_rtx_valtonum (
 	qse_awk_rtx_t* rtx, const qse_awk_val_t* v, qse_awk_int_t* l, qse_awk_flt_t* r)
 {
-	qse_awk_val_type_t vtype = qse_awk_rtx_getvaltype (rtx, v);
+	qse_awk_val_type_t vtype = QSE_AWK_RTX_GETVALTYPE (rtx, v);
 
 	switch (vtype)
 	{
@@ -1598,7 +1609,7 @@ int qse_awk_rtx_valtonum (
 
 		case QSE_AWK_VAL_INT:
 		{
-			*l = qse_awk_rtx_getintfromval (rtx, v);
+			*l = QSE_AWK_RTX_GETINTFROMVAL (rtx, v);
 			return 0; /* long */
 		}
 
@@ -1704,7 +1715,7 @@ static qse_awk_uint_t hash (qse_uint8_t* ptr, qse_size_t len)
 
 qse_awk_int_t qse_awk_rtx_hashval (qse_awk_rtx_t* rtx, qse_awk_val_t* v)
 {
-	qse_awk_val_type_t vtype = qse_awk_rtx_getvaltype (rtx, v);
+	qse_awk_val_type_t vtype = QSE_AWK_RTX_GETVALTYPE (rtx, v);
 	qse_awk_int_t hv;
 
 	switch (vtype)
@@ -1715,7 +1726,7 @@ qse_awk_int_t qse_awk_rtx_hashval (qse_awk_rtx_t* rtx, qse_awk_val_t* v)
 
 		case QSE_AWK_VAL_INT:
 		{
-			qse_awk_int_t tmp = qse_awk_rtx_getintfromval (rtx, v);
+			qse_awk_int_t tmp = QSE_AWK_RTX_GETINTFROMVAL (rtx, v);
 			/*hv = ((qse_awk_val_int_t*)v)->val;*/
 			hv = (qse_awk_int_t)hash ((qse_uint8_t*)&tmp, QSE_SIZEOF(tmp));
 			break;
@@ -1751,7 +1762,7 @@ qse_awk_int_t qse_awk_rtx_hashval (qse_awk_rtx_t* rtx, qse_awk_val_t* v)
 
 int qse_awk_rtx_setrefval (qse_awk_rtx_t* rtx, qse_awk_val_ref_t* ref, qse_awk_val_t* val)
 {
-	qse_awk_val_type_t vtype = qse_awk_rtx_getvaltype (rtx, val);
+	qse_awk_val_type_t vtype = QSE_AWK_RTX_GETVALTYPE (rtx, val);
 
 	if (vtype == QSE_AWK_VAL_REX || vtype == QSE_AWK_VAL_REF)
 	{
@@ -1830,7 +1841,7 @@ int qse_awk_rtx_setrefval (qse_awk_rtx_t* rtx, qse_awk_val_ref_t* ref, qse_awk_v
 			qse_awk_val_type_t rref_vtype;
 
 			rref = (qse_awk_val_t**)ref->adr; /* old value pointer */
-			rref_vtype = qse_awk_rtx_getvaltype (rtx, *rref); /* old value type */
+			rref_vtype = QSE_AWK_RTX_GETVALTYPE (rtx, *rref); /* old value type */
 			if (vtype == QSE_AWK_VAL_MAP)
 			{
 				/* new value: map, old value: nil or map => ok */

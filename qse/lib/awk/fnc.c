@@ -508,7 +508,7 @@ int qse_awk_fnc_length (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	else
 	{
 		v = qse_awk_rtx_getarg (rtx, 0);
-		vtype = qse_awk_rtx_getvaltype (rtx, v);
+		vtype = QSE_AWK_RTX_GETVALTYPE (rtx, v);
 
 		if (vtype == QSE_AWK_VAL_MAP)
 		{
@@ -622,7 +622,7 @@ int qse_awk_fnc_split (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	a1 = qse_awk_rtx_getarg (rtx, 1);
 	a2 = (nargs >= 3)? qse_awk_rtx_getarg (rtx, 2): QSE_NULL;
 
-	a1_vtype = qse_awk_rtx_getvaltype (rtx, a1);
+	a1_vtype = QSE_AWK_RTX_GETVALTYPE (rtx, a1);
 
 	QSE_ASSERT (a1_vtype == QSE_AWK_VAL_REF);
 
@@ -646,7 +646,7 @@ int qse_awk_fnc_split (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	{
 		/* get the value from FS */
 		t1 = qse_awk_rtx_getgbl (rtx, QSE_AWK_GBL_FS);
-		t1_vtype = qse_awk_rtx_getvaltype (rtx, t1);
+		t1_vtype = QSE_AWK_RTX_GETVALTYPE (rtx, t1);
 		if (t1_vtype == QSE_AWK_VAL_NIL)
 		{
 			fs.ptr = QSE_T(" ");
@@ -668,7 +668,7 @@ int qse_awk_fnc_split (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	}
 	else 
 	{
-		a2_vtype = qse_awk_rtx_getvaltype (rtx, a2);
+		a2_vtype = QSE_AWK_RTX_GETVALTYPE (rtx, a2);
 
 		if (a2_vtype == QSE_AWK_VAL_REX)
 		{
@@ -904,8 +904,8 @@ static int __substitute (qse_awk_rtx_t* rtx, qse_awk_int_t max_count)
 	a1 = qse_awk_rtx_getarg (rtx, 1);
 	a2 = (nargs >= 3)? qse_awk_rtx_getarg (rtx, 2): QSE_NULL;
 
-	a0_vtype = qse_awk_rtx_getvaltype (rtx, a0);
-	QSE_ASSERT (a2 == QSE_NULL || qse_awk_rtx_getvaltype(rtx, a2) == QSE_AWK_VAL_REF);
+	a0_vtype = QSE_AWK_RTX_GETVALTYPE (rtx, a0);
+	QSE_ASSERT (a2 == QSE_NULL || QSE_AWK_RTX_GETVALTYPE(rtx, a2) == QSE_AWK_VAL_REF);
 
 	if (a0_vtype == QSE_AWK_VAL_REX)
 	{
