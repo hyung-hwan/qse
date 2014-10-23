@@ -237,8 +237,19 @@ static qse_mux_errnum_t skerr_to_errnum (int e)
 		case EPIPE:
 			return QSE_MUX_EPIPE;
 
+#if defined(EAGAIN) || defined(EWOULDBLOCK)
+	#if defined(EAGAIN) && defined(EWOULDBLOCK)
 		case EAGAIN:
+		#if (EWOULDBLOCK != EAGAIN)
+		case EWOULDBLOCK:
+		#endif
+	#elif defined(EAGAIN)
+		case EAGAIN:
+	#else
+		case EWOULDBLOCK;
+	#endif
 			return QSE_MUX_EAGAIN;
+#endif
 
 		default:
 			return QSE_MUX_ESYSERR;

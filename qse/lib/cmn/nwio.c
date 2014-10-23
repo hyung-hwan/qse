@@ -176,8 +176,20 @@ static qse_nwio_errnum_t skerr_to_errnum (int e)
 		case EPIPE:
 			return QSE_NWIO_EPIPE;
 
+#if defined(EAGAIN) || defined(EWOULDBLOCK)
+
+	#if defined(EAGAIN) && defined(EWOULDBLOCK)
 		case EAGAIN:
+		#if (EWOULDBLOCK != EAGAIN)
+		case EWOULDBLOCK:
+		#endif
+	#elif defined(EAGAIN)
+		case EAGAIN:
+	#else
+		case EWOULDBLOCK;
+	#endif
 			return QSE_NWIO_EAGAIN;
+#endif
 
 #if defined(ECONNREFUSED) || defined(ENETUNREACH) || defined(EHOSTUNREACH) || defined(EHOSTDOWN)
 	#if defined(ECONNREFUSED) 

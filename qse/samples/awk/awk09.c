@@ -20,7 +20,7 @@ static int fnc_basename (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 
 	/* get the value of the first parameter */
 	a0 = qse_awk_rtx_getarg (rtx, 0);	
-        if (qse_awk_rtx_getvaltype (rtx, a0) == QSE_AWK_VAL_STR)
+	if (qse_awk_rtx_getvaltype (rtx, a0) == QSE_AWK_VAL_STR)
 	{
 		/* if it is a string value, don't duplicate the value */
 		ptr = ((qse_awk_val_str_t*)a0)->val.ptr;
