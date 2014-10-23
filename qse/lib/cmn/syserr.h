@@ -90,6 +90,7 @@
 		} \
 	}
 
+/*
 #elif defined(__DOS__) 
 
 	#define IMPLEMENT_SYSERR_TO_ERRNUM(obj1,obj2) \
@@ -105,6 +106,7 @@
 			default:     return __SYSERRNUM__ (obj2, ESYSERR); \
 		} \
 	}
+*/
 
 #elif defined(vms) || defined(__vms)
 
@@ -143,7 +145,7 @@
 		} \
 	}
 
-	#else
+	#elif defined(EAGAIN)
 
 	#define IMPLEMENT_SYSERR_TO_ERRNUM(obj1,obj2) \
 	static __SYSERRTYPE__(obj1) syserr_to_errnum (int e) \
@@ -160,6 +162,47 @@
 			case EINTR:  return __SYSERRNUM__ (obj2, EINTR); \
 			case EPIPE:  return __SYSERRNUM__ (obj2, EPIPE); \
 			case EAGAIN: return __SYSERRNUM__ (obj2, EAGAIN); \
+			default:     return __SYSERRNUM__ (obj2, ESYSERR); \
+		} \
+	}
+
+	#elif defined(EWOULDBLOCK)
+
+	#define IMPLEMENT_SYSERR_TO_ERRNUM(obj1,obj2) \
+	static __SYSERRTYPE__(obj1) syserr_to_errnum (int e) \
+	{ \
+		switch (e) \
+		{ \
+			case ENOMEM: return __SYSERRNUM__ (obj2, ENOMEM); \
+			case EINVAL: return __SYSERRNUM__ (obj2, EINVAL); \
+			case EBUSY: \
+			case EACCES: return __SYSERRNUM__ (obj2, EACCES); \
+			case ENOTDIR: \
+			case ENOENT: return __SYSERRNUM__ (obj2, ENOENT); \
+			case EEXIST: return __SYSERRNUM__ (obj2, EEXIST); \
+			case EINTR:  return __SYSERRNUM__ (obj2, EINTR); \
+			case EPIPE:  return __SYSERRNUM__ (obj2, EPIPE); \
+			case EWOULDBLOCK: return __SYSERRNUM__ (obj2, EAGAIN); \
+			default:     return __SYSERRNUM__ (obj2, ESYSERR); \
+		} \
+	}
+
+	#else
+
+	#define IMPLEMENT_SYSERR_TO_ERRNUM(obj1,obj2) \
+	static __SYSERRTYPE__(obj1) syserr_to_errnum (int e) \
+	{ \
+		switch (e) \
+		{ \
+			case ENOMEM: return __SYSERRNUM__ (obj2, ENOMEM); \
+			case EINVAL: return __SYSERRNUM__ (obj2, EINVAL); \
+			case EBUSY: \
+			case EACCES: return __SYSERRNUM__ (obj2, EACCES); \
+			case ENOTDIR: \
+			case ENOENT: return __SYSERRNUM__ (obj2, ENOENT); \
+			case EEXIST: return __SYSERRNUM__ (obj2, EEXIST); \
+			case EINTR:  return __SYSERRNUM__ (obj2, EINTR); \
+			case EPIPE:  return __SYSERRNUM__ (obj2, EPIPE); \
 			default:     return __SYSERRNUM__ (obj2, ESYSERR); \
 		} \
 	}

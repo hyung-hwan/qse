@@ -73,15 +73,14 @@ struct qse_awk_val_rchunk_t
 
 
 
-/* qse_awk_val_t pointer encoding assumes that
- * the 2 least significant bits of a real pointer are all zeros. */
-#define VAL_NUM_TYPE_BITS        2
-#define VAL_MASK_TYPE_BITS       3 
+/* qse_awk_val_t pointer encoding assumes the pointer is an even number.
+ * is this a safe assumption? do i have to use memalign or write my own
+ * aligned malloc()? */
+#define VAL_NUM_TYPE_BITS        1
+#define VAL_MASK_TYPE_BITS       1 
 
 #define VAL_TYPE_BITS_POINTER    0
 #define VAL_TYPE_BITS_QUICKINT   1
-#define VAL_TYPE_BITS_RESERVED_1 2
-#define VAL_TYPE_BITS_RESERVED_2 3
 #define VAL_SIGN_BIT ((qse_uintptr_t)1 << (QSE_SIZEOF_UINTPTR_T * 8 - 1))
 
 /* shrink the bit range by 1 more bit to ease signbit handling. 
@@ -100,7 +99,9 @@ struct qse_awk_val_rchunk_t
 /* sizeof(qse_intptr_t) may not be the same as sizeof(qse_awk_int_t).
  * so step-by-step type conversions are needed.
  * e.g) pointer to uintptr_t, uintptr_t to intptr_t, intptr_t to awk_int_t */
-#define GET_QUICKINT_FROM_POINTER(p) (((qse_uintptr_t)(p) & VAL_SIGN_BIT)? -(qse_intptr_t)(((qse_uintptr_t)(p) & ~VAL_SIGN_BIT) >> 2): (qse_intptr_t)((qse_uintptr_t)(p) >> 2))
+#define POSITIVE_QUICKINT_FROM_POINTER(p) ((qse_intptr_t)((qse_uintptr_t)(p) >> VAL_NUM_TYPE_BITS))
+#define NEGATIVE_QUICKINT_FROM_POINTER(p) (-(qse_intptr_t)(((qse_uintptr_t)(p) & ~VAL_SIGN_BIT) >> VAL_NUM_TYPE_BITS))
+#define GET_QUICKINT_FROM_POINTER(p) (((qse_uintptr_t)(p) & VAL_SIGN_BIT)? NEGATIVE_QUICKINT_FROM_POINTER(p): POSITIVE_QUICKINT_FROM_POINTER(p))
 
 #define QSE_AWK_RTX_GETVALTYPE(rtx,p) (IS_QUICKINT_POINTER(p)? QSE_AWK_VAL_INT: (p)->v_type)
 #define QSE_AWK_RTX_GETINTFROMVAL(rtx,p) ((IS_QUICKINT_POINTER(p)? (qse_awk_int_t)GET_QUICKINT_FROM_POINTER(p): ((qse_awk_val_int_t*)(p))->i_val))

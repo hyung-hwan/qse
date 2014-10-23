@@ -242,16 +242,6 @@ static qse_httpd_errnum_t skerr_to_errnum (int e)
 
 #define SKERR_TO_ERRNUM() skerr_to_errnum(sock_errno())
 
-/*
-#elif defined(__DOS__)
-static qse_httpd_errnum_t skerr_to_errnum (int e)
-{
-	/ * TODO: * /
-	return QSE_HTTPD_ESYSERR;
-}
-
-#define SKERR_TO_ERRNUM() skerr_to_errnum(errno)
-*/
 #else
 static qse_httpd_errnum_t skerr_to_errnum (int e)
 {
@@ -271,18 +261,27 @@ static qse_httpd_errnum_t skerr_to_errnum (int e)
 
 		case EEXIST:
 			return QSE_HTTPD_EEXIST;
-	
+
 		case EINTR:
 			return QSE_HTTPD_EINTR;
 
 		case EPIPE:
 			return QSE_HTTPD_EPIPE;
 
+#if defined(EAGAIN) || defined(EWOULDBLOCK)
+
+	#if defined(EAGAIN) && defined(EWOULDBLOCK)
 		case EAGAIN:
-#if defined(EWEOULDBLOCK) && defined(EAGAIN) && (EWOULDBLOCK != EAGAIN)
+		#if (EWOULDBLOCK != EAGAIN)
 		case EWOULDBLOCK:
-#endif
+		#endif
+	#elif defined(EAGAIN)
+		case EAGAIN:
+	#else
+		case EWOULDBLOCK;
+	#endif
 			return QSE_HTTPD_EAGAIN;
+#endif
 
 #if defined(ECONNREFUSED) || defined(ENETUNREACH) || defined(EHOSTUNREACH) || defined(EHOSTDOWN)
 	#if defined(ECONNREFUSED) 
@@ -1362,11 +1361,6 @@ static int is_peer_socket_connected (qse_httpd_t* httpd, qse_httpd_peer_t* peer)
 
 	return 1; /* connection completed */
 
-/*#elif defined(__DOS__)
-
-	qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
-	return -1;*/
-
 #else
 
 	qse_sck_len_t len;
@@ -1380,6 +1374,9 @@ static int is_peer_socket_connected (qse_httpd_t* httpd, qse_httpd_peer_t* peer)
 	}
 
 	if (ret == EINPROGRESS) return 0;
+#if defined(__DOS__)
+	if (ret == EISCONN) return 1; /* watt-32 gives EISCONN when connected */
+#endif
 	if (ret != 0)
 	{
 		qse_httpd_seterrnum (httpd, skerr_to_errnum (ret));

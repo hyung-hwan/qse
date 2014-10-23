@@ -1382,10 +1382,9 @@ enum qse_awk_val_type_t
 	QSE_AWK_VAL_INT  = 1, /**< integer */
 	QSE_AWK_VAL_FLT  = 2, /**< floating-pointer number */
 	QSE_AWK_VAL_STR  = 3, /**< string */
+	QSE_AWK_VAL_MAP  = 4, /**< map */
 
-	QSE_AWK_VAL_REX  = 4, /**< regular expression */
-	QSE_AWK_VAL_MAP  = 5, /**< map */
-
+	QSE_AWK_VAL_REX  = 5, /**< regular expression */
 	QSE_AWK_VAL_REF  = 6, /**< reference to other types */
 	QSE_AWK_VAL_FUN  = 7
 };

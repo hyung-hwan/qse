@@ -154,6 +154,7 @@ qse_awk_val_t* qse_awk_rtx_makeintval (qse_awk_rtx_t* rtx, qse_awk_int_t v)
 	val->i_val = v;
 	val->nde = QSE_NULL;
 
+printf ("makeintval => %p\n", val);
 #ifdef DEBUG_VAL
 	qse_errputstrf (QSE_T("makeintval => %jd [%p]\n"), (qse_intmax_t)v, val);
 #endif
