@@ -33,36 +33,45 @@ static qse_awk_val_str_t awk_zls = { QSE_AWK_VAL_STR, 0, 1, 0, { QSE_T(""), 0 } 
 qse_awk_val_t* qse_awk_val_nil = (qse_awk_val_t*)&awk_nil;
 qse_awk_val_t* qse_awk_val_zls = (qse_awk_val_t*)&awk_zls; 
 
+/*
+ * qse_awk_makeintval() returns a quickint pointer
+ * for the value of -1, 0, 1. these static pointers
+ * are kind of unnecesary for the quickint potiners.
+ * let me keep this table until i redefine 
+ * qse_awk_val_negone, qse_awk_val_zero, qse_awk_val_one
+ * to proper quickint pointer values.
+ * 
+ * #define qse_awk_val_zero (qse_awk_val_t*)((qse_uintptr)VAL_TYPE_BITS_QUICKINT)
+ * #define qse_awk_val_one  (qse_awk_val_t*)(((qse_uintptr)1 << NUM_TYPE_BITS) | VAL_TYPE_BITS_QUICKINT)
+ * #define qse_awk_val_negone  (qse_awk_val_t*)(((qse_uintptr)1 << NUM_TYPE_BITS) | VAL_TYPE_BITS_QUICKINT | VAL_SIGN_BIT)
+ */
 static qse_awk_val_int_t awk_int[] =
 {
 	/* type          ref stat nstr val nde */
 	{ QSE_AWK_VAL_INT, 0, 1, 0, -1, QSE_NULL },
 	{ QSE_AWK_VAL_INT, 0, 1, 0,  0, QSE_NULL },
-	{ QSE_AWK_VAL_INT, 0, 1, 0,  1, QSE_NULL },
-	{ QSE_AWK_VAL_INT, 0, 1, 0,  2, QSE_NULL },
-	{ QSE_AWK_VAL_INT, 0, 1, 0,  3, QSE_NULL },
-	{ QSE_AWK_VAL_INT, 0, 1, 0,  4, QSE_NULL },
-	{ QSE_AWK_VAL_INT, 0, 1, 0,  5, QSE_NULL },
-	{ QSE_AWK_VAL_INT, 0, 1, 0,  6, QSE_NULL },
-	{ QSE_AWK_VAL_INT, 0, 1, 0,  7, QSE_NULL },
-	{ QSE_AWK_VAL_INT, 0, 1, 0,  8, QSE_NULL },
-	{ QSE_AWK_VAL_INT, 0, 1, 0,  9, QSE_NULL },
-	{ QSE_AWK_VAL_INT, 0, 1, 0, 10, QSE_NULL },
-	{ QSE_AWK_VAL_INT, 0, 1, 0, 11, QSE_NULL },
-	{ QSE_AWK_VAL_INT, 0, 1, 0, 12, QSE_NULL },
-	{ QSE_AWK_VAL_INT, 0, 1, 0, 13, QSE_NULL },
-	{ QSE_AWK_VAL_INT, 0, 1, 0, 14, QSE_NULL },
-	{ QSE_AWK_VAL_INT, 0, 1, 0, 15, QSE_NULL },
-	{ QSE_AWK_VAL_INT, 0, 1, 0, 16, QSE_NULL },
-	{ QSE_AWK_VAL_INT, 0, 1, 0, 17, QSE_NULL },
-	{ QSE_AWK_VAL_INT, 0, 1, 0, 18, QSE_NULL },
-	{ QSE_AWK_VAL_INT, 0, 1, 0, 19, QSE_NULL },
-	{ QSE_AWK_VAL_INT, 0, 1, 0, 20, QSE_NULL }
+	{ QSE_AWK_VAL_INT, 0, 1, 0,  1, QSE_NULL }
 };
 
 qse_awk_val_t* qse_awk_val_negone = (qse_awk_val_t*)&awk_int[0];
 qse_awk_val_t* qse_awk_val_zero = (qse_awk_val_t*)&awk_int[1];
 qse_awk_val_t* qse_awk_val_one = (qse_awk_val_t*)&awk_int[2];
+
+static QSE_INLINE qse_awk_val_t* quickint_to_pointer (qse_awk_int_t v)
+{
+	qse_uintptr_t r;
+
+	if (v < 0)
+	{
+		r = (((qse_uintptr_t)-v) << VAL_NUM_TYPE_BITS) | VAL_TYPE_BITS_QUICKINT | VAL_SIGN_BIT;
+	}
+	else
+	{
+		r = ((qse_uintptr_t)v << VAL_NUM_TYPE_BITS) | VAL_TYPE_BITS_QUICKINT;
+	}
+
+	return (qse_awk_val_t*)r;
+}
 
 qse_awk_val_t* qse_getawknilval (void)
 {
@@ -79,51 +88,21 @@ qse_awk_val_t* qse_awk_rtx_makenilval (qse_awk_rtx_t* rtx)
 	return (qse_awk_val_t*)&awk_nil;
 }
 
-
-#define NUM_TYPE_BITS        2
-#define TYPE_BITS_POINTER    0
-#define TYPE_BITS_QUICKINT   1
-#define TYPE_BITS_RESERVED_1 2
-#define TYPE_BITS_RESERVED_2 3
-#define SIGN_BIT ((qse_uintptr_t)1 << (QSE_SIZEOF(qse_uintptr_t) * 8 - 1))
-
-/* shrink the bit range by 1 more bit to ease signbit handling. 
- * i want abs(max) == abs(min).
- * i don't want abs(max) + 1 == abs(min). e.g min: -32768, max: 32767
- */
-#define QUICKINT_MAX ((~(qse_uintptr_t)0) >> (NUM_TYPE_BITS + 1))
-#define QUICKINT_MIN (-QUICKINT_MAX)
-
-#define IS_QUICKINT(v) ((v) >= QUICKINT_MIN && (v) <= QUICKINT_MAX)
-#define POINTER_TYPE_BITS(p) (((qse_uintptr_t)(p)) | NUM_TYPE_BITS)
-
-static QSE_INLINE qse_awk_val_t* quickint_to_pointer (qse_awk_int_t v)
-{
-	qse_uintptr_t r;
-
-	if (v < 0)
-	{
-		r = (((qse_uintptr_t)-v) << NUM_TYPE_BITS) | TYPE_BITS_QUICKINT | SIGN_BIT;
-	}
-	else
-	{
-		r = ((qse_uintptr_t)v << NUM_TYPE_BITS) | TYPE_BITS_QUICKINT;
-	}
-
-	return (qse_awk_val_t*)r;
-}
-
 qse_awk_val_t* qse_awk_rtx_makeintval (qse_awk_rtx_t* rtx, qse_awk_int_t v)
 {
 	qse_awk_val_int_t* val;
 
-//	if (IS_QUICKINT(v)) return quickint_to_pinter (v);
+	if (IS_QUICKINT(v)) return quickint_to_pointer(v);
 
+#if 0
+	/* this is not necesary as the numbers in awk_int are
+	 * covered by QUICKINTs */
 	if (v >= awk_int[0].i_val && 
 	    v <= awk_int[QSE_COUNTOF(awk_int)-1].i_val)
 	{
 		return (qse_awk_val_t*)&awk_int[v-awk_int[0].i_val];
 	}
+#endif
 
 	if (rtx->vmgr.ifree == QSE_NULL)
 	{
@@ -788,176 +767,157 @@ qse_awk_val_t* qse_awk_rtx_makefunval (
 	return (qse_awk_val_t*)val;
 }
 
-/* 
- * if shared objects link a static library, statically defined objects
- * in the static library will be instatiated in the multiple shared objects.
- *
- * so equality check with a value pointer doesn't work
- * if the code crosses the library boundaries. instead, i decided to
- * add a field to indicate if a value is static.
- * 
-
-#define IS_STATICVAL(val) \
-	((val) == QSE_NULL || \
-	 (val) == qse_awk_val_nil || \
-	 (val) == qse_awk_val_zls || \
-	 (val) == qse_awk_val_zero || \
-	 (val) == qse_awk_val_one || \
-	 ((val) >= (qse_awk_val_t*)&awk_int[0] && \
-	  (val) <= (qse_awk_val_t*)&awk_int[QSE_COUNTOF(awk_int)-1]))
-*/
-#define IS_STATICVAL(val) ((val)->stat)
-
-int qse_awk_rtx_isstaticval (qse_awk_rtx_t* rtx, qse_awk_val_t* val)
+int QSE_INLINE qse_awk_rtx_isstaticval (qse_awk_rtx_t* rtx, qse_awk_val_t* val)
 {
-	return IS_STATICVAL(val);
+	return IS_REAL_POINTER(val) && IS_STATICVAL(val);
 }
 
 void qse_awk_rtx_freeval (qse_awk_rtx_t* rtx, qse_awk_val_t* val, int cache)
 {
 	qse_awk_val_type_t vtype;
 
-	switch (POINTER_TYPE_BITS(val))
+	if (IS_REAL_POINTER(val))
 	{
-//		case TYPE_BITS_QUICKINT:
-			/* do nothing */
-//			return;
+		if (IS_STATICVAL(val)) return;
 
-		default:
-			break;
-	}
+	#ifdef DEBUG_VAL
+		qse_errputstrf (QSE_T("freeing [cache=%d] ... "), cache);
+		qse_awk_dprintval (rtx, val);
+		qse_errputstrf (QSE_T("\n"));
+	#endif
 
-	if (IS_STATICVAL(val)) return;
-
-#ifdef DEBUG_VAL
-	qse_errputstrf (QSE_T("freeing [cache=%d] ... "), cache);
-	qse_awk_dprintval (rtx, val);
-	qse_errputstrf (QSE_T("\n"));
-#endif
-
-	vtype = qse_awk_rtx_getvaltype (rtx, val);
-	switch (vtype)
-	{
-		case QSE_AWK_VAL_NIL:
+		vtype = qse_awk_rtx_getvaltype (rtx, val);
+		switch (vtype)
 		{
-			QSE_AWK_FREE (rtx->awk, val);
-			break;
-		}
-		
-		case QSE_AWK_VAL_INT:
-		{
-			((qse_awk_val_int_t*)val)->nde = 
-				(qse_awk_nde_int_t*)rtx->vmgr.ifree;
-			rtx->vmgr.ifree = (qse_awk_val_int_t*)val;
-			break;
-		}
-
-		case QSE_AWK_VAL_FLT:
-		{
-			((qse_awk_val_flt_t*)val)->nde =
-				(qse_awk_nde_flt_t*)rtx->vmgr.rfree;
-			rtx->vmgr.rfree = (qse_awk_val_flt_t*)val;
-			break;
-		}
-
-		case QSE_AWK_VAL_STR:
-		{
-		#ifdef ENABLE_FEATURE_SCACHE
-			if (cache)
+			case QSE_AWK_VAL_NIL:
 			{
-				qse_awk_val_str_t* v = (qse_awk_val_str_t*)val;
-				int i;
-	
-				i = v->val.len / FEATURE_SCACHE_BLOCK_UNIT;
-				if (i < QSE_COUNTOF(rtx->scache_count) &&
-				    rtx->scache_count[i] < QSE_COUNTOF(rtx->scache[i]))
+				QSE_AWK_FREE (rtx->awk, val);
+				break;
+			}
+			
+			case QSE_AWK_VAL_INT:
+			{
+				((qse_awk_val_int_t*)val)->nde = (qse_awk_nde_int_t*)rtx->vmgr.ifree;
+				rtx->vmgr.ifree = (qse_awk_val_int_t*)val;
+				break;
+			}
+
+			case QSE_AWK_VAL_FLT:
+			{
+				((qse_awk_val_flt_t*)val)->nde = (qse_awk_nde_flt_t*)rtx->vmgr.rfree;
+				rtx->vmgr.rfree = (qse_awk_val_flt_t*)val;
+				break;
+			}
+
+			case QSE_AWK_VAL_STR:
+			{
+			#ifdef ENABLE_FEATURE_SCACHE
+				if (cache)
 				{
-					rtx->scache[i][rtx->scache_count[i]++] = v;
-					v->nstr = 0;
+					qse_awk_val_str_t* v = (qse_awk_val_str_t*)val;
+					int i;
+		
+					i = v->val.len / FEATURE_SCACHE_BLOCK_UNIT;
+					if (i < QSE_COUNTOF(rtx->scache_count) &&
+					    rtx->scache_count[i] < QSE_COUNTOF(rtx->scache[i]))
+					{
+						rtx->scache[i][rtx->scache_count[i]++] = v;
+						v->nstr = 0;
+					}
+					else QSE_AWK_FREE (rtx->awk, val);
+				}
+				else 
+			#endif
+					QSE_AWK_FREE (rtx->awk, val);
+
+				break;
+			}
+
+			case QSE_AWK_VAL_REX:
+			{
+				/* don't free ptr as it is inlined to val
+				QSE_AWK_FREE (rtx->awk, ((qse_awk_val_rex_t*)val)->ptr);
+				 */
+			
+				/* code is just a pointer to a regular expression stored
+				 * in parse tree nodes. so don't free it.
+				qse_awk_freerex (rtx->awk, ((qse_awk_val_rex_t*)val)->code[0], ((qse_awk_val_rex_t*)val)->code[1]);
+				 */
+
+				QSE_AWK_FREE (rtx->awk, val);
+				break;
+			}
+
+			case QSE_AWK_VAL_MAP:
+			{
+				qse_htb_fini (((qse_awk_val_map_t*)val)->map);
+				QSE_AWK_FREE (rtx->awk, val);
+				break;
+			}
+
+			case QSE_AWK_VAL_REF:
+			{
+				if (cache && rtx->rcache_count < QSE_COUNTOF(rtx->rcache))
+				{
+					rtx->rcache[rtx->rcache_count++] = (qse_awk_val_ref_t*)val;	
 				}
 				else QSE_AWK_FREE (rtx->awk, val);
+				break;
 			}
-			else 
-		#endif
-				QSE_AWK_FREE (rtx->awk, val);
-
-			break;
 		}
 
-		case QSE_AWK_VAL_REX:
-		{
-			/* don't free ptr as it is inlined to val
-			QSE_AWK_FREE (rtx->awk, ((qse_awk_val_rex_t*)val)->ptr);
-			 */
-		
-			/* code is just a pointer to a regular expression stored
-			 * in parse tree nodes. so don't free it.
-			qse_awk_freerex (rtx->awk, ((qse_awk_val_rex_t*)val)->code[0], ((qse_awk_val_rex_t*)val)->code[1]);
-			 */
-
-			QSE_AWK_FREE (rtx->awk, val);
-			break;
-		}
-
-		case QSE_AWK_VAL_MAP:
-		{
-			qse_htb_fini (((qse_awk_val_map_t*)val)->map);
-			QSE_AWK_FREE (rtx->awk, val);
-			break;
-		}
-
-		case QSE_AWK_VAL_REF:
-		{
-			if (cache && rtx->rcache_count < QSE_COUNTOF(rtx->rcache))
-			{
-				rtx->rcache[rtx->rcache_count++] = (qse_awk_val_ref_t*)val;	
-			}
-			else QSE_AWK_FREE (rtx->awk, val);
-			break;
-		}
 	}
 }
 
 void qse_awk_rtx_refupval (qse_awk_rtx_t* rtx, qse_awk_val_t* val)
 {
-	if (IS_STATICVAL(val)) return;
+	if (IS_REAL_POINTER(val))
+	{
+		if (IS_STATICVAL(val)) return;
 
-#ifdef DEBUG_VAL
-	qse_errputstrf (QSE_T("ref up [ptr=%p] [count=%d] "), val, (int)val->ref);
-	qse_awk_dprintval (rtx, val);
-	qse_errputstrf (QSE_T("\n"));
-#endif
-
-	val->ref++;
+	#ifdef DEBUG_VAL
+		qse_errputstrf (QSE_T("ref up [ptr=%p] [count=%d] "), val, (int)val->ref);
+		qse_awk_dprintval (rtx, val);
+		qse_errputstrf (QSE_T("\n"));
+	#endif
+		val->ref++;
+	}
 }
 
 void qse_awk_rtx_refdownval (qse_awk_rtx_t* rtx, qse_awk_val_t* val)
 {
-	if (IS_STATICVAL(val)) return;
-
-#ifdef DEBUG_VAL
-	qse_errputstrf (QSE_T("ref down [ptr=%p] [count=%d]\n"), val, (int)val->ref);
-	qse_awk_dprintval (rtx, val);
-	qse_errputstrf (QSE_T("\n"));
-#endif
-
-	QSE_ASSERTX (val->ref > 0, 
-		"the reference count of a value should be greater than zero for it to be decremented. check the source code for any bugs");
-
-	val->ref--;
-	if (val->ref <= 0) 
+	if (IS_REAL_POINTER(val))
 	{
-		qse_awk_rtx_freeval(rtx, val, 1);
+		if (IS_STATICVAL(val)) return;
+
+	#ifdef DEBUG_VAL
+		qse_errputstrf (QSE_T("ref down [ptr=%p] [count=%d]\n"), val, (int)val->ref);
+		qse_awk_dprintval (rtx, val);
+		qse_errputstrf (QSE_T("\n"));
+	#endif
+
+		QSE_ASSERTX (val->ref > 0, 
+			"the reference count of a value should be greater than zero for it to be decremented. check the source code for any bugs");
+
+		val->ref--;
+		if (val->ref <= 0) 
+		{
+			qse_awk_rtx_freeval(rtx, val, 1);
+		}
 	}
 }
 
 void qse_awk_rtx_refdownval_nofree (qse_awk_rtx_t* rtx, qse_awk_val_t* val)
 {
-	if (IS_STATICVAL(val)) return;
+	if (IS_REAL_POINTER(val))
+	{
+		if (IS_STATICVAL(val)) return;
+	
+		QSE_ASSERTX (val->ref > 0,
+			"the reference count of a value should be greater than zero for it to be decremented. check the source code for any bugs");
 
-	QSE_ASSERTX (val->ref > 0,
-		"the reference count of a value should be greater than zero for it to be decremented. check the source code for any bugs");
-	val->ref--;
+		val->ref--;
+	}
 }
 
 void qse_awk_rtx_freevalchunk (qse_awk_rtx_t* rtx, qse_awk_val_chunk_t* chunk)
@@ -970,8 +930,7 @@ void qse_awk_rtx_freevalchunk (qse_awk_rtx_t* rtx, qse_awk_val_chunk_t* chunk)
 	}
 }
 
-static int val_ref_to_bool (
-	qse_awk_rtx_t* rtx, const qse_awk_val_ref_t* ref)
+static int val_ref_to_bool (qse_awk_rtx_t* rtx, const qse_awk_val_ref_t* ref)
 {
 	switch (ref->id)
 	{
@@ -1559,13 +1518,12 @@ qse_char_t* qse_awk_rtx_getvalstr (
 void qse_awk_rtx_freevalstr (
 	qse_awk_rtx_t* rtx, const qse_awk_val_t* v, qse_char_t* str)
 {
-	if (qse_awk_rtx_getvaltype(rtx, v) != QSE_AWK_VAL_STR && 
+	if (qse_awk_rtx_getvaltype(rtx, v) != QSE_AWK_VAL_STR ||
 	    str != ((qse_awk_val_str_t*)v)->val.ptr)
 	{
 		qse_awk_rtx_freemem (rtx, str);
 	}
 }
-
 
 static int val_ref_to_num (
 	qse_awk_rtx_t* rtx, const qse_awk_val_ref_t* ref, qse_awk_int_t* l, qse_awk_flt_t* r)

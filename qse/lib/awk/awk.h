@@ -360,7 +360,6 @@ struct qse_awk_mod_data_t
 	qse_awk_mod_t mod;
 };
 
-
 #ifdef __cplusplus
 extern "C" {
 #endif

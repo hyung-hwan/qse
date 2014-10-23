@@ -874,17 +874,17 @@ int qse_awk_fnc_toupper (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	return 0;
 }
 
-static int __substitute (qse_awk_rtx_t* run, qse_awk_int_t max_count)
+static int __substitute (qse_awk_rtx_t* rtx, qse_awk_int_t max_count)
 {
 	qse_size_t nargs;
 	qse_awk_val_t* a0, * a1, * a2, * v;
-	qse_awk_val_type_t a0_vtype, a1_vtype;
+	qse_awk_val_type_t a0_vtype;
 
-	qse_cstr_t s0, s1, s2;
+	qse_cstr_t s0, s2;
+	qse_cstr_t s1 = { QSE_NULL, 0 };
 	const qse_char_t* s2_end;
 
 	qse_char_t* s0_free = QSE_NULL;
-	qse_char_t* s1_free = QSE_NULL;
 	qse_char_t* s2_free = QSE_NULL;
 
 	void* rex = QSE_NULL;
@@ -897,20 +897,19 @@ static int __substitute (qse_awk_rtx_t* run, qse_awk_int_t max_count)
 
 	qse_awk_int_t sub_count;
 
-	nargs = qse_awk_rtx_getnargs (run);
+	nargs = qse_awk_rtx_getnargs (rtx);
 	QSE_ASSERT (nargs >= 2 && nargs <= 3);
 
-	a0 = qse_awk_rtx_getarg (run, 0);
-	a1 = qse_awk_rtx_getarg (run, 1);
-	a2 = (nargs >= 3)? qse_awk_rtx_getarg (run, 2): QSE_NULL;
+	a0 = qse_awk_rtx_getarg (rtx, 0);
+	a1 = qse_awk_rtx_getarg (rtx, 1);
+	a2 = (nargs >= 3)? qse_awk_rtx_getarg (rtx, 2): QSE_NULL;
 
 	a0_vtype = qse_awk_rtx_getvaltype (rtx, a0);
-	a1_vtype = qse_awk_rtx_getvaltype (rtx, a1);
 	QSE_ASSERT (a2 == QSE_NULL || qse_awk_rtx_getvaltype(rtx, a2) == QSE_AWK_VAL_REF);
 
 	if (a0_vtype == QSE_AWK_VAL_REX)
 	{
-		rex = ((qse_awk_val_rex_t*)a0)->code[run->gbl.ignorecase];
+		rex = ((qse_awk_val_rex_t*)a0)->code[rtx->gbl.ignorecase];
 	}
 	else if (a0_vtype == QSE_AWK_VAL_STR)
 	{
@@ -919,39 +918,30 @@ static int __substitute (qse_awk_rtx_t* run, qse_awk_int_t max_count)
 	}
 	else
 	{
-		s0.ptr = qse_awk_rtx_valtostrdup (run, a0, &s0.len);
+		s0.ptr = qse_awk_rtx_valtostrdup (rtx, a0, &s0.len);
 		if (s0.ptr == QSE_NULL) goto oops;
 		s0_free = (qse_char_t*)s0.ptr;
 	}
 
-	if (a1_vtype == QSE_AWK_VAL_STR)
-	{
-		s1.ptr = ((qse_awk_val_str_t*)a1)->val.ptr;
-		s1.len = ((qse_awk_val_str_t*)a1)->val.len;
-	}
-	else
-	{
-		s1.ptr = qse_awk_rtx_valtostrdup (run, a1, &s1.len);
-		if (s1.ptr == QSE_NULL) goto oops;
-		s1_free = (qse_char_t*)s1.ptr;
-	}
+	s1.ptr = qse_awk_rtx_getvalstr (rtx, a1, &s1.len);
+	if (s1.ptr == QSE_NULL) goto oops;
 
 	if (a2 == QSE_NULL)
 	{
 		/* is this correct? any needs to use inrec.d0? */
-		s2.ptr = QSE_STR_PTR(&run->inrec.line);
-		s2.len = QSE_STR_LEN(&run->inrec.line);
+		s2.ptr = QSE_STR_PTR(&rtx->inrec.line);
+		s2.len = QSE_STR_LEN(&rtx->inrec.line);
 	}
 	else
 	{
-		s2.ptr = qse_awk_rtx_valtostrdup (run, a2, &s2.len);
+		s2.ptr = qse_awk_rtx_valtostrdup (rtx, a2, &s2.len);
 		if (s2.ptr == QSE_NULL) goto oops;
 		s2_free = (qse_char_t*)s2.ptr;
 	}
 
-	if (qse_str_init (&new, run->awk->mmgr, s2.len) <= -1)
+	if (qse_str_init (&new, rtx->awk->mmgr, s2.len) <= -1)
 	{
-		qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM, QSE_NULL);
+		qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
 		goto oops;
 	}
 	new_inited = 1;
@@ -961,14 +951,14 @@ static int __substitute (qse_awk_rtx_t* run, qse_awk_int_t max_count)
 		qse_awk_errnum_t errnum;
 		int x;
 
-		if (run->gbl.ignorecase)
-			x = qse_awk_buildrex (run->awk, s0.ptr, s0.len, &errnum, QSE_NULL, &rex);
+		if (rtx->gbl.ignorecase)
+			x = qse_awk_buildrex (rtx->awk, s0.ptr, s0.len, &errnum, QSE_NULL, &rex);
 		else
-			x = qse_awk_buildrex (run->awk, s0.ptr, s0.len, &errnum, &rex, QSE_NULL);
+			x = qse_awk_buildrex (rtx->awk, s0.ptr, s0.len, &errnum, &rex, QSE_NULL);
 
 		if (x <= -1)
 		{
-			qse_awk_rtx_seterrnum (run, errnum, QSE_NULL);
+			qse_awk_rtx_seterrnum (rtx, errnum, QSE_NULL);
 			goto oops;
 		}
 
@@ -994,7 +984,7 @@ static int __substitute (qse_awk_rtx_t* run, qse_awk_int_t max_count)
 		if (max_count == 0 || sub_count < max_count)
 		{
 			n = qse_awk_matchrex (
-				run->awk, rex, run->gbl.ignorecase, 
+				rtx->awk, rex, rtx->gbl.ignorecase, 
 				&s2, &cur, &mat, &errnum
 			);
 		}
@@ -1002,7 +992,7 @@ static int __substitute (qse_awk_rtx_t* run, qse_awk_int_t max_count)
 
 		if (n <= -1)
 		{
-			qse_awk_rtx_seterrnum (run, errnum, QSE_NULL);
+			qse_awk_rtx_seterrnum (rtx, errnum, QSE_NULL);
 			goto oops;
 		}
 
@@ -1012,7 +1002,7 @@ static int __substitute (qse_awk_rtx_t* run, qse_awk_int_t max_count)
 			if (qse_str_ncat (
 				&new, cur.ptr, cur.len) == (qse_size_t)-1)
 			{
-				qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM, QSE_NULL);
+				qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
 				goto oops;
 			}
 			break;
@@ -1030,7 +1020,7 @@ static int __substitute (qse_awk_rtx_t* run, qse_awk_int_t max_count)
 		if (qse_str_ncat (
 			&new, cur.ptr, mat.ptr - cur.ptr) == (qse_size_t)-1)
 		{
-			qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM, QSE_NULL);
+			qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
 			goto oops;
 		}
 
@@ -1054,7 +1044,7 @@ static int __substitute (qse_awk_rtx_t* run, qse_awk_int_t max_count)
 
 			if (m == (qse_size_t)-1)
 			{
-				qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM, QSE_NULL);
+				qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
 				goto oops;
 			}
 		}
@@ -1073,7 +1063,7 @@ static int __substitute (qse_awk_rtx_t* run, qse_awk_int_t max_count)
 			m = qse_str_ncat (&new, cur.ptr, 1);
 			if (m == (qse_size_t)-1)
 			{
-				qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM, QSE_NULL);
+				qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
 				goto oops;
 			}
 
@@ -1083,10 +1073,10 @@ static int __substitute (qse_awk_rtx_t* run, qse_awk_int_t max_count)
 
 	if (rex_free)
 	{
-		if (run->gbl.ignorecase)
-			qse_awk_freerex (run->awk, QSE_NULL, rex_free); 
+		if (rtx->gbl.ignorecase)
+			qse_awk_freerex (rtx->awk, QSE_NULL, rex_free); 
 		else
-			qse_awk_freerex (run->awk, rex_free, QSE_NULL); 
+			qse_awk_freerex (rtx->awk, rex_free, QSE_NULL); 
 		rex_free = QSE_NULL;
 	}
 
@@ -1095,57 +1085,59 @@ static int __substitute (qse_awk_rtx_t* run, qse_awk_int_t max_count)
 		if (a2 == QSE_NULL)
 		{
 			int n;
-			n = qse_awk_rtx_setrec (run, 0, QSE_STR_XSTR(&new));
+			n = qse_awk_rtx_setrec (rtx, 0, QSE_STR_XSTR(&new));
 			if (n <= -1) goto oops;
 		}
 		else 
 		{
 			int n;
 
-			v = qse_awk_rtx_makestrvalwithxstr (run, QSE_STR_XSTR(&new));
+			v = qse_awk_rtx_makestrvalwithxstr (rtx, QSE_STR_XSTR(&new));
 			if (v == QSE_NULL) goto oops;
-			qse_awk_rtx_refupval (run, v);
-			n = qse_awk_rtx_setrefval (run, (qse_awk_val_ref_t*)a2, v);
-			qse_awk_rtx_refdownval (run, v);
+			qse_awk_rtx_refupval (rtx, v);
+			n = qse_awk_rtx_setrefval (rtx, (qse_awk_val_ref_t*)a2, v);
+			qse_awk_rtx_refdownval (rtx, v);
 			if (n <= -1) goto oops;
 		}
 	}
 
 	qse_str_fini (&new);
 
-	if (s2_free) QSE_AWK_FREE (run->awk, s2_free);
-	if (s1_free) QSE_AWK_FREE (run->awk, s1_free);
-	if (s0_free) QSE_AWK_FREE (run->awk, s0_free);
+	if (s2_free) QSE_AWK_FREE (rtx->awk, s2_free);
 
-	v = qse_awk_rtx_makeintval (run, sub_count);
+	qse_awk_rtx_freevalstr (rtx, a1, s1.ptr);
+
+	if (s0_free) QSE_AWK_FREE (rtx->awk, s0_free);
+
+	v = qse_awk_rtx_makeintval (rtx, sub_count);
 	if (v == QSE_NULL) return -1;
 
-	qse_awk_rtx_setretval (run, v);
+	qse_awk_rtx_setretval (rtx, v);
 	return 0;
 
 oops:
 	if (rex_free) 
 	{
-		if (run->gbl.ignorecase)
-			qse_awk_freerex (run->awk, QSE_NULL, rex_free);
+		if (rtx->gbl.ignorecase)
+			qse_awk_freerex (rtx->awk, QSE_NULL, rex_free);
 		else	
-			qse_awk_freerex (run->awk, rex_free, QSE_NULL); 
+			qse_awk_freerex (rtx->awk, rex_free, QSE_NULL); 
 	}
 	if (new_inited) qse_str_fini (&new);
-	if (s2_free) QSE_AWK_FREE (run->awk, s2_free);
-	if (s1_free) QSE_AWK_FREE (run->awk, s1_free);
-	if (s0_free) QSE_AWK_FREE (run->awk, s0_free);
+	if (s2_free) QSE_AWK_FREE (rtx->awk, s2_free);
+	if (s1.ptr) qse_awk_rtx_freevalstr (rtx, a1, s1.ptr);
+	if (s0_free) QSE_AWK_FREE (rtx->awk, s0_free);
 	return -1;
 }
 
-int qse_awk_fnc_gsub (qse_awk_rtx_t* run, const qse_awk_fnc_info_t* fi)
+int qse_awk_fnc_gsub (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
-	return __substitute (run, 0);
+	return __substitute (rtx, 0);
 }
 
-int qse_awk_fnc_sub (qse_awk_rtx_t* run, const qse_awk_fnc_info_t* fi)
+int qse_awk_fnc_sub (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
-	return __substitute (run, 1);
+	return __substitute (rtx, 1);
 }
 
 int qse_awk_fnc_match (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
@@ -1169,24 +1161,10 @@ int qse_awk_fnc_match (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 		qse_awk_val_t* a2;
 
 		a2 = qse_awk_rtx_getarg (rtx, 2);
-#if 0
-		if (a2->type == QSE_AWK_VAL_MAP)
-		{
-			/* if the 3rd paramater is an array,
-			 * it is a placeholder to store parenthesized 
-			 * subexpressions */
-
-			/* TODO: please implement this... */
-			start = 0;
-		}
-		else
-#endif
-		{
-			/* if the 3rd parameter is not an array,
-			 * it is treated as a match start index */
-			n = qse_awk_rtx_valtoint (rtx, a2, &start);
-			if (n <= -1) return -1;
-		}
+		/* if the 3rd parameter is not an array,
+		 * it is treated as a match start index */
+		n = qse_awk_rtx_valtoint (rtx, a2, &start);
+		if (n <= -1) return -1;
 	}
 
 	str0 = qse_awk_rtx_getvalstr (rtx, a0, &len0);
@@ -1210,6 +1188,7 @@ int qse_awk_fnc_match (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 
 	qse_awk_rtx_freevalstr (rtx, a0, str0);
 
+	/* RSTART: 0 on no match */
 	idx = (n == 0)? 0: ((qse_awk_int_t)(mat.ptr-str0) + 1);
 
 	a0 = qse_awk_rtx_makeintval (rtx, idx);
@@ -1217,6 +1196,7 @@ int qse_awk_fnc_match (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 
 	qse_awk_rtx_refupval (rtx, a0);
 
+	/* RLENGTH: -1 on no match */
 	a1 = qse_awk_rtx_makeintval (rtx, 
 		((n == 0)? (qse_awk_int_t)-1: (qse_awk_int_t)mat.len));
 	if (a1 == QSE_NULL)
@@ -1240,6 +1220,8 @@ int qse_awk_fnc_match (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 		qse_awk_rtx_refdownval (rtx, a0);
 		return -1;
 	}
+
+/* TOOD: set RMATCH to hold the mainmatch and submatches inside () */
 
 	qse_awk_rtx_setretval (rtx, a0);
 
