@@ -517,7 +517,7 @@ static QSE_INLINE int task_main_getdir (
 	{
 		int keepalive_ignored = 0;
 
-		if (dir->keepalive && (dir->version.major < 1 || (dir->version.major == 1 && dir->version.minor <= 0)))
+		if (dir->keepalive && qse_comparehttpversions (&dir->version, &qse_http_v11) < 0) 
 		{
 			/* this task does chunking when keepalive is set.
 			 * chunking is not supported for http 1.0 or earlier.
@@ -525,7 +525,6 @@ static QSE_INLINE int task_main_getdir (
 			dir->keepalive = 0;
 			keepalive_ignored = 1;
 		}
-
 
 		x = qse_httpd_entaskformat (
 			httpd, client, x,

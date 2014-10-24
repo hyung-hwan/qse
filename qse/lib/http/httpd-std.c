@@ -3153,7 +3153,7 @@ auth_ok:
 	/* if authentication is ok or no authentication is required,
 	 * handle 'Expect: 100-continue' if it is contained in the header */
 	if ((req->flags & QSE_HTRE_ATTR_EXPECT) &&
-	    (req->version.major > 1 || (req->version.major == 1 && req->version.minor >= 1)) &&
+	    qse_comparehttpversions (&req->version, &qse_http_v11) >= 0 && 
 	    qse_htre_getcontentlen(req) <= 0)
 	{
 		/* "Expect" in the header, version 1.1 or higher,
