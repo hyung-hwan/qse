@@ -30,6 +30,7 @@
 #elif defined(__DOS__)
 #	include <dos.h>
 #	include <tcp.h> /* watt-32 */
+#	include <conio.h>
 #else
 #	include <unistd.h>
 #	include <errno.h>
@@ -2427,20 +2428,26 @@ static void impede_httpd (qse_httpd_t* httpd)
 	/* reconfigure the server when the server is impeded in sig_reconf(). */
 
 	httpd_xtn = qse_httpd_getxtnstd (httpd);
-
-	if (open_config_file (httpd) >= 0)
+	if (httpd_xtn->impede_code == 9999)
 	{
-		qse_httpd_server_t* server;
-
-		server = qse_httpd_getfirstserver (httpd);
-		while (server)
+		qse_httpd_stop (httpd);
+	}
+	else
+	{
+		if (open_config_file (httpd) >= 0)
 		{
-			if (server->dope.flags & QSE_HTTPD_SERVER_ACTIVE)
-				reconf_server (httpd, server);	
+			qse_httpd_server_t* server;
 
-			server = qse_httpd_getnextserver (httpd, server);
+			server = qse_httpd_getfirstserver (httpd);
+			while (server)
+			{
+				if (server->dope.flags & QSE_HTTPD_SERVER_ACTIVE)
+					reconf_server (httpd, server);
+
+				server = qse_httpd_getnextserver (httpd, server);
+			}
+			close_config_file (httpd);
 		}
-		close_config_file (httpd);
 	}
 
 	/* chain-call the orignal impedence function */
@@ -2609,7 +2616,7 @@ static int handle_args (int argc, qse_char_t* argv[])
 				{
 					print_version ();
 					return 0;
-                    }
+				}
 				break;
 			}
 
@@ -2708,6 +2715,28 @@ oops:
 	return -1;
 }
 
+#if defined(__DOS__)
+static void interrupt (*old_keyboard_handler)() = QSE_NULL;
+static int impeded_for_keyboard = 0;
+static void interrupt new_keyboard_handler (void)
+{
+	if (!impeded_for_keyboard && g_httpd) 
+	{
+		httpd_xtn_t* httpd_xtn;
+		int c;
+
+/* TODO: read a keystroke... etc */
+		httpd_xtn = qse_httpd_getxtnstd (g_httpd);
+		httpd_xtn->impede_code = 9999;
+		qse_httpd_impede (g_httpd);
+		impeded_for_keyboard = 1;
+	}
+
+	if (old_keyboard_handler) old_keyboard_handler ();
+}
+#endif
+
+
 int qse_main (int argc, qse_achar_t* argv[])
 {
 	int ret;
@@ -2746,6 +2775,11 @@ int qse_main (int argc, qse_achar_t* argv[])
 
 	qse_openstdsios ();
 
+#if defined(__DOS__)
+	old_keyboard_handler = _dos_getvect (0x09);
+	_dos_setvect (0x09, new_keyboard_handler);
+#endif
+
 #if defined(_WIN32)
 	if (WSAStartup (MAKEWORD(2,0), &wsadata) != 0)
 	{
@@ -2754,6 +2788,8 @@ int qse_main (int argc, qse_achar_t* argv[])
 		goto oops;
 	}
 #elif defined(__DOS__)
+	
+
 	_watt_do_exit = 0; /* prevent sock_init from exiting upon failure */
 	if (sock_init () != 0)
 	{
@@ -2786,6 +2822,10 @@ int qse_main (int argc, qse_achar_t* argv[])
 #endif
 
 oops:
+#if defined(__DOS__)
+	if (old_keyboard_handler) 
+		_dos_setvect (0x09, old_keyboard_handler);
+#endif
 	qse_closestdsios ();
 	return ret;
 }

@@ -73,11 +73,15 @@
 
 #elif defined(__DOS__)
 
+#	include <io.h>
+#	include <direct.h>
 #	include <errno.h>
 #	include <tcp.h> /* watt-32 */
 #	include <sys/ioctl.h> /* watt-32 */
+#	include <sys/stat.h>
 
-#	define select select_s /* TODO: is this correct? */
+#	define memset QSE_MEMSET
+#	define select select_s 
 #	undef AF_UNIX
 
 #else
@@ -416,12 +420,6 @@ static QSE_INLINE qse_ssize_t __send_file (
 {
 	/* TODO: os2 warp 4.5 has send_file. support it??? load it dynamically??? */
 
-/*
-#if defined(__DOS__)
-	qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
-	return -1;
-
-#el*/
 #if defined(HAVE_SENDFILE) && defined(HAVE_SENDFILE64)
 
 	qse_ssize_t ret;
@@ -903,10 +901,6 @@ oops:
 
 static int server_open (qse_httpd_t* httpd, qse_httpd_server_t* server)
 {
-/*#if defined(__DOS__)
-	qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
-	return -1;
-#else*/
 	qse_sck_hnd_t fd = QSE_INVALID_SCKHND, flag;
 	qse_skad_t addr;
 	int addrsize;
@@ -1030,7 +1024,6 @@ bind_ok:
 oops:
 	if (qse_isvalidsckhnd(fd)) qse_closesckhnd (fd);
 	return -1;
-/*#endif*/
 }
 
 static void server_close (qse_httpd_t* httpd, qse_httpd_server_t* server)
@@ -1041,11 +1034,6 @@ static void server_close (qse_httpd_t* httpd, qse_httpd_server_t* server)
 static int server_accept (
 	qse_httpd_t* httpd, qse_httpd_server_t* server, qse_httpd_client_t* client)
 {
-/*#if defined(__DOS__)
-	qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
-	return -1;
-
-#else*/
 	qse_skad_t addr;
 	qse_sck_len_t addrlen;
 	qse_sck_hnd_t fd = QSE_INVALID_SCKHND;
@@ -1124,19 +1112,12 @@ printf ("ERROR: too many client?\n");
 oops:
 	if (qse_isvalidsckhnd(fd)) qse_closesckhnd (fd);
 	return -1;
-/*#endif*/
 }
 
 /* ------------------------------------------------------------------- */
 
 static int peer_open (qse_httpd_t* httpd, qse_httpd_peer_t* peer)
 {
-/*#if defined(__DOS__)
-	qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
-	return -1;
-
-#else*/
-
 	/* -------------------------------------------------------------------- */
 
 	httpd_xtn_t* xtn;
@@ -1304,7 +1285,6 @@ oops:
 	return -1;
 
 	/* -------------------------------------------------------------------- */
-/*#endif*/
 }
 
 static void peer_close (qse_httpd_t* httpd, qse_httpd_peer_t* peer)
@@ -1464,14 +1444,9 @@ static qse_ssize_t peer_recv (
 	}
 	else
 	{
-	/*#if defined(__DOS__)
-		qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
-		return -1;
-	#else*/
 		qse_ssize_t ret = recv (peer->handle, buf, bufsize, 0);
 		if (ret <= -1) qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
 		return ret;
-	/*#endif*/
 	}
 }
 
@@ -1499,14 +1474,9 @@ static qse_ssize_t peer_send (
 	}
 	else
 	{
-	/*#if defined(__DOS__)
-		qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
-		return -1;
-	#else*/
 		qse_ssize_t ret = send (peer->handle, buf, bufsize, 0);
 		if (ret <= -1) qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
 		return ret;
-	/*#endif*/
 	}
 }
 
@@ -1608,11 +1578,6 @@ static int mux_readable (qse_httpd_t* httpd, qse_httpd_hnd_t handle, const qse_n
 	tv = tmout? QSE_SECNSEC_TO_MSEC (tmout->sec, tmout->nsec): -1;
 	return os2_select (&handle, 1, 0, 0, tv);
 
-/*#elif defined(__DOS__)
-
-	qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
-	return -1;*/
-
 #else
 	fd_set r;
 	struct timeval tv, * tvp;
@@ -1638,12 +1603,6 @@ static int mux_writable (qse_httpd_t* httpd, qse_httpd_hnd_t handle, const qse_n
 	long tv;
 	tv = tmout? QSE_SECNSEC_TO_MSEC (tmout->sec, tmout->nsec): -1;
 	return os2_select (&handle, 0, 1, 0, tv);
-
-/*#elif defined(__DOS__)
-
-	qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
-	return -1;
-*/
 
 #else
 	fd_set w;
@@ -1684,7 +1643,7 @@ static int stat_file (
 		 * if it's not appened with an wildcard letter like C:\*.*.
 		 * since i'm not interested in the files under the root 
 		 * directory, let me just hard-code it to indicate that
-		 * it is a directory.	
+		 * it is a directory.
 		 */
 		QSE_MEMSET (hst, 0, QSE_SIZEOF(*hst));
 		hst->isdir = 1;
@@ -1764,9 +1723,32 @@ static int stat_file (
 	return 0;
 
 #elif defined(__DOS__)
-	/* TODO: */
-	qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
-	return -1;
+
+	struct stat st;
+
+	if (stat (path, &st) <= -1)
+	{
+		qse_httpd_seterrnum (httpd, syserr_to_errnum(errno));
+		return -1;
+	}
+
+	if ((filter == STAT_REG && !S_ISREG(st.st_mode)) ||
+	    (filter == STAT_DIR && !S_ISDIR(st.st_mode)))
+	{
+		qse_httpd_seterrnum (httpd, QSE_HTTPD_EACCES);
+		return -1;
+	}
+
+	QSE_MEMSET (hst, 0, QSE_SIZEOF(*hst));
+
+	hst->isdir = S_ISDIR(st.st_mode);
+	hst->dev = st.st_dev;
+	hst->ino = st.st_ino;
+	hst->size = st.st_size;
+	hst->mtime.sec = st.st_mtime;
+	hst->mtime.nsec = 0;
+
+	return 0;
 #else
 	qse_stat_t st;
 
@@ -1841,9 +1823,13 @@ static int file_purge (qse_httpd_t* httpd, const qse_mchar_t* path)
 	return 0;
 
 #elif defined(__DOS__)
-	/* TODO: */
-	qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
-	return -1;
+
+	if (unlink (path) <= -1)
+	{
+		qse_httpd_seterrnum (httpd, syserr_to_errnum(errno));
+		return -1;
+	}
+	return 0;
 
 #else
 
@@ -1980,8 +1966,15 @@ static int dir_make (qse_httpd_t* httpd, const qse_mchar_t* path)
 	return 0;
 
 #elif defined(__DOS__)
-	qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
-	return -1;
+
+	if (mkdir (path) <= -1)
+	{
+		qse_httpd_seterrnum (httpd, syserr_to_errnum(errno));
+		return -1;
+	}
+
+	return 0;
+
 #else
 
 	if (QSE_MKDIR (path, 0755) <= -1)
@@ -2015,8 +2008,14 @@ static int dir_purge (qse_httpd_t* httpd, const qse_mchar_t* path)
 	return 0;
 
 #elif defined(__DOS__)
-	qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
-	return -1;
+
+	if (rmdir (path) <= -1)
+	{
+		qse_httpd_seterrnum (httpd, syserr_to_errnum(errno));
+		return -1;
+	}
+	return 0;
+
 #else
 
 	if (QSE_RMDIR (path) <= -1)
@@ -2175,15 +2174,10 @@ static qse_ssize_t client_recv (
 	}
 	else
 	{
-	/*#if defined(__DOS__)
-		qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
-		return -1;
-	#else*/
 		qse_ssize_t ret;
 		ret = recv (client->handle, buf, bufsize, 0);
 		if (ret <= -1) qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
 		return ret;
-	/*#endif*/
 	}
 }
 
@@ -2211,14 +2205,9 @@ static qse_ssize_t client_send (
 	}
 	else
 	{
-	/*#if defined(__DOS__)
-		qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
-		return -1;
-	#else*/
 		qse_ssize_t ret = send (client->handle, buf, bufsize, 0);
 		if (ret <= -1) qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
 		return ret;
-	/*#endif*/
 	}
 }
 

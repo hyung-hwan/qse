@@ -92,14 +92,10 @@ struct urs_req_t
 
 static int urs_open (qse_httpd_t* httpd, qse_httpd_urs_t* urs)
 {
-#if defined(__DOS__)
-	qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
-	return -1;
-#else
 	qse_nwad_t nwad;
 	urs_ctx_t* dc;
 	httpd_xtn_t* httpd_xtn;
-	int type, proto = IPPROTO_UDP; /*IPPROTO_SCTP*/
+	int type, proto = 0; /*IPPROTO_UDP;*/ /*IPPROTO_SCTP*/
 
 	httpd_xtn = qse_httpd_getxtn (httpd);
 
@@ -233,8 +229,6 @@ oops:
 	}
 	if (dc) qse_httpd_freemem (httpd, dc);
 	return -1;
-
-#endif
 }
 
 static void urs_remove_tmr_tmout (qse_httpd_t* httpd, urs_req_t* req)

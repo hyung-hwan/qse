@@ -287,10 +287,6 @@ int init_dns_query (qse_uint8_t* buf, qse_size_t len, const qse_mchar_t* name, i
 
 static int dns_open (qse_httpd_t* httpd, qse_httpd_dns_t* dns)
 {
-#if defined(__DOS__)
-	qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
-	return -1;
-#else
 	qse_nwad_t nwad;
 	dns_ctx_t* dc;
 	httpd_xtn_t* httpd_xtn;
@@ -368,9 +364,9 @@ static int dns_open (qse_httpd_t* httpd, qse_httpd_dns_t* dns)
 		httpd->opt.rcb.logact (httpd, &msg);
 	}
 
-	dns->handle[0] = open_client_socket (httpd, AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+	dns->handle[0] = open_client_socket (httpd, AF_INET, SOCK_DGRAM, 0);
 #if defined(AF_INET6)
-	dns->handle[1] = open_client_socket (httpd, AF_INET6, SOCK_DGRAM, IPPROTO_UDP);
+	dns->handle[1] = open_client_socket (httpd, AF_INET6, SOCK_DGRAM, 0);
 #endif
 #if defined(AF_UNIX)
 	dns->handle[2] = open_client_socket (httpd, AF_UNIX, SOCK_DGRAM, 0);
@@ -400,7 +396,6 @@ static int dns_open (qse_httpd_t* httpd, qse_httpd_dns_t* dns)
 		}
 	#endif
 	}
-
 
 	if (!qse_isvalidsckhnd(dns->handle[0]) &&
 	    !qse_isvalidsckhnd(dns->handle[1]) &&
@@ -463,8 +458,6 @@ oops:
 	}
 	if (dc) qse_httpd_freemem (httpd, dc);
 	return -1;
-
-#endif
 }
 
 static void dns_remove_tmr_tmout (qse_httpd_t* httpd, dns_req_t* req)
