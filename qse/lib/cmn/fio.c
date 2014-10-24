@@ -582,22 +582,31 @@ int qse_fio_init (
 		qse_size_t wl, ml;
 		int px;
 
-		path_mb = path_mb_buf;
-		ml = QSE_COUNTOF(path_mb_buf);
-		px = qse_wcstombs (path, &wl, path_mb, &ml);
-		if (px == -2)
+		if (flags & QSE_FIO_MBSPATH)
 		{
-			path_mb = qse_wcstombsdup (path, QSE_NULL, mmgr);
-			if (path_mb == QSE_NULL) 
+			path_mb = (qse_mchar_t*)path;
+		}
+		else
+		{
+			path_mb = path_mb_buf;
+			ml = QSE_COUNTOF(path_mb_buf);
+			px = qse_wcstombs (path, &wl, path_mb, &ml);
+			if (px == -2)
 			{
-				fio->errnum = QSE_FIO_ENOMEM;
+				/* static buffer size not enough. 
+				 * switch to dynamic allocation */
+				path_mb = qse_wcstombsdup (path, QSE_NULL, mmgr);
+				if (path_mb == QSE_NULL) 
+				{
+					fio->errnum = QSE_FIO_ENOMEM;
+					return -1;
+				}
+			}
+			else if (px <= -1) 
+			{
+				fio->errnum = QSE_FIO_EINVAL;
 				return -1;
 			}
-		}
-		else if (px <= -1) 
-		{
-			fio->errnum = QSE_FIO_EINVAL;
-			return -1;
 		}
 	#endif
 
@@ -704,9 +713,9 @@ int qse_fio_init (
 			if (path_mb != path_mb_buf) QSE_MMGR_FREE (mmgr, path_mb);
 	#endif
 			fio->errnum = QSE_FIO_ENOMEM;
-			return -1;			
+			return -1;
 		}
-	
+
 		fab = (struct FAB*)(rab + 1);
 		*rab = cc$rms_rab;
 		rab->rab$l_fab = fab;

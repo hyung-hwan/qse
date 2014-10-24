@@ -201,6 +201,7 @@ static QSE_INLINE int task_main_getfile (
 	if (httpd->opt.scb.file.ropen (httpd, file->path.ptr, &handle) <= -1)
 	{
 		int http_errnum;
+printf ("ropen failure...\n");
 		http_errnum = (httpd->errnum == QSE_HTTPD_ENOENT)? 404:
 		              (httpd->errnum == QSE_HTTPD_EACCES)? 403: 500;
 		x = qse_httpd_entask_error (
@@ -210,6 +211,7 @@ static QSE_INLINE int task_main_getfile (
 	}
 	fileopen = 1;
 
+printf ("ropen ok...\n");
 	if (file->u.get.range.type != QSE_HTTP_RANGE_NONE)
 	{ 
 		qse_mchar_t tmp[4][64];
