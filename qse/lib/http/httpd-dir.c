@@ -33,7 +33,7 @@ struct task_dir_t
 	qse_http_version_t version;
 	int                keepalive;
 	int                method;
-	qse_httpd_hnd_t          handle;
+	qse_httpd_hnd_t    handle;
 };
 
 typedef struct task_dseg_t task_dseg_t;
@@ -42,7 +42,7 @@ struct task_dseg_t
 	qse_http_version_t version;
 	int                keepalive;
 	int                chunked;
-	
+
 	qse_mcstr_t path;
 	qse_mcstr_t qpath;
 	qse_mcstr_t head;
@@ -515,9 +515,21 @@ static QSE_INLINE int task_main_getdir (
 	}
 	else
 	{
+		int keepalive_ignored = 0;
+
+		if (dir->keepalive && (dir->version.major < 1 || (dir->version.major == 1 && dir->version.minor <= 0)))
+		{
+			/* this task does chunking when keepalive is set.
+			 * chunking is not supported for http 1.0 or earlier.
+			 * force switch to the close mode */
+			dir->keepalive = 0;
+			keepalive_ignored = 1;
+		}
+
+
 		x = qse_httpd_entaskformat (
 			httpd, client, x,
-    			QSE_MT("HTTP/%d.%d 200 OK\r\nServer: %s\r\nDate: %s\r\nConnection: %s\r\nContent-Type: text/html\r\n%s\r\n"), 
+			QSE_MT("HTTP/%d.%d 200 OK\r\nServer: %s\r\nDate: %s\r\nConnection: %s\r\nContent-Type: text/html\r\n%s\r\n"), 
 			dir->version.major, dir->version.minor,
 			qse_httpd_getname (httpd),
 			qse_httpd_fmtgmtimetobb (httpd, QSE_NULL, 0),
@@ -543,7 +555,10 @@ static QSE_INLINE int task_main_getdir (
 
 			/* arrange to send the actual directory contents */
 			x = entask_directory_segment (httpd, client, x, dir->handle, dir);
+			if (keepalive_ignored && x)
+				x = qse_httpd_entaskdisconnect (httpd, client, x);
 			if (x) return 0;
+			
 		}
 
 		httpd->opt.scb.dir.close (httpd, dir->handle);
@@ -602,7 +617,7 @@ qse_httpd_task_t* qse_httpd_entaskdir (
 				data.foot.ptr = dir->foot? dir->foot: qse_httpd_getname(httpd);
 				data.foot.len = qse_mbslen(data.foot.ptr);
 				data.version = *qse_htre_getversion(req);
-				data.keepalive = (req->flags & QSE_HTRE_ATTR_KEEPALIVE);
+				data.keepalive = req->flags & QSE_HTRE_ATTR_KEEPALIVE;
 				data.method = method;
 
 				QSE_MEMSET (&task, 0, QSE_SIZEOF(task));
@@ -620,7 +635,7 @@ qse_httpd_task_t* qse_httpd_entaskdir (
 				return x;
 			}
 		}
-			
+
 		case QSE_HTTP_PUT:
 		{
 			int status = 201; /* 201 Created */
@@ -642,7 +657,7 @@ qse_httpd_task_t* qse_httpd_entaskdir (
 					         (httpd->errnum == QSE_HTTPD_EACCES)? 403: 500;
 				}
 			}
-				
+
 			return qse_httpd_entaskerror (httpd, client, pred, status, req);
 		}
 
