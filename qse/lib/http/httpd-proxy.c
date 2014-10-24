@@ -1115,7 +1115,7 @@ qse_mbs_ncat (proxy->reqfwdbuf, spc, QSE_COUNTOF(spc));
 
 		proxy->resflags |= PROXY_RES_AWAIT_RESHDR;
 		if ((arg->req->flags & QSE_HTRE_ATTR_EXPECT100) &&
-		    (arg->req->version.major > 1 || (arg->req->version.major == 1 && arg->req->version.minor >= 1)))
+		     qse_comparehttpversions (&arg->req->version, &qse_http_v11) >= 0)
 		{
 			proxy->resflags |= PROXY_RES_AWAIT_100;
 		}
