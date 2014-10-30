@@ -37,6 +37,7 @@ typedef struct qse_httpd_server_t qse_httpd_server_t;
 typedef struct qse_httpd_client_t qse_httpd_client_t;
 typedef struct qse_httpd_dns_t    qse_httpd_dns_t;
 typedef struct qse_httpd_urs_t    qse_httpd_urs_t;
+typedef struct qse_httpd_custom_t qse_httpd_custom_t;
 
 typedef qse_intptr_t qse_httpd_hnd_t;
 
@@ -179,13 +180,14 @@ enum qse_httpd_mux_mask_t
 	QSE_HTTPD_MUX_READ  = (1 << 0),
 	QSE_HTTPD_MUX_WRITE = (1 << 1)
 };
+typedef enum qse_httpd_mux_mask_t qse_httpd_mux_mask_t;
 
 typedef int (*qse_httpd_muxcb_t) (
-	qse_httpd_t* httpd,
-	void*        mux,
-	qse_httpd_hnd_t    handle,
-	int          mask, /* ORed of qse_httpd_mux_mask_t */
-	void*        cbarg
+	qse_httpd_t*    httpd,
+	void*           mux,
+	qse_httpd_hnd_t handle,
+	int             mask, /**> bitwise-ORed of #qse_httpd_mux_mask_t */
+	void*           cbarg
 );
 
 typedef struct qse_httpd_dirent_t qse_httpd_dirent_t;
@@ -302,6 +304,10 @@ typedef int (*qse_httpd_urs_prerewrite_t) (
 	qse_mchar_t**       url
 );
 
+/**
+ * The qse_httpd_scb_t type defines a structure to store
+ * user-defined callback functions for system interfacing.
+ */
 typedef struct qse_httpd_scb_t qse_httpd_scb_t;
 struct qse_httpd_scb_t
 {
@@ -423,8 +429,13 @@ struct qse_httpd_scb_t
 
 	struct
 	{
+		/** opens the name resolution service. set this to #QSE_NULL to
+		  * disable the service */
 		int (*open) (qse_httpd_t* httpd, qse_httpd_dns_t* dns);
+
+		/** stops the name resolution service. */
 		void (*close) (qse_httpd_t* httpd, qse_httpd_dns_t* dns);
+
 		int (*recv) (qse_httpd_t* httpd, qse_httpd_dns_t* dns, qse_httpd_hnd_t handle);
 		int (*send) (qse_httpd_t* httpd, qse_httpd_dns_t* dns,
 		             const qse_mchar_t* name, qse_httpd_resolve_t resol,
@@ -435,8 +446,13 @@ struct qse_httpd_scb_t
 
 	struct
 	{
+		/** opens the url rewriting service. set this to #QSE_NULL to disable
+		 *  the service */
 		qse_httpd_urs_open_t open;
+
+		/** stops the url rewriting service. */
 		qse_httpd_urs_close_t close;
+
 		qse_httpd_urs_recv_t recv;
 		qse_httpd_urs_send_t send;
 		qse_httpd_urs_prerewrite_t prerewrite;
@@ -574,7 +590,8 @@ enum qse_httpd_mate_type_t
 	QSE_HTTPD_SERVER,
 	QSE_HTTPD_CLIENT,
 	QSE_HTTPD_DNS,
-	QSE_HTTPD_URS
+	QSE_HTTPD_URS,
+	QSE_HTTPD_CUSTOM
 };
 typedef enum qse_httpd_mate_type_t  qse_httpd_mate_type_t;
 
@@ -587,6 +604,15 @@ struct qse_httpd_mate_t
 {
 	/* == PRIVATE == */
 	QSE_HTTPD_MATE_HDR;
+};
+
+struct qse_httpd_custom_t
+{
+	/* == PRIVATE == */
+	QSE_HTTPD_MATE_HDR;
+
+	/* == PUBLIC == */
+	int (*dispatch) (qse_httpd_t* httpd, void* mux, qse_httpd_hnd_t handle, int mask);
 };
 
 struct qse_httpd_client_t
@@ -901,6 +927,14 @@ typedef void (*qse_httpd_ecb_close_t) (
 	qse_httpd_t* httpd  /**< httpd */
 );
 
+typedef void (*qse_httpd_ecb_preloop_t) (
+	qse_httpd_t* httpd  /**< httpd */
+);
+
+typedef void (*qse_httpd_ecb_postloop_t) (
+	qse_httpd_t* httpd  /**< httpd */
+);
+
 /**
  * The qse_httpd_ecb_t type defines an event callback set.
  * You can register a callback function set with
@@ -915,11 +949,24 @@ struct qse_httpd_ecb_t
 	 */
 	qse_httpd_ecb_close_t close;
 
+	/**
+	 * called by qse_httpd_loop() before the actual event looping begins.
+	 * you may call qse_httpd_stop() to prevent the loop from beginning.
+	 * qse_httpd_stop() takes effect all all preloop hooks are executed.
+	 * the postloop hooks are still executed when qse_httpd_stop() 
+	 * stops the start of the loop.
+	 */
+	qse_httpd_ecb_preloop_t preloop;
+
+	/**
+	 * called by qse_httpd_loop() after the actual event looping ends.
+	 */
+	qse_httpd_ecb_postloop_t postloop;
+	
+
 	/* internal use only. don't touch this field */
 	qse_httpd_ecb_t* next;
 };
-
-
 
 #ifdef __cplusplus
 extern "C" {
@@ -1035,6 +1082,20 @@ QSE_EXPORT qse_httpd_server_t* qse_httpd_getprevserver (
 	qse_httpd_server_t* server
 );
 
+
+QSE_EXPORT int qse_httpd_addhnd (
+	qse_httpd_t*        httpd,
+	qse_httpd_hnd_t     handle,
+	int                 mask, /**> bitwise-ORed of #qse_httpd_mux_mask_t */
+	qse_httpd_custom_t* mate
+);
+
+QSE_EXPORT int qse_httpd_delhnd (
+	qse_httpd_t*        httpd,
+	qse_httpd_hnd_t     handle
+);
+
+
 QSE_EXPORT void qse_httpd_discardcontent (
 	qse_httpd_t*        httpd,
 	qse_htre_t*         req
@@ -1044,7 +1105,6 @@ QSE_EXPORT void qse_httpd_completecontent (
 	qse_httpd_t*        httpd,
 	qse_htre_t*         req
 );
-
 
 /**
  * The qse_httpd_setname() function changes the string

@@ -30,7 +30,6 @@
 #elif defined(__DOS__)
 #	include <dos.h>
 #	include <tcp.h> /* watt-32 */
-#	include <conio.h>
 #else
 #	include <unistd.h>
 #	include <errno.h>
@@ -2797,6 +2796,8 @@ int qse_main (int argc, qse_achar_t* argv[])
 		ret = -1;
 		goto oops;
 	}
+
+	/*trace2com_init (1, 38400);*/
 #endif
 
 #if defined(HAVE_SSL)    
