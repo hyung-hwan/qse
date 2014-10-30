@@ -1431,7 +1431,7 @@ printf ("task_main_cgi_2 trigger[0].mask=%d trigger[1].mask=%d cmask=%d\n",
 	return 1;
 
 oops:
-	return (qse_httpd_entask_error (httpd, client, task, 500, cgi->method, &cgi->version, cgi->keepalive) == QSE_NULL)? -1: 0;
+	return (qse_httpd_entaskerrorwithmvk (httpd, client, task, 500, cgi->method, &cgi->version, cgi->keepalive) == QSE_NULL)? -1: 0;
 }
 
 static int task_main_cgi (
@@ -1595,7 +1595,7 @@ oops:
 		cgi->script_htrd = QSE_NULL;
 	}
 
-	return (qse_httpd_entask_error (
+	return (qse_httpd_entaskerrorwithmvk (
 		httpd, client, task, http_errnum, 
 		cgi->method, &cgi->version, cgi->keepalive) == QSE_NULL)? -1: 0;
 }
