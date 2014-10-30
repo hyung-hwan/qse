@@ -581,6 +581,8 @@ static void purge_client (qse_httpd_t* httpd, qse_httpd_client_t* client)
 	else httpd->client.list.head = next;
 	if (next) next->prev = prev;
 	else httpd->client.list.tail = prev;
+
+	httpd->client.list.count--;
 }
 
 static void purge_client_list (qse_httpd_t* httpd)
@@ -643,11 +645,10 @@ static int accept_client (
 
 		if (httpd->opt.scb.server.accept (httpd, server, &clibuf) <= -1) 
 		{
-#if 0
-/* TODO: proper logging */
-qse_char_t tmp[128];
-qse_nwadtostr (&server->dope.nwad, tmp, QSE_COUNTOF(tmp), QSE_NWADTOSTR_ALL);
-qse_printf (QSE_T("failed to accept from server [%s] [%d]\n"), tmp, server->handle);
+#if 1
+qse_mchar_t tmp[128];
+qse_nwadtombs (&server->dope.nwad, tmp, QSE_COUNTOF(tmp), QSE_NWADTOSTR_ALL);
+printf ("failed to accept from server [%s] [%d]\n", tmp, server->handle);
 #endif
 
 			return -1;
@@ -694,6 +695,7 @@ qse_printf (QSE_T("failed to accept from server [%s] [%d]\n"), tmp, server->hand
 			httpd->client.list.head = client;
 			httpd->client.list.tail = client;
 		}
+		httpd->client.list.count++;
 
 		if (httpd->opt.trait & QSE_HTTPD_LOGACT)
 		{
@@ -898,6 +900,20 @@ qse_httpd_server_t* qse_httpd_getprevserver (qse_httpd_t* httpd, qse_httpd_serve
 	return server->prev;
 }
 
+
+int qse_httpd_addhnd (qse_httpd_t* httpd, qse_httpd_hnd_t handle, int mask, qse_httpd_custom_t* mate)
+{
+	/* qse_httpd_loop() opens the multiplexer. you can call this function from 
+	 * preloop/postloop hooks only. but calling it from postloop hooks is
+	 * useless. */
+	return httpd->opt.scb.mux.addhnd (httpd, httpd->mux, handle, QSE_HTTPD_MUX_READ, mate);
+}
+
+int qse_httpd_delhnd (qse_httpd_t* httpd, qse_httpd_hnd_t handle)
+{
+	return httpd->opt.scb.mux.delhnd (httpd, httpd->mux, handle);
+}
+
 /* ----------------------------------------------------------------------- */
 
 static int activate_dns (qse_httpd_t* httpd)
@@ -905,6 +921,13 @@ static int activate_dns (qse_httpd_t* httpd)
 	int i;
 
 	QSE_MEMSET (&httpd->dns, 0, QSE_SIZEOF(httpd->dns));
+
+	if (!httpd->opt.scb.dns.open) 
+	{
+		httpd->errnum = QSE_HTTPD_ENOIMPL;
+		return -1;
+	}
+
 	if (httpd->opt.scb.dns.open (httpd, &httpd->dns) <= -1) return -1;
 
 	httpd->dns.type = QSE_HTTPD_DNS;
@@ -949,6 +972,13 @@ static int activate_urs (qse_httpd_t* httpd)
 	int i;
 
 	QSE_MEMSET (&httpd->urs, 0, QSE_SIZEOF(httpd->urs));
+
+	if (!httpd->opt.scb.urs.open) 
+	{
+		httpd->errnum = QSE_HTTPD_ENOIMPL;
+		return -1;
+	}
+
 	if (httpd->opt.scb.urs.open (httpd, &httpd->urs) <= -1) return -1;
 
 	httpd->urs.type = QSE_HTTPD_URS;
@@ -1598,8 +1628,7 @@ qse_httpd_task_t* qse_httpd_entask (
 	return (qse_httpd_task_t*)new_task;
 }
 
-static int dispatch_mux (
-	qse_httpd_t* httpd, void* mux, qse_httpd_hnd_t handle, int mask, void* cbarg)
+static int dispatch_mux (qse_httpd_t* httpd, void* mux, qse_httpd_hnd_t handle, int mask, void* cbarg)
 {
 	switch (((qse_httpd_mate_t*)cbarg)->type)
 	{
@@ -1614,6 +1643,9 @@ static int dispatch_mux (
 
 		case QSE_HTTPD_URS:
 			return perform_urs (httpd, mux, handle, mask, cbarg);
+
+		case QSE_HTTPD_CUSTOM:
+			return ((qse_httpd_custom_t*)cbarg)->dispatch (httpd, mux, handle, mask);
 	}
 
 	httpd->errnum = QSE_HTTPD_EINTERN;
@@ -1624,6 +1656,7 @@ int qse_httpd_loop (qse_httpd_t* httpd)
 {
 	int xret, count;
 	qse_ntime_t tmout;
+	qse_httpd_ecb_t* ecb;
 
 	QSE_ASSERTX (httpd->server.list.head != QSE_NULL,
 		"Add listeners before calling qse_httpd_loop()");
@@ -1695,13 +1728,18 @@ printf ("no active servers...\n");
 		return -1;
 	}
 
-printf ("entering loop... ...\n");
-	xret = 0;
+	/* call preloop hooks */
+	for (ecb = httpd->ecb; ecb; ecb = ecb->next)
+	{
+		if (ecb->preloop) ecb->preloop (httpd);
+	}
 
+	xret = 0;
 	while (!httpd->stopreq)
 	{
 		if (qse_tmr_gettmout (httpd->tmr, QSE_NULL, &tmout) <= -1) tmout = httpd->opt.tmout;
 		count = httpd->opt.scb.mux.poll (httpd, httpd->mux, &tmout);
+printf ("polled ... ...%d client count = %d  tmout = %d.%d\n", (int)count, (int)httpd->client.list.count, (int)tmout.sec, (int)tmout.nsec);
 		if (count <= -1) 
 		{
 printf ("mux errorr ... ...\n");
@@ -1720,6 +1758,11 @@ printf ("mux errorr ... ...\n");
 			httpd->impedereq = 0;
 			httpd->opt.rcb.impede (httpd);
 		}
+	}
+
+	for (ecb = httpd->ecb; ecb; ecb = ecb->next)
+	{
+		if (ecb->postloop) ecb->postloop (httpd);
 	}
 
 	purge_client_list (httpd);

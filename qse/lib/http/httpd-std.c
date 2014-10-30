@@ -730,6 +730,7 @@ qse_httpd_t* qse_httpd_openstdwithmmgr (qse_mmgr_t* mmgr, qse_size_t xtnsize)
 	if (httpd == QSE_NULL) goto oops;
 
 	xtn = (httpd_xtn_t*)qse_httpd_getxtn (httpd);
+	QSE_MEMSET (xtn, 0, QSE_SIZEOF(httpd_xtn_t*));
 
 #if defined(USE_LTDL)
 	/* lt_dlinit() can be called more than once and 

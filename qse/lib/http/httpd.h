@@ -61,6 +61,7 @@ struct qse_httpd_t
 		{
 			qse_httpd_client_t* head;
 			qse_httpd_client_t* tail;
+			qse_size_t count;
 		} list;
 
 		struct
