@@ -228,10 +228,12 @@ qse_httpd_task_t* qse_httpd_entask_status (
 }
 /*------------------------------------------------------------------------*/
 
-qse_httpd_task_t* qse_httpd_entask_error (
+qse_httpd_task_t* qse_httpd_entaskerrorwithmvk (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, 
 	qse_httpd_task_t* pred, int code,
-	qse_http_method_t method, const qse_http_version_t* version, int keepalive)
+	qse_http_method_t method,
+	const qse_http_version_t* version,
+	int keepalive)
 {
 	return qse_httpd_entask_status (httpd, client, pred, code, QSE_NULL, method, version, keepalive);
 }

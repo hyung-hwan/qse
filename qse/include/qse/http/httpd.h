@@ -1185,6 +1185,16 @@ QSE_EXPORT qse_httpd_task_t* qse_httpd_entaskerror (
 	qse_htre_t*               req
 );
 
+QSE_EXPORT qse_httpd_task_t* qse_httpd_entaskerrorwithmvk (
+	qse_httpd_t*              httpd,
+	qse_httpd_client_t*       client,
+	qse_httpd_task_t*         pred,
+	int                       code,
+	qse_http_method_t         method,
+	const qse_http_version_t* version,
+	int                       keepalive
+);
+
 QSE_EXPORT qse_httpd_task_t* qse_httpd_entaskcontinue (
 	qse_httpd_t*              httpd,
 	qse_httpd_client_t*       client,

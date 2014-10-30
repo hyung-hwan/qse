@@ -906,7 +906,7 @@ int qse_httpd_addhnd (qse_httpd_t* httpd, qse_httpd_hnd_t handle, int mask, qse_
 	/* qse_httpd_loop() opens the multiplexer. you can call this function from 
 	 * preloop/postloop hooks only. but calling it from postloop hooks is
 	 * useless. */
-	return httpd->opt.scb.mux.addhnd (httpd, httpd->mux, handle, QSE_HTTPD_MUX_READ, mate);
+	return httpd->opt.scb.mux.addhnd (httpd, httpd->mux, handle, mask, mate);
 }
 
 int qse_httpd_delhnd (qse_httpd_t* httpd, qse_httpd_hnd_t handle)
