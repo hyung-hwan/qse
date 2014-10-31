@@ -940,10 +940,10 @@ typedef void (*qse_httpd_ecb_postloop_t) (
 );
 
 /**
- * The qse_httpd_ecb_t type defines an event callback set.
- * You can register a callback function set with
- * qse_httpd_pushecb().  The callback functions in the registered
- * set are called in the reverse order of registration.
+ * The qse_httpd_ecb_t type defines an event callback structure.
+ * You can register callback functions with qse_httpd_pushecb().
+ * The callback functions registered are called in the reverse 
+ * order of registration.
  */
 typedef struct qse_httpd_ecb_t qse_httpd_ecb_t;
 struct qse_httpd_ecb_t
@@ -1034,7 +1034,7 @@ QSE_EXPORT qse_httpd_ecb_t* qse_httpd_popecb (
  */
 QSE_EXPORT void qse_httpd_pushecb (
 	qse_httpd_t*     httpd, /**< httpd */
-	qse_httpd_ecb_t* ecb  /**< callback set */
+	qse_httpd_ecb_t* ecb    /**< callbacks */
 );
 
 /**
