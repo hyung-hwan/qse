@@ -1359,6 +1359,20 @@ QSE_EXPORT qse_httpd_mod_t* qse_httpd_findmod (
 	const qse_char_t* name
 );
 
+
+/* -------------------------------------------- */
+
+QSE_EXPORT int qse_httpd_inserttimerevent (
+	qse_httpd_t*           httpd,
+	const qse_tmr_event_t* event,
+	qse_tmr_index_t*       index
+);
+
+QSE_EXPORT void qse_httpd_removetimerevent (
+	qse_httpd_t*     httpd,
+	qse_tmr_index_t  index
+);
+
 #ifdef __cplusplus
 }
 #endif

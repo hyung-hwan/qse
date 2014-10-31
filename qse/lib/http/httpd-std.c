@@ -1503,6 +1503,7 @@ static void dispatch_muxcb (qse_mux_t* mux, const qse_mux_evt_t* evt)
 	if (evt->mask & QSE_MUX_OUT) mask |= QSE_HTTPD_MUX_WRITE;
 
 	xtn->cbfun (xtn->httpd, mux, handle, mask, evt->data);
+	/* ignore return code of xtn->cbfun */
 }
 
 static void* mux_open (qse_httpd_t* httpd, qse_httpd_muxcb_t cbfun)
