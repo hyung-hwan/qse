@@ -737,7 +737,7 @@ static void tmr_idle_handle (qse_tmr_t* tmr, const qse_ntime_t* now, void* ctx)
 		if (qse_cmptime(&diff, &client->server->httpd->opt.idle_limit) >= 0)
 		{
 			/* this client is idle */
-			HTTPD_DBGOUT1 ("Purging idle client %d", (int)client->handle);
+			HTTPD_DBGOUT1 ("Purging idle client %zd\n", (qse_size_t)client->handle);
 			purge_client (client->server->httpd, client);
 		}
 		else
