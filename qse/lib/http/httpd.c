@@ -541,7 +541,7 @@ static void free_client (
 #if defined(QSE_HTTPD_DEBUG)
 	{
 		qse_mchar_t tmp[128];
-		qse_nwadtombs (&client->remote_addr, tmp, QSE_COUNTOF(tmp), QSE_NWADTOSTR_ALL);
+		qse_nwadtombs (&client->remote_addr, tmp, QSE_COUNTOF(tmp), QSE_NWADTOMBS_ALL);
 		HTTPD_DBGOUT2 ("Closing client [%hs] - %zd\n", tmp, (qse_size_t)client->handle);
 	}
 #endif
@@ -579,7 +579,7 @@ static void purge_client (qse_httpd_t* httpd, qse_httpd_client_t* client)
 #if defined(QSE_HTTPD_DEBUG)
 	{
 		qse_mchar_t tmp[128];
-		qse_nwadtombs (&client->remote_addr, tmp, QSE_COUNTOF(tmp), QSE_NWADTOSTR_ALL);
+		qse_nwadtombs (&client->remote_addr, tmp, QSE_COUNTOF(tmp), QSE_NWADTOMBS_ALL);
 		HTTPD_DBGOUT2 ("Purged client [%hs] - %zd\n", tmp, (qse_size_t)client->handle);
 	}
 #endif
@@ -656,7 +656,7 @@ static int accept_client (
 		{
 		#if QSE_HTTPD_DEBUG
 			qse_mchar_t tmp[128];
-			qse_nwadtombs (&server->dope.nwad, tmp, QSE_COUNTOF(tmp), QSE_NWADTOSTR_ALL);
+			qse_nwadtombs (&server->dope.nwad, tmp, QSE_COUNTOF(tmp), QSE_NWADTOMBS_ALL);
 			HTTPD_DBGOUT2 ("Failed to accept from server [%hs] [%d]\n", tmp, (int)server->handle);
 		#endif
 			return -1;
@@ -708,9 +708,9 @@ static int accept_client (
 	#if defined(QSE_HTTPD_DEBUG)
 		{
 			qse_mchar_t tmp1[128], tmp2[128], tmp3[128];
-			qse_nwadtombs (&client->local_addr, tmp1, QSE_COUNTOF(tmp1), QSE_NWADTOSTR_ALL);
-			qse_nwadtombs (&client->orgdst_addr, tmp2, QSE_COUNTOF(tmp2), QSE_NWADTOSTR_ALL);
-			qse_nwadtombs (&client->remote_addr, tmp3, QSE_COUNTOF(tmp3), QSE_NWADTOSTR_ALL);
+			qse_nwadtombs (&client->local_addr, tmp1, QSE_COUNTOF(tmp1), QSE_NWADTOMBS_ALL);
+			qse_nwadtombs (&client->orgdst_addr, tmp2, QSE_COUNTOF(tmp2), QSE_NWADTOMBS_ALL);
+			qse_nwadtombs (&client->remote_addr, tmp3, QSE_COUNTOF(tmp3), QSE_NWADTOMBS_ALL);
 			HTTPD_DBGOUT3 ("Accepted client %hs(%hs) from %hs\n", tmp1, tmp2, tmp3);
 		}
 	#endif
@@ -774,6 +774,14 @@ static void deactivate_servers (qse_httpd_t* httpd)
 	{
 		if (server->dope.flags & QSE_HTTPD_SERVER_ACTIVE)
 		{
+		#if defined(QSE_HTTPD_DEBUG)
+			{
+				qse_mchar_t tmp[128];
+				qse_nwadtombs (&server->dope.nwad, tmp, QSE_COUNTOF(tmp), QSE_NWADTOMBS_ALL);
+				HTTPD_DBGOUT2 ("Closing server [%hs] %zd to mux\n", tmp, (qse_size_t)server->handle);
+			}
+		#endif
+
 			httpd->opt.scb.mux.delhnd (httpd, httpd->mux, server->handle);
 			httpd->opt.scb.server.close (httpd, server);
 			server->dope.flags &= ~QSE_HTTPD_SERVER_ACTIVE;
@@ -792,29 +800,37 @@ static int activate_servers (qse_httpd_t* httpd)
 
 		if (httpd->opt.scb.server.open (httpd, server) <= -1)
 		{
-			qse_char_t buf[64];
-			qse_nwadtostr (&server->dope.nwad, buf, QSE_COUNTOF(buf), QSE_NWADTOSTR_ALL);
+		#if defined(QSE_HTTPD_DEBUG)
+			{
+				qse_mchar_t tmp[128];
+				qse_nwadtombs (&server->dope.nwad, tmp, QSE_COUNTOF(tmp), QSE_NWADTOMBS_ALL);
+				HTTPD_DBGOUT1 ("Cannot open server [%hs]\n", tmp);
+			}
+		#endif
 
-/*
-			httpd->opt.rcb.log (httpd, 0, QSE_T("cannot activate %s"), buf);
-*/
-#if 1
-qse_printf(QSE_T("cannot activate [%s]\n"), buf);
-#endif
 			continue;
+		}
+		else
+		{
+		#if defined(QSE_HTTPD_DEBUG)
+			{
+				qse_mchar_t tmp[128];
+				qse_nwadtombs (&server->dope.nwad, tmp, QSE_COUNTOF(tmp), QSE_NWADTOMBS_ALL);
+				HTTPD_DBGOUT2 ("Opened server [%hs] - %zd\n", tmp, (qse_size_t)server->handle);
+			}
+		#endif
 		}
 
 		if (httpd->opt.scb.mux.addhnd (
 			httpd, httpd->mux, server->handle, QSE_HTTPD_MUX_READ, server) <= -1)
 		{
-			qse_char_t buf[64];
-			qse_nwadtostr (&server->dope.nwad, buf, QSE_COUNTOF(buf), QSE_NWADTOSTR_ALL);
-/*
-			httpd->opt.rcb.log (httpd, 0, QSE_T("cannot activate %s - "), buf);
-*/
-#if 1
-qse_printf(QSE_T("cannot add handle [%s]\n"), buf);
-#endif
+		#if defined(QSE_HTTPD_DEBUG)
+			{
+				qse_mchar_t tmp[128];
+				qse_nwadtombs (&server->dope.nwad, tmp, QSE_COUNTOF(tmp), QSE_NWADTOMBS_ALL);
+				HTTPD_DBGOUT2 ("Cannot add server [%hs] %zd to mux. Closing\n", tmp, (qse_size_t)server->handle);
+			}
+		#endif
 
 			httpd->opt.scb.server.close (httpd, server);
 			continue;

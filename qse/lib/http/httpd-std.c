@@ -936,7 +936,7 @@ static int server_open (qse_httpd_t* httpd, qse_httpd_server_t* server)
 	{
 		/* TODO: logging. warning only */
 		/* this is not a hard failure */
-qse_fprintf (QSE_STDERR, QSE_T("Failed to enable SO_REUSEPORT\n"));
+		HTTPD_DBGOUT1 ("Failed to enable SO_REUSERPORT on %zd\n", (qse_size_t)fd);
 	}
 	#endif
 
