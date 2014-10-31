@@ -24,9 +24,29 @@
 /* private header file for httpd */
 
 #include <qse/http/httpd.h>
+#include <qse/cmn/sio.h>
 
 #define QSE_HTTPD_DEFAULT_PORT        80
 #define QSE_HTTPD_DEFAULT_SECURE_PORT 443
+
+#define QSE_HTTPD_DEBUG 1
+/*#undef QSE_HTTPD_DEBUG*/
+
+#if defined(QSE_HTTPD_DEBUG)
+#	define HTTPD_DBGOUT0(fmt) qse_putmbsf("%hs:%d: " fmt, __FILE__, (int)__LINE__)
+#	define HTTPD_DBGOUT1(fmt,a1) qse_putmbsf("%hs:%d: " fmt, __FILE__, (int)__LINE__, (a1))
+#	define HTTPD_DBGOUT2(fmt,a1,a2) qse_putmbsf("%hs:%d: " fmt, __FILE__, (int)__LINE__, (a1), (a2))
+#	define HTTPD_DBGOUT3(fmt,a1,a2,a3) qse_putmbsf("%hs:%d: " fmt, __FILE__, (int)__LINE__, (a1), (a2), (a3))
+#	define HTTPD_DBGOUT4(fmt,a1,a2,a3,a4) qse_putmbsf("%hs:%d: " fmt, __FILE__, (int)__LINE__, (a1), (a2), (a3), (a4))
+#	define HTTPD_DBGOUT5(fmt,a1,a2,a3,a4,a5) qse_putmbsf("%hs:%d: " fmt, __FILE__, (int)__LINE__, (a1), (a2), (a3), (a4), (a5))
+#else
+#	define HTTPD_DBGOUT0(fmt)
+#	define HTTPD_DBGOUT1(fmt,a1)
+#	define HTTPD_DBGOUT2(fmt,a1,a2)
+#	define HTTPD_DBGOUT3(fmt,a1,a2,a3)
+#	define HTTPD_DBGOUT4(fmt,a1,a2,a3,a4)
+#	define HTTPD_DBGOUT5(fmt,a1,a2,a3,a4,a5)
+#endif
 
 struct qse_httpd_t
 {

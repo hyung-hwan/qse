@@ -554,7 +554,6 @@ printf ("intercepted. to be handled locally ...\n");
 		}
 	}
 
-printf ("qpath ===> [%s]\n",qpath);
 	if ((loccfg->proxy.allow_http && qse_mbszcasecmp (qpath, QSE_MT("http://"), (proto_len = 7)) == 0) ||
 	    (loccfg->proxy.allow_https && qse_mbszcasecmp (qpath, QSE_MT("https://"), (proto_len = 8)) == 0))
 	{
@@ -908,16 +907,18 @@ found:
 			qse_size_t i;
 			qse_httpd_serverstd_cgi_t* scgi;
 			const qse_mchar_t* xpath_base;
+#if 0
 			qse_mchar_t* qpath;
 
 			qpath = qse_htre_getqpath(qinfo->req);
+#endif
 
 			scgi = (qse_httpd_serverstd_cgi_t*)result;
 			qse_memset (scgi, 0, QSE_SIZEOF(*scgi));
 
-#if 1
-printf ("qinfo->xpath ####### [%s] %d [%s]\n", qinfo->xpath, qinfo->xpath_nx, qpath);
-			//if (qse_mbscmp (qinfo->xpath, QSE_MT("/tmp/version.cgi")) == 0)
+#if 0
+			printf ("qinfo->xpath [%s] %d [%s]\n", qinfo->xpath, qinfo->xpath_nx, qpath);
+			/*if (qse_mbscmp (qinfo->xpath, QSE_MT("/tmp/version.cgi")) == 0)*/
 			if (qse_mbscmp (qpath, QSE_MT("/local/version.cgi")) == 0)
 			{
 				scgi->cgi = 1;
@@ -927,8 +928,6 @@ printf ("qinfo->xpath ####### [%s] %d [%s]\n", qinfo->xpath, qinfo->xpath_nx, qp
 				return 0;
 			}
 #endif
-
-
 			if (!qinfo->xpath_nx)
 			{
 				xpath_base = qse_mbsbasename (qinfo->xpath);
@@ -2487,22 +2486,6 @@ static void logact_httpd (qse_httpd_t* httpd, const qse_httpd_act_t* act)
 
 		case QSE_HTTPD_CATCH_MWARNMSG:
 			qse_printf (QSE_T("WARNING: %hs\n"), act->u.mwarnmsg);
-			break;
-
-		case QSE_HTTPD_CATCH_MDBGMSG:
-			qse_printf (QSE_T("DEBUG: %hs\n"), act->u.mdbgmsg);
-			break;
-
-		case QSE_HTTPD_ACCEPT_CLIENT:
-			qse_nwadtostr (&act->u.client->local_addr, tmp, QSE_COUNTOF(tmp), QSE_NWADTOSTR_ALL);
-			qse_nwadtostr (&act->u.client->orgdst_addr, tmp2, QSE_COUNTOF(tmp2), QSE_NWADTOSTR_ALL);
-			qse_nwadtostr (&act->u.client->remote_addr, tmp3, QSE_COUNTOF(tmp3), QSE_NWADTOSTR_ALL);
-			qse_printf (QSE_T("accepted client %s(%s) from %s\n"), tmp, tmp2, tmp3);
-			break;
-
-		case QSE_HTTPD_PURGE_CLIENT:
-			qse_nwadtostr (&act->u.client->remote_addr, tmp, QSE_COUNTOF(tmp), QSE_NWADTOSTR_ALL);
-			qse_printf (QSE_T("purged client - %s\n"), tmp);
 			break;
 
 		case QSE_HTTPD_READERR_CLIENT:

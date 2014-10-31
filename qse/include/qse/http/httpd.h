@@ -73,10 +73,17 @@ typedef enum qse_httpd_errnum_t qse_httpd_errnum_t;
 enum qse_httpd_opt_t
 {
 	QSE_HTTPD_TRAIT,
+
+	/** Default multiplexer timeout. */
 	QSE_HTTPD_TMOUT,
+
+	/** Idle limit in #qse_ntime_t.
+	 *  The limit is enabled only if the value is greater than 0.0 */
 	QSE_HTTPD_IDLELIMIT,
+
 	QSE_HTTPD_MODPREFIX,
 	QSE_HTTPD_MODPOSTFIX,
+
 	QSE_HTTPD_SCB,
 	QSE_HTTPD_RCB
 };
@@ -489,9 +496,6 @@ enum qse_httpd_act_code_t
 {
 	QSE_HTTPD_CATCH_MERRMSG,
 	QSE_HTTPD_CATCH_MWARNMSG,
-	QSE_HTTPD_CATCH_MDBGMSG,
-	QSE_HTTPD_ACCEPT_CLIENT,
-	QSE_HTTPD_PURGE_CLIENT,
 	QSE_HTTPD_READERR_CLIENT
 };
 typedef enum qse_httpd_act_code_t qse_httpd_act_code_t;

@@ -478,13 +478,18 @@ static qse_httpd_client_t* new_client (qse_httpd_t* httpd, qse_httpd_client_t* t
 		goto oops;
 	}
 
-	qse_gettime (&idle_event.when);
-	qse_addtime (&idle_event.when, &httpd->opt.idle_limit, &idle_event.when);
-	idle_event.ctx = client;
-	idle_event.handler = tmr_idle_handle;
-	idle_event.updater = tmr_idle_update;
+	if (httpd->opt.idle_limit.sec > 0 || 
+	    (httpd->opt.idle_limit.sec == 0 && httpd->opt.idle_limit.nsec > 0))
+	{
+		/* idle limit is enabled when the limit is greater than 0.0 */
+		qse_gettime (&idle_event.when);
+		qse_addtime (&idle_event.when, &httpd->opt.idle_limit, &idle_event.when);
+		idle_event.ctx = client;
+		idle_event.handler = tmr_idle_handle;
+		idle_event.updater = tmr_idle_update;
 
-	if (qse_httpd_inserttimerevent (httpd, &idle_event, &client->tmr_idle) <= -1) goto oops;
+		if (qse_httpd_inserttimerevent (httpd, &idle_event, &client->tmr_idle) <= -1) goto oops;
+	}
 
 	qse_htrd_setoption (client->htrd, QSE_HTRD_REQUEST | QSE_HTRD_TRAILERS | QSE_HTRD_CANONQPATH);
 
@@ -515,7 +520,7 @@ oops:
 		if (client->tmr_idle != QSE_TMR_INVALID_INDEX) 
 		{
 			qse_httpd_removetimerevent (httpd, client->tmr_idle);
-			/* cleint->tmr_idle = QSE_TMR_INVALID_INDEX; */
+			client->tmr_idle = QSE_TMR_INVALID_INDEX;
 		}
 		if (client->htrd) qse_htrd_close (client->htrd);
 		qse_httpd_freemem (httpd, client);
@@ -533,8 +538,12 @@ static void free_client (
 
 	qse_htrd_close (client->htrd);
 
-#if 0
-qse_printf (QSE_T("Debug: CLOSING SOCKET %d\n"), client->handle.i);
+#if defined(QSE_HTTPD_DEBUG)
+	{
+		qse_mchar_t tmp[128];
+		qse_nwadtombs (&client->remote_addr, tmp, QSE_COUNTOF(tmp), QSE_NWADTOSTR_ALL);
+		HTTPD_DBGOUT2 ("Closing client [%hs] - %zd\n", tmp, (qse_size_t)client->handle);
+	}
 #endif
 
 	if (client->status & QSE_HTTPD_CLIENT_HANDLE_RW_IN_MUX)
@@ -567,13 +576,13 @@ static void purge_client (qse_httpd_t* httpd, qse_httpd_client_t* client)
 	prev = client->prev;
 	next = client->next;
 
-	if (httpd->opt.trait & QSE_HTTPD_LOGACT)
+#if defined(QSE_HTTPD_DEBUG)
 	{
-		qse_httpd_act_t msg;
-		msg.code = QSE_HTTPD_PURGE_CLIENT;
-		msg.u.client = client;
-		httpd->opt.rcb.logact (httpd, &msg);
+		qse_mchar_t tmp[128];
+		qse_nwadtombs (&client->remote_addr, tmp, QSE_COUNTOF(tmp), QSE_NWADTOSTR_ALL);
+		HTTPD_DBGOUT2 ("Purged client [%hs] - %zd\n", tmp, (qse_size_t)client->handle);
 	}
+#endif
 
 	free_client (httpd, client);
 
@@ -645,12 +654,11 @@ static int accept_client (
 
 		if (httpd->opt.scb.server.accept (httpd, server, &clibuf) <= -1) 
 		{
-#if 1
-qse_mchar_t tmp[128];
-qse_nwadtombs (&server->dope.nwad, tmp, QSE_COUNTOF(tmp), QSE_NWADTOSTR_ALL);
-printf ("failed to accept from server [%s] [%d]\n", tmp, server->handle);
-#endif
-
+		#if QSE_HTTPD_DEBUG
+			qse_mchar_t tmp[128];
+			qse_nwadtombs (&server->dope.nwad, tmp, QSE_COUNTOF(tmp), QSE_NWADTOSTR_ALL);
+			HTTPD_DBGOUT2 ("Failed to accept from server [%hs] [%d]\n", tmp, (int)server->handle);
+		#endif
 			return -1;
 		}
 
@@ -697,18 +705,19 @@ printf ("failed to accept from server [%s] [%d]\n", tmp, server->handle);
 		}
 		httpd->client.list.count++;
 
-		if (httpd->opt.trait & QSE_HTTPD_LOGACT)
+	#if defined(QSE_HTTPD_DEBUG)
 		{
-			qse_httpd_act_t msg;
-			msg.code = QSE_HTTPD_ACCEPT_CLIENT;
-			msg.u.client = client;
-			httpd->opt.rcb.logact (httpd, &msg);
+			qse_mchar_t tmp1[128], tmp2[128], tmp3[128];
+			qse_nwadtombs (&client->local_addr, tmp1, QSE_COUNTOF(tmp1), QSE_NWADTOSTR_ALL);
+			qse_nwadtombs (&client->orgdst_addr, tmp2, QSE_COUNTOF(tmp2), QSE_NWADTOSTR_ALL);
+			qse_nwadtombs (&client->remote_addr, tmp3, QSE_COUNTOF(tmp3), QSE_NWADTOSTR_ALL);
+			HTTPD_DBGOUT3 ("Accepted client %hs(%hs) from %hs\n", tmp1, tmp2, tmp3);
 		}
+	#endif
 	}
 
 	return 0;
 }
-
 
 static void tmr_idle_update (qse_tmr_t* tmr, qse_tmr_index_t old_index, qse_tmr_index_t new_index, void* ctx)
 {
@@ -728,6 +737,7 @@ static void tmr_idle_handle (qse_tmr_t* tmr, const qse_ntime_t* now, void* ctx)
 		if (qse_cmptime(&diff, &client->server->httpd->opt.idle_limit) >= 0)
 		{
 			/* this client is idle */
+			HTTPD_DBGOUT1 ("Purging idle client %d", (int)client->handle);
 			purge_client (client->server->httpd, client);
 		}
 		else
@@ -746,7 +756,10 @@ static void tmr_idle_handle (qse_tmr_t* tmr, const qse_ntime_t* now, void* ctx)
 			/* the timer must have been deleted when this callback is called. */
 			QSE_ASSERT (client->tmr_idle == QSE_TMR_INVALID_INDEX); 
 			if (qse_httpd_inserttimerevent (client->server->httpd, &idle_event, &client->tmr_idle) <= -1)
+			{
+				HTTPD_DBGOUT1 ("Cannot update idle timer for client %d. Marking it bad", (int)client->handle);
 				mark_bad_client (client);
+			}
 		}
 	}
 }
@@ -1695,6 +1708,8 @@ int qse_httpd_loop (qse_httpd_t* httpd)
 			qse_mbscpy (msg.u.mwarnmsg, QSE_MT("cannot activate dns"));
 			httpd->opt.rcb.logact (httpd, &msg);
 		}
+
+		HTTPD_DBGOUT0 ("Failed to activate DNS\n");
 	}
 	else httpd->dnsactive = 1;
 
@@ -1707,6 +1722,7 @@ int qse_httpd_loop (qse_httpd_t* httpd)
 			qse_mbscpy (msg.u.mwarnmsg, QSE_MT("cannot activate urs"));
 			httpd->opt.rcb.logact (httpd, &msg);
 		}
+		HTTPD_DBGOUT0 ("Failed to activate URS\n");
 	}
 	else httpd->ursactive = 1;
 
@@ -1719,7 +1735,8 @@ int qse_httpd_loop (qse_httpd_t* httpd)
 	}
 	if (httpd->server.nactive <= 0)
 	{
-printf ("no active servers...\n");
+		HTTPD_DBGOUT0 ("No servers are active. aborting\n");
+
 		if (httpd->dnsactive) deactivate_dns (httpd);
 		if (httpd->ursactive) deactivate_urs (httpd);
 		httpd->opt.scb.mux.close (httpd, httpd->mux);
@@ -1739,10 +1756,9 @@ printf ("no active servers...\n");
 	{
 		if (qse_tmr_gettmout (httpd->tmr, QSE_NULL, &tmout) <= -1) tmout = httpd->opt.tmout;
 		count = httpd->opt.scb.mux.poll (httpd, httpd->mux, &tmout);
-printf ("polled ... ...%d client count = %d  tmout = %d.%d\n", (int)count, (int)httpd->client.list.count, (int)tmout.sec, (int)tmout.nsec);
+		/*HTTPD_DBGOUT4 ("Multiplexer returned %d client count = %d  tmout = %d.%d\n", (int)count, (int)httpd->client.list.count, (int)tmout.sec, (int)tmout.nsec);*/
 		if (count <= -1) 
 		{
-printf ("mux errorr ... ...\n");
 			if (httpd->errnum != QSE_HTTPD_EINTR)
 			{
 				xret = -1; 
@@ -1893,13 +1909,13 @@ qse_mchar_t* qse_httpd_escapehtml (qse_httpd_t* httpd, const qse_mchar_t* str)
 
 int qse_httpd_resolvename (qse_httpd_t* httpd, const qse_mchar_t* name, qse_httpd_resolve_t resol, const qse_httpd_dns_server_t* dns_server, void* ctx)
 {
-printf ("DNS_SEND.........................\n");
 	if (!httpd->dnsactive) 
 	{
 		qse_httpd_seterrnum (httpd, QSE_HTTPD_ENODNS);
 		return -1;
 	}
 
+	HTTPD_DBGOUT1 ("Sending DNS request [%hs]\n", name);
 	return httpd->opt.scb.dns.send (httpd, &httpd->dns, name, resol, dns_server, ctx);
 }
 
@@ -1911,6 +1927,7 @@ int qse_httpd_rewriteurl (qse_httpd_t* httpd, const qse_mchar_t* url, qse_httpd_
 		return -1;
 	}
 
+	HTTPD_DBGOUT1 ("Sending URS request [%hs]\n", url);
 	return httpd->opt.scb.urs.send (httpd, &httpd->urs, url, rewrite, urs_server, ctx);
 }
 

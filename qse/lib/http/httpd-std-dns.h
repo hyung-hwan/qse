@@ -354,15 +354,13 @@ static int dns_open (qse_httpd_t* httpd, qse_httpd_dns_t* dns)
 	if (nwad.type != QSE_NWAD_NX && qse_getnwadport(&nwad) == 0) 
 		qse_setnwadport (&nwad, qse_hton16(QSE_HTTPD_DNSSTD_DEFAULT_PORT));
 
-	if (httpd->opt.trait & QSE_HTTPD_LOGACT)
+#if defined(QSE_HTTPD_DEBUG)
 	{
-		qse_httpd_act_t msg;
-		qse_size_t pos;
-		msg.code = QSE_HTTPD_CATCH_MDBGMSG;
-		pos = qse_mbsxcpy (msg.u.mdbgmsg, QSE_COUNTOF(msg.u.mdbgmsg), "default nameserver set to ");
-		qse_nwadtombs (&nwad, &msg.u.mdbgmsg[pos], QSE_COUNTOF(msg.u.mdbgmsg) - pos, QSE_NWADTOMBS_ALL);
-		httpd->opt.rcb.logact (httpd, &msg);
+		qse_mchar_t tmp[128];
+		qse_nwadtombs (&nwad, tmp, QSE_COUNTOF(tmp), QSE_NWADTOMBS_ALL);
+		HTTPD_DBGOUT1 ("Default DNS server set to [%hs]\n", tmp);
 	}
+#endif
 
 	dns->handle[0] = open_client_socket (httpd, AF_INET, SOCK_DGRAM, 0);
 #if defined(AF_INET6)
@@ -623,13 +621,21 @@ static int dns_recv (qse_httpd_t* httpd, qse_httpd_dns_t* dns, qse_httpd_hnd_t h
 	qse_nwad_t* resolved_nwad = QSE_NULL;
 	int cache_ttl = 0;
 
-printf ("DNS_RECV....\n");
-
 	httpd_xtn = qse_httpd_getxtn (httpd);
 
 	fromlen = QSE_SIZEOF(fromaddr);
 	len = recvfrom (handle, buf, QSE_SIZEOF(buf), 0, (struct sockaddr*)&fromaddr, &fromlen);
 
+#if defined(QSE_HTTPD_DEBUG)
+	{
+		qse_nwad_t tmpnwad;
+		qse_mchar_t tmp[128];
+		qse_skadtonwad (&fromaddr, &tmpnwad);
+
+		qse_nwadtombs (&tmpnwad, tmp, QSE_COUNTOF(tmp), QSE_NWADTOMBS_ALL);
+		HTTPD_DBGOUT2 ("Received DNS response of length %d from %s\n", (int)len, tmp);
+	}
+#endif
 	if (len < QSE_SIZEOF(*hdr)) goto done; /* packet too small */
 
 	hdr = (dns_hdr_t*)buf;
