@@ -1173,12 +1173,23 @@ QSE_EXPORT qse_httpd_task_t* qse_httpd_entaskformat (
 /* -------------------------------------------- */
 
 QSE_EXPORT qse_httpd_task_t* qse_httpd_entasktext (
-	qse_httpd_t*            httpd,
-	qse_httpd_client_t*     client,
-	qse_httpd_task_t*       pred,
-	const qse_mchar_t*      text,
-	const qse_mchar_t*      mime,
-	qse_htre_t*             req
+	qse_httpd_t*              httpd,
+	qse_httpd_client_t*       client,
+	qse_httpd_task_t*         pred,
+	const qse_mchar_t*        text,
+	const qse_mchar_t*        mime,
+	qse_htre_t*               req
+);
+
+QSE_EXPORT qse_httpd_task_t* qse_httpd_entasktextwithmvk (
+	qse_httpd_t*              httpd,
+	qse_httpd_client_t*       client,
+	qse_httpd_task_t*         pred, 
+	const qse_mchar_t*        text,
+	const qse_mchar_t*        mime,
+	qse_http_method_t         method,
+	const qse_http_version_t* version,
+	int                       keepalive
 );
 
 QSE_EXPORT qse_httpd_task_t* qse_httpd_entaskerror (
