@@ -1052,7 +1052,7 @@ static int server_accept (
 /* TODO: implement maximum number of client per server??? */
 	if (fd >= FD_SETSIZE)
 	{
-printf ("ERROR: too many client?\n");
+		HTTPD_DEBUG ("ERROR: too many client - max %d, fd %d\n", (FD_SETSIZE, fd));
 		/*TODO: qse_httpd_seterrnum (httpd, QSE_HTTPD_EXXXXX);*/
 		goto oops;
 	}
@@ -1870,16 +1870,8 @@ static int file_ropen (
 	if (fio == QSE_NULL) return -1;
 
 	*handle = FIO_TO_HANDLE(fio);
-	if (httpd->opt.trait & QSE_HTTPD_LOGACT)
-	{
-		qse_httpd_act_t msg;
-		qse_size_t pos;
-		msg.code = QSE_HTTPD_CATCH_MDBGMSG;
-		pos = qse_mbscpy (msg.u.mdbgmsg, QSE_MT("ropened file "));
-		qse_mbsxcpy (&msg.u.mdbgmsg[pos], QSE_COUNTOF(msg.u.mdbgmsg) - pos, path);
-		httpd->opt.rcb.logact (httpd, &msg);
-	}
 
+	HTTPD_DBGOUT2 ("Opened file [%hs] for reading - %zd\n", path, (qse_size_t)*handle);
 	return 0;
 }
 
@@ -1893,21 +1885,15 @@ static int file_wopen (
 	if (fio == QSE_NULL) return -1;
 
 	*handle = FIO_TO_HANDLE(fio);
-	if (httpd->opt.trait & QSE_HTTPD_LOGACT)
-	{
-		qse_httpd_act_t msg;
-		qse_size_t pos;
-		msg.code = QSE_HTTPD_CATCH_MDBGMSG;
-		pos = qse_mbscpy (msg.u.mdbgmsg, QSE_MT("wopened file "));
-		qse_mbsxcpy (&msg.u.mdbgmsg[pos], QSE_COUNTOF(msg.u.mdbgmsg) - pos, path);
-		httpd->opt.rcb.logact (httpd, &msg);
-	}
 
+	HTTPD_DBGOUT2 ("Opened file [%hs] for writing - %zd\n", path, (qse_size_t)*handle);
 	return 0;
 }
 
 static void file_close (qse_httpd_t* httpd, qse_httpd_hnd_t handle)
 {
+	HTTPD_DBGOUT1 ("Closed file %zd\n", (qse_size_t)handle);
+
 	qse_fio_fini (HANDLE_TO_FIO(handle));
 	qse_httpd_freemem (httpd, HANDLE_TO_FIO(handle));
 }
@@ -2073,23 +2059,17 @@ static int dir_open (qse_httpd_t* httpd, const qse_mchar_t* path, qse_httpd_hnd_
 		return -1;
 	}
 
-	if (httpd->opt.trait & QSE_HTTPD_LOGACT)
-	{
-		qse_httpd_act_t msg;
-		qse_size_t pos;
-		msg.code = QSE_HTTPD_CATCH_MDBGMSG;
-		pos = qse_mbscpy (msg.u.mdbgmsg, QSE_MT("opened dir "));
-		qse_mbsxcpy (&msg.u.mdbgmsg[pos], QSE_COUNTOF(msg.u.mdbgmsg) - pos, path);
-		httpd->opt.rcb.logact (httpd, &msg);
-	}
-
 	*handle = DIR_TO_HANDLE(d);
+
+	HTTPD_DBGOUT2 ("Opened directory [%hs] - %zd\n", path, (qse_size_t)*handle);
 	return 0;
 }
 
 static void dir_close (qse_httpd_t* httpd, qse_httpd_hnd_t handle)
 {
 	dir_t* d;
+
+	HTTPD_DBGOUT1 ("Closing directory %zd\n", (qse_size_t)handle);
 
 	d = HANDLE_TO_DIR(handle);
 
@@ -2328,7 +2308,8 @@ static qse_htb_walk_t walk (qse_htb_t* htb, qse_htb_pair_t* pair, void* ctx)
 	val = QSE_HTB_VPTR(pair);
 	while (val)
 	{
-qse_printf (QSE_T("HEADER OK %d[%hs] %d[%hs]\n"),  (int)QSE_HTB_KLEN(pair), QSE_HTB_KPTR(pair), (int)val->len, val->ptr);
+
+		HTTPD_DEBUG ((QSE_T("HEADER OK %d[%hs] %d[%hs]\n"), (int)QSE_HTB_KLEN(pair), QSE_HTB_KPTR(pair), (int)val->len, val->ptr));
 		val = val->next;
 	}
 	return QSE_HTB_WALK_FORWARD;
@@ -2350,17 +2331,15 @@ static int process_request (
 	 * any more. once it's decoded in the peek mode,
 	 * the decoded query path is made available in the
 	 * non-peek mode as well */
-	if (peek) qse_htre_perdecqpath(req);
-
-	if (peek && (httpd->opt.trait & QSE_HTTPD_LOGACT))
+	if (peek) 
 	{
-/* TODO: improve logging */
-		qse_httpd_act_t msg;
-		msg.code = QSE_HTTPD_CATCH_MDBGMSG;
-		qse_mbsxfmt (msg.u.mdbgmsg, QSE_COUNTOF(msg.u.mdbgmsg), 
-			QSE_MT("%s %s"), qse_htre_getqmethodname(req), qse_htre_getqpath(req));
-		httpd->opt.rcb.logact (httpd, &msg);
+		qse_htre_perdecqpath(req);
+
+		/* TODO: proper request logging */
+
+		HTTPD_DBGOUT2 ("%s %s\n", qse_htre_getqmethodname(req), qse_htre_getqpath(req));
 	}
+
 
 #if 0
 qse_printf (QSE_T("================================\n"));
@@ -2472,7 +2451,8 @@ if (qse_htre_getcontentlen(req) > 0)
 
 		if (mth == QSE_HTTP_CONNECT)
 		{
-printf ("SWITCHING HTRD TO DUMMY.... %s\n", qse_htre_getqpath(req));
+			HTTPD_DBGOUT1 ("Switching HTRD to DUMMY for [%hs]\n", qse_htre_getqpath(req));
+
 			/* Switch the http read to a dummy mode so that the subsqeuent
 			 * input(request) is just treated as data to the request just 
 			 * completed */
@@ -2480,7 +2460,8 @@ printf ("SWITCHING HTRD TO DUMMY.... %s\n", qse_htre_getqpath(req));
 
 			if (server_xtn->makersrc (httpd, client, req, &rsrc) <= -1)
 			{
-printf ("CANOT MAKE RESOURCE.... %s\n", qse_htre_getqpath(req));
+				HTTPD_DBGOUT1 ("Cannot make resource for [%hs]\n", qse_htre_getqpath(req));
+
 				/* failed to make a resource. just send the internal server error.
 				 * the makersrc handler can return a negative number to return 
 				 * '500 Internal Server Error'. If it wants to return a specific

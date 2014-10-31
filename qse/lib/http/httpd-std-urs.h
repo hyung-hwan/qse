@@ -113,15 +113,13 @@ static int urs_open (qse_httpd_t* httpd, qse_httpd_urs_t* urs)
 	if (nwad.type != QSE_NWAD_NX && qse_getnwadport(&nwad) == 0) 
 		qse_setnwadport (&nwad, qse_hton16(QSE_HTTPD_URSSTD_DEFAULT_PORT));
 
-	if (httpd->opt.trait & QSE_HTTPD_LOGACT)
+#if defined(QSE_HTTPD_DEBUG)
 	{
-		qse_httpd_act_t msg;
-		qse_size_t pos;
-		msg.code = QSE_HTTPD_CATCH_MDBGMSG;
-		pos = qse_mbsxcpy (msg.u.mdbgmsg, QSE_COUNTOF(msg.u.mdbgmsg), "default ursserver set to ");
-		qse_nwadtombs (&nwad, &msg.u.mdbgmsg[pos], QSE_COUNTOF(msg.u.mdbgmsg) - pos, QSE_NWADTOMBS_ALL);
-		httpd->opt.rcb.logact (httpd, &msg);
+		qse_mchar_t tmp[128];
+		qse_nwadtombs (&nwad, tmp, QSE_COUNTOF(tmp), QSE_NWADTOMBS_ALL);
+		HTTPD_DBGOUT1 ("Default URS server set to [%hs]\n", tmp);
 	}
+#endif
 
 #if defined(IPPROTO_SCTP)
 	type = (proto == IPPROTO_SCTP)? SOCK_SEQPACKET: SOCK_DGRAM;

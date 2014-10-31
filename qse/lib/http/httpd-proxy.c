@@ -134,6 +134,7 @@ struct proxy_peer_htrd_xtn_t
 
 static void log_proxy_error (task_proxy_t* proxy, const qse_mchar_t* shortmsg)
 {
+/* TODO: change this to HTTPD_DBGOUTXXXX */
 	qse_httpd_act_t msg;
 	qse_size_t pos = 0;
 
@@ -1350,7 +1351,16 @@ static void task_fini_proxy (
 	task_proxy_t* proxy = (task_proxy_t*)task->ctx;
 
 	if (proxy->peer_status & PROXY_PEER_OPEN) 
+	{
+	#if defined(QSE_HTTPD_DEBUG)
+		{
+			qse_mchar_t tmp[128];
+			qse_nwadtombs (&proxy->peer.nwad, tmp, QSE_COUNTOF(tmp), QSE_NWADTOMBS_ALL);
+			HTTPD_DBGOUT2 ("Closing peer [%hs] - %zd\n", tmp, (qse_size_t)proxy->peer.handle);
+		}
+	#endif
 		httpd->opt.scb.peer.close (httpd, &proxy->peer);
+	}
 
 	if ((proxy->flags & (PROXY_UPGRADE_REQUESTED | PROXY_PROTOCOL_SWITCHED)) == PROXY_UPGRADE_REQUESTED)
 	{
@@ -1883,8 +1893,13 @@ static int task_main_proxy_1 (
 			else if (httpd->errnum == QSE_HTTPD_EACCES || 
 			         httpd->errnum == QSE_HTTPD_ECONN) http_errnum = 403;
 
-			if (httpd->opt.trait & QSE_HTTPD_LOGACT) 
-				log_proxy_error (proxy, "proxy peer connect error - ");
+		#if defined(QSE_HTTPD_DEBUG)
+			{
+				qse_mchar_t tmp[128];
+				qse_nwadtombs (&proxy->peer.nwad, tmp, QSE_COUNTOF(tmp), QSE_NWADTOMBS_ALL);
+				HTTPD_DBGOUT1 ("Cannnot connect to peer [%hs]\n", tmp);
+			}
+		#endif
 
 			goto oops;
 		}
@@ -1985,15 +2000,14 @@ static void on_peer_name_resolved (qse_httpd_t* httpd, const qse_mchar_t* name, 
 	}
 
 
-{
-if (proxy->flags & PROXY_PEER_NAME_RESOLVED)
-{
-qse_mchar_t xxxx[128];
-qse_nwadtombs (&proxy->peer.nwad, xxxx, 128, QSE_NWADTOMBS_ALL);
-printf ("XXXXXXXXXXXXXXXXXXXXXXXXXX [%s] PEER NAME RESOLVED.....TO [%s]\n", name, xxxx);
-}
-}
-
+#if defined(QSE_HTTPD_DEBUG)
+	if (proxy->flags & PROXY_PEER_NAME_RESOLVED)
+	{
+		qse_mchar_t tmp[128];
+		qse_nwadtombs (&proxy->peer.nwad, tmp, 128, QSE_NWADTOMBS_ALL);
+		HTTPD_DBGOUT2 ("Peer name [%hs] resolved to [%hs]\n", name, tmp);
+	}
+#endif
 }
 
 static void on_url_rewritten (qse_httpd_t* httpd, const qse_mchar_t* url, const qse_mchar_t* new_url, void* ctx)
@@ -2007,7 +2021,7 @@ static void on_url_rewritten (qse_httpd_t* httpd, const qse_mchar_t* url, const 
 
 		proxy->flags &= ~(PROXY_REWRITE_URL | PROXY_URL_REWRITING);
 
-printf ("XXXXXXXXXXXXXXXXXXXXXXXXXX URL REWRITTEN TO [%s].....\n", new_url);
+		HTTPD_DBGOUT2 ("URL rewritten from [%hs] to [%hs]\n", url, new_url);
 		if (new_url[0] == QSE_MT('\0'))
 		{
 			/* no change. carry on */
@@ -2144,11 +2158,18 @@ printf ("XXXXXXXXXXXXXXXXXXXXXXXXXX URL REWRITTEN TO [%s].....\n", new_url);
 							proxy->peer.nwad = nwad;
 							proxy->flags |= PROXY_URL_REWRITTEN;
 							proxy->flags &= ~PROXY_RESOLVE_PEER_NAME; /* skip dns */
-{
-qse_mchar_t xxxx[128];
-qse_nwadtombs (&proxy->peer.nwad, xxxx, 128, QSE_NWADTOMBS_ALL);
-printf ("XXXXXXXXXXXXXXXXXXXXXXXXXX PEER NAME RESOLVED.....TO [%s] IN URLREWRITING NEW_URL[%s] %d %d\n", xxxx, new_url, (int)proxy->qpath_pos_in_reqfwdbuf, (int)proxy->qpath_len_in_reqfwdbuf);
-}
+
+						#if defined(QSE_HTTPD_DEBUG)
+							{
+								qse_mchar_t tmp[128];
+								qse_nwadtombs (&proxy->peer.nwad, tmp, 128, QSE_NWADTOMBS_ALL);
+								HTTPD_DBGOUT4 ("Peer name resolved to [%hs] in url rewriting. new_url [%hs] %d %d\n", 
+									tmp, new_url,
+									(int)proxy->qpath_pos_in_reqfwdbuf,
+									(int)proxy->qpath_len_in_reqfwdbuf
+								);
+							}
+						#endif
 
 							/* the temporary string is not used. kill it */
 							qse_httpd_freemem (httpd, tmp);
@@ -2177,8 +2198,6 @@ printf ("XXXXXXXXXXXXXXXXXXXXXXXXXX PEER NAME RESOLVED.....TO [%s] IN URLREWRITI
 	{
 		proxy->flags |= PROXY_INIT_FAILED;
 	}
-
-printf ("XXXXXXXXXXXXXXXXXXXXXXXXXX URL REWRITTEN ....\n");
 }
 
 static int task_main_proxy (
@@ -2309,12 +2328,6 @@ static int task_main_proxy (
 	proxy->res_consumed = 0;
 	proxy->res_pending = 0;
 
-
-{
-char buf[100];
-qse_nwadtombs (&proxy->peer.nwad, buf, QSE_COUNTOF(buf), QSE_NWADTOMBS_ALL);
-printf ("OPENDING PEER: [%s]\n", buf);
-}
 	httpd->errnum = QSE_HTTPD_ENOERR;
 	n = httpd->opt.scb.peer.open (httpd, &proxy->peer);
 	if (n <= -1)
@@ -2324,10 +2337,24 @@ printf ("OPENDING PEER: [%s]\n", buf);
 		else if (httpd->errnum == QSE_HTTPD_EACCES ||
 		         httpd->errnum == QSE_HTTPD_ECONN) http_errnum = 403;
 
-		if (httpd->opt.trait & QSE_HTTPD_LOGACT) 
-			log_proxy_error (proxy, "proxy peer initial connect error - ");
+	#if defined(QSE_HTTPD_DEBUG)
+		{
+			qse_mchar_t tmp[128];
+			qse_nwadtombs (&proxy->peer.nwad, tmp, QSE_COUNTOF(tmp), QSE_NWADTOMBS_ALL);
+			HTTPD_DBGOUT1 ("Cannnot open peer [%hs]\n", tmp);
+		}
+	#endif
+
 		goto oops;
 	}
+
+#if defined(QSE_HTTPD_DEBUG)
+	{
+		qse_mchar_t tmp[128];
+		qse_nwadtombs (&proxy->peer.nwad, tmp, QSE_COUNTOF(tmp), QSE_NWADTOMBS_ALL);
+		HTTPD_DBGOUT2 ("Opened peer [%hs] - %zd\n", tmp, (qse_size_t)proxy->peer.handle);
+	}
+#endif
 
 	proxy->peer_status |= PROXY_PEER_OPEN;
 	task->trigger.v[0].mask = QSE_HTTPD_TASK_TRIGGER_READ;
