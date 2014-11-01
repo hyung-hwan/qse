@@ -462,7 +462,7 @@ static void dns_remove_tmr_tmout (qse_httpd_t* httpd, dns_req_t* req)
 {
 	if (req->tmr_tmout != QSE_TMR_INVALID_INDEX)
 	{
-		qse_httpd_removetimerevent (httpd, req->tmr_tmout);
+		qse_httpd_remove_timer_event (httpd, req->tmr_tmout);
 		req->tmr_tmout = QSE_TMR_INVALID_INDEX;
 	}
 }
@@ -789,22 +789,23 @@ resolved:
 	return 0;
 }
 
-static void tmr_dns_tmout_update (qse_tmr_t* tmr, qse_tmr_index_t old_index, qse_tmr_index_t new_index, void* ctx)
+static void tmr_dns_tmout_update (qse_tmr_t* tmr, qse_tmr_index_t old_index, qse_tmr_index_t new_index, qse_tmr_event_t* evt)
 {
-	dns_req_t* req = (dns_req_t*)ctx;
+	dns_req_t* req = (dns_req_t*)evt->ctx;
 	QSE_ASSERT (req->tmr_tmout == old_index);
 	req->tmr_tmout = new_index;
 }
 
-static void tmr_dns_tmout_handle (qse_tmr_t* tmr, const qse_ntime_t* now, void* ctx)
+static void tmr_dns_tmout_handle (qse_tmr_t* tmr, const qse_ntime_t* now, qse_tmr_event_t* evt)
 {
 	/* destory the unanswered request if timed out */
 
-	dns_req_t* req = (dns_req_t*)ctx;
+	dns_req_t* req = (dns_req_t*)evt->ctx;
 	dns_ctx_t* dc = req->dc;
 	qse_uint16_t xid;
 
-printf (">>tmr_dns_tmout_handle  req->>%p\n", req);
+	HTTPD_DBGOUT1 ("DNS timed out [%s]\n", req->name);
+
 	/* when this handler is called, the event must be removed from the timer */
 	QSE_ASSERT (req->tmr_tmout == QSE_TMR_INVALID_INDEX);
 
@@ -818,6 +819,7 @@ printf (">>tmr_dns_tmout_handle  req->>%p\n", req);
 
 		httpd_xtn = qse_httpd_getxtn (dc->httpd);
 
+		QSE_MEMSET (&tmout_event, 0, QSE_SIZEOF(tmout_event));
 		qse_gettime (&tmout_event.when);
 		qse_addtime (&tmout_event.when, &req->dns_tmout, &tmout_event.when);
 		tmout_event.ctx = req;
@@ -841,7 +843,7 @@ printf (">>tmr_dns_tmout_handle  req->>%p\n", req);
 		{
 		send_ok:
 			QSE_ASSERT (tmr == dc->httpd->tmr);
-			if (qse_httpd_inserttimerevent (dc->httpd, &tmout_event, &req->tmr_tmout) >= 0)
+			if (qse_httpd_insert_timer_event (dc->httpd, &tmout_event, &req->tmr_tmout) >= 0)
 			{
 				req->dns_retries--;
 				return; /* resend ok */
@@ -987,12 +989,13 @@ static int dns_send (qse_httpd_t* httpd, qse_httpd_dns_t* dns, const qse_mchar_t
 		goto oops;
 	}
 
+	QSE_MEMSET (&tmout_event, 0, QSE_SIZEOF(tmout_event));
 	qse_gettime (&tmout_event.when);
 	qse_addtime (&tmout_event.when, &req->dns_tmout, &tmout_event.when);
 	tmout_event.ctx = req;
 	tmout_event.handler = tmr_dns_tmout_handle;
 	tmout_event.updater = tmr_dns_tmout_update;
-	if (qse_httpd_inserttimerevent (httpd, &tmout_event, &req->tmr_tmout) <= -1) goto oops;
+	if (qse_httpd_insert_timer_event (httpd, &tmout_event, &req->tmr_tmout) <= -1) goto oops;
 
 	if ((req->qalen > 0 && sendto (req->dns_socket, req->qa, req->qalen, 0, (struct sockaddr*)&req->dns_skad, req->dns_skadlen) != req->qalen) ||
 	    (req->qaaaalen > 0 && sendto (req->dns_socket, req->qaaaa, req->qaaaalen, 0, (struct sockaddr*)&req->dns_skad, req->dns_skadlen) != req->qaaaalen))

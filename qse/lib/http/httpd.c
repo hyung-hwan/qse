@@ -51,6 +51,11 @@ struct htrd_xtn_t
 	qse_httpd_client_t* client;
 };
 
+struct tmr_xtn_t
+{
+	qse_httpd_t* httpd;
+};
+
 static void free_server_list (qse_httpd_t* httpd);
 static int perform_client_task (
 	qse_httpd_t* httpd, void* mux, qse_httpd_hnd_t handle, int mask, void* cbarg);
@@ -84,11 +89,17 @@ void qse_httpd_close (qse_httpd_t* httpd)
 
 int qse_httpd_init (qse_httpd_t* httpd, qse_mmgr_t* mmgr)
 {
+	tmr_xtn_t* tmr_xtn;
+
 	QSE_MEMSET (httpd, 0, QSE_SIZEOF(*httpd));
 
 	httpd->mmgr = mmgr;
-	httpd->tmr = qse_tmr_open (mmgr, 0, 2048);
+	httpd->tmr = qse_tmr_open (mmgr, QSE_SIZEOF(tmr_xtn_t), 2048);
 	if (httpd->tmr == QSE_NULL) return -1;
+
+	tmr_xtn = qse_tmr_getxtn (httpd->tmr);
+	QSE_MEMSET (tmr_xtn, 0, QSE_SIZEOF(*tmr_xtn));
+	tmr_xtn->httpd = httpd;
 
 	qse_mbscpy (httpd->sname, QSE_MT("QSE-HTTPD " QSE_PACKAGE_VERSION));
 
@@ -444,8 +455,8 @@ static qse_htrd_recbs_t htrd_recbs =
 };
 
 /* ----------------------------------------------------------------------- */
-static void tmr_idle_update (qse_tmr_t* tmr, qse_tmr_index_t old_index, qse_tmr_index_t new_index, void* ctx);
-static void tmr_idle_handle (qse_tmr_t* tmr, const qse_ntime_t* now, void* ctx);
+static void tmr_idle_update (qse_tmr_t* tmr, qse_tmr_index_t old_index, qse_tmr_index_t new_index, qse_tmr_event_t* evt);
+static void tmr_idle_handle (qse_tmr_t* tmr, const qse_ntime_t* now, qse_tmr_event_t* evt);
 
 static void mark_bad_client (qse_httpd_client_t* client)
 {
@@ -482,13 +493,14 @@ static qse_httpd_client_t* new_client (qse_httpd_t* httpd, qse_httpd_client_t* t
 	    (httpd->opt.idle_limit.sec == 0 && httpd->opt.idle_limit.nsec > 0))
 	{
 		/* idle limit is enabled when the limit is greater than 0.0 */
+		QSE_MEMSET (&idle_event, 0, QSE_SIZEOF(idle_event));
 		qse_gettime (&idle_event.when);
 		qse_addtime (&idle_event.when, &httpd->opt.idle_limit, &idle_event.when);
 		idle_event.ctx = client;
 		idle_event.handler = tmr_idle_handle;
 		idle_event.updater = tmr_idle_update;
 
-		if (qse_httpd_inserttimerevent (httpd, &idle_event, &client->tmr_idle) <= -1) goto oops;
+		if (qse_httpd_insert_timer_event (httpd, &idle_event, &client->tmr_idle) <= -1) goto oops;
 	}
 
 	qse_htrd_setoption (client->htrd, QSE_HTRD_REQUEST | QSE_HTRD_TRAILERS | QSE_HTRD_CANONQPATH);
@@ -519,7 +531,7 @@ oops:
 	{
 		if (client->tmr_idle != QSE_TMR_INVALID_INDEX) 
 		{
-			qse_httpd_removetimerevent (httpd, client->tmr_idle);
+			qse_httpd_remove_timer_event (httpd, client->tmr_idle);
 			client->tmr_idle = QSE_TMR_INVALID_INDEX;
 		}
 		if (client->htrd) qse_htrd_close (client->htrd);
@@ -554,7 +566,7 @@ static void free_client (
 
 	if (client->tmr_idle != QSE_TMR_INVALID_INDEX)
 	{
-		qse_httpd_removetimerevent (httpd, client->tmr_idle);
+		qse_httpd_remove_timer_event (httpd, client->tmr_idle);
 		client->tmr_idle = QSE_TMR_INVALID_INDEX;
 	}
 
@@ -719,16 +731,16 @@ static int accept_client (
 	return 0;
 }
 
-static void tmr_idle_update (qse_tmr_t* tmr, qse_tmr_index_t old_index, qse_tmr_index_t new_index, void* ctx)
+static void tmr_idle_update (qse_tmr_t* tmr, qse_tmr_index_t old_index, qse_tmr_index_t new_index, qse_tmr_event_t* evt)
 {
-	qse_httpd_client_t* client = (qse_httpd_client_t*)ctx;
+	qse_httpd_client_t* client = (qse_httpd_client_t*)evt->ctx;
 	QSE_ASSERT (client->tmr_idle == old_index);
 	client->tmr_idle = new_index;
 }
 
-static void tmr_idle_handle (qse_tmr_t* tmr, const qse_ntime_t* now, void* ctx)
+static void tmr_idle_handle (qse_tmr_t* tmr, const qse_ntime_t* now, qse_tmr_event_t* evt)
 {
-	qse_httpd_client_t* client = (qse_httpd_client_t*)ctx;
+	qse_httpd_client_t* client = (qse_httpd_client_t*)evt->ctx;
 
 	if (qse_cmptime(now, &client->last_active) >= 0)
 	{
@@ -747,6 +759,7 @@ static void tmr_idle_handle (qse_tmr_t* tmr, const qse_ntime_t* now, void* ctx)
 			QSE_ASSERT (client->server->httpd->tmr == tmr);
 
 			/*qse_gettime (&idle_event.when);*/
+			QSE_MEMSET (&idle_event, 0, QSE_SIZEOF(idle_event));
 			idle_event.when = *now;
 			qse_addtime (&idle_event.when, &client->server->httpd->opt.idle_limit, &idle_event.when);
 			idle_event.ctx = client;
@@ -755,7 +768,7 @@ static void tmr_idle_handle (qse_tmr_t* tmr, const qse_ntime_t* now, void* ctx)
 
 			/* the timer must have been deleted when this callback is called. */
 			QSE_ASSERT (client->tmr_idle == QSE_TMR_INVALID_INDEX); 
-			if (qse_httpd_inserttimerevent (client->server->httpd, &idle_event, &client->tmr_idle) <= -1)
+			if (qse_httpd_insert_timer_event (client->server->httpd, &idle_event, &client->tmr_idle) <= -1)
 			{
 				HTTPD_DBGOUT1 ("Cannot update idle timer for client %d. Marking it bad", (int)client->handle);
 				mark_bad_client (client);
@@ -1980,7 +1993,68 @@ int qse_httpd_inactivatetasktrigger (qse_httpd_t* httpd, qse_httpd_client_t* cli
 	return update_mux_for_current_task (httpd, client, task);
 }
 
-int qse_httpd_inserttimerevent (qse_httpd_t* httpd, const qse_tmr_event_t* event, qse_tmr_index_t* index)
+
+/* ------------------------------------------------------------------- */
+
+
+static void update_timer_event (qse_tmr_t* tmr, qse_tmr_index_t old_index, qse_tmr_index_t new_index, qse_tmr_event_t* evt)
+{
+	tmr_xtn_t* tmr_xtn;
+	qse_httpd_t* httpd;
+	qse_httpd_timer_updater_t updater;
+
+	tmr_xtn = qse_tmr_getxtn (tmr);
+	httpd = tmr_xtn->httpd;
+	updater = evt->ctx2;
+	updater (httpd, old_index, new_index, evt->ctx);
+}
+
+static void handle_timer_event (qse_tmr_t* tmr, const qse_ntime_t* now, qse_tmr_event_t* evt)
+{
+	tmr_xtn_t* tmr_xtn;
+	qse_httpd_t* httpd;
+	qse_httpd_timer_handler_t handler;
+
+	tmr_xtn = qse_tmr_getxtn (tmr);
+	httpd = tmr_xtn->httpd;
+	handler = evt->ctx3;
+	handler (httpd, now, evt->ctx);
+}
+
+int qse_httpd_inserttimerevent (qse_httpd_t* httpd, const qse_httpd_timer_event_t* event, qse_httpd_timer_index_t* index)
+{
+	qse_tmr_event_t timer_event;
+	qse_tmr_index_t timer_index;
+
+	QSE_MEMSET (&timer_event, 0, QSE_SIZEOF(timer_event));
+
+	timer_event.ctx     = event->ctx;
+	timer_event.ctx2    = event->updater;
+	timer_event.ctx3    = event->handler;
+	timer_event.when    = event->when;
+	timer_event.updater = update_timer_event;
+	timer_event.handler = handle_timer_event;
+
+	timer_index = qse_tmr_insert (httpd->tmr, &timer_event);
+	if (timer_index == QSE_TMR_INVALID_INDEX)
+	{
+		qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOMEM);
+		return -1;
+	}
+
+	*index = timer_index;
+	return 0;
+}
+
+void qse_httpd_removetimerevent (qse_httpd_t* httpd, qse_httpd_timer_index_t index)
+{
+	qse_tmr_remove (httpd->tmr, index);
+}
+
+/* qse_httpd_insert_timer_event() is a lighter-weight version of 
+ * qse_httpd_inserttimerevent() and intended for internal use only */
+
+int qse_httpd_insert_timer_event (qse_httpd_t* httpd, const qse_tmr_event_t* event, qse_tmr_index_t* index)
 {
 	qse_tmr_index_t tmp = qse_tmr_insert (httpd->tmr, event);
 	if (tmp == QSE_TMR_INVALID_INDEX)
@@ -1992,12 +2066,12 @@ int qse_httpd_inserttimerevent (qse_httpd_t* httpd, const qse_tmr_event_t* event
 	*index = tmp;
 	return 0;
 }
-
-void qse_httpd_removetimerevent (qse_httpd_t* httpd, qse_tmr_index_t index)
+void qse_httpd_remove_timer_event (qse_httpd_t* httpd, qse_tmr_index_t index)
 {
 	qse_tmr_remove (httpd->tmr, index);
 }
 
+/* ----------------------------------------------------------------------- */
 
 static void unload_all_modules (qse_httpd_t* httpd)
 {

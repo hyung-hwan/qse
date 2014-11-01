@@ -177,6 +177,17 @@ int qse_httpd_inactivatetasktrigger (
 	qse_httpd_task_t* task
 );
 
+int qse_httpd_insert_timer_event (
+	qse_httpd_t*           httpd,
+	const qse_tmr_event_t* event,
+	qse_tmr_index_t*       index
+);
+
+void qse_httpd_remove_timer_event (
+	qse_httpd_t*     httpd,
+	qse_tmr_index_t  index
+);
+
 #ifdef __cplusplus
 }
 #endif

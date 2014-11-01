@@ -233,7 +233,7 @@ static void urs_remove_tmr_tmout (qse_httpd_t* httpd, urs_req_t* req)
 {
 	if (req->tmr_tmout != QSE_TMR_INVALID_INDEX)
 	{
-		qse_httpd_removetimerevent (httpd, req->tmr_tmout);
+		qse_httpd_remove_timer_event (httpd, req->tmr_tmout);
 		req->tmr_tmout = QSE_TMR_INVALID_INDEX;
 	}
 }
@@ -335,19 +335,19 @@ printf ("URS_RECV............................................\n");
 	return 0;
 }
 
-static void tmr_urs_tmout_update (qse_tmr_t* tmr, qse_tmr_index_t old_index, qse_tmr_index_t new_index, void* ctx)
+static void tmr_urs_tmout_update (qse_tmr_t* tmr, qse_tmr_index_t old_index, qse_tmr_index_t new_index, qse_tmr_event_t* evt)
 {
-	urs_req_t* req = (urs_req_t*)ctx;
+	urs_req_t* req = (urs_req_t*)evt->ctx;
 
 	QSE_ASSERT (req->tmr_tmout == old_index);
 	req->tmr_tmout = new_index;
 }
 
-static void tmr_urs_tmout_handle (qse_tmr_t* tmr, const qse_ntime_t* now, void* ctx)
+static void tmr_urs_tmout_handle (qse_tmr_t* tmr, const qse_ntime_t* now, qse_tmr_event_t* evt)
 {
 	/* destory the unanswered request if timed out */
 
-	urs_req_t* req = (urs_req_t*)ctx;
+	urs_req_t* req = (urs_req_t*)evt->ctx;
 	urs_ctx_t* dc = req->dc;
 	qse_uint16_t xid;
 
@@ -364,6 +364,7 @@ static void tmr_urs_tmout_handle (qse_tmr_t* tmr, const qse_ntime_t* now, void* 
 
 		httpd_xtn = qse_httpd_getxtn (dc->httpd);
 
+		QSE_MEMSET (&tmout_event, 0, QSE_SIZEOF(tmout_event));
 		qse_gettime (&tmout_event.when);
 		qse_addtime (&tmout_event.when, &req->urs_tmout, &tmout_event.when);
 		tmout_event.ctx = req;
@@ -387,7 +388,7 @@ static void tmr_urs_tmout_handle (qse_tmr_t* tmr, const qse_ntime_t* now, void* 
 		{
 		send_ok:
 			QSE_ASSERT (tmr == dc->httpd->tmr);
-			if (qse_httpd_inserttimerevent (dc->httpd, &tmout_event, &req->tmr_tmout) >= 0)
+			if (qse_httpd_insert_timer_event (dc->httpd, &tmout_event, &req->tmr_tmout) >= 0)
 			{
 				req->urs_retries--;
 				return; /* resend ok */
@@ -507,12 +508,13 @@ static int urs_send (qse_httpd_t* httpd, qse_httpd_urs_t* urs, const qse_mchar_t
 		}
 	}
 
+	QSE_MEMSET (&tmout_event, 0, QSE_SIZEOF(tmout_event));
 	qse_gettime (&tmout_event.when);
 	qse_addtime (&tmout_event.when, &req->urs_tmout, &tmout_event.when);
 	tmout_event.ctx = req;
 	tmout_event.handler = tmr_urs_tmout_handle;
 	tmout_event.updater = tmr_urs_tmout_update;
-	if (qse_httpd_inserttimerevent (httpd, &tmout_event, &req->tmr_tmout) <= -1) goto oops;
+	if (qse_httpd_insert_timer_event (httpd, &tmout_event, &req->tmr_tmout) <= -1) goto oops;
 
 /*
   {

@@ -106,7 +106,7 @@ static qse_tmr_index_t sift_up (qse_tmr_t* tmr, qse_tmr_index_t index, int notif
 		{
 			/* move down the parent to my current position */
 			tmr->event[index] = tmr->event[parent];
-			tmr->event[index].updater (tmr, parent, index, tmr->event[index].ctx);
+			tmr->event[index].updater (tmr, parent, index, &tmr->event[index]);
 
 			/* traverse up */
 			index = parent;
@@ -119,7 +119,7 @@ static qse_tmr_index_t sift_up (qse_tmr_t* tmr, qse_tmr_index_t index, int notif
 		 * reply on the return value. */
 		tmr->event[index] = item;
 		if (notify && index != old_index)
-			tmr->event[index].updater (tmr, old_index, index, tmr->event[index].ctx);
+			tmr->event[index].updater (tmr, old_index, index, &tmr->event[index]);
 	}
 
 	return index;
@@ -153,7 +153,7 @@ static qse_tmr_index_t sift_down (qse_tmr_t* tmr, qse_tmr_index_t index, int not
 			if (YOUNGER_THAN(&item, &tmr->event[younger])) break;
 
 			tmr->event[index] = tmr->event[younger];
-			tmr->event[index].updater (tmr, younger, index, tmr->event[index].ctx);
+			tmr->event[index].updater (tmr, younger, index, &tmr->event[index]);
 
 			index = younger;
 		}
@@ -161,7 +161,7 @@ static qse_tmr_index_t sift_down (qse_tmr_t* tmr, qse_tmr_index_t index, int not
 		
 		tmr->event[index] = item;
 		if (notify && index != old_index)
-			tmr->event[index].updater (tmr, old_index, index, tmr->event[index].ctx);
+			tmr->event[index].updater (tmr, old_index, index, &tmr->event[index]);
 	}
 
 	return index;
@@ -174,13 +174,13 @@ void qse_tmr_remove (qse_tmr_t* tmr, qse_tmr_index_t index)
 	QSE_ASSERT (index < tmr->size);
 
 	item = tmr->event[index];
-	tmr->event[index].updater (tmr, index, QSE_TMR_INVALID_INDEX, tmr->event[index].ctx);
+	tmr->event[index].updater (tmr, index, QSE_TMR_INVALID_INDEX, &tmr->event[index]);
 
 	tmr->size = tmr->size - 1;
 	if (tmr->size > 0 && index != tmr->size)
 	{
 		tmr->event[index] = tmr->event[tmr->size];
-		tmr->event[index].updater (tmr, tmr->size, index, tmr->event[index].ctx);
+		tmr->event[index].updater (tmr, tmr->size, index, &tmr->event[index]);
 		YOUNGER_THAN(&tmr->event[index], &item)? sift_up(tmr, index, 1): sift_down(tmr, index, 1);
 	}
 }
@@ -231,10 +231,10 @@ qse_size_t qse_tmr_fire (qse_tmr_t* tmr, const qse_ntime_t* tm)
 		if (qse_cmptime(&tmr->event[0].when, &now) > 0) break;
 
 		event = tmr->event[0];
-		qse_tmr_remove (tmr, 0);
+		qse_tmr_remove (tmr, 0); /* remove the registered event structure */
 
 		fire_count++;
-		event.handler (tmr, &now, event.ctx);
+		event.handler (tmr, &now, &event); /* then fire the event */
 	}
 
 	return fire_count;
@@ -257,3 +257,7 @@ int qse_tmr_gettmout (qse_tmr_t* tmr, const qse_ntime_t* tm, qse_ntime_t* tmout)
 	return 0;
 }
 
+qse_tmr_event_t* qse_tmr_getevent (qse_tmr_t* tmr, qse_tmr_index_t index)
+{
+	return (index < 0 || index >= tmr->size)? QSE_NULL: &tmr->event[index];
+}
