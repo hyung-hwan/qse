@@ -30,14 +30,14 @@ typedef qse_size_t qse_tmr_index_t;
 typedef void (*qse_tmr_handler_t) (
 	qse_tmr_t*         tmr,
 	const qse_ntime_t* now, 
-	void*              ctx
+	qse_tmr_event_t*   evt
 );
 
 typedef void (*qse_tmr_updater_t) (
 	qse_tmr_t*        tmr,
 	qse_tmr_index_t   old_index,
 	qse_tmr_index_t   new_index,
-	void*             ctx
+	qse_tmr_event_t*  evt
 );
 
 struct qse_tmr_t
@@ -50,8 +50,11 @@ struct qse_tmr_t
 
 struct qse_tmr_event_t
 {
+	void*              ctx;    /* primary context pointer */
+	void*              ctx2;   /* secondary context pointer */
+	void*              ctx3;   /* tertiary context pointer */
+
 	qse_ntime_t        when;
-	void*              ctx; 
 	qse_tmr_handler_t  handler;
 	qse_tmr_updater_t  updater;
 };
@@ -128,6 +131,15 @@ QSE_EXPORT int qse_tmr_gettmout (
 	qse_tmr_t*         tmr,
 	const qse_ntime_t* tm,
 	qse_ntime_t*       tmout
+);
+
+/**
+ * The qse_tmr_getevent() function returns the
+ * pointer to the registered event at the given index.
+ */
+QSE_EXPORT qse_tmr_event_t* qse_tmr_getevent (
+	qse_tmr_t*        tmr,
+	qse_tmr_index_t   index
 );
 
 #ifdef __cplusplus

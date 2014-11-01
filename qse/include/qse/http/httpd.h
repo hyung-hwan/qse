@@ -528,6 +528,33 @@ struct qse_httpd_rcb_t
 	qse_httpd_logact_t logact;
 };
 
+
+/* -------------------------------------------------------------------------- */
+
+typedef qse_tmr_index_t qse_httpd_timer_index_t;
+
+typedef void (*qse_httpd_timer_handler_t) (
+	qse_httpd_t*       httpd,
+	const qse_ntime_t* now,
+	void*              ctx
+);
+
+typedef void (*qse_httpd_timer_updater_t) (
+	qse_httpd_t*            httpd,
+	qse_httpd_timer_index_t old_index,
+	qse_httpd_timer_index_t new_index,
+	void*                   ctx
+);
+
+typedef struct qse_httpd_timer_event_t qse_httpd_timer_event_t;
+struct qse_httpd_timer_event_t
+{
+	void*                      ctx;    /* primary context pointer */
+	qse_ntime_t                when;
+	qse_httpd_timer_handler_t  handler;
+	qse_httpd_timer_updater_t  updater;
+};
+
 /* -------------------------------------------------------------------------- */
 
 typedef struct qse_httpd_task_t qse_httpd_task_t;
@@ -1363,15 +1390,17 @@ QSE_EXPORT qse_httpd_mod_t* qse_httpd_findmod (
 /* -------------------------------------------- */
 
 QSE_EXPORT int qse_httpd_inserttimerevent (
-	qse_httpd_t*           httpd,
-	const qse_tmr_event_t* event,
-	qse_tmr_index_t*       index
+	qse_httpd_t*             httpd,
+	const qse_httpd_timer_event_t* event,
+	qse_httpd_timer_index_t* index
 );
 
+
 QSE_EXPORT void qse_httpd_removetimerevent (
-	qse_httpd_t*     httpd,
-	qse_tmr_index_t  index
+	qse_httpd_t*             httpd,
+	qse_httpd_timer_index_t  index
 );
+
 
 #ifdef __cplusplus
 }
