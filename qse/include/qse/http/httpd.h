@@ -555,6 +555,8 @@ struct qse_httpd_timer_event_t
 	qse_httpd_timer_updater_t  updater;
 };
 
+#define QSE_HTTPD_TIMER_INVALID_INDEX QSE_TMR_INVALID_INDEX
+
 /* -------------------------------------------------------------------------- */
 
 typedef struct qse_httpd_task_t qse_httpd_task_t;

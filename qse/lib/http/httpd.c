@@ -2027,7 +2027,6 @@ int qse_httpd_inserttimerevent (qse_httpd_t* httpd, const qse_httpd_timer_event_
 	qse_tmr_index_t timer_index;
 
 	QSE_MEMSET (&timer_event, 0, QSE_SIZEOF(timer_event));
-
 	timer_event.ctx     = event->ctx;
 	timer_event.ctx2    = event->updater;
 	timer_event.ctx3    = event->handler;

@@ -25,9 +25,14 @@
 
 #include <qse/http/httpd.h>
 
-#define QSE_HTTPD_DEBUG 1
-/*#undef QSE_HTTPD_DEBUG*/
-
+#if defined(NDEBUG)
+	/* To include debugging messages while NDEBUG is set,
+	 * you can define QSE_HTTPD_DEBUG externally in CFLAGS or something.
+	 */
+#else
+	/* debugging mode */
+#	define QSE_HTTPD_DEBUG 1
+#endif
 
 #if defined(QSE_HTTPD_DEBUG)
 #	include <qse/cmn/sio.h>
@@ -46,7 +51,6 @@
 #	define HTTPD_DBGOUT4(fmt,a1,a2,a3,a4)
 #	define HTTPD_DBGOUT5(fmt,a1,a2,a3,a4,a5)
 #endif
-
 
 #define QSE_HTTPD_DEFAULT_PORT        80
 #define QSE_HTTPD_DEFAULT_SECURE_PORT 443
