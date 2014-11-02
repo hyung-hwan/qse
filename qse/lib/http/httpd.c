@@ -325,6 +325,25 @@ qse_mchar_t* qse_httpd_strntombsdup (qse_httpd_t* httpd, const qse_char_t* str, 
 	return mptr;
 }
 
+qse_mchar_t* qse_httpd_mbsdup (qse_httpd_t* httpd, const qse_mchar_t* str)
+{
+	qse_mchar_t* mptr;
+
+	mptr = qse_mbsdup (str, httpd->mmgr);
+	if (mptr == QSE_NULL) httpd->errnum = QSE_HTTPD_ENOMEM;
+
+	return mptr;
+}
+
+qse_mchar_t* qse_httpd_mbsxdup (qse_httpd_t* httpd, const qse_mchar_t* str, qse_size_t len)
+{
+	qse_mchar_t* mptr;
+
+	mptr = qse_mbsxdup (str, len, httpd->mmgr);
+	if (mptr == QSE_NULL) httpd->errnum = QSE_HTTPD_ENOMEM;
+
+	return mptr;
+}
 /* ----------------------------------------------------------------------- */
 
 static qse_httpd_real_task_t* enqueue_task (
