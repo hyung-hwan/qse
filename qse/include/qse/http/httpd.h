@@ -1357,6 +1357,18 @@ QSE_EXPORT qse_mchar_t* qse_httpd_strntombsdup (
 	qse_size_t         len
 );
 
+
+QSE_EXPORT qse_mchar_t* qse_httpd_mbsdup (
+	qse_httpd_t*       httpd,
+	const qse_mchar_t* str
+);
+
+QSE_EXPORT qse_mchar_t* qse_httpd_mbsxdup (
+	qse_httpd_t*       httpd,
+	const qse_mchar_t* str,
+	qse_size_t         len
+);
+
 QSE_EXPORT qse_mchar_t* qse_httpd_escapehtml (
 	qse_httpd_t*        httpd, 
 	const qse_mchar_t*  str
