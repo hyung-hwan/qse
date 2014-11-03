@@ -475,6 +475,12 @@ void* qse_htrd_getxtn (qse_htrd_t* htrd)
 	return QSE_XTN (htrd);
 }
 
+
+qse_htrd_errnum_t qse_htrd_geterrnum (qse_htrd_t* htrd)
+{
+	return htrd->errnum;
+}
+
 int qse_htrd_getoption (qse_htrd_t* htrd)
 {
 	return htrd->option;

@@ -145,6 +145,10 @@ QSE_EXPORT void* qse_htrd_getxtn (
 	qse_htrd_t* htrd
 );
 
+QSE_EXPORT qse_htrd_errnum_t qse_htrd_geterrnum (
+	qse_htrd_t* htrd
+);
+
 QSE_EXPORT void qse_htrd_clear (
 	qse_htrd_t* htrd
 );

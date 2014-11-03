@@ -57,7 +57,7 @@ const qse_char_t* qse_xli_dflerrstr (
 		QSE_T("no alias for '${0}'"),
 		QSE_T("illegal value for '${0}'"),
 		QSE_T("no value for '${0}'"),
-		QSE_T("too many string segments for '${0}'")
+		QSE_T("uncomplying number of string segments for '${0}'")
 	};
 
 	return (errnum >= 0 && errnum < QSE_COUNTOF(errstr))?

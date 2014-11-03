@@ -869,7 +869,7 @@ static int read_pair (qse_xli_t* xli, const qse_char_t* keytag)
 			{
 				/* too many string segments for the key */
 				qse_xli_seterror (xli, QSE_XLI_ESTRSEG, (const qse_cstr_t*)&key, &kloc);
-				goto oops;	
+				goto oops;
 			}
 
 			/* semicolon read. turn off NSTR */
@@ -879,7 +879,7 @@ static int read_pair (qse_xli_t* xli, const qse_char_t* keytag)
 		else
 		{
 			qse_xli_seterror (xli, QSE_XLI_EPAVAL, QSE_STR_XSTR(xli->tok.name), &xli->tok.loc);
-			goto oops;	
+			goto oops;
 		}
 
 
