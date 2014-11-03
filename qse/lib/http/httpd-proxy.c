@@ -1796,8 +1796,10 @@ static int task_main_proxy_2 (
 		{
 			if (qse_htrd_feed (proxy->peer_htrd, proxy->buf, proxy->buflen) <= -1)
 			{
-				if (httpd->opt.trait & QSE_HTTPD_LOGACT) 
-					log_proxy_error (proxy, "proxy feed error - ");
+			#if defined(QSE_HTTPD_DEBUG)
+				HTTPD_DBGOUT3 ("Failed to feed proxy peer response to handler - %d [%.*hs]\n",
+					qse_htrd_geterrnum(proxy->peer_htrd), (int)proxy->buflen, proxy->buf);
+			#endif
 				goto oops;
 			}
 

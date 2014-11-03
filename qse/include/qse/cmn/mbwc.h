@@ -454,7 +454,7 @@ QSE_EXPORT qse_mchar_t* qse_wcsntombsdup (
 
 QSE_EXPORT qse_mchar_t* qse_wcsatombsdup (
 	const qse_wchar_t* wcs[],
-	qse_size_t*       mbslen,
+	qse_size_t*        mbslen,
 	qse_mmgr_t*        mmgr
 );
 

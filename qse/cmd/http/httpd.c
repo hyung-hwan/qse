@@ -2272,6 +2272,7 @@ static int close_config_file (qse_httpd_t* httpd)
 
 	return 0;
 }
+
 static void set_limit (qse_httpd_t* httpd, const qse_char_t* name, int what)
 {
 	qse_xli_pair_t* pair;
