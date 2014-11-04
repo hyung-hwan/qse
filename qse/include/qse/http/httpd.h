@@ -995,7 +995,7 @@ struct qse_httpd_ecb_t
 	 * called by qse_httpd_loop() after the actual event looping ends.
 	 */
 	qse_httpd_ecb_postloop_t postloop;
-	
+
 
 	/* internal use only. don't touch this field */
 	qse_httpd_ecb_t* next;
