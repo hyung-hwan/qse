@@ -1316,6 +1316,42 @@ int qse_htrd_feed (qse_htrd_t* htrd, const qse_mchar_t* req, qse_size_t len)
 							htrd->fed.s.need = ~htrd->fed.s.need; 
 							htrd->fed.s.flags |= CONSUME_UNTIL_CLOSE;
 						}
+						else if ((htrd->option & QSE_HTRD_RESPONSE) &&
+						         !(htrd->re.flags & QSE_HTRE_ATTR_LENGTH) &&
+						          (htrd->re.flags & QSE_HTRE_ATTR_KEEPALIVE))
+						{
+							/* 
+							 * what the hell! 
+							 * no content-length, but keep-alive and not chunked.
+							 * there's no way to know how large the contents is.
+							 *
+							 * For a request 'http://php.net/manual/en/function.curl-strerror.php' containing the following header fields:
+							 *    If-Modified-Since: Fri, 31 Oct 2014 11:12:47 GMT
+							 *    Accept-Encoding: gzip, deflate
+							 *
+							 * the service gave this response as of this writing:
+							 * 
+HTTP/1.1 304 Not Modified
+Server: nginx/1.6.2
+Date: Tue, 04 Nov 2014 15:45:46 GMT
+Connection: keep-alive
+Vary: Accept-Encoding
+Set-Cookie: LAST_LANG=en; expires=Wed, 04-Nov-2015 15:45:46 GMT; Max-Age=31536000; path=/; domain=.php.net
+Set-Cookie: COUNTRY=KOR%2C220.121.110.171; expires=Tue, 11-Nov-2014 15:45:46 GMT; Max-Age=604800; path=/; domain=.php.net
+
+XXXXXXXX
+							 * 
+							 * XXXXXXX is some compressed garbage included in the contents-body.
+							 * why does the service behave this way? is it a server bug or am i doing anything wrong?
+							 *
+							 * <<WORKAROUND>>
+							 * i decided to drop whatever trailing data avaiable
+							 * after the header fields for this feeding.
+							 * if more contents are fed in later, it will still
+							 * end up with a bad request error. */
+							ptr = end;
+							htrd->fed.s.need = 0;
+						}
 						else
 						{
 							htrd->fed.s.need = htrd->re.attr.content_length;
