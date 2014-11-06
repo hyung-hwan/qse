@@ -1963,7 +1963,18 @@ int qse_httpd_resolvename (qse_httpd_t* httpd, const qse_mchar_t* name, qse_http
 		return -1;
 	}
 
-	HTTPD_DBGOUT1 ("Sending DNS request [%hs]\n", name);
+#if defined(QSE_HTTPD_DEBUG)
+	{
+		qse_mchar_t tmp[128];
+		if (dns_server)
+			qse_nwadtombs (&dns_server->nwad, tmp, QSE_COUNTOF(tmp), QSE_NWADTOMBS_ALL);
+		else
+			qse_mbscpy (tmp, QSE_MT("default server"));
+
+		HTTPD_DBGOUT2 ("Sending DNS request [%hs] to [%hs]\n", name, tmp);
+	}
+#endif
+
 	return httpd->opt.scb.dns.send (httpd, &httpd->dns, name, resol, dns_server, ctx);
 }
 
