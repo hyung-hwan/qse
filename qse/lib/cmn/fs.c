@@ -658,8 +658,8 @@ qse_fs_ent_t* qse_fs_read (qse_fs_t* fs, int flags)
 	{
 	#if defined(HAVE_STRUCT_STAT_ST_MTIM_TV_NSEC)
 		#if defined(HAVE_STRUCT_STAT_ST_BIRTHTIM_TV_NSEC)
-		fs->ent.time.create.secs = st.st_birthtim.tv_sec;
-		fs->ent.time.create.nsecs = st.st_birthtim.tv_nsec;
+		fs->ent.time.create.sec = st.st_birthtim.tv_sec;
+		fs->ent.time.create.nsec = st.st_birthtim.tv_nsec;
 		#endif
 
 		fs->ent.time.access.sec = st.st_atim.tv_sec;
