@@ -31,7 +31,20 @@
 #define DEF_BUF_CAPA 256
 #define RTX_STACK_INCREMENT 512
 
-#define IDXBUFSIZE 64
+/* Don't forget to grow IDXBUFSIZE if qse_awk_int_t is very large */
+#if (QSE_AWK_SIZEOF_INT_T <= 16) /* 128 bits */
+#	define IDXBUFSIZE 64
+#elif (QSE_AWK_SIZEOF_INT_T <= 32) /* 256 bits */
+#	define IDXBUFSIZE 128
+#elif (QSE_AWK_SIZEOF_INT_T <= 64) /* 512 bits */
+#	define IDXBUFSIZE 192
+#elif (QSE_AWK_SIZEOF_INT_T <= 128) /* 1024 bits */
+#	define IDXBUFSIZE 384
+#elif (QSE_AWK_SIZEOF_INT_T <= 256) /* 2048 bits */
+#	define IDXBUFSIZE 640
+#else
+#	error unsupported. qse_awk_int_t too big
+#endif
 
 #define MMGR(rtx) ((rtx)->awk->mmgr)
 
@@ -549,7 +562,7 @@ static int set_global (
 		}
 
 		case QSE_AWK_GBL_OFS:
-		{	
+		{
 			qse_awk_rtx_valtostr_out_t out;
 
 			out.type = QSE_AWK_RTX_VALTOSTR_CPLDUP;
@@ -6454,7 +6467,7 @@ read_console_again:
 	
 skip_read:
 	tmp = qse_awk_rtx_makeintval (rtx, n);
-	if (tmp == QSE_NULL) ADJERR_LOC (rtx, &nde->loc);
+	if (!tmp) ADJERR_LOC (rtx, &nde->loc);
 	return tmp;
 }
 
