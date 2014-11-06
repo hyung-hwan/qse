@@ -38,15 +38,19 @@
 #if defined(QSE_USE_AWK_INTMAX)
 typedef qse_intmax_t qse_awk_int_t;
 typedef qse_uintmax_t qse_awk_uint_t;
+#define QSE_AWK_SIZEOF_INT_T QSE_SIZEZOF_INTMAX_T
 #else
 typedef qse_long_t qse_awk_int_t;
 typedef qse_ulong_t qse_awk_uint_t;
+#define QSE_AWK_SIZEOF_INT_T QSE_SIZEZOF_LONG_T
 #endif
 
 #if defined(QSE_USE_AWK_FLTMAX)
 typedef qse_fltmax_t qse_awk_flt_t;
+#define QSE_AWK_SIZEOF_FLT_T QSE_SIZEOF_FLTMAX_T
 #else
 typedef qse_flt_t qse_awk_flt_t;
+#define QSE_AWK_SIZEOF_FLT_T QSE_SIZEOF_FLT_T
 #endif
 
 /** \struct qse_awk_t
