@@ -175,6 +175,38 @@ qse_awk_flt_t qse_awk_stdmathmod (qse_awk_t* awk, qse_awk_flt_t x, qse_awk_flt_t
 #endif
 }
 
+int qse_awk_stdmodstartup (qse_awk_t* awk)
+{
+#if defined(QSE_ENABLE_STATIC_MODULE)
+	return 0;
+
+#elif defined(USE_LTDL)
+	/* lt_dlinit() can be called more than once and 
+	 * lt_dlexit() shuts down libltdl if it's called as many times as
+	 * corresponding lt_dlinit(). so it's safe to call lt_dlinit()
+	 * and lt_dlexit() at the library level. */
+	return (lt_dlinit () != 0)? -1: 0;
+
+#else
+	return 0;
+#endif
+
+}
+
+void qse_awk_stdmodshutdown (qse_awk_t* awk)
+{
+#if defined(QSE_ENABLE_STATIC_MODULE)
+	/* do nothign */
+
+#elif defined(USE_LTDL)
+
+	lt_dlexit ();
+
+#else
+	/* do nothing */
+#endif
+}
+
 void* qse_awk_stdmodopen (qse_awk_t* awk, const qse_awk_mod_spec_t* spec)
 {
 #if defined(QSE_ENABLE_STATIC_MODULE)
@@ -389,10 +421,7 @@ qse_awk_t* qse_awk_openstd (qse_size_t xtnsize, qse_awk_errnum_t* errnum)
 
 static void fini_xtn (qse_awk_t* awk)
 {
-	/* nothing to do */
-#if defined(USE_LTDL)
-	lt_dlexit ();
-#endif
+	qse_awk_stdmodshutdown (awk);
 }
 
 static void clear_xtn (qse_awk_t* awk)
@@ -424,13 +453,7 @@ qse_awk_t* qse_awk_openstdwithmmgr (qse_mmgr_t* mmgr, qse_size_t xtnsize, qse_aw
 	if (add_globals(awk) <= -1 ||
 	    add_functions (awk) <= -1) goto oops;
 
-#if defined(USE_LTDL)
-	/* lt_dlinit() can be called more than once and 
-	 * lt_dlexit() shuts down libltdl if it's called as many times as
-	 * corresponding lt_dlinit(). so it's safe to call lt_dlinit()
-	 * and lt_dlexit() at the library level. */
-	if (lt_dlinit () != 0) goto oops;
-#endif
+	if (qse_awk_stdmodstartup (awk) <= -1) goto oops;
 
 	xtn->ecb.close = fini_xtn;
 	xtn->ecb.clear = clear_xtn;

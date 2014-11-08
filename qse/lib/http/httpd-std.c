@@ -441,8 +441,21 @@ static QSE_INLINE qse_ssize_t __send_file (
 	qse_fio_hnd_t fh;
 
 	fh = qse_fio_gethandle (HANDLE_TO_FIO(in_fd));
+	#if defined(__FreeBSD__)
+	{
+		off_t nsent;
+		ret = sendfile (fh, out_fd, *offset, count, QSE_NULL, &nsent, 0);
+		if (ret == 0) 
+		{
+			*offset += nsent;
+			ret = nsent;	
+		}
+		else qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
+	}
+	#else
 	ret = sendfile (out_fd, fh, offset, count);
 	if (ret <= -1) qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
+	#endif
 	return ret;
 
 #elif defined(HAVE_SENDFILE64)
