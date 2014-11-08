@@ -27,15 +27,7 @@
 #include <qse/cmn/nwio.h>
 #include <qse/cmn/path.h>
 #include "awk.h"
-
-#include <stdlib.h>
-#include <math.h>
-
-#if defined(HAVE_QUADMATH_H)
-extern "C" { // some gcc distros don't have extern "C" declared in the header file.
-#	include <quadmath.h>
-}
-#endif
+#include "std.h"
 
 #if defined(_WIN32)
 #	include <windows.h>
@@ -1098,228 +1090,33 @@ void  StdAwk::freeMem (void* ptr)
 
 StdAwk::flt_t StdAwk::pow (flt_t x, flt_t y) 
 { 
-#if defined(QSE_USE_AWK_FLTMAX) && defined(HAVE_POWQ)
-	return ::powq (x, y);
-#elif defined(HAVE_POWL) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
-	return ::powl (x, y);
-#elif defined(HAVE_POW)
-	return ::pow (x, y);
-#elif defined(HAVE_POWF)
-	return ::powf (x, y);
-#else
-	#error ### no pow function available ###
-#endif
+	return qse_awk_stdmathpow (this->awk, x, y);
 }
 
 StdAwk::flt_t StdAwk::mod (flt_t x, flt_t y) 
 { 
-#if defined(QSE_USE_AWK_FLTMAX) && defined(HAVE_FMODQ)
-	return ::fmodq (x, y);
-#elif defined(HAVE_FMODL) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
-	return ::fmodl (x, y);
-#elif defined(HAVE_FMOD)
-	return ::fmod (x, y);
-#elif defined(HAVE_FMODF)
-	return ::fmodf (x, y);
-#else
-	#error ### no fmod function available ###
-#endif
+	return qse_awk_stdmathmod (this->awk, x, y);
 }
 
 void* StdAwk::modopen (const mod_spec_t* spec)
 {
-#if defined(QSE_ENABLE_STATIC_MODULE)
-	/* this won't be called at all when modules are linked into
-	 * the main library. */
-	this->setError (QSE_AWK_ENOIMPL);
-	return QSE_NULL;
-
-#elif defined(USE_LTDL)
-
 	void* h;
-	qse_mchar_t* modpath;
-	const qse_char_t* tmp[4];
-	int count;
-
-	count = 0;
-	if (spec->prefix) tmp[count++] = spec->prefix;
-	tmp[count++] = spec->name;
-	if (spec->postfix) tmp[count++] = spec->postfix;
-	tmp[count] = QSE_NULL;
-
-	#if defined(QSE_CHAR_IS_MCHAR)
-	modpath = qse_mbsadup (tmp, QSE_NULL, this->getMmgr());
-	#else
-	modpath = qse_wcsatombsdup (tmp, QSE_NULL, this->getMmgr());
-	#endif
-	if (!modpath)
-	{
-		this->setError (QSE_AWK_ENOMEM);
-		return QSE_NULL;
-	}
-
-	h = lt_dlopenext (modpath);
-
-	QSE_MMGR_FREE (awk->mmgr, modpath);
-
+	h = qse_awk_stdmodopen (this->awk, spec);
+	if (!h) this->retrieveError ();
 	return h;
-
-#elif defined(_WIN32)
-
-	HMODULE h;
-	qse_char_t* modpath;
-	const qse_char_t* tmp[4];
-	int count;
-
-	count = 0;
-	if (spec->prefix) tmp[count++] = spec->prefix;
-	tmp[count++] = spec->name;
-	if (spec->postfix) tmp[count++] = spec->postfix;
-	tmp[count] = QSE_NULL;
-
-	modpath = qse_stradup (tmp, QSE_NULL, this->getMmgr());
-	if (!modpath)
-	{
-		this->setError (QSE_AWK_ENOMEM);
-		return QSE_NULL;
-	}
-
-	h = LoadLibrary (modpath);
-
-	QSE_MMGR_FREE (awk->mmgr, modpath);
-
-	QSE_ASSERT (QSE_SIZEOF(h) <= QSE_SIZEOF(void*));
-	return h;
-
-#elif defined(__OS2__)
-
-	HMODULE h;
-	qse_mchar_t* modpath;
-	const qse_char_t* tmp[4];
-	int count;
-	char errbuf[CCHMAXPATH];
-
-	count = 0;
-	if (spec->prefix) tmp[count++] = spec->prefix;
-	tmp[count++] = spec->name;
-	if (spec->postfix) tmp[count++] = spec->postfix;
-	tmp[count] = QSE_NULL;
-
-	#if defined(QSE_CHAR_IS_MCHAR)
-	modpath = qse_mbsadup (tmp, QSE_NULL, this->getMmgr());
-	#else
-	modpath = qse_wcsatombsdup (tmp, QSE_NULL, this->getMmgr());
-	#endif
-	if (!modpath)
-	{
-		this->setError (QSE_AWK_ENOMEM);
-		return QSE_NULL;
-	}
-
-	if (DosLoadModule (errbuf, QSE_COUNTOF(errbuf) - 1, modpath, &h) != NO_ERROR) h = QSE_NULL;
-
-	QSE_MMGR_FREE (awk->mmgr, modpath);
-
-	QSE_ASSERT (QSE_SIZEOF(h) <= QSE_SIZEOF(void*));
-	return (void*)h;
-
-#elif defined(__DOS__)
-
-	void* h;
-	qse_mchar_t* modpath;
-	const qse_char_t* tmp[4];
-	int count;
-
-	count = 0;
-	if (spec->prefix) tmp[count++] = spec->prefix;
-	tmp[count++] = spec->name;
-	if (spec->postfix) tmp[count++] = spec->postfix;
-	tmp[count] = QSE_NULL;
-
-	#if defined(QSE_CHAR_IS_MCHAR)
-	modpath = qse_mbsadup (tmp, QSE_NULL, awk->mmgr);
-	#else
-	modpath = qse_wcsatombsdup (tmp, QSE_NULL, awk->mmgr);
-	#endif
-	if (!modpath)
-	{
-		qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);
-		return QSE_NULL;
-	}
-
-	h = LoadModule (modpath);
-
-	QSE_MMGR_FREE (awk->mmgr, modpath);
-	
-	QSE_ASSERT (QSE_SIZEOF(h) <= QSE_SIZEOF(void*));
-	return h;
-
-#else
-
-	this->setError (QSE_AWK_ENOIMPL);
-	return QSE_NULL;
-
-#endif
 }
 
 void StdAwk::modclose (void* handle)
 {
-#if defined(QSE_ENABLE_STATIC_MODULE)
-	/* this won't be called at all when modules are linked into
-	 * the main library. */
-#elif defined(USE_LTDL)
-	lt_dlclose ((lt_dlhandle)handle);
-#elif defined(_WIN32)
-	FreeLibrary ((HMODULE)handle);
-#elif defined(__OS2__)
-     DosFreeModule ((HMODULE)handle);
-#elif defined(__DOS__)
-	FreeModule (handle);
-#else
-	/* nothing to do */
-#endif
+	qse_awk_stdmodclose (this->awk, handle);
 }
 
 void* StdAwk::modsym (void* handle, const qse_char_t* name)
 {
 	void* s;
-	qse_mchar_t* mname;
-
-#if defined(QSE_CHAR_IS_MCHAR)
-	mname = (qse_mchar_t*)name;
-#else
-	mname = qse_wcstombsdup (name, QSE_NULL, this->getMmgr());
-	if (!mname)
-	{
-		this->setError (QSE_AWK_ENOMEM);
-		return QSE_NULL;
-	}
-#endif
-
-#if defined(QSE_ENABLE_STATIC_MODULE)
-	/* this won't be called at all when modules are linked into
-	 * the main library. */
-	s = QSE_NULL;
-#elif defined(USE_LTDL)
-	s = lt_dlsym ((lt_dlhandle)handle, mname);
-#elif defined(_WIN32)
-	s = (void*)GetProcAddress ((HMODULE)handle, mname);
-#elif defined(__OS2__)
-     if (DosQueryProcAddr ((HMODULE)handle, 0, mname, (PFN*)&s) != NO_ERROR) s = QSE_NULL;
-#elif defined(__DOS__)
-	s = GetProcAddress (handle, mname);
-#else
-	s = QSE_NULL;
-#endif
-
-#if defined(QSE_CHAR_IS_MCHAR)
-	/* nothing to do */
-#else
-	QSE_MMGR_FREE (awk->mmgr, mname);
-#endif
-
+	s = qse_awk_stdmodsym (this->awk, handle, name);
+	if (!s) this->retrieveError ();
 	return s;
-
 }
 
 int StdAwk::SourceFile::open (Data& io)

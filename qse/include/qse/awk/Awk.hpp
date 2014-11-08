@@ -364,6 +364,8 @@ public:
 		class QSE_EXPORT Handler 
 		{
 		public:
+			virtual ~Handler () {}
+
 			virtual int     open  (Pipe& io) = 0;
 			virtual int     close (Pipe& io) = 0;
 			virtual ssize_t read  (Pipe& io, char_t* buf, size_t len) = 0;
@@ -406,6 +408,8 @@ public:
 		class QSE_EXPORT Handler 
 		{
 		public:
+			virtual ~Handler () {}
+
 			virtual int     open  (File& io) = 0;
 			virtual int     close (File& io) = 0;
 			virtual ssize_t read  (File& io, char_t* buf, size_t len) = 0;
@@ -442,6 +446,8 @@ public:
 		class QSE_EXPORT Handler 
 		{
 		public:
+			virtual ~Handler () {}
+
 			/// The open() function is called before the initial
 			/// access to the console for input and output.
 			/// It must return 0 for success and -1 for failure.
