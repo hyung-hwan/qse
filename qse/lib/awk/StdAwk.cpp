@@ -29,30 +29,10 @@
 #include "awk.h"
 #include "std.h"
 
-#if defined(_WIN32)
-#	include <windows.h>
-#	include <tchar.h>
-#	if defined(QSE_HAVE_CONFIG_H)
-#		include <ltdl.h>
-#		define USE_LTDL
-#	endif
-#elif defined(__OS2__)
-#	define INCL_DOSMODULEMGR
-#	define INCL_DOSPROCESS
-#	define INCL_DOSERRORS
-#	include <os2.h>
-#elif defined(__DOS__)
-#	if !defined(QSE_ENABLE_STATIC_MODULE)
-#		include <cwdllfnc.h>
-#	endif
-#else
-#    include <unistd.h>
-#    include <ltdl.h>
-#	define USE_LTDL
-#endif
+#include <stdlib.h>
 
-#ifndef QSE_HAVE_CONFIG_H
-#    if defined(_WIN32) || defined(__OS2__) || defined(__DOS__)
+#if !defined(QSE_HAVE_CONFIG_H)
+#	if defined(_WIN32) || defined(__OS2__) || defined(__DOS__)
 #		define HAVE_POW
 #		define HAVE_FMOD
 #	endif
@@ -128,13 +108,7 @@ int StdAwk::open ()
 		goto oops;
 	}
 
-#if defined(USE_LTDL)
-	/* lt_dlinit() can be called more than once and 
-	 * lt_dlexit() shuts down libltdl if it's called as many times as
-	 * corresponding lt_dlinit(). so it's safe to call lt_dlinit()
-	 * and lt_dlexit() at the library level. */
-	if (lt_dlinit() != 0) goto oops;
-#endif
+	if (qse_awk_stdmodstartup (this->awk) <= -1) goto oops;
 
 	this->cmgrtab_inited = false;
 	return 0;
@@ -153,11 +127,8 @@ void StdAwk::close ()
 	}
 
 	clearConsoleOutputs ();
+	qse_awk_stdmodshutdown (this->awk);
 	Awk::close ();
-
-#if defined(USE_LTDL)
-	lt_dlexit ();
-#endif
 }
 
 StdAwk::Run* StdAwk::parse (Source& in, Source& out)
