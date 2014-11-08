@@ -30,6 +30,11 @@ extern "C" {
 qse_awk_flt_t qse_awk_stdmathpow (qse_awk_t* awk, qse_awk_flt_t x, qse_awk_flt_t y);
 qse_awk_flt_t qse_awk_stdmathmod (qse_awk_t* awk, qse_awk_flt_t x, qse_awk_flt_t y);
 
+void* qse_awk_stdmodopen (qse_awk_t* awk, const qse_awk_mod_spec_t* spec);
+void qse_awk_stdmodclose (qse_awk_t* awk, void* handle);
+void* qse_awk_stdmodsym (qse_awk_t* awk, void* handle, const qse_char_t* name);
+
+
 #ifdef __cplusplus
 }
 #endif

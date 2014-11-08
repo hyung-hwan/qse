@@ -175,7 +175,7 @@ qse_awk_flt_t qse_awk_stdmathmod (qse_awk_t* awk, qse_awk_flt_t x, qse_awk_flt_t
 #endif
 }
 
-static void* custom_awk_modopen (qse_awk_t* awk, const qse_awk_mod_spec_t* spec)
+void* qse_awk_stdmodopen (qse_awk_t* awk, const qse_awk_mod_spec_t* spec)
 {
 #if defined(QSE_ENABLE_STATIC_MODULE)
 	/* this won't be called at all when modules are linked into
@@ -315,7 +315,7 @@ static void* custom_awk_modopen (qse_awk_t* awk, const qse_awk_mod_spec_t* spec)
 #endif
 }
 
-static void custom_awk_modclose (qse_awk_t* awk, void* handle)
+void qse_awk_stdmodclose (qse_awk_t* awk, void* handle)
 {
 #if defined(QSE_ENABLE_STATIC_MODULE)
 	/* this won't be called at all when modules are linked into
@@ -333,7 +333,7 @@ static void custom_awk_modclose (qse_awk_t* awk, void* handle)
 #endif
 }
 
-static void* custom_awk_modsym (qse_awk_t* awk, void* handle, const qse_char_t* name)
+void* qse_awk_stdmodsym (qse_awk_t* awk, void* handle, const qse_char_t* name)
 {
 	void* s;
 	qse_mchar_t* mname;
@@ -409,9 +409,9 @@ qse_awk_t* qse_awk_openstdwithmmgr (qse_mmgr_t* mmgr, qse_size_t xtnsize, qse_aw
 	prm.math.pow = qse_awk_stdmathpow;
 	prm.math.mod = qse_awk_stdmathmod;
 
-	prm.modopen = custom_awk_modopen;
-	prm.modclose = custom_awk_modclose;
-	prm.modsym = custom_awk_modsym;
+	prm.modopen = qse_awk_stdmodopen;
+	prm.modclose = qse_awk_stdmodclose;
+	prm.modsym = qse_awk_stdmodsym;
 
 	/* create an object */
 	awk = qse_awk_open (mmgr, QSE_SIZEOF(xtn_t) + xtnsize, &prm, errnum);
