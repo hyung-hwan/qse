@@ -23,7 +23,7 @@ CPPFLAGS_LIB_COMMON += -DQSE_AWK_DEFAULT_MODPREFIX=\"$(libdir)/libqseawk-\" -DQS
 endif
 
 lib_LTLIBRARIES = libqseawk.la
-libqseawk_la_SOURCES = awk.c err.c tree.c parse.c run.c rec.c val.c fnc.c misc.c rio.c std.c awk.h err.h rio.h val.h fnc.h misc.h parse.h run.h tree.h 
+libqseawk_la_SOURCES = awk.c err.c tree.c parse.c run.c rec.c val.c fnc.c misc.c rio.c std.c awk.h err.h rio.h val.h fnc.h misc.h parse.h run.h tree.h std.h
 libqseawk_la_CPPFLAGS = $(CPPFLAGS_LIB_COMMON)
 libqseawk_la_LDFLAGS = $(LDFLAGS_LIB_COMMON)
 libqseawk_la_LIBADD = $(LIBADD_LIB_COMMON)

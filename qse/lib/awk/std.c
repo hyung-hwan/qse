@@ -18,7 +18,7 @@
     License along with QSE. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "awk.h"
+#include "std.h"
 #include <qse/awk/stdawk.h>
 #include <qse/cmn/sio.h>
 #include <qse/cmn/pio.h>
@@ -145,7 +145,7 @@ typedef struct ioattr_t
 
 static ioattr_t* get_ioattr (qse_htb_t* tab, const qse_char_t* ptr, qse_size_t len);
 
-static qse_awk_flt_t custom_awk_pow (qse_awk_t* awk, qse_awk_flt_t x, qse_awk_flt_t y)
+qse_awk_flt_t qse_awk_stdmathpow (qse_awk_t* awk, qse_awk_flt_t x, qse_awk_flt_t y)
 {
 #if defined(QSE_USE_AWK_FLTMAX) && defined(HAVE_POWQ)
 	return powq (x, y);
@@ -160,7 +160,7 @@ static qse_awk_flt_t custom_awk_pow (qse_awk_t* awk, qse_awk_flt_t x, qse_awk_fl
 #endif
 }
 
-static qse_awk_flt_t custom_awk_mod (qse_awk_t* awk, qse_awk_flt_t x, qse_awk_flt_t y)
+qse_awk_flt_t qse_awk_stdmathmod (qse_awk_t* awk, qse_awk_flt_t x, qse_awk_flt_t y)
 {
 #if defined(QSE_USE_AWK_FLTMAX) && defined(HAVE_FMODQ)
 	return fmodq (x, y);
@@ -406,8 +406,8 @@ qse_awk_t* qse_awk_openstdwithmmgr (qse_mmgr_t* mmgr, qse_size_t xtnsize, qse_aw
 	qse_awk_prm_t prm;
 	xtn_t* xtn;
 
-	prm.math.pow = custom_awk_pow;
-	prm.math.mod = custom_awk_mod;
+	prm.math.pow = qse_awk_stdmathpow;
+	prm.math.mod = qse_awk_stdmathmod;
 
 	prm.modopen = custom_awk_modopen;
 	prm.modclose = custom_awk_modclose;
