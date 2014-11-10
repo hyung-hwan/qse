@@ -247,11 +247,14 @@ AC_SUBST(UNICOWS_LIBS)
 
 AC_ARG_ENABLE([ssl], [AS_HELP_STRING([--enable-ssl],[build the library in the ssl mode (default. yes)])],
 	enable_ssl_is=$enableval,enable_ssl_is=yes)
-if test "$enable_ssl_is" = "yes"
+if test "x$enable_ssl_is" = "xyes"
 then
+	AC_CHECK_HEADERS([openssl/err.h openssl/engine.h])
+
 	dnl check for an SSL library
 	AC_CHECK_FUNCS([SSL_library_init])
-	if test "$ac_cv_func_SSL_library_init" = "yes"
+
+	if test "x$ac_cv_func_SSL_library_init" = "xyes"
 	then
 		AC_DEFINE(HAVE_SSL, 1, [ssl support])
 	else
@@ -268,6 +271,11 @@ then
 			AC_DEFINE(HAVE_SSL_LIBRARY_INIT, 1)
 		])
 	fi
+
+	OLDLIBS="$LIBS"
+	LIBS="$SSL_LIBS $LIBS"
+	AC_CHECK_FUNCS([ENGINE_cleanup CRYPTO_cleanup_all_ex_data])
+	LIBS="$OLDLIBS"
 fi
 AC_SUBST(SSL_LIBS)
 

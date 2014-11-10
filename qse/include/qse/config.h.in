@@ -126,6 +126,9 @@
 /* Define to 1 if you have the <crt_externs.h> header file. */
 #undef HAVE_CRT_EXTERNS_H
 
+/* Define to 1 if you have the `CRYPTO_cleanup_all_ex_data' function. */
+#undef HAVE_CRYPTO_CLEANUP_ALL_EX_DATA
+
 /* Define if c++ supports namespace std. */
 #undef HAVE_CXX_NAMESPACE_STD
 
@@ -163,6 +166,9 @@
 
 /* Define if you have the _dyld_func_lookup function. */
 #undef HAVE_DYLD
+
+/* Define to 1 if you have the `ENGINE_cleanup' function. */
+#undef HAVE_ENGINE_CLEANUP
 
 /* epoll support */
 #undef HAVE_EPOLL
@@ -370,6 +376,12 @@
 
 /* Define to 1 if you have the `opendir' function. */
 #undef HAVE_OPENDIR
+
+/* Define to 1 if you have the <openssl/engine.h> header file. */
+#undef HAVE_OPENSSL_ENGINE_H
+
+/* Define to 1 if you have the <openssl/err.h> header file. */
+#undef HAVE_OPENSSL_ERR_H
 
 /* Define to 1 if you have the `posix_spawn' function. */
 #undef HAVE_POSIX_SPAWN
