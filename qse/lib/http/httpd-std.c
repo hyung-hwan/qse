@@ -124,8 +124,12 @@
 
 #if defined(HAVE_SSL)
 #	include <openssl/ssl.h>
-#	include <openssl/err.h>
-#	include <openssl/engine.h>
+#	if defined(HAVE_OPENSSL_ERR_H)
+#		include <openssl/err.h>
+#	endif
+#	if defined(HAVE_OPENSSL_ENGINE_H)
+#		include <openssl/engine.h>
+#	endif
 #endif
 
 #if defined(__linux) && !defined(SO_REUSEPORT)

@@ -38,8 +38,12 @@
 
 #if defined(HAVE_SSL)
 #	include <openssl/ssl.h>
-#	include <openssl/err.h>
-#	include <openssl/engine.h>
+#	if defined(HAVE_OPENSSL_ERR_H)
+#		include <openssl/err.h>
+#	endif
+#	if defined(HAVE_OPENSSL_ENGINE_H)
+#		include <openssl/engine.h>
+#	endif
 #endif
 
 #if defined(HAVE_SYS_PRCTL_H)
@@ -2794,10 +2798,14 @@ int qse_main (int argc, qse_achar_t* argv[])
 #if defined(HAVE_SSL)
 	/* ERR_remove_state() should be called for each thread if the application is thread */
 	ERR_remove_state (0); 
+	#if defined(HAVE_ENGINE_CLEANUP)
 	ENGINE_cleanup ();
+	#endif
 	ERR_free_strings ();
 	EVP_cleanup ();
+	#if defined(HAVE_CRYPTO_CLEANUP_ALL_EX_DATA)
 	CRYPTO_cleanup_all_ex_data ();
+	#endif
 #endif
 
 #if defined(_WIN32)

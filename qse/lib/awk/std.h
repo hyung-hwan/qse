@@ -37,7 +37,6 @@ QSE_EXPORT void* qse_awk_stdmodopen (qse_awk_t* awk, const qse_awk_mod_spec_t* s
 QSE_EXPORT void qse_awk_stdmodclose (qse_awk_t* awk, void* handle);
 QSE_EXPORT void* qse_awk_stdmodsym (qse_awk_t* awk, void* handle, const qse_char_t* name);
 
-
 #ifdef __cplusplus
 }
 #endif
