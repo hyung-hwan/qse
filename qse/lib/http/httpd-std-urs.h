@@ -274,7 +274,7 @@ static void urs_close (qse_httpd_t* httpd, qse_httpd_urs_t* urs)
 static int urs_recv (qse_httpd_t* httpd, qse_httpd_urs_t* urs, qse_httpd_hnd_t handle)
 {
 	urs_ctx_t* dc = (urs_ctx_t*)urs->ctx;
-	httpd_xtn_t* httpd_xtn;
+	/*httpd_xtn_t* httpd_xtn;*/
 
 	qse_skad_t fromaddr;
 	qse_sck_len_t fromlen;
@@ -285,9 +285,7 @@ static int urs_recv (qse_httpd_t* httpd, qse_httpd_urs_t* urs, qse_httpd_hnd_t h
 	urs_req_t* req;
 	qse_mchar_t* spc;
 
-printf ("URS_RECV............................................\n");
-
-	httpd_xtn = qse_httpd_getxtn (httpd);
+	/*httpd_xtn = qse_httpd_getxtn (httpd);*/
 
 /* TODO: use recvmsg with MSG_ERRQUEUE... set socket option IP_RECVERR... */
 	fromlen = QSE_SIZEOF(fromaddr);
@@ -359,10 +357,10 @@ static void tmr_urs_tmout_handle (qse_tmr_t* tmr, const qse_ntime_t* now, qse_tm
 	 *---------------------------------------------------------------- */
 	if (req->urs_retries > 0)
 	{
-		httpd_xtn_t* httpd_xtn;
+		/*httpd_xtn_t* httpd_xtn;*/
 		qse_tmr_event_t tmout_event;
 
-		httpd_xtn = qse_httpd_getxtn (dc->httpd);
+		/*httpd_xtn = qse_httpd_getxtn (dc->httpd);*/
 
 		QSE_MEMSET (&tmout_event, 0, QSE_SIZEOF(tmout_event));
 		qse_gettime (&tmout_event.when);

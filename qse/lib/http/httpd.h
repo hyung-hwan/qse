@@ -192,6 +192,20 @@ void qse_httpd_remove_timer_event (
 	qse_tmr_index_t  index
 );
 
+qse_httpd_peer_t* qse_httpd_cacheproxypeer (
+	qse_httpd_t*        httpd,
+	qse_httpd_client_t* client,
+	qse_httpd_peer_t*   tmpl
+);
+
+qse_httpd_peer_t* qse_httpd_decacheproxypeer (
+	qse_httpd_t*        httpd,
+	qse_httpd_client_t* client, 
+	const qse_nwad_t*   nwad,
+	const qse_nwad_t*   local,
+	int                 secure
+);
+
 #ifdef __cplusplus
 }
 #endif

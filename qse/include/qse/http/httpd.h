@@ -167,8 +167,13 @@ enum qse_httpd_peer_flag_t
 	/* internal use only */
 	QSE_HTTPD_PEER_PENDING = (1 << 21),
 
+	/* internal use only */
+	QSE_HTTPD_PEER_CACHED = (1 << 23),
+
 	/* all internal enumerators */
-	QSE_HTTPD_PEER_ALL_INTERNALS = (QSE_HTTPD_PEER_CONNECTED | QSE_HTTPD_PEER_PENDING)
+	QSE_HTTPD_PEER_ALL_INTERNALS = (QSE_HTTPD_PEER_CONNECTED |
+	                                QSE_HTTPD_PEER_PENDING |
+	                                QSE_HTTPD_PEER_CACHED)
 };
 typedef enum qse_httpd_peer_flag_t qse_httpd_peer_flag_t;
 
@@ -176,10 +181,20 @@ typedef struct qse_httpd_peer_t qse_httpd_peer_t;
 struct qse_httpd_peer_t
 {
 	int flags; /* 0 or bitwised-OR'ed of qse_httpd_peer_flag_t enumerators */
+
 	qse_nwad_t nwad;
 	qse_nwad_t local; /* local side address facing the peer */
+
+	/* peer.open can set these handles */
 	qse_httpd_hnd_t handle;
 	qse_httpd_hnd_t handle2;
+
+	/* peer links for the proxy peer cache list in client.
+	 * internal use only. don't mess with these */
+	qse_httpd_peer_t* next;
+	qse_httpd_peer_t* prev;
+
+	qse_ntime_t timestamp; /* internal use only */
 };
 
 enum qse_httpd_mux_mask_t
@@ -334,6 +349,42 @@ struct qse_httpd_scb_t
 
 	struct
 	{
+		void (*close) (
+			qse_httpd_t* httpd,
+			qse_httpd_client_t* client);
+
+		void (*shutdown) (
+			qse_httpd_t* httpd,
+			qse_httpd_client_t* client);
+
+		/* action */
+		qse_ssize_t (*recv) (
+			qse_httpd_t* httpd, 
+			qse_httpd_client_t* client,
+			qse_mchar_t* buf, qse_size_t bufsize);
+
+		qse_ssize_t (*send) (
+			qse_httpd_t* httpd,
+			qse_httpd_client_t* client,
+			const qse_mchar_t* buf, qse_size_t bufsize);
+
+		qse_ssize_t (*sendfile) (
+			qse_httpd_t* httpd,
+			qse_httpd_client_t* client,
+			qse_httpd_hnd_t handle, qse_foff_t* offset, qse_size_t count);
+
+		/* event notification */
+		int (*accepted) (
+			qse_httpd_t* httpd,
+			qse_httpd_client_t* client);  /* optional */
+		void (*closed) (
+			qse_httpd_t* httpd,
+			qse_httpd_client_t* client);  /* optional */
+	} client;
+
+
+	struct
+	{
 		int (*open) (qse_httpd_t* httpd, qse_httpd_peer_t* peer);
 		void (*close) (qse_httpd_t* httpd, qse_httpd_peer_t* peer);
 		int (*connected) (qse_httpd_t* httpd, qse_httpd_peer_t* peer);
@@ -399,41 +450,7 @@ struct qse_httpd_scb_t
 			qse_httpd_dirent_t* ent);
 	} dir;
 
-	struct
-	{
-		void (*close) (
-			qse_httpd_t* httpd,
-			qse_httpd_client_t* client);
-
-		void (*shutdown) (
-			qse_httpd_t* httpd,
-			qse_httpd_client_t* client);
-
-		/* action */
-		qse_ssize_t (*recv) (
-			qse_httpd_t* httpd, 
-			qse_httpd_client_t* client,
-			qse_mchar_t* buf, qse_size_t bufsize);
-
-		qse_ssize_t (*send) (
-			qse_httpd_t* httpd,
-			qse_httpd_client_t* client,
-			const qse_mchar_t* buf, qse_size_t bufsize);
-
-		qse_ssize_t (*sendfile) (
-			qse_httpd_t* httpd,
-			qse_httpd_client_t* client,
-			qse_httpd_hnd_t handle, qse_foff_t* offset, qse_size_t count);
-
-		/* event notification */
-		int (*accepted) (
-			qse_httpd_t* httpd,
-			qse_httpd_client_t* client);  /* optional */
-		void (*closed) (
-			qse_httpd_t* httpd,
-			qse_httpd_client_t* client);  /* optional */
-	} client;
-
+	
 	struct
 	{
 		/** opens the name resolution service. set this to #QSE_NULL to
@@ -663,6 +680,12 @@ struct qse_httpd_client_t
 	int                      initial_ifindex;
 
 	/* == PRIVATE == */
+	struct
+	{
+		qse_httpd_peer_t* first;
+		qse_httpd_peer_t* last;
+	} peer; /* list of proxy peers for this client */
+
 	qse_htrd_t*              htrd;
 	int                      status;
 	qse_httpd_task_trigger_t trigger;
@@ -1404,9 +1427,9 @@ QSE_EXPORT qse_httpd_mod_t* qse_httpd_findmod (
 /* -------------------------------------------- */
 
 QSE_EXPORT int qse_httpd_inserttimerevent (
-	qse_httpd_t*             httpd,
+	qse_httpd_t*                   httpd,
 	const qse_httpd_timer_event_t* event,
-	qse_httpd_timer_index_t* index
+	qse_httpd_timer_index_t*       index
 );
 
 
@@ -1415,6 +1438,7 @@ QSE_EXPORT void qse_httpd_removetimerevent (
 	qse_httpd_timer_index_t  index
 );
 
+/* -------------------------------------------- */
 
 #ifdef __cplusplus
 }

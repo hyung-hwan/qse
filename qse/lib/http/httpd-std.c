@@ -1134,6 +1134,192 @@ oops:
 
 /* ------------------------------------------------------------------- */
 
+static void client_close (qse_httpd_t* httpd, qse_httpd_client_t* client)
+{
+	qse_shutsckhnd (client->handle, QSE_SHUTSCKHND_RW);
+	qse_closesckhnd (client->handle);
+}
+
+static void client_shutdown (qse_httpd_t* httpd, qse_httpd_client_t* client)
+{
+	qse_shutsckhnd (client->handle, QSE_SHUTSCKHND_RW);
+}
+
+static qse_ssize_t client_recv (
+	qse_httpd_t* httpd, qse_httpd_client_t* client,
+	qse_mchar_t* buf, qse_size_t bufsize)
+{
+	if (client->status & QSE_HTTPD_CLIENT_SECURE)
+	{
+	#if defined(HAVE_SSL)
+		int ret = SSL_read (HANDLE_TO_SSL(client->handle2), buf, bufsize);
+		if (ret <= -1)
+		{
+			int err = SSL_get_error(HANDLE_TO_SSL(client->handle2),ret);
+			if (err == SSL_ERROR_WANT_READ || err == SSL_ERROR_WANT_WRITE)
+				qse_httpd_seterrnum (httpd, QSE_HTTPD_EAGAIN);
+			else
+				qse_httpd_seterrnum (httpd, QSE_HTTPD_ESYSERR);
+		}
+
+		if (SSL_pending (HANDLE_TO_SSL(client->handle2)) > 0) 
+			client->status |= QSE_HTTPD_CLIENT_PENDING;
+		else
+			client->status &= ~QSE_HTTPD_CLIENT_PENDING;
+
+		return ret;
+	#else
+		qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
+		return -1;
+	#endif
+	}
+	else
+	{
+		qse_ssize_t ret;
+		ret = recv (client->handle, buf, bufsize, 0);
+		if (ret <= -1) qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
+		return ret;
+	}
+}
+
+static qse_ssize_t client_send (
+	qse_httpd_t* httpd, qse_httpd_client_t* client,
+	const qse_mchar_t* buf, qse_size_t bufsize)
+{
+	if (client->status & QSE_HTTPD_CLIENT_SECURE)
+	{
+	#if defined(HAVE_SSL)
+		int ret = SSL_write (HANDLE_TO_SSL(client->handle2), buf, bufsize);
+		if (ret <= -1)
+		{
+			int err = SSL_get_error(HANDLE_TO_SSL(client->handle2),ret);
+			if (err == SSL_ERROR_WANT_READ || err == SSL_ERROR_WANT_WRITE)
+				qse_httpd_seterrnum (httpd, QSE_HTTPD_EAGAIN);
+			else
+				qse_httpd_seterrnum (httpd, QSE_HTTPD_ESYSERR);
+		}
+		return ret;
+	#else
+		qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
+		return -1;
+	#endif
+	}
+	else
+	{
+		qse_ssize_t ret = send (client->handle, buf, bufsize, 0);
+		if (ret <= -1) qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
+		return ret;
+	}
+}
+
+static qse_ssize_t client_sendfile (
+	qse_httpd_t* httpd, qse_httpd_client_t* client,
+	qse_httpd_hnd_t handle, qse_foff_t* offset, qse_size_t count)
+{
+	if (client->status & QSE_HTTPD_CLIENT_SECURE)
+	{
+		return __send_file_ssl (httpd, (void*)client->handle2, handle, offset, count);
+	}
+	else
+	{
+		return __send_file (httpd, client->handle, handle, offset, count);
+	}
+}
+
+static int client_accepted (qse_httpd_t* httpd, qse_httpd_client_t* client)
+{
+	if (client->status & QSE_HTTPD_CLIENT_SECURE)
+	{
+	#if defined(HAVE_SSL)
+		int ret;
+		SSL* ssl;
+		server_xtn_t* server_xtn;
+
+		server_xtn = (server_xtn_t*)qse_httpd_getserverxtn (httpd, client->server);
+
+		
+		if (!server_xtn->ssl_ctx)
+		{
+			/* performed the delayed ssl initialization */
+			if (init_server_ssl (httpd, client->server) <= -1) return -1;
+		}
+
+		QSE_ASSERT (server_xtn->ssl_ctx != QSE_NULL);
+		QSE_ASSERT (QSE_SIZEOF(client->handle2) >= QSE_SIZEOF(ssl));
+
+		if (HANDLE_TO_SSL(client->handle2))
+		{
+			ssl = HANDLE_TO_SSL(client->handle2);
+		}
+		else
+		{
+			ssl = SSL_new (server_xtn->ssl_ctx);
+			if (ssl == QSE_NULL) 
+			{
+				httpd->errnum = QSE_HTTPD_ESYSERR;
+				return -1;
+			}
+
+			client->handle2 = SSL_TO_HANDLE(ssl);
+			if (SSL_set_fd (ssl, client->handle) == 0)
+			{
+				/* don't free ssl here since client_closed()
+				 * will free it */
+				httpd->errnum = QSE_HTTPD_ESYSERR;
+				return -1;
+			}
+
+			SSL_set_read_ahead (ssl, 0);
+		}
+
+		ret = SSL_accept (ssl);
+		if (ret <= 0)
+		{
+			int err = SSL_get_error(ssl, ret);
+			if (err == SSL_ERROR_WANT_READ || err == SSL_ERROR_WANT_WRITE)
+			{
+				/* handshaking isn't complete. */
+				return 0;
+			}
+
+			if (httpd->opt.trait & QSE_HTTPD_LOGACT)
+			{
+				qse_httpd_act_t msg;
+				msg.code = QSE_HTTPD_CATCH_MERRMSG;
+				ERR_error_string_n (err, msg.u.merrmsg, QSE_COUNTOF(msg.u.merrmsg));
+				httpd->opt.rcb.logact (httpd, &msg);
+			}
+
+			/* client_closed() free this. no SSL_free() here.
+			SSL_free (ssl); */
+			return -1;
+		}
+
+	#else
+		qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
+		return -1;
+	#endif
+	}
+
+	return 1; /* accept completed */
+}
+
+static void client_closed (qse_httpd_t* httpd, qse_httpd_client_t* client)
+{
+	if (client->status & QSE_HTTPD_CLIENT_SECURE)
+	{
+	#if defined(HAVE_SSL)
+		if ((SSL*)client->handle2)
+		{
+			SSL_shutdown ((SSL*)client->handle2); /* is this needed? */
+			SSL_free ((SSL*)client->handle2);
+		}
+	#endif
+	}
+}
+
+/* ------------------------------------------------------------------- */
+
 static int peer_open (qse_httpd_t* httpd, qse_httpd_peer_t* peer)
 {
 	/* -------------------------------------------------------------------- */
@@ -2131,193 +2317,6 @@ static int dir_read (qse_httpd_t* httpd, qse_httpd_hnd_t handle, qse_httpd_diren
 }
 
 /* ------------------------------------------------------------------- */
-
-static void client_close (qse_httpd_t* httpd, qse_httpd_client_t* client)
-{
-	qse_shutsckhnd (client->handle, QSE_SHUTSCKHND_RW);
-	qse_closesckhnd (client->handle);
-}
-
-static void client_shutdown (qse_httpd_t* httpd, qse_httpd_client_t* client)
-{
-	qse_shutsckhnd (client->handle, QSE_SHUTSCKHND_RW);
-}
-
-static qse_ssize_t client_recv (
-	qse_httpd_t* httpd, qse_httpd_client_t* client,
-	qse_mchar_t* buf, qse_size_t bufsize)
-{
-	if (client->status & QSE_HTTPD_CLIENT_SECURE)
-	{
-	#if defined(HAVE_SSL)
-		int ret = SSL_read (HANDLE_TO_SSL(client->handle2), buf, bufsize);
-		if (ret <= -1)
-		{
-			int err = SSL_get_error(HANDLE_TO_SSL(client->handle2),ret);
-			if (err == SSL_ERROR_WANT_READ || err == SSL_ERROR_WANT_WRITE)
-				qse_httpd_seterrnum (httpd, QSE_HTTPD_EAGAIN);
-			else
-				qse_httpd_seterrnum (httpd, QSE_HTTPD_ESYSERR);
-		}
-
-		if (SSL_pending (HANDLE_TO_SSL(client->handle2)) > 0) 
-			client->status |= QSE_HTTPD_CLIENT_PENDING;
-		else
-			client->status &= ~QSE_HTTPD_CLIENT_PENDING;
-
-		return ret;
-	#else
-		qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
-		return -1;
-	#endif
-	}
-	else
-	{
-		qse_ssize_t ret;
-		ret = recv (client->handle, buf, bufsize, 0);
-		if (ret <= -1) qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
-		return ret;
-	}
-}
-
-static qse_ssize_t client_send (
-	qse_httpd_t* httpd, qse_httpd_client_t* client,
-	const qse_mchar_t* buf, qse_size_t bufsize)
-{
-	if (client->status & QSE_HTTPD_CLIENT_SECURE)
-	{
-	#if defined(HAVE_SSL)
-		int ret = SSL_write (HANDLE_TO_SSL(client->handle2), buf, bufsize);
-		if (ret <= -1)
-		{
-			int err = SSL_get_error(HANDLE_TO_SSL(client->handle2),ret);
-			if (err == SSL_ERROR_WANT_READ || err == SSL_ERROR_WANT_WRITE)
-				qse_httpd_seterrnum (httpd, QSE_HTTPD_EAGAIN);
-			else
-				qse_httpd_seterrnum (httpd, QSE_HTTPD_ESYSERR);
-		}
-		return ret;
-	#else
-		qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
-		return -1;
-	#endif
-	}
-	else
-	{
-		qse_ssize_t ret = send (client->handle, buf, bufsize, 0);
-		if (ret <= -1) qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
-		return ret;
-	}
-}
-
-static qse_ssize_t client_sendfile (
-	qse_httpd_t* httpd, qse_httpd_client_t* client,
-	qse_httpd_hnd_t handle, qse_foff_t* offset, qse_size_t count)
-{
-	if (client->status & QSE_HTTPD_CLIENT_SECURE)
-	{
-		return __send_file_ssl (httpd, (void*)client->handle2, handle, offset, count);
-	}
-	else
-	{
-		return __send_file (httpd, client->handle, handle, offset, count);
-	}
-}
-
-static int client_accepted (qse_httpd_t* httpd, qse_httpd_client_t* client)
-{
-	if (client->status & QSE_HTTPD_CLIENT_SECURE)
-	{
-	#if defined(HAVE_SSL)
-		int ret;
-		SSL* ssl;
-		server_xtn_t* server_xtn;
-
-		server_xtn = (server_xtn_t*)qse_httpd_getserverxtn (httpd, client->server);
-
-		
-		if (!server_xtn->ssl_ctx)
-		{
-			/* performed the delayed ssl initialization */
-			if (init_server_ssl (httpd, client->server) <= -1) return -1;
-		}
-
-		QSE_ASSERT (server_xtn->ssl_ctx != QSE_NULL);
-		QSE_ASSERT (QSE_SIZEOF(client->handle2) >= QSE_SIZEOF(ssl));
-
-		if (HANDLE_TO_SSL(client->handle2))
-		{
-			ssl = HANDLE_TO_SSL(client->handle2);
-		}
-		else
-		{
-			ssl = SSL_new (server_xtn->ssl_ctx);
-			if (ssl == QSE_NULL) 
-			{
-				httpd->errnum = QSE_HTTPD_ESYSERR;
-				return -1;
-			}
-
-			client->handle2 = SSL_TO_HANDLE(ssl);
-			if (SSL_set_fd (ssl, client->handle) == 0)
-			{
-				/* don't free ssl here since client_closed()
-				 * will free it */
-				httpd->errnum = QSE_HTTPD_ESYSERR;
-				return -1;
-			}
-
-			SSL_set_read_ahead (ssl, 0);
-		}
-
-		ret = SSL_accept (ssl);
-		if (ret <= 0)
-		{
-			int err = SSL_get_error(ssl, ret);
-			if (err == SSL_ERROR_WANT_READ || err == SSL_ERROR_WANT_WRITE)
-			{
-				/* handshaking isn't complete. */
-				return 0;
-			}
-
-			if (httpd->opt.trait & QSE_HTTPD_LOGACT)
-			{
-				qse_httpd_act_t msg;
-				msg.code = QSE_HTTPD_CATCH_MERRMSG;
-				ERR_error_string_n (err, msg.u.merrmsg, QSE_COUNTOF(msg.u.merrmsg));
-				httpd->opt.rcb.logact (httpd, &msg);
-			}
-
-			/* client_closed() free this. no SSL_free() here.
-			SSL_free (ssl); */
-			return -1;
-		}
-
-	#else
-		qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
-		return -1;
-	#endif
-	}
-
-	return 1; /* accept completed */
-}
-
-static void client_closed (qse_httpd_t* httpd, qse_httpd_client_t* client)
-{
-	if (client->status & QSE_HTTPD_CLIENT_SECURE)
-	{
-	#if defined(HAVE_SSL)
-		if ((SSL*)client->handle2)
-		{
-			SSL_shutdown ((SSL*)client->handle2); /* is this needed? */
-			SSL_free ((SSL*)client->handle2);
-		}
-	#endif
-	}
-}
-
-
-/* ------------------------------------------------------------------- */
 #if 0
 static qse_htb_walk_t walk (qse_htb_t* htb, qse_htb_pair_t* pair, void* ctx)
 {
@@ -2606,6 +2605,18 @@ static qse_httpd_scb_t httpd_system_callbacks =
 		server_accept
 	},
 
+	/* client connection */
+	{ 
+		client_close,
+		client_shutdown,
+		client_recv,
+		client_send,
+		client_sendfile,
+		client_accepted,
+		client_closed
+	},
+
+	/* proxy peer */
 	{ 
 		peer_open,
 		peer_close,
@@ -2645,17 +2656,6 @@ static qse_httpd_scb_t httpd_system_callbacks =
 		dir_open,
 		dir_close,
 		dir_read
-	},
-
-	/* client connection */
-	{ 
-		client_close,
-		client_shutdown,
-		client_recv,
-		client_send,
-		client_sendfile,
-		client_accepted,
-		client_closed
 	},
 
 	/* dns */
