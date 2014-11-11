@@ -180,6 +180,8 @@ typedef enum qse_httpd_peer_flag_t qse_httpd_peer_flag_t;
 typedef struct qse_httpd_peer_t qse_httpd_peer_t;
 struct qse_httpd_peer_t
 {
+	/* == PUBLIC == */
+
 	int flags; /* 0 or bitwised-OR'ed of qse_httpd_peer_flag_t enumerators */
 
 	qse_nwad_t nwad;
@@ -188,6 +190,9 @@ struct qse_httpd_peer_t
 	/* peer.open can set these handles */
 	qse_httpd_hnd_t handle;
 	qse_httpd_hnd_t handle2;
+
+
+	/* == PRIVATE == */
 
 	/* peer links for the proxy peer cache list in client.
 	 * internal use only. don't mess with these */

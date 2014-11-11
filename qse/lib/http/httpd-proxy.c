@@ -841,7 +841,7 @@ static void proxy_forward_client_input_to_peer (qse_httpd_t* httpd, qse_httpd_ta
 			{
 				if (httpd->errnum != QSE_HTTPD_EAGAIN)
 				{
-					DBGOUT_PROXY_ERROR (proxy, "Cannot send to peer");
+					DBGOUT_PROXY_ERROR (proxy, "Send failure to peer");
 
 					proxy->reqflags |= PROXY_REQ_FWDERR;
 					qse_mbs_clear (proxy->reqfwdbuf); 
@@ -1444,7 +1444,7 @@ printf ("task_main_proxy_5 trigger[0].mask=%d trigger[1].mask=%d trigger[2].mask
 			if (httpd->errnum != QSE_HTTPD_EAGAIN)
 			{
 				/* can't return internal server error any more... */
-				DBGOUT_PROXY_ERROR (proxy, "Cannot send to client");
+				DBGOUT_PROXY_ERROR (proxy, "Send failrue to client");
 				return -1;
 			}
 		}
@@ -1491,7 +1491,7 @@ printf ("task_main_proxy_4 trigger[0].mask=%d trigger[1].mask=%d trigger.cmask=%
 			/* can't return internal server error any more... */
 			if (httpd->errnum != QSE_HTTPD_EAGAIN)
 			{
-				DBGOUT_PROXY_ERROR (proxy, "Cannot receive from peer");
+				DBGOUT_PROXY_ERROR (proxy, "Recv failure from peer");
 				return -1;
 			}
 
@@ -1578,7 +1578,7 @@ printf ("task_main_proxy_4 trigger[0].mask=%d trigger[1].mask=%d trigger.cmask=%
 			if (httpd->errnum != QSE_HTTPD_EAGAIN)
 			{
 				/* can't return internal server error any more... */
-				DBGOUT_PROXY_ERROR (proxy, "Cannot send to client");
+				DBGOUT_PROXY_ERROR (proxy, "Send failure to client");
 				return -1;
 			}
 		}
@@ -1650,7 +1650,7 @@ printf ("task_main_proxy_3 trigger[0].mask=%d trigger[1].mask=%d trigger[2].mask
 		{
 			if (httpd->errnum != QSE_HTTPD_EAGAIN)
 			{
-				DBGOUT_PROXY_ERROR (proxy, "Cannot send to client");
+				DBGOUT_PROXY_ERROR (proxy, "Send failure to client");
 				return -1;
 			}
 		}
@@ -1738,7 +1738,7 @@ static int task_main_proxy_2 (
 		{
 			if (httpd->errnum != QSE_HTTPD_EAGAIN)
 			{
-				DBGOUT_PROXY_ERROR (proxy, "Cannot send to client");
+				DBGOUT_PROXY_ERROR (proxy, "Send failure to client");
 				goto oops;
 			}
 		}
@@ -1777,7 +1777,7 @@ static int task_main_proxy_2 (
 		{
 			if (httpd->errnum != QSE_HTTPD_EAGAIN)
 			{
-				DBGOUT_PROXY_ERROR (proxy, "Cannot receive from peer");
+				DBGOUT_PROXY_ERROR (proxy, "Recv failure from peer");
 				goto oops;
 			}
 		}
