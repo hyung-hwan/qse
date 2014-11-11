@@ -814,10 +814,10 @@ static void tmr_dns_tmout_handle (qse_tmr_t* tmr, const qse_ntime_t* now, qse_tm
 	 *---------------------------------------------------------------- */
 	if (req->dns_retries > 0)
 	{
-		httpd_xtn_t* httpd_xtn;
+		/*httpd_xtn_t* httpd_xtn;*/
 		qse_tmr_event_t tmout_event;
 
-		httpd_xtn = qse_httpd_getxtn (dc->httpd);
+		/*httpd_xtn = qse_httpd_getxtn (dc->httpd);*/
 
 		QSE_MEMSET (&tmout_event, 0, QSE_SIZEOF(tmout_event));
 		qse_gettime (&tmout_event.when);

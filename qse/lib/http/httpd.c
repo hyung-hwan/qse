@@ -406,8 +406,7 @@ static qse_httpd_real_task_t* enqueue_task (
 	return new_task;
 }
 
-static QSE_INLINE int dequeue_task (
-	qse_httpd_t* httpd, qse_httpd_client_t* client)
+static QSE_INLINE int dequeue_task (qse_httpd_t* httpd, qse_httpd_client_t* client)
 {
 	qse_httpd_real_task_t* task;
 	qse_size_t i;
@@ -447,14 +446,134 @@ static QSE_INLINE int dequeue_task (
 	return 0;
 }
 
-static QSE_INLINE void purge_tasks (
-	qse_httpd_t* httpd, qse_httpd_client_t* client)
+static QSE_INLINE void purge_tasks (qse_httpd_t* httpd, qse_httpd_client_t* client)
 {
 	while (dequeue_task (httpd, client) == 0);
 }
 
 /* ----------------------------------------------------------------------- */
 
+static QSE_INLINE void unchain_cached_proxy_peer (qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_peer_t* peer)
+{
+	QSE_ASSERT (peer->flags & QSE_HTTPD_PEER_CACHED);
+
+	if (peer->next) peer->next->prev = peer->prev;
+	else client->peer.last = peer->prev;
+
+	if (peer->prev) peer->prev->next = peer->next;
+	else client->peer.first = peer->next;
+}
+
+static void purge_cached_proxy_peer (qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_peer_t* peer)
+{
+	unchain_cached_proxy_peer (httpd, client, peer);
+
+#if defined(QSE_HTTPD_DEBUG)
+	{
+		qse_mchar_t tmp[128];
+
+		qse_nwadtombs (&peer->nwad, tmp, QSE_COUNTOF(tmp), QSE_NWADTOMBS_ALL);
+		HTTPD_DBGOUT2 ("Closing cached peer [%hs] - %zd\n", tmp, (qse_size_t)peer->handle);
+	}
+#endif
+
+	httpd->opt.scb.peer.close (httpd, peer);
+	qse_httpd_freemem (httpd, peer);
+}
+
+static void purge_cached_proxy_peers (qse_httpd_t* httpd, qse_httpd_client_t* client)
+{
+	while (client->peer.first)
+	{
+		purge_cached_proxy_peer (httpd, client, client->peer.first);
+	}
+}
+
+qse_httpd_peer_t* qse_httpd_cacheproxypeer (qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_peer_t* tmpl)
+{
+	qse_httpd_peer_t* peer;
+
+	if (tmpl->flags & QSE_HTTPD_PEER_CACHED)
+	{
+		/* If QSE_HTTPD_PEER_CACHED is set, tmpl points to a block allocated
+		 * here previously. Link such a block to the cache list */
+		peer = tmpl;
+	}
+	else
+	{
+		/* Clone the peer object if it's not previsouly allocated here */
+		peer = qse_httpd_allocmem (httpd, QSE_SIZEOF(*peer));
+		if (peer == QSE_NULL) goto oops;
+
+		QSE_MEMCPY (peer, tmpl, QSE_SIZEOF(*peer));
+		peer->flags |= QSE_HTTPD_PEER_CACHED;
+	}
+
+	/* place the peer at the back of the peer list of a client */
+	if (client->peer.last)
+	{
+		peer->next = QSE_NULL;
+		peer->prev = client->peer.last;
+		client->peer.last->next = peer;
+		client->peer.last = peer;
+	}
+	else
+	{
+		peer->next = QSE_NULL;
+		peer->prev = QSE_NULL;
+		client->peer.first = peer;
+		client->peer.last = peer;
+	}
+
+	qse_gettime (&peer->timestamp);
+	return peer;
+
+oops:
+	if (peer) qse_httpd_freemem (httpd, peer);
+	return QSE_NULL;
+}
+
+qse_httpd_peer_t* qse_httpd_decacheproxypeer (
+	qse_httpd_t* httpd, qse_httpd_client_t* client, 
+	const qse_nwad_t* nwad, const qse_nwad_t* local, int secure)
+{
+	qse_httpd_peer_t* peer, * next;
+	qse_ntime_t now, diff;
+	static qse_ntime_t diff_limit = { 5, 0 }; /* TODO: make this configurable */
+
+	qse_gettime (&now);
+
+	peer = client->peer.first;
+	while (peer)
+	{
+		next = peer->next;
+
+		qse_subtime (&now, &peer->timestamp, &diff);
+		if (qse_cmptime(&diff, &diff_limit) >= 0)
+		{
+			/* the entry is too old */
+			purge_cached_proxy_peer (httpd, client, peer);
+		}
+		else if (qse_nwadequal (nwad, &peer->nwad) && qse_nwadequal (local, &peer->local))
+		{
+			if ((secure && (peer->flags & QSE_HTTPD_PEER_SECURE)) ||
+			    (!secure && !(peer->flags & QSE_HTTPD_PEER_SECURE))) 
+			{
+				unchain_cached_proxy_peer (httpd, client, peer);
+				peer->next = QSE_NULL;
+				peer->prev = QSE_NULL;
+				return peer;
+			}
+		}
+
+		peer = next;
+	}
+
+	return QSE_NULL;
+}
+
+
+/* ----------------------------------------------------------------------- */
 static int htrd_peek_request (qse_htrd_t* htrd, qse_htre_t* req)
 {
 	htrd_xtn_t* xtn = (htrd_xtn_t*) qse_htrd_getxtn (htrd);
@@ -560,12 +679,12 @@ oops:
 	return QSE_NULL;
 }
 
-static void free_client (
-	qse_httpd_t* httpd, qse_httpd_client_t* client)
+static void free_client (qse_httpd_t* httpd, qse_httpd_client_t* client)
 {
 	QSE_ASSERT (client->htrd != QSE_NULL);
 
 	purge_tasks (httpd, client);
+	purge_cached_proxy_peers (httpd, client);
 
 	qse_htrd_close (client->htrd);
 
@@ -611,7 +730,7 @@ static void purge_client (qse_httpd_t* httpd, qse_httpd_client_t* client)
 	{
 		qse_mchar_t tmp[128];
 		qse_nwadtombs (&client->remote_addr, tmp, QSE_COUNTOF(tmp), QSE_NWADTOMBS_ALL);
-		HTTPD_DBGOUT2 ("Purged client [%hs] - %zd\n", tmp, (qse_size_t)client->handle);
+		HTTPD_DBGOUT2 ("Purging client [%hs] - %zd\n", tmp, (qse_size_t)client->handle);
 	}
 #endif
 
