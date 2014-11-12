@@ -356,7 +356,8 @@ static void on_statement (qse_awk_rtx_t* rtx, qse_awk_nde_t* nde)
 
 static void print_version (void)
 {
-	qse_fprintf (QSE_STDOUT, QSE_T("QSEAWK version %hs\n"), QSE_PACKAGE_VERSION);
+	qse_fprintf (QSE_STDOUT, QSE_T("QSEAWK %hs\n"), QSE_PACKAGE_VERSION);
+	qse_fprintf (QSE_STDOUT, QSE_T("Copyright 2006-2014 Chung, Hyung-Hwan\n"));
 }
 
 static void print_error (const qse_char_t* fmt, ...)
@@ -1082,7 +1083,7 @@ static int awk_main (int argc, qse_char_t* argv[])
 
 	rtx = qse_awk_rtx_openstd (
 		awk, 0, QSE_T("qseawk"),
-		(arg.call? QSE_NULL: arg.icf.ptr), /* console input */
+		(arg.call? QSE_NULL: (const qse_char_t**)arg.icf.ptr), /* console input */
 		QSE_NULL,  /* console output */
 		arg.console_cmgr
 	);
@@ -1106,7 +1107,7 @@ static int awk_main (int argc, qse_char_t* argv[])
 	set_intr_run ();
 
 	retv = arg.call?
-		qse_awk_rtx_callwithstrs (rtx, arg.call, arg.icf.ptr, arg.icf.size):
+		qse_awk_rtx_callwithstrs (rtx, arg.call, (const qse_char_t**)arg.icf.ptr, arg.icf.size):
 		qse_awk_rtx_loop (rtx);
 
 	unset_intr_run ();

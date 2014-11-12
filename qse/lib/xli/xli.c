@@ -196,7 +196,7 @@ static void insert_atom (
 {
 	if (parent == QSE_NULL) parent = &xli->root->list;
 
-	if (peer == QSE_NULL)	
+	if (peer == QSE_NULL)
 	{
 		/* insert it to the tail */
 		atom->prev = parent->tail;
@@ -362,7 +362,7 @@ qse_xli_pair_t* qse_xli_insertpairwithstrs (
 	str = (qse_xli_str_t*)tmp->val;
 	for (i = 1; i < count; i++)
 	{
-		str = qse_xli_addsegtostr (xli, str, QSE_NULL, &value[i]);			
+		str = qse_xli_addsegtostr (xli, str, QSE_NULL, &value[i]);
 		if (str == QSE_NULL)
 		{
 			free_atom (xli->root, (qse_xli_atom_t*)tmp);
@@ -487,7 +487,7 @@ static void free_list (qse_xli_root_list_t* root, qse_xli_list_t* list)
 	while (p)
 	{
 		n = p->next;
-		free_atom (root, p);	
+		free_atom (root, p);
 		p = n;
 	}
 
@@ -623,7 +623,7 @@ struct fqpn_seg_t
 	union
 	{
 		qse_size_t number;
-		qse_cstr_t alias;	
+		qse_cstr_t alias;
 	} idx;
 };
 
@@ -640,7 +640,7 @@ const qse_char_t* get_next_fqpn_segment (qse_xli_t* xli, const qse_char_t* fqpn,
 
 	if (*ptr == QSE_T('['))
 	{
-		/*  index is specified */
+		/* index is specified */
 		ptr++; /* skip [ */
 
 		if (QSE_ISDIGIT(*ptr))

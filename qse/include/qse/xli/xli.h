@@ -335,12 +335,17 @@ enum qse_xli_scm_flag_t
 	QSE_XLI_SCM_VALSTR   = (1 << 2),
 	QSE_XLI_SCM_VALLIST  = (1 << 3),
 	QSE_XLI_SCM_KEYNODUP = (1 << 4),
-	QSE_XLI_SCM_KEYALIAS = (1 << 5)
+	QSE_XLI_SCM_KEYALIAS = (1 << 5),
+
+	/* skips the validation of child pairs under a list.
+	 * useful with #QSE_XLI_SCM_VALLIST only. */
+	QSE_XLI_SCM_RELAXED  = (1 << 6) 
 };
+typedef enum qse_xli_scm_flag_t qse_xli_scm_flag_t;
 
 struct qse_xli_scm_t
 {
-	int flags;		
+	int flags;
 	int str_minseg;
 	int str_maxseg;
 };
