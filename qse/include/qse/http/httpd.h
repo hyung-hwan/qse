@@ -29,7 +29,7 @@
 #include <qse/cmn/time.h>
 #include <qse/cmn/tmr.h>
 #include <qse/cmn/env.h>
-
+#include <qse/xli/xli.h>
 
 typedef struct qse_httpd_t        qse_httpd_t;
 typedef struct qse_httpd_mate_t   qse_httpd_mate_t;
@@ -103,7 +103,8 @@ typedef enum qse_httpd_trait_t qse_httpd_trait_t;
 typedef struct qse_httpd_mod_t qse_httpd_mod_t;
 
 typedef int (*qse_httpd_mod_load_t) (
-	qse_httpd_mod_t* mod
+	qse_httpd_mod_t*      mod,
+	const qse_xli_list_t* cfg
 );
 
 typedef void (*qse_httpd_mod_unload_t) (
@@ -1419,8 +1420,9 @@ QSE_EXPORT int qse_httpd_rewriteurl (
 );
 
 QSE_EXPORT int qse_httpd_loadmod (
-	qse_httpd_t*      httpd,
-	const qse_char_t* name
+	qse_httpd_t*          httpd,
+	const qse_char_t*     name,
+	const qse_xli_list_t* list
 );
 
 QSE_EXPORT qse_httpd_mod_t* qse_httpd_findmod (

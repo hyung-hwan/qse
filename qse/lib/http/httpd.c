@@ -2236,7 +2236,7 @@ static void unload_all_modules (qse_httpd_t* httpd)
 	}
 }
 
-int qse_httpd_loadmod (qse_httpd_t* httpd, const qse_char_t* name)
+int qse_httpd_loadmod (qse_httpd_t* httpd, const qse_char_t* name, const qse_xli_list_t* cfg)
 {
 	qse_httpd_mod_t* mod;
 	qse_size_t name_len, prefix_len, postfix_len, fullname_len;
@@ -2308,7 +2308,7 @@ int qse_httpd_loadmod (qse_httpd_t* httpd, const qse_char_t* name)
 		}
 	}
 
-	if (load == QSE_NULL || load (mod) <= -1)
+	if (load == QSE_NULL || load (mod, cfg) <= -1)
 	{
 		httpd->opt.scb.mod.close (httpd, mod->handle);
 		qse_httpd_freemem (httpd, mod);

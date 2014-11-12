@@ -115,6 +115,7 @@ enum qse_xli_trait_t
 	 *  "tg" is stored into the tag field of qse_xli_str_t. */
 	QSE_XLI_STRTAG    = (1 << 10), 
 
+	/** enable pair validation against pair definitions while reading */
 	QSE_XLI_VALIDATE  = (1 << 11)
 };
 typedef enum qse_xli_trait_t qse_xli_trait_t;
@@ -668,7 +669,7 @@ QSE_EXPORT int qse_xli_undefinepair (
 QSE_EXPORT void qse_xli_undefinepairs (
 	qse_xli_t* xli
 );
-			
+
 QSE_EXPORT int qse_xli_read (
 	qse_xli_t*        xli,
 	qse_xli_io_impl_t io
@@ -678,7 +679,6 @@ QSE_EXPORT int qse_xli_write (
 	qse_xli_t*        xli,
 	qse_xli_io_impl_t io
 );
-
 
 QSE_EXPORT void* qse_getxlipairxtn (
 	qse_xli_pair_t* pair
