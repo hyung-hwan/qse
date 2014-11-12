@@ -2092,7 +2092,8 @@ static int open_config_file (qse_httpd_t* httpd)
 		{ QSE_T("hooks"),                                            { QSE_XLI_SCM_VALLIST | QSE_XLI_SCM_KEYNODUP, 0, 0      }  },
 		{ QSE_T("hooks.module"),                                     { QSE_XLI_SCM_VALLIST | QSE_XLI_SCM_KEYALIAS, 0, 0      }  },
 		{ QSE_T("hooks.module.file"),                                { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
-		/*{ QSE_T("hooks.module.config"),                              { QSE_XLI_SCM_VALLIST | QSE_XLI_SCM_KEYNODUP | QSE_SLI_SCM_SKIPVALIDATE, 0, 0      }  },*/
+		{ QSE_T("hooks.module.config"),                              { QSE_XLI_SCM_VALLIST | 
+		                                                               QSE_XLI_SCM_KEYNODUP | QSE_XLI_SCM_RELAXED, 0, 0      }  },
 
 		{ QSE_T("server-default"),                                   { QSE_XLI_SCM_VALLIST | QSE_XLI_SCM_KEYNODUP, 0, 0      }  },
 		{ QSE_T("server-default.ssl-cert-file"),                     { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
@@ -2503,7 +2504,8 @@ static void logact_httpd (qse_httpd_t* httpd, const qse_httpd_act_t* act)
 /* --------------------------------------------------------------------- */
 static void print_version (void)
 {
-	qse_printf (QSE_T("QSEHTTPD version %hs\n"), QSE_PACKAGE_VERSION);
+	qse_fprintf (QSE_STDOUT, QSE_T("QSEHTTPD %hs\n"), QSE_PACKAGE_VERSION);
+	qse_fprintf (QSE_STDOUT, QSE_T("Copyright 2006-2014 Chung, Hyung-Hwan\n"));
 }
 
 static void print_usage (qse_sio_t* out, int argc, qse_char_t* argv[])

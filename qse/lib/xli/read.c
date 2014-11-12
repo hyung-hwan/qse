@@ -23,8 +23,7 @@
 
 static int get_char (qse_xli_t* xli);
 static int get_token (qse_xli_t* xli);
-static int read_list (qse_xli_t* xli, qse_xli_list_t* list);
-
+static int read_list (qse_xli_t* xli, qse_xli_list_t* list, int skip_validation);
 
 enum
 {
@@ -140,7 +139,7 @@ static int get_char (qse_xli_t* xli)
 		}
 
 		xli->rio.inp->b.pos = 0;
-		xli->rio.inp->b.len = n;	
+		xli->rio.inp->b.len = n;
 	}
 
 	if (xli->rio.inp->last.c == QSE_T('\n'))
@@ -211,7 +210,7 @@ static int classify_ident (qse_xli_t* xli, const qse_cstr_t* name)
 		int n;
 		kwent_t* kwp;
 
-		mid = (left + right) / 2;	
+		mid = (left + right) / 2;
 		kwp = &kwtab[mid];
 
 		n = qse_strxncmp (kwp->name.ptr, kwp->name.len, name->ptr, name->len);
@@ -660,7 +659,7 @@ static int get_token (qse_xli_t* xli)
 	return get_token_into (xli, &xli->tok);
 }
 
-static int read_pair (qse_xli_t* xli, const qse_char_t* keytag)
+static int read_pair (qse_xli_t* xli, const qse_char_t* keytag, int skip_validation)
 {
 	qse_cstr_t key;
 	qse_xli_loc_t kloc;
@@ -682,7 +681,7 @@ static int read_pair (qse_xli_t* xli, const qse_char_t* keytag)
 
 	if (xli->opt.trait & QSE_XLI_KEYNODUP) key_nodup = 1;
 	if (xli->opt.trait & QSE_XLI_KEYALIAS) key_alias = 1;
-		
+
 	kloc = xli->tok.loc;
 	key.len = QSE_STR_LEN(xli->tok.name);
 	key.ptr = qse_strdup (QSE_STR_PTR(xli->tok.name), xli->mmgr);
@@ -700,7 +699,7 @@ static int read_pair (qse_xli_t* xli, const qse_char_t* keytag)
 		goto oops;
 	}
 
-	if (xli->opt.trait & QSE_XLI_VALIDATE) 
+	if (!skip_validation && (xli->opt.trait & QSE_XLI_VALIDATE)) 
 	{
 		qse_rbt_pair_t* pair;
 
@@ -708,7 +707,7 @@ static int read_pair (qse_xli_t* xli, const qse_char_t* keytag)
 		if (pair == QSE_NULL)
 		{
 			qse_xli_seterror (xli, QSE_XLI_EUDKEY, (const qse_cstr_t*)&key, &kloc);
-			goto oops;	
+			goto oops;
 		}
 
 		scm = (qse_xli_scm_t*)QSE_RBT_VPTR(pair);
@@ -900,8 +899,12 @@ static int read_pair (qse_xli_t* xli, const qse_char_t* keytag)
 		/* insert a pair with an empty list */
 		pair = qse_xli_insertpairwithemptylist (xli, parlist, QSE_NULL, key.ptr, name, keytag);
 		if (pair == QSE_NULL) goto oops;
-	
-		if (read_list (xli, (qse_xli_list_t*)pair->val) <= -1) goto oops;
+
+		/* skip validations of child pairs if the schema for the 
+		 * current pair is set with QSE_XLI_SCM_RELAXED. 
+		 * the schema for the child pairs, if specified, must not 
+		 * take effect. */
+		if (read_list (xli, (qse_xli_list_t*)pair->val, (scm && (scm->flags & QSE_XLI_SCM_RELAXED))) <= -1) goto oops;
 		
 		if (!MATCH (xli, TOK_RBRACE))
 		{
@@ -933,7 +936,7 @@ static int read_pair (qse_xli_t* xli, const qse_char_t* keytag)
 		{
 			/* check the value type */
 			qse_xli_seterror (xli, QSE_XLI_ENOVAL, (const qse_cstr_t*)&key, &kloc);
-			goto oops;	
+			goto oops;
 		}
 
 		xli->tok_status &= ~TOK_STATUS_ENABLE_NSTR;
@@ -989,7 +992,7 @@ static void free_list_link (qse_xli_t* xli, qse_xli_list_link_t* link)
 	qse_xli_freemem (xli, link);
 }
 
-static int __read_list (qse_xli_t* xli)
+static int __read_list (qse_xli_t* xli, int skip_validation)
 {
 	while (1)
 	{
@@ -1030,13 +1033,13 @@ static int __read_list (qse_xli_t* xli)
 				return -1;
 			}
 
-			x = read_pair (xli, keytag);
+			x = read_pair (xli, keytag, skip_validation);
 			QSE_MMGR_FREE (xli->mmgr, keytag);
 			if (x <= -1) return -1;
 		}
 		else if (MATCH (xli, TOK_IDENT))
 		{
-			if (read_pair (xli, QSE_NULL) <= -1) return -1;
+			if (read_pair (xli, QSE_NULL, skip_validation) <= -1) return -1;
 		}
 		else if (MATCH (xli, TOK_TEXT))
 		{
@@ -1051,7 +1054,7 @@ static int __read_list (qse_xli_t* xli)
 	return 0;
 }
 
-static int read_list (qse_xli_t* xli, qse_xli_list_t* parlist)
+static int read_list (qse_xli_t* xli, qse_xli_list_t* parlist, int skip_validation)
 {
 	qse_xli_list_link_t* link;
 
@@ -1061,7 +1064,7 @@ static int read_list (qse_xli_t* xli, qse_xli_list_t* parlist)
 	/* get_token() here is to read the token after the left brace.
 	 * it must be called after the xli->parlink has been updated
 	 * in case there are comments at the beginning of the list */
-	if (get_token (xli) <= -1 || __read_list (xli) <= -1) 
+	if (get_token (xli) <= -1 || __read_list (xli, skip_validation) <= -1) 
 	{
 		free_list_link (xli, link);
 		return -1;
@@ -1080,7 +1083,7 @@ static int read_root_list (qse_xli_t* xli)
 	link = make_list_link (xli, &xli->root->list);
 	if (link == QSE_NULL) return -1;
 
-	if (get_char (xli) <= -1 || get_token (xli) <= -1 || __read_list (xli) <= -1)
+	if (get_char (xli) <= -1 || get_token (xli) <= -1 || __read_list (xli, 0) <= -1)
 	{
 		free_list_link (xli, link);
 		return -1;
