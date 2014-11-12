@@ -2045,7 +2045,7 @@ static qse_httpd_server_t* attach_server (qse_httpd_t* httpd, int num, qse_xli_l
 static int load_hook_modules (qse_httpd_t* httpd, qse_xli_list_t* hook_list)
 {
 	qse_char_t buf[32];
-	qse_xli_pair_t* pair;
+	qse_xli_pair_t* pair, * cfg;
 	httpd_xtn_t* httpd_xtn;
 	
 	int i;
@@ -2065,7 +2065,8 @@ static int load_hook_modules (qse_httpd_t* httpd, qse_xli_list_t* hook_list)
 		}
 		else
 		{
-			qse_httpd_loadmod (httpd, ((qse_xli_str_t*)pair->val)->ptr);
+			cfg = qse_xli_findpair (httpd_xtn->xli, (qse_xli_list_t*)pair->val, QSE_T("config"));
+			qse_httpd_loadmod (httpd, ((qse_xli_str_t*)pair->val)->ptr, (cfg? cfg->val: QSE_NULL));
 			/* TODO: error handling and logging */
 		}
 	}
@@ -2239,11 +2240,11 @@ static int open_config_file (qse_httpd_t* httpd)
 	xli_in.type = QSE_XLI_IOSTD_FILE;
 	xli_in.u.file.path = httpd_xtn->cfgfile;
 	xli_in.u.file.cmgr = QSE_NULL;
-	
+
 	if (qse_xli_readstd (httpd_xtn->xli, &xli_in) <= -1)
 	{
 		const qse_xli_loc_t* errloc;
-        
+
 		errloc = qse_xli_geterrloc (httpd_xtn->xli);
 
 		if (errloc->line > 0 || errloc->colm > 0)
@@ -2361,7 +2362,7 @@ static int load_config (qse_httpd_t* httpd)
 		else
 		{
 			qse_httpd_server_t* server;
-	
+
 			server = attach_server (httpd, i, (qse_xli_list_t*)pair->val);
 			if (server)
 			{
