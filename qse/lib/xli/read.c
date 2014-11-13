@@ -23,12 +23,14 @@
 
 static int get_char (qse_xli_t* xli);
 static int get_token (qse_xli_t* xli);
-static int read_list (qse_xli_t* xli, qse_xli_list_t* list, int skip_validation);
+static int read_list (qse_xli_t* xli, qse_xli_list_t* list, const qse_xli_scm_t* override);
 
 enum
 {
 	TOK_STATUS_ENABLE_NSTR = (1 << 0)
 };
+
+static qse_xli_scm_t scm_val_iffy = { QSE_XLI_SCM_VALSTR | QSE_XLI_SCM_KEYNODUP, 1, 1 };
 
 static int close_current_stream (qse_xli_t* xli)
 {
@@ -659,7 +661,7 @@ static int get_token (qse_xli_t* xli)
 	return get_token_into (xli, &xli->tok);
 }
 
-static int read_pair (qse_xli_t* xli, const qse_char_t* keytag, int skip_validation)
+static int read_pair (qse_xli_t* xli, const qse_char_t* keytag, const qse_xli_scm_t* override)
 {
 	qse_cstr_t key;
 	qse_xli_loc_t kloc;
@@ -669,8 +671,8 @@ static int read_pair (qse_xli_t* xli, const qse_char_t* keytag, int skip_validat
 	qse_size_t dotted_curkey_len;
 	qse_char_t* strtag;
 
-	qse_xli_scm_t* scm = QSE_NULL;
-	int key_nodup = 0, key_alias = 0;
+	const qse_xli_scm_t* scm = QSE_NULL;
+	int key_nodup = 0, key_alias = 0, val_iffy = 0;
 
 	key.ptr = QSE_NULL;
 	name = QSE_NULL;
@@ -699,21 +701,26 @@ static int read_pair (qse_xli_t* xli, const qse_char_t* keytag, int skip_validat
 		goto oops;
 	}
 
-	if (!skip_validation && (xli->opt.trait & QSE_XLI_VALIDATE)) 
+	if (xli->opt.trait & QSE_XLI_VALIDATE) 
 	{
-		qse_rbt_pair_t* pair;
-
-		pair = qse_rbt_search (xli->schema, QSE_STR_PTR(xli->dotted_curkey), QSE_STR_LEN(xli->dotted_curkey));
-		if (pair == QSE_NULL)
+		if (override) scm = override;
+		else
 		{
-			qse_xli_seterror (xli, QSE_XLI_EUDKEY, (const qse_cstr_t*)&key, &kloc);
-			goto oops;
-		}
+			qse_rbt_pair_t* pair;
 
-		scm = (qse_xli_scm_t*)QSE_RBT_VPTR(pair);
+			pair = qse_rbt_search (xli->schema, QSE_STR_PTR(xli->dotted_curkey), QSE_STR_LEN(xli->dotted_curkey));
+			if (pair == QSE_NULL)
+			{
+				qse_xli_seterror (xli, QSE_XLI_EUDKEY, (const qse_cstr_t*)&key, &kloc);
+				goto oops;
+			}
+
+			scm = (qse_xli_scm_t*)QSE_RBT_VPTR(pair);
+		}
 
 		if (scm->flags & QSE_XLI_SCM_KEYNODUP) key_nodup = 2;
 		if (scm->flags & QSE_XLI_SCM_KEYALIAS) key_alias = 2;
+		if (scm->flags & QSE_XLI_SCM_VALIFFY) val_iffy = 1;
 	}
 
 	if (key_nodup)
@@ -901,10 +908,10 @@ static int read_pair (qse_xli_t* xli, const qse_char_t* keytag, int skip_validat
 		if (pair == QSE_NULL) goto oops;
 
 		/* skip validations of child pairs if the schema for the 
-		 * current pair is set with QSE_XLI_SCM_RELAXED. 
+		 * current pair is set with QSE_XLI_SCM_VALIFFY. 
 		 * the schema for the child pairs, if specified, must not 
 		 * take effect. */
-		if (read_list (xli, (qse_xli_list_t*)pair->val, (scm && (scm->flags & QSE_XLI_SCM_RELAXED))) <= -1) goto oops;
+		if (read_list (xli, (qse_xli_list_t*)pair->val, (val_iffy? &scm_val_iffy: QSE_NULL)) <= -1) goto oops;
 		
 		if (!MATCH (xli, TOK_RBRACE))
 		{
@@ -992,7 +999,7 @@ static void free_list_link (qse_xli_t* xli, qse_xli_list_link_t* link)
 	qse_xli_freemem (xli, link);
 }
 
-static int __read_list (qse_xli_t* xli, int skip_validation)
+static int __read_list (qse_xli_t* xli, const qse_xli_scm_t* override)
 {
 	while (1)
 	{
@@ -1033,13 +1040,13 @@ static int __read_list (qse_xli_t* xli, int skip_validation)
 				return -1;
 			}
 
-			x = read_pair (xli, keytag, skip_validation);
+			x = read_pair (xli, keytag, override);
 			QSE_MMGR_FREE (xli->mmgr, keytag);
 			if (x <= -1) return -1;
 		}
 		else if (MATCH (xli, TOK_IDENT))
 		{
-			if (read_pair (xli, QSE_NULL, skip_validation) <= -1) return -1;
+			if (read_pair (xli, QSE_NULL, override) <= -1) return -1;
 		}
 		else if (MATCH (xli, TOK_TEXT))
 		{
@@ -1054,7 +1061,7 @@ static int __read_list (qse_xli_t* xli, int skip_validation)
 	return 0;
 }
 
-static int read_list (qse_xli_t* xli, qse_xli_list_t* parlist, int skip_validation)
+static int read_list (qse_xli_t* xli, qse_xli_list_t* parlist, const qse_xli_scm_t* override)
 {
 	qse_xli_list_link_t* link;
 
@@ -1064,7 +1071,7 @@ static int read_list (qse_xli_t* xli, qse_xli_list_t* parlist, int skip_validati
 	/* get_token() here is to read the token after the left brace.
 	 * it must be called after the xli->parlink has been updated
 	 * in case there are comments at the beginning of the list */
-	if (get_token (xli) <= -1 || __read_list (xli, skip_validation) <= -1) 
+	if (get_token (xli) <= -1 || __read_list (xli, override) <= -1) 
 	{
 		free_list_link (xli, link);
 		return -1;
@@ -1083,7 +1090,7 @@ static int read_root_list (qse_xli_t* xli)
 	link = make_list_link (xli, &xli->root->list);
 	if (link == QSE_NULL) return -1;
 
-	if (get_char (xli) <= -1 || get_token (xli) <= -1 || __read_list (xli, 0) <= -1)
+	if (get_char (xli) <= -1 || get_token (xli) <= -1 || __read_list (xli, QSE_NULL) <= -1)
 	{
 		free_list_link (xli, link);
 		return -1;

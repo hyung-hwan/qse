@@ -360,14 +360,14 @@ struct qse_awk_mod_data_t
 	qse_awk_mod_t mod;
 };
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 extern "C" {
 #endif
 
 int qse_awk_init (qse_awk_t* awk, qse_mmgr_t* mmgr, const qse_awk_prm_t* prm);
 void qse_awk_fini (qse_awk_t* awk);
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 }
 #endif
 
