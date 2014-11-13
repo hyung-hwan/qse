@@ -335,12 +335,20 @@ enum qse_xli_scm_flag_t
 	QSE_XLI_SCM_VALNIL   = (1 << 1),
 	QSE_XLI_SCM_VALSTR   = (1 << 2),
 	QSE_XLI_SCM_VALLIST  = (1 << 3),
+
 	QSE_XLI_SCM_KEYNODUP = (1 << 4),
 	QSE_XLI_SCM_KEYALIAS = (1 << 5),
 
-	/* skips the validation of child pairs under a list.
-	 * useful with #QSE_XLI_SCM_VALLIST only. */
-	QSE_XLI_SCM_RELAXED  = (1 << 6) 
+	/** Indicates that the value is a list with uncertain definitions with
+	 *  the following constraints:
+	 *    no key aliases and duplicate keys are allowed.
+	 *    only a single-segment string is allowed as a value.
+	 *
+	 *  Each pair in the list is treated as if { QSE_SLI_SCM_VALSTR | QSE_XLI_SCM_KEYNODUP, 1, 1 }
+	 *  is specified.
+	 *
+	 *  Applies only if #QSE_XLI_SCM_VALLIST is set. */
+	QSE_XLI_SCM_VALIFFY  = (1 << 6) 
 };
 typedef enum qse_xli_scm_flag_t qse_xli_scm_flag_t;
 

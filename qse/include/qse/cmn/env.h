@@ -68,7 +68,7 @@ struct qse_env_t
 };
 
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 extern "C" {
 #endif
 
@@ -179,7 +179,7 @@ QSE_EXPORT int qse_env_deletembs (
 #	define qse_env_delete(env,name) qse_env_deletewcs(env,name)
 #endif
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 }
 #endif
 

@@ -1452,7 +1452,7 @@ struct qse_awk_nrflt_t
 };
 typedef struct qse_awk_nrflt_t qse_awk_nrflt_t;
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 extern "C" {
 #endif
 
@@ -2869,7 +2869,7 @@ QSE_EXPORT qse_awk_val_t* qse_getawknilval (
 	void
 );
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 }
 #endif
 

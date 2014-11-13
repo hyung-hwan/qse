@@ -162,7 +162,7 @@ struct qse_fio_lck_t
 
 #define QSE_FIO_HANDLE(fio) ((fio)->handle)
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 extern "C" {
 #endif
 
@@ -312,7 +312,7 @@ QSE_EXPORT int qse_getstdfiohandle (
 	qse_fio_hnd_t* hnd
 );
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 }
 #endif
 

@@ -29,7 +29,6 @@
 #include <qse/cmn/time.h>
 #include <qse/cmn/tmr.h>
 #include <qse/cmn/env.h>
-#include <qse/xli/xli.h>
 
 typedef struct qse_httpd_t        qse_httpd_t;
 typedef struct qse_httpd_mate_t   qse_httpd_mate_t;
@@ -58,15 +57,17 @@ enum qse_httpd_errnum_t
 	QSE_HTTPD_EPIPE,
 	QSE_HTTPD_EAGAIN,
 
-	QSE_HTTPD_ENOSVR,  /* no active servers */
-	QSE_HTTPD_ECONN,   /* connection failure */
-	QSE_HTTPD_ESCONN,  /* secure connection failure */
-	QSE_HTTPD_ENOBUF,  /* no buffer available */
-	QSE_HTTPD_EDISCON, /* client disconnnected */
-	QSE_HTTPD_EBADREQ, /* bad request */
-	QSE_HTTPD_ENODNS,  /* dns service not activated/enabled or no valid dns server specified */
-	QSE_HTTPD_ENOURS,  /* urs service not activated/enabled or no valid urs server specified */
-	QSE_HTTPD_ETASK
+	QSE_HTTPD_ENOSVR,        /* no active servers */
+	QSE_HTTPD_ECONN,         /* connection failure */
+	QSE_HTTPD_ESCONN,        /* secure connection failure */
+	QSE_HTTPD_ENOBUF,        /* no buffer available */
+	QSE_HTTPD_EDISCON,       /* client disconnnected */
+	QSE_HTTPD_EBADREQ,       /* bad request */
+	QSE_HTTPD_ENODNS,        /* dns service not activated/enabled or no valid dns server specified */
+	QSE_HTTPD_ENOURS,        /* urs service not activated/enabled or no valid urs server specified */
+	QSE_HTTPD_ETASK,         /* general error in the task handler */
+	QSE_HTTPD_ENOMODCONFIG,  /* module doesn't have the config callback */
+	QSE_HTTPD_EMODCFGKEY   /* module configuration key is invalid or unknown */
 };
 typedef enum qse_httpd_errnum_t qse_httpd_errnum_t;
 
@@ -103,12 +104,17 @@ typedef enum qse_httpd_trait_t qse_httpd_trait_t;
 typedef struct qse_httpd_mod_t qse_httpd_mod_t;
 
 typedef int (*qse_httpd_mod_load_t) (
-	qse_httpd_mod_t*      mod,
-	const qse_xli_list_t* cfg
+	qse_httpd_mod_t* mod
 );
 
 typedef void (*qse_httpd_mod_unload_t) (
 	qse_httpd_mod_t* mod
+);
+
+typedef int (*qse_httpd_mod_config_t) (
+	qse_httpd_mod_t*  mod,
+	const qse_char_t* key,
+	const qse_char_t* value
 );
 
 typedef int (*qse_httpd_mod_dns_preresolve_t) (
@@ -128,9 +134,11 @@ typedef int (*qse_httpd_mod_urs_prerewrite_t) (
 
 struct qse_httpd_mod_t
 {
-	/* private */
+	/* next and handle are for internal use only*/
 	qse_httpd_mod_t* next;
 	void* handle; /* set to the return value of mod.open() */
+
+	/* ------------------------------------------- */
 
 	/* module may access these fields for rererence  */
 	qse_httpd_t* httpd;
@@ -140,6 +148,8 @@ struct qse_httpd_mod_t
 	/* module's entry point may set these items */
 	void* ctx; 
 	qse_httpd_mod_unload_t unload;
+	/** return -1 upon error, 0 if a key is unknown/invalid, 1 upon success */
+	qse_httpd_mod_config_t config; 
 	qse_httpd_mod_dns_preresolve_t dns_preresolve;
 	qse_httpd_mod_urs_prerewrite_t urs_prerewrite;
 
@@ -1030,7 +1040,7 @@ struct qse_httpd_ecb_t
 	qse_httpd_ecb_t* next;
 };
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 extern "C" {
 #endif
 
@@ -1419,10 +1429,9 @@ QSE_EXPORT int qse_httpd_rewriteurl (
 	void*                         ctx
 );
 
-QSE_EXPORT int qse_httpd_loadmod (
+QSE_EXPORT qse_httpd_mod_t* qse_httpd_loadmod (
 	qse_httpd_t*          httpd,
-	const qse_char_t*     name,
-	const qse_xli_list_t* list
+	const qse_char_t*     name
 );
 
 QSE_EXPORT qse_httpd_mod_t* qse_httpd_findmod (
@@ -1430,6 +1439,12 @@ QSE_EXPORT qse_httpd_mod_t* qse_httpd_findmod (
 	const qse_char_t* name
 );
 
+QSE_EXPORT int qse_httpd_configmod (
+	qse_httpd_t*      httpd,
+	qse_httpd_mod_t*  mod,
+	const qse_char_t* key,
+	const qse_char_t* value
+);
 
 /* -------------------------------------------- */
 
@@ -1447,7 +1462,7 @@ QSE_EXPORT void qse_httpd_removetimerevent (
 
 /* -------------------------------------------- */
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 }
 #endif
 

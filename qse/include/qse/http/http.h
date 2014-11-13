@@ -161,7 +161,7 @@ enum qse_perenchttpstr_opt_t
 };
 typedef enum qse_perenchttpstr_opt_t qse_perenchttpstr_opt_t;
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 extern "C" {
 #endif
 
@@ -226,7 +226,7 @@ QSE_EXPORT qse_mchar_t* qse_perenchttpstrdup (
 	qse_mmgr_t*        mmgr
 );
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 }
 #endif
 

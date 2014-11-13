@@ -64,7 +64,7 @@ struct qse_tmr_event_t
 #define QSE_TMR_SIZE(tmr) ((tmr)->size)
 #define QSE_TMR_CAPA(tmr) ((tmr)->capa);
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 extern "C" {
 #endif
 
@@ -142,7 +142,7 @@ QSE_EXPORT qse_tmr_event_t* qse_tmr_getevent (
 	qse_tmr_index_t   index
 );
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 }
 #endif
 

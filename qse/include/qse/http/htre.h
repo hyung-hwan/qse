@@ -152,7 +152,7 @@ typedef int (*qse_htre_header_walker_t) (
 	void*                    ctx
 );
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 extern "C" {
 #endif
 
@@ -238,7 +238,7 @@ QSE_EXPORT int qse_htre_perdecqpath (
 	qse_htre_t*      req
 );
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 }
 #endif
 
