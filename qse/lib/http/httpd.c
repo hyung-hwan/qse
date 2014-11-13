@@ -2236,7 +2236,7 @@ static void unload_all_modules (qse_httpd_t* httpd)
 	}
 }
 
-int qse_httpd_loadmod (qse_httpd_t* httpd, const qse_char_t* name, const qse_xli_list_t* cfg)
+qse_httpd_mod_t* qse_httpd_loadmod (qse_httpd_t* httpd, const qse_char_t* name)
 {
 	qse_httpd_mod_t* mod;
 	qse_size_t name_len, prefix_len, postfix_len, fullname_len;
@@ -2276,7 +2276,7 @@ int qse_httpd_loadmod (qse_httpd_t* httpd, const qse_char_t* name, const qse_xli
 	 */
 	fullname_len = prefix_len + name_len + postfix_len;
 	mod = qse_httpd_callocmem (httpd, QSE_SIZEOF(*mod) + (name_len + 1 + fullname_len + 1 + 15 + name_len + 2) * QSE_SIZEOF(qse_char_t));
-	if (mod == QSE_NULL) return -1;
+	if (mod == QSE_NULL) return QSE_NULL;
 
 	mod->httpd = httpd;
 	mod->name = (qse_char_t*)(mod + 1);
@@ -2290,7 +2290,7 @@ int qse_httpd_loadmod (qse_httpd_t* httpd, const qse_char_t* name, const qse_xli
 	if (!mod->handle)
 	{
 		qse_httpd_freemem (httpd, mod);
-		return -1;
+		return QSE_NULL;
 	}
 
 	/* attempt qse_httpd_mod_xxx */
@@ -2308,16 +2308,35 @@ int qse_httpd_loadmod (qse_httpd_t* httpd, const qse_char_t* name, const qse_xli
 		}
 	}
 
-	if (load == QSE_NULL || load (mod, cfg) <= -1)
+	if (!load || load (mod) <= -1)
 	{
 		httpd->opt.scb.mod.close (httpd, mod->handle);
 		qse_httpd_freemem (httpd, mod);
-		return -1;
+		return QSE_NULL;
 	}
 
+	/* link the loaded module to the module list */
 	mod->next = httpd->modlist;
 	httpd->modlist = mod;
-	return 0;
+
+	return mod;
+}
+
+int qse_httpd_configmod (qse_httpd_t* httpd, qse_httpd_mod_t* mod, const qse_char_t* key, const qse_char_t* value)
+{
+	QSE_ASSERT (httpd == mod->httpd);
+
+	if (mod->config)
+	{
+		return mod->config (mod, key, value);
+	}
+	else
+	{
+		/* not allowed to set the module configuration 
+		 * without the 'config' handler */
+		httpd->errnum = QSE_HTTPD_EACCES; 
+		return -1;
+	}
 }
 
 qse_httpd_mod_t* qse_httpd_findmod (qse_httpd_t* httpd, const qse_char_t* name)

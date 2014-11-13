@@ -134,7 +134,7 @@ struct qse_httpd_real_task_t
 
 #define MAX_NWAD_TEXT_SIZE 96
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 extern "C" {
 #endif
 
@@ -206,7 +206,7 @@ qse_httpd_peer_t* qse_httpd_decacheproxypeer (
 	int                 secure
 );
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 }
 #endif
 
