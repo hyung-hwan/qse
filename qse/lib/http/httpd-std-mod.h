@@ -1,4 +1,10 @@
-
+/* Override the global definition QSE_ENABLE_STATIC_MODULE
+ * for httpd on platforms with mature dynamic loading support. 
+ */
+#if defined(QSE_ENABLE_STATIC_MODULE) && \
+    (defined(USE_LTDL) || defined(_WIN32) || defined(__OS2__))
+#	undef QSE_ENABLE_STATIC_MODULE
+#endif
 
 static void* mod_open (qse_httpd_t* httpd, const qse_char_t* sysname)
 {
