@@ -364,7 +364,7 @@ enum qse_wcsfnmat_flag_t
 #	define QSE_STRFNMAT_IGNORECASE QSE_WCSFNMAT_IGNORECASE
 #endif
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 extern "C" {
 #endif
 
@@ -3318,7 +3318,7 @@ QSE_EXPORT qse_size_t qse_wcs_fmt (
 #endif
 
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 }
 #endif
 

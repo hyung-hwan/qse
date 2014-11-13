@@ -114,7 +114,7 @@ struct qse_skad_t
 	qse_uintptr_t dummy; 
 };
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 extern "C" {
 #endif
 
@@ -201,7 +201,7 @@ QSE_EXPORT int qse_skadfamily (
 	const qse_skad_t* skad
 );
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 }
 #endif
 

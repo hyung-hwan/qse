@@ -218,7 +218,7 @@ struct qse_pio_t
 /** get the native handle from the #qse_pio_t structure */
 #define QSE_PIO_HANDLE(pio,hid) ((pio)->pin[hid].handle)
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 extern "C" {
 #endif
 
@@ -410,7 +410,7 @@ QSE_EXPORT int qse_pio_kill (
 	qse_pio_t* pio /**< pio object */
 );
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 }
 #endif
 

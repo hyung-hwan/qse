@@ -81,7 +81,7 @@ struct qse_mux_evt_t
 	void*         data;
 };
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 extern "C" {
 #endif
 
@@ -124,7 +124,7 @@ QSE_EXPORT int qse_mux_poll (
 	const qse_ntime_t* tmout
 );
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 }
 #endif
 

@@ -271,7 +271,7 @@ QSE_EXPORT int qse_httpd_loopstd (
 	const qse_httpd_ursstd_t* urs
 );
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 }
 #endif
 

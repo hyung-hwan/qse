@@ -109,7 +109,7 @@ struct qse_htrd_t
 	int        clean;
 };
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 extern "C" {
 #endif
 
@@ -211,7 +211,7 @@ QSE_EXPORT int qse_htrd_scanqparam (
 	const qse_mcstr_t* cstr
 );
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 }
 #endif
 

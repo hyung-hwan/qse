@@ -2045,7 +2045,8 @@ static qse_httpd_server_t* attach_server (qse_httpd_t* httpd, int num, qse_xli_l
 static int load_hook_modules (qse_httpd_t* httpd, qse_xli_list_t* hook_list)
 {
 	qse_char_t buf[32];
-	qse_xli_pair_t* pair, * cfg;
+	qse_xli_pair_t* file, * cfg, * mod;
+	qse_httpd_mod_t* module;
 	httpd_xtn_t* httpd_xtn;
 	
 	int i;
@@ -2055,19 +2056,59 @@ static int load_hook_modules (qse_httpd_t* httpd, qse_xli_list_t* hook_list)
 	for (i = 0; ; i++)
 	{
 		qse_strxfmt (buf, QSE_COUNTOF(buf), QSE_T("module[%d]"), i);
-		pair = qse_xli_findpair (httpd_xtn->xli, hook_list, buf);
-		if (pair == QSE_NULL) break;
+		mod = qse_xli_findpair (httpd_xtn->xli, hook_list, buf);
+		if (mod == QSE_NULL) break;
 
-		pair = qse_xli_findpair (httpd_xtn->xli, (qse_xli_list_t*)pair->val, QSE_T("file"));
-		if (pair == QSE_NULL)
+		file = qse_xli_findpair (httpd_xtn->xli, (qse_xli_list_t*)mod->val, QSE_T("file"));
+		if (file == QSE_NULL)
 		{
 			/* TODO: log warning when file is not found in module */
 		}
 		else
 		{
-			cfg = qse_xli_findpair (httpd_xtn->xli, (qse_xli_list_t*)pair->val, QSE_T("config"));
-			qse_httpd_loadmod (httpd, ((qse_xli_str_t*)pair->val)->ptr, (cfg? cfg->val: QSE_NULL));
-			/* TODO: error handling and logging */
+			module = qse_httpd_loadmod (httpd, ((qse_xli_str_t*)file->val)->ptr);
+			if (!module)
+			{
+				/* TODO: better error handling and logging */
+				qse_printf (QSE_T("WARNING: failed to load module [%s]\n"), ((qse_xli_str_t*)file->val)->ptr);
+			}
+			else
+			{
+				cfg = qse_xli_findpair (httpd_xtn->xli, (qse_xli_list_t*)mod->val, QSE_T("config"));
+				if (cfg)
+				{
+					if (!module->config)
+					{
+						qse_printf (QSE_T("WARNING: unneeded configuration for [%s]. no configuration handler\n"), 
+							((qse_xli_str_t*)file->val)->ptr);
+					}
+					else
+					{
+						const qse_xli_atom_t* atom;
+						const qse_xli_pair_t* pair;
+						int x;
+
+						for (atom = ((qse_xli_list_t*)(cfg->val))->head; atom; atom = atom->next)
+						{
+							if (atom->type != QSE_XLI_PAIR) continue;
+							pair = (qse_xli_pair_t*)atom;
+
+							if (pair->val->type != QSE_XLI_STR) continue;
+							x = qse_httpd_configmod (httpd, module, pair->key, ((qse_xli_str_t*)pair->val)->ptr);
+							if (x <= -1)
+							{
+								qse_printf (QSE_T("WARNING: failed to set module configuration [%s] to [%s] for [%s]\n"), 
+									pair->key, ((qse_xli_str_t*)pair->val)->ptr, ((qse_xli_str_t*)file->val)->ptr);
+							}
+							else if (x == 0)
+							{
+								qse_printf (QSE_T("WARNING: invalid module configuration item [%s] for [%s]\n"), 
+									pair->key, ((qse_xli_str_t*)file->val)->ptr);
+							}
+						}
+					}
+				}
+			}
 		}
 	}
 
@@ -2093,8 +2134,8 @@ static int open_config_file (qse_httpd_t* httpd)
 		{ QSE_T("hooks"),                                            { QSE_XLI_SCM_VALLIST | QSE_XLI_SCM_KEYNODUP, 0, 0      }  },
 		{ QSE_T("hooks.module"),                                     { QSE_XLI_SCM_VALLIST | QSE_XLI_SCM_KEYALIAS, 0, 0      }  },
 		{ QSE_T("hooks.module.file"),                                { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
-		{ QSE_T("hooks.module.config"),                              { QSE_XLI_SCM_VALLIST | 
-		                                                               QSE_XLI_SCM_KEYNODUP | QSE_XLI_SCM_RELAXED, 0, 0      }  },
+		{ QSE_T("hooks.module.config"),                              { QSE_XLI_SCM_VALLIST |
+		                                                               QSE_XLI_SCM_KEYNODUP | QSE_XLI_SCM_VALIFFY, 0, 0      }  },
 
 		{ QSE_T("server-default"),                                   { QSE_XLI_SCM_VALLIST | QSE_XLI_SCM_KEYNODUP, 0, 0      }  },
 		{ QSE_T("server-default.ssl-cert-file"),                     { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
