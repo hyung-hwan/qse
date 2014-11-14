@@ -177,10 +177,7 @@ qse_awk_flt_t qse_awk_stdmathmod (qse_awk_t* awk, qse_awk_flt_t x, qse_awk_flt_t
 
 int qse_awk_stdmodstartup (qse_awk_t* awk)
 {
-#if defined(QSE_ENABLE_STATIC_MODULE)
-	return 0;
-
-#elif defined(USE_LTDL)
+#if defined(USE_LTDL)
 	/* lt_dlinit() can be called more than once and 
 	 * lt_dlexit() shuts down libltdl if it's called as many times as
 	 * corresponding lt_dlinit(). so it's safe to call lt_dlinit()
@@ -195,10 +192,7 @@ int qse_awk_stdmodstartup (qse_awk_t* awk)
 
 void qse_awk_stdmodshutdown (qse_awk_t* awk)
 {
-#if defined(QSE_ENABLE_STATIC_MODULE)
-	/* do nothign */
-
-#elif defined(USE_LTDL)
+#if defined(USE_LTDL)
 
 	lt_dlexit ();
 
@@ -209,13 +203,7 @@ void qse_awk_stdmodshutdown (qse_awk_t* awk)
 
 void* qse_awk_stdmodopen (qse_awk_t* awk, const qse_awk_mod_spec_t* spec)
 {
-#if defined(QSE_ENABLE_STATIC_MODULE)
-	/* this won't be called at all when modules are linked into
-	 * the main library. */
-	qse_awk_seterrnum (awk, QSE_AWK_ENOIMPL, QSE_NULL);
-	return QSE_NULL;
-
-#elif defined(USE_LTDL)
+#if defined(USE_LTDL)
 	void* h;
 	qse_mchar_t* modpath;
 	const qse_char_t* tmp[4];
@@ -307,10 +295,10 @@ void* qse_awk_stdmodopen (qse_awk_t* awk, const qse_awk_mod_spec_t* spec)
 	QSE_ASSERT (QSE_SIZEOF(h) <= QSE_SIZEOF(void*));
 	return h;
 
-#elif defined(__DOS__)
+#elif defined(__DOS__) && defined(QSE_ENABLE_DOS_DYNAMIC_MODULE)
 
 	/* the DOS code here is not generic enough. it's for a specific
-	 * dos-extender only. the best is to enable QSE_ENABLE_STATIC_MODULE
+	 * dos-extender only. the best is not to use dynamic loading
 	 * when building for DOS. */
 	void* h;
 	qse_mchar_t* modpath;
@@ -349,16 +337,13 @@ void* qse_awk_stdmodopen (qse_awk_t* awk, const qse_awk_mod_spec_t* spec)
 
 void qse_awk_stdmodclose (qse_awk_t* awk, void* handle)
 {
-#if defined(QSE_ENABLE_STATIC_MODULE)
-	/* this won't be called at all when modules are linked into
-	 * the main library. */
-#elif defined(USE_LTDL)
+#if defined(USE_LTDL)
 	lt_dlclose (handle);
 #elif defined(_WIN32)
 	FreeLibrary ((HMODULE)handle);
 #elif defined(__OS2__)
 	DosFreeModule ((HMODULE)handle);
-#elif defined(__DOS__)
+#elif defined(__DOS__) && defined(QSE_ENABLE_DOS_DYNAMIC_MODULE)
 	FreeModule (handle);
 #else
 	/* nothing to do */
@@ -381,12 +366,7 @@ void* qse_awk_stdmodsym (qse_awk_t* awk, void* handle, const qse_char_t* name)
 	}
 #endif
 
-#if defined(QSE_ENABLE_STATIC_MODULE)
-	/* this won't be called at all when modules are linked into
-	 * the main library. */
-	s = QSE_NULL;
-
-#elif defined(USE_LTDL)
+#if defined(USE_LTDL)
 	s = lt_dlsym (handle, mname);
 
 #elif defined(_WIN32)
@@ -395,9 +375,9 @@ void* qse_awk_stdmodsym (qse_awk_t* awk, void* handle, const qse_char_t* name)
 #elif defined(__OS2__)
 	if (DosQueryProcAddr ((HMODULE)handle, 0, mname, (PFN*)&s) != NO_ERROR) s = QSE_NULL;
 
-#elif defined(__DOS__)
+#elif defined(__DOS__) && defined(QSE_ENABLE_DOS_DYNAMIC_MODULE)
 	s = GetProcAddress (handle, mname);
-	
+
 #else
 	s = QSE_NULL;
 #endif

@@ -356,19 +356,30 @@ static void on_statement (qse_awk_rtx_t* rtx, qse_awk_nde_t* nde)
 
 static void print_version (void)
 {
-	qse_fprintf (QSE_STDOUT, QSE_T("QSEAWK %hs\n"), QSE_PACKAGE_VERSION);
-	qse_fprintf (QSE_STDOUT, QSE_T("Copyright 2006-2014 Chung, Hyung-Hwan\n"));
+	qse_sio_putstrf (QSE_STDOUT, QSE_T("QSEAWK %hs\n"), QSE_PACKAGE_VERSION);
+	qse_sio_putstrf (QSE_STDOUT, QSE_T("Copyright 2006-2014 Chung, Hyung-Hwan\n"));
 }
 
 static void print_error (const qse_char_t* fmt, ...)
 {
 	va_list va;
 
-	qse_fprintf (QSE_STDERR, QSE_T("ERROR: "));
+	qse_sio_putstr (QSE_STDERR, QSE_T("ERROR: "));
 	va_start (va, fmt);
 	qse_sio_putstrvf (QSE_STDERR, fmt, va);
 	va_end (va);
 }
+
+static void print_warning (const qse_char_t* fmt, ...)
+{
+	va_list va;
+
+	qse_sio_putstr (QSE_STDERR, QSE_T("WARNING: "));
+	va_start (va, fmt);
+	qse_sio_putstrvf (QSE_STDERR, fmt, va);
+	va_end (va);
+}
+
 
 struct opttab_t
 {
@@ -1282,7 +1293,7 @@ int qse_main (int argc, qse_achar_t* argv[])
 /* TODO: add an option to skip watt-32 */
 	_watt_do_exit = 0; /* prevent sock_init from exiting upon failure */
 	if (sock_init() != 0)
-		print_error (QSE_T("Failed to initialize watt-32\n"));
+		print_warning (QSE_T("Failed to initialize watt-32\n"));
 	else sock_inited = 1;
 #endif
 
