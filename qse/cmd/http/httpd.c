@@ -497,18 +497,15 @@ static int get_server_root (
 
 	if (qinfo->client->status & QSE_HTTPD_CLIENT_INTERCEPTED)
 	{
-printf ("intercepted....\n");
 		/* transparent proxying */
 		if (loccfg->proxy.allow_intercept <= 0)
 		{
-printf ("intercepted. not allowed...\n");
 			root->type = QSE_HTTPD_SERVERSTD_ROOT_ERROR;
 			root->u.error.code = 403; /* forbidden */
 			return 0;
 		}
 		else if (loccfg->proxy.allow_intercept <= 1)
 		{
-printf ("intercepted. not allowed to go thru...\n");
 			root->type = QSE_HTTPD_SERVERSTD_ROOT_PROXY;
 			root->u.proxy.dst.nwad = qinfo->client->orgdst_addr;
 			/* if TPROXY is used, set the source to the original source.
@@ -522,7 +519,6 @@ printf ("intercepted. not allowed to go thru...\n");
 
 			goto proxy_ok;
 		}
-printf ("intercepted. to be handled locally ...\n");
 	}
 
 	if (mth == QSE_HTTP_CONNECT)
@@ -568,39 +564,63 @@ printf ("intercepted. to be handled locally ...\n");
 
 		if (slash && slash - host > 0)
 		{
+			qse_size_t len_before_slash;
+			qse_mchar_t* org_qpath = QSE_NULL;
+
+			len_before_slash = slash - qpath;
+
+			if (!(qinfo->req->flags & QSE_HTRE_QPATH_PERDEC) ||
+			    qse_mbszcmp (qpath, (org_qpath = qse_htre_getorgqpath(qinfo->req)), len_before_slash) == 0)
+			{
+				/* this block ensures to proxy a request whose protocol and
+				 * host name part were not percent-encoded in the original
+				 * request */
+				
+				/* e.g. proto://hostname/XXXX 
+				 *      slash should point to the slash before XXXX.
+				 *      if hostname is empty, this 'if' block is skipped. */
+
+				root->type = QSE_HTTPD_SERVERSTD_ROOT_PROXY;
+
+				if (loccfg->proxy.pseudonym[0]) 
+					root->u.proxy.pseudonym = loccfg->proxy.pseudonym;
+
 /* TODO: refrain from manipulating the request like this */
 
-			root->type = QSE_HTTPD_SERVERSTD_ROOT_PROXY;
+				/* move the host name part backward by 1 byte to make a room for
+				 * terminating null. An orginal input of http://www.yahoo.com/ab/cd
+				 * becomes http:/www.yahoo.com\0ab/cd. host gets to point to 
+				 * www.yahoo.com. qpath(qinfo->req.u.q.path) is updated to ab/cd. */
+				qse_memmove (host - 1, host, slash - host); 
+				slash[-1] = QSE_MT('\0');
+				host = host - 1;
+				root->u.proxy.host = host;
 
-			if (loccfg->proxy.pseudonym[0]) 
-			    root->u.proxy.pseudonym = loccfg->proxy.pseudonym;
+				if (proto_len == 8) root->u.proxy.flags |= QSE_HTTPD_RSRC_PROXY_DST_SECURE;
+				if (qse_mbstonwad (host, &root->u.proxy.dst.nwad) <= -1) 
+				{
+					root->u.proxy.flags |= QSE_HTTPD_RSRC_PROXY_DST_STR;
+					root->u.proxy.dst.str = host;
+				}
+				else
+				{
+					/* make the source binding type the same as destination */
+					if (qse_getnwadport(&root->u.proxy.dst.nwad) == 0)
+						qse_setnwadport (&root->u.proxy.dst.nwad, qse_hton16(80));
+					root->u.proxy.src.nwad.type = root->u.proxy.dst.nwad.type;
+				}
 
-			/* move the host name part backward by 1 byte to make a room for
-			 * terminating null. An orginal input of http://www.yahoo.com/ab/cd
-			 * becomes http:/www.yahoo.com\0ab/cd. host gets to point to the 
-			 * www.yahoo.com. qpath(qinfo->req.u.q.path) is updated to ab/cd. */
-			qse_memmove (host - 1, host, slash - host); 
-			slash[-1] = QSE_MT('\0');
-			host = host - 1;
-			root->u.proxy.host = host;
+	/* TODO: refrain from manipulating the request like this */
+				qinfo->req->u.q.path.len -= len_before_slash;
+				qinfo->req->u.q.path.ptr = slash; /* TODO: use setqpath or something... */
+				if (org_qpath)
+				{
+					qinfo->req->orgqpath.len -= len_before_slash;
+					qinfo->req->orgqpath.ptr += len_before_slash;
+				}
 
-			if (proto_len == 8) root->u.proxy.flags |= QSE_HTTPD_RSRC_PROXY_DST_SECURE;
-			if (qse_mbstonwad (host, &root->u.proxy.dst.nwad) <= -1) 
-			{
-				root->u.proxy.flags |= QSE_HTTPD_RSRC_PROXY_DST_STR;
-				root->u.proxy.dst.str = host;
+				goto proxy_ok;
 			}
-			else
-			{
-				/* make the source binding type the same as destination */
-				if (qse_getnwadport(&root->u.proxy.dst.nwad) == 0)
-					qse_setnwadport (&root->u.proxy.dst.nwad, qse_hton16(80));
-				root->u.proxy.src.nwad.type = root->u.proxy.dst.nwad.type;
-			}
-
-/* TODO: refrain from manipulating the request like this */
-			qinfo->req->u.q.path = slash; /* TODO: use setqpath or something... */
-			goto proxy_ok;
 		}
 		else
 		{

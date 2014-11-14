@@ -202,22 +202,39 @@ QSE_EXPORT qse_mchar_t* qse_fmthttptime (
 	qse_size_t         bufsz
 );
 
-/* percent-decode a string. 
- * returns the number of affected characters.
- * for example, 0 means that no characters in the input required decoding. */
-QSE_EXPORT qse_size_t qse_perdechttpstr (
-	const qse_mchar_t* str, 
-	qse_mchar_t*       buf
+/**
+ * The qse_isperencedhttpstr() function determines if the given string
+ * contains a valid percent-encoded sequence.
+ */
+QSE_EXPORT int qse_isperencedhttpstr (
+	const qse_mchar_t* str
 );
 
+/**
+ * The qse_perdechttpstr() function performs percent-decoding over a string.
+ * The caller must ensure that the output buffer \a buf is large enough.
+ * If \a ndecs is not #QSE_NULL, it is set to the number of characters
+ * decoded.  0 means no characters in the input string required decoding
+ * \return the length of the output string.
+ */
+QSE_EXPORT qse_size_t qse_perdechttpstr (
+	const qse_mchar_t* str, 
+	qse_mchar_t*       buf,
+	qse_size_t*        ndecs
+);
 
-/* percent-encode a string.
- * returns the number of affected characters. 
- * for example, 0 means that no characters in the input required encoding. */
+/**
+ * The qse_perenchttpstr() function performs percent-encoding over a string.
+ * The caller must ensure that the output buffer \a buf is large enough.
+ * If \a nencs is not #QSE_NULL, it is set to the number of characters
+ * encoded.  0 means no characters in the input string required encoding.
+ * \return the length of the output string.
+ */
 QSE_EXPORT qse_size_t qse_perenchttpstr (
 	int                opt, /**< 0 or bitwise-OR'ed of #qse_perenchttpstr_opt_t */
 	const qse_mchar_t* str, 
-	qse_mchar_t*       buf
+	qse_mchar_t*       buf,
+	qse_size_t*        nencs
 );
 
 QSE_EXPORT qse_mchar_t* qse_perenchttpstrdup (

@@ -318,7 +318,7 @@ static qse_mchar_t* parse_initial_line (qse_htrd_t* htrd, qse_mchar_t* line)
 
 				int q = xdigit_to_num(*(p+1));
 				int w = xdigit_to_num(*(p+2));
-	
+
 				if (q >= 0 && w >= 0)
 				{
 					int t = (q << 4) + w;
@@ -330,6 +330,8 @@ static qse_mchar_t* parse_initial_line (qse_htrd_t* htrd, qse_mchar_t* line)
 
 					*out++ = t;
 					p += 3;
+
+					htrd->re.flags |= QSE_HTRE_QPATH_PERDEC;
 				}
 				else *out++ = *p++;
 			}
@@ -355,23 +357,32 @@ static qse_mchar_t* parse_initial_line (qse_htrd_t* htrd, qse_mchar_t* line)
 		/* null-terminate the url part though we know the length */
 		*out = QSE_MT('\0'); 
 
+		if (htrd->re.flags & QSE_HTRE_QPATH_PERDEC)
+		{
+			/* TODO: build the original qpath */
+			htrd->re.orgpqath.ptr = XXX;
+			htrd->re.orgpath.len = XXXX;
+		}
+
 		if (param.ptr)
 		{
 			param.len = out - param.ptr;
-			htrd->re.u.q.path = tmp.ptr;
-			htrd->re.u.q.param = param.ptr;
+			htrd->re.u.q.path = tmp;
+			htrd->re.u.q.param = param;
 		}
 		else 
 		{
 			tmp.len = out - tmp.ptr;
-			htrd->re.u.q.path = tmp.ptr;
-			htrd->re.u.q.param = QSE_NULL;
+			htrd->re.u.q.path = tmp;
+			htrd->re.u.q.param.ptr = QSE_NULL;
+			htrd->re.u.q.param.len = 0;
 		}
 #else
 		while (*p != QSE_MT('\0') && !is_space_octet(*p)) 
 		{
 			if (*p == QSE_MT('?') && param.ptr == QSE_NULL)
 			{
+				tmp.len = p - tmp.ptr; /* length of the path part */
 				*p++ = QSE_MT('\0'); /* null-terminate the path part */
 				param.ptr = p;
 			}
@@ -380,33 +391,40 @@ static qse_mchar_t* parse_initial_line (qse_htrd_t* htrd, qse_mchar_t* line)
 
 		/* the url must be followed by a space */
 		if (!is_space_octet(*p)) goto badre;
+		param.len = p - param.ptr; /* length of the param part */
 		*p = QSE_MT('\0');  /* null-terminate the path or param part */
 
 		if (param.ptr)
 		{
-			htrd->re.u.q.path = tmp.ptr;
-			htrd->re.u.q.param = param.ptr;
+			htrd->re.u.q.path = tmp;
+			htrd->re.u.q.param = param;
 		}
 		else
 		{
-			htrd->re.u.q.path = tmp.ptr;
-			htrd->re.u.q.param = QSE_NULL;
+			htrd->re.u.q.path = tmp;
+			htrd->re.u.q.param.ptr = QSE_NULL;
+			htrd->re.u.q.param.len = 0;
 		}
 #endif
 
 		if (htrd->option & QSE_HTRD_CANONQPATH)
 		{
-			qse_mchar_t* qpath = htrd->re.u.q.path;
+			qse_mchar_t* qpath = htrd->re.u.q.path.ptr;
 
 			/* if the url begins with xxx://,
 			 * skip xxx:/ and canonicalize from the second slash */
 			while (is_alpha_octet(*qpath)) qpath++;
 			if (qse_mbszcmp (qpath, QSE_MT("://"), 3) == 0)
+			{
 				qpath = qpath + 2; /* set the position to the second / in :// */
+				htrd->re.u.q.path.len = qse_canonmbspath (qpath, qpath, 0);
+				htrd->re.u.q.path.len += qpath - htrd->re.u.q.path.ptr;
+			}
 			else
-				qpath = htrd->re.u.q.path;
-
-			qse_canonmbspath (qpath, qpath, 0);
+			{
+				qpath = htrd->re.u.q.path.ptr;
+				htrd->re.u.q.path.len = qse_canonmbspath (qpath, qpath, 0);
+			}
 		}
 	
 		/* skip spaces after the url part */

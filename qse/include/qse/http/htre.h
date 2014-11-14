@@ -79,8 +79,8 @@ struct qse_htre_t
 				qse_http_method_t type;
 				const qse_mchar_t* name;
 			} method;
-			qse_mchar_t* path;
-			qse_mchar_t* param;
+			qse_mcstr_t path;
+			qse_mcstr_t param;
 		} q;
 		struct
 		{
@@ -101,6 +101,17 @@ struct qse_htre_t
 #define QSE_HTRE_ATTR_PROXIED   (1 << 5)
 #define QSE_HTRE_QPATH_PERDEC   (1 << 6) /* the qpath has been percent-decoded */
 	int flags;
+
+	/* original query path for a request.
+	 * meaningful if QSE_HTRE_QPATH_PERDEC is set in the flags */
+	struct
+	{
+		qse_mchar_t* buf; /* buffer pointer */
+		qse_size_t capa; /* buffer capacity */
+
+		qse_mchar_t* ptr;
+		qse_size_t len;
+	} orgqpath;
 
 	/* special attributes derived from the header */
 	struct
@@ -132,8 +143,9 @@ struct qse_htre_t
 #define qse_htre_getqmethodtype(re) ((re)->u.q.method.type)
 #define qse_htre_getqmethodname(re) ((re)->u.q.method.name)
 
-#define qse_htre_getqpath(re) ((re)->u.q.path)
-#define qse_htre_getqparam(re) ((re)->u.q.param)
+#define qse_htre_getqpath(re) ((re)->u.q.path.ptr)
+#define qse_htre_getqparam(re) ((re)->u.q.param.ptr)
+#define qse_htre_getorgqpath(re) ((re)->orgqpath.ptr)
 
 #define qse_htre_getscodeval(re) ((re)->u.s.code.val)
 #define qse_htre_getscodestr(re) ((re)->u.s.code.str)
@@ -167,18 +179,6 @@ QSE_EXPORT void qse_htre_fini (
 
 QSE_EXPORT void qse_htre_clear (
 	qse_htre_t* re
-);
-
-QSE_EXPORT int qse_htre_setstrfromcstr (
-	qse_htre_t*        re,
-	qse_mbs_t*         str,
-	const qse_mcstr_t* cstr
-);
-
-QSE_EXPORT int qse_htre_setstrfromxstr (
-	qse_htre_t*        re,
-	qse_mbs_t*         str,
-	const qse_mcstr_t* xstr
 );
 
 QSE_EXPORT const qse_htre_hdrval_t* qse_htre_getheaderval (

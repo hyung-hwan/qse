@@ -387,7 +387,30 @@ qse_mchar_t* qse_fmthttptime (
 	return buf;
 }
 
-qse_size_t qse_perdechttpstr (const qse_mchar_t* str, qse_mchar_t* buf)
+int qse_isperencedhttpstr (const qse_mchar_t* str)
+{
+	const qse_mchar_t* p = str;
+
+	while (*p != QSE_T('\0'))
+	{
+		if (*p == QSE_MT('%') && *(p + 1) != QSE_MT('\0') && *(p + 2) != QSE_MT('\0'))
+		{
+			int q = QSE_MXDIGITTONUM (*(p + 1));
+			if (q >= 0)
+			{
+				/* return true if the first valid percent-encoded sequence is found */
+				int w = QSE_MXDIGITTONUM (*(p + 2));
+				if (w >= 0) return 1; 
+			}
+		}
+
+		p++;
+	}
+
+	return 1;
+}
+
+qse_size_t qse_perdechttpstr (const qse_mchar_t* str, qse_mchar_t* buf, qse_size_t* ndecs)
 {
 	const qse_mchar_t* p = str;
 	qse_mchar_t* out = buf;
@@ -395,16 +418,15 @@ qse_size_t qse_perdechttpstr (const qse_mchar_t* str, qse_mchar_t* buf)
 
 	while (*p != QSE_T('\0'))
 	{
-		if (*p == QSE_MT('%') && *(p+1) != QSE_MT('\0') && *(p+2) != QSE_MT('\0'))
+		if (*p == QSE_MT('%') && *(p + 1) != QSE_MT('\0') && *(p + 2) != QSE_MT('\0'))
 		{
-			int q = QSE_MXDIGITTONUM (*(p+1));
+			int q = QSE_MXDIGITTONUM (*(p + 1));
 			if (q >= 0)
 			{
-				int w = QSE_MXDIGITTONUM (*(p+2));
+				int w = QSE_MXDIGITTONUM (*(p + 2));
 				if (w >= 0)
 				{
-					/* unlike the path part, we don't care if it 
-					 * contains a null character */
+					/* we don't care if it contains a null character */
 					*out++ = ((q << 4) + w);
 					p += 3;
 					dec_count++;
@@ -412,12 +434,13 @@ qse_size_t qse_perdechttpstr (const qse_mchar_t* str, qse_mchar_t* buf)
 				}
 			}
 		}
+
 		*out++ = *p++;
 	}
 
 	*out = QSE_MT('\0');
-	/*return out - buf;*/
-	return dec_count;
+	if (ndecs) *ndecs = dec_count;
+	return out - buf;
 }
 
 #define IS_UNRESERVED(c) \
@@ -429,11 +452,14 @@ qse_size_t qse_perdechttpstr (const qse_mchar_t* str, qse_mchar_t* buf)
 
 #define TO_HEX(v) (QSE_MT("0123456789ABCDEF")[(v) & 15])
 
-qse_size_t qse_perenchttpstr (int opt, const qse_mchar_t* str, qse_mchar_t* buf)
+qse_size_t qse_perenchttpstr (int opt, const qse_mchar_t* str, qse_mchar_t* buf, qse_size_t* nencs)
 {
 	const qse_mchar_t* p = str;
 	qse_mchar_t* out = buf;
 	qse_size_t enc_count = 0;
+
+	/* this function doesn't accept the size of the buffer. the caller must 
+	 * ensure that the buffer is large enough */
 
 	if (opt & QSE_PERENCHTTPSTR_KEEP_SLASH)
 	{
@@ -466,8 +492,8 @@ qse_size_t qse_perenchttpstr (int opt, const qse_mchar_t* str, qse_mchar_t* buf)
 		}
 	}
 	*out = QSE_MT('\0');
-	/*return out - buf;*/
-	return enc_count;
+	if (nencs) *nencs = enc_count;
+	return out - buf;
 }
 
 qse_mchar_t* qse_perenchttpstrdup (int opt, const qse_mchar_t* str, qse_mmgr_t* mmgr)
@@ -500,7 +526,7 @@ qse_mchar_t* qse_perenchttpstrdup (int opt, const qse_mchar_t* str, qse_mmgr_t* 
 	if (buf == QSE_NULL) return QSE_NULL;
 
 	/* perform actual escaping */
-	qse_perenchttpstr (opt, str, buf);
+	qse_perenchttpstr (opt, str, buf, QSE_NULL);
 
 	return buf;
 }
