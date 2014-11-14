@@ -8,12 +8,7 @@
 
 static void* mod_open (qse_httpd_t* httpd, const qse_char_t* sysname)
 {
-#if defined(QSE_ENABLE_STATIC_MODULE)
-
-	qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
-	return QSE_NULL;
-
-#elif defined(USE_LTDL)
+#if defined(USE_LTDL)
 	void* h;
 	qse_mchar_t* modpath;
 
@@ -85,10 +80,10 @@ static void* mod_open (qse_httpd_t* httpd, const qse_char_t* sysname)
 	QSE_ASSERT (QSE_SIZEOF(h) <= QSE_SIZEOF(void*));
 	return h;
 
-#elif defined(__DOS__)
+#elif defined(__DOS__) && defined(QSE_ENABLE_DOS_DYNAMIC_MODULE)
 
 	/* the DOS code here is not generic enough. it's for a specific
-	 * dos-extender only. the best is to enable QSE_ENABLE_STATIC_MODULE
+	 * dos-extender only. the best is to disable dynamic loading
 	 * when building for DOS. */
 	void* h;
 	qse_mchar_t* modpath;
@@ -124,16 +119,13 @@ static void* mod_open (qse_httpd_t* httpd, const qse_char_t* sysname)
 
 static void mod_close (qse_httpd_t* httpd, void* handle)
 {
-#if defined(QSE_ENABLE_STATIC_MODULE)
-	/* this won't be called at all when modules are linked into
-	 * the main library. */
-#elif defined(USE_LTDL)
+#if defined(USE_LTDL)
 	lt_dlclose (handle);
 #elif defined(_WIN32)
 	FreeLibrary ((HMODULE)handle);
 #elif defined(__OS2__)
 	DosFreeModule ((HMODULE)handle);
-#elif defined(__DOS__)
+#elif defined(__DOS__) && defined(QSE_ENABLE_DOS_DYNAMIC_MODULE)
 	FreeModule (handle);
 #else
 	/* nothing to do */
@@ -157,12 +149,7 @@ static void* mod_symbol (qse_httpd_t* httpd, void* handle, const qse_char_t* nam
 #endif
 
 
-#if defined(QSE_ENABLE_STATIC_MODULE)
-	/* this won't be called at all when modules are linked into
-	 * the main library. */
-	s = QSE_NULL;
-
-#elif defined(USE_LTDL)
+#if defined(USE_LTDL)
 	s = lt_dlsym (handle, mname);
 	if (s == QSE_NULL) qse_httpd_seterrnum (httpd, syserr_to_errnum(errno));
 #elif defined(_WIN32)
@@ -178,7 +165,7 @@ static void* mod_symbol (qse_httpd_t* httpd, void* handle, const qse_char_t* nam
 			s = QSE_NULL;
 		}
 	}
-#elif defined(__DOS__)
+#elif defined(__DOS__) && defined(QSE_ENABLE_DOS_DYNAMIC_MODULE)
 	s = GetProcAddress (handle, mname);
 	if (s == QSE_NULL) qse_httpd_seterrnum (httpd, syserr_to_errnum(errno));
 #else

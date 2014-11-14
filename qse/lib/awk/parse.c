@@ -6697,7 +6697,6 @@ static qse_awk_mod_t* query_module (
 
 	QSE_ASSERT (nsegs == 2);
 
-
 	pair = qse_rbt_search (awk->modtab, segs[0].ptr, segs[0].len);
 	if (pair)
 	{
@@ -6706,7 +6705,7 @@ static qse_awk_mod_t* query_module (
 	else
 	{
 		qse_awk_mod_data_t md;
-		qse_awk_mod_load_t load;
+		qse_awk_mod_load_t load = QSE_NULL;
 		qse_awk_mod_spec_t spec;
 		qse_size_t buflen;
 		/*qse_char_t buf[64 + 15] = QSE_T("_qse_awk_mod_");*/
@@ -6738,6 +6737,8 @@ static qse_awk_mod_t* query_module (
 		}
 
 #if defined(QSE_ENABLE_STATIC_MODULE)
+		/* attempt to find a statically linked module */
+
 		/* TODO: binary search ... */
 		for (n = 0; n < QSE_COUNTOF(static_modtab); n++)
 		{
@@ -6748,34 +6749,43 @@ static qse_awk_mod_t* query_module (
 			}
 		}
 
-		if (n >= QSE_COUNTOF(static_modtab))
+		/*if (n >= QSE_COUNTOF(static_modtab))
 		{
+
 			ea.ptr = segs[0].ptr;
 			ea.len = segs[0].len;
 			qse_awk_seterror (awk, QSE_AWK_ENOENT, &ea, QSE_NULL);
 			return QSE_NULL;
-		}
+		}*/
 
-		QSE_MEMSET (&md, 0, QSE_SIZEOF(md));
-
-		/* i copy-insert 'md' into the table before calling 'load'.
-		 * to pass the same address to load(), query(), etc */
-		pair = qse_rbt_insert (awk->modtab, segs[0].ptr, segs[0].len, &md, QSE_SIZEOF(md));
-		if (pair == QSE_NULL)
+		if (load)
 		{
-			qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);
-			return QSE_NULL;
+			/* found the module in the staic module table */
+
+			QSE_MEMSET (&md, 0, QSE_SIZEOF(md));
+			/* Note md.handle is QSE_NULL for a static module */
+
+			/* i copy-insert 'md' into the table before calling 'load'.
+			 * to pass the same address to load(), query(), etc */
+			pair = qse_rbt_insert (awk->modtab, segs[0].ptr, segs[0].len, &md, QSE_SIZEOF(md));
+			if (pair == QSE_NULL)
+			{
+				qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);
+				return QSE_NULL;
+			}
+
+			mdp = (qse_awk_mod_data_t*)QSE_RBT_VPTR(pair);
+			if (load (&mdp->mod, awk) <= -1)
+			{
+				qse_rbt_delete (awk->modtab, segs[0].ptr, segs[0].len);
+				return QSE_NULL;
+			}
+
+			goto done;
 		}
+#endif
 
-		mdp = (qse_awk_mod_data_t*)QSE_RBT_VPTR(pair);
-		if (load (&mdp->mod, awk) <= -1)
-		{
-			qse_rbt_delete (awk->modtab, segs[0].ptr, segs[0].len);
-			return QSE_NULL;
-		}
-
-#else
-
+		/* attempt to find an external module */
 		QSE_MEMSET (&spec, 0, QSE_SIZEOF(spec));
 
 		if (awk->opt.mod[0].len > 0)
@@ -6844,9 +6854,9 @@ static qse_awk_mod_t* query_module (
 			awk->prm.modclose (awk, mdp->handle);
 			return QSE_NULL;
 		}
-#endif
 	}
 
+done:
 	n = mdp->mod.query (&mdp->mod, awk, segs[1].ptr, sym);
 	return (n <= -1)? QSE_NULL: &mdp->mod;
 }
