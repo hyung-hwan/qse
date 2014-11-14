@@ -98,7 +98,7 @@ struct qse_wfmtout_t
 
 typedef struct qse_wfmtout_t qse_wfmtout_t;
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 extern "C" {
 #endif
 
@@ -120,7 +120,7 @@ int qse_wfmtout (
 #	define qse_fmtout(fmt,fo,ap) qse_wfmtout(fmt,fo,ap)
 #endif
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 }
 #endif
 

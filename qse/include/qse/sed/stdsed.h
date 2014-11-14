@@ -91,7 +91,7 @@ struct qse_sed_iostd_t
 
 typedef struct qse_sed_iostd_t qse_sed_iostd_t;
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 extern "C" {
 #endif
 
@@ -234,7 +234,7 @@ QSE_EXPORT int qse_sed_execstdxstr (
 	qse_cmgr_t*       cmgr
 );
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 }
 #endif
 

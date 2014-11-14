@@ -21,13 +21,13 @@
 #ifndef _QSE_LIB_AWK_ERR_H_
 #define _QSE_LIB_AWK_ERR_H_
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 extern "C" {
 #endif
 
 const qse_char_t* qse_awk_dflerrstr (const qse_awk_t* awk, qse_awk_errnum_t errnum);
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 }
 #endif
 

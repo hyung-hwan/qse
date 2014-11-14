@@ -203,7 +203,7 @@ qse_mcint_t qse_tomctype (qse_mcint_t c, qse_mctype_t type)
 int qse_iswctype (qse_wcint_t c, qse_wctype_t type)
 { 
 /*
-#ifdef HAVE_WCTYPE
+#if defined(HAVE_WCTYPE)
 	static const char* name[] = 
 	{
 		"upper",
@@ -298,7 +298,7 @@ int qse_iswctype (qse_wcint_t c, qse_wctype_t type)
 qse_wcint_t qse_towctype (qse_wcint_t c, qse_wctype_t type)  
 { 
 /*
-#ifdef HAVE_WCTRANS
+#if defined(HAVE_WCTRANS)
 	static const char* name[] = 
 	{
 		"toupper",

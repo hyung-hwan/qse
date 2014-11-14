@@ -178,13 +178,13 @@ static int setsignal (int sig, void(*handler)(int), int restart)
 
 	if (restart)
 	{
-	#ifdef SA_RESTART
+	#if defined(SA_RESTART)
 		sa_int.sa_flags |= SA_RESTART;
 	#endif
 	}
 	else
 	{
-	#ifdef SA_INTERRUPT
+	#if defineed(SA_INTERRUPT)
 		sa_int.sa_flags |= SA_INTERRUPT;
 	#endif
 	}
@@ -347,7 +347,7 @@ static void dprint_return (qse_awk_rtx_t* rtx, qse_awk_val_t* ret)
 	dprint (QSE_T("[END NAMED VARIABLES]\n"));
 }
 
-#ifdef ENABLE_CALLBACK
+#if defined(ENABLE_CALLBACK)
 static void on_statement (qse_awk_rtx_t* rtx, qse_awk_nde_t* nde)
 {
 	dprint (QSE_T("running %d at line %zu\n"), (int)nde->type, (qse_size_t)nde->loc.line);
@@ -998,7 +998,7 @@ static int awk_main (int argc, qse_char_t* argv[])
 	struct arg_t arg;
 	int ret = -1;
 
-#ifdef ENABLE_CALLBACK
+#if defined(ENABLE_CALLBACK)
 	static qse_awk_rtx_ecb_t rtx_ecb =
 	{
 		QSE_FV(.close,  QSE_NULL),
@@ -1111,7 +1111,7 @@ static int awk_main (int argc, qse_char_t* argv[])
 	}
 	
 	app_rtx = rtx;
-#ifdef ENABLE_CALLBACK
+#if defined(ENABLE_CALLBACK)
 	qse_awk_rtx_pushecb (rtx, &rtx_ecb);
 #endif
 

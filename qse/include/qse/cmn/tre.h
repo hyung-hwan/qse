@@ -99,7 +99,7 @@ enum qse_tre_eflag_t
 	QSE_TRE_NOTEOL       = (1 << 2)
 };
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 extern "C" {
 #endif
 
@@ -169,7 +169,7 @@ QSE_EXPORT int qse_tre_exec (
 	int               eflags
 );
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 }
 #endif
 

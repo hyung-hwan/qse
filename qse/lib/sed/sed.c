@@ -691,7 +691,7 @@ Omitted for clash with regular expression \b.
 			break;
 		}
 
-#ifdef QSE_CHAR_IS_WCHAR
+#if defined(QSE_CHAR_IS_WCHAR)
 		case QSE_T('X'):
 		{
 			/* \Xnnnn or \Xnnnnnnnn for wchar_t */
@@ -2479,7 +2479,7 @@ static int write_str_clearly (
 				if (QSE_ISPRINT(c)) WRITE_CHAR (sed, c);
 				else
 				{
-				#ifdef QSE_CHAR_IS_MCHAR
+				#if defined(QSE_CHAR_IS_MCHAR)
 					WRITE_CHAR (sed, QSE_T('\\'));
 					WRITE_NUM (sed, (unsigned char)c, 8, QSE_SIZEOF(qse_char_t)*3);
 				#else
@@ -2579,7 +2579,7 @@ static int write_file (
 {
 	qse_ssize_t n;
 	qse_sed_io_arg_t arg;
-#ifdef QSE_CHAR_IS_MCHAR
+#if defined(QSE_CHAR_IS_MCHAR)
 	qse_char_t buf[1024];
 #else
 	qse_char_t buf[512];

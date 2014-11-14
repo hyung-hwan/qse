@@ -102,7 +102,7 @@ struct qse_nwio_t
 
 #define QSE_NWIO_HANDLE(nwio) ((nwio)->handle)
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 extern "C" {
 #endif
 
@@ -206,7 +206,7 @@ QSE_EXPORT qse_ssize_t qse_nwio_write (
 	qse_size_t   size
 );
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 }
 #endif
 

@@ -28,7 +28,7 @@
  * This file provides functions, types, macros for mb8 conversion.
  */
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 extern "C" {
 #endif
 
@@ -63,7 +63,7 @@ qse_size_t qse_mb8towc (
 	qse_wchar_t*       wc
 );
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 }
 #endif
 

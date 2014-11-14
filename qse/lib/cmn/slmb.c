@@ -34,10 +34,10 @@
 #	endif
 #endif
 
-#ifdef HAVE_WCHAR_H
+#if defined(HAVE_WCHAR_H)
 #	include <wchar.h>
 #endif
-#ifdef HAVE_STDLIB_H
+#if defined(HAVE_STDLIB_H)
 #	include <stdlib.h>
 #endif
 #if defined(_WIN32)

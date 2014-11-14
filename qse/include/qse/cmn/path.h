@@ -60,7 +60,7 @@ enum qse_canonpath_flag_t
 #	define QSE_ISPATHWCSEP(c) ((c) == QSE_WT('/'))
 #endif
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 extern "C" {
 #endif
 
@@ -242,7 +242,7 @@ QSE_EXPORT qse_size_t qse_canonwcspath (
 #	define qse_canonpath(p,c,f)  qse_canonwcspath(p,c,f)
 #endif
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 }
 #endif
 

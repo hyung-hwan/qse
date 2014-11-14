@@ -87,14 +87,14 @@ struct qse_upxd_t
 	qse_uint8_t rbuf[65535];
 };
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 extern "C" {
 #endif
 
 int qse_upxd_init (qse_upxd_t* upxd, qse_mmgr_t* mmgr);
 void qse_upxd_fini (qse_upxd_t* upxd);
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 }
 #endif
 

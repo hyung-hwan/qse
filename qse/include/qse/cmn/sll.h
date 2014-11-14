@@ -150,7 +150,7 @@ struct qse_sll_node_t
  */
 #define QSE_SLL_NEXT(node)  ((node)->next)
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 extern "C" {
 #endif
 
@@ -392,7 +392,7 @@ QSE_EXPORT void qse_sll_poptail (
 	qse_sll_t* sll
 );
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 }
 #endif
 

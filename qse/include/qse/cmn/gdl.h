@@ -183,7 +183,7 @@ struct qse_gdl_link_t
 #define QSE_GDL_ISHEAD(gdl,x) ((x)->prev == (qse_gdl_link_t*)(gdl))
 #define QSE_GDL_ISTAIL(gdl,x) ((x)->next == (qse_gdl_link_t*)(gdl))
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 extern "C" {
 #endif
 
@@ -205,7 +205,7 @@ QSE_EXPORT void qse_gdl_replace (
 	qse_gdl_link_t* new_link 
 );
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 }
 #endif
 

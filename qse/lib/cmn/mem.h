@@ -25,7 +25,7 @@
 
 #define MINIMIZE_PLATFORM_DEPENDENCY
 
-#ifdef MINIMIZE_PLATFORM_DEPENDENCY
+#if defined(MINIMIZE_PLATFORM_DEPENDENCY)
 #	define QSE_MEMCPY(dst,src,len)  qse_memcpy(dst,src,len)
 #	define QSE_MEMMOVE(dst,src,len) qse_memmove(dst,src,len)
 #	define QSE_MEMCMP(p1,p2,len)    qse_memcmp(p1,p2,len)

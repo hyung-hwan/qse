@@ -153,7 +153,7 @@
  * The #QSE_NULL macro defines a special pointer value to indicate an error or
  * that it does not point to anything.
  */
-#ifdef __cplusplus
+#if defined(__cplusplus)
 #	if QSE_SIZEOF_VOID_P == QSE_SIZEOF_INT
 #		define QSE_NULL (0)
 #	elif QSE_SIZEOF_VOID_P == QSE_SIZEOF_LONG
@@ -310,20 +310,20 @@
 		(qse_assert_failed (QSE_T(#expr), QSE_T(desc), QSE_T(__FILE__), __LINE__), 0))
 #endif
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 extern "C" {
 #endif
 QSE_EXPORT void qse_assert_failed (
 	const qse_char_t* expr, const qse_char_t* desc,
 	const qse_char_t* file, qse_size_t line);
-#ifdef __cplusplus
+#if defined(__cplusplus)
 }
 #endif
 
 /* ---------------------------------------------------------------------- 
  * C++ NAMESPACE
  * ---------------------------------------------------------------------- */
-#ifdef __cplusplus
+#if defined(__cplusplus)
 #	define QSE_BEGIN_NAMESPACE(x)    namespace x {
 #	define QSE_END_NAMESPACE(x)      }
 #	define QSE_BEGIN_NAMESPACE2(x,y) namespace x { namespace y {

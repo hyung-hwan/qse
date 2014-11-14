@@ -140,7 +140,7 @@ typedef qse_oht_walk_t (*qse_oht_walker_t) (
 	void*      ctx
 );
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 extern "C" {
 #endif
 
@@ -305,7 +305,7 @@ QSE_EXPORT void qse_oht_walk (
 	void*            ctx     /**< context */
 );
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 }
 #endif
 

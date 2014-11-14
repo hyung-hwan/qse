@@ -55,7 +55,7 @@
  */
 #define QSE_MMGR_FREE(mmgr,ptr) ((mmgr)->free(mmgr,ptr))
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 extern "C" {
 #endif
 
@@ -193,7 +193,7 @@ QSE_EXPORT void qse_setdflmmgr (
 	qse_mmgr_t* mmgr
 );
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 }
 #endif
 

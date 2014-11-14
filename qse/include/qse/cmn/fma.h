@@ -203,7 +203,7 @@ struct qse_fma_t
 	qse_fma_blk_t* freeblk; /**< point to the first free block */
 };
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 extern "C" {
 #endif
 
@@ -300,7 +300,7 @@ QSE_EXPORT void qse_fma_free (
 	void*      blk      /**< memory block to free */
 );
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 }
 #endif
 

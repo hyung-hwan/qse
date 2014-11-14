@@ -66,7 +66,7 @@ struct qse_nwifcfg_t
 	qse_uint8_t        ethw[6];  /* out */
 };
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 extern "C" {
 #endif
 
@@ -118,7 +118,7 @@ QSE_EXPORT int qse_getnwifcfg (
 	qse_nwifcfg_t* cfg
 );
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 }
 #endif
 

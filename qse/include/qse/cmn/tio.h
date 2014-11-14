@@ -124,7 +124,7 @@ struct qse_tio_t
 	qse_size_t       outbuf_len;
 };
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 extern "C" {
 #endif
 
@@ -311,7 +311,7 @@ QSE_EXPORT qse_ssize_t qse_tio_writewcs (
 #	define qse_tio_write(tio,str,size) qse_tio_writewcs(tio,str,size)
 #endif
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 }
 #endif
 

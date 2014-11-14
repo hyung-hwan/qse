@@ -303,7 +303,7 @@ struct qse_awk_nde_print_t
 	qse_awk_nde_t* out;
 };
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 extern "C" {
 #endif
 
@@ -316,7 +316,7 @@ int qse_awk_prnptnpt (qse_awk_t* awk, qse_awk_nde_t* tree);
 
 void qse_awk_clrpt (qse_awk_t* awk, qse_awk_nde_t* tree);
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 }
 #endif
 

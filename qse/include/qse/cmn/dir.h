@@ -62,7 +62,7 @@ struct qse_dir_ent_t
 	const qse_char_t* name;
 };
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 extern "C" {
 #endif
 
@@ -100,7 +100,7 @@ QSE_EXPORT int qse_dir_read (
 	qse_dir_ent_t* ent
 );
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 }
 #endif
 

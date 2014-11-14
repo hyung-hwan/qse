@@ -266,7 +266,7 @@ struct qse_rbt_t
 
 #define QSE_RBT_NEXT(p) ((p)->next)
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 extern "C" {
 #endif
 
@@ -590,7 +590,7 @@ QSE_EXPORT int qse_rbt_dflcomp (
 	qse_size_t       klen2
 );
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 }
 #endif
 

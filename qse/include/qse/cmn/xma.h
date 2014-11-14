@@ -114,7 +114,7 @@ typedef int (*qse_xma_dumper_t) (
 	...
 );
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 extern "C" {
 #endif
 
@@ -215,7 +215,7 @@ QSE_EXPORT void qse_xma_dump (
 	void*            ctx     /**< first parameter to output function */
 );
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 }
 #endif
 

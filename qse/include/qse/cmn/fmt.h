@@ -117,7 +117,7 @@ enum qse_fmtintmax_flag_t
 #define QSE_FMTUINTMAXTOWCS_FILLRIGHT  QSE_FMTINTMAX_FILLRIGHT
 #define QSE_FMTUINTMAXTOWCS_FILLCENTER QSE_FMTINTMAX_FILLCENTER
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 extern "C" {
 #endif
 
@@ -299,7 +299,7 @@ QSE_EXPORT int qse_fmtfltmaxtombs (
 	int          digits
 );
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 }
 #endif
 

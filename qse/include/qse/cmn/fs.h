@@ -109,7 +109,7 @@ enum qse_fs_option_t
 	QSE_FS_REALPATH = (1 << 2)  
 };
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 extern "C" {
 #endif
 
@@ -174,7 +174,7 @@ QSE_EXPORT int qse_fs_delete (
 	const qse_char_t* path
 );
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 }
 #endif
 

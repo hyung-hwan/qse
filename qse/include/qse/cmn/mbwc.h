@@ -59,7 +59,7 @@ enum qse_cmgr_id_t
 };
 typedef enum qse_cmgr_id_t qse_cmgr_id_t;
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 extern "C" {
 #endif
 
@@ -464,7 +464,7 @@ QSE_EXPORT qse_mchar_t* qse_wcsnatombsdup (
 	qse_mmgr_t*       mmgr
 );
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 }
 #endif
 

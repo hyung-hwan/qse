@@ -518,13 +518,13 @@ static int setsignal (int sig, void(*handler)(int), int restart)
 
 	if (restart)
 	{
-	#ifdef SA_RESTART
+	#if defined(SA_RESTART)
 		sa_int.sa_flags |= SA_RESTART;
 	#endif
 	}
 	else
 	{
-	#ifdef SA_INTERRUPT
+	#if defined(SA_INTERRUPT)
 		sa_int.sa_flags |= SA_INTERRUPT;
 	#endif
 	}

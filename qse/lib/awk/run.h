@@ -102,7 +102,7 @@ enum qse_awk_incop_type_t
 	QSE_AWK_INCOP_MINUS
 };
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 extern "C" {
 #endif
 
@@ -117,7 +117,7 @@ qse_char_t* qse_awk_rtx_format (
 	qse_size_t*       len
 );
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 }
 #endif
 

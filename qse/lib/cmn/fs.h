@@ -37,7 +37,7 @@
 	typedef int qse_fs_syserr_t;
 #endif
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 extern "C" {
 #endif
 
@@ -46,6 +46,6 @@ qse_fs_errnum_t qse_fs_syserrtoerrnum (
 	qse_fs_syserr_t e
 );
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 }
 #endif

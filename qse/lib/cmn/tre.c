@@ -236,7 +236,7 @@ int qse_tre_execx (
 		tre->errnum = QSE_TRE_EBADPAT; 
 		return -1;
 	}
-#ifdef QSE_CHAR_IS_WCHAR
+#if defined(QSE_CHAR_IS_WCHAR)
 	ret = tre_match (tre, str, len, STR_WIDE, nmatch, pmatch, eflags);
 #else
 	ret = tre_match (tre, str, len, STR_BYTE, nmatch, pmatch, eflags);

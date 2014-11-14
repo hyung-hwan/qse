@@ -38,7 +38,7 @@ struct qse_awk_fnc_t
 	qse_awk_mod_t* mod; /* set by the engine to a valid pointer if it's associated to a module */
 };
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 extern "C" {
 #endif
 
@@ -57,7 +57,7 @@ QSE_EXPORT int qse_awk_fnc_tolower (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t
 QSE_EXPORT int qse_awk_fnc_toupper (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi);
 QSE_EXPORT int qse_awk_fnc_sprintf (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi);
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 }
 #endif
 

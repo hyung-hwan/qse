@@ -66,7 +66,7 @@ struct qse_pma_t
 	int failed;
 };
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 extern "C" {
 #endif
 

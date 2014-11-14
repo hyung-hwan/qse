@@ -406,7 +406,7 @@ int qse_timegm (const qse_btime_t* bt, qse_ntime_t* nt)
 	tm.tm_yday = bt->yday;
 	tm.tm_isdst = bt->isdst;
 
-#ifdef HAVE_TIMEGM
+#if defined(HAVE_TIMEGM)
 	*nt = ((qse_ntime_t)timegm(&tm)*QSE_MSECS_PER_SEC) + bt->msec;
 	return 0;
 #else
