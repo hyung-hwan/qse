@@ -78,6 +78,9 @@ void qse_htre_fini (qse_htre_t* re)
 	qse_mbs_fini (&re->content);
 	qse_htb_fini (&re->trailers);
 	qse_htb_fini (&re->hdrtab);
+
+	if (re->orgqpath.buf) 
+		QSE_MMGR_FREE (re->mmgr, re->orgqpath.buf);
 }
 
 void qse_htre_clear (qse_htre_t* re)
@@ -95,6 +98,9 @@ void qse_htre_clear (qse_htre_t* re)
 	re->state = 0;
 	re->flags = 0;
 
+	re->orgqpath.ptr = QSE_NULL;
+	re->orgqpath.len = 0;
+
 	QSE_MEMSET (&re->version, 0, QSE_SIZEOF(re->version));
 	QSE_MEMSET (&re->attr, 0, QSE_SIZEOF(re->attr));
 
@@ -105,18 +111,6 @@ void qse_htre_clear (qse_htre_t* re)
 #if 0 
 	qse_mbs_clear (&re->iniline);
 #endif
-}
-
-int qse_htre_setstrfromcstr (
-	qse_htre_t* re, qse_mbs_t* str, const qse_mcstr_t* cstr)
-{
-	return (qse_mbs_ncpy (str, cstr->ptr, cstr->len) == (qse_size_t)-1)? -1: 0;
-}
-
-int qse_htre_setstrfromxstr (
-	qse_htre_t* re, qse_mbs_t* str, const qse_mcstr_t* xstr)
-{
-	return (qse_mbs_ncpy (str, xstr->ptr, xstr->len) == (qse_size_t)-1)? -1: 0;
 }
 
 const qse_htre_hdrval_t* qse_htre_getheaderval (
@@ -180,7 +174,7 @@ int qse_htre_walktrailers (
 	qse_htb_walk (&re->trailers, walk_headers, &hwctx);
 	return hwctx.ret;
 }
-	
+
 int qse_htre_addcontent (
 	qse_htre_t* re, const qse_mchar_t* ptr, qse_size_t len)
 {
@@ -266,11 +260,55 @@ void qse_htre_setconcb (qse_htre_t* re, qse_htre_concb_t concb, void* ctx)
 
 int qse_htre_perdecqpath (qse_htre_t* re)
 {
-	/* percent decode the query path */
+	qse_size_t dec_count;
+
+	/* percent decode the query path*/
+
 	if (re->type != QSE_HTRE_Q || (re->flags & QSE_HTRE_QPATH_PERDEC)) return -1;
-	if (qse_perdechttpstr (re->u.q.path, re->u.q.path) > 0)
+
+	QSE_ASSERT (re->orgqpath.len <= 0);
+	QSE_ASSERT (re->orgqpath.ptr == QSE_NULL);
+
+	if (qse_isperencedhttpstr(re->u.q.path.ptr))
 	{
+		/* the string is percent-encoded. keep the original request
+		 * in a separately allocated buffer */
+
+		if (re->orgqpath.buf && re->u.q.path.len <= re->orgqpath.capa)
+		{
+			re->orgqpath.len = qse_mbscpy (re->orgqpath.buf, re->u.q.path.ptr);
+			re->orgqpath.ptr = re->orgqpath.buf;
+		}
+		else
+		{
+			if (re->orgqpath.buf)
+			{
+				QSE_MMGR_FREE (re->mmgr, re->orgqpath.buf);
+				re->orgqpath.capa = 0;
+			}
+
+			re->orgqpath.buf = qse_mbsxdup (re->u.q.path.ptr, re->u.q.path.len, re->mmgr);
+			if (!re->orgqpath.buf) return -1;
+			re->orgqpath.capa = re->u.q.path.len;
+
+			re->orgqpath.ptr = re->orgqpath.buf;
+			re->orgqpath.len = re->orgqpath.capa;
+
+			/* orgqpath.buf and orgqpath.ptr are the same here. the caller
+			 * is free to change orgqpath.ptr to point to a differnt position
+			 * in the buffer. */
+		}
+	}
+
+	re->u.q.path.len = qse_perdechttpstr (re->u.q.path.ptr, re->u.q.path.ptr, &dec_count);
+	if (dec_count > 0) 
+	{
+		/* this assertion is to ensure that qse_isperencedhttpstr() 
+		 * returned true when dec_count is greater than 0 */
+		QSE_ASSERT (re->orgqpath.buf != QSE_NULL);
+		QSE_ASSERT (re->orgqpath.ptr != QSE_NULL);
 		re->flags |= QSE_HTRE_QPATH_PERDEC;
 	}
+
 	return 0;
 }

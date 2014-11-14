@@ -80,8 +80,8 @@ typedef struct xtn_t
 
 				struct 
 				{
-					const qse_char_t* ptr;	
-					const qse_char_t* end;	
+					const qse_char_t* ptr;
+					const qse_char_t* end;
 				} str;
 			} u;
 		} in;

@@ -1051,18 +1051,24 @@ static int task_init_proxy (
 		proxy->qpath_pos_in_reqfwdbuf = QSE_STR_LEN(proxy->reqfwdbuf);
 		if (arg->req->flags & QSE_HTRE_QPATH_PERDEC)
 		{
-			/* the query path has been percent-decoded. so encode it back */
+			/* the query path has been percent-decoded. get the original qpath*/
+
+			/*
 			qse_mchar_t* qpath, * qpath_enc;
 			qse_size_t x;
 
 			qpath = qse_htre_getqpath(arg->req);
 			qpath_enc = qse_perenchttpstrdup (QSE_PERENCHTTPSTR_KEEP_SLASH, qpath, httpd->mmgr);
 			if (qpath_enc == QSE_NULL) goto nomem_oops;
+			
 
 			x = qse_mbs_cat (proxy->reqfwdbuf, qpath_enc);
 			if (qpath != qpath_enc) QSE_MMGR_FREE (httpd->mmgr, qpath_enc);
 
 			if (x == (qse_size_t)-1) goto nomem_oops;
+			*/
+
+			if (qse_mbs_cat (proxy->reqfwdbuf, qse_htre_getorgqpath(arg->req)) == (qse_size_t)-1) goto nomem_oops;
 		}
 		else
 		{
