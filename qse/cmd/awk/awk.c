@@ -184,7 +184,7 @@ static int setsignal (int sig, void(*handler)(int), int restart)
 	}
 	else
 	{
-	#if defineed(SA_INTERRUPT)
+	#if defined(SA_INTERRUPT)
 		sa_int.sa_flags |= SA_INTERRUPT;
 	#endif
 	}
