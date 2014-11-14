@@ -150,7 +150,7 @@ struct qse_lda_slot_t
 	qse_xptl_t val;
 };
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 extern "C" {
 #endif
 
@@ -421,7 +421,7 @@ QSE_EXPORT void qse_lda_popheap (
 	qse_lda_t* lda
 );
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 }
 #endif
 

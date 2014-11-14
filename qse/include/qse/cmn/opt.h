@@ -58,7 +58,7 @@ struct qse_opt_t
 	qse_char_t*        cur;
 };
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 extern "C" {
 #endif
 
@@ -84,7 +84,7 @@ QSE_EXPORT qse_cint_t qse_getopt (
 	qse_opt_t*         opt   /* option configuration */
 );
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 }
 #endif
 

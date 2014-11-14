@@ -216,7 +216,7 @@ struct qse_sed_t
 	} e;
 };
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 extern "C" {
 #endif
 
@@ -234,7 +234,7 @@ const qse_char_t* qse_sed_dflerrstr (
 	qse_sed_errnum_t errnum
 );
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 }
 #endif
 

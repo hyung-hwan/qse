@@ -86,7 +86,7 @@ struct qse_xli_iostd_t
 
 typedef struct qse_xli_iostd_t qse_xli_iostd_t;
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 extern "C" {
 #endif
 
@@ -131,7 +131,7 @@ QSE_EXPORT int qse_xli_writestd (
 	qse_xli_iostd_t* out
 );
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 }
 #endif
 

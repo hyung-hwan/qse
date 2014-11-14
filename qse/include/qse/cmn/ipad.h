@@ -39,7 +39,7 @@ struct qse_ip6ad_t
 };
 #include <qse/unpack.h>
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 extern "C" {
 #endif
 
@@ -153,7 +153,7 @@ QSE_EXPORT int qse_prefixtoip6ad (
 	qse_ip6ad_t* ipad
 );
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 }
 #endif
 

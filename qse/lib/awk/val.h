@@ -106,7 +106,7 @@ struct qse_awk_val_rchunk_t
 #define QSE_AWK_RTX_GETVALTYPE(rtx,p) (IS_QUICKINT_POINTER(p)? QSE_AWK_VAL_INT: (p)->v_type)
 #define QSE_AWK_RTX_GETINTFROMVAL(rtx,p) ((IS_QUICKINT_POINTER(p)? (qse_awk_int_t)GET_QUICKINT_FROM_POINTER(p): ((qse_awk_val_int_t*)(p))->i_val))
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 extern "C" {
 #endif
 
@@ -137,7 +137,7 @@ void qse_awk_rtx_freevalchunk (
 	qse_awk_val_chunk_t* chunk
 );
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 }
 #endif
 

@@ -132,7 +132,7 @@ struct qse_upxd_cbs_t
 
 typedef struct qse_upxd_cbs_t qse_upxd_cbs_t;
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 extern "C" {
 #endif
 
@@ -233,7 +233,7 @@ QSE_EXPORT int qse_upxd_poll (
 	qse_ntime_t  timeout
 );
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 }
 #endif
 

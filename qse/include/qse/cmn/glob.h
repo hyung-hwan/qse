@@ -51,7 +51,7 @@ enum qse_glob_flags_t
 	QSE_GLOB_TOLERANT   = (1 << 3)
 };
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 extern "C" {
 #endif
 
@@ -69,7 +69,7 @@ QSE_EXPORT int qse_glob (
 	qse_mmgr_t*        mmgr
 );
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 }
 #endif
 

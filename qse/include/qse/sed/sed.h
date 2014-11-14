@@ -403,7 +403,7 @@ enum qse_sed_space_t
 };
 typedef enum qse_sed_space_t qse_sed_space_t;
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 extern "C" {
 #endif
 
@@ -725,7 +725,7 @@ QSE_EXPORT void qse_sed_getspace (
 	qse_cstr_t*     str
 );
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 }
 #endif
 

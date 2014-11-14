@@ -30,7 +30,7 @@
 #include <qse/macros.h>
 
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 extern "C" {
 #endif
 
@@ -49,7 +49,7 @@ QSE_EXPORT int qse_isunipunct (qse_wcint_t c);
 QSE_EXPORT qse_wcint_t qse_touniupper (qse_wcint_t c);
 QSE_EXPORT qse_wcint_t qse_tounilower (qse_wcint_t c);
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 }
 #endif
 

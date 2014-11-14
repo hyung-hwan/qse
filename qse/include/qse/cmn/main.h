@@ -78,7 +78,7 @@ typedef int (*qse_runmainwithenv_handler_t) (
 	qse_char_t* envp[]
 );
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 extern "C" {
 #endif
 
@@ -107,7 +107,7 @@ QSE_EXPORT int qse_runmainwithenv (
 /* TODO: support more weird main functions. for example,
  *  int main(int argc, char **argv, char **envp, char **apple) in Mac OS X */
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 }
 #endif
 

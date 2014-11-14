@@ -162,7 +162,7 @@ typedef qse_ctype_t qse_wctype_t;
 	 ((c) >= QSE_WT('A') && (c) <= QSE_WT('F'))? ((c) - QSE_WT('A') + 10): \
 	 ((c) >= QSE_WT('a') && (c) <= QSE_WT('f'))? ((c) - QSE_WT('a') + 10): -1)
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 extern "C" {
 #endif
 
@@ -220,7 +220,7 @@ QSE_EXPORT int qse_wcsntoctype (
 #	define qse_strntoctype(name,len,id)     qse_wcsntoctype(name,len,id)
 #endif
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 }
 #endif
 

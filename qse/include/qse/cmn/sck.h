@@ -63,7 +63,7 @@ enum qse_shutsckhnd_how_t
 };
 typedef enum qse_shutsckhnd_how_t qse_shutsckhnd_how_t;
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 extern "C" {
 #endif
 
@@ -81,7 +81,7 @@ QSE_EXPORT void qse_shutsckhnd (
 	qse_shutsckhnd_how_t how
 );
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 }
 #endif
 

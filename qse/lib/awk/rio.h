@@ -21,7 +21,7 @@
 #ifndef _QSE_LIB_AWK_RIO_H_
 #define _QSE_LIB_AWK_RIO_H_
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 extern "C" {
 #endif
 
@@ -54,7 +54,7 @@ int qse_awk_rtx_closeio (
 
 void qse_awk_rtx_cleario (qse_awk_rtx_t* run);
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 }
 #endif
 

@@ -169,7 +169,7 @@ int qse_xma_init (qse_xma_t* xma, qse_mmgr_t* mmgr, qse_size_t zonesize)
 	xma->head = free;
 
 	/* initialize some statistical variables */
-#ifdef QSE_XMA_ENABLE_STAT
+#if defined(QSE_XMA_ENABLE_STAT)
 	xma->stat.total = zonesize;
 	xma->stat.alloc = 0;
 	xma->stat.avail = zonesize - HDRSIZE;
@@ -287,11 +287,11 @@ static qse_xma_blk_t* alloc_from_freelist (
 				/* add the remaining part to the free list */
 				attach_to_freelist (xma, tmp);
 
-#ifdef QSE_XMA_ENABLE_STAT
+#if defined(QSE_XMA_ENABLE_STAT)
 				xma->stat.avail -= HDRSIZE;
 #endif
 			}
-#ifdef QSE_XMA_ENABLE_STAT
+#if defined(QSE_XMA_ENABLE_STAT)
 			else
 			{
 				/* decrement the number of free blocks as the current
@@ -306,7 +306,7 @@ static qse_xma_blk_t* alloc_from_freelist (
 			free->f.prev = QSE_NULL;
 			*/
 
-#ifdef QSE_XMA_ENABLE_STAT
+#if defined(QSE_XMA_ENABLE_STAT)
 			xma->stat.nused++;
 			xma->stat.alloc += free->size;
 			xma->stat.avail -= free->size;
@@ -344,7 +344,7 @@ void* qse_xma_alloc (qse_xma_t* xma, qse_size_t size)
 		detach_from_freelist (xma, free);
 		free->avail = 0;
 
-#ifdef QSE_XMA_ENABLE_STAT
+#if defined(QSE_XMA_ENABLE_STAT)
 		xma->stat.nfree--;
 		xma->stat.nused++;
 		xma->stat.alloc += free->size;
@@ -445,7 +445,7 @@ static void* _realloc_merge (qse_xma_t* xma, void* b, qse_size_t size)
 			blk->b.next = tmp;
 			tmp->b.prev = blk;
 
-#ifdef QSE_XMA_ENABLE_STAT
+#if defined(QSE_XMA_ENABLE_STAT)
 			xma->stat.alloc += req;
 			xma->stat.avail -= req; /* req + HDRSIZE(tmp) - HDRSIZE(n) */
 #endif
@@ -458,7 +458,7 @@ static void* _realloc_merge (qse_xma_t* xma, void* b, qse_size_t size)
 			blk->b.next = n->b.next;
 			if (n->b.next) n->b.next->b.prev = blk;
 
-#ifdef QSE_XMA_ENABLE_STAT
+#if defined(QSE_XMA_ENABLE_STAT)
 			xma->stat.nfree--;
 			xma->stat.alloc += HDRSIZE + n->size;
 			xma->stat.avail -= n->size;
@@ -496,7 +496,7 @@ static void* _realloc_merge (qse_xma_t* xma, void* b, qse_size_t size)
 
 				tmp->size = rem - HDRSIZE + HDRSIZE + n->size;
 
-#ifdef QSE_XMA_ENABLE_STAT
+#if defined(QSE_XMA_ENABLE_STAT)
 				xma->stat.alloc -= rem;
 				/* rem - HDRSIZE(tmp) + HDRSIZE(n) */
 				xma->stat.avail += rem;
@@ -513,7 +513,7 @@ static void* _realloc_merge (qse_xma_t* xma, void* b, qse_size_t size)
 
 				tmp->size = rem - HDRSIZE;
 
-#ifdef QSE_XMA_ENABLE_STAT
+#if defined(QSE_XMA_ENABLE_STAT)
 				xma->stat.nfree++;
 				xma->stat.alloc -= rem;
 				xma->stat.avail += tmp->size;
@@ -570,7 +570,7 @@ void qse_xma_free (qse_xma_t* xma, void* b)
 
 	/*QSE_ASSERT (blk->f.next == QSE_NULL);*/
 
-#ifdef QSE_XMA_ENABLE_STAT
+#if defined(QSE_XMA_ENABLE_STAT)
 	/* update statistical variables */
 	xma->stat.nused--;
 	xma->stat.alloc -= blk->size;
@@ -615,7 +615,7 @@ void qse_xma_free (qse_xma_t* xma, void* b)
 
 		attach_to_freelist (xma, x);
 
-#ifdef QSE_XMA_ENABLE_STAT
+#if defined(QSE_XMA_ENABLE_STAT)
 		xma->stat.nfree--;
 		xma->stat.avail += ns;
 #endif
@@ -646,7 +646,7 @@ void qse_xma_free (qse_xma_t* xma, void* b)
 		qse_xma_blk_t* x = blk->b.next;
 		qse_xma_blk_t* y = x->b.next;
 
-#ifdef QSE_XMA_ENABLE_STAT
+#if defined(QSE_XMA_ENABLE_STAT)
 		xma->stat.avail += blk->size + HDRSIZE;
 #endif
 
@@ -694,7 +694,7 @@ void qse_xma_free (qse_xma_t* xma, void* b)
 		qse_xma_blk_t* x = blk->b.prev;
 		qse_xma_blk_t* y = blk->b.next;
 
-#ifdef QSE_XMA_ENABLE_STAT
+#if defined(QSE_XMA_ENABLE_STAT)
 		xma->stat.avail += HDRSIZE + blk->size;
 #endif
 
@@ -711,7 +711,7 @@ void qse_xma_free (qse_xma_t* xma, void* b)
 		blk->avail = 1;
 		attach_to_freelist (xma, blk);
 
-#ifdef QSE_XMA_ENABLE_STAT
+#if defined(QSE_XMA_ENABLE_STAT)
 		xma->stat.nfree++;
 		xma->stat.avail += blk->size;
 #endif
@@ -722,13 +722,13 @@ void qse_xma_dump (qse_xma_t* xma, qse_xma_dumper_t dumper, void* ctx)
 {
 	qse_xma_blk_t* tmp;
 	qse_ulong_t fsum, asum; 
-#ifdef QSE_XMA_ENABLE_STAT
+#if defined(QSE_XMA_ENABLE_STAT)
 	qse_ulong_t isum;
 #endif
 
 	dumper (ctx, QSE_T("<XMA DUMP>\n"));
 
-#ifdef QSE_XMA_ENABLE_STAT
+#if defined(QSE_XMA_ENABLE_STAT)
 	dumper (ctx, QSE_T("== statistics ==\n"));
 #if (QSE_SIZEOF_SIZE_T == QSE_SIZEOF_LONG)
 	dumper (ctx, QSE_T("total = %lu\n"), (unsigned long)xma->stat.total);
@@ -770,7 +770,7 @@ void qse_xma_dump (qse_xma_t* xma, qse_xma_dumper_t dumper, void* ctx)
 		else asum += tmp->size;
 	}
 
-#ifdef QSE_XMA_ENABLE_STAT
+#if defined(QSE_XMA_ENABLE_STAT)
 	isum = (xma->stat.nfree + xma->stat.nused) * HDRSIZE;
 #endif
 
@@ -788,7 +788,7 @@ void qse_xma_dump (qse_xma_t* xma, qse_xma_dumper_t dumper, void* ctx)
 #	error weird size of qse_ulong_t. unsupported platform
 #endif
 
-#ifdef QSE_XMA_ENABLE_STAT
+#if defined(QSE_XMA_ENABLE_STAT)
 #if (QSE_SIZEOF_ULONG_T == QSE_SIZEOF_LONG)
 	dumper (ctx, QSE_T("Internal use    : %18lu bytes\n"), (unsigned long)isum);
 	dumper (ctx, QSE_T("Total           : %18lu bytes\n"), (unsigned long)(asum + fsum + isum));
@@ -803,7 +803,7 @@ void qse_xma_dump (qse_xma_t* xma, qse_xma_dumper_t dumper, void* ctx)
 #endif
 #endif
 
-#ifdef QSE_XMA_ENABLE_STAT
+#if defined(QSE_XMA_ENABLE_STAT)
 	QSE_ASSERT (asum == xma->stat.alloc);
 	QSE_ASSERT (fsum == xma->stat.avail);
 	QSE_ASSERT (isum == xma->stat.total - (xma->stat.alloc + xma->stat.avail));

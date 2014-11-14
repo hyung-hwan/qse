@@ -118,7 +118,7 @@ struct qse_dll_t
 #define QSE_DLL_DPTR(node) ((node)->val.ptr)
 #define QSE_DLL_DLEN(node) ((node)->val.len)
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 extern "C" {
 #endif
 
@@ -331,7 +331,7 @@ QSE_EXPORT void qse_dll_poptail (
 	qse_dll_t* dll
 );
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 }
 #endif
 

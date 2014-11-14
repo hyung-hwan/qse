@@ -430,7 +430,7 @@ static int getc (comp_t* com, int noesc)
 			}
 		}
 	}
-#ifdef QSE_CHAR_IS_WCHAR
+#if defined(QSE_CHAR_IS_WCHAR)
 	else if (c == QSE_T('u') && QSE_SIZEOF(qse_char_t) >= 2) 
 	{
 		qse_char_t cx;

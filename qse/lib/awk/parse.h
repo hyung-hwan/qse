@@ -53,7 +53,7 @@ enum qse_awk_kwid_t
 
 typedef enum qse_awk_kwid_t qse_awk_kwid_t;
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 extern "C" {
 #endif
 
@@ -88,7 +88,7 @@ void qse_awk_clearsionames (
 	qse_awk_t* awk
 );
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 }
 #endif
 

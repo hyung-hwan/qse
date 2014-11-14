@@ -49,7 +49,7 @@ struct qse_mbstate_t
 /* SYSTEM LOCALE BASED CHARACTER CONVERSION            */
 /* --------------------------------------------------- */
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 extern "C" {
 #endif
 
@@ -124,7 +124,7 @@ QSE_EXPORT qse_size_t qse_slmblenmax (
 	void
 );
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 }
 #endif
 

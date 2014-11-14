@@ -33,7 +33,7 @@ typedef qse_task_slice_t* (*qse_task_fnc_t) (
 	void*             ctx
 );
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 extern "C" {
 #endif
 
@@ -73,7 +73,7 @@ QSE_EXPORT void qse_task_schedule (
 );
 
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 }
 #endif
 

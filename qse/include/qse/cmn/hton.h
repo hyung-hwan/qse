@@ -24,7 +24,7 @@
 #include <qse/types.h>
 #include <qse/macros.h>
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 extern "C" {
 #endif
 
@@ -68,7 +68,7 @@ QSE_EXPORT qse_uint128_t qse_hton128 (
 );
 #endif
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 }
 #endif
 

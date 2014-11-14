@@ -115,7 +115,7 @@ struct qse_btime_t
 	(((x)->sec == (y)->sec)? ((x)->nsec - (y)->nsec): \
 	                         ((x)->sec -  (y)->sec))
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 extern "C" {
 #endif
 
@@ -187,7 +187,7 @@ QSE_EXPORT void qse_subtime (
 	qse_ntime_t*       z
 );
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 }
 #endif
 

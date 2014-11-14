@@ -295,7 +295,7 @@ struct qse_htb_t
 
 #define QSE_HTB_NEXT(p) ((p)->next)
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 extern "C" {
 #endif
 
@@ -657,7 +657,7 @@ QSE_EXPORT int qse_htb_dflcomp (
 	qse_size_t       klen2
 );
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 }
 #endif
 

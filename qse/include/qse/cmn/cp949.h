@@ -34,7 +34,7 @@
  */
 #define QSE_CP949LEN_MAX 2
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 extern "C" {
 #endif
 
@@ -96,7 +96,7 @@ QSE_EXPORT qse_size_t qse_cp949lenmax (
 	void
 );
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 }
 #endif
 

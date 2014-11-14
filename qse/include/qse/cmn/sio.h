@@ -130,7 +130,7 @@ struct qse_sio_t
 /** access the @a errnum field of the #qse_sio_t structure */
 #define QSE_SIO_ERRNUM(sio)    ((sio)->errnum)
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 extern "C" {
 #endif
 
@@ -449,7 +449,7 @@ QSE_EXPORT qse_ssize_t qse_errputwcsvf (
 #define qse_fflush qse_sio_flush
 
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 }
 #endif
 

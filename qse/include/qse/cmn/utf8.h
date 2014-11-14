@@ -40,7 +40,7 @@
 #	error Unsupported wide-character size
 #endif
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 extern "C" {
 #endif
 
@@ -102,7 +102,7 @@ qse_size_t qse_utf8lenmax (
 	void
 );
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 }
 #endif
 

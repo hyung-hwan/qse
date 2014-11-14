@@ -21,7 +21,7 @@
 #ifndef _QSE_LIB_AWK_MISC_H_
 #define _QSE_LIB_AWK_MISC_H_
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 extern "C" {
 #endif
 
@@ -86,7 +86,7 @@ int qse_awk_rtx_matchrex (
 	qse_cstr_t* match
 );
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 }
 #endif
 

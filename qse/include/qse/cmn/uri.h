@@ -83,7 +83,7 @@ enum qse_wcstouri_flag_t
 	typedef qse_wuri_t qse_uri_t;
 #endif
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 extern "C" {
 #endif
 
@@ -105,7 +105,7 @@ QSE_EXPORT int qse_wcstouri (
 	#define qse_strtouri(str,uri,flags) qse_wcstouri(str,uri,flags)
 #endif
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 }
 #endif
 

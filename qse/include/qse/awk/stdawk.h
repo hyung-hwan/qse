@@ -85,7 +85,7 @@ struct qse_awk_parsestd_t
 
 typedef struct qse_awk_parsestd_t qse_awk_parsestd_t;
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 extern "C" {
 #endif
 
@@ -183,7 +183,7 @@ QSE_EXPORT qse_cmgr_t* qse_awk_rtx_getcmgrstd (
 	const qse_char_t* ioname
 );
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 }
 #endif
 

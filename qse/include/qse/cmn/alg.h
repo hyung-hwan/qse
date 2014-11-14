@@ -54,7 +54,7 @@ typedef int (*qse_search_comper_t) (
  */
 typedef qse_search_comper_t qse_sort_comper_t;
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 extern "C" {
 #endif
 
@@ -214,7 +214,7 @@ QSE_EXPORT qse_size_t qse_debase64 (
 	qse_size_t*        xsz
 );
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 }
 #endif
 

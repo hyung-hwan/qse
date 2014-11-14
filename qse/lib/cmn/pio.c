@@ -961,7 +961,7 @@ create_process:
 		QSE_NULL,  /* LPSECURITY_ATTRIBUTES lpProcessAttributes */
 		QSE_NULL,  /* LPSECURITY_ATTRIBUTES lpThreadAttributes */
 		TRUE,      /* BOOL bInheritHandles */
-	#ifdef QSE_CHAR_IS_MCHAR
+	#if defined(QSE_CHAR_IS_MCHAR)
 		0,         /* DWORD dwCreationFlags */
 	#else
 		CREATE_UNICODE_ENVIRONMENT, /* DWORD dwCreationFlags */
@@ -1216,7 +1216,7 @@ create_process:
 	{
 		qse_size_t n, mn;
 
-	#ifdef QSE_CHAR_IS_MCHAR
+	#if defined(QSE_CHAR_IS_MCHAR)
 		mn = qse_strlen(cmd);
 	#else
 		if (flags & QSE_PIO_MBSCMD)
@@ -1242,7 +1242,7 @@ create_process:
 
 		qse_mbscpy (cmd_line, QSE_MT("cmd.exe")); /* cmd.exe\0/c */ 
 		qse_mbscpy (&cmd_line[8], QSE_MT("/c "));
-	#ifdef QSE_CHAR_IS_MCHAR
+	#if defined(QSE_CHAR_IS_MCHAR)
 		qse_mbscpy (&cmd_line[11], cmd);
 	#else
 		if (flags & QSE_PIO_MBSCMD)
@@ -1264,7 +1264,7 @@ create_process:
 		qse_mchar_t* mptr;
 		qse_size_t mn;
 
-	#ifdef QSE_CHAR_IS_MCHAR
+	#if defined(QSE_CHAR_IS_MCHAR)
 		mn = qse_strlen(cmd);
 		cmd_line = qse_strdup2 (cmd, QSE_T(" "), pio->mmgr);
 		if (cmd_line == QSE_NULL) 

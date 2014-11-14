@@ -199,7 +199,7 @@ struct qse_rex_t
 	qse_rex_node_t* code;
 };
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 extern "C" {
 #endif
 
@@ -307,7 +307,7 @@ QSE_EXPORT void qse_freerex (
 	void*       code
 );
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 }
 #endif
 
