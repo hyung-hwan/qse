@@ -1509,14 +1509,14 @@ static int task_main_cgi (
 	x = qse_pio_init (
 		&cgi->pio, httpd->mmgr, (const qse_char_t*)xpath,
 		cgi->env, pio_options);
-	if (xpath != cgi->path && xpath != &cgi->fnc) QSE_MMGR_FREE (httpd->mmgr, xpath);
+	if (xpath != cgi->path && 
+	    xpath != (qse_mchar_t*)&cgi->fnc) QSE_MMGR_FREE (httpd->mmgr, xpath);
 
 	if (x <= -1)
 	{
 		qse_pio_errnum_t errnum;
 
 		errnum = qse_pio_geterrnum (&cgi->pio);
-
 		if (errnum == QSE_PIO_ENOENT) http_errnum = 404;
 		else if (errnum == QSE_PIO_EACCES) http_errnum = 403;
 
@@ -1674,4 +1674,3 @@ qse_httpd_task_t* qse_httpd_entaskcgi (
 		((arg.shebang.len + 1) * QSE_SIZEOF(*arg.shebang.ptr))
 	);
 }
-
