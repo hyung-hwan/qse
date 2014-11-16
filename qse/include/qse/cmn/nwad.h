@@ -21,6 +21,11 @@
 #ifndef _QSE_CMN_NWAD_H_
 #define _QSE_CMN_NWAD_H_
 
+/** \file
+ * This file defines functions and data types for handling
+ * a network address and a socket address.
+ */
+
 #include <qse/types.h>
 #include <qse/macros.h>
 #include <qse/cmn/ipad.h>
@@ -38,9 +43,14 @@ typedef struct qse_nwad_t qse_nwad_t;
 
 #define QSE_NWAD_LOCAL_MAX_PATH 128
 
+/** 
+ * The qse_nwad_t type defines a structure to hold a network address.
+ */
 struct qse_nwad_t
 {
+	/** network address type */
 	qse_nwad_type_t type;
+
 	union
 	{
 		struct
@@ -65,7 +75,7 @@ struct qse_nwad_t
 			 *       trailers may get truncated, when itconverted to skad. */
 			qse_char_t path[QSE_NWAD_LOCAL_MAX_PATH]; 
 		} local;
-	} u;	
+	} u;
 };
 
 enum qse_nwadtostr_flag_t
@@ -86,6 +96,10 @@ typedef enum qse_nwadtostr_flag_t qse_nwadtostr_flag_t;
 
 typedef struct qse_skad_t qse_skad_t;
 
+/** 
+ * The qse_skad_t type defines a structure large enough to hold a socket
+ * address.
+ */
 struct qse_skad_t
 {
 #define QSE_SKAD_DATA_SIZE 0
@@ -132,15 +146,27 @@ QSE_EXPORT void qse_clearnwad (
 	qse_nwad_type_t type
 );
 
+/**
+ * The qse_setnwadport() function changes the port number field of a 
+ * network saddress.
+ */
 QSE_EXPORT void qse_setnwadport (
 	qse_nwad_t*  nwad,
 	qse_uint16_t port
 );
 
+/**
+ * The qse_getnwadport() function returns the port number field of a
+ * network address.
+ */
 QSE_EXPORT qse_uint16_t qse_getnwadport (
 	qse_nwad_t*   nwad
 );
 
+/**
+ * The qse_mbstonwad() function converts a multi-byte string \a mbs to a 
+ * network address and stores it to memory pointed to by \a nwad.
+ */
 QSE_EXPORT int qse_mbstonwad (
 	const qse_mchar_t* mbs,
 	qse_nwad_t*        nwad
@@ -187,16 +213,30 @@ QSE_EXPORT qse_size_t qse_nwadtowcs (
 #	define qse_nwadtostr(nwad,ptr,len,flags) qse_nwadtowcs(nwad,ptr,len,flags)
 #endif
 
+/**
+ * The qse_skadtonwad() function converts a socket address \a skad
+ * to a network address and stroes it to memory pointed to by \a nwad.
+ * \return -1 upon failure, size of the socket address in success.
+ */
 QSE_EXPORT int qse_skadtonwad (
 	const qse_skad_t* skad,
 	qse_nwad_t*       nwad
 );
 
+/**
+ * The qse_nwadtoskad() function converts a network address \a nwad
+ * to a socket address and stores it to memory pointed to by \a skad.
+ * \return -1 upon failure, size of the socket address in success.
+ */
 QSE_EXPORT int qse_nwadtoskad (
 	const qse_nwad_t* nwad,
 	qse_skad_t*       skad
 );
 
+/**
+ * The qse_skadfamily() function returns the socket address family
+ * of a given address \a skad.
+ */
 QSE_EXPORT int qse_skadfamily (
 	const qse_skad_t* skad
 );

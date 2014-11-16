@@ -1053,7 +1053,10 @@ static int task_init_proxy (
 		{
 			/* the query path has been percent-decoded. get the original qpath*/
 
-			/*
+		#if 0
+			/* percent-encoding back doesn't work all the time because
+			 * some characters not encoded in the original request may get
+			 * encoded. some picky servers has thrown errors for such requests */
 			qse_mchar_t* qpath, * qpath_enc;
 			qse_size_t x;
 
@@ -1066,9 +1069,10 @@ static int task_init_proxy (
 			if (qpath != qpath_enc) QSE_MMGR_FREE (httpd->mmgr, qpath_enc);
 
 			if (x == (qse_size_t)-1) goto nomem_oops;
-			*/
-
+		#else
+			/* using the original query path minimizes the chance of side-effects */
 			if (qse_mbs_cat (proxy->reqfwdbuf, qse_htre_getorgqpath(arg->req)) == (qse_size_t)-1) goto nomem_oops;
+		#endif
 		}
 		else
 		{

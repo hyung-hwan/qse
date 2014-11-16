@@ -25,13 +25,7 @@
 #include <qse/cmn/sio.h>
 
 /** \file
- * This file defines functions and data types that help you create
- * an xli interpreter with less effort. It is designed to be as close
- * to conventional xli implementations as possible.
- * 
- * The source script handler does not evaluate a file name of the "var=val"
- * form as an assignment expression. Instead, it just treats it as a
- * normal file name.
+ * This file provides easier interface to a qse_xli_t object.
  */
 
 /**

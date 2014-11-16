@@ -21,6 +21,23 @@
 #ifndef _QSE_XLI_XLI_H_
 #define _QSE_XLI_XLI_H_
 
+/** \file
+ * This file defines functions and data types for handling key-value pairs
+ * orgianized in the way shown below.
+ *
+ * \code
+ *  key1 = "abc";
+ *  key2 {
+ *    key21 = "hello";
+ *    key22 = "world";
+ *    key23 {
+ *       key231 = 99999;
+ *    }
+ *  }
+ *  key3 = "12345";
+ * \endcode
+ */
+
 #include <qse/types.h>
 #include <qse/macros.h>
 
@@ -81,7 +98,7 @@ enum qse_xli_opt_t
 	QSE_XLI_PAIRXTNSIZE,
 
 	/** 
-	 *  the size of extension area associated with the root list node.
+	 *  The size of extension area associated with the root list node.
 	 *  you can get the pointer to the extension with qse_getxlirootxtn().
 	 *  the new size set takes effect after the call to qse_xli_yieldroot().
 	 */
