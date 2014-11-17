@@ -17507,14 +17507,6 @@ fi
 done
 
 
-ac_fn_c_check_type "$LINENO" "wchar_t" "ac_cv_type_wchar_t" "#include <stddef.h>
-"
-if test "x$ac_cv_type_wchar_t" = xyes; then :
-
-$as_echo "#define HAVE_WCHAR_T_IN_STDDEF_H /**/" >>confdefs.h
-
-fi
-
 
 for ac_func in uselocale
 do :
@@ -19879,7 +19871,7 @@ _ACEOF
 
 
 
-if test "${platform_win32}" == "yes"
+if test "${platform_win32}" = "yes"
 then
 	# The cast to long int works around a bug in the HP C Compiler
 # version HP92453-01 B.11.11.23709.GP, which incorrectly rejects
@@ -20866,6 +20858,7 @@ else
 fi
 
 test "${ac_cv_sizeof_wchar_t}" = "0" && enable_wchar_is=no
+test "${ac_cv_sizeof_wchar_t}" = "1" && enable_wchar_is=no
 if test "${enable_wchar_is}" = "yes"
 then
 

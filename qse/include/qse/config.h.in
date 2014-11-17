@@ -700,9 +700,6 @@
 /* Define to 1 if you have the <wchar.h> header file. */
 #undef HAVE_WCHAR_H
 
-/* wchar_t is available in stddef.h */
-#undef HAVE_WCHAR_T_IN_STDDEF_H
-
 /* Define to 1 if you have the `wcrtomb' function. */
 #undef HAVE_WCRTOMB
 

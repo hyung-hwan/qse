@@ -131,11 +131,11 @@ AC_CHECK_HEADERS([sys/stropts.h sys/macstat.h linux/ethtool.h linux/sockios.h])
 AC_CHECK_HEADERS([quadmath.h crt_externs.h sys/prctl.h uci.h])
 
 dnl check data types
-AC_CHECK_TYPE([wchar_t], 
-	[ AC_DEFINE([HAVE_WCHAR_T_IN_STDDEF_H],
-	           [],[wchar_t is available in stddef.h]) ],
-	[],
-	[#include <stddef.h>])
+dnl AC_CHECK_TYPE([wchar_t], 
+dnl 	[ AC_DEFINE([HAVE_WCHAR_T_IN_STDDEF_H],
+dnl	           [],[wchar_t is available in stddef.h]) ],
+dnl	[],
+dnl	[#include <stddef.h>])
 
 dnl check functions
 AC_CHECK_FUNCS([uselocale])
@@ -375,7 +375,7 @@ AC_CHECK_SIZEOF(off64_t)
 AC_CHECK_SIZEOF(mbstate_t,,[#include <wchar.h>])
 AX_CHECK_NUMVALOF(MB_LEN_MAX,[32],[#include <limits.h>])
 
-if test "${platform_win32}" == "yes"
+if test "${platform_win32}" = "yes"
 then
 	AC_CHECK_SIZEOF(struct sockaddr_in,,[
 		#include <winsock2.h>
@@ -581,6 +581,7 @@ dnl define extra options
 AC_ARG_ENABLE([wchar], [AS_HELP_STRING([--enable-wchar],[Use the wide character type as the default charater type when enabled (default. yes)])],
 	enable_wchar_is=$enableval,enable_wchar_is=yes)
 test "${ac_cv_sizeof_wchar_t}" = "0" && enable_wchar_is=no
+test "${ac_cv_sizeof_wchar_t}" = "1" && enable_wchar_is=no
 if test "${enable_wchar_is}" = "yes"
 then
 	AC_DEFINE([QSE_CHAR_IS_WCHAR],[],[The default character type is the wide character type])

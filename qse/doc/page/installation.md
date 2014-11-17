@@ -156,6 +156,16 @@ available for the native makefile for Watcom C/C++ for OS/2 only.
 
     wmake TCPV40HDRS=on
 
+### SCO UNIX System V/386 Release 3.2 ###
+
+- Specify GREP if configure fails to find an acceptable grep.
+- Build in the source tree. Building outside the source tree is likely to fail
+  for dificiency of the bundled make utility.
+- Do not include -g in CFLAGS. 
+
+    ./configure GREP=/bin/grep CFLAGS=""
+
+
 ### More options ###
 
 More options are available for the configure script. Execute this for more 
