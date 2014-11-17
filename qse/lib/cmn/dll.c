@@ -299,8 +299,9 @@ void qse_dll_walk (qse_dll_t* dll, qse_dll_walker_t walker, void* ctx)
 
 	while (QSE_GDL_ISLINK(&dll->gdl,n))
 	{
-		qse_gdl_link_t tmp = *n;
+		qse_gdl_link_t tmp;
 
+		tmp = *n;
 		w = walker (dll, QSE_GDL_CONTAINER (n, qse_dll_node_t, link), ctx);
 
 		if (w == QSE_DLL_WALK_FORWARD) n = QSE_GDL_NEXT (&tmp);
@@ -316,8 +317,9 @@ void qse_dll_rwalk (qse_dll_t* dll, qse_dll_walker_t walker, void* ctx)
 
 	while (QSE_GDL_ISLINK(&dll->gdl,n))
 	{
-		qse_gdl_link_t tmp = *n;
+		qse_gdl_link_t tmp;
 
+		tmp = *n;
 		w = walker (dll, QSE_GDL_CONTAINER (n, qse_dll_node_t, link), ctx);
 
 		if (w == QSE_DLL_WALK_FORWARD) n = QSE_GDL_NEXT (&tmp);

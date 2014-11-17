@@ -251,7 +251,11 @@
  * The #QSE_WT macro maps a multi-byte literal string to a wide character 
  * string by prefixing it with @b L.
  */
-#define QSE_WT(txt)    (L ## txt)
+#if (QSE_SIZEOF_WCHAR_T == QSE_SIZEOF_MCHAR_T)
+#	define QSE_WT(txt)    (txt)
+#else
+#	define QSE_WT(txt)    (L ## txt)
+#endif
 
 /** @def QSE_T
  * The #QSE_T macro maps to #QSE_MT if #QSE_CHAR_IS_MCHAR is defined, and to

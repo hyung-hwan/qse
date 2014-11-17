@@ -528,6 +528,12 @@ typedef int qse_mcint_t;
 #elif defined(__GNUC__) && defined(__WCHAR_TYPE__) && defined(__WINT_TYPE__)
 	typedef __WCHAR_TYPE__ qse_wchar_t;
 	typedef __WINT_TYPE__ qse_wcint_t;
+
+#elif (QSE_SIZEOF_WCHAR_T == QSE_SIZEOF_MCHAR_T)
+	/* most likely, there is no support for wchar_t */
+	typedef qse_mchar_t qse_wchar_t;
+	typedef qse_mcint_t qse_wcint_t;
+
 #elif (QSE_SIZEOF_WCHAR_T == 2) || (QSE_SIZEOF_WCHAR_T == 0)
 	typedef unsigned short qse_wchar_t;
 	typedef unsigned short qse_wcint_t;
