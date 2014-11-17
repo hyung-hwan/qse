@@ -156,7 +156,7 @@ int qse_ismctype (qse_mcint_t c, qse_mctype_t type)
 
 	static int (*f[]) (qse_mcint_t) = 
 	{
-#if 0
+#if 1
 		is_malnum,
 		is_malpha,
 		is_mblank,
@@ -169,8 +169,7 @@ int qse_ismctype (qse_mcint_t c, qse_mctype_t type)
 		is_mspace,
 		is_mupper,
 		is_mxdigit
-#endif
-
+#else
 		isalnum,
 		isalpha,
 		is_mblank,
@@ -183,6 +182,7 @@ int qse_ismctype (qse_mcint_t c, qse_mctype_t type)
 		isspace,
 		isupper,
 		isxdigit
+#endif
 	};
 
 	QSE_ASSERTX (type >= QSE_WCTYPE_ALNUM && type <= QSE_WCTYPE_XDIGIT,
