@@ -123,7 +123,7 @@ AC_CHECK_HEADERS([stddef.h wchar.h wctype.h errno.h signal.h fcntl.h dirent.h])
 AC_CHECK_HEADERS([time.h sys/time.h utime.h spawn.h execinfo.h ucontext.h])
 AC_CHECK_HEADERS([sys/resource.h sys/wait.h sys/syscall.h sys/ioctl.h])
 AC_CHECK_HEADERS([sys/sendfile.h sys/epoll.h sys/event.h])
-AC_CHECK_HEADERS([sys/sysctl.h sys/socket.h sys/sockio.h ifaddrs.h linux/netfilter_ipv4.h netinet/sctp.h])
+AC_CHECK_HEADERS([sys/sysctl.h sys/socket.h sys/sockio.h sys/un.h ifaddrs.h linux/netfilter_ipv4.h netinet/sctp.h])
 AC_CHECK_HEADERS([net/if.h net/if_dl.h], [], [], [
 	#include <sys/types.h>
 	#include <sys/socket.h>])

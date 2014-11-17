@@ -1207,9 +1207,8 @@ qse_ssize_t qse_fio_read (qse_fio_t* fio, void* buf, qse_size_t size)
 	return rab->rab$w_rsz;
 #else
 
-	ssize_t n;
-	if (size > (QSE_TYPE_MAX(qse_ssize_t) & QSE_TYPE_MAX(size_t))) 
-		size = QSE_TYPE_MAX(qse_ssize_t) & QSE_TYPE_MAX(size_t);
+	qse_ssize_t n;
+	if (size > QSE_TYPE_MAX(qse_ssize_t)) size = QSE_TYPE_MAX(qse_ssize_t);
 	n = QSE_READ (fio->handle, buf, size);
 	if (n <= -1) fio->errnum = syserr_to_errnum (errno);
 	return n;
@@ -1312,9 +1311,8 @@ qse_ssize_t qse_fio_write (qse_fio_t* fio, const void* data, qse_size_t size)
 
 #else
 
-	ssize_t n;
-	if (size > (QSE_TYPE_MAX(qse_ssize_t) & QSE_TYPE_MAX(size_t))) 
-		size = QSE_TYPE_MAX(qse_ssize_t) & QSE_TYPE_MAX(size_t);
+	qse_ssize_t n;
+	if (size > QSE_TYPE_MAX(qse_ssize_t)) size = QSE_TYPE_MAX(qse_ssize_t);
 	n = QSE_WRITE (fio->handle, data, size);
 	if (n <= -1) fio->errnum = syserr_to_errnum (errno);
 	return n;
@@ -1605,7 +1603,7 @@ int qse_fio_unlock (qse_fio_t* fio, qse_fio_lck_t* lck, int flags)
 int qse_getstdfiohandle (qse_fio_std_t std, qse_fio_hnd_t* hnd)
 {
 #if defined(_WIN32)
-	DWORD tab[] =
+	static DWORD tab[] =
 	{
 		STD_INPUT_HANDLE,
 		STD_OUTPUT_HANDLE,
@@ -1613,10 +1611,10 @@ int qse_getstdfiohandle (qse_fio_std_t std, qse_fio_hnd_t* hnd)
 	};
 #elif defined(vms) || defined(__vms)
 	/* TODO */
-	int tab[] = { 0, 1, 2 };
+	static int tab[] = { 0, 1, 2 };
 #else
 
-	qse_fio_hnd_t tab[] =
+	static qse_fio_hnd_t tab[] =
 	{
 #if defined(__OS2__)
 		(HFILE)0, (HFILE)1, (HFILE)2

@@ -88,7 +88,9 @@
 #	include "../cmn/syscall.h"
 #	include <sys/socket.h>
 #	include <netinet/in.h>
-#	include <sys/un.h>
+#	if defined(HAVE_SYS_UN_H)
+#		include <sys/un.h>
+#	endif
 #	if defined(QSE_SIZEOF_STRUCT_SOCKADDR_IN6) && (QSE_SIZEOF_STRUCT_SOCKADDR_IN6 <= 0)
 #		undef AF_INET6
 #	endif
