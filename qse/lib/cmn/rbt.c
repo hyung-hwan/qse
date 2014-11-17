@@ -612,7 +612,9 @@ pair_t* qse_rbt_cbsert (
 		{
 			/* back up the contents of the current pair 
 			 * in case it is reallocated */
-			pair_t tmp = *x_cur;	 
+			pair_t tmp;
+
+			tmp = *x_cur;	 
 
 			/* call the callback function to manipulate the pair */
 			x_new = cbserter (rbt, x_cur, kptr, klen, ctx);

@@ -425,8 +425,10 @@ static int close_unneeded_fds_using_proc (int* excepts, qse_size_t count)
 
 static int get_highest_fd (void)
 {
+#if defined(HAVE_GETRLIMIT)
 	struct rlimit rlim;
-	int fd;
+#endif
+	int fd = -1;
 	QSE_DIR* d;
 
 #if defined(F_MAXFD)
@@ -473,6 +475,7 @@ static int get_highest_fd (void)
 		return maxfd;
 	}
 
+#if defined(HAVE_GETRLIMIT)
 	if (QSE_GETRLIMIT (RLIMIT_NOFILE, &rlim) <= -1 ||
 	    rlim.rlim_max == RLIM_INFINITY) 
 	{
@@ -481,12 +484,16 @@ static int get_highest_fd (void)
 	#endif
 	}
 	else fd = rlim.rlim_max;
+#elif defined(HAVE_SYSCONF)
+	fd = sysconf (_SC_OPEN_MAX);
+#endif
 	if (fd <= -1) fd = 1024; /* fallback */
 
 	/* F_MAXFD is the highest fd. but RLIMIT_NOFILE and 
 	 * _SC_OPEN_MAX returnes the maximum number of file 
 	 * descriptors. make adjustment */
 	if (fd > 0) fd--; 
+
 
 	return fd;
 }
@@ -659,7 +666,7 @@ int qse_pio_init (
 	qse_pio_t* pio, qse_mmgr_t* mmgr, const qse_char_t* cmd, 
 	qse_env_t* env, int flags)
 {
-	qse_pio_hnd_t handle[6] = 
+	qse_pio_hnd_t handle[6] /*= 
 	{ 
 		QSE_PIO_HND_NIL, 
 		QSE_PIO_HND_NIL,
@@ -667,14 +674,14 @@ int qse_pio_init (
 		QSE_PIO_HND_NIL,
 		QSE_PIO_HND_NIL,
 		QSE_PIO_HND_NIL
-	};
+	}*/;
 
-	qse_tio_t* tio[3] = 
+	qse_tio_t* tio[3] /*= 
 	{ 
 		QSE_NULL, 
 		QSE_NULL, 
 		QSE_NULL 
-	};
+	}*/;
 
 	int i, minidx = -1, maxidx = -1;
 
@@ -740,6 +747,17 @@ int qse_pio_init (
 	QSE_MEMSET (pio, 0, QSE_SIZEOF(*pio));
 	pio->mmgr = mmgr;
 	pio->flags = flags;
+
+	handle[0] = QSE_PIO_HND_NIL;
+	handle[1] = QSE_PIO_HND_NIL;
+	handle[2] = QSE_PIO_HND_NIL;
+	handle[3] = QSE_PIO_HND_NIL;
+	handle[4] = QSE_PIO_HND_NIL;
+	handle[5] = QSE_PIO_HND_NIL;
+
+	tio[0] = QSE_NULL;
+	tio[1] = QSE_NULL;
+	tio[2] = QSE_NULL;
 
 #if defined(_WIN32)
 	/* http://msdn.microsoft.com/en-us/library/ms682499(VS.85).aspx */

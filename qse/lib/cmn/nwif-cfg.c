@@ -627,7 +627,10 @@ static int get_nwifcfg (int s, qse_nwifcfg_t* cfg, struct ifreq* ifr)
 		 * use the streams interface to get the hardware address. 
 		 */
 		int strfd;
-		qse_mchar_t devname[QSE_COUNTOF(ifr->ifr_name) + 5 + 1] = QSE_MT("/dev/");
+		/*qse_mchar_t devname[QSE_COUNTOF(ifr->ifr_name) + 5 + 1] = QSE_MT("/dev/");*/
+		qse_mchar_t devname[QSE_COUNTOF(ifr->ifr_name) + 5 + 1];
+
+		qse_mbscpy (devname, QSE_MT("/dev/"));
 		qse_mbscpy (&devname[5], ifr->ifr_name);
 		if ((strfd = QSE_OPEN (devname, O_RDONLY, 0)) >= 0)
 		{
