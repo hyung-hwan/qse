@@ -56,6 +56,12 @@ static __utf8_t utf8_table[] =
 
 static QSE_INLINE __utf8_t* get_utf8_slot (qse_wchar_t uc)
 {
+#if (QSE_SIZEOF_WCHAR_T == QSE_SIZEOF_MCHAR_T)
+	/* no utf8 support */
+
+	return QSE_NULL; /* invalid character */
+
+#else
 	__utf8_t* cur, * end;
 
 	QSE_ASSERT (QSE_SIZEOF(qse_mchar_t) == 1);
@@ -71,6 +77,7 @@ static QSE_INLINE __utf8_t* get_utf8_slot (qse_wchar_t uc)
 	}
 
 	return QSE_NULL; /* invalid character */
+#endif
 }
 
 qse_size_t qse_uctoutf8 (qse_wchar_t uc, qse_mchar_t* utf8, qse_size_t size)
@@ -100,9 +107,12 @@ qse_size_t qse_uctoutf8 (qse_wchar_t uc, qse_mchar_t* utf8, qse_size_t size)
 	return (qse_size_t)cur->length;
 }
 
-qse_size_t qse_utf8touc (
-	const qse_mchar_t* utf8, qse_size_t size, qse_wchar_t* uc)
+qse_size_t qse_utf8touc (const qse_mchar_t* utf8, qse_size_t size, qse_wchar_t* uc)
 {
+#if (QSE_SIZEOF_WCHAR_T == QSE_SIZEOF_MCHAR_T)
+	/* no utf8 support */
+	return 0;
+#else
 	__utf8_t* cur, * end;
 
 	QSE_ASSERT (utf8 != QSE_NULL);
@@ -170,6 +180,7 @@ qse_size_t qse_utf8touc (
 	}
 
 	return 0; /* error - invalid sequence */
+#endif
 }
 
 qse_size_t qse_utf8len (const qse_mchar_t* utf8, qse_size_t size)

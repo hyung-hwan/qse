@@ -32,9 +32,12 @@
  * The QSE_UTF8LEN_MAX macro defines the maximum number of bytes
  * needed to form a single unicode character.
  */
-#if QSE_SIZEOF_WCHAR_T == 2
+#if (QSE_SIZEOF_WCHAR_T == QSE_SIZEOF_MCHAR_T)
+	/* cannot handle utf8 conversion properly */
+#	define QSE_UTF8LEN_MAX 1
+#elif (QSE_SIZEOF_WCHAR_T == 2)
 #	define QSE_UTF8LEN_MAX 3
-#elif QSE_SIZEOF_WCHAR_T == 4
+#elif (QSE_SIZEOF_WCHAR_T == 4)
 #	define QSE_UTF8LEN_MAX 6
 #else
 #	error Unsupported wide-character size

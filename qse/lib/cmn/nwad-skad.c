@@ -48,9 +48,12 @@
 #	include <tcp.h> /* watt-32 */
 #	undef AF_UNIX
 #else
+#	include <sys/types.h>
 #	include <sys/socket.h>
 #	include <netinet/in.h>
-#	include <sys/un.h>
+#	if defined(HAVE_SYS_UN_H)
+#		include <sys/un.h>
+#	endif
 
 #	if defined(QSE_SIZEOF_STRUCT_SOCKADDR_IN6) && (QSE_SIZEOF_STRUCT_SOCKADDR_IN6 <= 0)
 #		undef AF_INET6
