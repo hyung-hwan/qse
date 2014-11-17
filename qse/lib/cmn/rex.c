@@ -895,7 +895,7 @@ static qse_rex_node_t* comp_atom (comp_t* com)
 			default:
 				if (com->rex->option & QSE_REX_STRICT)
 				{
-					qse_char_t spc[] =
+					static qse_char_t spc[] =
         				{
 						QSE_T(')'),
 						QSE_T('?'),
@@ -905,10 +905,20 @@ static qse_rex_node_t* comp_atom (comp_t* com)
 						QSE_T('\0')
 					};
 
-					if (com->rex->option & QSE_REX_NOBOUND)
-						spc[4] = QSE_T('\0');
+					static qse_char_t nobound_spc[] =
+        				{
+						QSE_T(')'),
+						QSE_T('?'),
+						QSE_T('*'),
+						QSE_T('+'),
+						QSE_T('\0')
+					};
 
-					if (qse_strchr (spc, com->c.value) != QSE_NULL)
+					const qse_char_t* ptr;
+
+					ptr = (com->rex->option & QSE_REX_NOBOUND)? nobound_spc: spc;
+
+					if (qse_strchr (ptr, com->c.value))
 					{
 						com->rex->errnum = QSE_REX_ESPCAWP;
 						return QSE_NULL;

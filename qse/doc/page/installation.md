@@ -158,6 +158,14 @@ available for the native makefile for Watcom C/C++ for OS/2 only.
 
 ### SCO UNIX System V/386 Release 3.2 ###
 
+- If /usr/include/netinet and /usr/include/net are missing,
+  check if there are /usr/include/sys/netinet and /usr/include/sys/net.
+  f they exists, you can make these symbolic links.
+
+    cd /usr/include
+    ln -sf sys/netinet netinet
+    ln -sf sys/net net
+
 - Specify GREP if configure fails to find an acceptable grep.
 - Build in the source tree. Building outside the source tree is likely to fail
   for dificiency of the bundled make utility.
@@ -165,6 +173,9 @@ available for the native makefile for Watcom C/C++ for OS/2 only.
 
     ./configure GREP=/bin/grep CFLAGS=""
 
+- Change RANLIB from "ranlib" to "true" in libltdl/libtool.
+
+    make
 
 ### More options ###
 

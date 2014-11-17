@@ -293,8 +293,19 @@ qse_size_t qse_slmblenmax (void)
 	 * is CP_UTF8(65001). you should use functions in utf8.c for utf8 
 	 * handling on windows. 2 is the maximum for DBCS encodings. */
 	return 2; 
-#else
+
+#elif defined(MB_CUR_MAX)
+
 	return MB_CUR_MAX;
+
+#elif (QSE_SIZEOF_WCHAR_T == QSE_SIZEOF_MCHAR_T)
+
+	/* no proper multibyte string support */
+	return 1;	
+
+#else
+	/* fallback max utf8 value */
+	return 6;
 #endif
 }
 
