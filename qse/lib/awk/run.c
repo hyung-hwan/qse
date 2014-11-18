@@ -1262,36 +1262,34 @@ static int defaultify_globals (qse_awk_rtx_t* rtx)
 	struct gtab_t
 	{
 		int idx;
-		const qse_char_t* str;
-	} gtab[] =
+		const qse_char_t* str[2];
+	};
+	static struct gtab_t gtab[7] =
 	{
-		{ QSE_AWK_GBL_CONVFMT,   DEFAULT_CONVFMT },
-		{ QSE_AWK_GBL_FILENAME,  QSE_NULL },
-		{ QSE_AWK_GBL_OFILENAME, QSE_NULL },
-		{ QSE_AWK_GBL_OFMT,      DEFAULT_OFMT },
-		{ QSE_AWK_GBL_OFS,       DEFAULT_OFS },
-		{ QSE_AWK_GBL_ORS,       DEFAULT_ORS },
-		{ QSE_AWK_GBL_SUBSEP,    DEFAULT_SUBSEP },
+		{ QSE_AWK_GBL_CONVFMT,    { DEFAULT_CONVFMT, DEFAULT_CONVFMT  } },
+		{ QSE_AWK_GBL_FILENAME,   { QSE_NULL,        QSE_NULL         } },
+		{ QSE_AWK_GBL_OFILENAME,  { QSE_NULL,        QSE_NULL         } },
+		{ QSE_AWK_GBL_OFMT,       { DEFAULT_OFMT,    DEFAULT_OFMT     } },
+		{ QSE_AWK_GBL_OFS,        { DEFAULT_OFS,     DEFAULT_OFS      } },
+		{ QSE_AWK_GBL_ORS,        { DEFAULT_ORS,     DEFAULT_ORS_CRLF } },
+		{ QSE_AWK_GBL_SUBSEP,     { DEFAULT_SUBSEP,  DEFAULT_SUBSEP   } },
 	};
 
 	qse_awk_val_t* tmp;
 	qse_size_t i, j;
+	int stridx;
 
-	if (rtx->awk->opt.trait & QSE_AWK_CRLF)
-	{
-		/* ugly */
-		gtab[5].str = DEFAULT_ORS_CRLF;
-	}
 
+	stridx = (rtx->awk->opt.trait & QSE_AWK_CRLF)? 1: 0;
 	for (i = 0; i < QSE_COUNTOF(gtab); i++)
 	{
-		if (gtab[i].str == QSE_NULL || gtab[i].str[0] == QSE_T('\0'))
+		if (gtab[i].str[stridx] == QSE_NULL || gtab[i].str[stridx][0] == QSE_T('\0'))
 		{
 			tmp = qse_awk_val_zls;
 		}
 		else 
 		{
-			tmp = qse_awk_rtx_makestrvalwithstr (rtx, gtab[i].str);
+			tmp = qse_awk_rtx_makestrvalwithstr (rtx, gtab[i].str[stridx]);
 			if (tmp == QSE_NULL) return -1;
 		}
 		
@@ -1303,8 +1301,7 @@ static int defaultify_globals (qse_awk_rtx_t* rtx)
 		{
 			for (j = 0; j < i; j++)
 			{
-				qse_awk_rtx_setgbl (
-					rtx, gtab[i].idx, qse_awk_val_nil);
+				qse_awk_rtx_setgbl (rtx, gtab[i].idx, qse_awk_val_nil);
 			}
 
 			qse_awk_rtx_refdownval (rtx, tmp);

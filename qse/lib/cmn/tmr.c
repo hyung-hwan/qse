@@ -99,8 +99,11 @@ static qse_tmr_index_t sift_up (qse_tmr_t* tmr, qse_tmr_index_t index, int notif
 	parent = HEAP_PARENT(index);
 	if (index > 0 && YOUNGER_THAN(&tmr->event[index], &tmr->event[parent]))
 	{
-		qse_tmr_event_t item = tmr->event[index]; 
-		qse_size_t old_index = index;
+		qse_tmr_event_t item;
+		qse_size_t old_index;
+
+		item = tmr->event[index]; 
+		old_index = index;
 
 		do
 		{
@@ -131,8 +134,11 @@ static qse_tmr_index_t sift_down (qse_tmr_t* tmr, qse_tmr_index_t index, int not
 
 	if (index < base) /* at least 1 child is under the 'index' positmrn */
 	{
-		qse_tmr_event_t item = tmr->event[index];
-		qse_size_t old_index = index;
+		qse_tmr_event_t item;
+		qse_size_t old_index;
+
+		item = tmr->event[index];
+		old_index = index;
 
 		do
 		{

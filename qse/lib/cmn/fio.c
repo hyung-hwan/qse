@@ -1135,11 +1135,17 @@ int qse_fio_truncate (qse_fio_t* fio, qse_fio_off_t size)
 	}
 
 	return 0;
-#else
+
+#elif defined(HAVE_FTRUNCATE)
+
 	int n;
 	n = QSE_FTRUNCATE (fio->handle, size);
 	if (n <= -1) fio->errnum = syserr_to_errnum (errno);
 	return n;
+
+#else
+	fio->errnum = QSE_FIO_ENOIMPL;
+	return -1;
 #endif
 }
 
@@ -1526,11 +1532,16 @@ int qse_fio_chmod (qse_fio_t* fio, int mode)
 	fio->errnum = QSE_FIO_ENOIMPL;
 	return (qse_fio_off_t)-1;
 
-#else
+#elif defined(HAVE_FCHMOD)
 	int n;
 	n = QSE_FCHMOD (fio->handle, mode);
 	if (n <= -1) fio->errnum = syserr_to_errnum (errno);
 	return n;
+
+#else
+	fio->errnum = QSE_FIO_ENOIMPL;
+	return -1;
+
 #endif
 }
 
@@ -1569,12 +1580,16 @@ int qse_fio_sync (qse_fio_t* fio)
 	fio->errnum = QSE_FIO_ENOIMPL;
 	return (qse_fio_off_t)-1;
 
-#else
+#elif defined(HAVE_FSYNC)
 
 	int n;
 	n = QSE_FSYNC (fio->handle);
 	if (n <= -1) fio->errnum = syserr_to_errnum (errno);
 	return n;
+#else
+
+	fio->errnum = QSE_FIO_ENOIMPL;
+	return -1;
 #endif
 }
 

@@ -144,13 +144,14 @@ AC_CHECK_FUNCS([mbsnrtowcs mbsrtowcs wcsnrtombs wcsrtombs])
 AC_CHECK_FUNCS([wctype iswctype wctrans towctrans])
 AC_CHECK_FUNCS([isblank iswblank])
 AC_CHECK_FUNCS([lseek64 stat64 fstat64 lstat64 ftruncate64 readdir64 dirfd])
-AC_CHECK_FUNCS([timegm timelocal])
+AC_CHECK_FUNCS([lstat fchmod fsync ftruncate])
+AC_CHECK_FUNCS([timegm timelocal localtime_r gettimeofday settimeofday])
 AC_CHECK_FUNCS([utime utimes])
 AC_CHECK_FUNCS([sysconf prctl fdopendir setrlimit getrlimit])
 AC_CHECK_FUNCS([backtrace backtrace_symbols])
 AC_CHECK_FUNCS([fork vfork posix_spawn gettid nanosleep select])
 AC_CHECK_FUNCS([makecontext swapcontext getcontext setcontext])
-AC_CHECK_FUNCS([_vsnprintf _vsnwprintf])
+AC_CHECK_FUNCS([snprintf _vsnprintf _vsnwprintf])
 
 OLDLIBS="$LIBS"
 LIBS="$LIBM $LIBS"

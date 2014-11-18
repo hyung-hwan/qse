@@ -19,7 +19,7 @@
  */
 
 /*
-  tre-match-utils.h - TRE matcher helper definitions
+  tre-match-ut.h - TRE matcher helper definitions
 
 This is the license, copyright notice, and disclaimer for TRE, a regex
 matching package (library and tools) with support for approximate

@@ -339,7 +339,9 @@ static int matchtre (
 #else
 
 	int n;
-	qse_tre_match_t match[10] = { { 0, 0 }, };
+	/*qse_tre_match_t match[10] = { { 0, 0 }, };*/
+	qse_tre_match_t match[10];
+	QSE_MEMSET (match, 0, QSE_SIZEOF(match));
 
 	n = qse_tre_execx (tre, str->ptr, str->len, match, QSE_COUNTOF(match), opt);
 	if (n <= -1)
@@ -1336,7 +1338,11 @@ do { \
 static int get_subst (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 {
 	qse_cint_t c, delim;
-	qse_str_t* t[2] = { QSE_NULL, QSE_NULL };
+
+	/*qse_str_t* t[2] = { QSE_NULL, QSE_NULL };*/
+	qse_str_t* t[2];
+	t[0] = QSE_NULL;
+	t[1] = QSE_NULL;
 
 	c = CURSC (sed);
 	CHECK_CMDIC (sed, cmd, c, goto oops);

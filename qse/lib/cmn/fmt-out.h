@@ -553,17 +553,18 @@ reswitch:
 			long double v_ld;
 			double v_d;
 			int dtype = 0;
+			qse_size_t newcapa;
 
 			if (lm_flag & LF_J)
 			{
 			#if (QSE_SIZEOF___FLOAT128 > 0) && defined(HAVE_QUADMATH_SNPRINTF) && (QSE_SIZEOF_FLTMAX_T == QSE_SIZEOF___FLOAT128)
 				v_qd = va_arg (ap, qse_fltmax_t);
 				dtype = LF_QD;
+			#elif QSE_SIZEOF_FLTMAX_T == QSE_SIZEOF_DOUBLE
+				v_d = va_arg (ap, qse_fltmax_t);
 			#elif QSE_SIZEOF_FLTMAX_T == QSE_SIZEOF_LONG_DOUBLE
 				v_ld = va_arg (ap, qse_fltmax_t);
 				dtype = LF_LD;
-			#elif QSE_SIZEOF_FLTMAX_T == QSE_SIZEOF_DOUBLE
-				v_d = va_arg (ap, qse_fltmax_t);
 			#else
 				#error Unsupported qse_flt_t
 			#endif
@@ -571,11 +572,16 @@ reswitch:
 			else if (lm_flag & LF_Z)
 			{
 				/* qse_flt_t is limited to double or long double */
-			#if QSE_SIZEOF_FLT_T == QSE_SIZEOF_LONG_DOUBLE
+
+				/* precedence goes to double if sizeof(double) == sizeof(long double) 
+				 * for example, %Lf didn't work on some old platforms.
+				 * so i prefer the format specifier with no modifier.
+				 */
+			#if QSE_SIZEOF_FLT_T == QSE_SIZEOF_DOUBLE
+				v_d = va_arg (ap, qse_flt_t);
+			#elif QSE_SIZEOF_FLT_T == QSE_SIZEOF_LONG_DOUBLE
 				v_ld = va_arg (ap, qse_flt_t);
 				dtype = LF_LD;
-			#elif QSE_SIZEOF_FLT_T == QSE_SIZEOF_DOUBLE
-				v_d = va_arg (ap, qse_flt_t);
 			#else
 				#error Unsupported qse_flt_t
 			#endif
@@ -648,26 +654,55 @@ reswitch:
 
 			if (dtype == LF_LD)
 				fltfmt.ptr[fmtlen++] = QSE_MT('L');
-			#if (QSE_SIZEOF___FLOAT128 > 0)
+		#if (QSE_SIZEOF___FLOAT128 > 0)
 			else if (dtype == LF_QD)
 				fltfmt.ptr[fmtlen++] = QSE_MT('Q');
-			#endif
+		#endif
 
 			fltfmt.ptr[fmtlen++] = ch;
 			fltfmt.ptr[fmtlen] = QSE_MT('\0');
 
+		#if defined(HAVE_SNPRINTF)	
+			/* nothing special here */
+		#else
+			/* best effort to avoid buffer overflow when no snprintf is available. 
+			 * i really can't do much if it happens. */
+			newcapa = precision + width + 32;
+			if (fltout.capa < newcapa)
+			{
+				QSE_ASSERT (fltout.ptr == fltout.sbuf);
+
+				fltout.ptr = QSE_MMGR_ALLOC (QSE_MMGR_GETDFL(), QSE_SIZEOF(char_t) * (newcapa + 1));
+				if (fltout.ptr == QSE_NULL) goto oops;
+				fltout.capa = newcapa;
+			}
+		#endif
+
 			while (1)
 			{
-				qse_size_t newcapa;
 
 				if (dtype == LF_LD)
+				{
+				#if defined(HAVE_SNPRINTF)
 					q = snprintf ((qse_mchar_t*)fltout.ptr, fltout.capa + 1, fltfmt.ptr, v_ld);
+				#else
+					q = sprintf ((qse_mchar_t*)fltout.ptr, fltfmt.ptr, v_ld);
+				#endif
+				}
 			#if (QSE_SIZEOF___FLOAT128 > 0) && defined(HAVE_QUADMATH_SNPRINTF)
 				else if (dtype == LF_QD)
+				{
 					q = quadmath_snprintf ((qse_mchar_t*)fltout.ptr, fltout.capa + 1, fltfmt.ptr, v_qd);
+				}
 			#endif
 				else
+				{
+				#if defined(HAVE_SNPRINTF)
 					q = snprintf ((qse_mchar_t*)fltout.ptr, fltout.capa + 1, fltfmt.ptr, v_d);
+				#else
+					q = sprintf ((qse_mchar_t*)fltout.ptr, fltfmt.ptr, v_d);
+				#endif
+				}
 				if (q <= -1) goto oops;
 				if (q <= fltout.capa) break;
 

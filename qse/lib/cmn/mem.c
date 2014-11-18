@@ -606,7 +606,7 @@ static void* mmgr_alloc (qse_mmgr_t* mmgr, qse_size_t n)
 #if defined(_WIN32)
 	HANDLE heap;
 	heap = GetProcessHeap ();
-	if (heap == NULL) return QSE_NULL;
+	if (!heap) return QSE_NULL;
 	return HeapAlloc (heap, 0, n);	
 #else
 /* TODO: need to rewrite this for __OS2__ using DosAllocMem()? */
@@ -619,12 +619,17 @@ static void* mmgr_realloc (qse_mmgr_t* mmgr, void* ptr, qse_size_t n)
 #if defined(_WIN32)
 	HANDLE heap;
 	heap = GetProcessHeap ();
-	if (heap == NULL) return QSE_NULL;
+	if (!heap) return QSE_NULL;
 
 	return ptr? HeapReAlloc (heap, 0, ptr, n): 
 	            HeapAlloc (heap, 0, n);
 #else
-	return realloc (ptr, n);
+	/* realloc() on some old systems doesn't work like 
+	 * modern realloc() when ptr is NULL. let's divert
+	 * it to malloc() explicitly in such a case */
+
+	/*return realloc (ptr, n);*/
+	return ptr? realloc (ptr, n): malloc (n);
 #endif
 }
 

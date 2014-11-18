@@ -48,7 +48,9 @@
 #	include <tcp.h> /* watt-32 */
 #	undef AF_UNIX
 #else
-#	include <sys/types.h>
+#	if defined(HAVE_SYS_TYPES_H)
+#		include <sys/types.h>
+#	endif
 #	include <sys/socket.h>
 #	include <netinet/in.h>
 #	if defined(HAVE_SYS_UN_H)

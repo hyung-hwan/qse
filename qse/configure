@@ -17579,7 +17579,19 @@ _ACEOF
 fi
 done
 
-for ac_func in timegm timelocal
+for ac_func in lstat fchmod fsync ftruncate
+do :
+  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
+ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
+if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  cat >>confdefs.h <<_ACEOF
+#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+_ACEOF
+
+fi
+done
+
+for ac_func in timegm timelocal localtime_r gettimeofday settimeofday
 do :
   as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
 ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
@@ -17651,7 +17663,7 @@ _ACEOF
 fi
 done
 
-for ac_func in _vsnprintf _vsnwprintf
+for ac_func in snprintf _vsnprintf _vsnwprintf
 do :
   as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
 ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"

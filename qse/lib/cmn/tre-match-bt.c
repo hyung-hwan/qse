@@ -76,7 +76,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include "tre.h"
-#include "tre-match-utils.h"
+#include "tre-match-ut.h"
 
 typedef struct
 {

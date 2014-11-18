@@ -246,6 +246,18 @@
 #	define QSE_SETTIMEOFDAY(tv,tz) settimeofday(tv,tz)
 #endif
 
+#if defined(SYS_time) && defined(QSE_USE_SYSCALL)
+#	define QSE_TIME(tv) syscall(SYS_time,tv)
+#else
+#	define QSE_TIME(tv) time(tv)
+#endif
+
+#if defined(SYS_stime) && defined(QSE_USE_SYSCALL)
+#	define QSE_STIME(tv) syscall(SYS_stime,tv)
+#else
+#	define QSE_STIME(tv) stime(tv)
+#endif
+
 #if defined(SYS_getrlimit) && defined(QSE_USE_SYSCALL)
 #	define QSE_GETRLIMIT(res,lim) syscall(SYS_getrlimit,res,lim)
 #else

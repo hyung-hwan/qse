@@ -895,33 +895,21 @@ static qse_rex_node_t* comp_atom (comp_t* com)
 			default:
 				if (com->rex->option & QSE_REX_STRICT)
 				{
-					static qse_char_t spc[] =
-        				{
-						QSE_T(')'),
-						QSE_T('?'),
-						QSE_T('*'),
-						QSE_T('+'),
-						QSE_T('{'),
-						QSE_T('\0')
-					};
-
-					static qse_char_t nobound_spc[] =
-        				{
-						QSE_T(')'),
-						QSE_T('?'),
-						QSE_T('*'),
-						QSE_T('+'),
-						QSE_T('\0')
-					};
-
-					const qse_char_t* ptr;
-
-					ptr = (com->rex->option & QSE_REX_NOBOUND)? nobound_spc: spc;
-
-					if (qse_strchr (ptr, com->c.value))
+					/* check if a special charcter is at the 
+					 * position that requires a normal character. */
+					switch (com->c.value)
 					{
-						com->rex->errnum = QSE_REX_ESPCAWP;
-						return QSE_NULL;
+						case QSE_T('{'):
+							/* { is a normal charcter when bound is disabled */
+							if (com->rex->option & QSE_REX_NOBOUND) break;
+
+						case QSE_T(')'):
+						case QSE_T('?'):
+						case QSE_T('*'):
+						case QSE_T('+'):
+							/* it's at the wrong postion */
+							com->rex->errnum = QSE_REX_ESPCAWP;
+							return QSE_NULL;
 					}
 				}
 

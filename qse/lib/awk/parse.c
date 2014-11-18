@@ -1016,8 +1016,12 @@ static int parse_progunit (qse_awk_t* awk)
 		if (MATCH(awk,TOK_NEWLINE) || MATCH(awk,TOK_SEMICOLON) || MATCH(awk,TOK_EOF))
 		{
 			/* blockless pattern */
-			int eof = MATCH(awk,TOK_EOF);
-			qse_awk_loc_t ploc = awk->ptok.loc;
+			int eof;
+			qse_awk_loc_t ploc;
+
+
+			eof = MATCH(awk,TOK_EOF);
+			ploc  = awk->ptok.loc;
 
 			awk->parse.id.block = PARSE_ACTION_BLOCK;
 			if (parse_action_block (awk, ptn, 1) == QSE_NULL)
@@ -1351,8 +1355,9 @@ static qse_awk_nde_t* parse_function (qse_awk_t* awk)
 static qse_awk_nde_t* parse_begin (qse_awk_t* awk)
 {
 	qse_awk_nde_t* nde;
-	qse_awk_loc_t xloc = awk->tok.loc;
+	qse_awk_loc_t xloc;
 
+	xloc = awk->tok.loc;
 	QSE_ASSERT (MATCH(awk,TOK_LBRACE));
 
 	if (get_token(awk) <= -1) return QSE_NULL; 
@@ -1376,8 +1381,9 @@ static qse_awk_nde_t* parse_begin (qse_awk_t* awk)
 static qse_awk_nde_t* parse_end (qse_awk_t* awk)
 {
 	qse_awk_nde_t* nde;
-	qse_awk_loc_t xloc = awk->tok.loc;
+	qse_awk_loc_t xloc;
 
+	xloc = awk->tok.loc;
 	QSE_ASSERT (MATCH(awk,TOK_LBRACE));
 
 	if (get_token(awk) <= -1) return QSE_NULL; 
@@ -1402,8 +1408,9 @@ static qse_awk_chain_t* parse_action_block (
 {
 	qse_awk_nde_t* nde;
 	qse_awk_chain_t* chain;
-	qse_awk_loc_t xloc = awk->tok.loc;
+	qse_awk_loc_t xloc;
 
+	xloc = awk->tok.loc;
 	if (blockless) nde = QSE_NULL;
 	else
 	{
@@ -1563,7 +1570,8 @@ static qse_awk_nde_t* parse_block (
 		{
 			/* parse an actual statement in a block */
 			{
-				qse_awk_loc_t sloc = awk->tok.loc;
+				qse_awk_loc_t sloc;
+				sloc = awk->tok.loc;
 				nde = parse_statement (awk, &sloc);
 			}
 
@@ -2155,7 +2163,9 @@ static qse_awk_nde_t* parse_if (qse_awk_t* awk, const qse_awk_loc_t* xloc)
 		if (get_token(awk) <= -1) goto oops;
 
 		{
-			qse_awk_loc_t eloc = awk->tok.loc;
+			qse_awk_loc_t eloc;
+
+			eloc = awk->tok.loc;
 			else_part = parse_statement (awk, &eloc);
 			if (else_part == QSE_NULL) goto oops;
 		}
@@ -2330,7 +2340,9 @@ static qse_awk_nde_t* parse_for (qse_awk_t* awk, const qse_awk_loc_t* xloc)
 	if (!MATCH(awk,TOK_RPAREN)) 
 	{
 		{
-			qse_awk_loc_t eloc = awk->tok.loc;
+			qse_awk_loc_t eloc;
+
+			eloc = awk->tok.loc;
 			incr = parse_expr_withdc (awk, &eloc);
 			if (incr == QSE_NULL) goto oops;
 		}
@@ -2511,7 +2523,9 @@ static qse_awk_nde_t* parse_return (qse_awk_t* awk, const qse_awk_loc_t* xloc)
 	}
 	else 
 	{
-		qse_awk_loc_t eloc = awk->tok.loc;
+		qse_awk_loc_t eloc;
+
+		eloc = awk->tok.loc;
 		val = parse_expr_withdc (awk, &eloc);
 		if (val == QSE_NULL) 
 		{
@@ -2549,7 +2563,9 @@ static qse_awk_nde_t* parse_exit (qse_awk_t* awk, const qse_awk_loc_t* xloc)
 	}
 	else 
 	{
-		qse_awk_loc_t eloc = awk->tok.loc;
+		qse_awk_loc_t eloc;
+
+		eloc = awk->tok.loc;
 		val = parse_expr_withdc (awk, &eloc);
 		if (val == QSE_NULL) 
 		{
@@ -2812,7 +2828,7 @@ static qse_awk_nde_t* parse_print (qse_awk_t* awk, const qse_awk_loc_t* xloc)
 		{
 			int i;
 			qse_awk_nde_exp_t* ep = (qse_awk_nde_exp_t*)args_tail;
-			struct 
+			static struct 
 			{
 				int opc;
 				int out;
@@ -2847,8 +2863,7 @@ static qse_awk_nde_t* parse_print (qse_awk_t* awk, const qse_awk_loc_t* xloc)
 				{
 					qse_awk_nde_t* tmp;
 
-					if (tab[i].opt && 
-					    !(awk->opt.trait&tab[i].opt)) break;
+					if (tab[i].opt && !(awk->opt.trait & tab[i].opt)) break;
 
 					tmp = args_tail;
 
@@ -3073,7 +3088,9 @@ static qse_awk_nde_t* parse_statement (
 	else if (MATCH(awk,TOK_LBRACE)) 
 	{
 		/* a block statemnt { ... } */
-		qse_awk_loc_t tloc = awk->ptok.loc;
+		qse_awk_loc_t tloc;
+
+		tloc = awk->ptok.loc;
 		if (get_token(awk) <= -1) return QSE_NULL; 
 		nde = parse_block_dc (awk, &tloc, 0);
 	}
@@ -3085,8 +3102,11 @@ static qse_awk_nde_t* parse_statement (
 		 * statement id can be changed in parse_statement_nb.
 		 * it will, in turn, call parse_statement which will
 		 * eventually change the statement id. */
-		int old_id = awk->parse.id.stmt;
-		qse_awk_loc_t tloc = awk->tok.loc;
+		int old_id;
+		qse_awk_loc_t tloc;
+
+		old_id = awk->parse.id.stmt;
+		tloc = awk->tok.loc;
 
 		/* set the current statement id */
 		awk->parse.id.stmt = awk->tok.type;
@@ -3238,7 +3258,9 @@ static qse_awk_nde_t* parse_expr (
 	}
 
 	{
-		qse_awk_loc_t eloc = awk->tok.loc;
+		qse_awk_loc_t eloc;
+
+		eloc = awk->tok.loc;
 		y = parse_expr_withdc (awk, &eloc);
 	}
 	if (y == QSE_NULL) 
@@ -5215,7 +5237,9 @@ static qse_awk_nde_t* parse_hashidx (
 		}
 
 		{
-			qse_awk_loc_t eloc = awk->tok.loc;
+			qse_awk_loc_t eloc;
+
+			eloc = awk->tok.loc;
 			tmp = parse_expr_withdc (awk, &eloc);
 		}
 		if (tmp == QSE_NULL) 
@@ -6709,24 +6733,16 @@ static qse_awk_mod_t* query_module (
 		qse_awk_mod_spec_t spec;
 		qse_size_t buflen;
 		/*qse_char_t buf[64 + 15] = QSE_T("_qse_awk_mod_");*/
-		qse_char_t buf[64 + 15] = 
-		{
-			QSE_T('_'), 
-			QSE_T('q'), 
-			QSE_T('s'), 
-			QSE_T('e'), 
-			QSE_T('_'), 
-			QSE_T('a'), 
-			QSE_T('w'), 
-			QSE_T('k'), 
-			QSE_T('_'), 
-			QSE_T('m'), 
-			QSE_T('o'), 
-			QSE_T('d'), 
-			QSE_T('_')
-			/* the terminating null isn't needed */
-		};
 
+		/* maximum module name length is 64. 15 is decomposed to 13 + 1 + 1.
+		 * 13 for _qse_awk_mod_t
+		 * 1 for _ at the end when qse_awk_mod_xxx_ is attempted.
+		 * 1 for the terminating '\0'
+		 */
+		qse_char_t buf[64 + 15]; 
+
+		/* the terminating null isn't needed in buf here */
+		QSE_MEMCPY (buf, QSE_T("_qse_awk_mod_"), QSE_SIZEOF(qse_char_t) * 13); 
 		if (segs[0].len > QSE_COUNTOF(buf) - 15)
 		{
 			/* module name too long  */

@@ -167,11 +167,13 @@ available for the native makefile for Watcom C/C++ for OS/2 only.
     ln -sf sys/net net
 
 - Specify GREP if configure fails to find an acceptable grep.
+- Specify RANLIB to /bin/true. 
+  /bin/ranlib ended up like this: *ranlib: .libs/libqsecmn.a: not an archive*
 - Build in the source tree. Building outside the source tree is likely to fail
   for dificiency of the bundled make utility.
 - Do not include -g in CFLAGS. 
 
-    ./configure GREP=/bin/grep CFLAGS=""
+    ./configure GREP=/bin/grep RANLIB=/bin/true CFLAGS=""
 
 - Change RANLIB from "ranlib" to "true" in libltdl/libtool.
 

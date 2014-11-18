@@ -161,7 +161,8 @@ int qse_gettime (qse_ntime_t* t)
 	tv->nsec = 0;
 	
 	return 0;
-#else
+
+#elif defined(HAVE_GETTIMEOFDAY)
 	struct timeval tv;
 	int n;
 
@@ -171,6 +172,12 @@ int qse_gettime (qse_ntime_t* t)
 
 	t->sec = tv.tv_sec;
 	t->nsec = QSE_USEC_TO_NSEC(tv.tv_usec);
+	return 0;
+
+#else
+	t->sec = QSE_TIME (QSE_NULL);
+	t->nsec = 0;
+
 	return 0;
 #endif
 }
@@ -229,7 +236,7 @@ int qse_settime (const qse_ntime_t* t)
 
 	return 0;
 
-#else
+#elif defined(HAVE_SETTIMEOFDAY)
 	struct timeval tv;
 	int n;
 
@@ -249,6 +256,12 @@ int qse_settime (const qse_ntime_t* t)
 	n = QSE_SETTIMEOFDAY (&tv, QSE_NULL);
 	if (n == -1) return -1;
 	return 0;
+
+#else
+
+	time_t tv;
+	tv = t->sec;
+	return (QSE_STIME (&tv) == -1)? -1: 0;
 #endif
 }
 
@@ -343,9 +356,12 @@ int qse_localtime (const qse_ntime_t* nt, qse_btime_t* bt)
 #	else
 #		error Please support other compilers
 #	endif
-#else
+#elif defined(HAVE_LOCALTIME_R)
 	struct tm btm;
 	tm = localtime_r (&t, &btm);
+#else
+	/* thread unsafe */
+	tm = localtime (&t);
 #endif
 	if (tm == QSE_NULL) return -1;
 	
