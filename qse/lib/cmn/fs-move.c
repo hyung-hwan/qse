@@ -223,14 +223,22 @@ int qse_fs_move (
 
 	/* use lstat because we need to move the symbolic link 
 	 * itself if the file is a symbolic link */ 
+	#if defined(HAVE_LSTAT)
 	if (QSE_LSTAT (fop.old_path, &fop.old_stat) == -1)
+	#else
+	if (QSE_STAT (fop.old_path, &fop.old_stat) == -1) /* is this ok to use stat? */
+	#endif
 	{
 		fs->errnum = qse_fs_syserrtoerrnum (fs, errno);
 		goto oops;
 	}
 	else fop.flags |= FOP_OLD_STAT;
 
+	#if defined(HAVE_LSTAT)
 	if (QSE_LSTAT (fop.new_path, &fop.new_stat) == -1)
+	#else
+	if (QSE_STAT (fop.new_path, &fop.new_stat) == -1)
+	#endif
 	{
 		if (errno == ENOENT)
 		{

@@ -270,19 +270,25 @@ qse_size_t qse_slmbrlen (
 
 qse_size_t qse_slmbtoslwc (const qse_mchar_t* mb, qse_size_t mbl, qse_wchar_t* wc)
 {
-	qse_mbstate_t state = { { 0, } };
+	/*qse_mbstate_t state = { { 0, } };*/
+	qse_mbstate_t state;
+	QSE_MEMSET (&state, 0, QSE_SIZEOF(state));
 	return qse_slmbrtoslwc (mb, mbl, wc, &state);
 }
 
 qse_size_t qse_slwctoslmb (qse_wchar_t wc, qse_mchar_t* mb, qse_size_t mbl)
 {
-	qse_mbstate_t state = { { 0, } };
+	/*qse_mbstate_t state = { { 0, } };*/
+	qse_mbstate_t state;
+	QSE_MEMSET (&state, 0, QSE_SIZEOF(state));
 	return qse_slwcrtoslmb (wc, mb, mbl, &state);
 }
 
 qse_size_t qse_slmblen (const qse_mchar_t* mb, qse_size_t mbl)
 {
-	qse_mbstate_t state = { { 0, } };
+	/*qse_mbstate_t state = { { 0, } };*/
+	qse_mbstate_t state;
+	QSE_MEMSET (&state, 0, QSE_SIZEOF(state));
 	return qse_slmbrlen (mb, mbl, &state);
 }
 

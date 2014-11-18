@@ -586,7 +586,11 @@ qse_fs_ent_t* qse_fs_read (qse_fs_t* fs, int flags)
 			return QSE_NULL;
 		}
 	
+	#if defined(HAVE_LSTAT)
 		x = QSE_LSTAT (mfname, &st);
+	#else
+		x = QSE_STAT (mfname, &st);
+	#endif
 		QSE_MMGR_FREE (fs->mmgr, mfname);
 
 		if (x == -1)

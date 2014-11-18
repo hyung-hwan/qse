@@ -24,11 +24,9 @@
 #include <qse/types.h>
 #include <qse/macros.h>
 
-/** @file
+/** \file
  * This file provides functions, types, macros for 
  * multibyte/wide-character conversion based on system locale.
- *
- * 
  */
 
 /**
@@ -39,9 +37,9 @@ typedef struct qse_mbstate_t qse_mbstate_t;
 struct qse_mbstate_t
 {
 #if defined(QSE_SIZEOF_MBSTATE_T) && (QSE_SIZEOF_MBSTATE_T > 0)
-	char dummy[QSE_SIZEOF_MBSTATE_T];
+	qse_uint8_t dummy[QSE_SIZEOF_MBSTATE_T];
 #else
-	char dummy[1];
+	qse_uint8_t dummy[1];
 #endif
 };
 
@@ -78,7 +76,7 @@ QSE_EXPORT qse_size_t qse_slwcrtoslmb (
  * It returns 0 if an invalid multibyte sequence is detected, mblen + 1 if the 
  * sequence is incomplete. It returns the number of bytes processed to form a 
  * wide character.
- * @note This function can not handle conversion producing non-initial
+ * \note This function can not handle conversion producing non-initial
  *       states. For each call, it assumes initial state.
  */
 QSE_EXPORT qse_size_t qse_slmbtoslwc (
@@ -92,7 +90,7 @@ QSE_EXPORT qse_size_t qse_slmbtoslwc (
  * It returns 0 if the wide character is illegal, mblen + 1 if mblen is not 
  * large enough to hold the multibyte sequence. On successful conversion, it 
  * returns the number of bytes in the sequence.
- * @note This function can not handle conversion producing non-initial
+ * \note This function can not handle conversion producing non-initial
  *       states. For each call, it assumes initial state.
  */
 QSE_EXPORT qse_size_t qse_slwctoslmb (
@@ -103,12 +101,12 @@ QSE_EXPORT qse_size_t qse_slwctoslmb (
 
 /**
  * The qse_slmblen() function scans a multibyte sequence to get the number of 
- * bytes needed to form a wide character. It does not scan more than @a mblen
+ * bytes needed to form a wide character. It does not scan more than \a mblen
  * bytes.
- * @return number of bytes processed on success, 
+ * \return number of bytes processed on success, 
  *         0 for invalid sequences, 
  *         mblen + 1 for incomplete sequences
- * @note This function can not handle conversion producing non-initial
+ * \note This function can not handle conversion producing non-initial
  *       states. For each call, it assumes initial state.
  */
 QSE_EXPORT qse_size_t qse_slmblen (

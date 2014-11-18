@@ -1194,8 +1194,10 @@ static int matchtre (
 	qse_cstr_t submat[9], qse_awk_errnum_t* errnum)
 {
 	int n;
-	qse_tre_match_t match[10] = { { 0, 0 }, };
+	/*qse_tre_match_t match[10] = { { 0, 0 }, };*/
+	qse_tre_match_t match[10];
 
+	QSE_MEMSET (match, 0, QSE_SIZEOF(match));
 	n = qse_tre_execx (tre, str->ptr, str->len, match, QSE_COUNTOF(match), opt);
 	if (n <= -1)
 	{

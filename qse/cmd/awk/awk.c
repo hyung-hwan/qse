@@ -1314,3 +1314,19 @@ oops:
 	return ret;
 }
 
+
+#if defined(FAKE_SOCKET)
+socket () {}
+listen () {}
+accept () {}
+recvfrom () {}
+connect () {}
+getsockopt () {}
+recv      () {}
+setsockopt () {}
+send      () {}
+bind     () {}
+shutdown  () {}  
+
+void* memmove (void* x, void* y, size_t z) {}
+#endif

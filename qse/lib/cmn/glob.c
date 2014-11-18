@@ -185,7 +185,13 @@ static int path_exists (glob_t* g, const qse_char_t* name)
 	if (mptr == QSE_NULL) return -1;
 #endif
 
-	return (lstat (mptr, &st) == 0)? 1: 0;
+#if defined(HAVE_LSTAT)
+	return (QSE_LSTAT (mptr, &st) == 0)? 1: 0;
+#else
+	/* use stat() if no lstat() is available. */
+	return (QSE_STAT (mptr, &st) == 0)? 1: 0;
+#endif
+
 	/* ------------------------------------------------------------------- */
 
 #endif

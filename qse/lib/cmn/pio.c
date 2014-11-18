@@ -475,6 +475,8 @@ static int get_highest_fd (void)
 		return maxfd;
 	}
 
+/* TODO: should i also use getdtablesize() if available? */
+
 #if defined(HAVE_GETRLIMIT)
 	if (QSE_GETRLIMIT (RLIMIT_NOFILE, &rlim) <= -1 ||
 	    rlim.rlim_max == RLIM_INFINITY) 

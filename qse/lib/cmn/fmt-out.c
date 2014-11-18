@@ -26,12 +26,15 @@
 #include "mem.h"
 #include "fmt.h"
 
-#include <stdio.h> /* for snrintf() */
+#include <stdio.h> /* for snrintf(). used for floating-point number formatting */
 #if defined(_MSC_VER) || defined(__BORLANDC__) || (defined(__WATCOMC__) && (__WATCOMC__ < 1200))
 #	define snprintf _snprintf 
+#	if !defined(HAVE_SNPRINTF)
+#		define HAVE_SNPRINTF
+#	endif
 #endif
 #if defined(HAVE_QUADMATH_H)
-#	include <quadmath.h> /* for quadmath_snprintf */
+#	include <quadmath.h> /* for quadmath_snprintf() */
 #endif
 /* TODO: remove stdio.h and quadmath.h once snprintf gets replaced by own 
 floting-point conversion implementation*/

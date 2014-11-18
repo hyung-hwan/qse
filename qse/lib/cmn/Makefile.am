@@ -24,7 +24,7 @@ noinst_HEADERS = \
 	tre.h \
 	tre-ast.h \
 	tre-compile.h \
-	tre-match-utils.h \
+	tre-match-ut.h \
 	tre-parse.h \
 	tre-stack.h
 
@@ -64,7 +64,7 @@ libqsecmn_la_SOURCES = \
 	nwio.c \
 	oht.c \
 	opt.c \
-	path-basename.c \
+	path-base.c \
 	path-canon.c \
 	pio.c \
 	pma.c \
@@ -111,8 +111,8 @@ libqsecmn_la_SOURCES = \
 	tre.c \
 	tre-ast.c \
 	tre-compile.c \
-	tre-match-backtrack.c \
-	tre-match-parallel.c \
+	tre-match-bt.c \
+	tre-match-pa.c \
 	tre-parse.c \
 	tre-stack.c \
 	uri.c \
