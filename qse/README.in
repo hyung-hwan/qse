@@ -5,8 +5,7 @@ and functions needed when you deal with memory, streams, data structures. The
 interface has been designed to be flexible enough to access various aspects of
 embedding application and an embedded object from each other.
 
-* The library is licensed under the GNU Lesser General Public License 
-  version 3: http://www.gnu.org/licenses/
+* The library is licensed under the BSD license. See the LICENSE file.
 * The project webpage is at @QSE_PROJECT_URL@
 
 For further information, contact: @QSE_PROJECT_AUTHOR@
