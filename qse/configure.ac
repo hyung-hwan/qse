@@ -111,7 +111,7 @@ case "$host" in
 	platform_win32=no
 	;;
 esac
-AM_CONDITIONAL(WIN32, test "${platform_win32}" = "yes" )
+AM_CONDITIONAL(WIN32, test "x${platform_win32}" = "xyes" )
 
 dnl check the math library (check if -lm is needed)
 LT_LIB_M
@@ -123,7 +123,8 @@ AC_CHECK_HEADERS([stddef.h wchar.h wctype.h errno.h signal.h fcntl.h dirent.h])
 AC_CHECK_HEADERS([time.h sys/time.h utime.h spawn.h execinfo.h ucontext.h])
 AC_CHECK_HEADERS([sys/resource.h sys/wait.h sys/syscall.h sys/ioctl.h])
 AC_CHECK_HEADERS([sys/sendfile.h sys/epoll.h sys/event.h])
-AC_CHECK_HEADERS([sys/sysctl.h sys/socket.h sys/sockio.h sys/un.h ifaddrs.h linux/netfilter_ipv4.h netinet/sctp.h])
+AC_CHECK_HEADERS([sys/sysctl.h sys/socket.h sys/sockio.h sys/un.h])
+AC_CHECK_HEADERS([ifaddrs.h tiuser.h linux/netfilter_ipv4.h netinet/sctp.h])
 AC_CHECK_HEADERS([net/if.h net/if_dl.h], [], [], [
 	#include <sys/types.h>
 	#include <sys/socket.h>])
@@ -169,21 +170,33 @@ dnl	SOCKET_LIBS="$SOCKET_LIBS -lsocket"
 dnl fi
 dnl AC_SUBST(SOCKET_LIBS)
 AC_CHECK_FUNCS([connect gethostbyname])
-if test "$ac_cv_func_gethostbyname" = "no"
+if test "x$ac_cv_func_gethostbyname" = "xno"
 then
 	AC_CHECK_LIB([nsl], [gethostbyname], [
 		SOCKET_LIBS="$SOCKET_LIBS -lnsl"
 		AC_DEFINE(HAVE_GETHOSTBYNAME, 1)
 	])
 fi
-if test "$ac_cv_func_connect" = "no"
+if test "x$ac_cv_func_connect" = "xno"
 then
 	AC_CHECK_LIB([socket], [connect], [
 		SOCKET_LIBS="$SOCKET_LIBS -lsocket"
 		AC_DEFINE(HAVE_CONNECT, 1)
-	])
+	]) 
+
+	if test "x$ac_cv_lib_socket_connect" = xno
+	then
+		AC_CHECK_FUNCS([t_connect])
+		if test "x$ac_cv_func_t_connect" = "xno"
+		then
+			AC_CHECK_LIB([nsl_s], [t_connect], [
+				SOCKET_LIBS="$SOCKET_LIBS -lnsl_s"
+				AC_DEFINE(HAVE_T_CONNECT, 1)
+			])
+		fi
+	fi
 fi
-if test "${platform_win32}" = "yes"
+if test "x${platform_win32}" = "xyes"
 then
 	SOCKET_LIBS="$SOCKET_LIBS -lws2_32"
 fi
@@ -376,7 +389,7 @@ AC_CHECK_SIZEOF(off64_t)
 AC_CHECK_SIZEOF(mbstate_t,,[#include <wchar.h>])
 AX_CHECK_NUMVALOF(MB_LEN_MAX,[32],[#include <limits.h>])
 
-if test "${platform_win32}" = "yes"
+if test "x${platform_win32}" = "xyes"
 then
 	AC_CHECK_SIZEOF(struct sockaddr_in,,[
 		#include <winsock2.h>

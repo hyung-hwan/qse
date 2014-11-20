@@ -47,6 +47,13 @@
 #	endif
 #elif defined(__DOS__)
 #	include <tcp.h> /* watt-32 */
+
+#elif defined(HAVE_T_CONNECT) && !defined(HAVE_CONNECT) && defined(HAVE_TIUSER_H)
+
+#	include "syscall.h"
+#	include <tiuser.h>
+#	define USE_TLI
+
 #else
 #	include "syscall.h"
 #	include <sys/socket.h>
@@ -78,7 +85,9 @@ QSE_INLINE int qse_isvalidsckhnd (qse_sck_hnd_t handle)
 	return handle >= 0;
 
 #elif defined(__DOS__)
+	return handle >= 0;
 
+#elif defined(USE_TLI)
 	return handle >= 0;
 
 #else
@@ -90,10 +99,16 @@ QSE_INLINE void qse_closesckhnd (qse_sck_hnd_t handle)
 {
 #if defined(_WIN32)
 	closesocket (handle);
+
 #elif defined(__OS2__)
 	soclose (handle);
+
 #elif defined(__DOS__)
 	close_s (handle);
+
+#elif defined(USE_TLI)
+	t_close (handle);
+
 #else
 	QSE_CLOSE (handle);
 #endif
@@ -105,10 +120,29 @@ QSE_INLINE void qse_shutsckhnd (qse_sck_hnd_t handle, qse_shutsckhnd_how_t how)
 
 #if defined(_WIN32)
 	shutdown (handle, how_v[how]);
+
 #elif defined(__OS2__)
 	shutdown (handle, how_v[how]);
+
 #elif defined(__DOS__)
 	shutdown (handle, how_v[how]);
+
+#elif defined(USE_TLI)
+	/* Is this correct? */
+	switch (how)
+	{
+		case QSE_SHUTSCKHND_R:
+			t_rcvrel (handle);
+			break;
+		case QSE_SHUTSCKHND_W:
+			t_sndrel (handle);
+			break;
+		case QSE_SHUTSCKHND_RW:
+			t_rcvrel (handle);
+			t_sndrel (handle);
+			break;
+	}
+
 #else
 	shutdown (handle, how_v[how]);
 #endif
