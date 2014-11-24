@@ -30,7 +30,7 @@
 #include <qse/types.h>
 #include <qse/macros.h>
 
-/** @file
+/** \file
  * This file provides functions, types, macros for wildcard expansion
  * in a path name.
  */
@@ -62,10 +62,10 @@ extern "C" {
 #endif
 
 /**
- * The qse_glob() function finds path names matchin the @a pattern.
- * It calls the call-back function @a cbimpl for each path name found.
+ * The qse_glob() function finds path names matchin the \a pattern.
+ * It calls the call-back function \a cbimpl for each path name found.
  * 
- * @return -1 on failure, 0 on no match, 1 if matches are found.
+ * \return -1 on failure, 0 on no match, 1 if matches are found.
  */
 QSE_EXPORT int qse_glob (
 	const qse_char_t*  pattern,

@@ -123,7 +123,7 @@ QSE_EXPORT qse_size_t qse_tmr_update (
 	const qse_tmr_event_t* event
 );
 
-QSE_EXPORT void qse_tmr_remove (
+QSE_EXPORT void qse_tmr_delete (
 	qse_tmr_t*      tmr,
 	qse_tmr_index_t index
 );

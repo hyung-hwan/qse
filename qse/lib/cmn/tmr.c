@@ -95,7 +95,7 @@ void* qse_tmr_getxtn (qse_tmr_t* tmr)
 
 void qse_tmr_clear (qse_tmr_t* tmr)
 {
-	while (tmr->size > 0) qse_tmr_remove (tmr, 0);
+	while (tmr->size > 0) qse_tmr_delete (tmr, 0);
 }
 
 static qse_tmr_index_t sift_up (qse_tmr_t* tmr, qse_tmr_index_t index, int notify)
@@ -179,7 +179,7 @@ static qse_tmr_index_t sift_down (qse_tmr_t* tmr, qse_tmr_index_t index, int not
 	return index;
 }
 
-void qse_tmr_remove (qse_tmr_t* tmr, qse_tmr_index_t index)
+void qse_tmr_delete (qse_tmr_t* tmr, qse_tmr_index_t index)
 {
 	qse_tmr_event_t item;
 
@@ -243,7 +243,7 @@ qse_size_t qse_tmr_fire (qse_tmr_t* tmr, const qse_ntime_t* tm)
 		if (qse_cmptime(&tmr->event[0].when, &now) > 0) break;
 
 		event = tmr->event[0];
-		qse_tmr_remove (tmr, 0); /* remove the registered event structure */
+		qse_tmr_delete (tmr, 0); /* remove the registered event structure */
 
 		fire_count++;
 		event.handler (tmr, &now, &event); /* then fire the event */

@@ -2202,7 +2202,7 @@ int qse_httpd_inserttimerevent (qse_httpd_t* httpd, const qse_httpd_timer_event_
 
 void qse_httpd_removetimerevent (qse_httpd_t* httpd, qse_httpd_timer_index_t index)
 {
-	qse_tmr_remove (httpd->tmr, index);
+	qse_tmr_delete (httpd->tmr, index);
 }
 
 /* qse_httpd_insert_timer_event() is a lighter-weight version of 
@@ -2222,7 +2222,7 @@ int qse_httpd_insert_timer_event (qse_httpd_t* httpd, const qse_tmr_event_t* eve
 }
 void qse_httpd_remove_timer_event (qse_httpd_t* httpd, qse_tmr_index_t index)
 {
-	qse_tmr_remove (httpd->tmr, index);
+	qse_tmr_delete (httpd->tmr, index);
 }
 
 /* ----------------------------------------------------------------------- */

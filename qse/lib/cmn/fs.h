@@ -25,6 +25,11 @@
  */
 
 #include <qse/cmn/fs.h>
+#include <qse/cmn/mbwc.h>
+#include <qse/cmn/glob.h>
+#include <qse/cmn/dir.h>
+#include <qse/cmn/mem.h>
+#include <qse/cmn/str.h>
 
 #if defined(_WIN32)
 #	include <windows.h>
@@ -43,6 +48,29 @@
 	typedef int qse_fs_syserr_t;
 #endif
 
+#if defined(_WIN32) || defined(__OS2__) || defined(__DOS__)
+#	define DEFAULT_GLOB_FLAGS (QSE_GLOB_PERIOD | QSE_GLOB_NOESCAPE | QSE_GLOB_IGNORECASE)
+#	define DEFAULT_PATH_SEPARATOR QSE_T("\\")
+#else
+#	define DEFAULT_GLOB_FLAGS (QSE_GLOB_PERIOD)
+#	define DEFAULT_PATH_SEPARATOR QSE_T("/")
+#endif
+
+#define IS_CURDIR(x) ((x)[0] == QSE_T('.') && (x)[1] == QSE_T('\0'))
+#define IS_PREVDIR(x) ((x)[0] == QSE_T('.') && (x)[1] == QSE_T('.') && (x)[2] == QSE_T('\0'))
+
+#if defined(QSE_CHAR_IS_MCHAR)
+#	define make_str_with_wcs(fs,wcs) qse_wcstombsdupwithcmgr(wcs,QSE_NULL,(fs)->mmgr,(fs)->cmgr)
+#	define make_str_with_mbs(fs,mbs) (mbs)
+#	define free_str_with_wcs(fs,wcs,str) QSE_MMGR_FREE((fs)->mmgr,str)
+#	define free_str_with_mbs(fs,mbs,str) 
+#else
+#	define make_str_with_wcs(fs,wcs) (wcs)
+#	define make_str_with_mbs(fs,mbs) qse_mbstowcsdupwithcmgr(mbs,QSE_NULL,(fs)->mmgr,(fs)->cmgr)
+#	define free_str_with_wcs(fs,wcs,str)
+#	define free_str_with_mbs(fs,mbs,str) QSE_MMGR_FREE((fs)->mmgr,str)
+#endif
+
 #if defined(__cplusplus)
 extern "C" {
 #endif
@@ -51,6 +79,36 @@ qse_fs_errnum_t qse_fs_syserrtoerrnum (
 	qse_fs_t*       fs,
 	qse_fs_syserr_t e
 );
+
+qse_fs_char_t* qse_fs_makefspathformbs (
+	qse_fs_t*          fs,
+	const qse_mchar_t* path
+);
+
+qse_fs_char_t* qse_fs_makefspathforwcs (
+	qse_fs_t*          fs,
+	const qse_wchar_t* path
+);
+
+void qse_fs_freefspathformbs (
+	qse_fs_t*          fs, 
+	const qse_mchar_t* path,
+	qse_fs_char_t*     fspath
+);
+
+void qse_fs_freefspathforwcs (
+	qse_fs_t*          fs, 
+	const qse_wchar_t* path,
+	qse_fs_char_t*     fspath
+);
+
+#if defined(QSE_CHAR_IS_MCHAR)
+#	define qse_fs_makefspath(fs,path) qse_fs_makefspathformbs(fs,path)
+#	define qse_fs_freefspath(fs,path,fspath) qse_fs_freefspathformbs(fs,path,fspath);
+#else
+#	define qse_fs_makefspath(fs,path) qse_fs_makefspathforwcs(fs,path)
+#	define qse_fs_freefspath(fs,path,fspath) qse_fs_freefspathforwcs(fs,path,fspath);
+#endif
 
 #if defined(__cplusplus)
 }

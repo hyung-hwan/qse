@@ -60,7 +60,10 @@ qse_fs_errnum_t qse_fs_syserrtoerrnum (qse_fs_t* fs, qse_fs_syserr_t e)
 
 		case ERROR_NOT_SAME_DEVICE:
 			return QSE_FS_EXDEV;
-	
+
+		case ERROR_DIR_NOT_EMPTY;
+			return QSE_FS_ENOTEMPTY;
+
 		default:
 			return QSE_FS_ESYSERR;
 	}
@@ -109,7 +112,6 @@ qse_fs_errnum_t qse_fs_syserrtoerrnum (qse_fs_t* fs, qse_fs_syserr_t e)
 			return QSE_FS_EACCES;
 
 		case ENOENT:
-		case ENOTDIR:
 			return QSE_FS_ENOENT;
 
 		case EEXIST:
@@ -117,6 +119,9 @@ qse_fs_errnum_t qse_fs_syserrtoerrnum (qse_fs_t* fs, qse_fs_syserr_t e)
 
 		case EISDIR: 
 			return QSE_FS_EISDIR;
+
+		case ENOTDIR:
+			return QSE_FS_ENOTDIR;
 
 		default:
 			return QSE_FS_ESYSERR;
@@ -136,7 +141,6 @@ qse_fs_errnum_t qse_fs_syserrtoerrnum (qse_fs_t* fs, qse_fs_syserr_t e)
 			return QSE_FS_EACCES;
 
 		case ENOENT:
-		case ENOTDIR:
 			return QSE_FS_ENOENT;
 
 		case EEXIST:
@@ -147,6 +151,12 @@ qse_fs_errnum_t qse_fs_syserrtoerrnum (qse_fs_t* fs, qse_fs_syserr_t e)
 
 		case EISDIR: 
 			return QSE_FS_EISDIR;
+
+		case ENOTDIR:
+			return QSE_FS_ENOTDIR;
+
+		case ENOTEMPTY:
+			return QSE_FS_ENOTVOID;
 
 		case EXDEV:
 			return QSE_FS_EXDEV;

@@ -378,150 +378,15 @@ struct del_op_t
 #endif
 };
 
-int qse_fs_delete (qse_fs_t* fs, const qse_char_t* path)
-{
-	/* TODO: improve this function to support fs->curdir ... etc 
-	 * delete directory ... etc */
-
-#if defined(_WIN32)
-
-	if (DeleteFile (path) == FALSE)
-	{
-		fs->errnum = qse_fs_syserrtoerrnum (fs, GetLastError());
-		return -1;
-	}
-
-	return 0;
+/*
+int qse_cpfile
+int qse_mvfile
+* 
+int qse_rmdir
+qse_mkdir
 
 
-#elif defined(__OS2__)
+qse_statfile
 
-	/* ------------------------------------------------------ */
-
-	APIRET rc;
-	del_op_t dop;
-	
-
-	QSE_MEMSET (&dop, 0, QSE_SIZEOF(dop));
-
-	#if defined(QSE_CHAR_IS_MCHAR)
-	dop.path = path;
-	#else
-	dop.path = qse_wcstombsdup (path, QSE_NULL, fs->mmgr);
-	if (dop.path == QSE_NULL)
-	{
-		fs->errnum = QSE_FS_ENOMEM;
-		goto oops;
-	}
-	#endif
-
-	rc = DosDelete (dop.path);
-	if (rc != NO_ERROR)
-	{
-		fs->errnum = qse_fs_syserrtoerrnum (fs, rc);
-		goto oops;
-	}
-
-	#if defined(QSE_CHAR_IS_MCHAR)
-	/* nothing to do */
-	#else
-	QSE_MMGR_FREE (fs->mmgr, dop.path);
-	#endif
-	return 0;
-
-	/* ------------------------------------------------------ */
-
-oops:
-	#if defined(QSE_CHAR_IS_MCHAR)
-	/* nothing to do */
-	#else
-	if (dop.path) QSE_MMGR_FREE (fs->mmgr, dop.path);
-	#endif
-	return -1;
-
-#elif defined(__DOS__)
-
-	/* ------------------------------------------------------ */
-
-	del_op_t dop;
-
-	QSE_MEMSET (&dop, 0, QSE_SIZEOF(dop));
-
-	#if defined(QSE_CHAR_IS_MCHAR)
-	dop.path = path;
-	#else
-	dop.path = qse_wcstombsdup (path, QSE_NULL, fs->mmgr);
-	if (dop.path == QSE_NULL)
-	{
-		fs->errnum = QSE_FS_ENOMEM;
-		goto oops;
-	}
-	#endif
-
-	if (unlink (dop.path) <= -1)
-	{
-		fs->errnum = qse_fs_syserrtoerrnum (fs, errno);
-		goto oops;
-	}
-
-	#if defined(QSE_CHAR_IS_MCHAR)
-	/* nothing to do */
-	#else
-	QSE_MMGR_FREE (fs->mmgr, dop.path);
-	#endif
-	return 0;
-
-oops:
-	#if defined(QSE_CHAR_IS_MCHAR)
-	/* nothing to do */
-	#else
-	if (dop.path) QSE_MMGR_FREE (fs->mmgr, dop.path);
-	#endif
-	return -1;
-
-	/* ------------------------------------------------------ */
-
-#else
-
-	/* ------------------------------------------------------ */
-
-	del_op_t dop;
-
-	QSE_MEMSET (&dop, 0, QSE_SIZEOF(dop));
-
-	#if defined(QSE_CHAR_IS_MCHAR)
-	dop.path = path;
-	#else
-	dop.path = qse_wcstombsdup (path, QSE_NULL, fs->mmgr);
-	if (dop.path == QSE_NULL)
-	{
-		fs->errnum = QSE_FS_ENOMEM;
-		goto oops;
-	}
-	#endif
-
-	if (QSE_UNLINK (dop.path) <= -1)
-	{
-		fs->errnum = qse_fs_syserrtoerrnum (fs, errno);
-		goto oops;
-	}
-
-	#if defined(QSE_CHAR_IS_MCHAR)
-	/* nothing to do */
-	#else
-	QSE_MMGR_FREE (fs->mmgr, dop.path);
-	#endif
-	return 0;
-
-oops:
-	#if defined(QSE_CHAR_IS_MCHAR)
-	/* nothing to do */
-	#else
-	if (dop.path) QSE_MMGR_FREE (fs->mmgr, dop.path);
-	#endif
-	return -1;
-
-	/* ------------------------------------------------------ */
-
-#endif
-}
+qse_rm...????
+*/
