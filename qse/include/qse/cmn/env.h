@@ -30,7 +30,7 @@
 #include <qse/types.h>
 #include <qse/macros.h>
 
-/** @file
+/** \file
  * This file defines data types and functions that you can use to build
  * an environment block. 
  */
@@ -44,9 +44,11 @@
 #if defined(_WIN32) && defined(QSE_CHAR_IS_WCHAR)
 	typedef qse_wchar_t qse_env_char_t;
 #	define QSE_ENV_CHAR_IS_WCHAR
+#	define QSE_SIZEOF_ENV_CHAR_T QSE_SIZEOF_WCHAR_T
 #else
 	typedef qse_mchar_t qse_env_char_t;
 #	define QSE_ENV_CHAR_IS_MCHAR
+#	define QSE_SIZEOF_ENV_CHAR_T QSE_SIZEOF_MCHAR_T
 #endif
 
 /**
@@ -120,10 +122,10 @@ QSE_EXPORT qse_env_char_t** qse_env_getarr (
 
 /**
  * The qse_env_insertwcs() function adds a new environment variable
- * @a name with the @a value. If the @a value is #QSE_NULL, it takes
+ * \a name with the \a value. If the \a value is #QSE_NULL, it takes
  * the actual value from the system environment 
  *
- * @return 0 on success, -1 on failure
+ * \return 0 on success, -1 on failure
  */
 QSE_EXPORT int qse_env_insertwcs (
 	qse_env_t*         env,

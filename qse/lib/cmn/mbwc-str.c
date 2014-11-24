@@ -295,7 +295,7 @@ static qse_wchar_t* mbs_to_wcs_dup_with_cmgr (
 		mbs, &ml, QSE_NULL, &wl, cmgr, all) <= -1) return QSE_NULL;
 
 	wl++; /* for terminating null */
-	wcs = QSE_MMGR_ALLOC (mmgr, wl * QSE_SIZEOF(*wcs));	
+	wcs = QSE_MMGR_ALLOC (mmgr, wl * QSE_SIZEOF(*wcs));
 	if (wcs == QSE_NULL) return QSE_NULL;
 
 	mbs_to_wcs_with_cmgr (mbs, &ml, wcs, &wl, cmgr, all);

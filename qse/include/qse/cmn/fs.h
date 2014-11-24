@@ -27,27 +27,45 @@
 #ifndef _QSE_CMN_FS_H_
 #define _QSE_CMN_FS_H_
 
+/**  \file
+ * This file defines data types and functions for manipulating files and
+ * directories on a file system. 
+ */
+
 #include <qse/types.h>
 #include <qse/macros.h>
 #include <qse/cmn/time.h>
+
+
+#if defined(_WIN32) && defined(QSE_CHAR_IS_WCHAR)
+	typedef qse_wchar_t qse_fs_char_t;
+#	define QSE_FS_CHAR_IS_WCHAR
+#	define QSE_SIZEOF_FS_CHAR_T QSE_SIZEOF_WCHAR_T
+#else
+	typedef qse_mchar_t qse_fs_char_t;
+#	define QSE_FS_CHAR_IS_MCHAR
+#	define QSE_SIZEOF_FS_CHAR_T QSE_SIZEOF_MCHAR_T
+#endif
 
 enum qse_fs_errnum_t
 {
 	QSE_FS_ENOERR = 0,
 	QSE_FS_EOTHER,
-     QSE_FS_ENOIMPL,    /**< not implemented */
-     QSE_FS_ESYSERR,    /**< subsystem error */
-     QSE_FS_EINTERN,    /**< internal error */
+	QSE_FS_ENOIMPL,     /**< not implemented */
+	QSE_FS_ESYSERR,     /**< subsystem error */
+	QSE_FS_EINTERN,     /**< internal error */
 
-     QSE_FS_ENOMEM,     /**< out of memory */
-     QSE_FS_EINVAL,     /**< invalid parameter */
-     QSE_FS_EACCES,     /**< access denied */
-     QSE_FS_ENOENT,     /**< no such file */
-     QSE_FS_EEXIST,     /**< already exist */
-     QSE_FS_EINTR,      /**< interrupted */
-	QSE_FS_ENODIR,
-	QSE_FS_EISDIR,
-	QSE_FS_EXDEV 
+	QSE_FS_ENOMEM,      /**< out of memory */
+	QSE_FS_EINVAL,      /**< invalid parameter */
+	QSE_FS_EACCES,      /**< access denied */
+	QSE_FS_ENOENT,      /**< no such file or directory */
+	QSE_FS_EEXIST,      /**< already exist */
+	QSE_FS_EINTR,       /**< interrupted */
+	QSE_FS_EISDIR,      /**< is a directory */
+	QSE_FS_ENOTDIR,     /**< not a directory */
+	QSE_FS_ENOTVOID,    /**< directory not empty */
+	QSE_FS_EXDEV,       /**< cross device */
+	QSE_FS_EGLOB        /**< glob error */
 };
 typedef enum qse_fs_errnum_t qse_fs_errnum_t;
 
@@ -58,6 +76,7 @@ enum qse_fs_ent_flag_t
 	QSE_FS_ENT_SIZE = (1 << 2),
 	QSE_FS_ENT_TIME = (1 << 3)
 };
+typedef enum qse_fs_ent_flag_t qse_fs_ent_flag_t;
 
 enum qse_fs_ent_type_t
 {
@@ -82,7 +101,7 @@ struct qse_fs_ent_t
 		qse_char_t* path;
 	} name;
 	qse_fs_ent_type_t type;
-	qse_foff_t         size;
+	qse_foff_t        size;
 
 	struct
 	{
@@ -98,6 +117,8 @@ typedef struct qse_fs_ent_t qse_fs_ent_t;
 struct qse_fs_t
 {
 	qse_mmgr_t*     mmgr;
+	qse_cmgr_t*     cmgr; /* for name conversion */
+
 	qse_fs_errnum_t errnum;
 	qse_fs_ent_t    ent;
 	qse_char_t*     curdir;
@@ -114,6 +135,30 @@ enum qse_fs_option_t
 	/**< check directories against file system in qse_fs_chdir() */
 	QSE_FS_REALPATH = (1 << 2)  
 };
+typedef enum qse_fs_option_t qse_fs_option_t;
+
+
+enum qse_fs_delfile_flag_t
+{
+	QSE_FS_DELFILE_GLOB = (1 << 0),
+
+	QSE_FS_DELFILEMBS_GLOB = QSE_FS_DELFILE_GLOB,
+	QSE_FS_DELFILEWCS_GLOB = QSE_FS_DELFILE_GLOB
+};
+typedef enum qse_fs_delfile_flag_t qse_fs_delfile_flag_t;
+
+enum qse_fs_deldir_flag_t
+{
+	QSE_FS_DELDIR_GLOB      = (1 << 0),
+	QSE_FS_DELDIR_RECURSIVE = (1 << 1),
+
+	QSE_FS_DELDIRMBS_GLOB      = QSE_FS_DELDIR_GLOB,
+	QSE_FS_DELDIRMBS_RECURSIVE = QSE_FS_DELDIR_RECURSIVE,
+
+	QSE_FS_DELDIRWCS_GLOB      = QSE_FS_DELDIR_GLOB,
+	QSE_FS_DELDIRWCS_RECURSIVE = QSE_FS_DELDIR_RECURSIVE
+};
+typedef enum qse_fs_deldir_flag_t qse_fs_deldir_flag_t;
 
 #if defined(__cplusplus)
 extern "C" {
@@ -174,11 +219,51 @@ QSE_EXPORT int qse_fs_move (
 	const qse_char_t* oldpath,
 	const qse_char_t* newpath
 );
-	
-QSE_EXPORT int qse_fs_delete (
-	qse_fs_t*         fs,
-	const qse_char_t* path
+
+
+QSE_EXPORT int qse_fs_mkdirmbs (
+	qse_fs_t*          fs,
+	const qse_mchar_t* path
 );
+
+QSE_EXPORT int qse_fs_mkdirwcs (
+	qse_fs_t*          fs,
+	const qse_mchar_t* path
+);
+
+QSE_EXPORT int qse_fs_delfilembs (
+	qse_fs_t*          fs,
+	const qse_mchar_t* path,
+	int                flags
+);
+
+QSE_EXPORT int qse_fs_delfilewcs (
+	qse_fs_t*          fs,
+	const qse_wchar_t* path,
+	int                flags
+);
+
+QSE_EXPORT int qse_fs_deldirmbs (
+	qse_fs_t*          fs,
+	const qse_mchar_t* path,
+	int                flags
+);
+
+QSE_EXPORT int qse_fs_deldirwcs (
+	qse_fs_t*          fs,
+	const qse_wchar_t* path,
+	int                flags
+);
+
+#if defined(QSE_CHAR_IS_MCHAR)
+#	define qse_fs_mkdir(fs,path)   qse_fs_mkdirmbs(fs,path)
+#	define qse_fs_delfile(fs,path,flags) qse_fs_delfilembs(fs,path,flags)
+#	define qse_fs_deldir(fs,path,flags)  qse_fs_deldirmbs(fs,path,flags)
+#else
+#	define qse_fs_mkdir(fs,path)   qse_fs_mkdirwcs(fs,path)
+#	define qse_fs_delfile(fs,path,flags) qse_fs_delfilewcs(fs,path,flags)
+#	define qse_fs_deldir(fs,path,flags)  qse_fs_deldirwcs(fs,path,flags)
+#endif
 
 #if defined(__cplusplus)
 }

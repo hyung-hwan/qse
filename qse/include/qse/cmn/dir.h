@@ -101,6 +101,11 @@ QSE_EXPORT int qse_dir_reset (
 	const qse_char_t* path
 );
 
+/**
+ * The qse_dir_read() function reads a directory entry and
+ * stores it in memory pointed to by \a ent.
+ * \return -1 on failure, 0 upon no more entry, 1 on success
+ */
 QSE_EXPORT int qse_dir_read (
 	qse_dir_t*     dir,
 	qse_dir_ent_t* ent

@@ -160,7 +160,7 @@ available for the native makefile for Watcom C/C++ for OS/2 only.
 
 - If /usr/include/netinet and /usr/include/net are missing,
   check if there are /usr/include/sys/netinet and /usr/include/sys/net.
-  f they exists, you can make these symbolic links.
+  if they exists, you can make symbolic links.
 
     cd /usr/include
     ln -sf sys/netinet netinet
@@ -173,9 +173,10 @@ available for the native makefile for Watcom C/C++ for OS/2 only.
   for dificiency of the bundled make utility.
 - Do not include -g in CFLAGS. 
 
-    ./configure GREP=/bin/grep RANLIB=/bin/true CFLAGS=""
+    ./configure GREP=/bin/grep RANLIB=/bin/true CFLAGS="" RAN
 
-- Change RANLIB from "ranlib" to "true" in libltdl/libtool.
+- Remove $(LIBLTDL) from LIBADD_LIB_COMMON in lib/awk/Makefile
+- Remove $(LIBLTDL) from libqsehttp_la_LIBADD in lib/http/Makefile
 
     make
 

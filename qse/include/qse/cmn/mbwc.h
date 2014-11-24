@@ -411,7 +411,7 @@ QSE_EXPORT int qse_wcstombs (
 	qse_size_t*        mbslen  /**< [in,out] buffer size for in, 
 	                                         actual length  for out*/
 );
-	
+
 /**
  * The qse_wcsntombsn() function converts the first \a wcslen characters from 
  * a wide character string \a wcs to a multibyte string and writes it to a 

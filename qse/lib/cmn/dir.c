@@ -65,13 +65,13 @@ struct qse_dir_t
 
 #if defined(_WIN32)
 	HANDLE h;
-	WIN32_FIND_DATA wfd;	
+	WIN32_FIND_DATA wfd;
 #elif defined(__OS2__)
 	HDIR h;
 	#if defined(FIL_STANDARDL) 
-	FILEFINDBUF3L ffb;	
+	FILEFINDBUF3L ffb;
 	#else
-	FILEFINDBUF3 ffb;	
+	FILEFINDBUF3 ffb;
 	#endif
 	ULONG count;
 #elif defined(__DOS__)
@@ -316,7 +316,6 @@ static qse_char_t* make_dos_path (qse_dir_t* dir, const qse_char_t* path)
 
 	return QSE_STR_PTR(&dir->tbuf);
 }
-
 
 static qse_mchar_t* mkdospath (qse_dir_t* dir, const qse_char_t* path)
 {
@@ -696,7 +695,7 @@ static int read_dir_to_tbuf (qse_dir_t* dir, void** name)
 		if (mbs_to_wbuf (dir, de->d_name, &dir->tbuf) == QSE_NULL) return -1;
 		*name = QSE_STR_PTR(&dir->tbuf);
 	}
-	#endif	
+	#endif
 
 	return 1;
 	/* ------------------------------------------------------------------- */
@@ -716,15 +715,14 @@ static int read_ahead_and_sort (qse_dir_t* dir, const qse_char_t* path)
 		{
 			qse_size_t size;
 
-#if defined(QSE_CHAR_IS_MCHAR)
+		#if defined(QSE_CHAR_IS_MCHAR)
 			size = (qse_mbslen(name) + 1) * QSE_SIZEOF(qse_mchar_t);
-#else
+		#else
 			if (dir->flags & QSE_DIR_MBSPATH)
 				size = (qse_mbslen(name) + 1) * QSE_SIZEOF(qse_mchar_t);
 			else
 				size = (qse_wcslen(name) + 1) * QSE_SIZEOF(qse_wchar_t);
-		
-#endif
+		#endif
 
 			if (qse_lda_pushheap (dir->stab, name, size) == (qse_size_t)-1)
 			{

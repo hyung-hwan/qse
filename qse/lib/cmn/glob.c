@@ -242,7 +242,7 @@ static int get_next_segment (glob_t* g, segment_t* seg)
 			seg->wild = 0;
 			seg->esc = 0;
 		}
-#if defined(_WIN32) || defined(__OS2__) || defined(__DOS__)
+	#if defined(_WIN32) || defined(__OS2__) || defined(__DOS__)
 		else if (IS_DRIVE(seg->ptr))
 		{
 			seg->type = ROOT;
@@ -253,7 +253,7 @@ static int get_next_segment (glob_t* g, segment_t* seg)
 			seg->wild = 0;
 			seg->esc = 0;
 		}
-#endif
+	#endif
 		else
 		{
 			int escaped = 0;
@@ -463,7 +463,7 @@ entry:
 				{
 					if (seg->next)
 					{
-#if defined(NO_RECURSION)
+				#if defined(NO_RECURSION)
 						if (g->free) 
 						{
 							r = g->free;
@@ -492,7 +492,7 @@ entry:
 					resume:
 						;
 
-#else
+				#else
 						segment_t save;
 						int x;
 
@@ -500,7 +500,7 @@ entry:
 						x = search (g, seg);
 						*seg = save;
 						if (x <= -1) goto oops;
-#endif
+				#endif
 					}
 					else
 					{
@@ -551,7 +551,7 @@ entry:
 	return 0;
 
 oops:
-	if (dp) qse_dir_close (dp);	
+	if (dp) qse_dir_close (dp);
 
 #if defined(NO_RECURSION)
 	while (g->stack)

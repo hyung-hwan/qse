@@ -919,7 +919,7 @@ static int sed_main (int argc, qse_char_t* argv[])
 
 				if (tmpl_tmpfile) 
 				{
-					qse_fs_delete (fs, tmpl_tmpfile);
+					qse_fs_delfile (fs, tmpl_tmpfile, 0);
 					QSE_MMGR_FREE (qse_sed_getmmgr(sed), tmpl_tmpfile);
 				}
 				print_exec_error (sed);

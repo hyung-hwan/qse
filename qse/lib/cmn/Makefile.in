@@ -107,36 +107,38 @@ libqsecmn_la_DEPENDENCIES = $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1)
 am__libqsecmn_la_SOURCES_DIST = alg-base64.c alg-rand.c alg-search.c \
 	alg-sort.c assert.c chr.c dir.c dll.c env.c gdl.c htb.c fio.c \
-	fma.c fmt-intmax.c fmt-out.c fs.c fs-err.c fs-move.c glob.c \
-	hton.c ipad.c lda.c main.c mb8.c mbwc.c mbwc-str.c mem.c mux.c \
-	nwad.c nwad-skad.c nwif.c nwif-cfg.c nwio.c oht.c opt.c \
-	path-base.c path-canon.c pio.c pma.c rbt.c rex.c sck.c sio.c \
-	sll.c slmb.c str-beg.c str-cat.c str-chr.c str-cnv.c str-cmp.c \
-	str-cpy.c str-del.c str-dup.c str-dyn.c str-end.c str-excl.c \
-	str-fcpy.c str-fmt.c str-fnmat.c str-incl.c str-join.c \
-	str-len.c str-pac.c str-pbrk.c str-put.c str-rev.c str-rot.c \
-	str-set.c str-spl.c str-spn.c str-str.c str-subst.c str-tok.c \
-	str-trm.c str-word.c task.c time.c tio.c tmr.c tre.c tre-ast.c \
-	tre-compile.c tre-match-bt.c tre-match-pa.c tre-parse.c \
-	tre-stack.c uri.c utf8.c xma.c uni.c cp949.c cp950.c
+	fma.c fmt-intmax.c fmt-out.c fs.c fs-delete.c fs-err.c \
+	fs-move.c glob.c hton.c ipad.c lda.c main.c mb8.c mbwc.c \
+	mbwc-str.c mem.c mux.c nwad.c nwad-skad.c nwif.c nwif-cfg.c \
+	nwio.c oht.c opt.c path-base.c path-canon.c pio.c pma.c rbt.c \
+	rex.c sck.c sio.c sll.c slmb.c str-beg.c str-cat.c str-chr.c \
+	str-cnv.c str-cmp.c str-cpy.c str-del.c str-dup.c str-dyn.c \
+	str-end.c str-excl.c str-fcpy.c str-fmt.c str-fnmat.c \
+	str-incl.c str-join.c str-len.c str-pac.c str-pbrk.c str-put.c \
+	str-rev.c str-rot.c str-set.c str-spl.c str-spn.c str-str.c \
+	str-subst.c str-tok.c str-trm.c str-word.c task.c time.c tio.c \
+	tmr.c tre.c tre-ast.c tre-compile.c tre-match-bt.c \
+	tre-match-pa.c tre-parse.c tre-stack.c uri.c utf8.c xma.c \
+	uni.c cp949.c cp950.c
 @ENABLE_BUNDLED_UNICODE_TRUE@am__objects_1 = uni.lo
 @ENABLE_XCMGRS_TRUE@am__objects_2 = cp949.lo cp950.lo
 am_libqsecmn_la_OBJECTS = alg-base64.lo alg-rand.lo alg-search.lo \
 	alg-sort.lo assert.lo chr.lo dir.lo dll.lo env.lo gdl.lo \
-	htb.lo fio.lo fma.lo fmt-intmax.lo fmt-out.lo fs.lo fs-err.lo \
-	fs-move.lo glob.lo hton.lo ipad.lo lda.lo main.lo mb8.lo \
-	mbwc.lo mbwc-str.lo mem.lo mux.lo nwad.lo nwad-skad.lo nwif.lo \
-	nwif-cfg.lo nwio.lo oht.lo opt.lo path-base.lo path-canon.lo \
-	pio.lo pma.lo rbt.lo rex.lo sck.lo sio.lo sll.lo slmb.lo \
-	str-beg.lo str-cat.lo str-chr.lo str-cnv.lo str-cmp.lo \
-	str-cpy.lo str-del.lo str-dup.lo str-dyn.lo str-end.lo \
-	str-excl.lo str-fcpy.lo str-fmt.lo str-fnmat.lo str-incl.lo \
-	str-join.lo str-len.lo str-pac.lo str-pbrk.lo str-put.lo \
-	str-rev.lo str-rot.lo str-set.lo str-spl.lo str-spn.lo \
-	str-str.lo str-subst.lo str-tok.lo str-trm.lo str-word.lo \
-	task.lo time.lo tio.lo tmr.lo tre.lo tre-ast.lo tre-compile.lo \
-	tre-match-bt.lo tre-match-pa.lo tre-parse.lo tre-stack.lo \
-	uri.lo utf8.lo xma.lo $(am__objects_1) $(am__objects_2)
+	htb.lo fio.lo fma.lo fmt-intmax.lo fmt-out.lo fs.lo \
+	fs-delete.lo fs-err.lo fs-move.lo glob.lo hton.lo ipad.lo \
+	lda.lo main.lo mb8.lo mbwc.lo mbwc-str.lo mem.lo mux.lo \
+	nwad.lo nwad-skad.lo nwif.lo nwif-cfg.lo nwio.lo oht.lo opt.lo \
+	path-base.lo path-canon.lo pio.lo pma.lo rbt.lo rex.lo sck.lo \
+	sio.lo sll.lo slmb.lo str-beg.lo str-cat.lo str-chr.lo \
+	str-cnv.lo str-cmp.lo str-cpy.lo str-del.lo str-dup.lo \
+	str-dyn.lo str-end.lo str-excl.lo str-fcpy.lo str-fmt.lo \
+	str-fnmat.lo str-incl.lo str-join.lo str-len.lo str-pac.lo \
+	str-pbrk.lo str-put.lo str-rev.lo str-rot.lo str-set.lo \
+	str-spl.lo str-spn.lo str-str.lo str-subst.lo str-tok.lo \
+	str-trm.lo str-word.lo task.lo time.lo tio.lo tmr.lo tre.lo \
+	tre-ast.lo tre-compile.lo tre-match-bt.lo tre-match-pa.lo \
+	tre-parse.lo tre-stack.lo uri.lo utf8.lo xma.lo \
+	$(am__objects_1) $(am__objects_2)
 libqsecmn_la_OBJECTS = $(am_libqsecmn_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
@@ -412,18 +414,19 @@ noinst_HEADERS = \
 
 libqsecmn_la_SOURCES = alg-base64.c alg-rand.c alg-search.c alg-sort.c \
 	assert.c chr.c dir.c dll.c env.c gdl.c htb.c fio.c fma.c \
-	fmt-intmax.c fmt-out.c fs.c fs-err.c fs-move.c glob.c hton.c \
-	ipad.c lda.c main.c mb8.c mbwc.c mbwc-str.c mem.c mux.c nwad.c \
-	nwad-skad.c nwif.c nwif-cfg.c nwio.c oht.c opt.c path-base.c \
-	path-canon.c pio.c pma.c rbt.c rex.c sck.c sio.c sll.c slmb.c \
-	str-beg.c str-cat.c str-chr.c str-cnv.c str-cmp.c str-cpy.c \
-	str-del.c str-dup.c str-dyn.c str-end.c str-excl.c str-fcpy.c \
-	str-fmt.c str-fnmat.c str-incl.c str-join.c str-len.c \
-	str-pac.c str-pbrk.c str-put.c str-rev.c str-rot.c str-set.c \
-	str-spl.c str-spn.c str-str.c str-subst.c str-tok.c str-trm.c \
-	str-word.c task.c time.c tio.c tmr.c tre.c tre-ast.c \
-	tre-compile.c tre-match-bt.c tre-match-pa.c tre-parse.c \
-	tre-stack.c uri.c utf8.c xma.c $(am__append_1) $(am__append_2)
+	fmt-intmax.c fmt-out.c fs.c fs-delete.c fs-err.c fs-move.c \
+	glob.c hton.c ipad.c lda.c main.c mb8.c mbwc.c mbwc-str.c \
+	mem.c mux.c nwad.c nwad-skad.c nwif.c nwif-cfg.c nwio.c oht.c \
+	opt.c path-base.c path-canon.c pio.c pma.c rbt.c rex.c sck.c \
+	sio.c sll.c slmb.c str-beg.c str-cat.c str-chr.c str-cnv.c \
+	str-cmp.c str-cpy.c str-del.c str-dup.c str-dyn.c str-end.c \
+	str-excl.c str-fcpy.c str-fmt.c str-fnmat.c str-incl.c \
+	str-join.c str-len.c str-pac.c str-pbrk.c str-put.c str-rev.c \
+	str-rot.c str-set.c str-spl.c str-spn.c str-str.c str-subst.c \
+	str-tok.c str-trm.c str-word.c task.c time.c tio.c tmr.c tre.c \
+	tre-ast.c tre-compile.c tre-match-bt.c tre-match-pa.c \
+	tre-parse.c tre-stack.c uri.c utf8.c xma.c $(am__append_1) \
+	$(am__append_2)
 libqsecmn_la_LDFLAGS = -version-info 1:0:0 -no-undefined
 libqsecmn_la_LIBADD = $(SOCKET_LIBS) $(QUADMATH_LIBS)
 @ENABLE_CXX_TRUE@libqsecmnxx_la_SOURCES = \
@@ -525,6 +528,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fma.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fmt-intmax.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fmt-out.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fs-delete.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fs-err.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fs-move.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fs.Plo@am__quote@
