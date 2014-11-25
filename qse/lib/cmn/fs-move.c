@@ -363,30 +363,3 @@ oops:
 #endif
 }
 
-typedef struct del_op_t del_op_t;
-struct del_op_t
-{
-#if defined(_WIN32)
-	/* nothing */
-	int __dummy; /* just a placeholder */
-#elif defined(__OS2__)
-	qse_mchar_t* path;
-#elif defined(__DOS__)
-	qse_mchar_t* path;
-#else
-	qse_mchar_t* path;
-#endif
-};
-
-/*
-int qse_cpfile
-int qse_mvfile
-* 
-int qse_rmdir
-qse_mkdir
-
-
-qse_statfile
-
-qse_rm...????
-*/

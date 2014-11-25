@@ -49,10 +49,10 @@
 #endif
 
 #if defined(_WIN32) || defined(__OS2__) || defined(__DOS__)
-#	define DEFAULT_GLOB_FLAGS (QSE_GLOB_PERIOD | QSE_GLOB_NOESCAPE | QSE_GLOB_IGNORECASE)
+#	define DEFAULT_GLOB_FLAGS (QSE_GLOB_PERIOD | QSE_GLOB_LIMITED | QSE_GLOB_NOESCAPE | QSE_GLOB_IGNORECASE)
 #	define DEFAULT_PATH_SEPARATOR QSE_T("\\")
 #else
-#	define DEFAULT_GLOB_FLAGS (QSE_GLOB_PERIOD)
+#	define DEFAULT_GLOB_FLAGS (QSE_GLOB_PERIOD | QSE_GLOB_LIMITED)
 #	define DEFAULT_PATH_SEPARATOR QSE_T("/")
 #endif
 
@@ -78,6 +78,11 @@ extern "C" {
 qse_fs_errnum_t qse_fs_syserrtoerrnum (
 	qse_fs_t*       fs,
 	qse_fs_syserr_t e
+);
+
+qse_fs_errnum_t qse_fs_direrrtoerrnum (
+	qse_fs_t*        fs,
+	qse_dir_errnum_t e
 );
 
 qse_fs_char_t* qse_fs_makefspathformbs (

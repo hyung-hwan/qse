@@ -51,6 +51,20 @@
 #define STATUS_POPHEAP   (1 << 3)
 #define STATUS_SORT_ERR  (1 << 4)
 
+#define IS_CURDIR_M(x) ((x)[0] == QSE_MT('.') && (x)[1] == QSE_MT('\0'))
+#define IS_PREVDIR_M(x) ((x)[0] == QSE_MT('.') && (x)[1] == QSE_MT('.') && (x)[2] == QSE_MT('\0'))
+
+#define IS_CURDIR_W(x) ((x)[0] == QSE_WT('.') && (x)[1] == QSE_WT('\0'))
+#define IS_PREVDIR_W(x) ((x)[0] == QSE_WT('.') && (x)[1] == QSE_WT('.') && (x)[2] == QSE_WT('\0'))
+
+#if defined(QSE_CHAR_IS_MCHAR)
+#	define IS_CURDIR(x) IS_CURDIR_M(x)
+#	define IS_PREVDIR(x) IS_PREVDIR_M(x)
+#else
+#	define IS_CURDIR(x) IS_CURDIR_W(x)
+#	define IS_PREVDIR(x) IS_PREVDIR_W(x)
+#endif
+
 struct qse_dir_t
 {
 	qse_mmgr_t* mmgr;
@@ -533,6 +547,30 @@ static int read_dir_to_tbuf (qse_dir_t* dir, void** name)
 	/* ------------------------------------------------------------------- */
 	if (dir->status & STATUS_DONE) return (dir->status & STATUS_DONE_ERR)? -1: 0;
 
+	if (dir->flags & QSE_DIR_LIMITED)
+	{
+		/* skip . and .. */
+		while (IS_CURDIR(dir->wfd.cFileName) || IS_PREVDIR(dir->wfd.cFileName))
+		{
+			if (FindNextFile (dir->h, &dir->wfd) == FALSE) 
+			{
+				DWORD x = GetLastError();
+				if (x == ERROR_NO_MORE_FILES) 
+				{
+					dir->status |= STATUS_DONE;
+					return 0;
+				}
+				else
+				{
+					dir->errnum = syserr_to_errnum (x);
+					dir->status |= STATUS_DONE;
+					dir->status |= STATUS_DONE_ERR;
+					return -1;
+				}
+			}
+		}
+	}
+
 	#if defined(QSE_CHAR_IS_MCHAR)
 	if (qse_str_cpy (&dir->tbuf, dir->wfd.cFileName) == (qse_size_t)-1) 
 	{
@@ -579,6 +617,25 @@ static int read_dir_to_tbuf (qse_dir_t* dir, void** name)
 
 	if (dir->count <= 0) return 0;
 
+	if (dir->flags & QSE_DIR_LIMITED)
+	{
+		/* skip . and .. */
+		while (IS_CURDIR_M(dir->ffb.achName) || IS_PREVDIR_M(dir->ffb.achName))
+		{
+			rc = DosFindNext (dir->h, &dir->ffb, QSE_SIZEOF(dir->ffb), &dir->count);
+			if (rc == ERROR_NO_MORE_FILES) 
+			{
+				dir->count = 0;
+				return 0;
+			}
+			else if (rc != NO_ERROR)
+			{
+				dir->errnum = syserr_to_errnum (rc);
+				return -1;
+			}
+		}
+	}
+
 	#if defined(QSE_CHAR_IS_MCHAR)
 	if (qse_str_cpy (&dir->tbuf, dir->ffb.achName) == (qse_size_t)-1) 
 	{
@@ -619,6 +676,29 @@ static int read_dir_to_tbuf (qse_dir_t* dir, void** name)
 	/* ------------------------------------------------------------------- */
 
 	if (dir->status & STATUS_DONE) return (dir->status & STATUS_DONE_ERR)? -1: 0;
+
+	if (dir->flags & QSE_DIR_LIMITED)
+	{
+		/* skip . and .. */
+		while (IS_CURDIR_M(dir->f.name) || IS_PREVDIR_M(dir->f.name))
+		{
+			if (_dos_findnext (&dir->f) != 0)
+			{
+				if (errno == ENOENT) 
+				{
+					dir->status |= STATUS_DONE;
+					return 0;
+				}
+				else
+				{
+					dir->errnum = syserr_to_errnum (errno);
+					dir->status |= STATUS_DONE;
+					dir->status |= STATUS_DONE_ERR;
+					return -1;
+				}
+			}
+		}
+	}
 
 	#if defined(QSE_CHAR_IS_MCHAR)
 	if (qse_str_cpy (&dir->tbuf, dir->f.name) == (qse_size_t)-1) 
@@ -663,6 +743,7 @@ static int read_dir_to_tbuf (qse_dir_t* dir, void** name)
 	/* ------------------------------------------------------------------- */
 	qse_dirent_t* de;
 
+read:
 	errno = 0;
 	de = QSE_READDIR (dir->dp);
 	if (de == NULL) 
@@ -670,6 +751,13 @@ static int read_dir_to_tbuf (qse_dir_t* dir, void** name)
 		if (errno == 0) return 0;
 		dir->errnum = syserr_to_errnum (errno);
 		return -1;
+	}
+
+	if (dir->flags & QSE_DIR_LIMITED)
+	{
+		/* skip . and .. */
+		if (IS_CURDIR_M(de->d_name) || 
+		    IS_PREVDIR_M(de->d_name)) goto read;
 	}
 
 	#if defined(QSE_CHAR_IS_MCHAR)

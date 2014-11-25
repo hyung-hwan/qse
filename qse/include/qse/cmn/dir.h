@@ -60,7 +60,8 @@ typedef enum qse_dir_errnum_t qse_dir_errnum_t;
 enum qse_dir_flag_t
 {
 	QSE_DIR_MBSPATH = (1 << 0),
-	QSE_DIR_SORT    = (1 << 1)
+	QSE_DIR_SORT    = (1 << 1),
+	QSE_DIR_LIMITED = (1 << 2)  /**< limited to normal entries excluding . and .. */
 };
 
 struct qse_dir_ent_t

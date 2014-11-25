@@ -54,7 +54,11 @@ enum qse_glob_flags_t
 	QSE_GLOB_IGNORECASE = (1 << 2),
 
 	/** Make the function to be more fault-resistent */
-	QSE_GLOB_TOLERANT   = (1 << 3)
+	QSE_GLOB_TOLERANT   = (1 << 3),
+
+	/** Exclude special entries from matching. 
+	  * Special entries include . and .. */
+	QSE_GLOB_LIMITED    = (1 << 4)
 };
 
 #if defined(__cplusplus)
@@ -72,7 +76,8 @@ QSE_EXPORT int qse_glob (
 	qse_glob_cbimpl_t  cbimpl,
 	void*              cbctx,
 	int                flags,
-	qse_mmgr_t*        mmgr
+	qse_mmgr_t*        mmgr,
+	qse_cmgr_t*        cmgr
 );
 
 #if defined(__cplusplus)
