@@ -166,3 +166,52 @@ qse_fs_errnum_t qse_fs_syserrtoerrnum (qse_fs_t* fs, qse_fs_syserr_t e)
 	}
 #endif
 }
+
+
+qse_fs_errnum_t qse_fs_direrrtoerrnum (qse_fs_t* fs, qse_dir_errnum_t e)
+{
+	switch (e)
+	{
+		case QSE_DIR_ENOERR:
+			return QSE_FS_ENOERR;
+
+		case QSE_DIR_EOTHER:
+			return QSE_FS_EOTHER;
+
+		case QSE_DIR_ENOIMPL:
+			return QSE_FS_ENOIMPL;
+
+		case QSE_DIR_ESYSERR:
+			return QSE_FS_ESYSERR;
+
+		case QSE_DIR_EINTERN:
+			return QSE_FS_EINTERN;
+
+		case QSE_DIR_ENOMEM:
+			return QSE_FS_ENOMEM;
+
+		case QSE_DIR_EINVAL:
+			return QSE_FS_EINVAL;
+
+		case QSE_DIR_EACCES:
+			return QSE_FS_EACCES;
+
+		case QSE_DIR_ENOENT:
+			return QSE_FS_ENOENT;
+
+		case QSE_DIR_EEXIST:
+			return QSE_FS_EEXIST;
+
+		case QSE_DIR_EINTR:
+			return QSE_FS_EINTR;
+
+		case QSE_DIR_EPIPE:
+			return QSE_FS_EPIPE;
+
+		case QSE_DIR_EAGAIN:
+			return QSE_FS_EAGAIN;
+
+		default:
+			return QSE_FS_EOTHER;
+	}
+}

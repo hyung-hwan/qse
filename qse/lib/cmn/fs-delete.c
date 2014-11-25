@@ -119,7 +119,8 @@ static int purge_path (qse_fs_t* fs, const qse_char_t* path)
 	qse_fs_char_t* fspath;
 	int ret, x;
 
-	dir = qse_dir_open (fs->mmgr, 0, path, 0, &errnum);
+	/* 'dir' is asked to skip special entries like . and .. */
+	dir = qse_dir_open (fs->mmgr, 0, path, QSE_DIR_LIMITED, &errnum);
 	if (!dir)
 	{
 		/* not a directory. attempt to delete it as a file */
@@ -144,13 +145,10 @@ static int purge_path (qse_fs_t* fs, const qse_char_t* path)
 			x = qse_dir_read (dir, &ent);
 			if (x <= -1) 
 			{
-				/* TODO: CONVERT dir->errnum to fs errnum */
+				fs->errnum = qse_fs_direrrtoerrnum (fs, qse_dir_geterrnum(dir));
 				goto oops;
 			}
 			if (x == 0) break; /* no more entries */
-
-			/* skip . and .. */
-			if (IS_CURDIR(ent.name) || IS_PREVDIR(ent.name)) continue;
 
 			seg[0] = path;
 			seg[1] = DEFAULT_PATH_SEPARATOR;
@@ -204,8 +202,6 @@ static int delete_file_for_glob (const qse_cstr_t* path, void* ctx)
 	qse_fs_char_t* fspath;
 	int ret;
 
-	/* skip . and .. */
-	if (IS_CURDIR(path->ptr) || IS_PREVDIR(path->ptr)) return 0;
 
 	fspath = qse_fs_makefspath (fs, path->ptr);
 	if (!fspath) return -1;
@@ -234,7 +230,7 @@ int qse_fs_delfilembs (qse_fs_t* fs, const qse_mchar_t* path, int flags)
 			return -1;
 		}
 
-		ret = qse_glob (xpath, delete_file_for_glob, fs, DEFAULT_GLOB_FLAGS, fs->mmgr);
+		ret = qse_glob (xpath, delete_file_for_glob, fs, DEFAULT_GLOB_FLAGS, fs->mmgr, fs->cmgr);
 
 		free_str_with_mbs (fs, path, xpath);
 
@@ -276,7 +272,7 @@ int qse_fs_delfilewcs (qse_fs_t* fs, const qse_wchar_t* path, int flags)
 			return -1;
 		}
 
-		ret = qse_glob (xpath, delete_file_for_glob, fs, DEFAULT_GLOB_FLAGS, fs->mmgr);
+		ret = qse_glob (xpath, delete_file_for_glob, fs, DEFAULT_GLOB_FLAGS, fs->mmgr, fs->cmgr);
 
 		free_str_with_wcs (fs, path, xpath);
 
@@ -312,9 +308,6 @@ static int delete_directory_for_glob (const qse_cstr_t* path, void* ctx)
 	qse_fs_char_t* fspath;
 	int ret;
 
-	/* skip . and .. */
-	if (IS_CURDIR(path->ptr) || IS_PREVDIR(path->ptr)) return 0;
-
 	fspath = qse_fs_makefspath (fs, path->ptr);
 	if (!fspath) return -1;
 
@@ -330,10 +323,8 @@ static int delete_directory_for_glob (const qse_cstr_t* path, void* ctx)
 static int purge_path_for_glob (const qse_cstr_t* path, void* ctx)
 {
 	qse_fs_t* fs = (qse_fs_t*)ctx;
-	int ret;
 
-	/* skip . and .. */
-	if (IS_CURDIR(path->ptr) || IS_PREVDIR(path->ptr)) return 0;
+printf ("[%ls]\n", path->ptr);
 
 /*TODO query: */
 /*if (fs->cb.delete) fs->cb.delete (joined_path);*/
@@ -357,11 +348,11 @@ int qse_fs_deldirmbs (qse_fs_t* fs, const qse_mchar_t* path, int flags)
 
 		if (flags & QSE_FS_DELDIRMBS_RECURSIVE)
 		{
-			ret = qse_glob (xpath, purge_path_for_glob, fs, DEFAULT_GLOB_FLAGS, fs->mmgr);
+			ret = qse_glob (xpath, purge_path_for_glob, fs, DEFAULT_GLOB_FLAGS, fs->mmgr, fs->cmgr);
 		}
 		else
 		{
-			ret = qse_glob (xpath, delete_directory_for_glob, fs, DEFAULT_GLOB_FLAGS, fs->mmgr);
+			ret = qse_glob (xpath, delete_directory_for_glob, fs, DEFAULT_GLOB_FLAGS, fs->mmgr, fs->cmgr);
 		}
 
 		free_str_with_mbs (fs, path, xpath);
@@ -417,11 +408,11 @@ int qse_fs_deldirwcs (qse_fs_t* fs, const qse_wchar_t* path, int flags)
 
 		if (flags & QSE_FS_DELDIRWCS_RECURSIVE)
 		{
-			ret = qse_glob (xpath, purge_path_for_glob, fs, DEFAULT_GLOB_FLAGS, fs->mmgr);
+			ret = qse_glob (xpath, purge_path_for_glob, fs, DEFAULT_GLOB_FLAGS, fs->mmgr, fs->cmgr);
 		}
 		else
 		{
-			ret = qse_glob (xpath, delete_directory_for_glob, fs, DEFAULT_GLOB_FLAGS, fs->mmgr);
+			ret = qse_glob (xpath, delete_directory_for_glob, fs, DEFAULT_GLOB_FLAGS, fs->mmgr, fs->cmgr);
 		}
 
 		free_str_with_wcs (fs, path, xpath);

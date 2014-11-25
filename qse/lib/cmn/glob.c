@@ -82,6 +82,7 @@ struct glob_t
 	void* cbctx;
 
 	qse_mmgr_t* mmgr;
+	qse_cmgr_t* cmgr;
 	int flags;
 
 	qse_str_t path;
@@ -107,10 +108,10 @@ static qse_mchar_t* wcs_to_mbuf (glob_t* g, const qse_wchar_t* wcs, qse_mbs_t* m
 {
 	qse_size_t ml, wl;
 
-	if (qse_wcstombs (wcs, &wl, QSE_NULL, &ml) <= -1 ||
+	if (qse_wcstombswithcmgr (wcs, &wl, QSE_NULL, &ml, g->cmgr) <= -1 ||
 	    qse_mbs_setlen (mbs, ml) == (qse_size_t)-1) return QSE_NULL;
 
-	qse_wcstombs (wcs, &wl, QSE_MBS_PTR(mbs), &ml);
+	qse_wcstombswithcmgr (wcs, &wl, QSE_MBS_PTR(mbs), &ml, g->cmgr);
 	return QSE_MBS_PTR(mbs);
 }
 
@@ -437,7 +438,9 @@ entry:
 
 	if (seg->wild)
 	{
-		dp = qse_dir_open (g->mmgr, 0, QSE_STR_PTR(&g->path), 0, QSE_NULL);
+		dp = qse_dir_open (
+			g->mmgr, 0, QSE_STR_PTR(&g->path),
+			((g->flags & QSE_GLOB_LIMITED)? QSE_DIR_LIMITED: 0), QSE_NULL);
 		if (dp)
 		{
 			tmp = QSE_STR_LEN(&g->path);
@@ -572,7 +575,7 @@ oops:
 	return -1;
 }
 
-int qse_glob (const qse_char_t* pattern, qse_glob_cbimpl_t cbimpl, void* cbctx, int flags, qse_mmgr_t* mmgr)
+int qse_glob (const qse_char_t* pattern, qse_glob_cbimpl_t cbimpl, void* cbctx, int flags, qse_mmgr_t* mmgr, qse_cmgr_t* cmgr)
 {
 	segment_t seg;
 	glob_t g;
@@ -582,6 +585,7 @@ int qse_glob (const qse_char_t* pattern, qse_glob_cbimpl_t cbimpl, void* cbctx, 
 	g.cbimpl = cbimpl;
 	g.cbctx = cbctx;
 	g.mmgr = mmgr;
+	g.cmgr = cmgr;
 	g.flags = flags;
 
 #if defined(_WIN32) || defined(__OS2__) || defined(__DOS__)

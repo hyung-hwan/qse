@@ -511,7 +511,7 @@ static int expand_wildcard (int argc, qse_char_t* argv[], int glob, xarg_t* xarg
 #else
 				QSE_GLOB_PERIOD,
 #endif
-				xarg->mmgr
+				xarg->mmgr, qse_getdflcmgr()
 			);
 			if (x <= -1) return -1;
 		}

@@ -61,6 +61,9 @@ enum qse_fs_errnum_t
 	QSE_FS_ENOENT,      /**< no such file or directory */
 	QSE_FS_EEXIST,      /**< already exist */
 	QSE_FS_EINTR,       /**< interrupted */
+	QSE_FS_EPIPE,       /**< broken pipe */
+	QSE_FS_EAGAIN,      /**< resource temporarily unavailable */
+
 	QSE_FS_EISDIR,      /**< is a directory */
 	QSE_FS_ENOTDIR,     /**< not a directory */
 	QSE_FS_ENOTVOID,    /**< directory not empty */
