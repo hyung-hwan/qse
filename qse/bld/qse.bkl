@@ -172,6 +172,7 @@
 		fmt-intmax.c 
 		fmt-out.c
 		fs.c 
+		fs-delete.c
 		fs-err.c 
 		fs-move.c 
 		glob.c 
@@ -191,7 +192,7 @@
 		nwio.c 
 		oht.c 
 		opt.c 
-		path-basename.c 
+		path-base.c 
 		path-canon.c 
 		pio.c 
 		pma.c 
@@ -238,8 +239,8 @@
 		tre.c 
 		tre-ast.c 
 		tre-compile.c 
-		tre-match-backtrack.c 
-		tre-match-parallel.c 
+		tre-match-bt.c 
+		tre-match-pa.c 
 		tre-parse.c 
 		tre-stack.c 
 		uri.c 

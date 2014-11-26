@@ -159,11 +159,11 @@ QSE_EXPORT void qse_htrd_clear (
 	qse_htrd_t* htrd
 );
 
-QSE_EXPORT int qse_htrd_getoption (
+QSE_EXPORT int qse_htrd_getopt (
 	qse_htrd_t* htrd
 );
 
-QSE_EXPORT void qse_htrd_setoption (
+QSE_EXPORT void qse_htrd_setopt (
 	qse_htrd_t* htrd,
 	int         opts
 );

@@ -90,7 +90,7 @@ int qse_main (int argc, qse_achar_t* argv[])
 		qse_setdflcmgrbyid (QSE_CMGR_SLMB);
 	}
 #else
-     setlocale (LC_ALL, "");
+	setlocale (LC_ALL, "");
 	qse_setdflcmgrbyid (QSE_CMGR_SLMB);
 #endif
 	return qse_runmain (argc, argv, fs_main);

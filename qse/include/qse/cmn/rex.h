@@ -252,16 +252,16 @@ QSE_EXPORT qse_rex_node_t* qse_rex_yield (
 );
 
 /**
- * The qse_rex_getoption() function returns the current options.
+ * The qse_rex_getopt() function returns the current options.
  */
-QSE_EXPORT int qse_rex_getoption (
+QSE_EXPORT int qse_rex_getopt (
 	const qse_rex_t* rex /**< regular expression processor */
 );
 
 /**
- * The qse_rex_setoption() function overrides the current options with options.
+ * The qse_rex_setopt() function overrides the current options with options.
  */
-QSE_EXPORT void qse_rex_setoption (
+QSE_EXPORT void qse_rex_setopt (
 	qse_rex_t* rex, /**< regular expression processor */
 	int        opts /**< 0 or number XORed of ::qse_rex_option_t enumerators */
 );

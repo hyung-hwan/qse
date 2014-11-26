@@ -147,6 +147,44 @@ void* qse_fs_getxtn (qse_fs_t* fs)
 	return QSE_XTN (fs);
 }
 
+int qse_fs_getopt (qse_fs_t* fs, qse_fs_opt_t id, void* value)
+{
+	switch (id)
+	{
+		case QSE_FS_TRAIT:
+			*(int*)value = fs->trait;
+			return 0;
+
+		case QSE_FS_CBS:
+			*(qse_fs_cbs_t*)value = fs->cbs;
+			return 0;
+	}
+
+	fs->errnum = QSE_FS_EINVAL;
+	return -1;
+}
+
+int qse_fs_setopt (qse_fs_t* fs, qse_fs_opt_t id, const void* value)
+{
+	switch (id)
+	{
+		case QSE_FS_TRAIT:
+			fs->trait = *(const int*)value;
+			return 0;
+
+
+		case QSE_FS_CBS:
+			fs->cbs = *(qse_fs_cbs_t*)value;
+			return 0;
+
+	}
+
+	fs->errnum = QSE_FS_EINVAL;
+	return -1;
+}
+
+
+
 static QSE_INLINE info_t* get_info (qse_fs_t* fs)
 {
 	info_t* info;

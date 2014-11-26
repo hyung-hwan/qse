@@ -215,12 +215,12 @@ qse_rex_node_t* qse_rex_yield (qse_rex_t* rex)
 	return code;
 }
 
-int qse_rex_getoption (const qse_rex_t* rex)
+int qse_rex_getopt (const qse_rex_t* rex)
 {
 	return rex->option;
 }
 
-void qse_rex_setoption (qse_rex_t* rex, int opts)
+void qse_rex_setopt (qse_rex_t* rex, int opts)
 {
 	rex->option = opts;
 }
@@ -2047,7 +2047,7 @@ void* qse_buildrex (
 	qse_rex_node_t* code;
 
 	qse_rex_init (&rex, mmgr, QSE_NULL);
-	qse_rex_setoption (&rex, option);
+	qse_rex_setopt (&rex, option);
 
 	if (qse_rex_comp (&rex, ptn, len) == QSE_NULL)
 	{
@@ -2073,7 +2073,7 @@ int qse_matchrex (
 	int n;
 
 	qse_rex_init (&rex, mmgr, code);
-	qse_rex_setoption (&rex, option);
+	qse_rex_setopt (&rex, option);
 
 	if ((n = qse_rex_exec (&rex, str, substr, match)) <= -1)
 	{

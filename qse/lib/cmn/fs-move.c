@@ -331,7 +331,7 @@ int qse_fs_move (
 #if 0
 	if (!recursive)
 	{
-		fs->errnum = QSE_FS_E....;	
+		fs->errnum = QSE_FS_E....;
 		goto oops;
 	}
 

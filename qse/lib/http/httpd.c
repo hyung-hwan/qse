@@ -647,7 +647,7 @@ static qse_httpd_client_t* new_client (qse_httpd_t* httpd, qse_httpd_client_t* t
 		if (qse_httpd_insert_timer_event (httpd, &idle_event, &client->tmr_idle) <= -1) goto oops;
 	}
 
-	qse_htrd_setoption (client->htrd, QSE_HTRD_REQUEST | QSE_HTRD_TRAILERS | QSE_HTRD_CANONQPATH);
+	qse_htrd_setopt (client->htrd, QSE_HTRD_REQUEST | QSE_HTRD_TRAILERS | QSE_HTRD_CANONQPATH);
 
 	/* copy the public fields, 
 	 * keep the private fields initialized at 0 */
