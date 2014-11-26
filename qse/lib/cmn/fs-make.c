@@ -41,7 +41,7 @@ static int make_directory_in_fs (qse_fs_t* fs, const qse_fs_char_t* fspath)
 
 	APIRET rc;
 
-	rc = DosMkDir (fspath);
+	rc = DosMkDir (fspath, QSE_NULL);
 	if (rc != NO_ERROR)
 	{
 		fs->errnum = qse_fs_syserrtoerrnum (fs, rc);
@@ -76,20 +76,21 @@ static int make_directory_with_mbs (qse_fs_t* fs, const qse_mchar_t* path)
 	qse_fs_char_t* fspath;
 	int ret;
 
+#if 0
 	if (fs->cbs.mk) 
 	{
-		
 		int x;
-		x = fs->cbs.del (fs, path);
+		x = fs->cbs.mk (fs, path);
 		if (x <= -1) return -1;
 		if (x == 0) return 0; /* skipped */
 	}
+#endif
 
-	fspath = qse_fs_makefspath(fs, path);
+	fspath = (qse_fs_char_t*)qse_fs_makefspathformbs (fs, path);
 	if (!fspath) return -1;
 
-	ret = delete_file_from_fs (fs, fspath);
-	qse_fs_freefspath (fs, path, fspath);
+	ret = make_directory_from_fs (fs, fspath);
+	qse_fs_freefspathformbs (fs, path, fspath);
 
 	return ret;
 }
@@ -100,6 +101,7 @@ static int make_directory_with_wcs (qse_fs_t* fs, const qse_wchar_t* path)
 	qse_fs_char_t* fspath;
 	int ret;
 
+#if 0
 	if (fs->cbs.mk) 
 	{
 		int x;
@@ -107,12 +109,13 @@ static int make_directory_with_wcs (qse_fs_t* fs, const qse_wchar_t* path)
 		if (x <= -1) return -1;
 		if (x == 0) return 0; /* skipped */
 	}
+#endif
 
-	fspath = qse_fs_makefspath(fs, path);
+	fspath = (qse_fs_char_t*)qse_fs_makefspathforwcs (fs, path);
 	if (!fspath) return -1;
 
-	ret = delete_file_from_fs (fs, fspath);
-	qse_fs_freefspath (fs, path, fspath);
+	ret = make_directory_from_fs (fs, fspath);
+	qse_fs_freefspathforwcs (fs, path, fspath);
 
 	return ret;
 }
