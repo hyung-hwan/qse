@@ -129,6 +129,11 @@ enum qse_fs_trait_t
 };
 typedef enum qse_fs_trait_t qse_fs_trait_t;
 
+typedef int (*qse_fs_cbs_mk_t) (
+	qse_fs_t*         fs,
+	const qse_char_t* path
+);
+
 typedef int (*qse_fs_cbs_del_t) (
 	qse_fs_t*         fs,
 	const qse_char_t* path
@@ -136,6 +141,7 @@ typedef int (*qse_fs_cbs_del_t) (
 
 struct qse_fs_cbs_t
 {
+	qse_fs_cbs_mk_t mk;
 	qse_fs_cbs_del_t del;
 };
 typedef struct qse_fs_cbs_t qse_fs_cbs_t;
@@ -270,7 +276,7 @@ QSE_EXPORT int qse_fs_mkdirmbs (
 
 QSE_EXPORT int qse_fs_mkdirwcs (
 	qse_fs_t*          fs,
-	const qse_mchar_t* path
+	const qse_wchar_t* path
 );
 
 QSE_EXPORT int qse_fs_delfilembs (
