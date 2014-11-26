@@ -117,20 +117,9 @@ struct qse_fs_ent_t
 
 typedef struct qse_fs_ent_t qse_fs_ent_t;
 
-struct qse_fs_t
-{
-	qse_mmgr_t*     mmgr;
-	qse_cmgr_t*     cmgr; /* for name conversion */
-
-	qse_fs_errnum_t errnum;
-	qse_fs_ent_t    ent;
-	qse_char_t*     curdir;
-	void*           info;
-};
-
 typedef struct qse_fs_t qse_fs_t;
 
-enum qse_fs_option_t
+enum qse_fs_trait_t
 { 
 	/**< don't follow a symbolic link in qse_fs_chdir() */
 	QSE_FS_NOFOLLOW = (1 << 1),
@@ -138,15 +127,53 @@ enum qse_fs_option_t
 	/**< check directories against file system in qse_fs_chdir() */
 	QSE_FS_REALPATH = (1 << 2)  
 };
-typedef enum qse_fs_option_t qse_fs_option_t;
+typedef enum qse_fs_trait_t qse_fs_trait_t;
+
+typedef int (*qse_fs_cbs_del_t) (
+	qse_fs_t*         fs,
+	const qse_char_t* path
+);
+
+struct qse_fs_cbs_t
+{
+	qse_fs_cbs_del_t del;
+};
+typedef struct qse_fs_cbs_t qse_fs_cbs_t;
+
+struct qse_fs_t
+{
+	qse_mmgr_t*     mmgr;
+	qse_cmgr_t*     cmgr; /* for name conversion */
+
+	qse_fs_errnum_t errnum;
+	int             trait;
+	qse_fs_cbs_t    cbs;
+
+	qse_fs_ent_t    ent;
+	qse_char_t*     curdir;
+	void*           info;
+};
+
+
+
+enum qse_fs_opt_t
+{
+	QSE_FS_TRAIT,
+	QSE_FS_CBS
+};
+typedef enum qse_fs_opt_t qse_fs_opt_t;
 
 
 enum qse_fs_delfile_flag_t
 {
-	QSE_FS_DELFILE_GLOB = (1 << 0),
+	QSE_FS_DELFILE_GLOB      = (1 << 0),
+	QSE_FS_DELFILE_RECURSIVE = (1 << 1),
 
-	QSE_FS_DELFILEMBS_GLOB = QSE_FS_DELFILE_GLOB,
-	QSE_FS_DELFILEWCS_GLOB = QSE_FS_DELFILE_GLOB
+	QSE_FS_DELFILEMBS_GLOB      = QSE_FS_DELFILE_GLOB,
+	QSE_FS_DELFILEMBS_RECURSIVE = QSE_FS_DELFILE_RECURSIVE,
+
+	QSE_FS_DELFILEWCS_GLOB      = QSE_FS_DELFILE_GLOB,
+	QSE_FS_DELFILEWCS_RECURSIVE = QSE_FS_DELFILE_RECURSIVE
 };
 typedef enum qse_fs_delfile_flag_t qse_fs_delfile_flag_t;
 
@@ -195,6 +222,18 @@ QSE_EXPORT void* qse_fs_getxtn (
 
 QSE_EXPORT qse_fs_errnum_t qse_fs_geterrnum (
 	qse_fs_t* fs
+);
+
+QSE_EXPORT int qse_fs_getopt (
+	qse_fs_t*    fs,
+	qse_fs_opt_t id,
+	void*        value
+);
+
+QSE_EXPORT int qse_fs_setopt (
+	qse_fs_t*    fs,
+	qse_fs_opt_t id,
+	const void*  value
 );
 
 QSE_EXPORT qse_fs_ent_t* qse_fs_read (

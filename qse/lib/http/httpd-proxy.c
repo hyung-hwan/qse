@@ -1039,7 +1039,7 @@ static int task_init_proxy (
 		/* the caller must make sure that the actual content is discarded or completed
 		 * and the following data is treated as contents */
 		QSE_ASSERT (arg->req->state & (QSE_HTRE_DISCARDED | QSE_HTRE_COMPLETED));
-		/*QSE_ASSERT (qse_htrd_getoption(client->htrd) & QSE_HTRD_DUMMY);*/
+		/*QSE_ASSERT (qse_htrd_getopt(client->htrd) & QSE_HTRD_DUMMY);*/
 
 		proxy->req = arg->req;
 		qse_htre_setconcb (proxy->req, proxy_snatch_client_input_raw, task);
@@ -2363,7 +2363,7 @@ static int task_main_proxy (
 		xtn->client = client;
 		xtn->task = task;
 		qse_htrd_setrecbs (proxy->peer_htrd, &proxy_peer_htrd_cbs);
-		qse_htrd_setoption (proxy->peer_htrd, QSE_HTRD_RESPONSE | QSE_HTRD_TRAILERS);
+		qse_htrd_setopt (proxy->peer_htrd, QSE_HTRD_RESPONSE | QSE_HTRD_TRAILERS);
 	}
 
 	proxy->res = qse_mbs_open (httpd->mmgr, 0, 256);

@@ -222,6 +222,7 @@ LIBQSECMN_OBJECTS =  &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_fmt_intmax.obj &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_fmt_out.obj &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_fs.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_fs_delete.obj &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_fs_err.obj &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_fs_move.obj &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_glob.obj &
@@ -241,7 +242,7 @@ LIBQSECMN_OBJECTS =  &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_nwio.obj &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_oht.obj &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_opt.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_path_basename.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_path_base.obj &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_path_canon.obj &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_pio.obj &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_pma.obj &
@@ -288,8 +289,8 @@ LIBQSECMN_OBJECTS =  &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_tre.obj &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_tre_ast.obj &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_tre_compile.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_tre_match_backtrack.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_tre_match_parallel.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_tre_match_bt.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_tre_match_pa.obj &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_tre_parse.obj &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_tre_stack.obj &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_uri.obj &
@@ -563,6 +564,9 @@ $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_fmt_ou
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_fs.obj :  .AUTODEPEND ..\..\lib\cmn\fs.c
 	$(CC) -bt=dos -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_fs_delete.obj :  .AUTODEPEND ..\..\lib\cmn\fs-delete.c
+	$(CC) -bt=dos -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
+
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_fs_err.obj :  .AUTODEPEND ..\..\lib\cmn\fs-err.c
 	$(CC) -bt=dos -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
@@ -620,7 +624,7 @@ $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_oht.ob
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_opt.obj :  .AUTODEPEND ..\..\lib\cmn\opt.c
 	$(CC) -bt=dos -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_path_basename.obj :  .AUTODEPEND ..\..\lib\cmn\path-basename.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_path_base.obj :  .AUTODEPEND ..\..\lib\cmn\path-base.c
 	$(CC) -bt=dos -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_path_canon.obj :  .AUTODEPEND ..\..\lib\cmn\path-canon.c
@@ -761,10 +765,10 @@ $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_tre_as
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_tre_compile.obj :  .AUTODEPEND ..\..\lib\cmn\tre-compile.c
 	$(CC) -bt=dos -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_tre_match_backtrack.obj :  .AUTODEPEND ..\..\lib\cmn\tre-match-backtrack.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_tre_match_bt.obj :  .AUTODEPEND ..\..\lib\cmn\tre-match-bt.c
 	$(CC) -bt=dos -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_tre_match_parallel.obj :  .AUTODEPEND ..\..\lib\cmn\tre-match-parallel.c
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_tre_match_pa.obj :  .AUTODEPEND ..\..\lib\cmn\tre-match-pa.c
 	$(CC) -bt=dos -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_tre_parse.obj :  .AUTODEPEND ..\..\lib\cmn\tre-parse.c

@@ -505,12 +505,12 @@ qse_htrd_errnum_t qse_htrd_geterrnum (qse_htrd_t* htrd)
 	return htrd->errnum;
 }
 
-int qse_htrd_getoption (qse_htrd_t* htrd)
+int qse_htrd_getopt (qse_htrd_t* htrd)
 {
 	return htrd->option;
 }
 
-void qse_htrd_setoption (qse_htrd_t* htrd, int opts)
+void qse_htrd_setopt (qse_htrd_t* htrd, int opts)
 {
 	htrd->option = opts;
 }

@@ -1469,7 +1469,7 @@ static int task_main_cgi (
 		xtn->task = task;
 		xtn->client = client;
 		qse_htrd_setrecbs (cgi->script_htrd, &cgi_script_htrd_cbs);
-		qse_htrd_setoption (
+		qse_htrd_setopt (
 			cgi->script_htrd, 
 			QSE_HTRD_SKIPINITIALLINE | 
 			QSE_HTRD_PEEKONLY | 
