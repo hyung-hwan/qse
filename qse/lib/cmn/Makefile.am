@@ -47,6 +47,7 @@ libqsecmn_la_SOURCES = \
 	fs.c \
 	fs-delete.c \
 	fs-err.c \
+	fs-make.c \
 	fs-move.c \
 	glob.c \
 	hton.c \
