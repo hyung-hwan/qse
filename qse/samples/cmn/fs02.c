@@ -7,11 +7,19 @@
 #include <qse/cmn/mbwc.h>
 #include <locale.h>
 
+
 static int fs_del (qse_fs_t* fs, const qse_char_t* path)
 {
 	qse_printf (QSE_T("Deleting [%s]\n"), path);
 /*if (qse_strcmp(path, QSE_T("b/c")) == 0) return 0;*/
 	return 1;
+}
+
+static void print_usage (const qse_char_t* argv0)
+{
+	qse_fprintf (QSE_STDERR, QSE_T("Usage: %s command filename\n"), qse_basename(argv0));
+	qse_fprintf (QSE_STDERR, QSE_T("Command is one of delfile | delfile-r | deldir | deldir-r | mkdir | mkdir-p\n"));
+	qse_fprintf (QSE_STDERR, QSE_T("Filename is a pattern for delXXX\n"));
 }
 
 static int fs_main (int argc, qse_char_t* argv[])
@@ -20,20 +28,68 @@ static int fs_main (int argc, qse_char_t* argv[])
 	qse_fs_cbs_t cbs;
 	int ret = 0;
 
-	if (argc != 2)
+	if (argc != 3)
 	{
-		qse_fprintf (QSE_STDERR, QSE_T("Usage: %s file-pattern-to-delete\n"), qse_basename(argv[0]));
+		print_usage (argv[0]);
 		return -1;
 	}
-	fs = qse_fs_open (QSE_MMGR_GETDFL(), 0);	
+	fs = qse_fs_open (QSE_MMGR_GETDFL(), 0);
 
 	qse_memset (&cbs, 0, QSE_SIZEOF(cbs));
 	cbs.del = fs_del;
 	qse_fs_setopt (fs, QSE_FS_CBS, &cbs);
 
-	if (qse_fs_delfile (fs, argv[1], QSE_FS_DELDIRMBS_GLOB | QSE_FS_DELDIRMBS_RECURSIVE) <= -1)
+	if (qse_strcmp(argv[1], QSE_T("delfile")) == 0)
 	{
-		qse_fprintf (QSE_STDERR, QSE_T("cannot delete files - %d\n"), qse_fs_geterrnum(fs));
+		if (qse_fs_delfile (fs, argv[2], QSE_FS_DELFILEMBS_GLOB) <= -1)
+		{
+			qse_fprintf (QSE_STDERR, QSE_T("cannot delete files - %d\n"), qse_fs_geterrnum(fs));
+			ret = -1;
+		}
+	}
+	else if (qse_strcmp(argv[1], QSE_T("delfile-r")) == 0)
+	{
+		if (qse_fs_delfile (fs, argv[2], QSE_FS_DELFILE_GLOB | QSE_FS_DELFILE_RECURSIVE) <= -1)
+		{
+			qse_fprintf (QSE_STDERR, QSE_T("cannot delete files - %d\n"), qse_fs_geterrnum(fs));
+			ret = -1;
+		}
+	}
+	else if (qse_strcmp (argv[1], QSE_T("deldir")) == 0)
+	{
+		if (qse_fs_deldir (fs, argv[2], QSE_FS_DELDIR_GLOB) <= -1)
+		{
+			qse_fprintf (QSE_STDERR, QSE_T("cannot delete directories - %d\n"), qse_fs_geterrnum(fs));
+			ret = -1;
+		}
+	}
+	else if (qse_strcmp (argv[1], QSE_T("deldir-r")) == 0)
+	{
+		if (qse_fs_deldir (fs, argv[2], QSE_FS_DELDIR_GLOB | QSE_FS_DELDIR_RECURSIVE) <= -1)
+		{
+			qse_fprintf (QSE_STDERR, QSE_T("cannot delete directories - %d\n"), qse_fs_geterrnum(fs));
+			ret = -1;
+		}
+	}
+	else if (qse_strcmp (argv[1], QSE_T("mkdir")) == 0)
+	{
+		if (qse_fs_mkdir (fs, argv[2], 0) <= -1)
+		{
+			qse_fprintf (QSE_STDERR, QSE_T("cannot make directory - %d\n"), qse_fs_geterrnum(fs));
+			ret = -1;
+		}
+	}
+	else if (qse_strcmp (argv[1], QSE_T("mkdir-p")) == 0)
+	{
+		if (qse_fs_mkdir (fs, argv[2], QSE_FS_MKDIR_PARENT) <= -1)
+		{
+			qse_fprintf (QSE_STDERR, QSE_T("cannot make directory - %d\n"), qse_fs_geterrnum(fs));
+			ret = -1;
+		}
+	}
+	else
+	{
+		print_usage (argv[0]);
 		ret = -1;
 	}
 
@@ -46,7 +102,7 @@ int main (int argc, qse_achar_t* argv[])
 	int x;
 #if defined(_WIN32)
  	char locale[100];
-	UINT codepage = GetConsoleOutputCP();	
+	UINT codepage = GetConsoleOutputCP();
 	if (codepage == CP_UTF8)
 	{
 		/*SetConsoleOUtputCP (CP_UTF8);*/

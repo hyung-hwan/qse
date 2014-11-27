@@ -30,6 +30,7 @@
 #include <qse/cmn/dir.h>
 #include <qse/cmn/mem.h>
 #include <qse/cmn/str.h>
+#include <qse/cmn/path.h>
 
 #if defined(_WIN32)
 #	include <windows.h>
@@ -71,6 +72,18 @@
 #	define free_str_with_mbs(fs,mbs,str) QSE_MMGR_FREE((fs)->mmgr,str)
 #endif
 
+#if defined(QSE_FS_CHAR_IS_MCHAR)
+#	define canon_fspath(path,canon,flags) qse_canonmbspath(path,canon,flags)
+#	define get_fspath_core(fspath) qse_getmbspathcore(fspath)
+#	define IS_FSPATHSEP(x) QSE_ISPATHMBSEP(x)
+#	define QSE_FS_T(x) QSE_MT(x)
+#else
+#	define canon_fspath(fspath,canon,flags) qse_canonwcspath(fspath,canon,flags)
+#	define get_fspath_core(fspath) qse_getwcspathcore(fspath)
+#	define IS_FSPATHSEP(x) QSE_ISPATHWCSEP(x)
+#	define QSE_FS_T(x) QSE_WT(x)
+#endif
+
 #if defined(__cplusplus)
 extern "C" {
 #endif
@@ -91,6 +104,16 @@ qse_fs_char_t* qse_fs_makefspathformbs (
 );
 
 qse_fs_char_t* qse_fs_makefspathforwcs (
+	qse_fs_t*          fs,
+	const qse_wchar_t* path
+);
+
+qse_fs_char_t* qse_fs_dupfspathformbs (
+	qse_fs_t*          fs,
+	const qse_mchar_t* path
+);
+
+qse_fs_char_t* qse_fs_dupfspathforwcs (
 	qse_fs_t*          fs,
 	const qse_wchar_t* path
 );

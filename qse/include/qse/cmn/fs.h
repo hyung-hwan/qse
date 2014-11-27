@@ -129,11 +129,9 @@ enum qse_fs_trait_t
 };
 typedef enum qse_fs_trait_t qse_fs_trait_t;
 
-typedef int (*qse_fs_cbs_mk_t) (
-	qse_fs_t*         fs,
-	const qse_char_t* path
-);
-
+/**
+ * \return -1 on failure, 0 to skip, 1 to delete
+ */
 typedef int (*qse_fs_cbs_del_t) (
 	qse_fs_t*         fs,
 	const qse_char_t* path
@@ -141,7 +139,6 @@ typedef int (*qse_fs_cbs_del_t) (
 
 struct qse_fs_cbs_t
 {
-	qse_fs_cbs_mk_t mk;
 	qse_fs_cbs_del_t del;
 };
 typedef struct qse_fs_cbs_t qse_fs_cbs_t;
@@ -169,6 +166,15 @@ enum qse_fs_opt_t
 };
 typedef enum qse_fs_opt_t qse_fs_opt_t;
 
+
+enum qse_fs_mkdir_flag_t
+{
+	QSE_FS_MKDIR_PARENT = (1 << 0),
+
+	QSE_FS_MKDIRMBS_PARENT = QSE_FS_MKDIR_PARENT,
+	QSE_FS_MKDIRWCS_PARENT = QSE_FS_MKDIR_PARENT
+};
+typedef enum qse_fs_mkdir_flag_t qse_fs_mkdir_flag_t;
 
 enum qse_fs_delfile_flag_t
 {
@@ -271,12 +277,14 @@ QSE_EXPORT int qse_fs_move (
 
 QSE_EXPORT int qse_fs_mkdirmbs (
 	qse_fs_t*          fs,
-	const qse_mchar_t* path
+	const qse_mchar_t* path,
+	int                flags
 );
 
 QSE_EXPORT int qse_fs_mkdirwcs (
 	qse_fs_t*          fs,
-	const qse_wchar_t* path
+	const qse_wchar_t* path,
+	int                flags
 );
 
 QSE_EXPORT int qse_fs_delfilembs (
@@ -304,11 +312,11 @@ QSE_EXPORT int qse_fs_deldirwcs (
 );
 
 #if defined(QSE_CHAR_IS_MCHAR)
-#	define qse_fs_mkdir(fs,path)   qse_fs_mkdirmbs(fs,path)
+#	define qse_fs_mkdir(fs,path,flags) qse_fs_mkdirmbs(fs,path,flags)
 #	define qse_fs_delfile(fs,path,flags) qse_fs_delfilembs(fs,path,flags)
 #	define qse_fs_deldir(fs,path,flags)  qse_fs_deldirmbs(fs,path,flags)
 #else
-#	define qse_fs_mkdir(fs,path)   qse_fs_mkdirwcs(fs,path)
+#	define qse_fs_mkdir(fs,path,flags) qse_fs_mkdirwcs(fs,path,flags)
 #	define qse_fs_delfile(fs,path,flags) qse_fs_delfilewcs(fs,path,flags)
 #	define qse_fs_deldir(fs,path,flags)  qse_fs_deldirwcs(fs,path,flags)
 #endif

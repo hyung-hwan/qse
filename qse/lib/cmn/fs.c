@@ -778,6 +778,34 @@ qse_fs_char_t* qse_fs_makefspathforwcs (qse_fs_t* fs, const qse_wchar_t* path)
 	return fspath;
 }
 
+qse_fs_char_t* qse_fs_dupfspathformbs (qse_fs_t* fs, const qse_mchar_t* path)
+{
+	qse_fs_char_t* fspath;
+
+#if defined(QSE_FS_CHAR_IS_MCHAR)
+	fspath = qse_mbsdup (path, fs->mmgr);
+#else
+	fspath = qse_mbstowcsdupwithcmgr (path, QSE_NULL, fs->mmgrm fs->cmgr);
+	if (!fspath) fs->errnum = QSE_FS_ENOMEM;
+#endif
+
+	return fspath;
+}
+
+qse_fs_char_t* qse_fs_dupfspathforwcs (qse_fs_t* fs, const qse_wchar_t* path)
+{
+	qse_fs_char_t* fspath;
+
+#if defined(QSE_FS_CHAR_IS_MCHAR)
+	fspath = qse_wcstombsdupwithcmgr (path, QSE_NULL, fs->mmgr, fs->cmgr);
+	if (!fspath) fs->errnum = QSE_FS_ENOMEM;
+#else
+	fspath = qse_wcsdup (path, fs->mmgr);
+#endif
+
+	return fspath;
+}
+
 void qse_fs_freefspathformbs (qse_fs_t* fs, const qse_mchar_t* path, qse_fs_char_t* fspath)
 {
 	if (path != fspath) QSE_MMGR_FREE (fs->mmgr, fspath);

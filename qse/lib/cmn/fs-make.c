@@ -71,63 +71,102 @@ static int make_directory_in_fs (qse_fs_t* fs, const qse_fs_char_t* fspath)
 
 /* --------------------------------------------------------------------- */
 
-static int make_directory_with_mbs (qse_fs_t* fs, const qse_mchar_t* path)
+static int make_directory_chain (qse_fs_t* fs, qse_fs_char_t* fspath)
+{
+	qse_fs_char_t* p, c;
+	int ret = 0;
+
+	p = get_fspath_core (fspath);
+	canon_fspath (p, p, 0);
+	for (; *p; p++)
+	{
+		if (IS_FSPATHSEP(*p))
+		{
+			c = *(p + 1);
+			*(p + 1) = QSE_FS_T('\0');
+			ret = make_directory_in_fs (fs, fspath);
+			if (ret <= -1 && fs->errnum != QSE_FS_EEXIST) 
+			{
+				return -1;
+				goto done; /* abort */
+			}
+			*(p + 1) = c;
+		}
+	}
+
+	if (!IS_FSPATHSEP(*(p - 1))) ret = make_directory_in_fs (fs, fspath);
+
+done:
+	return ret;
+}
+
+int qse_fs_mkdirmbs (qse_fs_t* fs, const qse_mchar_t* path, int flags)
 {
 	qse_fs_char_t* fspath;
 	int ret;
 
-#if 0
-	if (fs->cbs.mk) 
+	if (*path == QSE_MT('\0')) 
 	{
-		int x;
-		x = fs->cbs.mk (fs, path);
-		if (x <= -1) return -1;
-		if (x == 0) return 0; /* skipped */
+		fs->errnum = QSE_FS_EINVAL;
+		return -1;
 	}
-#endif
 
-	fspath = (qse_fs_char_t*)qse_fs_makefspathformbs (fs, path);
-	if (!fspath) return -1;
+	if (flags & QSE_FS_MKDIRMBS_PARENT)
+	{
+		fspath = qse_fs_dupfspathformbs (fs, path);
+		if (!fspath) return -1;
 
-	ret = make_directory_from_fs (fs, fspath);
+		ret = make_directory_chain (fs, fspath);
+	}
+	else
+	{
+		fspath = (qse_fs_char_t*)qse_fs_makefspathformbs (fs, path);
+		if (!fspath) return -1;
+
+		ret = make_directory_in_fs (fs, fspath);
+	}
+
 	qse_fs_freefspathformbs (fs, path, fspath);
 
 	return ret;
 }
 
-
-static int make_directory_with_wcs (qse_fs_t* fs, const qse_wchar_t* path)
+int qse_fs_mkdirwcs (qse_fs_t* fs, const qse_wchar_t* path, int flags)
 {
 	qse_fs_char_t* fspath;
 	int ret;
 
-#if 0
-	if (fs->cbs.mk) 
+	if (*path == QSE_WT('\0')) 
 	{
-		int x;
-		x = fs->cbs.del (fs, path);
-		if (x <= -1) return -1;
-		if (x == 0) return 0; /* skipped */
+		fs->errnum = QSE_FS_EINVAL;
+		return -1;
 	}
-#endif
 
-	fspath = (qse_fs_char_t*)qse_fs_makefspathforwcs (fs, path);
-	if (!fspath) return -1;
+	if (flags & QSE_FS_MKDIRWCS_PARENT)
+	{
+		fspath = qse_fs_dupfspathforwcs (fs, path);
+		if (!fspath) return -1;
 
-	ret = make_directory_from_fs (fs, fspath);
+		ret = make_directory_chain (fs, fspath);
+	}
+	else
+	{
+		fspath = (qse_fs_char_t*)qse_fs_makefspathforwcs (fs, path);
+		if (!fspath) return -1;
+
+		ret = make_directory_in_fs (fs, fspath);
+	}
+
 	qse_fs_freefspathforwcs (fs, path, fspath);
 
 	return ret;
 }
 
+
 /* --------------------------------------------------------------------- */
-int qse_fs_mkdirmbs (qse_fs_t* fs, const qse_mchar_t* path)
-{
-
-	return 0;
-}
-
-int qse_fs_mkdirwcs (qse_fs_t* fs, const qse_wchar_t* path)
-{
-	return 0;
-}
+/*
+mknodmbs
+mkfifombs
+mknodwcs
+mknodwcs
+*/
