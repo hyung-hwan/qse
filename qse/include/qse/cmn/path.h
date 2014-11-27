@@ -27,7 +27,7 @@
 #ifndef _QSE_CMN_PATH_H_
 #define _QSE_CMN_PATH_H_
 
-/** @file
+/** \file
  * This file provides functions for path name manipulation.
  */
 
@@ -91,7 +91,7 @@ QSE_EXPORT const qse_wchar_t* qse_wcsbasename (
  * A path name beginning with a segment separator is absolute.
  * On Win32/OS2/DOS, it also returns 1 if a path name begins with a drive 
  * letter followed by a colon.
- * @return 1 if absolute, 0 if not.
+ * \return 1 if absolute, 0 if not.
  */
 QSE_EXPORT int qse_ismbsabspath (
 	const qse_mchar_t* path
@@ -122,27 +122,35 @@ QSE_EXPORT int qse_ismbsdrivecurpath (
 );
 
 /**
- * The qse_canonmbspath() function canonicalizes a path name @a path by deleting 
+ * The qse_getmbspathroot() function returns the core part of \a path 
+ * excluding a special prefix.
+ */
+QSE_EXPORT qse_mchar_t* qse_getmbspathcore (
+	const qse_mchar_t* path
+);
+
+/**
+ * The qse_canonmbspath() function canonicalizes a path name \a path by deleting 
  * unnecessary path segments from it and stores the result to a memory buffer 
- * pointed to by @a canon. Canonicalization is purely performed on the path
+ * pointed to by \a canon. Canonicalization is purely performed on the path
  * name without refering to actual file systems. It null-terminates the 
- * canonical path in @a canon and returns the number of characters excluding
+ * canonical path in \a canon and returns the number of characters excluding
  * the terminating null. 
  *
- * @code
+ * \code
  * qse_mchar_t buf[64];
  * qse_canonmbspath (QSE_MT("/usr/local/../bin/sh"), buf);
  * qse_printf (QSE_T("%hs\n")); // prints /usr/bin/sh
- * @endcode
+ * \endcode
  *
- * If #QSE_CANONPATH_EMPTYSINGLEDOT is clear in the @a flags, a single dot 
- * is produced if the input @a path resolves to the current directory logically.
+ * If #QSE_CANONPATH_EMPTYSINGLEDOT is clear in the \a flags, a single dot 
+ * is produced if the input \a path resolves to the current directory logically.
  * For example, dir/.. is canonicalized to a single period; If it is set, 
  * an empty string is produced. Even a single period as an input produces
  * an empty string if it is set.
  *
- * The output is empty returning 0 regardless of @a flags if the input 
- * @a path is empty.
+ * The output is empty returning 0 regardless of \a flags if the input 
+ * \a path is empty.
  * 
  * The caller must ensure that it is large enough to hold the resulting 
  * canonical path before calling because this function does not check the
@@ -151,7 +159,7 @@ QSE_EXPORT int qse_ismbsdrivecurpath (
  * buffer as long as the number of characters and a terminating null in 
  * the original path.
  *
- * @return number of characters in the resulting canonical path excluding
+ * \return number of characters in the resulting canonical path excluding
  *         the terminating null.
  */
 QSE_EXPORT qse_size_t qse_canonmbspath (
@@ -165,7 +173,7 @@ QSE_EXPORT qse_size_t qse_canonmbspath (
  * A path name beginning with a segment separator is absolute.
  * On Win32/OS2/DOS, it also returns 1 if a path name begins with a drive 
  * letter followed by a colon.
- * @return 1 if absolute, 0 if not.
+ * \return 1 if absolute, 0 if not.
  */
 QSE_EXPORT int qse_iswcsabspath (
 	const qse_wchar_t* path
@@ -196,27 +204,35 @@ QSE_EXPORT int qse_iswcsdrivecurpath (
 );
 
 /**
- * The qse_canonwcspath() function canonicalizes a path name @a path by deleting 
+ * The qse_getwcspathroot() function returns the core part of \a path 
+ * excluding a special prefix.
+ */
+QSE_EXPORT qse_wchar_t* qse_getwcspathcore (
+	const qse_wchar_t* path
+);
+
+/**
+ * The qse_canonwcspath() function canonicalizes a path name \a path by deleting 
  * unnecessary path segments from it and stores the result to a memory buffer 
- * pointed to by @a canon. Canonicalization is purely performed on the path
+ * pointed to by \a canon. Canonicalization is purely performed on the path
  * name without refering to actual file systems. It null-terminates the 
- * canonical path in @a canon and returns the number of characters excluding
+ * canonical path in \a canon and returns the number of characters excluding
  * the terminating null. 
  *
- * @code
+ * \code
  * qse_wchar_t buf[64];
  * qse_canonwcspath (QSE_WT("/usr/local/../bin/sh"), buf);
  * qse_printf (QSE_T("%ls\n")); // prints /usr/bin/sh
- * @endcode
+ * \endcode
  *
- * If #QSE_CANONPATH_EMPTYSINGLEDOT is clear in the @a flags, a single dot 
- * is produced if the input @a path resolves to the current directory logically.
+ * If #QSE_CANONPATH_EMPTYSINGLEDOT is clear in the \a flags, a single dot 
+ * is produced if the input \a path resolves to the current directory logically.
  * For example, dir/.. is canonicalized to a single period; If it is set, 
  * an empty string is produced. Even a single period as an input produces
  * an empty string if it is set.
  *
- * The output is empty returning 0 regardless of @a flags if the input 
- * @a path is empty.
+ * The output is empty returning 0 regardless of \a flags if the input 
+ * \a path is empty.
  * 
  * The caller must ensure that it is large enough to hold the resulting 
  * canonical path before calling because this function does not check the
@@ -225,7 +241,7 @@ QSE_EXPORT int qse_iswcsdrivecurpath (
  * buffer as long as the number of characters and a terminating null in 
  * the original path.
  *
- * @return number of characters in the resulting canonical path excluding
+ * \return number of characters in the resulting canonical path excluding
  *         the terminating null.
  */
 QSE_EXPORT qse_size_t qse_canonwcspath (
@@ -239,12 +255,14 @@ QSE_EXPORT qse_size_t qse_canonwcspath (
 #	define qse_isdrivepath(p)    qse_ismbsdrivepath(p)
 #	define qse_isdriveabspath(p) qse_ismbsdriveabspath(p)
 #	define qse_isdrivecurpath(p) qse_ismbsdrivecurpath(p)
+#	define qse_getpathcore(p)    qse_getmbspathcore(p)
 #	define qse_canonpath(p,c,f)  qse_canonmbspath(p,c,f)
 #else
 #	define qse_isabspath(p)      qse_iswcsabspath(p)
 #	define qse_isdrivepath(p)    qse_iswcsdrivepath(p)
 #	define qse_isdriveabspath(p) qse_iswcsdriveabspath(p)
 #	define qse_isdrivecurpath(p) qse_iswcsdrivecurpath(p)
+#	define qse_getpathcore(p)    qse_getwcspathcore(p)
 #	define qse_canonpath(p,c,f)  qse_canonwcspath(p,c,f)
 #endif
 

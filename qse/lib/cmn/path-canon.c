@@ -26,6 +26,10 @@
 
 #include <qse/cmn/path.h>
 
+/* TODO: support the \\?\ prefix and the \\.\ prefix on windows 
+ *       support \\?\UNC\server\path which is equivalent to \\server\path. 
+ * */
+
 /* ------------------------------------------------------------------ */
 /*  MBS IMPLEMENTATION                                                */
 /* ------------------------------------------------------------------ */
@@ -40,6 +44,7 @@
 	  (s[0] >= QSE_MT('a') && s[0] <= QSE_MT('z'))) && \
 	 s[1] == QSE_MT(':'))
 
+
 int qse_ismbsabspath (const qse_mchar_t* path)
 {
 	if (IS_MSEP(path[0])) return 1;
@@ -48,7 +53,7 @@ int qse_ismbsabspath (const qse_mchar_t* path)
 	 * but the path within the drive is kind of relative */
 	if (IS_MDRIVE(path)) return 1;
 #endif
-     return 0;
+	return 0;
 }
 
 int qse_ismbsdrivepath (const qse_mchar_t* path)
@@ -73,6 +78,25 @@ int qse_ismbsdrivecurpath (const qse_mchar_t* path)
 	if (IS_MDRIVE(path) && path[2] == QSE_MT('\0')) return 1;
 #endif
 	return 0;
+}
+
+qse_mchar_t* qse_getmbspathcore (const qse_mchar_t* path)
+{
+#if defined(_WIN32) || defined(__OS2__) || defined(__DOS__)
+	if (IS_MDRIVE(path)) return path + 2;
+	#if defined(_WIN32)
+	else if (IS_MSEP(*ptr) && IS_MSEP(*(ptr + 1)) && !IS_MSEP_OR_MNIL(*(ptr + 2)))
+	{
+		/* UNC Path */
+		ptr += 2;
+		do { ptr++; } while (!IS_MSEP_OR_MNIL(*ptr));
+		if (IS_MSEP(*ptr)) return ptr;
+	}
+	#endif
+/* TOOD: \\server\XXX \\.\XXX \\?\XXX \\?\UNC\server\XXX */
+	
+#endif
+	return path;
 }
 
 qse_size_t qse_canonmbspath (const qse_mchar_t* path, qse_mchar_t* canon, int flags)
@@ -388,6 +412,23 @@ int qse_iswcsdrivecurpath (const qse_wchar_t* path)
 	if (IS_WDRIVE(path) && path[2] == QSE_WT('\0')) return 1;
 #endif
 	return 0;
+}
+
+qse_wchar_t* qse_getwcspathcore (const qse_wchar_t* path)
+{
+#if defined(_WIN32) || defined(__OS2__) || defined(__DOS__)
+	if (IS_WDRIVE(path)) return path + 2;
+	#if defined(_WIN32)
+	else if (IS_WSEP(*ptr) && IS_WSEP(*(ptr + 1)) && !IS_WSEP_OR_WNIL(*(ptr + 2)))
+	{
+		/* UNC Path */
+		ptr += 2;
+		do { ptr++; } while (!IS_WSEP_OR_WNIL(*ptr));
+		if (IS_WSEP(*ptr)) return ptr;
+	}
+	#endif
+#endif
+	return path;
 }
 
 qse_size_t qse_canonwcspath (const qse_wchar_t* path, qse_wchar_t* canon, int flags)
