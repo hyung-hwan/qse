@@ -18,7 +18,7 @@ static int fs_del (qse_fs_t* fs, const qse_char_t* path)
 static void print_usage (const qse_char_t* argv0)
 {
 	qse_fprintf (QSE_STDERR, QSE_T("Usage: %s command filename\n"), qse_basename(argv0));
-	qse_fprintf (QSE_STDERR, QSE_T("Command is one of delfile | delfile-r | deldir | deldir-r | mkdir | mkdir-p\n"));
+	qse_fprintf (QSE_STDERR, QSE_T("Command is one of rmfile | rmfile-r | rmdir | rmdir-r | mkdir | mkdir-p\n"));
 	qse_fprintf (QSE_STDERR, QSE_T("Filename is a pattern for delXXX\n"));
 }
 
@@ -39,7 +39,7 @@ static int fs_main (int argc, qse_char_t* argv[])
 	cbs.del = fs_del;
 	qse_fs_setopt (fs, QSE_FS_CBS, &cbs);
 
-	if (qse_strcmp(argv[1], QSE_T("delfile")) == 0)
+	if (qse_strcmp(argv[1], QSE_T("rmfile")) == 0)
 	{
 		if (qse_fs_delfile (fs, argv[2], QSE_FS_DELFILEMBS_GLOB) <= -1)
 		{
@@ -47,7 +47,7 @@ static int fs_main (int argc, qse_char_t* argv[])
 			ret = -1;
 		}
 	}
-	else if (qse_strcmp(argv[1], QSE_T("delfile-r")) == 0)
+	else if (qse_strcmp(argv[1], QSE_T("rmfile-r")) == 0)
 	{
 		if (qse_fs_delfile (fs, argv[2], QSE_FS_DELFILE_GLOB | QSE_FS_DELFILE_RECURSIVE) <= -1)
 		{
@@ -55,7 +55,7 @@ static int fs_main (int argc, qse_char_t* argv[])
 			ret = -1;
 		}
 	}
-	else if (qse_strcmp (argv[1], QSE_T("deldir")) == 0)
+	else if (qse_strcmp (argv[1], QSE_T("rmdir")) == 0)
 	{
 		if (qse_fs_deldir (fs, argv[2], QSE_FS_DELDIR_GLOB) <= -1)
 		{
@@ -63,7 +63,7 @@ static int fs_main (int argc, qse_char_t* argv[])
 			ret = -1;
 		}
 	}
-	else if (qse_strcmp (argv[1], QSE_T("deldir-r")) == 0)
+	else if (qse_strcmp (argv[1], QSE_T("rmdir-r")) == 0)
 	{
 		if (qse_fs_deldir (fs, argv[2], QSE_FS_DELDIR_GLOB | QSE_FS_DELDIR_RECURSIVE) <= -1)
 		{

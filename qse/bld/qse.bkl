@@ -433,6 +433,8 @@
 		<library>libqsecmn</library>
 		<library>libqseawk</library>
 		<depends>dllqseawk</depends>
+		<sys-lib>$(SYSLIB_1)</sys-lib>
+		<sys-lib>$(SYSLIB_2)</sys-lib>
 	</dll>
 
 	<dll id="modqseawksed" template="base" cond="ENABLE_STATIC_MODULE=='0'">

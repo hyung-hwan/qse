@@ -83,20 +83,20 @@ int qse_ismbsdrivecurpath (const qse_mchar_t* path)
 qse_mchar_t* qse_getmbspathcore (const qse_mchar_t* path)
 {
 #if defined(_WIN32) || defined(__OS2__) || defined(__DOS__)
-	if (IS_MDRIVE(path)) return path + 2;
+	if (IS_MDRIVE(path)) return (qse_mchar_t*)path + 2;
 	#if defined(_WIN32)
-	else if (IS_MSEP(*ptr) && IS_MSEP(*(ptr + 1)) && !IS_MSEP_OR_MNIL(*(ptr + 2)))
+	else if (IS_MSEP(*path) && IS_MSEP(*(path + 1)) && !IS_MSEP_OR_MNIL(*(path + 2)))
 	{
 		/* UNC Path */
-		ptr += 2;
-		do { ptr++; } while (!IS_MSEP_OR_MNIL(*ptr));
-		if (IS_MSEP(*ptr)) return ptr;
+		path += 2;
+		do { path++; } while (!IS_MSEP_OR_MNIL(*path));
+		if (IS_MSEP(*path)) return (qse_mchar_t*)path;
 	}
 	#endif
 /* TOOD: \\server\XXX \\.\XXX \\?\XXX \\?\UNC\server\XXX */
 	
 #endif
-	return path;
+	return (qse_mchar_t*)path;
 }
 
 qse_size_t qse_canonmbspath (const qse_mchar_t* path, qse_mchar_t* canon, int flags)
@@ -303,7 +303,7 @@ qse_size_t qse_canonmbspath (const qse_mchar_t* path, qse_mchar_t* canon, int fl
 	else 
 	{
 		/* just null-terminate the canonical path normally */
-		dst[0] = QSE_MT('\0');	
+		dst[0] = QSE_MT('\0');
 		canon_len = dst - canon;
 	}
 
@@ -417,18 +417,18 @@ int qse_iswcsdrivecurpath (const qse_wchar_t* path)
 qse_wchar_t* qse_getwcspathcore (const qse_wchar_t* path)
 {
 #if defined(_WIN32) || defined(__OS2__) || defined(__DOS__)
-	if (IS_WDRIVE(path)) return path + 2;
+	if (IS_WDRIVE(path)) return (qse_wchar_t*)path + 2;
 	#if defined(_WIN32)
-	else if (IS_WSEP(*ptr) && IS_WSEP(*(ptr + 1)) && !IS_WSEP_OR_WNIL(*(ptr + 2)))
+	else if (IS_WSEP(*path) && IS_WSEP(*(path + 1)) && !IS_WSEP_OR_WNIL(*(path + 2)))
 	{
 		/* UNC Path */
-		ptr += 2;
-		do { ptr++; } while (!IS_WSEP_OR_WNIL(*ptr));
-		if (IS_WSEP(*ptr)) return ptr;
+		path += 2;
+		do { path++; } while (!IS_WSEP_OR_WNIL(*path));
+		if (IS_WSEP(*path)) return (qse_wchar_t*)path;
 	}
 	#endif
 #endif
-	return path;
+	return (qse_wchar_t*)path;
 }
 
 qse_size_t qse_canonwcspath (const qse_wchar_t* path, qse_wchar_t* canon, int flags)

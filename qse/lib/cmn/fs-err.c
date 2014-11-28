@@ -61,8 +61,8 @@ qse_fs_errnum_t qse_fs_syserrtoerrnum (qse_fs_t* fs, qse_fs_syserr_t e)
 		case ERROR_NOT_SAME_DEVICE:
 			return QSE_FS_EXDEV;
 
-		case ERROR_DIR_NOT_EMPTY;
-			return QSE_FS_ENOTEMPTY;
+		case ERROR_DIR_NOT_EMPTY:
+			return QSE_FS_ENOTVOID;
 
 		default:
 			return QSE_FS_ESYSERR;

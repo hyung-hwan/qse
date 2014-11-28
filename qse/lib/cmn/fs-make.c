@@ -44,6 +44,16 @@ static int make_directory_in_fs (qse_fs_t* fs, const qse_fs_char_t* fspath)
 	rc = DosMkDir (fspath, QSE_NULL);
 	if (rc != NO_ERROR)
 	{
+		FILESTATUS3L ffb;
+		if (DosQueryPathInfo (fspath, FIL_STANDARDL, &ffb, QSE_SIZEOF(ffb)) == NO_ERROR)
+		{
+			if (ffb.attrFile & FILE_DIRECTORY) 
+			{
+				fs->errnum = QSE_FS_EEXIST;
+				return -1;
+			}
+		}
+
 		fs->errnum = qse_fs_syserrtoerrnum (fs, rc);
 		return -1;
 	}
@@ -52,6 +62,16 @@ static int make_directory_in_fs (qse_fs_t* fs, const qse_fs_char_t* fspath)
 
 	if (mkdir (fspath) <= -1)
 	{
+		struct stat st;
+		if (errno != EEXIST && stat (fspath, &st) >= 0)
+		{
+			if (S_ISDIR(st.st_mode)) 
+			{
+				fs->errnum = QSE_FS_EEXIST;
+				return -1;
+			}
+		}
+
 		fs->errnum = qse_fs_syserrtoerrnum (fs, errno);
 		return -1;
 	}
@@ -73,24 +93,44 @@ static int make_directory_in_fs (qse_fs_t* fs, const qse_fs_char_t* fspath)
 
 static int make_directory_chain (qse_fs_t* fs, qse_fs_char_t* fspath)
 {
-	qse_fs_char_t* p, c;
+	qse_fs_char_t* core, * p, c;
 	int ret = 0;
 
-	p = get_fspath_core (fspath);
-	canon_fspath (p, p, 0);
+	core = get_fspath_core (fspath);
+	canon_fspath (core, core, 0);
+
+	if (*core == QSE_FS_T('\0'))
+	{
+		fs->errnum = QSE_FS_EINVAL;
+		return -1;
+	}
+
+	p = core;
+	if (IS_FSPATHSEP(*p)) p++;
 	for (; *p; p++)
 	{
 		if (IS_FSPATHSEP(*p))
 		{
+		#if defined(_WIN32) || defined(__DOS__) || defined(__OS2__)
+			/* exclude the separtor from the path name */
+			c = *p;
+			*p = QSE_FS_T('\0');
+		#else
+			/* include the separater in the path name */
 			c = *(p + 1);
 			*(p + 1) = QSE_FS_T('\0');
+		#endif
 			ret = make_directory_in_fs (fs, fspath);
 			if (ret <= -1 && fs->errnum != QSE_FS_EEXIST) 
 			{
 				return -1;
 				goto done; /* abort */
 			}
+		#if defined(_WIN32) || defined(__DOS__) || defined(__OS2__)
+			*p = c;
+		#else
 			*(p + 1) = c;
+		#endif
 		}
 	}
 
