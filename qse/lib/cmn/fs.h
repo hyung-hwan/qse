@@ -37,6 +37,7 @@
 	typedef DWORD qse_fs_syserr_t;
 #elif defined(__OS2__)
 #	define INCL_DOSERRORS
+#	define INCL_DOSFILEMGR
 #	include <os2.h>
 	typedef APIRET qse_fs_syserr_t;
 #elif defined(__DOS__)

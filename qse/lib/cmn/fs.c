@@ -183,8 +183,6 @@ int qse_fs_setopt (qse_fs_t* fs, qse_fs_opt_t id, const void* value)
 	return -1;
 }
 
-
-
 static QSE_INLINE info_t* get_info (qse_fs_t* fs)
 {
 	info_t* info;
@@ -454,7 +452,7 @@ qse_fs_ent_t* qse_fs_read (qse_fs_t* fs, int flags)
 	info = fs->info;
 	if (info == QSE_NULL) 
 	{
-		fs->errnum = QSE_FS_ENODIR;
+		fs->errnum = QSE_FS_ENOENT; /* TODO: is this correct? */
 		return QSE_NULL;
 	}
 
@@ -757,7 +755,7 @@ qse_fs_char_t* qse_fs_makefspathformbs (qse_fs_t* fs, const qse_mchar_t* path)
 #if defined(QSE_FS_CHAR_IS_MCHAR)
 	fspath = path;
 #else
-	fspath = qse_mbstowcsdupwithcmgr (path, QSE_NULL, fs->mmgrm fs->cmgr);
+	fspath = qse_mbstowcsdupwithcmgr (path, QSE_NULL, fs->mmgr, fs->cmgr);
 	if (!fspath) fs->errnum = QSE_FS_ENOMEM;
 #endif
 
@@ -785,7 +783,7 @@ qse_fs_char_t* qse_fs_dupfspathformbs (qse_fs_t* fs, const qse_mchar_t* path)
 #if defined(QSE_FS_CHAR_IS_MCHAR)
 	fspath = qse_mbsdup (path, fs->mmgr);
 #else
-	fspath = qse_mbstowcsdupwithcmgr (path, QSE_NULL, fs->mmgrm fs->cmgr);
+	fspath = qse_mbstowcsdupwithcmgr (path, QSE_NULL, fs->mmgr, fs->cmgr);
 	if (!fspath) fs->errnum = QSE_FS_ENOMEM;
 #endif
 
@@ -808,10 +806,10 @@ qse_fs_char_t* qse_fs_dupfspathforwcs (qse_fs_t* fs, const qse_wchar_t* path)
 
 void qse_fs_freefspathformbs (qse_fs_t* fs, const qse_mchar_t* path, qse_fs_char_t* fspath)
 {
-	if (path != fspath) QSE_MMGR_FREE (fs->mmgr, fspath);
+	if (path != (const qse_mchar_t*)fspath) QSE_MMGR_FREE (fs->mmgr, fspath);
 }
 
 void qse_fs_freefspathforwcs (qse_fs_t* fs, const qse_wchar_t* path, qse_fs_char_t* fspath)
 {
-	if (path != fspath) QSE_MMGR_FREE (fs->mmgr, fspath);
+	if (path != (const qse_wchar_t*)fspath) QSE_MMGR_FREE (fs->mmgr, fspath);
 }

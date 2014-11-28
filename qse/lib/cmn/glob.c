@@ -182,7 +182,11 @@ static int path_exists (glob_t* g, const qse_char_t* name)
 #else
 
 	/* ------------------------------------------------------------------- */
-	struct stat st;
+#if defined(HAVE_LSTAT)
+	qse_lstat_t st;
+#else
+	qse_stat_t st;
+#endif
 	const qse_mchar_t* mptr;
 
 #if defined(QSE_CHAR_IS_MCHAR)
@@ -193,10 +197,10 @@ static int path_exists (glob_t* g, const qse_char_t* name)
 #endif
 
 #if defined(HAVE_LSTAT)
-	return (QSE_LSTAT (mptr, &st) == 0)? 1: 0;
+	return (QSE_LSTAT (mptr, &st) <= -1)? 0: 1;
 #else
 	/* use stat() if no lstat() is available. */
-	return (QSE_STAT (mptr, &st) == 0)? 1: 0;
+	return (QSE_STAT (mptr, &st) <= -1)? 0: 1;
 #endif
 
 	/* ------------------------------------------------------------------- */
@@ -353,7 +357,6 @@ static int handle_non_wild_segments (glob_t* g, segment_t* seg)
 		QSE_ASSERT (seg->type != NONE && !seg->wild);
 
 		if (seg->sep && qse_str_ccat (&g->path, seg->sep) == (qse_size_t)-1) return -1;
-
 		if (seg->esc)
 		{
 			/* if the segment contains escape sequences,
