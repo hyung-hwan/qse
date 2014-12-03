@@ -813,3 +813,49 @@ void qse_fs_freefspathforwcs (qse_fs_t* fs, const qse_wchar_t* path, qse_fs_char
 {
 	if (path != (const qse_wchar_t*)fspath) QSE_MMGR_FREE (fs->mmgr, fspath);
 }
+
+
+int qse_fs_getattr (qse_fs_t* fs, const qse_fs_char_t* fspath, qse_fs_attr_t* attr)
+{
+#if defined(_WIN32)
+#error TODO
+#elif defined(__OS2__)
+#error TODO
+#elif defined(__DOS__)
+#error TODO
+#else
+	#if defined(HAVE_LSTAT)
+	qse_lstat_t st;
+	#else
+	qse_stat_t st;
+	#endif
+
+	#if defined(HAVE_LSTAT)
+	if (QSE_LSTAT (fspath, &st) == -1) 
+	{
+		fs->errnum = qse_fs_syserrtoerrnum (fs, errno);
+		return -1;
+	}
+	#else
+	/* is this ok to use stat? */
+	if (QSE_STAT (fspath, &st) == -1) 
+	{
+		fs->errnum = qse_fs_syserrtoerrnum (fs, errno);
+		return -1;
+	}
+	#endif
+
+	QSE_MEMSET (attr, 0, QSE_SIZEOF(*attr));
+
+	if (S_ISDIR(st.st_mode)) attr->isdir = 1;
+	if (S_ISLNK(st.st_mode)) attr->islnk = 1;
+	if (S_ISREG(st.st_mode)) attr->isreg = 1;
+	if (S_ISBLK(st.st_mode)) attr->isblk = 1;
+	if (S_ISCHR(st.st_mode)) attr->ischr = 1;
+
+	attr->size = st.st_size;
+	attr->ino = st.st_ino;
+	attr->dev = st.st_dev;
+	return 0;
+#endif
+}

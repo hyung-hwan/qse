@@ -139,6 +139,13 @@ void qse_fs_freefspathforwcs (
 #	define qse_fs_freefspath(fs,path,fspath) qse_fs_freefspathforwcs(fs,path,fspath);
 #endif
 
+
+int qse_fs_getattr (
+	qse_fs_t* fs,
+	const qse_fs_char_t* fspath,
+	qse_fs_attr_t* attr
+);
+
 #if defined(__cplusplus)
 }
 #endif

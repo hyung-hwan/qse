@@ -368,6 +368,12 @@
 #	define QSE_SYMLINK(oldpath,newpath) symlink(oldpath,newpath)
 #endif
 
+#if defined(SYS_readlink) && defined(QSE_USE_SYSCALL)
+#	define QSE_READLINK(path,buf,size) syscall(SYS_readlink,path,buf,size)
+#else
+#	define QSE_READLINK(path,buf,size) readlink(path,buf,size)
+#endif
+
 #if defined(SYS_unlink) && defined(QSE_USE_SYSCALL)
 #	define QSE_UNLINK(path) syscall(SYS_unlink,path)
 #else

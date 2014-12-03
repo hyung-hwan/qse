@@ -117,6 +117,20 @@ struct qse_fs_ent_t
 
 typedef struct qse_fs_ent_t qse_fs_ent_t;
 
+struct qse_fs_attr_t
+{
+	unsigned int isdir: 1;
+	unsigned int islnk: 1;
+	unsigned int isreg: 1;
+	unsigned int isblk: 1;
+	unsigned int ischr: 1;
+	qse_uintmax_t size;
+	qse_uintmax_t ino;
+	qse_uintmax_t dev;
+};
+
+typedef struct qse_fs_attr_t qse_fs_attr_t;
+
 typedef struct qse_fs_t qse_fs_t;
 
 enum qse_fs_trait_t
@@ -128,6 +142,15 @@ enum qse_fs_trait_t
 	QSE_FS_REALPATH = (1 << 2)  
 };
 typedef enum qse_fs_trait_t qse_fs_trait_t;
+
+
+/**
+ * \return -1 on failure, 0 to cancel, 1 to keep copying
+ */
+typedef int (*qse_fs_cbs_cp_t) (
+	qse_fs_t*         fs,
+	void*             ctx
+);
 
 /**
  * \return -1 on failure, 0 to skip, 1 to delete
@@ -155,6 +178,8 @@ struct qse_fs_t
 	qse_fs_ent_t    ent;
 	qse_char_t*     curdir;
 	void*           info;
+
+	qse_uint8_t     cpbuf[4096];
 };
 
 
@@ -165,6 +190,16 @@ enum qse_fs_opt_t
 	QSE_FS_CBS
 };
 typedef enum qse_fs_opt_t qse_fs_opt_t;
+
+enum qse_fs_cpfile_flag_t
+{
+	QSE_FS_CPFILE_PRESERVE = (1 << 0),
+	QSE_FS_CPFILE_REPLACE = (1 << 1),
+	QSE_FS_CPFILE_SYMLINK = (1 << 2),
+
+	QSE_FS_CPFILE_ALL = (QSE_FS_CPFILE_PRESERVE | QSE_FS_CPFILE_REPLACE | QSE_FS_CPFILE_SYMLINK)
+};
+typedef enum qse_fs_cpfile_flag_t qse_fs_cpfile_flag_t;
 
 
 enum qse_fs_mkdir_flag_t
@@ -274,6 +309,26 @@ QSE_EXPORT int qse_fs_move (
 	const qse_char_t* newpath
 );
 
+
+QSE_EXPORT int qse_fs_cpfilembs (
+	qse_fs_t*          fs,
+	const qse_mchar_t* srcpath,
+	const qse_mchar_t* dstpath,
+	int                flags
+);
+
+QSE_EXPORT int qse_fs_cpfilewcs (
+	qse_fs_t*          fs,
+	const qse_wchar_t* srcpath,
+	const qse_wchar_t* dstpath,
+	int                flags
+);
+
+#if defined(QSE_CHAR_IS_MCHAR)
+#	define qse_fs_cpfile(fs,srcpath,dstpath,flags) qse_fs_cpfilembs(fs,srcpath,dstpath,flags)
+#else
+#	define qse_fs_cpfile(fs,srcpath,dstpath,flags) qse_fs_cpfilewcs(fs,srcpath,dstpath,flags)
+#endif
 
 QSE_EXPORT int qse_fs_mkdirmbs (
 	qse_fs_t*          fs,

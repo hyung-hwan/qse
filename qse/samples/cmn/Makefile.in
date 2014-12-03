@@ -54,8 +54,8 @@ host_triplet = @host@
 bin_PROGRAMS = chr01$(EXEEXT) dir01$(EXEEXT) dll$(EXEEXT) \
 	env01$(EXEEXT) fio01$(EXEEXT) fio02$(EXEEXT) fma$(EXEEXT) \
 	fmt01$(EXEEXT) fmt02$(EXEEXT) fs01$(EXEEXT) fs02$(EXEEXT) \
-	htb$(EXEEXT) glob01$(EXEEXT) ipad01$(EXEEXT) lda$(EXEEXT) \
-	main01$(EXEEXT) main02$(EXEEXT) mbwc01$(EXEEXT) \
+	fs03$(EXEEXT) htb$(EXEEXT) glob01$(EXEEXT) ipad01$(EXEEXT) \
+	lda$(EXEEXT) main01$(EXEEXT) main02$(EXEEXT) mbwc01$(EXEEXT) \
 	mbwc02$(EXEEXT) nwad01$(EXEEXT) nwif01$(EXEEXT) \
 	nwif02$(EXEEXT) oht$(EXEEXT) path01$(EXEEXT) pio$(EXEEXT) \
 	pma$(EXEEXT) rex01$(EXEEXT) rbt$(EXEEXT) sio01$(EXEEXT) \
@@ -131,6 +131,10 @@ fs02_SOURCES = fs02.c
 fs02_OBJECTS = fs02.$(OBJEXT)
 fs02_LDADD = $(LDADD)
 fs02_DEPENDENCIES = $(am__DEPENDENCIES_2)
+fs03_SOURCES = fs03.c
+fs03_OBJECTS = fs03.$(OBJEXT)
+fs03_LDADD = $(LDADD)
+fs03_DEPENDENCIES = $(am__DEPENDENCIES_2)
 am_glob01_OBJECTS = glob01.$(OBJEXT)
 glob01_OBJECTS = $(am_glob01_OBJECTS)
 glob01_LDADD = $(LDADD)
@@ -272,7 +276,7 @@ am__v_GEN_0 = @echo "  GEN   " $@;
 SOURCES = $(chr01_SOURCES) dir01.c $(dll_SOURCES) $(env01_SOURCES) \
 	$(fio01_SOURCES) $(fio02_SOURCES) $(fma_SOURCES) \
 	$(fmt01_SOURCES) $(fmt02_SOURCES) $(fs01_SOURCES) fs02.c \
-	$(glob01_SOURCES) $(htb_SOURCES) $(ipad01_SOURCES) \
+	fs03.c $(glob01_SOURCES) $(htb_SOURCES) $(ipad01_SOURCES) \
 	$(lda_SOURCES) $(main01_SOURCES) $(main02_SOURCES) \
 	$(mbwc01_SOURCES) $(mbwc02_SOURCES) $(nwad01_SOURCES) nwif01.c \
 	nwif02.c $(oht_SOURCES) $(path01_SOURCES) $(pio_SOURCES) \
@@ -283,7 +287,7 @@ SOURCES = $(chr01_SOURCES) dir01.c $(dll_SOURCES) $(env01_SOURCES) \
 DIST_SOURCES = $(chr01_SOURCES) dir01.c $(dll_SOURCES) \
 	$(env01_SOURCES) $(fio01_SOURCES) $(fio02_SOURCES) \
 	$(fma_SOURCES) $(fmt01_SOURCES) $(fmt02_SOURCES) \
-	$(fs01_SOURCES) fs02.c $(glob01_SOURCES) $(htb_SOURCES) \
+	$(fs01_SOURCES) fs02.c fs03.c $(glob01_SOURCES) $(htb_SOURCES) \
 	$(ipad01_SOURCES) $(lda_SOURCES) $(main01_SOURCES) \
 	$(main02_SOURCES) $(mbwc01_SOURCES) $(mbwc02_SOURCES) \
 	$(nwad01_SOURCES) nwif01.c nwif02.c $(oht_SOURCES) \
@@ -628,6 +632,9 @@ fs01$(EXEEXT): $(fs01_OBJECTS) $(fs01_DEPENDENCIES) $(EXTRA_fs01_DEPENDENCIES)
 fs02$(EXEEXT): $(fs02_OBJECTS) $(fs02_DEPENDENCIES) $(EXTRA_fs02_DEPENDENCIES) 
 	@rm -f fs02$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(fs02_OBJECTS) $(fs02_LDADD) $(LIBS)
+fs03$(EXEEXT): $(fs03_OBJECTS) $(fs03_DEPENDENCIES) $(EXTRA_fs03_DEPENDENCIES) 
+	@rm -f fs03$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(fs03_OBJECTS) $(fs03_LDADD) $(LIBS)
 glob01$(EXEEXT): $(glob01_OBJECTS) $(glob01_DEPENDENCIES) $(EXTRA_glob01_DEPENDENCIES) 
 	@rm -f glob01$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(glob01_OBJECTS) $(glob01_LDADD) $(LIBS)
@@ -730,6 +737,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fmt02.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fs01.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fs02.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fs03.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/glob01.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/htb.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ipad01.Po@am__quote@
