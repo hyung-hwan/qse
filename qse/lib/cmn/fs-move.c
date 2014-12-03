@@ -51,25 +51,49 @@ struct fop_t
 #if defined(_WIN32)
 	/* nothing yet */
 #elif defined(__OS2__)
-	qse_mchar_t* old_path;
-	qse_mchar_t* new_path;
+	qse_fs_char_t* old_path;
+	qse_fs_char_t* new_path;
 #elif defined(__DOS__)
-	qse_mchar_t* old_path;
-	qse_mchar_t* new_path;
+	qse_fs_char_t* old_path;
+	qse_fs_char_t* new_path;
 #else
-	qse_mchar_t* old_path;
-	qse_mchar_t* new_path;
-	qse_mchar_t* new_path2;
+	qse_fs_char_t* old_path;
+	qse_fs_char_t* new_path;
+	qse_fs_char_t* new_path2;
 
+	#if defined(HAVE_LSTAT)
 	qse_lstat_t old_stat;
 	qse_lstat_t new_stat;
+	#else
+	qse_stat_t old_stat;
+	qse_stat_t new_stat;
+	#endif
 #endif
 };
 
 typedef struct fop_t fop_t;
 
-int qse_fs_move (
-	qse_fs_t* fs, const qse_char_t* oldpath, const qse_char_t* newpath)
+
+/* internal flags. it must not overlap with qse_fs_cpfile_flag_t enumerators */
+#define CPFILE_DST_ATTR (1 << 30)
+
+struct cpfile_t
+{
+	int flags;
+
+	qse_fs_char_t* src_fspath;
+	qse_fs_char_t* dst_fspath;
+
+	qse_char_t* src_path;
+	qse_char_t* dst_path;
+
+	qse_fs_attr_t src_attr;
+	qse_fs_attr_t dst_attr;
+};
+typedef struct cpfile_t cpfile_t;
+
+
+int qse_fs_move (qse_fs_t* fs, const qse_char_t* oldpath, const qse_char_t* newpath)
 {
 
 #if defined(_WIN32)
@@ -208,7 +232,7 @@ int qse_fs_move (
 	fop.new_path = newpath;
 	#else
 	fop.old_path = qse_wcstombsdup (oldpath, QSE_NULL, fs->mmgr);
-	fop.new_path = qse_wcstombsdup (newpath, QSE_NULL, fs->mmgr);	
+	fop.new_path = qse_wcstombsdup (newpath, QSE_NULL, fs->mmgr);
 	if (fop.old_path == QSE_NULL || fop.old_path == QSE_NULL)
 	{
 		fs->errnum = QSE_FS_ENOMEM;
@@ -363,3 +387,369 @@ oops:
 #endif
 }
 
+static int move_file_in_fs (qse_fs_t* fs, const qse_fs_char_t* oldpath, const qse_fs_char_t* newpath, int flags)
+{
+#if defined(_WIN32)
+	/* ------------------------------------------------------ */
+
+	if (MoveFile (oldpath, newpath) == FALSE)
+	{
+		DWORD e = GetLastError();
+		if (e == ERROR_ALREADY_EXISTS)
+		{
+			DeleteFile (newpath);
+			if (MoveFile (oldpath, newpath) == FALSE)
+			{
+				fs->errnum = qse_fs_syserrtoerrnum (fs, GetLastError());
+				return -1;
+			}
+		}
+		else
+		{
+			fs->errnum = qse_fs_syserrtoerrnum (fs, e);
+			return -1;
+		}
+	}
+
+	return 0;
+	/* ------------------------------------------------------ */
+
+#elif defined(__OS2__)
+	/* ------------------------------------------------------ */
+
+	/* TODO: improve it */
+	APIRET rc;
+
+	rc = DosMove (oldpath, newpath);
+	if (rc == ERROR_ALREADY_EXISTS || rc == ERROR_ACCESS_DENIED)
+	{
+		DosDelete (fop.new_path);
+		rc = DosMove (oldpath, newpath);
+	}
+	if (rc != NO_ERROR)
+	{
+		fs->errnum = qse_fs_syserrtoerrnum (fs, rc);
+		return -1;
+	}
+
+	return 0;
+
+	/* ------------------------------------------------------ */
+
+#elif defined(__DOS__)
+
+	/* ------------------------------------------------------ */
+	if (rename (oldpath, newpath) <= -1)
+	{
+		/* FYI, rename() on watcom seems to set 
+		 * errno to EACCES when the new path exists. */
+
+		unlink (newpath);
+		if (rename (oldpath, newpath) <= -1)
+		{
+			fs->errnum = qse_fs_syserrtoerrnum (fs, errno);
+			return -1;
+		}
+	}
+
+	return 0;
+
+	/* ------------------------------------------------------ */
+
+#else
+
+	if (!(flags & QSE_FS_CPFILE_REPLACE))
+	{
+		qse_lstat_t st;
+		if (QSE_LSTAT (newpath, &st) >= 0)
+		{
+			fs->errnum = QSE_FS_EEXIST;
+			return -1;
+		}
+	}
+
+	if (QSE_RENAME (oldpath, newpath) == -1)
+	{
+		fs->errnum = qse_fs_syserrtoerrnum (fs, errno);
+		return -1;
+	}
+
+	return 0;
+
+#endif
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*
+#if defined(_WIN32)
+DWORD copy_file_progress (
+	LARGE_INTEGER TotalFileSize,
+	LARGE_INTEGER TotalBytesTransferred,
+	LARGE_INTEGER StreamSize,
+	LARGE_INTEGER StreamBytesTransferred,
+	DWORD dwStreamNumber,
+	DWORD dwCallbackReason,
+	HANDLE hSourceFile,
+	HANDLE hDestinationFile,
+	LPVOID lpData)
+{
+}
+#endif
+*/
+
+/* copy
+ * -> progress
+ * -> abort/cancel
+ * -> replace/overwrite
+ * -> symbolic link
+ */
+
+static int copy_file_in_fs (qse_fs_t* fs, const cpfile_t* cpfile)
+{
+#if defined(_WIN32)
+	/* ------------------------------------------------------ */
+	DWORD copy_flags = 0;
+
+
+	if (flags & QSE_FS_CPFILE_SYMLINK)
+		copy_flags |= COPY_FILE_COPY_SYMLINK;
+	if (!(flags & QSE_FS_CPFILE_REPLACE))
+		copy_flags |= COPY_FILE_FAIL_IF_EXISTS;
+
+/*
+	if (fs->cbs.cp)
+	{
+		Specify callback???
+	}
+*/
+
+	if (CopyFileEx (oldpath, newpath,  QSE_NULL, QSE_NULL, QSE_NULL, copy_flags) == FALSE)
+	{
+		fs->errnum = qse_fs_syserrtoerrnum (fs, e);
+		return -1;
+	}
+
+	return 0;
+	/* ------------------------------------------------------ */
+
+#elif defined(__OS2__)
+	/* ------------------------------------------------------ */
+
+	APIRET rc;
+	USHORT opmode = 0;
+
+	if (flags & QSE_FS_CPFILE_REPLACE) opmode |= 1; /* set bit 0 */
+
+	rc = DosCopy (oldpath, newpath, opmode, 0);
+	if (rc != NO_ERROR)
+	{
+		fs->errnum = qse_fs_syserrtoerrnum (fs, rc);
+		return -1;
+	}
+
+	return 0;
+
+	/* ------------------------------------------------------ */
+
+#elif defined(__DOS__)
+
+	/* ------------------------------------------------------ */
+	if (rename (oldpath, newpath) <= -1)
+	{
+		/* FYI, rename() on watcom seems to set 
+		 * errno to EACCES when the new path exists. */
+
+		unlink (newpath);
+		if (rename (oldpath, newpath) <= -1)
+		{
+			fs->errnum = qse_fs_syserrtoerrnum (fs, errno);
+			return -1;
+		}
+	}
+
+	return 0;
+
+	/* ------------------------------------------------------ */
+
+#else
+	if ((cpfile->flags & QSE_FS_CPFILE_SYMLINK) && cpfile->src_attr.islnk)
+	{
+		qse_fs_char_t* tmpbuf;
+
+		/* TODO: use a static buffer is size is small enough */
+		tmpbuf = QSE_MMGR_ALLOC (fs->mmgr, QSE_SIZEOF(*tmpbuf) * (cpfile->src_attr.size + 1));
+		if (tmpbuf == QSE_NULL)
+		{
+			fs->errnum = QSE_FS_ENOMEM;
+			return -1;
+		}
+
+		if (QSE_READLINK (cpfile->src_fspath, tmpbuf, cpfile->src_attr.size) <= -1 ||
+		    QSE_SYMLINK (tmpbuf, cpfile->dst_fspath) <= -1)
+		{
+			QSE_MMGR_FREE (fs->mmgr, tmpbuf);
+			fs->errnum = qse_fs_syserrtoerrnum (fs, errno);
+			return -1;
+		}
+
+		QSE_MMGR_FREE (fs->mmgr, tmpbuf);
+		return 0;
+	}
+	else
+	{
+		int in = -1, out = -1;
+		qse_ssize_t in_len, out_len;
+		qse_uint8_t* bp;
+
+		in = QSE_OPEN (cpfile->src_fspath, O_RDONLY, 0);
+		out = QSE_OPEN (cpfile->dst_fspath, O_CREAT | O_WRONLY | O_TRUNC, 0777); /* TODO: proper mode */
+
+		if (in <= -1 || out <= -1)
+		{
+			fs->errnum = qse_fs_syserrtoerrnum (fs, errno);
+			goto oops;
+		}
+
+		while (1)
+		{
+			in_len = QSE_READ (in, fs->cpbuf, QSE_SIZEOF(fs->cpbuf));
+			if (in_len <= 0) break;
+
+	/* TODO: call progress callback */
+
+			bp = fs->cpbuf;
+			while (in_len > 0)
+			{
+				out_len = QSE_WRITE (out, bp, in_len);
+				if (out_len <= -1) goto oops;
+				bp += out_len;
+				in_len -= out_len;
+			}
+		}
+
+		QSE_CLOSE (out);
+		QSE_CLOSE (in);
+		return 0;
+
+	oops:
+		if (out >= 0) QSE_CLOSE (out);
+		if (in >= 0) QSE_CLOSE (in);
+		return -1;
+	}
+#endif
+}
+
+
+static int copy_file (qse_fs_t* fs, cpfile_t* cpfile)
+{
+
+	if (cpfile->src_attr.isdir)
+	{
+		fs->errnum = QSE_FS_ENOIMPL; /* TODO: copy a directory into a  directory */
+		return -1;
+	}
+	else
+	{
+		/* TODO: check if it's itself */
+
+		if (cpfile->flags & CPFILE_DST_ATTR) 
+		{
+			if (cpfile->src_attr.ino == cpfile->dst_attr.ino && 
+			    cpfile->src_attr.dev == cpfile->dst_attr.dev)
+			{
+				/* cannot copy a file to itself */
+				fs->errnum = QSE_FS_EINVAL; /* TODO: better error code */
+				return -1;
+			}
+
+			if (cpfile->dst_attr.isdir)
+			{
+				/* copy it to directory */
+				fs->errnum = QSE_FS_ENOIMPL; /* TODO: copy a file into a  directory */
+				return -1;
+			}
+
+			if (!(cpfile->flags & QSE_FS_CPFILE_REPLACE))
+			{
+				fs->errnum = QSE_FS_EEXIST;
+				return -1;
+			}
+		}
+
+		if (!cpfile->src_attr.isdir) 
+		{
+			/* source is not a directory. */
+			return copy_file_in_fs (fs, cpfile);
+		}
+
+		fs->errnum = QSE_FS_ENOIMPL; /* TODO: copy a file into a  directory */
+		return -1;
+	}
+}
+
+int qse_fs_cpfilembs (qse_fs_t* fs, const qse_mchar_t* srcpath, const qse_mchar_t* dstpath, int flags)
+{
+	cpfile_t cpfile;
+	int ret;
+
+	QSE_MEMSET (&cpfile, 0, QSE_SIZEOF(cpfile));
+
+	cpfile.flags = flags & QSE_FS_CPFILE_ALL; /* public flags only */
+
+	cpfile.src_fspath = (qse_fs_char_t*)qse_fs_makefspathformbs (fs, srcpath);
+	cpfile.dst_fspath = (qse_fs_char_t*)qse_fs_makefspathformbs (fs, dstpath);
+	if (!cpfile.src_fspath || !cpfile.dst_fspath) goto oops;
+
+	if (qse_fs_getattr (fs, cpfile.src_fspath, &cpfile.src_attr) <= -1) goto oops;
+	if (qse_fs_getattr (fs, cpfile.dst_fspath, &cpfile.dst_attr) >= 0) cpfile.flags |= CPFILE_DST_ATTR;
+
+	ret = copy_file (fs, &cpfile);
+
+	qse_fs_freefspathformbs (fs, dstpath, cpfile.dst_fspath);
+	qse_fs_freefspathformbs (fs, srcpath, cpfile.src_fspath);
+	return ret;
+
+oops:
+	if (cpfile.dst_fspath) qse_fs_freefspathformbs (fs, srcpath, cpfile.dst_fspath);
+	if (cpfile.src_fspath) qse_fs_freefspathformbs (fs, dstpath, cpfile.src_fspath);
+	return -1;
+}
+
+int qse_fs_cpfilewcs (qse_fs_t* fs, const qse_wchar_t* srcpath, const qse_wchar_t* dstpath, int flags)
+{
+	cpfile_t cpfile;
+	int ret;
+
+	QSE_MEMSET (&cpfile, 0, QSE_SIZEOF(cpfile));
+
+	cpfile.flags = flags & QSE_FS_CPFILE_ALL; /* public flags only */
+
+	cpfile.src_fspath = (qse_fs_char_t*)qse_fs_makefspathforwcs (fs, srcpath);
+	cpfile.dst_fspath = (qse_fs_char_t*)qse_fs_makefspathforwcs (fs, dstpath);
+	if (!cpfile.src_fspath || !cpfile.dst_fspath) goto oops;
+
+	if (qse_fs_getattr (fs, cpfile.src_fspath, &cpfile.src_attr) <= -1) goto oops;
+	if (qse_fs_getattr (fs, cpfile.dst_fspath, &cpfile.dst_attr) >= 0) cpfile.flags |= CPFILE_DST_ATTR;
+
+	ret = copy_file (fs, &cpfile);
+
+	qse_fs_freefspathforwcs (fs, dstpath, cpfile.dst_fspath);
+	qse_fs_freefspathforwcs (fs, srcpath, cpfile.src_fspath);
+	return ret;
+
+oops:
+	if (cpfile.dst_fspath) qse_fs_freefspathforwcs (fs, srcpath, cpfile.dst_fspath);
+	if (cpfile.src_fspath) qse_fs_freefspathforwcs (fs, dstpath, cpfile.src_fspath);
+	return -1;
+}

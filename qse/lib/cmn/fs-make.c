@@ -112,7 +112,7 @@ static int make_directory_chain (qse_fs_t* fs, qse_fs_char_t* fspath)
 		if (IS_FSPATHSEP(*p))
 		{
 		#if defined(_WIN32) || defined(__DOS__) || defined(__OS2__)
-			/* exclude the separtor from the path name */
+			/* exclude the separator from the path name */
 			c = *p;
 			*p = QSE_FS_T('\0');
 		#else
@@ -153,6 +153,8 @@ int qse_fs_mkdirmbs (qse_fs_t* fs, const qse_mchar_t* path, int flags)
 
 	if (flags & QSE_FS_MKDIRMBS_PARENT)
 	{
+		/* make_directory_chain changes the input path.
+		 * ensure to create a modifiable string for it. */
 		fspath = qse_fs_dupfspathformbs (fs, path);
 		if (!fspath) return -1;
 
@@ -184,6 +186,8 @@ int qse_fs_mkdirwcs (qse_fs_t* fs, const qse_wchar_t* path, int flags)
 
 	if (flags & QSE_FS_MKDIRWCS_PARENT)
 	{
+		/* make_directory_chain changes the input path.
+		 * ensure to create a modifiable string for it. */
 		fspath = qse_fs_dupfspathforwcs (fs, path);
 		if (!fspath) return -1;
 

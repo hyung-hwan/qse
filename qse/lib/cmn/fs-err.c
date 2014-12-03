@@ -123,6 +123,9 @@ qse_fs_errnum_t qse_fs_syserrtoerrnum (qse_fs_t* fs, qse_fs_syserr_t e)
 		case ENOTDIR:
 			return QSE_FS_ENOTDIR;
 
+		case EXDEV:
+			return QSE_FS_EXDEV;
+
 		default:
 			return QSE_FS_ESYSERR;
 	}
