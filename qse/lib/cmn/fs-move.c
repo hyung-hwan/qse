@@ -515,7 +515,7 @@ DWORD copy_file_progress (
  * -> symbolic link
  */
 
-static int copy_file_in_fs (qse_fs_t* fs, const cpfile_t* cpfile)
+static int copy_file_in_fs (qse_fs_t* fs, cpfile_t* cpfile)
 {
 #if defined(_WIN32)
 	/* ------------------------------------------------------ */
@@ -638,8 +638,48 @@ static int copy_file_in_fs (qse_fs_t* fs, const cpfile_t* cpfile)
 			}
 		}
 
+		if (cpfile->flags & QSE_FS_CPFILE_PRESERVE)
+		{
+		#if defined(HAVE_FUTIMENS)
+			struct timespec ts[2];
+		#elif defined(HAVE_FUTIMES)
+			struct timeval tv[2];
+		#endif
+
+			if (QSE_FCHOWN (out, cpfile->src_attr.uid, cpfile->src_attr.gid) <= -1)
+			{
+				fs->errnum = qse_fs_syserrtoerrnum (fs, errno);
+				goto oops;
+			}
+
+		#if defined(HAVE_FUTIMENS)
+			ts[0].tv_sec = cpfile->src_attr.atime.sec;
+			ts[0].tv_nsec = cpfile->src_attr.atime.nsec;
+			ts[1].tv_sec = cpfile->src_attr.mtime.sec;
+			ts[1].tv_nsec = cpfile->src_attr.mtime.nsec;
+			if (QSE_FUTIMENS (out, ts) <= -1)
+			{
+				fs->errnum = qse_fs_syserrtoerrnum (fs, errno);
+				goto oops;
+			}
+		#elif defined(HAVE_FUTIME)
+			tv[0].tv_sec = cpfile->src_attr.atime.sec;
+			tv[0].tv_usec = QSE_NSEC_TO_USEC(cpfile->src_attr.atime.nsec);
+			tv[1].tv_sec = cpfile->src_attr.mtime.sec;
+			tv[1].tv_usec = QSE_NSEC_TO_USEC(cpfile->src_attr.mtime.nsec);
+			if (QSE_FUTIMES (out, tv) <= -1)
+			{
+				fs->errnum = qse_fs_syserrtoerrnum (fs, errno);
+				goto oops;
+			}
+		#else
+		#	error neither futimens nor futimes exist
+		#endif
+		}
+
 		QSE_CLOSE (out);
 		QSE_CLOSE (in);
+
 		return 0;
 
 	oops:
@@ -650,10 +690,8 @@ static int copy_file_in_fs (qse_fs_t* fs, const cpfile_t* cpfile)
 #endif
 }
 
-
 static int copy_file (qse_fs_t* fs, cpfile_t* cpfile)
 {
-
 	if (cpfile->src_attr.isdir)
 	{
 		fs->errnum = QSE_FS_ENOIMPL; /* TODO: copy a directory into a  directory */
@@ -676,8 +714,8 @@ static int copy_file (qse_fs_t* fs, cpfile_t* cpfile)
 			if (cpfile->dst_attr.isdir)
 			{
 				/* copy it to directory */
-				fs->errnum = QSE_FS_ENOIMPL; /* TODO: copy a file into a  directory */
-				return -1;
+				//return copy_file_into_dir (fs, cpfile);
+				
 			}
 
 			if (!(cpfile->flags & QSE_FS_CPFILE_REPLACE))
@@ -693,7 +731,9 @@ static int copy_file (qse_fs_t* fs, cpfile_t* cpfile)
 			return copy_file_in_fs (fs, cpfile);
 		}
 
-		fs->errnum = QSE_FS_ENOIMPL; /* TODO: copy a file into a  directory */
+
+		/* source is a directory. is a recursive copy allowed? */
+		fs->errnum = QSE_FS_ENOIMPL;
 		return -1;
 	}
 }

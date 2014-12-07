@@ -392,6 +392,24 @@
 #	define QSE_UTIMES(path,t) utimes(path,t)
 #endif
 
+#if defined(SYS_futimes) && defined(QSE_USE_SYSCALL)
+#	define QSE_FUTIMES(fd,t) syscall(SYS_futimes,fd,t)
+#else
+#	define QSE_FUTIMES(fd,t) futimes(fd,t)
+#endif
+
+#if defined(SYS_lutimes) && defined(QSE_USE_SYSCALL)
+#	define QSE_LUTIMES(fd,t) syscall(SYS_lutimes,fd,t)
+#else
+#	define QSE_LUTIMES(fd,t) lutimes(fd,t)
+#endif
+
+#if defined(SYS_futimens) && defined(QSE_USE_SYSCALL)
+#	define QSE_FUTIMENS(fd,t) syscall(SYS_futimens,fd,t)
+#else
+#	define QSE_FUTIMENS(fd,t) futimens(fd,t)
+#endif
+
 /* ===== DIRECTORY - not really system calls ===== */
 #define QSE_OPENDIR(name) opendir(name)
 #define QSE_CLOSEDIR(dir) closedir(dir)
