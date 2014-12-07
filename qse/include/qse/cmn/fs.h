@@ -127,6 +127,11 @@ struct qse_fs_attr_t
 	qse_uintmax_t size;
 	qse_uintmax_t ino;
 	qse_uintmax_t dev;
+	qse_uintptr_t uid;
+	qse_uintptr_t gid;
+	qse_ntime_t atime; /* last access */
+	qse_ntime_t mtime; /* last modification */
+	qse_ntime_t ctime; /* last status change */
 };
 
 typedef struct qse_fs_attr_t qse_fs_attr_t;

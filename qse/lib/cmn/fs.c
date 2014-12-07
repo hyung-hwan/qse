@@ -856,6 +856,28 @@ int qse_fs_getattr (qse_fs_t* fs, const qse_fs_char_t* fspath, qse_fs_attr_t* at
 	attr->size = st.st_size;
 	attr->ino = st.st_ino;
 	attr->dev = st.st_dev;
+	attr->uid = st.st_uid;
+	attr->gid = st.st_gid;
+	
+	#if defined(HAVE_STRUCT_STAT_ST_MTIM_TV_NSEC)
+		attr->atime.sec = st.st_atim.tv_sec;
+		attr->atime.nsec = st.st_atim.tv_nsec;
+		attr->mtime.sec = st.st_mtim.tv_sec;
+		attr->mtime.nsec = st.st_mtim.tv_nsec;
+		attr->ctime.sec = st.st_ctim.tv_sec;
+		attr->ctime.nsec = st.st_ctim.tv_nsec;
+	#elif defined(HAVE_STRUCT_STAT_ST_MTIMESPEC_TV_NSEC)
+		attr->atime.sec = st.st_atimespec.tv_sec;
+		attr->atime.nsec = st.st_atimespec.tv_nsec;
+		attr->mtime.sec = st.st_mtimespec.tv_sec;
+		attr->mtime.nsec = st.st_mtimespec.tv_nsec;
+		attr->ctime.sec = st.st_ctimespec.tv_sec;
+		attr->ctime.nsec = st.st_ctimespec.tv_nsec;
+	#else
+		attr->atime.sec = st.st_atime;
+		attr->mtime.sec = st.st_mtime;
+		attr->ctime.sec = st.st_ctime;
+	#endif
 	return 0;
 #endif
 }
