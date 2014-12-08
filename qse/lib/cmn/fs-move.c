@@ -75,7 +75,10 @@ typedef struct fop_t fop_t;
 
 
 /* internal flags. it must not overlap with qse_fs_cpfile_flag_t enumerators */
-#define CPFILE_DST_ATTR (1 << 30)
+#define CPFILE_DST_ATTR (1 << 27)
+#define CPFILE_DST_PATH_DUP (1 << 28)
+#define CPFILE_DST_FSPATH_DUP (1 << 29)
+#define CPFILE_DST_FSPATH_MERGED (1 << 30)
 
 struct cpfile_t
 {
@@ -479,15 +482,60 @@ static int move_file_in_fs (qse_fs_t* fs, const qse_fs_char_t* oldpath, const qs
 #endif
 }
 
+static int merge_dstdir_and_file (qse_fs_t* fs, cpfile_t* cpfile)
+{
+	qse_fs_char_t* fstmp;
+
+	/* if the destination is directory, copy the base name of the source
+	 * and append it to the end of the destination, targetting at an entry
+	 * in the directory */
+	QSE_ASSERT (cpfile->dst_attr.isdir);
+
+	if (cpfile->dst_path)
+	{
+		qse_char_t* tmp;
+
+		tmp = qse_mergepathdup (cpfile->dst_path, qse_basename (cpfile->src_path), fs->mmgr);
+		if (!tmp) 
+		{
+			fs->errnum = QSE_FS_ENOMEM;
+			return -1;
+		}
+
+		if (cpfile->flags & CPFILE_DST_PATH_DUP) 
+			QSE_MMGR_FREE (fs->mmgr, cpfile->dst_path);
+
+		cpfile->dst_path = tmp;
+		cpfile->flags |= CPFILE_DST_PATH_DUP;
+	}
 
 
+	fstmp = merge_fspath_dup (cpfile->dst_fspath, get_fspath_base (cpfile->src_fspath), fs->mmgr);
+	if (!fstmp)
+	{
+		fs->errnum = QSE_FS_ENOMEM;
+		return -1;
+	}
+
+	if (cpfile->flags & CPFILE_DST_FSPATH_DUP) 
+		QSE_MMGR_FREE (fs->mmgr, cpfile->dst_fspath);
+	cpfile->dst_fspath = fstmp;
+	cpfile->flags |= CPFILE_DST_FSPATH_DUP;
+
+	if (qse_fs_getattr (fs, cpfile->dst_fspath, &cpfile->dst_attr) >= 0) 
+	{
+		cpfile->flags |= CPFILE_DST_ATTR;
+	}
+	else
+	{
+		cpfile->flags &= ~CPFILE_DST_ATTR;
+	}
+
+	cpfile->flags |= CPFILE_DST_FSPATH_MERGED;
 
 
-
-
-
-
-
+	return 0;
+}
 
 
 
@@ -699,8 +747,7 @@ static int copy_file (qse_fs_t* fs, cpfile_t* cpfile)
 	}
 	else
 	{
-		/* TODO: check if it's itself */
-
+	copy_file:
 		if (cpfile->flags & CPFILE_DST_ATTR) 
 		{
 			if (cpfile->src_attr.ino == cpfile->dst_attr.ino && 
@@ -711,11 +758,22 @@ static int copy_file (qse_fs_t* fs, cpfile_t* cpfile)
 				return -1;
 			}
 
-			if (cpfile->dst_attr.isdir)
+			if (!(cpfile->flags & QSE_FS_CPFILE_NOTGTDIR) && 
+			    cpfile->dst_attr.isdir)
 			{
-				/* copy it to directory */
-				//return copy_file_into_dir (fs, cpfile);
-				
+				if (cpfile->flags & CPFILE_DST_FSPATH_MERGED)
+				{
+					/* merge_dstdir_and_file() has been called already.
+					 * no more getting into a subdirectory */
+					fs->errnum = QSE_FS_EISDIR;
+					return -1;
+				}
+				else
+				{
+					/* arrange to copy a file into a directory */
+					if (merge_dstdir_and_file (fs, cpfile) <= -1) return -1;
+					goto copy_file;
+				}
 			}
 
 			if (!(cpfile->flags & QSE_FS_CPFILE_REPLACE))
@@ -730,7 +788,6 @@ static int copy_file (qse_fs_t* fs, cpfile_t* cpfile)
 			/* source is not a directory. */
 			return copy_file_in_fs (fs, cpfile);
 		}
-
 
 		/* source is a directory. is a recursive copy allowed? */
 		fs->errnum = QSE_FS_ENOIMPL;
@@ -750,6 +807,7 @@ int qse_fs_cpfilembs (qse_fs_t* fs, const qse_mchar_t* srcpath, const qse_mchar_
 	cpfile.src_fspath = (qse_fs_char_t*)qse_fs_makefspathformbs (fs, srcpath);
 	cpfile.dst_fspath = (qse_fs_char_t*)qse_fs_makefspathformbs (fs, dstpath);
 	if (!cpfile.src_fspath || !cpfile.dst_fspath) goto oops;
+	if (cpfile.dst_fspath != dstpath) cpfile.flags |= CPFILE_DST_FSPATH_DUP;
 
 	if (qse_fs_getattr (fs, cpfile.src_fspath, &cpfile.src_attr) <= -1) goto oops;
 	if (qse_fs_getattr (fs, cpfile.dst_fspath, &cpfile.dst_attr) >= 0) cpfile.flags |= CPFILE_DST_ATTR;
@@ -778,6 +836,7 @@ int qse_fs_cpfilewcs (qse_fs_t* fs, const qse_wchar_t* srcpath, const qse_wchar_
 	cpfile.src_fspath = (qse_fs_char_t*)qse_fs_makefspathforwcs (fs, srcpath);
 	cpfile.dst_fspath = (qse_fs_char_t*)qse_fs_makefspathforwcs (fs, dstpath);
 	if (!cpfile.src_fspath || !cpfile.dst_fspath) goto oops;
+	if (cpfile.dst_fspath != dstpath) cpfile.flags |= CPFILE_DST_FSPATH_DUP;
 
 	if (qse_fs_getattr (fs, cpfile.src_fspath, &cpfile.src_attr) <= -1) goto oops;
 	if (qse_fs_getattr (fs, cpfile.dst_fspath, &cpfile.dst_attr) >= 0) cpfile.flags |= CPFILE_DST_ATTR;
