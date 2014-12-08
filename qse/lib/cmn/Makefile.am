@@ -68,6 +68,8 @@ libqsecmn_la_SOURCES = \
 	opt.c \
 	path-base.c \
 	path-canon.c \
+	path-core.c \
+	path-merge.c \
 	pio.c \
 	pma.c \
 	rbt.c \

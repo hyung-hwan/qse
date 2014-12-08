@@ -199,13 +199,14 @@ typedef enum qse_fs_opt_t qse_fs_opt_t;
 enum qse_fs_cpfile_flag_t
 {
 	QSE_FS_CPFILE_PRESERVE = (1 << 0),
-	QSE_FS_CPFILE_REPLACE = (1 << 1),
-	QSE_FS_CPFILE_SYMLINK = (1 << 2),
+	QSE_FS_CPFILE_REPLACE  = (1 << 1),
+	QSE_FS_CPFILE_SYMLINK  = (1 << 2),
+	QSE_FS_CPFILE_NOTGTDIR = (1 << 3), /* no target directory */
 
-	QSE_FS_CPFILE_ALL = (QSE_FS_CPFILE_PRESERVE | QSE_FS_CPFILE_REPLACE | QSE_FS_CPFILE_SYMLINK)
+	QSE_FS_CPFILE_ALL = (QSE_FS_CPFILE_PRESERVE | QSE_FS_CPFILE_REPLACE |
+	                     QSE_FS_CPFILE_SYMLINK | QSE_FS_CPFILE_NOTGTDIR)
 };
 typedef enum qse_fs_cpfile_flag_t qse_fs_cpfile_flag_t;
-
 
 enum qse_fs_mkdir_flag_t
 {

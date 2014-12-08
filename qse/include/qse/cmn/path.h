@@ -34,17 +34,6 @@
 #include <qse/types.h>
 #include <qse/macros.h>
 
-/**
- * The qse_basename() macro returns the pointer to the file name 
- * segment in a path name. It maps to qse_mbsbasename() if #QSE_CHAR_IS_MCHAR
- * is defined; it maps to qse_wcsbasename() if #QSE_CHAR_IS_WCHAR is defined.
- */
-#if defined(QSE_CHAR_IS_MCHAR)
-#	define	qse_basename(path) qse_mbsbasename(path)
-#else
-#	define	qse_basename(path) qse_wcsbasename(path)
-#endif
-
 enum qse_canonpath_flag_t
 {
 	/** if the final output is . logically, return an empty path */
@@ -57,34 +46,49 @@ enum qse_canonpath_flag_t
 
 
 #if defined(_WIN32) || defined(__OS2__) || defined(__DOS__)
-#	define QSE_ISPATHSEP(c) ((c) == QSE_T('/') || (c) == QSE_T('\\'))
+
 #	define QSE_ISPATHMBSEP(c) ((c) == QSE_MT('/') || (c) == QSE_MT('\\'))
 #	define QSE_ISPATHWCSEP(c) ((c) == QSE_WT('/') || (c) == QSE_WT('\\'))
+
+#	define QSE_ISPATHMBDRIVE(s) \
+	(((s[0] >= QSE_MT('A') && s[0] <= QSE_MT('Z')) || \
+	  (s[0] >= QSE_MT('a') && s[0] <= QSE_MT('z'))) && \
+	 s[1] == QSE_MT(':'))
+#	define QSE_ISPATHWCDRIVE(s) \
+	(((s[0] >= QSE_WT('A') && s[0] <= QSE_WT('Z')) || \
+	  (s[0] >= QSE_WT('a') && s[0] <= QSE_WT('z'))) && \
+	 s[1] == QSE_WT(':'))
+
 #else
-#	define QSE_ISPATHSEP(c) ((c) == QSE_T('/'))
 #	define QSE_ISPATHMBSEP(c) ((c) == QSE_MT('/'))
 #	define QSE_ISPATHWCSEP(c) ((c) == QSE_WT('/'))
+
+	/* QSE_ISPATHMBDRIVE() and QSE_ISPATHWCDRIVE() are not defined for this platform */
+#endif
+
+#define QSE_ISPATHMBSEPORNIL(c) (QSE_ISPATHMBSEP(c) || (c) == QSE_MT('\0'))
+#define QSE_ISPATHWCSEPORNIL(c) (QSE_ISPATHWCSEP(c) || (c) == QSE_WT('\0'))
+
+#if defined(QSE_CHAR_IS_MCHAR)
+#	define QSE_ISPATHSEP(c)      QSE_ISPATHMBSEP(c)
+#	define QSE_ISPATHSEPORNIL(c) QSE_ISPATHMBSEPORNIL(c)
+
+#	if defined(_WIN32) || defined(__OS2__) || defined(__DOS__)
+#		define QSE_ISPATHDRIVE(s) QSE_ISPATHMBDRIVE(s)
+#	endif
+
+#else
+#	define QSE_ISPATHSEP(c)      QSE_ISPATHWCSEP(c)
+#	define QSE_ISPATHSEPORNIL(c) QSE_ISPATHWCSEPORNIL(c)
+
+#	if defined(_WIN32) || defined(__OS2__) || defined(__DOS__)
+#		define QSE_ISPATHDRIVE(s) QSE_ISPATHWCDRIVE(s)
+#	endif
 #endif
 
 #if defined(__cplusplus)
 extern "C" {
 #endif
-
-/**
- * The qse_mbsbasename() function returns the pointer to the file name 
- * segment in a multibyte path name.
- */
-QSE_EXPORT const qse_mchar_t* qse_mbsbasename (
-	const qse_mchar_t* path
-);
-
-/**
- * The qse_wcsbasename() function returns the pointer to the file name 
- * segment in a wide-character path name.
- */
-QSE_EXPORT const qse_wchar_t* qse_wcsbasename (
-	const qse_wchar_t* path
-);
 
 /**
  * The qse_ismbsabspath() function determines if a path name is absolute.
@@ -122,10 +126,18 @@ QSE_EXPORT int qse_ismbsdrivecurpath (
 );
 
 /**
- * The qse_getmbspathroot() function returns the core part of \a path 
+ * The qse_mbsbasename() function returns the pointer to the file name 
+ * segment in a multibyte path name.
+ */
+QSE_EXPORT const qse_mchar_t* qse_mbsbasename (
+	const qse_mchar_t* path
+);
+
+/**
+ * The qse_mbspathroot() function returns the core part of \a path 
  * excluding a special prefix.
  */
-QSE_EXPORT qse_mchar_t* qse_getmbspathcore (
+QSE_EXPORT qse_mchar_t* qse_mbspathcore (
 	const qse_mchar_t* path
 );
 
@@ -168,6 +180,14 @@ QSE_EXPORT qse_size_t qse_canonmbspath (
 	int                flags
 );
 
+QSE_EXPORT qse_mchar_t* qse_mergembspathdup (
+	const qse_mchar_t* dir,
+	const qse_mchar_t* file,
+	qse_mmgr_t*        mmgr
+);
+
+/* ------------------------------------------------------------------------- */
+
 /**
  * The qse_iswcsabspath() function determines if a path name is absolute.
  * A path name beginning with a segment separator is absolute.
@@ -204,10 +224,18 @@ QSE_EXPORT int qse_iswcsdrivecurpath (
 );
 
 /**
- * The qse_getwcspathroot() function returns the core part of \a path 
+ * The qse_wcsbasename() function returns the pointer to the file name 
+ * segment in a wide-character path name.
+ */
+QSE_EXPORT const qse_wchar_t* qse_wcsbasename (
+	const qse_wchar_t* path
+);
+
+/**
+ * The qse_wcspathroot() function returns the core part of \a path 
  * excluding a special prefix.
  */
-QSE_EXPORT qse_wchar_t* qse_getwcspathcore (
+QSE_EXPORT qse_wchar_t* qse_wcspathcore (
 	const qse_wchar_t* path
 );
 
@@ -250,20 +278,32 @@ QSE_EXPORT qse_size_t qse_canonwcspath (
 	int                flags
 );
 
+
+QSE_EXPORT qse_wchar_t* qse_mergewcspathdup (
+	const qse_wchar_t* dir,
+	const qse_wchar_t* file,
+	qse_mmgr_t*        mmgr
+);
+
+
 #if defined(QSE_CHAR_IS_MCHAR)
-#	define qse_isabspath(p)      qse_ismbsabspath(p)
-#	define qse_isdrivepath(p)    qse_ismbsdrivepath(p)
-#	define qse_isdriveabspath(p) qse_ismbsdriveabspath(p)
-#	define qse_isdrivecurpath(p) qse_ismbsdrivecurpath(p)
-#	define qse_getpathcore(p)    qse_getmbspathcore(p)
-#	define qse_canonpath(p,c,f)  qse_canonmbspath(p,c,f)
+#	define qse_isabspath(p)        qse_ismbsabspath(p)
+#	define qse_isdrivepath(p)      qse_ismbsdrivepath(p)
+#	define qse_isdriveabspath(p)   qse_ismbsdriveabspath(p)
+#	define qse_isdrivecurpath(p)   qse_ismbsdrivecurpath(p)
+#	define qse_basename(path)      qse_mbsbasename(path)
+#	define qse_pathcore(p)         qse_mbspathcore(p)
+#	define qse_canonpath(p,c,f)    qse_canonmbspath(p,c,f)
+#	define qse_mergepathdup(d,f,m) qse_mergembspathdup(d,f,m)
 #else
-#	define qse_isabspath(p)      qse_iswcsabspath(p)
-#	define qse_isdrivepath(p)    qse_iswcsdrivepath(p)
-#	define qse_isdriveabspath(p) qse_iswcsdriveabspath(p)
-#	define qse_isdrivecurpath(p) qse_iswcsdrivecurpath(p)
-#	define qse_getpathcore(p)    qse_getwcspathcore(p)
-#	define qse_canonpath(p,c,f)  qse_canonwcspath(p,c,f)
+#	define qse_isabspath(p)        qse_iswcsabspath(p)
+#	define qse_isdrivepath(p)      qse_iswcsdrivepath(p)
+#	define qse_isdriveabspath(p)   qse_iswcsdriveabspath(p)
+#	define qse_isdrivecurpath(p)   qse_iswcsdrivecurpath(p)
+#	define qse_basename(path)      qse_wcsbasename(path)
+#	define qse_pathcore(p)         qse_getpathcore(p)
+#	define qse_canonpath(p,c,f)    qse_canonwcspath(p,c,f)
+#	define qse_mergepathdup(d,f,m) qse_mergewcspathdup(d,f,m)
 #endif
 
 #if defined(__cplusplus)

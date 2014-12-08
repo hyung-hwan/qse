@@ -34,24 +34,13 @@
 /*  MBS IMPLEMENTATION                                                */
 /* ------------------------------------------------------------------ */
 
-#define IS_MSEP(c) QSE_ISPATHMBSEP(c)
-
-#define IS_MNIL(c) ((c) == QSE_MT('\0'))
-#define IS_MSEP_OR_MNIL(c) (IS_MSEP(c) || IS_MNIL(c))
-
-#define IS_MDRIVE(s) \
-	(((s[0] >= QSE_MT('A') && s[0] <= QSE_MT('Z')) || \
-	  (s[0] >= QSE_MT('a') && s[0] <= QSE_MT('z'))) && \
-	 s[1] == QSE_MT(':'))
-
-
 int qse_ismbsabspath (const qse_mchar_t* path)
 {
-	if (IS_MSEP(path[0])) return 1;
+	if (QSE_ISPATHMBSEP(path[0])) return 1;
 #if defined(_WIN32) || defined(__OS2__) || defined(__DOS__)
 	/* a drive like c:tmp is absolute in positioning the drive.
 	 * but the path within the drive is kind of relative */
-	if (IS_MDRIVE(path)) return 1;
+	if (QSE_ISPATHMBDRIVE(path)) return 1;
 #endif
 	return 0;
 }
@@ -59,7 +48,7 @@ int qse_ismbsabspath (const qse_mchar_t* path)
 int qse_ismbsdrivepath (const qse_mchar_t* path)
 {
 #if defined(_WIN32) || defined(__OS2__) || defined(__DOS__)
-	if (IS_MDRIVE(path)) return 1;
+	if (QSE_ISPATHMBDRIVE(path)) return 1;
 #endif
 	return 0;
 }
@@ -67,7 +56,7 @@ int qse_ismbsdrivepath (const qse_mchar_t* path)
 int qse_ismbsdriveabspath (const qse_mchar_t* path)
 {
 #if defined(_WIN32) || defined(__OS2__) || defined(__DOS__)
-	if (IS_MDRIVE(path) && IS_MSEP(path[2])) return 1;
+	if (QSE_ISPATHMBDRIVE(path) && QSE_ISPATHMBSEP(path[2])) return 1;
 #endif
 	return 0;
 }
@@ -75,29 +64,11 @@ int qse_ismbsdriveabspath (const qse_mchar_t* path)
 int qse_ismbsdrivecurpath (const qse_mchar_t* path)
 {
 #if defined(_WIN32) || defined(__OS2__) || defined(__DOS__)
-	if (IS_MDRIVE(path) && path[2] == QSE_MT('\0')) return 1;
+	if (QSE_ISPATHMBDRIVE(path) && path[2] == QSE_MT('\0')) return 1;
 #endif
 	return 0;
 }
 
-qse_mchar_t* qse_getmbspathcore (const qse_mchar_t* path)
-{
-#if defined(_WIN32) || defined(__OS2__) || defined(__DOS__)
-	if (IS_MDRIVE(path)) return (qse_mchar_t*)path + 2;
-	#if defined(_WIN32)
-	else if (IS_MSEP(*path) && IS_MSEP(*(path + 1)) && !IS_MSEP_OR_MNIL(*(path + 2)))
-	{
-		/* UNC Path */
-		path += 2;
-		do { path++; } while (!IS_MSEP_OR_MNIL(*path));
-		if (IS_MSEP(*path)) return (qse_mchar_t*)path;
-	}
-	#endif
-/* TOOD: \\server\XXX \\.\XXX \\?\XXX \\?\UNC\server\XXX */
-	
-#endif
-	return (qse_mchar_t*)path;
-}
 
 qse_size_t qse_canonmbspath (const qse_mchar_t* path, qse_mchar_t* canon, int flags)
 {
@@ -121,31 +92,31 @@ qse_size_t qse_canonmbspath (const qse_mchar_t* path, qse_mchar_t* canon, int fl
 	dst = canon;
 
 #if defined(_WIN32) || defined(__OS2__) || defined(__DOS__)
-	if (IS_MDRIVE(ptr))
+	if (QSE_ISPATHMBDRIVE(ptr))
 	{
 		/* handle drive letter */
 		*dst++ = *ptr++; /* drive letter */
 		*dst++ = *ptr++; /* colon */
 
 		is_drive = 1;
-		if (IS_MSEP(*ptr)) 
+		if (QSE_ISPATHMBSEP(*ptr)) 
 		{
 			*dst++ = *ptr++; /* root directory */
 			has_root = 1;
 		}
 	}
-	else if (IS_MSEP(*ptr)) 
+	else if (QSE_ISPATHMBSEP(*ptr)) 
 	{
 		*dst++ = *ptr++; /* root directory */
 		has_root = 1;
 
 	#if defined(_WIN32)
 		/* handle UNC path for Windows */
-		if (IS_MSEP(*ptr)) 
+		if (QSE_ISPATHMBSEP(*ptr)) 
 		{
 			*dst++ = *ptr++;
 
-			if (IS_MSEP_OR_MNIL(*ptr))
+			if (QSE_ISPATHMBSEPORNIL(*ptr))
 			{
 				/* if there is another separator after \\,
 				 * it's not an UNC path. */
@@ -154,14 +125,14 @@ qse_size_t qse_canonmbspath (const qse_mchar_t* path, qse_mchar_t* canon, int fl
 			else
 			{
 				/* if it starts with \\, process host name */
-				do { *dst++ = *ptr++; } while (!IS_MSEP_OR_MNIL(*ptr));
-				if (IS_MSEP(*ptr)) *dst++ = *ptr++;
+				do { *dst++ = *ptr++; } while (!QSE_ISPATHMBSEPORNIL(*ptr));
+				if (QSE_ISPATHMBSEP(*ptr)) *dst++ = *ptr++;
 			}
 		}
 	#endif
 	}
 #else
-	if (IS_MSEP(*ptr)) 
+	if (QSE_ISPATHMBSEP(*ptr)) 
 	{
 		*dst++ = *ptr++; /* root directory */
 		has_root = 1;
@@ -178,14 +149,14 @@ qse_size_t qse_canonmbspath (const qse_mchar_t* path, qse_mchar_t* canon, int fl
 		qse_size_t seglen;
 
 		/* skip duplicate separators */
-		while (IS_MSEP(*ptr)) ptr++;
+		while (QSE_ISPATHMBSEP(*ptr)) ptr++;
 
 		/* end of path reached */
 		if (*ptr == QSE_MT('\0')) break;
 
 		/* find the next segment */
 		seg = ptr;
-		while (!IS_MSEP_OR_MNIL(*ptr)) ptr++;
+		while (!QSE_ISPATHMBSEPORNIL(*ptr)) ptr++;
 		seglen = ptr - seg;
 
 		/* handle the segment */
@@ -210,7 +181,7 @@ qse_size_t qse_canonmbspath (const qse_mchar_t* path, qse_mchar_t* canon, int fl
 				while (tmp > non_root_start)
 				{
 					tmp--;
-					if (IS_MSEP(*tmp)) 
+					if (QSE_ISPATHMBSEP(*tmp)) 
 					{
 						tmp++; /* position it next to the separator */
 						break; 
@@ -271,7 +242,7 @@ qse_size_t qse_canonmbspath (const qse_mchar_t* path, qse_mchar_t* canon, int fl
 		{
 		normal:
 			while (seg < ptr) *dst++ = *seg++;
-			if (IS_MSEP(*ptr)) 
+			if (QSE_ISPATHMBSEP(*ptr)) 
 			{
 				/* this segment ended with a separator */
 				*dst++ = *seg++; /* copy the separator */
@@ -281,8 +252,8 @@ qse_size_t qse_canonmbspath (const qse_mchar_t* path, qse_mchar_t* canon, int fl
 	}
 	while (1);
 
-	if (dst > non_root_start && IS_MSEP(dst[-1]) && 
-	    ((flags & QSE_CANONPATH_DROPTRAILINGSEP) || !IS_MSEP(ptr[-1]))) 
+	if (dst > non_root_start && QSE_ISPATHMBSEP(dst[-1]) && 
+	    ((flags & QSE_CANONPATH_DROPTRAILINGSEP) || !QSE_ISPATHMBSEP(ptr[-1]))) 
 	{
 		/* if the canoncal path composed so far ends with a separator
 		 * and the original path didn't end with the separator, delete
@@ -292,9 +263,9 @@ qse_size_t qse_canonmbspath (const qse_mchar_t* path, qse_mchar_t* canon, int fl
 		 *   dst > non_root_start:
 		 *     there is at least 1 character after the root directory 
 		 *     part.
-		 *   IS_MSEP(dst[-1]):
+		 *   QSE_ISPATHMBSEP(dst[-1]):
 		 *     the canonical path ends with a separator.
-		 *   IS_MSEP(ptr[-1]):
+		 *   QSE_ISPATHMBSEP(ptr[-1]):
 		 *     the origial path ends with a separator.
 		 */
 		dst[-1] = QSE_MT('\0');
@@ -341,17 +312,17 @@ qse_size_t qse_canonmbspath (const qse_mchar_t* path, qse_mchar_t* canon, int fl
 			 * the double slahses indicate a directory obviously */
 			if (canon[canon_len-3] == QSE_MT('.') &&
 			    canon[canon_len-2] == QSE_MT('.') &&
-			    IS_MSEP(canon[canon_len-1]))
+			    QSE_ISPATHMBSEP(canon[canon_len-1]))
 			{
 				canon[--canon_len] = QSE_MT('\0');
 			}
 		}
 		else if (canon_len > adj_base_len)
 		{
-			if (IS_MSEP(canon[canon_len-4]) &&
+			if (QSE_ISPATHMBSEP(canon[canon_len-4]) &&
 			    canon[canon_len-3] == QSE_MT('.') &&
 			    canon[canon_len-2] == QSE_MT('.') &&
-			    IS_MSEP(canon[canon_len-1]))
+			    QSE_ISPATHMBSEP(canon[canon_len-1]))
 			{
 				canon[--canon_len] = QSE_MT('\0');
 			}
@@ -365,27 +336,14 @@ qse_size_t qse_canonmbspath (const qse_mchar_t* path, qse_mchar_t* canon, int fl
 /* ------------------------------------------------------------------ */
 /*  WCS IMPLEMENTATION                                                */
 /* ------------------------------------------------------------------ */
-#if defined(_WIN32) || defined(__OS2__) || defined(__DOS__)
-#	define IS_WSEP(c) ((c) == QSE_WT('/') || (c) == QSE_WT('\\'))
-#else
-#	define IS_WSEP(c) ((c) == QSE_WT('/'))
-#endif
-
-#define IS_WNIL(c) ((c) == QSE_WT('\0'))
-#define IS_WSEP_OR_WNIL(c) (IS_WSEP(c) || IS_WNIL(c))
-
-#define IS_WDRIVE(s) \
-	(((s[0] >= QSE_WT('A') && s[0] <= QSE_WT('Z')) || \
-	  (s[0] >= QSE_WT('a') && s[0] <= QSE_WT('z'))) && \
-	 s[1] == QSE_WT(':'))
 
 int qse_iswcsabspath (const qse_wchar_t* path)
 {
-	if (IS_WSEP(path[0])) return 1;
+	if (QSE_ISPATHWCSEP(path[0])) return 1;
 #if defined(_WIN32) || defined(__OS2__) || defined(__DOS__)
 	/* a drive like c:tmp is absolute in positioning the drive.
 	 * but the path within the drive is kind of relative */
-	if (IS_WDRIVE(path)) return 1;
+	if (QSE_ISPATHWCDRIVE(path)) return 1;
 #endif
      return 0;
 }
@@ -393,7 +351,7 @@ int qse_iswcsabspath (const qse_wchar_t* path)
 int qse_iswcsdrivepath (const qse_wchar_t* path)
 {
 #if defined(_WIN32) || defined(__OS2__) || defined(__DOS__)
-	if (IS_WDRIVE(path)) return 1;
+	if (QSE_ISPATHWCDRIVE(path)) return 1;
 #endif
 	return 0;
 }
@@ -401,7 +359,7 @@ int qse_iswcsdrivepath (const qse_wchar_t* path)
 int qse_iswcsdriveabspath (const qse_wchar_t* path)
 {
 #if defined(_WIN32) || defined(__OS2__) || defined(__DOS__)
-	if (IS_WDRIVE(path) && IS_WSEP(path[2])) return 1;
+	if (QSE_ISPATHWCDRIVE(path) && QSE_ISPATHWCSEP(path[2])) return 1;
 #endif
 	return 0;
 }
@@ -409,26 +367,9 @@ int qse_iswcsdriveabspath (const qse_wchar_t* path)
 int qse_iswcsdrivecurpath (const qse_wchar_t* path)
 {
 #if defined(_WIN32) || defined(__OS2__) || defined(__DOS__)
-	if (IS_WDRIVE(path) && path[2] == QSE_WT('\0')) return 1;
+	if (QSE_ISPATHWCDRIVE(path) && path[2] == QSE_WT('\0')) return 1;
 #endif
 	return 0;
-}
-
-qse_wchar_t* qse_getwcspathcore (const qse_wchar_t* path)
-{
-#if defined(_WIN32) || defined(__OS2__) || defined(__DOS__)
-	if (IS_WDRIVE(path)) return (qse_wchar_t*)path + 2;
-	#if defined(_WIN32)
-	else if (IS_WSEP(*path) && IS_WSEP(*(path + 1)) && !IS_WSEP_OR_WNIL(*(path + 2)))
-	{
-		/* UNC Path */
-		path += 2;
-		do { path++; } while (!IS_WSEP_OR_WNIL(*path));
-		if (IS_WSEP(*path)) return (qse_wchar_t*)path;
-	}
-	#endif
-#endif
-	return (qse_wchar_t*)path;
 }
 
 qse_size_t qse_canonwcspath (const qse_wchar_t* path, qse_wchar_t* canon, int flags)
@@ -453,31 +394,31 @@ qse_size_t qse_canonwcspath (const qse_wchar_t* path, qse_wchar_t* canon, int fl
 	dst = canon;
 
 #if defined(_WIN32) || defined(__OS2__) || defined(__DOS__)
-	if (IS_WDRIVE(ptr))
+	if (QSE_ISPATHWCDRIVE(ptr))
 	{
 		/* handle drive letter */
 		*dst++ = *ptr++; /* drive letter */
 		*dst++ = *ptr++; /* colon */
 
 		is_drive = 1;
-		if (IS_WSEP(*ptr)) 
+		if (QSE_ISPATHWCSEP(*ptr)) 
 		{
 			*dst++ = *ptr++; /* root directory */
 			has_root = 1;
 		}
 	}
-	else if (IS_WSEP(*ptr)) 
+	else if (QSE_ISPATHWCSEP(*ptr)) 
 	{
 		*dst++ = *ptr++; /* root directory */
 		has_root = 1;
 
 	#if defined(_WIN32)
 		/* handle UNC path for Windows */
-		if (IS_WSEP(*ptr)) 
+		if (QSE_ISPATHWCSEP(*ptr)) 
 		{
 			*dst++ = *ptr++;
 
-			if (IS_WSEP_OR_WNIL(*ptr))
+			if (QSE_ISPATHWCSEPORNIL(*ptr))
 			{
 				/* if there is another separator after \\,
 				 * it's not an UNC path. */
@@ -486,14 +427,14 @@ qse_size_t qse_canonwcspath (const qse_wchar_t* path, qse_wchar_t* canon, int fl
 			else
 			{
 				/* if it starts with \\, process host name */
-				do { *dst++ = *ptr++; } while (!IS_WSEP_OR_WNIL(*ptr));
-				if (IS_WSEP(*ptr)) *dst++ = *ptr++;
+				do { *dst++ = *ptr++; } while (!QSE_ISPATHWCSEPORNIL(*ptr));
+				if (QSE_ISPATHWCSEP(*ptr)) *dst++ = *ptr++;
 			}
 		}
 	#endif
 	}
 #else
-	if (IS_WSEP(*ptr)) 
+	if (QSE_ISPATHWCSEP(*ptr)) 
 	{
 		*dst++ = *ptr++; /* root directory */
 		has_root = 1;
@@ -510,14 +451,14 @@ qse_size_t qse_canonwcspath (const qse_wchar_t* path, qse_wchar_t* canon, int fl
 		qse_size_t seglen;
 
 		/* skip duplicate separators */
-		while (IS_WSEP(*ptr)) ptr++;
+		while (QSE_ISPATHWCSEP(*ptr)) ptr++;
 
 		/* end of path reached */
 		if (*ptr == QSE_WT('\0')) break;
 
 		/* find the next segment */
 		seg = ptr;
-		while (!IS_WSEP_OR_WNIL(*ptr)) ptr++;
+		while (!QSE_ISPATHWCSEPORNIL(*ptr)) ptr++;
 		seglen = ptr - seg;
 
 		/* handle the segment */
@@ -542,7 +483,7 @@ qse_size_t qse_canonwcspath (const qse_wchar_t* path, qse_wchar_t* canon, int fl
 				while (tmp > non_root_start)
 				{
 					tmp--;
-					if (IS_WSEP(*tmp)) 
+					if (QSE_ISPATHWCSEP(*tmp)) 
 					{
 						tmp++; /* position it next to the separator */
 						break; 
@@ -603,7 +544,7 @@ qse_size_t qse_canonwcspath (const qse_wchar_t* path, qse_wchar_t* canon, int fl
 		{
 		normal:
 			while (seg < ptr) *dst++ = *seg++;
-			if (IS_WSEP(*ptr)) 
+			if (QSE_ISPATHWCSEP(*ptr)) 
 			{
 				/* this segment ended with a separator */
 				*dst++ = *seg++; /* copy the separator */
@@ -613,8 +554,8 @@ qse_size_t qse_canonwcspath (const qse_wchar_t* path, qse_wchar_t* canon, int fl
 	}
 	while (1);
 
-	if (dst > non_root_start && IS_WSEP(dst[-1]) && 
-	    ((flags & QSE_CANONPATH_DROPTRAILINGSEP) || !IS_WSEP(ptr[-1]))) 
+	if (dst > non_root_start && QSE_ISPATHWCSEP(dst[-1]) && 
+	    ((flags & QSE_CANONPATH_DROPTRAILINGSEP) || !QSE_ISPATHWCSEP(ptr[-1]))) 
 	{
 		/* if the canoncal path composed so far ends with a separator
 		 * and the original path didn't end with the separator, delete
@@ -624,9 +565,9 @@ qse_size_t qse_canonwcspath (const qse_wchar_t* path, qse_wchar_t* canon, int fl
 		 *   dst > non_root_start:
 		 *     there is at least 1 character after the root directory 
 		 *     part.
-		 *   IS_WSEP(dst[-1]):
+		 *   QSE_ISPATHWCSEP(dst[-1]):
 		 *     the canonical path ends with a separator.
-		 *   IS_WSEP(ptr[-1]):
+		 *   QSE_ISPATHWCSEP(ptr[-1]):
 		 *     the origial path ends with a separator.
 		 */
 		dst[-1] = QSE_WT('\0');
@@ -673,17 +614,17 @@ qse_size_t qse_canonwcspath (const qse_wchar_t* path, qse_wchar_t* canon, int fl
 			 * the double slahses indicate a directory obviously */
 			if (canon[canon_len-3] == QSE_WT('.') &&
 			    canon[canon_len-2] == QSE_WT('.') &&
-			    IS_WSEP(canon[canon_len-1]))
+			    QSE_ISPATHWCSEP(canon[canon_len-1]))
 			{
 				canon[--canon_len] = QSE_WT('\0');
 			}
 		}
 		else if (canon_len > adj_base_len)
 		{
-			if (IS_WSEP(canon[canon_len-4]) &&
+			if (QSE_ISPATHWCSEP(canon[canon_len-4]) &&
 			    canon[canon_len-3] == QSE_WT('.') &&
 			    canon[canon_len-2] == QSE_WT('.') &&
-			    IS_WSEP(canon[canon_len-1]))
+			    QSE_ISPATHWCSEP(canon[canon_len-1]))
 			{
 				canon[--canon_len] = QSE_WT('\0');
 			}

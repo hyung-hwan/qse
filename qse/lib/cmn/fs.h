@@ -75,12 +75,16 @@
 
 #if defined(QSE_FS_CHAR_IS_MCHAR)
 #	define canon_fspath(path,canon,flags) qse_canonmbspath(path,canon,flags)
-#	define get_fspath_core(fspath) qse_getmbspathcore(fspath)
+#	define merge_fspath_dup(dir,file,mmgr) qse_mergembspathdup(dir,file,mmgr)
+#	define get_fspath_core(fspath) qse_mbspathcore(fspath)
+#	define get_fspath_base(fspath) qse_mbsbasename(fspath)
 #	define IS_FSPATHSEP(x) QSE_ISPATHMBSEP(x)
 #	define QSE_FS_T(x) QSE_MT(x)
 #else
 #	define canon_fspath(fspath,canon,flags) qse_canonwcspath(fspath,canon,flags)
-#	define get_fspath_core(fspath) qse_getwcspathcore(fspath)
+#	define merge_fspath_dup(dir,file,mmgr) qse_mergewcspathdup(dir,file,mmgr)
+#	define get_fspath_core(fspath) qse_wcspathcore(fspath)
+#	define get_fspath_base(fspath) qse_wcsbasename(fspath)
 #	define IS_FSPATHSEP(x) QSE_ISPATHWCSEP(x)
 #	define QSE_FS_T(x) QSE_WT(x)
 #endif
