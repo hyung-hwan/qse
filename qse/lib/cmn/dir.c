@@ -547,7 +547,7 @@ static int read_dir_to_tbuf (qse_dir_t* dir, void** name)
 	/* ------------------------------------------------------------------- */
 	if (dir->status & STATUS_DONE) return (dir->status & STATUS_DONE_ERR)? -1: 0;
 
-	if (dir->flags & QSE_DIR_LIMITED)
+	if (dir->flags & QSE_DIR_SKIPSPCDIR)
 	{
 		/* skip . and .. */
 		while (IS_CURDIR(dir->wfd.cFileName) || IS_PREVDIR(dir->wfd.cFileName))
@@ -617,7 +617,7 @@ static int read_dir_to_tbuf (qse_dir_t* dir, void** name)
 
 	if (dir->count <= 0) return 0;
 
-	if (dir->flags & QSE_DIR_LIMITED)
+	if (dir->flags & QSE_DIR_SKIPSPCDIR)
 	{
 		/* skip . and .. */
 		while (IS_CURDIR_M(dir->ffb.achName) || IS_PREVDIR_M(dir->ffb.achName))
@@ -677,7 +677,7 @@ static int read_dir_to_tbuf (qse_dir_t* dir, void** name)
 
 	if (dir->status & STATUS_DONE) return (dir->status & STATUS_DONE_ERR)? -1: 0;
 
-	if (dir->flags & QSE_DIR_LIMITED)
+	if (dir->flags & QSE_DIR_SKIPSPCDIR)
 	{
 		/* skip . and .. */
 		while (IS_CURDIR_M(dir->f.name) || IS_PREVDIR_M(dir->f.name))
@@ -753,7 +753,7 @@ read:
 		return -1;
 	}
 
-	if (dir->flags & QSE_DIR_LIMITED)
+	if (dir->flags & QSE_DIR_SKIPSPCDIR)
 	{
 		/* skip . and .. */
 		if (IS_CURDIR_M(de->d_name) || 

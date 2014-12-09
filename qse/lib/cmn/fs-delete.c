@@ -201,7 +201,7 @@ static int purge_directory_contents (qse_fs_t* fs, const qse_char_t* path)
 	qse_dir_errnum_t errnum;
 
 	/* 'dir' is asked to skip special entries like . and .. */
-	dir = qse_dir_open (fs->mmgr, 0, path, QSE_DIR_LIMITED, &errnum);
+	dir = qse_dir_open (fs->mmgr, 0, path, QSE_DIR_SKIPSPCDIR, &errnum);
 	if (dir)
 	{
 		/* it must be a directory. delete all entries under it */

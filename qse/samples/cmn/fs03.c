@@ -5,14 +5,20 @@
 #include <qse/cmn/path.h>
 #include <qse/cmn/main.h>
 #include <qse/cmn/mbwc.h>
+#include <qse/cmn/opt.h>
 #include <locale.h>
 
 
 static void print_usage (const qse_char_t* argv0)
 {
-	qse_fprintf (QSE_STDERR, QSE_T("Usage: %s command filename filename\n"), qse_basename(argv0));
-	qse_fprintf (QSE_STDERR, QSE_T("Command is one of cpfile | cpfile-s\n"));
-	qse_fprintf (QSE_STDERR, QSE_T("Filename is a pattern for delXXX\n"));
+	qse_fprintf (QSE_STDERR, QSE_T("Usage: %s [options] source-filename target-filename\n"), qse_basename(argv0));
+	qse_fprintf (QSE_STDERR, QSE_T("Options include:\n"));
+	qse_fprintf (QSE_STDERR, QSE_T("  -f            force\n"));
+	qse_fprintf (QSE_STDERR, QSE_T("  -o            overwrite\n"));
+	qse_fprintf (QSE_STDERR, QSE_T("  -p            preserve\n"));
+	qse_fprintf (QSE_STDERR, QSE_T("  -r            recursive\n"));
+	qse_fprintf (QSE_STDERR, QSE_T("  -s            symlink\n"));
+	
 }
 
 static int fs_main (int argc, qse_char_t* argv[])
@@ -20,44 +26,74 @@ static int fs_main (int argc, qse_char_t* argv[])
 	qse_fs_t* fs;
 	qse_fs_cbs_t cbs;
 	int ret = 0;
+	qse_cint_t c;
+	int cpfile_flags = 0;
 
-	if (argc != 4)
+	static qse_opt_t opt = 
 	{
-		print_usage (argv[0]);
-		return -1;
+		QSE_T("foprs"),
+		QSE_NULL
+	};
+
+	while ((c = qse_getopt (argc, argv, &opt)) != QSE_CHAR_EOF)
+	{
+		switch (c)
+		{
+			case QSE_T('f'):
+				cpfile_flags |= QSE_FS_CPFILE_FORCE;
+				break;
+
+			case QSE_T('o'):
+				cpfile_flags |= QSE_FS_CPFILE_REPLACE;
+				break;
+
+			case QSE_T('p'):
+				cpfile_flags |= QSE_FS_CPFILE_PRESERVE;
+				break;
+
+			case QSE_T('r'):
+				cpfile_flags |= QSE_FS_CPFILE_RECURSIVE;
+				break;
+
+			case QSE_T('s'):
+				cpfile_flags |= QSE_FS_CPFILE_SYMLINK;
+				break;
+
+			case QSE_T('?'):
+				qse_fprintf (QSE_STDERR, QSE_T("illegal option - '%c'\n"), opt.opt);
+				goto wrong_usage;
+
+			case QSE_T(':'):
+				qse_fprintf (QSE_STDERR, QSE_T("bad argument for '%c'\n"), opt.opt);
+				goto wrong_usage;
+
+			default:
+				goto wrong_usage;
+		}
 	}
+
+	if (opt.ind  + 2 != argc) goto wrong_usage;
+
 	fs = qse_fs_open (QSE_MMGR_GETDFL(), 0);
 
-/*
+/* 
 	qse_memset (&cbs, 0, QSE_SIZEOF(cbs));
 	cbs.del = fs_del;
 	qse_fs_setopt (fs, QSE_FS_CBS, &cbs);
 */
 
-	if (qse_strcmp(argv[1], QSE_T("cpfile")) == 0)
+	if (qse_fs_cpfile (fs, argv[opt.ind], argv[opt.ind + 1], cpfile_flags) <= -1)
 	{
-		if (qse_fs_cpfile (fs, argv[2], argv[3], 0) <= -1)
-		{
-			qse_fprintf (QSE_STDERR, QSE_T("cannot copy file - %d\n"), qse_fs_geterrnum(fs));
-			ret = -1;
-		}
-	}
-	else if (qse_strcmp(argv[1], QSE_T("cpfile-s")) == 0)
-	{
-		if (qse_fs_cpfile (fs, argv[2], argv[3], QSE_FS_CPFILE_SYMLINK) <= -1)
-		{
-			qse_fprintf (QSE_STDERR, QSE_T("cannot copy file - %d\n"), qse_fs_geterrnum(fs));
-			ret = -1;
-		}
-	}
-	else
-	{
-		print_usage (argv[0]);
+		qse_fprintf (QSE_STDERR, QSE_T("cannot copy file - %d\n"), qse_fs_geterrnum(fs));
 		ret = -1;
 	}
 
 	qse_fs_close (fs);
 	return ret;
+
+wrong_usage:
+	print_usage (argv[0]);
+	return -1;
 }
 
 int main (int argc, qse_achar_t* argv[])
