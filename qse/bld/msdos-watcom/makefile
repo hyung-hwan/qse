@@ -222,6 +222,7 @@ LIBQSECMN_OBJECTS =  &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_fmt_intmax.obj &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_fmt_out.obj &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_fs.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_fs_copy.obj &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_fs_delete.obj &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_fs_err.obj &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_fs_make.obj &
@@ -565,6 +566,9 @@ $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_fmt_ou
 	$(CC) -bt=dos -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_fs.obj :  .AUTODEPEND ..\..\lib\cmn\fs.c
+	$(CC) -bt=dos -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_fs_copy.obj :  .AUTODEPEND ..\..\lib\cmn\fs-copy.c
 	$(CC) -bt=dos -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_fs_delete.obj :  .AUTODEPEND ..\..\lib\cmn\fs-delete.c

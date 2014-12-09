@@ -45,6 +45,7 @@ libqsecmn_la_SOURCES = \
 	fmt-intmax.c \
 	fmt-out.c \
 	fs.c \
+	fs-copy.c \
 	fs-delete.c \
 	fs-err.c \
 	fs-make.c \

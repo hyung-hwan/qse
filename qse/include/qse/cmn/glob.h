@@ -58,7 +58,7 @@ enum qse_glob_flags_t
 
 	/** Exclude special entries from matching. 
 	  * Special entries include . and .. */
-	QSE_GLOB_LIMITED    = (1 << 4)
+	QSE_GLOB_SKIPSPCDIR  = (1 << 4)
 };
 
 #if defined(__cplusplus)

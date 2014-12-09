@@ -77,6 +77,7 @@ DLLQSECMN_OBJECTS =  \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsecmn_fmt_intmax.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsecmn_fmt_out.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsecmn_fs.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsecmn_fs_copy.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsecmn_fs_delete.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsecmn_fs_err.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsecmn_fs_make.obj \
@@ -179,6 +180,7 @@ LIBQSECMN_OBJECTS =  \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsecmn_fmt_intmax.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsecmn_fmt_out.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsecmn_fs.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsecmn_fs_copy.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsecmn_fs_delete.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsecmn_fs_err.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsecmn_fs_make.obj \
@@ -1130,6 +1132,9 @@ $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllq
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsecmn_fs.obj: ..\..\lib\cmn\fs.c
 	$(CC) /c /nologo /TC /Fo$@ $(DLLQSECMN_CFLAGS) ..\..\lib\cmn\fs.c
 
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsecmn_fs_copy.obj: ..\..\lib\cmn\fs-copy.c
+	$(CC) /c /nologo /TC /Fo$@ $(DLLQSECMN_CFLAGS) ..\..\lib\cmn\fs-copy.c
+
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsecmn_fs_delete.obj: ..\..\lib\cmn\fs-delete.c
 	$(CC) /c /nologo /TC /Fo$@ $(DLLQSECMN_CFLAGS) ..\..\lib\cmn\fs-delete.c
 
@@ -1417,6 +1422,9 @@ $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libq
 
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsecmn_fs.obj: ..\..\lib\cmn\fs.c
 	$(CC) /c /nologo /TC /Fo$@ $(LIBQSECMN_CFLAGS) ..\..\lib\cmn\fs.c
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsecmn_fs_copy.obj: ..\..\lib\cmn\fs-copy.c
+	$(CC) /c /nologo /TC /Fo$@ $(LIBQSECMN_CFLAGS) ..\..\lib\cmn\fs-copy.c
 
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsecmn_fs_delete.obj: ..\..\lib\cmn\fs-delete.c
 	$(CC) /c /nologo /TC /Fo$@ $(LIBQSECMN_CFLAGS) ..\..\lib\cmn\fs-delete.c

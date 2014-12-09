@@ -441,9 +441,12 @@ entry:
 
 	if (seg->wild)
 	{
+		int dir_flags = 0;
+		if (g->flags & QSE_GLOB_SKIPSPCDIR) dir_flags |= QSE_DIR_SKIPSPCDIR;
+
 		dp = qse_dir_open (
 			g->mmgr, 0, QSE_STR_PTR(&g->path),
-			((g->flags & QSE_GLOB_LIMITED)? QSE_DIR_LIMITED: 0), QSE_NULL);
+			dir_flags, QSE_NULL);
 		if (dp)
 		{
 			tmp = QSE_STR_LEN(&g->path);
@@ -490,7 +493,7 @@ entry:
 
 						r->next = g->stack;
 						g->stack = r;
-		
+
 						/* move to the function entry point as if
 						 * a recursive call has been made */
 						goto entry;
