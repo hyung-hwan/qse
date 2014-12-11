@@ -367,6 +367,7 @@ oops:
 #endif
 }
 
+#if 0
 static int move_file_in_fs (qse_fs_t* fs, const qse_fs_char_t* oldpath, const qse_fs_char_t* newpath, int flags)
 {
 #if defined(_WIN32)
@@ -458,3 +459,5 @@ static int move_file_in_fs (qse_fs_t* fs, const qse_fs_char_t* oldpath, const qs
 
 #endif
 }
+
+#endif

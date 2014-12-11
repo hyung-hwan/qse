@@ -145,9 +145,24 @@ void qse_fs_freefspathforwcs (
 
 
 int qse_fs_getattr (
-	qse_fs_t* fs,
+	qse_fs_t*            fs,
 	const qse_fs_char_t* fspath,
-	qse_fs_attr_t* attr
+	qse_fs_attr_t*       attr
+);
+
+int qse_fs_sysmkdir (
+	qse_fs_t*            fs,
+	const qse_fs_char_t* fspath
+);
+
+int qse_fs_sysrmfile (
+	qse_fs_t*            fs, 
+	const qse_fs_char_t* fspath
+);
+
+int qse_fs_sysrmdir (
+	qse_fs_t*            fs, 
+	const qse_fs_char_t* fspath
 );
 
 #if defined(__cplusplus)

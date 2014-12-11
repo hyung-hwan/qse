@@ -6,8 +6,12 @@
 #include <qse/cmn/main.h>
 #include <qse/cmn/mbwc.h>
 #include <qse/cmn/opt.h>
+#include <qse/cmn/fmt.h>
 #include <locale.h>
 
+#if defined(_WIN32)
+#	include <windows.h>
+#endif
 
 static void print_usage (const qse_char_t* argv0)
 {
@@ -109,7 +113,9 @@ int main (int argc, qse_achar_t* argv[])
 	}
 	else
 	{
-		sprintf (locale, ".%u", (unsigned int)codepage);
+		/* .codepage */
+		qse_fmtuintmaxtombs (locale, QSE_COUNTOF(locale),
+			codepage, 10, -1, QSE_MT('\0'), QSE_MT("."));
 		setlocale (LC_ALL, locale);
 		qse_setdflcmgrbyid (QSE_CMGR_SLMB);
 	}
