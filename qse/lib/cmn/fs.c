@@ -818,11 +818,21 @@ void qse_fs_freefspathforwcs (qse_fs_t* fs, const qse_wchar_t* path, qse_fs_char
 int qse_fs_getattr (qse_fs_t* fs, const qse_fs_char_t* fspath, qse_fs_attr_t* attr)
 {
 #if defined(_WIN32)
-#error TODO
+
+	fs->errnum = QSE_FS_ENOIMPL;
+	return -1;
+
 #elif defined(__OS2__)
-#error TODO
+
+	/* TODO */
+	fs->errnum = QSE_FS_ENOIMPL;
+	return -1;
+
 #elif defined(__DOS__)
-#error TODO
+
+	fs->errnum = QSE_FS_ENOIMPL;
+	return -1;
+
 #else
 	#if defined(HAVE_LSTAT)
 	qse_lstat_t st;

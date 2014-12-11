@@ -26,7 +26,7 @@
 
 #include "fs.h"
 
-static int make_directory_in_fs (qse_fs_t* fs, const qse_fs_char_t* fspath)
+int qse_fs_sysmkdir (qse_fs_t* fs, const qse_fs_char_t* fspath)
 {
 
 #if defined(_WIN32)
@@ -78,7 +78,7 @@ static int make_directory_in_fs (qse_fs_t* fs, const qse_fs_char_t* fspath)
 
 #else
 
-	if (QSE_MKDIR (fspath, 0755) <= -1)
+	if (QSE_MKDIR (fspath, 0777) <= -1) /* TODO: proper mode?? */
 	{
 		fs->errnum = qse_fs_syserrtoerrnum (fs, errno);
 		return -1;
@@ -120,7 +120,7 @@ static int make_directory_chain (qse_fs_t* fs, qse_fs_char_t* fspath)
 			c = *(p + 1);
 			*(p + 1) = QSE_FS_T('\0');
 		#endif
-			ret = make_directory_in_fs (fs, fspath);
+			ret = qse_fs_sysmkdir (fs, fspath);
 			if (ret <= -1 && fs->errnum != QSE_FS_EEXIST) 
 			{
 				return -1;
@@ -134,7 +134,7 @@ static int make_directory_chain (qse_fs_t* fs, qse_fs_char_t* fspath)
 		}
 	}
 
-	if (!IS_FSPATHSEP(*(p - 1))) ret = make_directory_in_fs (fs, fspath);
+	if (!IS_FSPATHSEP(*(p - 1))) ret = qse_fs_sysmkdir (fs, fspath);
 
 done:
 	return ret;
@@ -165,7 +165,7 @@ int qse_fs_mkdirmbs (qse_fs_t* fs, const qse_mchar_t* path, int flags)
 		fspath = (qse_fs_char_t*)qse_fs_makefspathformbs (fs, path);
 		if (!fspath) return -1;
 
-		ret = make_directory_in_fs (fs, fspath);
+		ret = qse_fs_sysmkdir (fs, fspath);
 	}
 
 	qse_fs_freefspathformbs (fs, path, fspath);
@@ -198,7 +198,7 @@ int qse_fs_mkdirwcs (qse_fs_t* fs, const qse_wchar_t* path, int flags)
 		fspath = (qse_fs_char_t*)qse_fs_makefspathforwcs (fs, path);
 		if (!fspath) return -1;
 
-		ret = make_directory_in_fs (fs, fspath);
+		ret = qse_fs_sysmkdir (fs, fspath);
 	}
 
 	qse_fs_freefspathforwcs (fs, path, fspath);

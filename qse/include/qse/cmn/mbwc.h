@@ -33,6 +33,7 @@
  */
 #include <qse/types.h>
 #include <qse/macros.h>
+#include <qse/cmn/str.h>
 
 typedef qse_cmgr_t* (*qse_cmgr_finder_t) (const qse_char_t* name);
 
@@ -469,6 +470,20 @@ QSE_EXPORT qse_mchar_t* qse_wcsnatombsdup (
 	qse_size_t*       mbslen,
 	qse_mmgr_t*       mmgr
 );
+
+
+#if defined(QSE_CHAR_IS_MCHAR)
+#	define qse_strtombsdup(sa,mmgr)               qse_strdup(sa,mmgr)
+#	define qse_strtowcsdup(sa,mmgr)               qse_mbstowcsdup(sa,QSE_NULL,mmgr)
+#	define qse_strtombsdupwithcmgr(sa,mmgr,cmgr)  qse_strdup(sa,mmgr)
+#	define qse_strtowcsdupwithcmgr(sa,mmgr,cmgr)  qse_mbstowcsdupwithcmgr(sa,QSE_NULL,mmgr,cmgr)
+
+#else
+#	define qse_strtombsdup(sa,mmgr)               qse_wcstombsdup(sa,QSE_NULL,mmgr)
+#	define qse_strtowcsdup(sa,mmgr)               qse_wcsdup(sa,mmgr)
+#	define qse_strtombsdupwithcmgr(sa,mmgr,cmgr)  qse_wcstombsdupwithcmgr(sa,QSE_NULL,mmgr,cmgr)
+#	define qse_strtowcsdupwithcmgr(sa,mmgr,cmgr)  qse_wcsdup(sa,mmgr)
+#endif
 
 #if defined(__cplusplus)
 }

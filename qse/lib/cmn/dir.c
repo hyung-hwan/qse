@@ -71,7 +71,7 @@ struct qse_dir_t
 	qse_dir_errnum_t errnum;
 	int flags;
 
-	qse_str_t tbuf;
+	qse_wcs_t wbuf;
 	qse_mbs_t mbuf;
 
 	qse_lda_t* stab;
@@ -158,13 +158,27 @@ static int compare_dirent (qse_lda_t* lda, const void* dptr1, qse_size_t dlen1, 
 int qse_dir_init (qse_dir_t* dir, qse_mmgr_t* mmgr, const qse_char_t* path, int flags)
 {
 	int n;
+	int path_flags;
+
+	path_flags = flags & (QSE_DIR_MBSPATH | QSE_DIR_WCSPATH);
+	if (path_flags == (QSE_DIR_MBSPATH | QSE_DIR_WCSPATH) || path_flags == 0)
+	{
+		/* if both are set or none are set, force it to the default */
+	#if defined(QSE_CHAR_IS_MCHAR)
+		flags |= QSE_DIR_MBSPATH;
+		flags &= ~QSE_DIR_WCSPATH;
+	#else
+		flags |= QSE_DIR_WCSPATH;
+		flags &= ~QSE_DIR_MBSPATH;
+	#endif
+	}
 
 	QSE_MEMSET (dir, 0, QSE_SIZEOF(*dir));
 
 	dir->mmgr = mmgr;
 	dir->flags = flags;
 
-	if (qse_str_init (&dir->tbuf, mmgr, 256) <= -1) goto oops_0;
+	if (qse_wcs_init (&dir->wbuf, mmgr, 256) <= -1) goto oops_0;
 	if (qse_mbs_init (&dir->mbuf, mmgr, 256) <= -1) goto oops_1;
 
 #if defined(_WIN32)
@@ -194,7 +208,7 @@ oops_3:
 oops_2:
 	qse_mbs_fini (&dir->mbuf);
 oops_1:
-	qse_str_fini (&dir->tbuf);
+	qse_wcs_fini (&dir->wbuf);
 oops_0:
 	return -1;
 }
@@ -233,12 +247,12 @@ void qse_dir_fini (qse_dir_t* dir)
 	close_dir_safely (dir);
 
 	qse_mbs_fini (&dir->mbuf);
-	qse_str_fini (&dir->tbuf);
+	qse_wcs_fini (&dir->wbuf);
 
 	if (dir->stab) qse_lda_close (dir->stab);
 }
 
-static qse_mchar_t* wcs_to_mbuf (qse_dir_t* dir, const qse_wchar_t* wcs, qse_mbs_t* mbs)
+static qse_mchar_t* wcs_to_mbuf (qse_dir_t* dir, const qse_wchar_t* wcs, qse_mbs_t* mbuf)
 {
 	qse_size_t ml, wl;
 
@@ -248,17 +262,17 @@ static qse_mchar_t* wcs_to_mbuf (qse_dir_t* dir, const qse_wchar_t* wcs, qse_mbs
 		return QSE_NULL;
 	}
 
-	if (qse_mbs_setlen (mbs, ml) == (qse_size_t)-1) 
+	if (qse_mbs_setlen (mbuf, ml) == (qse_size_t)-1) 
 	{
 		dir->errnum = QSE_DIR_ENOMEM;
 		return QSE_NULL;
 	}
 
-	qse_wcstombs (wcs, &wl, QSE_MBS_PTR(mbs), &ml);
-	return QSE_MBS_PTR(mbs);
+	qse_wcstombs (wcs, &wl, QSE_MBS_PTR(mbuf), &ml);
+	return QSE_MBS_PTR(mbuf);
 }
 
-static qse_wchar_t* mbs_to_wbuf (qse_dir_t* dir, const qse_mchar_t* mbs, qse_wcs_t* wcs)
+static qse_wchar_t* mbs_to_wbuf (qse_dir_t* dir, const qse_mchar_t* mbs, qse_wcs_t* wbuf)
 {
 	qse_size_t ml, wl;
 
@@ -267,16 +281,39 @@ static qse_wchar_t* mbs_to_wbuf (qse_dir_t* dir, const qse_mchar_t* mbs, qse_wcs
 		dir->errnum = QSE_DIR_EINVAL;
 		return QSE_NULL;
 	}
-	if (qse_wcs_setlen (wcs, wl) == (qse_size_t)-1) 
+	if (qse_wcs_setlen (wbuf, wl) == (qse_size_t)-1) 
 	{
 		dir->errnum = QSE_DIR_ENOMEM;
 		return QSE_NULL;
 	}
 
-	qse_mbstowcs (mbs, &ml, QSE_WCS_PTR(wcs), &wl);
-	return QSE_WCS_PTR(wcs);
+	qse_mbstowcs (mbs, &ml, QSE_WCS_PTR(wbuf), &wl);
+	return QSE_WCS_PTR(wbuf);
 }
 
+static qse_wchar_t* wcs_to_wbuf (qse_dir_t* dir, const qse_wchar_t* wcs, qse_wcs_t* wbuf)
+{
+	if (qse_wcs_cpy (&dir->wbuf, wcs) == (qse_size_t)-1) 
+	{
+		dir->errnum = QSE_DIR_ENOMEM;
+		return QSE_NULL;
+	}
+
+	return QSE_WCS_PTR(wbuf);
+}
+
+static qse_mchar_t* mbs_to_mbuf (qse_dir_t* dir, const qse_mchar_t* mbs, qse_mbs_t* mbuf)
+{
+	if (qse_mbs_cpy (&dir->mbuf, mbs) == (qse_size_t)-1) 
+	{
+		dir->errnum = QSE_DIR_ENOMEM;
+		return QSE_NULL;
+	}
+
+	return QSE_MBS_PTR(mbuf);
+}
+
+#if defined(_WIN32) || defined(__OS2__) || defined(__DOS__)
 static qse_mchar_t* make_mbsdos_path (qse_dir_t* dir, const qse_mchar_t* mpath)
 {
 	if (mpath[0] == QSE_MT('\0'))
@@ -304,6 +341,35 @@ static qse_mchar_t* make_mbsdos_path (qse_dir_t* dir, const qse_mchar_t* mpath)
 	return QSE_MBS_PTR(&dir->mbuf);
 }
 
+static qse_wchar_t* make_wcsdos_path (qse_dir_t* dir, const qse_wchar_t* wpath)
+{
+	if (wpath[0] == QSE_WT('\0'))
+	{
+		if (qse_wcs_cpy (&dir->wbuf, QSE_WT("*.*")) == (qse_size_t)-1) 
+		{
+			dir->errnum = QSE_DIR_ENOMEM;
+			return QSE_NULL;
+		}
+	}
+	else
+	{
+		qse_size_t len;
+		if ((len = qse_wcs_cpy (&dir->wbuf, wpath)) == (qse_size_t)-1 ||
+		    (!QSE_ISPATHWCSEP(wpath[len - 1]) && 
+		     !qse_iswcsdrivecurpath(wpath) &&
+		     qse_wcs_ccat (&dir->wbuf, QSE_WT('\\')) == (qse_size_t)-1) ||
+		    qse_wcs_cat (&dir->wbuf, QSE_WT("*.*")) == (qse_size_t)-1)
+		{
+			dir->errnum = QSE_DIR_ENOMEM;
+			return QSE_NULL;
+		}
+	}
+
+	return QSE_WCS_PTR(&dir->wbuf);
+}
+#endif
+
+/*
 static qse_char_t* make_dos_path (qse_dir_t* dir, const qse_char_t* path)
 {
 	if (path[0] == QSE_T('\0'))
@@ -357,31 +423,44 @@ static qse_mchar_t* mkdospath (qse_dir_t* dir, const qse_char_t* path)
 #endif
 
 }
+*/
 
 static int reset_to_path (qse_dir_t* dir, const qse_char_t* path)
 {
 #if defined(_WIN32)
 	/* ------------------------------------------------------------------- */
-	qse_char_t* tptr;
+	const qse_char_t* tptr;
 
 	dir->status &= ~STATUS_DONE;
 	dir->status &= ~STATUS_DONE_ERR;
 
-	#if defined(QSE_CHAR_IS_MCHAR)
-	tptr = make_dos_path (dir, path);
-	#else
 	if (dir->flags & QSE_DIR_MBSPATH)
 	{
-		qse_mchar_t* mptr = make_mbsdos_path (dir, (const qse_mchar_t*) path);
+		qse_mchar_t* mptr;
+
+		mptr = make_mbsdos_path (dir, (const qse_mchar_t*)path);
 		if (mptr == QSE_NULL) return -1;
-		tptr = mbs_to_wbuf (dir, mptr, &dir->tbuf);
+
+	#if defined(QSE_CHAR_IS_MCHAR)
+		tptr = mptr;
+	#else
+		tptr = mbs_to_wbuf (dir, mptr, &dir->wbuf);
+	#endif
 	}
 	else
 	{
-		tptr = make_dos_path (dir, path);
-		if (tptr == QSE_NULL) return -1;
-	}
+		qse_wchar_t* wptr;
+		QSE_ASSERT (dir->flags & QSE_DIR_WCSPATH);
+
+		wptr = make_wcsdos_path (dir, (const qse_wchar_t*)path);
+		if (wptr == QSE_NULL) return -1;
+
+	#if defined(QSE_CHAR_IS_MCHAR)
+		tptr = wcs_to_mbuf (dir, wptr, &dir->mbuf);
+	#else
+		tptr = wptr;
 	#endif
+	}
 	if (tptr == QSE_NULL) return -1;
 
 	dir->h = FindFirstFile (tptr, &dir->wfd);
@@ -398,25 +477,24 @@ static int reset_to_path (qse_dir_t* dir, const qse_char_t* path)
 
 	/* ------------------------------------------------------------------- */
 	APIRET rc;
-	qse_mchar_t* mptr;
+	const qse_mchar_t* mptr;
 
 	dir->h = HDIR_CREATE;
 	dir->count = 1;
 
-	#if defined(QSE_CHAR_IS_MCHAR)
-	mptr = make_dos_path (dir, path);
-	#else
 	if (dir->flags & QSE_DIR_MBSPATH)
 	{
-		mptr = make_mbsdos_path (dir, (const qse_mchar_t*) path);
+		mptr = make_mbsdos_path (dir, (const qse_mchar_t*)path);
 	}
 	else
 	{
-		qse_char_t* tptr = make_dos_path (dir, path);
-		if (tptr == QSE_NULL) return -1;
-		mptr = wcs_to_mbuf (dir, tptr, &dir->mbuf);
+		qse_wchar_t* wptr;
+		QSE_ASSERT (dir->flags & QSE_DIR_WCSPATH);
+
+		wptr = make_wcsdos_path (dir, (const qse_wchar_t*)path);
+		if (wptr == QSE_NULL) return -1;
+		mptr = wcs_to_mbuf (dir, wptr, &dir->mbuf);
 	}
-	#endif
 	if (mptr == QSE_NULL) return -1;
 
 	rc = DosFindFirst (
@@ -426,11 +504,11 @@ static int reset_to_path (qse_dir_t* dir, const qse_char_t* path)
 		&dir->ffb,
 		QSE_SIZEOF(dir->ffb),
 		&dir->count,
-#if defined(FIL_STANDARDL) 
+	#if defined(FIL_STANDARDL) 
 		FIL_STANDARDL
-#else
+	#else
 		FIL_STANDARD
-#endif
+	#endif
 	);
 
 	if (rc != NO_ERROR)
@@ -447,25 +525,25 @@ static int reset_to_path (qse_dir_t* dir, const qse_char_t* path)
 
 	/* ------------------------------------------------------------------- */
 	unsigned int rc;
-	qse_mchar_t* mptr;
+	const qse_mchar_t* mptr;
 
 	dir->status &= ~STATUS_DONE;
 	dir->status &= ~STATUS_DONE_ERR;
 
-	#if defined(QSE_CHAR_IS_MCHAR)
-	mptr = make_dos_path (dir, path);
-	#else
 	if (dir->flags & QSE_DIR_MBSPATH)
 	{
-		mptr = make_mbsdos_path (dir, (const qse_mchar_t*) path);
+		mptr = make_mbsdos_path (dir, (const qse_mchar_t*)path);
 	}
 	else
 	{
-		qse_char_t* tptr = make_dos_path (dir, path);
-		if (tptr == QSE_NULL) return -1;
-		mptr = wcs_to_mbuf (dir, tptr, &dir->mbuf);
+		qse_wchar_t* wptr;
+
+		QSE_ASSERT (dir->flags & QSE_DIR_WCSPTH);
+
+		wptr = make_wcsdos_path (dir, (const qse_wchar_t*)path);
+		if (wptr == QSE_NULL) return -1;
+		mptr = wcs_to_mbuf (dir, wptr, &dir->mbuf);
 	}
-	#endif
 	if (mptr == QSE_NULL) return -1;
 
 	rc = _dos_findfirst (mptr, _A_NORMAL | _A_SUBDIR, &dir->f);
@@ -482,17 +560,21 @@ static int reset_to_path (qse_dir_t* dir, const qse_char_t* path)
 #else
 	DIR* dp;
 
-	#if defined(QSE_CHAR_IS_MCHAR)
-	dp = QSE_OPENDIR (path[0] == QSE_MT('\0')? QSE_T("."): path);
-	#else
 	if (dir->flags & QSE_DIR_MBSPATH)
 	{
-		const qse_mchar_t* mpath = (const qse_mchar_t*)path;
+		const qse_mchar_t* mpath;
+
+		mpath = (const qse_mchar_t*)path;
 		dp = QSE_OPENDIR (mpath == QSE_MT('\0')? QSE_MT("."): mpath);
 	}
 	else
 	{
-		if (path[0] == QSE_T('\0'))
+
+		const qse_wchar_t* wpath;
+		QSE_ASSERT (dir->flags & QSE_DIR_WCSPATH);
+
+		wpath = (const qse_wchar_t*)path;
+		if (wpath[0] == QSE_WT('\0'))
 		{
 			dp = QSE_OPENDIR (QSE_MT("."));
 		}
@@ -500,13 +582,13 @@ static int reset_to_path (qse_dir_t* dir, const qse_char_t* path)
 		{
 			qse_mchar_t* mptr;
 
-			mptr = wcs_to_mbuf (dir, path, &dir->mbuf);
+			mptr = wcs_to_mbuf (dir, wpath, &dir->mbuf);
 			if (mptr == QSE_NULL) return -1;
 
 			dp = QSE_OPENDIR (mptr);
 		}
 	}
-	#endif 
+
 	if (dp == QSE_NULL) 
 	{
 		dir->errnum = syserr_to_errnum (errno);
@@ -540,7 +622,7 @@ int qse_dir_reset (qse_dir_t* dir, const qse_char_t* path)
 	return 0;
 }
 
-static int read_dir_to_tbuf (qse_dir_t* dir, void** name)
+static int read_dir_to_buf (qse_dir_t* dir, void** name)
 {
 #if defined(_WIN32)
 
@@ -571,29 +653,25 @@ static int read_dir_to_tbuf (qse_dir_t* dir, void** name)
 		}
 	}
 
-	#if defined(QSE_CHAR_IS_MCHAR)
-	if (qse_str_cpy (&dir->tbuf, dir->wfd.cFileName) == (qse_size_t)-1) 
-	{
-		dir->errnum = QSE_DIR_ENOMEM;
-		return -1;
-	}
-	*name = QSE_STR_PTR(&dir->tbuf);
-	#else
 	if (dir->flags & QSE_DIR_MBSPATH)
 	{
+	#if defined(QSE_CHAR_IS_MCHAR)
+		if (mbs_to_mbuf (dir, dir->wfd.cFileName, &dir->mbuf) == QSE_NULL) return -1;
+	#else
 		if (wcs_to_mbuf (dir, dir->wfd.cFileName, &dir->mbuf) == QSE_NULL) return -1;
-		*name = QSE_STR_PTR(&dir->mbuf);
+	#endif
+		*name = QSE_MBS_PTR(&dir->mbuf);
 	}
 	else
 	{
-		if (qse_str_cpy (&dir->tbuf, dir->wfd.cFileName) == (qse_size_t)-1) 
-		{
-			dir->errnum = QSE_DIR_ENOMEM;
-			return -1;
-		}
-		*name = QSE_STR_PTR(&dir->tbuf);
-	}
+		QSE_ASSERT (dir->flags & QSE_DIR_WCSPATH);
+	#if defined(QSE_CHAR_IS_MCHAR)
+		if (mbs_to_wbuf (dir, dir->wfd.cFileName, &dir->wbuf) == QSE_NULL) return -1;
+	#else
+		if (wcs_to_wbuf (dir, dir->wfd.cFileName, &dir->wbuf) == QSE_NULL) return -1;
 	#endif
+		*name = QSE_WCS_PTR(&dir->wbuf);
+	}
 
 	if (FindNextFile (dir->h, &dir->wfd) == FALSE) 
 	{
@@ -636,29 +714,18 @@ static int read_dir_to_tbuf (qse_dir_t* dir, void** name)
 		}
 	}
 
-	#if defined(QSE_CHAR_IS_MCHAR)
-	if (qse_str_cpy (&dir->tbuf, dir->ffb.achName) == (qse_size_t)-1) 
-	{
-		dir->errnum = QSE_DIR_ENOMEM;
-		return -1;
-	}
-	*name = QSE_STR_PTR(&dir->tbuf);
-	#else
 	if (dir->flags & QSE_DIR_MBSPATH)
 	{
-		if (qse_mbs_cpy (&dir->mbuf, dir->ffb.achName) == (qse_size_t)-1) 
-		{
-			dir->errnum = QSE_DIR_ENOMEM;
-			return -1;
-		}
+		if (mbs_to_mbuf (dir, dir->ffb.achName, &dir->mbuf) == QSE_NULL) return -1;
 		*name = QSE_MBS_PTR(&dir->mbuf);
 	}
 	else
 	{
-		if (mbs_to_wbuf (dir, dir->ffb.achName, &dir->tbuf) == QSE_NULL) return -1;
-		*name = QSE_STR_PTR(&dir->tbuf);
+		QSE_ASSERT (dir->flags & QSE_DIR_WCSPATH);
+		if (mbs_to_wbuf (dir, dir->ffb.achName, &dir->wbuf) == QSE_NULL) return -1;
+		*name = QSE_WCS_PTR(&dir->wbuf);
 	}
-	#endif
+	
 
 	rc = DosFindNext (dir->h, &dir->ffb, QSE_SIZEOF(dir->ffb), &dir->count);
 	if (rc == ERROR_NO_MORE_FILES) dir->count = 0;
@@ -700,29 +767,18 @@ static int read_dir_to_tbuf (qse_dir_t* dir, void** name)
 		}
 	}
 
-	#if defined(QSE_CHAR_IS_MCHAR)
-	if (qse_str_cpy (&dir->tbuf, dir->f.name) == (qse_size_t)-1) 
-	{
-		dir->errnum = QSE_DIR_ENOMEM;
-		return -1;
-	}
-	*name = QSE_STR_PTR(&dir->tbuf);
-	#else
 	if (dir->flags & QSE_DIR_MBSPATH)
 	{
-		if (qse_mbs_cpy (&dir->mbuf, dir->f.name) == (qse_size_t)-1) 
-		{
-			dir->errnum = QSE_DIR_ENOMEM;
-			return -1;
-		}
+		if (mbs_to_mbuf (dir, dir->f.name, &dir->mbuf) == QSE_NULL) return -1;
 		*name = QSE_MBS_PTR(&dir->mbuf);
 	}
 	else
 	{
-		if (mbs_to_wbuf (dir, dir->f.name, &dir->tbuf) == QSE_NULL) return -1;
-		*name = QSE_STR_PTR(&dir->tbuf);
+		QSE_ASSERT (dir->flags & QSE_DIR_WCSPATH);
+
+		if (mbs_to_wbuf (dir, dir->f.name, &dir->wbuf) == QSE_NULL) return -1;
+		*name = QSE_WCS_PTR(&dir->wbuf);
 	}
-	#endif
 
 	if (_dos_findnext (&dir->f) != 0)
 	{
@@ -760,30 +816,18 @@ read:
 		    IS_PREVDIR_M(de->d_name)) goto read;
 	}
 
-	#if defined(QSE_CHAR_IS_MCHAR)
-	if (qse_str_cpy (&dir->tbuf, de->d_name) == (qse_size_t)-1) 
-	{
-		dir->errnum = QSE_DIR_ENOMEM;
-		return -1;
-	}
-
-	*name = QSE_STR_PTR(&dir->tbuf);
-	#else
 	if (dir->flags & QSE_DIR_MBSPATH)
 	{
-		if (qse_mbs_cpy (&dir->mbuf, de->d_name) == (qse_size_t)-1) 
-		{
-			dir->errnum = QSE_DIR_ENOMEM;
-			return -1;
-		}
+		if (mbs_to_mbuf (dir, de->d_name, &dir->mbuf) == QSE_NULL) return -1;
 		*name = QSE_MBS_PTR(&dir->mbuf);
 	}
 	else
 	{
-		if (mbs_to_wbuf (dir, de->d_name, &dir->tbuf) == QSE_NULL) return -1;
-		*name = QSE_STR_PTR(&dir->tbuf);
+		QSE_ASSERT (dir->flags & QSE_DIR_WCSPATH);
+
+		if (mbs_to_wbuf (dir, de->d_name, &dir->wbuf) == QSE_NULL) return -1;
+		*name = QSE_WCS_PTR(&dir->wbuf);
 	}
-	#endif
 
 	return 1;
 	/* ------------------------------------------------------------------- */
@@ -798,19 +842,15 @@ static int read_ahead_and_sort (qse_dir_t* dir, const qse_char_t* path)
 
 	while (1)
 	{
-		x = read_dir_to_tbuf (dir, &name);
+		x = read_dir_to_buf (dir, &name);
 		if (x >= 1)
 		{
 			qse_size_t size;
 
-		#if defined(QSE_CHAR_IS_MCHAR)
-			size = (qse_mbslen(name) + 1) * QSE_SIZEOF(qse_mchar_t);
-		#else
 			if (dir->flags & QSE_DIR_MBSPATH)
 				size = (qse_mbslen(name) + 1) * QSE_SIZEOF(qse_mchar_t);
 			else
 				size = (qse_wcslen(name) + 1) * QSE_SIZEOF(qse_wchar_t);
-		#endif
 
 			if (qse_lda_pushheap (dir->stab, name, size) == (qse_size_t)-1)
 			{
@@ -846,7 +886,7 @@ int qse_dir_read (qse_dir_t* dir, qse_dir_ent_t* ent)
 		int x;
 		void* name;
 
-		x = read_dir_to_tbuf (dir, &name);
+		x = read_dir_to_buf (dir, &name);
 		if (x >= 1)
 		{
 			QSE_MEMSET (ent, 0, QSE_SIZEOF(ent));

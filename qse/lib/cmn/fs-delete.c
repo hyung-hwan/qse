@@ -31,7 +31,7 @@
  * qse_dir_xxx() and qse_glob()  don't support mbs and wcs separately.
  * while the functions here support them. */
 
-static int delete_file_from_fs (qse_fs_t* fs, const qse_fs_char_t* fspath)
+int qse_fs_sysrmfile (qse_fs_t* fs, const qse_fs_char_t* fspath)
 {
 
 #if defined(_WIN32)
@@ -74,7 +74,7 @@ static int delete_file_from_fs (qse_fs_t* fs, const qse_fs_char_t* fspath)
 	return 0;
 }
 
-static int delete_directory_from_fs (qse_fs_t* fs, const qse_fs_char_t* fspath)
+int qse_fs_sysrmdir (qse_fs_t* fs, const qse_fs_char_t* fspath)
 {
 #if defined(_WIN32)
 
@@ -138,7 +138,7 @@ static int delete_file (qse_fs_t* fs, const qse_char_t* path, int purge)
 	fspath = qse_fs_makefspath(fs, path);
 	if (!fspath) return -1;
 
-	ret = delete_file_from_fs (fs, fspath);
+	ret = qse_fs_sysrmfile (fs, fspath);
 	qse_fs_freefspath (fs, path, fspath);
 
 	if (ret <= -1 && purge) 
@@ -176,7 +176,7 @@ static int delete_directory_nocbs (qse_fs_t* fs, const qse_char_t* path)
 	fspath = qse_fs_makefspath(fs, path);
 	if (!fspath) return -1;
 
-	ret = delete_directory_from_fs (fs, fspath);
+	ret = qse_fs_sysrmdir (fs, fspath);
 	qse_fs_freefspath (fs, path, fspath);
 
 	return ret;
@@ -301,8 +301,8 @@ static int delete_from_fs_with_mbs (qse_fs_t* fs, const qse_mchar_t* path, int d
 		if (x == 0) return 0; /* skipped */
 	}
 
-	ret = dir? delete_directory_from_fs (fs, fspath): 
-	           delete_file_from_fs (fs, fspath);
+	ret = dir? qse_fs_sysrmdir (fs, fspath): 
+	           qse_fs_sysrmfile (fs, fspath);
 
 	qse_fs_freefspathformbs (fs, path, fspath);
 
@@ -337,8 +337,8 @@ static int delete_from_fs_with_wcs (qse_fs_t* fs, const qse_wchar_t* path, int d
 	fspath = qse_fs_makefspathforwcs (fs, path);
 	if (!fspath) return -1;
 
-	ret = dir? delete_directory_from_fs (fs, fspath): 
-	           delete_file_from_fs (fs, fspath);
+	ret = dir? qse_fs_sysrmdir (fs, fspath): 
+	           qse_fs_sysrmfile (fs, fspath);
 
 	qse_fs_freefspathforwcs (fs, path, fspath);
 

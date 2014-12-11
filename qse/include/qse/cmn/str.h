@@ -1392,6 +1392,7 @@ QSE_EXPORT qse_wchar_t* qse_wcstradup (
 #	define qse_cstradup(sa,len,mmgr)      qse_wcstradup(sa,len,mmgr)
 #endif
 
+
 /**
  * The qse_mbsstr() function searchs a string \a str for the first occurrence 
  * of a substring \a sub.
