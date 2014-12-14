@@ -35,12 +35,17 @@
  * in a path name.
  */
 
-typedef int (*qse_glob_cbimpl_t) (
-	const qse_cstr_t* path,
-	void*             cbctx
+typedef int (*qse_glob_mbscbimpl_t) (
+	const qse_mcstr_t* path,
+	void*              cbctx
 );
 
-enum qse_glob_flags_t
+typedef int (*qse_glob_wcscbimpl_t) (
+	const qse_wcstr_t* path,
+	void*              cbctx
+);
+
+enum qse_glob_flag_t
 {
 	/** Don't use the backslash as an escape charcter.
 	 *  This option is on in Win32/OS2/DOS. */
@@ -58,30 +63,58 @@ enum qse_glob_flags_t
 
 	/** Exclude special entries from matching. 
 	  * Special entries include . and .. */
-	QSE_GLOB_SKIPSPCDIR  = (1 << 4)
+	QSE_GLOB_SKIPSPCDIR  = (1 << 4),
+
+
+	/**
+	  * bitsise-ORed of all valid enumerators
+	  */
+	QSE_GLOB_ALL = (QSE_GLOB_NOESCAPE | QSE_GLOB_PERIOD |
+	                QSE_GLOB_IGNORECASE | QSE_GLOB_TOLERANT |
+	                QSE_GLOB_SKIPSPCDIR)
 };
+typedef enum qse_glob_flag_t qse_glob_flag_t;
 
 #if defined(__cplusplus)
 extern "C" {
 #endif
 
 /**
- * The qse_glob() function finds path names matchin the \a pattern.
+ * The qse_globmbs() function finds path names matchin the \a pattern.
  * It calls the call-back function \a cbimpl for each path name found.
  * 
  * \return -1 on failure, 0 on no match, 1 if matches are found.
  */
-QSE_EXPORT int qse_glob (
-	const qse_char_t*  pattern,
-	qse_glob_cbimpl_t  cbimpl,
-	void*              cbctx,
-	int                flags,
-	qse_mmgr_t*        mmgr,
-	qse_cmgr_t*        cmgr
+QSE_EXPORT int qse_globmbs (
+	const qse_mchar_t*   pattern,
+	qse_glob_mbscbimpl_t cbimpl,
+	void*                cbctx,
+	int                  flags,
+	qse_mmgr_t*          mmgr,
+	qse_cmgr_t*          cmgr
 );
+
+QSE_EXPORT int qse_globwcs (
+	const qse_wchar_t*   pattern,
+	qse_glob_wcscbimpl_t cbimpl,
+	void*                cbctx,
+	int                  flags,
+	qse_mmgr_t*          mmgr,
+	qse_cmgr_t*          cmgr
+);
+
+#if defined(QSE_CHAR_IS_MCHAR)
+	typedef qse_glob_mbscbimpl_t qse_glob_cbimpl_t;
+#	define qse_glob(pattern,cbimpl,cbctx,flags,mmgr,cmgr) qse_globmbs(pattern,cbimpl,cbctx,flags,mmgr,cmgr)
+	
+#else
+	typedef qse_glob_wcscbimpl_t qse_glob_cbimpl_t;
+#	define qse_glob(pattern,cbimpl,cbctx,flags,mmgr,cmgr) qse_globwcs(pattern,cbimpl,cbctx,flags,mmgr,cmgr)
+#endif
 
 #if defined(__cplusplus)
 }
 #endif
 
 #endif
+

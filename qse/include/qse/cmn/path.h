@@ -50,21 +50,20 @@ enum qse_canonpath_flag_t
 #	define QSE_ISPATHMBSEP(c) ((c) == QSE_MT('/') || (c) == QSE_MT('\\'))
 #	define QSE_ISPATHWCSEP(c) ((c) == QSE_WT('/') || (c) == QSE_WT('\\'))
 
-#	define QSE_ISPATHMBDRIVE(s) \
-	(((s[0] >= QSE_MT('A') && s[0] <= QSE_MT('Z')) || \
-	  (s[0] >= QSE_MT('a') && s[0] <= QSE_MT('z'))) && \
-	 s[1] == QSE_MT(':'))
-#	define QSE_ISPATHWCDRIVE(s) \
-	(((s[0] >= QSE_WT('A') && s[0] <= QSE_WT('Z')) || \
-	  (s[0] >= QSE_WT('a') && s[0] <= QSE_WT('z'))) && \
-	 s[1] == QSE_WT(':'))
-
 #else
 #	define QSE_ISPATHMBSEP(c) ((c) == QSE_MT('/'))
 #	define QSE_ISPATHWCSEP(c) ((c) == QSE_WT('/'))
 
-	/* QSE_ISPATHMBDRIVE() and QSE_ISPATHWCDRIVE() are not defined for this platform */
 #endif
+
+#define QSE_ISPATHMBDRIVE(s) \
+	(((s[0] >= QSE_MT('A') && s[0] <= QSE_MT('Z')) || \
+	  (s[0] >= QSE_MT('a') && s[0] <= QSE_MT('z'))) && \
+	 s[1] == QSE_MT(':'))
+#define QSE_ISPATHWCDRIVE(s) \
+	(((s[0] >= QSE_WT('A') && s[0] <= QSE_WT('Z')) || \
+	  (s[0] >= QSE_WT('a') && s[0] <= QSE_WT('z'))) && \
+	 s[1] == QSE_WT(':'))
 
 #define QSE_ISPATHMBSEPORNIL(c) (QSE_ISPATHMBSEP(c) || (c) == QSE_MT('\0'))
 #define QSE_ISPATHWCSEPORNIL(c) (QSE_ISPATHWCSEP(c) || (c) == QSE_WT('\0'))

@@ -163,7 +163,7 @@ static int make_param (
 			goto oops; 
 		}
 	}
-#else	
+#else
 	if (flags & QSE_PIO_MBSCMD) 
 	{
 		/* the cmd is flagged to be of qse_mchar_t 

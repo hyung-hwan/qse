@@ -13,6 +13,7 @@ noinst_HEADERS = \
 	fmt-intmax.h \
 	fmt-out.h \
 	fs.h \
+	glob.h \
 	mem.h \
 	str-dyn.h \
 	str-fcpy.h \
