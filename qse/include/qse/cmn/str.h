@@ -3259,12 +3259,12 @@ QSE_EXPORT qse_size_t qse_wcs_fmt (
 );
 
 #if defined(QSE_CHAR_IS_MCHAR)
-#	define qse_str_setmmgr(str,mmgr)    qse_mbs_wetmmgr(str,mmgr)
-#	define qse_str_getmmgr(str)         qse_mbs_getmmgr(str)
 #	define qse_str_open(mmgr,ext,capa)  qse_mbs_open(mmgr,ext,capa)
 #	define qse_str_close(str)           qse_mbs_close(str)
 #	define qse_str_init(str,mmgr,capa)  qse_mbs_init(str,mmgr,capa)
 #	define qse_str_fini(str)            qse_mbs_fini(str)
+#	define qse_str_setmmgr(str,mmgr)    qse_mbs_setmmgr(str,mmgr)
+#	define qse_str_getmmgr(str)         qse_mbs_getmmgr(str)
 #	define qse_str_yield(str,buf,ncapa) qse_mbs_yield(str,buf,ncapa)
 #	define qse_str_yieldptr(str,ncapa)  qse_mbs_yieldptr(str,ncapa)
 #	define qse_str_getsizer(str)        qse_mbs_getsizer(str)
@@ -3291,12 +3291,12 @@ QSE_EXPORT qse_size_t qse_wcs_fmt (
 #	define qse_str_fmt                  qse_mbs_fmt
 #	define qse_str_vfmt                 qse_mbs_vfmt
 #else
-#	define qse_str_setmmgr(str,mmgr)    qse_wcs_wetmmgr(str,mmgr)
-#	define qse_str_getmmgr(str)         qse_wcs_getmmgr(str)
 #	define qse_str_open(mmgr,ext,capa)  qse_wcs_open(mmgr,ext,capa)
 #	define qse_str_close(str)           qse_wcs_close(str)
 #	define qse_str_init(str,mmgr,capa)  qse_wcs_init(str,mmgr,capa)
 #	define qse_str_fini(str)            qse_wcs_fini(str)
+#	define qse_str_setmmgr(str,mmgr)    qse_wcs_setmmgr(str,mmgr)
+#	define qse_str_getmmgr(str)         qse_wcs_getmmgr(str)
 #	define qse_str_yield(str,buf,ncapa) qse_wcs_yield(str,buf,ncapa)
 #	define qse_str_yieldptr(str,ncapa)  qse_wcs_yieldptr(str,ncapa)
 #	define qse_str_getsizer(str)        qse_wcs_getsizer(str)
@@ -3323,7 +3323,6 @@ QSE_EXPORT qse_size_t qse_wcs_fmt (
 #	define qse_str_fmt                  qse_wcs_fmt
 #	define qse_str_vfmt                 qse_wcs_vfmt
 #endif
-
 
 #if defined(__cplusplus)
 }
