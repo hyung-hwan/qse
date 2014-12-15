@@ -148,7 +148,6 @@ static qse_size_t format_dirent (
 	const qse_httpd_dirent_t* dirent,
 	qse_mchar_t* buf, int bufsz)
 {
-/* TODO: page encoding?? utf-8??? or derive name from cmgr or current locale??? */
 	qse_size_t x;
 
 	qse_mchar_t* encname;
@@ -332,8 +331,11 @@ static int task_main_dseg (
 		qpath_esc = qse_httpd_escapehtml (httpd, ctx->qpath.ptr);
 		if (qpath_esc == QSE_NULL) return -1;
 
+		/* TODO: page encoding?? utf-8??? or derive name from cmgr or current locale??? */
+		/* TODO: SUPPORT character set. DON't HARD_CODE it to UTF8 */
 		x = qse_mbsxfmts (&ctx->buf[ctx->buflen], ctx->bufrem,
-			QSE_MT("<html><head>%s</head>\n<body>\n<div class='header'>%s</div>\n<div class='body'><table>%s"), ctx->head.ptr, qpath_esc,
+			QSE_MT("<html><meta http-equiv=\"Content-Type\" content=\"text/html; charset='UTF-8'\">\n<head>%s</head>\n<body>\n<div class='header'>%s</div>\n<div class='body'><table>%s"), 
+			ctx->head.ptr, qpath_esc,
 			(is_root? QSE_MT(""): QSE_MT("<tr><td class='name'><a href='../' class='dir'>..</a></td><td class='time'></td><td class='size'></td></tr>\n"))
 		);
 

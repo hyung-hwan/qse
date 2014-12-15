@@ -41,7 +41,7 @@ struct glob_t
 	str_t path;
 	str_t tbuf; /* temporary buffer */
 
-#if defined(DECLARE_MBUF)
+#if defined(INCLUDE_MBUF)
 	qse_mbs_t mbuf;
 #endif
 
@@ -83,7 +83,7 @@ struct stack_node_t
 };
 #endif
 
-#if defined(DECLARE_MBUF)
+#if defined(INCLUDE_MBUF)
 static qse_mchar_t* wcs_to_mbuf (glob_t* g, const qse_wchar_t* wcs, qse_mbs_t* mbs)
 {
 	qse_size_t ml, wl;
@@ -104,6 +104,7 @@ static int path_exists (glob_t* g, const char_t* name)
 	#if !defined(INVALID_FILE_ATTRIBUTES)
 	#define INVALID_FILE_ATTRIBUTES ((DWORD)-1)
 	#endif
+
 	#if defined(CHAR_IS_MCHAR)
 	return (GetFileAttributesA(name) != INVALID_FILE_ATTRIBUTES)? 1: 0;
 	#else
@@ -563,7 +564,7 @@ int glob (const char_t* pattern, cbimpl_t cbimpl, void* cbctx, int flags, qse_mm
 		return -1;
 	}
 
-#if defined(DECLARE_MBUF)
+#if defined(INCLUDE_MBUF)
 	if (qse_mbs_init (&g.mbuf, mmgr, 512) <= -1) 
 	{
 		str_fini (&g.path);
@@ -579,7 +580,7 @@ int glob (const char_t* pattern, cbimpl_t cbimpl, void* cbctx, int flags, qse_mm
 
 	x = search (&g, &seg);
 
-#if defined(DECLARE_MBUF)
+#if defined(INCLUDE_MBUF)
 	qse_mbs_fini (&g.mbuf);
 #endif
 	str_fini (&g.tbuf);

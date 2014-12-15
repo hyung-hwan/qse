@@ -48,7 +48,6 @@ static qse_cmgr_t builtin_cmgr[] =
 	{ qse_cp949touc,  qse_uctocp949 },
 	{ qse_cp950touc,  qse_uctocp950 }
 #endif
-
 };
 
 static qse_cmgr_t* dfl_cmgr = &builtin_cmgr[QSE_CMGR_SLMB];
