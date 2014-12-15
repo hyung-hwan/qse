@@ -1,11 +1,11 @@
 #include <qse/cmn/glob.h>
-#include <qse/cmn/stdio.h>
+#include <qse/cmn/sio.h>
 #include <qse/cmn/main.h>
 #include <qse/cmn/mbwc.h>
 #include <qse/cmn/str.h>
 #include <qse/cmn/mem.h>
+#include <qse/cmn/fmt.h>
 #include <qse/cmn/path.h>
-
 
 #include <locale.h>
 #if defined(_WIN32)
@@ -30,7 +30,8 @@ static int glob_main (int argc, qse_char_t* argv[])
 
 	for (i = 1; i < argc; i++)
 	{
-		if (qse_glob (argv[i], print, QSE_NULL, QSE_GLOB_PERIOD, QSE_MMGR_GETDFL()) <= -1) return -1;
+		if (qse_glob (argv[i], print, QSE_NULL, QSE_GLOB_PERIOD, 
+		              qse_getdflmmgr(), qse_getdflcmgr()) <= -1) return -1;
 	}
 
 	return 0;
@@ -38,9 +39,10 @@ static int glob_main (int argc, qse_char_t* argv[])
 
 int qse_main (int argc, qse_achar_t* argv[])
 {
+	int x;
 #if defined(_WIN32)
  	char locale[100];
-	UINT codepage = GetConsoleOutputCP();	
+	UINT codepage = GetConsoleOutputCP();
 	if (codepage == CP_UTF8)
 	{
 		/*SetConsoleOUtputCP (CP_UTF8);*/
@@ -48,14 +50,23 @@ int qse_main (int argc, qse_achar_t* argv[])
 	}
 	else
 	{
-     	sprintf (locale, ".%u", (unsigned int)codepage);
-     	setlocale (LC_ALL, locale);
+		/* .codepage */
+		qse_fmtuintmaxtombs (locale, QSE_COUNTOF(locale),
+			codepage, 10, -1, QSE_MT('\0'), QSE_MT("."));
+		setlocale (LC_ALL, locale);
 		qse_setdflcmgrbyid (QSE_CMGR_SLMB);
 	}
 #else
-     setlocale (LC_ALL, "");
+	setlocale (LC_ALL, "");
 	qse_setdflcmgrbyid (QSE_CMGR_SLMB);
 #endif
-	return qse_runmain (argc, argv, glob_main);
+
+	qse_openstdsios ();
+
+	x = qse_runmain (argc, argv, glob_main);
+
+	qse_closestdsios ();
+
+	return x;
 }
 

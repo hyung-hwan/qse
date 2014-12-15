@@ -22,7 +22,6 @@ static void print_usage (const qse_char_t* argv0)
 	qse_fprintf (QSE_STDERR, QSE_T("  -p            preserve\n"));
 	qse_fprintf (QSE_STDERR, QSE_T("  -r            recursive\n"));
 	qse_fprintf (QSE_STDERR, QSE_T("  -s            symlink\n"));
-	
 }
 
 static int fs_main (int argc, qse_char_t* argv[])

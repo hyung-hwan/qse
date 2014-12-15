@@ -115,7 +115,7 @@ typedef enum segment_type_t segment_type_t;
 #define get_next_segment mbs_get_next_segment
 #define handle_non_wild_segments mbs_handle_non_wild_segments
 #define CHAR_IS_MCHAR 
-#undef DECLARE_MBUF
+#undef INCLUDE_MBUF
 #include "glob.h"
 
 /* -------------------------------------------------------------------- */
@@ -156,7 +156,7 @@ typedef enum segment_type_t segment_type_t;
 #undef get_next_segment
 #undef handle_non_wild_segments
 #undef CHAR_IS_MCHAR 
-#undef DECLARE_MBUF
+#undef INCLUDE_MBUF
 
 /* -------------------------------------------------------------------- */
 
@@ -198,6 +198,6 @@ typedef enum segment_type_t segment_type_t;
 #define handle_non_wild_segments wcs_handle_non_wild_segments
 #undef CHAR_IS_MCHAR 
 #if !defined(_WIN32) 
-#	define DECLARE_MBUF 1
+#	define INCLUDE_MBUF 1
 #endif
 #include "glob.h"

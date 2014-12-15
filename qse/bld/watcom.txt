@@ -1,0 +1,45 @@
+Here are sample commands and linker files to use sample programs
+using the watcom compiler and linker.
+
+------------------------------------------------------------------------
+
+wcc386 -bt=os2 -zq -i=..\..\include -DNDEBUG -DQSE_CHAR_IS_WCHAR=1 -wx -d0 -bm -ot -ox ..\..\samples\cmn\dir01.c
+
+>>> dir01.lbc
+option quiet
+name dir01.exe
+option caseexact
+   system os2v2 
+file dir01.obj
+library release-wchar-shared\qsecmn.lib
+
+
+wlink @dir01.lbc
+
+------------------------------------------------------------------------
+
+wcc386 -bt=dos -dDOS4GW -zq -i=..\..\include -DNDEBUG -DQSE_CHAR_IS_WCHAR=1 -wx -d0 -bm -ot -ox ..\..\samples\cmn\dir01.c
+
+>>> dir01.lbc
+option quiet
+name dir01.exe
+option caseexact
+   system DOS4G 
+file dir01.obj
+library release-wchar-static\qsecmn.lib
+option stack=256k
+
+wlink @dir01.lbc
+------------------------------------------------------------------------
+
+wcc386 -bt=nt -zq -i=..\..\include -DNDEBUG -DQSE_CHAR_IS_WCHAR=1 -wx -d0 -bm -ot -ox ..\..\samples\cmn\dir01.c
+
+>>> dir01.lbc
+option quiet
+name dir01.exe
+option caseexact
+   system nt ref 'main_' 
+file dir01.obj
+library release-wchar-shared\qsecmn.lib
+
+wlink @dir01.lbc
