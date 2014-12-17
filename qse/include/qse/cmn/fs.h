@@ -111,7 +111,7 @@ struct qse_fs_ent_t
 		qse_ntime_t create; 
 		qse_ntime_t access;
 		qse_ntime_t modify;
-		qse_ntime_t change;	 /* inode status change */
+		qse_ntime_t change; /* inode status change */
 	} time;
 };
 
@@ -124,11 +124,15 @@ struct qse_fs_attr_t
 	unsigned int isreg: 1;
 	unsigned int isblk: 1;
 	unsigned int ischr: 1;
+
+	qse_uintptr_t mode;
+
 	qse_uintmax_t size;
 	qse_uintmax_t ino;
 	qse_uintmax_t dev;
 	qse_uintptr_t uid;
 	qse_uintptr_t gid;
+
 	qse_ntime_t atime; /* last access */
 	qse_ntime_t mtime; /* last modification */
 	qse_ntime_t ctime; /* last status change */
@@ -313,6 +317,24 @@ QSE_EXPORT int qse_fs_pop (
 	qse_fs_t* fs,
 	const qse_char_t* name
 );
+
+QSE_EXPORT int qse_fs_getattrmbs (
+	qse_fs_t*            fs,
+	const qse_mchar_t*   path,
+	qse_fs_attr_t*       attr
+);
+
+QSE_EXPORT int qse_fs_getattrwcs (
+	qse_fs_t*            fs,
+	const qse_wchar_t*   path,
+	qse_fs_attr_t*       attr
+);
+
+#if defined(QSE_CHAR_IS_MCHAR)
+#	define qse_fs_getattr(fs,path,attr) qse_fs_getattrmbs(fs,path,attr)
+#else
+#	define qse_fs_getattr(fs,path,attr) qse_fs_getattrwcs(fs,path,attr)
+#endif
 
 QSE_EXPORT int qse_fs_move (
 	qse_fs_t*         fs,
