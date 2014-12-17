@@ -30,9 +30,7 @@
 #include "mem.h"
 
 /* internal flags. it must not overlap with qse_fs_cpfile_flag_t enumerators */
-#define CPFILE_DST_ATTR (1 << 27)
-#define CPFILE_DST_PATH_DUP (1 << 28)
-#define CPFILE_DST_FSPATH_DUP (1 << 29)
+#define CPFILE_DST_ATTR (1 << 29)
 #define CPFILE_DST_FSPATH_MERGED (1 << 30)
 
 struct cpfile_t
@@ -42,13 +40,11 @@ struct cpfile_t
 	qse_fs_char_t* src_fspath;
 	qse_fs_char_t* dst_fspath;
 
-	qse_char_t* src_path;
-	qse_char_t* dst_path;
-
 	qse_fs_attr_t src_attr;
 	qse_fs_attr_t dst_attr;
 };
 typedef struct cpfile_t cpfile_t;
+
 
 static int merge_dstdir_and_file (qse_fs_t* fs, cpfile_t* cpfile)
 {
@@ -59,25 +55,6 @@ static int merge_dstdir_and_file (qse_fs_t* fs, cpfile_t* cpfile)
 	 * in the directory */
 	QSE_ASSERT (cpfile->dst_attr.isdir);
 
-	if (cpfile->dst_path)
-	{
-		qse_char_t* tmp;
-
-		tmp = qse_mergepathdup (cpfile->dst_path, qse_basename (cpfile->src_path), fs->mmgr);
-		if (!tmp) 
-		{
-			fs->errnum = QSE_FS_ENOMEM;
-			return -1;
-		}
-
-		if (cpfile->flags & CPFILE_DST_PATH_DUP) 
-			QSE_MMGR_FREE (fs->mmgr, cpfile->dst_path);
-
-		cpfile->dst_path = tmp;
-		cpfile->flags |= CPFILE_DST_PATH_DUP;
-	}
-
-
 	fstmp = merge_fspath_dup (cpfile->dst_fspath, get_fspath_base (cpfile->src_fspath), fs->mmgr);
 	if (!fstmp)
 	{
@@ -85,26 +62,23 @@ static int merge_dstdir_and_file (qse_fs_t* fs, cpfile_t* cpfile)
 		return -1;
 	}
 
-	if (cpfile->flags & CPFILE_DST_FSPATH_DUP) 
-		QSE_MMGR_FREE (fs->mmgr, cpfile->dst_fspath);
+	qse_fs_freefspath (fs, QSE_NULL, cpfile->dst_fspath);
 	cpfile->dst_fspath = fstmp;
-	cpfile->flags |= CPFILE_DST_FSPATH_DUP;
 
-	if (qse_fs_getattr (fs, cpfile->dst_fspath, &cpfile->dst_attr) >= 0) 
+	if (qse_fs_sysgetattr (fs, cpfile->dst_fspath, &cpfile->dst_attr) <= -1) 
 	{
-		cpfile->flags |= CPFILE_DST_ATTR;
+		/* attribute on the new destination is not available */
+		cpfile->flags &= ~CPFILE_DST_ATTR;
 	}
 	else
 	{
-		cpfile->flags &= ~CPFILE_DST_ATTR;
+		/* the attribute has been updated to reflect the new destination */
+		cpfile->flags |= CPFILE_DST_ATTR;
 	}
 
 	cpfile->flags |= CPFILE_DST_FSPATH_MERGED;
-
-
 	return 0;
 }
-
 
 
 /*
@@ -229,12 +203,12 @@ static int copy_file_in_fs (qse_fs_t* fs, cpfile_t* cpfile)
 			goto oops;
 		}
 
-		out = QSE_OPEN (cpfile->dst_fspath, O_CREAT | O_WRONLY | O_TRUNC, 0777); /* TODO: proper mode */
+		out = QSE_OPEN (cpfile->dst_fspath, O_CREAT | O_WRONLY | O_TRUNC, cpfile->src_attr.mode);
 		if (out <= -1 && (cpfile->flags & QSE_FS_CPFILE_FORCE))
 		{
 			/* if forced, delete it and try to open it again */
 			QSE_UNLINK (cpfile->dst_fspath);
-			out = QSE_OPEN (cpfile->dst_fspath, O_CREAT | O_WRONLY | O_TRUNC, 0777); /* TODO: proper mode */
+			out = QSE_OPEN (cpfile->dst_fspath, O_CREAT | O_WRONLY | O_TRUNC, cpfile->src_attr.mode); 
 		}
 		if (out <= -1)
 		{
@@ -267,7 +241,8 @@ static int copy_file_in_fs (qse_fs_t* fs, cpfile_t* cpfile)
 			struct timeval tv[2];
 		#endif
 
-			if (QSE_FCHOWN (out, cpfile->src_attr.uid, cpfile->src_attr.gid) <= -1)
+			if (QSE_FCHOWN (out, cpfile->src_attr.uid, cpfile->src_attr.gid) <= -1 ||
+			    QSE_FCHMOD (out,  cpfile->src_attr.mode) <= -1)
 			{
 				fs->errnum = qse_fs_syserrtoerrnum (fs, errno);
 				goto oops;
@@ -311,6 +286,29 @@ static int copy_file_in_fs (qse_fs_t* fs, cpfile_t* cpfile)
 #endif
 }
 
+static int prepare_cpfile (qse_fs_t* fs, cpfile_t* cpfile)
+{
+	/* error if the source file can't be stat'ed.
+	 * ok if the destination file can't be stat'ed */
+	if (qse_fs_sysgetattr (fs, cpfile->src_fspath, &cpfile->src_attr) <= -1) return -1;
+	if (qse_fs_sysgetattr (fs, cpfile->dst_fspath, &cpfile->dst_attr) >= 0) cpfile->flags |= CPFILE_DST_ATTR;
+	return 0;
+}
+
+static void clear_cpfile (qse_fs_t* fs, cpfile_t* cpfile)
+{
+	if (cpfile->src_fspath) 
+	{
+		QSE_MMGR_FREE (fs->mmgr, cpfile->src_fspath);
+		cpfile->src_fspath = QSE_NULL;
+	}
+	if (cpfile->dst_fspath) 
+	{
+		QSE_MMGR_FREE (fs->mmgr, cpfile->dst_fspath);
+		cpfile->dst_fspath = QSE_NULL;
+	}
+}
+
 static int copy_file (qse_fs_t* fs, cpfile_t* cpfile)
 {
 	if (cpfile->src_attr.isdir)
@@ -320,11 +318,11 @@ static int copy_file (qse_fs_t* fs, cpfile_t* cpfile)
 		qse_dir_t* dir;
 		qse_dir_errnum_t direrr;
 		qse_dir_ent_t dirent;
-		qse_char_t* src_path, * dst_path;
+		cpfile_t sub_cpfile;
 		int x;
 
 	copy_dir:
-		if (cpfile->flags  & CPFILE_DST_ATTR)
+		if (cpfile->flags & CPFILE_DST_ATTR)
 		{
 			if (!cpfile->dst_attr.isdir)
 			{
@@ -361,12 +359,20 @@ static int copy_file (qse_fs_t* fs, cpfile_t* cpfile)
 
 		if (!(cpfile->flags & QSE_FS_CPFILE_RECURSIVE))
 		{
-			/* cann not copy a directory without recursion */
+			/* cannot copy a directory without recursion */
 			fs->errnum = QSE_FS_EISDIR;
 			return -1;
 		}
 
-		dir = qse_dir_open (fs->mmgr, 0, cpfile->src_path, QSE_DIR_SKIPSPCDIR, &direrr);
+		dir = qse_dir_open (
+			fs->mmgr, 0, (const qse_char_t*)cpfile->src_fspath,
+		#if defined(QSE_FS_CHAR_IS_MCHAR)
+			QSE_DIR_SKIPSPCDIR | QSE_DIR_MBSPATH,
+		#else
+			QSE_DIR_SKIPSPCDIR | QSE_DIR_WCSPATH,
+		#endif
+			&direrr
+		);
 		if (!dir)
 		{
 			fs->errnum = qse_fs_direrrtoerrnum (fs, direrr);
@@ -390,21 +396,21 @@ static int copy_file (qse_fs_t* fs, cpfile_t* cpfile)
 			}
 			if (x == 0) break; /* no more entries */
 
-
-			src_path = qse_mergepathdup (cpfile->src_path, dirent.name, fs->mmgr);
-			dst_path = qse_mergepathdup (cpfile->dst_path, dirent.name, fs->mmgr);
-			if (!src_path  || !dst_path)
+			QSE_MEMSET (&sub_cpfile, 0, QSE_SIZEOF(sub_cpfile));
+			sub_cpfile.flags = cpfile->flags & QSE_FS_CPFILE_ALL; /* inherit public flags */
+			sub_cpfile.src_fspath = merge_fspath_dup (cpfile->src_fspath, (qse_fs_char_t*)dirent.name, fs->mmgr);
+			sub_cpfile.dst_fspath = merge_fspath_dup (cpfile->dst_fspath, (qse_fs_char_t*)dirent.name, fs->mmgr);
+			if (!sub_cpfile.src_fspath  || !sub_cpfile.dst_fspath || prepare_cpfile (fs, &sub_cpfile) <= -1)
 			{
-				if (dst_path) QSE_MMGR_FREE (fs->mmgr, dst_path);
-				if (src_path) QSE_MMGR_FREE (fs->mmgr, src_path);
+				clear_cpfile (fs, &sub_cpfile);
 				qse_dir_close (dir);
 				return -1;
 			}
 
-			x = qse_fs_cpfile (fs, src_path, dst_path, (cpfile->flags & QSE_FS_CPFILE_ALL));
+			x = copy_file (fs, &sub_cpfile); /* TODO: remove recursion */
 
-			QSE_MMGR_FREE (fs->mmgr, dst_path);
-			QSE_MMGR_FREE (fs->mmgr, src_path);
+			clear_cpfile (fs, &sub_cpfile);
+
 			if (x <= -1)
 			{
 				qse_dir_close (dir);
@@ -469,34 +475,17 @@ int qse_fs_cpfilembs (qse_fs_t* fs, const qse_mchar_t* srcpath, const qse_mchar_
 
 	cpfile.flags = flags & QSE_FS_CPFILE_ALL; /* keep public flags only */
 
-	cpfile.src_fspath = (qse_fs_char_t*)qse_fs_makefspathformbs (fs, srcpath);
-	cpfile.dst_fspath = (qse_fs_char_t*)qse_fs_makefspathformbs (fs, dstpath);
-	cpfile.src_path = (qse_char_t*)make_str_with_mbs (fs, srcpath);
-	cpfile.dst_path = (qse_char_t*)make_str_with_mbs (fs, dstpath);
-	if (!cpfile.src_fspath || !cpfile.dst_fspath || !cpfile.src_path || !cpfile.dst_path) goto oops;
-	
-	if (cpfile.dst_fspath != dstpath) 
-	{
-		/* mark that it's been duplicated. */
-		cpfile.flags |= CPFILE_DST_FSPATH_DUP;
-	}
-
-	if (qse_fs_getattr (fs, cpfile.src_fspath, &cpfile.src_attr) <= -1) goto oops;
-	if (qse_fs_getattr (fs, cpfile.dst_fspath, &cpfile.dst_attr) >= 0) cpfile.flags |= CPFILE_DST_ATTR;
+	cpfile.src_fspath = (qse_fs_char_t*)qse_fs_dupfspathformbs (fs, srcpath);
+	cpfile.dst_fspath = (qse_fs_char_t*)qse_fs_dupfspathformbs (fs, dstpath);
+	if (!cpfile.src_fspath || !cpfile.dst_fspath || prepare_cpfile (fs, &cpfile) <= -1) goto oops;
 
 	ret = copy_file (fs, &cpfile);
 
-	free_str_with_mbs (fs, dstpath, cpfile.dst_path);
-	free_str_with_mbs (fs, srcpath, cpfile.src_path);
-	qse_fs_freefspathformbs (fs, dstpath, cpfile.dst_fspath);
-	qse_fs_freefspathformbs (fs, srcpath, cpfile.src_fspath);
+	clear_cpfile (fs, &cpfile);
 	return ret;
 
 oops:
-	if (cpfile.dst_path) free_str_with_mbs (fs, dstpath, cpfile.dst_path);
-	if (cpfile.src_path) free_str_with_mbs (fs, srcpath, cpfile.src_path);
-	if (cpfile.dst_fspath) qse_fs_freefspathformbs (fs, srcpath, cpfile.dst_fspath);
-	if (cpfile.src_fspath) qse_fs_freefspathformbs (fs, dstpath, cpfile.src_fspath);
+	clear_cpfile (fs, &cpfile);
 	return -1;
 }
 
@@ -509,35 +498,16 @@ int qse_fs_cpfilewcs (qse_fs_t* fs, const qse_wchar_t* srcpath, const qse_wchar_
 
 	cpfile.flags = flags & QSE_FS_CPFILE_ALL; /* keep public flags only */
 
-	cpfile.src_fspath = (qse_fs_char_t*)qse_fs_makefspathforwcs (fs, srcpath);
-	cpfile.dst_fspath = (qse_fs_char_t*)qse_fs_makefspathforwcs (fs, dstpath);
-	cpfile.src_path = (qse_char_t*)make_str_with_wcs (fs, srcpath);
-	cpfile.dst_path = (qse_char_t*)make_str_with_wcs (fs, dstpath);
-	if (!cpfile.src_fspath || !cpfile.dst_fspath || !cpfile.src_path || !cpfile.dst_path) goto oops;
-
-	if (cpfile.dst_fspath != dstpath) 
-	{
-		/* mark that it's been duplicated */
-		cpfile.flags |= CPFILE_DST_FSPATH_DUP; 
-	}
-
-	if (qse_fs_getattr (fs, cpfile.src_fspath, &cpfile.src_attr) <= -1) goto oops;
-	if (qse_fs_getattr (fs, cpfile.dst_fspath, &cpfile.dst_attr) >= 0) cpfile.flags |= CPFILE_DST_ATTR;
+	cpfile.src_fspath = (qse_fs_char_t*)qse_fs_dupfspathforwcs (fs, srcpath);
+	cpfile.dst_fspath = (qse_fs_char_t*)qse_fs_dupfspathforwcs (fs, dstpath);
+	if (!cpfile.src_fspath || !cpfile.dst_fspath || prepare_cpfile (fs, &cpfile) <= -1) goto oops;
 
 	ret = copy_file (fs, &cpfile);
 
-	free_str_with_wcs (fs, dstpath, cpfile.dst_path);
-	free_str_with_wcs (fs, srcpath, cpfile.src_path);
-	qse_fs_freefspathforwcs (fs, dstpath, cpfile.dst_fspath);
-	qse_fs_freefspathforwcs (fs, srcpath, cpfile.src_fspath);
+	clear_cpfile (fs, &cpfile);
 	return ret;
 
 oops:
-	if (cpfile.dst_path) free_str_with_wcs (fs, dstpath, cpfile.dst_path); 
-	if (cpfile.src_path) free_str_with_wcs (fs, srcpath, cpfile.src_path);
-	if (cpfile.dst_fspath) qse_fs_freefspathforwcs (fs, srcpath, cpfile.dst_fspath);
-	if (cpfile.src_fspath) qse_fs_freefspathforwcs (fs, dstpath, cpfile.src_fspath);
+	clear_cpfile (fs, &cpfile);
 	return -1;
 }
-
-

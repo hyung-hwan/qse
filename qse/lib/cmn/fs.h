@@ -143,11 +143,16 @@ void qse_fs_freefspathforwcs (
 #	define qse_fs_freefspath(fs,path,fspath) qse_fs_freefspathforwcs(fs,path,fspath);
 #endif
 
-
-int qse_fs_getattr (
+int qse_fs_sysgetattr (
 	qse_fs_t*            fs,
 	const qse_fs_char_t* fspath,
-	qse_fs_attr_t*       attr
+	qse_fs_attr_t* attr
+);
+
+int qse_fs_syscpfile (
+	qse_fs_t*            fs,
+	const qse_fs_char_t* srcpath,
+	const qse_fs_char_t* dstpath
 );
 
 int qse_fs_sysmkdir (
