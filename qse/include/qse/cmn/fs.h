@@ -189,9 +189,8 @@ struct qse_fs_t
 	void*           info;
 
 	qse_uint8_t     cpbuf[4096];
+	void*           cfs; /* stack for recursive file copying */
 };
-
-
 
 enum qse_fs_opt_t
 {

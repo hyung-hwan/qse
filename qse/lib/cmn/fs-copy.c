@@ -29,6 +29,8 @@
 #include <qse/cmn/str.h>
 #include "mem.h"
 
+#define NO_RECURSION 1
+
 /* internal flags. it must not overlap with qse_fs_cpfile_flag_t enumerators */
 #define CPFILE_DST_ATTR (1 << 29)
 #define CPFILE_DST_FSPATH_MERGED (1 << 30)
@@ -309,18 +311,68 @@ static void clear_cpfile (qse_fs_t* fs, cpfile_t* cpfile)
 	}
 }
 
+/* copy file stack  - stack for file copying */
+typedef struct cfs_t cfs_t;
+struct cfs_t
+{
+	cpfile_t cpfile;
+	qse_dir_t* dir;
+	cfs_t* next;
+};
+
+static cfs_t* push_cfs (qse_fs_t* fs, const cpfile_t* cpfile, qse_dir_t* dir)
+{
+	cfs_t* cfs;
+
+	cfs = (cfs_t*)QSE_MMGR_ALLOC (fs->mmgr, QSE_SIZEOF(*cfs));
+	if (cfs == QSE_NULL)
+	{
+		fs->errnum = QSE_FS_ENOMEM;
+		return QSE_NULL;
+	}
+
+	cfs->cpfile = *cpfile;
+	cfs->dir = dir;
+	cfs->next = fs->cfs;
+
+	fs->cfs = cfs;
+	return cfs;
+}
+
+static void pop_cfs (qse_fs_t* fs, cpfile_t* cpfile, qse_dir_t** dir)
+{
+	cfs_t* cfs;
+
+	cfs = fs->cfs;
+	QSE_ASSERT (cfs != QSE_NULL);
+	fs->cfs = cfs->next;
+
+	if (cpfile) *cpfile = cfs->cpfile;
+	else clear_cpfile (fs, &cfs->cpfile);
+
+	if (dir) *dir = cfs->dir;
+	else qse_dir_close (cfs->dir);
+
+	QSE_MMGR_FREE (fs->mmgr, cfs);
+}
+
+
 static int copy_file (qse_fs_t* fs, cpfile_t* cpfile)
 {
+#if defined(NO_RECURSION)
+	cfs_t* cfs;
+#else
+	cpfile_t sub_cpfile;
+#endif
+	qse_dir_t* dir;
+	qse_dir_errnum_t direrr;
+	qse_dir_ent_t dirent;
+	int x;
+
+start_over:
 	if (cpfile->src_attr.isdir)
 	{
 		/* source is a directory */
-
-		qse_dir_t* dir;
-		qse_dir_errnum_t direrr;
-		qse_dir_ent_t dirent;
-		cpfile_t sub_cpfile;
-		int x;
-
 	copy_dir:
 		if (cpfile->flags & CPFILE_DST_ATTR)
 		{
@@ -328,7 +380,7 @@ static int copy_file (qse_fs_t* fs, cpfile_t* cpfile)
 			{
 				/* cannot copy a directory to a file */
 				fs->errnum = QSE_FS_ENOTDIR;
-				return -1;
+				goto oops;
 			}
 
 			if (!(cpfile->flags & QSE_FS_CPFILE_NOTGTDIR) && 
@@ -339,7 +391,7 @@ static int copy_file (qse_fs_t* fs, cpfile_t* cpfile)
 					/* merge_dstdir_and_file() has been called already.
 					 * no more getting into a subdirectory */
 					fs->errnum = QSE_FS_EISDIR;
-					return -1;
+					goto oops;
 				}
 				else
 				{
@@ -361,7 +413,7 @@ static int copy_file (qse_fs_t* fs, cpfile_t* cpfile)
 		{
 			/* cannot copy a directory without recursion */
 			fs->errnum = QSE_FS_EISDIR;
-			return -1;
+			goto oops;
 		}
 
 		dir = qse_dir_open (
@@ -376,14 +428,10 @@ static int copy_file (qse_fs_t* fs, cpfile_t* cpfile)
 		if (!dir)
 		{
 			fs->errnum = qse_fs_direrrtoerrnum (fs, direrr);
-			return -1;
+			goto oops;
 		}
 
-		if (qse_fs_sysmkdir (fs, cpfile->dst_fspath) <= -1)
-		{
-			qse_dir_close (dir);
-			return -1;
-		}
+		if (qse_fs_sysmkdir (fs, cpfile->dst_fspath) <= -1) goto oops;
 
 		while (1)
 		{
@@ -391,11 +439,33 @@ static int copy_file (qse_fs_t* fs, cpfile_t* cpfile)
 			if (x <= -1) 
 			{
 				fs->errnum = qse_fs_direrrtoerrnum (fs, qse_dir_geterrnum(dir));
-				qse_dir_close (dir);
-				return -1;
+				goto oops;
 			}
 			if (x == 0) break; /* no more entries */
 
+		#if defined(NO_RECURSION)
+			cfs = push_cfs (fs, cpfile, dir);
+			if (!cfs) goto oops;
+
+			QSE_MEMSET (cpfile, 0, QSE_SIZEOF(*cpfile));
+			dir = QSE_NULL;
+
+			cpfile->flags = cfs->cpfile.flags & QSE_FS_CPFILE_ALL; /* inherit public flags */
+			cpfile->src_fspath = merge_fspath_dup (cfs->cpfile.src_fspath, (qse_fs_char_t*)dirent.name, fs->mmgr);
+			cpfile->dst_fspath = merge_fspath_dup (cfs->cpfile.dst_fspath, (qse_fs_char_t*)dirent.name, fs->mmgr);
+			if (!cpfile->src_fspath  || !cpfile->dst_fspath || prepare_cpfile (fs, cpfile) <= -1)
+			{
+				clear_cpfile (fs, cpfile);
+				goto oops;
+			}
+
+			goto start_over;
+
+		resume_copy_dir:
+			/* do nothing. loop over */
+			;
+
+		#else
 			QSE_MEMSET (&sub_cpfile, 0, QSE_SIZEOF(sub_cpfile));
 			sub_cpfile.flags = cpfile->flags & QSE_FS_CPFILE_ALL; /* inherit public flags */
 			sub_cpfile.src_fspath = merge_fspath_dup (cpfile->src_fspath, (qse_fs_char_t*)dirent.name, fs->mmgr);
@@ -406,20 +476,19 @@ static int copy_file (qse_fs_t* fs, cpfile_t* cpfile)
 				qse_dir_close (dir);
 				return -1;
 			}
-
 			x = copy_file (fs, &sub_cpfile); /* TODO: remove recursion */
 
 			clear_cpfile (fs, &sub_cpfile);
-
 			if (x <= -1)
 			{
 				qse_dir_close (dir);
 				return -1;
 			}
+		#endif
 		}
 
 		qse_dir_close (dir);
-		return 0;
+		dir = QSE_NULL;
 	}
 	else
 	{
@@ -433,7 +502,7 @@ static int copy_file (qse_fs_t* fs, cpfile_t* cpfile)
 			{
 				/* cannot copy a file to itself */
 				fs->errnum = QSE_FS_EINVAL; /* TODO: better error code */
-				return -1;
+				goto oops;
 			}
 
 			if (!(cpfile->flags & QSE_FS_CPFILE_NOTGTDIR) && 
@@ -444,7 +513,7 @@ static int copy_file (qse_fs_t* fs, cpfile_t* cpfile)
 					/* merge_dstdir_and_file() has been called already.
 					 * no more getting into a subdirectory */
 					fs->errnum = QSE_FS_EISDIR;
-					return -1;
+					goto oops;
 				}
 				else
 				{
@@ -462,8 +531,27 @@ static int copy_file (qse_fs_t* fs, cpfile_t* cpfile)
 		}
 
 		/* both source and target are files */
-		return copy_file_in_fs (fs, cpfile);
+		if (copy_file_in_fs (fs, cpfile) <= -1) goto oops;
 	}
+
+#if defined(NO_RECURSION)
+	if (fs->cfs)
+	{ 
+		clear_cpfile (fs, cpfile); /* clear key data created for subitems in the directory */
+		pop_cfs (fs, cpfile, &dir); /* restore key data for the original directory*/
+		goto resume_copy_dir;
+	}
+#endif
+
+	return 0;
+
+
+oops:
+#if defined(NO_RECURSION)
+	while (fs->cfs) pop_cfs (fs, QSE_NULL, QSE_NULL);
+#endif
+	if (dir) qse_dir_close (dir);
+	return -1;
 }
 
 int qse_fs_cpfilembs (qse_fs_t* fs, const qse_mchar_t* srcpath, const qse_mchar_t* dstpath, int flags)
