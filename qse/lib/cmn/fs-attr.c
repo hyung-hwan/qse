@@ -105,7 +105,6 @@ int qse_fs_sysgetattr (qse_fs_t* fs, const qse_fs_char_t* fspath, qse_fs_attr_t*
 #endif
 }
 
-
 int qse_fs_getattrmbs (qse_fs_t* fs, const qse_mchar_t* path, qse_fs_attr_t* attr)
 {
 	qse_fs_char_t* fspath;

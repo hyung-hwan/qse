@@ -665,7 +665,7 @@ static int dns_recv (qse_httpd_t* httpd, qse_httpd_dns_t* dns, qse_httpd_hnd_t h
 	for (i = 0; i < qdcount; i++)
 	{
 		qse_size_t reclen;
-		qse_uint8_t dnlen;
+		qse_size_t dnlen;
 
 		dnlen = dn_length (plptr, pllen);
 		if (dnlen <= 0) goto done; /* invalid dn name */
@@ -708,11 +708,18 @@ static int dns_recv (qse_httpd_t* httpd, qse_httpd_dns_t* dns, qse_httpd_hnd_t h
 	for (i = 0; i < ancount; i++)
 	{
 		qse_size_t reclen;
-		qse_uint8_t dnlen;
+		qse_size_t dnlen;
 
 		if (pllen < 1) goto done; /* weird length */
 
-		if (*plptr > 63) dnlen = 2;
+		if (*plptr > 63) 
+		{
+/* TODO TODO TODO TODO */
+			/* this is not really right. each segment can be pointing to 
+			 * somewhere else. TODO: fix the problem. dn_legnth() needs
+			 * to use the original request packet also */
+			dnlen = 2;
+		}
 		else
 		{
 			dnlen = dn_length (plptr, pllen);
