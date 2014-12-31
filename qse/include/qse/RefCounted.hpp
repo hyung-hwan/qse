@@ -24,61 +24,53 @@
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _QSE_TYPES_HPP_
-#define _QSE_TYPES_HPP_
+#ifndef _QSE_REFCOUNTED_HPP_
+#define _QSE_REFCOUNTED_HPP_
 
-#include <qse/types.h>
-#include <qse/macros.h>
+#include <qse/Uncopyable.hpp>
 
 /////////////////////////////////
 QSE_BEGIN_NAMESPACE(QSE)
 /////////////////////////////////
 
-/**
- * The Types class defines handy aliases for various QSE types.
- */
-class QSE_EXPORT Types
+class QSE_EXPORT RefCounted: public Uncopyable
 {
+protected:
+	RefCounted () 
+	{
+		this->ref_count = 0; 
+	}
+
 public:
-	/** boolean data type */
-	typedef qse_bool_t  bool_t;
+	virtual ~RefCounted () 
+	{ 
+		QSE_ASSERT (this->ref_count == 0);
+	}
 
-	/** data type that can hold any character */
-	typedef qse_char_t  char_t;
+	void ref () const
+	{
+		this->ref_count++;
+	}
 
-	/** data type that can hold any character or an end-of-file value */
-	typedef qse_cint_t  cint_t;
+	void deref (bool kill = true) const
+	{
+		if (--this->ref_count == 0 && kill) delete this;
+	}
 
-	/** redefines an unsigned integer number of the same size as void* */
-	typedef qse_size_t  size_t;
+	qse_size_t count () const
+	{
+		return this->ref_count;
+	}
 
-	/** signed version of size_t */
-	typedef qse_ssize_t ssize_t;
+	bool isShared () const
+	{
+		return this->ref_count > 1;
+	}
 
-	/** redefines qse_long_t */
-	typedef qse_long_t  long_t;
-
-	/** redefines qse_ulong_t */
-	typedef qse_ulong_t  ulong_t;
-
-	/** redefines qse_intptr_t */
-	typedef qse_intptr_t intptr_t;
-
-	/** redefines qse_uintptr_t */
-	typedef qse_uintptr_t uintptr_t;
-
-	/** redefines qse_intmax_t */
-	typedef qse_intmax_t intmax_t;
-
-	/** redefines qse_uintmax_t */
-	typedef qse_uintmax_t uintmax_t;
-
-	/** redefines a floating-point number */
-	typedef qse_flt_t flt_t;
-
-	/** redefines a structure of a character pointer and length */
-	typedef qse_cstr_t  cstr_t;
+protected:
+	mutable qse_size_t ref_count;
 };
+
 
 /////////////////////////////////
 QSE_END_NAMESPACE(QSE)
