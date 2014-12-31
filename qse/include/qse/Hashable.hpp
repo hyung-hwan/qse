@@ -24,60 +24,72 @@
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _QSE_TYPES_HPP_
-#define _QSE_TYPES_HPP_
+#ifndef _QSE_HASHABLE_HPP_
+#define _QSE_HASHABLE_HPP_
 
-#include <qse/types.h>
-#include <qse/macros.h>
+#include <qse/Types.hpp>
 
 /////////////////////////////////
 QSE_BEGIN_NAMESPACE(QSE)
 /////////////////////////////////
 
-/**
- * The Types class defines handy aliases for various QSE types.
- */
-class QSE_EXPORT Types
+class QSE_EXPORT Hashable
 {
 public:
-	/** boolean data type */
-	typedef qse_bool_t  bool_t;
+	virtual ~Hashable () {}
 
-	/** data type that can hold any character */
-	typedef qse_char_t  char_t;
+	virtual qse_size_t getHashCode () const = 0;
 
-	/** data type that can hold any character or an end-of-file value */
-	typedef qse_cint_t  cint_t;
+	static qse_size_t getHashCode (qse_size_t init, const qse_char_t* str)
+	{
+		qse_size_t n = init;
 
-	/** redefines an unsigned integer number of the same size as void* */
-	typedef qse_size_t  size_t;
+		while (*str != QSE_T('\0'))
+		{
+			const qse_uint8_t* p = (const qse_uint8_t*)str;
+			for (qse_size_t i = 0; i < QSE_SIZEOF(*str); i++)
+				n = n * 31 + *p++;
+			str++;
+		}
 
-	/** signed version of size_t */
-	typedef qse_ssize_t ssize_t;
+		return n;
+	}
 
-	/** redefines qse_long_t */
-	typedef qse_long_t  long_t;
+	static qse_size_t getHashCode (const qse_char_t* str)
+	{
+		return getHashCode (0, str);
+	}
 
-	/** redefines qse_ulong_t */
-	typedef qse_ulong_t  ulong_t;
+	static qse_size_t getHashCode (qse_size_t init, const void* data, qse_size_t size)
+	{
+		qse_size_t n = init;
+		const qse_uint8_t* p = (const qse_uint8_t*)data;
 
-	/** redefines qse_intptr_t */
-	typedef qse_intptr_t intptr_t;
+		/*
+		for (qse_size_t i = 0; i < size; i++) {
+			n <<= 1;
+			n += *p++;
+		}
+		*/
 
-	/** redefines qse_uintptr_t */
-	typedef qse_uintptr_t uintptr_t;
+		for (qse_size_t i = 0; i < size; i++) n = n * 31 + *p++;
 
-	/** redefines qse_intmax_t */
-	typedef qse_intmax_t intmax_t;
+		/*
+		for (qse_size_t i = 0; i < size; i++) {
+			n = (n << 4) + *p++;
+			//qse_size_t g = n & 0xF0000000U;
+			qse_size_t g = n & ((qse_size_t)0xF << (qse_sizeof(qse_size_t) * 8 - 4));
+			n &= ~g;
+		}
+		*/
 
-	/** redefines qse_uintmax_t */
-	typedef qse_uintmax_t uintmax_t;
+		return n;
+	}
 
-	/** redefines a floating-point number */
-	typedef qse_flt_t flt_t;
-
-	/** redefines a structure of a character pointer and length */
-	typedef qse_cstr_t  cstr_t;
+	static qse_size_t getHashCode (const void* data, qse_size_t size)
+	{
+		return getHashCode (0, data, size);
+	}
 };
 
 /////////////////////////////////

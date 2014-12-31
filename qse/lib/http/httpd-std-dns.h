@@ -715,9 +715,17 @@ static int dns_recv (qse_httpd_t* httpd, qse_httpd_dns_t* dns, qse_httpd_hnd_t h
 		if (*plptr > 63) 
 		{
 /* TODO TODO TODO TODO */
-			/* this is not really right. each segment can be pointing to 
-			 * somewhere else. TODO: fix the problem. dn_legnth() needs
-			 * to use the original request packet also */
+
+			/* RFC1035
+			 * +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+			 * | 1  1|                OFFSET                   |
+			 * +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+			 */
+
+			/* this is not really right. the second segment or the 
+			 * subsequent segments can be pointing to somewhere else.
+			 * TODO: fix the problem. dn_legnth() needs
+			 *       to use the original request packet also */
 			dnlen = 2;
 		}
 		else

@@ -24,64 +24,29 @@
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _QSE_TYPES_HPP_
-#define _QSE_TYPES_HPP_
+#ifndef _QSE_UNCOPYABLE_HPP_
+#define _QSE_UNCOPYABLE_HPP_
 
-#include <qse/types.h>
-#include <qse/macros.h>
+#include <qse/Types.hpp>
 
 /////////////////////////////////
 QSE_BEGIN_NAMESPACE(QSE)
 /////////////////////////////////
 
-/**
- * The Types class defines handy aliases for various QSE types.
- */
-class QSE_EXPORT Types
+class QSE_EXPORT Uncopyable 
 {
 public:
-	/** boolean data type */
-	typedef qse_bool_t  bool_t;
+	Uncopyable () {}
+	//virtual ~Uncopyable () {}
 
-	/** data type that can hold any character */
-	typedef qse_char_t  char_t;
-
-	/** data type that can hold any character or an end-of-file value */
-	typedef qse_cint_t  cint_t;
-
-	/** redefines an unsigned integer number of the same size as void* */
-	typedef qse_size_t  size_t;
-
-	/** signed version of size_t */
-	typedef qse_ssize_t ssize_t;
-
-	/** redefines qse_long_t */
-	typedef qse_long_t  long_t;
-
-	/** redefines qse_ulong_t */
-	typedef qse_ulong_t  ulong_t;
-
-	/** redefines qse_intptr_t */
-	typedef qse_intptr_t intptr_t;
-
-	/** redefines qse_uintptr_t */
-	typedef qse_uintptr_t uintptr_t;
-
-	/** redefines qse_intmax_t */
-	typedef qse_intmax_t intmax_t;
-
-	/** redefines qse_uintmax_t */
-	typedef qse_uintmax_t uintmax_t;
-
-	/** redefines a floating-point number */
-	typedef qse_flt_t flt_t;
-
-	/** redefines a structure of a character pointer and length */
-	typedef qse_cstr_t  cstr_t;
+private:
+	Uncopyable (const Uncopyable&);
+	const Uncopyable& operator= (const Uncopyable&);
 };
 
 /////////////////////////////////
 QSE_END_NAMESPACE(QSE)
 /////////////////////////////////
+
 
 #endif
