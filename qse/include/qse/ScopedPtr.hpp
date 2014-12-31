@@ -85,7 +85,7 @@ public:
 		return this->_ptr;
 	}
 
-	int operator! () const 
+	bool operator! () const 
 	{
 		return this->_ptr == (T*)QSE_NULL;
 	}
