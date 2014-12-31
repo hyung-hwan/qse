@@ -7,7 +7,9 @@ pkginclude_HEADERS = \
 	types.h macros.h pack1.h unpack.h 
 
 if ENABLE_CXX
-pkginclude_HEADERS += Types.hpp Hashable.hpp Uncopyable.hpp RefCounted.hpp
+pkginclude_HEADERS += \
+	Types.hpp Hashable.hpp Uncopyable.hpp RefCounted.hpp \
+	ScopedPtr.hpp
 endif
 
 install-data-hook:
