@@ -33,7 +33,7 @@
 #include <qse/cmn/Mmged.hpp>
 #include <stdarg.h>
 
-/// @file
+/// \file
 /// AWK Interpreter
 
 /////////////////////////////////
@@ -105,24 +105,24 @@ public:
 
 protected:
 	///
-	/// @name Error Handling
+	/// \name Error Handling
 	///
-	/// @{
+	/// \{
 
 	///
 	/// The getErrorString() function returns a formatting string
-	/// for an error code @a num. You can override this function
+	/// for an error code \a num. You can override this function
 	/// to customize an error message. You must include the same numbers
 	/// of ${X}'s as the orginal formatting string. Their order may be
 	/// different. The example below changes the formatting string for
 	/// #QSE_AWK_ENOENT.
-	/// @code
+	/// \code
 	/// const MyAwk::char_t* MyAwk::getErrorString (errnum_t num) const 
 	/// {
 	///    if (num == QSE_AWK_ENOENT) return QSE_T("cannot find '${0}'");
 	///    return Awk::getErrorString (num);
 	/// }
-	/// @endcode
+	/// \endcode
 	///
 	virtual const char_t* getErrorString (
 		errnum_t num
@@ -175,7 +175,7 @@ public:
 //protected: can't make it protected for borland 
 	void retrieveError ();
 	void retrieveError (Run* run);
-	/// @}
+	/// \}
 
 protected:
 	class NoSource;
@@ -791,14 +791,14 @@ public:
 
 		///
 		/// The isIndexed() function determines if a value is arrayed.
-		/// @return true if indexed, false if not.
+		/// \return true if indexed, false if not.
 		///
 		bool isIndexed () const;
 
 		/// 
 		/// The getIndexed() function gets a value at the given 
-		/// index @a idx and sets it to @a val.
-		/// @return 0 on success, -1 on failure
+		/// index \a idx and sets it to \a val.
+		/// \return 0 on success, -1 on failure
 		///
 		int getIndexed (
 			const Index&  idx, ///< array index
@@ -807,8 +807,8 @@ public:
 
 		///
 		/// The getFirstIndex() function stores the first index of
-		/// an arrayed value into @a idx. 
-		/// @return IndexIterator::END if the arrayed value is empty,
+		/// an arrayed value into \a idx. 
+		/// \return IndexIterator::END if the arrayed value is empty,
 		///         iterator that can be passed to getNextIndex() if not
 		///
 		IndexIterator getFirstIndex (
@@ -816,10 +816,10 @@ public:
 		) const;
 
 		///
-		/// The getNextIndex() function stores into @a idx the next 
+		/// The getNextIndex() function stores into \a idx the next 
 		/// index of an array value from the position indicated by 
-		/// @a iter.
-		/// @return IndexIterator::END if the arrayed value is empty,
+		/// \a iter.
+		/// \return IndexIterator::END if the arrayed value is empty,
 		///         iterator that can be passed to getNextIndex() if not
 		///
 		IndexIterator getNextIndex (
@@ -882,40 +882,40 @@ public:
 
 		/// 
 		/// The setGlobal() function sets the value of a global 
-		/// variable identified by @a id
-		/// to @a v.
-		/// @return 0 on success, -1 on failure
+		/// variable identified by \a id
+		/// to \a v.
+		/// \return 0 on success, -1 on failure
 		///
 		int setGlobal (int id, int_t v);
 
 		/// 
 		/// The setGlobal() function sets the value of a global 
-		/// variable identified by @a id
-		/// to @a v.
-		/// @return 0 on success, -1 on failure
+		/// variable identified by \a id
+		/// to \a v.
+		/// \return 0 on success, -1 on failure
 		///
 		int setGlobal (int id, flt_t v); 
 
 		/// 
 		/// The setGlobal() function sets the value of a global 
-		/// variable identified by @a id
-		/// to a string as long as @a len characters pointed to by 
-		/// @a ptr.
-		/// @return 0 on success, -1 on failure
+		/// variable identified by \a id
+		/// to a string as long as \a len characters pointed to by 
+		/// \a ptr.
+		/// \return 0 on success, -1 on failure
 		///
 		int setGlobal (int id, const char_t* ptr, size_t len);
 
 		/// 
 		/// The setGlobal() function sets a global variable 
-		/// identified by @a id to a value @a v.
-		/// @return 0 on success, -1 on failure
+		/// identified by \a id to a value \a v.
+		/// \return 0 on success, -1 on failure
 		///	
 		int setGlobal (int id, const Value& v);
 
 		///
 		/// The getGlobal() function gets the value of a global 
-		/// variable identified by @a id and stores it in @a v.
-		/// @return 0 on success, -1 on failure
+		/// variable identified by \a id and stores it in \a v.
+		/// \return 0 on success, -1 on failure
 		///	
 		int getGlobal (int id, Value& v) const;
 
@@ -930,8 +930,8 @@ public:
 	operator awk_t* () const;
 
 	///
-	/// @name Basic Functions
-	/// @{
+	/// \name Basic Functions
+	/// \{
 	///
 
 	/// The Awk() function creates an interpreter without fully 
@@ -946,7 +946,7 @@ public:
 	///
 	/// The open() function initializes an interpreter. 
 	/// You must call this function before doing anything meaningful.
-	/// @return 0 on success, -1 on failure
+	/// \return 0 on success, -1 on failure
 	///
 	int open ();
 
@@ -957,11 +957,11 @@ public:
 
 	///
 	/// The parse() function parses the source code read from the input
-	/// stream @a in and writes the parse tree to the output stream @a out.
-	/// To disable deparsing, you may set @a out to Awk::Source::NONE. 
-	/// However, it is not allowed to specify Awk::Source::NONE for @a in.
+	/// stream \a in and writes the parse tree to the output stream \a out.
+	/// To disable deparsing, you may set \a out to Awk::Source::NONE. 
+	/// However, it is not allowed to specify Awk::Source::NONE for \a in.
 	///
-	/// @return Run object on success, #QSE_NULL on failure
+	/// \return Run object on success, #QSE_NULL on failure
 	///
 	Awk::Run* parse (
 		Source& in,  ///< script to parse 
@@ -1002,15 +1002,15 @@ public:
 	
 	///
 	/// The loop() function executes the BEGIN block, pattern-action blocks,
-	/// and the END block. The return value is stored into @a ret.
-	/// @return 0 on succes, -1 on failure
+	/// and the END block. The return value is stored into \a ret.
+	/// \return 0 on succes, -1 on failure
 	///
 	int loop (
 		Value* ret  ///< return value holder
 	);
 
 	///
-	/// The call() function invokes a function named @a name.
+	/// The call() function invokes a function named \a name.
 	///
 	int call (
 		const char_t* name,  ///< function name
@@ -1023,16 +1023,16 @@ public:
 	/// The stop() function makes request to abort execution
 	///
 	void stop ();
-	/// @}
+	/// \}
 
 	///
-	/// @name Configuration
-	/// @{
+	/// \name Configuration
+	/// \{
 	///
 
 	///
 	/// The getTrait() function gets the current options.
-	/// @return current traits
+	/// \return current traits
 	///
 	int getTrait () const;
 
@@ -1045,7 +1045,7 @@ public:
 
 	/// 
 	/// The setMaxDepth() function sets the maximum processing depth
-	/// for operations identified by @a ids.
+	/// for operations identified by \a ids.
 	///
 	void setMaxDepth (
 		depth_t id,  ///< depth identifier
@@ -1054,18 +1054,18 @@ public:
 
 	///
 	/// The getMaxDepth() function gets the maximum depth for an operation
-	/// type identified by @a id.
+	/// type identified by \a id.
 	///
 	size_t getMaxDepth (
 		depth_t id   ///< depth identifier
 	) const;
 
 	///
-	/// The addArgument() function adds an ARGV string as long as @a len 
+	/// The addArgument() function adds an ARGV string as long as \a len 
 	/// characters pointed to 
-	/// by @a arg. loop() and call() make a string added available 
+	/// by \a arg. loop() and call() make a string added available 
 	/// to a script through ARGV. 
-	/// @return 0 on success, -1 on failure
+	/// \return 0 on success, -1 on failure
 	///
 	int addArgument (
 		const char_t* arg,  ///< string pointer
@@ -1073,10 +1073,10 @@ public:
 	);
 
 	///
-	/// The addArgument() function adds a null-terminated string @a arg. 
+	/// The addArgument() function adds a null-terminated string \a arg. 
 	/// loop() and call() make a string added available to a script 
 	/// through ARGV. 
-	/// @return 0 on success, -1 on failure
+	/// \return 0 on success, -1 on failure
 	///
 	int addArgument (
 		const char_t* arg ///< string pointer
@@ -1089,7 +1089,7 @@ public:
 
 	///
 	/// The addGlobal() function registers an intrinsic global variable. 
-	/// @return integer >= 0 on success, -1 on failure.
+	/// \return integer >= 0 on success, -1 on failure.
 	///
 	int addGlobal (
 		const char_t* name ///< variable name
@@ -1098,7 +1098,7 @@ public:
 	///
 	/// The deleteGlobal() function unregisters an intrinsic global 
 	/// variable by name.
-	/// @return 0 on success, -1 on failure.
+	/// \return 0 on success, -1 on failure.
 	///
 	int deleteGlobal (
 		const char_t* name ///< variable name
@@ -1107,7 +1107,7 @@ public:
 	///
 	/// The addGlobal() function returns the numeric ID of an intrinsic 
 	//  global variable. 
-	/// @return integer >= 0 on success, -1 on failure.
+	/// \return integer >= 0 on success, -1 on failure.
 	///
 	int findGlobal (
 		const char_t* name ///> variable name
@@ -1115,10 +1115,10 @@ public:
 
 	///
 	/// The setGlobal() function sets the value of a global variable 
-	/// identified by @a id. The @a id is either a value returned by 
+	/// identified by \a id. The \a id is either a value returned by 
 	/// addGlobal() or one of the #gbl_id_t enumerators. It is not allowed
 	/// to call this function prior to parse().
-	/// @return 0 on success, -1 on failure
+	/// \return 0 on success, -1 on failure
 	///
 	int setGlobal (
 		int          id,  ///< numeric identifier
@@ -1127,10 +1127,10 @@ public:
 
 	///
 	/// The getGlobal() function gets the value of a global variable 
-	/// identified by @a id. The @a id is either a value returned by 
+	/// identified by \a id. The \a id is either a value returned by 
 	/// addGlobal() or one of the #gbl_id_t enumerators. It is not allowed
 	/// to call this function before parse().
-	/// @return 0 on success, -1 on failure
+	/// \return 0 on success, -1 on failure
 	///
 	int getGlobal (
 		int    id, ///< numeric identifier 
@@ -1168,7 +1168,7 @@ public:
 	int deleteFunction (
 		const char_t* name ///< function name
 	);
-	/// @}
+	/// \}
 
 	Pipe::Handler* getPipeHandler ()
 	{
@@ -1238,10 +1238,10 @@ public:
 
 protected:
 	/// 
-	/// @name Pipe I/O handlers
+	/// \name Pipe I/O handlers
 	/// Pipe operations are achieved through the following functions
 	/// if no external pipe handler is set with setPipeHandler().
-	/// @{
+	/// \{
 
 	/// The openPipe() function is a pure virtual function that must be
 	/// overridden by a child class to open a pipe. It must return 1
@@ -1256,26 +1256,26 @@ protected:
 	virtual ssize_t readPipe  (Pipe& io, char_t* buf, size_t len);
 	virtual ssize_t writePipe (Pipe& io, const char_t* buf, size_t len);
 	virtual int     flushPipe (Pipe& io);
-	/// @}
+	/// \}
 
 	/// 
-	/// @name File I/O handlers
+	/// \name File I/O handlers
 	/// File operations are achieved through the following functions
 	/// if no external file handler is set with setFileHandler().
-	/// @{
+	/// \{
 	///
 	virtual int     openFile  (File& io);
 	virtual int     closeFile (File& io);
 	virtual ssize_t readFile  (File& io, char_t* buf, size_t len);
 	virtual ssize_t writeFile (File& io, const char_t* buf, size_t len);
 	virtual int     flushFile (File& io);
-	/// @}
+	/// \}
 
 	/// 
-	/// @name Console I/O handlers
+	/// \name Console I/O handlers
 	/// Console operations are achieved through the following functions.
 	/// if no external console handler is set with setConsoleHandler().
-	/// @{
+	/// \{
 	///
 	virtual int     openConsole  (Console& io);
 	virtual int     closeConsole (Console& io);
@@ -1283,7 +1283,7 @@ protected:
 	virtual ssize_t writeConsole (Console& io, const char_t* buf, size_t len);
 	virtual int     flushConsole (Console& io);
 	virtual int     nextConsole  (Console& io);
-	/// @}
+	/// \}
 
 	// primitive handlers 
 	virtual flt_t pow (flt_t x, flt_t y) = 0;

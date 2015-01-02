@@ -24,51 +24,46 @@
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _QSE_REFCOUNTED_HPP_
-#define _QSE_REFCOUNTED_HPP_
+#ifndef _QSE_CMN_MPOOLABLE_HPP_
+#define _QSE_CMN_MPOOLABLE_HPP_
 
-#include <qse/Uncopyable.hpp>
+#include <qse/cmn/Mpool.hpp>
 
 /////////////////////////////////
 QSE_BEGIN_NAMESPACE(QSE)
 /////////////////////////////////
 
-class QSE_EXPORT RefCounted: public Uncopyable
+class Mpoolable
 {
-protected:
-	RefCounted () 
-	{
-		this->ref_count = 0; 
-	}
-
 public:
-	virtual ~RefCounted () 
-	{ 
-		QSE_ASSERT (this->ref_count == 0);
-	}
+	typedef qse_size_t mp_size_t;
 
-	void ref () const
+	inline void* operator new (mp_size_t size)
 	{
-		this->ref_count++;
+		return ::operator new (size);
 	}
 
-	void deref (bool kill = true) const
+	inline void operator delete (void* ptr)
 	{
-		if (--this->ref_count == 0 && kill) delete this;
+		::operator delete (ptr);
 	}
 
-	qse_size_t count () const
+	inline void* operator new (mp_size_t /*size*/, Mpool* mp)
 	{
-		return this->ref_count;
+		return mp->allocate ();
 	}
 
-	bool isShared () const
+#if defined(_MSC_VER)
+	void operator delete (void* ptr, Mpool* mp)
 	{
-		return this->ref_count > 1;
+		mp->dispose (ptr);
 	}
-
-protected:
-	mutable qse_size_t ref_count;
+#else
+	inline void dispose (void* ptr, Mpool* mp)
+	{
+		mp->dispose (ptr);
+	}
+#endif
 };
 
 /////////////////////////////////

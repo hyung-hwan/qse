@@ -31,7 +31,7 @@
 #include <qse/cmn/StdMmgr.hpp>
 #include <qse/cmn/time.h>
 
-/// @file
+/// \file
 /// Standard AWK Interpreter
 
 /////////////////////////////////

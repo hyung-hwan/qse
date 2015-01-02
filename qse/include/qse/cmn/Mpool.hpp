@@ -24,8 +24,8 @@
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _QSE_REFCOUNTED_HPP_
-#define _QSE_REFCOUNTED_HPP_
+#ifndef _QSE_CMN_MPOOL_HPP_
+#define _QSE_CMN_MPOOL_HPP_
 
 #include <qse/Uncopyable.hpp>
 
@@ -33,46 +33,75 @@
 QSE_BEGIN_NAMESPACE(QSE)
 /////////////////////////////////
 
-class QSE_EXPORT RefCounted: public Uncopyable
+//
+// allocator for fixed-size data
+//
+
+class Mpool: public Uncopyable 
 {
-protected:
-	RefCounted () 
-	{
-		this->ref_count = 0; 
-	}
-
 public:
-	virtual ~RefCounted () 
-	{ 
-		QSE_ASSERT (this->ref_count == 0);
+	enum 
+	{
+		DEFAULT_BLOCK_SIZE = 128
+	};
+
+	Mpool (
+		qse_size_t datum_size, 
+		qse_size_t block_size = DEFAULT_BLOCK_SIZE);
+	~Mpool ();
+
+	void* allocate ();
+	void  dispose (void* ptr);
+	void  dispose ();
+
+	inline bool isEnabled () const
+	{
+		return this->datum_size > 0 && this->block_size > 0;
+	}
+	inline bool isDisabled () const
+	{
+		return this->datum_size <= 0 || this->block_size <= 0;
 	}
 
-	void ref () const
+	inline qse_size_t datumSize () const
 	{
-		this->ref_count++;
+		return this->datum_size;
+	}
+	inline qse_size_t blockSize () const
+	{
+		return this->block_size;
+	}
+	inline void setBlockSize (qse_size_t blockSize) 
+	{
+		this->block_size = blockSize;
 	}
 
-	void deref (bool kill = true) const
-	{
-		if (--this->ref_count == 0 && kill) delete this;
-	}
-
-	qse_size_t count () const
-	{
-		return this->ref_count;
-	}
-
-	bool isShared () const
-	{
-		return this->ref_count > 1;
-	}
+#if defined(QSE_DEBUG_MPOOL)
+	qse_size_t  nalloc;
+	qse_size_t  navail;
+#endif
 
 protected:
-	mutable qse_size_t ref_count;
+	struct Block 
+	{
+		Block*  next;
+		//qse_uint8_t data[0];
+	};
+	struct Chain 
+	{
+		Chain* next;
+	};
+
+	Block* mp_blocks;
+	Chain* free_list;
+	qse_size_t datum_size;
+	qse_size_t block_size;
+
+	void add_block ();
 };
 
 /////////////////////////////////
 QSE_END_NAMESPACE(QSE)
-/////////////////////////////////
-
+////////////////////////////////
 #endif
+

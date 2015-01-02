@@ -27,7 +27,7 @@
 #ifndef _QSE_HTTP_HTTP_H_
 #define _QSE_HTTP_HTTP_H_
 
-/** @file
+/** \file
  * This file provides basic data types and functions for the http protocol.
  */
 
@@ -131,7 +131,7 @@ enum qse_http_range_type_t
 typedef enum qse_http_range_type_t qse_http_range_type_t;
 /**
  * The qse_http_range_t type defines a structure that can represent
- * a value for the @b Range: http header. 
+ * a value for the \b Range: http header. 
  *
  * If type is #QSE_HTTP_RANGE_NONE, this range is not valid.
  * 
@@ -141,10 +141,10 @@ typedef enum qse_http_range_type_t qse_http_range_type_t;
  *
  * You should adjust a range when the size that this range belongs to is 
  * made known. See this code:
- * @code
+ * \code
  *  range.from = total_size - range.to;
  *  range.to = range.to + range.from - 1;
- * @endcode
+ * \endcode
  *
  * If type is #QSE_HTTP_RANGE_PROPER, 'from' and 'to' represents a proper range
  * where the value of 0 indicates the first byte. This doesn't require any 

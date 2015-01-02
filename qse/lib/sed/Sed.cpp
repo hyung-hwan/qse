@@ -36,7 +36,7 @@ QSE_BEGIN_NAMESPACE(QSE)
 int Sed::open ()
 {
 	sed = qse_sed_open (this->mmgr, QSE_SIZEOF(Sed*));
-	if (sed == QSE_NULL) return -1;
+	if (!sed) return -1;
 	*(Sed**)QSE_XTN(sed) = this;
 
 	dflerrstr = qse_sed_geterrstr (sed);
@@ -47,10 +47,10 @@ int Sed::open ()
 
 void Sed::close ()
 {
-	if (sed != QSE_NULL)
+	if (sed)
 	{
 		qse_sed_close (sed);
-		sed = QSE_NULL;	
+		sed = QSE_NULL;
 	}
 }
 
