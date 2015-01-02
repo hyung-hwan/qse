@@ -50,6 +50,8 @@ pkginclude_HEADERS = \
 	xma.h 
 
 if ENABLE_CXX
-pkginclude_HEADERS += Mmgr.hpp StdMmgr.hpp Mmged.hpp
+pkginclude_HEADERS += \
+	Mmgr.hpp StdMmgr.hpp Mmged.hpp Mpool.hpp Mpoolable.hpp \
+	LinkedList.hpp
 endif
 

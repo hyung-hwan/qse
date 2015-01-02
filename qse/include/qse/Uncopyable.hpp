@@ -27,11 +27,15 @@
 #ifndef _QSE_UNCOPYABLE_HPP_
 #define _QSE_UNCOPYABLE_HPP_
 
-#include <qse/Types.hpp>
+#include <qse/types.h>
+#include <qse/macros.h>
 
 /////////////////////////////////
 QSE_BEGIN_NAMESPACE(QSE)
 /////////////////////////////////
+
+/// The Uncopyable class disallows an inheriting class to be assigned or
+/// copied. 
 
 class QSE_EXPORT Uncopyable 
 {
@@ -47,6 +51,5 @@ private:
 /////////////////////////////////
 QSE_END_NAMESPACE(QSE)
 /////////////////////////////////
-
 
 #endif

@@ -141,7 +141,7 @@ if ENABLE_CXX
 
 lib_LTLIBRARIES += libqsecmnxx.la
 libqsecmnxx_la_SOURCES = \
-	Mmgr.cpp StdMmgr.cpp
+	Mmgr.cpp StdMmgr.cpp Mpool.cpp
 libqsecmnxx_la_LDFLAGS = -version-info 1:0:0 -no-undefined
 libqsecmnxx_la_LIBADD = 
 
