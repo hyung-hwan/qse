@@ -29,15 +29,18 @@
 
 #include <qse/cmn/Mpool.hpp>
 
+// use size_t as some compilers complain about qse_size_t used in new().
+#include <stddef.h> 
+
 /////////////////////////////////
 QSE_BEGIN_NAMESPACE(QSE)
 /////////////////////////////////
 
-class Mpoolable
+class QSE_EXPORT Mpoolable
 {
 public:
-	typedef qse_size_t mp_size_t;
 
+/*
 	inline void* operator new (mp_size_t size)
 	{
 		return ::operator new (size);
@@ -47,21 +50,24 @@ public:
 	{
 		::operator delete (ptr);
 	}
+*/
 
-	inline void* operator new (mp_size_t /*size*/, Mpool* mp)
+	inline void* operator new (size_t size, Mpool* mp)
 	{
-		return mp->allocate ();
+		return mp->isEnabled()? mp->allocate (): ::operator new (size);
 	}
 
 #if defined(_MSC_VER)
 	void operator delete (void* ptr, Mpool* mp)
 	{
-		mp->dispose (ptr);
+		if (mp->isEnabled()) mp->dispose (ptr);
+		else ::operator delete (mp);
 	}
 #else
 	inline void dispose (void* ptr, Mpool* mp)
 	{
-		mp->dispose (ptr);
+		if (mp->isEnabled()) mp->dispose (ptr);
+		else ::operator delete (mp);
 	}
 #endif
 };

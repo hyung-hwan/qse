@@ -27,7 +27,8 @@
 #ifndef _QSE_CMN_MMGR_HPP_
 #define _QSE_CMN_MMGR_HPP_
 
-#include <qse/Types.hpp>
+#include <qse/types.h>
+#include <qse/macros.h>
 
 /////////////////////////////////
 QSE_BEGIN_NAMESPACE(QSE)
@@ -40,7 +41,7 @@ QSE_BEGIN_NAMESPACE(QSE)
 /// write code in more object-oriented fashion. An inheriting class should 
 /// implement three pure virtual functions.
 /// 
-class QSE_EXPORT Mmgr: public Types, public qse_mmgr_t
+class QSE_EXPORT Mmgr: public qse_mmgr_t
 {
 public:
 	/// defines an alias type to #qse_mmgr_t 
@@ -70,7 +71,7 @@ protected:
 	/// If it fails to allocate memory, it should return QSE_NULL.
 	///
 	virtual void* allocMem (
-		size_t n ///< size of memory chunk to allocate in bytes 
+		qse_size_t n ///< size of memory chunk to allocate in bytes 
 	) = 0;
 
 	///
@@ -81,7 +82,7 @@ protected:
 	///
 	virtual void* reallocMem (
 		void* ptr, ///< pointer to memory chunk to resize
-		size_t n   ///< new size in bytes
+		qse_size_t n   ///< new size in bytes
 	) = 0;
 
 	///
@@ -96,12 +97,12 @@ protected:
 	///
 	/// bridge function from the #qse_mmgr_t type the allocMem() function.
 	///
-	static void* alloc_mem (mmgr_t* mmgr, size_t n);
+	static void* alloc_mem (mmgr_t* mmgr, qse_size_t n);
 
 	///
 	/// bridge function from the #qse_mmgr_t type the reallocMem() function.
 	///
-	static void* realloc_mem (mmgr_t* mmgr, void* ptr, size_t n);
+	static void* realloc_mem (mmgr_t* mmgr, void* ptr, qse_size_t n);
 
 	///
 	/// bridge function from the #qse_mmgr_t type the freeMem() function.

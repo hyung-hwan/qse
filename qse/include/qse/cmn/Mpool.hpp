@@ -28,6 +28,7 @@
 #define _QSE_CMN_MPOOL_HPP_
 
 #include <qse/Uncopyable.hpp>
+#include <qse/cmn/ExcMmgr.hpp>
 
 /////////////////////////////////
 QSE_BEGIN_NAMESPACE(QSE)
@@ -37,7 +38,7 @@ QSE_BEGIN_NAMESPACE(QSE)
 // allocator for fixed-size data
 //
 
-class Mpool: public Uncopyable 
+class QSE_EXPORT Mpool: public Uncopyable, protected ExcMmgr
 {
 public:
 	enum 
@@ -63,14 +64,16 @@ public:
 		return this->datum_size <= 0 || this->block_size <= 0;
 	}
 
-	inline qse_size_t datumSize () const
+	inline qse_size_t getDatumSize () const
 	{
 		return this->datum_size;
 	}
-	inline qse_size_t blockSize () const
+
+	inline qse_size_t getBlockSize () const
 	{
 		return this->block_size;
 	}
+
 	inline void setBlockSize (qse_size_t blockSize) 
 	{
 		this->block_size = blockSize;
@@ -87,6 +90,7 @@ protected:
 		Block*  next;
 		//qse_uint8_t data[0];
 	};
+
 	struct Chain 
 	{
 		Chain* next;
@@ -97,7 +101,7 @@ protected:
 	qse_size_t datum_size;
 	qse_size_t block_size;
 
-	void add_block ();
+	Block* add_block ();
 };
 
 /////////////////////////////////

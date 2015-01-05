@@ -27,8 +27,8 @@
 #ifndef _QSE_CMN_MMGED_HPP_
 #define _QSE_CMN_MMGED_HPP_
 
-#include <qse/Types.hpp>
 #include <qse/cmn/Mmgr.hpp>
+#include <qse/cmn/StdMmgr.hpp>
 
 /////////////////////////////////
 QSE_BEGIN_NAMESPACE(QSE)
@@ -39,15 +39,18 @@ QSE_BEGIN_NAMESPACE(QSE)
 /// a subclass that uses a memory manager.
 ///
 
-class QSE_EXPORT Mmged: public Types
+class QSE_EXPORT Mmged
 {
 public:
-	Mmged (Mmgr* mmgr): mmgr (mmgr) {}
+	Mmged (Mmgr* mmgr): mmgr(mmgr) {}
 
 	///
 	/// The getMmgr() function returns the memory manager associated.
 	///
-	Mmgr* getMmgr () const { return mmgr; }
+	Mmgr* getMmgr () const { return this->mmgr; }
+
+
+
 
 protected:
 	Mmgr* mmgr;

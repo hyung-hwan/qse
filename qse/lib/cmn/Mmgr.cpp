@@ -30,12 +30,12 @@
 QSE_BEGIN_NAMESPACE(QSE)
 /////////////////////////////////
 
-void* Mmgr::alloc_mem (mmgr_t* mmgr, size_t n) 
+void* Mmgr::alloc_mem (mmgr_t* mmgr, qse_size_t n) 
 {
 	return ((Mmgr*)mmgr->ctx)->allocMem (n);
 }
 
-void* Mmgr::realloc_mem (mmgr_t* mmgr, void* ptr, size_t n) 
+void* Mmgr::realloc_mem (mmgr_t* mmgr, void* ptr, qse_size_t n) 
 {
 	return ((Mmgr*)mmgr->ctx)->reallocMem (ptr, n);
 }

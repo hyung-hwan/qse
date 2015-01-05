@@ -1,6 +1,6 @@
 /*
  * $Id$
- * 
+ *
     Copyright (c) 2006-2014 Chung, Hyung-Hwan. All rights reserved.
 
     Redistribution and use in source and binary forms, with or without
@@ -24,35 +24,31 @@
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <qse/cmn/StdMmgr.hpp>
-#include <stdlib.h>
+#ifndef _QSE_CMN_STDMMGR_HPP_
+#define _QSE_CMN_STDMMGR_HPP_
+
+#include <qse/cmn/Mmgr.hpp>
 
 /////////////////////////////////
 QSE_BEGIN_NAMESPACE(QSE)
 /////////////////////////////////
 
+/// The ExcMmgr class implements the memory manager interface that
+/// raises an exception upon failure. You can use the StdMmgr class
+/// if #QSE_NULL should be returned upon failure.
 
-void* StdMmgr::allocMem (qse_size_t n) 
+class QSE_EXPORT ExcMmgr: public Mmgr
 {
-	return ::malloc (n);
-}
+public:
+	void* allocMem (qse_size_t n);
+	void* reallocMem (void* ptr, qse_size_t n);
+	void freeMem (void* ptr);
 
-void* StdMmgr::reallocMem (void* ptr, qse_size_t n) 
-{ 
-	return ::realloc (ptr, n); 
-}
-
-void StdMmgr::freeMem (void* ptr) 
-{ 
-	::free (ptr); 
-}
-
-StdMmgr* StdMmgr::getDFL ()
-{
-	static StdMmgr DFL;
-	return &DFL;
-}
+	static ExcMmgr* getDFL();
+};
 
 /////////////////////////////////
 QSE_END_NAMESPACE(QSE)
 /////////////////////////////////
+
+#endif
