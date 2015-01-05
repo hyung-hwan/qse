@@ -24,32 +24,37 @@
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <qse/cmn/StdMmgr.hpp>
+#include <qse/cmn/ExcMmgr.hpp>
 #include <stdlib.h>
+#include <stdio.h>
 
 /////////////////////////////////
 QSE_BEGIN_NAMESPACE(QSE)
 /////////////////////////////////
 
 
-void* StdMmgr::allocMem (qse_size_t n) 
+void* ExcMmgr::allocMem (qse_size_t n) 
 {
-	return ::malloc (n);
+	void* ptr = ::malloc (n);
+	if (!ptr) throw 1; // TODO: change 1 to a proper exception object
+	return ptr; 
 }
 
-void* StdMmgr::reallocMem (void* ptr, qse_size_t n) 
+void* ExcMmgr::reallocMem (void* ptr, qse_size_t n) 
 { 
-	return ::realloc (ptr, n); 
+	void* xptr = ::realloc (ptr, n); 
+	if (!xptr) throw 1;
+	return xptr;
 }
 
-void StdMmgr::freeMem (void* ptr) 
+void ExcMmgr::freeMem (void* ptr) 
 { 
 	::free (ptr); 
 }
 
-StdMmgr* StdMmgr::getDFL ()
+ExcMmgr* ExcMmgr::getDFL ()
 {
-	static StdMmgr DFL;
+	static ExcMmgr DFL;
 	return &DFL;
 }
 

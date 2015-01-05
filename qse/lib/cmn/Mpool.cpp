@@ -25,9 +25,7 @@
  */
 
 #include <qse/cmn/Mpool.hpp>
-
-
-// TODO: can i use QSE_MMGR_XXXXX instead of ::new and ::delete???
+#include <qse/cmn/mem.h>
 
 /////////////////////////////////
 QSE_BEGIN_NAMESPACE(QSE)
@@ -47,6 +45,7 @@ Mpool::Mpool (qse_size_t datum_size, qse_size_t block_size)
 	this->nalloc = 0;
 #endif
 }
+
 Mpool::~Mpool ()
 {
 	this->dispose ();
@@ -59,7 +58,9 @@ void* Mpool::allocate ()
 	void* ptr = this->free_list;
 	if (!ptr) 
 	{
-		this->add_block ();
+		// NOTE: 'return QSE_NULL' can't be reached if add_block()
+		//       raises an exception.
+		if (!this->add_block ()) return QSE_NULL; 
 		ptr = this->free_list;
 	}
 	this->free_list = this->free_list->next;
@@ -84,24 +85,30 @@ void Mpool::dispose ()
 	while (block) 
 	{
 		Block* next = block->next;
-		::delete[] block;
+
+		//::delete[] (qse_uint8_t*)block;
+		this->freeMem ((qse_uint8_t*)block);
+
 		block = next;
 	}
 
 	this->free_list = QSE_NULL;
 	this->mp_blocks = QSE_NULL;
+
 #if defined(QSE_DEBUG_MPOOL)
 	this->navail = 0;
 	this->nalloc = 0;
 #endif
 }
 
-void Mpool::add_block ()
+Mpool::Block* Mpool::add_block ()
 {
 	QSE_ASSERT (this->datum_size > 0 && this->block_size > 0);
 
-	Block* block = (Block*)::new qse_uint8_t[
-		QSE_SIZEOF(Block) + this->block_size * this->datum_size];
+	//Block* block = (Block*)::new qse_uint8_t[
+	//	QSE_SIZEOF(Block) + this->block_size * this->datum_size];
+	Block* block = (Block*)this->allocMem (QSE_SIZEOF(Block) + this->block_size * this->datum_size);
+	if (!block) return QSE_NULL; // this line may not be reached if the allocator raises an exception
 
 	//this->free_list = (Chain*)block->data;
 	this->free_list = (Chain*)(block + 1);
@@ -114,12 +121,15 @@ void Mpool::add_block ()
 	}
 	ptr->next = QSE_NULL;
 
-	block->next  = this->mp_blocks;
+	block->next = this->mp_blocks;
 	this->mp_blocks = block;
+
 #if defined(QSE_DEBUG_MPOOL)
 	this->navail += this->block_size;
 	this->nalloc += this->block_size;
 #endif
+
+	return block;
 }
 
 /////////////////////////////////

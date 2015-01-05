@@ -30,6 +30,7 @@
 #include <qse/awk/awk.h>
 #include <qse/cmn/htb.h>
 #include <qse/cmn/chr.h>
+#include <qse/Types.hpp>
 #include <qse/cmn/Mmged.hpp>
 #include <stdarg.h>
 
@@ -44,7 +45,7 @@ QSE_BEGIN_NAMESPACE(QSE)
 /// The Awk class implements an AWK interpreter by wrapping around 
 /// #qse_awk_t and #qse_awk_rtx_t.
 ///
-class QSE_EXPORT Awk: public Mmged
+class QSE_EXPORT Awk: public Types, public Mmged
 {
 public:
 	typedef qse_htb_t htb_t;

@@ -28,44 +28,54 @@
 #define _QSE_CMN_LINKEDLIST_HPP_
 
 #include <qse/Types.hpp>
-#include <xp/bas/MemoryPool.hpp>
-#include <xp/bas/MemoryPoolable.hpp>
+#include <qse/cmn/Mpool.hpp>
+#include <qse/cmn/Mpoolable.hpp>
 
 
 /////////////////////////////////
 QSE_BEGIN_NAMESPACE(QSE)
 /////////////////////////////////
 
-template <typename T> class LinkedList;
+template <typename T, typename MPOOL> class LinkedList;
 
-template <typename T> 
-class LinkedListNode: protected MemoryPoolable
+template <typename T,typename MPOOL> 
+class LinkedListNode: protected Mpoolable
 {
 public:
-	friend class LinkedList<T>;
+	friend class LinkedList<T,MPOOL>;
+	typedef LinkedListNode<T,MPOOL> Node;
 
-	T value;
+	T value; // you can use this variable or accessor functions below
 
 protected:
-	LinkedListNode<T>* next;
-	LinkedListNode<T>* prev;
+	Node* next;
+	Node* prev;
 
 public:
-	LinkedListNode<T>* getNext () { return this->next; }
-	const LinkedListNode<T>* getNext () const { return this->next; }
+	T& getValue () { return this->value; }
+	const T& getValue () const { return this->value; }
+	void setValue (const T& v) { this->value = v; }
 
-	LinkedListNode<T>* getPrev () { return this->prev; }
-	const LinkedListNode<T>* getPrev () const { return this->prev; }
+	Node* getNext () { return this->next; }
+	const Node* getNext () const { return this->next; }
+	Node* getNextNode () { return this->next; }
+	const Node* getNextNode () const { return this->next; }
+
+	Node* getPrev () { return this->prev; }
+	const Node* getPrev () const { return this->prev; }
+	Node* getPrevNode () { return this->prev; }
+	const Node* getPrevNode () const { return this->prev; }
 
 protected:
-	LinkedListNode () {}
-	LinkedListNode (const T& v): value(v) {}
+	LinkedListNode (): prev(QSE_NULL), next(QSE_NULL)  {}
+	LinkedListNode (const T& v): value(v), prev(QSE_NULL), next(QSE_NULL)  {}
 
-	void setNext (const LinkedListNode<T>* node)
+	void setNext (const Node* node)
 	{
 		this->next = node;
 	}
-	void setPrev (const LinkedListNode<T>* node)
+
+	void setPrev (const Node* node)
 	{
 		this->prev = node;
 	}
@@ -74,10 +84,10 @@ protected:
 ///
 /// The LinkedList<T> class provides a template for a doubly-linked list.
 ///
-template <typename T> class LinkedList
+template <typename T, typename MPOOL = Mpool> class LinkedList
 {
 public:
-	typedef LinkedListNode<T> Node;
+	typedef LinkedListNode<T,MPOOL> Node;
 
 	enum 
 	{
@@ -96,7 +106,7 @@ public:
 		this->tail_node = QSE_NULL;
 	}
 
-	LinkedList (const LinkedList<T>& ll): mp (ll.mp.datumSize(), ll.mp.blockSize())
+	LinkedList (const LinkedList<T>& ll): mp (ll.mp.getDatumSize(), ll.mp.getBlockSize())
 	{
 		this->node_count = 0;
 		this->head_node = QSE_NULL;
@@ -161,9 +171,8 @@ public:
 	// create a new node to hold the value and insert it.
 	Node* insertValue (Node* pos, const T& value)
 	{
-		Node* n = this->mp.isEnabled()? 
-			(new(&mp) Node(value)): (new Node(value));
-		return this->insertNode (pos, n);
+		Node* node = new(&mp) Node(value);
+		return this->insertNode (pos, node);
 	}
 
 	T& insert (Node* node, const T& value)
@@ -186,10 +195,12 @@ public:
 
 	T& prepend (const T& value)
 	{
+		// same as prependValue()
 		return this->insert (this->head_node, value);
 	}
 	T& append (const T& value)
 	{
+		// same as appendValue()
 		return this->insert ((Node*)QSE_NULL, value);
 	}
 
@@ -263,22 +274,45 @@ public:
 	// take extra care when using this method as the node 
 	// can be freed through the memory pool when the list is 
 	// destructed if the memory pool is enabled.
-	Node* yield (Node* node, bool clear_links = true);
+	Node* yield (Node* node, bool clear_links = true)
+	{
+		QSE_ASSERT (node != QSE_NULL);
+		QSE_ASSERT (this->node_count > 0);
 
+		if (node->next)
+			node->next->prev = node->next;
+		else
+			this->tail_node = node->prev;
+
+		if (node->prev)
+			node->prev->next = node->next;
+		else
+			this->head_node = node->next;
+			
+		this->node_count--;
+
+		if (clear_links)
+		{
+			node->next = QSE_NULL;
+			node->prev = QSE_NULL;
+		}
+
+		return node;
+	}
 	// remove a node from the list and free it.
 	void remove (Node* node)
 	{
 		this->yield (node, false);
-		if (mp.isDisabled()) delete node;
-		else 
-		{
-			node->~Node ();
-		#if defined(_MSC_VER)
-			node->operator delete (node, &mp);
-		#else
-			node->dispose (node, &mp);
-		#endif
-		}
+
+		//call the destructor
+		node->~Node (); 
+
+		// cal the deallocator
+	#if defined(_MSC_VER)
+		node->operator delete (node, &this->mp);
+	#else
+		node->dispose (node, &this->mp);
+	#endif
 	}
 
 	void remove (qse_size_t index) 
@@ -298,17 +332,17 @@ public:
 	Node* yieldByValue (const T& value, bool clear_links = true)
 	{
 		Node* p = this->findFirstNode (value);
-		Node* p = this->findFirstNode (value);
-		if (p == QSE_NULL) return -1;
+		if (!p) return QSE_NULL;
 		return this->yield (p, clear_links);
 	}
 
+	/// \return the number of items deleted.
 	qse_size_t removeByValue (const T& value)
 	{
 		Node* p = this->findFirstNode (value);
 		if (!p) return 0;
 		this->remove (p);
-		return 1;
+		return 1; 
 	}
 
 	/// \return the number of items deleted
@@ -463,15 +497,15 @@ public:
 		while (p) 
 		{
 			saved = p->next;
-			
+
 			if (this->mp.isDisabled()) delete p;
 			else 
 			{
 				p->~Node ();
 			#if defined(_MSC_VER)
-				p->operator delete (p, &mp);
+				p->operator delete (p, &this->mp);
 			#else
-				p->dispose (p, &mp);
+				p->dispose (p, &this->mp);
 			#endif
 			}
 
@@ -510,14 +544,15 @@ public:
 	}
 
 protected:
-	MemoryPool  mp;
+	//Mpool       mp;
+	MPOOL       mp;
 	Node*       head_node;
 	Node*       tail_node;
 	qse_size_t  node_count;
 };
 
-template <typename T> 
-inline typename LinkedList<T>::Node* LinkedList<T>::insertNode (Node* pos, Node* node)
+template <typename T,typename MPOOL> 
+inline typename LinkedList<T,MPOOL>::Node* LinkedList<T,MPOOL>::insertNode (Node* pos, Node* node)
 {
 	if (pos == QSE_NULL) 
 	{
@@ -544,33 +579,6 @@ inline typename LinkedList<T>::Node* LinkedList<T>::insertNode (Node* pos, Node*
 	}
 
 	this->node_count++;
-	return n;
-}
-
-template <typename T>
-inline typename LinkedList<T>::Node* LinkedList<T>::yield (Node* node, bool clear_links) 
-{
-	QSE_ASSERT (node != QSE_NULL);
-	QSE_ASSERT (this->node_count > 0);
-
-	if (node->next)
-		node->next->prev = node->next;
-	else
-		this->tail_node = node->prev;
-
-	if (node->prev)
-		node->prev->next = node->next;
-	else
-		this->head_node = node->next;
-		
-	this->node_count--;
-
-	if (clear_links)
-	{
-		node->next = QSE_NULL;
-		node->prev = QSE_NULL;
-	}
-
 	return node;
 }
 

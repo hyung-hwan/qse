@@ -27,6 +27,7 @@
 #ifndef _QSE_SED_SED_HPP_
 #define _QSE_SED_SED_HPP_
 
+#include <qse/Types.hpp>
 #include <qse/cmn/Mmged.hpp>
 #include <qse/sed/sed.h>
 
@@ -45,7 +46,7 @@ QSE_BEGIN_NAMESPACE(QSE)
 ///
 /// The Sed class implements a stream editor by wrapping around #qse_sed_t.
 ///
-class QSE_EXPORT Sed: public Mmged
+class QSE_EXPORT Sed: public Types, public Mmged
 {
 public:
 	/// The sed_t type redefines a stream editor type

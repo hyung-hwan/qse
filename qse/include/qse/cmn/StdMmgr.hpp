@@ -33,12 +33,16 @@
 QSE_BEGIN_NAMESPACE(QSE)
 /////////////////////////////////
 
+/// The StdMmgr class implements the memory manager interface.
+/// It doesn't raise an exception upon failure. If you want an exception
+/// to be raised, use the ExcMmgr class instead.
+
 class QSE_EXPORT StdMmgr: public Mmgr
 {
 public:
-	void* allocMem (size_t n);
-	void* reallocMem (void* ptr, size_t n);
-	virtual void freeMem (void* ptr);
+	void* allocMem (qse_size_t n);
+	void* reallocMem (void* ptr, qse_size_t n);
+	void freeMem (void* ptr);
 
 	static StdMmgr* getDFL();
 };
