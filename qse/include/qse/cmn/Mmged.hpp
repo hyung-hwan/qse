@@ -28,7 +28,6 @@
 #define _QSE_CMN_MMGED_HPP_
 
 #include <qse/cmn/Mmgr.hpp>
-#include <qse/cmn/StdMmgr.hpp>
 
 /////////////////////////////////
 QSE_BEGIN_NAMESPACE(QSE)
