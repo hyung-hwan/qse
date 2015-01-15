@@ -65,7 +65,7 @@ struct qse_tmr_event_t
 	qse_tmr_updater_t  updater;
 };
 
-#define QSE_TMR_INVALID_INDEX ((qse_size_t)-1)
+#define QSE_TMR_INVALID_INDEX ((qse_tmr_index_t)-1)
 
 #define QSE_TMR_SIZE(tmr) ((tmr)->size)
 #define QSE_TMR_CAPA(tmr) ((tmr)->capa);
