@@ -36,14 +36,14 @@ QSE_BEGIN_NAMESPACE(QSE)
 void* ExcMmgr::allocMem (qse_size_t n) 
 {
 	void* ptr = ::malloc (n);
-	if (!ptr) throw 1; // TODO: change 1 to a proper exception object
+	if (!ptr) QSE_THROW (Error);
 	return ptr; 
 }
 
 void* ExcMmgr::reallocMem (void* ptr, qse_size_t n) 
 { 
 	void* xptr = ::realloc (ptr, n); 
-	if (!xptr) throw 1;
+	if (!xptr) QSE_THROW (Error);
 	return xptr;
 }
 
