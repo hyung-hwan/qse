@@ -141,7 +141,7 @@ public:
 
 	qse_size_t getMPBlockSize() const
 	{
-		return this->mp.blockSize();
+		return this->mp.getBlockSize();
 	}
 
 	bool isMPEnabled () const
@@ -280,7 +280,7 @@ public:
 		QSE_ASSERT (this->node_count > 0);
 
 		if (node->next)
-			node->next->prev = node->next;
+			node->next->prev = node->prev;
 		else
 			this->tail_node = node->prev;
 

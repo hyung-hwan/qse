@@ -52,6 +52,6 @@ pkginclude_HEADERS = \
 if ENABLE_CXX
 pkginclude_HEADERS += \
 	Mmgr.hpp StdMmgr.hpp ExcMmgr.hpp Mmged.hpp Mpool.hpp Mpoolable.hpp \
-	LinkedList.hpp
+	LinkedList.hpp HashList.hpp
 endif
 
