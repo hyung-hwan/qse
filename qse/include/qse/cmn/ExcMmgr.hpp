@@ -24,10 +24,11 @@
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _QSE_CMN_STDMMGR_HPP_
-#define _QSE_CMN_STDMMGR_HPP_
+#ifndef _QSE_CMN_EXCMMGR_HPP_
+#define _QSE_CMN_EXCMMGR_HPP_
 
 #include <qse/cmn/Mmgr.hpp>
+#include <qse/Exception.hpp>
 
 /////////////////////////////////
 QSE_BEGIN_NAMESPACE(QSE)
@@ -45,6 +46,8 @@ public:
 	void freeMem (void* ptr);
 
 	static ExcMmgr* getDFL();
+
+	QSE_EXCEPTION (Error);
 };
 
 /////////////////////////////////

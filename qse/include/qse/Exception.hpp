@@ -24,33 +24,62 @@
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _QSE_CMN_MMGED_HPP_
-#define _QSE_CMN_MMGED_HPP_
 
-#include <qse/cmn/Mmgr.hpp>
+#ifndef _QSE_EXCEPTION_CLASS_
+#define _QSE_EXCEPTION_CLASS_
+
+#include <qse/types.h>
+#include <qse/macros.h>
 
 /////////////////////////////////
 QSE_BEGIN_NAMESPACE(QSE)
 /////////////////////////////////
 
-///
-/// The Mmged class defines a memory manager interface to be inherited by
-/// a subclass that uses a memory manager. 
-///
-
-class QSE_EXPORT Mmged
+class Exception
 {
 public:
-	Mmged (Mmgr* mmgr): mmgr(mmgr) {}
+	Exception (
+		const qse_char_t* name, const qse_char_t* msg, 
+		const qse_char_t* file, int line): 
+		name(name), msg(msg)
+#if !defined(QSE_NO_LOCATION_IN_EXCEPTION)
+		, file(file), line(line) 
+#endif
+	{
+	}
 
-	///
-	/// The getMmgr() function returns the memory manager associated.
-	///
-	Mmgr* getMmgr () const { return this->mmgr; }
-
-protected:
-	Mmgr* mmgr;
+	const qse_char_t* name;
+	const qse_char_t* msg;
+#if !defined(QSE_NO_LOCATION_IN_EXCEPTION)
+	const qse_char_t* file;
+	int   line;
+#endif
 };
+
+#define QSE_THROW(ex_name) \
+	throw ex_name(QSE_Q(ex_name),QSE_Q(ex_name), QSE_T(__FILE__), __LINE__)
+#define QSE_THROW_WITH_MSG(ex_name,msg) \
+	throw ex_name(QSE_Q(ex_name),msg, QSE_T(__FILE__), __LINE__)
+
+#define QSE_EXCEPTION(ex_name) \
+	class ex_name: public QSE::Exception \
+	{ \
+	public: \
+		ex_name (const qse_char_t* name, const qse_char_t* msg, \
+		         const qse_char_t* file, int line): \
+			QSE::Exception (name, msg, file, line) {} \
+	}
+
+#define QSE_EXCEPTION_NAME(exception_object) ((exception_object).name)
+#define QSE_EXCEPTION_MSG(exception_object)  ((exception_object).msg)
+
+#if !defined(QSE_NO_LOCATION_IN_EXCEPTION)
+#	define QSE_EXCEPTION_FILE(exception_object) ((exception_object).file)
+#	define QSE_EXCEPTION_LINE(exception_object) ((exception_object).line)
+#else
+#	define QSE_EXCEPTION_FILE(exception_object) (QSE_T(""))
+#	define QSE_EXCEPTION_LINE(exception_object) (0)
+#endif
 
 /////////////////////////////////
 QSE_END_NAMESPACE(QSE)
