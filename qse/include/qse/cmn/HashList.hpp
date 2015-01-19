@@ -24,8 +24,8 @@
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _QSE_CMN_HASHLIST_CLASS_
-#define _QSE_CMN_HASHLIST_CLASS_
+#ifndef _QSE_CMN_HASHLIST_HPP_
+#define _QSE_CMN_HASHLIST_HPP_
 
 #include <qse/Hashable.hpp>
 #include <qse/cmn/LinkedList.hpp>
@@ -152,7 +152,7 @@ public:
 			
 			do 
 			{
-				copy_datum (np, this->node_capacity, this->nodes, this->datum_list);
+				this->copy_datum (np, this->node_capacity, this->nodes, this->datum_list);
 				if (np == list.nodes[tail]) break;
 				np = np->getNextNode ();
 			} 
@@ -364,12 +364,12 @@ public:
 
 	Node* getHeadNode () const
 	{
-		return datum_list->getHeadNode();
+		return this->datum_list->getHeadNode();
 	}
 
 	Node* getTaileNode () const
 	{
-		return datum_list->getTailNode();
+		return this->datum_list->getTailNode();
 	}
 
 	typedef int (SelfType::*TraverseCallback) (Node* start, Node* cur);
