@@ -43,50 +43,51 @@ class LinkedListNode: protected Mpoolable
 {
 public:
 	friend class LinkedList<T,MPOOL>;
-	typedef LinkedListNode<T,MPOOL> Node;
+	typedef LinkedListNode<T,MPOOL> SelfType;
 
 	T value; // you can use this variable or accessor functions below
 
 protected:
-	Node* next;
-	Node* prev;
+	SelfType* next;
+	SelfType* prev;
 
 public:
 	T& getValue () { return this->value; }
 	const T& getValue () const { return this->value; }
 	void setValue (const T& v) { this->value = v; }
 
-	Node* getNext () { return this->next; }
-	const Node* getNext () const { return this->next; }
-	Node* getNextNode () { return this->next; }
-	const Node* getNextNode () const { return this->next; }
+	SelfType* getNext () { return this->next; }
+	const SelfType* getNext () const { return this->next; }
+	SelfType* getNextNode () { return this->next; }
+	const SelfType* getNextNode () const { return this->next; }
 
-	Node* getPrev () { return this->prev; }
-	const Node* getPrev () const { return this->prev; }
-	Node* getPrevNode () { return this->prev; }
-	const Node* getPrevNode () const { return this->prev; }
+	SelfType* getPrev () { return this->prev; }
+	const SelfType* getPrev () const { return this->prev; }
+	SelfType* getPrevNode () { return this->prev; }
+	const SelfType* getPrevNode () const { return this->prev; }
 
 protected:
 	LinkedListNode (): prev(QSE_NULL), next(QSE_NULL)  {}
 	LinkedListNode (const T& v): value(v), prev(QSE_NULL), next(QSE_NULL)  {}
 
-	void setNext (const Node* node)
+	void setNext (const SelfType* node)
 	{
 		this->next = node;
 	}
 
-	void setPrev (const Node* node)
+	void setPrev (const SelfType* node)
 	{
 		this->prev = node;
 	}
 };
 
 ///
-/// The LinkedList<T> class provides a template for a doubly-linked list.
+/// The LinkedList<T,MPOOL> class provides a template for a doubly-linked list.
 ///
 template <typename T, typename MPOOL = Mpool> class LinkedList
 {
 public:
+	typedef LinkedList<T,MPOOL> SelfType;
 	typedef LinkedListNode<T,MPOOL> Node;
 
 	enum 
@@ -106,7 +107,7 @@ public:
 		this->tail_node = QSE_NULL;
 	}
 
-	LinkedList (const LinkedList<T>& ll): mp (ll.mp.getDatumSize(), ll.mp.getBlockSize())
+	LinkedList (const SelfType& ll): mp (ll.mp.getDatumSize(), ll.mp.getBlockSize())
 	{
 		this->node_count = 0;
 		this->head_node = QSE_NULL;
@@ -115,7 +116,7 @@ public:
 			this->append (p->value);
 	}
 
-	LinkedList<T>& operator= (const LinkedList<T>& ll) 
+	SelfType& operator= (const SelfType& ll) 
 	{
 		this->clear ();
 		for (Node* p = ll.head_node; p != QSE_NULL; p = p->next)
@@ -222,7 +223,7 @@ public:
 		return this->insertValue ((Node*)QSE_NULL, value);
 	}
 
-	void prependAll (const LinkedList<T>& list)
+	void prependAll (const SelfType& list)
 	{
 		Node* n = list.tail_node;
 
@@ -246,7 +247,7 @@ public:
 		}
 	}
 
-	void appendAll (const LinkedList<T>& list) 
+	void appendAll (const SelfType& list) 
 	{
 		Node* n = list.head_node;
 
@@ -523,7 +524,7 @@ public:
 		this->mp.dispose ();
 	}
 
-	typedef int (LinkedList<T>::*TraverseCallback) (Node* start, Node* cur);
+	typedef int (SelfType::*TraverseCallback) (Node* start, Node* cur);
 
 	void traverse (TraverseCallback callback, Node* start)
 	{
