@@ -260,7 +260,7 @@ static int copy_file_in_fs (qse_fs_t* fs, cpfile_t* cpfile)
 				fs->errnum = qse_fs_syserrtoerrnum (fs, errno);
 				goto oops;
 			}
-		#elif defined(HAVE_FUTIME)
+		#elif defined(HAVE_FUTIMES)
 			tv[0].tv_sec = cpfile->src_attr.atime.sec;
 			tv[0].tv_usec = QSE_NSEC_TO_USEC(cpfile->src_attr.atime.nsec);
 			tv[1].tv_sec = cpfile->src_attr.mtime.sec;
