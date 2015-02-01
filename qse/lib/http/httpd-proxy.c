@@ -579,10 +579,8 @@ static int proxy_htrd_peek_peer_output (qse_htrd_t* htrd, qse_htre_t* res)
 				 * Other browsers like firefox and opera didn't have this problem.
 				 *
 				 * The hack here assumes that the actual response from the peer
-				 * contains no message-body(content) either.	
+				 * contains no message-body(content) either.
 				 */
-
-/* TODO: apply the same trick if the request is HEAD */
 
 				/* Force the length to be zero as if Content-Length: 0 is in the
 				 * original peer response */
