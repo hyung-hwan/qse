@@ -491,6 +491,7 @@ static int proxy_htrd_peek_peer_output (qse_htrd_t* htrd, qse_htre_t* res)
 	proxy_peer_htrd_xtn_t* xtn;
 	task_proxy_t* proxy;
 	qse_httpd_t* httpd;
+	int res_code;
 
 	xtn = (proxy_peer_htrd_xtn_t*) qse_htrd_getxtn (htrd);
 	proxy = xtn->proxy;
@@ -507,7 +508,8 @@ static int proxy_htrd_peek_peer_output (qse_htrd_t* htrd, qse_htre_t* res)
 		return -1;
 	}
 
-	if ((proxy->resflags & PROXY_RES_AWAIT_100) && qse_htre_getscodeval(res) == 100)
+	res_code = qse_htre_getscodeval(res);
+	if ((proxy->resflags & PROXY_RES_AWAIT_100) && res_code == 100)
 	{
 		/* TODO: check if the request contained Expect... */
 
@@ -550,7 +552,7 @@ static int proxy_htrd_peek_peer_output (qse_htrd_t* htrd, qse_htre_t* res)
 		{
 			/* the response from the peer is chunked or
 			 * should be read until disconnection.
-			 * but the whold response has already been
+			 * but the whole response has already been
 			 * received. so i dont' have to do complex 
 			 * chunking or something when returning the 
 			 * response back to the client. */
@@ -559,7 +561,35 @@ static int proxy_htrd_peek_peer_output (qse_htrd_t* htrd, qse_htre_t* res)
 		}
 		else
 		{
-			if (qse_comparehttpversions (&proxy->version, &qse_http_v11) >= 0)
+			if (proxy->method == QSE_HTTP_HEAD || (res_code >= 100 && res_code <= 199) || 
+			    res_code == 204 || res_code == 304)
+			{
+				/* RFC 2616.
+				 * 1.Any response message which "MUST NOT" include a message-body (such
+				 * as the 1xx, 204, and 304 responses and any response to a HEAD
+				 * request) is always terminated by the first empty line after the
+				 * header fields, regardless of the entity-header fields present in
+				 * the message.
+				 *
+				 * Google chrome looks to be very strict in interpreting the above
+				 * clause in that it suffers when it gets a 304 response with 
+				 * chunked transfer-encoding and the content containting the last
+				 * chunk(0\r\n\r\n) only.
+				 *
+				 * Other browsers like firefox and opera didn't have this problem.
+				 *
+				 * The hack here assumes that the actual response from the peer
+				 * contains no message-body(content) either.	
+				 */
+
+/* TODO: apply the same trick if the request is HEAD */
+
+				/* Force the length to be zero as if Content-Length: 0 is in the
+				 * original peer response */
+				proxy->resflags |= PROXY_RES_PEER_LENGTH | PROXY_RES_PEER_LENGTH_FAKE;
+				proxy->peer_output_length = 0;
+			}
+			else if (qse_comparehttpversions (&proxy->version, &qse_http_v11) >= 0)
 			{
 				/* client supports chunking */
 
