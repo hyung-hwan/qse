@@ -64,11 +64,11 @@ public:
 	///
 	virtual ~Mmgr () {}
 
-protected:
+//protected:
 	/// 
 	/// The allocMem() function allocates a chunk of memory of the 
-	/// size @a n and return the pointer to the beginning of the chunk.
-	/// If it fails to allocate memory, it should return QSE_NULL.
+	/// size \a n and return the pointer to the beginning of the chunk.
+	/// If it fails to allocate memory, it should return #QSE_NULL.
 	///
 	virtual void* allocMem (
 		qse_size_t n ///< size of memory chunk to allocate in bytes 
@@ -113,5 +113,11 @@ protected:
 /////////////////////////////////
 QSE_END_NAMESPACE(QSE)
 /////////////////////////////////
+
+void* operator new (qse_size_t size, QSE::Mmgr* mmgr);
+void* operator new[] (qse_size_t size, QSE::Mmgr* mmgr);
+
+void operator delete (void* ptr, QSE::Mmgr* mmgr);
+void operator delete[] (void* ptr, QSE::Mmgr* mmgr);
 
 #endif

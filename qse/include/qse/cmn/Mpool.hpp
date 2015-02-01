@@ -28,7 +28,7 @@
 #define _QSE_CMN_MPOOL_HPP_
 
 #include <qse/Uncopyable.hpp>
-#include <qse/cmn/ExcMmgr.hpp>
+#include <qse/cmn/Mmged.hpp>
 
 /////////////////////////////////
 QSE_BEGIN_NAMESPACE(QSE)
@@ -38,7 +38,7 @@ QSE_BEGIN_NAMESPACE(QSE)
 // allocator for fixed-size data
 //
 
-class QSE_EXPORT Mpool: public Uncopyable, protected ExcMmgr
+class QSE_EXPORT Mpool: public Uncopyable, public Mmged
 {
 public:
 	enum 
@@ -47,6 +47,7 @@ public:
 	};
 
 	Mpool (
+		Mmgr* mmgr,
 		qse_size_t datum_size, 
 		qse_size_t block_size = DEFAULT_BLOCK_SIZE);
 	~Mpool ();
@@ -107,5 +108,9 @@ protected:
 /////////////////////////////////
 QSE_END_NAMESPACE(QSE)
 ////////////////////////////////
+
+void* operator new (qse_size_t size, QSE::Mpool* mp);
+void operator delete (void* ptr, QSE::Mpool* mp);
+
 #endif
 

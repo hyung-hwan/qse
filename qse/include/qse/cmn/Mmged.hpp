@@ -41,7 +41,7 @@ QSE_BEGIN_NAMESPACE(QSE)
 class QSE_EXPORT Mmged
 {
 public:
-	Mmged (Mmgr* mmgr): mmgr(mmgr) {}
+	Mmged (Mmgr* mmgr = QSE_NULL);
 
 	///
 	/// The getMmgr() function returns the memory manager associated.

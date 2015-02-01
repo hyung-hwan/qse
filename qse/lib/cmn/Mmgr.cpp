@@ -48,3 +48,25 @@ void Mmgr::free_mem (mmgr_t* mmgr, void* ptr)
 /////////////////////////////////
 QSE_END_NAMESPACE(QSE)
 /////////////////////////////////
+
+void* operator new (qse_size_t size, QSE::Mmgr* mmgr)
+{
+	return mmgr->allocMem (size);
+}
+
+void operator delete (void* ptr, QSE::Mmgr* mmgr)
+{
+	mmgr->freeMem (ptr);
+}
+
+#if 0
+void* operator new[] (qse_size_t size, QSE::Mmgr* mmgr)
+{
+	return mmgr->allocMem (size);
+}
+
+void operator delete[] (void* ptr, QSE::Mmgr* mmgr)
+{
+	mmgr->freeMem (ptr);
+}
+#endif

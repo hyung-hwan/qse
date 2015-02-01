@@ -29,8 +29,6 @@
 
 #include <qse/Types.hpp>
 #include <qse/cmn/Mpool.hpp>
-#include <qse/cmn/Mpoolable.hpp>
-
 
 /////////////////////////////////
 QSE_BEGIN_NAMESPACE(QSE)
@@ -39,7 +37,7 @@ QSE_BEGIN_NAMESPACE(QSE)
 template <typename T, typename MPOOL> class LinkedList;
 
 template <typename T,typename MPOOL> 
-class LinkedListNode: protected Mpoolable
+class LinkedListNode
 {
 public:
 	friend class LinkedList<T,MPOOL>;
@@ -84,7 +82,7 @@ protected:
 ///
 /// The LinkedList<T,MPOOL> class provides a template for a doubly-linked list.
 ///
-template <typename T, typename MPOOL = Mpool> class LinkedList
+template <typename T, typename MPOOL = Mpool> class LinkedList: public Mmged
 {
 public:
 	typedef LinkedList<T,MPOOL> SelfType;
@@ -100,14 +98,14 @@ public:
 		this->clearout ();
 	}
 
-	LinkedList (qse_size_t mpb_size = 0): mp (QSE_SIZEOF(Node), mpb_size)
+	LinkedList (Mmgr* mmgr = QSE_NULL, qse_size_t mpb_size = 0): Mmged(mmgr), mp (mmgr, QSE_SIZEOF(Node), mpb_size)
 	{
 		this->node_count = 0;
 		this->head_node = QSE_NULL;
 		this->tail_node = QSE_NULL;
 	}
 
-	LinkedList (const SelfType& ll): mp (ll.mp.getDatumSize(), ll.mp.getBlockSize())
+	LinkedList (const SelfType& ll): Mmged(ll.getMmgr()), mp (ll.getMmgr(), ll.mp.getDatumSize(), ll.mp.getBlockSize())
 	{
 		this->node_count = 0;
 		this->head_node = QSE_NULL;
@@ -119,6 +117,7 @@ public:
 	SelfType& operator= (const SelfType& ll) 
 	{
 		this->clear ();
+		// note that the memory pool itself is not copied.
 		for (Node* p = ll.head_node; p != QSE_NULL; p = p->next)
 			this->append (p->value);
 		return *this;
@@ -172,7 +171,7 @@ public:
 	// create a new node to hold the value and insert it.
 	Node* insertValue (Node* pos, const T& value)
 	{
-		Node* node = new(&mp) Node(value);
+		Node* node = new(&this->mp) Node(value);
 		return this->insertNode (pos, node);
 	}
 
@@ -307,13 +306,8 @@ public:
 
 		//call the destructor
 		node->~Node (); 
-
-		// cal the deallocator
-	#if defined(_MSC_VER)
-		node->operator delete (node, &this->mp);
-	#else
-		node->dispose (node, &this->mp);
-	#endif
+		// free the memory
+		::operator delete (node, &this->mp);
 	}
 
 	void remove (qse_size_t index) 
@@ -499,16 +493,9 @@ public:
 		{
 			saved = p->next;
 
-			if (this->mp.isDisabled()) delete p;
-			else 
-			{
-				p->~Node ();
-			#if defined(_MSC_VER)
-				p->operator delete (p, &this->mp);
-			#else
-				p->dispose (p, &this->mp);
-			#endif
-			}
+			// placement new/delete handling
+			p->~Node (); // call the destructor
+			::operator delete (p, &this->mp); // free the memory
 
 			this->node_count--;
 			p = saved;
@@ -545,7 +532,6 @@ public:
 	}
 
 protected:
-	//Mpool       mp;
 	MPOOL       mp;
 	Node*       head_node;
 	Node*       tail_node;

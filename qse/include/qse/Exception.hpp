@@ -25,8 +25,8 @@
  */
 
 
-#ifndef _QSE_EXCEPTION_CLASS_
-#define _QSE_EXCEPTION_CLASS_
+#ifndef _QSE_EXCEPTION_HPP_
+#define _QSE_EXCEPTION_HPP_
 
 #include <qse/types.h>
 #include <qse/macros.h>
