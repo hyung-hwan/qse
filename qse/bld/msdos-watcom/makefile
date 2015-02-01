@@ -222,6 +222,7 @@ LIBQSECMN_OBJECTS =  &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_fmt_intmax.obj &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_fmt_out.obj &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_fs.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_fs_attr.obj &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_fs_copy.obj &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_fs_delete.obj &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_fs_err.obj &
@@ -388,7 +389,10 @@ LIBQSECMNXX_CXXFLAGS = $(____DOS_CFLAG_p) -i=..\..\include $(CPPFLAGS_BUILD) &
 	-ox -xs $(CPPFLAGS) $(CXXFLAGS)
 LIBQSECMNXX_OBJECTS =  &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmnxx_Mmgr.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmnxx_StdMmgr.obj
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmnxx_StdMmgr.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmnxx_ExcMmgr.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmnxx_Mmged.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmnxx_Mpool.obj
 LIBQSEAWKXX_CXXFLAGS = $(____DOS_CFLAG_p) -i=..\..\include $(CPPFLAGS_BUILD) &
 	$(CPPFLAGS_CHAR) $(CPPFLAGS_XCMGRS) $(CPPFLAGS_BUNDLED_UNICODE) &
 	-DQSE_ENABLE_STATIC_MODULE $(CPPFLAGS_TCPV40HDRS) -wx $(__DEBUG_INFO) -bm -ot &
@@ -566,6 +570,9 @@ $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_fmt_ou
 	$(CC) -bt=dos -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_fs.obj :  .AUTODEPEND ..\..\lib\cmn\fs.c
+	$(CC) -bt=dos -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_fs_attr.obj :  .AUTODEPEND ..\..\lib\cmn\fs-attr.c
 	$(CC) -bt=dos -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_fs_copy.obj :  .AUTODEPEND ..\..\lib\cmn\fs-copy.c
@@ -935,6 +942,15 @@ $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmnxx_Mmgr
 	$(CXX) -bt=dos -zq -fo=$^@ $(LIBQSECMNXX_CXXFLAGS) $<
 
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmnxx_StdMmgr.obj :  .AUTODEPEND ..\..\lib\cmn\StdMmgr.cpp
+	$(CXX) -bt=dos -zq -fo=$^@ $(LIBQSECMNXX_CXXFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmnxx_ExcMmgr.obj :  .AUTODEPEND ..\..\lib\cmn\ExcMmgr.cpp
+	$(CXX) -bt=dos -zq -fo=$^@ $(LIBQSECMNXX_CXXFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmnxx_Mmged.obj :  .AUTODEPEND ..\..\lib\cmn\Mmged.cpp
+	$(CXX) -bt=dos -zq -fo=$^@ $(LIBQSECMNXX_CXXFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmnxx_Mpool.obj :  .AUTODEPEND ..\..\lib\cmn\Mpool.cpp
 	$(CXX) -bt=dos -zq -fo=$^@ $(LIBQSECMNXX_CXXFLAGS) $<
 
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqseawkxx_Awk.obj :  .AUTODEPEND ..\..\lib\awk\Awk.cpp
