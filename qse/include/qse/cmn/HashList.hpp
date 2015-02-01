@@ -52,10 +52,8 @@ struct HashListComparator
 	}
 };
 
-// TODO: use MPOLL for nodes???
-
 template <typename T, typename MPOOL = Mpool, typename HASHER = HashListHasher<T>, typename COMPARATOR = HashListComparator<T> >
-class HashList
+class HashList: public Mmged
 {
 public:
 	typedef LinkedList<T,MPOOL> DatumList;
@@ -63,9 +61,10 @@ public:
 	typedef HashList<T,MPOOL,HASHER,COMPARATOR> SelfType;
 
 	HashList (
+		Mmgr* mmgr = QSE_NULL,
 		qse_size_t node_capacity = 10, 
 		qse_size_t load_factor = 75, 
-		qse_size_t mpb_size = 0)/*: datum_list (mpb_size)*/
+		qse_size_t mpb_size = 0): Mmged(mmgr) /*: datum_list (mpb_size)*/
 	{
 		this->nodes = QSE_NULL;
 		this->node_capacity = 0;
@@ -73,28 +72,31 @@ public:
 
 		try 
 		{
-			this->nodes = new Node*[node_capacity << 1];
+			qse_size_t total_count = node_capacity << 1;
+			//this->nodes = new Node*[total_count];
+			this->nodes = (Node**)this->getMmgr()->allocMem (QSE_SIZEOF(Node*) * total_count);
 
 			this->node_capacity = node_capacity;
-			for (qse_size_t i = 0; i < (node_capacity << 1); i++) 
+			for (qse_size_t i = 0; i < total_count; i++) 
 			{
 				this->nodes[i] = QSE_NULL;
 			}
 
-			this->datum_list = new DatumList (mpb_size);
+			this->datum_list = new(this->getMmgr()) DatumList (this->getMmgr(), mpb_size);
 		}
 		catch (...) 
 		{
 			if (this->nodes) 
 			{
-				delete[] this->nodes;
+				//delete[] this->nodes;
+				this->getMmgr()->freeMem (this->nodes);
 				this->node_capacity = 0;
 				this->nodes = QSE_NULL;
 			}
 
 			if (this->datum_list) 
 			{
-				delete this->datum_list;
+				this->delete_datum_list ();
 				this->datum_list = QSE_NULL;
 			}
 
@@ -105,7 +107,7 @@ public:
 		this->threshold   = node_capacity * load_factor / 100;
 	}
 
-	HashList (const SelfType& list)/*: datum_list (list.datum_list.getMPBlockSize()) */
+	HashList (const SelfType& list): Mmged (list)/*: datum_list (list.datum_list.getMPBlockSize()) */
 	{
 		this->nodes = QSE_NULL;
 		this->node_capacity = 0;
@@ -113,26 +115,30 @@ public:
 
 		try 
 		{
-			this->nodes = new Node*[list.node_capacity << 1];
+			qse_size_t total_count = list.node_capacity << 1;
+			//this->nodes = new Node*[total_count];
+			this->nodes = (Node**)this->getMmgr()->allocMem (QSE_SIZEOF(Node*) * total_count);
+
 			this->node_capacity = list.node_capacity;
-			for (qse_size_t i = 0; i < list.node_capacity << 1; i++)
+			for (qse_size_t i = 0; i < total_count; i++)
 			{
 				this->nodes[i] = QSE_NULL;
 			}
 
-			this->datum_list = new DatumList (list.datum_list->getMPBlockSize());
+			this->datum_list = new(list.getMmgr()) DatumList (list.getMmgr(), list.datum_list->getMPBlockSize());
 		}
 		catch (...) 
 		{
 			if (this->nodes)
 			{
-				delete[] this->nodes;
+				//delete[] this->nodes;
+				this->getMmgr()->freeMem (this->nodes);
 				this->node_capacity = 0;
 				this->nodes = QSE_NULL;
 			}
 			if (this->datum_list)
 			{
-				delete this->datum_list;
+				this->delete_datum_list ();
 				this->datum_list = QSE_NULL;
 			}
 
@@ -163,8 +169,8 @@ public:
 	~HashList ()
 	{
 		this->clear ();
-		if (this->nodes) delete[] this->nodes;
-		if (this->datum_list) delete this->datum_list;
+		if (this->nodes) this->getMmgr()->freeMem (this->nodes); //delete[] this->nodes;
+		if (this->datum_list) this->delete_datum_list ();
 	}
 
 	SelfType& operator= (const SelfType& list)
@@ -416,7 +422,7 @@ protected:
 		// Move nodes around instead of values to prevent
 		// existing values from being copied over and destroyed.
 		// this incurs less number of memory allocations also.
-		SelfType temp (this->node_capacity << 1, this->load_factor, this->datum_list->getMPBlockSize());
+		SelfType temp (this->getMmgr(), this->node_capacity << 1, this->load_factor, this->datum_list->getMPBlockSize());
 		Node* p = this->datum_list->getHeadNode();
 		while (p)
 		{
@@ -497,6 +503,12 @@ protected:
 		}
 	}
 
+private:
+	void delete_datum_list ()
+	{
+		this->datum_list->~DatumList();
+		::operator delete (this->datum_list, this->getMmgr());
+	}
 };
 
 

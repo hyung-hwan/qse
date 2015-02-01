@@ -24,35 +24,18 @@
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <qse/cmn/StdMmgr.hpp>
-#include <stdlib.h>
+#include <qse/cmn/Mmged.hpp>
+#include <qse/cmn/ExcMmgr.hpp>
 
 /////////////////////////////////
 QSE_BEGIN_NAMESPACE(QSE)
 /////////////////////////////////
 
-
-void* StdMmgr::allocMem (qse_size_t n) 
+Mmged::Mmged (Mmgr* mmgr)
 {
-	return ::malloc (n);
+	if (!mmgr) mmgr = ExcMmgr::getDFL(); // TODO: use a different manager???? StdMmgr???
+	this->mmgr = mmgr;
 }
-
-void* StdMmgr::reallocMem (void* ptr, qse_size_t n) 
-{ 
-	return ::realloc (ptr, n); 
-}
-
-void StdMmgr::freeMem (void* ptr) 
-{
-	::free (ptr); 
-}
-
-StdMmgr* StdMmgr::getDFL ()
-{
-	static StdMmgr DFL;
-	return &DFL;
-}
-
 /////////////////////////////////
 QSE_END_NAMESPACE(QSE)
 /////////////////////////////////

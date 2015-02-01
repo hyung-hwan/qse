@@ -31,7 +31,7 @@
 QSE_BEGIN_NAMESPACE(QSE)
 /////////////////////////////////
 
-Mpool::Mpool (qse_size_t datum_size, qse_size_t block_size)
+Mpool::Mpool (Mmgr* mmgr, qse_size_t datum_size, qse_size_t block_size): Mmged(mmgr)
 {
 	if (datum_size > 0 && datum_size < QSE_SIZEOF(void*))
 		datum_size = QSE_SIZEOF(void*);
@@ -87,7 +87,7 @@ void Mpool::dispose ()
 		Block* next = block->next;
 
 		//::delete[] (qse_uint8_t*)block;
-		this->freeMem ((qse_uint8_t*)block);
+		this->mmgr->freeMem ((qse_uint8_t*)block);
 
 		block = next;
 	}
@@ -107,7 +107,7 @@ Mpool::Block* Mpool::add_block ()
 
 	//Block* block = (Block*)::new qse_uint8_t[
 	//	QSE_SIZEOF(Block) + this->block_size * this->datum_size];
-	Block* block = (Block*)this->allocMem (QSE_SIZEOF(Block) + this->block_size * this->datum_size);
+	Block* block = (Block*)this->mmgr->allocMem (QSE_SIZEOF(Block) + this->block_size * this->datum_size);
 	if (!block) return QSE_NULL; // this line may not be reached if the allocator raises an exception
 
 	//this->free_list = (Chain*)block->data;
@@ -135,3 +135,14 @@ Mpool::Block* Mpool::add_block ()
 /////////////////////////////////
 QSE_END_NAMESPACE(QSE)
 /////////////////////////////////
+
+void* operator new (qse_size_t size, QSE::Mpool* mp)
+{
+	return mp->isEnabled()? mp->allocate (): ::operator new (size, mp->getMmgr());
+}
+
+void operator delete (void* ptr, QSE::Mpool* mp)
+{
+	if (mp->isEnabled()) mp->dispose (ptr);
+	else ::operator delete (ptr, mp->getMmgr());
+}
