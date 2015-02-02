@@ -306,7 +306,7 @@
 	<set var="SOURCES_LIBQSECMNXX">
 		Mmgr.cpp
 		StdMmgr.cpp
-		ExcMmgr.cpp
+		HeapMmgr.cpp
 		Mmged.cpp
 		Mpool.cpp
 	</set>

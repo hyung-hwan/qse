@@ -66,6 +66,9 @@ public:
 		qse_size_t load_factor = 75, 
 		qse_size_t mpb_size = 0): Mmged(mmgr)
 	{
+		if (node_capacity <= 0) node_capacity = 1;
+		if (load_factor < 20) load_factor = 20;
+
 		this->nodes = QSE_NULL;
 		this->node_capacity = 0;
 		this->datum_list = QSE_NULL;
@@ -77,7 +80,7 @@ public:
 			// Node* is a plain type that doesn't have any constructors and destructors.
 			// it should be safe to call the memory manager bypassing the new operator.
 			//this->nodes = new Node*[total_count];
-			this->nodes = (Node**)this->getMmgr()->allocMem (QSE_SIZEOF(Node*) * total_count);
+			this->nodes = (Node**)this->getMmgr()->allocate (QSE_SIZEOF(Node*) * total_count);
 
 			// NOTE: something wil go wrong if the memory manager doesn't raise an exception
 			//       upon memory allocation failure. Make sure to use a memory allocation
@@ -95,7 +98,7 @@ public:
 		{
 			if (this->nodes) 
 			{
-				this->getMmgr()->freeMem (this->nodes); //delete[] this->nodes;
+				this->getMmgr()->dispose (this->nodes); //delete[] this->nodes;
 				this->nodes = QSE_NULL;
 				this->node_capacity = 0;
 			}
@@ -123,7 +126,7 @@ public:
 		{
 			qse_size_t total_count = list.node_capacity << 1;
 			//this->nodes = new Node*[total_count];
-			this->nodes = (Node**)this->getMmgr()->allocMem (QSE_SIZEOF(Node*) * total_count);
+			this->nodes = (Node**)this->getMmgr()->allocate (QSE_SIZEOF(Node*) * total_count);
 
 			this->node_capacity = list.node_capacity;
 			for (qse_size_t i = 0; i < total_count; i++)
@@ -139,7 +142,7 @@ public:
 		{
 			if (this->nodes)
 			{
-				this->getMmgr()->freeMem (this->nodes); //delete[] this->nodes;
+				this->getMmgr()->dispose (this->nodes); //delete[] this->nodes;
 				this->nodes = QSE_NULL;
 				this->node_capacity = 0;
 			}
@@ -176,7 +179,7 @@ public:
 	~HashList ()
 	{
 		this->clear ();
-		if (this->nodes) this->getMmgr()->freeMem (this->nodes); //delete[] this->nodes;
+		if (this->nodes) this->getMmgr()->dispose (this->nodes); //delete[] this->nodes;
 		if (this->datum_list) this->free_datum_list ();
 	}
 

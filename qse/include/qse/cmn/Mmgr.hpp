@@ -41,6 +41,12 @@ QSE_BEGIN_NAMESPACE(QSE)
 /// #qse_mmgr_t type. Using the class over the primitive type enables you to
 /// write code in more object-oriented fashion. An inheriting class should 
 /// implement three pure virtual functions.
+///
+/// You are free to call allocMem(), reallocMem(), and freeMem() in C++ context
+/// where no exception raising is desired. If you want an exception to be 
+/// raised upon memory allocation errors, you can call allocate(), reallocate(),
+/// dispose() instead.
+/// 
 /// 
 class QSE_EXPORT Mmgr: public qse_mmgr_t
 {
@@ -50,11 +56,15 @@ public:
 
 	QSE_EXCEPTION (MemoryError);
 
+protected:
+	bool raise_exception;
+
+public:
 	///
 	/// The Mmgr() function builds a memory manager composed of bridge
 	/// functions connecting itself with it.
 	///
-	Mmgr () 
+	Mmgr (bool raise_exception = true): raise_exception (raise_exception)
 	{
 		this->alloc = alloc_mem;
 		this->realloc = realloc_mem;
@@ -66,6 +76,38 @@ public:
 	/// The ~Mmgr() function finalizes a memory manager.
 	///
 	virtual ~Mmgr () {}
+
+	///
+	/// The allocate() function calls allocMem() for memory
+	/// allocation. if it fails, it raise an exception if it's
+	/// configured to do so.
+	///
+	void* allocate (qse_size_t n)
+	{
+		void* xptr = this->allocMem (n);
+		if (!xptr && this->raise_exception) QSE_THROW (MemoryError);
+		return xptr;
+	}
+
+	///
+	/// The reallocate() function calls reallocMem() for memory
+	/// reallocation. if it fails, it raise an exception if it's
+	/// configured to do so.
+	///
+	void* reallocate (void* ptr, qse_size_t n)
+	{
+		void* xptr = this->reallocMem (ptr, n);
+		if (!xptr && this->raise_exception) QSE_THROW (MemoryError);
+		return xptr;
+	}
+
+	///
+	/// The dispose() function calls freeMem() for memory disposal.
+	///
+	void dispose (void* ptr)
+	{
+		this->freeMem (ptr);
+	}
 
 //protected:
 	/// 
