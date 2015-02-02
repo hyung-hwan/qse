@@ -44,7 +44,9 @@ public:
 	void* reallocMem (void* ptr, qse_size_t n);
 	void freeMem (void* ptr);
 
-	static StdMmgr* getDFL();
+	/// The getInstance() function returns the stock instance of the StdMmgr
+	/// class.
+	static StdMmgr* getInstance ();
 };
 
 /////////////////////////////////

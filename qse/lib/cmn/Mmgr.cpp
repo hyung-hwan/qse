@@ -25,6 +25,8 @@
  */
 
 #include <qse/cmn/Mmgr.hpp>
+#include <qse/cmn/ExcMmgr.hpp>
+#include <qse/cmn/StdMmgr.hpp>
 
 /////////////////////////////////
 QSE_BEGIN_NAMESPACE(QSE)
@@ -43,6 +45,18 @@ void* Mmgr::realloc_mem (mmgr_t* mmgr, void* ptr, qse_size_t n)
 void Mmgr::free_mem (mmgr_t* mmgr, void* ptr) 
 {
 	((Mmgr*)mmgr->ctx)->freeMem (ptr);
+}
+
+Mmgr* Mmgr::dfl_mmgr = ExcMmgr::getInstance();
+
+Mmgr* Mmgr::getDFL ()
+{
+	return Mmgr::dfl_mmgr;
+}
+
+void Mmgr::setDFL (Mmgr* mmgr)
+{
+	Mmgr::dfl_mmgr = mmgr;
 }
 
 /////////////////////////////////

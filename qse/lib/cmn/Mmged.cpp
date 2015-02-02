@@ -25,7 +25,6 @@
  */
 
 #include <qse/cmn/Mmged.hpp>
-#include <qse/cmn/ExcMmgr.hpp>
 
 /////////////////////////////////
 QSE_BEGIN_NAMESPACE(QSE)
@@ -33,7 +32,7 @@ QSE_BEGIN_NAMESPACE(QSE)
 
 Mmged::Mmged (Mmgr* mmgr)
 {
-	if (!mmgr) mmgr = ExcMmgr::getDFL(); // TODO: use a different manager???? StdMmgr???
+	if (!mmgr) mmgr = Mmgr::getDFL();
 	this->mmgr = mmgr;
 }
 /////////////////////////////////

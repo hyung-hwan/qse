@@ -26,24 +26,23 @@
 
 #include <qse/cmn/ExcMmgr.hpp>
 #include <stdlib.h>
-#include <stdio.h>
+
 
 /////////////////////////////////
 QSE_BEGIN_NAMESPACE(QSE)
 /////////////////////////////////
 
-
 void* ExcMmgr::allocMem (qse_size_t n) 
 {
-	void* ptr = ::malloc (n);
-	if (!ptr) QSE_THROW (Error);
-	return ptr; 
+	void* xptr = ::malloc (n);
+	if (!xptr) QSE_THROW (MemoryError);
+	return xptr; 
 }
 
 void* ExcMmgr::reallocMem (void* ptr, qse_size_t n) 
 { 
 	void* xptr = ::realloc (ptr, n); 
-	if (!xptr) QSE_THROW (Error);
+	if (!xptr) QSE_THROW (MemoryError);
 	return xptr;
 }
 
@@ -52,7 +51,7 @@ void ExcMmgr::freeMem (void* ptr)
 	::free (ptr); 
 }
 
-ExcMmgr* ExcMmgr::getDFL ()
+ExcMmgr* ExcMmgr::getInstance ()
 {
 	static ExcMmgr DFL;
 	return &DFL;

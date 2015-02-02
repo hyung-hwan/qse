@@ -47,7 +47,7 @@ void StdMmgr::freeMem (void* ptr)
 	::free (ptr); 
 }
 
-StdMmgr* StdMmgr::getDFL ()
+StdMmgr* StdMmgr::getInstance ()
 {
 	static StdMmgr DFL;
 	return &DFL;

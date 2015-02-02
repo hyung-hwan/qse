@@ -28,7 +28,6 @@
 #define _QSE_CMN_EXCMMGR_HPP_
 
 #include <qse/cmn/Mmgr.hpp>
-#include <qse/Exception.hpp>
 
 /////////////////////////////////
 QSE_BEGIN_NAMESPACE(QSE)
@@ -45,9 +44,9 @@ public:
 	void* reallocMem (void* ptr, qse_size_t n);
 	void freeMem (void* ptr);
 
-	static ExcMmgr* getDFL();
-
-	QSE_EXCEPTION (Error);
+	/// The getInstance() function returns the stock instance of the StdMmgr
+	/// class.
+	static ExcMmgr* getInstance();
 };
 
 /////////////////////////////////

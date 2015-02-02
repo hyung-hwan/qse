@@ -29,6 +29,7 @@
 
 #include <qse/types.h>
 #include <qse/macros.h>
+#include <qse/Exception.hpp>
 
 /////////////////////////////////
 QSE_BEGIN_NAMESPACE(QSE)
@@ -46,6 +47,8 @@ class QSE_EXPORT Mmgr: public qse_mmgr_t
 public:
 	/// defines an alias type to #qse_mmgr_t 
 	typedef qse_mmgr_t mmgr_t;
+
+	QSE_EXCEPTION (MemoryError);
 
 	///
 	/// The Mmgr() function builds a memory manager composed of bridge
@@ -108,6 +111,13 @@ protected:
 	/// bridge function from the #qse_mmgr_t type the freeMem() function.
 	///
 	static void  free_mem (mmgr_t* mmgr, void* ptr);
+
+public:
+	static Mmgr* getDFL ();
+	static void setDFL (Mmgr* mmgr);
+
+protected:
+	static Mmgr* dfl_mmgr;
 };
 
 /////////////////////////////////
@@ -115,9 +125,11 @@ QSE_END_NAMESPACE(QSE)
 /////////////////////////////////
 
 void* operator new (qse_size_t size, QSE::Mmgr* mmgr);
-void* operator new[] (qse_size_t size, QSE::Mmgr* mmgr);
-
 void operator delete (void* ptr, QSE::Mmgr* mmgr);
+
+#if 0
+void* operator new[] (qse_size_t size, QSE::Mmgr* mmgr);
 void operator delete[] (void* ptr, QSE::Mmgr* mmgr);
+#endif
 
 #endif
