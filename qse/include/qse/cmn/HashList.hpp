@@ -64,7 +64,7 @@ public:
 		Mmgr* mmgr = QSE_NULL,
 		qse_size_t node_capacity = 10, 
 		qse_size_t load_factor = 75, 
-		qse_size_t mpb_size = 0): Mmged(mmgr) /*: datum_list (mpb_size)*/
+		qse_size_t mpb_size = 0): Mmged(mmgr)
 	{
 		this->nodes = QSE_NULL;
 		this->node_capacity = 0;
@@ -73,8 +73,15 @@ public:
 		try 
 		{
 			qse_size_t total_count = node_capacity << 1;
+
+			// Node* is a plain type that doesn't have any constructors and destructors.
+			// it should be safe to call the memory manager bypassing the new operator.
 			//this->nodes = new Node*[total_count];
 			this->nodes = (Node**)this->getMmgr()->allocMem (QSE_SIZEOF(Node*) * total_count);
+
+			// NOTE: something wil go wrong if the memory manager doesn't raise an exception
+			//       upon memory allocation failure. Make sure to use a memory allocation
+			//       that raises an exception.
 
 			this->node_capacity = node_capacity;
 			for (qse_size_t i = 0; i < total_count; i++) 
@@ -88,15 +95,14 @@ public:
 		{
 			if (this->nodes) 
 			{
-				//delete[] this->nodes;
-				this->getMmgr()->freeMem (this->nodes);
-				this->node_capacity = 0;
+				this->getMmgr()->freeMem (this->nodes); //delete[] this->nodes;
 				this->nodes = QSE_NULL;
+				this->node_capacity = 0;
 			}
 
 			if (this->datum_list) 
 			{
-				this->delete_datum_list ();
+				this->free_datum_list ();
 				this->datum_list = QSE_NULL;
 			}
 
@@ -107,7 +113,7 @@ public:
 		this->threshold   = node_capacity * load_factor / 100;
 	}
 
-	HashList (const SelfType& list): Mmged (list)/*: datum_list (list.datum_list.getMPBlockSize()) */
+	HashList (const SelfType& list): Mmged (list)
 	{
 		this->nodes = QSE_NULL;
 		this->node_capacity = 0;
@@ -125,20 +131,21 @@ public:
 				this->nodes[i] = QSE_NULL;
 			}
 
-			this->datum_list = new(list.getMmgr()) DatumList (list.getMmgr(), list.datum_list->getMPBlockSize());
+			// placement new
+			this->datum_list = new(list.getMmgr()) 
+				DatumList (list.getMmgr(), list.datum_list->getMPBlockSize());
 		}
 		catch (...) 
 		{
 			if (this->nodes)
 			{
-				//delete[] this->nodes;
-				this->getMmgr()->freeMem (this->nodes);
-				this->node_capacity = 0;
+				this->getMmgr()->freeMem (this->nodes); //delete[] this->nodes;
 				this->nodes = QSE_NULL;
+				this->node_capacity = 0;
 			}
 			if (this->datum_list)
 			{
-				this->delete_datum_list ();
+				this->free_datum_list ();
 				this->datum_list = QSE_NULL;
 			}
 
@@ -170,12 +177,14 @@ public:
 	{
 		this->clear ();
 		if (this->nodes) this->getMmgr()->freeMem (this->nodes); //delete[] this->nodes;
-		if (this->datum_list) this->delete_datum_list ();
+		if (this->datum_list) this->free_datum_list ();
 	}
 
 	SelfType& operator= (const SelfType& list)
 	{
 		this->clear ();
+
+		// note that the memory pool itself is not copied.
 
 		for (qse_size_t i = 0; i < list.node_capacity; i++)
 		{
@@ -187,7 +196,7 @@ public:
 			
 			do 
 			{
-				copy_datum (np, this->node_capacity, this->nodes, this->datum_list);
+				this->copy_datum (np, this->node_capacity, this->nodes, this->datum_list);
 				if (np == list.nodes[tail]) break;
 				np = np->getNextNode ();
 			} 
@@ -504,9 +513,13 @@ protected:
 	}
 
 private:
-	void delete_datum_list ()
+	void free_datum_list ()
 	{
+		// destruction in response to 'placement new'
+
+		// call the destructor
 		this->datum_list->~DatumList();
+		// free the memory
 		::operator delete (this->datum_list, this->getMmgr());
 	}
 };
