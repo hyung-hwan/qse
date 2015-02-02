@@ -25,7 +25,6 @@
  */
 
 #include <qse/cmn/Mmgr.hpp>
-#include <qse/cmn/ExcMmgr.hpp>
 #include <qse/cmn/StdMmgr.hpp>
 
 /////////////////////////////////
@@ -47,7 +46,7 @@ void Mmgr::free_mem (mmgr_t* mmgr, void* ptr)
 	((Mmgr*)mmgr->ctx)->freeMem (ptr);
 }
 
-Mmgr* Mmgr::dfl_mmgr = ExcMmgr::getInstance();
+Mmgr* Mmgr::dfl_mmgr = StdMmgr::getInstance();
 
 Mmgr* Mmgr::getDFL ()
 {
@@ -65,22 +64,22 @@ QSE_END_NAMESPACE(QSE)
 
 void* operator new (qse_size_t size, QSE::Mmgr* mmgr)
 {
-	return mmgr->allocMem (size);
+	return mmgr->allocate (size);
 }
 
 void operator delete (void* ptr, QSE::Mmgr* mmgr)
 {
-	mmgr->freeMem (ptr);
+	mmgr->dispose (ptr);
 }
 
 #if 0
 void* operator new[] (qse_size_t size, QSE::Mmgr* mmgr)
 {
-	return mmgr->allocMem (size);
+	return mmgr->allocate (size);
 }
 
 void operator delete[] (void* ptr, QSE::Mmgr* mmgr)
 {
-	mmgr->freeMem (ptr);
+	mmgr->dispose (ptr);
 }
 #endif

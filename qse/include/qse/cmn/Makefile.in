@@ -51,7 +51,7 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 @ENABLE_CXX_TRUE@am__append_1 = \
-@ENABLE_CXX_TRUE@	Mmgr.hpp StdMmgr.hpp ExcMmgr.hpp HeapMmgr.hpp Mmged.hpp \
+@ENABLE_CXX_TRUE@	Mmgr.hpp StdMmgr.hpp HeapMmgr.hpp Mmged.hpp \
 @ENABLE_CXX_TRUE@	Mpool.hpp Mpoolable.hpp LinkedList.hpp HashList.hpp
 
 subdir = include/qse/cmn
@@ -90,8 +90,8 @@ am__pkginclude_HEADERS_DIST = alg.h chr.h cp949.h cp950.h dir.h dll.h \
 	lda.h main.h map.h mb8.h mbwc.h mem.h mux.h nwad.h nwif.h \
 	nwio.h oht.h opt.h path.h pio.h pma.h rbt.h rex.h sck.h sio.h \
 	sll.h slmb.h str.h task.h time.h tio.h tmr.h tre.h uni.h uri.h \
-	utf8.h xma.h Mmgr.hpp StdMmgr.hpp ExcMmgr.hpp HeapMmgr.hpp \
-	Mmged.hpp Mpool.hpp Mpoolable.hpp LinkedList.hpp HashList.hpp
+	utf8.h xma.h Mmgr.hpp StdMmgr.hpp HeapMmgr.hpp Mmged.hpp \
+	Mpool.hpp Mpoolable.hpp LinkedList.hpp HashList.hpp
 am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
 am__vpath_adj = case $$p in \
     $(srcdir)/*) f=`echo "$$p" | sed "s|^$$srcdirstrip/||"`;; \
