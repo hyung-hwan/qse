@@ -24,31 +24,36 @@
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _QSE_CMN_STDMMGR_HPP_
-#define _QSE_CMN_STDMMGR_HPP_
+#ifndef _QSE_CMN_HEAPMMGR_HPP_
+#define _QSE_CMN_HEAPMMGR_HPP_
 
 #include <qse/cmn/Mmgr.hpp>
+#include <qse/cmn/Mmged.hpp>
+#include <qse/cmn/xma.h>
 
 /////////////////////////////////
 QSE_BEGIN_NAMESPACE(QSE)
 /////////////////////////////////
 
-/// The StdMmgr class implements the memory manager interface.
-/// It doesn't raise an exception upon failure. If you want an exception
-/// to be raised, use the ExcMmgr class instead.
+/// The HeapMmgr class implements the heap-based memory manager interface.
+/// It is a memory manager that's memory managed by another memory manager.
 
-class QSE_EXPORT StdMmgr: public Mmgr
+class QSE_EXPORT HeapMmgr: public Mmgr, public Mmged
 {
 public:
-	StdMmgr (bool raise_exception = true): Mmgr (raise_exception) {}
+	HeapMmgr (Mmgr* mmgr, qse_size_t heap_size, bool raise_exception = true);
+	~HeapMmgr ();
 
 	void* allocMem (qse_size_t n);
 	void* reallocMem (void* ptr, qse_size_t n);
 	void freeMem (void* ptr);
 
-	/// The getInstance() function returns the stock instance of the StdMmgr
-	/// class.
-	static StdMmgr* getInstance ();
+	// the library does not provide a stock instance of this class
+	//static HeapMmgr* getInstance ();
+
+protected:
+	qse_xma_t* xma;
+	qse_size_t heap_size;
 };
 
 /////////////////////////////////
