@@ -1,6 +1,6 @@
 /*
  * $Id$
- *
+ * 
     Copyright (c) 2006-2014 Chung, Hyung-Hwan. All rights reserved.
 
     Redistribution and use in source and binary forms, with or without
@@ -24,35 +24,68 @@
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _QSE_CMN_STDMMGR_HPP_
-#define _QSE_CMN_STDMMGR_HPP_
-
-#include <qse/cmn/Mmgr.hpp>
+#include <qse/cmn/HeapMmgr.hpp>
+#include <qse/cmn/xma.h>
 
 /////////////////////////////////
 QSE_BEGIN_NAMESPACE(QSE)
 /////////////////////////////////
 
-/// The StdMmgr class implements the memory manager interface.
-/// It doesn't raise an exception upon failure. If you want an exception
-/// to be raised, use the ExcMmgr class instead.
-
-class QSE_EXPORT StdMmgr: public Mmgr
+struct xma_xtn_t
 {
-public:
-	StdMmgr (bool raise_exception = true): Mmgr (raise_exception) {}
-
-	void* allocMem (qse_size_t n);
-	void* reallocMem (void* ptr, qse_size_t n);
-	void freeMem (void* ptr);
-
-	/// The getInstance() function returns the stock instance of the StdMmgr
-	/// class.
-	static StdMmgr* getInstance ();
+	HeapMmgr* heap;
 };
+
+HeapMmgr::HeapMmgr (Mmgr* mmgr, qse_size_t heap_size, bool raise_exception): 
+	Mmgr(raise_exception), Mmged(mmgr), xma(QSE_NULL), heap_size (heap_size)
+{
+}
+
+HeapMmgr::~HeapMmgr ()
+{
+	if (this->xma) qse_xma_close (this->xma);
+}
+
+void* HeapMmgr::allocMem (qse_size_t n)
+{
+	if (!this->xma)
+	{
+		this->xma = qse_xma_open (this->getMmgr(), QSE_SIZEOF(xma_xtn_t), heap_size);
+		if (!this->xma) return QSE_NULL;
+
+		xma_xtn_t* xtn = (xma_xtn_t*)qse_xma_getxtn (this->xma);
+		xtn->heap = this;
+	}
+
+	void* xptr = qse_xma_alloc (this->xma, n);
+	if (!xptr) QSE_THROW (MemoryError);
+	return xptr;
+}
+
+void* HeapMmgr::reallocMem (void* ptr, qse_size_t n)
+{
+	if (!this->xma)
+	{
+		this->xma = qse_xma_open (this->getMmgr(), QSE_SIZEOF(xma_xtn_t), heap_size);
+		if (!this->xma) return QSE_NULL;
+
+		xma_xtn_t* xtn = (xma_xtn_t*)qse_xma_getxtn (this->xma);
+		xtn->heap = this;
+	}
+
+	void* xptr = qse_xma_realloc (this->xma, ptr, n);
+	if (!xptr) QSE_THROW (MemoryError);
+	return xptr;
+}
+
+void HeapMmgr::freeMem (void* ptr)
+{
+	if (this->xma)
+	{
+		qse_xma_free (this->xma, ptr);
+	}
+}
 
 /////////////////////////////////
 QSE_END_NAMESPACE(QSE)
 /////////////////////////////////
-
-#endif

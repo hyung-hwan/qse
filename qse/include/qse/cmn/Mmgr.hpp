@@ -66,6 +66,10 @@ public:
 	///
 	Mmgr (bool raise_exception = true): raise_exception (raise_exception)
 	{
+		// NOTE:
+		//  the #qse_mmgr_t interface is not affected by raise_exception
+		//  because direct calls to the virtual functions that don't raise
+		//  exceptions are made via bridge functions below.
 		this->alloc = alloc_mem;
 		this->realloc = realloc_mem;
 		this->free = free_mem;
@@ -170,6 +174,13 @@ void* operator new (qse_size_t size, QSE::Mmgr* mmgr);
 void operator delete (void* ptr, QSE::Mmgr* mmgr);
 
 #if 0
+// i found no way to delete an array allocated with
+// the placement new operator. if the array element is an instance
+// of a class, the pointer returned by the new operator call
+// may not be the actual pointer allocated. some compilers
+// seem to put some information about the array at the 
+// beginning of the allocated memory and return the pointer
+// off a few bytes from the beginning.
 void* operator new[] (qse_size_t size, QSE::Mmgr* mmgr);
 void operator delete[] (void* ptr, QSE::Mmgr* mmgr);
 #endif
