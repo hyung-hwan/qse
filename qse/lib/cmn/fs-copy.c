@@ -241,16 +241,22 @@ static int copy_file_in_fs (qse_fs_t* fs, cpfile_t* cpfile)
 			struct timespec ts[2];
 		#elif defined(HAVE_FUTIMES)
 			struct timeval tv[2];
+		#elif defined(HAVE_UTIME)
+			struct utimbuf ub;
+		#elif defined(HAVE_UTIMES)
+			struct timeval tv[2];
 		#endif
 
 			if (QSE_FCHOWN (out, cpfile->src_attr.uid, cpfile->src_attr.gid) <= -1 ||
-			    QSE_FCHMOD (out,  cpfile->src_attr.mode) <= -1)
+			    QSE_FCHMOD (out, cpfile->src_attr.mode) <= -1)
 			{
 				fs->errnum = qse_fs_syserrtoerrnum (fs, errno);
 				goto oops;
 			}
 
 		#if defined(HAVE_FUTIMENS)
+
+			QSE_MEMSET (&ts, 0, QSE_SIZEOF(ts));
 			ts[0].tv_sec = cpfile->src_attr.atime.sec;
 			ts[0].tv_nsec = cpfile->src_attr.atime.nsec;
 			ts[1].tv_sec = cpfile->src_attr.mtime.sec;
@@ -260,7 +266,10 @@ static int copy_file_in_fs (qse_fs_t* fs, cpfile_t* cpfile)
 				fs->errnum = qse_fs_syserrtoerrnum (fs, errno);
 				goto oops;
 			}
+
 		#elif defined(HAVE_FUTIMES)
+
+			QSE_MEMSET (&tv, 0, QSE_SIZEOF(tv));
 			tv[0].tv_sec = cpfile->src_attr.atime.sec;
 			tv[0].tv_usec = QSE_NSEC_TO_USEC(cpfile->src_attr.atime.nsec);
 			tv[1].tv_sec = cpfile->src_attr.mtime.sec;
@@ -270,8 +279,34 @@ static int copy_file_in_fs (qse_fs_t* fs, cpfile_t* cpfile)
 				fs->errnum = qse_fs_syserrtoerrnum (fs, errno);
 				goto oops;
 			}
+
+		#elif defined(HAVE_UTIME)
+
+			QSE_MEMSET (&ub, 0, QSE_SIZEOF(ub));
+			ub.actime = cpfile->src_attr.atime.sec;
+			ub.modtime = cpfile->src_attr.mtime.sec;
+			if (QSE_UTIME (cpfile->dst_fspath, &ub) <= -1)
+			{
+				fs->errnum = qse_fs_syserrtoerrnum (fs, errno);
+				goto oops;
+			}
+
+		#elif defined(HAVE_UTIMES)
+
+			QSE_MEMSET (&tv, 0, QSE_SIZEOF(tv));
+			tv[0].tv_sec = cpfile->src_attr.atime.sec;
+			tv[0].tv_usec = QSE_NSEC_TO_USEC(cpfile->src_attr.atime.nsec);
+			tv[1].tv_sec = cpfile->src_attr.mtime.sec;
+			tv[1].tv_usec = QSE_NSEC_TO_USEC(cpfile->src_attr.mtime.nsec);
+			// work on the file name not on the file descriptor.
+			if (QSE_UTIMES (cpfile->dst_fspath, tv) <= -1)
+			{
+				fs->errnum = qse_fs_syserrtoerrnum (fs, errno);
+				goto oops;
+			}
+
 		#else
-		#	error neither futimens nor futimes exist
+		#	error none of futimens, futimes, utime, utimes exist
 		#endif
 		}
 
