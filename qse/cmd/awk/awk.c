@@ -504,14 +504,15 @@ static int expand_wildcard (int argc, qse_char_t* argv[], int glob, xarg_t* xarg
 
 		if (glob)
 		{
-			x = qse_glob (argv[i], collect_into_xarg, xarg, 
-				QSE_GLOB_TOLERANT |
-#if defined(_WIN32) || defined(__OS2__) || defined(__DOS__)
-				QSE_GLOB_NOESCAPE | QSE_GLOB_PERIOD | QSE_GLOB_IGNORECASE, 
-#else
-				QSE_GLOB_PERIOD,
-#endif
-				xarg->mmgr, qse_getdflcmgr()
+		#if defined(_WIN32) || defined(__OS2__) || defined(__DOS__)
+			int glob_flags = QSE_GLOB_TOLERANT | QSE_GLOB_PERIOD | QSE_GLOB_NOESCAPE | QSE_GLOB_IGNORECASE;
+		#else
+			int glob_flags = QSE_GLOB_TOLERANT | QSE_GLOB_PERIOD;
+		#endif
+
+			x = qse_glob (
+				argv[i], collect_into_xarg, xarg, 
+				glob_flags, xarg->mmgr, qse_getdflcmgr()
 			);
 			if (x <= -1) return -1;
 		}
