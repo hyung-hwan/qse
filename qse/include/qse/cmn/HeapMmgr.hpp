@@ -35,13 +35,29 @@
 QSE_BEGIN_NAMESPACE(QSE)
 /////////////////////////////////
 
-/// The HeapMmgr class implements the heap-based memory manager interface.
-/// It is a memory manager that's memory managed by another memory manager.
+/// The HeapMmgr class implements a memory management interface that
+/// handles a memory heap of a given size. Notably, it is a memory manager 
+/// managed by another memory manager. 
+///
+/// \code
+///   QSE::HeapMmgr heap_mmgr (QSE::Mmgr::getDFL(), 30000);
+///   QSE::LinkedList<int> int_list (&heap_mmgr);
+///   int_list.append (10);
+///   int_list.append (20);
+/// \endcode
 
 class QSE_EXPORT HeapMmgr: public Mmgr, public Mmged
 {
 public:
+	/// The constructor function accepts an memory manager \a mmgr that 
+	/// is used to create a heap of the size \a heap_size. Optionally,
+	/// you can ask the memory manager to return #QSE_NULL upon allocation
+	/// failure by setting \a raise_exception to false.
 	HeapMmgr (Mmgr* mmgr, qse_size_t heap_size, bool raise_exception = true);
+
+	/// The destructor function frees the heap. Memory areas returned by
+	/// allocate(), reallocate(), allocMem(), reallocMem() are invalidated
+	/// all at once.
 	~HeapMmgr ();
 
 	void* allocMem (qse_size_t n);

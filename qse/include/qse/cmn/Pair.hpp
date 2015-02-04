@@ -24,52 +24,34 @@
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _QSE_CMN_MPOOLABLE_HPP_
-#define _QSE_CMN_MPOOLABLE_HPP_
+#ifndef _QSE_CMN_PAIR_HPP_
+#define _QSE_CMN_PAIR_HPP_
 
-#include <qse/cmn/Mpool.hpp>
-
-// use size_t as some compilers complain about qse_size_t used in new().
-#include <stddef.h> 
+#include <qse/types.h>
+#include <qse/macros.h>
 
 /////////////////////////////////
 QSE_BEGIN_NAMESPACE(QSE)
 /////////////////////////////////
 
-class QSE_EXPORT Mpoolable
+template <typename KEY, typename VALUE> class Pair
 {
 public:
+	KEY key;
+	VALUE value;
 
-/*
-	inline void* operator new (mp_size_t size)
-	{
-		return ::operator new (size);
-	}
+	Pair () {}
+	Pair (const KEY& key): key (key) {}
+	Pair (const KEY& key, const VALUE& value): key (key), value (value) {} 
 
-	inline void operator delete (void* ptr)
-	{
-		::operator delete (ptr);
-	}
-*/
+	KEY& getKey () { return this->key; }
+	const KEY& getKey () const { return this->key; }
 
-	inline void* operator new (size_t size, Mpool* mp)
-	{
-		return mp->isEnabled()? mp->allocate (): ::operator new (size);
-	}
+	VALUE& getValue () { return this->value; }
+	const VALUE& getValue () const { return this->value; }
 
-#if defined(_MSC_VER)
-	void operator delete (void* ptr, Mpool* mp)
-	{
-		if (mp->isEnabled()) mp->dispose (ptr);
-		else ::operator delete (mp);
-	}
-#else
-	inline void dispose (void* ptr, Mpool* mp)
-	{
-		if (mp->isEnabled()) mp->dispose (ptr);
-		else ::operator delete (mp);
-	}
-#endif
+	void setKey (const KEY& key) { this->key = key; }
+	void setValue (const VALUE& value) { this->value = value; }
 };
 
 /////////////////////////////////

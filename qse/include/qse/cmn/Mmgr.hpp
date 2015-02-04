@@ -82,6 +82,15 @@ public:
 	virtual ~Mmgr () {}
 
 	///
+	/// The isExceptionRaising() function tells if the memory manager
+	/// throws an exception upon a memory allocation error.
+	///
+	bool isExceptionRaising () const
+	{
+		return this->raise_exception;
+	}
+
+	///
 	/// The allocate() function calls allocMem() for memory
 	/// allocation. if it fails, it raise an exception if it's
 	/// configured to do so.

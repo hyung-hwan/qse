@@ -52,7 +52,19 @@ struct HashListComparator
 	}
 };
 
-template <typename T, typename MPOOL = Mpool, typename HASHER = HashListHasher<T>, typename COMPARATOR = HashListComparator<T> >
+struct HashListResizer
+{
+	qse_size_t operator() (qse_size_t current) const
+	{
+		return (current < 5000)?   (current + current):
+		       (current < 50000)?  (current + (current / 2)):
+		       (current < 100000)? (current + (current / 4)):
+		       (current < 150000)? (current + (current / 8)):
+		                           (current + (current / 16));
+	}
+};
+
+template <typename T, typename MPOOL = Mpool, typename HASHER = HashListHasher<T>, typename COMPARATOR = HashListComparator<T>, typename RESIZER = HashListResizer >
 class HashList: public Mmged
 {
 public:
@@ -114,6 +126,10 @@ public:
 
 		this->load_factor = load_factor;
 		this->threshold   = node_capacity * load_factor / 100;
+
+		// the memory manager for the linked list must raise an exception
+		// upon memory allocation error.
+		QSE_ASSERT (this->getMmgr()->isExceptionRaising());
 	}
 
 	HashList (const SelfType& list): Mmged (list)
@@ -428,13 +444,14 @@ protected:
 	qse_size_t load_factor;
 	HASHER hasher;
 	COMPARATOR comparator;
+	RESIZER resizer;
 
 	void rehash () 
 	{
 		// Move nodes around instead of values to prevent
 		// existing values from being copied over and destroyed.
 		// this incurs less number of memory allocations also.
-		SelfType temp (this->getMmgr(), this->node_capacity << 1, this->load_factor, this->datum_list->getMPBlockSize());
+		SelfType temp (this->getMmgr(), this->resizer(this->node_capacity), this->load_factor, this->datum_list->getMPBlockSize());
 		Node* p = this->datum_list->getHeadNode();
 		while (p)
 		{

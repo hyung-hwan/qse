@@ -80,10 +80,7 @@ void* HeapMmgr::reallocMem (void* ptr, qse_size_t n)
 
 void HeapMmgr::freeMem (void* ptr)
 {
-	if (this->xma)
-	{
-		qse_xma_free (this->xma, ptr);
-	}
+	if (this->xma) qse_xma_free (this->xma, ptr);
 }
 
 /////////////////////////////////
