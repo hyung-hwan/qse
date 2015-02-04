@@ -103,6 +103,10 @@ public:
 		this->node_count = 0;
 		this->head_node = QSE_NULL;
 		this->tail_node = QSE_NULL;
+
+		// the memory manager for the linked list must raise an exception
+		// upon memory allocation error.
+		QSE_ASSERT (this->getMmgr()->isExceptionRaising());
 	}
 
 	LinkedList (const SelfType& ll): Mmged(ll.getMmgr()), mp (ll.getMmgr(), ll.mp.getDatumSize(), ll.mp.getBlockSize())
