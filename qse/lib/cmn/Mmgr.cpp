@@ -26,6 +26,7 @@
 
 #include <qse/cmn/Mmgr.hpp>
 #include <qse/cmn/StdMmgr.hpp>
+#include "mem.h"
 
 /////////////////////////////////
 QSE_BEGIN_NAMESPACE(QSE)
@@ -44,6 +45,13 @@ void* Mmgr::realloc_mem (mmgr_t* mmgr, void* ptr, qse_size_t n)
 void Mmgr::free_mem (mmgr_t* mmgr, void* ptr) 
 {
 	((Mmgr*)mmgr->ctx)->freeMem (ptr);
+}
+
+void* Mmgr::callocate (qse_size_t n)
+{
+	void* ptr = this->allocate (n);
+	QSE_MEMSET (ptr, 0, n);
+	return ptr;
 }
 
 Mmgr* Mmgr::dfl_mmgr = StdMmgr::getInstance();
