@@ -126,7 +126,8 @@ public:
 			this->append (p->value);
 		return *this;
 	}
-	
+
+#if 0
 	T& operator[] (qse_size_t index)
 	{
 		// same as getValueAt()
@@ -142,6 +143,7 @@ public:
 		Node* np = this->getNodeAt (index);
 		return np->value;
 	}
+#endif
 
 	qse_size_t getMPBlockSize() const
 	{

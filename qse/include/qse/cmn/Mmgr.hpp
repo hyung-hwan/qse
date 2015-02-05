@@ -103,6 +103,12 @@ public:
 	}
 
 	///
+	/// The callocate() function allocates memory like allocate() and 
+	/// clears the memory before returning.
+	///
+	void* callocate (qse_size_t n);
+
+	///
 	/// The reallocate() function calls reallocMem() for memory
 	/// reallocation. if it fails, it raise an exception if it's
 	/// configured to do so.
