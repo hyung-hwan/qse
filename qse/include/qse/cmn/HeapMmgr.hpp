@@ -50,10 +50,8 @@ class QSE_EXPORT HeapMmgr: public Mmgr, public Mmged
 {
 public:
 	/// The constructor function accepts an memory manager \a mmgr that 
-	/// is used to create a heap of the size \a heap_size. Optionally,
-	/// you can ask the memory manager to return #QSE_NULL upon allocation
-	/// failure by setting \a raise_exception to false.
-	HeapMmgr (Mmgr* mmgr, qse_size_t heap_size, bool raise_exception = true);
+	/// is used to create a heap of the size \a heap_size. 
+	HeapMmgr (Mmgr* mmgr, qse_size_t heap_size);
 
 	/// The destructor function frees the heap. Memory areas returned by
 	/// allocate(), reallocate(), allocMem(), reallocMem() are invalidated

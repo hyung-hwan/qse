@@ -24,8 +24,8 @@
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _QSE_CMN_PAIR_HPP_
-#define _QSE_CMN_PAIR_HPP_
+#ifndef _QSE_CMN_COUPLE_HPP_
+#define _QSE_CMN_COUPLE_HPP_
 
 #include <qse/types.h>
 #include <qse/macros.h>
@@ -34,15 +34,15 @@
 QSE_BEGIN_NAMESPACE(QSE)
 /////////////////////////////////
 
-template <typename KEY, typename VALUE> class Pair
+template <typename KEY, typename VALUE> class Couple
 {
 public:
 	KEY key;
 	VALUE value;
 
-	Pair () {}
-	Pair (const KEY& key): key (key) {}
-	Pair (const KEY& key, const VALUE& value): key (key), value (value) {} 
+	Couple () {}
+	Couple (const KEY& key): key (key) {}
+	Couple (const KEY& key, const VALUE& value): key (key), value (value) {} 
 
 	KEY& getKey () { return this->key; }
 	const KEY& getKey () const { return this->key; }

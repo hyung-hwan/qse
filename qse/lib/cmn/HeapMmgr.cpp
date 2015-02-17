@@ -36,8 +36,8 @@ struct xma_xtn_t
 	HeapMmgr* heap;
 };
 
-HeapMmgr::HeapMmgr (Mmgr* mmgr, qse_size_t heap_size, bool raise_exception): 
-	Mmgr(raise_exception), Mmged(mmgr), xma(QSE_NULL), heap_size (heap_size)
+HeapMmgr::HeapMmgr (Mmgr* mmgr, qse_size_t heap_size): 
+	Mmgr(), Mmged(mmgr), xma(QSE_NULL), heap_size (heap_size)
 {
 }
 

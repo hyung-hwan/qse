@@ -29,7 +29,7 @@
 
 #include <qse/Hashable.hpp>
 #include <qse/cmn/LinkedList.hpp>
-#include <qse/cmn/Pair.hpp>
+#include <qse/cmn/Couple.hpp>
 
 /////////////////////////////////
 QSE_BEGIN_NAMESPACE(QSE)
@@ -47,6 +47,7 @@ struct HashTableHasher
 template<typename T>
 struct HashTableComparator
 {
+	// it must return true if two values are equal
 	bool operator() (const T& v1, const T& v2) const
 	{
 		return v1 == v2;
@@ -69,8 +70,8 @@ template <typename K, typename V, typename HASHER = HashTableHasher<K>, typename
 class HashTable: public Mmged
 {
 public:
-	typedef Pair<K,V> Entry;
-	typedef LinkedList<Entry> Bucket;
+	typedef Couple<K,V> Pair;
+	typedef LinkedList<Pair> Bucket;
 	typedef HashTable<K,V,HASHER,COMPARATOR,RESIZER> SelfType;
 
 protected:
@@ -127,18 +128,18 @@ public:
 	{
 		this->buckets = this->allocate_bucket (this->getMmgr(), bucket_size);
 		this->bucket_size = bucket_size;
-		this->entry_count = 0;
+		this->pair_count = 0;
 		this->load_factor = load_factor;
-		this->threshold   = bucket_size * load_factor / 100;
+		this->threshold = bucket_size * load_factor / 100;
 	}
 
 	HashTable (const SelfType& table): Mmged (table)
 	{
 		this->buckets = this->allocate_bucket (this->getMmgr(), table.bucket_size);
 		this->bucket_size = table.bucket_size;
-		this->entry_count = 0;
+		this->pair_count = 0;
 		this->load_factor = table.load_factor;
-		this->threshold   = table.bucket_size * table.load_factor / 100;
+		this->threshold = table.bucket_size * table.load_factor / 100;
 
 		for (qse_size_t i = 0; i < table.bucket_size; i++) 
 		{
@@ -146,15 +147,15 @@ public:
 			typename Bucket::Node* np;
 			for (np = b->getHeadNode(); np; np = np->getNext())
 			{
-				Entry& e = np->value;
+				Pair& e = np->value;
 				qse_size_t hc = this->hasher(e.key) % this->bucket_size;
 				this->buckets[hc]->append (e);
-				this->entry_count++;
+				this->pair_count++;
 			}
 		}
 
-		// doesn't need to rehash in the copy constructor.
-		//if (entry_count >= threshold) this->rehash ();
+		// no rehashing is needed in the copy constructor.
+		//if (this->pair_count >= threshold) this->rehash ();
 	}
 
 	~HashTable ()
@@ -173,33 +174,45 @@ public:
 			typename Bucket::Node* np;
 			for (np = b->getHeadNode(); np; np = np->getNext()) 
 			{
-				Entry& e = np->value;
+				Pair& e = np->value;
 				qse_size_t hc = this->hasher(e.key) % this->bucket_size;
 				this->buckets[hc]->append (e);
-				entry_count++;
+				this->pair_count++;
 			}
 		}
 
-		if (this->entry_count >= this->threshold) this->rehash ();
+		if (this->pair_count >= this->threshold) this->rehash ();
 		return *this;
 	}
 
 	qse_size_t getSize () const
 	{
-		return this->entry_count;
+		return this->pair_count;
 	}
 
 	bool isEmpty () const
 	{
-		return this->entry_count == 0;
+		return this->pair_count == 0;
 	}
 
+	/// The getBucketSize() function returns the number of
+	/// pair list currently existing.
 	qse_size_t getBucketSize () const
 	{
 		return this->bucket_size;
 	}
 
-	Bucket& getBucket (qse_size_t index) const
+	/// The getBucket() function returns the pointer to the 
+	/// list of pairs of the given hash value \a index.
+	Bucket* getBucket (qse_size_t index)
+	{
+		QSE_ASSERT (index < this->bucket_size);
+		return this->buckets[index];
+	}
+
+	/// The getBucket() function returns the pointer to the 
+	/// list of pairs of the given hash value \a index.
+	const Bucket* getBucket (qse_size_t index) const
 	{
 		QSE_ASSERT (index < this->bucket_size);
 		return this->buckets[index];
@@ -213,19 +226,19 @@ public:
 		typename Bucket::Node* np;
 		for (np = this->buckets[hc]->getHeadNode(); np; np = np->getNext())
 		{
-			Entry& e = np->value;
+			Pair& e = np->value;
 			if (this->comparator (key, e.key)) return e.value;
 		}
 
-		if (entry_count >= threshold) 
+		if (this->pair_count >= threshold) 
 		{
 			this->rehash ();
 			hc = this->hasher(key) % bucket_size;
 		}
 
 		// insert a new key if the key is not found
-		Entry& e2 = this->buckets[hc]->append (Entry(key));
-		entry_count++;
+		Pair& e2 = this->buckets[hc]->append (Pair(key));
+		this->pair_count++;
 		return e2.value;
 	}
 
@@ -233,62 +246,80 @@ public:
 	{
 		qse_size_t hc = this->hasher(key) % this->bucket_size;
 
-		Entry* pair = this->find_pair (key, hc);
+		Pair* pair = this->find_pair (key, hc);
 		if (pair) return pair->value;
 
 		// insert a new key if the key is not found
-		Entry& new_pair = this->buckets[hc]->append (Entry(key));
-		this->entry_count++;
+		Pair& new_pair = this->buckets[hc]->append (Pair(key));
+		this->pair_count++;
 		return new_pair.value;
 	}
 #endif
 
-	//
-	// NOTE: getConstWithCustomKey() and getWithCustomKey() would
-	//       not need to have different names if compilers were smarter.
-	//
-
-	template <typename MK, typename MHASHER>
-	const V* getConstWithCustomKey (const MK& key) const
+protected:
+	template <typename MK, typename MHASHER, typename MCOMPARATOR>
+	Pair* find_pair_with_custom_key (const MK& key) const
 	{
-		MHASHER h;
-		qse_size_t hc = h(key) % bucket_size;
-	
+		MHASHER hash;
+		MCOMPARATOR is_equal;
+
+		qse_size_t hc = hash(key) % this->bucket_size;
+
 		typename Bucket::Node* np;
 		for (np = this->buckets[hc]->getHeadNode(); np; np = np->getNext()) 
 		{
-			const Entry& e = np->value;
-			if (key == e.key) return &e.value;
+			Pair& e = np->value;
+			if (is_equal(key, e.key)) return &e;
 		}
 
 		return QSE_NULL;
 	}
 
-	template <typename MK, typename MHASHER>
-	V* getWithCustomKey (const MK& key) const
+public:
+	/// \code
+	///	typedef QSE::HashTable<int,int,IntHasher> IntTable;
+	///	struct IntClass
+	///	{
+	///		IntClass (int x = 0): x (x) {}
+	///		int x;
+	///	};
+	///	struct IntClassHasher
+	///	{
+	///		qse_size_t operator() (const IntClass& v) const { return v.x; }
+	///	};
+	///	struct IntClassComparator
+	///	{
+	///		bool operator() (const IntClass& v, int y) const { return v.x == y; }
+	///		}
+	///	};
+	/// int main ()
+	/// {
+	///    IntTable int_list (NULL, 1000);
+	///    ...
+	///    IntTable::Pair* pair = int_list.findPairWithCustomKey<IntClass,IntClassHasher,IntClassComparator> (IntClass(50));
+	///    ...
+	/// }
+	/// \endcode
+
+	template <typename MK, typename MHASHER, typename MCOMPARATOR>
+	const Pair* findPairWithCustomKey (const MK& key) const
 	{
-		MHASHER h;
-		qse_size_t hc = h(key) % bucket_size;
+		return this->find_pair_with_custom_key<MK,MHASHER,MCOMPARATOR> (key);
+	}
 
-		typename Bucket::Node* np;
-		for (np = this->buckets[hc]->getHeadNode(); np; np = np->getNext())
-		{
-			Entry& e = np->value;
-			if (key == e.key) return &e.value;
-		}
-
-		return QSE_NULL;
+	template <typename MK, typename MHASHER, typename MCOMPARATOR>
+	Pair* findPairWithCustomKey (const MK& key)
+	{
+		return this->find_pair_with_custom_key<MK,MHASHER,MCOMPARATOR> (key);
 	}
 
 protected:
-	Entry* find_pair (const K& key, qse_size_t hc)
+	Pair* find_pair (const K& key, qse_size_t hc)
 	{
-		//qse_size_t hc = this->hasher(key) % this->bucket_size;
-	
 		typename Bucket::Node* np;
 		for (np = this->buckets[hc]->getHeadNode(); np; np = np->getNext())
 		{
-			Entry& e = np->value;
+			Pair& e = np->value;
 			if (this->comparator (key, e.key)) return &e;
 		}
 
@@ -296,26 +327,26 @@ protected:
 	}
 
 public:
-	Entry* findPair (const K& key)
+	Pair* findPair (const K& key)
 	{
 		return this->find_pair (key, this->hasher(key) % this->bucket_size);
 	}
 
-	const Entry* findPair (const K& key) const
+	const Pair* findPair (const K& key) const
 	{
 		return this->find_pair (key, this->hasher(key) % this->bucket_size);
 	}
 
 	V* findValue (const K& key)
 	{
-		Entry* pair = this->findPair (key);
+		Pair* pair = this->findPair (key);
 		if (pair) return &pair->value;
 		return QSE_NULL;
 	}
 
 	const V* findValue (const K& key) const
 	{
-		const Entry* pair = this->findPair (key);
+		const Pair* pair = this->findPair (key);
 		if (pair) return &pair->value;
 		return QSE_NULL;
 	}
@@ -327,7 +358,7 @@ public:
 		typename Bucket::Node* np;
 		for (np = this->buckets[hc]->getHeadNode(); np; np = np->getNext()) 
 		{
-			Entry& e = np->value;
+			Pair& e = np->value;
 			if (this->comparator (key, e.key))
 			{
 				*hash_code = hc;
@@ -346,7 +377,7 @@ public:
 		typename Bucket::Node* np;
 		for (np = this->buckets[hc]->getHeadNode(); np; np = np->getNext()) 
 		{
-			Entry& e = np->value;
+			Pair& e = np->value;
 			if (this->comparator (key, e.key))
 			{
 				*hash_code = hc;
@@ -360,104 +391,104 @@ public:
 
 	int put (const K& key, const V& value)
 	{
-		upsert (key, value);
+		this->upsert (key, value);
 		return 0;
 	}
 
 	int putNew (const K& key, const V& value)
 	{
-		return (insertNew(key,value) == QSE_NULL)? -1: 0;
+		return (this->insertNew(key,value) == QSE_NULL)? -1: 0;
 	}
 
-	Entry* insert (const K& key)
+	Pair* insert (const K& key)
 	{
 		qse_size_t hc = this->hasher(key) % bucket_size;
 
 		typename Bucket::Node* np;
 		for (np = this->buckets[hc]->getHeadNode(); np; np = np->getNext()) 
 		{
-			Entry& e = np->value;
+			Pair& e = np->value;
 			if (this->comparator (key, e.key)) return &e;
 		}
 
-		if (entry_count >= threshold) 
+		if (this->pair_count >= threshold) 
 		{
 			this->rehash ();
 			hc = this->hasher(key) % bucket_size;
 		}
 
-		Entry& e = this->buckets[hc]->append (Entry(key));
-		this->entry_count++;
+		Pair& e = this->buckets[hc]->append (Pair(key));
+		this->pair_count++;
 		return &e;
 	}
 
-	Entry* insert (const K& key, const V& value)
+	Pair* insert (const K& key, const V& value)
 	{
 		qse_size_t hc = this->hasher(key) % bucket_size;
 
 		typename Bucket::Node* np;
 		for (np = this->buckets[hc]->getHeadNode(); np; np = np->getNext()) 
 		{
-			Entry& e = np->value;
+			Pair& e = np->value;
 			if (this->comparator (key, e.key)) return &e;
 		}
 
-		if (entry_count >= threshold) 
+		if (this->pair_count >= threshold) 
 		{
 			this->rehash ();
 			hc = this->hasher(key) % bucket_size;
 		}
 
-		Entry& e = this->buckets[hc]->append (Entry(key,value));
-		entry_count++;
+		Pair& e = this->buckets[hc]->append (Pair(key,value));
+		this->pair_count++;
 		return &e;
 	}
 
 #if 0
-	Entry* upsert (const K& Key)
+	Pair* upsert (const K& Key)
 	{
 		qse_size_t hc = this->hasher(key) % this->bucket_size;
 
-		Entry* pair = this->find_pair (key, hc);
+		Pair* pair = this->find_pair (key, hc);
 		if (pair) 
 		{
 			// don't change the existing value.
 			return pair
 		}
 
-		if (entry_count >= threshold) 
+		if (this->pair_count >= threshold) 
 		{
 			this->rehash ();
 			hc = this->hasher(key) % this->bucket_size;
 		}
 
 		// insert a new key if the key is not found
-		Entry& new_pair = this->buckets[hc]->append (Entry(key));
-		this->entry_count++;
+		Pair& new_pair = this->buckets[hc]->append (Pair(key));
+		this->pair_count++;
 		return &new_pair
 	}
 #endif
 
-	Entry* upsert (const K& key, const V& value)
+	Pair* upsert (const K& key, const V& value)
 	{
 		qse_size_t hc = this->hasher(key) % this->bucket_size;
 
-		Entry* pair = this->find_pair (key, hc);
+		Pair* pair = this->find_pair (key, hc);
 		if (pair) 
 		{
 			pair->value = value;
 			return pair;
 		}
 
-		if (entry_count >= threshold) 
+		if (this->pair_count >= threshold) 
 		{
 			this->rehash ();
 			hc = this->hasher(key) % this->bucket_size;
 		}
 
 		// insert a new key if the key is not found
-		Entry& new_pair = this->buckets[hc]->append (Entry(key,value));
-		this->entry_count++;
+		Pair& new_pair = this->buckets[hc]->append (Pair(key,value));
+		this->pair_count++;
 		return &new_pair;
 
 		/*
@@ -466,7 +497,7 @@ public:
 		typename Bucket::Node* np;
 		for (np = this->buckets[hc]->getHeadNode(); np; np = np->getNext()) 
 		{
-			Entry& e = np->value;
+			Pair& e = np->value;
 			if (key == e.key) 
 			{
 				e.value = value;
@@ -474,14 +505,14 @@ public:
 			}
 		}
 
-		if (entry_count >= threshold) 
+		if (this->pair_count >= threshold) 
 		{
 			this->rehash ();
 			hc = this->hasher(key) % bucket_size;
 		}
 
-		Entry& e = this->buckets[hc]->append (Entry(key,value));
-		this->entry_count++;
+		Pair& e = this->buckets[hc]->append (Pair(key,value));
+		this->pair_count++;
 		return &e.value;
 		*/
 	}
@@ -495,18 +526,18 @@ public:
 		typename Bucket::Node* np;
 		for (np = this->buckets[hc]->getHeadNode(); np; np = np->getNext()) 
 		{
-			Entry& e = np->value;
+			Pair& e = np->value;
 			if (key == e.key) return QSE_NULL;
 		}
 
-		if (entry_count >= threshold) 
+		if (this->pair_count >= threshold) 
 		{
 			this->rehash ();
 			hc = this->hasher(key) % bucket_size;
 		}
 
-		Entry& e = this->buckets[hc]->append (Entry(key));
-		entry_count++;
+		Pair& e = this->buckets[hc]->append (Pair(key));
+		this->pair_count++;
 		return &e.value;
 	}
 
@@ -517,18 +548,18 @@ public:
 		typename Bucket::Node* np;
 		for (np = this->buckets[hc]->getHeadNode(); np; np = np->getNext()) 
 		{
-			Entry& e = np->value;
+			Pair& e = np->value;
 			if (key == e.key) return QSE_NULL;
 		}
 
-		if (entry_count >= threshold) 
+		if (this->pair_count >= threshold) 
 		{
 			this->rehash ();
 			hc = this->hasher(key) % bucket_size;
 		}
 
-		Entry& e = this->buckets[hc]->append (Entry(key, value));
-		entry_count++;
+		Pair& e = this->buckets[hc]->append (Pair(key, value));
+		this->pair_count++;
 		return &e.value;
 	}
 #endif
@@ -543,11 +574,11 @@ public:
 		typename Bucket::Node* np;
 		for (np = this->buckets[hc]->getHeadNode(); np; np = np->getNext()) 
 		{
-			Entry& e = np->value;
+			Pair& e = np->value;
 			if (key == e.key) 
 			{
 				this->buckets[hc]->remove (np);
-				this->entry_count--;
+				this->pair_count--;
 				return 0;
 			}
 		}
@@ -562,11 +593,11 @@ public:
 		typename Bucket::Node* np;
 		for (np = this->buckets[hc]->getHeadNode(); np; np = np->getNext()) 
 		{
-			Entry& e = np->value;
+			Pair& e = np->value;
 			if (key == e.key) 
 			{
 				this->buckets[hc]->remove (np);
-				this->entry_count--;
+				this->pair_count--;
 				return 0;
 			}
 		}
@@ -580,7 +611,7 @@ public:
 		// WARNING: this method should be used with extra care.
 		//
 		this->buckets[hc]->remove (np);
-		this->entry_count--;
+		this->pair_count--;
 		return 0;
 	}
 
@@ -595,7 +626,7 @@ public:
 			np = this->buckets[i]->getHeadNode();
 			while (np != QSE_NULL) 
 			{
-				Entry& e = np->value;
+				Pair& e = np->value;
 				np2 = np->getNext ();
 				if (value == e.value) 
 				{
@@ -617,7 +648,7 @@ public:
 		typename Bucket::Node* np;
 		for (np = this->buckets[hc]->getHeadNode(); np; np = np->getNext()) 
 		{
-			Entry& e = np->value;
+			Pair& e = np->value;
 			if (key == e.key) return true;
 		}
 
@@ -631,7 +662,7 @@ public:
 			typename Bucket::Node* np;
 			for (np = this->buckets[i]->getHeadNode(); np; np = np->getNext()) 
 			{
-				Entry& e = np->value;
+				Pair& e = np->value;
 				if (value == e.value) return true;
 			}
 		}
@@ -642,7 +673,7 @@ public:
 	void clear (qse_size_t new_bucket_size = 0)
 	{
 		for (qse_size_t i = 0; i < bucket_size; i++) this->buckets[i]->clear ();
-		this->entry_count = 0;
+		this->pair_count = 0;
 
 		if (new_bucket_size > 0)
 		{
@@ -656,7 +687,7 @@ public:
 	}
 
 	typedef int (SelfType::*TraverseCallback) 
-		(const Entry& entry, void* user_data) const;
+		(const Pair& entry, void* user_data) const;
 
 	int traverse (TraverseCallback callback, void* user_data) const
 	{
@@ -665,7 +696,7 @@ public:
 			typename Bucket::Node* np;
 			for (np = this->buckets[i]->getHeadNode(); np; np = np->getNext()) 
 			{
-				const Entry& e = np->value;
+				const Pair& e = np->value;
 				if ((this->*callback)(e,user_data) == -1) return -1;
 			}
 		}
@@ -674,7 +705,7 @@ public:
 	}
 
 	typedef int (*StaticTraverseCallback) 
-		(SelfType* table, Entry& entry, void* user_data);
+		(SelfType* table, Pair& entry, void* user_data);
 
 	int traverse (StaticTraverseCallback callback, void* user_data) 
 	{
@@ -683,7 +714,7 @@ public:
 			typename Bucket::Node* np;
 			for (np = this->buckets[i]->getHeadNode(); np; np = np->getNext()) 
 			{
-				Entry& e = np->value;
+				Pair& e = np->value;
 				if (callback(this,e,user_data) == -1) return -1;
 			}
 		}
@@ -692,7 +723,7 @@ public:
 	}
 	
 protected:
-	mutable qse_size_t  entry_count;
+	mutable qse_size_t  pair_count;
 	mutable qse_size_t  bucket_size;
 	mutable Bucket**    buckets;
 	mutable qse_size_t  threshold;
@@ -714,7 +745,7 @@ protected:
 				typename Bucket::Node* np;
 				for (np = this->buckets[i]->getHeadNode(); np; np = np->getNext()) 
 				{
-					const Entry& e = np->value;
+					const Pair& e = np->value;
 					qse_size_t hc = e.key.hashCode() % new_bucket_size;
 					new_this->buckets[hc]->append (e);
 				}
@@ -729,7 +760,7 @@ protected:
 				while (np)
 				{
 					typename Bucket::Node* next = np->getNext();
-					const Entry& e = np->value;
+					const Pair& e = np->value;
 					qse_size_t hc = this->hasher(e.key) % new_bucket_size;
 					new_buckets[hc]->appendNode (this->buckets[i]->yield(np));
 					np = next;

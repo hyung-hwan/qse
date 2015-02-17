@@ -126,10 +126,6 @@ public:
 
 		this->load_factor = load_factor;
 		this->threshold   = node_capacity * load_factor / 100;
-
-		// the memory manager for the linked list must raise an exception
-		// upon memory allocation error.
-		QSE_ASSERT (this->getMmgr()->isExceptionRaising());
 	}
 
 	HashList (const SelfType& list): Mmged (list)
