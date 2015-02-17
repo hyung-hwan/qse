@@ -64,7 +64,7 @@ public:
 	/// The Mmgr() function builds a memory manager composed of bridge
 	/// functions connecting itself with it.
 	///
-	Mmgr (bool raise_exception = true): raise_exception (raise_exception)
+	Mmgr ()
 	{
 		// NOTE:
 		//  the #qse_mmgr_t interface is not affected by raise_exception
@@ -82,23 +82,14 @@ public:
 	virtual ~Mmgr () {}
 
 	///
-	/// The isExceptionRaising() function tells if the memory manager
-	/// throws an exception upon a memory allocation error.
-	///
-	bool isExceptionRaising () const
-	{
-		return this->raise_exception;
-	}
-
-	///
 	/// The allocate() function calls allocMem() for memory
 	/// allocation. if it fails, it raise an exception if it's
 	/// configured to do so.
 	///
-	void* allocate (qse_size_t n)
+	void* allocate (qse_size_t n, bool raise_exception = true)
 	{
 		void* xptr = this->allocMem (n);
-		if (!xptr && this->raise_exception) QSE_THROW (MemoryError);
+		if (!xptr && raise_exception) QSE_THROW (MemoryError);
 		return xptr;
 	}
 
@@ -106,17 +97,17 @@ public:
 	/// The callocate() function allocates memory like allocate() and 
 	/// clears the memory before returning.
 	///
-	void* callocate (qse_size_t n);
+	void* callocate (qse_size_t n, bool raise_exception = true);
 
 	///
 	/// The reallocate() function calls reallocMem() for memory
 	/// reallocation. if it fails, it raise an exception if it's
 	/// configured to do so.
 	///
-	void* reallocate (void* ptr, qse_size_t n)
+	void* reallocate (void* ptr, qse_size_t n, bool raise_exception = true)
 	{
 		void* xptr = this->reallocMem (ptr, n);
-		if (!xptr && this->raise_exception) QSE_THROW (MemoryError);
+		if (!xptr && raise_exception) QSE_THROW (MemoryError);
 		return xptr;
 	}
 

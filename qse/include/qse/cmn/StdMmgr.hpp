@@ -40,7 +40,7 @@ QSE_BEGIN_NAMESPACE(QSE)
 class QSE_EXPORT StdMmgr: public Mmgr
 {
 public:
-	StdMmgr (bool raise_exception = true): Mmgr (raise_exception) {}
+	StdMmgr (): Mmgr () {}
 
 	void* allocMem (qse_size_t n);
 	void* reallocMem (void* ptr, qse_size_t n);
