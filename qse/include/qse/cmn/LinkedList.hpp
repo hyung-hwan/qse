@@ -34,14 +34,14 @@
 QSE_BEGIN_NAMESPACE(QSE)
 /////////////////////////////////
 
-template <typename T, typename MPOOL> class LinkedList;
+template <typename T, typename MPOOL, typename COMPARATOR> class LinkedList;
 
-template <typename T,typename MPOOL> 
+template <typename T, typename MPOOL, typename COMPARATOR> 
 class LinkedListNode
 {
 public:
-	friend class LinkedList<T,MPOOL>;
-	typedef LinkedListNode<T,MPOOL> SelfType;
+	friend class LinkedList<T,MPOOL,COMPARATOR>;
+	typedef LinkedListNode<T,MPOOL,COMPARATOR> SelfType;
 
 	T value; // you can use this variable or accessor functions below
 
@@ -79,14 +79,120 @@ protected:
 	}
 };
 
+template <typename T, typename MPOOL, typename COMPARATOR>
+class LinkedListIterator {
+public:
+	friend class LinkedList<T,MPOOL,COMPARATOR>;
+	typedef LinkedListNode<T,MPOOL,COMPARATOR> Node;
+	typedef LinkedListIterator<T,MPOOL,COMPARATOR> SelfType;
+
+	LinkedListIterator (): current(QSE_NULL) {}
+	LinkedListIterator (Node* node): current(node) {}
+	LinkedListIterator (const SelfType& it): current (it.current) {}
+
+	SelfType& operator= (const SelfType& it) 
+	{
+		this->current = it.current;
+		return *this;
+	}
+
+	SelfType& operator++ () // prefix increment
+	{
+		QSE_ASSERT (this->current != QSE_NULL);
+		this->current = this->current->getNext();
+		return *this;
+	}
+
+	SelfType operator++ (int) // postfix increment
+	{
+		QSE_ASSERT (this->current != QSE_NULL);
+		SelfType saved (*this);
+		this->current = this->current->getNext(); //++(*this);
+		return saved;
+	}
+
+	SelfType& operator-- () // prefix decrement
+	{
+		QSE_ASSERT (this->current != QSE_NULL);
+		this->current = this->current->getPrev();
+		return *this;
+	}
+
+	SelfType operator-- (int) // postfix decrement
+	{
+		QSE_ASSERT (this->current != QSE_NULL);
+		SelfType saved (*this);
+		this->current = this->current->getPrev(); //--(*this);
+		return saved;
+	}
+
+	int operator== (const SelfType& it) const
+	{
+		QSE_ASSERT (this->current != QSE_NULL);
+		return this->current == it.current;
+	}
+
+	int operator!= (const SelfType& it) const
+	{
+		QSE_ASSERT (this->current != QSE_NULL);
+		return this->current != it.current;
+	}
+
+	bool isValid () const 
+	{
+		return this->current != QSE_NULL;
+	}
+
+	T& getValue ()
+	{
+		QSE_ASSERT (this->current != QSE_NULL);
+		return this->current->getValue();
+	}
+
+	const T& getValue () const 
+	{
+		QSE_ASSERT (this->current != QSE_NULL);
+		return this->current->getValue();
+	}
+
+	SelfType& setValue (const T& v) 
+	{
+		QSE_ASSERT (this->current != QSE_NULL);
+		this->current->setValue (v);
+		return *this;
+	}
+
+	Node* getNode ()
+	{
+		return this->current;
+	}
+
+protected:
+	Node* current;
+};
+
+template<typename T>
+struct LinkedListComparator
+{
+	// it must return true if two values are equal
+	bool operator() (const T& v1, const T& v2) const
+	{
+		return v1 == v2;
+	}
+};
+
 ///
 /// The LinkedList<T,MPOOL> class provides a template for a doubly-linked list.
 ///
-template <typename T, typename MPOOL = Mpool> class LinkedList: public Mmged
+template <typename T, typename MPOOL = Mpool, typename COMPARATOR = LinkedListComparator<T> > class LinkedList: public Mmged
 {
 public:
-	typedef LinkedList<T,MPOOL> SelfType;
-	typedef LinkedListNode<T,MPOOL> Node;
+	typedef LinkedList<T,MPOOL,COMPARATOR> SelfType;
+	typedef LinkedListNode<T,MPOOL,COMPARATOR> Node;
+	typedef LinkedListIterator<T,MPOOL,COMPARATOR> Iterator;
+
+	typedef Mpool DefaultMpool;
+	typedef LinkedListComparator<T> DefaultComparator;
 
 	enum 
 	{
@@ -168,7 +274,35 @@ public:
 
 	// insert an externally created node.
 	// may need to take extra care when using this method.
-	Node* insertNode (Node* pos, Node* node);
+	Node* insertNode (Node* pos, Node* node)
+	{
+		if (pos == QSE_NULL) 
+		{
+			if (this->node_count == 0) 
+			{
+				QSE_ASSERT (head_node == QSE_NULL);
+				QSE_ASSERT (tail_node == QSE_NULL);
+				this->head_node = this->tail_node = node;
+			}
+			else 
+			{
+				node->prev = this->tail_node;
+				this->tail_node->next = node;
+				this->tail_node = node;
+			}
+		}
+		else 
+		{
+			node->next = pos;
+			node->prev = pos->prev;
+			if (pos->prev) pos->prev->next = node;
+			else this->head_node = node;
+			pos->prev = node;
+		}
+
+		this->node_count++;
+		return node;
+	}
 
 	// create a new node to hold the value and insert it.
 	Node* insertValue (Node* pos, const T& value)
@@ -432,7 +566,7 @@ public:
 	{
 		for (Node* p = this->head_node; p; p = p->next) 
 		{
-			if (value == p->value) return p;
+			if (this->comparator (value, p->value)) return p;
 		}
 		return QSE_NULL;
 	}
@@ -441,7 +575,7 @@ public:
 	{
 		for (Node* p = tail_node; p; p = p->prev) 
 		{
-			if (value == p->value) return p;
+			if (this->comparator (value, p->value)) return p;
 		}
 		return QSE_NULL;
 	}
@@ -450,7 +584,7 @@ public:
 	{
 		for (Node* p = head; p; p = p->next)
 		{
-			if (value == p->value) return p;
+			if (this->comparator (value, p->value)) return p;
 		}
 		return QSE_NULL;
 	}
@@ -459,17 +593,17 @@ public:
 	{
 		for (Node* p = tail; p; p = p->prev) 
 		{
-			if (value == p->value) return p;
+			if (this->comparator (value, p->value)) return p;
 		}
 		return QSE_NULL;
-	}	
+	}
 
 	qse_size_t findFirstIndex (const T& value) const
 	{
 		qse_size_t index = 0;
 		for (Node* p = this->head_node; p; p = p->next) 
 		{
-			if (value == p->value) return index;
+			if (this->comparator (value, p->value)) return index;
 			index++;
 		}
 		return INVALID_INDEX;
@@ -481,7 +615,7 @@ public:
 		for (Node* p = tail_node; p; p = p->prev) 
 		{
 			index--;
-			if (value == p->value) return index;
+			if (this->comparator (value, p->value)) return index;
 		}
 		return INVALID_INDEX;
 	}
@@ -513,6 +647,11 @@ public:
 		this->mp.dispose ();
 	}
 
+	//void reverse ()
+	//{
+	//
+	//}
+
 	typedef int (SelfType::*TraverseCallback) (Node* start, Node* cur);
 
 	void traverse (TraverseCallback callback, Node* start)
@@ -533,43 +672,18 @@ public:
 		}
 	}
 
+	Iterator getIterator (qse_size_t index = 0) const
+	{
+		return Iterator (this->getNodeAt(index));
+	}
+
 protected:
 	MPOOL       mp;
+	COMPARATOR  comparator;
 	Node*       head_node;
 	Node*       tail_node;
 	qse_size_t  node_count;
 };
-
-template <typename T,typename MPOOL> 
-inline typename LinkedList<T,MPOOL>::Node* LinkedList<T,MPOOL>::insertNode (Node* pos, Node* node)
-{
-	if (pos == QSE_NULL) 
-	{
-		if (this->node_count == 0) 
-		{
-			QSE_ASSERT (head_node == QSE_NULL);
-			QSE_ASSERT (tail_node == QSE_NULL);
-			this->head_node = this->tail_node = node;
-		}
-		else 
-		{
-			node->prev = this->tail_node;
-			this->tail_node->next = node;
-			this->tail_node = node;
-		}
-	}
-	else 
-	{
-		node->next = pos;
-		node->prev = pos->prev;
-		if (pos->prev) pos->prev->next = node;
-		else this->head_node = node;
-		pos->prev = node;
-	}
-
-	this->node_count++;
-	return node;
-}
 
 /////////////////////////////////
 QSE_END_NAMESPACE(QSE)
