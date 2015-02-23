@@ -72,6 +72,10 @@ public:
 	typedef typename DatumList::Node Node;
 	typedef HashList<T,MPOOL,HASHER,COMPARATOR> SelfType;
 
+	typedef HashListHasher<T> DefaultHasher;
+	typedef HashListComparator<T> DefaultComparator;
+	typedef HashListResizer DefaultResizer;
+
 	HashList (
 		Mmgr* mmgr = QSE_NULL,
 		qse_size_t node_capacity = 10, 
@@ -221,7 +225,46 @@ public:
 		return *this;
 	}
 
+	bool isEmpty () const 
+	{
+		return this->datum_list->isEmpty();
+	}
+
+	Node* getHeadNode () const
+	{
+		return this->datum_list->getHeadNode();
+	}
+
+	Node* getTaileNode () const
+	{
+		return this->datum_list->getTailNode();
+	}
+
 protected:
+	Node* find_node (const T& datum) const
+	{
+		qse_size_t hc, head, tail;
+		Node* np;
+
+		hc = this->hasher(datum) % this->node_capacity;
+		head = hc << 1; tail = head + 1;
+
+		np = this->nodes[head];
+		if (np) 
+		{
+			do 
+			{
+				T& t = np->value;
+				if (this->comparator(datum, t)) return np;
+				if (np == this->nodes[tail]) break;
+				np = np->getNextNode ();
+			}
+			while (1);
+		}
+
+		return QSE_NULL;
+	}
+
 	Node* insert_value (const T& datum, bool overwrite = true)
 	{
 		qse_size_t hc, head, tail;
@@ -270,45 +313,9 @@ protected:
 	}
 
 public:
-	Node* insert (const T& datum)
-	{
-		return this->insert_value (datum, false);
-	}
-
-	Node* upsert (const T& datum)
-	{
-		return this->insert_value (datum, true);
-	}
-
-protected:
-	const Node* find_node (const T& datum) const
-	{
-		qse_size_t hc, head, tail;
-		Node* np;
-
-		hc = this->hasher(datum) % this->node_capacity;
-		head = hc << 1; tail = head + 1;
-
-		np = this->nodes[head];
-		if (np) 
-		{
-			do 
-			{
-				T& t = np->value;
-				if (datum == t) return np;
-				if (np == this->nodes[tail]) break;
-				np = np->getNextNode ();
-			}
-			while (1);
-		}
-
-		return QSE_NULL;
-	}
-
-public:
 	Node* findNode (const T& datum)
 	{
-		return (Node*)this->find_node (datum);
+		return this->find_node (datum);
 	}
 
 	const Node* findNode (const T& datum) const
@@ -330,14 +337,37 @@ public:
 		return &b->value;
 	}
 
-	bool isEmpty () const 
+	/// The search() function returns the pointer to the existing node
+	/// containing the equal value to \a datum. If no node is found, it
+	/// return #QSE_NULL.
+	Node* search (const T& datum)
 	{
-		return this->datum_list->isEmpty();
+		return this->find_node (datum);
 	}
 
-	bool contains (const T& datum) const
+	/// The search() function returns the pointer to the existing node
+	/// containing the equal value to \a datum. If no node is found, it
+	/// return #QSE_NULL.
+	const Node* search (const T& datum) const
 	{
-		return this->findNode (datum) != QSE_NULL;
+		return this->find_node (datum);
+	}
+
+	Node* insert (const T& datum)
+	{
+		return this->insert_value (datum, false);
+	}
+
+	Node* update (const T& datum)
+	{
+		Node* node = this->find_node (datum);
+		if (node) node->value = datum;
+		return node;
+	}
+
+	Node* upsert (const T& datum)
+	{
+		return this->insert_value (datum, true);
 	}
 
 	int remove (const T& datum)
@@ -392,16 +422,6 @@ public:
 		if (this->datum_list) this->datum_list->clear ();
 	}
 
-	Node* getHeadNode () const
-	{
-		return this->datum_list->getHeadNode();
-	}
-
-	Node* getTaileNode () const
-	{
-		return this->datum_list->getTailNode();
-	}
-
 	typedef int (SelfType::*TraverseCallback) (Node* start, Node* cur);
 
 	void traverse (TraverseCallback callback, Node* start)
@@ -434,13 +454,13 @@ public:
 
 protected:
 	mutable qse_size_t node_capacity;
-	mutable Node** nodes;
+	mutable Node**     nodes;
 	mutable DatumList* datum_list;
 	mutable qse_size_t threshold;
-	qse_size_t load_factor;
-	HASHER hasher;
-	COMPARATOR comparator;
-	RESIZER resizer;
+	qse_size_t         load_factor;
+	HASHER             hasher;
+	COMPARATOR         comparator;
+	RESIZER            resizer;
 
 	void rehash () 
 	{
