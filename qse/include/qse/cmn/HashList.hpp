@@ -199,6 +199,11 @@ public:
 		if (this->datum_list) this->free_datum_list ();
 	}
 
+	Mpool& getMpool ()
+	{
+		return this->datum_list->getMpool ();
+	}
+
 	SelfType& operator= (const SelfType& list)
 	{
 		this->clear ();
@@ -301,12 +306,12 @@ protected:
 
 		if (nodes[head] == QSE_NULL) 
 		{
-			this->nodes[head] = this->datum_list->insertValue (QSE_NULL, datum);
+			this->nodes[head] = this->datum_list->insert ((Node*)QSE_NULL, datum);
 			this->nodes[tail] = this->nodes[head];
 		}
 		else 
 		{
-			this->nodes[head] = datum_list->insertValue (this->nodes[head], datum);
+			this->nodes[head] = datum_list->insert (this->nodes[head], datum);
 		}
 
 		return this->nodes[head];
@@ -467,7 +472,13 @@ protected:
 		// Move nodes around instead of values to prevent
 		// existing values from being copied over and destroyed.
 		// this incurs less number of memory allocations also.
-		SelfType temp (this->getMmgr(), this->resizer(this->node_capacity), this->load_factor, this->datum_list->getMPBlockSize());
+		Mpool& mpool = this->getMpool();
+
+		// Using the memory pool block size of 0 is OK because the nodes
+		// to be inserted are yielded off the original list and inserted
+		// without new allocation.
+		//SelfType temp (this->getMmgr(), this->resizer(this->node_capacity), this->load_factor, mpool.getBlockSize());
+		SelfType temp (this->getMmgr(), this->resizer(this->node_capacity), this->load_factor, 0);
 		Node* p = this->datum_list->getHeadNode();
 		while (p)
 		{
@@ -491,7 +502,7 @@ protected:
 			}
 			else 
 			{
-				temp.nodes[head] = temp.datum_list->insertNode (QSE_NULL, pp);
+				temp.nodes[head] = temp.datum_list->insertNode ((Node*)QSE_NULL, pp);
 				temp.nodes[tail] = temp.nodes[head];
 			}
 
@@ -507,7 +518,13 @@ protected:
 			this->nodes[i] = QSE_NULL;
 		}
 
-		// swap the contents
+		// swapping the memory pool is a critical thing to do
+		// especially when the memory pooling is enabled. the datum node in
+		// 'temp' is actual allocated inside 'mpool' not inside temp.getMpool().
+		// it is because yield() has been used for insertion into 'temp'.
+		mpool.swap (temp.getMpool());
+
+		// swap the actual contents
 		qse_size_t temp_capa = temp.node_capacity;
 		Node** temp_nodes = temp.nodes;
 		DatumList* temp_datum_list = temp.datum_list;
@@ -539,12 +556,12 @@ protected:
 
 		if (new_nodes[head] == QSE_NULL) 
 		{
-			new_nodes[head] = new_datum_list->insertValue (QSE_NULL, t);
+			new_nodes[head] = new_datum_list->insert ((Node*)QSE_NULL, t);
 			new_nodes[tail] = new_nodes[head];
 		}
 		else 
 		{
-			new_nodes[head] = new_datum_list->insertValue (new_nodes[head], t);
+			new_nodes[head] = new_datum_list->insert (new_nodes[head], t);
 		}
 	}
 
