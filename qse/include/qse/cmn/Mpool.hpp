@@ -56,29 +56,32 @@ public:
 	void  dispose (void* ptr);
 	void  dispose ();
 
-	inline bool isEnabled () const
+	bool isEnabled () const
 	{
 		return this->datum_size > 0 && this->block_size > 0;
 	}
-	inline bool isDisabled () const
+
+	bool isDisabled () const
 	{
 		return this->datum_size <= 0 || this->block_size <= 0;
 	}
 
-	inline qse_size_t getDatumSize () const
+	qse_size_t getDatumSize () const
 	{
 		return this->datum_size;
 	}
 
-	inline qse_size_t getBlockSize () const
+	qse_size_t getBlockSize () const
 	{
 		return this->block_size;
 	}
 
-	inline void setBlockSize (qse_size_t blockSize) 
+	void setBlockSize (qse_size_t blockSize) 
 	{
 		this->block_size = blockSize;
 	}
+
+	int swap (Mpool& mpool);
 
 #if defined(QSE_DEBUG_MPOOL)
 	qse_size_t  nalloc;
@@ -97,6 +100,8 @@ protected:
 		Chain* next;
 	};
 
+	// NOTE: whenever you add new member variables, make sure to
+	//       update the swap() function accordingly
 	Block* mp_blocks;
 	Chain* free_list;
 	qse_size_t datum_size;

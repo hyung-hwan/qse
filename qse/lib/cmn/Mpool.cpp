@@ -132,6 +132,50 @@ Mpool::Block* Mpool::add_block ()
 	return block;
 }
 
+int Mpool::swap (Mpool& mpool)
+{
+	// this function is sensitive to member variables changes.
+	// whenever you add new member variables, this function require
+	// relevant changes.
+
+	if (this->getMmgr() != mpool.getMmgr()) 
+	{
+		// disallow to swap contents if memory managers are different.
+		return -1;
+	}
+
+	if (this != &mpool)
+	{
+	#if defined(QSE_DEBUG_MPOOL)
+		qse_size_t org_nalloc = this->nalloc;
+		qse_size_t org_navail = this->navail;
+
+		this->nalloc = mpool.nalloc;
+		this->navail = mpool.navail;
+
+		mpool.nalloc = org_nalloc;
+		mpool.navail = org_navail;
+	#endif
+
+		Block* org_mp_blocks = this->mp_blocks;
+		Chain* org_free_list = this->free_list;
+		qse_size_t org_datum_size = this->datum_size;
+		qse_size_t org_block_size = this->block_size;
+
+		this->mp_blocks = mpool.mp_blocks;
+		this->free_list = mpool.free_list;
+		this->datum_size = mpool.datum_size;
+		this->block_size = mpool.block_size;
+
+		mpool.mp_blocks = org_mp_blocks;
+		mpool.free_list = org_free_list;
+		mpool.datum_size = org_datum_size;
+		mpool.block_size = org_block_size;
+	}
+
+	return 0;
+}
+
 /////////////////////////////////
 QSE_END_NAMESPACE(QSE)
 /////////////////////////////////

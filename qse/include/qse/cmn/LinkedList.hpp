@@ -46,8 +46,8 @@ public:
 	T value; // you can use this variable or accessor functions below
 
 protected:
-	SelfType* next;
 	SelfType* prev;
+	SelfType* next;
 
 public:
 	T& getValue () { return this->value; }
@@ -126,13 +126,13 @@ public:
 		return saved;
 	}
 
-	int operator== (const SelfType& it) const
+	bool operator== (const SelfType& it) const
 	{
 		QSE_ASSERT (this->current != QSE_NULL);
 		return this->current == it.current;
 	}
 
-	int operator!= (const SelfType& it) const
+	bool operator!= (const SelfType& it) const
 	{
 		QSE_ASSERT (this->current != QSE_NULL);
 		return this->current != it.current;
@@ -142,6 +142,23 @@ public:
 	{
 		return this->current != QSE_NULL;
 	}
+
+	T& operator* () // dereference
+	{
+		return this->current->getValue();
+	}
+
+	const T& operator* () const // dereference
+	{
+		return this->current->getValue();
+	}
+
+#if 0
+	T* operator-> ()
+	{
+		return &this->current->getValue();
+	}
+#endif
 
 	T& getValue ()
 	{
@@ -247,14 +264,9 @@ public:
 	}
 #endif
 
-	qse_size_t getMPBlockSize() const
+	Mpool& getMpool ()
 	{
-		return this->mp.getBlockSize();
-	}
-
-	bool isMPEnabled () const
-	{
-		return this->mp.isEnabled();
+		return this->mp;
 	}
 
 	qse_size_t getSize () const 
@@ -267,17 +279,15 @@ public:
 		return this->node_count == 0;
 	}
 
-	bool contains (const T& value) const
-	{
-		return this->findFirstNode(value) != QSE_NULL;    
-	}
-
-	// insert an externally created node.
-	// may need to take extra care when using this method.
+	/// The insertNode() function inserts an externally created \a node
+	/// before the node at the given position \a pos. If \a pos is QSE_NULL,
+	/// the \a node is inserted at the back of the list. You must take extra
+	/// care when using this function.
 	Node* insertNode (Node* pos, Node* node)
 	{
 		if (pos == QSE_NULL) 
 		{
+			// add to the back
 			if (this->node_count == 0) 
 			{
 				QSE_ASSERT (head_node == QSE_NULL);
@@ -293,6 +303,7 @@ public:
 		}
 		else 
 		{
+			// insert 'node' before the node at the given position 'pos'.
 			node->next = pos;
 			node->prev = pos->prev;
 			if (pos->prev) pos->prev->next = node;
@@ -305,57 +316,20 @@ public:
 	}
 
 	// create a new node to hold the value and insert it.
-	Node* insertValue (Node* pos, const T& value)
+	Node* insert (Node* pos, const T& value)
 	{
 		Node* node = new(&this->mp) Node(value);
 		return this->insertNode (pos, node);
 	}
 
-	T& insert (Node* node, const T& value)
+	Node* prepend (const T& value)
 	{
-		return this->insertValue(node, value)->value;
-	}
-
-	T& insert (qse_size_t index, const T& value)
-	{
-		QSE_ASSERT (index <= node_count);
-
-		if (index >= node_count) 
-		{
-			// insert it at the back
-			return this->insert ((Node*)QSE_NULL, value);
-		}
-
-		return this->insert (this->getNodeAt(index), value);
-	}
-
-	T& prepend (const T& value)
-	{
-		// same as prependValue()
 		return this->insert (this->head_node, value);
 	}
-	T& append (const T& value)
+
+	Node* append (const T& value)
 	{
-		// same as appendValue()
 		return this->insert ((Node*)QSE_NULL, value);
-	}
-
-	Node* prependNode (Node* node)
-	{
-		return this->insertNode (head_node, node);
-	}
-	Node* appendNode (Node* node)
-	{
-		return this->insertNode ((Node*)QSE_NULL, node);
-	}
-
-	Node* prependValue (const T& value)
-	{
-		return this->insertValue (this->head_node, value);
-	}
-	Node* appendValue (const T& value)
-	{
-		return this->insertValue ((Node*)QSE_NULL, value);
 	}
 
 	void prependAll (const SelfType& list)
@@ -435,6 +409,7 @@ public:
 
 		return node;
 	}
+
 	// remove a node from the list and free it.
 	void remove (Node* node)
 	{
@@ -444,20 +419,6 @@ public:
 		node->~Node (); 
 		// free the memory
 		::operator delete (node, &this->mp);
-	}
-
-	void remove (qse_size_t index) 
-	{
-		QSE_ASSERT (index < node_count);
-
-		Node* np = this->head_node; 
-		while (index > 0) 
-		{
-			np = np->next;
-			index--;
-		}
-
-		this->remove (np);
 	}
 
 	Node* yieldByValue (const T& value, bool clear_links = true)
@@ -611,7 +572,7 @@ public:
 
 	qse_size_t findLastIndex (const T& value) const
 	{
-		qse_size_t index = node_count;
+		qse_size_t index = this->node_count;
 		for (Node* p = tail_node; p; p = p->prev) 
 		{
 			index--;
@@ -647,10 +608,20 @@ public:
 		this->mp.dispose ();
 	}
 
-	//void reverse ()
-	//{
-	//
-	//}
+	/// The reverse() function reverses the order of nodes.
+	void reverse ()
+	{
+		if (this->node_count > 0)
+		{
+			Node* head = this->head_node;
+			QSE_ASSERT (head != QSE_NULL);
+			while (head->next)
+			{
+				Node* next_node = this->yield (head->next, false);
+				this->insertNode (this->head_node, next_node);
+			}
+		}
+	}
 
 	typedef int (SelfType::*TraverseCallback) (Node* start, Node* cur);
 
@@ -674,7 +645,15 @@ public:
 
 	Iterator getIterator (qse_size_t index = 0) const
 	{
-		return Iterator (this->getNodeAt(index));
+		if (this->node_count <= 0) 
+		{
+			return Iterator (QSE_NULL);
+		}
+		else
+		{
+			if (index >= this->node_count) index = this->node_count - 1;
+			return Iterator (this->getNodeAt(index));
+		}
 	}
 
 protected:
