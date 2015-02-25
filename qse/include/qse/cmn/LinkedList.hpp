@@ -138,7 +138,7 @@ public:
 		return this->current != it.current;
 	}
 
-	bool isValid () const 
+	bool isLegit () const 
 	{
 		return this->current != QSE_NULL;
 	}
@@ -210,6 +210,13 @@ public:
 
 	typedef Mpool DefaultMpool;
 	typedef LinkedListComparator<T> DefaultComparator;
+
+	struct Visiter
+	{
+		// return 1 to move forward, -1 to move backward, 0 to stop
+		virtual ~Visiter() {}
+		virtual int operator() (Node* node) = 0;
+	};
 
 	enum 
 	{
@@ -313,6 +320,20 @@ public:
 
 		this->node_count++;
 		return node;
+	}
+
+	/// The prependNode() function adds an externally created \a node
+	/// to the front of the list.
+	Node* prependNode (Node* node)
+	{
+		return this->insertNode (this->head_node, node);
+	}
+
+	/// The appendNode() function adds an externally created \a node
+	/// to the back of the list.
+	Node* appendNode (Node* node)
+	{
+		return this->insertNode (QSE_NULL, node);
 	}
 
 	// create a new node to hold the value and insert it.
@@ -636,6 +657,24 @@ public:
 			next = cur->next;
 
 			int n = (this->*callback) (start, cur);
+
+			if (n > 0) cur = next;
+			else if (n < 0) cur = prev;
+			else break;
+		}
+	}
+
+	void traverse (Visiter& visiter)
+	{
+		Node* cur, * prev, * next;
+
+		cur = this->head_node;
+		while (cur)
+		{
+			prev = cur->prev;
+			next = cur->next;
+
+			int n = visiter (cur);
 
 			if (n > 0) cur = next;
 			else if (n < 0) cur = prev;

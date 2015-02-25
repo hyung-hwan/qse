@@ -27,9 +27,11 @@
 #ifndef _QSE_CMN_HASHTABLE_HPP_
 #define _QSE_CMN_HASHTABLE_HPP_
 
-#include <qse/Hashable.hpp>
-#include <qse/cmn/LinkedList.hpp>
+/*#include <qse/Hashable.hpp>
+#include <qse/cmn/LinkedList.hpp>*/
+
 #include <qse/cmn/Couple.hpp>
+#include <qse/cmn/HashList.hpp>
 
 /////////////////////////////////
 QSE_BEGIN_NAMESPACE(QSE)
@@ -54,6 +56,7 @@ struct HashTableComparator
 	}
 };
 
+#if 0
 struct HashTableResizer
 {
 	qse_size_t operator() (qse_size_t current) const
@@ -65,7 +68,118 @@ struct HashTableResizer
 		                           (current + (current / 16));
 	}
 };
+#endif
 
+typedef HashListResizer HashTableResizer;
+
+template <typename K, typename V, typename MPOOL = Mpool, typename HASHER = HashTableHasher<K>, typename COMPARATOR = HashTableComparator<K>, typename RESIZER = HashTableResizer>
+class HashTable: public Mmged
+{
+public:
+	typedef Couple<K,V> Pair;
+	typedef HashTable<K,V,MPOOL,HASHER,COMPARATOR,RESIZER> SelfType;
+
+	typedef HashTableHasher<K> DefaultHasher;
+	typedef HashTableComparator<K> DefaultComparator;
+	typedef HashTableResizer DefaultResizer;
+
+
+	struct PairHasher
+	{
+		qse_size_t operator() (const Pair& p)
+		{
+			HASHER hasher;
+			return hasher (p.key);
+		}
+	};
+
+	struct PairComparator
+	{
+		qse_size_t operator() (const Pair& p1, const Pair& p2)
+		{
+			COMPARATOR comparator;
+			return comparator (p1.key, p2.key);
+		}
+	};
+
+	typedef HashList<Pair,MPOOL,PairHasher,PairComparator,RESIZER> PairList;
+	typedef typename PairList::Node PairNode;
+
+	enum
+	{
+		DEFAULT_CAPACITY = PairList::DEFAULT_CAPACITY,
+		DEFAULT_LOAD_FACTOR = PairList::DEFAULT_LOAD_FACTOR,
+
+		MIN_CAPACITY = PairList::MIN_CAPACITY,
+		MIN_LOAD_FACTOR = PairList::MIN_LOAD_FACTOR
+	};
+
+	HashTable (Mmgr* mmgr, qse_size_t capacity = DEFAULT_CAPACITY, qse_size_t load_factor = DEFAULT_LOAD_FACTOR, qse_size_t mpb_size = 0): Mmged(mmgr), pair_list (mmgr, capacity, load_factor, mpb_size)
+	{
+	}
+
+	HashTable (const SelfType& table): Mmged (table), pair_list (table.pair_list)
+	{
+	}
+
+	SelfType& operator= (const SelfType& table)
+	{
+		this->pair_list = table.pair_list;
+		return *this;
+	}
+
+	Pair* insert (const K& key, const V& value)
+	{
+		PairNode* node = this->pair_list.insert (Pair(key, value));
+		if (!node) return QSE_NULL;
+		return &node->value;
+	}
+
+	Pair* upsert (const K& key, const V& value)
+	{
+		PairNode* node = this->pair_list.upsert (Pair(key, value));
+		if (!node) return QSE_NULL;
+		return &node->value;
+	}
+
+	Pair* update (const K& key, const V& value)
+	{
+		PairNode* node = this->pair_list.update (Pair(key, value));
+		if (!node) return QSE_NULL;
+		return &node->value;
+	}
+
+	Pair* search (const K& key)
+	{
+		// TODO: find with custom...
+		PairNode* node = this->pair_list.update (Pair(key));
+		if (!node) return QSE_NULL;
+		return &node->value;
+	}
+
+	int remove (const K& key)
+	{
+		// TODO: use removeWithCustom....
+		return this->pair_list.remove (Pair(key));
+	}
+
+
+	void clear ()
+	{
+		// TODO: accept new capacity.
+		return this->pair_list.clear ();
+	}
+
+	qse_size_t getSize() const
+	{
+		return this->pair_list.getSize ();
+	}
+
+protected:
+	PairList pair_list;
+};
+
+#if 0
 template <typename K, typename V, typename HASHER = HashTableHasher<K>, typename COMPARATOR = HashTableComparator<K>, typename RESIZER = HashTableResizer>
 class HashTable: public Mmged
 {
@@ -79,8 +193,101 @@ public:
 	typedef HashTableComparator<K> DefaultComparator;
 	typedef HashTableResizer DefaultResizer;
 
+	enum
+	{
+		DEFAULT_CAPACITY = 10,
+		DEFAULT_LOAD_FACTOR = 75, // Load factor in percentage
+
+		MIN_CAPACITY = 1,
+		MIN_LOAD_FACTOR = 20
+	};
+
+#if 0
+	class Iterator
+	{
+	public:
+		Iterator (): bucket_index(0), bucket_node(QSE_NULL) {}
+		Iterator (qse_size_t index, BucketNode* node): bucket_index(index), bucket_node(node) {}
+		Iterator (const Iterator& it): bucket_index (it.bucket_index), bucket_node(it.bucket_node) {}
+
+		Iterator& operator= (const Iterator& it) 
+		{
+			this->bucket_index = it.bucket_index;
+			this->bucket_node = it.bucket_node;
+			return *this;
+		}
+
+		Iterator& operator++ () // prefix increment
+		{
+			QSE_ASSERT (this->isLegit());
+			this->bucket_node = this->bucket_node->getNext();
+			if (!this->bucket_node)
+			{
+				while (this->bucket_index 
+			}
+			return *this;
+		}
+
+		Iterator operator++ (int) // postfix increment
+		{
+			QSE_ASSERT (this->isLegit());
+			Iterator saved (*this);
+			this->current = this->current->getNext(); //++(*this);
+			return saved;
+		}
+
+		Iterator& operator-- () // prefix decrement
+		{
+			QSE_ASSERT (this->isLegit());
+			this->current = this->current->getPrev();
+			return *this;
+		}
+
+		Iterator operator-- (int) // postfix decrement
+		{
+			QSE_ASSERT (this->isLegit());
+			Iterator saved (*this);
+			this->current = this->current->getPrev(); //--(*this);
+			return saved;
+		}
+
+		bool operator== (const Iterator& it) const
+		{
+			return this->bucket_index == it.bucket_index &&
+			       this->bucket_node == it.bucket_node;
+		}
+
+		bool operator!= (const Iterator& it) const
+		{
+			return this->bucket_index != it.bucket_index ||
+			       this->bucket_node != it.bucket_node;
+		}
+
+		bool isLegit () const 
+		{
+			// TODO: change this
+			return this->bucket_node != QSE_NULL;
+		}
+
+		T& operator* () // dereference
+		{
+			return this->bucket_node->getValue();
+		}
+
+		const T& operator* () const // dereference
+		{
+			return this->bucket_node->getValue();
+		}
+
+	protected:
+		SelfType* table;
+		qse_size_t bucket_index;
+		BucketNode* bucket_node;
+	};
+#endif
+
 protected:
-	Bucket** allocate_bucket (Mmgr* mm, qse_size_t bs) const
+	Bucket** allocate_bucket (Mmgr* mm, qse_size_t bs, qse_size_t mpb_size) const
 	{
 		Bucket** b = QSE_NULL;
 
@@ -89,7 +296,7 @@ protected:
 			b = (Bucket**) mm->callocate (QSE_SIZEOF(*b) * bs);
 			for (qse_size_t i = 0; i < bs; i++)
 			{
-				b[i] = new(mm) Bucket (mm, this->bucket_mpb_size);
+				b[i] = new(mm) Bucket (mm, mpb_size);
 			}
 		}
 		catch (...)
@@ -129,9 +336,12 @@ protected:
 	}
 
 public:
-	HashTable (Mmgr* mmgr, qse_size_t bucket_size = 10, qse_size_t load_factor = 75, qse_size_t bucket_mpb_size = 0): Mmged(mmgr)
+	HashTable (Mmgr* mmgr, qse_size_t bucket_size = DEFAULT_CAPACITY, qse_size_t load_factor = DEFAULT_LOAD_FACTOR, qse_size_t bucket_mpb_size = 0): Mmged(mmgr)
 	{
-		this->buckets = this->allocate_bucket (this->getMmgr(), bucket_size);
+		if (bucket_size < MIN_CAPACITY) bucket_size = MIN_CAPACITY;
+		if (load_factor < MIN_LOAD_FACTOR) load_factor = MIN_LOAD_FACTOR;
+
+		this->buckets = this->allocate_bucket (this->getMmgr(), bucket_size, bucket_mpb_size);
 		this->bucket_size = bucket_size;
 		this->pair_count = 0;
 		this->load_factor = load_factor;
@@ -141,7 +351,7 @@ public:
 
 	HashTable (const SelfType& table): Mmged (table)
 	{
-		this->buckets = this->allocate_bucket (this->getMmgr(), table.bucket_size);
+		this->buckets = this->allocate_bucket (this->getMmgr(), table.bucket_size, table.bucket_mpb_size);
 		this->bucket_size = table.bucket_size;
 		this->pair_count = 0;
 		this->load_factor = table.load_factor;
@@ -414,9 +624,9 @@ public:
 		}
 
 		// insert a new pair
-		Pair& new_pair = this->buckets[hc]->append (Pair(key));
+		BucketNode* node = this->buckets[hc]->append (Pair(key));
 		this->pair_count++;
-		return &new_pair;
+		return &node->value;
 	}
 
 	/// The insert() function inserts a new pair with a \a key with a \a value.
@@ -436,9 +646,9 @@ public:
 		}
 
 		// insert a new pair
-		Pair& new_pair = this->buckets[hc]->append (Pair(key, value));
+		BucketNode* node = this->buckets[hc]->append (Pair(key, value));
 		this->pair_count++;
-		return &new_pair;
+		return &node->value;
 	}
 
 	/// The update() function updates an existing pair of the \a key
@@ -469,9 +679,9 @@ public:
 		}
 
 		// insert a new pair if the key is not found
-		Pair& new_pair = this->buckets[hc]->append (Pair(key));
+		BucketNode* node = this->buckets[hc]->append (Pair(key));
 		this->pair_count++;
-		return &new_pair;
+		return &node->value;
 	}
 
 	/// The upsert() function inserts a new pair with a \a key and a \a value
@@ -496,9 +706,9 @@ public:
 		}
 
 		// insert a new pair if the key is not found
-		Pair& new_pair = this->buckets[hc]->append (Pair(key, value));
+		BucketNode* node = this->buckets[hc]->append (Pair(key, value));
 		this->pair_count++;
-		return &new_pair;
+		return &node->value;
 	}
 
 protected:
@@ -550,7 +760,7 @@ public:
 
 		if (new_bucket_size > 0)
 		{
-			Bucket** tmp = this->allocate_bucket (this->getMmgr(), new_bucket_size);
+			Bucket** tmp = this->allocate_bucket (this->getMmgr(), new_bucket_size, this->bucket_mpb_size);
 			this->dispose_bucket (this->getMmgr(), this->buckets, this->bucket_size);
 
 			this->buckets = tmp;
@@ -595,6 +805,10 @@ public:
 		return 0;
 	}
 
+	//Iterator getIterator ()
+	//{
+	//}
+
 protected:
 	mutable qse_size_t  pair_count;
 	mutable qse_size_t  bucket_size;
@@ -609,7 +823,7 @@ protected:
 	void rehash () const
 	{
 		qse_size_t new_bucket_size = this->resizer (this->bucket_size);
-		Bucket** new_buckets = this->allocate_bucket (this->getMmgr(), new_bucket_size);
+		Bucket** new_buckets = this->allocate_bucket (this->getMmgr(), new_bucket_size, this->bucket_mpb_size);
 
 		try 
 		{
@@ -629,7 +843,9 @@ protected:
 				// and retains the previous pointers before rehashing.
 				// if the bucket uses a memory pool, this would not
 				// work. fortunately, the hash table doesn't use it
-				// for a bucket.
+				// for a bucket. ---> this is not true any more.
+				//               ---> this has been broken as memory pool
+				//               ---> can be activated for buckets.
 				BucketNode* np = this->buckets[i]->getHeadNode();
 				while (np)
 				{
@@ -654,6 +870,7 @@ protected:
 		this->threshold   = this->load_factor * this->bucket_size / 100;
 	}
 };
+#endif
 
 /////////////////////////////////
 QSE_END_NAMESPACE(QSE)
