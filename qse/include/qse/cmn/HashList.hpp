@@ -64,26 +64,49 @@ struct HashListResizer
 	}
 };
 
+/// The HashList class provides a linked list where a data item can be accessed
+/// using hashing. The accessor functions are similar to those of the HashTable
+/// class whereas the data items are linked with each other in a linked list.
+/// Extra hashing buckets maintain pointers to the first and the last node of
+/// data items whose hash values are equal. Unlike the HashTable class that
+/// maintains pairs of a key and a value, it stores a series of single items
+/// whose key is distinuguished via the hashing function.
+///
+/// For the capacicity of X, it allocates (X * 2) node slots(this->nodes).
+/// For a hash value of hc, this->nodes[hc * 2] points to the first node and
+/// this->nodes[hc * 2 + 1] ponits to the last node.     
+
 template <typename T, typename MPOOL = Mpool, typename HASHER = HashListHasher<T>, typename COMPARATOR = HashListComparator<T>, typename RESIZER = HashListResizer >
 class HashList: public Mmged
 {
 public:
 	typedef LinkedList<T,MPOOL> DatumList;
 	typedef typename DatumList::Node Node;
-	typedef HashList<T,MPOOL,HASHER,COMPARATOR> SelfType;
+	typedef typename DatumList::Iterator Iterator;
+	typedef typename DatumList::Visiter Visiter;
+	typedef HashList<T,MPOOL,HASHER,COMPARATOR,RESIZER> SelfType;
 
 	typedef HashListHasher<T> DefaultHasher;
 	typedef HashListComparator<T> DefaultComparator;
 	typedef HashListResizer DefaultResizer;
 
+	enum
+	{
+		DEFAULT_CAPACITY = 10,
+		DEFAULT_LOAD_FACTOR = 75, // Load factor in percentage
+
+		MIN_CAPACITY = 1,
+		MIN_LOAD_FACTOR = 20
+	};
+
 	HashList (
 		Mmgr* mmgr = QSE_NULL,
-		qse_size_t node_capacity = 10, 
-		qse_size_t load_factor = 75, 
+		qse_size_t node_capacity = DEFAULT_CAPACITY, 
+		qse_size_t load_factor = DEFAULT_LOAD_FACTOR, 
 		qse_size_t mpb_size = 0): Mmged(mmgr)
 	{
-		if (node_capacity <= 0) node_capacity = 1;
-		if (load_factor < 20) load_factor = 20;
+		if (node_capacity < MIN_CAPACITY) node_capacity = MIN_CAPACITY;
+		if (load_factor < MIN_LOAD_FACTOR) load_factor = MIN_LOAD_FACTOR;
 
 		this->nodes = QSE_NULL;
 		this->node_capacity = 0;
@@ -97,10 +120,6 @@ public:
 			// it should be safe to call the memory manager bypassing the new operator.
 			//this->nodes = new Node*[total_count];
 			this->nodes = (Node**)this->getMmgr()->allocate (QSE_SIZEOF(Node*) * total_count);
-
-			// NOTE: something wil go wrong if the memory manager doesn't raise an exception
-			//       upon memory allocation failure. Make sure to use a memory allocation
-			//       that raises an exception.
 
 			this->node_capacity = node_capacity;
 			for (qse_size_t i = 0; i < total_count; i++) 
@@ -447,6 +466,11 @@ public:
 		}
 	}
 
+	void traverse (Visiter& visiter)
+	{
+		return this->datum_list->traverse (visiter);
+	}
+
 	qse_size_t getCapacity() const
 	{
 		return this->node_capacity;
@@ -455,6 +479,31 @@ public:
 	qse_size_t getSize () const
 	{
 		return this->datum_list->getSize();
+	}
+
+	/// The getIterator() function returns an interator.
+	///
+	/// \code
+	///  struct IntHasher 
+	///  {
+	///      qse_size_t operator() (int v) { return v; }
+	///  };
+	///  typedef QSE::HashList<int,QSE::Mpool,IntHasher> IntList;
+	///
+	///  IntList hl;
+	///  IntList::Iterator it;
+	///
+	///  hl.insert (10);
+	///  hl.insert (150);
+	///  hl.insert (200);
+	///  for (it = hl.getIterator(); it.isLegit(); it++)
+	///  {
+	///      printf ("%d\n", *it);
+	///  }
+	/// \endcode
+	Iterator getIterator (qse_size_t index = 0)
+	{
+		return this->datum_list->getIterator (index);
 	}
 
 protected:
@@ -576,7 +625,6 @@ private:
 		::operator delete (this->datum_list, this->getMmgr());
 	}
 };
-
 
 /////////////////////////////////
 QSE_END_NAMESPACE(QSE)
