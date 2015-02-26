@@ -289,6 +289,32 @@ protected:
 		return QSE_NULL;
 	}
 
+	template <typename MT, typename MCOMPARATOR>
+	Node* heterofind_node (const MT& datum, qse_size_t hc) const
+	{
+		MCOMPARATOR is_equal;
+
+		qse_size_t head, tail;
+		Node* np;
+
+		head = hc << 1; tail = head + 1;
+
+		np = this->nodes[head];
+		if (np) 
+		{
+			do 
+			{
+				T& t = np->value;
+				if (is_equal(datum, t)) return np;
+				if (np == this->nodes[tail]) break;
+				np = np->getNextNode ();
+			}
+			while (1);
+		}
+
+		return QSE_NULL;
+	}
+
 	Node* insert_value (const T& datum, bool overwrite = true)
 	{
 		qse_size_t hc, head, tail;
@@ -330,7 +356,7 @@ protected:
 		}
 		else 
 		{
-			this->nodes[head] = datum_list->insert (this->nodes[head], datum);
+			this->nodes[head] = this->datum_list->insert (this->nodes[head], datum);
 		}
 
 		return this->nodes[head];
@@ -357,6 +383,22 @@ public:
 	const T* findValue (const T& datum) const
 	{
 		const Node* b = this->findNode (datum);
+		if (!b) return QSE_NULL;
+		return &b->value;
+	}
+
+	template <typename MT, typename MHASHER, typename MCOMPARATOR>
+	Node* heterofindNode (const MT& datum)
+	{
+		MHASHER hash;
+		return this->heterofind_node<MT,MCOMPARATOR> (datum, hash(datum) % this->node_capacity);
+	}
+
+	template <typename MT, typename MHASHER, typename MCOMPARATOR>
+	Node* heterofindValue(const MT& datum)
+	{
+		MHASHER hash;
+		Node* b = this->heterofind_node<MT,MCOMPARATOR> (datum, hash(datum) % this->node_capacity);
 		if (!b) return QSE_NULL;
 		return &b->value;
 	}
@@ -432,6 +474,40 @@ public:
 				np = np->getNextNode ();
 			} 
 			while (1);
+		}
+
+		return -1;
+	}
+
+	template <typename MT, typename MHASHER, typename MCOMPARATOR>
+	int heteroremove (const MT& datum)
+	{
+		MHASHER hash;
+		qse_size_t hc = hash(datum) % this->node_capacity;
+
+		Node* np = this->heterofind_node<MT,MCOMPARATOR> (datum, hc);
+		if (np)
+		{
+			qse_size_t head, tail;
+
+			head = hc << 1; tail = head + 1;
+
+			if (this->nodes[head] == this->nodes[tail])
+			{
+				QSE_ASSERT (np == this->nodes[head]);
+				this->nodes[head] = this->nodes[tail] = QSE_NULL;
+			}
+			else if (np == this->nodes[head])
+			{
+				this->nodes[head] = np->getNextNode();
+			}
+			else if (np == this->nodes[tail])
+			{ 
+				this->nodes[tail] = np->getPrevNode();
+			}
+
+			this->datum_list->remove (np);
+			return 0;
 		}
 
 		return -1;

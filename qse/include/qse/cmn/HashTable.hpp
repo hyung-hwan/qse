@@ -83,7 +83,6 @@ public:
 	typedef HashTableComparator<K> DefaultComparator;
 	typedef HashTableResizer DefaultResizer;
 
-
 	struct PairHasher
 	{
 		qse_size_t operator() (const Pair& p)
@@ -102,6 +101,15 @@ public:
 		}
 	};
 
+	struct PairHeteroComparator
+	{
+		qse_size_t operator() (const K& p1, const Pair& p2)
+		{
+			COMPARATOR is_equal;
+			return is_equal (p1, p2.key);
+		}
+	};
+
 	typedef HashList<Pair,MPOOL,PairHasher,PairComparator,RESIZER> PairList;
 	typedef typename PairList::Node PairNode;
 
@@ -114,7 +122,11 @@ public:
 		MIN_LOAD_FACTOR = PairList::MIN_LOAD_FACTOR
 	};
 
-	HashTable (Mmgr* mmgr, qse_size_t capacity = DEFAULT_CAPACITY, qse_size_t load_factor = DEFAULT_LOAD_FACTOR, qse_size_t mpb_size = 0): Mmged(mmgr), pair_list (mmgr, capacity, load_factor, mpb_size)
+	HashTable (Mmgr* mmgr = QSE_NULL, 
+	           qse_size_t capacity = DEFAULT_CAPACITY,
+	           qse_size_t load_factor = DEFAULT_LOAD_FACTOR,
+	           qse_size_t mpb_size = 0):
+		Mmged(mmgr), pair_list (mmgr, capacity, load_factor, mpb_size)
 	{
 	}
 
@@ -151,18 +163,17 @@ public:
 
 	Pair* search (const K& key)
 	{
-		// TODO: find with custom...
-		PairNode* node = this->pair_list.update (Pair(key));
+		//PairNode* node = this->pair_list.update (Pair(key));
+		PairNode* node = this->pair_list.template heterofindNode <K,HASHER,PairHeteroComparator> (key);
 		if (!node) return QSE_NULL;
 		return &node->value;
 	}
 
 	int remove (const K& key)
 	{
-		// TODO: use removeWithCustom....
-		return this->pair_list.remove (Pair(key));
+		//return this->pair_list.remove (Pair(key));
+		return this->pair_list.template heteroremove <K,HASHER,PairHeteroComparator> (key);
 	}
-
 
 	void clear ()
 	{
