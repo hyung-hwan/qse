@@ -83,7 +83,7 @@ public:
 	typedef LinkedList<T,COMPARATOR> DatumList;
 	typedef typename DatumList::Node Node;
 	typedef typename DatumList::Iterator Iterator;
-	typedef typename DatumList::Visiter Visiter;
+	typedef typename DatumList::ConstIterator ConstIterator;
 	typedef HashList<T,HASHER,COMPARATOR,RESIZER> SelfType;
 
 	typedef HashListHasher<T> DefaultHasher;
@@ -213,19 +213,9 @@ public:
 
 	~HashList ()
 	{
-		this->clear ();
+		this->clear (true);
 		if (this->nodes) this->getMmgr()->dispose (this->nodes); //delete[] this->nodes;
 		if (this->datum_list) this->free_datum_list ();
-	}
-
-	Mpool& getMpool ()
-	{
-		return this->datum_list->getMpool ();
-	}
-
-	const Mpool& getMpool() const
-	{
-		return this->datum_list->getMpool ();
 	}
 
 	SelfType& operator= (const SelfType& list)
@@ -254,19 +244,49 @@ public:
 		return *this;
 	}
 
+	Mpool& getMpool ()
+	{
+		return this->datum_list->getMpool ();
+	}
+
+	const Mpool& getMpool() const
+	{
+		return this->datum_list->getMpool ();
+	}
+
+	qse_size_t getCapacity() const
+	{
+		return this->node_capacity;
+	}
+
+	qse_size_t getSize () const
+	{
+		return this->datum_list->getSize ();
+	}
+
 	bool isEmpty () const 
 	{
-		return this->datum_list->isEmpty();
+		return this->datum_list->isEmpty ();
 	}
 
-	Node* getHeadNode () const
+	Node* getHeadNode ()
 	{
-		return this->datum_list->getHeadNode();
+		return this->datum_list->getHeadNode ();
 	}
 
-	Node* getTaileNode () const
+	const Node* getHeadNode () const
 	{
-		return this->datum_list->getTailNode();
+		return this->datum_list->getHeadNode ();
+	}
+
+	Node* getTailNode ()
+	{
+		return this->datum_list->getTailNode ();
+	}
+
+	const Node* getTailNode () const
+	{
+		return this->datum_list->getTailNode ();
 	}
 
 protected:
@@ -548,48 +568,13 @@ public:
 		return -1;
 	}
 
-	void clear ()
+	void clear (bool clear_mpool = false)
 	{
 		for (qse_size_t i = 0; i < (this->node_capacity << 1); i++) 
 		{
 			this->nodes[i] = QSE_NULL;
 		}
-		if (this->datum_list) this->datum_list->clear ();
-	}
-
-	typedef int (SelfType::*TraverseCallback) (Node* start, Node* cur);
-
-	void traverse (TraverseCallback callback, Node* start)
-	{
-		Node* cur, *prev, * next;
-
-		cur = start;
-		while (cur) 
-		{
-			prev = cur->getPrevNode ();
-			next = cur->getNextNode ();
-
-			int n = (this->*callback) (start, cur);
-
-			if (n > 0) cur = next;
-			else if (n < 0) cur = prev;
-			else break;
-		}
-	}
-
-	void traverse (Visiter& visiter)
-	{
-		return this->datum_list->traverse (visiter);
-	}
-
-	qse_size_t getCapacity() const
-	{
-		return this->node_capacity;
-	}
-
-	qse_size_t getSize () const
-	{
-		return this->datum_list->getSize();
+		this->datum_list->clear (clear_mpool);
 	}
 
 	/// The getIterator() function returns an interator.
@@ -615,6 +600,11 @@ public:
 	Iterator getIterator (qse_size_t index = 0)
 	{
 		return this->datum_list->getIterator (index);
+	}
+
+	ConstIterator getConstIterator (qse_size_t index = 0) const
+	{
+		return this->datum_list->getConstIterator (index);
 	}
 
 protected:

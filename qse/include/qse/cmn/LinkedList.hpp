@@ -79,12 +79,12 @@ protected:
 	}
 };
 
-template <typename T, typename COMPARATOR>
+template <typename T, typename COMPARATOR, typename NODE, typename GET_T>
 class LinkedListIterator {
 public:
 	friend class LinkedList<T,COMPARATOR>;
-	typedef LinkedListNode<T,COMPARATOR> Node;
-	typedef LinkedListIterator<T,COMPARATOR> SelfType;
+	typedef NODE Node;
+	typedef LinkedListIterator<T,COMPARATOR,NODE,GET_T> SelfType;
 
 	LinkedListIterator (): current(QSE_NULL) {}
 	LinkedListIterator (Node* node): current(node) {}
@@ -143,12 +143,7 @@ public:
 		return this->current != QSE_NULL;
 	}
 
-	T& operator* () // dereference
-	{
-		return this->current->getValue();
-	}
-
-	const T& operator* () const // dereference
+	GET_T& operator* () // dereference
 	{
 		return this->current->getValue();
 	}
@@ -160,13 +155,7 @@ public:
 	}
 #endif
 
-	T& getValue ()
-	{
-		QSE_ASSERT (this->current != QSE_NULL);
-		return this->current->getValue();
-	}
-
-	const T& getValue () const 
+	GET_T& getValue ()
 	{
 		QSE_ASSERT (this->current != QSE_NULL);
 		return this->current->getValue();
@@ -206,16 +195,10 @@ template <typename T, typename COMPARATOR = LinkedListComparator<T> > class Link
 public:
 	typedef LinkedList<T,COMPARATOR> SelfType;
 	typedef LinkedListNode<T,COMPARATOR> Node;
-	typedef LinkedListIterator<T,COMPARATOR> Iterator;
+	typedef LinkedListIterator<T,COMPARATOR,Node,T> Iterator;
+	typedef LinkedListIterator<T,COMPARATOR,const Node,const T> ConstIterator;
 
 	typedef LinkedListComparator<T> DefaultComparator;
-
-	struct Visiter
-	{
-		// return 1 to move forward, -1 to move backward, 0 to stop
-		virtual ~Visiter() {}
-		virtual int operator() (Node* node) = 0;
-	};
 
 	enum 
 	{
@@ -224,7 +207,7 @@ public:
 
 	~LinkedList () 
 	{
-		this->clearout ();
+		this->clear (true);
 	}
 
 	LinkedList (Mmgr* mmgr = QSE_NULL, qse_size_t mpb_size = 0): Mmged(mmgr), mp (mmgr, QSE_SIZEOF(Node), mpb_size)
@@ -485,22 +468,52 @@ public:
 	{
 		this->remove (this->head_node);
 	}
+
 	void removeTail ()
 	{
 		this->remove (this->tail_node);
 	}
 
-	Node* getHeadNode () const 
+	/// The getHeadNode() function returns the first node.
+	/// \code
+	/// QSE::LinkedList<int> l;
+	/// QSE::LinkedList<int>::Node* np;
+	/// for (np = l.getHeadNode(); np; np = np->getNextNode())
+	/// {
+	///     printf ("%d\n", np->value);
+	/// }
+	/// \endcode
+	Node* getHeadNode ()
 	{
 		return this->head_node;
 	}
 
-	Node* getTailNode () const 
+	const Node* getHeadNode () const 
+	{
+		return this->head_node;
+	}
+
+	/// The getTailNode() function returns the last node.
+	/// \code
+	/// QSE::LinkedList<int> l;
+	/// QSE::LinkedList<int>::Node* np;
+	/// for (np = l.getTailNode(); np; np = np->getPrevNode())
+	/// {
+	///     printf ("%d\n", np->value);
+	/// }
+	/// \endcode
+	Node* getTailNode ()
 	{
 		return this->tail_node;
 	}
 
-	Node* getNodeAt (qse_size_t index) const
+	const Node* getTailNode () const 
+	{
+		return this->tail_node;
+	}
+
+protected:
+	Node* get_node_at (qse_size_t index) const
 	{
 		QSE_ASSERT (index < this->node_count);
 
@@ -523,6 +536,17 @@ public:
 		}
 
 		return np;
+	}
+
+public:
+	Node* getNodeAt (qse_size_t index) 
+	{
+		return this->get_node_at (index);
+	}
+
+	const Node* getNodeAt (qse_size_t index) const
+	{
+		return this->get_node_at (index);
 	}
 
 	T& getValueAt (qse_size_t index) 
@@ -606,7 +630,7 @@ public:
 		return INVALID_INDEX;
 	}
 
-	void clear () 
+	void clear (bool clear_mpool = false) 
 	{
 		Node* p, * saved;
 
@@ -625,12 +649,34 @@ public:
 
 		this->head_node = this->tail_node = QSE_NULL;
 		QSE_ASSERT (this->node_count == 0);
+
+		if (clear_mpool) this->mp.dispose ();
 	}
 
-	void clearout ()
+	Iterator getIterator (qse_size_t index = 0)
 	{
-		this->clear ();
-		this->mp.dispose ();
+		if (this->node_count <= 0) 
+		{
+			return Iterator (QSE_NULL);
+		}
+		else
+		{
+			if (index >= this->node_count) index = this->node_count - 1;
+			return Iterator (this->getNodeAt(index));
+		}
+	}
+
+	ConstIterator getConstIterator (qse_size_t index = 0) const
+	{
+		if (this->node_count <= 0) 
+		{
+			return ConstIterator (QSE_NULL);
+		}
+		else
+		{
+			if (index >= this->node_count) index = this->node_count - 1;
+			return ConstIterator (this->getNodeAt(index));
+		}
 	}
 
 	/// The reverse() function reverses the order of nodes.
@@ -645,57 +691,6 @@ public:
 				Node* next_node = this->yield (head->next, false);
 				this->insertNode (this->head_node, next_node);
 			}
-		}
-	}
-
-	typedef int (SelfType::*TraverseCallback) (Node* start, Node* cur);
-
-	void traverse (TraverseCallback callback, Node* start)
-	{
-		Node* cur, * prev, * next;
-
-		cur = start;
-		while (cur)
-		{
-			prev = cur->prev;
-			next = cur->next;
-
-			int n = (this->*callback) (start, cur);
-
-			if (n > 0) cur = next;
-			else if (n < 0) cur = prev;
-			else break;
-		}
-	}
-
-	void traverse (Visiter& visiter)
-	{
-		Node* cur, * prev, * next;
-
-		cur = this->head_node;
-		while (cur)
-		{
-			prev = cur->prev;
-			next = cur->next;
-
-			int n = visiter (cur);
-
-			if (n > 0) cur = next;
-			else if (n < 0) cur = prev;
-			else break;
-		}
-	}
-
-	Iterator getIterator (qse_size_t index = 0) const
-	{
-		if (this->node_count <= 0) 
-		{
-			return Iterator (QSE_NULL);
-		}
-		else
-		{
-			if (index >= this->node_count) index = this->node_count - 1;
-			return Iterator (this->getNodeAt(index));
 		}
 	}
 
