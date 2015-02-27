@@ -34,14 +34,14 @@
 QSE_BEGIN_NAMESPACE(QSE)
 /////////////////////////////////
 
-template <typename T, typename MPOOL, typename COMPARATOR> class LinkedList;
+template <typename T, typename COMPARATOR> class LinkedList;
 
-template <typename T, typename MPOOL, typename COMPARATOR> 
+template <typename T, typename COMPARATOR> 
 class LinkedListNode
 {
 public:
-	friend class LinkedList<T,MPOOL,COMPARATOR>;
-	typedef LinkedListNode<T,MPOOL,COMPARATOR> SelfType;
+	friend class LinkedList<T,COMPARATOR>;
+	typedef LinkedListNode<T,COMPARATOR> SelfType;
 
 	T value; // you can use this variable or accessor functions below
 
@@ -79,12 +79,12 @@ protected:
 	}
 };
 
-template <typename T, typename MPOOL, typename COMPARATOR>
+template <typename T, typename COMPARATOR>
 class LinkedListIterator {
 public:
-	friend class LinkedList<T,MPOOL,COMPARATOR>;
-	typedef LinkedListNode<T,MPOOL,COMPARATOR> Node;
-	typedef LinkedListIterator<T,MPOOL,COMPARATOR> SelfType;
+	friend class LinkedList<T,COMPARATOR>;
+	typedef LinkedListNode<T,COMPARATOR> Node;
+	typedef LinkedListIterator<T,COMPARATOR> SelfType;
 
 	LinkedListIterator (): current(QSE_NULL) {}
 	LinkedListIterator (Node* node): current(node) {}
@@ -199,16 +199,15 @@ struct LinkedListComparator
 };
 
 ///
-/// The LinkedList<T,MPOOL> class provides a template for a doubly-linked list.
+/// The LinkedList<T,COMPARATOR> class provides a template for a doubly-linked list.
 ///
-template <typename T, typename MPOOL = Mpool, typename COMPARATOR = LinkedListComparator<T> > class LinkedList: public Mmged
+template <typename T, typename COMPARATOR = LinkedListComparator<T> > class LinkedList: public Mmged
 {
 public:
-	typedef LinkedList<T,MPOOL,COMPARATOR> SelfType;
-	typedef LinkedListNode<T,MPOOL,COMPARATOR> Node;
-	typedef LinkedListIterator<T,MPOOL,COMPARATOR> Iterator;
+	typedef LinkedList<T,COMPARATOR> SelfType;
+	typedef LinkedListNode<T,COMPARATOR> Node;
+	typedef LinkedListIterator<T,COMPARATOR> Iterator;
 
-	typedef Mpool DefaultMpool;
 	typedef LinkedListComparator<T> DefaultComparator;
 
 	struct Visiter
@@ -272,6 +271,11 @@ public:
 #endif
 
 	Mpool& getMpool ()
+	{
+		return this->mp;
+	}
+
+	const Mpool& getMpool () const
 	{
 		return this->mp;
 	}
@@ -696,7 +700,7 @@ public:
 	}
 
 protected:
-	MPOOL       mp;
+	Mpool       mp;
 	COMPARATOR  comparator;
 	Node*       head_node;
 	Node*       tail_node;

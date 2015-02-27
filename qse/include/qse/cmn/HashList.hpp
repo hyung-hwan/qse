@@ -76,15 +76,15 @@ struct HashListResizer
 /// For a hash value of hc, this->nodes[hc * 2] points to the first node and
 /// this->nodes[hc * 2 + 1] ponits to the last node.     
 
-template <typename T, typename MPOOL = Mpool, typename HASHER = HashListHasher<T>, typename COMPARATOR = HashListComparator<T>, typename RESIZER = HashListResizer >
+template <typename T, typename HASHER = HashListHasher<T>, typename COMPARATOR = HashListComparator<T>, typename RESIZER = HashListResizer >
 class HashList: public Mmged
 {
 public:
-	typedef LinkedList<T,MPOOL> DatumList;
+	typedef LinkedList<T,COMPARATOR> DatumList;
 	typedef typename DatumList::Node Node;
 	typedef typename DatumList::Iterator Iterator;
 	typedef typename DatumList::Visiter Visiter;
-	typedef HashList<T,MPOOL,HASHER,COMPARATOR,RESIZER> SelfType;
+	typedef HashList<T,HASHER,COMPARATOR,RESIZER> SelfType;
 
 	typedef HashListHasher<T> DefaultHasher;
 	typedef HashListComparator<T> DefaultComparator;
@@ -171,7 +171,7 @@ public:
 
 			// placement new
 			this->datum_list = new(list.getMmgr()) 
-				DatumList (list.getMmgr(), list.datum_list->getMPBlockSize());
+				DatumList (list.getMmgr(), list.getMpool().getBlockSize());
 		}
 		catch (...) 
 		{
@@ -219,6 +219,11 @@ public:
 	}
 
 	Mpool& getMpool ()
+	{
+		return this->datum_list->getMpool ();
+	}
+
+	const Mpool& getMpool() const
 	{
 		return this->datum_list->getMpool ();
 	}
@@ -395,7 +400,23 @@ public:
 	}
 
 	template <typename MT, typename MHASHER, typename MCOMPARATOR>
-	Node* heterofindValue(const MT& datum)
+	const Node* heterofindNode (const MT& datum) const
+	{
+		MHASHER hash;
+		return this->heterofind_node<MT,MCOMPARATOR> (datum, hash(datum) % this->node_capacity);
+	}
+
+	template <typename MT, typename MHASHER, typename MCOMPARATOR>
+	T* heterofindValue(const MT& datum)
+	{
+		MHASHER hash;
+		Node* b = this->heterofind_node<MT,MCOMPARATOR> (datum, hash(datum) % this->node_capacity);
+		if (!b) return QSE_NULL;
+		return &b->value;
+	}
+
+	template <typename MT, typename MHASHER, typename MCOMPARATOR>
+	const T* heterofindValue(const MT& datum) const
 	{
 		MHASHER hash;
 		Node* b = this->heterofind_node<MT,MCOMPARATOR> (datum, hash(datum) % this->node_capacity);
@@ -417,6 +438,20 @@ public:
 	const Node* search (const T& datum) const
 	{
 		return this->find_node (datum);
+	}
+
+	template <typename MT, typename MHASHER, typename MCOMPARATOR>
+	Node* heterosearch (const MT& datum)
+	{
+		MHASHER hash;
+		return this->heterofind_node<MT,MCOMPARATOR> (datum, hash(datum) % this->node_capacity);
+	}
+
+	template <typename MT, typename MHASHER, typename MCOMPARATOR>
+	const Node* heterosearch (const MT& datum) const
+	{
+		MHASHER hash;
+		return this->heterofind_node<MT,MCOMPARATOR> (datum, hash(datum) % this->node_capacity);
 	}
 
 	Node* insert (const T& datum)

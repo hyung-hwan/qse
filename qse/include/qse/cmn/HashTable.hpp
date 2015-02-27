@@ -72,12 +72,12 @@ struct HashTableResizer
 
 typedef HashListResizer HashTableResizer;
 
-template <typename K, typename V, typename MPOOL = Mpool, typename HASHER = HashTableHasher<K>, typename COMPARATOR = HashTableComparator<K>, typename RESIZER = HashTableResizer>
+template <typename K, typename V, typename HASHER = HashTableHasher<K>, typename COMPARATOR = HashTableComparator<K>, typename RESIZER = HashTableResizer>
 class HashTable: public Mmged
 {
 public:
 	typedef Couple<K,V> Pair;
-	typedef HashTable<K,V,MPOOL,HASHER,COMPARATOR,RESIZER> SelfType;
+	typedef HashTable<K,V,HASHER,COMPARATOR,RESIZER> SelfType;
 
 	typedef HashTableHasher<K> DefaultHasher;
 	typedef HashTableComparator<K> DefaultComparator;
@@ -85,7 +85,7 @@ public:
 
 	struct PairHasher
 	{
-		qse_size_t operator() (const Pair& p)
+		qse_size_t operator() (const Pair& p) const
 		{
 			HASHER hasher;
 			return hasher (p.key);
@@ -94,7 +94,7 @@ public:
 
 	struct PairComparator
 	{
-		qse_size_t operator() (const Pair& p1, const Pair& p2)
+		qse_size_t operator() (const Pair& p1, const Pair& p2) const
 		{
 			COMPARATOR comparator;
 			return comparator (p1.key, p2.key);
@@ -103,15 +103,26 @@ public:
 
 	struct PairHeteroComparator
 	{
-		qse_size_t operator() (const K& p1, const Pair& p2)
+		qse_size_t operator() (const K& p1, const Pair& p2) const
 		{
 			COMPARATOR is_equal;
 			return is_equal (p1, p2.key);
 		}
 	};
 
-	typedef HashList<Pair,MPOOL,PairHasher,PairComparator,RESIZER> PairList;
+	template <typename MK, typename MCOMPARATOR>
+	struct MHeteroComparator
+	{
+		qse_size_t operator() (const MK& p1, const Pair& p2) const
+		{
+			MCOMPARATOR is_equal;
+			return is_equal (p1, p2.key);
+		}
+	};
+
+	typedef HashList<Pair,PairHasher,PairComparator,RESIZER> PairList;
 	typedef typename PairList::Node PairNode;
+	typedef typename PairList::Iterator Iterator;
 
 	enum
 	{
@@ -140,6 +151,16 @@ public:
 		return *this;
 	}
 
+	Mpool& getMpool () 
+	{
+		return this->datum_list->getMpool();
+	}
+
+	const Mpool& getMpool () const
+	{
+		return this->datum_list->getMpool();
+	}
+
 	Pair* insert (const K& key, const V& value)
 	{
 		PairNode* node = this->pair_list.insert (Pair(key, value));
@@ -156,15 +177,22 @@ public:
 
 	Pair* update (const K& key, const V& value)
 	{
-		PairNode* node = this->pair_list.update (Pair(key, value));
+		
+		//PairNode* node = this->pair_list.update (Pair(key, value));
+		//if (!node) return QSE_NULL;
+		//return &node->value;
+
+		PairNode* node = this->pair_list.template heterofindNode<K,HASHER,PairHeteroComparator> (key);
 		if (!node) return QSE_NULL;
-		return &node->value;
+		Pair& pair = node->value;
+		pair.value = value;
+		return &pair;
 	}
 
 	Pair* search (const K& key)
 	{
 		//PairNode* node = this->pair_list.update (Pair(key));
-		PairNode* node = this->pair_list.template heterofindNode <K,HASHER,PairHeteroComparator> (key);
+		PairNode* node = this->pair_list.template heterofindNode<K,HASHER,PairHeteroComparator> (key);
 		if (!node) return QSE_NULL;
 		return &node->value;
 	}
@@ -172,7 +200,32 @@ public:
 	int remove (const K& key)
 	{
 		//return this->pair_list.remove (Pair(key));
-		return this->pair_list.template heteroremove <K,HASHER,PairHeteroComparator> (key);
+		return this->pair_list.template heteroremove<K,HASHER,PairHeteroComparator> (key);
+	}
+
+	template <typename MK, typename MHASHER, typename MCOMPARATOR>
+	Pair* heterosearch (const MK& key)
+	{
+		typedef MHeteroComparator<MK,MCOMPARATOR> MComparator;
+		PairNode* node = this->pair_list.template heterosearch<MK,MHASHER,MComparator> (key);
+		if (!node) return QSE_NULL;
+		return &node->value;
+	}
+
+	template <typename MK, typename MHASHER, typename MCOMPARATOR>
+	const Pair* heterosearch (const MK& key) const
+	{
+		typedef MHeteroComparator<MK,MCOMPARATOR> MComparator;
+		PairNode* node = this->pair_list.template heterosearch<MK,MHASHER,MComparator> (key);
+		if (!node) return QSE_NULL;
+		return &node->value;
+	}
+
+	template <typename MK, typename MHASHER, typename MCOMPARATOR>
+	int heteroremove (const MK& key)
+	{
+		typedef MHeteroComparator<MK,MCOMPARATOR> MComparator;
+		return this->pair_list.template heteroremove<MK,MHASHER,MComparator> (key);
 	}
 
 	void clear ()
@@ -184,6 +237,12 @@ public:
 	qse_size_t getSize() const
 	{
 		return this->pair_list.getSize ();
+	}
+
+
+	Iterator getIterator (qse_size_t index = 0)
+	{
+		return this->pair_list.getIterator (index);
 	}
 
 protected:
@@ -212,90 +271,6 @@ public:
 		MIN_CAPACITY = 1,
 		MIN_LOAD_FACTOR = 20
 	};
-
-#if 0
-	class Iterator
-	{
-	public:
-		Iterator (): bucket_index(0), bucket_node(QSE_NULL) {}
-		Iterator (qse_size_t index, BucketNode* node): bucket_index(index), bucket_node(node) {}
-		Iterator (const Iterator& it): bucket_index (it.bucket_index), bucket_node(it.bucket_node) {}
-
-		Iterator& operator= (const Iterator& it) 
-		{
-			this->bucket_index = it.bucket_index;
-			this->bucket_node = it.bucket_node;
-			return *this;
-		}
-
-		Iterator& operator++ () // prefix increment
-		{
-			QSE_ASSERT (this->isLegit());
-			this->bucket_node = this->bucket_node->getNext();
-			if (!this->bucket_node)
-			{
-				while (this->bucket_index 
-			}
-			return *this;
-		}
-
-		Iterator operator++ (int) // postfix increment
-		{
-			QSE_ASSERT (this->isLegit());
-			Iterator saved (*this);
-			this->current = this->current->getNext(); //++(*this);
-			return saved;
-		}
-
-		Iterator& operator-- () // prefix decrement
-		{
-			QSE_ASSERT (this->isLegit());
-			this->current = this->current->getPrev();
-			return *this;
-		}
-
-		Iterator operator-- (int) // postfix decrement
-		{
-			QSE_ASSERT (this->isLegit());
-			Iterator saved (*this);
-			this->current = this->current->getPrev(); //--(*this);
-			return saved;
-		}
-
-		bool operator== (const Iterator& it) const
-		{
-			return this->bucket_index == it.bucket_index &&
-			       this->bucket_node == it.bucket_node;
-		}
-
-		bool operator!= (const Iterator& it) const
-		{
-			return this->bucket_index != it.bucket_index ||
-			       this->bucket_node != it.bucket_node;
-		}
-
-		bool isLegit () const 
-		{
-			// TODO: change this
-			return this->bucket_node != QSE_NULL;
-		}
-
-		T& operator* () // dereference
-		{
-			return this->bucket_node->getValue();
-		}
-
-		const T& operator* () const // dereference
-		{
-			return this->bucket_node->getValue();
-		}
-
-	protected:
-		SelfType* table;
-		qse_size_t bucket_index;
-		BucketNode* bucket_node;
-	};
-#endif
 
 protected:
 	Bucket** allocate_bucket (Mmgr* mm, qse_size_t bs, qse_size_t mpb_size) const
@@ -815,10 +790,6 @@ public:
 
 		return 0;
 	}
-
-	//Iterator getIterator ()
-	//{
-	//}
 
 protected:
 	mutable qse_size_t  pair_count;
