@@ -44,7 +44,7 @@ struct HashListHasher
 };
 
 template<typename T>
-struct HashListComparator
+struct HashListEqualer
 {
 	bool operator() (const T& v1, const T& v2) const
 	{
@@ -76,18 +76,18 @@ struct HashListResizer
 /// For a hash value of hc, this->nodes[hc * 2] points to the first node and
 /// this->nodes[hc * 2 + 1] ponits to the last node.     
 
-template <typename T, typename HASHER = HashListHasher<T>, typename COMPARATOR = HashListComparator<T>, typename RESIZER = HashListResizer >
+template <typename T, typename HASHER = HashListHasher<T>, typename EQUALER = HashListEqualer<T>, typename RESIZER = HashListResizer >
 class HashList: public Mmged
 {
 public:
-	typedef LinkedList<T,COMPARATOR> DatumList;
+	typedef LinkedList<T,EQUALER> DatumList;
 	typedef typename DatumList::Node Node;
 	typedef typename DatumList::Iterator Iterator;
 	typedef typename DatumList::ConstIterator ConstIterator;
-	typedef HashList<T,HASHER,COMPARATOR,RESIZER> SelfType;
+	typedef HashList<T,HASHER,EQUALER,RESIZER> SelfType;
 
 	typedef HashListHasher<T> DefaultHasher;
-	typedef HashListComparator<T> DefaultComparator;
+	typedef HashListEqualer<T> DefaultEqualer;
 	typedef HashListResizer DefaultResizer;
 
 	enum
@@ -304,7 +304,7 @@ protected:
 			do 
 			{
 				T& t = np->value;
-				if (this->comparator(datum, t)) return np;
+				if (this->equaler(datum, t)) return np;
 				if (np == this->nodes[tail]) break;
 				np = np->getNextNode ();
 			}
@@ -314,10 +314,10 @@ protected:
 		return QSE_NULL;
 	}
 
-	template <typename MT, typename MCOMPARATOR>
+	template <typename MT, typename MEQUALER>
 	Node* heterofind_node (const MT& datum, qse_size_t hc) const
 	{
-		MCOMPARATOR is_equal;
+		MEQUALER m_Equaler;
 
 		qse_size_t head, tail;
 		Node* np;
@@ -330,7 +330,7 @@ protected:
 			do 
 			{
 				T& t = np->value;
-				if (is_equal(datum, t)) return np;
+				if (m_Equaler(datum, t)) return np;
 				if (np == this->nodes[tail]) break;
 				np = np->getNextNode ();
 			}
@@ -338,53 +338,6 @@ protected:
 		}
 
 		return QSE_NULL;
-	}
-
-	Node* insert_value (const T& datum, bool overwrite = true)
-	{
-		qse_size_t hc, head, tail;
-		Node* np;
-
-		hc = this->hasher(datum) % this->node_capacity;
-		head = hc << 1; tail = head + 1;
-
-		np = this->nodes[head];
-		if (np) 
-		{
-			do 
-			{
-				T& t = np->value;
-				if (this->comparator(datum, t)) 
-				{
-					if (!overwrite) return QSE_NULL;
-					t = datum;
-					return np;
-				}
-
-				if (np == this->nodes[tail]) break;
-				np = np->getNextNode ();
-			}
-			while (1); 
-		}
-
-		if (datum_list->getSize() >= threshold) 
-		{
-			this->rehash ();
-			hc = this->hasher(datum) % this->node_capacity;
-			head = hc << 1; tail = head + 1;
-		}
-
-		if (nodes[head] == QSE_NULL) 
-		{
-			this->nodes[head] = this->datum_list->insert ((Node*)QSE_NULL, datum);
-			this->nodes[tail] = this->nodes[head];
-		}
-		else 
-		{
-			this->nodes[head] = this->datum_list->insert (this->nodes[head], datum);
-		}
-
-		return this->nodes[head];
 	}
 
 public:
@@ -412,34 +365,34 @@ public:
 		return &b->value;
 	}
 
-	template <typename MT, typename MHASHER, typename MCOMPARATOR>
+	template <typename MT, typename MHASHER, typename MEQUALER>
 	Node* heterofindNode (const MT& datum)
 	{
 		MHASHER hash;
-		return this->heterofind_node<MT,MCOMPARATOR> (datum, hash(datum) % this->node_capacity);
+		return this->heterofind_node<MT,MEQUALER> (datum, hash(datum) % this->node_capacity);
 	}
 
-	template <typename MT, typename MHASHER, typename MCOMPARATOR>
+	template <typename MT, typename MHASHER, typename MEQUALER>
 	const Node* heterofindNode (const MT& datum) const
 	{
 		MHASHER hash;
-		return this->heterofind_node<MT,MCOMPARATOR> (datum, hash(datum) % this->node_capacity);
+		return this->heterofind_node<MT,MEQUALER> (datum, hash(datum) % this->node_capacity);
 	}
 
-	template <typename MT, typename MHASHER, typename MCOMPARATOR>
+	template <typename MT, typename MHASHER, typename MEQUALER>
 	T* heterofindValue(const MT& datum)
 	{
 		MHASHER hash;
-		Node* b = this->heterofind_node<MT,MCOMPARATOR> (datum, hash(datum) % this->node_capacity);
+		Node* b = this->heterofind_node<MT,MEQUALER> (datum, hash(datum) % this->node_capacity);
 		if (!b) return QSE_NULL;
 		return &b->value;
 	}
 
-	template <typename MT, typename MHASHER, typename MCOMPARATOR>
+	template <typename MT, typename MHASHER, typename MEQUALER>
 	const T* heterofindValue(const MT& datum) const
 	{
 		MHASHER hash;
-		Node* b = this->heterofind_node<MT,MCOMPARATOR> (datum, hash(datum) % this->node_capacity);
+		Node* b = this->heterofind_node<MT,MEQUALER> (datum, hash(datum) % this->node_capacity);
 		if (!b) return QSE_NULL;
 		return &b->value;
 	}
@@ -460,23 +413,82 @@ public:
 		return this->find_node (datum);
 	}
 
-	template <typename MT, typename MHASHER, typename MCOMPARATOR>
+	template <typename MT, typename MHASHER, typename MEQUALER>
 	Node* heterosearch (const MT& datum)
 	{
 		MHASHER hash;
-		return this->heterofind_node<MT,MCOMPARATOR> (datum, hash(datum) % this->node_capacity);
+		return this->heterofind_node<MT,MEQUALER> (datum, hash(datum) % this->node_capacity);
 	}
 
-	template <typename MT, typename MHASHER, typename MCOMPARATOR>
+	template <typename MT, typename MHASHER, typename MEQUALER>
 	const Node* heterosearch (const MT& datum) const
 	{
 		MHASHER hash;
-		return this->heterofind_node<MT,MCOMPARATOR> (datum, hash(datum) % this->node_capacity);
+		return this->heterofind_node<MT,MEQUALER> (datum, hash(datum) % this->node_capacity);
+	}
+
+	Node* inject (const T& datum, int mode, bool* injected = QSE_NULL)
+	{
+		qse_size_t hc, head, tail;
+		Node* np;
+
+		hc = this->hasher(datum) % this->node_capacity;
+		head = hc << 1; tail = head + 1;
+
+		np = this->nodes[head];
+		if (np) 
+		{
+			do 
+			{
+				T& t = np->value;
+				if (this->equaler(datum, t)) 
+				{
+					if (injected) *injected = false;
+					if (mode <= -1) return QSE_NULL; // failure
+					if (mode >= 1) t = datum; // overwrite
+					return np;
+				}
+
+				if (np == this->nodes[tail]) break;
+				np = np->getNextNode ();
+			}
+			while (1); 
+		}
+
+		if (datum_list->getSize() >= threshold) 
+		{
+			this->rehash ();
+			hc = this->hasher(datum) % this->node_capacity;
+			head = hc << 1; tail = head + 1;
+		}
+
+		if (nodes[head] == QSE_NULL) 
+		{
+			this->nodes[head] = this->datum_list->insert ((Node*)QSE_NULL, datum);
+			this->nodes[tail] = this->nodes[head];
+		}
+		else 
+		{
+			this->nodes[head] = this->datum_list->insert (this->nodes[head], datum);
+		}
+
+		if (injected) *injected = true;
+		return this->nodes[head];
 	}
 
 	Node* insert (const T& datum)
 	{
-		return this->insert_value (datum, false);
+		return this->inject (datum, -1, QSE_NULL);
+	}
+
+	Node* ensert (const T& datum)
+	{
+		return this->inject (datum, 0, QSE_NULL);
+	}
+
+	Node* upsert (const T& datum)
+	{
+		return this->inject (datum, 1, QSE_NULL);
 	}
 
 	Node* update (const T& datum)
@@ -484,11 +496,6 @@ public:
 		Node* node = this->find_node (datum);
 		if (node) node->value = datum;
 		return node;
-	}
-
-	Node* upsert (const T& datum)
-	{
-		return this->insert_value (datum, true);
 	}
 
 	int remove (const T& datum)
@@ -505,7 +512,7 @@ public:
 			do 
 			{
 				T& t = np->value;
-				if (this->comparator(datum, t)) 
+				if (this->equaler(datum, t)) 
 				{
 					if (this->nodes[head] == this->nodes[tail])
 					{
@@ -534,13 +541,13 @@ public:
 		return -1;
 	}
 
-	template <typename MT, typename MHASHER, typename MCOMPARATOR>
+	template <typename MT, typename MHASHER, typename MEQUALER>
 	int heteroremove (const MT& datum)
 	{
 		MHASHER hash;
 		qse_size_t hc = hash(datum) % this->node_capacity;
 
-		Node* np = this->heterofind_node<MT,MCOMPARATOR> (datum, hc);
+		Node* np = this->heterofind_node<MT,MEQUALER> (datum, hc);
 		if (np)
 		{
 			qse_size_t head, tail;
@@ -614,7 +621,7 @@ protected:
 	mutable qse_size_t threshold;
 	qse_size_t         load_factor;
 	HASHER             hasher;
-	COMPARATOR         comparator;
+	EQUALER            equaler;
 	RESIZER            resizer;
 
 	void rehash () 

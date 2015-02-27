@@ -44,7 +44,7 @@ struct HashTableHasher
 };
 
 template<typename T>
-struct HashTableComparator
+struct HashTableEqualer
 {
 	// it must return true if two values are equal
 	bool operator() (const T& v1, const T& v2) const
@@ -55,15 +55,15 @@ struct HashTableComparator
 
 typedef HashListResizer HashTableResizer;
 
-template <typename K, typename V, typename HASHER = HashTableHasher<K>, typename COMPARATOR = HashTableComparator<K>, typename RESIZER = HashTableResizer>
+template <typename K, typename V, typename HASHER = HashTableHasher<K>, typename EQUALER = HashTableEqualer<K>, typename RESIZER = HashTableResizer>
 class HashTable: public Mmged
 {
 public:
 	typedef Association<K,V> Pair;
-	typedef HashTable<K,V,HASHER,COMPARATOR,RESIZER> SelfType;
+	typedef HashTable<K,V,HASHER,EQUALER,RESIZER> SelfType;
 
 	typedef HashTableHasher<K> DefaultHasher;
-	typedef HashTableComparator<K> DefaultComparator;
+	typedef HashTableEqualer<K> DefaultEqualer;
 	typedef HashTableResizer DefaultResizer;
 
 	struct PairHasher
@@ -75,35 +75,35 @@ public:
 		}
 	};
 
-	struct PairComparator
+	struct PairEqualer
 	{
 		qse_size_t operator() (const Pair& p1, const Pair& p2) const
 		{
-			COMPARATOR comparator;
-			return comparator (p1.key, p2.key);
+			EQUALER equaler;
+			return equaler (p1.key, p2.key);
 		}
 	};
 
-	struct PairHeteroComparator
+	struct PairHeteroEqualer
 	{
 		qse_size_t operator() (const K& p1, const Pair& p2) const
 		{
-			COMPARATOR is_equal;
-			return is_equal (p1, p2.key);
+			EQUALER equaler;
+			return equaler (p1, p2.key);
 		}
 	};
 
-	template <typename MK, typename MCOMPARATOR>
-	struct MHeteroComparator
+	template <typename MK, typename MEQUALER>
+	struct MHeteroEqualer
 	{
 		qse_size_t operator() (const MK& p1, const Pair& p2) const
 		{
-			MCOMPARATOR is_equal;
-			return is_equal (p1, p2.key);
+			MEQUALER mequaler;
+			return mequaler (p1, p2.key);
 		}
 	};
 
-	typedef HashList<Pair,PairHasher,PairComparator,RESIZER> PairList;
+	typedef HashList<Pair,PairHasher,PairEqualer,RESIZER> PairList;
 	typedef typename PairList::Node PairNode;
 	typedef typename PairList::Iterator Iterator;
 	typedef typename PairList::ConstIterator ConstIterator;
@@ -180,6 +180,13 @@ public:
 		return this->pair_list.getTailNode ();
 	}
 
+	Pair* inject (const K& key, const V& value, int mode, bool* injected = QSE_NULL)
+	{
+		PairNode* node = this->pair_list.inject (Pair(key, value), mode, injected);
+		if (!node) return QSE_NULL;
+		return &node->value;
+	}
+
 	Pair* insert (const K& key, const V& value)
 	{
 		PairNode* node = this->pair_list.insert (Pair(key, value));
@@ -187,11 +194,29 @@ public:
 		return &node->value;
 	}
 
-	Pair* upsert (const K& key, const V& value)
+	Pair* ensert (const K& key, const V& value)
 	{
-		PairNode* node = this->pair_list.upsert (Pair(key, value));
+		PairNode* node = this->pair_list.ensert (Pair(key, value));
 		if (!node) return QSE_NULL;
 		return &node->value;
+	}
+
+	Pair* upsert (const K& key, const V& value)
+	{
+		//PairNode* node = this->pair_list.upsert (Pair(key, value));
+		//if (!node) return QSE_NULL;
+		//return &node->value;
+
+		// Don't call pair_list.upsert() to make sure that the 'key' object
+		// itself remains identical after potential update operation. 
+		// pair_list.upsert() changes the Pair object as a whole. so this
+		// trick is required.
+		bool injected;
+		PairNode* node = this->pair_list.inject (Pair(key, value), 0, &injected);
+		QSE_ASSERT (node != QSE_NULL);
+		Pair& pair = node->value;
+		if (injected) pair.value = value;
+		return &pair;
 	}
 
 	Pair* update (const K& key, const V& value)
@@ -200,7 +225,7 @@ public:
 		//if (!node) return QSE_NULL;
 		//return &node->value;
 
-		PairNode* node = this->pair_list.template heterofindNode<K,HASHER,PairHeteroComparator> (key);
+		PairNode* node = this->pair_list.template heterofindNode<K,HASHER,PairHeteroEqualer> (key);
 		if (!node) return QSE_NULL;
 		Pair& pair = node->value;
 		pair.value = value;
@@ -210,7 +235,7 @@ public:
 	Pair* search (const K& key)
 	{
 		//PairNode* node = this->pair_list.update (Pair(key));
-		PairNode* node = this->pair_list.template heterofindNode<K,HASHER,PairHeteroComparator> (key);
+		PairNode* node = this->pair_list.template heterofindNode<K,HASHER,PairHeteroEqualer> (key);
 		if (!node) return QSE_NULL;
 		return &node->value;
 	}
@@ -218,32 +243,32 @@ public:
 	int remove (const K& key)
 	{
 		//return this->pair_list.remove (Pair(key));
-		return this->pair_list.template heteroremove<K,HASHER,PairHeteroComparator> (key);
+		return this->pair_list.template heteroremove<K,HASHER,PairHeteroEqualer> (key);
 	}
 
-	template <typename MK, typename MHASHER, typename MCOMPARATOR>
+	template <typename MK, typename MHASHER, typename MEQUALER>
 	Pair* heterosearch (const MK& key)
 	{
-		typedef MHeteroComparator<MK,MCOMPARATOR> MComparator;
-		PairNode* node = this->pair_list.template heterosearch<MK,MHASHER,MComparator> (key);
+		typedef MHeteroEqualer<MK,MEQUALER> MEqualer;
+		PairNode* node = this->pair_list.template heterosearch<MK,MHASHER,MEqualer> (key);
 		if (!node) return QSE_NULL;
 		return &node->value;
 	}
 
-	template <typename MK, typename MHASHER, typename MCOMPARATOR>
+	template <typename MK, typename MHASHER, typename MEQUALER>
 	const Pair* heterosearch (const MK& key) const
 	{
-		typedef MHeteroComparator<MK,MCOMPARATOR> MComparator;
-		PairNode* node = this->pair_list.template heterosearch<MK,MHASHER,MComparator> (key);
+		typedef MHeteroEqualer<MK,MEQUALER> MEqualer;
+		PairNode* node = this->pair_list.template heterosearch<MK,MHASHER,MEqualer> (key);
 		if (!node) return QSE_NULL;
 		return &node->value;
 	}
 
-	template <typename MK, typename MHASHER, typename MCOMPARATOR>
+	template <typename MK, typename MHASHER, typename MEQUALER>
 	int heteroremove (const MK& key)
 	{
-		typedef MHeteroComparator<MK,MCOMPARATOR> MComparator;
-		return this->pair_list.template heteroremove<MK,MHASHER,MComparator> (key);
+		typedef MHeteroEqualer<MK,MEQUALER> MEqualer;
+		return this->pair_list.template heteroremove<MK,MHASHER,MEqualer> (key);
 	}
 
 	void clear (bool clear_mpool = false)
