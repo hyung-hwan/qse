@@ -304,7 +304,7 @@ protected:
 			do 
 			{
 				T& t = np->value;
-				if (this->equaler(datum, t)) return np;
+				if (this->equaler (datum, t)) return np;
 				if (np == this->nodes[tail]) break;
 				np = np->getNextNode ();
 			}
@@ -317,7 +317,7 @@ protected:
 	template <typename MT, typename MEQUALER>
 	Node* heterofind_node (const MT& datum, qse_size_t hc) const
 	{
-		MEQUALER m_Equaler;
+		MEQUALER mequaler;
 
 		qse_size_t head, tail;
 		Node* np;
@@ -330,7 +330,7 @@ protected:
 			do 
 			{
 				T& t = np->value;
-				if (m_Equaler(datum, t)) return np;
+				if (mequaler (datum, t)) return np;
 				if (np == this->nodes[tail]) break;
 				np = np->getNextNode ();
 			}
@@ -441,7 +441,7 @@ public:
 			do 
 			{
 				T& t = np->value;
-				if (this->equaler(datum, t)) 
+				if (this->equaler (datum, t)) 
 				{
 					if (injected) *injected = false;
 					if (mode <= -1) return QSE_NULL; // failure
@@ -512,7 +512,7 @@ public:
 			do 
 			{
 				T& t = np->value;
-				if (this->equaler(datum, t)) 
+				if (this->equaler (datum, t)) 
 				{
 					if (this->nodes[head] == this->nodes[tail])
 					{
