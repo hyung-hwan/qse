@@ -34,14 +34,14 @@
 QSE_BEGIN_NAMESPACE(QSE)
 /////////////////////////////////
 
-template <typename T, typename COMPARATOR> class LinkedList;
+template <typename T, typename EQUALER> class LinkedList;
 
-template <typename T, typename COMPARATOR> 
+template <typename T, typename EQUALER> 
 class LinkedListNode
 {
 public:
-	friend class LinkedList<T,COMPARATOR>;
-	typedef LinkedListNode<T,COMPARATOR> SelfType;
+	friend class LinkedList<T,EQUALER>;
+	typedef LinkedListNode<T,EQUALER> SelfType;
 
 	T value; // you can use this variable or accessor functions below
 
@@ -79,12 +79,12 @@ protected:
 	}
 };
 
-template <typename T, typename COMPARATOR, typename NODE, typename GET_T>
+template <typename T, typename EQUALER, typename NODE, typename GET_T>
 class LinkedListIterator {
 public:
-	friend class LinkedList<T,COMPARATOR>;
+	friend class LinkedList<T,EQUALER>;
 	typedef NODE Node;
-	typedef LinkedListIterator<T,COMPARATOR,NODE,GET_T> SelfType;
+	typedef LinkedListIterator<T,EQUALER,NODE,GET_T> SelfType;
 
 	LinkedListIterator (): current(QSE_NULL) {}
 	LinkedListIterator (Node* node): current(node) {}
@@ -178,7 +178,7 @@ protected:
 };
 
 template<typename T>
-struct LinkedListComparator
+struct LinkedListEqualer
 {
 	// it must return true if two values are equal
 	bool operator() (const T& v1, const T& v2) const
@@ -188,17 +188,17 @@ struct LinkedListComparator
 };
 
 ///
-/// The LinkedList<T,COMPARATOR> class provides a template for a doubly-linked list.
+/// The LinkedList<T,EQUALER> class provides a template for a doubly-linked list.
 ///
-template <typename T, typename COMPARATOR = LinkedListComparator<T> > class LinkedList: public Mmged
+template <typename T, typename EQUALER = LinkedListEqualer<T> > class LinkedList: public Mmged
 {
 public:
-	typedef LinkedList<T,COMPARATOR> SelfType;
-	typedef LinkedListNode<T,COMPARATOR> Node;
-	typedef LinkedListIterator<T,COMPARATOR,Node,T> Iterator;
-	typedef LinkedListIterator<T,COMPARATOR,const Node,const T> ConstIterator;
+	typedef LinkedList<T,EQUALER> SelfType;
+	typedef LinkedListNode<T,EQUALER> Node;
+	typedef LinkedListIterator<T,EQUALER,Node,T> Iterator;
+	typedef LinkedListIterator<T,EQUALER,const Node,const T> ConstIterator;
 
-	typedef LinkedListComparator<T> DefaultComparator;
+	typedef LinkedListEqualer<T> DefaultEqualer;
 
 	enum 
 	{
@@ -270,7 +270,7 @@ public:
 
 	bool isEmpty () const 
 	{
-		return this->node_count == 0;
+		return this->node_count <= 0;
 	}
 
 	/// The insertNode() function inserts an externally created \a node
@@ -576,7 +576,7 @@ public:
 	{
 		for (Node* p = this->head_node; p; p = p->next) 
 		{
-			if (this->comparator (value, p->value)) return p;
+			if (this->equaler (value, p->value)) return p;
 		}
 		return QSE_NULL;
 	}
@@ -585,7 +585,7 @@ public:
 	{
 		for (Node* p = tail_node; p; p = p->prev) 
 		{
-			if (this->comparator (value, p->value)) return p;
+			if (this->equaler (value, p->value)) return p;
 		}
 		return QSE_NULL;
 	}
@@ -594,7 +594,7 @@ public:
 	{
 		for (Node* p = head; p; p = p->next)
 		{
-			if (this->comparator (value, p->value)) return p;
+			if (this->equaler (value, p->value)) return p;
 		}
 		return QSE_NULL;
 	}
@@ -603,7 +603,7 @@ public:
 	{
 		for (Node* p = tail; p; p = p->prev) 
 		{
-			if (this->comparator (value, p->value)) return p;
+			if (this->equaler (value, p->value)) return p;
 		}
 		return QSE_NULL;
 	}
@@ -613,7 +613,7 @@ public:
 		qse_size_t index = 0;
 		for (Node* p = this->head_node; p; p = p->next) 
 		{
-			if (this->comparator (value, p->value)) return index;
+			if (this->equaler (value, p->value)) return index;
 			index++;
 		}
 		return INVALID_INDEX;
@@ -625,7 +625,7 @@ public:
 		for (Node* p = tail_node; p; p = p->prev) 
 		{
 			index--;
-			if (this->comparator (value, p->value)) return index;
+			if (this->equaler (value, p->value)) return index;
 		}
 		return INVALID_INDEX;
 	}
@@ -696,7 +696,7 @@ public:
 
 protected:
 	Mpool       mp;
-	COMPARATOR  comparator;
+	EQUALER     equaler;
 	Node*       head_node;
 	Node*       tail_node;
 	qse_size_t  node_count;
