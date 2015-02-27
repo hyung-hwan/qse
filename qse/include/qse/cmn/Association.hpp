@@ -24,8 +24,8 @@
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _QSE_CMN_COUPLE_HPP_
-#define _QSE_CMN_COUPLE_HPP_
+#ifndef _QSE_CMN_ASSOCIATION_HPP_
+#define _QSE_CMN_ASSOCIATION_HPP_
 
 #include <qse/types.h>
 #include <qse/macros.h>
@@ -34,24 +34,25 @@
 QSE_BEGIN_NAMESPACE(QSE)
 /////////////////////////////////
 
-template <typename KEY, typename VALUE> class Couple
+template <typename K, typename V>
+class Association
 {
 public:
-	KEY key;
-	VALUE value;
+	K key;
+	V value;
 
-	Couple () {}
-	Couple (const KEY& key): key (key) {}
-	Couple (const KEY& key, const VALUE& value): key (key), value (value) {} 
+	Association () {}
+	Association (const K& key): key (key) {}
+	Association (const K& key, const V& value): key (key), value (value) {} 
 
-	KEY& getKey () { return this->key; }
-	const KEY& getKey () const { return this->key; }
+	K& getKey () { return this->key; }
+	const K& getKey () const { return this->key; }
 
-	VALUE& getValue () { return this->value; }
-	const VALUE& getValue () const { return this->value; }
+	V& getValue () { return this->value; }
+	const V& getValue () const { return this->value; }
 
-	void setKey (const KEY& key) { this->key = key; }
-	void setValue (const VALUE& value) { this->value = value; }
+	void setKey (const K& key) { this->key = key; }
+	void setValue (const V& value) { this->value = value; }
 };
 
 /////////////////////////////////
