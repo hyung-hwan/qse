@@ -100,7 +100,7 @@ QSE_INLINE pair_t* qse_rbt_allocpair (
 		KPTR(n) = kcop (rbt, kptr, klen);
 		if (KPTR(n) == QSE_NULL)
 		{
-			QSE_MMGR_FREE (rbt->mmgr, n);		
+			QSE_MMGR_FREE (rbt->mmgr, n);
 			return QSE_NULL;
 		}
 	}
@@ -124,7 +124,7 @@ QSE_INLINE pair_t* qse_rbt_allocpair (
 		{
 			if (rbt->style->freeer[QSE_RBT_KEY] != QSE_NULL)
 				rbt->style->freeer[QSE_RBT_KEY] (rbt, KPTR(n), KLEN(n));
-			QSE_MMGR_FREE (rbt->mmgr, n);		
+			QSE_MMGR_FREE (rbt->mmgr, n);
 			return QSE_NULL;
 		}
 	}
@@ -350,7 +350,7 @@ static void rotate (rbt_t* rbt, pair_t* pivot, int leftwise)
 	parent = pivot->parent;
 	/* y for leftwise rotation, x for rightwise rotation */
 	z = pivot->child[cid1]; 
-	/* c1 for leftwise rotation, c1 for rightwise rotation */
+	/* c1 for leftwise rotation, c2 for rightwise rotation */
 	c = z->child[cid2]; 
 
 	z->parent = parent;
@@ -408,7 +408,7 @@ static void adjust (rbt_t* rbt, pair_t* pair)
 		{
 			x_par->color = QSE_RBT_BLACK;
 			tmp->color = QSE_RBT_BLACK;
-			x_par->parent->color = QSE_RBT_RED;	
+			x_par->parent->color = QSE_RBT_RED;
 			pair = x_par->parent;
 		}
 		else
