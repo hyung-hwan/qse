@@ -113,8 +113,10 @@ struct RedBlackTreeComparator
 {
 	int operator() (const T& v1, const T& v2) const
 	{
-		return (v1 > v2)? 1:
-		       (v1 < v2)? -1: 0;
+		if (v1 > v2) return 1;
+		if (v1 < v2) return -1;
+		QSE_ASSERT (v1 == v2);
+		return 0;
 	}
 };
 
@@ -250,6 +252,20 @@ public:
 
 	// no operator--
 
+	bool operator== (const SelfType& it) const
+	{
+		QSE_ASSERT (this->current != QSE_NULL);
+		return this->current == it.current &&
+		       this->previous == it.previous;
+	}
+
+	bool operator!= (const SelfType& it) const
+	{
+		QSE_ASSERT (this->current != QSE_NULL);
+		return this->current != it.current ||
+		       this->previous != it.previous;
+	}
+
 	bool isLegit() const
 	{
 		return current->notNil();
@@ -302,7 +318,10 @@ public:
 
 	typedef RedBlackTreeComparator<T> DefaultComparator;
 
-	RedBlackTree (Mmgr* mmgr = QSE_NULL, qse_size_t mpb_size = 0): Mmged(mmgr),  mp (mmgr, QSE_SIZEOF(Node), mpb_size), node_count (0)
+	RedBlackTree (Mmgr* mmgr = QSE_NULL, qse_size_t mpb_size = 0):
+		Mmged(mmgr),
+		mp (mmgr, QSE_SIZEOF(Node), mpb_size),
+		node_count (0)
 	{
 		// create a nil object
 		this->nil = new(&this->mp) Node();
@@ -311,9 +330,25 @@ public:
 		this->root = this->nil;
 	}
 
-	RedBlackTree (const RedBlackTree& rbt)
+	RedBlackTree (const RedBlackTree& rbt): 
+		Mmged(rbt.getMmgr()),
+		mp (rbt.getMmgr(), rbt.mp.getDatumSize(), rbt.mp.getBlockSize()),
+		node_count (0)
 	{
-		/* TODO */
+
+		// create a nil object
+		this->nil = new(&this->mp) Node();
+
+		// set root to nil
+		this->root = this->nil;
+
+		// TODO: do the level-order traversal to minize rebalancing.
+		Iterator it = rbt.getIterator();
+		while (it.isLegit())
+		{
+			this->insert (*it);
+			++it;
+		}
 	}
 
 	~RedBlackTree ()
@@ -326,7 +361,13 @@ public:
 	{
 		this->clear ();
 
-		/* TODO */
+		// TODO: do the level-order traversal to minize rebalancing.
+		Iterator it = rbt.getIterator();
+		while (it.isLegit())
+		{
+			this->insert (*it);
+			++it;
+		}
 
 		return *this;
 	}
@@ -792,6 +833,7 @@ public:
 	void clear (bool clear_mpool = false)
 	{
 		while (this->root->notNil()) this->remove_node (this->root);
+		QSE_ASSERT (this->root = this->nil);
 	}
 
 	Iterator getIterator (typename Iterator::Mode mode = Iterator::ASCENDING) const

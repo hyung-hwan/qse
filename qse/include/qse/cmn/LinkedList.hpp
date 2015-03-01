@@ -84,6 +84,7 @@ class LinkedListIterator
 {
 public:
 	friend class LinkedList<T,EQUALER>;
+	//typedef LinkedListNode<T,EQUALER> Node;
 	typedef NODE Node;
 	typedef LinkedListIterator<T,EQUALER,NODE,GET_T> SelfType;
 
@@ -162,11 +163,10 @@ public:
 		return this->current->getValue();
 	}
 
-	SelfType& setValue (const T& v) 
+	void setValue (const T& v) 
 	{
 		QSE_ASSERT (this->current != QSE_NULL);
 		this->current->setValue (v);
-		return *this;
 	}
 
 	Node* getNode ()
