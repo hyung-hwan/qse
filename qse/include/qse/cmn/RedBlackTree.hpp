@@ -49,6 +49,8 @@ public:
 		BLACK
 	};
 
+	// You must take extreme care not to screw up the whole tree by
+	// overriding the 'value' variable with a randome value.
 	T value; // you can use this variable or accessor functions below
 
 protected:
@@ -92,19 +94,18 @@ public:
 	const SelfType* getParent () const { return this->parent; }
 
 	SelfType* getLeft () { return this->left; }
-	const SelfType* getLeft () const { return this->left; }
+	const SelfType* getLeftConst () const { return this->left; }
 
 	SelfType* getRight () { return this->right; }
-	const SelfType* getRight () const { return this->right; }
+	const SelfType* getRightConst () const { return this->right; }
 
-	SelfType* getChild (int idx) { return idx == 0? this->left: this->right; }
-#if 0
-	void setBlack () { this->color = BLACK; }
-	void setRed () { this->color = RED; }
-	void setParent (SelfType* node) { this->parent = node; }
-	void setLeft (SelfType* node) { this->left = node; }
-	void setRight (SelfType* node) { this->right = node; }
-#endif
+	//void setBlack () { this->color = BLACK; }
+	//void setRed () { this->color = RED; }
+	//void setParent (SelfType* node) { this->parent = node; }
+	//void setLeft (SelfType* node) { this->left = node; }
+	//void setRight (SelfType* node) { this->right = node; }
+
+
 };
 
 template <typename T>
@@ -117,86 +118,79 @@ struct RedBlackTreeComparator
 	}
 };
 
-template <typename T, typename COMPARATOR, typename NODE, typename GET_T>
+template <typename T, typename COMPARATOR, typename GET_NODE, typename GET_T>
 class RedBlackTreeIterator
 {
 public:
-	typedef NODE Node;
-	typedef RedBlackTreeIterator<T,COMPARATOR,NODE,GET_T> SelfType;
+	typedef RedBlackTreeNode<T,COMPARATOR> Node;
+	typedef RedBlackTreeIterator<T,COMPARATOR,GET_NODE,GET_T> SelfType;
+	
+	typedef Node* (Node::*GetChild) ();
 
-	RedBlackTreeIterator (): current (QSE_NULL), previous (QSE_NULL), next_action (0) {}
-	RedBlackTreeIterator (Node* root): current (root) 
+	enum Mode
 	{
+		ASCENDING,
+		DESCENDING
+	};
+
+	RedBlackTreeIterator (): 
+		pending_action (0), current (QSE_NULL), previous (QSE_NULL),
+		get_left (QSE_NULL), get_right (QSE_NULL) 
+	{
+	}
+
+	RedBlackTreeIterator (Node* root, Mode mode): pending_action (0), current (root)
+	{
+		QSE_ASSERT (root != QSE_NULL);
+
 		this->previous = root->getParent();
+		if (mode == DESCENDING)
+		{
+			this->get_left = &Node::getRight;
+			this->get_right = &Node::getLeft;
+		}
+		else 
+		{
+			this->get_left = &Node::getLeft;
+			this->get_right = &Node::getRight;
+		}
+
 		this->__get_next_node ();
 	}
 
 protected:
 	void __get_next_node ()
 	{
-		int l = 1, r = 0;  // TODO:
+		QSE_ASSERT (this->current != QSE_NULL);
 
-		while (/*this->current &&*/ this->current->notNil())
+		while (this->current->notNil())
 		{
 			if (this->previous == this->current->getParent())
 			{
 				/* the previous node is the parent of the current node.
 				 * it indicates that we're going down to the getChild(l) */
-				if (this->current->getChild(l)->notNil())
+				if ((this->current->*this->get_left)()->notNil())
 				{
-					/* go to the getChild(l) child */
+					/* go to the left child */
 					this->previous = this->current;
-					this->current = this->current->getChild(l);
+					this->current = (this->current->*this->get_left)();
 				}
 				else
 				{
-					this->next_action = 1;
+					this->pending_action = 1;
 					break;
-					//if (walker (rbt, this->current, ctx) == QSE_RBT_WALK_STOP) break;
-
-#if 0
-					if (this->current->getChild(r)->notNil())
-					{
-						/* go down to the right node if exists */
-						this->previous = this->current;
-						this->current = this->current->getChild(r);
-					}
-					else
-					{
-						/* otherwise, move up to the parent */
-						this->previous = this->current;
-						this->current = this->current->getParent();
-					}
-#endif
 				}
 			}
-			else if (this->previous == this->current->getChild(l))
+			else if (this->previous == (this->current->*this->get_left)())
 			{
 				/* the left child has been already traversed */
-
-				this->next_action = 2;
+				this->pending_action = 2;
 				break;
-				//if (walker (rbt, this->current, ctx) == QSE_RBT_WALK_STOP) break;
-
-#if 0
-				if (this->current->getChild(r)->notNil())
-				{
-					/* go down to the right node if it exists */ 
-					this->previous = this->current;
-					this->current = this->current->getChild(r);
-				}
-				else
-				{
-					/* otherwise, move up to the parent */
-					this->previous = this->current;
-					this->current = this->current->getParent();
-				}
-#endif
 			}
 			else
 			{
 				/* both the left child and the right child have been traversed */
-				QSE_ASSERT (this->previous == this->current->getChild(r));
+				QSE_ASSERT (this->previous == (this->current->*this->get_right)());
 				/* just move up to the parent */
 				this->previous = this->current;
 				this->current = this->current->getParent();
@@ -206,15 +200,13 @@ protected:
 
 	void get_next_node ()
 	{
-		int l = 1, r = 0;  // TODO:
-
-		if (next_action ==  1)
+		if (pending_action ==  1)
 		{
-			if (this->current->getChild(r)->notNil())
+			if ((this->current->*this->get_right)()->notNil())
 			{
 				/* go down to the right node if exists */
 				this->previous = this->current;
-				this->current = this->current->getChild(r);
+				this->current = (this->current->*this->get_right)();
 			}
 			else
 			{
@@ -223,13 +215,13 @@ protected:
 				this->current = this->current->getParent();
 			}
 		}
-		else if (next_action == 2)
+		else if (pending_action == 2)
 		{
-			if (this->current->getChild(r)->notNil())
+			if ((this->current->*this->get_right)()->notNil())
 			{
 				/* go down to the right node if it exists */ 
 				this->previous = this->current;
-				this->current = this->current->getChild(r);
+				this->current = (this->current->*this->get_right)();
 			}
 			else
 			{
@@ -256,6 +248,8 @@ public:
 		return saved;
 	}
 
+	// no operator--
+
 	bool isLegit() const
 	{
 		return current->notNil();
@@ -273,15 +267,19 @@ public:
 
 	// no setValue().
 
-	Node* getNode ()
+	GET_NODE* getNode ()
 	{
 		return this->current;
 	}
 
 protected:
+	int pending_action;
 	Node* current;
 	Node* previous;
-	int next_action;
+	//Node* (Node::*get_left) ();
+	//Node* (Node::*get_right) ();
+	GetChild get_left;
+	GetChild get_right;
 };
 
 
@@ -306,9 +304,8 @@ public:
 
 	RedBlackTree (Mmgr* mmgr = QSE_NULL, qse_size_t mpb_size = 0): Mmged(mmgr),  mp (mmgr, QSE_SIZEOF(Node), mpb_size), node_count (0)
 	{
-		// initialize nil
+		// create a nil object
 		this->nil = new(&this->mp) Node();
-//		this->nil->setAll (Node::BLACK, this->nil, this->nil, this->nil);
 
 		// set root to nil
 		this->root = this->nil;
@@ -327,7 +324,10 @@ public:
 
 	RedBlackTree& operator= (const RedBlackTree& rbt)
 	{
+		this->clear ();
+
 		/* TODO */
+
 		return *this;
 	}
 
@@ -794,16 +794,14 @@ public:
 		while (this->root->notNil()) this->remove_node (this->root);
 	}
 
-	Iterator getIterator () const
+	Iterator getIterator (typename Iterator::Mode mode = Iterator::ASCENDING) const
 	{
-		return Iterator (this->root);
+		return Iterator (this->root, mode);
 	}
 
-	void dump (Node* node)
+	ConstIterator getConstIterator (typename ConstIterator::Mode mode = ConstIterator::ASCENDING) const
 	{
-		printf ("%d %d\n", node->value.getX(), node->value.getY());
-		if (node->left->notNil()) this->dump (node->left);
-		if (node->right->notNil()) this->dump (node->right);
+		return ConstIterator (this->root, mode);
 	}
 
 protected:
@@ -813,7 +811,6 @@ protected:
 	qse_size_t node_count;
 	Node*      nil; // internal node to present nil
 	Node*      root; // root node.
-
 };
 
 
