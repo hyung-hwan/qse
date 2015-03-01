@@ -80,7 +80,8 @@ protected:
 };
 
 template <typename T, typename EQUALER, typename NODE, typename GET_T>
-class LinkedListIterator {
+class LinkedListIterator 
+{
 public:
 	friend class LinkedList<T,EQUALER>;
 	typedef NODE Node;

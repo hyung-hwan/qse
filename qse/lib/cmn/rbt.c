@@ -95,7 +95,7 @@ QSE_INLINE pair_t* qse_rbt_allocpair (
 		KPTR(n) = n + 1;
 		if (kptr) QSE_MEMCPY (KPTR(n), kptr, KTOB(rbt,klen));
 	}
-	else 
+	else
 	{
 		KPTR(n) = kcop (rbt, kptr, klen);
 		if (KPTR(n) == QSE_NULL)
@@ -113,11 +113,11 @@ QSE_INLINE pair_t* qse_rbt_allocpair (
 	else if (vcop == QSE_RBT_COPIER_INLINE)
 	{
 		VPTR(n) = n + 1;
-		if (kcop == QSE_RBT_COPIER_INLINE) 
+		if (kcop == QSE_RBT_COPIER_INLINE)
 			VPTR(n) = (byte_t*)VPTR(n) + KTOB(rbt,klen);
 		if (vptr) QSE_MEMCPY (VPTR(n), vptr, VTOB(rbt,vlen));
 	}
-	else 
+	else
 	{
 		VPTR(n) = vcop (rbt, vptr, vlen);
 		if (VPTR(n) != QSE_NULL)
@@ -134,7 +134,7 @@ QSE_INLINE pair_t* qse_rbt_allocpair (
 
 QSE_INLINE void qse_rbt_freepair (rbt_t* rbt, pair_t* pair)
 {
-	if (rbt->style->freeer[QSE_RBT_KEY] != QSE_NULL) 
+	if (rbt->style->freeer[QSE_RBT_KEY] != QSE_NULL)
 		rbt->style->freeer[QSE_RBT_KEY] (rbt, KPTR(pair), KLEN(pair));
 	if (rbt->style->freeer[QSE_RBT_VAL] != QSE_NULL)
 		rbt->style->freeer[QSE_RBT_VAL] (rbt, VPTR(pair), VLEN(pair));
@@ -235,7 +235,7 @@ int qse_rbt_init (rbt_t* rbt, mmgr_t* mmgr, int kscale, int vscale)
 	rbt->size = 0;
 
 	rbt->style = &style[0];
-	
+
 	/* self-initializing nil */
 	QSE_MEMSET(&rbt->xnil, 0, QSE_SIZEOF(rbt->xnil));
 	rbt->xnil.color = QSE_RBT_BLACK;
@@ -299,11 +299,11 @@ static void rotate (rbt_t* rbt, pair_t* pivot, int leftwise)
 {
 	/*
 	 * == leftwise rotation
-	 * move the pivot pair down to the poistion of the pivot's original 
-	 * left child(x). move the pivot's right child(y) to the pivot's original 
-	 * position. as 'c1' is between 'y' and 'pivot', move it to the right 
+	 * move the pivot pair down to the poistion of the pivot's original
+	 * left child(x). move the pivot's right child(y) to the pivot's original
+	 * position. as 'c1' is between 'y' and 'pivot', move it to the right
 	 * of the new pivot position.
-	 *       parent                   parent 
+	 *       parent                   parent
 	 *        | | (left or right?)      | |
 	 *       pivot                      y
 	 *       /  \                     /  \
@@ -312,23 +312,23 @@ static void rotate (rbt_t* rbt, pair_t* pivot, int leftwise)
 	 *         c1  c2            x   c1
 	 *
 	 * == rightwise rotation
-	 * move the pivot pair down to the poistion of the pivot's original 
-	 * right child(y). move the pivot's left child(x) to the pivot's original 
-	 * position. as 'c2' is between 'x' and 'pivot', move it to the left 
+	 * move the pivot pair down to the poistion of the pivot's original
+	 * right child(y). move the pivot's left child(x) to the pivot's original
+	 * position. as 'c2' is between 'x' and 'pivot', move it to the left
 	 * of the new pivot position.
 	 *
-	 *       parent                   parent 
+	 *       parent                   parent
 	 *        | | (left or right?)      | |
 	 *       pivot                      x
 	 *       /  \                     /  \
-	 *     x     y    =====>        c1   pivot          
+	 *     x     y    =====>        c1   pivot
 	 *    / \                            /  \
 	 *   c1  c2                         c2   y
 	 *
 	 *
 	 * the actual implementation here resolves the pivot's relationship to
 	 * its parent by comparaing pointers as it is not known if the pivot pair
-	 * is the left child or the right child of its parent, 
+	 * is the left child or the right child of its parent,
 	 */
 
 	pair_t* parent, * z, * c;
@@ -349,9 +349,9 @@ static void rotate (rbt_t* rbt, pair_t* pivot, int leftwise)
 
 	parent = pivot->parent;
 	/* y for leftwise rotation, x for rightwise rotation */
-	z = pivot->child[cid1]; 
+	z = pivot->child[cid1];
 	/* c1 for leftwise rotation, c2 for rightwise rotation */
-	c = z->child[cid2]; 
+	c = z->child[cid2];
 
 	z->parent = parent;
 	if (parent)
@@ -391,7 +391,7 @@ static void adjust (rbt_t* rbt, pair_t* pair)
 
 		QSE_ASSERT (x_par->parent != QSE_NULL);
 
-		if (x_par == x_par->parent->child[LEFT]) 
+		if (x_par == x_par->parent->child[LEFT])
 		{
 			tmp = x_par->parent->child[RIGHT];
 			tmp2 = x_par->child[RIGHT];
@@ -430,10 +430,10 @@ static void adjust (rbt_t* rbt, pair_t* pair)
 static pair_t* change_pair_val (
 	rbt_t* rbt, pair_t* pair, void* vptr, size_t vlen)
 {
-	if (VPTR(pair) == vptr && VLEN(pair) == vlen) 
+	if (VPTR(pair) == vptr && VLEN(pair) == vlen)
 	{
 		/* if the old value and the new value are the same,
-		 * it just calls the handler for this condition. 
+		 * it just calls the handler for this condition.
 		 * No value replacement occurs. */
 		if (rbt->style->keeper != QSE_NULL)
 		{
@@ -461,7 +461,7 @@ static pair_t* change_pair_val (
 			else
 			{
 				/* need to reconstruct the pair */
-				pair_t* p = qse_rbt_allocpair (rbt, 
+				pair_t* p = qse_rbt_allocpair (rbt,
 					KPTR(pair), KLEN(pair),
 					vptr, vlen);
 				if (p == QSE_NULL) return QSE_NULL;
@@ -477,7 +477,7 @@ static pair_t* change_pair_val (
 					{
 						pair->parent->left = p;
 					}
-					else 
+					else
 					{
 						QSE_ASSERT (pair->parent->right == pair);
 						pair->parent->right = p;
@@ -492,7 +492,7 @@ static pair_t* change_pair_val (
 				return p;
 			}
 		}
-		else 
+		else
 		{
 			void* nvptr = vcop (rbt, vptr, vlen);
 			if (nvptr == QSE_NULL) return QSE_NULL;
@@ -501,7 +501,7 @@ static pair_t* change_pair_val (
 		}
 
 		/* free up the old value */
-		if (rbt->style->freeer[QSE_RBT_VAL] != QSE_NULL) 
+		if (rbt->style->freeer[QSE_RBT_VAL] != QSE_NULL)
 		{
 			rbt->style->freeer[QSE_RBT_VAL] (rbt, ovptr, ovlen);
 		}
@@ -515,12 +515,12 @@ static pair_t* insert (
 {
 	pair_t* x_cur = rbt->root;
 	pair_t* x_par = QSE_NULL;
-	pair_t* x_new; 
+	pair_t* x_new;
 
 	while (!IS_NIL(rbt,x_cur))
 	{
 		int n = rbt->style->comper (rbt, kptr, klen, KPTR(x_cur), KLEN(x_cur));
-		if (n == 0) 
+		if (n == 0)
 		{
 			switch (opt)
 			{
@@ -530,7 +530,7 @@ static pair_t* insert (
 
 				case ENSERT:
 					/* return existing pair */
-					return x_cur; 
+					return x_cur;
 
 				case INSERT:
 					/* return failure */
@@ -609,18 +609,18 @@ pair_t* qse_rbt_cbsert (
 {
 	pair_t* x_cur = rbt->root;
 	pair_t* x_par = QSE_NULL;
-	pair_t* x_new; 
+	pair_t* x_new;
 
 	while (!IS_NIL(rbt,x_cur))
 	{
 		int n = rbt->style->comper (rbt, kptr, klen, KPTR(x_cur), KLEN(x_cur));
-		if (n == 0) 
+		if (n == 0)
 		{
-			/* back up the contents of the current pair 
+			/* back up the contents of the current pair
 			 * in case it is reallocated */
 			pair_t tmp;
 
-			tmp = *x_cur;	 
+			tmp = *x_cur;
 
 			/* call the callback function to manipulate the pair */
 			x_new = cbserter (rbt, x_cur, kptr, klen, ctx);
@@ -647,7 +647,7 @@ pair_t* qse_rbt_cbsert (
 					{
 						tmp.parent->left = x_new;
 					}
-					else 
+					else
 					{
 						QSE_ASSERT (tmp.parent->right == x_cur);
 						tmp.parent->right = x_new;
@@ -730,7 +730,7 @@ static void adjust_for_delete (rbt_t* rbt, pair_t* pair, pair_t* par)
 			{
 				if (tmp->right->color == QSE_RBT_BLACK)
 				{
-					if (!IS_NIL(rbt,tmp->left)) 
+					if (!IS_NIL(rbt,tmp->left))
 						tmp->left->color = QSE_RBT_BLACK;
 					tmp->color = QSE_RBT_RED;
 					rotate_right (rbt, tmp);
@@ -946,7 +946,7 @@ static QSE_INLINE void walk (
 				{
 					/* otherwise, move up to the parent */
 					prev = x_cur;
-					x_cur = x_cur->parent;	
+					x_cur = x_cur->parent;
 				}
 			}
 		}
@@ -958,15 +958,15 @@ static QSE_INLINE void walk (
 
 			if (!IS_NIL(rbt,x_cur->child[r]))
 			{
-				/* go down to the right node if it exists */ 
+				/* go down to the right node if it exists */
 				prev = x_cur;
-				x_cur = x_cur->child[r];	
+				x_cur = x_cur->child[r];
 			}
 			else
 			{
 				/* otherwise, move up to the parent */
 				prev = x_cur;
-				x_cur = x_cur->parent;	
+				x_cur = x_cur->parent;
 			}
 		}
 		else
