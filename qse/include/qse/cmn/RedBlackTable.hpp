@@ -116,11 +116,6 @@ public:
 		return this->pair_tree.getMpool ();
 	}
 
-	qse_size_t getCapacity() const
-	{
-		return this->pair_tree.getCapacity ();
-	}
-
 	qse_size_t getSize() const
 	{
 		return this->pair_tree.getSize ();
@@ -247,14 +242,14 @@ public:
 		return this->pair_tree.clear (clear_mpool);
 	}
 
-	Iterator getIterator (qse_size_t index = 0)
+	Iterator getIterator (typename Iterator::Mode mode = Iterator::ASCENDING) const
 	{
-		return this->pair_tree.getIterator (index);
+		return this->pair_tree.getIterator (mode);
 	}
 
-	ConstIterator getConstIterator (qse_size_t index = 0) const
+	ConstIterator getConstIterator (typename ConstIterator::Mode mode = ConstIterator::ASCENDING) const
 	{
-		return this->pair_tree.getConstIterator (index);
+		return this->pair_tree.getConstIterator (mode);
 	}
 
 protected:
