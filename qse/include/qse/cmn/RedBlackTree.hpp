@@ -92,12 +92,18 @@ public:
 
 	SelfType* getParent () { return this->parent; }
 	const SelfType* getParent () const { return this->parent; }
+	SelfType* getParentNode () { return this->parent; }
+	const SelfType* getParentNode () const { return this->parent; }
 
 	SelfType* getLeft () { return this->left; }
-	const SelfType* getLeftConst () const { return this->left; }
+	const SelfType* getLeft () const { return this->left; }
+	SelfType* getLeftNode () { return this->left; }
+	const SelfType* getLeftNode () const { return this->left; }
 
 	SelfType* getRight () { return this->right; }
-	const SelfType* getRightConst () const { return this->right; }
+	const SelfType* getRight () const { return this->right; }
+	SelfType* getRightNode () { return this->right; }
+	const SelfType* getRightNode () const { return this->right; }
 
 	//void setBlack () { this->color = BLACK; }
 	//void setRed () { this->color = RED; }
@@ -126,7 +132,9 @@ class RedBlackTreeIterator
 public:
 	typedef RedBlackTreeNode<T,COMPARATOR> Node;
 	typedef RedBlackTreeIterator<T,COMPARATOR,GET_NODE,GET_T> SelfType;
-	
+
+	typedef RedBlackTreeComparator<T> DefaultComparator;
+
 	typedef Node* (Node::*GetChild) ();
 
 	enum Mode
@@ -157,11 +165,11 @@ public:
 			this->get_right = &Node::getRight;
 		}
 
-		this->__get_next_node ();
+		this->__move_to_next_node ();
 	}
 
 protected:
-	void __get_next_node ()
+	void __move_to_next_node ()
 	{
 		QSE_ASSERT (this->current != QSE_NULL);
 
@@ -200,7 +208,7 @@ protected:
 		}
 	}
 
-	void get_next_node ()
+	void move_to_next_node ()
 	{
 		if (pending_action ==  1)
 		{
@@ -233,20 +241,20 @@ protected:
 			}
 		}
 
-		this->__get_next_node ();
+		this->__move_to_next_node ();
 	}
 
 public:
 	SelfType& operator++ () // prefix increment
 	{
-		this->get_next_node ();
+		this->move_to_next_node ();
 		return *this;
 	}
 
 	SelfType operator++ (int) // postfix increment
 	{
 		SelfType saved (*this);
-		this->get_next_node ();
+		this->move_to_next_node ();
 		return saved;
 	}
 
@@ -392,12 +400,12 @@ public:
 		return this->node_count <= 0;
 	}
 
-	Node* getRoot ()
+	Node* getRootNode ()
 	{
 		return this->root;
 	}
 
-	const Node* getRoot () const
+	const Node* getRootNode () const
 	{
 		return this->root;
 	}
@@ -419,6 +427,25 @@ protected:
 		while (node->notNil())
 		{
 			int n = this->comparator (datum, node->value);
+			if (n == 0) return node;
+
+			if (n > 0) node = node->right;
+			else /* if (n < 0) */ node = node->left;
+		}
+
+		return QSE_NULL;
+	}
+
+	template <typename MT, typename MCOMPARATOR>
+	Node* heterofind_node (const MT& datum) const
+	{
+		MCOMPARATOR mcomparator;
+		Node* node = this->root;
+
+		// normal binary tree search
+		while (node->notNil())
+		{
+			int n = mcomparator (datum, node->value);
 			if (n == 0) return node;
 
 			if (n > 0) node = node->right;
@@ -736,6 +763,60 @@ protected:
 	}
 
 public:
+
+	Node* findNode (const T& datum)
+	{
+		return this->find_node (datum);
+	}
+
+	const Node* findNode (const T& datum) const
+	{
+		return this->find_node (datum);
+	}
+
+	T* findValue (const T& datum)
+	{
+		Node* b = this->findNode (datum);
+		if (!b) return QSE_NULL;
+		return &b->value;
+	}
+
+	const T* findValue (const T& datum) const
+	{
+		const Node* b = this->findNode (datum);
+		if (!b) return QSE_NULL;
+		return &b->value;
+	}
+
+	template <typename MT, typename MCOMPARATOR>
+	Node* heterofindNode (const MT& datum)
+	{
+		return this->heterofind_node<MT,MCOMPARATOR> (datum);
+	}
+
+	template <typename MT, typename MCOMPARATOR>
+	const Node* heterofindNode (const MT& datum) const
+	{
+		return this->heterofind_node<MT,MCOMPARATOR> (datum);
+	}
+
+
+	template <typename MT, typename MCOMPARATOR>
+	T* heterofindValue(const MT& datum)
+	{
+		Node* b = this->heterofind_node<MT,MCOMPARATOR> (datum);
+		if (!b) return QSE_NULL;
+		return &b->value;
+	}
+
+	template <typename MT, typename MCOMPARATOR>
+	const T* heterofindValue(const MT& datum) const
+	{
+		Node* b = this->heterofind_node<MT,MCOMPARATOR> (datum);
+		if (!b) return QSE_NULL;
+		return &b->value;
+	}
+
 	Node* search (const T& datum)
 	{
 		return this->find_node (datum);
@@ -744,6 +825,18 @@ public:
 	const Node* search (const T& datum) const
 	{
 		return this->find_node (datum);
+	}
+
+	template <typename MT, typename MCOMPARATOR>
+	Node* heterosearch (const MT& datum)
+	{
+		return this->heterofind_node<MT,MCOMPARATOR> (datum);
+	}
+
+	template <typename MT, typename MCOMPARATOR>
+	const Node* heterosearch (const MT& datum) const
+	{
+		return this->heterofind_node<MT,MCOMPARATOR> (datum);
 	}
 
 	Node* inject (const T& datum, int mode, bool* injected = QSE_NULL)
@@ -830,10 +923,21 @@ public:
 		return 0;
 	}
 
+	template <typename MT, typename MCOMPARATOR>
+	int heteroremove (const MT& datum)
+	{
+		Node* node = this->template heterofind_node<MT,MCOMPARATOR> (datum);
+		if (node == QSE_NULL) return -1;
+
+		this->remove_node (node);
+		return 0;
+	}
+
 	void clear (bool clear_mpool = false)
 	{
 		while (this->root->notNil()) this->remove_node (this->root);
 		QSE_ASSERT (this->root = this->nil);
+		QSE_ASSERT (this->node_count == 0);
 	}
 
 	Iterator getIterator (typename Iterator::Mode mode = Iterator::ASCENDING) const
