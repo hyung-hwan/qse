@@ -182,11 +182,16 @@ QSE_END_NAMESPACE(QSE)
 
 void* operator new (qse_size_t size, QSE::Mpool* mp)
 {
-	return mp->isEnabled()? mp->allocate (): ::operator new (size, mp->getMmgr());
+	return mp->isEnabled()? mp->allocate(): ::operator new(size, mp->getMmgr());
 }
 
 void operator delete (void* ptr, QSE::Mpool* mp)
 {
 	if (mp->isEnabled()) mp->dispose (ptr);
 	else ::operator delete (ptr, mp->getMmgr());
+}
+
+void* operator new (qse_size_t size, QSE::Mpool* mp, void* existing_ptr)
+{
+	return existing_ptr;
 }

@@ -55,19 +55,19 @@ public:
 
 protected:
 	Color color;
-	SelfType* parent;
+	SelfType* up;
 	SelfType* left; // left child
 	SelfType* right; // right child
 
-	RedBlackTreeNode(): color (BLACK), parent (this), left (this), right (this)
+	RedBlackTreeNode(): color (BLACK), up (this), left (this), right (this)
 	{
 		// no initialization on 'value' in this constructor.
 	}
 
-	RedBlackTreeNode(const T& value, Color color, SelfType* parent, SelfType* left, SelfType* right):
-		value (value), color (color), parent (parent), left (left), right (right)
+	RedBlackTreeNode(const T& value, Color color, SelfType* up, SelfType* left, SelfType* right):
+		value (value), color (color), up (up), left (left), right (right)
 	{
-		QSE_ASSERT (parent != this);
+		QSE_ASSERT (up != this);
 		QSE_ASSERT (left != this);
 		QSE_ASSERT (right != this);
 	}
@@ -79,7 +79,7 @@ public:
 
 	bool isNil () const
 	{
-		return this->parent == this; // && this->left == this && this->right == this;
+		return this->up == this; // && this->left == this && this->right == this;
 	}
 
 	bool notNil () const
@@ -90,28 +90,21 @@ public:
 	bool isBlack () const  { return this->color == BLACK; }
 	bool isRed () const { return this->color == RED; }
 
-	SelfType* getParent () { return this->parent; }
-	const SelfType* getParent () const { return this->parent; }
-	SelfType* getParentNode () { return this->parent; }
-	const SelfType* getParentNode () const { return this->parent; }
+	SelfType* getUpNode () { return this->up; }
+	const SelfType* getUpNode () const { return this->up; }
 
-	SelfType* getLeft () { return this->left; }
-	const SelfType* getLeft () const { return this->left; }
+	
 	SelfType* getLeftNode () { return this->left; }
 	const SelfType* getLeftNode () const { return this->left; }
 
-	SelfType* getRight () { return this->right; }
-	const SelfType* getRight () const { return this->right; }
 	SelfType* getRightNode () { return this->right; }
 	const SelfType* getRightNode () const { return this->right; }
 
 	//void setBlack () { this->color = BLACK; }
 	//void setRed () { this->color = RED; }
-	//void setParent (SelfType* node) { this->parent = node; }
-	//void setLeft (SelfType* node) { this->left = node; }
-	//void setRight (SelfType* node) { this->right = node; }
-
-
+	//void setUpNode (SelfType* node) { this->up = node; }
+	//void setLeftNode (SelfType* node) { this->left = node; }
+	//void setRightNode (SelfType* node) { this->right = node; }
 };
 
 template <typename T>
@@ -153,16 +146,16 @@ public:
 	{
 		QSE_ASSERT (root != QSE_NULL);
 
-		this->previous = root->getParent();
+		this->previous = root->getUpNode();
 		if (mode == DESCENDING)
 		{
-			this->get_left = &Node::getRight;
-			this->get_right = &Node::getLeft;
+			this->get_left = &Node::getRightNode;
+			this->get_right = &Node::getLeftNode;
 		}
 		else 
 		{
-			this->get_left = &Node::getLeft;
-			this->get_right = &Node::getRight;
+			this->get_left = &Node::getLeftNode;
+			this->get_right = &Node::getRightNode;
 		}
 
 		this->__move_to_next_node ();
@@ -175,9 +168,9 @@ protected:
 
 		while (this->current->notNil())
 		{
-			if (this->previous == this->current->getParent())
+			if (this->previous == this->current->getUpNode())
 			{
-				/* the previous node is the parent of the current node.
+				/* the previous node is the up of the current node.
 				 * it indicates that we're going down to the getChild(l) */
 				if ((this->current->*this->get_left)()->notNil())
 				{
@@ -201,9 +194,9 @@ protected:
 			{
 				/* both the left child and the right child have been traversed */
 				QSE_ASSERT (this->previous == (this->current->*this->get_right)());
-				/* just move up to the parent */
+				/* just move up to the up */
 				this->previous = this->current;
-				this->current = this->current->getParent();
+				this->current = this->current->getUpNode();
 			}
 		}
 	}
@@ -220,9 +213,9 @@ protected:
 			}
 			else
 			{
-				/* otherwise, move up to the parent */
+				/* otherwise, move up to the up */
 				this->previous = this->current;
-				this->current = this->current->getParent();
+				this->current = this->current->getUpNode();
 			}
 		}
 		else if (pending_action == 2)
@@ -235,9 +228,9 @@ protected:
 			}
 			else
 			{
-				/* otherwise, move up to the parent */
+				/* otherwise, move up to the up */
 				this->previous = this->current;
-				this->current = this->current->getParent();
+				this->current = this->current->getUpNode();
 			}
 		}
 
@@ -327,7 +320,7 @@ public:
 	typedef RedBlackTreeComparator<T> DefaultComparator;
 
 	RedBlackTree (Mmgr* mmgr = QSE_NULL, qse_size_t mpb_size = 0):
-		Mmged(mmgr),
+		Mmged (mmgr),
 		mp (mmgr, QSE_SIZEOF(Node), mpb_size),
 		node_count (0)
 	{
@@ -338,8 +331,8 @@ public:
 		this->root = this->nil;
 	}
 
-	RedBlackTree (const RedBlackTree& rbt): 
-		Mmged(rbt.getMmgr()),
+	RedBlackTree (const SelfType& rbt): 
+		Mmged (rbt.getMmgr()),
 		mp (rbt.getMmgr(), rbt.mp.getDatumSize(), rbt.mp.getBlockSize()),
 		node_count (0)
 	{
@@ -365,7 +358,7 @@ public:
 		this->dispose_node (this->nil);
 	}
 
-	RedBlackTree& operator= (const RedBlackTree& rbt)
+	SelfType& operator= (const SelfType& rbt)
 	{
 		this->clear ();
 
@@ -400,14 +393,16 @@ public:
 		return this->node_count <= 0;
 	}
 
+	/// The getRootNode() function gets the pointer to the root node.
+	/// If no node exists in the tree, it returns #QSE_NULL.
 	Node* getRootNode ()
 	{
-		return this->root;
+		return this->root->isNil()? QSE_NULL: this->root;
 	}
 
 	const Node* getRootNode () const
 	{
-		return this->root;
+		return this->root->isNil()? QSE_NULL: this->root;
 	}
 
 protected:
@@ -463,7 +458,7 @@ protected:
 		 * left child(x). move the pivot's right child(y) to the pivot's original
 		 * position. as 'c1' is between 'y' and 'pivot', move it to the right
 		 * of the new pivot position.
-		 *       parent                   parent
+		 *       up                   up
 		 *        | | (left or right?)      | |
 		 *       pivot                      y
 		 *       /  \                     /  \
@@ -477,7 +472,7 @@ protected:
 		 * position. as 'c2' is between 'x' and 'pivot', move it to the left
 		 * of the new pivot position.
 		 *
-		 *       parent                   parent
+		 *       up                   up
 		 *        | | (left or right?)      | |
 		 *       pivot                      x
 		 *       /  \                     /  \
@@ -487,15 +482,15 @@ protected:
 		 *
 		 *
 		 * the actual implementation here resolves the pivot's relationship to
-		 * its parent by comparaing pointers as it is not known if the pivot pair
-		 * is the left child or the right child of its parent,
+		 * its up by comparaing pointers as it is not known if the pivot pair
+		 * is the left child or the right child of its up,
 		 */
 
-		Node* parent, * z, * c;
+		Node* up, * z, * c;
 
 		QSE_ASSERT (pivot != QSE_NULL);
 
-		parent = pivot->parent;
+		up = pivot->up;
 		if (leftwise)
 		{
 			// y for leftwise rotation
@@ -511,17 +506,17 @@ protected:
 			c = z->right;
 		}
 
-		z->parent = parent;
-		if (parent->notNil())
+		z->up = up;
+		if (up->notNil())
 		{
-			if (parent->left == pivot)
+			if (up->left == pivot)
 			{
-				parent->left = z;
+				up->left = z;
 			}
 			else
 			{
-				QSE_ASSERT (parent->right == pivot);
-				parent->right = z;
+				QSE_ASSERT (up->right == pivot);
+				up->right = z;
 			}
 		}
 		else
@@ -541,8 +536,8 @@ protected:
 			pivot->left = c;
 		}
 
-		if (pivot->notNil()) pivot->parent = z;
-		if (c->notNil()) c->parent = pivot;
+		if (pivot->notNil()) pivot->up = z;
+		if (c->notNil()) c->up = pivot;
 	}
 
 	void rotate_left (Node* pivot)
@@ -562,12 +557,12 @@ protected:
 			Node* tmp, * tmp2, * x_par, * x_grand_par;
 			bool leftwise;
 
-			x_par = node->parent;
+			x_par = node->up;
 			if (x_par->color == Node::BLACK) break;
 
-			QSE_ASSERT (x_par->parent->notNil());
+			QSE_ASSERT (x_par->up->notNil());
 
-			x_grand_par = x_par->parent;
+			x_grand_par = x_par->up;
 			if (x_par == x_grand_par->left)
 			{
 				tmp = x_grand_par->right;
@@ -594,8 +589,8 @@ protected:
 				{
 					node = x_par;
 					this->rotate (node, leftwise);
-					x_par = node->parent;
-					x_grand_par = x_par->parent;
+					x_par = node->up;
+					x_grand_par = x_par->up;
 				}
 
 				x_par->color = Node::BLACK;
@@ -627,7 +622,7 @@ protected:
 				{
 					if (tmp->notNil()) tmp->color = Node::RED;
 					node = par;
-					par = node->parent;
+					par = node->up;
 				}
 				else
 				{
@@ -666,7 +661,7 @@ protected:
 				{
 					if (tmp->notNil()) tmp->color = Node::RED;
 					node = par;
-					par = node->parent;
+					par = node->up;
 				}
 				else
 				{
@@ -711,8 +706,8 @@ protected:
 
 		x = (y->left->isNil())? y->right: y->left;
 
-		par = y->parent;
-		if (x->notNil()) x->parent = par;
+		par = y->up;
+		if (x->notNil()) x->up = par;
 
 		if (par->notNil()) // if (par)
 		{
@@ -738,23 +733,23 @@ protected:
 			if (y->color == Node::BLACK && x->notNil())
 				this->rebalance_for_removal (x, par);
 
-			if (node->parent->notNil()) //if (node->parent)
+			if (node->up->notNil()) //if (node->up)
 			{
-				if (node->parent->left == node) node->parent->left = y;
-				if (node->parent->right == node) node->parent->right = y;
+				if (node->up->left == node) node->up->left = y;
+				if (node->up->right == node) node->up->right = y;
 			}
 			else
 			{
 				this->root = y;
 			}
 
-			y->parent = node->parent;
+			y->up = node->up;
 			y->left = node->left;
 			y->right = node->right;
 			y->color = node->color;
 
-			if (node->left->parent == node) node->left->parent = y;
-			if (node->right->parent == node) node->right->parent = y;
+			if (node->left->up == node) node->left->up = y;
+			if (node->right->up == node) node->right->up = y;
 
 			this->dispose_node (node);
 		}
@@ -800,7 +795,6 @@ public:
 		return this->heterofind_node<MT,MCOMPARATOR> (datum);
 	}
 
-
 	template <typename MT, typename MCOMPARATOR>
 	T* heterofindValue(const MT& datum)
 	{
@@ -839,6 +833,20 @@ public:
 		return this->heterofind_node<MT,MCOMPARATOR> (datum);
 	}
 
+	/// The inject() function inserts a \a datum if no existing datum
+	/// is found to be equal using the comparator. The \a mode argument
+	/// determines what action to take when an equal datum is found.
+	/// - -1: failure
+	/// -  0: do nothing
+	/// -  1: overwrite the existing datum
+	///
+	/// if \a injected is not #QSE_NULL, it is set to true when \a datum
+	/// has been inserted newly and false when an equal datum has been
+	/// found.
+	///
+	/// The function returns the poniter to the node inserted or 
+	/// affected. It return #QSE_NULL if mode is set to -1 and a duplicate
+	/// item has been found.
 	Node* inject (const T& datum, int mode, bool* injected = QSE_NULL)
 	{
 		Node* x_cur = this->root;
@@ -881,7 +889,7 @@ public:
 				x_par->left = x_new;
 			}
 
-			x_new->parent = x_par;
+			x_new->up = x_par;
 			this->rebalance_for_injection (x_new);
 		}
 
