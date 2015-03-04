@@ -179,6 +179,8 @@ QSE_END_NAMESPACE(QSE)
 void* operator new (qse_size_t size, QSE::Mmgr* mmgr);
 void operator delete (void* ptr, QSE::Mmgr* mmgr);
 
+void* operator new (qse_size_t size, QSE::Mmgr* mmgr, void* existing_ptr);
+
 #if 0
 // i found no way to delete an array allocated with
 // the placement new operator. if the array element is an instance

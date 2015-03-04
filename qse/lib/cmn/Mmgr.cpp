@@ -80,6 +80,13 @@ void operator delete (void* ptr, QSE::Mmgr* mmgr)
 	mmgr->dispose (ptr);
 }
 
+void* operator new (qse_size_t size, QSE::Mmgr* mmgr, void* existing_ptr)
+{
+	// mmgr unused. i put it in the parameter list to make this function
+	// less conflicting with the stock ::operator new() that doesn't allocate.
+	return existing_ptr;
+}
+
 #if 0
 void* operator new[] (qse_size_t size, QSE::Mmgr* mmgr)
 {
