@@ -211,14 +211,16 @@ public:
 		this->clear (true);
 	}
 
-	LinkedList (Mmgr* mmgr = QSE_NULL, qse_size_t mpb_size = 0): Mmged(mmgr), mp (mmgr, QSE_SIZEOF(Node), mpb_size)
+	LinkedList (Mmgr* mmgr = QSE_NULL, qse_size_t mpb_size = 0): 
+		Mmged(mmgr), mp (mmgr, QSE_SIZEOF(Node), mpb_size)
 	{
 		this->node_count = 0;
 		this->head_node = QSE_NULL;
 		this->tail_node = QSE_NULL;
 	}
 
-	LinkedList (const SelfType& ll): Mmged(ll.getMmgr()), mp (ll.getMmgr(), ll.mp.getDatumSize(), ll.mp.getBlockSize())
+	LinkedList (const SelfType& ll): 
+		Mmged(ll.getMmgr()), mp (ll.getMmgr(), ll.mp.getDatumSize(), ll.mp.getBlockSize())
 	{
 		this->node_count = 0;
 		this->head_node = QSE_NULL;

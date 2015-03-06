@@ -220,7 +220,7 @@ public:
 
 	SelfType& operator= (const SelfType& list)
 	{
-		this->clear ();
+		this->clear (false);
 
 		// note that the memory pool itself is not copied.
 
@@ -620,6 +620,7 @@ protected:
 	mutable DatumList* datum_list;
 	mutable qse_size_t threshold;
 	qse_size_t         load_factor;
+
 	HASHER             hasher;
 	EQUALER            equaler;
 	RESIZER            resizer;
