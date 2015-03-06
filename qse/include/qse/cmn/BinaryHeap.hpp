@@ -92,7 +92,7 @@ struct BinaryHeapAssigner
 	// The assignment proxy is used to get the value informed of its position
 	// within the heap. This default implmentation, however, doesn't utilize
 	// the position (index).
-	T& operator() (T& v1, const T& v2, xp_size_t index) const
+	T& operator() (T& v1, const T& v2, qse_size_t index) const
 	{
 		v1 = v2;
 		return v1;

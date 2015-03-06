@@ -324,8 +324,15 @@ public:
 		mp (mmgr, QSE_SIZEOF(Node), mpb_size),
 		node_count (0)
 	{
-		// create a nil object
-		this->nil = new(&this->mp) Node();
+	#if defined(QSE_REDBLACKTREE_ALLOCATE_NIL)
+		// create a nil object. note it doesn't go into the memory pool.
+		// the nil node allocated inside the memory pool makes implementation
+		// of this->clear (true) difficult as disposal of memory pool
+		// also deallocates the nil node.
+		this->nil = new(this->getMmgr()) Node();
+	#else
+		this->nil = &this->xnil;
+	#endif
 
 		// set root to nil
 		this->root = this->nil;
@@ -336,14 +343,20 @@ public:
 		mp (rbt.getMmgr(), rbt.mp.getDatumSize(), rbt.mp.getBlockSize()),
 		node_count (0)
 	{
-
-		// create a nil object
-		this->nil = new(&this->mp) Node();
+	#if defined(QSE_REDBLACKTREE_ALLOCATE_NIL)
+		// create a nil object. note it doesn't go into the memory pool.
+		// the nil node allocated inside the memory pool makes implementation
+		// of this->clear (true) difficult as disposal of memory pool
+		// also deallocates the nil node.
+		this->nil = new(this->getMmgr()) Node();
+	#else
+		this->nil = &this->xnil;
+	#endif
 
 		// set root to nil
 		this->root = this->nil;
 
-		// TODO: do the level-order traversal to minize rebalancing.
+		// TODO: do the level-order traversal to minimize rebalancing.
 		Iterator it = rbt.getIterator();
 		while (it.isLegit())
 		{
@@ -354,15 +367,22 @@ public:
 
 	~RedBlackTree ()
 	{
-		this->clear ();
-		this->dispose_node (this->nil);
+		this->clear (true);
+
+	#if defined(QSE_REDBLACKTREE_ALLOCATE_NIL)
+		// destroy the nil node.
+		this->nil->~Node (); 
+		::operator delete (this->nil, this->getMmgr());
+	#else
+		// do nothing
+	#endif
 	}
 
 	SelfType& operator= (const SelfType& rbt)
 	{
-		this->clear ();
+		this->clear (false);
 
-		// TODO: do the level-order traversal to minize rebalancing.
+		// TODO: do the level-order traversal to minimize rebalancing.
 		Iterator it = rbt.getIterator();
 		while (it.isLegit())
 		{
@@ -946,6 +966,8 @@ public:
 		while (this->root->notNil()) this->remove_node (this->root);
 		QSE_ASSERT (this->root = this->nil);
 		QSE_ASSERT (this->node_count == 0);
+
+		if (clear_mpool) this->mp.dispose ();
 	}
 
 	Iterator getIterator (typename Iterator::Mode mode = Iterator::ASCENDING) const
@@ -963,6 +985,13 @@ protected:
 	COMPARATOR comparator;
 
 	qse_size_t node_count;
+#if defined(QSE_REDBLACKTREE_ALLOCATE_NIL)
+	// nothing. let the constructor allocate it to this->nil.
+#else
+	// use a statically declared nil object.
+	Node       xnil;
+#endif
+
 	Node*      nil; // internal node to present nil
 	Node*      root; // root node.
 };
