@@ -28,7 +28,7 @@
 #define _QSE_CMN_ARRAY_HPP_
 
 #include <qse/Types.hpp>
-#include <qse/cmn/Mpool.hpp>
+#include <qse/cmn/Mmged.hpp>
 
 /////////////////////////////////
 QSE_BEGIN_NAMESPACE(QSE)
@@ -48,24 +48,14 @@ struct ArrayResizer
 	}
 };
 
-template<typename T>
-struct ArrayAssigner
-{
-	// The assignment proxy is used to get the value informed of its position
-	// within the heap. This default implmentation, however, doesn't utilize
-	// the position (index).
-	T& operator() (T& v1, const T& v2, qse_size_t index) const
-	{
-		v1 = v2;
-		return v1;
-	}
-};
-
-template <typename T, typename ASSIGNER = ArrayAssigner<T>, typename RESIZER = ArrayResizer >
+///
+/// The Array class provides a dynamically resized array.
+/// 
+template <typename T, typename RESIZER = ArrayResizer >
 class Array: public Mmged
 {
 public:
-	typedef Array<T,ASSIGNER,RESIZER> SelfType;
+	typedef Array<T,RESIZER> SelfType;
 
 	enum 
 	{
@@ -73,11 +63,7 @@ public:
 		INVALID_INDEX = ~(qse_size_t)0
 	};
 
-	Array (Mmgr* mmgr = QSE_NULL,
-	       qse_size_t capacity = DEFAULT_CAPACITY, 
-	       qse_size_t mpb_size = 0):
-		Mmged (mmgr),
-		mp (mmgr, QSE_SIZEOF(T), mpb_size)
+	Array (Mmgr* mmgr = QSE_NULL, qse_size_t capacity = DEFAULT_CAPACITY): Mmged (mmgr)
 	{
 		if (capacity <= 0) 
 		{
@@ -87,7 +73,7 @@ public:
 		else 
 		{
 			//this->buffer = new T[capacity];
-			this->buffer = (T*)::operator new (capacity * QSE_SIZEOF(*this->buffer), &this->mp);
+			this->buffer = (T*)::operator new (capacity * QSE_SIZEOF(*this->buffer), this->getMmgr());
 			this->capacity = capacity;
 		}
 
@@ -96,12 +82,11 @@ public:
 
 	Array (const SelfType& array): 
 		Mmged (array.getMmgr()),
-		mp (array.getMmgr(), array.mp.getDatumSize(), array.mp.getBlockSize()),
 		count (0), capacity (0), buffer (QSE_NULL)
 	{
 		if (array.buffer)
 		{
-			this->buffer = this->clone_buffer (array, array.capacity, array.count);
+			this->buffer = this->clone_buffer (array.buffer, array.capacity, array.count);
 			this->count = array.count;
 			this->capacity = array.capacity;
 		}
@@ -125,23 +110,22 @@ public:
 	}
 
 protected:
-	T* clone_buffer (const T* srcbuf, qse_size_t capa, qse_size_t count)
+	T* clone_buffer (const T* srcbuf, qse_size_t capa, qse_size_t cnt)
 	{
 		QSE_ASSERT (capa > 0);
-		QSE_ASSERT (count <= capa);
+		QSE_ASSERT (cnt <= capa);
 
 		qse_size_t index;
 
 		//T* tmp = new T[capa];
-		T* tmp = (T*)::operator new (capa * QSE_SIZEOF(*tmp), &this->mp);
+		T* tmp = (T*)::operator new (capa * QSE_SIZEOF(*tmp), this->getMmgr());
 
 		try 
 		{
-			for (index = 0; index < count; index++) 
+			for (index = 0; index < cnt; index++) 
 			{
-				//tmp[index] = srcbuf[index];
 				// copy-construct each element.
-				new((QSE::Mpool*)QSE_NULL, &tmp[index]) T(srcbuf[index]);
+				new((QSE::Mmgr*)QSE_NULL, &tmp[index]) T(srcbuf[index]);
 			}
 		}
 		catch (...) 
@@ -153,7 +137,7 @@ protected:
 				--index;
 				tmp[index].~T ();
 			}
-			::operator delete (tmp, &this->mp);
+			::operator delete (tmp, this->getMmgr());
 			throw;
 		}
 
@@ -166,13 +150,12 @@ protected:
 		{
 			// no value exists in the given position.
 			// i can copy-construct the value.
-			new((QSE::Mpool*)QSE_NULL, &this->buffer[index]) T(value);
-			//this->notify_position (this->buffer[index], index);
+			new((QSE::Mmgr*)QSE_NULL, &this->buffer[index]) T(value);
 		}
 		else
 		{
 			// there is an old value in the position.
-			this->assigner (this->buffer[index], value, index);
+			this->buffer[index] = value;
 		}
 	}
 
@@ -212,9 +195,18 @@ public:
 		return this->buffer;
 	}
 
-	/// The getBufferIndex() function returns the index of the
-	/// given value \a v if it is one of the values of the array.
-	/// It returns #INVALID_INDEX if not.
+	/// The getIndex() function returns the index of the given value \a v 
+	/// if it belongs to the array. It returns #INVALID_INDEX if not. 
+	/// Note that this is not a search function.
+	///
+	/// \code
+	///  QSE::Array<int> a;
+	///  a.insert (0, 10);
+	///  a.insert (0, 20);
+	///  a.insert (0, 30);
+	///  const int& t = a[2];
+	///  printf ("%lu\n", (unsigned long int)a.getIndex(t)); // print 2
+	/// \endcode
 	qse_size_t getIndex (const T& v)
 	{
 		if (&v >= &this->buffer[0] && &v < &this->buffer[this->count])
@@ -291,7 +283,7 @@ public:
 			// fill the gap with a default value.
 			for (qse_size_t i = this->count; i < index; i++)
 			{
-				new((QSE::Mpool*)QSE_NULL, &this->buffer[i]) T();
+				new((QSE::Mmgr*)QSE_NULL, &this->buffer[i]) T();
 			}
 		}
 
@@ -319,8 +311,7 @@ public:
 		// replace deleted elements by surviving elements at the back
 		while (i < this->count) 
 		{
-			//this->buffer[j++] = this->buffer[i++];
-			this->assigner (this->buffer[j], this->buffer[i], j);
+			this->buffer[j] = this->buffer[i];
 			j++; i++;
 		}
 
@@ -350,25 +341,18 @@ protected:
 	}
 
 public:
-	void clear (bool clear_mpool = false)
+	void clear (bool purge_buffer = false)
 	{
 		this->clear_all_items ();
 
-		if (clear_mpool) 
+		if (purge_buffer && this->buffer)
 		{
-			if (this->buffer)
-			{
-				// the buffer has been allocated using the memory pool.
-				// if the memory pool should be cleared, the buffer must
-				// not be left over either.
-				QSE_ASSERT (this->capacity > 0);
-				::operator delete (this->buffer, &this->mp);
-				this->capacity = 0;
-				this->buffer = QSE_NULL;
-			}
+			QSE_ASSERT (this->capacity > 0);
+			::operator delete (this->buffer, this->getMmgr());
+			this->capacity = 0;
+			this->buffer = QSE_NULL;
 
 			QSE_ASSERT (this->capacity == 0);
-			this->mp.dispose ();
 		}
 	}
 
@@ -390,42 +374,47 @@ public:
 			for (qse_size_t i = this->count; i < size; ++i)
 			{
 				// use the default contructor to set the value.
-				new((QSE::Mpool*)QSE_NULL, &this->buffer[i]) T();
+				new((QSE::Mmgr*)QSE_NULL, &this->buffer[i]) T();
 			}
 
 			this->count = size;
 		}
 	}
 
-	void setCapacity (qse_size_t capacity)
+	void setCapacity (qse_size_t capa)
 	{
-		if (capacity <= 0) 
+		if (capa <= 0) 
 		{
 			this->clear (true);
 		}
-		else 
+		else if (this->buffer)
 		{
-			
+			QSE_ASSERT (this->capacity > 0);
+
 			qse_size_t cnt = this->count;
-			if (cnt > capacity) cnt = capacity;
+			if (cnt > capa) cnt = capa;
 
-			T* tmp = clone_buffer (*this, capacity, cnt);
+			T* tmp = this->clone_buffer (this->buffer, capa, cnt);
 
-			if (this->buffer) 
-			{
-				// don't call this->clear (true) here. clear items only.
-				// the memory pool may destory the cloned buffer as well.
-				this->clear_all_items ();
+			// don't call this->clear(true) here. clear items only.
+			this->clear_all_items ();
 
-				// deallocate the current buffer;
-				::operator delete (this->buffer, &this->mp);
-				this->capacity = 0;
-				this->buffer = QSE_NULL;
-			}
+			// deallocate the current buffer;
+			::operator delete (this->buffer, this->getMmgr());
+			this->capacity = 0;
+			this->buffer = QSE_NULL;
 
 			this->buffer = tmp;
-			this->capacity = capacity;
+			this->capacity = capa;
 			this->count = cnt;
+		}
+		else
+		{
+			QSE_ASSERT (this->capacity <= 0);
+			QSE_ASSERT (this->count <= 0);
+
+			this->buffer = (T*)::operator new (capa * QSE_SIZEOF(*this->buffer), this->getMmgr());
+			this->capacity = capa;
 		}
 	}
 
@@ -488,31 +477,25 @@ public:
 		{
 			last = first + nk;
 			index = first;
-			//c = this->buffer[first];
-			this->assigner (c, this->buffer[first], INVALID_INDEX);
+			c = this->buffer[first];
 			while (1) 
 			{
 				cnt++;
 				while (index < nk) 
 				{
-					//this->buffer[index] = this->buffer[index + n];
-					this->assigner (this->buffer[index], this->buffer[index + n], index);
+					this->buffer[index] = this->buffer[index + n];
 					index += n;
 				}
 				if (index == last) break;
-				//this->buffer[index] = this->buffer[index - nk];
-				this->assigner (this->buffer[index], this->buffer[index - nk], index);
+				this->buffer[index] = this->buffer[index - nk];
 				index -= nk;
 			}
-			//this->buffer[last] = c; 
-			this->assigner (this->buffer[last], c, last);
+			this->buffer[last] = c;
 			first++;
 		}
 	}
 
 protected:
-	Mpool      mp;
-	ASSIGNER   assigner;
 	RESIZER    resizer;
 
 	qse_size_t count;
