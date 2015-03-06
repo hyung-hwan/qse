@@ -182,7 +182,24 @@ QSE_END_NAMESPACE(QSE)
 
 void* operator new (qse_size_t size, QSE::Mpool* mp)
 {
-	return mp->isEnabled()? mp->allocate(): ::operator new(size, mp->getMmgr());
+	if (mp->isEnabled())
+	{
+		QSE_ASSERT (size == mp->getDatumSize());
+		// the size argument is not really used. you must make sure that
+		// the given size matches the datum size of the memory pool.
+		if (size != mp->getDatumSize()) 
+		{
+			//QSE::Mmgr* mmgr = mp->getMmgr();
+			QSE_THROW (QSE::Mmgr::InvalidArgumentError);
+		}
+		return mp->allocate ();
+	}
+	else
+	{
+		// but when the memory pool is not enabled, it goes through 
+		// the memory manager directly and it honors the size argument.
+		return ::operator new(size, mp->getMmgr());
+	}
 }
 
 void operator delete (void* ptr, QSE::Mpool* mp)
