@@ -129,8 +129,14 @@ public:
 	using ParentType::isEmpty;
 	using ParentType::getSize;
 	using ParentType::getCapacity;
+	using ParentType::getIndex;
 	using ParentType::clear;
 	using ParentType::compact;
+
+	const T& operator[] (qse_size_t index) const
+	{
+		return ParentType::getValueAt (index);
+	}
 
 	const T& getValueAt (qse_size_t index) const
 	{
