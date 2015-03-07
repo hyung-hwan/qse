@@ -184,19 +184,24 @@ void* operator new (qse_size_t size, QSE::Mpool* mp)
 {
 	if (mp->isEnabled())
 	{
-		QSE_ASSERT (size == mp->getDatumSize());
+		QSE_ASSERTX (size == mp->getDatumSize(), 
+		             "Pass the right allocation size for the given memory pool");
 		// the size argument is not really used. you must make sure that
 		// the given size matches the datum size of the memory pool.
 		if (size != mp->getDatumSize()) 
 		{
-			//QSE::Mmgr* mmgr = mp->getMmgr();
-			QSE_THROW (QSE::Mmgr::InvalidArgumentError);
+			// when the assertion above is excluded during the build,
+			// bypass the memory pool if a wrong size is passed in.
+			// debug your application properly so that this block
+			// is never reached.
+			goto use_mmgr;
 		}
 		return mp->allocate ();
 	}
 	else
 	{
-		// but when the memory pool is not enabled, it goes through 
+	use_mmgr:
+		// when the memory pool is not enabled, it goes through 
 		// the memory manager directly and it honors the size argument.
 		return ::operator new(size, mp->getMmgr());
 	}

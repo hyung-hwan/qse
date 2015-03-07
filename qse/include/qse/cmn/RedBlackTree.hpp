@@ -170,7 +170,7 @@ protected:
 		{
 			if (this->previous == this->current->getUpNode())
 			{
-				/* the previous node is the up of the current node.
+				/* the previous node is the parent of the current node.
 				 * it indicates that we're going down to the getChild(l) */
 				if ((this->current->*this->get_left)()->notNil())
 				{
@@ -194,7 +194,7 @@ protected:
 			{
 				/* both the left child and the right child have been traversed */
 				QSE_ASSERT (this->previous == (this->current->*this->get_right)());
-				/* just move up to the up */
+				/* just move up to the parent */
 				this->previous = this->current;
 				this->current = this->current->getUpNode();
 			}
@@ -213,7 +213,7 @@ protected:
 			}
 			else
 			{
-				/* otherwise, move up to the up */
+				/* otherwise, move up to the parent */
 				this->previous = this->current;
 				this->current = this->current->getUpNode();
 			}
@@ -228,7 +228,7 @@ protected:
 			}
 			else
 			{
-				/* otherwise, move up to the up */
+				/* otherwise, move up to the parent */
 				this->previous = this->current;
 				this->current = this->current->getUpNode();
 			}
@@ -478,7 +478,7 @@ protected:
 		 * left child(x). move the pivot's right child(y) to the pivot's original
 		 * position. as 'c1' is between 'y' and 'pivot', move it to the right
 		 * of the new pivot position.
-		 *       up                   up
+		 *       parent                   parent
 		 *        | | (left or right?)      | |
 		 *       pivot                      y
 		 *       /  \                     /  \
@@ -492,7 +492,7 @@ protected:
 		 * position. as 'c2' is between 'x' and 'pivot', move it to the left
 		 * of the new pivot position.
 		 *
-		 *       up                   up
+		 *       parent                   parent
 		 *        | | (left or right?)      | |
 		 *       pivot                      x
 		 *       /  \                     /  \
@@ -502,8 +502,8 @@ protected:
 		 *
 		 *
 		 * the actual implementation here resolves the pivot's relationship to
-		 * its up by comparaing pointers as it is not known if the pivot pair
-		 * is the left child or the right child of its up,
+		 * its parent by comparaing pointers as it is not known if the pivot pair
+		 * is the left child or the right child of its parent,
 		 */
 
 		Node* up, * z, * c;

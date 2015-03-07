@@ -55,7 +55,6 @@ public:
 	typedef qse_mmgr_t mmgr_t;
 
 	QSE_EXCEPTION (MemoryError);
-	QSE_EXCEPTION (InvalidArgumentError);
 
 protected:
 	bool raise_exception;
