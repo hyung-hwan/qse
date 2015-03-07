@@ -244,7 +244,7 @@ public:
 		return this->buffer[index];
 	}
 
-	T& getValueAtgetValueAt (qse_size_t index)
+	T& getValueAt (qse_size_t index)
 	{
 		QSE_ASSERT (index < this->count);
 		return this->buffer[index];
