@@ -161,6 +161,19 @@ protected:
 		}
 	}
 
+	void clear_all_items  ()
+	{
+		QSE_ASSERT (this->count <= 0 || (this->count >= 1 && this->buffer));
+
+		for (qse_size_t i = this->count; i > 0; )
+		{
+			--i;
+			this->buffer[i].~T ();
+		}
+	
+		this->count = 0;
+	}
+
 public:
 	bool isEmpty () const
 	{
@@ -327,19 +340,23 @@ public:
 		this->count -= to_index - from_index + 1;
 	}
 
-protected:
-	void clear_all_items  ()
+#if 0
+	/// \return the number of items deleted.
+	int removeByValue (const T& value)
 	{
-		QSE_ASSERT (this->count <= 0 || (this->count >= 1 && this->buffer));
-
-		for (qse_size_t i = this->count; i > 0; )
-		{
-			--i;
-			this->buffer[i].~T ();
-		}
-	
-		this->count = 0;
+		qse_size_t index = this->findFirstIndex (value);
+		if (index == INVALID_INDEX) return 0;
+		this->remove (index);
+		return 1; 
 	}
+
+	qse_size_t removeAllByValue (const T& value)
+	{
+		qse_size_t cnt = 0;
+		while (this->removeByValue(value) > 0) cnt++;
+		return cnt;
+	}
+#endif
 
 public:
 	void clear (bool purge_buffer = false)
