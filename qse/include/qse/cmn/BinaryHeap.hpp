@@ -28,7 +28,7 @@
 #define _QSE_CMN_BINARYHEAP_HPP_
 
 ///
-/// This file provides an array-based binary heap.
+/// This file provides a binary heap implementation.
 /// In the heap, each node is greater than or equal to its BinaryHeap
 ///
 /// #include <qse/cmn/BinaryHeap.hpp>
@@ -60,7 +60,7 @@
 /// 
 ///         while (heap.getSize() > 0)
 ///         {
-///                 printf ("%d\n", heap.getRootValue());
+///                 printf ("%d\n", heap.getValueAt(0));
 ///                 heap.remove (0);
 ///         }
 /// 
@@ -68,14 +68,13 @@
 /// }
 /// 
 
-#include <qse/Types.hpp>
-#include <qse/cmn/Mpool.hpp>
-
+#include <qse/cmn/Array.hpp>
 
 /////////////////////////////////
 QSE_BEGIN_NAMESPACE(QSE)
 /////////////////////////////////
 
+// greater-than comparator
 template <typename T>
 struct BinaryHeapComparator
 {
@@ -86,170 +85,92 @@ struct BinaryHeapComparator
 	}
 };
 
-template<typename T>
-struct BinaryHeapAssigner
-{
-	// The assignment proxy is used to get the value informed of its position
-	// within the heap. This default implmentation, however, doesn't utilize
-	// the position (index).
-	T& operator() (T& v1, const T& v2, qse_size_t index) const
-	{
-		v1 = v2;
-		return v1;
-	}
-};
-
-struct BinaryHeapResizer
-{
-	qse_size_t operator() (qse_size_t current) const
-	{
-		return (current < 5000)?   (current + current):
-		       (current < 50000)?  (current + (current / 2)):
-		       (current < 100000)? (current + (current / 4)):
-		       (current < 150000)? (current + (current / 8)):
-		                           (current + (current / 16));
-	}
-};
-
+typedef ArrayResizer BinaryHeapResizer;
 
 #define QSE_BINARY_HEAP_UP(x)     (((x) - 1) / 2)
 #define QSE_BINARY_HEAP_LEFT(x)   ((x) * 2 + 1)
 #define QSE_BINARY_HEAP_RIGHT(x)  ((x) * 2 + 2)
 
-template <typename T, typename COMPARATOR = BinaryHeapComparator<T>, typename ASSIGNER = BinaryHeapAssigner<T>, RESIZER = TeeeHeapResizer >
-class BinaryHeap: public Mmged
+template <typename T, typename COMPARATOR = BinaryHeapComparator<T>, typename RESIZER = BinaryHeapResizer >
+class BinaryHeap: protected Array<T,RESIZER>
 {
 public:
-	typedef BinaryHeap<T,COMPARATOR,ASSIGNER,RESIZER> SelfType;
+	typedef BinaryHeap<T,COMPARATOR,RESIZER> SelfType;
+	typedef Array<T,RESIZER> ParentType;
+
+	typedef BinaryHeapComparator<T> DefaultComparator;
+	typedef BinaryHeapResizer DefaultResizer;
 
 	enum
 	{
-		DEFAULT_CAPACITY = 10,
-		MIN_CAPACITY = 1
+		DEFAULT_CAPACITY = ParentType::DEFAULT_CAPACITY,
+		INVALID_INDEX = ParentType::INVALID_INDEX
 	};
 
-	BinaryHeap (Mmgr* mmgr = QSE_NULL,
-	            qse_size_t capacity = DEFAULT_CAPACITY, 
-	            qse_size_t mpb_size = 0):
-		Mmged (mmgr),
-		mp (mmgr, QSE_SIZEOF(Node), mpb_size)
+	BinaryHeap (Mmgr* mmgr = QSE_NULL, qse_size_t capacity = DEFAULT_CAPACITY): 
+		ParentType (mmgr, capacity)
 	{
-		if (capacity < MIN_CAPACITY) capacity = MIN_CAPACITY;
-		this->capacity = capacity;
-		this->count = 0;
-
-		this->buffer = (T*)::operator new (this->capacity * QSE_SIZEOF(*this->buffer), &this->mp);
-		for (qse_size_t i = 0; i < this->capacity; i++)
-		{
-			
-		}
 	}
 
-	BinaryHeap (const SelfType& heap):
-		Mmged (heap.getMmgr()),
-		mp (heap.getMmgr(), heap.mp.getDatumSize(), heap.mp.getBlockSize()),
-		capacity (heap.capacity), count (0)
+	BinaryHeap (const SelfType& heap): ParentType (heap)
 	{
-		// TODO: copy data items.
 	}
 
 	~BinaryHeap ()
 	{
-		for (qse_size_t i = this->count; i > 0; )
-		{
-			--i;
-			this->buffer[i].~T ();
-		}
-
-		::operator delete (this->buffer, &this->mp);
 	}
 
 	SelfType& operator= (const SelfType& heap)
 	{
-		this->clear ();
-		// TODO: copy data items
+		ParentType::operator= (heap);
 		return *this;
 	}
 
-	~BinaryHeap
-	Mpool& getMpool ()
+	using ParentType::isEmpty;
+	using ParentType::getSize;
+	using ParentType::getCapacity;
+	using ParentType::clear;
+	using ParentType::compact;
+
+	const T& getValueAt (qse_size_t index) const
 	{
-		return this->mp;
+		return ParentType::getValueAt (index);
 	}
 
-	const Mpool& getMpool () const
+	qse_size_t insert (const T& value)
 	{
-		return this->mp;
-	}
-
-	qse_size_t getCapacity () const
-	{
-		return this->capacity;
-	}
-
-	qse_size_t getSize () const
-	{
-		return this->count;
-	}
-
-	bool isEmpty () const
-	{
-		return this->count <= 0;
-	}
-
-	
-
-	Node* insert (const T& value)
-	{
-#if 0
-		qse_size_t index = this->data_count;
+		qse_size_t index = this->count;
 
 		// add the item at the back of the array
-		// i don't use Tree<T>::insert() for this->assign().
-		//Tree<T>::insert (index, value);
-		Tree<T>::setSize (index + 1);
-		this->assign (this->data_buffer[index], value, index);
-
-		// move the item up to the top if it's greater than the up item	
-		return sift_up (index);
-#endif
+		ParentType::insert (index, value);
+		
+		// move the item up to the top if it's greater than the up item
+		return this->sift_up(index);
 	}
 
-#if 0
 	qse_size_t update (qse_size_t index, const T& value)
 	{
 		T old = this->data_buffer[index];
 
-		//this->data_buffer[index] = value;
-		this->assign (this->data_buffer[index], value, index);
+		this->buffer[index] = value;
 
-		return (this->greater_than (value, old))? sift_up (index): sift_down (index);
+		return (this->greater_than(value, old))? this->sift_up(index): this->sift_down(index);
 	}
-#endif
 
-	void remove_node (qse_size_t index)
+	void remove (qse_size_t index)
 	{
-		QSE_ASSERT (index < this->data_count);
+		QSE_ASSERT (index < this->count);
 
-#if 0
 		// copy the last item to the position to remove 
-		// note that this->assign() isn't called for temporary assignment.
-		T old = this->data_buffer[index];
+		T old = this->buffer[index];
 
-		//this->data_buffer[index] = this->data_buffer[this->data_count - 1];
-		this->assign (this->data_buffer[index], this->data_buffer[this->data_count - 1], index);
+		this->buffer[index] = this->buffer[this->count - 1];
 
 		// delete the last item
-		Tree<T>::remove (this->data_count - 1);
+		ParentType::remove (this->count - 1);
 		
 		// relocate the item
-		(this->greater_than (this->data_buffer[index], old))? sift_up (index): sift_down (index);
-#endif
-	}
-
-	void remove ()
-	{
-		/* TODO: remove root node */
+		(this->greater_than (this->buffer[index], old))? this->sift_up(index): this->sift_down(index);
 	}
 
 	void clear ()
@@ -260,60 +181,51 @@ public:
 	}
 
 protected:
-	Node* sift_up (qse_size_t index)
+	qse_size_t sift_up (qse_size_t index)
 	{
-#if 0
 		qse_size_t up;
 
-		up = QSE_ARRAY_HEAP_PARENT (index);
-		if (index > 0 && this->greater_than (this->data_buffer[index], this->data_buffer[up]))
+		up = QSE_BINARY_HEAP_UP(index);
+		if (index > 0 && this->greater_than(this->buffer[index], this->buffer[up]))
 		{
-			// note that this->assign() isn't called for temporary assignment.
-			T item = this->data_buffer[index];
+			T item = this->buffer[index];
 
 			do 
 			{
-				//this->data_buffer[index] = this->data_buffer[up];
-				this->assign (this->data_buffer[index], this->data_buffer[up], index);
+				this->buffer[index] = this->buffer[up];
 
-				index = up;	
-				up = QSE_ARRAY_HEAP_PARENT (up);
+				index = up;
+				up = QSE_BINARY_HEAP_UP(up);
 			}
-			while (index > 0 && this->greater_than (item, this->data_buffer[up]));
+			while (index > 0 && this->greater_than(item, this->buffer[up]));
 
-			//this->data_buffer[index] = item;
-			this->assign (this->data_buffer[index], item, index);
+			this->buffer[index] = item;
 		}
 
 		return index;
-#endif
-		return QSE_NULL;
 	}
 
-	Node* sift_down (qse_size_t index)
+	qse_size_t sift_down (qse_size_t index)
 	{
-#if 0
-		qse_size_t half_data_count = this->data_count / 2;
+		qse_size_t half_data_count = this->count / 2;
 		
 		if (index < half_data_count)
 		{
 			// if at least 1 child is under the 'index' position
 			// perform sifting
 
-			// note that this->assign() isn't called for temporary assignment.
-			T item = this->data_buffer[index];
-			T item = this->data_buffer[index];
+			T item = this->buffer[index];
 
 			do
 			{
 				qse_size_t left, right, greater;
 	
-				left = QSE_ARRAY_HEAP_LEFT (index);
-				right = QSE_ARRAY_HEAP_RIGHT (index);
+				left = QSE_BINARY_HEAP_LEFT(index);
+				right = QSE_BINARY_HEAP_RIGHT(index);
 	
 				// choose the larger one between 2 BinaryHeap 
-				if (right < this->data_count && 
-				    this->greater_than (this->data_buffer[right], this->data_buffer[left]))
+				if (right < this->count && 
+				    this->greater_than(this->buffer[right], this->buffer[left]))
 				{
 					// if the right child exists and 
 					// the right item is greater than the left item
@@ -323,33 +235,22 @@ protected:
 				{
 					greater = left;
 				}
-	
-				if (this->greater_than (item, this->data_buffer[greater])) break;
-	
-				//this->data_buffer[index] = this->data_buffer[greater];
-				this->assign (this->data_buffer[index], this->data_buffer[greater], index);
+
+				if (this->greater_than(item, this->buffer[greater])) break;
+
+				this->buffer[index] = this->buffer[greater];
 				index = greater;
 			}
 			while (index < half_data_count);
 
-			//this->data_buffer[index] = item;
-			this->assign (this->data_buffer[index], item, index);
+			this->buffer[index] = item;
 		}
 
 		return index;
-#endif
-		return QSE_NULL;
 	}
 
 protected:
-	Mpool      mp;
 	COMPARATOR greater_than;
-	ASSIGNER   assigner;
-	RESIZER    resizer;
-
-	qse_size_t capacity;
-	qse_size_t count;
-	T* buffer;
 };
 
 

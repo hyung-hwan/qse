@@ -57,6 +57,8 @@ class Array: public Mmged
 public:
 	typedef Array<T,RESIZER> SelfType;
 
+	typedef ArrayResizer DefaultResizer;
+
 	enum 
 	{
 		DEFAULT_CAPACITY = 128,
@@ -229,21 +231,20 @@ public:
 		return this->buffer[index];
 	}
 
-	T& get (qse_size_t index)
+	T& getValueAtgetValueAt (qse_size_t index)
 	{
 		QSE_ASSERT (index < this->count);
 		return this->buffer[index];
 	}
 
-	const T& get (qse_size_t index) const
+	const T& getValueAt (qse_size_t index) const
 	{
 		QSE_ASSERT (index < this->count);
 		return this->buffer[index];
 	}
 
-	void set (qse_size_t index, const T& value)
+	void setValueAt (qse_size_t index, const T& value)
 	{
-		QSE_ASSERT (index < this->count);
 		this->insert (index, value);
 	}
 
@@ -383,6 +384,8 @@ public:
 
 	void setCapacity (qse_size_t capa)
 	{
+		if (capa == this->capacity) return;
+
 		if (capa <= 0) 
 		{
 			this->clear (true);
@@ -395,15 +398,7 @@ public:
 			if (cnt > capa) cnt = capa;
 
 			T* tmp = this->clone_buffer (this->buffer, capa, cnt);
-
-			// don't call this->clear(true) here. clear items only.
-			this->clear_all_items ();
-
-			// deallocate the current buffer;
-			::operator delete (this->buffer, this->getMmgr());
-			this->capacity = 0;
-			this->buffer = QSE_NULL;
-
+			this->clear (true);
 			this->buffer = tmp;
 			this->capacity = capa;
 			this->count = cnt;
@@ -418,7 +413,8 @@ public:
 		}
 	}
 
-	void trimToSize ()
+	// The compact() function 
+	void compact ()
 	{
 		this->setCapacity (this->size);
 	}
