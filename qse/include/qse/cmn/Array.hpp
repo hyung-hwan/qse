@@ -34,6 +34,15 @@
 QSE_BEGIN_NAMESPACE(QSE)
 /////////////////////////////////
 
+template <typename T>
+struct ArrayPositioner
+{
+	void operator() (T& v, qse_size_t index) const
+	{
+		// do nothing
+	}
+};
+
 struct ArrayResizer
 {
 	qse_size_t operator() (qse_size_t current) const
@@ -51,12 +60,13 @@ struct ArrayResizer
 ///
 /// The Array class provides a dynamically resized array.
 /// 
-template <typename T, typename RESIZER = ArrayResizer >
+template <typename T, typename POSITIONER = ArrayPositioner<T>, typename RESIZER = ArrayResizer >
 class Array: public Mmged
 {
 public:
-	typedef Array<T,RESIZER> SelfType;
+	typedef Array<T,POSITIONER,RESIZER> SelfType;
 
+	typedef ArrayPositioner<T> DefaultPositioner;
 	typedef ArrayResizer DefaultResizer;
 
 	enum 
@@ -128,6 +138,7 @@ protected:
 			{
 				// copy-construct each element.
 				new((QSE::Mmgr*)QSE_NULL, &tmp[index]) T(srcbuf[index]);
+				this->positioner (tmp[index], index);
 			}
 		}
 		catch (...) 
@@ -137,6 +148,7 @@ protected:
 			while (index > 0)
 			{
 				--index;
+				this->positioner (tmp[index], INVALID_INDEX);
 				tmp[index].~T ();
 			}
 			::operator delete (tmp, this->getMmgr());
@@ -153,11 +165,13 @@ protected:
 			// no value exists in the given position.
 			// i can copy-construct the value.
 			new((QSE::Mmgr*)QSE_NULL, &this->buffer[index]) T(value);
+			this->positioner (this->buffer[index], index);
 		}
 		else
 		{
 			// there is an old value in the position.
 			this->buffer[index] = value;
+			this->positioner (this->buffer[index], index);
 		}
 	}
 
@@ -168,6 +182,7 @@ protected:
 		for (qse_size_t i = this->count; i > 0; )
 		{
 			--i;
+			this->positioner (this->buffer[i], INVALID_INDEX);
 			this->buffer[i].~T ();
 		}
 	
@@ -232,11 +247,14 @@ public:
 		return INVALID_INDEX;
 	}
 
-	T& operator[] (qse_size_t index)
-	{
-		QSE_ASSERT (index < this->count);
-		return this->buffer[index];
-	}
+	// i don't want expose a non-const accessor as i don't like
+	// a proper update procesure to be skipped. 
+	// use setValueAt() or update() to modify the existing element.
+	//T& operator[] (qse_size_t index)
+	//{
+	//	QSE_ASSERT (index < this->count);
+	//	return this->buffer[index];
+	//}
 
 	const T& operator[] (qse_size_t index) const
 	{
@@ -244,11 +262,14 @@ public:
 		return this->buffer[index];
 	}
 
-	T& getValueAt (qse_size_t index)
-	{
-		QSE_ASSERT (index < this->count);
-		return this->buffer[index];
-	}
+	// i don't want expose a non-const accessor as i don't like
+	// a proper update procesure to be skipped. 
+	// use setValueAt() or update() to modify the existing element.
+	//T& getValueAt (qse_size_t index)
+	//{
+	//	QSE_ASSERT (index < this->count);
+	//	return this->buffer[index];
+	//}
 
 	const T& getValueAt (qse_size_t index) const
 	{
@@ -258,7 +279,7 @@ public:
 
 	void setValueAt (qse_size_t index, const T& value)
 	{
-		this->insert (index, value);
+		this->update (index, value);
 	}
 
 	qse_size_t insert (qse_size_t index, const T& value)
@@ -298,6 +319,7 @@ public:
 			for (qse_size_t i = this->count; i < index; i++)
 			{
 				new((QSE::Mmgr*)QSE_NULL, &this->buffer[i]) T();
+				this->positioner (this->buffer[i], i);
 			}
 		}
 
@@ -308,7 +330,15 @@ public:
 
 		return index;
 	}
-	
+
+	qse_size_t update (qse_size_t index, const T& value)
+	{
+		QSE_ASSERT (index < this->count);
+		this->buffer[index] = value;
+		this->positioner (this->buffer[index], index);
+		return index;
+	}
+
 	void remove (qse_size_t index)
 	{
 		this->remove (index, index);
@@ -325,13 +355,27 @@ public:
 		// replace deleted elements by surviving elements at the back
 		while (i < this->count) 
 		{
+			// which is better? 
+			//  1. destruct followed by copy construct
+			//  2. operator assignment.
+
+			// 1. destruct followed by copy construct
+			//this->positioner (this->buffer[j], INVALID_INDEX);
+			//this->buffer[j].~T();
+			//new((QSE::Mmgr*)QSE_NULL, &this->buffer[j]) T(this->buffer[i]);
+			//this->positioner (this->buffer[j], j);
+
+			// 2. operator assignment
 			this->buffer[j] = this->buffer[i];
+			this->positioner (this->buffer[j], j);
+
 			j++; i++;
 		}
 
 		// call the destructor of deleted elements.
 		while (j < this->count)
 		{
+			this->positioner (this->buffer[j], INVALID_INDEX);
 			this->buffer[j].~T ();
 			j++;
 		}
@@ -381,6 +425,7 @@ public:
 			for (qse_size_t i = size; i < this->count; ++i)
 			{
 				// call the destructor of the items 
+				this->positioner (this->buffer[i], INVALID_INDEX);
 				this->buffer[i].~T ();
 			}
 
@@ -393,6 +438,7 @@ public:
 			{
 				// use the default contructor to set the value.
 				new((QSE::Mmgr*)QSE_NULL, &this->buffer[i]) T();
+				this->positioner (this->buffer[i], i);
 			}
 
 			this->count = size;
@@ -497,18 +543,24 @@ public:
 				while (index < nk) 
 				{
 					this->buffer[index] = this->buffer[index + n];
+					this->positioner (this->buffer[index], index);
 					index += n;
 				}
 				if (index == last) break;
+
 				this->buffer[index] = this->buffer[index - nk];
+				this->positioner (this->buffer[index], index);
 				index -= nk;
 			}
+
 			this->buffer[last] = c;
+			this->positioner (this->buffer[last], last);
 			first++;
 		}
 	}
 
 protected:
+	POSITIONER positioner;
 	RESIZER    resizer;
 
 	qse_size_t count;

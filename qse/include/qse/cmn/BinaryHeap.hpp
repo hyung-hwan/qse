@@ -85,20 +85,30 @@ struct BinaryHeapComparator
 	}
 };
 
+template <typename T>
+struct BinaryHeapPositioner
+{
+	void operator() (T& v, qse_size_t index) const
+	{
+		// do nothing
+	}
+};
+
 typedef ArrayResizer BinaryHeapResizer;
 
 #define QSE_BINARY_HEAP_UP(x)     (((x) - 1) / 2)
 #define QSE_BINARY_HEAP_LEFT(x)   ((x) * 2 + 1)
 #define QSE_BINARY_HEAP_RIGHT(x)  ((x) * 2 + 2)
 
-template <typename T, typename COMPARATOR = BinaryHeapComparator<T>, typename RESIZER = BinaryHeapResizer >
-class BinaryHeap: protected Array<T,RESIZER>
+template <typename T, typename COMPARATOR = BinaryHeapComparator<T>, typename POSITIONER = BinaryHeapPositioner<T>, typename RESIZER = BinaryHeapResizer >
+class BinaryHeap: protected Array<T,POSITIONER,RESIZER>
 {
 public:
-	typedef BinaryHeap<T,COMPARATOR,RESIZER> SelfType;
-	typedef Array<T,RESIZER> ParentType;
+	typedef BinaryHeap<T,COMPARATOR,POSITIONER,RESIZER> SelfType;
+	typedef Array<T,POSITIONER,RESIZER> ParentType;
 
 	typedef BinaryHeapComparator<T> DefaultComparator;
+	typedef BinaryHeapPositioner<T> DefaultPositioner;
 	typedef BinaryHeapResizer DefaultResizer;
 
 	enum
@@ -149,16 +159,16 @@ public:
 
 		// add the item at the back of the array
 		ParentType::insert (index, value);
-		
+
 		// move the item up to the top if it's greater than the up item
 		return this->sift_up(index);
 	}
 
 	qse_size_t update (qse_size_t index, const T& value)
 	{
-		T old = this->data_buffer[index];
+		T old = this->buffer[index];
 
-		this->buffer[index] = value;
+		ParentType::update (index, value);
 
 		return (this->greater_than(value, old))? this->sift_up(index): this->sift_down(index);
 	}
@@ -170,20 +180,13 @@ public:
 		// copy the last item to the position to remove 
 		T old = this->buffer[index];
 
-		this->buffer[index] = this->buffer[this->count - 1];
+		ParentType::update (index, this->buffer[this->count - 1]);
 
 		// delete the last item
 		ParentType::remove (this->count - 1);
 		
 		// relocate the item
 		(this->greater_than (this->buffer[index], old))? this->sift_up(index): this->sift_down(index);
-	}
-
-	void clear ()
-	{
-		while (this->root->notNil()) this->remove_node (this->root);
-		QSE_ASSERT (this->root = this->nil);
-		QSE_ASSERT (this->node_count == 0);
 	}
 
 protected:
@@ -198,14 +201,14 @@ protected:
 
 			do 
 			{
-				this->buffer[index] = this->buffer[up];
+				ParentType::setValueAt (index, this->buffer[up]);
 
 				index = up;
 				up = QSE_BINARY_HEAP_UP(up);
 			}
 			while (index > 0 && this->greater_than(item, this->buffer[up]));
 
-			this->buffer[index] = item;
+			ParentType::setValueAt (index, item);
 		}
 
 		return index;
@@ -244,12 +247,12 @@ protected:
 
 				if (this->greater_than(item, this->buffer[greater])) break;
 
-				this->buffer[index] = this->buffer[greater];
+				ParentType::setValueAt (index, this->buffer[greater]);
 				index = greater;
 			}
 			while (index < half_data_count);
 
-			this->buffer[index] = item;
+			ParentType::setValueAt (index, item);
 		}
 
 		return index;
