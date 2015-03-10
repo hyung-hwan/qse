@@ -27,6 +27,7 @@
 #ifndef _QSE_SED_SED_HPP_
 #define _QSE_SED_SED_HPP_
 
+#include <qse/Uncopyable.hpp>
 #include <qse/Types.hpp>
 #include <qse/cmn/Mmged.hpp>
 #include <qse/sed/sed.h>
@@ -46,12 +47,12 @@ QSE_BEGIN_NAMESPACE(QSE)
 ///
 /// The Sed class implements a stream editor by wrapping around #qse_sed_t.
 ///
-class QSE_EXPORT Sed: public Types, public Mmged
+class QSE_EXPORT Sed: public Uncopyable, public Types, public Mmged
 {
 public:
 	/// The sed_t type redefines a stream editor type
 	typedef qse_sed_t sed_t;
-	/// The loc_t type redefines the location type	
+	/// The loc_t type redefines the location type
 	typedef qse_sed_loc_t loc_t;
 	/// The errnum_t type redefines an error number type
 	typedef qse_sed_errnum_t errnum_t; 
@@ -312,10 +313,6 @@ private:
 	static ssize_t xout (
 		sed_t* s, io_cmd_t cmd, io_arg_t* arg, char_t* dat, size_t len);
 	static const char_t* xerrstr (const sed_t* s, errnum_t num);
-
-private:
-	Sed (const Sed&);
-	Sed& operator= (const Sed&);
 };
 
 /////////////////////////////////
