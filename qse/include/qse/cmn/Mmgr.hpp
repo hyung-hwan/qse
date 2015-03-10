@@ -209,6 +209,27 @@ struct ScopedPtrMmgrDeleter
 	}
 };
 
+// Customized deleter for SharedPtr
+template <typename T>
+struct SharedPtrMmgrDeleter
+{
+	void operator() (T* ptr, void* arg)
+	{
+		ptr->~T ();
+		::operator delete (ptr, (QSE::Mmgr*)arg);
+	}
+};
+
+template <typename T>
+struct MmgedSharedPtrMmgrDeleter
+{
+	void operator() (T* ptr, void* arg)
+	{
+		ptr->~T ();
+		::operator delete (ptr, (QSE::Mmgr*)arg);
+	}
+};
+
 /////////////////////////////////
 QSE_END_NAMESPACE(QSE)
 /////////////////////////////////

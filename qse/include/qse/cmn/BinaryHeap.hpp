@@ -132,7 +132,10 @@ public:
 
 	SelfType& operator= (const SelfType& heap)
 	{
-		ParentType::operator= (heap);
+		if (this != &heap)
+		{
+			ParentType::operator= (heap);
+		}
 		return *this;
 	}
 

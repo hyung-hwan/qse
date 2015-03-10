@@ -111,12 +111,15 @@ public:
 
 	SelfType& operator= (const SelfType& array)
 	{
-		this->clear (true);
-		if (array.buffer)
+		if (this != &array)
 		{
-			this->buffer = this->clone_buffer (array, array.capacity, array.count);
-			this->count = array.count;
-			this->capacity = array.capacity;
+			this->clear (true);
+			if (array.buffer)
+			{
+				this->buffer = this->clone_buffer (array, array.capacity, array.count);
+				this->count = array.count;
+				this->capacity = array.capacity;
+			}
 		}
 		return *this;
 	}

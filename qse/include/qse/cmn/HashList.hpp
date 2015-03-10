@@ -220,25 +220,28 @@ public:
 
 	SelfType& operator= (const SelfType& list)
 	{
-		this->clear (false);
-
-		// note that the memory pool itself is not copied.
-
-		for (qse_size_t i = 0; i < list.node_capacity; i++)
+		if (this != &list)
 		{
-			qse_size_t head = i << 1;
-			qse_size_t tail = head + 1;
+			this->clear (false);
 
-			Node* np = list.nodes[head];
-			if (np == QSE_NULL) continue;
-			
-			do 
+			// note that the memory pool itself is not copied.
+
+			for (qse_size_t i = 0; i < list.node_capacity; i++)
 			{
-				this->copy_datum (np, this->node_capacity, this->nodes, this->datum_list);
-				if (np == list.nodes[tail]) break;
-				np = np->getNextNode ();
-			} 
-			while (1);
+				qse_size_t head = i << 1;
+				qse_size_t tail = head + 1;
+
+				Node* np = list.nodes[head];
+				if (np == QSE_NULL) continue;
+				
+				do 
+				{
+					this->copy_datum (np, this->node_capacity, this->nodes, this->datum_list);
+					if (np == list.nodes[tail]) break;
+					np = np->getNextNode ();
+				} 
+				while (1);
+			}
 		}
 
 		return *this;

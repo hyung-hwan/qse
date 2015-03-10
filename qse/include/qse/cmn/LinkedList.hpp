@@ -231,10 +231,13 @@ public:
 
 	SelfType& operator= (const SelfType& ll) 
 	{
-		this->clear ();
-		// note that the memory pool itself is not copied.
-		for (Node* p = ll.head_node; p != QSE_NULL; p = p->next)
-			this->append (p->value);
+		if (this != &ll)
+		{
+			this->clear ();
+			// note that the memory pool itself is not copied.
+			for (Node* p = ll.head_node; p != QSE_NULL; p = p->next)
+				this->append (p->value);
+		}
 		return *this;
 	}
 

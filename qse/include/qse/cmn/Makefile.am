@@ -51,7 +51,7 @@ pkginclude_HEADERS = \
 
 if ENABLE_CXX
 pkginclude_HEADERS += \
-	Mmgr.hpp StdMmgr.hpp HeapMmgr.hpp Mmged.hpp \
+	Mmgr.hpp StdMmgr.hpp HeapMmgr.hpp Mmged.hpp MmgedSharedPtr.hpp \
 	Mpool.hpp Association.hpp LinkedList.hpp HashList.hpp HashTable.hpp \
 	RedBlackTree.hpp RedBlackTable.hpp \
 	Array.hpp BinaryHeap.hpp
