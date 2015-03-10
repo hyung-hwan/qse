@@ -30,6 +30,7 @@
 #include <qse/awk/awk.h>
 #include <qse/cmn/htb.h>
 #include <qse/cmn/chr.h>
+#include <qse/Uncopyable.hpp>
 #include <qse/Types.hpp>
 #include <qse/cmn/Mmged.hpp>
 #include <stdarg.h>
@@ -45,7 +46,7 @@ QSE_BEGIN_NAMESPACE(QSE)
 /// The Awk class implements an AWK interpreter by wrapping around 
 /// #qse_awk_t and #qse_awk_rtx_t.
 ///
-class QSE_EXPORT Awk: public Types, public Mmged
+class QSE_EXPORT Awk: public Uncopyable, public Types, public Mmged
 {
 public:
 	typedef qse_htb_t htb_t;
@@ -1363,10 +1364,6 @@ private:
 	int dispatch_function (Run* run, const fnc_info_t* fi);
 
 	static const char_t* xerrstr (const awk_t* a, errnum_t num);
-
-private:
-	Awk (const Awk&);
-	Awk& operator= (const Awk&);
 };
 
 /////////////////////////////////

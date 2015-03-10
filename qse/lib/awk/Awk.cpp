@@ -1383,7 +1383,7 @@ int Awk::dispatch_function (Run* run, const fnc_info_t* fi)
 	}
 
 	FunctionHandler handler;
-       	handler = *(FunctionHandler*)QSE_HTB_VPTR(pair);	
+	handler = *(FunctionHandler*)QSE_HTB_VPTR(pair);
 
 	size_t i, nargs = qse_awk_rtx_getnargs(run->rtx);
 

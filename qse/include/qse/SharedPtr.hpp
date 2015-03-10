@@ -153,9 +153,9 @@ public:
 
 protected:
 	qse_size_t* _ref;
-	T* _ptr;
-	void* _darg;
-	DELETER deleter;
+	T*          _ptr;
+	void*       _darg;
+	DELETER     deleter;
 }; 
 
 /////////////////////////////////
