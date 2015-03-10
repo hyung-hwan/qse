@@ -35,12 +35,12 @@
 QSE_BEGIN_NAMESPACE(QSE)
 /////////////////////////////////
 
-class Exception
+class QSE_EXPORT Exception
 {
 public:
 	Exception (
 		const qse_char_t* name, const qse_char_t* msg, 
-		const qse_char_t* file, int line): 
+		const qse_char_t* file, qse_size_t line): 
 		name(name), msg(msg)
 #if !defined(QSE_NO_LOCATION_IN_EXCEPTION)
 		, file(file), line(line) 
@@ -52,21 +52,21 @@ public:
 	const qse_char_t* msg;
 #if !defined(QSE_NO_LOCATION_IN_EXCEPTION)
 	const qse_char_t* file;
-	int   line;
+	qse_size_t        line;
 #endif
 };
 
 #define QSE_THROW(ex_name) \
-	throw ex_name(QSE_Q(ex_name),QSE_Q(ex_name), QSE_T(__FILE__), __LINE__)
+	throw ex_name(QSE_Q(ex_name),QSE_Q(ex_name), QSE_T(__FILE__), (qse_size_t)__LINE__)
 #define QSE_THROW_WITH_MSG(ex_name,msg) \
-	throw ex_name(QSE_Q(ex_name),msg, QSE_T(__FILE__), __LINE__)
+	throw ex_name(QSE_Q(ex_name),msg, QSE_T(__FILE__), (qse_size_t)__LINE__)
 
 #define QSE_EXCEPTION(ex_name) \
 	class ex_name: public QSE::Exception \
 	{ \
 	public: \
 		ex_name (const qse_char_t* name, const qse_char_t* msg, \
-		         const qse_char_t* file, int line): \
+		         const qse_char_t* file, qse_size_t line): \
 			QSE::Exception (name, msg, file, line) {} \
 	}
 

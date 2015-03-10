@@ -284,6 +284,12 @@ public:
 
 	qse_size_t insert (qse_size_t index, const T& value)
 	{
+		// Unlike insert() in RedBlackTree and HashList,
+		// it inserts an item when index exists in the existing array.
+		// It is because array allows duplicate items.
+		// RedBlckTree::insert() and HashList::insert() return failure
+		// if existing item exists.
+
 		if (index >= this->capacity) 
 		{
 			// the position to add the element is beyond the
@@ -337,6 +343,22 @@ public:
 		this->buffer[index] = value;
 		this->positioner (this->buffer[index], index);
 		return index;
+	}
+
+	qse_size_t upsert (qse_size_t index, const T& value)
+	{
+		if (index < this->count)
+			return this->update (index, value);
+		else
+			return this->insert (index, value);
+	}
+
+	qse_size_t ensert (qse_size_t index, const T& value)
+	{
+		if (index < this->count)
+			return index; // no update
+		else
+			return this->insert (index, value);
 	}
 
 	void remove (qse_size_t index)
@@ -409,7 +431,9 @@ public:
 
 		if (purge_buffer && this->buffer)
 		{
+			QSE_ASSERT (this->count <= 0);
 			QSE_ASSERT (this->capacity > 0);
+
 			::operator delete (this->buffer, this->getMmgr());
 			this->capacity = 0;
 			this->buffer = QSE_NULL;
