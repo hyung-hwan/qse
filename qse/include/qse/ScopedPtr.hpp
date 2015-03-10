@@ -33,31 +33,83 @@
 QSE_BEGIN_NAMESPACE(QSE)
 /////////////////////////////////
 
-class ScopedPtrType 
+template <typename T>
+struct ScopedPtrDeleter
 {
-public:
-	enum Value 
+	void operator() (T* ptr, void* arg)
 	{
-		SINGLETON = 0,
-		ARRAY     = 1
-	};
+		delete ptr;
+	}
 };
 
-template<class T, ScopedPtrType::Value type = ScopedPtrType::SINGLETON>
+template <typename T>
+struct ScopedPtrArrayDeleter
+{
+	void operator() (T* ptr, void* arg)
+	{
+		delete[] ptr;
+	}
+};
+
+/// The ScopedPtr class is a template class that destroys the object the
+/// pointer points to when its destructor is called. You can use this class
+/// to free a certain resource associated to the pointer when it goes out
+/// of the current scope.
+///
+/// \code
+/// #include <stdio.h>
+/// #include <qse/ScopedPtr.hpp>
+/// #include <qse/cmn/HeapMmgr.hpp>
+/// 
+/// 
+/// class X
+/// {
+/// public:
+///     X() { printf ("X constructured\n"); }
+///     ~X() { printf ("X destructed\n"); }
+/// };
+/// 
+/// struct destroy_x_in_mmgr
+/// {
+///     void operator() (X* x, void* arg)
+///     {   
+///         x->~X();    
+///         ::operator delete (x, (QSE::Mmgr*)arg);
+///     }   
+/// };
+/// 
+/// int main ()
+/// {
+///     QSE::HeapMmgr heap_mmgr (QSE::Mmgr::getDFL(), 30000);
+/// 
+///     {   
+///         QSE::ScopedPtr<X> x1 (new X);
+///         QSE::ScopedPtr<X,QSE::ScopedPtrArrayDeleter<X> > x3 (new X[10]); 
+///         QSE::ScopedPtr<X,destroy_x_in_mmgr> x2 (new(&heap_mmgr) X, &heap_mmgr);
+///     }   
+/// 
+///     return 0;
+/// }
+/// \endcode
+///
+
+template<typename T, typename DELETER = ScopedPtrDeleter<T> >
 class QSE_EXPORT ScopedPtr: public Uncopyable
 {
 public:
-	ScopedPtr (T* p = (T*)QSE_NULL) 
+	typedef ScopedPtrDeleter<T> DefaultDeleter;
+
+	ScopedPtr (T* ptr = (T*)QSE_NULL, void* darg = (void*)QSE_NULL) 
 	{
-		this->_ptr = p;
+		this->_ptr = ptr;
+		this->_darg = darg;
 	}
 
 	~ScopedPtr () 
 	{
 		if (this->_ptr) 
 		{
-			if (type == ScopedPtrType::SINGLETON) delete this->_ptr;
-			else delete[] this->_ptr;
+			this->deleter (this->_ptr, this->_darg);
 		}
 	}
 
@@ -110,22 +162,25 @@ public:
 	{
 		T* t = this->_ptr;
 		this->_ptr = (T*)QSE_NULL;
+		this->_darg = QSE_NULL;
 		return t;
 	}
 
-	void reset (T* p = (T*)QSE_NULL) 
+	void reset (T* ptr = (T*)QSE_NULL, void* darg = (T*)QSE_NULL) 
 	{
 		if (this->_ptr) 
 		{
-			if (type == ScopedPtrType::SINGLETON) delete this->_ptr;
-			else delete[] this->_ptr;
+			this->deleter (this->_ptr, this->_darg);
 		}
 
-		this->_ptr = p;
+		this->_ptr = ptr;
+		this->_darg = darg;
 	}
 
 protected:
 	T* _ptr;
+	void* _darg;
+	DELETER deleter;
 }; 
 
 /////////////////////////////////

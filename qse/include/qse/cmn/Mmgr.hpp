@@ -193,4 +193,24 @@ void* operator new[] (qse_size_t size, QSE::Mmgr* mmgr);
 void operator delete[] (void* ptr, QSE::Mmgr* mmgr);
 #endif
 
+
+/////////////////////////////////
+QSE_BEGIN_NAMESPACE(QSE)
+/////////////////////////////////
+
+// Customized deleter for ScopedPtr
+template <typename T>
+struct ScopedPtrMmgrDeleter
+{
+	void operator() (T* ptr, void* arg)
+	{
+		ptr->~T ();
+		::operator delete (ptr, (QSE::Mmgr*)arg);
+	}
+};
+
+/////////////////////////////////
+QSE_END_NAMESPACE(QSE)
+/////////////////////////////////
+
 #endif
