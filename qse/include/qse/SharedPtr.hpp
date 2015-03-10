@@ -24,17 +24,18 @@
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _QSE_SCOPEDPTR_HPP_
-#define _QSE_SCOPEDPTR_HPP_
+#ifndef _QSE_SHAREDPTR_HPP_
+#define _QSE_SHAREDPTR_HPP_
 
-#include <qse/Uncopyable.hpp>
+#include <qse/types.h>
+#include <qse/macros.h>
 
 /////////////////////////////////
 QSE_BEGIN_NAMESPACE(QSE)
 /////////////////////////////////
 
 template <typename T>
-struct ScopedPtrDeleter
+struct SharedPtrDeleter
 {
 	void operator() (T* ptr, void* arg)
 	{
@@ -43,7 +44,7 @@ struct ScopedPtrDeleter
 };
 
 template <typename T>
-struct ScopedPtrArrayDeleter
+struct SharedPtrArrayDeleter
 {
 	void operator() (T* ptr, void* arg)
 	{
@@ -51,66 +52,57 @@ struct ScopedPtrArrayDeleter
 	}
 };
 
-/// The ScopedPtr class is a template class that destroys the object the
-/// pointer points to when its destructor is called. You can use this class
-/// to free a certain resource associated to the pointer when it goes out
-/// of the current scope.
 ///
-/// \code
-/// #include <stdio.h>
-/// #include <qse/ScopedPtr.hpp>
-/// #include <qse/cmn/HeapMmgr.hpp>
-/// 
-/// 
-/// class X
-/// {
-/// public:
-///     X() { printf ("X constructured\n"); }
-///     ~X() { printf ("X destructed\n"); }
-/// };
-/// 
-/// struct destroy_x_in_mmgr
-/// {
-///     void operator() (X* x, void* arg)
-///     {   
-///         x->~X();    
-///         ::operator delete (x, (QSE::Mmgr*)arg);
-///     }   
-/// };
-/// 
-/// int main ()
-/// {
-///     QSE::HeapMmgr heap_mmgr (QSE::Mmgr::getDFL(), 30000);
-/// 
-///     {   
-///         QSE::ScopedPtr<X> x1 (new X);
-///         QSE::ScopedPtr<X,QSE::ScopedPtrArrayDeleter<X> > x3 (new X[10]); 
-///         QSE::ScopedPtr<X,destroy_x_in_mmgr> x2 (new(&heap_mmgr) X, &heap_mmgr);
-///     }   
-/// 
-///     return 0;
-/// }
-/// \endcode
+/// use QSE::MmgedSharedPtr if you want the instance of this class itself
+/// to be memory managed.
 ///
-
-template<typename T, typename DELETER = ScopedPtrDeleter<T> >
-class QSE_EXPORT ScopedPtr: public Uncopyable
+template<typename T, typename DELETER = SharedPtrDeleter<T> >
+class QSE_EXPORT SharedPtr
 {
 public:
 	typedef SharedPtr<T,DELETER> SelfType;
 
-	typedef ScopedPtrDeleter<T> DefaultDeleter;
+	typedef SharedPtrDeleter<T> DefaultDeleter;
 
-	ScopedPtr (T* ptr = (T*)QSE_NULL, void* darg = (void*)QSE_NULL): _ptr (ptr), _darg (darg)
+	SharedPtr (T* ptr = (T*)QSE_NULL, void* darg = (void*)QSE_NULL): _ptr (ptr), _darg (darg)
 	{
+		this->_ref = new qse_size_t;
+		(*this->_ref) = 1;
 	}
 
-	~ScopedPtr () 
+	SharedPtr (const SelfType& ptr): _ref(ptr._ref), _ptr (ptr._ptr), _darg (ptr._darg)
 	{
-		if (this->_ptr) 
+		(*this->_ref)++;
+	}
+
+	~SharedPtr () 
+	{
+		(*this->_ref)--;
+		if (*this->_ref <= 0)
 		{
-			this->deleter (this->_ptr, this->_darg);
+			if (this->_ptr) this->deleter (this->_ptr, this->_darg);
+			delete this->_ref;
 		}
+	}
+
+	SelfType& operator= (const SelfType& ptr)
+	{
+		if (this != &ptr)
+		{
+			(*this->_ref)--;
+			if (*this->_ref <= 0)
+			{
+				if (this->_ptr) this->deleter (this->_ptr, this->_darg);
+				delete this->_ref;
+			}
+
+			this->_ptr = ptr._ptr;
+			this->_darg = ptr._darg;
+			this->_ref = ptr._ref;
+			(*this->_ref)++;
+		}
+
+		return *this;
 	}
 
 	T& operator* ()
@@ -118,7 +110,7 @@ public:
 		QSE_ASSERT (this->_ptr != (T*)QSE_NULL);
 		return *this->_ptr;
 	}
-	
+
 	const T& operator* () const 
 	{
 		QSE_ASSERT (this->_ptr != (T*)QSE_NULL);
@@ -158,26 +150,9 @@ public:
 		return this->_ptr;
 	}
 
-	T* release () 
-	{
-		T* t = this->_ptr;
-		this->_ptr = (T*)QSE_NULL;
-		this->_darg = QSE_NULL;
-		return t;
-	}
-
-	void reset (T* ptr = (T*)QSE_NULL, void* darg = (T*)QSE_NULL) 
-	{
-		if (this->_ptr) 
-		{
-			this->deleter (this->_ptr, this->_darg);
-		}
-
-		this->_ptr = ptr;
-		this->_darg = darg;
-	}
 
 protected:
+	qse_size_t* _ref;
 	T* _ptr;
 	void* _darg;
 	DELETER deleter;

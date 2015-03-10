@@ -102,7 +102,10 @@ public:
 
 	SelfType& operator= (const SelfType& table)
 	{
-		this->pair_tree = table.pair_tree;
+		if (this != &table)
+		{
+			this->pair_tree = table.pair_tree;
+		}
 		return *this;
 	}
 

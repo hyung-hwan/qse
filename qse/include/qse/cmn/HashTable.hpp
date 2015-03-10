@@ -131,7 +131,10 @@ public:
 
 	SelfType& operator= (const SelfType& table)
 	{
-		this->pair_list = table.pair_list;
+		if (this != &table)
+		{
+			this->pair_list = table.pair_list;
+		}
 		return *this;
 	}
 

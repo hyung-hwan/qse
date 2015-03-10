@@ -57,7 +57,7 @@ public:
 		if (--this->ref_count == 0 && kill) delete this;
 	}
 
-	qse_size_t count () const
+	qse_size_t getRefCount () const
 	{
 		return this->ref_count;
 	}

@@ -380,14 +380,17 @@ public:
 
 	SelfType& operator= (const SelfType& rbt)
 	{
-		this->clear (false);
-
-		// TODO: do the level-order traversal to minimize rebalancing.
-		Iterator it = rbt.getIterator();
-		while (it.isLegit())
+		if (this != &rbt)
 		{
-			this->insert (*it);
-			++it;
+			this->clear (false);
+
+			// TODO: do the level-order traversal to minimize rebalancing.
+			Iterator it = rbt.getIterator();
+			while (it.isLegit())
+			{
+				this->insert (*it);
+				++it;
+			}
 		}
 
 		return *this;
