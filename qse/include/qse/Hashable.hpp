@@ -27,7 +27,8 @@
 #ifndef _QSE_HASHABLE_HPP_
 #define _QSE_HASHABLE_HPP_
 
-#include <qse/Types.hpp>
+#include <qse/types.h>
+#include <qse/macros.h>
 
 /////////////////////////////////
 QSE_BEGIN_NAMESPACE(QSE)

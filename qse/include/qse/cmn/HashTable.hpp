@@ -39,7 +39,7 @@ struct HashTableHasher
 {
 	qse_size_t operator() (const T& v) const
 	{
-		return v.hashCode();
+		return v.getHashCode();
 	}
 };
 

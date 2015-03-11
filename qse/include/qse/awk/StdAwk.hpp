@@ -87,9 +87,8 @@ public:
 		const char_t* str;
 		const char_t* ptr;
 	};
-        
-	StdAwk (Mmgr* mmgr = StdMmgr::getDFL()):
-		Awk (mmgr), console_cmgr (QSE_NULL) 
+
+	StdAwk (Mmgr* mmgr = QSE_NULL): Awk(mmgr), console_cmgr(QSE_NULL) 
 	{
 	}
 

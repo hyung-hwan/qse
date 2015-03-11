@@ -36,6 +36,11 @@ struct xma_xtn_t
 	HeapMmgr* heap;
 };
 
+HeapMmgr::HeapMmgr (qse_size_t heap_size):
+	Mmgr(), Mmged(QSE_NULL), xma(QSE_NULL), heap_size (heap_size)
+{
+}
+
 HeapMmgr::HeapMmgr (Mmgr* mmgr, qse_size_t heap_size): 
 	Mmgr(), Mmged(mmgr), xma(QSE_NULL), heap_size (heap_size)
 {

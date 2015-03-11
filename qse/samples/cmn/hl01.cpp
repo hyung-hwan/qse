@@ -17,7 +17,7 @@ public:
 //		printf ("destructor\n");
 	}
 	bool operator== (const T& x) const { return this->x == x.x; }
-	qse_size_t hashCode() const { return x; }
+	qse_size_t getHashCode() const { return x; }
 
 	int getValue() const { return this->x; }
 	int getY() const { return this->y; }

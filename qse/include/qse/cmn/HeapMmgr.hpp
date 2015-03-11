@@ -49,6 +49,8 @@ QSE_BEGIN_NAMESPACE(QSE)
 class QSE_EXPORT HeapMmgr: public Mmgr, public Mmged
 {
 public:
+	HeapMmgr (qse_size_t heap_size);
+
 	/// The constructor function accepts an memory manager \a mmgr that 
 	/// is used to create a heap of the size \a heap_size. 
 	HeapMmgr (Mmgr* mmgr, qse_size_t heap_size);
