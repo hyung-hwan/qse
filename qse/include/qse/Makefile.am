@@ -9,7 +9,7 @@ pkginclude_HEADERS = \
 if ENABLE_CXX
 pkginclude_HEADERS += \
 	Types.hpp Hashable.hpp Uncopyable.hpp RefCounted.hpp \
-	ScopedPtr.hpp SharedPtr.hpp Exception.hpp
+	ScopedPtr.hpp Exception.hpp
 endif
 
 install-data-hook:
