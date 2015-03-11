@@ -319,10 +319,8 @@ public:
 
 	typedef RedBlackTreeComparator<T> DefaultComparator;
 
-	RedBlackTree (Mmgr* mmgr = QSE_NULL, qse_size_t mpb_size = 0):
-		Mmged (mmgr),
-		mp (mmgr, QSE_SIZEOF(Node), mpb_size),
-		node_count (0)
+private:
+	void init_tree (qse_size_t mpb_size)
 	{
 	#if defined(QSE_REDBLACKTREE_ALLOCATE_NIL)
 		// create a nil object. note it doesn't go into the memory pool.
@@ -336,6 +334,19 @@ public:
 
 		// set root to nil
 		this->root = this->nil;
+	}
+
+public:
+	RedBlackTree (qse_size_t mpb_size = 0):
+		Mmged(QSE_NULL), mp(QSE_NULL, QSE_SIZEOF(Node), mpb_size), node_count(0)
+	{
+		this->init_tree (mpb_size);
+	}
+
+	RedBlackTree (Mmgr* mmgr, qse_size_t mpb_size = 0):
+		Mmged (mmgr), mp (mmgr, QSE_SIZEOF(Node), mpb_size), node_count (0)
+	{
+		this->init_tree (mpb_size);
 	}
 
 	RedBlackTree (const SelfType& rbt): 

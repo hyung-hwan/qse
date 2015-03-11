@@ -33,8 +33,15 @@ QSE_BEGIN_NAMESPACE(QSE)
 Mmged::Mmged (Mmgr* mmgr)
 {
 	if (!mmgr) mmgr = Mmgr::getDFL();
-	this->mmgr = mmgr;
+	this->_mmgr = mmgr;
 }
+
+void Mmged::setMmgr (Mmgr* mmgr)
+{
+	if (!mmgr) mmgr = Mmgr::getDFL();
+	this->_mmgr = mmgr;
+}
+
 /////////////////////////////////
 QSE_END_NAMESPACE(QSE)
 /////////////////////////////////

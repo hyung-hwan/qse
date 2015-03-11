@@ -87,7 +87,7 @@ void Mpool::dispose ()
 		Block* next = block->next;
 
 		//::delete[] (qse_uint8_t*)block;
-		this->mmgr->dispose ((qse_uint8_t*)block);
+		this->getMmgr()->dispose ((qse_uint8_t*)block);
 
 		block = next;
 	}
@@ -107,7 +107,7 @@ Mpool::Block* Mpool::add_block ()
 
 	//Block* block = (Block*)::new qse_uint8_t[
 	//	QSE_SIZEOF(Block) + this->block_size * this->datum_size];
-	Block* block = (Block*)this->mmgr->allocate (QSE_SIZEOF(Block) + this->block_size * this->datum_size);
+	Block* block = (Block*)this->getMmgr()->allocate (QSE_SIZEOF(Block) + this->block_size * this->datum_size);
 	if (!block) return QSE_NULL; // this line may not be reached if the allocator raises an exception
 
 	//this->free_list = (Chain*)block->data;

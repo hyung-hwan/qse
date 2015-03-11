@@ -117,7 +117,12 @@ public:
 		INVALID_INDEX = ParentType::INVALID_INDEX
 	};
 
-	BinaryHeap (Mmgr* mmgr = QSE_NULL, qse_size_t capacity = DEFAULT_CAPACITY): 
+	BinaryHeap (qse_size_t capacity = DEFAULT_CAPACITY): 
+		ParentType (QSE_NULL, capacity)
+	{
+	}
+
+	BinaryHeap (Mmgr* mmgr, qse_size_t capacity = DEFAULT_CAPACITY): 
 		ParentType (mmgr, capacity)
 	{
 	}

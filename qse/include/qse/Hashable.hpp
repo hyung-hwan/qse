@@ -57,7 +57,7 @@ public:
 
 	static qse_size_t getHashCode (const qse_char_t* str)
 	{
-		return this->getHashCode (0, str);
+		return Hashable::getHashCode (0, str);
 	}
 
 	static qse_size_t getHashCode (qse_size_t init, const void* data, qse_size_t size)
@@ -88,7 +88,7 @@ public:
 
 	static qse_size_t getHashCode (const void* data, qse_size_t size)
 	{
-		return this->getHashCode (0, data, size);
+		return Hashable::getHashCode (0, data, size);
 	}
 };
 
