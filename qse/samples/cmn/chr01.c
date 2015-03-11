@@ -1,6 +1,6 @@
 #include <qse/cmn/chr.h>
 #include <qse/cmn/mbwc.h>
-#include <qse/cmn/stdio.h>
+#include <qse/cmn/sio.h>
 
 #include <locale.h>
 
@@ -47,7 +47,12 @@ int main ()
 	qse_setdflcmgrbyid (QSE_CMGR_SLMB);
 #endif
 
+
+	qse_openstdsios ();
+
 	R (test1);
+
+	qse_closestdsios ();
 
 	return 0;
 }

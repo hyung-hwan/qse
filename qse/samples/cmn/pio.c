@@ -1,7 +1,7 @@
 #include <qse/cmn/pio.h>
 #include <qse/cmn/mem.h>
 #include <qse/cmn/env.h>
-#include <qse/cmn/stdio.h>
+#include <qse/cmn/sio.h>
 
 #include <locale.h>
 
@@ -395,6 +395,7 @@ static int test13 (void)
 
 int main ()
 {
+	qse_openstdsios ();
 	setlocale (LC_ALL, "");
 
 	qse_printf (QSE_T("--------------------------------------------------------------------------------\n"));
@@ -414,6 +415,6 @@ int main ()
 	R (test11);
 	R (test12);
 	R (test13);
-
+	qse_closestdsios ();
 	return 0;
 }

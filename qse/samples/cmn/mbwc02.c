@@ -2,7 +2,6 @@
 #include <qse/cmn/mem.h>
 #include <qse/cmn/str.h>
 #include <qse/cmn/sio.h>
-#include <qse/cmn/stdio.h>
 
 #include <locale.h>
 
@@ -295,7 +294,7 @@ int main ()
 {
 #if defined(_WIN32)
 	char locale[100];
-	UINT codepage = GetConsoleOutputCP();	
+	UINT codepage = GetConsoleOutputCP();
 	if (codepage == CP_UTF8)
 	{
 		/*SetConsoleOUtputCP (CP_UTF8);*/
@@ -312,6 +311,7 @@ int main ()
 	qse_setdflcmgrbyid (QSE_CMGR_SLMB);
 #endif
 
+	qse_openstdsios ();
 	qse_printf (QSE_T("--------------------------------------------------------------------------------\n"));
 	qse_printf (QSE_T("Set the environment LANG to a Unicode locale such as UTF-8 if you see the illegal XXXXX errors. If you see such errors in Unicode locales, this program might be buggy. It is normal to see such messages in non-Unicode locales as it uses Unicode data\n"));
 	qse_printf (QSE_T("--------------------------------------------------------------------------------\n"));
@@ -321,5 +321,6 @@ int main ()
 	R (test3);
 	R (test4);
 
+	qse_closestdsios ();
 	return 0;
 }

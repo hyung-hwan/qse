@@ -2,7 +2,7 @@
 #include <qse/cmn/mbwc.h>
 #include <qse/cmn/mem.h>
 #include <qse/cmn/str.h>
-#include <qse/cmn/stdio.h>
+#include <qse/cmn/sio.h>
 
 #include <locale.h>
 #include <wchar.h>
@@ -194,9 +194,11 @@ static int test3 (void)
 
 int main ()
 {
+	int x;
+
 #if defined(_WIN32)
- 	char locale[100];
-	UINT codepage = GetConsoleOutputCP();	
+	char locale[100];
+	UINT codepage = GetConsoleOutputCP();
 	if (codepage == CP_UTF8)
 	{
 		/*SetConsoleOUtputCP (CP_UTF8);*/
@@ -204,8 +206,8 @@ int main ()
 	}
 	else
 	{
-     	sprintf (locale, ".%u", (unsigned int)codepage);
-     	setlocale (LC_ALL, locale);
+		sprintf (locale, ".%u", (unsigned int)codepage);
+		setlocale (LC_ALL, locale);
 		qse_setdflcmgrbyid (QSE_CMGR_SLMB);
 	}
 
@@ -218,13 +220,15 @@ int main ()
 #endif
 
 #else
-     setlocale (LC_ALL, "");
+	setlocale (LC_ALL, "");
 	qse_setdflcmgrbyid (QSE_CMGR_SLMB);
 #endif
 
+	qse_openstdsios ();
 	R (test1);
 	R (test2);
 	R (test3);
+	qse_closestdsios ();
 
 	return 0;
 }

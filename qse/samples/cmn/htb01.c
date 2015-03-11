@@ -2,7 +2,7 @@
 #include <qse/cmn/chr.h>
 #include <qse/cmn/str.h>
 #include <qse/cmn/htb.h>
-#include <qse/cmn/stdio.h>
+#include <qse/cmn/sio.h>
 
 #define R(f) \
 	do { \
@@ -402,7 +402,7 @@ static int test5 ()
 			qse_printf (QSE_T("[FAILED]\n"));
 		}
 		else
-		{	
+		{
 			qse_printf (QSE_T("[OK]\n"));
 		}
 	}
@@ -415,6 +415,7 @@ static int test5 ()
 
 int main ()
 {
+	qse_openstdsios ();
 	R (test1);
 	R (test2);
 #if 0
@@ -422,5 +423,6 @@ int main ()
 	R (test4);
 #endif
 	R (test5);
+	qse_closestdsios ();
 	return 0;
 }

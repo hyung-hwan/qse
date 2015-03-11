@@ -54,15 +54,21 @@ host_triplet = @host@
 bin_PROGRAMS = chr01$(EXEEXT) dir01$(EXEEXT) dll$(EXEEXT) \
 	env01$(EXEEXT) fio01$(EXEEXT) fio02$(EXEEXT) fma$(EXEEXT) \
 	fmt01$(EXEEXT) fmt02$(EXEEXT) fs01$(EXEEXT) fs02$(EXEEXT) \
-	fs03$(EXEEXT) htb$(EXEEXT) glob01$(EXEEXT) ipad01$(EXEEXT) \
+	fs03$(EXEEXT) htb01$(EXEEXT) glob01$(EXEEXT) ipad01$(EXEEXT) \
 	lda$(EXEEXT) main01$(EXEEXT) main02$(EXEEXT) mbwc01$(EXEEXT) \
 	mbwc02$(EXEEXT) nwad01$(EXEEXT) nwif01$(EXEEXT) \
 	nwif02$(EXEEXT) oht$(EXEEXT) path01$(EXEEXT) pio$(EXEEXT) \
-	pma$(EXEEXT) rex01$(EXEEXT) rbt$(EXEEXT) sio01$(EXEEXT) \
+	pma$(EXEEXT) rex01$(EXEEXT) rbt01$(EXEEXT) sio01$(EXEEXT) \
 	sio02$(EXEEXT) sio03$(EXEEXT) sll$(EXEEXT) slmb01$(EXEEXT) \
 	str01$(EXEEXT) task01$(EXEEXT) time$(EXEEXT) tre01$(EXEEXT) \
-	uri01$(EXEEXT) xma$(EXEEXT)
+	uri01$(EXEEXT) xma$(EXEEXT) $(am__EXEEXT_1)
 @WCHAR_TRUE@@WIN32_TRUE@am__append_1 = $(UNICOWS_LIBS)
+
+#bin_PROGRAMS += rex02
+#rex02_SOURCES = rex02.cpp
+#rex02_CXXFLAGS = -I/usr/lib/wx/include/gtk2-unicode-release-2.8 -I/usr/include/wx-2.8 -D_FILE_OFFSET_BITS=64 -D_LARGE_FILES -D__WXGTK__ -pthread 
+#rex02_LDFLAGS = -pthread -Wl,-Bsymbolic-functions  -lwx_gtk2ud_richtext-2.8 -lwx_gtk2ud_aui-2.8 -lwx_gtk2ud_xrc-2.8 -lwx_gtk2ud_qa-2.8 -lwx_gtk2ud_html-2.8 -lwx_gtk2ud_adv-2.8 -lwx_gtk2ud_core-2.8 -lwx_baseud_xml-2.8 -lwx_baseud_net-2.8 -lwx_baseud-2.8 
+@ENABLE_CXX_TRUE@am__append_2 = arr01 bh01 hl01 htb02 rbt02 rbt03 sp01 sp02
 subdir = samples/cmn
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -80,17 +86,29 @@ mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/include/qse/config.h
 CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
+@ENABLE_CXX_TRUE@am__EXEEXT_1 = arr01$(EXEEXT) bh01$(EXEEXT) \
+@ENABLE_CXX_TRUE@	hl01$(EXEEXT) htb02$(EXEEXT) rbt02$(EXEEXT) \
+@ENABLE_CXX_TRUE@	rbt03$(EXEEXT) sp01$(EXEEXT) sp02$(EXEEXT)
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
-am_chr01_OBJECTS = chr01.$(OBJEXT)
-chr01_OBJECTS = $(am_chr01_OBJECTS)
-chr01_LDADD = $(LDADD)
+am__arr01_SOURCES_DIST = arr01.cpp
+@ENABLE_CXX_TRUE@am_arr01_OBJECTS = arr01.$(OBJEXT)
+arr01_OBJECTS = $(am_arr01_OBJECTS)
 am__DEPENDENCIES_1 =
 @WCHAR_TRUE@@WIN32_TRUE@am__DEPENDENCIES_2 = $(am__DEPENDENCIES_1)
-chr01_DEPENDENCIES = $(am__DEPENDENCIES_2)
+am__DEPENDENCIES_3 = $(am__DEPENDENCIES_2)
+@ENABLE_CXX_TRUE@arr01_DEPENDENCIES = $(am__DEPENDENCIES_3)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
+am__bh01_SOURCES_DIST = bh01.cpp
+@ENABLE_CXX_TRUE@am_bh01_OBJECTS = bh01.$(OBJEXT)
+bh01_OBJECTS = $(am_bh01_OBJECTS)
+@ENABLE_CXX_TRUE@bh01_DEPENDENCIES = $(am__DEPENDENCIES_3)
+am_chr01_OBJECTS = chr01.$(OBJEXT)
+chr01_OBJECTS = $(am_chr01_OBJECTS)
+chr01_LDADD = $(LDADD)
+chr01_DEPENDENCIES = $(am__DEPENDENCIES_2)
 dir01_SOURCES = dir01.c
 dir01_OBJECTS = dir01.$(OBJEXT)
 dir01_LDADD = $(LDADD)
@@ -139,10 +157,18 @@ am_glob01_OBJECTS = glob01.$(OBJEXT)
 glob01_OBJECTS = $(am_glob01_OBJECTS)
 glob01_LDADD = $(LDADD)
 glob01_DEPENDENCIES = $(am__DEPENDENCIES_2)
-am_htb_OBJECTS = htb.$(OBJEXT)
-htb_OBJECTS = $(am_htb_OBJECTS)
-htb_LDADD = $(LDADD)
-htb_DEPENDENCIES = $(am__DEPENDENCIES_2)
+am__hl01_SOURCES_DIST = hl01.cpp
+@ENABLE_CXX_TRUE@am_hl01_OBJECTS = hl01.$(OBJEXT)
+hl01_OBJECTS = $(am_hl01_OBJECTS)
+@ENABLE_CXX_TRUE@hl01_DEPENDENCIES = $(am__DEPENDENCIES_3)
+am_htb01_OBJECTS = htb01.$(OBJEXT)
+htb01_OBJECTS = $(am_htb01_OBJECTS)
+htb01_LDADD = $(LDADD)
+htb01_DEPENDENCIES = $(am__DEPENDENCIES_2)
+am__htb02_SOURCES_DIST = htb02.cpp
+@ENABLE_CXX_TRUE@am_htb02_OBJECTS = htb02.$(OBJEXT)
+htb02_OBJECTS = $(am_htb02_OBJECTS)
+@ENABLE_CXX_TRUE@htb02_DEPENDENCIES = $(am__DEPENDENCIES_3)
 am_ipad01_OBJECTS = ipad01.$(OBJEXT)
 ipad01_OBJECTS = $(am_ipad01_OBJECTS)
 ipad01_LDADD = $(LDADD)
@@ -195,10 +221,18 @@ am_pma_OBJECTS = pma.$(OBJEXT)
 pma_OBJECTS = $(am_pma_OBJECTS)
 pma_LDADD = $(LDADD)
 pma_DEPENDENCIES = $(am__DEPENDENCIES_2)
-am_rbt_OBJECTS = rbt.$(OBJEXT)
-rbt_OBJECTS = $(am_rbt_OBJECTS)
-rbt_LDADD = $(LDADD)
-rbt_DEPENDENCIES = $(am__DEPENDENCIES_2)
+am_rbt01_OBJECTS = rbt01.$(OBJEXT)
+rbt01_OBJECTS = $(am_rbt01_OBJECTS)
+rbt01_LDADD = $(LDADD)
+rbt01_DEPENDENCIES = $(am__DEPENDENCIES_2)
+am__rbt02_SOURCES_DIST = rbt02.cpp
+@ENABLE_CXX_TRUE@am_rbt02_OBJECTS = rbt02.$(OBJEXT)
+rbt02_OBJECTS = $(am_rbt02_OBJECTS)
+@ENABLE_CXX_TRUE@rbt02_DEPENDENCIES = $(am__DEPENDENCIES_3)
+am__rbt03_SOURCES_DIST = rbt03.cpp
+@ENABLE_CXX_TRUE@am_rbt03_OBJECTS = rbt03.$(OBJEXT)
+rbt03_OBJECTS = $(am_rbt03_OBJECTS)
+@ENABLE_CXX_TRUE@rbt03_DEPENDENCIES = $(am__DEPENDENCIES_3)
 am_rex01_OBJECTS = rex01.$(OBJEXT)
 rex01_OBJECTS = $(am_rex01_OBJECTS)
 rex01_LDADD = $(LDADD)
@@ -223,6 +257,14 @@ am_slmb01_OBJECTS = slmb01.$(OBJEXT)
 slmb01_OBJECTS = $(am_slmb01_OBJECTS)
 slmb01_LDADD = $(LDADD)
 slmb01_DEPENDENCIES = $(am__DEPENDENCIES_2)
+am__sp01_SOURCES_DIST = sp01.cpp
+@ENABLE_CXX_TRUE@am_sp01_OBJECTS = sp01.$(OBJEXT)
+sp01_OBJECTS = $(am_sp01_OBJECTS)
+@ENABLE_CXX_TRUE@sp01_DEPENDENCIES = $(am__DEPENDENCIES_3)
+am__sp02_SOURCES_DIST = sp02.cpp
+@ENABLE_CXX_TRUE@am_sp02_OBJECTS = sp02.$(OBJEXT)
+sp02_OBJECTS = $(am_sp02_OBJECTS)
+@ENABLE_CXX_TRUE@sp02_DEPENDENCIES = $(am__DEPENDENCIES_3)
 am_str01_OBJECTS = str01.$(OBJEXT)
 str01_OBJECTS = $(am_str01_OBJECTS)
 str01_LDADD = $(LDADD)
@@ -270,32 +312,54 @@ LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 AM_V_CCLD = $(am__v_CCLD_@AM_V@)
 am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
 am__v_CCLD_0 = @echo "  CCLD  " $@;
+CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
+	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
+LTCXXCOMPILE = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) \
+	$(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) \
+	$(AM_CXXFLAGS) $(CXXFLAGS)
+AM_V_CXX = $(am__v_CXX_@AM_V@)
+am__v_CXX_ = $(am__v_CXX_@AM_DEFAULT_V@)
+am__v_CXX_0 = @echo "  CXX   " $@;
+CXXLD = $(CXX)
+CXXLINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
+	$(CXXFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
+AM_V_CXXLD = $(am__v_CXXLD_@AM_V@)
+am__v_CXXLD_ = $(am__v_CXXLD_@AM_DEFAULT_V@)
+am__v_CXXLD_0 = @echo "  CXXLD " $@;
 AM_V_GEN = $(am__v_GEN_@AM_V@)
 am__v_GEN_ = $(am__v_GEN_@AM_DEFAULT_V@)
 am__v_GEN_0 = @echo "  GEN   " $@;
-SOURCES = $(chr01_SOURCES) dir01.c $(dll_SOURCES) $(env01_SOURCES) \
+SOURCES = $(arr01_SOURCES) $(bh01_SOURCES) $(chr01_SOURCES) dir01.c \
+	$(dll_SOURCES) $(env01_SOURCES) $(fio01_SOURCES) \
+	$(fio02_SOURCES) $(fma_SOURCES) $(fmt01_SOURCES) \
+	$(fmt02_SOURCES) $(fs01_SOURCES) fs02.c fs03.c \
+	$(glob01_SOURCES) $(hl01_SOURCES) $(htb01_SOURCES) \
+	$(htb02_SOURCES) $(ipad01_SOURCES) $(lda_SOURCES) \
+	$(main01_SOURCES) $(main02_SOURCES) $(mbwc01_SOURCES) \
+	$(mbwc02_SOURCES) $(nwad01_SOURCES) nwif01.c nwif02.c \
+	$(oht_SOURCES) $(path01_SOURCES) $(pio_SOURCES) $(pma_SOURCES) \
+	$(rbt01_SOURCES) $(rbt02_SOURCES) $(rbt03_SOURCES) \
+	$(rex01_SOURCES) $(sio01_SOURCES) $(sio02_SOURCES) \
+	$(sio03_SOURCES) $(sll_SOURCES) $(slmb01_SOURCES) \
+	$(sp01_SOURCES) $(sp02_SOURCES) $(str01_SOURCES) task01.c \
+	$(time_SOURCES) $(tre01_SOURCES) uri01.c $(xma_SOURCES)
+DIST_SOURCES = $(am__arr01_SOURCES_DIST) $(am__bh01_SOURCES_DIST) \
+	$(chr01_SOURCES) dir01.c $(dll_SOURCES) $(env01_SOURCES) \
 	$(fio01_SOURCES) $(fio02_SOURCES) $(fma_SOURCES) \
 	$(fmt01_SOURCES) $(fmt02_SOURCES) $(fs01_SOURCES) fs02.c \
-	fs03.c $(glob01_SOURCES) $(htb_SOURCES) $(ipad01_SOURCES) \
+	fs03.c $(glob01_SOURCES) $(am__hl01_SOURCES_DIST) \
+	$(htb01_SOURCES) $(am__htb02_SOURCES_DIST) $(ipad01_SOURCES) \
 	$(lda_SOURCES) $(main01_SOURCES) $(main02_SOURCES) \
 	$(mbwc01_SOURCES) $(mbwc02_SOURCES) $(nwad01_SOURCES) nwif01.c \
 	nwif02.c $(oht_SOURCES) $(path01_SOURCES) $(pio_SOURCES) \
-	$(pma_SOURCES) $(rbt_SOURCES) $(rex01_SOURCES) \
-	$(sio01_SOURCES) $(sio02_SOURCES) $(sio03_SOURCES) \
-	$(sll_SOURCES) $(slmb01_SOURCES) $(str01_SOURCES) task01.c \
+	$(pma_SOURCES) $(rbt01_SOURCES) $(am__rbt02_SOURCES_DIST) \
+	$(am__rbt03_SOURCES_DIST) $(rex01_SOURCES) $(sio01_SOURCES) \
+	$(sio02_SOURCES) $(sio03_SOURCES) $(sll_SOURCES) \
+	$(slmb01_SOURCES) $(am__sp01_SOURCES_DIST) \
+	$(am__sp02_SOURCES_DIST) $(str01_SOURCES) task01.c \
 	$(time_SOURCES) $(tre01_SOURCES) uri01.c $(xma_SOURCES)
-DIST_SOURCES = $(chr01_SOURCES) dir01.c $(dll_SOURCES) \
-	$(env01_SOURCES) $(fio01_SOURCES) $(fio02_SOURCES) \
-	$(fma_SOURCES) $(fmt01_SOURCES) $(fmt02_SOURCES) \
-	$(fs01_SOURCES) fs02.c fs03.c $(glob01_SOURCES) $(htb_SOURCES) \
-	$(ipad01_SOURCES) $(lda_SOURCES) $(main01_SOURCES) \
-	$(main02_SOURCES) $(mbwc01_SOURCES) $(mbwc02_SOURCES) \
-	$(nwad01_SOURCES) nwif01.c nwif02.c $(oht_SOURCES) \
-	$(path01_SOURCES) $(pio_SOURCES) $(pma_SOURCES) $(rbt_SOURCES) \
-	$(rex01_SOURCES) $(sio01_SOURCES) $(sio02_SOURCES) \
-	$(sio03_SOURCES) $(sll_SOURCES) $(slmb01_SOURCES) \
-	$(str01_SOURCES) task01.c $(time_SOURCES) $(tre01_SOURCES) \
-	uri01.c $(xma_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -496,7 +560,7 @@ fmt01_SOURCES = fmt01.c
 fmt02_SOURCES = fmt02.c
 fs01_SOURCES = fs01.c
 glob01_SOURCES = glob01.c
-htb_SOURCES = htb.c
+htb01_SOURCES = htb01.c
 ipad01_SOURCES = ipad01.c
 lda_SOURCES = lda.c
 main01_SOURCES = main01.c
@@ -509,7 +573,7 @@ path01_SOURCES = path01.c
 pio_SOURCES = pio.c
 pma_SOURCES = pma.c
 rex01_SOURCES = rex01.c
-rbt_SOURCES = rbt.c
+rbt01_SOURCES = rbt01.c
 sio01_SOURCES = sio01.c
 sio02_SOURCES = sio02.c
 sio03_SOURCES = sio03.c
@@ -519,10 +583,26 @@ str01_SOURCES = str01.c
 time_SOURCES = time.c
 tre01_SOURCES = tre01.c
 xma_SOURCES = xma.c
+@ENABLE_CXX_TRUE@arr01_SOURCES = arr01.cpp
+@ENABLE_CXX_TRUE@arr01_LDADD = $(LDADD) -lqsecmnxx
+@ENABLE_CXX_TRUE@bh01_SOURCES = bh01.cpp
+@ENABLE_CXX_TRUE@bh01_LDADD = $(LDADD) -lqsecmnxx
+@ENABLE_CXX_TRUE@hl01_SOURCES = hl01.cpp
+@ENABLE_CXX_TRUE@hl01_LDADD = $(LDADD) -lqsecmnxx
+@ENABLE_CXX_TRUE@htb02_SOURCES = htb02.cpp
+@ENABLE_CXX_TRUE@htb02_LDADD = $(LDADD) -lqsecmnxx
+@ENABLE_CXX_TRUE@rbt02_SOURCES = rbt02.cpp #RedBlackTree
+@ENABLE_CXX_TRUE@rbt02_LDADD = $(LDADD) -lqsecmnxx
+@ENABLE_CXX_TRUE@rbt03_SOURCES = rbt03.cpp #RedBlackTable
+@ENABLE_CXX_TRUE@rbt03_LDADD = $(LDADD) -lqsecmnxx
+@ENABLE_CXX_TRUE@sp01_SOURCES = sp01.cpp # ScopedPtr
+@ENABLE_CXX_TRUE@sp01_LDADD = $(LDADD) -lqsecmnxx
+@ENABLE_CXX_TRUE@sp02_SOURCES = sp02.cpp # SharedPtr
+@ENABLE_CXX_TRUE@sp02_LDADD = $(LDADD) -lqsecmnxx
 all: all-am
 
 .SUFFIXES:
-.SUFFIXES: .c .lo .o .obj
+.SUFFIXES: .c .cpp .lo .o .obj
 $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
 	@for dep in $?; do \
 	  case '$(am__configure_deps)' in \
@@ -599,6 +679,12 @@ clean-binPROGRAMS:
 	list=`for p in $$list; do echo "$$p"; done | sed 's/$(EXEEXT)$$//'`; \
 	echo " rm -f" $$list; \
 	rm -f $$list
+arr01$(EXEEXT): $(arr01_OBJECTS) $(arr01_DEPENDENCIES) $(EXTRA_arr01_DEPENDENCIES) 
+	@rm -f arr01$(EXEEXT)
+	$(AM_V_CXXLD)$(CXXLINK) $(arr01_OBJECTS) $(arr01_LDADD) $(LIBS)
+bh01$(EXEEXT): $(bh01_OBJECTS) $(bh01_DEPENDENCIES) $(EXTRA_bh01_DEPENDENCIES) 
+	@rm -f bh01$(EXEEXT)
+	$(AM_V_CXXLD)$(CXXLINK) $(bh01_OBJECTS) $(bh01_LDADD) $(LIBS)
 chr01$(EXEEXT): $(chr01_OBJECTS) $(chr01_DEPENDENCIES) $(EXTRA_chr01_DEPENDENCIES) 
 	@rm -f chr01$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(chr01_OBJECTS) $(chr01_LDADD) $(LIBS)
@@ -638,9 +724,15 @@ fs03$(EXEEXT): $(fs03_OBJECTS) $(fs03_DEPENDENCIES) $(EXTRA_fs03_DEPENDENCIES)
 glob01$(EXEEXT): $(glob01_OBJECTS) $(glob01_DEPENDENCIES) $(EXTRA_glob01_DEPENDENCIES) 
 	@rm -f glob01$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(glob01_OBJECTS) $(glob01_LDADD) $(LIBS)
-htb$(EXEEXT): $(htb_OBJECTS) $(htb_DEPENDENCIES) $(EXTRA_htb_DEPENDENCIES) 
-	@rm -f htb$(EXEEXT)
-	$(AM_V_CCLD)$(LINK) $(htb_OBJECTS) $(htb_LDADD) $(LIBS)
+hl01$(EXEEXT): $(hl01_OBJECTS) $(hl01_DEPENDENCIES) $(EXTRA_hl01_DEPENDENCIES) 
+	@rm -f hl01$(EXEEXT)
+	$(AM_V_CXXLD)$(CXXLINK) $(hl01_OBJECTS) $(hl01_LDADD) $(LIBS)
+htb01$(EXEEXT): $(htb01_OBJECTS) $(htb01_DEPENDENCIES) $(EXTRA_htb01_DEPENDENCIES) 
+	@rm -f htb01$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(htb01_OBJECTS) $(htb01_LDADD) $(LIBS)
+htb02$(EXEEXT): $(htb02_OBJECTS) $(htb02_DEPENDENCIES) $(EXTRA_htb02_DEPENDENCIES) 
+	@rm -f htb02$(EXEEXT)
+	$(AM_V_CXXLD)$(CXXLINK) $(htb02_OBJECTS) $(htb02_LDADD) $(LIBS)
 ipad01$(EXEEXT): $(ipad01_OBJECTS) $(ipad01_DEPENDENCIES) $(EXTRA_ipad01_DEPENDENCIES) 
 	@rm -f ipad01$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(ipad01_OBJECTS) $(ipad01_LDADD) $(LIBS)
@@ -680,9 +772,15 @@ pio$(EXEEXT): $(pio_OBJECTS) $(pio_DEPENDENCIES) $(EXTRA_pio_DEPENDENCIES)
 pma$(EXEEXT): $(pma_OBJECTS) $(pma_DEPENDENCIES) $(EXTRA_pma_DEPENDENCIES) 
 	@rm -f pma$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(pma_OBJECTS) $(pma_LDADD) $(LIBS)
-rbt$(EXEEXT): $(rbt_OBJECTS) $(rbt_DEPENDENCIES) $(EXTRA_rbt_DEPENDENCIES) 
-	@rm -f rbt$(EXEEXT)
-	$(AM_V_CCLD)$(LINK) $(rbt_OBJECTS) $(rbt_LDADD) $(LIBS)
+rbt01$(EXEEXT): $(rbt01_OBJECTS) $(rbt01_DEPENDENCIES) $(EXTRA_rbt01_DEPENDENCIES) 
+	@rm -f rbt01$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(rbt01_OBJECTS) $(rbt01_LDADD) $(LIBS)
+rbt02$(EXEEXT): $(rbt02_OBJECTS) $(rbt02_DEPENDENCIES) $(EXTRA_rbt02_DEPENDENCIES) 
+	@rm -f rbt02$(EXEEXT)
+	$(AM_V_CXXLD)$(CXXLINK) $(rbt02_OBJECTS) $(rbt02_LDADD) $(LIBS)
+rbt03$(EXEEXT): $(rbt03_OBJECTS) $(rbt03_DEPENDENCIES) $(EXTRA_rbt03_DEPENDENCIES) 
+	@rm -f rbt03$(EXEEXT)
+	$(AM_V_CXXLD)$(CXXLINK) $(rbt03_OBJECTS) $(rbt03_LDADD) $(LIBS)
 rex01$(EXEEXT): $(rex01_OBJECTS) $(rex01_DEPENDENCIES) $(EXTRA_rex01_DEPENDENCIES) 
 	@rm -f rex01$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(rex01_OBJECTS) $(rex01_LDADD) $(LIBS)
@@ -701,6 +799,12 @@ sll$(EXEEXT): $(sll_OBJECTS) $(sll_DEPENDENCIES) $(EXTRA_sll_DEPENDENCIES)
 slmb01$(EXEEXT): $(slmb01_OBJECTS) $(slmb01_DEPENDENCIES) $(EXTRA_slmb01_DEPENDENCIES) 
 	@rm -f slmb01$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(slmb01_OBJECTS) $(slmb01_LDADD) $(LIBS)
+sp01$(EXEEXT): $(sp01_OBJECTS) $(sp01_DEPENDENCIES) $(EXTRA_sp01_DEPENDENCIES) 
+	@rm -f sp01$(EXEEXT)
+	$(AM_V_CXXLD)$(CXXLINK) $(sp01_OBJECTS) $(sp01_LDADD) $(LIBS)
+sp02$(EXEEXT): $(sp02_OBJECTS) $(sp02_DEPENDENCIES) $(EXTRA_sp02_DEPENDENCIES) 
+	@rm -f sp02$(EXEEXT)
+	$(AM_V_CXXLD)$(CXXLINK) $(sp02_OBJECTS) $(sp02_LDADD) $(LIBS)
 str01$(EXEEXT): $(str01_OBJECTS) $(str01_DEPENDENCIES) $(EXTRA_str01_DEPENDENCIES) 
 	@rm -f str01$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(str01_OBJECTS) $(str01_LDADD) $(LIBS)
@@ -726,6 +830,8 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/arr01.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/bh01.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/chr01.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dir01.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dll.Po@am__quote@
@@ -739,7 +845,9 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fs02.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fs03.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/glob01.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/htb.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hl01.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/htb01.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/htb02.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ipad01.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/lda.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/main01.Po@am__quote@
@@ -753,13 +861,17 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/path01.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pio.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pma.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rbt.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rbt01.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rbt02.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rbt03.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rex01.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sio01.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sio02.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sio03.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sll.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/slmb01.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sp01.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sp02.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str01.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/task01.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/time.Po@am__quote@
@@ -787,6 +899,27 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LTCOMPILE) -c -o $@ $<
+
+.cpp.o:
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXXCOMPILE) -c -o $@ $<
+
+.cpp.obj:
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ `$(CYGPATH_W) '$<'`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXXCOMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
+
+.cpp.lo:
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LTCXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LTCXXCOMPILE) -c -o $@ $<
 
 mostlyclean-libtool:
 	-rm -f *.lo
@@ -999,11 +1132,6 @@ uninstall-am: uninstall-binPROGRAMS
 	pdf pdf-am ps ps-am tags uninstall uninstall-am \
 	uninstall-binPROGRAMS
 
-
-#bin_PROGRAMS += rex02
-#rex02_SOURCES = rex02.cpp
-#rex02_CXXFLAGS = -I/usr/lib/wx/include/gtk2-unicode-release-2.8 -I/usr/include/wx-2.8 -D_FILE_OFFSET_BITS=64 -D_LARGE_FILES -D__WXGTK__ -pthread 
-#rex02_LDFLAGS = -pthread -Wl,-Bsymbolic-functions  -lwx_gtk2ud_richtext-2.8 -lwx_gtk2ud_aui-2.8 -lwx_gtk2ud_xrc-2.8 -lwx_gtk2ud_qa-2.8 -lwx_gtk2ud_html-2.8 -lwx_gtk2ud_adv-2.8 -lwx_gtk2ud_core-2.8 -lwx_baseud_xml-2.8 -lwx_baseud_net-2.8 -lwx_baseud-2.8 
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

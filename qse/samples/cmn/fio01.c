@@ -1,7 +1,7 @@
 #include <qse/cmn/fio.h>
 #include <qse/cmn/mem.h>
 #include <qse/cmn/str.h>
-#include <qse/cmn/stdio.h>
+#include <qse/cmn/sio.h>
 
 #include <locale.h>
 
@@ -300,6 +300,7 @@ static int test3 (void)
 
 int main ()
 {
+	qse_openstdsios ();
 	setlocale (LC_ALL, "");
 
 	qse_printf (QSE_T("--------------------------------------------------------------------------------\n"));
@@ -314,5 +315,6 @@ int main ()
 	qse_printf (QSE_T("Run \"rm -f fio01-?.txt\" to delete garbages\n"));
 	qse_printf (QSE_T("--------------------------------------------------------------------------------\n"));
 
+	qse_closestdsios ();
 	return 0;
 }

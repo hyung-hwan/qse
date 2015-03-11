@@ -135,9 +135,10 @@ void* qse_fma_alloc (qse_fma_t* fma, qse_size_t size)
 
 	if ((blk = fma->freeblk) == QSE_NULL)
 	{
-		if (add_chunk (fma) == QSE_NULL) return QSE_NULL;
+		if (add_chunk(fma) == QSE_NULL) return QSE_NULL;
 		blk = fma->freeblk;
 	}
+
 	fma->freeblk = fma->freeblk->next;
 	return blk;
 }
