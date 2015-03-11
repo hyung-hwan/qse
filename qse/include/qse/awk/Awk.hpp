@@ -28,12 +28,22 @@
 #define _QSE_AWK_AWK_HPP_
 
 #include <qse/awk/awk.h>
-#include <qse/cmn/htb.h>
+
 #include <qse/cmn/chr.h>
 #include <qse/Uncopyable.hpp>
 #include <qse/Types.hpp>
 #include <qse/cmn/Mmged.hpp>
 #include <stdarg.h>
+
+//#define QSE_AWK_USE_HTB_FOR_FUNCTION_MAP 1
+//#define QSE_AWK_VALUE_USE_IN_CLASS_PLACEMENT_NEW 1
+
+#if defined(QSE_AWK_USE_HTB_FOR_FUNCTION_MAP)
+#	include <qse/cmn/htb.h>
+#else
+#	include <qse/cmn/HashTable.hpp>
+#	include <qse/Cstr.hpp>
+#endif
 
 /// \file
 /// AWK Interpreter
@@ -49,8 +59,6 @@ QSE_BEGIN_NAMESPACE(QSE)
 class QSE_EXPORT Awk: public Uncopyable, public Types, public Mmged
 {
 public:
-	typedef qse_htb_t htb_t;
-	typedef qse_htb_pair_t pair_t;
 
 	// define a primitive handle 
 	typedef qse_awk_t awk_t;
@@ -522,6 +530,7 @@ public:
 	public:
 		friend class Awk;
 
+	#if defined(QSE_AWK_VALUE_USE_IN_CLASS_PLACEMENT_NEW)
 		// initialization
 		void* operator new (size_t n, Run* run) throw ();
 		void* operator new[] (size_t n, Run* run) throw ();
@@ -535,6 +544,7 @@ public:
 		// normal deletion
 		void operator delete (void* p);
 		void operator delete[] (void* p);
+	#endif
 
 		///
 		/// The Index class encapsulates an index of an arrayed value.
@@ -634,7 +644,7 @@ public:
 			}
 
 		protected:
-			IndexIterator (pair_t* pair, size_t buckno)
+			IndexIterator (qse_htb_pair_t* pair, size_t buckno)
 			{
 				this->pair = pair;
 				this->buckno = buckno;
@@ -939,7 +949,7 @@ public:
 	/// The Awk() function creates an interpreter without fully 
 	/// initializing it. You must call open() for full initialization
 	/// before calling other functions. 
-	Awk (Mmgr* mmgr);
+	Awk (Mmgr* mmgr = QSE_NULL);
 
 	/// The ~Awk() function destroys an interpreter. Make sure to have
 	/// called close() for finalization before the destructor is executed.
@@ -1333,7 +1343,21 @@ protected:
 	errstr_t dflerrstr;
 	errinf_t errinf;
 
-	htb_t* functionMap;
+#if defined(QSE_AWK_USE_HTB_FOR_FUNCTION_MAP)
+	qse_htb_t* functionMap;
+#else
+	
+	class FunctionMap: public HashTable<Cstr,FunctionHandler>
+	{
+	public:
+		FunctionMap (Awk* awk): awk(awk) {}
+
+	protected:
+		Awk* awk;
+	};
+
+	FunctionMap functionMap;
+#endif
 
 	Source* source_reader;
 	Source* source_writer;

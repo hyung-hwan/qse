@@ -246,13 +246,14 @@ Awk::Value::IntIndex::IntIndex (int_t x)
 #undef NTOC
 }
 
+#if defined(QSE_AWK_VALUE_USE_IN_CLASS_PLACEMENT_NEW)
 void* Awk::Value::operator new (size_t n, Run* run) throw ()
 {
 	void* ptr = qse_awk_rtx_allocmem (run->rtx, QSE_SIZEOF(run) + n);
 	if (ptr == QSE_NULL) return QSE_NULL;
 
 	*(Run**)ptr = run;
-	return (char*)ptr+QSE_SIZEOF(run);
+	return (char*)ptr + QSE_SIZEOF(run);
 }
 
 void* Awk::Value::operator new[] (size_t n, Run* run) throw () 
@@ -261,7 +262,7 @@ void* Awk::Value::operator new[] (size_t n, Run* run) throw ()
 	if (ptr == QSE_NULL) return QSE_NULL;
 
 	*(Run**)ptr = run;
-	return (char*)ptr+QSE_SIZEOF(run);
+	return (char*)ptr + QSE_SIZEOF(run);
 }
 
 #if !defined(__BORLANDC__) && !defined(__WATCOMC__)
@@ -269,30 +270,31 @@ void Awk::Value::operator delete (void* ptr, Run* run)
 {
 	// this placement delete is to be called when the constructor 
 	// throws an exception and it's caught by the caller.
-	qse_awk_rtx_freemem (run->rtx, (char*)ptr-QSE_SIZEOF(run));
+	qse_awk_rtx_freemem (run->rtx, (char*)ptr - QSE_SIZEOF(run));
 }
 
 void Awk::Value::operator delete[] (void* ptr, Run* run) 
 {
 	// this placement delete is to be called when the constructor 
 	// throws an exception and it's caught by the caller.
-	qse_awk_rtx_freemem (run->rtx, (char*)ptr-QSE_SIZEOF(run));
+	qse_awk_rtx_freemem (run->rtx, (char*)ptr - QSE_SIZEOF(run));
 }
 #endif
 
 void Awk::Value::operator delete (void* ptr) 
 {
 	// this delete is to be called for normal destruction.
-	void* p = (char*)ptr-QSE_SIZEOF(Run*);
+	void* p = (char*)ptr - QSE_SIZEOF(Run*);
 	qse_awk_rtx_freemem ((*(Run**)p)->rtx, p);
 }
 
 void Awk::Value::operator delete[] (void* ptr) 
 {
 	// this delete is to be called for normal destruction.
-	void* p = (char*)ptr-QSE_SIZEOF(Run*);
+	void* p = (char*)ptr - QSE_SIZEOF(Run*);
 	qse_awk_rtx_freemem ((*(Run**)p)->rtx, p);
 }
+#endif
 
 Awk::Value::Value (): run (QSE_NULL), val (qse_getawknilval()) 
 {
@@ -1011,7 +1013,12 @@ int Awk::Run::getGlobal (int id, Value& g) const
 //////////////////////////////////////////////////////////////////
 
 Awk::Awk (Mmgr* mmgr): 
-	Mmged (mmgr), awk (QSE_NULL), functionMap (QSE_NULL), 
+	Mmged (mmgr), awk (QSE_NULL), 
+#if defined(QSE_AWK_USE_HTB_FOR_FUNCTION_MAP)
+	functionMap (QSE_NULL), 
+#else
+	functionMap (this), 
+#endif
 	source_reader (QSE_NULL), source_writer (QSE_NULL),
 	pipe_handler (QSE_NULL), file_handler (QSE_NULL), 
 	console_handler (QSE_NULL), runctx (this)
@@ -1108,16 +1115,12 @@ void Awk::retrieveError (Run* run)
 	qse_awk_rtx_geterrinf (run->rtx, &errinf);
 }
 
-static void free_function_map_value (
-	Awk::htb_t* map, void* dptr, Awk::size_t dlen)
-{
-	Awk* awk = *(Awk**) QSE_XTN (map);
-	qse_awk_freemem ((Awk::awk_t*)*awk, dptr);
-}
-
 int Awk::open () 
 {
-	QSE_ASSERT (awk == QSE_NULL && functionMap == QSE_NULL);
+	QSE_ASSERT (this->awk == QSE_NULL);
+#if defined(QSE_AWK_USE_HTB_FOR_FUNCTION_MAP)
+	QSE_ASSERT (this->functionMap == QSE_NULL);
+#endif
 
 	qse_awk_prm_t prm;
 
@@ -1129,73 +1132,80 @@ int Awk::open ()
 	prm.modsym  = modsym;
 
 	qse_awk_errnum_t errnum;
-	awk = qse_awk_open (this->getMmgr(), QSE_SIZEOF(xtn_t), &prm, &errnum);
-	if (awk == QSE_NULL)
+	this->awk = qse_awk_open (this->getMmgr(), QSE_SIZEOF(xtn_t), &prm, &errnum);
+	if (this->awk == QSE_NULL)
 	{
 		this->setError (errnum);
 		return -1;
 	}
 
 	// associate this Awk object with the underlying awk object
-	xtn_t* xtn = (xtn_t*) QSE_XTN (awk);
+	xtn_t* xtn = (xtn_t*) QSE_XTN (this->awk);
 	xtn->awk = this;
 
-	dflerrstr = qse_awk_geterrstr (awk);
-	qse_awk_seterrstr (awk, xerrstr);
+	dflerrstr = qse_awk_geterrstr (this->awk);
+	qse_awk_seterrstr (this->awk, xerrstr);
 
-	functionMap = qse_htb_open (
-		qse_awk_getmmgr(awk), QSE_SIZEOF(this), 512, 70,
+#if defined(QSE_AWK_USE_HTB_FOR_FUNCTION_MAP)
+	this->functionMap = qse_htb_open (
+		qse_awk_getmmgr(this->awk), QSE_SIZEOF(this), 512, 70,
 		QSE_SIZEOF(qse_char_t), 1
 	);
-	if (functionMap == QSE_NULL)
+	if (this->functionMap == QSE_NULL)
 	{
-		qse_awk_close (awk);
-		awk = QSE_NULL;
+		qse_awk_close (this->awk);
+		this->awk = QSE_NULL;
 
 		this->setError (QSE_AWK_ENOMEM);
 		return -1;
 	}
 
-	*(Awk**)QSE_XTN(functionMap) = this;
+	*(Awk**)QSE_XTN(this->functionMap) = this;
 
 	static qse_htb_style_t style =
 	{
 		{
-			QSE_HTB_COPIER_INLINE,
-			QSE_HTB_COPIER_DEFAULT 
+			QSE_HTB_COPIER_DEFAULT, // keep the key pointer only
+			QSE_HTB_COPIER_INLINE   // copy the value into the pair
 		},
 		{
-			QSE_HTB_FREEER_DEFAULT,
-			free_function_map_value
+			QSE_HTB_FREEER_DEFAULT, // free nothing 
+			QSE_HTB_FREEER_DEFAULT  // free nothing 
 		},
 		QSE_HTB_COMPER_DEFAULT,
 		QSE_HTB_KEEPER_DEFAULT,
 		QSE_HTB_SIZER_DEFAULT,
 		QSE_HTB_HASHER_DEFAULT
 	};
-	qse_htb_setstyle (functionMap, &style);
+	qse_htb_setstyle (this->functionMap, &style);
+	
+#endif
 
 	return 0;
 }
 
 void Awk::close () 
 {
-	fini_runctx ();
-	clearArguments ();
+	this->fini_runctx ();
+	this->clearArguments ();
 
-	if (functionMap != QSE_NULL)
+#if defined(QSE_AWK_USE_HTB_FOR_FUNCTION_MAP)
+	if (this->functionMap)
 	{
-		qse_htb_close (functionMap);
-		functionMap = QSE_NULL;
+		qse_htb_close (this->functionMap);
+		this->functionMap = QSE_NULL;
+	}
+#else
+	this->functionMap.clear ();
+#endif
+
+	if (this->awk) 
+	{
+		qse_awk_close (this->awk);
+		this->awk = QSE_NULL;
 	}
 
-	if (awk != QSE_NULL) 
-	{
-		qse_awk_close (awk);
-		awk = QSE_NULL;
-	}
-
-	clearError ();
+	this->clearError ();
 }
 
 Awk::Run* Awk::parse (Source& in, Source& out) 
@@ -1372,18 +1382,30 @@ void Awk::setMaxDepth (depth_t id, size_t depth)
 
 int Awk::dispatch_function (Run* run, const fnc_info_t* fi)
 {
-	pair_t* pair;
 	bool has_ref_arg = false;
 
-	pair = qse_htb_search (functionMap, fi->name.ptr, fi->name.len);
+#if defined(QSE_AWK_USE_HTB_FOR_FUNCTION_MAP)
+	qse_htb_pair_t* pair;
+	pair = qse_htb_search (this->functionMap, fi->name.ptr, fi->name.len);
 	if (pair == QSE_NULL) 
+	{
+		run->setError (QSE_AWK_EFUNNF, &fi->name);
+		return -1;
+	}
+	
+	FunctionHandler handler;
+	handler = *(FunctionHandler*)QSE_HTB_VPTR(pair);
+#else
+	FunctionMap::Pair* pair = this->functionMap.search (Cstr(fi->name.ptr, fi->name.len));
+	if (pair == QSE_NULL)
 	{
 		run->setError (QSE_AWK_EFUNNF, &fi->name);
 		return -1;
 	}
 
 	FunctionHandler handler;
-	handler = *(FunctionHandler*)QSE_HTB_VPTR(pair);
+	handler = pair->value;
+#endif
 
 	size_t i, nargs = qse_awk_rtx_getnargs(run->rtx);
 
@@ -1392,12 +1414,29 @@ int Awk::dispatch_function (Run* run, const fnc_info_t* fi)
 	if (nargs <= QSE_COUNTOF(buf)) args = buf;
 	else
 	{
+	#if defined(AWK_VALUE_USE_IN_CLASS_PLACEMENT_NEW)
 		args = new(run) Value[nargs];
 		if (args == QSE_NULL) 
 		{
 			run->setError (QSE_AWK_ENOMEM);
 			return -1;
 		}
+	#else
+		try { args = (Value*)::operator new (QSE_SIZEOF(Value) * nargs, this->getMmgr()); }
+		catch (...) { args = QSE_NULL; }
+		if (args == QSE_NULL) 
+		{
+			run->setError (QSE_AWK_ENOMEM);
+			return -1;
+		}
+		for (i = 0; i < nargs; i++)
+		{
+			// call the default constructor on the space allocated above.
+			// no exception handling is implemented here as i know 
+			// that Value::Value() doesn't throw an exception
+			new((QSE::Mmgr*)QSE_NULL, (void*)&args[i]) Value ();
+		}
+	#endif
 	}
 
 	for (i = 0; i < nargs; i++)
@@ -1441,7 +1480,7 @@ int Awk::dispatch_function (Run* run, const fnc_info_t* fi)
 					xx = args[i].setVal (run, val);
 					break;
 				}
-	
+
 				default:
 					xx = args[i].setVal (run, *(ref->adr));
 					break;
@@ -1487,7 +1526,19 @@ int Awk::dispatch_function (Run* run, const fnc_info_t* fi)
 		}
 	}
 
-	if (args != buf) delete[] args;
+	if (args != buf) 
+	{
+	#if defined(AWK_VALUE_USE_IN_CLASS_PLACEMENT_NEW)
+		delete[] args;
+	#else
+		for (i = nargs; i > 0; )
+		{
+			--i;
+			args[i].~Value ();
+		}
+		::operator delete (args, this->getMmgr());
+	#endif
+	}
 
 	if (n <= -1) 
 	{
@@ -1614,16 +1665,6 @@ int Awk::addFunction (
 {
 	QSE_ASSERT (awk != QSE_NULL);
 
-	FunctionHandler* tmp = (FunctionHandler*) 
-		qse_awk_callocmem (awk, QSE_SIZEOF(handler));
-	if (tmp == QSE_NULL)
-	{
-		setError (QSE_AWK_ENOMEM);
-		return -1;
-	}
-
-	*tmp = handler;
-	
 	fnc_spec_t spec;
 
 	QSE_MEMSET (&spec, 0, QSE_SIZEOF(spec));
@@ -1636,18 +1677,29 @@ int Awk::addFunction (
 	qse_awk_fnc_t* fnc = qse_awk_addfnc (awk, name, &spec);
 	if (fnc == QSE_NULL) 
 	{
-		qse_awk_freemem (awk, tmp);
-		retrieveError ();
+		this->retrieveError ();
 		return -1;
 	}
 
-	pair_t* pair = qse_htb_upsert (
-		functionMap, (char_t*)name, qse_strlen(name), tmp, 0);
+#if defined(QSE_AWK_USE_HTB_FOR_FUNCTION_MAP)
+	// handler is a pointer to a member function. 
+	// sizeof(handler) is likely to be greater than sizeof(void*)
+	// copy the handler pointer into the table.
+	//
+	// the function name exists in the underlying function table.
+	// use the pointer to the name to maintain the hash table.
+	qse_htb_pair_t* pair = qse_htb_upsert (
+		this->functionMap, (char_t*)fnc->name.ptr, fnc->name.len, &handler, QSE_SIZEOF(handler));
+#else
+	FunctionMap::Pair* pair;
+	try { pair = this->functionMap.upsert (Cstr(fnc->name.ptr, fnc->name.len), handler); }
+	catch (...) { pair = QSE_NULL; }
+#endif
+
 	if (pair == QSE_NULL)
 	{
 		qse_awk_delfnc (awk, name);
-		qse_awk_freemem (awk, tmp);
-		setError (QSE_AWK_ENOMEM);
+		this->setError (QSE_AWK_ENOMEM);
 		return -1;
 	}
 
@@ -1659,8 +1711,15 @@ int Awk::deleteFunction (const char_t* name)
 	QSE_ASSERT (awk != QSE_NULL);
 
 	int n = qse_awk_delfnc (awk, name);
-	if (n == 0) qse_htb_delete (functionMap, name, qse_strlen(name));
-	else retrieveError ();
+	if (n == 0) 
+	{
+#if defined(QSE_AWK_USE_HTB_FOR_FUNCTION_MAP)
+		qse_htb_delete (this->functionMap, name, qse_strlen(name));
+#else
+		this->functionMap.remove (Cstr(name, qse_strlen(name)));
+#endif
+	}
+	else this->retrieveError ();
 
 	return n;
 }

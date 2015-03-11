@@ -25,6 +25,7 @@
  */
 
 #include <qse/awk/StdAwk.hpp>
+#include <qse/cmn/HeapMmgr.hpp>
 #include <qse/cmn/opt.h>
 #include <qse/cmn/main.h>
 #include <qse/cmn/mbwc.h>
@@ -52,7 +53,7 @@ typedef QSE::StdAwk::Value Value;
 class MyAwk: public StdAwk
 {
 public:
-	MyAwk () { }
+	MyAwk (QSE::Mmgr* mmgr = QSE_NULL): StdAwk (mmgr) { }
 	~MyAwk () { close (); }
 
 	int open ()
@@ -428,6 +429,8 @@ static int awk_main_2 (MyAwk& awk, int argc, qse_char_t* argv[])
 
 static int awk_main (int argc, qse_char_t* argv[])
 {
+	//QSE::HeapMmgr hm (1000000);
+	//MyAwk awk (&hm);
 	MyAwk awk;
 
 	if (awk.open() <= -1)
