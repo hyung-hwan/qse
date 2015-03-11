@@ -1,6 +1,6 @@
 #include <qse/cmn/xma.h>
 #include <qse/cmn/mem.h>
-#include <qse/cmn/stdio.h>
+#include <qse/cmn/sio.h>
 
 #define R(f) \
 	do { \
@@ -146,14 +146,30 @@ static int test4 ()
 	qse_xma_close (xma);
 	return 0;
 }
+
+static void* xma_alloc (qse_mmgr_t* mmgr, qse_size_t size)
+{
+	return qse_xma_alloc (mmgr->ctx, size);
+}
+
+static void* xma_realloc (qse_mmgr_t* mmgr, void* ptr, qse_size_t size)
+{
+	return qse_xma_realloc (mmgr->ctx, ptr, size);
+}
+
+static void xma_free (qse_mmgr_t* mmgr, void* ptr)
+{
+	qse_xma_free (mmgr->ctx, ptr);
+}
+
 static int test5 ()
 {
 	void* ptr[100];
 	qse_mmgr_t xmammgr = 
 	{
-		(qse_mmgr_alloc_t)qse_xma_alloc,
-		(qse_mmgr_realloc_t)qse_xma_realloc,
-		(qse_mmgr_free_t)qse_xma_free,
+		xma_alloc,
+		xma_realloc,
+		xma_free,
 		QSE_NULL
 	};
 
@@ -202,10 +218,12 @@ static int test5 ()
 
 int main ()
 {
+	qse_openstdsios ();
 	R (test1);
 	R (test2);
 	R (test3);
 	R (test4);
 	R (test5);
+	qse_closestdsios ();
 	return 0;
 }

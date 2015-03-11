@@ -4,7 +4,7 @@
  */
 
 #include <qse/cmn/time.h>
-#include <qse/cmn/stdio.h>
+#include <qse/cmn/sio.h>
 #include <locale.h>
 
 #include <sys/time.h>
@@ -175,11 +175,13 @@ int main ()
 {
 	setlocale (LC_ALL, "");
 
+	qse_openstdsios ();
 	qse_printf (QSE_T("--------------------------------------------------------------------------------\n"));
 	qse_printf (QSE_T("Set the environment LANG to a Unicode locale such as UTF-8 if you see the illegal XXXXX errors. If you see such errors in Unicode locales, this program might be buggy. It is normal to see such messages in non-Unicode locales as it uses Unicode data\n"));
 	qse_printf (QSE_T("--------------------------------------------------------------------------------\n"));
 
 	R (test1);
+	qse_closestdsios ();
 
 	return 0;
 }

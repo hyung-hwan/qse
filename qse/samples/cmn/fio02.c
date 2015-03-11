@@ -1,7 +1,7 @@
 #include <qse/cmn/fio.h>
 #include <qse/cmn/mem.h>
 #include <qse/cmn/str.h>
-#include <qse/cmn/stdio.h>
+#include <qse/cmn/sio.h>
 
 #define R(f) \
 	do { \
@@ -79,6 +79,8 @@ static int test1 (void)
 
 int main ()
 {
+	qse_openstdsios();
 	R (test1);
+	qse_closestdsios();
 	return 0;
 }

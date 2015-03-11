@@ -4,7 +4,7 @@
 #include <qse/cmn/main.h>
 #include <qse/cmn/mbwc.h>
 #include <qse/cmn/path.h>
-#include <qse/cmn/stdio.h>
+#include <qse/cmn/sio.h>
 
 #include <locale.h>
 #if defined(_WIN32)
@@ -33,7 +33,7 @@ static int rex_main (int argc, qse_char_t* argv[])
 		return -1;
 	}
 
-	qse_rex_setoption (rex, QSE_REX_STRICT);
+	qse_rex_setopt (rex, QSE_REX_STRICT);
 
 	start = qse_rex_comp (rex, argv[1], qse_strlen(argv[1]));
 	if (start == QSE_NULL)
@@ -70,9 +70,10 @@ static int rex_main (int argc, qse_char_t* argv[])
 
 int qse_main (int argc, qse_achar_t* argv[])
 {
+	int x;
 #if defined(_WIN32)
  	char locale[100];
-	UINT codepage = GetConsoleOutputCP();	
+	UINT codepage = GetConsoleOutputCP();
 	if (codepage == CP_UTF8)
 	{
 		/*SetConsoleOUtputCP (CP_UTF8);*/
@@ -80,15 +81,18 @@ int qse_main (int argc, qse_achar_t* argv[])
 	}
 	else
 	{
-     	sprintf (locale, ".%u", (unsigned int)codepage);
-     	setlocale (LC_ALL, locale);
+		sprintf (locale, ".%u", (unsigned int)codepage);
+		setlocale (LC_ALL, locale);
 		qse_setdflcmgrbyid (QSE_CMGR_SLMB);
 	}
 #else
-     setlocale (LC_ALL, "");
+	setlocale (LC_ALL, "");
 	qse_setdflcmgrbyid (QSE_CMGR_SLMB);
 #endif
-	return qse_runmain (argc, argv, rex_main);
+	qse_openstdsios ();
+	x = qse_runmain (argc, argv, rex_main);
+	qse_closestdsios ();
+	return x;
 }
 
 

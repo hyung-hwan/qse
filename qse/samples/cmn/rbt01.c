@@ -1,7 +1,7 @@
 #include <qse/cmn/mem.h>
 #include <qse/cmn/str.h>
 #include <qse/cmn/rbt.h>
-#include <qse/cmn/stdio.h>
+#include <qse/cmn/sio.h>
 #include <stdlib.h>
 
 
@@ -223,8 +223,10 @@ static int test5 ()
 
 int main ()
 {
+	qse_openstdsios ();
 	R (test1);
 	R (test2);
 	R (test5);
+	qse_closestdsios ();
 	return 0;
 }
