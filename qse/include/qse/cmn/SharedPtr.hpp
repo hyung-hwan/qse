@@ -24,11 +24,10 @@
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _QSE_SHAREDPTR_HPP_
-#define _QSE_SHAREDPTR_HPP_
+#ifndef _QSE_CMN_SHAREDPTR_HPP_
+#define _QSE_CMN_SHAREDPTR_HPP_
 
-#include <qse/types.h>
-#include <qse/macros.h>
+#include <qse/cmn/Mmged.hpp>
 
 /////////////////////////////////
 QSE_BEGIN_NAMESPACE(QSE)
@@ -52,54 +51,78 @@ struct SharedPtrArrayDeleter
 	}
 };
 
+template <typename T>
+struct SharedPtrMmgrDeleter
+{
+	void operator() (T* ptr, void* arg)
+	{
+		ptr->~T ();
+		::operator delete (ptr, (QSE::Mmgr*)arg);
+	}
+};
+
 ///
-/// use QSE::MmgedSharedPtr if you want the instance of this class itself
-/// to be memory managed.
+/// The SharedPtr class provides a smart pointer that can be shared
+/// using reference counting.
 ///
 template<typename T, typename DELETER = SharedPtrDeleter<T> >
-class QSE_EXPORT SharedPtr
+class QSE_EXPORT SharedPtr: public Mmged
 {
 public:
 	typedef SharedPtr<T,DELETER> SelfType;
 
 	typedef SharedPtrDeleter<T> DefaultDeleter;
 
-	SharedPtr (T* ptr = (T*)QSE_NULL, void* darg = (void*)QSE_NULL): _ptr (ptr), _darg (darg)
+	SharedPtr (T* ptr = (T*)QSE_NULL, void* darg = (void*)QSE_NULL): Mmged(QSE_NULL)
 	{
-		this->_ref = new qse_size_t;
-		(*this->_ref) = 1;
+		this->item = new (this->getMmgr()) item_t;
+		this->item->ref = 1;
+		this->item->ptr = ptr;
+		this->item->darg = darg;
 	}
 
-	SharedPtr (const SelfType& ptr): _ref(ptr._ref), _ptr (ptr._ptr), _darg (ptr._darg)
+	SharedPtr (Mmgr* mmgr, T* ptr = (T*)QSE_NULL, void* darg = (void*)QSE_NULL): Mmged(mmgr)
 	{
-		(*this->_ref)++;
+		this->item = new (this->getMmgr()) item_t;
+		this->item->ref = 1;
+		this->item->ptr = ptr;
+		this->item->darg = darg;
+	}
+
+	SharedPtr (const SelfType& sp): Mmged(sp), item (sp.item) 
+	{
+		this->item->ref++;
 	}
 
 	~SharedPtr () 
 	{
-		(*this->_ref)--;
-		if (*this->_ref <= 0)
+		this->item->ref--;
+		if (this->item->ref <= 0)
 		{
-			if (this->_ptr) this->deleter (this->_ptr, this->_darg);
-			delete this->_ref;
+			if (this->item->ptr) this->item->deleter (this->item->ptr, this->item->darg);
+			// no destructor as *this->_ref is a plain type.
+			::operator delete (this->item, this->getMmgr());
 		}
 	}
 
-	SelfType& operator= (const SelfType& ptr)
+	SelfType& operator= (const SelfType& sp)
 	{
-		if (this != &ptr)
+		if (this != &sp)
 		{
-			(*this->_ref)--;
-			if (*this->_ref <= 0)
+			this->item->ref--;
+			if (this->item->ref <= 0)
 			{
-				if (this->_ptr) this->deleter (this->_ptr, this->_darg);
-				delete this->_ref;
+				if (this->item->ptr) this->item->deleter (this->item->ptr, this->item->darg);
+				// no destructor as *this->_ref is a plain type.
+				::operator delete (this->item, this->getMmgr());
 			}
 
-			this->_ptr = ptr._ptr;
-			this->_darg = ptr._darg;
-			this->_ref = ptr._ref;
-			(*this->_ref)++;
+			// must copy the memory manager pointer as the item
+			// to be copied is allocated using the memory manager of sp.
+			this->mmgr = sp.getMmgr();
+
+			this->item = sp.item;
+			this->item->ref++;
 		}
 
 		return *this;
@@ -107,55 +130,59 @@ public:
 
 	T& operator* ()
 	{
-		QSE_ASSERT (this->_ptr != (T*)QSE_NULL);
-		return *this->_ptr;
+		QSE_ASSERT (this->item->ptr != (T*)QSE_NULL);
+		return *this->item->ptr;
 	}
 
 	const T& operator* () const 
 	{
-		QSE_ASSERT (this->_ptr != (T*)QSE_NULL);
-		return *this->_ptr;
+		QSE_ASSERT (this->item->ptr != (T*)QSE_NULL);
+		return *this->item->ptr;
 	}
 
 	T* operator-> () 
 	{
-		QSE_ASSERT (this->_ptr != (T*)QSE_NULL);
-		return this->_ptr;
+		QSE_ASSERT (this->item->ptr != (T*)QSE_NULL);
+		return this->item->ptr;
 	}
 
 	const T* operator-> () const 
 	{
-		QSE_ASSERT (this->_ptr != (T*)QSE_NULL);
-		return this->_ptr;
+		QSE_ASSERT (this->item->ptr != (T*)QSE_NULL);
+		return this->item->ptr;
 	}
 
 	bool operator! () const 
 	{
-		return this->_ptr == (T*)QSE_NULL;
+		return this->item->ptr == (T*)QSE_NULL;
 	}
 
 	T& operator[] (qse_size_t idx) 
 	{
-		QSE_ASSERT (this->_ptr != (T*)QSE_NULL);
-		return this->_ptr[idx];
+		QSE_ASSERT (this->item->ptr != (T*)QSE_NULL);
+		return this->item->ptr[idx];
 	}
 
-	T* get () 
+	T* getPtr () 
 	{
-		return this->_ptr;
+		return this->item->ptr;
 	}
 
-	const T* get () const
+	const T* getPtr () const
 	{
-		return this->_ptr;
+		return this->item->ptr;
 	}
-
 
 protected:
-	qse_size_t* _ref;
-	T*          _ptr;
-	void*       _darg;
-	DELETER     deleter;
+	struct item_t
+	{
+		qse_size_t ref;
+		T*         ptr;
+		void*      darg;
+		DELETER    deleter;
+	};
+
+	item_t* item;
 }; 
 
 /////////////////////////////////
