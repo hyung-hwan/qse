@@ -75,7 +75,8 @@ public:
 		INVALID_INDEX = ~(qse_size_t)0
 	};
 
-	Array (Mmgr* mmgr = QSE_NULL, qse_size_t capacity = DEFAULT_CAPACITY): Mmged (mmgr)
+private:
+	void init_array (int capacity)
 	{
 		if (capacity <= 0) 
 		{
@@ -90,6 +91,17 @@ public:
 		}
 
 		this->count  = 0;
+	}
+
+public:
+	Array (qse_size_t capacity = DEFAULT_CAPACITY): Mmged (QSE_NULL)
+	{
+		this->init_array (capacity);
+	}
+
+	Array (Mmgr* mmgr, qse_size_t capacity = DEFAULT_CAPACITY): Mmged (mmgr)
+	{
+		this->init_array (capacity);
 	}
 
 	Array (const SelfType& array): 

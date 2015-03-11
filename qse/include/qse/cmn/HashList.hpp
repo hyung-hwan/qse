@@ -99,11 +99,8 @@ public:
 		MIN_LOAD_FACTOR = 20
 	};
 
-	HashList (
-		Mmgr* mmgr = QSE_NULL,
-		qse_size_t node_capacity = DEFAULT_CAPACITY, 
-		qse_size_t load_factor = DEFAULT_LOAD_FACTOR, 
-		qse_size_t mpb_size = 0): Mmged(mmgr)
+private:
+	void init_list (qse_size_t node_capacity, qse_size_t load_factor, qse_size_t mpb_size)
 	{
 		if (node_capacity < MIN_CAPACITY) node_capacity = MIN_CAPACITY;
 		if (load_factor < MIN_LOAD_FACTOR) load_factor = MIN_LOAD_FACTOR;
@@ -151,7 +148,25 @@ public:
 		this->threshold   = node_capacity * load_factor / 100;
 	}
 
-	HashList (const SelfType& list): Mmged (list)
+public:
+	HashList (
+		qse_size_t node_capacity = DEFAULT_CAPACITY, 
+		qse_size_t load_factor = DEFAULT_LOAD_FACTOR, 
+		qse_size_t mpb_size = 0): Mmged(QSE_NULL)
+	{
+		this->init_list (node_capacity, load_factor, mpb_size);
+	}
+
+	HashList (
+		Mmgr* mmgr,
+		qse_size_t node_capacity = DEFAULT_CAPACITY, 
+		qse_size_t load_factor = DEFAULT_LOAD_FACTOR, 
+		qse_size_t mpb_size = 0): Mmged(mmgr)
+	{
+		this->init_list (node_capacity, load_factor, mpb_size);
+	}
+
+	HashList (const SelfType& list): Mmged(list)
 	{
 		this->nodes = QSE_NULL;
 		this->node_capacity = 0;

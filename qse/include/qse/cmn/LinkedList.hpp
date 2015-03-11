@@ -211,8 +211,16 @@ public:
 		this->clear (true);
 	}
 
-	LinkedList (Mmgr* mmgr = QSE_NULL, qse_size_t mpb_size = 0): 
-		Mmged(mmgr), mp (mmgr, QSE_SIZEOF(Node), mpb_size)
+	LinkedList (qse_size_t mpb_size = 0): 
+		Mmged(QSE_NULL), mp(QSE_NULL, QSE_SIZEOF(Node), mpb_size)
+	{
+		this->node_count = 0;
+		this->head_node = QSE_NULL;
+		this->tail_node = QSE_NULL;
+	}
+
+	LinkedList (Mmgr* mmgr, qse_size_t mpb_size = 0): 
+		Mmged(mmgr), mp(mmgr, QSE_SIZEOF(Node), mpb_size)
 	{
 		this->node_count = 0;
 		this->head_node = QSE_NULL;

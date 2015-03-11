@@ -24,10 +24,11 @@
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _QSE_SCOPEDPTR_HPP_
-#define _QSE_SCOPEDPTR_HPP_
+#ifndef _QSE_CMN_SCOPEDPTR_HPP_
+#define _QSE_CMN_SCOPEDPTR_HPP_
 
 #include <qse/Uncopyable.hpp>
+#include <qse/cmn/Mmgr.hpp>
 
 /////////////////////////////////
 QSE_BEGIN_NAMESPACE(QSE)
@@ -51,6 +52,16 @@ struct ScopedPtrArrayDeleter
 	}
 };
 
+template <typename T>
+struct ScopedPtrMmgrDeleter
+{
+	void operator() (T* ptr, void* arg)
+	{
+		ptr->~T ();
+		::operator delete (ptr, (QSE::Mmgr*)arg);
+	}
+};
+
 /// The ScopedPtr class is a template class that destroys the object the
 /// pointer points to when its destructor is called. You can use this class
 /// to free a certain resource associated to the pointer when it goes out
@@ -58,7 +69,7 @@ struct ScopedPtrArrayDeleter
 ///
 /// \code
 /// #include <stdio.h>
-/// #include <qse/ScopedPtr.hpp>
+/// #include <qse/cmn/ScopedPtr.hpp>
 /// #include <qse/cmn/HeapMmgr.hpp>
 /// 
 /// 
@@ -69,14 +80,6 @@ struct ScopedPtrArrayDeleter
 ///     ~X() { printf ("X destructed\n"); }
 /// };
 /// 
-/// struct destroy_x_in_mmgr
-/// {
-///     void operator() (X* x, void* arg)
-///     {   
-///         x->~X();    
-///         ::operator delete (x, (QSE::Mmgr*)arg);
-///     }   
-/// };
 /// 
 /// int main ()
 /// {
@@ -85,7 +88,7 @@ struct ScopedPtrArrayDeleter
 ///     {   
 ///         QSE::ScopedPtr<X> x1 (new X);
 ///         QSE::ScopedPtr<X,QSE::ScopedPtrArrayDeleter<X> > x3 (new X[10]); 
-///         QSE::ScopedPtr<X,destroy_x_in_mmgr> x2 (new(&heap_mmgr) X, &heap_mmgr);
+///         QSE::ScopedPtr<X,QSE::ScopedPtrMmgrDeleter<X> > x2 (new(&heap_mmgr) X, &heap_mmgr);
 ///     }   
 /// 
 ///     return 0;
@@ -97,7 +100,7 @@ template<typename T, typename DELETER = ScopedPtrDeleter<T> >
 class QSE_EXPORT ScopedPtr: public Uncopyable
 {
 public:
-	typedef SharedPtr<T,DELETER> SelfType;
+	typedef ScopedPtr<T,DELETER> SelfType;
 
 	typedef ScopedPtrDeleter<T> DefaultDeleter;
 

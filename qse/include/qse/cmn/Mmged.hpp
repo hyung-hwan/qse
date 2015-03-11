@@ -46,10 +46,19 @@ public:
 	///
 	/// The getMmgr() function returns the memory manager associated.
 	///
-	Mmgr* getMmgr () const { return this->mmgr; }
+	Mmgr* getMmgr () const { return this->_mmgr; }
 
 protected:
-	Mmgr* mmgr;
+	/// 
+	/// The setMmgr() function changes the memory manager.
+	/// Changing memory manager requires extra care to be taken 
+	/// especially when you have some data allocated with the previous 
+	/// manager. for this reason, i put this as a protected function.
+	///
+	void setMmgr(Mmgr* mmgr);
+
+private:
+	Mmgr* _mmgr;
 };
 
 /////////////////////////////////
