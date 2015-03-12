@@ -36,39 +36,41 @@ QSE_BEGIN_NAMESPACE(QSE)
 class QSE_EXPORT RefCounted: public Uncopyable
 {
 protected:
-	RefCounted () 
+	RefCounted (): _ref_count(0)
 	{
-		this->ref_count = 0; 
 	}
 
 public:
 	virtual ~RefCounted () 
 	{ 
-		QSE_ASSERT (this->ref_count == 0);
+		QSE_ASSERT (this->_ref_count == 0);
 	}
 
 	void ref () const
 	{
-		this->ref_count++;
+		this->_ref_count++;
 	}
 
 	void deref (bool kill = true) const
 	{
-		if (--this->ref_count == 0 && kill) delete this;
+		if (--this->_ref_count == 0 && kill) 
+		{
+			delete this;
+		}
 	}
 
 	qse_size_t getRefCount () const
 	{
-		return this->ref_count;
+		return this->_ref_count;
 	}
 
 	bool isShared () const
 	{
-		return this->ref_count > 1;
+		return this->_ref_count > 1;
 	}
 
 protected:
-	mutable qse_size_t ref_count;
+	mutable qse_size_t _ref_count;
 };
 
 /////////////////////////////////
