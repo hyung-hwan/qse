@@ -95,7 +95,7 @@ public:
 	int open ();
 	void close ();
 
-	void uponDemise ();
+	void uponClosing ();
 
 	Run* parse (Source& in, Source& out);
 

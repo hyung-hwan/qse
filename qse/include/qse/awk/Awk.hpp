@@ -968,11 +968,19 @@ public:
 	void close ();
 
 	///
-	/// The uponClose() function is called back after Awk::close() 
+	/// The uponClosing() function is called back after Awk::close() 
 	/// has cleared most of the internal data but before destroying 
-	/// the underlying awk object.
+	/// the underlying awk object. This maps to the close callback
+	/// of #qse_awk_ecb_t.
 	/// 
-	virtual void uponDemise () {}
+	virtual void uponClosing ();
+
+	///
+	/// The uponClearing() function is called back when Awk::close()
+	/// begins clearing internal data. This maps to the clear callback
+	/// of #qse_awk_ecb_t.
+	///
+	virtual void uponClearing ();
 
 	///
 	/// The parse() function parses the source code read from the input

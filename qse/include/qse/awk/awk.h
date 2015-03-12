@@ -923,7 +923,9 @@ struct qse_awk_mod_sym_t
 
 /**
  * The qse_awk_ecb_close_t type defines the callback function
- * called when an awk object is closed.
+ * called when an awk object is closed. The qse_awk_close() function
+ * calls this callback function after having called qse_awk_clear()
+ * but before actual closing.
  */
 typedef void (*qse_awk_ecb_close_t) (
 	qse_awk_t* awk  /**< awk */
@@ -931,7 +933,8 @@ typedef void (*qse_awk_ecb_close_t) (
 
 /**
  * The qse_awk_ecb_clear_t type defines the callback function
- * called when an awk object is cleared.
+ * called when an awk object is cleared. The qse_awk_clear() function
+ * calls this calllback function before it performs actual clearing.
  */
 typedef void (*qse_awk_ecb_clear_t) (
 	qse_awk_t* awk  /**< awk */
