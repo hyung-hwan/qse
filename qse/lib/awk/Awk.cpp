@@ -40,6 +40,7 @@ QSE_BEGIN_NAMESPACE(QSE)
 struct xtn_t
 {
 	Awk* awk;
+	qse_awk_ecb_t ecb;
 };
 
 struct rxtn_t
@@ -1115,6 +1116,18 @@ void Awk::retrieveError (Run* run)
 	qse_awk_rtx_geterrinf (run->rtx, &errinf);
 }
 
+static void fini_xtn (qse_awk_t* awk)
+{
+	xtn_t* xtn = (xtn_t*)qse_awk_getxtn(awk);
+	xtn->awk->uponDemise ();
+}
+
+static void clear_xtn (qse_awk_t* awk)
+{
+	// do nothing
+}
+
+
 int Awk::open () 
 {
 	QSE_ASSERT (this->awk == QSE_NULL);
@@ -1142,6 +1155,8 @@ int Awk::open ()
 	// associate this Awk object with the underlying awk object
 	xtn_t* xtn = (xtn_t*) QSE_XTN (this->awk);
 	xtn->awk = this;
+	xtn->ecb.close = fini_xtn;
+	xtn->ecb.clear = clear_xtn;
 
 	dflerrstr = qse_awk_geterrstr (this->awk);
 	qse_awk_seterrstr (this->awk, xerrstr);
@@ -1181,6 +1196,11 @@ int Awk::open ()
 	
 #endif
 
+	// push the call back after everything else is ok.
+	// the uponDemise() is called only if Awk::open() is fully successful.
+	// it won't be called when qse_awk_close() is called for functionMap
+	// opening failure above.
+	qse_awk_pushecb (this->awk, &xtn->ecb);
 	return 0;
 }
 
@@ -1218,7 +1238,7 @@ Awk::Run* Awk::parse (Source& in, Source& out)
 		return QSE_NULL;
 	}
 
-	fini_runctx ();
+	this->fini_runctx ();
 
 	source_reader = &in;
 	source_writer = (&out == &Source::NONE)? QSE_NULL: &out;
@@ -1242,8 +1262,8 @@ Awk::Run* Awk::resetRunContext ()
 {
 	if (this->runctx.rtx)
 	{
-		fini_runctx ();
-		if (init_runctx() <= -1) return QSE_NULL;
+		this->fini_runctx ();
+		if (this->init_runctx() <= -1) return QSE_NULL;
 		return &this->runctx;
 	}
 	else return QSE_NULL;

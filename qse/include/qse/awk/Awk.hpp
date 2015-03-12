@@ -968,6 +968,13 @@ public:
 	void close ();
 
 	///
+	/// The uponClose() function is called back after Awk::close() 
+	/// has cleared most of the internal data but before destroying 
+	/// the underlying awk object.
+	/// 
+	virtual void uponDemise () {}
+
+	///
 	/// The parse() function parses the source code read from the input
 	/// stream \a in and writes the parse tree to the output stream \a out.
 	/// To disable deparsing, you may set \a out to Awk::Source::NONE. 

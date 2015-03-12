@@ -88,12 +88,15 @@ public:
 		const char_t* ptr;
 	};
 
-	StdAwk (Mmgr* mmgr = QSE_NULL): Awk(mmgr), console_cmgr(QSE_NULL) 
+	StdAwk (Mmgr* mmgr = QSE_NULL): Awk(mmgr), stdmod_up(false), console_cmgr(QSE_NULL) 
 	{
 	}
 
 	int open ();
 	void close ();
+
+	void uponDemise ();
+
 	Run* parse (Source& in, Source& out);
 
 	/// The setConsoleCmgr() function sets the encoding type of 
@@ -164,6 +167,7 @@ protected:
 protected:
 	qse_htb_t cmgrtab;
 	bool cmgrtab_inited;
+	bool stdmod_up;
 
 	qse_cmgr_t* console_cmgr;
 
