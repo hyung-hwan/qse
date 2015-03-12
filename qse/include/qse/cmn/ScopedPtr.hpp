@@ -112,7 +112,7 @@ public:
 	{
 		if (this->_ptr) 
 		{
-			this->deleter (this->_ptr, this->_darg);
+			this->_deleter (this->_ptr, this->_darg);
 		}
 	}
 
@@ -173,17 +173,17 @@ public:
 	{
 		if (this->_ptr) 
 		{
-			this->deleter (this->_ptr, this->_darg);
+			this->_deleter (this->_ptr, this->_darg);
 		}
 
 		this->_ptr = ptr;
 		this->_darg = darg;
 	}
 
-protected:
+private:
 	T* _ptr;
 	void* _darg;
-	DELETER deleter;
+	DELETER _deleter;
 }; 
 
 /////////////////////////////////
