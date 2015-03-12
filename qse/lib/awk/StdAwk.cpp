@@ -138,20 +138,27 @@ void StdAwk::close ()
 
 	clearConsoleOutputs ();
 
-	// I can't call qse_awk_stdmodshutdown before Awk::close()
-	// Fini and Unload functions need to be executed when modules 
-	// are unloaded. This should be done in StdAwk::uponDemise().
+	//
+	// StdAwk called qse_awk_stdmodstartup() after Awk::open().
+	// It's logical to call qse_awk_stdmodshutdown() Awk::close().
+	// but Awk::close() still needs to call some module's fini and
+	// unload functions. So it must be done in StdAwk::uponClosing()
+	// which is called after modules have been unloaded but while
+	// the underlying awk object is still alive. 
+	//
+	// See StdAwk::uponClosing() below.
 	//
 	//if (this->stdmod_up)
 	//{
 	//	qse_awk_stdmodshutdown (this->awk);
 	//	stdmod_up = false;
 	//}
+	//
 
 	Awk::close ();
 }
 
-void StdAwk::uponDemise ()
+void StdAwk::uponClosing ()
 {
 	if (this->stdmod_up)
 	{
@@ -159,7 +166,8 @@ void StdAwk::uponDemise ()
 		stdmod_up = false;
 	}
 
-	Awk::uponDemise ();
+	// chain up
+	Awk::uponClosing ();
 }
 
 StdAwk::Run* StdAwk::parse (Source& in, Source& out)
@@ -207,7 +215,7 @@ int StdAwk::build_argcv (Run* run)
 			this->runarg.ptr[i].ptr, 
 			this->runarg.ptr[i].len, true) <= -1) return -1;
 	}
-		
+
 	run->setGlobal (this->gbl_argc, (int_t)this->runarg.len);
 	run->setGlobal (this->gbl_argv, argv);
 	return 0;
@@ -251,9 +259,9 @@ int StdAwk::__build_environ (Run* run, void* envptr)
 				/* mbstowcsdup() may fail for invalid encoding.
 				 * so setting the error code to ENOMEM may not
 				 * be really accurate */
-				setError (QSE_AWK_ENOMEM);
+				this->setError (QSE_AWK_ENOMEM);
 				return -1;
-			}			
+			}
 
 			*eq = QSE_MT('=');
 		#else
@@ -272,9 +280,9 @@ int StdAwk::__build_environ (Run* run, void* envptr)
 				/* mbstowcsdup() may fail for invalid encoding.
 				 * so setting the error code to ENOMEM may not
 				 * be really accurate */
-				setError (QSE_AWK_ENOMEM);
+				this->setError (QSE_AWK_ENOMEM);
 				return -1;
-			}			
+			}
 
 			*eq = QSE_WT('=');
 		#endif
@@ -302,7 +310,7 @@ int StdAwk::build_environ (Run* run)
 
 	if (qse_env_init (&env, ((Awk*)*run)->getMmgr(), 1) <= -1)
 	{
-		setError (QSE_AWK_ENOMEM);
+		this->setError (QSE_AWK_ENOMEM);
 		return -1;
 	}
 
@@ -354,7 +362,7 @@ StdAwk::ioattr_t* StdAwk::find_or_make_ioattr (const char_t* ptr, size_t len)
 			QSE_SIZEOF(StdAwk::default_ioattr));
 		if (pair == QSE_NULL) 
 		{
-			setError (QSE_AWK_ENOMEM);
+			this->setError (QSE_AWK_ENOMEM);
 			return QSE_NULL;
 		}
 	}

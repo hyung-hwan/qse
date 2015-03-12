@@ -1068,7 +1068,7 @@ void Awk::setError (errnum_t code, const cstr_t* args, const loc_t* loc)
 	if (awk != QSE_NULL)
 	{
 		qse_awk_seterror (awk, code, args, loc);
-		retrieveError ();
+		this->retrieveError ();
 	}
 	else
 	{
@@ -1119,14 +1119,14 @@ void Awk::retrieveError (Run* run)
 static void fini_xtn (qse_awk_t* awk)
 {
 	xtn_t* xtn = (xtn_t*)qse_awk_getxtn(awk);
-	xtn->awk->uponDemise ();
+	xtn->awk->uponClosing ();
 }
 
 static void clear_xtn (qse_awk_t* awk)
 {
-	// do nothing
+	xtn_t* xtn = (xtn_t*)qse_awk_getxtn(awk);
+	xtn->awk->uponClearing ();
 }
-
 
 int Awk::open () 
 {
@@ -1142,7 +1142,7 @@ int Awk::open ()
 	prm.math.mod = mod;
 	prm.modopen  = modopen;
 	prm.modclose = modclose;
-	prm.modsym  = modsym;
+	prm.modsym   = modsym;
 
 	qse_awk_errnum_t errnum;
 	this->awk = qse_awk_open (this->getMmgr(), QSE_SIZEOF(xtn_t), &prm, &errnum);
@@ -1228,13 +1228,23 @@ void Awk::close ()
 	this->clearError ();
 }
 
+void Awk::uponClosing ()
+{
+	// nothing to do
+}
+
+void Awk::uponClearing ()
+{
+	// nothing to do
+}
+
 Awk::Run* Awk::parse (Source& in, Source& out) 
 {
 	QSE_ASSERT (awk != QSE_NULL);
 
 	if (&in == &Source::NONE) 
 	{
-		setError (QSE_AWK_EINVAL);
+		this->setError (QSE_AWK_EINVAL);
 		return QSE_NULL;
 	}
 
@@ -1250,7 +1260,7 @@ Awk::Run* Awk::parse (Source& in, Source& out)
 	int n = qse_awk_parse (awk, &sio);
 	if (n <= -1) 
 	{
-		retrieveError ();
+		this->retrieveError ();
 		return QSE_NULL;
 	}
 
@@ -1277,7 +1287,7 @@ int Awk::loop (Value* ret)
 	val_t* rv = qse_awk_rtx_loop (this->runctx.rtx);
 	if (rv == QSE_NULL) 
 	{
-		retrieveError (&this->runctx);
+		this->retrieveError (&this->runctx);
 		return -1;
 	}
 
@@ -1307,7 +1317,7 @@ int Awk::call (
 			if (ptr == QSE_NULL)
 			{
 				this->runctx.setError (QSE_AWK_ENOMEM);
-				retrieveError (&this->runctx);
+				this->retrieveError (&this->runctx);
 				return -1;
 			}
 		}
@@ -1321,7 +1331,7 @@ int Awk::call (
 
 	if (rv == QSE_NULL) 
 	{
-		retrieveError (&this->runctx);
+		this->retrieveError (&this->runctx);
 		return -1;
 	}
 
@@ -1350,7 +1360,7 @@ int Awk::init_runctx ()
 	rtx_t* rtx = qse_awk_rtx_open (awk, QSE_SIZEOF(rxtn_t), &rio);
 	if (rtx == QSE_NULL) 
 	{
-		retrieveError();
+		this->retrieveError();
 		return -1;
 	}
 
@@ -1615,7 +1625,7 @@ int Awk::addArgument (const char_t* arg, size_t len)
 {
 	QSE_ASSERT (awk != QSE_NULL);
 	int n = runarg.add (awk, arg, len);
-	if (n <= -1) setError (QSE_AWK_ENOMEM);
+	if (n <= -1) this->setError (QSE_AWK_ENOMEM);
 	return n;
 }
 
@@ -1633,7 +1643,7 @@ int Awk::addGlobal (const char_t* name)
 {
 	QSE_ASSERT (awk != QSE_NULL);
 	int n = qse_awk_addgbl (awk, name);
-	if (n <= -1) retrieveError ();
+	if (n <= -1) this->retrieveError ();
 	return n;
 }
 
@@ -1641,7 +1651,7 @@ int Awk::deleteGlobal (const char_t* name)
 {
 	QSE_ASSERT (awk != QSE_NULL);
 	int n = qse_awk_delgbl (awk, name);
-	if (n <= -1) retrieveError ();
+	if (n <= -1) this->retrieveError ();
 	return n;
 }
 
@@ -1649,7 +1659,7 @@ int Awk::findGlobal (const char_t* name)
 {
 	QSE_ASSERT (awk != QSE_NULL);
 	int n = qse_awk_findgbl (awk, name);
-	if (n <= -1) retrieveError ();
+	if (n <= -1) this->retrieveError ();
 	return n;
 }
 
@@ -1660,12 +1670,12 @@ int Awk::setGlobal (int id, const Value& v)
 
 	if (v.run != &runctx) 
 	{
-		setError (QSE_AWK_EINVAL);
+		this->setError (QSE_AWK_EINVAL);
 		return -1;
 	}
 
 	int n = runctx.setGlobal (id, v);
-	if (n <= -1) retrieveError ();
+	if (n <= -1) this->retrieveError ();
 	return n;
 }
 
@@ -1675,7 +1685,7 @@ int Awk::getGlobal (int id, Value& v)
 	QSE_ASSERT (runctx.rtx != QSE_NULL);
 
 	int n = runctx.getGlobal (id, v);
-	if (n <= -1) retrieveError ();
+	if (n <= -1) this->retrieveError ();
 	return n;
 }
 

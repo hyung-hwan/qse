@@ -325,6 +325,7 @@ void qse_awk_clear (qse_awk_t* awk)
 	clear_token (&awk->ntok);
 	clear_token (&awk->ptok);
 
+	/* clear all loaded modules */
 	qse_rbt_walk (awk->modtab, unload_module, awk);
 	qse_rbt_clear (awk->modtab);
 
