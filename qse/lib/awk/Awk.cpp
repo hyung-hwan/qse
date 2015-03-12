@@ -1736,7 +1736,7 @@ int Awk::deleteFunction (const char_t* name)
 #if defined(QSE_AWK_USE_HTB_FOR_FUNCTION_MAP)
 		qse_htb_delete (this->functionMap, name, qse_strlen(name));
 #else
-		this->functionMap.remove (Cstr(name, qse_strlen(name)));
+		this->functionMap.remove (Cstr(name));
 #endif
 	}
 	else this->retrieveError ();

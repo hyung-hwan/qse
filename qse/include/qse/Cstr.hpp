@@ -39,6 +39,18 @@ QSE_BEGIN_NAMESPACE(QSE)
 class Mcstr: public Types::mcstr_t, public Hashable
 {
 public:
+	Mcstr (qse_mchar_t* ptr)
+	{
+		this->ptr = ptr;
+		this->len = qse_mbslen(ptr);
+	}
+
+	Mcstr (const qse_mchar_t* ptr)
+	{
+		this->ptr = (qse_mchar_t*)ptr;
+		this->len = qse_mbslen(ptr);
+	}
+
 	Mcstr (qse_mchar_t* ptr, qse_size_t len)
 	{
 		this->ptr = ptr;
@@ -77,6 +89,18 @@ public:
 class Wcstr: public Types::wcstr_t, public Hashable
 {
 public:
+	Wcstr (qse_wchar_t* ptr)
+	{
+		this->ptr = ptr;
+		this->len = qse_wcslen(ptr);
+	}
+
+	Wcstr (const qse_wchar_t* ptr)
+	{
+		this->ptr = (qse_wchar_t*)ptr;
+		this->len = qse_wcslen(ptr);
+	}
+
 	Wcstr (qse_wchar_t* ptr, qse_size_t len)
 	{
 		this->ptr = ptr;
@@ -115,6 +139,18 @@ public:
 class Cstr: public Types::cstr_t, public Hashable
 {
 public:
+	Cstr (qse_char_t* ptr)
+	{
+		this->ptr = ptr;
+		this->len = qse_strlen(ptr);
+	}
+
+	Cstr (const qse_char_t* ptr)
+	{
+		this->ptr = (qse_char_t*)ptr;
+		this->len = qse_strlen(ptr);
+	}
+
 	Cstr (qse_char_t* ptr, qse_size_t len)
 	{
 		this->ptr = ptr;
