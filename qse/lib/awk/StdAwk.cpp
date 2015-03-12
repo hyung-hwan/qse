@@ -114,7 +114,11 @@ int StdAwk::open ()
 		goto oops;
 	}
 
-	if (qse_awk_stdmodstartup (this->awk) <= -1) goto oops;
+	if (!this->stdmod_up)
+	{
+		if (qse_awk_stdmodstartup (this->awk) <= -1) goto oops;
+		this->stdmod_up = true;
+	}
 
 	this->cmgrtab_inited = false;
 	return 0;
@@ -133,8 +137,29 @@ void StdAwk::close ()
 	}
 
 	clearConsoleOutputs ();
-	qse_awk_stdmodshutdown (this->awk);
+
+	// I can't call qse_awk_stdmodshutdown before Awk::close()
+	// Fini and Unload functions need to be executed when modules 
+	// are unloaded. This should be done in StdAwk::uponDemise().
+	//
+	//if (this->stdmod_up)
+	//{
+	//	qse_awk_stdmodshutdown (this->awk);
+	//	stdmod_up = false;
+	//}
+
 	Awk::close ();
+}
+
+void StdAwk::uponDemise ()
+{
+	if (this->stdmod_up)
+	{
+		qse_awk_stdmodshutdown (this->awk);
+		stdmod_up = false;
+	}
+
+	Awk::uponDemise ();
 }
 
 StdAwk::Run* StdAwk::parse (Source& in, Source& out)
