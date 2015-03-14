@@ -53,6 +53,7 @@ if ENABLE_CXX
 pkginclude_HEADERS += \
 	Mmgr.hpp StdMmgr.hpp HeapMmgr.hpp Mmged.hpp \
 	ScopedPtr.hpp SharedPtr.hpp \
+	StrBase.hpp String.hpp \
 	Mpool.hpp Association.hpp LinkedList.hpp HashList.hpp HashTable.hpp \
 	RedBlackTree.hpp RedBlackTable.hpp \
 	Array.hpp BinaryHeap.hpp

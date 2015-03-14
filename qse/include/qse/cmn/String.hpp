@@ -24,57 +24,54 @@
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _QSE_REFCOUNTED_HPP_
-#define _QSE_REFCOUNTED_HPP_
+#ifndef _QSE_CMN_STRING_HPP_
+#define _QSE_CMN_STRING_HPP_
 
-#include <qse/Uncopyable.hpp>
+#include <qse/cmn/StrBase.hpp>
+#include <qse/cmn/str.h>
 
 /////////////////////////////////
 QSE_BEGIN_NAMESPACE(QSE)
 /////////////////////////////////
 
-/// The RefCounted class provides common functions required to
-/// implement a reference counted class.
-
-class QSE_EXPORT RefCounted: public Uncopyable
+struct WcStringOpset
 {
-protected:
-	RefCounted (): _ref_count(0)
+	qse_size_t copy (qse_wchar_t* dst, const qse_wchar_t* src, qse_size_t ssz)
 	{
+		return qse_wcsncpy(dst, src, ssz);
 	}
 
-public:
-	/// The ref() function increments the reference count and returns
-	/// the incremented count.
-	qse_size_t ref () const
+	// compare two strings of the same length
+	int compare (const qse_wchar_t* str1, const qse_wchar_t* str2, qse_size_t len)
 	{
-		return ++this->_ref_count;
+		return qse_wcsxncmp(str1, len, str2, len);
 	}
 
-	/// The deref() function decrements the reference count and returns
-	/// the decremented count. The caller should kill the callee if it 
-	/// returns 0.
-	qse_size_t deref () const
+	// compare a length-bound string with a null-terminated string.
+	int compare (const qse_wchar_t* str1, qse_size_t len, const qse_wchar_t* str2)
 	{
-		return --this->_ref_count;
+		return qse_wcsxcmp(str1, len, str2);
 	}
 
-	/// The getRefCount() function returns the current reference count.
-	qse_size_t getRefCount () const
+	int length (const qse_wchar_t* str)
 	{
-		return this->_ref_count;
+		return qse_strlen(str);
 	}
-
-	/// The isShared() function returns true if the object is referenced
-	/// more than twice and false otherwise.
-	bool isShared () const
-	{
-		return this->_ref_count > 1;
-	}
-
-protected:
-	mutable qse_size_t _ref_count;
 };
+
+//struct MbStringOpset
+//{
+//};
+
+typedef StrBase<qse_wchar_t, QSE_WT('\0'), WcStringOpset > WcString;
+//typedef StrBase<qse_mchar_t, QSE_MT('\0'), MbStringOpset > MbString;
+
+#if defined(QSE_CHAR_IS_MCHAR)
+	//typedef MbString String;
+#else
+	typedef WcString String;
+#endif
+
 
 /////////////////////////////////
 QSE_END_NAMESPACE(QSE)

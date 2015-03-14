@@ -77,28 +77,29 @@ public:
 	SharedPtr (T* ptr = (T*)QSE_NULL, void* darg = (void*)QSE_NULL): Mmged(QSE_NULL)
 	{
 		this->_item = new (this->getMmgr()) item_t;
-		this->_item->ref = 1;
 		this->_item->ptr = ptr;
 		this->_item->darg = darg;
+
+		this->_item->ref ();
 	}
 
 	SharedPtr (Mmgr* mmgr, T* ptr = (T*)QSE_NULL, void* darg = (void*)QSE_NULL): Mmged(mmgr)
 	{
 		this->_item = new (this->getMmgr()) item_t;
-		this->_item->ref = 1;
 		this->_item->ptr = ptr;
 		this->_item->darg = darg;
+
+		this->_item->ref ();
 	}
 
 	SharedPtr (const SelfType& sp): Mmged(sp), _item(sp._item) 
 	{
-		this->_item->ref++;
+		this->_item->ref ();
 	}
 
 	~SharedPtr () 
 	{
-		this->_item->ref--;
-		if (this->_item->ref <= 0)
+		if (this->_item->deref() <= 0)
 		{
 			if (this->_item->ptr) this->_item->deleter (this->_item->ptr, this->_item->darg);
 			// no destructor as *this->_ref is a plain type.
@@ -110,8 +111,7 @@ public:
 	{
 		if (this != &sp)
 		{
-			this->_item->ref--;
-			if (this->_item->ref <= 0)
+			if (this->_item->deref() <= 0)
 			{
 				if (this->_item->ptr) this->_item->deleter (this->_item->ptr, this->_item->darg);
 				// no destructor as *this->_ref is a plain type.
@@ -123,7 +123,7 @@ public:
 			this->setMmgr (sp.getMmgr());
 
 			this->_item = sp._item;
-			this->_item->ref++;
+			this->_item->ref ();
 		}
 
 		return *this;
@@ -175,9 +175,8 @@ public:
 	}
 
 private:
-	struct item_t
+	struct item_t: public RefCounted
 	{
-		qse_size_t ref;
 		T*         ptr;
 		void*      darg;
 		DELETER    deleter;
