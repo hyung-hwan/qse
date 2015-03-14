@@ -68,7 +68,7 @@ bin_PROGRAMS = chr01$(EXEEXT) dir01$(EXEEXT) dll$(EXEEXT) \
 #rex02_SOURCES = rex02.cpp
 #rex02_CXXFLAGS = -I/usr/lib/wx/include/gtk2-unicode-release-2.8 -I/usr/include/wx-2.8 -D_FILE_OFFSET_BITS=64 -D_LARGE_FILES -D__WXGTK__ -pthread 
 #rex02_LDFLAGS = -pthread -Wl,-Bsymbolic-functions  -lwx_gtk2ud_richtext-2.8 -lwx_gtk2ud_aui-2.8 -lwx_gtk2ud_xrc-2.8 -lwx_gtk2ud_qa-2.8 -lwx_gtk2ud_html-2.8 -lwx_gtk2ud_adv-2.8 -lwx_gtk2ud_core-2.8 -lwx_baseud_xml-2.8 -lwx_baseud_net-2.8 -lwx_baseud-2.8 
-@ENABLE_CXX_TRUE@am__append_2 = arr01 bh01 hl01 htb02 rbt02 rbt03 sp01 sp02
+@ENABLE_CXX_TRUE@am__append_2 = arr01 bh01 hl01 htb02 rbt02 rbt03 sp01 sp02 str02
 subdir = samples/cmn
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -88,7 +88,8 @@ CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 @ENABLE_CXX_TRUE@am__EXEEXT_1 = arr01$(EXEEXT) bh01$(EXEEXT) \
 @ENABLE_CXX_TRUE@	hl01$(EXEEXT) htb02$(EXEEXT) rbt02$(EXEEXT) \
-@ENABLE_CXX_TRUE@	rbt03$(EXEEXT) sp01$(EXEEXT) sp02$(EXEEXT)
+@ENABLE_CXX_TRUE@	rbt03$(EXEEXT) sp01$(EXEEXT) sp02$(EXEEXT) \
+@ENABLE_CXX_TRUE@	str02$(EXEEXT)
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
 am__arr01_SOURCES_DIST = arr01.cpp
@@ -269,6 +270,10 @@ am_str01_OBJECTS = str01.$(OBJEXT)
 str01_OBJECTS = $(am_str01_OBJECTS)
 str01_LDADD = $(LDADD)
 str01_DEPENDENCIES = $(am__DEPENDENCIES_2)
+am__str02_SOURCES_DIST = str02.cpp
+@ENABLE_CXX_TRUE@am_str02_OBJECTS = str02.$(OBJEXT)
+str02_OBJECTS = $(am_str02_OBJECTS)
+@ENABLE_CXX_TRUE@str02_DEPENDENCIES = $(am__DEPENDENCIES_3)
 task01_SOURCES = task01.c
 task01_OBJECTS = task01.$(OBJEXT)
 task01_LDADD = $(LDADD)
@@ -343,8 +348,9 @@ SOURCES = $(arr01_SOURCES) $(bh01_SOURCES) $(chr01_SOURCES) dir01.c \
 	$(rbt01_SOURCES) $(rbt02_SOURCES) $(rbt03_SOURCES) \
 	$(rex01_SOURCES) $(sio01_SOURCES) $(sio02_SOURCES) \
 	$(sio03_SOURCES) $(sll_SOURCES) $(slmb01_SOURCES) \
-	$(sp01_SOURCES) $(sp02_SOURCES) $(str01_SOURCES) task01.c \
-	$(time_SOURCES) $(tre01_SOURCES) uri01.c $(xma_SOURCES)
+	$(sp01_SOURCES) $(sp02_SOURCES) $(str01_SOURCES) \
+	$(str02_SOURCES) task01.c $(time_SOURCES) $(tre01_SOURCES) \
+	uri01.c $(xma_SOURCES)
 DIST_SOURCES = $(am__arr01_SOURCES_DIST) $(am__bh01_SOURCES_DIST) \
 	$(chr01_SOURCES) dir01.c $(dll_SOURCES) $(env01_SOURCES) \
 	$(fio01_SOURCES) $(fio02_SOURCES) $(fma_SOURCES) \
@@ -358,8 +364,9 @@ DIST_SOURCES = $(am__arr01_SOURCES_DIST) $(am__bh01_SOURCES_DIST) \
 	$(am__rbt03_SOURCES_DIST) $(rex01_SOURCES) $(sio01_SOURCES) \
 	$(sio02_SOURCES) $(sio03_SOURCES) $(sll_SOURCES) \
 	$(slmb01_SOURCES) $(am__sp01_SOURCES_DIST) \
-	$(am__sp02_SOURCES_DIST) $(str01_SOURCES) task01.c \
-	$(time_SOURCES) $(tre01_SOURCES) uri01.c $(xma_SOURCES)
+	$(am__sp02_SOURCES_DIST) $(str01_SOURCES) \
+	$(am__str02_SOURCES_DIST) task01.c $(time_SOURCES) \
+	$(tre01_SOURCES) uri01.c $(xma_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -599,6 +606,8 @@ xma_SOURCES = xma.c
 @ENABLE_CXX_TRUE@sp01_LDADD = $(LDADD) -lqsecmnxx
 @ENABLE_CXX_TRUE@sp02_SOURCES = sp02.cpp # SharedPtr
 @ENABLE_CXX_TRUE@sp02_LDADD = $(LDADD) -lqsecmnxx
+@ENABLE_CXX_TRUE@str02_SOURCES = str02.cpp # SharedPtr
+@ENABLE_CXX_TRUE@str02_LDADD = $(LDADD) -lqsecmnxx
 all: all-am
 
 .SUFFIXES:
@@ -808,6 +817,9 @@ sp02$(EXEEXT): $(sp02_OBJECTS) $(sp02_DEPENDENCIES) $(EXTRA_sp02_DEPENDENCIES)
 str01$(EXEEXT): $(str01_OBJECTS) $(str01_DEPENDENCIES) $(EXTRA_str01_DEPENDENCIES) 
 	@rm -f str01$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(str01_OBJECTS) $(str01_LDADD) $(LIBS)
+str02$(EXEEXT): $(str02_OBJECTS) $(str02_DEPENDENCIES) $(EXTRA_str02_DEPENDENCIES) 
+	@rm -f str02$(EXEEXT)
+	$(AM_V_CXXLD)$(CXXLINK) $(str02_OBJECTS) $(str02_LDADD) $(LIBS)
 task01$(EXEEXT): $(task01_OBJECTS) $(task01_DEPENDENCIES) $(EXTRA_task01_DEPENDENCIES) 
 	@rm -f task01$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(task01_OBJECTS) $(task01_LDADD) $(LIBS)
@@ -873,6 +885,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sp01.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sp02.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str01.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str02.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/task01.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/time.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tre01.Po@am__quote@
