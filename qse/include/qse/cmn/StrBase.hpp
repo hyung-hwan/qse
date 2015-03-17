@@ -35,15 +35,15 @@
 QSE_BEGIN_NAMESPACE(QSE)
 /////////////////////////////////
 
-template <typename CHAR_TYPE, CHAR_TYPE NULL_CHAR, typename OPSET> class StrBase;
+template <typename CHAR_TYPE, CHAR_TYPE NULL_CHAR, typename OPSET, typename RESIZER> class StrBase;
 
-template <typename CHAR_TYPE, CHAR_TYPE NULL_CHAR, typename OPSET>
+template <typename CHAR_TYPE, CHAR_TYPE NULL_CHAR, typename OPSET, typename RESIZER>
 class StrBaseData: public RefCounted
 {
 protected:
-	friend class StrBase<CHAR_TYPE,NULL_CHAR,OPSET>;
+	friend class StrBase<CHAR_TYPE,NULL_CHAR,OPSET,RESIZER>;
 
-	typedef StrBaseData<CHAR_TYPE,NULL_CHAR,OPSET> SelfType;
+	typedef StrBaseData<CHAR_TYPE,NULL_CHAR,OPSET,RESIZER> SelfType;
 
 	StrBaseData (Mmgr* mmgr, qse_size_t capacity, const CHAR_TYPE* str, qse_size_t offset, qse_size_t size): 
 		buffer (QSE_NULL) // set buffer to QSE_NULL here in case operator new rasises an exception
@@ -91,14 +91,15 @@ public:
 protected:
 	SelfType* copy (Mmgr* mmgr)
 	{
-		return new SelfType (mmgr, this->capacity, this->buffer, 0, this->size);
+		return new(mmgr) SelfType (mmgr, this->capacity, this->buffer, 0, this->size);
 	}
 
 	SelfType* copy (Mmgr* mmgr, qse_size_t capacity)
 	{
-		return new SelfType (mmgr, capacity, this->buffer, 0, this->size);
+		return new(mmgr) SelfType (mmgr, capacity, this->buffer, 0, this->size);
 	}
 
+#if 0
 	void growBy (Mmgr* mmgr, qse_size_t inc)
 	{
 		if (inc > 0)
@@ -116,6 +117,7 @@ protected:
 			this->capacity = newcapa;
 		}
 	}
+#endif
 
 	CHAR_TYPE* buffer;
 	qse_size_t capacity;
@@ -123,15 +125,24 @@ protected:
 	OPSET      opset;
 };
 
-struct StrBaseNewSize
+struct StrBaseResizer
 {
-	qse_size_t operator () (qse_size_t old_size, qse_size_t desired_size) const
+	qse_size_t operator() (qse_size_t current, qse_size_t desired) const
 	{
-		return desired_size;
+		qse_size_t new_size;
+
+		new_size = (current < 5000)?   (current + current):
+		           (current < 50000)?  (current + (current / 2)):
+		           (current < 100000)? (current + (current / 4)):
+		           (current < 150000)? (current + (current / 8)):
+		                               (current + (current / 16));
+
+		if (new_size < desired) new_size = desired;
+		return new_size;
 	}
 };
 
-template <typename CHAR_TYPE, CHAR_TYPE NULL_CHAR, typename OPSET = StrBaseNewSize>
+template <typename CHAR_TYPE, CHAR_TYPE NULL_CHAR, typename OPSET, typename RESIZER = StrBaseResizer>
 class StrBase: public Mmged, public Hashable
 {
 public:
@@ -141,6 +152,7 @@ public:
 		INVALID_INDEX = ~(qse_size_t)0
 	};
 
+/*
 	class GrowthPolicy 
 	{
 	public:
@@ -155,98 +167,99 @@ public:
 		Type type;
 		qse_size_t value;
 	};
+*/
 
-	typedef StrBase<CHAR_TYPE,NULL_CHAR,OPSET> SelfType;
-	typedef StrBaseData<CHAR_TYPE,NULL_CHAR,OPSET> StringData;
+	typedef StrBase<CHAR_TYPE,NULL_CHAR,OPSET,RESIZER> SelfType;
+	typedef StrBaseData<CHAR_TYPE,NULL_CHAR,OPSET,RESIZER> StringItem;
 
 	/// The StrBase() function creates an empty string with the default memory manager.
 	StrBase (): Mmged(QSE_NULL)
 	{
-		this->data = new(this->getMmgr()) StringData (this->getMmgr(), this->round_capacity(DEFAULT_CAPACITY), QSE_NULL, 0, 0);
-		this->ref_data ();
+		this->_item = new(this->getMmgr()) StringItem (this->getMmgr(), this->round_capacity(DEFAULT_CAPACITY), QSE_NULL, 0, 0);
+		this->ref_item ();
 	}
 
 	/// The StrBase() function creates an empty string with a memory manager \a mmgr.
 	StrBase (Mmgr* mmgr): Mmged(mmgr)
 	{
-		this->data = new(this->getMmgr()) StringData (this->getMmgr(), this->round_capacity(DEFAULT_CAPACITY), QSE_NULL, 0, 0);
-		this->ref_data ();
+		this->_item = new(this->getMmgr()) StringItem (this->getMmgr(), this->round_capacity(DEFAULT_CAPACITY), QSE_NULL, 0, 0);
+		this->ref_item ();
 	}
 
 	StrBase (qse_size_t capacity): Mmged(QSE_NULL)
 	{
-		this->data = data = new(this->getMmgr()) StringData (this->getMmgr(), this->round_capacity(capacity), QSE_NULL, 0, 0);
-		this->ref_data ();
+		this->_item = new(this->getMmgr()) StringItem (this->getMmgr(), this->round_capacity(capacity), QSE_NULL, 0, 0);
+		this->ref_item ();
 	}
 
 	StrBase (Mmgr* mmgr, qse_size_t capacity): Mmged(mmgr)
 	{
-		this->data = data = new(this->getMmgr()) StringData (this->getMmgr(), this->round_capacity(capacity), QSE_NULL, 0, 0);
-		this->ref_data ();
+		this->_item = new(this->getMmgr()) StringItem (this->getMmgr(), this->round_capacity(capacity), QSE_NULL, 0, 0);
+		this->ref_item ();
 	}
 
 	StrBase (const CHAR_TYPE* str): Mmged(QSE_NULL)
 	{
-		qse_size_t len = this->opset.length(str);
-		this->data = new(this->getMmgr()) StringData (this->getMmgr(), this->round_capacity(len), str, 0, len);
-		this->ref_data ();
+		qse_size_t len = this->opset.getLength(str);
+		this->_item = new(this->getMmgr()) StringItem (this->getMmgr(), this->round_capacity(len), str, 0, len);
+		this->ref_item ();
 	}
 
 	StrBase (Mmgr* mmgr, const CHAR_TYPE* str): Mmged(mmgr)
 	{
-		qse_size_t len = this->opset.length(str);
-		this->data = new(this->getMmgr()) StringData (this->getMmgr(), this->round_capacity(len), str, 0, len);
-		this->ref_data ();
+		qse_size_t len = this->_opset.getLength(str);
+		this->_item = new(this->getMmgr()) StringItem (this->getMmgr(), this->round_capacity(len), str, 0, len);
+		this->ref_item ();
 	}
 
 	StrBase (const CHAR_TYPE* str, qse_size_t offset, qse_size_t size): Mmged(QSE_NULL)
 	{
-		this->data = new(this->getMmgr()) StringData (this->getMmgr(), this->round_capacity(size), str, offset, size);
-		this->ref_data ();
+		this->_item = new(this->getMmgr()) StringItem (this->getMmgr(), this->round_capacity(size), str, offset, size);
+		this->ref_item ();
 	}
 
 	StrBase (Mmgr* mmgr, const CHAR_TYPE* str, qse_size_t offset, qse_size_t size): Mmged(mmgr)
 	{
-		this->data = new(this->getMmgr()) StringData (this->getMmgr(), this->round_capacity(size), str, offset, size);
-		this->ref_data ();
+		this->_item = new(this->getMmgr()) StringItem (this->getMmgr(), this->round_capacity(size), str, offset, size);
+		this->ref_item ();
 	}
 
 	StrBase (CHAR_TYPE c, qse_size_t size): Mmged(QSE_NULL)
 	{
-		this->data = new(this->getMmgr()) StringData (this->getMmgr(), this->round_capacity(size), c, size);
-		this->ref_data ();
+		this->_item = new(this->getMmgr()) StringItem (this->getMmgr(), this->round_capacity(size), c, size);
+		this->ref_item ();
 	}
 
 	StrBase (Mmgr* mmgr, CHAR_TYPE c, qse_size_t size): Mmged(mmgr)
 	{
-		this->data = new(this->getMmgr()) StringData (this->getMmgr(), this->round_capacity(size), c, size);
-		this->ref_data ();
+		this->_item = new(this->getMmgr()) StringItem (this->getMmgr(), this->round_capacity(size), c, size);
+		this->ref_item ();
 	}
 
 	StrBase (const SelfType& str): Mmged(str)
 	{
-		this->data = str.data;
-		this->ref_data ();
+		this->_item = str._item;
+		this->ref_item ();
 	}
 
 	~StrBase () 
 	{
-		this->deref_data ();
+		this->deref_item ();
 	}
 
 	SelfType& operator= (const SelfType& str)
 	{
-		if (this->data != str.data) 
+		if (this->_item != str._item) 
 		{
-			this->deref_data ();
+			this->deref_item ();
 
 			// the data to be reference could be allocated using the
 			// memory manager of str. and it may be freed or resized by
 			// this. so the inner memory manager must be switched.
 			this->setMmgr (str.getMmgr()); // copy over mmgr.
 
-			this->data = str.data;
-			this->ref_data ();
+			this->_item = str._item;
+			this->ref_item ();
 		}
 		return *this;
 	}
@@ -254,9 +267,9 @@ public:
 #if 0
 	SelfType& operator= (const CHAR_TYPE* str)
 	{
-		if (this->data->buffer != str)
+		if (this->_item->buffer != str)
 		{
-			this->remove ();
+			this->clear ();
 			this->insert (0, str);
 		}
 		return *this;
@@ -264,123 +277,79 @@ public:
 
 	SelfType& operator= (const CHAR_TYPE c)
 	{
-		this->remove ();
+		this->clear ();
 		this->insert (0, &c, 0, 1);
 		return *this;
 	}
 #endif
 
 protected:
-	void ref_data () const
+	void ref_item () const
 	{
-		this->data->ref ();
+		this->_item->ref ();
 	}
 
-	void deref_data (StringData* sd) const
+	void deref_item (StringItem* sd) const
 	{
 		if (sd->deref () <= 0)
 		{
 			sd->dispose (this->getMmgr());
-			sd->~StringData ();
+			sd->~StringItem ();
 			::operator delete (sd, this->getMmgr());
 		}
 	}
 
-	void deref_data () const
+	void deref_item () const
 	{
-		this->deref_data (this->data);
+		this->deref_item (this->_item);
 	}
 
 	void possess_data () const
 	{
-		StringData* t = this->data->copy (this->getMmgr());
-		this->deref_data ();
-		this->data = t;
-		this->ref_data ();
+		StringItem* t = this->_item->copy (this->getMmgr());
+		this->deref_item ();
+		this->_item = t;
+		this->ref_item ();
 	}
 
 public:
-	const GrowthPolicy& growthPolicy () const
-	{
-		return this->growth_policy;
-	}
-
-	///
-	/// The setGrowthPolicy() function sets how to grow the buffer capacity
-	/// when more space is needed. 
-	///
-	/// The sample below doubles the capacity of the current buffer when necessary.
-	/// \code
-	///   xp::bas::String x;
-	///   x.setGrowthPolicy (xp::bas::String::GrowthPolicy (xp::bas::String::GrowthPolicy::PERCENT, 100));
-	///   for (int i = 0; i < 2000; i+=3)
-	///   {
-	///       x.appendFormat (QSE_T("%d %d %d "), i+1, i+2, i+3);
-	///   }
-	/// \endcode
-	void setGrowthPolicy (const GrowthPolicy& pol)
-	{
-		this->growth_policy = pol;
-	}
 
 	qse_size_t getSize () const 
 	{
-		return this->data->size;
+		return this->_item->size;
 	}
 
-	qse_size_t length () const 
+	qse_size_t getLength () const 
 	{
-		return this->data->size;
+		return this->_item->size;
 	}
 
 	qse_size_t getCapacity () const 
 	{
-		return this->data->capacity;
+		return this->_item->capacity;
 	}
 
 	operator const CHAR_TYPE* () const 
 	{
-		return this->data->buffer;
+		return this->_item->buffer;
 	}
 
 	const CHAR_TYPE* getBuffer() const
 	{
-		return this->data->buffer;
+		return this->_item->buffer;
 	}
 
 	qse_size_t getHashCode () const
 	{
 		// keep this in sync with getHashCode of BasePtrString<CHAR_TYPE>
 		return Hashable::getHashCode (
-			this->data->buffer, this->data->size * QSE_SIZEOF(CHAR_TYPE));
+			this->_item->buffer, this->_item->size * QSE_SIZEOF(CHAR_TYPE));
 	}
-
-	
-
-#if 0
-	SelfType& operator+= (const SelfType& str)
-	{
-		this->insert (this->data->size, str->data->buffer, 0, str->data->size);
-		return *this;
-	}
-
-	SelfType& operator+= (const CHAR_TYPE* str)
-	{
-		this->insert (this->data->size, str);
-		return *this;
-	}
-
-	SelfType& operator+= (const CHAR_TYPE c)
-	{
-		this->insert (this->data->size, &c, 0, 1);
-		return *this;
-	}
-#endif
 
 	bool operator== (const SelfType& str) const
 	{
-		if (this->data->size != str.data->size) return false;
-		return this->opset.compare(this->data->buffer, str.data->buffer, this->data->size) == 0;
+		if (this->_item->size != str._item->size) return false;
+		return this->_opset.compare(this->_item->buffer, str._item->buffer, this->_item->size) == 0;
 	}
 
 	bool operator!= (const SelfType& str) const
@@ -390,42 +359,37 @@ public:
 
 	bool operator== (const CHAR_TYPE* str) const
 	{
-		return this->opset.compare (this->data->buffer, this->data_size, str) == 0;
+		return this->_opset.compare (this->_item->buffer, this->_item_size, str) == 0;
 	}
+
 	bool operator!= (const CHAR_TYPE* str) const
 	{
-		return this->opset.compare (this->data->buffer, this->data_size, str) != 0;
+		return this->_opset.compare (this->_item->buffer, this->_item_size, str) != 0;
 	}
 
-
-	const CHAR_TYPE& operator[] (qse_size_t index)
+	// i don't want the caller to be able to change the character
+	// at the given index. i don't provide non-const operator[].
+	const CHAR_TYPE& operator[] (qse_size_t index) const
 	{
-		QSE_ASSERT (index < this->data->size);
-
-		if (this->data->isShared()) this->possess_data ();
-		return this->data->buffer[index];
-	}
-
-	CHAR_TYPE& getCharAt (qse_size_t index) 
-	{
-		QSE_ASSERT (index < this->data->size);
-		return this->data->buffer[index];
+		QSE_ASSERT (index < this->_item->size);
+		//if (this->_item->isShared()) this->possess_data ();
+		return this->_item->buffer[index];
 	}
 
 	const CHAR_TYPE& getCharAt (qse_size_t index) const 
 	{
-		QSE_ASSERT (index < this->data->size);
-		return this->data->buffer[index];
+		QSE_ASSERT (index < this->_item->size);
+		//if (this->_item->isShared()) this->possess_data ();
+		return this->_item->buffer[index];
 	}
 
 	void setCharAt (qse_size_t index, CHAR_TYPE c)
 	{
-		QSE_ASSERT (index < this->data->size);
-		if (this->data->isShared()) this->possess_data ();
-		this->data->buffer[index] = c;
+		QSE_ASSERT (index < this->_item->size);
+		if (this->_item->isShared()) this->possess_data ();
+		this->_item->buffer[index] = c;
 	}
 
-#if 0
 	//
 	// TODO: comparison, hash, trim, case-converting, etc
 	// utf-8 encoding/decoding
@@ -433,54 +397,53 @@ public:
 	void insert (qse_size_t index, const CHAR_TYPE* str, qse_size_t offset, qse_size_t size)
 	{
 		if (size <= 0) return;
-		if (index >= this->data->size) index = this->data->size;
+		if (index >= this->_item->size) index = this->_item->size;
 	
 		//
 		// When the same instance is inserted as in n.insert(index, n) which
-		// finally calls n.insert(index. n.this->data->buffer, 0, n.this->data->size),
+		// finally calls n.insert(index. n.this->_item->buffer, 0, n.this->_item->size),
 		// if n is not shared and should be copied, calling deref to it 
 		// immediately after it's copied will destroy n.data refered to by
 		// str/offset/size. So the deref must be called after copying is
 		// done.
 		//
 	
-		StringData* old_data = QSE_NULL;
-		qse_size_t new_size = this->data->size + size;
-	
-		if (this->data->isShared()) 
+		StringItem* old_item = QSE_NULL;
+		qse_size_t new_size = this->_item->size + size;
+
+		if (this->_item->isShared()) 
 		{
-			StringData* t;
-			if (new_size > this->data->capacity) 
-				t = this->data->copy (this->data->capacity + calc_new_inc_for_growth(new_size - this->data->capacity));
+			StringItem* t;
+
+			if (new_size > this->_item->capacity) 
+				t = this->_item->copy (this->getMmgr(), this->adjust_new_capacity(new_size));
 			else 
-				t = this->data->copy ();
-			//this->data->deref (); this->data = t; this->data->ref ();
-			old_data = data;
-			this->data = t;
-			this->ref_data ();
+				t = this->_item->copy (this->getMmgr());
+
+			old_item = this->_item;
+			this->_item = t;
+			this->ref_item ();
 		}
-		else if (new_size > this->data->capacity) 
+		else if (new_size > this->_item->capacity) 
 		{
-			StringData* t = this->data->copy (this->data->capacity + calc_new_inc_for_growth(new_size - this->data->capacity));
-			//this->data->deref (); this->data = t; this->data->ref ();
-			old_data = data;
-			this->data = t;
-			this->ref_data ();;
+			StringItem* t = this->_item->copy (this->getMmgr(), this->adjust_new_capacity(new_size));
+			old_item = this->_item;
+			this->_item = t;
+			this->ref_item ();;
 		}
-		
-		CHAR_TYPE* p = this->data->buffer + index;
-		qse_memmove (p + size, p, (this->data->size - index) * QSE_SIZEOF(CHAR_TYPE));
-		qse_memcpy (p, str + offset, size * QSE_SIZEOF(CHAR_TYPE));
-	
-		this->data->size = new_size;
-		this->data->buffer[new_size] = NULL_CHAR;
-	
-		if (old_data) this->deref_data (old_data);
+
+		CHAR_TYPE* p = this->_item->buffer + index;
+		this->_opset.move (p + size, p, this->_item->size - index);
+		this->_opset.move (p, str + offset, size);
+		this->_item->buffer[new_size] = NULL_CHAR;
+		this->_item->size = new_size;
+
+		if (old_item) this->deref_item (old_item);
 	}
 
 	void insert (qse_size_t index, const CHAR_TYPE* str)
 	{
-		this->insert (index, str, 0, SelfType::lengthOf(str));
+		this->insert (index, str, 0, this->_opset.getLength(str));
 	}
 
 	void insert (qse_size_t index, const CHAR_TYPE c)
@@ -490,13 +453,13 @@ public:
 
 	void insert (qse_size_t index, const SelfType& str, qse_size_t offset, qse_size_t size)
 	{
-		QSE_ASSERT (offset + size <= str->data->size);
-		this->insert (index, str->data->buffer, offset, size);
+		QSE_ASSERT (offset + size <= str._item->size);
+		this->insert (index, str._item->buffer, offset, size);
 	}
 
 	void insert (qse_size_t index, const SelfType& str)
 	{
-		this->insert (index, str->data->buffer, 0, str->data->size);
+		this->insert (index, str._item->buffer, 0, str._item->size);
 	}
 
 	void prepend (const CHAR_TYPE* str, qse_size_t offset, qse_size_t size)
@@ -526,47 +489,66 @@ public:
 
 	void append (const CHAR_TYPE* str, qse_size_t offset, qse_size_t size)
 	{
-		this->insert (this->data->size, str, offset, size);
+		this->insert (this->_item->size, str, offset, size);
 	}
 
 	void append (const CHAR_TYPE* str)
 	{
-		this->insert (this->data->size, str);
+		this->insert (this->_item->size, str);
 	}
 
 	void append (const CHAR_TYPE c)
 	{
-		this->insert (this->data->size, c);
+		this->insert (this->_item->size, c);
 	}
 
 	void append (const SelfType& str, qse_size_t offset, qse_size_t size)
 	{
-		this->insert (this->data->size, str, offset, size);
+		this->insert (this->_item->size, str, offset, size);
 	}
 
 	void append (const SelfType& str)
 	{
-		this->insert (this->data->size, str);
+		this->insert (this->_item->size, str);
 	}
 
+	SelfType& operator+= (const SelfType& str)
+	{
+		this->insert (this->_item->size, str._item->buffer, 0, str._item->size);
+		return *this;
+	}
+
+	SelfType& operator+= (const CHAR_TYPE* str)
+	{
+		this->insert (this->_item->size, str);
+		return *this;
+	}
+
+	SelfType& operator+= (const CHAR_TYPE c)
+	{
+		this->insert (this->_item->size, &c, 0, 1);
+		return *this;
+	}
+
+#if 0
 	void appendFormat (const CHAR_TYPE* fmt, ...)
 	{
 		/*
 		int n;
-		if (this->data->isShared()) 
+		if (this->_item->isShared()) 
 		{
-			StringData* t = this->data->copy ();
-			this->data->deref (); this->data = t; this->data->ref ();
+			StringItem* t = this->_item->copy ();
+			this->_item->deref (); this->_item = t; this->_item->ref ();
 		}
 		qse_va_start (ap, fmt);
-		while ((n = SelfType::opset.vsprintf (&this->data->buffer[this->data->size], this->data->capacity - this->data->size, fmt, ap)) <= -1)
+		while ((n = SelfType::opset.vsprintf (&this->_item->buffer[this->_item->size], this->_item->capacity - this->_item->size, fmt, ap)) <= -1)
 		{
-			this->data->growBy (calc_new_inc_for_growth (0));
+			this->_item->growBy (calc_new_inc_for_growth (0));
 			qse_va_end (ap);
 			qse_va_start (ap, fmt);
 		}
 		qse_va_end (ap);
-		this->data->size += n;
+		this->_item->size += n;
 		*/
 		qse_va_list ap;
 		qse_va_start (ap, fmt);
@@ -579,165 +561,154 @@ public:
 		int n;
 		qse_va_list save_ap;
 
-		if (this->data->isShared()) 
+		if (this->_item->isShared()) 
 		{
-			StringData* t = this->data->copy ();
-			this->data->deref (); this->data = t; this->data->ref ();
+			StringItem* t = this->_item->copy ();
+			this->_item->deref (); this->_item = t; this->_item->ref ();
 		}
 
 		qse_va_copy (save_ap, ap);
-		while ((n = SelfType::opset.vsprintf (&this->data->buffer[this->data->size], this->data->capacity - this->data->size, fmt, ap)) <= -1)
+		while ((n = SelfType::opset.vsprintf (&this->_item->buffer[this->_item->size], this->_item->capacity - this->_item->size, fmt, ap)) <= -1)
 		{
-			this->data->growBy (calc_new_inc_for_growth (0));
+			this->_item->growBy (calc_new_inc_for_growth (0));
 			qse_va_copy (ap, save_ap);
 		}
 		
-		this->data->size += n;
+		this->_item->size += n;
 	}
 
-	void set (const CHAR_TYPE* str, qse_size_t offset, qse_size_t size)
+#endif
+
+	
+	void update (const CHAR_TYPE* str, qse_size_t offset, qse_size_t size)
 	{
-		this->remove ();
-		this->insert (0, str, offset, size);	
-	}
-	void set (const CHAR_TYPE* str)
-	{
-		this->remove ();
-		this->insert (0, str);
-	}
-	void set (const CHAR_TYPE c)
-	{
-		this->remove ();
-		this->insert (0, c);
-	}
-	void set (const SelfType& str, qse_size_t offset, qse_size_t size)
-	{
-		this->remove ();
+		this->clear ();
 		this->insert (0, str, offset, size);
 	}
-	void set (const SelfType& str)
+
+	/// The update() function updates the entire string by copying a new 
+	/// null-terminated string pointed to by \a str.
+	void update (const CHAR_TYPE* str)
 	{
-		operator= (str);
+		this->clear ();
+		this->insert (0, str);
 	}
 
-	void remove (qse_size_t offset, qse_size_t size)
+	void update (const CHAR_TYPE c)
 	{
-		if (size <= 0) return;
-		if (offset >= this->data->size) return;
-		if (size > this->data->size - offset) size = this->data->size - offset;
-
-		if (this->data->isShared()) 
-		{
-			StringData* t = this->data->copy ();
-			this->data->deref (); this->data = t; this->data->ref ();
-		}
-
-		CHAR_TYPE* p = this->data->buffer + offset;
-		qse_memcpy (p, p + size, (this->data->size - offset - size + 1) * QSE_SIZEOF(CHAR_TYPE));
-		this->data->size -= size;	
-	}
-	void remove ()
-	{
-		this->remove (0, this->data->size);
+		this->clear ();
+		this->insert (0, c);
 	}
 
-	void invert (qse_size_t offset, qse_size_t size)
+	void update (const SelfType& str, qse_size_t offset, qse_size_t size)
 	{
-		QSE_ASSERT (offset + size <= this->data->size);
-	
-		if (this->data->isShared()) 
-		{
-			StringData* t = this->data->copy ();
-			this->data->deref (); this->data = t; this->data->ref ();
-		}
-	
-		CHAR_TYPE c;
-		qse_size_t i = offset + size;
-		for (qse_size_t j = offset; j < --i; j++) 
-		{
-			c = this->data->buffer[j];	
-			this->data->buffer[j] = this->data->buffer[i];
-			this->data->buffer[i] = c;
-		}
-	}
-	void invert ()
-	{
-		this->invert (0, this->data->size);
+		this->clear ();
+		this->insert (0, str, offset, size);
 	}
 
-	void replace (qse_size_t offset, qse_size_t size, const CHAR_TYPE* str, qse_size_t soffset, qse_size_t ssize)
+	void update (const SelfType& str)
 	{
-		this->remove (offset, size);	
-		this->insert (offset, str, soffset, ssize);
+		this->operator= (str);
 	}
-	void replace (qse_size_t offset, qse_size_t size, const CHAR_TYPE* str)
+
+	/// The update() function replaces a \a size substring staring from the \a offset
+	/// with a new \a ssize string pointed to by \a str starign from the \a soffset.
+	void update (qse_size_t offset, qse_size_t size, const CHAR_TYPE* str, qse_size_t soffset, qse_size_t ssize)
 	{
 		this->remove (offset, size);
-		this->insert (offset, str, 0, SelfType::lengthOf(str));
-	}
-	void replace (qse_size_t offset, qse_size_t size, const SelfType& str, qse_size_t soffset, qse_size_t ssize)
-	{
-		this->remove (offset, size);	
 		this->insert (offset, str, soffset, ssize);
 	}
-	void replace (qse_size_t offset, qse_size_t size, const SelfType& str)
+
+	void update (qse_size_t offset, qse_size_t size, const CHAR_TYPE* str)
+	{
+		this->remove (offset, size);
+		this->insert (offset, str, 0, this->_opset.getLength(str));
+	}
+
+	void update (qse_size_t offset, qse_size_t size, const SelfType& str, qse_size_t soffset, qse_size_t ssize)
+	{
+		this->remove (offset, size);
+		this->insert (offset, str, soffset, ssize);
+	}
+
+	void update (qse_size_t offset, qse_size_t size, const SelfType& str)
 	{
 		this->remove (offset, size);
 		this->insert (offset, str);
 	}
 
-	void replaceAll (qse_size_t index, const CHAR_TYPE* str1, const CHAR_TYPE* str2)
+	void remove (qse_size_t offset, qse_size_t size)
 	{
-		qse_size_t len1 = SelfType::lengthOf(str1);
-		qse_size_t len2 = SelfType::lengthOf(str2);
-		while ((index = this->indexOf(index, str1, 0, len1)) != INVALID_INDEX) 
-		{
-			this->replace (index, len1, str2, 0, len2);
-			index += len2;
-		}
-	}
-	void replaceAll (const CHAR_TYPE* str1, const CHAR_TYPE* str2)
-	{
-		this->replaceAll (0, str1, str2);
-	}
-	void replaceAll (qse_size_t index, const SelfType& str1, const SelfType& str2)
-	{
-		while ((index = this->indexOf(index, str1)) != INVALID_INDEX) 
-		{
-			this->replace (index, str1.data->data->size, str2);
-			index += str2.data->data->size;
-		}
-	}
-	void replaceAll (const SelfType& str1, const SelfType& str2)
-	{
-		this->replaceAll (0, str1, str2);
+		if (size <= 0) return;
+		if (offset >= this->_item->size) return;
+		if (size > this->_item->size - offset) size = this->_item->size - offset;
+
+		if (this->_item->isShared()) this->possess_data ();
+
+		CHAR_TYPE* p = this->_item->buffer + offset;
+
+		// +1 for the terminating null.
+		this->_opset.move (p, p + size, this->_item->size - offset - size + 1);
+		this->_item->size -= size;
 	}
 
-	SelfType substring (qse_size_t offset)
+	void remvoe ()
 	{
-		QSE_ASSERT (offset < this->data->size);
-		return SelfType (this->data->buffer, offset, this->data->size - offset);
-	}
-	SelfType substring (qse_size_t offset, qse_size_t size)
-	{
-		QSE_ASSERT (offset + size <= this->data->size);
-		return SelfType (this->data->buffer, offset, size);
+		this->remove (0, this->_item->size);
 	}
 
-	qse_size_t indexOf (qse_size_t index,
-		const CHAR_TYPE* str, qse_size_t offset, qse_size_t size)
+	void clear ()
+	{
+		this->remove (0, this->_item->size);
+	}
+
+
+	void invert (qse_size_t offset, qse_size_t size)
+	{
+		QSE_ASSERT (offset + size <= this->_item->size);
+	
+		if (this->_item->isShared())  this->possess_data ();
+
+		CHAR_TYPE c;
+		qse_size_t i = offset + size;
+		for (qse_size_t j = offset; j < --i; j++) 
+		{
+			c = this->_item->buffer[j];
+			this->_item->buffer[j] = this->_item->buffer[i];
+			this->_item->buffer[i] = c;
+		}
+	}
+
+	void invert ()
+	{
+		this->invert (0, this->_item->size);
+	}
+
+	SelfType getSubstring (qse_size_t offset) const
+	{
+		QSE_ASSERT (offset < this->_item->size);
+		return SelfType (this->_item->buffer, offset, this->_item->size - offset);
+	}
+
+	SelfType getSubstring (qse_size_t offset, qse_size_t size) const
+	{
+		QSE_ASSERT (offset + size <= this->_item->size);
+		return SelfType (this->_item->buffer, offset, size);
+	}
+
+	qse_size_t findIndex (qse_size_t index, const CHAR_TYPE* str, qse_size_t offset, qse_size_t size) const
 	{
 		if (size == 0) return index;
-		if (size > this->data->size) return INVALID_INDEX;
-		if (index >= this->data->size) return INVALID_INDEX;
+		if (size > this->_item->size) return INVALID_INDEX;
+		if (index >= this->_item->size) return INVALID_INDEX;
 	
 		/*
 		CHAR_TYPE first = str[offset];
 		qse_size_t i = index;
-		qse_size_t max = this->data->size - size;
-		CHAR_TYPE* p = this->data->buffer;
+		qse_size_t max = this->_item->size - size;
+		CHAR_TYPE* p = this->_item->buffer;
 	
-	loop_indexOf:
+	loop_findIndex:
 		while (i <= max && p[i] != first) i++;
 		if (i > max) return INVALID_INDEX;
 	
@@ -747,18 +718,18 @@ public:
 		while (j < end) {
 			if (p[j++] != str[k++]) {
 				i++;
-				goto loop_indexOf;
+				goto loop_findIndex;
 			}
 		}
 		return i;
 		*/
 	
 		CHAR_TYPE first = str[offset];
-		CHAR_TYPE* s1 = this->data->buffer + index;
-		CHAR_TYPE* e1 = this->data->buffer + this->data->size - size;
+		CHAR_TYPE* s1 = this->_item->buffer + index;
+		CHAR_TYPE* e1 = this->_item->buffer + this->_item->size - size;
 		CHAR_TYPE* p1 = s1;
 	
-	loop_indexOf:
+	loop_findIndex:
 		while (p1 <= e1 && *p1 != first) p1++;
 		if (p1 > e1) return INVALID_INDEX;
 	
@@ -772,48 +743,55 @@ public:
 			if (*p2++ != *s2++) 
 			{
 				p1++;
-				goto loop_indexOf;
+				goto loop_findIndex;
 			}
 		}
 
-		return p1 - this->data->buffer;
+		return p1 - this->_item->buffer;
 	}
-	qse_size_t indexOf (qse_size_t index, const CHAR_TYPE* str)
+	qse_size_t findIndex (qse_size_t index, const CHAR_TYPE* str) const
 	{
-		return indexOf (index, str, 0, SelfType::lengthOf(str));
+		return this->findIndex (index, str, 0, this->_opset.getLength(str));
 	}
-	qse_size_t indexOf (const CHAR_TYPE* str, qse_size_t offset, qse_size_t size)
+
+	qse_size_t findIndex (const CHAR_TYPE* str, qse_size_t offset, qse_size_t size) const
 	{
-		return indexOf (0, str, offset, size);
+		return this->findIndex (0, str, offset, size);
 	}
-	qse_size_t indexOf (const CHAR_TYPE* str)
+
+	qse_size_t findIndex (const CHAR_TYPE* str) const
 	{
-		return indexOf (0, str);
+		return this->findIndex (0, str);
 	}
-	qse_size_t indexOf (qse_size_t index, const SelfType& str, qse_size_t offset, qse_size_t size)
+
+	qse_size_t findIndex (qse_size_t index, const SelfType& str, qse_size_t offset, qse_size_t size) const
 	{
-		QSE_ASSERT (offset + size <= str->data->size);
-		return this->indexOf (index, str->data->buffer, offset, size);
+		QSE_ASSERT (offset + size <= str._item->size);
+		return this->findIndex (index, str._item->buffer, offset, size);
 	}
-	qse_size_t indexOf (qse_size_t index, const SelfType& str)
+
+	qse_size_t findIndex (qse_size_t index, const SelfType& str) const
 	{
-		return this->indexOf (index, str->data->buffer, 0, str->data->size);
+		return this->findIndex (index, str._item->buffer, 0, str._item->size);
 	}
-	qse_size_t indexOf (const SelfType& str, qse_size_t offset, qse_size_t size)
+
+	qse_size_t findIndex (const SelfType& str, qse_size_t offset, qse_size_t size) const
 	{
-		QSE_ASSERT (offset + size <= str->data->size);
-		return this->indexOf (0, str->data->buffer, offset, size);
+		QSE_ASSERT (offset + size <= str._item->size);
+		return this->findIndex (0, str._item->buffer, offset, size);
 	}
-	qse_size_t indexOf (const SelfType& str)
+
+	qse_size_t findIndex (const SelfType& str) const
 	{
-		return this->indexOf (0, str->data->buffer, 0, str->data->size);
+		return this->findIndex (0, str._item->buffer, 0, str._item->size);
 	}
-	qse_size_t indexOf (qse_size_t index, CHAR_TYPE c)
+
+	qse_size_t findIndex (qse_size_t index, CHAR_TYPE c) const
 	{
-		if (index >= this->data->size) return INVALID_INDEX;
-	
-		CHAR_TYPE* s = this->data->buffer + index;
-		CHAR_TYPE* e = this->data->buffer + this->data->size;
+		if (index >= this->_item->size) return INVALID_INDEX;
+
+		CHAR_TYPE* s = this->_item->buffer + index;
+		CHAR_TYPE* e = this->_item->buffer + this->_item->size;
 	
 		for (CHAR_TYPE* p = s; p < e; p++) 
 		{
@@ -822,77 +800,88 @@ public:
 	
 		return INVALID_INDEX;
 	}
-	qse_size_t indexOf (CHAR_TYPE c)
+
+	qse_size_t findIndex (CHAR_TYPE c) const
 	{
-		return indexOf (0, c);
+		return this->findIndex (0, c);
 	}
 
-	qse_size_t lastIndexOf (qse_size_t index,
-		const CHAR_TYPE* str, qse_size_t offset, qse_size_t size)
+	qse_size_t findLastIndex (qse_size_t index, const CHAR_TYPE* str, qse_size_t offset, qse_size_t size) const
 	{
 		if (size == 0) return index;
-		if (size > this->data->size) return INVALID_INDEX;
-		if (index >= this->data->size) index = this->data->size - 1;
-	
-		qse_size_t strLast = offset + size - 1;
-		CHAR_TYPE last = str[strLast];
+		if (size > this->_item->size) return INVALID_INDEX;
+		if (index >= this->_item->size) index = this->_item->size - 1;
+
+		qse_size_t str_last = offset + size - 1;
+		CHAR_TYPE last = str[str_last];
 		qse_size_t min = size - 1;
 		qse_size_t i = min + index;
-		CHAR_TYPE* p = this->data->buffer;
-	
-	loop_lastIndexOf:
-		while (i >= min && p[i] != last) i--;
-		if (i < min) return INVALID_INDEX;
-	
+		CHAR_TYPE* p = this->_item->buffer;
+
+	loop_findLastIndex:
+		while (i >= min && p[i] != last) 
+		{
+			if (i <= min) return INVALID_INDEX;
+			i--;
+		}
+
 		qse_size_t j = i - 1;
 		qse_size_t start = j - size + 1;
-		qse_size_t k = strLast - 1;
+		qse_size_t k = str_last - 1;
 		while (j > start) 
 		{
 			if (p[j--] != str[k--]) 
 			{
 				i--;
-				goto loop_lastIndexOf;
+				goto loop_findLastIndex;
 			}
 		}
 		return start + 1;
 	}
-	qse_size_t lastIndexOf (qse_size_t index, const CHAR_TYPE* str)
-	{
-		return this->lastIndexOf (index, str, 0, SelfType::lengthOf(str));
-	}
-	qse_size_t lastIndexOf (const CHAR_TYPE* str, qse_size_t offset, qse_size_t size)
-	{
-		return this->lastIndexOf (this->data->size - 1, str, offset, size);
-	}
-	qse_size_t lastIndexOf (const CHAR_TYPE* str)
-	{
-		return this->lastIndexOf (this->data->size - 1, str);
-	}
-	qse_size_t lastIndexOf (qse_size_t index, const SelfType& str, qse_size_t offset, qse_size_t size)
-	{
-		QSE_ASSERT (offset + size <= str->data->size);
-		return this->lastIndexOf (index, str->data->buffer, offset, size);
-	}
-	qse_size_t lastIndexOf (qse_size_t index, const SelfType& str)
-	{
-		return this->lastIndexOf (index, str->data->buffer, 0, str->data->size);
-	}
-	qse_size_t lastIndexOf (const SelfType& str, qse_size_t offset, qse_size_t size)
-	{
-		QSE_ASSERT (offset + size <= str->data->size);
-		return this->lastIndexOf (this->data->size - 1, str->data->buffer, offset, size);
-	}
-	qse_size_t lastIndexOf (const SelfType& str)
-	{
-		return this->lastIndexOf (this->data->size - 1, str->data->buffer, 0, str->data->size);
-	}
-	qse_size_t lastIndexOf (qse_size_t index, CHAR_TYPE c)
-	{
-		if (index >= this->data->size) index = this->data->size - 1;
 
-		CHAR_TYPE* s = this->data->buffer;
-		CHAR_TYPE* e = this->data->buffer + index;
+	qse_size_t findLastIndex (qse_size_t index, const CHAR_TYPE* str) const
+	{
+		return this->findLastIndex (index, str, 0, this->_opset.getLength(str));
+	}
+
+	qse_size_t findLastIndex (const CHAR_TYPE* str, qse_size_t offset, qse_size_t size) const
+	{
+		return this->findLastIndex (this->_item->size - 1, str, offset, size);
+	}
+
+	qse_size_t findLastIndex (const CHAR_TYPE* str) const
+	{
+		return this->findLastIndex (this->_item->size - 1, str);
+	}
+
+	qse_size_t findLastIndex (qse_size_t index, const SelfType& str, qse_size_t offset, qse_size_t size) const
+	{
+		QSE_ASSERT (offset + size <= str._item->size);
+		return this->findLastIndex (index, str._item->buffer, offset, size);
+	}
+
+	qse_size_t findLastIndex (qse_size_t index, const SelfType& str) const
+	{
+		return this->findLastIndex (index, str._item->buffer, 0, str._item->size);
+	}
+
+	qse_size_t findLastIndex (const SelfType& str, qse_size_t offset, qse_size_t size) const
+	{
+		QSE_ASSERT (offset + size <= str._item->size);
+		return this->findLastIndex (this->_item->size - 1, str._item->buffer, offset, size);
+	}
+
+	qse_size_t findLastIndex (const SelfType& str) const
+	{
+		return this->findLastIndex (this->_item->size - 1, str._item->buffer, 0, str._item->size);
+	}
+
+	qse_size_t findLastIndex (qse_size_t index, CHAR_TYPE c) const
+	{
+		if (index >= this->_item->size) index = this->_item->size - 1;
+
+		CHAR_TYPE* s = this->_item->buffer;
+		CHAR_TYPE* e = this->_item->buffer + index;
 
 		for (CHAR_TYPE* p = e; p >= s; p--) 
 		{
@@ -901,17 +890,52 @@ public:
 
 		return INVALID_INDEX;
 	}
-	qse_size_t lastIndexOf (CHAR_TYPE c)
+
+	qse_size_t findLastIndex (CHAR_TYPE c) const
 	{
-		return this->lastIndexOf (this->data->size - 1, c);
+		return this->findLastIndex (this->_item->size - 1, c);
 	}
 
+	/// The replace() function finds a substring \a str1 and replace it by
+	/// a new string \a str2.
+	void replace (qse_size_t index, const CHAR_TYPE* str1, const CHAR_TYPE* str2)
+	{
+		qse_size_t len1 = this->_opset.getLength(str1);
+		qse_size_t len2 = this->_opset.getLength(str2);
+		while ((index = this->findIndex(index, str1, 0, len1)) != INVALID_INDEX) 
+		{
+			this->update (index, len1, str2, 0, len2);
+			index += len2;
+		}
+	}
+
+	void replace (const CHAR_TYPE* str1, const CHAR_TYPE* str2)
+	{
+		this->replace (0, str1, str2);
+	}
+
+	void replace (qse_size_t index, const SelfType& str1, const SelfType& str2)
+	{
+		while ((index = this->findIndex(index, str1)) != INVALID_INDEX) 
+		{
+			this->update (index, str1.data->data->size, str2);
+			index += str2.data->data->size;
+		}
+	}
+
+	void replace (const SelfType& str1, const SelfType& str2)
+	{
+		this->replace (0, str1, str2);
+	}
+
+#if 0
 	bool beginsWith (const CHAR_TYPE* str) const
 	{
 		qse_size_t idx = 0;
-		while (*str != NULL_CHAR) {
-			if (idx >= this->data->size) return false;
-			if (this->data->buffer[idx] != *str) return false;
+		while (*str != NULL_CHAR) 
+		{
+			if (idx >= this->_item->size) return false;
+			if (this->_item->buffer[idx] != *str) return false;
 			idx++; str++;
 		}
 		return true;
@@ -922,9 +946,10 @@ public:
 		const CHAR_TYPE* end = str + len;
 		qse_size_t idx = 0;
 
-		while (str < end) {
-			if (idx >= this->data->size) return false;
-			if (this->data->buffer[idx] != *str) return false;
+		while (str < end) 
+		{
+			if (idx >= this->_item->size) return false;
+			if (this->_item->buffer[idx] != *str) return false;
 			idx++; str++;
 		}
 		return true;
@@ -932,60 +957,49 @@ public:
 
 	qse_size_t touppercase ()
 	{
-		if (this->data->isShared()) 
-	{
-			StringData* t = this->data->copy ();
-			this->data->deref (); this->data = t; this->data->ref ();
-		}
-
-		return touppercase (this->data->buffer);
+		if (this->_item->isShared()) this->possess_data();
+		return SelfType::touppercase (this->_item->buffer);
 	}
 
 	qse_size_t tolowercase ()
 	{
-		if (this->data->isShared()) 
-		{
-			StringData* t = this->data->copy ();
-			this->data->deref (); this->data = t; this->data->ref ();
-		}
-		return tolowercase (this->data->buffer);
+		if (this->_item->isShared()) this->possess_data ();
+		return SelfType::tolowercase (this->_item->buffer);
 	}
 
 	qse_size_t trim ()
 	{
-		if (this->data->isShared()) 
-		{
-			StringData* t = this->data->copy ();
-			this->data->deref (); this->data = t; this->data->ref ();
-		}
-
-		this->data->size = SelfType::trim (this->data->buffer);
-		return this->data->size;
+		if (this->_item->isShared()) this->possess_data ();
+		this->_item->size = SelfType::trim (this->_item->buffer);
+		return this->_item->size;
 	}
 
 #endif
 
 protected:
-	mutable StringData* data;
-	GrowthPolicy growth_policy;
-	OPSET opset;
+	mutable StringItem* _item;
+	OPSET _opset;
+	RESIZER _resizer;
 
 private:
-	static qse_size_t round_capacity (qse_size_t n) 
+	qse_size_t round_capacity (qse_size_t n) 
 	{
 		if (n == 0) n = 1;
-		return 
-			(n + (qse_size_t)DEFAULT_CAPACITY - 1) & 
-			~((qse_size_t)DEFAULT_CAPACITY - (qse_size_t)1);
+		return (n + (qse_size_t)DEFAULT_CAPACITY - 1) & 
+		       ~((qse_size_t)DEFAULT_CAPACITY - (qse_size_t)1);
 	}
 
+#if 0
 	qse_size_t calc_new_inc_for_growth (qse_size_t desired_inc)
 	{
 		qse_size_t inc ;
+
+		
+		/*
 		switch (this->growth_policy.type)
 		{
 			case GrowthPolicy::PERCENT:
-				inc = (this->data->size * this->growth_policy.value) / 100;
+				inc = (this->_item->size * this->growth_policy.value) / 100;
 				break;
 
 			case GrowthPolicy::ABSOLUTE:
@@ -995,11 +1009,18 @@ private:
 			default:
 				inc = DEFAULT_CAPACITY;
 				break;
-		}	
+		}
+		*/
 
 		if (inc <= 0) inc = 1;
 		if (inc < desired_inc) inc = desired_inc;
-		return round_capacity (inc);
+		return this->round_capacity (inc);
+	}
+#endif
+
+	qse_size_t adjust_new_capacity (qse_size_t new_desired_capacity)
+	{
+		return this->round_capacity(this->_resizer(this->_item->capacity, new_desired_capacity));
 	}
 
 };

@@ -29,6 +29,7 @@
 
 #include <qse/cmn/StrBase.hpp>
 #include <qse/cmn/str.h>
+#include <qse/cmn/mem.h>
 
 /////////////////////////////////
 QSE_BEGIN_NAMESPACE(QSE)
@@ -36,24 +37,31 @@ QSE_BEGIN_NAMESPACE(QSE)
 
 struct WcStringOpset
 {
-	qse_size_t copy (qse_wchar_t* dst, const qse_wchar_t* src, qse_size_t ssz)
+	qse_size_t copy (qse_wchar_t* dst, const qse_wchar_t* src, qse_size_t ssz) const
 	{
 		return qse_wcsncpy(dst, src, ssz);
 	}
 
+	qse_size_t move (qse_wchar_t* dst, const qse_wchar_t* src, qse_size_t ssz) const
+	{
+		// this one doesn't insert terminating null
+		qse_memmove (dst, src, ssz * QSE_SIZEOF(*dst));
+		return ssz;
+	}
+
 	// compare two strings of the same length
-	int compare (const qse_wchar_t* str1, const qse_wchar_t* str2, qse_size_t len)
+	int compare (const qse_wchar_t* str1, const qse_wchar_t* str2, qse_size_t len) const
 	{
 		return qse_wcsxncmp(str1, len, str2, len);
 	}
 
 	// compare a length-bound string with a null-terminated string.
-	int compare (const qse_wchar_t* str1, qse_size_t len, const qse_wchar_t* str2)
+	int compare (const qse_wchar_t* str1, qse_size_t len, const qse_wchar_t* str2) const
 	{
 		return qse_wcsxcmp(str1, len, str2);
 	}
 
-	int length (const qse_wchar_t* str)
+	qse_size_t getLength (const qse_wchar_t* str) const
 	{
 		return qse_strlen(str);
 	}

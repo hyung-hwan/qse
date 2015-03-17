@@ -139,7 +139,7 @@ int main ()
 	a.insert (0, 10);
 	a.insert (0, 20);
 	a.insert (0, 30);
-	const int& t = a[2];
+	const int& t = a[2u];
 	printf ("%lu\n", (unsigned long int)a.getIndex(t));
 
 
