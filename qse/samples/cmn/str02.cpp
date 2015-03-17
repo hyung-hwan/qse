@@ -13,7 +13,26 @@ void t1 ()
 		QSE::String y (x);
 
 		*z = y;
-		qse_printf (QSE_T("[%s]\n"), x.getBuffer());
+
+		//z->setCharAt (0, QSE_T('Q'));
+		//z->prepend (QSE_T("ok."));
+		z->append (*z);
+		for (int i = 0; i < 80; i++)
+		{
+			z->prepend (QSE_T("ok."));
+			z->insert (10, QSE_T("XXX"));
+		}
+		z->update (10, 2, QSE_T("ZZZZ"));
+		//z->update (QSE_T("QQQ"));
+
+		z->replace (QSE_T("XX"), QSE_T("^"));
+		//z->invert();
+
+
+		qse_printf (QSE_T("[%s] [%c] capa=%d len=%d\n"), x.getBuffer(), x[0], (int)x.getCapacity(), (int)x.getLength());
+		qse_printf (QSE_T("[%s] [%c] capa=%d len=%d\n"), z->getBuffer(), (*z)[0], (int)z->getCapacity(), (int)z->getLength());
+
+		qse_printf (QSE_T("%d %d\n"), (int)z->findIndex (0, QSE_T("K")), (int)z->findLastIndex (0, QSE_T("K")));
 	}
 
 	qse_printf (QSE_T("-----------------\n"));

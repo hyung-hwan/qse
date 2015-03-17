@@ -141,7 +141,7 @@ int main ()
 		h.insert (buf);
 	}
 
-	for (int i = 0; i < h.getSize(); i++)
+	for (qse_size_t i = 0; i < h.getSize(); i++)
 	{
 		printf ("%05d %s\n", (int)h.getIndex(h[i]), h[i].c_str());
 	}
@@ -150,7 +150,7 @@ int main ()
 
 	while (!h.isEmpty())
 	{
-		printf ("%s\n", h[0].c_str());
+		printf ("%s\n", h[0u].c_str());
 		h.remove (0);
 	}
 	printf ("----------------\n");
@@ -181,9 +181,9 @@ int main ()
 	{
 		Container c;
 		StrList::Node* node2, * node14;
-		for (int i = 0; i < 20; i++)
+		for (qse_size_t i = 0; i < 20; i++)
 		{
-			sprintf (buf, "hello %d", i);
+			sprintf (buf, "hello %d", (int)i);
 	
 			//c.insert (buf);
 	
