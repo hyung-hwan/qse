@@ -150,9 +150,9 @@ libqsecmn_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(libqsecmn_la_LDFLAGS) $(LDFLAGS) -o $@
 libqsecmnxx_la_DEPENDENCIES =
 am__libqsecmnxx_la_SOURCES_DIST = Mmgr.cpp StdMmgr.cpp HeapMmgr.cpp \
-	Mmged.cpp Mpool.cpp
+	Mmged.cpp Mpool.cpp String.cpp
 @ENABLE_CXX_TRUE@am_libqsecmnxx_la_OBJECTS = Mmgr.lo StdMmgr.lo \
-@ENABLE_CXX_TRUE@	HeapMmgr.lo Mmged.lo Mpool.lo
+@ENABLE_CXX_TRUE@	HeapMmgr.lo Mmged.lo Mpool.lo String.lo
 libqsecmnxx_la_OBJECTS = $(am_libqsecmnxx_la_OBJECTS)
 libqsecmnxx_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
@@ -435,7 +435,7 @@ libqsecmn_la_SOURCES = alg-base64.c alg-rand.c alg-search.c alg-sort.c \
 libqsecmn_la_LDFLAGS = -version-info 1:0:0 -no-undefined
 libqsecmn_la_LIBADD = $(SOCKET_LIBS) $(QUADMATH_LIBS)
 @ENABLE_CXX_TRUE@libqsecmnxx_la_SOURCES = \
-@ENABLE_CXX_TRUE@	Mmgr.cpp StdMmgr.cpp HeapMmgr.cpp Mmged.cpp Mpool.cpp
+@ENABLE_CXX_TRUE@	Mmgr.cpp StdMmgr.cpp HeapMmgr.cpp Mmged.cpp Mpool.cpp String.cpp
 
 @ENABLE_CXX_TRUE@libqsecmnxx_la_LDFLAGS = -version-info 1:0:0 -no-undefined
 @ENABLE_CXX_TRUE@libqsecmnxx_la_LIBADD = 
@@ -521,6 +521,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Mmgr.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Mpool.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/StdMmgr.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/String.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/alg-base64.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/alg-rand.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/alg-search.Plo@am__quote@

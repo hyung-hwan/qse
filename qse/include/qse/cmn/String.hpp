@@ -36,6 +36,7 @@
 #include <qse/cmn/StrBase.hpp>
 #include <qse/cmn/str.h>
 #include <qse/cmn/mem.h>
+#include <stdarg.h>
 
 /////////////////////////////////
 QSE_BEGIN_NAMESPACE(QSE)
@@ -175,15 +176,66 @@ struct MbStringOpset
 	}
 };
 
-typedef StrBase<qse_wchar_t, QSE_WT('\0'), WcStringOpset > WcString;
-typedef StrBase<qse_mchar_t, QSE_MT('\0'), MbStringOpset > MbString;
+// It's a pain to inherit StrBase<>. i do this not to have various va_xxx calls
+// in the header file  of StrBase.
+
+class WcString: public StrBase<qse_wchar_t, QSE_WT('\0'), WcStringOpset> 
+{
+public:
+	typedef StrBase<qse_wchar_t, QSE_WT('\0'), WcStringOpset> ParentType;
+
+	WcString (): ParentType() {}
+	WcString (Mmgr* mmgr): ParentType(mmgr) {}
+	WcString (qse_size_t capacity): ParentType(capacity) {}
+	WcString (Mmgr* mmgr, qse_size_t capacity): ParentType(mmgr, capacity) {}
+	WcString (const qse_wchar_t* str): ParentType(str) {}
+	WcString (Mmgr* mmgr, const qse_wchar_t* str): ParentType(mmgr, str) {}
+	WcString (const qse_wchar_t* str, qse_size_t size): ParentType(str, size) {}
+	WcString (Mmgr* mmgr, const qse_wchar_t* str, qse_size_t size): ParentType(mmgr, str, size) {}
+	WcString (qse_wchar_t c, qse_size_t size): ParentType(c, size) {}
+	WcString (Mmgr* mmgr, qse_wchar_t c, qse_size_t size): ParentType(mmgr, c, size) {}
+
+	WcString (const WcString& str): ParentType(str) {}
+
+	WcString& operator= (const WcString& str) { ParentType::operator=(str); return *this; }
+	WcString& operator= (const qse_wchar_t* str) { ParentType::operator=(str); return *this; }
+	WcString& operator= (const qse_wchar_t c) { ParentType::operator=(c); return *this; }
+
+	int format (const qse_wchar_t* fmt, ...);
+	int formatv (const qse_wchar_t* fmt, va_list ap);
+};
+
+class MbString: public StrBase<qse_mchar_t, QSE_MT('\0'), MbStringOpset>
+{
+public:
+	typedef StrBase<qse_mchar_t, QSE_MT('\0'), MbStringOpset> ParentType;
+
+	MbString (): ParentType() {}
+	MbString (Mmgr* mmgr): ParentType(mmgr) {}
+	MbString (qse_size_t capacity): ParentType(capacity) {}
+	MbString (Mmgr* mmgr, qse_size_t capacity): ParentType(mmgr, capacity) {}
+	MbString (const qse_mchar_t* str): ParentType(str) {}
+	MbString (Mmgr* mmgr, const qse_mchar_t* str): ParentType(mmgr, str) {}
+	MbString (const qse_mchar_t* str, qse_size_t size): ParentType(str, size) {}
+	MbString (Mmgr* mmgr, const qse_mchar_t* str, qse_size_t size): ParentType(mmgr, str, size) {}
+	MbString (qse_mchar_t c, qse_size_t size): ParentType(c, size) {}
+	MbString (Mmgr* mmgr, qse_mchar_t c, qse_size_t size): ParentType(mmgr, c, size) {}
+
+	MbString (const MbString& str): ParentType(str) {}
+
+	MbString& operator= (const MbString& str) { ParentType::operator=(str); return *this; }
+	MbString& operator= (const qse_mchar_t* str) { ParentType::operator=(str); return *this; }
+	MbString& operator= (const qse_mchar_t c) { ParentType::operator=(c); return *this; }
+
+	int format (const qse_mchar_t* fmt, ...);
+	int formatv (const qse_mchar_t* fmt, va_list ap);
+};
 
 #if defined(QSE_CHAR_IS_MCHAR)
 	typedef MbString String;
 #else
 	typedef WcString String;
 #endif
-
 
 /////////////////////////////////
 QSE_END_NAMESPACE(QSE)
