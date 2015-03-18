@@ -27,6 +27,9 @@
 #ifndef _QSE_CMN_MPOOL_HPP_
 #define _QSE_CMN_MPOOL_HPP_
 
+/// \file
+/// Provides the Mpool class.
+
 #include <qse/Uncopyable.hpp>
 #include <qse/cmn/Mmged.hpp>
 
@@ -34,9 +37,10 @@
 QSE_BEGIN_NAMESPACE(QSE)
 /////////////////////////////////
 
-//
-// allocator for fixed-size data
-//
+/// 
+/// The Mpool class implements an memory allocator for fixed-sized data.
+/// It is similar to #qse_fma_t in functionality.
+///
 
 class QSE_EXPORT Mpool: public Uncopyable, public Mmged
 {
@@ -52,8 +56,14 @@ public:
 		qse_size_t block_size = DEFAULT_BLOCK_SIZE);
 	~Mpool ();
 
+	/// The allocate() function returns the pointer to the memory chunk of the
+	/// configured datum size. It returns #QSE_NULL upon failure.
 	void* allocate ();
+
+	/// The dispose() function frees the memory chunk pointed to by \a ptr.
 	void  dispose (void* ptr);
+
+	/// The dispose() function frees all memory chunks allocated in the pool.
 	void  dispose ();
 
 	bool isEnabled () const

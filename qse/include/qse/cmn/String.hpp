@@ -27,6 +27,12 @@
 #ifndef _QSE_CMN_STRING_HPP_
 #define _QSE_CMN_STRING_HPP_
 
+/// \file
+/// Provides the String, WcString, McString classes.
+///
+/// \includelineno str02.cpp
+///
+
 #include <qse/cmn/StrBase.hpp>
 #include <qse/cmn/str.h>
 #include <qse/cmn/mem.h>
@@ -63,19 +69,117 @@ struct WcStringOpset
 
 	qse_size_t getLength (const qse_wchar_t* str) const
 	{
-		return qse_strlen(str);
+		return qse_wcslen(str);
+	}
+
+	bool beginsWith (const qse_wchar_t* str, qse_size_t len, const qse_wchar_t* sub) const
+	{
+		return qse_wcsxbeg (str, len, sub) != QSE_NULL;
+	}
+
+	bool beginsWith (const qse_wchar_t* str, qse_size_t len, const qse_wchar_t* sub, qse_size_t sublen) const
+	{
+		return qse_wcsxnbeg (str, len, sub, sublen) != QSE_NULL;
+	}
+
+	bool endsWith (const qse_wchar_t* str, qse_size_t len, const qse_wchar_t* sub) const
+	{
+		return qse_wcsxend (str, len, sub) != QSE_NULL;
+	}
+
+	bool endsWith (const qse_wchar_t* str, qse_size_t len, const qse_wchar_t* sub, qse_size_t sublen) const
+	{
+		return qse_wcsxnend (str, len, sub, sublen) != QSE_NULL;
+	}
+
+	qse_size_t trim (qse_wchar_t* str, qse_size_t len, bool left, bool right) const
+	{
+		qse_wchar_t* ptr;
+		qse_size_t xlen = len;
+		int flags = 0;
+
+		if (left) flags |= QSE_WCSTRMX_LEFT;
+		if (right) flags |= QSE_WCSTRMX_RIGHT;
+		ptr = qse_wcsxtrmx (str, &xlen, flags);
+		this->move (str, ptr, xlen);
+		str[xlen] = QSE_WT('\0');
+
+		return xlen;
 	}
 };
 
-//struct MbStringOpset
-//{
-//};
+struct MbStringOpset
+{
+	qse_size_t copy (qse_mchar_t* dst, const qse_mchar_t* src, qse_size_t ssz) const
+	{
+		return qse_mbsncpy(dst, src, ssz);
+	}
+
+	qse_size_t move (qse_mchar_t* dst, const qse_mchar_t* src, qse_size_t ssz) const
+	{
+		// this one doesn't insert terminating null
+		qse_memmove (dst, src, ssz * QSE_SIZEOF(*dst));
+		return ssz;
+	}
+
+	// compare two strings of the same length
+	int compare (const qse_mchar_t* str1, const qse_mchar_t* str2, qse_size_t len) const
+	{
+		return qse_mbsxncmp(str1, len, str2, len);
+	}
+
+	// compare a length-bound string with a null-terminated string.
+	int compare (const qse_mchar_t* str1, qse_size_t len, const qse_mchar_t* str2) const
+	{
+		return qse_mbsxcmp(str1, len, str2);
+	}
+
+	qse_size_t getLength (const qse_mchar_t* str) const
+	{
+		return qse_mbslen(str);
+	}
+
+	bool beginsWith (const qse_mchar_t* str, qse_size_t len, const qse_mchar_t* sub) const
+	{
+		return qse_mbsxbeg (str, len, sub) != QSE_NULL;
+	}
+
+	bool beginsWith (const qse_mchar_t* str, qse_size_t len, const qse_mchar_t* sub, qse_size_t sublen) const
+	{
+		return qse_mbsxnbeg (str, len, sub, sublen) != QSE_NULL;
+	}
+
+	bool endsWith (const qse_mchar_t* str, qse_size_t len, const qse_mchar_t* sub) const
+	{
+		return qse_mbsxend (str, len, sub) != QSE_NULL;
+	}
+
+	bool endsWith (const qse_mchar_t* str, qse_size_t len, const qse_mchar_t* sub, qse_size_t sublen) const
+	{
+		return qse_mbsxnend (str, len, sub, sublen) != QSE_NULL;
+	}
+
+	qse_size_t trim (qse_mchar_t* str, qse_size_t len, bool left, bool right) const
+	{
+		qse_mchar_t* ptr;
+		qse_size_t xlen = len;
+		int flags = 0;
+
+		if (left) flags |= QSE_MBSTRMX_LEFT;
+		if (right) flags |= QSE_MBSTRMX_RIGHT;
+		ptr = qse_mbsxtrmx (str, &xlen, flags);
+		this->move (str, ptr, xlen);
+		str[xlen] = QSE_MT('\0');
+
+		return xlen;
+	}
+};
 
 typedef StrBase<qse_wchar_t, QSE_WT('\0'), WcStringOpset > WcString;
-//typedef StrBase<qse_mchar_t, QSE_MT('\0'), MbStringOpset > MbString;
+typedef StrBase<qse_mchar_t, QSE_MT('\0'), MbStringOpset > MbString;
 
 #if defined(QSE_CHAR_IS_MCHAR)
-	//typedef MbString String;
+	typedef MbString String;
 #else
 	typedef WcString String;
 #endif

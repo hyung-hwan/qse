@@ -27,7 +27,11 @@
 #ifndef _QSE_CMN_HASHLIST_HPP_
 #define _QSE_CMN_HASHLIST_HPP_
 
+/// \file
+/// Provides a hash list template class.
+
 #include <qse/Hashable.hpp>
+#include <qse/Growable.hpp>
 #include <qse/cmn/LinkedList.hpp>
 
 /////////////////////////////////
@@ -54,13 +58,22 @@ struct HashListEqualer
 
 struct HashListResizer
 {
-	qse_size_t operator() (qse_size_t current) const
+	qse_size_t operator() (qse_size_t current, const GrowthPolicy* gp) const
 	{
-		return (current < 5000)?   (current + current):
-		       (current < 50000)?  (current + (current / 2)):
-		       (current < 100000)? (current + (current / 4)):
-		       (current < 150000)? (current + (current / 8)):
-		                           (current + (current / 16));
+		if (current <= 0) current = 1;
+
+		if (gp)
+		{
+			return gp->getNewSize (current);
+		}
+		else
+		{
+			return (current < 5000)?   (current + current):
+			       (current < 50000)?  (current + (current / 2)):
+			       (current < 100000)? (current + (current / 4)):
+			       (current < 150000)? (current + (current / 8)):
+			                           (current + (current / 16));
+		}
 	}
 };
 
@@ -77,7 +90,7 @@ struct HashListResizer
 /// this->nodes[hc * 2 + 1] ponits to the last node.     
 
 template <typename T, typename HASHER = HashListHasher<T>, typename EQUALER = HashListEqualer<T>, typename RESIZER = HashListResizer >
-class HashList: public Mmged
+class HashList: public Mmged, public Growable
 {
 public:
 	typedef LinkedList<T,EQUALER> DatumList;
@@ -313,7 +326,7 @@ protected:
 		qse_size_t hc, head, tail;
 		Node* np;
 
-		hc = this->hasher(datum) % this->node_capacity;
+		hc = this->_hasher(datum) % this->node_capacity;
 		head = hc << 1; tail = head + 1;
 
 		np = this->nodes[head];
@@ -322,7 +335,7 @@ protected:
 			do 
 			{
 				T& t = np->value;
-				if (this->equaler (datum, t)) return np;
+				if (this->_equaler (datum, t)) return np;
 				if (np == this->nodes[tail]) break;
 				np = np->getNextNode ();
 			}
@@ -450,7 +463,7 @@ public:
 		qse_size_t hc, head, tail;
 		Node* np;
 
-		hc = this->hasher(datum) % this->node_capacity;
+		hc = this->_hasher(datum) % this->node_capacity;
 		head = hc << 1; tail = head + 1;
 
 		np = this->nodes[head];
@@ -459,7 +472,7 @@ public:
 			do 
 			{
 				T& t = np->value;
-				if (this->equaler (datum, t)) 
+				if (this->_equaler (datum, t)) 
 				{
 					if (injected) *injected = false;
 					if (mode <= -1) return QSE_NULL; // failure
@@ -476,7 +489,7 @@ public:
 		if (datum_list->getSize() >= threshold) 
 		{
 			this->rehash ();
-			hc = this->hasher(datum) % this->node_capacity;
+			hc = this->_hasher(datum) % this->node_capacity;
 			head = hc << 1; tail = head + 1;
 		}
 
@@ -521,7 +534,7 @@ public:
 		qse_size_t hc, head, tail;
 		Node* np;
 
-		hc = this->hasher(datum) % this->node_capacity;
+		hc = this->_hasher(datum) % this->node_capacity;
 		head = hc << 1; tail = head + 1;
 
 		np = this->nodes[head];
@@ -530,7 +543,7 @@ public:
 			do 
 			{
 				T& t = np->value;
-				if (this->equaler (datum, t)) 
+				if (this->_equaler (datum, t)) 
 				{
 					if (this->nodes[head] == this->nodes[tail])
 					{
@@ -602,31 +615,36 @@ public:
 		this->datum_list->clear (clear_mpool);
 	}
 
-	/// The getIterator() function returns an interator.
 	///
-	/// \code
-	///  struct IntHasher 
-	///  {
-	///      qse_size_t operator() (int v) { return v; }
-	///  };
-	///  typedef QSE::HashList<int,QSE::Mpool,IntHasher> IntList;
+	/// The getIterator() function returns an iterator. You can use
+	/// the iterator to loop over items in the hash list.
 	///
-	///  IntList hl;
-	///  IntList::Iterator it;
+	/// \code{.cpp}
+	/// struct IntHasher 
+	/// {
+	///     qse_size_t operator() (int v) { return v; }
+	/// };
+	/// typedef QSE::HashList<int,QSE::Mpool,IntHasher> IntList;
 	///
-	///  hl.insert (10);
-	///  hl.insert (150);
-	///  hl.insert (200);
-	///  for (it = hl.getIterator(); it.isLegit(); it++)
-	///  {
-	///      printf ("%d\n", *it);
-	///  }
+	/// IntList hl;
+	/// IntList::Iterator it;
+	///
+	/// hl.insert (10);
+	/// hl.insert (150);
+	/// hl.insert (200);
+	/// for (it = hl.getIterator(); it.isLegit(); it++)
+	/// {
+	///     printf ("%d\n", *it);
+	/// }
 	/// \endcode
+	///
 	Iterator getIterator (qse_size_t index = 0)
 	{
 		return this->datum_list->getIterator (index);
 	}
 
+	/// The getConstIterator() function returns an iterator that emits the
+	/// constant reference to an item.
 	ConstIterator getConstIterator (qse_size_t index = 0) const
 	{
 		return this->datum_list->getConstIterator (index);
@@ -639,9 +657,9 @@ protected:
 	mutable qse_size_t threshold;
 	qse_size_t         load_factor;
 
-	HASHER             hasher;
-	EQUALER            equaler;
-	RESIZER            resizer;
+	HASHER             _hasher;
+	EQUALER            _equaler;
+	RESIZER            _resizer;
 
 	void rehash () 
 	{
@@ -653,8 +671,8 @@ protected:
 		// Using the memory pool block size of 0 is OK because the nodes
 		// to be inserted are yielded off the original list and inserted
 		// without new allocation.
-		//SelfType temp (this->getMmgr(), this->resizer(this->node_capacity), this->load_factor, mpool.getBlockSize());
-		SelfType temp (this->getMmgr(), this->resizer(this->node_capacity), this->load_factor, 0);
+		//SelfType temp (this->getMmgr(), this->_resizer(this->node_capacity), this->load_factor, mpool.getBlockSize());
+		SelfType temp (this->getMmgr(), this->_resizer(this->node_capacity, this->getGrowthPolicy()), this->load_factor, 0);
 		Node* p = this->datum_list->getHeadNode();
 		while (p)
 		{
@@ -668,7 +686,7 @@ protected:
 
 			// get the hash code using the new capacity
 			qse_size_t hc, head, tail;
-			hc = this->hasher(pp->value) % temp.node_capacity;
+			hc = this->_hasher(pp->value) % temp.node_capacity;
 			head = hc << 1; tail = head + 1;
 
 			// insert the detached node to the new temporary list
@@ -726,7 +744,7 @@ protected:
 	{
 		T& t = np->value;
 
-		qse_size_t hc = this->hasher(t) % new_node_capa;
+		qse_size_t hc = this->_hasher(t) % new_node_capa;
 		qse_size_t head = hc << 1;
 		qse_size_t tail = head + 1;
 

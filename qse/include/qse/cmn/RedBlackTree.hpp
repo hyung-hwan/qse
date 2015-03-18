@@ -27,6 +27,9 @@
 #ifndef _QSE_CMN_REDBLACKTREE_HPP_
 #define _QSE_CMN_REDBLACKTREE_HPP_
 
+/// \file
+/// Provides the RedBlackTree class.
+
 #include <qse/Types.hpp>
 #include <qse/cmn/Mpool.hpp>
 
@@ -300,13 +303,15 @@ protected:
 };
 
 
-///
+/// The RedBlackTree class implements the red-black tree data structure.
 ///
 ///   A node is either red or black.
 ///   The root is black.
 ///   All leaves (NIL) are black. (All leaves are same color as the root.)
 ///   Every red node must have two black child nodes.
 ///   Every path from a given node to any of its descendant NIL nodes contains the same number of black nodes.
+///
+/// \sa RedBlackTable, qse_rbt_t
 ///
 template <typename T, typename COMPARATOR = RedBlackTreeComparator<T> >
 class RedBlackTree: public Mmged

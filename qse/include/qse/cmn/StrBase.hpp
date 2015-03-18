@@ -27,7 +27,9 @@
 #ifndef _QSE_CMN_STRBASE_HPP_
 #define _QSE_CMN_STRBASE_HPP_
 
+
 #include <qse/Hashable.hpp>
+#include <qse/Growable.hpp>
 #include <qse/RefCounted.hpp>
 #include <qse/cmn/Mmged.hpp>
 
@@ -45,7 +47,7 @@ protected:
 
 	typedef StrBaseData<CHAR_TYPE,NULL_CHAR,OPSET,RESIZER> SelfType;
 
-	StrBaseData (Mmgr* mmgr, qse_size_t capacity, const CHAR_TYPE* str, qse_size_t offset, qse_size_t size): 
+	StrBaseData (Mmgr* mmgr, qse_size_t capacity, const CHAR_TYPE* str, qse_size_t size): 
 		buffer (QSE_NULL) // set buffer to QSE_NULL here in case operator new rasises an exception
 	{
 		if (capacity < size) capacity = size;
@@ -59,7 +61,7 @@ protected:
 		//}
 
 		this->capacity = capacity;
-		this->size = this->opset.copy (this->buffer, str + offset, size);
+		this->size = this->opset.copy (this->buffer, str, size);
 		QSE_ASSERT (this->size == size);
 	}
 
@@ -91,12 +93,12 @@ public:
 protected:
 	SelfType* copy (Mmgr* mmgr)
 	{
-		return new(mmgr) SelfType (mmgr, this->capacity, this->buffer, 0, this->size);
+		return new(mmgr) SelfType (mmgr, this->capacity, this->buffer, this->size);
 	}
 
 	SelfType* copy (Mmgr* mmgr, qse_size_t capacity)
 	{
-		return new(mmgr) SelfType (mmgr, capacity, this->buffer, 0, this->size);
+		return new(mmgr) SelfType (mmgr, capacity, this->buffer, this->size);
 	}
 
 #if 0
@@ -127,15 +129,22 @@ protected:
 
 struct StrBaseResizer
 {
-	qse_size_t operator() (qse_size_t current, qse_size_t desired) const
+	qse_size_t operator() (qse_size_t current, qse_size_t desired, const GrowthPolicy* gp) const
 	{
 		qse_size_t new_size;
 
-		new_size = (current < 5000)?   (current + current):
-		           (current < 50000)?  (current + (current / 2)):
-		           (current < 100000)? (current + (current / 4)):
-		           (current < 150000)? (current + (current / 8)):
-		                               (current + (current / 16));
+		if (gp)
+		{
+			new_size = gp->getNewSize (current);
+		}
+		else
+		{
+			new_size = (current < 5000)?   (current + current):
+					 (current < 50000)?  (current + (current / 2)):
+					 (current < 100000)? (current + (current / 4)):
+					 (current < 150000)? (current + (current / 8)):
+					                     (current + (current / 16));
+		}
 
 		if (new_size < desired) new_size = desired;
 		return new_size;
@@ -143,7 +152,7 @@ struct StrBaseResizer
 };
 
 template <typename CHAR_TYPE, CHAR_TYPE NULL_CHAR, typename OPSET, typename RESIZER = StrBaseResizer>
-class StrBase: public Mmged, public Hashable
+class StrBase: public Mmged, public Hashable, public Growable
 {
 public:
 	enum 
@@ -152,75 +161,58 @@ public:
 		INVALID_INDEX = ~(qse_size_t)0
 	};
 
-/*
-	class GrowthPolicy 
-	{
-	public:
-		enum Type
-		{
-			ABSOLUTE,
-			PERCENT
-		};
-
-		GrowthPolicy (Type type = ABSOLUTE, qse_size_t value = 0): type (type), value (value) {}
-
-		Type type;
-		qse_size_t value;
-	};
-*/
-
 	typedef StrBase<CHAR_TYPE,NULL_CHAR,OPSET,RESIZER> SelfType;
 	typedef StrBaseData<CHAR_TYPE,NULL_CHAR,OPSET,RESIZER> StringItem;
 
 	/// The StrBase() function creates an empty string with the default memory manager.
 	StrBase (): Mmged(QSE_NULL)
 	{
-		this->_item = new(this->getMmgr()) StringItem (this->getMmgr(), this->round_capacity(DEFAULT_CAPACITY), QSE_NULL, 0, 0);
+		this->_item = new(this->getMmgr()) StringItem (this->getMmgr(), this->round_capacity(DEFAULT_CAPACITY), (const CHAR_TYPE*)QSE_NULL, 0);
 		this->ref_item ();
 	}
 
 	/// The StrBase() function creates an empty string with a memory manager \a mmgr.
 	StrBase (Mmgr* mmgr): Mmged(mmgr)
 	{
-		this->_item = new(this->getMmgr()) StringItem (this->getMmgr(), this->round_capacity(DEFAULT_CAPACITY), QSE_NULL, 0, 0);
+		this->_item = new(this->getMmgr()) StringItem (this->getMmgr(), this->round_capacity(DEFAULT_CAPACITY), (const CHAR_TYPE*)QSE_NULL, 0);
 		this->ref_item ();
 	}
 
 	StrBase (qse_size_t capacity): Mmged(QSE_NULL)
 	{
-		this->_item = new(this->getMmgr()) StringItem (this->getMmgr(), this->round_capacity(capacity), QSE_NULL, 0, 0);
+		this->_item = new(this->getMmgr()) StringItem (this->getMmgr(), this->round_capacity(capacity), (const CHAR_TYPE*)QSE_NULL, 0);
 		this->ref_item ();
 	}
 
 	StrBase (Mmgr* mmgr, qse_size_t capacity): Mmged(mmgr)
 	{
-		this->_item = new(this->getMmgr()) StringItem (this->getMmgr(), this->round_capacity(capacity), QSE_NULL, 0, 0);
+		this->_item = new(this->getMmgr()) StringItem (this->getMmgr(), this->round_capacity(capacity), (const CHAR_TYPE*)QSE_NULL, 0);
 		this->ref_item ();
 	}
 
 	StrBase (const CHAR_TYPE* str): Mmged(QSE_NULL)
 	{
-		qse_size_t len = this->opset.getLength(str);
-		this->_item = new(this->getMmgr()) StringItem (this->getMmgr(), this->round_capacity(len), str, 0, len);
+		qse_size_t len = this->_opset.getLength(str);
+		this->_item = new(this->getMmgr()) StringItem (this->getMmgr(), this->round_capacity(len), str, len);
 		this->ref_item ();
 	}
 
 	StrBase (Mmgr* mmgr, const CHAR_TYPE* str): Mmged(mmgr)
 	{
 		qse_size_t len = this->_opset.getLength(str);
-		this->_item = new(this->getMmgr()) StringItem (this->getMmgr(), this->round_capacity(len), str, 0, len);
+		this->_item = new(this->getMmgr()) StringItem (this->getMmgr(), this->round_capacity(len), str, len);
 		this->ref_item ();
 	}
 
-	StrBase (const CHAR_TYPE* str, qse_size_t offset, qse_size_t size): Mmged(QSE_NULL)
+	StrBase (const CHAR_TYPE* str, qse_size_t size): Mmged(QSE_NULL)
 	{
-		this->_item = new(this->getMmgr()) StringItem (this->getMmgr(), this->round_capacity(size), str, offset, size);
+		this->_item = new(this->getMmgr()) StringItem (this->getMmgr(), this->round_capacity(size), str, size);
 		this->ref_item ();
 	}
 
-	StrBase (Mmgr* mmgr, const CHAR_TYPE* str, qse_size_t offset, qse_size_t size): Mmged(mmgr)
+	StrBase (Mmgr* mmgr, const CHAR_TYPE* str, qse_size_t size): Mmged(mmgr)
 	{
-		this->_item = new(this->getMmgr()) StringItem (this->getMmgr(), this->round_capacity(size), str, offset, size);
+		this->_item = new(this->getMmgr()) StringItem (this->getMmgr(), this->round_capacity(size), str, size);
 		this->ref_item ();
 	}
 
@@ -264,7 +256,6 @@ public:
 		return *this;
 	}
 
-#if 0
 	SelfType& operator= (const CHAR_TYPE* str)
 	{
 		if (this->_item->buffer != str)
@@ -278,10 +269,9 @@ public:
 	SelfType& operator= (const CHAR_TYPE c)
 	{
 		this->clear ();
-		this->insert (0, &c, 0, 1);
+		this->insert (0, &c, 1);
 		return *this;
 	}
-#endif
 
 protected:
 	void ref_item () const
@@ -307,6 +297,14 @@ protected:
 	void possess_data () const
 	{
 		StringItem* t = this->_item->copy (this->getMmgr());
+		this->deref_item ();
+		this->_item = t;
+		this->ref_item ();
+	}
+
+	void possess_data (qse_size_t capacity) const
+	{
+		StringItem* t = this->_item->copy (this->getMmgr(), capacity);
 		this->deref_item ();
 		this->_item = t;
 		this->ref_item ();
@@ -390,11 +388,23 @@ public:
 		this->_item->buffer[index] = c;
 	}
 
+	SelfType getSubstring (qse_size_t index) const
+	{
+		QSE_ASSERT (index < this->_item->size);
+		return SelfType (this->_item->buffer + index, this->_item->size - index);
+	}
+
+	SelfType getSubstring (qse_size_t index, qse_size_t size) const
+	{
+		QSE_ASSERT (index + size <= this->_item->size);
+		return SelfType (this->_item->buffer + index, size);
+	}
+
 	//
 	// TODO: comparison, hash, trim, case-converting, etc
 	// utf-8 encoding/decoding
 	//
-	void insert (qse_size_t index, const CHAR_TYPE* str, qse_size_t offset, qse_size_t size)
+	void insert (qse_size_t index, const CHAR_TYPE* str, qse_size_t size)
 	{
 		if (size <= 0) return;
 		if (index >= this->_item->size) index = this->_item->size;
@@ -404,8 +414,7 @@ public:
 		// finally calls n.insert(index. n.this->_item->buffer, 0, n.this->_item->size),
 		// if n is not shared and should be copied, calling deref to it 
 		// immediately after it's copied will destroy n.data refered to by
-		// str/offset/size. So the deref must be called after copying is
-		// done.
+		// str/size. So the deref must be called after copying is done.
 		//
 	
 		StringItem* old_item = QSE_NULL;
@@ -434,7 +443,7 @@ public:
 
 		CHAR_TYPE* p = this->_item->buffer + index;
 		this->_opset.move (p + size, p, this->_item->size - index);
-		this->_opset.move (p, str + offset, size);
+		this->_opset.move (p, str, size);
 		this->_item->buffer[new_size] = NULL_CHAR;
 		this->_item->size = new_size;
 
@@ -443,28 +452,28 @@ public:
 
 	void insert (qse_size_t index, const CHAR_TYPE* str)
 	{
-		this->insert (index, str, 0, this->_opset.getLength(str));
+		this->insert (index, str, this->_opset.getLength(str));
 	}
 
 	void insert (qse_size_t index, const CHAR_TYPE c)
 	{
-		this->insert (index, &c, 0, 1);
+		this->insert (index, &c, 1);
 	}
 
 	void insert (qse_size_t index, const SelfType& str, qse_size_t offset, qse_size_t size)
 	{
 		QSE_ASSERT (offset + size <= str._item->size);
-		this->insert (index, str._item->buffer, offset, size);
+		this->insert (index, str._item->buffer + offset, size);
 	}
 
 	void insert (qse_size_t index, const SelfType& str)
 	{
-		this->insert (index, str._item->buffer, 0, str._item->size);
+		this->insert (index, str._item->buffer, str._item->size);
 	}
 
-	void prepend (const CHAR_TYPE* str, qse_size_t offset, qse_size_t size)
+	void prepend (const CHAR_TYPE* str, qse_size_t size)
 	{
-		this->insert (0, str, offset, size);
+		this->insert (0, str, size);
 	}
 
 	void prepend (const CHAR_TYPE* str)
@@ -487,9 +496,9 @@ public:
 		this->insert (0, str);
 	}
 
-	void append (const CHAR_TYPE* str, qse_size_t offset, qse_size_t size)
+	void append (const CHAR_TYPE* str, qse_size_t size)
 	{
-		this->insert (this->_item->size, str, offset, size);
+		this->insert (this->_item->size, str, size);
 	}
 
 	void append (const CHAR_TYPE* str)
@@ -514,7 +523,7 @@ public:
 
 	SelfType& operator+= (const SelfType& str)
 	{
-		this->insert (this->_item->size, str._item->buffer, 0, str._item->size);
+		this->insert (this->_item->size, str._item->buffer, str._item->size);
 		return *this;
 	}
 
@@ -526,7 +535,7 @@ public:
 
 	SelfType& operator+= (const CHAR_TYPE c)
 	{
-		this->insert (this->_item->size, &c, 0, 1);
+		this->insert (this->_item->size, &c, 1);
 		return *this;
 	}
 
@@ -561,14 +570,17 @@ public:
 		int n;
 		qse_va_list save_ap;
 
-		if (this->_item->isShared()) 
+		if (this->_item->isShared()) this->possess_data ();
+
+		qse_size_t n = this->_opset.format (QSE_NULL, 0, fmt, ap);
+		if (n == (qse_size_t)-1)
 		{
-			StringItem* t = this->_item->copy ();
-			this->_item->deref (); this->_item = t; this->_item->ref ();
+			// there's conversion error.
+			????
 		}
 
 		qse_va_copy (save_ap, ap);
-		while ((n = SelfType::opset.vsprintf (&this->_item->buffer[this->_item->size], this->_item->capacity - this->_item->size, fmt, ap)) <= -1)
+		while ((n = this->_opset.format (&this->_item->buffer[this->_item->size], this->_item->capacity - this->_item->size, fmt, ap)) <= -1)
 		{
 			this->_item->growBy (calc_new_inc_for_growth (0));
 			qse_va_copy (ap, save_ap);
@@ -576,14 +588,12 @@ public:
 		
 		this->_item->size += n;
 	}
-
 #endif
 
-	
-	void update (const CHAR_TYPE* str, qse_size_t offset, qse_size_t size)
+	void update (const CHAR_TYPE* str, qse_size_t size)
 	{
 		this->clear ();
-		this->insert (0, str, offset, size);
+		this->insert (0, str, size);
 	}
 
 	/// The update() function updates the entire string by copying a new 
@@ -613,48 +623,43 @@ public:
 
 	/// The update() function replaces a \a size substring staring from the \a offset
 	/// with a new \a ssize string pointed to by \a str starign from the \a soffset.
-	void update (qse_size_t offset, qse_size_t size, const CHAR_TYPE* str, qse_size_t soffset, qse_size_t ssize)
+	void update (qse_size_t index, qse_size_t size, const CHAR_TYPE* str, qse_size_t ssize)
 	{
-		this->remove (offset, size);
-		this->insert (offset, str, soffset, ssize);
+		this->remove (index, size);
+		this->insert (index, str, ssize);
 	}
 
-	void update (qse_size_t offset, qse_size_t size, const CHAR_TYPE* str)
+	void update (qse_size_t index, qse_size_t size, const CHAR_TYPE* str)
 	{
-		this->remove (offset, size);
-		this->insert (offset, str, 0, this->_opset.getLength(str));
+		this->remove (index, size);
+		this->insert (index, str, this->_opset.getLength(str));
 	}
 
-	void update (qse_size_t offset, qse_size_t size, const SelfType& str, qse_size_t soffset, qse_size_t ssize)
+	void update (qse_size_t index, qse_size_t size, const SelfType& str, qse_size_t soffset, qse_size_t ssize)
 	{
-		this->remove (offset, size);
-		this->insert (offset, str, soffset, ssize);
+		this->remove (index, size);
+		this->insert (index, str, soffset, ssize);
 	}
 
-	void update (qse_size_t offset, qse_size_t size, const SelfType& str)
+	void update (qse_size_t index, qse_size_t size, const SelfType& str)
 	{
-		this->remove (offset, size);
-		this->insert (offset, str);
+		this->remove (index, size);
+		this->insert (index, str);
 	}
 
-	void remove (qse_size_t offset, qse_size_t size)
+	void remove (qse_size_t index, qse_size_t size)
 	{
 		if (size <= 0) return;
-		if (offset >= this->_item->size) return;
-		if (size > this->_item->size - offset) size = this->_item->size - offset;
+		if (index >= this->_item->size) return;
+		if (size > this->_item->size - index) size = this->_item->size - index;
 
 		if (this->_item->isShared()) this->possess_data ();
 
-		CHAR_TYPE* p = this->_item->buffer + offset;
+		CHAR_TYPE* p = this->_item->buffer + index;
 
 		// +1 for the terminating null.
-		this->_opset.move (p, p + size, this->_item->size - offset - size + 1);
+		this->_opset.move (p, p + size, this->_item->size - index - size + 1);
 		this->_item->size -= size;
-	}
-
-	void remvoe ()
-	{
-		this->remove (0, this->_item->size);
 	}
 
 	void clear ()
@@ -662,16 +667,26 @@ public:
 		this->remove (0, this->_item->size);
 	}
 
-
-	void invert (qse_size_t offset, qse_size_t size)
+	/// The compact() function compacts the internal buffer to the length of
+	/// the actual string.
+	void compact ()
 	{
-		QSE_ASSERT (offset + size <= this->_item->size);
+		if (this->getSize() < this->getCapacity())
+		{
+			// call possess_data() regardless of this->_item->isShared()
+			this->possess_data (this->getSize());
+		}
+	}
+
+	void invert (qse_size_t index, qse_size_t size)
+	{
+		QSE_ASSERT (index + size <= this->_item->size);
 	
 		if (this->_item->isShared())  this->possess_data ();
 
 		CHAR_TYPE c;
-		qse_size_t i = offset + size;
-		for (qse_size_t j = offset; j < --i; j++) 
+		qse_size_t i = index + size;
+		for (qse_size_t j = index; j < --i; j++) 
 		{
 			c = this->_item->buffer[j];
 			this->_item->buffer[j] = this->_item->buffer[i];
@@ -682,18 +697,6 @@ public:
 	void invert ()
 	{
 		this->invert (0, this->_item->size);
-	}
-
-	SelfType getSubstring (qse_size_t offset) const
-	{
-		QSE_ASSERT (offset < this->_item->size);
-		return SelfType (this->_item->buffer, offset, this->_item->size - offset);
-	}
-
-	SelfType getSubstring (qse_size_t offset, qse_size_t size) const
-	{
-		QSE_ASSERT (offset + size <= this->_item->size);
-		return SelfType (this->_item->buffer, offset, size);
 	}
 
 	qse_size_t findIndex (qse_size_t index, const CHAR_TYPE* str, qse_size_t offset, qse_size_t size) const
@@ -749,6 +752,7 @@ public:
 
 		return p1 - this->_item->buffer;
 	}
+
 	qse_size_t findIndex (qse_size_t index, const CHAR_TYPE* str) const
 	{
 		return this->findIndex (index, str, 0, this->_opset.getLength(str));
@@ -896,8 +900,8 @@ public:
 		return this->findLastIndex (this->_item->size - 1, c);
 	}
 
-	/// The replace() function finds a substring \a str1 and replace it by
-	/// a new string \a str2.
+	/// The replace() function finds all occurrences of a substring \a str1 
+	/// and replace them by a new string \a str2.
 	void replace (qse_size_t index, const CHAR_TYPE* str1, const CHAR_TYPE* str2)
 	{
 		qse_size_t len1 = this->_opset.getLength(str1);
@@ -928,53 +932,43 @@ public:
 		this->replace (0, str1, str2);
 	}
 
-#if 0
 	bool beginsWith (const CHAR_TYPE* str) const
 	{
-		qse_size_t idx = 0;
-		while (*str != NULL_CHAR) 
-		{
-			if (idx >= this->_item->size) return false;
-			if (this->_item->buffer[idx] != *str) return false;
-			idx++; str++;
-		}
-		return true;
+		return this->_opset.beginsWith(this->_item->buffer, this->_item->size, str);
 	}
 
 	bool beginsWith (const CHAR_TYPE* str, const qse_size_t len) const
 	{
-		const CHAR_TYPE* end = str + len;
-		qse_size_t idx = 0;
-
-		while (str < end) 
-		{
-			if (idx >= this->_item->size) return false;
-			if (this->_item->buffer[idx] != *str) return false;
-			idx++; str++;
-		}
-		return true;
+		return this->_opset.beginsWith(this->_item->buffer, this->_item->size, str, len);
 	}
 
-	qse_size_t touppercase ()
+	bool endsWith (const CHAR_TYPE* str) const
 	{
-		if (this->_item->isShared()) this->possess_data();
-		return SelfType::touppercase (this->_item->buffer);
+		return this->_opset.endsWith(this->_item->buffer, this->_item->size, str);
 	}
 
-	qse_size_t tolowercase ()
+	bool endsWith (const CHAR_TYPE* str, const qse_size_t len) const
+	{
+		return this->_opset.endsWith(this->_item->buffer, this->_item->size, str, len);
+	}
+
+	void trim ()
 	{
 		if (this->_item->isShared()) this->possess_data ();
-		return SelfType::tolowercase (this->_item->buffer);
+		this->_item->size = this->_opset.trim(this->_item->buffer, this->_item->size, true, true);
 	}
 
-	qse_size_t trim ()
+	void trimLeft ()
 	{
 		if (this->_item->isShared()) this->possess_data ();
-		this->_item->size = SelfType::trim (this->_item->buffer);
-		return this->_item->size;
+		this->_item->size = this->_opset.trim(this->_item->buffer, this->_item->size, true, false);
 	}
 
-#endif
+	void trimRight ()
+	{
+		if (this->_item->isShared()) this->possess_data ();
+		this->_item->size = this->_opset.trim(this->_item->buffer, this->_item->size, false, true);
+	}
 
 protected:
 	mutable StringItem* _item;
@@ -989,38 +983,11 @@ private:
 		       ~((qse_size_t)DEFAULT_CAPACITY - (qse_size_t)1);
 	}
 
-#if 0
-	qse_size_t calc_new_inc_for_growth (qse_size_t desired_inc)
-	{
-		qse_size_t inc ;
-
-		
-		/*
-		switch (this->growth_policy.type)
-		{
-			case GrowthPolicy::PERCENT:
-				inc = (this->_item->size * this->growth_policy.value) / 100;
-				break;
-
-			case GrowthPolicy::ABSOLUTE:
-				inc = this->growth_policy.value;
-				break;
-
-			default:
-				inc = DEFAULT_CAPACITY;
-				break;
-		}
-		*/
-
-		if (inc <= 0) inc = 1;
-		if (inc < desired_inc) inc = desired_inc;
-		return this->round_capacity (inc);
-	}
-#endif
-
 	qse_size_t adjust_new_capacity (qse_size_t new_desired_capacity)
 	{
-		return this->round_capacity(this->_resizer(this->_item->capacity, new_desired_capacity));
+		qse_size_t new_capacity = this->_resizer(this->_item->capacity, new_desired_capacity, this->getGrowthPolicy());
+		new_capacity = this->round_capacity(new_capacity);
+		return new_capacity;
 	}
 
 };

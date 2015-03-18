@@ -27,6 +27,10 @@
 #ifndef _QSE_CMN_HASHTABLE_HPP_
 #define _QSE_CMN_HASHTABLE_HPP_
 
+/// \file
+/// Provides a hash table template class.
+
+
 #include <qse/cmn/Association.hpp>
 #include <qse/cmn/HashList.hpp>
 

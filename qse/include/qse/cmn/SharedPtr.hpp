@@ -27,6 +27,9 @@
 #ifndef _QSE_CMN_SHAREDPTR_HPP_
 #define _QSE_CMN_SHAREDPTR_HPP_
 
+/// \file
+/// Provides the SharedPtr template class.
+
 #include <qse/cmn/Mmged.hpp>
 #include <qse/RefCounted.hpp>
 

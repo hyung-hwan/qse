@@ -27,6 +27,9 @@
 #ifndef _QSE_CMN_SCOPEDPTR_HPP_
 #define _QSE_CMN_SCOPEDPTR_HPP_
 
+/// \file
+/// Provides the ScopedPtr template class.
+
 #include <qse/Uncopyable.hpp>
 #include <qse/cmn/Mmgr.hpp>
 
