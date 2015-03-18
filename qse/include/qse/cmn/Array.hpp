@@ -27,7 +27,7 @@
 #ifndef _QSE_CMN_ARRAY_HPP_
 #define _QSE_CMN_ARRAY_HPP_
 
-#include <qse/Types.hpp>
+#include <qse/Growable.hpp>
 #include <qse/cmn/Mmged.hpp>
 
 /////////////////////////////////
@@ -45,15 +45,22 @@ struct ArrayPositioner
 
 struct ArrayResizer
 {
-	qse_size_t operator() (qse_size_t current) const
+	qse_size_t operator() (qse_size_t current, const GrowthPolicy* gp) const
 	{
 		if (current <= 0) current = 1;
 
-		return (current < 5000)?   (current + current):
-		       (current < 50000)?  (current + (current / 2)):
-		       (current < 100000)? (current + (current / 4)):
-		       (current < 150000)? (current + (current / 8)):
-		                           (current + (current / 16));
+		if (gp)
+		{
+			return gp->getNewSize (current);
+		}
+		else
+		{
+			return (current < 5000)?   (current + current):
+			       (current < 50000)?  (current + (current / 2)):
+			       (current < 100000)? (current + (current / 4)):
+			       (current < 150000)? (current + (current / 8)):
+			                           (current + (current / 16));
+		}
 	}
 };
 
@@ -61,7 +68,7 @@ struct ArrayResizer
 /// The Array class provides a dynamically resized array.
 /// 
 template <typename T, typename POSITIONER = ArrayPositioner<T>, typename RESIZER = ArrayResizer >
-class Array: public Mmged
+class Array: public Mmged, public Growable
 {
 public:
 	typedef Array<T,POSITIONER,RESIZER> SelfType;
@@ -152,7 +159,7 @@ protected:
 			{
 				// copy-construct each element.
 				new((QSE::Mmgr*)QSE_NULL, &tmp[index]) T(srcbuf[index]);
-				this->positioner (tmp[index], index);
+				this->_positioner (tmp[index], index);
 			}
 		}
 		catch (...) 
@@ -162,7 +169,7 @@ protected:
 			while (index > 0)
 			{
 				--index;
-				this->positioner (tmp[index], INVALID_INDEX);
+				this->_positioner (tmp[index], INVALID_INDEX);
 				tmp[index].~T ();
 			}
 			::operator delete (tmp, this->getMmgr());
@@ -179,13 +186,13 @@ protected:
 			// no value exists in the given position.
 			// i can copy-construct the value.
 			new((QSE::Mmgr*)QSE_NULL, &this->buffer[index]) T(value);
-			this->positioner (this->buffer[index], index);
+			this->_positioner (this->buffer[index], index);
 		}
 		else
 		{
 			// there is an old value in the position.
 			this->buffer[index] = value;
-			this->positioner (this->buffer[index], index);
+			this->_positioner (this->buffer[index], index);
 		}
 	}
 
@@ -196,7 +203,7 @@ protected:
 		for (qse_size_t i = this->count; i > 0; )
 		{
 			--i;
-			this->positioner (this->buffer[i], INVALID_INDEX);
+			this->_positioner (this->buffer[i], INVALID_INDEX);
 			this->buffer[i].~T ();
 		}
 	
@@ -251,7 +258,7 @@ public:
 	///  const int& t = a[2];
 	///  printf ("%lu\n", (unsigned long int)a.getIndex(t)); // print 2
 	/// \endcode
-	qse_size_t getIndex (const T& v)
+	qse_size_t getIndex (const T& v) const
 	{
 		if (&v >= &this->buffer[0] && &v < &this->buffer[this->count])
 		{
@@ -308,7 +315,7 @@ public:
 		{
 			// the position to add the element is beyond the
 			// capacity. resize the buffer.
-			qse_size_t new_capa = this->resizer (this->capacity);
+			qse_size_t new_capa = this->_resizer (this->capacity, this->getGrowthPolicy());
 
 			if (index < new_capa)
 				this->setCapacity (new_capa);
@@ -319,7 +326,7 @@ public:
 		{
 			// the array is already full.
 			// insertion requires at least one more slot
-			qse_size_t new_capa = this->resizer (this->capacity);
+			qse_size_t new_capa = this->_resizer (this->capacity, this->getGrowthPolicy());
 			this->setCapacity (new_capa);
 		}
 
@@ -339,7 +346,7 @@ public:
 			for (qse_size_t i = this->count; i < index; i++)
 			{
 				new((QSE::Mmgr*)QSE_NULL, &this->buffer[i]) T();
-				this->positioner (this->buffer[i], i);
+				this->_positioner (this->buffer[i], i);
 			}
 		}
 
@@ -355,7 +362,7 @@ public:
 	{
 		QSE_ASSERT (index < this->count);
 		this->buffer[index] = value;
-		this->positioner (this->buffer[index], index);
+		this->_positioner (this->buffer[index], index);
 		return index;
 	}
 
@@ -396,14 +403,14 @@ public:
 			//  2. operator assignment.
 
 			// 1. destruct followed by copy construct
-			//this->positioner (this->buffer[j], INVALID_INDEX);
+			//this->_positioner (this->buffer[j], INVALID_INDEX);
 			//this->buffer[j].~T();
 			//new((QSE::Mmgr*)QSE_NULL, &this->buffer[j]) T(this->buffer[i]);
-			//this->positioner (this->buffer[j], j);
+			//this->_positioner (this->buffer[j], j);
 
 			// 2. operator assignment
 			this->buffer[j] = this->buffer[i];
-			this->positioner (this->buffer[j], j);
+			this->_positioner (this->buffer[j], j);
 
 			j++; i++;
 		}
@@ -411,7 +418,7 @@ public:
 		// call the destructor of deleted elements.
 		while (j < this->count)
 		{
-			this->positioner (this->buffer[j], INVALID_INDEX);
+			this->_positioner (this->buffer[j], INVALID_INDEX);
 			this->buffer[j].~T ();
 			j++;
 		}
@@ -463,7 +470,7 @@ public:
 			for (qse_size_t i = size; i < this->count; ++i)
 			{
 				// call the destructor of the items 
-				this->positioner (this->buffer[i], INVALID_INDEX);
+				this->_positioner (this->buffer[i], INVALID_INDEX);
 				this->buffer[i].~T ();
 			}
 
@@ -476,7 +483,7 @@ public:
 			{
 				// use the default contructor to set the value.
 				new((QSE::Mmgr*)QSE_NULL, &this->buffer[i]) T();
-				this->positioner (this->buffer[i], i);
+				this->_positioner (this->buffer[i], i);
 			}
 
 			this->count = size;
@@ -514,7 +521,7 @@ public:
 		}
 	}
 
-	// The compact() function 
+	/// The compact() function removes the unused space in the buffer.
 	void compact ()
 	{
 		this->setCapacity (this->size);
@@ -581,25 +588,25 @@ public:
 				while (index < nk) 
 				{
 					this->buffer[index] = this->buffer[index + n];
-					this->positioner (this->buffer[index], index);
+					this->_positioner (this->buffer[index], index);
 					index += n;
 				}
 				if (index == last) break;
 
 				this->buffer[index] = this->buffer[index - nk];
-				this->positioner (this->buffer[index], index);
+				this->_positioner (this->buffer[index], index);
 				index -= nk;
 			}
 
 			this->buffer[last] = c;
-			this->positioner (this->buffer[last], last);
+			this->_positioner (this->buffer[last], last);
 			first++;
 		}
 	}
 
 protected:
-	POSITIONER positioner;
-	RESIZER    resizer;
+	POSITIONER _positioner;
+	RESIZER    _resizer;
 
 	qse_size_t count;
 	qse_size_t capacity;

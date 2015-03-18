@@ -51,7 +51,7 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 @ENABLE_CXX_TRUE@am__append_1 = \
-@ENABLE_CXX_TRUE@	Types.hpp Hashable.hpp Uncopyable.hpp RefCounted.hpp \
+@ENABLE_CXX_TRUE@	Types.hpp Growable.hpp Hashable.hpp Uncopyable.hpp RefCounted.hpp \
 @ENABLE_CXX_TRUE@	Exception.hpp Cstr.hpp
 
 subdir = include/qse
@@ -94,8 +94,8 @@ am__can_run_installinfo = \
   esac
 am__pkginclude_HEADERS_DIST = conf-msw.h conf-os2.h conf-dos.h \
 	conf-vms.h conf-mac.h conf-inf.h types.h macros.h pack1.h \
-	unpack.h Types.hpp Hashable.hpp Uncopyable.hpp RefCounted.hpp \
-	Exception.hpp Cstr.hpp
+	unpack.h Types.hpp Growable.hpp Hashable.hpp Uncopyable.hpp \
+	RefCounted.hpp Exception.hpp Cstr.hpp
 am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
 am__vpath_adj = case $$p in \
     $(srcdir)/*) f=`echo "$$p" | sed "s|^$$srcdirstrip/||"`;; \

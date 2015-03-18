@@ -27,6 +27,11 @@
 #ifndef _QSE_REFCOUNTED_HPP_
 #define _QSE_REFCOUNTED_HPP_
 
+
+/// \file
+/// Defines a class that can be used to implement a class of a reference
+/// counted object.
+
 #include <qse/Uncopyable.hpp>
 
 /////////////////////////////////

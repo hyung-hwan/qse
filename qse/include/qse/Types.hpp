@@ -31,7 +31,7 @@
 #include <qse/macros.h>
 
 /// \file
-/// This file defines a class containg aliases to various QSE types.
+/// Defines a class containg aliases to various QSE types.
 
 /////////////////////////////////
 QSE_BEGIN_NAMESPACE(QSE)

@@ -28,6 +28,9 @@
 #ifndef _QSE_EXCEPTION_HPP_
 #define _QSE_EXCEPTION_HPP_
 
+/// \file
+/// Provides the Exception class.
+
 #include <qse/types.h>
 #include <qse/macros.h>
 
@@ -35,6 +38,7 @@
 QSE_BEGIN_NAMESPACE(QSE)
 /////////////////////////////////
 
+/// The Exception class implements the exception object.
 class QSE_EXPORT Exception
 {
 public:

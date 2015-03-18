@@ -27,10 +27,48 @@
 #ifndef _QSE_CMN_BINARYHEAP_HPP_
 #define _QSE_CMN_BINARYHEAP_HPP_
 
+/// \file
+/// Provides a binary heap implementation.
 ///
-/// This file provides a binary heap implementation.
-/// In the heap, each node is greater than or equal to its BinaryHeap
+/// \includelineno bh01.cpp
+/// 
+
+#include <qse/cmn/Array.hpp>
+
+/////////////////////////////////
+QSE_BEGIN_NAMESPACE(QSE)
+/////////////////////////////////
+
+// greater-than comparator
+template <typename T>
+struct BinaryHeapComparator
+{
+	// this can be used to build a max heap
+	bool operator() (const T& v1, const T& v2) const
+	{
+		return v1 > v2;
+	}
+};
+
+template <typename T>
+struct BinaryHeapPositioner
+{
+	void operator() (T& v, qse_size_t index) const
+	{
+		// do nothing
+	}
+};
+
+typedef ArrayResizer BinaryHeapResizer;
+
+#define QSE_BINARY_HEAP_UP(x)     (((x) - 1) / 2)
+#define QSE_BINARY_HEAP_LEFT(x)   ((x) * 2 + 1)
+#define QSE_BINARY_HEAP_RIGHT(x)  ((x) * 2 + 2)
+
 ///
+/// The BinaryHeap class is a template class that implements a binary heap.
+///
+/// \code
 /// #include <qse/cmn/BinaryHeap.hpp>
 /// #include <stdio.h>
 ///
@@ -66,40 +104,8 @@
 /// 
 ///         return 0;
 /// }
-/// 
-
-#include <qse/cmn/Array.hpp>
-
-/////////////////////////////////
-QSE_BEGIN_NAMESPACE(QSE)
-/////////////////////////////////
-
-// greater-than comparator
-template <typename T>
-struct BinaryHeapComparator
-{
-	// this can be used to build a max heap
-	bool operator() (const T& v1, const T& v2) const
-	{
-		return v1 > v2;
-	}
-};
-
-template <typename T>
-struct BinaryHeapPositioner
-{
-	void operator() (T& v, qse_size_t index) const
-	{
-		// do nothing
-	}
-};
-
-typedef ArrayResizer BinaryHeapResizer;
-
-#define QSE_BINARY_HEAP_UP(x)     (((x) - 1) / 2)
-#define QSE_BINARY_HEAP_LEFT(x)   ((x) * 2 + 1)
-#define QSE_BINARY_HEAP_RIGHT(x)  ((x) * 2 + 2)
-
+/// \endcode
+///
 template <typename T, typename COMPARATOR = BinaryHeapComparator<T>, typename POSITIONER = BinaryHeapPositioner<T>, typename RESIZER = BinaryHeapResizer >
 class BinaryHeap: protected Array<T,POSITIONER,RESIZER>
 {
@@ -117,13 +123,11 @@ public:
 		INVALID_INDEX = ParentType::INVALID_INDEX
 	};
 
-	BinaryHeap (qse_size_t capacity = DEFAULT_CAPACITY): 
-		ParentType (QSE_NULL, capacity)
+	BinaryHeap (qse_size_t capacity = DEFAULT_CAPACITY): ParentType (QSE_NULL, capacity)
 	{
 	}
 
-	BinaryHeap (Mmgr* mmgr, qse_size_t capacity = DEFAULT_CAPACITY): 
-		ParentType (mmgr, capacity)
+	BinaryHeap (Mmgr* mmgr, qse_size_t capacity = DEFAULT_CAPACITY): ParentType (mmgr, capacity)
 	{
 	}
 
@@ -144,23 +148,42 @@ public:
 		return *this;
 	}
 
-	using ParentType::isEmpty;
-	using ParentType::getSize;
-	using ParentType::getCapacity;
-	using ParentType::getIndex;
-	using ParentType::clear;
-	using ParentType::compact;
+	/// The isEmpty() function returns true if the binary heap contains no
+	/// item and false otherwise.
+	bool isEmpty() const { return ParentType::isEmpty(); }
 
+	/// The getSize() function returns the number of items in the binary heap.
+	qse_size_t getSize() const { return ParentType::getSize(); }
+
+	/// The getCapacity() function returns the capacity of the internal buffer
+	/// of the binary heap.
+	qse_size_t getCapacity() const { return ParentType::getCapacity(); }
+
+	/// The getIndex() function returns the index of an item reference \a v.
+	qse_size_t getIndex (const T& v) const { return ParentType::getIndex(v); }
+
+	/// The clear() function returns all items.
+	void clear (bool purge_buffer = false) { ParentType::clear (purge_buffer); }
+
+	/// The compact() function restructures the internal buffer to the size
+	/// that is just large enough to hold the existing items.
+	void compact() { ParentType::compact (); }
+
+	/// The operator[] function returns the constant reference to the item 
+	/// at the specified \a index.
 	const T& operator[] (qse_size_t index) const
 	{
 		return ParentType::getValueAt (index);
 	}
 
+	/// The getValueAt() function returns the constant reference to the item
+	/// at the specified \a index.
 	const T& getValueAt (qse_size_t index) const
 	{
 		return ParentType::getValueAt (index);
 	}
 
+	/// The insert() function adds a new item \a value to the binary heap.
 	qse_size_t insert (const T& value)
 	{
 		qse_size_t index = this->count;
@@ -172,6 +195,8 @@ public:
 		return this->sift_up(index);
 	}
 
+	/// The update() function changes the item at the specified \a index
+	/// to a new item \a value.
 	qse_size_t update (qse_size_t index, const T& value)
 	{
 		T old = this->buffer[index];
@@ -181,6 +206,7 @@ public:
 		return (this->greater_than(value, old))? this->sift_up(index): this->sift_down(index);
 	}
 
+	/// The remove() function removes an item at the specified \a index.
 	void remove (qse_size_t index)
 	{
 		QSE_ASSERT (index < this->count);

@@ -27,6 +27,9 @@
 #ifndef _QSE_UNCOPYABLE_HPP_
 #define _QSE_UNCOPYABLE_HPP_
 
+/// \file
+/// Provides the Uncopyable class.
+
 #include <qse/types.h>
 #include <qse/macros.h>
 

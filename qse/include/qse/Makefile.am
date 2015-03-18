@@ -8,7 +8,7 @@ pkginclude_HEADERS = \
 
 if ENABLE_CXX
 pkginclude_HEADERS += \
-	Types.hpp Hashable.hpp Uncopyable.hpp RefCounted.hpp \
+	Types.hpp Growable.hpp Hashable.hpp Uncopyable.hpp RefCounted.hpp \
 	Exception.hpp Cstr.hpp
 endif
 

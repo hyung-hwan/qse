@@ -27,6 +27,9 @@
 #ifndef _QSE_CMN_REDBLACKTABLE_HPP_
 #define _QSE_CMN_REDBLACKTABLE_HPP_
 
+/// \file
+/// Provides the RedBlackTable class.
+
 #include <qse/cmn/Association.hpp>
 #include <qse/cmn/RedBlackTree.hpp>
 
@@ -48,6 +51,10 @@ struct RedBlackTableComparator
 };
 
 
+///
+/// The RedBlackTable class extends the RedBlackTree class to maintain the
+/// pair of a key and a value.
+///
 template <typename K, typename V, typename COMPARATOR = RedBlackTableComparator<K> >
 class RedBlackTable: public Mmged
 {

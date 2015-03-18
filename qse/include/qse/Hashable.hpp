@@ -27,6 +27,9 @@
 #ifndef _QSE_HASHABLE_HPP_
 #define _QSE_HASHABLE_HPP_
 
+/// \file
+/// Privides the Hashable interface class.
+
 #include <qse/types.h>
 #include <qse/macros.h>
 
@@ -34,11 +37,16 @@
 QSE_BEGIN_NAMESPACE(QSE)
 /////////////////////////////////
 
+/// The Hashable class is an abstract class that provides interface required 
+/// by a hasable object. In addtion, it provides static hash calculation 
+/// functions for convenience.
+///
 class QSE_EXPORT Hashable
 {
 public:
 	virtual ~Hashable () {}
 
+	/// A class of an hashable object must implement this function.
 	virtual qse_size_t getHashCode () const = 0;
 
 	static qse_size_t getHashCode (qse_size_t init, const qse_char_t* str)
@@ -87,6 +95,8 @@ public:
 		return n;
 	}
 
+	/// The getHashCode() function calculates a hash value of a byte stream
+	/// pointed to by \a data of the length \a size.
 	static qse_size_t getHashCode (const void* data, qse_size_t size)
 	{
 		return Hashable::getHashCode (0, data, size);
