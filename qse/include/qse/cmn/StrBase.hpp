@@ -590,6 +590,31 @@ public:
 	}
 #endif
 
+#if 0
+	int format (const CHAR_TYPE* fmt, va_list ap)
+	{
+		int n;
+		qse_va_list save_ap;
+
+		QSE_VA_COPY (save_ap, ap);
+		qse_size_t n = this->_opset.format (QSE_NULL, 0, fmt, ap);
+		if (n == (qse_size_t)-1)
+		{
+			// there's conversion error.
+			return -1;
+		}
+
+		if (n > this->getCapacity()) this->possess_data (n);
+		else if (this->_item->isShared()) this->possess_data ();
+
+		QSE_VA_COPY (ap, save_ap);
+		this->_opset.format (this->_item->buffer, this->_item->capacity + 1, fmt, ap);
+
+		this->_item->size = n;
+		return 0;
+	}
+#endif
+
 	void update (const CHAR_TYPE* str, qse_size_t size)
 	{
 		this->clear ();
@@ -714,7 +739,7 @@ public:
 	loop_findIndex:
 		while (i <= max && p[i] != first) i++;
 		if (i > max) return INVALID_INDEX;
-	
+
 		qse_size_t j = i + 1;
 		qse_size_t end = j + size - 1;
 		qse_size_t k = offset + 1;

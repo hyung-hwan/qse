@@ -88,6 +88,8 @@ void t2()
 {
 	QSE::MbString x(QSE_MT("this is a string"));
 	qse_printf (QSE_T("x: [%hs] %d %d\n"), x.getBuffer(), (int)x.getCapacity(), (int)x.getLength());
+	x.format (QSE_MT("what is this %d %d"), 10, 20);
+	qse_printf (QSE_T("x: [%hs] %d %d\n"), x.getBuffer(), (int)x.getCapacity(), (int)x.getLength());
 }
 
 int main ()
