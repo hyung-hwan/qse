@@ -41,7 +41,9 @@
 #	define QSE_INLINE inline
 #	define QSE_HAVE_INLINE
 #elif defined(__GNUC__) && defined(__GNUC_GNU_INLINE__)
-#	define QSE_INLINE /*extern*/ inline
+	/* gcc disables inline when -std=c89 or -ansi is used. 
+	 * so use __inline__ supported by gcc regardless of the options */
+#	define QSE_INLINE /*extern*/ __inline__
 #	define QSE_HAVE_INLINE
 #else
 #	define QSE_INLINE 
@@ -49,7 +51,7 @@
 #endif
 
 #if defined(__GNUC__) && defined(__GNUC_GNU_INLINE__)
-#	define QSE_INLINE_ALWAYS inline __attribute__((__always_inline__))
+#	define QSE_INLINE_ALWAYS __inline__ __attribute__((__always_inline__))
 #	define QSE_HAVE_INLINE_ALWAYS
 #elif defined(_MSC_VER) || (defined(__CC_ARM) || defined(__ARMCC__))
 #	define QSE_INLINE_ALWAYS __forceinline
@@ -60,7 +62,7 @@
 #endif
 
 #if defined(__GNUC__) && defined(__GNUC_GNU_INLINE__)
-#	define QSE_INLINE_NEVER inline __attribute__((__noinline__))
+#	define QSE_INLINE_NEVER __inline__ __attribute__((__noinline__))
 #	define QSE_HAVE_INLINE_NEVER
 #elif (defined(__CC_ARM) || defined(__ARMCC__))
 #	define QSE_INLINE_NEVER __declspec(noinline)
@@ -160,7 +162,9 @@
  * that it does not point to anything.
  */
 #if defined(__cplusplus)
-#	if QSE_SIZEOF_VOID_P == QSE_SIZEOF_INT
+#	if (__cplusplus >= 201103L) /* C++11 */
+#		define QSE_NULL nullptr
+#	elif QSE_SIZEOF_VOID_P == QSE_SIZEOF_INT
 #		define QSE_NULL (0)
 #	elif QSE_SIZEOF_VOID_P == QSE_SIZEOF_LONG
 #		define QSE_NULL (0l)

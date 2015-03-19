@@ -148,7 +148,7 @@ AC_CHECK_FUNCS([lseek64 stat64 fstat64 lstat64 ftruncate64 readdir64 dirfd])
 AC_CHECK_FUNCS([lstat fchmod fsync ftruncate])
 AC_CHECK_FUNCS([timegm timelocal localtime_r gettimeofday settimeofday])
 AC_CHECK_FUNCS([utime utimes futimes lutimes futimens])
-AC_CHECK_FUNCS([sysconf prctl fdopendir setrlimit getrlimit])
+AC_CHECK_FUNCS([sysconf prctl fdopendir setrlimit getrlimit getpgid getpgrp])
 AC_CHECK_FUNCS([backtrace backtrace_symbols])
 AC_CHECK_FUNCS([fork vfork posix_spawn gettid nanosleep select])
 AC_CHECK_FUNCS([makecontext swapcontext getcontext setcontext])
@@ -330,6 +330,15 @@ AC_CHECK_MEMBERS([struct sockaddr_in6.sin6_scope_id], [], [],
 	[#include <sys/types.h> 
 	 #include <sys/socket.h> 
 	 #include <netinet/in.h>])
+
+AC_CHECK_TYPES([struct timespec], [], [],
+	[#include <sys/types.h>
+	 #ifdef HAVE_TIME_H
+	 #include <time.h>
+	 #endif
+	 #ifdef HAVE_SYS_TIME_H
+	 #include <sys/time.h>
+	 #endif])
 
 AC_MSG_CHECKING([for va_copy])
 AC_TRY_LINK(

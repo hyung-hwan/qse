@@ -194,7 +194,7 @@ int qse_fmtfltmaxtombs (qse_mchar_t* buf, qse_size_t bufsize, qse_fltmax_t f, qs
  
 	if (len + 1 < bufsize)
 	{
-		buf[len++] = point;  // add decimal point to string
+		buf[len++] = point;  /* add decimal point to string */
 		buf[len] = QSE_MT('\0');
 	}
         
