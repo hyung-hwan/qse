@@ -108,7 +108,9 @@ enum qse_xli_opt_t
 	 *  you can get the pointer to the extension with qse_getxlirootxtn().
 	 *  the new size set takes effect after the call to qse_xli_yieldroot().
 	 */
-	QSE_XLI_ROOTXTNSIZE
+	QSE_XLI_ROOTXTNSIZE,
+
+	QSE_XLI_KEYSPLITTER
 };
 typedef enum qse_xli_opt_t qse_xli_opt_t;
 

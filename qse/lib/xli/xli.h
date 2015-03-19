@@ -72,6 +72,7 @@ struct qse_xli_t
 		int trait;          
 		qse_size_t pair_xtnsize;
 		qse_size_t root_xtnsize;
+		qse_char_t key_splitter; /**< character to use to split a key in the fqpn format */
 	} opt;
 
 	qse_xli_ecb_t* ecb;
