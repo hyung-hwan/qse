@@ -1,6 +1,7 @@
 #include <qse/cmn/sio.h>
 #include <qse/cmn/String.hpp>
 #include <qse/cmn/HeapMmgr.hpp>
+#include <locale.h>
 
 
 void t1 ()
@@ -84,16 +85,48 @@ void t1 ()
 
 }
 
+#include <stdio.h>
 void t2()
 {
 	QSE::MbString x(QSE_MT("this is a string"));
-	qse_printf (QSE_T("x: [%hs] %d %d\n"), x.getBuffer(), (int)x.getCapacity(), (int)x.getLength());
-	x.format (QSE_MT("what is this %d %d"), 10, 20);
-	qse_printf (QSE_T("x: [%hs] %d %d\n"), x.getBuffer(), (int)x.getCapacity(), (int)x.getLength());
+	QSE::MbString z(QSE_MT("this is a string"));
+	qse_printf (QSE_T("x: [%hs] capa=%d len=%d\n"), x.getBuffer(), (int)x.getCapacity(), (int)x.getLength());
+	QSE::MbString y(x);
+	y.format (QSE_MT("what is this %u %u fuck i don't like [%hs] 01234567890123456789 [%lu] [%ld]"), (int)10, (int)20, QSE_MT("what is what"), (unsigned long)QSE_TYPE_MAX(unsigned long), (long)QSE_TYPE_MAX(long));
+	qse_printf (QSE_T("y: [%hs] capa=%d len=%d\n"), y.getBuffer(), (int)y.getCapacity(), (int)y.getLength());
+
+	qse_size_t zl = z.getLength();
+	z.append (QSE_MT("is this good how do you do 0123456789 abcdefghijklmnopqrstuvwxyz AAAAAAAAAAAAAAAAAAABBBBBBBBBBBBBBBBBVVVVVVVVVVVVVVVVVVVVVVDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD?"));
+	qse_printf (QSE_T("z: [%hs] capa=%d len=%d\n"), z.getBuffer(), (int)z.getCapacity(), (int)z.getLength());
+	QSE_ASSERT (z.getCapacity() > x.getCapacity());
+
+	z.remove (zl, z.getLength() - zl);
+	QSE_ASSERT (z.getCapacity() > x.getCapacity());
+	QSE_ASSERT (z.getLength() == x.getLength());
+
+	QSE_ASSERT (x == x.getBuffer());
+	QSE_ASSERT (x != y.getBuffer());
+	QSE_ASSERT (y == y.getBuffer());
+	QSE_ASSERT (y != x.getBuffer());
+
+	QSE_ASSERT (x != y);
+	QSE_ASSERT (y == y);
+	QSE_ASSERT (x == z);
+	QSE_ASSERT (x.getBuffer() != z.getBuffer());
+
+	z.compact ();
+	QSE_ASSERT (z.getCapacity() == z.getLength());
+	QSE_ASSERT (z.getLength() == x.getLength());
+
+	qse_printf (QSE_T("z: [%hs] capa=%d len=%d\n"), z.getBuffer(), (int)z.getCapacity(), (int)z.getLength());
+
+	z.format (QSE_MT("hello %p world"), z.getBuffer());
+	qse_printf (QSE_T("z: [%hs] capa=%d len=%d\n"), z.getBuffer(), (int)z.getCapacity(), (int)z.getLength());
 }
 
 int main ()
 {
+	setlocale (LC_ALL, "");
 	qse_openstdsios ();
 
 	t1 ();

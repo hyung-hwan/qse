@@ -176,8 +176,8 @@ struct MbStringOpset
 	}
 };
 
-// It's a pain to inherit StrBase<>. i do this not to have various va_xxx calls
-// in the header file  of StrBase.
+// It's a pain to inherit StrBase<> as it has many constructors. 
+// i do this to hide various va_xxx calls from the header file of StrBase.
 
 class WcString: public StrBase<qse_wchar_t, QSE_WT('\0'), WcStringOpset> 
 {
@@ -194,12 +194,12 @@ public:
 	WcString (Mmgr* mmgr, const qse_wchar_t* str, qse_size_t size): ParentType(mmgr, str, size) {}
 	WcString (qse_wchar_t c, qse_size_t size): ParentType(c, size) {}
 	WcString (Mmgr* mmgr, qse_wchar_t c, qse_size_t size): ParentType(mmgr, c, size) {}
-
 	WcString (const WcString& str): ParentType(str) {}
 
 	WcString& operator= (const WcString& str) { ParentType::operator=(str); return *this; }
 	WcString& operator= (const qse_wchar_t* str) { ParentType::operator=(str); return *this; }
 	WcString& operator= (const qse_wchar_t c) { ParentType::operator=(c); return *this; }
+	//using ParentType::operator=;
 
 	int format (const qse_wchar_t* fmt, ...);
 	int formatv (const qse_wchar_t* fmt, va_list ap);
@@ -220,12 +220,12 @@ public:
 	MbString (Mmgr* mmgr, const qse_mchar_t* str, qse_size_t size): ParentType(mmgr, str, size) {}
 	MbString (qse_mchar_t c, qse_size_t size): ParentType(c, size) {}
 	MbString (Mmgr* mmgr, qse_mchar_t c, qse_size_t size): ParentType(mmgr, c, size) {}
-
 	MbString (const MbString& str): ParentType(str) {}
 
 	MbString& operator= (const MbString& str) { ParentType::operator=(str); return *this; }
 	MbString& operator= (const qse_mchar_t* str) { ParentType::operator=(str); return *this; }
 	MbString& operator= (const qse_mchar_t c) { ParentType::operator=(c); return *this; }
+	//using ParentType::operator=;
 
 	int format (const qse_mchar_t* fmt, ...);
 	int formatv (const qse_mchar_t* fmt, va_list ap);

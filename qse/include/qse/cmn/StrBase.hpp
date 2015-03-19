@@ -310,6 +310,20 @@ protected:
 		this->ref_item ();
 	}
 
+	void force_size (qse_size_t size) const
+	{
+		// for internal use only.
+		QSE_ASSERT (size < this->getCapacity());
+		this->_item->size = size;
+	}
+
+	qse_size_t round_capacity (qse_size_t n) 
+	{
+		if (n == 0) n = 1;
+		return (n + (qse_size_t)DEFAULT_CAPACITY - 1) & 
+		       ~((qse_size_t)DEFAULT_CAPACITY - (qse_size_t)1);
+	}
+
 public:
 
 	qse_size_t getSize () const 
@@ -357,12 +371,12 @@ public:
 
 	bool operator== (const CHAR_TYPE* str) const
 	{
-		return this->_opset.compare (this->_item->buffer, this->_item_size, str) == 0;
+		return this->_opset.compare (this->_item->buffer, this->_item->size, str) == 0;
 	}
 
 	bool operator!= (const CHAR_TYPE* str) const
 	{
-		return this->_opset.compare (this->_item->buffer, this->_item_size, str) != 0;
+		return this->_opset.compare (this->_item->buffer, this->_item->size, str) != 0;
 	}
 
 	// i don't want the caller to be able to change the character
@@ -425,7 +439,7 @@ public:
 			StringItem* t;
 
 			if (new_size > this->_item->capacity) 
-				t = this->_item->copy (this->getMmgr(), this->adjust_new_capacity(new_size));
+				t = this->_item->copy (this->getMmgr(), this->adjust_desired_capacity(new_size));
 			else 
 				t = this->_item->copy (this->getMmgr());
 
@@ -435,7 +449,7 @@ public:
 		}
 		else if (new_size > this->_item->capacity) 
 		{
-			StringItem* t = this->_item->copy (this->getMmgr(), this->adjust_new_capacity(new_size));
+			StringItem* t = this->_item->copy (this->getMmgr(), this->adjust_desired_capacity(new_size));
 			old_item = this->_item;
 			this->_item = t;
 			this->ref_item ();;
@@ -538,82 +552,6 @@ public:
 		this->insert (this->_item->size, &c, 1);
 		return *this;
 	}
-
-#if 0
-	void appendFormat (const CHAR_TYPE* fmt, ...)
-	{
-		/*
-		int n;
-		if (this->_item->isShared()) 
-		{
-			StringItem* t = this->_item->copy ();
-			this->_item->deref (); this->_item = t; this->_item->ref ();
-		}
-		qse_va_start (ap, fmt);
-		while ((n = SelfType::opset.vsprintf (&this->_item->buffer[this->_item->size], this->_item->capacity - this->_item->size, fmt, ap)) <= -1)
-		{
-			this->_item->growBy (calc_new_inc_for_growth (0));
-			qse_va_end (ap);
-			qse_va_start (ap, fmt);
-		}
-		qse_va_end (ap);
-		this->_item->size += n;
-		*/
-		qse_va_list ap;
-		qse_va_start (ap, fmt);
-		this->appendFormat (fmt, ap);
-		qse_va_end (ap);
-	}
-
-	void appendFormat (const CHAR_TYPE* fmt, qse_va_list ap)
-	{
-		int n;
-		qse_va_list save_ap;
-
-		if (this->_item->isShared()) this->possess_data ();
-
-		qse_size_t n = this->_opset.format (QSE_NULL, 0, fmt, ap);
-		if (n == (qse_size_t)-1)
-		{
-			// there's conversion error.
-			????
-		}
-
-		qse_va_copy (save_ap, ap);
-		while ((n = this->_opset.format (&this->_item->buffer[this->_item->size], this->_item->capacity - this->_item->size, fmt, ap)) <= -1)
-		{
-			this->_item->growBy (calc_new_inc_for_growth (0));
-			qse_va_copy (ap, save_ap);
-		}
-		
-		this->_item->size += n;
-	}
-#endif
-
-#if 0
-	int format (const CHAR_TYPE* fmt, va_list ap)
-	{
-		int n;
-		qse_va_list save_ap;
-
-		QSE_VA_COPY (save_ap, ap);
-		qse_size_t n = this->_opset.format (QSE_NULL, 0, fmt, ap);
-		if (n == (qse_size_t)-1)
-		{
-			// there's conversion error.
-			return -1;
-		}
-
-		if (n > this->getCapacity()) this->possess_data (n);
-		else if (this->_item->isShared()) this->possess_data ();
-
-		QSE_VA_COPY (ap, save_ap);
-		this->_opset.format (this->_item->buffer, this->_item->capacity + 1, fmt, ap);
-
-		this->_item->size = n;
-		return 0;
-	}
-#endif
 
 	void update (const CHAR_TYPE* str, qse_size_t size)
 	{
@@ -1000,15 +938,9 @@ protected:
 	OPSET _opset;
 	RESIZER _resizer;
 
-private:
-	qse_size_t round_capacity (qse_size_t n) 
-	{
-		if (n == 0) n = 1;
-		return (n + (qse_size_t)DEFAULT_CAPACITY - 1) & 
-		       ~((qse_size_t)DEFAULT_CAPACITY - (qse_size_t)1);
-	}
 
-	qse_size_t adjust_new_capacity (qse_size_t new_desired_capacity)
+private:
+	qse_size_t adjust_desired_capacity (qse_size_t new_desired_capacity)
 	{
 		qse_size_t new_capacity = this->_resizer(this->_item->capacity, new_desired_capacity, this->getGrowthPolicy());
 		new_capacity = this->round_capacity(new_capacity);

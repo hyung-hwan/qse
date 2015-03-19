@@ -383,7 +383,7 @@ reswitch:
 		lowercase_c:
 			ach = QSE_SIZEOF(char_t) < QSE_SIZEOF(int)? va_arg(ap, int): va_arg(ap, char_t);
 
-		print_lowercase_c:	
+		print_lowercase_c:
 			/* precision 0 doesn't kill the letter */
 			width--;
 			if (!(flagc & FLAGC_LEFTADJ) && width > 0)
@@ -645,7 +645,7 @@ reswitch:
 			if (flagc & FLAGC_STAR1) fltfmt.ptr[fmtlen++] = QSE_T('*');
 			else if (flagc & FLAGC_WIDTH) 
 			{
-				fmtlen += qse_fmtuintmaxtombs (	
+				fmtlen += qse_fmtuintmaxtombs (
 					&fltfmt.ptr[fmtlen], fltfmt.capa - fmtlen, 
 					width, 10, -1, QSE_MT('\0'), QSE_NULL);
 			}
@@ -653,7 +653,7 @@ reswitch:
 			if (flagc & FLAGC_STAR2) fltfmt.ptr[fmtlen++] = QSE_T('*');
 			else if (flagc & FLAGC_PRECISION) 
 			{
-				fmtlen += qse_fmtuintmaxtombs (	
+				fmtlen += qse_fmtuintmaxtombs (
 					&fltfmt.ptr[fmtlen], fltfmt.capa - fmtlen, 
 					precision, 10, -1, QSE_MT('\0'), QSE_NULL);
 			}
@@ -668,7 +668,7 @@ reswitch:
 			fltfmt.ptr[fmtlen++] = ch;
 			fltfmt.ptr[fmtlen] = QSE_MT('\0');
 
-		#if defined(HAVE_SNPRINTF)	
+		#if defined(HAVE_SNPRINTF)
 			/* nothing special here */
 		#else
 			/* best effort to avoid buffer overflow when no snprintf is available. 
@@ -782,7 +782,7 @@ handle_nosign:
 				num = va_arg (ap, unsigned long long int);
 			#endif
 			else if (lm_flag & (LF_L | LF_LD))
-				num = va_arg (ap, long int);
+				num = va_arg (ap, unsigned long int);
 			else if (lm_flag & LF_H)
 				num = (unsigned short int)va_arg (ap, int);
 			else if (lm_flag & LF_C)
@@ -802,7 +802,7 @@ handle_sign:
 				 * This is just a work-around for it */
 				int i;
 				for (i = 0, num = 0; i < QSE_SIZEOF(qse_intmax_t) / QSE_SIZEOF(qse_size_t); i++)
-				{	
+				{
 				#if defined(QSE_ENDIAN_BIG)
 					num = num << (8 * QSE_SIZEOF(qse_size_t)) | (va_arg (ap, qse_size_t));
 				#else
