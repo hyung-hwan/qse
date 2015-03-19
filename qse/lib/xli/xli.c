@@ -67,6 +67,7 @@ int qse_xli_init (qse_xli_t* xli, qse_mmgr_t* mmgr, qse_size_t rootxtnsize)
 	xli->mmgr = mmgr;
 	xli->errstr = qse_xli_dflerrstr;
 	xli->opt.root_xtnsize = rootxtnsize;
+	xli->opt.key_splitter = QSE_T('.');
 
 	xli->dotted_curkey = qse_str_open (mmgr, 0, 128);
 	if (xli->dotted_curkey == QSE_NULL) goto oops;
@@ -121,11 +122,15 @@ int qse_xli_setopt (qse_xli_t* xli, qse_xli_opt_t id, const void* value)
 			return 0;
 
 		case QSE_XLI_PAIRXTNSIZE:
-			xli->opt.pair_xtnsize = *(const qse_size_t*)value;	
+			xli->opt.pair_xtnsize = *(const qse_size_t*)value;
 			return 0;
 
 		case QSE_XLI_ROOTXTNSIZE:
-			xli->opt.root_xtnsize = *(const qse_size_t*)value;	
+			xli->opt.root_xtnsize = *(const qse_size_t*)value;
+			return 0;
+
+		case QSE_XLI_KEYSPLITTER:
+			xli->opt.key_splitter = *(const qse_char_t*)value;
 			return 0;
 	}
 
@@ -147,6 +152,10 @@ int qse_xli_getopt (qse_xli_t* xli, qse_xli_opt_t  id, void* value)
 
 		case QSE_XLI_ROOTXTNSIZE:
 			*(qse_size_t*)value = xli->opt.root_xtnsize;
+			return 0;
+
+		case QSE_XLI_KEYSPLITTER:
+			*(qse_char_t*)value = xli->opt.key_splitter;
 			return 0;
 	};
 
@@ -640,7 +649,7 @@ const qse_char_t* get_next_fqpn_segment (qse_xli_t* xli, const qse_char_t* fqpn,
 	const qse_char_t* ptr;
 
 	seg->key.ptr = ptr = fqpn;
-	while (*ptr != QSE_T('\0') && *ptr != QSE_T('.') && *ptr != QSE_T('[') && *ptr != QSE_T('{')) ptr++;
+	while (*ptr != QSE_T('\0') && *ptr != xli->opt.key_splitter && *ptr != QSE_T('[') && *ptr != QSE_T('{')) ptr++;
 	if (ptr == seg->key.ptr) goto inval; /* no key part */
 	seg->key.len = ptr - seg->key.ptr;
 
@@ -671,7 +680,7 @@ const qse_char_t* get_next_fqpn_segment (qse_xli_t* xli, const qse_char_t* fqpn,
 		else goto inval;
 
 		ptr++;  /* skip ] */
-		if (*ptr != QSE_T('\0') && *ptr != QSE_T('.')) goto inval;
+		if (*ptr != QSE_T('\0') && *ptr != xli->opt.key_splitter) goto inval;
 	}
 	else if (*ptr == QSE_T('{'))
 	{
@@ -692,7 +701,7 @@ const qse_char_t* get_next_fqpn_segment (qse_xli_t* xli, const qse_char_t* fqpn,
 		if (*ptr != QSE_T('}') || seg->idx.alias.len == 0) goto inval;
 
 		ptr++;  /* skip } */
-		if (*ptr != QSE_T('\0') && *ptr != QSE_T('.')) goto inval;
+		if (*ptr != QSE_T('\0') && *ptr != xli->opt.key_splitter) goto inval;
 	}
 	else
 	{
@@ -751,7 +760,7 @@ qse_xli_pair_t* qse_xli_findpair (qse_xli_t* xli, const qse_xli_list_t* list, co
 		if (*ptr == QSE_T('\0')) return pair; /* no more segments */
 
 		/* more segments to handle */
-		QSE_ASSERT (*ptr == QSE_T('.'));
+		QSE_ASSERT (*ptr == xli->opt.key_splitter);
 		ptr++; /* skip . */
 
 		/* switch to the value regardless of its type.
@@ -822,7 +831,7 @@ qse_size_t qse_xli_countpairs (qse_xli_t* xli, const qse_xli_list_t* list, const
 		}
 
 		/* more segments to handle */
-		QSE_ASSERT (*ptr == QSE_T('.'));
+		QSE_ASSERT (*ptr == xli->opt.key_splitter);
 		ptr++; /* skip . */
 
 		/* switch to the value regardless of its type.
@@ -1010,7 +1019,7 @@ qse_xli_pair_t* qse_xli_setpair (qse_xli_t* xli, const qse_char_t* fqpn, const q
 		}
 
 		/* more segments to handle */
-		QSE_ASSERT (*ptr == QSE_T('.'));
+		QSE_ASSERT (*ptr == xli->opt.key_splitter);
 		ptr++; /* skip . */
 
 		/* switch to the value regardless of its type.
