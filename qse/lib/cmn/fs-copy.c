@@ -237,7 +237,7 @@ static int copy_file_in_fs (qse_fs_t* fs, cpfile_t* cpfile)
 
 		if (cpfile->flags & QSE_FS_CPFILE_PRESERVE)
 		{
-		#if defined(HAVE_FUTIMENS)
+		#if defined(HAVE_FUTIMENS) && defined(HAVE_STRUCT_TIMESPEC)
 			struct timespec ts[2];
 		#elif defined(HAVE_FUTIMES)
 			struct timeval tv[2];
@@ -254,7 +254,7 @@ static int copy_file_in_fs (qse_fs_t* fs, cpfile_t* cpfile)
 				goto oops;
 			}
 
-		#if defined(HAVE_FUTIMENS)
+		#if defined(HAVE_FUTIMENS) && defined(HAVE_STRUCT_TIMESPEC)
 
 			QSE_MEMSET (&ts, 0, QSE_SIZEOF(ts));
 			ts[0].tv_sec = cpfile->src_attr.atime.sec;

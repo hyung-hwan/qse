@@ -146,7 +146,7 @@ static int fnc_kill (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	return 0;
 }
 
-static int fnc_getpgrp (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+static int fnc_getpgid (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
 	qse_awk_int_t pid;
 	qse_awk_val_t* retv;
@@ -164,7 +164,14 @@ static int fnc_getpgrp (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	pid = -1;
 
 #else
+	/* TODO: support specifing calling process id other than 0 */
+	#if defined(HAVE_GETPGID)
+	pid = getpgid (0);
+	#elif defined(HAVE_GETPGRP)
 	pid = getpgrp ();
+	#else
+	pid = -1;
+	#endif
 #endif
 
 	retv = qse_awk_rtx_makeintval (rtx, pid);
@@ -679,7 +686,7 @@ static fnctab_t fnctab[] =
 	{ QSE_T("geteuid"),    { { 0, 0, QSE_NULL     }, fnc_geteuid,    0  } },
 	{ QSE_T("getgid"),     { { 0, 0, QSE_NULL     }, fnc_getgid,     0  } },
 	{ QSE_T("getnwifcfg"), { { 3, 3, QSE_T("vvr") }, fnc_getnwifcfg, 0  } },
-	{ QSE_T("getpgrp"),    { { 0, 0, QSE_NULL     }, fnc_getpgrp,    0  } },
+	{ QSE_T("getpgid"),    { { 0, 0, QSE_NULL     }, fnc_getpgid,    0  } },
 	{ QSE_T("getpid"),     { { 0, 0, QSE_NULL     }, fnc_getpid,     0  } },
 	{ QSE_T("getppid"),    { { 0, 0, QSE_NULL     }, fnc_getppid,    0  } },
 	{ QSE_T("gettid"),     { { 0, 0, QSE_NULL     }, fnc_gettid,     0  } },

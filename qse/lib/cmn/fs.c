@@ -645,7 +645,7 @@ qse_fs_ent_t* qse_fs_read (qse_fs_t* fs, int flags)
 
 	if (flags & QSE_FS_ENT_TYPE)
 	{
-	#if defined(HAVE_STRUCT_DIRENT_D_TYPE)
+	#if defined(HAVE_STRUCT_DIRENT_D_TYPE) && defined(DT_DIR) && defined(DT_REG) /* and more */
 		switch (ent->d_type)
 		{
 			case DT_DIR:
@@ -678,18 +678,26 @@ qse_fs_ent_t* qse_fs_read (qse_fs_t* fs, int flags)
 			default:
 				fs->ent.type = QSE_FS_ENT_UNKNOWN;
 				break;
-		}	
+		}
 
 	#else
+		#if defined(__S_IFMT) && !defined(S_IFMT)
+		#	define S_IFMT __S_IFMT
+		#endif
+		#if defined(__S_IFDIR) && !defined(S_IFDIR)
+		#	define S_IFDIR __S_IFDIR
+		#endif
 		#define IS_TYPE(st,type) ((st.st_mode & S_IFMT) == S_IFDIR)
 		fs->ent.type = IS_TYPE(st,S_IFDIR)?  QSE_FS_ENT_SUBDIR:
-		                IS_TYPE(st,S_IFREG)?  QSE_FS_ENT_REGULAR:
-		                IS_TYPE(st,S_IFLNK)?  QSE_FS_ENT_SYMLINK:
-		                IS_TYPE(st,S_IFCHR)?  QSE_FS_ENT_CHRDEV:
-		                IS_TYPE(st,S_IFBLK)?  QSE_FS_ENT_BLKDEV:
-		                IS_TYPE(st,S_IFIFO)?  QSE_FS_ENT_PIPE:
-		                IS_TYPE(st,S_IFSOCK)? QSE_FS_ENT_PIPE:
-		                                      QSE_FS_ENT_UNKNOWN;
+		               IS_TYPE(st,S_IFREG)?  QSE_FS_ENT_REGULAR:
+		               IS_TYPE(st,S_IFLNK)?  QSE_FS_ENT_SYMLINK:
+		               IS_TYPE(st,S_IFCHR)?  QSE_FS_ENT_CHRDEV:
+		               IS_TYPE(st,S_IFBLK)?  QSE_FS_ENT_BLKDEV:
+		               IS_TYPE(st,S_IFIFO)?  QSE_FS_ENT_PIPE:
+		#if defined(S_IFSOCK)
+		               IS_TYPE(st,S_IFSOCK)? QSE_FS_ENT_PIPE:
+		#endif
+		                                     QSE_FS_ENT_UNKNOWN;
 		#undef IS_TYPE
 	#endif
 		fs->ent.flags |= QSE_FS_ENT_TYPE;
