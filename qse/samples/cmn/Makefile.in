@@ -68,7 +68,7 @@ bin_PROGRAMS = chr01$(EXEEXT) dir01$(EXEEXT) dll$(EXEEXT) \
 #rex02_SOURCES = rex02.cpp
 #rex02_CXXFLAGS = -I/usr/lib/wx/include/gtk2-unicode-release-2.8 -I/usr/include/wx-2.8 -D_FILE_OFFSET_BITS=64 -D_LARGE_FILES -D__WXGTK__ -pthread 
 #rex02_LDFLAGS = -pthread -Wl,-Bsymbolic-functions  -lwx_gtk2ud_richtext-2.8 -lwx_gtk2ud_aui-2.8 -lwx_gtk2ud_xrc-2.8 -lwx_gtk2ud_qa-2.8 -lwx_gtk2ud_html-2.8 -lwx_gtk2ud_adv-2.8 -lwx_gtk2ud_core-2.8 -lwx_baseud_xml-2.8 -lwx_baseud_net-2.8 -lwx_baseud-2.8 
-@ENABLE_CXX_TRUE@am__append_2 = arr01 bh01 hl01 htb02 rbt02 rbt03 sp01 sp02 str02
+@ENABLE_CXX_TRUE@am__append_2 = arr01 arr02 bh01 hl01 htb02 rbt02 rbt03 sp01 sp02 str02
 subdir = samples/cmn
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -86,10 +86,10 @@ mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/include/qse/config.h
 CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
-@ENABLE_CXX_TRUE@am__EXEEXT_1 = arr01$(EXEEXT) bh01$(EXEEXT) \
-@ENABLE_CXX_TRUE@	hl01$(EXEEXT) htb02$(EXEEXT) rbt02$(EXEEXT) \
-@ENABLE_CXX_TRUE@	rbt03$(EXEEXT) sp01$(EXEEXT) sp02$(EXEEXT) \
-@ENABLE_CXX_TRUE@	str02$(EXEEXT)
+@ENABLE_CXX_TRUE@am__EXEEXT_1 = arr01$(EXEEXT) arr02$(EXEEXT) \
+@ENABLE_CXX_TRUE@	bh01$(EXEEXT) hl01$(EXEEXT) htb02$(EXEEXT) \
+@ENABLE_CXX_TRUE@	rbt02$(EXEEXT) rbt03$(EXEEXT) sp01$(EXEEXT) \
+@ENABLE_CXX_TRUE@	sp02$(EXEEXT) str02$(EXEEXT)
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
 am__arr01_SOURCES_DIST = arr01.cpp
@@ -102,6 +102,10 @@ am__DEPENDENCIES_3 = $(am__DEPENDENCIES_2)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
+am__arr02_SOURCES_DIST = arr02.cpp
+@ENABLE_CXX_TRUE@am_arr02_OBJECTS = arr02.$(OBJEXT)
+arr02_OBJECTS = $(am_arr02_OBJECTS)
+@ENABLE_CXX_TRUE@arr02_DEPENDENCIES = $(am__DEPENDENCIES_3)
 am__bh01_SOURCES_DIST = bh01.cpp
 @ENABLE_CXX_TRUE@am_bh01_OBJECTS = bh01.$(OBJEXT)
 bh01_OBJECTS = $(am_bh01_OBJECTS)
@@ -336,11 +340,11 @@ am__v_CXXLD_0 = @echo "  CXXLD " $@;
 AM_V_GEN = $(am__v_GEN_@AM_V@)
 am__v_GEN_ = $(am__v_GEN_@AM_DEFAULT_V@)
 am__v_GEN_0 = @echo "  GEN   " $@;
-SOURCES = $(arr01_SOURCES) $(bh01_SOURCES) $(chr01_SOURCES) dir01.c \
-	$(dll_SOURCES) $(env01_SOURCES) $(fio01_SOURCES) \
-	$(fio02_SOURCES) $(fma_SOURCES) $(fmt01_SOURCES) \
-	$(fmt02_SOURCES) $(fs01_SOURCES) fs02.c fs03.c \
-	$(glob01_SOURCES) $(hl01_SOURCES) $(htb01_SOURCES) \
+SOURCES = $(arr01_SOURCES) $(arr02_SOURCES) $(bh01_SOURCES) \
+	$(chr01_SOURCES) dir01.c $(dll_SOURCES) $(env01_SOURCES) \
+	$(fio01_SOURCES) $(fio02_SOURCES) $(fma_SOURCES) \
+	$(fmt01_SOURCES) $(fmt02_SOURCES) $(fs01_SOURCES) fs02.c \
+	fs03.c $(glob01_SOURCES) $(hl01_SOURCES) $(htb01_SOURCES) \
 	$(htb02_SOURCES) $(ipad01_SOURCES) $(lda_SOURCES) \
 	$(main01_SOURCES) $(main02_SOURCES) $(mbwc01_SOURCES) \
 	$(mbwc02_SOURCES) $(nwad01_SOURCES) nwif01.c nwif02.c \
@@ -351,16 +355,17 @@ SOURCES = $(arr01_SOURCES) $(bh01_SOURCES) $(chr01_SOURCES) dir01.c \
 	$(sp01_SOURCES) $(sp02_SOURCES) $(str01_SOURCES) \
 	$(str02_SOURCES) task01.c $(time_SOURCES) $(tre01_SOURCES) \
 	uri01.c $(xma_SOURCES)
-DIST_SOURCES = $(am__arr01_SOURCES_DIST) $(am__bh01_SOURCES_DIST) \
-	$(chr01_SOURCES) dir01.c $(dll_SOURCES) $(env01_SOURCES) \
-	$(fio01_SOURCES) $(fio02_SOURCES) $(fma_SOURCES) \
-	$(fmt01_SOURCES) $(fmt02_SOURCES) $(fs01_SOURCES) fs02.c \
-	fs03.c $(glob01_SOURCES) $(am__hl01_SOURCES_DIST) \
-	$(htb01_SOURCES) $(am__htb02_SOURCES_DIST) $(ipad01_SOURCES) \
-	$(lda_SOURCES) $(main01_SOURCES) $(main02_SOURCES) \
-	$(mbwc01_SOURCES) $(mbwc02_SOURCES) $(nwad01_SOURCES) nwif01.c \
-	nwif02.c $(oht_SOURCES) $(path01_SOURCES) $(pio_SOURCES) \
-	$(pma_SOURCES) $(rbt01_SOURCES) $(am__rbt02_SOURCES_DIST) \
+DIST_SOURCES = $(am__arr01_SOURCES_DIST) $(am__arr02_SOURCES_DIST) \
+	$(am__bh01_SOURCES_DIST) $(chr01_SOURCES) dir01.c \
+	$(dll_SOURCES) $(env01_SOURCES) $(fio01_SOURCES) \
+	$(fio02_SOURCES) $(fma_SOURCES) $(fmt01_SOURCES) \
+	$(fmt02_SOURCES) $(fs01_SOURCES) fs02.c fs03.c \
+	$(glob01_SOURCES) $(am__hl01_SOURCES_DIST) $(htb01_SOURCES) \
+	$(am__htb02_SOURCES_DIST) $(ipad01_SOURCES) $(lda_SOURCES) \
+	$(main01_SOURCES) $(main02_SOURCES) $(mbwc01_SOURCES) \
+	$(mbwc02_SOURCES) $(nwad01_SOURCES) nwif01.c nwif02.c \
+	$(oht_SOURCES) $(path01_SOURCES) $(pio_SOURCES) $(pma_SOURCES) \
+	$(rbt01_SOURCES) $(am__rbt02_SOURCES_DIST) \
 	$(am__rbt03_SOURCES_DIST) $(rex01_SOURCES) $(sio01_SOURCES) \
 	$(sio02_SOURCES) $(sio03_SOURCES) $(sll_SOURCES) \
 	$(slmb01_SOURCES) $(am__sp01_SOURCES_DIST) \
@@ -592,6 +597,8 @@ tre01_SOURCES = tre01.c
 xma_SOURCES = xma.c
 @ENABLE_CXX_TRUE@arr01_SOURCES = arr01.cpp
 @ENABLE_CXX_TRUE@arr01_LDADD = $(LDADD) -lqsecmnxx
+@ENABLE_CXX_TRUE@arr02_SOURCES = arr02.cpp
+@ENABLE_CXX_TRUE@arr02_LDADD = $(LDADD) -lqsecmnxx
 @ENABLE_CXX_TRUE@bh01_SOURCES = bh01.cpp
 @ENABLE_CXX_TRUE@bh01_LDADD = $(LDADD) -lqsecmnxx
 @ENABLE_CXX_TRUE@hl01_SOURCES = hl01.cpp
@@ -691,6 +698,9 @@ clean-binPROGRAMS:
 arr01$(EXEEXT): $(arr01_OBJECTS) $(arr01_DEPENDENCIES) $(EXTRA_arr01_DEPENDENCIES) 
 	@rm -f arr01$(EXEEXT)
 	$(AM_V_CXXLD)$(CXXLINK) $(arr01_OBJECTS) $(arr01_LDADD) $(LIBS)
+arr02$(EXEEXT): $(arr02_OBJECTS) $(arr02_DEPENDENCIES) $(EXTRA_arr02_DEPENDENCIES) 
+	@rm -f arr02$(EXEEXT)
+	$(AM_V_CXXLD)$(CXXLINK) $(arr02_OBJECTS) $(arr02_LDADD) $(LIBS)
 bh01$(EXEEXT): $(bh01_OBJECTS) $(bh01_DEPENDENCIES) $(EXTRA_bh01_DEPENDENCIES) 
 	@rm -f bh01$(EXEEXT)
 	$(AM_V_CXXLD)$(CXXLINK) $(bh01_OBJECTS) $(bh01_LDADD) $(LIBS)
@@ -843,6 +853,7 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/arr01.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/arr02.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/bh01.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/chr01.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dir01.Po@am__quote@

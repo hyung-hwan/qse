@@ -123,7 +123,7 @@ public:
 
 			// must copy the memory manager pointer as the item
 			// to be copied is allocated using the memory manager of sp.
-			this->setMmgr (sp.getMmgr());
+			this->setMmgr (sp.getMmgr()); // copy over mmgr
 
 			this->_item = sp._item;
 			this->_item->ref ();

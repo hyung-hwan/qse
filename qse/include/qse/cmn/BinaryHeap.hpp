@@ -135,6 +135,12 @@ public:
 	{
 	}
 
+#if (__cplusplus >= 201103L) // C++11
+	BinaryHeap (SelfType& heap): ParentType (heap)
+	{
+	}
+#endif
+
 	~BinaryHeap ()
 	{
 	}
@@ -147,6 +153,17 @@ public:
 		}
 		return *this;
 	}
+
+#if (__cplusplus >= 201103L) // C++11
+	SelfType& operator= (SelfType&& heap)
+	{
+		if (this != &heap)
+		{
+			ParentType::operator= (heap);
+		}
+		return *this;
+	}
+#endif
 
 	/// The isEmpty() function returns true if the binary heap contains no
 	/// item and false otherwise.
@@ -195,6 +212,19 @@ public:
 		return this->sift_up(index);
 	}
 
+#if (__cplusplus >= 201103L) // C++11
+	qse_size_t insert (T&& value)
+	{
+		qse_size_t index = this->count;
+
+		// add the item at the back of the array
+		ParentType::insert (index, (T&&)value);
+
+		// move the item up to the top if it's greater than the up item
+		return this->sift_up(index);
+	}
+#endif
+
 	/// The update() function changes the item at the specified \a index
 	/// to a new item \a value.
 	qse_size_t update (qse_size_t index, const T& value)
@@ -206,15 +236,29 @@ public:
 		return (this->greater_than(value, old))? this->sift_up(index): this->sift_down(index);
 	}
 
+#if (__cplusplus >= 201103L) // C++11
+	qse_size_t update (qse_size_t index, T&& value)
+	{
+		T old = this->buffer[index];
+
+		ParentType::update (index, (T&&)value);
+
+		return (this->greater_than(value, old))? this->sift_up(index): this->sift_down(index);
+	}
+#endif
+
 	/// The remove() function removes an item at the specified \a index.
 	void remove (qse_size_t index)
 	{
 		QSE_ASSERT (index < this->count);
 
+// TODO: move semantics herr
+//BEGIN
 		// copy the last item to the position to remove 
 		T old = this->buffer[index];
 
 		ParentType::update (index, this->buffer[this->count - 1]);
+// END..
 
 		// delete the last item
 		ParentType::remove (this->count - 1);

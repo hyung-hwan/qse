@@ -122,6 +122,26 @@ public:
 		}
 	}
 
+#if (__cplusplus >= 201103L) // C++11
+
+	Array (SelfType&& array):
+		Mmged(array.getMmgr()),
+		count(0), capacity(0), buffer(QSE_NULL)
+	{
+		if (array.buffer)
+		{
+			this->buffer = array.buffer;
+			this->count = array.count;
+			this->capacity = array.capacity;
+
+			array.buffer = QSE_NULL;
+			array.count = 0;
+			array.capacity = 0;
+		}
+	}
+
+#endif
+
 	~Array ()
 	{
 		this->clear (true);
@@ -142,6 +162,33 @@ public:
 		return *this;
 	}
 
+#if (__cplusplus >= 201103L) // C++11
+	SelfType& operator= (SelfType&& array)
+	{
+		if (this != &array)
+		{
+			this->clear (true);
+
+			if (array.buffer)
+			{
+				// TODO: show i block move if mmgrs are differnt
+				//       between *this and array?
+
+				this->setMmgr (array.getMmgr());  // copy over mmgr.
+
+				this->buffer = array.buffer;
+				this->count = array.count;
+				this->capacity = array.capacity;
+
+				array.buffer = QSE_NULL;
+				array.count = 0;
+				array.capacity = 0;
+			}
+		}
+		return *this;
+	}
+#endif
+
 protected:
 	T* clone_buffer (const T* srcbuf, qse_size_t capa, qse_size_t cnt)
 	{
@@ -157,7 +204,7 @@ protected:
 		{
 			for (index = 0; index < cnt; index++) 
 			{
-				// copy-construct each element.
+				// copy-construct each element. 
 				new((QSE::Mmgr*)QSE_NULL, &tmp[index]) T(srcbuf[index]);
 				this->_positioner (tmp[index], index);
 			}
@@ -173,11 +220,60 @@ protected:
 				tmp[index].~T ();
 			}
 			::operator delete (tmp, this->getMmgr());
+
 			throw;
 		}
 
 		return tmp;
 	}
+
+#if (__cplusplus >= 201103L) // C++11
+	T* clone_buffer_by_moving (T* srcbuf, qse_size_t capa, qse_size_t cnt)
+	{
+		QSE_ASSERT (capa > 0);
+		QSE_ASSERT (cnt <= capa);
+
+		qse_size_t index;
+
+		//T* tmp = new T[capa];
+		T* tmp = (T*)::operator new (capa * QSE_SIZEOF(*tmp), this->getMmgr());
+
+		try 
+		{
+			for (index = 0; index < cnt; index++) 
+			{
+				// move-construct(or copy-construct) each element. 
+				new((QSE::Mmgr*)QSE_NULL, &tmp[index]) T((T&&)srcbuf[index]);
+				this->_positioner (tmp[index], index);
+			}
+		}
+		catch (...) 
+		{
+			// in case move-constructor(or copy-constructor) raises an exception.
+			QSE_ASSERT (tmp != QSE_NULL);
+			while (index > 0)
+			{
+				--index;
+
+				// if move-contruction ended up with an exception,
+				// the original array can get into an unknown state eventually.
+				// i don't attempt to restore the moved object as an exception
+				// may be raised during restoration.
+				// an exception 
+				//try { new((QSE::Mmgr*)QSE_NULL, &srcbuf[index]) T((T&&)tmp[index]); }
+				//catch (...) {}
+
+				this->_positioner (tmp[index], INVALID_INDEX);
+				tmp[index].~T ();
+			}
+			::operator delete (tmp, this->getMmgr());
+
+			throw;
+		}
+
+		return tmp;
+	}
+#endif
 
 	void put_item (qse_size_t index, const T& value)
 	{
@@ -190,11 +286,30 @@ protected:
 		}
 		else
 		{
-			// there is an old value in the position.
+			// there is an old value in the position. do classic-assignment
 			this->buffer[index] = value;
 			this->_positioner (this->buffer[index], index);
 		}
 	}
+
+#if (__cplusplus >= 201103L) // C++11
+	void put_item_by_moving (qse_size_t index, T&& value)
+	{
+		if (index >= this->count)
+		{
+			// no value exists in the given position.
+			// i can move-construct the value.
+			new((QSE::Mmgr*)QSE_NULL, &this->buffer[index]) T((T&&)value);
+			this->_positioner (this->buffer[index], index);
+		}
+		else
+		{
+			// there is an old value in the position. do move-assignment.
+			this->buffer[index] = (T&&)value;
+			this->_positioner (this->buffer[index], index);
+		}
+	}
+#endif
 
 	void clear_all_items  ()
 	{
@@ -303,14 +418,9 @@ public:
 		this->update (index, value);
 	}
 
-	qse_size_t insert (qse_size_t index, const T& value)
+protected:
+	void secure_slot (qse_size_t index)
 	{
-		// Unlike insert() in RedBlackTree and HashList,
-		// it inserts an item when index exists in the existing array.
-		// It is because array allows duplicate items.
-		// RedBlckTree::insert() and HashList::insert() return failure
-		// if existing item exists.
-
 		if (index >= this->capacity) 
 		{
 			// the position to add the element is beyond the
@@ -335,8 +445,11 @@ public:
 			// shift the existing elements to the back by one slot.
 			for (qse_size_t i = this->count; i > index; i--) 
 			{
-				//this->buffer[i] = this->buffer[i - 1];
-				this->put_item (i, this->buffer[i - 1]);
+			#if (__cplusplus >= 201103L) // C++11
+				this->put_item_by_moving (i, (T&&)this->buffer[i - 1]); 
+			#else
+				this->put_item (i, this->buffer[i - 1]); 
+			#endif
 			}
 		}
 		else if (index > this->count)
@@ -349,6 +462,17 @@ public:
 				this->_positioner (this->buffer[i], i);
 			}
 		}
+	}
+
+public:
+	qse_size_t insert (qse_size_t index, const T& value)
+	{
+		// Unlike insert() in RedBlackTree and HashList,
+		// it inserts an item when index exists in the existing array.
+		// It is because array allows duplicate items.
+		// RedBlckTree::insert() and HashList::insert() return failure
+		// if existing item exists.
+		this->secure_slot (index);
 
 		//this->buffer[index] = value;
 		this->put_item (index, value);
@@ -358,6 +482,25 @@ public:
 		return index;
 	}
 
+#if (__cplusplus >= 201103L) // C++11
+	qse_size_t insert (qse_size_t index, T&& value)
+	{
+		// Unlike insert() in RedBlackTree and HashList,
+		// it inserts an item when index exists in the existing array.
+		// It is because array allows duplicate items.
+		// RedBlckTree::insert() and HashList::insert() return failure
+		// if existing item exists.
+		this->secure_slot (index);
+
+		//this->buffer[index] = value;
+		this->put_item_by_moving (index, (T&&)value);
+		if (index > this->count) this->count = index + 1;
+		else this->count++;
+
+		return index;
+	}
+#endif
+
 	qse_size_t update (qse_size_t index, const T& value)
 	{
 		QSE_ASSERT (index < this->count);
@@ -365,6 +508,16 @@ public:
 		this->_positioner (this->buffer[index], index);
 		return index;
 	}
+
+#if (__cplusplus >= 201103L) // C++11
+	qse_size_t update (qse_size_t index, T&& value)
+	{
+		QSE_ASSERT (index < this->count);
+		this->buffer[index] = (T&&)value;
+		this->_positioner (this->buffer[index], index);
+		return index;
+	}
+#endif
 
 	qse_size_t upsert (qse_size_t index, const T& value)
 	{
@@ -374,6 +527,16 @@ public:
 			return this->insert (index, value);
 	}
 
+#if (__cplusplus >= 201103L) // C++11
+	qse_size_t upsert (qse_size_t index, T&& value)
+	{
+		if (index < this->count)
+			return this->update (index, (T&&)value);
+		else
+			return this->insert (index, (T&&)value);
+	}
+#endif
+
 	qse_size_t ensert (qse_size_t index, const T& value)
 	{
 		if (index < this->count)
@@ -382,15 +545,27 @@ public:
 			return this->insert (index, value);
 	}
 
+#if (__cplusplus >= 201103L) // C++11
+	qse_size_t ensert (qse_size_t index, T&& value)
+	{
+		if (index < this->count)
+			return index; // no update
+		else
+			return this->insert (index, (T&&)value);
+	}
+#endif
+
 	void remove (qse_size_t index)
 	{
-		this->remove (index, index);
+		this->remove (index, 1);
 	}
 
-	void remove (qse_size_t from_index, qse_size_t to_index)
+	void remove (qse_size_t from_index, qse_size_t size)
 	{
-		QSE_ASSERT (from_index < this->count);
-		QSE_ASSERT (to_index < this->count);
+		if (size <= 0 || this->count <= 0 || from_index >= this->count) return;
+
+		qse_size_t to_index = from_index + size - 1;
+		if (to_index >= this->count) to_index = this->count - 1;
 
 		qse_size_t j = from_index;
 		qse_size_t i = to_index + 1;
@@ -409,7 +584,11 @@ public:
 			//this->_positioner (this->buffer[j], j);
 
 			// 2. operator assignment
+		#if (__cplusplus >= 201103L) // C++11
+			this->buffer[j] = (T&&)this->buffer[i];
+		#else
 			this->buffer[j] = this->buffer[i];
+		#endif
 			this->_positioner (this->buffer[j], j);
 
 			j++; i++;
@@ -505,7 +684,11 @@ public:
 			qse_size_t cnt = this->count;
 			if (cnt > capa) cnt = capa;
 
+		#if (__cplusplus >= 201103L) // C++11
+			T* tmp = this->clone_buffer_by_moving (this->buffer, capa, cnt);
+		#else
 			T* tmp = this->clone_buffer (this->buffer, capa, cnt);
+		#endif
 			this->clear (true);
 			this->buffer = tmp;
 			this->capacity = capa;
@@ -565,7 +748,6 @@ public:
 	}
 #endif
 
-	
 	void rotate (int dir, qse_size_t n)
 	{
 		qse_size_t first, last, cnt, index, nk;
