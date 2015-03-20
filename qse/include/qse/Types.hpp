@@ -27,11 +27,43 @@
 #ifndef _QSE_TYPES_HPP_
 #define _QSE_TYPES_HPP_
 
+/// \file
+/// Defines aliases to various QSE types in a class and holds various feature
+/// configuration options.
+
 #include <qse/types.h>
 #include <qse/macros.h>
 
-/// \file
-/// Defines a class containg aliases to various QSE types.
+/// The QSE_ENABLE_CPP11_MOVE macro enables C++11 move semantics
+/// in various classes.
+#if (__cplusplus >= 201103L) // C++11
+#	define QSE_ENABLE_CPP11_MOVE 1
+#endif
+
+
+#if defined(QSE_ENABLE_CPP11_MOVE)
+
+	template<typename T> struct QSE_CPP_RMREF      { typedef T Type;} ;
+	template<typename T> struct QSE_CPP_RMREF<T&>  { typedef T Type; };
+	template<typename T> struct QSE_CPP_RMREF<T&&> { typedef T Type; };
+
+	template<typename T> inline
+	typename QSE_CPP_RMREF<T>::Type&& QSE_CPP_RVREF(T&& v) 
+	{
+		return (typename QSE_CPP_RMREF<T>::Type&&)v; 
+	}
+#else
+
+	/*
+	template<typename T> inline
+	T& QSE_CPP_RVREF(T& v) { return (T&)v; }
+
+	template<typename T> inline
+	const T& QSE_CPP_RVREF(const T& v) { return (const T&)v; }
+	*/
+	#define QSE_CPP_RVREF(x) x
+#endif
+
 
 /////////////////////////////////
 QSE_BEGIN_NAMESPACE(QSE)

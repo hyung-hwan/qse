@@ -30,8 +30,7 @@
 /// \file 
 /// Provides classes for handling size growth including buffer growth.
 
-#include <qse/types.h>
-#include <qse/macros.h>
+#include <qse/Types.hpp>
 
 /////////////////////////////////
 QSE_BEGIN_NAMESPACE(QSE)

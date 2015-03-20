@@ -122,7 +122,7 @@ public:
 		}
 	}
 
-#if (__cplusplus >= 201103L) // C++11
+#if defined(QSE_ENABLE_CPP11_MOVE)
 
 	Array (SelfType&& array):
 		Mmged(array.getMmgr()),
@@ -162,7 +162,7 @@ public:
 		return *this;
 	}
 
-#if (__cplusplus >= 201103L) // C++11
+#if defined(QSE_ENABLE_CPP11_MOVE)
 	SelfType& operator= (SelfType&& array)
 	{
 		if (this != &array)
@@ -227,7 +227,7 @@ protected:
 		return tmp;
 	}
 
-#if (__cplusplus >= 201103L) // C++11
+#if defined(QSE_ENABLE_CPP11_MOVE)
 	T* clone_buffer_by_moving (T* srcbuf, qse_size_t capa, qse_size_t cnt)
 	{
 		QSE_ASSERT (capa > 0);
@@ -292,7 +292,7 @@ protected:
 		}
 	}
 
-#if (__cplusplus >= 201103L) // C++11
+#if defined(QSE_ENABLE_CPP11_MOVE)
 	void put_item_by_moving (qse_size_t index, T&& value)
 	{
 		if (index >= this->count)
@@ -418,6 +418,13 @@ public:
 		this->update (index, value);
 	}
 
+#if defined(QSE_ENABLE_CPP11_MOVE)
+	void setValueAt (qse_size_t index, T&& value)
+	{
+		this->update (index, (T&&)value);
+	}
+#endif
+
 protected:
 	void secure_slot (qse_size_t index)
 	{
@@ -445,7 +452,7 @@ protected:
 			// shift the existing elements to the back by one slot.
 			for (qse_size_t i = this->count; i > index; i--) 
 			{
-			#if (__cplusplus >= 201103L) // C++11
+			#if defined(QSE_ENABLE_CPP11_MOVE)
 				this->put_item_by_moving (i, (T&&)this->buffer[i - 1]); 
 			#else
 				this->put_item (i, this->buffer[i - 1]); 
@@ -482,7 +489,7 @@ public:
 		return index;
 	}
 
-#if (__cplusplus >= 201103L) // C++11
+#if defined(QSE_ENABLE_CPP11_MOVE)
 	qse_size_t insert (qse_size_t index, T&& value)
 	{
 		// Unlike insert() in RedBlackTree and HashList,
@@ -509,7 +516,7 @@ public:
 		return index;
 	}
 
-#if (__cplusplus >= 201103L) // C++11
+#if defined(QSE_ENABLE_CPP11_MOVE)
 	qse_size_t update (qse_size_t index, T&& value)
 	{
 		QSE_ASSERT (index < this->count);
@@ -527,7 +534,7 @@ public:
 			return this->insert (index, value);
 	}
 
-#if (__cplusplus >= 201103L) // C++11
+#if defined(QSE_ENABLE_CPP11_MOVE)
 	qse_size_t upsert (qse_size_t index, T&& value)
 	{
 		if (index < this->count)
@@ -545,7 +552,7 @@ public:
 			return this->insert (index, value);
 	}
 
-#if (__cplusplus >= 201103L) // C++11
+#if defined(QSE_ENABLE_CPP11_MOVE)
 	qse_size_t ensert (qse_size_t index, T&& value)
 	{
 		if (index < this->count)
@@ -584,7 +591,7 @@ public:
 			//this->_positioner (this->buffer[j], j);
 
 			// 2. operator assignment
-		#if (__cplusplus >= 201103L) // C++11
+		#if defined(QSE_ENABLE_CPP11_MOVE)
 			this->buffer[j] = (T&&)this->buffer[i];
 		#else
 			this->buffer[j] = this->buffer[i];
@@ -684,7 +691,7 @@ public:
 			qse_size_t cnt = this->count;
 			if (cnt > capa) cnt = capa;
 
-		#if (__cplusplus >= 201103L) // C++11
+		#if defined(QSE_ENABLE_CPP11_MOVE)
 			T* tmp = this->clone_buffer_by_moving (this->buffer, capa, cnt);
 		#else
 			T* tmp = this->clone_buffer (this->buffer, capa, cnt);
@@ -748,39 +755,61 @@ public:
 	}
 #endif
 
-	void rotate (int dir, qse_size_t n)
+	enum RotateDirection
+	{
+		ROTATE_LEFT,
+		ROTATE_RIGHT
+	};
+
+	void rotate (RotateDirection dir, qse_size_t n)
 	{
 		qse_size_t first, last, cnt, index, nk;
 		T c;
 
-		if (dir == 0) return;
 		if ((n %= this->count) == 0) return;
 
-		if (dir > 0) n = this->count - n;
+		if (dir == ROTATE_RIGHT) n = this->count - n;
 		first = 0; nk = this->count - n; cnt = 0; 
 
 		while (cnt < n) 
 		{
 			last = first + nk;
 			index = first;
-			c = this->buffer[first];
+		#if defined(QSE_ENABLE_CPP11_MOVE)
+			c = (T&&)this->buffer[index];
+		#else
+			c = this->buffer[index];
+		#endif
 			while (1) 
 			{
 				cnt++;
 				while (index < nk) 
 				{
+				#if defined(QSE_ENABLE_CPP11_MOVE)
+					this->buffer[index] = (T&&)this->buffer[index + n];
+				#else
 					this->buffer[index] = this->buffer[index + n];
+				#endif
 					this->_positioner (this->buffer[index], index);
 					index += n;
 				}
 				if (index == last) break;
 
+		#if defined(QSE_ENABLE_CPP11_MOVE)
+				this->buffer[index] = (T&&)this->buffer[index - nk];
+		#else
 				this->buffer[index] = this->buffer[index - nk];
+		#endif
 				this->_positioner (this->buffer[index], index);
 				index -= nk;
 			}
 
+			
+		#if defined(QSE_ENABLE_CPP11_MOVE)
+			this->buffer[last] = (T&&)c;
+		#else
 			this->buffer[last] = c;
+		#endif
 			this->_positioner (this->buffer[last], last);
 			first++;
 		}

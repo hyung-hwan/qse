@@ -31,8 +31,7 @@
 /// \file
 /// Provides the Exception class.
 
-#include <qse/types.h>
-#include <qse/macros.h>
+#include <qse/Types.hpp>
 
 /////////////////////////////////
 QSE_BEGIN_NAMESPACE(QSE)

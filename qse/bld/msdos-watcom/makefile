@@ -392,7 +392,8 @@ LIBQSECMNXX_OBJECTS =  &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmnxx_StdMmgr.obj &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmnxx_HeapMmgr.obj &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmnxx_Mmged.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmnxx_Mpool.obj
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmnxx_Mpool.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmnxx_String.obj
 LIBQSEAWKXX_CXXFLAGS = $(____DOS_CFLAG_p) -i=..\..\include $(CPPFLAGS_BUILD) &
 	$(CPPFLAGS_CHAR) $(CPPFLAGS_XCMGRS) $(CPPFLAGS_BUNDLED_UNICODE) &
 	-DQSE_ENABLE_STATIC_MODULE $(CPPFLAGS_TCPV40HDRS) -wx $(__DEBUG_INFO) -bm -ot &
@@ -951,6 +952,9 @@ $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmnxx_Mmge
 	$(CXX) -bt=dos -zq -fo=$^@ $(LIBQSECMNXX_CXXFLAGS) $<
 
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmnxx_Mpool.obj :  .AUTODEPEND ..\..\lib\cmn\Mpool.cpp
+	$(CXX) -bt=dos -zq -fo=$^@ $(LIBQSECMNXX_CXXFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmnxx_String.obj :  .AUTODEPEND ..\..\lib\cmn\String.cpp
 	$(CXX) -bt=dos -zq -fo=$^@ $(LIBQSECMNXX_CXXFLAGS) $<
 
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqseawkxx_Awk.obj :  .AUTODEPEND ..\..\lib\awk\Awk.cpp

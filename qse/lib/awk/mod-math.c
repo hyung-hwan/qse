@@ -42,7 +42,7 @@
 #	if defined(_WIN32) || defined(__OS2__) || defined(__DOS__)
 #		define HAVE_CEIL
 #		define HAVE_FLOOR
-#		if !defined(__WATCOMC__)
+#		if !defined(__WATCOMC__) && !defined(__BORLANDC__)
 #		define HAVE_ROUND
 #		endif
 #		define HAVE_SINH

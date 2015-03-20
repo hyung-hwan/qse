@@ -208,6 +208,11 @@ public:
 
 	~LinkedList () 
 	{
+		this->shatter ();
+	}
+
+	void shatter ()
+	{
 		this->clear (true);
 	}
 

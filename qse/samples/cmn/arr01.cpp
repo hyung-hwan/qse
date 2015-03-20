@@ -124,7 +124,7 @@ int main ()
 	printf ("--------------------\n");
 	h3.setCapacity (6);
 	h3.insert (6, "good?");
-	h3.rotate (1, h3.getSize() / 2);
+	h3.rotate (StrArray::ROTATE_RIGHT, h3.getSize() / 2);
 	printf ("[%s] [%s]\n", h3.getValueAt(5).getBuffer(), h3.getValueAt(6).getBuffer());
 	printf ("%d\n", (int)h3.getSize());
 
