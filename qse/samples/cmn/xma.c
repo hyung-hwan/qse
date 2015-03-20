@@ -23,10 +23,10 @@ static int test1 ()
 	ptr[1] = qse_xma_alloc (xma, 1000);
 	ptr[2] = qse_xma_alloc (xma, 3000);
 	ptr[3] = qse_xma_alloc (xma, 1000);
-	//qse_xma_dump (xma, qse_printf);
-	//qse_xma_free (xma, ptr[0]);
-	//qse_xma_free (xma, ptr[2]);
-	//qse_xma_free (xma, ptr[3]);
+	/*qse_xma_dump (xma, qse_printf);
+	qse_xma_free (xma, ptr[0]);
+	qse_xma_free (xma, ptr[2]);
+	qse_xma_free (xma, ptr[3]); */
 
 	qse_xma_dump (xma, (qse_xma_dumper_t)qse_fprintf, QSE_STDOUT);
 	qse_xma_realloc (xma, ptr[0], 500);

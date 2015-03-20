@@ -1,7 +1,8 @@
 #include <stdio.h>
-#include <string>
+
 #include <string.h>
 #include <qse/cmn/Array.hpp>
+#include <qse/cmn/String.hpp>
 
 /*
 typedef  QSE::Array<int,int> IntArray;
@@ -24,12 +25,12 @@ struct IntClassComparator
 */
 
 #if 1
-class PosStr: public std::string
+class PosStr: public QSE::MbString
 {
 public:
-	PosStr (const char* str = ""): std::string(str), pos((qse_size_t)-1) {};
+	PosStr (const char* str = ""): QSE::MbString(str), pos((qse_size_t)-1) {};
 	
-	PosStr (const PosStr& ps): std::string (ps), pos(ps.pos)  
+	PosStr (const PosStr& ps): QSE::MbString (ps), pos(ps.pos)  
 	{
 	}
 
@@ -50,7 +51,7 @@ public:
 		strcpy (buf, str);
 	}
 
-	const char* c_str() const { return this->buf; }
+	const char* getBuffer() const { return this->buf; }
 	const char* data() const { return this->buf; }
 
 	char buf[512];
@@ -60,9 +61,9 @@ public:
 
 struct cstr_comparator
 {
-	int operator() (const char* v1, const std::string& v2) const
+	int operator() (const char* v1, const QSE::MbString& v2) const
 	{
-		return strcmp (v1, v2.c_str());
+		return strcmp (v1, v2.getBuffer());
 	}
 };
 
@@ -84,16 +85,16 @@ int main ()
 	}
 
 #if 0
-	printf ("%s\n", h.get(3).c_str());
+	printf ("%s\n", h.get(3).getBuffer());
 	h.remove (3, 5);
-	printf ("%s\n", h.get(3).c_str());
+	printf ("%s\n", h.get(3).getBuffer());
 	h.remove (3, 5);
-	printf ("%s\n", h.get(3).c_str());
+	printf ("%s\n", h.get(3).getBuffer());
 #endif
 	printf ("--------------------\n");
 	for (qse_size_t i = 0; i < h.getSize(); i++)
 	{
-		printf ("[%s] at [%lu]\n", h[i].c_str(), (unsigned long int)h.getIndex(h[i]));
+		printf ("[%s] at [%lu]\n", h[i].getBuffer(), (unsigned long int)h.getIndex(h[i]));
 	}
 	printf ("--------------------\n");
 
@@ -107,7 +108,7 @@ int main ()
 	printf ("--------------------\n");
 	for (qse_size_t i = 0; i < h2.getSize(); i++)
 	{
-		printf ("[%s] at [%lu]\n", h2[i].c_str(), (unsigned long int)h2.getIndex(h2[i]));
+		printf ("[%s] at [%lu]\n", h2[i].getBuffer(), (unsigned long int)h2.getIndex(h2[i]));
 	}
 	printf ("--------------------\n");
 
@@ -117,21 +118,21 @@ int main ()
 	h3.insert (21, "mystery!");
 	for (qse_size_t i = 0; i < h3.getSize(); i++)
 	{
-		printf ("[%s] at [%lu]\n", h3[i].c_str(), (unsigned long int)h3.getIndex(h3[i]));
+		printf ("[%s] at [%lu]\n", h3[i].getBuffer(), (unsigned long int)h3.getIndex(h3[i]));
 	}
 
 	printf ("--------------------\n");
 	h3.setCapacity (6);
 	h3.insert (6, "good?");
 	h3.rotate (1, h3.getSize() / 2);
-	printf ("[%s] [%s]\n", h3.getValueAt(5).c_str(), h3.getValueAt(6).c_str());
+	printf ("[%s] [%s]\n", h3.getValueAt(5).getBuffer(), h3.getValueAt(6).getBuffer());
 	printf ("%d\n", (int)h3.getSize());
 
 	printf ("--------------------\n");
 	h3.insert (1, "bad?");
 	for (qse_size_t i = 0; i < h3.getSize(); i++)
 	{
-		printf ("[%s] at [%lu]\n", h3[i].c_str(), (unsigned long int)h3.getIndex(h3[i]));
+		printf ("[%s] at [%lu]\n", h3[i].getBuffer(), (unsigned long int)h3.getIndex(h3[i]));
 	}
 
 	printf ("--------------------\n");
