@@ -243,7 +243,7 @@ protected:
 			for (index = 0; index < cnt; index++) 
 			{
 				// move-construct(or copy-construct) each element. 
-				new((QSE::Mmgr*)QSE_NULL, &tmp[index]) T((T&&)srcbuf[index]);
+				new((QSE::Mmgr*)QSE_NULL, &tmp[index]) T(QSE_CPP_RVREF(srcbuf[index]));
 				this->_positioner (tmp[index], index);
 			}
 		}
@@ -259,7 +259,8 @@ protected:
 				// the original array can get into an unknown state eventually.
 				// i don't attempt to restore the moved object as an exception
 				// may be raised during restoration.
-				// an exception 
+				//
+				// TODO: reconsider if this unwinding is needed
 				//try { new((QSE::Mmgr*)QSE_NULL, &srcbuf[index]) T((T&&)tmp[index]); }
 				//catch (...) {}
 
@@ -299,13 +300,13 @@ protected:
 		{
 			// no value exists in the given position.
 			// i can move-construct the value.
-			new((QSE::Mmgr*)QSE_NULL, &this->buffer[index]) T((T&&)value);
+			new((QSE::Mmgr*)QSE_NULL, &this->buffer[index]) T(QSE_CPP_RVREF(value));
 			this->_positioner (this->buffer[index], index);
 		}
 		else
 		{
 			// there is an old value in the position. do move-assignment.
-			this->buffer[index] = (T&&)value;
+			this->buffer[index] = QSE_CPP_RVREF(value);
 			this->_positioner (this->buffer[index], index);
 		}
 	}
@@ -421,7 +422,7 @@ public:
 #if defined(QSE_ENABLE_CPP11_MOVE)
 	void setValueAt (qse_size_t index, T&& value)
 	{
-		this->update (index, (T&&)value);
+		this->update (index, QSE_CPP_RVREF(value));
 	}
 #endif
 
@@ -453,7 +454,7 @@ protected:
 			for (qse_size_t i = this->count; i > index; i--) 
 			{
 			#if defined(QSE_ENABLE_CPP11_MOVE)
-				this->put_item_by_moving (i, (T&&)this->buffer[i - 1]); 
+				this->put_item_by_moving (i, QSE_CPP_RVREF(this->buffer[i - 1])); 
 			#else
 				this->put_item (i, this->buffer[i - 1]); 
 			#endif
@@ -500,7 +501,7 @@ public:
 		this->secure_slot (index);
 
 		//this->buffer[index] = value;
-		this->put_item_by_moving (index, (T&&)value);
+		this->put_item_by_moving (index, QSE_CPP_RVREF(value));
 		if (index > this->count) this->count = index + 1;
 		else this->count++;
 
@@ -520,7 +521,7 @@ public:
 	qse_size_t update (qse_size_t index, T&& value)
 	{
 		QSE_ASSERT (index < this->count);
-		this->buffer[index] = (T&&)value;
+		this->buffer[index] = QSE_CPP_RVREF(value);
 		this->_positioner (this->buffer[index], index);
 		return index;
 	}
@@ -538,9 +539,9 @@ public:
 	qse_size_t upsert (qse_size_t index, T&& value)
 	{
 		if (index < this->count)
-			return this->update (index, (T&&)value);
+			return this->update (index, QSE_CPP_RVREF(value));
 		else
-			return this->insert (index, (T&&)value);
+			return this->insert (index, QSE_CPP_RVREF(value));
 	}
 #endif
 
@@ -558,7 +559,7 @@ public:
 		if (index < this->count)
 			return index; // no update
 		else
-			return this->insert (index, (T&&)value);
+			return this->insert (index, QSE_CPP_RVREF(value));
 	}
 #endif
 
@@ -591,11 +592,7 @@ public:
 			//this->_positioner (this->buffer[j], j);
 
 			// 2. operator assignment
-		#if defined(QSE_ENABLE_CPP11_MOVE)
-			this->buffer[j] = (T&&)this->buffer[i];
-		#else
-			this->buffer[j] = this->buffer[i];
-		#endif
+			this->buffer[j] = QSE_CPP_RVREF(this->buffer[i]);
 			this->_positioner (this->buffer[j], j);
 
 			j++; i++;
@@ -775,41 +772,24 @@ public:
 		{
 			last = first + nk;
 			index = first;
-		#if defined(QSE_ENABLE_CPP11_MOVE)
-			c = (T&&)this->buffer[index];
-		#else
-			c = this->buffer[index];
-		#endif
+			c = QSE_CPP_RVREF(this->buffer[index]);
 			while (1) 
 			{
 				cnt++;
 				while (index < nk) 
 				{
-				#if defined(QSE_ENABLE_CPP11_MOVE)
-					this->buffer[index] = (T&&)this->buffer[index + n];
-				#else
-					this->buffer[index] = this->buffer[index + n];
-				#endif
+					this->buffer[index] = QSE_CPP_RVREF(this->buffer[index + n]);
 					this->_positioner (this->buffer[index], index);
 					index += n;
 				}
 				if (index == last) break;
 
-		#if defined(QSE_ENABLE_CPP11_MOVE)
-				this->buffer[index] = (T&&)this->buffer[index - nk];
-		#else
-				this->buffer[index] = this->buffer[index - nk];
-		#endif
+				this->buffer[index] = QSE_CPP_RVREF(this->buffer[index - nk]);
 				this->_positioner (this->buffer[index], index);
 				index -= nk;
 			}
 
-			
-		#if defined(QSE_ENABLE_CPP11_MOVE)
-			this->buffer[last] = (T&&)c;
-		#else
-			this->buffer[last] = c;
-		#endif
+			this->buffer[last] = QSE_CPP_RVREF(c);
 			this->_positioner (this->buffer[last], last);
 			first++;
 		}
