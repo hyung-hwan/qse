@@ -27,8 +27,6 @@
 #ifndef _QSE_CMN_MMGR_HPP_
 #define _QSE_CMN_MMGR_HPP_
 
-#include <qse/types.h>
-#include <qse/macros.h>
 #include <qse/Exception.hpp>
 
 /////////////////////////////////

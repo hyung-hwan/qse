@@ -77,7 +77,7 @@ protected:
 		while (size > 0) this->buffer[--size] = c;
 	}
 
-	void dispose (Mmgr* mmgr)
+	void shatter (Mmgr* mmgr)
 	{
 		QSE_ASSERT (this->buffer != QSE_NULL);
 		::operator delete (this->buffer, mmgr);
@@ -283,8 +283,21 @@ protected:
 	{
 		if (sd->deref () <= 0)
 		{
-			sd->dispose (this->getMmgr());
+			// i can't pass an argument to the destructor.
+			// destroy the actual contents via the shatter() funtion
+			// call the destructor for completeness only
+			sd->shatter (this->getMmgr()); 
+		#if defined(__BORLANDC__)
+			// BCC55 doesn't support calling the destructor explicitly.
+			// anyway, it's safe not to call it for the way i destroy
+			// the object using the shatter() call above
+			//
+			// DO NOTHING 
+			//
+		#else
+			// call the destructor
 			sd->~StringItem ();
+		#endif
 			::operator delete (sd, this->getMmgr());
 		}
 	}

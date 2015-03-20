@@ -764,8 +764,14 @@ private:
 	{
 		// destruction in response to 'placement new'
 
-		// call the destructor
-		this->datum_list->~DatumList();
+	#if defined(__BORLANDC__)
+		// BCC55 doesn't support the explicit destructor call.
+		// instead, call shatter() which is actually called by ~DatumList().
+		this->datum_list->shatter ();
+	#else
+		// call the destructor for completeness
+		this->datum_list->~DatumList ();
+	#endif
 		// free the memory
 		::operator delete (this->datum_list, this->getMmgr());
 	}

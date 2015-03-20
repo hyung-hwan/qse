@@ -309,6 +309,7 @@
 		HeapMmgr.cpp
 		Mmged.cpp
 		Mpool.cpp
+		String.cpp
 	</set>
 
 	<set var="SOURCES_LIBQSEAWKXX">

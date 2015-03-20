@@ -135,7 +135,7 @@ public:
 	{
 	}
 
-#if (__cplusplus >= 201103L) // C++11
+#if defined(QSE_ENABLE_CPP11_MOVE)
 	BinaryHeap (SelfType& heap): ParentType (heap)
 	{
 	}
@@ -154,7 +154,7 @@ public:
 		return *this;
 	}
 
-#if (__cplusplus >= 201103L) // C++11
+#if defined(QSE_ENABLE_CPP11_MOVE)
 	SelfType& operator= (SelfType&& heap)
 	{
 		if (this != &heap)
@@ -212,13 +212,13 @@ public:
 		return this->sift_up(index);
 	}
 
-#if (__cplusplus >= 201103L) // C++11
+#if defined(QSE_ENABLE_CPP11_MOVE)
 	qse_size_t insert (T&& value)
 	{
 		qse_size_t index = this->count;
 
 		// add the item at the back of the array
-		ParentType::insert (index, (T&&)value);
+		ParentType::insert (index, QSE_CPP_RVREF(value));
 
 		// move the item up to the top if it's greater than the up item
 		return this->sift_up(index);
@@ -230,19 +230,15 @@ public:
 	qse_size_t update (qse_size_t index, const T& value)
 	{
 		T old = this->buffer[index];
-
 		ParentType::update (index, value);
-
 		return (this->greater_than(value, old))? this->sift_up(index): this->sift_down(index);
 	}
 
-#if (__cplusplus >= 201103L) // C++11
+#if defined(QSE_ENABLE_CPP11_MOVE)
 	qse_size_t update (qse_size_t index, T&& value)
 	{
-		T old = this->buffer[index];
-
-		ParentType::update (index, (T&&)value);
-
+		T old = QSE_CPP_RVREF(this->buffer[index]);
+		ParentType::update (index, QSE_CPP_RVREF(value));
 		return (this->greater_than(value, old))? this->sift_up(index): this->sift_down(index);
 	}
 #endif
@@ -252,19 +248,25 @@ public:
 	{
 		QSE_ASSERT (index < this->count);
 
-// TODO: move semantics herr
-//BEGIN
-		// copy the last item to the position to remove 
-		T old = this->buffer[index];
+		if (this->count == 1)
+		{
+			QSE_ASSERT (index == 0);
+			ParentType::remove (this->count - 1);
+		}
+		else if (this->count > 1)
+		{
+			// store the item to remove temporarily
+			T old = QSE_CPP_RVREF(this->buffer[index]);
 
-		ParentType::update (index, this->buffer[this->count - 1]);
-// END..
+			// copy the last item to the position to remove 
+			ParentType::update (index, QSE_CPP_RVREF(this->buffer[this->count - 1]));
 
-		// delete the last item
-		ParentType::remove (this->count - 1);
-		
-		// relocate the item
-		(this->greater_than (this->buffer[index], old))? this->sift_up(index): this->sift_down(index);
+			// delete the last item
+			ParentType::remove (this->count - 1);
+			
+			// relocate the item
+			(this->greater_than (this->buffer[index], old))? this->sift_up(index): this->sift_down(index);
+		}
 	}
 
 protected:
@@ -275,18 +277,18 @@ protected:
 		up = QSE_BINARY_HEAP_UP(index);
 		if (index > 0 && this->greater_than(this->buffer[index], this->buffer[up]))
 		{
-			T item = this->buffer[index];
+			T item = QSE_CPP_RVREF(this->buffer[index]);
 
 			do 
 			{
-				ParentType::setValueAt (index, this->buffer[up]);
+				ParentType::setValueAt (index, QSE_CPP_RVREF(this->buffer[up]));
 
 				index = up;
 				up = QSE_BINARY_HEAP_UP(up);
 			}
 			while (index > 0 && this->greater_than(item, this->buffer[up]));
 
-			ParentType::setValueAt (index, item);
+			ParentType::setValueAt (index, QSE_CPP_RVREF(item));
 		}
 
 		return index;
@@ -301,15 +303,15 @@ protected:
 			// if at least 1 child is under the 'index' position
 			// perform sifting
 
-			T item = this->buffer[index];
+			T item = QSE_CPP_RVREF(this->buffer[index]);
 
 			do
 			{
 				qse_size_t left, right, greater;
-	
+
 				left = QSE_BINARY_HEAP_LEFT(index);
 				right = QSE_BINARY_HEAP_RIGHT(index);
-	
+
 				// choose the larger one between 2 BinaryHeap 
 				if (right < this->count && 
 				    this->greater_than(this->buffer[right], this->buffer[left]))
@@ -325,12 +327,12 @@ protected:
 
 				if (this->greater_than(item, this->buffer[greater])) break;
 
-				ParentType::setValueAt (index, this->buffer[greater]);
+				ParentType::setValueAt (index, QSE_CPP_RVREF(this->buffer[greater]));
 				index = greater;
 			}
 			while (index < half_data_count);
 
-			ParentType::setValueAt (index, item);
+			ParentType::setValueAt (index, QSE_CPP_RVREF(item));
 		}
 
 		return index;
