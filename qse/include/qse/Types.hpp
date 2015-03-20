@@ -43,7 +43,7 @@
 
 #if defined(QSE_ENABLE_CPP11_MOVE)
 
-	template<typename T> struct QSE_CPP_RMREF      { typedef T Type;} ;
+	template<typename T> struct QSE_CPP_RMREF      { typedef T Type; };
 	template<typename T> struct QSE_CPP_RMREF<T&>  { typedef T Type; };
 	template<typename T> struct QSE_CPP_RMREF<T&&> { typedef T Type; };
 
