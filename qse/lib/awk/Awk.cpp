@@ -1452,7 +1452,11 @@ int Awk::dispatch_function (Run* run, const fnc_info_t* fi)
 			return -1;
 		}
 	#else
-		try { args = (Value*)::operator new (QSE_SIZEOF(Value) * nargs, this->getMmgr()); }
+		try 
+		{ 
+			//args = (Value*)::operator new (QSE_SIZEOF(Value) * nargs, this->getMmgr()); 
+			args = (Value*)this->getMmgr()->allocate (QSE_SIZEOF(Value) * nargs);
+		}
 		catch (...) { args = QSE_NULL; }
 		if (args == QSE_NULL) 
 		{
@@ -1564,9 +1568,11 @@ int Awk::dispatch_function (Run* run, const fnc_info_t* fi)
 		for (i = nargs; i > 0; )
 		{
 			--i;
-			args[i].~Value ();
+			args[i].Value::~Value ();
 		}
-		::operator delete (args, this->getMmgr());
+
+		//::operator delete (args, this->getMmgr());
+		this->getMmgr()->dispose (args);
 	#endif
 	}
 

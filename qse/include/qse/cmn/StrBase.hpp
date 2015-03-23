@@ -53,7 +53,8 @@ protected:
 		if (capacity < size) capacity = size;
 
 		// I assume that CHAR_TYPE is a plain type.
-		this->buffer = (CHAR_TYPE*)::operator new ((capacity + 1) * QSE_SIZEOF(CHAR_TYPE), mmgr);
+		//this->buffer = (CHAR_TYPE*)::operator new ((capacity + 1) * QSE_SIZEOF(CHAR_TYPE), mmgr);
+		this->buffer = (CHAR_TYPE*)mmgr->allocate((capacity + 1) * QSE_SIZEOF(CHAR_TYPE));
 		// So no constructor calling is needed.
 		//for (qse_size_t i = 0; i < capacity + 1; i++)
 		//{
@@ -69,7 +70,8 @@ protected:
 		buffer (QSE_NULL) // set buffer to QSE_NULL here in case operator new rasises an exception
 	{
 		if (capacity < size) capacity = size;
-		this->buffer = (CHAR_TYPE*)::operator new ((capacity + 1) * QSE_SIZEOF(CHAR_TYPE), mmgr);
+		//this->buffer = (CHAR_TYPE*)::operator new ((capacity + 1) * QSE_SIZEOF(CHAR_TYPE), mmgr);
+		this->buffer = (CHAR_TYPE*)mmgr->allocate((capacity + 1) * QSE_SIZEOF(CHAR_TYPE));
 
 		this->capacity = capacity;
 		this->buffer[size] = NULL_CHAR;
@@ -80,7 +82,7 @@ protected:
 	void shatter (Mmgr* mmgr)
 	{
 		QSE_ASSERT (this->buffer != QSE_NULL);
-		::operator delete (this->buffer, mmgr);
+		mmgr->dispose (this->buffer); //::operator_delete (this->buffer, mmgr);
 		this->buffer = QSE_NULL;
 	}
 
@@ -107,13 +109,15 @@ protected:
 		if (inc > 0)
 		{
 			qse_size_t newcapa = this->capacity + inc;
-			CHAR_TYPE* tmp = ::operator new ((newcapa + 1) * QSE_SIZEOF(CHAR_TYPE), mmgr);
+			//CHAR_TYPE* tmp = ::operator new ((newcapa + 1) * QSE_SIZEOF(CHAR_TYPE), mmgr);
+			CHAR_TYPE* tmp = (CHAR_TYPE*)mmgr->allocate((newcapa + 1) * QSE_SIZEOF(CHAR_TYPE));
 
 			qse_size_t cursize = this->size;
 			this->size = this->opset.copy (tmp, this->buffer, cursize);
 			QSE_ASSERT (this->size == cursize);
 
-			::operator delete (this->buffer, mmgr);
+			//::operator_delete (this->buffer, mmgr);
+			mmgr->dispose (this->buffer);
 
 			this->buffer = tmp;
 			this->capacity = newcapa;
@@ -287,18 +291,10 @@ protected:
 			// destroy the actual contents via the shatter() funtion
 			// call the destructor for completeness only
 			sd->shatter (this->getMmgr()); 
-		#if defined(__BORLANDC__)
-			// BCC55 doesn't support calling the destructor explicitly.
-			// anyway, it's safe not to call it for the way i destroy
-			// the object using the shatter() call above
-			//
-			// DO NOTHING 
-			//
-		#else
-			// call the destructor
-			sd->~StringItem ();
-		#endif
-			::operator delete (sd, this->getMmgr());
+
+			// delete the object allocated using the place new 
+			QSE_CPP_CALL_DESTRUCTOR (sd, StringItem);
+			QSE_CPP_CALL_PLACEMENT_DELETE1 (sd, this->getMmgr());
 		}
 	}
 

@@ -248,8 +248,12 @@ public:
 
 	Pair* search (const K& key)
 	{
-		//PairNode* node = this->pair_list.update (Pair(key));
+		//PairNode* node = this->pair_list.search (Pair(key));
+	#if defined(__WATCOMC__)
+		PairNode* node = this->pair_list.heterofindNode<K,HASHER,PairHeteroEqualer> (key);
+	#else
 		PairNode* node = this->pair_list.template heterofindNode<K,HASHER,PairHeteroEqualer> (key);
+	#endif
 		if (!node) return QSE_NULL;
 		return &node->value;
 	}
@@ -257,14 +261,22 @@ public:
 	int remove (const K& key)
 	{
 		//return this->pair_list.remove (Pair(key));
+	#if defined(__WATCOMC__)
+		return this->pair_list.heteroremove<K,HASHER,PairHeteroEqualer> (key);
+	#else
 		return this->pair_list.template heteroremove<K,HASHER,PairHeteroEqualer> (key);
+	#endif
 	}
 
 	template <typename MK, typename MHASHER, typename MEQUALER>
 	Pair* heterosearch (const MK& key)
 	{
 		typedef MHeteroEqualer<MK,MEQUALER> MEqualer;
+	#if defined(__WATCOMC__)
+		PairNode* node = this->pair_list.heterosearch<MK,MHASHER,MEqualer> (key);
+	#else
 		PairNode* node = this->pair_list.template heterosearch<MK,MHASHER,MEqualer> (key);
+	#endif
 		if (!node) return QSE_NULL;
 		return &node->value;
 	}

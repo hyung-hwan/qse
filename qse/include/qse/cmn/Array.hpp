@@ -198,7 +198,8 @@ protected:
 		qse_size_t index;
 
 		//T* tmp = new T[capa];
-		T* tmp = (T*)::operator new (capa * QSE_SIZEOF(*tmp), this->getMmgr());
+		//T* tmp = (T*)::operator new (capa * QSE_SIZEOF(*tmp), this->getMmgr());
+		T* tmp = (T*)this->getMmgr()->allocate (capa * QSE_SIZEOF(*tmp));
 
 		try 
 		{
@@ -217,9 +218,11 @@ protected:
 			{
 				--index;
 				this->_positioner (tmp[index], INVALID_INDEX);
-				tmp[index].~T ();
+				tmp[index].T::~T ();
 			}
-			::operator delete (tmp, this->getMmgr());
+
+			//::operator delete (tmp, this->getMmgr());
+			this->getMmgr()->dispose (tmp);
 
 			throw;
 		}
@@ -236,7 +239,8 @@ protected:
 		qse_size_t index;
 
 		//T* tmp = new T[capa];
-		T* tmp = (T*)::operator new (capa * QSE_SIZEOF(*tmp), this->getMmgr());
+		//T* tmp = (T*)::operator new (capa * QSE_SIZEOF(*tmp), this->getMmgr());
+		T* tmp = (T*)this->getMmgr()->allocate (capa * QSE_SIZEOF(*tmp));
 
 		try 
 		{
@@ -265,9 +269,11 @@ protected:
 				//catch (...) {}
 
 				this->_positioner (tmp[index], INVALID_INDEX);
-				tmp[index].~T ();
+				tmp[index].T::~T ();
 			}
-			::operator delete (tmp, this->getMmgr());
+
+			//::operator delete (tmp, this->getMmgr());
+			this->getMmgr()->dispose (tmp);
 
 			throw;
 		}
@@ -320,7 +326,7 @@ protected:
 		{
 			--i;
 			this->_positioner (this->buffer[i], INVALID_INDEX);
-			this->buffer[i].~T ();
+			this->buffer[i].T::~T ();
 		}
 	
 		this->count = 0;
@@ -587,7 +593,7 @@ public:
 
 			// 1. destruct followed by copy construct
 			//this->_positioner (this->buffer[j], INVALID_INDEX);
-			//this->buffer[j].~T();
+			//this->buffer[j].T::~T();
 			//new((QSE::Mmgr*)QSE_NULL, &this->buffer[j]) T(this->buffer[i]);
 			//this->_positioner (this->buffer[j], j);
 
@@ -602,7 +608,7 @@ public:
 		while (j < this->count)
 		{
 			this->_positioner (this->buffer[j], INVALID_INDEX);
-			this->buffer[j].~T ();
+			this->buffer[j].T::~T ();
 			j++;
 		}
 
@@ -638,11 +644,10 @@ public:
 			QSE_ASSERT (this->count <= 0);
 			QSE_ASSERT (this->capacity > 0);
 
-			::operator delete (this->buffer, this->getMmgr());
-			this->capacity = 0;
+			//::operator delete (this->buffer, this->getMmgr());
+			this->getMmgr()->dispose (this->buffer);
 			this->buffer = QSE_NULL;
-
-			QSE_ASSERT (this->capacity == 0);
+			this->capacity = 0;
 		}
 	}
 
@@ -654,7 +659,7 @@ public:
 			{
 				// call the destructor of the items 
 				this->_positioner (this->buffer[i], INVALID_INDEX);
-				this->buffer[i].~T ();
+				this->buffer[i].T::~T ();
 			}
 
 			this->count = size;
@@ -703,7 +708,8 @@ public:
 			QSE_ASSERT (this->capacity <= 0);
 			QSE_ASSERT (this->count <= 0);
 
-			this->buffer = (T*)::operator new (capa * QSE_SIZEOF(*this->buffer), this->getMmgr());
+			//this->buffer = (T*)::operator new (capa * QSE_SIZEOF(*this->buffer), this->getMmgr());
+			this->buffer = (T*)this->getMmgr()->allocate (capa * QSE_SIZEOF(*this->buffer));
 			this->capacity = capa;
 		}
 	}

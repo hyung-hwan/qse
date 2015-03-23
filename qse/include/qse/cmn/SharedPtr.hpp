@@ -60,8 +60,8 @@ struct SharedPtrMmgrDeleter
 {
 	void operator() (T* ptr, void* arg)
 	{
-		ptr->~T ();
-		::operator delete (ptr, (QSE::Mmgr*)arg);
+		QSE_CPP_CALL_DESTRUCTOR (ptr, T);
+		QSE_CPP_CALL_PLACEMENT_DELETE1 (ptr, (QSE::Mmgr*)arg);
 	}
 };
 
@@ -79,7 +79,7 @@ public:
 
 	SharedPtr (T* ptr = (T*)QSE_NULL, void* darg = (void*)QSE_NULL): Mmged(QSE_NULL)
 	{
-		this->_item = new (this->getMmgr()) item_t;
+		this->_item = new(this->getMmgr()) item_t;
 		this->_item->ptr = ptr;
 		this->_item->darg = darg;
 
@@ -88,7 +88,7 @@ public:
 
 	SharedPtr (Mmgr* mmgr, T* ptr = (T*)QSE_NULL, void* darg = (void*)QSE_NULL): Mmged(mmgr)
 	{
-		this->_item = new (this->getMmgr()) item_t;
+		this->_item = new(this->getMmgr()) item_t;
 		this->_item->ptr = ptr;
 		this->_item->darg = darg;
 
@@ -104,9 +104,11 @@ public:
 	{
 		if (this->_item->deref() <= 0)
 		{
+			// reference count reached 0.
 			if (this->_item->ptr) this->_item->deleter (this->_item->ptr, this->_item->darg);
-			// no destructor as *this->_ref is a plain type.
-			::operator delete (this->_item, this->getMmgr());
+
+			QSE_CPP_CALL_DESTRUCTOR (this->_item, item_t);
+			QSE_CPP_CALL_PLACEMENT_DELETE1 (this->_item, this->getMmgr());
 		}
 	}
 
@@ -117,8 +119,9 @@ public:
 			if (this->_item->deref() <= 0)
 			{
 				if (this->_item->ptr) this->_item->deleter (this->_item->ptr, this->_item->darg);
-				// no destructor as *this->_ref is a plain type.
-				::operator delete (this->_item, this->getMmgr());
+
+				QSE_CPP_CALL_DESTRUCTOR (this->_item, item_t);
+				QSE_CPP_CALL_PLACEMENT_DELETE1 (this->_item, this->getMmgr());
 			}
 
 			// must copy the memory manager pointer as the item

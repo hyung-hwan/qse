@@ -34,12 +34,58 @@
 #include <qse/types.h>
 #include <qse/macros.h>
 
-/// The QSE_ENABLE_CPP11_MOVE macro enables C++11 move semantics
-/// in various classes.
-#if (__cplusplus >= 201103L) // C++11
-#	define QSE_ENABLE_CPP11_MOVE 1
-#endif
+// The QSE_CPP_CALL_DESTRUCTOR() macro calls a destructor explicitly.
+// The QSE_CPP_CALL_PLACEMENT_DELETE1() macro calls the global operator delete
+// with 1 extra argument given.
 
+#if (__cplusplus >= 201103L) // C++11
+
+	/// The QSE_ENABLE_CPP11_MOVE macro enables C++11 move semantics
+	/// in various classes.
+	#define QSE_ENABLE_CPP11_MOVE 1
+
+	#define QSE_CPP_CALL_DESTRUCTOR(ptr, class_name) ((ptr)->~class_name())
+	#define QSE_CPP_CALL_PLACEMENT_DELETE1(ptr, arg1) (::operator delete ((ptr), (arg1)))
+
+#elif (__cplusplus >= 199711L) // C++98
+
+	#define QSE_CPP_CALL_DESTRUCTOR(ptr, class_name) ((ptr)->~class_name())
+	#define QSE_CPP_CALL_PLACEMENT_DELETE1(ptr, arg1) (::operator delete ((ptr), (arg1)))
+
+#else
+
+	#if defined(__BORLANDC__)
+
+		// Explicit destructor call requires a class name depending on the
+		// C++ standard/compiler.  
+		// 
+		//   Node* x;
+		//   x->~Node (); 
+		//
+		// While x->~Node() is ok with modern compilers, some old compilers
+		// like BCC55 required the class name in the call as shown below.
+		//
+		//   x->Node::~Node ();
+
+		#define QSE_CPP_CALL_DESTRUCTOR(ptr, class_name) ((ptr)->class_name::~class_name())
+		#define QSE_CPP_CALL_PLACEMENT_DELETE1(ptr, arg1) (::operator delete ((ptr), (arg1)))
+
+	#elif defined(__WATCOMC__)
+		// WATCOM has a problem with this syntax.
+		//    Node* x; x->Node::~Node(). 
+		// But it doesn't support operator delete overloading.
+
+		#define QSE_CPP_CALL_DESTRUCTOR(ptr, class_name) ((ptr)->~class_name())
+		#define QSE_CPP_CALL_PLACEMENT_DELETE1(ptr, arg1) (::operator_delete ((ptr), (arg1)))
+
+	#else
+
+		#define QSE_CPP_CALL_DESTRUCTOR(ptr, class_name) ((ptr)->~class_name())
+		#define QSE_CPP_CALL_PLACEMENT_DELETE1(ptr, arg1) (::operator delete ((ptr), (arg1)))
+
+	#endif
+
+#endif
 
 #if defined(QSE_ENABLE_CPP11_MOVE)
 

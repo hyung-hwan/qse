@@ -387,8 +387,8 @@ public:
 
 	#if defined(QSE_REDBLACKTREE_ALLOCATE_NIL)
 		// destroy the nil node.
-		this->nil->~Node (); 
-		::operator delete (this->nil, this->getMmgr());
+		QSE_CPP_CALL_DESTRUCTOR (this->nil, Node);
+		QSE_CPP_CALL_PLACEMENT_DELETE1 (this->nil, this->getMmgr());
 	#else
 		// do nothing
 	#endif
@@ -447,10 +447,8 @@ public:
 protected:
 	void dispose_node (Node* node)
 	{
-		//call the destructor
-		node->~Node (); 
-		// free the memory
-		::operator delete (node, &this->mp);
+		QSE_CPP_CALL_DESTRUCTOR (node, Node);
+		QSE_CPP_CALL_PLACEMENT_DELETE1 (node, &this->mp);
 	}
 
 	Node* find_node (const T& datum) const
