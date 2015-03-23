@@ -208,11 +208,6 @@ public:
 
 	~LinkedList () 
 	{
-		this->shatter ();
-	}
-
-	void shatter ()
-	{
 		this->clear (true);
 	}
 
@@ -441,11 +436,8 @@ public:
 	void remove (Node* node)
 	{
 		this->yield (node, false);
-
-		//call the destructor
-		node->~Node (); 
-		// free the memory
-		::operator delete (node, &this->mp);
+		QSE_CPP_CALL_DESTRUCTOR (node, Node);
+		QSE_CPP_CALL_PLACEMENT_DELETE1 (node, &this->mp);
 	}
 
 	Node* yieldByValue (const T& value, bool clear_links = true)
@@ -659,8 +651,8 @@ public:
 			saved = p->next;
 
 			// placement new/delete handling
-			p->~Node (); // call the destructor
-			::operator delete (p, &this->mp); // free the memory
+			QSE_CPP_CALL_DESTRUCTOR (p, Node);
+			QSE_CPP_CALL_PLACEMENT_DELETE1 (p, &this->mp);
 
 			this->node_count--;
 			p = saved;

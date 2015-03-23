@@ -42,6 +42,7 @@
  *  }
  *  key3 = "12345";
  * \endcode
+ *
  */
 
 #include <qse/types.h>
@@ -145,16 +146,16 @@ enum qse_xli_trait_t
 };
 typedef enum qse_xli_trait_t qse_xli_trait_t;
 
-typedef struct qse_xli_val_t qse_xli_val_t;
-typedef struct qse_xli_nil_t qse_xli_nil_t;
-typedef struct qse_xli_str_t qse_xli_str_t;
+typedef struct qse_xli_val_t  qse_xli_val_t;
+typedef struct qse_xli_nil_t  qse_xli_nil_t;
+typedef struct qse_xli_str_t  qse_xli_str_t;
 typedef struct qse_xli_list_t qse_xli_list_t;
 
 typedef struct qse_xli_atom_t qse_xli_atom_t;
 typedef struct qse_xli_pair_t qse_xli_pair_t;
 typedef struct qse_xli_text_t qse_xli_text_t;
 typedef struct qse_xli_file_t qse_xli_file_t;
-typedef struct qse_xli_eof_t qse_xli_eof_t;
+typedef struct qse_xli_eof_t  qse_xli_eof_t;
 
 enum qse_xli_val_type_t
 {
@@ -581,6 +582,13 @@ QSE_EXPORT qse_xli_pair_t* qse_xli_insertpair (
 	qse_xli_val_t*    val
 );
 
+/**
+ * The qse_xli_insertpairwithemptylist() function inserts a new pair
+ * with an empty list as a value. You should call this function for adding
+ * a new pair holding a list.
+ *
+ * \return pointer to an inserted pair on success, #QSE_NULL on failure.
+ */
 QSE_EXPORT qse_xli_pair_t* qse_xli_insertpairwithemptylist (
 	qse_xli_t*        xli,
 	qse_xli_list_t*   list,
@@ -590,6 +598,10 @@ QSE_EXPORT qse_xli_pair_t* qse_xli_insertpairwithemptylist (
 	const qse_char_t* keytag
 );
 
+/**
+ * The qse_xli_insertpairwithstr() function inserts a new pair with a key
+ * named \a key with a string value \a value.
+ */
 QSE_EXPORT qse_xli_pair_t* qse_xli_insertpairwithstr (
 	qse_xli_t*        xli, 
 	qse_xli_list_t*   list,
@@ -643,6 +655,7 @@ QSE_EXPORT qse_size_t qse_xli_countpairs (
 	const qse_xli_list_t* list,
 	const qse_char_t*     fqpn 
 );
+
 
 /**
  * The qse_xli_addsegtostr() function creates a new string segment made of

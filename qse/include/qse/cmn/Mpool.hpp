@@ -124,9 +124,10 @@ protected:
 QSE_END_NAMESPACE(QSE)
 ////////////////////////////////
 
-void* operator new (qse_size_t size, QSE::Mpool* mp);
-void operator delete (void* ptr, QSE::Mpool* mp);
+QSE_EXPORT void* operator new (qse_size_t size, QSE::Mpool* mp);
 
-void* operator new (qse_size_t size, QSE::Mpool* mp, void* existing_ptr);
+QSE_EXPORT void operator delete (void* ptr, QSE::Mpool* mp);
+
+QSE_EXPORT void* operator new (qse_size_t size, QSE::Mpool* mp, void* existing_ptr);
 #endif
 

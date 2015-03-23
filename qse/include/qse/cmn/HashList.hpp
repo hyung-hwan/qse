@@ -763,17 +763,8 @@ private:
 	void free_datum_list ()
 	{
 		// destruction in response to 'placement new'
-
-	#if defined(__BORLANDC__)
-		// BCC55 doesn't support the explicit destructor call.
-		// instead, call shatter() which is actually called by ~DatumList().
-		this->datum_list->shatter ();
-	#else
-		// call the destructor for completeness
-		this->datum_list->~DatumList ();
-	#endif
-		// free the memory
-		::operator delete (this->datum_list, this->getMmgr());
+		QSE_CPP_CALL_DESTRUCTOR (this->datum_list, DatumList);
+		QSE_CPP_CALL_PLACEMENT_DELETE1 (this->datum_list, this->getMmgr());
 	}
 };
 

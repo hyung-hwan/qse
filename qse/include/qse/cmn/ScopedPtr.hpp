@@ -60,8 +60,8 @@ struct ScopedPtrMmgrDeleter
 {
 	void operator() (T* ptr, void* arg)
 	{
-		ptr->~T ();
-		::operator delete (ptr, (QSE::Mmgr*)arg);
+		QSE_CPP_CALL_DESTRUCTOR (ptr, T);
+		QSE_CPP_CALL_PLACEMENT_DELETE1 (ptr, (QSE::Mmgr*)arg);
 	}
 };
 
@@ -184,8 +184,8 @@ public:
 	}
 
 private:
-	T* _ptr;
-	void* _darg;
+	T*      _ptr;
+	void*   _darg;
 	DELETER _deleter;
 }; 
 

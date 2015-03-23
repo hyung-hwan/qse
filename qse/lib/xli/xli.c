@@ -490,6 +490,14 @@ static void free_val (qse_xli_root_list_t* root, qse_xli_val_t* val)
 
 static void free_atom (qse_xli_root_list_t* root, qse_xli_atom_t* atom)
 {
+	/* Among all atom type, QSE_XLI_PAIR has a value to dispose of specially.
+	 * A tag and an alise are inlined to the atom itself. see insert_atom() 
+	 * above for details.
+	 *
+	 * for QSE_XLI_TEXT, QSE_XLI_FILE, QSE_XLI_EOF, data are inlined to 
+	 * the atom itself as well.
+	 */
+
 	if (atom->type == QSE_XLI_PAIR) free_val (root, ((qse_xli_pair_t*)atom)->val);
 	QSE_MMGR_FREE (root->mmgr, atom);
 }
@@ -947,15 +955,58 @@ void qse_xli_undefinepairs (qse_xli_t* xli)
 	qse_rbt_clear (xli->schema);
 }
 
-
-#if 0
+/*
 qse_xli_pair_t* qse_xli_getpair (qse_xli_t* xli, const qse_char_t* fqpn)
 {
 	return qse_xli_findpair (xli, &xli->root->list, fqpn);
 }
+*/
 
-qse_xli_pair_t* qse_xli_setpair (qse_xli_t* xli, const qse_char_t* fqpn, const qse_xli_val_t* val) -> str, val, nil
+#if 0
+/* val is str , list or nil */
+qse_xli_pair_t* qse_xli_updatepair (qse_xli_t* xli, const qse_char_t* fqpn, const qse_xli_val_t* val)
 {
+	qse_xli_pair_t* pair;
+
+	pair = qse_xli_findpair (xli, fqpn);
+	if (pair)
+	{
+		/* update the value of an existing pair */
+		qse_xli_val_t* old_val;
+		qse_xli_scm_t* scm;
+
+		if (xli->opt.trait & QSE_XLI_VALIDATE) 
+		{
+			qse_rbt_pair_t* scm_pair;
+
+			scm_pair = qse_rbt_search (xli->schema, fqpn, qse_strlen(fqpn));
+			if (!scm_pair)
+			{
+				/*qse_xli_seterror (xli, QSE_XLI_EUDKEY, (const qse_cstr_t*)&key, &kloc);*/
+				goto oops;
+			}
+
+			scm = (qse_xli_scm_t*)QSE_RBT_VPTR(pair);
+		}
+
+		if (scm->flags & QSE_XLI_SCM_KEYNODUP) key_nodup = 2;
+		if (scm->flags & QSE_XLI_SCM_KEYALIAS) key_alias = 2;
+		if (scm->flags & QSE_XLI_SCM_VALIFFY) val_iffy = 1;
+
+/* TODO: alias, tag?? 
+ * when alias and tags are to changed, it can't just update the value only
+ * the whole pair may have to get reallocated and update must be made to the rbt data array.
+ */
+
+		old_val = pair->val;
+		pair->val = val;
+		free_val (old_val);
+		
+	}
+
+	return pair;
+
+#if 0
 	const qse_char_t* ptr;
 	const qse_xli_list_t* curlist;
 	fqpn_seg_t seg;
@@ -1035,7 +1086,10 @@ qse_xli_pair_t* qse_xli_setpair (qse_xli_t* xli, const qse_char_t* fqpn, const q
 noent:
 	qse_xli_seterrnum (xli, QSE_XLI_ENOENT, &seg.ki);
 	return QSE_NULL;
+#endif
 }
+
+
 #endif
 
 void* qse_getxlipairxtn (qse_xli_pair_t* pair)

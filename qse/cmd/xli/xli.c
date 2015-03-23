@@ -587,6 +587,13 @@ for (i = 0; i < QSE_COUNTOF(defs); i++) qse_xli_definepair (xli, defs[i].name, &
 				qse_printf (QSE_T("#LIST\n"));
 			}
 		}
+
+	/*
+		if (g_value)
+		{
+			TODO: ... set value...
+		}
+	*/
 	}
 
 
