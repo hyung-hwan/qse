@@ -176,7 +176,11 @@ QSE_END_NAMESPACE(QSE)
 
 QSE_EXPORT void* operator new (qse_size_t size, QSE::Mmgr* mmgr);
 
+#if defined(QSE_CPP_NO_OPERATOR_DELETE_OVERLOADING)
+QSE_EXPORT void qse_operator_delete (void* ptr, QSE::Mmgr* mmgr);
+#else
 QSE_EXPORT void operator delete (void* ptr, QSE::Mmgr* mmgr);
+#endif
 
 QSE_EXPORT void* operator new (qse_size_t size, QSE::Mmgr* mmgr, void* existing_ptr);
 

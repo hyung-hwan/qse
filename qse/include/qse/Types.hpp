@@ -34,23 +34,26 @@
 #include <qse/types.h>
 #include <qse/macros.h>
 
-// The QSE_CPP_CALL_DESTRUCTOR() macro calls a destructor explicitly.
-// The QSE_CPP_CALL_PLACEMENT_DELETE1() macro calls the global operator delete
-// with 1 extra argument given.
-
 #if (__cplusplus >= 201103L) // C++11
 
-	/// The QSE_ENABLE_CPP11_MOVE macro enables C++11 move semantics
+	/// The QSE_CPP_ENABLE_CPP1_MOVE macro enables C++11 move semantics
 	/// in various classes.
-	#define QSE_ENABLE_CPP11_MOVE 1
+	#define QSE_CPP_ENABLE_CPP1_MOVE 1
 
+	// The QSE_CPP_CALL_DESTRUCTOR() macro calls a destructor explicitly.
 	#define QSE_CPP_CALL_DESTRUCTOR(ptr, class_name) ((ptr)->~class_name())
-	#define QSE_CPP_CALL_PLACEMENT_DELETE1(ptr, arg1) (::operator delete ((ptr), (arg1)))
+
+	// The QSE_CPP_CALL_PLACEMENT_DELETE1() macro calls the global operator delete
+	// with 1 extra argument given.
+	#define QSE_CPP_CALL_PLACEMENT_DELETE1(ptr, arg1) (::operator delete((ptr), (arg1)))
+
+	#define QSE_CPP_TEMPLATE_QUALIFIER template
 
 #elif (__cplusplus >= 199711L) // C++98
 
 	#define QSE_CPP_CALL_DESTRUCTOR(ptr, class_name) ((ptr)->~class_name())
-	#define QSE_CPP_CALL_PLACEMENT_DELETE1(ptr, arg1) (::operator delete ((ptr), (arg1)))
+	#define QSE_CPP_CALL_PLACEMENT_DELETE1(ptr, arg1) (::operator delete((ptr), (arg1)))
+	#define QSE_CPP_TEMPLATE_QUALIFIER template
 
 #else
 
@@ -68,7 +71,8 @@
 		//   x->Node::~Node ();
 
 		#define QSE_CPP_CALL_DESTRUCTOR(ptr, class_name) ((ptr)->class_name::~class_name())
-		#define QSE_CPP_CALL_PLACEMENT_DELETE1(ptr, arg1) (::operator delete ((ptr), (arg1)))
+		#define QSE_CPP_CALL_PLACEMENT_DELETE1(ptr, arg1) (::operator delete((ptr), (arg1)))
+		#define QSE_CPP_TEMPLATE_QUALIFIER template
 
 	#elif defined(__WATCOMC__)
 		// WATCOM has a problem with this syntax.
@@ -76,18 +80,41 @@
 		// But it doesn't support operator delete overloading.
 
 		#define QSE_CPP_CALL_DESTRUCTOR(ptr, class_name) ((ptr)->~class_name())
-		#define QSE_CPP_CALL_PLACEMENT_DELETE1(ptr, arg1) (::operator_delete ((ptr), (arg1)))
+		#define QSE_CPP_CALL_PLACEMENT_DELETE1(ptr, arg1) (::qse_operator_delete((ptr), (arg1)))
 
+		// When  the name of a member template specialization appears after .  or
+		// -> in a postfix-expression, or after :: in a qualified-id that explic-
+		// itly  depends on a template-argument (_temp.dep_), the member template
+		// name must be prefixed by the keyword template.  Otherwise the name  is
+		// assumed to name a non-template.  [Example:
+		// 		class X {
+		// 		public:
+		// 			   template<size_t> X* alloc();
+		// 		};
+		// 		void f(X* p)
+		// 		{
+		// 			   X* p1 = p->alloc<200>();
+		// 					 // ill-formed: < means less than
+		// 			   X* p2 = p->template alloc<200>();
+		// 					 // fine: < starts explicit qualification
+		// 		}
+		// --end example]
+		//
+		// WATCOM doesn't support this qualifier.
+
+		#define QSE_CPP_TEMPLATE_QUALIFIER
+		#define QSE_CPP_NO_OPERATOR_DELETE_OVERLOADING 1
 	#else
 
 		#define QSE_CPP_CALL_DESTRUCTOR(ptr, class_name) ((ptr)->~class_name())
-		#define QSE_CPP_CALL_PLACEMENT_DELETE1(ptr, arg1) (::operator delete ((ptr), (arg1)))
+		#define QSE_CPP_CALL_PLACEMENT_DELETE1(ptr, arg1) (::operator delete((ptr), (arg1)))
+		#define QSE_CPP_TEMPLATE_QUALIFIER template
 
 	#endif
 
 #endif
 
-#if defined(QSE_ENABLE_CPP11_MOVE)
+#if defined(QSE_CPP_ENABLE_CPP1_MOVE)
 
 	template<typename T> struct QSE_CPP_RMREF      { typedef T Type; };
 	template<typename T> struct QSE_CPP_RMREF<T&>  { typedef T Type; };
