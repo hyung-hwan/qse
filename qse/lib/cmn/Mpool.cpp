@@ -196,21 +196,26 @@ void* operator new (qse_size_t size, QSE::Mpool* mp)
 			// is never reached.
 			goto use_mmgr;
 		}
-		return mp->allocate ();
+		return mp->allocate();
 	}
 	else
 	{
 	use_mmgr:
 		// when the memory pool is not enabled, it goes through 
 		// the memory manager directly and it honors the size argument.
-		return ::operator new(size, mp->getMmgr());
+		//return ::operator new(size, mp->getMmgr());
+		return mp->getMmgr()->allocate(size);
 	}
 }
 
+#if defined(QSE_CPP_NO_OPERATOR_DELETE_OVERLOADING)
+void qse_operator_delete (void* ptr, QSE::Mpool* mp)
+#else
 void operator delete (void* ptr, QSE::Mpool* mp)
+#endif
 {
-	if (mp->isEnabled()) mp->dispose (ptr);
-	else ::operator delete (ptr, mp->getMmgr());
+	if (mp->isEnabled()) mp->dispose(ptr);
+	else mp->getMmgr()->dispose(ptr);
 }
 
 void* operator new (qse_size_t size, QSE::Mpool* mp, void* existing_ptr)

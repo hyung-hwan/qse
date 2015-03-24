@@ -206,7 +206,7 @@ public:
 		//if (!node) return QSE_NULL;
 		//return &node->value;
 
-		PairNode* node = this->pair_tree.template heterofindNode<K,PairHeteroComparator> (key);
+		PairNode* node = this->pair_tree.QSE_CPP_TEMPLATE_QUALIFIER heterofindNode<K,PairHeteroComparator> (key);
 		if (!node) return QSE_NULL;
 		Pair& pair = node->value;
 		pair.value = value;
@@ -216,7 +216,7 @@ public:
 	Pair* search (const K& key)
 	{
 		//PairNode* node = this->pair_tree.update (Pair(key));
-		PairNode* node = this->pair_tree.template heterofindNode<K,PairHeteroComparator> (key);
+		PairNode* node = this->pair_tree.QSE_CPP_TEMPLATE_QUALIFIER heterofindNode<K,PairHeteroComparator> (key);
 		if (!node) return QSE_NULL;
 		return &node->value;
 	}
@@ -224,14 +224,14 @@ public:
 	int remove (const K& key)
 	{
 		//return this->pair_tree.remove (Pair(key));
-		return this->pair_tree.template heteroremove<K,PairHeteroComparator> (key);
+		return this->pair_tree.QSE_CPP_TEMPLATE_QUALIFIER heteroremove<K,PairHeteroComparator> (key);
 	}
 
 	template <typename MK, typename MCOMPARATOR>
 	Pair* heterosearch (const MK& key)
 	{
 		typedef MHeteroComparator<MK,MCOMPARATOR> MComparator;
-		PairNode* node = this->pair_tree.template heterosearch<MK,MComparator> (key);
+		PairNode* node = this->pair_tree.QSE_CPP_TEMPLATE_QUALIFIER heterosearch<MK,MComparator> (key);
 		if (!node) return QSE_NULL;
 		return &node->value;
 	}
@@ -240,7 +240,7 @@ public:
 	const Pair* heterosearch (const MK& key) const
 	{
 		typedef MHeteroComparator<MK,MCOMPARATOR> MComparator;
-		PairNode* node = this->pair_tree.template heterosearch<MK,MComparator> (key);
+		PairNode* node = this->pair_tree.QSE_CPP_TEMPLATE_QUALIFIER heterosearch<MK,MComparator> (key);
 		if (!node) return QSE_NULL;
 		return &node->value;
 	}
@@ -249,7 +249,7 @@ public:
 	int heteroremove (const MK& key)
 	{
 		typedef MHeteroComparator<MK,MCOMPARATOR> MComparator;
-		return this->pair_tree.template heteroremove<MK,MComparator> (key);
+		return this->pair_tree.QSE_CPP_TEMPLATE_QUALIFIER heteroremove<MK,MComparator> (key);
 	}
 
 	void clear (bool clear_mpool = false)

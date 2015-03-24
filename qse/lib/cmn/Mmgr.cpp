@@ -75,7 +75,11 @@ void* operator new (qse_size_t size, QSE::Mmgr* mmgr)
 	return mmgr->allocate (size);
 }
 
+#if defined(QSE_CPP_NO_OPERATOR_DELETE_OVERLOADING)
+void qse_operator_delete (void* ptr, QSE::Mmgr* mmgr)
+#else
 void operator delete (void* ptr, QSE::Mmgr* mmgr)
+#endif
 {
 	mmgr->dispose (ptr);
 }

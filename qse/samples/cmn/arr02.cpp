@@ -19,7 +19,8 @@ printf ("constructor %d\n", q);
 printf ("copy constructor %d\n", *q.x);
 	}
 
-#if defined(QSE_ENABLE_CPP11_MOVE) 
+
+#if defined(QSE_CPP_ENABLE_CPP1_MOVE) 
 	Julia (Julia&& q)
 	{
 printf ("move constructor %d\n", *q.x);
@@ -50,7 +51,7 @@ printf ("operator= %d\n", *q.x);
 		return *this;
 	}
 
-#if defined(QSE_ENABLE_CPP11_MOVE) 
+#if defined(QSE_CPP_ENABLE_CPP1_MOVE) 
 	Julia& operator= (Julia&& q)
 	{
 		if (this != &q)
@@ -68,9 +69,11 @@ printf ("move operator= %d\n", *q.x);
 	int* x;
 };
 
+typedef QSE::Array<Julia> JuliaArray;
+
 int main ()
 {
-	QSE::Array<Julia> a0;
+	JuliaArray a0;
 
 	for (int i = 0; i < 256; i++)
 	{
@@ -83,10 +86,10 @@ int main ()
 	a0.remove (2, 5);
 
 	a0.update (5, Julia(9999));
-#if defined(QSE_ENABLE_CPP11_MOVE) 
-	QSE::Array<Julia> a1 ((QSE::Array<Julia>&&)a0);
+#if defined(QSE_CPP_ENABLE_CPP1_MOVE) 
+	JuliaArray a1 ((JuliaArray&&)a0);
 #else
-	QSE::Array<Julia> a1 (a0);
+	JuliaArray a1 (a0);
 #endif
 	printf ("OK: %d %d\n", (int)a0.getSize(), (int)a1.getSize());
 
@@ -96,7 +99,7 @@ int main ()
 		printf ("ITEM: %d => %d\n", (int)i, *a1[i].x);
 	}
 	printf ("----------------\n");
-	a1.rotate (QSE::Array<Julia>::ROTATE_LEFT, 2);
+	a1.rotate (JuliaArray::ROTATE_LEFT, 2);
 	for (qse_size_t i = 0; i < a1.getSize(); i++)
 	{
 		printf ("ITEM: %d => %d\n", (int)i, *a1[i].x);

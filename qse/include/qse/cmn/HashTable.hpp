@@ -239,7 +239,7 @@ public:
 		//if (!node) return QSE_NULL;
 		//return &node->value;
 
-		PairNode* node = this->pair_list.template heterofindNode<K,HASHER,PairHeteroEqualer> (key);
+		PairNode* node = this->pair_list.QSE_CPP_TEMPLATE_QUALIFIER heterofindNode<K,HASHER,PairHeteroEqualer> (key);
 		if (!node) return QSE_NULL;
 		Pair& pair = node->value;
 		pair.value = value;
@@ -249,11 +249,7 @@ public:
 	Pair* search (const K& key)
 	{
 		//PairNode* node = this->pair_list.search (Pair(key));
-	#if defined(__WATCOMC__)
-		PairNode* node = this->pair_list.heterofindNode<K,HASHER,PairHeteroEqualer> (key);
-	#else
-		PairNode* node = this->pair_list.template heterofindNode<K,HASHER,PairHeteroEqualer> (key);
-	#endif
+		PairNode* node = this->pair_list.QSE_CPP_TEMPLATE_QUALIFIER heterofindNode<K,HASHER,PairHeteroEqualer> (key);
 		if (!node) return QSE_NULL;
 		return &node->value;
 	}
@@ -261,22 +257,14 @@ public:
 	int remove (const K& key)
 	{
 		//return this->pair_list.remove (Pair(key));
-	#if defined(__WATCOMC__)
-		return this->pair_list.heteroremove<K,HASHER,PairHeteroEqualer> (key);
-	#else
-		return this->pair_list.template heteroremove<K,HASHER,PairHeteroEqualer> (key);
-	#endif
+		return this->pair_list.QSE_CPP_TEMPLATE_QUALIFIER heteroremove<K,HASHER,PairHeteroEqualer> (key);
 	}
 
 	template <typename MK, typename MHASHER, typename MEQUALER>
 	Pair* heterosearch (const MK& key)
 	{
 		typedef MHeteroEqualer<MK,MEQUALER> MEqualer;
-	#if defined(__WATCOMC__)
-		PairNode* node = this->pair_list.heterosearch<MK,MHASHER,MEqualer> (key);
-	#else
-		PairNode* node = this->pair_list.template heterosearch<MK,MHASHER,MEqualer> (key);
-	#endif
+		PairNode* node = this->pair_list.QSE_CPP_TEMPLATE_QUALIFIER heterosearch<MK,MHASHER,MEqualer> (key);
 		if (!node) return QSE_NULL;
 		return &node->value;
 	}
@@ -285,7 +273,7 @@ public:
 	const Pair* heterosearch (const MK& key) const
 	{
 		typedef MHeteroEqualer<MK,MEQUALER> MEqualer;
-		PairNode* node = this->pair_list.template heterosearch<MK,MHASHER,MEqualer> (key);
+		PairNode* node = this->pair_list.QSE_CPP_TEMPLATE_QUALIFIER heterosearch<MK,MHASHER,MEqualer> (key);
 		if (!node) return QSE_NULL;
 		return &node->value;
 	}
@@ -294,7 +282,7 @@ public:
 	int heteroremove (const MK& key)
 	{
 		typedef MHeteroEqualer<MK,MEQUALER> MEqualer;
-		return this->pair_list.template heteroremove<MK,MHASHER,MEqualer> (key);
+		return this->pair_list.QSE_CPP_TEMPLATE_QUALIFIER heteroremove<MK,MHASHER,MEqualer> (key);
 	}
 
 	void clear (bool clear_mpool = false)

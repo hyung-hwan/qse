@@ -971,7 +971,7 @@ public:
 	template <typename MT, typename MCOMPARATOR>
 	int heteroremove (const MT& datum)
 	{
-		Node* node = this->template heterofind_node<MT,MCOMPARATOR> (datum);
+		Node* node = this->QSE_CPP_TEMPLATE_QUALIFIER heterofind_node<MT,MCOMPARATOR> (datum);
 		if (node == QSE_NULL) return -1;
 
 		this->remove_node (node);
