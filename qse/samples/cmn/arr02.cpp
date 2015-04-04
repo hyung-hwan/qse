@@ -20,7 +20,7 @@ printf ("copy constructor %d\n", *q.x);
 	}
 
 
-#if defined(QSE_CPP_ENABLE_CPP1_MOVE) 
+#if defined(QSE_CPP_ENABLE_CPP11_MOVE) 
 	Julia (Julia&& q)
 	{
 printf ("move constructor %d\n", *q.x);
@@ -51,7 +51,7 @@ printf ("operator= %d\n", *q.x);
 		return *this;
 	}
 
-#if defined(QSE_CPP_ENABLE_CPP1_MOVE) 
+#if defined(QSE_CPP_ENABLE_CPP11_MOVE) 
 	Julia& operator= (Julia&& q)
 	{
 		if (this != &q)
@@ -86,7 +86,7 @@ int main ()
 	a0.remove (2, 5);
 
 	a0.update (5, Julia(9999));
-#if defined(QSE_CPP_ENABLE_CPP1_MOVE) 
+#if defined(QSE_CPP_ENABLE_CPP11_MOVE) 
 	JuliaArray a1 ((JuliaArray&&)a0);
 #else
 	JuliaArray a1 (a0);

@@ -19,7 +19,7 @@ public:
 		this->x = new int (*q.x);
 	}
 
-#if defined(QSE_CPP_ENABLE_CPP1_MOVE) 
+#if defined(QSE_CPP_ENABLE_CPP11_MOVE) 
 	Julia (Julia&& q)
 	{
 		this->x = q.x;
@@ -46,7 +46,7 @@ public:
 		return *this;
 	}
 
-#if defined(QSE_CPP_ENABLE_CPP1_MOVE) 
+#if defined(QSE_CPP_ENABLE_CPP11_MOVE) 
 	Julia& operator= (Julia&& q)
 	{
 		if (this != &q)
