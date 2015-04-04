@@ -128,7 +128,7 @@ public:
 		}
 	}
 
-#if defined(QSE_CPP_ENABLE_CPP1_MOVE)
+#if defined(QSE_CPP_ENABLE_CPP11_MOVE)
 
 	Array (SelfType&& array):
 		Mmged(array.getMmgr()),
@@ -168,7 +168,7 @@ public:
 		return *this;
 	}
 
-#if defined(QSE_CPP_ENABLE_CPP1_MOVE)
+#if defined(QSE_CPP_ENABLE_CPP11_MOVE)
 	SelfType& operator= (SelfType&& array)
 	{
 		if (this != &array)
@@ -236,7 +236,7 @@ protected:
 		return tmp;
 	}
 
-#if defined(QSE_CPP_ENABLE_CPP1_MOVE)
+#if defined(QSE_CPP_ENABLE_CPP11_MOVE)
 	T* clone_buffer_by_moving (T* srcbuf, qse_size_t capa, qse_size_t cnt)
 	{
 		QSE_ASSERT (capa > 0);
@@ -306,7 +306,7 @@ protected:
 		}
 	}
 
-#if defined(QSE_CPP_ENABLE_CPP1_MOVE)
+#if defined(QSE_CPP_ENABLE_CPP11_MOVE)
 	void put_item_by_moving (qse_size_t index, T&& value)
 	{
 		if (index >= this->count)
@@ -432,7 +432,7 @@ public:
 		this->update (index, value);
 	}
 
-#if defined(QSE_CPP_ENABLE_CPP1_MOVE)
+#if defined(QSE_CPP_ENABLE_CPP11_MOVE)
 	void setValueAt (qse_size_t index, T&& value)
 	{
 		this->update (index, QSE_CPP_RVREF(value));
@@ -466,7 +466,7 @@ protected:
 			// shift the existing elements to the back by one slot.
 			for (qse_size_t i = this->count; i > index; i--) 
 			{
-			#if defined(QSE_CPP_ENABLE_CPP1_MOVE)
+			#if defined(QSE_CPP_ENABLE_CPP11_MOVE)
 				this->put_item_by_moving (i, QSE_CPP_RVREF(this->buffer[i - 1])); 
 			#else
 				this->put_item (i, this->buffer[i - 1]); 
@@ -503,7 +503,7 @@ public:
 		return index;
 	}
 
-#if defined(QSE_CPP_ENABLE_CPP1_MOVE)
+#if defined(QSE_CPP_ENABLE_CPP11_MOVE)
 	qse_size_t insert (qse_size_t index, T&& value)
 	{
 		// Unlike insert() in RedBlackTree and HashList,
@@ -530,7 +530,7 @@ public:
 		return index;
 	}
 
-#if defined(QSE_CPP_ENABLE_CPP1_MOVE)
+#if defined(QSE_CPP_ENABLE_CPP11_MOVE)
 	qse_size_t update (qse_size_t index, T&& value)
 	{
 		QSE_ASSERT (index < this->count);
@@ -548,7 +548,7 @@ public:
 			return this->insert (index, value);
 	}
 
-#if defined(QSE_CPP_ENABLE_CPP1_MOVE)
+#if defined(QSE_CPP_ENABLE_CPP11_MOVE)
 	qse_size_t upsert (qse_size_t index, T&& value)
 	{
 		if (index < this->count)
@@ -566,7 +566,7 @@ public:
 			return this->insert (index, value);
 	}
 
-#if defined(QSE_CPP_ENABLE_CPP1_MOVE)
+#if defined(QSE_CPP_ENABLE_CPP11_MOVE)
 	qse_size_t ensert (qse_size_t index, T&& value)
 	{
 		if (index < this->count)
@@ -700,7 +700,7 @@ public:
 			qse_size_t cnt = this->count;
 			if (cnt > capa) cnt = capa;
 
-		#if defined(QSE_CPP_ENABLE_CPP1_MOVE)
+		#if defined(QSE_CPP_ENABLE_CPP11_MOVE)
 			T* tmp = this->clone_buffer_by_moving (this->buffer, capa, cnt);
 		#else
 			T* tmp = this->clone_buffer (this->buffer, capa, cnt);

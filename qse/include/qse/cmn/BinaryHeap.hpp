@@ -135,7 +135,7 @@ public:
 	{
 	}
 
-#if defined(QSE_CPP_ENABLE_CPP1_MOVE)
+#if defined(QSE_CPP_ENABLE_CPP11_MOVE)
 	BinaryHeap (SelfType& heap): ParentType (heap)
 	{
 	}
@@ -154,7 +154,7 @@ public:
 		return *this;
 	}
 
-#if defined(QSE_CPP_ENABLE_CPP1_MOVE)
+#if defined(QSE_CPP_ENABLE_CPP11_MOVE)
 	SelfType& operator= (SelfType&& heap)
 	{
 		if (this != &heap)
@@ -212,7 +212,7 @@ public:
 		return this->sift_up(index);
 	}
 
-#if defined(QSE_CPP_ENABLE_CPP1_MOVE)
+#if defined(QSE_CPP_ENABLE_CPP11_MOVE)
 	qse_size_t insert (T&& value)
 	{
 		qse_size_t index = this->count;
@@ -234,7 +234,7 @@ public:
 		return (this->greater_than(value, old))? this->sift_up(index): this->sift_down(index);
 	}
 
-#if defined(QSE_CPP_ENABLE_CPP1_MOVE)
+#if defined(QSE_CPP_ENABLE_CPP11_MOVE)
 	qse_size_t update (qse_size_t index, T&& value)
 	{
 		T old = QSE_CPP_RVREF(this->buffer[index]);

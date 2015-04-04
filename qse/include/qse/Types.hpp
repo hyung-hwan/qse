@@ -36,9 +36,9 @@
 
 #if (__cplusplus >= 201103L) // C++11
 
-	/// The QSE_CPP_ENABLE_CPP1_MOVE macro enables C++11 move semantics
+	/// The QSE_CPP_ENABLE_CPP11_MOVE macro enables C++11 move semantics
 	/// in various classes.
-	#define QSE_CPP_ENABLE_CPP1_MOVE 1
+	#define QSE_CPP_ENABLE_CPP11_MOVE 1
 
 	// The QSE_CPP_CALL_DESTRUCTOR() macro calls a destructor explicitly.
 	#define QSE_CPP_CALL_DESTRUCTOR(ptr, class_name) ((ptr)->~class_name())
@@ -114,7 +114,7 @@
 
 #endif
 
-#if defined(QSE_CPP_ENABLE_CPP1_MOVE)
+#if defined(QSE_CPP_ENABLE_CPP11_MOVE)
 
 	template<typename T> struct QSE_CPP_RMREF      { typedef T Type; };
 	template<typename T> struct QSE_CPP_RMREF<T&>  { typedef T Type; };
