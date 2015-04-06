@@ -27,7 +27,7 @@
 #ifndef _QSE_TYPES_H_
 #define _QSE_TYPES_H_
 
-/**@file
+/**\file
  * This file defines various common basic types designed to be
  * cross-platform. These types are preferred over native data types.
  */
@@ -63,10 +63,10 @@ enum qse_bool_t
 };
 typedef enum qse_bool_t qse_bool_t;
 
-/** @typedef qse_int_t
+/** \typedef qse_int_t
  * The qse_int_t type defines a signed integer type as large as a pointer.
  */
-/** @typedef qse_uint_t
+/** \typedef qse_uint_t
  * The qse_uint_t type defines an unsigned integer type as large as a pointer.
  */
 #if (defined(hpux) || defined(__hpux) || defined(__hpux__) || \
@@ -130,10 +130,10 @@ typedef enum qse_bool_t qse_bool_t;
 #	error unsupported pointer size
 #endif
 
-/** @typedef qse_long_t
+/** \typedef qse_long_t
  * The qse_long_t type defines the largest signed integer type that supported. 
  */
-/** @typedef qse_ulong_t
+/** \typedef qse_ulong_t
  * The qse_ulong_t type defines the largest unsigned integer type supported.
  */
 #if QSE_SIZEOF_LONG >= QSE_SIZEOF_LONG_LONG
@@ -168,10 +168,10 @@ typedef enum qse_bool_t qse_bool_t;
 #define QSE_SIZEOF_INTMAX_T  0
 #define QSE_SIZEOF_UINTMAX_T 0
 
-/** @typedef qse_int8_t
+/** \typedef qse_int8_t
  * The qse_int8_t defines an 8-bit signed integer type.
  */
-/** @typedef qse_uint8_t
+/** \typedef qse_uint8_t
  * The qse_uint8_t type defines an 8-bit unsigned integer type.
  */
 #if QSE_SIZEOF_CHAR == 1
@@ -203,10 +203,10 @@ typedef enum qse_bool_t qse_bool_t;
 #	define QSE_SIZEOF_UINT8_T 0
 #endif
 
-/** @typedef qse_int16_t
+/** \typedef qse_int16_t
  * The qse_int16_t defines an 16-bit signed integer type.
  */
-/** @typedef qse_uint16_t
+/** \typedef qse_uint16_t
  * The qse_uint16_t type defines an 16-bit unsigned integer type.
  */
 #if QSE_SIZEOF_SHORT == 2
@@ -238,10 +238,10 @@ typedef enum qse_bool_t qse_bool_t;
 #	define QSE_SIZEOF_UINT16_T 0
 #endif
 
-/** @typedef qse_int32_t
+/** \typedef qse_int32_t
  * The qse_int32_t defines an 32-bit signed integer type.
  */
-/** @typedef qse_uint32_t
+/** \typedef qse_uint32_t
  * The qse_uint32_t type defines an 32-bit unsigned integer type.
  */
 #if QSE_SIZEOF_INT == 4
@@ -278,10 +278,10 @@ typedef enum qse_bool_t qse_bool_t;
 #	define QSE_SIZEOF_UINT32_T 0
 #endif
 
-/** @typedef qse_int64_t
+/** \typedef qse_int64_t
  * The qse_int64_t defines an 64-bit signed integer type.
  */
-/** @typedef qse_uint64_t
+/** \typedef qse_uint64_t
  * The qse_uint64_t type defines an 64-bit unsigned integer type.
  */
 #if QSE_SIZEOF_INT == 8
@@ -407,10 +407,10 @@ typedef qse_uint_t qse_uintptr_t;
 typedef qse_int_t qse_intptr_t;
 #define QSE_SIZEOF_INTPTR_T QSE_SIZEOF_INT_T
 
-/** @typedef qse_intmax_t
+/** \typedef qse_intmax_t
  * The qse_llong_t type defines the largest signed integer type supported.
  */
-/** @typedef qse_uintmax_t
+/** \typedef qse_uintmax_t
  * The qse_ullong_t type defines the largest unsigned integer type supported.
  */
 #if (QSE_SIZEOF_LONG >= QSE_SIZEOF_LONG_LONG) && \
@@ -458,7 +458,7 @@ typedef qse_int_t qse_intptr_t;
 #endif
 
 
-/** @typedef qse_flt_t
+/** \typedef qse_flt_t
  * The qse_flt_t type defines the largest floating-pointer number type
  * naturally supported.
  */
@@ -475,7 +475,7 @@ typedef qse_int_t qse_intptr_t;
 #	define QSE_SIZEOF_FLT_T QSE_SIZEOF_DOUBLE
 #endif
 
-/** @typedef qse_fltmax_t
+/** \typedef qse_fltmax_t
  * The qse_fltmax_t type defines the largest floating-pointer number type
  * ever supported.
  */
@@ -489,7 +489,7 @@ typedef qse_int_t qse_intptr_t;
 #	define QSE_SIZEOF_FLTMAX_T QSE_SIZEOF_FLT_T
 #endif
 
-/** @typedef qse_ptrdiff_t
+/** \typedef qse_ptrdiff_t
  */
 typedef qse_ssize_t qse_ptrdiff_t;
 #define QSE_SIZEOF_PTRDIFF_T QSE_SIZEOF_SSIZE_T
@@ -507,10 +507,10 @@ typedef char qse_mchar_t;
 typedef int qse_mcint_t;
 #define QSE_SIZEOF_MCINT_T QSE_SIZEOF_INT 
 
-/** @typedef qse_wchar_t
+/** \typedef qse_wchar_t
  * The qse_wchar_t type defines a wide character type. 
  */
-/** @typedef qse_wcint_t
+/** \typedef qse_wcint_t
  * The qse_wcint_t type defines a type that can hold a qse_wchar_t value and 
  * #QSE_WCHAR_EOF.
  */
@@ -581,10 +581,10 @@ typedef int qse_mcint_t;
 #	error Unsupported size of wchar_t
 #endif
 
-/** @typedef qse_char_t
+/** \typedef qse_char_t
  * The qse_char_t type defines a character type.
  */
-/** @typedef qse_cint_t
+/** \typedef qse_cint_t
  * The qse_cint_t typep defines a type that can hold a qse_char_t value and 
  * #QSE_CHAR_EOF.
  */
@@ -670,17 +670,17 @@ typedef struct qse_xptl_t qse_xptl_t;
 typedef struct qse_mmgr_t qse_mmgr_t;
 
 /** 
- * allocate a memory chunk of the size @a n.
- * @return pointer to a memory chunk on success, QSE_NULL on failure.
+ * allocate a memory chunk of the size \a n.
+ * \return pointer to a memory chunk on success, QSE_NULL on failure.
  */
 typedef void* (*qse_mmgr_alloc_t)   (qse_mmgr_t* mmgr, qse_size_t n);
 /** 
- * resize a memory chunk pointed to by @a ptr to the size @a n.
- * @return pointer to a memory chunk on success, QSE_NULL on failure.
+ * resize a memory chunk pointed to by \a ptr to the size \a n.
+ * \return pointer to a memory chunk on success, QSE_NULL on failure.
  */
 typedef void* (*qse_mmgr_realloc_t) (qse_mmgr_t* mmgr, void* ptr, qse_size_t n);
 /**
- * free a memory chunk pointed to by @a ptr.
+ * free a memory chunk pointed to by \a ptr.
  */
 typedef void  (*qse_mmgr_free_t)    (qse_mmgr_t* mmgr, void* ptr);
 
@@ -688,7 +688,7 @@ typedef void  (*qse_mmgr_free_t)    (qse_mmgr_t* mmgr, void* ptr);
  * The qse_mmgr_t type defines the memory management interface.
  * As the type is merely a structure, it is just used as a single container
  * for memory management functions with a pointer to user-defined data. 
- * The user-defined data pointer @a ctx is passed to each memory management 
+ * The user-defined data pointer \a ctx is passed to each memory management 
  * function whenever it is called. You can allocate, reallocate, and free 
  * a memory chunk.
  *

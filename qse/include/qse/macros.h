@@ -33,7 +33,7 @@
 #	include <qse/types.h>
 #endif
 
-/** @file
+/** \file
  * This file contains various useful macro definitions.
  */
 
@@ -96,20 +96,20 @@
 /**
  * The QSE_SIZEOF() macro gets data size in bytes. It is equivalent to the
  * sizeof operator. The following code snippet should print sizeof(int)*128.
- * @code
+ * \code
  * int x[128];
  * printf ("%d\n", (int)QSE_SIZEOF(x));
- * @endcode
+ * \endcode
  */
 #define QSE_SIZEOF(n)  (sizeof(n))
 
 /**
  * The QSE_COUNTOF() macro returns the number elements in an array.
  * The following code snippet should print 128.
- * @code
+ * \code
  * int x[128];
  * printf ("%d\n", (int)QSE_COUNTOF(x));
- * @endcode
+ * \endcode
  */
 #define QSE_COUNTOF(n) (sizeof(n)/sizeof(n[0]))
 
@@ -128,19 +128,19 @@
 
 /**
  * The QSE_TYPE_IS_SIGNED() macro determines if a type is signed. 
- * @code
+ * \code
  * printf ("%d\n", (int)QSE_TYPE_IS_SIGNED(int));
  * printf ("%d\n", (int)QSE_TYPE_IS_SIGNED(unsigned int));
- * @endcode
+ * \endcode
  */
 #define QSE_TYPE_IS_SIGNED(type) (((type)0) > ((type)-1))
 
 /**
  * The QSE_TYPE_IS_SIGNED() macro determines if a type is unsigned. 
- * @code
+ * \code
  * printf ("%d\n", QSE_TYPE_IS_UNSIGNED(int));
  * printf ("%d\n", QSE_TYPE_IS_UNSIGNED(unsigned int));
- * @endcode
+ * \endcode
  */
 #define QSE_TYPE_IS_UNSIGNED(type) (((type)0) < ((type)-1))
 
@@ -259,7 +259,7 @@
 #define QSE_WS(str)    ((const qse_wchar_t*)L ## str)
 /** 
  * The #QSE_WT macro maps a multi-byte literal string to a wide character 
- * string by prefixing it with @b L.
+ * string by prefixing it with \b L.
  */
 #if (QSE_SIZEOF_WCHAR_T == QSE_SIZEOF_MCHAR_T)
 #	define QSE_WT(txt)    (txt)
@@ -267,7 +267,7 @@
 #	define QSE_WT(txt)    (L ## txt)
 #endif
 
-/** @def QSE_T
+/** \def QSE_T
  * The #QSE_T macro maps to #QSE_MT if #QSE_CHAR_IS_MCHAR is defined, and to
  * #QSE_WT if #QSE_CHAR_IS_WCHAR is defined.
  */
