@@ -1,0 +1,12 @@
+prefix=@prefix@
+exec_prefix=${prefix}
+includedir=${prefix}/include
+libdir=${exec_prefix}/lib
+
+Name: QSEAWK Library
+Description: QSEAWK Library
+Version: @VERSION@
+Cflags: -I${includedir}
+Libs: -L${libdir} -lqseawk 
+Requires: qsecmn qsesed
+#Requires.private: qsecmn qsesed

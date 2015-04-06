@@ -746,6 +746,11 @@ AC_CONFIG_FILES([
 	lib/sed/Makefile 
 	lib/xli/Makefile 
 	lib/http/Makefile 
+	lib/qsecmn.pc
+	lib/qseawk.pc
+	lib/qsesed.pc
+	lib/qsexli.pc
+	lib/qsehttp.pc
 	cmd/Makefile 
 	cmd/awk/Makefile 
 	cmd/sed/Makefile 
