@@ -143,7 +143,7 @@ lib_LTLIBRARIES += libqsecmnxx.la
 libqsecmnxx_la_SOURCES = \
 	Mmgr.cpp StdMmgr.cpp HeapMmgr.cpp Mmged.cpp Mpool.cpp String.cpp
 libqsecmnxx_la_LDFLAGS = -version-info 1:0:0 -no-undefined
-libqsecmnxx_la_LIBADD = 
+libqsecmnxx_la_LIBADD = -lqsecmn
 
 endif
 
