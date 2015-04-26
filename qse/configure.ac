@@ -263,7 +263,7 @@ AC_ARG_ENABLE([ssl], [AS_HELP_STRING([--enable-ssl],[build the library in the ss
 	enable_ssl_is=$enableval,enable_ssl_is=yes)
 if test "x$enable_ssl_is" = "xyes"
 then
-	AC_CHECK_HEADERS([openssl/err.h openssl/engine.h])
+	AC_CHECK_HEADERS([openssl/ssl.h openssl/err.h openssl/engine.h])
 
 	dnl check for an SSL library
 	AC_CHECK_FUNCS([SSL_library_init])
