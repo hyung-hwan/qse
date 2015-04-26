@@ -130,7 +130,7 @@
 #	define USE_LTDL
 #endif
 
-#if defined(HAVE_SSL)
+#if defined(HAVE_OPENSSL_SSL_H) && defined(HAVE_SSL)
 #	include <openssl/ssl.h>
 #	if defined(HAVE_OPENSSL_ERR_H)
 #		include <openssl/err.h>
@@ -138,6 +138,7 @@
 #	if defined(HAVE_OPENSSL_ENGINE_H)
 #		include <openssl/engine.h>
 #	endif
+#	define USE_SSL
 #endif
 
 #if defined(__linux) && !defined(SO_REUSEPORT)
@@ -147,7 +148,7 @@
 #define HANDLE_TO_FIO(x) ((qse_fio_t*)(x))
 #define FIO_TO_HANDLE(x) ((qse_httpd_hnd_t)(x))
 
-#if defined(HAVE_SSL)
+#if defined(USE_SSL)
 #define HANDLE_TO_SSL(x) ((SSL*)(x))
 #define SSL_TO_HANDLE(x) ((qse_httpd_hnd_t)(x))
 #endif
@@ -161,7 +162,7 @@ struct server_xtn_t
 	qse_httpd_serverstd_makersrc_t makersrc;
 	qse_httpd_serverstd_freersrc_t freersrc;
 
-#if defined(HAVE_SSL)
+#if defined(USE_SSL)
 	SSL_CTX* ssl_ctx;
 #endif
 
@@ -565,7 +566,7 @@ static QSE_INLINE qse_ssize_t __send_file_ssl (
 	qse_httpd_t* httpd, void* xout, qse_httpd_hnd_t in_fd, 
 	qse_foff_t* offset, qse_size_t count)
 {
-#if defined(HAVE_SSL)
+#if defined(USE_SSL)
 	qse_mchar_t buf[MAX_SEND_SIZE];
 	qse_ssize_t ret;
 	qse_foff_t foff;
@@ -615,7 +616,7 @@ static QSE_INLINE qse_ssize_t __send_file_ssl (
 typedef struct httpd_xtn_t httpd_xtn_t;
 struct httpd_xtn_t
 {
-#if defined(HAVE_SSL)
+#if defined(USE_SSL)
 	SSL_CTX* ssl_peer_ctx;
 #endif
 	qse_httpd_ecb_t ecb;
@@ -623,7 +624,7 @@ struct httpd_xtn_t
 	qse_httpd_ursstd_t urs;
 };
 
-#if defined(HAVE_SSL)
+#if defined(USE_SSL)
 static int init_server_ssl (qse_httpd_t* httpd, qse_httpd_server_t* server)
 {
 	SSL_CTX* ssl_ctx = QSE_NULL;
@@ -729,7 +730,7 @@ static void cleanup_standard_httpd (qse_httpd_t* httpd)
 	httpd_xtn_t* xtn;
 	xtn = (httpd_xtn_t*)qse_httpd_getxtn (httpd);
 
-#if defined(HAVE_SSL)
+#if defined(USE_SSL)
 	if (xtn->ssl_peer_ctx) fini_xtn_peer_ssl (xtn);
 #endif
 
@@ -766,7 +767,7 @@ qse_httpd_t* qse_httpd_openstdwithmmgr (qse_mmgr_t* mmgr, qse_size_t xtnsize)
 	lt_dlinited = 1;
 #endif
 
-#if defined(HAVE_SSL)
+#if defined(USE_SSL)
 	if (init_xtn_peer_ssl (httpd) <= -1) goto oops;
 #endif
 
@@ -778,7 +779,7 @@ qse_httpd_t* qse_httpd_openstdwithmmgr (qse_mmgr_t* mmgr, qse_size_t xtnsize)
 	return httpd;
 
 oops:
-#if defined(HAVE_SSL)
+#if defined(USE_SSL)
 	if (xtn && xtn->ssl_peer_ctx) fini_xtn_peer_ssl (xtn);
 #endif
 #if defined(USE_LTDL)
@@ -1159,7 +1160,7 @@ static qse_ssize_t client_recv (
 {
 	if (client->status & QSE_HTTPD_CLIENT_SECURE)
 	{
-	#if defined(HAVE_SSL)
+	#if defined(USE_SSL)
 		int ret = SSL_read (HANDLE_TO_SSL(client->handle2), buf, bufsize);
 		if (ret <= -1)
 		{
@@ -1196,7 +1197,7 @@ static qse_ssize_t client_send (
 {
 	if (client->status & QSE_HTTPD_CLIENT_SECURE)
 	{
-	#if defined(HAVE_SSL)
+	#if defined(USE_SSL)
 		int ret = SSL_write (HANDLE_TO_SSL(client->handle2), buf, bufsize);
 		if (ret <= -1)
 		{
@@ -1238,7 +1239,7 @@ static int client_accepted (qse_httpd_t* httpd, qse_httpd_client_t* client)
 {
 	if (client->status & QSE_HTTPD_CLIENT_SECURE)
 	{
-	#if defined(HAVE_SSL)
+	#if defined(USE_SSL)
 		int ret;
 		SSL* ssl;
 		server_xtn_t* server_xtn;
@@ -1316,7 +1317,7 @@ static void client_closed (qse_httpd_t* httpd, qse_httpd_client_t* client)
 {
 	if (client->status & QSE_HTTPD_CLIENT_SECURE)
 	{
-	#if defined(HAVE_SSL)
+	#if defined(USE_SSL)
 		if ((SSL*)client->handle2)
 		{
 			SSL_shutdown ((SSL*)client->handle2); /* is this needed? */
@@ -1338,7 +1339,7 @@ static int peer_open (qse_httpd_t* httpd, qse_httpd_peer_t* peer)
 	int connected = 1;
 	qse_sck_hnd_t fd = QSE_INVALID_SCKHND;
 
-#if defined(HAVE_SSL)
+#if defined(USE_SSL)
 	SSL* ssl = QSE_NULL;
 #endif
 
@@ -1396,7 +1397,7 @@ static int peer_open (qse_httpd_t* httpd, qse_httpd_peer_t* peer)
 
 	if (peer->flags & QSE_HTTPD_PEER_SECURE)
 	{
-	#if defined(HAVE_SSL)
+	#if defined(USE_SSL)
 		QSE_ASSERT (xtn->ssl_peer_ctx != QSE_NULL);
 
 		ssl = SSL_new (xtn->ssl_peer_ctx);
@@ -1453,7 +1454,7 @@ static int peer_open (qse_httpd_t* httpd, qse_httpd_peer_t* peer)
 
 	if ((peer->flags & QSE_HTTPD_PEER_SECURE) && connected)
 	{
-	#if defined(HAVE_SSL)
+	#if defined(USE_SSL)
 		int ret = SSL_connect (ssl);
 		if (ret <= 0)
 		{
@@ -1482,7 +1483,7 @@ static int peer_open (qse_httpd_t* httpd, qse_httpd_peer_t* peer)
 	peer->handle = fd;
 	if (peer->flags & QSE_HTTPD_PEER_SECURE)
 	{
-	#if defined(HAVE_SSL)
+	#if defined(USE_SSL)
 		peer->handle2 = SSL_TO_HANDLE(ssl);
 	#endif
 	}
@@ -1490,7 +1491,7 @@ static int peer_open (qse_httpd_t* httpd, qse_httpd_peer_t* peer)
 
 oops:
 	qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
-#if defined(HAVE_SSL)
+#if defined(USE_SSL)
 	if (ssl) SSL_free (ssl);
 #endif
 	if (qse_isvalidsckhnd(fd)) qse_closesckhnd (fd);
@@ -1503,7 +1504,7 @@ static void peer_close (qse_httpd_t* httpd, qse_httpd_peer_t* peer)
 {
 	if (peer->flags & QSE_HTTPD_PEER_SECURE)
 	{
-	#if defined(HAVE_SSL)
+	#if defined(USE_SSL)
 		SSL_free (HANDLE_TO_SSL(peer->handle2));
 	#endif
 	}
@@ -1581,7 +1582,7 @@ static int is_peer_socket_connected (qse_httpd_t* httpd, qse_httpd_peer_t* peer)
 
 static int is_peer_connected_securely (qse_httpd_t* httpd, qse_httpd_peer_t* peer)
 {
-#if defined(HAVE_SSL)
+#if defined(USE_SSL)
 	int ret = SSL_connect (HANDLE_TO_SSL(peer->handle2));
 	if (ret <= 0)
 	{
@@ -1632,7 +1633,7 @@ static qse_ssize_t peer_recv (
 {
 	if (peer->flags & QSE_HTTPD_PEER_SECURE)
 	{
-	#if defined(HAVE_SSL)
+	#if defined(USE_SSL)
 		int ret = SSL_read (HANDLE_TO_SSL(peer->handle2), buf, bufsize);
 		if (ret <= -1)
 		{
@@ -1668,7 +1669,7 @@ static qse_ssize_t peer_send (
 {
 	if (peer->flags & QSE_HTTPD_PEER_SECURE)
 	{
-	#if defined(HAVE_SSL)
+	#if defined(USE_SSL)
 		int ret = SSL_write (HANDLE_TO_SSL(peer->handle2), buf, bufsize);
 		if (ret <= -1)
 		{
@@ -3368,7 +3369,7 @@ static void detach_server (qse_httpd_t* httpd, qse_httpd_server_t* server)
 	if (server_xtn->detach) server_xtn->detach (httpd, server);
 	if (server_xtn->auth.ptr) QSE_MMGR_FREE (httpd->mmgr, server_xtn->auth.ptr);
 
-#if defined(HAVE_SSL)
+#if defined(USE_SSL)
 	if (server_xtn->ssl_ctx) fini_server_ssl (server_xtn);
 #endif
 }

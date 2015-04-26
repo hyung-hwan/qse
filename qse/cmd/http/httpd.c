@@ -36,7 +36,7 @@
 #	include <fcntl.h>
 #endif
 
-#if defined(HAVE_SSL)
+#if defined(HAVE_OPENSSL_SSL_H) && defined(HAVE_SSL)
 #	include <openssl/ssl.h>
 #	if defined(HAVE_OPENSSL_ERR_H)
 #		include <openssl/err.h>
@@ -44,10 +44,15 @@
 #	if defined(HAVE_OPENSSL_ENGINE_H)
 #		include <openssl/engine.h>
 #	endif
+#	define USE_SSL
 #endif
 
 #if defined(HAVE_SYS_PRCTL_H)
 #	include <sys/prctl.h>
+#endif
+
+#if defined(HAVE_SYS_TIME_H)
+#	include <sys/time.h>
 #endif
 
 #if defined(HAVE_SYS_RESOURCE_H)
@@ -2852,14 +2857,14 @@ int qse_main (int argc, qse_achar_t* argv[])
 	/*trace2com_init (1, 38400);*/
 #endif
 
-#if defined(HAVE_SSL)    
+#if defined(USE_SSL)    
 	SSL_load_error_strings ();
 	SSL_library_init ();
 #endif
 
 	ret = qse_runmain (argc, argv, httpd_main);
 
-#if defined(HAVE_SSL)
+#if defined(USE_SSL)
 	/* ERR_remove_state() should be called for each thread if the application is thread */
 	ERR_remove_state (0); 
 	#if defined(HAVE_ENGINE_CLEANUP)

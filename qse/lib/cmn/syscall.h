@@ -421,7 +421,12 @@
 #elif defined(HAVE_DIR_D_FD)
 #	define QSE_DIRFD(dir) ((dir)->d_fd)
 #else
-#	error OUCH!!! NO DIRFD AVAILABLE
+#	if defined(dirfd)
+		/* mac os x 10.1 defines dirfd as a macro */
+#		define QSE_DIRFD(dir) dirfd(dir)
+#	else
+#		error OUCH!!! NO DIRFD AVAILABLE
+#	endif
 #endif
 #define QSE_DIR DIR
 

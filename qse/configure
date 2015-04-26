@@ -18198,7 +18198,7 @@ fi
 
 if test "x$enable_ssl_is" = "xyes"
 then
-	for ac_header in openssl/err.h openssl/engine.h
+	for ac_header in openssl/ssl.h openssl/err.h openssl/engine.h
 do :
   as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
 ac_fn_c_check_header_mongrel "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"

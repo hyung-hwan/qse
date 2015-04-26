@@ -862,7 +862,9 @@ int qse_fio_init (
 		if (flags & QSE_FIO_CREATE) desired_access |= O_CREAT;
 		if (flags & QSE_FIO_TRUNCATE) desired_access |= O_TRUNC;
 		if (flags & QSE_FIO_EXCLUSIVE) desired_access |= O_EXCL;
+	#if defined(O_SYNC)
 		if (flags & QSE_FIO_SYNC) desired_access |= O_SYNC;
+	#endif
 
 	#if defined(O_NOFOLLOW)
 		if (flags & QSE_FIO_NOFOLLOW) desired_access |= O_NOFOLLOW;

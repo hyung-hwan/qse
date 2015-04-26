@@ -156,6 +156,13 @@ available for the native makefile for Watcom C/C++ for OS/2 only.
 
     wmake TCPV40HDRS=on
 
+### C++ ###
+
+C++ support is enabled by default as long as a C++ compiler is detected.
+If you want to disable it for any reasons, you can specify `--disable-cxx`.
+
+    ./configure --disable-cxx
+
 ### SCO UNIX System V/386 Release 3.2 ###
 
 - If /usr/include/netinet and /usr/include/net are missing,
@@ -173,12 +180,47 @@ available for the native makefile for Watcom C/C++ for OS/2 only.
   for dificiency of the bundled make utility.
 - Do not include -g in CFLAGS. 
 
-    ./configure GREP=/bin/grep RANLIB=/bin/true CFLAGS="" RAN
+    ./configure GREP=/bin/grep RANLIB=/bin/true CFLAGS="" 
 
 - Remove $(LIBLTDL) from LIBADD_LIB_COMMON in lib/awk/Makefile
 - Remove $(LIBLTDL) from libqsehttp_la_LIBADD in lib/http/Makefile
 
     make
+
+### Mac OS X/Darwin ###
+
+No special consideration is required if you work with moderately recent
+version of developer tools. The GCC compiler by Apple before early 2000's
+has an option called `-no-cpp-precomp`.
+
+\code
+ % cc -E /tmp/a.c
+ #1 "/tmp/a.c"
+
+
+ int main ( ) 
+ { 
+ Lxxxx ; 
+ return 0 ; 
+ } 
+
+ % cc -E -no-cpp-precomp /tmp/a.c
+ #1 "/tmp/a.c"
+
+
+ int main ( ) 
+ { 
+ Lxxxx ; 
+ return 0 ; 
+ } 
+\endcode
+
+Without the `-no-cpp-precomp` option, some preprocessing produces erroneous 
+code. If your compiler behaves this way, you should specify `-no-cpp-precomp`
+to CFLAGS or CXXFLAGS when running configure. For instance,
+
+    $ ./configure --prefix=/usr/local --disable-cxx CFLAGS="-Wall -g -no-cpp-precomp" 
+
 
 ### More options ###
 
