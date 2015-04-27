@@ -25,6 +25,7 @@
  */
 
 #include <qse/cmn/slmb.h>
+#include <qse/cmn/utf8.h>
 #include "mem.h"
 
 #if !defined(QSE_HAVE_CONFIG_H)
@@ -50,11 +51,24 @@
 #	include <windows.h>
 #endif
 
+#if defined(_WIN32) || (defined(HAVE_WCRTOMB) && defined(HAVE_MBRTOWC) && defined(HAVE_MBRLEN))
+	/* use system locale */
+#	undef FORCE_UTF8
+#else
+	/* force to use UTF8 as required functions are not available */
+#	define FORCE_UTF8 1
+#endif
+
 qse_size_t qse_slwcrtoslmb (
 	qse_wchar_t wc, qse_mchar_t* mb,
 	qse_size_t mbl, qse_mbstate_t* state)
 {
-#if defined(_WIN32)
+
+#if defined(FORCE_UTF8)
+
+	return qse_uctoutf8 (wc, mb, mbl);
+
+#elif defined(_WIN32)
 	int n;
 
 	/* CP_THREAD_ACP results in ERROR_INVALID_PARAMETER
@@ -104,10 +118,8 @@ qse_size_t qse_slwcrtoslmb (
 
 #else
 	/* not supported */
-
-	/* make sure to update the precessor condition to set DEFAULT_CMGR
-	 * in mbwc.c when you have different implementation here */
 	return 0;
+
 #endif
 }
 
@@ -115,7 +127,11 @@ qse_size_t qse_slmbrtoslwc (
 	const qse_mchar_t* mb, qse_size_t mbl, 
 	qse_wchar_t* wc, qse_mbstate_t* state)
 {
-#if defined(_WIN32)
+#if defined(FORCE_UTF8)
+
+	return qse_utf8touc (mb, mbl, wc);
+
+#elif defined(_WIN32)
 	qse_size_t dbcslen;
 	int n;
 
@@ -192,7 +208,10 @@ qse_size_t qse_slmbrtoslwc (
 qse_size_t qse_slmbrlen (
 	const qse_mchar_t* mb, qse_size_t mbl, qse_mbstate_t* state)
 {
-#if defined(_WIN32)
+#if defined(FORCE_UTF8)
+	return qse_utf8len (mb, mbl);
+
+#elif defined(_WIN32)
 	qse_size_t dbcslen;
 
 	QSE_ASSERT (mb != QSE_NULL);
@@ -303,7 +322,10 @@ qse_size_t qse_slmblen (const qse_mchar_t* mb, qse_size_t mbl)
 
 qse_size_t qse_slmblenmax (void)
 {
-#if defined(_WIN32)
+#if defined(FORCE_UTF8)
+	return qse_utf8lenmax ();
+
+#elif defined(_WIN32)
 	/* Windows doesn't handle utf8 properly even when your code page
 	 * is CP_UTF8(65001). you should use functions in utf8.c for utf8 
 	 * handling on windows. 2 is the maximum for DBCS encodings. */
@@ -316,7 +338,7 @@ qse_size_t qse_slmblenmax (void)
 #elif (QSE_SIZEOF_WCHAR_T == QSE_SIZEOF_MCHAR_T)
 
 	/* no proper multibyte string support */
-	return 1;	
+	return 1;
 
 #else
 	/* fallback max utf8 value */
