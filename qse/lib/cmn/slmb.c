@@ -104,6 +104,9 @@ qse_size_t qse_slwcrtoslmb (
 
 #else
 	/* not supported */
+
+	/* make sure to update the precessor condition to set DEFAULT_CMGR
+	 * in mbwc.c when you have different implementation here */
 	return 0;
 #endif
 }

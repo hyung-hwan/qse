@@ -50,7 +50,15 @@ static qse_cmgr_t builtin_cmgr[] =
 #endif
 };
 
-static qse_cmgr_t* dfl_cmgr = &builtin_cmgr[QSE_CMGR_SLMB];
+#if defined(_WIN32) && defined(HAVE_WCRTOMB)
+	/* read the comment at the bottom of qse_slwcrtoslmb() in slmb.c 
+	 * for the condition above. */
+#	define DEFAULT_CMGR QSE_CMGR_SLMB
+#else
+#	define DEFAULT_CMGR QSE_CMGR_UTF8
+#endif
+
+static qse_cmgr_t* dfl_cmgr = &builtin_cmgr[DEFAULT_CMGR];
 static qse_cmgr_finder_t cmgr_finder = QSE_NULL;
 
 qse_cmgr_t* qse_getdflcmgr (void)
@@ -58,15 +66,17 @@ qse_cmgr_t* qse_getdflcmgr (void)
 	return dfl_cmgr;
 }
 
-void qse_setdflcmgr (qse_cmgr_t* cmgr)
+qse_cmgr_t* qse_setdflcmgr (qse_cmgr_t* cmgr)
 {
-	dfl_cmgr = (cmgr? cmgr: &builtin_cmgr[QSE_CMGR_SLMB]);
+	dfl_cmgr = (cmgr? cmgr: &builtin_cmgr[DEFAULT_CMGR]);
+	return dfl_cmgr;
 }
 
-void qse_setdflcmgrbyid (qse_cmgr_id_t id)
+qse_cmgr_t* qse_setdflcmgrbyid (qse_cmgr_id_t id)
 {
 	qse_cmgr_t* cmgr = qse_findcmgrbyid (id);
-	dfl_cmgr = (cmgr? cmgr: &builtin_cmgr[QSE_CMGR_SLMB]);
+	dfl_cmgr = (cmgr? cmgr: &builtin_cmgr[DEFAULT_CMGR]);
+	return dfl_cmgr;
 }
 
 qse_cmgr_t* qse_findcmgrbyid (qse_cmgr_id_t id)

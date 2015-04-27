@@ -471,7 +471,7 @@ int qse_main (int argc, qse_achar_t* argv[])
 		{
 			sprintf (locale, ".%u", (unsigned int)codepage);
 			setlocale (LC_ALL, locale);
-			qse_setdflcmgrbyid (QSE_CMGR_SLMB);
+			/*qse_setdflcmgrbyid (QSE_CMGR_SLMB);*/
 		}
 	
 		if (WSAStartup (MAKEWORD(2,0), &wsadata) != 0)
@@ -482,7 +482,7 @@ int qse_main (int argc, qse_achar_t* argv[])
 	
 	#else
 		setlocale (LC_ALL, "");
-		qse_setdflcmgrbyid (QSE_CMGR_SLMB);
+		/*qse_setdflcmgrbyid (QSE_CMGR_SLMB);*/
 	#endif
 	}
 

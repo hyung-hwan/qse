@@ -257,7 +257,7 @@ int qse_main (int argc, qse_achar_t* argv[])
 	{
 		sprintf (locale, ".%u", (unsigned int)codepage);
 		setlocale (LC_ALL, locale);
-		qse_setdflcmgrbyid (QSE_CMGR_SLMB);
+		/*qse_setdflcmgrbyid (QSE_CMGR_SLMB);*/
 	}
 
 
@@ -269,7 +269,7 @@ int qse_main (int argc, qse_achar_t* argv[])
 
 #else
 	setlocale (LC_ALL, "");
-	qse_setdflcmgrbyid (QSE_CMGR_SLMB);
+	/*qse_setdflcmgrbyid (QSE_CMGR_SLMB);*/
 #endif
 
 #if defined(HAVE_SSL)    
