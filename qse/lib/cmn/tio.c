@@ -708,7 +708,7 @@ qse_ssize_t qse_tio_writewcs (
 				/* flush the full buffer regardless of conversion
 				 * result. */
 				if (qse_tio_flush (tio) <= -1) return -1;
-				nl = 0;		  
+				nl = 0;
 			}
 
 			if (n <= -1)

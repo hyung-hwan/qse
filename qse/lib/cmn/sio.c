@@ -815,15 +815,16 @@ static qse_ssize_t file_output (
 
 static qse_sio_t* sio_stdout = QSE_NULL;
 static qse_sio_t* sio_stderr = QSE_NULL;
+/* TODO: add sio_stdin, qse_getmbs, etc */
 
 int qse_openstdsios (void)
 {
 	if (sio_stdout == QSE_NULL)
-	{	
+	{
 		sio_stdout = qse_sio_openstd (QSE_MMGR_GETDFL(), 0, QSE_SIO_STDOUT, QSE_SIO_LINEBREAK);
 	}
 	if (sio_stderr == QSE_NULL)
-	{	
+	{
 		sio_stderr = qse_sio_openstd (QSE_MMGR_GETDFL(), 0, QSE_SIO_STDERR, QSE_SIO_LINEBREAK);
 	}
 

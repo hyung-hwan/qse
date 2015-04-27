@@ -304,11 +304,11 @@ int main ()
 	{
 		sprintf (locale, ".%u", (unsigned int)codepage);
 		setlocale (LC_ALL, locale);
-		qse_setdflcmgrbyid (QSE_CMGR_SLMB);
+		/*qse_setdflcmgrbyid (QSE_CMGR_SLMB);*/
 	}
 #else
 	setlocale (LC_ALL, "");
-	qse_setdflcmgrbyid (QSE_CMGR_SLMB);
+	/*qse_setdflcmgrbyid (QSE_CMGR_SLMB);*/
 #endif
 
 	qse_openstdsios ();

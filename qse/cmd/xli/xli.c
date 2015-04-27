@@ -640,11 +640,11 @@ int qse_main (int argc, qse_achar_t* argv[])
 		qse_fmtuintmaxtombs (locale, QSE_COUNTOF(locale),
 			codepage, 10, -1, QSE_MT('\0'), QSE_MT("."));
 		setlocale (LC_ALL, locale);
-		qse_setdflcmgrbyid (QSE_CMGR_SLMB);
+		/*qse_setdflcmgrbyid (QSE_CMGR_SLMB);*/
 	}
 #else
 	setlocale (LC_ALL, "");
-	qse_setdflcmgrbyid (QSE_CMGR_SLMB);
+	/*qse_setdflcmgrbyid (QSE_CMGR_SLMB);*/
 #endif
 
 	qse_openstdsios ();

@@ -103,15 +103,15 @@ QSE_EXPORT qse_cmgr_t* qse_getdflcmgr (
 	void
 );
 
-QSE_EXPORT void qse_setdflcmgr (
+QSE_EXPORT qse_cmgr_t* qse_setdflcmgr (
 	qse_cmgr_t* cmgr
 );
 
 /**
- * The qse_setdflcmgrbyid() function finds a built-in
- * cmgr for the \a id and sets it as a default cmgr.
+ * The qse_setdflcmgrbyid() function finds a built-in cmgr for the \a id and 
+ * sets it as a default cmgr. It returns the pointer to the cmgr object set.
  */
-QSE_EXPORT void qse_setdflcmgrbyid (
+QSE_EXPORT qse_cmgr_t* qse_setdflcmgrbyid (
 	qse_cmgr_id_t id
 );
 
