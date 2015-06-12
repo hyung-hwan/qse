@@ -6,7 +6,7 @@ AM_CPPFLAGS = \
 	-I$(includedir)
 
 
-LDFLAGS = -L../../lib/cmn -L../../lib/sed
+AM_LDFLAGS = -L../../lib/cmn -L../../lib/sed
 LDADD = -lqsesed -lqsecmn 
 
 if WIN32 

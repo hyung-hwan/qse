@@ -16,6 +16,7 @@
 #include <locale.h>
 
 #include <stdio.h> /* TODO: remove this header file */
+#include <stdlib.h>
 
 #if defined(_WIN32)
 #	include <winsock2.h>

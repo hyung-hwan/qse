@@ -7,7 +7,7 @@ AM_CPPFLAGS = \
 	
 bin_PROGRAMS = httpd01 httpd02 upxd01
 
-LDFLAGS += -L../../lib/cmn -L../../lib/http 
+AM_LDFLAGS = -L../../lib/cmn -L../../lib/http 
 LDADD = -lqsehttp -lqsecmn $(PTHREAD_LIBS) $(SOCKET_LIBS) $(SENDFILE_LIBS)
 
 if WIN32 

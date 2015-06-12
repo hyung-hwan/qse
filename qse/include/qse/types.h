@@ -52,6 +52,19 @@
 #	error Unsupported operating system
 #endif
 
+
+#if defined(EMSCRIPTEN)
+#	if defined(QSE_SIZEOF___INT128)
+#		undef QSE_SIZEOF___INT128 
+#		define QSE_SIZEOF___INT128 0
+#	endif
+#	if defined(QSE_SIZEOF_LONG) && defined(QSE_SIZEOF_INT) && (QSE_SIZEOF_LONG > QSE_SIZEOF_INT)
+		/* autoconf doesn't seem to match actual emscripten */
+#		undef QSE_SIZEOF_LONG
+#		define QSE_SIZEOF_LONG QSE_SIZEOF_INT
+#	endif
+#endif
+
 /**
  * The qse_bool_t type defines a boolean type that can represent #QSE_TRUE 
  * and #QSE_FALSE.

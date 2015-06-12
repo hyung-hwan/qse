@@ -26,6 +26,7 @@
 
 #include <qse/cmn/nwad.h>
 #include "mem.h"
+#include <qse/cmn/mbwc.h>
 
 #if defined(_WIN32)
 #	include <winsock2.h>
