@@ -48,7 +48,7 @@ bin_PROGRAMS = \
 	uri01 \
 	xma 
 	
-LDFLAGS = -L../../lib/cmn 
+AM_LDFLAGS = -L../../lib/cmn 
 LDADD = -lqsecmn 
 
 if WIN32 

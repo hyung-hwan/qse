@@ -52,6 +52,7 @@ QSE_EXPORT int qse_isuniprint (qse_wcint_t c);
 QSE_EXPORT int qse_isunigraph (qse_wcint_t c);
 QSE_EXPORT int qse_isunicntrl (qse_wcint_t c);
 QSE_EXPORT int qse_isunipunct (qse_wcint_t c);
+QSE_EXPORT int qse_isuniblank (qse_wcint_t c);
 QSE_EXPORT qse_wcint_t qse_touniupper (qse_wcint_t c);
 QSE_EXPORT qse_wcint_t qse_tounilower (qse_wcint_t c);
 

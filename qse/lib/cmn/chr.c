@@ -74,10 +74,14 @@ static QSE_INLINE int is_walnum (qse_wcint_t c)
 }
 static QSE_INLINE int is_wblank (qse_wcint_t c) 
 { 
-#if defined(HAVE_ISWBLANK)
-	return iswblank(c); 
+#if defined(QSE_ENABLE_BUNDLED_UNICODE)
+	return qse_isuniblank (c);
 #else
+	#if defined(HAVE_ISWBLANK)
+	return iswblank(c); 
+	#else
 	return c == QSE_WT(' ') || c == QSE_WT('\t');
+	#endif
 #endif
 }
 static QSE_INLINE int is_wcntrl (qse_wcint_t c) 

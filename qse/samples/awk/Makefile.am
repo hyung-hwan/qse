@@ -7,7 +7,7 @@ AM_CPPFLAGS = \
 
 bin_PROGRAMS = awk01 awk02 awk03 awk04 awk05 awk06 awk07 awk08 awk09 awk10 awk11 awk12 awk15
 
-LDFLAGS = -L../../lib/awk -L../../lib/cmn
+AM_LDFLAGS = -L../../lib/awk -L../../lib/cmn
 LDADD = -lqseawk -lqsecmn $(LIBM)
 
 if WIN32 
