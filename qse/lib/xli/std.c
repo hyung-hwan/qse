@@ -97,6 +97,7 @@ qse_xli_t* qse_xli_openstdwithmmgr (qse_mmgr_t* mmgr, qse_size_t xtnsize, qse_si
 
 	/* initialize extension */
 	xtn = (xtn_t*) QSE_XTN (xli);
+	QSE_MEMSET (xtn, 0, QSE_SIZEOF(*xtn));
 
 	xtn->ecb.close = fini_xtn;
 	xtn->ecb.clear = clear_xtn;

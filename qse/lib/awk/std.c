@@ -114,6 +114,9 @@ typedef struct xtn_t
 	int gbl_environ;
 
 	qse_awk_ecb_t ecb;
+#if defined(USE_LTDL)
+	int ltdl_fail;
+#endif
 } xtn_t;
 
 typedef struct rxtn_t
@@ -184,11 +187,19 @@ qse_awk_flt_t qse_awk_stdmathmod (qse_awk_t* awk, qse_awk_flt_t x, qse_awk_flt_t
 int qse_awk_stdmodstartup (qse_awk_t* awk)
 {
 #if defined(USE_LTDL)
+
 	/* lt_dlinit() can be called more than once and 
 	 * lt_dlexit() shuts down libltdl if it's called as many times as
 	 * corresponding lt_dlinit(). so it's safe to call lt_dlinit()
 	 * and lt_dlexit() at the library level. */
-	return (lt_dlinit () != 0)? -1: 0;
+	if (lt_dlinit() != 0)
+	{
+		xtn_t* xtn = QSE_XTN(awk);
+		xtn->ltdl_fail = 1; 
+		/* carry on even if ltdl initialize failed */
+	}
+
+	return 0;
 
 #else
 	return 0;
@@ -199,8 +210,8 @@ int qse_awk_stdmodstartup (qse_awk_t* awk)
 void qse_awk_stdmodshutdown (qse_awk_t* awk)
 {
 #if defined(USE_LTDL)
-
-	lt_dlexit ();
+	xtn_t* xtn = QSE_XTN(awk);
+	if (!xtn->ltdl_fail) lt_dlexit ();
 
 #else
 	/* do nothing */
@@ -214,6 +225,15 @@ void* qse_awk_stdmodopen (qse_awk_t* awk, const qse_awk_mod_spec_t* spec)
 	qse_mchar_t* modpath;
 	const qse_char_t* tmp[4];
 	int count;
+	xtn_t* xtn = QSE_XTN(awk);
+
+	if (xtn->ltdl_fail)
+	{
+		/* ltdl_init() failed during initialization.
+		 * return failure immediately */
+		qse_awk_seterrnum (awk, QSE_AWK_ENOIMPL, QSE_NULL);
+		return QSE_NULL;
+	}
 
 	count = 0;
 	if (spec->prefix) tmp[count++] = spec->prefix;
@@ -364,7 +384,7 @@ void* qse_awk_stdmodsym (qse_awk_t* awk, void* handle, const qse_char_t* name)
 #if defined(QSE_CHAR_IS_MCHAR)
 	mname = name;
 #else
-	mname = qse_wcstombsdup (name, QSE_NULL, awk->mmgr);	
+	mname = qse_wcstombsdup (name, QSE_NULL, awk->mmgr);
 	if (!mname)
 	{
 		qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);
@@ -434,6 +454,7 @@ qse_awk_t* qse_awk_openstdwithmmgr (qse_mmgr_t* mmgr, qse_size_t xtnsize, qse_aw
 
 	/* initialize extension */
 	xtn = (xtn_t*) QSE_XTN (awk);
+	QSE_MEMSET (xtn, 0, QSE_SIZEOF(*xtn));
 
 	/* add intrinsic global variables and functions */
 	if (add_globals(awk) <= -1 ||

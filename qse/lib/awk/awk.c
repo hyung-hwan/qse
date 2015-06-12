@@ -140,7 +140,7 @@ int qse_awk_init (qse_awk_t* awk, qse_mmgr_t* mmgr, const qse_awk_prm_t* prm)
 	};
 
 	/* zero out the object */
-	QSE_MEMSET (awk, 0, QSE_SIZEOF(qse_awk_t));
+	QSE_MEMSET (awk, 0, QSE_SIZEOF(*awk));
 
 	/* remember the memory manager */
 	awk->mmgr = mmgr;
