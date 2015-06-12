@@ -739,12 +739,12 @@ static void cleanup_standard_httpd (qse_httpd_t* httpd)
 #endif
 }
 
-qse_httpd_t* qse_httpd_openstd (qse_size_t xtnsize)
+qse_httpd_t* qse_httpd_openstd (qse_size_t xtnsize, qse_httpd_errnum_t* errnum)
 {
-	return qse_httpd_openstdwithmmgr (QSE_MMGR_GETDFL(), xtnsize);
+	return qse_httpd_openstdwithmmgr (QSE_MMGR_GETDFL(), xtnsize, errnum);
 }
 
-qse_httpd_t* qse_httpd_openstdwithmmgr (qse_mmgr_t* mmgr, qse_size_t xtnsize)
+qse_httpd_t* qse_httpd_openstdwithmmgr (qse_mmgr_t* mmgr, qse_size_t xtnsize, qse_httpd_errnum_t* errnum)
 {
 	qse_httpd_t* httpd = QSE_NULL;
 	httpd_xtn_t* xtn = QSE_NULL;
@@ -752,11 +752,12 @@ qse_httpd_t* qse_httpd_openstdwithmmgr (qse_mmgr_t* mmgr, qse_size_t xtnsize)
 	int lt_dlinited = 0;
 #endif
 
-	httpd = qse_httpd_open (mmgr, QSE_SIZEOF(httpd_xtn_t) + xtnsize);
+	httpd = qse_httpd_open (mmgr, QSE_SIZEOF(httpd_xtn_t) + xtnsize, errnum);
 	if (httpd == QSE_NULL) goto oops;
 
 	xtn = (httpd_xtn_t*)qse_httpd_getxtn (httpd);
-	QSE_MEMSET (xtn, 0, QSE_SIZEOF(*xtn));
+	/* the extension area has been cleared in qse_httpd_open().
+	 * QSE_MEMSET (xtn, 0, QSE_SIZEOF(*xtn));*/
 
 #if defined(USE_LTDL)
 	/* lt_dlinit() can be called more than once and 

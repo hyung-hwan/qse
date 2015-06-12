@@ -1054,8 +1054,9 @@ extern "C" {
  * The qse_httpd_open() function creates a httpd processor.
  */
 QSE_EXPORT qse_httpd_t* qse_httpd_open (
-	qse_mmgr_t* mmgr,   /**< memory manager */
-	qse_size_t  xtnsize /**< extension size in bytes */
+	qse_mmgr_t*         mmgr,    /**< memory manager */
+	qse_size_t          xtnsize, /**< extension size in bytes */
+	qse_httpd_errnum_t* errnum
 );
 
 /**

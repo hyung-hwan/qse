@@ -100,24 +100,14 @@ static int int_to_str (qse_size_t val, qse_char_t* buf, qse_size_t buflen)
 	return 0;
 }
 
-qse_sed_t* qse_sed_openstd (qse_size_t xtnsize)
+qse_sed_t* qse_sed_openstd (qse_size_t xtnsize, qse_sed_errnum_t* errnum)
 {
-	return qse_sed_openstdwithmmgr (QSE_MMGR_GETDFL(), xtnsize);
+	return qse_sed_openstdwithmmgr (QSE_MMGR_GETDFL(), xtnsize, errnum);
 }
 
-qse_sed_t* qse_sed_openstdwithmmgr (qse_mmgr_t* mmgr, qse_size_t xtnsize)
+qse_sed_t* qse_sed_openstdwithmmgr (qse_mmgr_t* mmgr, qse_size_t xtnsize, qse_sed_errnum_t* errnum)
 {
-	qse_sed_t* sed;
-	xtn_t* xtn;
-
-	sed = qse_sed_open (mmgr, QSE_SIZEOF(xtn_t) + xtnsize);
-	if (!sed) return QSE_NULL;
-
-	/* initialize the my own extension area excluding xtnsize */
-	xtn = (xtn_t*) QSE_XTN(sed);
-	QSE_MEMSET (xtn, 0, QSE_SIZEOF(*xtn));
-
-	return sed;
+	return qse_sed_open (mmgr, QSE_SIZEOF(xtn_t) + xtnsize, errnum);
 }
 
 void* qse_sed_getxtnstd (qse_sed_t* sed)

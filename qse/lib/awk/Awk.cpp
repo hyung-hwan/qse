@@ -1146,7 +1146,7 @@ int Awk::open ()
 
 	qse_awk_errnum_t errnum;
 	this->awk = qse_awk_open (this->getMmgr(), QSE_SIZEOF(xtn_t), &prm, &errnum);
-	if (this->awk == QSE_NULL)
+	if (!this->awk)
 	{
 		this->setError (errnum);
 		return -1;

@@ -35,11 +35,16 @@ QSE_BEGIN_NAMESPACE(QSE)
 
 int Sed::open ()
 {
-	sed = qse_sed_open (this->getMmgr(), QSE_SIZEOF(Sed*));
-	if (!sed) return -1;
-	*(Sed**)QSE_XTN(sed) = this;
+	qse_sed_errnum_t errnum;
+	this->sed = qse_sed_open (this->getMmgr(), QSE_SIZEOF(Sed*), &errnum);
+	if (!this->sed) 
+	{
+		this->setError (errnum);
+		return -1;
+	}
+	*(Sed**)QSE_XTN(this->sed) = this;
 
-	dflerrstr = qse_sed_geterrstr (sed);
+	dflerrstr = qse_sed_geterrstr (this->sed);
 	qse_sed_seterrstr (sed, xerrstr);
 
 	return 0;
