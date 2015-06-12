@@ -754,8 +754,8 @@ static int sed_main (int argc, qse_char_t* argv[])
 		}
 	}
 
-	sed = qse_sed_openstdwithmmgr (mmgr, 0);
-	if (sed == QSE_NULL)
+	sed = qse_sed_openstdwithmmgr (mmgr, 0, QSE_NULL);
+	if (!sed)
 	{
 		qse_fprintf (QSE_STDERR, QSE_T("ERROR: cannot open stream editor\n"));
 		goto oops;

@@ -97,8 +97,10 @@ extern "C" {
  * over qse_xli_open() if you don't need finer-grained customization.
  */
 QSE_EXPORT qse_xli_t* qse_xli_openstd (
-	qse_size_t xtnsize,  /**< extension size in bytes */
-	qse_size_t rootxtnsize  /**< extension size in bytes for the root list node */
+	qse_size_t        xtnsize,      /**< extension size in bytes */
+	qse_size_t        rootxtnsize,  /**< extension size in bytes for the root list node */
+	qse_xli_errnum_t* errnum
+
 );
 
 /**
@@ -107,9 +109,10 @@ QSE_EXPORT qse_xli_t* qse_xli_openstd (
  * except that you can specify your own memory manager.
  */
 QSE_EXPORT qse_xli_t* qse_xli_openstdwithmmgr (
-	qse_mmgr_t* mmgr,    /**< memory manager */
-	qse_size_t  xtnsize, /**< extension size in bytes */
-	qse_size_t rootxtnsize  /**< extension size in bytes for the root list node */
+	qse_mmgr_t*       mmgr,        /**< memory manager */
+	qse_size_t        xtnsize,     /**< extension size in bytes */
+	qse_size_t        rootxtnsize,  /**< extension size in bytes for the root list node */
+	qse_xli_errnum_t* errnum
 );
 
 /**

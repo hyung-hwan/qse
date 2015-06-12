@@ -32,7 +32,7 @@ static void free_val (qse_xli_root_list_t* xli, qse_xli_val_t* val);
 static void free_list (qse_xli_root_list_t* xli, qse_xli_list_t* list);
 static void free_atom (qse_xli_root_list_t* xli, qse_xli_atom_t* atom);
 
-qse_xli_t* qse_xli_open (qse_mmgr_t* mmgr, qse_size_t xtnsize, qse_size_t rootxtnsize)
+qse_xli_t* qse_xli_open (qse_mmgr_t* mmgr, qse_size_t xtnsize, qse_size_t rootxtnsize, qse_xli_errnum_t* errnum)
 {
 	qse_xli_t* xli;
 
@@ -41,11 +41,13 @@ qse_xli_t* qse_xli_open (qse_mmgr_t* mmgr, qse_size_t xtnsize, qse_size_t rootxt
 	{
 		if (qse_xli_init (xli, mmgr, rootxtnsize) <= -1)
 		{
+			if (errnum) *errnum = qse_xli_geterrnum(xli);
 			QSE_MMGR_FREE (mmgr, xli);
 			return QSE_NULL;
 		}
 		else QSE_MEMSET (QSE_XTN(xli), 0, xtnsize);
 	}
+	else if (errnum) *errnum = QSE_XLI_ENOMEM;
 
 	return xli;
 }

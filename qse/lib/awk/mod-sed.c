@@ -94,7 +94,7 @@ static int fnc_file_to_file (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 
 	/* result = sed::file_to_file ("s/ABC/123/g", input_file, output_file [, option_string]) */
 
-	sed = qse_sed_openstdwithmmgr (qse_awk_rtx_getmmgr(rtx), 0);
+	sed = qse_sed_openstdwithmmgr (qse_awk_rtx_getmmgr(rtx), 0, QSE_NULL);
 	if (sed == QSE_NULL) 
 	{
 		ret = -2;
@@ -150,7 +150,7 @@ static int fnc_str_to_str (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	qse_cstr_t outstr;
 	int i = 0, ret = 0, n;
 
-	sed = qse_sed_openstdwithmmgr (qse_awk_rtx_getmmgr(rtx), 0);
+	sed = qse_sed_openstdwithmmgr (qse_awk_rtx_getmmgr(rtx), 0, QSE_NULL);
 	if (sed == QSE_NULL) 
 	{
 		ret = -2;

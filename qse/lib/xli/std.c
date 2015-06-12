@@ -71,9 +71,9 @@ typedef struct xtn_t
 	qse_xli_ecb_t ecb;
 } xtn_t;
 
-qse_xli_t* qse_xli_openstd (qse_size_t xtnsize, qse_size_t rootxtnsize)
+qse_xli_t* qse_xli_openstd (qse_size_t xtnsize, qse_size_t rootxtnsize, qse_xli_errnum_t* errnum)
 {
-	return qse_xli_openstdwithmmgr (QSE_MMGR_GETDFL(), xtnsize, rootxtnsize);
+	return qse_xli_openstdwithmmgr (QSE_MMGR_GETDFL(), xtnsize, rootxtnsize, errnum);
 }
 
 static void fini_xtn (qse_xli_t* xli)
@@ -86,18 +86,19 @@ static void clear_xtn (qse_xli_t* xli)
 	/* nothing to do */
 }
 
-qse_xli_t* qse_xli_openstdwithmmgr (qse_mmgr_t* mmgr, qse_size_t xtnsize, qse_size_t rootxtnsize)
+qse_xli_t* qse_xli_openstdwithmmgr (qse_mmgr_t* mmgr, qse_size_t xtnsize, qse_size_t rootxtnsize, qse_xli_errnum_t* errnum)
 {
 	qse_xli_t* xli;
 	xtn_t* xtn;
 
 	/* create an object */
-	xli = qse_xli_open (mmgr, QSE_SIZEOF(xtn_t) + xtnsize, rootxtnsize);
+	xli = qse_xli_open (mmgr, QSE_SIZEOF(xtn_t) + xtnsize, rootxtnsize, errnum);
 	if (xli == QSE_NULL) goto oops;
 
 	/* initialize extension */
 	xtn = (xtn_t*) QSE_XTN (xli);
-	QSE_MEMSET (xtn, 0, QSE_SIZEOF(*xtn));
+	/* the extension area has been cleared in qse_httpd_open().
+	 * QSE_MEMSET (xtn, 0, QSE_SIZEOF(*xtn));*/
 
 	xtn->ecb.close = fini_xtn;
 	xtn->ecb.clear = clear_xtn;

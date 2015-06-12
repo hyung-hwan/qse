@@ -392,15 +392,15 @@ extern "C" {
 #endif
 
 QSE_EXPORT qse_xli_t* qse_xli_open (
-	qse_mmgr_t* mmgr,
-	qse_size_t xtnsize,
-	qse_size_t rootxtnsize
+	qse_mmgr_t*       mmgr,
+	qse_size_t        xtnsize,
+	qse_size_t        rootxtnsize,
+	qse_xli_errnum_t* errnum
 );
 
 QSE_EXPORT void qse_xli_close (
 	qse_xli_t* xli
 );
-
 
 QSE_EXPORT qse_mmgr_t* qse_xli_getmmgr (
 	qse_xli_t* xli

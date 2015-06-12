@@ -17,7 +17,7 @@ static int sed_main (int argc, qse_char_t* argv[])
 	}
 
 	/* create the sed object */
-	sed = qse_sed_openstd (0);
+	sed = qse_sed_openstd (0, QSE_NULL);
 	if (sed == QSE_NULL)  
 	{
 		qse_fprintf (QSE_STDERR, QSE_T("ERROR: cannot open sed\n"));

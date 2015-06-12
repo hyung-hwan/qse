@@ -454,7 +454,8 @@ qse_awk_t* qse_awk_openstdwithmmgr (qse_mmgr_t* mmgr, qse_size_t xtnsize, qse_aw
 
 	/* initialize extension */
 	xtn = (xtn_t*) QSE_XTN (awk);
-	QSE_MEMSET (xtn, 0, QSE_SIZEOF(*xtn));
+	/* the extension area has been cleared in qse_awk_open().
+	 * QSE_MEMSET (xtn, 0, QSE_SIZEOF(*xtn));*/
 
 	/* add intrinsic global variables and functions */
 	if (add_globals(awk) <= -1 ||

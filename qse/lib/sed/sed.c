@@ -63,7 +63,7 @@ do { \
 
 static void free_all_cut_selector_blocks (qse_sed_t* sed, qse_sed_cmd_t* cmd);
 
-qse_sed_t* qse_sed_open (qse_mmgr_t* mmgr, qse_size_t xtnsize)
+qse_sed_t* qse_sed_open (qse_mmgr_t* mmgr, qse_size_t xtnsize, qse_sed_errnum_t* errnum)
 {
 	qse_sed_t* sed;
 
@@ -72,11 +72,13 @@ qse_sed_t* qse_sed_open (qse_mmgr_t* mmgr, qse_size_t xtnsize)
 	{
 		if (qse_sed_init (sed, mmgr) <= -1)
 		{
+			if (errnum) *errnum = qse_sed_geterrnum(sed);
 			QSE_MMGR_FREE (mmgr, sed);
 			return QSE_NULL;
 		}
 		else QSE_MEMSET (QSE_XTN(sed), 0, xtnsize);
 	}
+	else if (errnum) *errnum = QSE_SED_ENOMEM;
 
 	return sed;
 }

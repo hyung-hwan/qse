@@ -2282,7 +2282,7 @@ static int open_config_file (qse_httpd_t* httpd)
 	httpd_xtn = (httpd_xtn_t*) qse_httpd_getxtnstd (httpd);
 	QSE_ASSERT (httpd_xtn->xli == QSE_NULL);
 
-	httpd_xtn->xli = qse_xli_openstd (0, 0);
+	httpd_xtn->xli = qse_xli_openstd (0, 0, QSE_NULL);
 	if (httpd_xtn->xli == QSE_NULL)
 	{
 		qse_fprintf (QSE_STDERR, QSE_T("Cannot open xli\n"));
@@ -2710,7 +2710,7 @@ static int httpd_main (int argc, qse_char_t* argv[])
 	if (ret <= -1) return -1;
 	if (ret == 0) return 0;
 
-	httpd = qse_httpd_openstd (QSE_SIZEOF(httpd_xtn_t));
+	httpd = qse_httpd_openstd (QSE_SIZEOF(httpd_xtn_t), QSE_NULL);
 	if (httpd == QSE_NULL)
 	{
 		qse_fprintf (QSE_STDERR, QSE_T("ERROR: Cannot open httpd\n"));

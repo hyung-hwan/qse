@@ -424,8 +424,9 @@ extern "C" {
  * @return pointer to a stream editor on success, QSE_NULL on failure
  */
 QSE_EXPORT qse_sed_t* qse_sed_open (
-	qse_mmgr_t*    mmgr,   /**< memory manager */
-	qse_size_t     xtnsize /**< extension size in bytes */
+	qse_mmgr_t*       mmgr,    /**< memory manager */
+	qse_size_t        xtnsize, /**< extension size in bytes */
+	qse_sed_errnum_t* errnum
 );
 
 /**

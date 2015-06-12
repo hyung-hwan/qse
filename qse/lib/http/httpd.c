@@ -69,7 +69,7 @@ static void unload_all_modules (qse_httpd_t* httpd);
 
 qse_http_version_t qse_http_v11 = { 1, 1 };
 
-qse_httpd_t* qse_httpd_open (qse_mmgr_t* mmgr, qse_size_t xtnsize)
+qse_httpd_t* qse_httpd_open (qse_mmgr_t* mmgr, qse_size_t xtnsize, qse_httpd_errnum_t* errnum)
 {
 	qse_httpd_t* httpd;
 
@@ -78,11 +78,13 @@ qse_httpd_t* qse_httpd_open (qse_mmgr_t* mmgr, qse_size_t xtnsize)
 	{
 		if (qse_httpd_init (httpd, mmgr) <= -1)
 		{
+			if (errnum) *errnum = qse_httpd_geterrnum(httpd);
 			QSE_MMGR_FREE (mmgr, httpd);
 			return QSE_NULL;
 		}
 		else QSE_MEMSET (QSE_XTN(httpd), 0, xtnsize);
 	}
+	else if (errnum) *errnum = QSE_HTTPD_ENOMEM;
 
 	return httpd;
 }

@@ -223,12 +223,14 @@ extern "C" {
 #endif
 
 QSE_EXPORT qse_httpd_t* qse_httpd_openstd (
-	qse_size_t xtnsize
+	qse_size_t          xtnsize,
+	qse_httpd_errnum_t* errnum
 );
 
 QSE_EXPORT qse_httpd_t* qse_httpd_openstdwithmmgr (
-	qse_mmgr_t* mmgr,
-	qse_size_t  xtnsize
+	qse_mmgr_t*         mmgr,
+	qse_size_t          xtnsize,
+	qse_httpd_errnum_t* errnum
 );
 
 QSE_EXPORT void* qse_httpd_getxtnstd (
