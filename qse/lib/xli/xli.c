@@ -185,8 +185,7 @@ void* qse_xli_allocmem (qse_xli_t* xli, qse_size_t size)
 	void* ptr;
 
 	ptr = QSE_MMGR_ALLOC (xli->mmgr, size);
-	if (ptr == QSE_NULL) 
-		qse_xli_seterrnum (xli, QSE_XLI_ENOMEM, QSE_NULL);
+	if (!ptr) qse_xli_seterrnum (xli, QSE_XLI_ENOMEM, QSE_NULL);
 	return ptr;
 }
 
@@ -195,8 +194,7 @@ void* qse_xli_callocmem (qse_xli_t* xli, qse_size_t size)
 	void* ptr;
 
 	ptr = QSE_MMGR_ALLOC (xli->mmgr, size);
-	if (ptr == QSE_NULL)
-		qse_xli_seterrnum (xli, QSE_XLI_ENOMEM, QSE_NULL);
+	if (!ptr) qse_xli_seterrnum (xli, QSE_XLI_ENOMEM, QSE_NULL);
 	else QSE_MEMSET (ptr, 0, size);
 	return ptr;
 }
@@ -256,7 +254,7 @@ static qse_xli_pair_t* insert_pair (
 		((key->len + 1) * QSE_SIZEOF(*key->ptr)) + 
 		((alen + 1) * QSE_SIZEOF(*alias->ptr)) +
 		((tlen + 1) * QSE_SIZEOF(*keytag->ptr)));
-	if (pair == QSE_NULL) return QSE_NULL;
+	if (!pair) return QSE_NULL;
 
 	kptr = (qse_char_t*)((qse_uint8_t*)(pair + 1) + xli->opt.pair_xtnsize);
 	qse_strcpy (kptr, key->ptr);
@@ -318,11 +316,11 @@ qse_xli_pair_t* qse_xli_insertpairwithemptylist (
 	qse_xli_pair_t* tmp;
 
 	val = qse_xli_callocmem (xli, QSE_SIZEOF(*val));
-	if (val == QSE_NULL) return QSE_NULL;
+	if (!val) return QSE_NULL;
 
 	val->type = QSE_XLI_LIST;
 	tmp = qse_xli_insertpair (xli, parent, peer, key, alias, keytag, (qse_xli_val_t*)val);	
-	if (tmp == QSE_NULL) qse_xli_freemem (xli, val);
+	if (!tmp) qse_xli_freemem (xli, val);
 	return tmp;
 }
 
@@ -339,7 +337,7 @@ qse_xli_pair_t* qse_xli_insertpairwithstr (
 	if (strtag) reqlen += (qse_strlen (strtag) + 1) * QSE_SIZEOF(*strtag);
 
 	val = qse_xli_callocmem (xli, reqlen);
-	if (val == QSE_NULL) return QSE_NULL;
+	if (!val) return QSE_NULL;
 
 	val->type = QSE_XLI_STR;
 
@@ -354,7 +352,7 @@ qse_xli_pair_t* qse_xli_insertpairwithstr (
 	}
 	
 	tmp = qse_xli_insertpair (xli, parent, peer, key, alias, keytag, (qse_xli_val_t*)val);	
-	if (tmp == QSE_NULL) qse_xli_freemem (xli, val);
+	if (!tmp) qse_xli_freemem (xli, val);
 	return tmp;
 }
 
@@ -374,13 +372,13 @@ qse_xli_pair_t* qse_xli_insertpairwithstrs (
 	}
 
 	tmp = qse_xli_insertpairwithstr (xli, parent, peer, key, alias, keytag, &value[0], QSE_NULL);
-	if (tmp == QSE_NULL) return QSE_NULL;
+	if (!tmp) return QSE_NULL;
 
 	str = (qse_xli_str_t*)tmp->val;
 	for (i = 1; i < count; i++)
 	{
 		str = qse_xli_addsegtostr (xli, str, QSE_NULL, &value[i]);
-		if (str == QSE_NULL)
+		if (!str)
 		{
 			free_atom (xli->root, (qse_xli_atom_t*)tmp);
 			return QSE_NULL;
@@ -399,7 +397,7 @@ qse_xli_text_t* qse_xli_inserttext (
 	slen = qse_strlen (str);
 
 	text = qse_xli_callocmem (xli, QSE_SIZEOF(*text) + ((slen + 1) * QSE_SIZEOF(*str)));
-	if (text == QSE_NULL) return QSE_NULL;
+	if (!text) return QSE_NULL;
 
 	text->type = QSE_XLI_TEXT;
 	text->ptr = (const qse_char_t*)(text + 1);
@@ -420,7 +418,7 @@ qse_xli_file_t* qse_xli_insertfile (
 	plen = qse_strlen (path);
 
 	file = qse_xli_callocmem (xli, QSE_SIZEOF(*file) + ((plen + 1) * QSE_SIZEOF(*path)));
-	if (file == QSE_NULL) return QSE_NULL;
+	if (!file) return QSE_NULL;
 
 	file->type = QSE_XLI_FILE;
 	file->path = (const qse_char_t*)(file + 1);
@@ -438,7 +436,7 @@ qse_xli_eof_t* qse_xli_inserteof (
 	qse_xli_eof_t* eof;
 
 	eof = qse_xli_callocmem (xli, QSE_SIZEOF(*eof));
-	if (eof == QSE_NULL) return QSE_NULL;
+	if (!eof) return QSE_NULL;
 
 	eof->type = QSE_XLI_EOF;
 	insert_atom (xli, parent, peer, (qse_xli_atom_t*)eof);
@@ -453,7 +451,7 @@ static qse_xli_root_list_t* make_root (qse_xli_t* xli)
 	qse_xli_root_list_t* tmp;
 
 	tmp = QSE_MMGR_ALLOC (xli->mmgr, QSE_SIZEOF(*tmp) + xli->opt.root_xtnsize);
-	if (tmp == QSE_NULL) 
+	if (!tmp) 
 	{
 		qse_xli_seterrnum (xli, QSE_XLI_ENOMEM, QSE_NULL);
 		return QSE_NULL;
@@ -472,7 +470,9 @@ static void free_val (qse_xli_root_list_t* root, qse_xli_val_t* val)
 	if ((qse_xli_nil_t*)val != &root->xnil)
 	{
 		if (val->type == QSE_XLI_LIST)
+		{
 			free_list (root, (qse_xli_list_t*)val);
+		}
 		else if (val->type == QSE_XLI_STR)
 		{
 			qse_xli_str_t* cur, * next; 
@@ -549,7 +549,7 @@ qse_xli_list_t* qse_xli_yieldroot (qse_xli_t* xli)
 	qse_xli_root_list_t* tmp, * tmp2;
 
 	tmp = make_root (xli);
-	if (tmp == QSE_NULL) return QSE_NULL;
+	if (!tmp) return QSE_NULL;
 
 	tmp2 = xli->root;
 	xli->root = tmp;
