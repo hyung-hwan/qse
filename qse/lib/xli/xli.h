@@ -118,6 +118,14 @@ const qse_char_t* qse_xli_dflerrstr (
 void qse_xli_clearrionames (qse_xli_t* xli);
 void qse_xli_clearwionames (qse_xli_t* xli);
 
+
+int qse_xli_getchar (qse_xli_t* xli);
+int qse_xli_openstream (qse_xli_t* xli, qse_xli_io_arg_t* arg);
+int qse_xli_closecurrentstream (qse_xli_t* xli);
+
+qse_xli_list_link_t* qse_xli_makelistlink (qse_xli_t* xli, qse_xli_list_t* parlist);
+void qse_xli_freelistlink (qse_xli_t* xli, qse_xli_list_link_t* link);
+
 #if defined(__cplusplus)
 }
 #endif

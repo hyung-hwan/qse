@@ -721,6 +721,14 @@ QSE_EXPORT int qse_xli_read (
 	qse_xli_io_impl_t io
 );
 
+/*
+ * The qse_xli_readini() function reads the ini-styled text file.
+ */
+QSE_EXPORT int qse_xli_readini (
+	qse_xli_t*        xli,
+	qse_xli_io_impl_t io
+);
+
 QSE_EXPORT int qse_xli_write (
 	qse_xli_t*        xli,
 	qse_xli_io_impl_t io
