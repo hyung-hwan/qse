@@ -27,7 +27,6 @@
 #include "xli.h"
 #include <qse/cmn/chr.h>
 
-static int get_char (qse_xli_t* xli);
 static int get_token (qse_xli_t* xli);
 static int read_list (qse_xli_t* xli, qse_xli_list_t* list, const qse_xli_scm_t* override);
 
@@ -38,7 +37,22 @@ enum
 
 static qse_xli_scm_t scm_val_iffy = { QSE_XLI_SCM_VALSTR | QSE_XLI_SCM_KEYNODUP, 1, 1 };
 
-static int close_current_stream (qse_xli_t* xli)
+int qse_xli_openstream (qse_xli_t* xli, qse_xli_io_arg_t* arg)
+{
+	qse_ssize_t n;
+
+	n = xli->rio.impl (xli, QSE_XLI_IO_OPEN, arg, QSE_NULL, 0);
+	if (n <= -1)
+	{
+		if (xli->errnum == QSE_XLI_ENOERR)
+			qse_xli_seterrnum (xli, QSE_XLI_EIOUSR, QSE_NULL); 
+		return -1;
+	}
+
+	return 0;
+}
+
+int qse_xli_closecurrentstream (qse_xli_t* xli)
 {
 	qse_ssize_t n;
 
@@ -73,11 +87,11 @@ enum tok_t
 };
 
 #define GET_CHAR(xli) \
-	do { if (get_char(xli) <= -1) return -1; } while(0)
+	do { if (qse_xli_getchar(xli) <= -1) return -1; } while(0)
 
 #define GET_CHAR_TO(xli,c) \
 	do { \
-		if (get_char(xli) <= -1) return -1; \
+		if (qse_xli_getchar(xli) <= -1) return -1; \
 		c = (xli)->rio.last.c; \
 	} while(0)
 
@@ -119,7 +133,7 @@ static kwent_t kwtab[] =
 	{ { QSE_T("@include"),     8 }, TOK_XINCLUDE }
 };
 
-static int get_char (qse_xli_t* xli)
+int qse_xli_getchar (qse_xli_t* xli)
 {
 	qse_ssize_t n;
 
@@ -351,12 +365,7 @@ static int begin_include (qse_xli_t* xli)
 	/* let the argument's prev point field to the current */
 	arg->prev = xli->rio.inp; 
 
-	if (xli->rio.impl (xli, QSE_XLI_IO_OPEN, arg, QSE_NULL, 0) <= -1)
-	{
-		if (xli->errnum == QSE_XLI_ENOERR)
-			qse_xli_seterrnum (xli, QSE_XLI_EIOUSR, QSE_NULL); 
-		goto oops;
-	}
+	if (qse_xli_openstream(xli, arg) <= -1) goto oops;
 
 	/* i update the current pointer after opening is successful */
 	xli->rio.inp = arg;
@@ -365,7 +374,7 @@ static int begin_include (qse_xli_t* xli)
 	/* read in the first character in the included file. 
 	 * so the next call to get_token() sees the character read
 	 * from this file. */
-	if (get_char (xli) <= -1 || get_token (xli) <= -1) 
+	if (qse_xli_getchar (xli) <= -1 || get_token (xli) <= -1) 
 	{
 		end_include (xli, 1); 
 		/* i don't jump to oops since i've called 
@@ -426,7 +435,7 @@ retry:
 
 		ADD_TOKEN_STR (xli, tok, QSE_T("<EOF>"), 5);
 		SET_TOKEN_TYPE (xli, tok, TOK_EOF);
-	}	
+	}
 	else if (c == QSE_T('@'))
 	{
 		/* keyword/directive - start with @ */
@@ -985,7 +994,7 @@ oops:
 	return -1;
 }
 
-static qse_xli_list_link_t* make_list_link (qse_xli_t* xli, qse_xli_list_t* parlist)
+qse_xli_list_link_t* qse_xli_makelistlink (qse_xli_t* xli, qse_xli_list_t* parlist)
 {
 	qse_xli_list_link_t* link;
 
@@ -999,7 +1008,7 @@ static qse_xli_list_link_t* make_list_link (qse_xli_t* xli, qse_xli_list_t* parl
 	return link;
 }
 
-static void free_list_link (qse_xli_t* xli, qse_xli_list_link_t* link)
+void qse_xli_freelistlink (qse_xli_t* xli, qse_xli_list_link_t* link)
 {
 	xli->parlink = link->next;
 	qse_xli_freemem (xli, link);
@@ -1071,7 +1080,7 @@ static int read_list (qse_xli_t* xli, qse_xli_list_t* parlist, const qse_xli_scm
 {
 	qse_xli_list_link_t* link;
 
-	link = make_list_link (xli, parlist);
+	link = qse_xli_makelistlink (xli, parlist);
 	if (link == QSE_NULL) return -1;
 
 	/* get_token() here is to read the token after the left brace.
@@ -1079,12 +1088,12 @@ static int read_list (qse_xli_t* xli, qse_xli_list_t* parlist, const qse_xli_scm
 	 * in case there are comments at the beginning of the list */
 	if (get_token (xli) <= -1 || __read_list (xli, override) <= -1) 
 	{
-		free_list_link (xli, link);
+		qse_xli_freelistlink (xli, link);
 		return -1;
 	}
 
 	QSE_ASSERT (link == xli->parlink);
-	free_list_link (xli, link);
+	qse_xli_freelistlink (xli, link);
 
 	return 0;
 }
@@ -1093,17 +1102,17 @@ static int read_root_list (qse_xli_t* xli)
 {
 	qse_xli_list_link_t* link;
 
-	link = make_list_link (xli, &xli->root->list);
-	if (link == QSE_NULL) return -1;
+	link = qse_xli_makelistlink (xli, &xli->root->list);
+	if (!link) return -1;
 
-	if (get_char (xli) <= -1 || get_token (xli) <= -1 || __read_list (xli, QSE_NULL) <= -1)
+	if (qse_xli_getchar (xli) <= -1 || get_token (xli) <= -1 || __read_list (xli, QSE_NULL) <= -1)
 	{
-		free_list_link (xli, link);
+		qse_xli_freelistlink (xli, link);
 		return -1;
 	}
 
 	QSE_ASSERT (link == xli->parlink);
-	free_list_link (xli, link);
+	qse_xli_freelistlink (xli, link);
 
 	return 0;
 }
@@ -1121,9 +1130,7 @@ void qse_xli_clearrionames (qse_xli_t* xli)
 
 int qse_xli_read (qse_xli_t* xli, qse_xli_io_impl_t io)
 {
-	qse_ssize_t n;
-
-	if (io == QSE_NULL)
+	if (!io)
 	{
 		qse_xli_seterrnum (xli, QSE_XLI_EINVAL, QSE_NULL); 
 		return -1;
@@ -1140,13 +1147,7 @@ int qse_xli_read (qse_xli_t* xli, qse_xli_io_impl_t io)
 
 	QSE_ASSERT (QSE_STR_LEN(xli->dotted_curkey) == 0);
 
-	n = xli->rio.impl (xli, QSE_XLI_IO_OPEN, xli->rio.inp, QSE_NULL, 0);
-	if (n <= -1)
-	{
-		if (xli->errnum == QSE_XLI_ENOERR)
-			qse_xli_seterrnum (xli, QSE_XLI_EIOUSR, QSE_NULL); 
-		return -1;
-	}
+	if (qse_xli_openstream (xli, xli->rio.inp) <= -1) return -1;
 	/* the input stream is open now */
 
 	if (read_root_list (xli) <= -1) goto oops;
@@ -1160,7 +1161,7 @@ int qse_xli_read (qse_xli_t* xli, qse_xli_io_impl_t io)
 	}
 
 	QSE_ASSERT (xli->rio.inp == &xli->rio.top);
-	close_current_stream (xli);
+	qse_xli_closecurrentstream (xli);
 	qse_str_clear (xli->tok.name);
 	return 0;
 
@@ -1173,7 +1174,7 @@ oops:
 		qse_xli_io_arg_t* prev;
 
 		/* nothing much to do about a close error */
-		close_current_stream (xli);
+		qse_xli_closecurrentstream (xli);
 
 		prev = xli->rio.inp->prev;
 		QSE_ASSERT (xli->rio.inp->name != QSE_NULL);
@@ -1181,7 +1182,7 @@ oops:
 		xli->rio.inp = prev;
 	}
 	
-	close_current_stream (xli);
+	qse_xli_closecurrentstream (xli);
 	qse_str_clear (xli->tok.name);
 	return -1;
 }
