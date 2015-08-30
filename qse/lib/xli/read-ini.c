@@ -35,14 +35,19 @@
  * key1 = value1
  * --------------------------------
  *
- * SECTION1 = {
+ * SECTION1 {
  *   key1 = value1;
  *   key2 = value2;
  * }
- * SECTION2 = {
+ * SECTION2 {
  *   key1 = value1;
  * }
  */
+
+enum
+{
+	TOK_STATUS_UPTO_EOL = (1 << 0) 
+};
 
 #define GET_CHAR(xli) \
 	do { if (qse_xli_getchar(xli) <= -1) return -1; } while(0)
@@ -71,6 +76,10 @@
 		} \
 	} while (0)
 
+#define SET_TOKEN_TYPE(xli,tok,code) \
+	do { (tok)->type = (code); } while (0)
+
+#define MATCH(xli,tok_type) ((xli)->tok.type == (tok_type))
 
 static int skip_spaces (qse_xli_t* xli)
 {
@@ -102,7 +111,7 @@ static int skip_comment (qse_xli_t* xli, qse_xli_tok_t* tok)
 		    qse_xli_inserttext (xli, xli->parlink->list, QSE_NULL, QSE_STR_PTR(tok->name)) == QSE_NULL) return -1;
 
 		GET_CHAR (xli); /* eat the new line letter */
-		return 1; /* comment by # */
+		return 1; /* comment by ; */
 	}
 
 	return 0; 
@@ -130,21 +139,132 @@ static int get_token_into (qse_xli_t* xli, qse_xli_tok_t* tok)
 
 	if (c == QSE_CHAR_EOF) 
 	{
-#if 0
-		n = end_include (xli, 0);
-		if (n <= -1) return -1;
-		if (n >= 1) 
+		ADD_TOKEN_STR (xli, tok, QSE_T("<EOF>"), 5);
+		SET_TOKEN_TYPE (xli, tok, QSE_XLI_TOK_EOF); 
+	}
+	else if (xli->tok_status & TOK_STATUS_UPTO_EOL)
+	{
+		qse_size_t xlen = 0;
+
+		SET_TOKEN_TYPE (xli, tok, QSE_XLI_TOK_SQSTR);
+
+		while (1)
 		{
-			/*xli->rio.last = xli->rio.inp->last;*/
-			/* mark that i'm retrying after end of an included file */
-			skip_semicolon_after_include = 1; 
-			goto retry;
+			GET_CHAR_TO (xli, c);
+			if (c == QSE_CHAR_EOF || c == QSE_T(';')) break;
+
+			ADD_TOKEN_CHAR (xli, tok, c);
+			if (!QSE_ISSPACE(c)) xlen = QSE_STR_LEN(tok->name);
 		}
 
-		ADD_TOKEN_STR (xli, tok, QSE_T("<EOF>"), 5);
-		SET_TOKEN_TYPE (xli, tok, TOK_EOF); 
-#endif
+		/* trim away trailing spaces */
+		qse_str_setlen (tok->name, xlen);
 	}
+	else if (c == QSE_T('['))
+	{
+		/* in the ini-styled format, a tag is used as a section name.
+		 * but the kinds of allowed charaters are more limited than
+		 * a normal tag in the xli format. */
+		SET_TOKEN_TYPE (xli, tok, QSE_XLI_TOK_TAG);
+
+		while (1)
+		{
+			GET_CHAR_TO (xli, c);
+
+			if (c == QSE_CHAR_EOF)
+			{
+				/* the string tag is not closed */
+				qse_xli_seterror (xli, QSE_XLI_ETAGNC, QSE_NULL, &xli->tok.loc);
+				return -1;
+			}
+
+			if (c == QSE_T(']'))
+			{
+				/* terminating quote */
+				GET_CHAR (xli);
+				break;
+			}
+
+			if (!QSE_ISALNUM(c) && c != QSE_T('-') && c != QSE_T('_') && c != QSE_T(':'))
+			{
+				qse_char_t cc = (qse_char_t)c;
+				qse_cstr_t ea;
+				ea.ptr = &cc;
+				ea.len = 1;
+				qse_xli_seterror (xli, QSE_XLI_ETAGCHR, &ea, &tok->loc);
+				return -1;
+			}
+
+			ADD_TOKEN_CHAR (xli, tok, c);
+		}
+	}
+	else if (c == QSE_T('_') || QSE_ISALPHA (c) || 
+	         ((xli->opt.trait & QSE_XLI_LEADDIGIT) && QSE_ISDIGIT(c)))
+	{
+		int lead_digit = QSE_ISDIGIT(c);
+		int all_digits = 1;
+
+		/* a normal identifier can be composed of wider varieties of 
+		 * characters than a keyword/directive */
+		while (1)
+		{
+			ADD_TOKEN_CHAR (xli, tok, c);
+			GET_CHAR_TO (xli, c);
+
+			if (c == QSE_T('_') || c == QSE_T('-') || 
+			    c == QSE_T(':') || c == QSE_T('*') ||
+			    c == QSE_T('/') || QSE_ISALPHA (c)) 
+			{
+				all_digits = 0;
+			}
+			else if (QSE_ISDIGIT(c)) 
+			{
+				/* nothing to do */
+			}
+			else break;
+		} 
+
+		if (lead_digit && all_digits)
+		{
+			/* if an identifier begins with a digit, it must contain a non-digits character */
+			qse_xli_seterror (xli, QSE_XLI_EIDENT, QSE_STR_XSTR(tok->name), &tok->loc);
+			return -1;
+		}
+
+		SET_TOKEN_TYPE (xli, tok, QSE_XLI_TOK_IDENT);
+	}
+	else if (c == QSE_T('='))
+	{
+		SET_TOKEN_TYPE (xli, tok, QSE_XLI_TOK_EQ);
+		ADD_TOKEN_CHAR (xli, tok, c);
+	}
+	else
+	{
+		/* not handled yet */
+		if (c == QSE_T('\0'))
+		{
+			qse_cstr_t ea;
+			ea.ptr = QSE_T("<NUL>");
+			ea.len = 5;
+			qse_xli_seterror (xli, QSE_XLI_ELXCHR, &ea, &tok->loc);
+		}
+		else
+		{
+			qse_char_t cc = (qse_char_t)c;
+			qse_cstr_t ea;
+			ea.ptr = &cc;
+			ea.len = 1;
+			qse_xli_seterror (xli, QSE_XLI_ELXCHR, &ea, &tok->loc);
+		}
+		return -1;
+	}
+
+	return 0;
+}
+
+static int get_token (qse_xli_t* xli)
+{
+	return get_token_into (xli, &xli->tok);
 }
 
 static int __read_list (qse_xli_t* xli, const qse_xli_scm_t* override)
@@ -185,6 +305,8 @@ int qse_xli_readini (qse_xli_t* xli, qse_xli_io_impl_t io)
 	xli->rio.top.colm = 1;
 	xli->rio.inp = &xli->rio.top;
 
+	xli->tok_status = 0;
+
 	qse_xli_seterrnum (xli, QSE_XLI_ENOERR, QSE_NULL); 
 	qse_xli_clearrionames (xli);
 
@@ -197,13 +319,11 @@ int qse_xli_readini (qse_xli_t* xli, qse_xli_io_impl_t io)
 
 	QSE_ASSERT (xli->parlink == QSE_NULL);
 
-/*
-	if (!MATCH (xli, TOK_EOF))
+	if (!MATCH (xli, QSE_XLI_TOK_EOF))
 	{
 		qse_xli_seterror (xli, QSE_XLI_ESYNTAX, QSE_NULL, &xli->tok.loc);
 		goto oops;
 	}
-*/
 
 	QSE_ASSERT (xli->rio.inp == &xli->rio.top);
 	qse_xli_closecurrentstream (xli);

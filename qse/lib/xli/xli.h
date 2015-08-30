@@ -32,13 +32,32 @@
 #include <qse/cmn/rbt.h>
 #include "../cmn/mem.h"
 
+enum qse_xli_tok_type_t
+{
+	QSE_XLI_TOK_EOF,
+	QSE_XLI_TOK_XINCLUDE,
+	QSE_XLI_TOK_SEMICOLON,
+	QSE_XLI_TOK_LBRACE,
+	QSE_XLI_TOK_RBRACE,
+	QSE_XLI_TOK_EQ,
+	QSE_XLI_TOK_COMMA,
+	QSE_XLI_TOK_DQSTR,
+	QSE_XLI_TOK_SQSTR,
+	QSE_XLI_TOK_NSTR,
+	QSE_XLI_TOK_IDENT,
+	QSE_XLI_TOK_TEXT,
+	QSE_XLI_TOK_TAG
+};
+
+typedef enum qse_xli_tok_type_t qse_xli_tok_type_t;
+
 typedef struct qse_xli_tok_t qse_xli_tok_t;
 
 struct qse_xli_tok_t
 {
-     int           type;
-     qse_str_t*    name;
-     qse_xli_loc_t loc;
+	qse_xli_tok_type_t type;
+	qse_str_t*         name;
+	qse_xli_loc_t      loc;
 };
 
 typedef struct qse_xli_list_link_t qse_xli_list_link_t;
@@ -88,7 +107,7 @@ struct qse_xli_t
 	struct
 	{
 		qse_xli_io_impl_t impl; /* input handler */
-		qse_xli_io_lxc_t  last;	
+		qse_xli_io_lxc_t  last;
 		qse_xli_io_arg_t  top; /* for top level */
 		qse_xli_io_arg_t* inp; /* current */
 	} rio;

@@ -334,6 +334,7 @@ struct qse_xli_io_arg_t
 		qse_char_t buf[1024];
 		qse_size_t pos;
 		qse_size_t len;
+		int state;
 	} b;
 
 	qse_size_t line;
