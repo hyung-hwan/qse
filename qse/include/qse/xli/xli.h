@@ -66,6 +66,7 @@ enum qse_xli_errnum_t
 
 	QSE_XLI_ESYNTAX,  /**< syntax error */
 	QSE_XLI_ESCOLON,  /**< semicolon expected in place of '${0}' */
+	QSE_XLI_EEQ,      /**< = expected in place of '${0}' */
 	QSE_XLI_ELBREQ,   /**< { or = expected in place of '${0}' */
 	QSE_XLI_ERBRCE,   /**< } expected in place of '${0}' */
 	QSE_XLI_EPAVAL,   /**< pair value expected in place of '${0}' */
@@ -77,12 +78,15 @@ enum qse_xli_errnum_t
 	QSE_XLI_EXKWNR,   /**< @word '${0}' not recognized */
 	QSE_XLI_EXKWEM,   /**< @ not followed by a valid word  */
 	QSE_XLI_EIDENT,   /**< invalid identifier '${0}' */
+	QSE_XLI_EKEY,     /**< key expected in place of '${0}' */
 	QSE_XLI_ENOKEY,   /**< missing key after key tag */
 	QSE_XLI_EUDKEY,   /**< undefined key '${0}' */
 	QSE_XLI_ENOALI,   /**< no alias for '${0}' */
+	QSE_XLI_EVAL,     /**< value expected in place of '${0}' */
 	QSE_XLI_EILVAL,   /**< illegal value for '${0}' */
 	QSE_XLI_ENOVAL,   /**< no value for '${0}' */
-	QSE_XLI_ESTRSEG   /**< too many string segments for '${0}' */
+	QSE_XLI_ESTRSEG,  /**< too many string segments for '${0}' */
+	QSE_XLI_ESECTAG,  /**< section tag expected in place of '${0}' */
 };
 typedef enum qse_xli_errnum_t qse_xli_errnum_t;
 

@@ -46,7 +46,8 @@
 
 enum
 {
-	TOK_STATUS_UPTO_EOL = (1 << 0) 
+	TOK_STATUS_SAME_LINE = (1 << 0),
+	TOK_STATUS_UPTO_EOL = (1 << 1)
 };
 
 #define GET_CHAR(xli) \
@@ -267,8 +268,60 @@ static int get_token (qse_xli_t* xli)
 	return get_token_into (xli, &xli->tok);
 }
 
-static int __read_list (qse_xli_t* xli, const qse_xli_scm_t* override)
+static int read_list (qse_xli_t* xli)
 {
+
+	while (1)
+	{
+		if (MATCH(xli, QSE_XLI_TOK_EOF)) break;
+
+		if (MATCH(xli, QSE_XLI_TOK_TAG))
+		{
+			if (get_token(xli) <= -1) return -1;
+
+			if (MATCH(xli, QSE_XLI_TOK_EOF)) break;
+			if (MATCH(xli, QSE_XLI_TOK_TAG)) continue;
+
+			if (!MATCH(xli, QSE_XLI_TOK_IDENT))
+			{
+				qse_xli_seterror (xli, QSE_XLI_EKEY, QSE_STR_XSTR(xli->tok.name), &xli->tok.loc);
+				return -1;
+			}
+
+/* key is the token... */
+			xli->tok_status |= TOK_STATUS_SAME_LINE;
+			if (get_token (xli) <= -1) return -1;
+
+			if (!MATCH(xli, QSE_XLI_TOK_EQ))
+			{
+				qse_xli_seterror (xli, QSE_XLI_EEQ,  QSE_STR_XSTR(xli->tok.name), &xli->tok.loc);
+				return -1;
+			}
+
+			xli->tok_status |= TOK_STATUS_UPTO_EOL;
+			if (get_token (xli) <= -1) return -1;
+
+			xli->tok_status &= ~(TOK_STATUS_SAME_LINE | TOK_STATUS_UPTO_EOL);
+
+			if (MATCH(xli, QSE_XLI_TOK_EOF))
+			{
+				/* empty value */
+				break;
+			}
+
+			if (!MATCH(xli, QSE_XLI_TOK_SQSTR))
+			{
+				qse_xli_seterror (xli, QSE_XLI_EVAL, QSE_STR_XSTR(xli->tok.name), &xli->tok.loc);
+				return -1;
+			}
+		}
+		else
+		{
+			qse_xli_seterror (xli, QSE_XLI_ESECTAG, QSE_STR_XSTR(xli->tok.name), &xli->tok.loc);
+			return -1;
+		}
+	}
+
 	return 0;
 }
 
@@ -279,7 +332,7 @@ static int read_root_list (qse_xli_t* xli)
 	link = qse_xli_makelistlink (xli, &xli->root->list);
 	if (!link) return -1;
 
-	if (qse_xli_getchar (xli) <= -1 || __read_list (xli, QSE_NULL) <= -1)
+	if (qse_xli_getchar (xli) <= -1 || get_token (xli) <= -1 || read_list (xli) <= -1)
 	{
 		qse_xli_freelistlink (xli, link);
 		return -1;
