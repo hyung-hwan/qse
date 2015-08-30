@@ -47,6 +47,7 @@ const qse_char_t* qse_xli_dflerrstr (
 
 		QSE_T("syntax error"),
 		QSE_T("semicolon expected in place of '${0}'"),
+		QSE_T("equal-sign expected in place of '${0}'"),
 		QSE_T("left-brace or equal-sign expected in place of '${0}'"),
 		QSE_T("right-brace expected in place of '${0}'"),
 		QSE_T("pair value expected in place of '${0}'"),
@@ -58,12 +59,15 @@ const qse_char_t* qse_xli_dflerrstr (
 		QSE_T("'${0}' not recognized"),
 		QSE_T("@ not followed by a valid word"),
 		QSE_T("invalid identifier '${0}'"),
+		QSE_T("key expected in place of '${0}'"),
 		QSE_T("missing key after key tag"),
 		QSE_T("undefined key '${0}'"),
 		QSE_T("no alias for '${0}'"),
+		QSE_T("value expected in place of '${0}'"),
 		QSE_T("illegal value for '${0}'"),
 		QSE_T("no value for '${0}'"),
-		QSE_T("uncomplying number of string segments for '${0}'")
+		QSE_T("uncomplying number of string segments for '${0}'"),
+		QSE_T("section tag expected in place of '${0}'"),
 	};
 
 	return (errnum >= 0 && errnum < QSE_COUNTOF(errstr))?
