@@ -597,12 +597,6 @@ static qse_ssize_t sf_out (
 	}
 }
 
-
-
-
-
-
-
 int qse_xli_readstd (qse_xli_t* xli, qse_xli_iostd_t* in)
 {
 	xtn_t* xtn = (xtn_t*) QSE_XTN (xli);
@@ -619,6 +613,25 @@ int qse_xli_readstd (qse_xli_t* xli, qse_xli_iostd_t* in)
 	xtn->s.in.x = in;
 	return qse_xli_read (xli, sf_in);
 }
+
+
+int qse_xli_readinistd (qse_xli_t* xli, qse_xli_iostd_t* in)
+{
+	xtn_t* xtn = (xtn_t*) QSE_XTN (xli);
+
+	if (in == QSE_NULL || (in->type != QSE_XLI_IOSTD_FILE && 
+	                       in->type != QSE_XLI_IOSTD_STR))
+	{
+		/* the input is a must. at least 1 file or 1 string 
+		 * must be specified */
+		qse_xli_seterrnum (xli, QSE_XLI_EINVAL, QSE_NULL);
+		return -1;
+	}
+
+	xtn->s.in.x = in;
+	return qse_xli_readini (xli, sf_in);
+}
+
 
 int qse_xli_writestd (qse_xli_t* xli, qse_xli_iostd_t* out)
 {

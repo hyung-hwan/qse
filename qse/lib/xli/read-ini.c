@@ -81,11 +81,20 @@ enum
 	do { (tok)->type = (code); } while (0)
 
 #define MATCH(xli,tok_type) ((xli)->tok.type == (tok_type))
+#define MATCH(xli,tok_type) ((xli)->tok.type == (tok_type))
 
 static int skip_spaces (qse_xli_t* xli)
 {
 	qse_cint_t c = xli->rio.last.c;
-	while (QSE_ISSPACE(c)) GET_CHAR_TO (xli, c);
+	if (xli->tok_status & TOK_STATUS_SAME_LINE)
+	{
+		while (QSE_ISSPACE(c) && c != QSE_T('\n')) GET_CHAR_TO (xli, c);
+	}
+	else
+	{
+		while (QSE_ISSPACE(c)) GET_CHAR_TO (xli, c);
+	}
+
 	return 0;
 }
 
@@ -96,7 +105,6 @@ static int skip_comment (qse_xli_t* xli, qse_xli_tok_t* tok)
 	if (c == QSE_T(';'))
 	{
 		/* skip up to \n */
-		/* TODO: support a different line terminator */
 		qse_str_clear (tok->name);
 
 		do
@@ -149,14 +157,21 @@ static int get_token_into (qse_xli_t* xli, qse_xli_tok_t* tok)
 
 		SET_TOKEN_TYPE (xli, tok, QSE_XLI_TOK_SQSTR);
 
-		while (1)
+		do
 		{
-			GET_CHAR_TO (xli, c);
 			if (c == QSE_CHAR_EOF || c == QSE_T(';')) break;
+			if (c == QSE_T('\n')) 
+			{
+				GET_CHAR (xli);
+				break;
+			}
 
 			ADD_TOKEN_CHAR (xli, tok, c);
 			if (!QSE_ISSPACE(c)) xlen = QSE_STR_LEN(tok->name);
+
+			GET_CHAR_TO (xli, c);
 		}
+		while (1);
 
 		/* trim away trailing spaces */
 		qse_str_setlen (tok->name, xlen);
@@ -172,7 +187,7 @@ static int get_token_into (qse_xli_t* xli, qse_xli_tok_t* tok)
 		{
 			GET_CHAR_TO (xli, c);
 
-			if (c == QSE_CHAR_EOF)
+			if (c == QSE_CHAR_EOF || c == QSE_T('\n'))
 			{
 				/* the string tag is not closed */
 				qse_xli_seterror (xli, QSE_XLI_ETAGNC, QSE_NULL, &xli->tok.loc);
@@ -238,16 +253,24 @@ static int get_token_into (qse_xli_t* xli, qse_xli_tok_t* tok)
 	{
 		SET_TOKEN_TYPE (xli, tok, QSE_XLI_TOK_EQ);
 		ADD_TOKEN_CHAR (xli, tok, c);
+		GET_CHAR (xli);
 	}
 	else
 	{
+		if ((xli->tok_status & TOK_STATUS_SAME_LINE) && c == QSE_T('\n'))
+		{
+			SET_TOKEN_TYPE (xli, tok, QSE_XLI_TOK_NL);
+			ADD_TOKEN_STR (xli, tok, QSE_T("<NL>"), 4);
+			GET_CHAR (xli);
+		}
 		/* not handled yet */
-		if (c == QSE_T('\0'))
+		else if (c == QSE_T('\0'))
 		{
 			qse_cstr_t ea;
 			ea.ptr = QSE_T("<NUL>");
 			ea.len = 5;
 			qse_xli_seterror (xli, QSE_XLI_ELXCHR, &ea, &tok->loc);
+			return -1;
 		}
 		else
 		{
@@ -256,8 +279,8 @@ static int get_token_into (qse_xli_t* xli, qse_xli_tok_t* tok)
 			ea.ptr = &cc;
 			ea.len = 1;
 			qse_xli_seterror (xli, QSE_XLI_ELXCHR, &ea, &tok->loc);
+			return -1;
 		}
-		return -1;
 	}
 
 	return 0;
@@ -270,6 +293,9 @@ static int get_token (qse_xli_t* xli)
 
 static int read_list (qse_xli_t* xli)
 {
+	qse_xli_pair_t* pair;
+	qse_cstr_t key;
+	qse_xli_list_t* curlist;
 
 	while (1)
 	{
@@ -277,42 +303,107 @@ static int read_list (qse_xli_t* xli)
 
 		if (MATCH(xli, QSE_XLI_TOK_TAG))
 		{
-			if (get_token(xli) <= -1) return -1;
+			/* insert a pair with an empty list */
+			pair = qse_xli_insertpairwithemptylist (xli, &xli->root->list, QSE_NULL, QSE_STR_PTR(xli->tok.name), QSE_NULL, QSE_NULL);
+			if (pair == QSE_NULL) return -1;
+			curlist = (qse_xli_list_t*)pair->val;
 
-			if (MATCH(xli, QSE_XLI_TOK_EOF)) break;
-			if (MATCH(xli, QSE_XLI_TOK_TAG)) continue;
-
-			if (!MATCH(xli, QSE_XLI_TOK_IDENT))
+			while (1)
 			{
-				qse_xli_seterror (xli, QSE_XLI_EKEY, QSE_STR_XSTR(xli->tok.name), &xli->tok.loc);
-				return -1;
-			}
+				if (get_token(xli) <= -1) return -1;
 
-/* key is the token... */
-			xli->tok_status |= TOK_STATUS_SAME_LINE;
-			if (get_token (xli) <= -1) return -1;
+				if (MATCH(xli, QSE_XLI_TOK_EOF)) break;
+				if (MATCH(xli, QSE_XLI_TOK_TAG)) 
+				{
+					/* switch to a new tag */
+					pair = qse_xli_insertpairwithemptylist (xli, &xli->root->list, QSE_NULL, QSE_STR_PTR(xli->tok.name), QSE_NULL, QSE_NULL);
+					if (pair == QSE_NULL) return -1;
+					curlist = (qse_xli_list_t*)pair->val;
+					continue;
+				}
 
-			if (!MATCH(xli, QSE_XLI_TOK_EQ))
-			{
-				qse_xli_seterror (xli, QSE_XLI_EEQ,  QSE_STR_XSTR(xli->tok.name), &xli->tok.loc);
-				return -1;
-			}
+				if (!MATCH(xli, QSE_XLI_TOK_IDENT))
+				{
+					qse_xli_seterror (xli, QSE_XLI_EKEY, QSE_STR_XSTR(xli->tok.name), &xli->tok.loc);
+					return -1;
+				}
 
-			xli->tok_status |= TOK_STATUS_UPTO_EOL;
-			if (get_token (xli) <= -1) return -1;
+				if (xli->opt.trait & QSE_XLI_KEYNODUP)
+				{
+					qse_xli_atom_t* atom;
 
-			xli->tok_status &= ~(TOK_STATUS_SAME_LINE | TOK_STATUS_UPTO_EOL);
+					/* find any key conflicts in the current scope */
+					/* TODO: optimization. no sequential search */
+					atom = curlist->tail;
+					while (atom)
+					{
+						if (atom->type == QSE_XLI_PAIR &&
+						    qse_strcmp (((qse_xli_pair_t*)atom)->key, QSE_STR_PTR(xli->tok.name)) == 0)
+						{
+							qse_xli_seterror (xli, QSE_XLI_EEXIST, QSE_STR_XSTR(xli->tok.name), &xli->tok.loc);
+							return -1;
+						}
 
-			if (MATCH(xli, QSE_XLI_TOK_EOF))
-			{
-				/* empty value */
-				break;
-			}
+						atom = atom->prev;
+					}
+				}
 
-			if (!MATCH(xli, QSE_XLI_TOK_SQSTR))
-			{
-				qse_xli_seterror (xli, QSE_XLI_EVAL, QSE_STR_XSTR(xli->tok.name), &xli->tok.loc);
-				return -1;
+				key.len = QSE_STR_LEN(xli->tok.name);
+				key.ptr = qse_strdup (QSE_STR_PTR(xli->tok.name), xli->mmgr);
+				if (key.ptr == QSE_NULL) 
+				{
+					qse_xli_seterrnum (xli, QSE_XLI_ENOMEM, QSE_NULL); 
+					return -1;
+				}
+
+				xli->tok_status |= TOK_STATUS_SAME_LINE;
+				if (get_token (xli) <= -1) 
+				{
+					QSE_MMGR_FREE (xli->mmgr, key.ptr);
+					return -1;
+				}
+				if (!MATCH(xli, QSE_XLI_TOK_EQ))
+				{
+					QSE_MMGR_FREE (xli->mmgr, key.ptr);
+					qse_xli_seterror (xli, QSE_XLI_EEQ,  QSE_STR_XSTR(xli->tok.name), &xli->tok.loc);
+					return -1;
+				}
+
+				/* read the value */
+				xli->tok_status |= TOK_STATUS_UPTO_EOL;
+				if (get_token (xli) <= -1) 
+				{
+					QSE_MMGR_FREE (xli->mmgr, key.ptr);
+					return -1;
+				}
+				xli->tok_status &= ~(TOK_STATUS_SAME_LINE | TOK_STATUS_UPTO_EOL);
+
+				if (MATCH(xli, QSE_XLI_TOK_EOF))
+				{
+					/* empty value */
+					qse_cstr_t empty;
+
+					empty.ptr = QSE_T("");
+					empty.len = 0;
+
+					pair = qse_xli_insertpairwithstr (xli, curlist, QSE_NULL, key.ptr, QSE_NULL, QSE_NULL, &empty, QSE_NULL);
+					QSE_MMGR_FREE (xli->mmgr, key.ptr);
+					if (pair == QSE_NULL) return -1;
+					break;
+				}
+
+				if (MATCH(xli, QSE_XLI_TOK_SQSTR))
+				{
+					/* add a new pair with the initial string segment */
+					pair = qse_xli_insertpairwithstr (xli, curlist, QSE_NULL, key.ptr, QSE_NULL, QSE_NULL, QSE_STR_XSTR(xli->tok.name), QSE_NULL);
+					QSE_MMGR_FREE (xli->mmgr, key.ptr);
+					if (pair == QSE_NULL) return -1;
+				}
+				else
+				{
+					qse_xli_seterror (xli, QSE_XLI_EVAL, QSE_STR_XSTR(xli->tok.name), &xli->tok.loc);
+					return -1;
+				}
 			}
 		}
 		else
