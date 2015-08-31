@@ -413,7 +413,7 @@ static int xli_main (int argc, qse_char_t* argv[])
 	in.u.file.path = g_input_file;
 	in.u.file.cmgr = g_infile_cmgr;
 
-	if (qse_xli_readstd (xli, &in) <= -1)
+	if (qse_xli_readinistd (xli, &in) <= -1)
 	{
 		const qse_xli_loc_t* errloc;
 	

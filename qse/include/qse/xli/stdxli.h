@@ -129,6 +129,11 @@ QSE_EXPORT int qse_xli_readstd (
 	qse_xli_iostd_t* in
 );
 
+QSE_EXPORT int qse_xli_readinistd (
+	qse_xli_t*       xli,
+	qse_xli_iostd_t* in
+);
+
 QSE_EXPORT int qse_xli_writestd (
 	qse_xli_t*       xli,
 	qse_xli_iostd_t* out

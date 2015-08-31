@@ -71,7 +71,7 @@ enum qse_xli_errnum_t
 	QSE_XLI_ERBRCE,   /**< } expected in place of '${0}' */
 	QSE_XLI_EPAVAL,   /**< pair value expected in place of '${0}' */
 	QSE_XLI_ESTRNC,   /**< string not closed */
-	QSE_XLI_ETAGNC,   /**< string tag not closed */
+	QSE_XLI_ETAGNC,   /**< tag not closed */
 	QSE_XLI_EINCLSTR ,/**< '@include' not followed by a string */
 	QSE_XLI_ELXCHR,   /**< invalid character '${0} */
 	QSE_XLI_ETAGCHR,  /**< invalid tag character '${0} */
@@ -543,9 +543,9 @@ QSE_EXPORT void qse_xli_seterrnum (
  * message for a given error number.
  */
 QSE_EXPORT void qse_xli_seterrmsg (
-	qse_xli_t*        xli,      /**< stream editor */
-	qse_xli_errnum_t  errnum,   /**< error number */
-	const qse_char_t* errmsg,   /**< error message */
+	qse_xli_t*           xli,      /**< stream editor */
+	qse_xli_errnum_t     errnum,   /**< error number */
+	const qse_char_t*    errmsg,   /**< error message */
 	const qse_xli_loc_t* errloc /**< error location */
 );
 
@@ -630,27 +630,27 @@ QSE_EXPORT qse_xli_pair_t* qse_xli_insertpairwithstrs (
 );
 
 QSE_EXPORT qse_xli_text_t* qse_xli_inserttext (
-	qse_xli_t* xli,
-	qse_xli_list_t* parent,
-	qse_xli_atom_t* peer,
+	qse_xli_t*        xli,
+	qse_xli_list_t*   parent,
+	qse_xli_atom_t*   peer,
 	const qse_char_t* str
 );
 
 QSE_EXPORT qse_xli_file_t* qse_xli_insertfile (
-	qse_xli_t* xli,
-	qse_xli_list_t* parent,
-	qse_xli_atom_t* peer,
+	qse_xli_t*        xli,
+	qse_xli_list_t*   parent,
+	qse_xli_atom_t*   peer,
 	const qse_char_t* path
 );
 
 QSE_EXPORT qse_xli_eof_t* qse_xli_inserteof (
-	qse_xli_t* xli,
-	qse_xli_list_t* parent,
-	qse_xli_atom_t* peer
+	qse_xli_t*       xli,
+	qse_xli_list_t*  parent,
+	qse_xli_atom_t*  peer
 );
 
 QSE_EXPORT qse_xli_pair_t* qse_xli_findpair (
-	qse_xli_t*            xli,
+	qse_xli_t*             xli,
 	const qse_xli_list_t* list,
 	const qse_char_t*     fqpn
 );
@@ -681,10 +681,10 @@ QSE_EXPORT qse_xli_str_t* qse_xli_addsegtostr (
  * segment is delimited by double '\0's. The string tags are not included.
  */
 QSE_EXPORT qse_char_t* qse_xli_dupflatstr (
-	qse_xli_t*     xli,
-	qse_xli_str_t* str,
-	qse_size_t*    len,
-	qse_size_t*    nsegs
+	qse_xli_t*      xli,
+	qse_xli_str_t*  str,
+	qse_size_t*     len,
+	qse_size_t*     nsegs
 );
 
 QSE_EXPORT qse_xli_list_t* qse_xli_getroot (

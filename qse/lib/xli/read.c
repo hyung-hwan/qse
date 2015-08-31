@@ -234,7 +234,7 @@ static int skip_comment (qse_xli_t* xli, qse_xli_tok_t* tok)
 	if (c == QSE_T('#'))
 	{
 		/* skip up to \n */
-		/* TODO: support a different line terminator */
+
 		qse_str_clear (tok->name);
 
 		do
@@ -635,7 +635,7 @@ retry:
 		{
 			GET_CHAR_TO (xli, c);
 
-			if (c == QSE_CHAR_EOF)
+			if (c == QSE_CHAR_EOF || c == QSE_T('\n'))
 			{
 				/* the string tag is not closed */
 				qse_xli_seterror (xli, QSE_XLI_ETAGNC, QSE_NULL, &xli->tok.loc);

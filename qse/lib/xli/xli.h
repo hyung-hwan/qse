@@ -46,7 +46,8 @@ enum qse_xli_tok_type_t
 	QSE_XLI_TOK_NSTR,
 	QSE_XLI_TOK_IDENT,
 	QSE_XLI_TOK_TEXT,
-	QSE_XLI_TOK_TAG
+	QSE_XLI_TOK_TAG,
+	QSE_XLI_TOK_NL
 };
 
 typedef enum qse_xli_tok_type_t qse_xli_tok_type_t;
