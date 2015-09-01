@@ -139,6 +139,11 @@ QSE_EXPORT int qse_xli_writestd (
 	qse_xli_iostd_t* out
 );
 
+QSE_EXPORT int qse_xli_writeinistd (
+	qse_xli_t*       xli,
+	qse_xli_iostd_t* out
+);
+
 #if defined(__cplusplus)
 }
 #endif

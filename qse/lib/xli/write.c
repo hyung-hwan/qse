@@ -127,7 +127,7 @@ static int close_current_stream (qse_xli_t* xli, int* org_depth)
 	xli->wio.inp = arg->prev;
 	if (arg == &xli->wio.top)
 	{
-		if (org_depth) *org_depth = 0;			
+		if (org_depth) *org_depth = 0;
 	}
 	else
 	{
@@ -208,7 +208,7 @@ static int write_list (qse_xli_t* xli, qse_xli_list_t* list, int depth)
 					    write_to_current_stream (xli, pair->tag, qse_strlen(pair->tag), 0) <= -1 || 
 					    write_to_current_stream (xli, QSE_T("]"), 1, 0) <= -1) return -1;
 				}
-						
+
 				if (write_to_current_stream (xli, pair->key, qse_strlen(pair->key), 0) <= -1) return -1;
 
 				if (pair->alias) 
@@ -247,7 +247,7 @@ static int write_list (qse_xli_t* xli, qse_xli_list_t* list, int depth)
 							str = str->next;
 						}
 						if (write_to_current_stream (xli, QSE_T(";\n"), 2, 0) <= -1) return -1;
-						break;	
+						break;
 					}
 
 					case QSE_XLI_LIST:

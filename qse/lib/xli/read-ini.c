@@ -112,12 +112,16 @@ static int skip_comment (qse_xli_t* xli, qse_xli_tok_t* tok)
 			GET_CHAR_TO (xli, c); 
 			if (c == QSE_T('\n') || c == QSE_CHAR_EOF) break;
 
-			if  (xli->opt.trait & QSE_XLI_KEEPTEXT) ADD_TOKEN_CHAR (xli, tok, c);
+			/* i don't honor QSE_XLI_KEEPTEXT in the ini-format reader...
+			if (xli->opt.trait & QSE_XLI_KEEPTEXT) ADD_TOKEN_CHAR (xli, tok, c);
+			*/
 		}
 		while (1);
 
+		/* i don't honor QSE_XLI_KEEPTEXT in the ini-format reader...
 		if ((xli->opt.trait & QSE_XLI_KEEPTEXT) && 
-		    qse_xli_inserttext (xli, xli->parlink->list, QSE_NULL, QSE_STR_PTR(tok->name)) == QSE_NULL) return -1;
+		    qse_xli_inserttext (xli, &xli->root->list, QSE_NULL, QSE_STR_PTR(tok->name)) == QSE_NULL) return -1;
+		 */
 
 		GET_CHAR (xli); /* eat the new line letter */
 		return 1; /* comment by ; */
@@ -135,7 +139,11 @@ static int get_token_into (qse_xli_t* xli, qse_xli_tok_t* tok)
 	do 
 	{
 		if (skip_spaces (xli) <= -1) return -1;
-		if ((n = skip_comment (xli, tok)) <= -1) return -1; 
+		if (!(xli->tok_status & TOK_STATUS_UPTO_EOL))
+		{
+			if ((n = skip_comment (xli, tok)) <= -1) return -1; 
+		}
+		else n = 0;
 	} 
 	while (n >= 1);
 
@@ -297,6 +305,9 @@ static int read_list (qse_xli_t* xli)
 	qse_cstr_t key;
 	qse_xli_list_t* curlist;
 
+	key.ptr = QSE_NULL;
+	key.len = 0;
+
 	while (1)
 	{
 		if (MATCH(xli, QSE_XLI_TOK_EOF)) break;
@@ -305,19 +316,19 @@ static int read_list (qse_xli_t* xli)
 		{
 			/* insert a pair with an empty list */
 			pair = qse_xli_insertpairwithemptylist (xli, &xli->root->list, QSE_NULL, QSE_STR_PTR(xli->tok.name), QSE_NULL, QSE_NULL);
-			if (pair == QSE_NULL) return -1;
+			if (pair == QSE_NULL) goto oops;
 			curlist = (qse_xli_list_t*)pair->val;
 
 			while (1)
 			{
-				if (get_token(xli) <= -1) return -1;
+				if (get_token(xli) <= -1) goto oops;
 
 				if (MATCH(xli, QSE_XLI_TOK_EOF)) break;
 				if (MATCH(xli, QSE_XLI_TOK_TAG)) 
 				{
 					/* switch to a new tag */
 					pair = qse_xli_insertpairwithemptylist (xli, &xli->root->list, QSE_NULL, QSE_STR_PTR(xli->tok.name), QSE_NULL, QSE_NULL);
-					if (pair == QSE_NULL) return -1;
+					if (pair == QSE_NULL) goto oops;
 					curlist = (qse_xli_list_t*)pair->val;
 					continue;
 				}
@@ -325,7 +336,7 @@ static int read_list (qse_xli_t* xli)
 				if (!MATCH(xli, QSE_XLI_TOK_IDENT))
 				{
 					qse_xli_seterror (xli, QSE_XLI_EKEY, QSE_STR_XSTR(xli->tok.name), &xli->tok.loc);
-					return -1;
+					goto oops;
 				}
 
 				if (xli->opt.trait & QSE_XLI_KEYNODUP)
@@ -341,41 +352,35 @@ static int read_list (qse_xli_t* xli)
 						    qse_strcmp (((qse_xli_pair_t*)atom)->key, QSE_STR_PTR(xli->tok.name)) == 0)
 						{
 							qse_xli_seterror (xli, QSE_XLI_EEXIST, QSE_STR_XSTR(xli->tok.name), &xli->tok.loc);
-							return -1;
+							goto oops;
 						}
 
 						atom = atom->prev;
 					}
 				}
 
+				QSE_ASSERT (key.ptr == QSE_NULL);
 				key.len = QSE_STR_LEN(xli->tok.name);
 				key.ptr = qse_strdup (QSE_STR_PTR(xli->tok.name), xli->mmgr);
 				if (key.ptr == QSE_NULL) 
 				{
 					qse_xli_seterrnum (xli, QSE_XLI_ENOMEM, QSE_NULL); 
-					return -1;
+					goto oops;
 				}
 
 				xli->tok_status |= TOK_STATUS_SAME_LINE;
-				if (get_token (xli) <= -1) 
-				{
-					QSE_MMGR_FREE (xli->mmgr, key.ptr);
-					return -1;
-				}
+				if (get_token (xli) <= -1) goto oops;
+
 				if (!MATCH(xli, QSE_XLI_TOK_EQ))
 				{
-					QSE_MMGR_FREE (xli->mmgr, key.ptr);
 					qse_xli_seterror (xli, QSE_XLI_EEQ,  QSE_STR_XSTR(xli->tok.name), &xli->tok.loc);
-					return -1;
+					goto oops;
 				}
 
 				/* read the value */
 				xli->tok_status |= TOK_STATUS_UPTO_EOL;
-				if (get_token (xli) <= -1) 
-				{
-					QSE_MMGR_FREE (xli->mmgr, key.ptr);
-					return -1;
-				}
+				if (get_token (xli) <= -1) goto oops;
+
 				xli->tok_status &= ~(TOK_STATUS_SAME_LINE | TOK_STATUS_UPTO_EOL);
 
 				if (MATCH(xli, QSE_XLI_TOK_EOF))
@@ -387,8 +392,11 @@ static int read_list (qse_xli_t* xli)
 					empty.len = 0;
 
 					pair = qse_xli_insertpairwithstr (xli, curlist, QSE_NULL, key.ptr, QSE_NULL, QSE_NULL, &empty, QSE_NULL);
+
 					QSE_MMGR_FREE (xli->mmgr, key.ptr);
-					if (pair == QSE_NULL) return -1;
+					key.ptr = QSE_NULL;
+
+					if (pair == QSE_NULL) goto oops;
 					break;
 				}
 
@@ -396,24 +404,31 @@ static int read_list (qse_xli_t* xli)
 				{
 					/* add a new pair with the initial string segment */
 					pair = qse_xli_insertpairwithstr (xli, curlist, QSE_NULL, key.ptr, QSE_NULL, QSE_NULL, QSE_STR_XSTR(xli->tok.name), QSE_NULL);
+
 					QSE_MMGR_FREE (xli->mmgr, key.ptr);
-					if (pair == QSE_NULL) return -1;
+					key.ptr = QSE_NULL;
+
+					if (pair == QSE_NULL) goto oops;
 				}
 				else
 				{
 					qse_xli_seterror (xli, QSE_XLI_EVAL, QSE_STR_XSTR(xli->tok.name), &xli->tok.loc);
-					return -1;
+					goto oops;
 				}
 			}
 		}
 		else
 		{
 			qse_xli_seterror (xli, QSE_XLI_ESECTAG, QSE_STR_XSTR(xli->tok.name), &xli->tok.loc);
-			return -1;
+			goto oops;
 		}
 	}
 
 	return 0;
+
+oops:
+	if (key.ptr) QSE_MMGR_FREE (xli->mmgr, key.ptr);
+	return -1;
 }
 
 static int read_root_list (qse_xli_t* xli)
@@ -460,8 +475,6 @@ int qse_xli_readini (qse_xli_t* xli, qse_xli_io_impl_t io)
 	/* the input stream is open now */
 
 	if (read_root_list (xli) <= -1) goto oops;
-
-	QSE_ASSERT (xli->parlink == QSE_NULL);
 
 	if (!MATCH (xli, QSE_XLI_TOK_EOF))
 	{

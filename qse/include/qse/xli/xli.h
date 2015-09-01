@@ -739,6 +739,11 @@ QSE_EXPORT int qse_xli_write (
 	qse_xli_io_impl_t io
 );
 
+QSE_EXPORT int qse_xli_writeini (
+	qse_xli_t*        xli,
+	qse_xli_io_impl_t io
+);
+
 QSE_EXPORT void* qse_getxlipairxtn (
 	qse_xli_pair_t* pair
 );

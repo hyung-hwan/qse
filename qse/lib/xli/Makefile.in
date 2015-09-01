@@ -126,7 +126,7 @@ am__uninstall_files_from_dir = { \
 am__installdirs = "$(DESTDIR)$(libdir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
 libqsexli_la_DEPENDENCIES =
-am_libqsexli_la_OBJECTS = xli.lo err.lo read.lo read-ini.lo write.lo \
+am_libqsexli_la_OBJECTS = xli.lo err.lo read.lo read-ini.lo write.lo write-ini.lo \
 	std.lo
 libqsexli_la_OBJECTS = $(am_libqsexli_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
@@ -378,7 +378,7 @@ AM_CPPFLAGS = \
 	-I$(top_srcdir)/include 
 
 lib_LTLIBRARIES = libqsexli.la
-libqsexli_la_SOURCES = xli.h xli.c err.c read.c read-ini.c write.c std.c
+libqsexli_la_SOURCES = xli.h xli.c err.c read.c read-ini.c write.c write-ini.c std.c
 libqsexli_la_LDFLAGS = -L../cmn -version-info 1:0:0 -no-undefined
 libqsexli_la_LIBADD = -lqsecmn 
 all: all-am
@@ -465,6 +465,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/read.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/std.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/write.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/write-ini.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xli.Plo@am__quote@
 
 .c.o:

@@ -662,3 +662,33 @@ int qse_xli_writestd (qse_xli_t* xli, qse_xli_iostd_t* out)
 
 	return n;
 }
+
+int qse_xli_writeinistd (qse_xli_t* xli, qse_xli_iostd_t* out)
+{
+	int n;
+	xtn_t* xtn = (xtn_t*) QSE_XTN (xli);
+
+	if (out == QSE_NULL || (out->type != QSE_XLI_IOSTD_FILE && 
+	                        out->type != QSE_XLI_IOSTD_STR))
+	{
+		/* the input is a must. at least 1 file or 1 string 
+		 * must be specified */
+		qse_xli_seterrnum (xli, QSE_XLI_EINVAL, QSE_NULL);
+		return -1;
+	}
+
+	xtn->s.out.x = out;
+	n = qse_xli_writeini (xli, sf_out);
+
+	if (out->type == QSE_XLI_IOSTD_STR)
+	{
+		if (n >= 0)
+		{
+			QSE_ASSERT (xtn->s.out.u.str.buf != QSE_NULL);
+			qse_str_yield (xtn->s.out.u.str.buf, &out->u.str, 0);
+		}
+		if (xtn->s.out.u.str.buf) qse_str_close (xtn->s.out.u.str.buf);
+	}
+
+	return n;
+}
