@@ -112,16 +112,12 @@ static int skip_comment (qse_xli_t* xli, qse_xli_tok_t* tok)
 			GET_CHAR_TO (xli, c); 
 			if (c == QSE_T('\n') || c == QSE_CHAR_EOF) break;
 
-			/* i don't honor QSE_XLI_KEEPTEXT in the ini-format reader...
 			if (xli->opt.trait & QSE_XLI_KEEPTEXT) ADD_TOKEN_CHAR (xli, tok, c);
-			*/
 		}
 		while (1);
 
-		/* i don't honor QSE_XLI_KEEPTEXT in the ini-format reader...
 		if ((xli->opt.trait & QSE_XLI_KEEPTEXT) && 
-		    qse_xli_inserttext (xli, &xli->root->list, QSE_NULL, QSE_STR_PTR(tok->name)) == QSE_NULL) return -1;
-		 */
+		    qse_xli_inserttext (xli,  xli->parlink->list, QSE_NULL, QSE_STR_PTR(tok->name)) == QSE_NULL) return -1;
 
 		GET_CHAR (xli); /* eat the new line letter */
 		return 1; /* comment by ; */
@@ -317,11 +313,13 @@ static int read_list (qse_xli_t* xli)
 			/* insert a pair with an empty list */
 			pair = qse_xli_insertpairwithemptylist (xli, &xli->root->list, QSE_NULL, QSE_STR_PTR(xli->tok.name), QSE_NULL, QSE_NULL);
 			if (pair == QSE_NULL) goto oops;
+
 			curlist = (qse_xli_list_t*)pair->val;
+			xli->parlink->list = curlist;
 
 			while (1)
 			{
-				if (get_token(xli) <= -1) goto oops;
+				if (get_token (xli) <= -1) goto oops;
 
 				if (MATCH(xli, QSE_XLI_TOK_EOF)) break;
 				if (MATCH(xli, QSE_XLI_TOK_TAG)) 
@@ -329,7 +327,9 @@ static int read_list (qse_xli_t* xli)
 					/* switch to a new tag */
 					pair = qse_xli_insertpairwithemptylist (xli, &xli->root->list, QSE_NULL, QSE_STR_PTR(xli->tok.name), QSE_NULL, QSE_NULL);
 					if (pair == QSE_NULL) goto oops;
+
 					curlist = (qse_xli_list_t*)pair->val;
+					xli->parlink->list = curlist;
 					continue;
 				}
 
