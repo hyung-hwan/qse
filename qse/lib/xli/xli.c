@@ -319,7 +319,7 @@ qse_xli_pair_t* qse_xli_insertpairwithemptylist (
 	if (!val) return QSE_NULL;
 
 	val->type = QSE_XLI_LIST;
-	tmp = qse_xli_insertpair (xli, parent, peer, key, alias, keytag, (qse_xli_val_t*)val);	
+	tmp = qse_xli_insertpair (xli, parent, peer, key, alias, keytag, (qse_xli_val_t*)val);
 	if (!tmp) qse_xli_freemem (xli, val);
 	return tmp;
 }
