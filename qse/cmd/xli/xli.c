@@ -502,6 +502,7 @@ static int xli_main (int argc, qse_char_t* argv[])
 					QSE_T("ERROR: cannot set a string pair - %s \n"),
 					qse_xli_geterrmsg(xli)
 				);
+				goto oops;
 			}
 		}
 		else
