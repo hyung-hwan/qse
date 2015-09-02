@@ -317,7 +317,7 @@ void qse_xli_clearwionames (qse_xli_t* xli)
 	}
 }
 
-int qse_xli_write (qse_xli_t* xli, qse_xli_io_impl_t io)
+int qse_xli_write (qse_xli_t* xli, qse_xli_list_t* root_list, qse_xli_io_impl_t io)
 {
 	int n;
 
@@ -338,7 +338,7 @@ int qse_xli_write (qse_xli_t* xli, qse_xli_io_impl_t io)
 	if (qse_xli_openwstream (xli, QSE_NULL, 0) <= -1) return -1;
 
 	/* begin writing the root list */
-	n = write_list (xli, &xli->root->list, 0);
+	n = write_list (xli, (root_list? root_list: &xli->root->list), 0);
 	
 	/* close all open streams. there should be only the
 	 * top-level stream here if there occurred no errors */

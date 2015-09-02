@@ -587,6 +587,11 @@ QSE_EXPORT qse_xli_pair_t* qse_xli_insertpair (
 	qse_xli_val_t*    val
 );
 
+QSE_EXPORT void qse_xli_deletepair (
+	qse_xli_t*        xli,
+	qse_xli_pair_t*   pair
+);
+
 /**
  * The qse_xli_insertpairwithemptylist() function inserts a new pair
  * with an empty list as a value. You should call this function for adding
@@ -651,14 +656,22 @@ QSE_EXPORT qse_xli_eof_t* qse_xli_inserteof (
 
 QSE_EXPORT qse_xli_pair_t* qse_xli_findpair (
 	qse_xli_t*             xli,
-	const qse_xli_list_t* list,
-	const qse_char_t*     fqpn
+	const qse_xli_list_t*  list,
+	const qse_char_t*      fqpn
+);
+
+QSE_EXPORT qse_xli_pair_t* qse_xli_setpairwithstr (
+	qse_xli_t*             xli,
+	const qse_xli_list_t*  list,
+	const qse_char_t*      fqpn,
+	const qse_cstr_t*      value,
+	const qse_char_t*      strtag
 );
 
 QSE_EXPORT qse_size_t qse_xli_countpairs (
-	qse_xli_t*            xli,
-	const qse_xli_list_t* list,
-	const qse_char_t*     fqpn 
+	qse_xli_t*             xli,
+	const qse_xli_list_t*  list,
+	const qse_char_t*      fqpn 
 );
 
 
@@ -736,11 +749,13 @@ QSE_EXPORT int qse_xli_readini (
 
 QSE_EXPORT int qse_xli_write (
 	qse_xli_t*        xli,
+	qse_xli_list_t*   root_list,
 	qse_xli_io_impl_t io
 );
 
 QSE_EXPORT int qse_xli_writeini (
 	qse_xli_t*        xli,
+	qse_xli_list_t*   root_list,
 	qse_xli_io_impl_t io
 );
 
