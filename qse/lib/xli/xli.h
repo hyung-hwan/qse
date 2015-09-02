@@ -140,8 +140,12 @@ void qse_xli_clearwionames (qse_xli_t* xli);
 
 
 int qse_xli_getchar (qse_xli_t* xli);
-int qse_xli_openstream (qse_xli_t* xli, qse_xli_io_arg_t* arg);
-int qse_xli_closecurrentstream (qse_xli_t* xli);
+int qse_xli_openrstream (qse_xli_t* xli, qse_xli_io_arg_t* arg);
+int qse_xli_closeactiverstream (qse_xli_t* xli);
+
+int qse_xli_openwstream (qse_xli_t* xli, const qse_char_t* path, int old_depth);
+int qse_xli_closeactivewstream (qse_xli_t* xli, int* org_depth);
+int qse_xli_flushwstream (qse_xli_t* xli, qse_xli_io_arg_t* arg);
 
 qse_xli_list_link_t* qse_xli_makelistlink (qse_xli_t* xli, qse_xli_list_t* parlist);
 void qse_xli_freelistlink (qse_xli_t* xli, qse_xli_list_link_t* link);
