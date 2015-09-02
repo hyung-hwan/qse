@@ -471,7 +471,7 @@ int qse_xli_readini (qse_xli_t* xli, qse_xli_io_impl_t io)
 
 	QSE_ASSERT (QSE_STR_LEN(xli->dotted_curkey) == 0);
 
-	if (qse_xli_openstream (xli, xli->rio.inp) <= -1) return -1;
+	if (qse_xli_openrstream (xli, xli->rio.inp) <= -1) return -1;
 	/* the input stream is open now */
 
 	if (read_root_list (xli) <= -1) goto oops;
@@ -483,7 +483,7 @@ int qse_xli_readini (qse_xli_t* xli, qse_xli_io_impl_t io)
 	}
 
 	QSE_ASSERT (xli->rio.inp == &xli->rio.top);
-	qse_xli_closecurrentstream (xli);
+	qse_xli_closeactiverstream (xli);
 	qse_str_clear (xli->tok.name);
 	return 0;
 
@@ -496,7 +496,7 @@ oops:
 		qse_xli_io_arg_t* prev;
 
 		/* nothing much to do about a close error */
-		qse_xli_closecurrentstream (xli);
+		qse_xli_closeactiverstream (xli);
 
 		prev = xli->rio.inp->prev;
 		QSE_ASSERT (xli->rio.inp->name != QSE_NULL);
@@ -504,7 +504,7 @@ oops:
 		xli->rio.inp = prev;
 	}
 	
-	qse_xli_closecurrentstream (xli);
+	qse_xli_closeactiverstream (xli);
 	qse_str_clear (xli->tok.name);
 	return -1;
 }

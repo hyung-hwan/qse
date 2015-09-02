@@ -32,7 +32,7 @@ struct arg_data_t
 	int org_depth;
 };
 
-static int flush (qse_xli_t* xli, qse_xli_io_arg_t* arg)
+int qse_xli_flushwstream (qse_xli_t* xli, qse_xli_io_arg_t* arg)
 {
 	qse_ssize_t n;
 
@@ -54,7 +54,7 @@ static int flush (qse_xli_t* xli, qse_xli_io_arg_t* arg)
 	return 0;
 }
 
-static int open_new_stream (qse_xli_t* xli, const qse_char_t* path, int old_depth)
+int qse_xli_openwstream (qse_xli_t* xli, const qse_char_t* path, int old_depth)
 {
 	qse_ssize_t n;
 	qse_xli_io_arg_t* arg;
@@ -107,14 +107,14 @@ static int open_new_stream (qse_xli_t* xli, const qse_char_t* path, int old_dept
 	return 0;
 }
 
-static int close_current_stream (qse_xli_t* xli, int* org_depth)
+int qse_xli_closeactivewstream (qse_xli_t* xli, int* org_depth)
 {
 	qse_ssize_t n;
 	qse_xli_io_arg_t* arg;
 
 	arg = xli->wio.inp;
 
-	flush (xli, arg); /* TODO: do i have to care about the result? */
+	qse_xli_flushwstream (xli, arg); /* TODO: do i have to care about the result? */
 
 	n = xli->wio.impl (xli, QSE_XLI_IO_CLOSE, arg, QSE_NULL, 0);
 	if (n <= -1)
@@ -149,12 +149,12 @@ static int write_to_current_stream (qse_xli_t* xli, const qse_char_t* ptr, qse_s
 	{
 		if (escape && (ptr[i] == QSE_T('\\') || ptr[i] == QSE_T('\"')))
 		{
-			if (arg->b.len + 2 > QSE_COUNTOF(arg->b.buf) && flush (xli, arg) <= -1) return -1;
+			if (arg->b.len + 2 > QSE_COUNTOF(arg->b.buf) && qse_xli_flushwstream (xli, arg) <= -1) return -1;
 			arg->b.buf[arg->b.len++] = QSE_T('\\');
 		}
 		else
 		{
-			if (arg->b.len + 1 > QSE_COUNTOF(arg->b.buf) && flush (xli, arg) <= -1) return -1;
+			if (arg->b.len + 1 > QSE_COUNTOF(arg->b.buf) && qse_xli_flushwstream (xli, arg) <= -1) return -1;
 		}
 		arg->b.buf[arg->b.len++] = ptr[i];
 	}
@@ -292,13 +292,13 @@ static int write_list (qse_xli_t* xli, qse_xli_list_t* list, int depth)
 				    write_to_current_stream (xli, path, qse_strlen(path), 1) <= -1 ||
 				    write_to_current_stream (xli, QSE_T("\";\n"), 3, 0) <= -1) return -1;
 				
-				if (open_new_stream (xli, ((qse_xli_file_t*)curatom)->path, depth) <= -1) return -1;
+				if (qse_xli_openwstream (xli, ((qse_xli_file_t*)curatom)->path, depth) <= -1) return -1;
 				depth = 0;
 				break;
 			}
 
 			case QSE_XLI_EOF:
-				if (close_current_stream (xli, &depth) <= -1) return -1;
+				if (qse_xli_closeactivewstream (xli, &depth) <= -1) return -1;
 				break;
 		}
 	}
@@ -335,14 +335,14 @@ int qse_xli_write (qse_xli_t* xli, qse_xli_io_impl_t io)
 	qse_xli_clearwionames (xli);
 
 	/* open the top level stream */
-	if (open_new_stream (xli, QSE_NULL, 0) <= -1) return -1;
+	if (qse_xli_openwstream (xli, QSE_NULL, 0) <= -1) return -1;
 
 	/* begin writing the root list */
 	n = write_list (xli, &xli->root->list, 0);
 	
 	/* close all open streams. there should be only the
 	 * top-level stream here if there occurred no errors */
-	while (xli->wio.inp) close_current_stream (xli, QSE_NULL);
+	while (xli->wio.inp) qse_xli_closeactivewstream (xli, QSE_NULL);
 
 	return n;
 }

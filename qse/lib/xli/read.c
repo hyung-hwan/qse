@@ -37,7 +37,7 @@ enum
 
 static qse_xli_scm_t scm_val_iffy = { QSE_XLI_SCM_VALSTR | QSE_XLI_SCM_KEYNODUP, 1, 1 };
 
-int qse_xli_openstream (qse_xli_t* xli, qse_xli_io_arg_t* arg)
+int qse_xli_openrstream (qse_xli_t* xli, qse_xli_io_arg_t* arg)
 {
 	qse_ssize_t n;
 
@@ -52,7 +52,7 @@ int qse_xli_openstream (qse_xli_t* xli, qse_xli_io_arg_t* arg)
 	return 0;
 }
 
-int qse_xli_closecurrentstream (qse_xli_t* xli)
+int qse_xli_closeactiverstream (qse_xli_t* xli)
 {
 	qse_ssize_t n;
 
@@ -66,8 +66,6 @@ int qse_xli_closecurrentstream (qse_xli_t* xli)
 
 	return 0;
 }
-
-
 
 #define GET_CHAR(xli) \
 	do { if (qse_xli_getchar(xli) <= -1) return -1; } while(0)
@@ -402,7 +400,7 @@ static int begin_include (qse_xli_t* xli)
 	/* let the argument's prev point field to the current */
 	arg->prev = xli->rio.inp; 
 
-	if (qse_xli_openstream(xli, arg) <= -1) goto oops;
+	if (qse_xli_openrstream(xli, arg) <= -1) goto oops;
 
 	/* i update the current pointer after opening is successful */
 	xli->rio.inp = arg;
@@ -1186,7 +1184,7 @@ int qse_xli_read (qse_xli_t* xli, qse_xli_io_impl_t io)
 
 	QSE_ASSERT (QSE_STR_LEN(xli->dotted_curkey) == 0);
 
-	if (qse_xli_openstream (xli, xli->rio.inp) <= -1) return -1;
+	if (qse_xli_openrstream (xli, xli->rio.inp) <= -1) return -1;
 	/* the input stream is open now */
 
 	if (read_root_list (xli) <= -1) goto oops;
@@ -1200,7 +1198,7 @@ int qse_xli_read (qse_xli_t* xli, qse_xli_io_impl_t io)
 	}
 
 	QSE_ASSERT (xli->rio.inp == &xli->rio.top);
-	qse_xli_closecurrentstream (xli);
+	qse_xli_closeactiverstream (xli);
 	qse_str_clear (xli->tok.name);
 	return 0;
 
@@ -1213,7 +1211,7 @@ oops:
 		qse_xli_io_arg_t* prev;
 
 		/* nothing much to do about a close error */
-		qse_xli_closecurrentstream (xli);
+		qse_xli_closeactiverstream (xli);
 
 		prev = xli->rio.inp->prev;
 		QSE_ASSERT (xli->rio.inp->name != QSE_NULL);
@@ -1221,7 +1219,7 @@ oops:
 		xli->rio.inp = prev;
 	}
 	
-	qse_xli_closecurrentstream (xli);
+	qse_xli_closeactiverstream (xli);
 	qse_str_clear (xli->tok.name);
 	return -1;
 }

@@ -56,6 +56,10 @@
 #	include <errno.h>
 #endif
 
+#define IO_FLAG_INI_INPUT (1 << 0)
+#define IO_FLAG_INI_OUTPUT (1 << 1)
+
+static int g_io_flags = 0;
 static qse_char_t* g_input_file = QSE_NULL;
 static qse_char_t* g_output_file = QSE_NULL;
 static qse_char_t* g_lookup_key = QSE_NULL;
@@ -151,6 +155,8 @@ static void print_usage (qse_sio_t* out, int argc, qse_char_t* argv[])
 	qse_fprintf (out, QSE_T(" --version                 show version\n"));
 	qse_fprintf (out, QSE_T(" -i                 file   specify an input file\n"));
 	qse_fprintf (out, QSE_T(" -o                 file   specify an output file\n"));
+	qse_fprintf (out, QSE_T(" -I                 file   specify an ini input file\n"));
+	qse_fprintf (out, QSE_T(" -O                 file   specify an ini output file\n"));
 	qse_fprintf (out, QSE_T(" -u                        disallow duplicate keys\n"));
 	qse_fprintf (out, QSE_T(" -a                        allow a key alias\n"));
 	qse_fprintf (out, QSE_T(" -f                        keep file inclusion info\n"));
@@ -188,9 +194,9 @@ static int handle_args (int argc, qse_char_t* argv[])
 	static qse_opt_t opt = 
 	{
 #if defined(QSE_BUILD_DEBUG)
-		QSE_T("hi:o:uaftsdnlKSvm:X:"),
+		QSE_T("hi:o:I:O:uaftsdnlKSvm:X:"),
 #else
-		QSE_T("hi:o:uaftsdnlKSvm:"),
+		QSE_T("hi:o:I:O:uaftsdnlKSvm:"),
 #endif
 		lng
 	};
@@ -226,10 +232,22 @@ static int handle_args (int argc, qse_char_t* argv[])
 
 			case QSE_T('i'):
 				g_input_file = opt.arg;
+				g_io_flags &= ~IO_FLAG_INI_INPUT;
+				break;
+
+			case QSE_T('I'):
+				g_input_file = opt.arg;
+				g_io_flags |= IO_FLAG_INI_INPUT;
 				break;
 
 			case QSE_T('o'):
 				g_output_file = opt.arg;
+				g_io_flags &= ~IO_FLAG_INI_OUTPUT;
+				break;
+
+			case QSE_T('O'):
+				g_output_file = opt.arg;
+				g_io_flags |= IO_FLAG_INI_OUTPUT;
 				break;
 
 			case QSE_T('u'):
@@ -368,7 +386,7 @@ static int xli_main (int argc, qse_char_t* argv[])
 	qse_mmgr_t* mmgr = QSE_MMGR_GETDFL();
 	qse_xli_t* xli = QSE_NULL;
 	qse_xli_iostd_t in, out;
-	int ret = -1;
+	int ret = -1, n;
 
 	ret = handle_args (argc, argv);
 	if (ret <= -1) return -1;
@@ -413,7 +431,8 @@ static int xli_main (int argc, qse_char_t* argv[])
 	in.u.file.path = g_input_file;
 	in.u.file.cmgr = g_infile_cmgr;
 
-	if (qse_xli_readinistd (xli, &in) <= -1)
+	n = (g_io_flags & IO_FLAG_INI_INPUT)? qse_xli_readinistd(xli, &in): qse_xli_readstd(xli, &in);
+	if (n <= -1)
 	{
 		const qse_xli_loc_t* errloc;
 	
@@ -506,7 +525,8 @@ static int xli_main (int argc, qse_char_t* argv[])
 	out.type = QSE_XLI_IOSTD_FILE;
 	out.u.file.path = g_output_file? g_output_file: QSE_T("-");
 	out.u.file.cmgr = g_outfile_cmgr;
-	ret = qse_xli_writestd (xli, &out);
+
+	ret = (g_io_flags & IO_FLAG_INI_OUTPUT)? qse_xli_writeinistd(xli, &out): qse_xli_writestd(xli, &out);
 
 oops:
 	if (xli) qse_xli_close (xli);
