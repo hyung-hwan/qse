@@ -63,6 +63,7 @@ static int g_io_flags = 0;
 static qse_char_t* g_input_file = QSE_NULL;
 static qse_char_t* g_output_file = QSE_NULL;
 static qse_char_t* g_lookup_key = QSE_NULL;
+static qse_char_t* g_value = QSE_NULL;
 static qse_ulong_t g_memlimit = 0;
 static int g_trait = 0;
 
@@ -148,7 +149,7 @@ static void print_usage (qse_sio_t* out, int argc, qse_char_t* argv[])
 {
 	const qse_char_t* b = qse_basename (argv[0]);
 
-	qse_fprintf (out, QSE_T("USAGE: %s [options] -i input-file [key]\n"), b);
+	qse_fprintf (out, QSE_T("USAGE: %s [options] -i input-file [key [value]]\n"), b);
 
 	qse_fprintf (out, QSE_T("options as follows:\n"));
 	qse_fprintf (out, QSE_T(" -h/--help                 show this message\n"));
@@ -341,12 +342,19 @@ static int handle_args (int argc, qse_char_t* argv[])
 		goto oops;
 	}
 
-	if (opt.ind < argc) g_lookup_key = argv[opt.ind++];
-
-	if (opt.ind < argc)
+	if (opt.ind < argc) 
 	{
-		print_usage (QSE_STDERR, argc, argv);
-		goto oops;
+		g_lookup_key = argv[opt.ind++];
+		if (opt.ind < argc) 
+		{
+			g_value = argv[opt.ind++];
+
+			if (opt.ind < argc)
+			{
+				print_usage (QSE_STDERR, argc, argv);
+				goto oops;
+			}
+		}
 	}
 
 	return 1;
@@ -461,6 +469,7 @@ static int xli_main (int argc, qse_char_t* argv[])
 		goto oops;
 	}
 
+#if 0
 	{
 		static const qse_cstr_t strs[] =
 		{
@@ -477,48 +486,62 @@ static int xli_main (int argc, qse_char_t* argv[])
 			);
 		}
 	}
+#endif
 
 	if (g_lookup_key)
 	{
-		qse_xli_pair_t* pair;
-		qse_size_t count;
-
-		count = qse_xli_countpairs (xli, QSE_NULL, g_lookup_key);
-		qse_printf (QSE_T("COUNT: %lu\n"), (unsigned long)count);
-
-		pair = qse_xli_findpair (xli, QSE_NULL, g_lookup_key);
-		if (pair == QSE_NULL)
+		if (g_value)
 		{
-			qse_fprintf (QSE_STDERR, 
-				QSE_T("ERROR: cannot find %s - %s \n"),
-				g_lookup_key,
-				qse_xli_geterrmsg(xli)
-			);
-			goto oops;
+			qse_cstr_t v;
+
+			v.ptr = g_value;
+			v.len = qse_strlen(g_value);
+			if (qse_xli_setpairwithstr (xli, QSE_NULL, g_lookup_key, &v, QSE_NULL) == QSE_NULL)
+			{
+				qse_fprintf (QSE_STDERR, 
+					QSE_T("ERROR: cannot set a string pair - %s \n"),
+					qse_xli_geterrmsg(xli)
+				);
+			}
 		}
 		else
 		{
-			if (pair->val->type == QSE_XLI_STR)
+			qse_xli_pair_t* pair;
+			qse_size_t count;
+
+			count = qse_xli_countpairs (xli, QSE_NULL, g_lookup_key);
+			qse_printf (QSE_T("COUNT: %lu\n"), (unsigned long)count);
+
+			pair = qse_xli_findpair (xli, QSE_NULL, g_lookup_key);
+			if (pair == QSE_NULL)
 			{
-				qse_xli_str_t* str = (qse_xli_str_t*)pair->val;
-				qse_printf (QSE_T("[%.*s]\n"), (int)str->len, str->ptr);
-			}
-			else if (pair->val->type == QSE_XLI_NIL)
-			{
-				qse_printf (QSE_T("#NIL\n"));
+				qse_fprintf (QSE_STDERR, 
+					QSE_T("ERROR: cannot find %s - %s \n"),
+					g_lookup_key,
+					qse_xli_geterrmsg(xli)
+				);
+				goto oops;
 			}
 			else
 			{
-				qse_printf (QSE_T("#LIST\n"));
+				if (pair->val->type == QSE_XLI_STR)
+				{
+					qse_xli_str_t* str = (qse_xli_str_t*)pair->val;
+					qse_printf (QSE_T("[%.*s]\n"), (int)str->len, str->ptr);
+				}
+				else if (pair->val->type == QSE_XLI_NIL)
+				{
+					qse_printf (QSE_T("#NIL\n"));
+				}
+				else
+				{
+					out.type = QSE_XLI_IOSTD_FILE;
+					out.u.file.path = QSE_T("-");
+					out.u.file.cmgr = g_outfile_cmgr;
+					qse_xli_writestd (xli, pair->val, &out);
+				}
 			}
 		}
-
-	/*
-		if (g_value)
-		{
-			TODO: ... set value...
-		}
-	*/
 	}
 
 
@@ -526,7 +549,7 @@ static int xli_main (int argc, qse_char_t* argv[])
 	out.u.file.path = g_output_file? g_output_file: QSE_T("-");
 	out.u.file.cmgr = g_outfile_cmgr;
 
-	ret = (g_io_flags & IO_FLAG_INI_OUTPUT)? qse_xli_writeinistd(xli, &out): qse_xli_writestd(xli, &out);
+	ret = (g_io_flags & IO_FLAG_INI_OUTPUT)? qse_xli_writeinistd(xli, QSE_NULL, &out): qse_xli_writestd(xli, QSE_NULL, &out);
 
 oops:
 	if (xli) qse_xli_close (xli);

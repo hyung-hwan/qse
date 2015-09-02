@@ -308,6 +308,37 @@ qse_xli_pair_t* qse_xli_insertpair (
 	return insert_pair (xli, parent, peer, &k, ap, tp, value);
 }
 
+void qse_xli_deletepair (qse_xli_t* xli, qse_xli_pair_t* pair)
+{
+	qse_xli_list_t* list;
+
+	list = pair->super;
+
+	if (pair->prev)
+	{
+		pair->prev->next = pair->next;
+	}
+	else 
+	{
+		QSE_ASSERT (list->head == pair);
+		list->head = pair->next;
+	}
+
+	if (pair->next) 
+	{
+		pair->next->prev = pair->prev;
+	}
+	else 
+	{
+		QSE_ASSERT (list->tail == pair);
+		list->tail = pair->prev;
+	}
+
+	free_val (xli->root, pair->val);
+	QSE_MMGR_FREE (xli->mmgr, pair);
+}
+
+/* ------------------------------------------------------ */
 qse_xli_pair_t* qse_xli_insertpairwithemptylist (
 	qse_xli_t* xli, qse_xli_list_t* parent, qse_xli_atom_t* peer,
 	const qse_char_t* key, const qse_char_t* alias, const qse_char_t* keytag)
@@ -351,7 +382,7 @@ qse_xli_pair_t* qse_xli_insertpairwithstr (
 		qse_strcpy ((qse_char_t*)val->tag, strtag);
 	}
 	
-	tmp = qse_xli_insertpair (xli, parent, peer, key, alias, keytag, (qse_xli_val_t*)val);	
+	tmp = qse_xli_insertpair (xli, parent, peer, key, alias, keytag, (qse_xli_val_t*)val);
 	if (!tmp) qse_xli_freemem (xli, val);
 	return tmp;
 }
@@ -788,6 +819,56 @@ noent:
 	return QSE_NULL;
 }
 
+qse_xli_pair_t* qse_xli_setpairwithstr (qse_xli_t* xli, const qse_xli_list_t* list, const qse_char_t* fqpn, const qse_cstr_t* value, const qse_char_t* strtag)
+{
+	qse_xli_pair_t* pair, * xpair;
+
+	pair = qse_xli_findpair (xli, list, fqpn);
+	if (pair)
+	{
+		if (xli->opt.trait & QSE_XLI_VALIDATE) 
+		{
+			qse_rbt_pair_t* scm_pair;
+			const qse_xli_scm_t* scm;
+
+			scm_pair = qse_rbt_search (xli->schema, fqpn, qse_strlen(fqpn));
+			if (!scm_pair)
+			{
+				qse_cstr_t key;
+
+				key.ptr = (qse_char_t*)fqpn;
+				key.len = qse_strlen(fqpn);
+
+				qse_xli_seterror (xli, QSE_XLI_EUDKEY, &key, QSE_NULL);
+				return QSE_NULL;
+			}
+
+			scm = (qse_xli_scm_t*)QSE_RBT_VPTR(scm_pair);
+
+			if (scm && !(scm->flags & QSE_XLI_SCM_VALSTR))
+			{
+				/* check the value type */
+				qse_cstr_t key;
+
+				key.ptr = (qse_char_t*)fqpn;
+				key.len = qse_strlen(fqpn);
+
+				qse_xli_seterror (xli, QSE_XLI_EILVAL, (const qse_cstr_t*)&key, QSE_NULL);
+				return QSE_NULL;
+			}
+		}
+
+		xpair = qse_xli_insertpairwithstr (xli, pair->super, (qse_xli_atom_t*)pair, pair->key, pair->alias, pair->tag, value, strtag);
+		if (xpair) qse_xli_deletepair (xli, pair);
+		return xpair;
+	}
+	else
+	{
+		/* TODO: insert a new pair */
+		return QSE_NULL;
+	}
+}
+
 qse_size_t qse_xli_countpairs (qse_xli_t* xli, const qse_xli_list_t* list, const qse_char_t* fqpn)
 {
 
@@ -881,7 +962,7 @@ qse_xli_str_t* qse_xli_addsegtostr (
 		val->tag = val->ptr + val->len + 1;
 		qse_strcpy ((qse_char_t*)val->tag, tag);
 	}
-		
+
 	val->next = str->next;
 	str->next = val;
 	return str->next;

@@ -72,7 +72,7 @@
 #	undef QSE_HAVE_INLINE_NEVER
 #endif
 
-#if defined(_WIN32) || defined(__WATCOMC__)
+#if defined(_WIN32) || (defined(__WATCOMC__) && !defined(__WINDOWS_386__))
 #	define QSE_IMPORT __declspec(dllimport)
 #	define QSE_EXPORT __declspec(dllexport)
 #	define QSE_PRIVATE 

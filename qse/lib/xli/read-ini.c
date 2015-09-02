@@ -28,20 +28,25 @@
 #include <qse/cmn/chr.h>
 
 /*
+ * It reads key-value pairs under sections as shown below:
+ * 
  * [SECTION1]
  * key1 = value1
  * key2 = value2
  * [SECTION2]
  * key1 = value1
- * --------------------------------
+ *
+ * The above can get translated to the native XLI format shown below:
  *
  * SECTION1 {
- *   key1 = value1;
- *   key2 = value2;
+ *   key1 = "value1";
+ *   key2 = "value2";
  * }
  * SECTION2 {
- *   key1 = value1;
+ *   key1 = "value1";
  * }
+ *
+ * The ini-format reader doesn't support file inclusion via @include.
  */
 
 enum

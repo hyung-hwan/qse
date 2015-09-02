@@ -633,7 +633,7 @@ int qse_xli_readinistd (qse_xli_t* xli, qse_xli_iostd_t* in)
 }
 
 
-int qse_xli_writestd (qse_xli_t* xli, qse_xli_iostd_t* out)
+int qse_xli_writestd (qse_xli_t* xli, qse_xli_list_t* root_list, qse_xli_iostd_t* out)
 {
 	int n;
 	xtn_t* xtn = (xtn_t*) QSE_XTN (xli);
@@ -648,7 +648,7 @@ int qse_xli_writestd (qse_xli_t* xli, qse_xli_iostd_t* out)
 	}
 
 	xtn->s.out.x = out;
-	n = qse_xli_write (xli, sf_out);
+	n = qse_xli_write (xli, root_list, sf_out);
 
 	if (out->type == QSE_XLI_IOSTD_STR)
 	{
@@ -663,7 +663,7 @@ int qse_xli_writestd (qse_xli_t* xli, qse_xli_iostd_t* out)
 	return n;
 }
 
-int qse_xli_writeinistd (qse_xli_t* xli, qse_xli_iostd_t* out)
+int qse_xli_writeinistd (qse_xli_t* xli, qse_xli_list_t* root_list, qse_xli_iostd_t* out)
 {
 	int n;
 	xtn_t* xtn = (xtn_t*) QSE_XTN (xli);
@@ -678,7 +678,7 @@ int qse_xli_writeinistd (qse_xli_t* xli, qse_xli_iostd_t* out)
 	}
 
 	xtn->s.out.x = out;
-	n = qse_xli_writeini (xli, sf_out);
+	n = qse_xli_writeini (xli, root_list, sf_out);
 
 	if (out->type == QSE_XLI_IOSTD_STR)
 	{

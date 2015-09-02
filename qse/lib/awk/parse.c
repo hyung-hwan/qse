@@ -5764,7 +5764,7 @@ static int get_string (
 
 static int get_rexstr (qse_awk_t* awk, qse_awk_tok_t* tok)
 {
-	if (awk->sio.last.c == QSE_T('/')) 
+	if (awk->sio.last.c == QSE_T('/'))
 	{
 		/* handle an empty regular expression.
 		 *
@@ -5778,17 +5778,17 @@ static int get_rexstr (qse_awk_t* awk, qse_awk_tok_t* tok)
 		GET_CHAR (awk);
 		return 0;
 	}
-	else 
+	else
 	{
 		qse_size_t preescaped = 0;
-		if (awk->sio.last.c == QSE_T('\\')) 
-		{		
+		if (awk->sio.last.c == QSE_T('\\'))
+		{
 			/* for input like /\//, this condition is met. 
 			 * the initial escape character is added when the
 			 * second charater is handled in get_string() */
 			preescaped = 1;
 		}
-		else 
+		else
 		{
 			/* add other initial characters here as get_string()
 			 * begins with reading the next character */
