@@ -665,7 +665,7 @@ retry:
 	else
 	{
 		n = get_symbols (xli, c, tok);
-		if (n <= -1) return -1; // hard failure
+		if (n <= -1) return -1; /* hard failure */
 		if (n == 0)
 		{
 			/* not handled yet */

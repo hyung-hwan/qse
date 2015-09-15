@@ -30,7 +30,6 @@
 #include <qse/types.h>
 #include <qse/macros.h>
 
-typedef struct qse_ipad_t  qse_ipad_t;
 typedef struct qse_ip4ad_t qse_ip4ad_t;
 typedef struct qse_ip6ad_t qse_ip6ad_t;
 
