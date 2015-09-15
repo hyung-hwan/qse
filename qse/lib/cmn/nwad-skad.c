@@ -260,3 +260,35 @@ int qse_skadfamily (const qse_skad_t* skad)
 	QSE_ASSERT (QSE_SIZEOF(*skad) >= QSE_SIZEOF(sockaddr_t));
 	return FAMILY(skad);
 }
+
+int qse_skadsize (const qse_skad_t* skad)
+{
+	switch (FAMILY(skad))
+	{
+#if defined(AF_INET)
+		case AF_INET:
+		{
+			struct sockaddr_in in;
+			return QSE_SIZEOF(in);
+		}
+#endif
+
+#if defined(AF_INET6)
+		case AF_INET6:
+		{
+			struct sockaddr_in in6;
+			return QSE_SIZEOF(in6);
+		}
+#endif
+
+#if defined(AF_UNIX)
+		case AF_UNIX:
+		{
+			struct sockaddr_un un;
+			return QSE_SIZEOF(un);
+		}
+#endif
+	}
+
+	return 0;
+}

@@ -247,6 +247,15 @@ QSE_EXPORT int qse_skadfamily (
 	const qse_skad_t* skad
 );
 
+
+/**
+ * The qse_skadlength() function returns the socket address size
+ * of a given address \a skad.
+ */
+QSE_EXPORT int qse_skadsize (
+	const qse_skad_t* skad
+);
+
 #if defined(__cplusplus)
 }
 #endif
