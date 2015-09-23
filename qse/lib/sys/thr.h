@@ -24,68 +24,54 @@
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#if !defined(char_t) && !defined(strjoin) && !defined(strxjoin)
-#	error Never include this file
+#ifndef _QSE_LIB_CMN_THR_H_
+#define _QSE_LIB_CMN_THR_H_
+
+#include <qse/sys/thr.h>
+
+
+#if (!defined(__unix__) && !defined(__unix)) || defined(HAVE_PTHREAD)
+
+#if defined(_WIN32)
+#	include <process.h>
+#	define QSE_THR_HND_INVALID INVALID_HANDLE_VALUE
+#elif defined(__OS2__)
+	/* not implemented */
+
+#elif defined(__DOS__)
+
+	/* not implemented */
+
+#elif defined(__BEOS__)
+#	include <be/kernel/OS.h>
+#	define QSE_THR_HND_INVALID (-1)
+#else
+#	if defined(AIX) && defined(__GNUC__)
+		typedef int crid_t;
+		typedef unsigned int class_id_t;
+#	endif
+#	include <pthread.h>
+#	include <signal.h>
+
+#	define QSE_THR_HND_INVALID 0
+#endif
+
+struct qse_thr_t
+{
+	qse_mmgr_t*       mmgr;
+
+	qse_thr_routine_t __main_routine;
+	qse_thr_routine_t __temp_routine;
+	qse_bool_t        __joinable;
+	qse_size_t        __stacksize;
+
+	qse_thr_hnd_t     __handle;
+	qse_thr_state_t   __state;
+
+	int               __return_code;
+};
+
 #endif
 
 
-qse_size_t strxjoinv (char_t* buf, qse_size_t size, va_list ap)
-{
-	const char_t* p;
-	char_t* ptr = buf;
-	qse_size_t left = size, n;
-
-	while (left > 0) 
-	{
-		p = va_arg (ap, const char_t*);
-		if (p == QSE_NULL) break;
-
-		n = strxcpy (ptr, left, p);
-		left -= n; ptr += n;
-	}
-
-	return size - left;
-}
-
-qse_size_t strxjoin (char_t* buf, qse_size_t size, ...)
-{
-	va_list ap;
-	qse_size_t n;
-
-	va_start (ap, size);
-	n = strxjoinv (buf, size, ap);
-	va_end (ap);
-
-	return n;
-}
-
-qse_size_t strjoinv (char_t* buf, va_list ap)
-{
-	const char_t* p;
-	char_t* ptr = buf;
-	qse_size_t n;
-
-	while (1)
-	{
-		p = va_arg (ap, const char_t*);
-		if (p == QSE_NULL) break;
-
-		n = strcpy (ptr, p);
-		ptr += n;
-	}
-
-	return ptr - buf;
-}
-
-
-qse_size_t strjoin (char_t* buf, ...)
-{
-	va_list ap;
-	qse_size_t n;
-
-	va_start (ap, buf);
-	n = strjoinv (buf, ap);
-	va_end (ap);
-
-	return n;
-}
+#endif

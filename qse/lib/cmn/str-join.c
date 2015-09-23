@@ -25,7 +25,6 @@
  */
 
 #include <qse/cmn/str.h>
-#include <stdarg.h>
 
 /* ----------------------------------- */
 
@@ -63,21 +62,4 @@
 #define strxjoinv qse_wcsxjoinv
 #define strcpy qse_wcscpy
 #define strxcpy qse_wcsxcpy
-#include "str-join.h"
-
-#undef char_t
-#undef strjoin
-#undef strjoinv
-#undef strxjoin
-#undef strxjoinv
-#undef strcpy
-#undef strxcpy
-
-#define char_t qse_char_t
-#define strjoin qse_strjoin
-#define strjoinv qse_strjoinv
-#define strxjoin qse_strxjoin
-#define strxjoinv qse_strxjoinv
-#define strcpy qse_strcpy
-#define strxcpy qse_strxcpy
 #include "str-join.h"
