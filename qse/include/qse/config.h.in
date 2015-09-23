@@ -892,6 +892,9 @@
 /* Patch level */
 #undef QSE_PACKAGE_VERSION_PATCH
 
+/* Define if pthread_t is signed */
+#undef QSE_PTHREAD_T_IS_SIGNED
+
 /* sizeof(char) */
 #undef QSE_SIZEOF_CHAR
 
@@ -921,6 +924,9 @@
 
 /* sizeof(off_t) */
 #undef QSE_SIZEOF_OFF_T
+
+/* sizeof(pthread_t) */
+#undef QSE_SIZEOF_PTHREAD_T
 
 /* sizeof(short) */
 #undef QSE_SIZEOF_SHORT
@@ -1005,6 +1011,9 @@
 
 /* The size of `off_t', as computed by sizeof. */
 #undef SIZEOF_OFF_T
+
+/* The size of `pthread_t', as computed by sizeof. */
+#undef SIZEOF_PTHREAD_T
 
 /* The size of `short', as computed by sizeof. */
 #undef SIZEOF_SHORT

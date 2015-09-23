@@ -4,11 +4,12 @@ AM_CPPFLAGS = \
 	-I$(top_builddir)/include \
 	-I$(top_srcdir)/include
 
-lib_LTLIBRARIES = 
-#lib_LTLIBRARIES = libqsesys.la
-#libqsesys_la_SOURCES = 
-#libqsesys_la_LDFLAGS = -L../cmn -version-info 1:0:0 -no-undefined
-#libqsesys_la_LIBADD = -lqsecmn 
+lib_LTLIBRARIES = libqsesys.la
+libqsesys_la_SOURCES =  \
+	thr.c \
+	thr.h
+libqsesys_la_LDFLAGS = -L../cmn -version-info 1:0:0 -no-undefined
+libqsesys_la_LIBADD = -lqsecmn 
 
 if ENABLE_CXX
 lib_LTLIBRARIES += libqsesysxx.la

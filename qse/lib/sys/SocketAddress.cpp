@@ -89,18 +89,41 @@
 QSE_BEGIN_NAMESPACE(QSE)
 /////////////////////////////////
 
+
+SocketAddress::SocketAddress ()
+{
+	QSE_MEMSET (&this->skad, 0, QSE_SIZEOF(this->skad));
+}
+
+SocketAddress::SocketAddress (int family)
+{
+	QSE_MEMSET (&this->skad, 0, QSE_SIZEOF(this->skad));
+	FAMILY(&this->skad) = family;
+}
+
+SocketAddress::SocketAddress (const qse_skad_t* skad)
+{
+	this->set (skad);
+}
+
+SocketAddress::SocketAddress (const qse_nwad_t* nwad)
+{
+	this->set (nwad);
+}
+
+SocketAddress::SocketAddress (const struct sockaddr* ptr, int len)
+{
+	if (this->set (ptr, len) <= -1)
+	{
+		QSE_MEMSET (&this->skad, 0, QSE_SIZEOF(this->skad));
+	}
+}
+
 int SocketAddress::getFamily () const
 {
 	return FAMILY(&this->skad);
 	//return qse_skadfamily (&this->skad);
 }
-
-void* SocketAddress::getStorage (int* len)
-{
-	if (len) *len = qse_skadsize(&this->skad);
-	return (void*)&this->skad;
-}
-
 
 void SocketAddress::setIpaddr (const qse_ip4ad_t* ipaddr)
 {
@@ -179,19 +202,19 @@ int SocketAddress::set (const qse_skad_t* skad)
 	return 0;
 }
 
-int SocketAddress::set (const void* ptr, int len)
+int SocketAddress::set (const qse_nwad_t* nwad)
 {
-	if (len < QSE_SIZEOF(struct sockaddr)) return -1;
+	return qse_nwadtoskad (nwad, &this->skad);
+}
+
+int SocketAddress::set (const struct sockaddr* ptr, int len)
+{
 	int exp_size = qse_skadsize((const qse_skad_t*)ptr);
 	if (len < exp_size) return -1;
 	QSE_MEMCPY (&this->skad, ptr, exp_size);
 	return 0;
 }
 
-int SocketAddress::set (const qse_nwad_t* nwad)
-{
-	return qse_nwadtoskad (nwad, &this->skad);
-}
 
 /////////////////////////////////
 QSE_END_NAMESPACE(QSE)

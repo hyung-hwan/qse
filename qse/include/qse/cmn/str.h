@@ -1094,6 +1094,18 @@ QSE_EXPORT qse_size_t qse_mbsxjoin (
 	...
 );
 
+QSE_EXPORT qse_size_t qse_mbsjoinv (
+	qse_mchar_t* buf, 
+	va_list      ap
+);
+
+QSE_EXPORT qse_size_t qse_mbsxjoinv (
+	qse_mchar_t* buf,
+	qse_size_t   size,
+	va_list      ap
+);
+
+
 /*
  * The qse_wcsjoin() function joins a list of wide-charcter strings into 
  * a buffer. The list of strings is terminated by QSE_NULL.
@@ -1116,17 +1128,28 @@ QSE_EXPORT qse_size_t qse_wcsxjoin (
 	...
 );
 
-QSE_EXPORT qse_size_t qse_strjoin (
-	qse_char_t* buf, 
-	...
+QSE_EXPORT qse_size_t qse_wcsjoinv (
+	qse_wchar_t* buf, 
+	va_list      ap
 );
 
-QSE_EXPORT qse_size_t qse_strxjoin (
-	qse_char_t* buf,
-	qse_size_t  size,
-	...
+QSE_EXPORT qse_size_t qse_wcsxjoinv (
+	qse_wchar_t* buf,
+	qse_size_t   size,
+	va_list      ap
 );
 
+#if defined(QSE_CHAR_IS_MCHAR)
+#	define qse_strjoin                qse_mbsjoin
+#	define qse_strxjoin               qse_mbsxjoin
+#	define qse_strjoinv(buf,ap)       qse_mbsjoinv(buf,ap)
+#	define qse_strxjoinv(buf,size,ap) qse_mbsxjoinv(buf,size,ap)
+#else
+#	define qse_strjoin                qse_wcsjoin
+#	define qse_strxjoin               qse_wcsxjoin
+#	define qse_strjoinv(buf,ap) qse_wcsjoinv(buf,ap)
+#	define qse_strxjoinv(buf,size,ap) qse_wcsxjoinv(buf,size,ap)
+#endif
 /* ---------------------------------------------------- */
 
 

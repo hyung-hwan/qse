@@ -24,8 +24,7 @@
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-qse_size_t strfcpy (
-	char_t* buf, const char_t* fmt, const char_t* str[])
+qse_size_t strfcpy (char_t* buf, const char_t* fmt, const char_t* str[])
 {
 	char_t* b = buf;
 	const char_t* f = fmt;
@@ -69,8 +68,7 @@ qse_size_t strfcpy (
 	return b - buf;
 }
 
-qse_size_t strfncpy (
-	char_t* buf, const char_t* fmt, const cstr_t str[])
+qse_size_t strfncpy (char_t* buf, const char_t* fmt, const cstr_t str[])
 {
 	char_t* b = buf;
 	const char_t* f = fmt;
@@ -123,9 +121,7 @@ qse_size_t strfncpy (
 	return b - buf;
 }
 
-qse_size_t strxfcpy (
-	char_t* buf, qse_size_t bsz, 
-	const char_t* fmt, const char_t* str[])
+qse_size_t strxfcpy (char_t* buf, qse_size_t bsz, const char_t* fmt, const char_t* str[])
 {
 	char_t* b = buf;
 	char_t* end = buf + bsz - 1;
@@ -185,9 +181,7 @@ fini:
 	return b - buf;
 }
 
-qse_size_t strxfncpy (
-	char_t* buf, qse_size_t bsz, 
-	const char_t* fmt, const cstr_t str[])
+qse_size_t strxfncpy (char_t* buf, qse_size_t bsz, const char_t* fmt, const cstr_t str[])
 {
 	char_t* b = buf;
 	char_t* end = buf + bsz - 1;

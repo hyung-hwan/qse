@@ -36,22 +36,38 @@ QSE_BEGIN_NAMESPACE(QSE)
 class SocketAddress
 {
 public:
-	int   getFamily () const;
-	void* getStorage (int* len);
+	SocketAddress ();
+	SocketAddress (int family);
+	SocketAddress (const qse_skad_t* skad);
+	SocketAddress (const qse_nwad_t* nwad);
+	SocketAddress (const struct sockaddr* ptr, int len);
+	
+	int getFamily () const;
 
-	int   getStorageSize () const
+	qse_skad_t* getAddrPtr()
+	{
+		return &this->skad;
+	}
+
+	const qse_skad_t* getAddrPtr() const
+	{
+		return &this->skad;
+	}
+
+	int getAddrSize () const
 	{
 		return qse_skadsize(&this->skad);
 	}
 
 	void setIpaddr (const qse_ip4ad_t* ipaddr);
 	void setIpaddr (const qse_ip6ad_t* ipaddr);
+
 	qse_uint16_t getPort() const; // in network-byte order
 	void setPort (qse_uint16_t port); // in network-byte order
 
-	int set (const qse_skad_t* skad);
-	int set (const void* ptr, int len);
+	int set (const qse_skad_t* skad); 
 	int set (const qse_nwad_t* nwad);
+	int set (const struct sockaddr* ptr, int len); // treat ptr as a pointer to struct sockaddr
 
 protected:
 	qse_skad_t skad;
