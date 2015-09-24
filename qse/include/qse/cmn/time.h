@@ -27,7 +27,7 @@
 #ifndef _QSE_CMN_TIME_H_
 #define _QSE_CMN_TIME_H_
 
-/** @file
+/** \file
  * This file provides time manipulation functions.
  */
 

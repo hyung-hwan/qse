@@ -24,104 +24,113 @@
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
-#ifndef _QSE_CMN_MTX_H_
-#define _QSE_CMN_MTX_H_
+#ifndef _QSE_CMN_CND_H_
+#define _QSE_CMN_CND_H_
 
 #include <qse/types.h>
 #include <qse/macros.h>
+#include <qse/cmn/time.h>
+#include <qse/sys/mtx.h>
 
-typedef struct qse_mtx_t qse_mtx_t;
+typedef struct qse_cnd_t qse_cnd_t;
+
 
 #if defined(_WIN32)
-	/* <winnt.h> => typedef PVOID HANDLE; */
-	typedef void* qse_mtx_hnd_t;
-
+	/* define nothing */
 #elif defined(__OS2__)
+#	error not implemented
 
-	/* not implemented */
-#	error not implemented
 #elif defined(__DOS__)
-	/* not implemented */
 #	error not implemented
-#elif defined(__BEOS__)
-	/* typedef sem_id qse_mtx_hnd_t; */
-	typdef qse_int32_t qse_mtx_hnd_t;
+
 #else
 
-#	if (QSE_SIZEOF_PTHREAD_MUTEX_T == 0)
+#	if (QSE_SIZEOF_PTHREAD_COND_T == 0)
 #		error unsupported
 
-#	elif (QSE_SIZEOF_PTHREAD_MUTEX_T == QSE_SIZEOF_INT)
-#		if defined(QSE_PTHREAD_MUTEX_T_IS_SIGNED)
-			typedef int qse_mtx_hnd_t;
+#	elif (QSE_SIZEOF_PTHREAD_COND_T == QSE_SIZEOF_INT)
+#		if defined(QSE_PTHREAD_COND_T_IS_SIGNED)
+			typedef int qse_cnd_hnd_t;
 #		else
-			typedef unsigned int qse_mtx_hnd_t;
+			typedef unsigned int qse_cnd_hnd_t;
 #		endif
-#	elif (QSE_SIZEOF_PTHREAD_MUTEX_T == QSE_SIZEOF_LONG)
-#		if defined(QSE_PTHREAD_MUTEX_T_IS_SIGNED)
-			typedef long qse_mtx_hnd_t;
+#	elif (QSE_SIZEOF_PTHREAD_COND_T == QSE_SIZEOF_LONG)
+#		if defined(QSE_PTHREAD_COND_T_IS_SIGNED)
+			typedef long qse_cnd_hnd_t;
 #		else
-			typedef unsigned long qse_mtx_hnd_t;
+			typedef unsigned long qse_cnd_hnd_t;
 #		endif
 #	else
 #		include <qse/pack1.h>
-		struct qse_mtx_hnd_t
+		struct qse_cnd_hnd_t
 		{
-			qse_uint8_t b[QSE_SIZEOF_PTHREAD_MUTEX_T];
+			qse_uint8_t b[QSE_SIZEOF_PTHREAD_COND_T];
 		};
-		typedef struct qse_mtx_hnd_t qse_mtx_hnd_t;
+		typedef struct qse_cnd_hnd_t qse_cnd_hnd_t;
 #		include <qse/unpack.h>
 #	endif
 
 #endif
 
-struct qse_mtx_t
+struct qse_cnd_t
 {
 	qse_mmgr_t* mmgr;
-	qse_mtx_hnd_t hnd;
+
+#if defined(_WIN32)
+	void* gate;
+	void* queue;
+	void* mutex;
+	unsigned int  gone;
+	unsigned long blocked;
+	unsigned int  waiting;
+#else
+	qse_cnd_hnd_t hnd;
+#endif
 };
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-qse_mtx_t* qse_mtx_open (
+
+qse_cnd_t* qse_cnd_open (
 	qse_mmgr_t*       mmgr,
 	qse_size_t        xtnsize
 );
 
-void qse_mtx_close (
-	qse_mtx_t* mtx
+void qse_cnd_close (
+	qse_cnd_t* cnd
 );
 
-int qse_mtx_init (
-	qse_mtx_t*        mtx,
+int qse_cnd_init (
+	qse_cnd_t*        cnd,
 	qse_mmgr_t*       mmgr
 );
 
-void qse_mtx_fini (
-	qse_mtx_t* mtx
+void qse_cnd_fini (
+	qse_cnd_t* cnd
 );
 
-qse_mmgr_t* qse_mtx_getmmgr (
-	qse_mtx_t* mtx
+qse_mmgr_t* qse_cnd_getmmgr (
+	qse_cnd_t* cnd
 );
 
-void* qse_mtx_getxtn (
-	qse_mtx_t* mtx
+void* qse_cnd_getxtn (
+	qse_cnd_t* cnd
 );
 
-int qse_mtx_lock (
-	qse_mtx_t* mtx
+void qse_cnd_signal (
+	qse_cnd_t* cond
 );
 
-int qse_mtx_unlock (
-	qse_mtx_t* mtx
+void qse_cnd_broadcast (
+	qse_cnd_t* cond
 );
 
-int qse_mtx_trylock (
-	qse_mtx_t* mtx
+void qse_cnd_wait (
+	qse_cnd_t*   cond, 
+	qse_mtx_t*   mutex,
+	qse_ntime_t* waiting_time
 );
 
 #ifdef __cplusplus

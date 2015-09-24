@@ -31,6 +31,10 @@
 
 #if defined(_WIN32)
 	#include <process.h>
+#elif defined(__OS2__)
+	/* implement this */
+#elif defined(__DOS__)
+	/* implement this */
 #elif defined(__BEOS__)
 	#include <be/kernel/OS.h>
 #else
@@ -40,7 +44,6 @@
 	#endif
 	#include <pthread.h>
 #endif
-
 
 qse_mtx_t* qse_mtx_open (qse_mmgr_t* mmgr, qse_size_t xtnsize)
 {
@@ -65,7 +68,6 @@ void qse_mtx_close (qse_mtx_t* mtx)
 	qse_mtx_fini (mtx);
 	QSE_MMGR_FREE (mtx->mmgr, mtx);
 }
-
 
 int qse_mtx_init (qse_mtx_t* mtx, qse_mmgr_t* mmgr)
 {
@@ -100,7 +102,7 @@ int qse_mtx_init (qse_mtx_t* mtx, qse_mmgr_t* mmgr)
 	qse_ensure (pthread_mutex_init (&mtx->hnd, &attr) == 0);
 	qse_ensure (pthread_mutexattr_destroy (&attr) == 0);
 	*/
-	if (pthread_mutex_init (&mtx->hnd, QSE_NULL) != 0) return -1;
+	if (pthread_mutex_init ((pthread_mutex_t*)&mtx->hnd, QSE_NULL) != 0) return -1;
 #endif
 
 	return 0;
@@ -122,7 +124,7 @@ void qse_mtx_fini (qse_mtx_t* mtx)
 	delete_sem(mtx->hnd);
 
 #else
-	pthread_mutex_destroy(&mtx->hnd);
+	pthread_mutex_destroy((pthread_mutex_t*)&mtx->hnd);
 #endif
 }
 
@@ -160,7 +162,7 @@ int qse_mtx_lock (qse_mtx_t* mtx)
 #elif defined(__BEOS__)
 	if (acquire_sem(mtx->hnd) != B_NO_ERROR) return -1;
 #else
-	if (pthread_mutex_lock (&mtx->hnd) != 0) return -1;
+	if (pthread_mutex_lock ((pthread_mutex_t*)&mtx->hnd) != 0) return -1;
 #endif
 	return 0;
 }
@@ -168,15 +170,11 @@ int qse_mtx_lock (qse_mtx_t* mtx)
 int qse_mtx_unlock (qse_mtx_t* mtx)
 {
 #if defined(_WIN32)
-	if (ReleaseMutex (mtx->hnd) == FALSE) 
-	{
-		qse_seterrno (qse_maperrno(GetLastError()));
-		return -1;
-	}
+	if (ReleaseMutex (mtx->hnd) == FALSE) return -1;
 #elif defined(__BEOS__)
 	if (release_sem(mtx->hnd) != B_NO_ERROR) return -1;
 #else
-	if (pthread_mutex_unlock (&mtx->hnd) != 0) return -1;
+	if (pthread_mutex_unlock ((pthread_mutex_t*)&mtx->hnd) != 0) return -1;
 #endif
 	return 0;
 }
@@ -184,19 +182,15 @@ int qse_mtx_unlock (qse_mtx_t* mtx)
 int qse_mtx_trylock (qse_mtx_t* mtx)
 {
 #if defined(_WIN32)
-	if (WaitForSingleObject(mtx->hnd,0) != WAIT_OBJECT_0) 
-	{
-		qse_seterrno (qse_maperrno(GetLastError()));
-		return -1;
-	}
+	if (WaitForSingleObject(mtx->hnd, 0) != WAIT_OBJECT_0)  return -1;
 #elif defined(__BEOS__)
-	if (acquire_sem_etc(mtx->hnd,1,B_ABSOLUTE_TIMEOUT,0) != B_NO_ERROR) 
+	if (acquire_sem_etc(mtx->hnd, 1, B_ABSOLUTE_TIMEOUT, 0) != B_NO_ERROR) 
 	{
 		/* TODO: check for B_WOULD_BLOCK */
 		return -1;
 	}
 #else
-	if (pthread_mutex_trylock(&mtx->hnd) != 0) return -1;
+	if (pthread_mutex_trylock((pthread_mutex_t*)&mtx->hnd) != 0) return -1;
 #endif
 	return 0;
 }
