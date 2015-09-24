@@ -122,6 +122,14 @@ void qse_thr_fini (
 	qse_thr_t* thr
 );
 
+qse_mmgr_t* qse_thr_getmmgr (
+	qse_thr_t* thr
+);
+
+void* qse_thr_getxtn (
+	qse_thr_t* thr
+);
+
 qse_size_t qse_thr_getstacksize (
 	qse_thr_t* thr
 );
