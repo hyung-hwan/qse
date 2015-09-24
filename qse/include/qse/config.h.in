@@ -892,6 +892,9 @@
 /* Patch level */
 #undef QSE_PACKAGE_VERSION_PATCH
 
+/* Define if pthread_cond_t is signed */
+#undef QSE_PTHREAD_MUTEX_T_IS_SIGNED
+
 /* Define if pthread_t is signed */
 #undef QSE_PTHREAD_T_IS_SIGNED
 
@@ -924,6 +927,12 @@
 
 /* sizeof(off_t) */
 #undef QSE_SIZEOF_OFF_T
+
+/* sizeof(pthread_cond_t) */
+#undef QSE_SIZEOF_PTHREAD_COND_T
+
+/* sizeof(pthread_mutex_t) */
+#undef QSE_SIZEOF_PTHREAD_MUTEX_T
 
 /* sizeof(pthread_t) */
 #undef QSE_SIZEOF_PTHREAD_T
@@ -1011,6 +1020,12 @@
 
 /* The size of `off_t', as computed by sizeof. */
 #undef SIZEOF_OFF_T
+
+/* The size of `pthread_cond_t', as computed by sizeof. */
+#undef SIZEOF_PTHREAD_COND_T
+
+/* The size of `pthread_mutex_t', as computed by sizeof. */
+#undef SIZEOF_PTHREAD_MUTEX_T
 
 /* The size of `pthread_t', as computed by sizeof. */
 #undef SIZEOF_PTHREAD_T

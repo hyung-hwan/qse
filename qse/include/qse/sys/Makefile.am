@@ -1,6 +1,7 @@
 pkgincludedir = $(includedir)/qse/sys
 
 pkginclude_HEADERS = \
+	cnd.h \
 	mtx.h \
 	thr.h
 

@@ -455,6 +455,24 @@ then
 		[#include <pthread.h>])
 fi
 
+AC_CHECK_SIZEOF(pthread_mutex_t,, [#include <pthread.h>])
+if test ${ac_cv_sizeof_pthread_mutex_t} -gt 0
+then
+	AX_CHECK_SIGN([pthread_mutex_t],
+		[ AC_DEFINE(QSE_PTHREAD_MUTEX_T_IS_SIGNED, 1, [Define if pthread_mutex_t is signed]) ],
+		[ AS_ECHO_N("") ],
+		[#include <pthread.h>])
+fi
+
+AC_CHECK_SIZEOF(pthread_cond_t,, [#include <pthread.h>])
+if test ${ac_cv_sizeof_pthread_cond_t} -gt 0
+then
+	AX_CHECK_SIGN([pthread_cond_t],
+		[ AC_DEFINE(QSE_PTHREAD_MUTEX_T_IS_SIGNED, 1, [Define if pthread_cond_t is signed]) ],
+		[ AS_ECHO_N("") ],
+		[#include <pthread.h>])
+fi
+
 dnl gcc 3.4.3 on opensolaris x86 gave this warning without -msse or 
 dnl something similar.
 dnl    SSE vector argument without SSE enabled changes the ABI
@@ -585,6 +603,8 @@ AC_DEFINE_UNQUOTED(QSE_SIZEOF_STRUCT_SOCKADDR_IN6, ${ac_cv_sizeof_struct_sockadd
 AC_DEFINE_UNQUOTED(QSE_SIZEOF_STRUCT_SOCKADDR_UN, ${ac_cv_sizeof_struct_sockaddr_un}, [sizeof(struct sockaddr_un)])
 AC_DEFINE_UNQUOTED(QSE_SIZEOF_SOCKLEN_T, ${ac_cv_sizeof_socklen_t}, [sizeof(socklen_t)])
 AC_DEFINE_UNQUOTED(QSE_SIZEOF_PTHREAD_T, ${ac_cv_sizeof_pthread_t}, [sizeof(pthread_t)])
+AC_DEFINE_UNQUOTED(QSE_SIZEOF_PTHREAD_MUTEX_T, ${ac_cv_sizeof_pthread_mutex_t}, [sizeof(pthread_mutex_t)])
+AC_DEFINE_UNQUOTED(QSE_SIZEOF_PTHREAD_COND_T, ${ac_cv_sizeof_pthread_cond_t}, [sizeof(pthread_cond_t)])
 
 
 qse_package_version_major="`echo ${PACKAGE_VERSION} | cut -d. -f1`"

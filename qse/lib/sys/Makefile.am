@@ -6,6 +6,7 @@ AM_CPPFLAGS = \
 
 lib_LTLIBRARIES = libqsesys.la
 libqsesys_la_SOURCES =  \
+	cnd.c \
 	mtx.c \
 	thr.c \
 	thr.h
