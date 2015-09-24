@@ -6,6 +6,7 @@ AM_CPPFLAGS = \
 
 lib_LTLIBRARIES = libqsesys.la
 libqsesys_la_SOURCES =  \
+	mtx.c \
 	thr.c \
 	thr.h
 libqsesys_la_LDFLAGS = -L../cmn -version-info 1:0:0 -no-undefined

@@ -78,6 +78,15 @@ void qse_thr_fini (qse_thr_t* thr)
 	thr->__handle = QSE_THR_HND_INVALID;
 }
 
+qse_mmgr_t* qse_thr_getmmgr (qse_thr_t* thr)
+{
+	return thr->mmgr;
+}
+
+void* qse_thr_getxtn (qse_thr_t* thr)
+{
+	return QSE_XTN (thr);
+}
 
 qse_size_t qse_thr_getstacksize (qse_thr_t* thr)
 {

@@ -1,6 +1,7 @@
 pkgincludedir = $(includedir)/qse/sys
 
 pkginclude_HEADERS = \
+	mtx.h \
 	thr.h
 
 if ENABLE_CXX
