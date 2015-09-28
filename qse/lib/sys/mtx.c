@@ -153,8 +153,7 @@ int qse_mtx_lock (qse_mtx_t* mtx)
 	 *                  state is nonsignaled. 
 	 *   WAIT_FAILED    An error occurred
 	 */
-	if (WaitForSingleObject (
-		mtx->hnd, INFINITE) == WAIT_FAILED) 
+	if (WaitForSingleObject (mtx->hnd, INFINITE) == WAIT_FAILED) 
 	{
 		qse_seterrno (qse_maperrno(GetLastError()));
 		return -1;
