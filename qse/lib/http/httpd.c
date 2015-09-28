@@ -869,7 +869,8 @@ static int accept_client (
 			qse_nwadtombs (&client->local_addr, tmp1, QSE_COUNTOF(tmp1), QSE_NWADTOMBS_ALL);
 			qse_nwadtombs (&client->orgdst_addr, tmp2, QSE_COUNTOF(tmp2), QSE_NWADTOMBS_ALL);
 			qse_nwadtombs (&client->remote_addr, tmp3, QSE_COUNTOF(tmp3), QSE_NWADTOMBS_ALL);
-			HTTPD_DBGOUT3 ("Accepted client %hs(%hs) from %hs\n", tmp1, tmp2, tmp3);
+			HTTPD_DBGOUT5 ("Accepted client %hs(%hs) on %zd from %hs - %zd\n", 
+				tmp1, tmp2, (qse_size_t)server->handle, tmp3, (qse_size_t)client->handle);
 		}
 	#endif
 	}
@@ -973,9 +974,10 @@ static int activate_servers (qse_httpd_t* httpd)
 		{
 		#if defined(QSE_HTTPD_DEBUG)
 			{
-				qse_mchar_t tmp[128];
+				qse_mchar_t tmp[128], tmp2[128];
 				qse_nwadtombs (&server->dope.nwad, tmp, QSE_COUNTOF(tmp), QSE_NWADTOMBS_ALL);
-				HTTPD_DBGOUT2 ("Opened server [%hs] - %zd\n", tmp, (qse_size_t)server->handle);
+				qse_nwadtombs (&server->nwad, tmp2, QSE_COUNTOF(tmp2), QSE_NWADTOMBS_ALL);
+				HTTPD_DBGOUT3 ("Opened server [%hs] actual address [%hs] - %zd\n", tmp,  tmp2, (qse_size_t)server->handle);
 			}
 		#endif
 		}

@@ -777,6 +777,9 @@ struct qse_httpd_server_t
 	/* provided by a user for attaching */
 	qse_httpd_server_dope_t dope;
 
+	/* actual binding address */
+	qse_nwad_t nwad;
+
 	/* set by server.open callback */
 	qse_httpd_hnd_t handle;
 

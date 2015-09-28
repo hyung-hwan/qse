@@ -932,6 +932,7 @@ static int server_open (qse_httpd_t* httpd, qse_httpd_server_t* server)
 	qse_sck_hnd_t fd = QSE_INVALID_SCKHND, flag;
 	qse_skad_t addr;
 	int addrsize;
+	qse_sck_len_t addrlen;
 
 	addrsize = qse_nwadtoskad (&server->dope.nwad, &addr);
 	if (addrsize <= -1)
@@ -975,15 +976,37 @@ static int server_open (qse_httpd_t* httpd, qse_httpd_server_t* server)
 	 * if transparency is achieved with TPROXY */
 
 	/*
+	1)
 	ip rule add fwmark 0x1/0x1 lookup 100
 	ip route add local 0.0.0.0/0 dev lo table 100
 
+	2)
 	iptables -t mangle -N DIVERT
-	iptables -t mangle -A PREROUTING -p tcp -m socket --transparent -j DIVERT
 	iptables -t mangle -A DIVERT -j MARK --set-mark 0x1/0x1
 	iptables -t mangle -A DIVERT -j ACCEPT
-
+	iptables -t mangle -A PREROUTING -p tcp -m socket --transparent -j DIVERT
 	iptables -t mangle -A PREROUTING -p tcp --dport 80 -j TPROXY --tproxy-mark 0x1/0x1 --on-port 8000
+
+	3)
+	iptables -t mangle -A PREROUTING -p tcp -m socket --transparent -j MARK --set-mark 0x1/0x1
+	iptables -t mangle -A PREROUTING -p tcp -m mark 0x1/0x1 -j RETURN
+	iptables -t mangle -A PREROUTING -p tcp --dport 80 -j TPROXY --tproxy-mark 0x1/0x1 --on-port 8000
+
+	4)
+	iptables -t mangle -A PREROUTING -p tcp --sport 80 -j MARK --set-mark 0x1/0x1
+	iptables -t mangle -A PREROUTING -p tcp -m mark 0x1/0x1 -j RETURN
+        iptables -t mangle -A PREROUTING -p tcp --dport 80 -j TPROXY --tproxy-mark 0x1/0x1 --on-port 8000
+
+
+	1) is required.
+        one of 2), 3), 4), and a variant is needed.
+	Specifying -i and -o can narrow down the amount of packets when the upstream interface
+	and the downstream interface are obvious.
+
+	If eth2 is an upstream and the eth1 is a downstream interface,
+	iptables -t mangle -A PREROUTING -i eth2 -p tcp --sport 80 -j MARK --set-mark 0x1/0x1
+	iptables -t mangle -A PREROUTING -p tcp -m mark 0x1/0x1 -j RETURN
+        iptables -t mangle -A PREROUTING -i eth1 -p tcp --dport 80 -j TPROXY --tproxy-mark 0x1/0x1 --on-port 8000
 
 	----------------------------------------------------------------------
 
@@ -1038,6 +1061,19 @@ static int server_open (qse_httpd_t* httpd, qse_httpd_server_t* server)
 	}
 
 bind_ok:
+
+	server->nwad = server->dope.nwad;
+	addrlen = QSE_SIZEOF(addr);
+	if (getsockname (fd, (struct sockaddr*)&addr, &addrlen) >= 0)
+	{
+		qse_nwad_t tmpnwad;
+		if (qse_skadtonwad (&addr, &tmpnwad) >= 0)
+		{
+			/* this is the actual binding address */
+			server->nwad = tmpnwad;
+		}
+	}
+
 	if (listen (fd, 10) <= -1) 
 	{
 		qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
@@ -1095,7 +1131,7 @@ static int server_accept (
 	if (qse_skadtonwad (&addr, &client->remote_addr) <= -1)
 	{
 /* TODO: logging */
-		client->remote_addr = server->dope.nwad;
+		client->remote_addr = server->nwad;
 	}
 
 	addrlen = QSE_SIZEOF(addr);
@@ -1103,14 +1139,14 @@ static int server_accept (
 	    qse_skadtonwad (&addr, &client->local_addr) <= -1)
 	{
 /* TODO: logging */
-		client->local_addr = server->dope.nwad;
+		client->local_addr = server->nwad;
 	}
 
 	#if defined(SO_ORIGINAL_DST)
 	/* if REDIRECT is used, SO_ORIGINAL_DST returns the original
-	 * destination. If TPROXY is used, getsockname() above returns
-	 * the original address. */
-
+	 * destination address. When REDIRECT is not used, it returnes
+	 * the address of the local socket. In this case, it should 
+	 * be same as the result of getsockname(). */
 	addrlen = QSE_SIZEOF(addr);
 	if (getsockopt (fd, SOL_IP, SO_ORIGINAL_DST, (char*)&addr, &addrlen) <= -1 ||
 	    qse_skadtonwad (&addr, &client->orgdst_addr) <= -1)
@@ -1121,16 +1157,27 @@ static int server_accept (
 	client->orgdst_addr = client->local_addr;
 	#endif
 
-/* TODO: how to set intercepted when TPROXY is used? */
 	if (!qse_nwadequal(&client->orgdst_addr, &client->local_addr))
+	{
 		client->status |= QSE_HTTPD_CLIENT_INTERCEPTED;
-
+	}
+	else if (qse_getnwadport(&client->local_addr) != 
+	         qse_getnwadport(&server->nwad))
+	{
+		/* When TPROXY is used, getsockname() and SO_ORIGNAL_DST return
+		 * the same addresses. however, the port number may be different
+		 * as a typical TPROXY rule is set to change the port number.
+		 * However, this check is fragile if the server port number is
+		 * set to 0. */
+		client->status |= QSE_HTTPD_CLIENT_INTERCEPTED;
+	}
 	#if 0
-	client->initial_ifindex = resolve_ifindex (fd, client->local_addr);
-	if (client->ifindex <= -1)
+/* TODO: how to set intercepted when TPROXY is used? */
+	else if ((client->initial_ifindex = resolve_ifindex (fd, client->local_addr)) <= -1)
 	{
 		/* the local_address is not one of a local address.
 		 * it's probably proxied. */
+		client->status |= QSE_HTTPD_CLIENT_INTERCEPTED;
 	}
 	#endif
 

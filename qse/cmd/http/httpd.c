@@ -514,9 +514,17 @@ static int get_server_root (
 		{
 			root->type = QSE_HTTPD_SERVERSTD_ROOT_PROXY;
 			root->u.proxy.dst.nwad = qinfo->client->orgdst_addr;
-			/* if TPROXY is used, set the source to the original source.
-			root->u.proxy.src.nwad = qinfo->client->remote_addr;
-			qse_setnwadport (&root->u.proxy.src.nwad, 0);*/
+			if (qse_nwadequal(&qinfo->client->orgdst_addr, &qinfo->client->local_addr))
+			{
+				/* if the local address is the same as the original
+				 * destination and INTERCEPTED is set, it's probably
+				 * TPROXYed. if TPROXY is used, set the source to the
+				 * original source. */
+				root->u.proxy.src.nwad = qinfo->client->remote_addr;
+
+				/* well, i don't keep the port number, though */
+				qse_setnwadport (&root->u.proxy.src.nwad, 0);
+			}
 
 			if (mth == QSE_HTTP_CONNECT) 
 				root->u.proxy.flags |= QSE_HTTPD_RSRC_PROXY_RAW;
