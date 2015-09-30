@@ -30,6 +30,7 @@
 
 #include <qse/types.h>
 #include <qse/macros.h>
+#include <qse/cmn/time.h>
 
 typedef struct qse_mtx_t qse_mtx_t;
 
@@ -39,14 +40,19 @@ typedef struct qse_mtx_t qse_mtx_t;
 
 #elif defined(__OS2__)
 
-	/* not implemented */
-#	error not implemented
+	/* typdef unsigned long ULONG;
+	 * typedef ULONG HMTX; */
+	typedef unsigned long qse_mtx_hnd_t;
+
 #elif defined(__DOS__)
 	/* not implemented */
 #	error not implemented
+
 #elif defined(__BEOS__)
-	/* typedef sem_id qse_mtx_hnd_t; */
+	/* typedef int32 sem_id; 
+	 * typedef sem_id qse_mtx_hnd_t; */
 	typdef qse_int32_t qse_mtx_hnd_t;
+
 #else
 
 #	if (QSE_SIZEOF_PTHREAD_MUTEX_T == 0)
@@ -113,16 +119,14 @@ void* qse_mtx_getxtn (
 );
 
 int qse_mtx_lock (
-	qse_mtx_t* mtx
+	qse_mtx_t*   mtx,
+	qse_ntime_t* waiting_time
 );
 
 int qse_mtx_unlock (
-	qse_mtx_t* mtx
+	qse_mtx_t*   mtx
 );
 
-int qse_mtx_trylock (
-	qse_mtx_t* mtx
-);
 
 #ifdef __cplusplus
 }

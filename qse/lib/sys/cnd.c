@@ -30,6 +30,7 @@
 #if (!defined(__unix__) && !defined(__unix)) || defined(HAVE_PTHREAD)
 
 #if defined(_WIN32)
+	#include <windows.h>
 	#include <process.h>
 #elif defined(__OS2__)
 	/* implement this */
@@ -73,7 +74,7 @@ int qse_cnd_init (qse_cnd_t* cnd, qse_mmgr_t* mmgr)
 	QSE_MEMSET (cnd, 0, QSE_SIZEOF(*cnd));
 	cnd->mmgr = mmgr;
 
-#ifdef _WIN32
+#if defined(_WIN32)
 	cnd->gone    = 0;
 	cnd->blocked = 0;
 	cnd->waiting = 0;
@@ -86,8 +87,6 @@ int qse_cnd_init (qse_cnd_t* cnd, qse_mmgr_t* mmgr)
 	    cnd->queue == QSE_NULL || 
 	    cnd->mutex == QSE_NULL) 
 	{
-		int num = qse_maperrno (GetLastError());
-
 		if (cnd->gate) CloseHandle (cnd->gate);
 		if (cnd->queue) CloseHandle (cnd->queue);
 		if (cnd->mutex) CloseHandle (cnd->mutex);
@@ -107,7 +106,7 @@ int qse_cnd_init (qse_cnd_t* cnd, qse_mmgr_t* mmgr)
 
 void qse_cnd_fini (qse_cnd_t* cnd)
 {
-#ifdef _WIN32
+#if defined(_WIN32)
 	CloseHandle (cnd->gate);
 	CloseHandle (cnd->queue);
 	CloseHandle (cnd->mutex);
@@ -122,7 +121,7 @@ void qse_cnd_fini (qse_cnd_t* cnd)
 
 void qse_cnd_signal (qse_cnd_t* cnd)
 {
-#ifdef _WIN32
+#if defined(_WIN32)
 	unsigned int signals = 0;
 
 	WaitForSingleObject ((HANDLE)cnd->mutex, INFINITE);
@@ -166,7 +165,7 @@ void qse_cnd_signal (qse_cnd_t* cnd)
 
 void qse_cnd_broadcast (qse_cnd_t* cnd)
 {
-#ifdef _WIN32
+#if defined(_WIN32)
 	unsigned int signals = 0;
 
 	WaitForSingleObject ((HANDLE)cnd->mutex, INFINITE);
@@ -210,7 +209,7 @@ void qse_cnd_broadcast (qse_cnd_t* cnd)
 
 void qse_cnd_wait (qse_cnd_t* cnd, qse_mtx_t* mutex, qse_ntime_t* waiting_time)
 {
-#ifdef _WIN32
+#if defined(_WIN32)
 	unsigned int was_waiting, was_gone;
 	int signaled;
 
@@ -222,7 +221,10 @@ void qse_cnd_wait (qse_cnd_t* cnd, qse_mtx_t* mutex, qse_ntime_t* waiting_time)
 
 	if (waiting_time)
 	{
-		signaled = (WaitForSingleObject((HANDLE)cnd->queue, (DWORD)waiting_time) == WAIT_OBJECT_0);
+		DWORD msec;
+
+		msec = QSE_SECNSEC_TO_MSEC (waiting_time->sec, waiting_time->nsec);
+		signaled = (WaitForSingleObject((HANDLE)cnd->queue, msec) == WAIT_OBJECT_0);
 	}
 	else
 	{
@@ -279,7 +281,7 @@ void qse_cnd_wait (qse_cnd_t* cnd, qse_mtx_t* mutex, qse_ntime_t* waiting_time)
 		ReleaseSemaphore ((HANDLE)cnd->gate, 1, QSE_NULL);
 	}
 
-	qse_mtx_lock (mutex);
+	qse_mtx_lock (mutex, QSE_NULL);
 #else
 	if (waiting_time)
 	{
@@ -301,83 +303,5 @@ void qse_cnd_wait (qse_cnd_t* cnd, qse_mtx_t* mutex, qse_ntime_t* waiting_time)
 	}
 #endif
 }
-
-#if 0
-void qse_cnd_twait (
-	qse_cnd_t* cnd, qse_mtx_t* mutex, qse_time_t waiting_time)
-{
-#ifdef _WIN32
-	qse_bool_t signaled;
-	unsigned int was_waiting, was_gone;
-
-	WaitForSingleObject ((HANDLE)cnd->gate, INFINITE);
-	++cnd->blocked;
-	ReleaseSemaphore ((HANDLE)cnd->gate, 1, QSE_NULL);
-
-	qse_mtx_unlock (mutex);
-
-	signaled = (WaitForSingleObject((HANDLE)cnd->queue, (DWORD)waiting_time) == WAIT_OBJECT_0);
-
-	was_waiting = 0; 
-	was_gone = 0;
-
-	WaitForSingleObject ((HANDLE)cnd->mutex, INFINITE);
-
-	was_waiting = cnd->waiting;
-	was_gone = cnd->gone;
-
-	if (was_waiting != 0) 
-	{
-		if (!signaled) 
-		{ /* timed out */
-			if (cnd->blocked != 0) --(cnd->blocked);
-			else ++(cnd->gone);
-		}
-		if (--(cnd->waiting) == 0) 
-		{
-			if (cnd->blocked != 0) 
-			{
-				ReleaseSemaphore ((HANDLE)cnd->gate, 1, QSE_NULL);
-				was_waiting = 0;
-			}
-			else if (cnd->gone != 0) cnd->gone = 0;
-		}
-	}
-	else if (++(cnd->gone) == QSE_TYPE_MAX(unsigned int) / 2) 
-	{
-		WaitForSingleObject ((HANDLE)cnd->gate, INFINITE);
-		cnd->blocked -= cnd->gone;
-		ReleaseSemaphore ((HANDLE)cnd->gate, 1, QSE_NULL);
-		cnd->gone = 0;
-	}
-
-	ReleaseMutex ((HANDLE)cnd->mutex);
-
-	if (was_waiting == 1) 
-	{
-		for (;was_gone; --was_gone) 
-		{
-			WaitForSingleObject ((HANDLE)cnd->queue, INFINITE);
-		}
-		ReleaseSemaphore ((HANDLE)cnd->gate, 1, QSE_NULL);
-	}
-
-	qse_mtx_lock (mutex);
-#else
-	qse_time_t now;
-	qse_timespec_t timeout;
-
-	qse_gettime (&now);
-	now += waiting_time;
-
-	QSE_TIME_TO_TIMESPEC (now, &timeout);
-
-	QSE_ASSERT (QSE_SIZEOF(timeout) == QSE_SIZEOF(struct timespec));
-	pthread_cond_timedwait (&cnd->hnd, &mutex->hnd, &timeout);
-#endif
-}
-
-#endif
-
 
 #endif
