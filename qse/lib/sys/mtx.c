@@ -30,19 +30,25 @@
 #if (!defined(__unix__) && !defined(__unix)) || defined(HAVE_PTHREAD)
 
 #if defined(_WIN32)
-	#include <process.h>
+#	include <windows.h>
+#	include <process.h>
 #elif defined(__OS2__)
-	/* implement this */
+
+#	define INCL_DOSSEMAPHORES
+#	include <os2.h>
+
 #elif defined(__DOS__)
 	/* implement this */
+
 #elif defined(__BEOS__)
-	#include <be/kernel/OS.h>
+#	include <be/kernel/OS.h>
+
 #else
-	#if defined(AIX) && defined(__GNUC__)
+#	if defined(AIX) && defined(__GNUC__)
 		typedef int crid_t;
 		typedef unsigned int class_id_t;
-	#endif
-	#include <pthread.h>
+#	endif
+#	include <pthread.h>
 #endif
 
 qse_mtx_t* qse_mtx_open (qse_mmgr_t* mmgr, qse_size_t xtnsize)
@@ -79,7 +85,17 @@ int qse_mtx_init (qse_mtx_t* mtx, qse_mmgr_t* mmgr)
 	if (mtx->hnd == QSE_NULL) return -1;
 
 #elif defined(__OS2__)
-#	error not implemented
+
+	{
+		APIRET rc;
+		HMTX m;
+
+		rc = DosCreateMutexSem (QSE_NULL, &m, DC_SEM_SHARED, FALSE);
+		if (rc != NO_ERROR) return -1;
+
+		mtx->hnd = m;
+		return 0;
+	}
 
 #elif defined(__DOS__)
 #	error not implemented
@@ -114,7 +130,7 @@ void qse_mtx_fini (qse_mtx_t* mtx)
 	CloseHandle (mtx->hnd);
 
 #elif defined(__OS2__)
-#	error not implemented
+	DosCloseMutexSem (mtx->hnd);
 
 #elif defined(__DOS__)
 #	error not implemented
@@ -138,7 +154,7 @@ void* qse_mtx_getxtn (qse_mtx_t* mtx)
 	return QSE_XTN (mtx);
 }
 
-int qse_mtx_lock (qse_mtx_t* mtx)
+int qse_mtx_lock (qse_mtx_t* mtx, qse_ntime_t* waiting_time)
 {
 #if defined(_WIN32)
 	/* 
@@ -153,15 +169,61 @@ int qse_mtx_lock (qse_mtx_t* mtx)
 	 *                  state is nonsignaled. 
 	 *   WAIT_FAILED    An error occurred
 	 */
-	if (WaitForSingleObject (mtx->hnd, INFINITE) == WAIT_FAILED) 
+	if (waiting_time)
 	{
-		qse_seterrno (qse_maperrno(GetLastError()));
-		return -1;
+		DWORD msec;
+		msec = QSE_SECNSEC_TO_MSEC (waiting_time->sec, waiting_time->nsec);
+		if (WaitForSingleObject(mtx->hnd, msec) != WAIT_OBJECT_0)  return -1;
 	}
+	else
+	{
+		if (WaitForSingleObject (mtx->hnd, INFINITE) == WAIT_FAILED) return -1;
+	}
+
+#elif defined(__OS2__)
+	if (waiting_time)
+	{
+		ULONG msec;
+		msec = QSE_SECNSEC_TO_MSEC (waiting_time->sec, waiting_time->nsec);
+		if (DosRequestMutexSem (mtx->hnd, msec) != NO_ERROR) return -1;
+	}
+	else
+	{
+		if (DosRequestMutexSem (mtx->hnd, SEM_INDEFINITE_WAIT) != NO_ERROR) return -1;
+	}
+
+#elif defined(__DOS__)
+
+	/* nothing to do */
+
 #elif defined(__BEOS__)
-	if (acquire_sem(mtx->hnd) != B_NO_ERROR) return -1;
+	if (waiting_time)
+	{
+		/* TODO: check for B_WOULD_BLOCK */
+		/*if (acquire_sem_etc(mtx->hnd, 1, B_ABSOLUTE_TIMEOUT, 0) != B_NO_ERROR) return -1;*/
+		bigtime_t usec;
+
+		usec = QSE_SECNSEC_TO_USEC (waiting_time->sec, waiting_time->nsec);
+		if (acquire_sem_etc(mtx->hnd, 1, B_TIMEOUT, 0) != B_NO_ERROR) return -1;
+	}
+	else
+	{
+		if (acquire_sem(mtx->hnd) != B_NO_ERROR) return -1;
+	}
 #else
-	if (pthread_mutex_lock ((pthread_mutex_t*)&mtx->hnd) != 0) return -1;
+
+	if (waiting_time)
+	{
+		struct timespec ts;
+
+		ts.tv_sec = waiting_time->sec;
+		ts.tv_nsec = waiting_time->nsec;
+		if (pthread_mutex_timedlock ((pthread_mutex_t*)&mtx->hnd, &ts) != 0) return -1;
+	}
+	else
+	{
+		if (pthread_mutex_lock ((pthread_mutex_t*)&mtx->hnd) != 0) return -1;
+	}
 #endif
 	return 0;
 }
@@ -170,26 +232,19 @@ int qse_mtx_unlock (qse_mtx_t* mtx)
 {
 #if defined(_WIN32)
 	if (ReleaseMutex (mtx->hnd) == FALSE) return -1;
+
+#elif defined(__OS2__)
+	if (DosReleaseMutexSem (mtx->hnd) != NO_ERROR) return -1;
+
+#elif defined(__DOS__)
+
+	/* nothing to do */
+
 #elif defined(__BEOS__)
 	if (release_sem(mtx->hnd) != B_NO_ERROR) return -1;
+
 #else
 	if (pthread_mutex_unlock ((pthread_mutex_t*)&mtx->hnd) != 0) return -1;
-#endif
-	return 0;
-}
-
-int qse_mtx_trylock (qse_mtx_t* mtx)
-{
-#if defined(_WIN32)
-	if (WaitForSingleObject(mtx->hnd, 0) != WAIT_OBJECT_0)  return -1;
-#elif defined(__BEOS__)
-	if (acquire_sem_etc(mtx->hnd, 1, B_ABSOLUTE_TIMEOUT, 0) != B_NO_ERROR) 
-	{
-		/* TODO: check for B_WOULD_BLOCK */
-		return -1;
-	}
-#else
-	if (pthread_mutex_trylock((pthread_mutex_t*)&mtx->hnd) != 0) return -1;
 #endif
 	return 0;
 }

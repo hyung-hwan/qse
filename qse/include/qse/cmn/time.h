@@ -75,6 +75,9 @@
 #define QSE_SECNSEC_TO_MSEC(sec,nsec) \
 	(((qse_long_t)(sec) * QSE_MSECS_PER_SEC) + ((qse_long_t)(nsec) / QSE_NSECS_PER_MSEC))
 
+#define QSE_SECNSEC_TO_USEC(sec,nsec) \
+	(((qse_long_t)(sec) * QSE_USECS_PER_SEC) + ((qse_long_t)(nsec) / QSE_NSECS_PER_USEC))
+
 #define QSE_SEC_TO_MSEC(sec) ((sec) * QSE_MSECS_PER_SEC)
 #define QSE_MSEC_TO_SEC(sec) ((sec) / QSE_MSECS_PER_SEC)
 

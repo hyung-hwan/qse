@@ -33,6 +33,7 @@
 #if (!defined(__unix__) && !defined(__unix)) || defined(HAVE_PTHREAD)
 
 #if defined(_WIN32)
+#	include <windows.h>
 #	include <process.h>
 #	define QSE_THR_HND_INVALID INVALID_HANDLE_VALUE
 #elif defined(__OS2__)
