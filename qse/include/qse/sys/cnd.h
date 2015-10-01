@@ -37,8 +37,11 @@ typedef struct qse_cnd_t qse_cnd_t;
 
 #if defined(_WIN32)
 	/* define nothing */
+
 #elif defined(__OS2__)
-#	error not implemented
+	/* typdef unsigned long ULONG;
+	 * typedef ULONG HEV; */
+	typedef unsigned long qse_cnd_hnd_t;
 
 #elif defined(__DOS__)
 #	error not implemented
@@ -83,6 +86,11 @@ struct qse_cnd_t
 	unsigned int  gone;
 	unsigned long blocked;
 	unsigned int  waiting;
+#elif defined(__OS2__)
+	qse_size_t wait_count;
+	qse_cnd_hnd_t hnd;
+
+
 #else
 	qse_cnd_hnd_t hnd;
 #endif
@@ -94,8 +102,8 @@ extern "C" {
 
 
 qse_cnd_t* qse_cnd_open (
-	qse_mmgr_t*       mmgr,
-	qse_size_t        xtnsize
+	qse_mmgr_t* mmgr,
+	qse_size_t  xtnsize
 );
 
 void qse_cnd_close (
@@ -103,8 +111,8 @@ void qse_cnd_close (
 );
 
 int qse_cnd_init (
-	qse_cnd_t*        cnd,
-	qse_mmgr_t*       mmgr
+	qse_cnd_t*  cnd,
+	qse_mmgr_t* mmgr
 );
 
 void qse_cnd_fini (

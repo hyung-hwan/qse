@@ -30,18 +30,22 @@
 #if (!defined(__unix__) && !defined(__unix)) || defined(HAVE_PTHREAD)
 
 #if defined(_WIN32)
-	#include <windows.h>
-	#include <process.h>
+#	include <windows.h>
+#	include <process.h>
+
 #elif defined(__OS2__)
-	/* implement this */
+#	define INCL_DOSSEMAPHORES
+#	define INCL_DOSERRORS
+#	include <os2.h> 
+
 #elif defined(__DOS__)
 	/* implement this */
 #else
-	#if defined(AIX) && defined(__GNUC__)
-		typedef int crid_t;
-		typedef unsigned int class_id_t;
-	#endif
-	#include <pthread.h>
+#	if defined(AIX) && defined(__GNUC__)
+	typedef int crid_t;
+	typedef unsigned int class_id_t;
+#	endif
+#	include <pthread.h>
 #endif
 
 qse_cnd_t* qse_cnd_open (qse_mmgr_t* mmgr, qse_size_t xtnsize)
@@ -94,9 +98,22 @@ int qse_cnd_init (qse_cnd_t* cnd, qse_mmgr_t* mmgr)
 		return -1;
 	}
 #elif defined(__OS2__)
-#	error not implemented
+
+	{
+		APIRET rc;
+		HEV hev;
+
+		rc = DosCreateEventSem (QSE_NULL, &hev, DC_SEM_SHARED, FALSE);
+		if (rc != NO_ERROR) return -1;
+
+		cnd->hnd = hev;
+		cnd->wait_count = 0;
+	}
+
 #elif defined(__DOS__)
 #	error not implemented
+
+
 #else
 	if (pthread_cond_init ((pthread_cond_t*)&cnd->hnd, QSE_NULL) != 0)  return -1;
 #endif
@@ -110,10 +127,13 @@ void qse_cnd_fini (qse_cnd_t* cnd)
 	CloseHandle (cnd->gate);
 	CloseHandle (cnd->queue);
 	CloseHandle (cnd->mutex);
+
 #elif defined(__OS2__)
-#	error not implemented
+	DosCloseEventSem (cnd->hnd);
+
 #elif defined(__DOS__)
 #	error not implemented
+
 #else
 	pthread_cond_destroy ((pthread_cond_t*)&cnd->hnd);
 #endif
@@ -158,6 +178,21 @@ void qse_cnd_signal (qse_cnd_t* cnd)
 
 	ReleaseMutex ((HANDLE)cnd->mutex);
 	if (signals) ReleaseSemaphore ((HANDLE)cnd->queue, signals, QSE_NULL);
+
+#elif defined(__OS2__)
+
+	if (cnd->wait_count > 0)
+	{
+		DosPostEventSem (cnd->hnd);
+		cnd->wait_count--;
+	}
+
+#elif defined(__DOS__)
+#	error not implemented
+
+#elif defined(__BEOS__)
+#	error not implemented
+
 #else
 	pthread_cond_signal ((pthread_cond_t*)&cnd->hnd);
 #endif
@@ -202,6 +237,22 @@ void qse_cnd_broadcast (qse_cnd_t* cnd)
 
 	ReleaseMutex ((HANDLE)cnd->mutex);
 	if (signals) ReleaseSemaphore ((HANDLE)cnd->queue, signals, QSE_NULL);
+
+#elif defined(__OS2__)
+
+	while (cnd->wait_count > 0)
+	{
+		DosPostEventSem (cnd->hnd);
+		cnd->wait_count--;
+	}
+
+
+#elif defined(__DOS__)
+#	error not implemented
+
+#elif defined(__BEOS__)
+#	error not implemented
+
 #else
 	pthread_cond_broadcast ((pthread_cond_t*)&cnd->hnd);
 #endif
@@ -282,6 +333,29 @@ void qse_cnd_wait (qse_cnd_t* cnd, qse_mtx_t* mutex, qse_ntime_t* waiting_time)
 	}
 
 	qse_mtx_lock (mutex, QSE_NULL);
+
+#elif defined(__OS2__)
+
+	cnd->wait_count++;
+	qse_mtx_unlock (mutex);
+	if (waiting_time)
+	{
+		ULONG msec;
+		msec = QSE_SECNSEC_TO_MSEC(waiting_time->sec, waiting_time->nsec);
+		DosWaitEventSem (cnd->hnd, msec);
+	}
+	else
+	{
+		DosWaitEventSem (cnd->hnd, SEM_INDEFINITE_WAIT);
+	}
+	qse_mtx_lock (mutex, QSE_NULL);
+
+#elif defined(__DOS__)
+#	error not implemented
+
+#elif defined(__BEOS__)
+#	error not implemented
+
 #else
 	if (waiting_time)
 	{

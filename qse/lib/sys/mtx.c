@@ -32,9 +32,10 @@
 #if defined(_WIN32)
 #	include <windows.h>
 #	include <process.h>
-#elif defined(__OS2__)
 
+#elif defined(__OS2__)
 #	define INCL_DOSSEMAPHORES
+#	define INCL_DOSERRORS
 #	include <os2.h>
 
 #elif defined(__DOS__)
@@ -94,7 +95,6 @@ int qse_mtx_init (qse_mtx_t* mtx, qse_mmgr_t* mmgr)
 		if (rc != NO_ERROR) return -1;
 
 		mtx->hnd = m;
-		return 0;
 	}
 
 #elif defined(__DOS__)
@@ -210,14 +210,18 @@ int qse_mtx_lock (qse_mtx_t* mtx, qse_ntime_t* waiting_time)
 	{
 		if (acquire_sem(mtx->hnd) != B_NO_ERROR) return -1;
 	}
-#else
 
+#else
 	if (waiting_time)
 	{
+		qse_ntime_t t;
 		struct timespec ts;
 
-		ts.tv_sec = waiting_time->sec;
-		ts.tv_nsec = waiting_time->nsec;
+		qse_gettime (&t);
+		qse_addtime (&t, waiting_time, &t);
+
+		ts.tv_sec = t.sec;
+		ts.tv_nsec = t.nsec;
 		if (pthread_mutex_timedlock ((pthread_mutex_t*)&mtx->hnd, &ts) != 0) return -1;
 	}
 	else
@@ -225,6 +229,7 @@ int qse_mtx_lock (qse_mtx_t* mtx, qse_ntime_t* waiting_time)
 		if (pthread_mutex_lock ((pthread_mutex_t*)&mtx->hnd) != 0) return -1;
 	}
 #endif
+
 	return 0;
 }
 

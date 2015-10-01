@@ -255,6 +255,13 @@
 		$(SOURCES_BUNDLED_UNICODE)
 	</set>
 
+	<set var="SOURCES_LIBQSESYS">
+		cnd.c
+		mtx.c
+		rwl.c
+		thr.c
+	</set>
+
 	<set var="SOURCES_STATIC_AWK_MODULE">
 		<if cond="ENABLE_STATIC_MODULE=='1'">mod-dir.c mod-math.c mod-sed.c mod-str.c mod-sys.c</if>
 	</set>
@@ -386,6 +393,31 @@
 		<sys-lib>$(SYSLIB_2)</sys-lib>
 		<sys-lib>$(SYSLIB_SOCKET)</sys-lib>
 		<sys-lib>$(SYSLIB_SOCKET2)</sys-lib>
+	</lib>
+
+	<dll id="dllqsesys" template="base" cond="ENABLE_DLL=='1'">
+		<libname>qsesys</libname>
+		<dllname>qsesys</dllname>
+		<set-srcdir>../../lib/sys</set-srcdir>
+		<sources>$(SOURCES_LIBQSESYS)</sources>
+		<sys-lib>$(SYSLIB_1)</sys-lib>
+		<sys-lib>$(SYSLIB_2)</sys-lib>
+		<sys-lib>$(SYSLIB_SOCKET)</sys-lib>
+		<sys-lib>$(SYSLIB_SOCKET2)</sys-lib>
+		<library>libqsecmn</library>
+		<depends>dllqsecmn</depends>
+	</dll>
+
+	<lib id="libqsesys" template="base" cond="ENABLE_DLL=='0'">
+		<libname>qsesys</libname>
+		<set-srcdir>../../lib/sys</set-srcdir>
+		<sources>$(SOURCES_LIBQSESYS)</sources>
+		<sys-lib>$(SYSLIB_1)</sys-lib>
+		<sys-lib>$(SYSLIB_2)</sys-lib>
+		<sys-lib>$(SYSLIB_SOCKET)</sys-lib>
+		<sys-lib>$(SYSLIB_SOCKET2)</sys-lib>
+		<library>libqsecmn</library>
+		<depends>libqsecmn</depends>
 	</lib>
 
 	<dll id="dllqsesed" template="base" cond="ENABLE_DLL=='1'">

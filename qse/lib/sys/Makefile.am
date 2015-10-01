@@ -8,6 +8,7 @@ lib_LTLIBRARIES = libqsesys.la
 libqsesys_la_SOURCES =  \
 	cnd.c \
 	mtx.c \
+	rwl.c \
 	thr.c \
 	thr.h
 libqsesys_la_LDFLAGS = -L../cmn -version-info 1:0:0 -no-undefined
