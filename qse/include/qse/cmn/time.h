@@ -119,7 +119,9 @@ struct qse_btime_t
 	/*int offset;*/
 };
 
-#define qse_cleartime(x) ((x)->sec = (x)->nsec = 0);
+#define qse_inittime(x,s,ns) (((x)->sec = (s)), ((x)->nsec = (ns)))
+#define qse_cleartime(x) qse_inittime(x,0,0)
+/*#define qse_cleartime(x) ((x)->sec = (x)->nsec = 0)*/
 #define qse_cmptime(x,y) \
 	(((x)->sec == (y)->sec)? ((x)->nsec - (y)->nsec): \
 	                         ((x)->sec -  (y)->sec))
@@ -141,7 +143,6 @@ QSE_EXPORT int qse_gettime (
 QSE_EXPORT int qse_settime (
 	const qse_ntime_t* nt
 );
-
 
 /**
  * The qse_gmtime() function converts numeric time to broken-down time.
@@ -188,7 +189,7 @@ QSE_EXPORT void qse_addtime (
 );
 
 /**
- * The qse_subtime()  function subtract y from x and stores the result in z.
+ * The qse_subtime() function subtract y from x and stores the result in z.
  */
 QSE_EXPORT void qse_subtime (
 	const qse_ntime_t* x,
