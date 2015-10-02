@@ -36,6 +36,7 @@
 #include <qse/cmn/glob.h>
 #include <qse/cmn/sio.h>
 #include <qse/cmn/fmt.h>
+#include <qse/sys/intr.h>
 
 #include <string.h>
 #include <signal.h>
@@ -49,11 +50,7 @@
 #if defined(_WIN32)
 #	include <winsock2.h>
 #	include <windows.h>
-#	include <tchar.h>
-#	include <process.h>
 #elif defined(__OS2__)
-#	define INCL_DOSPROCESS
-#	define INCL_DOSEXCEPTIONS
 #	define INCL_ERRORS
 #	include <os2.h>
 #elif defined(__DOS__)
@@ -122,57 +119,7 @@ static void dprint (const qse_char_t* fmt, ...)
 	}
 }
 
-#if defined(_WIN32)
-static BOOL WINAPI stop_run (DWORD ctrl_type)
-{
-	if (ctrl_type == CTRL_C_EVENT ||
-	    ctrl_type == CTRL_CLOSE_EVENT)
-	{
-		qse_awk_rtx_stop (app_rtx);
-		return TRUE;
-	}
-
-	return FALSE;
-}
-#elif defined(__OS2__)
-
-static ULONG _System stop_run (
-	PEXCEPTIONREPORTRECORD p1,
-	PEXCEPTIONREGISTRATIONRECORD p2,
-	PCONTEXTRECORD p3,
-	PVOID pv)
-{
-	if (p1->ExceptionNum == XCPT_SIGNAL)
-	{
-		if (p1->ExceptionInfo[0] == XCPT_SIGNAL_INTR ||
-		    p1->ExceptionInfo[0] == XCPT_SIGNAL_KILLPROC ||
-		    p1->ExceptionInfo[0] == XCPT_SIGNAL_BREAK)
-		{
-			APIRET rc;
-
-			qse_awk_rtx_stop (app_rtx);
-			rc = DosAcknowledgeSignalException (p1->ExceptionInfo[0]);
-			return (rc != NO_ERROR)? 1: XCPT_CONTINUE_EXECUTION; 
-		}
-	}
-
-	return XCPT_CONTINUE_SEARCH; /* exception not resolved */
-}
-
-#elif defined(__DOS__)
-
-static void setsignal (int sig, void(*handler)(int))
-{
-	signal (sig, handler);
-}
-
-static void stop_run (int sig)
-{
-	qse_awk_rtx_stop (app_rtx);
-}
-
-#else
-
+#if !defined(_WIN32) && !defined(__OS2__) && !defined(__DOS__) && defined(SIGPIPE)
 static int setsignal (int sig, void(*handler)(int), int restart)
 {
 	struct sigaction sa_int;
@@ -196,50 +143,33 @@ static int setsignal (int sig, void(*handler)(int), int restart)
 	}
 	return sigaction (sig, &sa_int, NULL);
 }
+#endif
 
-static void stop_run (int sig)
+static void stop_run (void* arg)
 {
+#if !defined(_WIN32) && !defined(__OS2__) && !defined(__DOS__)
 	int e = errno;
+#endif
+
 	qse_awk_rtx_stop (app_rtx);
+
+#if !defined(_WIN32) && !defined(__OS2__) && !defined(__DOS__)
 	errno = e;
+#endif
 }
-
-#endif
-
-#if defined(__OS2__)
-static EXCEPTIONREGISTRATIONRECORD os2_excrr = { 0 };
-#endif
 
 static void set_intr_run (void)
 {
-#if defined(_WIN32)
-	SetConsoleCtrlHandler (stop_run, TRUE);
-#elif defined(__OS2__)
-	APIRET rc;
-	os2_excrr.ExceptionHandler = (ERR)stop_run;
-	rc = DosSetExceptionHandler (&os2_excrr);
-	/*if (rc != NO_ERROR)...*/
-#elif defined(__DOS__)
-	setsignal (SIGINT, stop_run);
-#else
-	/*setsignal (SIGINT, stop_run, 1); TO BE MORE COMPATIBLE WITH WIN32*/
-	setsignal (SIGINT, stop_run, 0);
+	qse_setintrhandler (stop_run, QSE_NULL);
+#if !defined(_WIN32) && !defined(__OS2__) && !defined(__DOS__) && defined(SIGPIPE)
 	setsignal (SIGPIPE, SIG_IGN, 0);
 #endif
 }
 
 static void unset_intr_run (void)
 {
-#if defined(_WIN32)
-	SetConsoleCtrlHandler (stop_run, FALSE);
-#elif defined(__OS2__)
-	APIRET rc;
-	rc = DosUnsetExceptionHandler (&os2_excrr);
-	/*if (rc != NO_ERROR) ...*/
-#elif defined(__DOS__)
-	setsignal (SIGINT, SIG_DFL);
-#else
-	setsignal (SIGINT, SIG_DFL, 1);
+	qse_clearintrhandler ();
+#if !defined(_WIN32) && !defined(__OS2__) && !defined(__DOS__) && defined(SIGPIPE)
 	setsignal (SIGPIPE, SIG_DFL, 0);
 #endif
 }

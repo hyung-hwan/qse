@@ -107,18 +107,19 @@ CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
-am_qseawk_OBJECTS = awk.$(OBJEXT)
+am_qseawk_OBJECTS = qseawk-awk.$(OBJEXT)
 qseawk_OBJECTS = $(am_qseawk_OBJECTS)
 am__DEPENDENCIES_1 =
 @WCHAR_TRUE@@WIN32_TRUE@am__DEPENDENCIES_2 = $(am__DEPENDENCIES_1)
 qseawk_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_2) $(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_2) \
+	$(am__DEPENDENCIES_1)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
 am__v_lt_1 = 
 qseawk_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
-	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(qseawk_CFLAGS) $(CFLAGS) \
 	$(qseawk_LDFLAGS) $(LDFLAGS) -o $@
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -360,9 +361,11 @@ AUTOMAKE_OPTIONS = nostdinc
 AM_CPPFLAGS = -I$(top_builddir)/include -I$(top_srcdir)/include \
 	$(LTDLINCL) $(am__append_1) $(am__append_2)
 qseawk_SOURCES = awk.c
-qseawk_LDFLAGS = -L../../lib/awk -L../../lib/cmn $(am__append_4)
-qseawk_LDADD = -lqseawk -lqsecmn $(LIBM) $(LIBLTDL) $(am__append_3) \
-	$(am__append_5)
+qseawk_CFLAGS = $(PTHREAD_CFLAGS)
+qseawk_LDFLAGS = -L../../lib/awk -L../../lib/sys -L../../lib/cmn \
+	$(am__append_4)
+qseawk_LDADD = -lqseawk -lqsesys -lqsecmn $(LIBM) $(LIBLTDL) \
+	$(PTHREAD_LIBS) $(am__append_3) $(am__append_5)
 all: all-am
 
 .SUFFIXES:
@@ -457,7 +460,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/awk.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/qseawk-awk.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
@@ -479,6 +482,20 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LTCOMPILE) -c -o $@ $<
+
+qseawk-awk.o: awk.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(qseawk_CFLAGS) $(CFLAGS) -MT qseawk-awk.o -MD -MP -MF $(DEPDIR)/qseawk-awk.Tpo -c -o qseawk-awk.o `test -f 'awk.c' || echo '$(srcdir)/'`awk.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/qseawk-awk.Tpo $(DEPDIR)/qseawk-awk.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='awk.c' object='qseawk-awk.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(qseawk_CFLAGS) $(CFLAGS) -c -o qseawk-awk.o `test -f 'awk.c' || echo '$(srcdir)/'`awk.c
+
+qseawk-awk.obj: awk.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(qseawk_CFLAGS) $(CFLAGS) -MT qseawk-awk.obj -MD -MP -MF $(DEPDIR)/qseawk-awk.Tpo -c -o qseawk-awk.obj `if test -f 'awk.c'; then $(CYGPATH_W) 'awk.c'; else $(CYGPATH_W) '$(srcdir)/awk.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/qseawk-awk.Tpo $(DEPDIR)/qseawk-awk.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='awk.c' object='qseawk-awk.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(qseawk_CFLAGS) $(CFLAGS) -c -o qseawk-awk.obj `if test -f 'awk.c'; then $(CYGPATH_W) 'awk.c'; else $(CYGPATH_W) '$(srcdir)/awk.c'; fi`
 
 mostlyclean-libtool:
 	-rm -f *.lo
