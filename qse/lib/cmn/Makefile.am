@@ -64,7 +64,6 @@ libqsecmn_la_SOURCES = \
 	mbwc.c \
 	mbwc-str.c \
 	mem.c \
-	mux.c \
 	nwad.c \
 	nwad-skad.c \
 	nwif.c \

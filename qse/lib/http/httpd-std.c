@@ -35,11 +35,11 @@
 #include <qse/cmn/alg.h>
 #include <qse/cmn/fmt.h>
 #include <qse/cmn/path.h>
-#include <qse/cmn/mux.h>
 #include <qse/cmn/dir.h>
 #include <qse/cmn/fio.h>
 #include <qse/cmn/sio.h>
 #include <qse/cmn/sck.h>
+#include <qse/sys/mux.h>
 
 #define STAT_REG   1
 #define STAT_DIR   2

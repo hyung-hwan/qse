@@ -24,8 +24,8 @@
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <qse/cmn/mux.h>
-#include "mem.h"
+#include <qse/sys/mux.h>
+#include "../cmn/mem.h"
 
 #if defined(_WIN32)
 #	define FD_SETSIZE 4096 /* what is the best value??? */

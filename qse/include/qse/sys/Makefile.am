@@ -4,6 +4,7 @@ pkginclude_HEADERS = \
 	cnd.h \
 	intr.h \
 	mtx.h \
+	mux.h \
 	rwl.h \
 	thr.h
 

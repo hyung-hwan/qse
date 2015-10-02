@@ -391,11 +391,11 @@ AM_CPPFLAGS = \
 qsecfgdir = $(sysconfdir)/qse
 qsecfg_DATA = httpd.conf httpd-mime.conf
 qsehttpd_SOURCES = httpd.c
-qsehttpd_LDFLAGS = -L../../lib/xli -L../../lib/http -L../../lib/cmn 
-qsehttpd_LDADD = -lqsexli -lqsehttp -lqsecmn $(am__append_1)
+qsehttpd_LDFLAGS = -L../../lib/xli -L../../lib/http -L../../lib/sys -L../../lib/cmn 
+qsehttpd_LDADD = -lqsexli -lqsehttp -lqsesys -lqsecmn $(am__append_1)
 qseursd_SOURCES = ursd.c
-qseursd_LDFLAGS = -L../../lib/cmn 
-qseursd_LDADD = -lqsecmn 
+qseursd_LDFLAGS = -L../../lib/sys -L../../lib/cmn 
+qseursd_LDADD = -lqsesys -lqsecmn 
 EXTRA_DIST = $(qsecfg_DATA)
 all: all-am
 
