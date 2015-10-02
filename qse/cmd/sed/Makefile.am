@@ -7,8 +7,9 @@ AM_CPPFLAGS = \
 bin_PROGRAMS = qsesed
 
 qsesed_SOURCES = sed.c
-qsesed_LDFLAGS = -L../../lib/sed -L../../lib/cmn 
-qsesed_LDADD = -lqsesed -lqsecmn
+qsesed_CFLAGS = $(PTHREAD_CFLAGS)
+qsesed_LDFLAGS = -L../../lib/sed -L../../lib/sys -L../../lib/cmn 
+qsesed_LDADD = -lqsesed -lqsesys -lqsecmn $(PTHREAD_LIBS)
 
 if WIN32 
 if WCHAR

@@ -562,6 +562,7 @@
 		<set-srcdir>../../cmd/awk</set-srcdir>
 		<sources>awk.c</sources>
 		<library>libqsecmn</library>
+		<library>libqsesys</library>
 		<library>libqseawk</library>
 		<!-- <depends>libqseawk</depends> -->
 		<library>$(EXTLIB_FOR_QSEAWK)</library>
@@ -577,6 +578,7 @@
 		<set-srcdir>../../cmd/sed</set-srcdir>
 		<sources>sed.c</sources>
 		<library>libqsecmn</library>
+		<library>libqsesys</library>
 		<library>libqsesed</library>
 		<!-- <depends>libqsesed</depends> -->
 	</exe>
