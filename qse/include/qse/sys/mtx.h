@@ -25,8 +25,8 @@
  */
 
 
-#ifndef _QSE_CMN_MTX_H_
-#define _QSE_CMN_MTX_H_
+#ifndef _QSE_SYS_MTX_H_
+#define _QSE_SYS_MTX_H_
 
 #include <qse/types.h>
 #include <qse/macros.h>
@@ -92,38 +92,38 @@ struct qse_mtx_t
 extern "C" {
 #endif
 
-qse_mtx_t* qse_mtx_open (
+QSE_EXPORT qse_mtx_t* qse_mtx_open (
 	qse_mmgr_t*       mmgr,
 	qse_size_t        xtnsize
 );
 
-void qse_mtx_close (
+QSE_EXPORT void qse_mtx_close (
 	qse_mtx_t* mtx
 );
 
-int qse_mtx_init (
+QSE_EXPORT int qse_mtx_init (
 	qse_mtx_t*        mtx,
 	qse_mmgr_t*       mmgr
 );
 
-void qse_mtx_fini (
+QSE_EXPORT void qse_mtx_fini (
 	qse_mtx_t* mtx
 );
 
-qse_mmgr_t* qse_mtx_getmmgr (
+QSE_EXPORT qse_mmgr_t* qse_mtx_getmmgr (
 	qse_mtx_t* mtx
 );
 
-void* qse_mtx_getxtn (
+QSE_EXPORT void* qse_mtx_getxtn (
 	qse_mtx_t* mtx
 );
 
-int qse_mtx_lock (
-	qse_mtx_t*   mtx,
-	qse_ntime_t* waiting_time
+QSE_EXPORT int qse_mtx_lock (
+	qse_mtx_t*         mtx,
+	const qse_ntime_t* waiting_time
 );
 
-int qse_mtx_unlock (
+QSE_EXPORT int qse_mtx_unlock (
 	qse_mtx_t*   mtx
 );
 

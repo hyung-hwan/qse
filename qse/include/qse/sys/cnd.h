@@ -24,8 +24,8 @@
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _QSE_CMN_CND_H_
-#define _QSE_CMN_CND_H_
+#ifndef _QSE_SYS_CND_H_
+#define _QSE_SYS_CND_H_
 
 #include <qse/types.h>
 #include <qse/macros.h>
@@ -100,45 +100,44 @@ struct qse_cnd_t
 extern "C" {
 #endif
 
-
-qse_cnd_t* qse_cnd_open (
+QSE_EXPORT qse_cnd_t* qse_cnd_open (
 	qse_mmgr_t* mmgr,
 	qse_size_t  xtnsize
 );
 
-void qse_cnd_close (
+QSE_EXPORT void qse_cnd_close (
 	qse_cnd_t* cnd
 );
 
-int qse_cnd_init (
+QSE_EXPORT int qse_cnd_init (
 	qse_cnd_t*  cnd,
 	qse_mmgr_t* mmgr
 );
 
-void qse_cnd_fini (
+QSE_EXPORT void qse_cnd_fini (
 	qse_cnd_t* cnd
 );
 
-qse_mmgr_t* qse_cnd_getmmgr (
+QSE_EXPORT qse_mmgr_t* qse_cnd_getmmgr (
 	qse_cnd_t* cnd
 );
 
-void* qse_cnd_getxtn (
+QSE_EXPORT void* qse_cnd_getxtn (
 	qse_cnd_t* cnd
 );
 
-void qse_cnd_signal (
+QSE_EXPORT void qse_cnd_signal (
 	qse_cnd_t* cond
 );
 
-void qse_cnd_broadcast (
+QSE_EXPORT void qse_cnd_broadcast (
 	qse_cnd_t* cond
 );
 
-void qse_cnd_wait (
-	qse_cnd_t*   cond, 
-	qse_mtx_t*   mutex,
-	qse_ntime_t* waiting_time
+QSE_EXPORT void qse_cnd_wait (
+	qse_cnd_t*         cond, 
+	qse_mtx_t*         mutex,
+	const qse_ntime_t* waiting_time
 );
 
 #ifdef __cplusplus

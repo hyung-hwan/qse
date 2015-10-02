@@ -257,6 +257,7 @@
 
 	<set var="SOURCES_LIBQSESYS">
 		cnd.c
+		intr.c
 		mtx.c
 		rwl.c
 		thr.c
@@ -307,6 +308,8 @@
 		err.c
 		read.c
 		write.c
+		read-ini.c
+		write-ini.c
 		std.c
 	</set>
 

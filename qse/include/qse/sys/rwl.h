@@ -59,49 +59,49 @@ typedef struct qse_rwl_t qse_rwl_t;
 extern "C" {
 #endif
 
-qse_rwl_t* qse_rwl_open (
+QSE_EXPORT qse_rwl_t* qse_rwl_open (
 	qse_mmgr_t* mmgr,
 	qse_size_t  xtnsize,
 	int         flags
 );
 
-void qse_rwl_close (
+QSE_EXPORT void qse_rwl_close (
 	qse_rwl_t* rwl
 );
 
-int qse_rwl_init (
+QSE_EXPORT int qse_rwl_init (
 	qse_rwl_t*   rwl,
 	qse_mmgr_t*  mmgr,
 	int          flags
 );
 
-void qse_rwl_fini (
+QSE_EXPORT void qse_rwl_fini (
 	qse_rwl_t* rwl
 );
 
-qse_mmgr_t* qse_rwl_getmmgr (
+QSE_EXPORT qse_mmgr_t* qse_rwl_getmmgr (
 	qse_rwl_t* rwl
 );
 
-void* qse_rwl_getxtn (
+QSE_EXPORT void* qse_rwl_getxtn (
 	qse_rwl_t* rwl
 );
 
-int qse_rwl_lockr (
-	qse_rwl_t*   rwl,
-	qse_ntime_t* waiting_time
+QSE_EXPORT int qse_rwl_lockr (
+	qse_rwl_t*         rwl,
+	const qse_ntime_t* waiting_time
 );
 
-int qse_rwl_unlockr (
+QSE_EXPORT int qse_rwl_unlockr (
 	qse_rwl_t* rwl
 );
 
-int qse_rwl_lockw (
-	qse_rwl_t*   rwl,
-	qse_ntime_t* waiting_time
+QSE_EXPORT int qse_rwl_lockw (
+	qse_rwl_t*         rwl,
+	const qse_ntime_t* waiting_time
 );
 
-int qse_rwl_unlockw (
+QSE_EXPORT int qse_rwl_unlockw (
 	qse_rwl_t* rwl
 );
 

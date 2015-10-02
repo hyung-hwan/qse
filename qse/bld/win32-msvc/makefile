@@ -270,6 +270,7 @@ DLLQSESYS_CFLAGS = /MD$(__DEBUG_INFO_3_0) /DWIN32 /I..\..\include \
 	/O2 $(CPPFLAGS) $(CFLAGS)
 DLLQSESYS_OBJECTS =  \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsesys_cnd.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsesys_intr.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsesys_mtx.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsesys_rwl.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsesys_thr.obj
@@ -281,6 +282,7 @@ LIBQSESYS_CFLAGS = /MD$(__DEBUG_INFO_3_0) /DWIN32 /I..\..\include \
 	/O2 $(CPPFLAGS) $(CFLAGS)
 LIBQSESYS_OBJECTS =  \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsesys_cnd.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsesys_intr.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsesys_mtx.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsesys_rwl.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsesys_thr.obj
@@ -431,6 +433,8 @@ DLLQSEXLI_OBJECTS =  \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsexli_err.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsexli_read.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsexli_write.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsexli_read_ini.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsexli_write_ini.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsexli_std.obj
 LIBQSEXLI_CFLAGS = /MD$(__DEBUG_INFO_3_0) /DWIN32 /I..\..\include \
 	$(CPPFLAGS_BUILD) $(CPPFLAGS_CHAR) $(CPPFLAGS_XCMGRS) \
@@ -443,6 +447,8 @@ LIBQSEXLI_OBJECTS =  \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsexli_err.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsexli_read.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsexli_write.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsexli_read_ini.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsexli_write_ini.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsexli_std.obj
 EXEQSEAWK_CFLAGS = /MD$(__DEBUG_INFO_3_0) /DWIN32 /I..\..\include \
 	$(CPPFLAGS_BUILD) $(CPPFLAGS_CHAR) $(CPPFLAGS_XCMGRS) \
@@ -1741,6 +1747,9 @@ $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libq
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsesys_cnd.obj: ..\..\lib\sys\cnd.c
 	$(CC) /c /nologo /TC /Fo$@ $(DLLQSESYS_CFLAGS) ..\..\lib\sys\cnd.c
 
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsesys_intr.obj: ..\..\lib\sys\intr.c
+	$(CC) /c /nologo /TC /Fo$@ $(DLLQSESYS_CFLAGS) ..\..\lib\sys\intr.c
+
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsesys_mtx.obj: ..\..\lib\sys\mtx.c
 	$(CC) /c /nologo /TC /Fo$@ $(DLLQSESYS_CFLAGS) ..\..\lib\sys\mtx.c
 
@@ -1752,6 +1761,9 @@ $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllq
 
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsesys_cnd.obj: ..\..\lib\sys\cnd.c
 	$(CC) /c /nologo /TC /Fo$@ $(LIBQSESYS_CFLAGS) ..\..\lib\sys\cnd.c
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsesys_intr.obj: ..\..\lib\sys\intr.c
+	$(CC) /c /nologo /TC /Fo$@ $(LIBQSESYS_CFLAGS) ..\..\lib\sys\intr.c
 
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsesys_mtx.obj: ..\..\lib\sys\mtx.c
 	$(CC) /c /nologo /TC /Fo$@ $(LIBQSESYS_CFLAGS) ..\..\lib\sys\mtx.c
@@ -1975,6 +1987,12 @@ $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllq
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsexli_write.obj: ..\..\lib\xli\write.c
 	$(CC) /c /nologo /TC /Fo$@ $(DLLQSEXLI_CFLAGS) ..\..\lib\xli\write.c
 
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsexli_read_ini.obj: ..\..\lib\xli\read-ini.c
+	$(CC) /c /nologo /TC /Fo$@ $(DLLQSEXLI_CFLAGS) ..\..\lib\xli\read-ini.c
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsexli_write_ini.obj: ..\..\lib\xli\write-ini.c
+	$(CC) /c /nologo /TC /Fo$@ $(DLLQSEXLI_CFLAGS) ..\..\lib\xli\write-ini.c
+
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsexli_std.obj: ..\..\lib\xli\std.c
 	$(CC) /c /nologo /TC /Fo$@ $(DLLQSEXLI_CFLAGS) ..\..\lib\xli\std.c
 
@@ -1989,6 +2007,12 @@ $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libq
 
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsexli_write.obj: ..\..\lib\xli\write.c
 	$(CC) /c /nologo /TC /Fo$@ $(LIBQSEXLI_CFLAGS) ..\..\lib\xli\write.c
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsexli_read_ini.obj: ..\..\lib\xli\read-ini.c
+	$(CC) /c /nologo /TC /Fo$@ $(LIBQSEXLI_CFLAGS) ..\..\lib\xli\read-ini.c
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsexli_write_ini.obj: ..\..\lib\xli\write-ini.c
+	$(CC) /c /nologo /TC /Fo$@ $(LIBQSEXLI_CFLAGS) ..\..\lib\xli\write-ini.c
 
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsexli_std.obj: ..\..\lib\xli\std.c
 	$(CC) /c /nologo /TC /Fo$@ $(LIBQSEXLI_CFLAGS) ..\..\lib\xli\std.c

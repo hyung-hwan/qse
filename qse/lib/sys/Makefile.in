@@ -127,7 +127,7 @@ am__uninstall_files_from_dir = { \
 am__installdirs = "$(DESTDIR)$(libdir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
 libqsesys_la_DEPENDENCIES =
-am_libqsesys_la_OBJECTS = cnd.lo mtx.lo rwl.lo thr.lo
+am_libqsesys_la_OBJECTS = cnd.lo intr.lo mtx.lo rwl.lo thr.lo
 libqsesys_la_OBJECTS = $(am_libqsesys_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
@@ -408,6 +408,7 @@ AM_CPPFLAGS = \
 lib_LTLIBRARIES = libqsesys.la $(am__append_1)
 libqsesys_la_SOURCES = \
 	cnd.c \
+	intr.c \
 	mtx.c \
 	rwl.c \
 	thr.c \
@@ -504,6 +505,7 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/SocketAddress.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cnd.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/intr.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mtx.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rwl.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/thr.Plo@am__quote@

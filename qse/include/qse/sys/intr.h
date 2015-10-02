@@ -12,7 +12,7 @@
        notice, this list of conditions and the following disclaimer in the
        documentation and/or other materials provided with the distribution.
 
-    THIS SOFTWARE IS PROVIDED BY THE AUTHOR "AS IS" AND ANY EXPRESS OR
+    THIS SOFTWARE IS PROVIDED BY THE AUTHOR "AS IS" AND ANY EQSERESS OR
     IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
     OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
     IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
@@ -24,61 +24,29 @@
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _QSE_LIB_CMN_THR_H_
-#define _QSE_LIB_CMN_THR_H_
 
-#include <qse/sys/thr.h>
+#ifndef _QSE_SYS_INTR_H_
+#define _QSE_SYS_INTR_H_
+
+#include <qse/types.h>
+#include <qse/macros.h>
+
+/** \file
+ * This file provides simple console interrupt handler management routines.
+ */
+
+typedef void (*qse_intr_handler_t) (void *arg);
 
 
-#if (!defined(__unix__) && !defined(__unix)) || defined(HAVE_PTHREAD)
-
-#if defined(_WIN32)
-#	include <windows.h>
-#	include <process.h>
-#	define QSE_THR_HND_INVALID INVALID_HANDLE_VALUE
-
-#elif defined(__OS2__)
-#	define INCL_DOSPROCESS 
-#	define INCL_DOSDATETIME 
-#	define INCL_DOSERRORS
-#	include <os2.h>
-#	include <process.h>
-#	define QSE_THR_HND_INVALID (-1)
-
-#elif defined(__DOS__)
-	/* not implemented */
-
-#elif defined(__BEOS__)
-#	include <be/kernel/OS.h>
-#	define QSE_THR_HND_INVALID (-1)
-
-#else
-#	if defined(AIX) && defined(__GNUC__)
-		typedef int crid_t;
-		typedef unsigned int class_id_t;
-#	endif
-#	include <pthread.h>
-#	include <signal.h>
-
-#	define QSE_THR_HND_INVALID 0
+#ifdef __cplusplus
+extern "C" {
 #endif
 
-struct qse_thr_t
-{
-	qse_mmgr_t*       mmgr;
+QSE_EXPORT void qse_setintrhandler (qse_intr_handler_t handler, void* arg);
+QSE_EXPORT void qse_clearintrhandler (void);
 
-	qse_thr_routine_t __main_routine;
-	qse_thr_routine_t __temp_routine;
-	qse_bool_t        __joinable;
-	qse_size_t        __stacksize;
-
-	qse_thr_hnd_t     __handle;
-	qse_thr_state_t   __state;
-
-	int               __return_code;
-};
-
+#ifdef __cplusplus
+}
 #endif
-
 
 #endif
