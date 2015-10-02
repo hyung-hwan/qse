@@ -258,7 +258,7 @@ void qse_cnd_broadcast (qse_cnd_t* cnd)
 #endif
 }
 
-void qse_cnd_wait (qse_cnd_t* cnd, qse_mtx_t* mutex, qse_ntime_t* waiting_time)
+void qse_cnd_wait (qse_cnd_t* cnd, qse_mtx_t* mutex, const qse_ntime_t* waiting_time)
 {
 #if defined(_WIN32)
 	unsigned int was_waiting, was_gone;

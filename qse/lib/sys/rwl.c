@@ -100,7 +100,7 @@ void* qse_rwl_getxtn (qse_rwl_t* rwl)
 	return QSE_XTN (rwl);
 }
 
-int qse_rwl_lockr (qse_rwl_t* rwl, qse_ntime_t* waiting_time)
+int qse_rwl_lockr (qse_rwl_t* rwl, const qse_ntime_t* waiting_time)
 {
 	qse_ntime_t dead_line, now, rem, zero;
 
@@ -164,7 +164,7 @@ int qse_rwl_unlockr (qse_rwl_t* rwl)
 	return 0;
 }
 
-int qse_rwl_lockw (qse_rwl_t* rwl, qse_ntime_t* waiting_time)
+int qse_rwl_lockw (qse_rwl_t* rwl, const qse_ntime_t* waiting_time)
 {
 	qse_ntime_t dead_line, now, rem, zero;
 

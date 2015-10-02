@@ -27,6 +27,7 @@
 
 #include "thr.h"
 #include "../cmn/mem.h"
+#include <qse/cmn/time.h>
 #include <stdarg.h>
 
 #if (!defined(__unix__) && !defined(__unix)) || defined(HAVE_PTHREAD)
@@ -98,7 +99,9 @@ void qse_thr_setstacksize (qse_thr_t* thr, qse_size_t num)
 	thr->__stacksize = num;
 }
 
-#if defined(__BEOS__)
+#if defined(__OS2__)
+static void __thread_main (void* arg)
+#elif defined(__BEOS__)
 static int32 __thread_main (void* arg)
 #else
 static void* __thread_main (void* arg)
@@ -110,9 +113,11 @@ static void* __thread_main (void* arg)
 	{
 #if defined(_WIN32)
 		Sleep (0);
+#elif defined(__OS2__)
+		DosSleep (0);
 #elif defined(HAVE_NANOSLEEP)
 		struct timespec ts;
-		ts.tv_sec =0;
+		ts.tv_sec = 0;
 		ts.tv_nsec = 0;
 		nanosleep (&ts, &ts);
 #else
@@ -120,7 +125,7 @@ static void* __thread_main (void* arg)
 #endif
 	}
 
-#if !defined(_WIN32) && !defined(__BEOS__)
+#if defined(HAVE_PTHREAD)
 	/* 
 	 * the asynchronous cancel-type is used to better emulate
 	 * the bad effect of WIN32's TerminateThread using pthread_cancel 
@@ -135,13 +140,24 @@ static void* __thread_main (void* arg)
 #if defined(_WIN32)
 	_endthreadex (thr->__return_code);
 	return QSE_NULL;
+
+#elif defined(__OS2__)
+	_endthread ();
+	/* no return statement */
+
+#elif defined(__DOS__)
+	/* not implemented */
+	return QSE_NULL;
+
 #elif defined(__BEOS__)
 	exit_thread (thr->__return_code);
 	return 0;
+
 #else
 	pthread_exit (&thr->__return_code);
 	return QSE_NULL;
 #endif
+
 }
 
 static int __create_thread (qse_thr_t* thr)
@@ -153,6 +169,19 @@ static int __create_thread (qse_thr_t* thr)
 
 	thr->__handle = (HANDLE)_beginthreadex (QSE_NULL, 0, (unsigned int (__stdcall*)(void*))__thread_main, thr, 0, &tid);
 	if (thr->__handle == 0) return -1;
+
+#elif defined(__OS2__)
+	TID tid;
+
+	/* default stack size to 81920(4096 * 20) */
+	tid = _beginthread (__thread_main, NULL, (thr->__stacksize > 0? thr->__stacksize: 81920), thr);
+	if (tid == -1) return -1;
+
+	thr->__handle = tid;
+
+#elif defined(__DOS__)
+	/* not implemented */
+
 #elif defined(__BEOS__)
 	thread_id tid;
 
@@ -161,6 +190,7 @@ static int __create_thread (qse_thr_t* thr)
 
 	thr->__handle = tid;
 	resume_thread(thr->__handle);
+
 #elif defined(HAVE_PTHREAD)
 	pthread_attr_t attr;
 	pthread_attr_init (&attr);
@@ -197,6 +227,10 @@ static int __cancel_thread (qse_thr_t* thr)
 	if (thr->__state != QSE_THR_RUNNING) return -1;
 #if defined(_WIN32)
 	if (TerminateThread (thr->__handle, 0) == 0) return -1;
+#elif defined(__OS2__)
+	if (DosKillThread (thr->__handle) != NO_ERROR) return -1;
+#elif defined(__DOS__)
+	/* not implemented */
 #elif defined(__BEOS__)
 	if (kill_thread (thr->__handle) < B_OK) return -1;
 #elif defined(HAVE_PTHREAD)
@@ -251,11 +285,18 @@ int qse_thr_join (qse_thr_t* thr)
 #if defined(_WIN32)
 	if (thr->__state == QSE_THR_RUNNING) 
 	{
-		if (WaitForSingleObject (
-			thr->__handle, INFINITE) == WAIT_FAILED) return -1;
+		if (WaitForSingleObject (thr->__handle, INFINITE) == WAIT_FAILED) return -1;
 	}
+
+#elif defined(__OS2__)
+	if (DosWaitThread (&thr->__handle, DCWW_WAIT) != NO_ERROR) return -1;
+
+#elif defined(__DOS__)
+	/* not implemented */
+
 #elif defined(__BEOS__)
 	if (wait_for_thread(thr->__handle, QSE_NULL) < B_OK) return -1;
+
 #elif defined(HAVE_PTHREAD)
 	if (pthread_join(thr->__handle, QSE_NULL) != 0) return -1;
 #endif
@@ -279,6 +320,8 @@ int qse_thr_detach (qse_thr_t* thr)
 
 int qse_thr_kill (qse_thr_t* thr, int sig)
 {
+	/* this function is to send a signal to a thread.
+	 * don't get confused by the name */
 	if (thr->__state != QSE_THR_RUNNING) return -1;
 
 #if defined(HAVE_PTHREAD)
@@ -341,7 +384,7 @@ int qse_thr_unblockallsigs (qse_thr_t* thr)
 #endif
 
 	if (thr->__state != QSE_THR_RUNNING) return -1;
-	
+
 #if defined(HAVE_PTHREAD)
 	sigfillset (&mask);
 	if (pthread_sigmask (SIG_UNBLOCK, &mask, QSE_NULL) != 0) return -1;
@@ -369,7 +412,12 @@ qse_thr_hnd_t qse_getcurthrhnd (void)
 #if defined(_WIN32)
 	return GetCurrentThread ();
 #elif defined(__OS2__)
-	return QSE_THR_HND_INVALID; /* TODO: implement this */
+	PTIB ptib;
+	PPIB ppib;
+
+	if (DosGetInfoBlocks (&ptib, &ppib) != NO_ERROR) return QSE_THR_HND_INVALID;
+	return ptib->tib_ptib2->tib2_ultid;
+
 #elif defined(__DOS__)
 	return QSE_THR_HND_INVALID; /* TODO: implement this */
 #elif defined(__BEOS__)

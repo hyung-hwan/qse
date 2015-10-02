@@ -154,7 +154,7 @@ void* qse_mtx_getxtn (qse_mtx_t* mtx)
 	return QSE_XTN (mtx);
 }
 
-int qse_mtx_lock (qse_mtx_t* mtx, qse_ntime_t* waiting_time)
+int qse_mtx_lock (qse_mtx_t* mtx, const qse_ntime_t* waiting_time)
 {
 #if defined(_WIN32)
 	/* 

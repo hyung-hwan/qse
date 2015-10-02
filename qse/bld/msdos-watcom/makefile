@@ -309,6 +309,7 @@ LIBQSESYS_CFLAGS = $(____DOS_CFLAG_p) -i=..\..\include $(CPPFLAGS_BUILD) &
 	-ox $(CPPFLAGS) $(CFLAGS)
 LIBQSESYS_OBJECTS =  &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsesys_cnd.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsesys_intr.obj &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsesys_mtx.obj &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsesys_rwl.obj &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsesys_thr.obj
@@ -367,6 +368,8 @@ LIBQSEXLI_OBJECTS =  &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsexli_err.obj &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsexli_read.obj &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsexli_write.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsexli_read_ini.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsexli_write_ini.obj &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsexli_std.obj
 EXEQSEAWK_CFLAGS = $(____DOS_CFLAG_p) -i=..\..\include $(CPPFLAGS_BUILD) &
 	$(CPPFLAGS_CHAR) $(CPPFLAGS_XCMGRS) $(CPPFLAGS_BUNDLED_UNICODE) &
@@ -837,6 +840,9 @@ $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_uni.ob
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsesys_cnd.obj :  .AUTODEPEND ..\..\lib\sys\cnd.c
 	$(CC) -bt=dos -zq -fo=$^@ $(LIBQSESYS_CFLAGS) $<
 
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsesys_intr.obj :  .AUTODEPEND ..\..\lib\sys\intr.c
+	$(CC) -bt=dos -zq -fo=$^@ $(LIBQSESYS_CFLAGS) $<
+
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsesys_mtx.obj :  .AUTODEPEND ..\..\lib\sys\mtx.c
 	$(CC) -bt=dos -zq -fo=$^@ $(LIBQSESYS_CFLAGS) $<
 
@@ -949,6 +955,12 @@ $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsexli_read.o
 	$(CC) -bt=dos -zq -fo=$^@ $(LIBQSEXLI_CFLAGS) $<
 
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsexli_write.obj :  .AUTODEPEND ..\..\lib\xli\write.c
+	$(CC) -bt=dos -zq -fo=$^@ $(LIBQSEXLI_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsexli_read_ini.obj :  .AUTODEPEND ..\..\lib\xli\read-ini.c
+	$(CC) -bt=dos -zq -fo=$^@ $(LIBQSEXLI_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsexli_write_ini.obj :  .AUTODEPEND ..\..\lib\xli\write-ini.c
 	$(CC) -bt=dos -zq -fo=$^@ $(LIBQSEXLI_CFLAGS) $<
 
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsexli_std.obj :  .AUTODEPEND ..\..\lib\xli\std.c

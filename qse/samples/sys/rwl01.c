@@ -2,9 +2,9 @@
 #include <qse/sys/thr.h>
 #include <qse/cmn/sio.h>
 #include <qse/cmn/mem.h>
+#include <qse/sys/intr.h>
 
 #include <locale.h>
-#include <stdio.h>
 
 #if defined(_WIN32)
 #	include <windows.h>
@@ -16,8 +16,9 @@ struct thr_xtn_t
 };
 typedef struct thr_xtn_t thr_xtn_t;
 
-qse_rwl_t* rwl;
-qse_mtx_t* mtx;
+static qse_rwl_t* rwl;
+static qse_mtx_t* mtx;
+static int stop_req = 0;
 
 #define OUTMSG(msg,id)  do { \
 	qse_ntime_t now; \
@@ -27,23 +28,29 @@ qse_mtx_t* mtx;
 	qse_mtx_unlock (mtx); \
 } while(0)
 
-int thr_exec (qse_thr_t* thr)
+static int thr_exec (qse_thr_t* thr)
 {
 	thr_xtn_t* xtn = qse_thr_getxtn(thr);
 
 	OUTMSG (QSE_T("starting"), xtn->id);
-	while (1)
+	while (!stop_req)
 	{
 		if (xtn->id % 2)
 		/*if (xtn->id > 0)*/
 		{
 			OUTMSG (QSE_T("read waiting"), xtn->id);
 
-			qse_rwl_lockr (rwl, QSE_NULL);
-			OUTMSG (QSE_T("read start"), xtn->id);
-			/*sleep (1);*/
-			OUTMSG (QSE_T("read done"), xtn->id);
-			qse_rwl_unlockr (rwl);
+			if (qse_rwl_lockr (rwl, QSE_NULL) >= 0)
+			{
+				OUTMSG (QSE_T("read start"), xtn->id);
+				/*sleep (1);*/
+				OUTMSG (QSE_T("read done"), xtn->id);
+				qse_rwl_unlockr (rwl);
+			}
+			else
+			{
+				OUTMSG (QSE_T("read fail"), xtn->id);
+			}
 		}
 		else
 		{
@@ -73,7 +80,7 @@ int thr_exec (qse_thr_t* thr)
 }
 
 
-void test_001 (void)
+static void test_001 (void)
 {
 	qse_mmgr_t* mmgr;
 	qse_thr_t* t[6];
@@ -100,6 +107,11 @@ void test_001 (void)
 	qse_mtx_close (mtx);
 }
 
+static void stop_run (void* arg)
+{
+	stop_req = 1;
+}
+
 int main ()
 {
 #if defined(_WIN32)
@@ -113,8 +125,9 @@ int main ()
 
 	qse_openstdsios ();
 
-setbuf (stdout, NULL);
+	qse_setintrhandler (stop_run, QSE_NULL);
 	test_001 ();
+	qse_clearintrhandler ();
 
 	qse_closestdsios ();
 
