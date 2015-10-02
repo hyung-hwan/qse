@@ -23,7 +23,6 @@ pkginclude_HEADERS = \
 	mb8.h \
 	mbwc.h \
 	mem.h \
-	mux.h \
 	nwad.h \
 	nwif.h \
 	nwio.h \

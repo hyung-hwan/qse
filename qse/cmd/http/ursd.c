@@ -10,10 +10,10 @@
 #include <qse/cmn/fmt.h>
 #include <qse/cmn/hton.h>
 #include <qse/cmn/pio.h>
-#include <qse/cmn/mux.h>
 #include <qse/cmn/sck.h>
 #include <qse/cmn/nwad.h>
 #include <qse/cmn/sio.h>
+#include <qse/sys/mux.h>
 
 #include <signal.h>
 #include <locale.h>

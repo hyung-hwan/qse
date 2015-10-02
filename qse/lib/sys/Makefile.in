@@ -126,16 +126,19 @@ am__uninstall_files_from_dir = { \
   }
 am__installdirs = "$(DESTDIR)$(libdir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
-libqsesys_la_DEPENDENCIES =
-am_libqsesys_la_OBJECTS = cnd.lo intr.lo mtx.lo rwl.lo thr.lo
+am__DEPENDENCIES_1 =
+libqsesys_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
+am_libqsesys_la_OBJECTS = libqsesys_la-cnd.lo libqsesys_la-intr.lo \
+	libqsesys_la-mtx.lo libqsesys_la-mux.lo libqsesys_la-rwl.lo \
+	libqsesys_la-thr.lo
 libqsesys_la_OBJECTS = $(am_libqsesys_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
 am__v_lt_1 = 
 libqsesys_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
-	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
-	$(libqsesys_la_LDFLAGS) $(LDFLAGS) -o $@
+	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(libqsesys_la_CFLAGS) \
+	$(CFLAGS) $(libqsesys_la_LDFLAGS) $(LDFLAGS) -o $@
 libqsesysxx_la_DEPENDENCIES =
 am__libqsesysxx_la_SOURCES_DIST = SocketAddress.cpp
 @ENABLE_CXX_TRUE@am_libqsesysxx_la_OBJECTS = SocketAddress.lo
@@ -410,12 +413,14 @@ libqsesys_la_SOURCES = \
 	cnd.c \
 	intr.c \
 	mtx.c \
+	mux.c \
 	rwl.c \
 	thr.c \
 	thr.h
 
+libqsesys_la_CFLAGS = $(PTHREAD_CFLAGS)
 libqsesys_la_LDFLAGS = -L../cmn -version-info 1:0:0 -no-undefined
-libqsesys_la_LIBADD = -lqsecmn 
+libqsesys_la_LIBADD = -lqsecmn $(PTHREAD_LIBS)
 @ENABLE_CXX_TRUE@libqsesysxx_la_SOURCES = \
 @ENABLE_CXX_TRUE@	SocketAddress.cpp
 
@@ -504,11 +509,12 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/SocketAddress.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cnd.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/intr.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mtx.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rwl.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/thr.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqsesys_la-cnd.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqsesys_la-intr.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqsesys_la-mtx.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqsesys_la-mux.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqsesys_la-rwl.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqsesys_la-thr.Plo@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
@@ -530,6 +536,48 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LTCOMPILE) -c -o $@ $<
+
+libqsesys_la-cnd.lo: cnd.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libqsesys_la_CFLAGS) $(CFLAGS) -MT libqsesys_la-cnd.lo -MD -MP -MF $(DEPDIR)/libqsesys_la-cnd.Tpo -c -o libqsesys_la-cnd.lo `test -f 'cnd.c' || echo '$(srcdir)/'`cnd.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libqsesys_la-cnd.Tpo $(DEPDIR)/libqsesys_la-cnd.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='cnd.c' object='libqsesys_la-cnd.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libqsesys_la_CFLAGS) $(CFLAGS) -c -o libqsesys_la-cnd.lo `test -f 'cnd.c' || echo '$(srcdir)/'`cnd.c
+
+libqsesys_la-intr.lo: intr.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libqsesys_la_CFLAGS) $(CFLAGS) -MT libqsesys_la-intr.lo -MD -MP -MF $(DEPDIR)/libqsesys_la-intr.Tpo -c -o libqsesys_la-intr.lo `test -f 'intr.c' || echo '$(srcdir)/'`intr.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libqsesys_la-intr.Tpo $(DEPDIR)/libqsesys_la-intr.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='intr.c' object='libqsesys_la-intr.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libqsesys_la_CFLAGS) $(CFLAGS) -c -o libqsesys_la-intr.lo `test -f 'intr.c' || echo '$(srcdir)/'`intr.c
+
+libqsesys_la-mtx.lo: mtx.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libqsesys_la_CFLAGS) $(CFLAGS) -MT libqsesys_la-mtx.lo -MD -MP -MF $(DEPDIR)/libqsesys_la-mtx.Tpo -c -o libqsesys_la-mtx.lo `test -f 'mtx.c' || echo '$(srcdir)/'`mtx.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libqsesys_la-mtx.Tpo $(DEPDIR)/libqsesys_la-mtx.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='mtx.c' object='libqsesys_la-mtx.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libqsesys_la_CFLAGS) $(CFLAGS) -c -o libqsesys_la-mtx.lo `test -f 'mtx.c' || echo '$(srcdir)/'`mtx.c
+
+libqsesys_la-mux.lo: mux.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libqsesys_la_CFLAGS) $(CFLAGS) -MT libqsesys_la-mux.lo -MD -MP -MF $(DEPDIR)/libqsesys_la-mux.Tpo -c -o libqsesys_la-mux.lo `test -f 'mux.c' || echo '$(srcdir)/'`mux.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libqsesys_la-mux.Tpo $(DEPDIR)/libqsesys_la-mux.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='mux.c' object='libqsesys_la-mux.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libqsesys_la_CFLAGS) $(CFLAGS) -c -o libqsesys_la-mux.lo `test -f 'mux.c' || echo '$(srcdir)/'`mux.c
+
+libqsesys_la-rwl.lo: rwl.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libqsesys_la_CFLAGS) $(CFLAGS) -MT libqsesys_la-rwl.lo -MD -MP -MF $(DEPDIR)/libqsesys_la-rwl.Tpo -c -o libqsesys_la-rwl.lo `test -f 'rwl.c' || echo '$(srcdir)/'`rwl.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libqsesys_la-rwl.Tpo $(DEPDIR)/libqsesys_la-rwl.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='rwl.c' object='libqsesys_la-rwl.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libqsesys_la_CFLAGS) $(CFLAGS) -c -o libqsesys_la-rwl.lo `test -f 'rwl.c' || echo '$(srcdir)/'`rwl.c
+
+libqsesys_la-thr.lo: thr.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libqsesys_la_CFLAGS) $(CFLAGS) -MT libqsesys_la-thr.lo -MD -MP -MF $(DEPDIR)/libqsesys_la-thr.Tpo -c -o libqsesys_la-thr.lo `test -f 'thr.c' || echo '$(srcdir)/'`thr.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libqsesys_la-thr.Tpo $(DEPDIR)/libqsesys_la-thr.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='thr.c' object='libqsesys_la-thr.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libqsesys_la_CFLAGS) $(CFLAGS) -c -o libqsesys_la-thr.lo `test -f 'thr.c' || echo '$(srcdir)/'`thr.c
 
 .cpp.o:
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<

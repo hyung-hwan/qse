@@ -123,7 +123,6 @@ DLLQSECMN_OBJECTS =  \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsecmn_mbwc.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsecmn_mbwc_str.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsecmn_mem.obj \
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsecmn_mux.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsecmn_nwad.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsecmn_nwad_skad.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsecmn_nwif.obj \
@@ -225,7 +224,6 @@ LIBQSECMN_OBJECTS =  \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsecmn_mbwc.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsecmn_mbwc_str.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsecmn_mem.obj \
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsecmn_mux.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsecmn_nwad.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsecmn_nwad_skad.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsecmn_nwif.obj \
@@ -299,6 +297,7 @@ DLLQSESYS_OBJECTS =  \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsesys_cnd.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsesys_intr.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsesys_mtx.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsesys_mux.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsesys_rwl.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsesys_thr.obj
 LIBQSESYS_CFLAGS = -I$(BCCDIR)\include -I..\..\include $(CPPFLAGS_BUILD) \
@@ -309,6 +308,7 @@ LIBQSESYS_OBJECTS =  \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsesys_cnd.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsesys_intr.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsesys_mtx.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsesys_mux.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsesys_rwl.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsesys_thr.obj
 DLLQSESED_CFLAGS = -I$(BCCDIR)\include -I..\..\include $(CPPFLAGS_BUILD) \
@@ -972,15 +972,15 @@ $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\qsea
 !endif
 
 !if "$(SHARED)" == "on"
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\qsehttp.dll: $(DLLQSEHTTP_OBJECTS) $(__libqsecmn___depname) $(__dllqsecmn___depname)
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\qsehttp.dll: $(DLLQSEHTTP_OBJECTS) $(__libqsecmn___depname) $(__libqsesys___depname) $(__dllqsecmn___depname) $(__dllqsesys___depname)
 	ilink32 -Tpd -q  -L$(BCCDIR)\lib -L$(BCCDIR)\lib\psdk $(__DEBUG_INFO)  $(LDFLAGS) @&&|
-	c0d32.obj $(DLLQSEHTTP_OBJECTS),$@,, $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\qsecmn.lib kernel32.lib user32.lib ws2_32.lib  import32.lib cw32mt.lib,,
+	c0d32.obj $(DLLQSEHTTP_OBJECTS),$@,, $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\qsecmn.lib $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\qsesys.lib kernel32.lib user32.lib ws2_32.lib  import32.lib cw32mt.lib,,
 |
 	implib -f $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\qsehttp $@
 !endif
 
 !if "$(SHARED)" == "off"
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\qsehttp.lib: $(LIBQSEHTTP_OBJECTS) $(__libqsecmn___depname) $(__libqsecmn___depname)
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\qsehttp.lib: $(LIBQSEHTTP_OBJECTS) $(__libqsecmn___depname) $(__libqsesys___depname) $(__libqsecmn___depname) $(__libqsesys___depname)
 	if exist $@ del $@
 	tlib /a /p4096 $@ @&&|
 	$(LIBQSEHTTP_OBJECTS)
@@ -1163,9 +1163,6 @@ $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllq
 
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsecmn_mem.obj: ..\..\lib\cmn\mem.c
 	$(CC) -q -c -P- -o$@ $(DLLQSECMN_CFLAGS) ..\..\lib\cmn\mem.c
-
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsecmn_mux.obj: ..\..\lib\cmn\mux.c
-	$(CC) -q -c -P- -o$@ $(DLLQSECMN_CFLAGS) ..\..\lib\cmn\mux.c
 
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsecmn_nwad.obj: ..\..\lib\cmn\nwad.c
 	$(CC) -q -c -P- -o$@ $(DLLQSECMN_CFLAGS) ..\..\lib\cmn\nwad.c
@@ -1458,9 +1455,6 @@ $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libq
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsecmn_mem.obj: ..\..\lib\cmn\mem.c
 	$(CC) -q -c -P- -o$@ $(LIBQSECMN_CFLAGS) ..\..\lib\cmn\mem.c
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsecmn_mux.obj: ..\..\lib\cmn\mux.c
-	$(CC) -q -c -P- -o$@ $(LIBQSECMN_CFLAGS) ..\..\lib\cmn\mux.c
-
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsecmn_nwad.obj: ..\..\lib\cmn\nwad.c
 	$(CC) -q -c -P- -o$@ $(LIBQSECMN_CFLAGS) ..\..\lib\cmn\nwad.c
 
@@ -1668,6 +1662,9 @@ $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllq
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsesys_mtx.obj: ..\..\lib\sys\mtx.c
 	$(CC) -q -c -P- -o$@ $(DLLQSESYS_CFLAGS) ..\..\lib\sys\mtx.c
 
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsesys_mux.obj: ..\..\lib\sys\mux.c
+	$(CC) -q -c -P- -o$@ $(DLLQSESYS_CFLAGS) ..\..\lib\sys\mux.c
+
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsesys_rwl.obj: ..\..\lib\sys\rwl.c
 	$(CC) -q -c -P- -o$@ $(DLLQSESYS_CFLAGS) ..\..\lib\sys\rwl.c
 
@@ -1682,6 +1679,9 @@ $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libq
 
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsesys_mtx.obj: ..\..\lib\sys\mtx.c
 	$(CC) -q -c -P- -o$@ $(LIBQSESYS_CFLAGS) ..\..\lib\sys\mtx.c
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsesys_mux.obj: ..\..\lib\sys\mux.c
+	$(CC) -q -c -P- -o$@ $(LIBQSESYS_CFLAGS) ..\..\lib\sys\mux.c
 
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsesys_rwl.obj: ..\..\lib\sys\rwl.c
 	$(CC) -q -c -P- -o$@ $(LIBQSESYS_CFLAGS) ..\..\lib\sys\rwl.c

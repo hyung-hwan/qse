@@ -11,8 +11,8 @@ qsecfg_DATA = httpd.conf httpd-mime.conf
 bin_PROGRAMS = qsehttpd qseursd
 
 qsehttpd_SOURCES = httpd.c
-qsehttpd_LDFLAGS = -L../../lib/xli -L../../lib/http -L../../lib/cmn 
-qsehttpd_LDADD = -lqsexli -lqsehttp -lqsecmn 
+qsehttpd_LDFLAGS = -L../../lib/xli -L../../lib/http -L../../lib/sys -L../../lib/cmn 
+qsehttpd_LDADD = -lqsexli -lqsehttp -lqsesys -lqsecmn 
 
 if WIN32 
 if WCHAR
@@ -21,7 +21,7 @@ endif
 endif
 
 qseursd_SOURCES = ursd.c
-qseursd_LDFLAGS = -L../../lib/cmn 
-qseursd_LDADD = -lqsecmn 
+qseursd_LDFLAGS = -L../../lib/sys -L../../lib/cmn 
+qseursd_LDADD = -lqsesys -lqsecmn 
 
 EXTRA_DIST = $(qsecfg_DATA)

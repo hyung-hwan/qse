@@ -187,7 +187,6 @@
 		mbwc.c 
 		mbwc-str.c 
 		mem.c 
-		mux.c 
 		nwad.c 
 		nwad-skad.c 
 		nwif.c 
@@ -259,6 +258,7 @@
 		cnd.c
 		intr.c
 		mtx.c
+		mux.c 
 		rwl.c
 		thr.c
 	</set>
@@ -520,7 +520,9 @@
 		<set-srcdir>../../lib/http</set-srcdir>
 		<sources>$(SOURCES_LIBQSEHTTP)</sources>
 		<library>libqsecmn</library>
+		<library>libqsesys</library>
 		<depends>dllqsecmn</depends>
+		<depends>dllqsesys</depends>
 		<sys-lib>$(SYSLIB_1)</sys-lib>
 		<sys-lib>$(SYSLIB_2)</sys-lib>
 		<sys-lib>$(SYSLIB_SOCKET)</sys-lib>
@@ -532,7 +534,9 @@
 		<set-srcdir>../../lib/http</set-srcdir>
 		<sources>$(SOURCES_LIBQSEHTTP)</sources>
 		<library>libqsecmn</library>
+		<library>libqsesys</library>
 		<depends>libqsecmn</depends>
+		<depends>libqsesys</depends>
 		<sys-lib>$(SYSLIB_1)</sys-lib>
 		<sys-lib>$(SYSLIB_2)</sys-lib>
 		<sys-lib>$(SYSLIB_SOCKET)</sys-lib>

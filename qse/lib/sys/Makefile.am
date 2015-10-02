@@ -9,11 +9,13 @@ libqsesys_la_SOURCES =  \
 	cnd.c \
 	intr.c \
 	mtx.c \
+	mux.c \
 	rwl.c \
 	thr.c \
 	thr.h
+libqsesys_la_CFLAGS = $(PTHREAD_CFLAGS)
 libqsesys_la_LDFLAGS = -L../cmn -version-info 1:0:0 -no-undefined
-libqsesys_la_LIBADD = -lqsecmn 
+libqsesys_la_LIBADD = -lqsecmn $(PTHREAD_LIBS)
 
 if ENABLE_CXX
 lib_LTLIBRARIES += libqsesysxx.la
