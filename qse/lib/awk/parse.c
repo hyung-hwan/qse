@@ -6741,7 +6741,7 @@ static qse_awk_mod_t* query_module (
 		/*qse_char_t buf[64 + 15] = QSE_T("_qse_awk_mod_");*/
 
 		/* maximum module name length is 64. 15 is decomposed to 13 + 1 + 1.
-		 * 13 for _qse_awk_mod_t
+		 * 13 for _qse_awk_mod_
 		 * 1 for _ at the end when qse_awk_mod_xxx_ is attempted.
 		 * 1 for the terminating '\0'
 		 */
