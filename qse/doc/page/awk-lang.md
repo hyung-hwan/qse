@@ -210,7 +210,7 @@ this tokenization process.
 
 ### Comments ###
 
-A comment is a part of the program text excluded during tokenization. You can
+A comment is part of the program text excluded during tokenization. You can
 put descriptive text about the program in a comment.
 
 A single-line comment is introduced by a hash character #, and is terminated at 

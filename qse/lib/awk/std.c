@@ -222,6 +222,7 @@ void* qse_awk_stdmodopen (qse_awk_t* awk, const qse_awk_mod_spec_t* spec)
 {
 #if defined(USE_LTDL)
 	void* h;
+	lt_dladvise adv;
 	qse_mchar_t* modpath;
 	const qse_char_t* tmp[4];
 	int count;
@@ -252,7 +253,20 @@ void* qse_awk_stdmodopen (qse_awk_t* awk, const qse_awk_mod_spec_t* spec)
 		return QSE_NULL;
 	}
 
-	h = lt_dlopenext (modpath);
+	if (lt_dladvise_init (&adv) != 0)
+	{
+		/* the only failure of lt_dladvise_init() seems to be caused
+		 * by memory allocation failured */
+		qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);
+		return QSE_NULL;
+	}
+
+	lt_dladvise_ext (&adv);
+	/*lt_dladvise_resident (&adv); useful for debugging with valgrind */
+
+	h = lt_dlopenadvise (modpath, adv);
+
+	lt_dladvise_destroy (&adv);
 
 	QSE_MMGR_FREE (awk->mmgr, modpath);
 
