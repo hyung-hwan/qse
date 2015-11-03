@@ -32,10 +32,11 @@
 #include "../cmn/mem.h"
 #include "fnc.h"
 
-
 #include <math.h>
 #if defined(HAVE_QUADMATH_H)
 #	include <quadmath.h>
+#elif defined(QSE_USE_AWK_FLTMAX) && (QSE_AWK_SIZEOF_FLT_T == 16)
+#	error QUADMATH.H NOT AVAILABLE or NOT COMPILABLE
 #endif
 
 #if !defined(QSE_HAVE_CONFIG_H)
