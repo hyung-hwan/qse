@@ -964,66 +964,73 @@ static int server_open (qse_httpd_t* httpd, qse_httpd_server_t* server)
 	{
 		/* TODO: logging. warning only */
 		/* this is not a hard failure */
-		HTTPD_DBGOUT1 ("Failed to enable SO_REUSERPORT on %zd\n", (qse_size_t)fd);
+		HTTPD_DBGOUT1 ("Failed to set SO_REUSERPORT on %zd\n", (qse_size_t)fd);
 	}
 	#endif
 
 
 /* TODO: linux. use capset() to set required capabilities just in case */
+	if (server->dope.flags & QSE_HTTPD_SERVER_TRANSPARENT)
+	{
 	#if defined(IP_TRANSPARENT)
-	/* remove the ip routing restriction that a packet can only
-	 * be sent using a local ip address. this option is useful
-	 * if transparency is achieved with TPROXY */
+		/* remove the ip routing restriction that a packet can only
+		 * be sent using a local ip address. this option is useful
+		 * if transparency is achieved with TPROXY */
+	
+		/*
+		1)
+		ip rule add fwmark 0x1/0x1 lookup 100
+		ip route add local 0.0.0.0/0 dev lo table 100
+	
+		2)
+		iptables -t mangle -N DIVERT
+		iptables -t mangle -A DIVERT -j MARK --set-mark 0x1/0x1
+		iptables -t mangle -A DIVERT -j ACCEPT
+		iptables -t mangle -A PREROUTING -p tcp -m socket --transparent -j DIVERT
+		iptables -t mangle -A PREROUTING -p tcp --dport 80 -j TPROXY --tproxy-mark 0x1/0x1 --on-port 8000
+	
+		3)
+		iptables -t mangle -A PREROUTING -p tcp -m socket --transparent -j MARK --set-mark 0x1/0x1
+		iptables -t mangle -A PREROUTING -p tcp -m mark 0x1/0x1 -j RETURN
+		iptables -t mangle -A PREROUTING -p tcp --dport 80 -j TPROXY --tproxy-mark 0x1/0x1 --on-port 8000
+	
+		4)
+		iptables -t mangle -A PREROUTING -p tcp --sport 80 -j MARK --set-mark 0x1/0x1
+		iptables -t mangle -A PREROUTING -p tcp -m mark 0x1/0x1 -j RETURN
+	        iptables -t mangle -A PREROUTING -p tcp --dport 80 -j TPROXY --tproxy-mark 0x1/0x1 --on-port 8000
+	
+	
+		1) is required.
+	        one of 2), 3), 4), and a variant is needed.
+		Specifying -i and -o can narrow down the amount of packets when the upstream interface
+		and the downstream interface are obvious.
 
-	/*
-	1)
-	ip rule add fwmark 0x1/0x1 lookup 100
-	ip route add local 0.0.0.0/0 dev lo table 100
+		If eth2 is an upstream and the eth1 is a downstream interface,
+		iptables -t mangle -A PREROUTING -i eth2 -p tcp --sport 80 -j MARK --set-mark 0x1/0x1
+		iptables -t mangle -A PREROUTING -p tcp -m mark 0x1/0x1 -j RETURN
+		iptables -t mangle -A PREROUTING -i eth1 -p tcp --dport 80 -j TPROXY --tproxy-mark 0x1/0x1 --on-port 8000
 
-	2)
-	iptables -t mangle -N DIVERT
-	iptables -t mangle -A DIVERT -j MARK --set-mark 0x1/0x1
-	iptables -t mangle -A DIVERT -j ACCEPT
-	iptables -t mangle -A PREROUTING -p tcp -m socket --transparent -j DIVERT
-	iptables -t mangle -A PREROUTING -p tcp --dport 80 -j TPROXY --tproxy-mark 0x1/0x1 --on-port 8000
+		----------------------------------------------------------------------
 
-	3)
-	iptables -t mangle -A PREROUTING -p tcp -m socket --transparent -j MARK --set-mark 0x1/0x1
-	iptables -t mangle -A PREROUTING -p tcp -m mark 0x1/0x1 -j RETURN
-	iptables -t mangle -A PREROUTING -p tcp --dport 80 -j TPROXY --tproxy-mark 0x1/0x1 --on-port 8000
+		if the socket is bound to 99.99.99.99:8000, you may do...
+		iptables -t mangle -A PREROUTING -p tcp --dport 80 -j TPROXY --tproxy-mark 0x1/0x1 --on-ip 99.99.99.99 --on-port 8000
 
-	4)
-	iptables -t mangle -A PREROUTING -p tcp --sport 80 -j MARK --set-mark 0x1/0x1
-	iptables -t mangle -A PREROUTING -p tcp -m mark 0x1/0x1 -j RETURN
-        iptables -t mangle -A PREROUTING -p tcp --dport 80 -j TPROXY --tproxy-mark 0x1/0x1 --on-port 8000
+		iptables -t mangle -A PREROUTING -p tcp  ! -s 127.0.0.0/255.0.0.0 --dport 80 -j TPROXY --tproxy-mark 0x1/0x1 --on-ip 0.0.0.0 --on-port 8000
 
-
-	1) is required.
-        one of 2), 3), 4), and a variant is needed.
-	Specifying -i and -o can narrow down the amount of packets when the upstream interface
-	and the downstream interface are obvious.
-
-	If eth2 is an upstream and the eth1 is a downstream interface,
-	iptables -t mangle -A PREROUTING -i eth2 -p tcp --sport 80 -j MARK --set-mark 0x1/0x1
-	iptables -t mangle -A PREROUTING -p tcp -m mark 0x1/0x1 -j RETURN
-        iptables -t mangle -A PREROUTING -i eth1 -p tcp --dport 80 -j TPROXY --tproxy-mark 0x1/0x1 --on-port 8000
-
-	----------------------------------------------------------------------
-
-	if the socket is bound to 99.99.99.99:8000, you may do...
-	iptables -t mangle -A PREROUTING -p tcp --dport 80 -j TPROXY --tproxy-mark 0x1/0x1 --on-ip 99.99.99.99 --on-port 8000
-
-	iptables -t mangle -A PREROUTING -p tcp  ! -s 127.0.0.0/255.0.0.0 --dport 80 -j TPROXY --tproxy-mark 0x1/0x1 --on-ip 0.0.0.0 --on-port 8000
-
-	IP_TRANSPRENT is needed for:
-	- accepting TPROXYed connections
-	- binding to a non-local IP address (IP address the local system doesn't have)
-	- using a non-local IP address as a source
-	- 
-	 */
-	flag = 1;
-	setsockopt (fd, SOL_IP, IP_TRANSPARENT, &flag, QSE_SIZEOF(flag));
+		IP_TRANSPRENT is needed for:
+			- accepting TPROXYed connections
+			- binding to a non-local IP address (IP address the local system doesn't have)
+			- using a non-local IP address as a source
+		 */
+		flag = 1;
+		if (setsockopt (fd, SOL_IP, IP_TRANSPARENT, &flag, QSE_SIZEOF(flag)) <= -1)
+		{
+			/* TODO: logging. warning only */
+			/* this is not a hard failure */
+			HTTPD_DBGOUT1 ("Failed to set IP_TRANSPARENT on %zd\n", (qse_size_t)fd);
+		}
 	#endif
+	}
 
 	if (server->dope.flags & QSE_HTTPD_SERVER_BINDTONWIF)
 	{
@@ -1032,11 +1039,10 @@ static int server_open (qse_httpd_t* httpd, qse_httpd_server_t* server)
 		qse_size_t len;
 
 		len = qse_nwifindextombs (server->dope.nwif, tmp, QSE_COUNTOF(tmp));
-
 		if (len <= 0 || setsockopt (fd, SOL_SOCKET, SO_BINDTODEVICE, tmp, len) <= -1)
 		{
-			/* TODO: logging ... */
 			qse_httpd_seterrnum (httpd, ((len <= 0)? QSE_HTTPD_EINVAL: SKERR_TO_ERRNUM()));
+			HTTPD_DBGOUT2 ("Failed to set SO_BINDTODEVICE to %hs on %zd\n", tmp, (qse_size_t)fd);
 			goto oops;
 		}
 	#endif
@@ -1294,7 +1300,6 @@ static int client_accepted (qse_httpd_t* httpd, qse_httpd_client_t* client)
 
 		server_xtn = (server_xtn_t*)qse_httpd_getserverxtn (httpd, client->server);
 
-		
 		if (!server_xtn->ssl_ctx)
 		{
 			/* performed the delayed ssl initialization */
@@ -1422,11 +1427,18 @@ static int peer_open (qse_httpd_t* httpd, qse_httpd_peer_t* peer)
 		goto oops;
 	}
 
-/* TODO: set transparent and bind only if the server is transparent */
+	if (peer->client && peer->client->server && 
+	    (peer->client->server->dope.flags & QSE_HTTPD_SERVER_TRANSPARENT))
+	{
 	#if defined(IP_TRANSPARENT)
-	flag = 1;
-	setsockopt (fd, SOL_IP, IP_TRANSPARENT, &flag, QSE_SIZEOF(flag));
+		flag = 1;
+		if (setsockopt (fd, SOL_IP, IP_TRANSPARENT, &flag, QSE_SIZEOF(flag)) <= -1)
+		{
+			/* this is not a hard failure */
+			HTTPD_DBGOUT1 ("Failed to set IP_TRANSPARENT on peer socket %zd\n", (qse_size_t)fd);
+		}
 	#endif
+	}
 
 	/* don't use invalid binding address */
 	if (bindaddrsize >= 0 &&
@@ -3457,7 +3469,7 @@ static int query_server (
 	{
 		case QSE_HTTPD_SERVERSTD_SSL:
 			/* you must specify the certificate and the key file to be able
-			 * to use SSL */
+			 * to use SSL. not supported by this sample implmentation. */
 			qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOENT);
 			return -1;
 

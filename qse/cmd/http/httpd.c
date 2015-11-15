@@ -527,9 +527,17 @@ static int get_server_root (
 			}
 
 			if (mth == QSE_HTTP_CONNECT) 
+			{
 				root->u.proxy.flags |= QSE_HTTPD_RSRC_PROXY_RAW;
-			else if (loccfg->proxy.pseudonym[0]) 
-				root->u.proxy.pseudonym = loccfg->proxy.pseudonym;
+			}
+			else 
+			{
+				if (loccfg->proxy.pseudonym[0]) 
+					root->u.proxy.pseudonym = loccfg->proxy.pseudonym;
+
+				if (server->dope.flags & QSE_HTTPD_SERVER_SECURE)
+					root->u.proxy.flags |= QSE_HTTPD_RSRC_PROXY_DST_SECURE;
+			}
 
 			goto proxy_ok;
 		}
@@ -2047,6 +2055,7 @@ static qse_httpd_server_t* attach_server (qse_httpd_t* httpd, int num, qse_xli_l
 	if (pair && pair->val->type == QSE_XLI_STR && 
 	    qse_strxcmp (((qse_xli_str_t*)pair->val)->ptr, ((qse_xli_str_t*)pair->val)->len, QSE_T("yes")) == 0) dope.flags |= QSE_HTTPD_SERVER_SECURE;	
 
+	dope.flags |= QSE_HTTPD_SERVER_TRANSPARENT; /* need this to support TPROXY when proxy.allow_intercept is enabled */
 	dope.detach = free_server_config;
 	xserver = qse_httpd_attachserverstd (httpd, &dope, QSE_SIZEOF(server_xtn_t));
 	if (xserver == QSE_NULL) 

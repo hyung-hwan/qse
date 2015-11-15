@@ -2270,8 +2270,7 @@ static void on_url_rewritten (qse_httpd_t* httpd, const qse_mchar_t* url, const 
 	}
 }
 
-static int task_main_proxy (
-	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
+static int task_main_proxy (qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
 {
 	task_proxy_t* proxy = (task_proxy_t*)task->ctx;
 	proxy_peer_htrd_xtn_t* xtn;
@@ -2383,8 +2382,7 @@ static int task_main_proxy (
 	if (!(proxy->flags & PROXY_RAW))
 	{
 		/* set up a http reader to read a response from the peer */
-		proxy->peer_htrd = qse_htrd_open (
-			httpd->mmgr, QSE_SIZEOF(proxy_peer_htrd_xtn_t));
+		proxy->peer_htrd = qse_htrd_open (httpd->mmgr, QSE_SIZEOF(proxy_peer_htrd_xtn_t));
 		if (proxy->peer_htrd == QSE_NULL) goto oops;
 		xtn = (proxy_peer_htrd_xtn_t*) qse_htrd_getxtn (proxy->peer_htrd);
 		xtn->proxy = proxy;
@@ -2400,7 +2398,9 @@ static int task_main_proxy (
 	proxy->res_pending = 0;
 
 	/* get a cached peer connection */
-	peer_from_cache = qse_httpd_decacheproxypeer (httpd, client, &proxy->peer->nwad, &proxy->peer->local, (proxy->peer->flags & QSE_HTTPD_PEER_SECURE));
+	peer_from_cache = qse_httpd_decacheproxypeer (
+		httpd, client, &proxy->peer->nwad, 
+		&proxy->peer->local, (proxy->peer->flags & QSE_HTTPD_PEER_SECURE));
 	if (peer_from_cache)
 	{
 		qse_mchar_t tmpch;
@@ -2424,13 +2424,13 @@ static int task_main_proxy (
 		else
 		{
 			/* the cached connection seems to be stale or invalid */
-	#if defined(QSE_HTTPD_DEBUG)
+		#if defined(QSE_HTTPD_DEBUG)
 			{
 				qse_mchar_t tmp[128];
 				qse_nwadtombs (&peer_from_cache->nwad, tmp, QSE_COUNTOF(tmp), QSE_NWADTOMBS_ALL);
 				HTTPD_DBGOUT2 ("Decached and closed stale peer [%hs] - %zd\n", tmp, (qse_size_t)peer_from_cache->handle);
 			}
-	#endif
+		#endif
 			httpd->opt.scb.peer.close (httpd, peer_from_cache);
 			qse_httpd_freemem (httpd, peer_from_cache);
 
@@ -2445,6 +2445,8 @@ static int task_main_proxy (
 	}
 	else
 	{
+		proxy->peer->client = client;
+
 		httpd->errnum = QSE_HTTPD_ENOERR;
 		n = httpd->opt.scb.peer.open (httpd, proxy->peer);
 		if (n <= -1)
@@ -2452,7 +2454,7 @@ static int task_main_proxy (
 			/* TODO: translate more error codes to http error codes... */
 			if (httpd->errnum == QSE_HTTPD_ENOENT) http_errnum = 404;
 			else if (httpd->errnum == QSE_HTTPD_EACCES ||
-					 httpd->errnum == QSE_HTTPD_ECONN) http_errnum = 403;
+			         httpd->errnum == QSE_HTTPD_ECONN) http_errnum = 403;
 
 		#if defined(QSE_HTTPD_DEBUG)
 			{
