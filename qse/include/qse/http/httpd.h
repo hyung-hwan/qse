@@ -211,6 +211,9 @@ struct qse_httpd_peer_t
 
 	/* == PRIVATE == */
 
+	/* set by httpd to the client this peer has been created for */
+	qse_httpd_client_t* client; 
+
 	/* peer links for the proxy peer cache list in client.
 	 * internal use only. don't mess with these */
 	qse_httpd_peer_t* next;
@@ -749,9 +752,10 @@ struct qse_httpd_client_t
 
 enum qse_httpd_server_flag_t
 {
-	QSE_HTTPD_SERVER_ACTIVE     = (1 << 0),
-	QSE_HTTPD_SERVER_SECURE     = (1 << 1),
-	QSE_HTTPD_SERVER_BINDTONWIF = (1 << 2)
+	QSE_HTTPD_SERVER_ACTIVE      = (1 << 0),
+	QSE_HTTPD_SERVER_SECURE      = (1 << 1),
+	QSE_HTTPD_SERVER_BINDTONWIF  = (1 << 2),
+	QSE_HTTPD_SERVER_TRANSPARENT = (1 << 3)
 };
 typedef enum qse_httpd_server_flag_t qse_httpd_server_flag_t;
 

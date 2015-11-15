@@ -822,7 +822,9 @@ static int accept_client (
 
 /* TODO: check maximum number of client. if exceed call client.close */
 
-		if (server->dope.flags & QSE_HTTPD_SERVER_SECURE) clibuf.status |= QSE_HTTPD_CLIENT_SECURE;
+		if (server->dope.flags & QSE_HTTPD_SERVER_SECURE) 
+			clibuf.status |= QSE_HTTPD_CLIENT_SECURE;
+
 		clibuf.server = server;
 
 #if 0
