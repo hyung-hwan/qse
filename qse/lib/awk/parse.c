@@ -3364,6 +3364,12 @@ static int fold_constants_for_binop (
 				break;
 
 			case QSE_AWK_BINOP_DIV:
+				if (((qse_awk_nde_int_t*)right)->val == 0)
+				{
+					qse_awk_seterrnum (awk, QSE_AWK_EDIVBY0, QSE_NULL);
+					return QSE_NULL;
+				}
+
 				if (INT_BINOP_INT(left,%,right))
 				{
 					folded->r = (qse_awk_flt_t)((qse_awk_nde_int_t*)left)->val / 
@@ -3371,8 +3377,17 @@ static int fold_constants_for_binop (
 					fold = QSE_AWK_NDE_FLT;
 					break;
 				}
-				/* fall through here */
+
+				folded->l = INT_BINOP_INT(left,/,right);
+				break;
+
 			case QSE_AWK_BINOP_IDIV:
+				if (((qse_awk_nde_int_t*)right)->val == 0)
+				{
+					qse_awk_seterrnum (awk, QSE_AWK_EDIVBY0, QSE_NULL);
+					return QSE_NULL;
+				}
+
 				folded->l = INT_BINOP_INT(left,/,right);
 				break;
 
