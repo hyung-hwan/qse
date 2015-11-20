@@ -1174,11 +1174,14 @@ static int server_accept (
 		 * the same addresses. however, the port number may be different
 		 * as a typical TPROXY rule is set to change the port number.
 		 * However, this check is fragile if the server port number is
-		 * set to 0. */
+		 * set to 0. 
+		 *
+		 * Take note that if the TPROXY rule doesn't change the port 
+		 * number the above assumption gets wrong. so it won't be able
+		 * to handle such a TPROXYed packet without port transformation. */
 		client->status |= QSE_HTTPD_CLIENT_INTERCEPTED;
 	}
 	#if 0
-/* TODO: how to set intercepted when TPROXY is used? */
 	else if ((client->initial_ifindex = resolve_ifindex (fd, client->local_addr)) <= -1)
 	{
 		/* the local_address is not one of a local address.
