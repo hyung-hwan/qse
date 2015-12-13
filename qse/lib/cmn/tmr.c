@@ -52,7 +52,6 @@ qse_tmr_t* qse_tmr_open (qse_mmgr_t* mmgr, qse_size_t xtnsize, qse_size_t capa)
 	return tmr;
 }
 
-
 void qse_tmr_close (qse_tmr_t* tmr)
 {
 	qse_tmr_fini (tmr);
@@ -124,8 +123,8 @@ static qse_tmr_index_t sift_up (qse_tmr_t* tmr, qse_tmr_index_t index, int notif
 		while (index > 0 && YOUNGER_THAN(&item, &tmr->event[parent]));
 
 		/* we send no notification if the item is added with qse_tmr_insert()
-		 * or updated with qse_tmr_update(). the caller of the funnctions must
-		 * reply on the return value. */
+		 * or updated with qse_tmr_update(). the caller of these functions
+		 * must rely on the return value. */
 		tmr->event[index] = item;
 		if (notify && index != old_index)
 			tmr->event[index].updater (tmr, old_index, index, &tmr->event[index]);
@@ -206,6 +205,7 @@ qse_tmr_index_t qse_tmr_insert (qse_tmr_t* tmr, const qse_tmr_event_t* event)
 		qse_tmr_event_t* tmp;
 		qse_size_t new_capa;
 
+		QSE_ASSERT (tmr->capa >= 1);
 		new_capa = tmr->capa * 2;
 		tmp = QSE_MMGR_REALLOC (tmr->mmgr, tmr->event, new_capa * QSE_SIZEOF(*tmp));
 		if (tmp == QSE_NULL) return QSE_TMR_INVALID_INDEX;
