@@ -30,6 +30,7 @@
 
 #include <qse/types.h>
 #include <qse/macros.h>
+#include <qse/cmn/nwad.h>
 
 #if defined(_WIN32)
 	typedef qse_uintptr_t qse_sck_hnd_t;
@@ -85,6 +86,20 @@ QSE_EXPORT void qse_closesckhnd (
 QSE_EXPORT void qse_shutsckhnd (
 	qse_sck_hnd_t        handle,
 	qse_shutsckhnd_how_t how
+);
+
+QSE_EXPORT int qse_setscknonblock (
+	qse_sck_hnd_t handle,
+	int           enabled
+);
+
+QSE_EXPORT int qse_initsckconn (
+	qse_sck_hnd_t     handle,
+	const qse_nwad_t* nwad
+);
+
+QSE_EXPORT int qse_finisckconn (
+	qse_sck_hnd_t handle
 );
 
 #if defined(__cplusplus)
