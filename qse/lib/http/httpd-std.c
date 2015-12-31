@@ -797,54 +797,6 @@ void* qse_httpd_getxtnstd (qse_httpd_t* httpd)
 
 /* ------------------------------------------------------------------- */
 
-static int set_socket_nonblock (qse_httpd_t* httpd, qse_sck_hnd_t fd, int enabled)
-{
-#if defined(_WIN32)
-	if (ioctlsocket (fd, FIONBIO, &enabled) == SOCKET_ERROR) 
-	{
-		qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
-		return -1;
-	}
-
-	return 0;
-
-#elif defined(__OS2__)
-
-	if (ioctl (fd, FIONBIO, (char*)&enabled, sizeof(enabled)) <= -1) 
-	{
-		qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
-		return -1;
-	}
-	return 0;
-
-#elif defined(__DOS__)
-
-	if (ioctlsocket (fd, FIONBIO, (char*)&enabled) == SOCKET_ERROR) 
-	{
-		qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
-		return -1;
-	}
-
-	return 0;
-
-#elif defined(O_NONBLOCK)
-
-	int flag = fcntl (fd, F_GETFL);
-	if (flag >= 0) flag = fcntl (fd, F_SETFL, (enabled? (flag | O_NONBLOCK): (flag & ~O_NONBLOCK)));
-	if (flag <= -1)
-	{
-		qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
-		return -1;
-	}
-	return 0;
-#else
-
-	qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
-	return -1;
-#endif
-
-}
-
 static qse_sck_hnd_t open_client_socket (qse_httpd_t* httpd, int domain, int type, int proto)
 {
 	qse_sck_hnd_t fd;
@@ -892,7 +844,11 @@ static qse_sck_hnd_t open_client_socket (qse_httpd_t* httpd, int domain, int typ
 	#endif
  	*/
 
-	if (set_socket_nonblock (httpd, fd, 1) <= -1) goto oops;
+	if (qse_setscknonblock (fd, 1) <= -1)
+	{
+		qse_httpd_seterrnum (httpd, QSE_HTTPD_ESYSERR);
+		goto oops;
+	}
 
 	#if defined(IPPROTO_SCTP)
 	if (proto == IPPROTO_SCTP)
@@ -906,14 +862,22 @@ static qse_sck_hnd_t open_client_socket (qse_httpd_t* httpd, int domain, int typ
 		im.sinit_max_instreams = 1;
 		im.sinit_max_attempts = 1;
 
-		if (setsockopt (fd, SOL_SCTP, SCTP_INITMSG, &im, QSE_SIZEOF(im)) <= -1) goto oops;
+		if (setsockopt (fd, SOL_SCTP, SCTP_INITMSG, &im, QSE_SIZEOF(im)) <= -1) 
+		{
+			qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
+			goto oops;
+		}
 
 		QSE_MEMSET (&hb, 0, QSE_SIZEOF(hb));
 		hb.spp_flags = SPP_HB_ENABLE;
 		hb.spp_hbinterval = 5000;
 		hb.spp_pathmaxrxt = 1;
 
-		if (setsockopt (fd, SOL_SCTP, SCTP_PEER_ADDR_PARAMS, &hb, QSE_SIZEOF(hb)) <= -1) goto oops;
+		if (setsockopt (fd, SOL_SCTP, SCTP_PEER_ADDR_PARAMS, &hb, QSE_SIZEOF(hb)) <= -1)
+		{
+			qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
+			goto oops;
+		}
 		#endif
 	}
 	#endif
@@ -1086,7 +1050,11 @@ bind_ok:
 		goto oops;
 	}
 
-	if (set_socket_nonblock (httpd, fd, 1) <= -1) goto oops;
+	if (qse_setscknonblock (fd, 1) <= -1) 
+	{
+		qse_httpd_seterrnum (httpd, QSE_HTTPD_ESYSERR);
+		goto oops;
+	}
 
 	server->handle = fd;
 	return 0;
@@ -1132,7 +1100,11 @@ static int server_accept (
 	if (flag >= 0) fcntl (fd, F_SETFD, flag | FD_CLOEXEC);
 	#endif
 
-	if (set_socket_nonblock (httpd, fd, 1) <= -1) goto oops;
+	if (qse_setscknonblock (fd, 1) <= -1) 
+	{
+		qse_httpd_seterrnum (httpd, QSE_HTTPD_ESYSERR);
+		goto oops;
+	}
 
 	if (qse_skadtonwad (&addr, &client->remote_addr) <= -1)
 	{
@@ -1456,7 +1428,11 @@ static int peer_open (qse_httpd_t* httpd, qse_httpd_peer_t* peer)
 	if (flag >= 0) fcntl (fd, F_SETFD, flag | FD_CLOEXEC);
 	#endif
 
-	if (set_socket_nonblock (httpd, fd, 1) <= -1) goto oops;
+	if (qse_setscknonblock (fd, 1) <= -1) 
+	{
+		qse_httpd_seterrnum (httpd, QSE_HTTPD_ESYSERR);
+		goto oops;
+	}
 
 	if (peer->flags & QSE_HTTPD_PEER_SECURE)
 	{

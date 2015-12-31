@@ -148,6 +148,123 @@ QSE_INLINE void qse_shutsckhnd (qse_sck_hnd_t handle, qse_shutsckhnd_how_t how)
 #endif
 }
 
+int qse_setscknonblock (qse_sck_hnd_t handle, int enabled)
+{
+#if defined(_WIN32)
+	if (ioctlsocket (handle, FIONBIO, &enabled) == SOCKET_ERROR) return -1;
+	return 0;
+
+#elif defined(__OS2__)
+
+	if (ioctl (handle, FIONBIO, (char*)&enabled, sizeof(enabled)) <= -1) return -1;
+	return 0;
+
+#elif defined(__DOS__)
+
+	if (ioctlsocket (handle, FIONBIO, (char*)&enabled) == SOCKET_ERROR) return -1;
+	return 0;
+
+#elif defined(O_NONBLOCK)
+
+	int flag = fcntl (handle, F_GETFL);
+	if (flag >= 0) flag = fcntl (handle, F_SETFL, (enabled? (flag | O_NONBLOCK): (flag & ~O_NONBLOCK)));
+	if (flag <= -1) return -1;
+	return 0;
+
+#else
+
+	return -1;
+#endif
+}
+
+int qse_initsckconn (qse_sck_hnd_t handle, const qse_nwad_t* nwad)
+{
+	int n;
+#if defined(_WIN32)
+	unsigned long cmd;
+#else
+	int saved = 0;
+#endif
+	qse_skad_t skad;
+	int skadlen;
+
+	skadlen = qse_nwadtoskad (nwad, &skad);
+	if (skadlen <= -1) return -1;
+
+#if defined(_WIN32)
+	/* switch to the non-blocking mode */
+	cmd = 1;
+	if (ioctlsocket(handle, FIONBIO, &cmd) == SOCKET_ERROR) 
+	{
+		/* error code in WSAGetLastError() */
+		return -1;
+	}
+
+	/* attempt to connet */
+	n = connect (handle, (struct sockaddr*)&skad, skadlen);
+	if (n == -1 && WSAGetLastError() != WSAEWOULDBLOCK) 
+	{
+		/* attemp to restore to the blocking mode upon failure.
+		 * there is no guarantee that this was the previous mode. */
+		cmd = 0;
+		ioctlsocket (handle, FIONBIO, &cmd); 
+		return -1;
+	}
+#else
+	/* switch to the non-blocking mode */
+	saved = fcntl (handle, F_GETFL, 0);
+	if (saved == -1) return -1;
+	if (fcntl (handle, F_SETFL, saved | O_NONBLOCK) == -1) return -1;
+
+	/* attempt to connet */
+	do 
+	{
+		n = connect (handle, (struct sockaddr*)&skad, skadlen);
+	}
+	while (n == -1 && errno == EINTR);
+
+	if (n == -1 && errno != EINPROGRESS) 
+	{
+		fcntl (handle, F_SETFL, saved); /* restore the flags upon failure */
+		return -1;
+	}
+#endif
+
+	/* the socket still remains in the non-blocking mode */
+	return (n == 0)? 1: 0; /* 1: connected, 0: in progress */
+}
+
+int qse_finisckconn (qse_sck_hnd_t handle)
+{
+	int ret;
+	qse_sck_len_t len;
+
+	len = (qse_sck_len_t)QSE_SIZEOF (ret);
+	if (getsockopt (handle, SOL_SOCKET, SO_ERROR, (char*)&ret, &len) == -1) return -1;
+
+#ifdef _WIN32
+	if (ret == WSAETIMEDOUT) 
+#else
+	if (ret == ETIMEDOUT) 
+#endif
+	{
+		return -1; /* failure - timed out */
+	}
+#ifdef _WIN32
+	else if (ret == WSAEWOULDBLOCK) 
+#else
+	else if (ret == EINPROGRESS) 
+#endif
+	{
+		return 0; /* in preogress */
+	}
+	else if (ret != 0) 
+	{
+		return -1; /* failure */
+	}
+
+	return 1; /* connected */
+}
 
 #if 0
 qse_sck_hnd_t
