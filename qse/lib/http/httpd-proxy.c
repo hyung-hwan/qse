@@ -944,8 +944,7 @@ static void adjust_peer_name_and_port (task_proxy_t* proxy)
 	}
 }
 
-static int task_init_proxy (
-	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
+static int task_init_proxy (qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
 {
 	task_proxy_t* proxy;
 	task_proxy_arg_t* arg;

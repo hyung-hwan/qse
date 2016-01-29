@@ -219,7 +219,7 @@ qse_tmr_index_t qse_tmr_insert (qse_tmr_t* tmr, const qse_tmr_event_t* event)
 	return sift_up (tmr, index, 0);
 }
 
-qse_size_t qse_tmr_update (qse_tmr_t* tmr, qse_size_t index, const qse_tmr_event_t* event)
+qse_tmr_index_t qse_tmr_update (qse_tmr_t* tmr, qse_size_t index, const qse_tmr_event_t* event)
 {
 	qse_tmr_event_t item;
 

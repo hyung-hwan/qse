@@ -117,7 +117,7 @@ QSE_EXPORT qse_tmr_index_t qse_tmr_insert (
 	const qse_tmr_event_t* event
 );
 
-QSE_EXPORT qse_size_t qse_tmr_update (
+QSE_EXPORT qse_tmr_index_t qse_tmr_update (
 	qse_tmr_t*             tmr,
 	qse_tmr_index_t        index,
 	const qse_tmr_event_t* event
