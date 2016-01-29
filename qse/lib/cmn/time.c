@@ -306,17 +306,17 @@ static void breakdown_time (const qse_ntime_t* nt, qse_btime_t* bt, qse_long_t o
 	{
 		while (days >= QSE_DAYS_PER_YEAR(year))
 		{
-    			days -= QSE_DAYS_PER_YEAR(year);
-    			year++;
-    		}
+			days -= QSE_DAYS_PER_YEAR(year);
+			year++;
 	}
-    	else 
+	}
+	else 
 	{
 		do 
 		{
-    			year--;
-   			days += QSE_DAYS_PER_YEAR(year);
-    		} 
+			year--;
+			days += QSE_DAYS_PER_YEAR(year);
+		} 
 		while (days < 0);
 	}
 
@@ -492,7 +492,7 @@ int qse_timegm (const qse_btime_t* bt, qse_ntime_t* nt)
 		*nt = n + bt->msec;*/
 
 		nt->sec = n;
-		nt->nsec = 0;		
+		nt->nsec = 0;
 	}
 
 	return 0;

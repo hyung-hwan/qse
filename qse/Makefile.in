@@ -80,12 +80,12 @@ host_triplet = @host@
 subdir = .
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(top_srcdir)/configure $(am__configure_deps) \
-	$(srcdir)/README.in ac/ar-lib ac/compile ac/config.guess \
-	ac/config.sub ac/depcomp ac/install-sh ac/missing ac/ltmain.sh \
-	$(top_srcdir)/ac/ar-lib $(top_srcdir)/ac/compile \
-	$(top_srcdir)/ac/config.guess $(top_srcdir)/ac/config.sub \
-	$(top_srcdir)/ac/install-sh $(top_srcdir)/ac/ltmain.sh \
-	$(top_srcdir)/ac/missing
+	$(srcdir)/README.in README ac/ar-lib ac/compile \
+	ac/config.guess ac/config.sub ac/depcomp ac/install-sh \
+	ac/missing ac/ltmain.sh $(top_srcdir)/ac/ar-lib \
+	$(top_srcdir)/ac/compile $(top_srcdir)/ac/config.guess \
+	$(top_srcdir)/ac/config.sub $(top_srcdir)/ac/install-sh \
+	$(top_srcdir)/ac/ltmain.sh $(top_srcdir)/ac/missing
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/argz.m4 \
 	$(top_srcdir)/m4/ax_check_sign.m4 \
