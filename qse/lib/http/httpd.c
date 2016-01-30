@@ -1945,7 +1945,7 @@ int qse_httpd_loop (qse_httpd_t* httpd)
 			}
 		}
 
-		qse_tmr_fire (httpd->tmr, QSE_NULL);
+		qse_tmr_fire (httpd->tmr, QSE_NULL, QSE_NULL);
 		purge_bad_clients (httpd);
 
 		if (httpd->impedereq)
