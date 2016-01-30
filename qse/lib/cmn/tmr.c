@@ -228,7 +228,7 @@ qse_tmr_index_t qse_tmr_update (qse_tmr_t* tmr, qse_size_t index, const qse_tmr_
 	return YOUNGER_THAN(event, &item)? sift_up (tmr, index, 0): sift_down (tmr, index, 0);
 }
 
-qse_size_t qse_tmr_fire (qse_tmr_t* tmr, const qse_ntime_t* tm)
+int qse_tmr_fire (qse_tmr_t* tmr, const qse_ntime_t* tm, qse_size_t* firecnt)
 {
 	qse_ntime_t now;
 	qse_tmr_event_t event;
@@ -249,7 +249,8 @@ qse_size_t qse_tmr_fire (qse_tmr_t* tmr, const qse_ntime_t* tm)
 		event.handler (tmr, &now, &event); /* then fire the event */
 	}
 
-	return fire_count;
+	if (firecnt) *firecnt = fire_count;
+	return 0;
 }
 
 int qse_tmr_gettmout (qse_tmr_t* tmr, const qse_ntime_t* tm, qse_ntime_t* tmout)

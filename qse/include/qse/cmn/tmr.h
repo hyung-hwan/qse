@@ -128,9 +128,10 @@ QSE_EXPORT void qse_tmr_delete (
 	qse_tmr_index_t index
 );
 
-QSE_EXPORT qse_size_t qse_tmr_fire (
+QSE_EXPORT int qse_tmr_fire (
 	qse_tmr_t*         tmr,
-	const qse_ntime_t* tm
+	const qse_ntime_t* tm,
+	qse_size_t*        firecnt
 );
 
 QSE_EXPORT int qse_tmr_gettmout (
