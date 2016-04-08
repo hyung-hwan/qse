@@ -41,7 +41,7 @@ public:
 	SocketAddress (const qse_skad_t* skad);
 	SocketAddress (const qse_nwad_t* nwad);
 	SocketAddress (const struct sockaddr* ptr, int len);
-	
+
 	int getFamily () const;
 
 	qse_skad_t* getAddrPtr()

@@ -78,7 +78,8 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 @ENABLE_CXX_TRUE@am__append_1 = \
-@ENABLE_CXX_TRUE@	SocketAddress.hpp
+@ENABLE_CXX_TRUE@	SocketAddress.hpp \
+@ENABLE_CXX_TRUE@	Socket.hpp
 
 subdir = include/qse/sys
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
@@ -118,7 +119,7 @@ am__can_run_installinfo = \
     *) (install-info --version) >/dev/null 2>&1;; \
   esac
 am__pkginclude_HEADERS_DIST = cnd.h intr.h mtx.h mux.h rwl.h thr.h \
-	SocketAddress.hpp
+	SocketAddress.hpp Socket.hpp
 am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
 am__vpath_adj = case $$p in \
     $(srcdir)/*) f=`echo "$$p" | sed "s|^$$srcdirstrip/||"`;; \
