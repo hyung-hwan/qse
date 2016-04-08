@@ -26,6 +26,7 @@
 
 #include "mod-sys.h"
 #include <qse/cmn/str.h>
+#include <qse/cmn/chr.h>
 #include <qse/cmn/time.h>
 #include <qse/cmn/nwif.h>
 #include <qse/cmn/nwad.h>
@@ -51,6 +52,7 @@
 #endif
 
 #include <stdlib.h> /* getenv, system */
+#include <time.h>
 
 static int fnc_fork (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
@@ -496,6 +498,213 @@ static int fnc_settime (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	return 0;
 }
 
+static int fnc_mktime (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	qse_ntime_t nt;
+	qse_size_t nargs;
+	qse_awk_val_t* retv;
+
+	nargs = qse_awk_rtx_getnargs (rtx);
+	if (nargs >= 1)
+	{
+		int sign;
+		qse_char_t* str, * p, * end;
+		qse_size_t len;
+		qse_awk_val_t* a0;
+		qse_btime_t bt;
+
+		a0 = qse_awk_rtx_getarg (rtx, 0);
+		str = qse_awk_rtx_getvalstr (rtx, a0, &len);
+		if (str == QSE_NULL) return -1;
+
+		/* the string must be of the format  YYYY MM DD HH MM SS[ DST] */
+		p = str;
+		end = str + len;
+		QSE_MEMSET (&bt, 0, QSE_SIZEOF(bt));
+
+		sign = 1;
+		if (p < end && *p == QSE_T('-')) { sign = -1; p++; }
+		while (p < end && QSE_ISDIGIT(*p)) bt.year = bt.year * 10 + (*p++ - QSE_T('0'));
+		bt.year *= sign;
+		bt.year -= 1900;
+		while (p < end && (QSE_ISSPACE(*p) || *p == QSE_T('\0'))) p++;
+
+		sign = 1;
+		if (p < end && *p == QSE_T('-')) { sign = -1; p++; }
+		while (p < end && QSE_ISDIGIT(*p)) bt.mon = bt.mon * 10 + (*p++ - QSE_T('0'));
+		bt.mon *= sign;
+		bt.mon -= 1;
+		while (p < end && (QSE_ISSPACE(*p) || *p == QSE_T('\0'))) p++;
+
+		sign = 1;
+		if (p < end && *p == QSE_T('-')) { sign = -1; p++; }
+		while (p < end && QSE_ISDIGIT(*p)) bt.mday = bt.mday * 10 + (*p++ - QSE_T('0'));
+		bt.mday *= sign;
+		while (p < end && (QSE_ISSPACE(*p) || *p == QSE_T('\0'))) p++;
+
+		sign = 1;
+		if (p < end && *p == QSE_T('-')) { sign = -1; p++; }
+		while (p < end && QSE_ISDIGIT(*p)) bt.hour = bt.hour * 10 + (*p++ - QSE_T('0'));
+		bt.hour *= sign;
+		while (p < end && (QSE_ISSPACE(*p) || *p == QSE_T('\0'))) p++;
+
+		sign = 1;
+		if (p < end && *p == QSE_T('-')) { sign = -1; p++; }
+		while (p < end && QSE_ISDIGIT(*p)) bt.min = bt.min * 10 + (*p++ - QSE_T('0'));
+		bt.min *= sign;
+		while (p < end && (QSE_ISSPACE(*p) || *p == QSE_T('\0'))) p++;
+
+		sign = 1;
+		if (p < end && *p == QSE_T('-')) { sign = -1; p++; }
+		while (p < end && QSE_ISDIGIT(*p)) bt.sec = bt.sec * 10 + (*p++ - QSE_T('0'));
+		bt.sec *= sign;
+		while (p < end && (QSE_ISSPACE(*p) || *p == QSE_T('\0'))) p++;
+
+		sign = 1;
+		if (p < end && *p == QSE_T('-')) { sign = -1; p++; }
+		while (p < end && QSE_ISDIGIT(*p)) bt.isdst = bt.isdst * 10 + (*p++ - QSE_T('0'));
+		bt.isdst *= sign;
+		while (p < end && (QSE_ISSPACE(*p) || *p == QSE_T('\0'))) p++;
+
+		qse_awk_rtx_freevalstr (rtx, a0, str);
+		qse_timelocal (&bt, &nt);
+	}
+	else
+	{
+		/* get the current time when no argument is given */
+		qse_gettime (&nt);
+	}
+
+	retv = qse_awk_rtx_makeintval (rtx, nt.sec);
+	if (retv == QSE_NULL) return -1;
+
+	qse_awk_rtx_setretval (rtx, retv);
+	return 0;
+}
+
+
+static int fnc_strftime (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	qse_mchar_t* fmt;
+	qse_size_t len;
+	qse_awk_val_t* retv;
+
+	fmt = qse_awk_rtx_valtombsdup (rtx, qse_awk_rtx_getarg (rtx, 0), &len);
+	if (fmt) 
+	{
+		qse_ntime_t nt;
+		qse_btime_t bt;
+		qse_awk_int_t tmpsec;
+
+		nt.nsec = 0;
+		if (qse_awk_rtx_valtoint (rtx, qse_awk_rtx_getarg (rtx, 1), &tmpsec) <= -1) 
+		{
+			nt.sec = 0;
+		}
+		else
+		{
+			nt.sec = tmpsec;
+		}
+
+		if (qse_localtime (&nt, &bt) >= 0)
+		{
+			qse_mchar_t tmpbuf[64], * tmpptr;
+			struct tm tm;
+			qse_size_t sl;
+
+			QSE_MEMSET (&tm, 0, QSE_SIZEOF(tm));
+			tm.tm_year = bt.year;
+			tm.tm_mon = bt.mon;
+			tm.tm_mday = bt.mday;
+			tm.tm_hour = bt.hour;
+			tm.tm_min = bt.min;
+			tm.tm_sec = bt.sec;
+			tm.tm_isdst = bt.isdst;
+
+			sl = strftime (tmpbuf, QSE_COUNTOF(tmpbuf), fmt, &tm);
+			if (sl <= 0 || sl >= QSE_COUNTOF(tmpbuf))
+			{
+				/* buffer too small */
+				qse_mchar_t* tmp;
+				qse_size_t tmpcapa, i, count = 0;
+
+/*
+man strftime >>>
+
+RETURN VALUE
+       The strftime() function returns the number of bytes placed in the array s, not including the  terminating  null  byte,  provided  the
+       string,  including  the  terminating  null  byte,  fits.  Otherwise, it returns 0, and the contents of the array is undefined.  (This
+       behavior applies since at least libc 4.4.4; very old versions of libc, such as libc 4.4.1, would return max  if  the  array  was  too
+       small.)
+
+       Note that the return value 0 does not necessarily indicate an error; for example, in many locales %p yields an empty string.
+ 
+--------------------------------------------------------------------------------------
+* 
+I use 'count' to limit the maximum number of retries when 0 is returned.
+*/
+
+				for (i = 0; i < len;)
+				{
+					if (fmt[i] == QSE_MT('%')) 
+					{
+						count++; /* the nubmer of % specifier */
+						i++;
+						if (i < len) i++;
+					}
+					else i++;
+				}
+
+				tmpptr = QSE_NULL;
+				tmpcapa = QSE_COUNTOF(tmpbuf);
+				if (tmpcapa < len) tmpcapa = len;
+
+				do
+				{
+					if (count <= 0) 
+					{
+						if (tmpptr) qse_awk_rtx_freemem (rtx, tmpptr);
+						tmpbuf[0] = QSE_MT('\0');
+						tmpptr = tmpbuf;
+						break;
+					}
+					count--;
+
+					tmpcapa *= 2;
+					tmp = qse_awk_rtx_reallocmem (rtx, tmpptr, tmpcapa * QSE_SIZEOF(*tmpptr));
+					if (!tmp) 
+					{
+						if (tmpptr) qse_awk_rtx_freemem (rtx, tmpptr);
+						tmpbuf[0] = QSE_MT('\0');
+						tmpptr = tmpbuf;
+						break;
+					}
+
+					tmpptr = tmp;
+					sl = strftime (tmpptr, tmpcapa, fmt, &tm);
+				}
+				while (sl <= 0 || sl >= tmpcapa);
+			}
+			else
+			{
+				tmpptr = tmpbuf;
+			}
+			qse_awk_rtx_freemem (rtx, fmt);
+
+			retv = qse_awk_rtx_makestrvalwithmbs (rtx, tmpptr);
+			if (tmpptr && tmpptr != tmpbuf) qse_awk_rtx_freemem (rtx, tmpptr);
+			if (retv == QSE_NULL) return -1;
+
+			qse_awk_rtx_setretval (rtx, retv);
+		}
+		else
+		{
+			qse_awk_rtx_freemem (rtx, fmt);
+		}
+	}
+	return 0;
+}
+
 static int fnc_getenv (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
 	qse_mchar_t* var;
@@ -544,7 +753,7 @@ static int fnc_getnwifcfg (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 
 			if (qse_getnwifcfg (&cfg) >= 0)
 			{
-				/* make a map value containg configuration */	
+				/* make a map value containg configuration */
 				qse_awk_int_t index, mtu;
 				qse_char_t addr[128];
 				qse_char_t mask[128];
@@ -693,9 +902,12 @@ static fnctab_t fnctab[] =
 	{ QSE_T("gettime"),    { { 0, 0, QSE_NULL     }, fnc_gettime,    0  } },
 	{ QSE_T("getuid"),     { { 0, 0, QSE_NULL     }, fnc_getuid,     0  } },
 	{ QSE_T("kill"),       { { 2, 2, QSE_NULL     }, fnc_kill,       0  } },
+	{ QSE_T("mktime"),     { { 0, 1, QSE_NULL     }, fnc_mktime,     0  } },
 	{ QSE_T("settime"),    { { 1, 1, QSE_NULL     }, fnc_settime,    0  } },
 	{ QSE_T("sleep"),      { { 1, 1, QSE_NULL     }, fnc_sleep,      0  } },
+	{ QSE_T("strftime"),   { { 2, 2, QSE_NULL     }, fnc_strftime,   0  } },
 	{ QSE_T("system"),     { { 1, 1, QSE_NULL     }, fnc_system,     0  } },
+	{ QSE_T("systime"),    { { 0, 0, QSE_NULL     }, fnc_gettime,    0  } }, /* alias to gettime() */
 	{ QSE_T("wait"),       { { 1, 1, QSE_NULL     }, fnc_wait,       0  } }
 };
 

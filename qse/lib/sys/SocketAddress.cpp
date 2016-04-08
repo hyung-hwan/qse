@@ -132,7 +132,6 @@ void SocketAddress::setIpaddr (const qse_ip4ad_t* ipaddr)
 	{
 		struct sockaddr_in* v4 = (struct sockaddr_in*)&this->skad;
 		QSE_MEMCPY (&v4->sin_addr, ipaddr, QSE_SIZEOF(*ipaddr));
-
 	}
 #endif
 }

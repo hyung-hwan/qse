@@ -58,27 +58,32 @@ static qse_awk_fnc_t sysfnctab[] =
 	{ {QSE_T("int"),     3}, 0, { {1,     1, QSE_NULL},     fnc_int,              0 }, QSE_NULL},
 
 	/* string functions */
-	{ {QSE_T("index"),   5}, 0, { {2,     3, QSE_NULL},     qse_awk_fnc_index,    0 }, QSE_NULL},
-	{ {QSE_T("substr"),  6}, 0, { {2,     3, QSE_NULL},     qse_awk_fnc_substr,   0 }, QSE_NULL},
-	{ {QSE_T("length"),  6}, 1, { {0,     1, QSE_NULL},     qse_awk_fnc_length,   0 }, QSE_NULL},
-	{ {QSE_T("split"),   5}, 0, { {2,     3, QSE_T("vrx")}, qse_awk_fnc_split,    0 }, QSE_NULL},
-	{ {QSE_T("tolower"), 7}, 0, { {1,     1, QSE_NULL},     qse_awk_fnc_tolower,  0 }, QSE_NULL},
-	{ {QSE_T("toupper"), 7}, 0, { {1,     1, QSE_NULL},     qse_awk_fnc_toupper,  0 }, QSE_NULL},
-	{ {QSE_T("gsub"),    4}, 0, { {2,     3, QSE_T("xvr")}, qse_awk_fnc_gsub,     0 }, QSE_NULL},
-	{ {QSE_T("sub"),     3}, 0, { {2,     3, QSE_T("xvr")}, qse_awk_fnc_sub,      0 }, QSE_NULL},
-	{ {QSE_T("match"),   5}, 0, { {2,     3, QSE_T("vxv")}, qse_awk_fnc_match,    0 }, QSE_NULL},
-	{ {QSE_T("sprintf"), 7}, 0, { {1, A_MAX, QSE_NULL},     qse_awk_fnc_sprintf,  0 }, QSE_NULL},
+	{ {QSE_T("index"),    5}, 0, { {2,     3, QSE_NULL},     qse_awk_fnc_index,    0 }, QSE_NULL},
+	{ {QSE_T("substr"),   6}, 0, { {2,     3, QSE_NULL},     qse_awk_fnc_substr,   0 }, QSE_NULL},
+	{ {QSE_T("length"),   6}, 1, { {0,     1, QSE_NULL},     qse_awk_fnc_length,   0 }, QSE_NULL},
+	{ {QSE_T("split"),    5}, 0, { {2,     3, QSE_T("vrx")}, qse_awk_fnc_split,    0 }, QSE_NULL},
+	{ {QSE_T("tolower"),  7}, 0, { {1,     1, QSE_NULL},     qse_awk_fnc_tolower,  0 }, QSE_NULL},
+	{ {QSE_T("toupper"),  7}, 0, { {1,     1, QSE_NULL},     qse_awk_fnc_toupper,  0 }, QSE_NULL},
+	{ {QSE_T("gsub"),     4}, 0, { {2,     3, QSE_T("xvr")}, qse_awk_fnc_gsub,     0 }, QSE_NULL},
+	{ {QSE_T("sub"),      3}, 0, { {2,     3, QSE_T("xvr")}, qse_awk_fnc_sub,      0 }, QSE_NULL},
+	{ {QSE_T("match"),    5}, 0, { {2,     3, QSE_T("vxv")}, qse_awk_fnc_match,    0 }, QSE_NULL},
+	{ {QSE_T("sprintf"),  7}, 0, { {1, A_MAX, QSE_NULL},     qse_awk_fnc_sprintf,  0 }, QSE_NULL},
 
 	/* math functions */
-	{ {QSE_T("sin"),     3}, 0, { {A_MAX, 0, QSE_T("math") },   QSE_NULL,         0 }, QSE_NULL},
-	{ {QSE_T("cos"),     3}, 0, { {A_MAX, 0, QSE_T("math") },   QSE_NULL,         0 }, QSE_NULL},
-	{ {QSE_T("tan"),     3}, 0, { {A_MAX, 0, QSE_T("math") },   QSE_NULL,         0 }, QSE_NULL},
-	{ {QSE_T("atan"),    4}, 0, { {A_MAX, 0, QSE_T("math") },   QSE_NULL,         0 }, QSE_NULL},
-	{ {QSE_T("atan2"),   5}, 0, { {A_MAX, 0, QSE_T("math") },   QSE_NULL,         0 }, QSE_NULL},
-	{ {QSE_T("log"),     3}, 0, { {A_MAX, 0, QSE_T("math") },   QSE_NULL,         0 }, QSE_NULL},
-	{ {QSE_T("log10"),   5}, 0, { {A_MAX, 0, QSE_T("math") },   QSE_NULL,         0 }, QSE_NULL},
-	{ {QSE_T("exp"),     3}, 0, { {A_MAX, 0, QSE_T("math") },   QSE_NULL,         0 }, QSE_NULL},
-	{ {QSE_T("sqrt"),    4}, 0, { {A_MAX, 0, QSE_T("math") },   QSE_NULL,         0 }, QSE_NULL}
+	{ {QSE_T("sin"),      3}, 0, { {A_MAX, 0, QSE_T("math") },   QSE_NULL,         0 }, QSE_NULL},
+	{ {QSE_T("cos"),      3}, 0, { {A_MAX, 0, QSE_T("math") },   QSE_NULL,         0 }, QSE_NULL},
+	{ {QSE_T("tan"),      3}, 0, { {A_MAX, 0, QSE_T("math") },   QSE_NULL,         0 }, QSE_NULL},
+	{ {QSE_T("atan"),     4}, 0, { {A_MAX, 0, QSE_T("math") },   QSE_NULL,         0 }, QSE_NULL},
+	{ {QSE_T("atan2"),    5}, 0, { {A_MAX, 0, QSE_T("math") },   QSE_NULL,         0 }, QSE_NULL},
+	{ {QSE_T("log"),      3}, 0, { {A_MAX, 0, QSE_T("math") },   QSE_NULL,         0 }, QSE_NULL},
+	{ {QSE_T("log10"),    5}, 0, { {A_MAX, 0, QSE_T("math") },   QSE_NULL,         0 }, QSE_NULL},
+	{ {QSE_T("exp"),      3}, 0, { {A_MAX, 0, QSE_T("math") },   QSE_NULL,         0 }, QSE_NULL},
+	{ {QSE_T("sqrt"),     4}, 0, { {A_MAX, 0, QSE_T("math") },   QSE_NULL,         0 }, QSE_NULL},
+
+	/* time functions */
+	{ {QSE_T("mktime"),   6}, 0, { {A_MAX, 0, QSE_T("sys") },   QSE_NULL,          0 }, QSE_NULL},
+	{ {QSE_T("strftime"), 8}, 0, { {A_MAX, 0, QSE_T("sys") },   QSE_NULL,          0 }, QSE_NULL},
+	{ {QSE_T("systime"),  7}, 0, { {A_MAX, 0, QSE_T("sys") },   QSE_NULL,          0 }, QSE_NULL}
 };
 
 qse_awk_fnc_t* qse_awk_addfnc (qse_awk_t* awk, const qse_char_t* name, const qse_awk_fnc_spec_t* spec)
@@ -90,7 +95,6 @@ qse_awk_fnc_t* qse_awk_addfnc (qse_awk_t* awk, const qse_char_t* name, const qse
 
 	ncs.ptr = (qse_char_t*)name;
 	ncs.len = qse_strlen (name);
-
 	if (ncs.len <= 0)
 	{
 		qse_awk_seterrnum (awk, QSE_AWK_EINVAL, QSE_NULL);
@@ -1243,7 +1247,7 @@ int qse_awk_fnc_match (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 }
 
 int qse_awk_fnc_sprintf (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
-{	
+{
 	qse_size_t nargs;
 	qse_awk_val_t* a0;
 	qse_str_t out, fbu;

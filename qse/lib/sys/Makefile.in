@@ -140,8 +140,9 @@ libqsesys_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(libqsesys_la_CFLAGS) \
 	$(CFLAGS) $(libqsesys_la_LDFLAGS) $(LDFLAGS) -o $@
 libqsesysxx_la_DEPENDENCIES =
-am__libqsesysxx_la_SOURCES_DIST = SocketAddress.cpp
-@ENABLE_CXX_TRUE@am_libqsesysxx_la_OBJECTS = SocketAddress.lo
+am__libqsesysxx_la_SOURCES_DIST = SocketAddress.cpp Socket.cpp
+@ENABLE_CXX_TRUE@am_libqsesysxx_la_OBJECTS = SocketAddress.lo \
+@ENABLE_CXX_TRUE@	Socket.lo
 libqsesysxx_la_OBJECTS = $(am_libqsesysxx_la_OBJECTS)
 libqsesysxx_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
@@ -422,7 +423,8 @@ libqsesys_la_CFLAGS = $(PTHREAD_CFLAGS)
 libqsesys_la_LDFLAGS = -L../cmn -version-info 1:0:0 -no-undefined
 libqsesys_la_LIBADD = -lqsecmn $(PTHREAD_LIBS)
 @ENABLE_CXX_TRUE@libqsesysxx_la_SOURCES = \
-@ENABLE_CXX_TRUE@	SocketAddress.cpp
+@ENABLE_CXX_TRUE@	SocketAddress.cpp \
+@ENABLE_CXX_TRUE@	Socket.cpp
 
 @ENABLE_CXX_TRUE@libqsesysxx_la_LDFLAGS = -L. -L../cmn -version-info 1:0:0 -no-undefined
 @ENABLE_CXX_TRUE@libqsesysxx_la_LIBADD = -lqsecmnxx -lqsecmn 
@@ -508,6 +510,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Socket.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/SocketAddress.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqsesys_la-cnd.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqsesys_la-intr.Plo@am__quote@
