@@ -928,7 +928,9 @@ static void handle_signal (int sig)
 	{
 		case SIGINT:
 		case SIGTERM:
+	#if defined(SIGHUP)
 		case SIGHUP:
+	#endif
 			g_stop_requested = 1;
 			break;
 	}
@@ -953,8 +955,12 @@ static int httpd_main (int argc, qse_char_t* argv[])
 
 	signal (SIGINT, handle_signal);
 	signal (SIGTERM, handle_signal);
+#if defined(SIGHUP)
 	signal (SIGHUP, handle_signal);
+#endif
+#if defined(SIGPIPE)
 	signal (SIGPIPE, SIG_IGN);
+#endif
 
 	if (init_ursd (&ursd, qse_strtoi(argv[2], 10), argv[1], argv[3]) <= -1) goto oops;
 	ursd_inited = 1;
