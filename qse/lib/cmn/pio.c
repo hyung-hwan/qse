@@ -289,12 +289,18 @@ static int make_param (
 		qse_mchar_t** argv;
 		qse_mchar_t* mcmdptr;
 
-		param->argv = QSE_MMGR_ALLOC (
-			pio->mmgr, (fcnt + 1) * QSE_SIZEOF(argv[0]));
-		if (param->argv == QSE_NULL) 
+		if (fcnt < QSE_COUNTOF(param->fixed_argv))
 		{
-			pio->errnum = QSE_PIO_ENOMEM;
-			goto oops;
+			param->argv = param->fixed_argv;
+		}
+		else
+		{
+			param->argv = QSE_MMGR_ALLOC (pio->mmgr, (fcnt + 1) * QSE_SIZEOF(argv[0]));
+			if (param->argv == QSE_NULL) 
+			{
+				pio->errnum = QSE_PIO_ENOMEM;
+				goto oops;
+			}
 		}
 
 		mcmdptr = mcmd;

@@ -2509,7 +2509,7 @@ QSE_EXPORT int qse_wcsspl (
  *       QSE_MT('\\'), QSE_MT("n\nr\r")
  *   );
  * \endcode
- * Given [xxx]:[\rabc\ndef]:[] as an input, the example breaks the second 
+ * Given [xxx]:[\rabc\ndef]:[] as an input, the example translates the second 
  * fields to <CR>abc<NL>def where <CR> is a carriage return and <NL> is a 
  * new line.
  *
