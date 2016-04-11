@@ -297,7 +297,7 @@ int qse_mbsspltrn (
 					}
 					p++;
 				}
-exit_point:			    
+exit_point:
 				;
 			}
 		}
@@ -583,7 +583,7 @@ int qse_wcsspltrn (
 					}
 					p++;
 				}
-exit_point:			    
+exit_point:
 				;
 			}
 		}
