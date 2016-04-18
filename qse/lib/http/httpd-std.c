@@ -120,6 +120,9 @@
 #		if !defined(IP_TRANSPARENT)
 #			define IP_TRANSPARENT 19
 #		endif
+#		if !defined(SO_REUSEPORT)
+#			define SO_REUSEPORT 15
+#		endif
 #	endif
 #	if defined(HAVE_NETINET_SCTP_H)
 #		include <netinet/sctp.h>
@@ -141,9 +144,6 @@
 #	define USE_SSL
 #endif
 
-#if defined(__linux) && !defined(SO_REUSEPORT)
-#	define SO_REUSEPORT 15
-#endif
 
 #define HANDLE_TO_FIO(x) ((qse_fio_t*)(x))
 #define FIO_TO_HANDLE(x) ((qse_httpd_hnd_t)(x))
