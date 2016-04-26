@@ -221,21 +221,21 @@ int qse_parsehttprange (const qse_mchar_t* str, qse_http_range_t* range)
 	str += 6;
 
 	from = 0;
-	if (QSE_ISDIGIT(*str))
+	if (QSE_ISMDIGIT(*str))
 	{
 		do
 		{
 			from = from * 10 + (*str - QSE_MT('0'));
 			str++;
 		}
-		while (QSE_ISDIGIT(*str));
+		while (QSE_ISMDIGIT(*str));
 	}
 	else type = QSE_HTTP_RANGE_SUFFIX;
 
 	if (*str != QSE_MT('-')) return -1;
 	str++;
 
-	if (QSE_ISDIGIT(*str))
+	if (QSE_ISMDIGIT(*str))
 	{
 		to = 0;
 		do
@@ -243,7 +243,7 @@ int qse_parsehttprange (const qse_mchar_t* str, qse_http_range_t* range)
 			to = to * 10 + (*str - QSE_MT('0'));
 			str++;
 		}
-		while (QSE_ISDIGIT(*str));
+		while (QSE_ISMDIGIT(*str));
 	}
 	else to = QSE_TYPE_MAX(qse_ulong_t); 
 
