@@ -293,7 +293,7 @@ static qse_mchar_t* parse_initial_line (qse_htrd_t* htrd, qse_mchar_t* line)
 		}
 	
 		/* if the line does not end with a new line, it is a bad request */
-		if (*p != QSE_T('\n')) goto badre;
+		if (*p != QSE_MT('\n')) goto badre;
 
 		/* null-terminate the message */
 		((qse_mchar_t*)tmp.ptr)[tmp.len] = QSE_MT('\0');
@@ -462,7 +462,7 @@ static qse_mchar_t* parse_initial_line (qse_htrd_t* htrd, qse_mchar_t* line)
 		while (is_space_octet(*p)) p++;
 
 		/* if the line does not end with a new line, it is a bad request */
-		if (*p != QSE_T('\n')) goto badre;
+		if (*p != QSE_MT('\n')) goto badre;
 
 		((qse_mchar_t*)tmp.ptr)[tmp.len] = QSE_MT('\0');
 		htrd->re.verstr = tmp.ptr;
