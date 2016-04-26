@@ -245,7 +245,7 @@ int qse_parsehttprange (const qse_mchar_t* str, qse_http_range_t* range)
 		}
 		while (QSE_ISMDIGIT(*str));
 	}
-	else to = QSE_TYPE_MAX(qse_ulong_t); 
+	else to = QSE_TYPE_MAX(qse_http_range_int_t); 
 
 	if (from > to) return -1;
 
@@ -397,7 +397,7 @@ int qse_isperencedhttpstr (const qse_mchar_t* str)
 {
 	const qse_mchar_t* p = str;
 
-	while (*p != QSE_T('\0'))
+	while (*p != QSE_MT('\0'))
 	{
 		if (*p == QSE_MT('%') && *(p + 1) != QSE_MT('\0') && *(p + 2) != QSE_MT('\0'))
 		{
@@ -422,7 +422,7 @@ qse_size_t qse_perdechttpstr (const qse_mchar_t* str, qse_mchar_t* buf, qse_size
 	qse_mchar_t* out = buf;
 	qse_size_t dec_count = 0;
 
-	while (*p != QSE_T('\0'))
+	while (*p != QSE_MT('\0'))
 	{
 		if (*p == QSE_MT('%') && *(p + 1) != QSE_MT('\0') && *(p + 2) != QSE_MT('\0'))
 		{
@@ -453,8 +453,8 @@ qse_size_t qse_perdechttpstr (const qse_mchar_t* str, qse_mchar_t* buf, qse_size
 	(((c) >= QSE_MT('A') && (c) <= QSE_MT('Z')) || \
 	 ((c) >= QSE_MT('a') && (c) <= QSE_MT('z')) || \
 	 ((c) >= QSE_MT('0') && (c) <= QSE_MT('9')) || \
-	 (c) == QSE_MT('-') || (c) == QSE_T('_') || \
-	 (c) == QSE_MT('.') || (c) == QSE_T('~'))
+	 (c) == QSE_MT('-') || (c) == QSE_MT('_') || \
+	 (c) == QSE_MT('.') || (c) == QSE_MT('~'))
 
 #define TO_HEX(v) (QSE_MT("0123456789ABCDEF")[(v) & 15])
 
@@ -469,7 +469,7 @@ qse_size_t qse_perenchttpstr (int opt, const qse_mchar_t* str, qse_mchar_t* buf,
 
 	if (opt & QSE_PERENCHTTPSTR_KEEP_SLASH)
 	{
-		while (*p != QSE_T('\0'))
+		while (*p != QSE_MT('\0'))
 		{
 			if (IS_UNRESERVED(*p) || *p == QSE_MT('/')) *out++ = *p;
 			else
@@ -484,7 +484,7 @@ qse_size_t qse_perenchttpstr (int opt, const qse_mchar_t* str, qse_mchar_t* buf,
 	}
 	else
 	{
-		while (*p != QSE_T('\0'))
+		while (*p != QSE_MT('\0'))
 		{
 			if (IS_UNRESERVED(*p)) *out++ = *p;
 			else
@@ -511,14 +511,14 @@ qse_mchar_t* qse_perenchttpstrdup (int opt, const qse_mchar_t* str, qse_mmgr_t* 
 	/* count the number of characters that should be encoded */
 	if (opt & QSE_PERENCHTTPSTR_KEEP_SLASH)
 	{
-		for (len = 0; str[len] != QSE_T('\0'); len++)
+		for (len = 0; str[len] != QSE_MT('\0'); len++)
 		{
 			if (!IS_UNRESERVED(str[len]) && str[len] != QSE_MT('/')) count++;
 		}
 	}
 	else
 	{
-		for (len = 0; str[len] != QSE_T('\0'); len++)
+		for (len = 0; str[len] != QSE_MT('\0'); len++)
 		{
 			if (!IS_UNRESERVED(str[len])) count++;
 		}
