@@ -127,6 +127,28 @@
 	/*(sizeof(struct { qse_uint8_t d1; type d2; }) - sizeof(type))*/
 
 /**
+ * The QSE_ALIGNTO() macro rounds up a positive integer to the nearest
+ * multiple of 'align'.
+ */
+#define QSE_ALIGNTO(num,align) ((((num) + (align) - 1) / (align)) * (align))
+
+#if 0
+/**
+ * Round up a number, both positive and negative, to the nearest multiple of 'align' 
+ */
+#define QSE_ALIGNTO(num,align) ((((num) + (num >= 0? 1: -1) * (align) - 1) / (align)) * (align))
+#endif
+
+/**
+ * The QSE_ALIGNTO_POW2() macro rounds up a positive integer to to the 
+ * nearest multiple of 'align' which should be a multiple of a power of 2
+ */
+#define QSE_ALIGNTO_POW2(num,align) ((((num) + (align) - 1)) & ~((align) - 1))
+
+#define QSE_IS_UNALIGNED_POW2(num,align) ((num) & ((align) - 1))
+#define QSE_IS_ALIGNED_POW2(num,align) (!QSE_IS_UNALIGNED_POW2(num,align))
+
+/**
  * The QSE_TYPE_IS_SIGNED() macro determines if a type is signed. 
  * \code
  * printf ("%d\n", (int)QSE_TYPE_IS_SIGNED(int));
