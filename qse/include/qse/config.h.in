@@ -401,6 +401,9 @@
 /* Define to 1 if you have the <netinet/sctp.h> header file. */
 #undef HAVE_NETINET_SCTP_H
 
+/* Define to 1 if you have the <netpacket/packet.h> header file. */
+#undef HAVE_NETPACKET_PACKET_H
+
 /* Define to 1 if you have the <net/if_dl.h> header file. */
 #undef HAVE_NET_IF_DL_H
 

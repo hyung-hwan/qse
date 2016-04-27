@@ -43,8 +43,8 @@
 #define SPU_VUC_SIZE QSE_SIZEOF(vector unsigned char)
 #endif
 
-/*#define IS_UNALIGNED(ptr) (((qse_size_t)ptr)%QSE_SIZEOF(qse_size_t))*/
-#define IS_UNALIGNED(ptr) (((qse_size_t)ptr)&(QSE_SIZEOF(qse_size_t)-1))
+#define IS_UNALIGNED(ptr) \
+	QSE_IS_UNALIGNED_POW2((qse_size_t)ptr, QSE_SIZEOF(qse_size_t))
 #define IS_ALIGNED(ptr) (!IS_UNALIGNED(ptr))
 
 #define IS_EITHER_UNALIGNED(ptr1,ptr2) \

@@ -27,7 +27,7 @@
 #include <qse/cmn/xma.h>
 #include "mem.h"
 
-#define ALIGN QSE_SIZEOF(qse_size_t)
+#define ALIGN QSE_SIZEOF(qse_size_t) /* this must be a power of 2 */
 #define HDRSIZE QSE_SIZEOF(qse_xma_blk_t)
 #define MINBLKLEN (HDRSIZE + ALIGN)
 
@@ -144,7 +144,7 @@ int qse_xma_init (qse_xma_t* xma, qse_mmgr_t* mmgr, qse_size_t zonesize)
 	qse_size_t xfi;
 
 	/* round 'zonesize' to be the multiples of ALIGN */
-	zonesize = ((zonesize + ALIGN - 1) / ALIGN) * ALIGN;
+	zonesize = QSE_ALIGNTO_POW2(zonesize, ALIGN);
 
 	/* adjust 'zonesize' to be large enough to hold a single smallest block */
 	if (zonesize < MINBLKLEN) zonesize = MINBLKLEN;
@@ -332,8 +332,7 @@ void* qse_xma_alloc (qse_xma_t* xma, qse_size_t size)
 	if (size <= 0) size = 1;
 
 	/* round up 'size' to the multiples of ALIGN */
-	/*size = (size + ALIGN - 1) & ~(ALIGN - 1); */
-	size = ((size + ALIGN - 1) / ALIGN) * ALIGN;
+	size = QSE_ALIGNTO_POW2(size, ALIGN);
 
 	QSE_ASSERT (size >= ALIGN);
 	xfi = getxfi(xma,size);
@@ -402,7 +401,7 @@ static void* _realloc_merge (qse_xma_t* xma, void* b, qse_size_t size)
 	qse_xma_blk_t* blk = USR_TO_SYS(b);
 
 	/* rounds up 'size' to be multiples of ALIGN */ 
-	size = ((size + ALIGN - 1) / ALIGN) * ALIGN;
+	size = QSE_ALIGNTO_POW2 (size, ALIGN);
 
 	if (size > blk->size)
 	{

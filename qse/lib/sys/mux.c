@@ -464,8 +464,6 @@ qse_mux_errnum_t qse_mux_geterrnum (qse_mux_t* mux)
 	return mux->errnum;
 }
 
-#define ALIGN_TO(num,align) ((((num) + (align) - 1) / (align)) * (align))
-
 int qse_mux_insert (qse_mux_t* mux, const qse_mux_evt_t* evt)
 {
 #if defined(USE_SELECT)
@@ -499,7 +497,7 @@ int qse_mux_insert (qse_mux_t* mux, const qse_mux_evt_t* evt)
 		int ubound;
 
 		ubound = evt->hnd + 1;
-		ubound = ALIGN_TO (ubound, 128);
+		ubound = QSE_ALIGNTO_POW2 (ubound, 128);
 
 		tmp = QSE_MMGR_REALLOC (mux->mmgr, mux->me.ptr, QSE_SIZEOF(*mux->me.ptr) * ubound);
 		if (tmp == QSE_NULL)
@@ -557,7 +555,7 @@ int qse_mux_insert (qse_mux_t* mux, const qse_mux_evt_t* evt)
 		int ubound;
 
 		ubound = evt->hnd + 1;
-		ubound = ALIGN_TO (ubound, 128);
+		ubound = QSE_ALIGNTO_POW2 (ubound, 128);
 
 		tmp = QSE_MMGR_REALLOC (mux->mmgr, mux->me.ptr, QSE_SIZEOF(*mux->me.ptr) * ubound);
 		if (tmp == QSE_NULL)
@@ -606,7 +604,7 @@ int qse_mux_insert (qse_mux_t* mux, const qse_mux_evt_t* evt)
 		int ubound;
 
 		ubound = evt->hnd + 1;
-		ubound = ALIGN_TO (ubound, 128);
+		ubound = QSE_ALIGNTO_POW2 (ubound, 128);
 
 		tmp = QSE_MMGR_REALLOC (mux->mmgr, mux->me.ptr, QSE_SIZEOF(*mux->me.ptr) * ubound);
 		if (tmp == QSE_NULL)
@@ -639,7 +637,7 @@ int qse_mux_insert (qse_mux_t* mux, const qse_mux_evt_t* evt)
 		qse_size_t newcapa;
 
 		newcapa = (mux->ee.capa + 1) * 2;
-		newcapa = ALIGN_TO (newcapa, 256);
+		newcapa = QSE_ALIGNTO_POW2 (newcapa, 256);
 
 		tmp = QSE_MMGR_REALLOC (
 			mux->mmgr, mux->ee.ptr,
@@ -673,7 +671,7 @@ int qse_mux_insert (qse_mux_t* mux, const qse_mux_evt_t* evt)
 		int ubound;
 
 		ubound = evt->hnd + 1;
-		ubound = ALIGN_TO (ubound, 128);
+		ubound = QSE_ALIGNTO_POW2 (ubound, 128);
 
 		tmp = QSE_MMGR_REALLOC (mux->mmgr, mux->me.ptr, QSE_SIZEOF(*mux->me.ptr) * ubound);
 		if (tmp == QSE_NULL)
