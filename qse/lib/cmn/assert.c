@@ -26,7 +26,7 @@
 
 #include <qse/types.h>
 #include <qse/macros.h>
-#include <qse/cmn/sio.h>
+#include <qse/io/sio.h>
 #include "mem.h"
 
 #if defined(HAVE_EXECINFO_H)

@@ -21160,6 +21160,79 @@ _ACEOF
 # version HP92453-01 B.11.11.23709.GP, which incorrectly rejects
 # declarations like `int a3[[(sizeof (unsigned char)) >= 0]];'.
 # This bug is HP SR number 8606223364.
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking size of struct sockaddr_ll" >&5
+$as_echo_n "checking size of struct sockaddr_ll... " >&6; }
+if ${ac_cv_sizeof_struct_sockaddr_ll+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if ac_fn_c_compute_int "$LINENO" "(long int) (sizeof (struct sockaddr_ll))" "ac_cv_sizeof_struct_sockaddr_ll"        "
+		#include <winsock2.h>
+		#include <ws2tcpip.h>
+"; then :
+
+else
+  if test "$ac_cv_type_struct_sockaddr_ll" = yes; then
+     { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error 77 "cannot compute sizeof (struct sockaddr_ll)
+See \`config.log' for more details" "$LINENO" 5; }
+   else
+     ac_cv_sizeof_struct_sockaddr_ll=0
+   fi
+fi
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_sizeof_struct_sockaddr_ll" >&5
+$as_echo "$ac_cv_sizeof_struct_sockaddr_ll" >&6; }
+
+
+
+cat >>confdefs.h <<_ACEOF
+#define SIZEOF_STRUCT_SOCKADDR_LL $ac_cv_sizeof_struct_sockaddr_ll
+_ACEOF
+
+
+	# The cast to long int works around a bug in the HP C Compiler
+# version HP92453-01 B.11.11.23709.GP, which incorrectly rejects
+# declarations like `int a3[[(sizeof (unsigned char)) >= 0]];'.
+# This bug is HP SR number 8606223364.
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking size of struct sockaddr_dl" >&5
+$as_echo_n "checking size of struct sockaddr_dl... " >&6; }
+if ${ac_cv_sizeof_struct_sockaddr_dl+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if ac_fn_c_compute_int "$LINENO" "(long int) (sizeof (struct sockaddr_dl))" "ac_cv_sizeof_struct_sockaddr_dl"        "
+		#include <winsock2.h>
+		#include <ws2tcpip.h>
+"; then :
+
+else
+  if test "$ac_cv_type_struct_sockaddr_dl" = yes; then
+     { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error 77 "cannot compute sizeof (struct sockaddr_dl)
+See \`config.log' for more details" "$LINENO" 5; }
+   else
+     ac_cv_sizeof_struct_sockaddr_dl=0
+   fi
+fi
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_sizeof_struct_sockaddr_dl" >&5
+$as_echo "$ac_cv_sizeof_struct_sockaddr_dl" >&6; }
+
+
+
+cat >>confdefs.h <<_ACEOF
+#define SIZEOF_STRUCT_SOCKADDR_DL $ac_cv_sizeof_struct_sockaddr_dl
+_ACEOF
+
+
+
+	# The cast to long int works around a bug in the HP C Compiler
+# version HP92453-01 B.11.11.23709.GP, which incorrectly rejects
+# declarations like `int a3[[(sizeof (unsigned char)) >= 0]];'.
+# This bug is HP SR number 8606223364.
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking size of socklen_t" >&5
 $as_echo_n "checking size of socklen_t... " >&6; }
 if ${ac_cv_sizeof_socklen_t+:} false; then :
@@ -21341,6 +21414,79 @@ $as_echo "$ac_cv_sizeof_struct_sockaddr_un" >&6; }
 
 cat >>confdefs.h <<_ACEOF
 #define SIZEOF_STRUCT_SOCKADDR_UN $ac_cv_sizeof_struct_sockaddr_un
+_ACEOF
+
+
+	# The cast to long int works around a bug in the HP C Compiler
+# version HP92453-01 B.11.11.23709.GP, which incorrectly rejects
+# declarations like `int a3[[(sizeof (unsigned char)) >= 0]];'.
+# This bug is HP SR number 8606223364.
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking size of struct sockaddr_ll" >&5
+$as_echo_n "checking size of struct sockaddr_ll... " >&6; }
+if ${ac_cv_sizeof_struct_sockaddr_ll+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if ac_fn_c_compute_int "$LINENO" "(long int) (sizeof (struct sockaddr_ll))" "ac_cv_sizeof_struct_sockaddr_ll"        "
+		#include <sys/socket.h>
+		#include <netpacket/packet.h>
+"; then :
+
+else
+  if test "$ac_cv_type_struct_sockaddr_ll" = yes; then
+     { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error 77 "cannot compute sizeof (struct sockaddr_ll)
+See \`config.log' for more details" "$LINENO" 5; }
+   else
+     ac_cv_sizeof_struct_sockaddr_ll=0
+   fi
+fi
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_sizeof_struct_sockaddr_ll" >&5
+$as_echo "$ac_cv_sizeof_struct_sockaddr_ll" >&6; }
+
+
+
+cat >>confdefs.h <<_ACEOF
+#define SIZEOF_STRUCT_SOCKADDR_LL $ac_cv_sizeof_struct_sockaddr_ll
+_ACEOF
+
+
+	# The cast to long int works around a bug in the HP C Compiler
+# version HP92453-01 B.11.11.23709.GP, which incorrectly rejects
+# declarations like `int a3[[(sizeof (unsigned char)) >= 0]];'.
+# This bug is HP SR number 8606223364.
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking size of struct sockaddr_dl" >&5
+$as_echo_n "checking size of struct sockaddr_dl... " >&6; }
+if ${ac_cv_sizeof_struct_sockaddr_dl+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if ac_fn_c_compute_int "$LINENO" "(long int) (sizeof (struct sockaddr_dl))" "ac_cv_sizeof_struct_sockaddr_dl"        "
+		#include <sys/socket.h>
+		#include <sys/types.h>
+		#include <net/if_dl.h>
+"; then :
+
+else
+  if test "$ac_cv_type_struct_sockaddr_dl" = yes; then
+     { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error 77 "cannot compute sizeof (struct sockaddr_dl)
+See \`config.log' for more details" "$LINENO" 5; }
+   else
+     ac_cv_sizeof_struct_sockaddr_dl=0
+   fi
+fi
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_sizeof_struct_sockaddr_dl" >&5
+$as_echo "$ac_cv_sizeof_struct_sockaddr_dl" >&6; }
+
+
+
+cat >>confdefs.h <<_ACEOF
+#define SIZEOF_STRUCT_SOCKADDR_DL $ac_cv_sizeof_struct_sockaddr_dl
 _ACEOF
 
 
@@ -21968,6 +22114,16 @@ _ACEOF
 
 cat >>confdefs.h <<_ACEOF
 #define QSE_SIZEOF_STRUCT_SOCKADDR_UN ${ac_cv_sizeof_struct_sockaddr_un}
+_ACEOF
+
+
+cat >>confdefs.h <<_ACEOF
+#define QSE_SIZEOF_STRUCT_SOCKADDR_LL ${ac_cv_sizeof_struct_sockaddr_ll}
+_ACEOF
+
+
+cat >>confdefs.h <<_ACEOF
+#define QSE_SIZEOF_STRUCT_SOCKADDR_DL ${ac_cv_sizeof_struct_sockaddr_dl}
 _ACEOF
 
 
@@ -22902,7 +23058,7 @@ QSE_PROJECT_AUTHOR="${PACKAGE_BUGREPORT}"
 QSE_PROJECT_URL="${PACKAGE_URL}"
 
 
-ac_config_files="$ac_config_files Makefile README include/Makefile include/qse/Makefile include/qse/cmn/Makefile include/qse/sys/Makefile include/qse/awk/Makefile include/qse/sed/Makefile include/qse/xli/Makefile include/qse/http/Makefile lib/Makefile lib/cmn/Makefile lib/sys/Makefile lib/awk/Makefile lib/sed/Makefile lib/xli/Makefile lib/http/Makefile lib/qsecmn.pc lib/qseawk.pc lib/qsesed.pc lib/qsexli.pc lib/qsehttp.pc cmd/Makefile cmd/awk/Makefile cmd/sed/Makefile cmd/xli/Makefile cmd/http/Makefile samples/Makefile samples/cmn/Makefile samples/sys/Makefile samples/awk/Makefile samples/sed/Makefile samples/http/Makefile regress/Makefile regress/awk/Makefile regress/awk/regress.sh regress/sed/Makefile regress/sed/regress.sh doc/Makefile doc/Doxyfile tools/Makefile"
+ac_config_files="$ac_config_files Makefile README include/Makefile include/qse/Makefile include/qse/cmn/Makefile include/qse/sys/Makefile include/qse/io/Makefile include/qse/awk/Makefile include/qse/sed/Makefile include/qse/xli/Makefile include/qse/http/Makefile lib/Makefile lib/cmn/Makefile lib/sys/Makefile lib/io/Makefile lib/awk/Makefile lib/sed/Makefile lib/xli/Makefile lib/http/Makefile lib/qsecmn.pc lib/qseawk.pc lib/qsesed.pc lib/qsexli.pc lib/qsehttp.pc cmd/Makefile cmd/awk/Makefile cmd/sed/Makefile cmd/xli/Makefile cmd/http/Makefile samples/Makefile samples/cmn/Makefile samples/sys/Makefile samples/awk/Makefile samples/sed/Makefile samples/http/Makefile regress/Makefile regress/awk/Makefile regress/awk/regress.sh regress/sed/Makefile regress/sed/regress.sh doc/Makefile doc/Doxyfile tools/Makefile"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -24080,6 +24236,7 @@ do
     "include/qse/Makefile") CONFIG_FILES="$CONFIG_FILES include/qse/Makefile" ;;
     "include/qse/cmn/Makefile") CONFIG_FILES="$CONFIG_FILES include/qse/cmn/Makefile" ;;
     "include/qse/sys/Makefile") CONFIG_FILES="$CONFIG_FILES include/qse/sys/Makefile" ;;
+    "include/qse/io/Makefile") CONFIG_FILES="$CONFIG_FILES include/qse/io/Makefile" ;;
     "include/qse/awk/Makefile") CONFIG_FILES="$CONFIG_FILES include/qse/awk/Makefile" ;;
     "include/qse/sed/Makefile") CONFIG_FILES="$CONFIG_FILES include/qse/sed/Makefile" ;;
     "include/qse/xli/Makefile") CONFIG_FILES="$CONFIG_FILES include/qse/xli/Makefile" ;;
@@ -24087,6 +24244,7 @@ do
     "lib/Makefile") CONFIG_FILES="$CONFIG_FILES lib/Makefile" ;;
     "lib/cmn/Makefile") CONFIG_FILES="$CONFIG_FILES lib/cmn/Makefile" ;;
     "lib/sys/Makefile") CONFIG_FILES="$CONFIG_FILES lib/sys/Makefile" ;;
+    "lib/io/Makefile") CONFIG_FILES="$CONFIG_FILES lib/io/Makefile" ;;
     "lib/awk/Makefile") CONFIG_FILES="$CONFIG_FILES lib/awk/Makefile" ;;
     "lib/sed/Makefile") CONFIG_FILES="$CONFIG_FILES lib/sed/Makefile" ;;
     "lib/xli/Makefile") CONFIG_FILES="$CONFIG_FILES lib/xli/Makefile" ;;

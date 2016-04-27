@@ -25,7 +25,7 @@
  */
 
 #include <qse/sed/Sed.hpp>
-#include <qse/cmn/sio.h>
+#include <qse/io/sio.h>
 #include "../cmn/mem.h"
 #include "sed.h"
 

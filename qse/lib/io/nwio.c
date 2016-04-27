@@ -24,9 +24,9 @@
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <qse/cmn/nwio.h>
+#include <qse/io/nwio.h>
 #include <qse/cmn/time.h>
-#include "mem.h"
+#include "../cmn/mem.h"
 
 #if defined(_WIN32)
 #	include <winsock2.h>
@@ -58,7 +58,7 @@
 #	undef SO_RCVTIMEO
 #	undef SO_SNDTIMEO
 #elif defined(HAVE_T_CONNECT) && !defined(HAVE_CONNECT) && defined(HAVE_TIUSER_H)
-#	include "syscall.h"
+#	include "../cmn/syscall.h"
 #	include <tiuser.h>
 #	include <sys/socket.h>
 #	include <netinet/in.h>
@@ -78,7 +78,7 @@
 	extern int t_rcv(int fd, char*  buf, unsigned int nbytes, int* flags);
 
 #else
-#	include "syscall.h"
+#	include "../cmn/syscall.h"
 #	include <sys/socket.h>
 #	include <netinet/in.h>
 #	define  USE_SELECT

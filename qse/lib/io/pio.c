@@ -24,9 +24,9 @@
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <qse/cmn/pio.h>
+#include <qse/io/pio.h>
 #include <qse/cmn/mbwc.h>
-#include "mem.h"
+#include "../cmn/mem.h"
 
 #if defined(_WIN32)
 #	include <windows.h>
@@ -40,7 +40,7 @@
 #	include <io.h>
 #	include <errno.h>
 #else
-#	include "syscall.h"
+#	include "../cmn/syscall.h"
 #	if defined(HAVE_SPAWN_H)
 #		include <spawn.h>
 #	endif
@@ -54,7 +54,7 @@ static qse_ssize_t pio_input (
 static qse_ssize_t pio_output (
 	qse_tio_t* tio, qse_tio_cmd_t cmd, void* buf, qse_size_t size);
 
-#include "syserr.h"
+#include "../cmn/syserr.h"
 IMPLEMENT_SYSERR_TO_ERRNUM (pio, PIO)
 
 static qse_pio_errnum_t tio_errnum_to_pio_errnum (qse_tio_t* tio)

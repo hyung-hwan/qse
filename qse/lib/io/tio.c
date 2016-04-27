@@ -24,9 +24,9 @@
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <qse/cmn/tio.h>
+#include <qse/io/tio.h>
 #include <qse/cmn/mbwc.h> 
-#include "mem.h"
+#include "../cmn/mem.h"
 
 #define STATUS_OUTPUT_DYNBUF (1 << 0)
 #define STATUS_INPUT_DYNBUF  (1 << 1)

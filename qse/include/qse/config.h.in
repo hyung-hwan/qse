@@ -946,11 +946,17 @@
 /* sizeof(socklen_t) */
 #undef QSE_SIZEOF_SOCKLEN_T
 
+/* sizeof(struct sockaddr_dl) */
+#undef QSE_SIZEOF_STRUCT_SOCKADDR_DL
+
 /* sizeof(struct sockaddr_in) */
 #undef QSE_SIZEOF_STRUCT_SOCKADDR_IN
 
 /* sizeof(struct sockaddr_in6) */
 #undef QSE_SIZEOF_STRUCT_SOCKADDR_IN6
+
+/* sizeof(struct sockaddr_ll) */
+#undef QSE_SIZEOF_STRUCT_SOCKADDR_LL
 
 /* sizeof(struct sockaddr_un) */
 #undef QSE_SIZEOF_STRUCT_SOCKADDR_UN
@@ -1039,11 +1045,17 @@
 /* The size of `socklen_t', as computed by sizeof. */
 #undef SIZEOF_SOCKLEN_T
 
+/* The size of `struct sockaddr_dl', as computed by sizeof. */
+#undef SIZEOF_STRUCT_SOCKADDR_DL
+
 /* The size of `struct sockaddr_in', as computed by sizeof. */
 #undef SIZEOF_STRUCT_SOCKADDR_IN
 
 /* The size of `struct sockaddr_in6', as computed by sizeof. */
 #undef SIZEOF_STRUCT_SOCKADDR_IN6
+
+/* The size of `struct sockaddr_ll', as computed by sizeof. */
+#undef SIZEOF_STRUCT_SOCKADDR_LL
 
 /* The size of `struct sockaddr_un', as computed by sizeof. */
 #undef SIZEOF_STRUCT_SOCKADDR_UN

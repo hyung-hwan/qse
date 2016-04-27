@@ -29,7 +29,6 @@
 #include <qse/cmn/mem.h>
 #include <qse/cmn/chr.h>
 #include <qse/cmn/opt.h>
-#include <qse/cmn/sio.h>
 #include <qse/cmn/xma.h>
 #include <qse/cmn/path.h>
 #include <qse/cmn/fs.h>
@@ -37,7 +36,9 @@
 #include <qse/cmn/mbwc.h>
 #include <qse/cmn/glob.h>
 #include <qse/cmn/fmt.h>
+#include <qse/io/sio.h>
 #include <qse/sys/intr.h>
+
 
 #include <locale.h>
 #include <stdio.h>

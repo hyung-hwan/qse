@@ -8,7 +8,6 @@ pkginclude_HEADERS = \
 	dir.h \
 	dll.h \
 	env.h \
-	fio.h \
 	fma.h \
 	fmt.h \
 	fs.h \
@@ -25,22 +24,17 @@ pkginclude_HEADERS = \
 	mem.h \
 	nwad.h \
 	nwif.h \
-	nwio.h \
 	oht.h \
 	opt.h \
 	path.h \
-	pio.h \
 	pma.h \
 	rbt.h \
 	rex.h \
 	sck.h \
-	sio.h \
 	sll.h \
 	slmb.h \
 	str.h \
-	task.h \
 	time.h \
-	tio.h \
 	tmr.h \
 	tre.h \
 	uni.h \

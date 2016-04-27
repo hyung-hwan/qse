@@ -410,6 +410,13 @@ then
 	AC_CHECK_SIZEOF(struct sockaddr_un,,[
 		#include <winsock2.h>
 		#include <ws2tcpip.h>])
+	AC_CHECK_SIZEOF(struct sockaddr_ll,,[
+		#include <winsock2.h>
+		#include <ws2tcpip.h>])
+	AC_CHECK_SIZEOF(struct sockaddr_dl,,[
+		#include <winsock2.h>
+		#include <ws2tcpip.h>])
+
 	AC_CHECK_SIZEOF(socklen_t,, [
 		#include <winsock2.h>
 		#include <ws2tcpip.h>])
@@ -432,6 +439,13 @@ else
 	AC_CHECK_SIZEOF(struct sockaddr_un,,[
 		#include <sys/socket.h>
 		#include <sys/un.h>])
+	AC_CHECK_SIZEOF(struct sockaddr_ll,,[
+		#include <sys/socket.h>
+		#include <netpacket/packet.h>])
+	AC_CHECK_SIZEOF(struct sockaddr_dl,,[
+		#include <sys/socket.h>
+		#include <sys/types.h>
+		#include <net/if_dl.h>])
 	AC_CHECK_SIZEOF(socklen_t,, [
 		#include <sys/socket.h>
 		#include <netinet/in.h>])
@@ -601,6 +615,8 @@ AC_DEFINE_UNQUOTED(QSE_MBLEN_MAX, ${ax_cv_numvalof_MB_LEN_MAX}, [MB_LEN_MAX])
 AC_DEFINE_UNQUOTED(QSE_SIZEOF_STRUCT_SOCKADDR_IN, ${ac_cv_sizeof_struct_sockaddr_in}, [sizeof(struct sockaddr_in)])
 AC_DEFINE_UNQUOTED(QSE_SIZEOF_STRUCT_SOCKADDR_IN6, ${ac_cv_sizeof_struct_sockaddr_in6}, [sizeof(struct sockaddr_in6)])
 AC_DEFINE_UNQUOTED(QSE_SIZEOF_STRUCT_SOCKADDR_UN, ${ac_cv_sizeof_struct_sockaddr_un}, [sizeof(struct sockaddr_un)])
+AC_DEFINE_UNQUOTED(QSE_SIZEOF_STRUCT_SOCKADDR_LL, ${ac_cv_sizeof_struct_sockaddr_ll}, [sizeof(struct sockaddr_ll)])
+AC_DEFINE_UNQUOTED(QSE_SIZEOF_STRUCT_SOCKADDR_DL, ${ac_cv_sizeof_struct_sockaddr_dl}, [sizeof(struct sockaddr_dl)])
 AC_DEFINE_UNQUOTED(QSE_SIZEOF_SOCKLEN_T, ${ac_cv_sizeof_socklen_t}, [sizeof(socklen_t)])
 AC_DEFINE_UNQUOTED(QSE_SIZEOF_PTHREAD_T, ${ac_cv_sizeof_pthread_t}, [sizeof(pthread_t)])
 AC_DEFINE_UNQUOTED(QSE_SIZEOF_PTHREAD_MUTEX_T, ${ac_cv_sizeof_pthread_mutex_t}, [sizeof(pthread_mutex_t)])
@@ -768,6 +784,7 @@ AC_CONFIG_FILES([
 	include/qse/Makefile
 	include/qse/cmn/Makefile
 	include/qse/sys/Makefile
+	include/qse/io/Makefile
 	include/qse/awk/Makefile
 	include/qse/sed/Makefile
 	include/qse/xli/Makefile
@@ -775,6 +792,7 @@ AC_CONFIG_FILES([
 	lib/Makefile 
 	lib/cmn/Makefile 
 	lib/sys/Makefile 
+	lib/io/Makefile
 	lib/awk/Makefile 
 	lib/sed/Makefile 
 	lib/xli/Makefile 

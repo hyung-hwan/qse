@@ -28,10 +28,11 @@
 #include <qse/cmn/str.h>
 #include <qse/cmn/mbwc.h>
 #include <qse/cmn/time.h>
-#include <qse/cmn/pio.h>
-#include <qse/cmn/sio.h>
-#include <qse/cmn/nwio.h>
 #include <qse/cmn/path.h>
+#include <qse/io/pio.h>
+#include <qse/io/sio.h>
+#include <qse/io/nwio.h>
+
 #include "awk.h"
 #include "std.h"
 

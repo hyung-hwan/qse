@@ -544,7 +544,7 @@ CPPFLAGS_ALL_COMMON = \
 	-I$(top_builddir)/include \
 	-I$(top_srcdir)/include
 
-LDFLAGS_ALL_COMMON = -L. -L../cmn -version-info 1:0:0 -no-undefined
+LDFLAGS_ALL_COMMON = -L. -L../cmn -L../io -version-info 1:0:0 -no-undefined
 
 ##################################################
 # MAIN LIBRARY 
@@ -552,7 +552,7 @@ LDFLAGS_ALL_COMMON = -L. -L../cmn -version-info 1:0:0 -no-undefined
 CPPFLAGS_LIB_COMMON = $(CPPFLAGS_ALL_COMMON) $(LTDLINCL) \
 	$(am__append_1) $(am__append_2)
 LDFLAGS_LIB_COMMON = $(LDFLAGS_ALL_COMMON) 
-LIBADD_LIB_COMMON = -lqsecmn $(LIBM) $(LIBLTDL) 
+LIBADD_LIB_COMMON = -lqsecmn -lqseio $(LIBM) $(LIBLTDL) 
 lib_LTLIBRARIES = libqseawk.la $(am__append_3)
 libqseawk_la_SOURCES = awk.c err.c tree.c parse.c run.c rec.c val.c \
 	fnc.c misc.c rio.c std.c awk.h err.h rio.h val.h fnc.h misc.h \

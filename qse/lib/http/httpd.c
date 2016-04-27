@@ -29,7 +29,7 @@
 #include <qse/cmn/chr.h>
 #include <qse/cmn/str.h>
 #include <qse/cmn/mbwc.h>
-#include <qse/cmn/sio.h>
+#include <qse/io/sio.h>
 
 
 #if !defined(QSE_HTTPD_DEFAULT_MODPREFIX)

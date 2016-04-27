@@ -28,7 +28,7 @@
 #define _QSE_SED_STDSED_H_
 
 #include <qse/sed/sed.h>
-#include <qse/cmn/sio.h>
+#include <qse/io/sio.h>
 
 /** \file
  * This file defines easier-to-use helper interface for a stream editor.

@@ -36,8 +36,8 @@
 #include <qse/cmn/fmt.h>
 #include <qse/cmn/path.h>
 #include <qse/cmn/dir.h>
-#include <qse/cmn/fio.h>
-#include <qse/cmn/sio.h>
+#include <qse/io/fio.h>
+#include <qse/io/sio.h>
 #include <qse/cmn/sck.h>
 #include <qse/sys/mux.h>
 

@@ -24,10 +24,10 @@
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <qse/cmn/sio.h>
+#include <qse/io/sio.h>
 #include <qse/cmn/mbwc.h>
-#include "mem.h"
-#include "fmt.h"
+#include "../cmn/mem.h"
+#include "../cmn/fmt.h"
 
 #if defined(_WIN32)
 #	include <windows.h> /* for the UGLY hack */
@@ -36,7 +36,7 @@
 #elif defined(__DOS__)
 	/* nothing */
 #else
-#	include "syscall.h"
+#	include "../cmn/syscall.h"
 #endif
 
 /* internal status codes */

@@ -6,6 +6,7 @@ pkginclude_HEADERS = \
 	mtx.h \
 	mux.h \
 	rwl.h \
+	task.h \
 	thr.h
 
 if ENABLE_CXX

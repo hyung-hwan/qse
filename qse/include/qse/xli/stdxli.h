@@ -28,7 +28,7 @@
 #define _QSE_XLI_STDXLI_H_
 
 #include <qse/xli/xli.h>
-#include <qse/cmn/sio.h>
+#include <qse/io/sio.h>
 
 /** \file
  * This file provides easier interface to a qse_xli_t object.
