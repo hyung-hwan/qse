@@ -6,8 +6,8 @@ AM_CPPFLAGS = \
 
 lib_LTLIBRARIES = libqsesed.la
 libqsesed_la_SOURCES = sed.c err.c sed.h std.c
-libqsesed_la_LDFLAGS = -L../cmn -version-info 1:0:0 -no-undefined
-libqsesed_la_LIBADD = -lqsecmn 
+libqsesed_la_LDFLAGS = -L../cmn -L../io -version-info 1:0:0 -no-undefined
+libqsesed_la_LIBADD = -lqsecmn  -lqseio
 
 if ENABLE_CXX
 lib_LTLIBRARIES += libqsesedxx.la

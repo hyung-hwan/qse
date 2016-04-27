@@ -33,7 +33,7 @@
 
 #include <qse/types.h>
 #include <qse/macros.h>
-#include <qse/cmn/tio.h>
+#include <qse/io/tio.h>
 #include <qse/cmn/nwad.h>
 #include <qse/cmn/time.h>
 #include <qse/cmn/sck.h>

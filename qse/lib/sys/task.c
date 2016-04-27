@@ -24,8 +24,8 @@
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <qse/cmn/task.h>
-#include "mem.h"
+#include <qse/sys/task.h>
+#include "../cmn/mem.h"
 
 #if defined(_WIN64)
 #	if !defined(_WIN32_WINNT)

@@ -11,6 +11,7 @@ libqsesys_la_SOURCES =  \
 	mtx.c \
 	mux.c \
 	rwl.c \
+	task.c \
 	thr.c \
 	thr.h
 libqsesys_la_CFLAGS = $(PTHREAD_CFLAGS)

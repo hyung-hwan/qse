@@ -29,7 +29,7 @@
 
 #include <qse/types.h>
 #include <qse/macros.h>
-#include <qse/cmn/tio.h>
+#include <qse/io/tio.h>
 #include <qse/cmn/env.h>
 
 /** \file 

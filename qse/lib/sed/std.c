@@ -27,7 +27,7 @@
 #include "sed.h"
 #include <qse/sed/stdsed.h>
 #include <qse/cmn/str.h>
-#include <qse/cmn/sio.h>
+#include <qse/io/sio.h>
 #include "../cmn/mem.h"
 
 typedef struct xtn_in_t xtn_in_t;

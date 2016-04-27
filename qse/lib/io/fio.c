@@ -24,13 +24,13 @@
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <qse/cmn/fio.h>
+#include <qse/io/fio.h>
 #include <qse/cmn/str.h>
 #include <qse/cmn/fmt.h>
 #include <qse/cmn/alg.h>
 #include <qse/cmn/time.h>
 #include <qse/cmn/mbwc.h>
-#include "mem.h"
+#include "../cmn/mem.h"
 
 #if defined(_WIN32)
 #	include <windows.h>
@@ -54,7 +54,7 @@
 #	include <starlet.h>
 #	include <rms.h>
 #else
-#	include "syscall.h"
+#	include "../cmn/syscall.h"
 #endif
 
 /* internal status codes */
@@ -65,7 +65,7 @@ enum
 	STATUS_WIN32_STDIN = (1 << 2)
 };
 
-#include "syserr.h"
+#include "../cmn/syserr.h"
 IMPLEMENT_SYSERR_TO_ERRNUM (fio, FIO)
 
 #if defined(_WIN32)

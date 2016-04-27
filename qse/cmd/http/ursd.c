@@ -9,10 +9,11 @@
 #include <qse/cmn/htb.h>
 #include <qse/cmn/fmt.h>
 #include <qse/cmn/hton.h>
-#include <qse/cmn/pio.h>
 #include <qse/cmn/sck.h>
 #include <qse/cmn/nwad.h>
-#include <qse/cmn/sio.h>
+
+#include <qse/io/sio.h>
+#include <qse/io/pio.h>
 #include <qse/sys/mux.h>
 
 #include <signal.h>

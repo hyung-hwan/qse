@@ -121,10 +121,16 @@ struct qse_btime_t
 
 #define qse_inittime(x,s,ns) (((x)->sec = (s)), ((x)->nsec = (ns)))
 #define qse_cleartime(x) qse_inittime(x,0,0)
-/*#define qse_cleartime(x) ((x)->sec = (x)->nsec = 0)*/
 #define qse_cmptime(x,y) \
 	(((x)->sec == (y)->sec)? ((x)->nsec - (y)->nsec): \
 	                         ((x)->sec -  (y)->sec))
+
+/* if time has been normalized properly, nsec must be equal to or
+ * greater than 0. */
+#define qse_isnegtime(x) ((x)->sec < 0)
+#define qse_ispostime(x) ((x)->sec > 0 || ((x)->sec == 0 && (x)->nsec > 0))
+#define qse_iszerotime(x) ((x)->sec == 0 && (x)->nsec == 0)
+
 
 #if defined(__cplusplus)
 extern "C" {

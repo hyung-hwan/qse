@@ -44,7 +44,6 @@ libqsecmn_la_SOURCES = \
 	env.c \
 	gdl.c \
 	htb.c \
-	fio.c \
 	fma.c \
 	fmt-intmax.c \
 	fmt-out.c \
@@ -68,19 +67,16 @@ libqsecmn_la_SOURCES = \
 	nwad-skad.c \
 	nwif.c \
 	nwif-cfg.c \
-	nwio.c \
 	oht.c \
 	opt.c \
 	path-base.c \
 	path-canon.c \
 	path-core.c \
 	path-merge.c \
-	pio.c \
 	pma.c \
 	rbt.c \
 	rex.c \
 	sck.c \
-	sio.c \
 	sll.c \
 	slmb.c \
 	str-beg.c \
@@ -113,9 +109,7 @@ libqsecmn_la_SOURCES = \
 	str-tok.c \
 	str-trm.c \
 	str-word.c \
-	task.c \
 	time.c \
-	tio.c \
 	tmr.c \
 	tre.c \
 	tre-ast.c \

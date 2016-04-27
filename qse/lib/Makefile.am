@@ -1,4 +1,4 @@
-SUBDIRS = cmn sys sed awk xli http 
+SUBDIRS = cmn sys io sed awk xli http 
 DIST_SUBDIRS = $(SUBDIRS) 
 
 pkgconfigdir = $(libdir)/pkgconfig

@@ -33,8 +33,8 @@
 
 #include <qse/types.h>
 #include <qse/macros.h>
-#include <qse/cmn/fio.h>
-#include <qse/cmn/tio.h>
+#include <qse/io/fio.h>
+#include <qse/io/tio.h>
 #include <stdarg.h>
 
 enum qse_sio_flag_t
