@@ -167,7 +167,6 @@
 		env.c 
 		gdl.c 
 		htb.c 
-		fio.c 
 		fma.c 
 		fmt-intmax.c 
 		fmt-out.c
@@ -189,21 +188,16 @@
 		mem.c 
 		nwad.c 
 		nwad-skad.c 
-		nwif.c 
-		nwif-cfg.c 
-		nwio.c 
 		oht.c 
 		opt.c 
 		path-base.c 
 		path-canon.c 
 		path-core.c 
 		path-merge.c 
-		pio.c 
 		pma.c 
 		rbt.c 
 		rex.c 
 		sck.c
-		sio.c 
 		sll.c 
 		slmb.c 
 		str-beg.c 
@@ -236,9 +230,7 @@
 		str-tok.c 
 		str-trm.c 
 		str-word.c 
-		task.c 
 		time.c 
-		tio.c 
 		tmr.c 
 		tre.c 
 		tre-ast.c 
@@ -254,13 +246,21 @@
 		$(SOURCES_BUNDLED_UNICODE)
 	</set>
 
-	<set var="SOURCES_LIBQSESYS">
+	<set var="SOURCES_LIBQSESI">
 		cnd.c
+		fio.c
 		intr.c
 		mtx.c
 		mux.c 
+		nwif.c 
+		nwif-cfg.c 
+		nwio.c
+		pio.c
 		rwl.c
+		sio.c
+		task.c 
 		thr.c
+		tio.c
 	</set>
 
 	<set var="SOURCES_STATIC_AWK_MODULE">
@@ -398,11 +398,11 @@
 		<sys-lib>$(SYSLIB_SOCKET2)</sys-lib>
 	</lib>
 
-	<dll id="dllqsesys" template="base" cond="ENABLE_DLL=='1'">
-		<libname>qsesys</libname>
-		<dllname>qsesys</dllname>
-		<set-srcdir>../../lib/sys</set-srcdir>
-		<sources>$(SOURCES_LIBQSESYS)</sources>
+	<dll id="dllqsesi" template="base" cond="ENABLE_DLL=='1'">
+		<libname>qsesi</libname>
+		<dllname>qsesi</dllname>
+		<set-srcdir>../../lib/si</set-srcdir>
+		<sources>$(SOURCES_LIBQSESI)</sources>
 		<sys-lib>$(SYSLIB_1)</sys-lib>
 		<sys-lib>$(SYSLIB_2)</sys-lib>
 		<sys-lib>$(SYSLIB_SOCKET)</sys-lib>
@@ -411,10 +411,10 @@
 		<depends>dllqsecmn</depends>
 	</dll>
 
-	<lib id="libqsesys" template="base" cond="ENABLE_DLL=='0'">
-		<libname>qsesys</libname>
-		<set-srcdir>../../lib/sys</set-srcdir>
-		<sources>$(SOURCES_LIBQSESYS)</sources>
+	<lib id="libqsesi" template="base" cond="ENABLE_DLL=='0'">
+		<libname>qsesi</libname>
+		<set-srcdir>../../lib/si</set-srcdir>
+		<sources>$(SOURCES_LIBQSESI)</sources>
 		<sys-lib>$(SYSLIB_1)</sys-lib>
 		<sys-lib>$(SYSLIB_2)</sys-lib>
 		<sys-lib>$(SYSLIB_SOCKET)</sys-lib>
@@ -429,6 +429,7 @@
 		<set-srcdir>../../lib/sed</set-srcdir>
 		<sources>$(SOURCES_LIBQSESED)</sources>
 		<library>libqsecmn</library>
+		<library>libqsesi</library>
 		<depends>dllqsecmn</depends>
 	</dll>
 
@@ -446,6 +447,7 @@
 		<set-srcdir>../../lib/awk</set-srcdir>
 		<sources>$(SOURCES_LIBQSEAWK)</sources>
 		<library>libqsecmn</library>
+		<library>libqsesi</library>
 		<depends>dllqsecmn</depends>
 		<sys-lib>$(SYSLIB_1)</sys-lib>
 		<sys-lib>$(SYSLIB_2)</sys-lib>
@@ -520,9 +522,9 @@
 		<set-srcdir>../../lib/http</set-srcdir>
 		<sources>$(SOURCES_LIBQSEHTTP)</sources>
 		<library>libqsecmn</library>
-		<library>libqsesys</library>
+		<library>libqsesi</library>
 		<depends>dllqsecmn</depends>
-		<depends>dllqsesys</depends>
+		<depends>dllqsesi</depends>
 		<sys-lib>$(SYSLIB_1)</sys-lib>
 		<sys-lib>$(SYSLIB_2)</sys-lib>
 		<sys-lib>$(SYSLIB_SOCKET)</sys-lib>
@@ -534,9 +536,9 @@
 		<set-srcdir>../../lib/http</set-srcdir>
 		<sources>$(SOURCES_LIBQSEHTTP)</sources>
 		<library>libqsecmn</library>
-		<library>libqsesys</library>
+		<library>libqsesi</library>
 		<depends>libqsecmn</depends>
-		<depends>libqsesys</depends>
+		<depends>libqsesi</depends>
 		<sys-lib>$(SYSLIB_1)</sys-lib>
 		<sys-lib>$(SYSLIB_2)</sys-lib>
 		<sys-lib>$(SYSLIB_SOCKET)</sys-lib>
@@ -549,6 +551,7 @@
 		<set-srcdir>../../lib/xli</set-srcdir>
 		<sources>$(SOURCES_LIBQSEXLI)</sources>
 		<library>libqsecmn</library>
+		<library>libqsesi</library>
 		<depends>dllqsecmn</depends>
 	</dll>
 
@@ -566,7 +569,7 @@
 		<set-srcdir>../../cmd/awk</set-srcdir>
 		<sources>awk.c</sources>
 		<library>libqsecmn</library>
-		<library>libqsesys</library>
+		<library>libqsesi</library>
 		<library>libqseawk</library>
 		<!-- <depends>libqseawk</depends> -->
 		<library>$(EXTLIB_FOR_QSEAWK)</library>
@@ -582,7 +585,7 @@
 		<set-srcdir>../../cmd/sed</set-srcdir>
 		<sources>sed.c</sources>
 		<library>libqsecmn</library>
-		<library>libqsesys</library>
+		<library>libqsesi</library>
 		<library>libqsesed</library>
 		<!-- <depends>libqsesed</depends> -->
 	</exe>
@@ -593,6 +596,7 @@
 		<set-srcdir>../../cmd/http</set-srcdir>
 		<sources>httpd.c</sources>
 		<library>libqsecmn</library>
+		<library>libqsesi</library>
 		<library>libqsehttp</library>
 		<!-- <depends>libqsehttp</depends> -->
 		<library>libqsexli</library>
@@ -608,6 +612,7 @@
 		<set-srcdir>../../cmd/xli</set-srcdir>
 		<sources>xli.c</sources>
 		<library>libqsecmn</library>
+		<library>libqsesi</library>
 		<library>libqsexli</library>
 		<!-- <depends>libqsexli</depends> -->
 	</exe>
@@ -636,6 +641,7 @@
 		<sources>$(SOURCES_LIBQSEAWKXX)</sources>
 		<library>libqsecmn</library>
 		<library>libqsecmnxx</library>
+		<library>libqsesi</library>
 		<library>libqseawk</library>
 		<depends>dllqsecmnxx</depends>
 		<depends>dllqseawk</depends>
@@ -647,6 +653,7 @@
 		<sources>$(SOURCES_LIBQSEAWKXX)</sources>
 		<library>libqsecmn</library>
 		<library>libqsecmnxx</library>
+		<library>libqsesi</library>
 		<library>libqseawk</library>
 		<depends>libqsecmnxx</depends>
 		<depends>libqseawk</depends>
@@ -659,6 +666,7 @@
 		<sources>$(SOURCES_LIBQSESEDXX)</sources>
 		<library>libqsecmn</library>
 		<library>libqsecmnxx</library>
+		<library>libqsesi</library>
 		<library>libqsesed</library>
 		<depends>dllqsecmnxx</depends>
 		<depends>dllqsesed</depends>
@@ -670,6 +678,7 @@
 		<sources>$(SOURCES_LIBQSESEDXX)</sources>
 		<library>libqsecmn</library>
 		<library>libqsecmnxx</library>
+		<library>libqsesi</library>
 		<library>libqsesed</library>
 		<depends>libqsecmnxx</depends>
 		<depends>libqsesed</depends>

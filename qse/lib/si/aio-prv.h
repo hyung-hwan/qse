@@ -24,10 +24,10 @@
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _QSE_LIB_IO_AIO_PRV_H_
-#define _QSE_LIB_IO_AIO_PRV_H_
+#ifndef _QSE_LIB_SI_AIO_PRV_H_
+#define _QSE_LIB_SI_AIO_PRV_H_
 
-#include <qse/io/aio.h>
+#include <qse/si/aio.h>
 #include "../cmn/mem.h"
 
 

@@ -28,7 +28,6 @@
 #include "httpd.h"
 #include "../cmn/mem.h"
 #include <qse/cmn/hton.h>
-#include <qse/cmn/nwif.h>
 #include <qse/cmn/mbwc.h>
 #include <qse/cmn/str.h>
 #include <qse/cmn/uri.h>
@@ -36,10 +35,11 @@
 #include <qse/cmn/fmt.h>
 #include <qse/cmn/path.h>
 #include <qse/cmn/dir.h>
-#include <qse/io/fio.h>
-#include <qse/io/sio.h>
+#include <qse/si/fio.h>
+#include <qse/si/sio.h>
+#include <qse/si/mux.h>
+#include <qse/si/nwif.h>
 #include <qse/cmn/sck.h>
-#include <qse/sys/mux.h>
 
 #define STAT_REG   1
 #define STAT_DIR   2

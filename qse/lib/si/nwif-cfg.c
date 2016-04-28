@@ -24,10 +24,10 @@
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <qse/cmn/nwif.h>
+#include <qse/si/nwif.h>
 #include <qse/cmn/str.h>
 #include <qse/cmn/mbwc.h>
-#include <qse/io/sio.h>
+#include <qse/si/sio.h>
 #include "mem.h"
 
 #if defined(_WIN32)

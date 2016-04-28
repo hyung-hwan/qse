@@ -32,9 +32,9 @@
 #include <qse/cmn/path.h>
 #include <qse/cmn/htb.h>
 #include <qse/cmn/env.h>
-#include <qse/io/sio.h>
-#include <qse/io/pio.h>
-#include <qse/io/nwio.h>
+#include <qse/si/sio.h>
+#include <qse/si/pio.h>
+#include <qse/si/nwio.h>
 #include "../cmn/mem.h"
 
 #include <stdarg.h>

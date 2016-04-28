@@ -24,10 +24,10 @@
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _QSE_IO_AIO_SCK_H_
-#define _QSE_IO_AIO_SCK_H_
+#ifndef _QSE_SI_AIO_SCK_H_
+#define _QSE_SI_AIO_SCK_H_
 
-#include <qse/io/aio.h>
+#include <qse/si/aio.h>
 
 /* ========================================================================= */
 /* TOOD: move these to a separte file */
