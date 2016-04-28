@@ -36,8 +36,8 @@
 #include <qse/cmn/mbwc.h>
 #include <qse/cmn/glob.h>
 #include <qse/cmn/fmt.h>
-#include <qse/io/sio.h>
-#include <qse/sys/intr.h>
+#include <qse/si/sio.h>
+#include <qse/si/intr.h>
 
 
 #include <locale.h>

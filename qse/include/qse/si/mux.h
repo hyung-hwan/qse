@@ -24,8 +24,8 @@
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _QSE_SYS_MUX_H_
-#define _QSE_SYS_MUX_H_
+#ifndef _QSE_SI_MUX_H_
+#define _QSE_SI_MUX_H_
 
 /** @file
  * This file provides functions and data types for I/O multiplexing.

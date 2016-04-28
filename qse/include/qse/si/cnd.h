@@ -24,13 +24,13 @@
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _QSE_SYS_CND_H_
-#define _QSE_SYS_CND_H_
+#ifndef _QSE_SI_CND_H_
+#define _QSE_SI_CND_H_
 
 #include <qse/types.h>
 #include <qse/macros.h>
 #include <qse/cmn/time.h>
-#include <qse/sys/mtx.h>
+#include <qse/si/mtx.h>
 
 typedef struct qse_cnd_t qse_cnd_t;
 

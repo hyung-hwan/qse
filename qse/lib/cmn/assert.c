@@ -24,15 +24,12 @@
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <qse/types.h>
-#include <qse/macros.h>
-#include <qse/io/sio.h>
+#include <qse/cmn/str.h>
 #include "mem.h"
 
 #if defined(HAVE_EXECINFO_H)
 #	include <execinfo.h>
 #	include <stdlib.h>
-#	include <qse/cmn/str.h>
 #endif
 
 #if defined(_WIN32)
@@ -90,8 +87,10 @@ void qse_assert_failed (
 	{
 		qse_char_t tmp[1024];
 		DWORD written;
+		static qse_char_t* static_header = QSE_T("=[ASSERTION FAILURE]===========================================================\r\n");
+		static qse_char_t* static_footer = QSE_T("===============================================================================\r\n");
 
-		WriteConsole (stderr, QSE_T("[ASSERTION FAILURE]\r\n"), 21, &written, QSE_NULL);
+		WriteConsole (stderr, static_header, qse_strlen(static_header), &written, QSE_NULL);
 
 		qse_strxfmt (tmp, QSE_COUNTOF(tmp), QSE_T("[FILE %s LINE %lu]\r\n"), file, (unsigned long)line);
 		WriteConsole (stderr, tmp, qse_strlen(tmp), &written, QSE_NULL);
@@ -106,13 +105,17 @@ void qse_assert_failed (
 			WriteConsole (stderr, desc, qse_strlen(desc), &written, QSE_NULL);
 			WriteConsole (stderr, QSE_T("\r\n"), 2, &written, QSE_NULL);
 		}
+
+		WriteConsole (stderr, static_header, qse_strlen(static_footer), &written, QSE_NULL);
 	}
 #elif defined(__OS2__)
 	HFILE stderr = (HFILE)2;
 	ULONG written;
 	qse_mchar_t tmp[1024];
+	static qse_mchar_t* static_header = QSE_MT("=[ASSERTION FAILURE]===========================================================\r\n");
+	static qse_mchar_t* static_footer = QSE_MT("===============================================================================\r\n");
 
-	DosWrite (stderr, QSE_T("[ASSERTION FAILURE]\r\n"), 21, &written);
+	DosWrite (stderr, static_header, qse_mbslen(static_header), &written);
 
 	#if defined(QSE_CHAR_IS_MCHAR)
 	qse_mbsxfmt (tmp, QSE_COUNTOF(tmp), QSE_MT("FILE %hs LINE %lu\r\n"), file, (unsigned long)line);
@@ -137,12 +140,15 @@ void qse_assert_failed (
 	#endif
 		DosWrite (stderr, tmp, qse_mbslen(tmp), &written);
 	}
+	DosWrite (stderr, static_footer, qse_mbslen(static_footer), &written);
 
 #elif defined(__DOS__)
 	int stderr = 2;
 	qse_mchar_t tmp[1024];
+	static qse_mchar_t* static_header = QSE_MT("=[ASSERTION FAILURE]===========================================================\r\n");
+	static qse_mchar_t* static_footer = QSE_MT("===============================================================================\r\n");
 
-	write (stderr, QSE_T("[ASSERTION FAILURE]\r\n"), 21);
+	write (stderr, static_header, qse_mbslen(static_header));
 
 	#if defined(QSE_CHAR_IS_MCHAR)
 	qse_mbsxfmt (tmp, QSE_COUNTOF(tmp), QSE_MT("FILE %hs LINE %lu\r\n"), file, (unsigned long)line);
@@ -168,6 +174,7 @@ void qse_assert_failed (
 		write (stderr, tmp, qse_mbslen(tmp));
 	}
 
+	write (stderr, static_footer, qse_mbslen(static_footer));
 
 #elif defined(macintosh)
 	/* note 'desc' is not used for macintosh at this moment.
@@ -202,9 +209,8 @@ void qse_assert_failed (
 
 
 #else
-	static qse_mchar_t* static_msg[] = 
+	static qse_mchar_t* oops_msg[] = 
 	{
-		QSE_MT("=[ASSERTION FAILURE]============================================================\n"),
 		QSE_MT("                         __ \n"),
 		QSE_MT(" _____ _____ _____ _____|  |\n"),
 		QSE_MT("|     |     |  _  |   __|  |\n"),
@@ -212,8 +218,9 @@ void qse_assert_failed (
 		QSE_MT("|_____|_____|__|  |_____|__|\n"),
 		QSE_MT("                            \n")
 	};
-	static qse_mchar_t* static_bthdr = QSE_MT("=[BACKTRACES]===================================================================\n");
-	static qse_mchar_t* static_footer= QSE_MT("================================================================================\n");
+	static qse_mchar_t* static_header = QSE_MT("=[ASSERTION FAILURE]============================================================\n"),
+	static qse_mchar_t* static_bthdr  = QSE_MT("=[BACKTRACES]===================================================================\n");
+	static qse_mchar_t* static_footer = QSE_MT("================================================================================\n");
 
 	qse_mchar_t tmp[1024];
 	qse_size_t i;
@@ -224,9 +231,11 @@ void qse_assert_failed (
 	char** btsyms;
 	#endif
 
-	for (i = 0; i < QSE_COUNTOF(static_msg); i++)
+	write (2, static_header, qse_mbslen(static_header));
+
+	for (i = 0; i < QSE_COUNTOF(oops_msg); i++)
 	{
-		write (2, static_msg[i], qse_mbslen(static_msg[i]));
+		write (2, oops_msg[i], qse_mbslen(oops_msg[i]));
 	}
 
 	#if defined(QSE_CHAR_IS_MCHAR)

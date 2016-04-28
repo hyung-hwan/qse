@@ -24,13 +24,13 @@
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _QSE_SYS_RWL_H_
-#define _QSE_SYS_RWL_H_
+#ifndef _QSE_SI_RWL_H_
+#define _QSE_SI_RWL_H_
 
 #include <qse/types.h>
 #include <qse/macros.h>
-#include <qse/sys/mtx.h>
-#include <qse/sys/cnd.h>
+#include <qse/si/mtx.h>
+#include <qse/si/cnd.h>
 
 enum qse_rwl_flag_t
 {

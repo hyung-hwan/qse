@@ -538,7 +538,7 @@ static int reset_to_path (qse_dir_t* dir, const qse_char_t* path)
 	{
 		qse_wchar_t* wptr;
 
-		QSE_ASSERT (dir->flags & QSE_DIR_WCSPTH);
+		QSE_ASSERT (dir->flags & QSE_DIR_WCSPATH);
 
 		wptr = make_wcsdos_path (dir, (const qse_wchar_t*)path);
 		if (wptr == QSE_NULL) return -1;

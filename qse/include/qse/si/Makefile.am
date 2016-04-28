@@ -9,6 +9,7 @@ pkginclude_HEADERS = \
 	intr.h \
 	mtx.h \
 	mux.h \
+	nwif.h \
 	nwio.h  \
 	pio.h  \
 	rwl.h \

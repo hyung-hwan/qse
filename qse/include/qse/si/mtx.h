@@ -25,8 +25,8 @@
  */
 
 
-#ifndef _QSE_SYS_MTX_H_
-#define _QSE_SYS_MTX_H_
+#ifndef _QSE_SI_MTX_H_
+#define _QSE_SI_MTX_H_
 
 #include <qse/types.h>
 #include <qse/macros.h>

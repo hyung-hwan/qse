@@ -27,7 +27,7 @@
 #ifndef _QSE_SYS_SOCKET_HPP_
 #define _QSE_SYS_SOCKET_HPP_
 
-#include <qse/sys/SocketAddress.hpp>
+#include <qse/si/SocketAddress.hpp>
 #include <qse/cmn/sck.h>
 
 /////////////////////////////////

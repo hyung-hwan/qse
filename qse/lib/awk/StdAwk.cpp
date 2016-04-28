@@ -29,9 +29,9 @@
 #include <qse/cmn/mbwc.h>
 #include <qse/cmn/time.h>
 #include <qse/cmn/path.h>
-#include <qse/io/pio.h>
-#include <qse/io/sio.h>
-#include <qse/io/nwio.h>
+#include <qse/si/pio.h>
+#include <qse/si/sio.h>
+#include <qse/si/nwio.h>
 
 #include "awk.h"
 #include "std.h"

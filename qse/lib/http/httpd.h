@@ -41,7 +41,7 @@
 #endif
 
 #if defined(QSE_HTTPD_DEBUG)
-#	include <qse/io/sio.h>
+#	include <qse/si/sio.h>
 #	include <qse/cmn/path.h>
 #	define HTTPD_DBGOUT0(fmt) qse_putmbsf("%06d %-20hs " fmt, (int)__LINE__, qse_mbsbasename(__FILE__))
 #	define HTTPD_DBGOUT1(fmt,a1) qse_putmbsf("%06d %-20hs " fmt, (int)__LINE__, qse_mbsbasename(__FILE__), (a1))

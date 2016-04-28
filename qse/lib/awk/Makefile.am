@@ -98,8 +98,8 @@ libqseawk_str_la_LIBADD = $(LIBADD_MOD_COMMON)
 modexec_LTLIBRARIES += libqseawk-sys.la
 libqseawk_sys_la_SOURCES = mod-sys.c mod-sys.h
 libqseawk_sys_la_CPPFLAGS = $(CPPFLAGS_MOD_COMMON)
-libqseawk_sys_la_LDFLAGS = $(LDFLAGS_MOD_COMMON)
-libqseawk_sys_la_LIBADD = $(LIBADD_MOD_COMMON)
+libqseawk_sys_la_LDFLAGS = $(LDFLAGS_MOD_COMMON) -L../si
+libqseawk_sys_la_LIBADD = $(LIBADD_MOD_COMMON) -lqsesi
 
 if HAVE_C_MPI
 modexec_LTLIBRARIES += libqseawk-mpi.la

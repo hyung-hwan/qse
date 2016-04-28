@@ -25,8 +25,8 @@
  */
 
 
-#ifndef _QSE_SYS_INTR_H_
-#define _QSE_SYS_INTR_H_
+#ifndef _QSE_SI_INTR_H_
+#define _QSE_SI_INTR_H_
 
 #include <qse/types.h>
 #include <qse/macros.h>

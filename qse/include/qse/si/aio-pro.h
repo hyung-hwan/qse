@@ -24,10 +24,10 @@
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _QSE_IO_AIO_PRO_H_
-#define _QSE_IO_AIO_PRO_H_
+#ifndef _QSE_SI_AIO_PRO_H_
+#define _QSE_SI_AIO_PRO_H_
 
-#include <qse/io/aio.h>
+#include <qse/si/aio.h>
 
 enum qse_aio_dev_pro_sid_t
 {

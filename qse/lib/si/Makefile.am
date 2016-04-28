@@ -16,6 +16,7 @@ libqsesi_la_SOURCES =  \
 	intr.c \
 	mtx.c \
 	mux.c \
+	nwif.c \
 	nwio.c  \
 	pio.c  \
 	rwl.c \
