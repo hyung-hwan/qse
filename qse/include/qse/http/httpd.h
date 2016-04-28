@@ -31,10 +31,10 @@
 #include <qse/macros.h>
 #include <qse/http/htre.h>
 #include <qse/http/htrd.h>
-#include <qse/cmn/nwad.h>
 #include <qse/cmn/time.h>
 #include <qse/cmn/tmr.h>
 #include <qse/cmn/env.h>
+#include <qse/si/nwad.h>
 
 typedef struct qse_httpd_t        qse_httpd_t;
 typedef struct qse_httpd_mate_t   qse_httpd_mate_t;

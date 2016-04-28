@@ -4,7 +4,7 @@ CPPFLAGS_ALL_COMMON = \
 	-I$(top_builddir)/include \
 	-I$(top_srcdir)/include
 
-LDFLAGS_ALL_COMMON = -L. -L../cmn -L../io -version-info 1:0:0 -no-undefined
+LDFLAGS_ALL_COMMON = -L. -L../cmn -L../si -version-info 1:0:0 -no-undefined
 
 ##################################################
 # MAIN LIBRARY 
@@ -12,7 +12,7 @@ LDFLAGS_ALL_COMMON = -L. -L../cmn -L../io -version-info 1:0:0 -no-undefined
 
 CPPFLAGS_LIB_COMMON = $(CPPFLAGS_ALL_COMMON) $(LTDLINCL)
 LDFLAGS_LIB_COMMON = $(LDFLAGS_ALL_COMMON) 
-LIBADD_LIB_COMMON = -lqsecmn -lqseio $(LIBM) $(LIBLTDL) 
+LIBADD_LIB_COMMON = -lqsecmn -lqsesi $(LIBM) $(LIBLTDL) 
 
 if WIN32
 # you must adjust the value of DEFAULT_MODPOSTFIX according 

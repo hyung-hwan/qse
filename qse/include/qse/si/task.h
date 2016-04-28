@@ -24,8 +24,8 @@
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _QSE_CMN_TASK_H_
-#define _QSE_CMN_TASK_H_
+#ifndef _QSE_SI_TASK_H_
+#define _QSE_SI_TASK_H_
 
 #include <qse/types.h>
 #include <qse/macros.h>

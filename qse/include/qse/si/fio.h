@@ -24,8 +24,8 @@
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _QSE_CMN_FIO_H_
-#define _QSE_CMN_FIO_H_
+#ifndef _QSE_SI_FIO_H_
+#define _QSE_SI_FIO_H_
 
 /** @file
  * This file defines a simple file I/O interface.

@@ -32,7 +32,7 @@ libqsesi_la_SOURCES =  \
 
 libqsesi_la_CFLAGS = $(PTHREAD_CFLAGS)
 libqsesi_la_LDFLAGS = -L../cmn -version-info 1:0:0 -no-undefined
-libqsesi_la_LIBADD = -lqsecmn $(PTHREAD_LIBS)
+libqsesi_la_LIBADD = -lqsecmn $(PTHREAD_LIBS) $(SSL_LIBS)
 
 if ENABLE_CXX
 lib_LTLIBRARIES += libqsesixx.la

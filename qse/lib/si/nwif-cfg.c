@@ -52,7 +52,7 @@
 #elif defined(__DOS__)
 	/* TODO: */
 #else
-#	include "syscall.h"
+#	include "../cmn/syscall.h"
 #	include <sys/socket.h>
 #	include <netinet/in.h>
 #	if defined(HAVE_SYS_IOCTL_H)

@@ -29,7 +29,7 @@
 
 #include <qse/types.h>
 #include <qse/macros.h>
-#include <qse/cmn/nwad.h>
+#include <qse/si/nwad.h>
 #include <qse/cmn/time.h>
 
 typedef struct qse_upxd_t qse_upxd_t;

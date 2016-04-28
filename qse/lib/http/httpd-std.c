@@ -39,7 +39,7 @@
 #include <qse/si/sio.h>
 #include <qse/si/mux.h>
 #include <qse/si/nwif.h>
-#include <qse/cmn/sck.h>
+#include <qse/si/sck.h>
 
 #define STAT_REG   1
 #define STAT_DIR   2

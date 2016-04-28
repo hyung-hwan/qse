@@ -186,8 +186,6 @@
 		mbwc.c 
 		mbwc-str.c 
 		mem.c 
-		nwad.c 
-		nwad-skad.c 
 		oht.c 
 		opt.c 
 		path-base.c 
@@ -197,7 +195,6 @@
 		pma.c 
 		rbt.c 
 		rex.c 
-		sck.c
 		sll.c 
 		slmb.c 
 		str-beg.c 
@@ -252,11 +249,14 @@
 		intr.c
 		mtx.c
 		mux.c 
+		nwad.c 
+		nwad-skad.c 
 		nwif.c 
 		nwif-cfg.c 
 		nwio.c
 		pio.c
 		rwl.c
+		sck.c
 		sio.c
 		task.c 
 		thr.c
