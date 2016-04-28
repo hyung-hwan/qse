@@ -24,7 +24,7 @@
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <qse/io/aio-pro.h>
+#include <qse/si/aio-pro.h>
 #include "aio-prv.h"
 
 #include <qse/cmn/str.h>

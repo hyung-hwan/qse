@@ -39,6 +39,7 @@
 #	include <windows.h>
 #elif defined(__OS2__)
 #	define INCL_DOSPROCESS
+#	define INCL_DOSFILEMGR
 #	include <os2.h>
 #elif defined(__DOS__)
 #	include <dos.h>
@@ -78,7 +79,7 @@ void qse_assert_failed (
 
 		qse_char_t tmp[1024];
 		qse_strxfmt (tmp, QSE_COUNTOF(tmp), 
-			QSE_T("FILE %s LINE %lu - %s%s%s"), 
+			QSE_T("[FILE %s LINE %lu]\r\n%s%s%s"), 
 			file, line, expr, 
 			(desc? QSE_T("\n\n"): QSE_T("")),
 			(desc? desc: QSE_T(""))
@@ -90,52 +91,83 @@ void qse_assert_failed (
 		qse_char_t tmp[1024];
 		DWORD written;
 
-		WriteConsole (stderr, QSE_T("[ASSERTION FAILURE]\r\n"), 21, &written, STIO_NULL);
+		WriteConsole (stderr, QSE_T("[ASSERTION FAILURE]\r\n"), 21, &written, QSE_NULL);
 
-		qse_strxfmt (tmp, QSE_COUNTOF(tmp), QSE_MT("FILE %s LINE %lu\r\n"), file, (unsigned long)line);
-		WriteConsole (stderr, tmp, qse_strlen(tmp), &written, STIO_NULL);
+		qse_strxfmt (tmp, QSE_COUNTOF(tmp), QSE_T("[FILE %s LINE %lu]\r\n"), file, (unsigned long)line);
+		WriteConsole (stderr, tmp, qse_strlen(tmp), &written, QSE_NULL);
 
-		WriteConsoel (stderr, QSE_T("[EXPRESSION] "), 13, &written, STIO_NULL);
-		WriteConsole (stderr, expr, qse_strlen(expr), &written, STIO_NULL);
-		WriteConsole (stderr, QSE_T("\r\n"), 2, &written, STIO_NULL);
+		WriteConsole (stderr, QSE_T("[EXPRESSION] "), 13, &written, QSE_NULL);
+		WriteConsole (stderr, expr, qse_strlen(expr), &written, QSE_NULL);
+		WriteConsole (stderr, QSE_T("\r\n"), 2, &written, QSE_NULL);
 
 		if (desc)
 		{
-			WriteConsole (stderr, QSE_T("[DESCRIPTION] "), 14, &written, STIO_NULL);
-			WriteConsole (stderr, desc, qse_strlen(desc), &written, STIO_NULL);
-			WriteConsole (stderr, QSE_T("\r\n"), 2, &written, STIO_NULL);
+			WriteConsole (stderr, QSE_T("[DESCRIPTION] "), 14, &written, QSE_NULL);
+			WriteConsole (stderr, desc, qse_strlen(desc), &written, QSE_NULL);
+			WriteConsole (stderr, QSE_T("\r\n"), 2, &written, QSE_NULL);
 		}
 	}
 #elif defined(__OS2__)
 	HFILE stderr = (HFILE)2;
-	USHORT written;
+	ULONG written;
 	qse_mchar_t tmp[1024];
 
 	DosWrite (stderr, QSE_T("[ASSERTION FAILURE]\r\n"), 21, &written);
 
 	#if defined(QSE_CHAR_IS_MCHAR)
-	qse_mbsxfmt (tmp, QSE_COUNTOF(tmp), QSE_MT("FILE %hs LINE %lu\n"), file, (unsigned long)line);
+	qse_mbsxfmt (tmp, QSE_COUNTOF(tmp), QSE_MT("FILE %hs LINE %lu\r\n"), file, (unsigned long)line);
 	#else
-	qse_mbsxfmt (tmp, QSE_COUNTOF(tmp), QSE_MT("FILE %ls LINE %lu\n"), file, (unsigned long)line);
+	qse_mbsxfmt (tmp, QSE_COUNTOF(tmp), QSE_MT("FILE %ls LINE %lu\r\n"), file, (unsigned long)line);
 	#endif
 	DosWrite (stderr, tmp, qse_mbslen(tmp), &written);
 
 	#if defined(QSE_CHAR_IS_MCHAR)
-	qse_mbsxfmt (tmp, QSE_COUNTOF(tmp), QSE_MT("[EXPRESSION] %hs\n"), expr);
+	qse_mbsxfmt (tmp, QSE_COUNTOF(tmp), QSE_MT("[EXPRESSION] %hs\r\n"), expr);
 	#else
-	qse_mbsxfmt (tmp, QSE_COUNTOF(tmp), QSE_MT("[EXPRESSION] %ls\n"), expr);
+	qse_mbsxfmt (tmp, QSE_COUNTOF(tmp), QSE_MT("[EXPRESSION] %ls\r\n"), expr);
 	#endif
 	DosWrite (stderr, tmp, qse_mbslen(tmp), &written);
 
 	if (desc)
 	{
 	#if defined(QSE_CHAR_IS_MCHAR)
-		qse_mbsxfmt (tmp, QSE_COUNTOF(tmp), QSE_MT("[DESCRIPTION] %hs\n"), desc);
+		qse_mbsxfmt (tmp, QSE_COUNTOF(tmp), QSE_MT("[DESCRIPTION] %hs\r\n"), desc);
 	#else
-		qse_mbsxfmt (tmp, QSE_COUNTOF(tmp), QSE_MT("[DESCRIPTION] %ls\n"), desc);
+		qse_mbsxfmt (tmp, QSE_COUNTOF(tmp), QSE_MT("[DESCRIPTION] %ls\r\n"), desc);
 	#endif
 		DosWrite (stderr, tmp, qse_mbslen(tmp), &written);
 	}
+
+#elif defined(__DOS__)
+	int stderr = 2;
+	qse_mchar_t tmp[1024];
+
+	write (stderr, QSE_T("[ASSERTION FAILURE]\r\n"), 21);
+
+	#if defined(QSE_CHAR_IS_MCHAR)
+	qse_mbsxfmt (tmp, QSE_COUNTOF(tmp), QSE_MT("FILE %hs LINE %lu\r\n"), file, (unsigned long)line);
+	#else
+	qse_mbsxfmt (tmp, QSE_COUNTOF(tmp), QSE_MT("FILE %ls LINE %lu\r\n"), file, (unsigned long)line);
+	#endif
+	write (stderr, tmp, qse_mbslen(tmp));
+
+	#if defined(QSE_CHAR_IS_MCHAR)
+	qse_mbsxfmt (tmp, QSE_COUNTOF(tmp), QSE_MT("[EXPRESSION] %hs\r\n"), expr);
+	#else
+	qse_mbsxfmt (tmp, QSE_COUNTOF(tmp), QSE_MT("[EXPRESSION] %ls\r\n"), expr);
+	#endif
+	write (stderr, tmp, qse_mbslen(tmp));
+
+	if (desc)
+	{
+	#if defined(QSE_CHAR_IS_MCHAR)
+		qse_mbsxfmt (tmp, QSE_COUNTOF(tmp), QSE_MT("[DESCRIPTION] %hs\r\n"), desc);
+	#else
+		qse_mbsxfmt (tmp, QSE_COUNTOF(tmp), QSE_MT("[DESCRIPTION] %ls\r\n"), desc);
+	#endif
+		write (stderr, tmp, qse_mbslen(tmp));
+	}
+
 
 #elif defined(macintosh)
 	/* note 'desc' is not used for macintosh at this moment.
@@ -168,8 +200,8 @@ void qse_assert_failed (
 	WHAT TO DO????
 */
 
-#else
 
+#else
 	static qse_mchar_t* static_msg[] = 
 	{
 		QSE_MT("=[ASSERTION FAILURE]============================================================\n"),

@@ -24,7 +24,7 @@
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <qse/sys/mux.h>
+#include <qse/si/mux.h>
 #include "../cmn/mem.h"
 
 #if defined(_WIN32)

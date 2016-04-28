@@ -24,7 +24,7 @@
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <qse/io/nwio.h>
+#include <qse/si/nwio.h>
 #include <qse/cmn/time.h>
 #include "../cmn/mem.h"
 

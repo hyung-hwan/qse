@@ -24,7 +24,7 @@
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <qse/sys/cnd.h>
+#include <qse/si/cnd.h>
 #include "../cmn/mem.h"
 
 #if (!defined(__unix__) && !defined(__unix)) || defined(HAVE_PTHREAD)

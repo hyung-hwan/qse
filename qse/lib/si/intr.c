@@ -24,7 +24,7 @@
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <qse/sys/intr.h>
+#include <qse/si/intr.h>
 
 #if defined(_WIN32)
 #	include <windows.h>

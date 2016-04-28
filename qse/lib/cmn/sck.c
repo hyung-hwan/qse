@@ -182,6 +182,8 @@ int qse_initsckconn (qse_sck_hnd_t handle, const qse_nwad_t* nwad)
 	int n;
 #if defined(_WIN32)
 	unsigned long cmd;
+#elif defined(__OS2__)
+	int enabled;
 #else
 	int saved = 0;
 #endif
@@ -204,13 +206,30 @@ int qse_initsckconn (qse_sck_hnd_t handle, const qse_nwad_t* nwad)
 	n = connect (handle, (struct sockaddr*)&skad, skadlen);
 	if (n == -1 && WSAGetLastError() != WSAEWOULDBLOCK) 
 	{
-		/* attemp to restore to the blocking mode upon failure.
+		/* attempt to restore to the blocking mode upon failure.
 		 * there is no guarantee that this was the previous mode. */
 		cmd = 0;
 		ioctlsocket (handle, FIONBIO, &cmd); 
 		return -1;
 	}
+#elif defined(__OS2__)
+
+	enabled = 1;
+	if (ioctl (handle, FIONBIO, (char*)&enabled, sizeof(enabled)) <= -1) return -1;
+
+	/* attempt to connet */
+	n = connect (handle, (struct sockaddr*)&skad, skadlen);
+	if (n == -1 && sock_errno() != EINPROGRESS)
+	{
+		/* attempt to restore to the blocking mode upon failure.
+		 * there is no guarantee that this was the previous mode. */
+		enabled = 0;
+		ioctl (handle, FIONBIO, (char*)&enabled, sizeof(enabled));
+		return -1;
+	}
+
 #else
+
 	/* switch to the non-blocking mode */
 	saved = fcntl (handle, F_GETFL, 0);
 	if (saved == -1) return -1;
@@ -242,7 +261,7 @@ int qse_finisckconn (qse_sck_hnd_t handle)
 	len = (qse_sck_len_t)QSE_SIZEOF (ret);
 	if (getsockopt (handle, SOL_SOCKET, SO_ERROR, (char*)&ret, &len) == -1) return -1;
 
-#ifdef _WIN32
+#if defined(_WIN32)
 	if (ret == WSAETIMEDOUT) 
 #else
 	if (ret == ETIMEDOUT) 
@@ -250,7 +269,7 @@ int qse_finisckconn (qse_sck_hnd_t handle)
 	{
 		return -1; /* failure - timed out */
 	}
-#ifdef _WIN32
+#if defined(_WIN32)
 	else if (ret == WSAEWOULDBLOCK) 
 #else
 	else if (ret == EINPROGRESS) 

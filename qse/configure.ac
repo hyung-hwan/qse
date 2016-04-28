@@ -783,16 +783,14 @@ AC_CONFIG_FILES([
 	include/Makefile
 	include/qse/Makefile
 	include/qse/cmn/Makefile
-	include/qse/sys/Makefile
-	include/qse/io/Makefile
+	include/qse/si/Makefile
 	include/qse/awk/Makefile
 	include/qse/sed/Makefile
 	include/qse/xli/Makefile
 	include/qse/http/Makefile
 	lib/Makefile 
 	lib/cmn/Makefile 
-	lib/sys/Makefile 
-	lib/io/Makefile
+	lib/si/Makefile 
 	lib/awk/Makefile 
 	lib/sed/Makefile 
 	lib/xli/Makefile 
@@ -809,7 +807,7 @@ AC_CONFIG_FILES([
 	cmd/http/Makefile 
 	samples/Makefile 
 	samples/cmn/Makefile 
-	samples/sys/Makefile 
+	samples/si/Makefile 
 	samples/awk/Makefile 
 	samples/sed/Makefile 
 	samples/http/Makefile

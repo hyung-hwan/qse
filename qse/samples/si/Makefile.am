@@ -8,9 +8,9 @@ AM_CPPFLAGS = \
 bin_PROGRAMS = \
 	rwl01
 	
-AM_LDFLAGS = -L../../lib/sys  -L../../lib/cmn
+AM_LDFLAGS = -L../../lib/si  -L../../lib/cmn
 AM_CFLAGS = $(PTHREAD_CFLAGS)
-LDADD = -lqsesys -lqsecmn $(PTHREAD_LIBS)
+LDADD = -lqsesi -lqsecmn $(PTHREAD_LIBS)
 
 if WIN32 
 if WCHAR
