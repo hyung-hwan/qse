@@ -24,8 +24,8 @@
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _QSE_CMN_NWAD_H_
-#define _QSE_CMN_NWAD_H_
+#ifndef _QSE_SI_NWAD_H_
+#define _QSE_SI_NWAD_H_
 
 /** \file
  * This file defines functions and data types for handling

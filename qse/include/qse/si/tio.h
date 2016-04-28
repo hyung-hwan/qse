@@ -24,8 +24,8 @@
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _QSE_CMN_TIO_H_
-#define _QSE_CMN_TIO_H_
+#ifndef _QSE_SI_TIO_H_
+#define _QSE_SI_TIO_H_
 
 /** @file
  * This file provides an interface to a text stream processor.

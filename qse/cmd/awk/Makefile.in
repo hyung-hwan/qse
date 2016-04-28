@@ -362,9 +362,9 @@ AM_CPPFLAGS = -I$(top_builddir)/include -I$(top_srcdir)/include \
 	$(LTDLINCL) $(am__append_1) $(am__append_2)
 qseawk_SOURCES = awk.c
 qseawk_CFLAGS = $(PTHREAD_CFLAGS)
-qseawk_LDFLAGS = -L../../lib/awk -L../../lib/sys -L../../lib/cmn \
+qseawk_LDFLAGS = -L../../lib/awk -L../../lib/si -L../../lib/cmn \
 	$(am__append_4)
-qseawk_LDADD = -lqseawk -lqsesys -lqsecmn $(LIBM) $(LIBLTDL) \
+qseawk_LDADD = -lqseawk -lqsesi -lqsecmn $(LIBM) $(LIBLTDL) \
 	$(PTHREAD_LIBS) $(am__append_3) $(am__append_5)
 all: all-am
 

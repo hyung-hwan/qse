@@ -9,12 +9,12 @@
 #include <qse/cmn/htb.h>
 #include <qse/cmn/fmt.h>
 #include <qse/cmn/hton.h>
-#include <qse/cmn/sck.h>
-#include <qse/cmn/nwad.h>
 
-#include <qse/io/sio.h>
-#include <qse/io/pio.h>
-#include <qse/sys/mux.h>
+#include <qse/si/sck.h>
+#include <qse/si/nwad.h>
+#include <qse/si/sio.h>
+#include <qse/si/pio.h>
+#include <qse/si/mux.h>
 
 #include <signal.h>
 #include <locale.h>

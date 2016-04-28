@@ -28,8 +28,8 @@
 #include <qse/cmn/str.h>
 #include <qse/cmn/chr.h>
 #include <qse/cmn/time.h>
-#include <qse/cmn/nwad.h>
 #include <qse/cmn/mbwc.h>
+#include <qse/si/nwad.h>
 #include <qse/si/nwif.h>
 #include "../cmn/mem.h"
 

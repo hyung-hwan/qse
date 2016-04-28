@@ -24,8 +24,8 @@
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
  
-#ifndef _QSE_CMN_SIO_H_
-#define _QSE_CMN_SIO_H_
+#ifndef _QSE_SI_SIO_H_
+#define _QSE_SI_SIO_H_
 
 /** @file
  * This file defines a simple stream I/O interface.

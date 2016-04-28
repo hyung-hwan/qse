@@ -24,8 +24,8 @@
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _QSE_CMN_NWIO_H_
-#define _QSE_CMN_NWIO_H_
+#ifndef _QSE_SI_NWIO_H_
+#define _QSE_SI_NWIO_H_
 
 /** @file
  * This file defines a network-based text I/O interface.

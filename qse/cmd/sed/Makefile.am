@@ -8,8 +8,8 @@ bin_PROGRAMS = qsesed
 
 qsesed_SOURCES = sed.c
 qsesed_CFLAGS = $(PTHREAD_CFLAGS)
-qsesed_LDFLAGS = -L../../lib/sed -L../../lib/sys -L../../lib/cmn 
-qsesed_LDADD = -lqsesed -lqsesys -lqsecmn $(PTHREAD_LIBS)
+qsesed_LDFLAGS = -L../../lib/sed -L../../lib/si -L../../lib/cmn 
+qsesed_LDADD = -lqsesed -lqsesi -lqsecmn $(PTHREAD_LIBS)
 
 if WIN32 
 if WCHAR

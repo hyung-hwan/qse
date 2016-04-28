@@ -24,7 +24,7 @@
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <qse/cmn/sck.h>
+#include <qse/si/sck.h>
 
 #if defined(_WIN32)
 #	include <winsock2.h>
@@ -50,12 +50,12 @@
 
 #elif defined(HAVE_T_CONNECT) && !defined(HAVE_CONNECT) && defined(HAVE_TIUSER_H)
 
-#	include "syscall.h"
+#	include "../cmn/syscall.h"
 #	include <tiuser.h>
 #	define USE_TLI
 
 #else
-#	include "syscall.h"
+#	include "../cmn/syscall.h"
 #	include <sys/socket.h>
 #	include <netinet/in.h>
 #	if defined(HAVE_NETINET_SCTP_H)

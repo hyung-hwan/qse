@@ -24,11 +24,11 @@
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _QSE_SYS_SOCKET_HPP_
-#define _QSE_SYS_SOCKET_HPP_
+#ifndef _QSE_SI_SOCKET_HPP_
+#define _QSE_SI_SOCKET_HPP_
 
 #include <qse/si/SocketAddress.hpp>
-#include <qse/cmn/sck.h>
+#include <qse/si/sck.h>
 
 /////////////////////////////////
 QSE_BEGIN_NAMESPACE(QSE)

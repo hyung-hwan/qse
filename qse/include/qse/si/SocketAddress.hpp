@@ -24,10 +24,10 @@
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _QSE_SYS_SOCKETADDRESS_HPP_
-#define _QSE_SYS_SOCKETADDRESS_HPP_
+#ifndef _QSE_SI_SOCKETADDRESS_HPP_
+#define _QSE_SI_SOCKETADDRESS_HPP_
 
-#include <qse/cmn/nwad.h>
+#include <qse/si/nwad.h>
 
 /////////////////////////////////
 QSE_BEGIN_NAMESPACE(QSE)
