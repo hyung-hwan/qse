@@ -57,180 +57,191 @@
 #	include "syscall.h"
 #endif
 
-#define NTOC(n) (QSE_MT("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ")[n])
-#define WRITE_CHAR(sio,c) \
-do { \
-	qse_mchar_t __xxx_c = c; \
-	if (qse_sio_putmbsn (sio, &__xxx_c, 1) != 1) return -1; \
-} while (0)
-
-static int write_num (qse_sio_t* sio, qse_size_t x, int base)
-{
-	qse_size_t last = x % base;
-	qse_size_t y = 0; 
-	int dig = 0;
-
-	x = x / base;
-
-	while (x > 0)
-	{
-		y = y * base + (x % base);
-		x = x / base;
-		dig++;
-	}
-
-	while (y > 0)
-	{
-		WRITE_CHAR (sio, NTOC(y % base));
-		y = y / base;
-		dig--;
-	}
-
-	while (dig > 0) 
-	{ 
-		dig--; 
-		WRITE_CHAR (sio, QSE_T('0'));
-	}
-	WRITE_CHAR (sio, NTOC(last));
-	return 0;
-}
-
 void qse_assert_failed (
 	const qse_char_t* expr, const qse_char_t* desc, 
 	const qse_char_t* file, qse_size_t line)
 {
-#if defined(macintosh)
+#if defined(_WIN32)
+	HANDLE stderr;
+
+	stderr = GetStdHandle (STD_ERROR_HANDLE);
+	if (stderr != INVALID_HANDLE_VALUE)
+	{
+		DWORD mode;
+		if (GetConsoleMode (stderr, &mode) == FALSE)
+			stderr = INVALID_HANDLE_VALUE;
+	}
+
+	if (stderr == INVALID_HANDLE_VALUE)
+	{
+		/* Use a message box if stderr is not available */
+
+		qse_char_t tmp[1024];
+		qse_strxfmt (tmp, QSE_COUNTOF(tmp), 
+			QSE_T("FILE %s LINE %lu - %s%s%s"), 
+			file, line, expr, 
+			(desc? QSE_T("\n\n"): QSE_T("")),
+			(desc? desc: QSE_T(""))
+		);
+		MessageBox (QSE_NULL, tmp, QSE_T("ASSERTION FAILURE"), MB_OK | MB_ICONERROR);
+	}
+	else
+	{
+		qse_char_t tmp[1024];
+		DWORD written;
+
+		WriteConsole (stderr, QSE_T("[ASSERTION FAILURE]\r\n"), 21, &written, STIO_NULL);
+
+		qse_strxfmt (tmp, QSE_COUNTOF(tmp), QSE_MT("FILE %s LINE %lu\r\n"), file, (unsigned long)line);
+		WriteConsole (stderr, tmp, qse_strlen(tmp), &written, STIO_NULL);
+
+		WriteConsoel (stderr, QSE_T("[EXPRESSION] "), 13, &written, STIO_NULL);
+		WriteConsole (stderr, expr, qse_strlen(expr), &written, STIO_NULL);
+		WriteConsole (stderr, QSE_T("\r\n"), 2, &written, STIO_NULL);
+
+		if (desc)
+		{
+			WriteConsole (stderr, QSE_T("[DESCRIPTION] "), 14, &written, STIO_NULL);
+			WriteConsole (stderr, desc, qse_strlen(desc), &written, STIO_NULL);
+			WriteConsole (stderr, QSE_T("\r\n"), 2, &written, STIO_NULL);
+		}
+	}
+#elif defined(__OS2__)
+	HFILE stderr = (HFILE)2;
+	USHORT written;
+	qse_mchar_t tmp[1024];
+
+	DosWrite (stderr, QSE_T("[ASSERTION FAILURE]\r\n"), 21, &written);
+
+	#if defined(QSE_CHAR_IS_MCHAR)
+	qse_mbsxfmt (tmp, QSE_COUNTOF(tmp), QSE_MT("FILE %hs LINE %lu\n"), file, (unsigned long)line);
+	#else
+	qse_mbsxfmt (tmp, QSE_COUNTOF(tmp), QSE_MT("FILE %ls LINE %lu\n"), file, (unsigned long)line);
+	#endif
+	DosWrite (stderr, tmp, qse_mbslen(tmp), &written);
+
+	#if defined(QSE_CHAR_IS_MCHAR)
+	qse_mbsxfmt (tmp, QSE_COUNTOF(tmp), QSE_MT("[EXPRESSION] %hs\n"), expr);
+	#else
+	qse_mbsxfmt (tmp, QSE_COUNTOF(tmp), QSE_MT("[EXPRESSION] %ls\n"), expr);
+	#endif
+	DosWrite (stderr, tmp, qse_mbslen(tmp), &written);
+
+	if (desc)
+	{
+	#if defined(QSE_CHAR_IS_MCHAR)
+		qse_mbsxfmt (tmp, QSE_COUNTOF(tmp), QSE_MT("[DESCRIPTION] %hs\n"), desc);
+	#else
+		qse_mbsxfmt (tmp, QSE_COUNTOF(tmp), QSE_MT("[DESCRIPTION] %ls\n"), desc);
+	#endif
+		DosWrite (stderr, tmp, qse_mbslen(tmp), &written);
+	}
+
+#elif defined(macintosh)
 	/* note 'desc' is not used for macintosh at this moment.
 	 * TODO: include 'desc' in the message */
-
 	Str255 ptitle;
 	Str255 ptext;
 	SInt16 res;
 
-	{
-		qse_mchar_t tmp[256];
+	qse_mchar_t tmp[256];
 
 	#if defined(QSE_CHAR_IS_MCHAR)
-		qse_mbsxfmt (tmp, QSE_COUNTOF(tmp), QSE_MT("ASSERTION FAILURE AT FILE %hs LINE %lu"), file, (unsigned long)line);
+	qse_mbsxfmt (tmp, QSE_COUNTOF(tmp), QSE_MT("ASSERTION FAILURE AT FILE %hs LINE %lu"), file, (unsigned long)line);
 	#else
-		qse_mbsxfmt (tmp, QSE_COUNTOF(tmp), QSE_MT("ASSERTION FAILURE AT FILE %ls LINE %lu"), file, (unsigned long)line);
+	qse_mbsxfmt (tmp, QSE_COUNTOF(tmp), QSE_MT("ASSERTION FAILURE AT FILE %ls LINE %lu"), file, (unsigned long)line);
 	#endif
-		CopyCStringToPascal (tmp, ptitle);
+	CopyCStringToPascal (tmp, ptitle);
 
 	#if defined(QSE_CHAR_IS_MCHAR)
-		CopyCStringToPascal (expr, ptext);
+	CopyCStringToPascal (expr, ptext);
 	#else
-		qse_mbsxfmt (tmp, QSE_COUNTOF(tmp), QSE_MT("%ls"), expr);
-		CopyCStringToPascal (tmp, ptext);
+	qse_mbsxfmt (tmp, QSE_COUNTOF(tmp), QSE_MT("%ls"), expr);
+	CopyCStringToPascal (tmp, ptext);
 	#endif
-	}
 
 	InitCursor ();
 	StandardAlert (kAlertStopAlert, ptitle, ptext, nil, &res);
 
-#else  /* macintosh */
+/*
+#elif defined(vms) || defined(__vms)
+	WHAT TO DO????
+*/
 
+#else
 
-#if defined(HAVE_BACKTRACE)
-	void* btarray[128];
-	qse_size_t btsize, i;
-	char** btsyms;
-#endif
-	qse_sio_t* sio, siobuf;
-
-
-	#if defined(_WIN32)
+	static qse_mchar_t* static_msg[] = 
 	{
-		HANDLE stderr;
+		QSE_MT("=[ASSERTION FAILURE]============================================================\n"),
+		QSE_MT("                         __ \n"),
+		QSE_MT(" _____ _____ _____ _____|  |\n"),
+		QSE_MT("|     |     |  _  |   __|  |\n"),
+		QSE_MT("|  |  |  |  |   __|__   |__|\n"),
+		QSE_MT("|_____|_____|__|  |_____|__|\n"),
+		QSE_MT("                            \n")
+	};
+	static qse_mchar_t* static_bthdr = QSE_MT("=[BACKTRACES]===================================================================\n");
+	static qse_mchar_t* static_footer= QSE_MT("================================================================================\n");
 
-		stderr = GetStdHandle (STD_ERROR_HANDLE);
-		if (stderr != INVALID_HANDLE_VALUE)
-		{
-			DWORD mode;
-			if (GetConsoleMode (stderr, &mode) == FALSE)
-				stderr = INVALID_HANDLE_VALUE;
-		}
+	qse_mchar_t tmp[1024];
+	qse_size_t i;
 
-		if (stderr == INVALID_HANDLE_VALUE)
-		{
-			/* Use a message box if stderr is not available */
-
-			qse_char_t tmp[512];
-			qse_strxfmt (tmp, QSE_COUNTOF(tmp), 
-				QSE_T("FILE %s LINE %lu - %s%s%s"), 
-				file, line, expr, 
-				(desc? QSE_T("\n\n"): QSE_T("")),
-				(desc? desc: QSE_T(""))
-			);
-			MessageBox (QSE_NULL, tmp, QSE_T("ASSERTION FAILURE"), MB_OK | MB_ICONERROR);
-			goto done;
-		}
-	}
+	#if defined(HAVE_BACKTRACE)
+	void* btarray[128];
+	qse_size_t btsize;
+	char** btsyms;
 	#endif
 
-	sio = &siobuf;
-	qse_sio_initstd (
-		sio, QSE_MMGR_GETDFL(), QSE_SIO_STDERR, 
-		QSE_SIO_WRITE | QSE_SIO_IGNOREMBWCERR | QSE_SIO_NOAUTOFLUSH);
-
-	qse_sio_putmbs (sio, QSE_MT("=[ASSERTION FAILURE]============================================================\n"));
-
-#if 1
-	qse_sio_putmbs (sio, QSE_MT("                         __ \n"));
-	qse_sio_putmbs (sio, QSE_MT(" _____ _____ _____ _____|  |\n"));
-	qse_sio_putmbs (sio, QSE_MT("|     |     |  _  |   __|  |\n"));
-	qse_sio_putmbs (sio, QSE_MT("|  |  |  |  |   __|__   |__|\n"));
-	qse_sio_putmbs (sio, QSE_MT("|_____|_____|__|  |_____|__|\n"));
-	qse_sio_putmbs (sio, QSE_MT("                            \n"));
-#else
-	qse_sio_putmbs (sio, QSE_MT("                            __ \n"));
-	qse_sio_putmbs (sio, QSE_MT(" _____ _____ _____ _____   |  |\n"));
-	qse_sio_putmbs (sio, QSE_MT("|     |     |  _  |   __|  |  |\n"));
-	qse_sio_putmbs (sio, QSE_MT("|  |  |  |  |   __|__   |  |__|\n"));
-	qse_sio_putmbs (sio, QSE_MT("|_____|_____|__|  |_____|  |__|\n"));
-	qse_sio_putmbs (sio, QSE_MT("                            __ \n"));
-#endif
-
-	qse_sio_putmbs (sio, QSE_MT("FILE: "));
-	qse_sio_putstr (sio, file);
-	qse_sio_putmbs (sio, QSE_MT(" LINE: "));
-
-	write_num (sio, line, 10);
-
-	qse_sio_putmbs (sio, QSE_MT("\nEXPRESSION: "));
-	qse_sio_putstr (sio, expr);
-	qse_sio_putmbs (sio, QSE_MT("\n"));
-
-	if (desc != QSE_NULL)
+	for (i = 0; i < QSE_COUNTOF(static_msg); i++)
 	{
-		qse_sio_putmbs (sio, QSE_MT("DESCRIPTION: "));
-		qse_sio_putstr (sio, desc);
-		qse_sio_putmbs (sio, QSE_MT("\n"));
+		write (2, static_msg[i], qse_mbslen(static_msg[i]));
 	}
 
-#if defined(HAVE_BACKTRACE)
+	#if defined(QSE_CHAR_IS_MCHAR)
+	qse_mbsxfmt (tmp, QSE_COUNTOF(tmp), QSE_MT("FILE %hs LINE %lu\n"), file, (unsigned long)line);
+	#else
+	qse_mbsxfmt (tmp, QSE_COUNTOF(tmp), QSE_MT("FILE %ls LINE %lu\n"), file, (unsigned long)line);
+	#endif
+	write (2, tmp, qse_mbslen(tmp));
+
+	#if defined(QSE_CHAR_IS_MCHAR)
+	qse_mbsxfmt (tmp, QSE_COUNTOF(tmp), QSE_MT("[EXPRESSION] %hs\n"), expr);
+	#else
+	qse_mbsxfmt (tmp, QSE_COUNTOF(tmp), QSE_MT("[EXPRESSION] %ls\n"), expr);
+	#endif
+	write (2, tmp, qse_mbslen(tmp));
+
+	if (desc)
+	{
+	#if defined(QSE_CHAR_IS_MCHAR)
+		qse_mbsxfmt (tmp, QSE_COUNTOF(tmp), QSE_MT("[DESCRIPTION] %hs\n"), desc);
+	#else
+		qse_mbsxfmt (tmp, QSE_COUNTOF(tmp), QSE_MT("[DESCRIPTION] %ls\n"), desc);
+	#endif
+		write (2, tmp, qse_mbslen(tmp));
+	}
+
+	#if defined(HAVE_BACKTRACE)
 	btsize = backtrace (btarray, QSE_COUNTOF(btarray));
 	btsyms = backtrace_symbols (btarray, btsize);
 	if (btsyms != QSE_NULL)
 	{
-		qse_sio_putmbs (sio, QSE_MT("=[BACKTRACES]===================================================================\n"));
+		write (2, static_bthdr, qse_mbslen(static_bthdr));
 
 		for (i = 0; i < btsize; i++)
 		{
-			qse_sio_putmbs (sio, btsyms[i]);
-			qse_sio_putmbs (sio, QSE_MT("\n"));
+			write (2, btsyms[i], qse_mbslen(btsyms[i]));
+			write (2, QSE_MT("\n"), 1);
 		}
 
 		free (btsyms);
 	}
+	#endif
+
+	write (2, static_footer, qse_mbslen(static_footer));
 #endif
 
-	qse_sio_putmbs (sio, QSE_MT("================================================================================\n"));
-	qse_sio_flush (sio);
-	qse_sio_fini (sio);
-#endif /* macintosh */
 
-done:
 #if defined(_WIN32)
 	ExitProcess (249);
 #elif defined(__OS2__)
