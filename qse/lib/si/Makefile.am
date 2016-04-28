@@ -16,10 +16,14 @@ libqsesi_la_SOURCES =  \
 	intr.c \
 	mtx.c \
 	mux.c \
+	nwad.c \
+	nwad-skad.c \
 	nwif.c \
+	nwif-cfg.c \
 	nwio.c  \
 	pio.c  \
 	rwl.c \
+	sck.c \
 	sio.c  \
 	task.c \
 	thr.c \

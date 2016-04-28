@@ -136,17 +136,16 @@ am__libqsecmn_la_SOURCES_DIST = alg-base64.c alg-rand.c alg-search.c \
 	alg-sort.c assert.c chr.c dir.c dll.c env.c gdl.c htb.c fma.c \
 	fmt-intmax.c fmt-out.c fs.c fs-attr.c fs-copy.c fs-delete.c \
 	fs-err.c fs-make.c fs-move.c glob.c hton.c ipad.c lda.c main.c \
-	mb8.c mbwc.c mbwc-str.c mem.c nwad.c nwad-skad.c nwif.c \
-	nwif-cfg.c oht.c opt.c path-base.c path-canon.c path-core.c \
-	path-merge.c pma.c rbt.c rex.c sck.c sll.c slmb.c str-beg.c \
-	str-cat.c str-chr.c str-cnv.c str-cmp.c str-cpy.c str-del.c \
-	str-dup.c str-dyn.c str-end.c str-excl.c str-fcpy.c str-fmt.c \
-	str-fnmat.c str-incl.c str-join.c str-len.c str-pac.c \
-	str-pbrk.c str-put.c str-rev.c str-rot.c str-set.c str-spl.c \
-	str-spn.c str-str.c str-subst.c str-tok.c str-trm.c str-word.c \
-	time.c tmr.c tre.c tre-ast.c tre-compile.c tre-match-bt.c \
-	tre-match-pa.c tre-parse.c tre-stack.c uri.c utf8.c xma.c \
-	uni.c cp949.c cp950.c
+	mb8.c mbwc.c mbwc-str.c mem.c oht.c opt.c path-base.c \
+	path-canon.c path-core.c path-merge.c pma.c rbt.c rex.c sll.c \
+	slmb.c str-beg.c str-cat.c str-chr.c str-cnv.c str-cmp.c \
+	str-cpy.c str-del.c str-dup.c str-dyn.c str-end.c str-excl.c \
+	str-fcpy.c str-fmt.c str-fnmat.c str-incl.c str-join.c \
+	str-len.c str-pac.c str-pbrk.c str-put.c str-rev.c str-rot.c \
+	str-set.c str-spl.c str-spn.c str-str.c str-subst.c str-tok.c \
+	str-trm.c str-word.c time.c tmr.c tre.c tre-ast.c \
+	tre-compile.c tre-match-bt.c tre-match-pa.c tre-parse.c \
+	tre-stack.c uri.c utf8.c xma.c uni.c cp949.c cp950.c
 @ENABLE_BUNDLED_UNICODE_TRUE@am__objects_1 = uni.lo
 @ENABLE_XCMGRS_TRUE@am__objects_2 = cp949.lo cp950.lo
 am_libqsecmn_la_OBJECTS = alg-base64.lo alg-rand.lo alg-search.lo \
@@ -154,9 +153,8 @@ am_libqsecmn_la_OBJECTS = alg-base64.lo alg-rand.lo alg-search.lo \
 	htb.lo fma.lo fmt-intmax.lo fmt-out.lo fs.lo fs-attr.lo \
 	fs-copy.lo fs-delete.lo fs-err.lo fs-make.lo fs-move.lo \
 	glob.lo hton.lo ipad.lo lda.lo main.lo mb8.lo mbwc.lo \
-	mbwc-str.lo mem.lo nwad.lo nwad-skad.lo nwif.lo nwif-cfg.lo \
-	oht.lo opt.lo path-base.lo path-canon.lo path-core.lo \
-	path-merge.lo pma.lo rbt.lo rex.lo sck.lo sll.lo slmb.lo \
+	mbwc-str.lo mem.lo oht.lo opt.lo path-base.lo path-canon.lo \
+	path-core.lo path-merge.lo pma.lo rbt.lo rex.lo sll.lo slmb.lo \
 	str-beg.lo str-cat.lo str-chr.lo str-cnv.lo str-cmp.lo \
 	str-cpy.lo str-del.lo str-dup.lo str-dyn.lo str-end.lo \
 	str-excl.lo str-fcpy.lo str-fmt.lo str-fnmat.lo str-incl.lo \
@@ -477,17 +475,16 @@ libqsecmn_la_SOURCES = alg-base64.c alg-rand.c alg-search.c alg-sort.c \
 	assert.c chr.c dir.c dll.c env.c gdl.c htb.c fma.c \
 	fmt-intmax.c fmt-out.c fs.c fs-attr.c fs-copy.c fs-delete.c \
 	fs-err.c fs-make.c fs-move.c glob.c hton.c ipad.c lda.c main.c \
-	mb8.c mbwc.c mbwc-str.c mem.c nwad.c nwad-skad.c nwif.c \
-	nwif-cfg.c oht.c opt.c path-base.c path-canon.c path-core.c \
-	path-merge.c pma.c rbt.c rex.c sck.c sll.c slmb.c str-beg.c \
-	str-cat.c str-chr.c str-cnv.c str-cmp.c str-cpy.c str-del.c \
-	str-dup.c str-dyn.c str-end.c str-excl.c str-fcpy.c str-fmt.c \
-	str-fnmat.c str-incl.c str-join.c str-len.c str-pac.c \
-	str-pbrk.c str-put.c str-rev.c str-rot.c str-set.c str-spl.c \
-	str-spn.c str-str.c str-subst.c str-tok.c str-trm.c str-word.c \
-	time.c tmr.c tre.c tre-ast.c tre-compile.c tre-match-bt.c \
-	tre-match-pa.c tre-parse.c tre-stack.c uri.c utf8.c xma.c \
-	$(am__append_1) $(am__append_2)
+	mb8.c mbwc.c mbwc-str.c mem.c oht.c opt.c path-base.c \
+	path-canon.c path-core.c path-merge.c pma.c rbt.c rex.c sll.c \
+	slmb.c str-beg.c str-cat.c str-chr.c str-cnv.c str-cmp.c \
+	str-cpy.c str-del.c str-dup.c str-dyn.c str-end.c str-excl.c \
+	str-fcpy.c str-fmt.c str-fnmat.c str-incl.c str-join.c \
+	str-len.c str-pac.c str-pbrk.c str-put.c str-rev.c str-rot.c \
+	str-set.c str-spl.c str-spn.c str-str.c str-subst.c str-tok.c \
+	str-trm.c str-word.c time.c tmr.c tre.c tre-ast.c \
+	tre-compile.c tre-match-bt.c tre-match-pa.c tre-parse.c \
+	tre-stack.c uri.c utf8.c xma.c $(am__append_1) $(am__append_2)
 libqsecmn_la_LDFLAGS = -version-info 1:0:0 -no-undefined
 libqsecmn_la_LIBADD = $(SOCKET_LIBS) $(QUADMATH_LIBS)
 @ENABLE_CXX_TRUE@libqsecmnxx_la_SOURCES = \
@@ -615,10 +612,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mbwc-str.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mbwc.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mem.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/nwad-skad.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/nwad.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/nwif-cfg.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/nwif.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/oht.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/opt.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/path-base.Plo@am__quote@
@@ -628,7 +621,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pma.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rbt.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rex.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sck.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sll.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/slmb.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str-beg.Plo@am__quote@

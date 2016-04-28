@@ -24,13 +24,15 @@
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <qse/cmn/nwad.h>
+#include <qse/si/nwad.h>
+#include <qse/si/nwif.h>
+
 #include <qse/cmn/hton.h>
 #include <qse/cmn/str.h>
 #include <qse/cmn/fmt.h>
 #include <qse/cmn/mbwc.h>
-#include <qse/si/nwif.h>
-#include "mem.h"
+
+#include "../cmn/mem.h"
 
 int qse_nwadequal (const qse_nwad_t* x, const qse_nwad_t* y)
 {

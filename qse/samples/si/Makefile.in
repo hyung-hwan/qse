@@ -78,9 +78,10 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-bin_PROGRAMS = rwl01$(EXEEXT)
+bin_PROGRAMS = fio01$(EXEEXT) fio02$(EXEEXT) pio01$(EXEEXT) \
+	rwl01$(EXEEXT) sio01$(EXEEXT) sio02$(EXEEXT) sio03$(EXEEXT)
 @WCHAR_TRUE@@WIN32_TRUE@am__append_1 = $(UNICOWS_LIBS)
-subdir = samples/sys
+subdir = samples/si
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(top_srcdir)/ac/depcomp
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -100,16 +101,40 @@ CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
-am_rwl01_OBJECTS = rwl01.$(OBJEXT)
-rwl01_OBJECTS = $(am_rwl01_OBJECTS)
-rwl01_LDADD = $(LDADD)
+am_fio01_OBJECTS = fio01.$(OBJEXT)
+fio01_OBJECTS = $(am_fio01_OBJECTS)
+fio01_LDADD = $(LDADD)
 am__DEPENDENCIES_1 =
 @WCHAR_TRUE@@WIN32_TRUE@am__DEPENDENCIES_2 = $(am__DEPENDENCIES_1)
-rwl01_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_2)
+fio01_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_2)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
 am__v_lt_1 = 
+am_fio02_OBJECTS = fio02.$(OBJEXT)
+fio02_OBJECTS = $(am_fio02_OBJECTS)
+fio02_LDADD = $(LDADD)
+fio02_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_2)
+am_pio01_OBJECTS = pio01.$(OBJEXT)
+pio01_OBJECTS = $(am_pio01_OBJECTS)
+pio01_LDADD = $(LDADD)
+pio01_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_2)
+am_rwl01_OBJECTS = rwl01.$(OBJEXT)
+rwl01_OBJECTS = $(am_rwl01_OBJECTS)
+rwl01_LDADD = $(LDADD)
+rwl01_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_2)
+am_sio01_OBJECTS = sio01.$(OBJEXT)
+sio01_OBJECTS = $(am_sio01_OBJECTS)
+sio01_LDADD = $(LDADD)
+sio01_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_2)
+am_sio02_OBJECTS = sio02.$(OBJEXT)
+sio02_OBJECTS = $(am_sio02_OBJECTS)
+sio02_LDADD = $(LDADD)
+sio02_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_2)
+am_sio03_OBJECTS = sio03.$(OBJEXT)
+sio03_OBJECTS = $(am_sio03_OBJECTS)
+sio03_LDADD = $(LDADD)
+sio03_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_2)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -144,8 +169,12 @@ AM_V_CCLD = $(am__v_CCLD_@AM_V@)
 am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
 am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
-SOURCES = $(rwl01_SOURCES)
-DIST_SOURCES = $(rwl01_SOURCES)
+SOURCES = $(fio01_SOURCES) $(fio02_SOURCES) $(pio01_SOURCES) \
+	$(rwl01_SOURCES) $(sio01_SOURCES) $(sio02_SOURCES) \
+	$(sio03_SOURCES)
+DIST_SOURCES = $(fio01_SOURCES) $(fio02_SOURCES) $(pio01_SOURCES) \
+	$(rwl01_SOURCES) $(sio01_SOURCES) $(sio02_SOURCES) \
+	$(sio03_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -352,10 +381,16 @@ AM_CPPFLAGS = \
 	-I$(top_srcdir)/include \
 	-I$(includedir)
 
-AM_LDFLAGS = -L../../lib/sys  -L../../lib/cmn
+AM_LDFLAGS = -L../../lib/si  -L../../lib/cmn
 AM_CFLAGS = $(PTHREAD_CFLAGS)
-LDADD = -lqsesys -lqsecmn $(PTHREAD_LIBS) $(am__append_1)
+LDADD = -lqsesi -lqsecmn $(PTHREAD_LIBS) $(am__append_1)
+fio01_SOURCES = fio01.c
+fio02_SOURCES = fio02.c
+pio01_SOURCES = pio01.c
 rwl01_SOURCES = rwl01.c
+sio01_SOURCES = sio01.c
+sio02_SOURCES = sio02.c
+sio03_SOURCES = sio03.c
 all: all-am
 
 .SUFFIXES:
@@ -369,9 +404,9 @@ $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign samples/sys/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign samples/si/Makefile'; \
 	$(am__cd) $(top_srcdir) && \
-	  $(AUTOMAKE) --foreign samples/sys/Makefile
+	  $(AUTOMAKE) --foreign samples/si/Makefile
 .PRECIOUS: Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
@@ -440,9 +475,33 @@ clean-binPROGRAMS:
 	echo " rm -f" $$list; \
 	rm -f $$list
 
+fio01$(EXEEXT): $(fio01_OBJECTS) $(fio01_DEPENDENCIES) $(EXTRA_fio01_DEPENDENCIES) 
+	@rm -f fio01$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(fio01_OBJECTS) $(fio01_LDADD) $(LIBS)
+
+fio02$(EXEEXT): $(fio02_OBJECTS) $(fio02_DEPENDENCIES) $(EXTRA_fio02_DEPENDENCIES) 
+	@rm -f fio02$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(fio02_OBJECTS) $(fio02_LDADD) $(LIBS)
+
+pio01$(EXEEXT): $(pio01_OBJECTS) $(pio01_DEPENDENCIES) $(EXTRA_pio01_DEPENDENCIES) 
+	@rm -f pio01$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(pio01_OBJECTS) $(pio01_LDADD) $(LIBS)
+
 rwl01$(EXEEXT): $(rwl01_OBJECTS) $(rwl01_DEPENDENCIES) $(EXTRA_rwl01_DEPENDENCIES) 
 	@rm -f rwl01$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(rwl01_OBJECTS) $(rwl01_LDADD) $(LIBS)
+
+sio01$(EXEEXT): $(sio01_OBJECTS) $(sio01_DEPENDENCIES) $(EXTRA_sio01_DEPENDENCIES) 
+	@rm -f sio01$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(sio01_OBJECTS) $(sio01_LDADD) $(LIBS)
+
+sio02$(EXEEXT): $(sio02_OBJECTS) $(sio02_DEPENDENCIES) $(EXTRA_sio02_DEPENDENCIES) 
+	@rm -f sio02$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(sio02_OBJECTS) $(sio02_LDADD) $(LIBS)
+
+sio03$(EXEEXT): $(sio03_OBJECTS) $(sio03_DEPENDENCIES) $(EXTRA_sio03_DEPENDENCIES) 
+	@rm -f sio03$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(sio03_OBJECTS) $(sio03_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -450,7 +509,13 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fio01.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fio02.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pio01.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rwl01.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sio01.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sio02.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sio03.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<

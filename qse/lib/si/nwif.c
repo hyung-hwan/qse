@@ -27,7 +27,7 @@
 #include <qse/si/nwif.h>
 #include <qse/cmn/str.h>
 #include <qse/cmn/mbwc.h>
-#include "mem.h"
+#include "../cmn/mem.h"
 
 #if defined(_WIN32)
 	/* TODO: */

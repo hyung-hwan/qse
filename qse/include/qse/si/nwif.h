@@ -29,7 +29,7 @@
 
 #include <qse/types.h>
 #include <qse/macros.h>
-#include <qse/cmn/nwad.h>
+#include <qse/si/nwad.h>
 
 typedef struct qse_nwifcfg_t qse_nwifcfg_t;
 

@@ -218,7 +218,7 @@ void qse_assert_failed (
 		QSE_MT("|_____|_____|__|  |_____|__|\n"),
 		QSE_MT("                            \n")
 	};
-	static qse_mchar_t* static_header = QSE_MT("=[ASSERTION FAILURE]============================================================\n"),
+	static qse_mchar_t* static_header = QSE_MT("=[ASSERTION FAILURE]============================================================\n");
 	static qse_mchar_t* static_bthdr  = QSE_MT("=[BACKTRACES]===================================================================\n");
 	static qse_mchar_t* static_footer = QSE_MT("================================================================================\n");
 

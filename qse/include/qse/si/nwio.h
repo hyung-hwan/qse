@@ -33,10 +33,10 @@
 
 #include <qse/types.h>
 #include <qse/macros.h>
-#include <qse/si/tio.h>
-#include <qse/cmn/nwad.h>
 #include <qse/cmn/time.h>
-#include <qse/cmn/sck.h>
+#include <qse/si/sck.h>
+#include <qse/si/tio.h>
+#include <qse/si/nwad.h>
 
 enum qse_nwio_flag_t
 {
