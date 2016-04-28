@@ -11,8 +11,6 @@ bin_PROGRAMS = \
 	dir01 \
 	dll \
 	env01 \
-	fio01 \
-	fio02 \
 	fma \
 	fmt01 \
 	fmt02 \
@@ -36,9 +34,6 @@ bin_PROGRAMS = \
 	pma \
 	rex01 \
 	rbt01 \
-	sio01 \
-	sio02 \
-	sio03 \
 	sll \
 	slmb01 \
 	str01 \
@@ -60,8 +55,6 @@ endif
 chr01_SOURCES = chr01.c
 env01_SOURCES = env01.c
 dll_SOURCES = dll.c
-fio01_SOURCES = fio01.c
-fio02_SOURCES = fio02.c
 fma_SOURCES = fma.c
 fmt01_SOURCES = fmt01.c
 fmt02_SOURCES = fmt02.c
@@ -81,9 +74,6 @@ pio_SOURCES = pio.c
 pma_SOURCES = pma.c
 rex01_SOURCES = rex01.c
 rbt01_SOURCES = rbt01.c
-sio01_SOURCES = sio01.c
-sio02_SOURCES = sio02.c
-sio03_SOURCES = sio03.c
 sll_SOURCES = sll.c
 slmb01_SOURCES = slmb01.c
 str01_SOURCES = str01.c

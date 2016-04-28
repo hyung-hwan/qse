@@ -124,13 +124,12 @@ am__can_run_installinfo = \
   esac
 am__pkginclude_HEADERS_DIST = alg.h chr.h cp949.h cp950.h dir.h dll.h \
 	env.h fma.h fmt.h fs.h gdl.h glob.h htb.h hton.h ipad.h lda.h \
-	main.h map.h mb8.h mbwc.h mem.h nwad.h oht.h opt.h \
-	path.h pma.h rbt.h rex.h sck.h sll.h slmb.h str.h time.h tmr.h \
-	tre.h uni.h uri.h utf8.h xma.h Mmgr.hpp StdMmgr.hpp \
-	HeapMmgr.hpp Mmged.hpp ScopedPtr.hpp SharedPtr.hpp StrBase.hpp \
-	String.hpp Mpool.hpp Association.hpp LinkedList.hpp \
-	HashList.hpp HashTable.hpp RedBlackTree.hpp RedBlackTable.hpp \
-	Array.hpp BinaryHeap.hpp
+	main.h map.h mb8.h mbwc.h mem.h oht.h opt.h path.h pma.h rbt.h \
+	rex.h sll.h slmb.h str.h time.h tmr.h tre.h uni.h uri.h utf8.h \
+	xma.h Mmgr.hpp StdMmgr.hpp HeapMmgr.hpp Mmged.hpp \
+	ScopedPtr.hpp SharedPtr.hpp StrBase.hpp String.hpp Mpool.hpp \
+	Association.hpp LinkedList.hpp HashList.hpp HashTable.hpp \
+	RedBlackTree.hpp RedBlackTable.hpp Array.hpp BinaryHeap.hpp
 am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
 am__vpath_adj = case $$p in \
     $(srcdir)/*) f=`echo "$$p" | sed "s|^$$srcdirstrip/||"`;; \
@@ -358,9 +357,9 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 pkginclude_HEADERS = alg.h chr.h cp949.h cp950.h dir.h dll.h env.h \
 	fma.h fmt.h fs.h gdl.h glob.h htb.h hton.h ipad.h lda.h main.h \
-	map.h mb8.h mbwc.h mem.h nwad.h oht.h opt.h path.h \
-	pma.h rbt.h rex.h sck.h sll.h slmb.h str.h time.h tmr.h tre.h \
-	uni.h uri.h utf8.h xma.h $(am__append_1)
+	map.h mb8.h mbwc.h mem.h oht.h opt.h path.h pma.h rbt.h rex.h \
+	sll.h slmb.h str.h time.h tmr.h tre.h uni.h uri.h utf8.h xma.h \
+	$(am__append_1)
 all: all-am
 
 .SUFFIXES:

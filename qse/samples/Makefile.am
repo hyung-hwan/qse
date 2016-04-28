@@ -1,1 +1,1 @@
-SUBDIRS = cmn sys awk sed http
+SUBDIRS = cmn si awk sed http

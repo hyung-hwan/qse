@@ -22,14 +22,12 @@ pkginclude_HEADERS = \
 	mb8.h \
 	mbwc.h \
 	mem.h \
-	nwad.h \
 	oht.h \
 	opt.h \
 	path.h \
 	pma.h \
 	rbt.h \
 	rex.h \
-	sck.h \
 	sll.h \
 	slmb.h \
 	str.h \

@@ -63,10 +63,6 @@ libqsecmn_la_SOURCES = \
 	mbwc.c \
 	mbwc-str.c \
 	mem.c \
-	nwad.c \
-	nwad-skad.c \
-	nwif.c \
-	nwif-cfg.c \
 	oht.c \
 	opt.c \
 	path-base.c \
@@ -76,7 +72,6 @@ libqsecmn_la_SOURCES = \
 	pma.c \
 	rbt.c \
 	rex.c \
-	sck.c \
 	sll.c \
 	slmb.c \
 	str-beg.c \

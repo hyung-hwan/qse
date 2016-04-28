@@ -24,9 +24,10 @@
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <qse/cmn/nwad.h>
-#include "mem.h"
+#include <qse/si/nwad.h>
+
 #include <qse/cmn/mbwc.h>
+#include "../cmn/mem.h"
 
 #if defined(_WIN32)
 #	include <winsock2.h>
