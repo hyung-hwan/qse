@@ -25,7 +25,7 @@
  */
 
 
-#include "thr.h"
+#include "thr-prv.h"
 #include "../cmn/mem.h"
 #include <qse/cmn/time.h>
 #include <stdarg.h>

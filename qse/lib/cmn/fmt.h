@@ -108,13 +108,14 @@ typedef struct qse_wfmtout_t qse_wfmtout_t;
 extern "C" {
 #endif
 
-int qse_mfmtout (
+/* QSE_EXPORTed, but keep in it the private header for used by other libraries in QSE */
+QSE_EXPORT int qse_mfmtout (
 	const qse_mchar_t* fmt,
 	qse_mfmtout_t*     data,
 	va_list            ap
 );
 
-int qse_wfmtout (
+QSE_EXPORT int qse_wfmtout (
 	const qse_wchar_t* fmt,
 	qse_wfmtout_t*     data,
 	va_list            ap

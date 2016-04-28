@@ -25,7 +25,7 @@
  */
 
 
-#include <qse/io/aio-sck.h>
+#include <qse/si/aio-sck.h>
 #include "aio-prv.h"
 
 #include <qse/cmn/hton.h>

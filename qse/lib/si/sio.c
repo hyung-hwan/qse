@@ -24,7 +24,7 @@
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <qse/io/sio.h>
+#include <qse/si/sio.h>
 #include <qse/cmn/mbwc.h>
 #include "../cmn/mem.h"
 #include "../cmn/fmt.h"

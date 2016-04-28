@@ -24,7 +24,7 @@
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <qse/io/fio.h>
+#include <qse/si/fio.h>
 #include <qse/cmn/str.h>
 #include <qse/cmn/fmt.h>
 #include <qse/cmn/alg.h>

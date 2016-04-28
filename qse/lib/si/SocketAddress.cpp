@@ -25,7 +25,7 @@
  */
 
 
-#include <qse/sys/SocketAddress.hpp>
+#include <qse/si/SocketAddress.hpp>
 #include "../cmn/mem.h"
 
 #if defined(_WIN32)

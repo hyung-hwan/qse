@@ -24,7 +24,7 @@
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <qse/sys/rwl.h>
+#include <qse/si/rwl.h>
 #include "../cmn/mem.h"
 
 qse_rwl_t* qse_rwl_open (qse_mmgr_t* mmgr, qse_size_t xtnsize, int flags)

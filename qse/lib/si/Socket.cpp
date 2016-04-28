@@ -24,61 +24,48 @@
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _QSE_LIB_CMN_THR_H_
-#define _QSE_LIB_CMN_THR_H_
+#include <qse/si/Socket.hpp>
 
-#include <qse/sys/thr.h>
+/////////////////////////////////
+QSE_BEGIN_NAMESPACE(QSE)
+/////////////////////////////////
 
-
-#if (!defined(__unix__) && !defined(__unix)) || defined(HAVE_PTHREAD)
-
-#if defined(_WIN32)
-#	include <windows.h>
-#	include <process.h>
-#	define QSE_THR_HND_INVALID INVALID_HANDLE_VALUE
-
-#elif defined(__OS2__)
-#	define INCL_DOSPROCESS 
-#	define INCL_DOSDATETIME 
-#	define INCL_DOSERRORS
-#	include <os2.h>
-#	include <process.h>
-#	define QSE_THR_HND_INVALID (-1)
-
-#elif defined(__DOS__)
-	/* not implemented */
-
-#elif defined(__BEOS__)
-#	include <be/kernel/OS.h>
-#	define QSE_THR_HND_INVALID (-1)
-
-#else
-#	if defined(AIX) && defined(__GNUC__)
-		typedef int crid_t;
-		typedef unsigned int class_id_t;
-#	endif
-#	include <pthread.h>
-#	include <signal.h>
-
-#	define QSE_THR_HND_INVALID 0
-#endif
-
-struct qse_thr_t
+Socket::Socket (): handle(QSE_INVALID_SCKHND)
 {
-	qse_mmgr_t*       mmgr;
+}
 
-	qse_thr_routine_t __main_routine;
-	qse_thr_routine_t __temp_routine;
-	qse_bool_t        __joinable;
-	qse_size_t        __stacksize;
-
-	qse_thr_hnd_t     __handle;
-	qse_thr_state_t   __state;
-
-	int               __return_code;
-};
-
-#endif
+Socket::~Socket ()
+{
+	this->close ();
+}
 
 
-#endif
+void Socket::close ()
+{
+	if (this->handle != QSE_INVALID_SCKHND)
+	{
+		qse_closesckhnd (this->handle);
+		this->handle = QSE_INVALID_SCKHND;
+	}
+}
+
+//int Socket::open (int domain, int type, int protocol)
+//{
+//}
+
+
+int Socket::connect (const SocketAddress& target)
+{
+	if (this->handle == QSE_INVALID_SCKHND)
+	{
+		//::socket (target.getFamily(), this->type, 0);
+	}
+}
+
+int Socket::beginConnect (const SocketAddress &target)
+{
+}
+
+/////////////////////////////////
+QSE_END_NAMESPACE(QSE)
+/////////////////////////////////
