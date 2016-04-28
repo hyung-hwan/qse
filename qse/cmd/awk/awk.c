@@ -1194,7 +1194,6 @@ int qse_main (int argc, qse_achar_t* argv[])
 #else
 	/* nothing special */
 #endif
-QSE_ASSERT (1 == 3);
 
 #if defined(_WIN32)
 	codepage = GetConsoleOutputCP();

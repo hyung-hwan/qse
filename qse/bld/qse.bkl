@@ -510,6 +510,7 @@
 		<set-srcdir>../../lib/awk</set-srcdir>
 		<sources>mod-sys.c</sources>
 		<library>libqsecmn</library>
+		<library>libqsesi</library>
 		<library>libqseawk</library>
 		<depends>dllqseawk</depends>
 		<sys-lib>$(SYSLIB_1)</sys-lib>
