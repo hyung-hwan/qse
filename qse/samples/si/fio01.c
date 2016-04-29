@@ -1,7 +1,7 @@
-#include <qse/cmn/fio.h>
+#include <qse/si/fio.h>
 #include <qse/cmn/mem.h>
 #include <qse/cmn/str.h>
-#include <qse/cmn/sio.h>
+#include <qse/si/sio.h>
 
 #include <locale.h>
 

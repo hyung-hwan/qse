@@ -25,7 +25,7 @@
  */
 
 #include <qse/cmn/lda.h>
-#include "mem.h"
+#include "mem-prv.h"
 
 #define lda_t    qse_lda_t
 #define slot_t   qse_lda_slot_t

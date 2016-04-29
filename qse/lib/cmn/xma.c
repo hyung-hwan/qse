@@ -25,7 +25,7 @@
  */
 
 #include <qse/cmn/xma.h>
-#include "mem.h"
+#include "mem-prv.h"
 
 #define ALIGN QSE_SIZEOF(qse_size_t) /* this must be a power of 2 */
 #define HDRSIZE QSE_SIZEOF(qse_xma_blk_t)

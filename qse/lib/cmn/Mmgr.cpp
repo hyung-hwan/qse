@@ -26,7 +26,7 @@
 
 #include <qse/cmn/Mmgr.hpp>
 #include <qse/cmn/StdMmgr.hpp>
-#include "mem.h"
+#include "mem-prv.h"
 
 /////////////////////////////////
 QSE_BEGIN_NAMESPACE(QSE)

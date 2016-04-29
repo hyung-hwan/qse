@@ -29,7 +29,7 @@
 #include <qse/cmn/rbt.h>
 #include <qse/cmn/mbwc.h>
 #include <qse/cmn/fmt.h>
-#include "../cmn/mem.h"
+#include "../cmn/mem-prv.h"
 
 #if defined(HAVE_UCI_H)
 #	include <uci.h>

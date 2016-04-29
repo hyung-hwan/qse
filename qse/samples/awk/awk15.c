@@ -27,7 +27,7 @@
 #include <qse/awk/awk.h>
 #include <qse/awk/stdawk.h>
 #include <qse/cmn/mem.h>
-#include <qse/cmn/sio.h>
+#include <qse/si/sio.h>
 
 static const qse_char_t* src = QSE_T(
 	"BEGIN {"

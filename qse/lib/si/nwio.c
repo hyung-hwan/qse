@@ -26,7 +26,7 @@
 
 #include <qse/si/nwio.h>
 #include <qse/cmn/time.h>
-#include "../cmn/mem.h"
+#include "../cmn/mem-prv.h"
 
 #if defined(_WIN32)
 #	include <winsock2.h>

@@ -27,7 +27,7 @@
 #include "xli.h"
 #include <qse/xli/stdxli.h>
 #include <qse/cmn/path.h>
-#include "../cmn/mem.h"
+#include "../cmn/mem-prv.h"
 
 typedef struct xtn_t
 {

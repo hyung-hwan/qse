@@ -24,8 +24,8 @@
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _QSE_LIB_CMN_MEM_H_
-#define _QSE_LIB_CMN_MEM_H_
+#ifndef _QSE_LIB_CMN_MEM_PRV_H_
+#define _QSE_LIB_CMN_MEM_PRV_H_
 
 #include <qse/cmn/mem.h>
 

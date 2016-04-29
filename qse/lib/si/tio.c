@@ -26,7 +26,7 @@
 
 #include <qse/si/tio.h>
 #include <qse/cmn/mbwc.h> 
-#include "../cmn/mem.h"
+#include "../cmn/mem-prv.h"
 
 #define STATUS_OUTPUT_DYNBUF (1 << 0)
 #define STATUS_INPUT_DYNBUF  (1 << 1)

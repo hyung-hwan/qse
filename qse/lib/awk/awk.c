@@ -24,7 +24,7 @@
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "awk.h"
+#include "awk-prv.h"
 
 static void free_fun (qse_htb_t* map, void* vptr, qse_size_t vlen)
 {

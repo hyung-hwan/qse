@@ -212,7 +212,6 @@ LIBQSECMN_OBJECTS =  &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_alg_sort.obj &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_assert.obj &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_chr.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_dir.obj &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_dll.obj &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_env.obj &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_gdl.obj &
@@ -220,14 +219,6 @@ LIBQSECMN_OBJECTS =  &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_fma.obj &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_fmt_intmax.obj &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_fmt_out.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_fs.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_fs_attr.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_fs_copy.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_fs_delete.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_fs_err.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_fs_make.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_fs_move.obj &
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_glob.obj &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_hton.obj &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_ipad.obj &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_lda.obj &
@@ -297,7 +288,16 @@ LIBQSESI_CFLAGS = $(____DOS_CFLAG_p) -i=..\..\include $(CPPFLAGS_BUILD) &
 	-ox $(CPPFLAGS) $(CFLAGS)
 LIBQSESI_OBJECTS =  &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsesi_cnd.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsesi_dir.obj &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsesi_fio.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsesi_fs.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsesi_fs_attr.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsesi_fs_copy.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsesi_fs_delete.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsesi_fs_err.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsesi_fs_make.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsesi_fs_move.obj &
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsesi_glob.obj &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsesi_intr.obj &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsesi_mtx.obj &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsesi_mux.obj &
@@ -561,9 +561,6 @@ $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_assert
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_chr.obj :  .AUTODEPEND ..\..\lib\cmn\chr.c
 	$(CC) -bt=dos -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_dir.obj :  .AUTODEPEND ..\..\lib\cmn\dir.c
-	$(CC) -bt=dos -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
-
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_dll.obj :  .AUTODEPEND ..\..\lib\cmn\dll.c
 	$(CC) -bt=dos -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
@@ -583,30 +580,6 @@ $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_fmt_in
 	$(CC) -bt=dos -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_fmt_out.obj :  .AUTODEPEND ..\..\lib\cmn\fmt-out.c
-	$(CC) -bt=dos -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
-
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_fs.obj :  .AUTODEPEND ..\..\lib\cmn\fs.c
-	$(CC) -bt=dos -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
-
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_fs_attr.obj :  .AUTODEPEND ..\..\lib\cmn\fs-attr.c
-	$(CC) -bt=dos -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
-
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_fs_copy.obj :  .AUTODEPEND ..\..\lib\cmn\fs-copy.c
-	$(CC) -bt=dos -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
-
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_fs_delete.obj :  .AUTODEPEND ..\..\lib\cmn\fs-delete.c
-	$(CC) -bt=dos -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
-
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_fs_err.obj :  .AUTODEPEND ..\..\lib\cmn\fs-err.c
-	$(CC) -bt=dos -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
-
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_fs_make.obj :  .AUTODEPEND ..\..\lib\cmn\fs-make.c
-	$(CC) -bt=dos -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
-
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_fs_move.obj :  .AUTODEPEND ..\..\lib\cmn\fs-move.c
-	$(CC) -bt=dos -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
-
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_glob.obj :  .AUTODEPEND ..\..\lib\cmn\glob.c
 	$(CC) -bt=dos -zq -fo=$^@ $(LIBQSECMN_CFLAGS) $<
 
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_hton.obj :  .AUTODEPEND ..\..\lib\cmn\hton.c
@@ -804,7 +777,34 @@ $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsecmn_uni.ob
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsesi_cnd.obj :  .AUTODEPEND ..\..\lib\si\cnd.c
 	$(CC) -bt=dos -zq -fo=$^@ $(LIBQSESI_CFLAGS) $<
 
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsesi_dir.obj :  .AUTODEPEND ..\..\lib\si\dir.c
+	$(CC) -bt=dos -zq -fo=$^@ $(LIBQSESI_CFLAGS) $<
+
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsesi_fio.obj :  .AUTODEPEND ..\..\lib\si\fio.c
+	$(CC) -bt=dos -zq -fo=$^@ $(LIBQSESI_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsesi_fs.obj :  .AUTODEPEND ..\..\lib\si\fs.c
+	$(CC) -bt=dos -zq -fo=$^@ $(LIBQSESI_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsesi_fs_attr.obj :  .AUTODEPEND ..\..\lib\si\fs-attr.c
+	$(CC) -bt=dos -zq -fo=$^@ $(LIBQSESI_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsesi_fs_copy.obj :  .AUTODEPEND ..\..\lib\si\fs-copy.c
+	$(CC) -bt=dos -zq -fo=$^@ $(LIBQSESI_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsesi_fs_delete.obj :  .AUTODEPEND ..\..\lib\si\fs-delete.c
+	$(CC) -bt=dos -zq -fo=$^@ $(LIBQSESI_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsesi_fs_err.obj :  .AUTODEPEND ..\..\lib\si\fs-err.c
+	$(CC) -bt=dos -zq -fo=$^@ $(LIBQSESI_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsesi_fs_make.obj :  .AUTODEPEND ..\..\lib\si\fs-make.c
+	$(CC) -bt=dos -zq -fo=$^@ $(LIBQSESI_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsesi_fs_move.obj :  .AUTODEPEND ..\..\lib\si\fs-move.c
+	$(CC) -bt=dos -zq -fo=$^@ $(LIBQSESI_CFLAGS) $<
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsesi_glob.obj :  .AUTODEPEND ..\..\lib\si\glob.c
 	$(CC) -bt=dos -zq -fo=$^@ $(LIBQSESI_CFLAGS) $<
 
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-static$(BUILDDIR_TCPV40HDRS)\libqsesi_intr.obj :  .AUTODEPEND ..\..\lib\si\intr.c

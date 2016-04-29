@@ -41,10 +41,10 @@ BEGIN {
 */
 
 #include "mod-dir.h"
+#include <qse/si/dir.h>
 #include <qse/cmn/str.h>
 #include <qse/cmn/rbt.h>
-#include <qse/cmn/dir.h>
-#include "../cmn/mem.h"
+#include "../cmn/mem-prv.h"
 
 typedef struct dir_list_t dir_list_t;
 typedef struct dir_node_t dir_node_t;

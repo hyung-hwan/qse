@@ -24,11 +24,11 @@
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "sed.h"
+#include "sed-prv.h"
 #include <qse/sed/stdsed.h>
 #include <qse/cmn/str.h>
 #include <qse/si/sio.h>
-#include "../cmn/mem.h"
+#include "../cmn/mem-prv.h"
 
 typedef struct xtn_in_t xtn_in_t;
 struct xtn_in_t

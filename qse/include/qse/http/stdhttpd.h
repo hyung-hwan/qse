@@ -182,8 +182,8 @@ typedef int (*qse_httpd_serverstd_query_t) (
 enum qse_httpd_serverstd_opt_t
 {
 	QSE_HTTPD_SERVERSTD_QUERY,     /* qse_httpd_serverstd_query_t */
-	QSE_HTTPD_SERVERSTD_MAKERSRC,  /* qse_httpd_serverstd_makersrc_t* */
-	QSE_HTTPD_SERVERSTD_FREERSRC   /* qse_httpd_serverstd_freersrc_t* */
+	QSE_HTTPD_SERVERSTD_MAKERSRC,  /* qse_httpd_serverstd_makersrc_t */
+	QSE_HTTPD_SERVERSTD_FREERSRC   /* qse_httpd_serverstd_freersrc_t */
 };
 typedef enum qse_httpd_serverstd_opt_t qse_httpd_serverstd_opt_t;
 

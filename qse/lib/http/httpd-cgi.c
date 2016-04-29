@@ -25,7 +25,7 @@
  */
 
 #include "httpd.h"
-#include "../cmn/mem.h"
+#include "../cmn/mem-prv.h"
 #include <qse/cmn/str.h>
 #include <qse/si/pio.h>
 #include <qse/cmn/fmt.h>

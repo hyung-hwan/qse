@@ -33,8 +33,9 @@
 #include <qse/cmn/main.h>
 #include <qse/cmn/mbwc.h>
 #include <qse/cmn/xma.h>
-#include <qse/cmn/glob.h>
 #include <qse/cmn/fmt.h>
+
+#include <qse/si/glob.h>
 #include <qse/si/sio.h>
 #include <qse/si/intr.h>
 

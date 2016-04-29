@@ -33,6 +33,6 @@ libqsehttp_la_SOURCES = \
 	upxd.c
 
 libqsehttp_la_CPPFLAGS = $(CPPFLAGS_ALL_COMMON) $(CPPFLAGS_HTTPD_MOD) $(LTDLINCL)
-libqsehttp_la_LDFLAGS = -L../sys -L../cmn -L../io -version-info 1:0:0 -no-undefined 
-libqsehttp_la_LIBADD = -lqsesys -lqsecmn -lqseio $(SOCKET_LIBS) $(SENDFILE_LIBS) $(SSL_LIBS) $(LIBLTDL)
+libqsehttp_la_LDFLAGS = -L../si -L../cmn -version-info 1:0:0 -no-undefined 
+libqsehttp_la_LIBADD = -lqsesi -lqsecmn $(SOCKET_LIBS) $(SENDFILE_LIBS) $(SSL_LIBS) $(LIBLTDL)
 

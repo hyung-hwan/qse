@@ -78,8 +78,11 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-bin_PROGRAMS = fio01$(EXEEXT) fio02$(EXEEXT) pio01$(EXEEXT) \
-	rwl01$(EXEEXT) sio01$(EXEEXT) sio02$(EXEEXT) sio03$(EXEEXT)
+bin_PROGRAMS = dir01$(EXEEXT) fio01$(EXEEXT) fio02$(EXEEXT) \
+	fs01$(EXEEXT) fs02$(EXEEXT) fs03$(EXEEXT) glob01$(EXEEXT) \
+	nwad01$(EXEEXT) nwif01$(EXEEXT) nwif02$(EXEEXT) pio01$(EXEEXT) \
+	rwl01$(EXEEXT) sio01$(EXEEXT) sio02$(EXEEXT) sio03$(EXEEXT) \
+	task01$(EXEEXT)
 @WCHAR_TRUE@@WIN32_TRUE@am__append_1 = $(UNICOWS_LIBS)
 subdir = samples/si
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
@@ -101,20 +104,52 @@ CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
-am_fio01_OBJECTS = fio01.$(OBJEXT)
-fio01_OBJECTS = $(am_fio01_OBJECTS)
-fio01_LDADD = $(LDADD)
+am_dir01_OBJECTS = dir01.$(OBJEXT)
+dir01_OBJECTS = $(am_dir01_OBJECTS)
+dir01_LDADD = $(LDADD)
 am__DEPENDENCIES_1 =
 @WCHAR_TRUE@@WIN32_TRUE@am__DEPENDENCIES_2 = $(am__DEPENDENCIES_1)
-fio01_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_2)
+dir01_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_2)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
 am__v_lt_1 = 
+am_fio01_OBJECTS = fio01.$(OBJEXT)
+fio01_OBJECTS = $(am_fio01_OBJECTS)
+fio01_LDADD = $(LDADD)
+fio01_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_2)
 am_fio02_OBJECTS = fio02.$(OBJEXT)
 fio02_OBJECTS = $(am_fio02_OBJECTS)
 fio02_LDADD = $(LDADD)
 fio02_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_2)
+am_fs01_OBJECTS = fs01.$(OBJEXT)
+fs01_OBJECTS = $(am_fs01_OBJECTS)
+fs01_LDADD = $(LDADD)
+fs01_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_2)
+am_fs02_OBJECTS = fs02.$(OBJEXT)
+fs02_OBJECTS = $(am_fs02_OBJECTS)
+fs02_LDADD = $(LDADD)
+fs02_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_2)
+am_fs03_OBJECTS = fs03.$(OBJEXT)
+fs03_OBJECTS = $(am_fs03_OBJECTS)
+fs03_LDADD = $(LDADD)
+fs03_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_2)
+am_glob01_OBJECTS = glob01.$(OBJEXT)
+glob01_OBJECTS = $(am_glob01_OBJECTS)
+glob01_LDADD = $(LDADD)
+glob01_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_2)
+am_nwad01_OBJECTS = nwad01.$(OBJEXT)
+nwad01_OBJECTS = $(am_nwad01_OBJECTS)
+nwad01_LDADD = $(LDADD)
+nwad01_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_2)
+am_nwif01_OBJECTS = nwif01.$(OBJEXT)
+nwif01_OBJECTS = $(am_nwif01_OBJECTS)
+nwif01_LDADD = $(LDADD)
+nwif01_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_2)
+am_nwif02_OBJECTS = nwif02.$(OBJEXT)
+nwif02_OBJECTS = $(am_nwif02_OBJECTS)
+nwif02_LDADD = $(LDADD)
+nwif02_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_2)
 am_pio01_OBJECTS = pio01.$(OBJEXT)
 pio01_OBJECTS = $(am_pio01_OBJECTS)
 pio01_LDADD = $(LDADD)
@@ -135,6 +170,10 @@ am_sio03_OBJECTS = sio03.$(OBJEXT)
 sio03_OBJECTS = $(am_sio03_OBJECTS)
 sio03_LDADD = $(LDADD)
 sio03_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_2)
+am_task01_OBJECTS = task01.$(OBJEXT)
+task01_OBJECTS = $(am_task01_OBJECTS)
+task01_LDADD = $(LDADD)
+task01_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_2)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -169,12 +208,18 @@ AM_V_CCLD = $(am__v_CCLD_@AM_V@)
 am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
 am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
-SOURCES = $(fio01_SOURCES) $(fio02_SOURCES) $(pio01_SOURCES) \
-	$(rwl01_SOURCES) $(sio01_SOURCES) $(sio02_SOURCES) \
-	$(sio03_SOURCES)
-DIST_SOURCES = $(fio01_SOURCES) $(fio02_SOURCES) $(pio01_SOURCES) \
-	$(rwl01_SOURCES) $(sio01_SOURCES) $(sio02_SOURCES) \
-	$(sio03_SOURCES)
+SOURCES = $(dir01_SOURCES) $(fio01_SOURCES) $(fio02_SOURCES) \
+	$(fs01_SOURCES) $(fs02_SOURCES) $(fs03_SOURCES) \
+	$(glob01_SOURCES) $(nwad01_SOURCES) $(nwif01_SOURCES) \
+	$(nwif02_SOURCES) $(pio01_SOURCES) $(rwl01_SOURCES) \
+	$(sio01_SOURCES) $(sio02_SOURCES) $(sio03_SOURCES) \
+	$(task01_SOURCES)
+DIST_SOURCES = $(dir01_SOURCES) $(fio01_SOURCES) $(fio02_SOURCES) \
+	$(fs01_SOURCES) $(fs02_SOURCES) $(fs03_SOURCES) \
+	$(glob01_SOURCES) $(nwad01_SOURCES) $(nwif01_SOURCES) \
+	$(nwif02_SOURCES) $(pio01_SOURCES) $(rwl01_SOURCES) \
+	$(sio01_SOURCES) $(sio02_SOURCES) $(sio03_SOURCES) \
+	$(task01_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -384,13 +429,22 @@ AM_CPPFLAGS = \
 AM_LDFLAGS = -L../../lib/si  -L../../lib/cmn
 AM_CFLAGS = $(PTHREAD_CFLAGS)
 LDADD = -lqsesi -lqsecmn $(PTHREAD_LIBS) $(am__append_1)
+dir01_SOURCES = dir01.c
 fio01_SOURCES = fio01.c
 fio02_SOURCES = fio02.c
+fs01_SOURCES = fs01.c
+fs02_SOURCES = fs02.c
+fs03_SOURCES = fs03.c
+glob01_SOURCES = glob01.c
+nwad01_SOURCES = nwad01.c
+nwif01_SOURCES = nwif01.c
+nwif02_SOURCES = nwif02.c
 pio01_SOURCES = pio01.c
 rwl01_SOURCES = rwl01.c
 sio01_SOURCES = sio01.c
 sio02_SOURCES = sio02.c
 sio03_SOURCES = sio03.c
+task01_SOURCES = task01.c
 all: all-am
 
 .SUFFIXES:
@@ -475,6 +529,10 @@ clean-binPROGRAMS:
 	echo " rm -f" $$list; \
 	rm -f $$list
 
+dir01$(EXEEXT): $(dir01_OBJECTS) $(dir01_DEPENDENCIES) $(EXTRA_dir01_DEPENDENCIES) 
+	@rm -f dir01$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(dir01_OBJECTS) $(dir01_LDADD) $(LIBS)
+
 fio01$(EXEEXT): $(fio01_OBJECTS) $(fio01_DEPENDENCIES) $(EXTRA_fio01_DEPENDENCIES) 
 	@rm -f fio01$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(fio01_OBJECTS) $(fio01_LDADD) $(LIBS)
@@ -482,6 +540,34 @@ fio01$(EXEEXT): $(fio01_OBJECTS) $(fio01_DEPENDENCIES) $(EXTRA_fio01_DEPENDENCIE
 fio02$(EXEEXT): $(fio02_OBJECTS) $(fio02_DEPENDENCIES) $(EXTRA_fio02_DEPENDENCIES) 
 	@rm -f fio02$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(fio02_OBJECTS) $(fio02_LDADD) $(LIBS)
+
+fs01$(EXEEXT): $(fs01_OBJECTS) $(fs01_DEPENDENCIES) $(EXTRA_fs01_DEPENDENCIES) 
+	@rm -f fs01$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(fs01_OBJECTS) $(fs01_LDADD) $(LIBS)
+
+fs02$(EXEEXT): $(fs02_OBJECTS) $(fs02_DEPENDENCIES) $(EXTRA_fs02_DEPENDENCIES) 
+	@rm -f fs02$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(fs02_OBJECTS) $(fs02_LDADD) $(LIBS)
+
+fs03$(EXEEXT): $(fs03_OBJECTS) $(fs03_DEPENDENCIES) $(EXTRA_fs03_DEPENDENCIES) 
+	@rm -f fs03$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(fs03_OBJECTS) $(fs03_LDADD) $(LIBS)
+
+glob01$(EXEEXT): $(glob01_OBJECTS) $(glob01_DEPENDENCIES) $(EXTRA_glob01_DEPENDENCIES) 
+	@rm -f glob01$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(glob01_OBJECTS) $(glob01_LDADD) $(LIBS)
+
+nwad01$(EXEEXT): $(nwad01_OBJECTS) $(nwad01_DEPENDENCIES) $(EXTRA_nwad01_DEPENDENCIES) 
+	@rm -f nwad01$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(nwad01_OBJECTS) $(nwad01_LDADD) $(LIBS)
+
+nwif01$(EXEEXT): $(nwif01_OBJECTS) $(nwif01_DEPENDENCIES) $(EXTRA_nwif01_DEPENDENCIES) 
+	@rm -f nwif01$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(nwif01_OBJECTS) $(nwif01_LDADD) $(LIBS)
+
+nwif02$(EXEEXT): $(nwif02_OBJECTS) $(nwif02_DEPENDENCIES) $(EXTRA_nwif02_DEPENDENCIES) 
+	@rm -f nwif02$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(nwif02_OBJECTS) $(nwif02_LDADD) $(LIBS)
 
 pio01$(EXEEXT): $(pio01_OBJECTS) $(pio01_DEPENDENCIES) $(EXTRA_pio01_DEPENDENCIES) 
 	@rm -f pio01$(EXEEXT)
@@ -503,19 +589,32 @@ sio03$(EXEEXT): $(sio03_OBJECTS) $(sio03_DEPENDENCIES) $(EXTRA_sio03_DEPENDENCIE
 	@rm -f sio03$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(sio03_OBJECTS) $(sio03_LDADD) $(LIBS)
 
+task01$(EXEEXT): $(task01_OBJECTS) $(task01_DEPENDENCIES) $(EXTRA_task01_DEPENDENCIES) 
+	@rm -f task01$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(task01_OBJECTS) $(task01_LDADD) $(LIBS)
+
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
 
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dir01.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fio01.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fio02.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fs01.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fs02.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fs03.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/glob01.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/nwad01.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/nwif01.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/nwif02.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pio01.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rwl01.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sio01.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sio02.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sio03.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/task01.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<

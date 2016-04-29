@@ -27,7 +27,7 @@
 #ifndef _QSE_LIB_AWK_STD_H
 #define _QSE_LIB_AWK_STD_H_
 
-#include "awk.h"
+#include "awk-prv.h"
 
 #if defined(__cplusplus)
 extern "C" {

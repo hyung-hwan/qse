@@ -28,7 +28,7 @@
 #include <qse/cmn/str.h>
 #include <qse/cmn/chr.h>
 #include <qse/cmn/htb.h>
-#include "../cmn/mem.h"
+#include "../cmn/mem-prv.h"
 
 int qse_comparehttpversions (
 	const qse_http_version_t* v1,

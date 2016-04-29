@@ -30,7 +30,7 @@
 #include <qse/xli/xli.h>
 #include <qse/cmn/str.h>
 #include <qse/cmn/rbt.h>
-#include "../cmn/mem.h"
+#include "../cmn/mem-prv.h"
 
 enum qse_xli_tok_type_t
 {

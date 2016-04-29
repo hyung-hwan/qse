@@ -25,7 +25,7 @@
  */
 
 #include <qse/cmn/mbwc.h>
-#include "mem.h"
+#include "mem-prv.h"
 
 static int mbsn_to_wcsn_with_cmgr (
 	const qse_mchar_t* mbs, qse_size_t* mbslen,

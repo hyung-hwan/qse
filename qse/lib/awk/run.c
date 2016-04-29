@@ -24,7 +24,7 @@
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "awk.h"
+#include "awk-prv.h"
 #include <qse/cmn/fmt.h>
 
 #ifdef DEBUG_RUN

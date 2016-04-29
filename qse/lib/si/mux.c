@@ -25,7 +25,7 @@
  */
 
 #include <qse/si/mux.h>
-#include "../cmn/mem.h"
+#include "../cmn/mem-prv.h"
 
 #if defined(_WIN32)
 #	define FD_SETSIZE 4096 /* what is the best value??? */

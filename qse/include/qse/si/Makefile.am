@@ -5,7 +5,10 @@ pkginclude_HEADERS = \
 	aio-pro.h \
 	aio-sck.h
 	cnd.h \
+	dir.h \
 	fio.h  \
+	fs.h \
+	glob.h \
 	intr.h \
 	mtx.h \
 	mux.h \

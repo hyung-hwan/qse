@@ -24,7 +24,7 @@
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "awk.h"
+#include "awk-prv.h"
 #include <qse/cmn/mbwc.h>
 
 #ifdef DEBUG_VAL
@@ -1021,7 +1021,7 @@ int qse_awk_rtx_valtobool (qse_awk_rtx_t* rtx, const qse_awk_val_t* val)
 
 	QSE_ASSERTX (
 		!"should never happen - invalid value type",
-		"the type of a value should be one of QSE_AWK_VAL_XXX's defined in awk.h");
+		"the type of a value should be one of QSE_AWK_VAL_XXX's defined in awk-prv.h");
 	return 0;
 }
 

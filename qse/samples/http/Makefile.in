@@ -78,7 +78,7 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-bin_PROGRAMS = httpd01$(EXEEXT) httpd02$(EXEEXT) upxd01$(EXEEXT)
+bin_PROGRAMS = httpd01$(EXEEXT)
 @WCHAR_TRUE@@WIN32_TRUE@am__append_1 = $(UNICOWS_LIBS)
 subdir = samples/http
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
@@ -111,14 +111,6 @@ AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
 am__v_lt_1 = 
-am_httpd02_OBJECTS = httpd02.$(OBJEXT)
-httpd02_OBJECTS = $(am_httpd02_OBJECTS)
-httpd02_DEPENDENCIES = $(am__DEPENDENCIES_3) $(am__DEPENDENCIES_1)
-am_upxd01_OBJECTS = upxd01.$(OBJEXT)
-upxd01_OBJECTS = $(am_upxd01_OBJECTS)
-upxd01_LDADD = $(LDADD)
-upxd01_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_2)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -131,7 +123,7 @@ AM_V_at = $(am__v_at_@AM_V@)
 am__v_at_ = $(am__v_at_@AM_DEFAULT_V@)
 am__v_at_0 = @
 am__v_at_1 = 
-DEFAULT_INCLUDES = 
+DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)/include/qse
 depcomp = $(SHELL) $(top_srcdir)/ac/depcomp
 am__depfiles_maybe = depfiles
 am__mv = mv -f
@@ -153,8 +145,8 @@ AM_V_CCLD = $(am__v_CCLD_@AM_V@)
 am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
 am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
-SOURCES = $(httpd01_SOURCES) $(httpd02_SOURCES) $(upxd01_SOURCES)
-DIST_SOURCES = $(httpd01_SOURCES) $(httpd02_SOURCES) $(upxd01_SOURCES)
+SOURCES = $(httpd01_SOURCES)
+DIST_SOURCES = $(httpd01_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -355,7 +347,7 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-AUTOMAKE_OPTIONS = nostdinc
+AiUTOMAKE_OPTIONS = nostdinc
 AM_CPPFLAGS = \
 	-I$(top_builddir)/include \
 	-I$(top_srcdir)/include \
@@ -365,10 +357,7 @@ AM_LDFLAGS = -L../../lib/cmn -L../../lib/http
 LDADD = -lqsehttp -lqsecmn $(PTHREAD_LIBS) $(SOCKET_LIBS) \
 	$(SENDFILE_LIBS) $(am__append_1)
 httpd01_SOURCES = httpd01.c
-httpd02_SOURCES = httpd02.c
-upxd01_SOURCES = upxd01.c
 httpd01_LDADD = $(LDADD) $(SSL_LIBS)
-httpd02_LDADD = $(LDADD) $(SSL_LIBS)
 all: all-am
 
 .SUFFIXES:
@@ -457,14 +446,6 @@ httpd01$(EXEEXT): $(httpd01_OBJECTS) $(httpd01_DEPENDENCIES) $(EXTRA_httpd01_DEP
 	@rm -f httpd01$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(httpd01_OBJECTS) $(httpd01_LDADD) $(LIBS)
 
-httpd02$(EXEEXT): $(httpd02_OBJECTS) $(httpd02_DEPENDENCIES) $(EXTRA_httpd02_DEPENDENCIES) 
-	@rm -f httpd02$(EXEEXT)
-	$(AM_V_CCLD)$(LINK) $(httpd02_OBJECTS) $(httpd02_LDADD) $(LIBS)
-
-upxd01$(EXEEXT): $(upxd01_OBJECTS) $(upxd01_DEPENDENCIES) $(EXTRA_upxd01_DEPENDENCIES) 
-	@rm -f upxd01$(EXEEXT)
-	$(AM_V_CCLD)$(LINK) $(upxd01_OBJECTS) $(upxd01_LDADD) $(LIBS)
-
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
 
@@ -472,8 +453,6 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/httpd01.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/httpd02.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/upxd01.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<

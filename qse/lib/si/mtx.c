@@ -25,7 +25,7 @@
  */
 
 #include <qse/si/mtx.h>
-#include "../cmn/mem.h"
+#include "../cmn/mem-prv.h"
 
 #if (!defined(__unix__) && !defined(__unix)) || defined(HAVE_PTHREAD)
 

@@ -24,7 +24,7 @@
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "fs.h"
+#include "fs-prv.h"
 
 int qse_fs_sysmkdir (qse_fs_t* fs, const qse_fs_char_t* fspath)
 {

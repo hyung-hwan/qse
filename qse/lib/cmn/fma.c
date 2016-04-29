@@ -25,7 +25,7 @@
  */
 
 #include <qse/cmn/fma.h>
-#include "mem.h"
+#include "mem-prv.h"
 
 qse_fma_t* qse_fma_open (
 	qse_mmgr_t* mmgr, qse_size_t xtnsize, 

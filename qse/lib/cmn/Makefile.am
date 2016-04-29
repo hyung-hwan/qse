@@ -9,12 +9,10 @@ lib_LTLIBRARIES = libqsecmn.la
 noinst_HEADERS = \
 	cp949.h \
 	cp950.h \
-	fmt.h \
+	fmt-prv.h \
 	fmt-intmax.h \
 	fmt-out.h \
-	fs.h \
-	glob.h \
-	mem.h \
+	mem-prv.h \
 	str-cat.h \
 	str-dyn.h \
 	str-fcpy.h \
@@ -39,7 +37,6 @@ libqsecmn_la_SOURCES = \
 	alg-sort.c \
 	assert.c \
 	chr.c \
-	dir.c \
 	dll.c \
 	env.c \
 	gdl.c \
@@ -47,14 +44,6 @@ libqsecmn_la_SOURCES = \
 	fma.c \
 	fmt-intmax.c \
 	fmt-out.c \
-	fs.c \
-	fs-attr.c \
-	fs-copy.c \
-	fs-delete.c \
-	fs-err.c \
-	fs-make.c \
-	fs-move.c \
-	glob.c \
 	hton.c \
 	ipad.c \
 	lda.c \

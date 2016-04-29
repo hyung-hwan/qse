@@ -25,7 +25,7 @@
  */
 
 #include <qse/cmn/dll.h>
-#include "mem.h"
+#include "mem-prv.h"
 
 #define TOB(dll,len) ((len)*(dll)->scale)
 #define DPTR(node) QSE_DLL_DPTR(node)

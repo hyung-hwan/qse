@@ -153,7 +153,7 @@ SUBMATCH[4] = [defg]
 #include <qse/cmn/chr.h>
 #include <qse/cmn/str.h>
 #include <qse/cmn/pma.h>
-#include "mem.h"
+#include "mem-prv.h"
 
 #define tre_islower(c)  QSE_ISLOWER(c)
 #define tre_isupper(c)  QSE_ISUPPER(c)

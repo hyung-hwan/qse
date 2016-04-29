@@ -29,8 +29,8 @@
 #include <qse/cmn/str.h>
 #include <qse/cmn/mbwc.h>
 #include <stdarg.h>
-#include "mem.h"
-#include "fmt.h"
+#include "mem-prv.h"
+#include "fmt-prv.h"
 
 #include <stdio.h> /* for snrintf(). used for floating-point number formatting */
 #if defined(_MSC_VER) || defined(__BORLANDC__) || (defined(__WATCOMC__) && (__WATCOMC__ < 1200))

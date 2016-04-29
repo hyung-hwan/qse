@@ -26,8 +26,8 @@
 
 #include <qse/si/sio.h>
 #include <qse/cmn/mbwc.h>
-#include "../cmn/mem.h"
-#include "../cmn/fmt.h"
+#include "../cmn/mem-prv.h"
+#include "../cmn/fmt-prv.h"
 
 #if defined(_WIN32)
 #	include <windows.h> /* for the UGLY hack */

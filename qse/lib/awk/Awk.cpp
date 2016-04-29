@@ -26,8 +26,8 @@
 
 #include <qse/awk/Awk.hpp>
 #include <qse/cmn/str.h>
-#include "../cmn/mem.h"
-#include "awk.h"
+#include "../cmn/mem-prv.h"
+#include "awk-prv.h"
 
 /////////////////////////////////
 QSE_BEGIN_NAMESPACE(QSE)

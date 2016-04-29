@@ -25,7 +25,7 @@
  */
 
 #include <qse/cmn/time.h>
-#include "mem.h"
+#include "mem-prv.h"
 
 #if defined(_WIN32)
 #	include <windows.h>

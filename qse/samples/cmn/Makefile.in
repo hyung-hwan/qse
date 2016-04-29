@@ -78,16 +78,13 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-bin_PROGRAMS = chr01$(EXEEXT) dir01$(EXEEXT) dll$(EXEEXT) \
-	env01$(EXEEXT) fma$(EXEEXT) fmt01$(EXEEXT) fmt02$(EXEEXT) \
-	fs01$(EXEEXT) fs02$(EXEEXT) fs03$(EXEEXT) htb01$(EXEEXT) \
-	glob01$(EXEEXT) ipad01$(EXEEXT) lda$(EXEEXT) main01$(EXEEXT) \
-	main02$(EXEEXT) mbwc01$(EXEEXT) mbwc02$(EXEEXT) \
-	nwad01$(EXEEXT) nwif01$(EXEEXT) nwif02$(EXEEXT) oht$(EXEEXT) \
-	path01$(EXEEXT) pio$(EXEEXT) pma$(EXEEXT) rex01$(EXEEXT) \
-	rbt01$(EXEEXT) sll$(EXEEXT) slmb01$(EXEEXT) str01$(EXEEXT) \
-	task01$(EXEEXT) time$(EXEEXT) tre01$(EXEEXT) uri01$(EXEEXT) \
-	xma$(EXEEXT) $(am__EXEEXT_1)
+bin_PROGRAMS = chr01$(EXEEXT) dll$(EXEEXT) env01$(EXEEXT) fma$(EXEEXT) \
+	fmt01$(EXEEXT) fmt02$(EXEEXT) htb01$(EXEEXT) ipad01$(EXEEXT) \
+	lda$(EXEEXT) main01$(EXEEXT) main02$(EXEEXT) mbwc01$(EXEEXT) \
+	mbwc02$(EXEEXT) oht$(EXEEXT) path01$(EXEEXT) pma$(EXEEXT) \
+	rex01$(EXEEXT) rbt01$(EXEEXT) sll$(EXEEXT) slmb01$(EXEEXT) \
+	str01$(EXEEXT) str02$(EXEEXT) time$(EXEEXT) tre01$(EXEEXT) \
+	uri01$(EXEEXT) xma$(EXEEXT) $(am__EXEEXT_1)
 @WCHAR_TRUE@@WIN32_TRUE@am__append_1 = $(UNICOWS_LIBS)
 
 #bin_PROGRAMS += rex02
@@ -146,10 +143,6 @@ am_chr01_OBJECTS = chr01.$(OBJEXT)
 chr01_OBJECTS = $(am_chr01_OBJECTS)
 chr01_LDADD = $(LDADD)
 chr01_DEPENDENCIES = $(am__DEPENDENCIES_2)
-dir01_SOURCES = dir01.c
-dir01_OBJECTS = dir01.$(OBJEXT)
-dir01_LDADD = $(LDADD)
-dir01_DEPENDENCIES = $(am__DEPENDENCIES_2)
 am_dll_OBJECTS = dll.$(OBJEXT)
 dll_OBJECTS = $(am_dll_OBJECTS)
 dll_LDADD = $(LDADD)
@@ -170,22 +163,6 @@ am_fmt02_OBJECTS = fmt02.$(OBJEXT)
 fmt02_OBJECTS = $(am_fmt02_OBJECTS)
 fmt02_LDADD = $(LDADD)
 fmt02_DEPENDENCIES = $(am__DEPENDENCIES_2)
-am_fs01_OBJECTS = fs01.$(OBJEXT)
-fs01_OBJECTS = $(am_fs01_OBJECTS)
-fs01_LDADD = $(LDADD)
-fs01_DEPENDENCIES = $(am__DEPENDENCIES_2)
-fs02_SOURCES = fs02.c
-fs02_OBJECTS = fs02.$(OBJEXT)
-fs02_LDADD = $(LDADD)
-fs02_DEPENDENCIES = $(am__DEPENDENCIES_2)
-fs03_SOURCES = fs03.c
-fs03_OBJECTS = fs03.$(OBJEXT)
-fs03_LDADD = $(LDADD)
-fs03_DEPENDENCIES = $(am__DEPENDENCIES_2)
-am_glob01_OBJECTS = glob01.$(OBJEXT)
-glob01_OBJECTS = $(am_glob01_OBJECTS)
-glob01_LDADD = $(LDADD)
-glob01_DEPENDENCIES = $(am__DEPENDENCIES_2)
 am__hl01_SOURCES_DIST = hl01.cpp
 @ENABLE_CXX_TRUE@am_hl01_OBJECTS = hl01.$(OBJEXT)
 hl01_OBJECTS = $(am_hl01_OBJECTS)
@@ -222,18 +199,6 @@ am_mbwc02_OBJECTS = mbwc02.$(OBJEXT)
 mbwc02_OBJECTS = $(am_mbwc02_OBJECTS)
 mbwc02_LDADD = $(LDADD)
 mbwc02_DEPENDENCIES = $(am__DEPENDENCIES_2)
-am_nwad01_OBJECTS = nwad01.$(OBJEXT)
-nwad01_OBJECTS = $(am_nwad01_OBJECTS)
-nwad01_LDADD = $(LDADD)
-nwad01_DEPENDENCIES = $(am__DEPENDENCIES_2)
-nwif01_SOURCES = nwif01.c
-nwif01_OBJECTS = nwif01.$(OBJEXT)
-nwif01_LDADD = $(LDADD)
-nwif01_DEPENDENCIES = $(am__DEPENDENCIES_2)
-nwif02_SOURCES = nwif02.c
-nwif02_OBJECTS = nwif02.$(OBJEXT)
-nwif02_LDADD = $(LDADD)
-nwif02_DEPENDENCIES = $(am__DEPENDENCIES_2)
 am_oht_OBJECTS = oht.$(OBJEXT)
 oht_OBJECTS = $(am_oht_OBJECTS)
 oht_LDADD = $(LDADD)
@@ -242,10 +207,6 @@ am_path01_OBJECTS = path01.$(OBJEXT)
 path01_OBJECTS = $(am_path01_OBJECTS)
 path01_LDADD = $(LDADD)
 path01_DEPENDENCIES = $(am__DEPENDENCIES_2)
-am_pio_OBJECTS = pio.$(OBJEXT)
-pio_OBJECTS = $(am_pio_OBJECTS)
-pio_LDADD = $(LDADD)
-pio_DEPENDENCIES = $(am__DEPENDENCIES_2)
 am_pma_OBJECTS = pma.$(OBJEXT)
 pma_OBJECTS = $(am_pma_OBJECTS)
 pma_LDADD = $(LDADD)
@@ -290,10 +251,6 @@ am__str02_SOURCES_DIST = str02.cpp
 @ENABLE_CXX_TRUE@am_str02_OBJECTS = str02.$(OBJEXT)
 str02_OBJECTS = $(am_str02_OBJECTS)
 @ENABLE_CXX_TRUE@str02_DEPENDENCIES = $(am__DEPENDENCIES_3)
-task01_SOURCES = task01.c
-task01_OBJECTS = task01.$(OBJEXT)
-task01_LDADD = $(LDADD)
-task01_DEPENDENCIES = $(am__DEPENDENCIES_2)
 am_time_OBJECTS = time.$(OBJEXT)
 time_OBJECTS = $(am_time_OBJECTS)
 time_LDADD = $(LDADD)
@@ -363,35 +320,31 @@ am__v_CXXLD_ = $(am__v_CXXLD_@AM_DEFAULT_V@)
 am__v_CXXLD_0 = @echo "  CXXLD   " $@;
 am__v_CXXLD_1 = 
 SOURCES = $(arr01_SOURCES) $(arr02_SOURCES) $(bh01_SOURCES) \
-	$(bh02_SOURCES) $(chr01_SOURCES) dir01.c $(dll_SOURCES) \
+	$(bh02_SOURCES) $(chr01_SOURCES) $(dll_SOURCES) \
 	$(env01_SOURCES) $(fma_SOURCES) $(fmt01_SOURCES) \
-	$(fmt02_SOURCES) $(fs01_SOURCES) fs02.c fs03.c \
-	$(glob01_SOURCES) $(hl01_SOURCES) $(htb01_SOURCES) \
+	$(fmt02_SOURCES) $(hl01_SOURCES) $(htb01_SOURCES) \
 	$(htb02_SOURCES) $(ipad01_SOURCES) $(lda_SOURCES) \
 	$(main01_SOURCES) $(main02_SOURCES) $(mbwc01_SOURCES) \
-	$(mbwc02_SOURCES) $(nwad01_SOURCES) nwif01.c nwif02.c \
-	$(oht_SOURCES) $(path01_SOURCES) $(pio_SOURCES) $(pma_SOURCES) \
-	$(rbt01_SOURCES) $(rbt02_SOURCES) $(rbt03_SOURCES) \
-	$(rex01_SOURCES) $(sll_SOURCES) $(slmb01_SOURCES) \
-	$(sp01_SOURCES) $(sp02_SOURCES) $(str01_SOURCES) \
-	$(str02_SOURCES) task01.c $(time_SOURCES) $(tre01_SOURCES) \
-	uri01.c $(xma_SOURCES)
+	$(mbwc02_SOURCES) $(oht_SOURCES) $(path01_SOURCES) \
+	$(pma_SOURCES) $(rbt01_SOURCES) $(rbt02_SOURCES) \
+	$(rbt03_SOURCES) $(rex01_SOURCES) $(sll_SOURCES) \
+	$(slmb01_SOURCES) $(sp01_SOURCES) $(sp02_SOURCES) \
+	$(str01_SOURCES) $(str02_SOURCES) $(time_SOURCES) \
+	$(tre01_SOURCES) uri01.c $(xma_SOURCES)
 DIST_SOURCES = $(am__arr01_SOURCES_DIST) $(am__arr02_SOURCES_DIST) \
 	$(am__bh01_SOURCES_DIST) $(am__bh02_SOURCES_DIST) \
-	$(chr01_SOURCES) dir01.c $(dll_SOURCES) $(env01_SOURCES) \
+	$(chr01_SOURCES) $(dll_SOURCES) $(env01_SOURCES) \
 	$(fma_SOURCES) $(fmt01_SOURCES) $(fmt02_SOURCES) \
-	$(fs01_SOURCES) fs02.c fs03.c $(glob01_SOURCES) \
 	$(am__hl01_SOURCES_DIST) $(htb01_SOURCES) \
 	$(am__htb02_SOURCES_DIST) $(ipad01_SOURCES) $(lda_SOURCES) \
 	$(main01_SOURCES) $(main02_SOURCES) $(mbwc01_SOURCES) \
-	$(mbwc02_SOURCES) $(nwad01_SOURCES) nwif01.c nwif02.c \
-	$(oht_SOURCES) $(path01_SOURCES) $(pio_SOURCES) $(pma_SOURCES) \
-	$(rbt01_SOURCES) $(am__rbt02_SOURCES_DIST) \
+	$(mbwc02_SOURCES) $(oht_SOURCES) $(path01_SOURCES) \
+	$(pma_SOURCES) $(rbt01_SOURCES) $(am__rbt02_SOURCES_DIST) \
 	$(am__rbt03_SOURCES_DIST) $(rex01_SOURCES) $(sll_SOURCES) \
 	$(slmb01_SOURCES) $(am__sp01_SOURCES_DIST) \
 	$(am__sp02_SOURCES_DIST) $(str01_SOURCES) \
-	$(am__str02_SOURCES_DIST) task01.c $(time_SOURCES) \
-	$(tre01_SOURCES) uri01.c $(xma_SOURCES)
+	$(am__str02_SOURCES_DIST) $(time_SOURCES) $(tre01_SOURCES) \
+	uri01.c $(xma_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -598,16 +551,14 @@ AM_CPPFLAGS = \
 	-I$(top_srcdir)/include \
 	-I$(includedir)
 
-AM_LDFLAGS = -L../../lib/cmn 
-LDADD = -lqsecmn $(am__append_1)
+AM_LDFLAGS = -L../../lib/si  -L../../lib/cmn
+LDADD = -lqsesi -lqsecmn $(am__append_1)
 chr01_SOURCES = chr01.c
 env01_SOURCES = env01.c
 dll_SOURCES = dll.c
 fma_SOURCES = fma.c
 fmt01_SOURCES = fmt01.c
 fmt02_SOURCES = fmt02.c
-fs01_SOURCES = fs01.c
-glob01_SOURCES = glob01.c
 htb01_SOURCES = htb01.c
 ipad01_SOURCES = ipad01.c
 lda_SOURCES = lda.c
@@ -615,10 +566,8 @@ main01_SOURCES = main01.c
 main02_SOURCES = main02.c
 mbwc01_SOURCES = mbwc01.c
 mbwc02_SOURCES = mbwc02.c
-nwad01_SOURCES = nwad01.c
 oht_SOURCES = oht.c
 path01_SOURCES = path01.c
-pio_SOURCES = pio.c
 pma_SOURCES = pma.c
 rex01_SOURCES = rex01.c
 rbt01_SOURCES = rbt01.c
@@ -754,10 +703,6 @@ chr01$(EXEEXT): $(chr01_OBJECTS) $(chr01_DEPENDENCIES) $(EXTRA_chr01_DEPENDENCIE
 	@rm -f chr01$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(chr01_OBJECTS) $(chr01_LDADD) $(LIBS)
 
-dir01$(EXEEXT): $(dir01_OBJECTS) $(dir01_DEPENDENCIES) $(EXTRA_dir01_DEPENDENCIES) 
-	@rm -f dir01$(EXEEXT)
-	$(AM_V_CCLD)$(LINK) $(dir01_OBJECTS) $(dir01_LDADD) $(LIBS)
-
 dll$(EXEEXT): $(dll_OBJECTS) $(dll_DEPENDENCIES) $(EXTRA_dll_DEPENDENCIES) 
 	@rm -f dll$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(dll_OBJECTS) $(dll_LDADD) $(LIBS)
@@ -777,22 +722,6 @@ fmt01$(EXEEXT): $(fmt01_OBJECTS) $(fmt01_DEPENDENCIES) $(EXTRA_fmt01_DEPENDENCIE
 fmt02$(EXEEXT): $(fmt02_OBJECTS) $(fmt02_DEPENDENCIES) $(EXTRA_fmt02_DEPENDENCIES) 
 	@rm -f fmt02$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(fmt02_OBJECTS) $(fmt02_LDADD) $(LIBS)
-
-fs01$(EXEEXT): $(fs01_OBJECTS) $(fs01_DEPENDENCIES) $(EXTRA_fs01_DEPENDENCIES) 
-	@rm -f fs01$(EXEEXT)
-	$(AM_V_CCLD)$(LINK) $(fs01_OBJECTS) $(fs01_LDADD) $(LIBS)
-
-fs02$(EXEEXT): $(fs02_OBJECTS) $(fs02_DEPENDENCIES) $(EXTRA_fs02_DEPENDENCIES) 
-	@rm -f fs02$(EXEEXT)
-	$(AM_V_CCLD)$(LINK) $(fs02_OBJECTS) $(fs02_LDADD) $(LIBS)
-
-fs03$(EXEEXT): $(fs03_OBJECTS) $(fs03_DEPENDENCIES) $(EXTRA_fs03_DEPENDENCIES) 
-	@rm -f fs03$(EXEEXT)
-	$(AM_V_CCLD)$(LINK) $(fs03_OBJECTS) $(fs03_LDADD) $(LIBS)
-
-glob01$(EXEEXT): $(glob01_OBJECTS) $(glob01_DEPENDENCIES) $(EXTRA_glob01_DEPENDENCIES) 
-	@rm -f glob01$(EXEEXT)
-	$(AM_V_CCLD)$(LINK) $(glob01_OBJECTS) $(glob01_LDADD) $(LIBS)
 
 hl01$(EXEEXT): $(hl01_OBJECTS) $(hl01_DEPENDENCIES) $(EXTRA_hl01_DEPENDENCIES) 
 	@rm -f hl01$(EXEEXT)
@@ -830,18 +759,6 @@ mbwc02$(EXEEXT): $(mbwc02_OBJECTS) $(mbwc02_DEPENDENCIES) $(EXTRA_mbwc02_DEPENDE
 	@rm -f mbwc02$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(mbwc02_OBJECTS) $(mbwc02_LDADD) $(LIBS)
 
-nwad01$(EXEEXT): $(nwad01_OBJECTS) $(nwad01_DEPENDENCIES) $(EXTRA_nwad01_DEPENDENCIES) 
-	@rm -f nwad01$(EXEEXT)
-	$(AM_V_CCLD)$(LINK) $(nwad01_OBJECTS) $(nwad01_LDADD) $(LIBS)
-
-nwif01$(EXEEXT): $(nwif01_OBJECTS) $(nwif01_DEPENDENCIES) $(EXTRA_nwif01_DEPENDENCIES) 
-	@rm -f nwif01$(EXEEXT)
-	$(AM_V_CCLD)$(LINK) $(nwif01_OBJECTS) $(nwif01_LDADD) $(LIBS)
-
-nwif02$(EXEEXT): $(nwif02_OBJECTS) $(nwif02_DEPENDENCIES) $(EXTRA_nwif02_DEPENDENCIES) 
-	@rm -f nwif02$(EXEEXT)
-	$(AM_V_CCLD)$(LINK) $(nwif02_OBJECTS) $(nwif02_LDADD) $(LIBS)
-
 oht$(EXEEXT): $(oht_OBJECTS) $(oht_DEPENDENCIES) $(EXTRA_oht_DEPENDENCIES) 
 	@rm -f oht$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(oht_OBJECTS) $(oht_LDADD) $(LIBS)
@@ -849,10 +766,6 @@ oht$(EXEEXT): $(oht_OBJECTS) $(oht_DEPENDENCIES) $(EXTRA_oht_DEPENDENCIES)
 path01$(EXEEXT): $(path01_OBJECTS) $(path01_DEPENDENCIES) $(EXTRA_path01_DEPENDENCIES) 
 	@rm -f path01$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(path01_OBJECTS) $(path01_LDADD) $(LIBS)
-
-pio$(EXEEXT): $(pio_OBJECTS) $(pio_DEPENDENCIES) $(EXTRA_pio_DEPENDENCIES) 
-	@rm -f pio$(EXEEXT)
-	$(AM_V_CCLD)$(LINK) $(pio_OBJECTS) $(pio_LDADD) $(LIBS)
 
 pma$(EXEEXT): $(pma_OBJECTS) $(pma_DEPENDENCIES) $(EXTRA_pma_DEPENDENCIES) 
 	@rm -f pma$(EXEEXT)
@@ -898,10 +811,6 @@ str02$(EXEEXT): $(str02_OBJECTS) $(str02_DEPENDENCIES) $(EXTRA_str02_DEPENDENCIE
 	@rm -f str02$(EXEEXT)
 	$(AM_V_CXXLD)$(CXXLINK) $(str02_OBJECTS) $(str02_LDADD) $(LIBS)
 
-task01$(EXEEXT): $(task01_OBJECTS) $(task01_DEPENDENCIES) $(EXTRA_task01_DEPENDENCIES) 
-	@rm -f task01$(EXEEXT)
-	$(AM_V_CCLD)$(LINK) $(task01_OBJECTS) $(task01_LDADD) $(LIBS)
-
 time$(EXEEXT): $(time_OBJECTS) $(time_DEPENDENCIES) $(EXTRA_time_DEPENDENCIES) 
 	@rm -f time$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(time_OBJECTS) $(time_LDADD) $(LIBS)
@@ -929,16 +838,11 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/bh01.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/bh02.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/chr01.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dir01.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dll.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/env01.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fma.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fmt01.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fmt02.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fs01.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fs02.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fs03.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/glob01.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hl01.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/htb01.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/htb02.Po@am__quote@
@@ -948,12 +852,8 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/main02.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mbwc01.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mbwc02.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/nwad01.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/nwif01.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/nwif02.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/oht.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/path01.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pio.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pma.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rbt01.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rbt02.Po@am__quote@
@@ -965,7 +865,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sp02.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str01.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str02.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/task01.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/time.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tre01.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/uri01.Po@am__quote@

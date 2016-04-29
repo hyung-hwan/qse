@@ -4,7 +4,7 @@
  */
 
 #include <qse/cmn/time.h>
-#include <qse/cmn/sio.h>
+#include <qse/si/sio.h>
 #include <locale.h>
 
 #include <sys/time.h>

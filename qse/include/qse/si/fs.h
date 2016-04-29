@@ -24,8 +24,8 @@
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _QSE_CMN_FS_H_
-#define _QSE_CMN_FS_H_
+#ifndef _QSE_SI_FS_H_
+#define _QSE_SI_FS_H_
 
 /**  \file
  * This file defines data types and functions for manipulating files and

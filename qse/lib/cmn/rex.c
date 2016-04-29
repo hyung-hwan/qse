@@ -28,7 +28,7 @@
 #include <qse/cmn/chr.h>
 #include <qse/cmn/str.h>
 #include <qse/cmn/lda.h>
-#include "mem.h"
+#include "mem-prv.h"
 
 #define OCC_MAX QSE_TYPE_MAX(qse_size_t)
 

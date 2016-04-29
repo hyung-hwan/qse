@@ -6,6 +6,6 @@ AM_CPPFLAGS = \
 
 lib_LTLIBRARIES = libqsexli.la
 libqsexli_la_SOURCES = xli.h xli.c err.c read.c read-ini.c write.c write-ini.c std.c
-libqsexli_la_LDFLAGS = -L../cmn -L../io -version-info 1:0:0 -no-undefined
-libqsexli_la_LIBADD = -lqsecmn  -lqseio
+libqsexli_la_LDFLAGS = -L../cmn -L../si -version-info 1:0:0 -no-undefined
+libqsexli_la_LIBADD = -lqsesi -lqsecmn 
 

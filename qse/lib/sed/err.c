@@ -24,8 +24,8 @@
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "sed.h"
-#include "../cmn/mem.h"
+#include "sed-prv.h"
+#include "../cmn/mem-prv.h"
 
 const qse_char_t* qse_sed_dflerrstr (
 	const qse_sed_t* sed, qse_sed_errnum_t errnum)

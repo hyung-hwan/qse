@@ -1,7 +1,7 @@
 #include <qse/cmn/fma.h>
 #include <qse/cmn/rbt.h>
 #include <qse/cmn/mem.h>
-#include <qse/cmn/sio.h>
+#include <qse/si/sio.h>
 
 #define R(f) \
 	do { \

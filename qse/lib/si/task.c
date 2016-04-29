@@ -25,7 +25,7 @@
  */
 
 #include <qse/si/task.h>
-#include "../cmn/mem.h"
+#include "../cmn/mem-prv.h"
 
 #if defined(_WIN64)
 #	if !defined(_WIN32_WINNT)

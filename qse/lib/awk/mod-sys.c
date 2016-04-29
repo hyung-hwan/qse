@@ -31,7 +31,7 @@
 #include <qse/cmn/mbwc.h>
 #include <qse/si/nwad.h>
 #include <qse/si/nwif.h>
-#include "../cmn/mem.h"
+#include "../cmn/mem-prv.h"
 
 #if defined(_WIN32)
 #	include <windows.h>

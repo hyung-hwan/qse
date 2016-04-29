@@ -35,7 +35,7 @@
 #include <qse/si/sio.h>
 #include <qse/si/pio.h>
 #include <qse/si/nwio.h>
-#include "../cmn/mem.h"
+#include "../cmn/mem-prv.h"
 
 #include <stdarg.h>
 #include <stdlib.h>

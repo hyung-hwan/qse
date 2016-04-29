@@ -28,7 +28,7 @@
 #define _QSE_LIB_NET_UPXD_H_
 
 #include <qse/http/upxd.h>
-#include "../cmn/mem.h"
+#include "../cmn/mem-prv.h"
 
 typedef struct qse_upxd_server_session_t qse_upxd_server_session_t;
 

@@ -24,7 +24,7 @@
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "awk.h"
+#include "awk-prv.h"
 
 const qse_char_t* qse_awk_dflerrstr (const qse_awk_t* awk, qse_awk_errnum_t errnum)
 {

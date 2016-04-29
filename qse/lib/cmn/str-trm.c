@@ -26,7 +26,7 @@
 
 #include <qse/cmn/str.h>
 #include <qse/cmn/chr.h>
-#include "mem.h"
+#include "mem-prv.h"
 
 qse_mchar_t* qse_mbstrmx (qse_mchar_t* str, int opt)
 {

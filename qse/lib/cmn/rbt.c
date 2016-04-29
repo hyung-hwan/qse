@@ -25,7 +25,7 @@
  */
 
 #include <qse/cmn/rbt.h>
-#include "mem.h"
+#include "mem-prv.h"
 
 #define rbt_t           qse_rbt_t
 #define pair_t          qse_rbt_pair_t

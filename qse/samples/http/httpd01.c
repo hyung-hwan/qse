@@ -1,6 +1,6 @@
 
-#include <qse/http/httpd.h>
-#include <qse/cmn/sio.h>
+#include <qse/http/stdhttpd.h>
+#include <qse/si/sio.h>
 #include <qse/cmn/main.h>
 #include <qse/cmn/str.h>
 #include <qse/cmn/mem.h>
@@ -46,11 +46,11 @@ static int httpd_main (int argc, qse_char_t* argv[])
 
 	if (argc <= 1)
 	{
-		qse_fprintf (QSE_STDERR, QSE_T("Usage: %s <listener_uri> ...\n"), argv[0]);
+		qse_fprintf (QSE_STDERR, QSE_T("Usage: %s binding_address:port ...\n"), argv[0]);
 		goto oops;
 	}
 
-	httpd = qse_httpd_openstd (0);
+	httpd = qse_httpd_openstd (0, QSE_NULL);
 	if (httpd == QSE_NULL)
 	{
 		qse_fprintf (QSE_STDERR, QSE_T("Cannot open httpd\n"));
@@ -60,19 +60,17 @@ static int httpd_main (int argc, qse_char_t* argv[])
 	for (i = 1; i < argc; i++)
 	{
 		qse_httpd_server_t* server;
+		qse_httpd_server_dope_t dope;
 
-		server = qse_httpd_attachserverstd (httpd, argv[i], QSE_NULL, 0);
+		qse_memset(&dope, 0, QSE_SIZEOF(dope));
+		qse_strtonwad (argv[i], &dope.nwad);
+		server = qse_httpd_attachserverstd (httpd, &dope, 0);
 		if (server == QSE_NULL)
 		{
 			qse_fprintf (QSE_STDERR,
 				QSE_T("Failed to add httpd listener - %s\n"), argv[i]);
 			goto oops;
 		}
-
-		qse_httpd_setserveroptstd (httpd, server, QSE_HTTPD_SERVER_DIRCSS, 
-			QSE_MT("<style type='text/css'>body { background-color:#d0e4fe; font-size: 0.9em; } div.header { font-weight: bold; margin-bottom: 5px; } div.footer { border-top: 1px solid #99AABB; text-align: right; } table { font-size: 0.9em; } td { white-space: nowrap; } td.size { text-align: right; }</style>"));
-		qse_httpd_setserveroptstd (httpd, server, QSE_HTTPD_SERVER_ERRCSS, 
-			QSE_MT("<style type='text/css'>body { background-color:#d0e4fe; font-size: 0.9em; } div.header { font-weight: bold; margin-bottom: 5px; } div.footer { border-top: 1px solid #99AABB; text-align: right; }</style>"));
 	}
 
 	g_httpd = httpd;
@@ -81,11 +79,16 @@ static int httpd_main (int argc, qse_char_t* argv[])
 	signal (SIGPIPE, SIG_IGN);
 #endif
 
-	qse_httpd_setoption (httpd, QSE_HTTPD_CGIERRTONUL);
+	{
 
-	tmout.sec = 10;
-	tmout.nsec = 0;
-	ret = qse_httpd_loopstd (httpd, &tmout);
+		int trait = QSE_HTTPD_CGIERRTONUL;
+		qse_httpd_setopt (httpd, QSE_HTTPD_TRAIT,  &trait);
+
+		qse_inittime (&tmout, 10, 0);
+		qse_httpd_setopt (httpd, QSE_HTTPD_TMOUT,  &tmout);
+	}
+
+	ret = qse_httpd_loopstd (httpd, QSE_NULL, QSE_NULL);
 
 	signal (SIGINT, SIG_DFL);
 #if defined(SIGPIPE)

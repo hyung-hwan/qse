@@ -25,7 +25,7 @@
  */
 
 #include <qse/cmn/sll.h>
-#include "mem.h"
+#include "mem-prv.h"
 
 #define sll_t    qse_sll_t
 #define node_t   qse_sll_node_t

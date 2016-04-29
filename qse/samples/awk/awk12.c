@@ -1,5 +1,5 @@
 #include <qse/awk/stdawk.h>
-#include <qse/cmn/sio.h>
+#include <qse/si/sio.h>
 
 /* this sample produces 8 text files containing multiplication chart. */
 

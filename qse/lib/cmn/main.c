@@ -27,7 +27,7 @@
 #include <qse/cmn/main.h>
 #include <qse/cmn/mbwc.h>
 
-#include "mem.h"
+#include "mem-prv.h"
 
 int qse_runmain (
 	int argc, qse_achar_t* argv[], qse_runmain_handler_t handler)

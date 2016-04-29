@@ -24,10 +24,10 @@
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _QSE_LIB_AWK_AWK_H_
-#define _QSE_LIB_AWK_AWK_H_
+#ifndef _QSE_LIB_AWK_AWK_PRV_H_
+#define _QSE_LIB_AWK_AWK_PRV_H_
 
-#include "../cmn/mem.h"
+#include "../cmn/mem-prv.h"
 #include <qse/cmn/chr.h>
 #include <qse/cmn/str.h>
 #include <qse/cmn/htb.h>

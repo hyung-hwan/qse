@@ -27,7 +27,7 @@
 #include "mod-str.h"
 #include <qse/cmn/str.h>
 #include <qse/cmn/chr.h>
-#include "../cmn/mem.h"
+#include "../cmn/mem-prv.h"
 #include "fnc.h"
 
 static int fnc_normspace (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)

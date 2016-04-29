@@ -24,8 +24,8 @@
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "sed.h"
-#include "../cmn/mem.h"
+#include "sed-prv.h"
+#include "../cmn/mem-prv.h"
 #include <qse/cmn/chr.h>
 
 /* Define USE_REX to use <qse/cmn/rex.h> */

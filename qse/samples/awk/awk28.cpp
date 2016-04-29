@@ -25,7 +25,7 @@
  */
 
 #include <qse/awk/StdAwk.hpp>
-#include <qse/cmn/sio.h>
+#include <qse/si/sio.h>
 #include <qse/cmn/main.h>
 #include <qse/cmn/mbwc.h>
 #include <qse/cmn/str.h>

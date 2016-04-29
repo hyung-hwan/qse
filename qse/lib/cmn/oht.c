@@ -1,5 +1,5 @@
 #include <qse/cmn/oht.h>
-#include "mem.h"
+#include "mem-prv.h"
 
 #define DATA_PTR(oht,index) \
 	((void*)(((qse_byte_t*)(oht)->data) + ((index) * (oht)->scale)))

@@ -24,7 +24,7 @@
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "fs.h"
+#include "fs-prv.h"
 
 /* NOTE:
  * The current implementation require mbs/wcs conversion as
