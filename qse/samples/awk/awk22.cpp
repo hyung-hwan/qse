@@ -1,5 +1,5 @@
 #include <qse/awk/StdAwk.hpp>
-#include <qse/cmn/sio.h>
+#include <qse/si/sio.h>
 #include <string>
 
 #if defined(QSE_CHAR_IS_WCHAR)

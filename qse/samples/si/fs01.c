@@ -1,8 +1,9 @@
-#include <qse/cmn/fs.h>
+#include <qse/si/fs.h>
+#include <qse/si/sio.h>
+
 #include <qse/cmn/mem.h>
 #include <qse/cmn/main.h>
 #include <qse/cmn/mbwc.h>
-#include <qse/cmn/sio.h>
 
 #include <locale.h>
 #if defined(_WIN32)

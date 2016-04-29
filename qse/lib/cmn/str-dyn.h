@@ -25,8 +25,8 @@
  */
 
 #include <qse/cmn/str.h>
-#include "mem.h"
-#include "fmt.h"
+#include "mem-prv.h"
+#include "fmt-prv.h"
 #include <stdarg.h>
 
 str_t* str_open (qse_mmgr_t* mmgr, qse_size_t xtnsize, qse_size_t capa)

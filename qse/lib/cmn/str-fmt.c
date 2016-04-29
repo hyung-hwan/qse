@@ -26,7 +26,7 @@
 
 #include <qse/cmn/str.h>
 #include <qse/cmn/mbwc.h>
-#include "fmt.h"
+#include "fmt-prv.h"
 
 struct mbuf_t
 {

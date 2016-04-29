@@ -1,6 +1,6 @@
 #include <qse/sed/stdsed.h>
 #include <qse/cmn/main.h>
-#include <qse/cmn/sio.h>
+#include <qse/si/sio.h>
 #include "sed00.h"
 
 static void trace_exec (qse_sed_t* sed, qse_sed_tracer_op_t op, qse_sed_cmd_t* cmd)

@@ -25,7 +25,7 @@
  */
 
 #include <qse/cmn/str.h>
-#include "mem.h"
+#include "mem-prv.h"
 
 #if defined(HAVE_EXECINFO_H)
 #	include <execinfo.h>

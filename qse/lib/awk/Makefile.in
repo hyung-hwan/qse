@@ -14,6 +14,7 @@
 
 @SET_MAKE@
 
+
 VPATH = @srcdir@
 am__is_gnu_make = test -n '$(MAKEFILE_LIST)' && test -n '$(MAKELEVEL)'
 am__make_running_with_option = \
@@ -105,7 +106,7 @@ host_triplet = @host@
 @ENABLE_STATIC_MODULE_FALSE@@HAVE_LIBUCI_TRUE@am__append_12 = libqseawk-uci.la
 subdir = lib/awk
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
-	$(top_srcdir)/ac/depcomp
+	$(top_srcdir)/ac/depcomp $(noinst_HEADERS)
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/argz.m4 \
 	$(top_srcdir)/m4/ax_check_sign.m4 \
@@ -243,10 +244,9 @@ am__DEPENDENCIES_2 = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 libqseawk_la_DEPENDENCIES = $(am__DEPENDENCIES_2) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_3)
 am__libqseawk_la_SOURCES_DIST = awk.c err.c tree.c parse.c run.c rec.c \
-	val.c fnc.c misc.c rio.c std.c awk.h err.h rio.h val.h fnc.h \
-	misc.h parse.h run.h tree.h std.h mod-dir.c mod-dir.h \
-	mod-math.c mod-math.h mod-sed.c mod-sed.h mod-str.c mod-str.h \
-	mod-sys.c mod-sys.h mod-mpi.c mod-mpi.h mod-uci.c mod-uci.h
+	val.c fnc.c misc.c rio.c std.c mod-dir.c mod-dir.h mod-math.c \
+	mod-math.h mod-sed.c mod-sed.h mod-str.c mod-str.h mod-sys.c \
+	mod-sys.h mod-mpi.c mod-mpi.h mod-uci.c mod-uci.h
 @ENABLE_STATIC_MODULE_TRUE@am__objects_1 = libqseawk_la-mod-dir.lo \
 @ENABLE_STATIC_MODULE_TRUE@	libqseawk_la-mod-math.lo \
 @ENABLE_STATIC_MODULE_TRUE@	libqseawk_la-mod-sed.lo \
@@ -344,6 +344,7 @@ am__can_run_installinfo = \
     n|no|NO) false;; \
     *) (install-info --version) >/dev/null 2>&1;; \
   esac
+HEADERS = $(noinst_HEADERS)
 am__tagged_files = $(HEADERS) $(SOURCES) $(TAGS_FILES) $(LISP)
 # Read a list of newline-separated strings from the standard input,
 # and print each of them once, without duplicates.  Input order is
@@ -553,10 +554,10 @@ CPPFLAGS_LIB_COMMON = $(CPPFLAGS_ALL_COMMON) $(LTDLINCL) \
 	$(am__append_1) $(am__append_2)
 LDFLAGS_LIB_COMMON = $(LDFLAGS_ALL_COMMON) 
 LIBADD_LIB_COMMON = -lqsecmn -lqsesi $(LIBM) $(LIBLTDL) 
+noinst_HEADERS = awk-prv.h err.h rio.h val.h fnc.h misc.h parse.h run.h tree.h std.h
 lib_LTLIBRARIES = libqseawk.la $(am__append_3)
 libqseawk_la_SOURCES = awk.c err.c tree.c parse.c run.c rec.c val.c \
-	fnc.c misc.c rio.c std.c awk.h err.h rio.h val.h fnc.h misc.h \
-	parse.h run.h tree.h std.h $(am__append_4) $(am__append_6) \
+	fnc.c misc.c rio.c std.c $(am__append_4) $(am__append_6) \
 	$(am__append_9)
 libqseawk_la_CPPFLAGS = $(CPPFLAGS_LIB_COMMON) $(am__append_7)
 libqseawk_la_LDFLAGS = $(LDFLAGS_LIB_COMMON) $(am__append_8)
@@ -565,7 +566,7 @@ libqseawk_la_LIBADD = $(LIBADD_LIB_COMMON) $(am__append_5) \
 @ENABLE_CXX_TRUE@libqseawkxx_la_SOURCES = Awk.cpp StdAwk.cpp
 @ENABLE_CXX_TRUE@libqseawkxx_la_CPPFLAGS = $(CPPFLAGS_LIB_COMMON)
 @ENABLE_CXX_TRUE@libqseawkxx_la_LDFLAGS = $(LDFLAGS_LIB_COMMON)
-@ENABLE_CXX_TRUE@libqseawkxx_la_LIBADD = -lqseawk -lqsecmnxx -lqseawk -lqsecmn $(LIBADD_LIB_COMMON) 
+@ENABLE_CXX_TRUE@libqseawkxx_la_LIBADD = -lqseawk -lqsecmnxx -lqseawk -lqsesi -lqsecmn $(LIBADD_LIB_COMMON) 
 
 ##################################################
 # DYNAMIC MODULES 
@@ -580,8 +581,8 @@ libqseawk_la_LIBADD = $(LIBADD_LIB_COMMON) $(am__append_5) \
 @ENABLE_STATIC_MODULE_FALSE@	$(am__append_11) $(am__append_12)
 @ENABLE_STATIC_MODULE_FALSE@libqseawk_dir_la_SOURCES = mod-dir.c mod-dir.h
 @ENABLE_STATIC_MODULE_FALSE@libqseawk_dir_la_CPPFLAGS = $(CPPFLAGS_MOD_COMMON)
-@ENABLE_STATIC_MODULE_FALSE@libqseawk_dir_la_LDFLAGS = $(LDFLAGS_MOD_COMMON)
-@ENABLE_STATIC_MODULE_FALSE@libqseawk_dir_la_LIBADD = $(LIBADD_MOD_COMMON)
+@ENABLE_STATIC_MODULE_FALSE@libqseawk_dir_la_LDFLAGS = $(LDFLAGS_MOD_COMMON) -L../si
+@ENABLE_STATIC_MODULE_FALSE@libqseawk_dir_la_LIBADD = $(LIBADD_MOD_COMMON) -lqsesi
 @ENABLE_STATIC_MODULE_FALSE@libqseawk_math_la_SOURCES = mod-math.c mod-math.h
 @ENABLE_STATIC_MODULE_FALSE@libqseawk_math_la_CPPFLAGS = $(CPPFLAGS_MOD_COMMON)
 @ENABLE_STATIC_MODULE_FALSE@libqseawk_math_la_LDFLAGS = $(LDFLAGS_MOD_COMMON)
@@ -1093,7 +1094,7 @@ distdir: $(DISTFILES)
 	done
 check-am: all-am
 check: check-am
-all-am: Makefile $(LTLIBRARIES)
+all-am: Makefile $(LTLIBRARIES) $(HEADERS)
 installdirs:
 	for dir in "$(DESTDIR)$(libdir)" "$(DESTDIR)$(modexecdir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \

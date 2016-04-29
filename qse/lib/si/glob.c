@@ -24,12 +24,13 @@
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <qse/cmn/glob.h>
+#include <qse/si/glob.h>
+#include <qse/si/dir.h>
+
 #include <qse/cmn/str.h>
 #include <qse/cmn/mbwc.h>
 #include <qse/cmn/path.h>
-#include <qse/cmn/dir.h>
-#include "mem.h"
+#include "../cmn/mem-prv.h"
 
 #if defined(_WIN32) 
 #	include <windows.h>
@@ -43,7 +44,7 @@
 #elif defined(macintosh)
 #	include <Files.h>
 #else
-#	include "syscall.h"
+#	include "../cmn/syscall.h"
 #endif
 
 #define NO_RECURSION 1
@@ -116,7 +117,7 @@ typedef enum segment_type_t segment_type_t;
 #define handle_non_wild_segments mbs_handle_non_wild_segments
 #define CHAR_IS_MCHAR 
 #undef INCLUDE_MBUF
-#include "glob.h"
+#include "glob-imp.h"
 
 /* -------------------------------------------------------------------- */
 
@@ -200,4 +201,4 @@ typedef enum segment_type_t segment_type_t;
 #if !defined(_WIN32) 
 #	define INCLUDE_MBUF 1
 #endif
-#include "glob.h"
+#include "glob-imp.h"

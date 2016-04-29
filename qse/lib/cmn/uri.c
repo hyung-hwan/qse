@@ -25,7 +25,7 @@
  */
 
 #include <qse/cmn/uri.h>
-#include "mem.h"
+#include "mem-prv.h"
 
 int qse_mbstouri (const qse_mchar_t* str, qse_muri_t* uri, int flags)
 {

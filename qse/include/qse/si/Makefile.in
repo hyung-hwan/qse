@@ -609,7 +609,10 @@ uninstall-am: uninstall-pkgincludeHEADERS
 	uninstall-pkgincludeHEADERS
 
 	cnd.h \
+	dir.h \
 	fio.h  \
+	fs.h \
+	glob.h \
 	intr.h \
 	mtx.h \
 	mux.h \

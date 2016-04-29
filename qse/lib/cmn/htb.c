@@ -25,7 +25,7 @@
  */
 
 #include <qse/cmn/htb.h>
-#include "mem.h"
+#include "mem-prv.h"
 
 
 #define htb_t           qse_htb_t

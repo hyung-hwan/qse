@@ -2,7 +2,7 @@
 #include <qse/cmn/chr.h>
 #include <qse/cmn/str.h>
 #include <qse/cmn/htb.h>
-#include <qse/cmn/sio.h>
+#include <qse/si/sio.h>
 
 #define R(f) \
 	do { \

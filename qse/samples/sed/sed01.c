@@ -1,6 +1,6 @@
 #include <qse/sed/stdsed.h>
 #include <qse/cmn/main.h>
-#include <qse/cmn/sio.h>
+#include <qse/si/sio.h>
 #include "sed00.h"
 
 static int sed_main (int argc, qse_char_t* argv[])

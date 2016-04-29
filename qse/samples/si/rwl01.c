@@ -1,8 +1,8 @@
-#include <qse/sys/rwl.h>
-#include <qse/sys/thr.h>
-#include <qse/cmn/sio.h>
+#include <qse/si/rwl.h>
+#include <qse/si/thr.h>
+#include <qse/si/sio.h>
+#include <qse/si/intr.h>
 #include <qse/cmn/mem.h>
-#include <qse/sys/intr.h>
 
 #include <locale.h>
 

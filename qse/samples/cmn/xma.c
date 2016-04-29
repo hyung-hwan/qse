@@ -1,6 +1,6 @@
 #include <qse/cmn/xma.h>
 #include <qse/cmn/mem.h>
-#include <qse/cmn/sio.h>
+#include <qse/si/sio.h>
 
 #define R(f) \
 	do { \

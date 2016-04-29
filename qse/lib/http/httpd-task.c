@@ -26,7 +26,7 @@
 
 #include "httpd.h"
 #include <qse/cmn/str.h>
-#include "../cmn/mem.h"
+#include "../cmn/mem-prv.h"
 
 /* TODO:
  * many functions in this file use qse_size_t.

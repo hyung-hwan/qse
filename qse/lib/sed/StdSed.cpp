@@ -27,8 +27,8 @@
 #include <qse/sed/StdSed.hpp>
 #include <qse/si/fio.h>
 #include <qse/si/sio.h>
-#include "sed.h"
-#include "../cmn/mem.h"
+#include "sed-prv.h"
+#include "../cmn/mem-prv.h"
 
 /////////////////////////////////
 QSE_BEGIN_NAMESPACE(QSE)

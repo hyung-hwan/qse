@@ -44,7 +44,7 @@
  */
 
 #include <qse/cmn/pma.h>
-#include "mem.h"
+#include "mem-prv.h"
 
 /* Returns number of bytes to add to (char *)ptr to make it
    properly aligned for the type. */

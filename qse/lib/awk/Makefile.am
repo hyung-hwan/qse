@@ -22,8 +22,10 @@ else
 CPPFLAGS_LIB_COMMON += -DQSE_AWK_DEFAULT_MODPREFIX=\"$(libdir)/libqseawk-\" -DQSE_AWK_DEFAULT_MODPOSTFIX=\"\"
 endif
 
+noinst_HEADERS = awk-prv.h err.h rio.h val.h fnc.h misc.h parse.h run.h tree.h std.h
+
 lib_LTLIBRARIES = libqseawk.la
-libqseawk_la_SOURCES = awk.c err.c tree.c parse.c run.c rec.c val.c fnc.c misc.c rio.c std.c awk.h err.h rio.h val.h fnc.h misc.h parse.h run.h tree.h std.h
+libqseawk_la_SOURCES = awk.c err.c tree.c parse.c run.c rec.c val.c fnc.c misc.c rio.c std.c 
 libqseawk_la_CPPFLAGS = $(CPPFLAGS_LIB_COMMON)
 libqseawk_la_LDFLAGS = $(LDFLAGS_LIB_COMMON)
 libqseawk_la_LIBADD = $(LIBADD_LIB_COMMON)
@@ -33,7 +35,7 @@ lib_LTLIBRARIES += libqseawkxx.la
 libqseawkxx_la_SOURCES = Awk.cpp StdAwk.cpp
 libqseawkxx_la_CPPFLAGS = $(CPPFLAGS_LIB_COMMON)
 libqseawkxx_la_LDFLAGS = $(LDFLAGS_LIB_COMMON)
-libqseawkxx_la_LIBADD = -lqseawk -lqsecmnxx -lqseawk -lqsecmn $(LIBADD_LIB_COMMON) 
+libqseawkxx_la_LIBADD = -lqseawk -lqsecmnxx -lqseawk -lqsesi -lqsecmn $(LIBADD_LIB_COMMON) 
 endif
 
 if ENABLE_STATIC_MODULE
@@ -74,8 +76,8 @@ modexecdir = $(libdir)
 modexec_LTLIBRARIES = libqseawk-dir.la
 libqseawk_dir_la_SOURCES = mod-dir.c mod-dir.h
 libqseawk_dir_la_CPPFLAGS = $(CPPFLAGS_MOD_COMMON)
-libqseawk_dir_la_LDFLAGS = $(LDFLAGS_MOD_COMMON)
-libqseawk_dir_la_LIBADD = $(LIBADD_MOD_COMMON)
+libqseawk_dir_la_LDFLAGS = $(LDFLAGS_MOD_COMMON) -L../si
+libqseawk_dir_la_LIBADD = $(LIBADD_MOD_COMMON) -lqsesi
 
 modexec_LTLIBRARIES += libqseawk-math.la
 libqseawk_math_la_SOURCES = mod-math.c mod-math.h

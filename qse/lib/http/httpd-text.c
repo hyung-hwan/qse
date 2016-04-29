@@ -25,7 +25,7 @@
  */
 
 #include "httpd.h"
-#include "../cmn/mem.h"
+#include "../cmn/mem-prv.h"
 #include <qse/cmn/fmt.h>
 
 typedef struct task_text_t task_text_t;

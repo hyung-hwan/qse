@@ -5,14 +5,11 @@ pkginclude_HEADERS = \
 	chr.h \
 	cp949.h \
 	cp950.h \
-	dir.h \
 	dll.h \
 	env.h \
 	fma.h \
 	fmt.h \
-	fs.h \
 	gdl.h \
-	glob.h \
 	htb.h \
 	hton.h \
 	ipad.h \

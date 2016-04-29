@@ -3,7 +3,7 @@
 #include <qse/cmn/HeapMmgr.hpp>
 #include <qse/cmn/LinkedList.hpp>
 #include <qse/cmn/HashList.hpp>
-#include <qse/cmn/sio.h>
+#include <qse/si/sio.h>
 
 
 class T

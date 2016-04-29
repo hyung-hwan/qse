@@ -25,7 +25,7 @@
  */
 
 #include "xli.h"
-#include "../cmn/mem.h"
+#include "../cmn/mem-prv.h"
 
 const qse_char_t* qse_xli_dflerrstr (
 	const qse_xli_t* xli, qse_xli_errnum_t errnum)

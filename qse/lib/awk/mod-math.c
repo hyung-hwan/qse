@@ -29,7 +29,7 @@
 #include <qse/cmn/chr.h>
 #include <qse/cmn/alg.h>
 #include <qse/cmn/time.h>
-#include "../cmn/mem.h"
+#include "../cmn/mem-prv.h"
 #include "fnc.h"
 
 #include <math.h>

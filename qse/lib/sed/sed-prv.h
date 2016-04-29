@@ -24,8 +24,8 @@
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _QSE_LIB_SED_SED_H_
-#define _QSE_LIB_SED_SED_H_
+#ifndef _QSE_LIB_SED_SED_PRV_H_
+#define _QSE_LIB_SED_SED_PRV_H_
 
 #include <qse/sed/sed.h>
 #include <qse/cmn/str.h>

@@ -44,7 +44,7 @@
 #include <qse/cmn/hton.h>
 #include <qse/cmn/str.h>
 #include <qse/cmn/fmt.h>
-#include "mem.h"
+#include "mem-prv.h"
 
 #if 0
 const qse_ip4ad_t qse_ip4ad_any =

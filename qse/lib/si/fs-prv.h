@@ -24,10 +24,10 @@
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <qse/cmn/fs.h>
+#include <qse/si/fs.h>
+#include <qse/si/glob.h>
+#include <qse/si/dir.h>
 #include <qse/cmn/mbwc.h>
-#include <qse/cmn/glob.h>
-#include <qse/cmn/dir.h>
 #include <qse/cmn/mem.h>
 #include <qse/cmn/str.h>
 #include <qse/cmn/path.h>
@@ -46,7 +46,7 @@
 #	include <stdio.h> /* for rename() */
 	typedef int qse_fs_syserr_t;
 #else
-#	include "syscall.h"
+#	include "../cmn/syscall.h"
 	typedef int qse_fs_syserr_t;
 #endif
 

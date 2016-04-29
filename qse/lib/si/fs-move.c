@@ -24,11 +24,11 @@
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "fs.h"
+#include "fs-prv.h"
 #include <qse/cmn/mbwc.h>
 #include <qse/cmn/path.h>
 #include <qse/cmn/str.h>
-#include "mem.h"
+#include "../cmn/mem-prv.h"
 
 /*
 OVERWRITE AND FORCE handled by callback???

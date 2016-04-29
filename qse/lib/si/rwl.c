@@ -25,7 +25,7 @@
  */
 
 #include <qse/si/rwl.h>
-#include "../cmn/mem.h"
+#include "../cmn/mem-prv.h"
 
 qse_rwl_t* qse_rwl_open (qse_mmgr_t* mmgr, qse_size_t xtnsize, int flags)
 {

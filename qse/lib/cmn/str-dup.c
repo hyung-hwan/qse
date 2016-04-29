@@ -25,7 +25,7 @@
  */
 
 #include <qse/cmn/str.h>
-#include "mem.h"
+#include "mem-prv.h"
 
 qse_mchar_t* qse_mbsdup (const qse_mchar_t* str, qse_mmgr_t* mmgr)
 {

@@ -24,7 +24,7 @@
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "fs.h"
+#include "fs-prv.h"
 
 qse_fs_errnum_t qse_fs_geterrnum (qse_fs_t* fs)
 {

@@ -27,7 +27,7 @@
 #include <qse/http/htrd.h>
 #include <qse/cmn/chr.h>
 #include <qse/cmn/path.h>
-#include "../cmn/mem.h"
+#include "../cmn/mem-prv.h"
 
 static const qse_mchar_t NUL = QSE_MT('\0');
 

@@ -1,7 +1,7 @@
-#include <qse/cmn/dir.h>
+#include <qse/si/dir.h>
 #include <qse/cmn/main.h>
 #include <qse/cmn/mbwc.h>
-#include <qse/cmn/sio.h>
+#include <qse/si/sio.h>
 #include <qse/cmn/mem.h>
 #include <qse/cmn/str.h>
 #include <qse/cmn/fmt.h>

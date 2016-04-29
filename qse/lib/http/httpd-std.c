@@ -26,7 +26,7 @@
 
 #include <qse/http/stdhttpd.h>
 #include "httpd.h"
-#include "../cmn/mem.h"
+#include "../cmn/mem-prv.h"
 #include <qse/cmn/hton.h>
 #include <qse/cmn/mbwc.h>
 #include <qse/cmn/str.h>
@@ -34,7 +34,7 @@
 #include <qse/cmn/alg.h>
 #include <qse/cmn/fmt.h>
 #include <qse/cmn/path.h>
-#include <qse/cmn/dir.h>
+#include <qse/si/dir.h>
 #include <qse/si/fio.h>
 #include <qse/si/sio.h>
 #include <qse/si/mux.h>

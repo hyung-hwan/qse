@@ -28,7 +28,7 @@
 #define _QSE_LIB_SI_AIO_PRV_H_
 
 #include <qse/si/aio.h>
-#include "../cmn/mem.h"
+#include "../cmn/mem-prv.h"
 
 
 typedef struct qse_aio_mux_t qse_aio_mux_t;

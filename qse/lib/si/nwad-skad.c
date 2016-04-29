@@ -27,7 +27,7 @@
 #include <qse/si/nwad.h>
 
 #include <qse/cmn/mbwc.h>
-#include "../cmn/mem.h"
+#include "../cmn/mem-prv.h"
 
 #if defined(_WIN32)
 #	include <winsock2.h>

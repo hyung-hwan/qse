@@ -98,7 +98,6 @@ DLLQSECMN_OBJECTS =  \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsecmn_alg_sort.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsecmn_assert.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsecmn_chr.obj \
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsecmn_dir.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsecmn_dll.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsecmn_env.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsecmn_gdl.obj \
@@ -106,14 +105,6 @@ DLLQSECMN_OBJECTS =  \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsecmn_fma.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsecmn_fmt_intmax.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsecmn_fmt_out.obj \
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsecmn_fs.obj \
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsecmn_fs_attr.obj \
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsecmn_fs_copy.obj \
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsecmn_fs_delete.obj \
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsecmn_fs_err.obj \
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsecmn_fs_make.obj \
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsecmn_fs_move.obj \
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsecmn_glob.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsecmn_hton.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsecmn_ipad.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsecmn_lda.obj \
@@ -188,7 +179,6 @@ LIBQSECMN_OBJECTS =  \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsecmn_alg_sort.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsecmn_assert.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsecmn_chr.obj \
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsecmn_dir.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsecmn_dll.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsecmn_env.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsecmn_gdl.obj \
@@ -196,14 +186,6 @@ LIBQSECMN_OBJECTS =  \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsecmn_fma.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsecmn_fmt_intmax.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsecmn_fmt_out.obj \
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsecmn_fs.obj \
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsecmn_fs_attr.obj \
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsecmn_fs_copy.obj \
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsecmn_fs_delete.obj \
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsecmn_fs_err.obj \
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsecmn_fs_make.obj \
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsecmn_fs_move.obj \
-	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsecmn_glob.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsecmn_hton.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsecmn_ipad.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsecmn_lda.obj \
@@ -273,7 +255,16 @@ DLLQSESI_CFLAGS = -I$(BCCDIR)\include -I..\..\include $(CPPFLAGS_BUILD) \
 	$(CPPFLAGS) $(CFLAGS)
 DLLQSESI_OBJECTS =  \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsesi_cnd.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsesi_dir.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsesi_fio.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsesi_fs.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsesi_fs_attr.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsesi_fs_copy.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsesi_fs_delete.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsesi_fs_err.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsesi_fs_make.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsesi_fs_move.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsesi_glob.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsesi_intr.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsesi_mtx.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsesi_mux.obj \
@@ -295,7 +286,16 @@ LIBQSESI_CFLAGS = -I$(BCCDIR)\include -I..\..\include $(CPPFLAGS_BUILD) \
 	$(CPPFLAGS) $(CFLAGS)
 LIBQSESI_OBJECTS =  \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsesi_cnd.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsesi_dir.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsesi_fio.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsesi_fs.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsesi_fs_attr.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsesi_fs_copy.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsesi_fs_delete.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsesi_fs_err.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsesi_fs_make.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsesi_fs_move.obj \
+	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsesi_glob.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsesi_intr.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsesi_mtx.obj \
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsesi_mux.obj \
@@ -932,9 +932,9 @@ $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\qsea
 !endif
 
 !if "$(SHARED)" == "on"
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\qseawk-dir.dll: $(MODQSEAWKDIR_OBJECTS) $(__libqsecmn___depname) $(__libqseawk___depname) $(__dllqseawk___depname)
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\qseawk-dir.dll: $(MODQSEAWKDIR_OBJECTS) $(__libqsecmn___depname) $(__libqsesi___depname) $(__libqseawk___depname) $(__dllqseawk___depname)
 	ilink32 -Tpd -q  -L$(BCCDIR)\lib -L$(BCCDIR)\lib\psdk $(__DEBUG_INFO)  $(LDFLAGS) @&&|
-	c0d32.obj $(MODQSEAWKDIR_OBJECTS),$@,, $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\qsecmn.lib $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\qseawk.lib import32.lib cw32mt.lib,,
+	c0d32.obj $(MODQSEAWKDIR_OBJECTS),$@,, $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\qsecmn.lib $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\qsesi.lib $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\qseawk.lib import32.lib cw32mt.lib,,
 |
 	implib -f $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\qseawk-dir $@
 !endif
@@ -1089,9 +1089,6 @@ $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllq
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsecmn_chr.obj: ..\..\lib\cmn\chr.c
 	$(CC) -q -c -P- -o$@ $(DLLQSECMN_CFLAGS) ..\..\lib\cmn\chr.c
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsecmn_dir.obj: ..\..\lib\cmn\dir.c
-	$(CC) -q -c -P- -o$@ $(DLLQSECMN_CFLAGS) ..\..\lib\cmn\dir.c
-
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsecmn_dll.obj: ..\..\lib\cmn\dll.c
 	$(CC) -q -c -P- -o$@ $(DLLQSECMN_CFLAGS) ..\..\lib\cmn\dll.c
 
@@ -1112,30 +1109,6 @@ $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllq
 
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsecmn_fmt_out.obj: ..\..\lib\cmn\fmt-out.c
 	$(CC) -q -c -P- -o$@ $(DLLQSECMN_CFLAGS) ..\..\lib\cmn\fmt-out.c
-
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsecmn_fs.obj: ..\..\lib\cmn\fs.c
-	$(CC) -q -c -P- -o$@ $(DLLQSECMN_CFLAGS) ..\..\lib\cmn\fs.c
-
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsecmn_fs_attr.obj: ..\..\lib\cmn\fs-attr.c
-	$(CC) -q -c -P- -o$@ $(DLLQSECMN_CFLAGS) ..\..\lib\cmn\fs-attr.c
-
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsecmn_fs_copy.obj: ..\..\lib\cmn\fs-copy.c
-	$(CC) -q -c -P- -o$@ $(DLLQSECMN_CFLAGS) ..\..\lib\cmn\fs-copy.c
-
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsecmn_fs_delete.obj: ..\..\lib\cmn\fs-delete.c
-	$(CC) -q -c -P- -o$@ $(DLLQSECMN_CFLAGS) ..\..\lib\cmn\fs-delete.c
-
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsecmn_fs_err.obj: ..\..\lib\cmn\fs-err.c
-	$(CC) -q -c -P- -o$@ $(DLLQSECMN_CFLAGS) ..\..\lib\cmn\fs-err.c
-
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsecmn_fs_make.obj: ..\..\lib\cmn\fs-make.c
-	$(CC) -q -c -P- -o$@ $(DLLQSECMN_CFLAGS) ..\..\lib\cmn\fs-make.c
-
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsecmn_fs_move.obj: ..\..\lib\cmn\fs-move.c
-	$(CC) -q -c -P- -o$@ $(DLLQSECMN_CFLAGS) ..\..\lib\cmn\fs-move.c
-
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsecmn_glob.obj: ..\..\lib\cmn\glob.c
-	$(CC) -q -c -P- -o$@ $(DLLQSECMN_CFLAGS) ..\..\lib\cmn\glob.c
 
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsecmn_hton.obj: ..\..\lib\cmn\hton.c
 	$(CC) -q -c -P- -o$@ $(DLLQSECMN_CFLAGS) ..\..\lib\cmn\hton.c
@@ -1347,9 +1320,6 @@ $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libq
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsecmn_chr.obj: ..\..\lib\cmn\chr.c
 	$(CC) -q -c -P- -o$@ $(LIBQSECMN_CFLAGS) ..\..\lib\cmn\chr.c
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsecmn_dir.obj: ..\..\lib\cmn\dir.c
-	$(CC) -q -c -P- -o$@ $(LIBQSECMN_CFLAGS) ..\..\lib\cmn\dir.c
-
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsecmn_dll.obj: ..\..\lib\cmn\dll.c
 	$(CC) -q -c -P- -o$@ $(LIBQSECMN_CFLAGS) ..\..\lib\cmn\dll.c
 
@@ -1370,30 +1340,6 @@ $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libq
 
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsecmn_fmt_out.obj: ..\..\lib\cmn\fmt-out.c
 	$(CC) -q -c -P- -o$@ $(LIBQSECMN_CFLAGS) ..\..\lib\cmn\fmt-out.c
-
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsecmn_fs.obj: ..\..\lib\cmn\fs.c
-	$(CC) -q -c -P- -o$@ $(LIBQSECMN_CFLAGS) ..\..\lib\cmn\fs.c
-
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsecmn_fs_attr.obj: ..\..\lib\cmn\fs-attr.c
-	$(CC) -q -c -P- -o$@ $(LIBQSECMN_CFLAGS) ..\..\lib\cmn\fs-attr.c
-
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsecmn_fs_copy.obj: ..\..\lib\cmn\fs-copy.c
-	$(CC) -q -c -P- -o$@ $(LIBQSECMN_CFLAGS) ..\..\lib\cmn\fs-copy.c
-
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsecmn_fs_delete.obj: ..\..\lib\cmn\fs-delete.c
-	$(CC) -q -c -P- -o$@ $(LIBQSECMN_CFLAGS) ..\..\lib\cmn\fs-delete.c
-
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsecmn_fs_err.obj: ..\..\lib\cmn\fs-err.c
-	$(CC) -q -c -P- -o$@ $(LIBQSECMN_CFLAGS) ..\..\lib\cmn\fs-err.c
-
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsecmn_fs_make.obj: ..\..\lib\cmn\fs-make.c
-	$(CC) -q -c -P- -o$@ $(LIBQSECMN_CFLAGS) ..\..\lib\cmn\fs-make.c
-
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsecmn_fs_move.obj: ..\..\lib\cmn\fs-move.c
-	$(CC) -q -c -P- -o$@ $(LIBQSECMN_CFLAGS) ..\..\lib\cmn\fs-move.c
-
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsecmn_glob.obj: ..\..\lib\cmn\glob.c
-	$(CC) -q -c -P- -o$@ $(LIBQSECMN_CFLAGS) ..\..\lib\cmn\glob.c
 
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsecmn_hton.obj: ..\..\lib\cmn\hton.c
 	$(CC) -q -c -P- -o$@ $(LIBQSECMN_CFLAGS) ..\..\lib\cmn\hton.c
@@ -1590,8 +1536,35 @@ $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libq
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsesi_cnd.obj: ..\..\lib\si\cnd.c
 	$(CC) -q -c -P- -o$@ $(DLLQSESI_CFLAGS) ..\..\lib\si\cnd.c
 
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsesi_dir.obj: ..\..\lib\si\dir.c
+	$(CC) -q -c -P- -o$@ $(DLLQSESI_CFLAGS) ..\..\lib\si\dir.c
+
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsesi_fio.obj: ..\..\lib\si\fio.c
 	$(CC) -q -c -P- -o$@ $(DLLQSESI_CFLAGS) ..\..\lib\si\fio.c
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsesi_fs.obj: ..\..\lib\si\fs.c
+	$(CC) -q -c -P- -o$@ $(DLLQSESI_CFLAGS) ..\..\lib\si\fs.c
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsesi_fs_attr.obj: ..\..\lib\si\fs-attr.c
+	$(CC) -q -c -P- -o$@ $(DLLQSESI_CFLAGS) ..\..\lib\si\fs-attr.c
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsesi_fs_copy.obj: ..\..\lib\si\fs-copy.c
+	$(CC) -q -c -P- -o$@ $(DLLQSESI_CFLAGS) ..\..\lib\si\fs-copy.c
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsesi_fs_delete.obj: ..\..\lib\si\fs-delete.c
+	$(CC) -q -c -P- -o$@ $(DLLQSESI_CFLAGS) ..\..\lib\si\fs-delete.c
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsesi_fs_err.obj: ..\..\lib\si\fs-err.c
+	$(CC) -q -c -P- -o$@ $(DLLQSESI_CFLAGS) ..\..\lib\si\fs-err.c
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsesi_fs_make.obj: ..\..\lib\si\fs-make.c
+	$(CC) -q -c -P- -o$@ $(DLLQSESI_CFLAGS) ..\..\lib\si\fs-make.c
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsesi_fs_move.obj: ..\..\lib\si\fs-move.c
+	$(CC) -q -c -P- -o$@ $(DLLQSESI_CFLAGS) ..\..\lib\si\fs-move.c
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsesi_glob.obj: ..\..\lib\si\glob.c
+	$(CC) -q -c -P- -o$@ $(DLLQSESI_CFLAGS) ..\..\lib\si\glob.c
 
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllqsesi_intr.obj: ..\..\lib\si\intr.c
 	$(CC) -q -c -P- -o$@ $(DLLQSESI_CFLAGS) ..\..\lib\si\intr.c
@@ -1641,8 +1614,35 @@ $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\dllq
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsesi_cnd.obj: ..\..\lib\si\cnd.c
 	$(CC) -q -c -P- -o$@ $(LIBQSESI_CFLAGS) ..\..\lib\si\cnd.c
 
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsesi_dir.obj: ..\..\lib\si\dir.c
+	$(CC) -q -c -P- -o$@ $(LIBQSESI_CFLAGS) ..\..\lib\si\dir.c
+
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsesi_fio.obj: ..\..\lib\si\fio.c
 	$(CC) -q -c -P- -o$@ $(LIBQSESI_CFLAGS) ..\..\lib\si\fio.c
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsesi_fs.obj: ..\..\lib\si\fs.c
+	$(CC) -q -c -P- -o$@ $(LIBQSESI_CFLAGS) ..\..\lib\si\fs.c
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsesi_fs_attr.obj: ..\..\lib\si\fs-attr.c
+	$(CC) -q -c -P- -o$@ $(LIBQSESI_CFLAGS) ..\..\lib\si\fs-attr.c
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsesi_fs_copy.obj: ..\..\lib\si\fs-copy.c
+	$(CC) -q -c -P- -o$@ $(LIBQSESI_CFLAGS) ..\..\lib\si\fs-copy.c
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsesi_fs_delete.obj: ..\..\lib\si\fs-delete.c
+	$(CC) -q -c -P- -o$@ $(LIBQSESI_CFLAGS) ..\..\lib\si\fs-delete.c
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsesi_fs_err.obj: ..\..\lib\si\fs-err.c
+	$(CC) -q -c -P- -o$@ $(LIBQSESI_CFLAGS) ..\..\lib\si\fs-err.c
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsesi_fs_make.obj: ..\..\lib\si\fs-make.c
+	$(CC) -q -c -P- -o$@ $(LIBQSESI_CFLAGS) ..\..\lib\si\fs-make.c
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsesi_fs_move.obj: ..\..\lib\si\fs-move.c
+	$(CC) -q -c -P- -o$@ $(LIBQSESI_CFLAGS) ..\..\lib\si\fs-move.c
+
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsesi_glob.obj: ..\..\lib\si\glob.c
+	$(CC) -q -c -P- -o$@ $(LIBQSESI_CFLAGS) ..\..\lib\si\glob.c
 
 $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)-$(BUILDDIR_SHARED)$(BUILDDIR_TCPV40HDRS)\libqsesi_intr.obj: ..\..\lib\si\intr.c
 	$(CC) -q -c -P- -o$@ $(LIBQSESI_CFLAGS) ..\..\lib\si\intr.c

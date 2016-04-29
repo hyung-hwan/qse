@@ -26,7 +26,7 @@
 
 #include <qse/cmn/slmb.h>
 #include <qse/cmn/utf8.h>
-#include "mem.h"
+#include "mem-prv.h"
 
 #if !defined(QSE_HAVE_CONFIG_H)
 #	if defined(_WIN32) || defined(__OS2__) || defined(__DOS__)

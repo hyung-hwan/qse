@@ -24,8 +24,8 @@
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "fs.h"
-#include "mem.h"
+#include "fs-prv.h"
+#include "../cmn/mem-prv.h"
 
 int qse_fs_sysgetattr (qse_fs_t* fs, const qse_fs_char_t* fspath, qse_fs_attr_t* attr)
 {

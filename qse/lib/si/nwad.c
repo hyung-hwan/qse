@@ -32,7 +32,7 @@
 #include <qse/cmn/fmt.h>
 #include <qse/cmn/mbwc.h>
 
-#include "../cmn/mem.h"
+#include "../cmn/mem-prv.h"
 
 int qse_nwadequal (const qse_nwad_t* x, const qse_nwad_t* y)
 {

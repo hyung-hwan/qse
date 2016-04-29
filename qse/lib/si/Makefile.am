@@ -4,15 +4,28 @@ AM_CPPFLAGS = \
 	-I$(top_builddir)/include \
 	-I$(top_srcdir)/include
 
+noinst_HEADERS = \
+	aio-prv.h \
+	fs-prv.h \
+	glob-imp.h
+
 lib_LTLIBRARIES = libqsesi.la
 libqsesi_la_SOURCES =  \
-	aio-prv.h \
 	aio.c \
 	aio-pro.c  \
 	aio-sck.c  \
 	aio-tmr.c  \
 	cnd.c \
+	dir.c \
 	fio.c  \
+	fs.c \
+	fs-attr.c \
+	fs-copy.c \
+	fs-delete.c \
+	fs-err.c \
+	fs-make.c \
+	fs-move.c \
+	glob.c \
 	intr.c \
 	mtx.c \
 	mux.c \

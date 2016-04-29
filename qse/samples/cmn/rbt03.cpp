@@ -2,7 +2,7 @@
 #include <qse/cmn/StdMmgr.hpp>
 #include <qse/cmn/HeapMmgr.hpp>
 #include <qse/cmn/RedBlackTable.hpp>
-#include <qse/cmn/sio.h>
+#include <qse/si/sio.h>
 #include <string>
 #include <string.h>
 

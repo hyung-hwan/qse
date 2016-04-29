@@ -24,7 +24,7 @@
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "awk.h"
+#include "awk-prv.h"
 
 #if !defined(QSE_AWK_DEFAULT_MODPREFIX)
 #	if defined(_WIN32)

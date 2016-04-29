@@ -8,43 +8,34 @@ AM_CPPFLAGS = \
 
 bin_PROGRAMS = \
 	chr01 \
-	dir01 \
 	dll \
 	env01 \
 	fma \
 	fmt01 \
 	fmt02 \
-	fs01 \
-	fs02 \
-	fs03 \
 	htb01 \
-	glob01 \
 	ipad01 \
 	lda \
 	main01 \
 	main02 \
 	mbwc01 \
 	mbwc02 \
-	nwad01 \
-	nwif01 \
-	nwif02 \
 	oht \
 	path01 \
-	pio \
 	pma \
 	rex01 \
 	rbt01 \
 	sll \
 	slmb01 \
 	str01 \
-	task01 \
+	str02 \
 	time \
 	tre01 \
 	uri01 \
 	xma 
 	
-AM_LDFLAGS = -L../../lib/cmn 
-LDADD = -lqsecmn 
+AM_LDFLAGS = -L../../lib/si  -L../../lib/cmn
+LDADD = -lqsesi -lqsecmn 
 
 if WIN32 
 if WCHAR
@@ -58,8 +49,6 @@ dll_SOURCES = dll.c
 fma_SOURCES = fma.c
 fmt01_SOURCES = fmt01.c
 fmt02_SOURCES = fmt02.c
-fs01_SOURCES = fs01.c
-glob01_SOURCES = glob01.c
 htb01_SOURCES = htb01.c
 ipad01_SOURCES = ipad01.c
 lda_SOURCES = lda.c
@@ -67,10 +56,8 @@ main01_SOURCES = main01.c
 main02_SOURCES = main02.c
 mbwc01_SOURCES = mbwc01.c
 mbwc02_SOURCES = mbwc02.c
-nwad01_SOURCES = nwad01.c
 oht_SOURCES = oht.c
 path01_SOURCES = path01.c
-pio_SOURCES = pio.c
 pma_SOURCES = pma.c
 rex01_SOURCES = rex01.c
 rbt01_SOURCES = rbt01.c

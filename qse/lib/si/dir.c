@@ -24,12 +24,12 @@
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <qse/cmn/dir.h>
+#include <qse/si/dir.h>
 #include <qse/cmn/str.h>
 #include <qse/cmn/mbwc.h>
 #include <qse/cmn/path.h>
 #include <qse/cmn/lda.h>
-#include "mem.h"
+#include "../cmn/mem-prv.h"
 
 #if defined(_WIN32) 
 #	include <windows.h>
@@ -41,7 +41,7 @@
 #	include <dos.h>
 #	include <errno.h>
 #else
-#	include "syscall.h"
+#	include "../cmn/syscall.h"
 #endif
 
 
@@ -102,7 +102,7 @@ static void close_dir_safely (qse_dir_t* dir);
 static int reset_to_path (qse_dir_t* dir, const qse_char_t* path);
 static int read_ahead_and_sort (qse_dir_t* dir, const qse_char_t* path);
 
-#include "syserr.h"
+#include "../cmn/syserr.h"
 IMPLEMENT_SYSERR_TO_ERRNUM (dir, DIR)
 
 qse_dir_t* qse_dir_open (

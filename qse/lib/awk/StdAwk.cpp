@@ -33,7 +33,7 @@
 #include <qse/si/sio.h>
 #include <qse/si/nwio.h>
 
-#include "awk.h"
+#include "awk-prv.h"
 #include "std.h"
 
 #include <stdlib.h>

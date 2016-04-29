@@ -25,7 +25,7 @@
  */
 
 #include <qse/http/htre.h>
-#include "../cmn/mem.h"
+#include "../cmn/mem-prv.h"
 
 static void free_hdrval (qse_htb_t* htb, void* vptr, qse_size_t vlen)
 {

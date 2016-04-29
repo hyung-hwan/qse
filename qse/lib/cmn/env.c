@@ -28,7 +28,7 @@
 #include <qse/cmn/env.h>
 #include <qse/cmn/str.h>
 #include <qse/cmn/mbwc.h>
-#include "mem.h"
+#include "mem-prv.h"
 
 #if defined(_WIN32)
 #    include <windows.h>

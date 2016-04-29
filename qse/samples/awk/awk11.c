@@ -25,7 +25,7 @@
  */
 
 #include <qse/awk/stdawk.h>
-#include <qse/cmn/sio.h>
+#include <qse/si/sio.h>
 
 const qse_char_t* src = QSE_T("BEGIN { print \"hello, world\" | \"dir\"; }");
 

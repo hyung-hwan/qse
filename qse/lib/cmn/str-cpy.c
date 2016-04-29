@@ -25,7 +25,7 @@
  */
 
 #include <qse/cmn/str.h>
-#include "mem.h"
+#include "mem-prv.h"
 
 qse_size_t qse_mbscpy (qse_mchar_t* buf, const qse_mchar_t* str)
 {

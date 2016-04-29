@@ -1,7 +1,7 @@
 #include <qse/cmn/uri.h>
 #include <qse/cmn/main.h>
 #include <qse/cmn/mbwc.h>
-#include <qse/cmn/sio.h>
+#include <qse/si/sio.h>
 
 #include <locale.h>
 #if defined(_WIN32)

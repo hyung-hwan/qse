@@ -25,7 +25,7 @@
  */
 
 #include <qse/cmn/tmr.h>
-#include "mem.h"
+#include "mem-prv.h"
 
 #define HEAP_PARENT(x) (((x) - 1) / 2)
 #define HEAP_LEFT(x)   ((x) * 2 + 1)

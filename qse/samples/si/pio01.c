@@ -1,7 +1,7 @@
-#include <qse/cmn/pio.h>
+#include <qse/si/pio.h>
 #include <qse/cmn/mem.h>
 #include <qse/cmn/env.h>
-#include <qse/cmn/sio.h>
+#include <qse/si/sio.h>
 
 #include <locale.h>
 
