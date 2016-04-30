@@ -8,5 +8,5 @@ Description: QSEAWK Library
 Version: @VERSION@
 Cflags: -I${includedir}
 Libs: -L${libdir} -lqseawk 
-Requires: qsecmn qsesed
+Requires: qsecmn qsesi qsesed
 #Requires.private: qsecmn qsesed

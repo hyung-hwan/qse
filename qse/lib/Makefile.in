@@ -80,9 +80,9 @@ build_triplet = @build@
 host_triplet = @host@
 subdir = lib
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
-	$(srcdir)/qsecmn.pc.in $(srcdir)/qseawk.pc.in \
-	$(srcdir)/qsesed.pc.in $(srcdir)/qsexli.pc.in \
-	$(srcdir)/qsehttp.pc.in
+	$(srcdir)/qsecmn.pc.in $(srcdir)/qsesi.pc.in \
+	$(srcdir)/qsesed.pc.in $(srcdir)/qseawk.pc.in \
+	$(srcdir)/qsexli.pc.in $(srcdir)/qsehttp.pc.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/argz.m4 \
 	$(top_srcdir)/m4/ax_check_sign.m4 \
@@ -96,7 +96,7 @@ am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/include/qse/config.h
-CONFIG_CLEAN_FILES = qsecmn.pc qseawk.pc qsesed.pc qsexli.pc \
+CONFIG_CLEAN_FILES = qsecmn.pc qsesi.pc qsesed.pc qseawk.pc qsexli.pc \
 	qsehttp.pc
 CONFIG_CLEAN_VPATH_FILES =
 AM_V_P = $(am__v_P_@AM_V@)
@@ -386,7 +386,7 @@ top_srcdir = @top_srcdir@
 SUBDIRS = cmn si sed awk xli http 
 DIST_SUBDIRS = $(SUBDIRS) 
 pkgconfigdir = $(libdir)/pkgconfig
-pkgconfig_DATA = qsecmn.pc qseawk.pc qsesed.pc qsexli.pc qsehttp.pc
+pkgconfig_DATA = qsecmn.pc qsesi.pc qsesed.pc qseawk.pc qsexli.pc qsehttp.pc
 all: all-recursive
 
 .SUFFIXES:
@@ -422,9 +422,11 @@ $(ACLOCAL_M4):  $(am__aclocal_m4_deps)
 $(am__aclocal_m4_deps):
 qsecmn.pc: $(top_builddir)/config.status $(srcdir)/qsecmn.pc.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
-qseawk.pc: $(top_builddir)/config.status $(srcdir)/qseawk.pc.in
+qsesi.pc: $(top_builddir)/config.status $(srcdir)/qsesi.pc.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 qsesed.pc: $(top_builddir)/config.status $(srcdir)/qsesed.pc.in
+	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
+qseawk.pc: $(top_builddir)/config.status $(srcdir)/qseawk.pc.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 qsexli.pc: $(top_builddir)/config.status $(srcdir)/qsexli.pc.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@

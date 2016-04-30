@@ -9,5 +9,5 @@ Version: @VERSION@
 Cflags: -I${includedir}
 Libs: -L${libdir} -lqsehttp
 # TODO: Produce Requres: using the autoconf settings
-Requires: qsecmn 
+Requires: qsecmn qsesi
 Requires.private: openssl

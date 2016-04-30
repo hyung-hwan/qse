@@ -69,7 +69,7 @@ static int kill_and_free_device (qse_aio_dev_t* dev, int force);
 #define MUX_CMD_UPDATE 2
 #define MUX_CMD_DELETE 3
 
-#define MUX_INDEX_INVALID QSE_AIO_TYPE_MAX(qse_size_t)
+#define MUX_INDEX_INVALID QSE_TYPE_MAX(qse_size_t)
 
 struct qse_aio_mux_t
 {
@@ -136,7 +136,7 @@ static int mux_control (qse_aio_dev_t* dev, int cmd, qse_aio_syshnd_t hnd, int d
 			return -1;
 		}
 
-		new_capa = QSE_AIO_ALIGNTO_POW2((hnd + 1), 256);
+		new_capa = QSE_ALIGNTO_POW2((hnd + 1), 256);
 
 		tmp = QSE_MMGR_REALLOC (aio->mmgr, mux->map.ptr, new_capa * QSE_SIZEOF(*tmp));
 		if (!tmp)
@@ -180,7 +180,7 @@ static int mux_control (qse_aio_dev_t* dev, int cmd, qse_aio_syshnd_t hnd, int d
 				struct pollfd* tmp1;
 				qse_aio_dev_t** tmp2;
 
-				new_capa = QSE_AIO_ALIGNTO_POW2(mux->pd.size + 1, 256);
+				new_capa = QSE_ALIGNTO_POW2(mux->pd.size + 1, 256);
 
 				tmp1 = QSE_MMGR_REALLOC (aio->mmgr, mux->pd.pfd, new_capa * QSE_SIZEOF(*tmp1));
 				if (!tmp1)
