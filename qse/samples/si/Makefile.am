@@ -6,6 +6,7 @@ AM_CPPFLAGS = \
 	-I$(includedir)
 
 bin_PROGRAMS = \
+	aio01 \
 	dir01 \
 	fio01 \
 	fio02 \
@@ -33,6 +34,7 @@ LDADD += $(UNICOWS_LIBS)
 endif
 endif
 
+aio01_SOURCES = aio01.c
 dir01_SOURCES = dir01.c
 fio01_SOURCES = fio01.c
 fio02_SOURCES = fio02.c
