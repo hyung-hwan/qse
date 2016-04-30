@@ -796,8 +796,9 @@ AC_CONFIG_FILES([
 	lib/xli/Makefile 
 	lib/http/Makefile 
 	lib/qsecmn.pc
-	lib/qseawk.pc
+	lib/qsesi.pc
 	lib/qsesed.pc
+	lib/qseawk.pc
 	lib/qsexli.pc
 	lib/qsehttp.pc
 	cmd/Makefile 

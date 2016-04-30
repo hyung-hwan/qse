@@ -8,4 +8,4 @@ Description: QSESED Library
 Version: @VERSION@
 Cflags: -I${includedir}
 Libs: -L${libdir} -lqsesed
-Requires: qsecmn 
+Requires: qsecmn qsesi

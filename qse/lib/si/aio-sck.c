@@ -297,44 +297,46 @@ struct sck_type_map_t
 	int extra_dev_capa;
 };
 
+#define PROTO_ETHARP  QSE_CONST_HTON16(QSE_AIO_ETHHDR_PROTO_ARP)
+
 static struct sck_type_map_t sck_type_map[] =
 {
 	/* QSE_AIO_DEV_SCK_TCP4 */
-	{ AF_INET,    SOCK_STREAM,    0,                         QSE_AIO_DEV_CAPA_STREAM  | QSE_AIO_DEV_CAPA_OUT_QUEUED },
+	{ AF_INET,    SOCK_STREAM,    0,              QSE_AIO_DEV_CAPA_STREAM  | QSE_AIO_DEV_CAPA_OUT_QUEUED },
 
 	/* QSE_AIO_DEV_SCK_TCP6 */
-	{ AF_INET6,   SOCK_STREAM,    0,                         QSE_AIO_DEV_CAPA_STREAM  | QSE_AIO_DEV_CAPA_OUT_QUEUED },
+	{ AF_INET6,   SOCK_STREAM,    0,              QSE_AIO_DEV_CAPA_STREAM  | QSE_AIO_DEV_CAPA_OUT_QUEUED },
 
 	/* QSE_AIO_DEV_SCK_UPD4 */
-	{ AF_INET,    SOCK_DGRAM,     0,                         0                                                },
+	{ AF_INET,    SOCK_DGRAM,     0,              0 },
 
 	/* QSE_AIO_DEV_SCK_UDP6 */
-	{ AF_INET6,   SOCK_DGRAM,     0,                         0                                                },
+	{ AF_INET6,   SOCK_DGRAM,     0,              0 },
 
 
 #if defined(AF_PACKET) && (QSE_SIZEOF_STRUCT_SOCKADDR_LL > 0)
 	/* QSE_AIO_DEV_SCK_ARP - Ethernet type is 2 bytes long. Protocol must be specified in the network byte order */
-	{ AF_PACKET,  SOCK_RAW,       QSE_CONST_HTON16(QSE_AIO_ETHHDR_PROTO_ARP), 0                                 },
+	{ AF_PACKET,  SOCK_RAW,       PROTO_ETHARP,   0 },
 
 	/* QSE_AIO_DEV_SCK_DGRAM */
-	{ AF_PACKET,  SOCK_DGRAM,     QSE_CONST_HTON16(QSE_AIO_ETHHDR_PROTO_ARP), 0                                 },
+	{ AF_PACKET,  SOCK_DGRAM,     PROTO_ETHARP,   0 },
 
 #elif defined(AF_LINK) && (QSE_SIZEOF_STRUCT_SOCKADDR_DL > 0)
 	/* QSE_AIO_DEV_SCK_ARP */
-	{ AF_LINK,  SOCK_RAW,         QSE_CONST_HTON16(QSE_AIO_ETHHDR_PROTO_ARP), 0                                 },
+	{ AF_LINK,  SOCK_RAW,         PROTO_ETHARP,   0 },
 
 	/* QSE_AIO_DEV_SCK_DGRAM */
-	{ AF_LINK,  SOCK_DGRAM,       QSE_CONST_HTON16(QSE_AIO_ETHHDR_PROTO_ARP), 0                                 },
+	{ AF_LINK,  SOCK_DGRAM,       PROTO_ETHARP,   0 },
 #else
-	{ -1,       0,                0,                            0                                             },
-	{ -1,       0,                0,                            0                                             },
+	{ -1,       0,                0,              0 },
+	{ -1,       0,                0,              0 },
 #endif
 
 	/* QSE_AIO_DEV_SCK_ICMP4 - IP protocol field is 1 byte only. no byte order conversion is needed */
-	{ AF_INET,    SOCK_RAW,       IPPROTO_ICMP,              0,                                               },
+	{ AF_INET,    SOCK_RAW,       IPPROTO_ICMP,   0, 1 },
 
 	/* QSE_AIO_DEV_SCK_ICMP6 - IP protocol field is 1 byte only. no byte order conversion is needed */
-	{ AF_INET6,   SOCK_RAW,       IPPROTO_ICMP,              0,                                               }
+	{ AF_INET6,   SOCK_RAW,       IPPROTO_ICMP,   0, 1 }
 };
 
 /* ======================================================================== */

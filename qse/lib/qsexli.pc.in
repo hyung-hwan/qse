@@ -8,4 +8,4 @@ Description: QSEXLI Library
 Version: @VERSION@
 Cflags: -I${includedir}
 Libs: -L${libdir} -lqsexli
-Requires: qsecmn 
+Requires: qsecmn qsesi
