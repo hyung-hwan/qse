@@ -30,16 +30,6 @@
 #include <qse/cmn/fmt.h>
 #include <stdarg.h>
 
-typedef int (*qse_fmtout_mchar_t) (
-	qse_mchar_t c,
-	void*       ctx
-);
-
-typedef int (*qse_fmtout_wchar_t) (
-	qse_wchar_t c,
-	void*       ctx
-);
-
 typedef int (*qse_mfmtout_put_t) (
 	qse_mchar_t c,
 	void*       ctx
