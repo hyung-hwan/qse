@@ -40,19 +40,6 @@ typedef int (*qse_fmtout_wchar_t) (
 	void*       ctx
 );
 
-struct qse_fmtout_t
-{
-	qse_size_t         count;     /* out */
-	qse_size_t         limit;     /* in */
-	void*              ctx;       /* in */
-	qse_fmtout_mchar_t put_mchar; /* in */
-	qse_fmtout_wchar_t put_wchar; /* in */
-};
-
-typedef struct qse_fmtout_t qse_fmtout_t;
-
-
-
 typedef int (*qse_mfmtout_put_t) (
 	qse_mchar_t c,
 	void*       ctx
