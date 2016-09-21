@@ -377,7 +377,7 @@ reswitch:
 
 		case T('c'):
 			/* zerpad must not take effect for 'c' */
-			if (flagc & FLAGC_ZEROPAD) padc = QSE_T(' '); 
+			if (flagc & FLAGC_ZEROPAD) padc = T(' '); 
 			if (((lm_flag & LF_H) && (QSE_SIZEOF(char_t) > QSE_SIZEOF(ochar_t))) ||
 			    ((lm_flag & LF_L) && (QSE_SIZEOF(char_t) < QSE_SIZEOF(ochar_t)))) goto uppercase_c;
 		lowercase_c:
@@ -399,7 +399,7 @@ reswitch:
 
 		case T('C'):
 			/* zerpad must not take effect for 'C' */
-			if (flagc & FLAGC_ZEROPAD) padc = QSE_T(' ');
+			if (flagc & FLAGC_ZEROPAD) padc = T(' ');
 			if (((lm_flag & LF_H) && (QSE_SIZEOF(char_t) < QSE_SIZEOF(ochar_t))) ||
 			    ((lm_flag & LF_L) && (QSE_SIZEOF(char_t) > QSE_SIZEOF(ochar_t)))) goto lowercase_c;
 		uppercase_c:
@@ -443,7 +443,7 @@ reswitch:
 
 		case T('s'):
 			/* zerpad must not take effect for 's' */
-			if (flagc & FLAGC_ZEROPAD) padc = QSE_T(' ');
+			if (flagc & FLAGC_ZEROPAD) padc = T(' ');
 			if (((lm_flag & LF_H) && (QSE_SIZEOF(char_t) > QSE_SIZEOF(ochar_t))) ||
 			    ((lm_flag & LF_L) && (QSE_SIZEOF(char_t) < QSE_SIZEOF(ochar_t)))) goto uppercase_s;
 		lowercase_s:
@@ -475,7 +475,7 @@ reswitch:
 
 		case T('S'):
 			/* zerpad must not take effect for 'S' */
-			if (flagc & FLAGC_ZEROPAD) padc = QSE_T(' ');
+			if (flagc & FLAGC_ZEROPAD) padc = T(' ');
 			if (((lm_flag & LF_H) && (QSE_SIZEOF(char_t) < QSE_SIZEOF(ochar_t))) ||
 			    ((lm_flag & LF_L) && (QSE_SIZEOF(char_t) > QSE_SIZEOF(ochar_t)))) goto lowercase_s;
 		uppercase_s:
@@ -636,21 +636,21 @@ reswitch:
 			/* compose back the format specifier */
 			fmtlen = 0;
 			fltfmt.ptr[fmtlen++] = QSE_MT('%');
-			if (flagc & FLAGC_SPACE) fltfmt.ptr[fmtlen++] = QSE_T(' ');
-			if (flagc & FLAGC_SHARP) fltfmt.ptr[fmtlen++] = QSE_T('#');
-			if (flagc & FLAGC_SIGN) fltfmt.ptr[fmtlen++] = QSE_T('+');
-			if (flagc & FLAGC_LEFTADJ) fltfmt.ptr[fmtlen++] = QSE_T('-');
-			if (flagc & FLAGC_ZEROPAD) fltfmt.ptr[fmtlen++] = QSE_T('0');
+			if (flagc & FLAGC_SPACE) fltfmt.ptr[fmtlen++] = QSE_MT(' ');
+			if (flagc & FLAGC_SHARP) fltfmt.ptr[fmtlen++] = QSE_MT('#');
+			if (flagc & FLAGC_SIGN) fltfmt.ptr[fmtlen++] = QSE_MT('+');
+			if (flagc & FLAGC_LEFTADJ) fltfmt.ptr[fmtlen++] = QSE_MT('-');
+			if (flagc & FLAGC_ZEROPAD) fltfmt.ptr[fmtlen++] = QSE_MT('0');
 
-			if (flagc & FLAGC_STAR1) fltfmt.ptr[fmtlen++] = QSE_T('*');
+			if (flagc & FLAGC_STAR1) fltfmt.ptr[fmtlen++] = QSE_MT('*');
 			else if (flagc & FLAGC_WIDTH) 
 			{
 				fmtlen += qse_fmtuintmaxtombs (
 					&fltfmt.ptr[fmtlen], fltfmt.capa - fmtlen, 
 					width, 10, -1, QSE_MT('\0'), QSE_NULL);
 			}
-			if (flagc & FLAGC_DOT) fltfmt.ptr[fmtlen++] = QSE_T('.');
-			if (flagc & FLAGC_STAR2) fltfmt.ptr[fmtlen++] = QSE_T('*');
+			if (flagc & FLAGC_DOT) fltfmt.ptr[fmtlen++] = QSE_MT('.');
+			if (flagc & FLAGC_STAR2) fltfmt.ptr[fmtlen++] = QSE_MT('*');
 			else if (flagc & FLAGC_PRECISION) 
 			{
 				fmtlen += qse_fmtuintmaxtombs (

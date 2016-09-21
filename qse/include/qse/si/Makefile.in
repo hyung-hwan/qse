@@ -118,8 +118,10 @@ am__can_run_installinfo = \
     n|no|NO) false;; \
     *) (install-info --version) >/dev/null 2>&1;; \
   esac
-am__pkginclude_HEADERS_DIST = aio.h aio-pro.h aio-sck.h \
-	SocketAddress.hpp Socket.hpp
+am__pkginclude_HEADERS_DIST = aio.h aio-pro.h aio-sck.h cnd.h dir.h \
+	fio.h fs.h glob.h intr.h mtx.h mux.h nwad.h nwif.h nwio.h \
+	pio.h rwl.h sck.h sio.h task.h thr.h tio.h SocketAddress.hpp \
+	Socket.hpp
 am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
 am__vpath_adj = case $$p in \
     $(srcdir)/*) f=`echo "$$p" | sed "s|^$$srcdirstrip/||"`;; \
@@ -169,7 +171,7 @@ am__define_uniq_tagged_files = \
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
-pkgincludedir = $(includedir)/qse/sys
+pkgincludedir = $(includedir)/qse/si
 ACLOCAL = @ACLOCAL@
 AMTAR = @AMTAR@
 AM_DEFAULT_VERBOSITY = @AM_DEFAULT_VERBOSITY@
@@ -345,7 +347,9 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-pkginclude_HEADERS = aio.h aio-pro.h aio-sck.h $(am__append_1)
+pkginclude_HEADERS = aio.h aio-pro.h aio-sck.h cnd.h dir.h fio.h fs.h \
+	glob.h intr.h mtx.h mux.h nwad.h nwif.h nwio.h pio.h rwl.h \
+	sck.h sio.h task.h thr.h tio.h $(am__append_1)
 all: all-am
 
 .SUFFIXES:
@@ -608,24 +612,6 @@ uninstall-am: uninstall-pkgincludeHEADERS
 	ps ps-am tags tags-am uninstall uninstall-am \
 	uninstall-pkgincludeHEADERS
 
-	cnd.h \
-	dir.h \
-	fio.h  \
-	fs.h \
-	glob.h \
-	intr.h \
-	mtx.h \
-	mux.h \
-	nwad.h \
-	nwif.h \
-	nwio.h  \
-	pio.h  \
-	rwl.h \
-	sck.h \
-	sio.h  \
-	task.h \
-	thr.h \
-	tio.h
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

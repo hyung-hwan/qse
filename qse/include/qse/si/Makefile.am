@@ -1,9 +1,9 @@
-pkgincludedir = $(includedir)/qse/sys
+pkgincludedir = $(includedir)/qse/si
 
 pkginclude_HEADERS = \
 	aio.h \
 	aio-pro.h \
-	aio-sck.h
+	aio-sck.h \
 	cnd.h \
 	dir.h \
 	fio.h  \

@@ -40,7 +40,7 @@
  * @code
  * #include <qse/cmn/htb.h>
  * #include <qse/cmn/mem.h>
- * #include <qse/cmn/stdio.h>
+ * #include <qse/si/sio.h>
  * 
  * static qse_htb_walk_t walk (qse_htb_t* htb, qse_htb_pair_t* pair, void* ctx)
  * {
@@ -54,6 +54,7 @@
  *   qse_htb_t* s1;
  *   int i;
  * 
+ *   qse_openstdsios ();
  *   s1 = qse_htb_open (QSE_MMGR_GETDFL(), 0, 30, 75, 1, 1); // error handling skipped
  *   qse_htb_setstyle (s1, qse_gethtbstyle(QSE_HTB_STYLE_INLINE_COPIERS));
  * 
@@ -66,6 +67,7 @@
  *   qse_htb_walk (s1, walk, QSE_NULL);
  * 
  *   qse_htb_close (s1);
+ *   qse_closestdsios ();
  *   return 0;
  * }
  * @endcode
@@ -482,6 +484,10 @@ QSE_EXPORT qse_htb_pair_t* qse_htb_update (
  * existing value delimited by a comma if the key is found.
  *
  * @code
+ * #include <qse/cmn/htb.h>
+ * #include <qse/cmn/mem.h>
+ * #include <qse/si/sio.h>
+ *
  * qse_htb_walk_t print_map_pair (qse_htb_t* map, qse_htb_pair_t* pair, void* ctx)
  * {
  *   qse_printf (QSE_T("%.*s[%d] => %.*s[%d]\n"),
@@ -512,13 +518,13 @@ QSE_EXPORT qse_htb_pair_t* qse_htb_update (
  *     // allocate a new pair, but without filling the actual value. 
  *     // note vptr is given QSE_NULL for that purpose 
  *     new_pair = qse_htb_allocpair (
- *       htb, kptr, klen, QSE_NULL, pair->vlen + 1 + v->len); 
+ *       htb, kptr, klen, QSE_NULL, QSE_HTB_VLEN(pair) + 1 + v->len); 
  *     if (new_pair == QSE_NULL) return QSE_NULL;
  * 
  *     // fill in the value space 
- *     vptr = new_pair->vptr;
- *     qse_memcpy (vptr, pair->vptr, pair->vlen*QSE_SIZEOF(qse_char_t));
- *     vptr += pair->vlen*QSE_SIZEOF(qse_char_t);
+ *     vptr = QSE_HTB_VPTR(new_pair);
+ *     qse_memcpy (vptr, QSE_HTB_VPTR(pair), QSE_HTB_VLEN(pair)*QSE_SIZEOF(qse_char_t));
+ *     vptr += QSE_HTB_VLEN(pair)*QSE_SIZEOF(qse_char_t);
  *     qse_memcpy (vptr, &comma, QSE_SIZEOF(qse_char_t));
  *     vptr += QSE_SIZEOF(qse_char_t);
  *     qse_memcpy (vptr, v->ptr, v->len*QSE_SIZEOF(qse_char_t));
@@ -538,11 +544,12 @@ QSE_EXPORT qse_htb_pair_t* qse_htb_update (
  *   qse_char_t* keys[] = { QSE_T("one"), QSE_T("two"), QSE_T("three") };
  *   qse_char_t* vals[] = { QSE_T("1"), QSE_T("2"), QSE_T("3"), QSE_T("4"), QSE_T("5") };
  * 
+ *   qse_openstdsios ();
  *   s1 = qse_htb_open (
  *     QSE_MMGR_GETDFL(), 0, 10, 70,
  *     QSE_SIZEOF(qse_char_t), QSE_SIZEOF(qse_char_t)
  *   ); // note error check is skipped 
- *   qse_htb_setstyle (s1, &style1);
+ *   qse_htb_setstyle (s1, qse_gethtbstyle(QSE_HTB_STYLE_INLINE_COPIERS));
  * 
  *   for (i = 0; i < QSE_COUNTOF(vals); i++)
  *   {
@@ -556,6 +563,7 @@ QSE_EXPORT qse_htb_pair_t* qse_htb_update (
  *   qse_htb_walk (s1, print_map_pair, QSE_NULL);
  * 
  *   qse_htb_close (s1);
+ *   qse_closestdsios ();
  *   return 0;
  * }
  * @endcode
