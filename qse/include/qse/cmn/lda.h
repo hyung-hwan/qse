@@ -61,9 +61,9 @@ typedef enum   qse_lda_walk_t qse_lda_walk_t;
 
 /**
  *  The qse_lda_copier_t type defines a callback function for slot construction.
- *  A slot is contructed when a user adds data to a list. The user can
- *  define how the data to add can be maintained in the list. A singly
- *  linked list not specified with any copiers stores the data pointer and
+ *  A slot is contructed when a user adds data to an array. The user can
+ *  define how the data to add can be maintained in the array. A dynamic
+ *  array not specified with any copiers stores the data pointer and
  *  the data length into a slot. A special copier QSE_LDA_COPIER_INLINE copies 
  *  the contents of the data a user provided into the slot. You can use the
  *  qse_lda_setcopier() function to change the copier. 
@@ -89,10 +89,11 @@ typedef void (*qse_lda_freeer_t) (
 
 /**
  * The qse_lda_comper_t type defines a key comparator that is called when
- * the list needs to compare data. A linear dynamic array is created with a
+ * the arry needs to compare data. A linear dynamic array is created with a
  * default comparator that performs bitwise comparison.
  *
- * The comparator should return 0 if the data are the same and a non-zero
+ * The comparator should return 0 if the data are the same, a negative 
+ * integer if the first data is less than the second data, a positive
  * integer otherwise.
  *
  */
