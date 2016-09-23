@@ -7,6 +7,7 @@ AM_CPPFLAGS = \
 
 
 bin_PROGRAMS = \
+	arr01 \
 	chr01 \
 	dll \
 	env01 \
@@ -15,7 +16,6 @@ bin_PROGRAMS = \
 	fmt02 \
 	htb01 \
 	ipad01 \
-	lda \
 	main01 \
 	main02 \
 	mbwc01 \
@@ -51,7 +51,7 @@ fmt01_SOURCES = fmt01.c
 fmt02_SOURCES = fmt02.c
 htb01_SOURCES = htb01.c
 ipad01_SOURCES = ipad01.c
-lda_SOURCES = lda.c
+arr01_SOURCES = arr01.c
 main01_SOURCES = main01.c
 main02_SOURCES = main02.c
 mbwc01_SOURCES = mbwc01.c
@@ -75,13 +75,13 @@ if ENABLE_CXX
 #rex02_CXXFLAGS = -I/usr/lib/wx/include/gtk2-unicode-release-2.8 -I/usr/include/wx-2.8 -D_FILE_OFFSET_BITS=64 -D_LARGE_FILES -D__WXGTK__ -pthread 
 #rex02_LDFLAGS = -pthread -Wl,-Bsymbolic-functions  -lwx_gtk2ud_richtext-2.8 -lwx_gtk2ud_aui-2.8 -lwx_gtk2ud_xrc-2.8 -lwx_gtk2ud_qa-2.8 -lwx_gtk2ud_html-2.8 -lwx_gtk2ud_adv-2.8 -lwx_gtk2ud_core-2.8 -lwx_baseud_xml-2.8 -lwx_baseud_net-2.8 -lwx_baseud-2.8 
 
-bin_PROGRAMS += arr01 arr02 bh01 bh02 hl01 htb02 rbt02 rbt03 sp01 sp02 str02
-
-arr01_SOURCES = arr01.cpp
-arr01_LDADD = $(LDADD) -lqsecmnxx
+bin_PROGRAMS += arr02 arr03 bh01 bh02 hl01 htb02 rbt02 rbt03 sp01 sp02 str02
 
 arr02_SOURCES = arr02.cpp
 arr02_LDADD = $(LDADD) -lqsecmnxx
+
+arr03_SOURCES = arr03.cpp
+arr03_LDADD = $(LDADD) -lqsecmnxx
 
 bh01_SOURCES = bh01.cpp
 bh01_LDADD = $(LDADD) -lqsecmnxx

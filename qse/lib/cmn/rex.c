@@ -27,7 +27,7 @@
 #include <qse/cmn/rex.h>
 #include <qse/cmn/chr.h>
 #include <qse/cmn/str.h>
-#include <qse/cmn/lda.h>
+#include <qse/cmn/arr.h>
 #include "mem-prv.h"
 
 #define OCC_MAX QSE_TYPE_MAX(qse_size_t)
@@ -75,7 +75,7 @@ struct exec_t
 	{
 		int active;
 		int pending;
-		qse_lda_t set[2]; /* candidate arrays */
+		qse_arr_t set[2]; /* candidate arrays */
 	} cand;
 
 	qse_size_t nmatches;
@@ -1379,9 +1379,9 @@ static int addsimplecand (
 	cand.group = group;
 	cand.mptr = mptr;
 
-	if (qse_lda_search (
+	if (qse_arr_search (
 		&e->cand.set[e->cand.pending],
-		0, &cand, 1) != QSE_LDA_NIL)
+		0, &cand, 1) != QSE_ARR_NIL)
 	{
 		/* exclude any existing entries in the array.
 		 * see comp_cand() for the equality test used.
@@ -1395,10 +1395,10 @@ static int addsimplecand (
 		return 0;
 	}
 
-	if (qse_lda_insert (
+	if (qse_arr_insert (
 		&e->cand.set[e->cand.pending],
-		QSE_LDA_SIZE(&e->cand.set[e->cand.pending]),
-		&cand, 1) == QSE_LDA_NIL)
+		QSE_ARR_SIZE(&e->cand.set[e->cand.pending]),
+		&cand, 1) == QSE_ARR_NIL)
 	{
 		e->rex->errnum = QSE_REX_ENOMEM;
 		return -1;
@@ -1704,11 +1704,11 @@ static int charset_matched (exec_t* e, qse_rex_node_t* node, qse_char_t c)
 	return matched;
 }
 
-static qse_lda_walk_t walk_cands_for_match (
-	qse_lda_t* lda, qse_size_t index, void* ctx)
+static qse_arr_walk_t walk_cands_for_match (
+	qse_arr_t* arr, qse_size_t index, void* ctx)
 {
 	exec_t* e = (exec_t*)ctx;	
-	cand_t* cand = QSE_LDA_DPTR(lda,index);
+	cand_t* cand = QSE_ARR_DPTR(arr,index);
 	qse_rex_node_t* node = cand->node;
 	const qse_char_t* nmptr = QSE_NULL;
 
@@ -1807,7 +1807,7 @@ static qse_lda_walk_t walk_cands_for_match (
 			if (cand->occ < node->occ.max && cand->group != QSE_NULL)
 			{
 				gx = dupgroupstack (e, cand->group);
-				if (gx == QSE_NULL) return QSE_LDA_WALK_STOP;
+				if (gx == QSE_NULL) return QSE_ARR_WALK_STOP;
 			}
 			else gx = cand->group;
 
@@ -1816,7 +1816,7 @@ static qse_lda_walk_t walk_cands_for_match (
 			n = addcands (e, gx, node, node->next, nmptr);
 			refdowngroupstack (gx, e->rex->mmgr);
 
-			if (n <= -1) return QSE_LDA_WALK_STOP;
+			if (n <= -1) return QSE_ARR_WALK_STOP;
 		}
 
 		if (cand->occ < node->occ.max)
@@ -1828,11 +1828,11 @@ static qse_lda_walk_t walk_cands_for_match (
 				node, cand->occ + 1, nmptr);
 			refdowngroupstack (cand->group, e->rex->mmgr);
 
-			if (n <= -1) return QSE_LDA_WALK_STOP;
+			if (n <= -1) return QSE_ARR_WALK_STOP;
 		}
 	}
 
-	return QSE_LDA_WALK_FORWARD;
+	return QSE_ARR_WALK_FORWARD;
 }
 
 static int exec (exec_t* e)
@@ -1846,7 +1846,7 @@ static int exec (exec_t* e)
 	e->cand.active = 1;
 
 	/* empty the pending set to collect the initial candidates */
-	qse_lda_clear (&e->cand.set[e->cand.pending]); 
+	qse_arr_clear (&e->cand.set[e->cand.pending]); 
 
 	/* the first node must be the START node */
 	QSE_ASSERT (e->rex->code->id == QSE_REX_NODE_START);
@@ -1874,7 +1874,7 @@ static int exec (exec_t* e)
 		e->cand.pending = e->cand.active;
 		e->cand.active = tmp;
 
-		ncands_active = QSE_LDA_SIZE(&e->cand.set[e->cand.active]);
+		ncands_active = QSE_ARR_SIZE(&e->cand.set[e->cand.active]);
 		if (ncands_active <= 0)
 		{
 			/* we can't go on with no candidates in the 
@@ -1883,7 +1883,7 @@ static int exec (exec_t* e)
 		}
 
 		/* clear the pending set */
-		qse_lda_clear (&e->cand.set[e->cand.pending]); 
+		qse_arr_clear (&e->cand.set[e->cand.pending]); 
 
 #ifdef XTRA_DEBUG
 		{
@@ -1891,7 +1891,7 @@ static int exec (exec_t* e)
 			qse_printf (QSE_T("SET="));
 			for (i = 0; i < ncands_active; i++)
 			{
-				cand_t* cand = QSE_LDA_DPTR(&e->cand.set[e->cand.active],i);
+				cand_t* cand = QSE_ARR_DPTR(&e->cand.set[e->cand.active],i);
 				qse_rex_node_t* node = cand->node;
 
 				if (node->id == QSE_REX_NODE_CHAR)
@@ -1907,7 +1907,7 @@ static int exec (exec_t* e)
 		}
 #endif
 
-		if (qse_lda_walk (
+		if (qse_arr_walk (
 			&e->cand.set[e->cand.active],
 			walk_cands_for_match, e) != ncands_active) 
 		{
@@ -1932,13 +1932,13 @@ static int exec (exec_t* e)
 	return (e->nmatches > 0)? 1: 0;
 }
 
-static void refdowngroupstack_incand (qse_lda_t* lda, void* dptr, qse_size_t dlen)
+static void refdowngroupstack_incand (qse_arr_t* arr, void* dptr, qse_size_t dlen)
 {
 	QSE_ASSERT (dlen == 1);
-	refdowngroupstack (((cand_t*)dptr)->group, lda->mmgr);
+	refdowngroupstack (((cand_t*)dptr)->group, arr->mmgr);
 }
 
-static int comp_cand (qse_lda_t* lda,
+static int comp_cand (qse_arr_t* arr,
 	const void* dptr1, qse_size_t dlen1,
 	const void* dptr2, qse_size_t dlen2)
 {
@@ -1953,37 +1953,37 @@ static int comp_cand (qse_lda_t* lda,
 static int init_exec_dds (exec_t* e, qse_mmgr_t* mmgr)
 {
 	/* initializes dynamic data structures */
-	if (qse_lda_init (&e->cand.set[0], mmgr, 100) <= -1)
+	if (qse_arr_init (&e->cand.set[0], mmgr, 100) <= -1)
 	{
 		e->rex->errnum = QSE_REX_ENOMEM;
 		return -1;
 	}
-	if (qse_lda_init (&e->cand.set[1], mmgr, 100) <= -1)
+	if (qse_arr_init (&e->cand.set[1], mmgr, 100) <= -1)
 	{
 		e->rex->errnum = QSE_REX_ENOMEM;
-		qse_lda_fini (&e->cand.set[0]);
+		qse_arr_fini (&e->cand.set[0]);
 		return -1;
 	}
 
-	qse_lda_setscale (&e->cand.set[0], QSE_SIZEOF(cand_t));
-	qse_lda_setscale (&e->cand.set[1], QSE_SIZEOF(cand_t));
+	qse_arr_setscale (&e->cand.set[0], QSE_SIZEOF(cand_t));
+	qse_arr_setscale (&e->cand.set[1], QSE_SIZEOF(cand_t));
 
-	qse_lda_setcopier (&e->cand.set[0], QSE_LDA_COPIER_INLINE);
-	qse_lda_setcopier (&e->cand.set[1], QSE_LDA_COPIER_INLINE);
+	qse_arr_setcopier (&e->cand.set[0], QSE_ARR_COPIER_INLINE);
+	qse_arr_setcopier (&e->cand.set[1], QSE_ARR_COPIER_INLINE);
 
-	qse_lda_setfreeer (&e->cand.set[0], refdowngroupstack_incand);
-	qse_lda_setfreeer (&e->cand.set[1], refdowngroupstack_incand);
+	qse_arr_setfreeer (&e->cand.set[0], refdowngroupstack_incand);
+	qse_arr_setfreeer (&e->cand.set[1], refdowngroupstack_incand);
 
-	qse_lda_setcomper (&e->cand.set[0], comp_cand);
-	qse_lda_setcomper (&e->cand.set[1], comp_cand);
+	qse_arr_setcomper (&e->cand.set[0], comp_cand);
+	qse_arr_setcomper (&e->cand.set[1], comp_cand);
 
 	return 0;
 }
 
 static void fini_exec_dds (exec_t* e)
 {
-	qse_lda_fini (&e->cand.set[1]);
-	qse_lda_fini (&e->cand.set[0]);
+	qse_arr_fini (&e->cand.set[1]);
+	qse_arr_fini (&e->cand.set[0]);
 }
 
 int qse_rex_exec (

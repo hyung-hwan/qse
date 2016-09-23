@@ -2,6 +2,7 @@ pkgincludedir = $(includedir)/qse/cmn
 
 pkginclude_HEADERS = \
 	alg.h \
+	arr.h \
 	chr.h \
 	cp949.h \
 	cp950.h \
@@ -13,7 +14,6 @@ pkginclude_HEADERS = \
 	htb.h \
 	hton.h \
 	ipad.h \
-	lda.h \
 	main.h \
 	map.h \
 	mb8.h \

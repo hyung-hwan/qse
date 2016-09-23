@@ -28,7 +28,7 @@
 #include <qse/cmn/str.h>
 #include <qse/cmn/mbwc.h>
 #include <qse/cmn/path.h>
-#include <qse/cmn/lda.h>
+#include <qse/cmn/arr.h>
 #include "../cmn/mem-prv.h"
 
 #if defined(_WIN32) 
@@ -74,7 +74,7 @@ struct qse_dir_t
 	qse_wcs_t wbuf;
 	qse_mbs_t mbuf;
 
-	qse_lda_t* stab;
+	qse_arr_t* stab;
 	int status;
 
 #if defined(_WIN32)
@@ -148,7 +148,7 @@ qse_dir_errnum_t qse_dir_geterrnum (qse_dir_t* dir)
 	return dir->errnum;
 }
 
-static int compare_dirent (qse_lda_t* lda, const void* dptr1, qse_size_t dlen1, const void* dptr2, qse_size_t dlen2)
+static int compare_dirent (qse_arr_t* arr, const void* dptr1, qse_size_t dlen1, const void* dptr2, qse_size_t dlen2)
 {
 	int n = QSE_MEMCMP (dptr1, dptr2, ((dlen1 < dlen2)? dlen1: dlen2));
 	if (n == 0 && dlen1 != dlen2) n = (dlen1 > dlen2)? 1: -1;
@@ -190,19 +190,19 @@ int qse_dir_init (qse_dir_t* dir, qse_mmgr_t* mmgr, const qse_char_t* path, int 
 
 	if (dir->flags & QSE_DIR_SORT)
 	{
-		dir->stab = qse_lda_open (dir->mmgr, 0, 128);
+		dir->stab = qse_arr_open (dir->mmgr, 0, 128);
 		if (dir->stab == QSE_NULL) goto oops_3;
 
-		/*qse_lda_setscale (dir->stab, 1);*/
-		qse_lda_setcopier (dir->stab, QSE_LDA_COPIER_INLINE);
-		qse_lda_setcomper (dir->stab, compare_dirent);
+		/*qse_arr_setscale (dir->stab, 1);*/
+		qse_arr_setcopier (dir->stab, QSE_ARR_COPIER_INLINE);
+		qse_arr_setcomper (dir->stab, compare_dirent);
 		if (read_ahead_and_sort (dir, path) <= -1) goto oops_4;
 	}
 
 	return n;
 
 oops_4:
-	qse_lda_close (dir->stab);
+	qse_arr_close (dir->stab);
 oops_3:
 	close_dir_safely (dir);
 oops_2:
@@ -249,7 +249,7 @@ void qse_dir_fini (qse_dir_t* dir)
 	qse_mbs_fini (&dir->mbuf);
 	qse_wcs_fini (&dir->wbuf);
 
-	if (dir->stab) qse_lda_close (dir->stab);
+	if (dir->stab) qse_arr_close (dir->stab);
 }
 
 static qse_mchar_t* wcs_to_mbuf (qse_dir_t* dir, const qse_wchar_t* wcs, qse_mbs_t* mbuf)
@@ -607,7 +607,7 @@ int qse_dir_reset (qse_dir_t* dir, const qse_char_t* path)
 
 	if (dir->flags & QSE_DIR_SORT)
 	{
-		qse_lda_clear (dir->stab);
+		qse_arr_clear (dir->stab);
 		if (read_ahead_and_sort (dir, path) <= -1) 
 		{
 			dir->status |= STATUS_SORT_ERR;
@@ -852,7 +852,7 @@ static int read_ahead_and_sort (qse_dir_t* dir, const qse_char_t* path)
 			else
 				size = (qse_wcslen(name) + 1) * QSE_SIZEOF(qse_wchar_t);
 
-			if (qse_lda_pushheap (dir->stab, name, size) == (qse_size_t)-1)
+			if (qse_arr_pushheap (dir->stab, name, size) == (qse_size_t)-1)
 			{
 				dir->errnum = QSE_DIR_ENOMEM;
 				return -1;
@@ -873,12 +873,12 @@ int qse_dir_read (qse_dir_t* dir, qse_dir_ent_t* ent)
 	{
 		if (dir->status & STATUS_SORT_ERR) return -1;
 
-		if (dir->status & STATUS_POPHEAP) qse_lda_popheap (dir->stab);
+		if (dir->status & STATUS_POPHEAP) qse_arr_popheap (dir->stab);
 		else dir->status |= STATUS_POPHEAP;
 
-		if (QSE_LDA_SIZE(dir->stab) <= 0) return 0; /* no more entry */
+		if (QSE_ARR_SIZE(dir->stab) <= 0) return 0; /* no more entry */
 
-		ent->name = QSE_LDA_DPTR(dir->stab, 0);
+		ent->name = QSE_ARR_DPTR(dir->stab, 0);
 		return 1;
 	}
 	else
