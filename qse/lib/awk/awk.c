@@ -194,9 +194,9 @@ int qse_awk_init (qse_awk_t* awk, qse_mmgr_t* mmgr, const qse_awk_prm_t* prm)
 	awk->parse.funs = qse_htb_open (mmgr, QSE_SIZEOF(awk), 256, 70, QSE_SIZEOF(qse_char_t), 1);
 	awk->parse.named = qse_htb_open (mmgr, QSE_SIZEOF(awk), 256, 70, QSE_SIZEOF(qse_char_t), 1);
 
-	awk->parse.gbls = qse_lda_open (mmgr, QSE_SIZEOF(awk), 128);
-	awk->parse.lcls = qse_lda_open (mmgr, QSE_SIZEOF(awk), 64);
-	awk->parse.params = qse_lda_open (mmgr, QSE_SIZEOF(awk), 32);
+	awk->parse.gbls = qse_arr_open (mmgr, QSE_SIZEOF(awk), 128);
+	awk->parse.lcls = qse_arr_open (mmgr, QSE_SIZEOF(awk), 64);
+	awk->parse.params = qse_arr_open (mmgr, QSE_SIZEOF(awk), 32);
 
 	awk->fnc.sys = QSE_NULL;
 	awk->fnc.user = qse_htb_open (mmgr, QSE_SIZEOF(awk), 512, 70, QSE_SIZEOF(qse_char_t), 1);
@@ -225,16 +225,16 @@ int qse_awk_init (qse_awk_t* awk, qse_mmgr_t* mmgr, const qse_awk_prm_t* prm)
 	qse_htb_setstyle (awk->parse.named, qse_gethtbstyle(QSE_HTB_STYLE_INLINE_KEY_COPIER));
 
 	*(qse_awk_t**)QSE_XTN(awk->parse.gbls) = awk;
-	qse_lda_setscale (awk->parse.gbls, QSE_SIZEOF(qse_char_t));
-	qse_lda_setcopier (awk->parse.gbls, QSE_LDA_COPIER_INLINE);
+	qse_arr_setscale (awk->parse.gbls, QSE_SIZEOF(qse_char_t));
+	qse_arr_setcopier (awk->parse.gbls, QSE_ARR_COPIER_INLINE);
 
 	*(qse_awk_t**)QSE_XTN(awk->parse.lcls) = awk;
-	qse_lda_setscale (awk->parse.lcls, QSE_SIZEOF(qse_char_t));
-	qse_lda_setcopier (awk->parse.lcls, QSE_LDA_COPIER_INLINE);
+	qse_arr_setscale (awk->parse.lcls, QSE_SIZEOF(qse_char_t));
+	qse_arr_setcopier (awk->parse.lcls, QSE_ARR_COPIER_INLINE);
 
 	*(qse_awk_t**)QSE_XTN(awk->parse.params) = awk;
-	qse_lda_setscale (awk->parse.params, QSE_SIZEOF(qse_char_t));
-	qse_lda_setcopier (awk->parse.params, QSE_LDA_COPIER_INLINE);
+	qse_arr_setscale (awk->parse.params, QSE_SIZEOF(qse_char_t));
+	qse_arr_setcopier (awk->parse.params, QSE_ARR_COPIER_INLINE);
 
 	*(qse_awk_t**)QSE_XTN(awk->fnc.user) = awk;
 	qse_htb_setstyle (awk->fnc.user, &fncusercbs);
@@ -252,9 +252,9 @@ int qse_awk_init (qse_awk_t* awk, qse_mmgr_t* mmgr, const qse_awk_prm_t* prm)
 oops:
 	if (awk->modtab) qse_rbt_close (awk->modtab);
 	if (awk->fnc.user) qse_htb_close (awk->fnc.user);
-	if (awk->parse.params) qse_lda_close (awk->parse.params);
-	if (awk->parse.lcls) qse_lda_close (awk->parse.lcls);
-	if (awk->parse.gbls) qse_lda_close (awk->parse.gbls);
+	if (awk->parse.params) qse_arr_close (awk->parse.params);
+	if (awk->parse.lcls) qse_arr_close (awk->parse.lcls);
+	if (awk->parse.gbls) qse_arr_close (awk->parse.gbls);
 	if (awk->parse.named) qse_htb_close (awk->parse.named);
 	if (awk->parse.funs) qse_htb_close (awk->parse.funs);
 	if (awk->tree.funs) qse_htb_close (awk->tree.funs);
@@ -279,9 +279,9 @@ void qse_awk_fini (qse_awk_t* awk)
 	qse_rbt_close (awk->modtab);
 	qse_htb_close (awk->fnc.user);
 
-	qse_lda_close (awk->parse.params);
-	qse_lda_close (awk->parse.lcls);
-	qse_lda_close (awk->parse.gbls);
+	qse_arr_close (awk->parse.params);
+	qse_arr_close (awk->parse.lcls);
+	qse_arr_close (awk->parse.gbls);
 	qse_htb_close (awk->parse.named);
 	qse_htb_close (awk->parse.funs);
 
@@ -329,14 +329,14 @@ void qse_awk_clear (qse_awk_t* awk)
 	qse_rbt_walk (awk->modtab, unload_module, awk);
 	qse_rbt_clear (awk->modtab);
 
-	QSE_ASSERT (QSE_LDA_SIZE(awk->parse.gbls) == awk->tree.ngbls);
+	QSE_ASSERT (QSE_ARR_SIZE(awk->parse.gbls) == awk->tree.ngbls);
 	/* delete all non-builtin global variables */
-	qse_lda_delete (
+	qse_arr_delete (
 		awk->parse.gbls, awk->tree.ngbls_base, 
-		QSE_LDA_SIZE(awk->parse.gbls) - awk->tree.ngbls_base);
+		QSE_ARR_SIZE(awk->parse.gbls) - awk->tree.ngbls_base);
 
-	qse_lda_clear (awk->parse.lcls);
-	qse_lda_clear (awk->parse.params);
+	qse_arr_clear (awk->parse.lcls);
+	qse_arr_clear (awk->parse.params);
 	qse_htb_clear (awk->parse.named);
 	qse_htb_clear (awk->parse.funs);
 

@@ -31,7 +31,7 @@
 #include <qse/cmn/chr.h>
 #include <qse/cmn/str.h>
 #include <qse/cmn/htb.h>
-#include <qse/cmn/lda.h>
+#include <qse/cmn/arr.h>
 #include <qse/cmn/rex.h>
 #include <qse/cmn/rbt.h>
 
@@ -176,13 +176,13 @@ struct qse_awk_t
 		qse_htb_t* named;
 
 		/* global variables */
-		qse_lda_t* gbls;
+		qse_arr_t* gbls;
 
 		/* local variables */
-		qse_lda_t* lcls;
+		qse_arr_t* lcls;
 
 		/* parameters to a function */
-		qse_lda_t* params;
+		qse_arr_t* params;
 
 		/* maximum number of local variables */
 		qse_size_t nlcls_max;

@@ -133,8 +133,8 @@ am__DEPENDENCIES_1 =
 libqsecmn_la_DEPENDENCIES = $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1)
 am__libqsecmn_la_SOURCES_DIST = alg-base64.c alg-rand.c alg-search.c \
-	alg-sort.c assert.c chr.c dll.c env.c gdl.c htb.c fma.c \
-	fmt-intmax.c fmt-out.c hton.c ipad.c lda.c main.c mb8.c mbwc.c \
+	alg-sort.c arr.c assert.c chr.c dll.c env.c gdl.c htb.c fma.c \
+	fmt-intmax.c fmt-out.c hton.c ipad.c main.c mb8.c mbwc.c \
 	mbwc-str.c mem.c oht.c opt.c path-base.c path-canon.c \
 	path-core.c path-merge.c pma.c rbt.c rex.c sll.c slmb.c \
 	str-beg.c str-cat.c str-chr.c str-cnv.c str-cmp.c str-cpy.c \
@@ -148,8 +148,8 @@ am__libqsecmn_la_SOURCES_DIST = alg-base64.c alg-rand.c alg-search.c \
 @ENABLE_BUNDLED_UNICODE_TRUE@am__objects_1 = uni.lo
 @ENABLE_XCMGRS_TRUE@am__objects_2 = cp949.lo cp950.lo
 am_libqsecmn_la_OBJECTS = alg-base64.lo alg-rand.lo alg-search.lo \
-	alg-sort.lo assert.lo chr.lo dll.lo env.lo gdl.lo htb.lo \
-	fma.lo fmt-intmax.lo fmt-out.lo hton.lo ipad.lo lda.lo main.lo \
+	alg-sort.lo arr.lo assert.lo chr.lo dll.lo env.lo gdl.lo \
+	htb.lo fma.lo fmt-intmax.lo fmt-out.lo hton.lo ipad.lo main.lo \
 	mb8.lo mbwc.lo mbwc-str.lo mem.lo oht.lo opt.lo path-base.lo \
 	path-canon.lo path-core.lo path-merge.lo pma.lo rbt.lo rex.lo \
 	sll.lo slmb.lo str-beg.lo str-cat.lo str-chr.lo str-cnv.lo \
@@ -467,18 +467,18 @@ noinst_HEADERS = \
 	uni-trait.h
 
 libqsecmn_la_SOURCES = alg-base64.c alg-rand.c alg-search.c alg-sort.c \
-	assert.c chr.c dll.c env.c gdl.c htb.c fma.c fmt-intmax.c \
-	fmt-out.c hton.c ipad.c lda.c main.c mb8.c mbwc.c mbwc-str.c \
-	mem.c oht.c opt.c path-base.c path-canon.c path-core.c \
-	path-merge.c pma.c rbt.c rex.c sll.c slmb.c str-beg.c \
-	str-cat.c str-chr.c str-cnv.c str-cmp.c str-cpy.c str-del.c \
-	str-dup.c str-dyn.c str-end.c str-excl.c str-fcpy.c str-fmt.c \
-	str-fnmat.c str-incl.c str-join.c str-len.c str-pac.c \
-	str-pbrk.c str-put.c str-rev.c str-rot.c str-set.c str-spl.c \
-	str-spn.c str-str.c str-subst.c str-tok.c str-trm.c str-word.c \
-	time.c tmr.c tre.c tre-ast.c tre-compile.c tre-match-bt.c \
-	tre-match-pa.c tre-parse.c tre-stack.c uri.c utf8.c xma.c \
-	$(am__append_1) $(am__append_2)
+	arr.c assert.c chr.c dll.c env.c gdl.c htb.c fma.c \
+	fmt-intmax.c fmt-out.c hton.c ipad.c main.c mb8.c mbwc.c \
+	mbwc-str.c mem.c oht.c opt.c path-base.c path-canon.c \
+	path-core.c path-merge.c pma.c rbt.c rex.c sll.c slmb.c \
+	str-beg.c str-cat.c str-chr.c str-cnv.c str-cmp.c str-cpy.c \
+	str-del.c str-dup.c str-dyn.c str-end.c str-excl.c str-fcpy.c \
+	str-fmt.c str-fnmat.c str-incl.c str-join.c str-len.c \
+	str-pac.c str-pbrk.c str-put.c str-rev.c str-rot.c str-set.c \
+	str-spl.c str-spn.c str-str.c str-subst.c str-tok.c str-trm.c \
+	str-word.c time.c tmr.c tre.c tre-ast.c tre-compile.c \
+	tre-match-bt.c tre-match-pa.c tre-parse.c tre-stack.c uri.c \
+	utf8.c xma.c $(am__append_1) $(am__append_2)
 libqsecmn_la_LDFLAGS = -version-info 1:0:0 -no-undefined
 libqsecmn_la_LIBADD = $(SOCKET_LIBS) $(QUADMATH_LIBS)
 @ENABLE_CXX_TRUE@libqsecmnxx_la_SOURCES = \
@@ -578,6 +578,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/alg-rand.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/alg-search.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/alg-sort.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/arr.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/assert.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/chr.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cp949.Plo@am__quote@
@@ -591,7 +592,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/htb.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hton.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ipad.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/lda.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/main.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mb8.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mbwc-str.Plo@am__quote@

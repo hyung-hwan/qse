@@ -35,6 +35,7 @@ libqsecmn_la_SOURCES = \
 	alg-rand.c \
 	alg-search.c  \
 	alg-sort.c \
+	arr.c \
 	assert.c \
 	chr.c \
 	dll.c \
@@ -46,7 +47,6 @@ libqsecmn_la_SOURCES = \
 	fmt-out.c \
 	hton.c \
 	ipad.c \
-	lda.c \
 	main.c \
 	mb8.c \
 	mbwc.c \
