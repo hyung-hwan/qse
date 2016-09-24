@@ -43,6 +43,8 @@
 #define DPTR(slot)   ((slot)->val.ptr)
 #define DLEN(slot)   ((slot)->val.len)
 
+/* the default comparator is not proper for number comparision.
+ * the first different byte decides whice side is greater */
 static int default_comparator (arr_t* arr, 
 	const void* dptr1, size_t dlen1, 
 	const void* dptr2, size_t dlen2)
@@ -52,8 +54,11 @@ static int default_comparator (arr_t* arr,
 	return 1;
 	*/
 
-	size_t min = (dlen1 < dlen2)? dlen1: dlen2;
-	int n = QSE_MEMCMP (dptr1, dptr2, TOB(arr,min));
+	int n;
+	size_t min;
+
+	min = (dlen1 < dlen2)? dlen1: dlen2;
+	n = QSE_MEMCMP (dptr1, dptr2, TOB(arr,min));
 	if (n == 0 && dlen1 != dlen2) 
 	{
 		n = (dlen1 > dlen2)? 1: -1;
@@ -378,8 +383,7 @@ size_t qse_arr_insert (arr_t* arr, size_t pos, void* dptr, size_t dlen)
 
 			if (capa <= mincapa)
 			{
-				if (arr->freeer) 
-					arr->freeer (arr, DPTR(slot), DLEN(slot));
+				if (arr->freeer) arr->freeer (arr, DPTR(slot), DLEN(slot));
 				QSE_MMGR_FREE (arr->mmgr, slot);
 				return QSE_ARR_NIL;
 			}
@@ -392,8 +396,7 @@ size_t qse_arr_insert (arr_t* arr, size_t pos, void* dptr, size_t dlen)
 	if (pos >= arr->capa || arr->size >= arr->capa) 
 	{
 		/* the buffer is not still enough after resizing */
-		if (arr->freeer) 
-			arr->freeer (arr, DPTR(slot), DLEN(slot));
+		if (arr->freeer) arr->freeer (arr, DPTR(slot), DLEN(slot));
 		QSE_MMGR_FREE (arr->mmgr, slot);
 		return QSE_ARR_NIL;
 	}
@@ -431,7 +434,7 @@ size_t qse_arr_update (arr_t* arr, size_t pos, void* dptr, size_t dlen)
 		if (dptr == DPTR(c) && dlen == DLEN(c))
 		{
 			/* updated to the same data */
-			if (arr->keeper) arr->keeper (arr, dptr, dlen);	
+			if (arr->keeper) arr->keeper (arr, dptr, dlen);
 		}
 		else
 		{
@@ -439,8 +442,7 @@ size_t qse_arr_update (arr_t* arr, size_t pos, void* dptr, size_t dlen)
 			slot_t* slot = alloc_slot (arr, dptr, dlen);
 			if (slot == QSE_NULL) return QSE_ARR_NIL;
 
-			if (arr->freeer != QSE_NULL)
-				arr->freeer (arr, DPTR(c), DLEN(c));
+			if (arr->freeer) arr->freeer (arr, DPTR(c), DLEN(c));
 			QSE_MMGR_FREE (arr->mmgr, c);
 
 			arr->slot[pos] = slot;
@@ -465,8 +467,7 @@ size_t qse_arr_delete (arr_t* arr, size_t index, size_t count)
 
 		if (c != QSE_NULL)
 		{
-			if (arr->freeer != QSE_NULL)
-				arr->freeer (arr, DPTR(c), DLEN(c));
+			if (arr->freeer) arr->freeer (arr, DPTR(c), DLEN(c));
 			QSE_MMGR_FREE (arr->mmgr, c);
 
 			arr->slot[i] = QSE_NULL;
@@ -498,8 +499,7 @@ size_t qse_arr_uplete (arr_t* arr, size_t index, size_t count)
 
 		if (c != QSE_NULL)
 		{
-			if (arr->freeer != QSE_NULL)
-				arr->freeer (arr, DPTR(c), DLEN(c));
+			if (arr->freeer) arr->freeer (arr, DPTR(c), DLEN(c));
 			QSE_MMGR_FREE (arr->mmgr, c);
 
 			arr->slot[i] = QSE_NULL;
@@ -608,93 +608,163 @@ void qse_arr_popstack (arr_t* arr)
 #define HEAP_LEFT(x)   ((x)*2 + 1)
 #define HEAP_RIGHT(x)  ((x)*2 + 2)
 
-size_t qse_arr_pushheap (arr_t* arr, void* dptr, size_t dlen)
+size_t sift_up (arr_t* arr, size_t index)
 {
-	size_t cur, par;
+	size_t parent;
 	int n;
 
-	/* add a value to the bottom */
-	cur = arr->size;
-	if (qse_arr_insert (arr, cur, dptr, dlen) == QSE_ARR_NIL)
-		return QSE_ARR_NIL;
+	if (index > 0)
+	{
+		parent = HEAP_PARENT(index);
+		n = arr->comper (arr,
+			DPTR(arr->slot[index]), DLEN(arr->slot[index]),
+			DPTR(arr->slot[parent]), DLEN(arr->slot[parent]));
+		if (n > 0)
+		{
+			slot_t* tmp;
 
-	while (cur != 0)
+			tmp = arr->slot[index];
+
+			while (1)
+			{
+				arr->slot[index] = arr->slot[parent];
+
+				index = parent;
+				parent = HEAP_PARENT(parent);
+
+				if (index <= 0) break;
+
+				n = arr->comper (arr,
+					DPTR(tmp), DLEN(tmp),
+					DPTR(arr->slot[parent]), DLEN(arr->slot[parent]));
+				if (n <= 0) break;
+			} 
+
+			arr->slot[index] = tmp;
+		}
+	}
+	return index;
+}
+
+size_t sift_down (arr_t* arr, size_t index)
+{
+	size_t base;
+
+	base = arr->size / 2;
+
+	if (index < base) /* at least 1 child is under the 'index' position */
 	{
 		slot_t* tmp;
 
-		/* compare with the parent */
-		par = HEAP_PARENT(cur);
-		n = arr->comper (arr,
-			DPTR(arr->slot[cur]), DLEN(arr->slot[cur]),
-			DPTR(arr->slot[par]), DLEN(arr->slot[par]));
-		if (n <= 0) break; /* ok */
+		tmp = arr->slot[index];
 
-		/* swap the current with the parent */
-		tmp = arr->slot[cur];
-		arr->slot[cur] = arr->slot[par];
-		arr->slot[par] = tmp;
+		do
+		{
+			qse_size_t left, right, child;
+			int n;
 
-		cur = par;
+			left= HEAP_LEFT(index);
+			right = HEAP_RIGHT(index);
+
+			if (right < arr->size)
+			{
+				n = arr->comper (arr,
+					DPTR(arr->slot[right]), DLEN(arr->slot[right]),
+					DPTR(arr->slot[left]), DLEN(arr->slot[left]));
+				child = (n > 0)? right: left;
+			}
+			else
+			{
+				child = left;
+			}
+
+			n = arr->comper (arr,
+				DPTR(tmp), DLEN(tmp),
+				DPTR(arr->slot[child]), DLEN(arr->slot[child]));
+			if (n > 0) break;
+
+			arr->slot[index] = arr->slot[child];
+			index = child;
+		}
+		while (index < base);
+
+		arr->slot[index] = tmp;
 	}
 
+	return index;
+}
+
+size_t qse_arr_pushheap (arr_t* arr, void* dptr, size_t dlen)
+{
+	size_t index;
+
+	/* add a value at the back of the array  */
+	index = arr->size;
+	if (qse_arr_insert (arr, index, dptr, dlen) == QSE_ARR_NIL) return QSE_ARR_NIL;
+
+	QSE_ASSERT (arr->size == index + 1);
+
+	/* move the item upto the top if it's greater than the parent items */
+	sift_up (arr, index);
 	return arr->size;
 }
 
 void qse_arr_popheap (arr_t* arr)
 {
-	size_t cur, child;
+	QSE_ASSERT (arr->size > 0);
+	qse_arr_deleteheap (arr, 0);
+}
+
+void qse_arr_deleteheap (arr_t* arr, size_t index)
+{
 	slot_t* tmp;
 
 	QSE_ASSERT (arr->size > 0);
+	QSE_ASSERT (index < arr->size);
 
-	/* destroy the top */
-	tmp = arr->slot[0];
+	/* remember the item to destroy */
+	tmp = arr->slot[index];
+
+	arr->size = arr->size - 1;
+	if (arr->size > 0 && index != arr->size)
+	{
+		int n;
+
+		/* move the last item to the deleting position */
+		arr->slot[index] = arr->slot[arr->size];
+
+		/* move it up if the last item is greater than the item to be deleted,
+		 * move it down otherwise. */
+		n = arr->comper (arr,
+			DPTR(arr->slot[index]), DLEN(arr->slot[index]),
+			DPTR(tmp), DLEN(tmp));
+		if (n > 0) sift_up (arr, index);
+		else if (n < 0) sift_down (arr, index);
+	}
+
+	/* destroy the actual item */
 	if (arr->freeer) arr->freeer (arr, DPTR(tmp), DLEN(tmp));
 	QSE_MMGR_FREE (arr->mmgr, tmp);
 
-	/* move the last item to the top position also shrink the size */
-	arr->slot[0] = arr->slot[--arr->size];
+	/* empty the last slot */
+	arr->slot[arr->size] = QSE_NULL;
+}
 
-	if (arr->size <= 1) return; /* only 1 element. nothing further to do */
+size_t qse_arr_updateheap (qse_arr_t* arr, qse_size_t index, void* dptr, qse_size_t dlen)
+{
+	slot_t* tmp;
+	int n;
 
-	for (cur = 0; cur < arr->size; cur = child)
+	tmp = arr->slot[index];
+	QSE_ASSERT (tmp != QSE_NULL);
+
+	n = arr->comper (arr, dptr, dlen, DPTR(tmp), DLEN(tmp));
+	if (n)
 	{
-		size_t left, right;
-		int n;
-
-		left = HEAP_LEFT(cur);
-		right = HEAP_RIGHT(cur);
-
-		if (left >= arr->size) 
-		{
-			/* the left child does not exist. 
-			 * reached the bottom. abort exchange */
-			break;
-		}
-
-		if (right >= arr->size) 
-		{
-			/* the right child does not exist. only the left */
-			child = left;	
-		}
-		else
-		{
-			/* get the larger child of the two */
-			n = arr->comper (arr,
-				DPTR(arr->slot[left]), DLEN(arr->slot[left]),
-				DPTR(arr->slot[right]), DLEN(arr->slot[right]));
-			child = (n > 0)? left: right;
-		}
-		
-		/* compare the current one with the child */
-		n = arr->comper (arr,
-			DPTR(arr->slot[cur]), DLEN(arr->slot[cur]),
-			DPTR(arr->slot[child]), DLEN(arr->slot[child]));
-		if (n > 0) break; /* current one is larger. stop exchange */
-
-		/* swap the current with the child */
-		tmp = arr->slot[cur];
-		arr->slot[cur] = arr->slot[child];
-		arr->slot[child] = tmp;
+		if (qse_arr_update (arr, index, dptr, dlen) == QSE_ARR_NIL) return QSE_ARR_NIL;
+		if (n > 0) sift_up (arr, index);
+		else sift_down (arr, index);
 	}
+
+	return index;
 }

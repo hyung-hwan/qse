@@ -90,8 +90,13 @@ typedef void (*qse_arr_freeer_t) (
 /**
  * The qse_arr_comper_t type defines a key comparator that is called when
  * the arry needs to compare data. A linear dynamic array is created with a
- * default comparator that performs bitwise comparison.
+ * default comparator that performs bitwise comparison. 
  *
+ * The default comparator compares data in a memcmp-like fashion.
+ * It is not suitable when you want to implement a heap of numbers
+ * greater than a byte size. You must implement a comparator that 
+ * takes the whole element and performs comparison in such a case.
+ * 
  * The comparator should return 0 if the data are the same, a negative 
  * integer if the first data is less than the second data, a positive
  * integer otherwise.
@@ -259,7 +264,8 @@ QSE_EXPORT qse_arr_comper_t qse_arr_getcomper (
 /**
  * The qse_arr_setcomper() function specifies how to compare two elements
  * for equality test. The comparator @a comper must return 0 if two elements
- * compared are equal, or a non-zero number otherwise.
+ * compared are equal, 1 if the first element is greater than the 
+ * second, -1 if the second element is greater than the first.
  */
 QSE_EXPORT void qse_arr_setcomper (
 	qse_arr_t*       arr     /**< arr */,
@@ -426,6 +432,18 @@ QSE_EXPORT qse_size_t qse_arr_pushheap (
  */
 QSE_EXPORT void qse_arr_popheap (
 	qse_arr_t* arr
+);
+
+QSE_EXPORT void qse_arr_deleteheap (
+	qse_arr_t* arr,
+	qse_size_t index
+);
+
+QSE_EXPORT qse_size_t qse_arr_updateheap (
+	qse_arr_t* arr,
+	qse_size_t index,
+	void*      dptr,
+	qse_size_t dlen
 );
 
 #if defined(__cplusplus)

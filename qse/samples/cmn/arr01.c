@@ -372,6 +372,14 @@ static int test4 ()
 
 qse_arr_comper_t default_comparator;
 
+static int integer_comparator (qse_arr_t* arr,
+        const void* dptr1, size_t dlen1,
+        const void* dptr2, size_t dlen2)
+{
+	return (*(int*)dptr1 > *(int*)dptr2)? 1:
+	       (*(int*)dptr1 < *(int*)dptr2)? -1: 0;
+}
+
 static int inverse_comparator (qse_arr_t* arr,
         const void* dptr1, size_t dlen1,
         const void* dptr2, size_t dlen2)
@@ -382,7 +390,7 @@ static int inverse_comparator (qse_arr_t* arr,
 static int test5 ()
 {
 	qse_arr_t* s1;
-	int i, j;
+	int i, j, oldv, newv;
 
 	s1 = qse_arr_open (QSE_MMGR_GETDFL(), 0, 3);
 	if (s1 == QSE_NULL)
@@ -393,55 +401,74 @@ static int test5 ()
 
 	qse_arr_setcopier (s1, QSE_ARR_COPIER_INLINE);
 	qse_arr_setscale (s1, QSE_SIZEOF(i));
+	qse_arr_setcomper (s1, integer_comparator);
 
 	/* inverse the comparator to implement min-heap */
 	default_comparator = qse_arr_getcomper (s1);
 	qse_arr_setcomper (s1, inverse_comparator);
 
-	for (i = 0; i < 25; i++)
+	for (i = 0; i < 2500; i++)
 	{
-		j = rand () % 100;
+		j = rand () % 1000;
 		qse_arr_pushheap (s1, &j, 1);
 	}
 
 	qse_printf (QSE_T("arr size => %lu\n"), QSE_ARR_SIZE(s1));
 	qse_arr_walk (s1, walker3, QSE_NULL);
 
+	oldv = 0;
 	while (QSE_ARR_SIZE(s1) > 10 )
 	{
-		qse_printf (QSE_T("top => %d\n"), *(int*)QSE_ARR_DPTR(s1,0));
+		newv = *(int*)QSE_ARR_DPTR(s1,0);
+		qse_printf (QSE_T("top => %d prevtop => %d\n"), newv, oldv);
+		QSE_ASSERT (newv >= oldv);
 		qse_arr_popheap (s1);
+		oldv = newv;
 	}
 
-	for (i = 0; i < 25; i++)
+	for (i = 0; i < 2500; i++)
 	{
-		j = rand () % 100;
+		j = rand () % 1000;
 		qse_arr_pushheap (s1, &j, 1);
 	}
 
 	qse_printf (QSE_T("arr size => %lu\n"), QSE_ARR_SIZE(s1));
 	qse_arr_walk (s1, walker3, QSE_NULL);
 
-	while (QSE_ARR_SIZE(s1))
+	oldv = 0;
+	while (QSE_ARR_SIZE(s1) > 0)
 	{
-		qse_printf (QSE_T("top => %d\n"), *(int*)QSE_ARR_DPTR(s1,0));
+		newv = *(int*)QSE_ARR_DPTR(s1,0);
+		qse_printf (QSE_T("top => %d prevtop => %d\n"), newv, oldv);
+		QSE_ASSERT (newv >= oldv);
 		qse_arr_popheap (s1);
+		oldv = newv;
 	}
 
+	/* back to max-heap */
 	qse_arr_setcomper (s1, default_comparator);
-	for (i = 0; i < 25; i++)
+	for (i = 0; i < 2500; i++)
 	{
-		j = rand () % 100;
+		j = rand () % 1000;
 		qse_arr_pushheap (s1, &j, 1);
 	}
+	j = 88888888;
+	qse_arr_updateheap (s1, QSE_ARR_SIZE(s1) / 2, &j, 1);
+	j = -123;
+	qse_arr_updateheap (s1, QSE_ARR_SIZE(s1) / 2, &j, 1);
 
 	qse_printf (QSE_T("arr size => %lu\n"), QSE_ARR_SIZE(s1));
 	qse_arr_walk (s1, walker3, QSE_NULL);
 
-	while (QSE_ARR_SIZE(s1))
+
+	oldv = 99999999;
+	while (QSE_ARR_SIZE(s1) > 0)
 	{
-		qse_printf (QSE_T("top => %d\n"), *(int*)QSE_ARR_DPTR(s1,0));
+		newv = *(int*)QSE_ARR_DPTR(s1,0);
+		qse_printf (QSE_T("top => %d prevtop => %d\n"), newv, oldv);
+		QSE_ASSERT (newv <= oldv);
 		qse_arr_popheap (s1);
+		oldv = newv;
 	}
 
 

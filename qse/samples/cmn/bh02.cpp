@@ -1,10 +1,13 @@
 #include <stdio.h>
-
 #include <string.h>
+#include <stdlib.h>
 #include <qse/cmn/BinaryHeap.hpp>
 #include <qse/cmn/String.hpp>
 #include <qse/cmn/alg.h>
 #include <qse/cmn/time.h>
+
+
+//#define MAX_HEAP
 
 class Julia
 {
@@ -60,7 +63,11 @@ public:
 	}
 #endif
 
+#if defined(MAX_HEAP)
 	bool operator> (const Julia& q) const { return *this->x > *q.x; }
+#else
+	bool operator> (const Julia& q) const { return *this->x < *q.x; }
+#endif
 	int* x;
 };
 
@@ -71,20 +78,36 @@ int main ()
 	JuliaHeap jh;
 	qse_uint32_t x;
 	qse_ntime_t nt;
+	int oldval, newval;
 
 	qse_gettime (&nt);
 
 	x = nt.sec + nt.nsec;
 
-	for (int i = 0; i < 100; i++)
+	for (int i = 0; i < 2500; i++)
 	{
-		x = qse_rand31(x);
-		jh.insert (Julia((int)x % 100));
+		//x = qse_rand31(x);
+		x = rand();
+		jh.insert (Julia((int)x % 1000));
 	}
 
+#if defined(MAX_HEAP)
+	oldval = 9999999;
+#else
+	oldval = 0;
+#endif
 	while (!jh.isEmpty())
 	{
-		printf ("%d\n", *jh.getValueAt(0).x);
+		newval = *jh.getValueAt(0).x;
+		printf ("%d    oldval => %d\n", newval, oldval);
+#if defined(MAX_HEAP)
+		QSE_ASSERT (newval <= oldval);	
+#else
+		QSE_ASSERT (newval >= oldval);	
+#endif
 		jh.remove (0);
+		oldval = newval;
 	}
+
+	return 0;
 }
