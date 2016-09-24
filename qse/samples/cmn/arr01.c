@@ -19,20 +19,20 @@ void keeper1 (qse_arr_t* arr, void* dptr, qse_size_t dlen)
 qse_arr_walk_t walker1 (qse_arr_t* arr, qse_size_t index, void* arg)
 {
 	qse_printf (QSE_T("%d => [%.*s]\n"), 
-		index, (int)QSE_ARR_DLEN(arr,index), QSE_ARR_DPTR(arr,index));
+		(int)index, (int)QSE_ARR_DLEN(arr,index), QSE_ARR_DPTR(arr,index));
 	return QSE_ARR_WALK_FORWARD;
 }
 qse_arr_walk_t rwalker1 (qse_arr_t* arr, qse_size_t index, void* arg)
 {
 	qse_printf (QSE_T("%d => [%.*s]\n"), 
-		index, (int)QSE_ARR_DLEN(arr,index), QSE_ARR_DPTR(arr,index));
+		(int)index, (int)QSE_ARR_DLEN(arr,index), QSE_ARR_DPTR(arr,index));
 	return QSE_ARR_WALK_BACKWARD;
 }
 
 qse_arr_walk_t walker3 (qse_arr_t* arr, qse_size_t index, void* arg)
 {
 	qse_printf (QSE_T("%d => [%d]\n"), 
-		index, *(int*)QSE_ARR_DPTR(arr,index));
+		(int)index, *(int*)QSE_ARR_DPTR(arr,index));
 	return QSE_ARR_WALK_FORWARD;
 }
 
@@ -476,6 +476,113 @@ static int test5 ()
 	return 0;
 }
 
+struct test6_data_t
+{
+	int v;
+	qse_size_t pos;	
+};
+typedef struct test6_data_t test6_data_t;
+
+static int test6_comparator (qse_arr_t* arr,
+        const void* dptr1, size_t dlen1,
+        const void* dptr2, size_t dlen2)
+{
+	return ((test6_data_t*)dptr1)->v > ((test6_data_t*)dptr2)->v? 1:
+	       ((test6_data_t*)dptr1)->v < ((test6_data_t*)dptr2)->v? -1: 0;
+}
+
+qse_arr_walk_t test6_walker (qse_arr_t* arr, qse_size_t index, void* arg)
+{
+	test6_data_t* x;
+
+	x = QSE_ARR_DPTR(arr,index);
+	qse_printf (QSE_T("%d => [%d] pos=%d\n"), (int)index, (int)x->v, (int)x->pos);
+	QSE_ASSERT (index == x->pos);
+	return QSE_ARR_WALK_FORWARD;
+}
+
+static int test6 ()
+{
+	qse_arr_t* s1;
+	int i, oldv, newv;
+	test6_data_t j;
+
+	s1 = qse_arr_open (QSE_MMGR_GETDFL(), 0, 3);
+	if (s1 == QSE_NULL)
+	{
+		qse_printf (QSE_T("cannot open an array\n"));
+		return -1;
+	}
+
+	qse_arr_setcopier (s1, QSE_ARR_COPIER_INLINE);
+	qse_arr_setscale (s1, QSE_SIZEOF(j));
+	qse_arr_setcomper (s1, test6_comparator);
+	qse_arr_setheapposoffset (s1, QSE_OFFSETOF(test6_data_t, pos));
+
+	for (i = 0; i < 100; i++)
+	{
+		j.v = rand () % 65535;
+		qse_arr_pushheap (s1, &j, 1);
+	}
+
+	j.v = 88888888;
+	qse_arr_updateheap (s1, QSE_ARR_SIZE(s1) / 2, &j, 1);
+	j.v = -123;
+	qse_arr_updateheap (s1, QSE_ARR_SIZE(s1) / 2, &j, 1);
+
+	qse_printf (QSE_T("arr size => %lu\n"), QSE_ARR_SIZE(s1));
+	qse_arr_walk (s1, test6_walker, QSE_NULL);
+
+	oldv = 99999999;
+	while (QSE_ARR_SIZE(s1) > 50)
+	{
+		newv = ((test6_data_t*)QSE_ARR_DPTR(s1,0))->v;
+		qse_printf (QSE_T("top => %d prevtop => %d\n"), newv, oldv);
+		QSE_ASSERT (newv <= oldv);
+		qse_arr_popheap (s1);
+		oldv = newv;
+	}
+
+	qse_printf (QSE_T("arr size => %lu\n"), QSE_ARR_SIZE(s1));
+	qse_arr_walk (s1, test6_walker, QSE_NULL);
+
+	while (QSE_ARR_SIZE(s1) > 10)
+	{
+		newv = ((test6_data_t*)QSE_ARR_DPTR(s1,0))->v;
+		qse_printf (QSE_T("top => %d prevtop => %d\n"), newv, oldv);
+		QSE_ASSERT (newv <= oldv);
+		qse_arr_popheap (s1);
+		oldv = newv;
+	}
+
+	qse_printf (QSE_T("arr size => %lu\n"), QSE_ARR_SIZE(s1));
+	qse_arr_walk (s1, test6_walker, QSE_NULL);
+
+	while (QSE_ARR_SIZE(s1) > 1)
+	{
+		newv = ((test6_data_t*)QSE_ARR_DPTR(s1,0))->v;
+		qse_printf (QSE_T("top => %d prevtop => %d\n"), newv, oldv);
+		QSE_ASSERT (newv <= oldv);
+		qse_arr_popheap (s1);
+		oldv = newv;
+	}
+
+	qse_printf (QSE_T("arr size => %lu\n"), QSE_ARR_SIZE(s1));
+	qse_arr_walk (s1, test6_walker, QSE_NULL);
+
+	while (QSE_ARR_SIZE(s1) > 0)
+	{
+		newv = ((test6_data_t*)QSE_ARR_DPTR(s1,0))->v;
+		qse_printf (QSE_T("top => %d prevtop => %d\n"), newv, oldv);
+		QSE_ASSERT (newv <= oldv);
+		qse_arr_popheap (s1);
+		oldv = newv;
+	}
+
+	qse_arr_close (s1);
+	return 0;
+}
+
 int main ()
 {
 	qse_openstdsios ();
@@ -484,6 +591,7 @@ int main ()
 	R (test3);
 	R (test4);
 	R (test5);
+	R (test6);
 	qse_closestdsios ();
 	return 0;
 }
