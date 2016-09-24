@@ -137,7 +137,7 @@ static qse_tmr_index_t sift_down (qse_tmr_t* tmr, qse_tmr_index_t index, int not
 {
 	qse_size_t base = tmr->size / 2;
 
-	if (index < base) /* at least 1 child is under the 'index' positmrn */
+	if (index < base) /* at least 1 child is under the 'index' position */
 	{
 		qse_tmr_event_t item;
 		qse_size_t old_index;
@@ -149,7 +149,7 @@ static qse_tmr_index_t sift_down (qse_tmr_t* tmr, qse_tmr_index_t index, int not
 		{
 			qse_size_t left, right, younger;
 
-			left= HEAP_LEFT(index);
+			left = HEAP_LEFT(index);
 			right = HEAP_RIGHT(index);
 
 			if (right < tmr->size && YOUNGER_THAN(&tmr->event[right], &tmr->event[left]))
