@@ -149,6 +149,8 @@ struct qse_arr_t
 	qse_arr_keeper_t keeper; /* data keeper */
 	qse_arr_sizer_t  sizer;  /* size calculator */
 	qse_byte_t       scale;  /* scale factor */
+	qse_size_t       heap_pos_offset; /* offset in the data element where position 
+	                                   * is stored when heap operation is performed. */
 	qse_size_t       size;   /* number of items */
 	qse_size_t       capa;   /* capacity */
 	qse_arr_slot_t** slot;
@@ -444,6 +446,36 @@ QSE_EXPORT qse_size_t qse_arr_updateheap (
 	qse_size_t index,
 	void*      dptr,
 	qse_size_t dlen
+);
+
+QSE_EXPORT qse_size_t qse_arr_getheapposoffset (
+	qse_arr_t* arr
+);
+
+/**
+ * The qse_arr_setheapposoffset() function sets the offset to a position holding 
+ * field within a data element. It assumes that the field is of the qse_size_t type.
+ *
+ * \code
+ * struct data_t
+ * {
+ *    int v;
+ *    qse_size_t pos;
+ * };
+ * struct data_t d;
+ * qse_arr_setheapposoffset (arr, QSE_OFFSETOF(struct data_t, pos)); 
+ * d.v = 20;
+ * qse_arr_pushheap (arr, &d, 1);
+ * \endcode
+ * 
+ * In the code above, the 'pos' field of the first element in the array must be 0.
+ * 
+ * If it's set to QSE_ARR_NIL, position is not updated when heapification is 
+ * performed.  
+ */
+QSE_EXPORT void qse_arr_setheapposoffset (
+	qse_arr_t* arr,
+	qse_size_t offset
 );
 
 #if defined(__cplusplus)

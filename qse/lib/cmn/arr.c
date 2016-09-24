@@ -135,6 +135,7 @@ int qse_arr_init (arr_t* arr, mmgr_t* mmgr, size_t capa)
 	arr->capa = 0;
 	arr->slot = QSE_NULL;
 	arr->scale = 1;
+	arr->heap_pos_offset = QSE_ARR_NIL;
 
 	arr->copier = QSE_ARR_COPIER_SIMPLE;
 	arr->comper = default_comparator;
@@ -608,13 +609,20 @@ void qse_arr_popstack (arr_t* arr)
 #define HEAP_LEFT(x)   ((x)*2 + 1)
 #define HEAP_RIGHT(x)  ((x)*2 + 2)
 
-size_t sift_up (arr_t* arr, size_t index)
+#define HEAP_UPDATE_POS(arr, index) \
+	do { \
+		if (arr->heap_pos_offset != QSE_ARR_NIL) \
+			*(qse_size_t*)((qse_byte_t*)DPTR(arr->slot[index]) + arr->heap_pos_offset) = index; \
+	} while(0)
+
+qse_size_t sift_up (arr_t* arr, qse_size_t index)
 {
-	size_t parent;
-	int n;
+	qse_size_t parent;
 
 	if (index > 0)
 	{
+		int n;
+
 		parent = HEAP_PARENT(index);
 		n = arr->comper (arr,
 			DPTR(arr->slot[index]), DLEN(arr->slot[index]),
@@ -628,6 +636,7 @@ size_t sift_up (arr_t* arr, size_t index)
 			while (1)
 			{
 				arr->slot[index] = arr->slot[parent];
+				HEAP_UPDATE_POS (arr, index);
 
 				index = parent;
 				parent = HEAP_PARENT(parent);
@@ -641,6 +650,7 @@ size_t sift_up (arr_t* arr, size_t index)
 			} 
 
 			arr->slot[index] = tmp;
+			HEAP_UPDATE_POS (arr, index);
 		}
 	}
 	return index;
@@ -684,11 +694,13 @@ size_t sift_down (arr_t* arr, size_t index)
 			if (n > 0) break;
 
 			arr->slot[index] = arr->slot[child];
+			HEAP_UPDATE_POS (arr, index);
 			index = child;
 		}
 		while (index < base);
 
 		arr->slot[index] = tmp;
+		HEAP_UPDATE_POS (arr, index);
 	}
 
 	return index;
@@ -701,6 +713,7 @@ size_t qse_arr_pushheap (arr_t* arr, void* dptr, size_t dlen)
 	/* add a value at the back of the array  */
 	index = arr->size;
 	if (qse_arr_insert (arr, index, dptr, dlen) == QSE_ARR_NIL) return QSE_ARR_NIL;
+	HEAP_UPDATE_POS (arr, index);
 
 	QSE_ASSERT (arr->size == index + 1);
 
@@ -715,7 +728,7 @@ void qse_arr_popheap (arr_t* arr)
 	qse_arr_deleteheap (arr, 0);
 }
 
-void qse_arr_deleteheap (arr_t* arr, size_t index)
+void qse_arr_deleteheap (arr_t* arr, qse_size_t index)
 {
 	slot_t* tmp;
 
@@ -732,6 +745,7 @@ void qse_arr_deleteheap (arr_t* arr, size_t index)
 
 		/* move the last item to the deleting position */
 		arr->slot[index] = arr->slot[arr->size];
+		HEAP_UPDATE_POS (arr, index);
 
 		/* move it up if the last item is greater than the item to be deleted,
 		 * move it down otherwise. */
@@ -750,7 +764,7 @@ void qse_arr_deleteheap (arr_t* arr, size_t index)
 	arr->slot[arr->size] = QSE_NULL;
 }
 
-size_t qse_arr_updateheap (qse_arr_t* arr, qse_size_t index, void* dptr, qse_size_t dlen)
+qse_size_t qse_arr_updateheap (qse_arr_t* arr, qse_size_t index, void* dptr, qse_size_t dlen)
 {
 	slot_t* tmp;
 	int n;
@@ -762,9 +776,21 @@ size_t qse_arr_updateheap (qse_arr_t* arr, qse_size_t index, void* dptr, qse_siz
 	if (n)
 	{
 		if (qse_arr_update (arr, index, dptr, dlen) == QSE_ARR_NIL) return QSE_ARR_NIL;
+		HEAP_UPDATE_POS (arr, index);
+
 		if (n > 0) sift_up (arr, index);
 		else sift_down (arr, index);
 	}
 
 	return index;
+}
+
+qse_size_t qse_arr_getheapposoffset (qse_arr_t* arr)
+{
+	return arr->heap_pos_offset;
+}
+
+void qse_arr_setheapposoffset (qse_arr_t* arr, qse_size_t offset)
+{
+	arr->heap_pos_offset = offset;
 }
