@@ -332,8 +332,8 @@ QSE_EXPORT qse_htb_t* qse_htb_open (
 	qse_size_t  xtnsize, /**< extension size in bytes */
 	qse_size_t  capa,    /**< initial capacity */
 	int         factor,  /**< load factor */
-	int         kscale,  /**< key scale */
-	int         vscale   /**< value scale */
+	int         kscale,  /**< key scale - 1 to 255 */
+	int         vscale   /**< value scale - 1 to 255 */
 );
 
 
