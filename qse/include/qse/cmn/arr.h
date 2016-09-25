@@ -224,7 +224,7 @@ QSE_EXPORT int qse_arr_getscale (
  */
 QSE_EXPORT void qse_arr_setscale (
 	qse_arr_t* arr   /**< array */,
-	int scale        /**< scale factor */
+	int scale        /**< scale factor - 1 to 255 */
 );
 
 QSE_EXPORT qse_arr_copier_t qse_arr_getcopier (
