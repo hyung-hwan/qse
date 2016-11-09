@@ -650,6 +650,20 @@ where the search begins. A negative value indicates a position from the back.
  }
 ~~~~~
 
+match() accepts the fourth parameter. The parameter is set to the array
+containing submatches. The caller can get the number of submatches by
+dividing the array size by 2. Assuming the array name of x, the nth 
+submatch is set in x[n,"start"] and x[n,"length"].
+
+~~~~~{.awk}
+ match($0, /^([[:digit:]]+),([[:digit:]]+),([[:digit:]]+)/, 1, xx) >= 1 {
+   count = length(xx) \ 2;
+   for (i = 1; i <= count; i++) print xx[i,"start"], xx[i,"length"]; 
+   print RSTART, RLENGTH
+ }
+
+~~~~~
+
 
  Opeartors
 ---------------
