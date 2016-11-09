@@ -293,7 +293,7 @@ QSE_INLINE qse_awk_val_t* qse_awk_rtx_getarg (qse_awk_rtx_t* run, qse_size_t idx
 
 QSE_INLINE qse_awk_val_t* qse_awk_rtx_getgbl (qse_awk_rtx_t* run, int id)
 {
-	QSE_ASSERT (id >= 0 && id < (int)QSE_LDA_SIZE(run->awk->parse.gbls));
+	QSE_ASSERT (id >= 0 && id < (int)QSE_ARR_SIZE(run->awk->parse.gbls));
 	return RTX_STACK_GBL (run, id);
 }
 
@@ -687,7 +687,7 @@ QSE_INLINE void qse_awk_rtx_setretval (
 QSE_INLINE int qse_awk_rtx_setgbl (
 	qse_awk_rtx_t* rtx, int id, qse_awk_val_t* val)
 {
-	QSE_ASSERT (id >= 0 && id < (int)QSE_LDA_SIZE(rtx->awk->parse.gbls));
+	QSE_ASSERT (id >= 0 && id < (int)QSE_ARR_SIZE(rtx->awk->parse.gbls));
 	return set_global (rtx, id, QSE_NULL, val, 0);
 }
 
@@ -3234,7 +3234,7 @@ static qse_awk_val_t* eval_expression (qse_awk_rtx_t* rtx, qse_awk_nde_t* nde)
 			vs.len = ((qse_awk_val_str_t*)rtx->inrec.d0)->val.len;
 		}
 
-		n = qse_awk_rtx_matchrex (rtx, v, &vs, &vs, QSE_NULL);
+		n = qse_awk_rtx_matchrex (rtx, v, &vs, &vs, QSE_NULL, QSE_NULL);
 		if (n <= -1)
 		{
 			ADJERR_LOC (rtx, &nde->loc);
@@ -5041,7 +5041,7 @@ static qse_awk_val_t* eval_binop_match0 (
 	out.ptr = qse_awk_rtx_getvalstr (rtx, left, &out.len);
 	if (out.ptr == QSE_NULL) return QSE_NULL;
 
-	n = qse_awk_rtx_matchrex (rtx, right, &out, &out, QSE_NULL);
+	n = qse_awk_rtx_matchrex (rtx, right, &out, &out, QSE_NULL, QSE_NULL);
 	qse_awk_rtx_freevalstr (rtx, left, out.ptr);
 
 	if (n <= -1) 
