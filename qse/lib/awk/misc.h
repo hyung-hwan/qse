@@ -81,7 +81,7 @@ int qse_awk_buildrex (
 int qse_awk_matchrex (
 	qse_awk_t* awk, void* code, int icase,
 	const qse_cstr_t* str, const qse_cstr_t* substr,
-	qse_cstr_t* match, qse_awk_errnum_t* errnum
+	qse_cstr_t* match, qse_cstr_t submat[9], qse_awk_errnum_t* errnum
 );
 
 void qse_awk_freerex (qse_awk_t* awk, void* code, void* icode);
@@ -89,7 +89,7 @@ void qse_awk_freerex (qse_awk_t* awk, void* code, void* icode);
 int qse_awk_rtx_matchrex (
 	qse_awk_rtx_t* rtx, qse_awk_val_t* val,
 	const qse_cstr_t* str, const qse_cstr_t* substr,
-	qse_cstr_t* match
+	qse_cstr_t* match, qse_cstr_t submat[9]
 );
 
 #if defined(__cplusplus)

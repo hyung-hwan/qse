@@ -906,7 +906,7 @@ qse_char_t* qse_awk_rtx_strxntokbyrex (
 	{
 		n = qse_awk_matchrex (
 			rtx->awk, rex, rtx->gbl.ignorecase,
-			&s, &cursub, &match, errnum);
+			&s, &cursub, &match, QSE_NULL, errnum);
 		if (n == -1) return QSE_NULL;
 		if (n == 0)
 		{
@@ -1248,12 +1248,13 @@ static int matchtre (
 int qse_awk_matchrex (
 	qse_awk_t* awk, void* code, int icase,
 	const qse_cstr_t* str, const qse_cstr_t* substr,
-	qse_cstr_t* match, qse_awk_errnum_t* errnum)
+	qse_cstr_t* match, qse_cstr_t submat[9], qse_awk_errnum_t* errnum)
 {
 #if defined(USE_REX)
 	int x;
 	qse_rex_errnum_t err;
 
+	/* submatch is not supported */
 	x = qse_matchrex (
 		awk->mmgr, awk->opt.depth.s.rex_match, code, 
 		(icase? QSE_REX_IGNORECASE: 0), str, substr, match, &err);
@@ -1266,7 +1267,7 @@ int qse_awk_matchrex (
 	x = matchtre (
 		awk, code,
 		((str->ptr == substr->ptr)? opt: (opt | QSE_TRE_NOTBOL)),
-		substr, match, QSE_NULL, errnum
+		substr, match, submat, errnum
 	);
 	return x;
 #endif
@@ -1295,7 +1296,7 @@ void qse_awk_freerex (qse_awk_t* awk, void* code, void* icode)
 
 int qse_awk_rtx_matchrex (
 	qse_awk_rtx_t* rtx, qse_awk_val_t* val,
-	const qse_cstr_t* str, const qse_cstr_t* substr, qse_cstr_t* match)
+	const qse_cstr_t* str, const qse_cstr_t* substr, qse_cstr_t* match, qse_cstr_t submat[9])
 {
 	void* code;
 	int icase, x;
@@ -1329,6 +1330,7 @@ int qse_awk_rtx_matchrex (
 	}
 	
 #if defined(USE_REX)
+	/* submatch not supported */
 	x = qse_matchrex (
 		rtx->awk->mmgr, rtx->awk->opt.depth.s.rex_match,
 		code, (icase? QSE_REX_IGNORECASE: 0),
@@ -1338,7 +1340,7 @@ int qse_awk_rtx_matchrex (
 	x = matchtre (
 		rtx->awk, code,
 		((str->ptr == substr->ptr)? QSE_TRE_BACKTRACKING: (QSE_TRE_BACKTRACKING | QSE_TRE_NOTBOL)),
-		substr, match, QSE_NULL, &awkerr
+		substr, match, submat, &awkerr
 	);
 	if (x <= -1) qse_awk_rtx_seterrnum (rtx, awkerr, QSE_NULL);
 #endif

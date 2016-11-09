@@ -51,23 +51,23 @@ static int fnc_int     (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi);
 static qse_awk_fnc_t sysfnctab[] = 
 {
 	/* io functions */
-	{ {QSE_T("close"),   5}, 0, { {1,     2, QSE_NULL},     fnc_close,  QSE_AWK_RIO }, QSE_NULL},
-	{ {QSE_T("fflush"),  6}, 0, { {0,     1, QSE_NULL},     fnc_fflush, QSE_AWK_RIO }, QSE_NULL},
+	{ {QSE_T("close"),   5}, 0, { {1,     2, QSE_NULL},       fnc_close,  QSE_AWK_RIO }, QSE_NULL},
+	{ {QSE_T("fflush"),  6}, 0, { {0,     1, QSE_NULL},       fnc_fflush, QSE_AWK_RIO }, QSE_NULL},
 
 	/* integer conversion */
-	{ {QSE_T("int"),     3}, 0, { {1,     1, QSE_NULL},     fnc_int,              0 }, QSE_NULL},
+	{ {QSE_T("int"),     3}, 0, { {1,     1, QSE_NULL},       fnc_int,              0 }, QSE_NULL},
 
 	/* string functions */
-	{ {QSE_T("index"),    5}, 0, { {2,     3, QSE_NULL},     qse_awk_fnc_index,    0 }, QSE_NULL},
-	{ {QSE_T("substr"),   6}, 0, { {2,     3, QSE_NULL},     qse_awk_fnc_substr,   0 }, QSE_NULL},
-	{ {QSE_T("length"),   6}, 1, { {0,     1, QSE_NULL},     qse_awk_fnc_length,   0 }, QSE_NULL},
-	{ {QSE_T("split"),    5}, 0, { {2,     3, QSE_T("vrx")}, qse_awk_fnc_split,    0 }, QSE_NULL},
-	{ {QSE_T("tolower"),  7}, 0, { {1,     1, QSE_NULL},     qse_awk_fnc_tolower,  0 }, QSE_NULL},
-	{ {QSE_T("toupper"),  7}, 0, { {1,     1, QSE_NULL},     qse_awk_fnc_toupper,  0 }, QSE_NULL},
-	{ {QSE_T("gsub"),     4}, 0, { {2,     3, QSE_T("xvr")}, qse_awk_fnc_gsub,     0 }, QSE_NULL},
-	{ {QSE_T("sub"),      3}, 0, { {2,     3, QSE_T("xvr")}, qse_awk_fnc_sub,      0 }, QSE_NULL},
-	{ {QSE_T("match"),    5}, 0, { {2,     3, QSE_T("vxv")}, qse_awk_fnc_match,    0 }, QSE_NULL},
-	{ {QSE_T("sprintf"),  7}, 0, { {1, A_MAX, QSE_NULL},     qse_awk_fnc_sprintf,  0 }, QSE_NULL},
+	{ {QSE_T("index"),    5}, 0, { {2,     3, QSE_NULL},      qse_awk_fnc_index,    0 }, QSE_NULL},
+	{ {QSE_T("substr"),   6}, 0, { {2,     3, QSE_NULL},      qse_awk_fnc_substr,   0 }, QSE_NULL},
+	{ {QSE_T("length"),   6}, 1, { {0,     1, QSE_NULL},      qse_awk_fnc_length,   0 }, QSE_NULL},
+	{ {QSE_T("split"),    5}, 0, { {2,     3, QSE_T("vrx")},  qse_awk_fnc_split,    0 }, QSE_NULL},
+	{ {QSE_T("tolower"),  7}, 0, { {1,     1, QSE_NULL},      qse_awk_fnc_tolower,  0 }, QSE_NULL},
+	{ {QSE_T("toupper"),  7}, 0, { {1,     1, QSE_NULL},      qse_awk_fnc_toupper,  0 }, QSE_NULL},
+	{ {QSE_T("gsub"),     4}, 0, { {2,     3, QSE_T("xvr")},  qse_awk_fnc_gsub,     0 }, QSE_NULL},
+	{ {QSE_T("sub"),      3}, 0, { {2,     3, QSE_T("xvr")},  qse_awk_fnc_sub,      0 }, QSE_NULL},
+	{ {QSE_T("match"),    5}, 0, { {2,     4, QSE_T("vxvr")}, qse_awk_fnc_match,    0 }, QSE_NULL},
+	{ {QSE_T("sprintf"),  7}, 0, { {1, A_MAX, QSE_NULL},      qse_awk_fnc_sprintf,  0 }, QSE_NULL},
 
 	/* math functions */
 	{ {QSE_T("sin"),      3}, 0, { {A_MAX, 0, QSE_T("math") },   QSE_NULL,         0 }, QSE_NULL},
@@ -1001,7 +1001,7 @@ static int __substitute (qse_awk_rtx_t* rtx, qse_awk_int_t max_count)
 		{
 			n = qse_awk_matchrex (
 				rtx->awk, rex, rtx->gbl.ignorecase, 
-				&s2, &cur, &mat, &errnum
+				&s2, &cur, &mat, QSE_NULL, &errnum
 			);
 		}
 		else n = 0;
@@ -1159,15 +1159,17 @@ int qse_awk_fnc_sub (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 int qse_awk_fnc_match (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
 	qse_size_t nargs;
-	qse_awk_val_t* a0, * a1;
+	qse_awk_val_t* a0, * a1, * a3;
 	qse_char_t* str0;
 	qse_size_t len0;
 	qse_awk_int_t idx, start = 1;
+	qse_awk_val_t* x0 = QSE_NULL, * x1 = QSE_NULL, * x2 = QSE_NULL;
 	int n;
-	qse_cstr_t mat;
+	qse_cstr_t mat, submat[9];
+	qse_str_t* tmpbuf = QSE_NULL;
 
 	nargs = qse_awk_rtx_getnargs (rtx);
-	QSE_ASSERT (nargs >= 2 && nargs <= 3);
+	QSE_ASSERT (nargs >= 2 && nargs <= 4);
 	
 	a0 = qse_awk_rtx_getarg (rtx, 0);
 	a1 = qse_awk_rtx_getarg (rtx, 1);
@@ -1181,6 +1183,8 @@ int qse_awk_fnc_match (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 		 * it is treated as a match start index */
 		n = qse_awk_rtx_valtoint (rtx, a2, &start);
 		if (n <= -1) return -1;
+
+		if (nargs >= 4) a3 = qse_awk_rtx_getarg (rtx, 3);
 	}
 
 	str0 = qse_awk_rtx_getvalstr (rtx, a0, &len0);
@@ -1189,6 +1193,7 @@ int qse_awk_fnc_match (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	if (start == 0) start = 1;
 	else if (start < 0) start = len0 + start + 1;
 
+	QSE_MEMSET (submat, 0, QSE_SIZEOF(submat));
 	if (start > len0 || start <= 0) n = 0;
 	else
 	{
@@ -1198,7 +1203,7 @@ int qse_awk_fnc_match (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 		tmp.ptr = str0 + start - 1;
 		tmp.len = len0 - start + 1;
 
-		n = qse_awk_rtx_matchrex (rtx, a1, &tmp, &tmp, &mat);
+		n = qse_awk_rtx_matchrex (rtx, a1, &tmp, &tmp, &mat, (nargs >= 4? submat: QSE_NULL));
 		if (n <= -1) return -1;
 	}
 
@@ -1207,43 +1212,90 @@ int qse_awk_fnc_match (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	/* RSTART: 0 on no match */
 	idx = (n == 0)? 0: ((qse_awk_int_t)(mat.ptr-str0) + 1);
 
-	a0 = qse_awk_rtx_makeintval (rtx, idx);
-	if (a0 == QSE_NULL) return -1;
-
-	qse_awk_rtx_refupval (rtx, a0);
+	x0 = qse_awk_rtx_makeintval (rtx, idx);
+	if (!x0) goto oops;
+	qse_awk_rtx_refupval (rtx, x0);
 
 	/* RLENGTH: -1 on no match */
-	a1 = qse_awk_rtx_makeintval (rtx, 
+	x1 = qse_awk_rtx_makeintval (rtx, 
 		((n == 0)? (qse_awk_int_t)-1: (qse_awk_int_t)mat.len));
-	if (a1 == QSE_NULL)
+	if (!x1) goto oops;
+	qse_awk_rtx_refupval (rtx, x1);
+
+	if (nargs >= 4)
 	{
-		qse_awk_rtx_refdownval (rtx, a0);
-		return -1;
+		const qse_cstr_t* subsep;
+		qse_awk_int_t submatcount;
+		qse_size_t i, xlen;
+		qse_awk_val_t* tv;
+
+		tmpbuf = qse_str_open (qse_awk_rtx_getmmgr(rtx), 0, 64);
+		if (!tmpbuf) goto oops;
+
+		x2 = qse_awk_rtx_makemapval (rtx);
+		if (!x2) goto oops;
+		qse_awk_rtx_refupval (rtx, x2);
+
+		submatcount =0;
+		subsep = qse_awk_rtx_getsubsep (rtx);
+		for (i = 0; i < QSE_COUNTOF(submat); i++)
+		{
+			if (!submat[i].ptr) break;
+
+			submatcount++;
+
+			if (qse_str_fmt (tmpbuf, QSE_T("%d"), (int)submatcount) == (qse_size_t)-1 ||
+			    qse_str_ncat (tmpbuf, subsep->ptr, subsep->len) == (qse_size_t)-1) goto oops;
+			xlen = QSE_STR_LEN(tmpbuf);
+			if (qse_str_ncat (tmpbuf, QSE_T("start"), 5) == (qse_size_t)-1) goto oops;
+
+			tv = qse_awk_rtx_makeintval (rtx, submat[i].ptr - str0 + 1);
+			if (!tv) goto oops;
+			if (!qse_awk_rtx_setmapvalfld (rtx, x2, QSE_STR_PTR(tmpbuf), QSE_STR_LEN(tmpbuf), tv))
+			{
+				qse_awk_rtx_refupval (rtx, tv);
+				qse_awk_rtx_refdownval (rtx, tv);
+				goto oops;
+			}
+
+			if (qse_str_setlen (tmpbuf, xlen) == (qse_size_t)-1 ||
+			    qse_str_ncat (tmpbuf, QSE_T("length"), 6) == (qse_size_t)-1) goto oops;
+
+			tv = qse_awk_rtx_makeintval (rtx, submat[i].len);
+			if (!tv) goto oops;
+			if (!qse_awk_rtx_setmapvalfld (rtx, x2, QSE_STR_PTR(tmpbuf), QSE_STR_LEN(tmpbuf), tv))
+			{
+				qse_awk_rtx_refupval (rtx, tv);
+				qse_awk_rtx_refdownval (rtx, tv);
+				goto oops;
+			}
+		}
+		/* the caller of this function must be able to get the submatch count by
+		 * dividing the array size by 2 */
+
+		if (qse_awk_rtx_setrefval (rtx, (qse_awk_val_ref_t*)a3, x2) <= -1) goto oops;
 	}
 
-	qse_awk_rtx_refupval (rtx, a1);
-
-	if (qse_awk_rtx_setgbl (rtx, QSE_AWK_GBL_RSTART, a0) <= -1)
+	if (qse_awk_rtx_setgbl (rtx, QSE_AWK_GBL_RSTART, x0) <= -1 ||
+	    qse_awk_rtx_setgbl (rtx, QSE_AWK_GBL_RLENGTH, x1) <= -1)
 	{
-		qse_awk_rtx_refdownval (rtx, a1);
-		qse_awk_rtx_refdownval (rtx, a0);
-		return -1;
+		goto oops;
 	}
 
-	if (qse_awk_rtx_setgbl (rtx, QSE_AWK_GBL_RLENGTH, a1) <= -1)
-	{
-		qse_awk_rtx_refdownval (rtx, a1);
-		qse_awk_rtx_refdownval (rtx, a0);
-		return -1;
-	}
+	qse_awk_rtx_setretval (rtx, x0);
 
-/* TOOD: set RMATCH to hold the mainmatch and submatches inside () */
-
-	qse_awk_rtx_setretval (rtx, a0);
-
-	qse_awk_rtx_refdownval (rtx, a1);
-	qse_awk_rtx_refdownval (rtx, a0);
+	if (tmpbuf) qse_str_close (tmpbuf);
+	if (x2) qse_awk_rtx_refdownval (rtx, x2);
+	qse_awk_rtx_refdownval (rtx, x1);
+	qse_awk_rtx_refdownval (rtx, x0);
 	return 0;
+
+oops:
+	if (tmpbuf) qse_str_close (tmpbuf);
+	if (x2) qse_awk_rtx_refdownval (rtx, x2);
+	if (x1) qse_awk_rtx_refdownval (rtx, x1);
+	if (x0) qse_awk_rtx_refdownval (rtx, x0);
+	return -1;
 }
 
 int qse_awk_fnc_sprintf (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)

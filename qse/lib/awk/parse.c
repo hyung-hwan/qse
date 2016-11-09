@@ -3367,28 +3367,30 @@ static int fold_constants_for_binop (
 				if (((qse_awk_nde_int_t*)right)->val == 0)
 				{
 					qse_awk_seterrnum (awk, QSE_AWK_EDIVBY0, QSE_NULL);
-					return QSE_NULL;
+					fold = -2; /* error */
 				}
-
-				if (INT_BINOP_INT(left,%,right))
+				else if (INT_BINOP_INT(left,%,right))
 				{
 					folded->r = (qse_awk_flt_t)((qse_awk_nde_int_t*)left)->val / 
 					            (qse_awk_flt_t)((qse_awk_nde_int_t*)right)->val;
 					fold = QSE_AWK_NDE_FLT;
-					break;
 				}
-
-				folded->l = INT_BINOP_INT(left,/,right);
+				else
+				{
+					folded->l = INT_BINOP_INT(left,/,right);
+				}
 				break;
 
 			case QSE_AWK_BINOP_IDIV:
 				if (((qse_awk_nde_int_t*)right)->val == 0)
 				{
 					qse_awk_seterrnum (awk, QSE_AWK_EDIVBY0, QSE_NULL);
-					return QSE_NULL;
+					fold = -2; /* error */
 				}
-
-				folded->l = INT_BINOP_INT(left,/,right);
+				else
+				{
+					folded->l = INT_BINOP_INT(left,/,right);
+				}
 				break;
 
 			case QSE_AWK_BINOP_MOD:
@@ -3396,7 +3398,7 @@ static int fold_constants_for_binop (
 				break;
 
 			default:
-				fold = -1;
+				fold = -1; /* no folding */
 				break;
 		}
 	}
@@ -3528,7 +3530,7 @@ static int fold_constants_for_binop (
 	return fold;
 }
 
-static qse_awk_nde_t* new_exp_bin_node (	
+static qse_awk_nde_t* new_exp_bin_node (
 	qse_awk_t* awk, const qse_awk_loc_t* loc,
 	int opcode, qse_awk_nde_t* left, qse_awk_nde_t* right)
 {
@@ -3668,7 +3670,7 @@ static qse_awk_nde_t* parse_binary (
 				{
 					qse_awk_clrpt (awk, right); right = QSE_NULL;
 					qse_awk_clrpt (awk, left); left = QSE_NULL;
-	
+
 					left = new_int_node (awk, folded.l, xloc);
 					if (left == QSE_NULL) goto oops;
 				}
@@ -3699,6 +3701,9 @@ static qse_awk_nde_t* parse_binary (
 				}
 
 				break;
+
+			case -2:
+				goto oops;
 
 			default:
 			{
