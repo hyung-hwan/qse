@@ -1122,7 +1122,7 @@ static int task_init_proxy (qse_httpd_t* httpd, qse_httpd_client_t* client, qse_
 		/* length must include the parameters also */
 		proxy->qpath_len_in_reqfwdbuf = QSE_STR_LEN(proxy->reqfwdbuf) - proxy->qpath_pos_in_reqfwdbuf;
 
-#if 0
+#if 1
 {
 /* EXPERIMENTAL */
 /* KT FILTERING WORKAROUND POC. KT seems to check the Host: the first packet

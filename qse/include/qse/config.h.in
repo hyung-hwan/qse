@@ -203,6 +203,15 @@
 /* Define to 1 if you have the `fchmod' function. */
 #undef HAVE_FCHMOD
 
+/* Define to 1 if you have the `fchmodat' function. */
+#undef HAVE_FCHMODAT
+
+/* Define to 1 if you have the `fchown' function. */
+#undef HAVE_FCHOWN
+
+/* Define to 1 if you have the `fchownat' function. */
+#undef HAVE_FCHOWNAT
+
 /* Define to 1 if you have the <fcntl.h> header file. */
 #undef HAVE_FCNTL_H
 
@@ -236,8 +245,17 @@
 /* Define to 1 if you have the `fork' function. */
 #undef HAVE_FORK
 
+/* Define to 1 if you have the `fstat' function. */
+#undef HAVE_FSTAT
+
 /* Define to 1 if you have the `fstat64' function. */
 #undef HAVE_FSTAT64
+
+/* Define to 1 if you have the `fstatat' function. */
+#undef HAVE_FSTATAT
+
+/* Define to 1 if you have the `fstatat64' function. */
+#undef HAVE_FSTATAT64
 
 /* Define to 1 if you have the `fsync' function. */
 #undef HAVE_FSYNC
@@ -355,9 +373,6 @@
 
 /* Define to 1 if you have the `lseek64' function. */
 #undef HAVE_LSEEK64
-
-/* Define to 1 if you have the `lstat' function. */
-#undef HAVE_LSTAT
 
 /* Define to 1 if you have the `lstat64' function. */
 #undef HAVE_LSTAT64
@@ -744,6 +759,9 @@
 
 /* Define to 1 if you have the `utime' function. */
 #undef HAVE_UTIME
+
+/* Define to 1 if you have the `utimensat' function. */
+#undef HAVE_UTIMENSAT
 
 /* Define to 1 if you have the `utimes' function. */
 #undef HAVE_UTIMES

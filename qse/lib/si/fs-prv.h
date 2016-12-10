@@ -143,10 +143,18 @@ void qse_fs_freefspathforwcs (
 #	define qse_fs_freefspath(fs,path,fspath) qse_fs_freefspathforwcs(fs,path,fspath);
 #endif
 
-int qse_fs_sysgetattr (
+int qse_fs_getattrsys (
 	qse_fs_t*            fs,
 	const qse_fs_char_t* fspath,
-	qse_fs_attr_t* attr
+	qse_fs_attr_t*       attr,
+	int                  flags
+);
+
+int qse_fs_setattrsys (
+	qse_fs_t*            fs,
+	qse_fs_char_t*       path,
+	const qse_fs_attr_t* attr,
+	int                  flags /** bitwise-ORed #qse_fs_setattr_flag_t enumerators */
 );
 
 int qse_fs_syscpfile (
