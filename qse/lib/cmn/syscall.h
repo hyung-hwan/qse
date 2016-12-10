@@ -114,20 +114,6 @@
 #	define QSE_LSEEK(handle,offset,whence) lseek(handle,offset,whence)
 #endif
 
-#if !defined(_LP64) && (QSE_SIZEOF_VOID_P<8) && defined(SYS_fstat64) && defined(QSE_USE_SYSCALL)
-#	define QSE_FSTAT(handle,stbuf) syscall(SYS_fstat64,handle,stbuf)
-	typedef struct stat64 qse_fstat_t;
-#elif defined(SYS_fstat) && defined(QSE_USE_SYSCALL)
-#	define QSE_FSTAT(handle,stbuf) syscall(SYS_fstat,handle,stbuf)
-	typedef struct stat qse_fstat_t;
-#elif !defined(_LP64) && (QSE_SIZEOF_VOID_P<8) && defined(HAVE_FSTAT64)
-#	define QSE_FSTAT(handle,stbuf) fstat64(handle,stbuf)
-	typedef struct stat64 qse_fstat_t;
-#else
-#	define QSE_FSTAT(handle,stbuf) fstat(handle,stbuf)
-	typedef struct stat qse_fstat_t;
-#endif
-
 #if !defined(_LP64) && (QSE_SIZEOF_VOID_P<8) && defined(SYS_ftruncate64) && defined(QSE_USE_SYSCALL)
 #	define QSE_FTRUNCATE(handle,size) syscall(SYS_ftruncate64,handle,size)
 #elif defined(SYS_ftruncate) && defined(QSE_USE_SYSCALL)
@@ -136,18 +122,6 @@
 #	define QSE_FTRUNCATE(handle,size) ftruncate64(handle,size)
 #else
 #	define QSE_FTRUNCATE(handle,size) ftruncate(handle,size)
-#endif
-
-#if defined(SYS_fchmod) && defined(QSE_USE_SYSCALL)
-#	define QSE_FCHMOD(handle,mode) syscall(SYS_fchmod,handle,mode)
-#else
-#	define QSE_FCHMOD(handle,mode) fchmod(handle,mode)
-#endif
-
-#if defined(SYS_fchown) && defined(QSE_USE_SYSCALL)
-#	define QSE_FCHOWN(handle,owner,group) syscall(SYS_fchown,handle,owner,group)
-#else
-#	define QSE_FCHOWN(handle,owner,group) fchown(handle,owner,group)
 #endif
 
 #if defined(SYS_fsync) && defined(QSE_USE_SYSCALL)
@@ -285,10 +259,34 @@
 #	define QSE_CHMOD(path,mode) chmod(path,mode)
 #endif
 
+#if defined(SYS_fchmod) && defined(QSE_USE_SYSCALL)
+#	define QSE_FCHMOD(handle,mode) syscall(SYS_fchmod,handle,mode)
+#else
+#	define QSE_FCHMOD(handle,mode) fchmod(handle,mode)
+#endif
+
+#if defined(SYS_fchmodat) && defined(QSE_USE_SYSCALL)
+#	define QSE_FCHMODAT(dirfd,path,mode,flags) syscall(SYS_fchmodat,dirfd,path,mode,flags)
+#else
+#	define QSE_FCHMODAT(dirfd,path,mode,flags) fchmodat(dirfd,path,mode,flags)
+#endif
+
 #if defined(SYS_chown) && defined(QSE_USE_SYSCALL)
 #	define QSE_CHOWN(path,owner,group) syscall(SYS_chown,path,owner,group)
 #else
 #	define QSE_CHOWN(path,owner,group) chown(path,owner,group)
+#endif
+
+#if defined(SYS_fchown) && defined(QSE_USE_SYSCALL)
+#	define QSE_FCHOWN(handle,owner,group) syscall(SYS_fchown,handle,owner,group)
+#else
+#	define QSE_FCHOWN(handle,owner,group) fchown(handle,owner,group)
+#endif
+
+#if defined(SYS_fchownat) && defined(QSE_USE_SYSCALL)
+#	define QSE_FCHOWNAT(dirfd,path,uid,gid,flags) syscall(SYS_fchownat,dirfd,path,uid,gid,flags)
+#else
+#	define QSE_FCHOWNAT(dirfd,path,uid,gid,flags) fchownat(dirfd,path,uid,gid,flags)
 #endif
 
 #if defined(SYS_chroot) && defined(QSE_USE_SYSCALL)
@@ -309,6 +307,35 @@
 #	define QSE_LINK(oldpath,newpath) link(oldpath,newpath)
 #endif
 
+
+#if !defined(_LP64) && (QSE_SIZEOF_VOID_P<8) && defined(SYS_fstat64) && defined(QSE_USE_SYSCALL)
+#	define QSE_FSTAT(handle,stbuf) syscall(SYS_fstat64,handle,stbuf)
+	typedef struct stat64 qse_fstat_t;
+#elif defined(SYS_fstat) && defined(QSE_USE_SYSCALL)
+#	define QSE_FSTAT(handle,stbuf) syscall(SYS_fstat,handle,stbuf)
+	typedef struct stat qse_fstat_t;
+#elif !defined(_LP64) && (QSE_SIZEOF_VOID_P<8) && defined(HAVE_FSTAT64)
+#	define QSE_FSTAT(handle,stbuf) fstat64(handle,stbuf)
+	typedef struct stat64 qse_fstat_t;
+#else
+#	define QSE_FSTAT(handle,stbuf) fstat(handle,stbuf)
+	typedef struct stat qse_fstat_t;
+#endif
+
+#if !defined(_LP64) && (QSE_SIZEOF_VOID_P<8) && defined(SYS_stat64) && defined(QSE_USE_SYSCALL)
+#	define QSE_STAT(path,stbuf) syscall(SYS_stat64,path,stbuf)
+	typedef struct stat64 qse_stat_t;
+#elif defined(SYS_stat) && defined(QSE_USE_SYSCALL)
+#	define QSE_STAT(path,stbuf) syscall(SYS_stat,path,stbuf)
+	typedef struct stat qse_stat_t;
+#elif !defined(_LP64) && (QSE_SIZEOF_VOID_P<8) && defined(HAVE_STAT64)
+#	define QSE_STAT(path,stbuf) stat64(path,stbuf)
+	typedef struct stat64 qse_stat_t;
+#else
+#	define QSE_STAT(path,stbuf) stat(path,stbuf)
+	typedef struct stat qse_stat_t;
+#endif
+
 #if !defined(_LP64) && (QSE_SIZEOF_VOID_P<8) && defined(SYS_lstat64) && defined(QSE_USE_SYSCALL)
 #	define QSE_LSTAT(path,stbuf) syscall(SYS_lstat,path,stbuf)
 	typedef struct stat64 qse_lstat_t;
@@ -321,6 +348,21 @@
 #else
 #	define QSE_LSTAT(path,stbuf) lstat(path,stbuf)
 	typedef struct stat qse_lstat_t;
+#endif
+
+
+#if !defined(_LP64) && (QSE_SIZEOF_VOID_P<8) && defined(SYS_fstatat64) && defined(QSE_USE_SYSCALL)
+#	define QSE_FSTATAT(dirfd,path,stbuf,flags) syscall(SYS_fstatat,dirfd,path,stbuf,flags)
+	typedef struct stat64 qse_fstatat_t;
+#elif defined(SYS_fstatat) && defined(QSE_USE_SYSCALL)
+#	define QSE_FSTATAT(dirfd,path,stbuf,flags) syscall(SYS_fstatat,dirfd,path,stbuf,flags)
+	typedef struct stat qse_fstatat_t;
+#elif !defined(_LP64) && (QSE_SIZEOF_VOID_P<8) && defined(HAVE_FSTATAT64)
+#	define QSE_FSTATAT(dirfd,path,stbuf,flags) fstatat64(dirfd,path,stbuf,flags)
+	typedef struct stat64 qse_fstatat_t;
+#else
+#	define QSE_FSTATAT(dirfd,path,stbuf,flags) fstatat(dirfd,path,stbuf,flags)
+	typedef struct stat qse_fstatat_t;
 #endif
 
 #if defined(SYS_access) && defined(QSE_USE_SYSCALL)
@@ -346,20 +388,6 @@
 #	define QSE_RMDIR(path) syscall(SYS_rmdir,path)
 #else
 #	define QSE_RMDIR(path) rmdir(path)
-#endif
-
-#if !defined(_LP64) && (QSE_SIZEOF_VOID_P<8) && defined(SYS_stat64) && defined(QSE_USE_SYSCALL)
-#	define QSE_STAT(path,stbuf) syscall(SYS_stat64,path,stbuf)
-	typedef struct stat64 qse_stat_t;
-#elif defined(SYS_stat) && defined(QSE_USE_SYSCALL)
-#	define QSE_STAT(path,stbuf) syscall(SYS_stat,path,stbuf)
-	typedef struct stat qse_stat_t;
-#elif !defined(_LP64) && (QSE_SIZEOF_VOID_P<8) && defined(HAVE_STAT64)
-#	define QSE_STAT(path,stbuf) stat64(path,stbuf)
-	typedef struct stat64 qse_stat_t;
-#else
-#	define QSE_STAT(path,stbuf) stat(path,stbuf)
-	typedef struct stat qse_stat_t;
 #endif
 
 #if defined(SYS_symlink) && defined(QSE_USE_SYSCALL)
@@ -408,6 +436,12 @@
 #	define QSE_FUTIMENS(fd,t) syscall(SYS_futimens,fd,t)
 #else
 #	define QSE_FUTIMENS(fd,t) futimens(fd,t)
+#endif
+
+#if defined(SYS_utimensat) && defined(QSE_USE_SYSCALL)
+#	define QSE_FUTIMENS(dirfd,path,times,flags) syscall(SYS_futimens,dirfd,path,times,flags)
+#else
+#	define QSE_UTIMENSAT(dirfd,path,times,flags) utimensat(dirfd,path,times,flags)
 #endif
 
 /* ===== DIRECTORY - not really system calls ===== */

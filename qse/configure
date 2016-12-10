@@ -18650,7 +18650,7 @@ _ACEOF
 fi
 done
 
-for ac_func in lseek64 stat64 fstat64 lstat64 ftruncate64 readdir64 dirfd
+for ac_func in lseek64 ftruncate64 readdir64 dirfd
 do :
   as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
 ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
@@ -18662,7 +18662,31 @@ _ACEOF
 fi
 done
 
-for ac_func in lstat fchmod fsync ftruncate
+for ac_func in stat64 fstat64 lstat64 fstatat64
+do :
+  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
+ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
+if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  cat >>confdefs.h <<_ACEOF
+#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+_ACEOF
+
+fi
+done
+
+for ac_func in fstat fstatat
+do :
+  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
+ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
+if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  cat >>confdefs.h <<_ACEOF
+#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+_ACEOF
+
+fi
+done
+
+for ac_func in fchmod fchmodat fchown fchownat fsync ftruncate
 do :
   as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
 ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
@@ -18686,7 +18710,7 @@ _ACEOF
 fi
 done
 
-for ac_func in utime utimes futimes lutimes futimens
+for ac_func in utime utimes futimes lutimes futimens utimensat
 do :
   as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
 ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"

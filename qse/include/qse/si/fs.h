@@ -140,6 +140,28 @@ struct qse_fs_attr_t
 
 typedef struct qse_fs_attr_t qse_fs_attr_t;
 
+enum qse_fs_getattr_flag_t
+{
+	QSE_FS_GETATTR_SYMLINK = (1 << 15)
+};
+typedef enum qse_fs_getattr_flag_t qse_fs_getattr_flag_t;
+
+enum qse_fs_setattr_flag_t
+{
+	QSE_FS_SETATTR_TIME  = (1 << 0),
+	QSE_FS_SETATTR_OWNER = (1 << 1),
+	QSE_FS_SETATTR_MODE  = (1 << 2),
+
+	QSE_FS_SETATTR_SYMLINK = (1 << 15) /* work on the symbolic link itself. don't follow */
+};
+typedef enum qse_fs_setattr_flag_t qse_fs_setattr_flag_t;
+
+#if defined(_WIN32)
+typedef void* qse_fs_handle_t;
+#else
+typedef int qse_fs_handle_t;
+#endif
+
 typedef struct qse_fs_t qse_fs_t;
 
 enum qse_fs_trait_t
@@ -206,13 +228,14 @@ enum qse_fs_cpfile_flag_t
 	QSE_FS_CPFILE_FORCE     = (1 << 2),
 	QSE_FS_CPFILE_PRESERVE  = (1 << 3),
 	QSE_FS_CPFILE_REPLACE   = (1 << 4),
-	QSE_FS_CPFILE_SYMLINK   = (1 << 5),
-	QSE_FS_CPFILE_NOTGTDIR  = (1 << 6), /* no target directory */
+	QSE_FS_CPFILE_NOTGTDIR  = (1 << 5), /* no target directory */
+
+	QSE_FS_CPFILE_SYMLINK   = (1 << 15),
 
 	QSE_FS_CPFILE_ALL = (QSE_FS_CPFILE_GLOB | QSE_FS_CPFILE_RECURSIVE |
 	                     QSE_FS_CPFILE_FORCE | QSE_FS_CPFILE_PRESERVE |
-	                     QSE_FS_CPFILE_REPLACE | QSE_FS_CPFILE_SYMLINK |
-	                     QSE_FS_CPFILE_NOTGTDIR)
+	                     QSE_FS_CPFILE_REPLACE | QSE_FS_CPFILE_NOTGTDIR |
+	                     QSE_FS_CPFILE_SYMLINK)
 };
 typedef enum qse_fs_cpfile_flag_t qse_fs_cpfile_flag_t;
 
@@ -317,23 +340,63 @@ QSE_EXPORT int qse_fs_pop (
 	const qse_char_t* name
 );
 
+
+
+
+QSE_EXPORT int qse_fs_getattronfd (
+	qse_fs_t*            fs,
+	qse_fs_handle_t      fd,
+	qse_fs_attr_t*       attr,
+	int                  flags
+);
+
+QSE_EXPORT int qse_fs_setattronfd (
+	qse_fs_t*            fs,
+	qse_fs_handle_t      fd,
+	const qse_fs_attr_t* attr,
+	int                  flags /** bitwise-ORed #qse_fs_setattr_flag_t enumerators */
+);
+
 QSE_EXPORT int qse_fs_getattrmbs (
 	qse_fs_t*            fs,
 	const qse_mchar_t*   path,
-	qse_fs_attr_t*       attr
+	qse_fs_attr_t*       attr,
+	int                  flags
 );
 
 QSE_EXPORT int qse_fs_getattrwcs (
 	qse_fs_t*            fs,
 	const qse_wchar_t*   path,
-	qse_fs_attr_t*       attr
+	qse_fs_attr_t*       attr,
+	int                  flags
 );
 
+QSE_EXPORT int qse_fs_setattrmbs (
+	qse_fs_t*            fs,
+	qse_mchar_t*         path,
+	const qse_fs_attr_t* attr,
+	int                  flags /** bitwise-ORed #qse_fs_setattr_flag_t enumerators */
+);
+
+QSE_EXPORT int qse_fs_setattrwcs (
+	qse_fs_t*            fs,
+	qse_wchar_t*         path,
+	const qse_fs_attr_t* attr,
+	int                  flags /** bitwise-ORed #qse_fs_setattr_flag_t enumerators */
+);
+
+
 #if defined(QSE_CHAR_IS_MCHAR)
-#	define qse_fs_getattr(fs,path,attr) qse_fs_getattrmbs(fs,path,attr)
+#	define qse_fs_getattr(fs,path,attr,flags) qse_fs_getattrmbs(fs,path,attr,flags)
+#	define qse_fs_setattr(fs,path,attr,flags) qse_fssetattrmbs(fs,path,attr,flags)
 #else
-#	define qse_fs_getattr(fs,path,attr) qse_fs_getattrwcs(fs,path,attr)
+#	define qse_fs_getattr(fs,path,attr,flags) qse_fs_getattrwcs(fs,path,attr,flags)
+#	define qse_fs_setattr(fs,path,attr,flags) qse_fssetattrwcs(fs,path,attr,flags)
 #endif
+
+
+
+
 
 QSE_EXPORT int qse_fs_move (
 	qse_fs_t*         fs,
@@ -407,6 +470,10 @@ QSE_EXPORT int qse_fs_deldirwcs (
 #	define qse_fs_delfile(fs,path,flags) qse_fs_delfilewcs(fs,path,flags)
 #	define qse_fs_deldir(fs,path,flags)  qse_fs_deldirwcs(fs,path,flags)
 #endif
+
+
+
+
 
 #if defined(__cplusplus)
 }

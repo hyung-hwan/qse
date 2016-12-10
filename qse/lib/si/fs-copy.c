@@ -38,10 +38,8 @@
 struct cpfile_t
 {
 	int flags;
-
 	qse_fs_char_t* src_fspath;
 	qse_fs_char_t* dst_fspath;
-
 	qse_fs_attr_t src_attr;
 	qse_fs_attr_t dst_attr;
 };
@@ -67,7 +65,8 @@ static int merge_dstdir_and_file (qse_fs_t* fs, cpfile_t* cpfile)
 	qse_fs_freefspath (fs, QSE_NULL, cpfile->dst_fspath);
 	cpfile->dst_fspath = fstmp;
 
-	if (qse_fs_sysgetattr (fs, cpfile->dst_fspath, &cpfile->dst_attr) <= -1) 
+/* TODO: check on the flags to getattrsys()... */
+	if (qse_fs_getattrsys (fs, cpfile->dst_fspath, &cpfile->dst_attr, 0) <= -1) 
 	{
 		/* attribute on the new destination is not available */
 		cpfile->flags &= ~CPFILE_DST_ATTR;
@@ -280,17 +279,6 @@ static int copy_file_in_fs (qse_fs_t* fs, cpfile_t* cpfile)
 				goto oops;
 			}
 
-		#elif defined(HAVE_UTIME)
-
-			QSE_MEMSET (&ub, 0, QSE_SIZEOF(ub));
-			ub.actime = cpfile->src_attr.atime.sec;
-			ub.modtime = cpfile->src_attr.mtime.sec;
-			if (QSE_UTIME (cpfile->dst_fspath, &ub) <= -1)
-			{
-				fs->errnum = qse_fs_syserrtoerrnum (fs, errno);
-				goto oops;
-			}
-
 		#elif defined(HAVE_UTIMES)
 
 			QSE_MEMSET (&tv, 0, QSE_SIZEOF(tv));
@@ -300,6 +288,17 @@ static int copy_file_in_fs (qse_fs_t* fs, cpfile_t* cpfile)
 			tv[1].tv_usec = QSE_NSEC_TO_USEC(cpfile->src_attr.mtime.nsec);
 			// work on the file name not on the file descriptor.
 			if (QSE_UTIMES (cpfile->dst_fspath, tv) <= -1)
+			{
+				fs->errnum = qse_fs_syserrtoerrnum (fs, errno);
+				goto oops;
+			}
+
+		#elif defined(HAVE_UTIME)
+
+			QSE_MEMSET (&ub, 0, QSE_SIZEOF(ub));
+			ub.actime = cpfile->src_attr.atime.sec;
+			ub.modtime = cpfile->src_attr.mtime.sec;
+			if (QSE_UTIME (cpfile->dst_fspath, &ub) <= -1)
 			{
 				fs->errnum = qse_fs_syserrtoerrnum (fs, errno);
 				goto oops;
@@ -327,8 +326,9 @@ static int prepare_cpfile (qse_fs_t* fs, cpfile_t* cpfile)
 {
 	/* error if the source file can't be stat'ed.
 	 * ok if the destination file can't be stat'ed */
-	if (qse_fs_sysgetattr (fs, cpfile->src_fspath, &cpfile->src_attr) <= -1) return -1;
-	if (qse_fs_sysgetattr (fs, cpfile->dst_fspath, &cpfile->dst_attr) >= 0) cpfile->flags |= CPFILE_DST_ATTR;
+/* TODO: check on flags to getattrsys() */
+	if (qse_fs_getattrsys (fs, cpfile->src_fspath, &cpfile->src_attr, 0) <= -1) return -1;
+	if (qse_fs_getattrsys (fs, cpfile->dst_fspath, &cpfile->dst_attr, 0) >= 0) cpfile->flags |= CPFILE_DST_ATTR;
 	return 0;
 }
 
@@ -634,3 +634,198 @@ oops:
 	clear_cpfile (fs, &cpfile);
 	return -1;
 }
+
+
+#if 0
+/* --------------------------------------------------------------------- */
+/*
+ * Copyright (c) 1983 Regents of the University of California.
+ * All rights reserved.  The Berkeley software License Agreement
+ * specifies the terms and conditions for redistribution.
+ */
+
+static int copy (const char* from, const char* to)
+{
+	int fold, fnew, n, exists;
+	char *last, destname[MAXPATHLEN + 1], buf[MAXBSIZE];
+	struct stat stfrom, stto;
+
+	fold = open (from, O_RDONLY);
+	if (fold < 0) 
+	{
+		return -1;
+	}
+
+	if (fstat(fold, &stfrom) < 0)
+	{
+		close(fold);
+		return -1;
+	}
+
+	if (stat(to, &stto) >= 0 && (stto.st_mode&S_IFMT) == S_IFDIR) 
+	{
+		last = rindex(from, '/');
+		if (last) last++; else last = from;
+
+		if (strlen(to) + strlen(last) >= sizeof(destname) - 1) 
+		{
+			/* name too long */
+			close(fold);
+			return(1);
+		}
+
+		(void) sprintf(destname, "%s/%s", to, last);
+		to = destname;
+	}
+
+	if (rflag && (stfrom.st_mode&S_IFMT) == S_IFDIR) 
+	{
+		int fixmode = 0;    /* cleanup mode after rcopy */
+
+		close(fold);
+		if (stat(to, &stto) < 0)
+		{
+			if (mkdir(to, (stfrom.st_mode & 07777) | 0700) < 0)
+			{
+				Perror(to);
+				return (1);
+			}
+			fixmode = 1;
+		}
+		else if ((stto.st_mode&S_IFMT) != S_IFDIR)
+		{
+		  fprintf(stderr, "cp: %s: Not a directory.\n", to);
+		  return (1);
+		}
+		else if (pflag)
+		{
+		  fixmode = 1;
+		}
+
+		n = rcopy(from, to);
+		if (fixmode) chmod(to, stfrom.st_mode & 07777);
+		return (n);
+	}
+
+	if ((stfrom.st_mode&S_IFMT) == S_IFDIR)
+	   fprintf(stderr,
+		  "cp: %s: Is a directory (copying as plain file).\n",
+			 from);
+
+	exists = stat(to, &stto) == 0;
+	if (exists) 
+	{
+		if (stfrom.st_dev == stto.st_dev && stfrom.st_ino == stto.st_ino)
+		{
+			fprintf(stderr,
+			 "cp: %s and %s are identical (not copied).\n", from, to);
+			close(fold);
+			return (1);
+		}
+		if (iflag && isatty(fileno(stdin)))
+		{
+			int i, c;
+
+			fprintf (stderr, "overwrite %s? ", to);
+			i = c = getchar();
+
+			while (c != '\n' && c != EOF)
+			c = getchar();
+			if (i != 'y')
+			{
+				close(fold);
+				return(1);
+			}
+		}
+	}
+
+	fnew = creat(to, stfrom.st_mode & 07777);
+	if (fnew < 0)
+	{
+		Perror(to);
+		(void) close(fold);
+		return(1);
+	}
+
+	if (exists && pflag)
+		fchmod(fnew, stfrom.st_mode & 07777);
+
+	for (;;)
+	{
+		/* use vmsplice() to copy??? */
+		n = read(fold, buf, sizeof buf);
+		if (n == 0) break;
+
+		if (n < 0) 
+		{
+			Perror(from);
+			close(fold);
+			close(fnew);
+			return (1);
+		}
+		if (write(fnew, buf, n) != n)
+		{
+			Perror(to);
+			close(fold);
+			close(fnew);
+			return (1);
+		}
+	}
+
+	close(fold);
+	close(fnew);
+	if (pflag) return (setimes(to, &stfrom));
+	return (0);
+}
+
+int rcopy(const char* from, const char* to)
+{
+	DIR *fold = opendir(from);
+	struct direct *dp;
+	struct stat statb;
+	int errs = 0;
+	char fromname[MAXPATHLEN + 1];
+
+	if (fold == 0 || (pflag && fstat(fold->dd_fd, &statb) < 0)) {
+		Perror(from);
+		return (1);
+	}
+	for (;;) 
+	{
+		dp = readdir(fold);
+		if (dp == 0) 
+		{
+			closedir(fold);
+			if (pflag) return (setimes(to, &statb) + errs);
+			return (errs);
+		}
+		if (dp->d_ino == 0) continue;
+		if (!strcmp(dp->d_name, ".") || !strcmp(dp->d_name, "..")) continue;
+		if (strlen(from)+1+strlen(dp->d_name) >= sizeof fromname - 1)
+		{
+			fprintf(stderr, "cp: %s/%s: Name too long.\n", from, dp->d_name);
+			errs++;
+			continue;
+		}
+
+		sprintf(fromname, "%s/%s", from, dp->d_name);
+		errs += copy(fromname, to);
+	}
+}
+
+static int setimes(const char* path, const struct stat* statp)
+{
+	struct timeval tv[2];
+
+	tv[0].tv_sec = statp->st_atime;
+	tv[1].tv_sec = statp->st_mtime;
+	tv[0].tv_usec = tv[1].tv_usec = 0;
+	if (utimes(path, tv) < 0) 
+	{
+		Perror(path);
+		return (1);
+	}
+	return (0);
+}
+
+#endif
