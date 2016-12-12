@@ -22,7 +22,16 @@ static void print_usage (const qse_char_t* argv0)
 	qse_fprintf (QSE_STDERR, QSE_T("  -p            preserve\n"));
 	qse_fprintf (QSE_STDERR, QSE_T("  -r            recursive\n"));
 	qse_fprintf (QSE_STDERR, QSE_T("  -s            symlink\n"));
+	qse_fprintf (QSE_STDERR, QSE_T("  -g            glob\n"));
 }
+
+static int fs_cp (qse_fs_t* fs, const qse_char_t* srcpath, const qse_char_t* dstpath, qse_uintmax_t total, qse_uintmax_t copied)
+{
+	if (total == copied) qse_printf (QSE_T("Copied [%s] to [%s]\n"), srcpath, dstpath);
+/*if (qse_strcmp(path, QSE_T("b/c")) == 0) return 0;*/
+        return 1;
+}
+
 
 static int fs_main (int argc, qse_char_t* argv[])
 {
@@ -34,7 +43,7 @@ static int fs_main (int argc, qse_char_t* argv[])
 
 	static qse_opt_t opt = 
 	{
-		QSE_T("foprs"),
+		QSE_T("foprsg"),
 		QSE_NULL
 	};
 
@@ -62,6 +71,10 @@ static int fs_main (int argc, qse_char_t* argv[])
 				cpfile_flags |= QSE_FS_CPFILE_SYMLINK;
 				break;
 
+			case QSE_T('g'):
+				cpfile_flags |= QSE_FS_CPFILE_GLOB;
+				break;
+
 			case QSE_T('?'):
 				qse_fprintf (QSE_STDERR, QSE_T("illegal option - '%c'\n"), opt.opt);
 				goto wrong_usage;
@@ -79,11 +92,9 @@ static int fs_main (int argc, qse_char_t* argv[])
 
 	fs = qse_fs_open (QSE_MMGR_GETDFL(), 0);
 
-/* 
 	qse_memset (&cbs, 0, QSE_SIZEOF(cbs));
-	cbs.del = fs_del;
+	cbs.cp = fs_cp;
 	qse_fs_setopt (fs, QSE_FS_CBS, &cbs);
-*/
 
 	if (qse_fs_cpfile (fs, argv[opt.ind], argv[opt.ind + 1], cpfile_flags) <= -1)
 	{
