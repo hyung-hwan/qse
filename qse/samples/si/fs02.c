@@ -12,7 +12,7 @@
 #	include <windows.h>
 #endif
 
-static int fs_del (qse_fs_t* fs, const qse_char_t* path)
+static int fs_rm (qse_fs_t* fs, const qse_char_t* path)
 {
 	qse_printf (QSE_T("Deleting [%s]\n"), path);
 /*if (qse_strcmp(path, QSE_T("b/c")) == 0) return 0;*/
@@ -40,12 +40,12 @@ static int fs_main (int argc, qse_char_t* argv[])
 	fs = qse_fs_open (QSE_MMGR_GETDFL(), 0);
 
 	qse_memset (&cbs, 0, QSE_SIZEOF(cbs));
-	cbs.del = fs_del;
+	cbs.rm = fs_rm;
 	qse_fs_setopt (fs, QSE_FS_CBS, &cbs);
 
 	if (qse_strcmp(argv[1], QSE_T("rmfile")) == 0)
 	{
-		if (qse_fs_delfile (fs, argv[2], QSE_FS_DELFILEMBS_GLOB) <= -1)
+		if (qse_fs_rmfile (fs, argv[2], QSE_FS_RMFILEMBS_GLOB) <= -1)
 		{
 			qse_fprintf (QSE_STDERR, QSE_T("cannot delete files - %d\n"), qse_fs_geterrnum(fs));
 			ret = -1;
@@ -53,7 +53,7 @@ static int fs_main (int argc, qse_char_t* argv[])
 	}
 	else if (qse_strcmp(argv[1], QSE_T("rmfile-r")) == 0)
 	{
-		if (qse_fs_delfile (fs, argv[2], QSE_FS_DELFILE_GLOB | QSE_FS_DELFILE_RECURSIVE) <= -1)
+		if (qse_fs_rmfile (fs, argv[2], QSE_FS_RMFILE_GLOB | QSE_FS_RMFILE_RECURSIVE) <= -1)
 		{
 			qse_fprintf (QSE_STDERR, QSE_T("cannot delete files - %d\n"), qse_fs_geterrnum(fs));
 			ret = -1;
@@ -61,7 +61,7 @@ static int fs_main (int argc, qse_char_t* argv[])
 	}
 	else if (qse_strcmp (argv[1], QSE_T("rmdir")) == 0)
 	{
-		if (qse_fs_deldir (fs, argv[2], QSE_FS_DELDIR_GLOB) <= -1)
+		if (qse_fs_rmdir (fs, argv[2], QSE_FS_RMDIR_GLOB) <= -1)
 		{
 			qse_fprintf (QSE_STDERR, QSE_T("cannot delete directories - %d\n"), qse_fs_geterrnum(fs));
 			ret = -1;
@@ -69,7 +69,7 @@ static int fs_main (int argc, qse_char_t* argv[])
 	}
 	else if (qse_strcmp (argv[1], QSE_T("rmdir-r")) == 0)
 	{
-		if (qse_fs_deldir (fs, argv[2], QSE_FS_DELDIR_GLOB | QSE_FS_DELDIR_RECURSIVE) <= -1)
+		if (qse_fs_rmdir (fs, argv[2], QSE_FS_RMDIR_GLOB | QSE_FS_RMDIR_RECURSIVE) <= -1)
 		{
 			qse_fprintf (QSE_STDERR, QSE_T("cannot delete directories - %d\n"), qse_fs_geterrnum(fs));
 			ret = -1;

@@ -66,11 +66,25 @@
 #	define make_str_with_mbs(fs,mbs) (mbs)
 #	define free_str_with_wcs(fs,wcs,str) QSE_MMGR_FREE((fs)->mmgr,str)
 #	define free_str_with_mbs(fs,mbs,str) 
+#	if defined(QSE_FS_CHAR_IS_MCHAR)
+#	define make_str_with_fspath(fs,fspath) (fspath)
+#	define free_str_with_fspath(fs,mbs,str) 
+#	else
+#	define make_str_with_fspath(fs,wcs) qse_wcstombsdupwithcmgr(wcs,QSE_NULL,(fs)->mmgr,(fs)->cmgr)
+#	define free_str_with_fspath(fs,wcs,str) QSE_MMGR_FREE((fs)->mmgr,str)
+#	endif
 #else
 #	define make_str_with_wcs(fs,wcs) (wcs)
 #	define make_str_with_mbs(fs,mbs) qse_mbstowcsdupwithcmgr(mbs,QSE_NULL,(fs)->mmgr,(fs)->cmgr)
 #	define free_str_with_wcs(fs,wcs,str)
 #	define free_str_with_mbs(fs,mbs,str) QSE_MMGR_FREE((fs)->mmgr,str)
+#	if defined(QSE_FS_CHAR_IS_MCHAR)
+#	define make_str_with_fspath(fs,mbs) qse_mbstowcsdupwithcmgr(mbs,QSE_NULL,(fs)->mmgr,(fs)->cmgr)
+#	define free_str_with_fspath(fs,mbs,str) QSE_MMGR_FREE((fs)->mmgr,str)
+#	else
+#	define make_str_with_fspath(fs,fspath) (fspath)
+#	define free_str_with_fspath(fs,mbs,str) 
+#	endif
 #endif
 
 #if defined(QSE_FS_CHAR_IS_MCHAR)
@@ -163,17 +177,17 @@ int qse_fs_syscpfile (
 	const qse_fs_char_t* dstpath
 );
 
-int qse_fs_sysmkdir (
+int qse_fs_mkdirsys (
 	qse_fs_t*            fs,
 	const qse_fs_char_t* fspath
 );
 
-int qse_fs_sysrmfile (
+int qse_fs_rmfilesys (
 	qse_fs_t*            fs, 
 	const qse_fs_char_t* fspath
 );
 
-int qse_fs_sysrmdir (
+int qse_fs_rmdirsys (
 	qse_fs_t*            fs, 
 	const qse_fs_char_t* fspath
 );

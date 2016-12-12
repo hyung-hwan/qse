@@ -31,7 +31,7 @@
  * qse_dir_xxx() and qse_glob()  don't support mbs and wcs separately.
  * while the functions here support them. */
 
-int qse_fs_sysrmfile (qse_fs_t* fs, const qse_fs_char_t* fspath)
+int qse_fs_rmfilesys (qse_fs_t* fs, const qse_fs_char_t* fspath)
 {
 
 #if defined(_WIN32)
@@ -74,7 +74,7 @@ int qse_fs_sysrmfile (qse_fs_t* fs, const qse_fs_char_t* fspath)
 	return 0;
 }
 
-int qse_fs_sysrmdir (qse_fs_t* fs, const qse_fs_char_t* fspath)
+int qse_fs_rmdirsys (qse_fs_t* fs, const qse_fs_char_t* fspath)
 {
 #if defined(_WIN32)
 
@@ -127,10 +127,10 @@ static int delete_file (qse_fs_t* fs, const qse_char_t* path, int purge)
 	qse_fs_char_t* fspath;
 	int ret;
 
-	if (fs->cbs.del) 
+	if (fs->cbs.rm) 
 	{
 		int x;
-		x = fs->cbs.del (fs, path);
+		x = fs->cbs.rm (fs, path);
 		if (x <= -1) return -1;
 		if (x == 0) return 0; /* skipped */
 	}
@@ -138,7 +138,7 @@ static int delete_file (qse_fs_t* fs, const qse_char_t* path, int purge)
 	fspath = qse_fs_makefspath(fs, path);
 	if (!fspath) return -1;
 
-	ret = qse_fs_sysrmfile (fs, fspath);
+	ret = qse_fs_rmfilesys (fs, fspath);
 	qse_fs_freefspath (fs, path, fspath);
 
 	if (ret <= -1 && purge) 
@@ -176,7 +176,7 @@ static int delete_directory_nocbs (qse_fs_t* fs, const qse_char_t* path)
 	fspath = qse_fs_makefspath(fs, path);
 	if (!fspath) return -1;
 
-	ret = qse_fs_sysrmdir (fs, fspath);
+	ret = qse_fs_rmdirsys (fs, fspath);
 	qse_fs_freefspath (fs, path, fspath);
 
 	return ret;
@@ -184,10 +184,10 @@ static int delete_directory_nocbs (qse_fs_t* fs, const qse_char_t* path)
 
 static int delete_directory (qse_fs_t* fs, const qse_char_t* path)
 {
-	if (fs->cbs.del) 
+	if (fs->cbs.rm) 
 	{
 		int x;
-		x = fs->cbs.del (fs, path);
+		x = fs->cbs.rm (fs, path);
 		if (x <= -1) return -1;
 		if (x == 0) return 0; /* skipped */
 	}
@@ -281,7 +281,7 @@ static int delete_from_fs_with_mbs (qse_fs_t* fs, const qse_mchar_t* path, int d
 	fspath = qse_fs_makefspathformbs (fs, path);
 	if (!fspath) return -1;
 
-	if (fs->cbs.del)
+	if (fs->cbs.rm)
 	{
 		qse_char_t* xpath;
 		int x;
@@ -293,7 +293,7 @@ static int delete_from_fs_with_mbs (qse_fs_t* fs, const qse_mchar_t* path, int d
 			return -1;
 		}
 
-		x = fs->cbs.del (fs, xpath);
+		x = fs->cbs.rm (fs, xpath);
 
 		free_str_with_mbs (fs, path, xpath);
 
@@ -301,8 +301,8 @@ static int delete_from_fs_with_mbs (qse_fs_t* fs, const qse_mchar_t* path, int d
 		if (x == 0) return 0; /* skipped */
 	}
 
-	ret = dir? qse_fs_sysrmdir (fs, fspath): 
-	           qse_fs_sysrmfile (fs, fspath);
+	ret = dir? qse_fs_rmdirsys (fs, fspath): 
+	           qse_fs_rmfilesys (fs, fspath);
 
 	qse_fs_freefspathformbs (fs, path, fspath);
 
@@ -314,7 +314,7 @@ static int delete_from_fs_with_wcs (qse_fs_t* fs, const qse_wchar_t* path, int d
 	qse_fs_char_t* fspath;
 	int ret;
 
-	if (fs->cbs.del)
+	if (fs->cbs.rm)
 	{
 		qse_char_t* xpath;
 		int x;
@@ -326,7 +326,7 @@ static int delete_from_fs_with_wcs (qse_fs_t* fs, const qse_wchar_t* path, int d
 			return -1;
 		}
 
-		x = fs->cbs.del (fs, xpath);
+		x = fs->cbs.rm (fs, xpath);
 
 		free_str_with_wcs (fs, path, xpath);
 
@@ -337,8 +337,8 @@ static int delete_from_fs_with_wcs (qse_fs_t* fs, const qse_wchar_t* path, int d
 	fspath = qse_fs_makefspathforwcs (fs, path);
 	if (!fspath) return -1;
 
-	ret = dir? qse_fs_sysrmdir (fs, fspath): 
-	           qse_fs_sysrmfile (fs, fspath);
+	ret = dir? qse_fs_rmdirsys (fs, fspath): 
+	           qse_fs_rmfilesys (fs, fspath);
 
 	qse_fs_freefspathforwcs (fs, path, fspath);
 
@@ -367,11 +367,11 @@ static int purge_path_for_glob (const qse_cstr_t* path, void* ctx)
 
 /* --------------------------------------------------------------------- */
 
-int qse_fs_delfilembs (qse_fs_t* fs, const qse_mchar_t* path, int flags)
+int qse_fs_rmfilembs (qse_fs_t* fs, const qse_mchar_t* path, int flags)
 {
 	int ret;
 
-	if (flags & QSE_FS_DELFILEMBS_GLOB)
+	if (flags & QSE_FS_RMFILEMBS_GLOB)
 	{
 		qse_char_t* xpath;
 
@@ -382,7 +382,7 @@ int qse_fs_delfilembs (qse_fs_t* fs, const qse_mchar_t* path, int flags)
 			return -1;
 		}
 
-		if (flags & QSE_FS_DELFILEMBS_RECURSIVE)
+		if (flags & QSE_FS_RMFILEMBS_RECURSIVE)
 		{
 			ret = qse_glob (xpath, purge_path_for_glob, fs, DEFAULT_GLOB_FLAGS, fs->mmgr, fs->cmgr);
 		}
@@ -399,11 +399,11 @@ int qse_fs_delfilembs (qse_fs_t* fs, const qse_mchar_t* path, int flags)
 			return -1;
 		}
 	}
-	else if (flags & QSE_FS_DELFILEMBS_RECURSIVE)
+	else if (flags & QSE_FS_RMFILEMBS_RECURSIVE)
 	{
 		qse_char_t* xpath;
 
-		/* if RECURSIVE is set, it's not differnt from qse_fs_deldirmbs() */
+		/* if RECURSIVE is set, it's not differnt from qse_fs_rmdirmbs() */
 		xpath = (qse_char_t*)make_str_with_mbs (fs, path);
 		if (!xpath)
 		{
@@ -423,11 +423,11 @@ int qse_fs_delfilembs (qse_fs_t* fs, const qse_mchar_t* path, int flags)
 	return ret;
 }
 
-int qse_fs_delfilewcs (qse_fs_t* fs, const qse_wchar_t* path, int flags)
+int qse_fs_rmfilewcs (qse_fs_t* fs, const qse_wchar_t* path, int flags)
 {
 	int ret;
 
-	if (flags & QSE_FS_DELFILEWCS_GLOB)
+	if (flags & QSE_FS_RMFILEWCS_GLOB)
 	{
 		qse_char_t* xpath;
 
@@ -438,7 +438,7 @@ int qse_fs_delfilewcs (qse_fs_t* fs, const qse_wchar_t* path, int flags)
 			return -1;
 		}
 
-		if (flags & QSE_FS_DELFILEWCS_RECURSIVE)
+		if (flags & QSE_FS_RMFILEWCS_RECURSIVE)
 		{
 			ret = qse_glob (xpath, purge_path_for_glob, fs, DEFAULT_GLOB_FLAGS, fs->mmgr, fs->cmgr);
 		}
@@ -455,11 +455,11 @@ int qse_fs_delfilewcs (qse_fs_t* fs, const qse_wchar_t* path, int flags)
 			return -1;
 		}
 	}
-	else if (flags & QSE_FS_DELFILEWCS_RECURSIVE)
+	else if (flags & QSE_FS_RMFILEWCS_RECURSIVE)
 	{
 		qse_char_t* xpath;
 
-		/* if RECURSIVE is set, it's not differnt from qse_fs_deldirwcs() */
+		/* if RECURSIVE is set, it's not differnt from qse_fs_rmdirwcs() */
 		xpath = (qse_char_t*)make_str_with_wcs (fs, path);
 		if (!xpath)
 		{
@@ -482,11 +482,11 @@ int qse_fs_delfilewcs (qse_fs_t* fs, const qse_wchar_t* path, int flags)
 
 /* --------------------------------------------------------------------- */
 
-int qse_fs_deldirmbs (qse_fs_t* fs, const qse_mchar_t* path, int flags)
+int qse_fs_rmdirmbs (qse_fs_t* fs, const qse_mchar_t* path, int flags)
 {
 	int ret;
 
-	if (flags & QSE_FS_DELDIRMBS_GLOB)
+	if (flags & QSE_FS_RMDIRMBS_GLOB)
 	{
 		qse_char_t* xpath;
 
@@ -497,7 +497,7 @@ int qse_fs_deldirmbs (qse_fs_t* fs, const qse_mchar_t* path, int flags)
 			return -1;
 		}
 
-		if (flags & QSE_FS_DELDIRMBS_RECURSIVE)
+		if (flags & QSE_FS_RMDIRMBS_RECURSIVE)
 		{
 			ret = qse_glob (xpath, purge_path_for_glob, fs, DEFAULT_GLOB_FLAGS, fs->mmgr, fs->cmgr);
 		}
@@ -510,11 +510,11 @@ int qse_fs_deldirmbs (qse_fs_t* fs, const qse_mchar_t* path, int flags)
 
 		if (ret <= -1) fs->errnum = QSE_FS_EGLOB;
 	}
-	else if (flags & QSE_FS_DELDIRMBS_RECURSIVE)
+	else if (flags & QSE_FS_RMDIRMBS_RECURSIVE)
 	{
 		qse_char_t* xpath;
 
-		/* if RECURSIVE is set, it's not differnt from qse_fs_delfilembs() */
+		/* if RECURSIVE is set, it's not differnt from qse_fs_rmfilembs() */
 		xpath = (qse_char_t*)make_str_with_mbs (fs, path);
 		if (!xpath)
 		{
@@ -534,11 +534,11 @@ int qse_fs_deldirmbs (qse_fs_t* fs, const qse_mchar_t* path, int flags)
 	return ret;
 }
 
-int qse_fs_deldirwcs (qse_fs_t* fs, const qse_wchar_t* path, int flags)
+int qse_fs_rmdirwcs (qse_fs_t* fs, const qse_wchar_t* path, int flags)
 {
 	int ret;
 
-	if (flags & QSE_FS_DELDIRWCS_GLOB)
+	if (flags & QSE_FS_RMDIRWCS_GLOB)
 	{
 		qse_char_t* xpath;
 
@@ -549,7 +549,7 @@ int qse_fs_deldirwcs (qse_fs_t* fs, const qse_wchar_t* path, int flags)
 			return -1;
 		}
 
-		if (flags & QSE_FS_DELDIRWCS_RECURSIVE)
+		if (flags & QSE_FS_RMDIRWCS_RECURSIVE)
 		{
 			ret = qse_glob (xpath, purge_path_for_glob, fs, DEFAULT_GLOB_FLAGS, fs->mmgr, fs->cmgr);
 		}
@@ -562,11 +562,11 @@ int qse_fs_deldirwcs (qse_fs_t* fs, const qse_wchar_t* path, int flags)
 
 		if (ret <= -1) fs->errnum = QSE_FS_EGLOB;
 	}
-	else if (flags & QSE_FS_DELDIRWCS_RECURSIVE)
+	else if (flags & QSE_FS_RMDIRWCS_RECURSIVE)
 	{
 		qse_char_t* xpath;
 
-		/* if RECURSIVE is set, it's not differnt from qse_fs_delfilewcs() */
+		/* if RECURSIVE is set, it's not differnt from qse_fs_rmfilewcs() */
 		xpath = (qse_char_t*)make_str_with_wcs (fs, path);
 		if (!xpath)
 		{

@@ -26,7 +26,7 @@
 
 #include "fs-prv.h"
 
-int qse_fs_sysmkdir (qse_fs_t* fs, const qse_fs_char_t* fspath)
+int qse_fs_mkdirsys (qse_fs_t* fs, const qse_fs_char_t* fspath)
 {
 
 #if defined(_WIN32)
@@ -120,12 +120,8 @@ static int make_directory_chain (qse_fs_t* fs, qse_fs_char_t* fspath)
 			c = *(p + 1);
 			*(p + 1) = QSE_FS_T('\0');
 		#endif
-			ret = qse_fs_sysmkdir (fs, fspath);
-			if (ret <= -1 && fs->errnum != QSE_FS_EEXIST) 
-			{
-				return -1;
-				goto done; /* abort */
-			}
+			ret = qse_fs_mkdirsys (fs, fspath);
+			if (ret <= -1 && fs->errnum != QSE_FS_EEXIST) goto done; /* abort */
 		#if defined(_WIN32) || defined(__DOS__) || defined(__OS2__)
 			*p = c;
 		#else
@@ -134,7 +130,7 @@ static int make_directory_chain (qse_fs_t* fs, qse_fs_char_t* fspath)
 		}
 	}
 
-	if (!IS_FSPATHSEP(*(p - 1))) ret = qse_fs_sysmkdir (fs, fspath);
+	if (!IS_FSPATHSEP(*(p - 1))) ret = qse_fs_mkdirsys (fs, fspath);
 
 done:
 	return ret;
@@ -151,7 +147,7 @@ int qse_fs_mkdirmbs (qse_fs_t* fs, const qse_mchar_t* path, int flags)
 		return -1;
 	}
 
-	if (flags & QSE_FS_MKDIRMBS_PARENT)
+	if (flags & QSE_FS_MKDIR_PARENT)
 	{
 		/* make_directory_chain changes the input path.
 		 * ensure to create a modifiable string for it. */
@@ -165,7 +161,7 @@ int qse_fs_mkdirmbs (qse_fs_t* fs, const qse_mchar_t* path, int flags)
 		fspath = (qse_fs_char_t*)qse_fs_makefspathformbs (fs, path);
 		if (!fspath) return -1;
 
-		ret = qse_fs_sysmkdir (fs, fspath);
+		ret = qse_fs_mkdirsys (fs, fspath);
 	}
 
 	qse_fs_freefspathformbs (fs, path, fspath);
@@ -184,7 +180,7 @@ int qse_fs_mkdirwcs (qse_fs_t* fs, const qse_wchar_t* path, int flags)
 		return -1;
 	}
 
-	if (flags & QSE_FS_MKDIRWCS_PARENT)
+	if (flags & QSE_FS_MKDIR_PARENT)
 	{
 		/* make_directory_chain changes the input path.
 		 * ensure to create a modifiable string for it. */
@@ -198,7 +194,7 @@ int qse_fs_mkdirwcs (qse_fs_t* fs, const qse_wchar_t* path, int flags)
 		fspath = (qse_fs_char_t*)qse_fs_makefspathforwcs (fs, path);
 		if (!fspath) return -1;
 
-		ret = qse_fs_sysmkdir (fs, fspath);
+		ret = qse_fs_mkdirsys (fs, fspath);
 	}
 
 	qse_fs_freefspathforwcs (fs, path, fspath);

@@ -179,21 +179,25 @@ typedef enum qse_fs_trait_t qse_fs_trait_t;
  * \return -1 on failure, 0 to cancel, 1 to keep copying
  */
 typedef int (*qse_fs_cbs_cp_t) (
-	qse_fs_t*         fs,
-	void*             ctx
+	qse_fs_t*          fs,
+	const qse_char_t*  srcpath,
+	const qse_char_t*  dstpath,
+	qse_uintmax_t      bytes_totoal,
+	qse_uintmax_t      bytes_copied
 );
 
 /**
  * \return -1 on failure, 0 to skip, 1 to delete
  */
-typedef int (*qse_fs_cbs_del_t) (
+typedef int (*qse_fs_cbs_rm_t) (
 	qse_fs_t*         fs,
 	const qse_char_t* path
 );
 
 struct qse_fs_cbs_t
 {
-	qse_fs_cbs_del_t del;
+	qse_fs_cbs_rm_t rm;
+	qse_fs_cbs_cp_t cp;
 };
 typedef struct qse_fs_cbs_t qse_fs_cbs_t;
 
@@ -228,51 +232,48 @@ enum qse_fs_cpfile_flag_t
 	QSE_FS_CPFILE_FORCE     = (1 << 2),
 	QSE_FS_CPFILE_PRESERVE  = (1 << 3),
 	QSE_FS_CPFILE_REPLACE   = (1 << 4),
-	QSE_FS_CPFILE_NOTGTDIR  = (1 << 5), /* no target directory */
 
 	QSE_FS_CPFILE_SYMLINK   = (1 << 15),
 
 	QSE_FS_CPFILE_ALL = (QSE_FS_CPFILE_GLOB | QSE_FS_CPFILE_RECURSIVE |
 	                     QSE_FS_CPFILE_FORCE | QSE_FS_CPFILE_PRESERVE |
-	                     QSE_FS_CPFILE_REPLACE | QSE_FS_CPFILE_NOTGTDIR |
-	                     QSE_FS_CPFILE_SYMLINK)
+	                     QSE_FS_CPFILE_REPLACE | QSE_FS_CPFILE_SYMLINK)
 };
 typedef enum qse_fs_cpfile_flag_t qse_fs_cpfile_flag_t;
 
 enum qse_fs_mkdir_flag_t
 {
 	QSE_FS_MKDIR_PARENT = (1 << 0),
-
 	QSE_FS_MKDIRMBS_PARENT = QSE_FS_MKDIR_PARENT,
 	QSE_FS_MKDIRWCS_PARENT = QSE_FS_MKDIR_PARENT
 };
 typedef enum qse_fs_mkdir_flag_t qse_fs_mkdir_flag_t;
 
-enum qse_fs_delfile_flag_t
+enum qse_fs_rmfile_flag_t
 {
-	QSE_FS_DELFILE_GLOB      = (1 << 0),
-	QSE_FS_DELFILE_RECURSIVE = (1 << 1),
+	QSE_FS_RMFILE_GLOB      = (1 << 0),
+	QSE_FS_RMFILE_RECURSIVE = (1 << 1),
 
-	QSE_FS_DELFILEMBS_GLOB      = QSE_FS_DELFILE_GLOB,
-	QSE_FS_DELFILEMBS_RECURSIVE = QSE_FS_DELFILE_RECURSIVE,
+	QSE_FS_RMFILEMBS_GLOB      = QSE_FS_RMFILE_GLOB,
+	QSE_FS_RMFILEMBS_RECURSIVE = QSE_FS_RMFILE_RECURSIVE,
 
-	QSE_FS_DELFILEWCS_GLOB      = QSE_FS_DELFILE_GLOB,
-	QSE_FS_DELFILEWCS_RECURSIVE = QSE_FS_DELFILE_RECURSIVE
+	QSE_FS_RMFILEWCS_GLOB      = QSE_FS_RMFILE_GLOB,
+	QSE_FS_RMFILEWCS_RECURSIVE = QSE_FS_RMFILE_RECURSIVE
 };
-typedef enum qse_fs_delfile_flag_t qse_fs_delfile_flag_t;
+typedef enum qse_fs_rmfile_flag_t qse_fs_rmfile_flag_t;
 
-enum qse_fs_deldir_flag_t
+enum qse_fs_rmdir_flag_t
 {
-	QSE_FS_DELDIR_GLOB      = (1 << 0),
-	QSE_FS_DELDIR_RECURSIVE = (1 << 1),
+	QSE_FS_RMDIR_GLOB      = (1 << 0),
+	QSE_FS_RMDIR_RECURSIVE = (1 << 1),
 
-	QSE_FS_DELDIRMBS_GLOB      = QSE_FS_DELDIR_GLOB,
-	QSE_FS_DELDIRMBS_RECURSIVE = QSE_FS_DELDIR_RECURSIVE,
+	QSE_FS_RMDIRMBS_GLOB      = QSE_FS_RMDIR_GLOB,
+	QSE_FS_RMDIRMBS_RECURSIVE = QSE_FS_RMDIR_RECURSIVE,
 
-	QSE_FS_DELDIRWCS_GLOB      = QSE_FS_DELDIR_GLOB,
-	QSE_FS_DELDIRWCS_RECURSIVE = QSE_FS_DELDIR_RECURSIVE
+	QSE_FS_RMDIRWCS_GLOB      = QSE_FS_RMDIR_GLOB,
+	QSE_FS_RMDIRWCS_RECURSIVE = QSE_FS_RMDIR_RECURSIVE
 };
-typedef enum qse_fs_deldir_flag_t qse_fs_deldir_flag_t;
+typedef enum qse_fs_rmdir_flag_t qse_fs_rmdir_flag_t;
 
 #if defined(__cplusplus)
 extern "C" {
@@ -343,6 +344,10 @@ QSE_EXPORT int qse_fs_pop (
 
 
 
+
+
+
+
 QSE_EXPORT int qse_fs_getattronfd (
 	qse_fs_t*            fs,
 	qse_fs_handle_t      fd,
@@ -395,14 +400,15 @@ QSE_EXPORT int qse_fs_setattrwcs (
 #endif
 
 
-
-
-
 QSE_EXPORT int qse_fs_move (
 	qse_fs_t*         fs,
 	const qse_char_t* oldpath,
 	const qse_char_t* newpath
 );
+
+
+
+
 
 
 QSE_EXPORT int qse_fs_cpfilembs (
@@ -437,41 +443,39 @@ QSE_EXPORT int qse_fs_mkdirwcs (
 	int                flags
 );
 
-QSE_EXPORT int qse_fs_delfilembs (
+QSE_EXPORT int qse_fs_rmfilembs (
 	qse_fs_t*          fs,
 	const qse_mchar_t* path,
 	int                flags
 );
 
-QSE_EXPORT int qse_fs_delfilewcs (
+QSE_EXPORT int qse_fs_rmfilewcs (
 	qse_fs_t*          fs,
 	const qse_wchar_t* path,
 	int                flags
 );
 
-QSE_EXPORT int qse_fs_deldirmbs (
+QSE_EXPORT int qse_fs_rmdirmbs (
 	qse_fs_t*          fs,
 	const qse_mchar_t* path,
 	int                flags
 );
 
-QSE_EXPORT int qse_fs_deldirwcs (
+QSE_EXPORT int qse_fs_rmdirwcs (
 	qse_fs_t*          fs,
 	const qse_wchar_t* path,
 	int                flags
 );
 
 #if defined(QSE_CHAR_IS_MCHAR)
-#	define qse_fs_mkdir(fs,path,flags) qse_fs_mkdirmbs(fs,path,flags)
-#	define qse_fs_delfile(fs,path,flags) qse_fs_delfilembs(fs,path,flags)
-#	define qse_fs_deldir(fs,path,flags)  qse_fs_deldirmbs(fs,path,flags)
+#	define qse_fs_mkdir(fs,path,flags)  qse_fs_mkdirmbs(fs,path,flags)
+#	define qse_fs_rmfile(fs,path,flags) qse_fs_rmfilembs(fs,path,flags)
+#	define qse_fs_rmdir(fs,path,flags)  qse_fs_rmdirmbs(fs,path,flags)
 #else
-#	define qse_fs_mkdir(fs,path,flags) qse_fs_mkdirwcs(fs,path,flags)
-#	define qse_fs_delfile(fs,path,flags) qse_fs_delfilewcs(fs,path,flags)
-#	define qse_fs_deldir(fs,path,flags)  qse_fs_deldirwcs(fs,path,flags)
+#	define qse_fs_mkdir(fs,path,flags)  qse_fs_mkdirwcs(fs,path,flags)
+#	define qse_fs_rmfile(fs,path,flags) qse_fs_rmfilewcs(fs,path,flags)
+#	define qse_fs_rmdir(fs,path,flags)  qse_fs_rmdirwcs(fs,path,flags)
 #endif
-
-
 
 
 
