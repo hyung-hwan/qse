@@ -196,6 +196,7 @@ static int copy_file_in_fs (qse_fs_t* fs, cpfile_t* cpfile)
 		{
 			if (cpfile->flags & QSE_FS_CPFILE_FORCE)
 			{
+/* TODO: call cbs.rm callback??? */
 				QSE_UNLINK (cpfile->dst_fspath);
 				if (QSE_SYMLINK (tmpbuf, cpfile->dst_fspath) <= -1)
 				{
@@ -250,6 +251,7 @@ static int copy_file_in_fs (qse_fs_t* fs, cpfile_t* cpfile)
 		if (out <= -1 && (cpfile->flags & QSE_FS_CPFILE_FORCE))
 		{
 			/* if forced, delete it and try to open it again */
+/* TODO: call cbs.rm callback??? */
 			QSE_UNLINK (cpfile->dst_fspath);
 			out = QSE_OPEN (cpfile->dst_fspath, O_CREAT | O_WRONLY | O_TRUNC, cpfile->src_attr.mode); 
 		}
@@ -393,7 +395,6 @@ static void pop_cfs (qse_fs_t* fs, cpfile_t* cpfile, qse_dir_t** dir)
 
 	QSE_MMGR_FREE (fs->mmgr, cfs);
 }
-
 
 static int copy_file (qse_fs_t* fs, cpfile_t* cpfile)
 {

@@ -659,7 +659,7 @@ qse_fs_ent_t* qse_fs_read (qse_fs_t* fs, int flags)
 			case DT_LNK:
 				fs->ent.type = QSE_FS_ENT_SYMLINK;
 				break;
-	
+
 			case DT_BLK: 
 				fs->ent.type = QSE_FS_ENT_BLKDEV;
 				break;
@@ -761,7 +761,7 @@ qse_fs_char_t* qse_fs_makefspathformbs (qse_fs_t* fs, const qse_mchar_t* path)
 	qse_fs_char_t* fspath;
 
 #if defined(QSE_FS_CHAR_IS_MCHAR)
-	fspath = path;
+	fspath = (qse_mchar_t*)path;
 #else
 	fspath = qse_mbstowcsdupwithcmgr (path, QSE_NULL, fs->mmgr, fs->cmgr);
 	if (!fspath) fs->errnum = QSE_FS_ENOMEM;
