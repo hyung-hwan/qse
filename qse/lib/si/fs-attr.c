@@ -371,7 +371,7 @@ int qse_fs_setattrsys (qse_fs_t* fs, qse_fs_char_t* path, const qse_fs_attr_t* a
 
 	if (flags & QSE_FS_SETATTR_OWNER)
 	{
-	#if defined(QSE_FCHOWNAT)
+	#if defined(HAVE_FCHOWNAT)
 		int sysflags = 0;
 
 		if (flags & QSE_FS_SETATTR_SYMLINK) sysflags |= AT_SYMLINK_NOFOLLOW;
@@ -399,7 +399,7 @@ int qse_fs_setattrsys (qse_fs_t* fs, qse_fs_char_t* path, const qse_fs_attr_t* a
 
 	if (flags & QSE_FS_SETATTR_MODE)
 	{
-	#if defined(QSE_FCHMODAT)
+	#if defined(HAVE_FCHMODAT)
 		int sysflags = 0;
 
 		if (flags & QSE_FS_SETATTR_SYMLINK) sysflags |= AT_SYMLINK_NOFOLLOW;
