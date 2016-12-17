@@ -58,6 +58,7 @@ enum qse_fs_errnum_t
 	QSE_FS_ENOMEM,      /**< out of memory */
 	QSE_FS_EINVAL,      /**< invalid parameter */
 	QSE_FS_EACCES,      /**< access denied */
+	QSE_FS_EPERM,       /**< operation not permitted */
 	QSE_FS_ENOENT,      /**< no such file or directory */
 	QSE_FS_EEXIST,      /**< already exist */
 	QSE_FS_EINTR,       /**< interrupted */

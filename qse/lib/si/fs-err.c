@@ -108,8 +108,10 @@ qse_fs_errnum_t qse_fs_syserrtoerrnum (qse_fs_t* fs, qse_fs_syserr_t e)
 			return QSE_FS_EINVAL;
 
 		case EACCES:
-		case EPERM:
 			return QSE_FS_EACCES;
+
+		case EPERM:
+			return QSE_FS_EPERM;
 
 		case ENOENT:
 			return QSE_FS_ENOENT;
@@ -140,8 +142,10 @@ qse_fs_errnum_t qse_fs_syserrtoerrnum (qse_fs_t* fs, qse_fs_syserr_t e)
 			return QSE_FS_EINVAL;
 
 		case EACCES:
-		case EPERM:
 			return QSE_FS_EACCES;
+
+		case EPERM:
+			return QSE_FS_EPERM;
 
 		case ENOENT:
 			return QSE_FS_ENOENT;
@@ -198,6 +202,9 @@ qse_fs_errnum_t qse_fs_direrrtoerrnum (qse_fs_t* fs, qse_dir_errnum_t e)
 
 		case QSE_DIR_EACCES:
 			return QSE_FS_EACCES;
+
+		case QSE_DIR_EPERM:
+			return QSE_FS_EPERM;
 
 		case QSE_DIR_ENOENT:
 			return QSE_FS_ENOENT;

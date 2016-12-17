@@ -1857,7 +1857,7 @@ int qse_awk_addgbl (qse_awk_t* awk, const qse_char_t* name)
 	if (awk->tree.ngbls > awk->tree.ngbls_base) 
 	{
 		/* this function is not allowed after qse_awk_parse is called */
-		SETERR_COD (awk, QSE_AWK_ENOPER);
+		SETERR_COD (awk, QSE_AWK_EPERM);
 		return -1;
 	}
 
@@ -1884,7 +1884,7 @@ int qse_awk_delgbl (qse_awk_t* awk, const qse_char_t* name)
 	if (awk->tree.ngbls > awk->tree.ngbls_base) 
 	{
 		/* this function is not allow after qse_awk_parse is called */
-		qse_awk_seterrnum (awk, QSE_AWK_ENOPER, QSE_NULL);
+		qse_awk_seterrnum (awk, QSE_AWK_EPERM, QSE_NULL);
 		return -1;
 	}
 

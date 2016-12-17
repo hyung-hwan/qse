@@ -396,6 +396,12 @@ static void pop_cfs (qse_fs_t* fs, cpfile_t* cpfile, qse_dir_t** dir)
 	QSE_MMGR_FREE (fs->mmgr, cfs);
 }
 
+static int can_copy_dir_into (qse_fs_t* fs, cpfile_t* cpfile)
+{
+/* TODO: */
+	return 1;
+}
+
 static int copy_file (qse_fs_t* fs, cpfile_t* cpfile)
 {
 #if defined(NO_RECURSION)
@@ -422,11 +428,12 @@ start_over:
 			}
 
 			/* the destination is also a directory */
+
 			if (cpfile->src_attr.ino == cpfile->dst_attr.ino &&
 			    cpfile->src_attr.dev == cpfile->dst_attr.dev)
 			{
 				/* cannot copy a directory to itself */
-				fs->errnum = QSE_FS_EINVAL; /* TODO: better error code */
+				fs->errnum = QSE_FS_EPERM;
 				goto oops;
 			}
 
@@ -462,10 +469,18 @@ start_over:
 			goto oops;
 		}
 
+/* TODO: check if the directory is beging copied into itself in advance...XXXXXXXXXXXXXXXXXXXXXX */
+
 		if (qse_fs_mkdirsys (fs, cpfile->dst_fspath) <= -1) 
 		{
 			/* it's ok if the destination directory already exists */
 			if (fs->errnum != QSE_FS_EEXIST) goto oops;
+		}
+
+		if (!can_copy_dir_into (fs, cpfile)) 
+		{
+			fs->errnum = QSE_FS_EPERM;
+			goto oops;
 		}
 
 		while (1)
@@ -533,29 +548,15 @@ start_over:
 			    cpfile->src_attr.dev == cpfile->dst_attr.dev)
 			{
 				/* cannot copy a file to itself */
-				fs->errnum = QSE_FS_EINVAL; /* TODO: better error code */
+				fs->errnum = QSE_FS_EPERM;
 				goto oops;
 			}
 
 			if (cpfile->dst_attr.isdir)
 			{
-#if 0
-				if (cpfile->flags & CPFILE_DST_FSPATH_MERGED)
-				{
-					/* merge_dstdir_and_file() has been called already.
-					 * no more getting into a subdirectory */
-					fs->errnum = QSE_FS_EISDIR;
-					goto oops;
-				}
-				else
-				{
-#endif
-					/* arrange to copy a file into a directory */
-					if (merge_dstdir_and_srcbase (fs, cpfile) <= -1) return -1;
-					goto copy_file;
-#if 0
-				}
-#endif
+				/* arrange to copy a file into a directory */
+				if (merge_dstdir_and_srcbase (fs, cpfile) <= -1) return -1;
+				goto copy_file;
 			}
 
 			if (!(cpfile->flags & QSE_FS_CPFILE_REPLACE))
@@ -643,9 +644,10 @@ int qse_fs_cpfilembs (qse_fs_t* fs, const qse_mchar_t* srcpath, const qse_mchar_
 
 	if (flags & QSE_FS_CPFILE_GLOB)
 	{
+		fs->errnum = QSE_FS_ENOERR;
 		if (qse_globmbs (srcpath, copy_file_for_glob, &ctx, DEFAULT_GLOB_FLAGS, fs->mmgr, fs->cmgr) <= -1)
 		{
-			fs->errnum = QSE_FS_EGLOB;
+			if (fs->errnum == QSE_FS_ENOERR) fs->errnum = QSE_FS_EGLOB;
 			return -1;
 		}
 
@@ -672,9 +674,10 @@ int qse_fs_cpfilewcs (qse_fs_t* fs, const qse_wchar_t* srcpath, const qse_wchar_
 
 	if (flags & QSE_FS_CPFILE_GLOB)
 	{
+		fs->errnum = QSE_FS_ENOERR;
 		if (qse_globwcs (srcpath, copy_file_for_glob, &ctx, DEFAULT_GLOB_FLAGS, fs->mmgr, fs->cmgr) <= -1)
 		{
-			fs->errnum = QSE_FS_EGLOB;
+			if (fs->errnum == QSE_FS_ENOERR) fs->errnum = QSE_FS_EGLOB;
 			return -1;
 		} 
 

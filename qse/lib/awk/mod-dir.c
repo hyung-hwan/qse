@@ -57,6 +57,7 @@ enum
 	DIR_ENOMEM,
 	DIR_EINVAL,
 	DIR_EACCES,
+	DIR_EPERM,
 	DIR_ENOENT,
 	DIR_EMAPTOSCALAR
 };
@@ -98,6 +99,8 @@ static int dir_err_to_errnum (qse_dir_errnum_t num)
 			return DIR_EINVAL;
 		case QSE_DIR_EACCES:
 			return DIR_EACCES;
+		case QSE_DIR_EPERM:
+			return DIR_EPERM;
 		case QSE_DIR_ENOENT:
 			return DIR_ENOENT;
 		default:	
@@ -117,6 +120,8 @@ static int awk_err_to_errnum (qse_awk_errnum_t num)
 			return DIR_EINVAL;
 		case QSE_AWK_EACCES:
 			return DIR_EACCES;
+		case QSE_AWK_EPERM:
+			return DIR_EPERM;
 		case QSE_AWK_ENOENT:
 			return DIR_ENOENT;
 		case QSE_AWK_EMAPTOSCALAR:
@@ -358,6 +363,7 @@ static qse_char_t* errmsg[] =
 	QSE_T("insufficient memory"),
 	QSE_T("invalid data"),
 	QSE_T("access denied"),
+	QSE_T("operation not permitted"),
 	QSE_T("no entry"),
 	QSE_T("cannot change a map to a scalar"),
 	QSE_T("unknown error")

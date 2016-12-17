@@ -49,8 +49,10 @@ enum qse_dir_errnum_t
 	QSE_DIR_ENOMEM,     /**< out of memory */
 	QSE_DIR_EINVAL,     /**< invalid parameter */
 	QSE_DIR_EACCES,     /**< access denied */
+	QSE_DIR_EPERM,      /**< operation not permitted */
 	QSE_DIR_ENOENT,     /**< no such file */
 	QSE_DIR_EEXIST,     /**< already exist */
+	QSE_DIR_ENOTDIR,    /**< not a directory */
 	QSE_DIR_EINTR,      /**< interrupted */
 	QSE_DIR_EPIPE,      /**< broken pipe */
 	QSE_DIR_EAGAIN      /**< resource not available temporarily */

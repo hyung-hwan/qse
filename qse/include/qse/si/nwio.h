@@ -68,8 +68,10 @@ enum qse_nwio_errnum_t
 	QSE_NWIO_ENOMEM,     /**< out of memory */
 	QSE_NWIO_EINVAL,     /**< invalid parameter */
 	QSE_NWIO_EACCES,     /**< access denied */
+	QSE_NWIO_EPERM,      /**< operation not permitted */
 	QSE_NWIO_ENOENT,     /**< no such file */
 	QSE_NWIO_EEXIST,     /**< already exist */
+	QSE_NWIO_ENOTDIR,    /**< not a directory */
 	QSE_NWIO_EINTR,      /**< interrupted */
 	QSE_NWIO_ETMOUT,     /**< timed out */
 	QSE_NWIO_EPIPE,      /**< broken pipe */
