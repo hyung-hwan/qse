@@ -152,8 +152,10 @@ enum qse_pio_errnum_t
 	QSE_PIO_ENOMEM,     /**< out of memory */
 	QSE_PIO_EINVAL,     /**< invalid parameter */
 	QSE_PIO_EACCES,     /**< access denied */
+	QSE_PIO_EPERM,      /**< operation not permitted */
 	QSE_PIO_ENOENT,     /**< no such file */
 	QSE_PIO_EEXIST,     /**< already exist */
+	QSE_PIO_ENOTDIR,    /**< not a directory */
 	QSE_PIO_EINTR,      /**< interrupted */
 	QSE_PIO_EPIPE,      /**< broken pipe */
 	QSE_PIO_EAGAIN,     /**< resource not available temporarily */

@@ -87,8 +87,10 @@ enum qse_fio_errnum_t
 	QSE_FIO_ENOMEM,     /**< out of memory */
 	QSE_FIO_EINVAL,     /**< invalid parameter */
 	QSE_FIO_EACCES,     /**< access denied */
+	QSE_FIO_EPERM,      /**< operation not permitted */
 	QSE_FIO_ENOENT,     /**< no such file */
 	QSE_FIO_EEXIST,     /**< already exist */
+	QSE_FIO_ENOTDIR,    /**< not a directory */
 	QSE_FIO_EINTR,      /**< interrupted */
 	QSE_FIO_EPIPE,      /**< broken pipe */
 	QSE_FIO_EAGAIN      /**< resource not available temporarily */

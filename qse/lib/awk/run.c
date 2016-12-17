@@ -816,7 +816,7 @@ qse_awk_rtx_t* qse_awk_rtx_open (
 	    awk->tree.chain_size == 0 &&
 	    qse_htb_getsize(awk->tree.funs) == 0)
 	{
-		qse_awk_seterrnum (awk, QSE_AWK_ENOPER, QSE_NULL);
+		qse_awk_seterrnum (awk, QSE_AWK_EPERM, QSE_NULL);
 		return QSE_NULL;
 	}
 	
@@ -1576,7 +1576,7 @@ qse_awk_val_t* qse_awk_rtx_callfun (
 	{
 		/* cannot call the function again when exit() is called
 		 * in an AWK program or qse_awk_rtx_stop() is invoked */
-		SETERR_COD (rtx, QSE_AWK_ENOPER);
+		SETERR_COD (rtx, QSE_AWK_EPERM);
 		return QSE_NULL;
 	}
 	/*rtx->exit_level = EXIT_NONE;*/

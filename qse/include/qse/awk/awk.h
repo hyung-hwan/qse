@@ -1185,8 +1185,8 @@ enum qse_awk_errnum_t
 	QSE_AWK_ENOMEM,  /**< insufficient memory */
 	QSE_AWK_EINVAL,  /**< invalid parameter or data */
 	QSE_AWK_EACCES,  /**< access denied */
+	QSE_AWK_EPERM,   /**< operation not permitted */
 	QSE_AWK_ENOSUP,  /**< not supported */
-	QSE_AWK_ENOPER,  /**< operation not allowed */
 	QSE_AWK_ENOENT,  /**< '${0}' not found */
 	QSE_AWK_EEXIST,  /**< '${0}' already exists */
 	QSE_AWK_EIOERR,  /**< I/O error */

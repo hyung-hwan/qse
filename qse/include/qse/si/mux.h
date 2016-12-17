@@ -40,20 +40,22 @@ typedef struct qse_mux_evt_t qse_mux_evt_t;
 
 enum qse_mux_errnum_t
 {
-	 QSE_MUX_ENOERR = 0, /**< no error */
-	 QSE_MUX_EOTHER,     /**< other error */
-	 QSE_MUX_ENOIMPL,    /**< not implemented */
-	 QSE_MUX_ESYSERR,    /**< subsystem(system call) error */
-	 QSE_MUX_EINTERN,    /**< internal error */
+	QSE_MUX_ENOERR = 0, /**< no error */
+	QSE_MUX_EOTHER,     /**< other error */
+	QSE_MUX_ENOIMPL,    /**< not implemented */
+	QSE_MUX_ESYSERR,    /**< subsystem(system call) error */
+	QSE_MUX_EINTERN,    /**< internal error */
 
-	 QSE_MUX_ENOMEM,     /**< out of memory */
-	 QSE_MUX_EINVAL,     /**< invalid parameter */
-	 QSE_MUX_EACCES,     /**< access denied */
-	 QSE_MUX_ENOENT,     /**< no such file */
-	 QSE_MUX_EEXIST,     /**< already exist */
-	 QSE_MUX_EINTR,      /**< interrupted */
-	 QSE_MUX_EPIPE,      /**< broken pipe */
-	 QSE_MUX_EAGAIN,     /**< resource not available temporarily */
+	QSE_MUX_ENOMEM,     /**< out of memory */
+	QSE_MUX_EINVAL,     /**< invalid parameter */
+	QSE_MUX_EACCES,     /**< access denied */
+	QSE_MUX_EPERM,      /**< operation not permitted */
+	QSE_MUX_ENOENT,     /**< no such file */
+	QSE_MUX_EEXIST,     /**< already exist */
+	QSE_MUX_ENOTDIR,    /**< not a directory */
+	QSE_MUX_EINTR,      /**< interrupted */
+	QSE_MUX_EPIPE,      /**< broken pipe */
+	QSE_MUX_EAGAIN,     /**< resource not available temporarily */
 };
 typedef enum qse_mux_errnum_t qse_mux_errnum_t;
 

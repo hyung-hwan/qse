@@ -79,8 +79,10 @@ enum qse_sio_errnum_t
 	QSE_SIO_ENOMEM,     /**< out of memory */
 	QSE_SIO_EINVAL,     /**< invalid parameter */
 	QSE_SIO_EACCES,     /**< access denied */
+	QSE_SIO_EPERM,      /**< operation not permitted */
 	QSE_SIO_ENOENT,     /**< no such file */
 	QSE_SIO_EEXIST,     /**< already exist */
+	QSE_SIO_ENOTDIR,    /**< not a directory */
 	QSE_SIO_EINTR,      /**< interrupted */
 	QSE_SIO_EPIPE,      /**< broken pipe */
 	QSE_SIO_EAGAIN,     /**< resource not available temporarily */
