@@ -35,6 +35,13 @@
 #define CPFILE_DST_ATTR (1 << 29)
 #define CPFILE_DST_FSPATH_MERGED (1 << 30)
 
+struct devino_t
+{
+	qse_uintmax_t dev;
+	qse_uintmax_t ino;
+};
+typedef struct devino_t devino_t;
+
 struct cpfile_t
 {
 	int flags;
@@ -42,9 +49,63 @@ struct cpfile_t
 	qse_fs_char_t* dst_fspath;
 	qse_fs_attr_t src_attr;
 	qse_fs_attr_t dst_attr;
+
 };
 typedef struct cpfile_t cpfile_t;
 
+static int is_dir_remembered (qse_fs_t* fs, qse_fs_attr_t* attr)
+{
+	qse_size_t i;
+	devino_t* di;
+
+	di = (devino_t*)fs->ddr.ptr;
+	for (i = 0; i < fs->ddr.len; i++)
+	{
+		if (attr->dev == di->dev && attr->ino == di->ino) return 1;
+	}
+
+	return 0;
+}
+
+static int remember_dir_to_history (qse_fs_t* fs, qse_fs_attr_t* attr)
+{
+	qse_size_t i;
+	devino_t* di;
+
+	di = (devino_t*)fs->ddr.ptr;
+	for (i = 0; i < fs->ddr.len; i++)
+	{
+		if (attr->dev == di->dev  && attr->ino == di->ino) 
+		{
+			fs->errnum = QSE_FS_EEXIST;
+			return -1;
+		}
+	}
+
+/* TODO: table baded lookup instead of sequential search? */
+	if (fs->ddr.len >= fs->ddr.capa)
+	{
+		qse_size_t newcapa;
+
+		newcapa = QSE_ALIGNTO(fs->ddr.capa + 1, 256);
+		di = (devino_t*)QSE_MMGR_REALLOC (fs->mmgr, di, newcapa * QSE_SIZEOF(*di));
+
+		if (!di) 
+		{
+			fs->errnum = QSE_FS_ENOMEM;
+			return -1;
+		}
+
+		fs->ddr.ptr = di;
+		fs->ddr.capa = newcapa;
+	}
+
+	di[fs->ddr.len].dev = attr->dev;
+	di[fs->ddr.len].ino = attr->ino;
+	fs->ddr.len++;
+
+	return 0;
+}
 
 static int merge_dstdir_and_srcbase (qse_fs_t* fs, cpfile_t* cpfile)
 {
@@ -168,7 +229,6 @@ static int copy_file_in_fs (qse_fs_t* fs, cpfile_t* cpfile)
 	/* ------------------------------------------------------ */
 
 #else
-	
 
 	if ((cpfile->flags & QSE_FS_CPFILE_SYMLINK) && cpfile->src_attr.islnk)
 	{
@@ -196,8 +256,9 @@ static int copy_file_in_fs (qse_fs_t* fs, cpfile_t* cpfile)
 		{
 			if (cpfile->flags & QSE_FS_CPFILE_FORCE)
 			{
-/* TODO: call cbs.rm callback??? */
 				QSE_UNLINK (cpfile->dst_fspath);
+				if (fs->cbs.actcb && qse_fs_invokecb (fs, QSE_FS_RMFILE, cpfile->dst_fspath, QSE_NULL, 0, 0) <= -1) goto oops_1;
+
 				if (QSE_SYMLINK (tmpbuf, cpfile->dst_fspath) <= -1)
 				{
 					fs->errnum = qse_fs_syserrtoerrnum (fs, errno);
@@ -205,25 +266,7 @@ static int copy_file_in_fs (qse_fs_t* fs, cpfile_t* cpfile)
 				}
 			}
 		}
-
-		if (fs->cbs.cp)
-		{
-			qse_char_t* srcpath = QSE_NULL, * dstpath = QSE_NULL;
-			int x = 1;
-
-			srcpath = (qse_char_t*)make_str_with_fspath (fs, cpfile->src_fspath);
-			dstpath = (qse_char_t*)make_str_with_fspath (fs, cpfile->dst_fspath);
-
-			if (srcpath && dstpath)
-			{
-				x = fs->cbs.cp (fs, srcpath, dstpath, cpfile->src_attr.size, cpfile->src_attr.size);
-			}
-
-			if (srcpath) free_str_with_fspath (fs, cpfile->src_fspath, srcpath);
-			if (dstpath) free_str_with_fspath (fs, cpfile->dst_fspath, dstpath);
-
-			if (x <= -1) goto oops_1;
-		}
+		if (fs->cbs.actcb && qse_fs_invokecb (fs, QSE_FS_SYMLINK, tmpbuf, cpfile->dst_fspath, 0, 0) <= -1) goto oops_1;
 
 		QSE_MMGR_FREE (fs->mmgr, tmpbuf);
 		return 0;
@@ -262,7 +305,7 @@ static int copy_file_in_fs (qse_fs_t* fs, cpfile_t* cpfile)
 			goto oops_2;
 		}
 
-		if (fs->cbs.cp)
+		if (fs->cbs.actcb)
 		{
 			srcpath = (qse_char_t*)make_str_with_fspath (fs, cpfile->src_fspath);
 			dstpath = (qse_char_t*)make_str_with_fspath (fs, cpfile->dst_fspath);
@@ -276,7 +319,7 @@ static int copy_file_in_fs (qse_fs_t* fs, cpfile_t* cpfile)
 			{
 				if (bytes_copied == 0 && srcpath && dstpath)
 				{
-					if (fs->cbs.cp (fs, srcpath, dstpath, cpfile->src_attr.size, bytes_copied) <= -1) goto oops_2;
+					if (fs->cbs.actcb (fs, QSE_FS_CPFILE, srcpath, dstpath, cpfile->src_attr.size, bytes_copied) <= -1) goto oops_2;
 				}
 				break;
 			}
@@ -293,7 +336,7 @@ static int copy_file_in_fs (qse_fs_t* fs, cpfile_t* cpfile)
 
 			if (srcpath && dstpath)
 			{
-				if (fs->cbs.cp (fs, srcpath, dstpath, cpfile->src_attr.size, bytes_copied) <= -1) goto oops_2;
+				if (fs->cbs.actcb (fs, QSE_FS_CPFILE, srcpath, dstpath, cpfile->src_attr.size, bytes_copied) <= -1) goto oops_2;
 /* TODO: skip, ignore, etc... */
 			}
 		}
@@ -396,12 +439,6 @@ static void pop_cfs (qse_fs_t* fs, cpfile_t* cpfile, qse_dir_t** dir)
 	QSE_MMGR_FREE (fs->mmgr, cfs);
 }
 
-static int can_copy_dir_into (qse_fs_t* fs, cpfile_t* cpfile)
-{
-/* TODO: */
-	return 1;
-}
-
 static int copy_file (qse_fs_t* fs, cpfile_t* cpfile)
 {
 #if defined(NO_RECURSION)
@@ -454,6 +491,16 @@ start_over:
 			goto oops;
 		}
 
+
+		if (is_dir_remembered (fs, &cpfile->src_attr))
+		{
+			/* skip this source directory as it's one of the destination 
+			 * directores earlier. see the call to remember_dir_to_history()
+			 * below. */
+			goto skip_dir;
+		}
+
+		/* both the source and the destion is a directory */
 		dir = qse_dir_open (
 			fs->mmgr, 0, (const qse_char_t*)cpfile->src_fspath,
 		#if defined(QSE_FS_CHAR_IS_MCHAR)
@@ -469,17 +516,20 @@ start_over:
 			goto oops;
 		}
 
-/* TODO: check if the directory is beging copied into itself in advance...XXXXXXXXXXXXXXXXXXXXXX */
-
 		if (qse_fs_mkdirsys (fs, cpfile->dst_fspath) <= -1) 
 		{
 			/* it's ok if the destination directory already exists */
 			if (fs->errnum != QSE_FS_EEXIST) goto oops;
 		}
 
-		if (!can_copy_dir_into (fs, cpfile)) 
+		/* (re)load the attribute. */
+		if (qse_fs_getattrsys (fs, cpfile->dst_fspath, &cpfile->dst_attr, QSE_FS_GETATTR_SYMLINK) <= -1) goto oops;
+		cpfile->flags |= CPFILE_DST_ATTR;
+
+		if (remember_dir_to_history (fs, &cpfile->dst_attr) <= -1) 
 		{
-			fs->errnum = QSE_FS_EPERM;
+			/* if the directory has been copied once, fs->errnum should be QSE_FS_EEXIST */
+			if (fs->errnum == QSE_FS_EEXIST) goto close_dir;
 			goto oops;
 		}
 
@@ -532,8 +582,12 @@ start_over:
 		#endif
 		}
 
+	close_dir:
 		qse_dir_close (dir);
 		dir = QSE_NULL;
+
+	skip_dir:
+		/* do nothing more */ ;
 	}
 	else
 	{
@@ -570,6 +624,7 @@ start_over:
 		if (copy_file_in_fs (fs, cpfile) <= -1) goto oops;
 	}
 
+skip:
 #if defined(NO_RECURSION)
 	if (fs->cfs)
 	{ 
@@ -636,6 +691,7 @@ oops:
 int qse_fs_cpfilembs (qse_fs_t* fs, const qse_mchar_t* srcpath, const qse_mchar_t* dstpath, int flags)
 {
 	glob_ctx_t ctx;
+	int ret = 0;
 
 	ctx.fs = fs;
 	ctx.flags = flags;
@@ -648,10 +704,8 @@ int qse_fs_cpfilembs (qse_fs_t* fs, const qse_mchar_t* srcpath, const qse_mchar_
 		if (qse_globmbs (srcpath, copy_file_for_glob, &ctx, DEFAULT_GLOB_FLAGS, fs->mmgr, fs->cmgr) <= -1)
 		{
 			if (fs->errnum == QSE_FS_ENOERR) fs->errnum = QSE_FS_EGLOB;
-			return -1;
+			ret = -1;
 		}
-
-		return 0;
 	}
 	else
 	{
@@ -659,13 +713,23 @@ int qse_fs_cpfilembs (qse_fs_t* fs, const qse_mchar_t* srcpath, const qse_mchar_
 		s.ptr = (qse_mchar_t*)srcpath;
 		s.len = 0; /* not important */
 		/* let me use the glob callback function for simplicity */
-		return copy_file_for_glob (&s, &ctx);
+		ret = copy_file_for_glob (&s, &ctx);
 	}
+
+	if (fs->ddr.ptr)
+	{
+		QSE_MMGR_FREE (fs->mmgr, fs->ddr.ptr);
+		fs->ddr.ptr = QSE_NULL;
+		fs->ddr.len = 0;
+		fs->ddr.capa = 0;
+	}
+	return ret;
 }
 
 int qse_fs_cpfilewcs (qse_fs_t* fs, const qse_wchar_t* srcpath, const qse_wchar_t* dstpath, int flags)
 {
 	glob_ctx_t ctx;
+	int ret = 0;
 
 	ctx.fs = fs;
 	ctx.flags = flags;
@@ -678,10 +742,8 @@ int qse_fs_cpfilewcs (qse_fs_t* fs, const qse_wchar_t* srcpath, const qse_wchar_
 		if (qse_globwcs (srcpath, copy_file_for_glob, &ctx, DEFAULT_GLOB_FLAGS, fs->mmgr, fs->cmgr) <= -1)
 		{
 			if (fs->errnum == QSE_FS_ENOERR) fs->errnum = QSE_FS_EGLOB;
-			return -1;
+			ret = -1;
 		} 
-
-		return 0;
 	}
 	else
 	{
@@ -689,6 +751,16 @@ int qse_fs_cpfilewcs (qse_fs_t* fs, const qse_wchar_t* srcpath, const qse_wchar_
 		qse_wcstr_t s;
 		s.ptr = (qse_wchar_t*)srcpath;
 		s.len = 0; /* not important */
-		return copy_file_for_glob (&s, &ctx);
+		ret = copy_file_for_glob (&s, &ctx);
 	}
+
+	if (fs->ddr.ptr)
+	{
+		QSE_MMGR_FREE (fs->mmgr, fs->ddr.ptr);
+		fs->ddr.ptr = QSE_NULL;
+		fs->ddr.len = 0;
+		fs->ddr.capa = 0;
+	}
+
+	return ret;
 }

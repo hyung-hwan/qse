@@ -127,10 +127,10 @@ static int delete_file (qse_fs_t* fs, const qse_char_t* path, int purge)
 	qse_fs_char_t* fspath;
 	int ret;
 
-	if (fs->cbs.rm) 
+	if (fs->cbs.actcb) 
 	{
 		int x;
-		x = fs->cbs.rm (fs, path);
+		x = fs->cbs.actcb (fs, QSE_FS_RMFILE, path, QSE_NULL, 0, 0);
 		if (x <= -1) return -1;
 		if (x == 0) return 0; /* skipped */
 	}
@@ -184,10 +184,10 @@ static int delete_directory_nocbs (qse_fs_t* fs, const qse_char_t* path)
 
 static int delete_directory (qse_fs_t* fs, const qse_char_t* path)
 {
-	if (fs->cbs.rm) 
+	if (fs->cbs.actcb) 
 	{
 		int x;
-		x = fs->cbs.rm (fs, path);
+		x = fs->cbs.actcb (fs, QSE_FS_RMDIR, path, QSE_NULL, 0, 0);
 		if (x <= -1) return -1;
 		if (x == 0) return 0; /* skipped */
 	}
@@ -276,70 +276,51 @@ static int purge_path (qse_fs_t* fs, const qse_char_t* path)
 static int delete_from_fs_with_mbs (qse_fs_t* fs, const qse_mchar_t* path, int dir)
 {
 	qse_fs_char_t* fspath;
-	int ret;
+	int ret = 0;
 
 	fspath = qse_fs_makefspathformbs (fs, path);
 	if (!fspath) return -1;
 
-	if (fs->cbs.rm)
+	if (fs->cbs.actcb)
 	{
-		qse_char_t* xpath;
 		int x;
 
-		xpath = (qse_char_t*)make_str_with_mbs (fs, path);
-		if (!xpath)
-		{
-			fs->errnum = QSE_FS_ENOMEM;
-			return -1;
-		}
+		x = qse_fs_invokecb (fs, (dir? QSE_FS_RMDIR: QSE_FS_RMFILE), fspath, QSE_NULL, 0, 0);
 
-		x = fs->cbs.rm (fs, xpath);
-
-		free_str_with_mbs (fs, path, xpath);
-
-		if (x <= -1) return -1;
-		if (x == 0) return 0; /* skipped */
+		if (x <= -1) { ret = -1; goto done; } 
+		if (x == 0) goto done; /* skipped */
 	}
 
 	ret = dir? qse_fs_rmdirsys (fs, fspath): 
 	           qse_fs_rmfilesys (fs, fspath);
 
+done:
 	qse_fs_freefspathformbs (fs, path, fspath);
-
 	return ret;
 }
 
 static int delete_from_fs_with_wcs (qse_fs_t* fs, const qse_wchar_t* path, int dir)
 {
 	qse_fs_char_t* fspath;
-	int ret;
-
-	if (fs->cbs.rm)
-	{
-		qse_char_t* xpath;
-		int x;
-
-		xpath = (qse_char_t*)make_str_with_wcs (fs, path);
-		if (!xpath)
-		{
-			fs->errnum = QSE_FS_ENOMEM;
-			return -1;
-		}
-
-		x = fs->cbs.rm (fs, xpath);
-
-		free_str_with_wcs (fs, path, xpath);
-
-		if (x <= -1) return -1;
-		if (x == 0) return 0; /* skipped */
-	}
+	int ret = 0;
 
 	fspath = qse_fs_makefspathforwcs (fs, path);
 	if (!fspath) return -1;
 
+	if (fs->cbs.actcb)
+	{
+		int x;
+
+		x = qse_fs_invokecb (fs, (dir? QSE_FS_RMDIR: QSE_FS_RMFILE), fspath, QSE_NULL, 0, 0);
+
+		if (x <= -1) { ret = -1; goto done; } 
+		if (x == 0) goto done; /* skipped */
+	}
+
 	ret = dir? qse_fs_rmdirsys (fs, fspath): 
 	           qse_fs_rmfilesys (fs, fspath);
 
+done:
 	qse_fs_freefspathforwcs (fs, path, fspath);
 
 	return ret;
