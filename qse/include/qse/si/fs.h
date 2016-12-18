@@ -97,7 +97,7 @@ typedef enum qse_fs_ent_type_t qse_fs_ent_type_t;
 
 struct qse_fs_ent_t
 {
-	int                flags;
+	int flags;
 
 	struct
 	{
@@ -176,29 +176,33 @@ enum qse_fs_trait_t
 typedef enum qse_fs_trait_t qse_fs_trait_t;
 
 
-/**
- * \return -1 on failure, 0 to cancel, 1 to keep copying
- */
-typedef int (*qse_fs_cbs_cp_t) (
-	qse_fs_t*          fs,
-	const qse_char_t*  srcpath,
-	const qse_char_t*  dstpath,
-	qse_uintmax_t      bytes_totoal,
-	qse_uintmax_t      bytes_copied
-);
+enum qse_fs_action_t
+{
+	QSE_FS_CPFILE,
+	QSE_FS_RMFILE,
+	QSE_FS_MKDIR,
+	QSE_FS_RMDIR,
+	QSE_FS_RENFILE,
+	QSE_FS_SYMLINK
+};
+typedef enum qse_fs_action_t qse_fs_action_t;
 
 /**
- * \return -1 on failure, 0 to skip, 1 to delete
+ * \return -1 on failure, 0 on success
  */
-typedef int (*qse_fs_cbs_rm_t) (
-	qse_fs_t*         fs,
-	const qse_char_t* path
+typedef int (*qse_fs_actcb_t) (
+	qse_fs_t*          fs,
+	qse_fs_action_t    action,
+	const qse_char_t*  srcpath,
+	const qse_char_t*  dstpath,
+	qse_uintmax_t      bytes_total,
+	qse_uintmax_t      bytes_copied
 );
 
 struct qse_fs_cbs_t
 {
-	qse_fs_cbs_rm_t rm;
-	qse_fs_cbs_cp_t cp;
+	qse_fs_actcb_t actcb;
+	/*qse_fs_querycb_t querycb;*/
 };
 typedef struct qse_fs_cbs_t qse_fs_cbs_t;
 
@@ -217,6 +221,12 @@ struct qse_fs_t
 
 	qse_uint8_t     cpbuf[4096];
 	void*           cfs; /* stack for recursive file copying */
+	struct
+	{
+		void* ptr;
+		qse_size_t len;
+		qse_size_t capa;
+	} ddr; /* destination directores remembers while copying */
 };
 
 enum qse_fs_opt_t
@@ -341,12 +351,6 @@ QSE_EXPORT int qse_fs_pop (
 	qse_fs_t* fs,
 	const qse_char_t* name
 );
-
-
-
-
-
-
 
 
 QSE_EXPORT int qse_fs_getattronfd (

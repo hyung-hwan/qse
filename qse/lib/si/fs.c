@@ -823,3 +823,35 @@ void qse_fs_freefspathforwcs (qse_fs_t* fs, const qse_wchar_t* path, qse_fs_char
 }
 
 
+int qse_fs_invokecb (qse_fs_t* fs, qse_fs_action_t action, qse_fs_char_t* src_fspath, qse_fs_char_t* dst_fspath, qse_uintmax_t bytes_total, qse_uintmax_t bytes_done)
+{
+	qse_char_t* srcpath = QSE_NULL, * dstpath = QSE_NULL;
+	int x = 1;
+
+	if (src_fspath) 
+	{
+		srcpath = (qse_char_t*)make_str_with_fspath (fs, src_fspath);
+		if (!srcpath) 
+		{
+			x = -1;
+			goto done;
+		}
+	}
+	if (dst_fspath) 
+	{
+		dstpath = (qse_char_t*)make_str_with_fspath (fs, dst_fspath);
+		if (!dstpath)
+		{
+			x = -1;
+			goto done;
+		}
+	}
+
+	x = fs->cbs.actcb (fs, action, srcpath, dstpath, bytes_total, bytes_done);
+
+done:
+	if (srcpath) free_str_with_fspath (fs, cpfile->src_fspath, srcpath);
+	if (dstpath) free_str_with_fspath (fs, cpfile->dst_fspath, dstpath);
+
+	return x;
+}

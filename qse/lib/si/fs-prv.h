@@ -192,6 +192,16 @@ int qse_fs_rmdirsys (
 	const qse_fs_char_t* fspath
 );
 
+
+int qse_fs_invokecb (
+	qse_fs_t*       fs,
+	qse_fs_action_t action,
+	qse_fs_char_t*  src_fspath,
+	qse_fs_char_t*  dst_fspath,
+	qse_uintmax_t bytes_total,
+	qse_uintmax_t bytes_done
+);
+
 #if defined(__cplusplus)
 }
 #endif

@@ -25,9 +25,35 @@ static void print_usage (const qse_char_t* argv0)
 	qse_fprintf (QSE_STDERR, QSE_T("  -g            glob\n"));
 }
 
-static int fs_cp (qse_fs_t* fs, const qse_char_t* srcpath, const qse_char_t* dstpath, qse_uintmax_t total, qse_uintmax_t copied)
+static int fs_actcb (qse_fs_t* fs, qse_fs_action_t act, const qse_char_t* srcpath, const qse_char_t* dstpath, qse_uintmax_t total, qse_uintmax_t done)
 {
-	if (total == copied) qse_printf (QSE_T("Copied [%s] to [%s]\n"), srcpath, dstpath);
+	switch (act)
+	{
+		case QSE_FS_CPFILE:
+			if (total == done) qse_printf (QSE_T("Copied [%s] to [%s]\n"), srcpath, dstpath);
+			break;
+
+		case QSE_FS_RMFILE:
+			qse_printf (QSE_T("Removed file [%s]\n"), srcpath);
+			break;
+
+		case QSE_FS_SYMLINK:
+			qse_printf (QSE_T("Symlinked [%s] to [%s]\n"), srcpath, dstpath);
+			break;
+
+		case QSE_FS_MKDIR:
+			qse_printf (QSE_T("Made directory [%s]\n"), srcpath);
+			break;
+
+		case QSE_FS_RMDIR:
+			qse_printf (QSE_T("Removed directory [%s]\n"), srcpath);
+			break;
+
+		case QSE_FS_RENFILE:
+			qse_printf (QSE_T("renamed  [%s] to [%s]\n"), srcpath);
+			break;
+	}
+
 /*if (qse_strcmp(path, QSE_T("b/c")) == 0) return 0;*/
         return 1;
 }
@@ -93,7 +119,7 @@ static int fs_main (int argc, qse_char_t* argv[])
 	fs = qse_fs_open (QSE_MMGR_GETDFL(), 0);
 
 	qse_memset (&cbs, 0, QSE_SIZEOF(cbs));
-	cbs.cp = fs_cp;
+	cbs.actcb = fs_actcb;
 	qse_fs_setopt (fs, QSE_FS_CBS, &cbs);
 
 	if (qse_fs_cpfile (fs, argv[opt.ind], argv[opt.ind + 1], cpfile_flags) <= -1)
