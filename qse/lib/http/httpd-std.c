@@ -109,6 +109,9 @@
 #	if defined(HAVE_SYS_EPOLL_H)
 #		include <sys/epoll.h>
 #	endif
+#	if defined(HAVE_SYS_POLL_H)
+#		include <sys/poll.h>
+#	endif
 #	if defined(__linux__)
 #		include <limits.h>
 #		if defined(HAVE_LINUX_NETFILTER_IPV4_H)
@@ -1044,7 +1047,8 @@ bind_ok:
 		}
 	}
 
-	if (listen (fd, 10) <= -1) 
+	HTTPD_DBGOUT1 ("Setting backlog size to %d\n", server->dope.backlog_size);
+	if (listen (fd, server->dope.backlog_size) <= -1) 
 	{
 		qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
 		goto oops;
@@ -1087,7 +1091,7 @@ static int server_accept (
 
 	#if 0
 /* TODO: implement maximum number of client per server??? */
-	if (fd >= FD_SETSIZE)
+	if (fd >= FD_SETSIZE - 1)
 	{
 		HTTPD_DEBUG ("ERROR: too many client - max %d, fd %d\n", (FD_SETSIZE, fd));
 		/*TODO: qse_httpd_seterrnum (httpd, QSE_HTTPD_EXXXXX);*/
@@ -1857,9 +1861,26 @@ static int mux_writable (qse_httpd_t* httpd, qse_httpd_hnd_t handle, const qse_n
 	tv = tmout? QSE_SECNSEC_TO_MSEC (tmout->sec, tmout->nsec): -1;
 	return os2_select (&handle, 0, 1, 0, tv);
 
+#elif defined(HAVE_SYS_POLL_H)
+	struct pollfd p;
+	int tv;
+
+	p.fd = handle;
+	p.events = POLLOUT;
+	p.revents = 0;
+
+	tv = tmout? QSE_SECNSEC_TO_MSEC(tmout->sec, tmout->nsec): -1;
+	return poll (&p, 1, tv);
 #else
+
 	fd_set w;
 	struct timeval tv, * tvp;
+
+	#if defined(FD_SETSIZE)
+	/* NOTE: when the handle exceeds FD_SETSIZE, 
+	 * select() may screw the entire program. */
+	if (handle >= FD_SETSIZE - 1) return -1;
+	#endif
 
 	FD_ZERO (&w);
 	FD_SET (handle, &w);

@@ -31,7 +31,6 @@
 #include <qse/cmn/mbwc.h>
 #include <qse/si/sio.h>
 
-
 #if !defined(QSE_HTTPD_DEFAULT_MODPREFIX)
 #	if defined(_WIN32)
 #		define QSE_HTTPD_DEFAULT_MODPREFIX "qsehttpd-"
@@ -1673,6 +1672,7 @@ static int invoke_client_task (
 		qse_ntime_t tmout;
 		tmout.sec = 0;
 		tmout.nsec = 0;
+
 		if (httpd->opt.scb.mux.writable (httpd, client->handle, &tmout) <= 0) 
 		{
 			/* it is not writable yet. so just skip 
@@ -1732,7 +1732,6 @@ static int perform_client_task (
 	else
 	{
 		/* locate an active client to the tail of the client list */
-
 		qse_gettime (&client->last_active); /* TODO: error check??? */
 		move_client_to_tail (httpd, client);
 
