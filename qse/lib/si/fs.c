@@ -823,7 +823,7 @@ void qse_fs_freefspathforwcs (qse_fs_t* fs, const qse_wchar_t* path, qse_fs_char
 }
 
 
-int qse_fs_invokecb (qse_fs_t* fs, qse_fs_action_t action, qse_fs_char_t* src_fspath, qse_fs_char_t* dst_fspath, qse_uintmax_t bytes_total, qse_uintmax_t bytes_done)
+int qse_fs_invokeactcb (qse_fs_t* fs, qse_fs_action_t action, qse_fs_char_t* src_fspath, qse_fs_char_t* dst_fspath, qse_uintmax_t bytes_total, qse_uintmax_t bytes_done)
 {
 	qse_char_t* srcpath = QSE_NULL, * dstpath = QSE_NULL;
 	int x = 1;

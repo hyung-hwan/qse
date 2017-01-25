@@ -257,7 +257,7 @@ static int copy_file_in_fs (qse_fs_t* fs, cpfile_t* cpfile)
 			if (cpfile->flags & QSE_FS_CPFILE_FORCE)
 			{
 				QSE_UNLINK (cpfile->dst_fspath);
-				if (fs->cbs.actcb && qse_fs_invokecb (fs, QSE_FS_RMFILE, cpfile->dst_fspath, QSE_NULL, 0, 0) <= -1) goto oops_1;
+				if (fs->cbs.actcb && qse_fs_invokeactcb (fs, QSE_FS_RMFILE, cpfile->dst_fspath, QSE_NULL, 0, 0) <= -1) goto oops_1;
 
 				if (QSE_SYMLINK (tmpbuf, cpfile->dst_fspath) <= -1)
 				{
@@ -266,7 +266,7 @@ static int copy_file_in_fs (qse_fs_t* fs, cpfile_t* cpfile)
 				}
 			}
 		}
-		if (fs->cbs.actcb && qse_fs_invokecb (fs, QSE_FS_SYMLINK, tmpbuf, cpfile->dst_fspath, 0, 0) <= -1) goto oops_1;
+		if (fs->cbs.actcb && qse_fs_invokeactcb (fs, QSE_FS_SYMLINK, tmpbuf, cpfile->dst_fspath, 0, 0) <= -1) goto oops_1;
 
 		QSE_MMGR_FREE (fs->mmgr, tmpbuf);
 		return 0;
@@ -313,7 +313,7 @@ static int copy_file_in_fs (qse_fs_t* fs, cpfile_t* cpfile)
 
 		while (1)
 		{
-/* TODO: use vmspliace() and family for faster copying... */
+/* TODO: use vmsplice() and family for faster copying... */
 			in_len = QSE_READ (in, fs->cpbuf, QSE_SIZEOF(fs->cpbuf));
 			if (in_len <= 0) 
 			{
@@ -337,7 +337,6 @@ static int copy_file_in_fs (qse_fs_t* fs, cpfile_t* cpfile)
 			if (srcpath && dstpath)
 			{
 				if (fs->cbs.actcb (fs, QSE_FS_CPFILE, srcpath, dstpath, cpfile->src_attr.size, bytes_copied) <= -1) goto oops_2;
-/* TODO: skip, ignore, etc... */
 			}
 		}
 

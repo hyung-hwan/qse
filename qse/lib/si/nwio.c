@@ -76,7 +76,12 @@
 	extern int t_errno;
 	extern int t_snd(int fd, char*  buf, unsigned int nbytes, int flags);
 	extern int t_rcv(int fd, char*  buf, unsigned int nbytes, int* flags);
-
+#elif defined(HAVE_POLL_H)
+#	include "../cmn/syscall.h"
+#	include <sys/socket.h>
+#	include <netinet/in.h>
+#	include <poll.h>
+#	define  USE_POLL
 #else
 #	include "../cmn/syscall.h"
 #	include <sys/socket.h>
@@ -282,7 +287,44 @@ static int wait_for_data (qse_nwio_t* nwio, const qse_ntime_t* tmout, int what)
 {
 	int xret;
 
-#if defined(USE_SELECT)
+#if defined(USE_POLL)
+	struct pollfd pfd;
+
+	pfd.fd = nwio->handle;
+	pfd.revents = 0;
+	switch (what)
+	{
+		case 0:
+			pfd.events = POLLIN;
+			break;
+
+		case 1:
+			pfd.events = POLLOUT;
+			break;
+
+		case 2:
+			pfd.events = POLLIN | POLLOUT;
+			break;
+
+		default:
+			nwio->errnum = QSE_NWIO_EINVAL;
+			return -1;
+	}
+
+	xret = poll (&pfd, 1, QSE_SECNSEC_TO_MSEC(tmout->sec, tmout->nsec));
+	if (xret <= -1)
+	{
+		nwio->errnum = skerr_to_errnum (errno);
+		return -1;
+	}
+	else if (xret == 0)
+	{
+		nwio->errnum = QSE_NWIO_ETMOUT;
+		return -1;
+	}
+
+	return 0;
+#elif defined(USE_SELECT)
 	fd_set fds[2];
 	struct timeval tv;
 
@@ -291,12 +333,12 @@ static int wait_for_data (qse_nwio_t* nwio, const qse_ntime_t* tmout, int what)
 
 	switch (what)
 	{
-		case 0:
-		case 1:
+		case 0: /* read */
+		case 1: /* write */
 			FD_SET (nwio->handle, &fds[what]);
 			break;
 
-		case 2:
+		case 2: /* both */
 			FD_SET (nwio->handle, &fds[0]);
 			FD_SET (nwio->handle, &fds[1]);
 			break;
@@ -305,7 +347,6 @@ static int wait_for_data (qse_nwio_t* nwio, const qse_ntime_t* tmout, int what)
 			nwio->errnum = QSE_NWIO_EINVAL;
 			return -1;
 	}
-	
 
 	tv.tv_sec = tmout->sec;
 	tv.tv_usec = QSE_NSEC_TO_USEC (tmout->nsec);
