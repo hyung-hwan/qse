@@ -109,8 +109,8 @@
 #	if defined(HAVE_SYS_EPOLL_H)
 #		include <sys/epoll.h>
 #	endif
-#	if defined(HAVE_SYS_POLL_H)
-#		include <sys/poll.h>
+#	if defined(HAVE_POLL_H)
+#		include <poll.h>
 #	endif
 #	if defined(__linux__)
 #		include <limits.h>
@@ -1861,7 +1861,7 @@ static int mux_writable (qse_httpd_t* httpd, qse_httpd_hnd_t handle, const qse_n
 	tv = tmout? QSE_SECNSEC_TO_MSEC (tmout->sec, tmout->nsec): -1;
 	return os2_select (&handle, 0, 1, 0, tv);
 
-#elif defined(HAVE_SYS_POLL_H)
+#elif defined(HAVE_POLL_H)
 	struct pollfd p;
 	int tv;
 
