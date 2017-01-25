@@ -772,6 +772,7 @@ struct qse_httpd_server_dope_t
 	int          flags; /* bitwise-ORed of qse_httpd_server_flag_t */
 	qse_nwad_t   nwad; /* binding address */
 	unsigned int nwif; /* interface number to bind to */
+	int          backlog_size; /* backlog size for the listen call */
 	qse_httpd_server_detach_t detach; /* executed when the server is detached */
 };
 

@@ -249,6 +249,7 @@ struct server_hostcfg_t
 typedef struct server_xtn_t server_xtn_t;
 struct server_xtn_t
 {
+	int backlog_size;
 	int nodir; /* no directory listing */
 
 	int num; /* the server number in the xli configuration */
@@ -2034,6 +2035,22 @@ static qse_httpd_server_t* attach_server (qse_httpd_t* httpd, int num, qse_xli_l
 
 	httpd_xtn = qse_httpd_getxtnstd (httpd);
 
+	qse_memset (&dope, 0, QSE_SIZEOF(dope));
+
+	pair = qse_xli_findpair (httpd_xtn->xli, list, QSE_T("backlog-size"));
+	if (!pair) pair = qse_xli_findpair (httpd_xtn->xli, QSE_NULL, QSE_T("server-default.backlog-size"));
+	if (pair == QSE_NULL || pair->val->type != QSE_XLI_STR)
+	{
+		dope.backlog_size = 256;
+	}
+	else
+	{
+		unsigned int v;
+		v = qse_strtoui (((qse_xli_str_t*)pair->val)->ptr, 10);
+		if (v <= 0) v = 256;
+		dope.backlog_size = v;
+	}
+
 	pair = qse_xli_findpair (httpd_xtn->xli, list, QSE_T("bind"));
 	if (pair == QSE_NULL || pair->val->type != QSE_XLI_STR)
 	{
@@ -2042,7 +2059,6 @@ static qse_httpd_server_t* attach_server (qse_httpd_t* httpd, int num, qse_xli_l
 		return QSE_NULL;
 	}
 
-	qse_memset (&dope, 0, QSE_SIZEOF(dope));
 	if (qse_strntonwad (((qse_xli_str_t*)pair->val)->ptr, ((qse_xli_str_t*)pair->val)->len, &dope.nwad) <= -1)
 	{
 		/*  TOOD: logging */
@@ -2174,6 +2190,7 @@ static int open_config_file (qse_httpd_t* httpd)
 		{ QSE_T("max-nofile"),                                       { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
 		{ QSE_T("max-nproc"),                                        { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
 
+
 		{ QSE_T("hooks"),                                            { QSE_XLI_SCM_VALLIST | QSE_XLI_SCM_KEYNODUP, 0, 0      }  },
 		{ QSE_T("hooks.module"),                                     { QSE_XLI_SCM_VALLIST | QSE_XLI_SCM_KEYALIAS, 0, 0      }  },
 		{ QSE_T("hooks.module.file"),                                { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
@@ -2181,6 +2198,7 @@ static int open_config_file (qse_httpd_t* httpd)
 		                                                               QSE_XLI_SCM_KEYNODUP | QSE_XLI_SCM_VALIFFY, 0, 0      }  },
 
 		{ QSE_T("server-default"),                                   { QSE_XLI_SCM_VALLIST | QSE_XLI_SCM_KEYNODUP, 0, 0      }  },
+		{ QSE_T("server-default.backlog-size"),                      { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
 		{ QSE_T("server-default.ssl-cert-file"),                     { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
 		{ QSE_T("server-default.ssl-key-file"),                      { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
 		{ QSE_T("server-default.root"),                              { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
@@ -2236,6 +2254,7 @@ static int open_config_file (qse_httpd_t* httpd)
 		{ QSE_T("server-default.proxy.urs-prerewrite-hook"),         { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
 
 		{ QSE_T("server"),                                           { QSE_XLI_SCM_VALLIST,                        0, 0      }  },
+		{ QSE_T("server.backlog-size"),                              { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
 		{ QSE_T("server.bind"),                                      { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
 		{ QSE_T("server.ssl"),                                       { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
 		{ QSE_T("server.ssl-cert-file"),                             { QSE_XLI_SCM_VALSTR  | QSE_XLI_SCM_KEYNODUP, 1, 1      }  },
