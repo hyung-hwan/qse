@@ -1091,7 +1091,7 @@ static int server_accept (
 
 	#if 0
 /* TODO: implement maximum number of client per server??? */
-	if (fd >= FD_SETSIZE - 1)
+	if (fd >= FD_SETSIZE)
 	{
 		HTTPD_DEBUG ("ERROR: too many client - max %d, fd %d\n", (FD_SETSIZE, fd));
 		/*TODO: qse_httpd_seterrnum (httpd, QSE_HTTPD_EXXXXX);*/
@@ -1879,7 +1879,7 @@ static int mux_writable (qse_httpd_t* httpd, qse_httpd_hnd_t handle, const qse_n
 	#if defined(FD_SETSIZE)
 	/* NOTE: when the handle exceeds FD_SETSIZE, 
 	 * select() may screw the entire program. */
-	if (handle >= FD_SETSIZE - 1) return -1;
+	if (handle >= FD_SETSIZE) return -1;
 	#endif
 
 	FD_ZERO (&w);
