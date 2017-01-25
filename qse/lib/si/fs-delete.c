@@ -285,7 +285,7 @@ static int delete_from_fs_with_mbs (qse_fs_t* fs, const qse_mchar_t* path, int d
 	{
 		int x;
 
-		x = qse_fs_invokecb (fs, (dir? QSE_FS_RMDIR: QSE_FS_RMFILE), fspath, QSE_NULL, 0, 0);
+		x = qse_fs_invokeactcb (fs, (dir? QSE_FS_RMDIR: QSE_FS_RMFILE), fspath, QSE_NULL, 0, 0);
 
 		if (x <= -1) { ret = -1; goto done; } 
 		if (x == 0) goto done; /* skipped */
@@ -311,7 +311,7 @@ static int delete_from_fs_with_wcs (qse_fs_t* fs, const qse_wchar_t* path, int d
 	{
 		int x;
 
-		x = qse_fs_invokecb (fs, (dir? QSE_FS_RMDIR: QSE_FS_RMFILE), fspath, QSE_NULL, 0, 0);
+		x = qse_fs_invokeactcb (fs, (dir? QSE_FS_RMDIR: QSE_FS_RMFILE), fspath, QSE_NULL, 0, 0);
 
 		if (x <= -1) { ret = -1; goto done; } 
 		if (x == 0) goto done; /* skipped */

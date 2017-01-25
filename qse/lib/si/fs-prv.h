@@ -193,7 +193,7 @@ int qse_fs_rmdirsys (
 );
 
 
-int qse_fs_invokecb (
+int qse_fs_invokeactcb (
 	qse_fs_t*       fs,
 	qse_fs_action_t action,
 	qse_fs_char_t*  src_fspath,
