@@ -48,7 +48,8 @@ static int fnc_normspace (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 		path.len = qse_strxpac (path.ptr, path.len);
 		retv = qse_awk_rtx_makestrval (rtx, path.ptr, path.len);
 		qse_awk_rtx_freevalstr (rtx, a0, path.ptr);
-		if (retv) qse_awk_rtx_setretval (rtx, retv);
+		if (!retv) return -1;
+		qse_awk_rtx_setretval (rtx, retv);
 	}
 
 	return 0;
@@ -69,7 +70,8 @@ static int trim (qse_awk_rtx_t* rtx, int flags)
 		npath = qse_strxtrmx (path.ptr, &path.len, flags);
 		retv = qse_awk_rtx_makestrval (rtx, npath, path.len);
 		qse_awk_rtx_freevalstr (rtx, a0, path.ptr);
-		if (retv) qse_awk_rtx_setretval (rtx, retv);
+		if (!retv) return -1;
+		qse_awk_rtx_setretval (rtx, retv);
 	}
 
 	return 0;
@@ -118,7 +120,7 @@ static int is_class (qse_awk_rtx_t* rtx, qse_ctype_t ctype)
 	}
 
 	a0 = qse_awk_rtx_makeintval (rtx, tmp);
-	if (a0 == QSE_NULL) return -1;
+	if (!a0) return -1;
 
 	qse_awk_rtx_setretval (rtx, a0);
 	return 0;
@@ -205,9 +207,40 @@ static int fnc_value (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 		retv = qse_awk_rtx_makeintval (rtx, path.ptr[0]);
 	#endif
 		qse_awk_rtx_freevalstr (rtx, a0, path.ptr);
-		if (retv) qse_awk_rtx_setretval (rtx, retv);
+		if (!retv) return -1;
+		qse_awk_rtx_setretval (rtx, retv);
 	}
 
+	return 0;
+}
+
+static int fnc_tonum (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	qse_awk_val_t* retv;
+	qse_awk_val_t* a0;
+	qse_awk_int_t lv;
+	qse_awk_flt_t rv;
+	int rx;
+
+	a0 = qse_awk_rtx_getarg(rtx, 0);
+
+	rx = qse_awk_rtx_valtonum (rtx, a0, &lv, &rv);
+	if (rx == 0)
+	{
+		retv = qse_awk_rtx_makeintval (rtx, lv);
+	}
+	else if (rx >= 1)
+	{
+		retv = qse_awk_rtx_makefltval (rtx, rv);
+	}
+	else
+	{
+		retv = qse_awk_rtx_makeintval (rtx, 0);
+	}
+
+	if (!retv) return -1;
+
+	qse_awk_rtx_setretval (rtx, retv);
 	return 0;
 }
 
@@ -224,34 +257,35 @@ struct fnctab_t
 static fnctab_t fnctab[] =
 {
 	/* keep this table sorted for binary search in query(). */
-	{ QSE_T("gsub"),      { { 2, 3, QSE_T("xvr")},  qse_awk_fnc_gsub,      0 } },
-	{ QSE_T("index"),     { { 2, 3, QSE_NULL },     qse_awk_fnc_index,     0 } },
-	{ QSE_T("isalnum"),   { { 1, 1, QSE_NULL },     fnc_isalnum,           0 } },
-	{ QSE_T("isalpha"),   { { 1, 1, QSE_NULL },     fnc_isalpha,           0 } },
-	{ QSE_T("isblank"),   { { 1, 1, QSE_NULL },     fnc_isblank,           0 } },
-	{ QSE_T("iscntrl"),   { { 1, 1, QSE_NULL },     fnc_iscntrl,           0 } },
-	{ QSE_T("isdigit"),   { { 1, 1, QSE_NULL },     fnc_isdigit,           0 } },
-	{ QSE_T("isgraph"),   { { 1, 1, QSE_NULL },     fnc_isgraph,           0 } },
-	{ QSE_T("islower"),   { { 1, 1, QSE_NULL },     fnc_islower,           0 } },
-	{ QSE_T("isprint"),   { { 1, 1, QSE_NULL },     fnc_isprint,           0 } },
-	{ QSE_T("ispunct"),   { { 1, 1, QSE_NULL },     fnc_ispunct,           0 } },
-	{ QSE_T("isspace"),   { { 1, 1, QSE_NULL },     fnc_isspace,           0 } },
-	{ QSE_T("isupper"),   { { 1, 1, QSE_NULL },     fnc_isupper,           0 } },
-	{ QSE_T("isxdigit"),  { { 1, 1, QSE_NULL },     fnc_isxdigit,          0 } },
-	{ QSE_T("length"),    { { 1, 1, QSE_NULL },     qse_awk_fnc_length,    0 } },
-	{ QSE_T("ltrim"),     { { 1, 1, QSE_NULL },     fnc_ltrim,             0 } },
-	{ QSE_T("match"),     { { 2, 3, QSE_T("vxv") }, qse_awk_fnc_match,     0 } },
-	{ QSE_T("normspace"), { { 1, 1, QSE_NULL },     fnc_normspace,         0 } },
-	{ QSE_T("printf"),    { { 1, A_MAX, QSE_NULL }, qse_awk_fnc_sprintf,   0 } },
-	{ QSE_T("rindex"),    { { 2, 3, QSE_NULL },     qse_awk_fnc_rindex,    0 } },
-	{ QSE_T("rtrim"),     { { 1, 1, QSE_NULL },     fnc_rtrim,             0 } },
-	{ QSE_T("split"),     { { 2, 3, QSE_T("vrx") }, qse_awk_fnc_split,     0 } },
-	{ QSE_T("sub"),       { { 2, 3, QSE_T("xvr") }, qse_awk_fnc_sub,       0 } },
-	{ QSE_T("substr"),    { { 2, 3, QSE_NULL },     qse_awk_fnc_substr,    0 } },
-	{ QSE_T("tolower"),   { { 1, 1, QSE_NULL },     qse_awk_fnc_tolower,   0 } },
-	{ QSE_T("toupper"),   { { 1, 1, QSE_NULL },     qse_awk_fnc_toupper,   0 } },
-	{ QSE_T("trim"),      { { 1, 1, QSE_NULL },     fnc_trim,              0 } },
-	{ QSE_T("value"),     { { 1, 1, QSE_NULL },     fnc_value,             0 } }
+	{ QSE_T("gsub"),      { { 2, 3, QSE_T("xvr")},   qse_awk_fnc_gsub,      0 } },
+	{ QSE_T("index"),     { { 2, 3, QSE_NULL },      qse_awk_fnc_index,     0 } },
+	{ QSE_T("isalnum"),   { { 1, 1, QSE_NULL },      fnc_isalnum,           0 } },
+	{ QSE_T("isalpha"),   { { 1, 1, QSE_NULL },      fnc_isalpha,           0 } },
+	{ QSE_T("isblank"),   { { 1, 1, QSE_NULL },      fnc_isblank,           0 } },
+	{ QSE_T("iscntrl"),   { { 1, 1, QSE_NULL },      fnc_iscntrl,           0 } },
+	{ QSE_T("isdigit"),   { { 1, 1, QSE_NULL },      fnc_isdigit,           0 } },
+	{ QSE_T("isgraph"),   { { 1, 1, QSE_NULL },      fnc_isgraph,           0 } },
+	{ QSE_T("islower"),   { { 1, 1, QSE_NULL },      fnc_islower,           0 } },
+	{ QSE_T("isprint"),   { { 1, 1, QSE_NULL },      fnc_isprint,           0 } },
+	{ QSE_T("ispunct"),   { { 1, 1, QSE_NULL },      fnc_ispunct,           0 } },
+	{ QSE_T("isspace"),   { { 1, 1, QSE_NULL },      fnc_isspace,           0 } },
+	{ QSE_T("isupper"),   { { 1, 1, QSE_NULL },      fnc_isupper,           0 } },
+	{ QSE_T("isxdigit"),  { { 1, 1, QSE_NULL },      fnc_isxdigit,          0 } },
+	{ QSE_T("length"),    { { 1, 1, QSE_NULL },      qse_awk_fnc_length,    0 } },
+	{ QSE_T("ltrim"),     { { 1, 1, QSE_NULL },      fnc_ltrim,             0 } },
+	{ QSE_T("match"),     { { 2, 4, QSE_T("vxvr") }, qse_awk_fnc_match,     0 } },
+	{ QSE_T("normspace"), { { 1, 1, QSE_NULL },      fnc_normspace,         0 } },
+	{ QSE_T("printf"),    { { 1, A_MAX, QSE_NULL },  qse_awk_fnc_sprintf,   0 } },
+	{ QSE_T("rindex"),    { { 2, 3, QSE_NULL },      qse_awk_fnc_rindex,    0 } },
+	{ QSE_T("rtrim"),     { { 1, 1, QSE_NULL },      fnc_rtrim,             0 } },
+	{ QSE_T("split"),     { { 2, 3, QSE_T("vrx") },  qse_awk_fnc_split,     0 } },
+	{ QSE_T("sub"),       { { 2, 3, QSE_T("xvr") },  qse_awk_fnc_sub,       0 } },
+	{ QSE_T("substr"),    { { 2, 3, QSE_NULL },      qse_awk_fnc_substr,    0 } },
+	{ QSE_T("tolower"),   { { 1, 1, QSE_NULL },      qse_awk_fnc_tolower,   0 } },
+	{ QSE_T("tonum"),     { { 1, 1, QSE_NULL },      fnc_tonum,             0 } },
+	{ QSE_T("toupper"),   { { 1, 1, QSE_NULL },      qse_awk_fnc_toupper,   0 } },
+	{ QSE_T("trim"),      { { 1, 1, QSE_NULL },      fnc_trim,              0 } },
+	{ QSE_T("value"),     { { 1, 1, QSE_NULL },      fnc_value,             0 } }
 };
 
 static int query (qse_awk_mod_t* mod, qse_awk_t* awk, const qse_char_t* name, qse_awk_mod_sym_t* sym)
