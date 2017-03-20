@@ -119,7 +119,7 @@ int qse_fs_getattrsys (qse_fs_t* fs, const qse_fs_char_t* fspath, qse_fs_attr_t*
 	fs->errnum = QSE_FS_ENOIMPL;
 	return -1;
 
-#elif defined(HAVE_FSTATAT)
+#elif defined(HAVE_FSTATAT) && defined(AT_SYMLINK_NOFOLLOW)
 
 	qse_fstatat_t st;
 	int sysflags = 0;
@@ -227,7 +227,7 @@ int qse_fs_setattronfd (qse_fs_t* fs, qse_fs_handle_t fd, const qse_fs_attr_t* a
 		tv[0].tv_usec = QSE_NSEC_TO_USEC(attr->atime.nsec);
 		tv[1].tv_sec = attr->mtime.sec;
 		tv[1].tv_usec = QSE_NSEC_TO_USEC(attr->mtime.nsec);
-		if (QSE_FUTIMES (fspath, tv) <= -1)
+		if (QSE_FUTIMES (fd, tv) <= -1)
 		{
 			fs->errnum = qse_fs_syserrtoerrnum (fs, errno);
 			return -1;
@@ -292,7 +292,7 @@ int qse_fs_setattrsys (qse_fs_t* fs, qse_fs_char_t* path, const qse_fs_attr_t* a
 #else
 	if (flags & QSE_FS_SETATTR_TIME)
 	{
-	#if defined(HAVE_UTIMENSAT)
+	#if defined(HAVE_UTIMENSAT) && defined(AT_SYMLINK_NOFOLLOW)
 		struct timespec ts[2];
 		int sysflags = 0;
 
@@ -371,7 +371,7 @@ int qse_fs_setattrsys (qse_fs_t* fs, qse_fs_char_t* path, const qse_fs_attr_t* a
 
 	if (flags & QSE_FS_SETATTR_OWNER)
 	{
-	#if defined(HAVE_FCHOWNAT)
+	#if defined(HAVE_FCHOWNAT) && defined(AT_SYMLINK_NOFOLLOW)
 		int sysflags = 0;
 
 		if (flags & QSE_FS_SETATTR_SYMLINK) sysflags |= AT_SYMLINK_NOFOLLOW;
@@ -399,7 +399,7 @@ int qse_fs_setattrsys (qse_fs_t* fs, qse_fs_char_t* path, const qse_fs_attr_t* a
 
 	if (flags & QSE_FS_SETATTR_MODE)
 	{
-	#if defined(HAVE_FCHMODAT)
+	#if defined(HAVE_FCHMODAT) && defined(AT_SYMLINK_NOFOLLOW)
 		int sysflags = 0;
 
 		if (flags & QSE_FS_SETATTR_SYMLINK) sysflags |= AT_SYMLINK_NOFOLLOW;
