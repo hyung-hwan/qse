@@ -40,7 +40,7 @@ libqsesi_la_SOURCES =  \
 	sio.c  \
 	task.c \
 	thr.c \
-	thr.h \
+	thr-prv.h \
 	tio.c
 
 libqsesi_la_CFLAGS = $(PTHREAD_CFLAGS)
