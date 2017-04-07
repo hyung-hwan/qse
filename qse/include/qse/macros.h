@@ -111,7 +111,7 @@
  * printf ("%d\n", (int)QSE_COUNTOF(x));
  * \endcode
  */
-#define QSE_COUNTOF(n) (sizeof(n)/sizeof(n[0]))
+#define QSE_COUNTOF(n) (sizeof(n)/sizeof((n)[0]))
 
 /**
  * The QSE_OFFSETOF() macro returns the offset of a field from the beginning
