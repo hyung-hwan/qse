@@ -66,7 +66,7 @@ QSE_INLINE pair_t* qse_htb_allocpair (
 	vcop = htb->style->copier[QSE_HTB_VAL];
 
 	as = SIZEOF(pair_t);
-	if (kcop == QSE_HTB_COPIER_INLINE) as += KTOB(htb,klen);
+	if (kcop == QSE_HTB_COPIER_INLINE) as += QSE_ALIGNTO_POW2(KTOB(htb,klen), QSE_SIZEOF_VOID_P);
 	if (vcop == QSE_HTB_COPIER_INLINE) as += VTOB(htb,vlen);
 
 	n = (pair_t*) QSE_MMGR_ALLOC (htb->mmgr, as);
@@ -105,7 +105,7 @@ QSE_INLINE pair_t* qse_htb_allocpair (
 	{
 		VPTR(n) = n + 1;
 		if (kcop == QSE_HTB_COPIER_INLINE) 
-			VPTR(n) = (byte_t*)VPTR(n) + KTOB(htb,klen);
+			VPTR(n) = (byte_t*)VPTR(n) + QSE_ALIGNTO_POW2(KTOB(htb,klen), QSE_SIZEOF_VOID_P);
 		/* if vptr is QSE_NULL, the inline copier does not fill
 		 * the actual value area */
 		if (vptr) QSE_MEMCPY (VPTR(n), vptr, VTOB(htb,vlen));
