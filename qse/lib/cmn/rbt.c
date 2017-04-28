@@ -74,7 +74,7 @@ QSE_INLINE pair_t* qse_rbt_allocpair (
 	copier_t vcop = rbt->style->copier[QSE_RBT_VAL];
 
 	size_t as = SIZEOF(pair_t);
-	if (kcop == QSE_RBT_COPIER_INLINE) as += KTOB(rbt,klen);
+	if (kcop == QSE_RBT_COPIER_INLINE) as += QSE_ALIGNTO_POW2(KTOB(rbt,klen), QSE_SIZEOF_VOID_P);
 	if (vcop == QSE_RBT_COPIER_INLINE) as += VTOB(rbt,vlen);
 
 	n = (pair_t*) QSE_MMGR_ALLOC (rbt->mmgr, as);
@@ -114,7 +114,7 @@ QSE_INLINE pair_t* qse_rbt_allocpair (
 	{
 		VPTR(n) = n + 1;
 		if (kcop == QSE_RBT_COPIER_INLINE)
-			VPTR(n) = (byte_t*)VPTR(n) + KTOB(rbt,klen);
+			VPTR(n) = (byte_t*)VPTR(n) + QSE_ALIGNTO_POW2(KTOB(rbt,klen), QSE_SIZEOF_VOID_P);
 		if (vptr) QSE_MEMCPY (VPTR(n), vptr, VTOB(rbt,vlen));
 	}
 	else
