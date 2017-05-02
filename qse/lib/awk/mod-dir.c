@@ -570,7 +570,7 @@ static int query (qse_awk_mod_t* mod, qse_awk_t* awk, const qse_char_t* name, qs
 
 	while (left <= right)
 	{
-		mid = (left + right) / 2;
+		mid = left + (right - left) / 2;
 
 		n = qse_strcmp (fnctab[mid].name, name);
 		if (n > 0) right = mid - 1; 
@@ -586,7 +586,7 @@ static int query (qse_awk_mod_t* mod, qse_awk_t* awk, const qse_char_t* name, qs
 	left = 0; right = QSE_COUNTOF(inttab) - 1;
 	while (left <= right)
 	{
-		mid = (left + right) / 2;
+		mid = left + (right - left) / 2;
 
 		n = qse_strcmp (inttab[mid].name, name);
 		if (n > 0) right = mid - 1;

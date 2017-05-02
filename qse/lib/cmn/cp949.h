@@ -22705,7 +22705,8 @@ static qse_uint16_t mbtowc (qse_uint16_t c)
 		int left = 0, right = QSE_COUNTOF(mbtowc_range) - 1, mid;
 		while (left <= right)
 		{
-			mid = (left + right) / 2;
+			/*mid = (left + right) / 2;*/
+			mid = left + (right - left) / 2;	
 			if (c >= mbtowc_range[mid].first && c <= mbtowc_range[mid].last) 
 				return mbtowc_range[mid].seg[c - mbtowc_range[mid].first];
 			else if (c > mbtowc_range[mid].last) 
@@ -56976,7 +56977,8 @@ static qse_uint16_t wctomb (qse_uint16_t c)
 		int left = 0, right = QSE_COUNTOF(wctomb_range) - 1, mid;
 		while (left <= right)
 		{
-			mid = (left + right) / 2;
+			/*mid = (left + right) / 2;*/
+			mid = left + (right - left) / 2;	
 			if (c >= wctomb_range[mid].first && c <= wctomb_range[mid].last) 
 				return wctomb_range[mid].seg[c - wctomb_range[mid].first];
 			else if (c > wctomb_range[mid].last) 

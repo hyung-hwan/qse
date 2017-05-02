@@ -371,7 +371,8 @@ int qse_wcstoctype (const qse_wchar_t* name, qse_wctype_t* id)
 		int n;
 		struct wtab_t* kwp;
 
-		mid = (left + right) / 2;	
+		/*mid = (left + right) / 2;*/
+		mid = left + (right - left) / 2;
 		kwp = &wtab[mid];
 
 		n = qse_wcscmp (name, wtab->name);
@@ -402,7 +403,8 @@ int qse_wcsntoctype (const qse_wchar_t* name, qse_size_t len, qse_wctype_t* id)
 		int n;
 		struct wtab_t* kwp;
 
-		mid = (left + right) / 2;	
+		/*mid = (left + right) / 2;*/
+		mid = left + (right - left) / 2;
 		kwp = &wtab[mid];
 
 		n = qse_wcsxcmp (name, len, kwp->name);
@@ -453,7 +455,8 @@ int qse_mbstoctype (const qse_mchar_t* name, qse_mctype_t* id)
 		int n;
 		struct mtab_t* kwp;
 
-		mid = (left + right) / 2;	
+		/*mid = (left + right) / 2;*/
+		mid = left + (right - left) / 2;
 		kwp = &mtab[mid];
 
 		n = qse_mbscmp (name, mtab->name);
@@ -484,7 +487,8 @@ int qse_mbsntoctype (const qse_mchar_t* name, qse_size_t len, qse_mctype_t* id)
 		int n;
 		struct mtab_t* kwp;
 
-		mid = (left + right) / 2;	
+		/*mid = (left + right) / 2;*/
+		mid = left + (right - left) / 2;
 		kwp = &mtab[mid];
 
 		n = qse_mbsxcmp (name, len, kwp->name);
