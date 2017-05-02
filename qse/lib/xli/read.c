@@ -267,7 +267,8 @@ static int classify_ident (qse_xli_t* xli, const qse_cstr_t* name)
 		int n;
 		kwent_t* kwp;
 
-		mid = (left + right) / 2;
+		/*mid = (left + right) / 2;*/
+		mid = left + (right - left) / 2;
 		kwp = &kwtab[mid];
 
 		n = qse_strxncmp (kwp->name.ptr, kwp->name.len, name->ptr, name->len);

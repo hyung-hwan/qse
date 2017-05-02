@@ -43,14 +43,13 @@ static int fnc_normspace (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	a0 = qse_awk_rtx_getarg(rtx, 0);
 
 	path.ptr = qse_awk_rtx_getvalstr (rtx, a0, &path.len);
-	if (path.ptr)
-	{
-		path.len = qse_strxpac (path.ptr, path.len);
-		retv = qse_awk_rtx_makestrval (rtx, path.ptr, path.len);
-		qse_awk_rtx_freevalstr (rtx, a0, path.ptr);
-		if (!retv) return -1;
-		qse_awk_rtx_setretval (rtx, retv);
-	}
+	if (!path.ptr) return -1;
+
+	path.len = qse_strxpac (path.ptr, path.len);
+	retv = qse_awk_rtx_makestrval (rtx, path.ptr, path.len);
+	qse_awk_rtx_freevalstr (rtx, a0, path.ptr);
+	if (!retv) return -1;
+	qse_awk_rtx_setretval (rtx, retv);
 
 	return 0;
 }
@@ -65,14 +64,13 @@ static int trim (qse_awk_rtx_t* rtx, int flags)
 	a0 = qse_awk_rtx_getarg(rtx, 0);
 
 	path.ptr = qse_awk_rtx_getvalstr (rtx, a0, &path.len);
-	if (path.ptr)
-	{
-		npath = qse_strxtrmx (path.ptr, &path.len, flags);
-		retv = qse_awk_rtx_makestrval (rtx, npath, path.len);
-		qse_awk_rtx_freevalstr (rtx, a0, path.ptr);
-		if (!retv) return -1;
-		qse_awk_rtx_setretval (rtx, retv);
-	}
+	if (!path.ptr) return -1;
+
+	npath = qse_strxtrmx (path.ptr, &path.len, flags);
+	retv = qse_awk_rtx_makestrval (rtx, npath, path.len);
+	qse_awk_rtx_freevalstr (rtx, a0, path.ptr);
+	if (!retv) return -1;
+	qse_awk_rtx_setretval (rtx, retv);
 
 	return 0;
 }
@@ -100,7 +98,7 @@ static int is_class (qse_awk_rtx_t* rtx, qse_ctype_t ctype)
 	a0 = qse_awk_rtx_getarg (rtx, 0);
 
 	str0 = qse_awk_rtx_getvalstr (rtx, a0, &len0);
-	if (str0 == QSE_NULL) return -1;
+	if (!str0) return -1;
 
 	if (len0 <= 0) tmp = 0;
 	else
@@ -216,6 +214,8 @@ static int fnc_value (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 
 static int fnc_tonum (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
+	/* str::tonum (value) */
+
 	qse_awk_val_t* retv;
 	qse_awk_val_t* a0;
 	qse_awk_int_t lv;
@@ -250,7 +250,6 @@ struct fnctab_t
 	const qse_char_t* name;
 	qse_awk_mod_sym_fnc_t info;
 };
-
 
 #define A_MAX QSE_TYPE_MAX(int)
 
@@ -297,7 +296,7 @@ static int query (qse_awk_mod_t* mod, qse_awk_t* awk, const qse_char_t* name, qs
 
 	while (left <= right)
 	{
-		mid = (left + right) / 2;
+		mid = left + (right - left) / 2;
 
 		n = qse_strcmp (fnctab[mid].name, name);
 		if (n > 0) right = mid - 1; 
@@ -314,7 +313,7 @@ static int query (qse_awk_mod_t* mod, qse_awk_t* awk, const qse_char_t* name, qs
 	left = 0; right = QSE_COUNTOF(inttab) - 1;
 	while (left <= right)
 	{
-		mid = (left + right) / 2;
+		mid = left + (right - left) / 2;
 
 		n = qse_strcmp (inttab[mid].name, name);
 		if (n > 0) right = mid - 1; 
