@@ -147,7 +147,8 @@ function emit_bsearch (name, min, max, arr) {
 	printf ("\t\tint left = 0, right = QSE_COUNTOF(%s_range) - 1, mid;
 		while (left <= right)
 		{
-			mid = (left + right) / 2;
+			mid = left + (right - left) / 2;
+
 			if (c >= %s_range[mid].first && c <= %s_range[mid].last) 
 				return %s_range[mid].seg[c - %s_range[mid].first];
 			else if (c > %s_range[mid].last) 
