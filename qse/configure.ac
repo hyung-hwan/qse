@@ -4,7 +4,7 @@ dnl Make sure you change the version information
 dnl in include/qse/conf_*.h whenever you change the version 
 dnl here. Those files don't depend on autoconf, thus requiring
 dnl manual change.
-AC_INIT([qse],[0.6.0],[Chung, Hyung-Hwan (hyunghwan.chung@gmail.com)],[],[http://code.abiyo.net/@qse])
+AC_INIT([qse],[0.6.1],[Chung, Hyung-Hwan (hyunghwan.chung@gmail.com)],[],[http://code.abiyo.net/@qse])
 
 AC_CONFIG_HEADER([include/qse/config.h])
 AC_CONFIG_AUX_DIR([ac])
@@ -305,6 +305,9 @@ dnl libuci (optional)
 AC_CHECK_LIB([uci], [uci_alloc_context], [UCI_LIBS="-luci"])
 AC_SUBST(UCI_LIBS)
 AM_CONDITIONAL(HAVE_LIBUCI, test "${ac_cv_lib_uci_uci_alloc_context}" = "yes" -a "${ac_cv_header_uci_h}" = "yes")
+
+dnl libmysqlclient
+AX_LIB_MYSQL()
 
 AC_STRUCT_DIRENT_D_TYPE
 AC_CHECK_MEMBERS([DIR.d_fd, DIR.dd_fd],,,[[#include <dirent.h>]])

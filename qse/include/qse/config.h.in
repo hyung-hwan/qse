@@ -407,6 +407,9 @@
 /* Define to 1 if you have MPI libs and headers. */
 #undef HAVE_MPI
 
+/* Define to 1 if MySQL libraries are available */
+#undef HAVE_MYSQL
+
 /* Define to 1 if you have the `nanosleep' function. */
 #undef HAVE_NANOSLEEP
 
