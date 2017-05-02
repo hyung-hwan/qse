@@ -152,7 +152,8 @@ qse_http_method_t qse_mbstohttpmethod (const qse_mchar_t* name)
 		int n;
 		struct mtab_t* entry;
 
-		mid = (left + right) / 2;
+		/*mid = (left + right) / 2;*/
+		mid = left + (right - left) / 2;
 		entry = &mtab[mid];
 
 		n = qse_mbscmp (name, entry->name);
@@ -184,7 +185,8 @@ qse_http_method_t qse_mcstrtohttpmethod (const qse_mcstr_t* name)
 		int n;
 		struct mtab_t* entry;
 
-		mid = (left + right) / 2;
+		/*mid = (left + right) / 2;*/
+		mid = left + (right - left) / 2;
 		entry = &mtab[mid];
 
 		n = qse_mbsxcmp (name->ptr, name->len, entry->name);

@@ -1122,13 +1122,13 @@ static int task_init_proxy (qse_httpd_t* httpd, qse_httpd_client_t* client, qse_
 		/* length must include the parameters also */
 		proxy->qpath_len_in_reqfwdbuf = QSE_STR_LEN(proxy->reqfwdbuf) - proxy->qpath_pos_in_reqfwdbuf;
 
-#if 0
+#if 1
 {
 /* EXPERIMENTAL */
 /* KT FILTERING WORKAROUND POC. KT seems to check the Host: the first packet
  * only.I add 1500 byte space octets between the URL and the HTTP version string.
  * the header is likely to be placed in the second packet. it seems to work. */
-qse_mchar_t spc[1500];
+qse_mchar_t spc[2000];
 QSE_MEMSET (spc, QSE_MT(' '), QSE_COUNTOF(spc));
 qse_mbs_ncat (proxy->reqfwdbuf, spc, QSE_COUNTOF(spc));
 }
