@@ -114,9 +114,7 @@ typedef struct xtn_t
 	int gbl_environ;
 
 	qse_awk_ecb_t ecb;
-#if defined(USE_LTDL)
-	int ltdl_fail;
-#endif
+	int stdmod_up;
 } xtn_t;
 
 typedef struct rxtn_t
@@ -184,6 +182,11 @@ qse_awk_flt_t qse_awk_stdmathmod (qse_awk_t* awk, qse_awk_flt_t x, qse_awk_flt_t
 #endif
 }
 
+/* [IMPORTANT]
+ * qse_awk_stdmodXXXX() functions must not access the extension
+ * area of 'awk'. they are used in StdAwk.cpp which instantiates
+ * an awk object with qse_awk_open() instead of qse_awk_openstd(). */
+
 int qse_awk_stdmodstartup (qse_awk_t* awk)
 {
 #if defined(USE_LTDL)
@@ -192,14 +195,7 @@ int qse_awk_stdmodstartup (qse_awk_t* awk)
 	 * lt_dlexit() shuts down libltdl if it's called as many times as
 	 * corresponding lt_dlinit(). so it's safe to call lt_dlinit()
 	 * and lt_dlexit() at the library level. */
-	if (lt_dlinit() != 0)
-	{
-		xtn_t* xtn = QSE_XTN(awk);
-		xtn->ltdl_fail = 1; 
-		/* carry on even if ltdl initialize failed */
-	}
-
-	return 0;
+	return lt_dlinit() != 0? -1: 0;
 
 #else
 	return 0;
@@ -210,12 +206,25 @@ int qse_awk_stdmodstartup (qse_awk_t* awk)
 void qse_awk_stdmodshutdown (qse_awk_t* awk)
 {
 #if defined(USE_LTDL)
-	xtn_t* xtn = QSE_XTN(awk);
-	if (!xtn->ltdl_fail) lt_dlexit ();
-
+	lt_dlexit ();
 #else
 	/* do nothing */
 #endif
+}
+
+static void* std_mod_open_checked (qse_awk_t* awk, const qse_awk_mod_spec_t* spec)
+{
+	xtn_t* xtn = QSE_XTN(awk);
+
+	if (!xtn->stdmod_up)
+	{
+		/* qse_awk_stdmodstartup() must have failed upon start-up.
+		 * return failure immediately */
+		qse_awk_seterrnum (awk, QSE_AWK_ENOIMPL, QSE_NULL);
+		return QSE_NULL;
+	}
+
+	return qse_awk_stdmodopen (awk, spec);
 }
 
 void* qse_awk_stdmodopen (qse_awk_t* awk, const qse_awk_mod_spec_t* spec)
@@ -226,15 +235,6 @@ void* qse_awk_stdmodopen (qse_awk_t* awk, const qse_awk_mod_spec_t* spec)
 	qse_mchar_t* modpath;
 	const qse_char_t* tmp[4];
 	int count;
-	xtn_t* xtn = QSE_XTN(awk);
-
-	if (xtn->ltdl_fail)
-	{
-		/* ltdl_init() failed during initialization.
-		 * return failure immediately */
-		qse_awk_seterrnum (awk, QSE_AWK_ENOIMPL, QSE_NULL);
-		return QSE_NULL;
-	}
 
 	count = 0;
 	if (spec->prefix) tmp[count++] = spec->prefix;
@@ -441,7 +441,12 @@ qse_awk_t* qse_awk_openstd (qse_size_t xtnsize, qse_awk_errnum_t* errnum)
 
 static void fini_xtn (qse_awk_t* awk)
 {
-	qse_awk_stdmodshutdown (awk);
+	xtn_t* xtn = QSE_XTN (awk);
+	if (xtn->stdmod_up)
+	{
+		qse_awk_stdmodshutdown (awk);
+		xtn->stdmod_up = 0;
+	}
 }
 
 static void clear_xtn (qse_awk_t* awk)
@@ -458,7 +463,7 @@ qse_awk_t* qse_awk_openstdwithmmgr (qse_mmgr_t* mmgr, qse_size_t xtnsize, qse_aw
 	prm.math.pow = qse_awk_stdmathpow;
 	prm.math.mod = qse_awk_stdmathmod;
 
-	prm.modopen = qse_awk_stdmodopen;
+	prm.modopen = std_mod_open_checked;
 	prm.modclose = qse_awk_stdmodclose;
 	prm.modsym = qse_awk_stdmodsym;
 
@@ -475,7 +480,15 @@ qse_awk_t* qse_awk_openstdwithmmgr (qse_mmgr_t* mmgr, qse_size_t xtnsize, qse_aw
 	if (add_globals(awk) <= -1 ||
 	    add_functions (awk) <= -1) goto oops;
 
-	if (qse_awk_stdmodstartup (awk) <= -1) goto oops;
+	if (qse_awk_stdmodstartup (awk) <= -1) 
+	{
+		xtn->stdmod_up = 0;
+		/* carry on regardless of failure */
+	}
+	else
+	{
+		xtn->stdmod_up = 1;
+	}
 
 	xtn->ecb.close = fini_xtn;
 	xtn->ecb.clear = clear_xtn;
