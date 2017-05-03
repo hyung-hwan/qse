@@ -152,7 +152,7 @@ void StdAwk::close ()
 	//if (this->stdmod_up)
 	//{
 	//	qse_awk_stdmodshutdown (this->awk);
-	//	stdmod_up = false;
+	//	this->stdmod_up = false;
 	//}
 	//
 
@@ -164,7 +164,7 @@ void StdAwk::uponClosing ()
 	if (this->stdmod_up)
 	{
 		qse_awk_stdmodshutdown (this->awk);
-		stdmod_up = false;
+		this->stdmod_up = false;
 	}
 
 	// chain up
