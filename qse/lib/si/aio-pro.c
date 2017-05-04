@@ -33,6 +33,7 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <sys/wait.h>
+#include <signal.h>
 
 /* ========================================================================= */
 
