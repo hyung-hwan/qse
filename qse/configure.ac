@@ -4,7 +4,7 @@ dnl Make sure you change the version information
 dnl in include/qse/conf_*.h whenever you change the version 
 dnl here. Those files don't depend on autoconf, thus requiring
 dnl manual change.
-AC_INIT([qse],[0.6.1],[Chung, Hyung-Hwan (hyunghwan.chung@gmail.com)],[],[http://code.abiyo.net/@qse])
+AC_INIT([qse],[0.7.0],[Chung, Hyung-Hwan (hyunghwan.chung@gmail.com)],[],[http://code.abiyo.net/@qse])
 
 AC_CONFIG_HEADER([include/qse/config.h])
 AC_CONFIG_AUX_DIR([ac])
@@ -788,24 +788,30 @@ AC_CONFIG_FILES([
 	include/Makefile
 	include/qse/Makefile
 	include/qse/cmn/Makefile
+	include/qse/cry/Makefile
 	include/qse/si/Makefile
 	include/qse/awk/Makefile
 	include/qse/sed/Makefile
 	include/qse/xli/Makefile
 	include/qse/http/Makefile
+	include/qse/rad/Makefile
 	lib/Makefile 
 	lib/cmn/Makefile 
+	lib/cry/Makefile
 	lib/si/Makefile 
 	lib/awk/Makefile 
 	lib/sed/Makefile 
 	lib/xli/Makefile 
 	lib/http/Makefile 
+	lib/rad/Makefile 
 	lib/qsecmn.pc
+	lib/qsecry.pc
 	lib/qsesi.pc
 	lib/qsesed.pc
 	lib/qseawk.pc
 	lib/qsexli.pc
 	lib/qsehttp.pc
+	lib/qserad.pc
 	cmd/Makefile 
 	cmd/awk/Makefile 
 	cmd/sed/Makefile 

@@ -1,0 +1,12 @@
+prefix=@prefix@
+exec_prefix=${prefix}
+includedir=${prefix}/include
+libdir=${exec_prefix}/lib
+
+Name: QSERAD Library
+Description: QSERAD Library
+Version: @VERSION@
+Cflags: -I${includedir}
+Libs: -L${libdir} -lqserad 
+Requires: qsecmn qsecry
+#Requires.private: qsecmn
