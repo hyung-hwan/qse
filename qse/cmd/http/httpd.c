@@ -2774,7 +2774,7 @@ static int httpd_main (int argc, qse_char_t* argv[])
 	setup_signal_handlers ();
 
 	qse_httpd_getopt (httpd, QSE_HTTPD_TRAIT, &trait);
-	trait |= QSE_HTTPD_CGIERRTONUL | QSE_HTTPD_LOGACT;
+	trait |= QSE_HTTPD_CGIERRTONUL | QSE_HTTPD_LOGACT /*| QSE_HTTPD_PROXYNOVIA*/;
 	qse_httpd_setopt (httpd, QSE_HTTPD_TRAIT, &trait);
 
 	tmout.sec = 10;

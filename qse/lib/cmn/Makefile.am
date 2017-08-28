@@ -46,6 +46,7 @@ libqsecmn_la_SOURCES = \
 	fmt-intmax.c \
 	fmt-out.c \
 	hton.c \
+	hwad.c \
 	ipad.c \
 	main.c \
 	mb8.c \

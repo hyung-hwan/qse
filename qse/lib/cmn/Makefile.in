@@ -144,8 +144,8 @@ libqsecmn_la_DEPENDENCIES = $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1)
 am__libqsecmn_la_SOURCES_DIST = alg-base64.c alg-rand.c alg-search.c \
 	alg-sort.c arr.c assert.c chr.c dll.c env.c gdl.c htb.c fma.c \
-	fmt-intmax.c fmt-out.c hton.c ipad.c main.c mb8.c mbwc.c \
-	mbwc-str.c mem.c oht.c opt.c path-base.c path-canon.c \
+	fmt-intmax.c fmt-out.c hton.c hwad.c ipad.c main.c mb8.c \
+	mbwc.c mbwc-str.c mem.c oht.c opt.c path-base.c path-canon.c \
 	path-core.c path-merge.c pma.c rbt.c rex.c sll.c slmb.c \
 	str-beg.c str-cat.c str-chr.c str-cnv.c str-cmp.c str-cpy.c \
 	str-del.c str-dup.c str-dyn.c str-end.c str-excl.c str-fcpy.c \
@@ -159,18 +159,19 @@ am__libqsecmn_la_SOURCES_DIST = alg-base64.c alg-rand.c alg-search.c \
 @ENABLE_XCMGRS_TRUE@am__objects_2 = cp949.lo cp950.lo
 am_libqsecmn_la_OBJECTS = alg-base64.lo alg-rand.lo alg-search.lo \
 	alg-sort.lo arr.lo assert.lo chr.lo dll.lo env.lo gdl.lo \
-	htb.lo fma.lo fmt-intmax.lo fmt-out.lo hton.lo ipad.lo main.lo \
-	mb8.lo mbwc.lo mbwc-str.lo mem.lo oht.lo opt.lo path-base.lo \
-	path-canon.lo path-core.lo path-merge.lo pma.lo rbt.lo rex.lo \
-	sll.lo slmb.lo str-beg.lo str-cat.lo str-chr.lo str-cnv.lo \
-	str-cmp.lo str-cpy.lo str-del.lo str-dup.lo str-dyn.lo \
-	str-end.lo str-excl.lo str-fcpy.lo str-fmt.lo str-fnmat.lo \
-	str-incl.lo str-join.lo str-len.lo str-pac.lo str-pbrk.lo \
-	str-put.lo str-rev.lo str-rot.lo str-set.lo str-spl.lo \
-	str-spn.lo str-str.lo str-subst.lo str-tok.lo str-trm.lo \
-	str-word.lo time.lo tmr.lo tre.lo tre-ast.lo tre-compile.lo \
-	tre-match-bt.lo tre-match-pa.lo tre-parse.lo tre-stack.lo \
-	uri.lo utf8.lo xma.lo $(am__objects_1) $(am__objects_2)
+	htb.lo fma.lo fmt-intmax.lo fmt-out.lo hton.lo hwad.lo ipad.lo \
+	main.lo mb8.lo mbwc.lo mbwc-str.lo mem.lo oht.lo opt.lo \
+	path-base.lo path-canon.lo path-core.lo path-merge.lo pma.lo \
+	rbt.lo rex.lo sll.lo slmb.lo str-beg.lo str-cat.lo str-chr.lo \
+	str-cnv.lo str-cmp.lo str-cpy.lo str-del.lo str-dup.lo \
+	str-dyn.lo str-end.lo str-excl.lo str-fcpy.lo str-fmt.lo \
+	str-fnmat.lo str-incl.lo str-join.lo str-len.lo str-pac.lo \
+	str-pbrk.lo str-put.lo str-rev.lo str-rot.lo str-set.lo \
+	str-spl.lo str-spn.lo str-str.lo str-subst.lo str-tok.lo \
+	str-trm.lo str-word.lo time.lo tmr.lo tre.lo tre-ast.lo \
+	tre-compile.lo tre-match-bt.lo tre-match-pa.lo tre-parse.lo \
+	tre-stack.lo uri.lo utf8.lo xma.lo $(am__objects_1) \
+	$(am__objects_2)
 libqsecmn_la_OBJECTS = $(am_libqsecmn_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
@@ -442,6 +443,7 @@ pdfdir = @pdfdir@
 prefix = @prefix@
 program_transform_name = @program_transform_name@
 psdir = @psdir@
+runstatedir = @runstatedir@
 sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 srcdir = @srcdir@
@@ -484,8 +486,8 @@ noinst_HEADERS = \
 
 libqsecmn_la_SOURCES = alg-base64.c alg-rand.c alg-search.c alg-sort.c \
 	arr.c assert.c chr.c dll.c env.c gdl.c htb.c fma.c \
-	fmt-intmax.c fmt-out.c hton.c ipad.c main.c mb8.c mbwc.c \
-	mbwc-str.c mem.c oht.c opt.c path-base.c path-canon.c \
+	fmt-intmax.c fmt-out.c hton.c hwad.c ipad.c main.c mb8.c \
+	mbwc.c mbwc-str.c mem.c oht.c opt.c path-base.c path-canon.c \
 	path-core.c path-merge.c pma.c rbt.c rex.c sll.c slmb.c \
 	str-beg.c str-cat.c str-chr.c str-cnv.c str-cmp.c str-cpy.c \
 	str-del.c str-dup.c str-dyn.c str-end.c str-excl.c str-fcpy.c \
@@ -606,6 +608,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gdl.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/htb.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hton.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hwad.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ipad.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/main.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mb8.Plo@am__quote@
