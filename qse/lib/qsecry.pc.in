@@ -1,0 +1,12 @@
+prefix=@prefix@
+exec_prefix=${prefix}
+includedir=${prefix}/include
+libdir=${exec_prefix}/lib
+
+Name: QSECRY Library
+Description: QSECRY Library
+Version: @VERSION@
+Cflags: -I${includedir}
+Libs: -L${libdir} -lqsecry 
+Requires: qsecmn
+#Requires.private: qsecmn

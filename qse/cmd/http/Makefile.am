@@ -12,7 +12,7 @@ bin_PROGRAMS = qsehttpd qseursd
 
 qsehttpd_SOURCES = httpd.c
 qsehttpd_LDFLAGS = -L../../lib/xli -L../../lib/http -L../../lib/si -L../../lib/cmn  
-qsehttpd_LDADD = -lqsexli -lqsehttp -lqsesi -lqsecmn 
+qsehttpd_LDADD = -lqsexli -lqsehttp -lqsesi -lqsecmn $(SSL_LIBS)
 
 if WIN32 
 if WCHAR
