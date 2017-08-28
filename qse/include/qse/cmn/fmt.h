@@ -30,7 +30,7 @@
 #include <qse/types.h>
 #include <qse/macros.h>
 
-/** @file
+/** \file
  * This file defines various formatting functions.
  */
 
@@ -128,28 +128,28 @@ extern "C" {
 #endif
 
 /**
- * The qse_fmtintmaxtombs() function formats an integer @a value to a 
+ * The qse_fmtintmaxtombs() function formats an integer \a value to a 
  * multibyte string according to the given base and writes it to a buffer 
- * pointed to by @a buf. It writes to the buffer at most @a size characters 
+ * pointed to by \a buf. It writes to the buffer at most \a size characters 
  * including the terminating null. The base must be between 2 and 36 inclusive 
  * and can be ORed with zero or more #qse_fmtintmaxtombs_flag_t enumerators. 
- * This ORed value is passed to the function via the @a base_and_flags 
- * parameter. If the formatted string is shorter than @a bufsize, the redundant
- * slots are filled with the fill character @a fillchar if it is not a null 
+ * This ORed value is passed to the function via the \a base_and_flags 
+ * parameter. If the formatted string is shorter than \a bufsize, the redundant
+ * slots are filled with the fill character \a fillchar if it is not a null 
  * character. The filling behavior is determined by the flags shown below:
  *
- * - If #QSE_FMTINTMAXTOMBS_FILLRIGHT is set in @a base_and_flags, slots 
+ * - If #QSE_FMTINTMAXTOMBS_FILLRIGHT is set in \a base_and_flags, slots 
  *   after the formatting string are filled.
- * - If #QSE_FMTINTMAXTOMBS_FILLCENTER is set in @a base_and_flags, slots 
+ * - If #QSE_FMTINTMAXTOMBS_FILLCENTER is set in \a base_and_flags, slots 
  *   before the formatting string are filled. However, if it contains the
  *   sign character, the slots between the sign character and the digit part
  *   are filled.  
  * - If neither #QSE_FMTINTMAXTOMBS_FILLRIGHT nor #QSE_FMTINTMAXTOMBS_FILLCENTER
  *   , slots before the formatting string are filled.
  *
- * The @a precision parameter specified the minimum number of digits to
- * produce from the @ value. If @a value produces fewer digits than
- * @a precision, the actual digits are padded with '0' to meet the precision
+ * The \a precision parameter specified the minimum number of digits to
+ * produce from the \a value. If \a value produces fewer digits than
+ * \a precision, the actual digits are padded with '0' to meet the precision
  * requirement. You can pass a negative number if you don't wish to specify
  * precision.
  *
@@ -166,13 +166,13 @@ extern "C" {
  * 0 to produce nothing. If both #QSE_FMTINTMAXTOMBS_NOZERO and 
  * #QSE_FMTINTMAXTOMBS_ZEROLEAD are specified, '0' is still produced.
  * 
- * If @a prefix is not #QSE_NULL, it is inserted before the digits.
+ * If \a prefix is not #QSE_NULL, it is inserted before the digits.
  * 
- * @return
+ * \return
  *  - -1 if the base is not between 2 and 36 inclusive. 
  *  - negated number of characters required for lossless formatting 
- *   - if @a bufsize is 0.
- *   - if #QSE_FMTINTMAXTOMBS_NOTRUNC is set and @a bufsize is less than
+ *   - if \a bufsize is 0.
+ *   - if #QSE_FMTINTMAXTOMBS_NOTRUNC is set and \a bufsize is less than
  *     the minimum required for lossless formatting.
  *  - number of characters written to the buffer excluding a terminating 
  *    null in all other cases.
@@ -188,28 +188,28 @@ QSE_EXPORT int qse_fmtintmaxtombs (
 );
 
 /**
- * The qse_fmtintmaxtowcs() function formats an integer @a value to a 
+ * The qse_fmtintmaxtowcs() function formats an integer \a value to a 
  * wide-character string according to the given base and writes it to a buffer 
- * pointed to by @a buf. It writes to the buffer at most @a size characters 
+ * pointed to by \a buf. It writes to the buffer at most \a size characters 
  * including the terminating null. The base must be between 2 and 36 inclusive 
  * and can be ORed with zero or more #qse_fmtintmaxtowcs_flag_t enumerators. 
- * This ORed value is passed to the function via the @a base_and_flags 
- * parameter. If the formatted string is shorter than @a bufsize, the redundant
- * slots are filled with the fill character @a fillchar if it is not a null 
+ * This ORed value is passed to the function via the \a base_and_flags 
+ * parameter. If the formatted string is shorter than \a bufsize, the redundant
+ * slots are filled with the fill character \a fillchar if it is not a null 
  * character. The filling behavior is determined by the flags shown below:
  *
- * - If #QSE_FMTINTMAXTOWCS_FILLRIGHT is set in @a base_and_flags, slots 
+ * - If #QSE_FMTINTMAXTOWCS_FILLRIGHT is set in \a base_and_flags, slots 
  *   after the formatting string are filled.
- * - If #QSE_FMTINTMAXTOWCS_FILLCENTER is set in @a base_and_flags, slots 
+ * - If #QSE_FMTINTMAXTOWCS_FILLCENTER is set in \a base_and_flags, slots 
  *   before the formatting string are filled. However, if it contains the
  *   sign character, the slots between the sign character and the digit part
  *   are filled.  
  * - If neither #QSE_FMTINTMAXTOWCS_FILLRIGHT nor #QSE_FMTINTMAXTOWCS_FILLCENTER
  *   , slots before the formatting string are filled.
  * 
- * The @a precision parameter specified the minimum number of digits to
- * produce from the @ value. If @a value produces fewer digits than
- * @a precision, the actual digits are padded with '0' to meet the precision
+ * The \a precision parameter specified the minimum number of digits to
+ * produce from the \ value. If \a value produces fewer digits than
+ * \a precision, the actual digits are padded with '0' to meet the precision
  * requirement. You can pass a negative number if don't wish to specify
  * precision.
  *
@@ -226,13 +226,13 @@ QSE_EXPORT int qse_fmtintmaxtombs (
  * 0 to produce nothing. If both #QSE_FMTINTMAXTOWCS_NOZERO and 
  * #QSE_FMTINTMAXTOWCS_ZEROLEAD are specified, '0' is still produced.
  *
- * If @a prefix is not #QSE_NULL, it is inserted before the digits.
+ * If \a prefix is not #QSE_NULL, it is inserted before the digits.
  * 
- * @return
+ * \return
  *  - -1 if the base is not between 2 and 36 inclusive. 
  *  - negated number of characters required for lossless formatting 
- *   - if @a bufsize is 0.
- *   - if #QSE_FMTINTMAXTOWCS_NOTRUNC is set and @a bufsize is less than
+ *   - if \a bufsize is 0.
+ *   - if #QSE_FMTINTMAXTOWCS_NOTRUNC is set and \a bufsize is less than
  *     the minimum required for lossless formatting.
  *  - number of characters written to the buffer excluding a terminating 
  *    null in all other cases.
@@ -247,7 +247,7 @@ QSE_EXPORT int qse_fmtintmaxtowcs (
 	const qse_wchar_t* prefix           /**< prefix */
 );
 
-/** @def qse_fmtintmax
+/** \def qse_fmtintmax
  * The qse_fmtintmax() macro maps to qse_fmtintmaxtombs() if 
  * #QSE_CHAR_IS_MCHAR, and qse_fmtintmaxtowcs() if #QSE_CHAR_IS_WCHAR.
  */
@@ -258,7 +258,7 @@ QSE_EXPORT int qse_fmtintmaxtowcs (
 #endif
 
 /**
- * The qse_fmtuintmaxtombs() function formats an unsigned integer @a value 
+ * The qse_fmtuintmaxtombs() function formats an unsigned integer \a value 
  * to a multibyte string buffer. It behaves the same as qse_fmtuintmaxtombs() 
  * except that it handles an unsigned integer.
  */
@@ -273,7 +273,7 @@ QSE_EXPORT int qse_fmtuintmaxtombs (
 );
 
 /**
- * The qse_fmtuintmaxtowcs() function formats an unsigned integer @a value 
+ * The qse_fmtuintmaxtowcs() function formats an unsigned integer \a value 
  * to a wide-character string buffer. It behaves the same as 
  * qse_fmtuintmaxtowcs() except that it handles an unsigned integer.
  */
@@ -287,7 +287,7 @@ QSE_EXPORT int qse_fmtuintmaxtowcs (
 	const qse_wchar_t* prefix           /**< prefix */
 );
 
-/** @def qse_fmtuintmax
+/** \def qse_fmtuintmax
  * The qse_fmtuintmax() macro maps to qse_fmtuintmaxtombs() if 
  * #QSE_CHAR_IS_MCHAR, and qse_fmtuintmaxtowcs() if #QSE_CHAR_IS_WCHAR.
  */

@@ -13,6 +13,7 @@ pkginclude_HEADERS = \
 	gdl.h \
 	htb.h \
 	hton.h \
+	hwad.h \
 	ipad.h \
 	main.h \
 	map.h \
