@@ -135,7 +135,8 @@ am__uninstall_files_from_dir = { \
 am__installdirs = "$(DESTDIR)$(libdir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
 libqserad_la_DEPENDENCIES =
-am_libqserad_la_OBJECTS = libqserad_la-radmsg.lo
+am_libqserad_la_OBJECTS = libqserad_la-raddic.lo \
+	libqserad_la-radmsg.lo
 libqserad_la_OBJECTS = $(am_libqserad_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
@@ -396,6 +397,7 @@ AM_CPPFLAGS = \
 #noinst_HEADERS =
 lib_LTLIBRARIES = libqserad.la
 libqserad_la_SOURCES = \
+	raddic.c \
 	radmsg.c
 
 libqserad_la_CFLAGS = 
@@ -479,6 +481,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqserad_la-raddic.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqserad_la-radmsg.Plo@am__quote@
 
 .c.o:
@@ -501,6 +504,13 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LTCOMPILE) -c -o $@ $<
+
+libqserad_la-raddic.lo: raddic.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libqserad_la_CFLAGS) $(CFLAGS) -MT libqserad_la-raddic.lo -MD -MP -MF $(DEPDIR)/libqserad_la-raddic.Tpo -c -o libqserad_la-raddic.lo `test -f 'raddic.c' || echo '$(srcdir)/'`raddic.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libqserad_la-raddic.Tpo $(DEPDIR)/libqserad_la-raddic.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='raddic.c' object='libqserad_la-raddic.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libqserad_la_CFLAGS) $(CFLAGS) -c -o libqserad_la-raddic.lo `test -f 'raddic.c' || echo '$(srcdir)/'`raddic.c
 
 libqserad_la-radmsg.lo: radmsg.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libqserad_la_CFLAGS) $(CFLAGS) -MT libqserad_la-radmsg.lo -MD -MP -MF $(DEPDIR)/libqserad_la-radmsg.Tpo -c -o libqserad_la-radmsg.lo `test -f 'radmsg.c' || echo '$(srcdir)/'`radmsg.c
