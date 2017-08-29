@@ -229,7 +229,7 @@ QSE_EXPORT int qse_rad_delete_attribute (
 QSE_EXPORT int qse_rad_delete_vendor_specific_attribute (
 	qse_rad_hdr_t*  hdr,
 	qse_uint32_t    vendor,
-	qse_uint8_t     id
+	qse_uint8_t     attrid
 );
 
 QSE_EXPORT int qse_rad_insert_string_attribute (
@@ -284,7 +284,7 @@ QSE_EXPORT int qse_rad_insert_ipv6prefix_attribute (
 );
 
 QSE_EXPORT int qse_rad_insert_giga_attribute (
-	qse_rad_hdr_t*        auth,
+	qse_rad_hdr_t*    auth,
 	int               max,
 	qse_uint32_t      vendor,
 	int               low_id,
@@ -293,7 +293,7 @@ QSE_EXPORT int qse_rad_insert_giga_attribute (
 );
 
 QSE_EXPORT int qse_rad_set_user_password (
-	qse_rad_hdr_t*          auth,
+	qse_rad_hdr_t*      auth,
 	int                 max,
 	const qse_mchar_t*  password,
 	const qse_mchar_t*  secret
@@ -309,7 +309,7 @@ QSE_EXPORT void qse_rad_copy_authenticator (
 );
 
 QSE_EXPORT int qse_rad_set_authenticator (
-	qse_rad_hdr_t*           req, 
+	qse_rad_hdr_t*       req, 
 	const qse_mchar_t*   secret
 );
 
@@ -319,14 +319,14 @@ QSE_EXPORT int qse_rad_set_authenticator (
  * so this function doesn't apply
  */
 QSE_EXPORT int qse_rad_verify_request (
-	qse_rad_hdr_t*          req,
+	qse_rad_hdr_t*      req,
 	const qse_mchar_t*  secret
 );
 
 QSE_EXPORT int qse_rad_verify_response (
 	qse_rad_hdr_t*         res,
 	const qse_rad_hdr_t*   req,
-	const qse_mchar_t* secret
+	const qse_mchar_t*     secret
 );
 
 

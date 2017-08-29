@@ -423,6 +423,51 @@ public:
 		return SelfType (this->_item->buffer + index, size);
 	}
 
+	void truncate (qse_size_t new_size)
+	{
+		// use this function with care.
+		// if the new size is greater than the current capacity,
+		// it grows the capacity first according to the policy.
+		// in such a case, it still changes the length.
+		// if the new size is equal to or less than the current capaciy,
+		// it only changes the length. 
+		// when chaning the length, it puts a null character at
+		// the length position. it leaves the contents of the growing
+		// part or the shrinking part untouched.
+		//
+		// if you want to shorten the length while growing the capacity,
+		// you can call truncate twice. for instance,
+		//    str.truncate (1000).
+		//    str.truncate (100).
+
+		StringItem* old_item = QSE_NULL;
+
+		if (this->_item->isShared()) 
+		{
+			StringItem* t;
+
+			if (new_size > this->_item->capacity) 
+				t = this->_item->copy (this->getMmgr(), this->adjust_desired_capacity(new_size));
+			else 
+				t = this->_item->copy (this->getMmgr());
+
+			old_item = this->_item;
+			this->_item = t;
+			this->ref_item ();
+		}
+		else if (new_size > this->_item->capacity) 
+		{
+			StringItem* t = this->_item->copy (this->getMmgr(), this->adjust_desired_capacity(new_size));
+			old_item = this->_item;
+			this->_item = t;
+			this->ref_item ();;
+		}
+
+		this->_item->buffer[new_size] = NULL_CHAR;
+		this->_item->size = new_size;
+		if (old_item) this->deref_item (old_item);
+	}
+
 	//
 	// TODO: comparison, hash, trim, case-converting, etc
 	// utf-8 encoding/decoding

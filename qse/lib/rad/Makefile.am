@@ -8,6 +8,7 @@ AM_CPPFLAGS = \
 
 lib_LTLIBRARIES = libqserad.la
 libqserad_la_SOURCES =  \
+	raddic.c \
 	radmsg.c
 
 libqserad_la_CFLAGS = 
