@@ -290,6 +290,16 @@ public:
 		return this->pair_list.clear (clear_mpool);
 	}
 
+	void removeNode (PairNode* node)
+	{
+		this->pair_list.removeNode (node);
+	}
+
+	PairNode* findNode (const K& key)
+	{
+		return this->pair_list.findNode (key);
+	}
+
 	Iterator getIterator (qse_size_t index = 0)
 	{
 		return this->pair_list.getIterator (index);

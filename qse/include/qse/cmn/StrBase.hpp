@@ -27,7 +27,6 @@
 #ifndef _QSE_CMN_STRBASE_HPP_
 #define _QSE_CMN_STRBASE_HPP_
 
-
 #include <qse/Hashable.hpp>
 #include <qse/Growable.hpp>
 #include <qse/RefCounted.hpp>
@@ -182,6 +181,42 @@ public:
 		this->ref_item ();
 	}
 
+	StrBase (int capacity): Mmged(QSE_NULL)
+	{
+		if (capacity <= -1)
+		{
+			// this is a special constructor to instanatiate a string with no buffer.
+			// it is intended to be followed by truncate() for actual buffer allocation.
+			// all other functions except the destructor and the truncation() function 
+			// are not aware of this special condition.
+			//
+			// String x(0);
+			// try { x.truncate(10); } catch (...) { return -1; }
+			// x.append ("xxx");
+			// 
+			this->_item = QSE_NULL;
+		}
+		else
+		{
+			this->_item = new(this->getMmgr()) StringItem (this->getMmgr(), this->round_capacity(capacity), (const CHAR_TYPE*)QSE_NULL, 0);
+			this->ref_item ();
+		}
+	}
+	StrBase (Mmgr* mmgr, int capacity): Mmged(mmgr)
+	{
+		if (capacity <= -1) 
+		{
+			// this is a special constructor to instanatiate a string with no buffer.
+			// it is intended to be followed by truncate() for actual buffer allocation.
+			this->_item = QSE_NULL;
+		}
+		else
+		{
+			this->_item = new(this->getMmgr()) StringItem (this->getMmgr(), this->round_capacity(capacity), (const CHAR_TYPE*)QSE_NULL, 0);
+			this->ref_item ();
+		}
+	}
+
 	StrBase (qse_size_t capacity): Mmged(QSE_NULL)
 	{
 		this->_item = new(this->getMmgr()) StringItem (this->getMmgr(), this->round_capacity(capacity), (const CHAR_TYPE*)QSE_NULL, 0);
@@ -240,7 +275,7 @@ public:
 
 	~StrBase () 
 	{
-		this->deref_item ();
+		if (this->_item) this->deref_item ();
 	}
 
 	SelfType& operator= (const SelfType& str)
@@ -360,9 +395,14 @@ public:
 		return this->_item->buffer;
 	}
 
+	const CHAR_TYPE* getData() const
+	{
+		return this->_item->buffer;
+	}
+
 	qse_size_t getHashCode () const
 	{
-		// keep this in sync with getHashCode of BasePtrString<CHAR_TYPE>
+		// keep this in sync with getHashCode() of PtrStrBase<CHAR_TYPE>
 		return Hashable::getHashCode (
 			this->_item->buffer, this->_item->size * QSE_SIZEOF(CHAR_TYPE));
 	}
@@ -439,33 +479,45 @@ public:
 		// you can call truncate twice. for instance,
 		//    str.truncate (1000).
 		//    str.truncate (100).
-
-		StringItem* old_item = QSE_NULL;
-
-		if (this->_item->isShared()) 
+		if (this->_item)
 		{
-			StringItem* t;
+			StringItem* old_item = QSE_NULL;
 
-			if (new_size > this->_item->capacity) 
-				t = this->_item->copy (this->getMmgr(), this->adjust_desired_capacity(new_size));
-			else 
-				t = this->_item->copy (this->getMmgr());
+			if (this->_item->isShared()) 
+			{
+				StringItem* t;
 
-			old_item = this->_item;
-			this->_item = t;
+				if (new_size > this->_item->capacity) 
+					t = this->_item->copy (this->getMmgr(), this->adjust_desired_capacity(new_size));
+				else 
+					t = this->_item->copy (this->getMmgr());
+
+				old_item = this->_item;
+				this->_item = t;
+				this->ref_item ();
+			}
+			else if (new_size > this->_item->capacity) 
+			{
+				StringItem* t = this->_item->copy (this->getMmgr(), this->adjust_desired_capacity(new_size));
+				old_item = this->_item;
+				this->_item = t;
+				this->ref_item ();;
+			}
+
+			this->_item->buffer[new_size] = NULL_CHAR;
+			this->_item->size = new_size;
+			if (old_item) this->deref_item (old_item);
+		}
+		else
+		{
+			// this is the only function that supports some use-cases
+			// of a string object created with no buffer at all.
+			// read comments in the special constructor
+			this->_item = new(this->getMmgr()) StringItem (this->getMmgr(), this->round_capacity(new_size), (const CHAR_TYPE*)QSE_NULL, 0);
 			this->ref_item ();
+			this->_item->buffer[new_size] = NULL_CHAR;
+			this->_item->size = new_size;
 		}
-		else if (new_size > this->_item->capacity) 
-		{
-			StringItem* t = this->_item->copy (this->getMmgr(), this->adjust_desired_capacity(new_size));
-			old_item = this->_item;
-			this->_item = t;
-			this->ref_item ();;
-		}
-
-		this->_item->buffer[new_size] = NULL_CHAR;
-		this->_item->size = new_size;
-		if (old_item) this->deref_item (old_item);
 	}
 
 	//
@@ -476,7 +528,7 @@ public:
 	{
 		if (size <= 0) return;
 		if (index >= this->_item->size) index = this->_item->size;
-	
+
 		//
 		// When the same instance is inserted as in n.insert(index, n) which
 		// finally calls n.insert(index. n.this->_item->buffer, 0, n.this->_item->size),
@@ -992,7 +1044,6 @@ protected:
 	OPSET _opset;
 	RESIZER _resizer;
 
-
 private:
 	qse_size_t adjust_desired_capacity (qse_size_t new_desired_capacity)
 	{
@@ -1001,6 +1052,76 @@ private:
 		return new_capacity;
 	}
 
+};
+
+
+template <typename CHAR_TYPE, CHAR_TYPE NULL_CHAR, typename OPSET, typename RESIZER = StrBaseResizer>
+class PtrStrBase
+{
+public:
+	typedef PtrStrBase<CHAR_TYPE,NULL_CHAR,OPSET,RESIZER> ThisType;
+	typedef StrBase<CHAR_TYPE,NULL_CHAR,OPSET,RESIZER> StringType;
+
+	PtrStrBase (): ptr (QSE_NULL), len (0) {}
+
+	PtrStrBase (const CHAR_TYPE* ptr): ptr (ptr)
+	{
+		this->len = this->_opset.getLength (ptr);
+	}
+
+	PtrStrBase (const CHAR_TYPE* ptr, qse_size_t len): ptr (ptr), len (len)
+	{
+		// do nothing
+	}
+
+	qse_size_t getHashCode () const
+	{
+		// keep this in sync with hashCode of StringType(StrBase)
+		return Hashable::getHashCode (this->ptr, this->len * QSE_SIZEOF(CHAR_TYPE));
+	}
+
+	bool operator== (const ThisType& ps) const
+	{
+		if (this->len != ps.len) return false;
+		return this->_opset.compare (this->ptr, ps.ptr, this->len) == 0;
+	}
+
+	bool operator!= (const ThisType& ps) const
+	{
+		return !this->operator== (ps);
+	}
+
+	bool operator== (const StringType& s) const
+	{
+		if (this->len != s.getLength()) return false;
+		return this->_opset.compare (this->ptr, s.getBuffer(), this->len) == 0;
+	}
+
+	bool operator!= (const StringType& s) const
+	{
+		return !this->operator== (s);
+	}
+
+	operator const CHAR_TYPE* () const
+	{
+		return this->ptr;
+	}
+
+	const CHAR_TYPE* getData() const
+	{
+		return this->ptr;
+	}
+
+	qse_size_t getLength() const
+	{
+		return this->len;
+	}
+
+protected:
+	const CHAR_TYPE* ptr;
+	qse_size_t       len;
+
+	OPSET _opset;
 };
 
 /////////////////////////////////

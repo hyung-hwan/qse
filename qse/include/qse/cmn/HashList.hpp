@@ -581,31 +581,44 @@ public:
 		Node* np = this->heterofind_node<MT,MEQUALER> (datum, hc);
 		if (np)
 		{
-			qse_size_t head, tail;
-
-			head = hc << 1; tail = head + 1;
-
-			if (this->nodes[head] == this->nodes[tail])
-			{
-				QSE_ASSERT (np == this->nodes[head]);
-				this->nodes[head] = this->nodes[tail] = QSE_NULL;
-			}
-			else if (np == this->nodes[head])
-			{
-				this->nodes[head] = np->getNextNode();
-			}
-			else if (np == this->nodes[tail])
-			{ 
-				this->nodes[tail] = np->getPrevNode();
-			}
-
-			this->datum_list->remove (np);
+			this->remove_node (np, hc);
 			return 0;
 		}
 
 		return -1;
 	}
 
+	void removeNode (Node* np)
+	{
+		T& datum = np->value;
+		qse_size_t hc = this->_hasher(datum) % this->node_capacity;
+		this->remove_node (np, hc);
+	}
+
+private:
+	void remove_node (Node* np, qse_size_t hc)
+	{
+		qse_size_t head, tail;
+		head = hc << 1; tail = head + 1;
+
+		if (this->nodes[head] == this->nodes[tail])
+		{
+			QSE_ASSERT (np == this->nodes[head]);
+			this->nodes[head] = this->nodes[tail] = QSE_NULL;
+		}
+		else if (np == this->nodes[head])
+		{
+			this->nodes[head] = np->getNextNode();
+		}
+		else if (np == this->nodes[tail])
+		{ 
+			this->nodes[tail] = np->getPrevNode();
+		}
+
+		this->datum_list->remove (np);
+	}
+
+public:
 	void clear (bool clear_mpool = false)
 	{
 		for (qse_size_t i = 0; i < (this->node_capacity << 1); i++) 
