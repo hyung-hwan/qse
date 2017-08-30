@@ -181,11 +181,14 @@ struct MbStringOpset
 
 class WcString: public StrBase<qse_wchar_t, QSE_WT('\0'), WcStringOpset> 
 {
-public:
+private:
 	typedef StrBase<qse_wchar_t, QSE_WT('\0'), WcStringOpset> ParentType;
 
+public:
 	WcString (): ParentType() {}
 	WcString (Mmgr* mmgr): ParentType(mmgr) {}
+	WcString (int capacity): ParentType(capacity) {}
+	WcString (Mmgr* mmgr, int capacity): ParentType(mmgr, capacity) {}
 	WcString (qse_size_t capacity): ParentType(capacity) {}
 	WcString (Mmgr* mmgr, qse_size_t capacity): ParentType(mmgr, capacity) {}
 	WcString (const qse_wchar_t* str): ParentType(str) {}
@@ -207,11 +210,14 @@ public:
 
 class MbString: public StrBase<qse_mchar_t, QSE_MT('\0'), MbStringOpset>
 {
-public:
+private:
 	typedef StrBase<qse_mchar_t, QSE_MT('\0'), MbStringOpset> ParentType;
 
+public:
 	MbString (): ParentType() {}
 	MbString (Mmgr* mmgr): ParentType(mmgr) {}
+	MbString (int capacity): ParentType(capacity) {}
+	MbString (Mmgr* mmgr, int capacity): ParentType(mmgr, capacity) {}
 	MbString (qse_size_t capacity): ParentType(capacity) {}
 	MbString (Mmgr* mmgr, qse_size_t capacity): ParentType(mmgr, capacity) {}
 	MbString (const qse_mchar_t* str): ParentType(str) {}
@@ -231,10 +237,38 @@ public:
 	int formatv (const qse_mchar_t* fmt, va_list ap);
 };
 
+
+
+class WcPtrString: public PtrStrBase<qse_wchar_t, QSE_MT('\0'), WcStringOpset>
+{
+private:
+	typedef PtrStrBase<qse_wchar_t, QSE_MT('\0'), WcStringOpset> ParentType;
+
+public:
+	WcPtrString () {}
+	WcPtrString (const qse_wchar_t* ptr): ParentType(ptr) {}
+	WcPtrString (const qse_wchar_t* ptr, qse_size_t len): ParentType(ptr, len) {}
+};
+
+class MbPtrString: public PtrStrBase<qse_mchar_t, QSE_MT('\0'), MbStringOpset>
+{
+private:
+	typedef PtrStrBase<qse_mchar_t, QSE_MT('\0'), MbStringOpset> ParentType;
+
+public:
+	MbPtrString () {}
+	MbPtrString (const qse_mchar_t* ptr): ParentType(ptr) {}
+	MbPtrString (const qse_mchar_t* ptr, qse_size_t len): ParentType(ptr, len) {}
+};
+
+
+
 #if defined(QSE_CHAR_IS_MCHAR)
 	typedef MbString String;
+	typedef MbPtrString PtrString;
 #else
 	typedef WcString String;
+	typedef WcPtrString PtrString;
 #endif
 
 /////////////////////////////////
