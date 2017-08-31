@@ -439,6 +439,16 @@ public:
 	}
 #endif
 
+	const T& getFirst () const
+	{
+		return this->getValueAt(0);
+	}
+
+	const T& getLast() const
+	{
+		return this->getValueAt(this->getSize() - 1);
+	}
+
 protected:
 	void secure_slot (qse_size_t index)
 	{
@@ -576,6 +586,30 @@ public:
 	}
 #endif
 
+	qse_size_t insertFirst (const T& value)
+	{
+		return this->insert (0, value);
+	}
+
+#if defined(QSE_CPP_ENABLE_CPP11_MOVE)
+	qse_size_t insertFirst (T&& value)
+	{
+		return this->insert (0, QSE_CPP_RVREF(value));
+	}
+#endif
+
+	qse_size_t insertLast (const T& value)
+	{
+		return this->insert (this->getSize(), value);
+	}
+
+#if defined(QSE_CPP_ENABLE_CPP11_MOVE)
+	qse_size_t insertLast (T&& value)
+	{
+		return this->insert (this->getSize(), QSE_CPP_RVREF(value));
+	}
+#endif
+
 	void remove (qse_size_t index)
 	{
 		this->remove (index, 1);
@@ -621,6 +655,16 @@ public:
 
 		// recalculate the number of elements 
 		this->count -= to_index - from_index + 1;
+	}
+
+	void removeFirst ()
+	{
+		this->remove(0);
+	}
+
+	void removeLast ()
+	{
+		this->remove(this->getSize() - 1);
 	}
 
 #if 0
