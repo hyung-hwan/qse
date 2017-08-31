@@ -186,9 +186,11 @@ public:
 		if (capacity <= -1)
 		{
 			// this is a special constructor to instanatiate a string with no buffer.
-			// it is intended to be followed by truncate() for actual buffer allocation.
-			// all other functions except the destructor and the truncation() function 
-			// are not aware of this special condition.
+			// it is designed to be followed by truncate() immediately for actual buffer
+			// allocation. all other functions except the copy/move constructors, some
+			// assignment operators, the destructor and the truncation() function are
+			// not aware of this special condition. if you call other functions without
+			// truncate(), your program will end with a crash.
 			//
 			// String x(0);
 			// try { x.truncate(10); } catch (...) { return -1; }
@@ -270,7 +272,9 @@ public:
 	StrBase (const SelfType& str): Mmged(str)
 	{
 		this->_item = str._item;
-		this->ref_item ();
+
+		// check if this->_item is null or not to cater for a no buffer string
+		if (this->_item) this->ref_item ();
 	}
 
 #if defined(QSE_CPP_ENABLE_CPP11_MOVE)
@@ -291,7 +295,8 @@ public:
 	{
 		if (this->_item != str._item) 
 		{
-			this->deref_item ();
+			// check if this->_item is null or not to cater for a no buffer string
+			if (this->_item) this->deref_item ();
 
 			// the data to be reference could be allocated using the
 			// memory manager of str. and it may be freed or resized by
@@ -309,7 +314,8 @@ public:
 	{
 		if (this->_item != str._item) 
 		{
-			this->deref_item ();
+			// check if this->_item is null or not to cater for a no buffer string
+			if (this->_item) this->deref_item ();
 
 			// the data to be reference could be allocated using the
 			// memory manager of str. and it may be freed or resized by
