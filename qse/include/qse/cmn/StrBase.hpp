@@ -273,6 +273,15 @@ public:
 		this->ref_item ();
 	}
 
+#if defined(QSE_CPP_ENABLE_CPP11_MOVE)
+	StrBase (SelfType&& str): Mmged(str)
+	{
+		this->_item = str._item; // still it from the rvalue.
+		str._item = QSE_NULL; // the rvalue is soon to be destroyed. so nullify it
+		// no reference count manipulation is needed.
+	}
+#endif
+
 	~StrBase () 
 	{
 		if (this->_item) this->deref_item ();
@@ -294,6 +303,26 @@ public:
 		}
 		return *this;
 	}
+
+#if defined(QSE_CPP_ENABLE_CPP11_MOVE)
+	SelfType& operator= (SelfType&& str)
+	{
+		if (this->_item != str._item) 
+		{
+			this->deref_item ();
+
+			// the data to be reference could be allocated using the
+			// memory manager of str. and it may be freed or resized by
+			// this. so the inner memory manager must be switched.
+			this->setMmgr (str.getMmgr()); // copy over mmgr.
+
+			this->_item = str._item;
+			str._item = QSE_NULL;
+			// no reference count manipulation is needed.
+		}
+		return *this;
+	}
+#endif
 
 	SelfType& operator= (const CHAR_TYPE* str)
 	{
@@ -481,10 +510,9 @@ public:
 		//    str.truncate (100).
 		if (this->_item)
 		{
-			StringItem* old_item = QSE_NULL;
-
 			if (this->_item->isShared()) 
 			{
+			#if 0
 				StringItem* t;
 
 				if (new_size > this->_item->capacity) 
@@ -492,21 +520,26 @@ public:
 				else 
 					t = this->_item->copy (this->getMmgr());
 
-				old_item = this->_item;
+				this->deref_item ();
 				this->_item = t;
 				this->ref_item ();
+			#else
+				if (new_size > this->_item->capacity) 
+					this->possess_data (this->adjust_desired_capacity(new_size));
+				else
+					this->possess_data ();
+			#endif
 			}
-			else if (new_size > this->_item->capacity) 
+			else if (new_size > this->_item->capacity)
 			{
 				StringItem* t = this->_item->copy (this->getMmgr(), this->adjust_desired_capacity(new_size));
-				old_item = this->_item;
+				this->deref_item();
 				this->_item = t;
-				this->ref_item ();;
+				this->ref_item ();
 			}
 
 			this->_item->buffer[new_size] = NULL_CHAR;
 			this->_item->size = new_size;
-			if (old_item) this->deref_item (old_item);
 		}
 		else
 		{
@@ -691,7 +724,7 @@ public:
 	}
 
 	/// The update() function replaces a \a size substring staring from the \a offset
-	/// with a new \a ssize string pointed to by \a str starign from the \a soffset.
+	/// with a new \a ssize string pointed to by \a str starting from the \a soffset.
 	void update (qse_size_t index, qse_size_t size, const CHAR_TYPE* str, qse_size_t ssize)
 	{
 		this->remove (index, size);
@@ -733,7 +766,8 @@ public:
 
 	void clear ()
 	{
-		this->remove (0, this->_item->size);
+		//this->remove (0, this->_item->size);
+		this->truncate (0);
 	}
 
 	/// The compact() function compacts the internal buffer to the length of
@@ -804,9 +838,9 @@ public:
 	loop_findIndex:
 		while (p1 <= e1 && *p1 != first) p1++;
 		if (p1 > e1) return INVALID_INDEX;
-	
+
 		const CHAR_TYPE* s2 = str + offset + 1;
-	
+
 		CHAR_TYPE* p2 = p1 + 1;
 		CHAR_TYPE* e2 = p2 + size - 1;
 	
@@ -991,8 +1025,8 @@ public:
 	{
 		while ((index = this->findIndex(index, str1)) != INVALID_INDEX) 
 		{
-			this->update (index, str1.data->data->size, str2);
-			index += str2.data->data->size;
+			this->update (index, str1._item->size, str2);
+			index += str2._item->size;
 		}
 	}
 
@@ -1051,7 +1085,6 @@ private:
 		new_capacity = this->round_capacity(new_capacity);
 		return new_capacity;
 	}
-
 };
 
 

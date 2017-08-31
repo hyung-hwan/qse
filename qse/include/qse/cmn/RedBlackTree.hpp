@@ -259,15 +259,13 @@ public:
 	bool operator== (const SelfType& it) const
 	{
 		QSE_ASSERT (this->current != QSE_NULL);
-		return this->current == it.current &&
-		       this->previous == it.previous;
+		return this->current == it.current && this->previous == it.previous;
 	}
 
 	bool operator!= (const SelfType& it) const
 	{
 		QSE_ASSERT (this->current != QSE_NULL);
-		return this->current != it.current ||
-		       this->previous != it.previous;
+		return this->current != it.current || this->previous != it.previous;
 	}
 
 	bool isLegit() const
@@ -380,6 +378,8 @@ public:
 			++it;
 		}
 	}
+
+	// TODO: move constructors and move assignment operators for c++11 
 
 	~RedBlackTree ()
 	{
