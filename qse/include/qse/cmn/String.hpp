@@ -199,14 +199,14 @@ public:
 	WcString (Mmgr* mmgr, qse_wchar_t c, qse_size_t size): ParentType(mmgr, c, size) {}
 	WcString (const WcString& str): ParentType(str) {}
 #if defined(QSE_CPP_ENABLE_CPP11_MOVE)
-	WcString (WcString&& str): ParentType((ParentType&&)str) {}
-	WcString (ParentType&& str): ParentType((ParentType&&)str) {} // added for ParentType returned in some methods defined in ParentType. e.g. getSubstring()
+	WcString (WcString&& str): ParentType(QSE_CPP_RVREF(str)) {}
+	WcString (ParentType&& str): ParentType(QSE_CPP_RVREF(str)) {} // added for ParentType returned in some methods defined in ParentType. e.g. getSubstring()
 #endif
 
 	WcString& operator= (const WcString& str) { ParentType::operator=(str); return *this; }
 #if defined(QSE_CPP_ENABLE_CPP11_MOVE)
-	WcString& operator= (WcString&& str) { ParentType::operator=((WcString&&)str); return *this; }
-	WcString& operator= (ParentType&& str) { ParentType::operator=((WcString&&)str); return *this; } // added for ParentType returned in some methods defined in ParentType. e.g. getSubstring()
+	WcString& operator= (WcString&& str) { ParentType::operator=(QSE_CPP_RVREF(str)); return *this; }
+	WcString& operator= (ParentType&& str) { ParentType::operator=(QSE_CPP_RVREF(str)); return *this; } // added for ParentType returned in some methods defined in ParentType. e.g. getSubstring()
 #endif
 	WcString& operator= (const qse_wchar_t* str) { ParentType::operator=(str); return *this; }
 	WcString& operator= (const qse_wchar_t c) { ParentType::operator=(c); return *this; }
@@ -237,15 +237,15 @@ public:
 	MbString (const MbString& str): ParentType(str) {}
 	MbString (const ParentType& str): ParentType(str) {}
 #if defined(QSE_CPP_ENABLE_CPP11_MOVE)
-	MbString (MbString&& str): ParentType((ParentType&&)str) {}
-	MbString (ParentType&& str): ParentType((ParentType&&)str) {} // added for ParentType returned in some methods defined in ParentType. e.g. getSubstring()
+	MbString (MbString&& str): ParentType(QSE_CPP_RVREF(str)) {}
+	MbString (ParentType&& str): ParentType(QSE_CPP_RVREF(str)) {} // added for ParentType returned in some methods defined in ParentType. e.g. getSubstring()
 #endif
 
 	MbString& operator= (const MbString& str) { ParentType::operator=(str); return *this; }
 	MbString& operator= (const ParentType& str) { ParentType::operator=(str); return *this; }
 #if defined(QSE_CPP_ENABLE_CPP11_MOVE)
-	MbString& operator= (MbString&& str) { ParentType::operator=((MbString&&)str); return *this; }
-	MbString& operator= (ParentType&& str) { ParentType::operator=((MbString&&)str); return *this; } // added for ParentType returned in some methods defined in ParentType. e.g. getSubstring()
+	MbString& operator= (MbString&& str) { ParentType::operator=(QSE_CPP_RVREF(str)); return *this; }
+	MbString& operator= (ParentType&& str) { ParentType::operator=(QSE_CPP_RVREF(str)); return *this; } // added for ParentType returned in some methods defined in ParentType. e.g. getSubstring()
 #endif
 	MbString& operator= (const qse_mchar_t* str) { ParentType::operator=(str); return *this; }
 	MbString& operator= (const qse_mchar_t c) { ParentType::operator=(c); return *this; }

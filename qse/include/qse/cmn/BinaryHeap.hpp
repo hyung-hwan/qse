@@ -130,7 +130,7 @@ public:
 	BinaryHeap (const SelfType& heap): ParentType (heap) {}
 
 #if defined(QSE_CPP_ENABLE_CPP11_MOVE)
-	BinaryHeap (SelfType&& heap): ParentType ((ParentType&&)heap) {}
+	BinaryHeap (SelfType&& heap): ParentType (QSE_CPP_RVREF(heap)) {}
 #endif
 
 	~BinaryHeap () {}
@@ -149,7 +149,7 @@ public:
 	{
 		if (this != &heap)
 		{
-			ParentType::operator= ((ParentType&&)heap);
+			ParentType::operator= (QSE_CPP_RVREF(heap));
 		}
 		return *this;
 	}
