@@ -129,59 +129,133 @@ public:
  };
  
  
+
+static StrHeap getStrHeap ()
+{
+	char buf[100];
+	StrHeap h;
+
+	for (int i = 0; i < 25; i++)
+	{
+		sprintf (buf, "binary heap item %d", i);
+		h.insert (buf);
+	}
+
+	return h;
+}
+
 int main ()
 {
 	char buf[20];
 	StrHeap h;
 
-	for (int i = 0; i < 20; i++)
+#define TOTAL 22
+	printf ("[TEST #1 - %d strings must be shown]\n", TOTAL * 2);
+	for (int i = 0; i < TOTAL; i++)
 	{
 		sprintf (buf, "hello %d", i);
 		h.insert (buf);
 		h.insert (buf);
 	}
-
-	for (qse_size_t i = 0; i < h.getSize(); i++)
+	if (h.getSize() != TOTAL * 2)
 	{
-		printf ("%05d %s\n", (int)h.getIndex(h[i]), h[i].c_str());
+		printf ("[FAILURE] ------------------------ \n");
 	}
-	printf ("----------------\n");
-
-
-	while (!h.isEmpty())
+	else
 	{
-		printf ("%s\n", h[0u].c_str());
+		for (qse_size_t i = 0; i < h.getSize(); i++)
+		{
+			printf ("%05d %s\n", (int)h.getIndex(h[i]), h[i].c_str());
+		}
+	}
+	printf ("\n");
+
+
+	//////////////////////////////////////////////////////////////////////////////  
+
+	printf ("[TEST #2 - strings must be shown in ascending order]\n");
+	const char* x =  h[0u].c_str();
+	std::string oldx;
+	while (true)
+	{
+		oldx = x;
+		printf ("%s\n", x);
 		h.remove (0);
+		if (h.isEmpty()) break;
+		x =  h[0u].c_str();
+		if (strcmp (x, oldx.c_str()) < 0) 
+		{
+			printf ("[FAILURE] ------------------------ \n");
+			break;
+		}
 	}
-	printf ("----------------\n");
+	printf ("\n");
+	//////////////////////////////////////////////////////////////////////////////  
+
+
+	printf ("[TEST #3 - integers must be shown in ascending order]\n");
 	{
+		QSE::BinaryHeap<int,IntComparator> h2;
 
-         QSE::BinaryHeap<int,IntComparator> h2;
- 
-         h2.insert (70);
-         h2.insert (90);
-         h2.insert (10);
-         h2.insert (5);
-         h2.insert (88);
-         h2.insert (87);
-         h2.insert (300);
-         h2.insert (91);
-         h2.insert (100);
-         h2.insert (200);
- 
-         while (h2.getSize() > 0)
-         {
-                 printf ("%d\n", h2.getValueAt(0));
-                 h2.remove (0);
-         }
+		h2.insert (70);
+		h2.insert (90);
+		h2.insert (10);
+		h2.insert (5);
+		h2.insert (88);
+		h2.insert (87);
+		h2.insert (300);
+		h2.insert (91);
+		h2.insert (100);
+		h2.insert (200);
+
+		int x = h2.getValueAt(0);
+		int oldx;
+		while (true)
+		{
+			oldx = x;
+			printf ("%d\n", x);
+			h2.remove (0);
+			if (h2.getSize() <= 0) break;
+			x = h2.getValueAt(0);
+			if (x < oldx)
+			{
+				printf ("[FAILURE] ------------------------ \n");
+				break;
+			}
+		}
 	}
+	printf ("\n");
+	//////////////////////////////////////////////////////////////////////////////  
 
-	printf ("----------------\n");
 
+	printf ("[TEST #4 - strings must be shown in the ascending order]\n");
+	{
+		StrHeap h (getStrHeap ());
+
+		const char* x = h.getValueAt(0).c_str();
+		std::string oldx;
+		while (true)
+		{
+			oldx = x;
+			printf ("%s\n", x);
+			h.remove (0);
+			if (h.isEmpty()) break;
+			x = h.getValueAt(0).c_str();
+			if (strcmp (x, oldx.c_str()) < 0) 
+			{
+				printf ("[FAILURE] ------------------------ \n");
+				break;
+			}
+		}
+	}
+	printf ("\n");
+	//////////////////////////////////////////////////////////////////////////////  
+
+	printf ("[TEST #5 - random test]\n");
 	{
 		Container c;
 		StrList::Node* node2, * node14;
-		for (qse_size_t i = 0; i < 20; i++)
+		for (qse_size_t i = 0; i < TOTAL; i++)
 		{
 			sprintf (buf, "hello %d", (int)i);
 	
@@ -209,13 +283,14 @@ int main ()
 		}
 		*/
 		
-	         for (int i = 0; c.getSize() > 0; i++)
-	         {
+		for (int i = 0; c.getSize() > 0; i++)
+		{
 			if (i == 3) c.remove (node2);
 			if (i == 5) c.remove (node14);
-	
+
 			const char* largest = c.getLargest().c_str();
-	                 printf ("%s\n", largest);
+			printf ("%s\n", largest);
+
 			c.removeLargest ();
 		}
 	}

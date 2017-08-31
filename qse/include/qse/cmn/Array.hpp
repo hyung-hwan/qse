@@ -116,9 +116,7 @@ public:
 		this->init_array (capacity);
 	}
 
-	Array (const SelfType& array): 
-		Mmged(array.getMmgr()),
-		count(0), capacity(0), buffer(QSE_NULL)
+	Array (const SelfType& array): Mmged(array.getMmgr()), count(0), capacity(0), buffer(QSE_NULL)
 	{
 		if (array.buffer)
 		{
@@ -129,10 +127,7 @@ public:
 	}
 
 #if defined(QSE_CPP_ENABLE_CPP11_MOVE)
-
-	Array (SelfType&& array):
-		Mmged(array.getMmgr()),
-		count(0), capacity(0), buffer(QSE_NULL)
+	Array (SelfType&& array): Mmged(array.getMmgr()), count(0), capacity(0), buffer(QSE_NULL)
 	{
 		if (array.buffer)
 		{
@@ -173,11 +168,14 @@ public:
 	{
 		if (this != &array)
 		{
+			// since 'array' is an rvalue, i know it's going to be destroyed.
+			// it should be safe to destroy all my items here first instead of
+			// arranging to swap with items of 'array'.
 			this->clear (true);
 
 			if (array.buffer)
 			{
-				// TODO: show i block move if mmgrs are differnt
+				// TODO: should i swap items if mmgrs are differnt
 				//       between *this and array?
 
 				this->setMmgr (array.getMmgr());  // copy over mmgr.
@@ -186,6 +184,8 @@ public:
 				this->count = array.count;
 				this->capacity = array.capacity;
 
+				// since i cleared all items in the existing array,
+				// i can simply do the followings.
 				array.buffer = QSE_NULL;
 				array.count = 0;
 				array.capacity = 0;
