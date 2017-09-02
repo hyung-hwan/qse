@@ -98,7 +98,7 @@ typedef enum qse_xli_errnum_t qse_xli_errnum_t;
  * editor with the qse_xli_seterrstr() function to customize an error string.
  */
 typedef const qse_char_t* (*qse_xli_errstr_t) (
-	const qse_xli_t* xli,   /**< stream editor */
+	const qse_xli_t* xli,   /**< xli object */
 	qse_xli_errnum_t num    /**< error number */
 );
 
@@ -459,7 +459,7 @@ QSE_EXPORT int qse_xli_setopt (
  * The qse_xli_geterrstr() gets an error string getter.
  */
 QSE_EXPORT qse_xli_errstr_t qse_xli_geterrstr (
-	const qse_xli_t* xli    /**< stream editor */
+	const qse_xli_t* xli    /**< xli object */
 );
 
 /**
@@ -487,7 +487,7 @@ QSE_EXPORT qse_xli_errstr_t qse_xli_geterrstr (
  * @endcode
  */
 QSE_EXPORT void qse_xli_seterrstr (
-	qse_xli_t*       xli,   /**< stream editor */
+	qse_xli_t*       xli,   /**< xli object */
 	qse_xli_errstr_t errstr /**< an error string getter */
 );
 
@@ -496,7 +496,7 @@ QSE_EXPORT void qse_xli_seterrstr (
  * @return error number
  */
 QSE_EXPORT qse_xli_errnum_t qse_xli_geterrnum (
-	const qse_xli_t* xli /**< stream editor */
+	const qse_xli_t* xli /**< xli object */
 );
 
 /**
@@ -505,7 +505,7 @@ QSE_EXPORT qse_xli_errnum_t qse_xli_geterrnum (
  * @return error location
  */
 QSE_EXPORT const qse_xli_loc_t* qse_xli_geterrloc (
-	const qse_xli_t* xli /**< stream editor */
+	const qse_xli_t* xli /**< xli object */
 );
 
 /**
@@ -513,7 +513,7 @@ QSE_EXPORT const qse_xli_loc_t* qse_xli_geterrloc (
  * @return error message pointer
  */
 QSE_EXPORT const qse_char_t* qse_xli_geterrmsg (
-	const qse_xli_t* xli /**< stream editor */
+	const qse_xli_t* xli /**< xli object */
 );
 
 /**
@@ -522,7 +522,7 @@ QSE_EXPORT const qse_char_t* qse_xli_geterrmsg (
  * to by each parameter.
  */
 QSE_EXPORT void qse_xli_geterror (
-	const qse_xli_t*   xli,    /**< stream editor */
+	const qse_xli_t*   xli,    /**< xli object */
 	qse_xli_errnum_t*  errnum, /**< error number */
 	const qse_char_t** errmsg, /**< error message */
 	qse_xli_loc_t*     errloc  /**< error location */
@@ -533,7 +533,7 @@ QSE_EXPORT void qse_xli_geterror (
  * location.
  */
 QSE_EXPORT void qse_xli_seterrnum (
-	qse_xli_t*        xli,    /**< stream editor */
+	qse_xli_t*        xli,    /**< xli object */
 	qse_xli_errnum_t  errnum, /**< error number */
 	const qse_cstr_t* errarg  /**< argument for formatting error message */
 );
@@ -543,7 +543,7 @@ QSE_EXPORT void qse_xli_seterrnum (
  * message for a given error number.
  */
 QSE_EXPORT void qse_xli_seterrmsg (
-	qse_xli_t*           xli,      /**< stream editor */
+	qse_xli_t*           xli,      /**< xli object */
 	qse_xli_errnum_t     errnum,   /**< error number */
 	const qse_char_t*    errmsg,   /**< error message */
 	const qse_xli_loc_t* errloc /**< error location */
@@ -555,7 +555,7 @@ QSE_EXPORT void qse_xli_seterrmsg (
  * and an array of formatting parameters.
  */
 QSE_EXPORT void qse_xli_seterror (
-	qse_xli_t*           xli,    /**< stream editor */
+	qse_xli_t*           xli,    /**< xli object */
 	qse_xli_errnum_t     errnum, /**< error number */
 	const qse_cstr_t*    errarg, /**< array of arguments for formatting 
 	                              *   an error message */
