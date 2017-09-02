@@ -82,11 +82,11 @@ QSE_EXPORT qse_size_t qse_ethwadtowcs (
 #if defined(QSE_CHAR_IS_MCHAR)
 #       define qse_strtoethwad(ptr,hwad)            qse_mbstoethwad(ptr,hwad)
 #       define qse_strntoethwad(ptr,len,hwad)       qse_mbsntoethwad(ptr,len,hwad)
-#       define qse_ethwadtostr(hwad,ptr,len,flags)  qse_ethwadtombs(hwad,ptr,len,flags)
+#       define qse_ethwadtostr(hwad,ptr,len)        qse_ethwadtombs(hwad,ptr,len)
 #else
 #       define qse_strtoethwad(ptr,hwad)            qse_wcstoethwad(ptr,hwad)
 #       define qse_strntoethwad(ptr,len,hwad)       qse_wcsntoethwad(ptr,len,hwad)
-#       define qse_ethwadtostr(hwad,ptr,len,flags)  qse_ethwadtowcs(hwad,ptr,len,flags)
+#       define qse_ethwadtostr(hwad,ptr,len)        qse_ethwadtowcs(hwad,ptr,len)
 #endif
 
 #if defined(__cplusplus)
