@@ -25,22 +25,43 @@
  */
 
 #include <qse/si/Socket.hpp>
+#include <sys/socket.h>
 
 /////////////////////////////////
 QSE_BEGIN_NAMESPACE(QSE)
 /////////////////////////////////
 
-Socket::Socket (): handle(QSE_INVALID_SCKHND)
+Socket::Socket () QSE_CPP_NOEXCEPT: handle(QSE_INVALID_SCKHND)
 {
 }
 
-Socket::~Socket ()
+Socket::~Socket () QSE_CPP_NOEXCEPT
 {
 	this->close ();
 }
 
+#if 0
+int Socket::fdopen (int handle) QSE_CPP_NOEXCEPT
+{
+	this->handle = handle;
+}
+#endif
 
-void Socket::close ()
+int Socket::open (int domain, int type, int protocol) QSE_CPP_NOEXCEPT
+{
+	int x;
+
+	x = ::socket (domain, type, protocol);
+	if (x != -1)
+	{
+		this->close ();
+		this->handle = x;
+	}
+
+	return x;
+}
+
+void Socket::close () QSE_CPP_NOEXCEPT
 {
 	if (this->handle != QSE_INVALID_SCKHND)
 	{
@@ -49,20 +70,17 @@ void Socket::close ()
 	}
 }
 
-//int Socket::open (int domain, int type, int protocol)
-//{
-//}
-
-
-int Socket::connect (const SocketAddress& target)
+int Socket::connect (const SocketAddress& target) QSE_CPP_NOEXCEPT
 {
-	if (this->handle == QSE_INVALID_SCKHND)
-	{
-		//::socket (target.getFamily(), this->type, 0);
-	}
+	//if (this->handle == QSE_INVALID_SCKHND)
+	//{
+	//	
+	//}
+
+	return -1;
 }
 
-int Socket::beginConnect (const SocketAddress &target)
+int Socket::beginConnect (const SocketAddress &target) QSE_CPP_NOEXCEPT
 {
 }
 

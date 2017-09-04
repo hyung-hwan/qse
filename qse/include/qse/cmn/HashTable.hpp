@@ -174,25 +174,15 @@ public:
 		return this->pair_list.isEmpty ();
 	}
 
-	PairNode* getHeadNode ()
-	{
-		return this->pair_list.getHeadNode ();
-	}
+	PairNode* getHeadNode () { return this->pair_list.getHeadNode (); }
+	const PairNode* getHeadNode () const { return this->pair_list.getHeadNode (); }
+	PairNode* getFirstNode () { return this->pair_list.getHeadNode (); }
+	const PairNode* getFirstNode () const { return this->pair_list.getHeadNode (); }
 
-	const PairNode* getHeadNode () const
-	{
-		return this->pair_list.getHeadNode ();
-	}
-
-	PairNode* getTailNode ()
-	{
-		return this->pair_list.getTailNode ();
-	}
-
-	const PairNode* getTailNode () const
-	{
-		return this->pair_list.getTailNode ();
-	}
+	PairNode* getTailNode () { return this->pair_list.getTailNode (); }
+	const PairNode* getTailNode () const { return this->pair_list.getTailNode (); }
+	PairNode* getLastNode () { return this->pair_list.getTailNode (); }
+	const PairNode* getLastNode () const { return this->pair_list.getTailNode (); }
 
 	Pair* inject (const K& key, const V& value, int mode, bool* injected = QSE_NULL)
 	{
