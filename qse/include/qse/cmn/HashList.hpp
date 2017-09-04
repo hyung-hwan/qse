@@ -300,26 +300,15 @@ public:
 		return this->datum_list->isEmpty ();
 	}
 
-	Node* getHeadNode ()
-	{
-		return this->datum_list->getHeadNode ();
-	}
+	Node* getHeadNode () { return this->datum_list->getHeadNode (); }
+	const Node* getHeadNode () const { return this->datum_list->getHeadNode (); }
+	Node* getFirstNode () { return this->datum_list->getHeadNode (); }
+	const Node* getFirstNode () const { return this->datum_list->getHeadNode (); }
 
-	const Node* getHeadNode () const
-	{
-		return this->datum_list->getHeadNode ();
-	}
-
-	Node* getTailNode ()
-	{
-		return this->datum_list->getTailNode ();
-	}
-
-	const Node* getTailNode () const
-	{
-		return this->datum_list->getTailNode ();
-	}
-
+	Node* getTailNode () { return this->datum_list->getTailNode (); }
+	const Node* getTailNode () const { return this->datum_list->getTailNode (); }
+	Node* getLastNode () { return this->datum_list->getTailNode (); }
+	const Node* getLastNode () const { return this->datum_list->getTailNode (); }
 protected:
 	Node* find_node (const T& datum) const
 	{

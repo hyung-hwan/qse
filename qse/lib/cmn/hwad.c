@@ -27,6 +27,7 @@
 #include <qse/cmn/hwad.h>
 #include <qse/cmn/chr.h>
 #include <qse/cmn/fmt.h>
+#include <qse/cmn/str.h>
 
 int qse_mbstoethwad (const qse_mchar_t* mbs, qse_ethwad_t* hwaddr)
 {

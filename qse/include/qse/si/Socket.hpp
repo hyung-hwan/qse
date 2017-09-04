@@ -37,14 +37,14 @@ QSE_BEGIN_NAMESPACE(QSE)
 class Socket
 {
 public:
-	Socket ();
-	~Socket ();
+	Socket () QSE_CPP_NOEXCEPT;
+	~Socket () QSE_CPP_NOEXCEPT;
 
-	int open (int domain, int type, int protocol);
-	void close ();
+	int open (int domain, int type, int protocol) QSE_CPP_NOEXCEPT;
+	void close () QSE_CPP_NOEXCEPT;
 
-	int connect (const SocketAddress& target);
-	int beginConnect (const SocketAddress& target);
+	int connect (const SocketAddress& target) QSE_CPP_NOEXCEPT;
+	int beginConnect (const SocketAddress& target) QSE_CPP_NOEXCEPT;
 
 protected:
 	qse_sck_hnd_t handle;

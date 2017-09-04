@@ -325,17 +325,13 @@ public:
 
 	/// The prependNode() function adds an externally created \a node
 	/// to the front of the list.
-	Node* prependNode (Node* node)
-	{
-		return this->insertNode (this->head_node, node);
-	}
+	Node* prependNode (Node* node) { return this->insertNode (this->head_node, node); }
+	Node* insertFirstNode (Node* node) { return this->insertNode (this->head_node, node); }
 
 	/// The appendNode() function adds an externally created \a node
 	/// to the back of the list.
-	Node* appendNode (Node* node)
-	{
-		return this->insertNode (QSE_NULL, node);
-	}
+	Node* appendNode (Node* node) { return this->insertNode (QSE_NULL, node); }
+	Node* insertLastNode (Node* node) { return this->insertNode (QSE_NULL, node); }
 
 	// create a new node to hold the value and insert it.
 	Node* insert (Node* pos, const T& value)
@@ -344,15 +340,11 @@ public:
 		return this->insertNode (pos, node);
 	}
 
-	Node* prepend (const T& value)
-	{
-		return this->insert (this->head_node, value);
-	}
+	Node* prepend (const T& value) { return this->insert (this->head_node, value); }
+	Node* insertFirst (const T& value) { return this->insert (this->head_node, value); }
 
-	Node* append (const T& value)
-	{
-		return this->insert ((Node*)QSE_NULL, value);
-	}
+	Node* append (const T& value) { return this->insert ((Node*)QSE_NULL, value); }
+	Node* insertLast (const T& value) { return this->insert ((Node*)QSE_NULL, value); }
 
 	void prependAll (const SelfType& list)
 	{
@@ -475,15 +467,11 @@ public:
 		return cnt;
 	}
 
-	void removeHead ()
-	{
-		this->remove (this->head_node);
-	}
+	void removeHead () { this->remove (this->head_node); }
+	void removeFirst () { this->remove (this->head_node); }
 
-	void removeTail ()
-	{
-		this->remove (this->tail_node);
-	}
+	void removeTail () { this->remove (this->tail_node); }
+	void removeLast () { this->remove (this->tail_node); }
 
 	/// The getHeadNode() function returns the first node.
 	/// \code
@@ -494,15 +482,11 @@ public:
 	///     printf ("%d\n", np->value);
 	/// }
 	/// \endcode
-	Node* getHeadNode ()
-	{
-		return this->head_node;
-	}
+	Node* getHeadNode () { return this->head_node; }
+	const Node* getHeadNode () const { return this->head_node; }
 
-	const Node* getHeadNode () const 
-	{
-		return this->head_node;
-	}
+	Node* getFirstNode () { return this->head_node; }
+	const Node* getFirstNode () const { return this->head_node; }
 
 	/// The getTailNode() function returns the last node.
 	/// \code
@@ -513,15 +497,11 @@ public:
 	///     printf ("%d\n", np->value);
 	/// }
 	/// \endcode
-	Node* getTailNode ()
-	{
-		return this->tail_node;
-	}
+	Node* getTailNode () { return this->tail_node; }
+	const Node* getTailNode () const { return this->tail_node; }
 
-	const Node* getTailNode () const 
-	{
-		return this->tail_node;
-	}
+	Node* getLastNode () { return this->tail_node; }
+	const Node* getLastNode () const { return this->tail_node; }
 
 protected:
 	Node* get_node_at (qse_size_t index) const

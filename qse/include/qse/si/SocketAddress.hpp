@@ -27,6 +27,7 @@
 #ifndef _QSE_SI_SOCKETADDRESS_HPP_
 #define _QSE_SI_SOCKETADDRESS_HPP_
 
+#include <qse/Types.hpp>
 #include <qse/si/nwad.h>
 
 /////////////////////////////////

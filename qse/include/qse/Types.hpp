@@ -36,6 +36,9 @@
 
 #if (__cplusplus >= 201103L) // C++11
 
+	#define QSE_CPP_NOEXCEPT noexcept(true)
+	#define QSE_CPP_EXPLICIT explicit
+
 	/// The QSE_CPP_ENABLE_CPP11_MOVE macro enables C++11 move semantics
 	/// in various classes.
 	#define QSE_CPP_ENABLE_CPP11_MOVE 1
@@ -49,13 +52,18 @@
 
 	#define QSE_CPP_TEMPLATE_QUALIFIER template
 
+
 #elif (__cplusplus >= 199711L) // C++98
+
+	#define QSE_CPP_NOEXCEPT throw()
+	#define QSE_CPP_EXPLICIT 
 
 	#define QSE_CPP_CALL_DESTRUCTOR(ptr, class_name) ((ptr)->~class_name())
 	#define QSE_CPP_CALL_PLACEMENT_DELETE1(ptr, arg1) (::operator delete((ptr), (arg1)))
 	#define QSE_CPP_TEMPLATE_QUALIFIER template
-
 #else
+	#define QSE_CPP_NOEXCEPT 
+	#define QSE_CPP_EXPLICIT 
 
 	#if defined(__BORLANDC__)
 
