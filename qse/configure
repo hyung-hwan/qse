@@ -23878,7 +23878,7 @@ QSE_PROJECT_AUTHOR="${PACKAGE_BUGREPORT}"
 QSE_PROJECT_URL="${PACKAGE_URL}"
 
 
-ac_config_files="$ac_config_files Makefile README include/Makefile include/qse/Makefile include/qse/cmn/Makefile include/qse/cry/Makefile include/qse/si/Makefile include/qse/awk/Makefile include/qse/sed/Makefile include/qse/xli/Makefile include/qse/http/Makefile include/qse/rad/Makefile lib/Makefile lib/cmn/Makefile lib/cry/Makefile lib/si/Makefile lib/awk/Makefile lib/sed/Makefile lib/xli/Makefile lib/http/Makefile lib/rad/Makefile lib/qsecmn.pc lib/qsecry.pc lib/qsesi.pc lib/qsesed.pc lib/qseawk.pc lib/qsexli.pc lib/qsehttp.pc lib/qserad.pc cmd/Makefile cmd/awk/Makefile cmd/sed/Makefile cmd/xli/Makefile cmd/http/Makefile samples/Makefile samples/cmn/Makefile samples/si/Makefile samples/awk/Makefile samples/sed/Makefile samples/http/Makefile regress/Makefile regress/awk/Makefile regress/awk/regress.sh regress/sed/Makefile regress/sed/regress.sh doc/Makefile doc/Doxyfile tools/Makefile"
+ac_config_files="$ac_config_files Makefile README include/Makefile include/qse/Makefile include/qse/cmn/Makefile include/qse/cry/Makefile include/qse/si/Makefile include/qse/awk/Makefile include/qse/sed/Makefile include/qse/xli/Makefile include/qse/http/Makefile include/qse/rad/Makefile lib/Makefile lib/cmn/Makefile lib/cry/Makefile lib/si/Makefile lib/awk/Makefile lib/sed/Makefile lib/xli/Makefile lib/http/Makefile lib/rad/Makefile lib/qsecmn.pc lib/qsecry.pc lib/qsesi.pc lib/qsesed.pc lib/qseawk.pc lib/qsexli.pc lib/qsehttp.pc lib/qserad.pc cmd/Makefile cmd/awk/Makefile cmd/sed/Makefile cmd/xli/Makefile cmd/http/Makefile samples/Makefile samples/cmn/Makefile samples/cry/Makefile samples/si/Makefile samples/awk/Makefile samples/sed/Makefile samples/http/Makefile regress/Makefile regress/awk/Makefile regress/awk/regress.sh regress/sed/Makefile regress/sed/regress.sh doc/Makefile doc/Doxyfile tools/Makefile"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -25092,6 +25092,7 @@ do
     "cmd/http/Makefile") CONFIG_FILES="$CONFIG_FILES cmd/http/Makefile" ;;
     "samples/Makefile") CONFIG_FILES="$CONFIG_FILES samples/Makefile" ;;
     "samples/cmn/Makefile") CONFIG_FILES="$CONFIG_FILES samples/cmn/Makefile" ;;
+    "samples/cry/Makefile") CONFIG_FILES="$CONFIG_FILES samples/cry/Makefile" ;;
     "samples/si/Makefile") CONFIG_FILES="$CONFIG_FILES samples/si/Makefile" ;;
     "samples/awk/Makefile") CONFIG_FILES="$CONFIG_FILES samples/awk/Makefile" ;;
     "samples/sed/Makefile") CONFIG_FILES="$CONFIG_FILES samples/sed/Makefile" ;;

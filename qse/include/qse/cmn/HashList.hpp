@@ -309,6 +309,7 @@ public:
 	const Node* getTailNode () const { return this->datum_list->getTailNode (); }
 	Node* getLastNode () { return this->datum_list->getTailNode (); }
 	const Node* getLastNode () const { return this->datum_list->getTailNode (); }
+
 protected:
 	Node* find_node (const T& datum) const
 	{

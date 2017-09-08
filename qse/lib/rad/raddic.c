@@ -148,7 +148,7 @@ static int str2argv (qse_mchar_t *str, qse_mchar_t* argv[], int max_argc)
 	int nflds, i;
 	qse_mchar_t* ptr;
 
-	nflds = qse_mbsspl (str, QSE_T(""), QSE_MT('\0'), QSE_MT('\0'), QSE_MT('\0'));
+	nflds = qse_mbsspl (str, QSE_MT(""), QSE_MT('\0'), QSE_MT('\0'), QSE_MT('\0'));
 	if (nflds <= 0)
 	{
 		return -1;
