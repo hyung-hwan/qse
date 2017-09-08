@@ -534,7 +534,7 @@ void qse_rad_copy_authenticator (qse_rad_hdr_t* dst, const qse_rad_hdr_t* src)
 	QSE_MEMCPY (dst->authenticator, src->authenticator, QSE_SIZEOF(dst->authenticator));
 }
 
-int qse_rad_set_authenticator (qse_rad_hdr_t* req, const qse_char_t* secret)
+int qse_rad_set_authenticator (qse_rad_hdr_t* req, const qse_mchar_t* secret)
 {
 	qse_md5_t md5;
 

@@ -819,6 +819,7 @@ AC_CONFIG_FILES([
 	cmd/http/Makefile 
 	samples/Makefile 
 	samples/cmn/Makefile 
+	samples/cry/Makefile 
 	samples/si/Makefile 
 	samples/awk/Makefile 
 	samples/sed/Makefile 

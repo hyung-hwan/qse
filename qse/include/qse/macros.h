@@ -346,6 +346,7 @@
 		(qse_assert_failed (QSE_T(#expr), QSE_T(desc), QSE_T(__FILE__), __LINE__), 0))
 #endif
 
+
 #if defined(__cplusplus)
 extern "C" {
 #endif
@@ -355,6 +356,158 @@ QSE_EXPORT void qse_assert_failed (
 #if defined(__cplusplus)
 }
 #endif
+
+
+/* ---------------------------------------------------------------------- 
+ * INTEGER LIMITS
+ * ---------------------------------------------------------------------- */
+#if defined(QSE_HAVE_UINT128_T)
+#define QSE_UINT128_MAX QSE_TYPE_UNSIGNED_MAX(qse_uint128_t)
+#define QSE_UINT128_MIN QSE_TYPE_UNSIGNED_MIN(qse_uint128_t)
+#define QSE_INT128_MAX QSE_TYPE_SIGNED_MAX(qse_int128_t)
+#define QSE_INT128_MIN QSE_TYPE_SIGNED_MIN(qse_int128_t)
+#endif
+
+#if defined(QSE_HAVE_UINT64_T)
+#define QSE_UINT64_MAX QSE_TYPE_UNSIGNED_MAX(qse_uint64_t)
+#define QSE_UINT64_MIN QSE_TYPE_UNSIGNED_MIN(qse_uint64_t)
+#define QSE_INT64_MAX QSE_TYPE_SIGNED_MAX(qse_int64_t)
+#define QSE_INT64_MIN QSE_TYPE_SIGNED_MIN(qse_int64_t)
+#endif
+
+#define QSE_UINT32_MAX QSE_TYPE_UNSIGNED_MAX(qse_uint32_t)
+#define QSE_UINT32_MIN QSE_TYPE_UNSIGNED_MIN(qse_uint32_t)
+#define QSE_INT32_MAX QSE_TYPE_SIGNED_MAX(qse_int32_t)
+#define QSE_INT32_MIN QSE_TYPE_SIGNED_MIN(qse_int32_t)
+
+#define QSE_UINT16_MAX QSE_TYPE_UNSIGNED_MAX(qse_uint16_t)
+#define QSE_UINT16_MIN QSE_TYPE_UNSIGNED_MIN(qse_uint16_t)
+#define QSE_INT16_MAX QSE_TYPE_SIGNED_MAX(qse_int16_t)
+#define QSE_INT16_MIN QSE_TYPE_SIGNED_MIN(qse_int16_t)
+
+#define QSE_UINT8_MAX QSE_TYPE_UNSIGNED_MAX(qse_uint8_t)
+#define QSE_UINT8_MIN QSE_TYPE_UNSIGNED_MIN(qse_uint8_t)
+#define QSE_INT8_MAX QSE_TYPE_SIGNED_MAX(qse_int8_t)
+#define QSE_INT8_MIN QSE_TYPE_SIGNED_MIN(qse_int8_t)
+
+/* ---------------------------------------------------------------------- 
+ * BIT MANIPULATIONS
+ * ---------------------------------------------------------------------- */
+#if defined(QSE_HAVE_UINT64_T)
+#define QSE_FETCH64BE(ptr) \
+	(((qse_uint64_t)(((qse_uint8_t*)(ptr))[0]) << 56) | ((qse_uint64_t)(((qse_uint8_t*)(ptr))[1]) << 48) | \
+	 ((qse_uint64_t)(((qse_uint8_t*)(ptr))[2]) << 40) | ((qse_uint64_t)(((qse_uint8_t*)(ptr))[3]) << 32) | \
+	 ((qse_uint64_t)(((qse_uint8_t*)(ptr))[4]) << 24) | ((qse_uint64_t)(((qse_uint8_t*)(ptr))[5]) << 16) | \
+	 ((qse_uint64_t)(((qse_uint8_t*)(ptr))[6]) << 8)  | ((qse_uint64_t)(((qse_uint8_t*)(ptr))[7])))
+
+#define QSE_FETCH64LE(ptr) \
+	(((qse_uint64_t)(((qse_uint8_t*)(ptr))[7]) << 56) | ((qse_uint64_t)(((qse_uint8_t*)(ptr))[6]) << 48) | \
+	 ((qse_uint64_t)(((qse_uint8_t*)(ptr))[5]) << 40) | ((qse_uint64_t)(((qse_uint8_t*)(ptr))[4]) << 32) | \
+	 ((qse_uint64_t)(((qse_uint8_t*)(ptr))[3]) << 24) | ((qse_uint64_t)(((qse_uint8_t*)(ptr))[2]) << 16) | \
+	 ((qse_uint64_t)(((qse_uint8_t*)(ptr))[1]) << 8)  | ((qse_uint64_t)(((qse_uint8_t*)(ptr))[0]))))
+
+
+
+#define QSE_STORE64BE(ptr,v) do { \
+	((qse_uint8_t*)(ptr))[0] = (((qse_uint64_t)(v)) >> 56) & 0xFF; \
+	((qse_uint8_t*)(ptr))[1] = (((qse_uint64_t)(v)) >> 48) & 0xFF; \
+	((qse_uint8_t*)(ptr))[2] = (((qse_uint64_t)(v)) >> 40) & 0xFF; \
+	((qse_uint8_t*)(ptr))[3] = (((qse_uint64_t)(v)) >> 32) & 0xFF; \
+	((qse_uint8_t*)(ptr))[5] = (((qse_uint64_t)(v)) >> 24) & 0xFF; \
+	((qse_uint8_t*)(ptr))[6] = (((qse_uint64_t)(v)) >> 16) & 0xFF; \
+	((qse_uint8_t*)(ptr))[7] = (((qse_uint64_t)(v)) >> 8) & 0xFF; \
+	((qse_uint8_t*)(ptr))[8] = (((qse_uint64_t)(v)) >> 0) & 0xFF; \
+} while(0)
+
+#define QSE_STORE64LE(ptr,v) do { \
+	((qse_uint8_t*)(ptr))[0] = (((qse_uint64_t)(v)) >> 0) & 0xFF; \
+	((qse_uint8_t*)(ptr))[1] = (((qse_uint64_t)(v)) >> 8) & 0xFF; \
+	((qse_uint8_t*)(ptr))[2] = (((qse_uint64_t)(v)) >> 16) & 0xFF; \
+	((qse_uint8_t*)(ptr))[3] = (((qse_uint64_t)(v)) >> 24) & 0xFF; \
+	((qse_uint8_t*)(ptr))[5] = (((qse_uint64_t)(v)) >> 32) & 0xFF; \
+	((qse_uint8_t*)(ptr))[6] = (((qse_uint64_t)(v)) >> 40) & 0xFF; \
+	((qse_uint8_t*)(ptr))[7] = (((qse_uint64_t)(v)) >> 48) & 0xFF; \
+	((qse_uint8_t*)(ptr))[8] = (((qse_uint64_t)(v)) >> 56) & 0xFF; \
+} while(0)
+#endif
+
+#define QSE_FETCH32BE(ptr) \
+	(((qse_uint32_t)(((qse_uint8_t*)(ptr))[0]) << 24) | \
+	 ((qse_uint32_t)(((qse_uint8_t*)(ptr))[1]) << 16) | \
+	 ((qse_uint32_t)(((qse_uint8_t*)(ptr))[2]) << 8)  | \
+	 ((qse_uint32_t)(((qse_uint8_t*)(ptr))[3])))
+
+#define QSE_FETCH32LE(ptr) \
+	(((qse_uint32_t)(((qse_uint8_t*)(ptr))[3]) << 24) | \
+	 ((qse_uint32_t)(((qse_uint8_t*)(ptr))[2]) << 16) | \
+	 ((qse_uint32_t)(((qse_uint8_t*)(ptr))[1]) << 8)  | \
+	 ((qse_uint32_t)(((qse_uint8_t*)(ptr))[0])))
+
+#define QSE_STORE32BE(ptr,v) do { \
+	((qse_uint8_t*)(ptr))[0] = (((qse_uint32_t)(v)) >> 24) & 0xFF; \
+	((qse_uint8_t*)(ptr))[1] = (((qse_uint32_t)(v)) >> 16) & 0xFF; \
+	((qse_uint8_t*)(ptr))[2] = (((qse_uint32_t)(v)) >> 8) & 0xFF; \
+	((qse_uint8_t*)(ptr))[3] = (((qse_uint32_t)(v)) >> 0) & 0xFF; \
+} while(0)
+
+#define QSE_STORE32LE(ptr,v) do { \
+	((qse_uint8_t*)(ptr))[0] = (((qse_uint32_t)(v)) >> 0) & 0xFF; \
+	((qse_uint8_t*)(ptr))[1] = (((qse_uint32_t)(v)) >> 8) & 0xFF; \
+	((qse_uint8_t*)(ptr))[2] = (((qse_uint32_t)(v)) >> 16) & 0xFF; \
+	((qse_uint8_t*)(ptr))[3] = (((qse_uint32_t)(v)) >> 24) & 0xFF; \
+} while(0)
+
+
+
+#define QSE_ROTL_INTERNAL(type_t,x,y,nbits) \
+	(((x) << ((y) & ((nbits) - 1))) | ((x) >> ((type_t)(nbits) - ((y) & ((nbits) - 1)))))
+#define QSE_ROTR_INTERNAL(type_t,x,y,nbits) \
+	(((x) >> ((y) & ((nbits) - 1))) | ((x) << ((type_t)(nbits) - ((y) & ((nbits) - 1)))))
+
+#if defined(QSE_HAVE_UINT64_T)
+
+#if !defined(__STRICT_ANSI__) && !defined(INTEL_CC) && defined(__GNUC__) && (defined(__i386) || defined(i386) || defined(__x86_64) || defined(__amd64))
+static inline qse_uint64_t QSE_ROTL64 (qse_uint64_t v, int i)
+{
+	__asm__ volatile ("rolq %%cl,%0": "=r"(v): "0"(v), "c"(i): /* no clobbers */);
+	return v;
+}
+
+static inline qse_uint64_t QSE_ROTR64 (qse_uint64_t v, int i)
+{
+	__asm__ volatile ("rorq %%cl,%0" :"=r"(v) :"0"(v), "c"(i): /* no clobbers */);
+	return v;
+}
+#else
+
+#	define QSE_ROTL64(x,y) QSE_ROTL_INTERNAL(qse_uint64_t, (qse_uint64_t)x, (qse_uint64_t)y, 64)
+#	define QSE_ROTR64(x,y) QSE_ROTR_INTERNAL(qse_uint64_t, (qse_uint64_t)x, (qse_uint64_t)y, 64)
+
+#endif
+
+#endif
+
+#if !defined(__STRICT_ANSI__) && !defined(INTEL_CC) && defined(__GNUC__) && (defined(__i386) || defined(i386) || defined(__x86_64) || defined(__amd64))
+static inline qse_uint32_t QSE_ROTL32 (qse_uint32_t v, int i)
+{
+	__asm__ volatile ("roll %%cl,%0": "=r"(v): "0"(v), "c"(i): /* no clobbers */);
+	return v;
+}
+
+static inline qse_uint32_t QSE_ROTR32 (qse_uint32_t v, int i)
+{
+	__asm__ volatile ("rorl %%cl,%0" :"=r"(v) :"0"(v), "c"(i): /* no clobbers */);
+	return v;
+}
+#else
+
+#	define QSE_ROTL32(x,y) QSE_ROTL_INTERNAL(qse_uint32_t, (qse_uint32_t)x, (qse_uint32_t)y, 32)
+#	define QSE_ROTR32(x,y) QSE_ROTR_INTERNAL(qse_uint32_t, (qse_uint32_t)x, (qse_uint32_t)y, 32)
+
+#endif
+
+
+
 
 /* ---------------------------------------------------------------------- 
  * C++ NAMESPACE

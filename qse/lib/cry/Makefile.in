@@ -135,7 +135,8 @@ am__uninstall_files_from_dir = { \
 am__installdirs = "$(DESTDIR)$(libdir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
 libqsecry_la_DEPENDENCIES =
-am_libqsecry_la_OBJECTS = libqsecry_la-md5.lo
+am_libqsecry_la_OBJECTS = libqsecry_la-blowfish.lo \
+	libqsecry_la-kseed.lo libqsecry_la-md5.lo
 libqsecry_la_OBJECTS = $(am_libqsecry_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
@@ -396,6 +397,8 @@ AM_CPPFLAGS = \
 #noinst_HEADERS =
 lib_LTLIBRARIES = libqsecry.la
 libqsecry_la_SOURCES = \
+	blowfish.c  \
+	kseed.c \
 	md5.c
 
 libqsecry_la_CFLAGS = 
@@ -479,6 +482,8 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqsecry_la-blowfish.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqsecry_la-kseed.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqsecry_la-md5.Plo@am__quote@
 
 .c.o:
@@ -501,6 +506,20 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LTCOMPILE) -c -o $@ $<
+
+libqsecry_la-blowfish.lo: blowfish.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libqsecry_la_CFLAGS) $(CFLAGS) -MT libqsecry_la-blowfish.lo -MD -MP -MF $(DEPDIR)/libqsecry_la-blowfish.Tpo -c -o libqsecry_la-blowfish.lo `test -f 'blowfish.c' || echo '$(srcdir)/'`blowfish.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libqsecry_la-blowfish.Tpo $(DEPDIR)/libqsecry_la-blowfish.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='blowfish.c' object='libqsecry_la-blowfish.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libqsecry_la_CFLAGS) $(CFLAGS) -c -o libqsecry_la-blowfish.lo `test -f 'blowfish.c' || echo '$(srcdir)/'`blowfish.c
+
+libqsecry_la-kseed.lo: kseed.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libqsecry_la_CFLAGS) $(CFLAGS) -MT libqsecry_la-kseed.lo -MD -MP -MF $(DEPDIR)/libqsecry_la-kseed.Tpo -c -o libqsecry_la-kseed.lo `test -f 'kseed.c' || echo '$(srcdir)/'`kseed.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libqsecry_la-kseed.Tpo $(DEPDIR)/libqsecry_la-kseed.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='kseed.c' object='libqsecry_la-kseed.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libqsecry_la_CFLAGS) $(CFLAGS) -c -o libqsecry_la-kseed.lo `test -f 'kseed.c' || echo '$(srcdir)/'`kseed.c
 
 libqsecry_la-md5.lo: md5.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libqsecry_la_CFLAGS) $(CFLAGS) -MT libqsecry_la-md5.lo -MD -MP -MF $(DEPDIR)/libqsecry_la-md5.Tpo -c -o libqsecry_la-md5.lo `test -f 'md5.c' || echo '$(srcdir)/'`md5.c
