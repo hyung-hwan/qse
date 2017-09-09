@@ -844,6 +844,7 @@ static int dev_sck_ioctl (qse_aio_dev_t* dev, int cmd, void* arg)
 			#endif
 			}
 
+		#if defined(USE_SSL)
 			if (rdev->ssl_ctx)
 			{
 				SSL_CTX_free (rdev->ssl_ctx);
@@ -855,6 +856,7 @@ static int dev_sck_ioctl (qse_aio_dev_t* dev, int cmd, void* arg)
 					rdev->ssl = QSE_NULL;
 				}
 			}
+		#endif
 
 			if (bnd->options & QSE_AIO_DEV_SCK_BIND_SSL)
 			{
