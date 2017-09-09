@@ -25,9 +25,9 @@ static int test1 ()
 
 	for (i = 0; i < QSE_COUNTOF(test_data); i++)
 	{
-		qse_uint8_t tmp[16];
+		qse_uint8_t tmp[QSE_BLOWFISH_BLOCK_SIZE];
 		memcpy (tmp, test_data[i], QSE_BLOWFISH_BLOCK_SIZE);
-		qse_blowfish_encrypt_block (&bf, tmp);
+		qse_blowfish_encrypt_block (&bf, &tmp);
 
 		qse_printf (QSE_T("%05d ENC => "), i);
 		if (memcmp (tmp, test_data[i], QSE_BLOWFISH_BLOCK_SIZE) == 0)
@@ -39,7 +39,7 @@ static int test1 ()
 			qse_printf (QSE_T("OK\n"));
 		}
 
-		qse_blowfish_decrypt_block (&bf, tmp);
+		qse_blowfish_decrypt_block (&bf, &tmp);
 		qse_printf (QSE_T("%05d DEC => "), i);
 		if (memcmp (tmp, test_data[i], QSE_BLOWFISH_BLOCK_SIZE) != 0)
 		{
@@ -72,9 +72,9 @@ static int test2 ()
 
 	for (i = 0; i < QSE_COUNTOF(test_data); i++)
 	{
-		qse_uint8_t tmp[16];
+		qse_uint8_t tmp[QSE_KSEED_BLOCK_SIZE];
 		memcpy (tmp, test_data[i], QSE_KSEED_BLOCK_SIZE);
-		qse_kseed_encrypt_block (&bf, tmp);
+		qse_kseed_encrypt_block (&bf, &tmp);
 
 		qse_printf (QSE_T("%05d ENC => "), i);
 		if (memcmp (tmp, test_data[i], QSE_KSEED_BLOCK_SIZE) == 0)
@@ -86,7 +86,7 @@ static int test2 ()
 			qse_printf (QSE_T("OK\n"));
 		}
 
-		qse_kseed_decrypt_block (&bf, tmp);
+		qse_kseed_decrypt_block (&bf, &tmp);
 		qse_printf (QSE_T("%05d DEC => "), i);
 		if (memcmp (tmp, test_data[i], QSE_KSEED_BLOCK_SIZE) != 0)
 		{
