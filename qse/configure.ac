@@ -255,6 +255,11 @@ fi
 
 AC_CHECK_FUNCS([kqueue kqueue1 kevent])
 
+
+AC_CHECK_LIB([pthread], [pthread_mutex_timedlock],  [
+	AC_DEFINE([HAVE_PTHREAD_MUTEX_TIMEDLOCK],1,[pthreads has pthread_mutex_timedlock()])
+])
+
 dnl check is the import library for unicows.dll exists
 dnl this check doesn't look for a particular symbol
 dnl but for the symbol 'main' since i want to check 

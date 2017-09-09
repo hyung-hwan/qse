@@ -212,6 +212,9 @@ int qse_mtx_lock (qse_mtx_t* mtx, const qse_ntime_t* waiting_time)
 	}
 
 #else
+
+	/* if pthread_mutex_timedlock() isn't available, don't honor the waiting time. */
+	#if defined(HAVE_PTHREAD_MUTEX_TIMEDLOCK)
 	if (waiting_time)
 	{
 		qse_ntime_t t;
@@ -226,8 +229,12 @@ int qse_mtx_lock (qse_mtx_t* mtx, const qse_ntime_t* waiting_time)
 	}
 	else
 	{
+	#endif
 		if (pthread_mutex_lock ((pthread_mutex_t*)&mtx->hnd) != 0) return -1;
+
+	#if defined(HAVE_PTHREAD_MUTEX_TIMEDLOCK)
 	}
+	#endif
 #endif
 
 	return 0;

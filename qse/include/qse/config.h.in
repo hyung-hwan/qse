@@ -467,6 +467,9 @@
 /* Define if you have POSIX threads libraries and header files. */
 #undef HAVE_PTHREAD
 
+/* pthreads has pthread_mutex_timedlock() */
+#undef HAVE_PTHREAD_MUTEX_TIMEDLOCK
+
 /* Have PTHREAD_PRIO_INHERIT. */
 #undef HAVE_PTHREAD_PRIO_INHERIT
 
