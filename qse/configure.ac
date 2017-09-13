@@ -58,7 +58,7 @@ LT_CONFIG_LTDL_DIR([libltdl])
 save_CFLAGS="$CFLAGS"
 save_LDFLAGS="$LDFLAGS"
 save_LIBS="$LIBS"
-LTDL_INIT
+LTDL_INIT(convenience)
 LDFLAGS="$save_LDFLAGS"
 CFLAGS="$save_CFLAGS"
 LIBS="$save_LIBS"
