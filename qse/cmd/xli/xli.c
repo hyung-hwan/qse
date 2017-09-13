@@ -443,9 +443,8 @@ static int xli_main (int argc, qse_char_t* argv[])
 	if (n <= -1)
 	{
 		const qse_xli_loc_t* errloc;
-	
-		errloc = qse_xli_geterrloc (xli);
 
+		errloc = qse_xli_geterrloc (xli);
 		if (errloc->line > 0 || errloc->colm > 0)
 		{
 			qse_fprintf (QSE_STDERR, 
@@ -539,12 +538,11 @@ static int xli_main (int argc, qse_char_t* argv[])
 					out.type = QSE_XLI_IOSTD_FILE;
 					out.u.file.path = QSE_T("-");
 					out.u.file.cmgr = g_outfile_cmgr;
-					qse_xli_writestd (xli, pair->val, &out);
+					qse_xli_writestd (xli, (qse_xli_list_t*)pair->val, &out);
 				}
 			}
 		}
 	}
-
 
 	out.type = QSE_XLI_IOSTD_FILE;
 	out.u.file.path = g_output_file? g_output_file: QSE_T("-");

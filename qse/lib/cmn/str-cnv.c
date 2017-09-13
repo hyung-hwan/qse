@@ -291,8 +291,6 @@ qse_size_t qse_wcsupr (qse_wchar_t* str)
 	return p - str;
 }
 
-
-
 /*---------------------------------------------------------------
  * Hexadecimal string conversion
  *---------------------------------------------------------------*/
@@ -306,21 +304,15 @@ int qse_mbshextobin (const qse_mchar_t* hex, qse_size_t hexlen, qse_uint8_t* buf
 	{
 		int v;
 
-		if (*hex >= QSE_MT('0') && *hex <= QSE_MT('9')) v = *hex - QSE_MT('0');
-		else if (*hex >= QSE_MT('a') && *hex <= QSE_MT('f')) v = *hex - QSE_MT('a') + 10;
-		else if (*hex >= QSE_MT('A') && *hex <= QSE_MT('F')) v = *hex - QSE_MT('A') + 10;
-		else return -1;
-
+		v = QSE_MXDIGITTONUM(*hex);
+		if (v <= -1) return -1;
 		buf[bi] = buf[bi] * 16 + v;
 
 		hex++;
 		if (hex >= end) return -1;
 
-		if (*hex >= QSE_MT('0') && *hex <= QSE_MT('9')) v = *hex - QSE_MT('0');
-		else if (*hex >= QSE_MT('a') && *hex <= QSE_MT('f')) v = *hex - QSE_MT('a') + 10;
-		else if (*hex >= QSE_MT('A') && *hex <= QSE_MT('F')) v = *hex - QSE_MT('A') + 10;
-		else return -1;
-
+		v = QSE_MXDIGITTONUM(*hex);
+		if (v <= -1) return -1;
 		buf[bi] = buf[bi] * 16 + v;
 
 		hex++;
@@ -329,7 +321,6 @@ int qse_mbshextobin (const qse_mchar_t* hex, qse_size_t hexlen, qse_uint8_t* buf
 
 	return 0;
 }
-
 
 int qse_wcshextobin (const qse_wchar_t* hex, qse_size_t hexlen, qse_uint8_t* buf, qse_size_t buflen)
 {
@@ -340,21 +331,15 @@ int qse_wcshextobin (const qse_wchar_t* hex, qse_size_t hexlen, qse_uint8_t* buf
 	{
 		int v;
 
-		if (*hex >= QSE_WT('0') && *hex <= QSE_WT('9')) v = *hex - QSE_WT('0');
-		else if (*hex >= QSE_WT('a') && *hex <= QSE_WT('f')) v = *hex - QSE_WT('a') + 10;
-		else if (*hex >= QSE_WT('A') && *hex <= QSE_WT('F')) v = *hex - QSE_WT('A') + 10;
-		else return -1;
-
+		v = QSE_WXDIGITTONUM(*hex);
+		if (v <= -1) return -1;
 		buf[bi] = buf[bi] * 16 + v;
 
 		hex++;
 		if (hex >= end) return -1;
 
-		if (*hex >= QSE_WT('0') && *hex <= QSE_WT('9')) v = *hex - QSE_WT('0');
-		else if (*hex >= QSE_WT('a') && *hex <= QSE_WT('f')) v = *hex - QSE_WT('a') + 10;
-		else if (*hex >= QSE_WT('A') && *hex <= QSE_WT('F')) v = *hex - QSE_WT('A') + 10;
-		else return -1;
-
+		v = QSE_WXDIGITTONUM(*hex);
+		if (v <= -1) return -1;
 		buf[bi] = buf[bi] * 16 + v;
 
 		hex++;

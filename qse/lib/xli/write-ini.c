@@ -91,7 +91,7 @@ static int write_list (qse_xli_t* xli, qse_xli_list_t* list, int depth)
 						{
 							/* key = value is not supported at the top level */
 
-							if (write_to_current_stream (xli, QSE_T(" = "), 3) <= -1) return -1;
+							if (write_to_current_stream (xli, QSE_T("="), 1) <= -1) return -1;
 							while (1)
 							{
 								if (str->tag)
