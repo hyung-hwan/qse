@@ -1,0 +1,560 @@
+/*
+ * $Id$
+ *
+    Copyright (c) 2006-2014 Chung, Hyung-Hwan. All rights reserved.
+
+    Redistribution and use in source and binary forms, with or without
+    modification, are permitted provided that the following conditions
+    are met:
+    1. Redistributions of source code must retain the above copyright
+       notice, this list of conditions and the following disclaimer.
+    2. Redistributions in binary form must reproduce the above copyright
+       notice, this list of conditions and the following disclaimer in the
+       documentation and/or other materials provided with the distribution.
+
+    THIS SOFTWARE IS PROVIDED BY THE AUTHOR "AS IS" AND ANY EXPRESS OR
+    IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+    OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+    IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+    INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+    NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+    DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+    THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+    (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+    THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+#include <qse/si/log.h>
+#include <qse/cmn/str.h>
+#include <qse/cmn/time.h>
+#include "../cmn/mem-prv.h"
+#include "../cmn/va_copy.h"
+
+#if defined(_WIN32)
+	/* TODO: windows event log */
+#else
+	#include <syslog.h>
+	#include <sys/socket.h>
+	#include "../cmn/syscall.h"
+#endif
+
+static const qse_char_t* __priority_names[] =
+{
+	QSE_T("panic"),
+	QSE_T("alert"),
+	QSE_T("critical"),
+	QSE_T("error"),
+	QSE_T("warning"),
+	QSE_T("notice"),
+	QSE_T("info"),
+	QSE_T("debug"),
+	QSE_NULL
+};
+
+#ifndef LOG_EMERG
+#	define LOG_EMERG  0 
+#endif
+#ifndef LOG_ALERT
+#	define LOG_ALERT  1  
+#endif
+#ifndef LOG_CRIT
+#	define LOG_CRIT   2
+#endif
+#ifndef LOG_ERR
+#	define LOG_ERR         3
+#endif
+#ifndef LOG_WARNING
+#	define LOG_WARNING     4
+#endif
+#ifndef LOG_NOTICE
+#	define LOG_NOTICE      5
+#endif
+#ifndef LOG_INFO
+#	define LOG_INFO        6
+#endif
+#ifndef LOG_DEBUG
+#	define LOG_DEBUG       7
+#endif
+
+static int __syslog_priority[] =
+{
+	LOG_EMERG,
+	LOG_ALERT,
+	LOG_CRIT,
+	LOG_ERR,
+	LOG_WARNING,
+	LOG_NOTICE,
+	LOG_INFO,
+	LOG_DEBUG
+};
+
+#if defined(_WIN32)
+/* TODO: windows event logging */
+#else
+
+struct syslog_fac_info_t
+{
+	const qse_char_t* name;
+	qse_log_facility_t     code;
+};
+
+static struct syslog_fac_info_t __syslog_fac_info[] =
+{
+	{ QSE_T("kern"),     QSE_LOG_KERN },
+	{ QSE_T("user"),     QSE_LOG_USER },
+	{ QSE_T("mail"),     QSE_LOG_MAIL },
+	{ QSE_T("daemon"),   QSE_LOG_DAEMON },
+	{ QSE_T("auth"),     QSE_LOG_AUTH },
+	{ QSE_T("syslogd"),  QSE_LOG_SYSLOGD },
+	{ QSE_T("lpr"),      QSE_LOG_LPR },
+	{ QSE_T("news"),     QSE_LOG_NEWS },
+	{ QSE_T("uucp"),     QSE_LOG_UUCP },
+	{ QSE_T("cron"),     QSE_LOG_CRON },
+	{ QSE_T("authpriv"), QSE_LOG_AUTHPRIV },
+	{ QSE_T("ftp"),      QSE_LOG_FTP },
+	{ QSE_T("local0"),   QSE_LOG_LOCAL0 },
+	{ QSE_T("local1"),   QSE_LOG_LOCAL1 },
+	{ QSE_T("local2"),   QSE_LOG_LOCAL2 },
+	{ QSE_T("local3"),   QSE_LOG_LOCAL3 },
+	{ QSE_T("local4"),   QSE_LOG_LOCAL4 },
+	{ QSE_T("local5"),   QSE_LOG_LOCAL5 },
+	{ QSE_T("local6"),   QSE_LOG_LOCAL6 },
+	{ QSE_T("local7"),   QSE_LOG_LOCAL7 },
+
+	{ QSE_NULL,          0 }
+};
+#endif
+
+int qse_log_init (qse_log_t* log, qse_mmgr_t* mmgr, const qse_char_t* ident, int potflags, const qse_log_target_t* target)
+{
+	QSE_MEMSET (log, 0, QSE_SIZEOF(*log));
+	log->mmgr = mmgr;
+
+	log->flags = potflags & (QSE_LOG_MASK_PRIORITY | QSE_LOG_MASK_OPTION);
+	log->t.syslog_remote.sock = -1; 
+
+	if (potflags & QSE_LOG_FILE)
+	{
+		qse_strxcpy (log->t.file.path, QSE_COUNTOF(log->t.file.path), target->file);
+		log->flags |= QSE_LOG_FILE;
+	}
+	if (potflags & QSE_LOG_CONSOLE) log->flags |= QSE_LOG_CONSOLE;
+	if (potflags & QSE_LOG_SYSLOG) log->flags |= QSE_LOG_SYSLOG;
+
+	if (potflags & QSE_LOG_SYSLOG_REMOTE)
+	{
+		/* flags_arg should be qse_skad_t* */
+		log->t.syslog_remote.addr = target->syslog_remote;
+		log->flags |= QSE_LOG_SYSLOG_REMOTE;
+	}
+
+	if (ident) qse_strxcpy (log->ident, QSE_COUNTOF(log->ident), ident);
+	if (qse_mtx_init(&log->mtx, mmgr) <= -1) return -1;
+
+#if defined(_WIN32)
+	/* TODO: windows event logging */
+#else
+	log->syslog_facility = QSE_LOG_USER;
+#endif
+
+	return 0;
+}
+
+void qse_log_fini (qse_log_t* log)
+{
+	if (log->t.syslog_remote.sock >= 0)
+	{
+		QSE_CLOSE (log->t.syslog_remote.sock);
+		log->t.syslog_remote.sock = -1;
+	}
+
+	if (log->t.console.sio)
+	{
+		qse_sio_close (log->t.console.sio);
+		log->t.console.sio = QSE_NULL;
+	}
+
+	if (log->t.file.sio)
+	{
+		qse_sio_close (log->t.file.sio);
+		log->t.file.sio = QSE_NULL;
+	}
+
+	if (log->t.syslog.opened) 
+	{
+		closelog ();
+		log->t.syslog.opened = 0;
+	}
+
+	if (log->dmsgbuf) 
+	{
+		qse_mbs_close (log->dmsgbuf);
+		log->dmsgbuf = QSE_NULL;
+	}
+	qse_mtx_fini (&log->mtx);
+}
+
+qse_log_t* qse_log_open (qse_mmgr_t* mmgr, qse_size_t xtnsize, const qse_char_t* ident, int potflags, const qse_log_target_t* target)
+{
+	qse_log_t* log;
+
+	log = (qse_log_t*) QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(qse_log_t) + xtnsize);
+	if (log)
+	{
+		 if (qse_log_init (log, mmgr, ident, potflags, target) <= -1)
+		 {
+			QSE_MMGR_FREE (mmgr, log);
+			return QSE_NULL;
+		 }
+		 else QSE_MEMSET (QSE_XTN(log), 0, xtnsize);
+	}
+
+	return log;
+}
+
+void qse_log_close (qse_log_t* log)
+{
+	qse_log_fini (log);
+	QSE_MMGR_FREE (log->mmgr, log);
+}
+
+void qse_log_setident (qse_log_t* log, const qse_char_t* ident)
+{
+	/* set the base identifer to use */
+	if (ident) 
+		qse_strxcpy (log->ident, QSE_COUNTOF(log->ident), ident);
+	else
+		log->ident[0] = QSE_T('\0');
+
+	if (log->t.syslog.opened)
+	{
+		closelog ();
+		log->t.syslog.opened = 0;
+		/* it will be opened again with the new identifier in the
+ 		 * output function if necessary. */
+	}
+}
+
+void qse_log_settarget (qse_log_t* log, int flags, const qse_log_target_t* target)
+{
+#if 0
+/* TODO: */
+	if ((log->flags & QSE_LOG_SYSLOG_REMOTE) != 0 &&
+	    (flags & QSE_LOG_SYSLOG_REMOTE) == 0) 
+	{
+		QSE_CLOSE (log->t.syslog_remote.sock);
+	}
+
+	if ((log->flags & QSE_LOG_SYSLOG_REMOTE) == 0 &&
+	    (flags & QSE_LOG_SYSLOG_REMOTE) != 0) 
+	{
+		int sock;
+		sock = qse_sckopen (AF_INET, SOCK_DGRAM, 0);
+		if (sock == -1) flags &= ~QSE_LOG_SYSLOG_REMOTE;
+		else log->t.syslog_remote.sock = sock;
+	}
+
+	log->flags &= (QSE_LOG_MASK_PRIORITY | QSE_LOG_MASK_OPTION); /* preserve the priority and the options */
+	if (flags & QSE_LOG_FILE) log->flags |= QSE_LOG_FILE;
+	if (flags & QSE_LOG_CONSOLE) log->flags |= QSE_LOG_CONSOLE;
+	if (flags & QSE_LOG_SYSLOG) log->flags |= QSE_LOG_SYSLOG;
+
+	if (flags & QSE_LOG_SYSLOG_REMOTE) log->flags |= QSE_LOG_SYSLOG_REMOTE;
+#endif
+
+}
+
+int qse_log_gettarget (qse_log_t* log, qse_log_target_t* target)
+{
+	if (target)
+	{
+		target->file = log->t.file.path;
+		target->syslog_remote = log->t.syslog_remote.addr;
+	}
+	return log->flags & QSE_LOG_MASK_TARGET;
+}
+
+void qse_log_setpriority (qse_log_t* log, int priority)
+{
+	log->flags = (log->flags & QSE_LOG_MASK_TARGET) | (priority & QSE_LOG_MASK_PRIORITY);
+}
+
+int qse_log_setprioritybyname (qse_log_t* log, const qse_char_t* name)
+{
+	const qse_char_t** p = __priority_names;
+
+	while (*p != QSE_NULL) 
+	{
+		if (qse_strcmp(*p, name) == 0) 
+		{
+			qse_log_setpriority (log, (int)(p - __priority_names));
+			return 0;
+		}
+
+		p++;
+	}
+
+	return -1;
+}
+
+void qse_log_setsyslogfacility (qse_log_t* log, qse_log_facility_t facility)
+{
+#ifndef _WIN32
+	log->syslog_facility = facility;
+#endif
+}
+
+int qse_log_setsyslogfacilitybyname (qse_log_t* log, const qse_char_t* name)
+{
+#if defined(_WIN32)
+	/* do nothing */
+	return 0;
+#else
+	struct syslog_fac_info_t* f = __syslog_fac_info;
+
+	while (f->name != QSE_NULL) 
+	{
+		if (qse_strcmp (f->name, name) == 0) 
+		{
+			log->syslog_facility = f->code;
+			return 0;
+		}
+
+		f++;
+	}
+
+	return -1;
+#endif
+}
+
+int qse_log_getpriority (qse_log_t* log)
+{
+	return log->flags & QSE_LOG_MASK_PRIORITY;
+}
+
+const qse_char_t* qse_log_getpriorityname (qse_log_t* log)
+{
+	int pri = log->flags & QSE_LOG_MASK_PRIORITY;
+
+	if (pri < 0 || pri >= QSE_COUNTOF(__priority_names)) return QSE_NULL;
+	return __priority_names[pri];
+}
+
+static QSE_INLINE void __report_over_sio (qse_log_t* log, qse_sio_t* sio, const qse_mchar_t* tm, const qse_char_t* ident, const qse_char_t* fmt, va_list arg)
+{
+	int id_out = 0;
+
+	qse_sio_putmbs (sio, tm);
+	qse_sio_putmbs (sio, QSE_MT(" "));
+
+	if (log->ident[0] != QSE_T('\0')) 
+	{
+		qse_sio_putstr (sio, log->ident);
+
+		if (ident && ident[0] != QSE_T('\0'))
+		{
+			qse_sio_putmbs (sio, QSE_MT("("));
+			qse_sio_putstr (sio, ident);
+			qse_sio_putmbs (sio, QSE_MT(")"));
+		}
+		id_out = 1;
+	}
+	else
+	{
+		if (ident && ident[0] != QSE_T('\0'))
+		{
+			qse_sio_putstr (sio, ident);
+			id_out = 1;
+		}
+	}
+
+	if (id_out) qse_sio_putmbs (sio, QSE_MT(": "));
+
+	qse_sio_putstrvf (sio, fmt, arg);
+	qse_sio_putmbs (sio, "\n");
+}
+
+void qse_log_report (qse_log_t* log, const qse_char_t* ident, int pri, const qse_char_t* fmt, ...)
+{
+	va_list ap;
+
+	va_start (ap, fmt);
+	qse_log_reportv (log, ident, pri, fmt, ap);
+	va_end (ap);
+}
+
+void qse_log_reportv (qse_log_t* log, const qse_char_t* ident, int pri, const qse_char_t* fmt, va_list ap)
+{
+	qse_ntime_t now;
+	qse_btime_t cnow;
+	qse_mchar_t tm[64];
+
+	if ((log->flags & QSE_LOG_MASK_TARGET) == 0) return; /* no target */
+
+	if (log->flags & QSE_LOG_ENABLE_MASKED)
+	{
+		if (!(pri & (log->flags & QSE_LOG_MASK_PRIORITY))) return;
+	}
+	else
+	{
+		if (pri > (log->flags & QSE_LOG_MASK_PRIORITY)) return;
+	}
+
+	if (qse_gettime(&now) <= -1) return;
+	if (qse_localtime(&now, &cnow) <= -1) return;
+
+	if (log->flags & (QSE_LOG_CONSOLE | QSE_LOG_FILE))
+	{
+		if (cnow.gmtoff == QSE_TYPE_MIN(int))
+		{
+			qse_mbsxfmt (tm, QSE_COUNTOF(tm),
+				QSE_T("%04.4d-%02d-%02d %02d:%02d:%02d"), 
+				cnow.year + QSE_BTIME_YEAR_BASE, cnow.mon + 1, cnow.mday, 
+				cnow.hour, cnow.min, cnow.sec);
+		}
+		else
+		{
+			qse_long_t gmtoff_hour, gmtoff_min;
+			gmtoff_hour = cnow.gmtoff / QSE_SECS_PER_HOUR;
+			gmtoff_min = (cnow.gmtoff % QSE_SECS_PER_HOUR) / QSE_SECS_PER_MIN;
+			qse_mbsxfmt (tm, QSE_COUNTOF(tm),
+				QSE_T("%04.4d-%02d-%02d %02d:%02d:%02d %c%02d%02d"), 
+				cnow.year + QSE_BTIME_YEAR_BASE, cnow.mon + 1, cnow.mday, 
+				cnow.hour, cnow.min, cnow.sec, 
+				((cnow.gmtoff > 0)? QSE_T('+'): QSE_T('-')),
+				gmtoff_hour, gmtoff_min);
+		}
+	}
+
+	if (qse_mtx_lock (&log->mtx, QSE_NULL) <= -1) return;
+
+	if (log->flags & QSE_LOG_CONSOLE) 
+	{
+		if (!log->t.console.sio) 
+			log->t.console.sio = qse_sio_openstd (log->mmgr, 0, QSE_SIO_STDERR, QSE_SIO_APPEND | QSE_SIO_IGNOREMBWCERR);
+		if (log->t.console.sio)
+		{
+			va_list xap;
+			va_copy (xap, ap);
+			__report_over_sio (log, log->t.console.sio, tm, ident, fmt, xap);
+		}
+	}
+
+	if (log->flags & QSE_LOG_FILE) 
+	{
+		if (!log->t.file.sio)
+			log->t.file.sio = qse_sio_open (log->mmgr, 0, log->t.file.path, QSE_SIO_CREATE | QSE_SIO_APPEND | QSE_SIO_IGNOREMBWCERR);
+		if (log->t.file.sio)
+		{
+			va_list xap;
+			va_copy (xap, ap);
+			__report_over_sio (log, log->t.file.sio, tm, ident, fmt, xap);
+			if (!(log->flags & QSE_LOG_KEEP_FILE_OPEN))
+			{
+				qse_sio_close (log->t.file.sio);
+				log->t.file.sio = QSE_NULL;
+			}
+		}
+	}
+
+	if (log->flags & (QSE_LOG_SYSLOG | QSE_LOG_SYSLOG_REMOTE))
+	{
+		va_list xap;
+
+		if (!log->dmsgbuf) log->dmsgbuf = qse_mbs_open (log->mmgr, 0, 0);
+		if (!log->dmsgbuf) goto done;
+
+		va_copy (xap, ap);
+		if (qse_str_vfmt (log->dmsgbuf, fmt, xap) == QSE_TYPE_MAX(qse_size_t)) goto done;
+	}
+
+	if (log->flags & QSE_LOG_SYSLOG) 
+	{
+	#if defined(_WIN32)
+		/* TODO: windows event log */
+	#else
+		int sl_pri, sl_opt;
+
+		sl_opt = (log->flags & QSE_LOG_SYSLOG_PID)? LOG_PID: 0;
+		sl_pri = (pri < QSE_COUNTOF(__syslog_priority))? __syslog_priority[pri]: LOG_DEBUG;
+
+		if (!log->t.syslog.opened) 
+		{
+			/* the secondary 'ident' string is not included into syslog */
+		#if defined(QSE_CHAR_IS_MCHAR)
+			openlog (log->ident, sl_opt, log->syslog_facility);
+		#else
+			qse_mchar_t idbuf[QSE_LOG_IDENT_MAX * 2 + 1];
+			qse_mbsxfmt (idbuf, QSE_COUNTOF(idbuf), QSE_MT("%ls"), log->ident);
+			openlog (idbuf, sl_opt, log->syslog_facility);
+		#endif
+			log->t.syslog.opened = 1;
+		}
+
+		syslog (sl_pri, "%s", QSE_MBS_PTR(log->dmsgbuf));
+	#endif
+	}
+
+	/* remote syslogging for ipv4 */
+	if (log->flags & QSE_LOG_SYSLOG_REMOTE)  
+	{
+	#if defined(_WIN32)
+		/* TODO: windows event log */
+	#else
+		/* direct interface over udp to a remote syslog server */
+
+#if 0
+		int sl_pri;
+
+
+		sl_pri = (pri < QSE_COUNTOF(__syslog_priority))? __syslog_priority[pri]: LOG_DEBUG;
+
+#if 0
+		qse_formattime (tm, QSE_COUNTOF(tm), QSE_T("%b %d %H:%M:%S"), &cnow);
+#endif
+		if (idt == QSE_NULL) 
+		{
+			qse_strxfmt (log->msgbuf2, QSE_COUNTOF(log->msgbuf2), 
+				QSE_T("<%d>%s %s"), 
+				(int)(log->syslog_facility | sl_pri), 
+				tm, log->msgbuf);
+		}
+		else 
+		{
+			qse_strxfmt (log->msgbuf2, QSE_COUNTOF(log->msgbuf2), 
+				QSE_T("<%d>%s %s: %s"), 
+				(int)(log->syslog_facility | sl_pri), 
+				tm, idt, log->msgbuf);
+		}
+
+		if (log->t.syslog_remote.sock <= -1)
+			log->t.syslog_remote.sock = socket (qse_skadfamily(&log->t.syslog_remote.addr), SOCK_DGRAM, 0);
+		
+		if (log->t.syslog_remote.sock >= 0)
+		{
+		#if defined(QSE_CHAR_IS_MCHAR)
+			sendto (log->t.syslog_remote.sock, log->msgbuf2, qse_strlen(log->msgbuf2), 0,
+			        (struct sockaddr*)&log->t.syslog_remote.addr, 
+			        qse_skadsize(&log->t.syslog_remote.addr));
+		#else
+			qse_wcstomcs (log->msgbuf2, log->msgbuf_mb, QSE_COUNTOF(log->msgbuf_mb));
+
+			sendto (log->t.syslog_remote.sock, 
+			        log->msgbuf_mb, qse_mstrlen(log->msgbuf_mb), 0,
+			        (struct sockaddr*)&log->t.syslog_remote.addr, 
+			        qse_skadsize(&log->t.syslog_remote.addr));
+		#endif
+		}
+#endif
+	#endif
+	}
+
+done:
+	qse_mtx_unlock (&log->mtx);
+}
+
+const qse_char_t* qse_get_log_priority_name (int pri)
+{
+	if (pri < 0 || pri >= QSE_COUNTOF(__priority_names)) return QSE_NULL;
+	return __priority_names[pri];
+}

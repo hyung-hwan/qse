@@ -27,26 +27,7 @@
 #include <qse/cmn/str.h>
 #include <qse/cmn/mbwc.h>
 #include "mem-prv.h"
-
-#if !defined(QSE_HAVE_CONFIG_H)
-#	if defined(_WIN32) || defined(__OS2__) || defined(__DOS__)
-#		if (defined(__WATCOMC__) && (__WATCOMC__ < 1200)) || defined(__BORLANDC__)
-#			undef HAVE_VA_COPY
-#			undef HAVE___VA_COPY
-#		else
-#			define HAVE_VA_COPY
-#			define HAVE___VA_COPY
-#		endif
-#	endif
-#endif
-
-#if !defined(HAVE_VA_COPY)
-#	if defined(HAVE___VA_COPY)
-#		define va_copy(dst,src) __va_copy((dst),(src))
-#	else
-#		define va_copy(dst,src) QSE_MEMCPY(&(dst),&(src),QSE_SIZEOF(va_list))
-#	endif
-#endif
+#include "va_copy.h"
 
 static int put_mchar_null (qse_mchar_t c, void* ctx)
 {

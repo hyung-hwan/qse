@@ -27,6 +27,7 @@ libqsesi_la_SOURCES =  \
 	fs-move.c \
 	glob.c \
 	intr.c \
+	log.c \
 	mtx.c \
 	mux.c \
 	nwad.c \

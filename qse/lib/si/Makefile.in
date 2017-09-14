@@ -146,11 +146,12 @@ am_libqsesi_la_OBJECTS = libqsesi_la-aio.lo libqsesi_la-aio-pro.lo \
 	libqsesi_la-fs-copy.lo libqsesi_la-fs-delete.lo \
 	libqsesi_la-fs-err.lo libqsesi_la-fs-make.lo \
 	libqsesi_la-fs-move.lo libqsesi_la-glob.lo libqsesi_la-intr.lo \
-	libqsesi_la-mtx.lo libqsesi_la-mux.lo libqsesi_la-nwad.lo \
-	libqsesi_la-nwad-skad.lo libqsesi_la-nwif.lo \
-	libqsesi_la-nwif-cfg.lo libqsesi_la-nwio.lo libqsesi_la-pio.lo \
-	libqsesi_la-rwl.lo libqsesi_la-sck.lo libqsesi_la-sio.lo \
-	libqsesi_la-task.lo libqsesi_la-thr.lo libqsesi_la-tio.lo
+	libqsesi_la-log.lo libqsesi_la-mtx.lo libqsesi_la-mux.lo \
+	libqsesi_la-nwad.lo libqsesi_la-nwad-skad.lo \
+	libqsesi_la-nwif.lo libqsesi_la-nwif-cfg.lo \
+	libqsesi_la-nwio.lo libqsesi_la-pio.lo libqsesi_la-rwl.lo \
+	libqsesi_la-sck.lo libqsesi_la-sio.lo libqsesi_la-task.lo \
+	libqsesi_la-thr.lo libqsesi_la-tio.lo
 libqsesi_la_OBJECTS = $(am_libqsesi_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
@@ -459,6 +460,7 @@ libqsesi_la_SOURCES = \
 	fs-move.c \
 	glob.c \
 	intr.c \
+	log.c \
 	mtx.c \
 	mux.c \
 	nwad.c \
@@ -583,6 +585,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqsesi_la-fs.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqsesi_la-glob.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqsesi_la-intr.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqsesi_la-log.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqsesi_la-mtx.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqsesi_la-mux.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqsesi_la-nwad-skad.Plo@am__quote@
@@ -730,6 +733,13 @@ libqsesi_la-intr.lo: intr.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='intr.c' object='libqsesi_la-intr.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libqsesi_la_CFLAGS) $(CFLAGS) -c -o libqsesi_la-intr.lo `test -f 'intr.c' || echo '$(srcdir)/'`intr.c
+
+libqsesi_la-log.lo: log.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libqsesi_la_CFLAGS) $(CFLAGS) -MT libqsesi_la-log.lo -MD -MP -MF $(DEPDIR)/libqsesi_la-log.Tpo -c -o libqsesi_la-log.lo `test -f 'log.c' || echo '$(srcdir)/'`log.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libqsesi_la-log.Tpo $(DEPDIR)/libqsesi_la-log.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='log.c' object='libqsesi_la-log.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libqsesi_la_CFLAGS) $(CFLAGS) -c -o libqsesi_la-log.lo `test -f 'log.c' || echo '$(srcdir)/'`log.c
 
 libqsesi_la-mtx.lo: mtx.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libqsesi_la_CFLAGS) $(CFLAGS) -MT libqsesi_la-mtx.lo -MD -MP -MF $(DEPDIR)/libqsesi_la-mtx.Tpo -c -o libqsesi_la-mtx.lo `test -f 'mtx.c' || echo '$(srcdir)/'`mtx.c
