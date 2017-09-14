@@ -10,6 +10,7 @@ pkginclude_HEADERS = \
 	fs.h \
 	glob.h \
 	intr.h \
+	log.h \
 	mtx.h \
 	mux.h \
 	nwad.h \

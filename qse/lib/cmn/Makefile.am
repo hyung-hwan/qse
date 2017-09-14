@@ -28,7 +28,8 @@ noinst_HEADERS = \
 	tre-parse.h \
 	tre-stack.h \
 	uni-case.h \
-	uni-trait.h
+	uni-trait.h \
+	va_copy.h
 
 libqsecmn_la_SOURCES = \
 	alg-base64.c \

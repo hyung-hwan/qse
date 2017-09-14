@@ -19353,7 +19353,7 @@ _ACEOF
 fi
 done
 
-for ac_func in timegm timelocal localtime_r gettimeofday settimeofday
+for ac_func in timegm timelocal localtime_r gmtime_r gettimeofday settimeofday
 do :
   as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
 ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
@@ -20892,6 +20892,17 @@ if test "x$ac_cv_member_struct_stat_st_birthtimespec_tv_nsec" = xyes; then :
 
 cat >>confdefs.h <<_ACEOF
 #define HAVE_STRUCT_STAT_ST_BIRTHTIMESPEC_TV_NSEC 1
+_ACEOF
+
+
+fi
+
+ac_fn_c_check_member "$LINENO" "struct tm" "tm_gmtoff" "ac_cv_member_struct_tm_tm_gmtoff" "#include <time.h>
+"
+if test "x$ac_cv_member_struct_tm_tm_gmtoff" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_STRUCT_TM_TM_GMTOFF 1
 _ACEOF
 
 

@@ -116,7 +116,7 @@ struct qse_btime_t
 	int wday; /* 0(sun)-6(sat) */
 	int yday; /* 0(jan 1) to 365 */
 	int isdst; /* -1(unknown), 0(not in effect), 1 (in effect) */
-	/*int offset;*/
+	int gmtoff;
 };
 
 #define qse_inittime(x,s,ns) (((x)->sec = (s)), ((x)->nsec = (ns)))

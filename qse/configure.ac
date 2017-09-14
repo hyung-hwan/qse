@@ -149,7 +149,7 @@ AC_CHECK_FUNCS([lseek64 ftruncate64 readdir64 dirfd])
 AC_CHECK_FUNCS([stat64 fstat64 lstat64 fstatat64])
 AC_CHECK_FUNCS([fstat fstatat])
 AC_CHECK_FUNCS([fchmod fchmodat fchown fchownat fsync ftruncate])
-AC_CHECK_FUNCS([timegm timelocal localtime_r gettimeofday settimeofday])
+AC_CHECK_FUNCS([timegm timelocal localtime_r gmtime_r gettimeofday settimeofday])
 AC_CHECK_FUNCS([utime utimes futimes lutimes futimens utimensat])
 AC_CHECK_FUNCS([sysconf prctl fdopendir setrlimit getrlimit getpgid getpgrp])
 AC_CHECK_FUNCS([backtrace backtrace_symbols])
@@ -321,6 +321,7 @@ AC_CHECK_MEMBERS([struct stat.st_mtim.tv_nsec])
 AC_CHECK_MEMBERS([struct stat.st_birthtim.tv_nsec])
 AC_CHECK_MEMBERS([struct stat.st_mtimespec.tv_nsec])
 AC_CHECK_MEMBERS([struct stat.st_birthtimespec.tv_nsec])
+AC_CHECK_MEMBERS([struct tm.tm_gmtoff],,,[[#include <time.h>]])
 
 
 AC_CHECK_MEMBERS([struct ifreq.ifr_ifindex, struct ifreq.ifr_mtu], [], [],

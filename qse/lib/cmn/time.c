@@ -271,14 +271,14 @@ int qse_settime (const qse_ntime_t* t)
 #endif
 }
 
-static void breakdown_time (const qse_ntime_t* nt, qse_btime_t* bt, qse_long_t offset)
+static void breakdown_time (const qse_ntime_t* nt, qse_btime_t* bt, qse_long_t gmtoff)
 {
 	int midx;
 	qse_long_t days; /* total days */
 	qse_long_t secs; /* the remaining seconds */
 	qse_long_t year = QSE_EPOCH_YEAR;
 	
-	secs = nt->sec + offset; /* offset in seconds */
+	secs = nt->sec + gmtoff; /* offset in seconds */
 	days = secs / QSE_SECS_PER_DAY;
 	secs %= QSE_SECS_PER_DAY;
 
@@ -331,13 +331,63 @@ static void breakdown_time (const qse_ntime_t* nt, qse_btime_t* bt, qse_long_t o
 
 	bt->mday = days + 1;
 	bt->isdst = 0; /* TODO: this may vary depeding on offset and time */
-	/*bt->offset = offset;*/
+	bt->gmtoff = gmtoff;
 }
 
 int qse_gmtime (const qse_ntime_t* nt, qse_btime_t* bt)
 {
+#if 0
 	breakdown_time (nt, bt, 0);
 	return 0;
+#else
+
+	struct tm* tm;
+	time_t t = nt->sec;
+
+	/* TODO: remove dependency on gmtime/gmtime_r */
+#if defined(_WIN32)
+	tm = gmtime (&t);
+#elif defined(__OS2__)
+#	if defined(__WATCOMC__)
+		struct tm btm;
+		tm = _gmtime (&t, &btm);
+#	else
+#		error Please support other compilers 
+#	endif
+#elif defined(__DOS__)
+#	if defined(__WATCOMC__)
+		struct tm btm;
+		tm = _gmtime (&t, &btm);
+#	else
+#		error Please support other compilers
+#	endif
+#elif defined(HAVE_GMTIME_R)
+	struct tm btm;
+	tm = gmtime_r (&t, &btm);
+#else
+	/* thread unsafe */
+	tm = gmtime_r (&t);
+#endif
+	if (tm == QSE_NULL) return -1;
+	
+	QSE_MEMSET (bt, 0, QSE_SIZEOF(*bt));
+
+	bt->sec = tm->tm_sec;
+	bt->min = tm->tm_min;
+	bt->hour = tm->tm_hour;
+	bt->mday = tm->tm_mday;
+	bt->mon = tm->tm_mon;
+	bt->year = tm->tm_year;
+	bt->wday = tm->tm_wday;
+	bt->yday = tm->tm_yday;
+	bt->isdst = tm->tm_isdst;
+#if defined(HAVE_STRUCT_TM_TM_GMTOFF)
+	bt->gmtoff = tm->tm_gmtoff;
+#endif
+
+	return 0;
+
+#endif
 }
 
 int qse_localtime (const qse_ntime_t* nt, qse_btime_t* bt)
@@ -370,7 +420,7 @@ int qse_localtime (const qse_ntime_t* nt, qse_btime_t* bt)
 	tm = localtime (&t);
 #endif
 	if (tm == QSE_NULL) return -1;
-	
+
 	QSE_MEMSET (bt, 0, QSE_SIZEOF(*bt));
 
 	bt->sec = tm->tm_sec;
@@ -382,7 +432,11 @@ int qse_localtime (const qse_ntime_t* nt, qse_btime_t* bt)
 	bt->wday = tm->tm_wday;
 	bt->yday = tm->tm_yday;
 	bt->isdst = tm->tm_isdst;
-	/*bt->offset = tm->tm_offset;*/
+#if defined(HAVE_STRUCT_TM_TM_GMTOFF)
+	bt->gmtoff = tm->tm_gmtoff;
+#else
+	bt->gmtoff = QSE_TYPE_MIN(int); /* unknown */
+#endif
 
 	return 0;
 }
@@ -427,6 +481,9 @@ int qse_timegm (const qse_btime_t* bt, qse_ntime_t* nt)
 	tm.tm_wday = bt->wday;
 	tm.tm_yday = bt->yday;
 	tm.tm_isdst = bt->isdst;
+#if defined(HAVE_STRUCT_TM_TM_GMTOFF)
+	tm->tm_gmtoff = bt->gmtoff; /* i don't think this is needed. but just keep it */
+#endif
 
 #if defined(HAVE_TIMEGM)
 	*nt = ((qse_ntime_t)timegm(&tm)*QSE_MSECS_PER_SEC) + bt->msec;
@@ -513,6 +570,9 @@ int qse_timelocal (const qse_btime_t* bt, qse_ntime_t* nt)
 	tm.tm_wday = bt->wday;
 	tm.tm_yday = bt->yday;
 	tm.tm_isdst = bt->isdst;
+#if defined(HAVE_STRUCT_TM_TM_GMTOFF)
+	tm.tm_gmtoff = bt->gmtoff; /* i don't think this is needed. but just keep it */
+#endif
 
 #if defined(HAVE_TIMELOCAL)
 	nt->sec = timelocal (&tm);
