@@ -78,7 +78,7 @@ int main ()
 	qse_awk_parsestd_t psin[2];
 	int ret = -1;
 
-	qse_openstdsios ();
+	qse_open_stdsios ();
 
 	awk = qse_awk_openstd (0, QSE_NULL);
 	if (awk == QSE_NULL)  
@@ -131,7 +131,7 @@ oops:
 	if (rtx != QSE_NULL) qse_awk_rtx_close (rtx);
 	if (awk != QSE_NULL) qse_awk_close (awk);
 
-	qse_closestdsios ();
+	qse_close_stdsios ();
 	return ret;
 }
 

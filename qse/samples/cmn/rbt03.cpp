@@ -37,7 +37,7 @@ struct cstr_comparator
 
 int main ()
 {
-//	qse_openstdsios ();
+//	qse_open_stdsios ();
 
 	QSE::HeapMmgr heap_mmgr (QSE::Mmgr::getDFL(), 3000000);
 	//QSE::RedBlackTable<int,int,IntHasher> int_table (&heap_mmgr, 1000);
@@ -185,7 +185,7 @@ printf ("----------\n");
 #endif
 	
 
-//	qse_closestdsios ();
+//	qse_close_stdsios ();
 	return 0;	
 }
 

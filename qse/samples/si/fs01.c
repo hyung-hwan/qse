@@ -97,11 +97,11 @@ int qse_main (int argc, qse_achar_t* argv[])
 	/*qse_setdflcmgrbyid (QSE_CMGR_SLMB);*/
 #endif
 
-	qse_openstdsios ();
+	qse_open_stdsios ();
 
 	x = qse_runmain (argc, argv, fs_main);
 
-	qse_closestdsios ();
+	qse_close_stdsios ();
 
 	return x;
 }

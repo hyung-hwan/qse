@@ -159,7 +159,7 @@ int qse_main (int argc, qse_achar_t* argv[])
 {
 	int x;
 
-	qse_openstdsios ();
+	qse_open_stdsios ();
 
 	{
 	#if defined(_WIN32)
@@ -183,6 +183,6 @@ int qse_main (int argc, qse_achar_t* argv[])
 	}
 
 	x = qse_runmain (argc,argv,awk_main);
-	qse_closestdsios ();
+	qse_close_stdsios ();
 	return x;
 }

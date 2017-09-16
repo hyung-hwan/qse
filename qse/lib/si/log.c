@@ -113,7 +113,7 @@ static int __syslog_priority[] =
 struct syslog_fac_info_t
 {
 	const qse_char_t* name;
-	qse_log_facility_t     code;
+	qse_log_facility_t code;
 };
 
 static struct syslog_fac_info_t __syslog_fac_info[] =

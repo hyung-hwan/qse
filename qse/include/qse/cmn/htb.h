@@ -54,7 +54,7 @@
  *   qse_htb_t* s1;
  *   int i;
  * 
- *   qse_openstdsios ();
+ *   qse_open_stdsios ();
  *   s1 = qse_htb_open (QSE_MMGR_GETDFL(), 0, 30, 75, 1, 1); // error handling skipped
  *   qse_htb_setstyle (s1, qse_gethtbstyle(QSE_HTB_STYLE_INLINE_COPIERS));
  * 
@@ -67,7 +67,7 @@
  *   qse_htb_walk (s1, walk, QSE_NULL);
  * 
  *   qse_htb_close (s1);
- *   qse_closestdsios ();
+ *   qse_close_stdsios ();
  *   return 0;
  * }
  * @endcode
@@ -544,7 +544,7 @@ QSE_EXPORT qse_htb_pair_t* qse_htb_update (
  *   qse_char_t* keys[] = { QSE_T("one"), QSE_T("two"), QSE_T("three") };
  *   qse_char_t* vals[] = { QSE_T("1"), QSE_T("2"), QSE_T("3"), QSE_T("4"), QSE_T("5") };
  * 
- *   qse_openstdsios ();
+ *   qse_open_stdsios ();
  *   s1 = qse_htb_open (
  *     QSE_MMGR_GETDFL(), 0, 10, 70,
  *     QSE_SIZEOF(qse_char_t), QSE_SIZEOF(qse_char_t)
@@ -563,7 +563,7 @@ QSE_EXPORT qse_htb_pair_t* qse_htb_update (
  *   qse_htb_walk (s1, print_map_pair, QSE_NULL);
  * 
  *   qse_htb_close (s1);
- *   qse_closestdsios ();
+ *   qse_close_stdsios ();
  *   return 0;
  * }
  * @endcode

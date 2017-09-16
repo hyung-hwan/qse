@@ -415,7 +415,7 @@ static int test5 ()
 
 int main ()
 {
-	qse_openstdsios ();
+	qse_open_stdsios ();
 	R (test1);
 	R (test2);
 #if 0
@@ -423,6 +423,6 @@ int main ()
 	R (test4);
 #endif
 	R (test5);
-	qse_closestdsios ();
+	qse_close_stdsios ();
 	return 0;
 }

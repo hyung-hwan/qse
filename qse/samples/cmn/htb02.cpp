@@ -69,7 +69,7 @@ struct cstr_is_equal
 
 int main ()
 {
-//	qse_openstdsios ();
+//	qse_open_stdsios ();
 
 	QSE::HeapMmgr heap_mmgr (QSE::Mmgr::getDFL(), 3000000);
 	//QSE::HashTable<int,int,IntHasher> int_table (&heap_mmgr, 1000);
@@ -215,7 +215,7 @@ printf ("----------\n");
 	}
 	
 
-//	qse_closestdsios ();
+//	qse_close_stdsios ();
 	return 0;	
 }
 

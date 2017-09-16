@@ -224,11 +224,11 @@ int main ()
 	/*qse_setdflcmgrbyid (QSE_CMGR_SLMB);*/
 #endif
 
-	qse_openstdsios ();
+	qse_open_stdsios ();
 	R (test1);
 	R (test2);
 	R (test3);
-	qse_closestdsios ();
+	qse_close_stdsios ();
 
 	return 0;
 }

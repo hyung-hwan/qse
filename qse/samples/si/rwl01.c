@@ -123,13 +123,13 @@ int main ()
 	setlocale (LC_ALL, "");
 #endif
 
-	qse_openstdsios ();
+	qse_open_stdsios ();
 
 	qse_setintrhandler (stop_run, QSE_NULL);
 	test_001 ();
 	qse_clearintrhandler ();
 
-	qse_closestdsios ();
+	qse_close_stdsios ();
 
 #if defined(_WIN32)
 	SetConsoleOutputCP (old_cp);

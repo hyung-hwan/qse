@@ -35,8 +35,6 @@
 #include <stdarg.h>
 
 /* TODO: improve this and complete win32 portion */
-
-#define QSE_LOG_MSG_MAX   10204
 #define QSE_LOG_IDENT_MAX 32
 
 #define QSE_LOG_MASK_PRIORITY 0x00000FFFUL
