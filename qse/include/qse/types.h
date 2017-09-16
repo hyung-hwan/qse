@@ -204,7 +204,7 @@ typedef enum qse_bool_t qse_bool_t;
 	typedef __uint8_t qse_uint8_t;
 #endif
 
-#ifdef QSE_HAVE_INT8_T
+#if defined(QSE_HAVE_INT8_T)
 #	define QSE_SIZEOF_INT8_T 1
 #	define QSE_SIZEOF_UINT8_T 1
 #	undef  QSE_SIZEOF_INTMAX_T

@@ -14,6 +14,7 @@ void t1 (void)
 
 	t.file = QSE_T("/tmp/t3.log");
 	/*qse_strtonwad ("127.0.0.1:514", &nwad);*/
+	/*qse_strtonwad ("@/var/run/log", &nwad);*/
 	qse_strtonwad ("@/dev/log", &nwad);
 	qse_nwadtoskad (&nwad, &t.syslog_remote);
 
