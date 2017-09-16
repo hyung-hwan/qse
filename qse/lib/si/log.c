@@ -37,6 +37,7 @@
 	#include <sys/socket.h>
 	#include <netinet/in.h>
 	#include <sys/un.h>
+	#include <sys/utsname.h>
 	#include "../cmn/syscall.h"
 #endif
 
@@ -49,8 +50,7 @@ static const qse_char_t* __priority_names[] =
 	QSE_T("warning"),
 	QSE_T("notice"),
 	QSE_T("info"),
-	QSE_T("debug"),
-	QSE_NULL
+	QSE_T("debug")
 };
 
 static const qse_mchar_t* __syslog_month_names[] =
@@ -332,17 +332,16 @@ void qse_log_setpriority (qse_log_t* log, int priority)
 
 int qse_log_setprioritybyname (qse_log_t* log, const qse_char_t* name)
 {
-	const qse_char_t** p = __priority_names;
 
-	while (*p != QSE_NULL) 
+	qse_size_t i;
+
+	for (i = 0; i < QSE_COUNTOF(__priority_names); i++)
 	{
-		if (qse_strcmp(*p, name) == 0) 
+		if (qse_strcmp(__priority_names[i], name) == 0) 
 		{
-			qse_log_setpriority (log, (int)(p - __priority_names));
+			qse_log_setpriority (log, i);
 			return 0;
 		}
-
-		p++;
 	}
 
 	return -1;
@@ -523,7 +522,7 @@ void qse_log_reportv (qse_log_t* log, const qse_char_t* ident, int pri, const qs
 		if (!log->wmsgbuf) goto done;
 #endif
 
-		sl_pri = (pri < QSE_COUNTOF(__syslog_priority))? __syslog_priority[pri]: LOG_DEBUG;
+		sl_pri = (pri < QSE_COUNTOF(__syslog_priority))? __syslog_priority[(pri & QSE_LOG_MASK_PRIORITY)]: LOG_DEBUG;
 
 		fplen = qse_mbs_fmt(log->dmsgbuf, QSE_MT("<%d>"), (int)(log->syslog_facility | sl_pri));
 		if (fplen == (qse_size_t)-1) goto done;
@@ -533,6 +532,17 @@ void qse_log_reportv (qse_log_t* log, const qse_char_t* ident, int pri, const qs
 			__syslog_month_names[cnow.mon], cnow.mday, 
 			cnow.hour, cnow.min, cnow.sec);
 		if (fpdlen == (qse_size_t)-1) goto done;
+
+
+		if (log->flags & QSE_LOG_HOST_IN_REMOTE_SYSLOG)
+		{
+			struct utsname un;
+			if (uname(&un) == 0)
+			{
+				fpdlen = qse_mbs_fcat (log->dmsgbuf, QSE_MT("%hs "), un.nodename);
+				if (fpdlen == (qse_size_t)-1) goto done;
+			}
+		}
 
 	#if defined(QSE_CHAR_IS_MCHAR)
 		identfmt = QSE_MT("%hs");
