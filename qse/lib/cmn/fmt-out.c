@@ -63,10 +63,16 @@ enum
 	LF_T = (1 << 5),
 	LF_Z = (1 << 6),
 
+	LF_I8  = (1 << 7),
+	LF_I16 = (1 << 8),
+	LF_I32 = (1 << 9),
+	LF_I64 = (1 << 10),
+	LF_I128 = (1 << 11),
+
 	/* long double */
-	LF_LD = (1 << 7),
+	LF_LD = (1 << 12),
 	/* __float128 */
-	LF_QD = (1 << 8)
+	LF_QD = (1 << 13)
 };
 
 static struct

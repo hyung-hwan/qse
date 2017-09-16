@@ -243,6 +243,7 @@ reswitch:
 
 		case T('1'): case T('2'): case T('3'): case T('4'):
 		case T('5'): case T('6'): case T('7'): case T('8'): case T('9'):
+			if (flagc & FLAGC_LENMOD) goto invalid_format;
 			for (n = 0;; ++fmt) 
 			{
 				n = n * 10 + ch - T('0');
@@ -319,6 +320,54 @@ reswitch:
 			flagc |= FLAGC_LENMOD;
 			lm_flag |= LF_QD;
 			goto reswitch;
+
+		case T('I'):
+		{
+			int save_lm_flag = lm_flag;
+			if (fmt[0] == T('8'))
+			{
+				lm_flag |= LF_I8;
+				fmt += 1;
+			}
+			else if (fmt[0] == T('1') && fmt[1] == T('6'))
+			{
+				lm_flag |= LF_I16;
+				fmt += 2;
+			}
+		#if defined(QSE_HAVE_INT128_T)
+			else if (fmt[0] == T('1') && fmt[1] == T('2') && fmt[2] == T('8'))
+			{
+				lm_flag |= LF_I128;
+				fmt += 3;
+			}
+		#endif
+			else if (fmt[0] == T('3') && fmt[1] == T('2'))
+			{
+				lm_flag |= LF_I32;
+				fmt += 2;
+			}
+		#if defined(QSE_HAVE_INT64_T)
+			else if (fmt[0] == T('6') && fmt[1] == T('4'))
+			{
+				lm_flag |= LF_I64;
+				fmt += 2;
+			}
+		#endif
+			else
+			{
+				goto invalid_format; 
+			}
+
+			if (flagc & FLAGC_LENMOD)
+			{
+				/* conflict with other length modifier */
+				save_lm_flag = lm_flag;
+				goto invalid_format; 
+			}
+			flagc |= FLAGC_LENMOD;
+			goto reswitch;
+		}
+			
 			
 		/* end of length modifiers */
 
@@ -363,6 +412,9 @@ reswitch:
 			upper = 1;
 		case T('x'):
 			base = 16;
+			goto handle_nosign;
+		case T('b'):
+			base = 2;
 			goto handle_nosign;
 		/* end of unsigned integer conversions */
 
@@ -748,7 +800,7 @@ reswitch:
 			goto print_lowercase_s;
 		}
 
-handle_nosign:
+		handle_nosign:
 			sign = 0;
 			if (lm_flag & LF_J)
 			{
@@ -787,6 +839,37 @@ handle_nosign:
 				num = (unsigned short int)va_arg (ap, int);
 			else if (lm_flag & LF_C)
 				num = (unsigned char)va_arg (ap, int);
+
+			else if (lm_flag & LF_I8)
+			#if (QSE_SIZEOF_UINT8_T < QSE_SIZEOF_UINT)
+				num = (qse_uint8_t)va_arg (ap, unsigned int);
+			#else
+				num = va_arg (ap, qse_uint8_t);
+			#endif
+			else if (lm_flag & LF_I16)
+			#if (QSE_SIZEOF_UINT16_T < QSE_SIZEOF_UINT)
+				num = (qse_uint16_t)va_arg (ap, unsigned int);
+			#else
+				num = va_arg (ap, qse_uint16_t);
+			#endif
+			else if (lm_flag & LF_I32)
+			#if (QSE_SIZEOF_UINT32_T < QSE_SIZEOF_UINT)
+				num = (qse_uint32_t)va_arg (ap, unsigned int);
+			#else
+				num = va_arg (ap, qse_uint32_t);
+			#endif
+			else if (lm_flag & LF_I64)
+			#if defined(QSE_HAVE_UINT64_T) && (QSE_SIZEOF_UINT64_T < QSE_SIZEOF_UINT)
+				num = (qse_uint64_t)va_arg (ap, unsigned int);
+			#else
+				num = va_arg (ap, qse_uint64_t);
+			#endif
+			else if (lm_flag & LF_I128)
+			#if defined(QSE_HAVE_UINT128_T) && (QSE_SIZEOF_UINT128_T < QSE_SIZEOF_UINT)
+				num = (qse_uint128_t)va_arg (ap, unsigned int);
+			#else
+				num = va_arg (ap, qse_uint128_t);
+			#endif
 			else
 				num = va_arg (ap, unsigned int);
 			goto number;
@@ -830,6 +913,37 @@ handle_sign:
 				num = (short int)va_arg (ap, int);
 			else if (lm_flag & LF_C)
 				num = (char)va_arg (ap, int);
+
+			else if (lm_flag & LF_I8)
+			#if (QSE_SIZEOF_INT8_T < QSE_SIZEOF_INT)
+				num = (qse_int8_t)va_arg (ap, int);
+			#else
+				num = va_arg (ap, qse_int8_t);
+			#endif
+			else if (lm_flag & LF_I16)
+			#if (QSE_SIZEOF_INT16_T < QSE_SIZEOF_INT)
+				num = (qse_int16_t)va_arg (ap, int);
+			#else
+				num = va_arg (ap, qse_int16_t);
+			#endif
+			else if (lm_flag & LF_I32)
+			#if (QSE_SIZEOF_INT32_T < QSE_SIZEOF_INT)
+				num = (qse_int32_t)va_arg (ap, int);
+			#else
+				num = va_arg (ap, qse_int32_t);
+			#endif
+			else if (lm_flag & LF_I64)
+			#if defined(QSE_HAVE_INT64_T) && (QSE_SIZEOF_INT64_T < QSE_SIZEOF_INT)
+				num = (qse_int64_t)va_arg (ap, int);
+			#else
+				num = va_arg (ap, qse_int64_t);
+			#endif
+			else if (lm_flag & LF_I128)
+			#if defined(QSE_HAVE_INT128_T) && (QSE_SIZEOF_INT128_T < QSE_SIZEOF_INT)
+				num = (qse_int128_t)va_arg (ap, int);
+			#else
+				num = va_arg (ap, qse_int128_t);
+			#endif
 			else
 				num = va_arg (ap, int);
 
@@ -867,7 +981,12 @@ number:
 
 			if ((flagc & FLAGC_SHARP) && num != 0) 
 			{
-				if (base == 8) 
+				if (base == 2) 
+				{
+					PUT_CHAR(T('0'));
+					PUT_CHAR(T('b'));
+				} 
+				else if (base == 8) 
 				{
 					PUT_CHAR(T('0'));
 				} 

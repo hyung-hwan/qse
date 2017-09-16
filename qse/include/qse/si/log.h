@@ -52,13 +52,14 @@
 /* options */
 #define QSE_LOG_KEEP_FILE_OPEN  (1UL << 13)
 #define QSE_LOG_ENABLE_MASKED   (1UL << 14)
-#define QSE_LOG_SYSLOG_PID      (1UL << 15)
+#define QSE_LOG_INCLUDE_PID      (1UL << 15)
 
 /* target */
 #define QSE_LOG_CONSOLE         (1UL << 20)
 #define QSE_LOG_FILE            (1UL << 21)
 #define QSE_LOG_SYSLOG          (1UL << 22)
-#define QSE_LOG_SYSLOG_REMOTE   (1UL << 23)
+#define QSE_LOG_SYSLOG_LOCAL    (1UL << 23)
+#define QSE_LOG_SYSLOG_REMOTE   (1UL << 24)
 
 #define QSE_LOG_MASK_PRIORITY 0x00000FFFUL
 #define QSE_LOG_MASK_OPTION   0x000FF000UL
@@ -217,6 +218,9 @@ struct qse_log_t
 
 	qse_char_t ident[QSE_LOG_IDENT_MAX + 1];
 	qse_mbs_t* dmsgbuf;
+#if defined(QSE_CHAR_IS_WCHAR)
+	qse_wcs_t* wmsgbuf;
+#endif
 	qse_mtx_t mtx;
 
 #if !defined(_WIN32)
