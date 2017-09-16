@@ -359,7 +359,7 @@ static qse_awk_flt_t math_atan2 (qse_awk_t* awk, qse_awk_flt_t x, qse_awk_flt_t 
 #endif
 }
 
-static qse_awk_flt_t math_log (qse_awk_t* awk, qse_awk_flt_t x)
+static QSE_INLINE qse_awk_flt_t math_log (qse_awk_t* awk, qse_awk_flt_t x)
 {
 #if defined(QSE_USE_AWK_FLTMAX) && defined(HAVE_LOGQ)
 	return logq (x);
@@ -385,7 +385,7 @@ static qse_awk_flt_t math_log2 (qse_awk_t* awk, qse_awk_flt_t x)
 #elif defined(HAVE_LOG2F)
 	return log2f (x);
 #else
-	#error ### no log2 function available ###
+	return math_log(x) / math_log(2.0);
 #endif
 }
 

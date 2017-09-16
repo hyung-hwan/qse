@@ -239,7 +239,7 @@ typedef enum qse_bool_t qse_bool_t;
 	typedef __uint16_t qse_uint16_t;
 #endif
 
-#ifdef QSE_HAVE_INT16_T
+#if defined(QSE_HAVE_INT16_T)
 #	define QSE_SIZEOF_INT16_T 2
 #	define QSE_SIZEOF_UINT16_T 2
 #	undef  QSE_SIZEOF_INTMAX_T
@@ -279,7 +279,7 @@ typedef enum qse_bool_t qse_bool_t;
 	typedef __uint32_t qse_uint32_t;
 #endif
 
-#ifdef QSE_HAVE_INT32_T
+#if defined(QSE_HAVE_INT32_T)
 #	define QSE_SIZEOF_INT32_T 4
 #	define QSE_SIZEOF_UINT32_T 4
 #	undef  QSE_SIZEOF_INTMAX_T
@@ -324,7 +324,7 @@ typedef enum qse_bool_t qse_bool_t;
 	typedef __uint64_t qse_uint64_t;
 #endif
 
-#ifdef QSE_HAVE_INT64_T
+#if defined(QSE_HAVE_INT64_T)
 #	define QSE_SIZEOF_INT64_T 8
 #	define QSE_SIZEOF_UINT64_T 8
 #	undef  QSE_SIZEOF_INTMAX_T
@@ -363,7 +363,7 @@ typedef enum qse_bool_t qse_bool_t;
 	typedef __uint128_t qse_uint128_t;
 #endif
 
-#ifdef QSE_HAVE_INT128_T
+#if defined(QSE_HAVE_INT128_T)
 #	define QSE_SIZEOF_INT128_T 16
 #	define QSE_SIZEOF_UINT128_T 16
 #	undef  QSE_SIZEOF_INTMAX_T
