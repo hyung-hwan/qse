@@ -14,6 +14,7 @@ bin_PROGRAMS = \
 	fs02 \
 	fs03 \
 	glob01 \
+	log01 \
 	nwad01 \
 	nwif01 \
 	nwif02 \
@@ -42,6 +43,7 @@ fs01_SOURCES = fs01.c
 fs02_SOURCES = fs02.c
 fs03_SOURCES = fs03.c
 glob01_SOURCES = glob01.c
+log01_SOURCES = log01.c
 nwad01_SOURCES = nwad01.c
 nwif01_SOURCES = nwif01.c
 nwif02_SOURCES = nwif02.c
