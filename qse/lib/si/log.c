@@ -53,7 +53,7 @@ static const qse_char_t* __priority_names[] =
 	QSE_NULL
 };
 
-static const qse_char_t* __syslog_month_names[] =
+static const qse_mchar_t* __syslog_month_names[] =
 {
 	QSE_MT("Jan"),
 	QSE_MT("Feb"),
@@ -158,7 +158,6 @@ int qse_log_init (qse_log_t* log, qse_mmgr_t* mmgr, const qse_char_t* ident, int
 	}
 	if (potflags & QSE_LOG_CONSOLE) log->flags |= QSE_LOG_CONSOLE;
 	if (potflags & QSE_LOG_SYSLOG) log->flags |= QSE_LOG_SYSLOG;
-	if (potflags & QSE_LOG_SYSLOG_LOCAL) log->flags |= QSE_LOG_SYSLOG_LOCAL;
 
 	if (potflags & QSE_LOG_SYSLOG_REMOTE)
 	{
@@ -255,6 +254,11 @@ void qse_log_setident (qse_log_t* log, const qse_char_t* ident)
 
 	if (log->t.syslog.opened)
 	{
+		/* it's best to avoid using QSE_LOG_SYSLOG
+		 * if the application calls syslog APIs directly.
+		 * otherwise, it may conflict with openlog()/closelog()
+		 * called in this library */
+
 		closelog ();
 		log->t.syslog.opened = 0;
 		/* it will be opened again with the new identifier in the
@@ -264,30 +268,44 @@ void qse_log_setident (qse_log_t* log, const qse_char_t* ident)
 
 void qse_log_settarget (qse_log_t* log, int flags, const qse_log_target_t* target)
 {
-#if 0
-/* TODO: */
-	if ((log->flags & QSE_LOG_SYSLOG_REMOTE) != 0 &&
-	    (flags & QSE_LOG_SYSLOG_REMOTE) == 0) 
+	if (log->t.syslog_remote.sock >= 0)
 	{
 		QSE_CLOSE (log->t.syslog_remote.sock);
+		log->t.syslog_remote.sock = -1;
 	}
 
-	if ((log->flags & QSE_LOG_SYSLOG_REMOTE) == 0 &&
-	    (flags & QSE_LOG_SYSLOG_REMOTE) != 0) 
+	if (log->t.console.sio)
 	{
-		int sock;
-		sock = qse_sckopen (AF_INET, SOCK_DGRAM, 0);
-		if (sock == -1) flags &= ~QSE_LOG_SYSLOG_REMOTE;
-		else log->t.syslog_remote.sock = sock;
+		qse_sio_close (log->t.console.sio);
+		log->t.console.sio = QSE_NULL;
+	}
+
+	if (log->t.file.sio)
+	{
+		qse_sio_close (log->t.file.sio);
+		log->t.file.sio = QSE_NULL;
+	}
+
+	if (log->t.syslog.opened) 
+	{
+		closelog ();
+		log->t.syslog.opened = 0;
 	}
 
 	log->flags &= (QSE_LOG_MASK_PRIORITY | QSE_LOG_MASK_OPTION); /* preserve the priority and the options */
-	if (flags & QSE_LOG_FILE) log->flags |= QSE_LOG_FILE;
+	if (flags & QSE_LOG_FILE) 
+	{
+		qse_strxcpy (log->t.file.path, QSE_COUNTOF(log->t.file.path), target->file);
+		log->flags |= QSE_LOG_FILE;
+	}
+
 	if (flags & QSE_LOG_CONSOLE) log->flags |= QSE_LOG_CONSOLE;
 	if (flags & QSE_LOG_SYSLOG) log->flags |= QSE_LOG_SYSLOG;
-
-	if (flags & QSE_LOG_SYSLOG_REMOTE) log->flags |= QSE_LOG_SYSLOG_REMOTE;
-#endif
+	if (flags & QSE_LOG_SYSLOG_REMOTE) 
+	{
+		log->t.syslog_remote.addr = target->syslog_remote;
+		log->flags |= QSE_LOG_SYSLOG_REMOTE;
+	}
 
 }
 
@@ -301,9 +319,15 @@ int qse_log_gettarget (qse_log_t* log, qse_log_target_t* target)
 	return log->flags & QSE_LOG_MASK_TARGET;
 }
 
+
+void qse_log_setoption (qse_log_t* log, int option)
+{
+	log->flags = (log->flags & (QSE_LOG_MASK_TARGET | QSE_LOG_MASK_PRIORITY)) | (option & QSE_LOG_MASK_OPTION);
+}
+
 void qse_log_setpriority (qse_log_t* log, int priority)
 {
-	log->flags = (log->flags & QSE_LOG_MASK_TARGET) | (priority & QSE_LOG_MASK_PRIORITY);
+	log->flags = (log->flags & (QSE_LOG_MASK_TARGET | QSE_LOG_MASK_OPTION)) | (priority & QSE_LOG_MASK_PRIORITY);
 }
 
 int qse_log_setprioritybyname (qse_log_t* log, const qse_char_t* name)
@@ -323,6 +347,15 @@ int qse_log_setprioritybyname (qse_log_t* log, const qse_char_t* name)
 
 	return -1;
 }
+
+const qse_char_t* qse_log_getpriorityname (qse_log_t* log)
+{
+	int pri = log->flags & QSE_LOG_MASK_PRIORITY;
+
+	if (pri < 0 || pri >= QSE_COUNTOF(__priority_names)) return QSE_NULL;
+	return __priority_names[pri];
+}
+
 
 void qse_log_setsyslogfacility (qse_log_t* log, qse_log_facility_t facility)
 {
@@ -352,19 +385,6 @@ int qse_log_setsyslogfacilitybyname (qse_log_t* log, const qse_char_t* name)
 
 	return -1;
 #endif
-}
-
-int qse_log_getpriority (qse_log_t* log)
-{
-	return log->flags & QSE_LOG_MASK_PRIORITY;
-}
-
-const qse_char_t* qse_log_getpriorityname (qse_log_t* log)
-{
-	int pri = log->flags & QSE_LOG_MASK_PRIORITY;
-
-	if (pri < 0 || pri >= QSE_COUNTOF(__priority_names)) return QSE_NULL;
-	return __priority_names[pri];
 }
 
 static QSE_INLINE void __report_over_sio (qse_log_t* log, qse_sio_t* sio, const qse_mchar_t* tm, const qse_char_t* ident, const qse_char_t* fmt, va_list arg)
@@ -439,7 +459,7 @@ void qse_log_reportv (qse_log_t* log, const qse_char_t* ident, int pri, const qs
 		if (cnow.gmtoff == QSE_TYPE_MIN(int))
 		{
 			qse_mbsxfmt (tm, QSE_COUNTOF(tm),
-				QSE_T("%04.4d-%02d-%02d %02d:%02d:%02d"), 
+				QSE_MT("%04.4d-%02d-%02d %02d:%02d:%02d"), 
 				cnow.year + QSE_BTIME_YEAR_BASE, cnow.mon + 1, cnow.mday, 
 				cnow.hour, cnow.min, cnow.sec);
 		}
@@ -449,7 +469,7 @@ void qse_log_reportv (qse_log_t* log, const qse_char_t* ident, int pri, const qs
 			gmtoff_hour = cnow.gmtoff / QSE_SECS_PER_HOUR;
 			gmtoff_min = (cnow.gmtoff % QSE_SECS_PER_HOUR) / QSE_SECS_PER_MIN;
 			qse_mbsxfmt (tm, QSE_COUNTOF(tm),
-				QSE_T("%04.4d-%02d-%02d %02d:%02d:%02d %c%02d%02d"), 
+				QSE_MT("%04.4d-%02d-%02d %02d:%02d:%02d %c%02d%02d"), 
 				cnow.year + QSE_BTIME_YEAR_BASE, cnow.mon + 1, cnow.mday, 
 				cnow.hour, cnow.min, cnow.sec, 
 				((cnow.gmtoff > 0)? QSE_T('+'): QSE_T('-')),
@@ -488,7 +508,7 @@ void qse_log_reportv (qse_log_t* log, const qse_char_t* ident, int pri, const qs
 		}
 	}
 
-	if (log->flags & (QSE_LOG_SYSLOG | QSE_LOG_SYSLOG_LOCAL | QSE_LOG_SYSLOG_REMOTE))
+	if (log->flags & (QSE_LOG_SYSLOG | QSE_LOG_SYSLOG_REMOTE))
 	{
 		va_list xap;
 		qse_size_t fplen, fpdlen, fpdilen;
@@ -560,7 +580,7 @@ void qse_log_reportv (qse_log_t* log, const qse_char_t* ident, int pri, const qs
 		if (qse_mbs_vfcat (log->dmsgbuf, fmt, xap) == (qse_size_t)-1) goto done;
 	#else
 		if (qse_wcs_vfmt (log->wmsgbuf, fmt, xap) == (qse_size_t)-1 ||
-		    qse_mbs_vfcat (log->dmsgbuf, QSE_MT("%.*ls"), QSE_WCS_LEN(log->wmsgbuf), QSE_WCS_PTR(log->wmsgbuf)) == (qse_size_t)-1) goto done;
+		    qse_mbs_fcat (log->dmsgbuf, QSE_MT("%.*ls"), QSE_WCS_LEN(log->wmsgbuf), QSE_WCS_PTR(log->wmsgbuf)) == (qse_size_t)-1) goto done;
 	#endif
 
 		if (log->flags & QSE_LOG_SYSLOG) 
@@ -578,9 +598,8 @@ void qse_log_reportv (qse_log_t* log, const qse_char_t* ident, int pri, const qs
 			#if defined(QSE_CHAR_IS_MCHAR)
 				openlog (log->ident, sl_opt, log->syslog_facility);
 			#else
-				qse_mchar_t idbuf[QSE_LOG_IDENT_MAX * 2 + 1];
-				qse_mbsxfmt (idbuf, QSE_COUNTOF(idbuf), QSE_MT("%ls"), log->ident);
-				openlog (idbuf, sl_opt, log->syslog_facility);
+				qse_mbsxfmt (log->mident, QSE_COUNTOF(log->mident), QSE_MT("%ls"), log->ident);
+				openlog (log->mident, sl_opt, log->syslog_facility);
 			#endif
 				log->t.syslog.opened = 1;
 			}

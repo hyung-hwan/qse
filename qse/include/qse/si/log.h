@@ -58,8 +58,7 @@
 #define QSE_LOG_CONSOLE         (1UL << 20)
 #define QSE_LOG_FILE            (1UL << 21)
 #define QSE_LOG_SYSLOG          (1UL << 22)
-#define QSE_LOG_SYSLOG_LOCAL    (1UL << 23)
-#define QSE_LOG_SYSLOG_REMOTE   (1UL << 24)
+#define QSE_LOG_SYSLOG_REMOTE   (1UL << 23)
 
 #define QSE_LOG_MASK_PRIORITY 0x00000FFFUL
 #define QSE_LOG_MASK_OPTION   0x000FF000UL
@@ -220,6 +219,7 @@ struct qse_log_t
 	qse_mbs_t* dmsgbuf;
 #if defined(QSE_CHAR_IS_WCHAR)
 	qse_wcs_t* wmsgbuf;
+	qse_mchar_t mident[QSE_LOG_IDENT_MAX * 2 +1];
 #endif
 	qse_mtx_t mtx;
 
@@ -240,7 +240,7 @@ typedef struct qse_log_target_t qse_log_target_t;
 extern "C" {
 #endif
 
-qse_log_t* qse_log_open (
+QSE_EXPORT qse_log_t* qse_log_open (
 	qse_mmgr_t*               mmgr,
 	qse_size_t                xtnsize,
 	const qse_char_t*         ident,
@@ -248,56 +248,76 @@ qse_log_t* qse_log_open (
 	const qse_log_target_t*   target
 );
 
-void qse_log_close (
+QSE_EXPORT void qse_log_close (
 	qse_log_t*        log
 );
 
-void qse_log_setident (
+QSE_EXPORT void qse_log_setident (
 	qse_log_t*        log,
 	const qse_char_t* ident
 );
 
-void qse_log_settarget (
+QSE_EXPORT void qse_log_settarget (
 	qse_log_t*              log,
 	int                     flags,
 	const qse_log_target_t* target
 );
 
-int qse_log_gettarget (
+QSE_EXPORT int qse_log_gettarget (
 	qse_log_t*        log,
 	qse_log_target_t* target
 );
 
-void qse_log_setpriority (
+QSE_EXPORT void qse_log_setoption (
+	qse_log_t* log,
+	int        options
+);
+
+#if defined(QSE_HAVE_INLINE)
+static QSE_INLINE int qse_log_getoption (qse_log_t* log)
+{
+	return log->flags & QSE_LOG_MASK_OPTION;
+}
+#else
+#define qse_log_getoption(log) ((log)->flags & QSE_LOG_MASK_OPTION)
+#endif
+
+
+QSE_EXPORT void qse_log_setpriority (
 	qse_log_t* log,
 	int        priority
 );
 
-int qse_log_setprioritybyname (
+QSE_EXPORT int qse_log_setprioritybyname (
 	qse_log_t*        log,
 	const qse_char_t* name
 );
 
-void qse_log_setsyslogfacility (
+QSE_EXPORT void qse_log_setsyslogfacility (
 	qse_log_t*         log,
 	qse_log_facility_t facility
 );
 
-int qse_log_setsyslogfacilitybyname (
+QSE_EXPORT int qse_log_setsyslogfacilitybyname (
 	qse_log_t*        log,
 	const qse_char_t* name
 );
 
-int qse_log_getpriority (
-	qse_log_t* log
-);
+#if defined(QSE_HAVE_INLINE)
+static QSE_INLINE int qse_log_getpriority (qse_log_t* log)
+{
+	return log->flags & QSE_LOG_MASK_PRIORITY;
+}
+#else
+#define qse_log_getpriority(log) ((log)->flags & QSE_LOG_MASK_PRIORITY)
+#endif
 
 const qse_char_t* qse_log_getpriorityname (
 	qse_log_t* log
 );
 
 
-void qse_log_report (
+QSE_EXPORT void qse_log_report (
 	qse_log_t*        log, 
 	const qse_char_t* ident,
 	int               pri,
@@ -305,7 +325,7 @@ void qse_log_report (
 	...
 );
 
-void qse_log_reportv (
+QSE_EXPORT void qse_log_reportv (
 	qse_log_t*        log,
 	const qse_char_t* ident,
 	int               pri,
@@ -313,7 +333,7 @@ void qse_log_reportv (
 	va_list           ap
 );
 
-const qse_char_t* qse_get_log_priority_name (
+QSE_EXPORT const qse_char_t* qse_get_log_priority_name (
 	int pri
 );
 
