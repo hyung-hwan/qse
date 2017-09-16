@@ -385,7 +385,7 @@ static qse_awk_flt_t math_log2 (qse_awk_t* awk, qse_awk_flt_t x)
 #elif defined(HAVE_LOG2F)
 	return log2f (x);
 #else
-	return math_log(x) / math_log(2.0);
+	return math_log(awk, x) / math_log(awk, 2.0);
 #endif
 }
 
