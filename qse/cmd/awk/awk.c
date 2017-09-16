@@ -1217,7 +1217,7 @@ int qse_main (int argc, qse_achar_t* argv[])
 	/* qse_setdflcmgrbyid (QSE_CMGR_SLMB); */
 #endif
 
-	qse_openstdsios ();
+	qse_open_stdsios ();
 
 #if defined(_WIN32)
 	if (WSAStartup (MAKEWORD(2,0), &wsadata) != 0)
@@ -1247,7 +1247,7 @@ int qse_main (int argc, qse_achar_t* argv[])
 #endif
 
 oops:
-	qse_closestdsios ();
+	qse_close_stdsios ();
 	return ret;
 }
 

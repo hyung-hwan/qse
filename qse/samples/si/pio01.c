@@ -395,7 +395,7 @@ static int test13 (void)
 
 int main ()
 {
-	qse_openstdsios ();
+	qse_open_stdsios ();
 	setlocale (LC_ALL, "");
 
 	qse_printf (QSE_T("--------------------------------------------------------------------------------\n"));
@@ -415,6 +415,6 @@ int main ()
 	R (test11);
 	R (test12);
 	R (test13);
-	qse_closestdsios ();
+	qse_close_stdsios ();
 	return 0;
 }

@@ -117,7 +117,7 @@ int main (int argc, char* argv[])
 {
 	MyAwk awk;
 
-	qse_openstdsios ();
+	qse_open_stdsios ();
 	int ret = awk.open ();
 	if (ret >= 0) ret = run_awk (awk);
 
@@ -128,7 +128,7 @@ int main (int argc, char* argv[])
 	}
 
 	awk.close ();
-	qse_closestdsios ();
+	qse_close_stdsios ();
 	return ret;
 }
 

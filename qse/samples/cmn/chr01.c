@@ -48,11 +48,11 @@ int main ()
 #endif
 
 
-	qse_openstdsios ();
+	qse_open_stdsios ();
 
 	R (test1);
 
-	qse_closestdsios ();
+	qse_close_stdsios ();
 
 	return 0;
 }

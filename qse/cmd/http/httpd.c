@@ -2866,7 +2866,7 @@ int qse_main (int argc, qse_achar_t* argv[])
 	/*qse_setdflcmgrbyid (QSE_CMGR_SLMB);*/
 #endif
 
-	qse_openstdsios ();
+	qse_open_stdsios ();
 
 #if defined(__DOS__)
 	old_keyboard_handler = _dos_getvect (0x09);
@@ -2925,6 +2925,6 @@ oops:
 	if (old_keyboard_handler) 
 		_dos_setvect (0x09, old_keyboard_handler);
 #endif
-	qse_closestdsios ();
+	qse_close_stdsios ();
 	return ret;
 }

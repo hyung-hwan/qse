@@ -135,7 +135,7 @@ qse_sio_t* qse_sio_openstd (
 	}
 	*/
 
-	if (qse_getstdfiohandle (std, &hnd) <= -1) return QSE_NULL;
+	if (qse_get_stdfiohandle (std, &hnd) <= -1) return QSE_NULL;
 
 	sio = qse_sio_open (mmgr, xtnsize, 
 		(const qse_char_t*)&hnd, flags | QSE_SIO_HANDLE | QSE_SIO_NOCLOSE);
@@ -236,7 +236,7 @@ int qse_sio_initstd (
 	int n;
 	qse_fio_hnd_t hnd;
 
-	if (qse_getstdfiohandle (std, &hnd) <= -1) return -1;
+	if (qse_get_stdfiohandle (std, &hnd) <= -1) return -1;
 
 	n = qse_sio_init (sio, mmgr, 
 		(const qse_char_t*)&hnd, flags | QSE_SIO_HANDLE | QSE_SIO_NOCLOSE);
@@ -817,7 +817,7 @@ static qse_sio_t* sio_stdout = QSE_NULL;
 static qse_sio_t* sio_stderr = QSE_NULL;
 /* TODO: add sio_stdin, qse_getmbs, etc */
 
-int qse_openstdsios (void)
+int qse_open_stdsios (void)
 {
 	if (sio_stdout == QSE_NULL)
 	{
@@ -830,14 +830,14 @@ int qse_openstdsios (void)
 
 	if (sio_stdout == QSE_NULL || sio_stderr == QSE_NULL) 
 	{
-		qse_closestdsios ();
+		qse_close_stdsios ();
 		return -1;
 	}
 
 	return 0;
 }
 
-void qse_closestdsios (void)
+void qse_close_stdsios (void)
 {
 	if (sio_stderr)
 	{
@@ -851,12 +851,12 @@ void qse_closestdsios (void)
 	}
 }
 
-qse_sio_t* qse_getstdout (void)
+qse_sio_t* qse_get_stdout (void)
 {
 	return sio_stdout;
 }
 
-qse_sio_t* qse_getstderr (void)
+qse_sio_t* qse_get_stderr (void)
 {
 	return sio_stderr;
 }

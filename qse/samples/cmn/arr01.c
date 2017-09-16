@@ -585,13 +585,13 @@ static int test6 ()
 
 int main ()
 {
-	qse_openstdsios ();
+	qse_open_stdsios ();
 	R (test1);
 	R (test2);
 	R (test3);
 	R (test4);
 	R (test5);
 	R (test6);
-	qse_closestdsios ();
+	qse_close_stdsios ();
 	return 0;
 }

@@ -46,7 +46,7 @@ typedef QSE::HashList<int,IntHasher> IntList;
 
 int main ()
 {
-	qse_openstdsios ();
+	qse_open_stdsios ();
 
 	T* x;
 	//QSE::StdMmgr* mmgr = QSE::StdMmgr::getDFL();
@@ -142,7 +142,7 @@ catch (QSE::Exception& e)
 }
 
 
-	qse_closestdsios ();
+	qse_close_stdsios ();
 	return 0;	
 }
 

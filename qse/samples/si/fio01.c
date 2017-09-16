@@ -300,7 +300,7 @@ static int test3 (void)
 
 int main ()
 {
-	qse_openstdsios ();
+	qse_open_stdsios ();
 	setlocale (LC_ALL, "");
 
 	qse_printf (QSE_T("--------------------------------------------------------------------------------\n"));
@@ -315,6 +315,6 @@ int main ()
 	qse_printf (QSE_T("Run \"rm -f fio01-?.txt\" to delete garbages\n"));
 	qse_printf (QSE_T("--------------------------------------------------------------------------------\n"));
 
-	qse_closestdsios ();
+	qse_close_stdsios ();
 	return 0;
 }

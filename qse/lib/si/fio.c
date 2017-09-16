@@ -1623,7 +1623,7 @@ int qse_fio_unlock (qse_fio_t* fio, qse_fio_lck_t* lck, int flags)
 	return -1;
 }
 
-int qse_getstdfiohandle (qse_fio_std_t std, qse_fio_hnd_t* hnd)
+int qse_get_stdfiohandle (qse_fio_std_t std, qse_fio_hnd_t* hnd)
 {
 #if defined(_WIN32)
 	static DWORD tab[] =

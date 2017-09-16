@@ -127,13 +127,13 @@ void t2()
 int main ()
 {
 	setlocale (LC_ALL, "");
-	qse_openstdsios ();
+	qse_open_stdsios ();
 
 	t1 ();
 	qse_printf (QSE_T("=================\n"));
 	t2 ();
 	qse_printf (QSE_T("=================\n"));
-	qse_closestdsios ();
+	qse_close_stdsios ();
 
 	return 0;
 }

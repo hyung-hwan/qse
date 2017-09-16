@@ -390,10 +390,26 @@ QSE_EXPORT int qse_sio_seek (
 	qse_sio_ori_t  origin
 );
 
-QSE_EXPORT int qse_openstdsios (void);
-QSE_EXPORT void qse_closestdsios (void);
-QSE_EXPORT qse_sio_t* qse_getstdout (void);
-QSE_EXPORT qse_sio_t* qse_getstderr (void);
+
+
+
+
+QSE_EXPORT int qse_open_stdsios (
+	void
+);
+
+QSE_EXPORT void qse_close_stdsios (
+	void
+);
+
+QSE_EXPORT qse_sio_t* qse_get_stdout (
+	void
+);
+
+QSE_EXPORT qse_sio_t* qse_get_stderr (
+	void
+);
+
 
 QSE_EXPORT qse_ssize_t qse_putmbsf (
 	const qse_mchar_t* fmt,
@@ -447,9 +463,10 @@ QSE_EXPORT qse_ssize_t qse_errputwcsvf (
 #	define qse_errputstrvf(fmt,ap) qse_errputwcsvf(fmt,ap)
 #endif
 
+
 /* Some convenience macros */
-#define QSE_STDOUT (qse_getstdout())
-#define QSE_STDERR (qse_getstderr())
+#define QSE_STDOUT (qse_get_stdout())
+#define QSE_STDERR (qse_get_stderr())
 #define qse_printf qse_putstrf
 #define qse_vprintf qse_putstrvf
 #define qse_fprintf qse_sio_putstrf 

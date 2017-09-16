@@ -315,7 +315,7 @@ QSE_EXPORT int qse_fio_unlock (
 	int            flags
 );
 
-QSE_EXPORT int qse_getstdfiohandle (
+QSE_EXPORT int qse_get_stdfiohandle (
 	qse_fio_std_t  std,
 	qse_fio_hnd_t* hnd
 );

@@ -72,9 +72,9 @@ oops:
 int qse_main (int argc, qse_achar_t* argv[])
 {
 	int x;
-	qse_openstdsios ();
+	qse_open_stdsios ();
 	init_sed_sample_locale ();
 	x = qse_runmain (argc, argv, sed_main);
-	qse_closestdsios ();
+	qse_close_stdsios ();
 	return x;
 }
