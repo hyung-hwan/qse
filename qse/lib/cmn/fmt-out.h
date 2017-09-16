@@ -361,7 +361,7 @@ reswitch:
 			if (flagc & FLAGC_LENMOD)
 			{
 				/* conflict with other length modifier */
-				save_lm_flag = lm_flag;
+				lm_flag = save_lm_flag;
 				goto invalid_format; 
 			}
 			flagc |= FLAGC_LENMOD;
@@ -841,37 +841,53 @@ reswitch:
 				num = (unsigned char)va_arg (ap, int);
 
 			else if (lm_flag & LF_I8)
-			#if (QSE_SIZEOF_UINT8_T < QSE_SIZEOF_UINT)
+			{
+			#if (QSE_SIZEOF_UINT8_T < QSE_SIZEOF_INT)
 				num = (qse_uint8_t)va_arg (ap, unsigned int);
 			#else
 				num = va_arg (ap, qse_uint8_t);
 			#endif
+			}
 			else if (lm_flag & LF_I16)
-			#if (QSE_SIZEOF_UINT16_T < QSE_SIZEOF_UINT)
+			{
+			#if (QSE_SIZEOF_UINT16_T < QSE_SIZEOF_INT)
 				num = (qse_uint16_t)va_arg (ap, unsigned int);
 			#else
 				num = va_arg (ap, qse_uint16_t);
 			#endif
+			}
 			else if (lm_flag & LF_I32)
-			#if (QSE_SIZEOF_UINT32_T < QSE_SIZEOF_UINT)
+			{	
+			#if (QSE_SIZEOF_UINT32_T < QSE_SIZEOF_INT)
 				num = (qse_uint32_t)va_arg (ap, unsigned int);
 			#else
 				num = va_arg (ap, qse_uint32_t);
 			#endif
+			}
+		#if defined(QSE_HAVE_UINT64_T)
 			else if (lm_flag & LF_I64)
-			#if defined(QSE_HAVE_UINT64_T) && (QSE_SIZEOF_UINT64_T < QSE_SIZEOF_UINT)
+			{
+			#if (QSE_SIZEOF_UINT64_T < QSE_SIZEOF_INT)
 				num = (qse_uint64_t)va_arg (ap, unsigned int);
 			#else
 				num = va_arg (ap, qse_uint64_t);
 			#endif
+			}
+		#endif
+		#if defined(QSE_HAVE_UINT128_T)
 			else if (lm_flag & LF_I128)
-			#if defined(QSE_HAVE_UINT128_T) && (QSE_SIZEOF_UINT128_T < QSE_SIZEOF_UINT)
+			{
+			#if (QSE_SIZEOF_UINT128_T < QSE_SIZEOF_INT)
 				num = (qse_uint128_t)va_arg (ap, unsigned int);
 			#else
 				num = va_arg (ap, qse_uint128_t);
 			#endif
+			}
+		#endif
 			else
+			{
 				num = va_arg (ap, unsigned int);
+			}
 			goto number;
 
 handle_sign:
@@ -915,37 +931,53 @@ handle_sign:
 				num = (char)va_arg (ap, int);
 
 			else if (lm_flag & LF_I8)
+			{
 			#if (QSE_SIZEOF_INT8_T < QSE_SIZEOF_INT)
 				num = (qse_int8_t)va_arg (ap, int);
 			#else
 				num = va_arg (ap, qse_int8_t);
 			#endif
+			}
 			else if (lm_flag & LF_I16)
+			{
 			#if (QSE_SIZEOF_INT16_T < QSE_SIZEOF_INT)
 				num = (qse_int16_t)va_arg (ap, int);
 			#else
 				num = va_arg (ap, qse_int16_t);
 			#endif
+			}
 			else if (lm_flag & LF_I32)
+			{
 			#if (QSE_SIZEOF_INT32_T < QSE_SIZEOF_INT)
 				num = (qse_int32_t)va_arg (ap, int);
 			#else
 				num = va_arg (ap, qse_int32_t);
 			#endif
+			}
+		#if defined(QSE_HAVE_INT64_T)
 			else if (lm_flag & LF_I64)
-			#if defined(QSE_HAVE_INT64_T) && (QSE_SIZEOF_INT64_T < QSE_SIZEOF_INT)
+			{
+			#if (QSE_SIZEOF_INT64_T < QSE_SIZEOF_INT)
 				num = (qse_int64_t)va_arg (ap, int);
 			#else
 				num = va_arg (ap, qse_int64_t);
 			#endif
+			}
+		#endif
+		#if defined(QSE_HAVE_INT128_T)
 			else if (lm_flag & LF_I128)
-			#if defined(QSE_HAVE_INT128_T) && (QSE_SIZEOF_INT128_T < QSE_SIZEOF_INT)
+			{
+			#if (QSE_SIZEOF_INT128_T < QSE_SIZEOF_INT)
 				num = (qse_int128_t)va_arg (ap, int);
 			#else
 				num = va_arg (ap, qse_int128_t);
 			#endif
+			}
+		#endif
 			else
+			{
 				num = va_arg (ap, int);
+			}
 
 number:
 			if (sign && (qse_intmax_t)num < 0) 
