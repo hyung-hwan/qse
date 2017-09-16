@@ -39,20 +39,25 @@
 #define QSE_LOG_MSG_MAX   10204
 #define QSE_LOG_IDENT_MAX 32
 
+#define QSE_LOG_MASK_PRIORITY 0x00000FFFUL
+#define QSE_LOG_MASK_OPTION   0x000FF000UL
+#define QSE_LOG_MASK_TARGET   0xFFF00000UL
+
 /* priority */
-#define QSE_LOG_PANIC          (1UL << 0)
-#define QSE_LOG_ALERT          (1UL << 1)
-#define QSE_LOG_CRITICAL       (1UL << 2)
-#define QSE_LOG_ERROR          (1UL << 3)
-#define QSE_LOG_WARNING        (1UL << 4)
-#define QSE_LOG_NOTICE         (1UL << 5)
-#define QSE_LOG_INFO           (1UL << 6)
-#define QSE_LOG_DEBUG          (1UL << 7)
+#define QSE_LOG_PANIC           0x0000UL
+#define QSE_LOG_ALERT           0x0001UL
+#define QSE_LOG_CRITICAL        0x0002UL
+#define QSE_LOG_ERROR           0x0003UL
+#define QSE_LOG_WARNING         0x0004UL
+#define QSE_LOG_NOTICE          0x0005UL
+#define QSE_LOG_INFO            0x0006UL
+#define QSE_LOG_DEBUG           0x0007UL
 
 /* options */
-#define QSE_LOG_KEEP_FILE_OPEN  (1UL << 13)
-#define QSE_LOG_ENABLE_MASKED   (1UL << 14)
-#define QSE_LOG_INCLUDE_PID      (1UL << 15)
+#define QSE_LOG_KEEP_FILE_OPEN        (1UL << 13)
+#define QSE_LOG_ENABLE_MASKED         (1UL << 14)
+#define QSE_LOG_INCLUDE_PID           (1UL << 15)
+#define QSE_LOG_HOST_IN_REMOTE_SYSLOG (1UL << 16)
 
 /* target */
 #define QSE_LOG_CONSOLE         (1UL << 20)
@@ -60,9 +65,6 @@
 #define QSE_LOG_SYSLOG          (1UL << 22)
 #define QSE_LOG_SYSLOG_REMOTE   (1UL << 23)
 
-#define QSE_LOG_MASK_PRIORITY 0x00000FFFUL
-#define QSE_LOG_MASK_OPTION   0x000FF000UL
-#define QSE_LOG_MASK_TARGET   0xFFF00000UL
 
 
 /* facility */
@@ -92,7 +94,17 @@ enum qse_log_facility_t
 typedef enum qse_log_facility_t qse_log_facility_t;
 
 
+/* TODO: support ENABLE_MASKED??? */
 #define QSE_LOG_ENABLED(log,pri) ((pri) <= ((log)->flags & QSE_LOG_MASK_PRIORITY)) 
+
+
+#if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L)
+#define QSE_LOG(log,ident,pri,...) \
+	do { \
+		if (QSE_LOG_ENABLED(log,pri)) \
+			qse_log_report (log, ident, pri, __VA_ARGS__); \
+	} while (0)
+#endif
 
 #define QSE_LOG0(log,ident,pri,fmt) \
 	do { \

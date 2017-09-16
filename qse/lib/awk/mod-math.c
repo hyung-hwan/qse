@@ -374,6 +374,21 @@ static qse_awk_flt_t math_log (qse_awk_t* awk, qse_awk_flt_t x)
 #endif
 }
 
+static qse_awk_flt_t math_log2 (qse_awk_t* awk, qse_awk_flt_t x)
+{
+#if defined(QSE_USE_AWK_FLTMAX) && defined(HAVE_LOG2Q)
+	return log2q (x);
+#elif defined(HAVE_LOG2L) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
+	return log2l (x);
+#elif defined(HAVE_LOG2)
+	return log2 (x);
+#elif defined(HAVE_LOG2F)
+	return log2f (x);
+#else
+	#error ### no log2 function available ###
+#endif
+}
+
 static qse_awk_flt_t math_log10 (qse_awk_t* awk, qse_awk_flt_t x)
 {
 #if defined(QSE_USE_AWK_FLTMAX) && defined(HAVE_LOG10Q)
@@ -494,6 +509,11 @@ static int fnc_log (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	return fnc_math_1 (rtx, fi, math_log);
 }
 
+static int fnc_log2 (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	return fnc_math_1 (rtx, fi, math_log2);
+}
+
 static int fnc_log10 (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
 	return fnc_math_1 (rtx, fi, math_log10);
@@ -600,6 +620,7 @@ static fnctab_t fnctab[] =
 	{ QSE_T("floor"),   { { 1, 1, QSE_NULL },     fnc_floor,      0 } },
 	{ QSE_T("log"),     { { 1, 1, QSE_NULL },     fnc_log,        0 } },
 	{ QSE_T("log10"),   { { 1, 1, QSE_NULL },     fnc_log10,      0 } },
+	{ QSE_T("log2"),    { { 1, 1, QSE_NULL },     fnc_log2,       0 } },
 	{ QSE_T("rand"),    { { 0, 0, QSE_NULL },     fnc_rand,       0 } },
 	{ QSE_T("round"),   { { 1, 1, QSE_NULL },     fnc_round,      0 } },
 	{ QSE_T("sin"),     { { 1, 1, QSE_NULL },     fnc_sin,        0 } },

@@ -365,6 +365,18 @@
 /* Define to 1 if you have the `log10q' function. */
 #undef HAVE_LOG10Q
 
+/* Define to 1 if you have the `log2' function. */
+#undef HAVE_LOG2
+
+/* Define to 1 if you have the `log2f' function. */
+#undef HAVE_LOG2F
+
+/* Define to 1 if you have the `log2l' function. */
+#undef HAVE_LOG2L
+
+/* Define to 1 if you have the `log2q' function. */
+#undef HAVE_LOG2Q
+
 /* Define to 1 if you have the `logf' function. */
 #undef HAVE_LOGF
 
