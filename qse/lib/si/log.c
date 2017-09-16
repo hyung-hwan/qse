@@ -35,6 +35,8 @@
 #else
 	#include <syslog.h>
 	#include <sys/socket.h>
+	#include <netinet/in.h>
+	#include <sys/un.h>
 	#include "../cmn/syscall.h"
 #endif
 
@@ -49,6 +51,22 @@ static const qse_char_t* __priority_names[] =
 	QSE_T("info"),
 	QSE_T("debug"),
 	QSE_NULL
+};
+
+static const qse_char_t* __syslog_month_names[] =
+{
+	QSE_MT("Jan"),
+	QSE_MT("Feb"),
+	QSE_MT("Mar"),
+	QSE_MT("Apr"),
+	QSE_MT("May"),
+	QSE_MT("Jun"),
+	QSE_MT("Jul"),
+	QSE_MT("Aug"),
+	QSE_MT("Sep"),
+	QSE_MT("Oct"),
+	QSE_MT("Nov"),
+	QSE_MT("Dec"),
 };
 
 #ifndef LOG_EMERG
@@ -140,6 +158,7 @@ int qse_log_init (qse_log_t* log, qse_mmgr_t* mmgr, const qse_char_t* ident, int
 	}
 	if (potflags & QSE_LOG_CONSOLE) log->flags |= QSE_LOG_CONSOLE;
 	if (potflags & QSE_LOG_SYSLOG) log->flags |= QSE_LOG_SYSLOG;
+	if (potflags & QSE_LOG_SYSLOG_LOCAL) log->flags |= QSE_LOG_SYSLOG_LOCAL;
 
 	if (potflags & QSE_LOG_SYSLOG_REMOTE)
 	{
@@ -191,6 +210,14 @@ void qse_log_fini (qse_log_t* log)
 		qse_mbs_close (log->dmsgbuf);
 		log->dmsgbuf = QSE_NULL;
 	}
+
+#if defined(QSE_CHAR_IS_WCHAR)
+	if (log->wmsgbuf)
+	{
+		qse_wcs_close (log->wmsgbuf);
+		log->wmsgbuf = QSE_NULL;
+	}
+#endif
 	qse_mtx_fini (&log->mtx);
 }
 
@@ -368,6 +395,11 @@ static QSE_INLINE void __report_over_sio (qse_log_t* log, qse_sio_t* sio, const 
 		}
 	}
 
+	if (log->flags & QSE_LOG_INCLUDE_PID) 
+	{
+		qse_sio_putmbsf (sio, QSE_MT("[%d]"), (int)QSE_GETPID());
+		id_out = 1;
+	}
 	if (id_out) qse_sio_putmbs (sio, QSE_MT(": "));
 
 	qse_sio_putstrvf (sio, fmt, arg);
@@ -400,8 +432,7 @@ void qse_log_reportv (qse_log_t* log, const qse_char_t* ident, int pri, const qs
 		if (pri > (log->flags & QSE_LOG_MASK_PRIORITY)) return;
 	}
 
-	if (qse_gettime(&now) <= -1) return;
-	if (qse_localtime(&now, &cnow) <= -1) return;
+	if (qse_gettime(&now) || qse_localtime(&now, &cnow) <= -1) return;
 
 	if (log->flags & (QSE_LOG_CONSOLE | QSE_LOG_FILE))
 	{
@@ -457,96 +488,139 @@ void qse_log_reportv (qse_log_t* log, const qse_char_t* ident, int pri, const qs
 		}
 	}
 
-	if (log->flags & (QSE_LOG_SYSLOG | QSE_LOG_SYSLOG_REMOTE))
+	if (log->flags & (QSE_LOG_SYSLOG | QSE_LOG_SYSLOG_LOCAL | QSE_LOG_SYSLOG_REMOTE))
 	{
 		va_list xap;
+		qse_size_t fplen, fpdlen, fpdilen;
+		int sl_pri, id_out = 0;
+		const qse_mchar_t* identfmt, * identparenfmt;
 
 		if (!log->dmsgbuf) log->dmsgbuf = qse_mbs_open (log->mmgr, 0, 0);
 		if (!log->dmsgbuf) goto done;
 
+#if defined(QSE_CHAR_IS_WCHAR)
+		if (!log->wmsgbuf) log->wmsgbuf = qse_wcs_open (log->mmgr, 0, 0);
+		if (!log->wmsgbuf) goto done;
+#endif
+
+		sl_pri = (pri < QSE_COUNTOF(__syslog_priority))? __syslog_priority[pri]: LOG_DEBUG;
+
+		fplen = qse_mbs_fmt(log->dmsgbuf, QSE_MT("<%d>"), (int)(log->syslog_facility | sl_pri));
+		if (fplen == (qse_size_t)-1) goto done;
+
+		fpdlen = qse_mbs_fcat (
+			log->dmsgbuf, QSE_MT("%s %02d %02d:%02d:%02d "), 
+			__syslog_month_names[cnow.mon], cnow.mday, 
+			cnow.hour, cnow.min, cnow.sec);
+		if (fpdlen == (qse_size_t)-1) goto done;
+
+	#if defined(QSE_CHAR_IS_MCHAR)
+		identfmt = QSE_MT("%hs");
+		identparenfmt = QSE_MT("(%hs)");
+	#else
+		identfmt = QSE_MT("%ls");
+		identparenfmt = QSE_MT("(%ls)");
+	#endif
+
+		if (log->ident[0])
+		{
+			if (qse_mbs_fcat (log->dmsgbuf, identfmt, log->ident) == (qse_size_t)-1) goto done;
+			if (ident && ident[0] && 
+			    qse_mbs_fcat (log->dmsgbuf, identparenfmt, ident) == (qse_size_t)-1) goto done;
+			id_out = 1;
+		}
+		else
+		{
+			if (ident && ident[0])
+			{
+				if (qse_mbs_fcat (log->dmsgbuf, identfmt, ident) == (qse_size_t)-1) goto done;
+				id_out = 1;
+			}
+		}
+
+		if (log->flags & QSE_LOG_INCLUDE_PID)
+		{
+			fpdilen = qse_mbs_fcat (log->dmsgbuf, QSE_MT("[%d]"), (int)QSE_GETPID());
+			if (fpdilen == (qse_size_t)-1) goto done;
+			id_out = 1;
+		}
+
+		if (id_out)
+		{
+			fpdilen = qse_mbs_fcat (log->dmsgbuf, QSE_MT(": "), log->ident);
+			if (fpdilen == (qse_size_t)-1) goto done;
+		}
+		else
+		{
+			fpdilen = fpdlen;
+		}
+
 		va_copy (xap, ap);
-		if (qse_str_vfmt (log->dmsgbuf, fmt, xap) == QSE_TYPE_MAX(qse_size_t)) goto done;
-	}
-
-	if (log->flags & QSE_LOG_SYSLOG) 
-	{
-	#if defined(_WIN32)
-		/* TODO: windows event log */
+	#if defined(QSE_CHAR_IS_MCHAR)
+		if (qse_mbs_vfcat (log->dmsgbuf, fmt, xap) == (qse_size_t)-1) goto done;
 	#else
-		int sl_pri, sl_opt;
-
-		sl_opt = (log->flags & QSE_LOG_SYSLOG_PID)? LOG_PID: 0;
-		sl_pri = (pri < QSE_COUNTOF(__syslog_priority))? __syslog_priority[pri]: LOG_DEBUG;
-
-		if (!log->t.syslog.opened) 
-		{
-			/* the secondary 'ident' string is not included into syslog */
-		#if defined(QSE_CHAR_IS_MCHAR)
-			openlog (log->ident, sl_opt, log->syslog_facility);
-		#else
-			qse_mchar_t idbuf[QSE_LOG_IDENT_MAX * 2 + 1];
-			qse_mbsxfmt (idbuf, QSE_COUNTOF(idbuf), QSE_MT("%ls"), log->ident);
-			openlog (idbuf, sl_opt, log->syslog_facility);
-		#endif
-			log->t.syslog.opened = 1;
-		}
-
-		syslog (sl_pri, "%s", QSE_MBS_PTR(log->dmsgbuf));
+		if (qse_wcs_vfmt (log->wmsgbuf, fmt, xap) == (qse_size_t)-1 ||
+		    qse_mbs_vfcat (log->dmsgbuf, QSE_MT("%.*ls"), QSE_WCS_LEN(log->wmsgbuf), QSE_WCS_PTR(log->wmsgbuf)) == (qse_size_t)-1) goto done;
 	#endif
-	}
 
-	/* remote syslogging for ipv4 */
-	if (log->flags & QSE_LOG_SYSLOG_REMOTE)  
-	{
-	#if defined(_WIN32)
-		/* TODO: windows event log */
-	#else
-		/* direct interface over udp to a remote syslog server */
-
-#if 0
-		int sl_pri;
-
-
-		sl_pri = (pri < QSE_COUNTOF(__syslog_priority))? __syslog_priority[pri]: LOG_DEBUG;
-
-#if 0
-		qse_formattime (tm, QSE_COUNTOF(tm), QSE_T("%b %d %H:%M:%S"), &cnow);
-#endif
-		if (idt == QSE_NULL) 
+		if (log->flags & QSE_LOG_SYSLOG) 
 		{
-			qse_strxfmt (log->msgbuf2, QSE_COUNTOF(log->msgbuf2), 
-				QSE_T("<%d>%s %s"), 
-				(int)(log->syslog_facility | sl_pri), 
-				tm, log->msgbuf);
-		}
-		else 
-		{
-			qse_strxfmt (log->msgbuf2, QSE_COUNTOF(log->msgbuf2), 
-				QSE_T("<%d>%s %s: %s"), 
-				(int)(log->syslog_facility | sl_pri), 
-				tm, idt, log->msgbuf);
-		}
-
-		if (log->t.syslog_remote.sock <= -1)
-			log->t.syslog_remote.sock = socket (qse_skadfamily(&log->t.syslog_remote.addr), SOCK_DGRAM, 0);
-		
-		if (log->t.syslog_remote.sock >= 0)
-		{
-		#if defined(QSE_CHAR_IS_MCHAR)
-			sendto (log->t.syslog_remote.sock, log->msgbuf2, qse_strlen(log->msgbuf2), 0,
-			        (struct sockaddr*)&log->t.syslog_remote.addr, 
-			        qse_skadsize(&log->t.syslog_remote.addr));
+		#if defined(_WIN32)
+			/* TODO: windows event log */
 		#else
-			qse_wcstomcs (log->msgbuf2, log->msgbuf_mb, QSE_COUNTOF(log->msgbuf_mb));
+			int sl_opt;
 
-			sendto (log->t.syslog_remote.sock, 
-			        log->msgbuf_mb, qse_mstrlen(log->msgbuf_mb), 0,
-			        (struct sockaddr*)&log->t.syslog_remote.addr, 
-			        qse_skadsize(&log->t.syslog_remote.addr));
+			sl_opt = (log->flags & QSE_LOG_INCLUDE_PID)? LOG_PID: 0;
+
+			if (!log->t.syslog.opened) 
+			{
+				/* the secondary 'ident' string is not included into syslog */
+			#if defined(QSE_CHAR_IS_MCHAR)
+				openlog (log->ident, sl_opt, log->syslog_facility);
+			#else
+				qse_mchar_t idbuf[QSE_LOG_IDENT_MAX * 2 + 1];
+				qse_mbsxfmt (idbuf, QSE_COUNTOF(idbuf), QSE_MT("%ls"), log->ident);
+				openlog (idbuf, sl_opt, log->syslog_facility);
+			#endif
+				log->t.syslog.opened = 1;
+			}
+
+			syslog (sl_pri, "%s", QSE_MBS_CPTR(log->dmsgbuf, fpdilen));
 		#endif
 		}
-#endif
-	#endif
+
+		if (log->flags & QSE_LOG_SYSLOG_REMOTE)  
+		{
+		#if defined(_WIN32)
+			/* TODO: windows event log */
+		#else
+			/* direct interface over udp to a remote syslog server. 
+			 * if you specify a local unix socket address, it may interact with a local syslog server */
+			if (log->t.syslog_remote.sock <= -1)
+			{
+			#if defined(SOCK_CLOEXECX)
+				log->t.syslog_remote.sock = socket (qse_skadfamily(&log->t.syslog_remote.addr), SOCK_DGRAM | SOCK_CLOEXEC, 0);
+			#else
+				log->t.syslog_remote.sock = socket (qse_skadfamily(&log->t.syslog_remote.addr), SOCK_DGRAM, 0);
+				#if defined(FD_CLOEXEC)
+				if (log->t.syslog_remote.sock >= 0)
+				{
+					int flag = fcntl (log->t.syslog_remote.sock, F_GETFD);
+					if (flag >= 0) fcntl (log->t.syslog_remote.sock, F_SETFD, flag | FD_CLOEXEC);
+				}
+				#endif
+			#endif
+			}
+			
+			if (log->t.syslog_remote.sock >= 0)
+			{
+				sendto (log->t.syslog_remote.sock, QSE_MBS_PTR(log->dmsgbuf), QSE_MBS_LEN(log->dmsgbuf), 0,
+					(struct sockaddr*)&log->t.syslog_remote.addr, 
+					qse_skadsize(&log->t.syslog_remote.addr));
+			}
+		#endif
+		}
+
 	}
 
 done:
