@@ -90,7 +90,7 @@ build_triplet = @build@
 host_triplet = @host@
 bin_PROGRAMS = aio01$(EXEEXT) dir01$(EXEEXT) fio01$(EXEEXT) \
 	fio02$(EXEEXT) fs01$(EXEEXT) fs02$(EXEEXT) fs03$(EXEEXT) \
-	glob01$(EXEEXT) nwad01$(EXEEXT) nwif01$(EXEEXT) \
+	glob01$(EXEEXT) log01$(EXEEXT) nwad01$(EXEEXT) nwif01$(EXEEXT) \
 	nwif02$(EXEEXT) pio01$(EXEEXT) rwl01$(EXEEXT) sio01$(EXEEXT) \
 	sio02$(EXEEXT) sio03$(EXEEXT) task01$(EXEEXT)
 @WCHAR_TRUE@@WIN32_TRUE@am__append_1 = $(UNICOWS_LIBS)
@@ -151,6 +151,10 @@ am_glob01_OBJECTS = glob01.$(OBJEXT)
 glob01_OBJECTS = $(am_glob01_OBJECTS)
 glob01_LDADD = $(LDADD)
 glob01_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_2)
+am_log01_OBJECTS = log01.$(OBJEXT)
+log01_OBJECTS = $(am_log01_OBJECTS)
+log01_LDADD = $(LDADD)
+log01_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_2)
 am_nwad01_OBJECTS = nwad01.$(OBJEXT)
 nwad01_OBJECTS = $(am_nwad01_OBJECTS)
 nwad01_LDADD = $(LDADD)
@@ -223,16 +227,16 @@ am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
 SOURCES = $(aio01_SOURCES) $(dir01_SOURCES) $(fio01_SOURCES) \
 	$(fio02_SOURCES) $(fs01_SOURCES) $(fs02_SOURCES) \
-	$(fs03_SOURCES) $(glob01_SOURCES) $(nwad01_SOURCES) \
-	$(nwif01_SOURCES) $(nwif02_SOURCES) $(pio01_SOURCES) \
-	$(rwl01_SOURCES) $(sio01_SOURCES) $(sio02_SOURCES) \
-	$(sio03_SOURCES) $(task01_SOURCES)
+	$(fs03_SOURCES) $(glob01_SOURCES) $(log01_SOURCES) \
+	$(nwad01_SOURCES) $(nwif01_SOURCES) $(nwif02_SOURCES) \
+	$(pio01_SOURCES) $(rwl01_SOURCES) $(sio01_SOURCES) \
+	$(sio02_SOURCES) $(sio03_SOURCES) $(task01_SOURCES)
 DIST_SOURCES = $(aio01_SOURCES) $(dir01_SOURCES) $(fio01_SOURCES) \
 	$(fio02_SOURCES) $(fs01_SOURCES) $(fs02_SOURCES) \
-	$(fs03_SOURCES) $(glob01_SOURCES) $(nwad01_SOURCES) \
-	$(nwif01_SOURCES) $(nwif02_SOURCES) $(pio01_SOURCES) \
-	$(rwl01_SOURCES) $(sio01_SOURCES) $(sio02_SOURCES) \
-	$(sio03_SOURCES) $(task01_SOURCES)
+	$(fs03_SOURCES) $(glob01_SOURCES) $(log01_SOURCES) \
+	$(nwad01_SOURCES) $(nwif01_SOURCES) $(nwif02_SOURCES) \
+	$(pio01_SOURCES) $(rwl01_SOURCES) $(sio01_SOURCES) \
+	$(sio02_SOURCES) $(sio03_SOURCES) $(task01_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -457,6 +461,7 @@ fs01_SOURCES = fs01.c
 fs02_SOURCES = fs02.c
 fs03_SOURCES = fs03.c
 glob01_SOURCES = glob01.c
+log01_SOURCES = log01.c
 nwad01_SOURCES = nwad01.c
 nwif01_SOURCES = nwif01.c
 nwif02_SOURCES = nwif02.c
@@ -581,6 +586,10 @@ glob01$(EXEEXT): $(glob01_OBJECTS) $(glob01_DEPENDENCIES) $(EXTRA_glob01_DEPENDE
 	@rm -f glob01$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(glob01_OBJECTS) $(glob01_LDADD) $(LIBS)
 
+log01$(EXEEXT): $(log01_OBJECTS) $(log01_DEPENDENCIES) $(EXTRA_log01_DEPENDENCIES) 
+	@rm -f log01$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(log01_OBJECTS) $(log01_LDADD) $(LIBS)
+
 nwad01$(EXEEXT): $(nwad01_OBJECTS) $(nwad01_DEPENDENCIES) $(EXTRA_nwad01_DEPENDENCIES) 
 	@rm -f nwad01$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(nwad01_OBJECTS) $(nwad01_LDADD) $(LIBS)
@@ -631,6 +640,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fs02.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fs03.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/glob01.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/log01.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/nwad01.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/nwif01.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/nwif02.Po@am__quote@
