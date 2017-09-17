@@ -333,10 +333,10 @@ static struct sck_type_map_t sck_type_map[] =
 #endif
 
 	/* QSE_AIO_DEV_SCK_ICMP4 - IP protocol field is 1 byte only. no byte order conversion is needed */
-	{ AF_INET,    SOCK_RAW,       IPPROTO_ICMP,   0, 1 },
+	{ AF_INET,    SOCK_RAW,       IPPROTO_ICMP,   0 },
 
 	/* QSE_AIO_DEV_SCK_ICMP6 - IP protocol field is 1 byte only. no byte order conversion is needed */
-	{ AF_INET6,   SOCK_RAW,       IPPROTO_ICMP,   0, 1 }
+	{ AF_INET6,   SOCK_RAW,       IPPROTO_ICMP,   0 }
 };
 
 /* ======================================================================== */
@@ -847,12 +847,16 @@ static int dev_sck_ioctl (qse_aio_dev_t* dev, int cmd, void* arg)
 		#if defined(USE_SSL)
 			if (rdev->ssl_ctx)
 			{
+			#if defined(USE_SSL)
 				SSL_CTX_free (rdev->ssl_ctx);
+			#endif
 				rdev->ssl_ctx = QSE_NULL;
 
 				if (rdev->ssl)
 				{
+			#if defined(USE_SSL)
 					SSL_free (rdev->ssl);
+			#endif
 					rdev->ssl = QSE_NULL;
 				}
 			}
