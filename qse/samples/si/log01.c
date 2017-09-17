@@ -8,14 +8,20 @@ void t1 (void)
 {
 	qse_log_t* log;
 	qse_log_target_t t;
+#if defined(QSE_HAVE_INT128_T)
 	qse_int128_t q = 0x1234567890;
+#elif defined(QSE_HAVE_INT64_T)
+	qse_int64_t q = 0x1234567890;
+#else
+	qse_int32_t q = 0x12345678;
+#endif
 	int i;
 	qse_nwad_t nwad;
 
 	t.file = QSE_T("/tmp/t3.log");
 	/*qse_strtonwad ("127.0.0.1:514", &nwad);*/
 	/*qse_strtonwad ("@/var/run/log", &nwad);*/
-	qse_strtonwad ("@/dev/log", &nwad);
+	qse_strtonwad (QSE_T("@/dev/log"), &nwad);
 	qse_nwadtoskad (&nwad, &t.syslog_remote);
 
 	log = qse_log_open (QSE_MMGR_GETDFL(), 0, QSE_T("t3"), 
@@ -34,7 +40,7 @@ void t1 (void)
 			qse_log_target_t t2;
 
 			qse_log_gettarget (log, &t2);
-			qse_strtonwad ("127.0.0.1:514", &nwad);
+			qse_strtonwad (QSE_T("127.0.0.1:514"), &nwad);
 			qse_nwadtoskad (&nwad, &t2.syslog_remote);
 			qse_log_settarget (log, QSE_LOG_CONSOLE | QSE_LOG_FILE | QSE_LOG_SYSLOG_REMOTE, &t2);
 
@@ -44,7 +50,16 @@ void t1 (void)
 			QSE_ASSERT (qse_log_gettarget (log, QSE_NULL) == (QSE_LOG_CONSOLE | QSE_LOG_FILE | QSE_LOG_SYSLOG_REMOTE));
 		}
 
-		QSE_LOG4 (log, QSE_T("test"), QSE_LOG_DEBUG, QSE_T("XXXXXXXX %d %I128x %#0128I128b %l20d >>"), 10 * i , q, q, (long)45);
+		QSE_LOG4 (log, QSE_T("test"), QSE_LOG_DEBUG, 
+#if defined(QSE_HAVE_INT128_T)
+			QSE_T("MSG %d %I128x %#0128I128b %l20d >>"), 
+#elif defined(QSE_HAVE_INT64_T)
+			QSE_T("MSG %d %I64x %#064I64b %l20d >>"), 
+#else
+			QSE_T("MSG %d %I32x %#032I32b %l20d >>"), 
+#endif
+			10 * i , q, q, (long)45
+		);
 	}
 
 
