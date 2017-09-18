@@ -41,18 +41,6 @@
 	#include "../cmn/syscall.h"
 #endif
 
-static const qse_char_t* __priority_names[] =
-{
-	QSE_T("panic"),
-	QSE_T("alert"),
-	QSE_T("critical"),
-	QSE_T("error"),
-	QSE_T("warning"),
-	QSE_T("notice"),
-	QSE_T("info"),
-	QSE_T("debug")
-};
-
 static const qse_mchar_t* __syslog_month_names[] =
 {
 	QSE_MT("Jan"),
@@ -94,16 +82,48 @@ static const qse_mchar_t* __syslog_month_names[] =
 #	define LOG_DEBUG       7
 #endif
 
-static int __syslog_priority[] =
+/* use a simple look-up table for mapping a priority to a syslog value.
+ * i assume it's faster than getting the position of the first lowest bit set
+ * and use a smaller and dense table without gap-filling 0s. */
+static int __syslog_priority[256] =
 {
-	LOG_EMERG,
-	LOG_ALERT,
-	LOG_CRIT,
-	LOG_ERR,
-	LOG_WARNING,
-	LOG_NOTICE,
-	LOG_INFO,
-	LOG_DEBUG
+	0,
+	LOG_EMERG,      /* 1 */
+	LOG_ALERT,      /* 2 */
+	0,
+	LOG_CRIT,       /* 4 */
+	0, 0, 0,
+	LOG_ERR,        /* 8 */
+	0, 0, 0, 0, 0, 0, 0,
+	LOG_WARNING,    /* 16 */
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	LOG_NOTICE,     /* 32 */
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0,
+	LOG_INFO,       /* 64 */
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0,
+	LOG_DEBUG,      /* 128 */
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0
 };
 
 #if defined(_WIN32)
@@ -137,11 +157,44 @@ static struct syslog_fac_info_t __syslog_fac_info[] =
 	{ QSE_T("local4"),   QSE_LOG_LOCAL4 },
 	{ QSE_T("local5"),   QSE_LOG_LOCAL5 },
 	{ QSE_T("local6"),   QSE_LOG_LOCAL6 },
-	{ QSE_T("local7"),   QSE_LOG_LOCAL7 },
-
-	{ QSE_NULL,          0 }
+	{ QSE_T("local7"),   QSE_LOG_LOCAL7 }
 };
 #endif
+
+static QSE_INLINE int get_active_priority_bits (int flags)
+{
+	int priority_bits = 0;
+
+	if (flags & QSE_LOG_MASKED_PRIORITY)
+	{
+		priority_bits = flags & QSE_LOG_MASK_PRIORITY;
+	}
+	else
+	{
+		int pri = flags & QSE_LOG_MASK_PRIORITY;
+		switch (pri)
+		{
+			case QSE_LOG_DEBUG:
+				priority_bits |= QSE_LOG_DEBUG;
+			case QSE_LOG_INFO:
+				priority_bits |= QSE_LOG_INFO;
+			case QSE_LOG_NOTICE:
+				priority_bits |= QSE_LOG_NOTICE;
+			case QSE_LOG_WARNING:
+				priority_bits |= QSE_LOG_WARNING;
+			case QSE_LOG_ERROR:
+				priority_bits |= QSE_LOG_ERROR;
+			case QSE_LOG_CRITICAL:
+				priority_bits |= QSE_LOG_CRITICAL;
+			case QSE_LOG_ALERT:
+				priority_bits |= QSE_LOG_ALERT;
+			case QSE_LOG_PANIC:
+				priority_bits |= QSE_LOG_PANIC;
+		}
+	}
+
+	return priority_bits;
+}
 
 int qse_log_init (qse_log_t* log, qse_mmgr_t* mmgr, const qse_char_t* ident, int potflags, const qse_log_target_t* target)
 {
@@ -169,12 +222,15 @@ int qse_log_init (qse_log_t* log, qse_mmgr_t* mmgr, const qse_char_t* ident, int
 	if (ident) qse_strxcpy (log->ident, QSE_COUNTOF(log->ident), ident);
 	if (qse_mtx_init(&log->mtx, mmgr) <= -1) return -1;
 
+	log->active_priority_bits = get_active_priority_bits(log->flags);
+
 #if defined(_WIN32)
 	/* TODO: windows event logging */
 #else
 	log->syslog_facility = QSE_LOG_USER;
+	
 #endif
-
+	
 	return 0;
 }
 
@@ -328,61 +384,13 @@ void qse_log_setoption (qse_log_t* log, int option)
 void qse_log_setpriority (qse_log_t* log, int priority)
 {
 	log->flags = (log->flags & (QSE_LOG_MASK_TARGET | QSE_LOG_MASK_OPTION)) | (priority & QSE_LOG_MASK_PRIORITY);
+	log->active_priority_bits = get_active_priority_bits (log->flags);
 }
-
-int qse_log_setprioritybyname (qse_log_t* log, const qse_char_t* name)
-{
-
-	qse_size_t i;
-
-	for (i = 0; i < QSE_COUNTOF(__priority_names); i++)
-	{
-		if (qse_strcmp(__priority_names[i], name) == 0) 
-		{
-			qse_log_setpriority (log, i);
-			return 0;
-		}
-	}
-
-	return -1;
-}
-
-const qse_char_t* qse_log_getpriorityname (qse_log_t* log)
-{
-	int pri = log->flags & QSE_LOG_MASK_PRIORITY;
-
-	if (pri < 0 || pri >= QSE_COUNTOF(__priority_names)) return QSE_NULL;
-	return __priority_names[pri];
-}
-
 
 void qse_log_setsyslogfacility (qse_log_t* log, qse_log_facility_t facility)
 {
-#ifndef _WIN32
+#if !defined(_WIN32)
 	log->syslog_facility = facility;
-#endif
-}
-
-int qse_log_setsyslogfacilitybyname (qse_log_t* log, const qse_char_t* name)
-{
-#if defined(_WIN32)
-	/* do nothing */
-	return 0;
-#else
-	struct syslog_fac_info_t* f = __syslog_fac_info;
-
-	while (f->name != QSE_NULL) 
-	{
-		if (qse_strcmp (f->name, name) == 0) 
-		{
-			log->syslog_facility = f->code;
-			return 0;
-		}
-
-		f++;
-	}
-
-	return -1;
 #endif
 }
 
@@ -442,7 +450,7 @@ void qse_log_reportv (qse_log_t* log, const qse_char_t* ident, int pri, const qs
 
 	if ((log->flags & QSE_LOG_MASK_TARGET) == 0) return; /* no target */
 
-	if (log->flags & QSE_LOG_ENABLE_MASKED)
+	if (log->flags & QSE_LOG_MASKED_PRIORITY)
 	{
 		if (!(pri & (log->flags & QSE_LOG_MASK_PRIORITY))) return;
 	}
@@ -522,6 +530,7 @@ void qse_log_reportv (qse_log_t* log, const qse_char_t* ident, int pri, const qs
 		if (!log->wmsgbuf) goto done;
 #endif
 
+		/* the priority value given must have only 1 bit set. otherwise, it will translate to wrong values */
 		sl_pri = (pri < QSE_COUNTOF(__syslog_priority))? __syslog_priority[(pri & QSE_LOG_MASK_PRIORITY)]: LOG_DEBUG;
 
 		fplen = qse_mbs_fmt(log->dmsgbuf, QSE_MT("<%d>"), (int)(log->syslog_facility | sl_pri));
@@ -532,7 +541,6 @@ void qse_log_reportv (qse_log_t* log, const qse_char_t* ident, int pri, const qs
 			__syslog_month_names[cnow.mon], cnow.mday, 
 			cnow.hour, cnow.min, cnow.sec);
 		if (fpdlen == (qse_size_t)-1) goto done;
-
 
 		if (log->flags & QSE_LOG_HOST_IN_REMOTE_SYSLOG)
 		{
@@ -656,8 +664,91 @@ done:
 	qse_mtx_unlock (&log->mtx);
 }
 
-const qse_char_t* qse_get_log_priority_name (int pri)
+/* --------------------------------------------------------------------------
+ * HELPER FUNCTIONS
+ * -------------------------------------------------------------------------- */
+
+static const qse_char_t* __priority_names[] =
 {
-	if (pri < 0 || pri >= QSE_COUNTOF(__priority_names)) return QSE_NULL;
-	return __priority_names[pri];
+/* NOTE: QSE_LOG_PRIORITY_LEN_MAX must be redefined if strings here
+ *       can produce a longer compositional name. e.g. panic|critical|... */
+	QSE_T("panic"),
+	QSE_T("alert"),
+	QSE_T("critical"),
+	QSE_T("error"),
+	QSE_T("warning"),
+	QSE_T("notice"),
+	QSE_T("info"),
+	QSE_T("debug")
+};
+
+qse_size_t qse_get_log_priority_name (int pri, qse_char_t* buf, qse_size_t len)
+{
+	qse_size_t tlen, xlen, rem, i;
+
+	tlen = 0;
+	rem = len;
+
+	for (i = 0; i < QSE_COUNTOF(__priority_names); i++)
+	{
+		if (pri & (1UL << i))
+		{
+			if (rem <= 1) break;
+
+			xlen = (tlen <= 0)?
+				qse_strxcpy (&buf[tlen], rem, __priority_names[i]):
+				qse_strxjoin (&buf[tlen], rem, QSE_T("|"), __priority_names[i], QSE_NULL);
+
+			rem -= xlen;
+			tlen += xlen;
+		}
+	}
+
+	if (len >= tlen) buf[tlen] = QSE_T('\0');
+	return tlen;
+}
+
+int qse_get_log_priority_by_name (const qse_char_t* name)
+{
+	qse_size_t i;
+	qse_cstr_t tok;
+	const qse_char_t* ptr;
+	int pri = 0;
+
+	ptr = name;
+	while (ptr)
+	{
+		ptr = qse_strtok (ptr, QSE_T("|"), &tok);
+		if (tok.ptr)
+		{
+			for (i = 0; i < QSE_COUNTOF(__priority_names); i++)
+			{
+				if (qse_strxcmp(tok.ptr, tok.len, __priority_names[i]) == 0) 
+				{
+					pri |= (1UL << i);
+					break;
+				}
+			}
+			if (i >= QSE_COUNTOF(__priority_names)) return 0; /* unknown name included */
+		}
+	}
+
+	return pri;
+}
+
+
+int qse_get_log_facility_by_name (const qse_char_t* name, qse_log_facility_t* fcode)
+{
+	qse_size_t i;
+
+	for (i = 0; i < QSE_COUNTOF(__syslog_fac_info); i++)
+	{
+		if (qse_strcmp (__syslog_fac_info[i].name, name) == 0)
+		{
+			*fcode = __syslog_fac_info[i].code;
+			return 0;
+		}
+	}
+
+	return -1;
 }
