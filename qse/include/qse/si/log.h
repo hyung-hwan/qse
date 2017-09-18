@@ -265,6 +265,18 @@ QSE_EXPORT void qse_log_close (
 	qse_log_t*        log
 );
 
+QSE_EXPORT int qse_log_init (
+	qse_log_t*        log,
+	qse_mmgr_t*       mmgr,
+	const qse_char_t* ident,
+	int               potflags,
+	const qse_log_target_t* target
+);
+
+QSE_EXPORT void qse_log_fini (
+	qse_log_t* log
+);
+
 QSE_EXPORT void qse_log_setident (
 	qse_log_t*        log,
 	const qse_char_t* ident
@@ -332,10 +344,22 @@ QSE_EXPORT void qse_log_reportv (
 	va_list           ap
 );
 
-QSE_EXPORT qse_size_t qse_get_log_priority_name (
-	int         pri,
-	qse_char_t* buf,
-	qse_size_t  len /* length of the buffer, QSE_LOG_PRIORITY_LEN_MAX + 1 is enough */
+/**
+ * The qse_get_log_priority_name() function returns the name of 
+ * the first priority bit set.
+ */
+QSE_EXPORT const qse_char_t* qse_get_log_priority_name (
+	int         pri
+);
+
+/**
+ * The qse_make_log_priority_name() function composes a priority name
+ * string representing all priority bits set */
+QSE_EXPORT qse_size_t qse_make_log_priority_name (
+	int               pri,
+	const qse_char_t* delim,
+	qse_char_t*       buf,
+	qse_size_t        len /* length of the buffer, QSE_LOG_PRIORITY_LEN_MAX + 1 is enough */
 );
 
 /**
@@ -343,7 +367,8 @@ QSE_EXPORT qse_size_t qse_get_log_priority_name (
  *         0 if \a name is invalid or empty.
  */
 QSE_EXPORT int qse_get_log_priority_by_name (
-	const qse_char_t* name
+	const qse_char_t* name,
+	const qse_char_t* delim
 );
 
 QSE_EXPORT int qse_get_log_facility_by_name (
