@@ -26,14 +26,14 @@ static void t1_sub001 (qse_log_t* log)
 
 	for (i = 0; i < QSE_COUNTOF(xtab); i++)
 	{
-		len = qse_get_log_priority_name (xtab[i].pri, buf, QSE_COUNTOF(buf));
+		len = qse_make_log_priority_name (xtab[i].pri, QSE_T("|"), buf, QSE_COUNTOF(buf));
 		QSE_LOG3 (log, QSE_NULL, QSE_LOG_INFO, QSE_T("%x => %s [%d]"), xtab[i].pri, buf, len);
 	}
 	
 	for  (i = 0; i < QSE_COUNTOF(xtab); i++)
 	{
 		int pri;
-		if ((pri = qse_get_log_priority_by_name(xtab[i].name)) == xtab[i].pri)
+		if ((pri = qse_get_log_priority_by_name(xtab[i].name, QSE_T("|"))) == xtab[i].pri)
 		{
 			QSE_LOG2 (log, QSE_NULL, QSE_LOG_INFO, QSE_T("SUCCESS: %s => %x"), xtab[i].name, pri);
 		}

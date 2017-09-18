@@ -196,6 +196,30 @@ static QSE_INLINE int get_active_priority_bits (int flags)
 	return priority_bits;
 }
 
+qse_log_t* qse_log_open (qse_mmgr_t* mmgr, qse_size_t xtnsize, const qse_char_t* ident, int potflags, const qse_log_target_t* target)
+{
+	qse_log_t* log;
+
+	log = (qse_log_t*) QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(qse_log_t) + xtnsize);
+	if (log)
+	{
+		 if (qse_log_init (log, mmgr, ident, potflags, target) <= -1)
+		 {
+			QSE_MMGR_FREE (mmgr, log);
+			return QSE_NULL;
+		 }
+		 else QSE_MEMSET (QSE_XTN(log), 0, xtnsize);
+	}
+
+	return log;
+}
+
+void qse_log_close (qse_log_t* log)
+{
+	qse_log_fini (log);
+	QSE_MMGR_FREE (log->mmgr, log);
+}
+
 int qse_log_init (qse_log_t* log, qse_mmgr_t* mmgr, const qse_char_t* ident, int potflags, const qse_log_target_t* target)
 {
 	QSE_MEMSET (log, 0, QSE_SIZEOF(*log));
@@ -276,29 +300,6 @@ void qse_log_fini (qse_log_t* log)
 	qse_mtx_fini (&log->mtx);
 }
 
-qse_log_t* qse_log_open (qse_mmgr_t* mmgr, qse_size_t xtnsize, const qse_char_t* ident, int potflags, const qse_log_target_t* target)
-{
-	qse_log_t* log;
-
-	log = (qse_log_t*) QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(qse_log_t) + xtnsize);
-	if (log)
-	{
-		 if (qse_log_init (log, mmgr, ident, potflags, target) <= -1)
-		 {
-			QSE_MMGR_FREE (mmgr, log);
-			return QSE_NULL;
-		 }
-		 else QSE_MEMSET (QSE_XTN(log), 0, xtnsize);
-	}
-
-	return log;
-}
-
-void qse_log_close (qse_log_t* log)
-{
-	qse_log_fini (log);
-	QSE_MMGR_FREE (log->mmgr, log);
-}
 
 void qse_log_setident (qse_log_t* log, const qse_char_t* ident)
 {
@@ -349,20 +350,18 @@ void qse_log_settarget (qse_log_t* log, int flags, const qse_log_target_t* targe
 	}
 
 	log->flags &= (QSE_LOG_MASK_PRIORITY | QSE_LOG_MASK_OPTION); /* preserve the priority and the options */
-	if (flags & QSE_LOG_FILE) 
-	{
-		qse_strxcpy (log->t.file.path, QSE_COUNTOF(log->t.file.path), target->file);
-		log->flags |= QSE_LOG_FILE;
-	}
+	if (flags & QSE_LOG_FILE) log->flags |= QSE_LOG_FILE;
+
+	/* If you just want to set the target file path without enable QSE_LOG_FILE,
+	 * just set target->file without QSE_LOG_FILE in the flags.
+	 * later, you can call this function with QSE_LOG_FILE set but with target->file or QSE_NULL */
+	if (target->file) qse_strxcpy (log->t.file.path, QSE_COUNTOF(log->t.file.path), target->file);
 
 	if (flags & QSE_LOG_CONSOLE) log->flags |= QSE_LOG_CONSOLE;
 	if (flags & QSE_LOG_SYSLOG) log->flags |= QSE_LOG_SYSLOG;
-	if (flags & QSE_LOG_SYSLOG_REMOTE) 
-	{
-		log->t.syslog_remote.addr = target->syslog_remote;
-		log->flags |= QSE_LOG_SYSLOG_REMOTE;
-	}
 
+	if (flags & QSE_LOG_SYSLOG_REMOTE) log->flags |= QSE_LOG_SYSLOG_REMOTE;
+	if (qse_skadfamily(&target->syslog_remote) != -1) log->t.syslog_remote.addr = target->syslog_remote;
 }
 
 int qse_log_gettarget (qse_log_t* log, qse_log_target_t* target)
@@ -374,7 +373,6 @@ int qse_log_gettarget (qse_log_t* log, qse_log_target_t* target)
 	}
 	return log->flags & QSE_LOG_MASK_TARGET;
 }
-
 
 void qse_log_setoption (qse_log_t* log, int option)
 {
@@ -682,7 +680,21 @@ static const qse_char_t* __priority_names[] =
 	QSE_T("debug")
 };
 
-qse_size_t qse_get_log_priority_name (int pri, qse_char_t* buf, qse_size_t len)
+const qse_char_t* qse_get_log_priority_name (int pri)
+{
+	if (pri & QSE_LOG_PANIC) return __priority_names[0];
+	if (pri & QSE_LOG_ALERT) return __priority_names[1];
+	if (pri & QSE_LOG_CRITICAL) return __priority_names[2];
+	if (pri & QSE_LOG_ERROR) return __priority_names[3];
+	if (pri & QSE_LOG_WARNING) return __priority_names[4];
+	if (pri & QSE_LOG_NOTICE) return __priority_names[5];
+	if (pri & QSE_LOG_INFO) return __priority_names[6];
+	if (pri & QSE_LOG_DEBUG) return __priority_names[7];
+
+	return QSE_NULL;
+}
+
+qse_size_t qse_make_log_priority_name (int pri, const qse_char_t* delim, qse_char_t* buf, qse_size_t len)
 {
 	qse_size_t tlen, xlen, rem, i;
 
@@ -697,7 +709,7 @@ qse_size_t qse_get_log_priority_name (int pri, qse_char_t* buf, qse_size_t len)
 
 			xlen = (tlen <= 0)?
 				qse_strxcpy (&buf[tlen], rem, __priority_names[i]):
-				qse_strxjoin (&buf[tlen], rem, QSE_T("|"), __priority_names[i], QSE_NULL);
+				qse_strxjoin (&buf[tlen], rem, delim, __priority_names[i], QSE_NULL);
 
 			rem -= xlen;
 			tlen += xlen;
@@ -708,7 +720,7 @@ qse_size_t qse_get_log_priority_name (int pri, qse_char_t* buf, qse_size_t len)
 	return tlen;
 }
 
-int qse_get_log_priority_by_name (const qse_char_t* name)
+int qse_get_log_priority_by_name (const qse_char_t* name, const qse_char_t* delim)
 {
 	qse_size_t i;
 	qse_cstr_t tok;
@@ -718,7 +730,7 @@ int qse_get_log_priority_by_name (const qse_char_t* name)
 	ptr = name;
 	while (ptr)
 	{
-		ptr = qse_strtok (ptr, QSE_T("|"), &tok);
+		ptr = qse_strtok (ptr, delim, &tok);
 		if (tok.ptr)
 		{
 			for (i = 0; i < QSE_COUNTOF(__priority_names); i++)
