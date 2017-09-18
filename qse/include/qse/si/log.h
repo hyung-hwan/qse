@@ -14,7 +14,7 @@
 
     THIS SOFTWARE IS PROVIDED BY THE AUTHOR "AS IS" AND ANY EXPRESS OR
     IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
-    OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+    OF MERCHANTABILITY AND FITNESS FOR A PARTICAR PURPOSE ARE DISCLAIMED.
     IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
     INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
     NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
@@ -37,64 +37,65 @@
 /* TODO: improve this and complete win32 portion */
 #define QSE_LOG_IDENT_MAX 32
 
-#define QSE_LOG_MASK_PRIORITY 0x00000FFFUL
-#define QSE_LOG_MASK_OPTION   0x000FF000UL
-#define QSE_LOG_MASK_TARGET   0xFFF00000UL
+#define QSE_LOG_PRIORITY_LEN_MAX 64
+
+#define QSE_LOG_MASK_PRIORITY 0x000000FF /* bit 0 to 7 */
+                                           /* bit 8 to 11 unused */
+#define QSE_LOG_MASK_OPTION   0x000FF000 /* bit 12 to 19 */
+#define QSE_LOG_MASK_TARGET   0xFFF00000 /* bit 20 to 31 */
+
 
 /* priority */
-#define QSE_LOG_PANIC           0x0000UL
-#define QSE_LOG_ALERT           0x0001UL
-#define QSE_LOG_CRITICAL        0x0002UL
-#define QSE_LOG_ERROR           0x0003UL
-#define QSE_LOG_WARNING         0x0004UL
-#define QSE_LOG_NOTICE          0x0005UL
-#define QSE_LOG_INFO            0x0006UL
-#define QSE_LOG_DEBUG           0x0007UL
+#define QSE_LOG_PANIC           (1 << 0)
+#define QSE_LOG_ALERT           (1 << 1)
+#define QSE_LOG_CRITICAL        (1 << 2)
+#define QSE_LOG_ERROR           (1 << 3)
+#define QSE_LOG_WARNING         (1 << 4)
+#define QSE_LOG_NOTICE          (1 << 5)
+#define QSE_LOG_INFO            (1 << 6)
+#define QSE_LOG_DEBUG           (1 << 7)
 
 /* options */
-#define QSE_LOG_KEEP_FILE_OPEN        (1UL << 13)
-#define QSE_LOG_ENABLE_MASKED         (1UL << 14)
-#define QSE_LOG_INCLUDE_PID           (1UL << 15)
-#define QSE_LOG_HOST_IN_REMOTE_SYSLOG (1UL << 16)
+#define QSE_LOG_KEEP_FILE_OPEN        (1 << 13)
+#define QSE_LOG_MASKED_PRIORITY         (1 << 14)
+#define QSE_LOG_INCLUDE_PID           (1 << 15)
+#define QSE_LOG_HOST_IN_REMOTE_SYSLOG (1 << 16)
 
 /* target */
-#define QSE_LOG_CONSOLE         (1UL << 20)
-#define QSE_LOG_FILE            (1UL << 21)
-#define QSE_LOG_SYSLOG          (1UL << 22)
-#define QSE_LOG_SYSLOG_REMOTE   (1UL << 23)
+#define QSE_LOG_CONSOLE         (1 << 20)
+#define QSE_LOG_FILE            (1 << 21)
+#define QSE_LOG_SYSLOG          (1 << 22)
+#define QSE_LOG_SYSLOG_REMOTE   (1 << 23)
 
 
 
 /* facility */
 enum qse_log_facility_t
 {
-	QSE_LOG_KERN     = (0<<3),  /* kernel messages */
-	QSE_LOG_USER     = (1<<3),  /* random user-level messages */
-	QSE_LOG_MAIL     = (2<<3),  /* mail system */
-	QSE_LOG_DAEMON   = (3<<3),  /* system daemons */
-	QSE_LOG_AUTH     = (4<<3),  /* security/authorization messages */
-	QSE_LOG_SYSLOGD  = (5<<3),  /* messages from syslogd */
-	QSE_LOG_LPR      = (6<<3),  /* line printer subsystem */
-	QSE_LOG_NEWS     = (7<<3),  /* network news subsystem */
-	QSE_LOG_UUCP     = (8<<3),  /* UUCP subsystem */
-	QSE_LOG_CRON     = (9<<3),  /* clock daemon */
-	QSE_LOG_AUTHPRIV = (10<<3), /* authorization messages (private) */
-	QSE_LOG_FTP      = (11<<3), /* ftp daemon */
-	QSE_LOG_LOCAL0   = (16<<3), /* reserved for local use */
-	QSE_LOG_LOCAL1   = (17<<3), /* reserved for local use */
-	QSE_LOG_LOCAL2   = (18<<3), /* reserved for local use */
-	QSE_LOG_LOCAL3   = (19<<3), /* reserved for local use */
-	QSE_LOG_LOCAL4   = (20<<3), /* reserved for local use */
-	QSE_LOG_LOCAL5   = (21<<3), /* reserved for local use */
-	QSE_LOG_LOCAL6   = (22<<3), /* reserved for local use */
-	QSE_LOG_LOCAL7   = (23<<3)  /* reserved for local use */
+	QSE_LOG_KERN     = (0 << 3),  /* kernel messages */
+	QSE_LOG_USER     = (1 << 3),  /* random user-level messages */
+	QSE_LOG_MAIL     = (2 << 3),  /* mail system */
+	QSE_LOG_DAEMON   = (3 << 3),  /* system daemons */
+	QSE_LOG_AUTH     = (4 << 3),  /* security/authorization messages */
+	QSE_LOG_SYSLOGD  = (5 << 3),  /* messages from syslogd */
+	QSE_LOG_LPR      = (6 << 3),  /* line printer subsystem */
+	QSE_LOG_NEWS     = (7 << 3),  /* network news subsystem */
+	QSE_LOG_UUCP     = (8 << 3),  /* UUCP subsystem */
+	QSE_LOG_CRON     = (9 << 3),  /* clock daemon */
+	QSE_LOG_AUTHPRIV = (10 << 3), /* authorization messages (private) */
+	QSE_LOG_FTP      = (11 << 3), /* ftp daemon */
+	QSE_LOG_LOCAL0   = (16 << 3), /* reserved for local use */
+	QSE_LOG_LOCAL1   = (17 << 3), /* reserved for local use */
+	QSE_LOG_LOCAL2   = (18 << 3), /* reserved for local use */
+	QSE_LOG_LOCAL3   = (19 << 3), /* reserved for local use */
+	QSE_LOG_LOCAL4   = (20 << 3), /* reserved for local use */
+	QSE_LOG_LOCAL5   = (21 << 3), /* reserved for local use */
+	QSE_LOG_LOCAL6   = (22 << 3), /* reserved for local use */
+	QSE_LOG_LOCAL7   = (23 << 3)  /* reserved for local use */
 };
 typedef enum qse_log_facility_t qse_log_facility_t;
 
-
-/* TODO: support ENABLE_MASKED??? */
-#define QSE_LOG_ENABLED(log,pri) ((pri) <= ((log)->flags & QSE_LOG_MASK_PRIORITY)) 
-
+#define QSE_LOG_ENABLED(log,pri) ((pri) & (log)->active_priority_bits) 
 
 #if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L)
 #define QSE_LOG(log,ident,pri,...) \
@@ -233,6 +234,8 @@ struct qse_log_t
 #endif
 	qse_mtx_t mtx;
 
+	int active_priority_bits;
+
 #if !defined(_WIN32)
 	qse_log_facility_t syslog_facility;
 #endif
@@ -298,19 +301,9 @@ QSE_EXPORT void qse_log_setpriority (
 	int        priority
 );
 
-QSE_EXPORT int qse_log_setprioritybyname (
-	qse_log_t*        log,
-	const qse_char_t* name
-);
-
 QSE_EXPORT void qse_log_setsyslogfacility (
 	qse_log_t*         log,
 	qse_log_facility_t facility
-);
-
-QSE_EXPORT int qse_log_setsyslogfacilitybyname (
-	qse_log_t*        log,
-	const qse_char_t* name
 );
 
 #if defined(QSE_HAVE_INLINE)
@@ -321,10 +314,6 @@ static QSE_INLINE int qse_log_getpriority (qse_log_t* log)
 #else
 #define qse_log_getpriority(log) ((log)->flags & QSE_LOG_MASK_PRIORITY)
 #endif
-
-const qse_char_t* qse_log_getpriorityname (
-	qse_log_t* log
-);
 
 
 QSE_EXPORT void qse_log_report (
@@ -343,8 +332,23 @@ QSE_EXPORT void qse_log_reportv (
 	va_list           ap
 );
 
-QSE_EXPORT const qse_char_t* qse_get_log_priority_name (
-	int pri
+QSE_EXPORT qse_size_t qse_get_log_priority_name (
+	int         pri,
+	qse_char_t* buf,
+	qse_size_t  len /* length of the buffer, QSE_LOG_PRIORITY_LEN_MAX + 1 is enough */
+);
+
+/**
+ * \return an integer bitwised-ORed of priority bits if \a name is valid. 
+ *         0 if \a name is invalid or empty.
+ */
+QSE_EXPORT int qse_get_log_priority_by_name (
+	const qse_char_t* name
+);
+
+QSE_EXPORT int qse_get_log_facility_by_name (
+	const qse_char_t*   name,
+	qse_log_facility_t* fcode
 );
 
 #ifdef __cplusplus

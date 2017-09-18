@@ -4,7 +4,47 @@
 #include <qse/si/nwad.h>
 #include <stdio.h>
 
-void t1 (void)
+static void t1_sub001 (qse_log_t* log)
+{
+	static struct
+	{
+		const qse_char_t* name;
+		int pri;
+	} xtab[] =
+	{
+		{ QSE_T(""),                          0                                             },
+		{ QSE_T("   "),                       0                                             },
+		{ QSE_T("|"),                         0                                             },
+		{ QSE_T("debug|xinfo|panic"),         0                                             },
+		{ QSE_T("debug|info|panic"),          (QSE_LOG_DEBUG | QSE_LOG_INFO | QSE_LOG_PANIC) },
+		{ QSE_T("debug|notice|debug|panic"),  (QSE_LOG_DEBUG | QSE_LOG_NOTICE | QSE_LOG_PANIC) },
+		{ QSE_T("notice"),                    QSE_LOG_NOTICE                                 }
+	};
+	qse_size_t i;
+	qse_char_t buf[QSE_LOG_PRIORITY_LEN_MAX + 1];
+	qse_size_t len;
+
+	for (i = 0; i < QSE_COUNTOF(xtab); i++)
+	{
+		len = qse_get_log_priority_name (xtab[i].pri, buf, QSE_COUNTOF(buf));
+		QSE_LOG3 (log, QSE_NULL, QSE_LOG_INFO, QSE_T("%x => %s [%d]"), xtab[i].pri, buf, len);
+	}
+	
+	for  (i = 0; i < QSE_COUNTOF(xtab); i++)
+	{
+		int pri;
+		if ((pri = qse_get_log_priority_by_name(xtab[i].name)) == xtab[i].pri)
+		{
+			QSE_LOG2 (log, QSE_NULL, QSE_LOG_INFO, QSE_T("SUCCESS: %s => %x"), xtab[i].name, pri);
+		}
+		else
+		{
+			QSE_LOG3 (log, QSE_NULL, QSE_LOG_INFO, QSE_T("FAILURE: %s => got %x expected %x"), xtab[i].name, pri, xtab[i].pri);
+		}
+	}
+}
+
+static void t1 (void)
 {
 	qse_log_t* log;
 	qse_log_target_t t;
@@ -31,6 +71,8 @@ void t1 (void)
 
 	QSE_ASSERT (qse_log_getoption (log) == (QSE_LOG_INCLUDE_PID | QSE_LOG_HOST_IN_REMOTE_SYSLOG));
 	QSE_ASSERT (qse_log_gettarget (log, QSE_NULL) == (QSE_LOG_CONSOLE | QSE_LOG_FILE | QSE_LOG_SYSLOG | QSE_LOG_SYSLOG_REMOTE));
+
+	t1_sub001 (log);
 
 	for (i = 0; i < 10; i++)
 	{
