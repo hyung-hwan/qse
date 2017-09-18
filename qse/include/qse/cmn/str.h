@@ -3275,10 +3275,22 @@ QSE_EXPORT qse_size_t qse_wcs_fcat (
 	...
 );
 
+QSE_EXPORT qse_size_t qse_wcs_vfcat (
+	qse_wcs_t*         str,
+	const qse_wchar_t* fmt,
+	va_list            ap
+);
+
 QSE_EXPORT qse_size_t qse_wcs_fmt (
 	qse_wcs_t*         str,
 	const qse_wchar_t* fmt,
 	...
+);
+
+QSE_EXPORT qse_size_t qse_wcs_vfmt (
+	qse_wcs_t*         str,
+	const qse_wchar_t* fmt,
+	va_list            ap
 );
 
 #if defined(QSE_CHAR_IS_MCHAR)
