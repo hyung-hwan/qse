@@ -210,7 +210,8 @@ struct qse_log_t
 
 		struct
 		{
-			qse_char_t path[/*QSE_PATH_MAX + 1*/2048]; /* TODO: use the defined macro for sizing */
+			qse_char_t pathbuf[128]; /* static path buffer */
+			qse_char_t* path;
 			qse_sio_t* sio;
 		} file;
 
@@ -282,12 +283,18 @@ QSE_EXPORT void qse_log_setident (
 	const qse_char_t* ident
 );
 
-QSE_EXPORT void qse_log_settarget (
+/**
+ * \return 0 on success, -1 on failure
+ */
+QSE_EXPORT int qse_log_settarget (
 	qse_log_t*              log,
 	int                     flags,
 	const qse_log_target_t* target
 );
 
+/** 
+ * \return an integer bitwise-ORed of the target bits.
+ */
 QSE_EXPORT int qse_log_gettarget (
 	qse_log_t*        log,
 	qse_log_target_t* target

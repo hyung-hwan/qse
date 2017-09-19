@@ -228,23 +228,37 @@ int qse_log_init (qse_log_t* log, qse_mmgr_t* mmgr, const qse_char_t* ident, int
 	log->flags = potflags & (QSE_LOG_MASK_PRIORITY | QSE_LOG_MASK_OPTION);
 	log->t.syslog_remote.sock = -1; 
 
-	if (potflags & QSE_LOG_FILE)
+	if (potflags & QSE_LOG_FILE) log->flags |= QSE_LOG_FILE;
+	if (target->file)
 	{
-		qse_strxcpy (log->t.file.path, QSE_COUNTOF(log->t.file.path), target->file);
-		log->flags |= QSE_LOG_FILE;
+		if (qse_strlen(target->file) >= QSE_COUNTOF(log->t.file.pathbuf))
+		{
+			log->t.file.path = qse_strdup (target->file, log->mmgr);
+			if (!log->t.file.path) return -1;
+		}
+		else
+		{
+			qse_strxcpy (log->t.file.pathbuf, QSE_COUNTOF(log->t.file.pathbuf), target->file);
+			log->t.file.path = log->t.file.pathbuf;
+		}
 	}
+
 	if (potflags & QSE_LOG_CONSOLE) log->flags |= QSE_LOG_CONSOLE;
 	if (potflags & QSE_LOG_SYSLOG) log->flags |= QSE_LOG_SYSLOG;
 
-	if (potflags & QSE_LOG_SYSLOG_REMOTE)
-	{
-		/* flags_arg should be qse_skad_t* */
-		log->t.syslog_remote.addr = target->syslog_remote;
-		log->flags |= QSE_LOG_SYSLOG_REMOTE;
-	}
+	if (potflags & QSE_LOG_SYSLOG_REMOTE) log->flags |= QSE_LOG_SYSLOG_REMOTE;
+	if (qse_skadfamily(&target->syslog_remote) >= 0) log->t.syslog_remote.addr = target->syslog_remote;
 
 	if (ident) qse_strxcpy (log->ident, QSE_COUNTOF(log->ident), ident);
-	if (qse_mtx_init(&log->mtx, mmgr) <= -1) return -1;
+	if (qse_mtx_init(&log->mtx, mmgr) <= -1) 
+	{
+		if (log->t.file.path && log->t.file.path != log->t.file.pathbuf) 
+		{
+			QSE_MMGR_FREE (mmgr, log->t.file.path);
+			log->t.file.path = QSE_NULL;
+		}
+		return -1;
+	}
 
 	log->active_priority_bits = get_active_priority_bits(log->flags);
 
@@ -252,7 +266,6 @@ int qse_log_init (qse_log_t* log, qse_mmgr_t* mmgr, const qse_char_t* ident, int
 	/* TODO: windows event logging */
 #else
 	log->syslog_facility = QSE_LOG_USER;
-	
 #endif
 	
 	return 0;
@@ -270,6 +283,12 @@ void qse_log_fini (qse_log_t* log)
 	{
 		qse_sio_close (log->t.console.sio);
 		log->t.console.sio = QSE_NULL;
+	}
+
+	if (log->t.file.path && log->t.file.path != log->t.file.pathbuf)
+	{
+		QSE_MMGR_FREE (log->mmgr, log->t.file.path);
+		log->t.file.path = QSE_NULL;
 	}
 
 	if (log->t.file.sio)
@@ -323,8 +342,15 @@ void qse_log_setident (qse_log_t* log, const qse_char_t* ident)
 	}
 }
 
-void qse_log_settarget (qse_log_t* log, int flags, const qse_log_target_t* target)
+int qse_log_settarget (qse_log_t* log, int flags, const qse_log_target_t* target)
 {
+	qse_char_t* target_file = QSE_NULL;
+	if (target->file && qse_strlen(target->file) >= QSE_COUNTOF(log->t.file.pathbuf))
+	{
+		target_file = qse_strdup (target->file, log->mmgr);
+		if (!target_file) return -1;
+	}
+
 	if (log->t.syslog_remote.sock >= 0)
 	{
 		QSE_CLOSE (log->t.syslog_remote.sock);
@@ -355,13 +381,28 @@ void qse_log_settarget (qse_log_t* log, int flags, const qse_log_target_t* targe
 	/* If you just want to set the target file path without enable QSE_LOG_FILE,
 	 * just set target->file without QSE_LOG_FILE in the flags.
 	 * later, you can call this function with QSE_LOG_FILE set but with target->file or QSE_NULL */
-	if (target->file) qse_strxcpy (log->t.file.path, QSE_COUNTOF(log->t.file.path), target->file);
+	if (target->file) 
+	{
+		if (log->t.file.path && log->t.file.path != log->t.file.pathbuf) QSE_MMGR_FREE (log->mmgr, log->t.file.path);
+
+		if (target_file)
+		{
+			log->t.file.path = target_file;
+		}
+		else
+		{
+			qse_strxcpy (log->t.file.pathbuf, QSE_COUNTOF(log->t.file.pathbuf), target->file);
+			log->t.file.path = log->t.file.pathbuf;
+		}
+	}
 
 	if (flags & QSE_LOG_CONSOLE) log->flags |= QSE_LOG_CONSOLE;
 	if (flags & QSE_LOG_SYSLOG) log->flags |= QSE_LOG_SYSLOG;
 
 	if (flags & QSE_LOG_SYSLOG_REMOTE) log->flags |= QSE_LOG_SYSLOG_REMOTE;
-	if (qse_skadfamily(&target->syslog_remote) != -1) log->t.syslog_remote.addr = target->syslog_remote;
+	if (qse_skadfamily(&target->syslog_remote) >= 0) log->t.syslog_remote.addr = target->syslog_remote;
+
+	return 0;
 }
 
 int qse_log_gettarget (qse_log_t* log, qse_log_target_t* target)
