@@ -150,8 +150,8 @@ am_libqsesi_la_OBJECTS = libqsesi_la-aio.lo libqsesi_la-aio-pro.lo \
 	libqsesi_la-nwad.lo libqsesi_la-nwad-skad.lo \
 	libqsesi_la-nwif.lo libqsesi_la-nwif-cfg.lo \
 	libqsesi_la-nwio.lo libqsesi_la-pio.lo libqsesi_la-rwl.lo \
-	libqsesi_la-sck.lo libqsesi_la-sio.lo libqsesi_la-task.lo \
-	libqsesi_la-thr.lo libqsesi_la-tio.lo
+	libqsesi_la-sck.lo libqsesi_la-sinfo.lo libqsesi_la-sio.lo \
+	libqsesi_la-task.lo libqsesi_la-thr.lo libqsesi_la-tio.lo
 libqsesi_la_OBJECTS = $(am_libqsesi_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
@@ -161,8 +161,10 @@ libqsesi_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(libqsesi_la_CFLAGS) \
 	$(CFLAGS) $(libqsesi_la_LDFLAGS) $(LDFLAGS) -o $@
 libqsesixx_la_DEPENDENCIES =
-am__libqsesixx_la_SOURCES_DIST = SocketAddress.cpp Socket.cpp
-@ENABLE_CXX_TRUE@am_libqsesixx_la_OBJECTS = SocketAddress.lo Socket.lo
+am__libqsesixx_la_SOURCES_DIST = AppRoot.cpp SocketAddress.cpp \
+	Socket.cpp
+@ENABLE_CXX_TRUE@am_libqsesixx_la_OBJECTS = AppRoot.lo \
+@ENABLE_CXX_TRUE@	SocketAddress.lo Socket.lo
 libqsesixx_la_OBJECTS = $(am_libqsesixx_la_OBJECTS)
 libqsesixx_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
@@ -471,6 +473,7 @@ libqsesi_la_SOURCES = \
 	pio.c  \
 	rwl.c \
 	sck.c \
+	sinfo.c \
 	sio.c  \
 	task.c \
 	thr.c \
@@ -481,6 +484,7 @@ libqsesi_la_CFLAGS = $(PTHREAD_CFLAGS)
 libqsesi_la_LDFLAGS = -L../cmn -version-info 1:0:0 -no-undefined
 libqsesi_la_LIBADD = -lqsecmn $(PTHREAD_LIBS) $(SSL_LIBS)
 @ENABLE_CXX_TRUE@libqsesixx_la_SOURCES = \
+@ENABLE_CXX_TRUE@	AppRoot.cpp \
 @ENABLE_CXX_TRUE@	SocketAddress.cpp \
 @ENABLE_CXX_TRUE@	Socket.cpp
 
@@ -567,6 +571,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/AppRoot.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Socket.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/SocketAddress.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqsesi_la-aio-pro.Plo@am__quote@
@@ -596,6 +601,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqsesi_la-pio.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqsesi_la-rwl.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqsesi_la-sck.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqsesi_la-sinfo.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqsesi_la-sio.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqsesi_la-task.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqsesi_la-thr.Plo@am__quote@
@@ -810,6 +816,13 @@ libqsesi_la-sck.lo: sck.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='sck.c' object='libqsesi_la-sck.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libqsesi_la_CFLAGS) $(CFLAGS) -c -o libqsesi_la-sck.lo `test -f 'sck.c' || echo '$(srcdir)/'`sck.c
+
+libqsesi_la-sinfo.lo: sinfo.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libqsesi_la_CFLAGS) $(CFLAGS) -MT libqsesi_la-sinfo.lo -MD -MP -MF $(DEPDIR)/libqsesi_la-sinfo.Tpo -c -o libqsesi_la-sinfo.lo `test -f 'sinfo.c' || echo '$(srcdir)/'`sinfo.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libqsesi_la-sinfo.Tpo $(DEPDIR)/libqsesi_la-sinfo.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='sinfo.c' object='libqsesi_la-sinfo.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libqsesi_la_CFLAGS) $(CFLAGS) -c -o libqsesi_la-sinfo.lo `test -f 'sinfo.c' || echo '$(srcdir)/'`sinfo.c
 
 libqsesi_la-sio.lo: sio.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libqsesi_la_CFLAGS) $(CFLAGS) -MT libqsesi_la-sio.lo -MD -MP -MF $(DEPDIR)/libqsesi_la-sio.Tpo -c -o libqsesi_la-sio.lo `test -f 'sio.c' || echo '$(srcdir)/'`sio.c

@@ -38,6 +38,7 @@ libqsesi_la_SOURCES =  \
 	pio.c  \
 	rwl.c \
 	sck.c \
+	sinfo.c \
 	sio.c  \
 	task.c \
 	thr.c \
@@ -51,6 +52,7 @@ libqsesi_la_LIBADD = -lqsecmn $(PTHREAD_LIBS) $(SSL_LIBS)
 if ENABLE_CXX
 lib_LTLIBRARIES += libqsesixx.la
 libqsesixx_la_SOURCES = \
+	AppRoot.cpp \
 	SocketAddress.cpp \
 	Socket.cpp
 libqsesixx_la_LDFLAGS = -L. -L../cmn -version-info 1:0:0 -no-undefined

@@ -69,6 +69,9 @@
 #if defined(HAVE_DIRENT_H)
 #	include <dirent.h>
 #endif
+#if defined(HAVE_SYS_IOCTL_H)
+#	include <sys/ioctl.h>
+#endif
 
 #if defined(QSE_USE_SYSCALL) && defined(HAVE_SYS_SYSCALL_H)
 #	include <sys/syscall.h>
@@ -214,6 +217,24 @@
 #	define QSE_GETEGID() getegid()
 #endif
 
+#if defined(SYS_getsid) && defined(QSE_USE_SYSCALL)
+#	define QSE_GETSID(pid) syscall(SYS_getsid,pid)
+#else
+#	define QSE_GETSID(pid) getsid(pid)
+#endif
+
+#if defined(SYS_setsid) && defined(QSE_USE_SYSCALL)
+#	define QSE_SETSID() syscall(SYS_setsid)
+#else
+#	define QSE_SETSID() setsid()
+#endif
+
+#if defined(SYS_signal) && defined(QSE_USE_SYSCALL)
+#	define QSE_SIGNAL(signum,handler) syscall(SYS_signal,signum,handler)
+#else
+#	define QSE_SIGNAL(signum,handler) signal(signum,handler)
+#endif
+
 #if defined(SYS_gettimeofday) && defined(QSE_USE_SYSCALL)
 #	define QSE_GETTIMEOFDAY(tv,tz) syscall(SYS_gettimeofday,tv,tz)
 #else
@@ -248,6 +269,12 @@
 #	define QSE_SETRLIMIT(res,lim) syscall(SYS_setrlimit,res,lim)
 #else
 #	define QSE_SETRLIMIT(res,lim) setrlimit(res,lim)
+#endif
+
+#if defined(SYS_ioctl) && defined(QSE_USE_SYSCALL)
+#	define QSE_IOCTL(fd,req,arg) syscall(SYS_ioctl,fd,req,arg)
+#else
+#	define QSE_IOCTL(fd,req,arg) ioctl(fd,req,arg)
 #endif
 
 
@@ -378,6 +405,12 @@
 #	define QSE_RENAME(oldpath,newpath) rename(oldpath,newpath)
 #endif
 
+#if defined(SYS_umask) && defined(QSE_USE_SYSCALL)
+#	define QSE_UMASK(mode) syscall(SYS_umask,mode)
+#else
+#	define QSE_UMASK(mode) umask(mode)
+#endif
+
 #if defined(SYS_mkdir) && defined(QSE_USE_SYSCALL)
 #	define QSE_MKDIR(path,mode) syscall(SYS_mkdir,path,mode)
 #else
@@ -388,6 +421,12 @@
 #	define QSE_RMDIR(path) syscall(SYS_rmdir,path)
 #else
 #	define QSE_RMDIR(path) rmdir(path)
+#endif
+
+#if defined(SYS_chdir) && defined(QSE_USE_SYSCALL)
+#	define QSE_CHDIR(path) syscall(SYS_chdir,path)
+#else
+#	define QSE_CHDIR(path) chdir(path)
 #endif
 
 #if defined(SYS_symlink) && defined(QSE_USE_SYSCALL)

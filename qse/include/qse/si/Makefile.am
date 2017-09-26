@@ -19,6 +19,7 @@ pkginclude_HEADERS = \
 	pio.h  \
 	rwl.h \
 	sck.h \
+	sinfo.h \
 	sio.h  \
 	task.h \
 	thr.h \
@@ -26,6 +27,7 @@ pkginclude_HEADERS = \
 
 if ENABLE_CXX
 pkginclude_HEADERS += \
+	AppRoot.hpp \
 	SocketAddress.hpp \
 	Socket.hpp
 endif
