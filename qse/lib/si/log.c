@@ -229,7 +229,7 @@ int qse_log_init (qse_log_t* log, qse_mmgr_t* mmgr, const qse_char_t* ident, int
 	log->t.syslog_remote.sock = -1; 
 
 	if (potflags & QSE_LOG_FILE) log->flags |= QSE_LOG_FILE;
-	if (target->file)
+	if (target && target->file)
 	{
 		if (qse_strlen(target->file) >= QSE_COUNTOF(log->t.file.pathbuf))
 		{
@@ -247,7 +247,7 @@ int qse_log_init (qse_log_t* log, qse_mmgr_t* mmgr, const qse_char_t* ident, int
 	if (potflags & QSE_LOG_SYSLOG) log->flags |= QSE_LOG_SYSLOG;
 
 	if (potflags & QSE_LOG_SYSLOG_REMOTE) log->flags |= QSE_LOG_SYSLOG_REMOTE;
-	if (qse_skadfamily(&target->syslog_remote) >= 0) log->t.syslog_remote.addr = target->syslog_remote;
+	if (target && qse_skadfamily(&target->syslog_remote) >= 0) log->t.syslog_remote.addr = target->syslog_remote;
 
 	if (ident) qse_strxcpy (log->ident, QSE_COUNTOF(log->ident), ident);
 	if (qse_mtx_init(&log->mtx, mmgr) <= -1) 
@@ -381,7 +381,7 @@ int qse_log_settarget (qse_log_t* log, int flags, const qse_log_target_t* target
 	/* If you just want to set the target file path without enable QSE_LOG_FILE,
 	 * just set target->file without QSE_LOG_FILE in the flags.
 	 * later, you can call this function with QSE_LOG_FILE set but with target->file or QSE_NULL */
-	if (target->file) 
+	if (target && target->file) 
 	{
 		if (log->t.file.path && log->t.file.path != log->t.file.pathbuf) QSE_MMGR_FREE (log->mmgr, log->t.file.path);
 
@@ -400,7 +400,7 @@ int qse_log_settarget (qse_log_t* log, int flags, const qse_log_target_t* target
 	if (flags & QSE_LOG_SYSLOG) log->flags |= QSE_LOG_SYSLOG;
 
 	if (flags & QSE_LOG_SYSLOG_REMOTE) log->flags |= QSE_LOG_SYSLOG_REMOTE;
-	if (qse_skadfamily(&target->syslog_remote) >= 0) log->t.syslog_remote.addr = target->syslog_remote;
+	if (target && qse_skadfamily(&target->syslog_remote) >= 0) log->t.syslog_remote.addr = target->syslog_remote;
 
 	return 0;
 }

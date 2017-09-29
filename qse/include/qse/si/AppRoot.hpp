@@ -42,6 +42,9 @@ public:
 
 	int daemonize (bool chdir_to_root = true, int fork_count = 1) QSE_CPP_NOEXCEPT;
 
+	int chroot (const qse_wchar_t* wpath) QSE_CPP_NOEXCEPT;
+	int chroot (const qse_mchar_t* mpath) QSE_CPP_NOEXCEPT;
+
 protected:
 	bool _root_only;
 
