@@ -49,14 +49,7 @@ int AppRoot::daemonize (bool chdir_to_root, int fork_count) QSE_CPP_NOEXCEPT
 		}
 
 		int n = QSE_FORK();
-		if (n == -1)
-		{
-			//throw DaemonError ("can't xp_fork");
-			//if (err_code) *err_code = ERR_FORK;
-			return -1;
-		}
-
-		// the parent exits
+		if (n == -1) return -1;
 		if (n != 0) QSE_EXIT(0); // TODO: should i call exit() in stdlib.h? 
 	}
 
@@ -127,6 +120,16 @@ int AppRoot::switchUser () QSE_CPP_NOEXCEPT
 
 }
 #endif
+
+
+int AppRoot::chroot (const qse_mchar_t* mpath) QSE_CPP_NOEXCEPT
+{
+	QSE_CHROOT (mpath);
+}
+
+int AppRoot::chroot (const qse_wchar_t* mpath) QSE_CPP_NOEXCEPT
+{
+}
 
 void AppRoot::on_signal () QSE_CPP_NOEXCEPT
 {
