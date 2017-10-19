@@ -469,13 +469,13 @@ QSE_EXPORT void qse_assert_failed (
 #if !defined(__STRICT_ANSI__) && !defined(INTEL_CC) && defined(__GNUC__) && (defined(__i386) || defined(i386) || defined(__x86_64) || defined(__amd64))
 static inline qse_uint64_t QSE_ROTL64 (qse_uint64_t v, int i)
 {
-	__asm__ volatile ("rolq %%cl,%0": "=r"(v): "0"(v), "c"(i): /* no clobbers */);
+	__asm__ volatile ("rolq %%cl,%0": "=r"(v): "0"(v), "c"(i) /*: no clobbers */);
 	return v;
 }
 
 static inline qse_uint64_t QSE_ROTR64 (qse_uint64_t v, int i)
 {
-	__asm__ volatile ("rorq %%cl,%0" :"=r"(v) :"0"(v), "c"(i): /* no clobbers */);
+	__asm__ volatile ("rorq %%cl,%0" :"=r"(v) :"0"(v), "c"(i) /*: no clobbers */);
 	return v;
 }
 #else
@@ -490,13 +490,13 @@ static inline qse_uint64_t QSE_ROTR64 (qse_uint64_t v, int i)
 #if !defined(__STRICT_ANSI__) && !defined(INTEL_CC) && defined(__GNUC__) && (defined(__i386) || defined(i386) || defined(__x86_64) || defined(__amd64))
 static inline qse_uint32_t QSE_ROTL32 (qse_uint32_t v, int i)
 {
-	__asm__ volatile ("roll %%cl,%0": "=r"(v): "0"(v), "c"(i): /* no clobbers */);
+	__asm__ volatile ("roll %%cl,%0": "=r"(v): "0"(v), "c"(i) /*: no clobbers */);
 	return v;
 }
 
 static inline qse_uint32_t QSE_ROTR32 (qse_uint32_t v, int i)
 {
-	__asm__ volatile ("rorl %%cl,%0" :"=r"(v) :"0"(v), "c"(i): /* no clobbers */);
+	__asm__ volatile ("rorl %%cl,%0" :"=r"(v) :"0"(v), "c"(i) /*: no clobbers */);
 	return v;
 }
 #else
