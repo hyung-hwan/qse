@@ -152,7 +152,7 @@ int AppRoot::chroot (const qse_wchar_t* wpath) QSE_CPP_NOEXCEPT
 	mpath = qse_wcstombsdup (wpath, QSE_NULL, QSE_MMGR_GETDFL());
 	if (!mpath) return -1;
 
-	int n = AppRoot::chroot (mpath);
+	int n = AppRoot::chroot ((const qse_mchar_t*)mpath);
 	QSE_MMGR_FREE (QSE_MMGR_GETDFL(), mpath);
 	return n;
 }
