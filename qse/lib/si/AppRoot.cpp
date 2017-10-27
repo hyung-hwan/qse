@@ -26,6 +26,8 @@
 
 #include <qse/si/AppRoot.hpp>
 #include <qse/si/sinfo.h>
+#include <qse/cmn/mem.h>
+#include <qse/cmn/mbwc.h>
 #include "../cmn/syscall.h"
 
 /////////////////////////////////
@@ -124,11 +126,35 @@ int AppRoot::switchUser () QSE_CPP_NOEXCEPT
 
 int AppRoot::chroot (const qse_mchar_t* mpath) QSE_CPP_NOEXCEPT
 {
-	QSE_CHROOT (mpath);
+	int orgdirfd;
+
+	orgdirfd = QSE_OPEN (".", O_RDONLY, 0);
+	if (orgdirfd == -1) return -1;
+
+	if (QSE_CHDIR(mpath) == -1) return -1;
+	if (QSE_CHROOT(mpath) == -1)
+	{
+		QSE_FCHDIR (orgdirfd);
+		QSE_CLOSE (orgdirfd);
+		return -1;
+	}
+
+	QSE_CLOSE (orgdirfd);
+	QSE_CHROOT ("/");
+
+	return 0;
 }
 
-int AppRoot::chroot (const qse_wchar_t* mpath) QSE_CPP_NOEXCEPT
+int AppRoot::chroot (const qse_wchar_t* wpath) QSE_CPP_NOEXCEPT
 {
+	qse_mchar_t* mpath;
+
+	mpath = qse_wcstombsdup (wpath, QSE_NULL, QSE_MMGR_GETDFL());
+	if (!mpath) return -1;
+
+	int n = AppRoot::chroot (mpath);
+	QSE_MMGR_FREE (QSE_MMGR_GETDFL(), mpath);
+	return n;
 }
 
 void AppRoot::on_signal () QSE_CPP_NOEXCEPT
