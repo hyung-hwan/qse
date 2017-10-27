@@ -429,6 +429,12 @@
 #	define QSE_CHDIR(path) chdir(path)
 #endif
 
+#if defined(SYS_fchdir) && defined(QSE_USE_SYSCALL)
+#	define QSE_FCHDIR(handle) syscall(SYS_fchdir,handle)
+#else
+#	define QSE_FCHDIR(handle) fchdir(handle)
+#endif
+
 #if defined(SYS_symlink) && defined(QSE_USE_SYSCALL)
 #	define QSE_SYMLINK(oldpath,newpath) syscall(SYS_symlink,oldpath,newpath)
 #else
