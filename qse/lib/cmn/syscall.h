@@ -77,28 +77,44 @@
 #	include <sys/syscall.h>
 #endif
 
+#if defined(__cplusplus)
+#	define	QSE_LIBCALL0(x) ::x()
+#	define	QSE_LIBCALL1(x,a1) ::x(a1)
+#	define	QSE_LIBCALL2(x,a1,a2) ::x(a1,a2)
+#	define	QSE_LIBCALL3(x,a1,a2,a3) ::x(a1,a2,a3)
+#	define	QSE_LIBCALL4(x,a1,a2,a3,a4) ::x(a1,a2,a3,a4)
+#	define	QSE_LIBCALL5(x,a1,a2,a3,a4,a5) ::x(a1,a2,a3,a4,a5)
+#else
+#	define	QSE_LIBCALL0(x) x
+#	define	QSE_LIBCALL1(x,a1) x(a1)
+#	define	QSE_LIBCALL2(x,a1,a2) x(a1,a2)
+#	define	QSE_LIBCALL3(x,a1,a2,a3) x(a1,a2,a3)
+#	define	QSE_LIBCALL4(x,a1,a2,a3,a4) x(a1,a2,a3,a4)
+#	define	QSE_LIBCALL5(x,a1,a2,a3,a4,a5) x(a1,a2,a3,a4,a5)
+#endif
+
 #if defined(SYS_open) && defined(QSE_USE_SYSCALL)
 #	define QSE_OPEN(path,flags,mode) syscall(SYS_open,path,flags,mode)
 #else
-#	define QSE_OPEN(path,flags,mode) open(path,flags,mode)
+#	define QSE_OPEN(path,flags,mode) QSE_LIBCALL3(open,path,flags,mode)
 #endif
 
 #if defined(SYS_close) && defined(QSE_USE_SYSCALL)
 #	define QSE_CLOSE(handle) syscall(SYS_close,handle)
 #else
-#	define QSE_CLOSE(handle) close(handle)
+#	define QSE_CLOSE(handle) QSE_LIBCALL1(close,handle)
 #endif
 
 #if defined(SYS_read) && defined(QSE_USE_SYSCALL)
 #	define QSE_READ(handle,buf,size) syscall(SYS_read,handle,buf,size)
 #else
-#	define QSE_READ(handle,buf,size) read(handle,buf,size)
+#	define QSE_READ(handle,buf,size) QSE_LIBCALL3(read,handle,buf,size)
 #endif
 
 #if defined(SYS_write) && defined(QSE_USE_SYSCALL)
 #	define QSE_WRITE(handle,buf,size) syscall(SYS_write,handle,buf,size)
 #else
-#	define QSE_WRITE(handle,buf,size) write(handle,buf,size)
+#	define QSE_WRITE(handle,buf,size) QSE_LIBCALL3(write,handle,buf,size)
 #endif
 
 #if !defined(_LP64) && (QSE_SIZEOF_VOID_P<8) && defined(SYS__llseek) && defined(QSE_USE_SYSCALL)
@@ -307,31 +323,31 @@
 #if defined(SYS_fchown) && defined(QSE_USE_SYSCALL)
 #	define QSE_FCHOWN(handle,owner,group) syscall(SYS_fchown,handle,owner,group)
 #else
-#	define QSE_FCHOWN(handle,owner,group) fchown(handle,owner,group)
+#	define QSE_FCHOWN(handle,owner,group) QSE_LIBCALL3(fchown,handle,owner,group)
 #endif
 
 #if defined(SYS_fchownat) && defined(QSE_USE_SYSCALL)
 #	define QSE_FCHOWNAT(dirfd,path,uid,gid,flags) syscall(SYS_fchownat,dirfd,path,uid,gid,flags)
 #else
-#	define QSE_FCHOWNAT(dirfd,path,uid,gid,flags) fchownat(dirfd,path,uid,gid,flags)
+#	define QSE_FCHOWNAT(dirfd,path,uid,gid,flags) QSE_LIBCALL5(fchownat,dirfd,path,uid,gid,flags)
 #endif
 
 #if defined(SYS_chroot) && defined(QSE_USE_SYSCALL)
 #	define QSE_CHROOT(path) syscall(SYS_chroot,path)
 #else
-#	define QSE_CHROOT(path) chroot(path)
+#	define QSE_CHROOT(path) QSE_LIBCALL1(chroot,path)
 #endif
 
 #if defined(SYS_lchown) && defined(QSE_USE_SYSCALL)
 #	define QSE_LCHOWN(path,owner,group) syscall(SYS_lchown,path,owner,group)
 #else
-#	define QSE_LCHOWN(path,owner,group) lchown(path,owner,group)
+#	define QSE_LCHOWN(path,owner,group) QSE_LIBCALL3(lchown,path,owner,group)
 #endif
 
 #if defined(SYS_link) && defined(QSE_USE_SYSCALL)
 #	define QSE_LINK(oldpath,newpath) syscall(SYS_link,oldpath,newpath)
 #else
-#	define QSE_LINK(oldpath,newpath) link(oldpath,newpath)
+#	define QSE_LINK(oldpath,newpath) QSE_LIBCALL2(link,oldpath,newpath)
 #endif
 
 
