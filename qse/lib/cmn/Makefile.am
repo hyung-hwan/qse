@@ -43,6 +43,7 @@ libqsecmn_la_SOURCES = \
 	env.c \
 	gdl.c \
 	htb.c \
+	htl.c \
 	fma.c \
 	fmt-intmax.c \
 	fmt-out.c \

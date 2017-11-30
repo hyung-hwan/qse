@@ -46,15 +46,51 @@
 #define QSE_RAD_ATTR_TYPE_COMBO_IP                13
 #define QSE_RAD_ATTR_TYPE_TLV                     14
 
+struct qse_raddic_attr_flags_t 
+{
+	unsigned int            addport : 1;  /* add NAS-Port to IP address */
+	unsigned int            has_tag : 1;  /* tagged attribute */
+	unsigned int            do_xlat : 1;  /* strvalue is dynamic */
+	unsigned int            unknown_attr : 1; /* not in dictionary */
+	unsigned int            array : 1; /* pack multiples into 1 attr */
+	unsigned int            has_value : 1; /* has a value */
+	unsigned int            has_value_alias : 1; /* has a value alias */
+	unsigned int            has_tlv : 1; /* has sub attributes */
+	unsigned int            is_tlv : 1; /* is a sub attribute */
+	unsigned int            encoded : 1; /* has been put into packet */
+	qse_int8_t              tag;          /* tag for tunneled attributes */
+	qse_uint8_t             encrypt;      /* encryption method */
+};
+typedef struct qse_raddic_attr_flags_t qse_raddic_attr_flags_t;
+
 struct qse_raddic_attr_t 
 {
 	int                     attr;
 	int                     type;
 	int                     vendor;
-/*	ATTR_FLAGS              flags;*/
-	char                    name[1];
+	qse_raddic_attr_flags_t flags;
+	qse_char_t              name[1];
 };
 typedef struct qse_raddic_attr_t qse_raddic_attr_t;
+
+
+struct qse_raddic_value_t
+{
+	int                     attr;
+	int                     value;
+	qse_char_t              name[1];
+};
+typedef struct qse_raddic_value_t qse_raddic_value_t;
+
+struct qse_raddic_vendor_t
+{
+	int         vendorpec;
+	int         type;
+	int         length;
+	int         flags;
+	qse_char_t  name[1];
+};
+typedef struct qse_raddic_vendor_t qse_raddic_vendor_t;
 
 typedef struct qse_raddic_t qse_raddic_t;
 

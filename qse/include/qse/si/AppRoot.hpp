@@ -29,25 +29,39 @@
 
 #include <qse/Types.hpp>
 #include <qse/Uncopyable.hpp>
+#include <qse/cmn/Mmged.hpp>
 
 /////////////////////////////////
 QSE_BEGIN_NAMESPACE(QSE)
 /////////////////////////////////
 
-class AppRoot: QSE::Uncopyable
+class AppRoot: Uncopyable, public Types, public Mmged
 {
 public:
-	AppRoot (): _root_only (false) {}
+	AppRoot (Mmgr* mmgr): Mmged(mmgr), _root_only(false) {}
 	virtual ~AppRoot () {}
 
 	int daemonize (bool chdir_to_root = true, int fork_count = 1) QSE_CPP_NOEXCEPT;
 
-	static int chroot (const qse_wchar_t* wpath) QSE_CPP_NOEXCEPT;
-	static int chroot (const qse_mchar_t* mpath) QSE_CPP_NOEXCEPT;
+	int chroot (const qse_mchar_t* mpath) QSE_CPP_NOEXCEPT;
+	int chroot (const qse_wchar_t* wpath) QSE_CPP_NOEXCEPT;
+
+#if 0
+	int switchUser (uid_t uid, gid_t gid, bool permanently) QSE_CPP_NOEXCEPT;
+	int restoreUser () QSE_CPP_NOEXCEPT;
+#endif
 
 protected:
 	bool _root_only;
+#if 0
+	uid_t saved_uid;
+	gid_t saved_gid;
+	gid_t saved_groups[NGROUPS_MAX];
+	qse_size_t saved_ngroups;
+
 	void on_signal () QSE_CPP_NOEXCEPT;
+	void on_signal () QSE_CPP_NOEXCEPT;
+#endif
 };
 
 /////////////////////////////////

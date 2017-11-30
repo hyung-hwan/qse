@@ -26,9 +26,8 @@
 
 #include <qse/si/AppRoot.hpp>
 #include <qse/si/sinfo.h>
-#include <qse/cmn/mem.h>
-#include <qse/cmn/mbwc.h>
 #include "../cmn/syscall.h"
+#include <qse/cmn/mbwc.h>
 
 /////////////////////////////////
 QSE_BEGIN_NAMESPACE(QSE)
@@ -42,7 +41,6 @@ int AppRoot::daemonize (bool chdir_to_root, int fork_count) QSE_CPP_NOEXCEPT
 	{
 		if (fork_count >= 2)
 		{
-			struct sigaction sa;
 			int n = QSE_FORK();
 			if (n == -1) return -1;
 			if (n != 0) QSE_EXIT(0);
@@ -103,64 +101,53 @@ int AppRoot::daemonize (bool chdir_to_root, int fork_count) QSE_CPP_NOEXCEPT
 	return 0;
 }
 
-#if 0
-int AppRoot::switchUser () QSE_CPP_NOEXCEPT
-{
-	struct passwd* pw;
-
-	pw = getpwnam (username);
-	if (!pw)
-
-
-	if (QSE_SETGID(pw->pw_gid) == -1)
-	{
-	}
-
-	QSE_SETEGID(gid);
-	QSE_SETUID(uid);
-	QSE_SETEUID(uid);
-
-}
-#endif
 
 
 int AppRoot::chroot (const qse_mchar_t* mpath) QSE_CPP_NOEXCEPT
 {
-	int orgdirfd;
-
-	orgdirfd = QSE_OPEN (".", O_RDONLY, 0);
-	if (orgdirfd == -1) return -1;
-
-	if (QSE_CHDIR(mpath) == -1) return -1;
-	if (QSE_CHROOT(mpath) == -1)
-	{
-		QSE_FCHDIR (orgdirfd);
-		QSE_CLOSE (orgdirfd);
-		return -1;
-	}
-
-	QSE_CLOSE (orgdirfd);
-	QSE_CHROOT ("/");
-
-	return 0;
+	return QSE_CHROOT (mpath);
 }
 
 int AppRoot::chroot (const qse_wchar_t* wpath) QSE_CPP_NOEXCEPT
 {
 	qse_mchar_t* mpath;
-
-	mpath = qse_wcstombsdup (wpath, QSE_NULL, QSE_MMGR_GETDFL());
+	mpath = qse_wcstombsdup (wpath, QSE_NULL, this->getMmgr());
 	if (!mpath) return -1;
-
 	int n = AppRoot::chroot ((const qse_mchar_t*)mpath);
-	QSE_MMGR_FREE (QSE_MMGR_GETDFL(), mpath);
+	this->getMmgr()->dispose (mpath);
 	return n;
 }
 
-void AppRoot::on_signal () QSE_CPP_NOEXCEPT
+#if 0
+int AppRoot::switchPrivilege (int gid, int uid, bool permanently)
 {
+	gid = QSE_GETGID();
+	uid = QSE_GETUID();
+
+	this->saved_egid = QSE_GETEGID();
+	this->saved_euid = QSE_GETEUID();
+	this->saved_ngroups = getgroups (QSE_COUNTOF(this->saved_groups), this->saved_groups);
+
+	if (this->saved_euid ==  0) setgrops (1, gid);
+
+	setegid (gid);
+	//setregid (-1, gid);
+
+	if (uid != this->saved_euid)
+	{
+		seteuid (uid);
+		//setreuid (-1, uid);
+	}
 }
 
+int AppRoot::restorePrivilege ()
+{
+	if (QSE_GETEUID() != this->saved_euid) seteuid (this->saved_euid);
+	if (QSE_GETEGID() != this->saved_egid) setegid (this->saved_egid);
+	if (this->saved_euid == 0) setgroups (this->saved_ngroups, this->saved_groups);
+	return 0;
+}
+#endif
 
 #if 0
 int main ()
@@ -168,8 +155,10 @@ int main ()
 	AppRoot app;
 
 	app.daemonize();
-	app.switchUser ("nobody", "nobody");
-	app.switchUser (10, 20);
+	app.chuser ();
+	app.chgroup ();
+	app.chroot ();
+
 	app.catchSignal (SIGINT, xxxxx);
 	app.catchSignal (SIGTERM, xxx);
 
