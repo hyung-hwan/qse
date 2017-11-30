@@ -62,6 +62,8 @@ struct qse_raddic_t
 	qse_rbt_t attributes_byvalue;
 	qse_rbt_t values_byvalue;
 	qse_rbt_t values_byname;
+
+	qse_raddic_attr_t *last_attr;
 };
 
 
@@ -92,6 +94,57 @@ static const name_id_t type_table[] =
 	{ QSE_NULL,     0 }
 };
 
+static int comp_xxx (const qse_rbt_t* rbt, const void* kptr, qse_size_t klen, const void* vptr, qse_size_t vlen)
+{
+	return 0;
+}
+
+static qse_rbt_style_t vendors_byname_style =
+{
+	{
+		QSE_RBT_COPIER_INLINE,
+		QSE_RBT_COPIER_DEFAULT
+	},
+	{
+		QSE_RBT_FREEER_DEFAULT,
+		QSE_RBT_FREEER_DEFAULT
+	},
+	comp_xxx,
+	QSE_RBT_KEEPER_DEFAULT,
+};
+
+static qse_rbt_style_t vendors_byvalue_style =
+{
+	{
+		QSE_RBT_COPIER_INLINE,
+		QSE_RBT_COPIER_DEFAULT
+	},
+	{
+		QSE_RBT_FREEER_DEFAULT,
+		QSE_RBT_FREEER_DEFAULT
+	},
+	QSE_RBT_COMPER_DEFAULT,
+	QSE_RBT_KEEPER_DEFAULT,
+};
+
+/*
+static qse_rbt_style_t attr_by_name_style =
+{
+	{
+		QSE_RBT_COPIER_INLINE,
+		QSE_RBT_COPIER_DEFAULT
+	},
+	{
+		QSE_RBT_FREEER_DEFAULT,
+		QSE_RBT_FREEER_DEFAULT
+	},
+	QSE_RBT_COMPER_DEFAULT,
+	QSE_RBT_KEEPER_DEFAULT,
+	QSE_RBT_SIZER_DEFAULT,
+	QSE_RBT_HASHER_DEFAULT
+};
+*/
+
 int qse_raddic_init (qse_raddic_t* dic, qse_mmgr_t* mmgr)
 {
 	QSE_MEMSET (dic, 0, QSE_SIZEOF(*dic));
@@ -104,6 +157,8 @@ int qse_raddic_init (qse_raddic_t* dic, qse_mmgr_t* mmgr)
 	qse_rbt_init (&dic->values_byname, mmgr, 1, 1);
 	qse_rbt_init (&dic->values_byvalue, mmgr, 1, 1);
 
+	qse_rbt_setstyle (&dic->vendors_byname, &vendors_byname_style);
+	qse_rbt_setstyle (&dic->vendors_byvalue, &vendors_byvalue_style);
 	return 0;
 }
 
@@ -116,7 +171,6 @@ void qse_raddic_fini (qse_raddic_t* dic)
 	qse_rbt_fini (&dic->values_byvalue);
 	qse_rbt_fini (&dic->values_byname);
 }
-
 
 qse_raddic_t* qse_raddic_open (qse_mmgr_t* mmgr, qse_size_t xtnsize)
 {
@@ -143,12 +197,364 @@ void qse_raddic_close (qse_raddic_t* dic)
 
 }
 
-static int str2argv (qse_mchar_t *str, qse_mchar_t* argv[], int max_argc)
+
+#if 0
+int qse_raddic_addvendor (qse_raddic_t* dic, const qse_char_t *name, int value)
+{
+	qse_size_t length;
+	qse_raddic_vendor_t* dv;
+
+	if (value >= 65535) 
+	{
+		//fr_strerror_printf("dict_addvendor: Cannot handle vendor ID larger than 65535");
+		return -1;
+	}
+
+	/*if ((length = qse_strlen(name)) >= qse_raddic_vendor_t_MAX_NAME_LEN) {
+		fr_strerror_printf("dict_addvendor: vendor name too long");
+		return -1;
+	}*/
+
+	if ((dv = QSE_MMGR_ALLOC(dic->mmgr, QSE_SIZEOF(*dv) + (length * QSE_SIZEOF(*name)))) == QSE_NULL) 
+	{
+	//	fr_strerror_printf("dict_addvendor: out of memory");
+		return -1;
+	}
+
+	qse_strcpy(dv->name, name);
+	dv->vendorpec  = value;
+	dv->type = dv->length = 1; /* defaults */
+
+	qse_rbt_insert (dic->vendors_byname, 
+	if (!fr_hash_table_insert(vendors_byname, dv)) 
+	{
+		qse_raddic_vendor_t *old_dv;
+
+		old_dv = fr_hash_table_finddata(vendors_byname, dv);
+		if (!old_dv) {
+			fr_strerror_printf("dict_addvendor: Failed inserting vendor name %s", name);
+			return -1;
+		}
+		if (old_dv->vendorpec != dv->vendorpec) {
+			fr_strerror_printf("dict_addvendor: Duplicate vendor name %s", name);
+			return -1;
+		}
+
+		/*
+		 *	Already inserted.  Discard the duplicate entry.
+		 */
+		fr_pool_free(dv);
+		return 0;
+	}
+
+	/*
+	 *	Insert the SAME pointer (not free'd when this table is
+	 *	deleted), into another table.
+	 *
+	 *	We want this behaviour because we want OLD names for
+	 *	the attributes to be read from the configuration
+	 *	files, but when we're printing them, (and looking up
+	 *	by value) we want to use the NEW name.
+	 */
+	if (!fr_hash_table_replace(vendors_byvalue, dv)) {
+		fr_strerror_printf("dict_addvendor: Failed inserting vendor %s",
+			   name);
+		return -1;
+	}
+
+	return 0;
+}
+#endif
+
+
+#if 0 // XXX
+/*
+ *	Get an attribute by its numerical value.
+ */
+qse_raddic_attr_t *dict_attrbyvalue(qse_raddic_t* dic, int attr)
+{
+	qse_raddic_attr_t dattr;
+
+#if 0
+	if ((attr > 0) && (attr < 256)) return dict_base_attrs[attr];
+#endif
+
+	dattr.attr = attr;
+	dattr.vendor = VENDOR(attr) /*& 0x7fff*/;
+
+	return fr_hash_table_finddata(dic->attributes_byvalue, &dattr);
+}
+
+/*
+ *	Get an attribute by its name.
+ */
+qse_raddic_attr_t *dict_attrbyname(const char *name)
+{
+	qse_raddic_attr_t *da;
+	uint32_t buffer[(QSE_SIZEOF(*da) + qse_raddic_attr_t_MAX_NAME_LEN + 3)/4];
+
+	if (!name) return QSE_NULL;
+
+	da = (qse_raddic_attr_t *) buffer;
+	strlcpy(da->name, name, qse_raddic_attr_t_MAX_NAME_LEN + 1);
+
+	return fr_hash_table_finddata(attributes_byname, da);
+}
+
+/*
+ *	Associate a value with an attribute and return it.
+ */
+qse_raddic_value_t *dict_valbyattr(qse_raddic_t* dic, int attr, int value)
+{
+	qse_raddic_value_t dval, *dv;
+
+	/*
+	 *	First, look up aliases.
+	 */
+	dval.attr = attr;
+	dval.name[0] = '\0';
+
+	/*
+	 *	Look up the attribute alias target, and use
+	 *	the correct attribute number if found.
+	 */
+	dv = fr_hash_table_finddata(values_byname, &dval);
+	if (dv) dval.attr = dv->value;
+
+	dval.value = value;
+
+	return fr_hash_table_finddata(values_byvalue, &dval);
+}
+
+/*
+ *	Get a value by its name, keyed off of an attribute.
+ */
+qse_raddic_value_t *dict_valbyname(qse_raddic_t* dic, int attr, const char *name)
+{
+	qse_raddic_value_t *my_dv, *dv;
+	uint32_t buffer[(QSE_SIZEOF(*my_dv) + qse_raddic_value_t_MAX_NAME_LEN + 3)/4];
+
+	if (!name) return QSE_NULL;
+
+	my_dv = (qse_raddic_value_t *) buffer;
+	my_dv->attr = attr;
+	my_dv->name[0] = '\0';
+
+	/*
+	 *	Look up the attribute alias target, and use
+	 *	the correct attribute number if found.
+	 */
+	dv = fr_hash_table_finddata(values_byname, my_dv);
+	if (dv) my_dv->attr = dv->value;
+
+	strlcpy(my_dv->name, name, qse_raddic_value_t_MAX_NAME_LEN + 1);
+
+	return fr_hash_table_finddata(values_byname, my_dv);
+}
+
+/*
+ *	Get the vendor PEC based on the vendor name
+ *
+ *	This is efficient only for small numbers of vendors.
+ */
+int dict_vendorbyname(const char *name)
+{
+	qse_raddic_vendor_t *dv;
+	uint32_t buffer[(QSE_SIZEOF(*dv) + qse_raddic_vendor_t_MAX_NAME_LEN + 3)/4];
+
+	if (!name) return 0;
+
+	dv = (qse_raddic_vendor_t *) buffer;
+	strlcpy(dv->name, name, qse_raddic_vendor_t_MAX_NAME_LEN + 1);
+
+	dv = fr_hash_table_finddata(vendors_byname, dv);
+	if (!dv) return 0;
+
+	return dv->vendorpec;
+}
+
+/*
+ *	Return the vendor struct based on the PEC.
+ */
+qse_raddic_vendor_t *dict_vendorbyvalue(int vendorpec)
+{
+	qse_raddic_vendor_t dv;
+
+	dv.vendorpec = vendorpec;
+
+	return fr_hash_table_finddata(vendors_byvalue, &dv);
+}
+
+/*
+ *	Add a value for an attribute to the dictionary.
+ */
+int dict_addvalue(qse_raddic_t* dic, const qse_char_t* namestr, const qse_char_t* attrstr, int value)
+{
+	qse_size_t     length;
+	qse_raddic_attr_t*     dattr;
+	qse_raddic_value_t*    dval;
+
+	if (!*namestr) 
+	{
+		//fr_strerror_printf("dict_addvalue: empty names are not permitted");
+		return -1;
+	}
+
+	length = qse_strlen(namestr);
+
+	/* no +1 to length when allocating the space because dval has space for one character */
+	if ((dval = QSE_MMGR_ALLOC (dic->mmgr,  QSE_SIZEOF(*dval) + (length * QSE_SIZEOF(*namestr)))) == QSE_NULL) 
+	{
+		//fr_strerror_printf("dict_addvalue: out of memory");
+		return -1;
+	}
+	QSE_MEMSET(dval, 0, QSE_SIZEOF(*dval));
+
+	qse_strcpy(dval->name, namestr);
+	dval->value = value;
+
+	/*
+	 *	Most VALUEs are bunched together by ATTRIBUTE.  We can
+	 *	save a lot of lookups on dictionary initialization by
+	 *	caching the last attribute.
+	 */
+	if (dic->last_attr && (qse_strcasecmp(attrstr, dic->last_attr->name) == 0))
+	{
+		dattr = dic->last_attr;
+	}
+	else
+	{
+		dattr = dict_attrbyname(attrstr);
+		dic->last_attr = dattr;
+	}
+
+	/*
+	 *	Remember which attribute is associated with this
+	 *	value, if possible.
+	 */
+	if (dattr) 
+	{
+		if (dattr->flags.has_value_alias) 
+		{
+			//fr_strerror_printf("dict_addvalue: Cannot add VALUE for ATTRIBUTE \"%s\": It already has a VALUE-ALIAS", attrstr);
+			return -1;
+		}
+
+		dval->attr = dattr->attr;
+
+		/*
+		 *	Enforce valid values
+		 *
+		 *	Don't worry about fixups...
+		 */
+		switch (dattr->type) 
+		{
+			case QSE_RAD_ATTR_TYPE_BYTE:
+				if (value > 255) 
+				{
+					fr_pool_free(dval);
+					fr_strerror_printf("dict_addvalue: ATTRIBUTEs of type 'byte' cannot have VALUEs larger than 255");
+					return -1;
+				}
+				break;
+			case QSE_RAD_ATTR_TYPE_SHORT:
+				if (value > 65535) 
+				{
+					fr_pool_free(dval);
+					fr_strerror_printf("dict_addvalue: ATTRIBUTEs of type 'short' cannot have VALUEs larger than 65535");
+					return -1;
+				}
+				break;
+
+				/*
+				 *	Allow octets for now, because
+				 *	of dictionary.cablelabs
+				 */
+			case QSE_RAD_ATTR_TYPE_OCTETS:
+			case QSE_RAD_ATTR_TYPE_INTEGER:
+				break;
+
+			default:
+				fr_pool_free(dval);
+				fr_strerror_printf("dict_addvalue: VALUEs cannot be defined for attributes of type '%s'",
+					   fr_int2str(type_table, dattr->type, "?Unknown?"));
+				return -1;
+		}
+
+		dattr->flags.has_value = 1;
+	} 
+	else 
+	{
+		value_fixup_t *fixup;
+
+		fixup = (value_fixup_t *) malloc(QSE_SIZEOF(*fixup));
+		if (!fixup) {
+			fr_pool_free(dval);
+			fr_strerror_printf("dict_addvalue: out of memory");
+			return -1;
+		}
+		QSE_MEMSET(fixup, 0, QSE_SIZEOF(*fixup));
+
+		strlcpy(fixup->attrstr, attrstr, QSE_SIZEOF(fixup->attrstr));
+		fixup->dval = dval;
+
+		/*
+		 *	Insert to the head of the list.
+		 */
+		fixup->next = value_fixup;
+		value_fixup = fixup;
+
+		return 0;
+	}
+
+	/*
+	 *	Add the value into the dictionary.
+	 */
+	if (!fr_hash_table_insert(values_byname, dval)) 
+	{
+		if (dattr) 
+		{
+			qse_raddic_value_t *old;
+
+			/*
+			 *	Suppress duplicates with the same
+			 *	name and value.  There are lots in
+			 *	dictionary.ascend.
+			 */
+			old = dict_valbyname(dattr->attr, namestr);
+			if (old && (old->value == dval->value)) 
+			{
+				fr_pool_free(dval);
+				return 0;
+			}
+		}
+
+		fr_pool_free(dval);
+		fr_strerror_printf("dict_addvalue: Duplicate value name %s for attribute %s", namestr, attrstr);
+		return -1;
+	}
+
+	/*
+	 *	There are multiple VALUE's, keyed by attribute, so we
+	 *	take care of that here.
+	 */
+	if (!fr_hash_table_replace(values_byvalue, dval)) 
+	{
+		fr_strerror_printf("dict_addvalue: Failed inserting value %s", namestr);
+		return -1;
+	}
+
+	return 0;
+}
+
+
+
+static int str2argv (qse_char_t *str, qse_char_t* argv[], int max_argc)
 {
 	int nflds, i;
-	qse_mchar_t* ptr;
+	qse_char_t* ptr;
 
-	nflds = qse_mbsspl (str, QSE_MT(""), QSE_MT('\0'), QSE_MT('\0'), QSE_MT('\0'));
+	nflds = qse_strspl (str, QSE_T(""), QSE_T('\0'), QSE_T('\0'), QSE_T('\0'));
 	if (nflds <= 0)
 	{
 		return -1;
@@ -158,17 +564,56 @@ static int str2argv (qse_mchar_t *str, qse_mchar_t* argv[], int max_argc)
 	for (i = 0; i < nflds; i++)
 	{
 		argv[i] = ptr;
-		while (*ptr != QSE_MT('\0')) ptr++;
+		while (*ptr != QSE_T('\0')) ptr++;
 		ptr++;
 	}
 
 	return nflds;
 }
 
-
-
+static int sscanf_i(const qse_char_t *str, int *pvalue)
+{
 #if 0
-static int process_value(const char* fn, qse_size_t line, qse_mchar_t* argv[], int argc)
+	int rcode = 0;
+	int base = 10;
+	const char *tab = "0123456789";
+
+	if ((str[0] == '0') && ((str[1] == 'x') || (str[1] == 'X'))) 
+	{
+		tab = "0123456789abcdef";
+		base = 16;
+
+		str += 2;
+	}
+
+	while (*str) 
+	{
+		const char *c;
+
+		c = memchr(tab, tolower((int) *str), base);
+		if (!c) return 0;
+
+		rcode *= base;
+		rcode += (c - tab);
+		str++;
+	}
+
+	*pvalue = rcode;
+	return 1;
+#else
+	qse_long_t v;
+	const qse_char_t* end;
+	QSE_STRTONUM (v, str, &end, 0);
+	if (*end != '\0') return 0;
+	*pvalue = v;
+	return 1;
+#endif
+}
+
+
+
+
+static int process_value(const qse_char_t* fn, qse_size_t line, qse_char_t* argv[], int argc)
 {
 	/* Process the VALUE command */
 
@@ -176,33 +621,33 @@ static int process_value(const char* fn, qse_size_t line, qse_mchar_t* argv[], i
 
 	if (argc != 3) 
 	{
-		fr_strerror_printf("dict_init: %s[%d]: invalid VALUE line", fn, line);
+		/*fr_strerror_printf("dict_init: %s[%d]: invalid VALUE line", fn, line);*/
 		return -1;
 	}
 
 	/* For Compatibility, skip "Server-Config" */
-	if (qse_mbscasecmp(argv[0], "Server-Config") == 0) return 0;
+	if (qse_strcasecmp(argv[0], QSE_T("Server-Config")) == 0) return 0;
 
 	/* Validate all entries */
 	if (!sscanf_i(argv[2], &value)) 
 	{
-		fr_strerror_printf("dict_init: %s[%d]: invalid value", fn, line);
+		//fr_strerror_printf("dict_init: %s[%d]: invalid value", fn, line);
 		return -1;
 	}
 
 	if (dict_addvalue(argv[1], argv[0], value) < 0) 
 	{
-		fr_strerror_printf("dict_init: %s[%d]: %s", fn, line, fr_strerror());
+		//fr_strerror_printf("dict_init: %s[%d]: %s", fn, line, fr_strerror());
 		return -1;
 	}
 
 	return 0;
 }
 
-static int load_file (qse_raddic_t* dic, const char *dir, const char *fn, const char *src_file, int src_line)
+static int load_file (qse_raddic_t* dic, const qse_char_t *dir, const qse_char_t *fn, const qse_char_t *src_file, int src_line)
 {
 	qse_sio_t* sio = QSE_NULL;
-	char dirtmp[256];
+	qse_char_t dirtmp[256]; /* TODO: longer path */
 	char buf[256];
 	char* p;
 	qse_size_t line = 0;
@@ -216,8 +661,8 @@ static int load_file (qse_raddic_t* dic, const char *dir, const char *fn, const 
 	qse_raddic_attr_t* da, * block_tlv = QSE_NULL;
 
 #if 0
-	if (qse_mbslen(fn) >= sizeof(dirtmp) / 2 ||
-	    qse_mbslen(dir) >= sizeof(dirtmp) / 2) 
+	if (qse_strlen(fn) >= QSE_SIZEOF(dirtmp) / 2 ||
+	    qse_strlen(dir) >= QSE_SIZEOF(dirtmp) / 2) 
 	{
 		fr_strerror_printf("dict_init: filename name too long");
 		return -1;
@@ -227,15 +672,15 @@ static int load_file (qse_raddic_t* dic, const char *dir, const char *fn, const 
 	 *	First see if fn is relative to dir. If so, create
 	 *	new filename. If not, remember the absolute dir.
 	 */
-	if ((p = strrchr(fn, FR_DIR_SEP)) != NULL) 
+	if ((p = qse_strrchr(fn, FR_DIR_SEP)) != QSE_NULL) 
 	{
-		qse_mbscpy(dirtmp, fn);
+		qse_strcpy(dirtmp, fn);
 		dirtmp[p - fn] = 0;
 		dir = dirtmp;
 	}
-	else if (dir && dir[0] && qse_mbscmp(dir, ".") != 0) 
+	else if (dir && dir[0] && qse_strcmp(dir, ".") != 0) 
 	{
-		snprintf(dirtmp, sizeof(dirtmp), "%s/%s", dir, fn);
+		snprintf(dirtmp, QSE_SIZEOF(dirtmp), "%s/%s", dir, fn);
 		fn = dirtmp;
 	}
 #endif
@@ -270,7 +715,7 @@ static int load_file (qse_raddic_t* dic, const char *dir, const char *fn, const 
 	/*
 	 *	Seed the random pool with data.
 	 */
-	fr_rand_seed(&statbuf, sizeof(statbuf));
+	fr_rand_seed(&statbuf, QSE_SIZEOF(statbuf));
 #endif
 
 	block_vendor = 0;
@@ -279,14 +724,14 @@ static int load_file (qse_raddic_t* dic, const char *dir, const char *fn, const 
 	{
 		line++;
 
-		qse_mbspac (buf);
+		qse_strpac (buf);
 		if (buf[0] == QSE_MT('\0') || buf[0] == QSE_MT('#')) continue;
 
 		/*
 		 *  Comment characters should NOT be appearing anywhere but
 		 *  as start of a comment;
 		 */
-		p = qse_mbschr (buf, QSE_MT('#'));
+		p = qse_strchr (buf, QSE_MT('#'));
 		if (p) *p = '\0';
 
 		argc = str2argv(buf, argv, QSE_COUNTOF(argv));
@@ -301,7 +746,7 @@ static int load_file (qse_raddic_t* dic, const char *dir, const char *fn, const 
 		/*
 		 *	Process VALUE lines.
 		 */
-		if (qse_mbscasecmp(argv[0], "VALUE") == 0) 
+		if (qse_strcasecmp(argv[0], QSE_T("VALUE")) == 0) 
 		{
 			if (process_value(fn, line, argv + 1, argc - 1) == -1) goto oops;
 			continue;
@@ -310,7 +755,7 @@ static int load_file (qse_raddic_t* dic, const char *dir, const char *fn, const 
 		/*
 		 *	Perhaps this is an attribute.
 		 */
-		if (qse_mbscasecmp(argv[0], "ATTRIBUTE") == 0) 
+		if (qse_strcasecmp(argv[0], QSE_T("ATTRIBUTE")) == 0) 
 		{
 			if (process_attribute(fn, line, block_vendor, block_tlv, argv + 1, argc - 1) == -1) goto oops;
 			continue;
@@ -319,13 +764,13 @@ static int load_file (qse_raddic_t* dic, const char *dir, const char *fn, const 
 		/*
 		 *	See if we need to import another dictionary.
 		 */
-		if (qse_mbscasecmp(argv[0], "$INCLUDE") == 0) 
+		if (qse_strcasecmp(argv[0], QSE_T("$INCLUDE")) == 0) 
 		{
-			if (my_dict_init(dir, argv[1], fn, line) < 0) goto oops;
+			if (load_file(dir, argv[1], fn, line) < 0) goto oops;
 			continue;
 		} /* $INCLUDE */
 
-		if (qse_mbscasecmp(argv[0], "VALUE-ALIAS") == 0) 
+		if (qse_strcasecmp(argv[0], QSE_T("VALUE-ALIAS")) == 0) 
 		{
 			if (process_value_alias(fn, line, argv + 1, argc - 1) == -1) goto oops;
 			continue;
@@ -334,13 +779,13 @@ static int load_file (qse_raddic_t* dic, const char *dir, const char *fn, const 
 		/*
 		 *	Process VENDOR lines.
 		 */
-		if (qse_mbscasecmp(argv[0], "VENDOR") == 0) 
+		if (qse_strcasecmp(argv[0], QSE_T("VENDOR")) == 0) 
 		{
 			if (process_vendor(fn, line, argv + 1, argc - 1) == -1)  goto oops;
 			continue;
 		}
 
-		if (qse_mbscasecmp(argv[0], "BEGIN-TLV") == 0) 
+		if (qse_strcasecmp(argv[0], QSE_T("BEGIN-TLV")) == 0) 
 		{
 			if (argc != 2) 
 			{
@@ -365,7 +810,7 @@ static int load_file (qse_raddic_t* dic, const char *dir, const char *fn, const 
 			continue;
 		} /* BEGIN-TLV */
 
-		if (qse_mbscasecmp(argv[0], "END-TLV") == 0) 
+		if (qse_strcasecmp(argv[0], "END-TLV") == 0) 
 		{
 			if (argc != 2) 
 			{
@@ -385,11 +830,11 @@ static int load_file (qse_raddic_t* dic, const char *dir, const char *fn, const 
 				fr_strerror_printf("dict_init: %s[%d]: END-TLV %s does not match any previous BEGIN-TLV", fn, line, argv[1]);
 				goto oops;
 			}
-			block_tlv = NULL;
+			block_tlv = QSE_NULL;
 			continue;
 		} /* END-VENDOR */
 
-		if (qse_mbscasecmp(argv[0], "BEGIN-VENDOR") == 0) {
+		if (qse_strcasecmp(argv[0], "BEGIN-VENDOR") == 0) {
 			if (argc != 2) {
 				fr_strerror_printf("dict_init: %s[%d] invalid BEGIN-VENDOR entry", fn, line);
 				goto oops;
@@ -404,7 +849,7 @@ static int load_file (qse_raddic_t* dic, const char *dir, const char *fn, const 
 			continue;
 		} /* BEGIN-VENDOR */
 
-		if (qse_mbscasecmp(argv[0], "END-VENDOR") == 0) 
+		if (qse_strcasecmp(argv[0], QSE_T("END-VENDOR")) == 0) 
 		{
 			if (argc != 2) {
 				fr_strerror_printf("dict_init: %s[%d] invalid END-VENDOR entry", fn, line);
@@ -445,43 +890,27 @@ oops:
 	return -1;
 }
 
-
-#endif
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+static int qse_raddic_load (qse_raddic_t* dic, const qse_char_t* file)
+{
+	return load_file (dic, QSE_NULL, file, QSE_NULL, 0);
+}
 
 
 #if 0
-#define DICT_VALUE_MAX_NAME_LEN (128)
-#define DICT_VENDOR_MAX_NAME_LEN (128)
-#define DICT_ATTR_MAX_NAME_LEN (128)
+#define qse_raddic_value_t_MAX_NAME_LEN (128)
+#define qse_raddic_vendor_t_MAX_NAME_LEN (128)
+#define qse_raddic_attr_t_MAX_NAME_LEN (128)
 
-static fr_hash_table_t *vendors_byname = NULL;
-static fr_hash_table_t *vendors_byvalue = NULL;
+static fr_hash_table_t *vendors_byname = QSE_NULL;
+static fr_hash_table_t *vendors_byvalue = QSE_NULL;
 
-static fr_hash_table_t *attributes_byname = NULL;
-static fr_hash_table_t *attributes_byvalue = NULL;
+static fr_hash_table_t *attributes_byname = QSE_NULL;
+static fr_hash_table_t *attributes_byvalue = QSE_NULL;
 
-static fr_hash_table_t *values_byvalue = NULL;
-static fr_hash_table_t *values_byname = NULL;
+static fr_hash_table_t *values_byvalue = QSE_NULL;
+static fr_hash_table_t *values_byname = QSE_NULL;
 
-static DICT_ATTR *dict_base_attrs[256];
+static qse_raddic_attr_t *dict_base_attrs[256];
 
 /*
  *	For faster HUP's, we cache the stat information for
@@ -493,15 +922,15 @@ typedef struct dict_stat_t {
 	time_t		   mtime;
 } dict_stat_t;
 
-static char *stat_root_dir = NULL;
-static char *stat_root_file = NULL;
+static char *stat_root_dir = QSE_NULL;
+static char *stat_root_file = QSE_NULL;
 
-static dict_stat_t *stat_head = NULL;
-static dict_stat_t *stat_tail = NULL;
+static dict_stat_t *stat_head = QSE_NULL;
+static dict_stat_t *stat_tail = QSE_NULL;
 
 typedef struct value_fixup_t {
-	char		attrstr[DICT_ATTR_MAX_NAME_LEN];
-	DICT_VALUE	*dval;
+	char		attrstr[qse_raddic_attr_t_MAX_NAME_LEN];
+	qse_raddic_value_t	*dval;
 	struct value_fixup_t *next;
 } value_fixup_t;
 
@@ -509,7 +938,7 @@ typedef struct value_fixup_t {
 /*
  *	So VALUEs in the dictionary can have forward references.
  */
-static value_fixup_t *value_fixup = NULL;
+static value_fixup_t *value_fixup = QSE_NULL;
 
 static const FR_NAME_NUMBER type_table[] = {
 	{ "integer",	QSE_RAD_ATTR_TYPE_INTEGER },
@@ -527,7 +956,7 @@ static const FR_NAME_NUMBER type_table[] = {
 	{ "combo-ip",	QSE_RAD_ATTR_TYPE_COMBO_IP },
 	{ "tlv",	QSE_RAD_ATTR_TYPE_TLV },
 	{ "signed",	QSE_RAD_ATTR_TYPE_SIGNED },
-	{ NULL, 0 }
+	{ QSE_NULL, 0 }
 };
 
 
@@ -561,13 +990,13 @@ static uint32_t dict_hashname(const char *name)
  */
 static uint32_t dict_attr_name_hash(const void *data)
 {
-	return dict_hashname(((const DICT_ATTR *)data)->name);
+	return dict_hashname(((const qse_raddic_attr_t *)data)->name);
 }
 
 static int dict_attr_name_cmp(const void *one, const void *two)
 {
-	const DICT_ATTR *a = one;
-	const DICT_ATTR *b = two;
+	const qse_raddic_attr_t *a = one;
+	const qse_raddic_attr_t *b = two;
 
 	return qse_mbscasecmp(a->name, b->name);
 }
@@ -575,16 +1004,16 @@ static int dict_attr_name_cmp(const void *one, const void *two)
 static uint32_t dict_attr_value_hash(const void *data)
 {
 	uint32_t hash;
-	const DICT_ATTR *attr = data;
+	const qse_raddic_attr_t *attr = data;
 
-	hash = fr_hash(&attr->vendor, sizeof(attr->vendor));
-	return fr_hash_update(&attr->attr, sizeof(attr->attr), hash);
+	hash = fr_hash(&attr->vendor, QSE_SIZEOF(attr->vendor));
+	return fr_hash_update(&attr->attr, QSE_SIZEOF(attr->attr), hash);
 }
 
 static int dict_attr_value_cmp(const void *one, const void *two)
 {
-	const DICT_ATTR *a = one;
-	const DICT_ATTR *b = two;
+	const qse_raddic_attr_t *a = one;
+	const qse_raddic_attr_t *b = two;
 
 	if (a->vendor < b->vendor) return -1;
 	if (a->vendor > b->vendor) return +1;
@@ -594,27 +1023,27 @@ static int dict_attr_value_cmp(const void *one, const void *two)
 
 static uint32_t dict_vendor_name_hash(const void *data)
 {
-	return dict_hashname(((const DICT_VENDOR *)data)->name);
+	return dict_hashname(((const qse_raddic_vendor_t *)data)->name);
 }
 
 static int dict_vendor_name_cmp(const void *one, const void *two)
 {
-	const DICT_VENDOR *a = one;
-	const DICT_VENDOR *b = two;
+	const qse_raddic_vendor_t *a = one;
+	const qse_raddic_vendor_t *b = two;
 
 	return qse_mbscasecmp(a->name, b->name);
 }
 
 static uint32_t dict_vendor_value_hash(const void *data)
 {
-	return fr_hash(&(((const DICT_VENDOR *)data)->vendorpec),
-			 sizeof(((const DICT_VENDOR *)data)->vendorpec));
+	return fr_hash(&(((const qse_raddic_vendor_t *)data)->vendorpec),
+			 QSE_SIZEOF(((const qse_raddic_vendor_t *)data)->vendorpec));
 }
 
 static int dict_vendor_value_cmp(const void *one, const void *two)
 {
-	const DICT_VENDOR *a = one;
-	const DICT_VENDOR *b = two;
+	const qse_raddic_vendor_t *a = one;
+	const qse_raddic_vendor_t *b = two;
 
 	return a->vendorpec - b->vendorpec;
 }
@@ -622,17 +1051,17 @@ static int dict_vendor_value_cmp(const void *one, const void *two)
 static uint32_t dict_value_name_hash(const void *data)
 {
 	uint32_t hash;
-	const DICT_VALUE *dval = data;
+	const qse_raddic_value_t *dval = data;
 
 	hash = dict_hashname(dval->name);
-	return fr_hash_update(&dval->attr, sizeof(dval->attr), hash);
+	return fr_hash_update(&dval->attr, QSE_SIZEOF(dval->attr), hash);
 }
 
 static int dict_value_name_cmp(const void *one, const void *two)
 {
 	int rcode;
-	const DICT_VALUE *a = one;
-	const DICT_VALUE *b = two;
+	const qse_raddic_value_t *a = one;
+	const qse_raddic_value_t *b = two;
 
 	rcode = a->attr - b->attr;
 	if (rcode != 0) return rcode;
@@ -643,17 +1072,17 @@ static int dict_value_name_cmp(const void *one, const void *two)
 static uint32_t dict_value_value_hash(const void *data)
 {
 	uint32_t hash;
-	const DICT_VALUE *dval = data;
+	const qse_raddic_value_t *dval = data;
 
-	hash = fr_hash(&dval->attr, sizeof(dval->attr));
-	return fr_hash_update(&dval->value, sizeof(dval->value), hash);
+	hash = fr_hash(&dval->attr, QSE_SIZEOF(dval->attr));
+	return fr_hash_update(&dval->value, QSE_SIZEOF(dval->value), hash);
 }
 
 static int dict_value_value_cmp(const void *one, const void *two)
 {
 	int rcode;
-	const DICT_VALUE *a = one;
-	const DICT_VALUE *b = two;
+	const qse_raddic_value_t *a = one;
+	const qse_raddic_value_t *b = two;
 
 	rcode = a->attr - b->attr;
 	if (rcode != 0) return rcode;
@@ -670,22 +1099,22 @@ static void dict_stat_free(void)
 	dict_stat_t *this, *next;
 
 	free(stat_root_dir);
-	stat_root_dir = NULL;
+	stat_root_dir = QSE_NULL;
 	free(stat_root_file);
-	stat_root_file = NULL;
+	stat_root_file = QSE_NULL;
 
 	if (!stat_head) {
-		stat_tail = NULL;
+		stat_tail = QSE_NULL;
 		return;
 	}
 
-	for (this = stat_head; this != NULL; this = next) {
+	for (this = stat_head; this != QSE_NULL; this = next) {
 		next = this->next;
 		free(this->name);
 		free(this);
 	}
 
-	stat_head = stat_tail = NULL;
+	stat_head = stat_tail = QSE_NULL;
 }
 
 
@@ -696,9 +1125,9 @@ static void dict_stat_add(const char *name, const struct stat *stat_buf)
 {
 	dict_stat_t *this;
 
-	this = malloc(sizeof(*this));
+	this = malloc(QSE_SIZEOF(*this));
 	if (!this) return;
-	QSE_MEMSET(this, 0, sizeof(*this));
+	QSE_MEMSET(this, 0, QSE_SIZEOF(*this));
 
 	this->name = strdup(name);
 	this->mtime = stat_buf->st_mtime;
@@ -729,7 +1158,7 @@ static int dict_stat_check(const char *root_dir, const char *root_file)
 
 	if (!stat_head) return 0; /* changed, reload */
 
-	for (this = stat_head; this != NULL; this = this->next) {
+	for (this = stat_head; this != QSE_NULL; this = this->next) {
 		if (stat(this->name, &buf) < 0) return 0;
 
 		if (buf.st_mtime != this->mtime) return 0;
@@ -748,20 +1177,20 @@ typedef struct fr_pool_t {
 #define FR_POOL_SIZE (32768)
 #define FR_ALLOC_ALIGN (8)
 
-static fr_pool_t *dict_pool = NULL;
+static fr_pool_t *dict_pool = QSE_NULL;
 
 static fr_pool_t *fr_pool_create(void)
 {
 	fr_pool_t *fp = malloc(FR_POOL_SIZE);
 
-	if (!fp) return NULL;
+	if (!fp) return QSE_NULL;
 
 	QSE_MEMSET(fp, 0, FR_POOL_SIZE);
 
 	fp->page_end = ((uint8_t *) fp) + FR_POOL_SIZE;
-	fp->free_ptr = ((uint8_t *) fp) + sizeof(*fp);
+	fp->free_ptr = ((uint8_t *) fp) + QSE_SIZEOF(*fp);
 	fp->page_free = fp;
-	fp->page_next = NULL;
+	fp->page_next = QSE_NULL;
 	return fp;
 }
 
@@ -771,7 +1200,7 @@ static void fr_pool_delete(fr_pool_t **pfp)
 
 	if (!pfp || !*pfp) return;
 
-	for (fp = *pfp; fp != NULL; fp = next) {
+	for (fp = *pfp; fp != QSE_NULL; fp = next) {
 		next = fp->page_next;
 		free(fp);
 	}
@@ -782,13 +1211,13 @@ static void *fr_pool_alloc(size_t size)
 {
 	void *ptr;
 
-	if (size == 0) return NULL;
+	if (size == 0) return QSE_NULL;
 
-	if (size > 256) return NULL; /* shouldn't happen */
+	if (size > 256) return QSE_NULL; /* shouldn't happen */
 
 	if (!dict_pool) {
 		dict_pool = fr_pool_create();
-		if (!dict_pool) return NULL;
+		if (!dict_pool) return QSE_NULL;
 	}
 
 	if ((size & (FR_ALLOC_ALIGN - 1)) != 0) {
@@ -797,7 +1226,7 @@ static void *fr_pool_alloc(size_t size)
 
 	if ((((uint8_t *) dict_pool->page_free->free_ptr) + size) > (uint8_t *) dict_pool->page_free->page_end) {
 		dict_pool->page_free->page_next = fr_pool_create();
-		if (!dict_pool->page_free->page_next) return NULL;
+		if (!dict_pool->page_free->page_next) return QSE_NULL;
 		dict_pool->page_free = dict_pool->page_free->page_next;
 	}
 
@@ -825,20 +1254,20 @@ void dict_free(void)
 	 */
 	fr_hash_table_free(vendors_byname);
 	fr_hash_table_free(vendors_byvalue);
-	vendors_byname = NULL;
-	vendors_byvalue = NULL;
+	vendors_byname = QSE_NULL;
+	vendors_byvalue = QSE_NULL;
 
 	fr_hash_table_free(attributes_byname);
 	fr_hash_table_free(attributes_byvalue);
-	attributes_byname = NULL;
-	attributes_byvalue = NULL;
+	attributes_byname = QSE_NULL;
+	attributes_byvalue = QSE_NULL;
 
 	fr_hash_table_free(values_byname);
 	fr_hash_table_free(values_byvalue);
-	values_byname = NULL;
-	values_byvalue = NULL;
+	values_byname = QSE_NULL;
+	values_byvalue = QSE_NULL;
 
-	QSE_MEMSET(dict_base_attrs, 0, sizeof(dict_base_attrs));
+	QSE_MEMSET(dict_base_attrs, 0, QSE_SIZEOF(dict_base_attrs));
 
 	fr_pool_delete(&dict_pool);
 
@@ -846,73 +1275,6 @@ void dict_free(void)
 }
 
 
-/*
- *	Add vendor to the list.
- */
-int dict_addvendor(const char *name, int value)
-{
-	size_t length;
-	DICT_VENDOR *dv;
-
-	/* BACON */
-	/*if (value >= 32767) {*/
-	if (value >= 65535) {
-	/* END BACON */
-	       	fr_strerror_printf("dict_addvendor: Cannot handle vendor ID larger than 65535");
-		return -1;
-	}
-
-	if ((length = qse_mbslen(name)) >= DICT_VENDOR_MAX_NAME_LEN) {
-		fr_strerror_printf("dict_addvendor: vendor name too long");
-		return -1;
-	}
-
-	if ((dv = fr_pool_alloc(sizeof(*dv) + length)) == NULL) {
-		fr_strerror_printf("dict_addvendor: out of memory");
-		return -1;
-	}
-
-	qse_mbscpy(dv->name, name);
-	dv->vendorpec  = value;
-	dv->type = dv->length = 1; /* defaults */
-
-	if (!fr_hash_table_insert(vendors_byname, dv)) {
-		DICT_VENDOR *old_dv;
-
-		old_dv = fr_hash_table_finddata(vendors_byname, dv);
-		if (!old_dv) {
-			fr_strerror_printf("dict_addvendor: Failed inserting vendor name %s", name);
-			return -1;
-		}
-		if (old_dv->vendorpec != dv->vendorpec) {
-			fr_strerror_printf("dict_addvendor: Duplicate vendor name %s", name);
-			return -1;
-		}
-
-		/*
-		 *	Already inserted.  Discard the duplicate entry.
-		 */
-		fr_pool_free(dv);
-		return 0;
-	}
-
-	/*
-	 *	Insert the SAME pointer (not free'd when this table is
-	 *	deleted), into another table.
-	 *
-	 *	We want this behaviour because we want OLD names for
-	 *	the attributes to be read from the configuration
-	 *	files, but when we're printing them, (and looking up
-	 *	by value) we want to use the NEW name.
-	 */
-	if (!fr_hash_table_replace(vendors_byvalue, dv)) {
-		fr_strerror_printf("dict_addvendor: Failed inserting vendor %s",
-			   name);
-		return -1;
-	}
-
-	return 0;
-}
 
 /*
  *	Add an attribute to the dictionary.
@@ -922,10 +1284,10 @@ int dict_addattr(const char *name, int vendor, int type, int value,
 {
 	size_t namelen;
 	static int      max_attr = 0;
-	DICT_ATTR	*attr;
+	qse_raddic_attr_t	*attr;
 
 	namelen = qse_mbslen(name);
-	if (namelen >= DICT_ATTR_MAX_NAME_LEN) {
+	if (namelen >= qse_raddic_attr_t_MAX_NAME_LEN) {
 		fr_strerror_printf("dict_addattr: attribute name too long");
 		return -1;
 	}
@@ -963,8 +1325,8 @@ int dict_addattr(const char *name, int vendor, int type, int value,
 	}
 
 	if (vendor) {
-		DICT_VENDOR *dv;
-		static DICT_VENDOR *last_vendor = NULL;
+		qse_raddic_vendor_t *dv;
+		static qse_raddic_vendor_t *last_vendor = QSE_NULL;
 
 		if (flags.is_tlv && (flags.encrypt != FLAG_ENCRYPT_NONE)) {
 			fr_strerror_printf("Sub-TLV's cannot be encrypted");
@@ -1020,7 +1382,7 @@ int dict_addattr(const char *name, int vendor, int type, int value,
 	/*
 	 *	Create a new attribute for the list
 	 */
-	if ((attr = fr_pool_alloc(sizeof(*attr) + namelen)) == NULL) {
+	if ((attr = fr_pool_alloc(QSE_SIZEOF(*attr) + namelen)) == QSE_NULL) {
 		fr_strerror_printf("dict_addattr: out of memory");
 		return -1;
 	}
@@ -1038,7 +1400,7 @@ int dict_addattr(const char *name, int vendor, int type, int value,
 	 *	Insert the attribute, only if it's not a duplicate.
 	 */
 	if (!fr_hash_table_insert(attributes_byname, attr)) {
-		DICT_ATTR	*a;
+		qse_raddic_attr_t	*a;
 
 		/*
 		 *	If the attribute has identical number, then
@@ -1092,169 +1454,6 @@ int dict_addattr(const char *name, int vendor, int type, int value,
 }
 
 
-/*
- *	Add a value for an attribute to the dictionary.
- */
-int dict_addvalue(const char *namestr, const char *attrstr, int value)
-{
-	qse_size_t     length;
-	DICT_ATTR*     dattr;
-	DICT_VALUE*    dval;
-
-	static DICT_ATTR *last_attr = NULL;
-
-	if (!*namestr) 
-	{
-		fr_strerror_printf("dict_addvalue: empty names are not permitted");
-		return -1;
-	}
-
-	if ((length = qse_mbslen(namestr)) >= DICT_VALUE_MAX_NAME_LEN) 
-	{
-		fr_strerror_printf("dict_addvalue: value name too long");
-		return -1;
-	}
-
-	if ((dval = fr_pool_alloc(sizeof(*dval) + length)) == NULL) 
-	{
-		fr_strerror_printf("dict_addvalue: out of memory");
-		return -1;
-	}
-	QSE_MEMSET(dval, 0, sizeof(*dval));
-
-	qse_mbscpy(dval->name, namestr);
-	dval->value = value;
-
-	/*
-	 *	Most VALUEs are bunched together by ATTRIBUTE.  We can
-	 *	save a lot of lookups on dictionary initialization by
-	 *	caching the last attribute.
-	 */
-	if (last_attr && (qse_mbscasecmp(attrstr, last_attr->name) == 0)) {
-		dattr = last_attr;
-	} else {
-		dattr = dict_attrbyname(attrstr);
-		last_attr = dattr;
-	}
-
-	/*
-	 *	Remember which attribute is associated with this
-	 *	value, if possible.
-	 */
-	if (dattr) 
-	{
-		if (dattr->flags.has_value_alias) 
-		{
-			fr_strerror_printf("dict_addvalue: Cannot add VALUE for ATTRIBUTE \"%s\": It already has a VALUE-ALIAS", attrstr);
-			return -1;
-		}
-
-		dval->attr = dattr->attr;
-
-		/*
-		 *	Enforce valid values
-		 *
-		 *	Don't worry about fixups...
-		 */
-		switch (dattr->type) 
-		{
-			case QSE_RAD_ATTR_TYPE_BYTE:
-				if (value > 255) 
-				{
-					fr_pool_free(dval);
-					fr_strerror_printf("dict_addvalue: ATTRIBUTEs of type 'byte' cannot have VALUEs larger than 255");
-					return -1;
-				}
-				break;
-			case QSE_RAD_ATTR_TYPE_SHORT:
-				if (value > 65535) 
-				{
-					fr_pool_free(dval);
-					fr_strerror_printf("dict_addvalue: ATTRIBUTEs of type 'short' cannot have VALUEs larger than 65535");
-					return -1;
-				}
-				break;
-
-				/*
-				 *	Allow octets for now, because
-				 *	of dictionary.cablelabs
-				 */
-			case QSE_RAD_ATTR_TYPE_OCTETS:
-			case QSE_RAD_ATTR_TYPE_INTEGER:
-				break;
-
-			default:
-				fr_pool_free(dval);
-				fr_strerror_printf("dict_addvalue: VALUEs cannot be defined for attributes of type '%s'",
-					   fr_int2str(type_table, dattr->type, "?Unknown?"));
-				return -1;
-		}
-
-		dattr->flags.has_value = 1;
-	} 
-	else 
-	{
-		value_fixup_t *fixup;
-
-		fixup = (value_fixup_t *) malloc(sizeof(*fixup));
-		if (!fixup) {
-			fr_pool_free(dval);
-			fr_strerror_printf("dict_addvalue: out of memory");
-			return -1;
-		}
-		QSE_MEMSET(fixup, 0, sizeof(*fixup));
-
-		strlcpy(fixup->attrstr, attrstr, sizeof(fixup->attrstr));
-		fixup->dval = dval;
-
-		/*
-		 *	Insert to the head of the list.
-		 */
-		fixup->next = value_fixup;
-		value_fixup = fixup;
-
-		return 0;
-	}
-
-	/*
-	 *	Add the value into the dictionary.
-	 */
-	if (!fr_hash_table_insert(values_byname, dval)) 
-	{
-		if (dattr) 
-		{
-			DICT_VALUE *old;
-
-			/*
-			 *	Suppress duplicates with the same
-			 *	name and value.  There are lots in
-			 *	dictionary.ascend.
-			 */
-			old = dict_valbyname(dattr->attr, namestr);
-			if (old && (old->value == dval->value)) 
-			{
-				fr_pool_free(dval);
-				return 0;
-			}
-		}
-
-		fr_pool_free(dval);
-		fr_strerror_printf("dict_addvalue: Duplicate value name %s for attribute %s", namestr, attrstr);
-		return -1;
-	}
-
-	/*
-	 *	There are multiple VALUE's, keyed by attribute, so we
-	 *	take care of that here.
-	 */
-	if (!fr_hash_table_replace(values_byvalue, dval)) 
-	{
-		fr_strerror_printf("dict_addvalue: Failed inserting value %s", namestr);
-		return -1;
-	}
-
-	return 0;
-}
 
 static int sscanf_i(const char *str, int *pvalue)
 {
@@ -1291,7 +1490,7 @@ static int sscanf_i(const char *str, int *pvalue)
  */
 static int process_attribute (
 	const char* fn, const qse_size_t line,
-	const int block_vendor, DICT_ATTR *block_tlv,
+	const int block_vendor, qse_raddic_attr_t *block_tlv,
 	char **argv, int argc)
 {
 	int		vendor = 0;
@@ -1328,7 +1527,7 @@ static int process_attribute (
 	 *	Only look up the vendor if the string
 	 *	is non-empty.
 	 */
-	QSE_MEMSET (&flags, 0, sizeof(flags));
+	QSE_MEMSET (&flags, 0, QSE_SIZEOF(flags));
 	if (argc == 4) 
 	{
 		char *key, *next, *last;
@@ -1465,21 +1664,18 @@ static int process_value(const char* fn, const qse_size_t line, char **argv,
 	/*
 	 *	For Compatibility, skip "Server-Config"
 	 */
-	if (qse_mbscasecmp(argv[0], "Server-Config") == 0)
-		return 0;
+	if (qse_mbscasecmp(argv[0], "Server-Config") == 0) return 0;
 
 	/*
 	 *	Validate all entries
 	 */
 	if (!sscanf_i(argv[2], &value)) {
-		fr_strerror_printf("dict_init: %s[%d]: invalid value",
-			fn, line);
+		fr_strerror_printf("dict_init: %s[%d]: invalid value", fn, line);
 		return -1;
 	}
 
 	if (dict_addvalue(argv[1], argv[0], value) < 0) {
-		fr_strerror_printf("dict_init: %s[%d]: %s",
-			   fn, line, fr_strerror());
+		fr_strerror_printf("dict_init: %s[%d]: %s", fn, line, fr_strerror());
 		return -1;
 	}
 
@@ -1496,12 +1692,11 @@ static int process_value(const char* fn, const qse_size_t line, char **argv,
 static int process_value_alias(const char* fn, const qse_size_t line, char **argv,
 			       int argc)
 {
-	DICT_ATTR *my_da, *da;
-	DICT_VALUE *dval;
+	qse_raddic_attr_t *my_da, *da;
+	qse_raddic_value_t *dval;
 
 	if (argc != 2) {
-		fr_strerror_printf("dict_init: %s[%d]: invalid VALUE-ALIAS line",
-			fn, line);
+		fr_strerror_printf("dict_init: %s[%d]: invalid VALUE-ALIAS line", fn, line);
 		return -1;
 	}
 
@@ -1549,7 +1744,7 @@ static int process_value_alias(const char* fn, const qse_size_t line, char **arg
 		return -1;
 	}
 
-	if ((dval = fr_pool_alloc(sizeof(*dval))) == NULL) {
+	if ((dval = fr_pool_alloc(QSE_SIZEOF(*dval))) == QSE_NULL) {
 		fr_strerror_printf("dict_addvalue: out of memory");
 		return -1;
 	}
@@ -1577,7 +1772,7 @@ static int process_vendor(const char* fn, const qse_size_t line, char **argv,
 {
 	int	value;
 	int	continuation = 0;
-	const	char *format = NULL;
+	const	char *format = QSE_NULL;
 
 	if ((argc < 2) || (argc > 3)) {
 		fr_strerror_printf( "dict_init: %s[%d] invalid VENDOR entry",
@@ -1622,7 +1817,7 @@ static int process_vendor(const char* fn, const qse_size_t line, char **argv,
 	if (format) {
 		int type, length;
 		const char *p;
-		DICT_VENDOR *dv;
+		qse_raddic_vendor_t *dv;
 
 		if (strncasecmp(format, "format=", 7) != 0) {
 			fr_strerror_printf("dict_init: %s[%d]: Invalid format for VENDOR.  Expected \"format=\", got \"%s\"",
@@ -1738,10 +1933,10 @@ static int my_dict_init(const char *dir, const char *fn,
 	struct stat statbuf;
 	char	*argv[MAX_ARGV];
 	int	argc;
-	DICT_ATTR *da, *block_tlv = NULL;
+	qse_raddic_attr_t *da, *block_tlv = QSE_NULL;
 
-	if (qse_mbslen(fn) >= sizeof(dirtmp) / 2 ||
-	    qse_mbslen(dir) >= sizeof(dirtmp) / 2) {
+	if (qse_mbslen(fn) >= QSE_SIZEOF(dirtmp) / 2 ||
+	    qse_mbslen(dir) >= QSE_SIZEOF(dirtmp) / 2) {
 		fr_strerror_printf("dict_init: filename name too long");
 		return -1;
 	}
@@ -1750,16 +1945,16 @@ static int my_dict_init(const char *dir, const char *fn,
 	 *	First see if fn is relative to dir. If so, create
 	 *	new filename. If not, remember the absolute dir.
 	 */
-	if ((p = strrchr(fn, FR_DIR_SEP)) != NULL) {
+	if ((p = strrchr(fn, FR_DIR_SEP)) != QSE_NULL) {
 		qse_mbscpy(dirtmp, fn);
 		dirtmp[p - fn] = 0;
 		dir = dirtmp;
 	} else if (dir && dir[0] && qse_mbscmp(dir, ".") != 0) {
-		snprintf(dirtmp, sizeof(dirtmp), "%s/%s", dir, fn);
+		snprintf(dirtmp, QSE_SIZEOF(dirtmp), "%s/%s", dir, fn);
 		fn = dirtmp;
 	}
 
-	if ((fp = fopen(fn, "r")) == NULL) {
+	if ((fp = fopen(fn, "r")) == QSE_NULL) {
 		if (!src_file) {
 			fr_strerror_printf("dict_init: Couldn't open dictionary \"%s\": %s",
 				   fn, strerror(errno));
@@ -1796,11 +1991,11 @@ static int my_dict_init(const char *dir, const char *fn,
 	/*
 	 *	Seed the random pool with data.
 	 */
-	fr_rand_seed(&statbuf, sizeof(statbuf));
+	fr_rand_seed(&statbuf, QSE_SIZEOF(statbuf));
 
 	block_vendor = 0;
 
-	while (fgets(buf, sizeof(buf), fp) != NULL) {
+	while (fgets(buf, QSE_SIZEOF(buf), fp) != QSE_NULL) {
 		line++;
 		if (buf[0] == '#' || buf[0] == 0 ||
 		    buf[0] == '\n' || buf[0] == '\r')
@@ -1935,7 +2130,7 @@ static int my_dict_init(const char *dir, const char *fn,
 				fclose(fp);
 				return -1;
 			}
-			block_tlv = NULL;
+			block_tlv = QSE_NULL;
 			continue;
 		} /* END-VENDOR */
 
@@ -2099,16 +2294,16 @@ int dict_init(const char *dir, const char *fn)
 		return -1;
 	}
 
-	value_fixup = NULL;	/* just to be safe. */
+	value_fixup = QSE_NULL;	/* just to be safe. */
 
-	if (my_dict_init(dir, fn, NULL, 0) < 0)
+	if (my_dict_init(dir, fn, QSE_NULL, 0) < 0)
 		return -1;
 
 	if (value_fixup) {
-		DICT_ATTR *a;
+		qse_raddic_attr_t *a;
 		value_fixup_t *this, *next;
 
-		for (this = value_fixup; this != NULL; this = next) {
+		for (this = value_fixup; this != QSE_NULL; this = next) {
 			next = this->next;
 
 			a = dict_attrbyname(this->attrstr);
@@ -2154,132 +2349,20 @@ int dict_init(const char *dir, const char *fn)
 	 *	lookups, and we don't want multi-threaded re-ordering
 	 *	of the table entries.  That would be bad.
 	 */
-	fr_hash_table_walk(vendors_byname, null_callback, NULL);
-	fr_hash_table_walk(vendors_byvalue, null_callback, NULL);
+	fr_hash_table_walk(vendors_byname, null_callback, QSE_NULL);
+	fr_hash_table_walk(vendors_byvalue, null_callback, QSE_NULL);
 
-	fr_hash_table_walk(attributes_byname, null_callback, NULL);
-	fr_hash_table_walk(attributes_byvalue, null_callback, NULL);
+	fr_hash_table_walk(attributes_byname, null_callback, QSE_NULL);
+	fr_hash_table_walk(attributes_byvalue, null_callback, QSE_NULL);
 
-	fr_hash_table_walk(values_byvalue, null_callback, NULL);
-	fr_hash_table_walk(values_byname, null_callback, NULL);
+	fr_hash_table_walk(values_byvalue, null_callback, QSE_NULL);
+	fr_hash_table_walk(values_byname, null_callback, QSE_NULL);
 
 	return 0;
 }
 
-/*
- *	Get an attribute by its numerical value.
- */
-DICT_ATTR *dict_attrbyvalue(int attr)
-{
-	DICT_ATTR dattr;
 
-	if ((attr > 0) && (attr < 256)) return dict_base_attrs[attr];
-
-	dattr.attr = attr;
-	/* BACON */
-	dattr.vendor = VENDOR(attr) /*& 0x7fff*/;
-	/* END BACON */
-
-	return fr_hash_table_finddata(attributes_byvalue, &dattr);
-}
-
-/*
- *	Get an attribute by its name.
- */
-DICT_ATTR *dict_attrbyname(const char *name)
-{
-	DICT_ATTR *da;
-	uint32_t buffer[(sizeof(*da) + DICT_ATTR_MAX_NAME_LEN + 3)/4];
-
-	if (!name) return NULL;
-
-	da = (DICT_ATTR *) buffer;
-	strlcpy(da->name, name, DICT_ATTR_MAX_NAME_LEN + 1);
-
-	return fr_hash_table_finddata(attributes_byname, da);
-}
-
-/*
- *	Associate a value with an attribute and return it.
- */
-DICT_VALUE *dict_valbyattr(int attr, int value)
-{
-	DICT_VALUE dval, *dv;
-
-	/*
-	 *	First, look up aliases.
-	 */
-	dval.attr = attr;
-	dval.name[0] = '\0';
-
-	/*
-	 *	Look up the attribute alias target, and use
-	 *	the correct attribute number if found.
-	 */
-	dv = fr_hash_table_finddata(values_byname, &dval);
-	if (dv)	dval.attr = dv->value;
-
-	dval.value = value;
-
-	return fr_hash_table_finddata(values_byvalue, &dval);
-}
-
-/*
- *	Get a value by its name, keyed off of an attribute.
- */
-DICT_VALUE *dict_valbyname(int attr, const char *name)
-{
-	DICT_VALUE *my_dv, *dv;
-	uint32_t buffer[(sizeof(*my_dv) + DICT_VALUE_MAX_NAME_LEN + 3)/4];
-
-	if (!name) return NULL;
-
-	my_dv = (DICT_VALUE *) buffer;
-	my_dv->attr = attr;
-	my_dv->name[0] = '\0';
-
-	/*
-	 *	Look up the attribute alias target, and use
-	 *	the correct attribute number if found.
-	 */
-	dv = fr_hash_table_finddata(values_byname, my_dv);
-	if (dv) my_dv->attr = dv->value;
-
-	strlcpy(my_dv->name, name, DICT_VALUE_MAX_NAME_LEN + 1);
-
-	return fr_hash_table_finddata(values_byname, my_dv);
-}
-
-/*
- *	Get the vendor PEC based on the vendor name
- *
- *	This is efficient only for small numbers of vendors.
- */
-int dict_vendorbyname(const char *name)
-{
-	DICT_VENDOR *dv;
-	uint32_t buffer[(sizeof(*dv) + DICT_VENDOR_MAX_NAME_LEN + 3)/4];
-
-	if (!name) return 0;
-
-	dv = (DICT_VENDOR *) buffer;
-	strlcpy(dv->name, name, DICT_VENDOR_MAX_NAME_LEN + 1);
-
-	dv = fr_hash_table_finddata(vendors_byname, dv);
-	if (!dv) return 0;
-
-	return dv->vendorpec;
-}
-
-/*
- *	Return the vendor struct based on the PEC.
- */
-DICT_VENDOR *dict_vendorbyvalue(int vendorpec)
-{
-	DICT_VENDOR dv;
-
-	dv.vendorpec = vendorpec;
-
-	return fr_hash_table_finddata(vendors_byvalue, &dv);
-}
 #endif
+
+
+#endif //XXX

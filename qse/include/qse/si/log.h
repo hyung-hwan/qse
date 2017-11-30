@@ -278,6 +278,18 @@ QSE_EXPORT void qse_log_fini (
 	qse_log_t* log
 );
 
+#if defined(QSE_HAVE_INLINE)
+static QSE_INLINE qse_mmgr_t* qse_log_getmmgr (qse_log_t* log) { return (log)->mmgr; }
+#else
+#define qse_log_getmmgr(log) ((log)->mmgr))
+#endif
+
+#if defined(QSE_HAVE_INLINE)
+static QSE_INLINE void* qse_log_getxtn (qse_log_t* log) { return QSE_XTN(log); }
+#else
+#define qse_log_getxtn(log) (QSE_XTN(log))
+#endif
+
 QSE_EXPORT void qse_log_setident (
 	qse_log_t*        log,
 	const qse_char_t* ident

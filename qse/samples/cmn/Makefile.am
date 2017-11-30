@@ -15,6 +15,7 @@ bin_PROGRAMS = \
 	fmt01 \
 	fmt02 \
 	htb01 \
+	htl01 \
 	ipad01 \
 	main01 \
 	main02 \

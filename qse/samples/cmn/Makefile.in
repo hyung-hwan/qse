@@ -90,11 +90,12 @@ build_triplet = @build@
 host_triplet = @host@
 bin_PROGRAMS = arr01$(EXEEXT) chr01$(EXEEXT) dll$(EXEEXT) \
 	env01$(EXEEXT) fma$(EXEEXT) fmt01$(EXEEXT) fmt02$(EXEEXT) \
-	htb01$(EXEEXT) ipad01$(EXEEXT) main01$(EXEEXT) main02$(EXEEXT) \
-	mbwc01$(EXEEXT) mbwc02$(EXEEXT) oht$(EXEEXT) path01$(EXEEXT) \
-	pma$(EXEEXT) rex01$(EXEEXT) rbt01$(EXEEXT) sll$(EXEEXT) \
-	slmb01$(EXEEXT) str01$(EXEEXT) str02$(EXEEXT) time$(EXEEXT) \
-	tre01$(EXEEXT) uri01$(EXEEXT) xma$(EXEEXT) $(am__EXEEXT_1)
+	htb01$(EXEEXT) htl01$(EXEEXT) ipad01$(EXEEXT) main01$(EXEEXT) \
+	main02$(EXEEXT) mbwc01$(EXEEXT) mbwc02$(EXEEXT) oht$(EXEEXT) \
+	path01$(EXEEXT) pma$(EXEEXT) rex01$(EXEEXT) rbt01$(EXEEXT) \
+	sll$(EXEEXT) slmb01$(EXEEXT) str01$(EXEEXT) str02$(EXEEXT) \
+	time$(EXEEXT) tre01$(EXEEXT) uri01$(EXEEXT) xma$(EXEEXT) \
+	$(am__EXEEXT_1)
 @WCHAR_TRUE@@WIN32_TRUE@am__append_1 = $(UNICOWS_LIBS)
 
 #bin_PROGRAMS += rex02
@@ -188,6 +189,10 @@ am__htb02_SOURCES_DIST = htb02.cpp
 @ENABLE_CXX_TRUE@am_htb02_OBJECTS = htb02.$(OBJEXT)
 htb02_OBJECTS = $(am_htb02_OBJECTS)
 @ENABLE_CXX_TRUE@htb02_DEPENDENCIES = $(am__DEPENDENCIES_3)
+htl01_SOURCES = htl01.c
+htl01_OBJECTS = htl01.$(OBJEXT)
+htl01_LDADD = $(LDADD)
+htl01_DEPENDENCIES = $(am__DEPENDENCIES_2)
 am_ipad01_OBJECTS = ipad01.$(OBJEXT)
 ipad01_OBJECTS = $(am_ipad01_OBJECTS)
 ipad01_LDADD = $(LDADD)
@@ -332,7 +337,7 @@ SOURCES = $(arr01_SOURCES) $(arr02_SOURCES) $(arr03_SOURCES) \
 	$(bh01_SOURCES) $(bh02_SOURCES) $(chr01_SOURCES) \
 	$(dll_SOURCES) $(env01_SOURCES) $(fma_SOURCES) \
 	$(fmt01_SOURCES) $(fmt02_SOURCES) $(hl01_SOURCES) \
-	$(htb01_SOURCES) $(htb02_SOURCES) $(ipad01_SOURCES) \
+	$(htb01_SOURCES) $(htb02_SOURCES) htl01.c $(ipad01_SOURCES) \
 	$(main01_SOURCES) $(main02_SOURCES) $(mbwc01_SOURCES) \
 	$(mbwc02_SOURCES) $(oht_SOURCES) $(path01_SOURCES) \
 	$(pma_SOURCES) $(rbt01_SOURCES) $(rbt02_SOURCES) \
@@ -345,10 +350,10 @@ DIST_SOURCES = $(arr01_SOURCES) $(am__arr02_SOURCES_DIST) \
 	$(am__bh02_SOURCES_DIST) $(chr01_SOURCES) $(dll_SOURCES) \
 	$(env01_SOURCES) $(fma_SOURCES) $(fmt01_SOURCES) \
 	$(fmt02_SOURCES) $(am__hl01_SOURCES_DIST) $(htb01_SOURCES) \
-	$(am__htb02_SOURCES_DIST) $(ipad01_SOURCES) $(main01_SOURCES) \
-	$(main02_SOURCES) $(mbwc01_SOURCES) $(mbwc02_SOURCES) \
-	$(oht_SOURCES) $(path01_SOURCES) $(pma_SOURCES) \
-	$(rbt01_SOURCES) $(am__rbt02_SOURCES_DIST) \
+	$(am__htb02_SOURCES_DIST) htl01.c $(ipad01_SOURCES) \
+	$(main01_SOURCES) $(main02_SOURCES) $(mbwc01_SOURCES) \
+	$(mbwc02_SOURCES) $(oht_SOURCES) $(path01_SOURCES) \
+	$(pma_SOURCES) $(rbt01_SOURCES) $(am__rbt02_SOURCES_DIST) \
 	$(am__rbt03_SOURCES_DIST) $(rex01_SOURCES) $(sll_SOURCES) \
 	$(slmb01_SOURCES) $(am__sp01_SOURCES_DIST) \
 	$(am__sp02_SOURCES_DIST) $(str01_SOURCES) \
@@ -550,7 +555,6 @@ pdfdir = @pdfdir@
 prefix = @prefix@
 program_transform_name = @program_transform_name@
 psdir = @psdir@
-runstatedir = @runstatedir@
 sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 srcdir = @srcdir@
@@ -754,6 +758,10 @@ htb02$(EXEEXT): $(htb02_OBJECTS) $(htb02_DEPENDENCIES) $(EXTRA_htb02_DEPENDENCIE
 	@rm -f htb02$(EXEEXT)
 	$(AM_V_CXXLD)$(CXXLINK) $(htb02_OBJECTS) $(htb02_LDADD) $(LIBS)
 
+htl01$(EXEEXT): $(htl01_OBJECTS) $(htl01_DEPENDENCIES) $(EXTRA_htl01_DEPENDENCIES) 
+	@rm -f htl01$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(htl01_OBJECTS) $(htl01_LDADD) $(LIBS)
+
 ipad01$(EXEEXT): $(ipad01_OBJECTS) $(ipad01_DEPENDENCIES) $(EXTRA_ipad01_DEPENDENCIES) 
 	@rm -f ipad01$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(ipad01_OBJECTS) $(ipad01_LDADD) $(LIBS)
@@ -862,6 +870,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hl01.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/htb01.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/htb02.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/htl01.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ipad01.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/main01.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/main02.Po@am__quote@
