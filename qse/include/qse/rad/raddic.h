@@ -107,6 +107,22 @@ QSE_EXPORT void qse_raddic_close (
 	qse_raddic_t* dic
 );
 
+QSE_EXPORT qse_raddic_vendor_t* qse_raddic_findvendorbyname (
+	qse_raddic_t*     dic,
+	const qse_char_t* name
+);
+
+QSE_EXPORT qse_raddic_vendor_t* qse_raddic_findvendorbyvalue (
+	qse_raddic_t*     dic,
+	int               vendorpec
+);
+
+QSE_EXPORT qse_raddic_vendor_t* qse_raddic_addvendor (
+	qse_raddic_t*     dic,
+	const qse_char_t* name,
+	int               value
+);
+
 #if defined(__cplusplus)
 }
 #endif

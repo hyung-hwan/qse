@@ -25,7 +25,7 @@
  */
 
 /*
- * hash.c	Non-thread-safe split-ordered hash table.
+ * hash.c Non-thread-safe split-ordered hash table.
  *
  *  The weird "reverse" function is based on an idea from
  *  "Split-Ordered Lists - Lock-free Resizable Hash Tables", with
@@ -58,6 +58,7 @@
 
 
 #include <qse/cmn/htl.h>
+#include <qse/cmn/chr.h>
 #include "mem-prv.h"
 
 /*
@@ -176,20 +177,19 @@ static qse_uint32_t parent_of (qse_uint32_t key)
 }
 
 
-static qse_htl_node_t *list_find (qse_htl_t* ht, qse_htl_node_t* head, qse_uint32_t reversed, const void* data)
+static qse_htl_node_t* __list_find (qse_htl_t* ht, qse_htl_node_t* head, qse_uint32_t reversed, const void* data, qse_htl_comper_t comper)
 {
 	qse_htl_node_t *cur;
+
+	if (!/*ht->*/comper) return QSE_NULL;
 
 	for (cur = head; cur != &ht->null; cur = cur->next) 
 	{
 		if (cur->reversed == reversed) 
 		{
-			if (ht->comper) 
-			{
-				int cmp = ht->comper(ht, data, cur->data);
-				if (cmp > 0) break;
-				if (cmp < 0) continue;
-			}
+			int cmp = /*ht->*/comper(ht, data, cur->data);
+			if (cmp > 0) break;
+			if (cmp < 0) continue;
 			return cur;
 		}
 		if (cur->reversed > reversed) break;
@@ -198,6 +198,11 @@ static qse_htl_node_t *list_find (qse_htl_t* ht, qse_htl_node_t* head, qse_uint3
 	return QSE_NULL;
 }
 
+
+QSE_INLINE static qse_htl_node_t *list_find (qse_htl_t* ht, qse_htl_node_t* head, qse_uint32_t reversed, const void* data)
+{
+	return __list_find (ht, head, reversed, data, ht->comper);
+}
 
 /*
  *	Inserts a new entry into the list, in order.
@@ -254,7 +259,7 @@ static int list_delete (qse_htl_t* ht, qse_htl_node_t** head, qse_htl_node_t* no
 /* ------------------------------------------------------------------------- */
 
 
-static QSE_INLINE_ALWAYS qse_size_t default_hasher (qse_htl_t* htl, const void* data)
+static QSE_INLINE_ALWAYS qse_uint32_t default_hasher (qse_htl_t* htl, const void* data)
 {
 #if 0
 	qse_size_t h = 5381;
@@ -263,7 +268,7 @@ static QSE_INLINE_ALWAYS qse_size_t default_hasher (qse_htl_t* htl, const void* 
 	while (p < bound) h = ((h << 5) + h) + *p++;
 	return h ; 
 #else
-	return qse_genhash (data, htl->keysize);
+	return qse_genhash32 (data, htl->keysize);
 #endif
 }
 
@@ -426,7 +431,7 @@ static void fixup (qse_htl_t *ht, qse_uint32_t entry)
 /*
  *	Grow the hash table.
  */
-static void grow (qse_htl_t *ht)
+static void grow (qse_htl_t*ht)
 {
 	qse_htl_node_t **buckets;
 
@@ -443,7 +448,7 @@ static void grow (qse_htl_t *ht)
 	ht->mask = ht->num_buckets - 1;
 }
 
-qse_htl_node_t *qse_htl_search (qse_htl_t* ht, void* data)
+qse_htl_node_t *qse_htl_search (qse_htl_t* ht, const void* data)
 {
 	qse_uint32_t key;
 	qse_uint32_t entry;
@@ -455,6 +460,20 @@ qse_htl_node_t *qse_htl_search (qse_htl_t* ht, void* data)
 
 	if (!ht->buckets[entry]) fixup(ht, entry);
 	return list_find(ht, ht->buckets[entry], reversed, data);
+}
+
+qse_htl_node_t *qse_htl_heterosearch (qse_htl_t* ht, const void* data, qse_htl_hasher_t hasher, qse_htl_comper_t comper)
+{
+	qse_uint32_t key;
+	qse_uint32_t entry;
+	qse_uint32_t reversed;
+
+	key = /*ht->*/hasher(ht, data);
+	entry = key & ht->mask;
+	reversed = reverse(key);
+
+	if (!ht->buckets[entry]) fixup(ht, entry);
+	return __list_find(ht, ht->buckets[entry], reversed, data, comper);
 }
 
 /*
@@ -564,7 +583,7 @@ qse_htl_node_t* qse_htl_ensert (qse_htl_t* ht, void* data)
 	qse_htl_node_t *node;
 
 	node = qse_htl_search(ht, data);
-	if (!node) return qse_htl_insert(ht, data);
+	if (!node) node = qse_htl_insert(ht, data);
 
 	return node;
 }
@@ -754,7 +773,7 @@ int qse_htl_info(qse_htl_t *ht)
 /*
  *	Continue hashing data.
  */
-QSE_INLINE qse_uint32_t qse_genhash_update (const void* data, qse_size_t size, qse_uint32_t hash)
+QSE_INLINE qse_uint32_t qse_genhash32_update (const void* data, qse_size_t size, qse_uint32_t hash)
 {
 	const qse_uint8_t *p = data;
 	const qse_uint8_t *q = p + size;
@@ -785,15 +804,15 @@ QSE_INLINE qse_uint32_t qse_genhash_update (const void* data, qse_size_t size, q
 	return hash;
 }
 
-qse_uint32_t qse_genhash (const void *data, qse_size_t size)
+qse_uint32_t qse_genhash32 (const void *data, qse_size_t size)
 {
-	return qse_genhash_update (data, size, FNV_MAGIC_INIT);
+	return qse_genhash32_update (data, size, FNV_MAGIC_INIT);
 }
 
 /*
  *	Hash a C string, so we loop over it once.
  */
-qse_uint32_t qse_mbshash (const qse_mchar_t* p)
+qse_uint32_t qse_mbshash32 (const qse_mchar_t* p)
 {
 	qse_uint32_t hash = FNV_MAGIC_INIT;
 
@@ -806,25 +825,58 @@ qse_uint32_t qse_mbshash (const qse_mchar_t* p)
 	return hash;
 }
 
-qse_uint32_t qse_wcshash (const qse_wchar_t* p)
+qse_uint32_t qse_wcshash32 (const qse_wchar_t* p)
 {
 
 	qse_uint32_t hash = FNV_MAGIC_INIT;
 
 	while (*p) 
 	{
-#if (QSE_SIZEOF_WCHAR_T <= QSE_SIZEOF_UINT32_T)
+	#if (QSE_SIZEOF_WCHAR_T <= QSE_SIZEOF_UINT32_T)
 		hash ^= (qse_uint32_t)(*p);
 		hash *= FNV_MAGIC_PRIME;
-#else
+	#else
 		hash = qse_genhash_update (*p, QSE_SIZEOF(*p), hash);
-#endif
+	#endif
 		p++;
 	}
 
 	return hash;
 }
 
+qse_uint32_t qse_mbscasehash32 (const qse_mchar_t* p)
+{
+	qse_uint32_t hash = FNV_MAGIC_INIT;
+
+	while (*p) 
+	{
+		qse_mchar_t mc = *p++;
+		mc = QSE_TOMLOWER(mc);
+		hash ^= (qse_uint32_t)mc;
+		hash *= FNV_MAGIC_PRIME;
+	}
+
+	return hash;
+}
+
+qse_uint32_t qse_wcscasehash32 (const qse_wchar_t* p)
+{
+	qse_uint32_t hash = FNV_MAGIC_INIT;
+
+	while (*p) 
+	{
+		qse_wchar_t wc = *p++;
+		wc = QSE_TOWLOWER(wc);
+	#if (QSE_SIZEOF_WCHAR_T <= QSE_SIZEOF_UINT32_T)
+		hash ^= (qse_uint32_t)(wc);
+		hash *= FNV_MAGIC_PRIME;
+	#else
+		hash = qse_genhash_update (&wc, QSE_SIZEOF(wc), hash);
+	#endif
+	}
+
+	return hash;
+}
 
 #if 0
 /*
@@ -833,7 +885,7 @@ qse_uint32_t qse_wcshash (const qse_wchar_t* p)
  *
  *	If you need a non-power-of-two hash, cope.
  */
-qse_uint32_t qse_foldhash (qse_uint32_t hash, int bits)
+qse_uint32_t qse_foldhash32 (qse_uint32_t hash, int bits)
 {
 	int count;
 	qse_uint32_t result;
