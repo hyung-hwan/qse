@@ -830,6 +830,7 @@ AC_CONFIG_FILES([
 	samples/awk/Makefile 
 	samples/sed/Makefile 
 	samples/http/Makefile
+	samples/rad/Makefile
 	regress/Makefile
 	regress/awk/Makefile
 	regress/awk/regress.sh

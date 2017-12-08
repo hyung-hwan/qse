@@ -1,1 +1,1 @@
-SUBDIRS = cmn cry si awk sed http
+SUBDIRS = cmn cry si awk sed http rad

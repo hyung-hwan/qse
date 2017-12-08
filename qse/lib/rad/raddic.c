@@ -47,7 +47,7 @@
  */
 
 #include <qse/rad/raddic.h>
-#include <qse/cmn/rbt.h>
+#include <qse/cmn/htl.h>
 #include <qse/cmn/str.h>
 #include "../cmn/mem-prv.h"
 #include <qse/si/sio.h>
@@ -56,12 +56,12 @@ struct qse_raddic_t
 {
 	qse_mmgr_t* mmgr;
 
-	qse_rbt_t vendors_byname;
-	qse_rbt_t vendors_byvalue;
-	qse_rbt_t attributes_byname;
-	qse_rbt_t attributes_byvalue;
-	qse_rbt_t values_byvalue;
-	qse_rbt_t values_byname;
+	qse_htl_t vendors_byname;
+	qse_htl_t vendors_byvalue;
+	qse_htl_t attributes_byname;
+	qse_htl_t attributes_byvalue;
+	qse_htl_t values_byvalue;
+	qse_htl_t values_byname;
 
 	qse_raddic_attr_t *last_attr;
 };
@@ -94,82 +94,78 @@ static const name_id_t type_table[] =
 	{ QSE_NULL,     0 }
 };
 
-static int comp_xxx (const qse_rbt_t* rbt, const void* kptr, qse_size_t klen, const void* vptr, qse_size_t vlen)
+static qse_uint32_t dict_vendor_name_hash (qse_htl_t* htl, const void *data)
 {
-	return 0;
+	return qse_strcasehash32(((const qse_raddic_vendor_t*)data)->name);
 }
 
-static qse_rbt_style_t vendors_byname_style =
+static int dict_vendor_name_cmp (qse_htl_t* htl, const void* one, const void* two)
 {
-	{
-		QSE_RBT_COPIER_INLINE,
-		QSE_RBT_COPIER_DEFAULT
-	},
-	{
-		QSE_RBT_FREEER_DEFAULT,
-		QSE_RBT_FREEER_DEFAULT
-	},
-	comp_xxx,
-	QSE_RBT_KEEPER_DEFAULT,
-};
+	const qse_raddic_vendor_t* a = one;
+	const qse_raddic_vendor_t* b = two;
+	return qse_strcasecmp(a->name, b->name);
+}
 
-static qse_rbt_style_t vendors_byvalue_style =
+static void dict_vendor_name_free (qse_htl_t* htl, void* data)
 {
-	{
-		QSE_RBT_COPIER_INLINE,
-		QSE_RBT_COPIER_DEFAULT
-	},
-	{
-		QSE_RBT_FREEER_DEFAULT,
-		QSE_RBT_FREEER_DEFAULT
-	},
-	QSE_RBT_COMPER_DEFAULT,
-	QSE_RBT_KEEPER_DEFAULT,
-};
+	QSE_MMGR_FREE (htl->mmgr, data);
+}
 
-/*
-static qse_rbt_style_t attr_by_name_style =
+static qse_uint32_t dict_vendor_name_hetero_hash (qse_htl_t* htl, const void* one)
 {
-	{
-		QSE_RBT_COPIER_INLINE,
-		QSE_RBT_COPIER_DEFAULT
-	},
-	{
-		QSE_RBT_FREEER_DEFAULT,
-		QSE_RBT_FREEER_DEFAULT
-	},
-	QSE_RBT_COMPER_DEFAULT,
-	QSE_RBT_KEEPER_DEFAULT,
-	QSE_RBT_SIZER_DEFAULT,
-	QSE_RBT_HASHER_DEFAULT
-};
-*/
+	return qse_strcasehash32((const qse_char_t*)one);
+}
+
+static int dict_vendor_name_hetero_cmp (qse_htl_t* htl, const void* one, const void* two)
+{
+	const qse_raddic_vendor_t* b = two;
+	return qse_strcasecmp((const qse_char_t*)one, b->name);
+}
+
+static qse_uint32_t dict_vendor_value_hash (qse_htl_t* htl, const void* data)
+{
+	const qse_raddic_vendor_t* v = (const qse_raddic_vendor_t*)data;
+	return qse_genhash32(&v->vendorpec, QSE_SIZEOF(v->vendorpec));
+}
+
+static int dict_vendor_value_cmp (qse_htl_t* htl, const void* one, const void* two)
+{
+	const qse_raddic_vendor_t *a = one;
+	const qse_raddic_vendor_t *b = two;
+	return a->vendorpec - b->vendorpec;
+}
 
 int qse_raddic_init (qse_raddic_t* dic, qse_mmgr_t* mmgr)
 {
 	QSE_MEMSET (dic, 0, QSE_SIZEOF(*dic));
 	dic->mmgr = mmgr;
 
-	qse_rbt_init (&dic->vendors_byname, mmgr, 1, 1);
-	qse_rbt_init (&dic->vendors_byvalue, mmgr, 1, 1);
-	qse_rbt_init (&dic->attributes_byname, mmgr, 1, 1);
-	qse_rbt_init (&dic->attributes_byvalue, mmgr, 1, 1);
-	qse_rbt_init (&dic->values_byname, mmgr, 1, 1);
-	qse_rbt_init (&dic->values_byvalue, mmgr, 1, 1);
+	qse_htl_init (&dic->vendors_byname, mmgr, 1);
+	qse_htl_init (&dic->vendors_byvalue, mmgr, 1);
+	qse_htl_init (&dic->attributes_byname, mmgr, 1);
+	qse_htl_init (&dic->attributes_byvalue, mmgr, 1);
+	qse_htl_init (&dic->values_byname, mmgr, 1);
+	qse_htl_init (&dic->values_byvalue, mmgr, 1);
 
-	qse_rbt_setstyle (&dic->vendors_byname, &vendors_byname_style);
-	qse_rbt_setstyle (&dic->vendors_byvalue, &vendors_byvalue_style);
+	qse_htl_sethasher (&dic->vendors_byname, dict_vendor_name_hash);
+	qse_htl_setcomper (&dic->vendors_byname, dict_vendor_name_cmp);
+	qse_htl_setfreeer (&dic->vendors_byname, dict_vendor_name_free); 
+
+	qse_htl_sethasher (&dic->vendors_byvalue, dict_vendor_value_hash);
+	qse_htl_setcomper (&dic->vendors_byvalue, dict_vendor_value_cmp);
+	/* no freeer for dic->vendors_byvalue */
+
 	return 0;
 }
 
 void qse_raddic_fini (qse_raddic_t* dic)
 {
-	qse_rbt_fini (&dic->vendors_byname);
-	qse_rbt_fini (&dic->vendors_byvalue);
-	qse_rbt_fini (&dic->attributes_byname);
-	qse_rbt_fini (&dic->attributes_byvalue);
-	qse_rbt_fini (&dic->values_byvalue);
-	qse_rbt_fini (&dic->values_byname);
+	qse_htl_fini (&dic->vendors_byname);
+	qse_htl_fini (&dic->vendors_byvalue);
+	qse_htl_fini (&dic->attributes_byname);
+	qse_htl_fini (&dic->attributes_byvalue);
+	qse_htl_fini (&dic->values_byvalue);
+	qse_htl_fini (&dic->values_byname);
 }
 
 qse_raddic_t* qse_raddic_open (qse_mmgr_t* mmgr, qse_size_t xtnsize)
@@ -194,77 +190,66 @@ void qse_raddic_close (qse_raddic_t* dic)
 {
 	qse_raddic_fini (dic);
 	QSE_MMGR_FREE (dic->mmgr, dic);
-
 }
 
+qse_raddic_vendor_t* qse_raddic_findvendorbyname (qse_raddic_t* dic, const qse_char_t* name)
+{
+	qse_htl_node_t* np;
+	np = qse_htl_heterosearch (&dic->vendors_byname, name, dict_vendor_name_hetero_hash, dict_vendor_name_hetero_cmp);
+	if (!np) return QSE_NULL;
+	return (qse_raddic_vendor_t*)np->data;
+}
 
-#if 0
-int qse_raddic_addvendor (qse_raddic_t* dic, const qse_char_t *name, int value)
+/*
+ *	Return the vendor struct based on the PEC.
+ */
+qse_raddic_vendor_t* qse_raddic_findvendorbyvalue (qse_raddic_t* dic, int vendorpec)
+{
+	qse_htl_node_t* np;
+	qse_raddic_vendor_t dv;
+
+	dv.vendorpec = vendorpec;
+	np = qse_htl_search (&dic->vendors_byvalue, &dv);
+	if (!np) return QSE_NULL;
+	return (qse_raddic_vendor_t*)np->data;
+}
+
+qse_raddic_vendor_t* qse_raddic_addvendor (qse_raddic_t* dic, const qse_char_t* name, int value)
 {
 	qse_size_t length;
 	qse_raddic_vendor_t* dv;
+	qse_htl_node_t* np;
 
-	if (value >= 65535) 
-	{
-		//fr_strerror_printf("dict_addvendor: Cannot handle vendor ID larger than 65535");
-		return -1;
-	}
+	if (value >= 65535) return QSE_NULL;
 
-	/*if ((length = qse_strlen(name)) >= qse_raddic_vendor_t_MAX_NAME_LEN) {
-		fr_strerror_printf("dict_addvendor: vendor name too long");
-		return -1;
-	}*/
+	length = qse_strlen(name);
 
-	if ((dv = QSE_MMGR_ALLOC(dic->mmgr, QSE_SIZEOF(*dv) + (length * QSE_SIZEOF(*name)))) == QSE_NULL) 
-	{
-	//	fr_strerror_printf("dict_addvendor: out of memory");
-		return -1;
-	}
-
+	/* no +1 for the terminating null because dv->name is char[1] */
+	dv = QSE_MMGR_ALLOC(dic->mmgr, QSE_SIZEOF(*dv) + (length * QSE_SIZEOF(*name)));
+	if (dv == QSE_NULL) return QSE_NULL;
+	
 	qse_strcpy(dv->name, name);
-	dv->vendorpec  = value;
+	dv->vendorpec = value;
 	dv->type = dv->length = 1; /* defaults */
 
-	qse_rbt_insert (dic->vendors_byname, 
-	if (!fr_hash_table_insert(vendors_byname, dv)) 
+	/* return an existing item or insert a new item */
+	np = qse_htl_ensert(&dic->vendors_byname, dv);
+	if (!np || np->data != dv)
 	{
-		qse_raddic_vendor_t *old_dv;
-
-		old_dv = fr_hash_table_finddata(vendors_byname, dv);
-		if (!old_dv) {
-			fr_strerror_printf("dict_addvendor: Failed inserting vendor name %s", name);
-			return -1;
-		}
-		if (old_dv->vendorpec != dv->vendorpec) {
-			fr_strerror_printf("dict_addvendor: Duplicate vendor name %s", name);
-			return -1;
-		}
-
-		/*
-		 *	Already inserted.  Discard the duplicate entry.
-		 */
-		fr_pool_free(dv);
-		return 0;
+		/* insertion failure or existing item found */
+		QSE_MMGR_FREE (dic->mmgr, dv);
+		return QSE_NULL;
 	}
 
-	/*
-	 *	Insert the SAME pointer (not free'd when this table is
-	 *	deleted), into another table.
-	 *
-	 *	We want this behaviour because we want OLD names for
-	 *	the attributes to be read from the configuration
-	 *	files, but when we're printing them, (and looking up
-	 *	by value) we want to use the NEW name.
-	 */
-	if (!fr_hash_table_replace(vendors_byvalue, dv)) {
-		fr_strerror_printf("dict_addvendor: Failed inserting vendor %s",
-			   name);
-		return -1;
+	/* update indexing by value */
+	if (!qse_htl_upsert(&dic->vendors_byvalue, dv))
+	{
+		qse_htl_delete (&dic->vendors_byname, dv);
+		return QSE_NULL;
 	}
 
-	return 0;
+	return dv;
 }
-#endif
 
 
 #if 0 // XXX
@@ -357,33 +342,6 @@ qse_raddic_value_t *dict_valbyname(qse_raddic_t* dic, int attr, const char *name
  *
  *	This is efficient only for small numbers of vendors.
  */
-int dict_vendorbyname(const char *name)
-{
-	qse_raddic_vendor_t *dv;
-	uint32_t buffer[(QSE_SIZEOF(*dv) + qse_raddic_vendor_t_MAX_NAME_LEN + 3)/4];
-
-	if (!name) return 0;
-
-	dv = (qse_raddic_vendor_t *) buffer;
-	strlcpy(dv->name, name, qse_raddic_vendor_t_MAX_NAME_LEN + 1);
-
-	dv = fr_hash_table_finddata(vendors_byname, dv);
-	if (!dv) return 0;
-
-	return dv->vendorpec;
-}
-
-/*
- *	Return the vendor struct based on the PEC.
- */
-qse_raddic_vendor_t *dict_vendorbyvalue(int vendorpec)
-{
-	qse_raddic_vendor_t dv;
-
-	dv.vendorpec = vendorpec;
-
-	return fr_hash_table_finddata(vendors_byvalue, &dv);
-}
 
 /*
  *	Add a value for an attribute to the dictionary.
@@ -1021,32 +979,6 @@ static int dict_attr_value_cmp(const void *one, const void *two)
 	return a->attr - b->attr;
 }
 
-static uint32_t dict_vendor_name_hash(const void *data)
-{
-	return dict_hashname(((const qse_raddic_vendor_t *)data)->name);
-}
-
-static int dict_vendor_name_cmp(const void *one, const void *two)
-{
-	const qse_raddic_vendor_t *a = one;
-	const qse_raddic_vendor_t *b = two;
-
-	return qse_mbscasecmp(a->name, b->name);
-}
-
-static uint32_t dict_vendor_value_hash(const void *data)
-{
-	return fr_hash(&(((const qse_raddic_vendor_t *)data)->vendorpec),
-			 QSE_SIZEOF(((const qse_raddic_vendor_t *)data)->vendorpec));
-}
-
-static int dict_vendor_value_cmp(const void *one, const void *two)
-{
-	const qse_raddic_vendor_t *a = one;
-	const qse_raddic_vendor_t *b = two;
-
-	return a->vendorpec - b->vendorpec;
-}
 
 static uint32_t dict_value_name_hash(const void *data)
 {
@@ -1234,14 +1166,6 @@ static void *fr_pool_alloc(size_t size)
 	dict_pool->page_free->free_ptr = ((uint8_t *) dict_pool->page_free->free_ptr) + size;
 
 	return ptr;
-}
-
-
-static void fr_pool_free(UNUSED void *ptr)
-{
-	/*
-	 *	Place-holder for later code.
-	 */
 }
 
 /*

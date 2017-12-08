@@ -7567,7 +7567,7 @@ linux* | k*bsd*-gnu | kopensolaris*-gnu | gnu*)
   lt_cv_deplibs_check_method=pass_all
   ;;
 
-netbsd* | netbsdelf*-gnu)
+netbsd*)
   if echo __ELF__ | $CC -E - | $GREP __ELF__ > /dev/null; then
     lt_cv_deplibs_check_method='match_pattern /lib[^/]+(\.so\.[0-9]+\.[0-9]+|_pic\.a)$'
   else
@@ -11269,9 +11269,6 @@ $as_echo_n "checking whether the $compiler linker ($LD) supports shared librarie
   openbsd* | bitrig*)
     with_gnu_ld=no
     ;;
-  linux* | k*bsd*-gnu | gnu*)
-    link_all_deplibs=no
-    ;;
   esac
 
   ld_shlibs=yes
@@ -11526,7 +11523,7 @@ _LT_EOF
       fi
       ;;
 
-    netbsd* | netbsdelf*-gnu)
+    netbsd*)
       if echo __ELF__ | $CC -E - | $GREP __ELF__ >/dev/null; then
 	archive_cmds='$LD -Bshareable $libobjs $deplibs $linker_flags -o $lib'
 	wlarc=
@@ -12196,7 +12193,6 @@ $as_echo "$lt_cv_irix_exported_symbol" >&6; }
 	if test yes = "$lt_cv_irix_exported_symbol"; then
           archive_expsym_cmds='$CC -shared $pic_flag $libobjs $deplibs $compiler_flags $wl-soname $wl$soname `test -n "$verstring" && func_echo_all "$wl-set_version $wl$verstring"` $wl-update_registry $wl$output_objdir/so_locations $wl-exports_file $wl$export_symbols -o $lib'
 	fi
-	link_all_deplibs=no
       else
 	archive_cmds='$CC -shared $libobjs $deplibs $compiler_flags -soname $soname `test -n "$verstring" && func_echo_all "-set_version $verstring"` -update_registry $output_objdir/so_locations -o $lib'
 	archive_expsym_cmds='$CC -shared $libobjs $deplibs $compiler_flags -soname $soname `test -n "$verstring" && func_echo_all "-set_version $verstring"` -update_registry $output_objdir/so_locations -exports_file $export_symbols -o $lib'
@@ -12218,7 +12214,7 @@ $as_echo "$lt_cv_irix_exported_symbol" >&6; }
       esac
       ;;
 
-    netbsd* | netbsdelf*-gnu)
+    netbsd*)
       if echo __ELF__ | $CC -E - | $GREP __ELF__ >/dev/null; then
 	archive_cmds='$LD -Bshareable -o $lib $libobjs $deplibs $linker_flags'  # a.out
       else
@@ -13313,6 +13309,9 @@ fi
   # before this can be enabled.
   hardcode_into_libs=yes
 
+  # Add ABI-specific directories to the system library path.
+  sys_lib_dlsearch_path_spec="/lib64 /usr/lib64 /lib /usr/lib"
+
   # Ideally, we could use ldconfig to report *all* directores which are
   # searched for libraries, however this is still not possible.  Aside from not
   # being certain /sbin/ldconfig is available, command
@@ -13321,7 +13320,7 @@ fi
   # appending ld.so.conf contents (and includes) to the search path.
   if test -f /etc/ld.so.conf; then
     lt_ld_extra=`awk '/^include / { system(sprintf("cd /etc; cat %s 2>/dev/null", \$2)); skip = 1; } { if (!skip) print \$0; skip = 0; }' < /etc/ld.so.conf | $SED -e 's/#.*//;/^[	 ]*hwcap[	 ]/d;s/[:,	]/ /g;s/=[^=]*$//;s/=[^= ]* / /g;s/"//g;/^$/d' | tr '\n' ' '`
-    sys_lib_dlsearch_path_spec="/lib /usr/lib $lt_ld_extra"
+    sys_lib_dlsearch_path_spec="$sys_lib_dlsearch_path_spec $lt_ld_extra"
   fi
 
   # We used to test for /lib/ld.so.1 and disable shared libraries on
@@ -13331,18 +13330,6 @@ fi
   # people can always --disable-shared, the test was removed, and we
   # assume the GNU/Linux dynamic linker is in use.
   dynamic_linker='GNU/Linux ld.so'
-  ;;
-
-netbsdelf*-gnu)
-  version_type=linux
-  need_lib_prefix=no
-  need_version=no
-  library_names_spec='${libname}${release}${shared_ext}$versuffix ${libname}${release}${shared_ext}$major ${libname}${shared_ext}'
-  soname_spec='${libname}${release}${shared_ext}$major'
-  shlibpath_var=LD_LIBRARY_PATH
-  shlibpath_overrides_runpath=no
-  hardcode_into_libs=yes
-  dynamic_linker='NetBSD ld.elf_so'
   ;;
 
 netbsd*)
@@ -16239,7 +16226,7 @@ lt_prog_compiler_static_CXX=
 	    ;;
 	esac
 	;;
-      netbsd* | netbsdelf*-gnu)
+      netbsd*)
 	;;
       *qnx* | *nto*)
         # QNX uses GNU C++, but need to define -shared option too, otherwise
@@ -16613,9 +16600,6 @@ $as_echo_n "checking whether the $compiler linker ($LD) supports shared librarie
       exclude_expsyms_CXX='[_]+GLOBAL_OFFSET_TABLE_|[_]+GLOBAL__[FID]_.*|[_]+head_[A-Za-z0-9_]+_dll|[A-Za-z0-9_]+_dll_iname'
       ;;
     esac
-    ;;
-  linux* | k*bsd*-gnu | gnu*)
-    link_all_deplibs_CXX=no
     ;;
   *)
     export_symbols_cmds_CXX='$NM $libobjs $convenience | $global_symbol_pipe | $SED '\''s/.* //'\'' | sort | uniq > $export_symbols'
@@ -17290,6 +17274,9 @@ fi
   # before this can be enabled.
   hardcode_into_libs=yes
 
+  # Add ABI-specific directories to the system library path.
+  sys_lib_dlsearch_path_spec="/lib64 /usr/lib64 /lib /usr/lib"
+
   # Ideally, we could use ldconfig to report *all* directores which are
   # searched for libraries, however this is still not possible.  Aside from not
   # being certain /sbin/ldconfig is available, command
@@ -17298,7 +17285,7 @@ fi
   # appending ld.so.conf contents (and includes) to the search path.
   if test -f /etc/ld.so.conf; then
     lt_ld_extra=`awk '/^include / { system(sprintf("cd /etc; cat %s 2>/dev/null", \$2)); skip = 1; } { if (!skip) print \$0; skip = 0; }' < /etc/ld.so.conf | $SED -e 's/#.*//;/^[	 ]*hwcap[	 ]/d;s/[:,	]/ /g;s/=[^=]*$//;s/=[^= ]* / /g;s/"//g;/^$/d' | tr '\n' ' '`
-    sys_lib_dlsearch_path_spec="/lib /usr/lib $lt_ld_extra"
+    sys_lib_dlsearch_path_spec="$sys_lib_dlsearch_path_spec $lt_ld_extra"
   fi
 
   # We used to test for /lib/ld.so.1 and disable shared libraries on
@@ -17308,18 +17295,6 @@ fi
   # people can always --disable-shared, the test was removed, and we
   # assume the GNU/Linux dynamic linker is in use.
   dynamic_linker='GNU/Linux ld.so'
-  ;;
-
-netbsdelf*-gnu)
-  version_type=linux
-  need_lib_prefix=no
-  need_version=no
-  library_names_spec='${libname}${release}${shared_ext}$versuffix ${libname}${release}${shared_ext}$major ${libname}${shared_ext}'
-  soname_spec='${libname}${release}${shared_ext}$major'
-  shlibpath_var=LD_LIBRARY_PATH
-  shlibpath_overrides_runpath=no
-  hardcode_into_libs=yes
-  dynamic_linker='NetBSD ld.elf_so'
   ;;
 
 netbsd*)
@@ -18299,7 +18274,7 @@ else
     # at 6.2 and later dlopen does load deplibs.
     lt_cv_sys_dlopen_deplibs=yes
     ;;
-  netbsd* | netbsdelf*-gnu)
+  netbsd*)
     lt_cv_sys_dlopen_deplibs=yes
     ;;
   openbsd*)
@@ -23923,7 +23898,7 @@ QSE_PROJECT_AUTHOR="${PACKAGE_BUGREPORT}"
 QSE_PROJECT_URL="${PACKAGE_URL}"
 
 
-ac_config_files="$ac_config_files Makefile README include/Makefile include/qse/Makefile include/qse/cmn/Makefile include/qse/cry/Makefile include/qse/si/Makefile include/qse/awk/Makefile include/qse/sed/Makefile include/qse/xli/Makefile include/qse/http/Makefile include/qse/rad/Makefile lib/Makefile lib/cmn/Makefile lib/cry/Makefile lib/si/Makefile lib/awk/Makefile lib/sed/Makefile lib/xli/Makefile lib/http/Makefile lib/rad/Makefile lib/qsecmn.pc lib/qsecry.pc lib/qsesi.pc lib/qsesed.pc lib/qseawk.pc lib/qsexli.pc lib/qsehttp.pc lib/qserad.pc cmd/Makefile cmd/awk/Makefile cmd/sed/Makefile cmd/xli/Makefile cmd/http/Makefile samples/Makefile samples/cmn/Makefile samples/cry/Makefile samples/si/Makefile samples/awk/Makefile samples/sed/Makefile samples/http/Makefile regress/Makefile regress/awk/Makefile regress/awk/regress.sh regress/sed/Makefile regress/sed/regress.sh doc/Makefile doc/Doxyfile tools/Makefile"
+ac_config_files="$ac_config_files Makefile README include/Makefile include/qse/Makefile include/qse/cmn/Makefile include/qse/cry/Makefile include/qse/si/Makefile include/qse/awk/Makefile include/qse/sed/Makefile include/qse/xli/Makefile include/qse/http/Makefile include/qse/rad/Makefile lib/Makefile lib/cmn/Makefile lib/cry/Makefile lib/si/Makefile lib/awk/Makefile lib/sed/Makefile lib/xli/Makefile lib/http/Makefile lib/rad/Makefile lib/qsecmn.pc lib/qsecry.pc lib/qsesi.pc lib/qsesed.pc lib/qseawk.pc lib/qsexli.pc lib/qsehttp.pc lib/qserad.pc cmd/Makefile cmd/awk/Makefile cmd/sed/Makefile cmd/xli/Makefile cmd/http/Makefile samples/Makefile samples/cmn/Makefile samples/cry/Makefile samples/si/Makefile samples/awk/Makefile samples/sed/Makefile samples/http/Makefile samples/rad/Makefile regress/Makefile regress/awk/Makefile regress/awk/regress.sh regress/sed/Makefile regress/sed/regress.sh doc/Makefile doc/Doxyfile tools/Makefile"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -25142,6 +25117,7 @@ do
     "samples/awk/Makefile") CONFIG_FILES="$CONFIG_FILES samples/awk/Makefile" ;;
     "samples/sed/Makefile") CONFIG_FILES="$CONFIG_FILES samples/sed/Makefile" ;;
     "samples/http/Makefile") CONFIG_FILES="$CONFIG_FILES samples/http/Makefile" ;;
+    "samples/rad/Makefile") CONFIG_FILES="$CONFIG_FILES samples/rad/Makefile" ;;
     "regress/Makefile") CONFIG_FILES="$CONFIG_FILES regress/Makefile" ;;
     "regress/awk/Makefile") CONFIG_FILES="$CONFIG_FILES regress/awk/Makefile" ;;
     "regress/awk/regress.sh") CONFIG_FILES="$CONFIG_FILES regress/awk/regress.sh" ;;
@@ -25853,6 +25829,7 @@ $as_echo X"$file" |
     cat <<_LT_EOF >> "$cfgfile"
 #! $SHELL
 # Generated automatically by $as_me ($PACKAGE) $VERSION
+# Libtool was configured on host `(hostname || uname -n) 2>/dev/null | sed 1q`:
 # NOTE: Changes made to this file will be lost: look at ltmain.sh.
 
 # Provide generalized library-building support services.

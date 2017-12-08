@@ -50,7 +50,7 @@ typedef struct qse_htl_node_t  qse_htl_node_t;
 /**
  * The #qse_htl_hasher_t type defines a data hasher function.
  */
-typedef qse_size_t (*qse_htl_hasher_t) (
+typedef qse_uint32_t (*qse_htl_hasher_t) (
 	qse_htl_t*  htl,
 	const void* data
 );
@@ -204,7 +204,14 @@ static QSE_INLINE void qse_htl_setcopier (qse_htl_t* htl, qse_htl_copier_t _copi
  */
 QSE_EXPORT qse_htl_node_t* qse_htl_search (
 	qse_htl_t*       htl,    /**< hash table */
-	void*            data    /**< data pointer */
+	const void*      data    /**< data pointer */
+);
+
+QSE_EXPORT qse_htl_node_t* qse_htl_heterosearch (
+	qse_htl_t*       htl,     /**< hash table */
+	const void*      data,    /**< data pointer */
+	qse_htl_hasher_t hasher,
+	qse_htl_comper_t comper
 );
 
 /**
@@ -282,17 +289,21 @@ QSE_EXPORT void qse_htl_walk (
 
 /* ------------------------------------------------------------------------- */
 
-QSE_EXPORT qse_uint32_t qse_genhash_update (const void* data, qse_size_t size, qse_uint32_t hash);
-QSE_EXPORT qse_uint32_t qse_genhash (const void *data, qse_size_t size);
-/*qse_uint32_t qse_foldhash (qse_uint32_t hash, int bits);*/
+QSE_EXPORT qse_uint32_t qse_genhash32_update (const void* data, qse_size_t size, qse_uint32_t hash);
+QSE_EXPORT qse_uint32_t qse_genhash32 (const void *data, qse_size_t size);
+/*qse_uint32_t qse_foldhash32 (qse_uint32_t hash, int bits);*/
 
-QSE_EXPORT qse_uint32_t qse_mbshash (const qse_mchar_t* p);
-QSE_EXPORT qse_uint32_t qse_wcshash (const qse_wchar_t* p);
+QSE_EXPORT qse_uint32_t qse_mbshash32 (const qse_mchar_t* p);
+QSE_EXPORT qse_uint32_t qse_wcshash32 (const qse_wchar_t* p);
+QSE_EXPORT qse_uint32_t qse_mbscasehash32 (const qse_mchar_t* p);
+QSE_EXPORT qse_uint32_t qse_wcscasehash32 (const qse_wchar_t* p);
 
 #if defined(QSE_CHAR_IS_WCHAR)
-#	define qse_strhash(x) qse_wcshash (x)
+#	define qse_strhash32(x)     qse_wcshash32(x)
+#	define qse_strcasehash32(x) qse_wcscasehash32(x)
 #else
-#	define qse_strhash(x) qse_mbshash (x)
+#	define qse_strhash32(x)     qse_mbshash32(x)
+#	define qse_strcasehash32(x) qse_mbscasehash32(x)
 #endif
 
 #if defined(__cplusplus)
