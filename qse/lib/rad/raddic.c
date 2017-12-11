@@ -217,7 +217,7 @@ qse_raddic_vendor_t* qse_raddic_findvendorbyvalue (qse_raddic_t* dic, int vendor
 qse_raddic_vendor_t* qse_raddic_addvendor (qse_raddic_t* dic, const qse_char_t* name, int value)
 {
 	qse_size_t length;
-	qse_raddic_vendor_t* dv;
+	qse_raddic_vendor_t* dv, * old_dv;
 	qse_htl_node_t* np;
 
 	if (value >= 65535) return QSE_NULL;
@@ -227,10 +227,11 @@ qse_raddic_vendor_t* qse_raddic_addvendor (qse_raddic_t* dic, const qse_char_t* 
 	/* no +1 for the terminating null because dv->name is char[1] */
 	dv = QSE_MMGR_ALLOC(dic->mmgr, QSE_SIZEOF(*dv) + (length * QSE_SIZEOF(*name)));
 	if (dv == QSE_NULL) return QSE_NULL;
-	
+
 	qse_strcpy(dv->name, name);
 	dv->vendorpec = value;
 	dv->type = dv->length = 1; /* defaults */
+	dv->nextv = QSE_NULL;
 
 	/* return an existing item or insert a new item */
 	np = qse_htl_ensert(&dic->vendors_byname, dv);
@@ -241,16 +242,96 @@ qse_raddic_vendor_t* qse_raddic_addvendor (qse_raddic_t* dic, const qse_char_t* 
 		return QSE_NULL;
 	}
 
-	/* update indexing by value */
-	if (!qse_htl_upsert(&dic->vendors_byvalue, dv))
+	/* attempt to update the lookup table by value */
+	np = qse_htl_upyank(&dic->vendors_byvalue, dv, (void**)&old_dv);
+	if (np)
 	{
-		qse_htl_delete (&dic->vendors_byname, dv);
-		return QSE_NULL;
+		/* updated the existing item successfully. 
+		 * link the old item to the current item */
+		QSE_ASSERT (np->data == dv);
+		QSE_ASSERT (dv->vendorpec == old_dv->vendorpec);
+		dv->nextv = old_dv;
+	}
+	else
+	{
+		/* update failure, this entry must be new. try insertion */
+		if (!qse_htl_insert (&dic->vendors_byvalue, dv))
+		{
+			qse_htl_delete (&dic->vendors_byname, dv);
+			return QSE_NULL;
+		}
 	}
 
 	return dv;
 }
 
+int qse_raddic_deletevendorbyname (qse_raddic_t* dic, const qse_char_t* name)
+{
+	qse_raddic_vendor_t* dv, * dv2;
+
+	dv = qse_raddic_findvendorbyname(dic, name);
+	if (!dv) return -1;
+
+	dv2 = qse_raddic_findvendorbyvalue(dic, dv->vendorpec);
+	QSE_ASSERT (dv2 != QSE_NULL);
+
+	if (dv != dv2)
+	{
+		qse_raddic_vendor_t* x, * y;
+
+		QSE_ASSERT (qse_strcasecmp(dv->name, dv2->name) != 0);
+		QSE_ASSERT (dv->vendorpec == dv2->vendorpec);
+
+		/* when the vendor of the given name is not the first one
+		 * referenced by value, i need to unlink the vendor from the
+		 * vendor chains with the same ID */
+		x = dv2;
+		y = QSE_NULL; 
+		while (x)
+		{
+			if (x == dv) 
+			{
+				if (y) y->nextv = x->nextv;
+				break;
+			}
+			y = x;
+			x = x->nextv;
+		}
+	}
+	else
+	{
+		/* this is the only vendor with the vendor ID. i can 
+		 * safely remove it from the lookup table by value */
+		qse_htl_delete (&dic->vendors_byvalue, dv);
+	}
+
+	/* delete the vendor from the lookup table by name */
+	qse_htl_delete (&dic->vendors_byname, dv);
+	return 0;
+}
+
+int qse_raddic_deletevendorbyvalue (qse_raddic_t* dic, int value)
+{
+	qse_raddic_vendor_t* dv;
+
+	dv = qse_raddic_findvendorbyvalue(dic, value);
+	if (!dv) return -1;
+
+	if (dv->nextv)
+	{
+		qse_htl_update (&dic->vendors_byvalue, dv->nextv);
+	}
+	else
+	{
+		/* this is the only vendor with the vendor ID. i can 
+		 * safely remove it from the lookup table by value */
+		qse_htl_delete (&dic->vendors_byvalue, dv);
+	}
+
+	/* delete the vendor from the lookup table by name */
+	qse_htl_delete (&dic->vendors_byname, dv);
+	return 0;
+}
 
 #if 0 // XXX
 /*

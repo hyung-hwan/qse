@@ -578,9 +578,30 @@ qse_htl_node_t* qse_htl_update (qse_htl_t* ht, void* data)
 	return node;
 }
 
+qse_htl_node_t* qse_htl_upyank (qse_htl_t* ht, void* data, void** olddata)
+{
+	qse_htl_node_t* node;
+	void* datap, * olddatap;
+
+	node = qse_htl_search(ht, data);
+	if (!node) return QSE_NULL;
+
+	if (ht->copier) 
+	{
+		datap = ht->copier (ht, data);
+		if (!datap) return QSE_NULL;
+	}
+	else datap = data;
+
+	*olddata = node->data;
+	node->data = datap;
+
+	return node;
+}
+
 qse_htl_node_t* qse_htl_ensert (qse_htl_t* ht, void* data)
 {
-	qse_htl_node_t *node;
+	qse_htl_node_t* node;
 
 	node = qse_htl_search(ht, data);
 	if (!node) node = qse_htl_insert(ht, data);
@@ -588,18 +609,13 @@ qse_htl_node_t* qse_htl_ensert (qse_htl_t* ht, void* data)
 	return node;
 }
 
-/*
- *	Yank an entry from the hash table, without freeing the data.
- */
-void* qse_htl_yank (qse_htl_t* ht, void* data)
+
+qse_htl_node_t* qse_htl_yanknode (qse_htl_t* ht, void* data)
 {
 	qse_uint32_t key;
 	qse_uint32_t entry;
 	qse_uint32_t reversed;
-	void *old;
 	qse_htl_node_t* node;
-
-	if (!ht) return QSE_NULL;
 
 	key = ht->hasher(ht, data);
 	entry = key & ht->mask;
@@ -613,9 +629,23 @@ void* qse_htl_yank (qse_htl_t* ht, void* data)
 	list_delete(ht, &ht->buckets[entry], node);
 	ht->num_elements--;
 
+	return node;
+}
+
+
+/*
+ *	Yank an entry from the hash table, without freeing the data.
+ */
+void* qse_htl_yank (qse_htl_t* ht, void* data)
+{
+	qse_htl_node_t* node;
+	void* old;
+
+	node = qse_htl_yanknode (ht, data);
+	if (!node) return QSE_NULL;
+
 	old = node->data;
 	QSE_MMGR_FREE (ht->mmgr, node);
-
 	return old;
 }
 

@@ -197,10 +197,10 @@ static QSE_INLINE void qse_htl_setcopier (qse_htl_t* htl, qse_htl_copier_t _copi
 
 /**
  * The qse_htl_search() function searches a hash table to find a 
- * matching datum. It returns the index to the slot of an internal array
- * where the matching datum is found. 
+ * matching item. It returns the index to the slot of an internal array
+ * where the matching item is found. 
  * \return slot index if a match if found,
- *         #QSE_HTL_NIL if no match is found.
+ *         #QSE_NULL if no match is found.
  */
 QSE_EXPORT qse_htl_node_t* qse_htl_search (
 	qse_htl_t*       htl,    /**< hash table */
@@ -215,10 +215,9 @@ QSE_EXPORT qse_htl_node_t* qse_htl_heterosearch (
 );
 
 /**
- * The qse_htl_insert() function inserts a new datum. It fails if it finds
- * an existing datum.
- * \return slot index where the new datum is inserted on success,
- *         #QSE_HTL_NIL on failure.
+ * The qse_htl_insert() function inserts a new item. It fails if it finds
+ * an existing item.
+ * \return a node pointer on success, #QSE_NULL on failure.
  */
 QSE_EXPORT qse_htl_node_t* qse_htl_insert (
 	qse_htl_t*  htl,    /**< hash table */
@@ -226,9 +225,9 @@ QSE_EXPORT qse_htl_node_t* qse_htl_insert (
 );
 
 /**
- * The qse_htl_upsert() function inserts a new datum if it finds no matching
- * datum or updates an exsting datum if finds a matching datum.
- * \return slot index where the datum is inserted or updated.
+ * The qse_htl_upsert() function inserts a new item if it finds no matching
+ * item or updates an exsting item if finds a matching item.
+ * \return node pointer on success, #QSE_NULL on failure.
  */
 QSE_EXPORT qse_htl_node_t* qse_htl_upsert (
 	qse_htl_t*       htl,    /**< hash table */
@@ -236,14 +235,23 @@ QSE_EXPORT qse_htl_node_t* qse_htl_upsert (
 );
 
 /**
- * The qse_htl_update() function updates an existing datum. It fails if it finds
- * no existing datum.
- * \return slot index where an existing datum is updated on success,
- *         #QSE_HTL_NIL on failure.
+ * The qse_htl_update() function updates an existing item. It fails if it finds
+ * no existing item.
+ * \return a node pointer on success, #QSE_NULL on failure.
  */
 QSE_EXPORT qse_htl_node_t* qse_htl_update (
 	qse_htl_t*       htl,    /**< hash table */
 	void*            data    /**< data pointer */
+);
+
+/**
+ * The qse_htl_upyank() function updates an existing dataum without disposing
+ * the old data. 
+ */
+QSE_EXPORT qse_htl_node_t* qse_htl_upyank (
+	qse_htl_t*       htl,    /**< hash table */
+	void*            data,   /**< data pointer */
+	void**           oldata  /**< old data pointer */
 );
 
 /**
@@ -256,8 +264,8 @@ QSE_EXPORT qse_htl_node_t* qse_htl_ensert (
 );
 
 /**
- * The qse_htl_delete() function deletes an existing datum. It fails if it finds
- * no existing datum.
+ * The qse_htl_delete() function deletes an existing item. It fails if it finds
+ * no existing item.
  * \return 0 on success, -1 on failure
  */
 QSE_EXPORT int qse_htl_delete (
@@ -266,6 +274,11 @@ QSE_EXPORT int qse_htl_delete (
 );
 
 QSE_EXPORT void* qse_htl_yank (
+	qse_htl_t*       ht,
+	void*            data
+);
+
+QSE_EXPORT qse_htl_node_t* qse_htl_yanknode (
 	qse_htl_t*       ht,
 	void*            data
 );
