@@ -58,12 +58,13 @@ struct qse_raddic_t
 
 	qse_htl_t vendors_byname;
 	qse_htl_t vendors_byvalue;
-	qse_htl_t attributes_byname;
-	qse_htl_t attributes_byvalue;
+	qse_htl_t attrs_byname;
+	qse_htl_t attrs_byvalue;
 	qse_htl_t values_byvalue;
 	qse_htl_t values_byname;
 
-	qse_raddic_attr_t *last_attr;
+	qse_raddic_attr_t* last_attr;
+	qse_raddic_attr_t* base_attrs[256];
 };
 
 
@@ -76,23 +77,25 @@ struct name_id_t
 
 static const name_id_t type_table[] = 
 {
-	{ "integer",    QSE_RAD_ATTR_TYPE_INTEGER },
-	{ "string",     QSE_RAD_ATTR_TYPE_STRING },
-	{ "ipaddr",     QSE_RAD_ATTR_TYPE_IPADDR },
-	{ "date",       QSE_RAD_ATTR_TYPE_DATE },
-	{ "abinary",    QSE_RAD_ATTR_TYPE_ABINARY },
-	{ "octets",     QSE_RAD_ATTR_TYPE_OCTETS },
-	{ "ifid",       QSE_RAD_ATTR_TYPE_IFID },
-	{ "ipv6addr",   QSE_RAD_ATTR_TYPE_IPV6ADDR },
-	{ "ipv6prefix", QSE_RAD_ATTR_TYPE_IPV6PREFIX },
-	{ "byte",       QSE_RAD_ATTR_TYPE_BYTE },
-	{ "short",      QSE_RAD_ATTR_TYPE_SHORT },
-	{ "ether",      QSE_RAD_ATTR_TYPE_ETHERNET },
-	{ "combo-ip",   QSE_RAD_ATTR_TYPE_COMBO_IP },
-	{ "tlv",        QSE_RAD_ATTR_TYPE_TLV },
-	{ "signed",     QSE_RAD_ATTR_TYPE_SIGNED },
+	{ "integer",    QSE_RADDIC_ATTR_TYPE_INTEGER },
+	{ "string",     QSE_RADDIC_ATTR_TYPE_STRING },
+	{ "ipaddr",     QSE_RADDIC_ATTR_TYPE_IPADDR },
+	{ "date",       QSE_RADDIC_ATTR_TYPE_DATE },
+	{ "abinary",    QSE_RADDIC_ATTR_TYPE_ABINARY },
+	{ "octets",     QSE_RADDIC_ATTR_TYPE_OCTETS },
+	{ "ifid",       QSE_RADDIC_ATTR_TYPE_IFID },
+	{ "ipv6addr",   QSE_RADDIC_ATTR_TYPE_IPV6ADDR },
+	{ "ipv6prefix", QSE_RADDIC_ATTR_TYPE_IPV6PREFIX },
+	{ "byte",       QSE_RADDIC_ATTR_TYPE_BYTE },
+	{ "short",      QSE_RADDIC_ATTR_TYPE_SHORT },
+	{ "ether",      QSE_RADDIC_ATTR_TYPE_ETHERNET },
+	{ "combo-ip",   QSE_RADDIC_ATTR_TYPE_COMBO_IP },
+	{ "tlv",        QSE_RADDIC_ATTR_TYPE_TLV },
+	{ "signed",     QSE_RADDIC_ATTR_TYPE_SIGNED },
 	{ QSE_NULL,     0 }
 };
+
+/* -------------------------------------------------------------------------- */
 
 static qse_uint32_t dict_vendor_name_hash (qse_htl_t* htl, const void *data)
 {
@@ -135,6 +138,57 @@ static int dict_vendor_value_cmp (qse_htl_t* htl, const void* one, const void* t
 	return a->vendorpec - b->vendorpec;
 }
 
+/* -------------------------------------------------------------------------- */
+
+static qse_uint32_t dict_attr_name_hash (qse_htl_t* htl, const void *data)
+{
+	return qse_strcasehash32(((const qse_raddic_attr_t*)data)->name);
+}
+
+static int dict_attr_name_cmp (qse_htl_t* htl, const void* one, const void* two)
+{
+	const qse_raddic_attr_t* a = one;
+	const qse_raddic_attr_t* b = two;
+	return qse_strcasecmp(a->name, b->name);
+}
+
+static void dict_attr_name_free (qse_htl_t* htl, void* data)
+{
+	QSE_MMGR_FREE (htl->mmgr, data);
+}
+
+static qse_uint32_t dict_attr_name_hetero_hash (qse_htl_t* htl, const void* one)
+{
+	return qse_strcasehash32((const qse_char_t*)one);
+}
+
+static int dict_attr_name_hetero_cmp (qse_htl_t* htl, const void* one, const void* two)
+{
+	const qse_raddic_attr_t* b = two;
+	return qse_strcasecmp((const qse_char_t*)one, b->name);
+}
+
+static qse_uint32_t dict_attr_value_hash (qse_htl_t* htl, const void* data)
+{
+	const qse_raddic_attr_t* v = (const qse_raddic_attr_t*)data;
+	qse_uint32_t hv;
+
+	hv = qse_genhash32(&v->vendor, QSE_SIZEOF(v->vendor));
+	return qse_genhash32_update(&v->attr, QSE_SIZEOF(v->attr), hv);
+}
+
+static int dict_attr_value_cmp (qse_htl_t* htl, const void* one, const void* two)
+{
+	const qse_raddic_attr_t *a = one;
+	const qse_raddic_attr_t *b = two;
+
+	if (a->vendor < b->vendor) return -1;
+	if (a->vendor > b->vendor) return -1;
+	return a->attr - b->attr;
+}
+
+/* -------------------------------------------------------------------------- */
+
 int qse_raddic_init (qse_raddic_t* dic, qse_mmgr_t* mmgr)
 {
 	QSE_MEMSET (dic, 0, QSE_SIZEOF(*dic));
@@ -142,8 +196,8 @@ int qse_raddic_init (qse_raddic_t* dic, qse_mmgr_t* mmgr)
 
 	qse_htl_init (&dic->vendors_byname, mmgr, 1);
 	qse_htl_init (&dic->vendors_byvalue, mmgr, 1);
-	qse_htl_init (&dic->attributes_byname, mmgr, 1);
-	qse_htl_init (&dic->attributes_byvalue, mmgr, 1);
+	qse_htl_init (&dic->attrs_byname, mmgr, 1);
+	qse_htl_init (&dic->attrs_byvalue, mmgr, 1);
 	qse_htl_init (&dic->values_byname, mmgr, 1);
 	qse_htl_init (&dic->values_byvalue, mmgr, 1);
 
@@ -155,6 +209,15 @@ int qse_raddic_init (qse_raddic_t* dic, qse_mmgr_t* mmgr)
 	qse_htl_setcomper (&dic->vendors_byvalue, dict_vendor_value_cmp);
 	/* no freeer for dic->vendors_byvalue */
 
+
+	qse_htl_sethasher (&dic->attrs_byname, dict_attr_name_hash);
+	qse_htl_setcomper (&dic->attrs_byname, dict_attr_name_cmp);
+	qse_htl_setfreeer (&dic->attrs_byname, dict_attr_name_free); 
+
+	qse_htl_sethasher (&dic->attrs_byvalue, dict_attr_value_hash);
+	qse_htl_setcomper (&dic->attrs_byvalue, dict_attr_value_cmp);
+	/* no freeer for dic->attrs_byvalue */
+
 	return 0;
 }
 
@@ -162,8 +225,8 @@ void qse_raddic_fini (qse_raddic_t* dic)
 {
 	qse_htl_fini (&dic->vendors_byname);
 	qse_htl_fini (&dic->vendors_byvalue);
-	qse_htl_fini (&dic->attributes_byname);
-	qse_htl_fini (&dic->attributes_byvalue);
+	qse_htl_fini (&dic->attrs_byname);
+	qse_htl_fini (&dic->attrs_byvalue);
 	qse_htl_fini (&dic->values_byvalue);
 	qse_htl_fini (&dic->values_byname);
 }
@@ -192,6 +255,7 @@ void qse_raddic_close (qse_raddic_t* dic)
 	QSE_MMGR_FREE (dic->mmgr, dic);
 }
 
+/* -------------------------------------------------------------------------- */
 qse_raddic_vendor_t* qse_raddic_findvendorbyname (qse_raddic_t* dic, const qse_char_t* name)
 {
 	qse_htl_node_t* np;
@@ -214,13 +278,13 @@ qse_raddic_vendor_t* qse_raddic_findvendorbyvalue (qse_raddic_t* dic, int vendor
 	return (qse_raddic_vendor_t*)np->data;
 }
 
-qse_raddic_vendor_t* qse_raddic_addvendor (qse_raddic_t* dic, const qse_char_t* name, int value)
+qse_raddic_vendor_t* qse_raddic_addvendor (qse_raddic_t* dic, const qse_char_t* name, int vendorpec)
 {
 	qse_size_t length;
 	qse_raddic_vendor_t* dv, * old_dv;
 	qse_htl_node_t* np;
 
-	if (value >= 65535) return QSE_NULL;
+	if (vendorpec <= 0 || vendorpec > 65535) return QSE_NULL;
 
 	length = qse_strlen(name);
 
@@ -229,7 +293,7 @@ qse_raddic_vendor_t* qse_raddic_addvendor (qse_raddic_t* dic, const qse_char_t* 
 	if (dv == QSE_NULL) return QSE_NULL;
 
 	qse_strcpy(dv->name, name);
-	dv->vendorpec = value;
+	dv->vendorpec = vendorpec;
 	dv->type = dv->length = 1; /* defaults */
 	dv->nextv = QSE_NULL;
 
@@ -310,11 +374,11 @@ int qse_raddic_deletevendorbyname (qse_raddic_t* dic, const qse_char_t* name)
 	return 0;
 }
 
-int qse_raddic_deletevendorbyvalue (qse_raddic_t* dic, int value)
+int qse_raddic_deletevendorbyvalue (qse_raddic_t* dic, int vendorpec)
 {
 	qse_raddic_vendor_t* dv;
 
-	dv = qse_raddic_findvendorbyvalue(dic, value);
+	dv = qse_raddic_findvendorbyvalue(dic, vendorpec);
 	if (!dv) return -1;
 
 	if (dv->nextv)
@@ -332,6 +396,162 @@ int qse_raddic_deletevendorbyvalue (qse_raddic_t* dic, int value)
 	qse_htl_delete (&dic->vendors_byname, dv);
 	return 0;
 }
+
+/* -------------------------------------------------------------------------- */
+
+qse_raddic_attr_t* qse_raddic_findattrbyname (qse_raddic_t* dic, const qse_char_t* name)
+{
+	qse_htl_node_t* np;
+	np = qse_htl_heterosearch (&dic->attrs_byname, name, dict_attr_name_hetero_hash, dict_attr_name_hetero_cmp);
+	if (!np) return QSE_NULL;
+	return (qse_raddic_attr_t*)np->data;
+}
+
+qse_raddic_attr_t* qse_raddic_findattrbyvalue (qse_raddic_t* dic, int attr)
+{
+	qse_htl_node_t* np;
+	qse_raddic_attr_t dv;
+
+	/* simple cache lookup for basic attributes */
+	if (attr >= 0 && attr <= 255) return dic->base_attrs[attr];
+
+	dv.attr = attr;
+	dv.vendor = QSE_RADDIC_ATTR_VENDOR(attr);
+	np = qse_htl_search (&dic->attrs_byvalue, &dv);
+	if (!np) return QSE_NULL;
+	return (qse_raddic_attr_t*)np->data;
+}
+
+qse_raddic_attr_t* qse_raddic_addattr (qse_raddic_t* dic, const qse_char_t* name, int vendor, int type, int value, const qse_raddic_attr_flags_t* flags)
+{
+	qse_size_t length;
+	qse_raddic_attr_t* dv, * old_dv;
+	qse_htl_node_t* np;
+
+	if (vendor < 0 || vendor > 65535) return QSE_NULL; /* 0 is allowed to mean no vendor */
+	if (value < 0 || value > 255) return QSE_NULL;
+
+	length = qse_strlen(name);
+
+	if (vendor > 0)
+	{
+		/* TODO: validation ... */
+	}
+
+	/* no +1 for the terminating null because dv->name is char[1] */
+	dv = QSE_MMGR_ALLOC(dic->mmgr, QSE_SIZEOF(*dv) + (length * QSE_SIZEOF(*name)));
+	if (dv == QSE_NULL) return QSE_NULL;
+
+	qse_strcpy(dv->name, name);
+	dv->attr = QSE_RADDIC_ATTR_MAKE(vendor, value);
+	dv->vendor = vendor;
+	dv->type = type;
+	dv->flags = *flags;
+	dv->nexta = QSE_NULL;
+
+	/* return an existing item or insert a new item */
+	np = qse_htl_ensert(&dic->attrs_byname, dv);
+	if (!np || np->data != dv)
+	{
+		/* insertion failure or existing item found */
+		QSE_MMGR_FREE (dic->mmgr, dv);
+		return QSE_NULL;
+	}
+
+	/* attempt to update the lookup table by value */
+	np = qse_htl_upyank(&dic->attrs_byvalue, dv, (void**)&old_dv);
+	if (np)
+	{
+		/* updated the existing item successfully. 
+		 * link the old item to the current item */
+		QSE_ASSERT (np->data == dv);
+		QSE_ASSERT (dv->attr == old_dv->attr);
+		dv->nexta = old_dv;
+	}
+	else
+	{
+		/* update failure, this entry must be new. try insertion */
+		if (!qse_htl_insert (&dic->attrs_byvalue, dv))
+		{
+			qse_htl_delete (&dic->attrs_byname, dv);
+			return QSE_NULL;
+		}
+	}
+
+	if (vendor == 0) dic->base_attrs[value] = dv; /* cache base attributes */
+	return dv;
+}
+
+int qse_raddic_deleteattrbyname (qse_raddic_t* dic, const qse_char_t* name)
+{
+	qse_raddic_attr_t* dv, * dv2;
+
+	dv = qse_raddic_findattrbyname(dic, name);
+	if (!dv) return -1;
+
+	dv2 = qse_raddic_findattrbyvalue(dic, dv->attr);
+	QSE_ASSERT (dv2 != QSE_NULL);
+
+	if (dv != dv2)
+	{
+		qse_raddic_attr_t* x, * y;
+
+		QSE_ASSERT (qse_strcasecmp(dv->name, dv2->name) != 0);
+		QSE_ASSERT (dv->attr == dv2->attr);
+		QSE_ASSERT (dv->vendor == dv2->vendor);
+
+		/* when the attr of the given name is not the first one
+		 * referenced by value, i need to unlink the attr from the
+		 * attr chains with the same ID */
+		x = dv2;
+		y = QSE_NULL; 
+		while (x)
+		{
+			if (x == dv) 
+			{
+				if (y) y->nexta = x->nexta;
+				break;
+			}
+			y = x;
+			x = x->nexta;
+		}
+	}
+	else
+	{
+		/* this is the only attr with the attr ID. i can 
+		 * safely remove it from the lookup table by value */
+		qse_htl_delete (&dic->attrs_byvalue, dv);
+	}
+
+	/* delete the attr from the lookup table by name */
+	qse_htl_delete (&dic->attrs_byname, dv);
+	return 0;
+}
+
+int qse_raddic_deleteattrbyvalue (qse_raddic_t* dic, int attr)
+{
+	qse_raddic_attr_t* dv;
+
+	dv = qse_raddic_findattrbyvalue(dic, attr);
+	if (!dv) return -1;
+
+	if (dv->nexta)
+	{
+		qse_htl_update (&dic->attrs_byvalue, dv->nexta);
+	}
+	else
+	{
+		/* this is the only attr with the attr ID. i can 
+		 * safely remove it from the lookup table by value */
+		qse_htl_delete (&dic->attrs_byvalue, dv);
+	}
+
+	/* delete the attr from the lookup table by name */
+	qse_htl_delete (&dic->attrs_byname, dv);
+	return 0;
+}
+
+/* -------------------------------------------------------------------------- */
 
 #if 0 // XXX
 /*
@@ -488,7 +708,7 @@ int dict_addvalue(qse_raddic_t* dic, const qse_char_t* namestr, const qse_char_t
 		 */
 		switch (dattr->type) 
 		{
-			case QSE_RAD_ATTR_TYPE_BYTE:
+			case QSE_RADDIC_ATTR_TYPE_BYTE:
 				if (value > 255) 
 				{
 					fr_pool_free(dval);
@@ -496,7 +716,7 @@ int dict_addvalue(qse_raddic_t* dic, const qse_char_t* namestr, const qse_char_t
 					return -1;
 				}
 				break;
-			case QSE_RAD_ATTR_TYPE_SHORT:
+			case QSE_RADDIC_ATTR_TYPE_SHORT:
 				if (value > 65535) 
 				{
 					fr_pool_free(dval);
@@ -509,8 +729,8 @@ int dict_addvalue(qse_raddic_t* dic, const qse_char_t* namestr, const qse_char_t
 				 *	Allow octets for now, because
 				 *	of dictionary.cablelabs
 				 */
-			case QSE_RAD_ATTR_TYPE_OCTETS:
-			case QSE_RAD_ATTR_TYPE_INTEGER:
+			case QSE_RADDIC_ATTR_TYPE_OCTETS:
+			case QSE_RADDIC_ATTR_TYPE_INTEGER:
 				break;
 
 			default:
@@ -839,7 +1059,7 @@ static int load_file (qse_raddic_t* dic, const qse_char_t *dir, const qse_char_t
 				goto oops;
 			}
 
-			if (da->type != QSE_RAD_ATTR_TYPE_TLV) 
+			if (da->type != QSE_RADDIC_ATTR_TYPE_TLV) 
 			{
 				fr_strerror_printf("dict_init: %s[%d]: attribute %s is not of type tlv", fn, line, argv[1]);
 				goto oops;
@@ -980,21 +1200,21 @@ typedef struct value_fixup_t {
 static value_fixup_t *value_fixup = QSE_NULL;
 
 static const FR_NAME_NUMBER type_table[] = {
-	{ "integer",	QSE_RAD_ATTR_TYPE_INTEGER },
-	{ "string",	QSE_RAD_ATTR_TYPE_STRING },
-	{ "ipaddr",	QSE_RAD_ATTR_TYPE_IPADDR },
-	{ "date",	QSE_RAD_ATTR_TYPE_DATE },
-	{ "abinary",	QSE_RAD_ATTR_TYPE_ABINARY },
-	{ "octets",	QSE_RAD_ATTR_TYPE_OCTETS },
-	{ "ifid",	QSE_RAD_ATTR_TYPE_IFID },
-	{ "ipv6addr",	QSE_RAD_ATTR_TYPE_IPV6ADDR },
-	{ "ipv6prefix", QSE_RAD_ATTR_TYPE_IPV6PREFIX },
-	{ "byte",	QSE_RAD_ATTR_TYPE_BYTE },
-	{ "short",	QSE_RAD_ATTR_TYPE_SHORT },
-	{ "ether",	QSE_RAD_ATTR_TYPE_ETHERNET },
-	{ "combo-ip",	QSE_RAD_ATTR_TYPE_COMBO_IP },
-	{ "tlv",	QSE_RAD_ATTR_TYPE_TLV },
-	{ "signed",	QSE_RAD_ATTR_TYPE_SIGNED },
+	{ "integer",	QSE_RADDIC_ATTR_TYPE_INTEGER },
+	{ "string",	QSE_RADDIC_ATTR_TYPE_STRING },
+	{ "ipaddr",	QSE_RADDIC_ATTR_TYPE_IPADDR },
+	{ "date",	QSE_RADDIC_ATTR_TYPE_DATE },
+	{ "abinary",	QSE_RADDIC_ATTR_TYPE_ABINARY },
+	{ "octets",	QSE_RADDIC_ATTR_TYPE_OCTETS },
+	{ "ifid",	QSE_RADDIC_ATTR_TYPE_IFID },
+	{ "ipv6addr",	QSE_RADDIC_ATTR_TYPE_IPV6ADDR },
+	{ "ipv6prefix", QSE_RADDIC_ATTR_TYPE_IPV6PREFIX },
+	{ "byte",	QSE_RADDIC_ATTR_TYPE_BYTE },
+	{ "short",	QSE_RADDIC_ATTR_TYPE_SHORT },
+	{ "ether",	QSE_RADDIC_ATTR_TYPE_ETHERNET },
+	{ "combo-ip",	QSE_RADDIC_ATTR_TYPE_COMBO_IP },
+	{ "tlv",	QSE_RADDIC_ATTR_TYPE_TLV },
+	{ "signed",	QSE_RADDIC_ATTR_TYPE_SIGNED },
 	{ QSE_NULL, 0 }
 };
 
@@ -1564,11 +1784,11 @@ static int process_attribute (
 				flags.array = 1;
 				
 				switch (type) {
-					case QSE_RAD_ATTR_TYPE_IPADDR:
-					case QSE_RAD_ATTR_TYPE_BYTE:
-					case QSE_RAD_ATTR_TYPE_SHORT:
-					case QSE_RAD_ATTR_TYPE_INTEGER:
-					case QSE_RAD_ATTR_TYPE_DATE:
+					case QSE_RADDIC_ATTR_TYPE_IPADDR:
+					case QSE_RADDIC_ATTR_TYPE_BYTE:
+					case QSE_RADDIC_ATTR_TYPE_SHORT:
+					case QSE_RADDIC_ATTR_TYPE_INTEGER:
+					case QSE_RADDIC_ATTR_TYPE_DATE:
 						break;
 
 					default:
@@ -1599,8 +1819,8 @@ static int process_attribute (
 		 *	Only string, octets, and integer can be tagged.
 		 */
 		switch (type) {
-		case QSE_RAD_ATTR_TYPE_STRING:
-		case QSE_RAD_ATTR_TYPE_INTEGER:
+		case QSE_RADDIC_ATTR_TYPE_STRING:
+		case QSE_RADDIC_ATTR_TYPE_INTEGER:
 			break;
 
 		default:
@@ -1612,7 +1832,7 @@ static int process_attribute (
 		}
 	}
 
-	if (type == QSE_RAD_ATTR_TYPE_TLV) {
+	if (type == QSE_RADDIC_ATTR_TYPE_TLV) {
 		flags.has_tlv = 1;
 	}
 
@@ -2098,7 +2318,7 @@ static int my_dict_init(const char *dir, const char *fn,
 				return -1;
 			}
 
-			if (da->type != QSE_RAD_ATTR_TYPE_TLV) {
+			if (da->type != QSE_RADDIC_ATTR_TYPE_TLV) {
 				fr_strerror_printf(
 					"dict_init: %s[%d]: attribute %s is not of type tlv",
 					fn, line, argv[1]);
