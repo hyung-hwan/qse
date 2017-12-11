@@ -30,21 +30,21 @@
 #include <qse/types.h>
 #include <qse/macros.h>
 
-#define QSE_RAD_ATTR_TYPE_STRING                  0
-#define QSE_RAD_ATTR_TYPE_INTEGER                 1
-#define QSE_RAD_ATTR_TYPE_IPADDR                  2
-#define QSE_RAD_ATTR_TYPE_DATE                    3
-#define QSE_RAD_ATTR_TYPE_ABINARY                 4
-#define QSE_RAD_ATTR_TYPE_OCTETS                  5
-#define QSE_RAD_ATTR_TYPE_IFID                    6
-#define QSE_RAD_ATTR_TYPE_IPV6ADDR                7
-#define QSE_RAD_ATTR_TYPE_IPV6PREFIX              8
-#define QSE_RAD_ATTR_TYPE_BYTE                    9
-#define QSE_RAD_ATTR_TYPE_SHORT                   10
-#define QSE_RAD_ATTR_TYPE_ETHERNET                11
-#define QSE_RAD_ATTR_TYPE_SIGNED                  12
-#define QSE_RAD_ATTR_TYPE_COMBO_IP                13
-#define QSE_RAD_ATTR_TYPE_TLV                     14
+#define QSE_RADDIC_ATTR_TYPE_STRING                  0
+#define QSE_RADDIC_ATTR_TYPE_INTEGER                 1
+#define QSE_RADDIC_ATTR_TYPE_IPADDR                  2
+#define QSE_RADDIC_ATTR_TYPE_DATE                    3
+#define QSE_RADDIC_ATTR_TYPE_ABINARY                 4
+#define QSE_RADDIC_ATTR_TYPE_OCTETS                  5
+#define QSE_RADDIC_ATTR_TYPE_IFID                    6
+#define QSE_RADDIC_ATTR_TYPE_IPV6ADDR                7
+#define QSE_RADDIC_ATTR_TYPE_IPV6PREFIX              8
+#define QSE_RADDIC_ATTR_TYPE_BYTE                    9
+#define QSE_RADDIC_ATTR_TYPE_SHORT                   10
+#define QSE_RADDIC_ATTR_TYPE_ETHERNET                11
+#define QSE_RADDIC_ATTR_TYPE_SIGNED                  12
+#define QSE_RADDIC_ATTR_TYPE_COMBO_IP                13
+#define QSE_RADDIC_ATTR_TYPE_TLV                     14
 
 struct qse_raddic_attr_flags_t 
 {
@@ -63,16 +63,16 @@ struct qse_raddic_attr_flags_t
 };
 typedef struct qse_raddic_attr_flags_t qse_raddic_attr_flags_t;
 
+typedef struct qse_raddic_attr_t qse_raddic_attr_t;
 struct qse_raddic_attr_t 
 {
 	int                     attr;
 	int                     type;
 	int                     vendor;
 	qse_raddic_attr_flags_t flags;
+	qse_raddic_attr_t*      nexta;
 	qse_char_t              name[1];
 };
-typedef struct qse_raddic_attr_t qse_raddic_attr_t;
-
 
 struct qse_raddic_value_t
 {
@@ -93,8 +93,11 @@ struct qse_raddic_vendor_t
 	qse_char_t           name[1];
 };
 
-
 typedef struct qse_raddic_t qse_raddic_t;
+
+#define QSE_RADDIC_ATTR_MAKE(vendor,value) ((((vendor) & 0xFFFF) << 8) | (value))
+#define QSE_RADDIC_ATTR_VENDOR(attr)       (((attr) >> 8) & 0xFFFF);
+#define QSE_RADDIC_ATTR_VALUE(attr)        ((attr) & 0xFF)
 
 #if defined(__cplusplus)
 extern "C" {
@@ -122,7 +125,7 @@ QSE_EXPORT qse_raddic_vendor_t* qse_raddic_findvendorbyvalue (
 QSE_EXPORT qse_raddic_vendor_t* qse_raddic_addvendor (
 	qse_raddic_t*     dic,
 	const qse_char_t* name,
-	int               value
+	int               vendorpec
 );
 
 QSE_EXPORT int qse_raddic_deletevendorbyname (
@@ -132,7 +135,39 @@ QSE_EXPORT int qse_raddic_deletevendorbyname (
 
 QSE_EXPORT int qse_raddic_deletevendorbyvalue (
 	qse_raddic_t*     dic,
-	int               value
+	int               vendorpec
+);
+
+
+
+
+QSE_EXPORT qse_raddic_attr_t* qse_raddic_findattrbyname (
+	qse_raddic_t*     dic,
+	const qse_char_t* name
+);
+
+QSE_EXPORT qse_raddic_attr_t* qse_raddic_findattrbyvalue (
+	qse_raddic_t*     dic,
+	int               attr
+);
+
+QSE_EXPORT qse_raddic_attr_t* qse_raddic_addattr (
+	qse_raddic_t*                  dic,
+	const qse_char_t*              name,
+	int                            vendor,
+	int                            type,
+	int                            value,
+	const qse_raddic_attr_flags_t* flags
+);
+
+QSE_EXPORT int qse_raddic_deleteattrbyname (
+	qse_raddic_t*     dic,
+	const qse_char_t* name
+);
+
+QSE_EXPORT int qse_raddic_deleteattrbyvalue (
+	qse_raddic_t*     dic,
+	int               attr
 );
 
 #if defined(__cplusplus)
