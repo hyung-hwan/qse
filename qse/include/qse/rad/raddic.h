@@ -76,21 +76,23 @@ typedef struct qse_raddic_attr_t qse_raddic_attr_t;
 
 struct qse_raddic_value_t
 {
-	int                     attr;
-	int                     value;
-	qse_char_t              name[1];
+	int          attr;
+	int          value;
+	qse_char_t   name[1];
 };
 typedef struct qse_raddic_value_t qse_raddic_value_t;
 
+typedef struct qse_raddic_vendor_t qse_raddic_vendor_t;
 struct qse_raddic_vendor_t
 {
-	int         vendorpec;
-	int         type;
-	int         length;
-	int         flags;
-	qse_char_t  name[1];
+	int                  vendorpec;
+	int                  type;
+	int                  length;
+	int                  flags;
+	qse_raddic_vendor_t* nextv; /* next vendor with same details except the name */
+	qse_char_t           name[1];
 };
-typedef struct qse_raddic_vendor_t qse_raddic_vendor_t;
+
 
 typedef struct qse_raddic_t qse_raddic_t;
 
@@ -120,6 +122,16 @@ QSE_EXPORT qse_raddic_vendor_t* qse_raddic_findvendorbyvalue (
 QSE_EXPORT qse_raddic_vendor_t* qse_raddic_addvendor (
 	qse_raddic_t*     dic,
 	const qse_char_t* name,
+	int               value
+);
+
+QSE_EXPORT int qse_raddic_deletevendorbyname (
+	qse_raddic_t*     dic,
+	const qse_char_t* name
+);
+
+QSE_EXPORT int qse_raddic_deletevendorbyvalue (
+	qse_raddic_t*     dic,
 	int               value
 );
 
