@@ -74,13 +74,14 @@ struct qse_raddic_attr_t
 	qse_char_t              name[1];
 };
 
-struct qse_raddic_value_t
+typedef struct qse_raddic_const_t qse_raddic_const_t;
+struct qse_raddic_const_t
 {
-	int          attr;
-	int          value;
-	qse_char_t   name[1];
+	int                 attr;     /* vendor + attribute-value */
+	int                 value;
+	qse_raddic_const_t* nextc;
+	qse_char_t          name[1];
 };
-typedef struct qse_raddic_value_t qse_raddic_value_t;
 
 typedef struct qse_raddic_vendor_t qse_raddic_vendor_t;
 struct qse_raddic_vendor_t
@@ -169,6 +170,40 @@ QSE_EXPORT int qse_raddic_deleteattrbyvalue (
 	qse_raddic_t*     dic,
 	int               attr
 );
+
+
+
+QSE_EXPORT qse_raddic_const_t* qse_raddic_findconstbyname (
+	qse_raddic_t*     dic,
+	int               attr,
+	const qse_char_t* name
+);
+
+QSE_EXPORT qse_raddic_const_t* qse_raddic_findconstbyvalue (
+	qse_raddic_t*     dic,
+	int               attr,
+	int               value
+);
+
+QSE_EXPORT qse_raddic_const_t* qse_raddic_addconst (
+	qse_raddic_t*     dic,
+	const qse_char_t* name,
+	const qse_char_t* attrstr,
+	int               value
+);
+
+QSE_EXPORT int qse_raddic_deleteconstbyname (
+	qse_raddic_t*     dic,
+	int               attr,
+	const qse_char_t* name
+);
+
+QSE_EXPORT int qse_raddic_deleteconstbyvalue (
+	qse_raddic_t*     dic,
+	int               attr,
+	int               value
+);
+
 
 #if defined(__cplusplus)
 }
