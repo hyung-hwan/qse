@@ -35,15 +35,15 @@ static int test1 ()
 	_assert (vendor != QSE_NULL, "unable to add a duplicate id");
 
 	vendor = qse_raddic_findvendorbyname (dic, QSE_T("Abiyo.Net"));
-	_assert (vendor != QSE_NULL && vendor->vendorpec == 12365, "unabled to find a vendor named Abiyo.Net");
+	_assert (vendor != QSE_NULL && vendor->vendorpec == 12365, "unable to find a vendor named Abiyo.Net");
 
 	vendor = qse_raddic_findvendorbyvalue (dic, 12365);
-	_assert (vendor != QSE_NULL && vendor->vendorpec == 12365, "unabled to find a vendor of value 12365");
-	_assert (qse_strcasecmp(vendor->name, QSE_T("abiyo-aliased.net")) == 0, "unabled to find a vendor of value 12365");
+	_assert (vendor != QSE_NULL && vendor->vendorpec == 12365, "unable to find a vendor of value 12365");
+	_assert (qse_strcasecmp(vendor->name, QSE_T("abiyo-aliased.net")) == 0, "unable to find a vendor of value 12365");
 
 	vendor = qse_raddic_findvendorbyname (dic, QSE_T("Abiyo-aliased.Net"));
-	_assert (vendor != QSE_NULL && vendor->vendorpec == 12365, "unabled to find a vendor named Abiyo-aliased.Net");
-	_assert (qse_strcasecmp(vendor->name, QSE_T("abiyo-aliased.net")) == 0, "unabled to find a vendor of value 12365");
+	_assert (vendor != QSE_NULL && vendor->vendorpec == 12365, "unable to find a vendor named Abiyo-aliased.Net");
+	_assert (qse_strcasecmp(vendor->name, QSE_T("abiyo-aliased.net")) == 0, "unable to find a vendor of value 12365");
 
 #define COUNT1 600
 #define COUNT2 700
@@ -201,105 +201,135 @@ static int test2 ()
 			_assert (attr != QSE_NULL, "unable to add an attribute");
 			_assert (attr->attr == QSE_RADDIC_ATTR_MAKE(j, i), "wrong attr value");
 			_assert (qse_strcasecmp(attr->name, tmp) == 0, "wrong attr name");
+
+			attr = qse_raddic_findattrbyvalue (dic, QSE_RADDIC_ATTR_MAKE(j, i));
+			_assert (attr != QSE_NULL, "unable to add an attribute");
+			_assert (attr->attr == QSE_RADDIC_ATTR_MAKE(j, i), "wrong attr value");
+			_assert (qse_strcasecmp(attr->name, tmp) == 0, "wrong attr name");
 		}
 	}
 
-#if 0
-	for (i = 0; i < COUNT1; i++)
+	for (j = 0; j < 100; j++)
 	{
-		qse_char_t tmp[64];
-		qse_strxfmt(tmp, QSE_COUNTOF(tmp), QSE_T("test%d"), i);
-		attr = qse_raddic_findattrbyvalue (dic, i);
-		_assert (attr != QSE_NULL, "unable to find an attribute");
-		_assert (attr->attr == i, "wrong attr value");
-		_assert (qse_strcasecmp(attr->name, tmp) == 0, "wrong attr name");
-	}
-
-	for (i = COUNT1; i < COUNT2; i++)
-	{
-		qse_char_t tmp[64];
-		qse_strxfmt(tmp, QSE_COUNTOF(tmp), QSE_T("test%d"), i);
-		attr = qse_raddic_addattr (dic, tmp, COUNT1); 
-		// insert different items with the same value
-		_assert (attr != QSE_NULL, "unable to add an attribute");
-		_assert (attr->attr == COUNT1, "wrong attr value");
-		_assert (qse_strcasecmp(attr->name, tmp) == 0, "wrong attr name");
-
-		v = qse_raddic_findattrbyvalue (dic, COUNT1);
-		_assert (attr == v, "unable to find a last added attr by value");
-	}
-
-	for (i = COUNT1; i < COUNT2 - 1; i++)
-	{
-		qse_char_t tmp[64];
-		int n;
-
-		qse_strxfmt(tmp, QSE_COUNTOF(tmp), QSE_T("test%d"), i);
-
-		n = qse_raddic_deleteattrbyname (dic, tmp); 
-		_assert (n == 0, "unable to delete an attribute");
-
-		v = qse_raddic_findattrbyname (dic, tmp);
-		_assert (v == QSE_NULL, "attr found errorenously");
-
-		if (i == COUNT2 - 1)
+		for (i = 0; i <= 255; i++)
 		{
-			v = qse_raddic_findattrbyvalue (dic, COUNT1);
-			_assert (v == QSE_NULL, "attr of COUNT1 found errorenously");
+			qse_char_t tmp[64];
+			qse_strxfmt(tmp, QSE_COUNTOF(tmp), QSE_T("testx%d-%d"), j, i);
+			attr = qse_raddic_addattr (dic, tmp, j, QSE_RADDIC_ATTR_TYPE_STRING, i, &f);
+			_assert (attr != QSE_NULL, "unable to add an attribute");
+			_assert (attr->attr == QSE_RADDIC_ATTR_MAKE(j, i), "wrong attr value");
+			_assert (qse_strcasecmp(attr->name, tmp) == 0, "wrong attr name");
+
+			qse_strxfmt(tmp, QSE_COUNTOF(tmp), QSE_T("testy%d-%d"), j, i);
+			attr = qse_raddic_addattr (dic, tmp, j, QSE_RADDIC_ATTR_TYPE_STRING, i, &f);
+			_assert (attr != QSE_NULL, "unable to add an attribute");
+			_assert (attr->attr == QSE_RADDIC_ATTR_MAKE(j, i), "wrong attr value");
+			_assert (qse_strcasecmp(attr->name, tmp) == 0, "wrong attr name");
 		}
-		else
+	}
+
+	for (j = 0; j < 100; j++)
+	{
+		for (i = 0; i <= 255; i++)
 		{
-			qse_strxfmt(tmp, QSE_COUNTOF(tmp), QSE_T("test%d"), i + 1);
-			v = qse_raddic_findattrbyname (dic, tmp);
-			_assert (v != QSE_NULL && v->attr == COUNT1 && qse_strcasecmp(tmp, v->name) == 0, "unable to find an expected attr");
+			qse_char_t tmp[64], tmpx[64], tmpy[64];
+			qse_strxfmt(tmp, QSE_COUNTOF(tmp), QSE_T("test%d-%d"), j, i);
+			qse_strxfmt(tmpx, QSE_COUNTOF(tmpx), QSE_T("testx%d-%d"), j, i);
+			qse_strxfmt(tmpy, QSE_COUNTOF(tmpy), QSE_T("testy%d-%d"), j, i);
 
-			v = qse_raddic_findattrbyvalue (dic, COUNT1);
-			_assert (v != QSE_NULL && v->attr == COUNT1, "unable to find the attr of COUNT1");
+			attr = qse_raddic_findattrbyname (dic, tmp);
+			_assert (attr != QSE_NULL, "unable to add an attribute");
+			_assert (attr->attr == QSE_RADDIC_ATTR_MAKE(j, i), "wrong attr value");
+			_assert (qse_strcasecmp(attr->name, tmp) == 0, "wrong attr name");
+
+			attr = qse_raddic_findattrbyname (dic, tmpx);
+			_assert (attr != QSE_NULL, "unable to add an attribute");
+			_assert (attr->attr == QSE_RADDIC_ATTR_MAKE(j, i), "wrong attr value");
+			_assert (qse_strcasecmp(attr->name, tmpx) == 0, "wrong attr name");
+
+			attr = qse_raddic_findattrbyname (dic, tmpy);
+			_assert (attr != QSE_NULL, "unable to add an attribute");
+			_assert (attr->attr == QSE_RADDIC_ATTR_MAKE(j, i), "wrong attr value");
+			_assert (qse_strcasecmp(attr->name, tmpy) == 0, "wrong attr name");
+
+			attr = qse_raddic_findattrbyvalue (dic, QSE_RADDIC_ATTR_MAKE(j, i));
+			_assert (attr != QSE_NULL, "unable to add an attribute");
+			_assert (attr->attr == QSE_RADDIC_ATTR_MAKE(j, i), "wrong attr value");
+			_assert (qse_strcasecmp(attr->name, tmpy) == 0, "wrong attr name");
+
+			_assert (attr->nexta != QSE_NULL, "unable to find an old attribute");
+			_assert (attr->nexta->attr == QSE_RADDIC_ATTR_MAKE(j, i), "wrong attr value");
+			_assert (qse_strcasecmp(attr->nexta->name, tmpx) == 0, "wrong attr name");
+
+			_assert (attr->nexta->nexta != QSE_NULL, "unable to find an old attribute");
+			_assert (attr->nexta->nexta->attr == QSE_RADDIC_ATTR_MAKE(j, i), "wrong attr value");
+			_assert (qse_strcasecmp(attr->nexta->nexta->name, tmp) == 0, "wrong attr name");
+
+			_assert (attr->nexta->nexta->nexta == QSE_NULL, "wrong attribute chian");
 		}
 	}
 
-	for (i = 0; i < COUNT1; i++)
+	for (j = 0; j < 100; j++)
 	{
-		qse_char_t tmp[64];
+		for (i = 0; i <= 255; i++)
+		{
+			qse_char_t tmp[64];
+			int n;
+
+			qse_strxfmt(tmp, QSE_COUNTOF(tmp), QSE_T("testx%d-%d"), j, i);
+			n = qse_raddic_deleteattrbyname (dic, tmp);
+			_assert (n == 0, "erroreneous attribute deletion failure by name");
+		}
+	}
+
+	for (j = 0; j < 100; j++)
+	{
+		for (i = 0; i <= 255; i++)
+		{
+			qse_char_t tmp[64], tmpx[64], tmpy[64];
+			qse_strxfmt(tmp, QSE_COUNTOF(tmp), QSE_T("test%d-%d"), j, i);
+			qse_strxfmt(tmpy, QSE_COUNTOF(tmpy), QSE_T("testx%d-%d"), j, i);
+			qse_strxfmt(tmpy, QSE_COUNTOF(tmpy), QSE_T("testy%d-%d"), j, i);
+
+			attr = qse_raddic_findattrbyname (dic, tmp);
+			_assert (attr != QSE_NULL, "unable to add an attribute");
+			_assert (attr->attr == QSE_RADDIC_ATTR_MAKE(j, i), "wrong attr value");
+			_assert (qse_strcasecmp(attr->name, tmp) == 0, "wrong attr name");
+
+			attr = qse_raddic_findattrbyname (dic, tmpx);
+			_assert (attr == QSE_NULL, "errorneous search success");
+
+			attr = qse_raddic_findattrbyname (dic, tmpy);
+			_assert (attr != QSE_NULL, "unable to add an attribute");
+			_assert (attr->attr == QSE_RADDIC_ATTR_MAKE(j, i), "wrong attr value");
+			_assert (qse_strcasecmp(attr->name, tmpy) == 0, "wrong attr name");
+
+
+			attr = qse_raddic_findattrbyvalue (dic, QSE_RADDIC_ATTR_MAKE(j, i));
+			_assert (attr != QSE_NULL, "unable to add an attribute");
+			_assert (attr->attr == QSE_RADDIC_ATTR_MAKE(j, i), "wrong attr value");
+			_assert (qse_strcasecmp(attr->name, tmpy) == 0, "wrong attr name");
+
+			_assert (attr->nexta != QSE_NULL, "unable to find an old attribute");
+			_assert (attr->nexta->attr == QSE_RADDIC_ATTR_MAKE(j, i), "wrong attr value");
+			_assert (qse_strcasecmp(attr->nexta->name, tmp) == 0, "wrong attr name");
+
+			_assert (attr->nexta->nexta == QSE_NULL, "wrong attribute chian");
+		}
+	}
+
+
+	{
 		int n;
+		n = qse_raddic_deleteattrbyvalue (dic, QSE_RADDIC_ATTR_MAKE(0, 0));
+		_assert (n == 0, "errorneous deletion failure by value");
 
-		qse_strxfmt(tmp, QSE_COUNTOF(tmp), QSE_T("test%d"), i);
-		n = qse_raddic_deleteattrbyname (dic, tmp);
-		_assert (n == 0, "unable to delete an attribute");
+		n = qse_raddic_deleteattrbyvalue (dic, QSE_RADDIC_ATTR_MAKE(0, 0));
+		_assert (n == 0, "errorneous deletion failure by value");
+
+		n = qse_raddic_deleteattrbyvalue (dic, QSE_RADDIC_ATTR_MAKE(0, 0));
+		_assert (n <= -1, "errorneous deletion success by value");
 	}
-
-	for (i = 0; i < COUNT1; i++)
-	{
-		qse_char_t tmp[64];
-		qse_strxfmt(tmp, QSE_COUNTOF(tmp), QSE_T("test%d"), i);
-		v = qse_raddic_addattr (dic, tmp, i);
-		_assert (v != QSE_NULL && v->attr == i, "unable to add an attribute");
-
-		qse_strxfmt(tmp, QSE_COUNTOF(tmp), QSE_T("testx%d"), i);
-		v = qse_raddic_addattr (dic, tmp, i);
-		_assert (v != QSE_NULL && v->attr == i, "unable to add an attribute");
-
-		qse_strxfmt(tmp, QSE_COUNTOF(tmp), QSE_T("testy%d"), i);
-		v = qse_raddic_addattr (dic, tmp, i);
-		_assert (v != QSE_NULL && v->attr == i, "unable to add an attribute");
-	}
-
-	for (i = 0; i < COUNT1; i++)
-	{
-		int n;
-		n = qse_raddic_deleteattrbyvalue (dic, i);
-		_assert (n == 0, "unable to delete an attribute by value");
-
-		n = qse_raddic_deleteattrbyvalue (dic, i);
-		_assert (n == 0, "unable to delete an attribute by value");
-
-		n = qse_raddic_deleteattrbyvalue (dic, i);
-		_assert (n == 0, "unable to delete an attribute by value");
-
-		n = qse_raddic_deleteattrbyvalue (dic, i);
-		_assert (n <= -1, "erroreneously successful attr deletion by value");
-	}
-#endif
 
 	qse_raddic_close (dic);
 	return 0;

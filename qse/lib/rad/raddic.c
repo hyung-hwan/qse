@@ -500,7 +500,7 @@ int qse_raddic_deleteattrbyname (qse_raddic_t* dic, const qse_char_t* name)
 		QSE_ASSERT (dv->attr == dv2->attr);
 		QSE_ASSERT (dv->vendor == dv2->vendor);
 
-		/* when the attr of the given name is not the first one
+		/* when the attribute of the given name is not the first one
 		 * referenced by value, i need to unlink the attr from the
 		 * attr chains with the same ID */
 		x = dv2;
@@ -515,11 +515,17 @@ int qse_raddic_deleteattrbyname (qse_raddic_t* dic, const qse_char_t* name)
 			y = x;
 			x = x->nexta;
 		}
+		/* no need to update cache as the deleted item was not the first one formerly */
 	}
 	else
 	{
 		/* this is the only attr with the attr ID. i can 
 		 * safely remove it from the lookup table by value */
+		if (dv->vendor == 0)
+		{
+			/* update the cache first */
+			dic->base_attrs[dv->vendor] = QSE_NULL;
+		}
 		qse_htl_delete (&dic->attrs_byvalue, dv);
 	}
 
@@ -534,6 +540,14 @@ int qse_raddic_deleteattrbyvalue (qse_raddic_t* dic, int attr)
 
 	dv = qse_raddic_findattrbyvalue(dic, attr);
 	if (!dv) return -1;
+
+	QSE_ASSERT (QSE_RADDIC_ATTR_VENDOR(attr) == dv->vendor);
+
+	if (QSE_RADDIC_ATTR_VENDOR(attr) == 0) 
+	{
+		/* update the cache */
+		dic->base_attrs[QSE_RADDIC_ATTR_VALUE(attr)] = dv->nexta;
+	}
 
 	if (dv->nexta)
 	{

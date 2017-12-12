@@ -96,7 +96,7 @@ struct qse_raddic_vendor_t
 typedef struct qse_raddic_t qse_raddic_t;
 
 #define QSE_RADDIC_ATTR_MAKE(vendor,value) ((((vendor) & 0xFFFF) << 8) | (value))
-#define QSE_RADDIC_ATTR_VENDOR(attr)       (((attr) >> 8) & 0xFFFF);
+#define QSE_RADDIC_ATTR_VENDOR(attr)       (((attr) >> 8) & 0xFFFF)
 #define QSE_RADDIC_ATTR_VALUE(attr)        ((attr) & 0xFF)
 
 #if defined(__cplusplus)
