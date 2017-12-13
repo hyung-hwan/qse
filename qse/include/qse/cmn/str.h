@@ -170,6 +170,7 @@ typedef qse_wchar_t* (*qse_wcssubst_t) (
 #define QSE_STRTONUM(value,nptr,endptr,base) do {\
 	int __ston_f = 0, __ston_v; \
 	const qse_char_t* __ston_ptr = nptr; \
+	int __ston_base = base; \
 	for (;;) { \
 		qse_char_t __ston_c = *__ston_ptr; \
 		if (__ston_c == QSE_T(' ') || \
@@ -178,8 +179,15 @@ typedef qse_wchar_t* (*qse_wcssubst_t) (
 		else if (__ston_c == QSE_T('+')) { __ston_ptr++; } \
 		break; \
 	} \
-	for (value = 0; (__ston_v = QSE_CHARTONUM(*__ston_ptr, base)) < base; __ston_ptr++) { \
-		value = value * base + __ston_v; \
+	if (base == 0) { \
+		if (*__ston_ptr == QSE_T('0')) { \
+		       if (*(__ston_ptr + 1) == QSE_T('x') || *(__ston_ptr + 1) == QSE_T('X')) { __ston_base = 16; __ston_ptr += 2; } \
+		       else { __ston_base = 8; __ston_ptr++; } \
+		} \
+		else __ston_base = 10; \
+	} \
+	for (value = 0; (__ston_v = QSE_CHARTONUM(*__ston_ptr, __ston_base)) < __ston_base; __ston_ptr++) { \
+		value = value * __ston_base + __ston_v; \
 	} \
 	if (endptr) *((const qse_char_t**)endptr) = __ston_ptr; \
 	if (__ston_f > 0) value *= -1; \
@@ -190,7 +198,7 @@ typedef qse_wchar_t* (*qse_wcssubst_t) (
 	int __ston_f = 0, __ston_v; \
 	const qse_char_t* __ston_ptr = nptr; \
 	const qse_char_t* __ston_end = __ston_ptr + len; \
-	value = 0; \
+	int __ston_base = base; \
 	while (__ston_ptr < __ston_end) { \
 		qse_char_t __ston_c = *__ston_ptr; \
 		if (__ston_c == QSE_T(' ') || __ston_c == QSE_T('\t')) { \
@@ -200,9 +208,15 @@ typedef qse_wchar_t* (*qse_wcssubst_t) (
 		else if (__ston_c == QSE_T('+')) { __ston_ptr++; } \
 		break; \
 	} \
-	for (value = 0; __ston_ptr < __ston_end && \
-	               (__ston_v = QSE_CHARTONUM(*__ston_ptr, base)) != base; __ston_ptr++) { \
-		value = value * base + __ston_v; \
+	if (base == 0) { \
+		if (__ston_ptr < __ston_end && *__ston_ptr == QSE_T('0')) { \
+		       if ((__ston_ptr < __ston_end - 1) && (*(__ston_ptr + 1) == QSE_T('x') || *(__ston_ptr + 1) == QSE_T('X'))) { __ston_base = 16; __ston_ptr += 2; } \
+		       else { __ston_base = 8; __ston_ptr++; } \
+		} \
+		else __ston_base = 10; \
+	} \
+	for (value = 0; __ston_ptr < __ston_end && (__ston_v = QSE_CHARTONUM(*__ston_ptr, __ston_base)) != __ston_base; __ston_ptr++) { \
+		value = value * __ston_base + __ston_v; \
 	} \
 	if (endptr) *((const qse_char_t**)endptr) = __ston_ptr; \
 	if (__ston_f > 0) value *= -1; \
@@ -218,6 +232,7 @@ typedef qse_wchar_t* (*qse_wcssubst_t) (
 #define QSE_MBSTONUM(value,nptr,endptr,base) do {\
 	int __ston_f = 0, __ston_v; \
 	const qse_mchar_t* __ston_ptr = nptr; \
+	int __ston_base = base; \
 	for (;;) { \
 		qse_mchar_t __ston_c = *__ston_ptr; \
 		if (__ston_c == QSE_MT(' ') || \
@@ -226,8 +241,15 @@ typedef qse_wchar_t* (*qse_wcssubst_t) (
 		else if (__ston_c == QSE_MT('+')) { __ston_ptr++; } \
 		break; \
 	} \
-	for (value = 0; (__ston_v = QSE_MCHARTONUM(*__ston_ptr, base)) < base; __ston_ptr++) { \
-		value = value * base + __ston_v; \
+	if (base == 0) { \
+		if (*__ston_ptr == QSE_MT('0')) { \
+		       if (*(__ston_ptr + 1) == QSE_MT('x') || *(__ston_ptr + 1) == QSE_MT('X')) { __ston_base = 16; __ston_ptr += 2; } \
+		       else { __ston_base = 8; __ston_ptr++; } \
+		} \
+		else __ston_base = 10; \
+	} \
+	for (value = 0; (__ston_v = QSE_MCHARTONUM(*__ston_ptr, __ston_base)) < __ston_base; __ston_ptr++) { \
+		value = value * __ston_base + __ston_v; \
 	} \
 	if (endptr) *((const qse_mchar_t**)endptr) = __ston_ptr; \
 	if (__ston_f > 0) value *= -1; \
@@ -238,7 +260,7 @@ typedef qse_wchar_t* (*qse_wcssubst_t) (
 	int __ston_f = 0, __ston_v; \
 	const qse_mchar_t* __ston_ptr = nptr; \
 	const qse_mchar_t* __ston_end = __ston_ptr + len; \
-	value = 0; \
+	int __ston_base = base; \
 	while (__ston_ptr < __ston_end) { \
 		qse_mchar_t __ston_c = *__ston_ptr; \
 		if (__ston_c == QSE_MT(' ') || __ston_c == QSE_MT('\t')) { \
@@ -248,9 +270,15 @@ typedef qse_wchar_t* (*qse_wcssubst_t) (
 		else if (__ston_c == QSE_MT('+')) { __ston_ptr++; } \
 		break; \
 	} \
-	for (value = 0; __ston_ptr < __ston_end && \
-	               (__ston_v = QSE_MCHARTONUM(*__ston_ptr, base)) != base; __ston_ptr++) { \
-		value = value * base + __ston_v; \
+	if (base == 0) { \
+		if (__ston_ptr < __ston_end && *__ston_ptr == QSE_MT('0')) { \
+		       if ((__ston_ptr < __ston_end - 1) && (*(__ston_ptr + 1) == QSE_MT('x') || *(__ston_ptr + 1) == QSE_MT('X'))) { __ston_base = 16; __ston_ptr += 2; } \
+		       else { __ston_base = 8; __ston_ptr++; } \
+		} \
+		else __ston_base = 10; \
+	} \
+	for (value = 0; __ston_ptr < __ston_end && (__ston_v = QSE_MCHARTONUM(*__ston_ptr, __ston_base)) != __ston_base; __ston_ptr++) { \
+		value = value * __ston_base + __ston_v; \
 	} \
 	if (endptr) *((const qse_mchar_t**)endptr) = __ston_ptr; \
 	if (__ston_f > 0) value *= -1; \
@@ -266,6 +294,7 @@ typedef qse_wchar_t* (*qse_wcssubst_t) (
 #define QSE_WCSTONUM(value,nptr,endptr,base) do {\
 	int __ston_f = 0, __ston_v; \
 	const qse_wchar_t* __ston_ptr = nptr; \
+	int __ston_base = base; \
 	for (;;) { \
 		qse_wchar_t __ston_c = *__ston_ptr; \
 		if (__ston_c == QSE_WT(' ') || \
@@ -274,8 +303,15 @@ typedef qse_wchar_t* (*qse_wcssubst_t) (
 		else if (__ston_c == QSE_WT('+')) { __ston_ptr++; } \
 		break; \
 	} \
-	for (value = 0; (__ston_v = QSE_WCHARTONUM(*__ston_ptr, base)) < base; __ston_ptr++) { \
-		value = value * base + __ston_v; \
+	if (base == 0) { \
+		if (*__ston_ptr == QSE_WT('0')) { \
+		       if (*(__ston_ptr + 1) == QSE_WT('x') || *(__ston_ptr + 1) == QSE_WT('X')) { __ston_base = 16; __ston_ptr += 2; } \
+		       else { __ston_base = 8; __ston_ptr++; } \
+		} \
+		else __ston_base = 10; \
+	} \
+	for (value = 0; (__ston_v = QSE_WCHARTONUM(*__ston_ptr, __ston_base)) < __ston_base; __ston_ptr++) { \
+		value = value * __ston_base + __ston_v; \
 	} \
 	if (endptr) *((const qse_wchar_t**)endptr) = __ston_ptr; \
 	if (__ston_f > 0) value *= -1; \
@@ -286,7 +322,7 @@ typedef qse_wchar_t* (*qse_wcssubst_t) (
 	int __ston_f = 0, __ston_v; \
 	const qse_wchar_t* __ston_ptr = nptr; \
 	const qse_wchar_t* __ston_end = __ston_ptr + len; \
-	value = 0; \
+	int __ston_base = base; \
 	while (__ston_ptr < __ston_end) { \
 		qse_wchar_t __ston_c = *__ston_ptr; \
 		if (__ston_c == QSE_WT(' ') || __ston_c == QSE_WT('\t')) { \
@@ -296,9 +332,15 @@ typedef qse_wchar_t* (*qse_wcssubst_t) (
 		else if (__ston_c == QSE_WT('+')) { __ston_ptr++; } \
 		break; \
 	} \
-	for (value = 0; __ston_ptr < __ston_end && \
-	               (__ston_v = QSE_WCHARTONUM(*__ston_ptr, base)) != base; __ston_ptr++) { \
-		value = value * base + __ston_v; \
+	if (base == 0) { \
+		if (__ston_ptr < __ston_end && *__ston_ptr == QSE_WT('0')) { \
+		       if ((__ston_ptr < __ston_end - 1) && (*(__ston_ptr + 1) == QSE_WT('x') || *(__ston_ptr + 1) == QSE_WT('X'))) { __ston_base = 16; __ston_ptr += 2; } \
+		       else { __ston_base = 8; __ston_ptr++; } \
+		} \
+		else __ston_base = 10; \
+	} \
+	for (value = 0; __ston_ptr < __ston_end && (__ston_v = QSE_WCHARTONUM(*__ston_ptr, __ston_base)) != __ston_base; __ston_ptr++) { \
+		value = value * __ston_base + __ston_v; \
 	} \
 	if (endptr) *((const qse_wchar_t**)endptr) = __ston_ptr; \
 	if (__ston_f > 0) value *= -1; \

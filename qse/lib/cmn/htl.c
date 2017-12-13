@@ -341,8 +341,14 @@ int qse_htl_init (qse_htl_t* ht, qse_mmgr_t* mmgr, int keysize)
 
 void qse_htl_fini (qse_htl_t* ht)
 {
+	qse_htl_clear (ht);
+	QSE_MMGR_FREE (ht->mmgr, ht->buckets);
+}
+
+void qse_htl_clear (qse_htl_t* ht)
+{
 	int i;
-	qse_htl_node_t *node, *next;
+	qse_htl_node_t* node, * next;
 
 	/*
 	 *	Walk over the buckets, freeing them all.
@@ -363,9 +369,10 @@ void qse_htl_fini (qse_htl_t* ht)
 		}
 	}
 
-	QSE_MMGR_FREE (ht->mmgr, ht->buckets);
+	QSE_MEMSET (ht->buckets, 0, sizeof(*ht->buckets) * ht->num_buckets);
+	ht->buckets[0] = &ht->null;
+	ht->num_elements = 0;
 }
-
 /* ------------------------------------------------------------------------- */
 
 /*

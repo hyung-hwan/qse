@@ -30,6 +30,33 @@
 #include <qse/types.h>
 #include <qse/macros.h>
 
+enum qse_raddic_opt_t
+{
+	QSE_RADDIC_TRAIT
+};
+typedef enum qse_raddic_opt_t qse_raddic_opt_t;
+
+enum qse_raddic_trait_t
+{
+	QSE_RADDIC_ALLOW_CONST_WITHOUT_ATTR = (1 << 0)
+};
+typedef enum qse_raddic_trait_t qse_raddic_trait_t;
+
+enum qse_raddic_errnum_t
+{
+	QSE_RADDIC_ENOERR,
+	QSE_RADDIC_EOTHER,
+	QSE_RADDIC_ENOIMPL,
+	QSE_RADDIC_ESYSERR,
+	QSE_RADDIC_EINTERN,
+	QSE_RADDIC_ENOMEM,
+	QSE_RADDIC_EINVAL,
+	QSE_RADDIC_ENOENT,
+	QSE_RADDIC_EEXIST,
+	QSE_RADDIC_ESYNERR
+};
+typedef enum qse_raddic_errnum_t qse_raddic_errnum_t;
+
 #define QSE_RADDIC_ATTR_TYPE_STRING                  0
 #define QSE_RADDIC_ATTR_TYPE_INTEGER                 1
 #define QSE_RADDIC_ATTR_TYPE_IPADDR                  2
@@ -66,7 +93,7 @@ typedef struct qse_raddic_attr_flags_t qse_raddic_attr_flags_t;
 typedef struct qse_raddic_attr_t qse_raddic_attr_t;
 struct qse_raddic_attr_t 
 {
-	int                     attr;
+	qse_uint32_t            attr;
 	int                     type;
 	int                     vendor;
 	qse_raddic_attr_flags_t flags;
@@ -77,7 +104,7 @@ struct qse_raddic_attr_t
 typedef struct qse_raddic_const_t qse_raddic_const_t;
 struct qse_raddic_const_t
 {
-	int                 attr;     /* vendor + attribute-value */
+	qse_uint32_t        attr;     /* vendor + attribute-value */
 	int                 value;
 	qse_raddic_const_t* nextc;
 	qse_char_t          name[1];
@@ -96,9 +123,9 @@ struct qse_raddic_vendor_t
 
 typedef struct qse_raddic_t qse_raddic_t;
 
-#define QSE_RADDIC_ATTR_MAKE(vendor,value) ((((vendor) & 0xFFFF) << 8) | (value))
-#define QSE_RADDIC_ATTR_VENDOR(attr)       (((attr) >> 8) & 0xFFFF)
-#define QSE_RADDIC_ATTR_VALUE(attr)        ((attr) & 0xFF)
+#define QSE_RADDIC_ATTR_MAKE(vendor,value) ((((vendor) & 0xFFFFu) << 16) | (value))
+#define QSE_RADDIC_ATTR_VENDOR(attr)       (((attr) >> 16) & 0xFFFFu)
+#define QSE_RADDIC_ATTR_VALUE(attr)        ((attr) & 0xFFFFu)
 
 #if defined(__cplusplus)
 extern "C" {
@@ -111,6 +138,47 @@ QSE_EXPORT qse_raddic_t* qse_raddic_open (
 
 QSE_EXPORT void qse_raddic_close (
 	qse_raddic_t* dic
+);
+
+QSE_EXPORT int qse_raddic_getopt (
+	qse_raddic_t*    raddic,
+	qse_raddic_opt_t id,
+	void*            value
+);
+
+QSE_EXPORT int qse_raddic_setopt (
+	qse_raddic_t*    raddic,
+	qse_raddic_opt_t id,
+	const void*     value
+);
+
+QSE_EXPORT qse_raddic_errnum_t qse_raddic_geterrnum (
+	qse_raddic_t* dic
+);
+
+QSE_EXPORT const qse_char_t* qse_raddic_geterrmsg (
+	qse_raddic_t* dic
+);
+
+QSE_EXPORT void qse_raddic_seterrnum (
+	qse_raddic_t*       dic,
+	qse_raddic_errnum_t errnum
+);
+
+QSE_EXPORT void qse_raddic_seterrfmt (
+	qse_raddic_t*        dic,
+	qse_raddic_errnum_t  errnum,
+	const qse_char_t*    fmt,
+	...
+);
+
+QSE_EXPORT void qse_raddic_clear (
+	qse_raddic_t* dic
+);
+
+QSE_EXPORT int qse_raddic_load (
+	qse_raddic_t*     dic,
+	const qse_char_t* path
 );
 
 QSE_EXPORT qse_raddic_vendor_t* qse_raddic_findvendorbyname (
@@ -149,7 +217,7 @@ QSE_EXPORT qse_raddic_attr_t* qse_raddic_findattrbyname (
 
 QSE_EXPORT qse_raddic_attr_t* qse_raddic_findattrbyvalue (
 	qse_raddic_t*     dic,
-	int               attr
+	qse_uint32_t      attr
 );
 
 QSE_EXPORT qse_raddic_attr_t* qse_raddic_addattr (
@@ -172,16 +240,15 @@ QSE_EXPORT int qse_raddic_deleteattrbyvalue (
 );
 
 
-
 QSE_EXPORT qse_raddic_const_t* qse_raddic_findconstbyname (
 	qse_raddic_t*     dic,
-	int               attr,
+	qse_uint32_t      attr,
 	const qse_char_t* name
 );
 
 QSE_EXPORT qse_raddic_const_t* qse_raddic_findconstbyvalue (
 	qse_raddic_t*     dic,
-	int               attr,
+	qse_uint32_t      attr,
 	int               value
 );
 
@@ -194,13 +261,13 @@ QSE_EXPORT qse_raddic_const_t* qse_raddic_addconst (
 
 QSE_EXPORT int qse_raddic_deleteconstbyname (
 	qse_raddic_t*     dic,
-	int               attr,
+	qse_uint32_t      attr,
 	const qse_char_t* name
 );
 
 QSE_EXPORT int qse_raddic_deleteconstbyvalue (
 	qse_raddic_t*     dic,
-	int               attr,
+	qse_uint32_t      attr,
 	int               value
 );
 
