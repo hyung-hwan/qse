@@ -34,7 +34,7 @@ static qse_size_t hash_item (qse_htl_t* htl, const void* data)
 {
 	item_t* item = (item_t*)data;
 	//return item->a + 123445;
-	return qse_genhash (&item->a, QSE_SIZEOF(item->a));
+	return qse_genhash32 (&item->a, QSE_SIZEOF(item->a));
 }
 
 static int comp_item (qse_htl_t* htl, const void* data1, const void* data2)
@@ -135,6 +135,7 @@ static int test2 ()
 	item_t x;
 	qse_htl_t* htl;
 	qse_htl_node_t* np;
+	int count = 0;
 
 	htl = qse_htl_open (QSE_MMGR_GETDFL(), 0, QSE_SIZEOF(x));
 	if (htl == QSE_NULL)
@@ -148,6 +149,7 @@ static int test2 ()
 	qse_htl_setcopier (htl, copy_item);
 	qse_htl_setfreeer (htl, free_item);
 
+again:
 	for (x.a = 9; x.a < 20; x.a++)
 	{
 		x.x = x.a * 10;
@@ -195,6 +197,15 @@ static int test2 ()
 
 	qse_printf (QSE_T("total %lu items\n"), (unsigned long)qse_htl_getsize(htl));
 	qse_htl_walk (htl, walk2, QSE_NULL);
+
+	qse_htl_clear (htl);
+	if (count == 0) 
+	{
+		count++;
+		qse_printf (QSE_T("<<<TRAYING AGAIN ....>>>\n"));
+		goto again;
+	}
+
 	qse_htl_close (htl);
 	return 0;
 }

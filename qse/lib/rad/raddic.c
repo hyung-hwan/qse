@@ -47,14 +47,38 @@
  */
 
 #include <qse/rad/raddic.h>
+#include <qse/rad/radmsg.h>
 #include <qse/cmn/htl.h>
 #include <qse/cmn/str.h>
+#include <qse/cmn/chr.h>
 #include "../cmn/mem-prv.h"
 #include <qse/si/sio.h>
+#include <stdarg.h>
+
+#include <stdio.h>
+#define fr_strerror_printf printf
+
+
+typedef struct const_fixup_t const_fixup_t;
+
+struct const_fixup_t 
+{
+	const_fixup_t*        next;
+	qse_raddic_const_t*   dval;
+	qse_char_t            attrstr[1];
+};
 
 struct qse_raddic_t
 {
-	qse_mmgr_t* mmgr;
+	qse_mmgr_t*         mmgr;
+	qse_raddic_errnum_t errnum;
+	qse_char_t          errmsg[256];
+	qse_char_t          errmsg2[256];
+
+	struct 
+	{
+		int trait;
+	} opt;
 
 	qse_htl_t vendors_byname;
 	qse_htl_t vendors_byvalue;
@@ -65,36 +89,48 @@ struct qse_raddic_t
 
 	qse_raddic_attr_t* last_attr;
 	qse_raddic_attr_t* base_attrs[256];
+	const_fixup_t* const_fixup;
 };
-
 
 typedef struct name_id_t name_id_t;
 struct name_id_t
 {
-	const char      *name;
-	int             id;
+	const qse_char_t* name;
+	int               id;
 };
 
 static const name_id_t type_table[] = 
 {
-	{ "integer",    QSE_RADDIC_ATTR_TYPE_INTEGER },
-	{ "string",     QSE_RADDIC_ATTR_TYPE_STRING },
-	{ "ipaddr",     QSE_RADDIC_ATTR_TYPE_IPADDR },
-	{ "date",       QSE_RADDIC_ATTR_TYPE_DATE },
-	{ "abinary",    QSE_RADDIC_ATTR_TYPE_ABINARY },
-	{ "octets",     QSE_RADDIC_ATTR_TYPE_OCTETS },
-	{ "ifid",       QSE_RADDIC_ATTR_TYPE_IFID },
-	{ "ipv6addr",   QSE_RADDIC_ATTR_TYPE_IPV6ADDR },
-	{ "ipv6prefix", QSE_RADDIC_ATTR_TYPE_IPV6PREFIX },
-	{ "byte",       QSE_RADDIC_ATTR_TYPE_BYTE },
-	{ "short",      QSE_RADDIC_ATTR_TYPE_SHORT },
-	{ "ether",      QSE_RADDIC_ATTR_TYPE_ETHERNET },
-	{ "combo-ip",   QSE_RADDIC_ATTR_TYPE_COMBO_IP },
-	{ "tlv",        QSE_RADDIC_ATTR_TYPE_TLV },
-	{ "signed",     QSE_RADDIC_ATTR_TYPE_SIGNED },
-	{ QSE_NULL,     0 }
+	{ QSE_T("integer"),    QSE_RADDIC_ATTR_TYPE_INTEGER },
+	{ QSE_T("string"),     QSE_RADDIC_ATTR_TYPE_STRING },
+	{ QSE_T("ipaddr"),     QSE_RADDIC_ATTR_TYPE_IPADDR },
+	{ QSE_T("date"),       QSE_RADDIC_ATTR_TYPE_DATE },
+	{ QSE_T("abinary"),    QSE_RADDIC_ATTR_TYPE_ABINARY },
+	{ QSE_T("octets"),     QSE_RADDIC_ATTR_TYPE_OCTETS },
+	{ QSE_T("ifid"),       QSE_RADDIC_ATTR_TYPE_IFID },
+	{ QSE_T("ipv6addr"),   QSE_RADDIC_ATTR_TYPE_IPV6ADDR },
+	{ QSE_T("ipv6prefix"), QSE_RADDIC_ATTR_TYPE_IPV6PREFIX },
+	{ QSE_T("byte"),       QSE_RADDIC_ATTR_TYPE_BYTE },
+	{ QSE_T("short"),      QSE_RADDIC_ATTR_TYPE_SHORT },
+	{ QSE_T("ether"),      QSE_RADDIC_ATTR_TYPE_ETHERNET },
+	{ QSE_T("combo-ip"),   QSE_RADDIC_ATTR_TYPE_COMBO_IP },
+	{ QSE_T("tlv"),        QSE_RADDIC_ATTR_TYPE_TLV },
+	{ QSE_T("signed"),     QSE_RADDIC_ATTR_TYPE_SIGNED },
 };
 
+/* -------------------------------------------------------------------------- */
+static int str_to_type (qse_raddic_t* dic, const qse_char_t* name)
+{
+	int i;
+
+	for (i = 0; i < QSE_COUNTOF(type_table); i++)
+	{
+		if (qse_strcmp(name, type_table[i].name) == 0) return  type_table[i].id;
+	}
+
+	dic->errnum = QSE_RADDIC_EINVAL;
+	return -1;
+}
 /* -------------------------------------------------------------------------- */
 
 static qse_uint32_t dict_vendor_name_hash (qse_htl_t* htl, const void *data)
@@ -192,7 +228,7 @@ static int dict_attr_value_cmp (qse_htl_t* htl, const void* one, const void* two
 struct const_hsd_t
 {
 	const qse_char_t* name;
-	int attr;
+	qse_uint32_t attr;
 };
 typedef struct const_hsd_t const_hsd_t;
 
@@ -270,6 +306,7 @@ int qse_raddic_init (qse_raddic_t* dic, qse_mmgr_t* mmgr)
 {
 	QSE_MEMSET (dic, 0, QSE_SIZEOF(*dic));
 	dic->mmgr = mmgr;
+	qse_raddic_seterrnum (dic, QSE_RADDIC_ENOERR);
 
 	qse_htl_init (&dic->vendors_byname, mmgr, 1);
 	qse_htl_init (&dic->vendors_byvalue, mmgr, 1);
@@ -307,6 +344,8 @@ int qse_raddic_init (qse_raddic_t* dic, qse_mmgr_t* mmgr)
 
 void qse_raddic_fini (qse_raddic_t* dic)
 {
+	qse_raddic_clear (dic);
+
 	qse_htl_fini (&dic->vendors_byname);
 	qse_htl_fini (&dic->vendors_byvalue);
 	qse_htl_fini (&dic->attrs_byname);
@@ -339,12 +378,112 @@ void qse_raddic_close (qse_raddic_t* dic)
 	QSE_MMGR_FREE (dic->mmgr, dic);
 }
 
+int qse_raddic_getopt (qse_raddic_t* dic, qse_raddic_opt_t id, void* value)
+{
+	switch (id)
+	{
+		case QSE_RADDIC_TRAIT:
+			*(int*)value = dic->opt.trait;
+			return 0;
+	}
+
+	qse_raddic_seterrnum (dic, QSE_RADDIC_EINVAL);
+	return -1;
+}
+
+int qse_raddic_setopt (qse_raddic_t* dic, qse_raddic_opt_t id, const void* value)
+{
+	switch (id)
+	{
+		case QSE_RADDIC_TRAIT:
+			dic->opt.trait = *(const int*)value;
+			return 0;
+	}
+
+	qse_raddic_seterrnum (dic, QSE_RADDIC_EINVAL);
+	return -1;
+}
+
+
+static const qse_char_t* errnum_to_str (qse_raddic_errnum_t errnum)
+{
+	static const qse_char_t* errstr[] =
+	{
+		QSE_T("no error"),
+		QSE_T("other error"),
+		QSE_T("not implemented"),
+		QSE_T("subsystem error"),
+		QSE_T("internal error that should never have happened"),
+		QSE_T("insufficient memory"),
+		QSE_T("invalid parameter or data"),
+		QSE_T("no data found"),
+		QSE_T("existing data found"),
+		QSE_T("syntax error")
+	};
+
+	return errnum < QSE_COUNTOF(errstr)? errstr[errnum]: QSE_T("unknown error");
+}
+
+qse_raddic_errnum_t qse_raddic_geterrnum (qse_raddic_t* dic)
+{
+	return dic->errnum;
+}
+
+const qse_char_t* qse_raddic_geterrmsg (qse_raddic_t* dic)
+{
+	return dic->errmsg;
+}
+
+void qse_raddic_seterrnum (qse_raddic_t* dic, qse_raddic_errnum_t errnum)
+{
+	dic->errnum = errnum;
+	qse_strxcpy (dic->errmsg, QSE_COUNTOF(dic->errmsg), errnum_to_str(errnum));
+}
+
+void qse_raddic_seterrfmt (qse_raddic_t* dic, qse_raddic_errnum_t errnum, const qse_char_t* fmt, ...)
+{
+	va_list ap;
+	dic->errnum = errnum;
+	va_start (ap, fmt);
+	qse_strxvfmt (dic->errmsg, QSE_COUNTOF(dic->errmsg), fmt, ap);
+	va_end (ap);
+}
+
+/* -------------------------------------------------------------------------- */
+
+void qse_raddic_clear (qse_raddic_t* dic)
+{
+	int i;
+
+	while (dic->const_fixup)
+	{
+		const_fixup_t* fixup = dic->const_fixup;
+		dic->const_fixup = dic->const_fixup->next;
+		QSE_MMGR_FREE (dic->mmgr, fixup->dval);
+		QSE_MMGR_FREE (dic->mmgr, fixup);
+	}
+
+	dic->last_attr = QSE_NULL;
+	for (i = 0; i < QSE_COUNTOF(dic->base_attrs); i++) dic->base_attrs[i] = QSE_NULL;
+
+	qse_htl_clear (&dic->vendors_byname);
+	qse_htl_clear (&dic->vendors_byvalue);
+	qse_htl_clear (&dic->attrs_byname);
+	qse_htl_clear (&dic->attrs_byvalue);
+	qse_htl_clear (&dic->consts_byvalue);
+	qse_htl_clear (&dic->consts_byname);
+}
+
 /* -------------------------------------------------------------------------- */
 qse_raddic_vendor_t* qse_raddic_findvendorbyname (qse_raddic_t* dic, const qse_char_t* name)
 {
 	qse_htl_node_t* np;
 	np = qse_htl_heterosearch (&dic->vendors_byname, name, dict_vendor_name_hetero_hash, dict_vendor_name_hetero_cmp);
-	if (!np) return QSE_NULL;
+	if (!np) 
+	{
+		qse_raddic_seterrfmt (dic, QSE_RADDIC_ENOENT, QSE_T("cannot find a vendor named %s"), name);
+		return QSE_NULL;
+	}
 	return (qse_raddic_vendor_t*)np->data;
 }
 
@@ -358,7 +497,11 @@ qse_raddic_vendor_t* qse_raddic_findvendorbyvalue (qse_raddic_t* dic, int vendor
 
 	dv.vendorpec = vendorpec;
 	np = qse_htl_search (&dic->vendors_byvalue, &dv);
-	if (!np) return QSE_NULL;
+	if (!np) 
+	{
+		qse_raddic_seterrfmt (dic, QSE_RADDIC_ENOENT, QSE_T("cannot find a vendor of value %d"), vendorpec);
+		return QSE_NULL;
+	}
 	return (qse_raddic_vendor_t*)np->data;
 }
 
@@ -368,13 +511,21 @@ qse_raddic_vendor_t* qse_raddic_addvendor (qse_raddic_t* dic, const qse_char_t* 
 	qse_raddic_vendor_t* dv, * old_dv;
 	qse_htl_node_t* np;
 
-	if (vendorpec <= 0 || vendorpec > 65535) return QSE_NULL;
+	if (vendorpec <= 0 || vendorpec > 65535) 
+	{
+		qse_raddic_seterrfmt (dic, QSE_RADDIC_EINVAL, QSE_T("vendor value %d out of accepted range"), vendorpec);
+		return QSE_NULL;
+	}
 
 	length = qse_strlen(name);
 
 	/* no +1 for the terminating null because dv->name is char[1] */
 	dv = QSE_MMGR_ALLOC(dic->mmgr, QSE_SIZEOF(*dv) + (length * QSE_SIZEOF(*name)));
-	if (dv == QSE_NULL) return QSE_NULL;
+	if (dv == QSE_NULL) 
+	{
+		qse_raddic_seterrnum (dic, QSE_RADDIC_ENOMEM);
+		return QSE_NULL;
+	}
 
 	qse_strcpy(dv->name, name);
 	dv->vendorpec = vendorpec;
@@ -386,6 +537,9 @@ qse_raddic_vendor_t* qse_raddic_addvendor (qse_raddic_t* dic, const qse_char_t* 
 	if (!np || np->data != dv)
 	{
 		/* insertion failure or existing item found */
+		if (!np) qse_raddic_seterrnum (dic, QSE_RADDIC_ENOMEM);
+		else qse_raddic_seterrfmt (dic, QSE_RADDIC_EEXIST, QSE_T("existing vendor %s"), name);
+
 		QSE_MMGR_FREE (dic->mmgr, dv);
 		return QSE_NULL;
 	}
@@ -405,6 +559,7 @@ qse_raddic_vendor_t* qse_raddic_addvendor (qse_raddic_t* dic, const qse_char_t* 
 		/* update failure, this entry must be new. try insertion */
 		if (!qse_htl_insert (&dic->vendors_byvalue, dv))
 		{
+			qse_raddic_seterrnum (dic, QSE_RADDIC_ENOMEM);
 			qse_htl_delete (&dic->vendors_byname, dv);
 			return QSE_NULL;
 		}
@@ -487,11 +642,15 @@ qse_raddic_attr_t* qse_raddic_findattrbyname (qse_raddic_t* dic, const qse_char_
 {
 	qse_htl_node_t* np;
 	np = qse_htl_heterosearch (&dic->attrs_byname, name, dict_attr_name_hetero_hash, dict_attr_name_hetero_cmp);
-	if (!np) return QSE_NULL;
+	if (!np) 
+	{
+		qse_raddic_seterrfmt (dic, QSE_RADDIC_ENOENT, QSE_T("cannot find an attribute named %s"), name);
+		return QSE_NULL;
+	}
 	return (qse_raddic_attr_t*)np->data;
 }
 
-qse_raddic_attr_t* qse_raddic_findattrbyvalue (qse_raddic_t* dic, int attr)
+qse_raddic_attr_t* qse_raddic_findattrbyvalue (qse_raddic_t* dic, qse_uint32_t attr)
 {
 	qse_htl_node_t* np;
 	qse_raddic_attr_t dv;
@@ -502,7 +661,11 @@ qse_raddic_attr_t* qse_raddic_findattrbyvalue (qse_raddic_t* dic, int attr)
 	dv.attr = attr;
 	dv.vendor = QSE_RADDIC_ATTR_VENDOR(attr);
 	np = qse_htl_search (&dic->attrs_byvalue, &dv);
-	if (!np) return QSE_NULL;
+	if (!np) 
+	{
+		qse_raddic_seterrfmt (dic, QSE_RADDIC_ENOENT, QSE_T("cannot find an attribute of value %d and of vendor %d"), QSE_RADDIC_ATTR_VALUE(attr), QSE_RADDIC_ATTR_VENDOR(attr));
+		return QSE_NULL;
+	}
 	return (qse_raddic_attr_t*)np->data;
 }
 
@@ -512,8 +675,17 @@ qse_raddic_attr_t* qse_raddic_addattr (qse_raddic_t* dic, const qse_char_t* name
 	qse_raddic_attr_t* dv, * old_dv;
 	qse_htl_node_t* np;
 
-	if (vendor < 0 || vendor > 65535) return QSE_NULL; /* 0 is allowed to mean no vendor */
-	if (value < 0 || value > 255) return QSE_NULL;
+	if (vendor < 0 || vendor > 65535) 
+	{
+		qse_raddic_seterrfmt (dic, QSE_RADDIC_EINVAL, QSE_T("vendor %d out of accepted range"), vendor);
+		return QSE_NULL; /* 0 is allowed to mean no vendor */
+	}
+	if (value < 0 || value > 65535)  
+	{
+		/* the upper bound is not 255 because there are vendors defining values in 16-bit format */
+		qse_raddic_seterrfmt (dic, QSE_RADDIC_EINVAL, QSE_T("attribute value %d out of accepted range"), value);
+		return QSE_NULL;
+	}
 
 	length = qse_strlen(name);
 
@@ -524,7 +696,11 @@ qse_raddic_attr_t* qse_raddic_addattr (qse_raddic_t* dic, const qse_char_t* name
 
 	/* no +1 for the terminating null because dv->name is char[1] */
 	dv = QSE_MMGR_ALLOC(dic->mmgr, QSE_SIZEOF(*dv) + (length * QSE_SIZEOF(*name)));
-	if (dv == QSE_NULL) return QSE_NULL;
+	if (dv == QSE_NULL) 
+	{
+		qse_raddic_seterrnum (dic, QSE_RADDIC_ENOMEM);
+		return QSE_NULL;
+	}
 
 	qse_strcpy(dv->name, name);
 	dv->attr = QSE_RADDIC_ATTR_MAKE(vendor, value);
@@ -538,6 +714,9 @@ qse_raddic_attr_t* qse_raddic_addattr (qse_raddic_t* dic, const qse_char_t* name
 	if (!np || np->data != dv)
 	{
 		/* insertion failure or existing item found */
+		if (!np) qse_raddic_seterrnum (dic, QSE_RADDIC_ENOMEM);
+		else qse_raddic_seterrfmt (dic, QSE_RADDIC_EEXIST, QSE_T("existing attribute %s"), name);
+
 		QSE_MMGR_FREE (dic->mmgr, dv);
 		return QSE_NULL;
 	}
@@ -557,12 +736,13 @@ qse_raddic_attr_t* qse_raddic_addattr (qse_raddic_t* dic, const qse_char_t* name
 		/* update failure, this entry must be new. try insertion */
 		if (!qse_htl_insert (&dic->attrs_byvalue, dv))
 		{
+			qse_raddic_seterrnum (dic, QSE_RADDIC_ENOMEM);
 			qse_htl_delete (&dic->attrs_byname, dv);
 			return QSE_NULL;
 		}
 	}
 
-	if (vendor == 0) dic->base_attrs[value] = dv; /* cache a base attribute */
+	if (vendor == 0 && value <= 255) dic->base_attrs[value] = dv; /* cache a base attribute */
 	return dv;
 }
 
@@ -653,7 +833,7 @@ int qse_raddic_deleteattrbyvalue (qse_raddic_t* dic, int attr)
 
 /* -------------------------------------------------------------------------- */
 
-qse_raddic_const_t* qse_raddic_findconstbyname (qse_raddic_t* dic, int attr, const qse_char_t* name)
+qse_raddic_const_t* qse_raddic_findconstbyname (qse_raddic_t* dic, qse_uint32_t attr, const qse_char_t* name)
 {
 	qse_htl_node_t* np;
 	const_hsd_t hsd;
@@ -662,11 +842,15 @@ qse_raddic_const_t* qse_raddic_findconstbyname (qse_raddic_t* dic, int attr, con
 	hsd.attr = attr;
 
 	np = qse_htl_heterosearch (&dic->consts_byname, &hsd.name, dict_const_name_hetero_hash, dict_const_name_hetero_cmp);
-	if (!np) return QSE_NULL;
+	if (!np) 
+	{
+		qse_raddic_seterrfmt (dic, QSE_RADDIC_ENOENT, QSE_T("cannot find a constant named %s"), name);
+		return QSE_NULL;
+	}
 	return (qse_raddic_const_t*)np->data;
 }
 
-qse_raddic_const_t* qse_raddic_findconstbyvalue (qse_raddic_t* dic, int attr, int value)
+qse_raddic_const_t* qse_raddic_findconstbyvalue (qse_raddic_t* dic, qse_uint32_t attr, int value)
 {
 	qse_htl_node_t* np;
 	qse_raddic_const_t dval;
@@ -674,7 +858,11 @@ qse_raddic_const_t* qse_raddic_findconstbyvalue (qse_raddic_t* dic, int attr, in
 	dval.attr = attr;
 	dval.value = value;
 	np = qse_htl_search (&dic->consts_byvalue, &dval);
-	if (!np) return QSE_NULL;
+	if (!np)
+	{
+		qse_raddic_seterrfmt (dic, QSE_RADDIC_ENOENT, QSE_T("cannot find a constant valued %d"), value);
+		return QSE_NULL;
+	}
 	return (qse_raddic_const_t*)np->data;
 }
 
@@ -689,7 +877,11 @@ qse_raddic_const_t* qse_raddic_addconst (qse_raddic_t* dic, const qse_char_t* na
 
 	/* no +1 for the terminating null because dval->name is char[1] */
 	dval = QSE_MMGR_ALLOC(dic->mmgr, QSE_SIZEOF(*dval) + (length * QSE_SIZEOF(*name)));
-	if (dval == QSE_NULL) return QSE_NULL;
+	if (dval == QSE_NULL) 
+	{
+		qse_raddic_seterrnum (dic, QSE_RADDIC_ENOMEM);
+		return QSE_NULL;
+	}
 
 	qse_strcpy(dval->name, name);
 	dval->value = value;
@@ -748,6 +940,7 @@ qse_raddic_const_t* qse_raddic_addconst (qse_raddic_t* dic, const qse_char_t* na
 
 			default: /* cannot define VALUE for other types */
 			wrong_value:
+				qse_raddic_seterrfmt (dic, QSE_RADDIC_EINVAL, QSE_T("value %d for a constant %s not allowed for an attribute %s for type %d"), value, name, attrstr, (int)dattr->type);
 				QSE_MMGR_FREE (dic->mmgr, dval);
 				return QSE_NULL;
 		}
@@ -756,8 +949,32 @@ qse_raddic_const_t* qse_raddic_addconst (qse_raddic_t* dic, const qse_char_t* na
 	} 
 	else
 	{
-		QSE_MMGR_FREE (dic->mmgr, dval);
-		return QSE_NULL;
+		if (dic->opt.trait & QSE_RADDIC_ALLOW_CONST_WITHOUT_ATTR)
+		{
+			const_fixup_t* fixup;
+
+			fixup = QSE_MMGR_ALLOC(dic->mmgr, QSE_SIZEOF(*fixup) + (qse_strlen(attrstr) * QSE_SIZEOF(*attrstr)));
+			if (!fixup)
+			{
+				qse_raddic_seterrnum (dic, QSE_RADDIC_ENOMEM);
+				QSE_MMGR_FREE (dic->mmgr, dval);
+				return QSE_NULL;
+			}
+
+			QSE_MEMSET (fixup, 0, QSE_SIZEOF(*fixup));
+			qse_strcpy (fixup->attrstr, attrstr);
+			fixup->dval = dval;
+			fixup->next = dic->const_fixup;
+			dic->const_fixup = fixup;
+
+			return dval; /* this is not complete */
+		}
+		else
+		{
+			qse_raddic_seterrfmt (dic, QSE_RADDIC_EINVAL, QSE_T("attribute %s not found for a constant"), attrstr, name);
+			QSE_MMGR_FREE (dic->mmgr, dval);
+			return QSE_NULL;
+		}
 	}
 
 	/* return an existing item or insert a new item */
@@ -765,6 +982,9 @@ qse_raddic_const_t* qse_raddic_addconst (qse_raddic_t* dic, const qse_char_t* na
 	if (!np || np->data != dval)
 	{
 		/* insertion failure or existing item found */
+		if (!np) qse_raddic_seterrnum (dic, QSE_RADDIC_ENOMEM);
+		else qse_raddic_seterrfmt (dic, QSE_RADDIC_EEXIST, QSE_T("existing constant %s"), name);
+
 		QSE_MMGR_FREE (dic->mmgr, dval);
 		return QSE_NULL;
 	}
@@ -784,6 +1004,7 @@ qse_raddic_const_t* qse_raddic_addconst (qse_raddic_t* dic, const qse_char_t* na
 		/* update failure, this entry must be new. try insertion */
 		if (!qse_htl_insert (&dic->consts_byvalue, dval))
 		{
+			qse_raddic_seterrnum (dic, QSE_RADDIC_ENOMEM);
 			qse_htl_delete (&dic->consts_byname, dval);
 			return QSE_NULL;
 		}
@@ -792,7 +1013,7 @@ qse_raddic_const_t* qse_raddic_addconst (qse_raddic_t* dic, const qse_char_t* na
 	return dval;
 }
 
-int qse_raddic_deleteconstbyname (qse_raddic_t* dic, int attr, const qse_char_t* name)
+int qse_raddic_deleteconstbyname (qse_raddic_t* dic, qse_uint32_t attr, const qse_char_t* name)
 {
 	qse_raddic_const_t* dv, * dv2;
 
@@ -840,7 +1061,7 @@ int qse_raddic_deleteconstbyname (qse_raddic_t* dic, int attr, const qse_char_t*
 	return 0;
 }
 
-int qse_raddic_deleteconstbyvalue (qse_raddic_t* dic, int attr, int value)
+int qse_raddic_deleteconstbyvalue (qse_raddic_t* dic, qse_uint32_t attr, int value)
 {
 	qse_raddic_const_t* dv;
 
@@ -865,16 +1086,13 @@ int qse_raddic_deleteconstbyvalue (qse_raddic_t* dic, int attr, int value)
 
 /* -------------------------------------------------------------------------- */
 
-static int str2argv (qse_char_t *str, qse_char_t* argv[], int max_argc)
+static int str2argv (qse_char_t* str, qse_char_t* argv[], int max_argc)
 {
 	int nflds, i;
 	qse_char_t* ptr;
 
 	nflds = qse_strspl (str, QSE_T(""), QSE_T('\0'), QSE_T('\0'), QSE_T('\0'));
-	if (nflds <= 0)
-	{
-		return -1;
-	}
+	if (nflds <= 0) return -1;
 
 	ptr = str;
 	for (i = 0; i < nflds; i++)
@@ -887,115 +1105,54 @@ static int str2argv (qse_char_t *str, qse_char_t* argv[], int max_argc)
 	return nflds;
 }
 
-static int sscanf_i(const qse_char_t *str, int *pvalue)
+static int sscanf_i (qse_raddic_t* dic, const qse_char_t* str, int* pvalue)
 {
-#if 0
-	int rcode = 0;
-	int base = 10;
-	const char *tab = "0123456789";
-
-	if ((str[0] == '0') && ((str[1] == 'x') || (str[1] == 'X'))) 
-	{
-		tab = "0123456789abcdef";
-		base = 16;
-
-		str += 2;
-	}
-
-	while (*str) 
-	{
-		const char *c;
-
-		c = memchr(tab, tolower((int) *str), base);
-		if (!c) return 0;
-
-		rcode *= base;
-		rcode += (c - tab);
-		str++;
-	}
-
-	*pvalue = rcode;
-	return 1;
-#else
 	qse_long_t v;
 	const qse_char_t* end;
 	QSE_STRTONUM (v, str, &end, 0);
-	if (*end != '\0') return 0;
+	if (*end != '\0') 
+	{
+		qse_raddic_seterrfmt (dic, QSE_RADDIC_ESYNERR, QSE_T("invalid number - %s"), str);
+		return -1;
+	}
 	*pvalue = v;
-	return 1;
-#endif
-}
-
-
-
-
-static int process_value(qse_raddic_t* dic, const qse_char_t* fn, qse_size_t line, qse_char_t* argv[], int argc)
-{
-	/* Process the VALUE command */
-
-	int	value;
-
-	if (argc != 3) 
-	{
-		/*fr_strerror_printf("dict_init: %s[%d]: invalid VALUE line", fn, line);*/
-		return -1;
-	}
-
-	/* For Compatibility, skip "Server-Config" */
-	if (qse_strcasecmp(argv[0], QSE_T("Server-Config")) == 0) return 0;
-
-	/* Validate all entries */
-	if (!sscanf_i(argv[2], &value)) 
-	{
-		//fr_strerror_printf("dict_init: %s[%d]: invalid value", fn, line);
-		return -1;
-	}
-
-	if (qse_raddic_addconst(dic, argv[1], argv[0], value) < 0) 
-	{
-		//fr_strerror_printf("dict_init: %s[%d]: %s", fn, line, fr_strerror());
-		return -1;
-	}
-
 	return 0;
 }
-
 
 /*
  *	Process the ATTRIBUTE command
  */
 static int process_attribute (
-	const char* fn, const qse_size_t line,
-	const int block_vendor, qse_raddic_attr_t *block_tlv,
-	char **argv, int argc)
+	qse_raddic_t* dic, const qse_char_t* fn, const qse_size_t line,
+	int block_vendor, qse_raddic_attr_t* block_tlv, qse_char_t** argv, int argc)
 {
-	int		vendor = 0;
-	int		value;
-	int		type;
-	ATTR_FLAGS	flags;
+	int vendor = 0;
+	int value;
+	int type;
+	qse_raddic_attr_flags_t flags;
 
-	if ((argc < 3) || (argc > 4)) {
-		fr_strerror_printf("dict_init: %s[%d]: invalid ATTRIBUTE line",
-			fn, line);
+	if ((argc < 3) || (argc > 4)) 
+	{
+		qse_raddic_seterrfmt (dic, QSE_RADDIC_ESYNERR, QSE_T("%s[%zd]: invalid ATTRIBUTE line"), fn, line);
 		return -1;
 	}
 
 	/*
 	 *	Validate all entries
 	 */
-	if (!sscanf_i(argv[1], &value)) 
+	if (sscanf_i(dic, argv[1], &value) <= -1) 
 	{
-		fr_strerror_printf("dict_init: %s[%d]: invalid value", fn, line);
+		qse_raddic_seterrfmt (dic, QSE_RADDIC_ESYNERR, QSE_T("%s[%zd]: invalid value  %s"), fn, line, argv[1]);
 		return -1;
 	}
 
 	/*
 	 *	find the type of the attribute.
 	 */
-	type = fr_str2int(type_table, argv[2], -1);
-	if (type < 0) {
-		fr_strerror_printf("dict_init: %s[%d]: invalid type \"%s\"",
-			fn, line, argv[2]);
+	type = str_to_type(dic, argv[2]);
+	if (type < 0) 
+	{
+		qse_raddic_seterrfmt (dic, QSE_RADDIC_ESYNERR, QSE_T("%s[%zd]: invalid type \"%s\""), fn, line, argv[2]);
 		return -1;
 	}
 
@@ -1006,35 +1163,43 @@ static int process_attribute (
 	QSE_MEMSET (&flags, 0, QSE_SIZEOF(flags));
 	if (argc == 4) 
 	{
-		char *key, *next, *last;
+		qse_char_t* key, * next, * last;
 
 		key = argv[3];
-		do {
-			next = strchr(key, ',');
-			if (next) *(next++) = '\0';
+		do 
+		{
+			next = qse_strchr(key, QSE_T(','));
+			if (next) *(next++) = QSE_T('\0');
 
-			if (qse_mbscmp(key, "has_tag") == 0 ||
-			    qse_mbscmp(key, "has_tag=1") == 0) {
+			if (qse_strcmp(key, QSE_T("has_tag")) == 0 ||
+			    qse_strcmp(key, QSE_T("has_tag=1")) == 0) 
+			{
 				/* Boolean flag, means this is a
 				   tagged attribute */
 				flags.has_tag = 1;
-				
-			} else if (strncmp(key, "encrypt=", 8) == 0) {
+			}
+			else if (qse_strzcmp(key, QSE_T("encrypt="), 8) == 0) 
+			{
 				/* Encryption method, defaults to 0 (none).
 				   Currently valid is just type 2,
 				   Tunnel-Password style, which can only
 				   be applied to strings. */
-				flags.encrypt = strtol(key + 8, &last, 0);
-				if (*last) {
-					fr_strerror_printf( "dict_init: %s[%d] invalid option %s",
-						    fn, line, key);
+				flags.encrypt = qse_strtol(key + 8, 0);
+#if 0
+				if (*last) 
+				{
+					qse_raddic_seterrfmt (dic, QSE_RADDIC_ESYNERR,  QSE_T("%s[%zd] invalid option %s"), fn, line, key);
 					return -1;
 				}
 				
-			} else if (strncmp(key, "array", 8) == 0) {
+#endif
+			} 
+			else if (qse_strcmp(key, QSE_T("array")) == 0) 
+			{
 				flags.array = 1;
 				
-				switch (type) {
+				switch (type) 
+				{
 					case QSE_RADDIC_ATTR_TYPE_IPADDR:
 					case QSE_RADDIC_ATTR_TYPE_BYTE:
 					case QSE_RADDIC_ATTR_TYPE_SHORT:
@@ -1043,20 +1208,19 @@ static int process_attribute (
 						break;
 
 					default:
-						fr_strerror_printf( "dict_init: %s[%d] Only IP addresses can have the \"array\" flag set.",
-							    fn, line);
+						qse_raddic_seterrfmt (dic, QSE_RADDIC_ESYNERR,  QSE_T("%s[%zd] Only IP addresses can have the \"array\" flag set."), fn, line);
 						return -1;
 				}
 				
 			} else {
-				fr_strerror_printf( "dict_init: %s[%d]: unknown option \"%s\"",
-					    fn, line, key);
+				qse_raddic_seterrfmt (dic, QSE_RADDIC_ESYNERR,  QSE_T("%s[%zd]: unknown option \"%s\""), fn, line, key);
 				return -1;
 			}
 
 			key = next;
 			if (key && !*key) break;
-		} while (key);
+		}
+		while (key);
 	}
 
 	if (block_vendor) vendor = block_vendor;
@@ -1065,47 +1229,48 @@ static int process_attribute (
 	 *	Special checks for tags, they make our life much more
 	 *	difficult.
 	 */
-	if (flags.has_tag) {
+	if (flags.has_tag) 
+	{
 		/*
 		 *	Only string, octets, and integer can be tagged.
 		 */
-		switch (type) {
-		case QSE_RADDIC_ATTR_TYPE_STRING:
-		case QSE_RADDIC_ATTR_TYPE_INTEGER:
-			break;
+		switch (type) 
+		{
+			case QSE_RADDIC_ATTR_TYPE_STRING:
+			case QSE_RADDIC_ATTR_TYPE_INTEGER:
+				break;
 
-		default:
-			fr_strerror_printf("dict_init: %s[%d]: Attributes of type %s cannot be tagged.",
-				   fn, line,
-				   fr_int2str(type_table, type, "?Unknown?"));
-			return -1;
-
+			default:
+				qse_raddic_seterrfmt (dic, QSE_RADDIC_ESYNERR, QSE_T("%s[%zd]: attribute of this type cannot be tagged"), fn, line);
+				return -1;
 		}
 	}
 
-	if (type == QSE_RADDIC_ATTR_TYPE_TLV) {
+	if (type == QSE_RADDIC_ATTR_TYPE_TLV) 
+	{
 		flags.has_tlv = 1;
 	}
 
-	if (block_tlv) {
+// TODO: what is tlv???
+	if (block_tlv) 
+	{
 		/*
 		 *	TLV's can be only one octet.
 		 */
-		if ((value <= 0) || (value > 255)) {
-			fr_strerror_printf( "dict_init: %s[%d]: sub-tlv's cannot have value > 255",
-				    fn, line);
+		if ((value <= 0) || (value > 255)) 
+		{
+			qse_raddic_seterrfmt (dic, QSE_RADDIC_ESYNERR,  QSE_T("%s[%zd]: sub-tlv's cannot have value > 255"), fn, line);
 			return -1;
 		}
 
-		if (flags.encrypt != FLAG_ENCRYPT_NONE) {
-			fr_strerror_printf( "dict_init: %s[%d]: sub-tlv's cannot be encrypted",
-				    fn, line);
+#if 0
+		if (flags.encrypt != QSE_RADDIC_ATTR_FLAG_ENCRYPT_NONE) 
+		{
+			qse_raddic_seterrfmt (dic, QSE_RADDIC_ESYNERR,  QSE_T("%s[%zd]: sub-tlv's cannot be encrypted"), fn, line);
 			return -1;
 		}
+#endif
 
-		/*
-		 *	
-		 */
 		value <<= 8;
 		value |= (block_tlv->attr & 0xffff);
 		flags.is_tlv = 1;
@@ -1114,26 +1279,23 @@ static int process_attribute (
 	/*
 	 *	Add it in.
 	 */
-	if (dict_addattr(argv[0], vendor, type, value, flags) < 0) {
-		fr_strerror_printf("dict_init: %s[%d]: %s",
-			   fn, line, fr_strerror());
+	if (qse_raddic_addattr(dic, argv[0], vendor, type, value, &flags) == QSE_NULL) 
+	{
+		qse_strcpy (dic->errmsg2, dic->errmsg);
+		qse_raddic_seterrfmt (dic, QSE_RADDIC_ESYNERR, QSE_T("%s[%zd]: cannot add attribute - %s"), fn, line, dic->errmsg2);
 		return -1;
 	}
 
 	return 0;
 }
 
-
-/*
- *	Process the VALUE command
- */
-static int process_value(qse_raddic_t* dic, const qse_char_t* fn, const qse_size_t line, qse_char_t** argv, int argc)
+static int process_constant(qse_raddic_t* dic, const qse_char_t* fn, const qse_size_t line, qse_char_t** argv, int argc)
 {
 	int value;
 
 	if (argc != 3) 
 	{
-		//fr_strerror_printf("dict_init: %s[%d]: invalid VALUE line", fn, line);
+		qse_raddic_seterrfmt (dic, QSE_RADDIC_ESYNERR, QSE_T("%s[%zd]: invalid VALUE line"), fn, line);
 		return -1;
 	}
 
@@ -1145,15 +1307,17 @@ static int process_value(qse_raddic_t* dic, const qse_char_t* fn, const qse_size
 	/*
 	 *	Validate all entries
 	 */
-	if (!sscanf_i(argv[2], &value)) 
+	if (sscanf_i(dic, argv[2], &value) <= -1)
 	{
-		//fr_strerror_printf("dict_init: %s[%d]: invalid value", fn, line);
+		qse_strcpy (dic->errmsg2, dic->errmsg);
+		qse_raddic_seterrfmt (dic, QSE_RADDIC_ESYNERR, QSE_T("%s[%zd]: invalid constant value - %s"), fn, line, dic->errmsg2);
 		return -1;
 	}
 
-	if (qse_raddic_addconst (dic, argv[1], argv[0], value) <= -1) 
+	if (qse_raddic_addconst(dic, argv[1], argv[0], value) == QSE_NULL) 
 	{
-		//fr_strerror_printf("dict_init: %s[%d]: %s", fn, line, fr_strerror());
+		qse_strcpy (dic->errmsg2, dic->errmsg);
+		qse_raddic_seterrfmt (dic, QSE_RADDIC_ESYNERR, QSE_T("%s[%zd]: cannot add a constant - %s"), fn, line, dic->errmsg2);
 		return -1;
 	}
 
@@ -1168,35 +1332,35 @@ static int process_value(qse_raddic_t* dic, const qse_char_t* fn, const qse_size
  *	This allows VALUE mappings to be shared among multiple
  *	attributes.
  */
-static int process_value_alias(qse_raddic_t* dic, const qse_char_t* fn, const qse_size_t line, qse_char_t** argv, int argc)
+static int process_constant_alias(qse_raddic_t* dic, const qse_char_t* fn, const qse_size_t line, qse_char_t** argv, int argc)
 {
 	qse_raddic_attr_t* my_da, * da;
 	qse_raddic_const_t* dval;
 
 	if (argc != 2) 
 	{
-		//fr_strerror_printf("dict_init: %s[%d]: invalid VALUE-ALIAS line", fn, line);
+		qse_raddic_seterrfmt (dic, QSE_RADDIC_ESYNERR, QSE_T("%s[%zd]: invalid VALUE-ALIAS line", fn, line);
 		return -1;
 	}
 
 	my_da = qse_raddic_findattrbyname(argv[0]);
 	if (!my_da) 
 	{
-		//fr_strerror_printf("dict_init: %s[%d]: ATTRIBUTE \"%s\" does not exist",
+		qse_raddic_seterrfmt (dic, QSE_RADDIC_ESYNERR, QSE_T("%s[%zd]: ATTRIBUTE \"%s\" does not exist",
 		//	   fn, line, argv[1]);
 		return -1;
 	}
 
 	if (my_da->flags.has_value) 
 	{
-		//fr_strerror_printf("dict_init: %s[%d]: Cannot add VALUE-ALIAS to ATTRIBUTE \"%s\" with pre-existing VALUE",
+		qse_raddic_seterrfmt (dic, QSE_RADDIC_ESYNERR, QSE_T("%s[%zd]: Cannot add VALUE-ALIAS to ATTRIBUTE \"%s\" with pre-existing VALUE",
 		//	   fn, line, argv[0]);
 		return -1;
 	}
 
 	if (my_da->flags.has_value_alias) 
 	{
-		//fr_strerror_printf("dict_init: %s[%d]: Cannot add VALUE-ALIAS to ATTRIBUTE \"%s\" with pre-existing VALUE-ALIAS",
+		qse_raddic_seterrfmt (dic, QSE_RADDIC_ESYNERR, QSE_T("%s[%zd]: Cannot add VALUE-ALIAS to ATTRIBUTE \"%s\" with pre-existing VALUE-ALIAS",
 		//	   fn, line, argv[0]);
 		return -1;
 	}
@@ -1204,31 +1368,31 @@ static int process_value_alias(qse_raddic_t* dic, const qse_char_t* fn, const qs
 	da = qse_raddic_findattrbyname(argv[1]);
 	if (!da) 
 	{
-		//fr_strerror_printf("dict_init: %s[%d]: Cannot find ATTRIBUTE \"%s\" for alias", fn, line, argv[1]);
+		qse_raddic_seterrfmt (dic, QSE_RADDIC_ESYNERR, QSE_T("%s[%zd]: Cannot find ATTRIBUTE \"%s\" for alias", fn, line, argv[1]);
 		return -1;
 	}
 
 	if (!da->flags.has_value) 
 	{
-		//fr_strerror_printf("dict_init: %s[%d]: VALUE-ALIAS cannot refer to ATTRIBUTE %s: It has no values", fn, line, argv[1]);
+		qse_raddic_seterrfmt (dic, QSE_RADDIC_ESYNERR, QSE_T("%s[%zd]: VALUE-ALIAS cannot refer to ATTRIBUTE %s: It has no values", fn, line, argv[1]);
 		return -1;
 	}
 
 	if (da->flags.has_value_alias) 
 	{
-		//fr_strerror_printf("dict_init: %s[%d]: Cannot add VALUE-ALIAS to ATTRIBUTE \"%s\" which itself has a VALUE-ALIAS", fn, line, argv[1]);
+		qse_raddic_seterrfmt (dic, QSE_RADDIC_ESYNERR, QSE_T("%s[%zd]: Cannot add VALUE-ALIAS to ATTRIBUTE \"%s\" which itself has a VALUE-ALIAS", fn, line, argv[1]);
 		return -1;
 	}
 
 	if (my_da->type != da->type) 
 	{
-		fr_strerror_printf("dict_init: %s[%d]: Cannot add VALUE-ALIAS between attributes of differing type",
+		qse_raddic_seterrfmt (dic, QSE_RADDIC_ESYNERR, QSE_T("%s[%zd]: Cannot add VALUE-ALIAS between attributes of differing type",
 			   fn, line);
 		return -1;
 	}
 
 	if ((dval = fr_pool_alloc(QSE_SIZEOF(*dval))) == QSE_NULL) {
-		fr_strerror_printf("dict_addvalue: out of memory");
+		qse_raddic_seterrfmt (dic, QSE_RADDIC_ESYNERR, "dict_addvalue: out of memory");
 		return -1;
 	}
 
@@ -1237,8 +1401,7 @@ static int process_value_alias(qse_raddic_t* dic, const qse_char_t* fn, const qs
 	dval->value = da->attr;
 
 	if (!fr_hash_table_insert(values_byname, dval)) {
-		fr_strerror_printf("dict_init: %s[%d]: Error create alias",
-			   fn, line);
+		qse_raddic_seterrfmt (dic, QSE_RADDIC_ESYNERR, QSE_T("%s[%zd]: Error create alias"), fn, line);
 		fr_pool_free(dval);
 		return -1;
 	}
@@ -1253,101 +1416,105 @@ static int process_value_alias(qse_raddic_t* dic, const qse_char_t* fn, const qs
  */
 static int process_vendor (qse_raddic_t* dic, const qse_char_t* fn, const qse_size_t line, qse_char_t** argv,  int argc)
 {
-	int	value;
-	int	continuation = 0;
+	int value;
+	int continuation = 0;
 	const qse_char_t* format = QSE_NULL;
 
 	if ((argc < 2) || (argc > 3)) 
 	{
-		//fr_strerror_printf( "dict_init: %s[%d] invalid VENDOR entry", fn, line);
+		qse_raddic_seterrfmt (dic, QSE_RADDIC_ESYNERR,  QSE_T("%s[%zd] invalid VENDOR entry"), fn, line);
 		return -1;
 	}
 
 	/*
 	 *	 Validate all entries
 	 */
-	if (!isdigit((int) argv[1][0])) {
-		fr_strerror_printf("dict_init: %s[%d]: invalid value",
-			fn, line);
+	if (!QSE_ISDIGIT(argv[1][0])) 
+	{
+		qse_raddic_seterrfmt (dic, QSE_RADDIC_ESYNERR, QSE_T("%s[%zd]: invalid value"), fn, line);
 		return -1;
 	}
-	value = atoi(argv[1]);
+	value = qse_strtoi(argv[1], 0);
 
 	/* Create a new VENDOR entry for the list */
-	if (dict_addvendor(argv[0], value) < 0) {
-		fr_strerror_printf("dict_init: %s[%d]: %s",
-			   fn, line, fr_strerror());
+	if (qse_raddic_addvendor(dic, argv[0], value) == QSE_NULL) 
+	{
+		qse_strcpy (dic->errmsg2, dic->errmsg);
+		qse_raddic_seterrfmt (dic, QSE_RADDIC_ESYNERR, QSE_T("%s[%zd]: cannot add a vendor - %s"), fn, line, dic->errmsg2);
 		return -1;
 	}
 
 	/*
 	 *	Look for a format statement
 	 */
-	if (argc == 3) {
+	if (argc == 3) 
+	{
 		format = argv[2];
+	}
+#if 0
+	else if (value == VENDORPEC_USR) 
+	{ /* catch dictionary screw-ups */
+		format = QSE_T("format=4,0");
 
-	} else if (value == VENDORPEC_USR) { /* catch dictionary screw-ups */
-		format = "format=4,0";
-
-	} else if (value == VENDORPEC_LUCENT) {
-		format = "format=2,1";
-
-	} else if (value == VENDORPEC_STARENT) {
-		format = "format=2,2";
-
+	}
+	else if (value == VENDORPEC_LUCENT) 
+	{
+		format = QSE_T("format=2,1");
+	}
+	else if (value == VENDORPEC_STARENT) 
+	{
+		format = QSE_T("format=2,2");
 	} /* else no fixups to do */
+#endif
 
-	if (format) {
+	if (format) 
+	{
 		int type, length;
-		const char *p;
+		const qse_char_t* p;
 		qse_raddic_vendor_t *dv;
 
-		if (strncasecmp(format, "format=", 7) != 0) {
-			fr_strerror_printf("dict_init: %s[%d]: Invalid format for VENDOR.  Expected \"format=\", got \"%s\"",
-				   fn, line, format);
+		if (qse_strzcasecmp(format, QSE_T("format="), 7) != 0) 
+		{
+			qse_raddic_seterrfmt (dic, QSE_RADDIC_ESYNERR, QSE_T("%s[%zd]: Invalid format for VENDOR.  Expected \"format=\", got \"%s\""), fn, line, format);
 			return -1;
 		}
 
 		p = format + 7;
-		if ((qse_mbslen(p) < 3) ||
-		    !isdigit((int) p[0]) ||
-		    (p[1] != ',') ||
-		    !isdigit((int) p[2]) ||
-		    (p[3] && (p[3] != ','))) {
-			fr_strerror_printf("dict_init: %s[%d]: Invalid format for VENDOR.  Expected text like \"1,1\", got \"%s\"",
-				   fn, line, p);
+		if (qse_strlen(p) < 3 || !QSE_ISDIGIT(p[0]) || p[1] != QSE_T(',') || !QSE_ISDIGIT(p[2]) || (p[3] && p[3] != QSE_T(','))) 
+		{
+			qse_raddic_seterrfmt (dic, QSE_RADDIC_ESYNERR, QSE_T("%s[%zd]: Invalid format for VENDOR.  Expected text like \"1,1\", got \"%s\""), fn, line, p);
 			return -1;
 		}
 
-		type = (int) (p[0] - '0');
-		length = (int) (p[2] - '0');
+		type = p[0] - QSE_T('0');
+		length = p[2] - QSE_T('0');
 
-		if (p[3] == ',') {
-			if ((p[4] != 'c') ||
-			    (p[5] != '\0')) {
-				fr_strerror_printf("dict_init: %s[%d]: Invalid format for VENDOR.  Expected text like \"1,1\", got \"%s\"",
-					   fn, line, p);
+		if (p[3] == QSE_T(',')) 
+		{
+			if (p[4] != QSE_T('c') || p[5] != QSE_T('\0')) 
+			{
+				qse_raddic_seterrfmt (dic, QSE_RADDIC_ESYNERR, QSE_T("%s[%zd]: Invalid format for VENDOR.  Expected text like \"1,1\", got \"%s\""), fn, line, p);
 				return -1;
 			}
 			continuation = 1;
 		}
 
-		dv = dict_vendorbyvalue(value);
-		if (!dv) {
-			fr_strerror_printf("dict_init: %s[%d]: Failed adding format for VENDOR",
-				   fn, line);
+		dv = qse_raddic_findvendorbyvalue(dic, value);
+		if (!dv) 
+		{
+			qse_raddic_seterrfmt (dic, QSE_RADDIC_ESYNERR, QSE_T("%s[%zd]: Failed adding format for VENDOR"), fn, line);
 			return -1;
 		}
 
-		if ((type != 1) && (type != 2) && (type != 4)) {
-			fr_strerror_printf("dict_init: %s[%d]: invalid type value %d for VENDOR",
-				   fn, line, type);
+		if ((type != 1) && (type != 2) && (type != 4)) 
+		{
+			qse_raddic_seterrfmt (dic, QSE_RADDIC_ESYNERR, QSE_T("%s[%zd]: invalid type value %d for VENDOR"), fn, line, type);
 			return -1;
 		}
 
-		if ((length != 0) && (length != 1) && (length != 2)) {
-			fr_strerror_printf("dict_init: %s[%d]: invalid length value %d for VENDOR",
-				   fn, line, length);
+		if ((length != 0) && (length != 1) && (length != 2)) 
+		{
+			qse_raddic_seterrfmt (dic, QSE_RADDIC_ESYNERR, QSE_T("%s[%zd]: invalid length value %d for VENDOR"), fn, line, length);
 			return -1;
 		}
 
@@ -1362,12 +1529,14 @@ static int process_vendor (qse_raddic_t* dic, const qse_char_t* fn, const qse_si
 static int load_file (qse_raddic_t* dic, const qse_char_t *dir, const qse_char_t *fn, const qse_char_t *src_file, int src_line)
 {
 	qse_sio_t* sio = QSE_NULL;
+#if 0
 	qse_char_t dirtmp[256]; /* TODO: longer path */
+#endif
 	qse_char_t buf[256];
 	qse_char_t* p;
 	qse_size_t line = 0;
-	int vendor;
-	int block_vendor;
+	qse_raddic_vendor_t* vendor;
+	qse_raddic_vendor_t* block_vendor;
 
 	qse_char_t* argv[16]; /* TODO: what is the best size? */
 	int argc;
@@ -1377,7 +1546,7 @@ static int load_file (qse_raddic_t* dic, const qse_char_t *dir, const qse_char_t
 	if (qse_strlen(fn) >= QSE_SIZEOF(dirtmp) / 2 ||
 	    qse_strlen(dir) >= QSE_SIZEOF(dirtmp) / 2) 
 	{
-		fr_strerror_printf("dict_init: filename name too long");
+		qse_raddic_seterrfmt (dic, QSE_RADDIC_ESYNERR, QSE_T("filename name too long");
 		return -1;
 	}
 
@@ -1401,39 +1570,16 @@ static int load_file (qse_raddic_t* dic, const qse_char_t *dir, const qse_char_t
 	sio = qse_sio_open (dic->mmgr, 0, fn, QSE_SIO_READ);
 	if (!sio)
 	{
-#if 0
-		if (!src_file) {
-			fr_strerror_printf("dict_init: Couldn't open dictionary \"%s\": %s",
-				   fn, strerror(errno));
-		} else {
-			fr_strerror_printf("dict_init: %s[%d]: Couldn't open dictionary \"%s\": %s",
-				   src_file, src_line, fn, strerror(errno));
-		}
-		}
-#endif
+		if (src_file)
+			qse_raddic_seterrfmt (dic, QSE_RADDIC_ESYNERR, QSE_T("%s[%zd]: cannot open %s"), src_file, src_line, fn);
+		else
+			qse_raddic_seterrfmt (dic, QSE_RADDIC_ESYNERR, QSE_T("cannot open %s"), fn);
 		return -1;
 	}
-
-#if 0
-	stat(fn, &statbuf); /* fopen() guarantees this will succeed */
-	if (!S_ISREG(statbuf.st_mode)) {
-		fclose(fp);
-		fr_strerror_printf("dict_init: Dictionary \"%s\" is not a regular file",
-			   fn);
-		return -1;
-	}
-
-	dict_stat_add(fn, &statbuf);
-
-	/*
-	 *	Seed the random pool with data.
-	 */
-	fr_rand_seed(&statbuf, QSE_SIZEOF(statbuf));
-#endif
 
 	block_vendor = 0;
 
-	while (qse_sio_getstr (sio, buf, QSE_COUNTOF(buf)) >= 0) 
+	while (qse_sio_getstr (sio, buf, QSE_COUNTOF(buf)) > 0) 
 	{
 		line++;
 
@@ -1452,7 +1598,7 @@ static int load_file (qse_raddic_t* dic, const qse_char_t *dir, const qse_char_t
 
 		if (argc == 1) 
 		{
-			//fr_strerror_printf( "dict_init: %s[%d] invalid entry", fn, line);
+			qse_raddic_seterrfmt (dic, QSE_RADDIC_ESYNERR,  QSE_T("%s[%zd] invalid entry"), fn, line);
 			goto oops;
 		}
 
@@ -1461,7 +1607,7 @@ static int load_file (qse_raddic_t* dic, const qse_char_t *dir, const qse_char_t
 		 */
 		if (qse_strcasecmp(argv[0], QSE_T("VALUE")) == 0) 
 		{
-			if (process_value(dic, fn, line, argv + 1, argc - 1) == -1) goto oops;
+			if (process_constant(dic, fn, line, argv + 1, argc - 1) == -1) goto oops;
 			continue;
 		}
 
@@ -1470,7 +1616,7 @@ static int load_file (qse_raddic_t* dic, const qse_char_t *dir, const qse_char_t
 		 */
 		if (qse_strcasecmp(argv[0], QSE_T("ATTRIBUTE")) == 0) 
 		{
-			if (process_attribute(dic, fn, line, block_vendor, block_tlv, argv + 1, argc - 1) == -1) goto oops;
+			if (process_attribute(dic, fn, line, (block_vendor? block_vendor->vendorpec: 0), block_tlv, argv + 1, argc - 1) == -1) goto oops;
 			continue;
 		}
 
@@ -1486,7 +1632,7 @@ static int load_file (qse_raddic_t* dic, const qse_char_t *dir, const qse_char_t
 #if 0
 		if (qse_strcasecmp(argv[0], QSE_T("VALUE-ALIAS")) == 0) 
 		{
-			if (process_value_alias(dic, fn, line, argv + 1, argc - 1) == -1) goto oops;
+			if (process_constant_alias(dic, fn, line, argv + 1, argc - 1) == -1) goto oops;
 			continue;
 		}
 #endif
@@ -1504,20 +1650,20 @@ static int load_file (qse_raddic_t* dic, const qse_char_t *dir, const qse_char_t
 		{
 			if (argc != 2) 
 			{
-				//fr_strerror_printf("dict_init: %s[%d] invalid BEGIN-TLV entry", fn, line);
+				qse_raddic_seterrfmt (dic, QSE_RADDIC_ESYNERR, QSE_T("%s[%zd] invalid BEGIN-TLV entry"), fn, line);
 				goto oops;
 			}
 
-			da = qse_findattrbyname (dic, argv[1]);
+			da = qse_raddic_findattrbyname (dic, argv[1]);
 			if (!da) 
 			{
-				//fr_strerror_printf("dict_init: %s[%d]: unknown attribute %s", fn, line, argv[1]);
+				qse_raddic_seterrfmt (dic, QSE_RADDIC_ESYNERR, QSE_T("%s[%zd]: unknown attribute %s"), fn, line, argv[1]);
 				goto oops;
 			}
 
 			if (da->type != QSE_RADDIC_ATTR_TYPE_TLV) 
 			{
-				//fr_strerror_printf("dict_init: %s[%d]: attribute %s is not of type tlv", fn, line, argv[1]);
+				qse_raddic_seterrfmt (dic, QSE_RADDIC_ESYNERR, QSE_T("%s[%zd]: attribute %s is not of type tlv"), fn, line, argv[1]);
 				goto oops;
 			}
 
@@ -1525,42 +1671,42 @@ static int load_file (qse_raddic_t* dic, const qse_char_t *dir, const qse_char_t
 			continue;
 		} /* BEGIN-TLV */
 
-		if (qse_strcasecmp(argv[0], "END-TLV") == 0) 
+		if (qse_strcasecmp(argv[0], QSE_T("END-TLV")) == 0) 
 		{
 			if (argc != 2) 
 			{
-				//fr_strerror_printf("dict_init: %s[%d] invalid END-TLV entry", fn, line);
+				qse_raddic_seterrfmt (dic, QSE_RADDIC_ESYNERR, QSE_T("%s[%zd] invalid END-TLV entry"), fn, line);
 				goto oops;
 			}
 
 			da = qse_raddic_findattrbyname(dic, argv[1]);
 			if (!da) 
 			{
-				//fr_strerror_printf("dict_init: %s[%d]: unknown attribute %s", fn, line, argv[1]);
+				qse_raddic_seterrfmt (dic, QSE_RADDIC_ESYNERR, QSE_T("%s[%zd]: unknown attribute %s"), fn, line, argv[1]);
 				goto oops;
 			}
 
 			if (da != block_tlv) 
 			{
-				//fr_strerror_printf("dict_init: %s[%d]: END-TLV %s does not match any previous BEGIN-TLV", fn, line, argv[1]);
+				qse_raddic_seterrfmt (dic, QSE_RADDIC_ESYNERR, QSE_T("%s[%zd]: END-TLV %s does not match any previous BEGIN-TLV"), fn, line, argv[1]);
 				goto oops;
 			}
 			block_tlv = QSE_NULL;
 			continue;
 		} /* END-VENDOR */
 
-		if (qse_strcasecmp(argv[0], "BEGIN-VENDOR") == 0) 
+		if (qse_strcasecmp(argv[0], QSE_T("BEGIN-VENDOR")) == 0) 
 		{
 			if (argc != 2) 
 			{
-				//fr_strerror_printf("dict_init: %s[%d] invalid BEGIN-VENDOR entry", fn, line);
+				qse_raddic_seterrfmt (dic, QSE_RADDIC_ESYNERR, QSE_T("%s[%zd] invalid BEGIN-VENDOR entry"), fn, line);
 				goto oops;
 			}
 
 			vendor = qse_raddic_findvendorbyname (dic, argv[1]);
 			if (!vendor) 
 			{
-				//fr_strerror_printf("dict_init: %s[%d]: unknown vendor %s", fn, line, argv[1]);
+				qse_raddic_seterrfmt (dic, QSE_RADDIC_ESYNERR, QSE_T("%s[%zd]: unknown vendor %s"), fn, line, argv[1]);
 				goto oops;
 			}
 			block_vendor = vendor;
@@ -1569,23 +1715,23 @@ static int load_file (qse_raddic_t* dic, const qse_char_t *dir, const qse_char_t
 
 		if (qse_strcasecmp(argv[0], QSE_T("END-VENDOR")) == 0) 
 		{
-			if (argc != 2) {
-				//fr_strerror_printf("dict_init: %s[%d] invalid END-VENDOR entry", fn, line);
+			if (argc != 2) 
+			{
+				qse_raddic_seterrfmt (dic, QSE_RADDIC_ESYNERR, QSE_T("%s[%zd] invalid END-VENDOR entry"), fn, line);
 				goto oops;
 			}
 
-			vendor = qse_raddic_findvendorbyname(argv[1]);
+			vendor = qse_raddic_findvendorbyname(dic, argv[1]);
 			if (!vendor) 
 			{
-				//fr_strerror_printf("dict_init: %s[%d]: unknown vendor %s", fn, line, argv[1]);
+				qse_raddic_seterrfmt (dic, QSE_RADDIC_ESYNERR, QSE_T("%s[%zd]: unknown vendor %s"), fn, line, argv[1]);
 				goto oops;
 			}
 
 			if (vendor != block_vendor)
 			{
-				//fr_strerror_printf(
-				//	"dict_init: %s[%d]: END-VENDOR %s does not match any previous BEGIN-VENDOR",
-				//	fn, line, argv[1]);
+				qse_raddic_seterrfmt (dic, QSE_RADDIC_ESYNERR,
+					QSE_T("%s[%zd]: END-VENDOR %s does not match any previous BEGIN-VENDOR"), fn, line, argv[1]);
 				goto oops;
 			}
 			block_vendor = 0;
@@ -1595,7 +1741,7 @@ static int load_file (qse_raddic_t* dic, const qse_char_t *dir, const qse_char_t
 		/*
 		 *	Any other string: We don't recognize it.
 		 */
-		//fr_strerror_printf("dict_init: %s[%d] invalid keyword \"%s\"", fn, line, argv[0]);
+		qse_raddic_seterrfmt (dic, QSE_RADDIC_ESYNERR, QSE_T("%s[%zd] invalid keyword \"%s\""), fn, line, argv[0]);
 		goto oops;
 		
 	}
@@ -1603,584 +1749,12 @@ static int load_file (qse_raddic_t* dic, const qse_char_t *dir, const qse_char_t
 	qse_sio_close (sio);
 	return 0;
 
-
 oops:
 	if (sio) qse_sio_close (sio);
 	return -1;
 }
 
-static int qse_raddic_load (qse_raddic_t* dic, const qse_char_t* file)
+int qse_raddic_load (qse_raddic_t* dic, const qse_char_t* file)
 {
 	return load_file (dic, QSE_NULL, file, QSE_NULL, 0);
 }
-
-
-#if 0
-/*
- *	For faster HUP's, we cache the stat information for
- *	files we've $INCLUDEd
- */
-typedef struct dict_stat_t {
-	struct dict_stat_t* next;
-	char*               name;
-	time_t		     mtime;
-} dict_stat_t;
-
-static char *stat_root_dir = QSE_NULL;
-static char *stat_root_file = QSE_NULL;
-
-static dict_stat_t *stat_head = QSE_NULL;
-static dict_stat_t *stat_tail = QSE_NULL;
-
-typedef struct value_fixup_t {
-	char		attrstr[qse_raddic_attr_t_MAX_NAME_LEN];
-	qse_raddic_value_t	*dval;
-	struct value_fixup_t *next;
-} value_fixup_t;
-
-
-/*
- *	So VALUEs in the dictionary can have forward references.
- */
-static value_fixup_t *value_fixup = QSE_NULL;
-
-static const FR_NAME_NUMBER type_table[] = {
-	{ "integer",	QSE_RADDIC_ATTR_TYPE_INTEGER },
-	{ "string",	QSE_RADDIC_ATTR_TYPE_STRING },
-	{ "ipaddr",	QSE_RADDIC_ATTR_TYPE_IPADDR },
-	{ "date",	QSE_RADDIC_ATTR_TYPE_DATE },
-	{ "abinary",	QSE_RADDIC_ATTR_TYPE_ABINARY },
-	{ "octets",	QSE_RADDIC_ATTR_TYPE_OCTETS },
-	{ "ifid",	QSE_RADDIC_ATTR_TYPE_IFID },
-	{ "ipv6addr",	QSE_RADDIC_ATTR_TYPE_IPV6ADDR },
-	{ "ipv6prefix", QSE_RADDIC_ATTR_TYPE_IPV6PREFIX },
-	{ "byte",	QSE_RADDIC_ATTR_TYPE_BYTE },
-	{ "short",	QSE_RADDIC_ATTR_TYPE_SHORT },
-	{ "ether",	QSE_RADDIC_ATTR_TYPE_ETHERNET },
-	{ "combo-ip",	QSE_RADDIC_ATTR_TYPE_COMBO_IP },
-	{ "tlv",	QSE_RADDIC_ATTR_TYPE_TLV },
-	{ "signed",	QSE_RADDIC_ATTR_TYPE_SIGNED },
-	{ QSE_NULL, 0 }
-};
-
-
-
-static int sscanf_i(const char *str, int *pvalue)
-{
-	int rcode = 0;
-	int base = 10;
-	const char *tab = "0123456789";
-
-	if ((str[0] == '0') &&
-	    ((str[1] == 'x') || (str[1] == 'X'))) {
-		tab = "0123456789abcdef";
-		base = 16;
-
-		str += 2;
-	}
-
-	while (*str) {
-		const char *c;
-
-		c = memchr(tab, tolower((int) *str), base);
-		if (!c) return 0;
-
-		rcode *= base;
-		rcode += (c - tab);
-		str++;
-	}
-
-	*pvalue = rcode;
-	return 1;
-}
-
-
-/*
- *	String split routine.  Splits an input string IN PLACE
- *	into pieces, based on spaces.
- */
-static int str2argv(char *str, char **argv, int max_argc)
-{
-	int argc = 0;
-
-	while (*str) {
-		if (argc >= max_argc) return argc;
-
-		/*
-		 *	Chop out comments early.
-		 */
-		if (*str == '#') {
-			*str = '\0';
-			break;
-		}
-
-		while ((*str == ' ') ||
-		       (*str == '\t') ||
-		       (*str == '\r') ||
-		       (*str == '\n')) *(str++) = '\0';
-
-		if (!*str) return argc;
-
-		argv[argc] = str;
-		argc++;
-
-		while (*str &&
-		       (*str != ' ') &&
-		       (*str != '\t') &&
-		       (*str != '\r') &&
-		       (*str != '\n')) str++;
-	}
-
-	return argc;
-}
-
-#define MAX_ARGV (16)
-
-/*
- *	Initialize the dictionary.
- */
-static int my_dict_init(const char *dir, const char *fn,
-			const char *src_file, int src_line)
-{
-	FILE	*fp;
-	char 	dirtmp[256];
-	char	buf[256];
-	char	*p;
-	int	line = 0;
-	int	vendor;
-	int	block_vendor;
-	struct stat statbuf;
-	char	*argv[MAX_ARGV];
-	int	argc;
-	qse_raddic_attr_t *da, *block_tlv = QSE_NULL;
-
-	if (qse_mbslen(fn) >= QSE_SIZEOF(dirtmp) / 2 ||
-	    qse_mbslen(dir) >= QSE_SIZEOF(dirtmp) / 2) {
-		fr_strerror_printf("dict_init: filename name too long");
-		return -1;
-	}
-
-	/*
-	 *	First see if fn is relative to dir. If so, create
-	 *	new filename. If not, remember the absolute dir.
-	 */
-	if ((p = strrchr(fn, FR_DIR_SEP)) != QSE_NULL) {
-		qse_mbscpy(dirtmp, fn);
-		dirtmp[p - fn] = 0;
-		dir = dirtmp;
-	} else if (dir && dir[0] && qse_mbscmp(dir, ".") != 0) {
-		snprintf(dirtmp, QSE_SIZEOF(dirtmp), "%s/%s", dir, fn);
-		fn = dirtmp;
-	}
-
-	if ((fp = fopen(fn, "r")) == QSE_NULL) {
-		if (!src_file) {
-			fr_strerror_printf("dict_init: Couldn't open dictionary \"%s\": %s",
-				   fn, strerror(errno));
-		} else {
-			fr_strerror_printf("dict_init: %s[%d]: Couldn't open dictionary \"%s\": %s",
-				   src_file, src_line, fn, strerror(errno));
-		}
-		return -1;
-	}
-
-	stat(fn, &statbuf); /* fopen() guarantees this will succeed */
-	if (!S_ISREG(statbuf.st_mode)) {
-		fclose(fp);
-		fr_strerror_printf("dict_init: Dictionary \"%s\" is not a regular file",
-			   fn);
-		return -1;
-	}
-
-	/*
-	 *	Globally writable dictionaries means that users can control
-	 *	the server configuration with little difficulty.
-	 */
-#ifdef S_IWOTH
-	if ((statbuf.st_mode & S_IWOTH) != 0) {
-		fclose(fp);
-		fr_strerror_printf("dict_init: Dictionary \"%s\" is globally writable.  Refusing to start due to insecure configuration.",
-			   fn);
-		return -1;
-	}
-#endif
-
-	dict_stat_add(fn, &statbuf);
-
-	/*
-	 *	Seed the random pool with data.
-	 */
-	fr_rand_seed(&statbuf, QSE_SIZEOF(statbuf));
-
-	block_vendor = 0;
-
-	while (fgets(buf, QSE_SIZEOF(buf), fp) != QSE_NULL) {
-		line++;
-		if (buf[0] == '#' || buf[0] == 0 ||
-		    buf[0] == '\n' || buf[0] == '\r')
-			continue;
-
-		/*
-		 *  Comment characters should NOT be appearing anywhere but
-		 *  as start of a comment;
-		 */
-		p = strchr(buf, '#');
-		if (p) *p = '\0';
-
-		argc = str2argv(buf, argv, MAX_ARGV);
-		if (argc == 0) continue;
-
-		if (argc == 1) {
-			fr_strerror_printf( "dict_init: %s[%d] invalid entry",
-				    fn, line);
-			fclose(fp);
-			return -1;
-		}
-
-		/*
-		 *	Process VALUE lines.
-		 */
-		if (qse_mbscasecmp(argv[0], "VALUE") == 0) {
-			if (process_value(fn, line,
-					  argv + 1, argc - 1) == -1) {
-				fclose(fp);
-				return -1;
-			}
-			continue;
-		}
-
-		/*
-		 *	Perhaps this is an attribute.
-		 */
-		if (qse_mbscasecmp(argv[0], "ATTRIBUTE") == 0) {
-			if (process_attribute(fn, line, block_vendor,
-					      block_tlv,
-					      argv + 1, argc - 1) == -1) {
-				fclose(fp);
-				return -1;
-			}
-			continue;
-		}
-
-		/*
-		 *	See if we need to import another dictionary.
-		 */
-		if (qse_mbscasecmp(argv[0], "$INCLUDE") == 0) {
-			if (my_dict_init(dir, argv[1], fn, line) < 0) {
-				fclose(fp);
-				return -1;
-			}
-			continue;
-		} /* $INCLUDE */
-
-		if (qse_mbscasecmp(argv[0], "VALUE-ALIAS") == 0) {
-			if (process_value_alias(fn, line,
-						argv + 1, argc - 1) == -1) {
-				fclose(fp);
-				return -1;
-			}
-			continue;
-		}
-
-		/*
-		 *	Process VENDOR lines.
-		 */
-		if (qse_mbscasecmp(argv[0], "VENDOR") == 0) {
-			if (process_vendor(fn, line,
-					   argv + 1, argc - 1) == -1) {
-				fclose(fp);
-				return -1;
-			}
-			continue;
-		}
-
-		if (qse_mbscasecmp(argv[0], "BEGIN-TLV") == 0) {
-			if (argc != 2) {
-				fr_strerror_printf(
-				"dict_init: %s[%d] invalid BEGIN-TLV entry",
-					fn, line);
-				fclose(fp);
-				return -1;
-			}
-
-			da = dict_attrbyname(argv[1]);
-			if (!da) {
-				fr_strerror_printf(
-					"dict_init: %s[%d]: unknown attribute %s",
-					fn, line, argv[1]);
-				fclose(fp);
-				return -1;
-			}
-
-			if (da->type != QSE_RADDIC_ATTR_TYPE_TLV) {
-				fr_strerror_printf(
-					"dict_init: %s[%d]: attribute %s is not of type tlv",
-					fn, line, argv[1]);
-				fclose(fp);
-				return -1;
-			}
-
-			block_tlv = da;
-			continue;
-		} /* BEGIN-TLV */
-
-		if (qse_mbscasecmp(argv[0], "END-TLV") == 0) {
-			if (argc != 2) {
-				fr_strerror_printf(
-				"dict_init: %s[%d] invalid END-TLV entry",
-					fn, line);
-				fclose(fp);
-				return -1;
-			}
-
-			da = dict_attrbyname(argv[1]);
-			if (!da) {
-				fr_strerror_printf(
-					"dict_init: %s[%d]: unknown attribute %s",
-					fn, line, argv[1]);
-				fclose(fp);
-				return -1;
-			}
-
-			if (da != block_tlv) {
-				fr_strerror_printf(
-					"dict_init: %s[%d]: END-TLV %s does not match any previous BEGIN-TLV",
-					fn, line, argv[1]);
-				fclose(fp);
-				return -1;
-			}
-			block_tlv = QSE_NULL;
-			continue;
-		} /* END-VENDOR */
-
-		if (qse_mbscasecmp(argv[0], "BEGIN-VENDOR") == 0) {
-			if (argc != 2) {
-				fr_strerror_printf(
-				"dict_init: %s[%d] invalid BEGIN-VENDOR entry",
-					fn, line);
-				fclose(fp);
-				return -1;
-			}
-
-			vendor = dict_vendorbyname(argv[1]);
-			if (!vendor) {
-				fr_strerror_printf(
-					"dict_init: %s[%d]: unknown vendor %s",
-					fn, line, argv[1]);
-				fclose(fp);
-				return -1;
-			}
-			block_vendor = vendor;
-			continue;
-		} /* BEGIN-VENDOR */
-
-		if (qse_mbscasecmp(argv[0], "END-VENDOR") == 0) {
-			if (argc != 2) {
-				fr_strerror_printf(
-				"dict_init: %s[%d] invalid END-VENDOR entry",
-					fn, line);
-				fclose(fp);
-				return -1;
-			}
-
-			vendor = dict_vendorbyname(argv[1]);
-			if (!vendor) {
-				fr_strerror_printf(
-					"dict_init: %s[%d]: unknown vendor %s",
-					fn, line, argv[1]);
-				fclose(fp);
-				return -1;
-			}
-
-			if (vendor != block_vendor) {
-				fr_strerror_printf(
-					"dict_init: %s[%d]: END-VENDOR %s does not match any previous BEGIN-VENDOR",
-					fn, line, argv[1]);
-				fclose(fp);
-				return -1;
-			}
-			block_vendor = 0;
-			continue;
-		} /* END-VENDOR */
-
-		/*
-		 *	Any other string: We don't recognize it.
-		 */
-		fr_strerror_printf("dict_init: %s[%d] invalid keyword \"%s\"",
-			   fn, line, argv[0]);
-		fclose(fp);
-		return -1;
-	}
-	fclose(fp);
-	return 0;
-}
-
-
-/*
- *	Empty callback for hash table initialization.
- */
-static int null_callback(void *ctx, void *data)
-{
-	ctx = ctx;		/* -Wunused */
-	data = data;		/* -Wunused */
-
-	return 0;
-}
-
-
-/*
- *	Initialize the directory, then fix the attr member of
- *	all attributes.
- */
-int dict_init(const char *dir, const char *fn)
-{
-	/*
-	 *	Check if we need to change anything.  If not, don't do
-	 *	anything.
-	 */
-	if (dict_stat_check(dir, fn)) {
-		return 0;
-	}
-
-	/*
-	 *	Free the dictionaries, and the stat cache.
-	 */
-	dict_free();
-	stat_root_dir = strdup(dir);
-	stat_root_file = strdup(fn);
-
-	/*
-	 *	Create the table of vendor by name.   There MAY NOT
-	 *	be multiple vendors of the same name.
-	 *
-	 *	Each vendor is malloc'd, so the free function is free.
-	 */
-	vendors_byname = fr_hash_table_create(dict_vendor_name_hash,
-						dict_vendor_name_cmp,
-						fr_pool_free);
-	if (!vendors_byname) {
-		return -1;
-	}
-
-	/*
-	 *	Create the table of vendors by value.  There MAY
-	 *	be vendors of the same value.  If there are, we
-	 *	pick the latest one.
-	 */
-	vendors_byvalue = fr_hash_table_create(dict_vendor_value_hash,
-						 dict_vendor_value_cmp,
-						 fr_pool_free);
-	if (!vendors_byvalue) {
-		return -1;
-	}
-
-	/*
-	 *	Create the table of attributes by name.   There MAY NOT
-	 *	be multiple attributes of the same name.
-	 *
-	 *	Each attribute is malloc'd, so the free function is free.
-	 */
-	attributes_byname = fr_hash_table_create(dict_attr_name_hash,
-						   dict_attr_name_cmp,
-						   fr_pool_free);
-	if (!attributes_byname) {
-		return -1;
-	}
-
-	/*
-	 *	Create the table of attributes by value.  There MAY
-	 *	be attributes of the same value.  If there are, we
-	 *	pick the latest one.
-	 */
-	attributes_byvalue = fr_hash_table_create(dict_attr_value_hash,
-						    dict_attr_value_cmp,
-						    fr_pool_free);
-	if (!attributes_byvalue) {
-		return -1;
-	}
-
-	values_byname = fr_hash_table_create(dict_value_name_hash,
-					       dict_value_name_cmp,
-					       fr_pool_free);
-	if (!values_byname) {
-		return -1;
-	}
-
-	values_byvalue = fr_hash_table_create(dict_value_value_hash,
-						dict_value_value_cmp,
-						fr_pool_free);
-	if (!values_byvalue) {
-		return -1;
-	}
-
-	value_fixup = QSE_NULL;	/* just to be safe. */
-
-	if (my_dict_init(dir, fn, QSE_NULL, 0) < 0)
-		return -1;
-
-	if (value_fixup) {
-		qse_raddic_attr_t *a;
-		value_fixup_t *this, *next;
-
-		for (this = value_fixup; this != QSE_NULL; this = next) {
-			next = this->next;
-
-			a = dict_attrbyname(this->attrstr);
-			if (!a) {
-				fr_strerror_printf(
-					"dict_init: No ATTRIBUTE \"%s\" defined for VALUE \"%s\"",
-					this->attrstr, this->dval->name);
-				return -1; /* leak, but they should die... */
-			}
-
-			this->dval->attr = a->attr;
-
-			/*
-			 *	Add the value into the dictionary.
-			 */
-			if (!fr_hash_table_replace(values_byname,
-						     this->dval)) {
-				fr_strerror_printf("dict_addvalue: Duplicate value name %s for attribute %s", this->dval->name, a->name);
-				return -1;
-			}
-
-			/*
-			 *	Allow them to use the old name, but
-			 *	prefer the new name when printing
-			 *	values.
-			 */
-			if (!fr_hash_table_finddata(values_byvalue, this->dval)) {
-				fr_hash_table_replace(values_byvalue,
-							this->dval);
-			}
-			free(this);
-
-			/*
-			 *	Just so we don't lose track of things.
-			 */
-			value_fixup = next;
-		}
-	}
-
-	/*
-	 *	Walk over all of the hash tables to ensure they're
-	 *	initialized.  We do this because the threads may perform
-	 *	lookups, and we don't want multi-threaded re-ordering
-	 *	of the table entries.  That would be bad.
-	 */
-	fr_hash_table_walk(vendors_byname, null_callback, QSE_NULL);
-	fr_hash_table_walk(vendors_byvalue, null_callback, QSE_NULL);
-
-	fr_hash_table_walk(attributes_byname, null_callback, QSE_NULL);
-	fr_hash_table_walk(attributes_byvalue, null_callback, QSE_NULL);
-
-	fr_hash_table_walk(values_byvalue, null_callback, QSE_NULL);
-	fr_hash_table_walk(values_byname, null_callback, QSE_NULL);
-
-	return 0;
-}
-
-
-#endif
-
-
