@@ -39,7 +39,8 @@ typedef enum qse_raddic_opt_t qse_raddic_opt_t;
 enum qse_raddic_trait_t
 {
 	QSE_RADDIC_ALLOW_CONST_WITHOUT_ATTR = (1 << 0),
-	QSE_RADDIC_ALLOW_DUPLICATE_CONST    = (1 << 1)
+	QSE_RADDIC_ALLOW_DUPLICATE_CONST    = (1 << 1),
+	QSE_RADDIC_IGNORE_UNKNOWN_ATTR_FLAG = (1 << 2)
 };
 typedef enum qse_raddic_trait_t qse_raddic_trait_t;
 
@@ -58,24 +59,6 @@ enum qse_raddic_errnum_t
 };
 typedef enum qse_raddic_errnum_t qse_raddic_errnum_t;
 
-
-#if 0
-#define QSE_RADDIC_ATTR_TYPE_STRING                  0
-#define QSE_RADDIC_ATTR_TYPE_INTEGER                 1
-#define QSE_RADDIC_ATTR_TYPE_IPADDR                  2
-#define QSE_RADDIC_ATTR_TYPE_DATE                    3
-#define QSE_RADDIC_ATTR_TYPE_ABINARY                 4
-#define QSE_RADDIC_ATTR_TYPE_OCTETS                  5
-#define QSE_RADDIC_ATTR_TYPE_IFID                    6
-#define QSE_RADDIC_ATTR_TYPE_IPV6ADDR                7
-#define QSE_RADDIC_ATTR_TYPE_IPV6PREFIX              8
-#define QSE_RADDIC_ATTR_TYPE_BYTE                    9
-#define QSE_RADDIC_ATTR_TYPE_SHORT                   10
-#define QSE_RADDIC_ATTR_TYPE_ETHERNET                11
-#define QSE_RADDIC_ATTR_TYPE_SIGNED                  12
-#define QSE_RADDIC_ATTR_TYPE_COMBO_IP                13
-#define QSE_RADDIC_ATTR_TYPE_TLV                     14
-#endif
 
 enum qse_raddic_attr_type_t
 {
@@ -130,20 +113,34 @@ enum qse_raddic_attr_type_t
 };
 typedef enum qse_raddic_attr_type_t qse_raddic_attr_type_t;
 
+enum qse_raddic_attr_flag_encrypt_t
+{
+	QSE_RADDIC_ATTR_FLAG_ENCRYPT_NONE = 0, /* keep this entry on top */
+
+	QSE_RADDIC_ATTR_FLAG_ENCRYPT_USER_PASSWORD, /* RFC2865 */
+	QSE_RADDIC_ATTR_FLAG_ENCRYPT_TUNNEL_PASSWORD, /* RFC2868 */
+	QSE_RADDIC_ATTR_FLAG_ENCRYPT_ASCEND_SECRET,
+
+	QSE_RADDIC_ATTR_FLAG_ENCRYPT_OTHER /* keep this entry at the bottom */
+};
+typedef enum qse_raddic_attr_flag_encrypt_t qse_raddic_attr_flag_encrypt_t;
+
 struct qse_raddic_attr_flags_t 
 {
-	unsigned int            addport : 1;  /* add NAS-Port to IP address */
-	unsigned int            has_tag : 1;  /* tagged attribute */
-	unsigned int            do_xlat : 1;  /* strvalue is dynamic */
-	unsigned int            unknown_attr : 1; /* not in dictionary */
-	unsigned int            array : 1; /* pack multiples into 1 attr */
-	unsigned int            has_value : 1; /* has a value */
-	unsigned int            has_value_alias : 1; /* has a value alias */
-	unsigned int            has_tlv : 1; /* has sub attributes */
-	unsigned int            is_tlv : 1; /* is a sub attribute */
-	unsigned int            encoded : 1; /* has been put into packet */
-	qse_int8_t              tag;          /* tag for tunneled attributes */
-	qse_uint8_t             encrypt;      /* encryption method */
+	unsigned int            addport: 1;  /* add NAS-Port to IP address */
+	unsigned int            has_tag: 1;  /* tagged attribute */
+	unsigned int            unknown_attr: 1; /* not in dictionary */
+	unsigned int            array: 1; /* pack multiples into 1 attr */
+	unsigned int            concat: 1;
+	unsigned int            internal: 1; /* internal use only */
+	unsigned int            has_value: 1; /* has a value */
+	unsigned int            has_tlv: 1; /* has sub attributes */
+	unsigned int            is_tlv: 1; /* is a sub attribute */
+	qse_int8_t              tag;        /* tag for tunneled attributes */
+	qse_uint8_t             length;
+
+	qse_raddic_attr_flag_encrypt_t encrypt;      /* encryption method */
+	
 };
 typedef struct qse_raddic_attr_flags_t qse_raddic_attr_flags_t;
 
@@ -151,20 +148,43 @@ typedef struct qse_raddic_attr_t qse_raddic_attr_t;
 struct qse_raddic_attr_t 
 {
 	qse_uint32_t            attr;
-	int                     type;
+	qse_raddic_attr_type_t  type;
 	int                     vendor;
 	qse_raddic_attr_flags_t flags;
 	qse_raddic_attr_t*      nexta;
 	qse_char_t              name[1];
 };
 
+typedef struct qse_raddic_const_value_t qse_raddic_const_value_t;
+struct qse_raddic_const_value_t
+{
+	qse_raddic_attr_type_t type;
+	union
+	{
+		qse_uint8_t ui8;
+		qse_uint16_t ui16;
+		qse_uint32_t ui32;
+		qse_uint64_t ui64;
+
+		qse_int8_t i8;
+		qse_int16_t i16;
+		qse_int32_t i32;
+		qse_int64_t i64;
+
+		qse_flt_t f32;
+		qse_flt_t f64;
+		/* TODO: more to come like ip address */
+	} u;
+};
+
+
 typedef struct qse_raddic_const_t qse_raddic_const_t;
 struct qse_raddic_const_t
 {
-	qse_uint32_t        attr;     /* vendor + attribute-value */
-	int                 value;
-	qse_raddic_const_t* nextc;
-	qse_char_t          name[1];
+	qse_uint32_t             attr;     /* vendor + attribute-value */
+	qse_raddic_const_value_t value;
+	qse_raddic_const_t*      nextc;
+	qse_char_t               name[1];
 };
 
 typedef struct qse_raddic_vendor_t qse_raddic_vendor_t;
@@ -265,8 +285,6 @@ QSE_EXPORT int qse_raddic_deletevendorbyvalue (
 );
 
 
-
-
 QSE_EXPORT qse_raddic_attr_t* qse_raddic_findattrbyname (
 	qse_raddic_t*     dic,
 	const qse_char_t* name
@@ -281,7 +299,7 @@ QSE_EXPORT qse_raddic_attr_t* qse_raddic_addattr (
 	qse_raddic_t*                  dic,
 	const qse_char_t*              name,
 	int                            vendor,
-	int                            type,
+	qse_raddic_attr_type_t         type,
 	int                            value,
 	const qse_raddic_attr_flags_t* flags
 );
@@ -293,7 +311,7 @@ QSE_EXPORT int qse_raddic_deleteattrbyname (
 
 QSE_EXPORT int qse_raddic_deleteattrbyvalue (
 	qse_raddic_t*     dic,
-	int               attr
+	qse_uint32_t      attr
 );
 
 
@@ -304,16 +322,16 @@ QSE_EXPORT qse_raddic_const_t* qse_raddic_findconstbyname (
 );
 
 QSE_EXPORT qse_raddic_const_t* qse_raddic_findconstbyvalue (
-	qse_raddic_t*     dic,
-	qse_uint32_t      attr,
-	int               value
+	qse_raddic_t*                   dic,
+	qse_uint32_t                    attr,
+	const qse_raddic_const_value_t* value
 );
 
 QSE_EXPORT qse_raddic_const_t* qse_raddic_addconst (
-	qse_raddic_t*     dic,
-	const qse_char_t* name,
-	const qse_char_t* attrstr,
-	int               value
+	qse_raddic_t*                   dic,
+	const qse_char_t*               name,
+	const qse_char_t*               attrstr,
+	const qse_raddic_const_value_t* value
 );
 
 QSE_EXPORT int qse_raddic_deleteconstbyname (
@@ -323,9 +341,9 @@ QSE_EXPORT int qse_raddic_deleteconstbyname (
 );
 
 QSE_EXPORT int qse_raddic_deleteconstbyvalue (
-	qse_raddic_t*     dic,
-	qse_uint32_t      attr,
-	int               value
+	qse_raddic_t*                   dic,
+	qse_uint32_t                    attr,
+	const qse_raddic_const_value_t* value
 );
 
 

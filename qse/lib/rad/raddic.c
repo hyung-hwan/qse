@@ -56,10 +56,6 @@
 #include <qse/si/sio.h>
 #include <stdarg.h>
 
-#include <stdio.h>
-#define fr_strerror_printf printf
-
-
 typedef struct const_fixup_t const_fixup_t;
 
 struct const_fixup_t 
@@ -98,95 +94,82 @@ struct name_id_t
 {
 	const qse_char_t* name;
 	int               id;
+	int               length;
 };
 
 static const name_id_t type_table[] = 
 {
-	{ QSE_T("string"),            QSE_RADDIC_ATTR_TYPE_STRING },
-	{ QSE_T("octets"),            QSE_RADDIC_ATTR_TYPE_OCTETS },
+	{ QSE_T("string"),            QSE_RADDIC_ATTR_TYPE_STRING,            -1 },
+	{ QSE_T("octets"),            QSE_RADDIC_ATTR_TYPE_OCTETS,            -1 },
 
-	{ QSE_T("ipaddr"),            QSE_RADDIC_ATTR_TYPE_IPV4_ADDR },
-	{ QSE_T("ipv4prefix"),        QSE_RADDIC_ATTR_TYPE_IPV4_PREFIX },
-	{ QSE_T("ipv6addr"),          QSE_RADDIC_ATTR_TYPE_IPV6_ADDR },
-	{ QSE_T("ipv6prefix"),        QSE_RADDIC_ATTR_TYPE_IPV6_PREFIX },
-	{ QSE_T("ifid"),              QSE_RADDIC_ATTR_TYPE_IFID },
-	{ QSE_T("combo-ip"),          QSE_RADDIC_ATTR_TYPE_COMBO_IP_ADDR },
-	{ QSE_T("combo-prefix"),      QSE_RADDIC_ATTR_TYPE_COMBO_IP_PREFIX },
-	{ QSE_T("ether"),             QSE_RADDIC_ATTR_TYPE_ETHERNET },
+	{ QSE_T("ipaddr"),            QSE_RADDIC_ATTR_TYPE_IPV4_ADDR,          4 },
+	{ QSE_T("ipv4prefix"),        QSE_RADDIC_ATTR_TYPE_IPV4_PREFIX,       -1 },
+	{ QSE_T("ipv6addr"),          QSE_RADDIC_ATTR_TYPE_IPV6_ADDR,         16 },
+	{ QSE_T("ipv6prefix"),        QSE_RADDIC_ATTR_TYPE_IPV6_PREFIX,       -1 },
+	{ QSE_T("ifid"),              QSE_RADDIC_ATTR_TYPE_IFID,               8 },
+	{ QSE_T("combo-ip"),          QSE_RADDIC_ATTR_TYPE_COMBO_IP_ADDR,     -1 },
+	{ QSE_T("combo-prefix"),      QSE_RADDIC_ATTR_TYPE_COMBO_IP_PREFIX,   -1 },
+	{ QSE_T("ether"),             QSE_RADDIC_ATTR_TYPE_ETHERNET,           6 },
 
-	{ QSE_T("bool"),              QSE_RADDIC_ATTR_TYPE_BOOL },
+	{ QSE_T("bool"),              QSE_RADDIC_ATTR_TYPE_BOOL,               1 },
 
-	{ QSE_T("uint8"),             QSE_RADDIC_ATTR_TYPE_UINT8 },
-	{ QSE_T("uint16"),            QSE_RADDIC_ATTR_TYPE_UINT16 },
-	{ QSE_T("uint32"),            QSE_RADDIC_ATTR_TYPE_UINT32 },
-	{ QSE_T("uint64"),            QSE_RADDIC_ATTR_TYPE_UINT64 },
+	{ QSE_T("uint8"),             QSE_RADDIC_ATTR_TYPE_UINT8,              1 },
+	{ QSE_T("uint16"),            QSE_RADDIC_ATTR_TYPE_UINT16,             2 },
+	{ QSE_T("uint32"),            QSE_RADDIC_ATTR_TYPE_UINT32,             4 },
+	{ QSE_T("uint64"),            QSE_RADDIC_ATTR_TYPE_UINT64,             8 },
 
-	{ QSE_T("int8"),              QSE_RADDIC_ATTR_TYPE_INT8 },
-	{ QSE_T("int16"),             QSE_RADDIC_ATTR_TYPE_INT16 },
-	{ QSE_T("int32"),             QSE_RADDIC_ATTR_TYPE_INT32 },
-	{ QSE_T("int64"),             QSE_RADDIC_ATTR_TYPE_INT64 },
+	{ QSE_T("int8"),              QSE_RADDIC_ATTR_TYPE_INT8,               1 },
+	{ QSE_T("int16"),             QSE_RADDIC_ATTR_TYPE_INT16,              2 },
+	{ QSE_T("int32"),             QSE_RADDIC_ATTR_TYPE_INT32,              4 },
+	{ QSE_T("int64"),             QSE_RADDIC_ATTR_TYPE_INT64,              8 },
 
-	{ QSE_T("float32"),           QSE_RADDIC_ATTR_TYPE_FLOAT32 },
-	{ QSE_T("float64"),           QSE_RADDIC_ATTR_TYPE_FLOAT64 },
+	{ QSE_T("float32"),           QSE_RADDIC_ATTR_TYPE_FLOAT32,            4 },
+	{ QSE_T("float64"),           QSE_RADDIC_ATTR_TYPE_FLOAT64,            8 },
 
-	{ QSE_T("timeval"),           QSE_RADDIC_ATTR_TYPE_TIMEVAL },
-	{ QSE_T("date"),              QSE_RADDIC_ATTR_TYPE_DATE },
-	{ QSE_T("date_milliseconds"), QSE_RADDIC_ATTR_TYPE_DATE_MILLISECONDS },
-	{ QSE_T("date_microseconds"), QSE_RADDIC_ATTR_TYPE_DATE_MICROSECONDS },
-	{ QSE_T("date_nanoseconds"),  QSE_RADDIC_ATTR_TYPE_DATE_NANOSECONDS },
+	{ QSE_T("timeval"),           QSE_RADDIC_ATTR_TYPE_TIMEVAL,           -1 },
+	{ QSE_T("date"),              QSE_RADDIC_ATTR_TYPE_DATE,               4 },
+	{ QSE_T("date_milliseconds"), QSE_RADDIC_ATTR_TYPE_DATE_MILLISECONDS, -1 },
+	{ QSE_T("date_microseconds"), QSE_RADDIC_ATTR_TYPE_DATE_MICROSECONDS, -1 },
+	{ QSE_T("date_nanoseconds"),  QSE_RADDIC_ATTR_TYPE_DATE_NANOSECONDS,  -1 },
 
-	{ QSE_T("abinary"),           QSE_RADDIC_ATTR_TYPE_ABINARY },
+	{ QSE_T("abinary"),           QSE_RADDIC_ATTR_TYPE_ABINARY,           -1 },
 
-	{ QSE_T("size"),              QSE_RADDIC_ATTR_TYPE_SIZE },
+	{ QSE_T("size"),              QSE_RADDIC_ATTR_TYPE_SIZE,               8 },
 
-	{ QSE_T("tlv"),               QSE_RADDIC_ATTR_TYPE_TLV },
-	{ QSE_T("struct"),            QSE_RADDIC_ATTR_TYPE_STRUCT },
+	{ QSE_T("tlv"),               QSE_RADDIC_ATTR_TYPE_TLV,               -1 },
+	{ QSE_T("struct"),            QSE_RADDIC_ATTR_TYPE_STRUCT,            -1 },
 
-	{ QSE_T("extended"),          QSE_RADDIC_ATTR_TYPE_EXTENDED },
-	{ QSE_T("long-extended"),     QSE_RADDIC_ATTR_TYPE_LONG_EXTENDED },
+	{ QSE_T("extended"),          QSE_RADDIC_ATTR_TYPE_EXTENDED,           0 },
+	{ QSE_T("long-extended"),     QSE_RADDIC_ATTR_TYPE_LONG_EXTENDED,      0 },
 
-	{ QSE_T("vsa"),               QSE_RADDIC_ATTR_TYPE_VSA },
-	{ QSE_T("evs"),               QSE_RADDIC_ATTR_TYPE_EVS },
-	{ QSE_T("vendor"),            QSE_RADDIC_ATTR_TYPE_VENDOR },
+	{ QSE_T("vsa"),               QSE_RADDIC_ATTR_TYPE_VSA,               -1 },
+	{ QSE_T("evs"),               QSE_RADDIC_ATTR_TYPE_EVS,               -1 },
+	{ QSE_T("vendor"),            QSE_RADDIC_ATTR_TYPE_VENDOR,            -1 },
 
 	/*
 	 *	Alternative names
 	 */
-	{ QSE_T("cidr"),              QSE_RADDIC_ATTR_TYPE_IPV4_PREFIX },
-	{ QSE_T("byte"),              QSE_RADDIC_ATTR_TYPE_UINT8 },
-	{ QSE_T("short"),             QSE_RADDIC_ATTR_TYPE_UINT16 },
-	{ QSE_T("integer"),           QSE_RADDIC_ATTR_TYPE_UINT32 },
-	{ QSE_T("integer64"),         QSE_RADDIC_ATTR_TYPE_UINT64 },
-	{ QSE_T("decimal"),           QSE_RADDIC_ATTR_TYPE_FLOAT64 },
-	{ QSE_T("signed"),            QSE_RADDIC_ATTR_TYPE_INT32 },
-
-#if 0
-	{ QSE_T("integer"),    QSE_RADDIC_ATTR_TYPE_INTEGER },
-	{ QSE_T("string"),     QSE_RADDIC_ATTR_TYPE_STRING },
-	{ QSE_T("ipaddr"),     QSE_RADDIC_ATTR_TYPE_IPADDR },
-	{ QSE_T("date"),       QSE_RADDIC_ATTR_TYPE_DATE },
-	{ QSE_T("abinary"),    QSE_RADDIC_ATTR_TYPE_ABINARY },
-	{ QSE_T("octets"),     QSE_RADDIC_ATTR_TYPE_OCTETS },
-	{ QSE_T("ifid"),       QSE_RADDIC_ATTR_TYPE_IFID },
-	{ QSE_T("ipv6addr"),   QSE_RADDIC_ATTR_TYPE_IPV6ADDR },
-	{ QSE_T("ipv6prefix"), QSE_RADDIC_ATTR_TYPE_IPV6PREFIX },
-	{ QSE_T("byte"),       QSE_RADDIC_ATTR_TYPE_BYTE },
-	{ QSE_T("short"),      QSE_RADDIC_ATTR_TYPE_SHORT },
-	{ QSE_T("ether"),      QSE_RADDIC_ATTR_TYPE_ETHERNET },
-	{ QSE_T("combo-ip"),   QSE_RADDIC_ATTR_TYPE_COMBO_IP },
-	{ QSE_T("tlv"),        QSE_RADDIC_ATTR_TYPE_TLV },
-	{ QSE_T("signed"),     QSE_RADDIC_ATTR_TYPE_SIGNED },
-#endif
+	{ QSE_T("cidr"),              QSE_RADDIC_ATTR_TYPE_IPV4_PREFIX,       -1 },
+	{ QSE_T("byte"),              QSE_RADDIC_ATTR_TYPE_UINT8,              1 },
+	{ QSE_T("short"),             QSE_RADDIC_ATTR_TYPE_UINT16,             2 },
+	{ QSE_T("integer"),           QSE_RADDIC_ATTR_TYPE_UINT32,             4 },
+	{ QSE_T("integer64"),         QSE_RADDIC_ATTR_TYPE_UINT64,             8 },
+	{ QSE_T("decimal"),           QSE_RADDIC_ATTR_TYPE_FLOAT64,            8 },
+	{ QSE_T("signed"),            QSE_RADDIC_ATTR_TYPE_INT32,              4 }
 };
 
 /* -------------------------------------------------------------------------- */
-static int str_to_type (qse_raddic_t* dic, const qse_char_t* name)
+static int str_to_type (qse_raddic_t* dic, const qse_char_t* name, int* length)
 {
 	int i;
 
 	for (i = 0; i < QSE_COUNTOF(type_table); i++)
 	{
-		if (qse_strcmp(name, type_table[i].name) == 0) return  type_table[i].id;
+		if (qse_strcmp(name, type_table[i].name) == 0) 
+		{
+			if (length) *length = type_table[i].length;
+			return  type_table[i].id;
+		}
 	}
 
 	dic->errnum = QSE_RADDIC_EINVAL;
@@ -281,7 +264,10 @@ static int dict_attr_value_cmp (qse_htl_t* htl, const void* one, const void* two
 
 	if (a->vendor < b->vendor) return -1;
 	if (a->vendor > b->vendor) return 1;
-	return a->attr - b->attr;
+
+	if (a->attr < b->attr) return -1;
+	if (a->attr > b->attr) return 1;
+	return 0;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -355,23 +341,34 @@ static int dict_const_value_cmp (qse_htl_t* htl, const void* one, const void* tw
 	if (a->attr < b->attr) return -1;
 	if (a->attr > b->attr) return 1;
 
-	return a->value - b->value;
+	if (a->value.type != b->value.type) return -2; /* cannot really compare */
+
+	/* this function actuall requires to check equality.
+	 * it doesn't have to return greaterness or lessness.
+	 * it also assumes that the unused space in the 'value' 
+	 * union field is all initialized to zero */
+	return QSE_MEMCMP(&a->value, &b->value, QSE_SIZEOF(a->value));
 }
 
 /* -------------------------------------------------------------------------- */
 
 int qse_raddic_init (qse_raddic_t* dic, qse_mmgr_t* mmgr)
 {
+	int count = 0;
+
 	QSE_MEMSET (dic, 0, QSE_SIZEOF(*dic));
 	dic->mmgr = mmgr;
 	qse_raddic_seterrnum (dic, QSE_RADDIC_ENOERR);
 
-	qse_htl_init (&dic->vendors_byname, mmgr, 1);
-	qse_htl_init (&dic->vendors_byvalue, mmgr, 1);
-	qse_htl_init (&dic->attrs_byname, mmgr, 1);
-	qse_htl_init (&dic->attrs_byvalue, mmgr, 1);
-	qse_htl_init (&dic->consts_byname, mmgr, 1);
-	qse_htl_init (&dic->consts_byvalue, mmgr, 1);
+	if (qse_htl_init(&dic->vendors_byname, mmgr, 1) <= -1 || (++count == 0) ||
+	    qse_htl_init(&dic->vendors_byvalue, mmgr, 1) <= -1 || (++count == 0) ||
+	    qse_htl_init(&dic->attrs_byname, mmgr, 1) <= -1 ||  (++count == 0) ||
+	    qse_htl_init(&dic->attrs_byvalue, mmgr, 1) <= -1 ||(++count == 0) ||
+	    qse_htl_init(&dic->consts_byname, mmgr, 1) <= -1 || (++count == 0) ||
+	    qse_htl_init(&dic->consts_byvalue, mmgr, 1) <= -1 || (++count == 0))
+	{
+		goto oops;
+	}
 
 	qse_htl_sethasher (&dic->vendors_byname, dict_vendor_name_hash);
 	qse_htl_setcomper (&dic->vendors_byname, dict_vendor_name_cmp);
@@ -398,18 +395,28 @@ int qse_raddic_init (qse_raddic_t* dic, qse_mmgr_t* mmgr)
 	/* no freeer for dic->consts_byvalue */
 
 	return 0;
+
+oops:
+	if (count >= 6) qse_htl_fini (&dic->consts_byvalue);
+	if (count >= 5) qse_htl_fini (&dic->consts_byname);
+	if (count >= 4) qse_htl_fini (&dic->attrs_byvalue);
+	if (count >= 3) qse_htl_fini (&dic->attrs_byname);
+	if (count >= 2) qse_htl_fini (&dic->vendors_byvalue);
+	if (count >= 1) qse_htl_fini (&dic->vendors_byname);
+
+	return -1;
 }
 
 void qse_raddic_fini (qse_raddic_t* dic)
 {
 	qse_raddic_clear (dic);
 
-	qse_htl_fini (&dic->vendors_byname);
-	qse_htl_fini (&dic->vendors_byvalue);
-	qse_htl_fini (&dic->attrs_byname);
-	qse_htl_fini (&dic->attrs_byvalue);
 	qse_htl_fini (&dic->consts_byvalue);
 	qse_htl_fini (&dic->consts_byname);
+	qse_htl_fini (&dic->attrs_byvalue);
+	qse_htl_fini (&dic->attrs_byname);
+	qse_htl_fini (&dic->vendors_byvalue);
+	qse_htl_fini (&dic->vendors_byname);
 }
 
 qse_raddic_t* qse_raddic_open (qse_mmgr_t* mmgr, qse_size_t xtnsize)
@@ -727,7 +734,7 @@ qse_raddic_attr_t* qse_raddic_findattrbyvalue (qse_raddic_t* dic, qse_uint32_t a
 	return (qse_raddic_attr_t*)np->data;
 }
 
-qse_raddic_attr_t* qse_raddic_addattr (qse_raddic_t* dic, const qse_char_t* name, int vendor, int type, int value, const qse_raddic_attr_flags_t* flags)
+qse_raddic_attr_t* qse_raddic_addattr (qse_raddic_t* dic, const qse_char_t* name, int vendor, qse_raddic_attr_type_t type, int value, const qse_raddic_attr_flags_t* flags)
 {
 	qse_size_t length;
 	qse_raddic_attr_t* dv, * old_dv;
@@ -857,7 +864,7 @@ int qse_raddic_deleteattrbyname (qse_raddic_t* dic, const qse_char_t* name)
 	return 0;
 }
 
-int qse_raddic_deleteattrbyvalue (qse_raddic_t* dic, int attr)
+int qse_raddic_deleteattrbyvalue (qse_raddic_t* dic, qse_uint32_t attr)
 {
 	qse_raddic_attr_t* dv;
 
@@ -908,13 +915,13 @@ qse_raddic_const_t* qse_raddic_findconstbyname (qse_raddic_t* dic, qse_uint32_t 
 	return (qse_raddic_const_t*)np->data;
 }
 
-qse_raddic_const_t* qse_raddic_findconstbyvalue (qse_raddic_t* dic, qse_uint32_t attr, int value)
+qse_raddic_const_t* qse_raddic_findconstbyvalue (qse_raddic_t* dic, qse_uint32_t attr, const  qse_raddic_const_value_t* value)
 {
 	qse_htl_node_t* np;
 	qse_raddic_const_t dval;
 
 	dval.attr = attr;
-	dval.value = value;
+	dval.value = *value;
 	np = qse_htl_search (&dic->consts_byvalue, &dval);
 	if (!np)
 	{
@@ -924,7 +931,7 @@ qse_raddic_const_t* qse_raddic_findconstbyvalue (qse_raddic_t* dic, qse_uint32_t
 	return (qse_raddic_const_t*)np->data;
 }
 
-qse_raddic_const_t* qse_raddic_addconst (qse_raddic_t* dic, const qse_char_t* name, const qse_char_t* attrstr, int value)
+qse_raddic_const_t* qse_raddic_addconst (qse_raddic_t* dic, const qse_char_t* name, const qse_char_t* attrstr, const qse_raddic_const_value_t* value)
 {
 	qse_size_t length;
 	qse_raddic_const_t* dval, * old_dval;
@@ -942,7 +949,7 @@ qse_raddic_const_t* qse_raddic_addconst (qse_raddic_t* dic, const qse_char_t* na
 	}
 
 	qse_strcpy(dval->name, name);
-	dval->value = value;
+	dval->value = *value;
 	dval->nextc = QSE_NULL;
 
 	/*
@@ -965,9 +972,9 @@ qse_raddic_const_t* qse_raddic_addconst (qse_raddic_t* dic, const qse_char_t* na
 	 */
 	if (dattr) 
 	{
-		if (dattr->flags.has_value_alias) 
+		if (dattr->type != value->type)
 		{
-			/* cannot add a VALUE for an attribute having a VALUE_ALIAS */
+			qse_raddic_seterrfmt (dic, QSE_RADDIC_EINVAL, QSE_T("conflicts between attribute type and constant value"));
 			return QSE_NULL;
 		}
 
@@ -1046,7 +1053,8 @@ qse_raddic_const_t* qse_raddic_addconst (qse_raddic_t* dic, const qse_char_t* na
 		}
 		else 
 		{
-			if ((dic->opt.trait & QSE_RADDIC_ALLOW_DUPLICATE_CONST) && ((qse_raddic_const_t*)np->data)->value == dval->value) 
+			if ((dic->opt.trait & QSE_RADDIC_ALLOW_DUPLICATE_CONST) && 
+			    QSE_MEMCMP(&((qse_raddic_const_t*)np->data)->value, &dval->value, QSE_SIZEOF(dval->value)) == 0) 
 			{
 				QSE_MMGR_FREE (dic->mmgr, dval);
 				return np->data;
@@ -1065,7 +1073,7 @@ qse_raddic_const_t* qse_raddic_addconst (qse_raddic_t* dic, const qse_char_t* na
 		/* updated the existing item successfully. 
 		 * link the old item to the current item */
 		QSE_ASSERT (np->data == dval);
-		QSE_ASSERT (dval->value == old_dval->value);
+		QSE_ASSERT (QSE_MEMCMP(&dval->value, &old_dval->value, QSE_SIZEOF(dval->value)) == 0);
 		dval->nextc = old_dval;
 	}
 	else
@@ -1090,7 +1098,7 @@ int qse_raddic_deleteconstbyname (qse_raddic_t* dic, qse_uint32_t attr, const qs
 	if (!dv) return -1;
 
 	QSE_ASSERT (attr == dv->attr);
-	dv2 = qse_raddic_findconstbyvalue(dic, attr, dv->value);
+	dv2 = qse_raddic_findconstbyvalue(dic, attr, &dv->value);
 	QSE_ASSERT (dv2 != QSE_NULL);
 
 	if (dv != dv2)
@@ -1098,7 +1106,7 @@ int qse_raddic_deleteconstbyname (qse_raddic_t* dic, qse_uint32_t attr, const qs
 		qse_raddic_const_t* x, * y;
 
 		QSE_ASSERT (qse_strcasecmp(dv->name, dv2->name) != 0);
-		QSE_ASSERT (dv->value == dv2->value);
+		QSE_ASSERT (QSE_MEMCMP (&dv->value, &dv2->value, QSE_SIZEOF(dv->value)) == 0);
 		QSE_ASSERT (dv->attr == dv2->attr);
 
 		/* when the constibute of the given name is not the first one
@@ -1130,7 +1138,7 @@ int qse_raddic_deleteconstbyname (qse_raddic_t* dic, qse_uint32_t attr, const qs
 	return 0;
 }
 
-int qse_raddic_deleteconstbyvalue (qse_raddic_t* dic, qse_uint32_t attr, int value)
+int qse_raddic_deleteconstbyvalue (qse_raddic_t* dic, qse_uint32_t attr, const qse_raddic_const_value_t* value)
 {
 	qse_raddic_const_t* dv;
 
@@ -1178,6 +1186,7 @@ static int sscanf_i (qse_raddic_t* dic, const qse_char_t* str, int* pvalue)
 {
 	qse_long_t v;
 	const qse_char_t* end;
+
 	QSE_STRTONUM (v, str, &end, 0);
 	if (*end != '\0') 
 	{
@@ -1185,6 +1194,41 @@ static int sscanf_i (qse_raddic_t* dic, const qse_char_t* str, int* pvalue)
 		return -1;
 	}
 	*pvalue = v;
+	return 0;
+}
+
+static int sscanf_ui32 (qse_raddic_t* dic, const qse_char_t* str, qse_uint32_t* pvalue, qse_uint32_t* pvalue2)
+{
+	qse_long_t v, v2;
+	const qse_char_t* end;
+	const qse_char_t* start2 = QSE_NULL;
+
+	if (!QSE_ISDIGIT(*str) && *str != QSE_T('+')) 
+	{
+		qse_raddic_seterrfmt (dic, QSE_RADDIC_ESYNERR, QSE_T("invalid unsigned number - %s"), str);
+		return -1;
+	}
+
+	QSE_STRTONUM (v, str, &end, 0);
+	if (pvalue2 && *end == '.')
+	{
+		start2 = end + 1;
+		QSE_STRTONUM (v2, start2, &end, 0);
+	}
+
+	if (*end != '\0')
+	{
+		qse_raddic_seterrfmt (dic, QSE_RADDIC_ESYNERR, QSE_T("invalid unsigned number - %s"), str);
+		return -1;
+	}
+
+	*pvalue = v;
+	if (start2) 
+	{
+		*pvalue2 = v2;
+		return (int)(end - start2); /* the value must not be very long. so i cast it to 'int' */
+	}
+
 	return 0;
 }
 
@@ -1196,9 +1240,11 @@ static int process_attribute (
 	int block_vendor, qse_raddic_attr_t* block_tlv, qse_char_t** argv, int argc)
 {
 	int vendor = 0;
-	int value;
+	unsigned int value;
 	int type;
 	qse_raddic_attr_flags_t flags;
+	qse_char_t* p;
+	int typelen = -1;
 
 	if ((argc < 3) || (argc > 4)) 
 	{
@@ -1206,33 +1252,62 @@ static int process_attribute (
 		return -1;
 	}
 
+	QSE_MEMSET (&flags, 0, QSE_SIZEOF(flags));
+
 	/*
 	 *	Validate all entries
 	 */
 	if (sscanf_i(dic, argv[1], &value) <= -1) 
 	{
-		qse_raddic_seterrfmt (dic, QSE_RADDIC_ESYNERR, QSE_T("%s[%zd]: invalid value  %s"), fn, line, argv[1]);
+		qse_raddic_seterrfmt (dic, QSE_RADDIC_ESYNERR, QSE_T("%s[%zd]: invalid attribute value  %s"), fn, line, argv[1]);
 		return -1;
 	}
 
 	/*
 	 *	find the type of the attribute.
 	 */
-	type = str_to_type(dic, argv[2]);
+	p = qse_strchr(argv[2], QSE_T('[')); /* for instance, octets[20] */
+	if (p) 
+	{
+		qse_char_t* q;
+
+		*p = QSE_T('\0');
+		q = qse_strchr(p + 1, QSE_T(']'));
+		if (!q || q[1] != QSE_T('\0')) 
+		{
+			*p = QSE_T('[');
+			goto invalid_type;
+		}
+
+		*q = QSE_T('\0');
+		if (sscanf_i(dic, p + 1, &typelen) <= -1 || typelen <= 0 || typelen > 253)
+		{
+			*p = QSE_T('[');
+			*q = QSE_T(']');
+			goto invalid_type;
+		}
+
+		flags.length = typelen;
+	}
+
+	type = str_to_type(dic, argv[2], &typelen);
 	if (type < 0) 
 	{
-		qse_raddic_seterrfmt (dic, QSE_RADDIC_ESYNERR, QSE_T("%s[%zd]: invalid type \"%s\""), fn, line, argv[2]);
+	invalid_type:
+		qse_raddic_seterrfmt (dic, QSE_RADDIC_ESYNERR, QSE_T("%s[%zd]: invalid attribute type \"%s\""), fn, line, argv[2]);
 		return -1;
 	}
+
+	if (flags.length <= 0 && typelen >= 0) flags.length = typelen;
 
 	/*
 	 *	Only look up the vendor if the string
 	 *	is non-empty.
 	 */
-	QSE_MEMSET (&flags, 0, QSE_SIZEOF(flags));
-	if (argc == 4) 
+	
+	if (argc >= 4) 
 	{
-		qse_char_t* key, * next, * last;
+		qse_char_t* key, * next;
 
 		key = argv[3];
 		do 
@@ -1240,49 +1315,40 @@ static int process_attribute (
 			next = qse_strchr(key, QSE_T(','));
 			if (next) *(next++) = QSE_T('\0');
 
-			if (qse_strcmp(key, QSE_T("has_tag")) == 0 ||
-			    qse_strcmp(key, QSE_T("has_tag=1")) == 0) 
+			if (qse_strcasecmp(key, QSE_T("has_tag")) == 0 ||
+			    qse_strcasecmp(key, QSE_T("has_tag=1")) == 0) 
 			{
-				/* Boolean flag, means this is a
-				   tagged attribute */
 				flags.has_tag = 1;
 			}
-			else if (qse_strzcmp(key, QSE_T("encrypt="), 8) == 0) 
+			else if (qse_strzcasecmp(key, QSE_T("encrypt="), 8) == 0) 
 			{
 				/* Encryption method, defaults to 0 (none).
 				   Currently valid is just type 2,
 				   Tunnel-Password style, which can only
 				   be applied to strings. */
-				flags.encrypt = qse_strtol(key + 8, 0);
-#if 0
-				if (*last) 
+				unsigned int ev;
+				if (sscanf_i(dic, key + 8, &ev) <= -1 || ev < QSE_RADDIC_ATTR_FLAG_ENCRYPT_NONE || ev > QSE_RADDIC_ATTR_FLAG_ENCRYPT_OTHER)
 				{
 					qse_raddic_seterrfmt (dic, QSE_RADDIC_ESYNERR,  QSE_T("%s[%zd] invalid option %s"), fn, line, key);
 					return -1;
 				}
-				
-#endif
+
+				flags.encrypt = ev;
 			} 
-			else if (qse_strcmp(key, QSE_T("array")) == 0) 
+			else if (qse_strcasecmp(key, QSE_T("array")) == 0) 
 			{
 				flags.array = 1;
-
-/* TODO: ... */
-				switch (type) 
-				{
-					case QSE_RADDIC_ATTR_TYPE_IPV4_ADDR:
-					case QSE_RADDIC_ATTR_TYPE_UINT8:
-					case QSE_RADDIC_ATTR_TYPE_UINT16:
-					case QSE_RADDIC_ATTR_TYPE_UINT32:
-					case QSE_RADDIC_ATTR_TYPE_DATE:
-						break;
-
-					default:
-						qse_raddic_seterrfmt (dic, QSE_RADDIC_ESYNERR,  QSE_T("%s[%zd] Only IP addresses can have the \"array\" flag set."), fn, line);
-						return -1;
-				}
-				
-			} else {
+			}
+			else if (qse_strcasecmp(key, QSE_T("concat")) == 0) 
+			{
+				flags.concat = 1;
+			}
+			else if (qse_strcasecmp(key, QSE_T("internal")) == 0) 
+			{
+				flags.internal = 1;
+			}
+			else 
+			{
 				qse_raddic_seterrfmt (dic, QSE_RADDIC_ESYNERR,  QSE_T("%s[%zd]: unknown option \"%s\""), fn, line, key);
 				return -1;
 			}
@@ -1361,7 +1427,9 @@ static int process_attribute (
 
 static int process_constant(qse_raddic_t* dic, const qse_char_t* fn, const qse_size_t line, qse_char_t** argv, int argc)
 {
-	int value;
+	qse_raddic_const_value_t value;
+	int n;
+	qse_uint32_t v1, v2;
 
 	if (argc != 3) 
 	{
@@ -1377,14 +1445,25 @@ static int process_constant(qse_raddic_t* dic, const qse_char_t* fn, const qse_s
 	/*
 	 *	Validate all entries
 	 */
-	if (sscanf_i(dic, argv[2], &value) <= -1)
+
+	if ((n = sscanf_ui32(dic, argv[2], &v1, &v2)) <= -1)
 	{
 		qse_strcpy (dic->errmsg2, dic->errmsg);
 		qse_raddic_seterrfmt (dic, QSE_RADDIC_ESYNERR, QSE_T("%s[%zd]: invalid constant value - %s"), fn, line, dic->errmsg2);
 		return -1;
 	}
 
-	if (qse_raddic_addconst(dic, argv[1], argv[0], value) == QSE_NULL) 
+	QSE_MEMSET (&value, 0, QSE_SIZEOF(value));
+	value.type = QSE_RADDIC_ATTR_TYPE_UINT32;
+	value.u.ui32 = v1;
+	if (n >= 1)
+	{
+		value.type = QSE_RADDIC_ATTR_TYPE_FLOAT64;
+		value.u.f64 = (qse_flt_t)v1 + ((qse_flt_t)v2 / (pow(10, n))); /* TOOD: XXXXXXXXXXXXX device a way to prepresent this */
+	}
+	value.type = (n == 0)? QSE_RADDIC_ATTR_TYPE_UINT32: QSE_RADDIC_ATTR_TYPE_FLOAT64;
+
+	if (qse_raddic_addconst(dic, argv[1], argv[0], &value) == QSE_NULL) 
 	{
 		qse_strcpy (dic->errmsg2, dic->errmsg);
 		qse_raddic_seterrfmt (dic, QSE_RADDIC_ESYNERR, QSE_T("%s[%zd]: cannot add a constant - %s"), fn, line, dic->errmsg2);
@@ -1508,7 +1587,7 @@ static int process_vendor (qse_raddic_t* dic, const qse_char_t* fn, const qse_si
 	return 0;
 }
 
-static int load_file (qse_raddic_t* dic, const qse_char_t* dir, const qse_char_t* fn, const qse_char_t* src_file, qse_size_t src_line)
+static int load_file (qse_raddic_t* dic, const qse_char_t* fn, const qse_char_t* src_file, qse_size_t src_line)
 {
 	qse_sio_t* sio = QSE_NULL;
 	qse_char_t buf[256]; /* TODO: is this a good size? */
@@ -1543,7 +1622,7 @@ static int load_file (qse_raddic_t* dic, const qse_char_t* dir, const qse_char_t
 		if (src_file)
 			qse_raddic_seterrfmt (dic, QSE_RADDIC_ESYNERR, QSE_T("%s[%zd]: cannot open %s"), src_file, src_line, fname);
 		else
-			qse_raddic_seterrfmt (dic, QSE_RADDIC_ESYNERR, QSE_T("cannot open %s"), fname);
+			qse_raddic_seterrfmt (dic, QSE_RADDIC_ESYNERR, QSE_T("cannot open \"%s\""), fname);
 		goto oops;
 	}
 
@@ -1568,7 +1647,7 @@ static int load_file (qse_raddic_t* dic, const qse_char_t* dir, const qse_char_t
 
 		if (argc == 1) 
 		{
-			qse_raddic_seterrfmt (dic, QSE_RADDIC_ESYNERR,  QSE_T("%s[%zd] invalid entry"), fname, line);
+			qse_raddic_seterrfmt (dic, QSE_RADDIC_ESYNERR,  QSE_T("%s[%zd] invalid entry \"%s\""), fname, line, argv[0]);
 			goto oops;
 		}
 
@@ -1595,7 +1674,7 @@ static int load_file (qse_raddic_t* dic, const qse_char_t* dir, const qse_char_t
 		 */
 		if (qse_strcasecmp(argv[0], QSE_T("$INCLUDE")) == 0) 
 		{
-			if (load_file(dic, dir, argv[1], fname, line) < 0) goto oops;
+			if (load_file(dic, argv[1], fname, line) < 0) goto oops;
 			continue;
 		} /* $INCLUDE */
 
@@ -1720,5 +1799,5 @@ oops:
 
 int qse_raddic_load (qse_raddic_t* dic, const qse_char_t* file)
 {
-	return load_file (dic, QSE_NULL, file, QSE_NULL, 0);
+	return load_file (dic, file, QSE_NULL, 0);
 }
