@@ -132,6 +132,10 @@ QSE_EXPORT const qse_mchar_t* qse_mbsbasename (
 	const qse_mchar_t* path
 );
 
+/**
+ * The qse_substmbsbasenamedup() function creates a new string composed of
+ * the base directory part of the given \a path and \a file combined.
+ */
 QSE_EXPORT qse_mchar_t* qse_substmbsbasenamedup (
 	const qse_mchar_t* path,
 	const qse_mchar_t* file,
@@ -289,7 +293,10 @@ QSE_EXPORT qse_size_t qse_canonwcspath (
 	int                flags
 );
 
-
+/**
+ * The qse_substwcsbasenamedup() function creates a new string composed of
+ * the base directory part of the given \a path and \a file combined.
+ */
 QSE_EXPORT qse_wchar_t* qse_mergewcspathdup (
 	const qse_wchar_t* dir,
 	const qse_wchar_t* file,
