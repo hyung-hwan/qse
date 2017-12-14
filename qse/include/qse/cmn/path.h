@@ -132,8 +132,14 @@ QSE_EXPORT const qse_mchar_t* qse_mbsbasename (
 	const qse_mchar_t* path
 );
 
+QSE_EXPORT qse_mchar_t* qse_substmbsbasenamedup (
+	const qse_mchar_t* path,
+	const qse_mchar_t* file,
+	qse_mmgr_t*        mmgr
+);
+
 /**
- * The qse_mbspathroot() function returns the core part of \a path 
+ * The qse_mbspathcore() function returns the core part of \a path 
  * excluding a special prefix.
  */
 QSE_EXPORT qse_mchar_t* qse_mbspathcore (
@@ -230,8 +236,14 @@ QSE_EXPORT const qse_wchar_t* qse_wcsbasename (
 	const qse_wchar_t* path
 );
 
+QSE_EXPORT qse_wchar_t* qse_substwcsbasenamedup (
+	const qse_wchar_t* path,
+	const qse_wchar_t* file,
+	qse_mmgr_t*        mmgr
+);
+
 /**
- * The qse_wcspathroot() function returns the core part of \a path 
+ * The qse_wcspathcore() function returns the core part of \a path 
  * excluding a special prefix.
  */
 QSE_EXPORT qse_wchar_t* qse_wcspathcore (
@@ -286,23 +298,25 @@ QSE_EXPORT qse_wchar_t* qse_mergewcspathdup (
 
 
 #if defined(QSE_CHAR_IS_MCHAR)
-#	define qse_isabspath(p)        qse_ismbsabspath(p)
-#	define qse_isdrivepath(p)      qse_ismbsdrivepath(p)
-#	define qse_isdriveabspath(p)   qse_ismbsdriveabspath(p)
-#	define qse_isdrivecurpath(p)   qse_ismbsdrivecurpath(p)
-#	define qse_basename(path)      qse_mbsbasename(path)
-#	define qse_pathcore(p)         qse_mbspathcore(p)
-#	define qse_canonpath(p,c,f)    qse_canonmbspath(p,c,f)
-#	define qse_mergepathdup(d,f,m) qse_mergembspathdup(d,f,m)
+#	define qse_isabspath(p)              qse_ismbsabspath(p)
+#	define qse_isdrivepath(p)            qse_ismbsdrivepath(p)
+#	define qse_isdriveabspath(p)         qse_ismbsdriveabspath(p)
+#	define qse_isdrivecurpath(p)         qse_ismbsdrivecurpath(p)
+#	define qse_basename(path)            qse_mbsbasename(path)
+#	define qse_pathcore(p)               qse_mbspathcore(p)
+#	define qse_canonpath(p,c,f)          qse_canonmbspath(p,c,f)
+#	define qse_mergepathdup(d,f,m)       qse_mergembspathdup(d,f,m)
+#	define qse_substbasenamedup(d,f,m)   qse_substmbsbasenamedup(d,f,m)
 #else
-#	define qse_isabspath(p)        qse_iswcsabspath(p)
-#	define qse_isdrivepath(p)      qse_iswcsdrivepath(p)
-#	define qse_isdriveabspath(p)   qse_iswcsdriveabspath(p)
-#	define qse_isdrivecurpath(p)   qse_iswcsdrivecurpath(p)
-#	define qse_basename(path)      qse_wcsbasename(path)
-#	define qse_pathcore(p)         qse_getpathcore(p)
-#	define qse_canonpath(p,c,f)    qse_canonwcspath(p,c,f)
-#	define qse_mergepathdup(d,f,m) qse_mergewcspathdup(d,f,m)
+#	define qse_isabspath(p)              qse_iswcsabspath(p)
+#	define qse_isdrivepath(p)            qse_iswcsdrivepath(p)
+#	define qse_isdriveabspath(p)         qse_iswcsdriveabspath(p)
+#	define qse_isdrivecurpath(p)         qse_iswcsdrivecurpath(p)
+#	define qse_basename(path)            qse_wcsbasename(path)
+#	define qse_pathcore(p)               qse_wcspathcore(p)
+#	define qse_canonpath(p,c,f)          qse_canonwcspath(p,c,f)
+#	define qse_mergepathdup(d,f,m)       qse_mergewcspathdup(d,f,m)
+#	define qse_substbasenamedup(d,f,m)   qse_substwcsbasenamedup(d,f,m)
 #endif
 
 #if defined(__cplusplus)

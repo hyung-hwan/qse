@@ -398,11 +398,11 @@ static int test3 ()
 	dic = qse_raddic_open (QSE_MMGR_GETDFL(), 0);
 	_assert (dic != QSE_NULL, QSE_T("unable to create a radius dictionary"));
 
-	trait = QSE_RADDIC_ALLOW_CONST_WITHOUT_ATTR;
+	trait = QSE_RADDIC_ALLOW_CONST_WITHOUT_ATTR | QSE_RADDIC_ALLOW_DUPLICATE_CONST;
 	n = qse_raddic_setopt (dic, QSE_RADDIC_TRAIT, &trait);
 	_assert (n == 0, QSE_T("cannot set trait"));
 
-	n = qse_raddic_load (dic, QSE_T("dictionary"));
+	n = qse_raddic_load (dic, QSE_T("fr/dictionary"));
 	_assert (n == 0, qse_raddic_geterrmsg(dic));
 
 	qse_raddic_close (dic);

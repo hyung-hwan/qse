@@ -25,6 +25,7 @@
  */
 
 #include <qse/cmn/path.h>
+#include <qse/cmn/str.h>
 
 #define IS_MSEP(c) QSE_ISPATHMBSEP(c)
 #define IS_WSEP(c) QSE_ISPATHWCSEP(c)
@@ -51,4 +52,53 @@ const qse_wchar_t* qse_wcsbasename (const qse_wchar_t* path)
 	}
 
 	return (last == QSE_NULL)? path: (last + 1);
+}
+
+
+qse_mchar_t* qse_substmbsbasenamedup (const qse_mchar_t* path, const qse_mchar_t* file, qse_mmgr_t* mmgr)
+{
+	const qse_mchar_t* b;
+	qse_mcstr_t seg[3];
+	qse_size_t idx = 0;
+
+	b = qse_mbsbasename(path);
+	if (b)
+	{
+		seg[idx].ptr = (qse_mchar_t*)path;
+		seg[idx].len = b - path;
+		idx++;
+	}
+
+	seg[idx].ptr = (qse_mchar_t*)file;
+	seg[idx].len = qse_mbslen(file);
+	idx++;
+
+	seg[idx].ptr = QSE_NULL;
+	seg[idx].len = 0;
+
+	return qse_mcstradup (seg, QSE_NULL, mmgr);
+}
+
+qse_wchar_t* qse_substwcsbasenamedup (const qse_wchar_t* path, const qse_wchar_t* file, qse_mmgr_t* mmgr)
+{
+	const qse_wchar_t* b;
+	qse_wcstr_t seg[3];
+	qse_size_t idx = 0;
+
+	b = qse_wcsbasename(path);
+	if (b)
+	{
+		seg[idx].ptr = (qse_wchar_t*)path;
+		seg[idx].len = b - path;
+		idx++;
+	}
+
+	seg[idx].ptr = (qse_wchar_t*)file;
+	seg[idx].len = qse_wcslen(file);
+	idx++;
+
+	seg[idx].ptr = QSE_NULL;
+	seg[idx].len = 0;
+
+	return qse_wcstradup (seg, QSE_NULL, mmgr);
 }
