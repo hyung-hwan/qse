@@ -167,7 +167,7 @@ typedef qse_wchar_t* (*qse_wcssubst_t) (
 	 (c>=QSE_T('a') && c<=QSE_T('z'))? ((c-QSE_T('a')+10<base)? (c-QSE_T('a')+10): base): base)
 
 /* qse_strtonum (const qse_char_t* nptr, qse_char_t** endptr, int base) */
-#define QSE_STRTONUM(value,nptr,endptr,base) do {\
+#define QSE_STRTONUM(value,nptr,endptr,base,allowneg) do {\
 	int __ston_f = 0, __ston_v; \
 	const qse_char_t* __ston_ptr = nptr; \
 	int __ston_base = base; \
@@ -175,7 +175,7 @@ typedef qse_wchar_t* (*qse_wcssubst_t) (
 		qse_char_t __ston_c = *__ston_ptr; \
 		if (__ston_c == QSE_T(' ') || \
 		    __ston_c == QSE_T('\t')) { __ston_ptr++; continue; } \
-		else if (__ston_c == QSE_T('-')) { __ston_f++; __ston_ptr++; } \
+		else if ((allowneg) && __ston_c == QSE_T('-')) { __ston_f++; __ston_ptr++; } \
 		else if (__ston_c == QSE_T('+')) { __ston_ptr++; } \
 		break; \
 	} \
@@ -194,7 +194,7 @@ typedef qse_wchar_t* (*qse_wcssubst_t) (
 } while(0)
 
 /* qse_strxtonum (const qse_char_t* nptr, qse_size_t len, qse_char_char** endptr, int base) */
-#define QSE_STRXTONUM(value,nptr,len,endptr,base) do {\
+#define QSE_STRXTONUM(value,nptr,len,endptr,base,allowneg) do {\
 	int __ston_f = 0, __ston_v; \
 	const qse_char_t* __ston_ptr = nptr; \
 	const qse_char_t* __ston_end = __ston_ptr + len; \
@@ -204,7 +204,7 @@ typedef qse_wchar_t* (*qse_wcssubst_t) (
 		if (__ston_c == QSE_T(' ') || __ston_c == QSE_T('\t')) { \
 			__ston_ptr++; continue; \
 		} \
-		else if (__ston_c == QSE_T('-')) { __ston_f++; __ston_ptr++; } \
+		else if (allowneg && __ston_c == QSE_T('-')) { __ston_f++; __ston_ptr++; } \
 		else if (__ston_c == QSE_T('+')) { __ston_ptr++; } \
 		break; \
 	} \
@@ -229,7 +229,7 @@ typedef qse_wchar_t* (*qse_wcssubst_t) (
 	 (c>=QSE_MT('a') && c<=QSE_MT('z'))? ((c-QSE_MT('a')+10<base)? (c-QSE_MT('a')+10): base): base)
 
 /* qse_strtonum (const qse_mchar_t* nptr, qse_mchar_t** endptr, int base) */
-#define QSE_MBSTONUM(value,nptr,endptr,base) do {\
+#define QSE_MBSTONUM(value,nptr,endptr,base,allowneg) do {\
 	int __ston_f = 0, __ston_v; \
 	const qse_mchar_t* __ston_ptr = nptr; \
 	int __ston_base = base; \
@@ -237,7 +237,7 @@ typedef qse_wchar_t* (*qse_wcssubst_t) (
 		qse_mchar_t __ston_c = *__ston_ptr; \
 		if (__ston_c == QSE_MT(' ') || \
 		    __ston_c == QSE_MT('\t')) { __ston_ptr++; continue; } \
-		else if (__ston_c == QSE_MT('-')) { __ston_f++; __ston_ptr++; } \
+		else if ((allowneg) && __ston_c == QSE_MT('-')) { __ston_f++; __ston_ptr++; } \
 		else if (__ston_c == QSE_MT('+')) { __ston_ptr++; } \
 		break; \
 	} \
@@ -256,7 +256,7 @@ typedef qse_wchar_t* (*qse_wcssubst_t) (
 } while(0)
 
 /* qse_strxtonum (const qse_mchar_t* nptr, qse_size_t len, qse_mchar_t** endptr, int base) */
-#define QSE_MBSXTONUM(value,nptr,len,endptr,base) do {\
+#define QSE_MBSXTONUM(value,nptr,len,endptr,base,allowneg) do {\
 	int __ston_f = 0, __ston_v; \
 	const qse_mchar_t* __ston_ptr = nptr; \
 	const qse_mchar_t* __ston_end = __ston_ptr + len; \
@@ -266,7 +266,7 @@ typedef qse_wchar_t* (*qse_wcssubst_t) (
 		if (__ston_c == QSE_MT(' ') || __ston_c == QSE_MT('\t')) { \
 			__ston_ptr++; continue; \
 		} \
-		else if (__ston_c == QSE_MT('-')) { __ston_f++; __ston_ptr++; } \
+		else if ((allowneg) && __ston_c == QSE_MT('-')) { __ston_f++; __ston_ptr++; } \
 		else if (__ston_c == QSE_MT('+')) { __ston_ptr++; } \
 		break; \
 	} \
@@ -291,7 +291,7 @@ typedef qse_wchar_t* (*qse_wcssubst_t) (
 	 (c>=QSE_WT('a') && c<=QSE_WT('z'))? ((c-QSE_WT('a')+10<base)? (c-QSE_WT('a')+10): base): base)
 
 /* qse_strtonum (const qse_wchar_t* nptr, qse_wchar_t** endptr, int base) */
-#define QSE_WCSTONUM(value,nptr,endptr,base) do {\
+#define QSE_WCSTONUM(value,nptr,endptr,base,allowneg) do {\
 	int __ston_f = 0, __ston_v; \
 	const qse_wchar_t* __ston_ptr = nptr; \
 	int __ston_base = base; \
@@ -299,7 +299,7 @@ typedef qse_wchar_t* (*qse_wcssubst_t) (
 		qse_wchar_t __ston_c = *__ston_ptr; \
 		if (__ston_c == QSE_WT(' ') || \
 		    __ston_c == QSE_WT('\t')) { __ston_ptr++; continue; } \
-		else if (__ston_c == QSE_WT('-')) { __ston_f++; __ston_ptr++; } \
+		else if ((allowneg) && __ston_c == QSE_WT('-')) { __ston_f++; __ston_ptr++; } \
 		else if (__ston_c == QSE_WT('+')) { __ston_ptr++; } \
 		break; \
 	} \
@@ -318,7 +318,7 @@ typedef qse_wchar_t* (*qse_wcssubst_t) (
 } while(0)
 
 /* qse_strxtonum (const qse_wchar_t* nptr, qse_size_t len, qse_wchar_t** endptr, int base) */
-#define QSE_WCSXTONUM(value,nptr,len,endptr,base) do {\
+#define QSE_WCSXTONUM(value,nptr,len,endptr,base,allowneg) do {\
 	int __ston_f = 0, __ston_v; \
 	const qse_wchar_t* __ston_ptr = nptr; \
 	const qse_wchar_t* __ston_end = __ston_ptr + len; \
@@ -328,7 +328,7 @@ typedef qse_wchar_t* (*qse_wcssubst_t) (
 		if (__ston_c == QSE_WT(' ') || __ston_c == QSE_WT('\t')) { \
 			__ston_ptr++; continue; \
 		} \
-		else if (__ston_c == QSE_WT('-')) { __ston_f++; __ston_ptr++; } \
+		else if ((allowneg) && __ston_c == QSE_WT('-')) { __ston_f++; __ston_ptr++; } \
 		else if (__ston_c == QSE_WT('+')) { __ston_ptr++; } \
 		break; \
 	} \
@@ -2052,226 +2052,332 @@ QSE_EXPORT qse_wchar_t* qse_wcsxrpbrk (
  * string conversion
  */
 QSE_EXPORT int qse_mbstoi (
-	const qse_mchar_t* str,
-	int               base
+	const qse_mchar_t*  str,
+	int                 base,
+	const qse_mchar_t** end
 );
 
 QSE_EXPORT long qse_mbstol (
-	const qse_mchar_t* str,
-	int               base
+	const qse_mchar_t*  str,
+	int                 base,
+	const qse_mchar_t** end
 );
 
 QSE_EXPORT unsigned int qse_mbstoui (
-	const qse_mchar_t* str,
-	int               base
+	const qse_mchar_t*  str,
+	int                 base,
+	const qse_mchar_t** end
 );
 
 QSE_EXPORT unsigned long qse_mbstoul (
-	const qse_mchar_t* str,
-	int               base
+	const qse_mchar_t*  str,
+	int                 base,
+	const qse_mchar_t** end
 );
+/* ----- */
 
 QSE_EXPORT int qse_mbsxtoi (
-	const qse_mchar_t* str,
-	qse_size_t        len,
-	int               base
+	const qse_mchar_t*  str,
+	qse_size_t          len,
+	int                 base,
+	const qse_mchar_t** end
 );
 
 QSE_EXPORT long qse_mbsxtol (
-	const qse_mchar_t* str,
-	qse_size_t        len,
-	int               base
+	const qse_mchar_t*  str,
+	qse_size_t          len,
+	int                 base,
+	const qse_mchar_t** end
 );
 
 QSE_EXPORT unsigned int qse_mbsxtoui (
-	const qse_mchar_t* str,
-	qse_size_t        len,
-	int               base
+	const qse_mchar_t*  str,
+	qse_size_t          len,
+	int                 base,
+	const qse_mchar_t** end
 );
 
 QSE_EXPORT unsigned long qse_mbsxtoul (
-	const qse_mchar_t* str,
-	qse_size_t        len,
-	int               base
+	const qse_mchar_t*  str,
+	qse_size_t          len,
+	int                 base,
+	const qse_mchar_t** end
 );
 
+/* ----- */
+
 QSE_EXPORT qse_int_t qse_mbstoint (
-	const qse_mchar_t* str,
-	int               base
+	const qse_mchar_t*  str,
+	int                 base,
+	const qse_mchar_t** end
 );
 
 QSE_EXPORT qse_long_t qse_mbstolong (
-	const qse_mchar_t* str,
-	int               base
+	const qse_mchar_t*  str,
+	int                 base,
+	const qse_mchar_t** end
 );
 
+QSE_EXPORT qse_intmax_t qse_mbstointmax (
+	const qse_mchar_t*  str,
+	int                 base,
+	const qse_mchar_t** end
+);
+
+/* ----- */
+
 QSE_EXPORT qse_uint_t qse_mbstouint (
-	const qse_mchar_t* str,
-	int               base
+	const qse_mchar_t*  str,
+	int                 base,
+	const qse_mchar_t** end
 );
 
 QSE_EXPORT qse_ulong_t qse_mbstoulong (
-	const qse_mchar_t* str,
-	int               base
+	const qse_mchar_t*  str,
+	int                 base,
+	const qse_mchar_t** end
 );
 
+QSE_EXPORT qse_uintmax_t qse_mbstouintmax (
+	const qse_mchar_t*  str,
+	int                 base,
+	const qse_mchar_t** end
+);
+
+/* ----- */
+
 QSE_EXPORT qse_int_t qse_mbsxtoint (
-	const qse_mchar_t* str, 
-	qse_size_t        len,
-	int               base
+	const qse_mchar_t*  str, 
+	qse_size_t          len,
+	int                 base,
+	const qse_mchar_t** end
 );
 
 QSE_EXPORT qse_long_t qse_mbsxtolong (
-	const qse_mchar_t* str,
-	qse_size_t        len,
-	int               base
+	const qse_mchar_t*  str,
+	qse_size_t          len,
+	int                 base,
+	const qse_mchar_t** end
 );
 
+QSE_EXPORT qse_intmax_t qse_mbsxtointmax (
+	const qse_mchar_t*  str,
+	qse_size_t          len,
+	int                 base,
+	const qse_mchar_t** end
+);
+
+/* ----- */
+
 QSE_EXPORT qse_uint_t qse_mbsxtouint (
-	const qse_mchar_t* str,
-	qse_size_t        len,
-	int               base
+	const qse_mchar_t*  str,
+	qse_size_t          len,
+	int                 base,
+	const qse_mchar_t** end
 );
 
 QSE_EXPORT qse_ulong_t qse_mbsxtoulong (
-	const qse_mchar_t* str,
-	qse_size_t        len,
-	int               base
+	const qse_mchar_t*  str,
+	qse_size_t          len,
+	int                 base,
+	const qse_mchar_t** end
 );
 
-
+QSE_EXPORT qse_uintmax_t qse_mbsxtouintmax (
+	const qse_mchar_t*  str,
+	qse_size_t          len,
+	int                 base,
+	const qse_mchar_t** end
+);
+/* ------------------------------------------------------ */
 
 QSE_EXPORT int qse_wcstoi (
-	const qse_wchar_t* str,
-	int               base
+	const qse_wchar_t*  str,
+	int                 base,
+	const qse_wchar_t** end
 );
 
 QSE_EXPORT long qse_wcstol (
-	const qse_wchar_t* str,
-	int               base
+	const qse_wchar_t*  str,
+	int                 base,
+	const qse_wchar_t** end
 );
 
 QSE_EXPORT unsigned int qse_wcstoui (
-	const qse_wchar_t* str,
-	int               base
+	const qse_wchar_t*  str,
+	int                 base,
+	const qse_wchar_t** end
 );
 
 QSE_EXPORT unsigned long qse_wcstoul (
-	const qse_wchar_t* str,
-	int               base
+	const qse_wchar_t*  str,
+	int                 base,
+	const qse_wchar_t** end
 );
+/* ----- */
 
 QSE_EXPORT int qse_wcsxtoi (
-	const qse_wchar_t* str,
-	qse_size_t        len,
-	int               base
+	const qse_wchar_t*  str,
+	qse_size_t          len,
+	int                 base,
+	const qse_wchar_t** end
 );
 
 QSE_EXPORT long qse_wcsxtol (
-	const qse_wchar_t* str,
-	qse_size_t        len,
-	int               base
+	const qse_wchar_t*  str,
+	qse_size_t          len,
+	int                 base,
+	const qse_wchar_t** end
 );
 
 QSE_EXPORT unsigned int qse_wcsxtoui (
-	const qse_wchar_t* str,
-	qse_size_t        len,
-	int               base
+	const qse_wchar_t*  str,
+	qse_size_t          len,
+	int                 base,
+	const qse_wchar_t** end
 );
 
 QSE_EXPORT unsigned long qse_wcsxtoul (
-	const qse_wchar_t* str,
-	qse_size_t        len,
-	int               base
+	const qse_wchar_t*  str,
+	qse_size_t          len,
+	int                 base,
+	const qse_wchar_t** end
 );
-
+/* ----- */
 QSE_EXPORT qse_int_t qse_wcstoint (
-	const qse_wchar_t* str,
-	int               base
+	const qse_wchar_t*  str,
+	int                 base,
+	const qse_wchar_t** end
 );
 
 QSE_EXPORT qse_long_t qse_wcstolong (
-	const qse_wchar_t* str,
-	int               base
+	const qse_wchar_t*  str,
+	int                 base,
+	const qse_wchar_t** end
 );
 
+QSE_EXPORT qse_intmax_t qse_wcstointmax (
+	const qse_wchar_t*  str,
+	int                 base,
+	const qse_wchar_t** end
+);
+/* ----- */
 QSE_EXPORT qse_uint_t qse_wcstouint (
-	const qse_wchar_t* str,
-	int               base
+	const qse_wchar_t*  str,
+	int                 base,
+	const qse_wchar_t** end
 );
 
 QSE_EXPORT qse_ulong_t qse_wcstoulong (
-	const qse_wchar_t* str,
-	int               base
+	const qse_wchar_t*  str,
+	int                 base,
+	const qse_wchar_t** end
 );
 
+QSE_EXPORT qse_uintmax_t qse_wcstouintmax (
+	const qse_wchar_t*  str,
+	int                 base,
+	const qse_wchar_t** end
+);
+/* ----- */
 QSE_EXPORT qse_int_t qse_wcsxtoint (
-	const qse_wchar_t* str, 
-	qse_size_t        len,
-	int               base
+	const qse_wchar_t*  str, 
+	qse_size_t          len,
+	int                 base,
+	const qse_wchar_t** end
 );
 
 QSE_EXPORT qse_long_t qse_wcsxtolong (
-	const qse_wchar_t* str,
-	qse_size_t        len,
-	int               base
+	const qse_wchar_t*  str,
+	qse_size_t          len,
+	int                 base,
+	const qse_wchar_t** end
 );
 
+QSE_EXPORT qse_intmax_t qse_wcsxtointmax (
+	const qse_wchar_t*  str,
+	qse_size_t          len,
+	int                 base,
+	const qse_wchar_t** end
+);
+
+/* ----- */
 QSE_EXPORT qse_uint_t qse_wcsxtouint (
-	const qse_wchar_t* str,
-	qse_size_t         len,
-	int                base
+	const qse_wchar_t*  str,
+	qse_size_t          len,
+	int                 base,
+	const qse_wchar_t** end
 );
 
 QSE_EXPORT qse_ulong_t qse_wcsxtoulong (
-	const qse_wchar_t* str,
-	qse_size_t         len,
-	int                base
+	const qse_wchar_t*  str,
+	qse_size_t          len,
+	int                 base,
+	const qse_wchar_t** end
+);
+
+QSE_EXPORT qse_uintmax_t qse_wcsxtouintmax (
+	const qse_wchar_t*  str,
+	qse_size_t          len,
+	int                 base,
+	const qse_wchar_t** end
 );
 
 #if defined(QSE_CHAR_IS_MCHAR)
 
-#	define qse_strtoi(str,base) qse_mbstoi(str,base)
-#	define qse_strtol(str,base) qse_mbstol(str,base)
-#	define qse_strtoui(str,base) qse_mbstoui(str,base)
-#	define qse_strtoul(str,base) qse_mbstoul(str,base)
-
-#	define qse_strxtoi(str,len,base) qse_mbsxtoi(str,len,base)
-#	define qse_strxtol(str,len,base) qse_mbsxtol(str,len,base)
-#	define qse_strxtoui(str,len,base) qse_mbsxtoui(str,len,base)
-#	define qse_strxtoul(str,len,base) qse_mbsxtoul(str,len,base)
-
-#	define qse_strtoint(str,base) qse_mbstoint(str,base)
-#	define qse_strtolong(str,base) qse_mbstolong(str,base)
-#	define qse_strtouint(str,base) qse_mbstouint(str,base)
-#	define qse_strtoulong(str,base) qse_mbstoulong(str,base)
-
-#	define qse_strxtoint(str,len,base) qse_mbsxtoint(str,len,base)
-#	define qse_strxtolong(str,len,base) qse_mbsxtolong(str,len,base)
-#	define qse_strxtouint(str,len,base) qse_mbsxtouint(str,len,base)
-#	define qse_strxtoulong(str,len,base) qse_mbsxtoulong(str,len,base)
+#	define qse_strtoi(str,base,end) qse_mbstoi(str,base,end)
+#	define qse_strtol(str,base,end) qse_mbstol(str,base,end)
+#	define qse_strtoui(str,base,end) qse_mbstoui(str,base,end)
+#	define qse_strtoul(str,base,end) qse_mbstoul(str,base,end)
+/* ----- */
+#	define qse_strxtoi(str,len,base,end) qse_mbsxtoi(str,len,base,end)
+#	define qse_strxtol(str,len,base,end) qse_mbsxtol(str,len,base,end)
+#	define qse_strxtoui(str,len,base,end) qse_mbsxtoui(str,len,base,end)
+#	define qse_strxtoul(str,len,base,end) qse_mbsxtoul(str,len,base,end)
+/* ----- */
+#	define qse_strtoint(str,base,end) qse_mbstoint(str,base,end)
+#	define qse_strtolong(str,base,end) qse_mbstolong(str,base,end)
+#	define qse_strtointmax(str,base,end) qse_mbstointmax(str,base,end)
+/* ----- */
+#	define qse_strtouint(str,base,end) qse_mbstouint(str,base,end)
+#	define qse_strtoulong(str,base,end) qse_mbstoulong(str,base,end)
+#	define qse_strtouintmax(str,base,end) qse_mbstouintmax(str,base,end)
+/* ----- */
+#	define qse_strxtoint(str,len,base,end) qse_mbsxtoint(str,len,base,end)
+#	define qse_strxtolong(str,len,base,end) qse_mbsxtolong(str,len,base,end)
+#	define qse_strxtointmax(str,len,base,end) qse_mbsxtointmax(str,len,base,end)
+/* ----- */
+#	define qse_strxtouint(str,len,base,end) qse_mbsxtouint(str,len,base,end)
+#	define qse_strxtoulong(str,len,base,end) qse_mbsxtoulong(str,len,base,end)
+#	define qse_strxtouintmax(str,len,base,end) qse_mbsxtouintmax(str,len,base,end)
 
 #else
 
-#	define qse_strtoi(str,base) qse_wcstoi(str,base)
-#	define qse_strtol(str,base) qse_wcstol(str,base)
-#	define qse_strtoui(str,base) qse_wcstoui(str,base)
-#	define qse_strtoul(str,base) qse_wcstoul(str,base)
-
-#	define qse_strxtoi(str,len,base) qse_wcsxtoi(str,len,base)
-#	define qse_strxtol(str,len,base) qse_wcsxtol(str,len,base)
-#	define qse_strxtoui(str,len,base) qse_wcsxtoui(str,len,base)
-#	define qse_strxtoul(str,len,base) qse_wcsxtoul(str,len,base)
-
-#	define qse_strtoint(str,base) qse_wcstoint(str,base)
-#	define qse_strtolong(str,base) qse_wcstolong(str,base)
-#	define qse_strtouint(str,base) qse_wcstouint(str,base)
-#	define qse_strtoulong(str,base) qse_wcstoulong(str,base)
-
-#	define qse_strxtoint(str,len,base) qse_wcsxtoint(str,len,base)
-#	define qse_strxtolong(str,len,base) qse_wcsxtolong(str,len,base)
-#	define qse_strxtouint(str,len,base) qse_wcsxtouint(str,len,base)
-#	define qse_strxtoulong(str,len,base) qse_wcsxtoulong(str,len,base)
+#	define qse_strtoi(str,base,end) qse_wcstoi(str,base,end)
+#	define qse_strtol(str,base,end) qse_wcstol(str,base,end)
+#	define qse_strtoui(str,base,end) qse_wcstoui(str,base,end)
+#	define qse_strtoul(str,base,end) qse_wcstoul(str,base,end)
+/* ----- */
+#	define qse_strxtoi(str,len,base,end) qse_wcsxtoi(str,len,base,end)
+#	define qse_strxtol(str,len,base,end) qse_wcsxtol(str,len,base,end)
+#	define qse_strxtoui(str,len,base,end) qse_wcsxtoui(str,len,base,end)
+#	define qse_strxtoul(str,len,base,end) qse_wcsxtoul(str,len,base,end)
+/* ----- */
+#	define qse_strtoint(str,base,end) qse_wcstoint(str,base,end)
+#	define qse_strtolong(str,base,end) qse_wcstolong(str,base,end)
+#	define qse_strtointmax(str,base,end) qse_wcstointmax(str,base,end)
+/* ----- */
+#	define qse_strtouint(str,base,end) qse_wcstouint(str,base,end)
+#	define qse_strtoulong(str,base,end) qse_wcstoulong(str,base,end)
+#	define qse_strtouintmax(str,base,end) qse_wcstouintmax(str,base,end)
+/* ----- */
+#	define qse_strxtoint(str,len,base,end) qse_wcsxtoint(str,len,base,end)
+#	define qse_strxtolong(str,len,base,end) qse_wcsxtolong(str,len,base,end)
+#	define qse_strxtointmax(str,len,base,end) qse_wcsxtointmax(str,len,base,end)
+/* ----- */
+#	define qse_strxtouint(str,len,base,end) qse_wcsxtouint(str,len,base,end)
+#	define qse_strxtoulong(str,len,base,end) qse_wcsxtoulong(str,len,base,end)
+#	define qse_strxtouintmax(str,len,base,end) qse_wcsxtouintmax(str,len,base,end)
 
 #endif
 
@@ -2461,12 +2567,12 @@ QSE_EXPORT qse_size_t qse_wcsrev (
 	qse_wchar_t* str
 );
 
-QSE_EXPORT qse_size_t qse_mbsxrev (	
+QSE_EXPORT qse_size_t qse_mbsxrev (
 	qse_mchar_t* str,
 	qse_size_t   len
 );
 
-QSE_EXPORT qse_size_t qse_wcsxrev (	
+QSE_EXPORT qse_size_t qse_wcsxrev (
 	qse_wchar_t* str,
 	qse_size_t   len
 );

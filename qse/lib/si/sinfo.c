@@ -65,7 +65,8 @@ int qse_get_highest_fd (void)
 
 			if (de->d_name[0] == QSE_MT('.')) continue;
 
-			QSE_MBSTONUM (l, de->d_name, &endptr, 10);
+			/*QSE_MBSTONUM (l, de->d_name, &endptr, 10);*/
+			l = qse_mbstolong (de->d_name, 10, &endptr);
 			if (*endptr == QSE_MT('\0'))
 			{
 				fd = (int)l;
@@ -137,7 +138,8 @@ int qse_close_open_fds_using_proc (int* excepts, qse_size_t count)
 
 			if (de->d_name[0] == QSE_MT('.')) continue;
 
-			QSE_MBSTONUM (l, de->d_name, &endptr, 10);
+			/*QSE_MBSTONUM (l, de->d_name, &endptr, 10);*/
+			l = qse_mbstolong (de->d_name, 10, &endptr);
 			if (*endptr == QSE_MT('\0'))
 			{
 				int fd = (int)l;

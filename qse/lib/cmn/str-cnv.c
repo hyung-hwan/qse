@@ -32,231 +32,303 @@
 /*---------------------------------------------------------------
  * multi-byte string to number conversion 
  *---------------------------------------------------------------*/
-int qse_mbstoi (const qse_mchar_t* mbs, int base)
+int qse_mbstoi (const qse_mchar_t* mbs, int base, const qse_mchar_t** end)
 {
 	int v;
-	QSE_MBSTONUM (v, mbs, QSE_NULL, base);
+	
+	QSE_MBSTONUM (v, mbs, end, base, 1);
 	return v;
 }
 
-long qse_mbstol (const qse_mchar_t* mbs, int base)
+long qse_mbstol (const qse_mchar_t* mbs, int base, const qse_mchar_t** end)
 {
 	long v;
-	QSE_MBSTONUM (v, mbs, QSE_NULL, base);
+	QSE_MBSTONUM (v, mbs, end, base, 1);
 	return v;
 }
 
-unsigned int qse_mbstoui (const qse_mchar_t* mbs, int base)
+unsigned int qse_mbstoui (const qse_mchar_t* mbs, int base, const qse_mchar_t** end)
 {
 	unsigned int v;
-	QSE_MBSTONUM (v, mbs, QSE_NULL, base);
+	QSE_MBSTONUM (v, mbs, end, base, 0);
 	return v;
 }
 
-unsigned long qse_mbstoul (const qse_mchar_t* mbs, int base)
+unsigned long qse_mbstoul (const qse_mchar_t* mbs, int base, const qse_mchar_t** end)
 {
 	unsigned long v;
-	QSE_MBSTONUM (v, mbs, QSE_NULL, base);
+	QSE_MBSTONUM (v, mbs, end, base, 0);
 	return v;
 }
 
-int qse_mbsxtoi (const qse_mchar_t* mbs, qse_size_t len, int base)
+/* ----- */
+
+int qse_mbsxtoi (const qse_mchar_t* mbs, qse_size_t len, int base, const qse_mchar_t** end)
 {
 	int v;
-	QSE_MBSXTONUM (v, mbs, len, QSE_NULL, base);
+	QSE_MBSXTONUM (v, mbs, len, end, base, 1);
 	return v;
 }
 
-long qse_mbsxtol (const qse_mchar_t* mbs, qse_size_t len, int base)
+long qse_mbsxtol (const qse_mchar_t* mbs, qse_size_t len, int base, const qse_mchar_t** end)
 {
 	long v;
-	QSE_MBSXTONUM (v, mbs, len, QSE_NULL, base);
+	QSE_MBSXTONUM (v, mbs, len, end, base, 1);
 	return v;
 }
 
-unsigned int qse_mbsxtoui (const qse_mchar_t* mbs, qse_size_t len, int base)
+unsigned int qse_mbsxtoui (const qse_mchar_t* mbs, qse_size_t len, int base, const qse_mchar_t** end)
 {
 	unsigned int v;
-	QSE_MBSXTONUM (v, mbs, len, QSE_NULL, base);
+	QSE_MBSXTONUM (v, mbs, len, end, base, 0);
 	return v;
 }
 
-unsigned long qse_mbsxtoul (const qse_mchar_t* mbs, qse_size_t len, int base)
+unsigned long qse_mbsxtoul (const qse_mchar_t* mbs, qse_size_t len, int base, const qse_mchar_t** end)
 {
 	unsigned long v;
-	QSE_MBSXTONUM (v, mbs, len, QSE_NULL, base);
+	QSE_MBSXTONUM (v, mbs, len, end, base, 0);
 	return v;
 }
 
-qse_int_t qse_mbstoint (const qse_mchar_t* mbs, int base)
+/* ----- */
+
+qse_int_t qse_mbstoint (const qse_mchar_t* mbs, int base, const qse_mchar_t** end)
 {
 	qse_int_t v;
-	QSE_MBSTONUM (v, mbs, QSE_NULL, base);
+	QSE_MBSTONUM (v, mbs, end, base, 1);
 	return v;
 }
 
-qse_long_t qse_mbstolong (const qse_mchar_t* mbs, int base)
+qse_long_t qse_mbstolong (const qse_mchar_t* mbs, int base, const qse_mchar_t** end)
 {
 	qse_long_t v;
-	QSE_MBSTONUM (v, mbs, QSE_NULL, base);
+	QSE_MBSTONUM (v, mbs, end, base, 1);
 	return v;
 }
 
-qse_uint_t qse_mbstouint (const qse_mchar_t* mbs, int base)
+qse_intmax_t qse_mbstointmax (const qse_mchar_t* mbs, int base, const qse_mchar_t** end)
+{
+	qse_intmax_t v;
+	QSE_MBSTONUM (v, mbs, end, base, 1);
+	return v;
+}
+/* ----- */
+
+qse_uint_t qse_mbstouint (const qse_mchar_t* mbs, int base, const qse_mchar_t** end)
 {
 	qse_uint_t v;
-	QSE_MBSTONUM (v, mbs, QSE_NULL, base);
+	QSE_MBSTONUM (v, mbs, end, base, 0);
 	return v;
 }
 
-qse_ulong_t qse_mbstoulong (const qse_mchar_t* mbs, int base)
+qse_ulong_t qse_mbstoulong (const qse_mchar_t* mbs, int base, const qse_mchar_t** end)
 {
 	qse_ulong_t v;
-	QSE_MBSTONUM (v, mbs, QSE_NULL, base);
+	QSE_MBSTONUM (v, mbs, end, base, 0);
 	return v;
 }
 
-qse_int_t qse_mbsxtoint (const qse_mchar_t* mbs, qse_size_t len, int base)
+qse_uintmax_t qse_mbstouintmax (const qse_mchar_t* mbs, int base, const qse_mchar_t** end)
+{
+	qse_uintmax_t v;
+	QSE_MBSTONUM (v, mbs, end, base, 0);
+	return v;
+}
+
+/* ----- */
+
+qse_int_t qse_mbsxtoint (const qse_mchar_t* mbs, qse_size_t len, int base, const qse_mchar_t** end)
 {
 	qse_int_t v;
-	QSE_MBSXTONUM (v, mbs, len, QSE_NULL, base);
+	QSE_MBSXTONUM (v, mbs, len, end, base, 1);
 	return v;
 }
 
-qse_long_t qse_mbsxtolong (const qse_mchar_t* mbs, qse_size_t len, int base)
+qse_long_t qse_mbsxtolong (const qse_mchar_t* mbs, qse_size_t len, int base, const qse_mchar_t** end)
 {
 	qse_long_t v;
-	QSE_MBSXTONUM (v, mbs, len, QSE_NULL, base);
+	QSE_MBSXTONUM (v, mbs, len, end, base, 1);
 	return v;
 }
 
-qse_uint_t qse_mbsxtouint (const qse_mchar_t* mbs, qse_size_t len, int base)
+qse_intmax_t qse_mbsxtointmax (const qse_mchar_t* mbs, qse_size_t len, int base, const qse_mchar_t** end)
+{
+	qse_intmax_t v;
+	QSE_MBSXTONUM (v, mbs, len, end, base, 1);
+	return v;
+}
+/* ----- */
+
+qse_uint_t qse_mbsxtouint (const qse_mchar_t* mbs, qse_size_t len, int base, const qse_mchar_t** end)
 {
 	qse_uint_t v;
-	QSE_MBSXTONUM (v, mbs, len, QSE_NULL, base);
+	QSE_MBSXTONUM (v, mbs, len, end, base, 0);
 	return v;
 }
 
-qse_ulong_t qse_mbsxtoulong (const qse_mchar_t* mbs, qse_size_t len, int base)
+qse_ulong_t qse_mbsxtoulong (const qse_mchar_t* mbs, qse_size_t len, int base, const qse_mchar_t** end)
 {
 	qse_ulong_t v;
-	QSE_MBSXTONUM (v, mbs, len, QSE_NULL, base);
+	QSE_MBSXTONUM (v, mbs, len, end, base, 0);
 	return v;
 }
 
+
+qse_uintmax_t qse_mbsxtouintmax (const qse_mchar_t* mbs, qse_size_t len, int base, const qse_mchar_t** end)
+{
+	qse_uintmax_t v;
+	QSE_MBSXTONUM (v, mbs, len, end, base, 0);
+	return v;
+}
 
 /*---------------------------------------------------------------
  * wide string to number conversion 
  *---------------------------------------------------------------*/
-int qse_wcstoi (const qse_wchar_t* wcs, int base)
+int qse_wcstoi (const qse_wchar_t* wcs, int base, const qse_wchar_t** end)
 {
 	int v;
-	QSE_WCSTONUM (v, wcs, QSE_NULL, base);
+	QSE_WCSTONUM (v, wcs, end, base, 1);
 	return v;
 }
 
-long qse_wcstol (const qse_wchar_t* wcs, int base)
+long qse_wcstol (const qse_wchar_t* wcs, int base, const qse_wchar_t** end)
 {
 	long v;
-	QSE_WCSTONUM (v, wcs, QSE_NULL, base);
+	QSE_WCSTONUM (v, wcs, end, base, 1);
 	return v;
 }
 
-unsigned int qse_wcstoui (const qse_wchar_t* wcs, int base)
+unsigned int qse_wcstoui (const qse_wchar_t* wcs, int base, const qse_wchar_t** end)
 {
 	unsigned int v;
-	QSE_WCSTONUM (v, wcs, QSE_NULL, base);
+	QSE_WCSTONUM (v, wcs, end, base, 0);
 	return v;
 }
 
-unsigned long qse_wcstoul (const qse_wchar_t* wcs, int base)
+unsigned long qse_wcstoul (const qse_wchar_t* wcs, int base, const qse_wchar_t** end)
 {
 	unsigned long v;
-	QSE_WCSTONUM (v, wcs, QSE_NULL, base);
+	QSE_WCSTONUM (v, wcs, end, base, 0);
 	return v;
 }
 
-int qse_wcsxtoi (const qse_wchar_t* wcs, qse_size_t len, int base)
+/* ----- */
+
+int qse_wcsxtoi (const qse_wchar_t* wcs, qse_size_t len, int base, const qse_wchar_t** end)
 {
 	int v;
-	QSE_WCSXTONUM (v, wcs, len, QSE_NULL, base);
+	QSE_WCSXTONUM (v, wcs, len, end, base, 1);
 	return v;
 }
 
-long qse_wcsxtol (const qse_wchar_t* wcs, qse_size_t len, int base)
+long qse_wcsxtol (const qse_wchar_t* wcs, qse_size_t len, int base, const qse_wchar_t** end)
 {
 	long v;
-	QSE_WCSXTONUM (v, wcs, len, QSE_NULL, base);
+	QSE_WCSXTONUM (v, wcs, len, end, base, 1);
 	return v;
 }
 
-unsigned int qse_wcsxtoui (const qse_wchar_t* wcs, qse_size_t len, int base)
+unsigned int qse_wcsxtoui (const qse_wchar_t* wcs, qse_size_t len, int base, const qse_wchar_t** end)
 {
 	unsigned int v;
-	QSE_WCSXTONUM (v, wcs, len, QSE_NULL, base);
+	QSE_WCSXTONUM (v, wcs, len, end, base, 0);
 	return v;
 }
 
-unsigned long qse_wcsxtoul (const qse_wchar_t* wcs, qse_size_t len, int base)
+unsigned long qse_wcsxtoul (const qse_wchar_t* wcs, qse_size_t len, int base, const qse_wchar_t** end)
 {
 	unsigned long v;
-	QSE_WCSXTONUM (v, wcs, len, QSE_NULL, base);
+	QSE_WCSXTONUM (v, wcs, len, end, base, 0);
 	return v;
 }
 
-qse_int_t qse_wcstoint (const qse_wchar_t* wcs, int base)
+/* ----- */
+
+qse_int_t qse_wcstoint (const qse_wchar_t* wcs, int base, const qse_wchar_t** end)
 {
 	qse_int_t v;
-	QSE_WCSTONUM (v, wcs, QSE_NULL, base);
+	QSE_WCSTONUM (v, wcs, end, base, 1);
 	return v;
 }
 
-qse_long_t qse_wcstolong (const qse_wchar_t* wcs, int base)
+qse_long_t qse_wcstolong (const qse_wchar_t* wcs, int base, const qse_wchar_t** end)
 {
 	qse_long_t v;
-	QSE_WCSTONUM (v, wcs, QSE_NULL, base);
+	QSE_WCSTONUM (v, wcs, end, base, 1);
 	return v;
 }
 
-qse_uint_t qse_wcstouint (const qse_wchar_t* wcs, int base)
+qse_intmax_t qse_wcstointmax (const qse_wchar_t* wcs, int base, const qse_wchar_t** end)
+{
+	qse_intmax_t v;
+	QSE_WCSTONUM (v, wcs, end, base, 1);
+	return v;
+}
+
+/* ----- */
+qse_uint_t qse_wcstouint (const qse_wchar_t* wcs, int base, const qse_wchar_t** end)
 {
 	qse_uint_t v;
-	QSE_WCSTONUM (v, wcs, QSE_NULL, base);
+	QSE_WCSTONUM (v, wcs, end, base, 0);
 	return v;
 }
 
-qse_ulong_t qse_wcstoulong (const qse_wchar_t* wcs, int base)
+qse_ulong_t qse_wcstoulong (const qse_wchar_t* wcs, int base, const qse_wchar_t** end)
 {
 	qse_ulong_t v;
-	QSE_WCSTONUM (v, wcs, QSE_NULL, base);
+	QSE_WCSTONUM (v, wcs, end, base, 0);
 	return v;
 }
 
-qse_int_t qse_wcsxtoint (const qse_wchar_t* wcs, qse_size_t len, int base)
+qse_uintmax_t qse_wcstouintmax (const qse_wchar_t* wcs, int base, const qse_wchar_t** end)
+{
+	qse_uintmax_t v;
+	QSE_WCSTONUM (v, wcs, end, base, 0);
+	return v;
+}
+
+/* ----- */
+qse_int_t qse_wcsxtoint (const qse_wchar_t* wcs, qse_size_t len, int base, const qse_wchar_t** end)
 {
 	qse_int_t v;
-	QSE_WCSXTONUM (v, wcs, len, QSE_NULL, base);
+	QSE_WCSXTONUM (v, wcs, len, end, base, 1);
 	return v;
 }
 
-qse_long_t qse_wcsxtolong (const qse_wchar_t* wcs, qse_size_t len, int base)
+qse_long_t qse_wcsxtolong (const qse_wchar_t* wcs, qse_size_t len, int base, const qse_wchar_t** end)
 {
 	qse_long_t v;
-	QSE_WCSXTONUM (v, wcs, len, QSE_NULL, base);
+	QSE_WCSXTONUM (v, wcs, len, end, base, 1);
 	return v;
 }
 
-qse_uint_t qse_wcsxtouint (const qse_wchar_t* wcs, qse_size_t len, int base)
+qse_intmax_t qse_wcsxtointmax (const qse_wchar_t* wcs, qse_size_t len, int base, const qse_wchar_t** end)
+{
+	qse_intmax_t v;
+	QSE_WCSXTONUM (v, wcs, len, end, base, 1);
+	return v;
+}
+
+/* ----- */
+qse_uint_t qse_wcsxtouint (const qse_wchar_t* wcs, qse_size_t len, int base, const qse_wchar_t** end)
 {
 	qse_uint_t v;
-	QSE_WCSXTONUM (v, wcs, len, QSE_NULL, base);
+	QSE_WCSXTONUM (v, wcs, len, end, base, 0);
 	return v;
 }
 
-qse_ulong_t qse_wcsxtoulong (const qse_wchar_t* wcs, qse_size_t len, int base)
+qse_ulong_t qse_wcsxtoulong (const qse_wchar_t* wcs, qse_size_t len, int base, const qse_wchar_t** end)
 {
 	qse_ulong_t v;
-	QSE_WCSXTONUM (v, wcs, len, QSE_NULL, base);
+	QSE_WCSXTONUM (v, wcs, len, end, base, 0);
+	return v;
+}
+
+qse_uintmax_t qse_wcsxtouintmax (const qse_wchar_t* wcs, qse_size_t len, int base, const qse_wchar_t** end)
+{
+	qse_uintmax_t v;
+	QSE_WCSXTONUM (v, wcs, len, end, base, 0);
 	return v;
 }
 

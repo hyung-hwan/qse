@@ -927,7 +927,7 @@ static void adjust_peer_name_and_port (task_proxy_t* proxy)
 	{
 		/* handle a port number after the colon sign */
 		*colon = QSE_MT('\0');
-		proxy->peer_port = qse_mbstoui (colon + 1, 10);
+		proxy->peer_port = qse_mbstoui (colon + 1, 10, QSE_NULL);
 		/* TODO: check if there is a garbage after the port number.
 		 *       check if the port number has overflown */
 	}
