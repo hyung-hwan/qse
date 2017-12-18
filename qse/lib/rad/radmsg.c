@@ -368,7 +368,7 @@ int qse_rad_insert_wide_string_attribute_with_length (
 	return n;
 }
 
-int qse_rad_insert_integer_attribute (
+int qse_rad_insert_uint32_attribute (
 	qse_rad_hdr_t* auth, int max, qse_uint32_t vendor, qse_uint8_t id, qse_uint32_t value)
 {
 	qse_uint32_t val = qse_hton32(value);
@@ -455,8 +455,43 @@ int qse_rad_insert_giga_attribute (
 		}
 	}
 
-        return 0;
+	return 0;
 }
+
+
+int qse_rad_insert_extended_vendor_specific_attribute (
+	qse_rad_hdr_t* auth, int max, qse_uint8_t base, qse_uint32_t vendor,
+	qse_uint8_t attrid, const void* ptr, qse_uint8_t len)
+{
+	/* RFC6929 */
+	qse_rad_extvsattr_hdr_t* attr;
+	int auth_len = qse_ntoh16(auth->length);
+	int new_auth_len;
+
+	if (base < 241 && base > 244) return -1;
+/* TODO: for 245 and 246, switch to long-extended format */
+
+	/*if (len > QSE_RAD_MAX_EXTVSATTR_VALUE_LEN) return -1;*/
+	if (len > QSE_RAD_MAX_EXTVSATTR_VALUE_LEN) len = QSE_RAD_MAX_EXTVSATTR_VALUE_LEN;
+	new_auth_len = auth_len + len + QSE_SIZEOF(*attr);
+
+	if (new_auth_len > max) return -1;
+
+	attr = (qse_rad_extvsattr_hdr_t*) ((char*)auth + auth_len);
+	attr->id = base;
+	attr->length = new_auth_len - auth_len;
+	attr->xid = QSE_RAD_ATTR_VENDOR_SPECIFIC;
+	attr->vendor = qse_hton32(vendor);
+	attr->evsid = attrid;
+
+	/* no special header for the evs-value */
+	QSE_MEMCPY (attr + 1, ptr, len);
+
+	auth->length = qse_hton16(new_auth_len);
+	return 0;
+}
+
+
 
 #define PASS_BLKSIZE QSE_RAD_MAX_AUTHENTICATOR_LEN
 #define ALIGN(x,factor) ((((x) + (factor) - 1) / (factor)) * (factor))

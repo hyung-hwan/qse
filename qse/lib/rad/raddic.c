@@ -62,6 +62,8 @@ struct const_fixup_t
 {
 	const_fixup_t*        next;
 	qse_raddic_const_t*   dval;
+	qse_size_t            line;
+	qse_char_t*           fn;
 	qse_char_t            attrstr[1];
 };
 
@@ -341,13 +343,10 @@ static int dict_const_value_cmp (qse_htl_t* htl, const void* one, const void* tw
 	if (a->attr < b->attr) return -1;
 	if (a->attr > b->attr) return 1;
 
-	if (a->value.type != b->value.type) return -2; /* cannot really compare */
+	if (a->value < b->value) return -1;
+	if (a->value > b->value) return 1;
 
-	/* this function actuall requires to check equality.
-	 * it doesn't have to return greaterness or lessness.
-	 * it also assumes that the unused space in the 'value' 
-	 * union field is all initialized to zero */
-	return QSE_MEMCMP(&a->value, &b->value, QSE_SIZEOF(a->value));
+	return 0;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -555,7 +554,7 @@ qse_raddic_vendor_t* qse_raddic_findvendorbyname (qse_raddic_t* dic, const qse_c
 /*
  *	Return the vendor struct based on the PEC.
  */
-qse_raddic_vendor_t* qse_raddic_findvendorbyvalue (qse_raddic_t* dic, int vendorpec)
+qse_raddic_vendor_t* qse_raddic_findvendorbyvalue (qse_raddic_t* dic, unsigned int vendorpec)
 {
 	qse_htl_node_t* np;
 	qse_raddic_vendor_t dv;
@@ -564,13 +563,13 @@ qse_raddic_vendor_t* qse_raddic_findvendorbyvalue (qse_raddic_t* dic, int vendor
 	np = qse_htl_search (&dic->vendors_byvalue, &dv);
 	if (!np) 
 	{
-		qse_raddic_seterrfmt (dic, QSE_RADDIC_ENOENT, QSE_T("cannot find a vendor of value %d"), vendorpec);
+		qse_raddic_seterrfmt (dic, QSE_RADDIC_ENOENT, QSE_T("cannot find a vendor of value %u"), vendorpec);
 		return QSE_NULL;
 	}
 	return (qse_raddic_vendor_t*)np->data;
 }
 
-qse_raddic_vendor_t* qse_raddic_addvendor (qse_raddic_t* dic, const qse_char_t* name, int vendorpec)
+qse_raddic_vendor_t* qse_raddic_addvendor (qse_raddic_t* dic, const qse_char_t* name, unsigned int vendorpec)
 {
 	qse_size_t length;
 	qse_raddic_vendor_t* dv, * old_dv;
@@ -578,7 +577,7 @@ qse_raddic_vendor_t* qse_raddic_addvendor (qse_raddic_t* dic, const qse_char_t* 
 
 	if (vendorpec <= 0 || vendorpec > 65535) 
 	{
-		qse_raddic_seterrfmt (dic, QSE_RADDIC_EINVAL, QSE_T("vendor value %d out of accepted range"), vendorpec);
+		qse_raddic_seterrfmt (dic, QSE_RADDIC_EINVAL, QSE_T("vendor value %u out of accepted range"), vendorpec);
 		return QSE_NULL;
 	}
 
@@ -678,7 +677,7 @@ int qse_raddic_deletevendorbyname (qse_raddic_t* dic, const qse_char_t* name)
 	return 0;
 }
 
-int qse_raddic_deletevendorbyvalue (qse_raddic_t* dic, int vendorpec)
+int qse_raddic_deletevendorbyvalue (qse_raddic_t* dic, unsigned int vendorpec)
 {
 	qse_raddic_vendor_t* dv;
 
@@ -734,21 +733,21 @@ qse_raddic_attr_t* qse_raddic_findattrbyvalue (qse_raddic_t* dic, qse_uint32_t a
 	return (qse_raddic_attr_t*)np->data;
 }
 
-qse_raddic_attr_t* qse_raddic_addattr (qse_raddic_t* dic, const qse_char_t* name, int vendor, qse_raddic_attr_type_t type, int value, const qse_raddic_attr_flags_t* flags)
+qse_raddic_attr_t* qse_raddic_addattr (qse_raddic_t* dic, const qse_char_t* name, unsigned int vendor, qse_raddic_attr_type_t type, unsigned int value, const qse_raddic_attr_flags_t* flags)
 {
 	qse_size_t length;
 	qse_raddic_attr_t* dv, * old_dv;
 	qse_htl_node_t* np;
 
-	if (vendor < 0 || vendor > 65535) 
+	if (vendor < 0 || vendor > 65535u) 
 	{
-		qse_raddic_seterrfmt (dic, QSE_RADDIC_EINVAL, QSE_T("vendor %d out of accepted range"), vendor);
+		qse_raddic_seterrfmt (dic, QSE_RADDIC_EINVAL, QSE_T("vendor %u out of accepted range"), vendor);
 		return QSE_NULL; /* 0 is allowed to mean no vendor */
 	}
-	if (value < 0 || value > 65535)  
+	if (value < 0 || value > 65535u)  
 	{
 		/* the upper bound is not 255 because there are vendors defining values in 16-bit format */
-		qse_raddic_seterrfmt (dic, QSE_RADDIC_EINVAL, QSE_T("attribute value %d out of accepted range"), value);
+		qse_raddic_seterrfmt (dic, QSE_RADDIC_EINVAL, QSE_T("attribute value %u out of accepted range"), value);
 		return QSE_NULL;
 	}
 
@@ -915,13 +914,13 @@ qse_raddic_const_t* qse_raddic_findconstbyname (qse_raddic_t* dic, qse_uint32_t 
 	return (qse_raddic_const_t*)np->data;
 }
 
-qse_raddic_const_t* qse_raddic_findconstbyvalue (qse_raddic_t* dic, qse_uint32_t attr, const  qse_raddic_const_value_t* value)
+qse_raddic_const_t* qse_raddic_findconstbyvalue (qse_raddic_t* dic, qse_uint32_t attr, qse_uintmax_t value)
 {
 	qse_htl_node_t* np;
 	qse_raddic_const_t dval;
 
 	dval.attr = attr;
-	dval.value = *value;
+	dval.value = value;
 	np = qse_htl_search (&dic->consts_byvalue, &dval);
 	if (!np)
 	{
@@ -931,12 +930,64 @@ qse_raddic_const_t* qse_raddic_findconstbyvalue (qse_raddic_t* dic, qse_uint32_t
 	return (qse_raddic_const_t*)np->data;
 }
 
-qse_raddic_const_t* qse_raddic_addconst (qse_raddic_t* dic, const qse_char_t* name, const qse_char_t* attrstr, const qse_raddic_const_value_t* value)
+static qse_raddic_const_t* __add_const (qse_raddic_t* dic, qse_raddic_const_t* dval)
+{
+	qse_htl_node_t* np;
+	qse_raddic_const_t* old_dval;
+
+	/* return an existing item or insert a new item */
+	np = qse_htl_ensert(&dic->consts_byname, dval);
+	if (!np || np->data != dval)
+	{
+		/* insertion failure or existing item found */
+		if (!np) 
+		{
+			qse_raddic_seterrnum (dic, QSE_RADDIC_ENOMEM);
+		}
+		else 
+		{
+			if ((dic->opt.trait & QSE_RADDIC_ALLOW_DUPLICATE_CONST) && 
+			    ((qse_raddic_const_t*)np->data)->value == dval->value) 
+			{
+				QSE_MMGR_FREE (dic->mmgr, dval);
+				return np->data;
+			}
+			qse_raddic_seterrfmt (dic, QSE_RADDIC_EEXIST, QSE_T("existing constant %s"), dval->name);
+		}
+
+		QSE_MMGR_FREE (dic->mmgr, dval);
+		return QSE_NULL;
+	}
+
+	/* attempt to update the lookup table by value */
+	np = qse_htl_upyank(&dic->consts_byvalue, dval, (void**)&old_dval);
+	if (np)
+	{
+		/* updated the existing item successfully. 
+		 * link the old item to the current item */
+		QSE_ASSERT (np->data == dval);
+		QSE_ASSERT (dval->value == old_dval->value);
+		dval->nextc = old_dval;
+	}
+	else
+	{
+		/* update failure, this entry must be new. try insertion */
+		if (!qse_htl_insert (&dic->consts_byvalue, dval))
+		{
+			qse_raddic_seterrnum (dic, QSE_RADDIC_ENOMEM);
+			qse_htl_delete (&dic->consts_byname, dval);
+			return QSE_NULL;
+		}
+	}
+
+	return dval;
+}
+
+static qse_raddic_const_t* add_const (qse_raddic_t* dic, const qse_char_t* name, const qse_char_t* attrstr, qse_uintmax_t value, const qse_char_t* fn, qse_size_t line)
 {
 	qse_size_t length;
-	qse_raddic_const_t* dval, * old_dval;
+	qse_raddic_const_t* dval;
 	qse_raddic_attr_t* dattr;
-	qse_htl_node_t* np;
 
 	length = qse_strlen(name);
 
@@ -949,7 +1000,7 @@ qse_raddic_const_t* qse_raddic_addconst (qse_raddic_t* dic, const qse_char_t* na
 	}
 
 	qse_strcpy(dval->name, name);
-	dval->value = *value;
+	dval->value = value;
 	dval->nextc = QSE_NULL;
 
 	/*
@@ -972,27 +1023,48 @@ qse_raddic_const_t* qse_raddic_addconst (qse_raddic_t* dic, const qse_char_t* na
 	 */
 	if (dattr) 
 	{
+#if 0
 		if (dattr->type != value->type)
 		{
-			qse_raddic_seterrfmt (dic, QSE_RADDIC_EINVAL, QSE_T("conflicts between attribute type and constant value"));
+			qse_raddic_seterrfmt (dic, QSE_RADDIC_EINVAL, QSE_T("conflicts between attribute type(%d) and constant value type(%d)"), (int)dattr->type, (int)value->type);
 			return QSE_NULL;
 		}
+#endif
 
 		dval->attr = dattr->attr;
 
-#if 0
-		/*
-		 * Enforce valid values
-		 * Don't worry about fixups...
-		 */
 		switch (dattr->type) 
 		{
-			case QSE_RADDIC_ATTR_TYPE_BYTE:
-				if (value < 0 || value > 255) goto wrong_value; 
+			case QSE_RADDIC_ATTR_TYPE_UINT8:
+				if (value < QSE_TYPE_MIN(qse_uint8_t) || value > QSE_TYPE_MAX(qse_uint8_t)) goto wrong_value; 
 				break;
 
-			case QSE_RADDIC_ATTR_TYPE_SHORT:
-				if (value < 0 || value > 65535)  goto wrong_value;
+			case QSE_RADDIC_ATTR_TYPE_UINT16:
+				if (value < QSE_TYPE_MIN(qse_uint16_t) || value > QSE_TYPE_MAX(qse_uint16_t))  goto wrong_value;
+				break;
+
+			case QSE_RADDIC_ATTR_TYPE_UINT32:
+				if (value < QSE_TYPE_MIN(qse_uint32_t) || value > QSE_TYPE_MAX(qse_uint32_t))  goto wrong_value;
+				break;
+
+			case QSE_RADDIC_ATTR_TYPE_UINT64:
+				if (value < QSE_TYPE_MIN(qse_uint64_t) || value > QSE_TYPE_MAX(qse_uint64_t))  goto wrong_value;
+				break;
+
+			case QSE_RADDIC_ATTR_TYPE_INT8:
+				if (value < QSE_TYPE_MIN(qse_int8_t) || value > QSE_TYPE_MAX(qse_int8_t)) goto wrong_value; 
+				break;
+
+			case QSE_RADDIC_ATTR_TYPE_INT16:
+				if (value < QSE_TYPE_MIN(qse_int16_t) || value > QSE_TYPE_MAX(qse_int16_t))  goto wrong_value;
+				break;
+
+			case QSE_RADDIC_ATTR_TYPE_INT32:
+				if (value < QSE_TYPE_MIN(qse_int32_t) || value > QSE_TYPE_MAX(qse_int32_t))  goto wrong_value;
+				break;
+
+			case QSE_RADDIC_ATTR_TYPE_INT64:
+				if (value < QSE_TYPE_MIN(qse_int64_t) || value > QSE_TYPE_MAX(qse_int64_t))  goto wrong_value;
 				break;
 
 				/*
@@ -1000,25 +1072,29 @@ qse_raddic_const_t* qse_raddic_addconst (qse_raddic_t* dic, const qse_char_t* na
 				 *	of dictionary.cablelabs
 				 */
 			case QSE_RADDIC_ATTR_TYPE_OCTETS:
-			case QSE_RADDIC_ATTR_TYPE_INTEGER:
 				break;
 
 			default: /* cannot define VALUE for other types */
 			wrong_value:
-				qse_raddic_seterrfmt (dic, QSE_RADDIC_EINVAL, QSE_T("value %d for a constant %s not allowed for an attribute %s for type %d"), value, name, attrstr, (int)dattr->type);
+				qse_raddic_seterrfmt (dic, QSE_RADDIC_EINVAL, QSE_T("value %jd for a constant %s not allowed for an attribute %s of type %d"), value, name, attrstr, (int)dattr->type);
 				QSE_MMGR_FREE (dic->mmgr, dval);
 				return QSE_NULL;
 		}
-#endif
+
 		dattr->flags.has_value = 1;
 	} 
 	else
 	{
-		if (dic->opt.trait & QSE_RADDIC_ALLOW_CONST_WITHOUT_ATTR)
+		if (fn && (dic->opt.trait & QSE_RADDIC_ALLOW_CONST_WITHOUT_ATTR))
 		{
 			const_fixup_t* fixup;
+			qse_size_t attrstrlen, fnlen;
 
-			fixup = QSE_MMGR_ALLOC(dic->mmgr, QSE_SIZEOF(*fixup) + (qse_strlen(attrstr) * QSE_SIZEOF(*attrstr)));
+			attrstrlen = qse_strlen(attrstr);
+			fnlen = qse_strlen(fn);
+
+			/* TODO: don't copy fn again and again */
+			fixup = QSE_MMGR_ALLOC(dic->mmgr, QSE_SIZEOF(*fixup) + ((attrstrlen + fnlen + 1) * QSE_SIZEOF(*attrstr)));
 			if (!fixup)
 			{
 				qse_raddic_seterrnum (dic, QSE_RADDIC_ENOMEM);
@@ -1030,6 +1106,10 @@ qse_raddic_const_t* qse_raddic_addconst (qse_raddic_t* dic, const qse_char_t* na
 			qse_strcpy (fixup->attrstr, attrstr);
 			fixup->dval = dval;
 			fixup->next = dic->const_fixup;
+			fixup->line = line;
+			fixup->fn = fixup->attrstr + attrstrlen + 1;
+			qse_strcpy (fixup->fn, fn); /* TODO: don't copy fn again and again */
+
 			dic->const_fixup = fixup;
 
 			return dval; /* this is not complete */
@@ -1042,52 +1122,12 @@ qse_raddic_const_t* qse_raddic_addconst (qse_raddic_t* dic, const qse_char_t* na
 		}
 	}
 
-	/* return an existing item or insert a new item */
-	np = qse_htl_ensert(&dic->consts_byname, dval);
-	if (!np || np->data != dval)
-	{
-		/* insertion failure or existing item found */
-		if (!np) 
-		{
-			qse_raddic_seterrnum (dic, QSE_RADDIC_ENOMEM);
-		}
-		else 
-		{
-			if ((dic->opt.trait & QSE_RADDIC_ALLOW_DUPLICATE_CONST) && 
-			    QSE_MEMCMP(&((qse_raddic_const_t*)np->data)->value, &dval->value, QSE_SIZEOF(dval->value)) == 0) 
-			{
-				QSE_MMGR_FREE (dic->mmgr, dval);
-				return np->data;
-			}
-			qse_raddic_seterrfmt (dic, QSE_RADDIC_EEXIST, QSE_T("existing constant %s"), name);
-		}
+	return __add_const(dic, dval);
+}
 
-		QSE_MMGR_FREE (dic->mmgr, dval);
-		return QSE_NULL;
-	}
-
-	/* attempt to update the lookup table by value */
-	np = qse_htl_upyank(&dic->consts_byvalue, dval, (void**)&old_dval);
-	if (np)
-	{
-		/* updated the existing item successfully. 
-		 * link the old item to the current item */
-		QSE_ASSERT (np->data == dval);
-		QSE_ASSERT (QSE_MEMCMP(&dval->value, &old_dval->value, QSE_SIZEOF(dval->value)) == 0);
-		dval->nextc = old_dval;
-	}
-	else
-	{
-		/* update failure, this entry must be new. try insertion */
-		if (!qse_htl_insert (&dic->consts_byvalue, dval))
-		{
-			qse_raddic_seterrnum (dic, QSE_RADDIC_ENOMEM);
-			qse_htl_delete (&dic->consts_byname, dval);
-			return QSE_NULL;
-		}
-	}
-
-	return dval;
+qse_raddic_const_t* qse_raddic_addconst (qse_raddic_t* dic, const qse_char_t* name, const qse_char_t* attrstr, qse_uintmax_t value)
+{
+	return add_const (dic, name, attrstr, value, QSE_NULL, 0);
 }
 
 int qse_raddic_deleteconstbyname (qse_raddic_t* dic, qse_uint32_t attr, const qse_char_t* name)
@@ -1098,7 +1138,7 @@ int qse_raddic_deleteconstbyname (qse_raddic_t* dic, qse_uint32_t attr, const qs
 	if (!dv) return -1;
 
 	QSE_ASSERT (attr == dv->attr);
-	dv2 = qse_raddic_findconstbyvalue(dic, attr, &dv->value);
+	dv2 = qse_raddic_findconstbyvalue(dic, attr, dv->value);
 	QSE_ASSERT (dv2 != QSE_NULL);
 
 	if (dv != dv2)
@@ -1106,7 +1146,7 @@ int qse_raddic_deleteconstbyname (qse_raddic_t* dic, qse_uint32_t attr, const qs
 		qse_raddic_const_t* x, * y;
 
 		QSE_ASSERT (qse_strcasecmp(dv->name, dv2->name) != 0);
-		QSE_ASSERT (QSE_MEMCMP (&dv->value, &dv2->value, QSE_SIZEOF(dv->value)) == 0);
+		QSE_ASSERT (dv->value ==dv2->value);
 		QSE_ASSERT (dv->attr == dv2->attr);
 
 		/* when the constibute of the given name is not the first one
@@ -1138,7 +1178,7 @@ int qse_raddic_deleteconstbyname (qse_raddic_t* dic, qse_uint32_t attr, const qs
 	return 0;
 }
 
-int qse_raddic_deleteconstbyvalue (qse_raddic_t* dic, qse_uint32_t attr, const qse_raddic_const_value_t* value)
+int qse_raddic_deleteconstbyvalue (qse_raddic_t* dic, qse_uint32_t attr, qse_uintmax_t value)
 {
 	qse_raddic_const_t* dv;
 
@@ -1197,6 +1237,29 @@ static int sscanf_i (qse_raddic_t* dic, const qse_char_t* str, int* pvalue)
 	return 0;
 }
 
+static int sscanf_ui (qse_raddic_t* dic, const qse_char_t* str, qse_uintmax_t* pvalue)
+{
+	qse_uintmax_t v;
+	const qse_char_t* end;
+
+	if (!QSE_ISDIGIT(*str) && *str != QSE_T('+')) 
+	{
+		qse_raddic_seterrfmt (dic, QSE_RADDIC_ESYNERR, QSE_T("invalid unsigned number - %s"), str);
+		return -1;
+	}
+
+	QSE_STRTONUM (v, str, &end, 0);
+
+	if (*end != '\0')
+	{
+		qse_raddic_seterrfmt (dic, QSE_RADDIC_ESYNERR, QSE_T("invalid unsigned number - %s"), str);
+		return -1;
+	}
+
+	*pvalue = v;
+	return 0;
+}
+
 static int sscanf_ui32 (qse_raddic_t* dic, const qse_char_t* str, qse_uint32_t* pvalue, qse_uint32_t* pvalue2)
 {
 	qse_long_t v, v2;
@@ -1239,8 +1302,8 @@ static int process_attribute (
 	qse_raddic_t* dic, const qse_char_t* fn, const qse_size_t line,
 	int block_vendor, qse_raddic_attr_t* block_tlv, qse_char_t** argv, int argc)
 {
-	int vendor = 0;
-	unsigned int value;
+	unsigned int vendor = 0;
+	qse_uintmax_t value;
 	int type;
 	qse_raddic_attr_flags_t flags;
 	qse_char_t* p;
@@ -1257,7 +1320,7 @@ static int process_attribute (
 	/*
 	 *	Validate all entries
 	 */
-	if (sscanf_i(dic, argv[1], &value) <= -1) 
+	if (sscanf_ui(dic, argv[1], &value) <= -1 || value > QSE_TYPE_MAX(qse_uint16_t)) 
 	{
 		qse_raddic_seterrfmt (dic, QSE_RADDIC_ESYNERR, QSE_T("%s[%zd]: invalid attribute value  %s"), fn, line, argv[1]);
 		return -1;
@@ -1326,7 +1389,7 @@ static int process_attribute (
 				   Currently valid is just type 2,
 				   Tunnel-Password style, which can only
 				   be applied to strings. */
-				unsigned int ev;
+				int ev;
 				if (sscanf_i(dic, key + 8, &ev) <= -1 || ev < QSE_RADDIC_ATTR_FLAG_ENCRYPT_NONE || ev > QSE_RADDIC_ATTR_FLAG_ENCRYPT_OTHER)
 				{
 					qse_raddic_seterrfmt (dic, QSE_RADDIC_ESYNERR,  QSE_T("%s[%zd] invalid option %s"), fn, line, key);
@@ -1427,9 +1490,8 @@ static int process_attribute (
 
 static int process_constant(qse_raddic_t* dic, const qse_char_t* fn, const qse_size_t line, qse_char_t** argv, int argc)
 {
-	qse_raddic_const_value_t value;
+	qse_uintmax_t value;
 	int n;
-	qse_uint32_t v1, v2;
 
 	if (argc != 3) 
 	{
@@ -1446,27 +1508,17 @@ static int process_constant(qse_raddic_t* dic, const qse_char_t* fn, const qse_s
 	 *	Validate all entries
 	 */
 
-	if ((n = sscanf_ui32(dic, argv[2], &v1, &v2)) <= -1)
+	if ((n = sscanf_ui(dic, argv[2], &value)) <= -1)
 	{
 		qse_strcpy (dic->errmsg2, dic->errmsg);
 		qse_raddic_seterrfmt (dic, QSE_RADDIC_ESYNERR, QSE_T("%s[%zd]: invalid constant value - %s"), fn, line, dic->errmsg2);
 		return -1;
 	}
 
-	QSE_MEMSET (&value, 0, QSE_SIZEOF(value));
-	value.type = QSE_RADDIC_ATTR_TYPE_UINT32;
-	value.u.ui32 = v1;
-	if (n >= 1)
-	{
-		value.type = QSE_RADDIC_ATTR_TYPE_FLOAT64;
-		value.u.f64 = (qse_flt_t)v1 + ((qse_flt_t)v2 / (pow(10, n))); /* TOOD: XXXXXXXXXXXXX device a way to prepresent this */
-	}
-	value.type = (n == 0)? QSE_RADDIC_ATTR_TYPE_UINT32: QSE_RADDIC_ATTR_TYPE_FLOAT64;
-
-	if (qse_raddic_addconst(dic, argv[1], argv[0], &value) == QSE_NULL) 
+	if (add_const(dic, argv[1], argv[0], value, fn, line) == QSE_NULL) 
 	{
 		qse_strcpy (dic->errmsg2, dic->errmsg);
-		qse_raddic_seterrfmt (dic, QSE_RADDIC_ESYNERR, QSE_T("%s[%zd]: cannot add a constant - %s"), fn, line, dic->errmsg2);
+		qse_raddic_seterrfmt (dic, QSE_RADDIC_ESYNERR, QSE_T("%s[%zd]: cannot add a constant \"%s\" - %s"), fn, line, argv[1], dic->errmsg2);
 		return -1;
 	}
 
@@ -1765,7 +1817,7 @@ static int load_file (qse_raddic_t* dic, const qse_char_t* fn, const qse_char_t*
 			vendor = qse_raddic_findvendorbyname(dic, argv[1]);
 			if (!vendor) 
 			{
-				qse_raddic_seterrfmt (dic, QSE_RADDIC_ESYNERR, QSE_T("%s[%zd]: unknown vendor %s"), fname, line, argv[1]);
+				qse_raddic_seterrfmt (dic, QSE_RADDIC_ESYNERR, QSE_T("%s[%zd]: unknown vendor \"%s\""), fname, line, argv[1]);
 				goto oops;
 			}
 
@@ -1784,7 +1836,6 @@ static int load_file (qse_raddic_t* dic, const qse_char_t* fn, const qse_char_t*
 		 */
 		qse_raddic_seterrfmt (dic, QSE_RADDIC_ESYNERR, QSE_T("%s[%zd] invalid keyword \"%s\""), fname, line, argv[0]);
 		goto oops;
-		
 	}
 
 	qse_sio_close (sio);
@@ -1799,5 +1850,36 @@ oops:
 
 int qse_raddic_load (qse_raddic_t* dic, const qse_char_t* file)
 {
-	return load_file (dic, file, QSE_NULL, 0);
+	int n;
+
+	n = load_file (dic, file, QSE_NULL, 0);
+
+	while (dic->const_fixup)
+	{
+		qse_raddic_attr_t* attr;
+		const_fixup_t* fixup = dic->const_fixup;
+		dic->const_fixup = dic->const_fixup->next;
+
+		if (n >= 0)
+		{
+			attr = qse_raddic_findattrbyname (dic, fixup->attrstr);
+			if (attr)
+			{
+				fixup->dval->attr = attr->attr;
+				attr->flags.has_value = 1;
+				if (__add_const(dic, fixup->dval) != QSE_NULL) goto fixed;
+			}
+			else
+			{
+				qse_raddic_seterrfmt (dic, QSE_RADDIC_ESYNERR, QSE_T("%s[%zd]: constant \"%s\" defined for an unknown attribute \"%s\""), fixup->fn, fixup->line, fixup->dval->name, fixup->attrstr);
+				n = -1;
+			}
+		}
+
+		QSE_MMGR_FREE (dic->mmgr, fixup->dval);
+	fixed:
+		QSE_MMGR_FREE (dic->mmgr, fixup);
+	}
+
+	return n;
 }

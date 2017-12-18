@@ -27,6 +27,8 @@
 #ifndef _QSE_RAD_RADMSG_H_
 #define _QSE_RAD_RADMSG_H_
 
+/* TODO: tag, extended, long-extended, tlv, evs */
+
 #include <qse/types.h>
 #include <qse/macros.h>
 #include <qse/cmn/ipad.h>
@@ -56,12 +58,18 @@ typedef enum qse_rad_code_t qse_rad_code_t;
 #define QSE_RAD_MAX_AUTHENTICATOR_LEN 16
 #define QSE_RAD_MAX_ATTR_VALUE_LEN  (QSE_TYPE_MAX(qse_uint8_t) - QSE_SIZEOF(qse_rad_attr_hdr_t))
 #define QSE_RAD_MAX_VSATTR_VALUE_LEN (QSE_TYPE_MAX(qse_uint8_t) - QSE_SIZEOF(qse_rad_attr_hdr_t) - QSE_SIZEOF(qse_rad_vsattr_hdr_t))
+#define QSE_RAD_MAX_EXTVSATTR_VALUE_LEN (QSE_TYPE_MAX(qse_uint8_t) - QSE_SIZEOF(qse_rad_extvsattr_hdr_t))
 
 
 typedef struct qse_rad_hdr_t qse_rad_hdr_t;
 typedef struct qse_rad_attr_hdr_t qse_rad_attr_hdr_t;
 typedef struct qse_rad_vsattr_hdr_t qse_rad_vsattr_hdr_t;
-typedef struct qse_rad_attr_int_t qse_rad_attr_int_t;
+typedef struct qse_rad_extvsattr_hdr_t qse_rad_extvsattr_hdr_t; /* evs */
+
+typedef struct qse_rad_attr_uint32_t qse_rad_attr_uint32_t;
+#if (QSE_SIZEOF_UINT64_T > 0)
+typedef struct qse_rad_attr_uint64_t qse_rad_attr_uint64_t;
+#endif
 
 #include <qse/pack1.h>
 struct qse_rad_hdr_t 
@@ -80,24 +88,42 @@ struct qse_rad_attr_hdr_t
 
 struct qse_rad_vsattr_hdr_t
 {
-	qse_uint8_t  id;
-	qse_uint8_t  length;
+	qse_uint8_t  id; /* type */
+	qse_uint8_t  length; /* length */
 	qse_uint32_t vendor; /* in network-byte order */
 };
 
-struct qse_rad_attr_int_t
+struct qse_rad_extvsattr_hdr_t
+{
+	qse_uint8_t id; /* one of 241-244 */
+	qse_uint8_t length;
+	qse_uint8_t xid;  /* extended type. 26 for evs */
+	qse_uint32_t vendor; /* in network-byte order */
+	qse_uint8_t evsid;
+};
+
+struct qse_rad_attr_uint32_t
 {
 	qse_rad_attr_hdr_t hdr;
 	qse_uint32_t val;
 };
+
+#if (QSE_SIZEOF_UINT64_T > 0)
+struct qse_rad_attr_uint64_t
+{
+	qse_rad_attr_hdr_t hdr;
+	qse_uint64_t val;
+};
+#endif
+
 #include <qse/unpack.h>
 
 
 typedef int (*qse_rad_attr_walker_t) (
 	const qse_rad_hdr_t*      hdr, 
-	qse_uint32_t           vendor, /* in host-byte order */
+	qse_uint32_t              vendor, /* in host-byte order */
 	const qse_rad_attr_hdr_t* attr, 
-	void*                 ctx
+	void*                     ctx
 );
 
 enum qse_rad_attr_id_t
@@ -223,7 +249,7 @@ QSE_EXPORT int qse_rad_insert_vendor_specific_attribute (
 
 QSE_EXPORT int qse_rad_delete_attribute (
 	qse_rad_hdr_t* hdr,
-	qse_uint8_t attrid
+	qse_uint8_t    attrid
 );
 
 QSE_EXPORT int qse_rad_delete_vendor_specific_attribute (
@@ -249,7 +275,7 @@ QSE_EXPORT int qse_rad_insert_wide_string_attribute (
 );
 
 QSE_EXPORT int qse_rad_insert_string_attribute_with_length (
-	qse_rad_hdr_t*         auth, 
+	qse_rad_hdr_t*     auth, 
 	int                max, 
 	qse_uint32_t       vendor, /* in host-byte order */
 	qse_uint8_t        id, 
@@ -258,7 +284,7 @@ QSE_EXPORT int qse_rad_insert_string_attribute_with_length (
 );
 
 QSE_EXPORT int qse_rad_insert_wide_string_attribute_with_length (
-	qse_rad_hdr_t*         auth, 
+	qse_rad_hdr_t*     auth, 
 	int                max, 
 	qse_uint32_t       vendor, /* in host-byte order */
 	qse_uint8_t        id, 
@@ -266,16 +292,16 @@ QSE_EXPORT int qse_rad_insert_wide_string_attribute_with_length (
 	qse_uint8_t        length
 );
 
-QSE_EXPORT int qse_rad_insert_integer_attribute (
-	qse_rad_hdr_t*       auth, 
-	int              max,
-	qse_uint32_t     vendor, /* in host-byte order */
-	qse_uint8_t      id,
-	qse_uint32_t     value /* in host-byte order */
+QSE_EXPORT int qse_rad_insert_uint32_attribute (
+	qse_rad_hdr_t*     auth, 
+	int                max,
+	qse_uint32_t       vendor, /* in host-byte order */
+	qse_uint8_t        id,
+	qse_uint32_t       value /* in host-byte order */
 );
 
 QSE_EXPORT int qse_rad_insert_ipv6prefix_attribute (
-	qse_rad_hdr_t*          auth, 
+	qse_rad_hdr_t*      auth, 
 	int                 max,
 	qse_uint32_t        vendor, /* in host-byte order */
 	qse_uint8_t         id,
@@ -291,6 +317,18 @@ QSE_EXPORT int qse_rad_insert_giga_attribute (
 	int               high_id,
 	qse_uint64_t      value
 );
+
+QSE_EXPORT int qse_rad_insert_extended_vendor_specific_attribute (
+	qse_rad_hdr_t*  auth,
+	int             max,
+	qse_uint8_t     base, /* one of 241-244 */
+	qse_uint32_t    vendor,
+	qse_uint8_t     attrid, 
+	const void*     ptr,
+	qse_uint8_t     len
+);
+
+/* TODO: QSE_EXPORT int qse_rad_delete_extended_vendor_specific_attribute () */
 
 QSE_EXPORT int qse_rad_set_user_password (
 	qse_rad_hdr_t*      auth,
@@ -328,7 +366,6 @@ QSE_EXPORT int qse_rad_verify_response (
 	const qse_rad_hdr_t*   req,
 	const qse_mchar_t*     secret
 );
-
 
 #ifdef __cplusplus
 }

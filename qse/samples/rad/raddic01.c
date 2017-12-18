@@ -4,14 +4,23 @@
 #include <qse/si/sio.h>
 #include <string.h>
 
+#if 0
+#include <qse/rad/radmsg.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <unistd.h>
+#endif
+
 #define R(f) \
 	do { \
 		qse_printf (QSE_T("== %s ==\n"), QSE_T(#f)); \
-		if (f() == -1) return -1; \
+		if (f() == -1) goto oops; \
 	} while (0)
 
 #define FAIL(msg) qse_printf(QSE_T("FAILURE in %hs line %d - %s\n"), __func__, __LINE__, msg)
-#define _assert(test,msg) do { if (!(test)) { FAIL(msg); return -1; } } while(0)
+#define FAIL2(msg1,msg2) qse_printf(QSE_T("FAILURE in %hs line %d - %s - %s\n"), __func__, __LINE__, msg1, msg2)
+#define _assert(test,msg) do { if (!(test)) { FAIL(msg); goto oops; } } while(0)
+#define _assert2(test,msg1,msg2) do { if (!(test)) { FAIL2(msg1,msg2); goto oops; } } while(0)
 #define _verify(test) do { int r=test(); tests_run++; if(r) return r; } while(0)
 
 static int test1 ()
@@ -165,6 +174,10 @@ static int test1 ()
 
 	qse_raddic_close (dic);
 	return 0;
+
+oops:
+	if (dic) qse_raddic_close (dic);
+	return -1;
 }
 
 
@@ -300,7 +313,7 @@ static int test2 ()
 			_assert (qse_strcasecmp(attr->name, tmp) == 0, QSE_T("wrong attr name"));
 
 			attr = qse_raddic_findattrbyname (dic, tmpx);
-			_assert (attr == QSE_NULL, QSE_T("errorneous search success"));
+			_assert (attr == QSE_NULL, QSE_T("erroneous search success"));
 
 			attr = qse_raddic_findattrbyname (dic, tmpy);
 			_assert (attr != QSE_NULL, QSE_T("unable to add an attribute"));
@@ -324,13 +337,13 @@ static int test2 ()
 	{
 		int n;
 		n = qse_raddic_deleteattrbyvalue (dic, QSE_RADDIC_ATTR_MAKE(0, 0));
-		_assert (n == 0, QSE_T("errorneous deletion failure by value"));
+		_assert (n == 0, QSE_T("erroneous deletion failure by value"));
 
 		n = qse_raddic_deleteattrbyvalue (dic, QSE_RADDIC_ATTR_MAKE(0, 0));
-		_assert (n == 0, QSE_T("errorneous deletion failure by value"));
+		_assert (n == 0, QSE_T("erroneous deletion failure by value"));
 
 		n = qse_raddic_deleteattrbyvalue (dic, QSE_RADDIC_ATTR_MAKE(0, 0));
-		_assert (n <= -1, QSE_T("errorneous deletion success by value"));
+		_assert (n <= -1, QSE_T("erroneous deletion success by value"));
 	}
 
 
@@ -339,17 +352,12 @@ static int test2 ()
 		for (i = 1; i <= 255; i++)
 		{
 			qse_char_t constr[64], attrstr[64];
-			qse_raddic_const_value_t v;
-
-			memset (&v, 0, QSE_SIZEOF(v));
-			v.type = QSE_RADDIC_ATTR_TYPE_UINT32;
-			v.u.ui32 = 10;
 
 			qse_strxfmt(attrstr, QSE_COUNTOF(attrstr), QSE_T("test-%d-%d"), j, i);
 			qse_strxfmt(constr, QSE_COUNTOF(constr), QSE_T("const-%d-%d"), j, i);
-			con = qse_raddic_addconst (dic, constr, attrstr, &v);
-			_assert (con != QSE_NULL, QSE_T("unable to add an constant"));
-			_assert (con->value.type == QSE_RADDIC_ATTR_TYPE_UINT32 || con->value.u.ui32 == 10, QSE_T("wrong constant value"));
+			con = qse_raddic_addconst (dic, constr, attrstr, 10);
+			_assert2 (con != QSE_NULL, QSE_T("unable to add an constant"), qse_raddic_geterrmsg(dic));
+			_assert (con->value == 10, QSE_T("wrong constant value"));
 			_assert (qse_strcasecmp(con->name, constr) == 0, QSE_T("wrong constant name"));
 		}
 	}
@@ -359,55 +367,46 @@ static int test2 ()
 		for (i = 1; i <= 255; i++)
 		{
 			qse_char_t constr[64];
-			qse_raddic_const_value_t v;
-
-			memset (&v, 0, QSE_SIZEOF(v));
-			v.type = QSE_RADDIC_ATTR_TYPE_UINT32;
-			v.u.ui32 = 10;
 
 			qse_strxfmt(constr, QSE_COUNTOF(constr), QSE_T("const-%d-%d"), j, i);
 
 			con = qse_raddic_findconstbyname (dic, QSE_RADDIC_ATTR_MAKE(j, i), constr);
 			_assert (con != QSE_NULL, QSE_T("unable to find an constant"));
 			_assert (con->attr == QSE_RADDIC_ATTR_MAKE(j, i), QSE_T("wrong constant value"));
-			_assert (con->value.type == QSE_RADDIC_ATTR_TYPE_UINT32 || con->value.u.ui32 == 10, QSE_T("wrong constant value"));
+			_assert (con->value == 10, QSE_T("wrong constant value"));
 
-			con = qse_raddic_findconstbyvalue (dic, QSE_RADDIC_ATTR_MAKE(j, i), &v);
+			con = qse_raddic_findconstbyvalue (dic, QSE_RADDIC_ATTR_MAKE(j, i), 10);
 			_assert (con != QSE_NULL, QSE_T("unable to find an constant"));
-			_assert (con->value.type == QSE_RADDIC_ATTR_TYPE_UINT32 || con->value.u.ui32 == 10, QSE_T("wrong constant value"));
+			_assert (con->value == 10, QSE_T("wrong constant value"));
 			_assert (con->attr == QSE_RADDIC_ATTR_MAKE(j, i), QSE_T("wrong constant value"));
 		}
 	}
 
-
 	{
 		int n;
-		qse_raddic_const_value_t v;
-
-		memset (&v, 0, QSE_SIZEOF(v));
-		v.type = QSE_RADDIC_ATTR_TYPE_UINT32;
 
 		n = qse_raddic_deleteconstbyname (dic, QSE_RADDIC_ATTR_MAKE(1,1), QSE_T("const-1-1"));
-		_assert (n == 0, QSE_T("errorneous constant deletion failure"));
+		_assert (n == 0, QSE_T("erroneous constant deletion failure"));
 
 		n = qse_raddic_deleteconstbyname (dic, QSE_RADDIC_ATTR_MAKE(1,1), QSE_T("const-1-1"));
-		_assert (n <= -1, QSE_T("errorneous constant deletion success"));
+		_assert (n <= -1, QSE_T("erroneous constant deletion success"));
 
-		v.u.ui32 = 20;
-		n = qse_raddic_deleteconstbyvalue (dic, QSE_RADDIC_ATTR_MAKE(2,2), &v);
-		_assert (n <= -1, QSE_T("errorneous constant deletion success"));
+		n = qse_raddic_deleteconstbyvalue (dic, QSE_RADDIC_ATTR_MAKE(2,2), 20);
+		_assert (n <= -1, QSE_T("erroneous constant deletion success"));
 
-		v.u.ui32 = 10;
-		n = qse_raddic_deleteconstbyvalue (dic, QSE_RADDIC_ATTR_MAKE(2,2), &v);
-		_assert (n == 0, QSE_T("errorneous constant deletion success"));
+		n = qse_raddic_deleteconstbyvalue (dic, QSE_RADDIC_ATTR_MAKE(2,2), 10);
+		_assert (n == 0, QSE_T("erroneous constant deletion success"));
 
-		v.u.ui32 = 10;
-		n = qse_raddic_deleteconstbyvalue (dic, QSE_RADDIC_ATTR_MAKE(2,2), &v);
-		_assert (n <= -1, QSE_T("errorneous constant deletion success"));
+		n = qse_raddic_deleteconstbyvalue (dic, QSE_RADDIC_ATTR_MAKE(2,2), 10);
+		_assert (n <= -1, QSE_T("erroneous constant deletion success"));
 	}
 
 	qse_raddic_close (dic);
 	return 0;
+
+oops:
+	if (dic) qse_raddic_close (dic);
+	return -1;
 }
 
 static int test3 ()
@@ -424,25 +423,60 @@ static int test3 ()
 	n = qse_raddic_setopt (dic, QSE_RADDIC_TRAIT, &trait);
 	_assert (n == 0, QSE_T("cannot set trait"));
 
-	n = qse_raddic_load (dic, QSE_T("fr2/dictionary"));
-	_assert (n == 0, qse_raddic_geterrmsg(dic));
+	n = qse_raddic_load (dic, QSE_T("fr/dictionary"));
+	_assert2 (n == 0, QSE_T("unabled to load dictionary"), qse_raddic_geterrmsg(dic));
 
 	v = qse_raddic_findvendorbyname (dic, QSE_T("cisco"));
 	_assert (v && v->vendorpec == 9, "wrong vendor value");
 
 	c = qse_raddic_findconstbyname (dic, QSE_RADDIC_ATTR_MAKE(0,49), QSE_T("Reauthentication-Failure"));
-	_assert (c && c->value.type == QSE_RADDIC_ATTR_TYPE_UINT32 && c->value.u.ui32 == 20, QSE_T("wrong constant value"));
+	_assert (c && c->value == 20, QSE_T("wrong constant value"));
 
 	qse_raddic_close (dic);
 	return 0;
+
+oops:
+	if (dic) qse_raddic_close (dic);
+	return -1;
 }
+
+#if 0
+static int test10()
+{
+	struct sockaddr_in sin;
+	int s;
+	char buf[10000];
+
+	if ((s=socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1) return -1;
+
+	memset (&sin, 0, sizeof(sin));
+	sin.sin_family = AF_INET;
+	sin.sin_addr.s_addr = inet_addr("192.168.1.2");
+	sin.sin_port = htons(1812);
+
+	qse_rad_initialize (buf, QSE_RAD_ACCESS_REQUEST, 99);
+	qse_rad_insert_extended_vendor_specific_attribute (buf, sizeof(buf), 243, 12345, 5, "xxxxxx", 6);
+
+	sendto (s, buf, ntohs(((qse_rad_hdr_t*)buf)->length), 0, &sin, sizeof(sin));
+
+	close (s);
+	return 0;
+}
+#endif
 
 int main ()
 {
 	qse_open_stdsios (); 
+
 	R (test1);
 	R (test2);
 	R (test3);
+
+#if 0
+	R (test10);
+#endif
+
+oops:
 	qse_close_stdsios ();
 	return 0;
 }

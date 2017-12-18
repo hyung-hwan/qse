@@ -30,6 +30,8 @@
 #include <qse/types.h>
 #include <qse/macros.h>
 
+/* TODO: extended, long-extended, tlv, evs */
+
 enum qse_raddic_opt_t
 {
 	QSE_RADDIC_TRAIT
@@ -182,7 +184,7 @@ typedef struct qse_raddic_const_t qse_raddic_const_t;
 struct qse_raddic_const_t
 {
 	qse_uint32_t             attr;     /* vendor + attribute-value */
-	qse_raddic_const_value_t value;
+	qse_uintmax_t            value;
 	qse_raddic_const_t*      nextc;
 	qse_char_t               name[1];
 };
@@ -190,7 +192,7 @@ struct qse_raddic_const_t
 typedef struct qse_raddic_vendor_t qse_raddic_vendor_t;
 struct qse_raddic_vendor_t
 {
-	int                  vendorpec;
+	unsigned int         vendorpec;
 	int                  type;
 	int                  length;
 	int                  flags;
@@ -265,13 +267,13 @@ QSE_EXPORT qse_raddic_vendor_t* qse_raddic_findvendorbyname (
 
 QSE_EXPORT qse_raddic_vendor_t* qse_raddic_findvendorbyvalue (
 	qse_raddic_t*     dic,
-	int               vendorpec
+	unsigned int      vendorpec
 );
 
 QSE_EXPORT qse_raddic_vendor_t* qse_raddic_addvendor (
 	qse_raddic_t*     dic,
 	const qse_char_t* name,
-	int               vendorpec
+	unsigned int      vendorpec
 );
 
 QSE_EXPORT int qse_raddic_deletevendorbyname (
@@ -281,7 +283,7 @@ QSE_EXPORT int qse_raddic_deletevendorbyname (
 
 QSE_EXPORT int qse_raddic_deletevendorbyvalue (
 	qse_raddic_t*     dic,
-	int               vendorpec
+	unsigned int      vendorpec
 );
 
 
@@ -298,9 +300,9 @@ QSE_EXPORT qse_raddic_attr_t* qse_raddic_findattrbyvalue (
 QSE_EXPORT qse_raddic_attr_t* qse_raddic_addattr (
 	qse_raddic_t*                  dic,
 	const qse_char_t*              name,
-	int                            vendor,
+	unsigned int                   vendor,
 	qse_raddic_attr_type_t         type,
-	int                            value,
+	unsigned int                   value,
 	const qse_raddic_attr_flags_t* flags
 );
 
@@ -322,16 +324,16 @@ QSE_EXPORT qse_raddic_const_t* qse_raddic_findconstbyname (
 );
 
 QSE_EXPORT qse_raddic_const_t* qse_raddic_findconstbyvalue (
-	qse_raddic_t*                   dic,
-	qse_uint32_t                    attr,
-	const qse_raddic_const_value_t* value
+	qse_raddic_t*      dic,
+	qse_uint32_t       attr,
+	qse_uintmax_t      value
 );
 
 QSE_EXPORT qse_raddic_const_t* qse_raddic_addconst (
-	qse_raddic_t*                   dic,
-	const qse_char_t*               name,
-	const qse_char_t*               attrstr,
-	const qse_raddic_const_value_t* value
+	qse_raddic_t*      dic,
+	const qse_char_t*  name,
+	const qse_char_t*  attrstr,
+	qse_uintmax_t      value
 );
 
 QSE_EXPORT int qse_raddic_deleteconstbyname (
@@ -341,9 +343,9 @@ QSE_EXPORT int qse_raddic_deleteconstbyname (
 );
 
 QSE_EXPORT int qse_raddic_deleteconstbyvalue (
-	qse_raddic_t*                   dic,
-	qse_uint32_t                    attr,
-	const qse_raddic_const_value_t* value
+	qse_raddic_t*     dic,
+	qse_uint32_t      attr,
+	qse_uintmax_t     value
 );
 
 
