@@ -1188,7 +1188,7 @@ static int get_intercept (const qse_xli_str_t* v)
 static int get_integer (const qse_xli_str_t* v)
 {
 /* TODO: be more strict */
-	return qse_strxtoi (v->ptr, v->len, 10);
+	return qse_strxtoi (v->ptr, v->len, 10, QSE_NULL);
 }
 
 static int parse_dns_query_types (qse_httpd_t* httpd, const qse_xli_str_t* str)
@@ -2046,7 +2046,7 @@ static qse_httpd_server_t* attach_server (qse_httpd_t* httpd, int num, qse_xli_l
 	else
 	{
 		unsigned int v;
-		v = qse_strtoui (((qse_xli_str_t*)pair->val)->ptr, 10);
+		v = qse_strtoui (((qse_xli_str_t*)pair->val)->ptr, 10, QSE_NULL);
 		if (v <= 0) v = 256;
 		dope.backlog_size = v;
 	}
@@ -2409,7 +2409,7 @@ static void set_limit (qse_httpd_t* httpd, const qse_char_t* name, int what)
 				if (qse_strxcmp (str, len, QSE_T("unlimited")) == 0)
 					lim.rlim_cur = RLIM_INFINITY;
 				else
-					lim.rlim_cur = qse_strtoui (((qse_xli_str_t*)pair->val)->ptr, 10);
+					lim.rlim_cur = qse_strtoui (((qse_xli_str_t*)pair->val)->ptr, 10, QSE_NULL);
 				if (setrlimit (what, &lim) <= -1)
 				{
 					/* TODO: warning */

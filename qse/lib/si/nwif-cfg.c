@@ -342,7 +342,7 @@ static void read_proc_net_if_inet6 (qse_nwifcfg_t* cfg, struct ifreq* ifr)
 
 			if (count >= 6)
 			{
-				index = qse_mbsxtoi (tok[1].ptr, tok[1].len, 16);
+				index = qse_mbsxtoi (tok[1].ptr, tok[1].len, 16, QSE_NULL);
 				if (index == cfg->index)
 				{
 					int ti;
@@ -356,7 +356,7 @@ static void read_proc_net_if_inet6 (qse_nwifcfg_t* cfg, struct ifreq* ifr)
 
 					cfg->addr.type = QSE_NWAD_IN6;
 
-					ti = qse_mbsxtoi (tok[2].ptr, tok[0].len, 16);
+					ti = qse_mbsxtoi (tok[2].ptr, tok[0].len, 16, QSE_NULL);
 					qse_prefixtoip6ad (ti, &cfg->mask.u.in6.addr);
 
 					cfg->mask.type = QSE_NWAD_IN6;

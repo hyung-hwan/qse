@@ -1227,7 +1227,7 @@ static int sscanf_i (qse_raddic_t* dic, const qse_char_t* str, int* pvalue)
 	qse_long_t v;
 	const qse_char_t* end;
 
-	QSE_STRTONUM (v, str, &end, 0);
+	v = qse_strtolong (str, 0, &end);
 	if (*end != '\0') 
 	{
 		qse_raddic_seterrfmt (dic, QSE_RADDIC_ESYNERR, QSE_T("invalid number - %s"), str);
@@ -1248,9 +1248,9 @@ static int sscanf_ui (qse_raddic_t* dic, const qse_char_t* str, qse_uintmax_t* p
 		return -1;
 	}
 
-	QSE_STRTONUM (v, str, &end, 0);
-
-	if (*end != '\0')
+	/*QSE_STRTONUM (v, str, &end, 0);*/
+	v = qse_strtouintmax (str, 0, &end);
+	if (*end != QSE_T('\0'))
 	{
 		qse_raddic_seterrfmt (dic, QSE_RADDIC_ESYNERR, QSE_T("invalid unsigned number - %s"), str);
 		return -1;
@@ -1260,6 +1260,7 @@ static int sscanf_ui (qse_raddic_t* dic, const qse_char_t* str, qse_uintmax_t* p
 	return 0;
 }
 
+#if 0
 static int sscanf_ui32 (qse_raddic_t* dic, const qse_char_t* str, qse_uint32_t* pvalue, qse_uint32_t* pvalue2)
 {
 	qse_long_t v, v2;
@@ -1272,11 +1273,13 @@ static int sscanf_ui32 (qse_raddic_t* dic, const qse_char_t* str, qse_uint32_t* 
 		return -1;
 	}
 
-	QSE_STRTONUM (v, str, &end, 0);
+	/*QSE_STRTONUM (v, str, &end, 0);*/
+	v = qse_strtolong (str, 0, &end);
 	if (pvalue2 && *end == '.')
 	{
 		start2 = end + 1;
-		QSE_STRTONUM (v2, start2, &end, 0);
+		/*QSE_STRTONUM (v2, start2, &end, 0);*/
+		v2 = qse_strtolong (start2, 0, &end);
 	}
 
 	if (*end != '\0')
@@ -1294,6 +1297,7 @@ static int sscanf_ui32 (qse_raddic_t* dic, const qse_char_t* str, qse_uint32_t* 
 
 	return 0;
 }
+#endif
 
 /*
  *	Process the ATTRIBUTE command
@@ -1322,7 +1326,7 @@ static int process_attribute (
 	 */
 	if (sscanf_ui(dic, argv[1], &value) <= -1 || value > QSE_TYPE_MAX(qse_uint16_t)) 
 	{
-		qse_raddic_seterrfmt (dic, QSE_RADDIC_ESYNERR, QSE_T("%s[%zd]: invalid attribute value  %s"), fn, line, argv[1]);
+		qse_raddic_seterrfmt (dic, QSE_RADDIC_ESYNERR, QSE_T("%s[%zd]: invalid attribute value %s"), fn, line, argv[1]);
 		return -1;
 	}
 
@@ -1530,9 +1534,10 @@ static int process_constant(qse_raddic_t* dic, const qse_char_t* fn, const qse_s
  */
 static int process_vendor (qse_raddic_t* dic, const qse_char_t* fn, const qse_size_t line, qse_char_t** argv,  int argc)
 {
-	int value;
+	unsigned int value;
 	int continuation = 0;
 	const qse_char_t* format = QSE_NULL;
+	const qse_char_t* end;
 
 	if ((argc < 2) || (argc > 3)) 
 	{
@@ -1541,14 +1546,18 @@ static int process_vendor (qse_raddic_t* dic, const qse_char_t* fn, const qse_si
 	}
 
 	/*
-	 *	 Validate all entries
+	 * Validate all entries
 	 */
-	if (!QSE_ISDIGIT(argv[1][0])) 
+	//if (!QSE_ISDIGIT(argv[1][0])) 
+	//{
+	//
+	//}
+	value = qse_strtoui(argv[1], 0, &end);
+	if (*end != QSE_T('\0') || value <= 0u || value > 65535u)
 	{
 		qse_raddic_seterrfmt (dic, QSE_RADDIC_ESYNERR, QSE_T("%s[%zd]: invalid value"), fn, line);
 		return -1;
 	}
-	value = qse_strtoi(argv[1], 0);
 
 	/* Create a new VENDOR entry for the list */
 	if (qse_raddic_addvendor(dic, argv[0], value) == QSE_NULL) 
