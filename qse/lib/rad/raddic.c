@@ -1275,7 +1275,7 @@ static int sscanf_ui32 (qse_raddic_t* dic, const qse_char_t* str, qse_uint32_t* 
 
 	/*QSE_STRTONUM (v, str, &end, 0);*/
 	v = qse_strtolong (str, 0, &end);
-	if (pvalue2 && *end == '.')
+	if (pvalue2 && *end == QSE_T('.'))
 	{
 		start2 = end + 1;
 		/*QSE_STRTONUM (v2, start2, &end, 0);*/
@@ -1548,14 +1548,10 @@ static int process_vendor (qse_raddic_t* dic, const qse_char_t* fn, const qse_si
 	/*
 	 * Validate all entries
 	 */
-	//if (!QSE_ISDIGIT(argv[1][0])) 
-	//{
-	//
-	//}
 	value = qse_strtoui(argv[1], 0, &end);
 	if (*end != QSE_T('\0') || value <= 0u || value > 65535u)
 	{
-		qse_raddic_seterrfmt (dic, QSE_RADDIC_ESYNERR, QSE_T("%s[%zd]: invalid value"), fn, line);
+		qse_raddic_seterrfmt (dic, QSE_RADDIC_ESYNERR, QSE_T("%s[%zd]: invalid vendor value"), fn, line);
 		return -1;
 	}
 
@@ -1597,7 +1593,7 @@ static int process_vendor (qse_raddic_t* dic, const qse_char_t* fn, const qse_si
 
 		if (qse_strzcasecmp(format, QSE_T("format="), 7) != 0) 
 		{
-			qse_raddic_seterrfmt (dic, QSE_RADDIC_ESYNERR, QSE_T("%s[%zd]: Invalid format for VENDOR.  Expected \"format=\", got \"%s\""), fn, line, format);
+			qse_raddic_seterrfmt (dic, QSE_RADDIC_ESYNERR, QSE_T("%s[%zd]: invalid vendor format.  expected \"format=\", got \"%s\""), fn, line, format);
 			return -1;
 		}
 
