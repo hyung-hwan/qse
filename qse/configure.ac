@@ -801,6 +801,7 @@ AC_CONFIG_FILES([
 	include/qse/xli/Makefile
 	include/qse/http/Makefile
 	include/qse/rad/Makefile
+	include/qse/dhcp/Makefile
 	lib/Makefile 
 	lib/cmn/Makefile 
 	lib/cry/Makefile
@@ -810,6 +811,7 @@ AC_CONFIG_FILES([
 	lib/xli/Makefile 
 	lib/http/Makefile 
 	lib/rad/Makefile 
+	lib/dhcp/Makefile 
 	lib/qsecmn.pc
 	lib/qsecry.pc
 	lib/qsesi.pc
@@ -818,6 +820,7 @@ AC_CONFIG_FILES([
 	lib/qsexli.pc
 	lib/qsehttp.pc
 	lib/qserad.pc
+	lib/qsedhcp.pc
 	cmd/Makefile 
 	cmd/awk/Makefile 
 	cmd/sed/Makefile 
