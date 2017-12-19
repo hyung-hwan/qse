@@ -1,4 +1,4 @@
-SUBDIRS = cmn cry si awk sed xli http rad
+SUBDIRS = cmn cry si awk sed xli http rad dhcp
 
 pkgincludedir = $(includedir)/qse
 
