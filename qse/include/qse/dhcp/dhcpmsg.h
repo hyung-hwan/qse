@@ -11,8 +11,19 @@
 /* operation code */
 enum qse_dhcp4_op_t
 {
-	QSE_DHCP4OP_BOOTREQUEST = 1,
-	QSE_DHCP4OP_BOOTREPLY   = 2
+	QSE_DHCP4_OP_BOOTREQUEST = 1,
+	QSE_DHCP4_OP_BOOTREPLY   = 2
+};
+
+enum qse_dhcp4_htype_t
+{
+	QSE_DHCP4_HTYPE_ETHERNET   = 1,
+	QSE_DHCP4_HTYPE_IEEE802    = 6,
+	QSE_DHCP4_HTYPE_ARCNET     = 7,
+	QSE_DHCP4_HTYPE_APPLETALK  = 8,
+	QSE_DHCP4_HTYPE_HDLC       = 17,
+	QSE_DHCP4_HTYPE_ATM        = 19,
+	QSE_DHCP4_HTYPE_INFINIBAND = 32
 };
 
 /* option codes (partial) */
@@ -71,17 +82,29 @@ enum qse_dhcp4_opt_relay_t
 /* message type */
 enum qse_dhcp4_msg_t
 {
-	QSE_DHCP4MSG_DISCOVER = 1,
-	QSE_DHCP4MSG_OFFER    = 2,
-	QSE_DHCP4MSG_REQUEST  = 3,
-	QSE_DHCP4MSG_DECLINE  = 4,
-	QSE_DHCP4MSG_ACK      = 5,
-	QSE_DHCP4MSG_NAK      = 6,
-	QSE_DHCP4MSG_RELEASE  = 7,
-	QSE_DHCP4MSG_INFORM   = 8
+	QSE_DHCP4_MSG_DISCOVER         = 1,
+	QSE_DHCP4_MSG_OFFER            = 2,
+	QSE_DHCP4_MSG_REQUEST          = 3,
+	QSE_DHCP4_MSG_DECLINE          = 4,
+	QSE_DHCP4_MSG_ACK              = 5,
+	QSE_DHCP4_MSG_NAK              = 6,
+	QSE_DHCP4_MSG_RELEASE          = 7,
+	QSE_DHCP4_MSG_INFORM           = 8,
+
+	/*QSE_DHCP4_MSG_RENEW            = 9,*/
+
+	QSE_DHCP4_MSG_LEASE_QUERY      = 10,
+	QSE_DHCP4_MSG_LEASE_UNASSIGNED = 11,
+	QSE_DHCP4_MSG_LEASE_UNKNOWN    = 12,
+	QSE_DHCP4_MSG_LEASE_ACTIVE     = 13,
+
+	QSE_DHCP4_MSG_BULK_LEASE_QUERY = 14,
+	QSE_DHCP4_MSG_LEASE_QUERY_DONE = 15
 };
 
-struct qse_dhcp4_pkt_t
+#include <qse/pack1.h>
+
+struct qse_dhcp4_pkt_hdr_t
 {
 	qse_uint8_t  op; 
 	qse_uint8_t  htype; 
@@ -103,24 +126,74 @@ struct qse_dhcp4_pkt_t
 	 * the first four bytes of the options compose a magic cookie  
 	 * 0x63 0x82 0x53 0x63 */
 };
+typedef struct qse_dhcp4_pkt_hdr_t qse_dhcp4_pkt_hdr_t;
 
-typedef struct qse_dhcp4_pkt_t qse_dhcp4_pkt_t;
+struct qse_dhcp4_opt_hdr_t
+{
+	qse_uint8_t code;
+	qse_uint8_t len;
+};
+typedef struct qse_dhcp4_opt_hdr_t qse_dhcp4_opt_hdr_t;
+
+typedef int (*qse_dhcp4_opt_walker_t) (qse_dhcp4_opt_hdr_t* opt);
+
+struct qse_dhcp4_pktinf_t
+{
+	qse_dhcp4_pkt_hdr_t* hdr;
+	qse_size_t           len;
+};
+typedef struct qse_dhcp4_pktinf_t qse_dhcp4_pktinf_t;
+
+struct qse_dhcp4_pktbuf_t
+{
+	qse_dhcp4_pkt_hdr_t* hdr;
+	qse_size_t           len;
+	qse_size_t           capa;
+};
+typedef struct qse_dhcp4_pktbuf_t qse_dhcp4_pktbuf_t;
+
+#include <qse/unpack.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-QSE_EXPORT qse_uint8_t* qse_dhcp4_get_options (
-	const qse_dhcp4_pkt_t* pkt,
-	qse_size_t             len,
-	qse_size_t*            olen /* option area length */
+QSE_EXPORT int qse_dhcp4_initialize_pktbuf (
+	qse_dhcp4_pktbuf_t* pkt,
+	void*               buf,
+	qse_size_t          capa
 );
 
-QSE_EXPORT qse_uint8_t* qse_dhcp4_get_option (
-	const qse_dhcp4_pkt_t* pkt,
-	qse_size_t             len,
-	int                    code,
-	qse_uint8_t*           olen
+QSE_EXPORT int qse_dhcp4_add_option (
+	qse_dhcp4_pktbuf_t* pkt,
+	int                 code,
+	void*               optr, /**< option data pointer */
+	qse_uint8_t         olen  /**< option data length */
+);
+
+QSE_EXPORT void qse_dhcp4_compact_options (
+	qse_dhcp4_pktbuf_t* pkt
+);
+
+#if 0
+QSE_EXPORT int qse_dhcp4_add_options (
+	qse_dhcp4_pkt_hdr_t* pkt,
+	qse_size_t       len,
+	qse_size_t       max,
+	int              code,
+	qse_uint8_t*     optr, /* option data */
+	qse_uint8_t      olen  /* option length */
+);
+#endif
+
+QSE_EXPORT int qse_dhcp4_walk_options (
+	const qse_dhcp4_pktinf_t* pkt,
+	qse_dhcp4_opt_walker_t    walker
+);
+
+QSE_EXPORT qse_dhcp4_opt_hdr_t* qse_dhcp4_find_option (
+	const qse_dhcp4_pktinf_t* pkt,
+	int                       ode
 );
 
 QSE_EXPORT qse_uint8_t* qse_dhcp4_get_relay_suboption (
@@ -128,16 +201,6 @@ QSE_EXPORT qse_uint8_t* qse_dhcp4_get_relay_suboption (
 	qse_uint8_t        len,
 	int                code,
 	qse_uint8_t*       olen
-);
-
-
-QSE_EXPORT int qse_dhcp4_add_option (
-	qse_dhcp4_pkt_t* pkt,
-	qse_size_t       len,
-	qse_size_t       max,
-	int              code,
-	qse_uint8_t*     optr, /* option data */
-	qse_uint8_t      olen  /* option length */
 );
 
 #ifdef __cplusplus

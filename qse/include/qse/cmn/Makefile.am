@@ -33,6 +33,7 @@ pkginclude_HEADERS = \
 	time.h \
 	tmr.h \
 	tre.h \
+	test.h \
 	uni.h \
 	uri.h \
 	utf8.h \
