@@ -2,44 +2,121 @@
 #include <qse/cmn/hton.h>
 #include "../cmn/mem-prv.h"
 
-qse_uint8_t* qse_dhcp4_get_options (const qse_dhcp4_pkt_t* pkt, qse_size_t len, qse_size_t* olen)
+#include <qse/pack1.h>
+struct magic_cookie_t
 {
-	qse_uint32_t cookie;
-	qse_size_t optlen;
-	qse_uint8_t* opt;
+	qse_uint32_t value;
+};
+typedef struct magic_cookie_t magic_cookie_t;
+#include <qse/unpack.h>
 
-	/* check if a packet is large enough to hold the known header */
-	if (len < QSE_SIZEOF(qse_dhcp4_pkt_t)) return QSE_NULL; 
-
-	/* get the length of option fields */
-	optlen = len - QSE_SIZEOF(qse_dhcp4_pkt_t);
-
-	/* check if a packet is large enough to have a magic cookie */
-	if (optlen < QSE_SIZEOF(cookie)) return QSE_NULL; 
-
-	/* get the pointer to the beginning of options */
-	opt = (qse_uint8_t*)(pkt + 1);
-
-	/* use QSE_MEMCPY to prevent any alignment issues */
-	QSE_MEMCPY (&cookie, opt, QSE_SIZEOF(cookie));
-	/* check if the packet contains the right magic cookie */
-	if (cookie != qse_hton32(QSE_DHCP4_MAGIC_COOKIE)) return QSE_NULL;
-
-	*olen = optlen - QSE_SIZEOF(cookie);
-	return (qse_uint8_t*)(opt + QSE_SIZEOF(cookie));
+int qse_dhcp4_initialize_pktbuf (qse_dhcp4_pktbuf_t* pkt, void* buf, qse_size_t capa)
+{
+	if (capa < QSE_SIZEOF(*pkt->hdr)) return -1;
+	pkt->hdr = (qse_dhcp4_pkt_hdr_t*)buf;
+	pkt->len = QSE_SIZEOF(*pkt->hdr);
+	pkt->capa = capa;
+	QSE_MEMSET (pkt->hdr, 0, QSE_SIZEOF(*pkt->hdr));
+	return 0;
 }
 
-qse_uint8_t* qse_dhcp4_get_option (const qse_dhcp4_pkt_t* pkt, qse_size_t len, int code, qse_uint8_t* olen)
+int qse_dhcp4_add_option (qse_dhcp4_pktbuf_t* pkt, int code, void* optr, qse_uint8_t olen)
+{
+	qse_dhcp4_opt_hdr_t* opthdr;
+	magic_cookie_t* cookie; 
+	int optlen;
+
+/* TODO: support to override sname and file */
+	if (pkt->len < QSE_SIZEOF(*pkt->hdr) || pkt->capa < pkt->len) 
+	{
+		/* the pktbuf_t structure got messy */
+		return -1;
+	}
+
+	if (pkt->len == QSE_SIZEOF(*pkt->hdr))
+	{
+		/* the first option is being added */
+		if (pkt->capa - pkt->len < QSE_SIZEOF(*cookie)) return -1;
+		cookie = (magic_cookie_t*)((qse_uint8_t*)pkt->hdr + pkt->len);
+		cookie->value = QSE_CONST_HTON32(QSE_DHCP4_MAGIC_COOKIE);
+		pkt->len += QSE_SIZEOF(*cookie);
+	}
+	else if (pkt->len < QSE_SIZEOF(*pkt->hdr) + QSE_SIZEOF(*cookie))
+	{
+		/* no space for cookie */
+		return -1;
+	}
+	else
+	{
+		cookie = (magic_cookie_t*)(pkt->hdr + 1);
+		if (cookie->value != QSE_CONST_HTON32(QSE_DHCP4_MAGIC_COOKIE)) return -1;
+	}
+
+/* do i need to disallow adding a new option if END is found? */
+
+	if (code == QSE_DHCP4_OPT_PADDING || code == QSE_DHCP4_OPT_END)
+	{
+		optlen = 1; /* no length field in the header and no option palyload */
+		if (pkt->capa - pkt->len < optlen) return -1;
+		opthdr = (qse_dhcp4_opt_hdr_t*)((qse_uint8_t*)pkt->hdr + pkt->len);
+	}
+	else
+	{
+		optlen = QSE_SIZEOF(*opthdr) + olen;
+
+		if (pkt->capa - pkt->len < optlen) return -1;
+		opthdr = (qse_dhcp4_opt_hdr_t*)((qse_uint8_t*)pkt->hdr + pkt->len);
+
+		opthdr->len = olen;
+		if (olen > 0) QSE_MEMCPY (opthdr + 1, optr, olen);
+	}
+
+	opthdr->code = code;
+	pkt->len += optlen;
+
+	return 0;
+}
+
+void qse_dhcp4_compact_options (qse_dhcp4_pktbuf_t* pkt)
+{
+	/* TODO: move some optiosn to sname or file fields if they are not in use. */
+}
+
+static qse_uint8_t* get_option_start (const qse_dhcp4_pkt_hdr_t* pkt, qse_size_t len, qse_size_t* olen)
+{
+	magic_cookie_t* cookie;
+	qse_size_t optlen;
+
+	/* check if a packet is large enough to hold the known header */
+	if (len < QSE_SIZEOF(qse_dhcp4_pkt_hdr_t)) return QSE_NULL; 
+
+	/* get the length of option fields */
+	optlen = len - QSE_SIZEOF(qse_dhcp4_pkt_hdr_t);
+
+	/* check if a packet is large enough to have a magic cookie */
+	if (optlen < QSE_SIZEOF(*cookie)) return QSE_NULL; 
+
+	/* get the pointer to the beginning of options */
+	cookie = (magic_cookie_t*)(pkt + 1);
+
+	/* check if the packet contains the right magic cookie */
+	if (cookie->value != QSE_CONST_HTON32(QSE_DHCP4_MAGIC_COOKIE)) return QSE_NULL;
+
+	*olen = optlen - QSE_SIZEOF(*cookie);
+	return (qse_uint8_t*)(cookie + 1);
+}
+
+int qse_dhcp4_walk_options (const qse_dhcp4_pktinf_t* pkt, qse_dhcp4_opt_walker_t walker)
 {
 	const qse_uint8_t* optptr[3];
 	qse_size_t optlen[3];
 	int i;
 
-	optptr[0] = qse_dhcp4_get_options (pkt, len, &optlen[0]);
-	if (optptr[0] == QSE_NULL) return QSE_NULL;
+	optptr[0] = get_option_start(pkt->hdr, pkt->len, &optlen[0]);
+	if (optptr[0] == QSE_NULL) return -1;
 
-	optptr[1] = (const qse_uint8_t*)pkt->file;
-	optptr[2] = (const qse_uint8_t*)pkt->sname;
+	optptr[1] = (const qse_uint8_t*)pkt->hdr->file;
+	optptr[2] = (const qse_uint8_t*)pkt->hdr->sname;
 	optlen[1] = 0;
 	optlen[2] = 0;
 
@@ -51,49 +128,99 @@ qse_uint8_t* qse_dhcp4_get_option (const qse_dhcp4_pkt_t* pkt, qse_size_t len, i
 		while (opt < end)
 		{
 			/* option code */
-			qse_uint8_t oc, ol;
+			qse_dhcp4_opt_hdr_t* opthdr;
 
-			oc = *opt++;
+			if (opt + QSE_SIZEOF(*opthdr) >= end) return -1;
+			opthdr = (qse_dhcp4_opt_hdr_t*)opt;
+			opt += QSE_SIZEOF(*opthdr);
 
-			if (oc == QSE_DHCP4_OPT_PADDING) continue;
-			if (oc == QSE_DHCP4_OPT_END) break;
-		
-			if (opt >= end) 
+			/* no len field exists for PADDING and END */
+			if (opthdr->code == QSE_DHCP4_OPT_PADDING) continue; 
+			if (opthdr->code == QSE_DHCP4_OPT_END) break;
+
+			if (opt + opthdr->len >= end) return -1; /* the length field is wrong */
+
+			if (opthdr->code == QSE_DHCP4_OPT_OVERLOAD)
+			{
+				if (opthdr->len != 1) return -1;
+				if (*opt & QSE_DHCP4_OPT_OVERLOAD_FILE) optlen[1] = QSE_SIZEOF(pkt->hdr->file);
+				if (*opt & QSE_DHCP4_OPT_OVERLOAD_SNAME) optlen[2] = QSE_SIZEOF(pkt->hdr->sname);
+			}
+			else
+			{
+				int n;
+				if ((n = walker(opthdr)) <= -1) return -1;
+				if (n == 0) break; /* stop */
+			}
+
+			opt += opthdr->len;
+		}
+	}
+
+	return 0;
+}
+
+qse_dhcp4_opt_hdr_t* qse_dhcp4_find_option (const qse_dhcp4_pktinf_t* pkt, int code)
+{
+	const qse_uint8_t* optptr[3];
+	qse_size_t optlen[3];
+	int i;
+
+	optptr[0] = get_option_start(pkt->hdr, pkt->len, &optlen[0]);
+	if (optptr[0] == QSE_NULL) return QSE_NULL;
+
+	optptr[1] = (const qse_uint8_t*)pkt->hdr->file;
+	optptr[2] = (const qse_uint8_t*)pkt->hdr->sname;
+	optlen[1] = 0;
+	optlen[2] = 0;
+
+	for (i = 0; i < 3; i++)
+	{
+		const qse_uint8_t* opt = optptr[i];
+		const qse_uint8_t* end = opt + optlen[i];
+
+		while (opt < end)
+		{
+			/* option code */
+			qse_dhcp4_opt_hdr_t* opthdr;
+
+			if (opt + QSE_SIZEOF(*opthdr) >= end) 
 			{
 				/*return QSE_NULL; */
 				break;
 			}
+			opthdr = (qse_dhcp4_opt_hdr_t*)opt;
+			opt += QSE_SIZEOF(*opthdr);
+
+			if (opthdr->code == QSE_DHCP4_OPT_PADDING) continue;
+			if (opthdr->code == QSE_DHCP4_OPT_END) break;
 
 			/* option length */
-			ol = *opt++;
 
-			if (oc == code)
+			if (opthdr->code == code)
 			{
-				if (opt + ol >= end) 
+				if (opt + opthdr->len >= end) 
 				{
 					/*return QSE_NULL; */
 					break;
 				}
 
-				*olen = ol;
-				return (qse_uint8_t*)opt;
+				return opthdr;
 			}
 
-			if (oc == QSE_DHCP4_OPT_OVERLOAD)
+			if (opthdr->code == QSE_DHCP4_OPT_OVERLOAD)
 			{
-				if (ol != 1) 
+				if (opthdr->len != 1) 
 				{
 					/*return QSE_NULL; */
 					break;
 				}
 
-				if (*opt & QSE_DHCP4_OPT_OVERLOAD_FILE) 
-					optlen[1] = QSE_SIZEOF(pkt->file);
-				if (*opt & QSE_DHCP4_OPT_OVERLOAD_SNAME) 
-					optlen[2] = QSE_SIZEOF(pkt->sname);
+				if (*opt & QSE_DHCP4_OPT_OVERLOAD_FILE) optlen[1] = QSE_SIZEOF(pkt->hdr->file);
+				if (*opt & QSE_DHCP4_OPT_OVERLOAD_SNAME) optlen[2] = QSE_SIZEOF(pkt->hdr->sname);
 			}
 
-			opt += ol;
+			opt += opthdr->len;
 		}
 	}
 
@@ -125,33 +252,4 @@ qse_uint8_t* qse_dhcp4_get_relay_suboption (const qse_uint8_t* ptr, qse_uint8_t 
 	return QSE_NULL;
 }
 
-
-int qse_dhcp4_add_option (qse_dhcp4_pkt_t* pkt, qse_size_t len, qse_size_t max, int code, qse_uint8_t* optr, qse_uint8_t olen)
-{
-	qse_size_t optlen;
-
-#if 0
-	/* check if a packet is large enough to hold the known header */
-	if (len < QSE_SIZEOF(qse_dhcp4_pkt_t)) return -1; 
-
-	/* get the length of option fields */
-	optlen = len - QSE_SIZEOF(qse_dhcp4_pkt_t);
-
-	/* check if a packet is large enough to have a magic cookie */
-	if (optlen < QSE_SIZEOF(cookie)) return QSE_NULL; 
-
-	/* get the pointer to the beginning of options */
-	opt = (qse_uint8_t*)(pkt + 1);
-
-	/* use QSE_MEMCPY to prevent any alignment issues */
-	QSE_MEMCPY (&cookie, opt, QSE_SIZEOF(cookie));
-	/* check if the packet contains the right magic cookie */
-	if (cookie != qse_hton32(QSE_DHCP4_MAGIC_COOKIE)) return QSE_NULL;
-
-	*olen = optlen - QSE_SIZEOF(cookie);
-	optr = (qse_uint8_t*)(opt + QSE_SIZEOF(cookie));
-#endif
-
-	return -1;
-}
 
