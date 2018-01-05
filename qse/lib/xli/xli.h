@@ -37,6 +37,7 @@ enum qse_xli_tok_type_t
 	QSE_XLI_TOK_EOF,
 	QSE_XLI_TOK_XINCLUDE,
 	QSE_XLI_TOK_SEMICOLON,
+	QSE_XLI_TOK_COLON,
 	QSE_XLI_TOK_LBRACE,
 	QSE_XLI_TOK_RBRACE,
 	QSE_XLI_TOK_EQ,
@@ -93,6 +94,10 @@ struct qse_xli_t
 		qse_size_t pair_xtnsize;
 		qse_size_t root_xtnsize;
 		qse_char_t key_splitter; /**< character to use to split a key in the fqpn format */
+		qse_char_t tag_marker[2];
+		qse_char_t array_marker[2];
+
+		qse_xli_tok_type_t _assign_tok;
 	} opt;
 
 	qse_xli_ecb_t* ecb;
@@ -133,7 +138,7 @@ int qse_xli_init (qse_xli_t* xli, qse_mmgr_t* mmgr, qse_size_t rootxtnsize);
 void qse_xli_fini (qse_xli_t* xli);
 
 const qse_char_t* qse_xli_dflerrstr (
-     const qse_xli_t* xli, qse_xli_errnum_t errnum);
+	const qse_xli_t* xli, qse_xli_errnum_t errnum);
 
 void qse_xli_clearrionames (qse_xli_t* xli);
 void qse_xli_clearwionames (qse_xli_t* xli);

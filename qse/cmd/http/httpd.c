@@ -2020,7 +2020,7 @@ static void free_server_config (qse_httpd_t* httpd, qse_httpd_server_t* server)
 
 	if (server_xtn->cfgtab) 
 	{
-		qse_htb_close (server_xtn->cfgtab);	
+		qse_htb_close (server_xtn->cfgtab);
 		server_xtn->cfgtab = QSE_NULL;
 	}
 }
