@@ -25,6 +25,7 @@
  */
 
 #include "xli.h"
+#include <qse/cmn/chr.h>
 
 typedef struct arg_data_t arg_data_t;
 struct arg_data_t
@@ -138,7 +139,7 @@ int qse_xli_closeactivewstream (qse_xli_t* xli, int* org_depth)
 	return 0;
 }
 
-static int write_to_current_stream (qse_xli_t* xli, const qse_char_t* ptr, qse_size_t len, int escape)
+static int write_to_current_stream(qse_xli_t* xli, const qse_char_t* ptr, qse_size_t len, int escape)
 {
 	qse_xli_io_arg_t* arg;
 	qse_size_t i;
@@ -174,22 +175,100 @@ static int write_indentation (qse_xli_t* xli, int depth)
 
 	if (depth <= QSE_COUNTOF(tabs))
 	{
-		if (write_to_current_stream (xli, tabs, depth, 0) <= -1) return -1;
+		if (write_to_current_stream(xli, tabs, depth, 0) <= -1) return -1;
 	}
 	else
 	{
 		int i;
-		if (write_to_current_stream (xli, tabs, QSE_COUNTOF(tabs), 0) <= -1) return -1;
+		if (write_to_current_stream(xli, tabs, QSE_COUNTOF(tabs), 0) <= -1) return -1;
 		for (i = QSE_COUNTOF(tabs); i < depth; i++) 
 		{
-			if (write_to_current_stream (xli, QSE_T("\t"), 1, 0) <= -1) return -1;
+			if (write_to_current_stream(xli, QSE_T("\t"), 1, 0) <= -1) return -1;
 		}
 	}
 	return 0;
 }
 
+
+static int key_needs_quoting (qse_xli_t* xli, const qse_char_t* str, int nstr)
+{
+	/* this determines if a key or an alias requires quoting for output.
+	 * NSTR is not taken into account because it's only allowed as a value */
+
+	/* refer to the tokenization rule in get_token_into() in read.c */
+	qse_char_t c;
+
+	c = *str++;
+	if (c == QSE_T('\0')) return 1; /* an empty string requires a quoting */
+
+	if (c == QSE_T('_') || QSE_ISALPHA(c) || (!nstr && (xli->opt.trait & QSE_XLI_LEADDIGIT) && QSE_ISDIGIT(c)))
+	{
+		int lead_digit = QSE_ISDIGIT(c);
+		int all_digits = 1;
+
+		/* a normal identifier can be composed of wider varieties of 
+		 * characters than a keyword/directive */
+		while (1)
+		{
+			c = *str++;
+			if (c == QSE_T('\0')) break;
+
+			if (c == QSE_T('_') || c == QSE_T('-') || 
+			    (!(xli->opt.trait & QSE_XLI_ASSIGNWITHCOLON) && c == QSE_T(':')) ||
+			    c == QSE_T('*') || c == QSE_T('/') || QSE_ISALPHA(c)) 
+			{
+				all_digits = 0;
+			}
+			else if (QSE_ISDIGIT(c)) 
+			{
+				/* nothing to do */
+			}
+			else 
+			{
+				/* a disallowed character for an identifier */
+				return 1; /* quote it */
+			}
+		}
+
+		if (lead_digit && all_digits)
+		{
+			/* if an identifier begins with a digit, it must contain a non-digit character */
+			/* in fact, it is not a valid identifer. so quote it */
+			return 1;
+		}
+		else
+		{
+			/* this must be a normal identifer */
+			return 0; /* no quoting needed */
+		}
+	}
+	else if (nstr && QSE_ISDIGIT(c))
+	{
+		do 
+		{
+			c = *str++;
+			if (c == QSE_T('\0')) return 0; /* it's a numeric string */
+		}
+		while (QSE_ISDIGIT(c));
+	}
+
+	/* quote all the rest */
+	return 1;
+}
+
 static int write_list (qse_xli_t* xli, qse_xli_list_t* list, int depth)
 {
+	static struct
+	{
+		qse_char_t* qptr;
+		qse_size_t  qlen;
+	} quotes[] =
+	{
+		{ QSE_T(""),   0 },
+		{ QSE_T("\'"), 1 },
+		{ QSE_T("\""), 1 }
+	};
+
 	qse_xli_atom_t* curatom;
 
 	for (curatom = list->head; curatom; curatom = curatom->next)
@@ -198,64 +277,84 @@ static int write_list (qse_xli_t* xli, qse_xli_list_t* list, int depth)
 		{
 			case QSE_XLI_PAIR:
 			{
+				int qtype;
 				qse_xli_pair_t* pair = (qse_xli_pair_t*)curatom;
-				
-				if (write_indentation (xli, depth) <= -1) return -1;
+
+				if (write_indentation(xli, depth) <= -1) return -1;
 
 				if (pair->tag)
 				{
-					if (write_to_current_stream (xli, QSE_T("["), 1, 0) <= -1 ||
-					    write_to_current_stream (xli, pair->tag, qse_strlen(pair->tag), 0) <= -1 || 
-					    write_to_current_stream (xli, QSE_T("]"), 1, 0) <= -1) return -1;
+					if (write_to_current_stream(xli, &xli->opt.tag_marker[0], 1, 0) <= -1 ||
+					    write_to_current_stream(xli, pair->tag, qse_strlen(pair->tag), 0) <= -1 || 
+					    write_to_current_stream(xli, &xli->opt.tag_marker[1], 1, 0) <= -1) return -1;
 				}
 
-				if (write_to_current_stream (xli, pair->key, qse_strlen(pair->key), 0) <= -1) return -1;
+				QSE_ASSERT(pair->_key_quoted >= 0 && pair->_key_quoted < QSE_COUNTOF(quotes));
+				qtype = pair->_key_quoted;
+				if (qtype <= 0 && key_needs_quoting(xli, pair->key, 0)) qtype = 2; /* force double quoting */
+
+				if (write_to_current_stream(xli, quotes[qtype].qptr, quotes[qtype].qlen, 0) <= -1 ||
+				    write_to_current_stream(xli, pair->key, qse_strlen(pair->key), (qtype >= 2)) <= -1 ||
+				    write_to_current_stream(xli, quotes[qtype].qptr, quotes[qtype].qlen, 0) <= -1) return -1;
 
 				if (pair->alias) 
 				{
-					if (write_to_current_stream (xli, QSE_T(" \""), 2, 0) <= -1 ||
-					    write_to_current_stream (xli, pair->alias, qse_strlen(pair->alias), 1) <= -1 ||
-					    write_to_current_stream (xli, QSE_T("\""), 1, 0) <= -1) return -1;
+					QSE_ASSERT(pair->_alias_quoted >= 0 && pair->_alias_quoted < QSE_COUNTOF(quotes));
+					qtype = pair->_alias_quoted;
+					if (qtype <= 0 && key_needs_quoting(xli, pair->alias, 1)) qtype = 2;
+
+					if (write_to_current_stream(xli, QSE_T(" "), 1, 0) <= -1 ||
+					    write_to_current_stream(xli, quotes[qtype].qptr, quotes[qtype].qlen, 0) <= -1 ||
+					    write_to_current_stream(xli, pair->alias, qse_strlen(pair->alias), (qtype >= 2)) <= -1 ||
+					    write_to_current_stream(xli, quotes[qtype].qptr, quotes[qtype].qlen, 0) <= -1) return -1;
 				}
 
 				switch (pair->val->type)
 				{
 					case QSE_XLI_NIL:
-						if (write_to_current_stream (xli, QSE_T(";\n"), 2, 0) <= -1) return -1;
+						if (write_to_current_stream(xli, QSE_T(";\n"), 2, 0) <= -1) return -1;
 						break;
 
 					case QSE_XLI_STR:
 					{
 						qse_xli_str_t* str = (qse_xli_str_t*)pair->val;
 
-						if (write_to_current_stream (xli, QSE_T(" = "), 3, 0) <= -1) return -1;
+						if (xli->opt.trait & QSE_XLI_ASSIGNWITHCOLON)
+						{
+							if (write_to_current_stream(xli, QSE_T(": "), 2, 0) <= -1) return -1;
+						}
+						else
+						{
+							if (write_to_current_stream(xli, QSE_T(" = "), 3, 0) <= -1) return -1;
+						}
+
 						while (1)
 						{
 							if (str->tag)
 							{
-								if (write_to_current_stream (xli, QSE_T("["), 1, 0) <= -1 ||
-								    write_to_current_stream (xli, str->tag, qse_strlen(str->tag), 0) <= -1 || 
-								    write_to_current_stream (xli, QSE_T("]"), 1, 0) <= -1) return -1;
+								if (write_to_current_stream(xli, QSE_T("["), 1, 0) <= -1 ||
+								    write_to_current_stream(xli, str->tag, qse_strlen(str->tag), 0) <= -1 || 
+								    write_to_current_stream(xli, QSE_T("]"), 1, 0) <= -1) return -1;
 							}
-						
-							if (write_to_current_stream (xli, QSE_T("\""), 1, 0) <= -1 ||
-							    write_to_current_stream (xli, str->ptr, str->len, 1) <= -1 ||
-							    write_to_current_stream (xli, QSE_T("\""), 1, 0) <= -1) return -1;
+
+							if (write_to_current_stream(xli, QSE_T("\""), 1, 0) <= -1 ||
+							    write_to_current_stream(xli, str->ptr, str->len, 1) <= -1 ||
+							    write_to_current_stream(xli, QSE_T("\""), 1, 0) <= -1) return -1;
 							if (!str->next) break;
 
-							if (write_to_current_stream (xli, QSE_T(", "), 2, 0) <= -1) return -1;
+							if (write_to_current_stream(xli, QSE_T(", "), 2, 0) <= -1) return -1;
 							str = str->next;
 						}
-						if (write_to_current_stream (xli, QSE_T(";\n"), 2, 0) <= -1) return -1;
+						if (write_to_current_stream(xli, QSE_T(";\n"), 2, 0) <= -1) return -1;
 						break;
 					}
 
 					case QSE_XLI_LIST:
 					{
-						if (write_to_current_stream (xli, QSE_T(" {\n"), 3, 0) <= -1 ||
+						if (write_to_current_stream(xli, QSE_T(" {\n"), 3, 0) <= -1 ||
 						    write_list (xli, (qse_xli_list_t*)pair->val, depth + 1) <= -1 ||
 						    write_indentation (xli, depth) <= -1 ||
-						    write_to_current_stream (xli, QSE_T("}\n"), 2, 0) <= -1) return -1;
+						    write_to_current_stream(xli, QSE_T("}\n"), 2, 0) <= -1) return -1;
 						break;
 					}
 				}
@@ -269,12 +368,12 @@ static int write_list (qse_xli_t* xli, qse_xli_list_t* list, int depth)
 
 				for (i = 0; i < depth; i++) 
 				{
-					if (write_to_current_stream (xli, QSE_T("\t"), 1, 0) <= -1) return -1;
+					if (write_to_current_stream(xli, QSE_T("\t"), 1, 0) <= -1) return -1;
 				}
 
-				if (write_to_current_stream (xli, QSE_T("#"), 1, 0) <= -1 ||
-				    write_to_current_stream (xli, str, qse_strlen(str), 0) <= -1 ||
-				    write_to_current_stream (xli, QSE_T("\n"), 1, 0) <= -1) return -1;
+				if (write_to_current_stream(xli, QSE_T("#"), 1, 0) <= -1 ||
+				    write_to_current_stream(xli, str, qse_strlen(str), 0) <= -1 ||
+				    write_to_current_stream(xli, QSE_T("\n"), 1, 0) <= -1) return -1;
 				break;
 			}
 
@@ -285,12 +384,12 @@ static int write_list (qse_xli_t* xli, qse_xli_list_t* list, int depth)
 
 				for (i = 0; i < depth; i++) 
 				{
-					if (write_to_current_stream (xli, QSE_T("\t"), 1, 0) <= -1) return -1;
+					if (write_to_current_stream(xli, QSE_T("\t"), 1, 0) <= -1) return -1;
 				}
 
-				if (write_to_current_stream (xli, QSE_T("@include \""), 10, 0) <= -1 ||
-				    write_to_current_stream (xli, path, qse_strlen(path), 1) <= -1 ||
-				    write_to_current_stream (xli, QSE_T("\";\n"), 3, 0) <= -1) return -1;
+				if (write_to_current_stream(xli, QSE_T("@include \""), 10, 0) <= -1 ||
+				    write_to_current_stream(xli, path, qse_strlen(path), 1) <= -1 ||
+				    write_to_current_stream(xli, QSE_T("\";\n"), 3, 0) <= -1) return -1;
 				
 				if (qse_xli_openwstream (xli, ((qse_xli_file_t*)curatom)->path, depth) <= -1) return -1;
 				depth = 0;

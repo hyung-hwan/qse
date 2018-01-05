@@ -115,7 +115,20 @@ enum qse_xli_opt_t
 	 */
 	QSE_XLI_ROOTXTNSIZE,
 
-	QSE_XLI_KEYSPLITTER
+	/**
+	 * It is a character to put between a parent key and a nested key.
+	 * By default, it's a period and used like 'a.b.c' that means c under b under a. 
+	 */
+	QSE_XLI_KEYSPLITTER,
+
+	/**
+	 * The first character is in the tag marker speicifies the tag opener
+	 * and the second chracter specifies the tag closer. The are used when
+	 * key tags and/or string tags are enabled. By default, it is "[]".
+	 */
+	QSE_XLI_TAGMARKER,
+
+	QSE_XLI_ARRAYMARKER
 };
 typedef enum qse_xli_opt_t qse_xli_opt_t;
 
@@ -145,14 +158,20 @@ enum qse_xli_trait_t
 	 *  "tg" is stored into the tag field of qse_xli_str_t. */
 	QSE_XLI_STRTAG    = (1 << 10), 
 
+	/** use a colon as an assignment character intead of an equal sign.
+	  * it doesn't apply when reading or writing in the ini format. */
+	QSE_XLI_ASSIGNWITHCOLON = (1 << 11), 
+
 	/** enable pair validation against pair definitions while reading */
-	QSE_XLI_VALIDATE  = (1 << 11)
+	QSE_XLI_VALIDATE  = (1 << 12)
 };
 typedef enum qse_xli_trait_t qse_xli_trait_t;
 
 typedef struct qse_xli_val_t  qse_xli_val_t;
 typedef struct qse_xli_nil_t  qse_xli_nil_t;
 typedef struct qse_xli_str_t  qse_xli_str_t;
+typedef struct qse_xli_int_t  qse_xli_int_t;
+typedef struct qse_xli_array_t qse_xli_array_t;
 typedef struct qse_xli_list_t qse_xli_list_t;
 
 typedef struct qse_xli_atom_t qse_xli_atom_t;
@@ -207,6 +226,26 @@ struct qse_xli_str_t
 	qse_xli_str_t*     next;
 };
 
+struct qse_xli_int_t
+{
+	QSE_XLI_VAL_HDR;
+	const qse_char_t*  tag;
+	const qse_char_t*  ptr;
+	qse_size_t         len; 
+	/* TODO: include a numeric value here??? 
+	qse_intmax_t       val;
+	*/
+	/* NEED TO SUPPORT MULTI NUBMER? */
+};
+
+struct qse_xli_array_t
+{
+	QSE_XLI_VAL_HDR;
+	const qse_char_t* tag;
+	qse_xli_val_t* ptr;
+	qse_size_t count;
+};
+
 #define QSE_XLI_ATOM_HDR \
 	qse_xli_atom_type_t type; \
 	qse_xli_atom_t* prev; \
@@ -225,6 +264,8 @@ struct qse_xli_pair_t
 	const qse_char_t* key;
 	const qse_char_t* alias; 
 	const qse_char_t* tag;
+	unsigned int _key_quoted: 2; /* used internally for output */
+	unsigned int _alias_quoted: 2; /* used internally for output - in fact, an alias is always quoted */
 	qse_xli_val_t*    val;
 };
 
