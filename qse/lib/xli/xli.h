@@ -40,6 +40,10 @@ enum qse_xli_tok_type_t
 	QSE_XLI_TOK_COLON,
 	QSE_XLI_TOK_LBRACE,
 	QSE_XLI_TOK_RBRACE,
+	QSE_XLI_TOK_LBRACK,
+	QSE_XLI_TOK_RBRACK,
+	QSE_XLI_TOK_LPAREN,
+	QSE_XLI_TOK_RPAREN,
 	QSE_XLI_TOK_EQ,
 	QSE_XLI_TOK_COMMA,
 	QSE_XLI_TOK_DQSTR,
@@ -94,10 +98,6 @@ struct qse_xli_t
 		qse_size_t pair_xtnsize;
 		qse_size_t root_xtnsize;
 		qse_char_t key_splitter; /**< character to use to split a key in the fqpn format */
-		qse_char_t tag_marker[2];
-		qse_char_t array_marker[2];
-
-		qse_xli_tok_type_t _assign_tok;
 	} opt;
 
 	qse_xli_ecb_t* ecb;

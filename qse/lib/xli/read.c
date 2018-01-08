@@ -27,7 +27,6 @@
 #include "xli.h"
 #include <qse/cmn/chr.h>
 
-
 /*
 	"key1" {
 		# comment
@@ -38,6 +37,9 @@
 	  }
 	}
 */
+
+static qse_char_t tag_opener[] = { QSE_T('['), QSE_T('(') };
+static qse_char_t tag_closer[] = { QSE_T(']'), QSE_T(')') };
 
 static int get_token (qse_xli_t* xli);
 static int read_list (qse_xli_t* xli, qse_xli_list_t* list, const qse_xli_scm_t* override);
@@ -305,33 +307,37 @@ static int get_symbols (qse_xli_t* xli, qse_cint_t c, qse_xli_tok_t* tok)
 	{
 		const qse_char_t* str;
 		qse_size_t len;
-		int tid;
+		int tid[2]; /* normal id, alternative id */
 	};
 
 	static struct ops_t ops[] = 
 	{
-		{ QSE_T("="),   1, QSE_XLI_TOK_EQ          },
-		{ QSE_T(","),   1, QSE_XLI_TOK_COMMA       },
-		{ QSE_T(":"),   1, QSE_XLI_TOK_COLON       },
-		{ QSE_T(";"),   1, QSE_XLI_TOK_SEMICOLON   },
-		{ QSE_T("{"),   1, QSE_XLI_TOK_LBRACE      },
-		{ QSE_T("}"),   1, QSE_XLI_TOK_RBRACE      },
-		{ QSE_NULL,     0, 0,                      }
+		{ QSE_T("="),   1, { QSE_XLI_TOK_EQ,        QSE_XLI_TOK_COLON       } },
+		{ QSE_T(":"),   1, { QSE_XLI_TOK_COLON,     QSE_XLI_TOK_EQ          } },
+		{ QSE_T(","),   1, { QSE_XLI_TOK_COMMA,     QSE_XLI_TOK_COMMA       } },
+		{ QSE_T(";"),   1, { QSE_XLI_TOK_SEMICOLON, QSE_XLI_TOK_SEMICOLON   } },
+		{ QSE_T("{"),   1, { QSE_XLI_TOK_LBRACE,    QSE_XLI_TOK_LBRACE      } },
+		{ QSE_T("}"),   1, { QSE_XLI_TOK_RBRACE,    QSE_XLI_TOK_RBRACE      } },
+		{ QSE_T("["),   1, { QSE_XLI_TOK_LBRACK,    QSE_XLI_TOK_LPAREN      } },
+		{ QSE_T("]"),   1, { QSE_XLI_TOK_RBRACK,    QSE_XLI_TOK_RPAREN      } },
+		{ QSE_T("("),   1, { QSE_XLI_TOK_LPAREN,    QSE_XLI_TOK_LBRACK      } },
+		{ QSE_T(")"),   1, { QSE_XLI_TOK_RPAREN,    QSE_XLI_TOK_RBRACK      } },
+		{ QSE_NULL,     0, { 0,                     0                       } }
 	};
 
 	struct ops_t* p;
 	int idx = 0;
+	int tid_mode = (xli->opt.trait & QSE_XLI_JSON)? 1: 0;
 
 	/* note that the loop below is not generaic enough.
 	 * you must keep the operators strings in a particular order */
-
 
 	for (p = ops; p->str != QSE_NULL; )
 	{
 		if (p->str[idx] == QSE_T('\0'))
 		{
 			ADD_TOKEN_STR (xli, tok, p->str, p->len);
-			SET_TOKEN_TYPE (xli, tok, p->tid);
+			SET_TOKEN_TYPE (xli, tok, p->tid[tid_mode]);
 			return 1;
 		}
 
@@ -452,7 +458,7 @@ oops:
 static int get_token_into (qse_xli_t* xli, qse_xli_tok_t* tok)
 {
 	qse_cint_t c;
-	int n;
+	int n, tag_mode = (xli->opt.trait & QSE_XLI_JSON)? 1: 0;
 	int skip_semicolon_after_include = 0;
 
 retry:
@@ -537,7 +543,7 @@ retry:
 			GET_CHAR_TO (xli, c);
 
 			if (c == QSE_T('_') || c == QSE_T('-') || 
-			    (!(xli->opt.trait & QSE_XLI_ASSIGNWITHCOLON) && c == QSE_T(':')) || 
+			    (!(xli->opt.trait & QSE_XLI_JSON) && c == QSE_T(':')) || 
 			    c == QSE_T('*') || c == QSE_T('/') || QSE_ISALPHA (c)) 
 			{
 				all_digits = 0;
@@ -636,7 +642,7 @@ retry:
 			}
 		}
 	}
-	else if ((xli->opt.trait & (QSE_XLI_KEYTAG | QSE_XLI_STRTAG)) && c == xli->opt.tag_marker[0]) /* [ */
+	else if ((xli->opt.trait & (QSE_XLI_KEYTAG | QSE_XLI_STRTAG)) && c == tag_opener[tag_mode]) /* [ */
 	{
 		/* a string tag is a bracketed word placed in front of a string value.
 		 *   A = [tg] "abc"; 
@@ -658,7 +664,7 @@ retry:
 				return -1;
 			}
 
-			if (c == xli->opt.tag_marker[1]) /* ] */
+			if (c == tag_closer[tag_mode]) /* ] */
 			{
 				/* terminating quote */
 				GET_CHAR (xli);
@@ -861,7 +867,7 @@ static int read_pair (qse_xli_t* xli, const qse_char_t* keytag, const qse_xli_sc
 		}
 	}
 
-	if (MATCH(xli, xli->opt._assign_tok)) /* either QSE_XLI_TOK_EQ or QSE_XLI_TOK_COLON */
+	if (MATCH(xli, QSE_XLI_TOK_EQ))
 	{
 		if (get_token (xli) <= -1) goto oops;
 
@@ -970,7 +976,12 @@ static int read_pair (qse_xli_t* xli, const qse_char_t* keytag, const qse_xli_sc
 		}
 
 		/* TODO: check against schema */
-
+	}
+	else if (xli->opt.trait & QSE_XLI_JSON)
+	{
+		/* the assignment operator is mandator */
+		qse_xli_seterror (xli, QSE_XLI_EASSIGN,  QSE_STR_XSTR(xli->tok.name), &xli->tok.loc);
+		goto oops;
 	}
 	else if (!(xli->opt.trait & QSE_XLI_NOLIST) && MATCH (xli, QSE_XLI_TOK_LBRACE))
 	{
@@ -1079,6 +1090,75 @@ void qse_xli_freelistlink (qse_xli_t* xli, qse_xli_list_link_t* link)
 	xli->parlink = link->next;
 	qse_xli_freemem (xli, link);
 }
+
+#if 0
+static int __read_array (qse_xli_t* xli, int opt_outer_brace)
+{
+	qse_size_t pair_count = 0; 
+
+	while (1)
+	{
+		if (MATCH (xli, QSE_XLI_TOK_XINCLUDE))
+		{
+			if (get_token(xli) <= -1) return -1;
+
+			if (!MATCH(xli,QSE_XLI_TOK_SQSTR) && !MATCH(xli,QSE_XLI_TOK_DQSTR))
+			{
+				qse_xli_seterror (xli, QSE_XLI_EINCLSTR, QSE_NULL, &xli->tok.loc);
+				return -1;
+			}
+
+			if (begin_include (xli) <= -1) return -1;
+		}
+		else if (opt_outer_brace == 1 && pair_count == 0 && MATCH(xli, QSE_XLI_TOK_LBRACK))
+		{
+			opt_outer_brace++;
+			if (get_token(xli) <= -1) return -1;
+		}
+		else if (MATCH(xli, QSE_XLI_TOK_IDENT) || MATCH(xli, QSE_XLI_TOK_SQSTR) || MATCH(xli, QSE_XLI_TOK_DQSTR))
+		{
+			//if (read_pair(xli, QSE_NULL, override) <= -1) return -1;
+			pair_count++;
+		}
+		else if (MATCH(xli, QSE_XLI_TOK_LBRACE))
+		{
+			
+		}
+		else if (MATCH(xli, QSE_XLI_TOK_LBRACK))
+		{
+			if (get_token(xli) <= -1) return -1;
+
+			if (__read_array(xli, 0) <= -1) return -1;
+
+			if (!MATCH(xli, QSE_XLI_TOK_RBRACK))
+			{
+			}
+
+			if (get_token(xli) <= -1) return -1;
+		}
+		else if (MATCH(xli, QSE_XLI_TOK_TEXT))
+		{
+			if (get_token(xli) <= -1) return -1;
+		}
+		else 
+		{
+			break;
+		}
+	}
+
+	if (opt_outer_brace >= 2)
+	{
+		if (!MATCH(xli, QSE_XLI_TOK_RBRACE))
+		{
+			qse_xli_seterror (xli, QSE_XLI_ERBRCE, QSE_STR_XSTR(xli->tok.name), &xli->tok.loc);
+			return -1;
+		}
+		if (get_token(xli) <= -1) return -1;
+	}
+
+	return 0;
+}
+#endif
 
 static int __read_list (qse_xli_t* xli, const qse_xli_scm_t* override, int opt_outer_brace)
 {

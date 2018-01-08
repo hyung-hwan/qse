@@ -29,6 +29,7 @@
 static int fnc_close   (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi);
 static int fnc_fflush  (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi);
 static int fnc_int     (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi);
+static int fnc_asort   (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi);
 
 #define A_MAX QSE_TYPE_MAX(int)
 
@@ -51,12 +52,15 @@ static int fnc_int     (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi);
 static qse_awk_fnc_t sysfnctab[] = 
 {
 	/* io functions */
-	{ {QSE_T("close"),   5}, 0, { {1,     2, QSE_NULL},       fnc_close,  QSE_AWK_RIO }, QSE_NULL},
-	{ {QSE_T("fflush"),  6}, 0, { {0,     1, QSE_NULL},       fnc_fflush, QSE_AWK_RIO }, QSE_NULL},
+	{ {QSE_T("close"),    5}, 0, { {1,     2, QSE_NULL},       fnc_close,  QSE_AWK_RIO }, QSE_NULL},
+	{ {QSE_T("fflush"),   6}, 0, { {0,     1, QSE_NULL},       fnc_fflush, QSE_AWK_RIO }, QSE_NULL},
 
 	/* integer conversion */
-	{ {QSE_T("int"),     3}, 0, { {1,     1, QSE_NULL},       fnc_int,              0 }, QSE_NULL},
+	{ {QSE_T("int"),      3}, 0, { {1,     1, QSE_NULL},       fnc_int,              0 }, QSE_NULL},
 
+	/* array sort */
+	{ {QSE_T("asort"),    5}, 0, { {1,     3, QSE_NULL},       fnc_asort,            0 }, QSE_NULL},
+ 
 	/* string functions */
 	{ {QSE_T("index"),    5}, 0, { {2,     3, QSE_NULL},      qse_awk_fnc_index,    0 }, QSE_NULL},
 	{ {QSE_T("substr"),   6}, 0, { {2,     3, QSE_NULL},      qse_awk_fnc_substr,   0 }, QSE_NULL},
@@ -1355,6 +1359,30 @@ static int fnc_int (qse_awk_rtx_t* run, const qse_awk_fnc_info_t* fi)
 	qse_awk_val_t* r;
 	int n;
 
+	nargs = qse_awk_rtx_getnargs (run);
+	QSE_ASSERT (nargs == 1);
+
+	a0 = qse_awk_rtx_getarg (run, 0);
+
+	n = qse_awk_rtx_valtoint (run, a0, &lv);
+	if (n <= -1) return -1;
+
+	r = qse_awk_rtx_makeintval (run, lv);
+	if (r == QSE_NULL) return -1;
+
+	qse_awk_rtx_setretval (run, r);
+	return 0;
+}
+
+static int fnc_asort (qse_awk_rtx_t* run, const qse_awk_fnc_info_t* fi)
+{
+	qse_size_t nargs;
+	qse_awk_val_t* a0;
+	qse_awk_int_t lv;
+	qse_awk_val_t* r;
+	int n;
+
+/* TODO: .......................... */
 	nargs = qse_awk_rtx_getnargs (run);
 	QSE_ASSERT (nargs == 1);
 
