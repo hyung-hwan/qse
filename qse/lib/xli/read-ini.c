@@ -378,7 +378,7 @@ static int read_list (qse_xli_t* xli)
 
 				if (!MATCH(xli, QSE_XLI_TOK_EQ))
 				{
-					qse_xli_seterror (xli, QSE_XLI_EEQ,  QSE_STR_XSTR(xli->tok.name), &xli->tok.loc);
+					qse_xli_seterror (xli, QSE_XLI_EASSIGN,  QSE_STR_XSTR(xli->tok.name), &xli->tok.loc);
 					goto oops;
 				}
 

@@ -47,7 +47,7 @@ const qse_char_t* qse_xli_dflerrstr (
 
 		QSE_T("syntax error"),
 		QSE_T("semicolon expected in place of '${0}'"),
-		QSE_T("equal-sign expected in place of '${0}'"),
+		QSE_T("assignment symbol expected in place of '${0}'"),
 		QSE_T("left-brace or assignment token expected in place of '${0}'"),
 		QSE_T("right-brace expected in place of '${0}'"),
 		QSE_T("pair value expected in place of '${0}'"),

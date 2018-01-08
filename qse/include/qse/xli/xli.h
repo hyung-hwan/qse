@@ -66,7 +66,7 @@ enum qse_xli_errnum_t
 
 	QSE_XLI_ESYNTAX,  /**< syntax error */
 	QSE_XLI_ESCOLON,  /**< semicolon expected in place of '${0}' */
-	QSE_XLI_EEQ,      /**< = expected in place of '${0}' */
+	QSE_XLI_EASSIGN,  /**< = expected in place of '${0}' */
 	QSE_XLI_ELBREQ,   /**< { or = expected in place of '${0}' */
 	QSE_XLI_ERBRCE,   /**< } expected in place of '${0}' */
 	QSE_XLI_EPAVAL,   /**< pair value expected in place of '${0}' */
@@ -126,9 +126,7 @@ enum qse_xli_opt_t
 	 * and the second chracter specifies the tag closer. The are used when
 	 * key tags and/or string tags are enabled. By default, it is "[]".
 	 */
-	QSE_XLI_TAGMARKER,
-
-	QSE_XLI_ARRAYMARKER
+	QSE_XLI_TAGMARKER
 };
 typedef enum qse_xli_opt_t qse_xli_opt_t;
 
@@ -158,9 +156,8 @@ enum qse_xli_trait_t
 	 *  "tg" is stored into the tag field of qse_xli_str_t. */
 	QSE_XLI_STRTAG    = (1 << 10), 
 
-	/** use a colon as an assignment character intead of an equal sign.
-	  * it doesn't apply when reading or writing in the ini format. */
-	QSE_XLI_ASSIGNWITHCOLON = (1 << 11), 
+	/** support the json format */
+	QSE_XLI_JSON = (1 << 11),
 
 	/** enable pair validation against pair definitions while reading */
 	QSE_XLI_VALIDATE  = (1 << 12)
@@ -407,9 +404,10 @@ enum qse_xli_scm_flag_t
 	QSE_XLI_SCM_VALNIL   = (1 << 1),
 	QSE_XLI_SCM_VALSTR   = (1 << 2),
 	QSE_XLI_SCM_VALLIST  = (1 << 3),
+	QSE_XLI_SCM_VALARRAY = (1 << 4),
 
-	QSE_XLI_SCM_KEYNODUP = (1 << 4),
-	QSE_XLI_SCM_KEYALIAS = (1 << 5),
+	QSE_XLI_SCM_KEYNODUP = (1 << 5),
+	QSE_XLI_SCM_KEYALIAS = (1 << 6),
 
 	/** Indicates that the value is a list with uncertain definitions with
 	 *  the following constraints:
@@ -420,7 +418,7 @@ enum qse_xli_scm_flag_t
 	 *  is specified.
 	 *
 	 *  Applies only if #QSE_XLI_SCM_VALLIST is set. */
-	QSE_XLI_SCM_VALIFFY  = (1 << 6) 
+	QSE_XLI_SCM_VALIFFY  = (1 << 7) 
 };
 typedef enum qse_xli_scm_flag_t qse_xli_scm_flag_t;
 

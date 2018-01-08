@@ -214,7 +214,7 @@ static int key_needs_quoting (qse_xli_t* xli, const qse_char_t* str, int nstr)
 			if (c == QSE_T('\0')) break;
 
 			if (c == QSE_T('_') || c == QSE_T('-') || 
-			    (!(xli->opt.trait & QSE_XLI_ASSIGNWITHCOLON) && c == QSE_T(':')) ||
+			    (!(xli->opt.trait & QSE_XLI_JSON) && c == QSE_T(':')) ||
 			    c == QSE_T('*') || c == QSE_T('/') || QSE_ISALPHA(c)) 
 			{
 				all_digits = 0;
@@ -269,7 +269,31 @@ static int write_list (qse_xli_t* xli, qse_xli_list_t* list, int depth)
 		{ QSE_T("\""), 1 }
 	};
 
+	static qse_char_t tag_opener[] = { QSE_T('['), QSE_T('(') };
+	static qse_char_t tag_closer[] = { QSE_T(']'), QSE_T(')') };
+
+	static struct
+	{
+		qse_char_t* ptr;
+		qse_size_t  len;
+	} assign_symbol[] =
+	{
+		{ QSE_T(" = "), 3 },
+		{ QSE_T(": "),  2 }
+	};
+
+	static struct
+	{
+		qse_char_t* ptr;
+		qse_size_t  len;
+	} list_assign_symbol[] =
+	{
+		{ QSE_T(" "), 1 },
+		{ QSE_T(": "),  2 }
+	};
+
 	qse_xli_atom_t* curatom;
+	int tag_mode = (xli->opt.trait & QSE_XLI_JSON)? 1: 0;
 
 	for (curatom = list->head; curatom; curatom = curatom->next)
 	{
@@ -284,9 +308,9 @@ static int write_list (qse_xli_t* xli, qse_xli_list_t* list, int depth)
 
 				if (pair->tag)
 				{
-					if (write_to_current_stream(xli, &xli->opt.tag_marker[0], 1, 0) <= -1 ||
+					if (write_to_current_stream(xli, &tag_opener[tag_mode], 1, 0) <= -1 ||
 					    write_to_current_stream(xli, pair->tag, qse_strlen(pair->tag), 0) <= -1 || 
-					    write_to_current_stream(xli, &xli->opt.tag_marker[1], 1, 0) <= -1) return -1;
+					    write_to_current_stream(xli, &tag_closer[tag_mode], 1, 0) <= -1) return -1;
 				}
 
 				QSE_ASSERT(pair->_key_quoted >= 0 && pair->_key_quoted < QSE_COUNTOF(quotes));
@@ -319,14 +343,7 @@ static int write_list (qse_xli_t* xli, qse_xli_list_t* list, int depth)
 					{
 						qse_xli_str_t* str = (qse_xli_str_t*)pair->val;
 
-						if (xli->opt.trait & QSE_XLI_ASSIGNWITHCOLON)
-						{
-							if (write_to_current_stream(xli, QSE_T(": "), 2, 0) <= -1) return -1;
-						}
-						else
-						{
-							if (write_to_current_stream(xli, QSE_T(" = "), 3, 0) <= -1) return -1;
-						}
+						if (write_to_current_stream(xli, assign_symbol[tag_mode].ptr, assign_symbol[tag_mode].len, 0) <= -1) return -1;
 
 						while (1)
 						{
@@ -351,7 +368,9 @@ static int write_list (qse_xli_t* xli, qse_xli_list_t* list, int depth)
 
 					case QSE_XLI_LIST:
 					{
-						if (write_to_current_stream(xli, QSE_T(" {\n"), 3, 0) <= -1 ||
+						if (write_to_current_stream(xli, list_assign_symbol[tag_mode].ptr, list_assign_symbol[tag_mode].len, 0) <= -1) return -1;
+
+						if (write_to_current_stream(xli, QSE_T("{\n"), 2, 0) <= -1 ||
 						    write_list (xli, (qse_xli_list_t*)pair->val, depth + 1) <= -1 ||
 						    write_indentation (xli, depth) <= -1 ||
 						    write_to_current_stream(xli, QSE_T("}\n"), 2, 0) <= -1) return -1;

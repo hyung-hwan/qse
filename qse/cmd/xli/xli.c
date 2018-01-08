@@ -168,7 +168,7 @@ static void print_usage (qse_sio_t* out, int argc, qse_char_t* argv[])
 	qse_fprintf (out, QSE_T(" -l                        disallow lists\n"));
 	qse_fprintf (out, QSE_T(" -K                        allow key tags\n"));
 	qse_fprintf (out, QSE_T(" -S                        allow string tags\n"));
-	qse_fprintf (out, QSE_T(" -c                        use a colon for assignment\n"));
+	qse_fprintf (out, QSE_T(" -j                        input and output in json format\n"));
 	qse_fprintf (out, QSE_T(" -v                        perform validation\n"));
 	qse_fprintf (out, QSE_T(" -m                 number specify the maximum amount of memory to use in bytes\n"));
 #if defined(QSE_BUILD_DEBUG)
@@ -196,9 +196,9 @@ static int handle_args (int argc, qse_char_t* argv[])
 	static qse_opt_t opt = 
 	{
 #if defined(QSE_BUILD_DEBUG)
-		QSE_T("hi:o:I:O:uaftsdnlKScvm:X:"),
+		QSE_T("hi:o:I:O:uaftsdnlKSjvm:X:"),
 #else
-		QSE_T("hi:o:I:O:uaftsdnlKScvm:"),
+		QSE_T("hi:o:I:O:uaftsdnlKSjvm:"),
 #endif
 		lng
 	};
@@ -292,8 +292,8 @@ static int handle_args (int argc, qse_char_t* argv[])
 				g_trait |= QSE_XLI_STRTAG;
 				break;
 
-			case QSE_T('c'):
-				g_trait |= QSE_XLI_ASSIGNWITHCOLON;
+			case QSE_T('j'):
+				g_trait |= QSE_XLI_JSON;
 				break;
 
 			case QSE_T('v'):

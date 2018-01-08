@@ -513,6 +513,11 @@ typedef qse_ssize_t qse_ptrdiff_t;
 typedef char qse_mchar_t;
 #define QSE_SIZEOF_MCHAR_T QSE_SIZEOF_CHAR 
 
+/** \typedef qse_mchau_t
+ * The qse_mchau_t type defines a type that can hold the unsigned qse_mchar_t value.
+ */
+typedef unsigned char qse_mchau_t;
+
 /**
  * The qse_mcint_t defines a type that can hold a qse_mchar_t value and 
  * #QSE_MCHAR_EOF.
@@ -520,8 +525,12 @@ typedef char qse_mchar_t;
 typedef int qse_mcint_t;
 #define QSE_SIZEOF_MCINT_T QSE_SIZEOF_INT 
 
+
 /** \typedef qse_wchar_t
  * The qse_wchar_t type defines a wide character type. 
+ */
+/** \typedef qse_wchau_t
+ * The qse_wchau_t type defines a type that can hold the unsigned qse_wchar_t value.
  */
 /** \typedef qse_wcint_t
  * The qse_wcint_t type defines a type that can hold a qse_wchar_t value and 
@@ -531,62 +540,101 @@ typedef int qse_mcint_t;
 	/* WATCOM C++ before OpenWatcom */
 
 	typedef long char qse_wchar_t;
+	typedef unsigned long char qse_wchau_t;
 	typedef long char qse_wcint_t;
 
 #elif defined(__cplusplus) && !( \
-      (defined(_MSC_VER) && !defined(_NATIVE_WCHAR_T_DEFINED)) || \
-      (defined(__WATCOMC__) && (__WATCOMC__ < 1200)) || \
-      defined(_SCO_DS) \
-    )
+       (defined(_MSC_VER) && !defined(_NATIVE_WCHAR_T_DEFINED)) || \
+       (defined(__WATCOMC__) && (__WATCOMC__ < 1200)) || \
+       defined(_SCO_DS) \
+      )
 	/* C++ */
 
 	typedef wchar_t qse_wchar_t;
+
+	#if (QSE_SIZEOF_WCHAR_T == QSE_SIZEOF_LONG)
+		typedef unsigned long int qse_wchau_t; 
+	#elif (QSE_SIZEOF_WCHAR_T == QSE_SIZEOF_INT)
+		typedef unsigned int qse_wchau_t; 
+	#elif (QSE_SIZEOF_WCHAR_T == QSE_SIZEOF_SHORT)
+		typedef unsigned short int qse_wchau_t;
+	#else
+		/* may still be signed, but wchar_t should be large enough that the largest character won't exceed the maximum value of the type */
+		typedef wchar_t qse_wchau_t;
+	#endif
+
 	typedef wchar_t qse_wcint_t;
 
 	/* all the way down from here for C */
 #elif defined(__GNUC__) && defined(__WCHAR_TYPE__) && defined(__WINT_TYPE__)
 	typedef __WCHAR_TYPE__ qse_wchar_t;
+	#if (defined(__SIZEOF_WCHAR_T) && __SIZEOF_WCHAR_T == QSE_SIZEOF_LONG)
+		typedef unsigned long int qse_wchau_t; 
+	#elif (defined(__SIZEOF_WCHAR_T) && __SIZEOF_WCHAR_T == QSE_SIZEOF_INT)
+		typedef unsigned int qse_wchau_t; 
+	#elif (defined(__SIZEOF_WCHAR_T) && __SIZEOF_WCHAR_T == QSE_SIZEOF_SHORT)
+		typedef unsigned short int qse_wchau_t;
+	#elif (QSE_SIZEOF_WCHAR_T == QSE_SIZEOF_LONG)
+		typedef unsigned long int qse_wchau_t; 
+	#elif (QSE_SIZEOF_WCHAR_T == QSE_SIZEOF_INT)
+		typedef unsigned int qse_wchau_t; 
+	#elif (QSE_SIZEOF_WCHAR_T == QSE_SIZEOF_SHORT)
+		typedef unsigned short int qse_wchau_t;
+	#else
+		/* i can't guarantee the unsignedness */
+		typedef __WINT_TYPE__ qse_wchau_t;
+	#endif
 	typedef __WINT_TYPE__ qse_wcint_t;
 
 #elif (QSE_SIZEOF_WCHAR_T == QSE_SIZEOF_MCHAR_T)
 	/* most likely, there is no support for wchar_t */
 	typedef qse_mchar_t qse_wchar_t;
+	typedef qse_mchau_t qse_wchau_t;
 	typedef qse_mcint_t qse_wcint_t;
 
 #elif (QSE_SIZEOF_WCHAR_T == 2) || (QSE_SIZEOF_WCHAR_T == 0)
-	typedef unsigned short qse_wchar_t;
-	typedef unsigned short qse_wcint_t;
+	typedef unsigned short int qse_wchar_t;
+	typedef unsigned short int qse_wchau_t;
+	typedef unsigned short int qse_wcint_t;
 #elif (QSE_SIZEOF_WCHAR_T == 4)
 #	if defined(vms) || defined(__vms)
 		typedef unsigned int qse_wchar_t;
-		typedef int qse_wcint_t;
+		typedef unsigned int qse_wchau_t;
+		typedef int          qse_wcint_t;
 #	elif defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
-		typedef int qse_wchar_t;
-		typedef int qse_wcint_t;
+		typedef int          qse_wchar_t;
+		typedef unsigned int qse_wchau_t;
+		typedef int          qse_wcint_t;
 #	elif (defined(sun) || defined(__sun) || defined(__linux))
 #		if defined(_LP64)
-			typedef int qse_wchar_t;
-			typedef int qse_wcint_t;
+			typedef int               qse_wchar_t;
+			typedef unsigned int      qse_wchau_t;
+			typedef int               qse_wcint_t;
 #		else
-			typedef long qse_wchar_t;
-			typedef long qse_wcint_t;
+			typedef long int          qse_wchar_t;
+			typedef unsigned long int qse_wchau_t;
+			typedef long int          qse_wcint_t;
 #		endif
 #	elif defined(__APPLE__) && defined(__MACH__)
-		typedef int qse_wchar_t;
-		typedef int qse_wcint_t;
+		typedef int          qse_wchar_t;
+		typedef unsigned int qse_wchau_t;
+		typedef int          qse_wcint_t;
 #	elif defined(hpux) || defined(__hpux) || defined(__hpux__)
 #		if defined(__HP_cc) || defined(__HP_aCC)
 			typedef unsigned int qse_wchar_t;
 #		else
 			typedef int qse_wchar_t;
 #		endif
-		typedef int qse_wcint_t;
+		typedef unsigned int      qse_wchau_t;
+		typedef int               qse_wcint_t;
 #	elif QSE_SIZEOF_LONG == 4
-		typedef long qse_wchar_t;
-		typedef long qse_wcint_t;
+		typedef long int          qse_wchar_t;
+		typedef unsigned long int qse_wchau_t;
+		typedef long int          qse_wcint_t;
 #	elif QSE_SIZEOF_INT == 4
-		typedef int qse_wchar_t;
-		typedef int qse_wcint_t;
+		typedef int               qse_wchar_t;
+		typedef unsigned int      qse_wchau_t;
+		typedef int               qse_wcint_t;
 #	else
 #		error No supported data type for wchar_t
 #	endif
@@ -597,15 +645,20 @@ typedef int qse_mcint_t;
 /** \typedef qse_char_t
  * The qse_char_t type defines a character type.
  */
+/** \typedef qse_chau_t
+ * The qse_chau_t type defines a type that can hold a unsigned qse_char_t value.
+ */
 /** \typedef qse_cint_t
- * The qse_cint_t typep defines a type that can hold a qse_char_t value and 
+ * The qse_cint_t type defines a type that can hold a qse_char_t value and 
  * #QSE_CHAR_EOF.
  */
 #if defined(QSE_CHAR_IS_MCHAR)
 	typedef qse_mchar_t qse_char_t;
+	typedef qse_mchau_t qse_chau_t;
 	typedef qse_mcint_t qse_cint_t;
 #elif defined(QSE_CHAR_IS_WCHAR)
 	typedef qse_wchar_t qse_char_t;
+	typedef qse_wchau_t qse_chau_t;
 	typedef qse_wcint_t qse_cint_t;
 #else
 	/* If the character type is not determined in the conf_xxx files */
@@ -614,10 +667,12 @@ typedef int qse_mcint_t;
 #		if defined(UNICODE) || defined(_UNICODE)
 #			define QSE_CHAR_IS_WCHAR
 			typedef qse_wchar_t qse_char_t;
+			typedef qse_wchau_t qse_chau_t;
 			typedef qse_wcint_t qse_cint_t;
 #		else
 #			define QSE_CHAR_IS_MCHAR
 			typedef qse_mchar_t qse_char_t;
+			typedef qse_mchau_t qse_chau_t;
 			typedef qse_mcint_t qse_cint_t;
 #		endif
 #	else

@@ -70,11 +70,6 @@ int qse_xli_init (qse_xli_t* xli, qse_mmgr_t* mmgr, qse_size_t rootxtnsize)
 	xli->errstr = qse_xli_dflerrstr;
 	xli->opt.root_xtnsize = rootxtnsize;
 	xli->opt.key_splitter = QSE_T('.');
-	xli->opt.tag_marker[0] = QSE_T('[');
-	xli->opt.tag_marker[1] = QSE_T(']');
-	xli->opt.array_marker[0] = QSE_T('(');
-	xli->opt.array_marker[1] = QSE_T(')');
-	xli->opt._assign_tok = QSE_XLI_TOK_EQ;
 
 	xli->dotted_curkey = qse_str_open (mmgr, 0, 128);
 	if (xli->dotted_curkey == QSE_NULL) goto oops;
@@ -126,7 +121,6 @@ int qse_xli_setopt (qse_xli_t* xli, qse_xli_opt_t id, const void* value)
 	{
 		case QSE_XLI_TRAIT:
 			xli->opt.trait = *(const int*)value;
-			xli->opt._assign_tok = (xli->opt.trait & QSE_XLI_ASSIGNWITHCOLON)? QSE_XLI_TOK_COLON: QSE_XLI_TOK_EQ;
 			return 0;
 
 		case QSE_XLI_PAIRXTNSIZE:
@@ -139,16 +133,6 @@ int qse_xli_setopt (qse_xli_t* xli, qse_xli_opt_t id, const void* value)
 
 		case QSE_XLI_KEYSPLITTER:
 			xli->opt.key_splitter = *(const qse_char_t*)value;
-			return 0;
-
-		case QSE_XLI_TAGMARKER:
-			xli->opt.tag_marker[0] = ((const qse_char_t*)value)[0];
-			xli->opt.tag_marker[1] = ((const qse_char_t*)value)[1];
-			return 0;
-
-		case QSE_XLI_ARRAYMARKER:
-			xli->opt.array_marker[0] = ((const qse_char_t*)value)[0];
-			xli->opt.array_marker[1] = ((const qse_char_t*)value)[1];
 			return 0;
 	}
 
@@ -174,14 +158,6 @@ int qse_xli_getopt (qse_xli_t* xli, qse_xli_opt_t  id, void* value)
 
 		case QSE_XLI_KEYSPLITTER:
 			*(qse_char_t*)value = xli->opt.key_splitter;
-			return 0;
-
-		case QSE_XLI_TAGMARKER:
-			((qse_char_t*)value)[0] = xli->opt.tag_marker[1];
-			return 0;
-
-		case QSE_XLI_ARRAYMARKER:
-			((qse_char_t*)value)[0] = xli->opt.array_marker[1];
 			return 0;
 	};
 

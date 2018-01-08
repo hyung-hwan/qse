@@ -162,6 +162,9 @@ public:
 	/** data type that can hold any character */
 	typedef qse_char_t  char_t;
 
+	/** data type that can hold an unsigned char_t value */
+	typedef qse_chau_t  chau_t;
+
 	/** data type that can hold any character or an end-of-file value */
 	typedef qse_cint_t  cint_t;
 
