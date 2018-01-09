@@ -27,20 +27,6 @@
 #include "xli.h"
 #include <qse/cmn/chr.h>
 
-/*
-	"key1" {
-		# comment
-		[keytag]key11 "alias" = [strtag]"test machine;
-		key1122 {
-			key112233 = "hello";
-		}
-	  }
-	}
-*/
-
-static qse_char_t tag_opener[] = { QSE_T('['), QSE_T('(') };
-static qse_char_t tag_closer[] = { QSE_T(']'), QSE_T(')') };
-
 static int get_token (qse_xli_t* xli);
 static int read_list (qse_xli_t* xli, qse_xli_list_t* list, const qse_xli_scm_t* override);
 
@@ -307,37 +293,32 @@ static int get_symbols (qse_xli_t* xli, qse_cint_t c, qse_xli_tok_t* tok)
 	{
 		const qse_char_t* str;
 		qse_size_t len;
-		int tid[2]; /* normal id, alternative id */
+		int tid;
 	};
 
 	static struct ops_t ops[] = 
 	{
-		{ QSE_T("="),   1, { QSE_XLI_TOK_EQ,        QSE_XLI_TOK_COLON       } },
-		{ QSE_T(":"),   1, { QSE_XLI_TOK_COLON,     QSE_XLI_TOK_EQ          } },
-		{ QSE_T(","),   1, { QSE_XLI_TOK_COMMA,     QSE_XLI_TOK_COMMA       } },
-		{ QSE_T(";"),   1, { QSE_XLI_TOK_SEMICOLON, QSE_XLI_TOK_SEMICOLON   } },
-		{ QSE_T("{"),   1, { QSE_XLI_TOK_LBRACE,    QSE_XLI_TOK_LBRACE      } },
-		{ QSE_T("}"),   1, { QSE_XLI_TOK_RBRACE,    QSE_XLI_TOK_RBRACE      } },
-		{ QSE_T("["),   1, { QSE_XLI_TOK_LBRACK,    QSE_XLI_TOK_LPAREN      } },
-		{ QSE_T("]"),   1, { QSE_XLI_TOK_RBRACK,    QSE_XLI_TOK_RPAREN      } },
-		{ QSE_T("("),   1, { QSE_XLI_TOK_LPAREN,    QSE_XLI_TOK_LBRACK      } },
-		{ QSE_T(")"),   1, { QSE_XLI_TOK_RPAREN,    QSE_XLI_TOK_RBRACK      } },
-		{ QSE_NULL,     0, { 0,                     0                       } }
+		{ QSE_T("="),   1, QSE_XLI_TOK_EQ          },
+		{ QSE_T(","),   1, QSE_XLI_TOK_COMMA       },
+		{ QSE_T(";"),   1, QSE_XLI_TOK_SEMICOLON   },
+		{ QSE_T("{"),   1, QSE_XLI_TOK_LBRACE      },
+		{ QSE_T("}"),   1, QSE_XLI_TOK_RBRACE      },
+		{ QSE_NULL,     0, 0,              }
 	};
 
 	struct ops_t* p;
 	int idx = 0;
-	int tid_mode = (xli->opt.trait & QSE_XLI_JSON)? 1: 0;
 
 	/* note that the loop below is not generaic enough.
 	 * you must keep the operators strings in a particular order */
+
 
 	for (p = ops; p->str != QSE_NULL; )
 	{
 		if (p->str[idx] == QSE_T('\0'))
 		{
 			ADD_TOKEN_STR (xli, tok, p->str, p->len);
-			SET_TOKEN_TYPE (xli, tok, p->tid[tid_mode]);
+			SET_TOKEN_TYPE (xli, tok, p->tid);
 			return 1;
 		}
 
@@ -458,7 +439,7 @@ oops:
 static int get_token_into (qse_xli_t* xli, qse_xli_tok_t* tok)
 {
 	qse_cint_t c;
-	int n, tag_mode = (xli->opt.trait & QSE_XLI_JSON)? 1: 0;
+	int n;
 	int skip_semicolon_after_include = 0;
 
 retry:
@@ -530,8 +511,6 @@ retry:
 	          (xli->opt.trait & QSE_XLI_LEADDIGIT) && 
 	          QSE_ISDIGIT(c)))
 	{
-		/* if you change the rules here, you need to update
-		 * need_quoting() in write.c */
 		int lead_digit = QSE_ISDIGIT(c);
 		int all_digits = 1;
 
@@ -543,8 +522,8 @@ retry:
 			GET_CHAR_TO (xli, c);
 
 			if (c == QSE_T('_') || c == QSE_T('-') || 
-			    (!(xli->opt.trait & QSE_XLI_JSON) && c == QSE_T(':')) || 
-			    c == QSE_T('*') || c == QSE_T('/') || QSE_ISALPHA (c)) 
+			    c == QSE_T(':') || c == QSE_T('*') ||
+			    c == QSE_T('/') || QSE_ISALPHA (c)) 
 			{
 				all_digits = 0;
 			}
@@ -557,7 +536,7 @@ retry:
 
 		if (lead_digit && all_digits)
 		{
-			/* if an identifier begins with a digit, it must contain a non-digit character */
+			/* if an identifier begins with a digit, it must contain a non-digits character */
 			qse_xli_seterror (xli, QSE_XLI_EIDENT, QSE_STR_XSTR(tok->name), &tok->loc);
 			return -1;
 		}
@@ -642,17 +621,15 @@ retry:
 			}
 		}
 	}
-	else if ((xli->opt.trait & (QSE_XLI_KEYTAG | QSE_XLI_STRTAG)) && c == tag_opener[tag_mode]) /* [ */
+	else if ((xli->opt.trait & (QSE_XLI_KEYTAG | QSE_XLI_STRTAG)) && c == QSE_T('['))
 	{
 		/* a string tag is a bracketed word placed in front of a string value.
 		 *   A = [tg] "abc"; 
 		 * "tg" is stored into the tag field of qse_xli_str_t. 
-		 * 
-		 * however, the tag opener and the closer are not hard-coded. you may
-		 * use a different opener and closer depending on your requirement.
 		 */
-		SET_TOKEN_TYPE (xli, tok, QSE_XLI_TOK_TAG);
 
+		SET_TOKEN_TYPE (xli, tok, QSE_XLI_TOK_TAG);
+		
 		while (1)
 		{
 			GET_CHAR_TO (xli, c);
@@ -664,7 +641,7 @@ retry:
 				return -1;
 			}
 
-			if (c == tag_closer[tag_mode]) /* ] */
+			if (c == QSE_T(']'))
 			{
 				/* terminating quote */
 				GET_CHAR (xli);
@@ -747,7 +724,6 @@ static int read_pair (qse_xli_t* xli, const qse_char_t* keytag, const qse_xli_sc
 
 	const qse_xli_scm_t* scm = QSE_NULL;
 	int key_nodup = 0, key_alias = 0, val_iffy = 0;
-	/*int key_quoted = 0, alias_quoted = 0;*/
 
 	key.ptr = QSE_NULL;
 	name = QSE_NULL;
@@ -759,11 +735,9 @@ static int read_pair (qse_xli_t* xli, const qse_char_t* keytag, const qse_xli_sc
 	if (xli->opt.trait & QSE_XLI_KEYNODUP) key_nodup = 1;
 	if (xli->opt.trait & QSE_XLI_KEYALIAS) key_alias = 1;
 
-	/*if (MATCH(xli, QSE_XLI_TOK_SQSTR)) key_quoted = 1;
-	else if (MATCH(xli, QSE_XLI_TOK_DQSTR)) key_quoted = 2;*/
 	kloc = xli->tok.loc;
 	key.len = QSE_STR_LEN(xli->tok.name);
-	key.ptr = qse_strdup(QSE_STR_PTR(xli->tok.name), xli->mmgr);
+	key.ptr = qse_strdup (QSE_STR_PTR(xli->tok.name), xli->mmgr);
 	if (key.ptr == QSE_NULL) 
 	{
 		qse_xli_seterrnum (xli, QSE_XLI_ENOMEM, QSE_NULL); 
@@ -771,8 +745,8 @@ static int read_pair (qse_xli_t* xli, const qse_char_t* keytag, const qse_xli_sc
 	}
 
 	dotted_curkey_len = QSE_STR_LEN (xli->dotted_curkey);
-	if ((dotted_curkey_len > 0 && qse_str_cat(xli->dotted_curkey, QSE_T(".")) == (qse_size_t)-1) ||
-	    qse_str_cat(xli->dotted_curkey, key.ptr) == (qse_size_t)-1)
+	if ((dotted_curkey_len > 0 && qse_str_cat (xli->dotted_curkey, QSE_T(".")) == (qse_size_t)-1) ||
+	    qse_str_cat (xli->dotted_curkey, key.ptr) == (qse_size_t)-1)
 	{
 		qse_xli_seterrnum (xli, QSE_XLI_ENOMEM, QSE_NULL); 
 		goto oops;
@@ -810,7 +784,7 @@ static int read_pair (qse_xli_t* xli, const qse_char_t* keytag, const qse_xli_sc
 		while (atom)
 		{
 			if (atom->type == QSE_XLI_PAIR &&
-			    qse_strcmp(((qse_xli_pair_t*)atom)->key, QSE_STR_PTR(xli->tok.name)) == 0)
+			    qse_strcmp (((qse_xli_pair_t*)atom)->key, QSE_STR_PTR(xli->tok.name)) == 0)
 			{
 				qse_xli_seterror (xli, QSE_XLI_EEXIST, QSE_STR_XSTR(xli->tok.name), &xli->tok.loc);
 				goto oops;
@@ -820,15 +794,15 @@ static int read_pair (qse_xli_t* xli, const qse_char_t* keytag, const qse_xli_sc
 		}
 	}
 
-	/* once the key name is read, enable the numeric string for a key alias and a value */
+	/* once the key name is read, enable the numeric string for a value */
 	xli->tok_status |= TOK_STATUS_ENABLE_NSTR;
 
-	if (get_token(xli) <= -1) goto oops;
+	if (get_token (xli) <= -1) goto oops;
 
 	if (key_alias)
 	{
 		/* the alias part must be unique for the same key(s) */
-		if (MATCH(xli, QSE_XLI_TOK_IDENT) || MATCH(xli, QSE_XLI_TOK_SQSTR) || MATCH(xli, QSE_XLI_TOK_DQSTR) || MATCH(xli, QSE_XLI_TOK_NSTR))
+		if (MATCH(xli, QSE_XLI_TOK_IDENT) || MATCH(xli, QSE_XLI_TOK_DQSTR) || MATCH(xli, QSE_XLI_TOK_SQSTR) || MATCH(xli, QSE_XLI_TOK_NSTR))
 		{
 			qse_xli_atom_t* atom;
 
@@ -853,9 +827,6 @@ static int read_pair (qse_xli_t* xli, const qse_char_t* keytag, const qse_xli_sc
 				goto oops;
 			}
 
-			/*if (MATCH(xli, QSE_XLI_TOK_SQSTR)) alias_quoted = 1;
-			else if (MATCH(xli, QSE_XLI_TOK_DQSTR)) alias_quoted = 2;*/
-
 			if (get_token (xli) <= -1) goto oops;
 		}
 		else if (key_alias == 2)
@@ -871,9 +842,7 @@ static int read_pair (qse_xli_t* xli, const qse_char_t* keytag, const qse_xli_sc
 	{
 		if (get_token (xli) <= -1) goto oops;
 
-		if (!(xli->opt.trait & QSE_XLI_NOLIST) && MATCH(xli, QSE_XLI_TOK_LBRACE)) goto handle_list;
-
-		if ((xli->opt.trait & QSE_XLI_STRTAG) && MATCH (xli, QSE_XLI_TOK_TAG))
+		if ((xli->opt.trait & QSE_XLI_STRTAG) && MATCH(xli, QSE_XLI_TOK_TAG))
 		{
 			strtag = qse_strxdup (QSE_STR_PTR(xli->tok.name), QSE_STR_LEN(xli->tok.name), xli->mmgr);
 			if (strtag == QSE_NULL)
@@ -901,11 +870,6 @@ static int read_pair (qse_xli_t* xli, const qse_char_t* keytag, const qse_xli_sc
 			pair = qse_xli_insertpairwithstr (xli, parlist, QSE_NULL, key.ptr, name, keytag, QSE_STR_XSTR(xli->tok.name), strtag);
 			if (pair == QSE_NULL) goto oops;
 
-#if 0
-			pair->_key_quoted = key_quoted; /* store this for easier output support */
-			pair->_alias_quoted = alias_quoted;
-#endif
-
 			segcount++;
 			curstrseg = (qse_xli_str_t*)pair->val;
 
@@ -923,7 +887,7 @@ static int read_pair (qse_xli_t* xli, const qse_char_t* keytag, const qse_xli_sc
 						strtag = QSE_NULL;
 					}
 
-					if ((xli->opt.trait & QSE_XLI_STRTAG) && MATCH (xli, QSE_XLI_TOK_TAG))
+					if ((xli->opt.trait & QSE_XLI_STRTAG) && MATCH(xli, QSE_XLI_TOK_TAG))
 					{
 						strtag = qse_strxdup (QSE_STR_PTR(xli->tok.name), QSE_STR_LEN(xli->tok.name), xli->mmgr);
 						if (strtag == QSE_NULL)
@@ -935,7 +899,7 @@ static int read_pair (qse_xli_t* xli, const qse_char_t* keytag, const qse_xli_sc
 						if (get_token (xli) <= -1) goto oops; 
 					}
 
-					if (!MATCH (xli, QSE_XLI_TOK_SQSTR) && !MATCH (xli, QSE_XLI_TOK_DQSTR) && !MATCH (xli, QSE_XLI_TOK_NSTR) && !MATCH (xli, QSE_XLI_TOK_IDENT))
+					if (!MATCH(xli, QSE_XLI_TOK_SQSTR) && !MATCH(xli, QSE_XLI_TOK_DQSTR) && !MATCH(xli, QSE_XLI_TOK_NSTR) && !MATCH(xli, QSE_XLI_TOK_IDENT))
 					{
 						qse_xli_seterror (xli, QSE_XLI_ESYNTAX, QSE_NULL, &xli->tok.loc);
 						goto oops;
@@ -948,11 +912,11 @@ static int read_pair (qse_xli_t* xli, const qse_char_t* keytag, const qse_xli_sc
 					segcount++;
 					if (get_token (xli) <= -1) goto oops; /* skip the value */
 				}
-				while (MATCH (xli, QSE_XLI_TOK_COMMA));
+				while (MATCH(xli, QSE_XLI_TOK_COMMA));
 			}
 
 			/* semicolon is mandatory for a string */
-			if (!MATCH (xli, QSE_XLI_TOK_SEMICOLON))
+			if (!MATCH(xli, QSE_XLI_TOK_SEMICOLON))
 			{
 				qse_xli_seterror (xli, QSE_XLI_ESCOLON, QSE_STR_XSTR(xli->tok.name), &xli->tok.loc);
 				goto oops;
@@ -975,17 +939,12 @@ static int read_pair (qse_xli_t* xli, const qse_char_t* keytag, const qse_xli_sc
 			goto oops;
 		}
 
+
 		/* TODO: check against schema */
+
 	}
-	else if (xli->opt.trait & QSE_XLI_JSON)
+	else if (!(xli->opt.trait & QSE_XLI_NOLIST) && MATCH(xli, QSE_XLI_TOK_LBRACE))
 	{
-		/* the assignment operator is mandator */
-		qse_xli_seterror (xli, QSE_XLI_EASSIGN,  QSE_STR_XSTR(xli->tok.name), &xli->tok.loc);
-		goto oops;
-	}
-	else if (!(xli->opt.trait & QSE_XLI_NOLIST) && MATCH (xli, QSE_XLI_TOK_LBRACE))
-	{
-	handle_list:
 		if (scm && !(scm->flags & QSE_XLI_SCM_VALLIST))
 		{
 			/* check the value type */
@@ -996,25 +955,25 @@ static int read_pair (qse_xli_t* xli, const qse_char_t* keytag, const qse_xli_sc
 		xli->tok_status &= ~TOK_STATUS_ENABLE_NSTR;
 
 		/* insert a pair with an empty list */
-		pair = qse_xli_insertpairwithemptylist (xli, parlist, QSE_NULL, key.ptr, name, keytag);
+		pair = qse_xli_insertpairwithemptylist(xli, parlist, QSE_NULL, key.ptr, name, keytag);
 		if (pair == QSE_NULL) goto oops;
 
 		/* skip validations of child pairs if the schema for the 
 		 * current pair is set with QSE_XLI_SCM_VALIFFY. 
 		 * the schema for the child pairs, if specified, must not 
 		 * take effect. */
-		if (read_list (xli, (qse_xli_list_t*)pair->val, (val_iffy? &scm_val_iffy: QSE_NULL)) <= -1) goto oops;
-		
-		if (!MATCH (xli, QSE_XLI_TOK_RBRACE))
+		if (read_list(xli, (qse_xli_list_t*)pair->val, (val_iffy? &scm_val_iffy: QSE_NULL)) <= -1) goto oops;
+
+		if (!MATCH(xli, QSE_XLI_TOK_RBRACE))
 		{
-			qse_xli_seterror (xli, QSE_XLI_ERBRCE, QSE_STR_XSTR(xli->tok.name), &xli->tok.loc);
+			qse_xli_seterror (xli, QSE_XLI_ERBRACE, QSE_STR_XSTR(xli->tok.name), &xli->tok.loc);
 			goto oops;
 		}
 
-		if (get_token (xli) <= -1) goto oops;
+		if (get_token(xli) <= -1) goto oops;
 
 		/* semicolon is optional for a list */
-		if (MATCH (xli, QSE_XLI_TOK_SEMICOLON))
+		if (MATCH(xli, QSE_XLI_TOK_SEMICOLON))
 		{
 			/* skip the semicolon */
 			if (get_token (xli) <= -1) goto oops;
@@ -1022,7 +981,7 @@ static int read_pair (qse_xli_t* xli, const qse_char_t* keytag, const qse_xli_sc
 
 		/* TODO: check against schema */
 	}
-	else if (MATCH (xli, QSE_XLI_TOK_SEMICOLON))
+	else if (MATCH(xli, QSE_XLI_TOK_SEMICOLON))
 	{
 		if (xli->opt.trait & QSE_XLI_NONIL) 
 		{
@@ -1087,18 +1046,16 @@ qse_xli_list_link_t* qse_xli_makelistlink (qse_xli_t* xli, qse_xli_list_t* parli
 
 void qse_xli_freelistlink (qse_xli_t* xli, qse_xli_list_link_t* link)
 {
+	QSE_ASSERT (xli->parlink == link); 
 	xli->parlink = link->next;
 	qse_xli_freemem (xli, link);
 }
 
-#if 0
-static int __read_array (qse_xli_t* xli, int opt_outer_brace)
+static int __read_list (qse_xli_t* xli, const qse_xli_scm_t* override)
 {
-	qse_size_t pair_count = 0; 
-
 	while (1)
 	{
-		if (MATCH (xli, QSE_XLI_TOK_XINCLUDE))
+		if (MATCH(xli, QSE_XLI_TOK_XINCLUDE))
 		{
 			if (get_token(xli) <= -1) return -1;
 
@@ -1109,86 +1066,13 @@ static int __read_array (qse_xli_t* xli, int opt_outer_brace)
 			}
 
 			if (begin_include (xli) <= -1) return -1;
-		}
-		else if (opt_outer_brace == 1 && pair_count == 0 && MATCH(xli, QSE_XLI_TOK_LBRACK))
-		{
-			opt_outer_brace++;
-			if (get_token(xli) <= -1) return -1;
-		}
-		else if (MATCH(xli, QSE_XLI_TOK_IDENT) || MATCH(xli, QSE_XLI_TOK_SQSTR) || MATCH(xli, QSE_XLI_TOK_DQSTR))
-		{
-			//if (read_pair(xli, QSE_NULL, override) <= -1) return -1;
-			pair_count++;
-		}
-		else if (MATCH(xli, QSE_XLI_TOK_LBRACE))
-		{
-			
-		}
-		else if (MATCH(xli, QSE_XLI_TOK_LBRACK))
-		{
-			if (get_token(xli) <= -1) return -1;
-
-			if (__read_array(xli, 0) <= -1) return -1;
-
-			if (!MATCH(xli, QSE_XLI_TOK_RBRACK))
-			{
-			}
-
-			if (get_token(xli) <= -1) return -1;
-		}
-		else if (MATCH(xli, QSE_XLI_TOK_TEXT))
-		{
-			if (get_token(xli) <= -1) return -1;
-		}
-		else 
-		{
-			break;
-		}
-	}
-
-	if (opt_outer_brace >= 2)
-	{
-		if (!MATCH(xli, QSE_XLI_TOK_RBRACE))
-		{
-			qse_xli_seterror (xli, QSE_XLI_ERBRCE, QSE_STR_XSTR(xli->tok.name), &xli->tok.loc);
-			return -1;
-		}
-		if (get_token(xli) <= -1) return -1;
-	}
-
-	return 0;
-}
-#endif
-
-static int __read_list (qse_xli_t* xli, const qse_xli_scm_t* override, int opt_outer_brace)
-{
-	qse_size_t pair_count = 0; 
-
-	while (1)
-	{
-		if (MATCH (xli, QSE_XLI_TOK_XINCLUDE))
-		{
-			if (get_token(xli) <= -1) return -1;
-
-			if (!MATCH(xli,QSE_XLI_TOK_SQSTR) && !MATCH(xli,QSE_XLI_TOK_DQSTR))
-			{
-				qse_xli_seterror (xli, QSE_XLI_EINCLSTR, QSE_NULL, &xli->tok.loc);
-				return -1;
-			}
-
-			if (begin_include (xli) <= -1) return -1;
-		}
-		else if (opt_outer_brace == 1 && pair_count == 0 && MATCH(xli, QSE_XLI_TOK_LBRACE))
-		{
-			opt_outer_brace++;
-			if (get_token(xli) <= -1) return -1;
 		}
 		else if ((xli->opt.trait & QSE_XLI_KEYTAG) && MATCH(xli, QSE_XLI_TOK_TAG))
 		{
 			qse_char_t* keytag;
 			int x;
 
-			keytag = qse_strxdup(QSE_STR_PTR(xli->tok.name), QSE_STR_LEN(xli->tok.name), xli->mmgr);
+			keytag = qse_strxdup (QSE_STR_PTR(xli->tok.name), QSE_STR_LEN(xli->tok.name), xli->mmgr);
 			if (keytag == QSE_NULL)
 			{
 				qse_xli_seterrnum (xli, QSE_XLI_ENOMEM, QSE_NULL); 
@@ -1201,7 +1085,7 @@ static int __read_list (qse_xli_t* xli, const qse_xli_scm_t* override, int opt_o
 				return -1;
 			}
 
-			if (!MATCH(xli,QSE_XLI_TOK_IDENT) && !MATCH(xli,QSE_XLI_TOK_SQSTR) && !MATCH(xli,QSE_XLI_TOK_DQSTR))
+			if (!MATCH(xli, QSE_XLI_TOK_IDENT) && !MATCH(xli, QSE_XLI_TOK_DQSTR) && !MATCH(xli, QSE_XLI_TOK_SQSTR))
 			{
 				QSE_MMGR_FREE (xli->mmgr, keytag);
 				qse_xli_seterror (xli, QSE_XLI_ENOKEY, QSE_NULL, &xli->tok.loc);
@@ -1211,12 +1095,10 @@ static int __read_list (qse_xli_t* xli, const qse_xli_scm_t* override, int opt_o
 			x = read_pair(xli, keytag, override);
 			QSE_MMGR_FREE (xli->mmgr, keytag);
 			if (x <= -1) return -1;
-			pair_count++;
 		}
-		else if (MATCH(xli, QSE_XLI_TOK_IDENT) || MATCH(xli, QSE_XLI_TOK_SQSTR) || MATCH(xli, QSE_XLI_TOK_DQSTR))
+		else if (MATCH(xli, QSE_XLI_TOK_IDENT) || MATCH(xli, QSE_XLI_TOK_DQSTR) || MATCH(xli, QSE_XLI_TOK_SQSTR))
 		{
 			if (read_pair(xli, QSE_NULL, override) <= -1) return -1;
-			pair_count++;
 		}
 		else if (MATCH(xli, QSE_XLI_TOK_TEXT))
 		{
@@ -1226,16 +1108,6 @@ static int __read_list (qse_xli_t* xli, const qse_xli_scm_t* override, int opt_o
 		{
 			break;
 		}
-	}
-
-	if (opt_outer_brace >= 2)
-	{
-		if (!MATCH(xli, QSE_XLI_TOK_RBRACE))
-		{
-			qse_xli_seterror (xli, QSE_XLI_ERBRCE, QSE_STR_XSTR(xli->tok.name), &xli->tok.loc);
-			return -1;
-		}
-		if (get_token(xli) <= -1) return -1;
 	}
 
 	return 0;
@@ -1248,17 +1120,19 @@ static int read_list (qse_xli_t* xli, qse_xli_list_t* parlist, const qse_xli_scm
 	link = qse_xli_makelistlink(xli, parlist);
 	if (link == QSE_NULL) return -1;
 
+	QSE_ASSERT (link == xli->parlink);
+
 	/* get_token() here is to read the token after the left brace.
 	 * it must be called after the xli->parlink has been updated
 	 * in case there are comments at the beginning of the list */
-	if (get_token(xli) <= -1 || __read_list(xli, override, 0) <= -1) 
+	if (get_token(xli) <= -1 || __read_list(xli, override) <= -1) 
 	{
 		qse_xli_freelistlink (xli, link);
 		return -1;
 	}
 
 	QSE_ASSERT (link == xli->parlink);
-	qse_xli_freelistlink(xli, link);
+	qse_xli_freelistlink (xli, link);
 
 	return 0;
 }
@@ -1267,18 +1141,19 @@ static int read_root_list (qse_xli_t* xli)
 {
 	qse_xli_list_link_t* link;
 
-	link = qse_xli_makelistlink(xli, &xli->root->list);
+	link = qse_xli_makelistlink (xli, &xli->root->list);
 	if (!link) return -1;
 
-/* TODO: pass opt_outer_brace 1 to __read_list only if a certian option is enabled */
-	if (qse_xli_getchar(xli) <= -1 || get_token(xli) <= -1 || __read_list(xli, QSE_NULL, 1) <= -1)
+	QSE_ASSERT (link == xli->parlink);
+
+	if (qse_xli_getchar(xli) <= -1 || get_token(xli) <= -1 || __read_list(xli, QSE_NULL) <= -1)
 	{
 		qse_xli_freelistlink (xli, link);
 		return -1;
 	}
 
 	QSE_ASSERT (link == xli->parlink);
-	qse_xli_freelistlink(xli, link);
+	qse_xli_freelistlink (xli, link);
 
 	return 0;
 }
@@ -1322,7 +1197,7 @@ int qse_xli_read (qse_xli_t* xli, qse_xli_io_impl_t io)
 
 	QSE_ASSERT (xli->parlink == QSE_NULL);
 
-	if (!MATCH (xli, QSE_XLI_TOK_EOF))
+	if (!MATCH(xli, QSE_XLI_TOK_EOF))
 	{
 		qse_xli_seterror (xli, QSE_XLI_ESYNTAX, QSE_NULL, &xli->tok.loc);
 		goto oops;

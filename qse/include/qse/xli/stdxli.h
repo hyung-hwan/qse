@@ -134,6 +134,12 @@ QSE_EXPORT int qse_xli_readinistd (
 	qse_xli_iostd_t* in
 );
 
+QSE_EXPORT int qse_xli_readjsonstd (
+	qse_xli_t*       xli,
+	qse_xli_iostd_t* in
+);
+
+
 QSE_EXPORT int qse_xli_writestd (
 	qse_xli_t*       xli,
 	qse_xli_list_t*  root_list,
@@ -141,6 +147,12 @@ QSE_EXPORT int qse_xli_writestd (
 );
 
 QSE_EXPORT int qse_xli_writeinistd (
+	qse_xli_t*       xli,
+	qse_xli_list_t*  root_list,
+	qse_xli_iostd_t* out
+);
+
+QSE_EXPORT int qse_xli_writejsonstd (
 	qse_xli_t*       xli,
 	qse_xli_list_t*  root_list,
 	qse_xli_iostd_t* out

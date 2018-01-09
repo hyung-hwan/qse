@@ -36,8 +36,8 @@ enum qse_xli_tok_type_t
 {
 	QSE_XLI_TOK_EOF,
 	QSE_XLI_TOK_XINCLUDE,
-	QSE_XLI_TOK_SEMICOLON,
 	QSE_XLI_TOK_COLON,
+	QSE_XLI_TOK_SEMICOLON,
 	QSE_XLI_TOK_LBRACE,
 	QSE_XLI_TOK_RBRACE,
 	QSE_XLI_TOK_LBRACK,
@@ -103,7 +103,7 @@ struct qse_xli_t
 	qse_xli_ecb_t* ecb;
 
 	qse_xli_root_list_t* root;
-	qse_xli_list_link_t* parlink; /* link that points to the list being read currently */
+	qse_xli_list_link_t* parlink; /* internal use only - link that points to the list being read currently */
 
 	qse_str_t* dotted_curkey;
 	qse_rbt_t* schema;
@@ -138,11 +138,10 @@ int qse_xli_init (qse_xli_t* xli, qse_mmgr_t* mmgr, qse_size_t rootxtnsize);
 void qse_xli_fini (qse_xli_t* xli);
 
 const qse_char_t* qse_xli_dflerrstr (
-	const qse_xli_t* xli, qse_xli_errnum_t errnum);
+     const qse_xli_t* xli, qse_xli_errnum_t errnum);
 
 void qse_xli_clearrionames (qse_xli_t* xli);
 void qse_xli_clearwionames (qse_xli_t* xli);
-
 
 int qse_xli_getchar (qse_xli_t* xli);
 int qse_xli_openrstream (qse_xli_t* xli, qse_xli_io_arg_t* arg);
@@ -154,6 +153,12 @@ int qse_xli_flushwstream (qse_xli_t* xli, qse_xli_io_arg_t* arg);
 
 qse_xli_list_link_t* qse_xli_makelistlink (qse_xli_t* xli, qse_xli_list_t* parlist);
 void qse_xli_freelistlink (qse_xli_t* xli, qse_xli_list_link_t* link);
+
+
+qse_xli_str_t* qse_xli_makestrval (qse_xli_t* xli, const qse_cstr_t* value, const qse_char_t* strtag);
+qse_xli_list_t* qse_xli_makelistval (qse_xli_t* xli);
+qse_xli_pair_t* qse_xli_makepairval (qse_xli_t* xli);
+void qse_xli_freeval (qse_xli_t* xli, qse_xli_val_t* val);
 
 #if defined(__cplusplus)
 }

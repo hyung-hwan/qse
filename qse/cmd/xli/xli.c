@@ -58,6 +58,8 @@
 
 #define IO_FLAG_INI_INPUT (1 << 0)
 #define IO_FLAG_INI_OUTPUT (1 << 1)
+#define IO_FLAG_JSON_INPUT (1 << 2)
+#define IO_FLAG_JSON_OUTPUT (1 << 3)
 
 static int g_io_flags = 0;
 static qse_char_t* g_input_file = QSE_NULL;
@@ -158,6 +160,8 @@ static void print_usage (qse_sio_t* out, int argc, qse_char_t* argv[])
 	qse_fprintf (out, QSE_T(" -o                 file   specify an output file\n"));
 	qse_fprintf (out, QSE_T(" -I                 file   specify an ini input file\n"));
 	qse_fprintf (out, QSE_T(" -O                 file   specify an ini output file\n"));
+	qse_fprintf (out, QSE_T(" -j                 file   specify a json input file\n"));
+	qse_fprintf (out, QSE_T(" -J                 file   specify a json output file\n"));
 	qse_fprintf (out, QSE_T(" -u                        disallow duplicate keys\n"));
 	qse_fprintf (out, QSE_T(" -a                        allow a key alias\n"));
 	qse_fprintf (out, QSE_T(" -f                        keep file inclusion info\n"));
@@ -168,7 +172,6 @@ static void print_usage (qse_sio_t* out, int argc, qse_char_t* argv[])
 	qse_fprintf (out, QSE_T(" -l                        disallow lists\n"));
 	qse_fprintf (out, QSE_T(" -K                        allow key tags\n"));
 	qse_fprintf (out, QSE_T(" -S                        allow string tags\n"));
-	qse_fprintf (out, QSE_T(" -j                        input and output in json format\n"));
 	qse_fprintf (out, QSE_T(" -v                        perform validation\n"));
 	qse_fprintf (out, QSE_T(" -m                 number specify the maximum amount of memory to use in bytes\n"));
 #if defined(QSE_BUILD_DEBUG)
@@ -196,15 +199,15 @@ static int handle_args (int argc, qse_char_t* argv[])
 	static qse_opt_t opt = 
 	{
 #if defined(QSE_BUILD_DEBUG)
-		QSE_T("hi:o:I:O:uaftsdnlKSjvm:X:"),
+		QSE_T("hi:o:I:O:j:J:uaftsdnlKSvm:X:"),
 #else
-		QSE_T("hi:o:I:O:uaftsdnlKSjvm:"),
+		QSE_T("hi:o:I:O:j:J:uaftsdnlKSvm:"),
 #endif
 		lng
 	};
 	qse_cint_t c;
 
-	while ((c = qse_getopt (argc, argv, &opt)) != QSE_CHAR_EOF)
+	while ((c = qse_getopt(argc, argv, &opt)) != QSE_CHAR_EOF)
 	{
 		switch (c)
 		{
@@ -234,7 +237,7 @@ static int handle_args (int argc, qse_char_t* argv[])
 
 			case QSE_T('i'):
 				g_input_file = opt.arg;
-				g_io_flags &= ~IO_FLAG_INI_INPUT;
+				g_io_flags &= ~(IO_FLAG_INI_INPUT | IO_FLAG_JSON_OUTPUT);
 				break;
 
 			case QSE_T('I'):
@@ -242,14 +245,24 @@ static int handle_args (int argc, qse_char_t* argv[])
 				g_io_flags |= IO_FLAG_INI_INPUT;
 				break;
 
+			case QSE_T('j'):
+				g_input_file = opt.arg;
+				g_io_flags |= IO_FLAG_JSON_INPUT;
+				break;
+
 			case QSE_T('o'):
 				g_output_file = opt.arg;
-				g_io_flags &= ~IO_FLAG_INI_OUTPUT;
+				g_io_flags &= ~(IO_FLAG_INI_OUTPUT | IO_FLAG_JSON_OUTPUT);
 				break;
 
 			case QSE_T('O'):
 				g_output_file = opt.arg;
 				g_io_flags |= IO_FLAG_INI_OUTPUT;
+				break;
+
+			case QSE_T('J'):
+				g_output_file = opt.arg;
+				g_io_flags |= IO_FLAG_JSON_OUTPUT;
 				break;
 
 			case QSE_T('u'):
@@ -290,10 +303,6 @@ static int handle_args (int argc, qse_char_t* argv[])
 
 			case QSE_T('S'):
 				g_trait |= QSE_XLI_STRTAG;
-				break;
-
-			case QSE_T('j'):
-				g_trait |= QSE_XLI_JSON;
 				break;
 
 			case QSE_T('v'):
@@ -444,7 +453,9 @@ static int xli_main (int argc, qse_char_t* argv[])
 	in.u.file.path = g_input_file;
 	in.u.file.cmgr = g_infile_cmgr;
 
-	n = (g_io_flags & IO_FLAG_INI_INPUT)? qse_xli_readinistd(xli, &in): qse_xli_readstd(xli, &in);
+	n = (g_io_flags & IO_FLAG_JSON_INPUT)? qse_xli_readjsonstd(xli, &in):
+	    (g_io_flags & IO_FLAG_INI_INPUT)?  qse_xli_readinistd(xli, &in):
+	                                       qse_xli_readstd(xli, &in);
 	if (n <= -1)
 	{
 		const qse_xli_loc_t* errloc;
@@ -553,8 +564,9 @@ static int xli_main (int argc, qse_char_t* argv[])
 	out.u.file.path = g_output_file? g_output_file: QSE_T("-");
 	out.u.file.cmgr = g_outfile_cmgr;
 
-	ret = (g_io_flags & IO_FLAG_INI_OUTPUT)? qse_xli_writeinistd(xli, QSE_NULL, &out): qse_xli_writestd(xli, QSE_NULL, &out);
-
+	ret = (g_io_flags & IO_FLAG_JSON_OUTPUT)? qse_xli_writejsonstd(xli, QSE_NULL, &out):
+	      (g_io_flags & IO_FLAG_INI_OUTPUT)?  qse_xli_writeinistd(xli, QSE_NULL, &out):
+	                                          qse_xli_writestd(xli, QSE_NULL, &out);
 oops:
 	if (xli) qse_xli_close (xli);
 	if (xma_mmgr.ctx) qse_xma_close (xma_mmgr.ctx);

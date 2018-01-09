@@ -119,7 +119,16 @@ static int write_list (qse_xli_t* xli, qse_xli_list_t* list, int depth)
 					}
 
 					case QSE_XLI_LIST:
-						if (write_list (xli, (qse_xli_list_t*)pair->val, depth + 1) <= -1) return -1;
+						if (depth < 1)
+						{
+							if (write_list(xli, (qse_xli_list_t*)pair->val, depth + 1) <= -1 ||
+							    write_to_current_stream (xli, QSE_T("\n"), 1) <= -1) return -1;
+						}
+						else
+						{
+							/* the ini format doesn't support deep nesting */
+							if (write_to_current_stream (xli, QSE_T("={}\n"), 4) <= -1) return -1;
+						}
 						break;
 				}
 				break;
@@ -129,9 +138,9 @@ static int write_list (qse_xli_t* xli, qse_xli_list_t* list, int depth)
 			{
 				const qse_char_t* str = ((qse_xli_text_t*)curatom)->ptr;
 
-				if (write_to_current_stream (xli, QSE_T(";"), 1) <= -1 ||
-				    write_to_current_stream (xli, str, qse_strlen(str)) <= -1 ||
-				    write_to_current_stream (xli, QSE_T("\n"), 1) <= -1) return -1;
+				if (write_to_current_stream(xli, QSE_T(";"), 1) <= -1 ||
+				    write_to_current_stream(xli, str, qse_strlen(str)) <= -1 ||
+				    write_to_current_stream(xli, QSE_T("\n"), 1) <= -1) return -1;
 				break;
 			}
 
