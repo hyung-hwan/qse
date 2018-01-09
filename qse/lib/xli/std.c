@@ -123,7 +123,7 @@ static qse_sio_t* open_sio (qse_xli_t* xli, const qse_char_t* file, int flags)
 	if (sio == QSE_NULL)
 	{
 		qse_cstr_t errarg;
-		errarg.ptr = file;
+		errarg.ptr = (qse_char_t*)file;
 		errarg.len = qse_strlen(file);
 		qse_xli_seterrnum (xli, QSE_XLI_EIOFIL, &errarg);
 	}
@@ -241,7 +241,7 @@ static qse_ssize_t sf_in_open (qse_xli_t* xli, qse_xli_io_arg_t* arg, xtn_t* xtn
 		if (arg->handle == QSE_NULL)
 		{
 			qse_cstr_t ea;
-			ea.ptr = arg->name;
+			ea.ptr = (qse_char_t*)arg->name;
 			ea.len = qse_strlen(ea.ptr);
 			qse_xli_seterrnum (xli, QSE_XLI_EIOFIL, &ea);
 			return -1;
@@ -299,7 +299,7 @@ static qse_ssize_t sf_in_read (
 				if (n <= -1)
 				{
 					qse_cstr_t ea;
-					ea.ptr = xtn->s.in.x->u.file.path;
+					ea.ptr = (qse_char_t*)xtn->s.in.x->u.file.path;
 					if (ea.ptr == QSE_NULL) ea.ptr = sio_std_names[QSE_SIO_STDIN].ptr;
 					ea.len = qse_strlen(ea.ptr);
 					qse_xli_seterrnum (xli, QSE_XLI_EIOFIL, &ea);
@@ -335,7 +335,7 @@ static qse_ssize_t sf_in_read (
 		if (n <= -1)
 		{
 			qse_cstr_t ea;
-			ea.ptr = arg->name;
+			ea.ptr = (qse_char_t*)arg->name;
 			ea.len = qse_strlen(ea.ptr);
 			qse_xli_seterrnum (xli, QSE_XLI_EIOFIL, &ea);
 		}
@@ -468,7 +468,7 @@ static qse_ssize_t sf_out_open (qse_xli_t* xli, qse_xli_io_arg_t* arg, xtn_t* xt
 		if (arg->handle == QSE_NULL)
 		{
 			qse_cstr_t ea;
-			ea.ptr = arg->name;
+			ea.ptr = (qse_char_t*)arg->name;
 			ea.len = qse_strlen(ea.ptr);
 			qse_xli_seterrnum (xli, QSE_XLI_EIOFIL, &ea);
 			return -1;
@@ -526,7 +526,7 @@ static qse_ssize_t sf_out_write (
 				if (n <= -1)
 				{
 					qse_cstr_t ea;
-					ea.ptr = xtn->s.out.x->u.file.path;
+					ea.ptr = (qse_char_t*)xtn->s.out.x->u.file.path;
 					if (ea.ptr == QSE_NULL) ea.ptr = sio_std_names[QSE_SIO_STDOUT].ptr;
 					ea.len = qse_strlen(ea.ptr);
 					qse_xli_seterrnum (xli, QSE_XLI_EIOFIL, &ea);
@@ -564,7 +564,7 @@ static qse_ssize_t sf_out_write (
 		if (n <= -1)
 		{
 			qse_cstr_t ea;
-			ea.ptr = arg->name;
+			ea.ptr = (qse_char_t*)arg->name;
 			ea.len = qse_strlen(ea.ptr);
 			qse_xli_seterrnum (xli, QSE_XLI_EIOFIL, &ea);
 		}
@@ -611,7 +611,7 @@ int qse_xli_readstd (qse_xli_t* xli, qse_xli_iostd_t* in)
 	}
 
 	xtn->s.in.x = in;
-	return qse_xli_read (xli, sf_in);
+	return qse_xli_read(xli, sf_in);
 }
 
 
@@ -629,9 +629,25 @@ int qse_xli_readinistd (qse_xli_t* xli, qse_xli_iostd_t* in)
 	}
 
 	xtn->s.in.x = in;
-	return qse_xli_readini (xli, sf_in);
+	return qse_xli_readini(xli, sf_in);
 }
 
+int qse_xli_readjsonstd (qse_xli_t* xli, qse_xli_iostd_t* in)
+{
+	xtn_t* xtn = (xtn_t*) QSE_XTN (xli);
+
+	if (in == QSE_NULL || (in->type != QSE_XLI_IOSTD_FILE && 
+	                       in->type != QSE_XLI_IOSTD_STR))
+	{
+		/* the input is a must. at least 1 file or 1 string 
+		 * must be specified */
+		qse_xli_seterrnum (xli, QSE_XLI_EINVAL, QSE_NULL);
+		return -1;
+	}
+
+	xtn->s.in.x = in;
+	return qse_xli_readjson(xli, sf_in);
+}
 
 int qse_xli_writestd (qse_xli_t* xli, qse_xli_list_t* root_list, qse_xli_iostd_t* out)
 {
@@ -679,6 +695,36 @@ int qse_xli_writeinistd (qse_xli_t* xli, qse_xli_list_t* root_list, qse_xli_iost
 
 	xtn->s.out.x = out;
 	n = qse_xli_writeini (xli, root_list, sf_out);
+
+	if (out->type == QSE_XLI_IOSTD_STR)
+	{
+		if (n >= 0)
+		{
+			QSE_ASSERT (xtn->s.out.u.str.buf != QSE_NULL);
+			qse_str_yield (xtn->s.out.u.str.buf, &out->u.str, 0);
+		}
+		if (xtn->s.out.u.str.buf) qse_str_close (xtn->s.out.u.str.buf);
+	}
+
+	return n;
+}
+
+int qse_xli_writejsonstd (qse_xli_t* xli, qse_xli_list_t* root_list, qse_xli_iostd_t* out)
+{
+	int n;
+	xtn_t* xtn = (xtn_t*) QSE_XTN (xli);
+
+	if (out == QSE_NULL || (out->type != QSE_XLI_IOSTD_FILE && 
+	                        out->type != QSE_XLI_IOSTD_STR))
+	{
+		/* the input is a must. at least 1 file or 1 string 
+		 * must be specified */
+		qse_xli_seterrnum (xli, QSE_XLI_EINVAL, QSE_NULL);
+		return -1;
+	}
+
+	xtn->s.out.x = out;
+	n = qse_xli_writejson (xli, root_list, sf_out);
 
 	if (out->type == QSE_XLI_IOSTD_STR)
 	{

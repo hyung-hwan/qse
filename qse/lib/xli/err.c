@@ -27,8 +27,7 @@
 #include "xli.h"
 #include "../cmn/mem-prv.h"
 
-const qse_char_t* qse_xli_dflerrstr (
-	const qse_xli_t* xli, qse_xli_errnum_t errnum)
+const qse_char_t* qse_xli_dflerrstr (const qse_xli_t* xli, qse_xli_errnum_t errnum)
 {
 	static const qse_char_t* errstr[] =
  	{
@@ -46,10 +45,12 @@ const qse_char_t* qse_xli_dflerrstr (
 		QSE_T("error returned by user I/O handler"),
 
 		QSE_T("syntax error"),
+		QSE_T("colon expected in place of '${0}'"),
 		QSE_T("semicolon expected in place of '${0}'"),
-		QSE_T("assignment symbol expected in place of '${0}'"),
-		QSE_T("left-brace or assignment token expected in place of '${0}'"),
+		QSE_T("equal-sign expected in place of '${0}'"),
+		QSE_T("left-brace or equal-sign expected in place of '${0}'"),
 		QSE_T("right-brace expected in place of '${0}'"),
+		QSE_T("right-bracket expected in place of '${0}'"),
 		QSE_T("pair value expected in place of '${0}'"),
 		QSE_T("string not closed"),
 		QSE_T("string tag not closed"),

@@ -28,9 +28,9 @@
 #include <qse/cmn/chr.h>
 
 static qse_xli_root_list_t* make_root (qse_xli_t* xli);
-static void free_val (qse_xli_root_list_t* xli, qse_xli_val_t* val);
-static void free_list (qse_xli_root_list_t* xli, qse_xli_list_t* list);
-static void free_atom (qse_xli_root_list_t* xli, qse_xli_atom_t* atom);
+static void free_val (qse_xli_root_list_t* root, qse_xli_val_t* val);
+static void free_list (qse_xli_root_list_t* root, qse_xli_list_t* list);
+static void free_atom (qse_xli_root_list_t* root, qse_xli_atom_t* atom);
 
 qse_xli_t* qse_xli_open (qse_mmgr_t* mmgr, qse_size_t xtnsize, qse_size_t rootxtnsize, qse_xli_errnum_t* errnum)
 {
@@ -289,18 +289,18 @@ qse_xli_pair_t* qse_xli_insertpair (
 	qse_cstr_t a, * ap = QSE_NULL;
 	qse_cstr_t t, * tp = QSE_NULL;
 
-	k.ptr = key;
-	k.len = qse_strlen (key);
+	k.ptr = (qse_char_t*)key;
+	k.len = qse_strlen(key);
 
 	if (alias)
 	{
-		a.ptr = alias;
+		a.ptr = (qse_char_t*)alias;
 		a.len = qse_strlen (alias);
 		ap = &a;
 	}
 	if (keytag)
 	{
-		t.ptr = keytag;
+		t.ptr = (qse_char_t*)keytag;
 		t.len = qse_strlen (keytag);
 		tp = &t;
 	}
@@ -339,29 +339,10 @@ void qse_xli_deletepair (qse_xli_t* xli, qse_xli_pair_t* pair)
 }
 
 /* ------------------------------------------------------ */
-qse_xli_pair_t* qse_xli_insertpairwithemptylist (
-	qse_xli_t* xli, qse_xli_list_t* parent, qse_xli_atom_t* peer,
-	const qse_char_t* key, const qse_char_t* alias, const qse_char_t* keytag)
-{
-	qse_xli_list_t* val;
-	qse_xli_pair_t* tmp;
 
-	val = qse_xli_callocmem (xli, QSE_SIZEOF(*val));
-	if (!val) return QSE_NULL;
-
-	val->type = QSE_XLI_LIST;
-	tmp = qse_xli_insertpair (xli, parent, peer, key, alias, keytag, (qse_xli_val_t*)val);
-	if (!tmp) qse_xli_freemem (xli, val);
-	return tmp;
-}
-
-qse_xli_pair_t* qse_xli_insertpairwithstr (
-	qse_xli_t* xli, qse_xli_list_t* parent, qse_xli_atom_t* peer,
-	const qse_char_t* key, const qse_char_t* alias, const qse_char_t* keytag,
-	const qse_cstr_t* value, const qse_char_t* strtag)
+qse_xli_str_t* qse_xli_makestrval (qse_xli_t* xli, const qse_cstr_t* value, const qse_char_t* strtag)
 {
 	qse_xli_str_t* val;
-	qse_xli_pair_t* tmp;
 	qse_size_t reqlen;
 
 	reqlen = QSE_SIZEOF(*val) + ((value->len + 1) * QSE_SIZEOF(*value->ptr));
@@ -381,7 +362,52 @@ qse_xli_pair_t* qse_xli_insertpairwithstr (
 		val->tag = val->ptr + val->len + 1;
 		qse_strcpy ((qse_char_t*)val->tag, strtag);
 	}
-	
+
+	return val;
+}
+
+qse_xli_list_t* qse_xli_makelistval (qse_xli_t* xli)
+{
+	qse_xli_list_t* val;
+
+	val = qse_xli_callocmem (xli, QSE_SIZEOF(*val));
+	if (!val) return QSE_NULL;
+
+	val->type = QSE_XLI_LIST;
+	val->head = QSE_NULL;
+	val->tail = QSE_NULL;
+
+	return val;
+}
+
+/* ------------------------------------------------------ */
+
+qse_xli_pair_t* qse_xli_insertpairwithemptylist (
+	qse_xli_t* xli, qse_xli_list_t* parent, qse_xli_atom_t* peer,
+	const qse_char_t* key, const qse_char_t* alias, const qse_char_t* keytag)
+{
+	qse_xli_list_t* val;
+	qse_xli_pair_t* tmp;
+
+	val = qse_xli_makelistval(xli);
+	if (!val) return QSE_NULL;
+
+	tmp = qse_xli_insertpair (xli, parent, peer, key, alias, keytag, (qse_xli_val_t*)val);
+	if (!tmp) qse_xli_freemem (xli, val);
+	return tmp;
+}
+
+qse_xli_pair_t* qse_xli_insertpairwithstr (
+	qse_xli_t* xli, qse_xli_list_t* parent, qse_xli_atom_t* peer,
+	const qse_char_t* key, const qse_char_t* alias, const qse_char_t* keytag,
+	const qse_cstr_t* value, const qse_char_t* strtag)
+{
+	qse_xli_str_t* val;
+	qse_xli_pair_t* tmp;
+
+	val = qse_xli_makestrval (xli, value, strtag);
+	if (!val) return QSE_NULL;
+
 	tmp = qse_xli_insertpair (xli, parent, peer, key, alias, keytag, (qse_xli_val_t*)val);
 	if (!tmp) qse_xli_freemem (xli, val);
 	return tmp;
@@ -496,28 +522,39 @@ static qse_xli_root_list_t* make_root (qse_xli_t* xli)
 	return tmp;
 }
 
+
+static void unsafe_free_val (qse_xli_root_list_t* root, qse_xli_val_t* val)
+{
+	if (val->type == QSE_XLI_LIST)
+	{
+		free_list (root, (qse_xli_list_t*)val);
+	}
+	else if (val->type == QSE_XLI_STR)
+	{
+		qse_xli_str_t* cur, * next; 
+
+		cur = ((qse_xli_str_t*)val)->next;
+		while (cur)
+		{
+			next = cur->next;
+			QSE_MMGR_FREE (root->mmgr, cur);
+			cur = next;
+		}
+	}
+
+	QSE_MMGR_FREE (root->mmgr, val);
+}
+
+void qse_xli_freeval (qse_xli_t* xli, qse_xli_val_t* val)
+{
+	unsafe_free_val (xli->root, val);
+}
+
 static void free_val (qse_xli_root_list_t* root, qse_xli_val_t* val)
 {
 	if ((qse_xli_nil_t*)val != &root->xnil)
 	{
-		if (val->type == QSE_XLI_LIST)
-		{
-			free_list (root, (qse_xli_list_t*)val);
-		}
-		else if (val->type == QSE_XLI_STR)
-		{
-			qse_xli_str_t* cur, * next; 
-
-			cur = ((qse_xli_str_t*)val)->next;
-			while (cur)
-			{
-				next = cur->next;
-				QSE_MMGR_FREE (root->mmgr, cur);
-				cur = next;
-			}
-		}
-
-		QSE_MMGR_FREE (root->mmgr, val);
+		unsafe_free_val (root, val);
 	}
 }
 
@@ -579,7 +616,7 @@ qse_xli_list_t* qse_xli_yieldroot (qse_xli_t* xli)
 {
 	qse_xli_root_list_t* tmp, * tmp2;
 
-	tmp = make_root (xli);
+	tmp = make_root(xli);
 	if (!tmp) return QSE_NULL;
 
 	tmp2 = xli->root;
@@ -732,7 +769,7 @@ const qse_char_t* get_next_fqpn_segment (qse_xli_t* xli, const qse_char_t* fqpn,
 		 * so if your alias contains these characters (in a quoted string), 
 		 * you can't reference it using a dotted key name. */
 		seg->idxtype = FQPN_SEG_IDX_ALIAS;
-		seg->idx.alias.ptr = ptr;
+		seg->idx.alias.ptr = (qse_char_t*)ptr;
 		while (*ptr != QSE_T('}') && *ptr != QSE_T('\0')) ptr++;
 		seg->idx.alias.len = ptr - seg->idx.alias.ptr;
 
@@ -1010,7 +1047,7 @@ int qse_xli_definepair (qse_xli_t* xli, const qse_char_t* fqpn, const qse_xli_sc
 		return -1;
 	}
 
-	if (qse_rbt_upsert (xli->schema, fqpn, qse_strlen(fqpn), scm, QSE_SIZEOF(*scm)) == QSE_NULL)
+	if (qse_rbt_upsert (xli->schema, (void*)fqpn, qse_strlen(fqpn), (void*)scm, QSE_SIZEOF(*scm)) == QSE_NULL)
 	{
 		qse_xli_seterrnum (xli, QSE_XLI_ENOMEM, QSE_NULL);
 		return -1;
@@ -1171,8 +1208,6 @@ noent:
 	return QSE_NULL;
 #endif
 }
-
-
 #endif
 
 void* qse_getxlipairxtn (qse_xli_pair_t* pair)
