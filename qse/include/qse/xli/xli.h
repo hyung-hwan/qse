@@ -69,9 +69,10 @@ enum qse_xli_errnum_t
 	QSE_XLI_ESCOLON,  /**< semicolon expected in place of '${0}' */
 	QSE_XLI_EEQ,      /**< = expected in place of '${0}' */
 	QSE_XLI_ELBREQ,   /**< { or = expected in place of '${0}' */
-	QSE_XLI_ERBRACE,   /**< } expected in place of '${0}' */
-	QSE_XLI_ERBRACK,   /**< ] expected in place of '${0}' */
-	QSE_XLI_EPAVAL,   /**< pair value expected in place of '${0}' */
+	QSE_XLI_ERBRACE,  /**< } expected in place of '${0}' */
+	QSE_XLI_ERBRACK,  /**< ] expected in place of '${0}' */
+	QSE_XLI_ECOMMA,   /**< , expected in place of '${0}' */
+	QSE_XLI_EVALUE,   /**< value expected in place of '${0}' */
 	QSE_XLI_ESTRNC,   /**< string not closed */
 	QSE_XLI_ETAGNC,   /**< tag not closed */
 	QSE_XLI_EINCLSTR ,/**< '@include' not followed by a string */
@@ -147,29 +148,45 @@ enum qse_xli_trait_t
 	 *  "tg" is stored into the tag field of qse_xli_str_t. */
 	QSE_XLI_STRTAG    = (1 << 10), 
 
+	/** enable the keyword 'true' and 'false' in the xli format.
+	 *  the json format always supports these keywords regardless of this option.
+	 *  the ini format doesn't support these regardless of this option. */
+	QSE_XLI_BOOLEAN   = (1 << 11),
+
 	/** enable pair validation against pair definitions while reading */
-	QSE_XLI_VALIDATE  = (1 << 11)
+	QSE_XLI_VALIDATE  = (1 << 12)
 };
 typedef enum qse_xli_trait_t qse_xli_trait_t;
 
-typedef struct qse_xli_val_t  qse_xli_val_t;
-typedef struct qse_xli_nil_t  qse_xli_nil_t;
-typedef struct qse_xli_str_t  qse_xli_str_t;
-typedef struct qse_xli_list_t qse_xli_list_t;
+typedef struct qse_xli_val_t    qse_xli_val_t;
+typedef struct qse_xli_nil_t    qse_xli_nil_t;
+typedef struct qse_xli_true_t   qse_xli_true_t;
+typedef struct qse_xli_false_t  qse_xli_false_t;
+typedef struct qse_xli_str_t    qse_xli_str_t;
+typedef struct qse_xli_list_t   qse_xli_list_t;
 
-typedef struct qse_xli_atom_t qse_xli_atom_t;
-typedef struct qse_xli_pair_t qse_xli_pair_t;
-typedef struct qse_xli_text_t qse_xli_text_t;
-typedef struct qse_xli_file_t qse_xli_file_t;
-typedef struct qse_xli_eof_t  qse_xli_eof_t;
+typedef struct qse_xli_atom_t   qse_xli_atom_t;
+typedef struct qse_xli_pair_t   qse_xli_pair_t;
+typedef struct qse_xli_text_t   qse_xli_text_t;
+typedef struct qse_xli_file_t   qse_xli_file_t;
+typedef struct qse_xli_eof_t    qse_xli_eof_t;
 
 enum qse_xli_val_type_t
 {
 	QSE_XLI_NIL,
+	QSE_XLI_TRUE,
+	QSE_XLI_FALSE,
 	QSE_XLI_STR,
 	QSE_XLI_LIST,
 };
 typedef enum qse_xli_val_type_t qse_xli_val_type_t;
+
+enum qse_xli_str_flag_t
+{
+	QSE_XLI_STR_NSTR  = (1 << 0),
+	QSE_XLI_STR_RADIX = (1 << 1),
+	QSE_XLI_STR_FLOAT = (1 << 2)
+};
 
 enum qse_xli_atom_type_t
 {
@@ -193,6 +210,16 @@ struct qse_xli_nil_t
 	QSE_XLI_VAL_HDR;
 };
 
+struct qse_xli_true_t
+{
+	QSE_XLI_VAL_HDR;
+};
+
+struct qse_xli_false_t
+{
+	QSE_XLI_VAL_HDR;
+};
+
 struct qse_xli_list_t
 {
 	QSE_XLI_VAL_HDR;
@@ -203,6 +230,7 @@ struct qse_xli_list_t
 struct qse_xli_str_t
 {
 	QSE_XLI_VAL_HDR;
+	int                flags;
 	const qse_char_t*  tag;
 	const qse_char_t*  ptr;
 	qse_size_t         len; 

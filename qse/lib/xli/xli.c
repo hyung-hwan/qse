@@ -320,7 +320,7 @@ void qse_xli_deletepair (qse_xli_t* xli, qse_xli_pair_t* pair)
 	}
 	else 
 	{
-		QSE_ASSERT (list->head == pair);
+		QSE_ASSERT (list->head == (qse_xli_atom_t*)pair);
 		list->head = pair->next;
 	}
 
@@ -330,7 +330,7 @@ void qse_xli_deletepair (qse_xli_t* xli, qse_xli_pair_t* pair)
 	}
 	else 
 	{
-		QSE_ASSERT (list->tail == pair);
+		QSE_ASSERT (list->tail == (qse_xli_atom_t*)pair);
 		list->tail = pair->prev;
 	}
 
@@ -352,6 +352,7 @@ qse_xli_str_t* qse_xli_makestrval (qse_xli_t* xli, const qse_cstr_t* value, cons
 	if (!val) return QSE_NULL;
 
 	val->type = QSE_XLI_STR;
+	val->flags = 0;
 
 	qse_strncpy ((qse_char_t*)(val + 1), value->ptr, value->len);
 	val->ptr = (const qse_char_t*)(val + 1);
@@ -378,6 +379,81 @@ qse_xli_list_t* qse_xli_makelistval (qse_xli_t* xli)
 	val->tail = QSE_NULL;
 
 	return val;
+}
+
+static void free_val (qse_xli_root_list_t* root, qse_xli_val_t* val)
+{
+	switch (val->type)
+	{
+		case QSE_XLI_NIL:
+			QSE_ASSERT (val == (qse_xli_val_t*)&root->xnil);
+			return;
+		case QSE_XLI_TRUE:
+			QSE_ASSERT (val == (qse_xli_val_t*)&root->xtrue);
+			return;
+		case QSE_XLI_FALSE:
+			QSE_ASSERT (val == (qse_xli_val_t*)&root->xfalse);
+			return;
+
+		case QSE_XLI_LIST:
+			free_list (root, (qse_xli_list_t*)val);
+			break;
+
+		case QSE_XLI_STR:
+		{
+			qse_xli_str_t* cur, * next; 
+
+			cur = ((qse_xli_str_t*)val)->next;
+			while (cur)
+			{
+				next = cur->next;
+				QSE_MMGR_FREE (root->mmgr, cur);
+				cur = next;
+			}
+			break;
+		}
+	}
+
+	QSE_MMGR_FREE (root->mmgr, val);
+}
+
+
+static void free_atom (qse_xli_root_list_t* root, qse_xli_atom_t* atom)
+{
+	/* Among all atom type, QSE_XLI_PAIR has a value to dispose of specially.
+	 * A tag and an alise are inlined to the atom itself. see insert_atom() 
+	 * above for details.
+	 *
+	 * for QSE_XLI_TEXT, QSE_XLI_FILE, QSE_XLI_EOF, data are inlined to 
+	 * the atom itself as well.
+	 */
+
+	if (atom->type == QSE_XLI_PAIR) free_val (root, ((qse_xli_pair_t*)atom)->val);
+	QSE_MMGR_FREE (root->mmgr, atom);
+}
+
+static void free_list (qse_xli_root_list_t* root, qse_xli_list_t* list)
+{
+	qse_xli_atom_t* p, * n;
+
+	p = list->head;
+	while (p)
+	{
+		n = p->next;
+		free_atom (root, p);
+		p = n;
+	}
+
+	list->head = QSE_NULL;
+	list->tail = QSE_NULL;
+
+	/* this doesn't destroy the list itself. 
+	 * the caller must destory the list if necessary. */
+}
+
+void qse_xli_freeval (qse_xli_t* xli, qse_xli_val_t* val)
+{
+	free_val (xli->root, val);
 }
 
 /* ------------------------------------------------------ */
@@ -517,78 +593,11 @@ static qse_xli_root_list_t* make_root (qse_xli_t* xli)
 	QSE_MEMSET (tmp, 0, QSE_SIZEOF(*tmp) + xli->opt.root_xtnsize);
 	tmp->list.type = QSE_XLI_LIST;
 	tmp->xnil.type = QSE_XLI_NIL;
+	tmp->xtrue.type = QSE_XLI_TRUE;
+	tmp->xfalse.type = QSE_XLI_FALSE;
 	tmp->mmgr = xli->mmgr;
 
 	return tmp;
-}
-
-
-static void unsafe_free_val (qse_xli_root_list_t* root, qse_xli_val_t* val)
-{
-	if (val->type == QSE_XLI_LIST)
-	{
-		free_list (root, (qse_xli_list_t*)val);
-	}
-	else if (val->type == QSE_XLI_STR)
-	{
-		qse_xli_str_t* cur, * next; 
-
-		cur = ((qse_xli_str_t*)val)->next;
-		while (cur)
-		{
-			next = cur->next;
-			QSE_MMGR_FREE (root->mmgr, cur);
-			cur = next;
-		}
-	}
-
-	QSE_MMGR_FREE (root->mmgr, val);
-}
-
-void qse_xli_freeval (qse_xli_t* xli, qse_xli_val_t* val)
-{
-	unsafe_free_val (xli->root, val);
-}
-
-static void free_val (qse_xli_root_list_t* root, qse_xli_val_t* val)
-{
-	if ((qse_xli_nil_t*)val != &root->xnil)
-	{
-		unsafe_free_val (root, val);
-	}
-}
-
-static void free_atom (qse_xli_root_list_t* root, qse_xli_atom_t* atom)
-{
-	/* Among all atom type, QSE_XLI_PAIR has a value to dispose of specially.
-	 * A tag and an alise are inlined to the atom itself. see insert_atom() 
-	 * above for details.
-	 *
-	 * for QSE_XLI_TEXT, QSE_XLI_FILE, QSE_XLI_EOF, data are inlined to 
-	 * the atom itself as well.
-	 */
-
-	if (atom->type == QSE_XLI_PAIR) free_val (root, ((qse_xli_pair_t*)atom)->val);
-	QSE_MMGR_FREE (root->mmgr, atom);
-}
-
-static void free_list (qse_xli_root_list_t* root, qse_xli_list_t* list)
-{
-	qse_xli_atom_t* p, * n;
-
-	p = list->head;
-	while (p)
-	{
-		n = p->next;
-		free_atom (root, p);
-		p = n;
-	}
-
-	list->head = QSE_NULL;
-	list->tail = QSE_NULL;
-
-	/* this doesn't destroy the list itself. 
-	 * the caller must destory the list if necessary. */
 }
 
 void qse_xli_clear (qse_xli_t* xli)
@@ -726,7 +735,8 @@ const qse_char_t* get_next_fqpn_segment (qse_xli_t* xli, const qse_char_t* fqpn,
 {
 	const qse_char_t* ptr;
 
-	seg->key.ptr = ptr = fqpn;
+	ptr = fqpn;
+	seg->key.ptr = (qse_char_t*)ptr;
 	while (*ptr != QSE_T('\0') && *ptr != xli->opt.key_splitter && *ptr != QSE_T('[') && *ptr != QSE_T('{')) ptr++;
 	if (ptr == seg->key.ptr) goto inval; /* no key part */
 	seg->key.len = ptr - seg->key.ptr;

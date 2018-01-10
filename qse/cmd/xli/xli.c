@@ -164,6 +164,7 @@ static void print_usage (qse_sio_t* out, int argc, qse_char_t* argv[])
 	qse_fprintf (out, QSE_T(" -J                 file   specify a json output file\n"));
 	qse_fprintf (out, QSE_T(" -u                        disallow duplicate keys\n"));
 	qse_fprintf (out, QSE_T(" -a                        allow a key alias\n"));
+	qse_fprintf (out, QSE_T(" -b                        allow true and false as boolean values\n"));
 	qse_fprintf (out, QSE_T(" -f                        keep file inclusion info\n"));
 	qse_fprintf (out, QSE_T(" -t                        keep comment text\n"));
 	qse_fprintf (out, QSE_T(" -s                        allow multi-segmented strings\n"));
@@ -199,9 +200,9 @@ static int handle_args (int argc, qse_char_t* argv[])
 	static qse_opt_t opt = 
 	{
 #if defined(QSE_BUILD_DEBUG)
-		QSE_T("hi:o:I:O:j:J:uaftsdnlKSvm:X:"),
+		QSE_T("hi:o:I:O:j:J:uabftsdnlKSvm:X:"),
 #else
-		QSE_T("hi:o:I:O:j:J:uaftsdnlKSvm:"),
+		QSE_T("hi:o:I:O:j:J:uabftsdnlKSvm:"),
 #endif
 		lng
 	};
@@ -271,6 +272,10 @@ static int handle_args (int argc, qse_char_t* argv[])
 
 			case QSE_T('a'):
 				g_trait |= QSE_XLI_KEYALIAS;
+				break;
+
+			case QSE_T('b'):
+				g_trait |= QSE_XLI_BOOLEAN;
 				break;
 
 			case QSE_T('f'):
@@ -547,7 +552,15 @@ static int xli_main (int argc, qse_char_t* argv[])
 				}
 				else if (pair->val->type == QSE_XLI_NIL)
 				{
-					qse_printf (QSE_T("#NIL\n"));
+					qse_printf (QSE_T("nil\n"));
+				}
+				else if (pair->val->type == QSE_XLI_TRUE)
+				{
+					qse_printf (QSE_T("true\n"));
+				}
+				else if (pair->val->type == QSE_XLI_FALSE)
+				{
+					qse_printf (QSE_T("false\n"));
 				}
 				else
 				{
@@ -567,6 +580,11 @@ static int xli_main (int argc, qse_char_t* argv[])
 	ret = (g_io_flags & IO_FLAG_JSON_OUTPUT)? qse_xli_writejsonstd(xli, QSE_NULL, &out):
 	      (g_io_flags & IO_FLAG_INI_OUTPUT)?  qse_xli_writeinistd(xli, QSE_NULL, &out):
 	                                          qse_xli_writestd(xli, QSE_NULL, &out);
+	if (ret <= -1)
+	{
+		qse_fprintf (QSE_STDERR, QSE_T("WARNING: cannot write - %s\n"), qse_xli_geterrmsg(xli));
+	}
+
 oops:
 	if (xli) qse_xli_close (xli);
 	if (xma_mmgr.ctx) qse_xma_close (xma_mmgr.ctx);

@@ -36,6 +36,9 @@ enum qse_xli_tok_type_t
 {
 	QSE_XLI_TOK_EOF,
 	QSE_XLI_TOK_XINCLUDE,
+	QSE_XLI_TOK_TRUE,
+	QSE_XLI_TOK_FALSE,
+	QSE_XLI_TOK_NIL,
 	QSE_XLI_TOK_COLON,
 	QSE_XLI_TOK_SEMICOLON,
 	QSE_XLI_TOK_LBRACE,
@@ -80,6 +83,8 @@ struct qse_xli_root_list_t
 {
 	qse_xli_list_t list;
 	qse_xli_nil_t xnil;
+	qse_xli_true_t xtrue;
+	qse_xli_false_t xfalse;
 	qse_mmgr_t* mmgr;
 };
 
@@ -157,7 +162,6 @@ void qse_xli_freelistlink (qse_xli_t* xli, qse_xli_list_link_t* link);
 
 qse_xli_str_t* qse_xli_makestrval (qse_xli_t* xli, const qse_cstr_t* value, const qse_char_t* strtag);
 qse_xli_list_t* qse_xli_makelistval (qse_xli_t* xli);
-qse_xli_pair_t* qse_xli_makepairval (qse_xli_t* xli);
 void qse_xli_freeval (qse_xli_t* xli, qse_xli_val_t* val);
 
 #if defined(__cplusplus)

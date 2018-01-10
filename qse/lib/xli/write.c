@@ -296,6 +296,14 @@ static int write_list (qse_xli_t* xli, qse_xli_list_t* list, int depth)
 						if (write_to_current_stream (xli, QSE_T(";\n"), 2, 0) <= -1) return -1;
 						break;
 
+					case QSE_XLI_TRUE:
+						if (write_to_current_stream (xli, QSE_T(" = true;\n"), 9, 0) <= -1) return -1;
+						break;
+
+					case QSE_XLI_FALSE:
+						if (write_to_current_stream (xli, QSE_T(" = false;\n"), 10, 0) <= -1) return -1;
+						break;
+
 					case QSE_XLI_STR:
 					{
 						qse_xli_str_t* str = (qse_xli_str_t*)pair->val;
@@ -309,10 +317,12 @@ static int write_list (qse_xli_t* xli, qse_xli_list_t* list, int depth)
 								    write_to_current_stream (xli, str->tag, qse_strlen(str->tag), 0) <= -1 || 
 								    write_to_current_stream (xli, QSE_T("]"), 1, 0) <= -1) return -1;
 							}
-						
-							if (write_to_current_stream (xli, QSE_T("\""), 1, 0) <= -1 ||
+
+							if ((!(str->flags & QSE_XLI_STR_NSTR) && 
+							     write_to_current_stream (xli, QSE_T("\""), 1, 0) <= -1) ||
 							    write_to_current_stream (xli, str->ptr, str->len, 1) <= -1 ||
-							    write_to_current_stream (xli, QSE_T("\""), 1, 0) <= -1) return -1;
+							    (!(str->flags & QSE_XLI_STR_NSTR) && 
+							     write_to_current_stream (xli, QSE_T("\""), 1, 0) <= -1)) return -1;
 							if (!str->next) break;
 
 							if (write_to_current_stream (xli, QSE_T(", "), 2, 0) <= -1) return -1;
@@ -363,8 +373,8 @@ static int write_list (qse_xli_t* xli, qse_xli_list_t* list, int depth)
 				if (write_to_current_stream (xli, QSE_T("@include \""), 10, 0) <= -1 ||
 				    write_to_current_stream (xli, path, qse_strlen(path), 1) <= -1 ||
 				    write_to_current_stream (xli, QSE_T("\";\n"), 3, 0) <= -1) return -1;
-				
-				if (qse_xli_openwstream (xli, ((qse_xli_file_t*)curatom)->path, depth) <= -1) return -1;
+
+				if (qse_xli_openwstream(xli, ((qse_xli_file_t*)curatom)->path, depth) <= -1) return -1;
 				depth = 0;
 				break;
 			}
@@ -411,7 +421,7 @@ int qse_xli_write (qse_xli_t* xli, qse_xli_list_t* root_list, qse_xli_io_impl_t 
 
 	/* begin writing the root list */
 	n = write_list (xli, (root_list? root_list: &xli->root->list), 0);
-	
+
 	/* close all open streams. there should be only the
 	 * top-level stream here if there occurred no errors */
 	while (xli->wio.inp) qse_xli_closeactivewstream (xli, QSE_NULL);
