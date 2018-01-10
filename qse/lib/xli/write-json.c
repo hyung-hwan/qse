@@ -232,7 +232,15 @@ static int write_list (qse_xli_t* xli, qse_xli_list_t* list, int depth)
 				switch (pair->val->type)
 				{
 					case QSE_XLI_NIL:
-						if (write_to_current_stream(xli, QSE_T(";\n"), 2, 0) <= -1) return -1;
+						if (write_to_current_stream(xli, QSE_T("nil;\n"), 5, 0) <= -1) return -1;
+						break;
+
+					case QSE_XLI_TRUE:
+						if (write_to_current_stream(xli, QSE_T("true;\n"), 6, 0) <= -1) return -1;
+						break;
+
+					case QSE_XLI_FALSE:
+						if (write_to_current_stream(xli, QSE_T("false;\n"), 7, 0) <= -1) return -1;
 						break;
 
 					case QSE_XLI_STR:

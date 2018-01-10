@@ -104,7 +104,7 @@ typedef struct kwent_t kwent_t;
 struct kwent_t 
 { 
 	qse_cstr_t name;
-	int type; 
+	qse_xli_tok_type_t type; 
 };
 
 /* note that the keyword must start with @. */
@@ -112,6 +112,13 @@ static kwent_t kwtab[] =
 {
 	/* keep it sorted by the first field for binary search */
 	{ { QSE_T("@include"),     8 }, QSE_XLI_TOK_XINCLUDE }
+};
+
+static kwent_t boolkwtab[] = 
+{
+	/* keep it sorted by the first field for binary search */
+	{ { QSE_T("false"),     5 }, QSE_XLI_TOK_FALSE },
+	{ { QSE_T("true"),      4 }, QSE_XLI_TOK_TRUE }
 };
 
 int qse_xli_getchar (qse_xli_t* xli)
@@ -254,14 +261,21 @@ static int skip_comment (qse_xli_t* xli, qse_xli_tok_t* tok)
 	return 0; 
 }
 
-static int classify_ident (qse_xli_t* xli, const qse_cstr_t* name)
+static qse_xli_tok_type_t classify_ident (qse_xli_t* xli, const qse_cstr_t* name)
 {
 	/* perform binary search */
 
 	/* declaring left, right, mid to be the int type is ok
 	 * because we know kwtab is small enough. */
-	int left = 0, right = QSE_COUNTOF(kwtab) - 1, mid;
+	int left, right, mid;
+	int bool_checked = 0;
+	kwent_t* kwtabp;
 
+	left = 0;
+	right = QSE_COUNTOF(kwtab) - 1;
+	kwtabp = kwtab;
+
+retry:
 	while (left <= right)
 	{
 		int n;
@@ -269,7 +283,7 @@ static int classify_ident (qse_xli_t* xli, const qse_cstr_t* name)
 
 		/*mid = (left + right) / 2;*/
 		mid = left + (right - left) / 2;
-		kwp = &kwtab[mid];
+		kwp = &kwtabp[mid];
 
 		n = qse_strxncmp (kwp->name.ptr, kwp->name.len, name->ptr, name->len);
 		if (n > 0) 
@@ -282,6 +296,15 @@ static int classify_ident (qse_xli_t* xli, const qse_cstr_t* name)
 		}
 		else if (n < 0) left = mid + 1;
 		else return kwp->type;
+	}
+
+	if (!bool_checked && (xli->opt.trait & QSE_XLI_BOOLEAN))
+	{
+		bool_checked = 1;
+		kwtabp = boolkwtab;
+		left = 0;
+		right = QSE_COUNTOF(boolkwtab) - 1;
+		goto retry;
 	}
 
 	return QSE_XLI_TOK_IDENT;
@@ -513,6 +536,7 @@ retry:
 	{
 		int lead_digit = QSE_ISDIGIT(c);
 		int all_digits = 1;
+		qse_xli_tok_type_t type;
 
 		/* a normal identifier can be composed of wider varieties of 
 		 * characters than a keyword/directive */
@@ -541,7 +565,8 @@ retry:
 			return -1;
 		}
 
-		SET_TOKEN_TYPE (xli, tok, QSE_XLI_TOK_IDENT);
+		type = classify_ident (xli, QSE_STR_XSTR(tok->name));
+		SET_TOKEN_TYPE (xli, tok, type);
 	}
 	else if ((xli->tok_status & TOK_STATUS_ENABLE_NSTR) && QSE_ISDIGIT(c))
 	{
@@ -854,7 +879,26 @@ static int read_pair (qse_xli_t* xli, const qse_char_t* keytag, const qse_xli_sc
 			if (get_token (xli) <= -1) goto oops;
 		}
 
-		if (MATCH(xli, QSE_XLI_TOK_SQSTR) || MATCH(xli, QSE_XLI_TOK_DQSTR) || MATCH(xli, QSE_XLI_TOK_NSTR) || MATCH(xli, QSE_XLI_TOK_IDENT))
+		if (MATCH(xli, QSE_XLI_TOK_TRUE) || MATCH(xli, QSE_XLI_TOK_FALSE))
+		{
+			qse_xli_val_t* v;
+
+			v = MATCH(xli, QSE_XLI_TOK_TRUE)? (qse_xli_val_t*)&xli->root->xtrue:
+			                                  (qse_xli_val_t*)&xli->root->xfalse;
+			pair = qse_xli_insertpair(xli, parlist, QSE_NULL, key.ptr, name, keytag, v);
+			if (pair == QSE_NULL) goto oops;
+
+			if (get_token (xli) <= -1) goto oops; /* skip the value */
+
+			if (!MATCH(xli, QSE_XLI_TOK_SEMICOLON))
+			{
+				qse_xli_seterror (xli, QSE_XLI_ESCOLON, QSE_STR_XSTR(xli->tok.name), &xli->tok.loc);
+				goto oops;
+			}
+
+			if (get_token (xli) <= -1) goto oops; /* skip the value */
+		}
+		else if (MATCH(xli, QSE_XLI_TOK_SQSTR) || MATCH(xli, QSE_XLI_TOK_DQSTR) || MATCH(xli, QSE_XLI_TOK_NSTR) || MATCH(xli, QSE_XLI_TOK_IDENT))
 		{
 			qse_xli_str_t* curstrseg;
 			qse_size_t segcount = 0;
@@ -867,8 +911,13 @@ static int read_pair (qse_xli_t* xli, const qse_char_t* keytag, const qse_xli_sc
 			}
 
 			/* add a new pair with the initial string segment */
-			pair = qse_xli_insertpairwithstr (xli, parlist, QSE_NULL, key.ptr, name, keytag, QSE_STR_XSTR(xli->tok.name), strtag);
+			pair = qse_xli_insertpairwithstr(xli, parlist, QSE_NULL, key.ptr, name, keytag, QSE_STR_XSTR(xli->tok.name), strtag);
 			if (pair == QSE_NULL) goto oops;
+
+			if (MATCH(xli, QSE_XLI_TOK_NSTR))
+			{
+				((qse_xli_str_t*)pair->val)->flags |= QSE_XLI_STR_NSTR;
+			}
 
 			segcount++;
 			curstrseg = (qse_xli_str_t*)pair->val;
@@ -931,17 +980,14 @@ static int read_pair (qse_xli_t* xli, const qse_char_t* keytag, const qse_xli_sc
 
 			/* semicolon read. turn off NSTR */
 			xli->tok_status &= ~TOK_STATUS_ENABLE_NSTR;
-			if (get_token (xli) <= -1) goto oops;
+			if (get_token(xli) <= -1) goto oops;
 		}
 		else
 		{
-			qse_xli_seterror (xli, QSE_XLI_EPAVAL, QSE_STR_XSTR(xli->tok.name), &xli->tok.loc);
+			qse_xli_seterror (xli, QSE_XLI_EVALUE, QSE_STR_XSTR(xli->tok.name), &xli->tok.loc);
 			goto oops;
 		}
-
-
 		/* TODO: check against schema */
-
 	}
 	else if (!(xli->opt.trait & QSE_XLI_NOLIST) && MATCH(xli, QSE_XLI_TOK_LBRACE))
 	{

@@ -468,8 +468,10 @@ static qse_ssize_t sf_out_open (qse_xli_t* xli, qse_xli_io_arg_t* arg, xtn_t* xt
 		if (arg->handle == QSE_NULL)
 		{
 			qse_cstr_t ea;
-			ea.ptr = (qse_char_t*)arg->name;
-			ea.len = qse_strlen(ea.ptr);
+			/*ea.ptr = (qse_char_t*)arg->name;
+			ea.len = qse_strlen(ea.ptr);*/
+			ea.ptr = (qse_char_t*)path;
+			ea.len = qse_strlen(path);
 			qse_xli_seterrnum (xli, QSE_XLI_EIOFIL, &ea);
 			return -1;
 		}

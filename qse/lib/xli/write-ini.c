@@ -83,6 +83,14 @@ static int write_list (qse_xli_t* xli, qse_xli_list_t* list, int depth)
 						if (write_to_current_stream (xli, QSE_T("\n"), 1) <= -1) return -1;
 						break;
 
+					case QSE_XLI_TRUE:
+						if (write_to_current_stream (xli, QSE_T("true\n"), 5) <= -1) return -1;
+						break;
+
+					case QSE_XLI_FALSE:
+						if (write_to_current_stream (xli, QSE_T("false\n"), 6) <= -1) return -1;
+						break;
+
 					case QSE_XLI_STR:
 					{
 						qse_xli_str_t* str = (qse_xli_str_t*)pair->val;
