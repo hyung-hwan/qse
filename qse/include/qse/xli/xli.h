@@ -169,7 +169,6 @@ typedef struct qse_xli_list_t   qse_xli_list_t;
 typedef struct qse_xli_atom_t   qse_xli_atom_t;
 typedef struct qse_xli_pair_t   qse_xli_pair_t;
 typedef struct qse_xli_text_t   qse_xli_text_t;
-typedef struct qse_xli_vtext_t  qse_xli_vtext_t;
 typedef struct qse_xli_file_t   qse_xli_file_t;
 typedef struct qse_xli_eof_t    qse_xli_eof_t;
 
@@ -197,15 +196,22 @@ enum qse_xli_list_flag_t
 };
 typedef enum qse_xli_list_flag_t qse_xli_list_flag_t;
 
+enum qse_xli_text_flag_t
+{
+	QSE_XLI_TEXT_VERBATIM = (1 << 0),
+	QSE_XLI_TEXT_DEINDENT = (1 << 1)
+};
+typedef enum qse_xli_text_flag_t qse_xli_text_flag_t;
+
 enum qse_xli_atom_type_t
 {
 	QSE_XLI_PAIR,
 	QSE_XLI_TEXT,
-	QSE_XLI_VTEXT, /* verbatim text */
 	QSE_XLI_FILE,
 	QSE_XLI_EOF
 };
 typedef enum qse_xli_atom_type_t qse_xli_atom_type_t;
+
 
 #define QSE_XLI_VAL_HDR \
 	qse_xli_val_type_t type
@@ -272,12 +278,7 @@ struct qse_xli_pair_t
 struct qse_xli_text_t
 {
 	QSE_XLI_ATOM_HDR;
-	const qse_char_t* ptr;
-};
-
-struct qse_xli_vtext_t
-{
-	QSE_XLI_ATOM_HDR;
+	int flags;
 	const qse_char_t* ptr;
 };
 
@@ -682,13 +683,6 @@ QSE_EXPORT qse_xli_pair_t* qse_xli_insertpairwithstrs (
 );
 
 QSE_EXPORT qse_xli_text_t* qse_xli_inserttext (
-	qse_xli_t*        xli,
-	qse_xli_list_t*   parent,
-	qse_xli_atom_t*   peer,
-	const qse_char_t* str
-);
-
-QSE_EXPORT qse_xli_vtext_t* qse_xli_insertvtext (
 	qse_xli_t*        xli,
 	qse_xli_list_t*   parent,
 	qse_xli_atom_t*   peer,

@@ -346,40 +346,24 @@ static int write_list (qse_xli_t* xli, qse_xli_list_t* list, int depth)
 
 			case QSE_XLI_TEXT:
 			{
-				int i;
 				const qse_char_t* str = ((qse_xli_text_t*)curatom)->ptr;
 
-				for (i = 0; i < depth; i++) 
-				{
-					if (write_to_current_stream (xli, QSE_T("\t"), 1, 0) <= -1) return -1;
-				}
-
-				if (write_to_current_stream (xli, QSE_T("#"), 1, 0) <= -1 ||
-				    write_to_current_stream (xli, str, qse_strlen(str), 0) <= -1 ||
-				    write_to_current_stream (xli, QSE_T("\n"), 1, 0) <= -1) return -1;
-				break;
-			}
-
-			case QSE_XLI_VTEXT:
-			{
-				/* no vtext element can be included in the xli format */
-				/* do nothing */
+				/* don't honor VERBATIM and DEINDENT flags */
+				if (write_indentation(xli, depth) <= -1 ||
+				    write_to_current_stream(xli, QSE_T("#"), 1, 0) <= -1 ||
+				    write_to_current_stream(xli, str, qse_strlen(str), 0) <= -1 ||
+				    write_to_current_stream(xli, QSE_T("\n"), 1, 0) <= -1) return -1;
 				break;
 			}
 
 			case QSE_XLI_FILE:
 			{
-				int i;
 				const qse_char_t* path = ((qse_xli_file_t*)curatom)->path;
 
-				for (i = 0; i < depth; i++) 
-				{
-					if (write_to_current_stream (xli, QSE_T("\t"), 1, 0) <= -1) return -1;
-				}
-
-				if (write_to_current_stream (xli, QSE_T("@include \""), 10, 0) <= -1 ||
-				    write_to_current_stream (xli, path, qse_strlen(path), 1) <= -1 ||
-				    write_to_current_stream (xli, QSE_T("\";\n"), 3, 0) <= -1) return -1;
+				if (write_indentation(xli, depth) <= -1 ||
+				    write_to_current_stream(xli, QSE_T("@include \""), 10, 0) <= -1 ||
+				    write_to_current_stream(xli, path, qse_strlen(path), 1) <= -1 ||
+				    write_to_current_stream(xli, QSE_T("\";\n"), 3, 0) <= -1) return -1;
 
 				if (qse_xli_openwstream(xli, ((qse_xli_file_t*)curatom)->path, depth) <= -1) return -1;
 				depth = 0;

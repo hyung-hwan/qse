@@ -28,15 +28,26 @@
 #include <qse/cmn/chr.h>
 
 /*
-	"key1" {
+{
+	"key1": {
 		# comment
-		[keytag]key11 "alias" = [strtag]"test machine;
-		key1122 {
-			key112233 = "hello";
-		}
-	  }
+		"key11": = "test machine,
+		"key1122": [
+			1,
+ 			2,
+ 			{ 
+				"a": 10,
+ 				"b": 20,
+ 			}
+		]
 	}
+}
 */
+
+enum
+{
+	TOK_STATUS_DEINDENT_TEXT = (1 << 0)
+};
 
 static int get_token (qse_xli_t* xli);
 static int read_list (qse_xli_t* xli, qse_xli_list_t* lv);
@@ -123,8 +134,14 @@ static int skip_comment (qse_xli_t* xli, qse_xli_tok_t* tok)
 		}
 		while (1);
 
-		if ((xli->opt.trait & QSE_XLI_KEEPTEXT) && 
-		    qse_xli_inserttext(xli, xli->parlink->list, QSE_NULL, QSE_STR_PTR(tok->name)) == QSE_NULL) return -1;
+		if (xli->opt.trait & QSE_XLI_KEEPTEXT)
+		{
+			qse_xli_text_t* ta;
+			ta = qse_xli_inserttext(xli, xli->parlink->list, QSE_NULL, QSE_STR_PTR(tok->name));
+			if (!ta) return -1;
+
+			if (xli->tok_status & TOK_STATUS_DEINDENT_TEXT) ta->flags |= QSE_XLI_TEXT_DEINDENT;
+		}
 
 		GET_CHAR (xli); /* eat the new line letter */
 		return 1; /* comment by # */
@@ -803,11 +820,12 @@ static int read_root_list (qse_xli_t* xli)
 	link = qse_xli_makelistlink (xli, &xli->root->list);
 	if (!link) goto oops;
 
+	xli->tok_status |= TOK_STATUS_DEINDENT_TEXT;
 	if (qse_xli_getchar(xli) <= -1 || get_token(xli) <= -1) goto oops;
 
 	while (1)
 	{
-		if (MATCH(xli, QSE_XLI_TOK_XINCLUDE))
+		/*if (MATCH(xli, QSE_XLI_TOK_XINCLUDE))
 		{
 			if (get_token(xli) <= -1) goto oops;
 
@@ -823,14 +841,24 @@ static int read_root_list (qse_xli_t* xli)
 		{
 			if (get_token(xli) <= -1) goto oops;
 		}
-		else if (MATCH(xli, QSE_XLI_TOK_LBRACK))
+		else*/if (MATCH(xli, QSE_XLI_TOK_LBRACK))
 		{
+			qse_xli_text_t* ta;
 			xli->root->list.flags |= QSE_XLI_LIST_ARRAYED; 
+			ta = qse_xli_inserttext(xli, xli->parlink->list, QSE_NULL, QSE_STR_PTR(xli->tok.name));
+			if (!ta) goto oops;
+			ta->flags |= QSE_XLI_TEXT_VERBATIM | QSE_XLI_TEXT_DEINDENT;
+			xli->tok_status &= ~TOK_STATUS_DEINDENT_TEXT;
 			if (get_token(xli) <= -1) goto oops;
 			break;
 		}
 		else if (MATCH(xli, QSE_XLI_TOK_LBRACE))
 		{
+			qse_xli_text_t* ta;
+			ta = qse_xli_inserttext(xli, xli->parlink->list, QSE_NULL, QSE_STR_PTR(xli->tok.name));
+			if (!ta) goto oops;
+			ta->flags |= QSE_XLI_TEXT_VERBATIM | QSE_XLI_TEXT_DEINDENT;
+			xli->tok_status &= ~TOK_STATUS_DEINDENT_TEXT;
 			if (get_token(xli) <= -1) goto oops;
 			break;
 		}
@@ -845,7 +873,7 @@ static int read_root_list (qse_xli_t* xli)
 
 	while (1)
 	{
-		if (MATCH(xli, QSE_XLI_TOK_XINCLUDE))
+		/*if (MATCH(xli, QSE_XLI_TOK_XINCLUDE))
 		{
 			if (get_token(xli) <= -1) goto oops;
 
@@ -861,15 +889,25 @@ static int read_root_list (qse_xli_t* xli)
 		{
 			if (get_token(xli) <= -1) goto oops;
 		}
-		else if (MATCH(xli, QSE_XLI_TOK_RBRACK))
+		else*/if (MATCH(xli, QSE_XLI_TOK_RBRACK))
 		{
+			qse_xli_text_t* ta;
 			if (!(xli->root->list.flags & QSE_XLI_LIST_ARRAYED)) goto oops_rbrac;
+			ta = qse_xli_inserttext(xli, xli->parlink->list, QSE_NULL, QSE_STR_PTR(xli->tok.name));
+			if (!ta) goto oops;
+			ta->flags |= QSE_XLI_TEXT_VERBATIM | QSE_XLI_TEXT_DEINDENT;
+			xli->tok_status |= TOK_STATUS_DEINDENT_TEXT;
 			if (get_token(xli) <= -1) goto oops;
 			break;
 		}
 		else if (MATCH(xli, QSE_XLI_TOK_RBRACE))
 		{
+			qse_xli_text_t* ta;
 			if (xli->root->list.flags & QSE_XLI_LIST_ARRAYED) goto oops_rbrac;
+			ta = qse_xli_inserttext(xli, xli->parlink->list, QSE_NULL, QSE_STR_PTR(xli->tok.name));
+			if (!ta) goto oops;
+			ta->flags |= QSE_XLI_TEXT_VERBATIM | QSE_XLI_TEXT_DEINDENT;
+			xli->tok_status |= TOK_STATUS_DEINDENT_TEXT;
 			if (get_token(xli) <= -1) goto oops;
 			break;
 		}
@@ -883,7 +921,6 @@ static int read_root_list (qse_xli_t* xli)
 			goto oops;
 		}
 	}
-
 
 	QSE_ASSERT (link == xli->parlink);
 	qse_xli_freelistlink (xli, link);

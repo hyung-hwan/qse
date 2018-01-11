@@ -146,16 +146,10 @@ static int write_list (qse_xli_t* xli, qse_xli_list_t* list, int depth)
 			{
 				const qse_char_t* str = ((qse_xli_text_t*)curatom)->ptr;
 
+				/* don't honor VERBATIM and DEINDENT flags */
 				if (write_to_current_stream(xli, QSE_T(";"), 1) <= -1 ||
 				    write_to_current_stream(xli, str, qse_strlen(str)) <= -1 ||
 				    write_to_current_stream(xli, QSE_T("\n"), 1) <= -1) return -1;
-				break;
-			}
-
-			case QSE_XLI_VTEXT:
-			{
-				/* no vtext element can be included in the ini format */
-				/* do nothing */
 				break;
 			}
 

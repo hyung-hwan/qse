@@ -542,20 +542,6 @@ qse_xli_text_t* qse_xli_inserttext (
 	return text;
 }
 
-qse_xli_vtext_t* qse_xli_insertvtext (
-	qse_xli_t* xli, qse_xli_list_t* parent, qse_xli_atom_t* peer, const qse_char_t* str)
-{
-	qse_xli_text_t* text;
-
-	QSE_ASSERT (QSE_SIZEOF(qse_xli_text_t) == QSE_SIZEOF(qse_xli_vtext_t));
-
-	text = qse_xli_inserttext (xli, parent, peer, str);
-	if (!text) return QSE_NULL;
-
-	((qse_xli_vtext_t*)text)->type = QSE_XLI_VTEXT;
-	return (qse_xli_vtext_t*)text;
-}
-
 qse_xli_file_t* qse_xli_insertfile (
 	qse_xli_t* xli, qse_xli_list_t* parent, qse_xli_atom_t* peer, const qse_char_t* path)
 {
