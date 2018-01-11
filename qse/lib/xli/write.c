@@ -360,6 +360,13 @@ static int write_list (qse_xli_t* xli, qse_xli_list_t* list, int depth)
 				break;
 			}
 
+			case QSE_XLI_VTEXT:
+			{
+				/* no vtext element can be included in the xli format */
+				/* do nothing */
+				break;
+			}
+
 			case QSE_XLI_FILE:
 			{
 				int i;

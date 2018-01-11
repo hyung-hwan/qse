@@ -69,6 +69,7 @@ enum qse_xli_errnum_t
 	QSE_XLI_ESCOLON,  /**< semicolon expected in place of '${0}' */
 	QSE_XLI_EEQ,      /**< = expected in place of '${0}' */
 	QSE_XLI_ELBREQ,   /**< { or = expected in place of '${0}' */
+	QSE_XLI_ELBRAC,   /** { or [ expected in place of '${0}' */
 	QSE_XLI_ERBRACE,  /**< } expected in place of '${0}' */
 	QSE_XLI_ERBRACK,  /**< ] expected in place of '${0}' */
 	QSE_XLI_ECOMMA,   /**< , expected in place of '${0}' */
@@ -168,6 +169,7 @@ typedef struct qse_xli_list_t   qse_xli_list_t;
 typedef struct qse_xli_atom_t   qse_xli_atom_t;
 typedef struct qse_xli_pair_t   qse_xli_pair_t;
 typedef struct qse_xli_text_t   qse_xli_text_t;
+typedef struct qse_xli_vtext_t  qse_xli_vtext_t;
 typedef struct qse_xli_file_t   qse_xli_file_t;
 typedef struct qse_xli_eof_t    qse_xli_eof_t;
 
@@ -187,13 +189,21 @@ enum qse_xli_str_flag_t
 	QSE_XLI_STR_RADIX = (1 << 1),
 	QSE_XLI_STR_FLOAT = (1 << 2)
 };
+typedef enum qse_xli_str_flag_t qse_xli_str_flag_t;
+
+enum qse_xli_list_flag_t
+{
+	QSE_XLI_LIST_ARRAYED = (1 << 0)
+};
+typedef enum qse_xli_list_flag_t qse_xli_list_flag_t;
 
 enum qse_xli_atom_type_t
 {
 	QSE_XLI_PAIR,
 	QSE_XLI_TEXT,
+	QSE_XLI_VTEXT, /* verbatim text */
 	QSE_XLI_FILE,
-	QSE_XLI_EOF 
+	QSE_XLI_EOF
 };
 typedef enum qse_xli_atom_type_t qse_xli_atom_type_t;
 
@@ -223,6 +233,7 @@ struct qse_xli_false_t
 struct qse_xli_list_t
 {
 	QSE_XLI_VAL_HDR;
+	int             flags;
 	qse_xli_atom_t* head;
 	qse_xli_atom_t* tail;
 };
@@ -259,6 +270,12 @@ struct qse_xli_pair_t
 };
 
 struct qse_xli_text_t
+{
+	QSE_XLI_ATOM_HDR;
+	const qse_char_t* ptr;
+};
+
+struct qse_xli_vtext_t
 {
 	QSE_XLI_ATOM_HDR;
 	const qse_char_t* ptr;
@@ -665,6 +682,13 @@ QSE_EXPORT qse_xli_pair_t* qse_xli_insertpairwithstrs (
 );
 
 QSE_EXPORT qse_xli_text_t* qse_xli_inserttext (
+	qse_xli_t*        xli,
+	qse_xli_list_t*   parent,
+	qse_xli_atom_t*   peer,
+	const qse_char_t* str
+);
+
+QSE_EXPORT qse_xli_vtext_t* qse_xli_insertvtext (
 	qse_xli_t*        xli,
 	qse_xli_list_t*   parent,
 	qse_xli_atom_t*   peer,
