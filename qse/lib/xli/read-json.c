@@ -825,23 +825,8 @@ static int read_root_list (qse_xli_t* xli)
 
 	while (1)
 	{
-		/*if (MATCH(xli, QSE_XLI_TOK_XINCLUDE))
-		{
-			if (get_token(xli) <= -1) goto oops;
-
-			if (!MATCH(xli,QSE_XLI_TOK_SQSTR) && !MATCH(xli,QSE_XLI_TOK_DQSTR))
-			{
-				qse_xli_seterror (xli, QSE_XLI_EINCLSTR, QSE_NULL, &xli->tok.loc);
-				goto oops;
-			}
-
-			if (begin_include (xli) <= -1) goto oops;
-		}
-		else if (MATCH(xli, QSE_XLI_TOK_TEXT))
-		{
-			if (get_token(xli) <= -1) goto oops;
-		}
-		else*/if (MATCH(xli, QSE_XLI_TOK_LBRACK))
+		/* NOTE: i don't support @include outside the outermost {} or [] */
+		if (MATCH(xli, QSE_XLI_TOK_LBRACK))
 		{
 			qse_xli_text_t* ta;
 			xli->root->list.flags |= QSE_XLI_LIST_ARRAYED; 
@@ -873,23 +858,8 @@ static int read_root_list (qse_xli_t* xli)
 
 	while (1)
 	{
-		/*if (MATCH(xli, QSE_XLI_TOK_XINCLUDE))
-		{
-			if (get_token(xli) <= -1) goto oops;
-
-			if (!MATCH(xli,QSE_XLI_TOK_SQSTR) && !MATCH(xli,QSE_XLI_TOK_DQSTR))
-			{
-				qse_xli_seterror (xli, QSE_XLI_EINCLSTR, QSE_NULL, &xli->tok.loc);
-				goto oops;
-			}
-
-			if (begin_include (xli) <= -1) goto oops;
-		}
-		else if (MATCH(xli, QSE_XLI_TOK_TEXT))
-		{
-			if (get_token(xli) <= -1) goto oops;
-		}
-		else*/if (MATCH(xli, QSE_XLI_TOK_RBRACK))
+		/* NOTE: i don't support @include outside the outermost {} or [] */
+		if (MATCH(xli, QSE_XLI_TOK_RBRACK))
 		{
 			qse_xli_text_t* ta;
 			if (!(xli->root->list.flags & QSE_XLI_LIST_ARRAYED)) goto oops_rbrac;
