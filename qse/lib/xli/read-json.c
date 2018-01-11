@@ -798,21 +798,101 @@ static int read_list (qse_xli_t* xli, qse_xli_list_t* lv)
 
 static int read_root_list (qse_xli_t* xli)
 {
-	qse_xli_list_link_t* link;
+	qse_xli_list_link_t* link = QSE_NULL;
 
 	link = qse_xli_makelistlink (xli, &xli->root->list);
-	if (!link) return -1;
+	if (!link) goto oops;
 
-	if (qse_xli_getchar(xli) <= -1 || get_token(xli) <= -1 || __read_list(xli) <= -1)
+	if (qse_xli_getchar(xli) <= -1 || get_token(xli) <= -1) goto oops;
+
+	while (1)
 	{
-		qse_xli_freelistlink (xli, link);
-		return -1;
+		if (MATCH(xli, QSE_XLI_TOK_XINCLUDE))
+		{
+			if (get_token(xli) <= -1) goto oops;
+
+			if (!MATCH(xli,QSE_XLI_TOK_SQSTR) && !MATCH(xli,QSE_XLI_TOK_DQSTR))
+			{
+				qse_xli_seterror (xli, QSE_XLI_EINCLSTR, QSE_NULL, &xli->tok.loc);
+				goto oops;
+			}
+
+			if (begin_include (xli) <= -1) goto oops;
+		}
+		else if (MATCH(xli, QSE_XLI_TOK_TEXT))
+		{
+			if (get_token(xli) <= -1) goto oops;
+		}
+		else if (MATCH(xli, QSE_XLI_TOK_LBRACK))
+		{
+			xli->root->list.flags |= QSE_XLI_LIST_ARRAYED; 
+			if (get_token(xli) <= -1) goto oops;
+			break;
+		}
+		else if (MATCH(xli, QSE_XLI_TOK_LBRACE))
+		{
+			if (get_token(xli) <= -1) goto oops;
+			break;
+		}
+		else
+		{
+			qse_xli_seterror (xli, QSE_XLI_ELBRAC, QSE_STR_XSTR(xli->tok.name), &xli->tok.loc);
+			goto oops;
+		}
 	}
+
+	if (__read_list(xli) <= -1) goto oops;
+
+	while (1)
+	{
+		if (MATCH(xli, QSE_XLI_TOK_XINCLUDE))
+		{
+			if (get_token(xli) <= -1) goto oops;
+
+			if (!MATCH(xli,QSE_XLI_TOK_SQSTR) && !MATCH(xli,QSE_XLI_TOK_DQSTR))
+			{
+				qse_xli_seterror (xli, QSE_XLI_EINCLSTR, QSE_NULL, &xli->tok.loc);
+				goto oops;
+			}
+
+			if (begin_include (xli) <= -1) goto oops;
+		}
+		else if (MATCH(xli, QSE_XLI_TOK_TEXT))
+		{
+			if (get_token(xli) <= -1) goto oops;
+		}
+		else if (MATCH(xli, QSE_XLI_TOK_RBRACK))
+		{
+			if (!(xli->root->list.flags & QSE_XLI_LIST_ARRAYED)) goto oops_rbrac;
+			if (get_token(xli) <= -1) goto oops;
+			break;
+		}
+		else if (MATCH(xli, QSE_XLI_TOK_RBRACE))
+		{
+			if (xli->root->list.flags & QSE_XLI_LIST_ARRAYED) goto oops_rbrac;
+			if (get_token(xli) <= -1) goto oops;
+			break;
+		}
+		else
+		{
+		oops_rbrac:
+			qse_xli_seterror (xli,
+				((xli->root->list.flags & QSE_XLI_LIST_ARRAYED)? QSE_XLI_ERBRACK: QSE_XLI_ERBRACE),
+				QSE_STR_XSTR(xli->tok.name), &xli->tok.loc
+			);
+			goto oops;
+		}
+	}
+
 
 	QSE_ASSERT (link == xli->parlink);
 	qse_xli_freelistlink (xli, link);
 
 	return 0;
+
+oops:
+	if (link) qse_xli_freelistlink (xli, link);
+	return -1;
 }
 
 int qse_xli_readjson (qse_xli_t* xli, qse_xli_io_impl_t io)

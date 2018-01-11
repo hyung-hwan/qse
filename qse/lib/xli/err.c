@@ -49,6 +49,7 @@ const qse_char_t* qse_xli_dflerrstr (const qse_xli_t* xli, qse_xli_errnum_t errn
 		QSE_T("semicolon expected in place of '${0}'"),
 		QSE_T("equal-sign expected in place of '${0}'"),
 		QSE_T("left-brace or equal-sign expected in place of '${0}'"),
+		QSE_T("left-brace or left-bracket expected in place of '${0}'"),
 		QSE_T("right-brace expected in place of '${0}'"),
 		QSE_T("right-bracket expected in place of '${0}'"),
 		QSE_T("comma expected in place of '${0}'"),

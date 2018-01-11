@@ -152,6 +152,13 @@ static int write_list (qse_xli_t* xli, qse_xli_list_t* list, int depth)
 				break;
 			}
 
+			case QSE_XLI_VTEXT:
+			{
+				/* no vtext element can be included in the ini format */
+				/* do nothing */
+				break;
+			}
+
 			case QSE_XLI_FILE:
 				/* no file inclusion is supported by the ini-format. ignore it */
 				break;
