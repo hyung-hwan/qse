@@ -3009,15 +3009,29 @@ QSE_EXPORT int qse_mbsistype (
 	qse_mctype_t       type
 );
 
+QSE_EXPORT int qse_mbsxistype (
+	const qse_mchar_t* str,
+	qse_size_t         len,
+	qse_mctype_t       type
+);
+
 QSE_EXPORT int qse_wcsistype (
 	const qse_wchar_t* str, 
 	qse_wctype_t       type
 );
 
+QSE_EXPORT int qse_wcsxistype (
+	const qse_wchar_t* str,
+	qse_size_t         len,
+	qse_wctype_t       type
+);
+
 #if defined(QSE_CHAR_IS_MCHAR)
 #	define qse_stristype(str,type) qse_mbsistype(str,type)
+#	define qse_strxistype(str,len,type) qse_mbsxistype(str,len,type)
 #else
 #	define qse_stristype(str,type) qse_wcsistype(str,type)
+#	define qse_strxistype(str,len,type) qse_wcsxistype(str,len,type)
 #endif
 /* ------------------------------------------------------------------------- */
 

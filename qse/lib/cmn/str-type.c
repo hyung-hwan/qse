@@ -38,9 +38,33 @@ int qse_mbsistype (const qse_mchar_t* str, qse_mctype_t type)
 	return 1;
 }
 
+int qse_mbsxistype (const qse_mchar_t* str, qse_size_t len, qse_mctype_t type)
+{
+	const qse_mchar_t* end = str + len;
+	while (str < end)
+	{
+		if (!qse_ismctype(*str, type)) return 0;
+		str++;
+	}
+	return 1;
+}
+
+/* -------------------------------------------------------------------------- */
+
 int qse_wcsistype (const qse_wchar_t* str, qse_wctype_t type)
 {
 	while (*str)
+	{
+		if (!qse_iswctype(*str, type)) return 0;
+		str++;
+	}
+	return 1;
+}
+
+int qse_wcsxistype (const qse_wchar_t* str, qse_size_t len, qse_wctype_t type)
+{
+	const qse_wchar_t* end = str + len;
+	while (str < end)
 	{
 		if (!qse_iswctype(*str, type)) return 0;
 		str++;
