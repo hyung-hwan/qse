@@ -29,6 +29,7 @@
 
 #include <qse/types.h>
 #include <qse/macros.h>
+#include <qse/cmn/chr.h>
 #include <stdarg.h>
 
 /** \file
@@ -3003,6 +3004,22 @@ QSE_EXPORT int qse_wcsxnfnmat (
 #	define qse_strxnfnmat(str,slen,ptn,plen,flags) qse_wcsxnfnmat(str,slen,ptn,plen,flags)
 #endif
 
+QSE_EXPORT int qse_mbsistype (
+	const qse_mchar_t* str,
+	qse_mctype_t       type
+);
+
+QSE_EXPORT int qse_wcsistype (
+	const qse_wchar_t* str, 
+	qse_wctype_t       type
+);
+
+#if defined(QSE_CHAR_IS_MCHAR)
+#	define qse_stristype(str,type) qse_mbsistype(str,type)
+#else
+#	define qse_stristype(str,type) qse_wcsistype(str,type)
+#endif
+/* ------------------------------------------------------------------------- */
 
 /**
  * The qse_mbs_open() function creates a dynamically resizable multibyte string.
@@ -3218,6 +3235,9 @@ QSE_EXPORT qse_size_t qse_mbs_vfmt (
 	const qse_mchar_t* fmt,
 	va_list            ap
 );
+
+/* ------------------------------------------------------------------------- */
+
 
 /**
  * The qse_wcs_open() function creates a dynamically resizable wide-character
