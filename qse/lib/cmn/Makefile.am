@@ -57,6 +57,7 @@ libqsecmn_la_SOURCES = \
 	mem.c \
 	oht.c \
 	opt.c \
+	opt-cli.c \
 	path-base.c \
 	path-canon.c \
 	path-core.c \
@@ -95,6 +96,7 @@ libqsecmn_la_SOURCES = \
 	str-subst.c \
 	str-tok.c \
 	str-trm.c \
+	str-type.c \
 	str-word.c \
 	time.c \
 	tmr.c \

@@ -317,7 +317,6 @@ static void print_warning (const qse_char_t* fmt, ...)
 	va_end (va);
 }
 
-
 struct opttab_t
 {
 	const qse_char_t* name;

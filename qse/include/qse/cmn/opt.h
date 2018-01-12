@@ -64,31 +64,121 @@ struct qse_opt_t
 	qse_char_t*        cur;
 };
 
+
+/* --------------------------------------------------------------------- */
+#define QSE_CLI_OPTNAME (1 << 0)
+#define QSE_CLI_OPTVAL  (1 << 1)
+
+#define QSE_CLI_ERROR_INVALID_OPTNAME  1
+#define QSE_CLI_ERROR_MISSING_OPTNAME  2
+#define QSE_CLI_ERROR_REDUNDANT_OPTVAL 3
+#define QSE_CLI_ERROR_MISSING_OPTVAL   4
+#define QSE_CLI_ERROR_MEMORY           5
+
+typedef struct qse_cli_opt_t qse_cli_opt_t;
+typedef struct qse_cli_t qse_cli_t;
+
+struct qse_cli_opt_t
+{
+	/* input */
+	const qse_char_t* name;
+	int requires;
+
+	/* output - you don't have to initialize this field */
+	qse_char_t* value;
+};
+
+typedef int (*qse_cli_errcb_t) (
+	qse_cli_t*        cli,
+	int               code, 
+	const qse_char_t* qname,
+	const qse_char_t* qval
+);
+
+struct qse_cli_data_t
+{
+	/* input */
+	qse_cli_errcb_t    errcb;
+	const qse_char_t** optsta;
+	const qse_char_t*  optasn;
+	qse_cli_opt_t*     opts;
+
+};
+typedef struct qse_cli_data_t qse_cli_data_t;
+
+struct qse_cli_t
+{
+	qse_mmgr_t*    mmgr;
+	qse_cli_data_t data;
+
+	/* output - you don't have to initialize these fields */
+	qse_char_t*    verb;
+	int            nparams;
+	qse_char_t**   params;
+};
+
+
 #if defined(__cplusplus)
 extern "C" {
 #endif
 
 /**
- * The qse_getopt() function processes the @a argc command-line arguments
- * pointed to by @a argv as configured in @a opt. It can process two 
+ * The qse_getopt() function processes the \a argc command-line arguments
+ * pointed to by \a argv as configured in \a opt. It can process two 
  * different option styles: a single character starting with '-', and a 
  * long name starting with '--'. 
  *
- * A character in @a opt.str is treated as a single character option. Should
+ * A character in \a opt.str is treated as a single character option. Should
  * it require a parameter, specify ':' after it.
  *
  * Two special returning option characters indicate special error conditions. 
- * - @b ? indicates a bad option stored in the @a opt->opt field.
- * - @b : indicates a bad parameter for an option stored in the 
- *      @a opt->opt field.
+ * - \b ? indicates a bad option stored in the \a opt->opt field.
+ * - \b : indicates a bad parameter for an option stored in the 
+ *      \a opt->opt field.
  *
- * @return an option character on success, QSE_CHAR_EOF on no more options.
+ * \return an option character on success, QSE_CHAR_EOF on no more options.
  */
 QSE_EXPORT qse_cint_t qse_getopt (
 	int                argc, /* argument count */ 
 	qse_char_t* const* argv, /* argument array */
 	qse_opt_t*         opt   /* option configuration */
 );
+
+/* --------------------------------------------------------------------- */
+
+QSE_EXPORT int qse_parsecli (
+	qse_cli_t*        cli,
+	qse_mmgr_t*       mmgr,
+	int               argc,
+	qse_char_t* const argv[],
+	qse_cli_data_t*   data
+);
+
+QSE_EXPORT void qse_clearcli (
+	qse_cli_t*        cli
+);
+
+QSE_EXPORT qse_char_t* qse_getcliverb (
+	qse_cli_t*        cli
+);
+
+QSE_EXPORT qse_char_t* qse_getclioptval (
+	qse_cli_t*        cli,
+	const qse_char_t* opt
+);
+
+QSE_EXPORT qse_char_t* qse_getcliparams (
+	qse_cli_t*        cli,
+	int               index
+);
+
+
+
+#if defined(QSE_HAVE_INLINE)
+	static QSE_INLINE int qse_getncliparams (qse_cli_t* cli) { return cli->nparams; }
+#else
+#	define qse_getncliparams(cli) ((cli)->nparams)
+#endif
 
 #if defined(__cplusplus)
 }
