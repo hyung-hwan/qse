@@ -198,8 +198,12 @@ typedef enum qse_xli_list_flag_t qse_xli_list_flag_t;
 
 enum qse_xli_text_flag_t
 {
-	QSE_XLI_TEXT_VERBATIM = (1 << 0),
-	QSE_XLI_TEXT_DEINDENT = (1 << 1)
+	QSE_XLI_TEXT_VERBATIM            = (1 << 0),
+	QSE_XLI_TEXT_DEINDENT            = (1 << 1),
+	QSE_XLI_TEXT_LIST_OPENER         = (1 << 2),
+	QSE_XLI_TEXT_LIST_CLOSER         = (1 << 3),
+	QSE_XLI_TEXT_ARRAYED_LIST_OPENER = (1 << 4),
+	QSE_XLI_TEXT_ARRAYED_LIST_CLOSER = (1 << 5)
 };
 typedef enum qse_xli_text_flag_t qse_xli_text_flag_t;
 
