@@ -228,9 +228,25 @@ static int write_list (qse_xli_t* xli, qse_xli_list_t* list, int depth)
 	return 0;
 }
 
+
+static int have_opening_marker (qse_xli_t* xli, qse_xli_list_t* list)
+{
+	qse_xli_atom_t* curatom;
+
+	for (curatom = list->head; curatom; curatom = curatom->next)
+	{
+		qse_xli_text_t* ta;
+		if (curatom->type != QSE_XLI_TEXT) break;
+		ta = (qse_xli_text_t*)curatom;
+		if (ta->flags & (QSE_XLI_TEXT_ARRAYED_LIST_OPENER | QSE_XLI_TEXT_LIST_OPENER)) return 1;
+	}
+
+	return 0;
+}
+
 int qse_xli_writejson (qse_xli_t* xli, qse_xli_list_t* root_list, qse_xli_io_impl_t io)
 {
-	int n;
+	int n, marker;
 
 	if (io == QSE_NULL)
 	{
@@ -248,8 +264,23 @@ int qse_xli_writejson (qse_xli_t* xli, qse_xli_list_t* root_list, qse_xli_io_imp
 	/* open the top level stream */
 	if (qse_xli_openwstream (xli, QSE_NULL, 0) <= -1) return -1;
 
+	if (!root_list) root_list = &xli->root->list;
+
+	marker = have_opening_marker(xli, root_list);
+	if (!marker)
+	{
+		/* if the data has been loaded from a different format like xli or ini,
+		 * there are no opening and closing markers. so emit them manually */
+		if (write_to_current_stream(xli, ((root_list->flags & QSE_XLI_LIST_ARRAYED)? QSE_T("[\n"): QSE_T("{\n")), 2, 0) <= -1) return -1;
+	}
+
 	/* begin writing the root list */
-	n = write_list (xli, (root_list? root_list: &xli->root->list), 1);
+	n = write_list (xli, root_list, 1);
+
+	if (!marker)
+	{
+		if (write_to_current_stream(xli, ((root_list->flags & QSE_XLI_LIST_ARRAYED)? QSE_T("]\n"): QSE_T("}\n")), 2, 0) <= -1) return -1;
+	}
 
 	/* close all open streams. there should be only the
 	 * top-level stream here if there occurred no errors */

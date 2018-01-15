@@ -832,7 +832,7 @@ static int read_root_list (qse_xli_t* xli)
 			xli->root->list.flags |= QSE_XLI_LIST_ARRAYED; 
 			ta = qse_xli_inserttext(xli, xli->parlink->list, QSE_NULL, QSE_STR_PTR(xli->tok.name));
 			if (!ta) goto oops;
-			ta->flags |= QSE_XLI_TEXT_VERBATIM | QSE_XLI_TEXT_DEINDENT;
+			ta->flags |= QSE_XLI_TEXT_VERBATIM | QSE_XLI_TEXT_DEINDENT | QSE_XLI_TEXT_ARRAYED_LIST_OPENER;
 			xli->tok_status &= ~TOK_STATUS_DEINDENT_TEXT;
 			if (get_token(xli) <= -1) goto oops;
 			break;
@@ -842,7 +842,7 @@ static int read_root_list (qse_xli_t* xli)
 			qse_xli_text_t* ta;
 			ta = qse_xli_inserttext(xli, xli->parlink->list, QSE_NULL, QSE_STR_PTR(xli->tok.name));
 			if (!ta) goto oops;
-			ta->flags |= QSE_XLI_TEXT_VERBATIM | QSE_XLI_TEXT_DEINDENT;
+			ta->flags |= QSE_XLI_TEXT_VERBATIM | QSE_XLI_TEXT_DEINDENT | QSE_XLI_TEXT_LIST_OPENER;
 			xli->tok_status &= ~TOK_STATUS_DEINDENT_TEXT;
 			if (get_token(xli) <= -1) goto oops;
 			break;
@@ -865,7 +865,7 @@ static int read_root_list (qse_xli_t* xli)
 			if (!(xli->root->list.flags & QSE_XLI_LIST_ARRAYED)) goto oops_rbrac;
 			ta = qse_xli_inserttext(xli, xli->parlink->list, QSE_NULL, QSE_STR_PTR(xli->tok.name));
 			if (!ta) goto oops;
-			ta->flags |= QSE_XLI_TEXT_VERBATIM | QSE_XLI_TEXT_DEINDENT;
+			ta->flags |= QSE_XLI_TEXT_VERBATIM | QSE_XLI_TEXT_DEINDENT | QSE_XLI_TEXT_ARRAYED_LIST_CLOSER;
 			xli->tok_status |= TOK_STATUS_DEINDENT_TEXT;
 			if (get_token(xli) <= -1) goto oops;
 			break;
@@ -876,7 +876,7 @@ static int read_root_list (qse_xli_t* xli)
 			if (xli->root->list.flags & QSE_XLI_LIST_ARRAYED) goto oops_rbrac;
 			ta = qse_xli_inserttext(xli, xli->parlink->list, QSE_NULL, QSE_STR_PTR(xli->tok.name));
 			if (!ta) goto oops;
-			ta->flags |= QSE_XLI_TEXT_VERBATIM | QSE_XLI_TEXT_DEINDENT;
+			ta->flags |= QSE_XLI_TEXT_VERBATIM | QSE_XLI_TEXT_DEINDENT | QSE_XLI_TEXT_LIST_CLOSER;
 			xli->tok_status |= TOK_STATUS_DEINDENT_TEXT;
 			if (get_token(xli) <= -1) goto oops;
 			break;

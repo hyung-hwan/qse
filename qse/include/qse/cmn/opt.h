@@ -30,7 +30,7 @@
 #include <qse/types.h>
 #include <qse/macros.h>
 
-/** @file
+/** \file
  * This file defines functions and data structures to process 
  * command-line arguments. 
  */
