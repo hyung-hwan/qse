@@ -268,8 +268,6 @@
 
 #define QSE_MQ_I(val) #val
 #define QSE_MQ(val)   QSE_MQ_I(val)
-#define QSE_MC(ch)    ((qse_mchar_t)ch)
-#define QSE_MS(str)   ((const qse_mchar_t*)str)
 /** 
  * The #QSE_MT macro maps a multi-byte literal string literal as it is. 
  */
@@ -277,8 +275,7 @@
 
 #define QSE_WQ_I(val)  (L ## #val)
 #define QSE_WQ(val)    QSE_WQ_I(val)
-#define QSE_WC(ch)     ((qse_wchar_t)L ## ch)
-#define QSE_WS(str)    ((const qse_wchar_t*)L ## str)
+
 /** 
  * The #QSE_WT macro maps a multi-byte literal string to a wide character 
  * string by prefixing it with \b L.
@@ -295,13 +292,9 @@
  */
 #if defined(QSE_CHAR_IS_MCHAR)
 #	define QSE_Q(val) QSE_MQ(val)
-#	define QSE_C(ch)  QSE_MC(ch)
-#	define QSE_S(str) QSE_MS(str)
 #	define QSE_T(txt) QSE_MT(txt)
 #else
 #	define QSE_Q(val) QSE_WQ(val)
-#	define QSE_C(ch)  QSE_WC(ch)
-#	define QSE_S(str) QSE_WS(str)
 #	define QSE_T(txt) QSE_WT(txt)
 #endif
 
