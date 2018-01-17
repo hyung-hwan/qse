@@ -172,8 +172,6 @@ QSE_EXPORT qse_char_t* qse_getcliparams (
 	int               index
 );
 
-
-
 #if defined(QSE_HAVE_INLINE)
 	static QSE_INLINE int qse_getncliparams (qse_cli_t* cli) { return cli->nparams; }
 #else
