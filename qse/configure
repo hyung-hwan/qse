@@ -21828,6 +21828,82 @@ _ACEOF
 # version HP92453-01 B.11.11.23709.GP, which incorrectly rejects
 # declarations like `int a3[[(sizeof (unsigned char)) >= 0]];'.
 # This bug is HP SR number 8606223364.
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking size of mode_t" >&5
+$as_echo_n "checking size of mode_t... " >&6; }
+if ${ac_cv_sizeof_mode_t+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if ac_fn_c_compute_int "$LINENO" "(long int) (sizeof (mode_t))" "ac_cv_sizeof_mode_t"        "$ac_includes_default"; then :
+
+else
+  if test "$ac_cv_type_mode_t" = yes; then
+     { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error 77 "cannot compute sizeof (mode_t)
+See \`config.log' for more details" "$LINENO" 5; }
+   else
+     ac_cv_sizeof_mode_t=0
+   fi
+fi
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_sizeof_mode_t" >&5
+$as_echo "$ac_cv_sizeof_mode_t" >&6; }
+
+
+
+cat >>confdefs.h <<_ACEOF
+#define SIZEOF_MODE_T $ac_cv_sizeof_mode_t
+_ACEOF
+
+
+if test ${ac_cv_sizeof_mode_t} -gt 0
+then
+
+ typename=`echo mode_t | sed "s/[^a-zA-Z0-9_]/_/g"`
+ { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether mode_t is signed" >&5
+$as_echo_n "checking whether mode_t is signed... " >&6; }
+if eval \${ax_cv_decl_${typename}_signed+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+ int foo [ 1 - 2 * !(((mode_t) -1) < 0) ]
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+   eval "ax_cv_decl_${typename}_signed=\"yes\""
+else
+   eval "ax_cv_decl_${typename}_signed=\"no\""
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+eval ac_res=\$ax_cv_decl_${typename}_signed
+	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+$as_echo "$ac_res" >&6; }
+ symbolname=`echo mode_t | sed "s/[^a-zA-Z0-9_]/_/g" | tr "a-z" "A-Z"`
+ if eval "test \"\${ax_cv_decl_${typename}_signed}\" = \"yes\""; then
+
+$as_echo "#define QSE_MODE_T_IS_SIGNED 1" >>confdefs.h
+
+ elif eval "test \"\${ax_cv_decl_${typename}_signed}\" = \"no\""; then
+    $as_echo_n ""
+ fi
+
+fi
+
+
+# The cast to long int works around a bug in the HP C Compiler
+# version HP92453-01 B.11.11.23709.GP, which incorrectly rejects
+# declarations like `int a3[[(sizeof (unsigned char)) >= 0]];'.
+# This bug is HP SR number 8606223364.
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking size of mbstate_t" >&5
 $as_echo_n "checking size of mbstate_t... " >&6; }
 if ${ac_cv_sizeof_mbstate_t+:} false; then :
@@ -22954,6 +23030,11 @@ _ACEOF
 
 cat >>confdefs.h <<_ACEOF
 #define QSE_SIZEOF_OFF64_T ${ac_cv_sizeof_off64_t}
+_ACEOF
+
+
+cat >>confdefs.h <<_ACEOF
+#define QSE_SIZEOF_MODE_T ${ac_cv_sizeof_mode_t}
 _ACEOF
 
 

@@ -36,7 +36,6 @@
 #include <qse/macros.h>
 #include <qse/cmn/time.h>
 
-
 #if defined(_WIN32) && defined(QSE_CHAR_IS_WCHAR)
 	typedef qse_wchar_t qse_fs_char_t;
 #	define QSE_FS_CHAR_IS_WCHAR
@@ -45,6 +44,34 @@
 	typedef qse_mchar_t qse_fs_char_t;
 #	define QSE_FS_CHAR_IS_MCHAR
 #	define QSE_SIZEOF_FS_CHAR_T QSE_SIZEOF_MCHAR_T
+#endif
+
+#if (QSE_SIZEOF_MODE_T == QSE_SIZEOF_LONG)
+#	if defined(QSE_MODE_T_IS_SIGNED)
+		typedef long int qse_fs_mode_t;
+#	else
+		typedef unsigned long int qse_fs_mode_t;
+#	endif
+#elif (QSE_SIZEOF_MODE_T == QSE_SIZEOF_INT)
+#	if defined(QSE_MODE_T_IS_SIGNED)
+		typedef int qse_fs_mode_t;
+#	else
+		typedef unsigned int qse_fs_mode_t;
+#	endif
+#elif (QSE_SIZEOF_MODE_T == QSE_SIZEOF_SHORT)
+#	if defined(QSE_MODE_T_IS_SIGNED)
+		typedef short int qse_fs_mode_t;
+#	else
+		typedef unsigned short int qse_fs_mode_t;
+#	endif
+#elif (QSE_SIZEOF_MODE_T == QSE_SIZEOF_CHAR)
+#	if defined(QSE_MODE_T_IS_SIGNED)
+		typedef signed char qse_fs_mode_t;
+#	else
+		typedef unsigned char qse_fs_mode_t;
+#	endif
+#else
+	typedef unsigned int qse_fs_mode_t;
 #endif
 
 enum qse_fs_errnum_t
@@ -441,12 +468,14 @@ QSE_EXPORT int qse_fs_cpfilewcs (
 QSE_EXPORT int qse_fs_mkdirmbs (
 	qse_fs_t*          fs,
 	const qse_mchar_t* path,
+	qse_fs_mode_t      mode,
 	int                flags
 );
 
 QSE_EXPORT int qse_fs_mkdirwcs (
 	qse_fs_t*          fs,
 	const qse_wchar_t* path,
+	qse_fs_mode_t      mode,
 	int                flags
 );
 
@@ -475,11 +504,11 @@ QSE_EXPORT int qse_fs_rmdirwcs (
 );
 
 #if defined(QSE_CHAR_IS_MCHAR)
-#	define qse_fs_mkdir(fs,path,flags)  qse_fs_mkdirmbs(fs,path,flags)
+#	define qse_fs_mkdir(fs,path,mode,flags)  qse_fs_mkdirmbs(fs,path,mode,flags)
 #	define qse_fs_rmfile(fs,path,flags) qse_fs_rmfilembs(fs,path,flags)
 #	define qse_fs_rmdir(fs,path,flags)  qse_fs_rmdirmbs(fs,path,flags)
 #else
-#	define qse_fs_mkdir(fs,path,flags)  qse_fs_mkdirwcs(fs,path,flags)
+#	define qse_fs_mkdir(fs,path,mode,flags)  qse_fs_mkdirwcs(fs,path,mode,flags)
 #	define qse_fs_rmfile(fs,path,flags) qse_fs_rmfilewcs(fs,path,flags)
 #	define qse_fs_rmdir(fs,path,flags)  qse_fs_rmdirwcs(fs,path,flags)
 #endif

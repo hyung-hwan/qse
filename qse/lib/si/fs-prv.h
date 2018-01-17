@@ -179,7 +179,8 @@ int qse_fs_syscpfile (
 
 int qse_fs_mkdirsys (
 	qse_fs_t*            fs,
-	const qse_fs_char_t* fspath
+	const qse_fs_char_t* fspath,
+	qse_fs_mode_t        mode
 );
 
 int qse_fs_rmfilesys (

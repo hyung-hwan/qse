@@ -103,8 +103,7 @@ static qse_sio_errnum_t tio_errnum_to_sio_errnum (qse_tio_t* tio)
 	}
 }
 
-qse_sio_t* qse_sio_open (
-	qse_mmgr_t* mmgr, qse_size_t xtnsize, const qse_char_t* file, int flags)
+qse_sio_t* qse_sio_open (qse_mmgr_t* mmgr, qse_size_t xtnsize, const qse_char_t* file, int flags)
 {
 	qse_sio_t* sio;
 
@@ -161,8 +160,7 @@ void qse_sio_close (qse_sio_t* sio)
 	QSE_MMGR_FREE (sio->mmgr, sio);
 }
 
-int qse_sio_init (
-	qse_sio_t* sio, qse_mmgr_t* mmgr, const qse_char_t* path, int flags)
+int qse_sio_init (qse_sio_t* sio, qse_mmgr_t* mmgr, const qse_char_t* path, int flags)
 {
 	int mode;
 	int topt = 0;
