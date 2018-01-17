@@ -945,6 +945,9 @@
 /* Patch level */
 #undef QSE_PACKAGE_VERSION_PATCH
 
+/* PATH_MAX */
+#undef QSE_PATH_MAX
+
 /* Define if pthread_cond_t is signed */
 #undef QSE_PTHREAD_MUTEX_T_IS_SIGNED
 

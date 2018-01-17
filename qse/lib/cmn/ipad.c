@@ -78,7 +78,7 @@ static int str_to_ip4ad (int mbs, const void* str, qse_size_t len, qse_ip4ad_t* 
 {
 	const void* end;
 	int dots = 0, digits = 0;
-	qse_uint32_t acc = 0, addr = 0;	
+	qse_uint32_t acc = 0, addr = 0;
 	qse_wchar_t c;
 
 	end = (mbs? (const void*)((const qse_mchar_t*)str + len):

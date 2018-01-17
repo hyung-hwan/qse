@@ -149,14 +149,14 @@ QSE_EXPORT qse_sio_t* qse_sio_open (
 	qse_mmgr_t*       mmgr,    /**< memory manager */
 	qse_size_t        xtnsize, /**< extension size in bytes */
 	const qse_char_t* file,    /**< file name */
-	int               flags   /**< number OR'ed of #qse_sio_flag_t */
+	int               flags    /**< number OR'ed of #qse_sio_flag_t */
 );
 
 QSE_EXPORT qse_sio_t* qse_sio_openstd (
 	qse_mmgr_t*       mmgr,    /**< memory manager */
 	qse_size_t        xtnsize, /**< extension size in bytes */
 	qse_sio_std_t     std,     /**< standard I/O identifier */
-	int               flags   /**< number OR'ed of #qse_sio_flag_t */
+	int               flags    /**< number OR'ed of #qse_sio_flag_t */
 );
 
 /**

@@ -316,9 +316,11 @@ QSE_EXPORT void* qse_fs_getxtn (
 	qse_fs_t* fs
 );
 
-QSE_EXPORT qse_fs_errnum_t qse_fs_geterrnum (
-	qse_fs_t* fs
-);
+#if defined(QSE_HAVE_INLINE)
+static QSE_INLINE qse_fs_errnum_t qse_fs_geterrnum (qse_fs_t* fs) { return fs->errnum; }
+#else
+#	define qse_fs_geterrnum(fs) ((fs)->errnum)
+#endif
 
 QSE_EXPORT int qse_fs_getopt (
 	qse_fs_t*    fs,

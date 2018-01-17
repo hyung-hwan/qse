@@ -26,11 +26,6 @@
 
 #include "fs-prv.h"
 
-qse_fs_errnum_t qse_fs_geterrnum (qse_fs_t* fs)
-{
-	return fs->errnum;
-}
-
 qse_fs_errnum_t qse_fs_syserrtoerrnum (qse_fs_t* fs, qse_fs_syserr_t e)
 {
 #if defined(_WIN32)

@@ -29,6 +29,7 @@
 
 #include <qse/types.h>
 #include <qse/macros.h>
+#include <qse/cmn/hton.h>
 
 typedef struct qse_ip4ad_t qse_ip4ad_t;
 typedef struct qse_ip6ad_t qse_ip6ad_t;
@@ -37,12 +38,87 @@ typedef struct qse_ip6ad_t qse_ip6ad_t;
 struct qse_ip4ad_t
 {
 	qse_uint32_t value;
+
+#if defined(__cplusplus)
+	bool operator== (const qse_ip4ad_t& peer) const { return this->value == peer.value; }
+	bool operator!= (const qse_ip4ad_t& peer) const { return this->value != peer.value; }
+	bool operator<  (const qse_ip4ad_t& peer) const { return qse_ntoh32(this->value) < qse_ntoh32(peer.value); }
+	bool operator<=  (const qse_ip4ad_t& peer) const { return qse_ntoh32(this->value) <= qse_ntoh32(peer.value); }
+	bool operator>  (const qse_ip4ad_t& peer) const { return qse_ntoh32(this->value) > qse_ntoh32(peer.value); }
+	bool operator>=  (const qse_ip4ad_t& peer) const { return qse_ntoh32(this->value) >= qse_ntoh32(peer.value); }
+
+	/* i don't define a constructor so that it can be used within a struct
+	 * with no constructor.
+	 *   struct xxx { qse_ip4ad_t addr; } 
+	 * since xxx doesn't have a constructor, some compilers complain of
+	 * ill-formed constructor or deleted default contructor.
+	 */
+
+	qse_ip4ad_t& operator= (qse_ip4ad_t v)
+	{
+		this->value = v.value;
+		return *this;
+	}
+	qse_ip4ad_t& operator+= (qse_ip4ad_t v) 
+	{
+		this->value = qse_hton32(qse_ntoh32(this->value) + qse_ntoh32(v.value));
+		return *this;
+	}
+	qse_ip4ad_t& operator-= (qse_ip4ad_t v) 
+	{
+		this->value = qse_hton32(qse_ntoh32(this->value) - qse_ntoh32(v.value));
+		return *this;
+	}
+	qse_ip4ad_t operator+ (qse_ip4ad_t v) const
+	{
+		qse_ip4ad_t x;
+		x.value = qse_hton32(qse_ntoh32(this->value) + qse_ntoh32(v.value));
+		return x;
+	}
+	qse_ip4ad_t operator- (qse_ip4ad_t v) const
+	{
+		qse_ip4ad_t x;
+		x.value = qse_hton32(qse_ntoh32(this->value) - qse_ntoh32(v.value));
+		return x;
+	}
+
+	qse_ip4ad_t& operator= (qse_uint32_t v)
+	{
+		this->value = qse_hton32(v);
+		return *this;
+	}
+	qse_ip4ad_t& operator+= (qse_uint32_t v) 
+	{
+		this->value = qse_hton32(qse_ntoh32(this->value) + v);
+		return *this;
+	}
+	qse_ip4ad_t& operator-= (qse_uint32_t v) 
+	{
+		this->value = qse_hton32(qse_ntoh32(this->value) - v);
+		return *this;
+	}
+	qse_ip4ad_t operator+ (qse_uint32_t v) const
+	{
+		qse_ip4ad_t x;
+		x.value = qse_hton32(qse_ntoh32(this->value) + v);
+		return x;
+	}
+	qse_ip4ad_t operator- (qse_uint32_t v) const
+	{
+		qse_ip4ad_t x;
+		x.value = qse_hton32(qse_ntoh32(this->value) - v);
+		return x;
+	}
+#endif
 };
+
 struct qse_ip6ad_t
 {
 	qse_uint8_t value[16];
 };
 #include <qse/unpack.h>
+
+#define QSE_IP4AD_IN_LOOPBACK(addr) ((((addr)->value) & QSE_CONST_HTON32(0xFF000000)) == QSE_CONST_HTON32(0x7F000000))
 
 #if defined(__cplusplus)
 extern "C" {

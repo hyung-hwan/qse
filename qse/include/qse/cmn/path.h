@@ -34,6 +34,10 @@
 #include <qse/types.h>
 #include <qse/macros.h>
 
+#if !defined(QSE_PATH_MAX)
+#	define QSE_PATH_MAX 1024
+#endif
+
 enum qse_canonpath_flag_t
 {
 	/** if the final output is . logically, return an empty path */
