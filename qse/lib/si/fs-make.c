@@ -26,7 +26,7 @@
 
 #include "fs-prv.h"
 
-int qse_fs_mkdirsys (qse_fs_t* fs, const qse_fs_char_t* fspath)
+int qse_fs_mkdirsys (qse_fs_t* fs, const qse_fs_char_t* fspath, qse_fs_mode_t mode)
 {
 
 #if defined(_WIN32)
@@ -78,7 +78,7 @@ int qse_fs_mkdirsys (qse_fs_t* fs, const qse_fs_char_t* fspath)
 
 #else
 
-	if (QSE_MKDIR (fspath, 0777) <= -1) /* TODO: proper mode?? */
+	if (QSE_MKDIR (fspath, mode) <= -1) /* TODO: proper mode?? */
 	{
 		fs->errnum = qse_fs_syserrtoerrnum (fs, errno);
 		return -1;
@@ -91,7 +91,7 @@ int qse_fs_mkdirsys (qse_fs_t* fs, const qse_fs_char_t* fspath)
 
 /* --------------------------------------------------------------------- */
 
-static int make_directory_chain (qse_fs_t* fs, qse_fs_char_t* fspath)
+static int make_directory_chain (qse_fs_t* fs, qse_fs_char_t* fspath, qse_fs_mode_t mode)
 {
 	qse_fs_char_t* core, * p, c;
 	int ret = 0;
@@ -120,7 +120,7 @@ static int make_directory_chain (qse_fs_t* fs, qse_fs_char_t* fspath)
 			c = *(p + 1);
 			*(p + 1) = QSE_FS_T('\0');
 		#endif
-			ret = qse_fs_mkdirsys (fs, fspath);
+			ret = qse_fs_mkdirsys (fs, fspath, mode);
 			if (ret <= -1 && fs->errnum != QSE_FS_EEXIST) goto done; /* abort */
 		#if defined(_WIN32) || defined(__DOS__) || defined(__OS2__)
 			*p = c;
@@ -130,13 +130,13 @@ static int make_directory_chain (qse_fs_t* fs, qse_fs_char_t* fspath)
 		}
 	}
 
-	if (!IS_FSPATHSEP(*(p - 1))) ret = qse_fs_mkdirsys (fs, fspath);
+	if (!IS_FSPATHSEP(*(p - 1))) ret = qse_fs_mkdirsys (fs, fspath, mode);
 
 done:
 	return ret;
 }
 
-int qse_fs_mkdirmbs (qse_fs_t* fs, const qse_mchar_t* path, int flags)
+int qse_fs_mkdirmbs (qse_fs_t* fs, const qse_mchar_t* path, qse_fs_mode_t mode, int flags)
 {
 	qse_fs_char_t* fspath;
 	int ret;
@@ -154,14 +154,14 @@ int qse_fs_mkdirmbs (qse_fs_t* fs, const qse_mchar_t* path, int flags)
 		fspath = qse_fs_dupfspathformbs (fs, path);
 		if (!fspath) return -1;
 
-		ret = make_directory_chain (fs, fspath);
+		ret = make_directory_chain (fs, fspath, mode);
 	}
 	else
 	{
 		fspath = (qse_fs_char_t*)qse_fs_makefspathformbs (fs, path);
 		if (!fspath) return -1;
 
-		ret = qse_fs_mkdirsys (fs, fspath);
+		ret = qse_fs_mkdirsys (fs, fspath, mode);
 	}
 
 	qse_fs_freefspathformbs (fs, path, fspath);
@@ -169,7 +169,7 @@ int qse_fs_mkdirmbs (qse_fs_t* fs, const qse_mchar_t* path, int flags)
 	return ret;
 }
 
-int qse_fs_mkdirwcs (qse_fs_t* fs, const qse_wchar_t* path, int flags)
+int qse_fs_mkdirwcs (qse_fs_t* fs, const qse_wchar_t* path, qse_fs_mode_t mode, int flags)
 {
 	qse_fs_char_t* fspath;
 	int ret;
@@ -187,14 +187,14 @@ int qse_fs_mkdirwcs (qse_fs_t* fs, const qse_wchar_t* path, int flags)
 		fspath = qse_fs_dupfspathforwcs (fs, path);
 		if (!fspath) return -1;
 
-		ret = make_directory_chain (fs, fspath);
+		ret = make_directory_chain (fs, fspath, mode);
 	}
 	else
 	{
 		fspath = (qse_fs_char_t*)qse_fs_makefspathforwcs (fs, path);
 		if (!fspath) return -1;
 
-		ret = qse_fs_mkdirsys (fs, fspath);
+		ret = qse_fs_mkdirsys (fs, fspath, mode);
 	}
 
 	qse_fs_freefspathforwcs (fs, path, fspath);

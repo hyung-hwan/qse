@@ -407,6 +407,16 @@ AC_CHECK_SIZEOF(wchar_t)
 AC_CHECK_SIZEOF(off_t)
 AC_CHECK_SIZEOF(off64_t)
 
+AC_CHECK_SIZEOF(mode_t)
+if test ${ac_cv_sizeof_mode_t} -gt 0
+then
+	AX_CHECK_SIGN([mode_t],
+		[ AC_DEFINE(QSE_MODE_T_IS_SIGNED, 1, [Define if mode_t is signed]) ],
+		[ AS_ECHO_N("") ],
+		[])
+fi
+
+
 AC_CHECK_SIZEOF(mbstate_t,,[#include <wchar.h>])
 AX_CHECK_NUMVALOF(MB_LEN_MAX,[32],[#include <limits.h>])
 AX_CHECK_NUMVALOF(PATH_MAX,[0],[#include <limits.h>])
@@ -620,6 +630,7 @@ AC_DEFINE_UNQUOTED(QSE_SIZEOF___FLOAT128, ${ac_cv_sizeof___float128}, [sizeof(__
 AC_DEFINE_UNQUOTED(QSE_SIZEOF_WCHAR_T, ${ac_cv_sizeof_wchar_t}, [sizeof(wchar_t)])
 AC_DEFINE_UNQUOTED(QSE_SIZEOF_OFF_T, ${ac_cv_sizeof_off_t}, [sizeof(off_t)])
 AC_DEFINE_UNQUOTED(QSE_SIZEOF_OFF64_T, ${ac_cv_sizeof_off64_t}, [sizeof(off64_t)])
+AC_DEFINE_UNQUOTED(QSE_SIZEOF_MODE_T, ${ac_cv_sizeof_mode_t}, [sizeof(mode_t)])
 
 AC_DEFINE_UNQUOTED(QSE_SIZEOF_MBSTATE_T, ${ac_cv_sizeof_mbstate_t}, [sizeof(mbstate_t)])
 AC_DEFINE_UNQUOTED(QSE_MBLEN_MAX, ${ax_cv_numvalof_MB_LEN_MAX}, [MB_LEN_MAX])

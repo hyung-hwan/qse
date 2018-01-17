@@ -927,6 +927,9 @@
 /* MB_LEN_MAX */
 #undef QSE_MBLEN_MAX
 
+/* Define if mode_t is signed */
+#undef QSE_MODE_T_IS_SIGNED
+
 /* Author */
 #undef QSE_PACKAGE_AUTHOR
 
@@ -980,6 +983,9 @@
 
 /* sizeof(mbstate_t) */
 #undef QSE_SIZEOF_MBSTATE_T
+
+/* sizeof(mode_t) */
+#undef QSE_SIZEOF_MODE_T
 
 /* sizeof(off64_t) */
 #undef QSE_SIZEOF_OFF64_T
@@ -1079,6 +1085,9 @@
 
 /* The size of `mbstate_t', as computed by sizeof. */
 #undef SIZEOF_MBSTATE_T
+
+/* The size of `mode_t', as computed by sizeof. */
+#undef SIZEOF_MODE_T
 
 /* The size of `off64_t', as computed by sizeof. */
 #undef SIZEOF_OFF64_T
