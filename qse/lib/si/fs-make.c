@@ -28,7 +28,6 @@
 
 int qse_fs_mkdirsys (qse_fs_t* fs, const qse_fs_char_t* fspath, qse_fs_mode_t mode)
 {
-
 #if defined(_WIN32)
 
 	if (CreateDirectory (fspath, QSE_NULL) == FALSE)
@@ -139,6 +138,7 @@ done:
 int qse_fs_mkdirmbs (qse_fs_t* fs, const qse_mchar_t* path, qse_fs_mode_t mode, int flags)
 {
 	qse_fs_char_t* fspath;
+	qse_fs_mode_t oldmask;
 	int ret;
 
 	if (*path == QSE_MT('\0')) 
@@ -154,14 +154,20 @@ int qse_fs_mkdirmbs (qse_fs_t* fs, const qse_mchar_t* path, qse_fs_mode_t mode, 
 		fspath = qse_fs_dupfspathformbs (fs, path);
 		if (!fspath) return -1;
 
+		/* [NOTE] the umask value is global. so changing it here affects other threads */
+		if (flags & QSE_FS_MKDIRMBS_IGNORE_UMASK) oldmask = QSE_UMASK(0);
 		ret = make_directory_chain (fs, fspath, mode);
+		if (flags & QSE_FS_MKDIRWCS_IGNORE_UMASK) QSE_UMASK(oldmask);
 	}
 	else
 	{
 		fspath = (qse_fs_char_t*)qse_fs_makefspathformbs (fs, path);
 		if (!fspath) return -1;
 
+		/* [NOTE] the umask value is global. so changing it here affects other threads */
+		if (flags & QSE_FS_MKDIRMBS_IGNORE_UMASK) oldmask = QSE_UMASK(0);
 		ret = qse_fs_mkdirsys (fs, fspath, mode);
+		if (flags & QSE_FS_MKDIRWCS_IGNORE_UMASK) QSE_UMASK(oldmask);
 	}
 
 	qse_fs_freefspathformbs (fs, path, fspath);
@@ -172,6 +178,7 @@ int qse_fs_mkdirmbs (qse_fs_t* fs, const qse_mchar_t* path, qse_fs_mode_t mode, 
 int qse_fs_mkdirwcs (qse_fs_t* fs, const qse_wchar_t* path, qse_fs_mode_t mode, int flags)
 {
 	qse_fs_char_t* fspath;
+	qse_fs_mode_t oldmask;
 	int ret;
 
 	if (*path == QSE_WT('\0')) 
@@ -187,14 +194,20 @@ int qse_fs_mkdirwcs (qse_fs_t* fs, const qse_wchar_t* path, qse_fs_mode_t mode, 
 		fspath = qse_fs_dupfspathforwcs (fs, path);
 		if (!fspath) return -1;
 
+		/* [NOTE] the umask value is global. so changing it here affects other threads */
+		if (flags & QSE_FS_MKDIRWCS_IGNORE_UMASK) oldmask = QSE_UMASK(0);
 		ret = make_directory_chain (fs, fspath, mode);
+		if (flags & QSE_FS_MKDIRWCS_IGNORE_UMASK) QSE_UMASK(oldmask);
 	}
 	else
 	{
 		fspath = (qse_fs_char_t*)qse_fs_makefspathforwcs (fs, path);
 		if (!fspath) return -1;
 
+		/* [NOTE] the umask value is global. so changing it here affects other threads */
+		if (flags & QSE_FS_MKDIRWCS_IGNORE_UMASK) oldmask = QSE_UMASK(0);
 		ret = qse_fs_mkdirsys (fs, fspath, mode);
+		if (flags & QSE_FS_MKDIRWCS_IGNORE_UMASK) QSE_UMASK(oldmask);
 	}
 
 	qse_fs_freefspathforwcs (fs, path, fspath);
