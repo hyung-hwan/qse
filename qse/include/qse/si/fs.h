@@ -282,8 +282,13 @@ typedef enum qse_fs_cpfile_flag_t qse_fs_cpfile_flag_t;
 enum qse_fs_mkdir_flag_t
 {
 	QSE_FS_MKDIR_PARENT = (1 << 0),
+	QSE_FS_MKDIR_IGNORE_UMASK = (1 << 1),
+
 	QSE_FS_MKDIRMBS_PARENT = QSE_FS_MKDIR_PARENT,
-	QSE_FS_MKDIRWCS_PARENT = QSE_FS_MKDIR_PARENT
+	QSE_FS_MKDIRWCS_PARENT = QSE_FS_MKDIR_PARENT,
+
+	QSE_FS_MKDIRMBS_IGNORE_UMASK = QSE_FS_MKDIR_IGNORE_UMASK,
+	QSE_FS_MKDIRWCS_IGNORE_UMASK = QSE_FS_MKDIR_IGNORE_UMASK
 };
 typedef enum qse_fs_mkdir_flag_t qse_fs_mkdir_flag_t;
 
