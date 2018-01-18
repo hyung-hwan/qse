@@ -38,79 +38,80 @@ typedef struct qse_ip6ad_t qse_ip6ad_t;
 struct qse_ip4ad_t
 {
 	qse_uint32_t value;
+};
 
 #if defined(__cplusplus)
-	bool operator== (const qse_ip4ad_t& peer) const { return this->value == peer.value; }
-	bool operator!= (const qse_ip4ad_t& peer) const { return this->value != peer.value; }
-	bool operator<  (const qse_ip4ad_t& peer) const { return qse_ntoh32(this->value) < qse_ntoh32(peer.value); }
-	bool operator<=  (const qse_ip4ad_t& peer) const { return qse_ntoh32(this->value) <= qse_ntoh32(peer.value); }
-	bool operator>  (const qse_ip4ad_t& peer) const { return qse_ntoh32(this->value) > qse_ntoh32(peer.value); }
-	bool operator>=  (const qse_ip4ad_t& peer) const { return qse_ntoh32(this->value) >= qse_ntoh32(peer.value); }
+struct qse_ip4adxx_t: public qse_ip4ad_t
+{
+	qse_ip4adxx_t (qse_uint32_t v = 0)  
+	{
+		this->value = v;
+	}
 
-	/* i don't define a constructor so that it can be used within a struct
-	 * with no constructor.
-	 *   struct xxx { qse_ip4ad_t addr; } 
-	 * since xxx doesn't have a constructor, some compilers complain of
-	 * ill-formed constructor or deleted default contructor.
-	 */
+	bool operator== (const qse_ip4adxx_t& peer) const { return this->value == peer.value; }
+	bool operator!= (const qse_ip4adxx_t& peer) const { return this->value != peer.value; }
+	bool operator<  (const qse_ip4adxx_t& peer) const { return qse_ntoh32(this->value) < qse_ntoh32(peer.value); }
+	bool operator<= (const qse_ip4adxx_t& peer) const { return qse_ntoh32(this->value) <= qse_ntoh32(peer.value); }
+	bool operator>  (const qse_ip4adxx_t& peer) const { return qse_ntoh32(this->value) > qse_ntoh32(peer.value); }
+	bool operator>= (const qse_ip4adxx_t& peer) const { return qse_ntoh32(this->value) >= qse_ntoh32(peer.value); }
 
-	qse_ip4ad_t& operator= (qse_ip4ad_t v)
+	qse_ip4adxx_t& operator= (const qse_ip4adxx_t& v)
 	{
 		this->value = v.value;
 		return *this;
 	}
-	qse_ip4ad_t& operator+= (qse_ip4ad_t v) 
+	qse_ip4adxx_t& operator+= (const qse_ip4adxx_t& v) 
 	{
 		this->value = qse_hton32(qse_ntoh32(this->value) + qse_ntoh32(v.value));
 		return *this;
 	}
-	qse_ip4ad_t& operator-= (qse_ip4ad_t v) 
+	qse_ip4adxx_t& operator-= (const qse_ip4adxx_t& v) 
 	{
 		this->value = qse_hton32(qse_ntoh32(this->value) - qse_ntoh32(v.value));
 		return *this;
 	}
-	qse_ip4ad_t operator+ (qse_ip4ad_t v) const
+	qse_ip4adxx_t operator+ (const qse_ip4adxx_t& v) const
 	{
-		qse_ip4ad_t x;
+		qse_ip4adxx_t x;
 		x.value = qse_hton32(qse_ntoh32(this->value) + qse_ntoh32(v.value));
 		return x;
 	}
-	qse_ip4ad_t operator- (qse_ip4ad_t v) const
+	qse_ip4adxx_t operator- (const qse_ip4adxx_t& v) const
 	{
-		qse_ip4ad_t x;
+		qse_ip4adxx_t x;
 		x.value = qse_hton32(qse_ntoh32(this->value) - qse_ntoh32(v.value));
 		return x;
 	}
 
-	qse_ip4ad_t& operator= (qse_uint32_t v)
+	qse_ip4adxx_t& operator= (qse_uint32_t v)
 	{
 		this->value = qse_hton32(v);
 		return *this;
 	}
-	qse_ip4ad_t& operator+= (qse_uint32_t v) 
+	qse_ip4adxx_t& operator+= (qse_uint32_t v) 
 	{
 		this->value = qse_hton32(qse_ntoh32(this->value) + v);
 		return *this;
 	}
-	qse_ip4ad_t& operator-= (qse_uint32_t v) 
+	qse_ip4adxx_t& operator-= (qse_uint32_t v) 
 	{
 		this->value = qse_hton32(qse_ntoh32(this->value) - v);
 		return *this;
 	}
-	qse_ip4ad_t operator+ (qse_uint32_t v) const
+	qse_ip4adxx_t operator+ (qse_uint32_t v) const
 	{
-		qse_ip4ad_t x;
+		qse_ip4adxx_t x;
 		x.value = qse_hton32(qse_ntoh32(this->value) + v);
 		return x;
 	}
-	qse_ip4ad_t operator- (qse_uint32_t v) const
+	qse_ip4adxx_t operator- (qse_uint32_t v) const
 	{
-		qse_ip4ad_t x;
+		qse_ip4adxx_t x;
 		x.value = qse_hton32(qse_ntoh32(this->value) - v);
 		return x;
 	}
-#endif
 };
+#endif
 
 struct qse_ip6ad_t
 {
