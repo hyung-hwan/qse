@@ -750,6 +750,7 @@ static int read_pair (qse_xli_t* xli, const qse_char_t* keytag, const qse_xli_sc
 
 	const qse_xli_scm_t* scm = QSE_NULL;
 	int key_nodup = 0, key_alias = 0, val_iffy = 0;
+	
 
 	key.ptr = QSE_NULL;
 	name = QSE_NULL;
@@ -889,6 +890,8 @@ static int read_pair (qse_xli_t* xli, const qse_char_t* keytag, const qse_xli_sc
 			pair = qse_xli_insertpair(xli, parlist, QSE_NULL, key.ptr, name, keytag, v);
 			if (pair == QSE_NULL) goto oops;
 
+			if (xli->opt.cbs.pair_read) xli->opt.cbs.pair_read (xli, pair, &kloc);
+
 			if (get_token (xli) <= -1) goto oops; /* skip the value */
 
 			if (!MATCH(xli, QSE_XLI_TOK_SEMICOLON))
@@ -914,6 +917,8 @@ static int read_pair (qse_xli_t* xli, const qse_char_t* keytag, const qse_xli_sc
 			/* add a new pair with the initial string segment */
 			pair = qse_xli_insertpairwithstr(xli, parlist, QSE_NULL, key.ptr, name, keytag, QSE_STR_XSTR(xli->tok.name), strtag);
 			if (pair == QSE_NULL) goto oops;
+
+			if (xli->opt.cbs.pair_read) xli->opt.cbs.pair_read (xli, pair, &kloc);
 
 			if (MATCH(xli, QSE_XLI_TOK_NSTR))
 			{
@@ -1005,6 +1010,8 @@ static int read_pair (qse_xli_t* xli, const qse_char_t* keytag, const qse_xli_sc
 		pair = qse_xli_insertpairwithemptylist(xli, parlist, QSE_NULL, key.ptr, name, keytag);
 		if (pair == QSE_NULL) goto oops;
 
+		if (xli->opt.cbs.pair_read) xli->opt.cbs.pair_read (xli, pair, &kloc);
+
 		/* skip validations of child pairs if the schema for the 
 		 * current pair is set with QSE_XLI_SCM_VALIFFY. 
 		 * the schema for the child pairs, if specified, must not 
@@ -1049,6 +1056,8 @@ static int read_pair (qse_xli_t* xli, const qse_char_t* keytag, const qse_xli_sc
 		/* no value has been specified for the pair */
 		pair = qse_xli_insertpair (xli, parlist, QSE_NULL, key.ptr, name, keytag, (qse_xli_val_t*)&xli->root->xnil);
 		if (pair == QSE_NULL) goto oops;
+
+		if (xli->opt.cbs.pair_read) xli->opt.cbs.pair_read (xli, pair, &kloc);
 
 		/* skip the semicolon */
 		if (get_token (xli) <= -1) goto oops;

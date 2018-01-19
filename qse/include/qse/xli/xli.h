@@ -119,7 +119,9 @@ enum qse_xli_opt_t
 	 */
 	QSE_XLI_ROOTXTNSIZE,
 
-	QSE_XLI_KEYSPLITTER
+	QSE_XLI_KEYSPLITTER,
+
+	QSE_XLI_CBS
 };
 typedef enum qse_xli_opt_t qse_xli_opt_t;
 
@@ -162,6 +164,7 @@ enum qse_xli_trait_t
 	QSE_XLI_VALIDATE  = (1 << 13)
 };
 typedef enum qse_xli_trait_t qse_xli_trait_t;
+
 
 typedef struct qse_xli_val_t    qse_xli_val_t;
 typedef struct qse_xli_nil_t    qse_xli_nil_t;
@@ -447,6 +450,23 @@ struct qse_xli_scm_t
 };
 
 typedef struct qse_xli_scm_t qse_xli_scm_t;
+
+
+
+/* --------------------------------------------------------------------- */
+
+typedef void (*qse_xli_pair_read_cb_t) (
+	qse_xli_t*      xli,
+	qse_xli_pair_t* pair,
+	qse_xli_loc_t*  loc
+);
+
+struct qse_xli_cbs_t
+{
+	qse_xli_pair_read_cb_t pair_read;
+};
+typedef struct qse_xli_cbs_t qse_xli_cbs_t;
+
 
 #if defined(__cplusplus)
 extern "C" {
