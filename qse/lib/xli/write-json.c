@@ -146,16 +146,23 @@ static int write_list (qse_xli_t* xli, qse_xli_list_t* list, int depth)
 						qse_xli_str_t* str = (qse_xli_str_t*)pair->val;
 
 						/* ignore the string tag(str->tag) in the json format.
-						 * concatenate multi-segmented string into 1 */
-						if (write_to_current_stream(xli, QSE_T("\""), 1, 0) <= -1) return -1;
+						 * concatenate multi-segmented string into 1 seperated by a comma */
+						int quote_needed;
+
+						/* if the string value is a non-numeric string or
+						 * it is multi-segmented, quoting is needed */
+						quote_needed = !(str->flags & QSE_XLI_STR_NSTR) || str->next;
+
+						if (quote_needed && write_to_current_stream(xli, QSE_T("\""), 1, 0) <= -1) return -1;
 						while (1)
 						{
-							if (write_to_current_stream(xli, str->ptr, str->len, 1) <= -1) return -1;
+							if (write_to_current_stream(xli, str->ptr, str->len, quote_needed) <= -1) return -1;
 							if (!str->next) break;
+							if (write_to_current_stream(xli, QSE_T(","), 1, 0) <= -1) return -1;
 							str = str->next;
 						}
 
-						if (write_to_current_stream(xli, QSE_T("\""), 1, 0) <= -1) return -1;
+						if (quote_needed && write_to_current_stream(xli, QSE_T("\""), 1, 0) <= -1) return -1;
 						break;
 					}
 

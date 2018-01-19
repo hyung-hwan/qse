@@ -690,6 +690,8 @@ static int __read_array (qse_xli_t* xli)
 	qse_size_t index = 0;
 	qse_char_t key[64];
 
+	if (MATCH(xli, QSE_XLI_TOK_RBRACK)) return 0; // empty array
+
 	while (1)
 	{
 		val = __read_value(xli);
@@ -734,6 +736,7 @@ static int read_array (qse_xli_t* xli, qse_xli_list_t* lv)
 		return -1;
 	}
 
+	lv->flags |= QSE_XLI_LIST_ARRAYED;
 	return 0;
 }
 
