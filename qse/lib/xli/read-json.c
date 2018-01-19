@@ -167,6 +167,7 @@ static qse_xli_tok_type_t classify_ident (qse_xli_t* xli, const qse_cstr_t* name
 		mid = left + (right - left) / 2;
 		kwp = &kwtab[mid];
 
+		/* not affected by case-insensitivity */
 		n = qse_strxncmp (kwp->name.ptr, kwp->name.len, name->ptr, name->len);
 		if (n > 0) 
 		{
@@ -539,7 +540,7 @@ static int check_token_for_key_eligibility (qse_xli_t* xli, qse_xli_list_t* parl
 		while (atom)
 		{
 			if (atom->type == QSE_XLI_PAIR &&
-			    qse_strcmp(((qse_xli_pair_t*)atom)->key, QSE_STR_PTR(xli->tok.name)) == 0)
+			    xli->opt.strcmp(((qse_xli_pair_t*)atom)->key, QSE_STR_PTR(xli->tok.name)) == 0)
 			{
 				qse_xli_seterror (xli, QSE_XLI_EEXIST, QSE_STR_XSTR(xli->tok.name), &xli->tok.loc);
 				return -1;

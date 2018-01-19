@@ -76,11 +76,11 @@ enum qse_xli_errnum_t
 	QSE_XLI_EVALUE,   /**< value expected in place of '${0}' */
 	QSE_XLI_ESTRNC,   /**< string not closed */
 	QSE_XLI_ETAGNC,   /**< tag not closed */
-	QSE_XLI_EINCLSTR ,/**< '@include' not followed by a string */
+	QSE_XLI_EINCLSTR ,/**< '\include' not followed by a string */
 	QSE_XLI_ELXCHR,   /**< invalid character '${0} */
 	QSE_XLI_ETAGCHR,  /**< invalid tag character '${0} */
-	QSE_XLI_EXKWNR,   /**< @word '${0}' not recognized */
-	QSE_XLI_EXKWEM,   /**< @ not followed by a valid word  */
+	QSE_XLI_EXKWNR,   /**< \word '${0}' not recognized */
+	QSE_XLI_EXKWEM,   /**< \ not followed by a valid word  */
 	QSE_XLI_EIDENT,   /**< invalid identifier '${0}' */
 	QSE_XLI_EKEY,     /**< key expected in place of '${0}' */
 	QSE_XLI_ENOKEY,   /**< missing key after key tag */
@@ -154,8 +154,12 @@ enum qse_xli_trait_t
 	 *  the ini format doesn't support these regardless of this option. */
 	QSE_XLI_BOOLEAN   = (1 << 11),
 
+	/** perform a case insensitive search. it doesn't affect
+	 *  tokenization of keyword idntifiers like @include. */
+	QSE_XLI_CASE_INSENSITIVE = (1 << 12),
+
 	/** enable pair validation against pair definitions while reading */
-	QSE_XLI_VALIDATE  = (1 << 12)
+	QSE_XLI_VALIDATE  = (1 << 13)
 };
 typedef enum qse_xli_trait_t qse_xli_trait_t;
 
@@ -520,7 +524,7 @@ QSE_EXPORT qse_xli_errstr_t qse_xli_geterrstr (
  *
  * Here is an example of changing the formatting string for the #QSE_XLI_EIOFIL 
  * error.
- * @code
+ * \code
  * qse_xli_errstr_t orgerrstr;
  *
  * const qse_char_t* myerrstr (qse_xli_t* xli, qse_xli_errnum_t num)
@@ -536,7 +540,7 @@ QSE_EXPORT qse_xli_errstr_t qse_xli_geterrstr (
  *    qse_xli_seterrstr (xli, myerrstr);
  *    ...
  * }
- * @endcode
+ * \endcode
  */
 QSE_EXPORT void qse_xli_seterrstr (
 	qse_xli_t*       xli,   /**< xli object */
@@ -545,7 +549,7 @@ QSE_EXPORT void qse_xli_seterrstr (
 
 /**
  * The qse_xli_geterrnum() function gets the number of the last error.
- * @return error number
+ * \return error number
  */
 QSE_EXPORT qse_xli_errnum_t qse_xli_geterrnum (
 	const qse_xli_t* xli /**< xli object */
@@ -554,7 +558,7 @@ QSE_EXPORT qse_xli_errnum_t qse_xli_geterrnum (
 /**
  * The qse_xli_geterrloc() function gets the location where the last error 
  * has occurred.
- * @return error location
+ * \return error location
  */
 QSE_EXPORT const qse_xli_loc_t* qse_xli_geterrloc (
 	const qse_xli_t* xli /**< xli object */
@@ -562,7 +566,7 @@ QSE_EXPORT const qse_xli_loc_t* qse_xli_geterrloc (
 
 /**
  * The qse_xli_geterrmsg() function gets a string describing the last error.
- * @return error message pointer
+ * \return error message pointer
  */
 QSE_EXPORT const qse_char_t* qse_xli_geterrmsg (
 	const qse_xli_t* xli /**< xli object */
