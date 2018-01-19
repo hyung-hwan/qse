@@ -70,6 +70,8 @@ int qse_xli_init (qse_xli_t* xli, qse_mmgr_t* mmgr, qse_size_t rootxtnsize)
 	xli->errstr = qse_xli_dflerrstr;
 	xli->opt.root_xtnsize = rootxtnsize;
 	xli->opt.key_splitter = QSE_T('.');
+	xli->opt.strcmp = qse_strcmp;
+	xli->opt.strxcmp = qse_strxcmp;
 
 	xli->dotted_curkey = qse_str_open (mmgr, 0, 128);
 	if (xli->dotted_curkey == QSE_NULL) goto oops;
@@ -121,6 +123,16 @@ int qse_xli_setopt (qse_xli_t* xli, qse_xli_opt_t id, const void* value)
 	{
 		case QSE_XLI_TRAIT:
 			xli->opt.trait = *(const int*)value;
+			if (xli->opt.trait & QSE_XLI_CASE_INSENSITIVE)
+			{
+				xli->opt.strcmp = qse_strcasecmp;
+				xli->opt.strxcmp = qse_strxcasecmp;
+			}
+			else
+			{
+				xli->opt.strcmp = qse_strcmp;
+				xli->opt.strxcmp = qse_strxcmp;
+			}
 			return 0;
 
 		case QSE_XLI_PAIRXTNSIZE:
@@ -648,7 +660,7 @@ static qse_size_t count_pairs_by_key (
 		if (p->type == QSE_XLI_PAIR)
 		{
 			qse_xli_pair_t* pair = (qse_xli_pair_t*)p;
-			if (qse_strxcmp (key->ptr, key->len, pair->key) == 0) count++;
+			if (xli->opt.strxcmp(key->ptr, key->len, pair->key) == 0) count++;
 		}
 
 		p = p->next;
@@ -670,10 +682,10 @@ static qse_xli_pair_t* find_pair_by_key_and_alias (
 		if (p->type == QSE_XLI_PAIR)
 		{
 			qse_xli_pair_t* pair = (qse_xli_pair_t*)p;
-			if (qse_strxcmp (key->ptr, key->len, pair->key) == 0) 
+			if (xli->opt.strxcmp(key->ptr, key->len, pair->key) == 0) 
 			{
 				if (alias == QSE_NULL || 
-				    qse_strxcmp (alias->ptr, alias->len, pair->alias) == 0) return pair;
+				    xli->opt.strxcmp(alias->ptr, alias->len, pair->alias) == 0) return pair;
 			}
 		}
 
@@ -697,7 +709,7 @@ static qse_xli_pair_t* find_pair_by_key_and_index (
 		if (p->type == QSE_XLI_PAIR)
 		{
 			qse_xli_pair_t* pair = (qse_xli_pair_t*)p;
-			if (qse_strxcmp (key->ptr, key->len, pair->key) == 0) 
+			if (xli->opt.strxcmp(key->ptr, key->len, pair->key) == 0) 
 			{
 				if (index == count) return pair;
 				count++;

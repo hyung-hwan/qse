@@ -354,7 +354,7 @@ static int read_list (qse_xli_t* xli)
 					while (atom)
 					{
 						if (atom->type == QSE_XLI_PAIR &&
-						    qse_strcmp (((qse_xli_pair_t*)atom)->key, QSE_STR_PTR(xli->tok.name)) == 0)
+						    xli->opt.strcmp(((qse_xli_pair_t*)atom)->key, QSE_STR_PTR(xli->tok.name)) == 0)
 						{
 							qse_xli_seterror (xli, QSE_XLI_EEXIST, QSE_STR_XSTR(xli->tok.name), &xli->tok.loc);
 							goto oops;

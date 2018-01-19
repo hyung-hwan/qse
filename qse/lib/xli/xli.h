@@ -103,6 +103,9 @@ struct qse_xli_t
 		qse_size_t pair_xtnsize;
 		qse_size_t root_xtnsize;
 		qse_char_t key_splitter; /**< character to use to split a key in the fqpn format */
+
+		int (*strcmp) (const qse_char_t* s1, const qse_char_t* s2);
+		int (*strxcmp) (const qse_char_t* s1, qse_size_t len1, const qse_char_t* s2);
 	} opt;
 
 	qse_xli_ecb_t* ecb;

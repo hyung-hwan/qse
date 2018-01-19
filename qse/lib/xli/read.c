@@ -285,7 +285,8 @@ retry:
 		mid = left + (right - left) / 2;
 		kwp = &kwtabp[mid];
 
-		n = qse_strxncmp (kwp->name.ptr, kwp->name.len, name->ptr, name->len);
+		/* the identifier classification is not affected by case-insensivity */
+		n = qse_strxncmp(kwp->name.ptr, kwp->name.len, name->ptr, name->len);
 		if (n > 0) 
 		{
 			/* if left, right, mid were of qse_size_t,
@@ -809,7 +810,7 @@ static int read_pair (qse_xli_t* xli, const qse_char_t* keytag, const qse_xli_sc
 		while (atom)
 		{
 			if (atom->type == QSE_XLI_PAIR &&
-			    qse_strcmp (((qse_xli_pair_t*)atom)->key, QSE_STR_PTR(xli->tok.name)) == 0)
+			    xli->opt.strcmp(((qse_xli_pair_t*)atom)->key, QSE_STR_PTR(xli->tok.name)) == 0)
 			{
 				qse_xli_seterror (xli, QSE_XLI_EEXIST, QSE_STR_XSTR(xli->tok.name), &xli->tok.loc);
 				goto oops;
@@ -836,8 +837,8 @@ static int read_pair (qse_xli_t* xli, const qse_char_t* keytag, const qse_xli_sc
 			{
 				if (atom->type == QSE_XLI_PAIR &&
 				    ((qse_xli_pair_t*)atom)->alias && 
-				    qse_strcmp (((qse_xli_pair_t*)atom)->key, key.ptr) == 0 &&
-				    qse_strcmp (((qse_xli_pair_t*)atom)->alias, QSE_STR_PTR(xli->tok.name)) == 0)
+				    xli->opt.strcmp(((qse_xli_pair_t*)atom)->key, key.ptr) == 0 &&
+				    xli->opt.strcmp(((qse_xli_pair_t*)atom)->alias, QSE_STR_PTR(xli->tok.name)) == 0)
 				{
 					qse_xli_seterror (xli, QSE_XLI_EEXIST, QSE_STR_XSTR(xli->tok.name), &xli->tok.loc);
 					goto oops;

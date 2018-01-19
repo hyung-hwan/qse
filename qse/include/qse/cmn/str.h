@@ -456,11 +456,11 @@ QSE_EXPORT qse_size_t qse_wcsbytes (
 );
 
 #if defined(QSE_CHAR_IS_MCHAR)
-#	define qse_strlen(str)   qse_mbslen(str)
-#	define qse_strbytes(str) qse_mbsbytes(str)
+#	define qse_strlen   qse_mbslen
+#	define qse_strbytes qse_mbsbytes
 #else
-#	define qse_strlen(str)   qse_wcslen(str)
-#	define qse_strbytes(str) qse_wcsbytes(str)
+#	define qse_strlen   qse_wcslen
+#	define qse_strbytes qse_wcsbytes
 #endif
 
 QSE_EXPORT qse_size_t qse_mbscpy (
@@ -528,15 +528,15 @@ QSE_EXPORT qse_size_t qse_wcsxncpy (
 );
 
 #if defined(QSE_CHAR_IS_MCHAR)
-#	define qse_strcpy(buf,str)           qse_mbscpy(buf,str)
-#	define qse_strxcpy(buf,bsz,str)      qse_mbsxcpy(buf,bsz,str)
-#	define qse_strncpy(buf,str,len)      qse_mbsncpy(buf,str,len)
-#	define qse_strxncpy(buf,bsz,str,len) qse_mbsxncpy(buf,bsz,str,len)
+#	define qse_strcpy       qse_mbscpy
+#	define qse_strxcpy      qse_mbsxcpy
+#	define qse_strncpy      qse_mbsncpy
+#	define qse_strxncpy     qse_mbsxncpy
 #else
-#	define qse_strcpy(buf,str)           qse_wcscpy(buf,str)
-#	define qse_strxcpy(buf,bsz,str)      qse_wcsxcpy(buf,bsz,str)
-#	define qse_strncpy(buf,str,len)      qse_wcsncpy(buf,str,len)
-#	define qse_strxncpy(buf,bsz,str,len) qse_wcsxncpy(buf,bsz,str,len)
+#	define qse_strcpy       qse_wcscpy
+#	define qse_strxcpy      qse_wcsxcpy
+#	define qse_strncpy      qse_wcsncpy
+#	define qse_strxncpy     qse_wcsxncpy
 #endif
 
 QSE_EXPORT qse_size_t qse_mbsput (
@@ -586,13 +586,13 @@ QSE_EXPORT qse_size_t qse_wcsxnput (
 );
 
 #if defined(QSE_CHAR_IS_MCHAR)
-#	define qse_strput(buf,str)           qse_mbsput(buf,str)
-#	define qse_strxput(buf,bsz,str)      qse_mbsxput(buf,bsz,str)
-#	define qse_strxnput(buf,bsz,str,len) qse_mbsxnput(buf,bsz,str,len)
+#	define qse_strput       qse_mbsput
+#	define qse_strxput      qse_mbsxput
+#	define qse_strxnput     qse_mbsxnput
 #else
-#	define qse_strput(buf,str)           qse_wcsput(buf,str)
-#	define qse_strxput(buf,bsz,str)      qse_wcsxput(buf,bsz,str)
-#	define qse_strxnput(buf,bsz,str,len) qse_wcsxnput(buf,bsz,str,len)
+#	define qse_strput       qse_wcsput
+#	define qse_strxput      qse_wcsxput
+#	define qse_strxnput     qse_wcsxnput
 #endif
 
 /**
@@ -718,15 +718,15 @@ QSE_EXPORT qse_size_t qse_wcsxfncpy (
 );
 
 #if defined(QSE_CHAR_IS_MCHAR)
-#	define qse_strfcpy(buf,fmt,str)        qse_mbsfcpy(buf,fmt,str)
-#	define qse_strfncpy(buf,fmt,str)       qse_mbsfncpy(buf,fmt,str)
-#	define qse_strxfcpy(buf,bsz,fmt,str)   qse_mbsxfcpy(buf,bsz,fmt,str)
-#	define qse_strxfncpy(buf,bsz,fmt,str)  qse_mbsxfncpy(buf,bsz,fmt,str)
+#	define qse_strfcpy        qse_mbsfcpy
+#	define qse_strfncpy       qse_mbsfncpy
+#	define qse_strxfcpy       qse_mbsxfcpy
+#	define qse_strxfncpy      qse_mbsxfncpy
 #else
-#	define qse_strfcpy(buf,fmt,str)        qse_wcsfcpy(buf,fmt,str)
-#	define qse_strfncpy(buf,fmt,str)       qse_wcsfncpy(buf,fmt,str)
-#	define qse_strxfcpy(buf,bsz,fmt,str)   qse_wcsxfcpy(buf,bsz,fmt,str)
-#	define qse_strxfncpy(buf,bsz,fmt,str)  qse_wcsxfncpy(buf,bsz,fmt,str)
+#	define qse_strfcpy        qse_wcsfcpy
+#	define qse_strfncpy       qse_wcsfncpy
+#	define qse_strxfcpy       qse_wcsxfcpy
+#	define qse_strxfncpy      qse_wcsxfncpy
 #endif
 
 
@@ -1042,11 +1042,11 @@ QSE_EXPORT qse_size_t qse_wcsxnsubst (
 );
 
 #if defined(QSE_CHAR_IS_MCHAR)
-#	define qse_strxsubst(buf,bsz,fmt,subst,ctx) qse_mbsxsubst(buf,bsz,fmt,subst,ctx)
-#	define qse_strxnsubst(buf,bsz,fmt,fsz,subst,ctx) qse_mbsxnsubst(buf,bsz,fmt,fsz,subst,ctx)
+#	define qse_strxsubst  qse_mbsxsubst
+#	define qse_strxnsubst qse_mbsxnsubst
 #else
-#	define qse_strxsubst(buf,bsz,fmt,subst,ctx) qse_wcsxsubst(buf,bsz,fmt,subst,ctx)
-#	define qse_strxnsubst(buf,bsz,fmt,fsz,subst,ctx) qse_wcsxnsubst(buf,bsz,fmt,fsz,subst,ctx)
+#	define qse_strxsubst  qse_wcsxsubst
+#	define qse_strxnsubst qse_wcsxnsubst
 #endif
 
 QSE_EXPORT qse_size_t qse_mbscat (
@@ -1110,17 +1110,17 @@ QSE_EXPORT qse_size_t qse_wcsxncat (
 );
 
 #if defined(QSE_CHAR_IS_MCHAR)
-#	define qse_strcat(buf,str)           qse_mbscat(buf,str)
-#	define qse_strncat(buf,str,len)      qse_mbsncat(buf,str,len)
-#	define qse_strcatn(buf,str,n)        qse_mbscatn(buf,str,n)
-#	define qse_strxcat(buf,bsz,str)      qse_mbsxcat(buf,bsz,str);
-#	define qse_strxncat(buf,bsz,str,len) qse_mbsxncat(buf,bsz,str,len)
+#	define qse_strcat        qse_mbscat
+#	define qse_strncat       qse_mbsncat
+#	define qse_strcatn       qse_mbscatn
+#	define qse_strxcat       qse_mbsxcat;
+#	define qse_strxncat      qse_mbsxncat
 #else
-#	define qse_strcat(buf,str)           qse_wcscat(buf,str)
-#	define qse_strncat(buf,str,len)      qse_wcsncat(buf,str,len)
-#	define qse_strcatn(buf,str,n)        qse_wcscatn(buf,str,n)
-#	define qse_strxcat(buf,bsz,str)      qse_wcsxcat(buf,bsz,str);
-#	define qse_strxncat(buf,bsz,str,len) qse_wcsxncat(buf,bsz,str,len)
+#	define qse_strcat        qse_wcscat
+#	define qse_strncat       qse_wcsncat
+#	define qse_strcatn       qse_wcscatn
+#	define qse_strxcat       qse_wcsxcat;
+#	define qse_strxncat      qse_wcsxncat
 #endif
 
 
@@ -1183,15 +1183,15 @@ QSE_EXPORT qse_size_t qse_wcsxjoinv (
 );
 
 #if defined(QSE_CHAR_IS_MCHAR)
-#	define qse_strjoin                qse_mbsjoin
-#	define qse_strxjoin               qse_mbsxjoin
-#	define qse_strjoinv(buf,ap)       qse_mbsjoinv(buf,ap)
-#	define qse_strxjoinv(buf,size,ap) qse_mbsxjoinv(buf,size,ap)
+#	define qse_strjoin         qse_mbsjoin
+#	define qse_strxjoin        qse_mbsxjoin
+#	define qse_strjoinv        qse_mbsjoinv
+#	define qse_strxjoinv       qse_mbsxjoinv
 #else
-#	define qse_strjoin                qse_wcsjoin
-#	define qse_strxjoin               qse_wcsxjoin
-#	define qse_strjoinv(buf,ap) qse_wcsjoinv(buf,ap)
-#	define qse_strxjoinv(buf,size,ap) qse_wcsxjoinv(buf,size,ap)
+#	define qse_strjoin         qse_wcsjoin
+#	define qse_strxjoin        qse_wcsxjoin
+#	define qse_strjoinv        qse_wcsjoinv
+#	define qse_strxjoinv       qse_wcsxjoinv
 #endif
 /* ---------------------------------------------------- */
 
@@ -1333,23 +1333,23 @@ QSE_EXPORT int qse_wcszcasecmp (
 );
 
 #if defined(QSE_CHAR_IS_MCHAR)
-#	define qse_strcmp(s1,s2)               qse_mbscmp(s1,s2)
-#	define qse_strxcmp(s1,ln1,s2)          qse_mbsxcmp(s1,ln1,s2)
-#	define qse_strxncmp(s1,ln1,s2,ln2)     qse_mbsxncmp(s1,ln1,s2,ln2)
-#	define qse_strcasecmp(s1,s2)           qse_mbscasecmp(s1,s2)
-#	define qse_strxcasecmp(s1,ln1,s2)      qse_mbsxcasecmp(s1,ln1,s2)
-#	define qse_strxncasecmp(s1,ln1,s2,ln2) qse_mbsxncasecmp(s1,ln1,s2,ln2)
-#	define qse_strzcmp(s1,s2,n)            qse_mbszcmp(s1,s2,n)
-#	define qse_strzcasecmp(s1,s2,n)        qse_mbszcasecmp(s1,s2,n)
+#	define qse_strcmp               qse_mbscmp
+#	define qse_strxcmp              qse_mbsxcmp
+#	define qse_strxncmp             qse_mbsxncmp
+#	define qse_strcasecmp           qse_mbscasecmp
+#	define qse_strxcasecmp          qse_mbsxcasecmp
+#	define qse_strxncasecmp         qse_mbsxncasecmp
+#	define qse_strzcmp              qse_mbszcmp
+#	define qse_strzcasecmp          qse_mbszcasecmp
 #else
-#	define qse_strcmp(s1,s2)               qse_wcscmp(s1,s2)
-#	define qse_strxcmp(s1,ln1,s2)          qse_wcsxcmp(s1,ln1,s2)
-#	define qse_strxncmp(s1,ln1,s2,ln2)     qse_wcsxncmp(s1,ln1,s2,ln2)
-#	define qse_strcasecmp(s1,s2)           qse_wcscasecmp(s1,s2)
-#	define qse_strxcasecmp(s1,ln1,s2)      qse_wcsxcasecmp(s1,ln1,s2)
-#	define qse_strxncasecmp(s1,ln1,s2,ln2) qse_wcsxncasecmp(s1,ln1,s2,ln2)
-#	define qse_strzcmp(s1,s2,n)            qse_wcszcmp(s1,s2,n)
-#	define qse_strzcasecmp(s1,s2,n)        qse_wcszcasecmp(s1,s2,n)
+#	define qse_strcmp               qse_wcscmp
+#	define qse_strxcmp              qse_wcsxcmp
+#	define qse_strxncmp             qse_wcsxncmp
+#	define qse_strcasecmp           qse_wcscasecmp
+#	define qse_strxcasecmp          qse_wcsxcasecmp
+#	define qse_strxncasecmp         qse_wcsxncasecmp
+#	define qse_strzcmp              qse_wcszcmp
+#	define qse_strzcasecmp          qse_wcszcasecmp
 #endif
 
 QSE_EXPORT qse_mchar_t* qse_mbsdup (
@@ -1415,17 +1415,17 @@ QSE_EXPORT qse_wchar_t* qse_wcsadup (
 );
 
 #if defined(QSE_CHAR_IS_MCHAR)
-#	define qse_strdup(s,mmgr)             qse_mbsdup(s,mmgr)
-#	define qse_strdup2(s1,s2,mmgr)        qse_mbsdup2(s1,s2,mmgr)
-#	define qse_strxdup(s,l,mmgr)          qse_mbsxdup(s,l,mmgr)
-#	define qse_strxdup2(s1,l1,s2,l2,mmgr) qse_mbsxdup(s1,l1,s2,l2,mmgr)
-#	define qse_stradup(sa,len,mmgr)       qse_mbsadup(sa,len,mmgr)
+#	define qse_strdup         qse_mbsdup
+#	define qse_strdup2        qse_mbsdup2
+#	define qse_strxdup        qse_mbsxdup
+#	define qse_strxdup2       qse_mbsxdup
+#	define qse_stradup        qse_mbsadup
 #else
-#	define qse_strdup(s,mmgr)             qse_wcsdup(s,mmgr)
-#	define qse_strdup2(s1,s2,mmgr)        qse_wcsdup2(s1,s2,mmgr)
-#	define qse_strxdup(s,l,mmgr)          qse_wcsxdup(s,l,mmgr)
-#	define qse_strxdup2(s1,l1,s2,l2,mmgr) qse_wcsxdup(s1,l1,s2,l2,mmgr)
-#	define qse_stradup(sa,len,mmgr)       qse_wcsadup(sa,len,mmgr)
+#	define qse_strdup         qse_wcsdup
+#	define qse_strdup2        qse_wcsdup2
+#	define qse_strxdup        qse_wcsxdup
+#	define qse_strxdup2       qse_wcsxdup
+#	define qse_stradup        qse_wcsadup
 #endif
 
 QSE_EXPORT qse_mchar_t* qse_mcstrdup (
@@ -1451,11 +1451,11 @@ QSE_EXPORT qse_wchar_t* qse_wcstradup (
 );
 
 #if defined(QSE_CHAR_IS_MCHAR)
-#	define qse_cstrdup(sa,mmgr)           qse_mcstrdup(sa,mmgr)
-#	define qse_cstradup(sa,len,mmgr)      qse_mcstradup(sa,len,mmgr)
+#	define qse_cstrdup       qse_mcstrdup
+#	define qse_cstradup      qse_mcstradup
 #else
-#	define qse_cstrdup(sa,mmgr)           qse_wcstrdup(sa,mmgr)
-#	define qse_cstradup(sa,len,mmgr)      qse_wcstradup(sa,len,mmgr)
+#	define qse_cstrdup       qse_wcstrdup
+#	define qse_cstradup      qse_wcstradup
 #endif
 
 
@@ -1628,31 +1628,31 @@ QSE_EXPORT qse_wchar_t* qse_wcsxnrcasestr (
 );
 
 #if defined(QSE_CHAR_IS_MCHAR)
-#	define qse_strstr(str,sub)                    qse_mbsstr(str,sub)
-#	define qse_strxstr(str,size,sub)              qse_mbsxstr(str,size,sub)
-#	define qse_strxnstr(str,strsz,sub,subsz)      qse_mbsxnstr(str,strsz,sub,subsz)
-#	define qse_strcasestr(str,sub)                qse_mbscasestr(str,sub)
-#	define qse_strxcasestr(str,size,sub)          qse_mbsxcasestr(str,size,sub)
-#	define qse_strxncasestr(str,strsz,sub,subsz)  qse_mbsxncasestr(str,strsz,sub,subsz)
-#	define qse_strrstr(str,sub)                   qse_mbsrstr(str,sub)
-#	define qse_strxrstr(str,size,sub)             qse_mbsxrstr(str,size,sub)
-#	define qse_strxnrstr(str,strsz,sub,subsz)     qse_mbsxnrstr(str,strsz,sub,subsz)
-#	define qse_strrcasestr(str,sub)               qse_mbsrcasestr(str,sub)
-#	define qse_strxrcasestr(str,size,sub)         qse_mbsxrcasestr(str,size,sub)
-#	define qse_strxnrcasestr(str,strsz,sub,subsz) qse_mbsxnrcasestr(str,strsz,sub,subsz)
+#	define qse_strstr        qse_mbsstr
+#	define qse_strxstr       qse_mbsxstr
+#	define qse_strxnstr      qse_mbsxnstr
+#	define qse_strcasestr    qse_mbscasestr
+#	define qse_strxcasestr   qse_mbsxcasestr
+#	define qse_strxncasestr  qse_mbsxncasestr
+#	define qse_strrstr       qse_mbsrstr
+#	define qse_strxrstr      qse_mbsxrstr
+#	define qse_strxnrstr     qse_mbsxnrstr
+#	define qse_strrcasestr   qse_mbsrcasestr
+#	define qse_strxrcasestr  qse_mbsxrcasestr
+#	define qse_strxnrcasestr qse_mbsxnrcasestr
 #else
-#	define qse_strstr(str,sub)                    qse_wcsstr(str,sub)
-#	define qse_strxstr(str,size,sub)              qse_wcsxstr(str,size,sub)
-#	define qse_strxnstr(str,strsz,sub,subsz)      qse_wcsxnstr(str,strsz,sub,subsz)
-#	define qse_strcasestr(str,sub)                qse_wcscasestr(str,sub)
-#	define qse_strxcasestr(str,size,sub)          qse_wcsxcasestr(str,size,sub)
-#	define qse_strxncasestr(str,strsz,sub,subsz)  qse_wcsxncasestr(str,strsz,sub,subsz)
-#	define qse_strrstr(str,sub)                   qse_wcsrstr(str,sub)
-#	define qse_strxrstr(str,size,sub)             qse_wcsxrstr(str,size,sub)
-#	define qse_strxnrstr(str,strsz,sub,subsz)     qse_wcsxnrstr(str,strsz,sub,subsz)
-#	define qse_strrcasestr(str,sub)               qse_wcsrcasestr(str,sub)
-#	define qse_strxrcasestr(str,size,sub)         qse_wcsxrcasestr(str,size,sub)
-#	define qse_strxnrcasestr(str,strsz,sub,subsz) qse_wcsxnrcasestr(str,strsz,sub,subsz)
+#	define qse_strstr        qse_wcsstr
+#	define qse_strxstr       qse_wcsxstr
+#	define qse_strxnstr      qse_wcsxnstr
+#	define qse_strcasestr    qse_wcscasestr
+#	define qse_strxcasestr   qse_wcsxcasestr
+#	define qse_strxncasestr  qse_wcsxncasestr
+#	define qse_strrstr       qse_wcsrstr
+#	define qse_strxrstr      qse_wcsxrstr
+#	define qse_strxnrstr     qse_wcsxnrstr
+#	define qse_strrcasestr   qse_wcsrcasestr
+#	define qse_strxrcasestr  qse_wcsxrcasestr
+#	define qse_strxnrcasestr qse_wcsxnrcasestr
 #endif
 
 QSE_EXPORT const qse_mchar_t* qse_mbsword (
@@ -1728,15 +1728,15 @@ QSE_EXPORT const qse_wchar_t* qse_wcsxcaseword (
 );
 
 #if defined(QSE_CHAR_IS_MCHAR)
-#	define qse_strword(str,word,edelim)          qse_mbsword(str,word,edelim)
-#	define qse_strxword(str,len,word,edelim)     qse_mbsxword(str,len,word,edelim)
-#	define qse_strcaseword(str,word,edelim)      qse_mbscaseword(str,word,edelim)
-#	define qse_strxcaseword(str,len,word,edelim) qse_mbsxcaseword(str,len,word,edelim)
+#	define qse_strword      qse_mbsword
+#	define qse_strxword     qse_mbsxword
+#	define qse_strcaseword  qse_mbscaseword
+#	define qse_strxcaseword qse_mbsxcaseword
 #else
-#	define qse_strword(str,word,edelim)          qse_wcsword(str,word,edelim)
-#	define qse_strxword(str,len,word,edelim)     qse_wcsxword(str,len,word,edelim)
-#	define qse_strcaseword(str,word,edelim)      qse_wcscaseword(str,word,edelim)
-#	define qse_strxcaseword(str,len,word,edelim) qse_wcsxcaseword(str,len,word,edelim)
+#	define qse_strword      qse_wcsword
+#	define qse_strxword     qse_wcsxword
+#	define qse_strcaseword  qse_wcscaseword
+#	define qse_strxcaseword qse_wcsxcaseword
 #endif
 
 /**
@@ -1790,15 +1790,15 @@ QSE_EXPORT qse_wchar_t* qse_wcsxrchr (
 );
 
 #if defined(QSE_CHAR_IS_MCHAR)
-#	define qse_strchr(str,c)        qse_mbschr(str,c)
-#	define qse_strxchr(str,len,c)   qse_mbsxchr(str,len,c)
-#	define qse_strrchr(str,c)       qse_mbsrchr(str,c)
-#	define qse_strxrchr(str,len,c)  qse_mbsxrchr(str,len,c)
+#	define qse_strchr    qse_mbschr
+#	define qse_strxchr   qse_mbsxchr
+#	define qse_strrchr   qse_mbsrchr
+#	define qse_strxrchr  qse_mbsxrchr
 #else
-#	define qse_strchr(str,c)        qse_wcschr(str,c)
-#	define qse_strxchr(str,len,c)   qse_wcsxchr(str,len,c)
-#	define qse_strrchr(str,c)       qse_wcsrchr(str,c)
-#	define qse_strxrrchr(str,len,c) qse_wcsxrchr(str,len,c)
+#	define qse_strchr    qse_wcschr
+#	define qse_strxchr   qse_wcsxchr
+#	define qse_strrchr   qse_wcsrchr
+#	define qse_strxrrchr qse_wcsxrchr
 #endif
 
 /**
@@ -1870,17 +1870,17 @@ QSE_EXPORT qse_wchar_t* qse_wcscasebeg (
 );
 
 #if defined(QSE_CHAR_IS_MCHAR)
-#	define qse_strbeg(str,sub)             qse_mbsbeg(str,sub)
-#	define qse_strxbeg(str,len,sub)        qse_mbsxbeg(str,len,sub)
-#	define qse_strnbeg(str,sub,len)        qse_mbsnbeg(str,sub,len)
-#	define qse_strxnbeg(str,len1,sub,len2) qse_mbsxnbeg(str,len1,sub,len2)
-#	define qse_strcasebeg(str,sub)         qse_mbscasebeg(str,sub)
+#	define qse_strbeg         qse_mbsbeg
+#	define qse_strxbeg        qse_mbsxbeg
+#	define qse_strnbeg        qse_mbsnbeg
+#	define qse_strxnbeg       qse_mbsxnbeg
+#	define qse_strcasebeg     qse_mbscasebeg
 #else
-#	define qse_strbeg(str,sub)             qse_wcsbeg(str,sub)
-#	define qse_strxbeg(str,len,sub)        qse_wcsxbeg(str,len,sub)
-#	define qse_strnbeg(str,sub,len)        qse_wcsnbeg(str,sub,len)
-#	define qse_strxnbeg(str,len1,sub,len2) qse_wcsxnbeg(str,len1,sub,len2)
-#	define qse_strcasebeg(str,sub)         qse_wcscasebeg(str,sub)
+#	define qse_strbeg         qse_wcsbeg
+#	define qse_strxbeg        qse_wcsxbeg
+#	define qse_strnbeg        qse_wcsnbeg
+#	define qse_strxnbeg       qse_wcsxnbeg
+#	define qse_strcasebeg     qse_wcscasebeg
 #endif
 
 /**
@@ -1942,15 +1942,15 @@ QSE_EXPORT qse_wchar_t* qse_wcsxnend (
 );
 
 #if defined(QSE_CHAR_IS_MCHAR)
-#	define qse_strend(str,sub)             qse_mbsend(str,sub)
-#	define qse_strxend(str,len,sub)        qse_mbsxend(str,len,sub)
-#	define qse_strnend(str,sub,len)        qse_mbsnend(str,sub,len)
-#	define qse_strxnend(str,len1,sub,len2) qse_mbsxnend(str,len1,sub,len2)
+#	define qse_strend         qse_mbsend
+#	define qse_strxend        qse_mbsxend
+#	define qse_strnend        qse_mbsnend
+#	define qse_strxnend       qse_mbsxnend
 #else
-#	define qse_strend(str,sub)             qse_wcsend(str,sub)
-#	define qse_strxend(str,len,sub)        qse_wcsxend(str,len,sub)
-#	define qse_strnend(str,sub,len)        qse_wcsnend(str,sub,len)
-#	define qse_strxnend(str,len1,sub,len2) qse_wcsxnend(str,len1,sub,len2)
+#	define qse_strend         qse_wcsend
+#	define qse_strxend        qse_wcsxend
+#	define qse_strnend        qse_wcsnend
+#	define qse_strxnend       qse_wcsxnend
 #endif
 
 QSE_EXPORT qse_size_t qse_mbsspn (
@@ -1974,11 +1974,11 @@ QSE_EXPORT qse_size_t qse_wcscspn (
 );
 
 #if defined(QSE_CHAR_IS_MCHAR)
-#	define qse_strspn(str1,str2) qse_mbsspn(str1,str2)
-#	define qse_strcspn(str1,str2) qse_mbscspn(str1,str2)
+#	define qse_strspn   qse_mbsspn
+#	define qse_strcspn  qse_mbscspn
 #else
-#	define qse_strspn(str1,str2) qse_wcsspn(str1,str2)
-#	define qse_strcspn(str1,str2) qse_wcscspn(str1,str2)
+#	define qse_strspn   qse_wcsspn
+#	define qse_strcspn   qse_wcscspn
 #endif
 
 /*
@@ -2038,15 +2038,15 @@ QSE_EXPORT qse_wchar_t* qse_wcsxrpbrk (
 );
 
 #if defined(QSE_CHAR_IS_MCHAR)
-#	define qse_strpbrk(str1,str2)       qse_mbspbrk(str1,str2)
-#	define qse_strxpbrk(str1,len,str2)  qse_mbsxpbrk(str1,len,str2)
-#	define qse_strrpbrk(str1,str2)      qse_mbsrpbrk(str1,str2)
-#	define qse_strxrpbrk(str1,len,str2) qse_mbsxrpbrk(str1,len,str2)
+#	define qse_strpbrk       qse_mbspbrk
+#	define qse_strxpbrk      qse_mbsxpbrk
+#	define qse_strrpbrk      qse_mbsrpbrk
+#	define qse_strxrpbrk     qse_mbsxrpbrk
 #else
-#	define qse_strpbrk(str1,str2)       qse_wcspbrk(str1,str2)
-#	define qse_strxpbrk(str1,len,str2)  qse_wcsxpbrk(str1,len,str2)
-#	define qse_strrpbrk(str1,str2)      qse_wcsrpbrk(str1,str2)
-#	define qse_strxrpbrk(str1,len,str2) qse_wcsxrpbrk(str1,len,str2)
+#	define qse_strpbrk       qse_wcspbrk
+#	define qse_strxpbrk      qse_wcsxpbrk
+#	define qse_strrpbrk      qse_wcsrpbrk
+#	define qse_strxrpbrk     qse_wcsxrpbrk
 #endif
 
 /* 
@@ -2326,59 +2326,59 @@ QSE_EXPORT qse_uintmax_t qse_wcsxtouintmax (
 
 #if defined(QSE_CHAR_IS_MCHAR)
 
-#	define qse_strtoi(str,base,end) qse_mbstoi(str,base,end)
-#	define qse_strtol(str,base,end) qse_mbstol(str,base,end)
-#	define qse_strtoui(str,base,end) qse_mbstoui(str,base,end)
-#	define qse_strtoul(str,base,end) qse_mbstoul(str,base,end)
+#	define qse_strtoi        qse_mbstoi
+#	define qse_strtol        qse_mbstol
+#	define qse_strtoui       qse_mbstoui
+#	define qse_strtoul       qse_mbstoul
 /* ----- */
-#	define qse_strxtoi(str,len,base,end) qse_mbsxtoi(str,len,base,end)
-#	define qse_strxtol(str,len,base,end) qse_mbsxtol(str,len,base,end)
-#	define qse_strxtoui(str,len,base,end) qse_mbsxtoui(str,len,base,end)
-#	define qse_strxtoul(str,len,base,end) qse_mbsxtoul(str,len,base,end)
+#	define qse_strxtoi       qse_mbsxtoi
+#	define qse_strxtol       qse_mbsxtol
+#	define qse_strxtoui      qse_mbsxtoui
+#	define qse_strxtoul      qse_mbsxtoul
 /* ----- */
-#	define qse_strtoint(str,base,end) qse_mbstoint(str,base,end)
-#	define qse_strtolong(str,base,end) qse_mbstolong(str,base,end)
-#	define qse_strtointmax(str,base,end) qse_mbstointmax(str,base,end)
+#	define qse_strtoint      qse_mbstoint
+#	define qse_strtolong     qse_mbstolong
+#	define qse_strtointmax   qse_mbstointmax
 /* ----- */
-#	define qse_strtouint(str,base,end) qse_mbstouint(str,base,end)
-#	define qse_strtoulong(str,base,end) qse_mbstoulong(str,base,end)
-#	define qse_strtouintmax(str,base,end) qse_mbstouintmax(str,base,end)
+#	define qse_strtouint     qse_mbstouint
+#	define qse_strtoulong    qse_mbstoulong
+#	define qse_strtouintmax  qse_mbstouintmax
 /* ----- */
-#	define qse_strxtoint(str,len,base,end) qse_mbsxtoint(str,len,base,end)
-#	define qse_strxtolong(str,len,base,end) qse_mbsxtolong(str,len,base,end)
-#	define qse_strxtointmax(str,len,base,end) qse_mbsxtointmax(str,len,base,end)
+#	define qse_strxtoint     qse_mbsxtoint
+#	define qse_strxtolong    qse_mbsxtolong
+#	define qse_strxtointmax  qse_mbsxtointmax
 /* ----- */
-#	define qse_strxtouint(str,len,base,end) qse_mbsxtouint(str,len,base,end)
-#	define qse_strxtoulong(str,len,base,end) qse_mbsxtoulong(str,len,base,end)
-#	define qse_strxtouintmax(str,len,base,end) qse_mbsxtouintmax(str,len,base,end)
+#	define qse_strxtouint    qse_mbsxtouint
+#	define qse_strxtoulong   qse_mbsxtoulong
+#	define qse_strxtouintmax qse_mbsxtouintmax
 
 #else
 
-#	define qse_strtoi(str,base,end) qse_wcstoi(str,base,end)
-#	define qse_strtol(str,base,end) qse_wcstol(str,base,end)
-#	define qse_strtoui(str,base,end) qse_wcstoui(str,base,end)
-#	define qse_strtoul(str,base,end) qse_wcstoul(str,base,end)
+#	define qse_strtoi        qse_wcstoi
+#	define qse_strtol        qse_wcstol
+#	define qse_strtoui       qse_wcstoui
+#	define qse_strtoul       qse_wcstoul
 /* ----- */
-#	define qse_strxtoi(str,len,base,end) qse_wcsxtoi(str,len,base,end)
-#	define qse_strxtol(str,len,base,end) qse_wcsxtol(str,len,base,end)
-#	define qse_strxtoui(str,len,base,end) qse_wcsxtoui(str,len,base,end)
-#	define qse_strxtoul(str,len,base,end) qse_wcsxtoul(str,len,base,end)
+#	define qse_strxtoi       qse_wcsxtoi
+#	define qse_strxtol       qse_wcsxtol
+#	define qse_strxtoui      qse_wcsxtoui
+#	define qse_strxtoul      qse_wcsxtoul
 /* ----- */
-#	define qse_strtoint(str,base,end) qse_wcstoint(str,base,end)
-#	define qse_strtolong(str,base,end) qse_wcstolong(str,base,end)
-#	define qse_strtointmax(str,base,end) qse_wcstointmax(str,base,end)
+#	define qse_strtoint      qse_wcstoint
+#	define qse_strtolong     qse_wcstolong
+#	define qse_strtointmax   qse_wcstointmax
 /* ----- */
-#	define qse_strtouint(str,base,end) qse_wcstouint(str,base,end)
-#	define qse_strtoulong(str,base,end) qse_wcstoulong(str,base,end)
-#	define qse_strtouintmax(str,base,end) qse_wcstouintmax(str,base,end)
+#	define qse_strtouint     qse_wcstouint
+#	define qse_strtoulong    qse_wcstoulong
+#	define qse_strtouintmax  qse_wcstouintmax
 /* ----- */
-#	define qse_strxtoint(str,len,base,end) qse_wcsxtoint(str,len,base,end)
-#	define qse_strxtolong(str,len,base,end) qse_wcsxtolong(str,len,base,end)
-#	define qse_strxtointmax(str,len,base,end) qse_wcsxtointmax(str,len,base,end)
+#	define qse_strxtoint     qse_wcsxtoint
+#	define qse_strxtolong    qse_wcsxtolong
+#	define qse_strxtointmax  qse_wcsxtointmax
 /* ----- */
-#	define qse_strxtouint(str,len,base,end) qse_wcsxtouint(str,len,base,end)
-#	define qse_strxtoulong(str,len,base,end) qse_wcsxtoulong(str,len,base,end)
-#	define qse_strxtouintmax(str,len,base,end) qse_wcsxtouintmax(str,len,base,end)
+#	define qse_strxtouint    qse_wcsxtouint
+#	define qse_strxtoulong   qse_wcsxtoulong
+#	define qse_strxtouintmax qse_wcsxtouintmax
 
 #endif
 
@@ -2398,9 +2398,9 @@ QSE_EXPORT int qse_wcshextobin (
 );
 
 #if defined(QSE_CHAR_IS_MCHAR)
-#	define qse_strhextobin(hex,hexlen,buf,buflen) qse_mbshextobin(hex,hexlen,buf,buflen)
+#	define qse_strhextobin qse_mbshextobin
 #else
-#	define qse_strhextobin(hex,hexlen,buf,buflen) qse_wcshextobin(hex,hexlen,buf,buflen)
+#	define qse_strhextobin qse_wcshextobin
 #endif
 
 QSE_EXPORT qse_size_t qse_mbsdel (
@@ -2430,11 +2430,11 @@ QSE_EXPORT qse_size_t qse_wcsxdel (
 );
 
 #if defined(QSE_CHAR_IS_MCHAR)
-#	define qse_strdel(str,pos,n)      qse_mbsdel(str,pos,n)
-#	define qse_strxdel(str,len,pos,n) qse_mbsxdel(str,len,pos,n)
+#	define qse_strdel      qse_mbsdel
+#	define qse_strxdel     qse_mbsxdel
 #else
-#	define qse_strdel(str,pos,n)      qse_wcsdel(str,pos,n)
-#	define qse_strxdel(str,len,pos,n) qse_wcsxdel(str,len,pos,n)
+#	define qse_strdel      qse_wcsdel
+#	define qse_strxdel     qse_wcsxdel
 #endif
 
 
@@ -2461,11 +2461,11 @@ QSE_EXPORT qse_size_t qse_wcsxexcl (
 );
 
 #if defined(QSE_CHAR_IS_MCHAR)
-#	define qse_strexcl(str,cs)      qse_mbsexcl(str,cs)
-#	define qse_strxexcl(str,len,cs) qse_mbsxexcl(str,len,cs)
+#	define qse_strexcl      qse_mbsexcl
+#	define qse_strxexcl     qse_mbsxexcl
 #else
-#	define qse_strexcl(str,cs)      qse_wcsexcl(str,cs)
-#	define qse_strxexcl(str,len,cs) qse_wcsxexcl(str,len,cs)
+#	define qse_strexcl      qse_wcsexcl
+#	define qse_strxexcl     qse_wcsxexcl
 #endif
 
 QSE_EXPORT qse_size_t qse_mbsincl (
@@ -2491,11 +2491,11 @@ QSE_EXPORT qse_size_t qse_wcsxincl (
 );
 
 #if defined(QSE_CHAR_IS_MCHAR)
-#	define qse_strincl(str,cs)      qse_mbsincl(str,cs)
-#	define qse_strxincl(str,len,cs) qse_mbsxincl(str,len,cs)
+#	define qse_strincl      qse_mbsincl
+#	define qse_strxincl     qse_mbsxincl
 #else
-#	define qse_strincl(str,cs)      qse_wcsincl(str,cs)
-#	define qse_strxincl(str,len,cs) qse_wcsxincl(str,len,cs)
+#	define qse_strincl      qse_wcsincl
+#	define qse_strxincl     qse_wcsxincl
 #endif
 
 QSE_EXPORT qse_size_t qse_mbsset (
@@ -2526,11 +2526,11 @@ QSE_EXPORT qse_size_t qse_wcsxset (
 );
 
 #if defined(QSE_CHAR_IS_MCHAR)
-#	define qse_strset(buf,c,n) qse_mbsset(buf,c,n)
-#	define qse_strxset(buf,bsz,c,n) qse_mbsxset(buf,bsz,c,n)
+#	define qse_strset  qse_mbsset
+#	define qse_strxset qse_mbsxset
 #else
-#	define qse_strset(buf,c,n) qse_wcsset(buf,c,n)
-#	define qse_strxset(buf,bsz,c,n) qse_wcsxset(buf,bsz,c,n)
+#	define qse_strset  qse_wcsset
+#	define qse_strxset qse_wcsxset
 #endif
 
 /* case conversion */
@@ -2552,11 +2552,11 @@ QSE_EXPORT qse_size_t qse_wcsupr (
 );
 
 #if defined(QSE_CHAR_IS_MCHAR)
-#	define qse_strlwr(str) qse_mbslwr(str);
-#	define qse_strupr(str) qse_mbsupr(str);
+#	define qse_strlwr qse_mbslwr;
+#	define qse_strupr qse_mbsupr;
 #else
-#	define qse_strlwr(str) qse_wcslwr(str);
-#	define qse_strupr(str) qse_wcsupr(str);
+#	define qse_strlwr qse_wcslwr;
+#	define qse_strupr qse_wcsupr;
 #endif
 
 
@@ -2579,11 +2579,11 @@ QSE_EXPORT qse_size_t qse_wcsxrev (
 );
 
 #if defined(QSE_CHAR_IS_MCHAR)
-#	define qse_strrev(str)      qse_mbsrev(str)
-#	define qse_strxrev(str,len) qse_mbsxrev(str,len)
+#	define qse_strrev      qse_mbsrev
+#	define qse_strxrev     qse_mbsxrev
 #else
-#	define qse_strrev(str)      qse_wcsrev(str)
-#	define qse_strxrev(str,len) qse_wcsxrev(str,len)
+#	define qse_strrev      qse_wcsrev
+#	define qse_strxrev     qse_wcsxrev
 #endif
 
 QSE_EXPORT qse_size_t qse_mbsrot (
@@ -2613,11 +2613,11 @@ QSE_EXPORT qse_size_t qse_wcsxrot (
 );
 
 #if defined(QSE_CHAR_IS_MCHAR)
-#	define qse_strrot(str,dir,n)      qse_mbsrot(str,dir,n)
-#	define qse_strxrot(str,len,dir,n) qse_mbsrot(str,len,dir,n)
+#	define qse_strrot      qse_mbsrot
+#	define qse_strxrot     qse_mbsrot
 #else
-#	define qse_strrot(str,dir,n)      qse_wcsrot(str,dir,n)
-#	define qse_strxrot(str,len,dir,n) qse_wcsrot(str,len,dir,n)
+#	define qse_strrot      qse_wcsrot
+#	define qse_strxrot     qse_wcsrot
 #endif
 
 /**
@@ -2707,11 +2707,11 @@ QSE_EXPORT int qse_wcsspltrn (
 );
 
 #if defined(QSE_CHAR_IS_MCHAR)
-#	define qse_strspl(str,delim,lquote,rquote,escape) qse_mbsspl(str,delim,lquote,rquote,escape)
-#	define qse_strspltrn(str,delim,lquote,rquote,escape,trset) qse_mbsspltrn(str,delim,lquote,rquote,escape,trset)
+#	define qse_strspl    qse_mbsspl
+#	define qse_strspltrn qse_mbsspltrn
 #else
-#	define qse_strspl(str,delim,lquote,rquote,escape) qse_wcsspl(str,delim,lquote,rquote,escape)
-#	define qse_strspltrn(str,delim,lquote,rquote,escape,trset) qse_wcsspltrn(str,delim,lquote,rquote,escape,trset)
+#	define qse_strspl    qse_wcsspl
+#	define qse_strspltrn qse_wcsspltrn
 #endif
 
 
@@ -2758,13 +2758,13 @@ QSE_EXPORT qse_wchar_t* qse_wcsxntok (
 );
 
 #if defined(QSE_CHAR_IS_MCHAR)
-#	define qse_strtok(s,d,t)          qse_mbstok(s,d,t)
-#	define qse_strxtok(s,len,d,t)     qse_mbsxtok(s,len,d,t)
-#	define qse_strxntok(s,len,d,dl,t) qse_mbsxntok(s,len,d,dl,t)
+#	define qse_strtok      qse_mbstok
+#	define qse_strxtok     qse_mbsxtok
+#	define qse_strxntok    qse_mbsxntok
 #else
-#	define qse_strtok(s,d,t)          qse_wcstok(s,d,t)
-#	define qse_strxtok(s,len,d,t)     qse_wcsxtok(s,len,d,t)
-#	define qse_strxntok(s,len,d,dl,t) qse_wcsxntok(s,len,d,dl,t)
+#	define qse_strtok      qse_wcstok
+#	define qse_strxtok     qse_wcsxtok
+#	define qse_strxntok    qse_wcsxntok
 #endif
 
 /**
@@ -2878,15 +2878,15 @@ QSE_EXPORT qse_size_t qse_wcsxtrm (
 );
 
 #if defined(QSE_CHAR_IS_MCHAR)
-#	define qse_strtrmx(str,opt)      qse_mbstrmx(str,opt)
-#	define qse_strxtrmx(str,len,opt) qse_mbsxtrmx(str,len,opt)
-#	define qse_strtrm(str)           qse_mbstrm(str)
-#	define qse_strxtrm(str,len)      qse_mbsxtrm(str,len)
+#	define qse_strtrmx      qse_mbstrmx
+#	define qse_strxtrmx     qse_mbsxtrmx
+#	define qse_strtrm       qse_mbstrm
+#	define qse_strxtrm      qse_mbsxtrm
 #else
-#	define qse_strtrmx(str,opt)       qse_wcstrmx(str,opt)
-#	define qse_strxtrmx(str,len,opt)  qse_wcsxtrmx(str,len,opt)
-#	define qse_strtrm(str)            qse_wcstrm(str)
-#	define qse_strxtrm(str,len)       qse_wcsxtrm(str,len)
+#	define qse_strtrmx       qse_wcstrmx
+#	define qse_strxtrmx      qse_wcsxtrmx
+#	define qse_strtrm        qse_wcstrm
+#	define qse_strxtrm       qse_wcsxtrm
 #endif
 
 /**
@@ -2929,11 +2929,11 @@ QSE_EXPORT qse_size_t qse_wcsxpac (
 );
 
 #if defined(QSE_CHAR_IS_MCHAR)
-#	define qse_strpac(str)      qse_mbspac(str)
-#	define qse_strxpac(str,len) qse_mbsxpac(str,len)
+#	define qse_strpac      qse_mbspac
+#	define qse_strxpac     qse_mbsxpac
 #else
-#	define qse_strpac(str)      qse_wcspac(str)
-#	define qse_strxpac(str,len) qse_wcsxpac(str,len)
+#	define qse_strpac      qse_wcspac
+#	define qse_strxpac     qse_wcsxpac
 #endif
 
 QSE_EXPORT int qse_mbsfnmat (
@@ -2993,15 +2993,15 @@ QSE_EXPORT int qse_wcsxnfnmat (
 );
 
 #if defined(QSE_CHAR_IS_MCHAR)
-#	define qse_strfnmat(str,ptn,flags)             qse_mbsfnmat(str,ptn,flags)
-#	define qse_strxfnmat(str,slen,ptn,flags)       qse_mbsxfnmat(str,slen,ptn,flags)
-#	define qse_strnfnmat(str,ptn,plen,flags)       qse_mbsnfnmat(str,ptn,plen,flags)
-#	define qse_strxnfnmat(str,slen,ptn,plen,flags) qse_mbsxnfnmat(str,slen,ptn,plen,flags)
+#	define qse_strfnmat        qse_mbsfnmat
+#	define qse_strxfnmat       qse_mbsxfnmat
+#	define qse_strnfnmat       qse_mbsnfnmat
+#	define qse_strxnfnmat      qse_mbsxnfnmat
 #else
-#	define qse_strfnmat(str,ptn,flags)             qse_wcsfnmat(str,ptn,flags)
-#	define qse_strxfnmat(str,slen,ptn,flags)       qse_wcsxfnmat(str,slen,ptn,flags)
-#	define qse_strnfnmat(str,ptn,plen,flags)       qse_wcsnfnmat(str,ptn,plen,flags)
-#	define qse_strxnfnmat(str,slen,ptn,plen,flags) qse_wcsxnfnmat(str,slen,ptn,plen,flags)
+#	define qse_strfnmat        qse_wcsfnmat
+#	define qse_strxfnmat       qse_wcsxfnmat
+#	define qse_strnfnmat       qse_wcsnfnmat
+#	define qse_strxnfnmat      qse_wcsxnfnmat
 #endif
 
 QSE_EXPORT int qse_mbsistype (
@@ -3027,11 +3027,11 @@ QSE_EXPORT int qse_wcsxistype (
 );
 
 #if defined(QSE_CHAR_IS_MCHAR)
-#	define qse_stristype(str,type) qse_mbsistype(str,type)
-#	define qse_strxistype(str,len,type) qse_mbsxistype(str,len,type)
+#	define qse_stristype  qse_mbsistype
+#	define qse_strxistype qse_mbsxistype
 #else
-#	define qse_stristype(str,type) qse_wcsistype(str,type)
-#	define qse_strxistype(str,len,type) qse_wcsxistype(str,len,type)
+#	define qse_stristype  qse_wcsistype
+#	define qse_strxistype qse_wcsxistype
 #endif
 /* ------------------------------------------------------------------------- */
 
