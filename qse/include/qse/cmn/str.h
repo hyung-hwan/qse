@@ -2058,7 +2058,7 @@ QSE_EXPORT int qse_mbstoi (
 	const qse_mchar_t** end
 );
 
-QSE_EXPORT long qse_mbstol (
+QSE_EXPORT long int qse_mbstol (
 	const qse_mchar_t*  str,
 	int                 base,
 	const qse_mchar_t** end
@@ -2070,7 +2070,7 @@ QSE_EXPORT unsigned int qse_mbstoui (
 	const qse_mchar_t** end
 );
 
-QSE_EXPORT unsigned long qse_mbstoul (
+QSE_EXPORT unsigned long int qse_mbstoul (
 	const qse_mchar_t*  str,
 	int                 base,
 	const qse_mchar_t** end
@@ -2084,7 +2084,7 @@ QSE_EXPORT int qse_mbsxtoi (
 	const qse_mchar_t** end
 );
 
-QSE_EXPORT long qse_mbsxtol (
+QSE_EXPORT long int qse_mbsxtol (
 	const qse_mchar_t*  str,
 	qse_size_t          len,
 	int                 base,
@@ -2098,7 +2098,7 @@ QSE_EXPORT unsigned int qse_mbsxtoui (
 	const qse_mchar_t** end
 );
 
-QSE_EXPORT unsigned long qse_mbsxtoul (
+QSE_EXPORT unsigned long int qse_mbsxtoul (
 	const qse_mchar_t*  str,
 	qse_size_t          len,
 	int                 base,
@@ -2198,7 +2198,7 @@ QSE_EXPORT int qse_wcstoi (
 	const qse_wchar_t** end
 );
 
-QSE_EXPORT long qse_wcstol (
+QSE_EXPORT long int qse_wcstol (
 	const qse_wchar_t*  str,
 	int                 base,
 	const qse_wchar_t** end
@@ -2210,7 +2210,7 @@ QSE_EXPORT unsigned int qse_wcstoui (
 	const qse_wchar_t** end
 );
 
-QSE_EXPORT unsigned long qse_wcstoul (
+QSE_EXPORT unsigned long int qse_wcstoul (
 	const qse_wchar_t*  str,
 	int                 base,
 	const qse_wchar_t** end
@@ -2224,7 +2224,7 @@ QSE_EXPORT int qse_wcsxtoi (
 	const qse_wchar_t** end
 );
 
-QSE_EXPORT long qse_wcsxtol (
+QSE_EXPORT long int qse_wcsxtol (
 	const qse_wchar_t*  str,
 	qse_size_t          len,
 	int                 base,
@@ -2238,7 +2238,7 @@ QSE_EXPORT unsigned int qse_wcsxtoui (
 	const qse_wchar_t** end
 );
 
-QSE_EXPORT unsigned long qse_wcsxtoul (
+QSE_EXPORT unsigned long int qse_wcsxtoul (
 	const qse_wchar_t*  str,
 	qse_size_t          len,
 	int                 base,

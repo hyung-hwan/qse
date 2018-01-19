@@ -146,6 +146,10 @@ int qse_xli_setopt (qse_xli_t* xli, qse_xli_opt_t id, const void* value)
 		case QSE_XLI_KEYSPLITTER:
 			xli->opt.key_splitter = *(const qse_char_t*)value;
 			return 0;
+
+		case QSE_XLI_CBS:
+			xli->opt.cbs = *(qse_xli_cbs_t*)value;
+			return 0;
 	}
 
 	qse_xli_seterrnum (xli, QSE_XLI_EINVAL, QSE_NULL);
@@ -170,6 +174,10 @@ int qse_xli_getopt (qse_xli_t* xli, qse_xli_opt_t  id, void* value)
 
 		case QSE_XLI_KEYSPLITTER:
 			*(qse_char_t*)value = xli->opt.key_splitter;
+			return 0;
+
+		case QSE_XLI_CBS:
+			*(qse_xli_cbs_t*)value = xli->opt.cbs;
 			return 0;
 	};
 

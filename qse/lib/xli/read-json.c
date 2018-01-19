@@ -690,15 +690,22 @@ static int __read_array (qse_xli_t* xli)
 	qse_size_t index = 0;
 	qse_char_t key[64];
 
-	if (MATCH(xli, QSE_XLI_TOK_RBRACK)) return 0; // empty array
+	if (MATCH(xli, QSE_XLI_TOK_RBRACK)) return 0; /* empty array */
 
 	while (1)
 	{
+		qse_xli_pair_t* p;
+		qse_xli_loc_t ploc;
+
 		val = __read_value(xli);
 		if (!val) return -1;
 
+		ploc = xli->tok.loc;
+
 		qse_strxfmt (key, QSE_COUNTOF(key), QSE_T("%zu"), index);
-		if (!qse_xli_insertpair (xli, xli->parlink->list, QSE_NULL, key, QSE_NULL, QSE_NULL, val)) return -1;
+		p = qse_xli_insertpair (xli, xli->parlink->list, QSE_NULL, key, QSE_NULL, QSE_NULL, val);
+		if (!p) return -1;
+		if (xli->opt.cbs.pair_read) xli->opt.cbs.pair_read (xli, p, &ploc);
 		index++;
 
 		if (get_token(xli) <= -1) return -1;
@@ -759,14 +766,21 @@ static int __read_list (qse_xli_t* xli)
 		else if (/*MATCH(xli, QSE_XLI_TOK_IDENT) ||*/  MATCH(xli, QSE_XLI_TOK_DQSTR) || MATCH(xli, QSE_XLI_TOK_SQSTR))
 		{
 			rpair_t rpair;
+			qse_xli_pair_t* p;
+			qse_xli_loc_t ploc;
+
+			ploc = xli->tok.loc;
 			if (read_pair(xli, &rpair) <= -1) return -1;
 
-			if (!qse_xli_insertpair(xli, xli->parlink->list, QSE_NULL, rpair.key, QSE_NULL, QSE_NULL, rpair.val)) 
+			p = qse_xli_insertpair(xli, xli->parlink->list, QSE_NULL, rpair.key, QSE_NULL, QSE_NULL, rpair.val);
+			if (!p)
 			{
 				QSE_MMGR_FREE (xli->mmgr, rpair.key);
 				qse_xli_freeval (xli, rpair.val);
 				return -1;
 			}
+
+			if (xli->opt.cbs.pair_read) xli->opt.cbs.pair_read (xli, p, &ploc);
 
 			/* clear the duplicated key. the key is also duplicated in qse_xli_insertpair(). don't need it */
 			QSE_MMGR_FREE (xli->mmgr, rpair.key);
