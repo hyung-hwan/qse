@@ -121,13 +121,7 @@ typedef struct qse_awk_rtx_t qse_awk_rtx_t;
 /**
  * The qse_awk_loc_t type defines a structure to hold location.
  */
-struct qse_awk_loc_t
-{
-	const qse_char_t* file; /**< file */
-	qse_size_t        line; /**< line */
-	qse_size_t        colm; /**< column */
-};
-typedef struct qse_awk_loc_t qse_awk_loc_t;
+typedef qse_floc_t qse_awk_loc_t;
 
 /**
  * The #QSE_AWK_VAL_HDR defines the common header for a value.
