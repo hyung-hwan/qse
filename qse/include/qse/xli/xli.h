@@ -454,9 +454,15 @@ typedef void (*qse_xli_pair_read_cb_t) (
 	qse_xli_loc_t*  loc
 );
 
+typedef int (*qse_xli_pair_writable_cb_t) (
+	qse_xli_t*      xli,
+	qse_xli_pair_t* pair
+);
+
 struct qse_xli_cbs_t
 {
 	qse_xli_pair_read_cb_t pair_read;
+	qse_xli_pair_writable_cb_t pair_writable;
 };
 typedef struct qse_xli_cbs_t qse_xli_cbs_t;
 

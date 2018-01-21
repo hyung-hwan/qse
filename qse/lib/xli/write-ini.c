@@ -54,6 +54,8 @@ static int write_list (qse_xli_t* xli, qse_xli_list_t* list, int depth)
 			{
 				qse_xli_pair_t* pair = (qse_xli_pair_t*)curatom;
 
+				if (xli->opt.cbs.pair_writable && !xli->opt.cbs.pair_writable(xli, pair)) continue;
+
 				if (pair->tag)
 				{
 					/* the tag can't be written. so ignore it */

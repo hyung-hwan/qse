@@ -106,6 +106,8 @@ static int write_list (qse_xli_t* xli, qse_xli_list_t* list, int depth)
 			{
 				qse_xli_pair_t* pair = (qse_xli_pair_t*)curatom;
 
+				if (xli->opt.cbs.pair_writable && !xli->opt.cbs.pair_writable(xli, pair)) continue;
+
 				if (write_indentation(xli, depth) <= -1) return -1;
 
 				if (!(list->flags & QSE_XLI_LIST_ARRAYED))
@@ -130,15 +132,15 @@ static int write_list (qse_xli_t* xli, qse_xli_list_t* list, int depth)
 				switch (pair->val->type)
 				{
 					case QSE_XLI_NIL:
-						if (write_to_current_stream(xli, QSE_T("nil"), 5, 0) <= -1) return -1;
+						if (write_to_current_stream(xli, QSE_T("nil"), 3, 0) <= -1) return -1;
 						break;
 
 					case QSE_XLI_TRUE:
-						if (write_to_current_stream(xli, QSE_T("true"), 6, 0) <= -1) return -1;
+						if (write_to_current_stream(xli, QSE_T("true"), 4, 0) <= -1) return -1;
 						break;
 
 					case QSE_XLI_FALSE:
-						if (write_to_current_stream(xli, QSE_T("false"), 7, 0) <= -1) return -1;
+						if (write_to_current_stream(xli, QSE_T("false"), 5, 0) <= -1) return -1;
 						break;
 
 					case QSE_XLI_STR:
