@@ -734,6 +734,44 @@ struct qse_xptl_t
 };
 typedef struct qse_xptl_t qse_xptl_t;
 
+/**
+ * The qse_floc_t type defines a structure that can hold a position
+ * in a file.
+ */
+struct qse_floc_t
+{
+	const qse_char_t* file;
+	qse_size_t        line;
+	qse_size_t        colm;
+};
+typedef struct qse_floc_t qse_floc_t;
+
+#if defined(__cplusplus)
+struct qse_flocxx_t: qse_floc_t
+{
+	qse_flocxx_t () 
+	{
+		this->file = (const qse_char_t*)0 /*QSE_NULL*/;
+		this->line = 0;
+		this->colm = 0;
+	}
+
+	qse_flocxx_t (qse_size_t line, qse_size_t colm)
+	{
+		this->file = (const qse_char_t*)0 /*QSE_NULL*/;
+		this->line = line;
+		this->colm = colm;
+	}
+
+	qse_flocxx_t& operator= (const qse_floc_t& floc)
+	{
+		this->file = floc.file;
+		this->line = floc.line;
+		this->colm = floc.colm;
+		return *this;
+	}
+};
+#endif
 
 typedef struct qse_mmgr_t qse_mmgr_t;
 

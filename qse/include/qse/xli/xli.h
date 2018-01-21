@@ -334,17 +334,10 @@ struct qse_xli_ecb_t
 	qse_xli_ecb_t* next;
 };
 
-typedef struct qse_xli_loc_t qse_xli_loc_t;
-
 /** 
  * The qse_xli_loc_t defines a structure to store location information.
  */
-struct qse_xli_loc_t
-{
-	const qse_char_t* file;
-	qse_size_t line; /**< line  */
-	qse_size_t colm; /**< column */
-};
+typedef qse_floc_t qse_xli_loc_t;
 
 /**
  * The qse_xli_io_cmd_t type defines I/O command codes. The code indicates 
