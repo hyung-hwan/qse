@@ -83,12 +83,16 @@ static int write_indentation (qse_xli_t* xli, int depth)
 	return 0;
 }
 
-static int need_comma (qse_xli_atom_t* start)
+static int need_comma (qse_xli_t* xli, qse_xli_atom_t* start)
 {
 	qse_xli_atom_t* cur;
 	for (cur = start; cur; cur = cur->next)
 	{
-		if (cur->type == QSE_XLI_PAIR) return 1;
+		if (cur->type == QSE_XLI_PAIR) 
+		{
+			if (xli->opt.cbs.pair_writable && !xli->opt.cbs.pair_writable(xli, (qse_xli_pair_t*)cur)) continue;
+			return 1;
+		}
 		if (cur->type == QSE_XLI_EOF) return 0; /* if EOF encountered in the included file, i don't want a comma at the end of the file */
 	}
 	return 0;
@@ -189,7 +193,7 @@ static int write_list (qse_xli_t* xli, qse_xli_list_t* list, int depth)
 					}
 				}
 
-				if (need_comma(curatom->next) && write_to_current_stream(xli, QSE_T(","), 1, 0) <= -1) return -1;
+				if (need_comma(xli, curatom->next) && write_to_current_stream(xli, QSE_T(","), 1, 0) <= -1) return -1;
 				if (write_to_current_stream(xli, QSE_T("\n"), 1, 0) <= -1) return -1;
 				break;
 			}
@@ -228,7 +232,7 @@ static int write_list (qse_xli_t* xli, qse_xli_list_t* list, int depth)
 			case QSE_XLI_EOF:
 				if (qse_xli_closeactivewstream(xli, &depth) <= -1) return -1;
 
-				if (need_comma(curatom->next) && write_to_current_stream(xli, QSE_T(","), 1, 0) <= -1) return -1;
+				if (need_comma(xli, curatom->next) && write_to_current_stream(xli, QSE_T(","), 1, 0) <= -1) return -1;
 				if (write_to_current_stream(xli, QSE_T("\n"), 1, 0) <= -1) return -1;
 				break;
 		}
