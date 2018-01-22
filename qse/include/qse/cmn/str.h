@@ -1149,7 +1149,7 @@ QSE_EXPORT qse_size_t qse_mbsxjoinv (
 );
 
 
-/*
+/**
  * The qse_wcsjoin() function joins a list of wide-charcter strings into 
  * a buffer. The list of strings is terminated by QSE_NULL.
  *
@@ -1157,7 +1157,7 @@ QSE_EXPORT qse_size_t qse_mbsxjoinv (
  *  qse_wcsjoin (x, QSE_T("hello"), QSE_T("world"), QSE_NULL);
  * \endcode
  *
- * \return the number of character in the joined string excluding 
+ * \return the number of characters in the joined string excluding 
  *         the terminating null.
  */
 QSE_EXPORT qse_size_t qse_wcsjoin (
@@ -1165,6 +1165,15 @@ QSE_EXPORT qse_size_t qse_wcsjoin (
 	...
 );
 
+/**
+ * The qse_wcsxjoin() function acts like qse_wcsjoin() except it doens't
+ * copy more than size characters. if the buffer is not large enough,
+ * the result is truncated. If the buffer \a size given is 0, no terminating
+ * null character is written to the buffer. 
+ *
+ * \return the number of characters in the joined string excluding 
+ *         the terminating null.
+ */
 QSE_EXPORT qse_size_t qse_wcsxjoin (
 	qse_wchar_t* buf,
 	qse_size_t   size,
