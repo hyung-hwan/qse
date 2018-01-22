@@ -891,49 +891,43 @@ qse_xli_pair_t* qse_xli_setpairwithstr (qse_xli_t* xli, const qse_xli_list_t* li
 	qse_xli_pair_t* pair, * xpair;
 
 	pair = qse_xli_findpair (xli, list, fqpn);
-	if (pair)
+	if (!pair) return QSE_NULL;
+
+	if (xli->opt.trait & QSE_XLI_VALIDATE) 
 	{
-		if (xli->opt.trait & QSE_XLI_VALIDATE) 
+		qse_rbt_pair_t* scm_pair;
+		const qse_xli_scm_t* scm;
+
+		scm_pair = qse_rbt_search (xli->schema, fqpn, qse_strlen(fqpn));
+		if (!scm_pair)
 		{
-			qse_rbt_pair_t* scm_pair;
-			const qse_xli_scm_t* scm;
+			qse_cstr_t key;
 
-			scm_pair = qse_rbt_search (xli->schema, fqpn, qse_strlen(fqpn));
-			if (!scm_pair)
-			{
-				qse_cstr_t key;
+			key.ptr = (qse_char_t*)fqpn;
+			key.len = qse_strlen(fqpn);
 
-				key.ptr = (qse_char_t*)fqpn;
-				key.len = qse_strlen(fqpn);
-
-				qse_xli_seterror (xli, QSE_XLI_EUDKEY, &key, QSE_NULL);
-				return QSE_NULL;
-			}
-
-			scm = (qse_xli_scm_t*)QSE_RBT_VPTR(scm_pair);
-
-			if (scm && !(scm->flags & QSE_XLI_SCM_VALSTR))
-			{
-				/* check the value type */
-				qse_cstr_t key;
-
-				key.ptr = (qse_char_t*)fqpn;
-				key.len = qse_strlen(fqpn);
-
-				qse_xli_seterror (xli, QSE_XLI_EILVAL, (const qse_cstr_t*)&key, QSE_NULL);
-				return QSE_NULL;
-			}
+			qse_xli_seterror (xli, QSE_XLI_EUDKEY, &key, QSE_NULL);
+			return QSE_NULL;
 		}
 
-		xpair = qse_xli_insertpairwithstr (xli, pair->super, (qse_xli_atom_t*)pair, pair->key, pair->alias, pair->tag, value, strtag);
-		if (xpair) qse_xli_deletepair (xli, pair);
-		return xpair;
+		scm = (qse_xli_scm_t*)QSE_RBT_VPTR(scm_pair);
+
+		if (scm && !(scm->flags & QSE_XLI_SCM_VALSTR))
+		{
+			/* check the value type */
+			qse_cstr_t key;
+
+			key.ptr = (qse_char_t*)fqpn;
+			key.len = qse_strlen(fqpn);
+
+			qse_xli_seterror (xli, QSE_XLI_EILVAL, (const qse_cstr_t*)&key, QSE_NULL);
+			return QSE_NULL;
+		}
 	}
-	else
-	{
-		/* TODO: insert a new pair */
-		return QSE_NULL;
-	}
+
+	xpair = qse_xli_insertpairwithstr (xli, pair->super, (qse_xli_atom_t*)pair, pair->key, pair->alias, pair->tag, value, strtag);
+	if (xpair) qse_xli_deletepair (xli, pair);
+	return xpair;
 }
 
 qse_size_t qse_xli_countpairs (qse_xli_t* xli, const qse_xli_list_t* list, const qse_char_t* fqpn)
