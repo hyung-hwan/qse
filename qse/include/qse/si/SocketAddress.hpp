@@ -59,6 +59,11 @@ public:
 		return qse_skadsize(&this->skad);
 	}
 
+	int getAddrCapa() const
+	{
+		return QSE_SIZEOF(this->skad);
+	}
+
 	void setIpaddr (const qse_ip4ad_t* ipaddr);
 	void setIpaddr (const qse_ip6ad_t* ipaddr);
 

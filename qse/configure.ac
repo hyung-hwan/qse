@@ -156,6 +156,7 @@ AC_CHECK_FUNCS([backtrace backtrace_symbols])
 AC_CHECK_FUNCS([fork vfork posix_spawn gettid nanosleep select])
 AC_CHECK_FUNCS([makecontext swapcontext getcontext setcontext])
 AC_CHECK_FUNCS([snprintf _vsnprintf _vsnwprintf])
+AC_CHECK_FUNCS([accept4])
 
 OLDLIBS="$LIBS"
 LIBS="$LIBM $LIBS"
@@ -674,6 +675,11 @@ AC_DEFINE_UNQUOTED(QSE_SIZEOF_STRUCT_SOCKADDR_IN6, ${ac_cv_sizeof_struct_sockadd
 AC_DEFINE_UNQUOTED(QSE_SIZEOF_STRUCT_SOCKADDR_UN, ${ac_cv_sizeof_struct_sockaddr_un}, [sizeof(struct sockaddr_un)])
 AC_DEFINE_UNQUOTED(QSE_SIZEOF_STRUCT_SOCKADDR_LL, ${ac_cv_sizeof_struct_sockaddr_ll}, [sizeof(struct sockaddr_ll)])
 AC_DEFINE_UNQUOTED(QSE_SIZEOF_STRUCT_SOCKADDR_DL, ${ac_cv_sizeof_struct_sockaddr_dl}, [sizeof(struct sockaddr_dl)])
+
+
+AC_DEFINE_UNQUOTED(QSE_SIZEOF_SOCKLEN_T, ${ac_cv_sizeof_socklen_t}, [sizeof(socklen_t)])
+AC_DEFINE_UNQUOTED(QSE_SIZEOF_SA_FAMILY_T, ${ac_cv_sizeof_sa_family_t}, [sizeof(sa_family_t)])
+
 AC_DEFINE_UNQUOTED(QSE_SIZEOF_SOCKLEN_T, ${ac_cv_sizeof_socklen_t}, [sizeof(socklen_t)])
 AC_DEFINE_UNQUOTED(QSE_SIZEOF_PTHREAD_T, ${ac_cv_sizeof_pthread_t}, [sizeof(pthread_t)])
 AC_DEFINE_UNQUOTED(QSE_SIZEOF_PTHREAD_MUTEX_T, ${ac_cv_sizeof_pthread_mutex_t}, [sizeof(pthread_mutex_t)])

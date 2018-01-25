@@ -100,6 +100,69 @@ enum qse_nwadtostr_flag_t
 };
 typedef enum qse_nwadtostr_flag_t qse_nwadtostr_flag_t;
 
+#if (QSE_SIZEOF_SOCKLEN_T == 1)
+	#if defined(QSE_SOCKLEN_T_IS_SIGNED)
+		typedef qse_int8_t qse_sklen_t;
+	#else
+		typedef qse_uint8_t qse_sklen_t;
+	#endif
+#elif (QSE_SIZEOF_SOCKLEN_T == 2)
+	#if defined(QSE_SOCKLEN_T_IS_SIGNED)
+		typedef qse_int16_t qse_sklen_t;
+	#else
+		typedef qse_uint16_t qse_sklen_t;
+	#endif
+#elif (QSE_SIZEOF_SOCKLEN_T == 4)
+	#if defined(QSE_SOCKLEN_T_IS_SIGNED)
+		typedef qse_int32_t qse_sklen_t;
+	#else
+		typedef qse_uint32_t qse_sklen_t;
+	#endif
+#elif (QSE_SIZEOF_SOCKLEN_T == 8)
+	#if defined(QSE_SOCKLEN_T_IS_SIGNED)
+		typedef qse_int64_t qse_sklen_t;
+	#else
+		typedef qse_uint64_t qse_sklen_t;
+	#endif
+#else
+#	undef QSE_SIZEOF_SOCKLEN_T
+#	define QSE_SIZEOF_SOCKLEN_T QSE_SIZEOF_INT
+#	define QSE_SOCKLEN_T_IS_SIGNED
+	typedef int qse_sklen_t;
+#endif
+
+#if (QSE_SIZEOF_SA_FAMILY_T == 1)
+	#if defined(QSE_SA_FAMILY_T_IS_SIGNED)
+		typedef qse_int8_t qse_skaf_t;
+	#else
+		typedef qse_uint8_t qse_skaf_t;
+	#endif
+#elif (QSE_SIZEOF_SA_FAMILY_T == 2)
+	#if defined(QSE_SA_FAMILY_T_IS_SIGNED)
+		typedef qse_int16_t qse_skaf_t;
+	#else
+		typedef qse_uint16_t qse_skaf_t;
+	#endif
+#elif (QSE_SIZEOF_SA_FAMILY_T == 4)
+	#if defined(QSE_SA_FAMILY_T_IS_SIGNED)
+		typedef qse_int32_t qse_skaf_t;
+	#else
+		typedef qse_uint32_t qse_skaf_t;
+	#endif
+#elif (QSE_SIZEOF_SA_FAMILY_T == 8)
+	#if defined(QSE_SA_FAMILY_T_IS_SIGNED)
+		typedef qse_int64_t qse_skaf_t;
+	#else
+		typedef qse_uint64_t qse_skaf_t;
+	#endif
+#else
+#	undef QSE_SIZEOF_SA_FAMILY_T
+#	define QSE_SIZEOF_SA_FAMILY_T QSE_SIZEOF_SHORT
+#	undef QSE_SA_FAMILY_T_IS_SIGNED
+	typedef unsigned short int qse_skaf_t;
+#endif
+
+
 typedef struct qse_skad_t qse_skad_t;
 
 /** 
@@ -122,13 +185,21 @@ struct qse_skad_t
 #	undef QSE_SKAD_DATA_SIZE
 #	define QSE_SKAD_DATA_SIZE QSE_SIZEOF_STRUCT_SOCKADDR_UN
 #endif
+#if (QSE_SIZEOF_STRUCT_SOCKADDR_LL > QSE_SKAD_DATA_SIZE)
+#	undef QSE_SKAD_DATA_SIZE
+#	define QSE_SKAD_DATA_SIZE QSE_SIZEOF_STRUCT_SOCKADDR_LL
+#endif
 
 #if (QSE_SKAD_DATA_SIZE == 0)
 #	undef QSE_SKAD_DATA_SIZE
 #	define QSE_SKAD_DATA_SIZE QSE_SIZEOF(qse_nwad_t)
 #endif
 	/* TODO: is this large enough?? */
-	qse_uint8_t data[QSE_SKAD_DATA_SIZE];
+	union
+	{
+		qse_skaf_t family;
+		qse_uint8_t data[QSE_SKAD_DATA_SIZE];
+	} u;
 
 	/* dummy member to secure extra space and force structure alignment */
 	qse_uintptr_t dummy; 
