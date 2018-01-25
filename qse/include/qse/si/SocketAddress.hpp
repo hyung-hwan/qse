@@ -41,7 +41,6 @@ public:
 	SocketAddress (int family);
 	SocketAddress (const qse_skad_t* skad);
 	SocketAddress (const qse_nwad_t* nwad);
-	SocketAddress (const struct sockaddr* ptr, int len);
 
 	int getFamily () const;
 
@@ -68,7 +67,6 @@ public:
 
 	int set (const qse_skad_t* skad); 
 	int set (const qse_nwad_t* nwad);
-	int set (const struct sockaddr* ptr, int len); // treat ptr as a pointer to struct sockaddr
 
 protected:
 	qse_skad_t skad;

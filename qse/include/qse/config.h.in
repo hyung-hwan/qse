@@ -960,6 +960,9 @@
 /* Define if pthread_t is signed */
 #undef QSE_PTHREAD_T_IS_SIGNED
 
+/* Define if sa_family_t is signed */
+#undef QSE_SA_FAMILY_T_IS_SIGNED
+
 /* sizeof(char) */
 #undef QSE_SIZEOF_CHAR
 
@@ -1103,6 +1106,9 @@
 
 /* The size of `pthread_t', as computed by sizeof. */
 #undef SIZEOF_PTHREAD_T
+
+/* The size of `sa_family_t', as computed by sizeof. */
+#undef SIZEOF_SA_FAMILY_T
 
 /* The size of `short', as computed by sizeof. */
 #undef SIZEOF_SHORT

@@ -255,7 +255,7 @@ int qse_getnwifcfg (qse_nwifcfg_t* cfg)
 			head->flags |= QSE_NWIFCFG_PTOP;
 		}
 
-		if (ioctl (s, SIOCGLIFINDEX, &ifrbuf) <= -1) goto oops;		
+		if (ioctl (s, SIOCGLIFINDEX, &ifrbuf) <= -1) goto oops;
 		head->index = ifrbuf.lifr_index;
 
 		if (ioctl (s, SIOCGLIFNETMASK, &ifrbuf) <= -1) goto oops;

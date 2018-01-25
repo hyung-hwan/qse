@@ -111,14 +111,6 @@ SocketAddress::SocketAddress (const qse_nwad_t* nwad)
 	this->set (nwad);
 }
 
-SocketAddress::SocketAddress (const struct sockaddr* ptr, int len)
-{
-	if (this->set (ptr, len) <= -1)
-	{
-		QSE_MEMSET (&this->skad, 0, QSE_SIZEOF(this->skad));
-	}
-}
-
 int SocketAddress::getFamily () const
 {
 	return FAMILY(&this->skad);
@@ -204,14 +196,6 @@ int SocketAddress::set (const qse_skad_t* skad)
 int SocketAddress::set (const qse_nwad_t* nwad)
 {
 	return qse_nwadtoskad (nwad, &this->skad);
-}
-
-int SocketAddress::set (const struct sockaddr* ptr, int len)
-{
-	int exp_size = qse_skadsize((const qse_skad_t*)ptr);
-	if (len < exp_size) return -1;
-	QSE_MEMCPY (&this->skad, ptr, exp_size);
-	return 0;
 }
 
 

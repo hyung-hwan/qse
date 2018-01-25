@@ -27,6 +27,8 @@
 #ifndef _QSE_SI_SOCKET_HPP_
 #define _QSE_SI_SOCKET_HPP_
 
+#include <qse/Types.hpp>
+#include <qse/Uncopyable.hpp>
 #include <qse/si/SocketAddress.hpp>
 #include <qse/si/sck.h>
 
@@ -34,20 +36,41 @@
 QSE_BEGIN_NAMESPACE(QSE)
 /////////////////////////////////
 
-class Socket
+class Socket: public Uncopyable, public Types
 {
 public:
+	enum ErrorCode
+	{
+		E_NOERR,
+		E_NOMEM,
+		E_INVAL,
+		E_NOTOPEN,
+		E_SYSERR
+	};
+
 	Socket () QSE_CPP_NOEXCEPT;
 	~Socket () QSE_CPP_NOEXCEPT;
+
+	void setError (ErrorCode error_code, const qse_char_t* fmt = QSE_NULL, ...);
+
 
 	int open (int domain, int type, int protocol) QSE_CPP_NOEXCEPT;
 	void close () QSE_CPP_NOEXCEPT;
 
 	int connect (const SocketAddress& target) QSE_CPP_NOEXCEPT;
-	int beginConnect (const SocketAddress& target) QSE_CPP_NOEXCEPT;
+	int bind (const SocketAddress& target) QSE_CPP_NOEXCEPT;
+	int accept (Socket* newsck, SocketAddress* newaddr, int flags) QSE_CPP_NOEXCEPT;
+
+	int read () QSE_CPP_NOEXCEPT;
+	int write () QSE_CPP_NOEXCEPT;
 
 protected:
 	qse_sck_hnd_t handle;
+
+	ErrorCode errcode;
+	qse_char_t errmsg[128];
+
+	void set_error_with_syserr (int syserr);
 };
 
 

@@ -35,7 +35,7 @@
 QSE_BEGIN_NAMESPACE(QSE)
 /////////////////////////////////
 
-class AppRoot: Uncopyable, public Types, public Mmged
+class AppRoot: public Uncopyable, public Types, public Mmged
 {
 public:
 	AppRoot (Mmgr* mmgr): Mmged(mmgr), _root_only(false) {}
