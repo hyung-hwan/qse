@@ -44,8 +44,15 @@ public:
 		E_NOERR,
 		E_NOMEM,
 		E_INVAL,
+		E_INPROG,
 		E_NOTOPEN,
 		E_SYSERR
+	};
+
+	enum Trait
+	{
+		T_NONBLOCK = (1 << 0),
+		T_CLOEXEC  = (1 << 1)
 	};
 
 	Socket () QSE_CPP_NOEXCEPT;
@@ -53,17 +60,20 @@ public:
 
 	void setError (ErrorCode error_code, const qse_char_t* fmt = QSE_NULL, ...);
 
-
-	int open (int domain, int type, int protocol) QSE_CPP_NOEXCEPT;
+	int open (int domain, int type, int protocol, int traits = 0) QSE_CPP_NOEXCEPT;
 	void close () QSE_CPP_NOEXCEPT;
 
 	int connect (const SocketAddress& target) QSE_CPP_NOEXCEPT;
 	int bind (const SocketAddress& target) QSE_CPP_NOEXCEPT;
-	int accept (Socket* newsck, SocketAddress* newaddr, int flags) QSE_CPP_NOEXCEPT;
+	int accept (Socket* newsck, SocketAddress* newaddr, int traits = 0) QSE_CPP_NOEXCEPT;
 
-	int read () QSE_CPP_NOEXCEPT;
-	int write () QSE_CPP_NOEXCEPT;
+	qse_ssize_t send (const void* buf, qse_size_t len) QSE_CPP_NOEXCEPT;
+	qse_ssize_t send (const void* buf, qse_size_t len, const SocketAddress& dstaddr) QSE_CPP_NOEXCEPT;
 
+	qse_ssize_t receive (void* buf, qse_size_t len) QSE_CPP_NOEXCEPT;
+	qse_ssize_t receive (void* buf, qse_size_t len, SocketAddress& srcaddr) QSE_CPP_NOEXCEPT;
+
+/* TODO: sendmsg, recvmsg */
 protected:
 	qse_sck_hnd_t handle;
 

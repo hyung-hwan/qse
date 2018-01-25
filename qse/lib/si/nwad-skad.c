@@ -94,6 +94,7 @@ union sockaddr_t
 
 typedef union sockaddr_t sockaddr_t;
 
+/*
 #if defined(AF_INET)
 #	define FAMILY(x) (((struct sockaddr_in*)(x))->sin_family)
 #elif defined(AF_INET6)
@@ -103,6 +104,9 @@ typedef union sockaddr_t sockaddr_t;
 #else
 #	define FAMILY(x) (-1)
 #endif
+*/
+
+#define FAMILY(x) (((qse_skad_t*)x)->u.family)
 
 static QSE_INLINE int skad_to_nwad (const sockaddr_t* skad, qse_nwad_t* nwad)
 {
