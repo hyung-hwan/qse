@@ -104,7 +104,7 @@ static int fs_main (int argc, qse_char_t* argv[])
 	}
 	else if (qse_strcmp (argv[1], QSE_T("mkdir")) == 0)
 	{
-		if (qse_fs_mkdir (fs, argv[2], 0) <= -1)
+		if (qse_fs_mkdir (fs, argv[2], 0755, 0) <= -1)
 		{
 			qse_fprintf (QSE_STDERR, QSE_T("cannot make directory - %d\n"), qse_fs_geterrnum(fs));
 			ret = -1;
@@ -112,7 +112,7 @@ static int fs_main (int argc, qse_char_t* argv[])
 	}
 	else if (qse_strcmp (argv[1], QSE_T("mkdir-p")) == 0)
 	{
-		if (qse_fs_mkdir (fs, argv[2], QSE_FS_MKDIR_PARENT) <= -1)
+		if (qse_fs_mkdir (fs, argv[2], 0755, QSE_FS_MKDIR_PARENT) <= -1)
 		{
 			qse_fprintf (QSE_STDERR, QSE_T("cannot make directory - %d\n"), qse_fs_geterrnum(fs));
 			ret = -1;

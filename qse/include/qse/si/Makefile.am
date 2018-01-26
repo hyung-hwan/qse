@@ -29,6 +29,7 @@ if ENABLE_CXX
 pkginclude_HEADERS += \
 	AppRoot.hpp \
 	SocketAddress.hpp \
-	Socket.hpp
+	Socket.hpp \
+	Thread.hpp
 endif
 

@@ -36,11 +36,11 @@
 typedef struct qse_thr_t qse_thr_t;
 
 /** 
- * The qse_thr_routine_t type defines a thread routine that can be passed to 
+ * The qse_thr_rtn_t type defines a thread routine that can be passed to 
  * qse_thr_open() and qse_thr_start(). When it is executed, the pointer to the
  * calling thread object is passed as its first argument. 
  */
-typedef int (*qse_thr_routine_t) (qse_thr_t*);
+typedef int (*qse_thr_rtn_t) (qse_thr_t*);
 
 enum qse_thr_state_t
 {
@@ -53,8 +53,8 @@ typedef enum qse_thr_state_t qse_thr_state_t;
 
 enum qse_thr_flag_t
 {
-	QSE_THR_DETACHED    = (1 << 0),
-	QSE_THR_NEW_ROUTINE = (1 << 1)
+	QSE_THR_DETACHED        = (1 << 0),
+	QSE_THR_SIGNALS_BLOCKED = (1 << 1)
 };
 typedef enum qse_thr_flag_t qse_thr_flag_t;
 
@@ -93,6 +93,22 @@ typedef enum qse_thr_flag_t qse_thr_flag_t;
 	#endif
 #endif
 
+
+struct qse_thr_t
+{
+	qse_mmgr_t*       mmgr;
+
+	qse_thr_rtn_t     __main_routine;
+	qse_thr_rtn_t     __temp_routine;
+	unsigned int      __flags;
+	qse_size_t        __stacksize;
+
+	qse_thr_hnd_t     __handle;
+	qse_thr_state_t   __state;
+
+	int               __return_code;
+};
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -104,8 +120,7 @@ extern "C" {
  */
 QSE_EXPORT qse_thr_t* qse_thr_open (
 	qse_mmgr_t*       mmgr,
-	qse_size_t        xtnsize,
-	qse_thr_routine_t routine
+	qse_size_t        xtnsize
 );
 
 /**
@@ -118,8 +133,7 @@ QSE_EXPORT void qse_thr_close (
 
 QSE_EXPORT int qse_thr_init (
 	qse_thr_t*        thr,
-	qse_mmgr_t*       mmgr,
-	qse_thr_routine_t routine
+	qse_mmgr_t*       mmgr
 );
 
 QSE_EXPORT void qse_thr_fini (
@@ -149,19 +163,16 @@ QSE_EXPORT void qse_thr_setstacksize (
 
 /** 
  * The qse_thr_start() executes a thread routine in a new thread of control.
- * A new temporary thread routine can be passed as the third argument to 
- * override the main thread routine for a single invocation if \a flags contains
- * the #QSE_THR_NEW_ROUTINE bit.
- *
+
  * QSE_THR_DETACHED, when set in \a flags, puts the thread in a detached state.
  * Otherwise, the thread is joinable. 
  *
  * \return 0 on success, -1 on failure
  */
 QSE_EXPORT int qse_thr_start (
-	qse_thr_t* thr,
-	int        flags, /**< 0 or bitwise-or of QSE_THR_NEW_ROUTINE and QSE_THR_DETACHED  */
-	...
+	qse_thr_t*    thr,
+	qse_thr_rtn_t func,
+	int           flags /**< 0 or bitwise-or of the #qse_thr_flag_t enumerators  */
 );
 
 /**
@@ -232,10 +243,10 @@ QSE_EXPORT qse_thr_state_t qse_thr_getstate (
 );
 
 /**
- * The qse_getcurthrhnd() function returns the native handle to the 
+ * The qse_get_thr_hnd() function returns the native handle to the 
  * calling thread.
  */
-QSE_EXPORT qse_thr_hnd_t qse_getcurthrhnd (void);
+QSE_EXPORT qse_thr_hnd_t qse_get_thr_hnd (void);
 
 #ifdef __cplusplus
 }

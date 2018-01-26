@@ -23,8 +23,9 @@ bin_PROGRAMS = \
 	sio01 \
 	sio02 \
 	sio03  \
-	task01 
-
+	task01 \
+	thr01 
+	
 AM_LDFLAGS = -L../../lib/si  -L../../lib/cmn
 AM_CFLAGS = $(PTHREAD_CFLAGS)
 LDADD = -lqsesi -lqsecmn $(PTHREAD_LIBS)
@@ -53,4 +54,19 @@ sio01_SOURCES = sio01.c
 sio02_SOURCES = sio02.c
 sio03_SOURCES = sio03.c
 task01_SOURCES = task01.c
+thr01_SOURCES = thr01.c
+
+
+
+if ENABLE_CXX
+
+CXXLIB = -lqsesixx -lqsecmnxx
+
+bin_PROGRAMS += thr02
+
+thr02_SOURCES = thr02.cpp
+
+thr02_LDADD = $(CXXLIB) $(LDADD)
+
+endif
 
