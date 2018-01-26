@@ -158,6 +158,7 @@ enum qse_pio_errnum_t
 	QSE_PIO_ENOTDIR,    /**< not a directory */
 	QSE_PIO_EINTR,      /**< interrupted */
 	QSE_PIO_EPIPE,      /**< broken pipe */
+	QSE_PIO_EINPROG,    /**< in progress */
 	QSE_PIO_EAGAIN,     /**< resource not available temporarily */
 
 	QSE_PIO_ENOHND,     /**< no handle available */

@@ -94,12 +94,12 @@ static void test_001 (void)
 
 	for (i = 0; i < QSE_COUNTOF(t); i++)
 	{
-		t[i] = qse_thr_open (mmgr, QSE_SIZEOF(thr_xtn_t), thr_exec);
+		t[i] = qse_thr_open (mmgr, QSE_SIZEOF(thr_xtn_t));
 		xtn = qse_thr_getxtn(t[i]);
 		xtn->id = i;
 	}
 
-	for (i = 0; i < QSE_COUNTOF(t); i++) qse_thr_start (t[i], 0);
+	for (i = 0; i < QSE_COUNTOF(t); i++) qse_thr_start (t[i], thr_exec, 0);
 	for (i = 0; i < QSE_COUNTOF(t); i++) qse_thr_join (t[i]);
 	for (i = 0; i < QSE_COUNTOF(t); i++) qse_thr_close (t[i]);
 

@@ -55,6 +55,7 @@ enum qse_dir_errnum_t
 	QSE_DIR_ENOTDIR,    /**< not a directory */
 	QSE_DIR_EINTR,      /**< interrupted */
 	QSE_DIR_EPIPE,      /**< broken pipe */
+	QSE_DIR_EINPROG,    /**< in progress */
 	QSE_DIR_EAGAIN      /**< resource not available temporarily */
 };
 typedef enum qse_dir_errnum_t qse_dir_errnum_t;

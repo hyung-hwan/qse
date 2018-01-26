@@ -32,6 +32,7 @@
 #include <qse/si/SocketAddress.hpp>
 #include <qse/si/sck.h>
 
+
 /////////////////////////////////
 QSE_BEGIN_NAMESPACE(QSE)
 /////////////////////////////////
@@ -41,12 +42,23 @@ class Socket: public Uncopyable, public Types
 public:
 	enum ErrorCode
 	{
-		E_NOERR,
-		E_NOMEM,
-		E_INVAL,
-		E_INPROG,
-		E_NOTOPEN,
-		E_SYSERR
+		E_ENOERR,  /**< no error */
+		E_EOTHER,  /**< other error */
+		E_ENOIMPL, /**< not implemented */
+		E_ESYSERR, /**< subsystem error */
+		E_EINTERN, /**< internal error */
+
+		E_ENOMEM,
+		E_EINVAL,
+		E_EACCES,
+		E_EPERM,
+		E_ENOENT,
+		E_EEXIST,
+		E_ENOTDIR,
+		E_EINTR,
+		E_EPIPE,
+		E_EINPROG, /* in progress */
+		E_EAGAIN  /* resource unavailable unavailable */
 	};
 
 	enum Trait
@@ -58,13 +70,16 @@ public:
 	Socket () QSE_CPP_NOEXCEPT;
 	~Socket () QSE_CPP_NOEXCEPT;
 
-	void setError (ErrorCode error_code, const qse_char_t* fmt = QSE_NULL, ...);
+	ErrorCode getErrorCode () const QSE_CPP_NOEXCEPT { return this->errcode; }
+	void setErrorCode (ErrorCode errcode) QSE_CPP_NOEXCEPT { this->errcode = errcode; }
 
 	int open (int domain, int type, int protocol, int traits = 0) QSE_CPP_NOEXCEPT;
 	void close () QSE_CPP_NOEXCEPT;
 
+	
 	int connect (const SocketAddress& target) QSE_CPP_NOEXCEPT;
 	int bind (const SocketAddress& target) QSE_CPP_NOEXCEPT;
+	int listen (int backlog) QSE_CPP_NOEXCEPT;
 	int accept (Socket* newsck, SocketAddress* newaddr, int traits = 0) QSE_CPP_NOEXCEPT;
 
 	qse_ssize_t send (const void* buf, qse_size_t len) QSE_CPP_NOEXCEPT;
@@ -76,11 +91,9 @@ public:
 /* TODO: sendmsg, recvmsg */
 protected:
 	qse_sck_hnd_t handle;
-
 	ErrorCode errcode;
-	qse_char_t errmsg[128];
 
-	void set_error_with_syserr (int syserr);
+	void set_errcode_with_syserr (int syserr);
 };
 
 

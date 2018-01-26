@@ -32,14 +32,14 @@
 
 #if (!defined(__unix__) && !defined(__unix)) || defined(HAVE_PTHREAD)
 
-qse_thr_t* qse_thr_open (qse_mmgr_t* mmgr, qse_size_t xtnsize, qse_thr_routine_t routine)
+qse_thr_t* qse_thr_open (qse_mmgr_t* mmgr, qse_size_t xtnsize)
 {
 	qse_thr_t* thr;
 
 	thr = (qse_thr_t*) QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(qse_thr_t) + xtnsize);
 	if (thr)
 	{
-		if (qse_thr_init (thr, mmgr, routine) <= -1)
+		if (qse_thr_init (thr, mmgr) <= -1)
 		{
 			QSE_MMGR_FREE (mmgr, thr);
 			return QSE_NULL;
@@ -56,7 +56,7 @@ void qse_thr_close (qse_thr_t* thr)
 	QSE_MMGR_FREE (thr->mmgr, thr);
 }
 
-int qse_thr_init (qse_thr_t* thr, qse_mmgr_t* mmgr, qse_thr_routine_t routine)
+int qse_thr_init (qse_thr_t* thr, qse_mmgr_t* mmgr)
 {
 	QSE_MEMSET (thr, 0, QSE_SIZEOF(*thr));
 
@@ -64,8 +64,8 @@ int qse_thr_init (qse_thr_t* thr, qse_mmgr_t* mmgr, qse_thr_routine_t routine)
 	thr->__handle = QSE_THR_HND_INVALID;
 	thr->__state = QSE_THR_INCUBATING;
 	thr->__return_code = 0;
-	thr->__main_routine = routine;
-	thr->__joinable = 1;
+	thr->__main_routine = QSE_NULL;
+	thr->__flags = 0;
 	thr->__stacksize = 0;
 
 	return 0;
@@ -109,20 +109,25 @@ static void* __thread_main (void* arg)
 {
 	qse_thr_t* thr = (qse_thr_t*)arg;
 
+	if (thr->__flags & QSE_THR_SIGNALS_BLOCKED) 
+		qse_thr_blockallsigs (thr);
+	else
+		qse_thr_unblockallsigs (thr);
+	
 	while (thr->__state != QSE_THR_RUNNING) 
 	{
-#if defined(_WIN32)
+	#if defined(_WIN32)
 		Sleep (0);
-#elif defined(__OS2__)
+	#elif defined(__OS2__)
 		DosSleep (0);
-#elif defined(HAVE_NANOSLEEP)
+	#elif defined(HAVE_NANOSLEEP)
 		struct timespec ts;
 		ts.tv_sec = 0;
 		ts.tv_nsec = 0;
 		nanosleep (&ts, &ts);
-#else
+	#else
 		sleep (0);
-#endif
+	#endif
 	}
 
 #if defined(HAVE_PTHREAD)
@@ -134,7 +139,7 @@ static void* __thread_main (void* arg)
 	pthread_setcanceltype (PTHREAD_CANCEL_ASYNCHRONOUS, QSE_NULL);
 #endif
 
-	thr->__return_code = thr->__temp_routine? thr->__temp_routine(thr): thr->__main_routine(thr);
+	thr->__return_code = thr->__main_routine(thr);
 	thr->__state = QSE_THR_TERMINATED;
 
 #if defined(_WIN32)
@@ -195,8 +200,7 @@ static int __create_thread (qse_thr_t* thr)
 	pthread_attr_t attr;
 	pthread_attr_init (&attr);
 
-	if (pthread_attr_setdetachstate (&attr, (thr->__joinable? 
-		PTHREAD_CREATE_JOINABLE: PTHREAD_CREATE_DETACHED)) != 0) 
+	if (pthread_attr_setdetachstate(&attr, ((thr->__flags & QSE_THR_DETACHED)? PTHREAD_CREATE_DETACHED: PTHREAD_CREATE_JOINABLE)) != 0) 
 	{
 		pthread_attr_destroy (&attr);
 		return -1;
@@ -226,32 +230,25 @@ static int __cancel_thread (qse_thr_t* thr)
 {
 	if (thr->__state != QSE_THR_RUNNING) return -1;
 #if defined(_WIN32)
-	if (TerminateThread (thr->__handle, 0) == 0) return -1;
+	if (TerminateThread(thr->__handle, 0) == 0) return -1;
 #elif defined(__OS2__)
-	if (DosKillThread (thr->__handle) != NO_ERROR) return -1;
+	if (DosKillThread(thr->__handle) != NO_ERROR) return -1;
 #elif defined(__DOS__)
 	/* not implemented */
 #elif defined(__BEOS__)
-	if (kill_thread (thr->__handle) < B_OK) return -1;
+	if (kill_thread(thr->__handle) < B_OK) return -1;
 #elif defined(HAVE_PTHREAD)
-	if (pthread_cancel (thr->__handle) != 0) return -1;
+	if (pthread_cancel(thr->__handle) != 0) return -1;
 #endif
 	return 0;
 }
 
-int qse_thr_start (qse_thr_t* thr, int flags, ...)
+int qse_thr_start (qse_thr_t* thr, qse_thr_rtn_t func, int flags)
 {
 	if (thr->__state == QSE_THR_RUNNING) return -1;
 
-	thr->__joinable = ((flags & QSE_THR_DETACHED) == 0);
-	if (flags & QSE_THR_NEW_ROUTINE) 
-	{
-		va_list va;
-		va_start (va, flags);
-		thr->__temp_routine = va_arg (va, qse_thr_routine_t);
-		va_end (va);
-	}
-	else thr->__temp_routine = QSE_NULL;
+	thr->__flags = flags;
+	thr->__main_routine = func;
 
 	if (__create_thread(thr) == -1) 
 	{
@@ -280,7 +277,7 @@ int qse_thr_stop (qse_thr_t* thr)
 int qse_thr_join (qse_thr_t* thr)
 {
 	if (thr->__state == QSE_THR_INCUBATING) return -1;
-	if (!thr->__joinable) return -1;
+	if (thr->__flags & QSE_THR_DETACHED) return -1;
 
 #if defined(_WIN32)
 	if (thr->__state == QSE_THR_RUNNING) 
@@ -301,20 +298,20 @@ int qse_thr_join (qse_thr_t* thr)
 	if (pthread_join(thr->__handle, QSE_NULL) != 0) return -1;
 #endif
 
-	thr->__joinable = 0;
+	thr->__flags |= QSE_THR_DETACHED;
 	return 0;
 }
 
 int qse_thr_detach (qse_thr_t* thr)
 {
 	if (thr->__state == QSE_THR_INCUBATING) return -1;
-	if (!thr->__joinable) return -1;
+	if (thr->__flags & QSE_THR_DETACHED) return -1;
 
 #if defined(HAVE_PTHREAD)
 	if (pthread_detach(thr->__handle) != 0) return -1;
 #endif
 
-	thr->__joinable = 0;
+	thr->__flags |= QSE_THR_DETACHED;
 	return 0;
 }
 
@@ -325,7 +322,7 @@ int qse_thr_kill (qse_thr_t* thr, int sig)
 	if (thr->__state != QSE_THR_RUNNING) return -1;
 
 #if defined(HAVE_PTHREAD)
-	if (pthread_kill (thr->__handle, sig) != 0) return -1;
+	if (pthread_kill(thr->__handle, sig) != 0) return -1;
 #endif
 	return 0;
 }
@@ -341,7 +338,7 @@ int qse_thr_blocksig (qse_thr_t* thr, int sig)
 #if defined(HAVE_PTHREAD)
 	sigemptyset (&mask);
 	sigaddset (&mask, sig);
-	if (pthread_sigmask (SIG_BLOCK, &mask, QSE_NULL) != 0) return -1;
+	if (pthread_sigmask(SIG_BLOCK, &mask, QSE_NULL) != 0) return -1;
 #endif
 	return 0;
 }
@@ -357,7 +354,7 @@ int qse_thr_unblocksig (qse_thr_t* thr, int sig)
 #if defined(HAVE_PTHREAD)
 	sigemptyset (&mask);
 	sigaddset (&mask, sig);
-	if (pthread_sigmask (SIG_UNBLOCK, &mask, QSE_NULL) != 0) return -1;
+	if (pthread_sigmask(SIG_UNBLOCK, &mask, QSE_NULL) != 0) return -1;
 #endif
 	return 0;
 }
@@ -392,6 +389,7 @@ int qse_thr_unblockallsigs (qse_thr_t* thr)
 	return 0;
 }
 
+
 qse_thr_hnd_t qse_thr_gethnd (qse_thr_t* thr)
 {
 	return thr->__handle;
@@ -407,7 +405,7 @@ qse_thr_state_t qse_thr_getstate (qse_thr_t* thr)
 	return thr->__state;
 }
 
-qse_thr_hnd_t qse_getcurthrhnd (void)
+qse_thr_hnd_t qse_get_thr_hnd (void)
 {
 #if defined(_WIN32)
 	return GetCurrentThread ();
@@ -423,7 +421,7 @@ qse_thr_hnd_t qse_getcurthrhnd (void)
 #elif defined(__BEOS__)
 	return QSE_THR_HND_INVALID; /* TODO: implement this */
 #else
-	return pthread_self ();
+	return pthread_self();
 #endif
 }
 

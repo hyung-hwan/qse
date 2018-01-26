@@ -63,6 +63,7 @@ enum qse_httpd_errnum_t
 	QSE_HTTPD_ENOTDIR,
 	QSE_HTTPD_EINTR,
 	QSE_HTTPD_EPIPE,
+	QSE_HTTPD_EINPROG,
 	QSE_HTTPD_EAGAIN,
 
 	QSE_HTTPD_ENOSVR,        /* no active servers */

@@ -35,8 +35,13 @@
  * before this file.
  */
 
-#define __SYSERRTYPE__(obj) qse_ ## obj ## _errnum_t
-#define __SYSERRNUM__(obj,num) (QSE_ ## obj ## _ ## num)
+#if defined(__cplusplus)
+#	define __SYSERRTYPE__(obj) obj
+#	define __SYSERRNUM__(obj,num) (obj E_ ## num)
+#else
+#	define __SYSERRTYPE__(obj) qse_ ## obj ## _errnum_t
+#	define __SYSERRNUM__(obj,num) (QSE_ ## obj ## _ ## num)
+#endif
 
 #if defined(_WIN32)
 
@@ -146,6 +151,7 @@
 			case EEXIST: return __SYSERRNUM__ (obj2, EEXIST); \
 			case EINTR:  return __SYSERRNUM__ (obj2, EINTR); \
 			case EPIPE:  return __SYSERRNUM__ (obj2, EPIPE); \
+			case EINPROGRESS: return __SYSERRNUM__ (obj2, EINPROG); \
 			case EWOULDBLOCK: \
 			case EAGAIN: return __SYSERRNUM__ (obj2, EAGAIN); \
 			default:     return __SYSERRNUM__ (obj2, ESYSERR); \
@@ -169,6 +175,7 @@
 			case EEXIST: return __SYSERRNUM__ (obj2, EEXIST); \
 			case EINTR:  return __SYSERRNUM__ (obj2, EINTR); \
 			case EPIPE:  return __SYSERRNUM__ (obj2, EPIPE); \
+			case EINPROGRESS: return __SYSERRNUM__ (obj2, EINPROG); \
 			case EAGAIN: return __SYSERRNUM__ (obj2, EAGAIN); \
 			default:     return __SYSERRNUM__ (obj2, ESYSERR); \
 		} \
@@ -191,6 +198,7 @@
 			case EEXIST: return __SYSERRNUM__ (obj2, EEXIST); \
 			case EINTR:  return __SYSERRNUM__ (obj2, EINTR); \
 			case EPIPE:  return __SYSERRNUM__ (obj2, EPIPE); \
+			case EINPROGRESS: return __SYSERRNUM__ (obj2, EINPROG); \
 			case EWOULDBLOCK: return __SYSERRNUM__ (obj2, EAGAIN); \
 			default:     return __SYSERRNUM__ (obj2, ESYSERR); \
 		} \
@@ -213,6 +221,7 @@
 			case EEXIST: return __SYSERRNUM__ (obj2, EEXIST); \
 			case EINTR:  return __SYSERRNUM__ (obj2, EINTR); \
 			case EPIPE:  return __SYSERRNUM__ (obj2, EPIPE); \
+			case EINPROGRESS: return __SYSERRNUM__ (obj2, EINPROG); \
 			default:     return __SYSERRNUM__ (obj2, ESYSERR); \
 		} \
 	}
