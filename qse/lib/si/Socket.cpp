@@ -40,7 +40,7 @@ QSE_BEGIN_NAMESPACE(QSE)
 /////////////////////////////////
 
 #include "../cmn/syserr.h"
-IMPLEMENT_SYSERR_TO_ERRNUM (Socket::ErrorCode, Socket::ErrorCode::)
+IMPLEMENT_SYSERR_TO_ERRNUM (Socket::ErrorCode, Socket::)
 
 Socket::Socket () QSE_CPP_NOEXCEPT: handle(QSE_INVALID_SCKHND), errcode(E_ENOERR)
 {

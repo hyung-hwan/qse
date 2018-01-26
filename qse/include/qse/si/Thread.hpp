@@ -31,7 +31,7 @@
 #include <qse/Uncopyable.hpp>
 #include <qse/cmn/Mmged.hpp>
 
-//#include <functional>
+#include <functional>
 
 QSE_BEGIN_NAMESPACE(QSE)
 
@@ -81,7 +81,25 @@ public:
 		this->x_func = std::bind(f);
 		return qse_thr_start (this, (qse_thr_rtn_t)Thread::call_lambda, flags);
 	}
-	std::function<int(QSE::Thread*)> x_func;
+	
+#endif
+
+#if (__cplusplus >= 201103L) || (defined(_MSC_VER) && _MSC_VER >= 1900) //C++11 or later
+	using lfunc_t = std::function<int(QSE::Thread*thr)>;
+
+	static int call_lambda (QSE::Thread* thr)
+	{
+		return thr->x_func (thr);
+	}
+
+	int start (lfunc_t f, int flags)
+	{
+		this->x_func = std::move(f);
+		return qse_thr_start (this, (qse_thr_rtn_t)Thread::call_lambda, flags);
+	}
+
+	//std::function<int(QSE::Thread*)> x_func;
+	lfunc_t x_func;
 #endif
 
 	virtual int start (int flags = 0) QSE_CPP_NOEXCEPT;
