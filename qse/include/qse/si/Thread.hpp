@@ -113,31 +113,6 @@ protected:
 	static int thr_func_call_rtn (qse_thr_t* rtn, void* ctx);
 };
 
-#if (__cplusplus >= 201103L) || (defined(_MSC_VER) && _MSC_VER >= 1900) //C++11 or later
-
-#if 0
-// i don't want to use std::function. 
-class LambdaThread: public Thread
-{
-public:
-	static int call_lambda (qse_thr_t* thr, void* ctx)
-	{
-		LambdaThread* t = (LambdaThread*)ctx;
-		return t->__tmplam (t);
-	}
-
-	template <typename X>
-	int startl (X&& f, int flags) QSE_CPP_NOEXCEPT
-	{
-		this->__tmplam = QSE_CPP_RVREF(f);
-		return qse_thr_start (this, (qse_thr_rtn_t)LambdaThread::call_lambda, this, flags);
-	}
-
-protected:
-	std::function<int(LambdaThread*)> __tmplam; 
-};
-#endif
-
 template <typename F>
 class ThreadC: public Thread
 {
@@ -146,7 +121,7 @@ public:
 	ThreadC (F& f): __lfunc(f) { }
 	//ThreadC (F&& f): __lfunc(QSE_CPP_RVREF(f)) { }
 
-	static int call_lambda (qse_thr_t* thr, void* ctx)
+	static int call_func (qse_thr_t* thr, void* ctx)
 	{
 		ThreadC<F>* t = (ThreadC<F>*)ctx;
 		return t->__lfunc (t);
@@ -154,12 +129,39 @@ public:
 
 	int start (int flags = 0) QSE_CPP_NOEXCEPT
 	{
-		return qse_thr_start (this, (qse_thr_rtn_t)ThreadC<F>::call_lambda, this, flags);
+		return qse_thr_start (this, (qse_thr_rtn_t)ThreadC<F>::call_func, this, flags);
 	}
 
 protected:
 	F __lfunc;
 };
+
+#if (__cplusplus >= 201103L) || (defined(_MSC_VER) && _MSC_VER >= 1900) //C++11 or later
+
+#if 0
+// i don't want to use std::function. 
+class ThreadC: public Thread
+{
+public:
+	static int call_func (qse_thr_t* thr, void* ctx)
+	{
+		ThreadC* t = (ThreadC*)ctx;
+		return t->__lfunc (t);
+	}
+
+	template <typename X>
+	int start (X&& f, int flags) QSE_CPP_NOEXCEPT
+	{
+		this->__lfunc = QSE_CPP_RVREF(f);
+		return qse_thr_start (this, (qse_thr_rtn_t)ThreadC::call_func, this, flags);
+	}
+
+protected:
+	std::function<int(ThreadC*)> __lfunc; 
+};
+#endif
+
+
 
 #endif
 
