@@ -29,9 +29,6 @@
 
 #include <qse/si/thr.h>
 #include <qse/Uncopyable.hpp>
-#include <qse/cmn/Mmged.hpp>
-
-#include <functional>
 
 QSE_BEGIN_NAMESPACE(QSE)
 
@@ -40,8 +37,6 @@ class Thread: protected qse_thr_t, public Uncopyable
 public:
 	// native thread hadnle type
 	typedef qse_thr_hnd_t Handle;
-
-	typedef int (*ThreadRoutine) (Thread* thr);
 
 	enum State
 	{
@@ -68,45 +63,6 @@ public:
 
 	qse_size_t getStackSize () const QSE_CPP_NOEXCEPT { return this->__stacksize; }
 	void setStackSize (qse_size_t num) QSE_CPP_NOEXCEPT { qse_thr_setstacksize(this, num); }
-
-
-#if (__cplusplus >= 201103L) || (defined(_MSC_VER) && _MSC_VER >= 1900) //C++11 or later
-	using ThreadLambda = std::function<int(QSE::Thread*)>;
-
-	static int call_lambda (qse_thr_t* thr, void* ctx)
-	{
-		Thread* t = (Thread*)ctx;
-		return t->__tmplam (t);
-	}
-
-	int startl (ThreadLambda&& f, int flags)
-	{
-		this->__tmplam = QSE_CPP_RVREF(f);
-		return qse_thr_start (this, (qse_thr_rtn_t)Thread::call_lambda, this, flags);
-	}
-
-#if 0
-	static int call_lambda_lx (qse_thr_t* thr, void* ctx)
-	{
-		Thread* t = (Thread*)ctx;
-		//return ([]int(QSE::Thread*))t->__tmpvoid (t);
-	}
-
-	template <typename F>
-	int startlx (F&& f, int flags)
-	{
-		this->__tmplam = QSE_CPP_RVREF(f);
-		auto xx = QSE_CPP_RVREF(f);
-		this->__tmpvoid = (void*)&xx;
-		return qse_thr_start (this, (qse_thr_rtn_t)Thread::call_lambda_lx, this, flags);
-	}
-#endif
-
-#endif
-
-
-	// execute the given function in a thread.
-	virtual int start (ThreadRoutine rtn, int flags = 0) QSE_CPP_NOEXCEPT;
 
 	// execute the main method defined in this class in a thread.
 	virtual int start (int flags = 0) QSE_CPP_NOEXCEPT;
@@ -141,16 +97,71 @@ public:
 
 protected:
 	void* __exctx;
-	ThreadRoutine __tmprtn;
-#if (__cplusplus >= 201103L) || (defined(_MSC_VER) && _MSC_VER >= 1900) //C++11 or later
-	ThreadLambda __tmplam;
-//	void* __tmpvoid;
-#endif
 	static Handle INVALID_HANDLE;
+};
 
+class ThreadR: public Thread
+{
+public:
+	typedef int (*ThreadRoutine) (Thread* thr);
 
+	// execute the given function in a thread.
+	virtual int start (ThreadRoutine rtn, int flags = 0) QSE_CPP_NOEXCEPT;
+
+protected:
+	ThreadRoutine __tmprtn;
 	static int thr_func_call_rtn (qse_thr_t* rtn, void* ctx);
 };
+
+#if (__cplusplus >= 201103L) || (defined(_MSC_VER) && _MSC_VER >= 1900) //C++11 or later
+
+#if 0
+// i don't want to use std::function. 
+class LambdaThread: public Thread
+{
+public:
+	static int call_lambda (qse_thr_t* thr, void* ctx)
+	{
+		LambdaThread* t = (LambdaThread*)ctx;
+		return t->__tmplam (t);
+	}
+
+	template <typename X>
+	int startl (X&& f, int flags) QSE_CPP_NOEXCEPT
+	{
+		this->__tmplam = QSE_CPP_RVREF(f);
+		return qse_thr_start (this, (qse_thr_rtn_t)LambdaThread::call_lambda, this, flags);
+	}
+
+protected:
+	std::function<int(LambdaThread*)> __tmplam; 
+};
+#endif
+
+template <typename F>
+class ThreadC: public Thread
+{
+public:
+	ThreadC () {}
+	ThreadC (F& f): __lfunc(f) { }
+	//ThreadC (F&& f): __lfunc(QSE_CPP_RVREF(f)) { }
+
+	static int call_lambda (qse_thr_t* thr, void* ctx)
+	{
+		ThreadC<F>* t = (ThreadC<F>*)ctx;
+		return t->__lfunc (t);
+	}
+
+	int start (int flags = 0) QSE_CPP_NOEXCEPT
+	{
+		return qse_thr_start (this, (qse_thr_rtn_t)ThreadC<F>::call_lambda, this, flags);
+	}
+
+protected:
+	F __lfunc;
+};
+
+#endif
 
 
 QSE_END_NAMESPACE(QSE)

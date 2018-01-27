@@ -113,7 +113,7 @@ static void* __thread_main (void* arg)
 		qse_thr_blockallsigs (thr);
 	else
 		qse_thr_unblockallsigs (thr);
-	
+
 	while (thr->__state != QSE_THR_RUNNING) 
 	{
 	#if defined(_WIN32)
