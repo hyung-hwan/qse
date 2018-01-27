@@ -139,7 +139,7 @@ static void* __thread_main (void* arg)
 	pthread_setcanceltype (PTHREAD_CANCEL_ASYNCHRONOUS, QSE_NULL);
 #endif
 
-	thr->__return_code = thr->__main_routine(thr);
+	thr->__return_code = thr->__main_routine(thr, thr->__ctx);
 	thr->__state = QSE_THR_TERMINATED;
 
 #if defined(_WIN32)
@@ -243,12 +243,13 @@ static int __cancel_thread (qse_thr_t* thr)
 	return 0;
 }
 
-int qse_thr_start (qse_thr_t* thr, qse_thr_rtn_t func, int flags)
+int qse_thr_start (qse_thr_t* thr, qse_thr_rtn_t func, void* ctx, int flags)
 {
 	if (thr->__state == QSE_THR_RUNNING) return -1;
 
 	thr->__flags = flags;
 	thr->__main_routine = func;
+	thr->__ctx = ctx;
 
 	if (__create_thread(thr) == -1) 
 	{

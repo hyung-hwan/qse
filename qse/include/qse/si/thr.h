@@ -40,7 +40,7 @@ typedef struct qse_thr_t qse_thr_t;
  * qse_thr_open() and qse_thr_start(). When it is executed, the pointer to the
  * calling thread object is passed as its first argument. 
  */
-typedef int (*qse_thr_rtn_t) (qse_thr_t*);
+typedef int (*qse_thr_rtn_t) (qse_thr_t* thr, void* ctx);
 
 enum qse_thr_state_t
 {
@@ -98,10 +98,12 @@ struct qse_thr_t
 {
 	qse_mmgr_t*       mmgr;
 
-	qse_thr_rtn_t     __main_routine;
-	qse_thr_rtn_t     __temp_routine;
+
 	unsigned int      __flags;
 	qse_size_t        __stacksize;
+
+	qse_thr_rtn_t     __main_routine;
+	void*             __ctx;
 
 	qse_thr_hnd_t     __handle;
 	qse_thr_state_t   __state;
@@ -172,6 +174,7 @@ QSE_EXPORT void qse_thr_setstacksize (
 QSE_EXPORT int qse_thr_start (
 	qse_thr_t*    thr,
 	qse_thr_rtn_t func,
+	void*         ctx,
 	int           flags /**< 0 or bitwise-or of the #qse_thr_flag_t enumerators  */
 );
 
