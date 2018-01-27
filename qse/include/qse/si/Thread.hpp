@@ -35,12 +35,13 @@
 
 QSE_BEGIN_NAMESPACE(QSE)
 
-
 class Thread: protected qse_thr_t, public Uncopyable
 {
 public:
 	// native thread hadnle type
 	typedef qse_thr_hnd_t Handle;
+
+	typedef int (*ThreadRoutine) (Thread* thr);
 
 	enum State
 	{
@@ -69,43 +70,57 @@ public:
 	void setStackSize (qse_size_t num) QSE_CPP_NOEXCEPT { qse_thr_setstacksize(this, num); }
 
 
-#if 0
-	static int call_lambda (QSE::Thread* thr)
+#if (__cplusplus >= 201103L) || (defined(_MSC_VER) && _MSC_VER >= 1900) //C++11 or later
+	using ThreadLambda = std::function<int(QSE::Thread*)>;
+
+	static int call_lambda (qse_thr_t* thr, void* ctx)
 	{
-		return thr->x_func (thr);
+		Thread* t = (Thread*)ctx;
+		return t->__tmplam (t);
+	}
+
+	int startl (ThreadLambda&& f, int flags)
+	{
+		this->__tmplam = QSE_CPP_RVREF(f);
+		return qse_thr_start (this, (qse_thr_rtn_t)Thread::call_lambda, this, flags);
+	}
+
+#if 0
+	static int call_lambda_lx (qse_thr_t* thr, void* ctx)
+	{
+		Thread* t = (Thread*)ctx;
+		//return ([]int(QSE::Thread*))t->__tmpvoid (t);
 	}
 
 	template <typename F>
-	int start (F&& f, int flags) 
-	{ 
-		this->x_func = std::bind(f);
-		return qse_thr_start (this, (qse_thr_rtn_t)Thread::call_lambda, flags);
+	int startlx (F&& f, int flags)
+	{
+		this->__tmplam = QSE_CPP_RVREF(f);
+		auto xx = QSE_CPP_RVREF(f);
+		this->__tmpvoid = (void*)&xx;
+		return qse_thr_start (this, (qse_thr_rtn_t)Thread::call_lambda_lx, this, flags);
 	}
-	
 #endif
 
-#if (__cplusplus >= 201103L) || (defined(_MSC_VER) && _MSC_VER >= 1900) //C++11 or later
-	using lfunc_t = std::function<int(QSE::Thread*thr)>;
-
-	static int call_lambda (QSE::Thread* thr)
-	{
-		return thr->x_func (thr);
-	}
-
-	int start (lfunc_t f, int flags)
-	{
-		this->x_func = std::move(f);
-		return qse_thr_start (this, (qse_thr_rtn_t)Thread::call_lambda, flags);
-	}
-
-	//std::function<int(QSE::Thread*)> x_func;
-	lfunc_t x_func;
 #endif
 
+
+	// execute the given function in a thread.
+	virtual int start (ThreadRoutine rtn, int flags = 0) QSE_CPP_NOEXCEPT;
+
+	// execute the main method defined in this class in a thread.
 	virtual int start (int flags = 0) QSE_CPP_NOEXCEPT;
+
 	virtual int stop () QSE_CPP_NOEXCEPT;
 
 	virtual int main () { return 0; }
+
+	// return the context pointer value
+	const void* getContext () const { return this->__exctx; }
+	void* getContext () { return this->__exctx; }
+
+	// change the context pointer value
+	void setContext (void* ctx) { this->__exctx = ctx; }
 
 	int join () QSE_CPP_NOEXCEPT { return qse_thr_join(this); }
 	int detach () QSE_CPP_NOEXCEPT { return qse_thr_detach(this); }
@@ -125,7 +140,16 @@ public:
 	int unblockAllSignals () QSE_CPP_NOEXCEPT { return qse_thr_unblockallsigs (this); }
 
 protected:
+	void* __exctx;
+	ThreadRoutine __tmprtn;
+#if (__cplusplus >= 201103L) || (defined(_MSC_VER) && _MSC_VER >= 1900) //C++11 or later
+	ThreadLambda __tmplam;
+//	void* __tmpvoid;
+#endif
 	static Handle INVALID_HANDLE;
+
+
+	static int thr_func_call_rtn (qse_thr_t* rtn, void* ctx);
 };
 
 

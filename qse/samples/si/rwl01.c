@@ -99,7 +99,7 @@ static void test_001 (void)
 		xtn->id = i;
 	}
 
-	for (i = 0; i < QSE_COUNTOF(t); i++) qse_thr_start (t[i], thr_exec, 0);
+	for (i = 0; i < QSE_COUNTOF(t); i++) qse_thr_start (t[i], thr_exec, QSE_NULL, 0);
 	for (i = 0; i < QSE_COUNTOF(t); i++) qse_thr_join (t[i]);
 	for (i = 0; i < QSE_COUNTOF(t); i++) qse_thr_close (t[i]);
 

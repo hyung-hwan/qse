@@ -1,4 +1,5 @@
 #include <qse/si/Thread.hpp>
+#include <qse/si/mtx.h>
 #include <qse/si/sio.h>
 #include <qse/cmn/mem.h>
 
@@ -12,18 +13,22 @@
 #include <string.h>
 
 static int g_stopreq = 0;
-
+static qse_mtx_t* g_prmtx = QSE_NULL;
 
 class MyThread: public QSE::Thread
 {
 public:
+	MyThread(): stopreq(0) {}
+
 	int main ()
 	{
 		int i = 0;
 
 		while (!this->stopreq)
 		{
-			qse_printf (QSE_T("%d\n"), i);
+			qse_mtx_lock (g_prmtx, QSE_NULL);
+			qse_printf (QSE_T("m %p -> %d\n"), this, i);
+			qse_mtx_unlock (g_prmtx);
 			i++;
 			sleep (1);
 		}
@@ -36,47 +41,26 @@ public:
 
 static int test1 (void)
 {
-	MyThread thr;
+	MyThread thr1;
+	QSE::Thread thr2;
+	QSE::Thread thr3;
+	int localstopreq = 0;
 
-	thr.setStackSize (64000);
+	g_prmtx = qse_mtx_open (QSE_MMGR_GETDFL(), 0);
 
-	//thr = QSE::Thread::start (task, QSE::Thread::SIGNALS_BLOCKED);
-	if (thr.start(QSE::Thread::SIGNALS_BLOCKED) <= -1)
-	{
-		qse_printf (QSE_T("cannot start thread\n"));
-		return -1;
-	}
+	thr1.setStackSize (64000);
+	thr2.setStackSize (64000);
+	thr3.setStackSize (64000);
 
-	while (!g_stopreq)
-	{
-		if (thr.getState() == QSE::Thread::TERMINATED) break;
-		sleep (1);
-	}
-
-	if (g_stopreq) 
-	{
-		/*qse_thr_stop (thr);*/
-		thr.stopreq = 1;
-	}
-
-	thr.join ();
-	qse_printf (QSE_T("thread ended with retcode %d\n"), thr.getReturnCode());
-
-	return 0;
-}
-
-static int test2 (void)
-{
-	QSE::Thread thr;
-
-	thr.setStackSize (64000);
-
-	auto lambda = [&g_stopreq](QSE::Thread* thr) { 
+	auto lambda = [](QSE::Thread* thr) { 
 		int i = 0;
+		int* stopreqptr = (int*)thr->getContext();
 
-		while (!g_stopreq)
+		while (!*stopreqptr)
 		{
-			qse_printf (QSE_T("%d\n"), i);
+			qse_mtx_lock (g_prmtx, QSE_NULL);
+			qse_printf (QSE_T("l %p -> %d\n"), thr, i);
+			qse_mtx_unlock (g_prmtx);
 			i++;
 			sleep (1);
 		}
@@ -84,29 +68,69 @@ static int test2 (void)
 		return i;
 	};
 
-	if (thr.start(lambda, QSE::Thread::SIGNALS_BLOCKED) <= -1)
+	auto lambda_with_capture = [&localstopreq](QSE::Thread* thr) { 
+		int i = 0;
+
+		while (!localstopreq)
+		{
+			qse_mtx_lock (g_prmtx, QSE_NULL);
+			qse_printf (QSE_T("lc %p -> %d\n"), thr, i);
+			qse_mtx_unlock (g_prmtx);
+			i++;
+			sleep (1);
+		}
+
+		return i;
+	};
+
+	if (thr1.start(QSE::Thread::SIGNALS_BLOCKED) <= -1)
 	{
-		qse_printf (QSE_T("cannot start thread\n"));
+		qse_printf (QSE_T("cannot start thread1\n"));
 		return -1;
 	}
 
+	// the lambda expression with no capture can be passed as a function pointer
+	// as long as the signature matches QSE::Thread::ThreadRoutine.
+	thr2.setContext (&localstopreq);
+	if (thr2.start(lambda, QSE::Thread::SIGNALS_BLOCKED) <= -1)
+	{
+		qse_printf (QSE_T("cannot start thread2\n"));
+		return -1;
+	}
+
+
+	if (thr3.startl(lambda_with_capture, QSE::Thread::SIGNALS_BLOCKED) <= -1)
+	{
+		qse_printf (QSE_T("cannot start thread3\n"));
+		return -1;
+	}
+
+
 	while (!g_stopreq)
 	{
-		if (thr.getState() == QSE::Thread::TERMINATED) break;
+		if (thr1.getState() == QSE::Thread::TERMINATED && 
+		    thr2.getState() == QSE::Thread::TERMINATED &&
+		    thr3.getState() == QSE::Thread::TERMINATED) break;
 		sleep (1);
 	}
 
 	if (g_stopreq) 
 	{
-		/*qse_thr_stop (thr);*/
-		//thr.stopreq = 1;
+		thr1.stopreq = 1;
+		localstopreq = 1;
 	}
 
-	thr.join ();
-	qse_printf (QSE_T("thread ended with retcode %d\n"), thr.getReturnCode());
+	thr1.join ();
+	thr2.join ();
+	thr3.join ();
+	qse_printf (QSE_T("thread1 ended with retcode %d\n"), thr1.getReturnCode());
+	qse_printf (QSE_T("thread2 ended with retcode %d\n"), thr2.getReturnCode());
+	qse_printf (QSE_T("thread3 ended with retcode %d\n"), thr3.getReturnCode());
 
+	qse_mtx_close (g_prmtx);
 	return 0;
 }
+
 
 
 static void handle_sigint (int sig, siginfo_t* siginfo, void* ctx)
@@ -163,7 +187,7 @@ int main ()
 	set_signal (SIGINT, handle_sigint);
 
 	qse_open_stdsios ();
-	test2();
+	test1();
 	qse_close_stdsios ();
 
 	set_signal_to_default (SIGINT);

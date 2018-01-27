@@ -48,7 +48,7 @@ static int test1 (void)
 
 	qse_thr_setstacksize (thr, 64000);
 
-	if (qse_thr_start(thr, thr_func, QSE_THR_SIGNALS_BLOCKED) <= -1)
+	if (qse_thr_start(thr, thr_func, QSE_NULL, QSE_THR_SIGNALS_BLOCKED) <= -1)
 	{
 		qse_printf (QSE_T("cannot start thread\n"));
 		qse_thr_close (thr);

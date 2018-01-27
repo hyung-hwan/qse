@@ -27,13 +27,12 @@
 #include <qse/si/Thread.hpp>
 #include "thr-prv.h"
 
-#include <stdio.h>
 QSE_BEGIN_NAMESPACE(QSE)
 
 
 Thread::Handle Thread::INVALID_HANDLE = QSE_THR_HND_INVALID;
 
-Thread::Thread() QSE_CPP_NOEXCEPT //: thread_target (QSE_NULL)
+Thread::Thread() QSE_CPP_NOEXCEPT : __exctx(QSE_NULL)
 {
 	//qse_thr_init (this, this->getMmgr());
 	qse_thr_init (this, QSE_NULL);
@@ -41,7 +40,7 @@ Thread::Thread() QSE_CPP_NOEXCEPT //: thread_target (QSE_NULL)
 
 Thread::~Thread () QSE_CPP_NOEXCEPT
 {
-	QSE_ASSERT (this->__state != Thread::RUNNING);
+	QSE_ASSERT (this->__state != QSE_THR_RUNNING);
 	// it is subclasses' responsibility to stop the thread gracefully.
 	// so stop is not called here.
 	// this->stop ();
@@ -50,15 +49,39 @@ Thread::~Thread () QSE_CPP_NOEXCEPT
 	qse_thr_fini (this);
 }
 
-int thr_func (qse_thr_t* thr)
+int Thread::thr_func_call_rtn (qse_thr_t* thr, void* ctx)
 {
-	Thread* t = (Thread*)thr;
+	// 'thr' may not be point to the actual Thread 
+	// for the reason stated in Thread::start(). 
+	// utilize the ctx pointer passed in Thread::start().
+	Thread* t = (Thread*)ctx;
+	return t->__tmprtn(t);
+}
+
+int Thread::start (ThreadRoutine rtn, int flags) QSE_CPP_NOEXCEPT
+{
+	if (this->__state == QSE_THR_RUNNING) return -1;
+
+	// this != (qse_thr_t*)this may not be equal if this class
+	// has some internal added data fields. e.g. it contains
+	// a virtual function. direct invocation without the extra ctx pointer
+	// like this has some implications when attempting to convert
+	// qse_thr_t* to Thread*.
+	// 	qse_thr_start (this, (qse_thr_rtn_t)rtn, QSE_NULL, flags);
+	// so i pass a void pointer 'this' as the third argument.
+	this->__tmprtn = rtn;
+	return qse_thr_start(this, thr_func_call_rtn, this, flags);
+}
+
+static int thr_func_call_main (qse_thr_t* thr, void* ctx)
+{
+	Thread* t = (Thread*)ctx;
 	return t->main ();
 }
 
 int Thread::start (int flags) QSE_CPP_NOEXCEPT
 {
-	return qse_thr_start(this, thr_func, flags);
+	return qse_thr_start(this, thr_func_call_main, this, flags);
 }
 
 int Thread::stop () QSE_CPP_NOEXCEPT
