@@ -189,10 +189,10 @@ static QSE_INLINE void qse_htl_setcopier (qse_htl_t* htl, qse_htl_copier_t _copi
 #define qse_htl_getcomper(htl) ((htl)->comper)
 #define qse_htl_getfreeer(htl) ((htl)->freeer)
 
-#define qse_htl_sethasher(htl,_hahser) ((htl)->hasher = _hasher)
-#define qse_htl_setcomper(htl,_comper) ((htl)->comper = _comper)
-#define qse_htl_setfreeer(htl,_freeer) ((htl)->freeer = _freeer)
-#define qse_htl_setcopier(htl,_copier) ((htl)->copier = _copier)
+#define qse_htl_sethasher(htl,_hasher) ((htl)->hasher = (_hasher))
+#define qse_htl_setcomper(htl,_comper) ((htl)->comper = (_comper))
+#define qse_htl_setfreeer(htl,_freeer) ((htl)->freeer = (_freeer))
+#define qse_htl_setcopier(htl,_copier) ((htl)->copier = (_copier))
 #endif
 
 /**
