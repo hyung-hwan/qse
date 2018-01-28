@@ -588,7 +588,7 @@ qse_htl_node_t* qse_htl_update (qse_htl_t* ht, void* data)
 qse_htl_node_t* qse_htl_upyank (qse_htl_t* ht, void* data, void** olddata)
 {
 	qse_htl_node_t* node;
-	void* datap, * olddatap;
+	void* datap;
 
 	node = qse_htl_search(ht, data);
 	if (!node) return QSE_NULL;
