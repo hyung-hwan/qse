@@ -28,7 +28,7 @@ static int stop_req = 0;
 	qse_mtx_unlock (mtx); \
 } while(0)
 
-static int thr_exec (qse_thr_t* thr)
+static int thr_exec (qse_thr_t* thr, void* ctx)
 {
 	thr_xtn_t* xtn = qse_thr_getxtn(thr);
 

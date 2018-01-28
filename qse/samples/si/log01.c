@@ -92,16 +92,13 @@ static void t1 (void)
 			QSE_ASSERT (qse_log_gettarget (log, QSE_NULL) == (QSE_LOG_CONSOLE | QSE_LOG_FILE | QSE_LOG_SYSLOG_REMOTE));
 		}
 
-		QSE_LOG4 (log, QSE_T("test"), QSE_LOG_DEBUG, 
-#if defined(QSE_HAVE_INT128_T)
-			QSE_T("MSG %d %I128x %#0128I128b %l20d >>"), 
-#elif defined(QSE_HAVE_INT64_T)
-			QSE_T("MSG %d %I64x %#064I64b %l20d >>"), 
-#else
-			QSE_T("MSG %d %I32x %#032I32b %l20d >>"), 
-#endif
-			10 * i , q, q, (long)45
-		);
+	#if defined(QSE_HAVE_INT128_T)
+		QSE_LOG4 (log, QSE_T("test"), QSE_LOG_DEBUG, QSE_T("MSG %d %I128x %#0128I128b %l20d >>"), 10 * i , q, q, (long)45);
+	#elif defined(QSE_HAVE_INT64_T)
+		QSE_LOG4 (log, QSE_T("test"), QSE_LOG_DEBUG, QSE_T("MSG %d %I64x %#064I64b %l20d >>"), 10 * i , q, q, (long)45);
+	#else
+		QSE_LOG4 (log, QSE_T("test"), QSE_LOG_DEBUG, QSE_T("MSG %d %I32x %#032I32b %l20d >>"), 10 * i , q, q, (long)45);
+	#endif
 	}
 
 

@@ -20,7 +20,7 @@ struct thr_xtn_t
 };
 typedef struct thr_xtn_t thr_xtn_t;
 
-static int thr_func (qse_thr_t* thr)
+static int thr_func (qse_thr_t* thr, void* ctx)
 {
 	int i = 0;
 	thr_xtn_t* xtn = qse_thr_getxtn(thr);
