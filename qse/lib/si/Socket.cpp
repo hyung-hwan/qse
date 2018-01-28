@@ -64,8 +64,8 @@ int Socket::open (int domain, int type, int protocol, int traits) QSE_CPP_NOEXCE
 	bool fcntl_v = 0;
 
 #if defined(SOCK_NONBLOCK) && defined(SOCK_CLOEXEC)
-	if (traits & T_NONBLOCK) type |= SOCK_NONBLOCK;
-	if (traits & T_CLOEXEC) type |= SOCK_CLOEXEC;
+	if (traits & Socket::T_NONBLOCK) type |= SOCK_NONBLOCK;
+	if (traits & Socket::T_CLOEXEC) type |= SOCK_CLOEXEC;
 open_socket:
 #endif
 	x = ::socket (domain, type, protocol);
@@ -75,8 +75,10 @@ open_socket:
 		if (errno == EINVAL && (type & (SOCK_NONBLOCK | SOCK_CLOEXEC)))
 		{
 			type &= ~(SOCK_NONBLOCK | SOCK_CLOEXEC);
-			if (traits & T_NONBLOCK ) fcntl_v |= O_NONBLOCK;
-			if (traits & T_CLOEXEC) fcntl_v |= O_CLOEXEC;
+			if (traits & Socket::T_NONBLOCK ) fcntl_v |= O_NONBLOCK;
+			#if defined(O_CLOEXEC)
+			if (traits & Socket::T_CLOEXEC) fcntl_v |= O_CLOEXEC;
+			#endif
 			goto open_socket;
 		}
 	#endif
@@ -87,8 +89,10 @@ open_socket:
 #if defined(SOCK_NONBLOCK) && defined(SOCK_CLOEXEC)
 	// do nothing
 #else
-	if (traits & T_NONBLOCK ) fcntl_v |= O_NONBLOCK;
-	if (traits & T_CLOEXEC) fcntl_v |= O_CLOEXEC;
+	if (traits & Socket::T_NONBLOCK ) fcntl_v |= O_NONBLOCK;
+	#if defined(O_CLOEXEC)
+	if (traits & O_CLOEXEC) fcntl_v |= O_CLOEXEC;
+	#endif
 #endif
 
 	if (fcntl_v)
@@ -170,8 +174,8 @@ int Socket::accept (Socket* newsck, SocketAddress* newaddr, int traits) QSE_CPP_
 #if defined(SOCK_NONBLOCK) && defined(SOCK_CLOEXEC) && defined(HAVE_ACCEPT4)
 
 	flag_v = 0;
-	if (traits & T_NONBLOCK ) flag_v |= SOCK_NONBLOCK;
-	if (traits & T_CLOEXEC) flag_v |= SOCK_CLOEXEC;
+	if (traits & Socket::T_NONBLOCK ) flag_v |= SOCK_NONBLOCK;
+	if (traits & Socket::T_CLOEXEC) flag_v |= SOCK_CLOEXEC;
 
 	addrlen = newaddr->getAddrCapa();
 	newfd = ::accept4(this->handle, (struct sockaddr*)newaddr->getAddrPtr(), &addrlen, flag_v);
@@ -200,8 +204,10 @@ int Socket::accept (Socket* newsck, SocketAddress* newaddr, int traits) QSE_CPP_
 	}
 
 	flag_v = 0;
-	if (traits & T_NONBLOCK ) flag_v |= O_NONBLOCK;
-	if (traits & T_CLOEXEC) flag_v |= O_CLOEXEC;
+	if (traits & Socket::T_NONBLOCK ) flag_v |= O_NONBLOCK;
+	#if defined(O_CLOEXEC)
+	if (traits & Socket::T_CLOEXEC) flag_v |= O_CLOEXEC;
+	#endif
 
 	if (flag_v)
 	{
