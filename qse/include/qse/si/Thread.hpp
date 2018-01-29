@@ -69,29 +69,21 @@ public:
 
 	virtual int stop () QSE_CPP_NOEXCEPT;
 
-	virtual int main () { return 0; }
+	virtual int main () { return 0; } // to be overridden by a child class.
 
 	// return the context pointer value
-	const void* getContext () const { return this->__exctx; }
-	void* getContext () { return this->__exctx; }
+	const void* getContext () const QSE_CPP_NOEXCEPT { return this->__exctx; }
+	void* getContext () QSE_CPP_NOEXCEPT { return this->__exctx; }
 
 	// change the context pointer value
-	void setContext (void* ctx) { this->__exctx = ctx; }
+	void setContext (void* ctx) QSE_CPP_NOEXCEPT { this->__exctx = ctx; }
 
 	int join () QSE_CPP_NOEXCEPT { return qse_thr_join(this); }
 	int detach () QSE_CPP_NOEXCEPT { return qse_thr_detach(this); }
 
-/*
-	void sleep (qse_time_t msecs)
-	{
-		qse_sleep (msecs);
-	}
-*/
 	int kill (int sig) QSE_CPP_NOEXCEPT { return qse_thr_kill(this, sig); }
-
 	int blockSignal (int sig) QSE_CPP_NOEXCEPT { return qse_thr_blocksig(this, sig); }
 	int unblockSignal (int sig) QSE_CPP_NOEXCEPT { return qse_thr_unblocksig(this, sig); }
-
 	int blockAllSignals () QSE_CPP_NOEXCEPT { return qse_thr_blockallsigs (this); }
 	int unblockAllSignals () QSE_CPP_NOEXCEPT { return qse_thr_unblockallsigs (this); }
 
@@ -117,10 +109,10 @@ template <typename F>
 class ThreadF: public Thread
 {
 public:
-	ThreadF () {}
-	ThreadF (const F& f): __lfunc(f) {}
+	ThreadF () QSE_CPP_NOEXCEPT {}
+	ThreadF (const F& f) QSE_CPP_NOEXCEPT: __lfunc(f) {}
 #if defined(QSE_CPP_ENABLE_CPP11_MOVE)
-	ThreadF (F&& f): __lfunc(QSE_CPP_RVREF(f)) {}
+	ThreadF (F&& f) QSE_CPP_NOEXCEPT: __lfunc(QSE_CPP_RVREF(f)) {}
 #endif
 
 	static int call_func (qse_thr_t* thr, void* ctx)
@@ -138,7 +130,8 @@ protected:
 	F __lfunc;
 };
 
-#if (__cplusplus >= 201103L) || (defined(_MSC_VER) && _MSC_VER >= 1900) //C++11 or later
+#if defined(QSE_CPP_CPP11)
+
 
 #if 0
 // i don't want to use std::function. 
@@ -161,11 +154,72 @@ public:
 protected:
 	std::function<int(ThreadF*)> __lfunc; 
 };
+
+#else
+
+template <typename T>
+class ThreadL;
+
+template <typename RT, typename... ARGS>
+class ThreadL<RT(ARGS...)>: public Thread
+{
+public:
+	ThreadL () QSE_CPP_NOEXCEPT: __lfunc(nullptr) {}
+	~ThreadL () QSE_CPP_NOEXCEPT 
+	{ 
+		if (this->__lfunc) delete this->__lfunc; 
+	}
+
+	static int call_func (qse_thr_t* thr, void* ctx)
+	{
+		ThreadL* t = (ThreadL*)ctx;
+		return t->__lfunc->invoke(t);
+	}
+
+	template <typename T>
+	int start (T&& f, int flags) QSE_CPP_NOEXCEPT
+	//int start (T f, int flags) QSE_CPP_NOEXCEPT
+	{
+		if (this->__state == QSE_THR_RUNNING) return -1;
+		if (this->__lfunc) delete this->__lfunc;
+		try
+		{
+			// TODO: are there any ways to achieve this without memory allocation?
+			this->__lfunc = new TCallable<T> (QSE_CPP_RVREF(f));
+		}
+		catch (...)
+		{
+			this->__lfunc = nullptr;
+			return -1;
+		}
+		return qse_thr_start (this, (qse_thr_rtn_t)ThreadL::call_func, this, flags);
+	}
+
+protected:
+	class Callable
+	{
+	public:
+		virtual ~Callable () QSE_CPP_NOEXCEPT {};
+		virtual RT invoke (ARGS... args) = 0;
+	};
+
+	template <typename T>
+	class TCallable: public Callable
+	{
+	public:
+		TCallable (const T& t) QSE_CPP_NOEXCEPT: t(t) { }
+		virtual ~TCallable () QSE_CPP_NOEXCEPT {}
+		RT invoke (ARGS... args) { return this->t(args ...); }
+
+	private:
+		T t;
+	};
+
+	Callable* __lfunc;
+};
 #endif
 
-
-
-#endif
+#endif // QSE_CPP_CPP11
 
 
 QSE_END_NAMESPACE(QSE)
