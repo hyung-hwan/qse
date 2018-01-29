@@ -114,24 +114,24 @@ protected:
 };
 
 template <typename F>
-class ThreadC: public Thread
+class ThreadF: public Thread
 {
 public:
-	ThreadC () {}
-	ThreadC (const F& f): __lfunc(f) {}
+	ThreadF () {}
+	ThreadF (const F& f): __lfunc(f) {}
 #if defined(QSE_CPP_ENABLE_CPP11_MOVE)
-	ThreadC (F&& f): __lfunc(QSE_CPP_RVREF(f)) {}
+	ThreadF (F&& f): __lfunc(QSE_CPP_RVREF(f)) {}
 #endif
 
 	static int call_func (qse_thr_t* thr, void* ctx)
 	{
-		ThreadC<F>* t = (ThreadC<F>*)ctx;
+		ThreadF<F>* t = (ThreadF<F>*)ctx;
 		return t->__lfunc (t);
 	}
 
 	int start (int flags = 0) QSE_CPP_NOEXCEPT
 	{
-		return qse_thr_start (this, (qse_thr_rtn_t)ThreadC<F>::call_func, this, flags);
+		return qse_thr_start (this, (qse_thr_rtn_t)ThreadF<F>::call_func, this, flags);
 	}
 
 protected:
@@ -142,12 +142,12 @@ protected:
 
 #if 0
 // i don't want to use std::function. 
-class ThreadC: public Thread
+class ThreadF: public Thread
 {
 public:
 	static int call_func (qse_thr_t* thr, void* ctx)
 	{
-		ThreadC* t = (ThreadC*)ctx;
+		ThreadF* t = (ThreadF*)ctx;
 		return t->__lfunc (t);
 	}
 
@@ -155,11 +155,11 @@ public:
 	int start (X&& f, int flags) QSE_CPP_NOEXCEPT
 	{
 		this->__lfunc = QSE_CPP_RVREF(f);
-		return qse_thr_start (this, (qse_thr_rtn_t)ThreadC::call_func, this, flags);
+		return qse_thr_start (this, (qse_thr_rtn_t)ThreadF::call_func, this, flags);
 	}
 
 protected:
-	std::function<int(ThreadC*)> __lfunc; 
+	std::function<int(ThreadF*)> __lfunc; 
 };
 #endif
 
