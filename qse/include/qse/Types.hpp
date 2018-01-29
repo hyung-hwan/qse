@@ -34,7 +34,7 @@
 #include <qse/types.h>
 #include <qse/macros.h>
 
-#if (__cplusplus >= 201103L) // C++11
+#if (__cplusplus >= 201103L) || (defined(_MSC_VER) && _MSC_VER >= 1900) // C++11 or later
 
 	#define QSE_CPP_NOEXCEPT noexcept(true)
 	#define QSE_CPP_EXPLICIT explicit

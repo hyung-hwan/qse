@@ -118,8 +118,10 @@ class ThreadC: public Thread
 {
 public:
 	ThreadC () {}
-	ThreadC (F& f): __lfunc(f) { }
-	//ThreadC (F&& f): __lfunc(QSE_CPP_RVREF(f)) { }
+	ThreadC (const F& f): __lfunc(f) {}
+#if defined(QSE_CPP_ENABLE_CPP11_MOVE)
+	ThreadC (F&& f): __lfunc(QSE_CPP_RVREF(f)) {}
+#endif
 
 	static int call_func (qse_thr_t* thr, void* ctx)
 	{
