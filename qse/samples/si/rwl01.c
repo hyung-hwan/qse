@@ -125,9 +125,9 @@ int main ()
 
 	qse_open_stdsios ();
 
-	qse_setintrhandler (stop_run, QSE_NULL);
+	qse_set_intr_handler (stop_run, QSE_NULL);
 	test_001 ();
-	qse_clearintrhandler ();
+	qse_clear_intr_handler ();
 
 	qse_close_stdsios ();
 

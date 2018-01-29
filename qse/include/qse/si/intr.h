@@ -42,8 +42,8 @@ typedef void (*qse_intr_handler_t) (void *arg);
 extern "C" {
 #endif
 
-QSE_EXPORT void qse_setintrhandler (qse_intr_handler_t handler, void* arg);
-QSE_EXPORT void qse_clearintrhandler (void);
+QSE_EXPORT void qse_set_intr_handler (qse_intr_handler_t handler, void* arg);
+QSE_EXPORT void qse_clear_intr_handler (void);
 
 #ifdef __cplusplus
 }
