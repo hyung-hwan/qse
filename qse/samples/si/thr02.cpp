@@ -80,9 +80,10 @@ static int func_ptr (QSE::Thread* thr)
 static int test1 (void)
 {
 	int localstopreq = 0;
+
 	g_prmtx = qse_mtx_open (QSE_MMGR_GETDFL(), 0);
 
-#if (__cplusplus >= 201103L) || (defined(_MSC_VER) && _MSC_VER >= 1900) //C++11 or later
+#if defined(QSE_CPP_CPP11)
 	auto lambda = [](QSE::Thread* thr)->int 
 	{ 
 		int i = 0;
@@ -128,7 +129,7 @@ static int test1 (void)
 	QSE::ThreadR thr2;
 	thr2.setStackSize (64000);
 	thr2.setContext (&localstopreq);
-#if (__cplusplus >= 201103L) || (defined(_MSC_VER) && _MSC_VER >= 1900) //C++11 or later
+#if defined(QSE_CPP_CPP11)
 	// the lambda expression with no capture can be passed as a function pointer
 	// as long as the signature matches QSE::Thread::ThreadRoutine.
 	if (thr2.start(lambda, QSE::Thread::SIGNALS_BLOCKED) <= -1)
@@ -140,7 +141,7 @@ static int test1 (void)
 		return -1;
 	}
 
-#if (__cplusplus >= 201103L) || (defined(_MSC_VER) && _MSC_VER >= 1900) //C++11 or later
+#if defined(QSE_CPP_CPP11)
 	QSE::ThreadF<decltype(lambda)> thr3 (lambda);
 	thr3.setStackSize (64000);
 	thr3.setContext (&localstopreq);
@@ -158,15 +159,38 @@ static int test1 (void)
 		qse_printf (QSE_T("cannot start thread4\n"));
 		return -1;
 	}
+
+	QSE::ThreadL<int(QSE::Thread*)> thr5;
+	thr5.setStackSize (64000);
+	if (thr5.start(
+		([&localstopreq, &thr5](QSE::Thread* thr) { 
+			int i = 0;
+
+			while (!localstopreq)
+			{
+				qse_mtx_lock (g_prmtx, QSE_NULL);
+				qse_printf (QSE_T("tl %p -> %d\n"), thr, i);
+				qse_mtx_unlock (g_prmtx);
+				i++;
+				sleep (1);
+			}
+
+			return i;
+		}), 
+		QSE::Thread::SIGNALS_BLOCKED) <= -1)
+	{
+		qse_printf (QSE_T("cannot start thread5\n"));
+		return -1;
+	}
 #endif
 
 	// turn a functor to a thread
-	QSE::ThreadF<Functor> thr5;
-	thr5.setStackSize (64000);
-	thr5.setContext (&localstopreq);
-	if (thr5.start(QSE::Thread::SIGNALS_BLOCKED) <= -1)
+	QSE::ThreadF<Functor> thr6;
+	thr6.setStackSize (64000);
+	thr6.setContext (&localstopreq);
+	if (thr6.start(QSE::Thread::SIGNALS_BLOCKED) <= -1)
 	{
-		qse_printf (QSE_T("cannot start thread4\n"));
+		qse_printf (QSE_T("cannot start thread6\n"));
 		return -1;
 	}
 
@@ -174,11 +198,12 @@ static int test1 (void)
 	{
 		if (thr1.getState() == QSE::Thread::TERMINATED && 
 		    thr2.getState() == QSE::Thread::TERMINATED &&
-#if (__cplusplus >= 201103L) || (defined(_MSC_VER) && _MSC_VER >= 1900) //C++11 or later
+#if defined(QSE_CPP_CPP11)
 		    thr3.getState() == QSE::Thread::TERMINATED &&
 		    thr4.getState() == QSE::Thread::TERMINATED &&
+		    thr5.getState() == QSE::Thread::TERMINATED &&
 #endif
-		    thr5.getState() == QSE::Thread::TERMINATED) break;
+		    thr6.getState() == QSE::Thread::TERMINATED) break;
 		sleep (1);
 	}
 
@@ -190,19 +215,21 @@ static int test1 (void)
 
 	thr1.join ();
 	thr2.join ();
-#if (__cplusplus >= 201103L) || (defined(_MSC_VER) && _MSC_VER >= 1900) //C++11 or later
+#if defined(QSE_CPP_CPP11)
 	thr3.join ();
 	thr4.join ();
-#endif
 	thr5.join ();
+#endif
+	thr6.join ();
 
 	qse_printf (QSE_T("thread1 ended with retcode %d\n"), thr1.getReturnCode());
 	qse_printf (QSE_T("thread2 ended with retcode %d\n"), thr2.getReturnCode());
-#if (__cplusplus >= 201103L) || (defined(_MSC_VER) && _MSC_VER >= 1900) //C++11 or later
+#if defined(QSE_CPP_CPP11)
 	qse_printf (QSE_T("thread3 ended with retcode %d\n"), thr3.getReturnCode());
 	qse_printf (QSE_T("thread4 ended with retcode %d\n"), thr4.getReturnCode());
-#endif
 	qse_printf (QSE_T("thread5 ended with retcode %d\n"), thr5.getReturnCode());
+#endif
+	qse_printf (QSE_T("thread6 ended with retcode %d\n"), thr6.getReturnCode());
 
 	qse_mtx_close (g_prmtx);
 	return 0;
