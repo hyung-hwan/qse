@@ -62,10 +62,12 @@ if ENABLE_CXX
 
 CXXLIB = -lqsesixx -lqsecmnxx
 
-bin_PROGRAMS += thr02
+bin_PROGRAMS += thr02 spl02
 
+spl02_SOURCES = spl02.cpp
 thr02_SOURCES = thr02.cpp
 
+spl02_LDADD = $(CXXLIB) $(LDADD)
 thr02_LDADD = $(CXXLIB) $(LDADD)
 
 endif

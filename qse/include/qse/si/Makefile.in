@@ -91,6 +91,7 @@ host_triplet = @host@
 @ENABLE_CXX_TRUE@	AppRoot.hpp \
 @ENABLE_CXX_TRUE@	SocketAddress.hpp \
 @ENABLE_CXX_TRUE@	Socket.hpp \
+@ENABLE_CXX_TRUE@	SpinLock.hpp \
 @ENABLE_CXX_TRUE@	Thread.hpp
 
 subdir = include/qse/si
@@ -133,7 +134,8 @@ am__can_run_installinfo = \
 am__pkginclude_HEADERS_DIST = aio.h aio-pro.h aio-sck.h cnd.h dir.h \
 	fio.h fs.h glob.h intr.h log.h mtx.h mux.h nwad.h nwif.h \
 	nwio.h pio.h rwl.h sck.h sinfo.h sio.h task.h thr.h tio.h \
-	AppRoot.hpp SocketAddress.hpp Socket.hpp Thread.hpp
+	AppRoot.hpp SocketAddress.hpp Socket.hpp SpinLock.hpp \
+	Thread.hpp
 am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
 am__vpath_adj = case $$p in \
     $(srcdir)/*) f=`echo "$$p" | sed "s|^$$srcdirstrip/||"`;; \
