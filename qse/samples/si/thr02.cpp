@@ -141,7 +141,7 @@ static int test1 (void)
 	}
 
 #if (__cplusplus >= 201103L) || (defined(_MSC_VER) && _MSC_VER >= 1900) //C++11 or later
-	QSE::ThreadC<decltype(lambda)> thr3 (lambda);
+	QSE::ThreadF<decltype(lambda)> thr3 (lambda);
 	thr3.setStackSize (64000);
 	thr3.setContext (&localstopreq);
 	if (thr3.start(QSE::Thread::SIGNALS_BLOCKED) <= -1)
@@ -151,7 +151,7 @@ static int test1 (void)
 	}
 
 	// turn a lambda with capture to a thread
-	QSE::ThreadC<decltype(lambda_with_capture)> thr4 (lambda_with_capture);
+	QSE::ThreadF<decltype(lambda_with_capture)> thr4 (lambda_with_capture);
 	thr4.setStackSize (64000);
 	if (thr4.start(QSE::Thread::SIGNALS_BLOCKED) <= -1)
 	{
@@ -161,7 +161,7 @@ static int test1 (void)
 #endif
 
 	// turn a functor to a thread
-	QSE::ThreadC<Functor> thr5;
+	QSE::ThreadF<Functor> thr5;
 	thr5.setStackSize (64000);
 	thr5.setContext (&localstopreq);
 	if (thr5.start(QSE::Thread::SIGNALS_BLOCKED) <= -1)
