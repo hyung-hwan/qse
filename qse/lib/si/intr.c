@@ -127,7 +127,7 @@ static int setsignal (int sig, void(*handler)(int), int restart)
 }
 #endif
 
-void qse_setintrhandler (qse_intr_handler_t handler, void* arg)
+void qse_set_intr_handler (qse_intr_handler_t handler, void* arg)
 {
 	intr_handler = handler;
 	intr_handler_arg = arg;
@@ -145,7 +145,7 @@ void qse_setintrhandler (qse_intr_handler_t handler, void* arg)
 #endif
 }
 
-void qse_clearintrhandler (void)
+void qse_clear_intr_handler (void)
 {
 	intr_handler = QSE_NULL;
 	intr_handler_arg = QSE_NULL;

@@ -523,7 +523,7 @@ typedef unsigned char qse_mchau_t;
  * #QSE_MCHAR_EOF.
  */
 typedef int qse_mcint_t;
-#define QSE_SIZEOF_MCINT_T QSE_SIZEOF_INT 
+/*#define QSE_SIZEOF_MCINT_T QSE_SIZEOF_INT*/
 
 
 /** \typedef qse_wchar_t
@@ -536,7 +536,26 @@ typedef int qse_mcint_t;
  * The qse_wcint_t type defines a type that can hold a qse_wchar_t value and 
  * #QSE_WCHAR_EOF.
  */
-#if defined(__cplusplus) && (defined(__WATCOMC__) && (__WATCOMC__ < 1200))
+
+#if /*defined(QSE_PREFER_CHAR16_T) &&*/ defined(__GNUC__) && defined(__CHAR16_TYPE__) && \
+    defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201112L)
+	/* C11 */
+	typedef __CHAR16_TYPE__ qse_wchar_t;
+	typedef qse_uint16_t  qse_wchau_t;
+	
+	
+	#if (QSE_SIZEOF_INT > 2)
+	typedef int qse_wcint_t;
+	#else
+	typedef qse_uint16_t  qse_wcint_t;
+	#endif
+
+	#define QSE_WCHAR_IS_CHAR16_T
+
+	#undef QSE_SIZEOF_WCHAR_T 
+	#define QSE_SIZEOF_WCHAR_T 2
+
+#elif defined(__cplusplus) && (defined(__WATCOMC__) && (__WATCOMC__ < 1200))
 	/* WATCOM C++ before OpenWatcom */
 
 	typedef long char qse_wchar_t;

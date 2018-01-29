@@ -502,7 +502,7 @@ static void stop_run (void* arg)
 
 static void set_intr_run (void)
 {
-	qse_setintrhandler (stop_run, QSE_NULL);
+	qse_set_intr_handler (stop_run, QSE_NULL);
 #if !defined(_WIN32) && !defined(__OS2__) && !defined(__DOS__) && defined(SIGPIPE)
 	setsignal (SIGPIPE, SIG_IGN, 0);
 #endif
@@ -510,7 +510,7 @@ static void set_intr_run (void)
 
 static void unset_intr_run (void)
 {
-	qse_clearintrhandler ();
+	qse_clear_intr_handler ();
 #if !defined(_WIN32) && !defined(__OS2__) && !defined(__DOS__) && defined(SIGPIPE)
 	setsignal (SIGPIPE, SIG_DFL, 0);
 #endif

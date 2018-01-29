@@ -273,8 +273,13 @@
  */
 #define QSE_MT(txt)   (txt)
 
-#define QSE_WQ_I(val)  (L ## #val)
-#define QSE_WQ(val)    QSE_WQ_I(val)
+#if defined(QSE_WCHAR_IS_CHAR16_T)
+#	define QSE_WQ_I(val)  (u ## #val)
+#	define QSE_WQ(val)    QSE_WQ_I(val)
+#else
+#	define QSE_WQ_I(val)  (L ## #val)
+#	define QSE_WQ(val)    QSE_WQ_I(val)
+#endif
 
 /** 
  * The #QSE_WT macro maps a multi-byte literal string to a wide character 
@@ -282,6 +287,8 @@
  */
 #if (QSE_SIZEOF_WCHAR_T == QSE_SIZEOF_MCHAR_T)
 #	define QSE_WT(txt)    (txt)
+#elif defined(QSE_WCHAR_IS_CHAR16_T)
+#	define QSE_WT(txt)    (u ## txt)
 #else
 #	define QSE_WT(txt)    (L ## txt)
 #endif
