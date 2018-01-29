@@ -30,6 +30,7 @@ pkginclude_HEADERS += \
 	AppRoot.hpp \
 	SocketAddress.hpp \
 	Socket.hpp \
+	SpinLock.hpp \
 	Thread.hpp
 endif
 
