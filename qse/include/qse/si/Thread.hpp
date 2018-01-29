@@ -208,7 +208,7 @@ protected:
 	{
 	public:
 		TCallable (const T& t) QSE_CPP_NOEXCEPT: t(t) { }
-		virtual ~TCallable () QSE_CPP_NOEXCEPT {}
+		~TCallable () QSE_CPP_NOEXCEPT {}
 		RT invoke (ARGS... args) { return this->t(args ...); }
 
 	private:
