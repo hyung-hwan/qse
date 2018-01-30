@@ -35,7 +35,7 @@
 #include <qse/macros.h>
 
 #if (__cplusplus >= 201103L) || (defined(_MSC_VER) && _MSC_VER >= 1900) // C++11 or later
-	#define QSE_CPP_CPP11 1
+	#define QSE_LANG_CPP11 1
 
 	#define QSE_CPP_NOEXCEPT noexcept(true)
 	#define QSE_CPP_EXPLICIT explicit
@@ -55,7 +55,7 @@
 
 
 #elif (__cplusplus >= 199711L) // C++98
-	#undef QSE_CPP_CPP11 
+	#undef QSE_LANG_CPP11 
 
 	#define QSE_CPP_NOEXCEPT throw()
 	#define QSE_CPP_EXPLICIT 

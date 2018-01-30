@@ -30,40 +30,73 @@
 #include <qse/Types.hpp>
 #include <qse/Uncopyable.hpp>
 
-QSE_BEGIN_NAMESPACE(QSE)
+#if defined(QSE_HAVE_SYNC_LOCK_TEST_AND_SET) && defined(QSE_HAVE_SYNC_LOCK_RELEASE)
+	// don't include anything
+#elif defined(QSE_LANG_CPP11)
+	// NOTE: <stdatomic.h> in C11 doesn't seem compatible due to lack of
+	//       the keyword _Atomic in C++11
+#	include <atomic>
+#endif
 
+QSE_BEGIN_NAMESPACE(QSE)
 
 class SpinLock
 {
 public:
+	SpinLock(): flag(0) {}
+
 	bool tryock()
 	{
+	#if defined(QSE_HAVE_SYNC_LOCK_TEST_AND_SET) && defined(QSE_HAVE_SYNC_LOCK_RELEASE)
 		return !__sync_lock_test_and_set(&this->flag, 1);
+	#elif defined(QSE_LANG_CPP11)
+		return !this->flag.test_and_set();
+	#else
+	#	error UNSUPPORTED
+	#endif
 	}
 
 	void lock ()
 	{
-		//while (!this->tryLock());
-		while (__sync_lock_test_and_set(&this->flag, 1));
+	#if defined(QSE_HAVE_SYNC_LOCK_TEST_AND_SET) && defined(QSE_HAVE_SYNC_LOCK_RELEASE)
+		while (__sync_lock_test_and_set(&this->flag, 1)) { /* do nothing special */ }
+	#elif defined(QSE_LANG_CPP11)
+		while (flag.test_and_set()) { /* do nothing sepcial */ }
+	#else
+	#	error UNSUPPORTED
+	#endif
 	}
 
 	void unlock ()
 	{
+	#if defined(QSE_HAVE_SYNC_LOCK_TEST_AND_SET) && defined(QSE_HAVE_SYNC_LOCK_RELEASE)
 		__sync_lock_release (&this->flag);
+	#elif defined(QSE_LANG_CPP11)
+		flag.clear ();
+	#else
+	#	error UNSUPPORTED
+	#endif
 	}
 
 protected:
+#if defined(QSE_HAVE_SYNC_LOCK_TEST_AND_SET) && defined(QSE_HAVE_SYNC_LOCK_RELEASE)
 	volatile int flag;
+#elif defined(QSE_LANG_CPP11)
+	std::atomic_flag flag;
+#else
+#	error UNSUPPORTED;
+#endif
 };
 
-class ScopedSpinLock: public Uncopyable
+class ScopedSpinLocker: public Uncopyable
 {
-	ScopedSpinLock (SpinLock& spl): spl(spl)
+public:
+	ScopedSpinLocker (SpinLock& spl): spl(spl)
 	{
 		this->spl.lock ();
 	}
 
-	~ScopedSpinLock ()
+	~ScopedSpinLocker ()
 	{
 		this->spl.unlock ();
 	}
