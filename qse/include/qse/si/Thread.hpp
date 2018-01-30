@@ -130,7 +130,7 @@ protected:
 	F __lfunc;
 };
 
-#if defined(QSE_CPP_CPP11)
+#if defined(QSE_LANG_CPP11)
 
 
 #if 0
@@ -219,7 +219,7 @@ protected:
 };
 #endif
 
-#endif // QSE_CPP_CPP11
+#endif // QSE_LANG_CPP11
 
 
 QSE_END_NAMESPACE(QSE)

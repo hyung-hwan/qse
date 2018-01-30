@@ -52,6 +52,11 @@
 #	error Unsupported operating system
 #endif
 
+#if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201112L)
+#	define QSE_LANG_C11
+#else
+#	undef QSE_LANG_C11
+#endif
 
 #if defined(EMSCRIPTEN)
 #	if defined(QSE_SIZEOF___INT128)
@@ -537,12 +542,17 @@ typedef int qse_mcint_t;
  * #QSE_WCHAR_EOF.
  */
 
-#if defined(QSE_WCHAR_PREFER_CHAR16) && defined(__GNUC__) && defined(__CHAR16_TYPE__) && \
-    defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201112L)
+#if defined(QSE_WCHAR_PREFER_CHAR16) && defined(__GNUC__) && defined(__CHAR16_TYPE__)
 	/* C11 */
+	#if defined(__cplusplus)
+	typedef char16_t qse_wchar_t;
+	#else
+	/* i don't want to include <uchar.h> */
 	typedef __CHAR16_TYPE__ qse_wchar_t;
+	#endif
 	typedef qse_uint16_t  qse_wchau_t;
-	
+
+
 	#if (QSE_SIZEOF_INT > 2)
 	typedef int qse_wcint_t;
 	#else

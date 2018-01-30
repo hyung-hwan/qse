@@ -120,7 +120,7 @@ AC_SUBST(LIBM, $LIBM)
 
 dnl check header files.
 AC_HEADER_STDC
-AC_CHECK_HEADERS([stddef.h wchar.h wctype.h errno.h signal.h fcntl.h dirent.h])
+AC_CHECK_HEADERS([stddef.h wchar.h wctype.h errno.h signal.h fcntl.h dirent.h stdatomic.h])
 AC_CHECK_HEADERS([time.h sys/time.h utime.h spawn.h execinfo.h ucontext.h])
 AC_CHECK_HEADERS([sys/resource.h sys/wait.h sys/syscall.h sys/ioctl.h])
 AC_CHECK_HEADERS([sys/sendfile.h sys/epoll.h sys/event.h sys/poll.h poll.h])

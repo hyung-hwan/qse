@@ -83,7 +83,7 @@ static int test1 (void)
 {
 	int localstopreq = 0;
 
-#if defined(QSE_CPP_CPP11)
+#if defined(QSE_LANG_CPP11)
 	auto lambda = [](QSE::Thread* thr)->int 
 	{ 
 		int i = 0;
@@ -129,7 +129,7 @@ static int test1 (void)
 	QSE::ThreadR thr2;
 	thr2.setStackSize (64000);
 	thr2.setContext (&localstopreq);
-#if defined(QSE_CPP_CPP11)
+#if defined(QSE_LANG_CPP11)
 	// the lambda expression with no capture can be passed as a function pointer
 	// as long as the signature matches QSE::Thread::ThreadRoutine.
 	if (thr2.start(lambda, QSE::Thread::SIGNALS_BLOCKED) <= -1)
@@ -141,7 +141,7 @@ static int test1 (void)
 		return -1;
 	}
 
-#if defined(QSE_CPP_CPP11)
+#if defined(QSE_LANG_CPP11)
 	QSE::ThreadF<decltype(lambda)> thr3 (lambda);
 	thr3.setStackSize (64000);
 	thr3.setContext (&localstopreq);
@@ -198,7 +198,7 @@ static int test1 (void)
 	{
 		if (thr1.getState() == QSE::Thread::TERMINATED && 
 		    thr2.getState() == QSE::Thread::TERMINATED &&
-#if defined(QSE_CPP_CPP11)
+#if defined(QSE_LANG_CPP11)
 		    thr3.getState() == QSE::Thread::TERMINATED &&
 		    thr4.getState() == QSE::Thread::TERMINATED &&
 		    thr5.getState() == QSE::Thread::TERMINATED &&
@@ -215,7 +215,7 @@ static int test1 (void)
 
 	thr1.join ();
 	thr2.join ();
-#if defined(QSE_CPP_CPP11)
+#if defined(QSE_LANG_CPP11)
 	thr3.join ();
 	thr4.join ();
 	thr5.join ();
@@ -224,7 +224,7 @@ static int test1 (void)
 
 	qse_printf (QSE_T("thread1 ended with retcode %d\n"), thr1.getReturnCode());
 	qse_printf (QSE_T("thread2 ended with retcode %d\n"), thr2.getReturnCode());
-#if defined(QSE_CPP_CPP11)
+#if defined(QSE_LANG_CPP11)
 	qse_printf (QSE_T("thread3 ended with retcode %d\n"), thr3.getReturnCode());
 	qse_printf (QSE_T("thread4 ended with retcode %d\n"), thr4.getReturnCode());
 	qse_printf (QSE_T("thread5 ended with retcode %d\n"), thr5.getReturnCode());

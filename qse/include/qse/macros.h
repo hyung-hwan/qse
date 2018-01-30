@@ -508,6 +508,137 @@ static inline qse_uint32_t QSE_ROTR32 (qse_uint32_t v, int i)
 
 
 
+/* =========================================================================
+ * COMPILER FEATURE TEST MACROS
+ * =========================================================================*/
+#if !defined(__has_builtin) && defined(_INTELC32_)
+	/* intel c code builder 1.0 ended up with an error without this override */
+	#define __has_builtin(x) 0
+#endif
+
+/*
+#if !defined(__is_identifier)
+	#define __is_identifier(x) 0
+#endif
+
+#if !defined(__has_attribute)
+	#define __has_attribute(x) 0
+#endif
+*/
+
+
+#if defined(__has_builtin) 
+	#if __has_builtin(__builtin_ctz)
+		#define QSE_HAVE_BUILTIN_CTZ
+	#endif
+	#if __has_builtin(__builtin_ctzl)
+		#define QSE_HAVE_BUILTIN_CTZL
+	#endif
+	#if __has_builtin(__builtin_ctzll)
+		#define QSE_HAVE_BUILTIN_CTZLL
+	#endif
+
+	#if __has_builtin(__builtin_uadd_overflow)
+		#define QSE_HAVE_BUILTIN_UADD_OVERFLOW 
+	#endif
+	#if __has_builtin(__builtin_uaddl_overflow)
+		#define QSE_HAVE_BUILTIN_UADDL_OVERFLOW 
+	#endif
+	#if __has_builtin(__builtin_uaddll_overflow)
+		#define QSE_HAVE_BUILTIN_UADDLL_OVERFLOW 
+	#endif
+	#if __has_builtin(__builtin_umul_overflow)
+		#define QSE_HAVE_BUILTIN_UMUL_OVERFLOW 
+	#endif
+	#if __has_builtin(__builtin_umull_overflow)
+		#define QSE_HAVE_BUILTIN_UMULL_OVERFLOW 
+	#endif
+	#if __has_builtin(__builtin_umulll_overflow)
+		#define QSE_HAVE_BUILTIN_UMULLL_OVERFLOW 
+	#endif
+
+	#if __has_builtin(__builtin_sadd_overflow)
+		#define QSE_HAVE_BUILTIN_SADD_OVERFLOW 
+	#endif
+	#if __has_builtin(__builtin_saddl_overflow)
+		#define QSE_HAVE_BUILTIN_SADDL_OVERFLOW 
+	#endif
+	#if __has_builtin(__builtin_saddll_overflow)
+		#define QSE_HAVE_BUILTIN_SADDLL_OVERFLOW 
+	#endif
+	#if __has_builtin(__builtin_smul_overflow)
+		#define QSE_HAVE_BUILTIN_SMUL_OVERFLOW 
+	#endif
+	#if __has_builtin(__builtin_smull_overflow)
+		#define QSE_HAVE_BUILTIN_SMULL_OVERFLOW 
+	#endif
+	#if __has_builtin(__builtin_smulll_overflow)
+		#define QSE_HAVE_BUILTIN_SMULLL_OVERFLOW 
+	#endif
+
+	#if __has_builtin(__builtin_expect)
+		#define QSE_HAVE_BUILTIN_EXPECT
+	#endif
+
+
+	#if __has_builtin(__sync_lock_test_and_set)
+		#define QSE_HAVE_SYNC_LOCK_TEST_AND_SET
+	#endif
+	#if __has_builtin(__sync_lock_release)
+		#define QSE_HAVE_SYNC_LOCK_RELEASE
+	#endif
+
+	#if __has_builtin(__sync_synchronize)
+		#define QSE_HAVE_SYNC_SYNCHRONIZE
+	#endif
+	#if __has_builtin(__sync_bool_compare_and_swap)
+		#define QSE_HAVE_SYNC_BOOL_COMPARE_AND_SWAP
+	#endif
+	#if __has_builtin(__sync_val_compare_and_swap)
+		#define QSE_HAVE_SYNC_VAL_COMPARE_AND_SWAP
+	#endif
+
+#elif defined(__GNUC__) && defined(__GNUC_MINOR__)
+
+	#if (__GNUC__ >= 4) 
+		#define QSE_HAVE_SYNC_LOCK_TEST_AND_SET
+		#define QSE_HAVE_SYNC_LOCK_RELEASE
+
+		#define QSE_HAVE_SYNC_SYNCHRONIZE
+		#define QSE_HAVE_SYNC_BOOL_COMPARE_AND_SWAP
+		#define QSE_HAVE_SYNC_VAL_COMPARE_AND_SWAP
+	#endif
+
+	#if (__GNUC__ >= 4) || (__GNUC__ == 3 && __GNUC_MINOR__ >= 4)
+		#define QSE_HAVE_BUILTIN_CTZ
+		#define QSE_HAVE_BUILTIN_EXPECT
+	#endif
+
+	#if (__GNUC__ >= 5)
+		#define QSE_HAVE_BUILTIN_UADD_OVERFLOW
+		#define QSE_HAVE_BUILTIN_UADDL_OVERFLOW
+		#define QSE_HAVE_BUILTIN_UADDLL_OVERFLOW
+		#define QSE_HAVE_BUILTIN_UMUL_OVERFLOW
+		#define QSE_HAVE_BUILTIN_UMULL_OVERFLOW
+		#define QSE_HAVE_BUILTIN_UMULLL_OVERFLOW
+
+		#define QSE_HAVE_BUILTIN_SADD_OVERFLOW
+		#define QSE_HAVE_BUILTIN_SADDL_OVERFLOW
+		#define QSE_HAVE_BUILTIN_SADDLL_OVERFLOW
+		#define QSE_HAVE_BUILTIN_SMUL_OVERFLOW
+		#define QSE_HAVE_BUILTIN_SMULL_OVERFLOW
+		#define QSE_HAVE_BUILTIN_SMULLL_OVERFLOW
+	#endif
+
+#endif
+
+#if defined(QSE_HAVE_BUILTIN_EXPECT)
+#	define QSE_LIKELY(x) (__builtin_expect(!!(x),1))
+#	define QSE_UNLIKELY(x) (__builtin_expect(!!(x),0))
+#else
+#	define QSE_LIKELY(x) (x)
+#	define QSE_UNLIKELY(x) (x)
+#endif
 
 /* ---------------------------------------------------------------------- 
  * C++ NAMESPACE

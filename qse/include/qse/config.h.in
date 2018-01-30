@@ -596,6 +596,9 @@
 /* Define to 1 if you have the `stat64' function. */
 #undef HAVE_STAT64
 
+/* Define to 1 if you have the <stdatomic.h> header file. */
+#undef HAVE_STDATOMIC_H
+
 /* Define to 1 if you have the <stddef.h> header file. */
 #undef HAVE_STDDEF_H
 
