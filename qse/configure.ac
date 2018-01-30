@@ -725,6 +725,15 @@ else
 fi
 AM_CONDITIONAL(WCHAR, test "${enable_wchar_is}" = "yes")
 
+
+AC_ARG_ENABLE([wchar-prefer-char16], [AS_HELP_STRING([--enable-wchar-prefer-char16],[Use char16_t for qse_wchar_t if possible(default. no)])],
+	enable_wchar_prefer_char16=$enableval,enable_wchar_prefer_char16=no)
+if test "${enable_wchar_prefer_char16}" = "yes"
+then
+	AC_DEFINE([QSE_WCHAR_PREFER_CHAR16],[],[specify preference for char16_t as qse_wchar_t])
+fi
+
+
 AC_ARG_ENABLE([bundled-unicode], [AS_HELP_STRING([--enable-bundled-unicode],[use thn bundled unicode routines (default. no)])],
 	enable_bundled_unicode_is=$enableval,enable_bundled_unicode_is=yes)
 if test "${ac_cv_header_wctype_h}" = "no" -o "${ac_cv_func_wctrans}" = "no" -o "${ac_cv_func_wctype}" = "no"
