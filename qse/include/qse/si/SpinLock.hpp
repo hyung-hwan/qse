@@ -43,9 +43,9 @@ QSE_BEGIN_NAMESPACE(QSE)
 class SpinLock
 {
 public:
-	SpinLock(): flag(0) {}
+	SpinLock() QSE_CPP_NOEXCEPT: flag(0) {}
 
-	bool tryock()
+	bool tryock() QSE_CPP_NOEXCEPT
 	{
 	#if defined(QSE_HAVE_SYNC_LOCK_TEST_AND_SET) && defined(QSE_HAVE_SYNC_LOCK_RELEASE)
 		return !__sync_lock_test_and_set(&this->flag, 1);
@@ -56,7 +56,7 @@ public:
 	#endif
 	}
 
-	void lock ()
+	void lock () QSE_CPP_NOEXCEPT
 	{
 	#if defined(QSE_HAVE_SYNC_LOCK_TEST_AND_SET) && defined(QSE_HAVE_SYNC_LOCK_RELEASE)
 		while (__sync_lock_test_and_set(&this->flag, 1)) { /* do nothing special */ }
@@ -67,7 +67,7 @@ public:
 	#endif
 	}
 
-	void unlock ()
+	void unlock () QSE_CPP_NOEXCEPT
 	{
 	#if defined(QSE_HAVE_SYNC_LOCK_TEST_AND_SET) && defined(QSE_HAVE_SYNC_LOCK_RELEASE)
 		__sync_lock_release (&this->flag);
@@ -91,12 +91,12 @@ protected:
 class ScopedSpinLocker: public Uncopyable
 {
 public:
-	ScopedSpinLocker (SpinLock& spl): spl(spl)
+	ScopedSpinLocker (SpinLock& spl) QSE_CPP_NOEXCEPT: spl(spl)
 	{
 		this->spl.lock ();
 	}
 
-	~ScopedSpinLocker ()
+	~ScopedSpinLocker () QSE_CPP_NOEXCEPT
 	{
 		this->spl.unlock ();
 	}
