@@ -537,12 +537,11 @@ typedef int qse_mcint_t;
  * #QSE_WCHAR_EOF.
  */
 
-#if /*defined(QSE_PREFER_CHAR16_T) &&*/ defined(__GNUC__) && defined(__CHAR16_TYPE__) && \
+#if defined(QSE_WCHAR_PREFER_CHAR16) && defined(__GNUC__) && defined(__CHAR16_TYPE__) && \
     defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201112L)
 	/* C11 */
 	typedef __CHAR16_TYPE__ qse_wchar_t;
 	typedef qse_uint16_t  qse_wchau_t;
-	
 	
 	#if (QSE_SIZEOF_INT > 2)
 	typedef int qse_wcint_t;

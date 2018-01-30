@@ -1071,6 +1071,9 @@
 /* use the syscall() function to invoke a system call */
 #undef QSE_USE_SYSCALL
 
+/* specify preference for char16_t as qse_wchar_t */
+#undef QSE_WCHAR_PREFER_CHAR16
+
 /* The size of `char', as computed by sizeof. */
 #undef SIZEOF_CHAR
 

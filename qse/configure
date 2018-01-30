@@ -860,6 +860,7 @@ enable_ltdl_install
 enable_ssl
 with_mysql
 enable_wchar
+enable_wchar_prefer_char16
 enable_bundled_unicode
 enable_xcmgrs
 enable_syscall
@@ -1518,6 +1519,9 @@ Optional Features:
   --enable-ssl            build the library in the ssl mode (default. yes)
   --enable-wchar          Use the wide character type as the default charater
                           type when enabled (default. yes)
+  --enable-wchar-prefer-char16
+                          Use char16_t for qse_wchar_t if possible(default.
+                          no)
   --enable-bundled-unicode
                           use thn bundled unicode routines (default. no)
   --enable-xcmgrs         include more built-in cmgrs like cp949 and cp950
@@ -23597,6 +23601,22 @@ fi
 else
   WCHAR_TRUE='#'
   WCHAR_FALSE=
+fi
+
+
+
+# Check whether --enable-wchar-prefer-char16 was given.
+if test "${enable_wchar_prefer_char16+set}" = set; then :
+  enableval=$enable_wchar_prefer_char16; enable_wchar_prefer_char16=$enableval
+else
+  enable_wchar_prefer_char16=no
+fi
+
+if test "${enable_wchar_prefer_char16}" = "yes"
+then
+
+$as_echo "#define QSE_WCHAR_PREFER_CHAR16 /**/" >>confdefs.h
+
 fi
 
 
