@@ -51,7 +51,7 @@ public:
 #if defined(QSE_SUPPORT_SPL)
 	SpinLock() QSE_CPP_NOEXCEPT: flag(QSE_SPL_INIT) {}
 #else
-	SpinLock() QSE_CPP_NOEXCEPT: flag(0) {}
+	SpinLock() QSE_CPP_NOEXCEPT: flag(ATOMIC_FLAG_INIT) {}
 #endif
 
 	bool tryock() QSE_CPP_NOEXCEPT

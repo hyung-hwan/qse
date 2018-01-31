@@ -135,6 +135,56 @@ asm void qse_spl_unlock (qse_spl_t* spl)
 }
 #endif
 
+
+#elif defined(__GNUC__) && (defined(__x86_64) || defined(__amd64) || defined(__i386) || defined(i386))
+
+	static QSE_INLINE int qse_spl_trylock (qse_spl_t* spl) 
+	{
+		register int x = 1;
+		__asm__ volatile (
+			"xchgl %0, (%2)\n"
+			: "=r"(x)
+			: "0"(x), "r"(spl)
+			: "memory"
+		);
+		return !x;
+	}
+	static QSE_INLINE void qse_spl_lock (qse_spl_t* spl) 
+	{
+		register int x = 1;
+		do
+		{
+			__asm__ volatile (
+				"xchgl %0, (%2)\n"
+				: "=r"(x)
+				: "0"(x), "r"(spl)
+				: "memory"
+			);
+		}
+		while (x);
+
+	}
+	static QSE_INLINE void qse_spl_unlock (qse_spl_t* spl) 
+	{
+	#if defined(__x86_64) || defined(__amd64)
+		__asm__ volatile (
+			"mfence\n\t"
+			"movl $0, (%0)\n"
+			:
+			:"r"(spl)
+			:"memory"
+		);
+	#else
+		__asm__ volatile (
+			"movl $0, (%0)\n"
+			:
+			:"r"(spl)
+			:"memory"
+		);
+	#endif
+	}
+
+
 #elif defined(QSE_SPL_NO_UNSUPPORTED_ERROR)
 	/* don't raise the compile time error */
 	#undef QSE_SUPPORT_SPL

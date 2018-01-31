@@ -34,7 +34,7 @@ static int thr_func (qse_thr_t* thr, void* ctx)
 		qse_printf (QSE_T("%s: [% 16d] [% 16d] [% 16d]\n"), xtn->name, i, i, i);
 		qse_spl_unlock (xtn->spl);
 		i++;
-		//sleep (1);
+		/*sleep (1);*/
 	}
 
 	return i;
