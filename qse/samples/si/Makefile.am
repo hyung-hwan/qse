@@ -23,8 +23,9 @@ bin_PROGRAMS = \
 	sio01 \
 	sio02 \
 	sio03  \
+	spl01 \
 	task01 \
-	thr01 
+	thr01
 	
 AM_LDFLAGS = -L../../lib/si  -L../../lib/cmn
 AM_CFLAGS = $(PTHREAD_CFLAGS)
@@ -53,6 +54,7 @@ rwl01_SOURCES = rwl01.c
 sio01_SOURCES = sio01.c
 sio02_SOURCES = sio02.c
 sio03_SOURCES = sio03.c
+spl01_SOURCES = spl01.c 
 task01_SOURCES = task01.c
 thr01_SOURCES = thr01.c
 

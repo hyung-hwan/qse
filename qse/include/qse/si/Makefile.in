@@ -133,8 +133,8 @@ am__can_run_installinfo = \
   esac
 am__pkginclude_HEADERS_DIST = aio.h aio-pro.h aio-sck.h cnd.h dir.h \
 	fio.h fs.h glob.h intr.h log.h mtx.h mux.h nwad.h nwif.h \
-	nwio.h pio.h rwl.h sck.h sinfo.h sio.h task.h thr.h tio.h \
-	AppRoot.hpp SocketAddress.hpp Socket.hpp SpinLock.hpp \
+	nwio.h pio.h rwl.h sck.h sinfo.h sio.h spl.h task.h thr.h \
+	tio.h AppRoot.hpp SocketAddress.hpp Socket.hpp SpinLock.hpp \
 	Thread.hpp
 am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
 am__vpath_adj = case $$p in \
@@ -369,7 +369,8 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 pkginclude_HEADERS = aio.h aio-pro.h aio-sck.h cnd.h dir.h fio.h fs.h \
 	glob.h intr.h log.h mtx.h mux.h nwad.h nwif.h nwio.h pio.h \
-	rwl.h sck.h sinfo.h sio.h task.h thr.h tio.h $(am__append_1)
+	rwl.h sck.h sinfo.h sio.h spl.h task.h thr.h tio.h \
+	$(am__append_1)
 all: all-am
 
 .SUFFIXES:

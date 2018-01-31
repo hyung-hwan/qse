@@ -30,8 +30,13 @@
 #include <qse/Types.hpp>
 #include <qse/Uncopyable.hpp>
 
-#if defined(QSE_HAVE_SYNC_LOCK_TEST_AND_SET) && defined(QSE_HAVE_SYNC_LOCK_RELEASE)
-	// don't include anything
+#undef QSE_SPL_NO_UNSUPPORTED_ERROR
+#define QSE_SPL_NO_UNSUPPORTED_ERROR
+#include <qse/si/spl.h>
+#undef QSE_SPL_NO_UNSUPPORTED_ERROR
+
+#if defined(QSE_SUPPORT_SPL)
+	// don't include anything else
 #elif defined(QSE_LANG_CPP11)
 	// NOTE: <stdatomic.h> in C11 doesn't seem compatible due to lack of
 	//       the keyword _Atomic in C++11
@@ -43,12 +48,16 @@ QSE_BEGIN_NAMESPACE(QSE)
 class SpinLock
 {
 public:
+#if defined(QSE_SUPPORT_SPL)
+	SpinLock() QSE_CPP_NOEXCEPT: flag(QSE_SPL_INIT) {}
+#else
 	SpinLock() QSE_CPP_NOEXCEPT: flag(0) {}
+#endif
 
 	bool tryock() QSE_CPP_NOEXCEPT
 	{
-	#if defined(QSE_HAVE_SYNC_LOCK_TEST_AND_SET) && defined(QSE_HAVE_SYNC_LOCK_RELEASE)
-		return !__sync_lock_test_and_set(&this->flag, 1);
+	#if defined(QSE_SUPPORT_SPL)
+		return !qse_spl_trylock(&this->flag);
 	#elif defined(QSE_LANG_CPP11)
 		return !this->flag.test_and_set();
 	#else
@@ -58,8 +67,8 @@ public:
 
 	void lock () QSE_CPP_NOEXCEPT
 	{
-	#if defined(QSE_HAVE_SYNC_LOCK_TEST_AND_SET) && defined(QSE_HAVE_SYNC_LOCK_RELEASE)
-		while (__sync_lock_test_and_set(&this->flag, 1)) { /* do nothing special */ }
+	#if defined(QSE_SUPPORT_SPL)
+		qse_spl_lock (&this->flag);
 	#elif defined(QSE_LANG_CPP11)
 		while (flag.test_and_set()) { /* do nothing sepcial */ }
 	#else
@@ -69,8 +78,8 @@ public:
 
 	void unlock () QSE_CPP_NOEXCEPT
 	{
-	#if defined(QSE_HAVE_SYNC_LOCK_TEST_AND_SET) && defined(QSE_HAVE_SYNC_LOCK_RELEASE)
-		__sync_lock_release (&this->flag);
+	#if defined(QSE_SUPPORT_SPL)
+		qse_spl_unlock (&this->flag);
 	#elif defined(QSE_LANG_CPP11)
 		flag.clear ();
 	#else
@@ -79,8 +88,8 @@ public:
 	}
 
 protected:
-#if defined(QSE_HAVE_SYNC_LOCK_TEST_AND_SET) && defined(QSE_HAVE_SYNC_LOCK_RELEASE)
-	volatile int flag;
+#if defined(QSE_SUPPORT_SPL)
+	qse_spl_t flag;
 #elif defined(QSE_LANG_CPP11)
 	std::atomic_flag flag;
 #else

@@ -92,8 +92,8 @@ bin_PROGRAMS = aio01$(EXEEXT) dir01$(EXEEXT) fio01$(EXEEXT) \
 	fio02$(EXEEXT) fs01$(EXEEXT) fs02$(EXEEXT) fs03$(EXEEXT) \
 	glob01$(EXEEXT) log01$(EXEEXT) nwad01$(EXEEXT) nwif01$(EXEEXT) \
 	nwif02$(EXEEXT) pio01$(EXEEXT) rwl01$(EXEEXT) sio01$(EXEEXT) \
-	sio02$(EXEEXT) sio03$(EXEEXT) task01$(EXEEXT) thr01$(EXEEXT) \
-	$(am__EXEEXT_1)
+	sio02$(EXEEXT) sio03$(EXEEXT) spl01$(EXEEXT) task01$(EXEEXT) \
+	thr01$(EXEEXT) $(am__EXEEXT_1)
 @WCHAR_TRUE@@WIN32_TRUE@am__append_1 = $(UNICOWS_LIBS)
 @ENABLE_CXX_TRUE@am__append_2 = thr02 spl02
 subdir = samples/si
@@ -190,6 +190,10 @@ am_sio03_OBJECTS = sio03.$(OBJEXT)
 sio03_OBJECTS = $(am_sio03_OBJECTS)
 sio03_LDADD = $(LDADD)
 sio03_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_2)
+am_spl01_OBJECTS = spl01.$(OBJEXT)
+spl01_OBJECTS = $(am_spl01_OBJECTS)
+spl01_LDADD = $(LDADD)
+spl01_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_2)
 am__spl02_SOURCES_DIST = spl02.cpp
 @ENABLE_CXX_TRUE@am_spl02_OBJECTS = spl02.$(OBJEXT)
 spl02_OBJECTS = $(am_spl02_OBJECTS)
@@ -266,15 +270,17 @@ SOURCES = $(aio01_SOURCES) $(dir01_SOURCES) $(fio01_SOURCES) \
 	$(fs03_SOURCES) $(glob01_SOURCES) $(log01_SOURCES) \
 	$(nwad01_SOURCES) $(nwif01_SOURCES) $(nwif02_SOURCES) \
 	$(pio01_SOURCES) $(rwl01_SOURCES) $(sio01_SOURCES) \
-	$(sio02_SOURCES) $(sio03_SOURCES) $(spl02_SOURCES) \
-	$(task01_SOURCES) $(thr01_SOURCES) $(thr02_SOURCES)
+	$(sio02_SOURCES) $(sio03_SOURCES) $(spl01_SOURCES) \
+	$(spl02_SOURCES) $(task01_SOURCES) $(thr01_SOURCES) \
+	$(thr02_SOURCES)
 DIST_SOURCES = $(aio01_SOURCES) $(dir01_SOURCES) $(fio01_SOURCES) \
 	$(fio02_SOURCES) $(fs01_SOURCES) $(fs02_SOURCES) \
 	$(fs03_SOURCES) $(glob01_SOURCES) $(log01_SOURCES) \
 	$(nwad01_SOURCES) $(nwif01_SOURCES) $(nwif02_SOURCES) \
 	$(pio01_SOURCES) $(rwl01_SOURCES) $(sio01_SOURCES) \
-	$(sio02_SOURCES) $(sio03_SOURCES) $(am__spl02_SOURCES_DIST) \
-	$(task01_SOURCES) $(thr01_SOURCES) $(am__thr02_SOURCES_DIST)
+	$(sio02_SOURCES) $(sio03_SOURCES) $(spl01_SOURCES) \
+	$(am__spl02_SOURCES_DIST) $(task01_SOURCES) $(thr01_SOURCES) \
+	$(am__thr02_SOURCES_DIST)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -507,6 +513,7 @@ rwl01_SOURCES = rwl01.c
 sio01_SOURCES = sio01.c
 sio02_SOURCES = sio02.c
 sio03_SOURCES = sio03.c
+spl01_SOURCES = spl01.c 
 task01_SOURCES = task01.c
 thr01_SOURCES = thr01.c
 @ENABLE_CXX_TRUE@CXXLIB = -lqsesixx -lqsecmnxx
@@ -665,6 +672,10 @@ sio03$(EXEEXT): $(sio03_OBJECTS) $(sio03_DEPENDENCIES) $(EXTRA_sio03_DEPENDENCIE
 	@rm -f sio03$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(sio03_OBJECTS) $(sio03_LDADD) $(LIBS)
 
+spl01$(EXEEXT): $(spl01_OBJECTS) $(spl01_DEPENDENCIES) $(EXTRA_spl01_DEPENDENCIES) 
+	@rm -f spl01$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(spl01_OBJECTS) $(spl01_LDADD) $(LIBS)
+
 spl02$(EXEEXT): $(spl02_OBJECTS) $(spl02_DEPENDENCIES) $(EXTRA_spl02_DEPENDENCIES) 
 	@rm -f spl02$(EXEEXT)
 	$(AM_V_CXXLD)$(CXXLINK) $(spl02_OBJECTS) $(spl02_LDADD) $(LIBS)
@@ -704,6 +715,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sio01.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sio02.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sio03.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/spl01.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/spl02.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/task01.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/thr01.Po@am__quote@
