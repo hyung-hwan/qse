@@ -21,6 +21,7 @@ pkginclude_HEADERS = \
 	sck.h \
 	sinfo.h \
 	sio.h  \
+	spl.h \
 	task.h \
 	thr.h \
 	tio.h
