@@ -76,7 +76,7 @@
 #	define QSE_IMPORT __declspec(dllimport)
 #	define QSE_EXPORT __declspec(dllexport)
 #	define QSE_PRIVATE 
-#elif defined(__GNUC__) && (__GNUC__>=4)
+#elif defined(__GNUC__) && ((__GNUC__>= 4) || (__GNUC__ == 3 && __GNUC_MINOR__ >= 3))
 #	define QSE_IMPORT __attribute__((visibility("default")))
 #	define QSE_EXPORT __attribute__((visibility("default")))
 #	define QSE_PRIVATE __attribute__((visibility("hidden")))
