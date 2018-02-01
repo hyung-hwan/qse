@@ -936,6 +936,9 @@
 /* Define if mode_t is signed */
 #undef QSE_MODE_T_IS_SIGNED
 
+/* offsetof(struct sockaddr, sa_family) */
+#undef QSE_OFFSETOF_SA_FAMILY
+
 /* Author */
 #undef QSE_PACKAGE_AUTHOR
 

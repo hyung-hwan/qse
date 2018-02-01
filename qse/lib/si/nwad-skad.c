@@ -106,7 +106,7 @@ typedef union sockaddr_t sockaddr_t;
 #endif
 */
 
-#define FAMILY(x) (((qse_skad_t*)x)->u.family)
+#define FAMILY(x) (((qse_skad_t*)x)->u.sa.family)
 
 static QSE_INLINE int skad_to_nwad (const sockaddr_t* skad, qse_nwad_t* nwad)
 {

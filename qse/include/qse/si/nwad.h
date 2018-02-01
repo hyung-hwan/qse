@@ -197,7 +197,13 @@ struct qse_skad_t
 	/* TODO: is this large enough?? */
 	union
 	{
-		qse_skaf_t family;
+		struct
+		{
+		#if defined(QSE_OFFSETOF_SA_FAMILY) && (QSE_OFFSET_OF_SA_FAMILY > 0)
+			qse_uint8_t filler[QSE_OFFSETOF_SA_FAMILY];
+		#endif
+			qse_skaf_t family;
+		} sa;
 		qse_uint8_t data[QSE_SKAD_DATA_SIZE];
 	} u;
 
