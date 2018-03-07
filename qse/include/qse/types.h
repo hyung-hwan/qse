@@ -763,6 +763,29 @@ struct qse_xptl_t
 typedef struct qse_xptl_t qse_xptl_t;
 
 /**
+ * The qse_ioptl_t type defines an analogus type to 'struct iovec' typically
+ * found on posix platforms
+ */
+#if (QSE_SIZEOF_STRUCT_IOVEC > 0) && (QSE_OFFSETOF_IOV_BASE != QSE_OFFSETOF_IOV_LEN)
+	struct qse_ioptl_t
+	{
+	/* [THINK] do i have to go extreme to inject fillers by looking at the total size and the offsets ? 
+	 *         i believe most systems should define only two members - iovec_base and iovec_len */
+	#if (QSE_OFFSETOF_IOV_BASE < QSE_OFFSETOF_IOV_LEN)
+		void*      ptr;
+		qse_size_t len;
+	#else
+		qse_size_t len;
+		void*      ptr;
+	#endif
+	};
+	typedef struct qse_ioptl_t qse_ioptl_t;
+#else
+	typedef qse_xptl_t qse_ioptl_t;
+#endif
+
+
+/**
  * The qse_floc_t type defines a structure that can hold a position
  * in a file.
  */

@@ -72,6 +72,8 @@ public:
 
 	int set (const qse_skad_t* skad); 
 	int set (const qse_nwad_t* nwad);
+	int set (const qse_mchar_t* str);
+	int set (const qse_wchar_t* str);
 
 protected:
 	qse_skad_t skad;

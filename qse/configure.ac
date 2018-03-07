@@ -156,7 +156,7 @@ AC_CHECK_FUNCS([backtrace backtrace_symbols])
 AC_CHECK_FUNCS([fork vfork posix_spawn gettid nanosleep select])
 AC_CHECK_FUNCS([makecontext swapcontext getcontext setcontext])
 AC_CHECK_FUNCS([snprintf _vsnprintf _vsnwprintf])
-AC_CHECK_FUNCS([accept4])
+AC_CHECK_FUNCS([accept4 sendmsg recvmsg writev readv])
 
 OLDLIBS="$LIBS"
 LIBS="$LIBM $LIBS"
@@ -422,6 +422,29 @@ AC_CHECK_SIZEOF(mbstate_t,,[#include <wchar.h>])
 AX_CHECK_NUMVALOF(MB_LEN_MAX,[32],[#include <limits.h>])
 AX_CHECK_NUMVALOF(PATH_MAX,[0],[#include <limits.h>])
 
+AX_CHECK_NUMVALOF(SOCK_STREAM, [-1],   [#include <sys/types.h>
+                                        #include <sys/socket.h>
+                                        #include <netinet/in.h>])
+AX_CHECK_NUMVALOF(SOCK_DGRAM,  [-1],   [#include <sys/types.h>
+                                        #include <sys/socket.h>
+                                        #include <netinet/in.h>])
+AX_CHECK_NUMVALOF(SOCK_RAW,    [-1],   [#include <sys/types.h>
+                                        #include <sys/socket.h>
+                                        #include <netinet/in.h>])
+
+AX_CHECK_NUMVALOF(AF_INET,     [-1],   [#include <sys/types.h>
+                                        #include <sys/socket.h>
+                                        #include <netinet/in.h>])
+AX_CHECK_NUMVALOF(AF_INET6,    [-1],   [#include <sys/types.h>
+                                        #include <sys/socket.h>
+                                        #include <netinet/in.h>])
+AX_CHECK_NUMVALOF(AF_PACKET,   [-1],   [#include <sys/types.h>
+                                        #include <sys/socket.h>
+                                        #include <netinet/in.h>])
+AX_CHECK_NUMVALOF(AF_UNIX,     [-1],   [#include <sys/types.h>
+                                        #include <sys/socket.h>
+                                        #include <sys/un.h>])
+
 if test "x${platform_win32}" = "xyes"
 then
 	AC_CHECK_SIZEOF(struct sockaddr_in,,[
@@ -530,13 +553,32 @@ else
 	AC_DEFINE_UNQUOTED(QSE_OFFSETOF_SA_FAMILY, ${ac_cv_offsetof_sa_family}, [offsetof(struct sockaddr, sa_family)])
 fi
 
+AC_CHECK_SIZEOF(struct iovec,,[#include <sys/uio.h>])
+if test ${ac_cv_sizeof_struct_iovec} -gt 0
+then
+	AC_MSG_CHECKING([offset of iov_base in struct iovec])
+	AC_COMPUTE_INT([ac_cv_offsetof_iov_base],
+		[[offsetof(struct iovec, iov_base)]],
+		[#include <stddef.h>
+		 #include <sys/uio.h>], [ac_cv_offsteof_iov_base=0])
+	AC_MSG_RESULT([$ac_cv_offsetof_iov_base])
+	AC_DEFINE_UNQUOTED(QSE_OFFSETOF_IOV_BASE, ${ac_cv_offsetof_iov_base}, [offsetof(struct iovec, iov_base)])
+
+	AC_MSG_CHECKING([offset of iov_len in struct iovec])
+	AC_COMPUTE_INT([ac_cv_offsetof_iov_len],
+		[[offsetof(struct iovec, iov_len)]],
+		[#include <stddef.h>
+		 #include <sys/uio.h>], [ac_cv_offsteof_iov_len=0])
+	AC_MSG_RESULT([$ac_cv_offsetof_iov_len])
+	AC_DEFINE_UNQUOTED(QSE_OFFSETOF_IOV_LEN, ${ac_cv_offsetof_iov_len}, [offsetof(struct iovec, iov_len)])
+fi
 
 AC_CHECK_SIZEOF(pthread_t,, [#include <pthread.h>])
 if test ${ac_cv_sizeof_pthread_t} -gt 0
 then
 	AX_CHECK_SIGN([pthread_t],
-		[ AC_DEFINE(QSE_PTHREAD_T_IS_SIGNED, 1, [Define if pthread_t is signed]) ],
-		[ AS_ECHO_N("") ],
+		[AC_DEFINE(QSE_PTHREAD_T_IS_SIGNED, 1, [Define if pthread_t is signed])],
+		[AS_ECHO_N("")],
 		[#include <pthread.h>])
 fi
 
@@ -688,6 +730,35 @@ then
 	AC_DEFINE_UNQUOTED(QSE_PATH_MAX, ${ax_cv_numvalof_PATH_MAX}, [PATH_MAX])
 fi
 
+if test ${ax_cv_numvalof_SOCK_STREAM} -ge 0 
+then
+	AC_DEFINE_UNQUOTED(QSE_SOCK_STREAM, ${ax_cv_numvalof_SOCK_STREAM}, [SOCK_STREAM])
+fi
+if test ${ax_cv_numvalof_SOCK_DGRAM} -ge 0 
+then
+	AC_DEFINE_UNQUOTED(QSE_SOCK_DGRAM, ${ax_cv_numvalof_SOCK_DGRAM}, [SOCK_DGRAM])
+fi
+if test ${ax_cv_numvalof_SOCK_RAW} -ge 0 
+then
+	AC_DEFINE_UNQUOTED(QSE_SOCK_RAW, ${ax_cv_numvalof_SOCK_RAW}, [SOCK_RAW])
+fi
+if test ${ax_cv_numvalof_AF_INET} -ge 0 
+then
+	AC_DEFINE_UNQUOTED(QSE_AF_INET, ${ax_cv_numvalof_AF_INET}, [AF_INET])
+fi
+if test ${ax_cv_numvalof_AF_INET6} -ge 0 
+then
+	AC_DEFINE_UNQUOTED(QSE_AF_INET6, ${ax_cv_numvalof_AF_INET6}, [AF_INET6])
+fi
+if test ${ax_cv_numvalof_AF_PACKET} -ge 0 
+then
+	AC_DEFINE_UNQUOTED(QSE_AF_PACKET, ${ax_cv_numvalof_AF_PACKET}, [AF_PACKET])
+fi
+if test ${ax_cv_numvalof_AF_UNIX} -ge 0 
+then
+	AC_DEFINE_UNQUOTED(QSE_AF_UNIX, ${ax_cv_numvalof_AF_UNIX}, [AF_UNIX])
+fi
+
 AC_DEFINE_UNQUOTED(QSE_SIZEOF_STRUCT_SOCKADDR_IN, ${ac_cv_sizeof_struct_sockaddr_in}, [sizeof(struct sockaddr_in)])
 AC_DEFINE_UNQUOTED(QSE_SIZEOF_STRUCT_SOCKADDR_IN6, ${ac_cv_sizeof_struct_sockaddr_in6}, [sizeof(struct sockaddr_in6)])
 AC_DEFINE_UNQUOTED(QSE_SIZEOF_STRUCT_SOCKADDR_UN, ${ac_cv_sizeof_struct_sockaddr_un}, [sizeof(struct sockaddr_un)])
@@ -699,6 +770,7 @@ AC_DEFINE_UNQUOTED(QSE_SIZEOF_SOCKLEN_T, ${ac_cv_sizeof_socklen_t}, [sizeof(sock
 AC_DEFINE_UNQUOTED(QSE_SIZEOF_SA_FAMILY_T, ${ac_cv_sizeof_sa_family_t}, [sizeof(sa_family_t)])
 
 AC_DEFINE_UNQUOTED(QSE_SIZEOF_SOCKLEN_T, ${ac_cv_sizeof_socklen_t}, [sizeof(socklen_t)])
+AC_DEFINE_UNQUOTED(QSE_SIZEOF_STRUCT_IOVEC, ${ac_cv_sizeof_struct_iovec}, [sizeof(struct iovec)])
 AC_DEFINE_UNQUOTED(QSE_SIZEOF_PTHREAD_T, ${ac_cv_sizeof_pthread_t}, [sizeof(pthread_t)])
 AC_DEFINE_UNQUOTED(QSE_SIZEOF_PTHREAD_MUTEX_T, ${ac_cv_sizeof_pthread_mutex_t}, [sizeof(pthread_mutex_t)])
 AC_DEFINE_UNQUOTED(QSE_SIZEOF_PTHREAD_COND_T, ${ac_cv_sizeof_pthread_cond_t}, [sizeof(pthread_cond_t)])

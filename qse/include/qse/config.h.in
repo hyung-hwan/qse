@@ -503,6 +503,12 @@
 /* Define to 1 if you have the `readdir64' function. */
 #undef HAVE_READDIR64
 
+/* Define to 1 if you have the `readv' function. */
+#undef HAVE_READV
+
+/* Define to 1 if you have the `recvmsg' function. */
+#undef HAVE_RECVMSG
+
 /* Define to 1 if you have the `round' function. */
 #undef HAVE_ROUND
 
@@ -529,6 +535,9 @@
 
 /* Define to 1 if you have the `sendfilev64' function. */
 #undef HAVE_SENDFILEV64
+
+/* Define to 1 if you have the `sendmsg' function. */
+#undef HAVE_SENDMSG
 
 /* Define to 1 if you have the `setcontext' function. */
 #undef HAVE_SETCONTEXT
@@ -832,6 +841,9 @@
 /* This value is set to 1 to indicate that the system argz facility works */
 #undef HAVE_WORKING_ARGZ
 
+/* Define to 1 if you have the `writev' function. */
+#undef HAVE_WRITEV
+
 /* Define to 1 if you have the `_vsnprintf' function. */
 #undef HAVE__VSNPRINTF
 
@@ -872,11 +884,32 @@
 /* Define if dlsym() requires a leading underscore in symbol names. */
 #undef NEED_USCORE
 
+/* The size of `AF_INET', as computed by valueof. */
+#undef NUMVALOF_AF_INET
+
+/* The size of `AF_INET6', as computed by valueof. */
+#undef NUMVALOF_AF_INET6
+
+/* The size of `AF_PACKET', as computed by valueof. */
+#undef NUMVALOF_AF_PACKET
+
+/* The size of `AF_UNIX', as computed by valueof. */
+#undef NUMVALOF_AF_UNIX
+
 /* The size of `MB_LEN_MAX', as computed by valueof. */
 #undef NUMVALOF_MB_LEN_MAX
 
 /* The size of `PATH_MAX', as computed by valueof. */
 #undef NUMVALOF_PATH_MAX
+
+/* The size of `SOCK_DGRAM', as computed by valueof. */
+#undef NUMVALOF_SOCK_DGRAM
+
+/* The size of `SOCK_RAW', as computed by valueof. */
+#undef NUMVALOF_SOCK_RAW
+
+/* The size of `SOCK_STREAM', as computed by valueof. */
+#undef NUMVALOF_SOCK_STREAM
 
 /* Name of package */
 #undef PACKAGE
@@ -902,6 +935,18 @@
 /* Define to necessary symbol if this constant uses a non-standard name on
    your system. */
 #undef PTHREAD_CREATE_JOINABLE
+
+/* AF_INET */
+#undef QSE_AF_INET
+
+/* AF_INET6 */
+#undef QSE_AF_INET6
+
+/* AF_PACKET */
+#undef QSE_AF_PACKET
+
+/* AF_UNIX */
+#undef QSE_AF_UNIX
 
 /* The default character type is the multi-byte character type */
 #undef QSE_CHAR_IS_MCHAR
@@ -935,6 +980,12 @@
 
 /* Define if mode_t is signed */
 #undef QSE_MODE_T_IS_SIGNED
+
+/* offsetof(struct iovec, iov_base) */
+#undef QSE_OFFSETOF_IOV_BASE
+
+/* offsetof(struct iovec, iov_len) */
+#undef QSE_OFFSETOF_IOV_LEN
 
 /* offsetof(struct sockaddr, sa_family) */
 #undef QSE_OFFSETOF_SA_FAMILY
@@ -1023,6 +1074,9 @@
 /* sizeof(socklen_t) */
 #undef QSE_SIZEOF_SOCKLEN_T
 
+/* sizeof(struct iovec) */
+#undef QSE_SIZEOF_STRUCT_IOVEC
+
 /* sizeof(struct sockaddr_dl) */
 #undef QSE_SIZEOF_STRUCT_SOCKADDR_DL
 
@@ -1067,6 +1121,15 @@
 
 /* Define if socklen_t is signed */
 #undef QSE_SOCKLEN_T_IS_SIGNED
+
+/* SOCK_DGRAM */
+#undef QSE_SOCK_DGRAM
+
+/* SOCK_RAW */
+#undef QSE_SOCK_RAW
+
+/* SOCK_STREAM */
+#undef QSE_SOCK_STREAM
 
 /* use qse_fltmax_t for floating-point numbers in AWK */
 #undef QSE_USE_AWK_FLTMAX
@@ -1130,6 +1193,9 @@
 
 /* The size of `socklen_t', as computed by sizeof. */
 #undef SIZEOF_SOCKLEN_T
+
+/* The size of `struct iovec', as computed by sizeof. */
+#undef SIZEOF_STRUCT_IOVEC
 
 /* The size of `struct sockaddr_dl', as computed by sizeof. */
 #undef SIZEOF_STRUCT_SOCKADDR_DL
