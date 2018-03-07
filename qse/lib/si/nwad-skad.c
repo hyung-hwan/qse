@@ -64,6 +64,12 @@
 #	if defined(HAVE_SYS_UN_H)
 #		include <sys/un.h>
 #	endif
+#	if defined(HAVE_NETPACKET_PACKET_H)
+#		include <netpacket/packet.h>
+#	endif
+#	if defined(HAVE_NET_IF_DL_H)
+#		include <net/if_dl.h>
+#	endif
 
 #	if defined(QSE_SIZEOF_STRUCT_SOCKADDR_IN6) && (QSE_SIZEOF_STRUCT_SOCKADDR_IN6 <= 0)
 #		undef AF_INET6
@@ -283,6 +289,14 @@ int qse_skadsize (const qse_skad_t* skad)
 		{
 			struct sockaddr_in6 in6;
 			return QSE_SIZEOF(in6);
+		}
+	#endif
+
+	#if defined(AF_PACKET)
+		case AF_PACKET:
+		{
+			struct sockaddr_ll ll;
+			return QSE_SIZEOF(ll);
 		}
 	#endif
 
