@@ -76,14 +76,21 @@ public:
 	int open (int domain, int type, int protocol, int traits = 0) QSE_CPP_NOEXCEPT;
 	void close () QSE_CPP_NOEXCEPT;
 
-	
 	int connect (const SocketAddress& target) QSE_CPP_NOEXCEPT;
 	int bind (const SocketAddress& target) QSE_CPP_NOEXCEPT;
 	int listen (int backlog) QSE_CPP_NOEXCEPT;
 	int accept (Socket* newsck, SocketAddress* newaddr, int traits = 0) QSE_CPP_NOEXCEPT;
 
+	// The send() functions sends data by attemping a single call to the 
+	// underlying system calls
 	qse_ssize_t send (const void* buf, qse_size_t len) QSE_CPP_NOEXCEPT;
 	qse_ssize_t send (const void* buf, qse_size_t len, const SocketAddress& dstaddr) QSE_CPP_NOEXCEPT;
+
+	// The sendx() functions sends data as much as it can, possibly with multiple
+	// underlying system calls. 
+	int sendx (const void* buf, qse_size_t len, qse_size_t* total_sent = QSE_NULL) QSE_CPP_NOEXCEPT;
+	int sendx (const void* buf, qse_size_t len, const SocketAddress& dstaddr, qse_size_t* total_sent = QSE_NULL) QSE_CPP_NOEXCEPT;
+	int sendx (qse_ioptl_t* vec, int count, qse_size_t* total_sent = QSE_NULL) QSE_CPP_NOEXCEPT;
 
 	qse_ssize_t receive (void* buf, qse_size_t len) QSE_CPP_NOEXCEPT;
 	qse_ssize_t receive (void* buf, qse_size_t len, SocketAddress& srcaddr) QSE_CPP_NOEXCEPT;

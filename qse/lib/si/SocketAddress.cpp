@@ -195,9 +195,23 @@ int SocketAddress::set (const qse_skad_t* skad)
 
 int SocketAddress::set (const qse_nwad_t* nwad)
 {
-	return qse_nwadtoskad (nwad, &this->skad);
+	return qse_nwadtoskad(nwad, &this->skad);
 }
 
+
+int SocketAddress::set (const qse_mchar_t* str)
+{
+	qse_nwad_t nwad;
+	if (qse_mbstonwad(str, &nwad) <= -1) return -1;
+	return qse_nwadtoskad(&nwad, &this->skad);
+}
+
+int SocketAddress::set (const qse_wchar_t* str)
+{
+	qse_nwad_t nwad;
+	if (qse_wcstonwad(str, &nwad) <= -1) return -1;
+	return qse_nwadtoskad(&nwad, &this->skad);
+}
 
 /////////////////////////////////
 QSE_END_NAMESPACE(QSE)

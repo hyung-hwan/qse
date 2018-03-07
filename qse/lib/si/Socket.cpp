@@ -26,6 +26,7 @@
 
 #include <qse/si/Socket.hpp>
 #include <qse/cmn/str.h>
+#include "../cmn/mem-prv.h"
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -256,6 +257,151 @@ qse_ssize_t Socket::send (const void* buf, qse_size_t len, const SocketAddress& 
 	}
 
 	return n; 
+}
+
+int Socket::sendx (const void* buf, qse_size_t len, qse_size_t* total_sent) QSE_CPP_NOEXCEPT
+{
+	QSE_ASSERT (this->handle != QSE_INVALID_SCKHND);
+
+	qse_size_t pos = 0;
+
+	while (pos < len)
+	{
+		qse_ssize_t n = ::send(this->handle, (char*)buf + pos, len - pos, 0);
+		if (n <= -1)
+		{
+			this->setErrorCode (syserr_to_errnum(errno));
+			if (total_sent) *total_sent = pos;
+			return -1;
+		}
+
+		pos += n;
+	}
+
+	if (total_sent) *total_sent = pos;
+	return 0; 
+}
+
+int Socket::sendx (const void* buf, qse_size_t len, const SocketAddress& dstaddr, qse_size_t* total_sent) QSE_CPP_NOEXCEPT
+{
+	QSE_ASSERT (this->handle != QSE_INVALID_SCKHND);
+
+	qse_size_t pos = 0;
+
+	while (pos < len)
+	{
+		qse_ssize_t n = ::sendto(this->handle, (char*)buf + pos, len - pos, 0, (struct sockaddr*)dstaddr.getAddrPtr(), dstaddr.getAddrSize());
+		if (n == -1)
+		{
+			this->setErrorCode (syserr_to_errnum(errno));
+			if (total_sent) *total_sent = pos;
+			return -1;
+		}
+
+		pos += n;
+	}
+
+	if (total_sent) *total_sent = pos;
+	return 0; 
+}
+
+int Socket::sendx (qse_ioptl_t* iov, int count, qse_size_t* total_sent) QSE_CPP_NOEXCEPT
+{
+	QSE_ASSERT (this->handle != QSE_INVALID_SCKHND);
+
+#if defined(HAVE_SENDMSG) || defined(HAVE_WRITEV)
+	int index = 0;
+	qse_size_t total = 0;
+	int backup_index = -1;
+	qse_ioptl_t backup;
+
+	#if defined(HAVE_SENDMSG)
+	struct msghdr msg;
+	QSE_MEMSET (&msg, 0, QSE_SIZEOF(msg));
+	#endif
+
+	while (1)
+	{
+		ssize_t nwritten;
+
+	#if defined(HAVE_SENDMSG)
+		msg.msg_iov = (struct iovec*)&iov[index];
+		msg.msg_iovlen = count - index;
+		nwritten = ::sendmsg(this->handle, &msg, 0);
+	#else
+		nwritten = ::writev(this->handle, (const struct iovec*)&iov[index], count - index);
+	#endif
+		if (nwritten <= -1)
+		{
+			this->setErrorCode (syserr_to_errnum(errno));
+			if (backup_index >= 0) iov[backup_index] = backup;
+			if (total_sent) *total_sent = total; 
+			return -1;
+		}
+
+		total += nwritten;
+
+		while (index < count && (qse_size_t)nwritten >= iov[index].len)
+			nwritten -= iov[index++].len;
+
+		if (index == count) break;
+
+		if (backup_index != index)
+		{
+			if (backup_index >= 0) iov[backup_index] = backup;
+			backup = iov[index];
+			backup_index = index;
+		}
+
+		iov[index].ptr = (void*)((qse_uint8_t*)iov[index].ptr + nwritten);
+		iov[index].len -= nwritten;
+	}
+
+	if (backup_index >= 0) iov[backup_index] = backup;
+	if (total_sent) *total_sent = total; 
+	return 0;
+
+#else
+	qse_ioptl_t* v, * ve;
+	qse_size_t total = 0, pos, rem;
+	ssize_t nwritten;
+
+	v = iov;
+	ve = v + count;
+
+	while (v < ve)
+	{
+		if (v->len <= 0) 
+		{
+			v++;
+			continue;
+		}
+
+		pos = 0;
+		rem = v->len;
+	write_again:
+		nwritten = ::send(this->handle, (qse_uint8_t*)v->ptr + pos, rem, 0);
+		if (nwritten <= -1) 
+		{
+			this->setErrorCode (syserr_to_errnum(errno));
+			if (total_sent) *total_sent = total; 
+			return -1;
+		}
+
+		total += nwritten;
+		if ((qse_size_t)nwritten < rem)
+		{
+			pos += nwritten;
+			rem -= nwritten;
+			goto write_again;
+		}
+
+		v++;
+	}
+
+	if (total_sent) *total_sent = total; 
+	return 0;
+#endif
 }
 
 qse_ssize_t Socket::receive (void* buf, qse_size_t len) QSE_CPP_NOEXCEPT

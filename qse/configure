@@ -19404,12 +19404,13 @@ _ACEOF
 fi
 done
 
-for ac_func in accept4
+for ac_func in accept4 sendmsg recvmsg writev readv
 do :
-  ac_fn_c_check_func "$LINENO" "accept4" "ac_cv_func_accept4"
-if test "x$ac_cv_func_accept4" = xyes; then :
+  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
+ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
+if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
   cat >>confdefs.h <<_ACEOF
-#define HAVE_ACCEPT4 1
+#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
 _ACEOF
 
 fi
@@ -22004,6 +22005,211 @@ _ACEOF
 
 
 
+
+
+
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: checking numeric value of SOCK_STREAM" >&5
+$as_echo_n "checking numeric value of SOCK_STREAM... " >&6; }
+if ${ax_cv_numvalof_SOCK_STREAM+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if ac_fn_c_compute_int "$LINENO" "(SOCK_STREAM)" "ax_cv_numvalof_SOCK_STREAM"        "#include <sys/types.h>
+                                        #include <sys/socket.h>
+                                        #include <netinet/in.h>
+"; then :
+
+else
+  ax_cv_numvalof_SOCK_STREAM=-1
+fi
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_numvalof_SOCK_STREAM" >&5
+$as_echo "$ax_cv_numvalof_SOCK_STREAM" >&6; }
+
+
+
+cat >>confdefs.h <<_ACEOF
+#define NUMVALOF_SOCK_STREAM $ax_cv_numvalof_SOCK_STREAM
+_ACEOF
+
+
+
+
+
+
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: checking numeric value of SOCK_DGRAM" >&5
+$as_echo_n "checking numeric value of SOCK_DGRAM... " >&6; }
+if ${ax_cv_numvalof_SOCK_DGRAM+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if ac_fn_c_compute_int "$LINENO" "(SOCK_DGRAM)" "ax_cv_numvalof_SOCK_DGRAM"        "#include <sys/types.h>
+                                        #include <sys/socket.h>
+                                        #include <netinet/in.h>
+"; then :
+
+else
+  ax_cv_numvalof_SOCK_DGRAM=-1
+fi
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_numvalof_SOCK_DGRAM" >&5
+$as_echo "$ax_cv_numvalof_SOCK_DGRAM" >&6; }
+
+
+
+cat >>confdefs.h <<_ACEOF
+#define NUMVALOF_SOCK_DGRAM $ax_cv_numvalof_SOCK_DGRAM
+_ACEOF
+
+
+
+
+
+
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: checking numeric value of SOCK_RAW" >&5
+$as_echo_n "checking numeric value of SOCK_RAW... " >&6; }
+if ${ax_cv_numvalof_SOCK_RAW+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if ac_fn_c_compute_int "$LINENO" "(SOCK_RAW)" "ax_cv_numvalof_SOCK_RAW"        "#include <sys/types.h>
+                                        #include <sys/socket.h>
+                                        #include <netinet/in.h>
+"; then :
+
+else
+  ax_cv_numvalof_SOCK_RAW=-1
+fi
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_numvalof_SOCK_RAW" >&5
+$as_echo "$ax_cv_numvalof_SOCK_RAW" >&6; }
+
+
+
+cat >>confdefs.h <<_ACEOF
+#define NUMVALOF_SOCK_RAW $ax_cv_numvalof_SOCK_RAW
+_ACEOF
+
+
+
+
+
+
+
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: checking numeric value of AF_INET" >&5
+$as_echo_n "checking numeric value of AF_INET... " >&6; }
+if ${ax_cv_numvalof_AF_INET+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if ac_fn_c_compute_int "$LINENO" "(AF_INET)" "ax_cv_numvalof_AF_INET"        "#include <sys/types.h>
+                                        #include <sys/socket.h>
+                                        #include <netinet/in.h>
+"; then :
+
+else
+  ax_cv_numvalof_AF_INET=-1
+fi
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_numvalof_AF_INET" >&5
+$as_echo "$ax_cv_numvalof_AF_INET" >&6; }
+
+
+
+cat >>confdefs.h <<_ACEOF
+#define NUMVALOF_AF_INET $ax_cv_numvalof_AF_INET
+_ACEOF
+
+
+
+
+
+
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: checking numeric value of AF_INET6" >&5
+$as_echo_n "checking numeric value of AF_INET6... " >&6; }
+if ${ax_cv_numvalof_AF_INET6+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if ac_fn_c_compute_int "$LINENO" "(AF_INET6)" "ax_cv_numvalof_AF_INET6"        "#include <sys/types.h>
+                                        #include <sys/socket.h>
+                                        #include <netinet/in.h>
+"; then :
+
+else
+  ax_cv_numvalof_AF_INET6=-1
+fi
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_numvalof_AF_INET6" >&5
+$as_echo "$ax_cv_numvalof_AF_INET6" >&6; }
+
+
+
+cat >>confdefs.h <<_ACEOF
+#define NUMVALOF_AF_INET6 $ax_cv_numvalof_AF_INET6
+_ACEOF
+
+
+
+
+
+
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: checking numeric value of AF_PACKET" >&5
+$as_echo_n "checking numeric value of AF_PACKET... " >&6; }
+if ${ax_cv_numvalof_AF_PACKET+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if ac_fn_c_compute_int "$LINENO" "(AF_PACKET)" "ax_cv_numvalof_AF_PACKET"        "#include <sys/types.h>
+                                        #include <sys/socket.h>
+                                        #include <netinet/in.h>
+"; then :
+
+else
+  ax_cv_numvalof_AF_PACKET=-1
+fi
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_numvalof_AF_PACKET" >&5
+$as_echo "$ax_cv_numvalof_AF_PACKET" >&6; }
+
+
+
+cat >>confdefs.h <<_ACEOF
+#define NUMVALOF_AF_PACKET $ax_cv_numvalof_AF_PACKET
+_ACEOF
+
+
+
+
+
+
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: checking numeric value of AF_UNIX" >&5
+$as_echo_n "checking numeric value of AF_UNIX... " >&6; }
+if ${ax_cv_numvalof_AF_UNIX+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if ac_fn_c_compute_int "$LINENO" "(AF_UNIX)" "ax_cv_numvalof_AF_UNIX"        "#include <sys/types.h>
+                                        #include <sys/socket.h>
+                                        #include <sys/un.h>
+"; then :
+
+else
+  ax_cv_numvalof_AF_UNIX=-1
+fi
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_numvalof_AF_UNIX" >&5
+$as_echo "$ax_cv_numvalof_AF_UNIX" >&6; }
+
+
+
+cat >>confdefs.h <<_ACEOF
+#define NUMVALOF_AF_UNIX $ax_cv_numvalof_AF_UNIX
+_ACEOF
+
+
+
+
 if test "x${platform_win32}" = "xyes"
 then
 	# The cast to long int works around a bug in the HP C Compiler
@@ -22728,6 +22934,76 @@ _ACEOF
 
 fi
 
+# The cast to long int works around a bug in the HP C Compiler
+# version HP92453-01 B.11.11.23709.GP, which incorrectly rejects
+# declarations like `int a3[[(sizeof (unsigned char)) >= 0]];'.
+# This bug is HP SR number 8606223364.
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking size of struct iovec" >&5
+$as_echo_n "checking size of struct iovec... " >&6; }
+if ${ac_cv_sizeof_struct_iovec+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if ac_fn_c_compute_int "$LINENO" "(long int) (sizeof (struct iovec))" "ac_cv_sizeof_struct_iovec"        "#include <sys/uio.h>
+"; then :
+
+else
+  if test "$ac_cv_type_struct_iovec" = yes; then
+     { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error 77 "cannot compute sizeof (struct iovec)
+See \`config.log' for more details" "$LINENO" 5; }
+   else
+     ac_cv_sizeof_struct_iovec=0
+   fi
+fi
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_sizeof_struct_iovec" >&5
+$as_echo "$ac_cv_sizeof_struct_iovec" >&6; }
+
+
+
+cat >>confdefs.h <<_ACEOF
+#define SIZEOF_STRUCT_IOVEC $ac_cv_sizeof_struct_iovec
+_ACEOF
+
+
+if test ${ac_cv_sizeof_struct_iovec} -gt 0
+then
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking offset of iov_base in struct iovec" >&5
+$as_echo_n "checking offset of iov_base in struct iovec... " >&6; }
+	if ac_fn_c_compute_int "$LINENO" "offsetof(struct iovec, iov_base)" "ac_cv_offsetof_iov_base"        "#include <stddef.h>
+		 #include <sys/uio.h>"; then :
+
+else
+  ac_cv_offsteof_iov_base=0
+fi
+
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_offsetof_iov_base" >&5
+$as_echo "$ac_cv_offsetof_iov_base" >&6; }
+
+cat >>confdefs.h <<_ACEOF
+#define QSE_OFFSETOF_IOV_BASE ${ac_cv_offsetof_iov_base}
+_ACEOF
+
+
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking offset of iov_len in struct iovec" >&5
+$as_echo_n "checking offset of iov_len in struct iovec... " >&6; }
+	if ac_fn_c_compute_int "$LINENO" "offsetof(struct iovec, iov_len)" "ac_cv_offsetof_iov_len"        "#include <stddef.h>
+		 #include <sys/uio.h>"; then :
+
+else
+  ac_cv_offsteof_iov_len=0
+fi
+
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_offsetof_iov_len" >&5
+$as_echo "$ac_cv_offsetof_iov_len" >&6; }
+
+cat >>confdefs.h <<_ACEOF
+#define QSE_OFFSETOF_IOV_LEN ${ac_cv_offsetof_iov_len}
+_ACEOF
+
+fi
 
 # The cast to long int works around a bug in the HP C Compiler
 # version HP92453-01 B.11.11.23709.GP, which incorrectly rejects
@@ -22800,7 +23076,7 @@ $as_echo "$ac_res" >&6; }
 $as_echo "#define QSE_PTHREAD_T_IS_SIGNED 1" >>confdefs.h
 
  elif eval "test \"\${ax_cv_decl_${typename}_signed}\" = \"no\""; then
-    $as_echo_n ""
+   $as_echo_n ""
  fi
 
 fi
@@ -23272,6 +23548,63 @@ _ACEOF
 
 fi
 
+if test ${ax_cv_numvalof_SOCK_STREAM} -ge 0
+then
+
+cat >>confdefs.h <<_ACEOF
+#define QSE_SOCK_STREAM ${ax_cv_numvalof_SOCK_STREAM}
+_ACEOF
+
+fi
+if test ${ax_cv_numvalof_SOCK_DGRAM} -ge 0
+then
+
+cat >>confdefs.h <<_ACEOF
+#define QSE_SOCK_DGRAM ${ax_cv_numvalof_SOCK_DGRAM}
+_ACEOF
+
+fi
+if test ${ax_cv_numvalof_SOCK_RAW} -ge 0
+then
+
+cat >>confdefs.h <<_ACEOF
+#define QSE_SOCK_RAW ${ax_cv_numvalof_SOCK_RAW}
+_ACEOF
+
+fi
+if test ${ax_cv_numvalof_AF_INET} -ge 0
+then
+
+cat >>confdefs.h <<_ACEOF
+#define QSE_AF_INET ${ax_cv_numvalof_AF_INET}
+_ACEOF
+
+fi
+if test ${ax_cv_numvalof_AF_INET6} -ge 0
+then
+
+cat >>confdefs.h <<_ACEOF
+#define QSE_AF_INET6 ${ax_cv_numvalof_AF_INET6}
+_ACEOF
+
+fi
+if test ${ax_cv_numvalof_AF_PACKET} -ge 0
+then
+
+cat >>confdefs.h <<_ACEOF
+#define QSE_AF_PACKET ${ax_cv_numvalof_AF_PACKET}
+_ACEOF
+
+fi
+if test ${ax_cv_numvalof_AF_UNIX} -ge 0
+then
+
+cat >>confdefs.h <<_ACEOF
+#define QSE_AF_UNIX ${ax_cv_numvalof_AF_UNIX}
+_ACEOF
+
+fi
+
 
 cat >>confdefs.h <<_ACEOF
 #define QSE_SIZEOF_STRUCT_SOCKADDR_IN ${ac_cv_sizeof_struct_sockaddr_in}
@@ -23313,6 +23646,11 @@ _ACEOF
 
 cat >>confdefs.h <<_ACEOF
 #define QSE_SIZEOF_SOCKLEN_T ${ac_cv_sizeof_socklen_t}
+_ACEOF
+
+
+cat >>confdefs.h <<_ACEOF
+#define QSE_SIZEOF_STRUCT_IOVEC ${ac_cv_sizeof_struct_iovec}
 _ACEOF
 
 
