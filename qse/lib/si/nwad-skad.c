@@ -83,36 +83,24 @@
 
 union sockaddr_t
 {
-#if defined(AF_INET) || defined(AF_INET6) || defined(AF_UNIX)
-	#if defined(AF_INET)
+	struct sockaddr sa;
+#if (QSE_SIZEOF_STRUCT_SOCKADDR_IN > 0)
 	struct sockaddr_in in4;
-	#endif
-	#if defined(AF_INET6)
+#endif
+#if (QSE_SIZEOF_STRUCT_SOCKADDR_IN6 > 0)
 	struct sockaddr_in6 in6;
-	#endif
-	#if defined(AF_UNIX)
+#endif
+#if (QSE_SIZEOF_STRUCT_SOCKADDR_UN > 0)
 	struct sockaddr_un un;
-	#endif
-#else
-	int dummy;
+#endif
+#if (QSE_SIZEOF_STRUCT_SOCKADDR_LL > 0)
+	struct sockaddr_ll ll;
 #endif
 };
 
 typedef union sockaddr_t sockaddr_t;
 
-/*
-#if defined(AF_INET)
-#	define FAMILY(x) (((struct sockaddr_in*)(x))->sin_family)
-#elif defined(AF_INET6)
-#	define FAMILY(x) (((struct sockaddr_in6*)(x))->sin6_family)
-#elif defined(AF_UNIX)
-#	define FAMILY(x) (((struct sockaddr_un*)(x))->sun_family)
-#else
-#	define FAMILY(x) (-1)
-#endif
-*/
-
-#define FAMILY(x) (((qse_skad_t*)x)->u.sa.family)
+#define FAMILY(x) (((struct sockaddr*)(x))->sa_family)
 
 static QSE_INLINE int skad_to_nwad (const sockaddr_t* skad, qse_nwad_t* nwad)
 {
@@ -120,7 +108,7 @@ static QSE_INLINE int skad_to_nwad (const sockaddr_t* skad, qse_nwad_t* nwad)
 
 	switch (FAMILY(skad))
 	{
-#if defined(AF_INET)
+	#if defined(AF_INET)
 		case AF_INET:
 		{
 			struct sockaddr_in* in;
@@ -133,9 +121,9 @@ static QSE_INLINE int skad_to_nwad (const sockaddr_t* skad, qse_nwad_t* nwad)
 			nwad->u.in4.port = in->sin_port;
 			break;
 		}
-#endif
+	#endif
 
-#if defined(AF_INET6)
+	#if defined(AF_INET6)
 		case AF_INET6:
 		{
 			struct sockaddr_in6* in;
@@ -151,9 +139,9 @@ static QSE_INLINE int skad_to_nwad (const sockaddr_t* skad, qse_nwad_t* nwad)
 			nwad->u.in6.port = in->sin6_port;
 			break;
 		}
-#endif
+	#endif
 
-#if defined(AF_UNIX)
+	#if defined(AF_UNIX)
 		case AF_UNIX:
 		{
 			struct sockaddr_un* un;
@@ -167,14 +155,14 @@ static QSE_INLINE int skad_to_nwad (const sockaddr_t* skad, qse_nwad_t* nwad)
 		#else
 			{
 				qse_size_t wcslen, mbslen;
-				mbslen = QSE_COUNTOF(nwad->u.local.path);
-				qse_wcstombs (un->sun_path, &wcslen, nwad->u.local.path, &mbslen);
+				wcslen = QSE_COUNTOF(nwad->u.local.path);
+				qse_mbstowcs (un->sun_path, &mbslen, nwad->u.local.path, &wcslen);
 				/* don't care about conversion errors */
 			}
 		#endif
 			break;
 		}
-#endif
+	#endif
 		default:
 			break;
 	}
@@ -190,7 +178,7 @@ static QSE_INLINE int nwad_to_skad (const qse_nwad_t* nwad, sockaddr_t* skad)
 	{
 		case QSE_NWAD_IN4:
 		{
-#if defined(AF_INET)
+		#if defined(AF_INET)
 			struct sockaddr_in* in;
 
 			in = (struct sockaddr_in*)skad;
@@ -200,13 +188,13 @@ static QSE_INLINE int nwad_to_skad (const qse_nwad_t* nwad, sockaddr_t* skad)
 			in->sin_family = AF_INET;
 			in->sin_addr.s_addr = nwad->u.in4.addr.value;
 			in->sin_port = nwad->u.in4.port;
-#endif
+		#endif
 			break;
 		}
 
 		case QSE_NWAD_IN6:
 		{
-#if defined(AF_INET6)
+		#if defined(AF_INET6)
 			struct sockaddr_in6* in;
 
 			in = (struct sockaddr_in6*)skad;
@@ -219,14 +207,14 @@ static QSE_INLINE int nwad_to_skad (const qse_nwad_t* nwad, sockaddr_t* skad)
 			in->sin6_scope_id = nwad->u.in6.scope;
 		#endif
 			in->sin6_port = nwad->u.in6.port;
-#endif
+		#endif
 			break;
 		}
 
 
 		case QSE_NWAD_LOCAL:
 		{
-#if defined(AF_UNIX)
+		#if defined(AF_UNIX)
 			struct sockaddr_un* un;
 
 			un = (struct sockaddr_un*)skad;
@@ -245,7 +233,7 @@ static QSE_INLINE int nwad_to_skad (const qse_nwad_t* nwad, sockaddr_t* skad)
 			}
 
 		#endif
-#endif
+		#endif
 			break;
 		}
 
@@ -274,39 +262,27 @@ int qse_skadfamily (const qse_skad_t* skad)
 
 int qse_skadsize (const qse_skad_t* skad)
 {
+	sockaddr_t* sa = (sockaddr_t*)skad;
+	QSE_ASSERT (QSE_SIZEOF(*skad) >= QSE_SIZEOF(*sa));
+
 	switch (FAMILY(skad))
 	{
 	#if defined(AF_INET)
-		case AF_INET:
-		{
-			struct sockaddr_in in;
-			return QSE_SIZEOF(in);
-		}
+		case AF_INET: return QSE_SIZEOF(sa->in4);
 	#endif
 
 	#if defined(AF_INET6)
-		case AF_INET6:
-		{
-			struct sockaddr_in6 in6;
-			return QSE_SIZEOF(in6);
-		}
-	#endif
-
-	#if defined(AF_PACKET)
-		case AF_PACKET:
-		{
-			struct sockaddr_ll ll;
-			return QSE_SIZEOF(ll);
-		}
+		case AF_INET6: return QSE_SIZEOF(sa->in6);
 	#endif
 
 	#if defined(AF_UNIX)
-		case AF_UNIX:
-		{
-			struct sockaddr_un un;
-			return QSE_SIZEOF(un);
-		}
+		case AF_UNIX: return QSE_SIZEOF(sa->un);
 	#endif
+
+	#if defined(AF_PACKET)
+		case AF_PACKET: return QSE_SIZEOF(sa->ll);
+	#endif
+
 	}
 
 	return 0;

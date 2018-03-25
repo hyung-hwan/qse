@@ -987,9 +987,6 @@
 /* offsetof(struct iovec, iov_len) */
 #undef QSE_OFFSETOF_IOV_LEN
 
-/* offsetof(struct sockaddr, sa_family) */
-#undef QSE_OFFSETOF_SA_FAMILY
-
 /* Author */
 #undef QSE_PACKAGE_AUTHOR
 
