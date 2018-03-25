@@ -821,6 +821,7 @@ infodir
 docdir
 oldincludedir
 includedir
+runstatedir
 localstatedir
 sharedstatedir
 sysconfdir
@@ -924,6 +925,7 @@ datadir='${datarootdir}'
 sysconfdir='${prefix}/etc'
 sharedstatedir='${prefix}/com'
 localstatedir='${prefix}/var'
+runstatedir='${localstatedir}/run'
 includedir='${prefix}/include'
 oldincludedir='/usr/include'
 docdir='${datarootdir}/doc/${PACKAGE_TARNAME}'
@@ -1176,6 +1178,15 @@ do
   | -silent | --silent | --silen | --sile | --sil)
     silent=yes ;;
 
+  -runstatedir | --runstatedir | --runstatedi | --runstated \
+  | --runstate | --runstat | --runsta | --runst | --runs \
+  | --run | --ru | --r)
+    ac_prev=runstatedir ;;
+  -runstatedir=* | --runstatedir=* | --runstatedi=* | --runstated=* \
+  | --runstate=* | --runstat=* | --runsta=* | --runst=* | --runs=* \
+  | --run=* | --ru=* | --r=*)
+    runstatedir=$ac_optarg ;;
+
   -sbindir | --sbindir | --sbindi | --sbind | --sbin | --sbi | --sb)
     ac_prev=sbindir ;;
   -sbindir=* | --sbindir=* | --sbindi=* | --sbind=* | --sbin=* \
@@ -1313,7 +1324,7 @@ fi
 for ac_var in	exec_prefix prefix bindir sbindir libexecdir datarootdir \
 		datadir sysconfdir sharedstatedir localstatedir includedir \
 		oldincludedir docdir infodir htmldir dvidir pdfdir psdir \
-		libdir localedir mandir
+		libdir localedir mandir runstatedir
 do
   eval ac_val=\$$ac_var
   # Remove trailing slashes.
@@ -1466,6 +1477,7 @@ Fine tuning of the installation directories:
   --sysconfdir=DIR        read-only single-machine data [PREFIX/etc]
   --sharedstatedir=DIR    modifiable architecture-independent data [PREFIX/com]
   --localstatedir=DIR     modifiable single-machine data [PREFIX/var]
+  --runstatedir=DIR       modifiable per-process data [LOCALSTATEDIR/run]
   --libdir=DIR            object code libraries [EPREFIX/lib]
   --includedir=DIR        C header files [PREFIX/include]
   --oldincludedir=DIR     C header files for non-gcc [/usr/include]
@@ -22551,24 +22563,6 @@ $as_echo "#define QSE_SA_FAMILY_T_IS_SIGNED 1" >>confdefs.h
 
 	fi
 
-	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking offset of sa_family in struct sockaddr" >&5
-$as_echo_n "checking offset of sa_family in struct sockaddr... " >&6; }
-	if ac_fn_c_compute_int "$LINENO" "offsetof(struct sockaddr, sa_family)" "ac_cv_offsetof_sa_family"        "#include <stddef.h>
-		 #include <winsock2.h>
-		 #include <ws2tcpip.h>"; then :
-
-else
-  ac_cv_offsteof_sa_family=0
-fi
-
-	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_offsetof_sa_family" >&5
-$as_echo "$ac_cv_offsetof_sa_family" >&6; }
-
-cat >>confdefs.h <<_ACEOF
-#define QSE_OFFSETOF_SA_FAMILY ${ac_cv_offsetof_sa_family}
-_ACEOF
-
-
 else
 	# The cast to long int works around a bug in the HP C Compiler
 # version HP92453-01 B.11.11.23709.GP, which incorrectly rejects
@@ -22914,24 +22908,6 @@ $as_echo "#define QSE_SA_FAMILY_T_IS_SIGNED 1" >>confdefs.h
  fi
 
 	fi
-
-	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking offset of sa_family in struct sockaddr" >&5
-$as_echo_n "checking offset of sa_family in struct sockaddr... " >&6; }
-	if ac_fn_c_compute_int "$LINENO" "offsetof(struct sockaddr, sa_family)" "ac_cv_offsetof_sa_family"        "#include <stddef.h>
-		 #include <sys/types.h>
-		 #include <sys/socket.h>"; then :
-
-else
-  ac_cv_offsteof_sa_family=0
-fi
-
-	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_offsetof_sa_family" >&5
-$as_echo "$ac_cv_offsetof_sa_family" >&6; }
-
-cat >>confdefs.h <<_ACEOF
-#define QSE_OFFSETOF_SA_FAMILY ${ac_cv_offsetof_sa_family}
-_ACEOF
-
 fi
 
 # The cast to long int works around a bug in the HP C Compiler
