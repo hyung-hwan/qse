@@ -76,7 +76,7 @@ static const char_t* scan_dollar (
 				if (dfl) dfl->len = f - dfl->ptr;
 				return f + 1;
 			}
-			else	f++;
+			else f++;
 		}
 	}
 	else if (*f == T('}')) 
@@ -132,14 +132,7 @@ qse_size_t strxnsubst (
 
 	while (f < fend)
 	{
-		if (*f == T('\\'))
-		{
-			/* get the escaped character and treat it normally.
-			 * if the escaper is the last character, treat it 
-			 * normally also. */
-			if (f < fend - 1) f++;
-		}
-		else if (*f == T('$') && f < fend - 1)
+		if (*f == T('$') && f < fend - 1)
 		{
 			if (*(f + 1) == T('{'))
 			{
@@ -167,7 +160,7 @@ qse_size_t strxnsubst (
 			}
 			else if (*(f + 1) == T('$')) 
 			{
-				/* $$ -> $. \$ is also $. */
+				/* $$ -> $. */
 				f++;
 			}
 		}
