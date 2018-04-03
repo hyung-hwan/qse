@@ -950,6 +950,8 @@ QSE_EXPORT qse_size_t qse_wcsxvfmts (
  *   return buf; 
  * }
  * \endcode
+ *
+ * Double dollars($$) translates a single literal dollar sign. 
  */
 QSE_EXPORT qse_size_t qse_mbsxsubst (
 	qse_mchar_t*           buf,
@@ -1023,6 +1025,8 @@ QSE_EXPORT qse_size_t qse_mbsxnsubst (
  *   return buf; 
  * }
  * \endcode
+ *
+ * Double dollars($$) translates a single literal dollar sign. 
  */
 QSE_EXPORT qse_size_t qse_wcsxsubst (
 	qse_wchar_t*           buf,

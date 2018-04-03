@@ -246,8 +246,8 @@ qse_char_t* subst (qse_char_t* buf, qse_size_t bsz, const qse_cstr_t* ident, voi
 		return buf + qse_strxput (buf, bsz, QSE_T("coders"));	
 	}
 
-	/* don't do anything */
-	return buf;
+	/*return buf; returning the buffer pointer will result in empty substitution and the default value won't be used */
+	return QSE_NULL; /* return NULL to take the default value if specified */
 }
 
 static int test13 (void)
@@ -269,6 +269,39 @@ static int test13 (void)
 		}
 		qse_printf (QSE_T("]\n"));
 	}
+
+	qse_char_t buf2[48];
+
+	for (i = 0; i <= QSE_COUNTOF(buf2); i++)
+	{
+		qse_strcpy (buf2, QSE_T("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"));
+		qse_strxsubst (buf2, i, QSE_T("user=${USER},group=${GROUP},xxx=${USERX:=${GROUP:=default value}}"), subst, QSE_NULL);
+		qse_printf (QSE_T("bufsize=%02d, buf2=[%-49s] "), i, buf2);
+
+		qse_printf (QSE_T("["));
+		for (j = 0; j < QSE_COUNTOF(buf2); j++)
+		{
+			if (buf2[j] == QSE_T('\0')) qse_printf (QSE_T("*"));
+			else qse_printf (QSE_T("%c"), buf2[j]);
+		}
+		qse_printf (QSE_T("]\n"));
+	}
+
+	for (i = 0; i <= QSE_COUNTOF(buf2); i++)
+	{
+		qse_strcpy (buf2, QSE_T("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"));
+		qse_strxsubst (buf2, i, QSE_T("user=${USER},group=${GROUP},xxx=${USERX:=${GROUPX:=default value}}"), subst, QSE_NULL);
+		qse_printf (QSE_T("bufsize=%02d, buf2=[%-49s] "), i, buf2);
+
+		qse_printf (QSE_T("["));
+		for (j = 0; j < QSE_COUNTOF(buf2); j++)
+		{
+			if (buf2[j] == QSE_T('\0')) qse_printf (QSE_T("*"));
+			else qse_printf (QSE_T("%c"), buf2[j]);
+		}
+		qse_printf (QSE_T("]\n"));
+	}
+
 	return 0;
 }
 
