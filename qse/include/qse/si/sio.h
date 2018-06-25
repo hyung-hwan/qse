@@ -229,7 +229,7 @@ QSE_EXPORT void qse_sio_drain (
 	qse_sio_t* sio
 );
 
-QSE_EXPORT qse_ssize_t qse_sio_getmc (
+QSE_EXPORT qse_ssize_t qse_sio_getmb (
 	qse_sio_t*   sio,
 	qse_mchar_t* c
 );
