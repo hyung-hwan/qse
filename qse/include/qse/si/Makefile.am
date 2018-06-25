@@ -16,6 +16,7 @@ pkginclude_HEADERS = \
 	nwad.h \
 	nwif.h \
 	nwio.h  \
+	os.h \
 	pio.h  \
 	rwl.h \
 	sck.h \

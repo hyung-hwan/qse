@@ -12,15 +12,51 @@
 #include <signal.h>
 #include <string.h>
 
+static int g_stopreq = 0;
+
+
+class ClientHandler
+{
+public:
+	int operator() (QSE::Socket* sck, QSE::SocketAddress* addr)
+	{
+		return 0;
+	}
+};
 
 static int test1 (void)
 {
-	QSE::TcpServer server;
+	QSE::TcpServerF<ClientHandler> server;
 
-	server.setClientThreadStackSize (256000);
+	QSE::SocketAddress addr;
+	addr.set ("0.0.0.0:9998");
+
+	server.setThreadStackSize (256000);
+	server.setBindingAddress (addr);
+	server.start ();
 	return 0;
 }
 
+static int test2 (void)
+{
+#if defined(QSE_LANG_CPP11)
+
+	QSE::TcpServerL<int(QSE::Thread*)> server;
+	thr5.setStackSize (64000);
+
+	if (server.start(
+		([](QSE::Socket* clisock, QSE::SocketAddress* cliaddr) { 
+			return 0;
+		})
+	) <= -1)
+	{
+		qse_printf (QSE_T("cannot start server\n"));
+		return -1;
+	}
+#endif
+
+	return 0;
+}
 
 static void handle_sigint (int sig, siginfo_t* siginfo, void* ctx)
 {
