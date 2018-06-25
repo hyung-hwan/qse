@@ -341,16 +341,16 @@
 #else
 
 #	define QSE_ASSERT(expr) (void)((expr) || \
-		(QSE_ASSERT_failed (QSE_T(#expr), QSE_NULL, QSE_T(__FILE__), __LINE__), 0))
+		(qse_assert_failed (QSE_T(#expr), QSE_NULL, QSE_T(__FILE__), __LINE__), 0))
 #	define QSE_ASSERTX(expr,desc) (void)((expr) || \
-		(QSE_ASSERT_failed (QSE_T(#expr), QSE_T(desc), QSE_T(__FILE__), __LINE__), 0))
+		(qse_assert_failed (QSE_T(#expr), QSE_T(desc), QSE_T(__FILE__), __LINE__), 0))
 #endif
 
 
 #if defined(__cplusplus)
 extern "C" {
 #endif
-QSE_EXPORT void QSE_ASSERT_failed (
+QSE_EXPORT void qse_assert_failed (
 	const qse_char_t* expr, const qse_char_t* desc,
 	const qse_char_t* file, qse_size_t line);
 #if defined(__cplusplus)

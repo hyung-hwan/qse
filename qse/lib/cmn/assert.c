@@ -55,7 +55,7 @@
 #	include "syscall.h"
 #endif
 
-void QSE_ASSERT_failed (
+void qse_assert_failed (
 	const qse_char_t* expr, const qse_char_t* desc, 
 	const qse_char_t* file, qse_size_t line)
 {
