@@ -55,6 +55,7 @@ libqsesixx_la_SOURCES = \
 	AppRoot.cpp \
 	SocketAddress.cpp \
 	Socket.cpp \
+	TcpServer.cpp \
 	Thread.cpp
 libqsesixx_la_LDFLAGS = -L. -L../cmn -version-info 1:0:0 -no-undefined
 libqsesixx_la_LIBADD = -lqsecmnxx -lqsecmn 

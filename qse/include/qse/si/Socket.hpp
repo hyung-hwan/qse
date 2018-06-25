@@ -76,9 +76,15 @@ public:
 	int open (int domain, int type, int protocol, int traits = 0) QSE_CPP_NOEXCEPT;
 	void close () QSE_CPP_NOEXCEPT;
 
+
+	int shutdown (int how = 2) QSE_CPP_NOEXCEPT;
+
+	int getOption (int level, int optname, void* optval, qse_sck_len_t* optlen) QSE_CPP_NOEXCEPT;
+	int setOption (int level, int optname, const void* optval, qse_sck_len_t optlen) QSE_CPP_NOEXCEPT;
+
 	int connect (const SocketAddress& target) QSE_CPP_NOEXCEPT;
 	int bind (const SocketAddress& target) QSE_CPP_NOEXCEPT;
-	int listen (int backlog) QSE_CPP_NOEXCEPT;
+	int listen (int backlog = 128) QSE_CPP_NOEXCEPT;
 	int accept (Socket* newsck, SocketAddress* newaddr, int traits = 0) QSE_CPP_NOEXCEPT;
 
 	// The send() functions sends data by attemping a single call to the 
@@ -96,6 +102,7 @@ public:
 	qse_ssize_t receive (void* buf, qse_size_t len, SocketAddress& srcaddr) QSE_CPP_NOEXCEPT;
 
 /* TODO: sendmsg, recvmsg */
+
 protected:
 	qse_sck_hnd_t handle;
 	ErrorCode errcode;

@@ -65,14 +65,16 @@ if ENABLE_CXX
 
 CXXLIB = -lqsesixx -lqsecmnxx
 
-bin_PROGRAMS += sck01 spl02 thr02
+bin_PROGRAMS += sck01 spl02 tcpsvr01 thr02
 
 sck01_SOURCES = sck01.cpp
 spl02_SOURCES = spl02.cpp
+tcpsvr01_SOURCES = tcpsvr01.cpp
 thr02_SOURCES = thr02.cpp
 
 sck01_LDADD = $(CXXLIB) $(LDADD)
 spl02_LDADD = $(CXXLIB) $(LDADD)
+tcpsvr01_LDADD = $(CXXLIB) $(LDADD)
 thr02_LDADD = $(CXXLIB) $(LDADD)
 
 endif
