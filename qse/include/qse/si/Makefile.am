@@ -32,6 +32,7 @@ pkginclude_HEADERS += \
 	SocketAddress.hpp \
 	Socket.hpp \
 	SpinLock.hpp \
+	TcpServer.hpp \
 	Thread.hpp
 endif
 

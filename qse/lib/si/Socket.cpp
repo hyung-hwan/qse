@@ -126,6 +126,36 @@ void Socket::close () QSE_CPP_NOEXCEPT
 	}
 }
 
+int Socket::shutdown (int how) QSE_CPP_NOEXCEPT
+{
+	QSE_ASSERT (this->handle != QSE_INVALID_SCKHND);
+
+	if (::shutdown(this->handle, how) == -1)
+	{
+		this->setErrorCode (syserr_to_errnum(errno));
+		return -1;
+	}
+
+	return 0;
+}
+
+
+int Socket::getOption (int level, int optname, void* optval, qse_sck_len_t* optlen) QSE_CPP_NOEXCEPT
+{
+	QSE_ASSERT (this->handle != QSE_INVALID_SCKHND);
+	int n = ::getsockopt (this->handle, level, optname, (char*)optval, optlen);
+	if (n == -1) this->setErrorCode (syserr_to_errnum(errno));
+	return n;
+}
+
+int Socket::setOption (int level, int optname, const void* optval, qse_sck_len_t optlen) QSE_CPP_NOEXCEPT
+{
+	QSE_ASSERT (this->handle != QSE_INVALID_SCKHND);
+	int n = ::setsockopt (this->handle, level, optname, (const char*)optval, optlen);
+	if (n == -1) this->setErrorCode (syserr_to_errnum(errno));
+	return n;
+}
+
 int Socket::connect (const SocketAddress& target) QSE_CPP_NOEXCEPT
 {
 	QSE_ASSERT (this->handle != QSE_INVALID_SCKHND);
