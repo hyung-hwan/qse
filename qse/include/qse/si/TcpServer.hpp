@@ -36,12 +36,15 @@
 
 QSE_BEGIN_NAMESPACE(QSE)
 
+// The TcpServer class implements a simple block TCP server that start a thread
+// for each connection accepted.
+
 class TcpServer: public QSE::Uncopyable 
 {
 public:
 	TcpServer ();
 	TcpServer (const SocketAddress& address);
-	virtual ~TcpServer ();
+	virtual ~TcpServer () QSE_CPP_NOEXCEPT;
 
 	enum 
 	{
@@ -52,39 +55,39 @@ public:
 		ERR_EXCEPTION = 4
 	};
 
-	virtual int start (int* err_code = QSE_NULL);
-	virtual int start (bool winsock_inheritable, int* err_code = QSE_NULL);
-	virtual int stop ();
+	virtual int start (int* err_code = QSE_NULL) QSE_CPP_NOEXCEPT;
+	virtual int start (bool winsock_inheritable, int* err_code = QSE_NULL) QSE_CPP_NOEXCEPT;
+	virtual int stop () QSE_CPP_NOEXCEPT;
 
-	bool isServing () const 
+	bool isServing () const QSE_CPP_NOEXCEPT
 	{ 
 		return this->server_serving; 
 	}
 
-	bool isStopRequested () const 
+	bool isStopRequested () const QSE_CPP_NOEXCEPT
 	{
 		return this->stop_requested;
 	}
-	void setStopRequested (bool req)
+	void setStopRequested (bool req) QSE_CPP_NOEXCEPT
 	{
 		this->stop_requested = req;
 	}
 
-	const SocketAddress& bindingAddress () const
+	const SocketAddress& getBindingAddress () const QSE_CPP_NOEXCEPT
 	{
 		return this->binding_address;
 	}
-	void setBindingAddress (const SocketAddress& address)
+	void setBindingAddress (const SocketAddress& address) QSE_CPP_NOEXCEPT
 	{
 		QSE_ASSERT (this->server_serving == false);
 		this->binding_address = address;
 	}
 
-	qse_size_t maxConnections () const 
+	qse_size_t getMaxConnections () const QSE_CPP_NOEXCEPT
 	{
 		return this->max_connections;
 	}
-	void setMaxConnections (qse_size_t mc) 
+	void setMaxConnections (qse_size_t mc) QSE_CPP_NOEXCEPT
 	{
 		// don't disconnect client connections 
 		// establised before maxConn is set.
@@ -93,31 +96,31 @@ public:
 		this->max_connections = mc;
 	}
 
-	qse_size_t clientCount () const 
+	qse_size_t getClientCount () const QSE_CPP_NOEXCEPT
 	{ 
 		return this->client_list.getSize(); 
 	}
-	qse_size_t connectionCount () const
+	qse_size_t getConnectionCount () const QSE_CPP_NOEXCEPT
 	{
 		return this->client_list.getSize(); 
 	}
 
-	qse_size_t threadStackSize () const
+	qse_size_t getThreadStackSize () const QSE_CPP_NOEXCEPT
 	{
 		return this->thread_stack_size;
 	}
 
-	void setThreadStackSize (qse_size_t tss)
+	void setThreadStackSize (qse_size_t tss) QSE_CPP_NOEXCEPT
 	{
 		this->thread_stack_size = tss;
 	}
 
-	bool shouldReopenSocketUponError () const
+	bool getReopenSocketUponError () const QSE_CPP_NOEXCEPT
 	{
 		return this->reopen_socket_upon_error;
 	}
 
-	void setReopenSocketUponError (bool v)
+	void setReopenSocketUponError (bool v) QSE_CPP_NOEXCEPT
 	{
 		this->reopen_socket_upon_error = v;
 	}
@@ -153,10 +156,96 @@ protected:
 	virtual int handle_client (Socket* sock, SocketAddress* addr) = 0;
 
 private:
-	void delete_dead_clients ();
-	void delete_all_clients  ();
-	int open_tcp_socket (Socket& socket, bool winsock_inheritable, int* err_code);
+	void delete_dead_clients () QSE_CPP_NOEXCEPT;
+	void delete_all_clients  () QSE_CPP_NOEXCEPT;
+	int open_tcp_socket (Socket& socket, bool winsock_inheritable, int* err_code) QSE_CPP_NOEXCEPT;
 };
+
+
+// functor as a template parameter
+template <typename F>
+class TcpServerF: public TcpServer
+{
+public:
+	TcpServerF () QSE_CPP_NOEXCEPT {}
+	TcpServerF (const F& f) QSE_CPP_NOEXCEPT: __lfunc(f) {}
+#if defined(QSE_CPP_ENABLE_CPP11_MOVE)
+	TcpServerF (F&& f) QSE_CPP_NOEXCEPT: __lfunc(QSE_CPP_RVREF(f)) {}
+#endif
+
+protected:
+	F __lfunc;
+
+	int handle_client (Socket* sock, SocketAddress* addr)
+	{
+		return this->__lfunc(sock, addr);
+	}
+};
+
+
+#if defined(QSE_LANG_CPP11)
+
+template <typename T>
+class TcpServerL;
+
+template <typename RT, typename... ARGS>
+class TcpServerL<RT(ARGS...)>: public TcpServer
+{
+public:
+	TcpServerL () QSE_CPP_NOEXCEPT: __lfunc(nullptr) {}
+	~TcpServerL () QSE_CPP_NOEXCEPT 
+	{ 
+		if (this->__lfunc) delete this->__lfunc; 
+	}
+
+	static int call_func (qse_thr_t* thr, void* ctx)
+	{
+		TcpServerL* t = (TcpServerL*)ctx;
+		return t->__lfunc->invoke(t);
+	}
+
+	template <typename T>
+	int handle_client (Socket* sock, SocketAddress* addr)
+	{
+		if (this->__state == QSE_THR_RUNNING) return -1;
+		if (this->__lfunc) delete this->__lfunc;
+		try
+		{
+			// TODO: are there any ways to achieve this without memory allocation?
+			this->__lfunc = new TCallable<T> (QSE_CPP_RVREF(f));
+		}
+		catch (...)
+		{
+			this->__lfunc = nullptr;
+			return -1;
+		}
+		return this->__lfunc->invoke (sock, addr);
+	}
+
+protected:
+	class Callable
+	{
+	public:
+		virtual ~Callable () QSE_CPP_NOEXCEPT {};
+		virtual RT invoke (ARGS... args) = 0;
+	};
+
+	template <typename T>
+	class TCallable: public Callable
+	{
+	public:
+		TCallable (const T& t) QSE_CPP_NOEXCEPT: t(t) { }
+		~TCallable () QSE_CPP_NOEXCEPT {}
+		RT invoke (ARGS... args) { return this->t(args ...); }
+
+	private:
+		T t;
+	};
+
+	Callable* __lfunc;
+};
+
+#endif
 
 QSE_END_NAMESPACE(QSE)
 

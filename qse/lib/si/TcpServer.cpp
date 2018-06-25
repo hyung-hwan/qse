@@ -25,6 +25,7 @@
  */
 
 #include <qse/si/TcpServer.hpp>
+#include <qse/si/os.h>
 
 QSE_BEGIN_NAMESPACE(QSE)
 
@@ -51,10 +52,10 @@ int TcpServer::Client::run ()
 	// Client is instantiated in the TcpServer thread.
 	// so if it is called in the constructor of Client, 
 	// it would just block signals to the TcpProxy thread.
-	blockAllSignals (); // don't care about the result.
+	this->blockAllSignals (); // don't care about the result.
 
-	guarantee_tcpsocket_close close_socket (&socket);
-	if (server->handle_client (&socket, &address) == -1) return -1;
+	guarantee_tcpsocket_close close_socket (&this->socket);
+	if (server->handle_client(&this->socket, &this->address) <= -1) return -1;
 	return 0;
 }
 
@@ -69,8 +70,8 @@ int TcpServer::Client::stop () QSE_CPP_NOEXCEPT
 	//       as it might not be thread-safe.
 	//       but it is still ok because Client::stop() 
 	//       is rarely called.
-	socket.shutdown ();
-	socket.close ();
+	this->socket.shutdown ();
+	this->socket.close ();
 	return 0;
 }
 
@@ -93,44 +94,30 @@ TcpServer::TcpServer (const SocketAddress& address):
 {
 }
 
-TcpServer::~TcpServer ()
+TcpServer::~TcpServer () QSE_CPP_NOEXCEPT
 {
 	// QSE_ASSERT (server_serving == false);
 	this->delete_all_clients ();
 }
 
-int TcpServer::start (int* err_code)
+int TcpServer::start (int* err_code) QSE_CPP_NOEXCEPT
 {
 	return this->start(true, err_code);
 }
 
-int TcpServer::open_tcp_socket (Socket& socket, bool winsock_inheritable, int* err_code)
+int TcpServer::open_tcp_socket (Socket& socket, bool winsock_inheritable, int* err_code) QSE_CPP_NOEXCEPT
 {
-	if (socket.open(QSE_AF_INET6, QSE_SOCK_STREAM, 0) <= -1)
+	if (socket.open(this->binding_address.getFamily(), QSE_SOCK_STREAM, 0) <= -1)
 	{
 		if (err_code) *err_code = ERR_OPEN;
 		return -1;
 	}
 
-
-
-#ifdef _WIN32
-	if (winsock_inheritable)
-	{
-		SetHandleInformation (
-			(HANDLE)socket.handle(), 
-			HANDLE_FLAG_INHERIT,
-			HANDLE_FLAG_INHERIT);
-	}
-	else
-	{
-		SetHandleInformation (
-			(HANDLE)socket.handle(), 
-			HANDLE_FLAG_INHERIT, 0);
-	}
+#if defined(_WIN32)
+	SetHandleInformation ((HANDLE)socket.handle(), HANDLE_FLAG_INHERIT, (winsock_inheritable? HANDLE_FLAG_INHERIT: 0));
 #endif
 
-	socket.setReuseAddr (true);
+	//socket.setReuseAddr (true);
 	//socket.setReusePort (true);
 
 	if (socket.bind(this->binding_address) <= -1)
@@ -145,11 +132,11 @@ int TcpServer::open_tcp_socket (Socket& socket, bool winsock_inheritable, int* e
 		return -1;
 	}
 
-	socket.enableTimeout (1000);
+	//socket.enableTimeout (1000);
 	return 0;
 }
 
-int TcpServer::start (bool winsock_inheritable, int* err_code)
+int TcpServer::start (bool winsock_inheritable, int* err_code) QSE_CPP_NOEXCEPT
 {
 	this->server_serving = true;
 	if (err_code != QSE_NULL) *err_code = ERR_NONE;
@@ -175,6 +162,7 @@ int TcpServer::start (bool winsock_inheritable, int* err_code)
 
 			if (this->max_connections > 0 && this->max_connections <= this->client_list.getSize()) 
 			{
+				// too many connections. accept the connection and close it.
 				Socket s;
 				SocketAddress sa;
 				if (socket.accept(&s, &sa, Socket::T_CLOEXEC) >= 0) s.close();
@@ -191,7 +179,7 @@ int TcpServer::start (bool winsock_inheritable, int* err_code)
 			}
 			if (client == QSE_NULL) 
 			{
-				// memory alloc failed
+				// memory alloc failed. accept the connection and close it.
 				Socket s;
 				SocketAddress sa;
 				if (socket.accept(&s, &sa, Socket::T_CLOEXEC) >= 0) s.close();
@@ -218,8 +206,13 @@ int TcpServer::start (bool winsock_inheritable, int* err_code)
 				reopen:
 					if (this->open_tcp_socket (socket, winsock_inheritable, err_code) <= -1)
 					{
-						if (reopen_count >= 200) qse_sleep (100);
-						else if (reopen_count >= 100) qse_sleep (10);
+						if (reopen_count >= 100) 
+						{
+							qse_ntime_t interval;
+							if (reopen_count >= 200) qse_inittime (&interval, 0, 100000000); // 100 milliseconds
+							else qse_inittime (&interval, 0, 10000000); // 10 milliseconds
+							qse_sleep (&interval);
+						}
 
 						if (this->isStopRequested()) break;
 						reopen_count++;
@@ -229,8 +222,8 @@ int TcpServer::start (bool winsock_inheritable, int* err_code)
 				continue;
 			}
 
-			client->setStackSize (thread_stack_size);
-		#ifdef _WIN32
+			client->setStackSize (this->thread_stack_size);
+		#if defined(_WIN32)
 			if (client->start(Thread::DETACHED) == -1) 
 		#else
 			if (client->start(0) == -1)
@@ -265,17 +258,17 @@ int TcpServer::start (bool winsock_inheritable, int* err_code)
 	return 0;
 }
 
-int TcpServer::stop ()
+int TcpServer::stop () QSE_CPP_NOEXCEPT
 {
 	if (server_serving) setStopRequested (true);
 	return 0;
 }
 
-void TcpServer::delete_dead_clients ()
+void TcpServer::delete_dead_clients () QSE_CPP_NOEXCEPT
 {
 	ClientList::Node* np, * np2;
 	
-	np = client_list.getHeadNode();
+	np = this->client_list.getHeadNode();
 	while (np) 
 	{
 		Client* p = np->value;
@@ -283,12 +276,13 @@ void TcpServer::delete_dead_clients ()
 
 		if (p->getState() != Thread::RUNNING)
 		{
-#ifndef _WIN32
+		#if !defined(_WIN32)
 			p->join ();
-#endif
+		#endif
+
 			delete p;
 			np2 = np; np = np->getNextNode();
-			client_list.remove (np2);
+			this->client_list.remove (np2);
 			continue;
 		}
 
@@ -296,31 +290,31 @@ void TcpServer::delete_dead_clients ()
 	}
 }
 
-void TcpServer::delete_all_clients ()
+void TcpServer::delete_all_clients () QSE_CPP_NOEXCEPT
 {
 	ClientList::Node* np, * np2;
 	Client* p;
 
-	for (np = client_list.getHeadNode(); np; np = np->getNextNode()) 
+	for (np = this->client_list.getHeadNode(); np; np = np->getNextNode()) 
 	{
 		p = np->value;
 		if (p->getState() == Thread::RUNNING) p->stop();
 	}
 
-	np = client_list.getHeadNode();
+	np = this->client_list.getHeadNode();
 	while (np != QSE_NULL) 
 	{
 		p = np->value;
 		QSE_ASSERT (p != QSE_NULL);
 
-#ifdef _WIN32
+#if defined(_WIN32)
 		while (p->state() == Thread::RUNNING) qse_sleep (300);
 #else	
 		p->join ();
 #endif
 		delete p;
 		np2 = np; np = np->getNextNode();
-		client_list.remove (np2);
+		this->client_list.remove (np2);
 	}
 }
 

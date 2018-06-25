@@ -35,6 +35,7 @@ libqsesi_la_SOURCES =  \
 	nwif.c \
 	nwif-cfg.c \
 	nwio.c  \
+	os.c \
 	pio.c  \
 	rwl.c \
 	sck.c \
