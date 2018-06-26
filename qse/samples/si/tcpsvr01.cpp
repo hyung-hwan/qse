@@ -12,7 +12,7 @@
 #include <signal.h>
 #include <string.h>
 
-static int g_stopreq = 0;
+
 
 
 class ClientHandler
@@ -20,16 +20,20 @@ class ClientHandler
 public:
 	int operator() (QSE::Socket* sck, QSE::SocketAddress* addr)
 	{
-qse_printf (QSE_T("XXXXXXXXXXXXXXXXXXXXXXXXXX\n"));p
+qse_printf (QSE_T("XXXXXXXXXXXXXXXXXXXXXXXXXX\n"));
 		return 0;
 	}
 };
+
+static QSE::TcpServerF<ClientHandler>* g_server;
 
 static int test1 (void)
 {
 	QSE::TcpServerF<ClientHandler> server;
 	server.setThreadStackSize (256000);
+	g_server = &server;
 	server.start (QSE_T("0.0.0.0:9998"));
+	g_server = QSE_NULL;
 	return 0;
 }
 
@@ -56,7 +60,7 @@ static int test2 (void)
 
 static void handle_sigint (int sig, siginfo_t* siginfo, void* ctx)
 {
-	g_stopreq = 1;
+	if (g_server) g_server->stop ();
 }
 
 static void set_signal (int sig, void(*handler)(int, siginfo_t*, void*))
