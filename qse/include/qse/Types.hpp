@@ -205,6 +205,30 @@ public:
 
 	/** redefines a structure of a character pointer and length */
 	typedef qse_mcstr_t mcstr_t;
+
+
+	/** defines common error codes */
+	enum ErrorCode
+	{
+		E_ENOERR,  /**< no error */
+		E_EOTHER,  /**< other error */
+		E_ENOIMPL, /**< not implemented */
+		E_ESYSERR, /**< subsystem error */
+		E_EINTERN, /**< internal error */
+		E_EEXCEPT, /**< exception */
+
+		E_ENOMEM,
+		E_EINVAL,
+		E_EACCES,
+		E_EPERM,
+		E_ENOENT,
+		E_EEXIST,
+		E_ENOTDIR,
+		E_EINTR,
+		E_EPIPE,
+		E_EINPROG, /* in progress */
+		E_EAGAIN  /* resource unavailable unavailable */
+	};
 };
 
 /////////////////////////////////

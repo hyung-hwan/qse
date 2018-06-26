@@ -39,11 +39,11 @@ QSE_BEGIN_NAMESPACE(QSE)
 // The TcpServer class implements a simple block TCP server that start a thread
 // for each connection accepted.
 
-class TcpServer: public QSE::Uncopyable 
+class TcpServer: public Uncopyable, public Types
 {
 public:
-	TcpServer ();
-	TcpServer (const SocketAddress& address);
+	TcpServer () QSE_CPP_NOEXCEPT;
+	TcpServer (const SocketAddress& address) QSE_CPP_NOEXCEPT;
 	virtual ~TcpServer () QSE_CPP_NOEXCEPT;
 
 	enum 
@@ -55,8 +55,12 @@ public:
 		ERR_EXCEPTION = 4
 	};
 
-	virtual int start (int* err_code = QSE_NULL) QSE_CPP_NOEXCEPT;
+	virtual int start (const qse_mchar_t* addrs) QSE_CPP_NOEXCEPT;
+	virtual int start (const qse_wchar_t* addrs) QSE_CPP_NOEXCEPT;
 	virtual int stop () QSE_CPP_NOEXCEPT;
+
+	ErrorCode getErrorCode () const QSE_CPP_NOEXCEPT { return this->errcode; }
+	void setErrorCode (ErrorCode errcode) QSE_CPP_NOEXCEPT { this->errcode = errcode; }
 
 	bool isServing () const QSE_CPP_NOEXCEPT
 	{ 
@@ -114,19 +118,11 @@ public:
 		this->thread_stack_size = tss;
 	}
 
-	bool getReopenSocketUponError () const QSE_CPP_NOEXCEPT
-	{
-		return this->reopen_socket_upon_error;
-	}
-
-	void setReopenSocketUponError (bool v) QSE_CPP_NOEXCEPT
-	{
-		this->reopen_socket_upon_error = v;
-	}
-
 protected:
 	class Listener: public QSE::Socket
 	{
+	public:
+		SocketAddress address;
 		Listener* next_listener;
 	};
 
@@ -146,15 +142,29 @@ protected:
 		SocketAddress address;
 	};
 
-	Listener* listener_head;
-	Listener* listener_tail;
+	struct ListenerList
+	{
+		ListenerList(): ep_fd(-1), head(QSE_NULL), tail(QSE_NULL), count(0)
+		{
+			this->mux_pipe[0] = -1;
+			this->mux_pipe[1] = -1;
+		}
 
+		int ep_fd;
+		int mux_pipe[2];
+
+		Listener* head;
+		Listener* tail;
+
+		qse_size_t count;
+	} listener;
+
+	ErrorCode errcode;
 	SocketAddress binding_address;
 	bool          stop_requested;
 	bool          server_serving;
 	qse_size_t    max_connections;
 	qse_size_t    thread_stack_size;
-	bool          reopen_socket_upon_error;
 
 	typedef QSE::LinkedList<Client*> ClientList;
 	ClientList client_list;
@@ -165,7 +175,9 @@ protected:
 private:
 	void delete_dead_clients () QSE_CPP_NOEXCEPT;
 	void delete_all_clients  () QSE_CPP_NOEXCEPT;
-	int open_tcp_socket (Socket& socket, int* err_code) QSE_CPP_NOEXCEPT;
+
+	int setup_listeners (const qse_char_t* addrs) QSE_CPP_NOEXCEPT;
+	void free_all_listeners () QSE_CPP_NOEXCEPT;
 };
 
 

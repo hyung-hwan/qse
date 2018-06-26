@@ -26,8 +26,19 @@
 
 #include <qse/si/TcpServer.hpp>
 #include <qse/si/os.h>
+#include <qse/cmn/str.h>
+#include "../cmn/mem-prv.h"
+
+#include <sys/epoll.h>
+#include <errno.h>
+#include <unistd.h>
+#include <fcntl.h>
 
 QSE_BEGIN_NAMESPACE(QSE)
+
+
+#include "../cmn/syserr.h"
+IMPLEMENT_SYSERR_TO_ERRNUM (TcpServer::ErrorCode, TcpServer::)
 
 TcpServer::Client::Client (TcpServer* server) 
 {
@@ -75,22 +86,21 @@ int TcpServer::Client::stop () QSE_CPP_NOEXCEPT
 	return 0;
 }
 
-TcpServer::TcpServer (): 
+TcpServer::TcpServer () QSE_CPP_NOEXCEPT: 
+	errcode(E_ENOERR),
 	stop_requested(false), 
 	server_serving(false), 
 	max_connections(0),
-	thread_stack_size (0),
-	reopen_socket_upon_error(false)
+	thread_stack_size (0)
 {
 }
 
-TcpServer::TcpServer (const SocketAddress& address): 
+TcpServer::TcpServer (const SocketAddress& address) QSE_CPP_NOEXCEPT: 
 	binding_address(address),
 	stop_requested(false), 
 	server_serving(false), 
 	max_connections(0), 
-	thread_stack_size (0),
-	reopen_socket_upon_error(false)
+	thread_stack_size (0)
 {
 }
 
@@ -100,38 +110,159 @@ TcpServer::~TcpServer () QSE_CPP_NOEXCEPT
 	this->delete_all_clients ();
 }
 
-int TcpServer::open_tcp_socket (Socket& socket, int* err_code) QSE_CPP_NOEXCEPT
+void TcpServer::free_all_listeners () QSE_CPP_NOEXCEPT
 {
-	if (socket.open(this->binding_address.getFamily(), QSE_SOCK_STREAM, Socket::T_CLOEXEC | Socket::T_NONBLOCK) <= -1)
+	Listener* lp;
+	struct epoll_event dummy_ev;
+
+	::epoll_ctl (this->listener.ep_fd, EPOLL_CTL_DEL, this->listener.mux_pipe[0], &dummy_ev);
+
+	while (this->listener.head)
 	{
-		if (err_code) *err_code = ERR_OPEN;
-		return -1;
+		lp = this->listener.head;
+		this->listener.head = lp->next_listener;
+		this->listener.count--;
+
+		::epoll_ctl (this->listener.ep_fd, EPOLL_CTL_DEL, lp->getHandle(), &dummy_ev);
+		lp->close ();
+		delete lp;
 	}
 
-	//socket.setReuseAddr (true);
-	//socket.setReusePort (true);
-
-	if (socket.bind(this->binding_address) <= -1)
-	{
-		if (err_code) *err_code = ERR_BIND;
-		return -1;
-	}
-
-	if (socket.listen() <= -1) 
-	{
-		if (err_code) *err_code = ERR_LISTEN;
-		return -1;
-	}
-
-	//socket.enableTimeout (1000);
-	return 0;
+	QSE_ASSERT (this->listener.ep_fd >= 0);
+	::close (this->listener.ep_fd);
+	this->listener.ep_fd = -1;
 }
 
-int TcpServer::start (int* err_code) QSE_CPP_NOEXCEPT
+int TcpServer::setup_listeners (const qse_char_t* addrs) QSE_CPP_NOEXCEPT
+{
+	const qse_char_t* addr_ptr, * comma;
+	int ep_fd = -1, fcv;
+	struct epoll_event ev;
+	int pfd[2] = { -1, - 1 };
+	SocketAddress sockaddr;
+
+	ep_fd = ::epoll_create(1024);
+	if (ep_fd <= -1)
+	{
+		this->setErrorCode (syserr_to_errnum(errno));
+		return -1;
+	}
+
+#if defined(O_CLOEXEC)
+	fcv = ::fcntl(ep_fd, F_GETFD, 0);
+	if (fcv >= 0) ::fcntl(ep_fd, F_SETFD, fcv | O_CLOEXEC);
+#endif
+
+	if (::pipe(pfd) <= -1)
+	{
+		this->setErrorCode (syserr_to_errnum(errno));
+		goto oops;
+	}
+
+#if defined(O_CLOEXEC)
+	fcv = ::fcntl(pfd[0], F_GETFD, 0);
+	if (fcv >= 0) ::fcntl(pfd[0], F_SETFD, fcv | O_CLOEXEC);
+	fcv = ::fcntl(pfd[1], F_GETFD, 0);
+	if (fcv >= 0) ::fcntl(pfd[1], F_SETFD, fcv | O_CLOEXEC);
+#endif
+#if defined(O_NONBLOCK)
+	fcv = ::fcntl(pfd[0], F_GETFL, 0);
+	if (fcv >= 0) ::fcntl(pfd[0], F_SETFL, fcv | O_NONBLOCK);
+	fcv = ::fcntl(pfd[1], F_GETFL, 0);
+	if (fcv >= 0) ::fcntl(pfd[1], F_SETFL, fcv | O_NONBLOCK);
+#endif
+
+	QSE_MEMSET (&ev, 0, QSE_SIZEOF(ev));
+	ev.events = EPOLLIN | EPOLLHUP | EPOLLERR;
+	ev.data.fd = pfd[0];
+	if (::epoll_ctl(ep_fd, EPOLL_CTL_ADD, pfd[0], &ev) <= -1)
+	{
+		this->setErrorCode (syserr_to_errnum(errno));
+		goto oops;
+	}
+
+	addr_ptr = addrs;
+	while (1)
+	{
+		qse_size_t addr_len;
+		Listener* lsck;
+		Socket sock;
+
+		comma = qse_strchr(addr_ptr, QSE_T(','));
+		addr_len = comma? comma - addr_ptr: qse_strlen(addr_ptr);
+		/* [NOTE] no whitespaces are allowed before and after a comma */
+
+		if (sockaddr.set(addr_ptr, addr_len) <= -1)
+		{
+			/* TOOD: logging */
+			goto next_segment;
+		}
+
+		try 
+		{ 
+			lsck = new Listener(); 
+		}
+		catch (...) 
+		{
+			/* TODO: logging... */
+			goto next_segment;
+		}
+
+		if (lsck->open(sockaddr.getFamily(), QSE_SOCK_STREAM, Socket::T_CLOEXEC | Socket::T_NONBLOCK) <= -1)
+		{
+			/* TODO: logging */
+			goto next_segment;
+		}
+
+		lsck->setReuseAddr (1);
+		lsck->setReusePort (1);
+
+		if (lsck->bind(sockaddr) <= -1 || lsck->listen() <= -1)
+		{
+			/* TODO: logging */
+			lsck->close ();
+			goto next_segment;
+		}
+
+		QSE_MEMSET (&ev, 0, QSE_SIZEOF(ev));
+		ev.events = EPOLLIN | EPOLLHUP | EPOLLERR;
+		ev.data.fd = lsck->getHandle();
+		if (::epoll_ctl(ep_fd, EPOLL_CTL_ADD, lsck->getHandle(), &ev) <= -1)
+		{
+			/* TODO: logging */
+			lsck->close ();
+			goto next_segment;
+		}
+
+		lsck->address = sockaddr;
+		lsck->next_listener = this->listener.head;
+		this->listener.head = lsck;
+		this->listener.count++;
+
+	next_segment:
+		if (!comma) break;
+		addr_ptr = comma + 1;
+	}
+
+	if (!this->listener.head) goto oops;
+	
+	this->listener.ep_fd = ep_fd;
+	this->listener.mux_pipe[0] = pfd[0];
+	this->listener.mux_pipe[1] = pfd[1];
+
+	return 0;
+
+oops:
+	if (this->listener.head) this->free_all_listeners ();
+	if (pfd[0] >= 0) close (pfd[0]);
+	if (pfd[1] >= 0) close (pfd[1]);
+	if (ep_fd >= 0) close (ep_fd);
+	return -1;
+}
+
+int TcpServer::start (const qse_char_t* addrs) QSE_CPP_NOEXCEPT
 {
 	this->server_serving = true;
-	if (err_code != QSE_NULL) *err_code = ERR_NONE;
-
 	this->setStopRequested (false);
 
 	Client* client = QSE_NULL;
@@ -140,7 +271,7 @@ int TcpServer::start (int* err_code) QSE_CPP_NOEXCEPT
 	{
 		Socket socket;
 
-		if (this->open_tcp_socket(socket, err_code) <= -1)
+		if (this->setup_listeners(addrs) <= -1)
 		{
 			this->server_serving = false;
 			this->setStopRequested (false);
@@ -183,33 +314,7 @@ int TcpServer::start (int* err_code) QSE_CPP_NOEXCEPT
 
 				// don't "delete client" here as i want it to be reused
 				// in the next iteration after "continue"
-
-				if (this->reopen_socket_upon_error)
-				{
-					// closing the listeing socket causes the 
-					// the pending connection to be dropped.
-					// this poses the risk of reopening failure.
-					// imagine the case of EMFILE(too many open files).
-					// accept() will fail until an open file is closed.
-					qse_size_t reopen_count = 0;
-					socket.close ();
-
-				reopen:
-					if (this->open_tcp_socket (socket, err_code) <= -1)
-					{
-						if (reopen_count >= 100) 
-						{
-							qse_ntime_t interval;
-							if (reopen_count >= 200) qse_inittime (&interval, 0, 100000000); // 100 milliseconds
-							else qse_inittime (&interval, 0, 10000000); // 10 milliseconds
-							qse_sleep (&interval);
-						}
-
-						if (this->isStopRequested()) break;
-						reopen_count++;
-						goto reopen;
-					}
-				}
+				/* TODO: logging */
 				continue;
 			}
 
@@ -237,7 +342,7 @@ int TcpServer::start (int* err_code) QSE_CPP_NOEXCEPT
 		this->delete_all_clients ();
 		if (client != QSE_NULL) delete client;
 
-		if (err_code) *err_code = ERR_EXCEPTION;
+		this->setErrorCode (E_EEXCEPT);
 		this->server_serving = false;
 		this->setStopRequested (false);
 
@@ -298,11 +403,11 @@ void TcpServer::delete_all_clients () QSE_CPP_NOEXCEPT
 		p = np->value;
 		QSE_ASSERT (p != QSE_NULL);
 
-#if defined(_WIN32)
+	#if defined(_WIN32)
 		while (p->state() == Thread::RUNNING) qse_sleep (300);
-#else	
+	#else
 		p->join ();
-#endif
+	#endif
 		delete p;
 		np2 = np; np = np->getNextNode();
 		this->client_list.remove (np2);

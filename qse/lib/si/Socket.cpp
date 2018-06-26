@@ -126,20 +126,6 @@ void Socket::close () QSE_CPP_NOEXCEPT
 	}
 }
 
-int Socket::shutdown (int how) QSE_CPP_NOEXCEPT
-{
-	QSE_ASSERT (this->handle != QSE_INVALID_SCKHND);
-
-	if (::shutdown(this->handle, how) == -1)
-	{
-		this->setErrorCode (syserr_to_errnum(errno));
-		return -1;
-	}
-
-	return 0;
-}
-
-
 int Socket::getOption (int level, int optname, void* optval, qse_sck_len_t* optlen) QSE_CPP_NOEXCEPT
 {
 	QSE_ASSERT (this->handle != QSE_INVALID_SCKHND);
@@ -154,6 +140,118 @@ int Socket::setOption (int level, int optname, const void* optval, qse_sck_len_t
 	int n = ::setsockopt (this->handle, level, optname, (const char*)optval, optlen);
 	if (n == -1) this->setErrorCode (syserr_to_errnum(errno));
 	return n;
+}
+
+int Socket::setDebug (int n) QSE_CPP_NOEXCEPT
+{
+	return this->setOption (SOL_SOCKET, SO_DEBUG, (char*)&n, QSE_SIZEOF(n));
+};
+
+int Socket::setReuseAddr (int n) QSE_CPP_NOEXCEPT
+{
+	return this->setOption (SOL_SOCKET, SO_REUSEADDR, (char*)&n, QSE_SIZEOF(n));
+}
+
+int Socket::setReusePort (int n) QSE_CPP_NOEXCEPT
+{
+#if defined(SO_REUSEPORT)
+	return this->setOption (SOL_SOCKET, SO_REUSEPORT, (char*)&n, QSE_SIZEOF(n));
+#else
+	this->setErrorCode (E_ENOIMPL);
+	return -1;
+#endif
+}
+
+int Socket::setKeepAlive (int n, int keepidle, int keepintvl, int keepcnt) QSE_CPP_NOEXCEPT
+{
+	if (this->setOption (SOL_SOCKET, SO_KEEPALIVE, (char*)&n, QSE_SIZEOF(n)) <= -1) return -1;
+
+	// the following values are just hints. 
+	// i don't care about success and failure
+#if defined(TCP_KEEPIDLE) && defined(SOL_TCP)
+	if (keepidle > 0) this->setOption (SOL_TCP, TCP_KEEPIDLE, (char*)&keepidle, QSE_SIZEOF(keepidle));
+#endif
+#if defined(TCP_KEEPINTVL) && defined(SOL_TCP)
+	if (keepintvl > 0) this->setOption (SOL_TCP, TCP_KEEPINTVL, (char*)&keepintvl, QSE_SIZEOF(keepintvl));
+#endif
+#if defined(TCP_KEEPCNT) && defined(SOL_TCP)
+	if (keepcnt > 0) this->setOption (SOL_TCP, TCP_KEEPCNT, (char*)&keepcnt, QSE_SIZEOF(keepcnt));
+#endif
+	return 0;
+}
+
+int Socket::setBroadcast (int n) QSE_CPP_NOEXCEPT
+{
+	return this->setOption (SOL_SOCKET, SO_BROADCAST, (char*)&n, QSE_SIZEOF(n));
+}
+
+int Socket::setSendBuf (unsigned int size)  QSE_CPP_NOEXCEPT
+{
+	return this->setOption (SOL_SOCKET, SO_SNDBUF, (char*)&size, QSE_SIZEOF(size));
+}
+
+int Socket::setRecvBuf (unsigned int size) QSE_CPP_NOEXCEPT
+{
+	return this->setOption (SOL_SOCKET, SO_RCVBUF, (char*)&size, QSE_SIZEOF(size));
+}
+
+int Socket::setLingerOn (int sec) QSE_CPP_NOEXCEPT
+{
+	struct linger lng;
+	lng.l_onoff = 1;
+	lng.l_linger = sec;
+	return this->setOption (SOL_SOCKET, SO_LINGER, (char*)&lng, QSE_SIZEOF(lng));
+}
+
+int Socket::setLingerOff () QSE_CPP_NOEXCEPT
+{
+	struct linger lng;
+	lng.l_onoff = 0;
+	lng.l_linger = 0;
+	return this->setOption (SOL_SOCKET, SO_LINGER, (char*)&lng, QSE_SIZEOF(lng));
+}
+
+int Socket::setTcpNodelay (int n) QSE_CPP_NOEXCEPT
+{
+#if defined(TCP_NODELAY)
+	return this->setOption (IPPROTO_TCP, TCP_NODELAY, (char*)&n, QSE_SIZEOF(n));
+#else
+	this->setErrorCode (E_ENOIMPL);
+	return -1;
+#endif
+}
+
+int Socket::setOobInline (int n) QSE_CPP_NOEXCEPT
+{
+#if defined(SO_OOBINLINE)
+	return this->setOption (SOL_SOCKET, SO_OOBINLINE, (char*)&n, QSE_SIZEOF(n));
+#else
+	this->setErrorCode (E_ENOIMPL);
+	return -1;
+#endif
+}
+
+int Socket::setIpv6Only (int n) QSE_CPP_NOEXCEPT
+{
+#if defined(IPV6_V6ONLY)
+	return this->setOption (IPPROTO_IPV6, IPV6_V6ONLY, (char*)&n, QSE_SIZEOF(n));
+#else
+	this->setErrorCode (E_ENOIMPL);
+	return -1;
+#endif
+}
+
+int Socket::shutdown (int how) QSE_CPP_NOEXCEPT
+{
+	QSE_ASSERT (this->handle != QSE_INVALID_SCKHND);
+
+	if (::shutdown(this->handle, how) == -1)
+	{
+		this->setErrorCode (syserr_to_errnum(errno));
+		return -1;
+	}
+
+	return 0;
 }
 
 int Socket::connect (const SocketAddress& target) QSE_CPP_NOEXCEPT
