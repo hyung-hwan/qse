@@ -106,8 +106,6 @@ void TcpServer::free_all_listeners () QSE_CPP_NOEXCEPT
 	Listener* lp;
 	struct epoll_event dummy_ev;
 
-	::epoll_ctl (this->listener.ep_fd, EPOLL_CTL_DEL, this->listener.mux_pipe[0], &dummy_ev);
-
 	while (this->listener.head)
 	{
 		lp = this->listener.head;
@@ -119,7 +117,19 @@ void TcpServer::free_all_listeners () QSE_CPP_NOEXCEPT
 		delete lp;
 	}
 
+	if (this->listener.mux_pipe[0] >= 0)
+	{
+		::epoll_ctl (this->listener.ep_fd, EPOLL_CTL_DEL, this->listener.mux_pipe[0], &dummy_ev);
+		close (this->listener.mux_pipe[0]);
+		this->listener.mux_pipe[0] = -1;
+	}
+	if (this->listener.mux_pipe[1] >= 0)
+	{
+		close (this->listener.mux_pipe[1]);
+		this->listener.mux_pipe[1] = -1;
+	}
 	QSE_ASSERT (this->listener.ep_fd >= 0);
+
 	::close (this->listener.ep_fd);
 	this->listener.ep_fd = -1;
 }

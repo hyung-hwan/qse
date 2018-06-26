@@ -45,15 +45,6 @@ public:
 	TcpServer () QSE_CPP_NOEXCEPT;
 	virtual ~TcpServer () QSE_CPP_NOEXCEPT;
 
-	enum 
-	{
-		ERR_NONE      = 0,
-		ERR_OPEN      = 1,
-		ERR_BIND      = 2,
-		ERR_LISTEN    = 3,
-		ERR_EXCEPTION = 4
-	};
-
 	virtual int start (const qse_char_t* addrs) QSE_CPP_NOEXCEPT;
 	virtual int stop () QSE_CPP_NOEXCEPT;
 
