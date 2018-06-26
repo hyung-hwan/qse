@@ -37,43 +37,46 @@ QSE_BEGIN_NAMESPACE(QSE)
 class SocketAddress
 {
 public:
-	SocketAddress ();
-	SocketAddress (int family);
-	SocketAddress (const qse_skad_t* skad);
-	SocketAddress (const qse_nwad_t* nwad);
+	SocketAddress () QSE_CPP_NOEXCEPT;
+	SocketAddress (int family) QSE_CPP_NOEXCEPT;
+	SocketAddress (const qse_skad_t* skad) QSE_CPP_NOEXCEPT;
+	SocketAddress (const qse_nwad_t* nwad) QSE_CPP_NOEXCEPT;
 
-	int getFamily () const;
+	int getFamily () const QSE_CPP_NOEXCEPT;
 
-	qse_skad_t* getAddrPtr()
+	qse_skad_t* getAddrPtr() QSE_CPP_NOEXCEPT
 	{
 		return &this->skad;
 	}
 
-	const qse_skad_t* getAddrPtr() const
+	const qse_skad_t* getAddrPtr() const QSE_CPP_NOEXCEPT
 	{
 		return &this->skad;
 	}
 
-	int getAddrSize () const
+	int getAddrSize () const QSE_CPP_NOEXCEPT
 	{
 		return qse_skadsize(&this->skad);
 	}
 
-	int getAddrCapa() const
+	int getAddrCapa() const QSE_CPP_NOEXCEPT
 	{
 		return QSE_SIZEOF(this->skad);
 	}
 
-	void setIpaddr (const qse_ip4ad_t* ipaddr);
-	void setIpaddr (const qse_ip6ad_t* ipaddr);
+	void setIpaddr (const qse_ip4ad_t* ipaddr) QSE_CPP_NOEXCEPT;
+	void setIpaddr (const qse_ip6ad_t* ipaddr) QSE_CPP_NOEXCEPT;
 
-	qse_uint16_t getPort() const; // in network-byte order
-	void setPort (qse_uint16_t port); // in network-byte order
+	qse_uint16_t getPort() const QSE_CPP_NOEXCEPT; // in network-byte order
+	void setPort (qse_uint16_t port) QSE_CPP_NOEXCEPT; // in network-byte order
 
-	int set (const qse_skad_t* skad); 
-	int set (const qse_nwad_t* nwad);
-	int set (const qse_mchar_t* str);
-	int set (const qse_wchar_t* str);
+	int set (const qse_skad_t* skad) QSE_CPP_NOEXCEPT; 
+	int set (const qse_nwad_t* nwad) QSE_CPP_NOEXCEPT;
+	int set (const qse_mchar_t* str) QSE_CPP_NOEXCEPT;
+	int set (const qse_wchar_t* str) QSE_CPP_NOEXCEPT;
+	int set (const qse_mchar_t* str, qse_size_t len) QSE_CPP_NOEXCEPT;
+	int set (const qse_wchar_t* str, qse_size_t len) QSE_CPP_NOEXCEPT;
+
 
 protected:
 	qse_skad_t skad;

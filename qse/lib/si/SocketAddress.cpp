@@ -90,34 +90,34 @@ QSE_BEGIN_NAMESPACE(QSE)
 /////////////////////////////////
 
 
-SocketAddress::SocketAddress ()
+SocketAddress::SocketAddress () QSE_CPP_NOEXCEPT
 {
 	QSE_MEMSET (&this->skad, 0, QSE_SIZEOF(this->skad));
 }
 
-SocketAddress::SocketAddress (int family)
+SocketAddress::SocketAddress (int family) QSE_CPP_NOEXCEPT
 {
 	QSE_MEMSET (&this->skad, 0, QSE_SIZEOF(this->skad));
 	FAMILY(&this->skad) = family;
 }
 
-SocketAddress::SocketAddress (const qse_skad_t* skad)
+SocketAddress::SocketAddress (const qse_skad_t* skad) QSE_CPP_NOEXCEPT
 {
 	this->set (skad);
 }
 
-SocketAddress::SocketAddress (const qse_nwad_t* nwad)
+SocketAddress::SocketAddress (const qse_nwad_t* nwad) QSE_CPP_NOEXCEPT
 {
 	this->set (nwad);
 }
 
-int SocketAddress::getFamily () const
+int SocketAddress::getFamily () const QSE_CPP_NOEXCEPT
 {
 	return FAMILY(&this->skad);
 	//return qse_skadfamily (&this->skad);
 }
 
-void SocketAddress::setIpaddr (const qse_ip4ad_t* ipaddr)
+void SocketAddress::setIpaddr (const qse_ip4ad_t* ipaddr) QSE_CPP_NOEXCEPT
 {
 #if defined(AF_INET)
 	if (FAMILY(&this->skad) == AF_INET)
@@ -128,7 +128,7 @@ void SocketAddress::setIpaddr (const qse_ip4ad_t* ipaddr)
 #endif
 }
 
-void SocketAddress::setIpaddr (const qse_ip6ad_t* ipaddr)
+void SocketAddress::setIpaddr (const qse_ip6ad_t* ipaddr) QSE_CPP_NOEXCEPT
 {
 #if defined(AF_INET6)
 	if (FAMILY(&this->skad) == AF_INET6)
@@ -139,7 +139,7 @@ void SocketAddress::setIpaddr (const qse_ip6ad_t* ipaddr)
 #endif
 }
 
-qse_uint16_t SocketAddress::getPort () const
+qse_uint16_t SocketAddress::getPort () const QSE_CPP_NOEXCEPT
 {
 	switch (FAMILY(&this->skad))
 	{
@@ -163,7 +163,7 @@ qse_uint16_t SocketAddress::getPort () const
 	return 0;
 }
 
-void SocketAddress::setPort (qse_uint16_t port)
+void SocketAddress::setPort (qse_uint16_t port) QSE_CPP_NOEXCEPT
 {
 	switch (FAMILY(&this->skad))
 	{
@@ -187,29 +187,43 @@ void SocketAddress::setPort (qse_uint16_t port)
 	}
 }
 
-int SocketAddress::set (const qse_skad_t* skad)
+int SocketAddress::set (const qse_skad_t* skad) QSE_CPP_NOEXCEPT
 {
 	this->skad = *skad;
 	return 0;
 }
 
-int SocketAddress::set (const qse_nwad_t* nwad)
+int SocketAddress::set (const qse_nwad_t* nwad) QSE_CPP_NOEXCEPT
 {
 	return qse_nwadtoskad(nwad, &this->skad);
 }
 
 
-int SocketAddress::set (const qse_mchar_t* str)
+int SocketAddress::set (const qse_mchar_t* str) QSE_CPP_NOEXCEPT
 {
 	qse_nwad_t nwad;
 	if (qse_mbstonwad(str, &nwad) <= -1) return -1;
 	return qse_nwadtoskad(&nwad, &this->skad);
 }
 
-int SocketAddress::set (const qse_wchar_t* str)
+int SocketAddress::set (const qse_wchar_t* str) QSE_CPP_NOEXCEPT
 {
 	qse_nwad_t nwad;
 	if (qse_wcstonwad(str, &nwad) <= -1) return -1;
+	return qse_nwadtoskad(&nwad, &this->skad);
+}
+
+int SocketAddress::set (const qse_mchar_t* str, qse_size_t len) QSE_CPP_NOEXCEPT
+{
+	qse_nwad_t nwad;
+	if (qse_mbsntonwad(str, len, &nwad) <= -1) return -1;
+	return qse_nwadtoskad(&nwad, &this->skad);
+}
+
+int SocketAddress::set (const qse_wchar_t* str, qse_size_t len) QSE_CPP_NOEXCEPT
+{
+	qse_nwad_t nwad;
+	if (qse_wcsntonwad(str, len, &nwad) <= -1) return -1;
 	return qse_nwadtoskad(&nwad, &this->skad);
 }
 

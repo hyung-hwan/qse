@@ -40,27 +40,6 @@ QSE_BEGIN_NAMESPACE(QSE)
 class Socket: public Uncopyable, public Types
 {
 public:
-	enum ErrorCode
-	{
-		E_ENOERR,  /**< no error */
-		E_EOTHER,  /**< other error */
-		E_ENOIMPL, /**< not implemented */
-		E_ESYSERR, /**< subsystem error */
-		E_EINTERN, /**< internal error */
-
-		E_ENOMEM,
-		E_EINVAL,
-		E_EACCES,
-		E_EPERM,
-		E_ENOENT,
-		E_EEXIST,
-		E_ENOTDIR,
-		E_EINTR,
-		E_EPIPE,
-		E_EINPROG, /* in progress */
-		E_EAGAIN  /* resource unavailable unavailable */
-	};
-
 	enum Trait
 	{
 		T_NONBLOCK = (1 << 0),
@@ -76,12 +55,25 @@ public:
 	int open (int domain, int type, int protocol, int traits = 0) QSE_CPP_NOEXCEPT;
 	void close () QSE_CPP_NOEXCEPT;
 
-
-	int shutdown (int how = 2) QSE_CPP_NOEXCEPT;
+	qse_sck_hnd_t getHandle() const QSE_CPP_NOEXCEPT { return this->handle; }
 
 	int getOption (int level, int optname, void* optval, qse_sck_len_t* optlen) QSE_CPP_NOEXCEPT;
 	int setOption (int level, int optname, const void* optval, qse_sck_len_t optlen) QSE_CPP_NOEXCEPT;
 
+	int setDebug (int n) QSE_CPP_NOEXCEPT;
+	int setReuseAddr (int n) QSE_CPP_NOEXCEPT;
+	int setReusePort (int n) QSE_CPP_NOEXCEPT;
+	int setKeepAlive (int n, int keepidle = 0, int keepintvl = 0, int keepcnt = 0) QSE_CPP_NOEXCEPT;
+	int setBroadcast (int n) QSE_CPP_NOEXCEPT;
+	int setSendBuf (unsigned int n) QSE_CPP_NOEXCEPT;
+	int setRecvBuf (unsigned int n) QSE_CPP_NOEXCEPT;
+	int setLingerOn (int sec) QSE_CPP_NOEXCEPT;
+	int setLingerOff () QSE_CPP_NOEXCEPT;
+	int setTcpNodelay (int n) QSE_CPP_NOEXCEPT;
+	int setOobInline (int n) QSE_CPP_NOEXCEPT;
+	int setIpv6Only (int n) QSE_CPP_NOEXCEPT;
+
+	int shutdown (int how = 2) QSE_CPP_NOEXCEPT;
 	int connect (const SocketAddress& target) QSE_CPP_NOEXCEPT;
 	int bind (const SocketAddress& target) QSE_CPP_NOEXCEPT;
 	int listen (int backlog = 128) QSE_CPP_NOEXCEPT;
