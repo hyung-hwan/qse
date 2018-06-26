@@ -47,7 +47,7 @@
 #if defined(_WIN32)
 #	include <windows.h>
 #	include <tchar.h>
-#	if defined(QSE_HAVE_CONFIG_H)
+#	if defined(QSE_HAVE_CONFIG_H) && defined(QSE_ENABLE_LIBLTDL)
 #		include <ltdl.h>
 #		define USE_LTDL
 #	endif
@@ -60,8 +60,15 @@
 	/* nothing to include */
 #else
 #	include <unistd.h>
-#	include <ltdl.h>
-#	define USE_LTDL
+#	if defined(QSE_ENABLE_LIBLTDL)
+#		include <ltdl.h>
+#		define USE_LTDL
+#	elif defined(HAVE_DLFCN_H)
+#		include <dlfcn.h>
+#		define USE_DLFCN
+#	else
+#		error UNSUPPORTED DYNAMIC LINKER
+#	endif
 #endif
 
 #if !defined(QSE_HAVE_CONFIG_H)
@@ -369,6 +376,36 @@ void* qse_awk_stdmodopen (qse_awk_t* awk, const qse_awk_mod_spec_t* spec)
 	QSE_ASSERT (QSE_SIZEOF(h) <= QSE_SIZEOF(void*));
 	return h;
 
+#elif defined(USE_DLFCN)
+
+	void* h;
+	qse_mchar_t* modpath;
+	const qse_char_t* tmp[4];
+	int count;
+
+	count = 0;
+	if (spec->prefix) tmp[count++] = spec->prefix;
+	tmp[count++] = spec->name;
+	if (spec->postfix) tmp[count++] = spec->postfix;
+	tmp[count] = QSE_NULL;
+
+	#if defined(QSE_CHAR_IS_MCHAR)
+	modpath = qse_mbsadup (tmp, QSE_NULL, awk->mmgr);
+	#else
+	modpath = qse_wcsatombsdup (tmp, QSE_NULL, awk->mmgr);
+	#endif
+	if (!modpath)
+	{
+		qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);
+		return QSE_NULL;
+	}
+
+	h = dlopen(modpath, RTLD_NOW);
+
+	QSE_MMGR_FREE (awk->mmgr, modpath);
+
+	return h;
+
 #else
 	qse_awk_seterrnum (awk, QSE_AWK_ENOIMPL, QSE_NULL);
 	return QSE_NULL;
@@ -385,6 +422,8 @@ void qse_awk_stdmodclose (qse_awk_t* awk, void* handle)
 	DosFreeModule ((HMODULE)handle);
 #elif defined(__DOS__) && defined(QSE_ENABLE_DOS_DYNAMIC_MODULE)
 	FreeModule (handle);
+#elif defined(USE_DLFCN)
+	dlclose (handle);
 #else
 	/* nothing to do */
 #endif
@@ -417,6 +456,9 @@ void* qse_awk_stdmodsym (qse_awk_t* awk, void* handle, const qse_char_t* name)
 
 #elif defined(__DOS__) && defined(QSE_ENABLE_DOS_DYNAMIC_MODULE)
 	s = GetProcAddress (handle, mname);
+
+#elif defined(USE_DLFCN)
+	s = dlsym (handle, mname);
 
 #else
 	s = QSE_NULL;
@@ -471,14 +513,26 @@ qse_awk_t* qse_awk_openstdwithmmgr (qse_mmgr_t* mmgr, qse_size_t xtnsize, qse_aw
 	awk = qse_awk_open (mmgr, QSE_SIZEOF(xtn_t) + xtnsize, &prm, errnum);
 	if (awk == QSE_NULL) return QSE_NULL;
 
+
+#if defined(USE_DLFCN)
+	if (qse_awk_setopt(awk, QSE_AWK_MODPOSTFIX, QSE_T(".so")) <= -1) 
+	{
+		if (errnum) *errnum = qse_awk_geterrnum(awk);
+		goto oops;
+	}
+#endif
+
 	/* initialize extension */
 	xtn = (xtn_t*) QSE_XTN (awk);
 	/* the extension area has been cleared in qse_awk_open().
 	 * QSE_MEMSET (xtn, 0, QSE_SIZEOF(*xtn));*/
 
 	/* add intrinsic global variables and functions */
-	if (add_globals(awk) <= -1 ||
-	    add_functions (awk) <= -1) goto oops;
+	if (add_globals(awk) <= -1 || add_functions (awk) <= -1) 
+	{
+		if (errnum) *errnum = qse_awk_geterrnum(awk);
+		goto oops;
+	}
 
 	if (qse_awk_stdmodstartup (awk) <= -1) 
 	{

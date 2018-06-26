@@ -110,6 +110,32 @@ static void* mod_open (qse_httpd_t* httpd, const qse_char_t* sysname)
 
 	QSE_ASSERT (QSE_SIZEOF(h) <= QSE_SIZEOF(void*));
 	return h;
+#elif defined(USE_DLFCN)
+
+	void* h;
+	qse_mchar_t* modpath;
+
+	#if defined(QSE_CHAR_IS_MCHAR)
+	modpath = sysname;
+	#else
+	modpath = qse_wcstombsdup (sysname, QSE_NULL, httpd->mmgr);
+	if (!modpath)
+	{
+		qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOMEM);
+		return QSE_NULL;
+	}
+	#endif
+
+	h = dlopen(modpath, RTLD_NOW);
+	if (!h) qse_httpd_seterrnum (httpd, QSE_HTTPD_ESYSERR);
+
+	#if defined(QSE_CHAR_IS_MCHAR)
+	/* do nothing */
+	#else
+	QSE_MMGR_FREE (httpd->mmgr, modpath);
+	#endif
+
+	return h;
 
 #else
 	qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
@@ -127,6 +153,8 @@ static void mod_close (qse_httpd_t* httpd, void* handle)
 	DosFreeModule ((HMODULE)handle);
 #elif defined(__DOS__) && defined(QSE_ENABLE_DOS_DYNAMIC_MODULE)
 	FreeModule (handle);
+#elif defined(USE_DLFCN)
+	dlclose (handle);
 #else
 	/* nothing to do */
 #endif
@@ -168,6 +196,9 @@ static void* mod_symbol (qse_httpd_t* httpd, void* handle, const qse_char_t* nam
 #elif defined(__DOS__) && defined(QSE_ENABLE_DOS_DYNAMIC_MODULE)
 	s = GetProcAddress (handle, mname);
 	if (s == QSE_NULL) qse_httpd_seterrnum (httpd, syserr_to_errnum(errno));
+#elif defined(USE_DLFCN)
+	s = dlsym (handle, mname);
+	if (s == QSE_NULL) qse_httpd_seterrnum (httpd, QSE_HTTPD_ESYSERR);
 #else
 	s = QSE_NULL;
 	qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);

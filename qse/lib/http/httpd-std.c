@@ -52,9 +52,9 @@
 #	define EPOCH_DIFF_YEARS (QSE_EPOCH_YEAR-QSE_EPOCH_YEAR_WIN)
 #	define EPOCH_DIFF_DAYS  ((qse_long_t)EPOCH_DIFF_YEARS*365+EPOCH_DIFF_YEARS/4-3)
 #	define EPOCH_DIFF_SECS  ((qse_long_t)EPOCH_DIFF_DAYS*24*60*60)
-#	if defined(QSE_HAVE_CONFIG_H)
+#	if defined(QSE_HAVE_CONFIG_H) && defined(QSE_ENABLE_LIBLTDL)
 #		include <ltdl.h>
-#			define USE_LTDL
+#		define USE_LTDL
 #	endif
 
 #	undef AF_UNIX
@@ -132,8 +132,16 @@
 #	endif
 
 #	include <unistd.h>
-#	include <ltdl.h>
-#	define USE_LTDL
+
+#	if defined(QSE_ENABLE_LIBLTDL)
+#		include <ltdl.h>
+#		define USE_LTDL
+#	elif defined(HAVE_DLFCN_H)
+#		include <dlfcn.h>
+#		define USE_DLFCN
+#	else
+#		error UNSUPPORTED DYNAMIC LINKER
+#	endif
 #endif
 
 #if defined(HAVE_OPENSSL_SSL_H) && defined(HAVE_SSL)
@@ -767,12 +775,28 @@ qse_httpd_t* qse_httpd_openstdwithmmgr (qse_mmgr_t* mmgr, qse_size_t xtnsize, qs
 	 * lt_dlexit() shuts down libltdl if it's called as many times as
 	 * corresponding lt_dlinit(). so it's safe to call lt_dlinit()
 	 * and lt_dlexit() at the library level. */
-	if (lt_dlinit () != 0) goto oops;
+	if (lt_dlinit () != 0) 
+	{
+		if (errnum) *errnum = QSE_HTTPD_ESYSERR;
+		goto oops;
+	}
 	lt_dlinited = 1;
+#elif defined(USE_DLFCN)
+	/* don't care about failure */
+	if (qse_httpd_setopt (httpd, QSE_HTTPD_MODPOSTFIX, QSE_T(".so")) <= -1)  
+	{
+		if (errnum) *errnum = qse_httpd_geterrnum(httpd);
+		goto oops;
+	}
 #endif
 
+
 #if defined(USE_SSL)
-	if (init_xtn_peer_ssl (httpd) <= -1) goto oops;
+	if (init_xtn_peer_ssl (httpd) <= -1) 
+	{
+		if (errnum) *errnum = qse_httpd_geterrnum(httpd);
+		goto oops;
+	}
 #endif
 
 	set_httpd_callbacks (httpd);

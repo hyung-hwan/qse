@@ -20,7 +20,13 @@ bin_PROGRAMS = qseawk
 qseawk_SOURCES = awk.c
 qseawk_CFLAGS = $(PTHREAD_CFLAGS)
 qseawk_LDFLAGS = -L../../lib/awk -L../../lib/si -L../../lib/cmn 
-qseawk_LDADD = -lqseawk -lqsesi -lqsecmn $(LIBM) $(LIBLTDL) $(PTHREAD_LIBS)
+qseawk_LDADD = -lqseawk -lqsesi -lqsecmn $(LIBM) $(PTHREAD_LIBS)
+
+if ENABLE_LIBLTDL
+qseawk_LDADD += $(LTDL_LIBS)
+else
+qseawk_LDADD += $(DL_LIBS)
+endif
 
 if WIN32
 if WCHAR

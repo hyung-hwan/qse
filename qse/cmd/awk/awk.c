@@ -60,8 +60,16 @@
 #else
 #	include <unistd.h>
 #	include <errno.h>
-#	include <ltdl.h>
-#	define USE_LTDL
+#	if defined(QSE_ENABLE_LIBLTDL)
+#		include <ltdl.h>
+#		define USE_LTDL
+#	elif defined(HAVE_DLFCN_H)
+#		include <dlfcn.h>
+#		define USE_DLFCN
+#	else
+#		error UNSUPPORTED DYNAMIC LINKER
+#	endif
+
 #endif
 
 static qse_awk_rtx_t* app_rtx = QSE_NULL;

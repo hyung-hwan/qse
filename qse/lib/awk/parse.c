@@ -39,7 +39,7 @@
 #endif
 
 #if !defined(QSE_AWK_DEFAULT_MODPOSTFIX)
-#	define QSE_AWK_DEFAULT_MODPOSTFIX ""
+#	define QSE_DEFAULT_PFMODPOSTFIX ""
 #endif
 
 enum tok_t

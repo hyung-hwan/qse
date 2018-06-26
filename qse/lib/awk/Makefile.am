@@ -12,7 +12,13 @@ LDFLAGS_ALL_COMMON = -L. -L../cmn -L../si -version-info 1:0:0 -no-undefined
 
 CPPFLAGS_LIB_COMMON = $(CPPFLAGS_ALL_COMMON) $(LTDLINCL)
 LDFLAGS_LIB_COMMON = $(LDFLAGS_ALL_COMMON) 
-LIBADD_LIB_COMMON = -lqsecmn -lqsesi $(LIBM) $(LIBLTDL) 
+LIBADD_LIB_COMMON = -lqsecmn -lqsesi $(LIBM)
+
+if ENABLE_LIBLTDL
+LIBADD_LIB_COMMON += $(LTDL_LIBS)
+else
+LIBADD_LIB_COMMON += $(DL_LIBS)
+endif
 
 if WIN32
 # you must adjust the value of DEFAULT_MODPOSTFIX according 
