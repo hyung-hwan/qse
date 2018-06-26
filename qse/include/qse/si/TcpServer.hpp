@@ -212,7 +212,7 @@ public:
 		try
 		{
 			// TODO: are there any ways to achieve this without memory allocation?
-			this->__lfunc = new TCallable<T> (QSE_CPP_RVREF(f));
+			//this->__lfunc = new TCallable<T> (QSE_CPP_RVREF(f));
 		}
 		catch (...)
 		{

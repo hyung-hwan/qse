@@ -51,32 +51,6 @@ dnl initialize libtool
 LT_INIT
 AC_SUBST(LIBTOOL_DEPS)
 
-dnl 'recursive' type seems to have problems in setting LT_CONFIG_H
-dnl so i use the classic 'subproject' type here
-LT_CONFIG_LTDL_DIR([libltdl])
-
-save_CFLAGS="$CFLAGS"
-save_LDFLAGS="$LDFLAGS"
-save_LIBS="$LIBS"
-LTDL_INIT(convenience)
-LDFLAGS="$save_LDFLAGS"
-CFLAGS="$save_CFLAGS"
-LIBS="$save_LIBS"
-
-dnl The lt_dladvise_init symbol was added with libtool-2.2
-if test "x$with_included_ltdl" != "xyes"; then
-	save_CFLAGS="$CFLAGS"
-	save_LDFLAGS="$LDFLAGS"
-	save_LIBS="$LIBS"
-	CFLAGS="$CFLAGS $LTDLINCL"
-	LDFLAGS="$LDFLAGS $LIBLTDL"
-	AC_CHECK_LIB([ltdl], [lt_dladvise_init], [],
-	             [AC_MSG_ERROR([installed libltdl is too old. install a newer libltdl or specify --with-included-ltdl])])
-	LDFLAGS="$save_LDFLAGS"
-	CFLAGS="$save_CFLAGS"
-	LIBS="$save_LIBS"
-fi
-
 dnl overrides the default CFLAGS setting
 if test "$ac_test_CFLAGS" != "set"
 then
@@ -131,6 +105,7 @@ AC_CHECK_HEADERS([net/if.h net/if_dl.h], [], [], [
 	#include <sys/socket.h>])
 AC_CHECK_HEADERS([sys/stropts.h sys/macstat.h linux/ethtool.h linux/sockios.h])
 AC_CHECK_HEADERS([quadmath.h crt_externs.h sys/prctl.h uci.h])
+AC_CHECK_HEADERS([ltdl.h dlfcn.h])
 
 dnl check data types
 dnl AC_CHECK_TYPE([wchar_t], 
@@ -164,6 +139,28 @@ AC_CHECK_FUNCS([powl fmodl sinl cosl tanl sinhl coshl tanhl asinl acosl atanl at
 AC_CHECK_FUNCS([pow fmod sin cos tan sinh cosh tanh asin acos atan atan2 log log2 log10 exp sqrt ceil floor round])
 AC_CHECK_FUNCS([powf fmodf sinf cosf tanf sinhf coshf tanhf asinf acosf atanf atan2f logf log2f log10f expf sqrtf ceilf floorf roundf])
 LIBS="$OLDLIBS"
+
+save_LIBS="$LIBS"
+AC_SEARCH_LIBS([dlopen], [dl dld], [
+	DL_LIBS="$ac_cv_search_dlopen"
+	if test "x${DL_LIBS}" = "xnone required"
+	then
+		DL_LIBS=""
+	fi
+])
+LIBS="$save_LIBS"
+AC_SUBST(DL_LIBS)
+
+save_LIBS="$LIBS"
+AC_SEARCH_LIBS([lt_dlopen], [ltdl], [
+	LTDL_LIBS="$ac_cv_search_lt_dlopen"
+	if test "x${LTDL_LIBS}" = "xnone required"
+	then
+		LTDL_LIBS=""
+	fi
+])
+LIBS="$save_LIBS"
+AC_SUBST(LTDL_LIBS)
 
 dnl OLDLIBS="$LIBS"
 dnl AC_SEARCH_LIBS([connect], [socket])
@@ -781,6 +778,24 @@ AC_C_BIGENDIAN(
 	[AC_DEFINE([QSE_ENDIAN_BIG],[],[Big Endian])],
 	[AC_DEFINE([QSE_ENDIAN_LITTLE],[],[Little Endian])],
 	[AC_DEFINE([QSE_ENDIAN_UNKNOWN],[],[Unknown Endian])])
+
+dnl ===== enable-libltdl =====
+AC_ARG_ENABLE([libltdl],
+	[AS_HELP_STRING([--enable-libltdl],[use libltdl(default. no)])],
+	enable_libltdl_is=$enableval,
+	enable_libltdl_is=no
+)
+if test "x${enable_libltdl_is}" = "xyes"
+then
+	if test "x${ac_cv_header_ltdl_h}" = "xyes"  -a "${LTDL_LIBS}" != ""
+	then
+		AC_DEFINE([QSE_ENABLE_LIBLTDL],[],[use libltdl when loading a dynamic module])
+	else
+		enable_libltdl_is="no"
+	fi
+fi
+AM_CONDITIONAL(ENABLE_LIBLTDL, test "x${enable_libltdl_is}" = "xyes")
+
 
 dnl define extra options
 AC_ARG_ENABLE([wchar], [AS_HELP_STRING([--enable-wchar],[Use the wide character type as the default charater type when enabled (default. yes)])],
