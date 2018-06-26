@@ -43,7 +43,6 @@ class TcpServer: public Uncopyable, public Types
 {
 public:
 	TcpServer () QSE_CPP_NOEXCEPT;
-	TcpServer (const SocketAddress& address) QSE_CPP_NOEXCEPT;
 	virtual ~TcpServer () QSE_CPP_NOEXCEPT;
 
 	enum 
@@ -55,8 +54,7 @@ public:
 		ERR_EXCEPTION = 4
 	};
 
-	virtual int start (const qse_mchar_t* addrs) QSE_CPP_NOEXCEPT;
-	virtual int start (const qse_wchar_t* addrs) QSE_CPP_NOEXCEPT;
+	virtual int start (const qse_char_t* addrs) QSE_CPP_NOEXCEPT;
 	virtual int stop () QSE_CPP_NOEXCEPT;
 
 	ErrorCode getErrorCode () const QSE_CPP_NOEXCEPT { return this->errcode; }
@@ -74,16 +72,6 @@ public:
 	void setStopRequested (bool req) QSE_CPP_NOEXCEPT
 	{
 		this->stop_requested = req;
-	}
-
-	const SocketAddress& getBindingAddress () const QSE_CPP_NOEXCEPT
-	{
-		return this->binding_address;
-	}
-	void setBindingAddress (const SocketAddress& address) QSE_CPP_NOEXCEPT
-	{
-		QSE_ASSERT (this->server_serving == false);
-		this->binding_address = address;
 	}
 
 	qse_size_t getMaxConnections () const QSE_CPP_NOEXCEPT
@@ -133,12 +121,12 @@ protected:
 
 		Client (TcpServer* server);
 
-		int run ();
+		int main ();
 		int stop () QSE_CPP_NOEXCEPT;
 
 	private:
 		TcpServer* server;
-		QSE::Socket  socket;
+		QSE::Socket socket;
 		SocketAddress address;
 	};
 
@@ -160,7 +148,6 @@ protected:
 	} listener;
 
 	ErrorCode errcode;
-	SocketAddress binding_address;
 	bool          stop_requested;
 	bool          server_serving;
 	qse_size_t    max_connections;

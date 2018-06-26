@@ -227,7 +227,7 @@ public:
 		E_EINTR,
 		E_EPIPE,
 		E_EINPROG, /* in progress */
-		E_EAGAIN  /* resource unavailable unavailable */
+		E_EAGAIN   /* resource unavailable unavailable */
 	};
 };
 
