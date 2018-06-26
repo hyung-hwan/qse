@@ -96,26 +96,17 @@ TcpServer::TcpServer (const SocketAddress& address):
 
 TcpServer::~TcpServer () QSE_CPP_NOEXCEPT
 {
-	// QSE_ASSERT (server_serving == false);
+	// QSE_ASSERT (this->server_serving == false);
 	this->delete_all_clients ();
 }
 
-int TcpServer::start (int* err_code) QSE_CPP_NOEXCEPT
+int TcpServer::open_tcp_socket (Socket& socket, int* err_code) QSE_CPP_NOEXCEPT
 {
-	return this->start(true, err_code);
-}
-
-int TcpServer::open_tcp_socket (Socket& socket, bool winsock_inheritable, int* err_code) QSE_CPP_NOEXCEPT
-{
-	if (socket.open(this->binding_address.getFamily(), QSE_SOCK_STREAM, 0) <= -1)
+	if (socket.open(this->binding_address.getFamily(), QSE_SOCK_STREAM, Socket::T_CLOEXEC | Socket::T_NONBLOCK) <= -1)
 	{
 		if (err_code) *err_code = ERR_OPEN;
 		return -1;
 	}
-
-#if defined(_WIN32)
-	SetHandleInformation ((HANDLE)socket.handle(), HANDLE_FLAG_INHERIT, (winsock_inheritable? HANDLE_FLAG_INHERIT: 0));
-#endif
 
 	//socket.setReuseAddr (true);
 	//socket.setReusePort (true);
@@ -136,7 +127,7 @@ int TcpServer::open_tcp_socket (Socket& socket, bool winsock_inheritable, int* e
 	return 0;
 }
 
-int TcpServer::start (bool winsock_inheritable, int* err_code) QSE_CPP_NOEXCEPT
+int TcpServer::start (int* err_code) QSE_CPP_NOEXCEPT
 {
 	this->server_serving = true;
 	if (err_code != QSE_NULL) *err_code = ERR_NONE;
@@ -149,7 +140,7 @@ int TcpServer::start (bool winsock_inheritable, int* err_code) QSE_CPP_NOEXCEPT
 	{
 		Socket socket;
 
-		if (this->open_tcp_socket(socket, winsock_inheritable, err_code) <= -1)
+		if (this->open_tcp_socket(socket, err_code) <= -1)
 		{
 			this->server_serving = false;
 			this->setStopRequested (false);
@@ -204,7 +195,7 @@ int TcpServer::start (bool winsock_inheritable, int* err_code) QSE_CPP_NOEXCEPT
 					socket.close ();
 
 				reopen:
-					if (this->open_tcp_socket (socket, winsock_inheritable, err_code) <= -1)
+					if (this->open_tcp_socket (socket, err_code) <= -1)
 					{
 						if (reopen_count >= 100) 
 						{

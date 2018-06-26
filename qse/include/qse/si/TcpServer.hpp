@@ -56,7 +56,6 @@ public:
 	};
 
 	virtual int start (int* err_code = QSE_NULL) QSE_CPP_NOEXCEPT;
-	virtual int start (bool winsock_inheritable, int* err_code = QSE_NULL) QSE_CPP_NOEXCEPT;
 	virtual int stop () QSE_CPP_NOEXCEPT;
 
 	bool isServing () const QSE_CPP_NOEXCEPT
@@ -126,6 +125,11 @@ public:
 	}
 
 protected:
+	class Listener: public QSE::Socket
+	{
+		Listener* next_listener;
+	};
+
 	class Client: public QSE::Thread 
 	{
 	public:
@@ -141,6 +145,9 @@ protected:
 		QSE::Socket  socket;
 		SocketAddress address;
 	};
+
+	Listener* listener_head;
+	Listener* listener_tail;
 
 	SocketAddress binding_address;
 	bool          stop_requested;
@@ -158,7 +165,7 @@ protected:
 private:
 	void delete_dead_clients () QSE_CPP_NOEXCEPT;
 	void delete_all_clients  () QSE_CPP_NOEXCEPT;
-	int open_tcp_socket (Socket& socket, bool winsock_inheritable, int* err_code) QSE_CPP_NOEXCEPT;
+	int open_tcp_socket (Socket& socket, int* err_code) QSE_CPP_NOEXCEPT;
 };
 
 
@@ -213,6 +220,7 @@ public:
 		{
 			// TODO: are there any ways to achieve this without memory allocation?
 			//this->__lfunc = new TCallable<T> (QSE_CPP_RVREF(f));
+		// TODO:	this->__lfunc = new TCallable<T> (QSE_CPP_RVREF(f));
 		}
 		catch (...)
 		{
