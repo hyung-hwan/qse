@@ -20,6 +20,7 @@ class ClientHandler
 public:
 	int operator() (QSE::Socket* sck, QSE::SocketAddress* addr)
 	{
+qse_printf (QSE_T("XXXXXXXXXXXXXXXXXXXXXXXXXX\n"));p
 		return 0;
 	}
 };
@@ -27,13 +28,8 @@ public:
 static int test1 (void)
 {
 	QSE::TcpServerF<ClientHandler> server;
-
-	QSE::SocketAddress addr;
-	addr.set ("0.0.0.0:9998");
-
 	server.setThreadStackSize (256000);
-	server.setBindingAddress (addr);
-	server.start ();
+	server.start (QSE_T("0.0.0.0:9998"));
 	return 0;
 }
 
