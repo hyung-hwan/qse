@@ -243,12 +243,14 @@ int Socket::setIpv6Only (int n) QSE_CPP_NOEXCEPT
 
 int Socket::shutdown (int how) QSE_CPP_NOEXCEPT
 {
-	QSE_ASSERT (this->handle != QSE_INVALID_SCKHND);
-
-	if (::shutdown(this->handle, how) == -1)
+	if (this->handle != QSE_INVALID_SCKHND)
 	{
-		this->setErrorCode (syserr_to_errnum(errno));
-		return -1;
+		// i put this guard to allow multiple calls to shutdown().
+		if (::shutdown(this->handle, how) == -1)
+		{
+			this->setErrorCode (syserr_to_errnum(errno));
+			return -1;
+		}
 	}
 
 	return 0;

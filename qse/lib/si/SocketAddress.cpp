@@ -227,6 +227,22 @@ int SocketAddress::set (const qse_wchar_t* str, qse_size_t len) QSE_CPP_NOEXCEPT
 	return qse_nwadtoskad(&nwad, &this->skad);
 }
 
+qse_wchar_t* SocketAddress::toStrBuf (qse_wchar_t* buf, qse_size_t len) const QSE_CPP_NOEXCEPT
+{
+	qse_nwad_t nwad;
+	qse_skadtonwad (&this->skad, &nwad);
+	qse_nwadtowcs (&nwad, buf, len, QSE_NWADTOWCS_ALL);
+	return buf;
+}
+
+qse_mchar_t* SocketAddress::toStrBuf (qse_mchar_t* buf, qse_size_t len) const QSE_CPP_NOEXCEPT
+{
+	qse_nwad_t nwad;
+	qse_skadtonwad (&this->skad, &nwad);
+	qse_nwadtombs (&nwad, buf, len, QSE_NWADTOWCS_ALL);
+	return buf;
+}
+
 /////////////////////////////////
 QSE_END_NAMESPACE(QSE)
 /////////////////////////////////

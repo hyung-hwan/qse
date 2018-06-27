@@ -78,6 +78,9 @@ public:
 	int set (const qse_wchar_t* str, qse_size_t len) QSE_CPP_NOEXCEPT;
 
 
+	qse_mchar_t* toStrBuf (qse_mchar_t* buf, qse_size_t len) const QSE_CPP_NOEXCEPT;
+	qse_wchar_t* toStrBuf (qse_wchar_t* buf, qse_size_t len) const QSE_CPP_NOEXCEPT;
+
 protected:
 	qse_skad_t skad;
 };

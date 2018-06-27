@@ -1,7 +1,9 @@
 #include <qse/si/TcpServer.hpp>
 #include <qse/si/mtx.h>
 #include <qse/si/sio.h>
+#include <qse/si/os.h>
 #include <qse/cmn/mem.h>
+
 
 #include <locale.h>
 #if defined(_WIN32)
@@ -33,11 +35,17 @@ static QSE::TcpServerF<ClientHandler>* g_server;
 static int test1 (void)
 {
 #if defined(QSE_LANG_CPP11)
-	int x, y;
-
 	QSE::TcpServerL<int(QSE::Socket*,QSE::SocketAddress*)> server (
-		([&x, &y](QSE::Socket* clisock, QSE::SocketAddress* cliaddr) { 
-qse_printf (QSE_T("hello word......\n"));
+		([&server](QSE::Socket* clisock, QSE::SocketAddress* cliaddr) { 
+			qse_char_t buf[128];
+			qse_uint8_t bb[256];
+
+			while (!server.isStopRequested())
+			{
+qse_printf (QSE_T("hello word..from %s\n"), cliaddr->toStrBuf(buf, QSE_COUNTOF(buf)));
+				if (clisock->receive (bb, QSE_COUNTOF(bb)) <= 0) break;
+			}
+qse_printf (QSE_T("bye..to %s\n"), cliaddr->toStrBuf(buf, QSE_COUNTOF(buf)));
 			return 0;
 		})
 	);
@@ -47,7 +55,9 @@ qse_printf (QSE_T("hello word......\n"));
 
 	server.setThreadStackSize (256000);
 	g_server = &server;
-	server.start (QSE_T("0.0.0.0:9998"));
+	//server.start (QSE_T("0.0.0.0:9998"));
+	server.start (QSE_T("[::]:9998,0.0.0.0:9998"));
+	//server.start (QSE_T("[fe80::1c4:a90d:a0f0:d52%wlan0]:9998,0.0.0.0:9998"));
 	g_server = QSE_NULL;
 	return 0;
 }

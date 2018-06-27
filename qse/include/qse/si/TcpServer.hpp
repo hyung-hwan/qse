@@ -32,7 +32,7 @@
 #include <qse/si/Thread.hpp>
 #include <qse/cmn/LinkedList.hpp>
 #include <qse/Uncopyable.hpp>
-
+#include <qse/si/mtx.h>
 
 QSE_BEGIN_NAMESPACE(QSE)
 
@@ -101,6 +101,9 @@ protected:
 	class Listener: public QSE::Socket
 	{
 	public:
+		Listener(TcpServer* server) QSE_CPP_NOEXCEPT : server(server), next_listener(QSE_NULL) {}
+
+		TcpServer* server;
 		SocketAddress address;
 		Listener* next_listener;
 	};
@@ -110,15 +113,24 @@ protected:
 	public:
 		friend class TcpServer;
 
-		Client (TcpServer* server);
+		Client (Listener* listener) QSE_CPP_NOEXCEPT : listener(listener) {}
+		~Client ();
 
 		int main ();
 		int stop () QSE_CPP_NOEXCEPT;
 
+		Listener* getListener() QSE_CPP_NOEXCEPT { return this->listener; }
+		const Listener* getListener() const QSE_CPP_NOEXCEPT { return this->listener; }
+
+		TcpServer* getServer() QSE_CPP_NOEXCEPT { return this->listener->server; }
+		const TcpServer* getServer() const QSE_CPP_NOEXCEPT { return this->listener->server; }
+
 	private:
-		TcpServer* server;
+		Listener* listener;
 		QSE::Socket socket;
 		SocketAddress address;
+
+		qse_mtx_t* csmtx; /* mutex for client stop */
 	};
 
 	struct ListenerList
@@ -232,17 +244,6 @@ public:
 		return 0;
 	}
 
-	int handle_client (Socket* sock, SocketAddress* addr)
-	{
-		if (!this->__lfunc)
-		{
-			//this->setErrorCode (TcpServer::E_ENOMEM or E_EINVAL??);
-			return -1;
-		}
-
-		return this->__lfunc->invoke(sock, addr);
-	}
-
 protected:
 	class Callable
 	{
@@ -264,6 +265,18 @@ protected:
 	};
 
 	Callable* __lfunc;
+
+
+	int handle_client (Socket* sock, SocketAddress* addr)
+	{
+		if (!this->__lfunc)
+		{
+			//this->setErrorCode (TcpServer::E_ENOMEM or E_EINVAL??);
+			return -1;
+		}
+
+		return this->__lfunc->invoke(sock, addr);
+	}
 };
 
 #endif
