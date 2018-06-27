@@ -36,13 +36,13 @@
 
 QSE_BEGIN_NAMESPACE(QSE)
 
-
 #include "../cmn/syserr.h"
 IMPLEMENT_SYSERR_TO_ERRNUM (TcpServer::ErrorCode, TcpServer::)
 
-TcpServer::Client::Client (TcpServer* server) 
+
+TcpServer::Client::~Client()
 {
-	this->server = server;
+	if (this->csmtx) qse_mtx_close(this->csmtx);
 }
 
 //
@@ -52,9 +52,16 @@ TcpServer::Client::Client (TcpServer* server)
 //
 class guarantee_tcpsocket_close {
 public:
-	guarantee_tcpsocket_close (Socket* socket): psck (socket) {}
-	~guarantee_tcpsocket_close () { psck->shutdown (); psck->close (); }
+	guarantee_tcpsocket_close (Socket* socket, qse_mtx_t* mtx): psck(socket), mtx(mtx) {}
+	~guarantee_tcpsocket_close () 
+	{ 
+		qse_mtx_lock (this->mtx, QSE_NULL);
+		/*psck->shutdown ();*/
+		psck->close (); 
+		qse_mtx_unlock (this->mtx);
+	}
 	Socket* psck;
+	qse_mtx_t* mtx;
 };
 
 int TcpServer::Client::main ()
@@ -65,8 +72,8 @@ int TcpServer::Client::main ()
 	// it would just block signals to the TcpProxy thread.
 	this->blockAllSignals (); // don't care about the result.
 
-	guarantee_tcpsocket_close close_socket (&this->socket);
-	if (server->handle_client(&this->socket, &this->address) <= -1) return -1;
+	guarantee_tcpsocket_close close_socket (&this->socket, this->csmtx);
+	if (this->listener->server->handle_client(&this->socket, &this->address) <= -1) return -1;
 	return 0;
 }
 
@@ -81,8 +88,10 @@ int TcpServer::Client::stop () QSE_CPP_NOEXCEPT
 	//       as it might not be thread-safe.
 	//       but it is still ok because Client::stop() 
 	//       is rarely called.
+	qse_mtx_lock (this->csmtx, QSE_NULL);
 	this->socket.shutdown ();
-	this->socket.close ();
+	//this->socket.close ();
+	qse_mtx_unlock (this->csmtx);
 	return 0;
 }
 
@@ -201,7 +210,7 @@ int TcpServer::setup_listeners (const qse_char_t* addrs) QSE_CPP_NOEXCEPT
 
 		try 
 		{ 
-			lsck = new Listener(); 
+			lsck = new Listener(this); 
 		}
 		catch (...) 
 		{
@@ -298,7 +307,6 @@ int TcpServer::start (const qse_char_t* addrs) QSE_CPP_NOEXCEPT
 				break;
 			}
 
-
 			while (n > 0)
 			{
 				struct epoll_event* evp;
@@ -318,7 +326,6 @@ int TcpServer::start (const qse_char_t* addrs) QSE_CPP_NOEXCEPT
 					/* the reset should be the listener's socket */
 					Listener* lsck = (Listener*)evp->data.ptr;
 
-
 					if (this->max_connections > 0 && this->max_connections <= this->client_list.getSize()) 
 					{
 						// too many connections. accept the connection and close it.
@@ -333,7 +340,7 @@ int TcpServer::start (const qse_char_t* addrs) QSE_CPP_NOEXCEPT
 						// allocating the client object before accept is 
 						// a bit awkward. but socket.accept() can be passed
 						// the socket field inside the client object.
-						try { client = new Client (this); } 
+						try { client = new Client (lsck); } 
 						catch (...) { }
 					}
 					if (client == QSE_NULL) 
@@ -355,6 +362,15 @@ int TcpServer::start (const qse_char_t* addrs) QSE_CPP_NOEXCEPT
 						this->setErrorCode (lerr);
 						xret = -1;
 						break;
+					}
+
+					client->csmtx = qse_mtx_open(QSE_MMGR_GETDFL(), 0);
+					if (!client->csmtx)
+					{
+						// TODO: logging  .... 
+						// don't delete client. just close the socket. for reuse.
+						client->socket.close (); 
+						continue;
 					}
 
 					client->setStackSize (this->thread_stack_size);
@@ -416,7 +432,7 @@ int TcpServer::stop () QSE_CPP_NOEXCEPT
 void TcpServer::delete_dead_clients () QSE_CPP_NOEXCEPT
 {
 	ClientList::Node* np, * np2;
-	
+
 	np = this->client_list.getHeadNode();
 	while (np) 
 	{
