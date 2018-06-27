@@ -13,7 +13,9 @@
 #include <string.h>
 
 
-
+#if defined(QSE_LANG_CPP11)
+QSE::TcpServerL<int(QSE::Socket*,QSE::SocketAddress*)>* g_server;
+#else
 
 class ClientHandler
 {
@@ -26,35 +28,27 @@ qse_printf (QSE_T("XXXXXXXXXXXXXXXXXXXXXXXXXX\n"));
 };
 
 static QSE::TcpServerF<ClientHandler>* g_server;
+#endif
 
 static int test1 (void)
 {
+#if defined(QSE_LANG_CPP11)
+	int x, y;
+
+	QSE::TcpServerL<int(QSE::Socket*,QSE::SocketAddress*)> server (
+		([&x, &y](QSE::Socket* clisock, QSE::SocketAddress* cliaddr) { 
+qse_printf (QSE_T("hello word......\n"));
+			return 0;
+		})
+	);
+#else
 	QSE::TcpServerF<ClientHandler> server;
+#endif
+
 	server.setThreadStackSize (256000);
 	g_server = &server;
 	server.start (QSE_T("0.0.0.0:9998"));
 	g_server = QSE_NULL;
-	return 0;
-}
-
-static int test2 (void)
-{
-#if defined(QSE_LANG_CPP11)
-
-	QSE::TcpServerL<int(QSE::Thread*)> server;
-	thr5.setStackSize (64000);
-
-	if (server.start(
-		([](QSE::Socket* clisock, QSE::SocketAddress* cliaddr) { 
-			return 0;
-		})
-	) <= -1)
-	{
-		qse_printf (QSE_T("cannot start server\n"));
-		return -1;
-	}
-#endif
-
 	return 0;
 }
 

@@ -190,34 +190,57 @@ class TcpServerL<RT(ARGS...)>: public TcpServer
 {
 public:
 	TcpServerL () QSE_CPP_NOEXCEPT: __lfunc(nullptr) {}
+
+	template <typename T>
+	TcpServerL (T&& f) QSE_CPP_NOEXCEPT: __lfunc(nullptr)
+	{
+		try
+		{
+			// TODO: are there any ways to achieve this without memory allocation?
+			this->__lfunc = new TCallable<T> (QSE_CPP_RVREF(f));
+		}
+		catch (...)
+		{
+			// upon failure, i set this->__lfunc to null.
+			// this->handle_client() will return failure for this.
+			this->__lfunc = nullptr;
+		}
+	}
+
 	~TcpServerL () QSE_CPP_NOEXCEPT 
 	{ 
 		if (this->__lfunc) delete this->__lfunc; 
 	}
 
-	static int call_func (qse_thr_t* thr, void* ctx)
-	{
-		TcpServerL* t = (TcpServerL*)ctx;
-		return t->__lfunc->invoke(t);
-	}
-
 	template <typename T>
-	int handle_client (Socket* sock, SocketAddress* addr)
+	int setClientHandler (T&& f) QSE_CPP_NOEXCEPT
 	{
-		if (this->__state == QSE_THR_RUNNING) return -1;
-		if (this->__lfunc) delete this->__lfunc;
+		Callable* lf;
+
 		try
 		{
 			// TODO: are there any ways to achieve this without memory allocation?
-			//this->__lfunc = new TCallable<T> (QSE_CPP_RVREF(f));
-		// TODO:	this->__lfunc = new TCallable<T> (QSE_CPP_RVREF(f));
+			lf = new TCallable<T> (QSE_CPP_RVREF(f));
 		}
 		catch (...)
 		{
-			this->__lfunc = nullptr;
 			return -1;
 		}
-		return this->__lfunc->invoke (sock, addr);
+
+		if (this->__lfunc) delete this->__lfunc;
+		this->__lfunc = lf;
+		return 0;
+	}
+
+	int handle_client (Socket* sock, SocketAddress* addr)
+	{
+		if (!this->__lfunc)
+		{
+			//this->setErrorCode (TcpServer::E_ENOMEM or E_EINVAL??);
+			return -1;
+		}
+
+		return this->__lfunc->invoke(sock, addr);
 	}
 
 protected:
