@@ -89,7 +89,7 @@ struct qse_mux_t
 {
 	qse_mmgr_t*      mmgr;
 	qse_mux_errnum_t errnum;
-	qse_mux_evtfun_t evtfun;
+	qse_mux_evtcb_t evtcb;
 
 #if defined(USE_SELECT)
 	fd_set rset;
@@ -147,7 +147,7 @@ struct qse_mux_t
 int qse_mux_init (
 	qse_mux_t*       mux,
 	qse_mmgr_t*      mmgr,
-	qse_mux_evtfun_t evtfun,
+	qse_mux_evtcb_t evtcb,
 	qse_size_t       capahint
 );
 void qse_mux_fini (qse_mux_t* mux);
@@ -265,15 +265,15 @@ static qse_mux_errnum_t skerr_to_errnum (int e)
 
 qse_mux_t* qse_mux_open (
 	qse_mmgr_t* mmgr, qse_size_t xtnsize, 
-	qse_mux_evtfun_t evtfun, qse_size_t capahint, 
+	qse_mux_evtcb_t evtcb, qse_size_t capahint, 
 	qse_mux_errnum_t* errnum)
 {
 	qse_mux_t* mux;
 	
-	mux = QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(*mux) + xtnsize);
+	mux = QSE_MMGR_ALLOC(mmgr, QSE_SIZEOF(*mux) + xtnsize);
 	if (mux)
 	{
-		if (qse_mux_init (mux, mmgr, evtfun, capahint) <= -1)
+		if (qse_mux_init(mux, mmgr, evtcb, capahint) <= -1)
 		{
 			if (errnum) *errnum = qse_mux_geterrnum (mux);
 			QSE_MMGR_FREE (mmgr, mux);
@@ -294,11 +294,11 @@ void qse_mux_close (qse_mux_t* mux)
 
 int qse_mux_init (
 	qse_mux_t* mux, qse_mmgr_t* mmgr,
-	qse_mux_evtfun_t evtfun, qse_size_t capahint)
+	qse_mux_evtcb_t evtcb, qse_size_t capahint)
 {
 	QSE_MEMSET (mux, 0, QSE_SIZEOF(*mux));
 	mux->mmgr = mmgr;
-	mux->evtfun = evtfun;
+	mux->evtcb = evtcb;
 
 	/* epoll_create returns an error and set errno to EINVAL
 	 * if size is 0. Having a positive size greater than 0
@@ -860,13 +860,16 @@ int qse_mux_poll (qse_mux_t* mux, const qse_ntime_t* tmout)
 	struct timeval tv;
 	int n;
 
-	tv.tv_sec = tmout->sec;
-	tv.tv_usec = QSE_NSEC_TO_USEC (tmout->nsec);
+	if (tmout)
+	{
+		tv.tv_sec = tmout->sec;
+		tv.tv_usec = QSE_NSEC_TO_USEC (tmout->nsec);
+	}
 
 	mux->tmprset = mux->rset;
 	mux->tmpwset = mux->wset;
 
-	n = select (mux->maxhnd + 1, &mux->tmprset, &mux->tmpwset, QSE_NULL, &tv); 
+	n = select(mux->maxhnd + 1, &mux->tmprset, &mux->tmpwset, QSE_NULL, (tmout? &tv: QSE_NULL)); 
 	if (n <= -1)
 	{
 	#if defined(_WIN32)
@@ -896,7 +899,7 @@ int qse_mux_poll (qse_mux_t* mux, const qse_ntime_t* tmout)
 			if ((evt->mask & QSE_MUX_OUT) &&
 			    FD_ISSET(evt->hnd, &mux->tmpwset)) xevt.mask |= QSE_MUX_OUT;
 
-			if (xevt.mask > 0) mux->evtfun (mux, &xevt);
+			if (xevt.mask > 0) mux->evtcb (mux, &xevt);
 		}
 	}
 
@@ -906,11 +909,14 @@ int qse_mux_poll (qse_mux_t* mux, const qse_ntime_t* tmout)
 	int nevs;
 	struct timespec ts;
 
-	ts.tv_sec = tmout->sec;
-	ts.tv_nsec = tmout->nsec;
+	if (tmout)
+	{
+		ts.tv_sec = tmout->sec;
+		ts.tv_nsec = tmout->nsec;
+	}
 
 	/* wait for events */
-	nevs = kevent (mux->kq, QSE_NULL, 0, mux->evlist, QSE_COUNTOF(mux->evlist), &ts);
+	nevs = kevent(mux->kq, QSE_NULL, 0, mux->evlist, QSE_COUNTOF(mux->evlist), (tmout? &ts: QSE_NULL));
 	if (nevs <= -1) 
 	{
 		mux->errnum = skerr_to_errnum(errno);
@@ -939,7 +945,7 @@ int qse_mux_poll (qse_mux_t* mux, const qse_ntime_t* tmout)
 			if ((evt->mask & QSE_MUX_OUT) &&
 			    mux->evlist[i].filter == EVFILT_WRITE) xevt.mask |= QSE_MUX_OUT;
 
-			if (xevt.mask > 0) mux->evtfun (mux, &xevt);
+			if (xevt.mask > 0) mux->evtcb (mux, &xevt);
 		}
 	}
 
@@ -949,9 +955,9 @@ int qse_mux_poll (qse_mux_t* mux, const qse_ntime_t* tmout)
 	int nfds, i;
 	qse_mux_evt_t* evt, xevt;
 
-	nfds = epoll_wait (
+	nfds = epoll_wait(
 		mux->fd, mux->ee.ptr, mux->ee.len, 
-		QSE_SECNSEC_TO_MSEC(tmout->sec,tmout->nsec)
+		(tmout? QSE_SECNSEC_TO_MSEC(tmout->sec,tmout->nsec): -1)
 	);
 	if (nfds <= -1)
 	{
@@ -978,7 +984,7 @@ int qse_mux_poll (qse_mux_t* mux, const qse_ntime_t* tmout)
 			if (evt->mask & QSE_MUX_OUT) xevt.mask |= QSE_MUX_OUT;
 		}
 
-		if (xevt.mask > 0) mux->evtfun (mux, &xevt);
+		if (xevt.mask > 0) mux->evtcb (mux, &xevt);
 	}
 
 	return nfds;
@@ -988,8 +994,8 @@ int qse_mux_poll (qse_mux_t* mux, const qse_ntime_t* tmout)
 	qse_mux_evt_t* evt;
 	long tv;
 	int n, i, count, rcount, wcount;
-	
-	tv = QSE_SEC_TO_MSEC(tmout->sec) + QSE_NSEC_TO_MSEC (tmout->nsec);
+
+	tv = tmout? (QSE_SEC_TO_MSEC(tmout->sec) + QSE_NSEC_TO_MSEC (tmout->nsec)): -1;
 
 	/* 
 	 * be aware that reconstructing this array every time is pretty 
@@ -1033,12 +1039,11 @@ int qse_mux_poll (qse_mux_t* mux, const qse_ntime_t* tmout)
 			 * both IN and OUT at the same time. they are 
 			 * triggered separately */
 			xevt.mask = (i < rcount)? QSE_MUX_IN: QSE_MUX_OUT;
-			mux->evtfun (mux, &xevt);
+			mux->evtcb (mux, &xevt);
 		}
 	}
 
 	return n;
-
 
 #else
 	/* TODO */

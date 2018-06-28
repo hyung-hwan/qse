@@ -22,9 +22,19 @@ QSE::TcpServerL<int(QSE::Socket*,QSE::SocketAddress*)>* g_server;
 class ClientHandler
 {
 public:
-	int operator() (QSE::Socket* sck, QSE::SocketAddress* addr)
+	int operator() (QSE::TcpServer* server, QSE::Socket* clisock, QSE::SocketAddress* cliaddr)
 	{
-qse_printf (QSE_T("XXXXXXXXXXXXXXXXXXXXXXXXXX\n"));
+		qse_char_t buf[128];
+		qse_uint8_t bb[256];
+		qse_ssize_t n;
+
+		while (!server->isStopRequested())
+		{
+qse_printf (QSE_T("hello word..from %s\n"), cliaddr->toStrBuf(buf, QSE_COUNTOF(buf)));
+			if ((n = clisock->receive(bb, QSE_COUNTOF(bb))) <= 0) break;
+			clisock->send (bb, n);
+		}
+qse_printf (QSE_T("bye..to %s\n"), cliaddr->toStrBuf(buf, QSE_COUNTOF(buf)));
 		return 0;
 	}
 };
