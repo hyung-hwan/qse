@@ -30,9 +30,10 @@
 #include <qse/si/Socket.hpp>
 #include <qse/si/SocketAddress.hpp>
 #include <qse/si/Thread.hpp>
+#include <qse/si/SpinLock.hpp>
 #include <qse/cmn/LinkedList.hpp>
 #include <qse/Uncopyable.hpp>
-#include <qse/si/mtx.h>
+
 
 QSE_BEGIN_NAMESPACE(QSE)
 
@@ -114,7 +115,6 @@ protected:
 		friend class TcpServer;
 
 		Client (Listener* listener) QSE_CPP_NOEXCEPT : listener(listener) {}
-		~Client ();
 
 		int main ();
 		int stop () QSE_CPP_NOEXCEPT;
@@ -129,8 +129,7 @@ protected:
 		Listener* listener;
 		QSE::Socket socket;
 		SocketAddress address;
-
-		qse_mtx_t* csmtx; /* mutex for client stop */
+		SpinLock csspl; /* spin lock for client stop */
 	};
 
 	struct ListenerList

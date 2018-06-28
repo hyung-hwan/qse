@@ -39,12 +39,6 @@ QSE_BEGIN_NAMESPACE(QSE)
 #include "../cmn/syserr.h"
 IMPLEMENT_SYSERR_TO_ERRNUM (TcpServer::ErrorCode, TcpServer::)
 
-
-TcpServer::Client::~Client()
-{
-	if (this->csmtx) qse_mtx_close(this->csmtx);
-}
-
 //
 // NOTICE: the guarantee class below could have been placed 
 //         inside TCPServer::Client::run () without supporting 
@@ -52,16 +46,16 @@ TcpServer::Client::~Client()
 //
 class guarantee_tcpsocket_close {
 public:
-	guarantee_tcpsocket_close (Socket* socket, qse_mtx_t* mtx): psck(socket), mtx(mtx) {}
+	guarantee_tcpsocket_close (Socket* socket, SpinLock* spl): psck(socket), spl(spl) {}
 	~guarantee_tcpsocket_close () 
 	{ 
-		qse_mtx_lock (this->mtx, QSE_NULL);
+		spl->lock ();
 		/*psck->shutdown ();*/
 		psck->close (); 
-		qse_mtx_unlock (this->mtx);
+		spl->unlock ();
 	}
 	Socket* psck;
-	qse_mtx_t* mtx;
+	SpinLock* spl;
 };
 
 int TcpServer::Client::main ()
@@ -72,7 +66,7 @@ int TcpServer::Client::main ()
 	// it would just block signals to the TcpProxy thread.
 	this->blockAllSignals (); // don't care about the result.
 
-	guarantee_tcpsocket_close close_socket (&this->socket, this->csmtx);
+	guarantee_tcpsocket_close close_socket (&this->socket, &this->csspl);
 	if (this->listener->server->handle_client(&this->socket, &this->address) <= -1) return -1;
 	return 0;
 }
@@ -88,10 +82,9 @@ int TcpServer::Client::stop () QSE_CPP_NOEXCEPT
 	//       as it might not be thread-safe.
 	//       but it is still ok because Client::stop() 
 	//       is rarely called.
-	qse_mtx_lock (this->csmtx, QSE_NULL);
+	this->csspl.lock ();
 	this->socket.shutdown ();
-	//this->socket.close ();
-	qse_mtx_unlock (this->csmtx);
+	this->csspl.unlock ();
 	return 0;
 }
 
@@ -362,15 +355,6 @@ int TcpServer::start (const qse_char_t* addrs) QSE_CPP_NOEXCEPT
 						this->setErrorCode (lerr);
 						xret = -1;
 						break;
-					}
-
-					client->csmtx = qse_mtx_open(QSE_MMGR_GETDFL(), 0);
-					if (!client->csmtx)
-					{
-						// TODO: logging  .... 
-						// don't delete client. just close the socket. for reuse.
-						client->socket.close (); 
-						continue;
 					}
 
 					client->setStackSize (this->thread_stack_size);
