@@ -215,7 +215,6 @@ public:
 		E_ENOIMPL, /**< not implemented */
 		E_ESYSERR, /**< subsystem error */
 		E_EINTERN, /**< internal error */
-		E_EEXCEPT, /**< exception */
 
 		E_ENOMEM,
 		E_EINVAL,
@@ -227,7 +226,9 @@ public:
 		E_EINTR,
 		E_EPIPE,
 		E_EINPROG, /* in progress */
-		E_EAGAIN   /* resource unavailable unavailable */
+		E_EAGAIN,   /* resource unavailable unavailable */
+
+		E_EEXCEPT /**< exception */
 	};
 };
 

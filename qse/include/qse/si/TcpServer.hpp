@@ -32,15 +32,16 @@
 #include <qse/si/Thread.hpp>
 #include <qse/si/SpinLock.hpp>
 #include <qse/cmn/LinkedList.hpp>
+#include <qse/cmn/Mmged.hpp>
 #include <qse/Uncopyable.hpp>
-
+#include <qse/si/mux.h>
 
 QSE_BEGIN_NAMESPACE(QSE)
 
 // The TcpServer class implements a simple block TCP server that start a thread
 // for each connection accepted.
 
-class TcpServer: public Uncopyable, public Types
+class TcpServer: public Uncopyable, public Mmged, public Types
 {
 public:
 	TcpServer () QSE_CPP_NOEXCEPT;
@@ -134,22 +135,22 @@ protected:
 
 	struct ListenerList
 	{
-		ListenerList(): ep_fd(-1), head(QSE_NULL), tail(QSE_NULL), count(0)
+		ListenerList(): mux(QSE_NULL), head(QSE_NULL), tail(QSE_NULL), count(0)
 		{
 			this->mux_pipe[0] = -1;
 			this->mux_pipe[1] = -1;
 		}
 
-		int ep_fd;
+		qse_mux_t* mux;
 		int mux_pipe[2];
 
 		Listener* head;
 		Listener* tail;
 
 		qse_size_t count;
-	} listener;
+	} listener_list;
 
-	ErrorCode errcode;
+	ErrorCode     errcode;
 	bool          stop_requested;
 	bool          server_serving;
 	qse_size_t    max_connections;
@@ -167,6 +168,8 @@ private:
 
 	int setup_listeners (const qse_char_t* addrs) QSE_CPP_NOEXCEPT;
 	void free_all_listeners () QSE_CPP_NOEXCEPT;
+
+	static void dispatch_mux_event (qse_mux_t* mux, const qse_mux_evt_t* evt) QSE_CPP_NOEXCEPT;
 };
 
 
