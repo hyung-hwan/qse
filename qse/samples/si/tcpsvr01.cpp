@@ -36,18 +36,21 @@ static int test1 (void)
 {
 #if defined(QSE_LANG_CPP11)
 	QSE::TcpServerL<int(QSE::Socket*,QSE::SocketAddress*)> server (
-		([&server](QSE::Socket* clisock, QSE::SocketAddress* cliaddr) { 
+
+		// workload by lambda
+		([&server](QSE::Socket* clisock, QSE::SocketAddress* cliaddr) {
 			qse_char_t buf[128];
 			qse_uint8_t bb[256];
 
 			while (!server.isStopRequested())
 			{
 qse_printf (QSE_T("hello word..from %s\n"), cliaddr->toStrBuf(buf, QSE_COUNTOF(buf)));
-				if (clisock->receive (bb, QSE_COUNTOF(bb)) <= 0) break;
+				if (clisock->receive(bb, QSE_COUNTOF(bb)) <= 0) break;
 			}
 qse_printf (QSE_T("bye..to %s\n"), cliaddr->toStrBuf(buf, QSE_COUNTOF(buf)));
 			return 0;
 		})
+
 	);
 #else
 	QSE::TcpServerF<ClientHandler> server;
