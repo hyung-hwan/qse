@@ -77,7 +77,7 @@ enum qse_mux_evtmask_t
 };
 typedef enum qse_mux_evtmask_t qse_mux_evtmask_t;
 
-typedef void (*qse_mux_evtfun_t) (
+typedef void (*qse_mux_evtcb_t) (
 	qse_mux_t*           mux,
 	const qse_mux_evt_t* evt
 );
@@ -96,7 +96,7 @@ extern "C" {
 QSE_EXPORT qse_mux_t* qse_mux_open (
 	qse_mmgr_t*       mmgr,
 	qse_size_t        xtnsize,
-	qse_mux_evtfun_t  evtfun,
+	qse_mux_evtcb_t   evtcb,
 	qse_size_t        capahint,
 	qse_mux_errnum_t* errnum
 );

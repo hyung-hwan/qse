@@ -50,7 +50,6 @@ public:
 	~guarantee_tcpsocket_close () 
 	{ 
 		spl->lock ();
-		/*psck->shutdown ();*/
 		psck->close (); 
 		spl->unlock ();
 	}
@@ -130,11 +129,14 @@ void TcpServer::free_all_listeners () QSE_CPP_NOEXCEPT
 		close (this->listener_list.mux_pipe[0]);
 		this->listener_list.mux_pipe[0] = -1;
 	}
+
+	this->listener_list.mux_pipe_spl.lock ();
 	if (this->listener_list.mux_pipe[1] >= 0)
 	{
 		close (this->listener_list.mux_pipe[1]);
 		this->listener_list.mux_pipe[1] = -1;
 	}
+	this->listener_list.mux_pipe_spl.unlock ();
 
 	QSE_ASSERT (this->listener_list.mux != QSE_NULL);
 	qse_mux_close (this->listener_list.mux);
@@ -143,6 +145,7 @@ void TcpServer::free_all_listeners () QSE_CPP_NOEXCEPT
 
 struct mux_xtn_t
 {
+	bool first_time;
 	TcpServer* server;
 };
 
@@ -151,10 +154,17 @@ void TcpServer::dispatch_mux_event (qse_mux_t* mux, const qse_mux_evt_t* evt) QS
 	mux_xtn_t* mux_xtn = (mux_xtn_t*)qse_mux_getxtn(mux);
 	TcpServer* server = mux_xtn->server;
 
+	if (mux_xtn->first_time)
+	{
+		server->delete_dead_clients();
+		mux_xtn->first_time = false;
+	}
+
 	if (!evt->mask) return;
 
 	if (evt->data == NULL)
 	{
+		/* just consume data written by TcpServer::stop() */
 		char tmp[128];
 		while (::read(server->listener_list.mux_pipe[0], tmp, QSE_SIZEOF(tmp)) > 0) /* nothing */;
 	}
@@ -196,7 +206,6 @@ void TcpServer::dispatch_mux_event (qse_mux_t* mux, const qse_mux_evt_t* evt) QS
 
 			server->setErrorCode (lerr);
 			server->stop ();
-			//xret = -1;
 			return;
 		}
 
@@ -208,14 +217,19 @@ void TcpServer::dispatch_mux_event (qse_mux_t* mux, const qse_mux_evt_t* evt) QS
 	#endif
 		{
 			delete client; 
-			client = QSE_NULL;
 			return;
 		}
 
-		server->client_list.append (client);
+		try { server->client_list.append (client); }
+		catch (...)
+		{
+			// TODO: logging.
+			delete client;
+			return;
+			
+		}
 	}
 }
-
 
 int TcpServer::setup_listeners (const qse_char_t* addrs) QSE_CPP_NOEXCEPT
 {
@@ -233,6 +247,7 @@ int TcpServer::setup_listeners (const qse_char_t* addrs) QSE_CPP_NOEXCEPT
 	}
 	mux_xtn_t* mux_xtn = (mux_xtn_t*)qse_mux_getxtn(mux);
 	mux_xtn->server = this;
+	mux_xtn->first_time = true;
 
 	if (::pipe(pfd) <= -1)
 	{
@@ -254,14 +269,6 @@ int TcpServer::setup_listeners (const qse_char_t* addrs) QSE_CPP_NOEXCEPT
 #endif
 
 	QSE_MEMSET (&ev, 0, QSE_SIZEOF(ev));
-	/*
-	ev.events = EPOLLIN | EPOLLHUP | EPOLLERR;
-	ev.data.ptr = QSE_NULL;
-	if (::epoll_ctl(mux, EPOLL_CTL_ADD, pfd[0], &ev) <= -1)
-	{
-		this->setErrorCode (syserr_to_errnum(errno));
-		goto oops;
-	}*/
 	ev.hnd = pfd[0];
 	ev.mask = QSE_MUX_IN;
 	ev.data = QSE_NULL;
@@ -315,16 +322,6 @@ int TcpServer::setup_listeners (const qse_char_t* addrs) QSE_CPP_NOEXCEPT
 		}
 
 		QSE_MEMSET (&ev, 0, QSE_SIZEOF(ev));
-	#if 0
-		ev.events = EPOLLIN | EPOLLHUP | EPOLLERR;
-		ev.data.ptr = lsck;
-		if (::epoll_ctl(mux, EPOLL_CTL_ADD, lsck->getHandle(), &ev) <= -1)
-		{
-			/* TODO: logging */
-			lsck->close ();
-			goto next_segment;
-		}
-	#else
 		ev.hnd = lsck->getHandle();
 		ev.mask = QSE_MUX_IN;
 		ev.data = lsck;
@@ -334,7 +331,6 @@ int TcpServer::setup_listeners (const qse_char_t* addrs) QSE_CPP_NOEXCEPT
 			lsck->close ();
 			goto next_segment;
 		}
-	#endif
 
 		lsck->address = sockaddr;
 		lsck->next_listener = this->listener_list.head;
@@ -364,7 +360,6 @@ oops:
 
 int TcpServer::start (const qse_char_t* addrs) QSE_CPP_NOEXCEPT
 {
-	struct epoll_event ev_buf[128];
 	int xret = 0;
 
 	this->server_serving = true;
@@ -374,8 +369,6 @@ int TcpServer::start (const qse_char_t* addrs) QSE_CPP_NOEXCEPT
 
 	try 
 	{
-		Socket socket;
-
 		if (this->setup_listeners(addrs) <= -1)
 		{
 			this->server_serving = false;
@@ -383,99 +376,21 @@ int TcpServer::start (const qse_char_t* addrs) QSE_CPP_NOEXCEPT
 			return -1;
 		}
 
+		mux_xtn_t* mux_xtn = (mux_xtn_t*)qse_mux_getxtn(this->listener_list.mux);
+
 		while (!this->isStopRequested()) 
 		{
 			int n;
 
-			n = qse_mux_poll (this->listener_list.mux, QSE_NULL);
+			mux_xtn->first_time = true;
 
-#if 0
-			n = ::epoll_wait (this->listener_list.mux, ev_buf, QSE_COUNTOF(ev_buf), -1);
-			this->delete_dead_clients ();
+			n = qse_mux_poll (this->listener_list.mux, QSE_NULL);
 			if (n <= -1)
 			{
-				if (this->isStopRequested()) break;
-				if (errno == EINTR) continue;
-
-				this->setErrorCode (syserr_to_errnum(errno));
+				this->setErrorCode (E_ESYSERR); // TODO: proper error code conversion
 				xret = -1;
 				break;
 			}
-
-			while (n > 0)
-			{
-				struct epoll_event* evp;
-
-				--n;
-
-				evp = &ev_buf[n];
-				if (!evp->events /*& (POLLIN | POLLHUP | POLLERR) */) continue;
-
-				if (evp->data.ptr == NULL)
-				{
-					char tmp[128];
-					while (::read(this->listener_list.mux_pipe[0], tmp, QSE_SIZEOF(tmp)) > 0) /* nothing */;
-				}
-				else
-				{
-					/* the reset should be the listener's socket */
-					Listener* lsck = (Listener*)evp->data.ptr;
-
-					if (this->max_connections > 0 && this->max_connections <= this->client_list.getSize()) 
-					{
-						// too many connections. accept the connection and close it.
-						Socket s;
-						SocketAddress sa;
-						if (lsck->accept(&s, &sa, Socket::T_CLOEXEC) >= 0) s.close();
-						continue;
-					}
-
-					if (client == QSE_NULL)
-					{
-						// allocating the client object before accept is 
-						// a bit awkward. but socket.accept() can be passed
-						// the socket field inside the client object.
-						try { client = new Client (lsck); } 
-						catch (...) { }
-					}
-					if (client == QSE_NULL) 
-					{
-						// memory alloc failed. accept the connection and close it.
-						Socket s;
-						SocketAddress sa;
-						if (lsck->accept(&s, &sa, Socket::T_CLOEXEC) >= 0) s.close();
-						continue;
-					}
-
-					if (lsck->accept(&client->socket, &client->address, Socket::T_CLOEXEC) <= -1)
-					{
-						if (this->isStopRequested()) break; /* normal termination requested */
-
-						Socket::ErrorCode lerr = lsck->getErrorCode();
-						if (lerr == Socket::E_EINTR || lerr == Socket::E_EAGAIN) continue;
-
-						this->setErrorCode (lerr);
-						xret = -1;
-						break;
-					}
-
-					client->setStackSize (this->thread_stack_size);
-				#if defined(_WIN32)
-					if (client->start(Thread::DETACHED) <= -1) 
-				#else
-					if (client->start(0) <= -1)
-				#endif
-					{
-						delete client; 
-						client = QSE_NULL;
-						continue;
-					}
-
-					this->client_list.append (client);
-					client = QSE_NULL;
-				}
-			}
-#endif
 		}
 
 		this->delete_all_clients ();
@@ -505,12 +420,12 @@ int TcpServer::stop () QSE_CPP_NOEXCEPT
 {
 	if (this->server_serving) 
 	{
-// TODO: mutex
+		this->listener_list.mux_pipe_spl.lock ();
 		if (this->listener_list.mux_pipe[1] >= 0)
 		{
 			::write (this->listener_list.mux_pipe[1], "Q", 1);
 		}
-// TODO: mutex
+		this->listener_list.mux_pipe_spl.unlock ();
 		this->setStopRequested (true);
 	}
 	return 0;

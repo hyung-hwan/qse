@@ -143,6 +143,7 @@ protected:
 
 		qse_mux_t* mux;
 		int mux_pipe[2];
+		SpinLock mux_pipe_spl;
 
 		Listener* head;
 		Listener* tail;
@@ -189,7 +190,7 @@ protected:
 
 	int handle_client (Socket* sock, SocketAddress* addr)
 	{
-		return this->__lfunc(sock, addr);
+		return this->__lfunc(this, sock, addr);
 	}
 };
 
