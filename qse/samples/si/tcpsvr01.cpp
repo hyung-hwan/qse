@@ -24,17 +24,24 @@ class ClientHandler
 public:
 	int operator() (QSE::TcpServer* server, QSE::Socket* clisock, QSE::SocketAddress* cliaddr)
 	{
-		qse_char_t buf[128];
+		qse_char_t addrbuf[128];
 		qse_uint8_t bb[256];
 		qse_ssize_t n;
 
+		cliaddr->toStrBuf(addrbuf, QSE_COUNTOF(addrbuf));
+		qse_printf (QSE_T("hello word..from %s\n"), addrbuf);
+
 		while (!server->isStopRequested())
 		{
-qse_printf (QSE_T("hello word..from %s\n"), cliaddr->toStrBuf(buf, QSE_COUNTOF(buf)));
-			if ((n = clisock->receive(bb, QSE_COUNTOF(bb))) <= 0) break;
+			if ((n = clisock->receive(bb, QSE_COUNTOF(bb))) <= 0) 
+			{
+				qse_printf (QSE_T("%zd bytes received from %s\n"), n, addrbuf);
+				break;
+			}
 			clisock->send (bb, n);
 		}
-qse_printf (QSE_T("bye..to %s\n"), cliaddr->toStrBuf(buf, QSE_COUNTOF(buf)));
+
+		qse_printf (QSE_T("byte to %s\n"), addrbuf);
 		return 0;
 	}
 };
@@ -49,17 +56,24 @@ static int test1 (void)
 
 		// workload by lambda
 		([&server](QSE::Socket* clisock, QSE::SocketAddress* cliaddr) {
-			qse_char_t buf[128];
+			qse_char_t addrbuf[128];
 			qse_uint8_t bb[256];
 			qse_ssize_t n;
-
-			while (!server.isStopRequested())
+	
+			cliaddr->toStrBuf(addrbuf, QSE_COUNTOF(addrbuf));
+			qse_printf (QSE_T("hello word..from %s\n"), addrbuf);
+	
+			while (!server->isStopRequested())
 			{
-qse_printf (QSE_T("hello word..from %s\n"), cliaddr->toStrBuf(buf, QSE_COUNTOF(buf)));
-				if ((n = clisock->receive(bb, QSE_COUNTOF(bb))) <= 0) break;
+				if ((n = clisock->receive(bb, QSE_COUNTOF(bb))) <= 0) 
+				{
+					qse_printf (QSE_T("%zd bytes received from %s\n"), n, addrbuf);
+					break;
+				}
 				clisock->send (bb, n);
 			}
-qse_printf (QSE_T("bye..to %s\n"), cliaddr->toStrBuf(buf, QSE_COUNTOF(buf)));
+	
+			qse_printf (QSE_T("byte to %s\n"), addrbuf);
 			return 0;
 		})
 
