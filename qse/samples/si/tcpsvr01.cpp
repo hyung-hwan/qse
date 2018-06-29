@@ -63,7 +63,7 @@ static int test1 (void)
 			cliaddr->toStrBuf(addrbuf, QSE_COUNTOF(addrbuf));
 			qse_printf (QSE_T("hello word..from %s\n"), addrbuf);
 	
-			while (!server->isStopRequested())
+			while (!server.isStopRequested())
 			{
 				if ((n = clisock->receive(bb, QSE_COUNTOF(bb))) <= 0) 
 				{
