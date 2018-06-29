@@ -29,7 +29,6 @@
 #include <qse/cmn/str.h>
 #include "../cmn/mem-prv.h"
 
-#include <sys/epoll.h>
 #include <errno.h>
 #include <unistd.h>
 #include <fcntl.h>

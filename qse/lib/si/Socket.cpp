@@ -32,7 +32,6 @@
 #include <sys/socket.h>
 #include <stdarg.h>
 #include <errno.h>
-#include <string.h>
 #include <fcntl.h>
 #include <unistd.h>
 
@@ -62,7 +61,7 @@ int Socket::fdopen (int handle) QSE_CPP_NOEXCEPT
 int Socket::open (int domain, int type, int protocol, int traits) QSE_CPP_NOEXCEPT
 {
 	int x;
-	bool fcntl_v = 0;
+	int fcntl_v = 0;
 
 #if defined(SOCK_NONBLOCK) && defined(SOCK_CLOEXEC)
 	if (traits & Socket::T_NONBLOCK) type |= SOCK_NONBLOCK;
@@ -76,43 +75,43 @@ open_socket:
 		if (errno == EINVAL && (type & (SOCK_NONBLOCK | SOCK_CLOEXEC)))
 		{
 			type &= ~(SOCK_NONBLOCK | SOCK_CLOEXEC);
-			if (traits & Socket::T_NONBLOCK ) fcntl_v |= O_NONBLOCK;
-			#if defined(O_CLOEXEC)
-			if (traits & Socket::T_CLOEXEC) fcntl_v |= O_CLOEXEC;
-			#endif
 			goto open_socket;
 		}
 	#endif
 		this->setErrorCode (syserr_to_errnum(errno));
 		return -1;
 	}
-
-#if defined(SOCK_NONBLOCK) && defined(SOCK_CLOEXEC)
-	// do nothing
-#else
-	if (traits & Socket::T_NONBLOCK ) fcntl_v |= O_NONBLOCK;
-	#if defined(O_CLOEXEC)
-	if (traits & O_CLOEXEC) fcntl_v |= O_CLOEXEC;
-	#endif
-#endif
-
-	if (fcntl_v)
+	else
 	{
-		int fl = fcntl(x, F_GETFL, 0);
-		if (fl == -1)
+	#if defined(SOCK_NONBLOCK) && defined(SOCK_CLOEXEC)
+		if (type & (SOCK_NONBLOCK | SOCK_CLOEXEC)) goto done;
+	#endif
+	}
+
+	if (traits)
+	{
+		fcntl_v = fcntl(x, F_GETFL, 0);
+		if (fcntl_v == -1)
 		{
 		fcntl_failure:
 			this->setErrorCode (syserr_to_errnum(errno));
 			::close (x);
-			x = -1;
+			return -1;
 		}
-		else
-		{
-			if (fcntl(x, F_SETFL, fl | fcntl_v) == -1) goto fcntl_failure;
-		}
+
+		if (traits & Socket::T_NONBLOCK) fcntl_v |= O_NONBLOCK;
+		else fcntl_v &= ~O_NONBLOCK;
+
+	#if defined(O_CLOEXEC)
+		if (traits & Socket::T_CLOEXEC) fcntl_v |= O_CLOEXEC;
+		else fcntl_v &= ~O_CLOEXEC;
+	#endif
+
+		if (fcntl(x, F_SETFL, fcntl_v) == -1) goto fcntl_failure;
 	}
 
-	this->close ();
+done:
+	this->close (); // close the existing handle if open.
 	this->handle = x;
 	return 0;
 }
@@ -334,16 +333,10 @@ int Socket::accept (Socket* newsck, SocketAddress* newaddr, int traits) QSE_CPP_
 		return -1;
 	}
 
-	flag_v = 0;
-	if (traits & Socket::T_NONBLOCK ) flag_v |= O_NONBLOCK;
-	#if defined(O_CLOEXEC)
-	if (traits & Socket::T_CLOEXEC) flag_v |= O_CLOEXEC;
-	#endif
-
-	if (flag_v)
+	if (traits)
 	{
-		int fl = ::fcntl(newfd, F_GETFL, 0);
-		if (fl == -1)
+		flag_v = ::fcntl(newfd, F_GETFL, 0);
+		if (flag_v == -1)
 		{
 		fcntl_failure:
 			this->setErrorCode (syserr_to_errnum(errno));
@@ -352,7 +345,15 @@ int Socket::accept (Socket* newsck, SocketAddress* newaddr, int traits) QSE_CPP_
 		}
 		else
 		{
-			if (::fcntl(newfd, F_SETFL, fl | flag_v) == -1) goto fcntl_failure;
+			if (traits & Socket::T_NONBLOCK) flag_v |= O_NONBLOCK;
+			else flag_v &= ~O_NONBLOCK;
+
+		#if defined(O_CLOEXEC)
+			if (traits & Socket::T_CLOEXEC) flag_v |= O_CLOEXEC;
+			else flag_v &= ~O_CLOEXEC;
+		#endif
+			
+			if (::fcntl(newfd, F_SETFL, flag_v) == -1) goto fcntl_failure;
 		}
 	}
 
