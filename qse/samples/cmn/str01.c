@@ -253,6 +253,7 @@ qse_char_t* subst (qse_char_t* buf, qse_size_t bsz, const qse_cstr_t* ident, voi
 static int test13 (void)
 {
 	qse_char_t buf[24];
+	qse_char_t buf2[48];
 	qse_size_t i, j;
 
 	for (i = 0; i <= QSE_COUNTOF(buf); i++)
@@ -270,7 +271,6 @@ static int test13 (void)
 		qse_printf (QSE_T("]\n"));
 	}
 
-	qse_char_t buf2[48];
 
 	for (i = 0; i <= QSE_COUNTOF(buf2); i++)
 	{
