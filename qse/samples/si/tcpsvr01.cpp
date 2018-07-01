@@ -1,9 +1,10 @@
 #include <qse/si/TcpServer.hpp>
-#include <qse/si/mtx.h>
+#include <qse/si/Mutex.hpp>
 #include <qse/si/sio.h>
 #include <qse/si/os.h>
 #include <qse/cmn/mem.h>
 #include <qse/cmn/HeapMmgr.hpp>
+
 
 #include <locale.h>
 #if defined(_WIN32)
@@ -14,34 +15,41 @@
 #include <signal.h>
 #include <string.h>
 
+QSE::Mutex g_prt_mutex;
 
 #if defined(QSE_LANG_CPP11)
-QSE::TcpServerL<int(QSE::Socket*,QSE::SocketAddress*)>* g_server;
+QSE::TcpServerL<int(QSE::TcpServer::Worker*)>* g_server;
 #else
 
 class ClientHandler
 {
 public:
-	int operator() (QSE::TcpServer* server, QSE::Socket* clisock, QSE::SocketAddress* cliaddr)
+	int operator() (QSE::TcpServer* server, QSE::TcpServer::Worker* worker)
 	{
 		qse_char_t addrbuf[128];
 		qse_uint8_t bb[256];
 		qse_ssize_t n;
 
-		cliaddr->toStrBuf(addrbuf, QSE_COUNTOF(addrbuf));
-		qse_printf (QSE_T("hello word..from %s\n"), addrbuf);
+		worker->address.toStrBuf(addrbuf, QSE_COUNTOF(addrbuf));
+		g_prt_mutex.lock();
+		qse_printf (QSE_T("hello word..from %s -> wid %zu\n"), addrbuf, worker->getWid());
+		g_prt_mutex.unlock();
 
 		while (!server->isStopRequested())
 		{
-			if ((n = clisock->receive(bb, QSE_COUNTOF(bb))) <= 0) 
+			if ((n = worker->socket.receive(bb, QSE_COUNTOF(bb))) <= 0) 
 			{
+				g_prt_mutex.lock();
 				qse_printf (QSE_T("%zd bytes received from %s\n"), n, addrbuf);
+				g_prt_mutex.unlock();
 				break;
 			}
-			clisock->send (bb, n);
+			worker->socket.send (bb, n);
 		}
 
-		qse_printf (QSE_T("byte to %s\n"), addrbuf);
+		g_prt_mutex.lock();
+		qse_printf (QSE_T("byte to %s -> wid %zu\n"), addrbuf, worker->getWid());
+		g_prt_mutex.unlock();
 		return 0;
 	}
 };
@@ -49,33 +57,40 @@ public:
 static QSE::TcpServerF<ClientHandler>* g_server;
 #endif
 
+
 static int test1 (void)
 {
 	QSE::HeapMmgr heap_mmgr (QSE::Mmgr::getDFL(), 30000);
 
 #if defined(QSE_LANG_CPP11)
-	QSE::TcpServerL<int(QSE::Socket*,QSE::SocketAddress*)> server (
+	QSE::TcpServerL<int(QSE::TcpServer::Worker*)> server (
 
 		// workload by lambda
-		([&server](QSE::Socket* clisock, QSE::SocketAddress* cliaddr) {
+		([&server](QSE::TcpServer::Worker* worker) {
 			qse_char_t addrbuf[128];
 			qse_uint8_t bb[256];
 			qse_ssize_t n;
-	
-			cliaddr->toStrBuf(addrbuf, QSE_COUNTOF(addrbuf));
-			qse_printf (QSE_T("hello word..from %s\n"), addrbuf);
+
+			worker->address.toStrBuf(addrbuf, QSE_COUNTOF(addrbuf));
+			g_prt_mutex.lock();
+			qse_printf (QSE_T("hello word..from %s -> wid %zu\n"), addrbuf, worker->getWid());
+			g_prt_mutex.unlock();
 
 			while (!server.isStopRequested())
 			{
-				if ((n = clisock->receive(bb, QSE_COUNTOF(bb))) <= 0) 
+				if ((n = worker->socket.receive(bb, QSE_COUNTOF(bb))) <= 0) 
 				{
+					g_prt_mutex.lock();
 					qse_printf (QSE_T("%zd bytes received from %s\n"), n, addrbuf);
+					g_prt_mutex.unlock();
 					break;
 				}
-				clisock->send (bb, n);
+				worker->socket.send (bb, n);
 			}
 
-			qse_printf (QSE_T("byte to %s\n"), addrbuf);
+			g_prt_mutex.lock();
+			qse_printf (QSE_T("byte to %s -> wid %zu\n"), addrbuf, worker->getWid());
+			g_prt_mutex.unlock();
 			return 0;
 		}),
 
@@ -83,7 +98,7 @@ static int test1 (void)
 
 	);
 #else
-	QSE::TcpServerF<ClientHandler> server (&heap_mmgr);
+	QSE::TcpServerF<ClientHandler> server /*(&heap_mmgr)*/;
 #endif
 
 	server.setThreadStackSize (256000);

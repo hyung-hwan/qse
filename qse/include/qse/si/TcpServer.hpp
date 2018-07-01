@@ -72,20 +72,20 @@ public:
 	}
 	void setMaxConnections (qse_size_t mc) QSE_CPP_NOEXCEPT
 	{
-		// don't disconnect client connections 
+		// don't disconnect worker connections 
 		// establised before maxConn is set.
 		// 0 means there's no restriction over 
 		// the number of connection.
 		this->max_connections = mc;
 	}
 
-	qse_size_t getClientCount () const QSE_CPP_NOEXCEPT
+	qse_size_t getWorkerCount () const QSE_CPP_NOEXCEPT
 	{ 
-		return this->client_list[Client::LIVE].getSize(); 
+		return this->worker_list[Worker::LIVE].getSize(); 
 	}
 	qse_size_t getConnectionCount () const QSE_CPP_NOEXCEPT
 	{
-		return this->client_list[Client::LIVE].getSize(); 
+		return this->worker_list[Worker::LIVE].getSize(); 
 	}
 
 	qse_size_t getThreadStackSize () const QSE_CPP_NOEXCEPT
@@ -109,7 +109,8 @@ protected:
 		Listener* next_listener;
 	};
 
-	class Client: public QSE::Thread 
+public:
+	class Worker: public QSE::Thread 
 	{
 	public:
 		friend class TcpServer;
@@ -119,7 +120,7 @@ protected:
 			DEAD = 0,
 			LIVE = 1
 		};
-		Client (Listener* listener) QSE_CPP_NOEXCEPT: listener(listener), prev_client(QSE_NULL), next_client(QSE_NULL), claimed(false) {}
+		Worker (Listener* listener) QSE_CPP_NOEXCEPT: listener(listener), prev_worker(QSE_NULL), next_worker(QSE_NULL), claimed(false), wid(wid_map_t::WID_INVALID) {}
 
 		int main ();
 		int stop () QSE_CPP_NOEXCEPT;
@@ -131,17 +132,45 @@ protected:
 		const TcpServer* getServer() const QSE_CPP_NOEXCEPT { return this->listener->server; }
 
 
-		Client* getNextClient() { return this->next_client; }
-		Client* getPrevClient() { return this->prev_client; }
+		Worker* getNextWorker() { return this->next_worker; }
+		Worker* getPrevWorker() { return this->prev_worker; }
+
+		qse_size_t getWid() const { return this->wid; }
 
 		Listener* listener;
-		Client* prev_client;
-		Client* next_client;
+		Worker* prev_worker;
+		Worker* next_worker;
 		bool claimed;
+		qse_size_t wid;
 
 		QSE::Socket socket;
 		QSE::SocketAddress address;
-		QSE::SpinLock csspl; // spin lock for client stop 
+		QSE::SpinLock csspl; // spin lock for worker stop 
+	};
+
+protected:
+	struct wid_map_data_t
+	{
+		int used;
+		union
+		{
+				Worker*     worker;
+				qse_size_t  next;
+		} u;
+	};
+
+	struct wid_map_t
+	{
+		enum 
+		{
+			WID_INVALID = (qse_size_t)-1
+		};
+
+		wid_map_t(): ptr(QSE_NULL), capa(0), free_first(WID_INVALID), free_last(WID_INVALID) {}
+		wid_map_data_t* ptr;
+		qse_size_t      capa;
+		qse_size_t      free_first;
+		qse_size_t      free_last;
 	};
 
 	struct ListenerList
@@ -162,58 +191,59 @@ protected:
 		qse_size_t count;
 	};
 
-	struct ClientList
+	struct WorkerList
 	{
-		ClientList() QSE_CPP_NOEXCEPT: head(QSE_NULL), tail(QSE_NULL), count(0) {}
+		WorkerList() QSE_CPP_NOEXCEPT: head(QSE_NULL), tail(QSE_NULL), count(0) {}
 
 		qse_size_t getSize() const { return this->count; }
-		Client* getHead() { return this->head; }
-		Client* getTail() { return this->tail; }
+		Worker* getHead() { return this->head; }
+		Worker* getTail() { return this->tail; }
 
-		void append (Client* client)
+		void append (Worker* worker)
 		{
-			client->next_client = QSE_NULL;
+			worker->next_worker = QSE_NULL;
 			if (this->count == 0) 
 			{
-				this->head = this->tail = client;
-				client->prev_client = QSE_NULL;
+				this->head = this->tail = worker;
+				worker->prev_worker = QSE_NULL;
 			}
 			else 
 			{
-				client->prev_client = this->tail;
-				this->tail->next_client = client;
-				this->tail = client;
+				worker->prev_worker = this->tail;
+				this->tail->next_worker = worker;
+				this->tail = worker;
 			}
 
 			this->count++;
 		}
 
-		void remove (Client* client)
+		void remove (Worker* worker)
 		{
-			if (client->next_client)
-				client->next_client->prev_client = client->prev_client;
+			if (worker->next_worker)
+				worker->next_worker->prev_worker = worker->prev_worker;
 			else
-				this->tail = client->prev_client;
+				this->tail = worker->prev_worker;
 
-			if (client->prev_client)
-				client->prev_client->next_client = client->next_client;
+			if (worker->prev_worker)
+				worker->prev_worker->next_worker = worker->next_worker;
 			else
-				this->head = client->next_client;
+				this->head = worker->next_worker;
 
-			client->prev_client = QSE_NULL;
-			client->next_client = QSE_NULL;
+			worker->prev_worker = QSE_NULL;
+			worker->next_worker = QSE_NULL;
 			this->count--;
 
 		}
 
-		Client* head;
-		Client* tail;
+		Worker* head;
+		Worker* tail;
 		qse_size_t count;
 	};
 
+	wid_map_t wid_map; // worker's id map 
 	ListenerList listener_list;
-	ClientList client_list[2];
-	QSE::SpinLock client_list_spl;
+	WorkerList worker_list[2];
+	QSE::SpinLock worker_list_spl;
 
 	ErrorCode     errcode;
 	bool          stop_requested;
@@ -221,14 +251,20 @@ protected:
 	qse_size_t    max_connections;
 	qse_size_t    thread_stack_size;
 
-	friend class TcpServer::Client;
-	virtual int handle_client (Socket* sock, SocketAddress* addr) = 0;
+	friend class TcpServer::Worker;
+	virtual int handle_worker (Worker* worker) = 0;
+
 
 private:
-	void delete_all_clients  (Client::State state) QSE_CPP_NOEXCEPT;
+	void delete_all_workers (Worker::State state) QSE_CPP_NOEXCEPT;
 
 	int setup_listeners (const qse_char_t* addrs) QSE_CPP_NOEXCEPT;
 	void free_all_listeners () QSE_CPP_NOEXCEPT;
+
+	int prepare_to_acquire_wid () QSE_CPP_NOEXCEPT;
+	void acquire_wid (Worker* worker) QSE_CPP_NOEXCEPT;
+	void release_wid (Worker* worker) QSE_CPP_NOEXCEPT;
+	void free_wid_map () QSE_CPP_NOEXCEPT;
 
 	static void dispatch_mux_event (qse_mux_t* mux, const qse_mux_evt_t* evt) QSE_CPP_NOEXCEPT;
 };
@@ -248,9 +284,9 @@ public:
 protected:
 	F __lfunc;
 
-	int handle_client (Socket* sock, SocketAddress* addr)
+	int handle_worker (Worker* worker)
 	{
-		return this->__lfunc(this, sock, addr);
+		return this->__lfunc(this, worker);
 	}
 };
 
@@ -277,7 +313,7 @@ public:
 		catch (...)
 		{
 			// upon failure, i set this->__lfunc to null.
-			// this->handle_client() will return failure for this.
+			// this->handle_worker() will return failure for this.
 			this->__lfunc = nullptr;
 		}
 	}
@@ -288,7 +324,7 @@ public:
 	}
 
 	template <typename T>
-	int setClientHandler (T&& f) QSE_CPP_NOEXCEPT
+	int setWorkerHandler (T&& f) QSE_CPP_NOEXCEPT
 	{
 		Callable* lf;
 
@@ -330,7 +366,7 @@ protected:
 
 	Callable* __lfunc;
 
-	int handle_client (Socket* sock, SocketAddress* addr)
+	int handle_worker (Worker* worker)
 	{
 		if (!this->__lfunc)
 		{
@@ -338,7 +374,7 @@ protected:
 			return -1;
 		}
 
-		return this->__lfunc->invoke(sock, addr);
+		return this->__lfunc->invoke(worker);
 	}
 };
 
