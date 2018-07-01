@@ -204,10 +204,10 @@ template <typename RT, typename... ARGS>
 class TcpServerL<RT(ARGS...)>: public TcpServer
 {
 public:
-	TcpServerL (Mmgr* mmgr = QSE_NULL) QSE_CPP_NOEXCEPT: Mmgr(mmgr), __lfunc(nullptr) {}
+	TcpServerL (Mmgr* mmgr = QSE_NULL) QSE_CPP_NOEXCEPT: TcpServer(mmgr), __lfunc(nullptr) {}
 
 	template <typename T>
-	TcpServerL (T&& f, Mmgr* mmgr = QSE_NULL) QSE_CPP_NOEXCEPT: Mmgr(mmgr), __lfunc(nullptr)
+	TcpServerL (T&& f, Mmgr* mmgr = QSE_NULL) QSE_CPP_NOEXCEPT: TcpServer(mmgr), __lfunc(nullptr)
 	{
 		try
 		{

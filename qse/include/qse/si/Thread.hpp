@@ -182,7 +182,7 @@ public:
 	int start (T&& f, int flags) QSE_CPP_NOEXCEPT
 	//int start (T f, int flags) QSE_CPP_NOEXCEPT
 	{
-		if (this->__state == QSE_THR_RUNNING) return -1;
+		if (this->thr.__state == QSE_THR_RUNNING) return -1;
 		if (this->__lfunc) this->getMmgr()->dispose (this->__lfunc); //delete this->__lfunc;
 		try
 		{
