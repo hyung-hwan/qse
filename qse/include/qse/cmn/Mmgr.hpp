@@ -109,7 +109,7 @@ public:
 	///
 	/// The dispose() function calls freeMem() for memory disposal.
 	///
-	void dispose (void* ptr)
+	void dispose (void* ptr) QSE_CPP_NOEXCEPT
 	{
 		this->freeMem (ptr);
 	}
