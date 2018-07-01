@@ -77,7 +77,9 @@ static int test1 (void)
 	
 			qse_printf (QSE_T("byte to %s\n"), addrbuf);
 			return 0;
-		})
+		}),
+
+		&heap_mmgr
 
 	);
 #else
