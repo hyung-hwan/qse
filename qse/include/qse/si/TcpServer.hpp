@@ -224,11 +224,7 @@ public:
 
 	~TcpServerL () QSE_CPP_NOEXCEPT 
 	{ 
-		if (this->__lfunc) 
-		{
-			//delete this->__lfunc; 
-			this->getMmgr()->dispose (this->__lfunc);
-		}
+		if (this->__lfunc) QSE_CPP_DELETE_WITH_MMGR (this->__lfunc, Callable, this->getMmgr()); //delete this->__lfunc; 
 	}
 
 	template <typename T>
@@ -247,11 +243,7 @@ public:
 			return -1;
 		}
 
-		if (this->__lfunc) 
-		{
-			//delete this->__lfunc;
-			this->getMmgr()->dispose (this->__lfunc);
-		}
+		if (this->__lfunc) QSE_CPP_DELETE_WITH_MMGR (this->__lfunc, Callable, this->getMmgr()); //delete this->__lfunc;
 		this->__lfunc = lf;
 		return 0;
 	}

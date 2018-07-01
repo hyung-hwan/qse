@@ -362,7 +362,7 @@ public:
 		}
 		else 
 		{
-			while (n) 
+			while (n)
 			{
 				this->prepend (n->value);
 				n = (Node*)n->prev;

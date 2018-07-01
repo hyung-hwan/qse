@@ -43,7 +43,7 @@ class QSE_EXPORT Exception
 public:
 	Exception (
 		const qse_char_t* name, const qse_char_t* msg, 
-		const qse_char_t* file, qse_size_t line): 
+		const qse_char_t* file, qse_size_t line) QSE_CPP_NOEXCEPT: 
 		name(name), msg(msg)
 #if !defined(QSE_NO_LOCATION_IN_EXCEPTION)
 		, file(file), line(line) 
@@ -69,7 +69,7 @@ public:
 	{ \
 	public: \
 		ex_name (const qse_char_t* name, const qse_char_t* msg, \
-		         const qse_char_t* file, qse_size_t line): \
+		         const qse_char_t* file, qse_size_t line) QSE_CPP_NOEXCEPT: \
 			QSE::Exception (name, msg, file, line) {} \
 	}
 

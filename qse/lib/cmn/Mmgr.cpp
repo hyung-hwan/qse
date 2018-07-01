@@ -47,9 +47,9 @@ void Mmgr::free_mem (mmgr_t* mmgr, void* ptr) QSE_CPP_NOEXCEPT
 	((Mmgr*)mmgr->ctx)->freeMem (ptr);
 }
 
-void* Mmgr::callocate (qse_size_t n, bool raise_exception)
+void* Mmgr::callocate (qse_size_t n, bool raise_exception) throw(MemoryError)
 {
-	void* ptr = this->allocate (n, raise_exception);
+	void* ptr = this->allocate(n, raise_exception);
 	QSE_MEMSET (ptr, 0, n);
 	return ptr;
 }
@@ -70,7 +70,7 @@ void Mmgr::setDFL (Mmgr* mmgr) QSE_CPP_NOEXCEPT
 QSE_END_NAMESPACE(QSE)
 /////////////////////////////////
 
-void* operator new (qse_size_t size, QSE::Mmgr* mmgr)
+void* operator new (qse_size_t size, QSE::Mmgr* mmgr) throw(QSE::Mmgr::MemoryError)
 {
 	return mmgr->allocate (size);
 }
@@ -84,7 +84,7 @@ void operator delete (void* ptr, QSE::Mmgr* mmgr)
 	mmgr->dispose (ptr);
 }
 
-void* operator new (qse_size_t size, QSE::Mmgr* mmgr, void* existing_ptr)
+void* operator new (qse_size_t size, QSE::Mmgr* mmgr, void* existing_ptr) throw(QSE::Mmgr::MemoryError)
 {
 	// mmgr unused. i put it in the parameter list to make this function
 	// less conflicting with the stock ::operator new() that doesn't allocate.
