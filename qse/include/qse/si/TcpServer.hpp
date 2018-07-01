@@ -335,7 +335,7 @@ public:
 		}
 		catch (...)
 		{
-			this->setErrorCode (E_NOERR);
+			this->setErrorCode (E_ENOMEM);
 			return -1;
 		}
 
