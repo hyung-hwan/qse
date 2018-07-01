@@ -92,7 +92,8 @@ TcpServer::TcpServer (Mmgr* mmgr) QSE_CPP_NOEXCEPT:
 	stop_requested(false), 
 	server_serving(false), 
 	max_connections(0),
-	thread_stack_size (0)
+	thread_stack_size(0),
+	client_list(mmgr)
 {
 }
 
