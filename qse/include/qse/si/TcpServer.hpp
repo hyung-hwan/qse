@@ -331,7 +331,6 @@ public:
 		try
 		{
 			// TODO: are there any ways to achieve this without memory allocation?
-			//lf = new TCallable<T> (QSE_CPP_RVREF(f));
 			lf = new(this->getMmgr()) TCallable<T> (QSE_CPP_RVREF(f));
 		}
 		catch (...)
