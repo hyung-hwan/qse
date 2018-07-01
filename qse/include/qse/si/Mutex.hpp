@@ -24,96 +24,63 @@
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _QSE_SI_SPINLOCK_CLASS_
-#define _QSE_SI_SPINLOCK_CLASS_
+#ifndef _QSE_SI_MUTEX_CLASS_
+#define _QSE_SI_MUTEX_CLASS_
 
 #include <qse/Types.hpp>
 #include <qse/Uncopyable.hpp>
-
-#undef QSE_SPL_NO_UNSUPPORTED_ERROR
-#define QSE_SPL_NO_UNSUPPORTED_ERROR
-#include <qse/si/spl.h>
-#undef QSE_SPL_NO_UNSUPPORTED_ERROR
-
-#if defined(QSE_SUPPORT_SPL)
-	// don't include anything else
-#elif defined(QSE_LANG_CPP11)
-	// NOTE: <stdatomic.h> in C11 doesn't seem compatible due to lack of
-	//       the keyword _Atomic in C++11
-#	include <atomic>
-#endif
+#include <qse/si/mtx.h>
 
 QSE_BEGIN_NAMESPACE(QSE)
 
-class SpinLock: public Uncopyable
+class Mutex: public Uncopyable
 {
 public:
-#if defined(QSE_SUPPORT_SPL)
-	SpinLock() QSE_CPP_NOEXCEPT: flag(QSE_SPL_INIT) {}
-#else
-	SpinLock() QSE_CPP_NOEXCEPT: flag(ATOMIC_FLAG_INIT) {}
-#endif
+	Mutex() QSE_CPP_NOEXCEPT 
+	{
+		qse_mtx_init (&this->mtx, QSE_NULL);
+	}
+	~Mutex() QSE_CPP_NOEXCEPT
+	{
+		qse_mtx_fini (&this->mtx);
+	}
 
+#if 0
 	bool tryock() QSE_CPP_NOEXCEPT
 	{
-	#if defined(QSE_SUPPORT_SPL)
-		return !qse_spl_trylock(&this->flag);
-	#elif defined(QSE_LANG_CPP11)
-		return !this->flag.test_and_set();
-	#else
-	#	error UNSUPPORTED
-	#endif
 	}
+#endif
 
 	void lock () QSE_CPP_NOEXCEPT
 	{
-	#if defined(QSE_SUPPORT_SPL)
-		qse_spl_lock (&this->flag);
-	#elif defined(QSE_LANG_CPP11)
-		while (flag.test_and_set()) { /* do nothing sepcial */ }
-	#else
-	#	error UNSUPPORTED
-	#endif
+		qse_mtx_lock (&this->mtx, QSE_NULL);
 	}
 
 	void unlock () QSE_CPP_NOEXCEPT
 	{
-	#if defined(QSE_SUPPORT_SPL)
-		qse_spl_unlock (&this->flag);
-	#elif defined(QSE_LANG_CPP11)
-		flag.clear ();
-	#else
-	#	error UNSUPPORTED
-	#endif
+		qse_mtx_unlock (&this->mtx);
 	}
 
 protected:
-#if defined(QSE_SUPPORT_SPL)
-	qse_spl_t flag;
-#elif defined(QSE_LANG_CPP11)
-	std::atomic_flag flag;
-#else
-#	error UNSUPPORTED;
-#endif
+	qse_mtx_t mtx;
 };
 
-class ScopedSpinLocker: public Uncopyable
+class ScopedMutexLocker: public Uncopyable
 {
 public:
-	ScopedSpinLocker (SpinLock& spl) QSE_CPP_NOEXCEPT: spl(spl)
+	ScopedMutexLocker (Mutex& mtx) QSE_CPP_NOEXCEPT: mtx(mtx)
 	{
-		this->spl.lock ();
+		this->mtx.lock ();
 	}
 
-	~ScopedSpinLocker () QSE_CPP_NOEXCEPT
+	~ScopedMutexLocker () QSE_CPP_NOEXCEPT
 	{
-		this->spl.unlock ();
+		this->mtx.unlock ();
 	}
 
 protected:
-	SpinLock& spl;
+	Mutex& mtx;
 };
-
 QSE_END_NAMESPACE(QSE)
 
 #endif
