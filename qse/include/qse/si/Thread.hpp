@@ -169,7 +169,7 @@ public:
 	ThreadL (Mmgr* mmgr = QSE_NULL) QSE_CPP_NOEXCEPT: Thread(mmgr), __lfunc(nullptr) {}
 	~ThreadL () QSE_CPP_NOEXCEPT 
 	{ 
-		if (this->__lfunc) QSE_CPP_CALL_DESTRUCTOR (this->__lfunc, Callable, this->getMmgr()); //delete this->__lfunc; 
+		if (this->__lfunc) QSE_CPP_DELETE_WITH_MMGR (this->__lfunc, Callable, this->getMmgr()); //delete this->__lfunc; 
 	}
 
 	static int call_func (qse_thr_t* thr, void* ctx)
@@ -183,7 +183,7 @@ public:
 	//int start (T f, int flags) QSE_CPP_NOEXCEPT
 	{
 		if (this->thr.__state == QSE_THR_RUNNING) return -1;
-		if (this->__lfunc) QSE_CPP_CALL_DESTRUCTOR (this->__lfunc, Callable, this->getMmgr()); //delete this->__lfunc; 
+		if (this->__lfunc) QSE_CPP_DELETE_WITH_MMGR (this->__lfunc, Callable, this->getMmgr()); //delete this->__lfunc; 
 		try
 		{
 			// TODO: are there any ways to achieve this without memory allocation?
