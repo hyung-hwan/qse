@@ -54,9 +54,6 @@ public:
 
 	QSE_EXCEPTION (MemoryError);
 
-protected:
-	bool raise_exception;
-
 public:
 	///
 	/// The Mmgr() function builds a memory manager composed of bridge
@@ -84,7 +81,7 @@ public:
 	/// allocation. if it fails, it raise an exception if it's
 	/// configured to do so.
 	///
-	void* allocate (qse_size_t n, bool raise_exception = true)
+	void* allocate (qse_size_t n, bool raise_exception = true) throw(MemoryError)
 	{
 		void* xptr = this->allocMem (n);
 		if (!xptr && raise_exception) QSE_THROW (MemoryError);
@@ -95,14 +92,14 @@ public:
 	/// The callocate() function allocates memory like allocate() and 
 	/// clears the memory before returning.
 	///
-	void* callocate (qse_size_t n, bool raise_exception = true);
+	void* callocate (qse_size_t n, bool raise_exception = true) throw(MemoryError);
 
 	///
 	/// The reallocate() function calls reallocMem() for memory
 	/// reallocation. if it fails, it raise an exception if it's
 	/// configured to do so.
 	///
-	void* reallocate (void* ptr, qse_size_t n, bool raise_exception = true)
+	void* reallocate (void* ptr, qse_size_t n, bool raise_exception = true) throw(MemoryError)
 	{
 		void* xptr = this->reallocMem (ptr, n);
 		if (!xptr && raise_exception) QSE_THROW (MemoryError);
@@ -174,7 +171,7 @@ protected:
 QSE_END_NAMESPACE(QSE)
 /////////////////////////////////
 
-QSE_EXPORT void* operator new (qse_size_t size, QSE::Mmgr* mmgr);
+QSE_EXPORT void* operator new (qse_size_t size, QSE::Mmgr* mmgr) throw(QSE::Mmgr::MemoryError);
 
 #if defined(QSE_CPP_NO_OPERATOR_DELETE_OVERLOADING)
 QSE_EXPORT void qse_operator_delete (void* ptr, QSE::Mmgr* mmgr);
@@ -182,7 +179,7 @@ QSE_EXPORT void qse_operator_delete (void* ptr, QSE::Mmgr* mmgr);
 QSE_EXPORT void operator delete (void* ptr, QSE::Mmgr* mmgr);
 #endif
 
-QSE_EXPORT void* operator new (qse_size_t size, QSE::Mmgr* mmgr, void* existing_ptr);
+QSE_EXPORT void* operator new (qse_size_t size, QSE::Mmgr* mmgr, void* existing_ptr) throw(QSE::Mmgr::MemoryError);
 
 #if 0
 // i found no way to delete an array allocated with
@@ -195,5 +192,11 @@ QSE_EXPORT void* operator new (qse_size_t size, QSE::Mmgr* mmgr, void* existing_
 void* operator new[] (qse_size_t size, QSE::Mmgr* mmgr);
 void operator delete[] (void* ptr, QSE::Mmgr* mmgr);
 #endif
+
+#define QSE_CPP_DELETE_WITH_MMGR(ptr, class_name, mmgr) \
+	do { \
+		QSE_CPP_CALL_DESTRUCTOR (ptr, class_name); \
+		QSE_CPP_CALL_PLACEMENT_DELETE1(ptr, mmgr); \
+	} while(0); 
 
 #endif

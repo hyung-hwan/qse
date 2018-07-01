@@ -118,7 +118,8 @@ void TcpServer::free_all_listeners () QSE_CPP_NOEXCEPT
 		qse_mux_delete (this->listener_list.mux, &evt);
 
 		lp->close ();
-		this->getMmgr()->dispose(lp); //delete lp;
+
+		QSE_CPP_DELETE_WITH_MMGR(lp, Listener, this->getMmgr()); // delete lp
 	}
 
 	if (this->listener_list.mux_pipe[0] >= 0)
@@ -190,7 +191,7 @@ void TcpServer::dispatch_mux_event (qse_mux_t* mux, const qse_mux_evt_t* evt) QS
 		// allocating the client object before accept is 
 		// a bit awkward. but socket.accept() can be passed
 		// the socket field inside the client object.
-		try { client = new(server->getMmgr()) Client (lsck); } 
+		try { client = new(server->getMmgr()) Client(lsck); } 
 		catch (...) 
 		{
 			// memory alloc failed. accept the connection and close it.
@@ -214,6 +215,17 @@ void TcpServer::dispatch_mux_event (qse_mux_t* mux, const qse_mux_evt_t* evt) QS
 			return;
 		}
 
+		try 
+		{
+			server->client_list.append (client); 
+		}
+		catch (...)
+		{
+			// TODO: logging.
+			QSE_CPP_DELETE_WITH_MMGR (client, Client, server->getMmgr()); // delete client
+			return;
+		}
+
 		client->setStackSize (server->thread_stack_size);
 	#if defined(_WIN32)
 		if (client->start(Thread::DETACHED) <= -1) 
@@ -221,17 +233,10 @@ void TcpServer::dispatch_mux_event (qse_mux_t* mux, const qse_mux_evt_t* evt) QS
 		if (client->start(0) <= -1)
 	#endif
 		{
-			server->getMmgr()->dispose (client); //delete client; 
-			return;
-		}
-
-		try { server->client_list.append (client); }
-		catch (...)
-		{
 			// TODO: logging.
-			server->getMmgr()->dispose (client); //delete client;
+			// don't delete the client object here. as it's int the client_list,
+			// this->delete_dead_clients() should delete this client later.
 			return;
-			
 		}
 	}
 }
@@ -370,8 +375,6 @@ int TcpServer::start (const qse_char_t* addrs) QSE_CPP_NOEXCEPT
 	this->server_serving = true;
 	this->setStopRequested (false);
 
-	Client* client = QSE_NULL;
-
 	try 
 	{
 		if (this->setup_listeners(addrs) <= -1)
@@ -399,12 +402,10 @@ int TcpServer::start (const qse_char_t* addrs) QSE_CPP_NOEXCEPT
 		}
 
 		this->delete_all_clients ();
-		if (client != QSE_NULL) this->getMmgr()->dispose (client); // delete client;
 	}
 	catch (...) 
 	{
 		this->delete_all_clients ();
-		if (client != QSE_NULL) this->getMmgr()->dispose (client); //delete client;
 
 		this->setErrorCode (E_EEXCEPT);
 		this->server_serving = false;
@@ -451,8 +452,7 @@ void TcpServer::delete_dead_clients () QSE_CPP_NOEXCEPT
 		#if !defined(_WIN32)
 			p->join ();
 		#endif
-
-			this->getMmgr()->dispose (p); //delete p;
+			QSE_CPP_DELETE_WITH_MMGR (p, Client, this->getMmgr()); // delete p
 			np2 = np; np = np->getNextNode();
 			this->client_list.remove (np2);
 			continue;
@@ -484,7 +484,7 @@ void TcpServer::delete_all_clients () QSE_CPP_NOEXCEPT
 	#else
 		p->join ();
 	#endif
-		this->getMmgr()->dispose (p); //delete p;
+		QSE_CPP_DELETE_WITH_MMGR (p, Client, this->getMmgr()); // delete p
 		np2 = np; np = np->getNextNode();
 		this->client_list.remove (np2);
 	}
