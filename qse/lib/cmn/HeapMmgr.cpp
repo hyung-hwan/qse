@@ -36,22 +36,22 @@ struct xma_xtn_t
 	HeapMmgr* heap;
 };
 
-HeapMmgr::HeapMmgr (qse_size_t heap_size):
+HeapMmgr::HeapMmgr (qse_size_t heap_size) QSE_CPP_NOEXCEPT:
 	Mmgr(), Mmged(QSE_NULL), xma(QSE_NULL), heap_size (heap_size)
 {
 }
 
-HeapMmgr::HeapMmgr (Mmgr* mmgr, qse_size_t heap_size): 
+HeapMmgr::HeapMmgr (Mmgr* mmgr, qse_size_t heap_size) QSE_CPP_NOEXCEPT: 
 	Mmgr(), Mmged(mmgr), xma(QSE_NULL), heap_size (heap_size)
 {
 }
 
-HeapMmgr::~HeapMmgr ()
+HeapMmgr::~HeapMmgr () QSE_CPP_NOEXCEPT
 {
 	if (this->xma) qse_xma_close (this->xma);
 }
 
-void* HeapMmgr::allocMem (qse_size_t n)
+void* HeapMmgr::allocMem (qse_size_t n) QSE_CPP_NOEXCEPT
 {
 	if (!this->xma)
 	{
@@ -67,7 +67,7 @@ void* HeapMmgr::allocMem (qse_size_t n)
 	return xptr;
 }
 
-void* HeapMmgr::reallocMem (void* ptr, qse_size_t n)
+void* HeapMmgr::reallocMem (void* ptr, qse_size_t n) QSE_CPP_NOEXCEPT
 {
 	if (!this->xma)
 	{
@@ -83,7 +83,7 @@ void* HeapMmgr::reallocMem (void* ptr, qse_size_t n)
 	return xptr;
 }
 
-void HeapMmgr::freeMem (void* ptr)
+void HeapMmgr::freeMem (void* ptr) QSE_CPP_NOEXCEPT
 {
 	if (this->xma) qse_xma_free (this->xma, ptr);
 }

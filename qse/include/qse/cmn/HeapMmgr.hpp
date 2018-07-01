@@ -49,23 +49,23 @@ QSE_BEGIN_NAMESPACE(QSE)
 class QSE_EXPORT HeapMmgr: public Mmgr, public Mmged
 {
 public:
-	HeapMmgr (qse_size_t heap_size);
+	HeapMmgr (qse_size_t heap_size) QSE_CPP_NOEXCEPT;
 
 	/// The constructor function accepts an memory manager \a mmgr that 
 	/// is used to create a heap of the size \a heap_size. 
-	HeapMmgr (Mmgr* mmgr, qse_size_t heap_size);
+	HeapMmgr (Mmgr* mmgr, qse_size_t heap_size) QSE_CPP_NOEXCEPT;
 
 	/// The destructor function frees the heap. Memory areas returned by
 	/// allocate(), reallocate(), allocMem(), reallocMem() are invalidated
 	/// all at once.
-	~HeapMmgr ();
+	~HeapMmgr () QSE_CPP_NOEXCEPT;
 
-	void* allocMem (qse_size_t n);
-	void* reallocMem (void* ptr, qse_size_t n);
-	void freeMem (void* ptr);
+	void* allocMem (qse_size_t n) QSE_CPP_NOEXCEPT;
+	void* reallocMem (void* ptr, qse_size_t n) QSE_CPP_NOEXCEPT;
+	void freeMem (void* ptr) QSE_CPP_NOEXCEPT;
 
 	// the library does not provide a stock instance of this class
-	//static HeapMmgr* getInstance ();
+	//static HeapMmgr* getInstance () QSE_CPP_NOEXCEPT;
 
 protected:
 	qse_xma_t* xma;

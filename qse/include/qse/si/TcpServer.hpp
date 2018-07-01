@@ -44,7 +44,7 @@ QSE_BEGIN_NAMESPACE(QSE)
 class TcpServer: public Uncopyable, public Mmged, public Types
 {
 public:
-	TcpServer () QSE_CPP_NOEXCEPT;
+	TcpServer (Mmgr* mmgr = QSE_NULL) QSE_CPP_NOEXCEPT;
 	virtual ~TcpServer () QSE_CPP_NOEXCEPT;
 
 	virtual int start (const qse_char_t* addrs) QSE_CPP_NOEXCEPT;
@@ -179,10 +179,10 @@ template <typename F>
 class TcpServerF: public TcpServer
 {
 public:
-	TcpServerF () QSE_CPP_NOEXCEPT {}
-	TcpServerF (const F& f) QSE_CPP_NOEXCEPT: __lfunc(f) {}
+	TcpServerF (Mmgr* mmgr = QSE_NULL) QSE_CPP_NOEXCEPT: TcpServer(mmgr) {}
+	TcpServerF (const F& f, Mmgr* mmgr = QSE_NULL) QSE_CPP_NOEXCEPT: TcpServer(mmgr), __lfunc(f) {}
 #if defined(QSE_CPP_ENABLE_CPP11_MOVE)
-	TcpServerF (F&& f) QSE_CPP_NOEXCEPT: __lfunc(QSE_CPP_RVREF(f)) {}
+	TcpServerF (F&& f, Mmgr* mmgr = QSE_NULL) QSE_CPP_NOEXCEPT: TcpServer(mmgr), __lfunc(QSE_CPP_RVREF(f)) {}
 #endif
 
 protected:
@@ -204,15 +204,15 @@ template <typename RT, typename... ARGS>
 class TcpServerL<RT(ARGS...)>: public TcpServer
 {
 public:
-	TcpServerL () QSE_CPP_NOEXCEPT: __lfunc(nullptr) {}
+	TcpServerL (Mmgr* mmgr = QSE_NULL) QSE_CPP_NOEXCEPT: Mmgr(mmgr), __lfunc(nullptr) {}
 
 	template <typename T>
-	TcpServerL (T&& f) QSE_CPP_NOEXCEPT: __lfunc(nullptr)
+	TcpServerL (T&& f, Mmgr* mmgr = QSE_NULL) QSE_CPP_NOEXCEPT: Mmgr(mmgr), __lfunc(nullptr)
 	{
 		try
 		{
 			// TODO: are there any ways to achieve this without memory allocation?
-			this->__lfunc = new TCallable<T> (QSE_CPP_RVREF(f));
+			this->__lfunc = new(this->getMmgr()) TCallable<T> (QSE_CPP_RVREF(f));
 		}
 		catch (...)
 		{
@@ -224,7 +224,11 @@ public:
 
 	~TcpServerL () QSE_CPP_NOEXCEPT 
 	{ 
-		if (this->__lfunc) delete this->__lfunc; 
+		if (this->__lfunc) 
+		{
+			//delete this->__lfunc; 
+			this->getMmgr()->dispose (this->__lfunc);
+		}
 	}
 
 	template <typename T>
@@ -235,14 +239,19 @@ public:
 		try
 		{
 			// TODO: are there any ways to achieve this without memory allocation?
-			lf = new TCallable<T> (QSE_CPP_RVREF(f));
+			//lf = new TCallable<T> (QSE_CPP_RVREF(f));
+			lf = new(this->getMmgr()) TCallable<T> (QSE_CPP_RVREF(f));
 		}
 		catch (...)
 		{
 			return -1;
 		}
 
-		if (this->__lfunc) delete this->__lfunc;
+		if (this->__lfunc) 
+		{
+			//delete this->__lfunc;
+			this->getMmgr()->dispose (this->__lfunc);
+		}
 		this->__lfunc = lf;
 		return 0;
 	}

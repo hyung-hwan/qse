@@ -32,21 +32,20 @@ QSE_BEGIN_NAMESPACE(QSE)
 
 Thread::Handle Thread::INVALID_HANDLE = QSE_THR_HND_INVALID;
 
-Thread::Thread() QSE_CPP_NOEXCEPT : __exctx(QSE_NULL)
+Thread::Thread(Mmgr* mmgr) QSE_CPP_NOEXCEPT: Mmged(mmgr), __exctx(QSE_NULL)
 {
-	//qse_thr_init (this, this->getMmgr());
-	qse_thr_init (this, QSE_NULL);
+	qse_thr_init (&this->thr, this->getMmgr());
 }
 
 Thread::~Thread () QSE_CPP_NOEXCEPT
 {
-	QSE_ASSERT (this->__state != QSE_THR_RUNNING);
+	QSE_ASSERT (this->thr.__state != QSE_THR_RUNNING);
 	// it is subclasses' responsibility to stop the thread gracefully.
 	// so stop is not called here.
 	// this->stop ();
 
-	/*if (this->__joinable)*/ this->join ();
-	qse_thr_fini (this);
+	/*if (this->thr.__joinable)*/ this->join ();
+	qse_thr_fini (&this->thr);
 }
 
 
@@ -58,7 +57,7 @@ static int thr_func_call_main (qse_thr_t* thr, void* ctx)
 
 int Thread::start (int flags) QSE_CPP_NOEXCEPT
 {
-	return qse_thr_start(this, thr_func_call_main, this, flags);
+	return qse_thr_start(&this->thr, thr_func_call_main, this, flags);
 }
 
 int Thread::stop () QSE_CPP_NOEXCEPT
@@ -67,7 +66,7 @@ int Thread::stop () QSE_CPP_NOEXCEPT
 	// make sure that subclasses override "stop" and call it
 	// properly so that the thread can be terminated gracefully.
 	// "stop" here just aborts the running thread.
-	return qse_thr_stop(this);
+	return qse_thr_stop(&this->thr);
 }
 
 
@@ -82,7 +81,7 @@ int ThreadR::thr_func_call_rtn (qse_thr_t* thr, void* ctx)
 
 int ThreadR::start (ThreadRoutine rtn, int flags) QSE_CPP_NOEXCEPT
 {
-	if (this->__state == QSE_THR_RUNNING) return -1;
+	if (this->thr.__state == QSE_THR_RUNNING) return -1;
 
 	// this != (qse_thr_t*)this may not be equal if this class
 	// has some internal added data fields. e.g. it contains
@@ -92,7 +91,7 @@ int ThreadR::start (ThreadRoutine rtn, int flags) QSE_CPP_NOEXCEPT
 	// 	qse_thr_start (this, (qse_thr_rtn_t)rtn, QSE_NULL, flags);
 	// so i pass a void pointer 'this' as the third argument.
 	this->__tmprtn = rtn;
-	return qse_thr_start(this, thr_func_call_rtn, this, flags);
+	return qse_thr_start(&this->thr, thr_func_call_rtn, this, flags);
 }
 
 QSE_END_NAMESPACE(QSE)

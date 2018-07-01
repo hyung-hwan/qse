@@ -86,7 +86,8 @@ int TcpServer::Client::stop () QSE_CPP_NOEXCEPT
 	return 0;
 }
 
-TcpServer::TcpServer () QSE_CPP_NOEXCEPT: 
+TcpServer::TcpServer (Mmgr* mmgr) QSE_CPP_NOEXCEPT: 
+	Mmged(mmgr),
 	errcode(E_ENOERR),
 	stop_requested(false), 
 	server_serving(false), 
@@ -116,7 +117,7 @@ void TcpServer::free_all_listeners () QSE_CPP_NOEXCEPT
 		qse_mux_delete (this->listener_list.mux, &evt);
 
 		lp->close ();
-		delete lp;
+		this->getMmgr()->dispose(lp); //delete lp;
 	}
 
 	if (this->listener_list.mux_pipe[0] >= 0)
@@ -175,9 +176,11 @@ void TcpServer::dispatch_mux_event (qse_mux_t* mux, const qse_mux_evt_t* evt) QS
 		if (server->max_connections > 0 && server->max_connections <= server->client_list.getSize()) 
 		{
 			// too many connections. accept the connection and close it.
+
 			Socket s;
 			SocketAddress sa;
 			if (lsck->accept(&s, &sa, Socket::T_CLOEXEC) >= 0) s.close();
+			// TODO: logging.
 			return;
 		}
 
@@ -186,13 +189,15 @@ void TcpServer::dispatch_mux_event (qse_mux_t* mux, const qse_mux_evt_t* evt) QS
 		// allocating the client object before accept is 
 		// a bit awkward. but socket.accept() can be passed
 		// the socket field inside the client object.
-		try { client = new Client (lsck); } 
+		try { client = new(server->getMmgr()) Client (lsck); } 
 		catch (...) 
 		{
 			// memory alloc failed. accept the connection and close it.
+
 			Socket s;
 			SocketAddress sa;
 			if (lsck->accept(&s, &sa, Socket::T_CLOEXEC) >= 0) s.close();
+			// TODO: logging.
 			return;
 		}
 
@@ -215,7 +220,7 @@ void TcpServer::dispatch_mux_event (qse_mux_t* mux, const qse_mux_evt_t* evt) QS
 		if (client->start(0) <= -1)
 	#endif
 		{
-			delete client; 
+			server->getMmgr()->dispose (client); //delete client; 
 			return;
 		}
 
@@ -223,7 +228,7 @@ void TcpServer::dispatch_mux_event (qse_mux_t* mux, const qse_mux_evt_t* evt) QS
 		catch (...)
 		{
 			// TODO: logging.
-			delete client;
+			server->getMmgr()->dispose (client); //delete client;
 			return;
 			
 		}
@@ -296,7 +301,7 @@ int TcpServer::setup_listeners (const qse_char_t* addrs) QSE_CPP_NOEXCEPT
 
 		try 
 		{ 
-			lsck = new Listener(this); 
+			lsck = new(this->getMmgr()) Listener(this); 
 		}
 		catch (...) 
 		{
@@ -393,12 +398,12 @@ int TcpServer::start (const qse_char_t* addrs) QSE_CPP_NOEXCEPT
 		}
 
 		this->delete_all_clients ();
-		if (client != QSE_NULL) delete client;
+		if (client != QSE_NULL) this->getMmgr()->dispose (client); // delete client;
 	}
 	catch (...) 
 	{
 		this->delete_all_clients ();
-		if (client != QSE_NULL) delete client;
+		if (client != QSE_NULL) this->getMmgr()->dispose (client); //delete client;
 
 		this->setErrorCode (E_EEXCEPT);
 		this->server_serving = false;
@@ -446,7 +451,7 @@ void TcpServer::delete_dead_clients () QSE_CPP_NOEXCEPT
 			p->join ();
 		#endif
 
-			delete p;
+			this->getMmgr()->dispose (p); //delete p;
 			np2 = np; np = np->getNextNode();
 			this->client_list.remove (np2);
 			continue;
@@ -478,7 +483,7 @@ void TcpServer::delete_all_clients () QSE_CPP_NOEXCEPT
 	#else
 		p->join ();
 	#endif
-		delete p;
+		this->getMmgr()->dispose (p); //delete p;
 		np2 = np; np = np->getNextNode();
 		this->client_list.remove (np2);
 	}

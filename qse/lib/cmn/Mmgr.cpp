@@ -32,17 +32,17 @@
 QSE_BEGIN_NAMESPACE(QSE)
 /////////////////////////////////
 
-void* Mmgr::alloc_mem (mmgr_t* mmgr, qse_size_t n) 
+void* Mmgr::alloc_mem (mmgr_t* mmgr, qse_size_t n) QSE_CPP_NOEXCEPT
 {
 	return ((Mmgr*)mmgr->ctx)->allocMem (n);
 }
 
-void* Mmgr::realloc_mem (mmgr_t* mmgr, void* ptr, qse_size_t n) 
+void* Mmgr::realloc_mem (mmgr_t* mmgr, void* ptr, qse_size_t n) QSE_CPP_NOEXCEPT
 {
 	return ((Mmgr*)mmgr->ctx)->reallocMem (ptr, n);
 }
 
-void Mmgr::free_mem (mmgr_t* mmgr, void* ptr) 
+void Mmgr::free_mem (mmgr_t* mmgr, void* ptr) QSE_CPP_NOEXCEPT
 {
 	((Mmgr*)mmgr->ctx)->freeMem (ptr);
 }
@@ -56,12 +56,12 @@ void* Mmgr::callocate (qse_size_t n, bool raise_exception)
 
 Mmgr* Mmgr::dfl_mmgr = StdMmgr::getInstance();
 
-Mmgr* Mmgr::getDFL ()
+Mmgr* Mmgr::getDFL () QSE_CPP_NOEXCEPT
 {
 	return Mmgr::dfl_mmgr;
 }
 
-void Mmgr::setDFL (Mmgr* mmgr)
+void Mmgr::setDFL (Mmgr* mmgr) QSE_CPP_NOEXCEPT
 {
 	Mmgr::dfl_mmgr = mmgr;
 }

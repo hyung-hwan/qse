@@ -62,7 +62,7 @@ public:
 	/// The Mmgr() function builds a memory manager composed of bridge
 	/// functions connecting itself with it.
 	///
-	Mmgr ()
+	Mmgr () QSE_CPP_NOEXCEPT
 	{
 		// NOTE:
 		//  the #qse_mmgr_t interface is not affected by raise_exception
@@ -77,7 +77,7 @@ public:
 	///
 	/// The ~Mmgr() function finalizes a memory manager.
 	///
-	virtual ~Mmgr () {}
+	virtual ~Mmgr () QSE_CPP_NOEXCEPT {}
 
 	///
 	/// The allocate() function calls allocMem() for memory
@@ -125,7 +125,7 @@ public:
 	///
 	virtual void* allocMem (
 		qse_size_t n ///< size of memory chunk to allocate in bytes 
-	) = 0;
+	) QSE_CPP_NOEXCEPT = 0;
 
 	///
 	/// The reallocMem() function resizes a chunk of memory previously
@@ -136,7 +136,7 @@ public:
 	virtual void* reallocMem (
 		void* ptr, ///< pointer to memory chunk to resize
 		qse_size_t n   ///< new size in bytes
-	) = 0;
+	) QSE_CPP_NOEXCEPT = 0;
 
 	///
 	/// The freeMem() function frees a chunk of memory allocated with
@@ -144,27 +144,27 @@ public:
 	///
 	virtual void freeMem (
 		void* ptr ///< pointer to memory chunk to free 
-	) = 0;
+	) QSE_CPP_NOEXCEPT = 0;
 
 protected:
 	///
 	/// bridge function from the #qse_mmgr_t type the allocMem() function.
 	///
-	static void* alloc_mem (mmgr_t* mmgr, qse_size_t n);
+	static void* alloc_mem (mmgr_t* mmgr, qse_size_t n) QSE_CPP_NOEXCEPT;
 
 	///
 	/// bridge function from the #qse_mmgr_t type the reallocMem() function.
 	///
-	static void* realloc_mem (mmgr_t* mmgr, void* ptr, qse_size_t n);
+	static void* realloc_mem (mmgr_t* mmgr, void* ptr, qse_size_t n) QSE_CPP_NOEXCEPT;
 
 	///
 	/// bridge function from the #qse_mmgr_t type the freeMem() function.
 	///
-	static void  free_mem (mmgr_t* mmgr, void* ptr);
+	static void  free_mem (mmgr_t* mmgr, void* ptr) QSE_CPP_NOEXCEPT;
 
 public:
-	static Mmgr* getDFL ();
-	static void setDFL (Mmgr* mmgr);
+	static Mmgr* getDFL () QSE_CPP_NOEXCEPT;
+	static void setDFL (Mmgr* mmgr) QSE_CPP_NOEXCEPT;
 
 protected:
 	static Mmgr* dfl_mmgr;
