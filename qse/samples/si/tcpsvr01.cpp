@@ -98,7 +98,7 @@ static int test1 (void)
 
 	);
 #else
-	QSE::TcpServerF<ClientHandler> server /*(&heap_mmgr)*/;
+	QSE::TcpServerF<ClientHandler> server (&heap_mmgr);
 #endif
 
 	server.setThreadStackSize (256000);
