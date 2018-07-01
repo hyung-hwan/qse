@@ -41,7 +41,7 @@ QSE_BEGIN_NAMESPACE(QSE)
 // The TcpServer class implements a simple block TCP server that start a thread
 // for each connection accepted.
 
-class TcpServer: public Uncopyable, public Mmged, public Types
+class QSE_EXPORT TcpServer: public Uncopyable, public Mmged, public Types
 {
 public:
 	TcpServer (Mmgr* mmgr = QSE_NULL) QSE_CPP_NOEXCEPT;
@@ -176,7 +176,7 @@ private:
 
 // functor as a template parameter
 template <typename F>
-class TcpServerF: public TcpServer
+class QSE_EXPORT TcpServerF: public TcpServer
 {
 public:
 	TcpServerF (Mmgr* mmgr = QSE_NULL) QSE_CPP_NOEXCEPT: TcpServer(mmgr) {}
@@ -201,7 +201,7 @@ template <typename T>
 class TcpServerL;
 
 template <typename RT, typename... ARGS>
-class TcpServerL<RT(ARGS...)>: public TcpServer
+class QSE_EXPORT TcpServerL<RT(ARGS...)>: public TcpServer
 {
 public:
 	TcpServerL (Mmgr* mmgr = QSE_NULL) QSE_CPP_NOEXCEPT: TcpServer(mmgr), __lfunc(nullptr) {}

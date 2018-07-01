@@ -55,32 +55,28 @@ void* HeapMmgr::allocMem (qse_size_t n) QSE_CPP_NOEXCEPT
 {
 	if (!this->xma)
 	{
-		this->xma = qse_xma_open (this->getMmgr(), QSE_SIZEOF(xma_xtn_t), heap_size);
+		this->xma = qse_xma_open(this->getMmgr(), QSE_SIZEOF(xma_xtn_t), heap_size);
 		if (!this->xma) return QSE_NULL;
 
-		xma_xtn_t* xtn = (xma_xtn_t*)qse_xma_getxtn (this->xma);
+		xma_xtn_t* xtn = (xma_xtn_t*)qse_xma_getxtn(this->xma);
 		xtn->heap = this;
 	}
 
-	void* xptr = qse_xma_alloc (this->xma, n);
-	if (!xptr) QSE_THROW (MemoryError);
-	return xptr;
+	return qse_xma_alloc(this->xma, n);
 }
 
 void* HeapMmgr::reallocMem (void* ptr, qse_size_t n) QSE_CPP_NOEXCEPT
 {
 	if (!this->xma)
 	{
-		this->xma = qse_xma_open (this->getMmgr(), QSE_SIZEOF(xma_xtn_t), heap_size);
+		this->xma = qse_xma_open(this->getMmgr(), QSE_SIZEOF(xma_xtn_t), heap_size);
 		if (!this->xma) return QSE_NULL;
 
-		xma_xtn_t* xtn = (xma_xtn_t*)qse_xma_getxtn (this->xma);
+		xma_xtn_t* xtn = (xma_xtn_t*)qse_xma_getxtn(this->xma);
 		xtn->heap = this;
 	}
 
-	void* xptr = qse_xma_realloc (this->xma, ptr, n);
-	if (!xptr) QSE_THROW (MemoryError);
-	return xptr;
+	return qse_xma_realloc(this->xma, ptr, n);
 }
 
 void HeapMmgr::freeMem (void* ptr) QSE_CPP_NOEXCEPT

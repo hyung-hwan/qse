@@ -29,7 +29,7 @@ public:
 		qse_ssize_t n;
 
 		cliaddr->toStrBuf(addrbuf, QSE_COUNTOF(addrbuf));
-		//qse_printf (QSE_T("hello word..from %s\n"), addrbuf);
+		qse_printf (QSE_T("hello word..from %s\n"), addrbuf);
 
 		while (!server->isStopRequested())
 		{
@@ -41,7 +41,7 @@ public:
 			clisock->send (bb, n);
 		}
 
-		//qse_printf (QSE_T("byte to %s\n"), addrbuf);
+		qse_printf (QSE_T("byte to %s\n"), addrbuf);
 		return 0;
 	}
 };
@@ -74,7 +74,7 @@ static int test1 (void)
 				}
 				clisock->send (bb, n);
 			}
-	
+
 			qse_printf (QSE_T("byte to %s\n"), addrbuf);
 			return 0;
 		}),

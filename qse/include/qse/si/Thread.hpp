@@ -33,7 +33,7 @@
 
 QSE_BEGIN_NAMESPACE(QSE)
 
-class Thread: public Uncopyable, public Mmged
+class QSE_EXPORT Thread: public Uncopyable, public Mmged
 {
 public:
 	// native thread handle type
@@ -94,7 +94,7 @@ protected:
 	static Handle INVALID_HANDLE;
 };
 
-class ThreadR: public Thread
+class QSE_EXPORT ThreadR: public Thread
 {
 public:
 	ThreadR (Mmgr* mmgr = QSE_NULL) QSE_CPP_NOEXCEPT: Thread(mmgr) {}
@@ -109,7 +109,7 @@ protected:
 };
 
 template <typename F>
-class ThreadF: public Thread
+class QSE_EXPORT ThreadF: public Thread
 {
 public:
 	ThreadF (Mmgr* mmgr = QSE_NULL) QSE_CPP_NOEXCEPT: Thread(mmgr) {}
@@ -163,7 +163,7 @@ template <typename T>
 class ThreadL;
 
 template <typename RT, typename... ARGS>
-class ThreadL<RT(ARGS...)>: public Thread
+class QSE_EXPORT ThreadL<RT(ARGS...)>: public Thread
 {
 public:
 	ThreadL (Mmgr* mmgr = QSE_NULL) QSE_CPP_NOEXCEPT: Thread(mmgr), __lfunc(nullptr) {}
