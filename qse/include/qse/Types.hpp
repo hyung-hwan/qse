@@ -38,6 +38,11 @@
 	#define QSE_LANG_CPP11 1
 
 	#define QSE_CPP_NOEXCEPT noexcept(true)
+	#define QSE_CPP_THREXCEPT1(e1) throw(e1)
+	#define QSE_CPP_THREXCEPT2(e1,e2) throw(e1,e2)
+	#define QSE_CPP_THREXCEPT3(e1,e2,e3) throw(e1,e2,e3)
+	#define QSE_CPP_THREXCEPT4(e1,e2,e3,e4) throw(e1,e2,e3,e4)
+	#define QSE_CPP_THREXCEPT5(e1,e2,e3,e4,e5) throw(e1,e2,e3,e4,e5)
 	#define QSE_CPP_EXPLICIT explicit
 
 	/// The QSE_CPP_ENABLE_CPP11_MOVE macro enables C++11 move semantics
@@ -58,6 +63,11 @@
 	#undef QSE_LANG_CPP11 
 
 	#define QSE_CPP_NOEXCEPT throw()
+	#define QSE_CPP_THREXCEPT1(e1) throw(e1)
+	#define QSE_CPP_THREXCEPT2(e1,e2) throw(e1,e2)
+	#define QSE_CPP_THREXCEPT3(e1,e2,e3) throw(e1,e2,e3)
+	#define QSE_CPP_THREXCEPT4(e1,e2,e3,e4) throw(e1,e2,e3,e4)
+	#define QSE_CPP_THREXCEPT5(e1,e2,e3,e4,e5) throw(e1,e2,e3,e4,e5)
 	#define QSE_CPP_EXPLICIT 
 
 	#define QSE_CPP_CALL_DESTRUCTOR(ptr, class_name) ((ptr)->~class_name())
@@ -65,6 +75,11 @@
 	#define QSE_CPP_TEMPLATE_QUALIFIER template
 #else
 	#define QSE_CPP_NOEXCEPT 
+	#define QSE_CPP_THREXCEPT1(e1)
+	#define QSE_CPP_THREXCEPT2(e1,e2)
+	#define QSE_CPP_THREXCEPT3(e1,e2,e3)
+	#define QSE_CPP_THREXCEPT4(e1,e2,e3,e4)
+	#define QSE_CPP_THREXCEPT5(e1,e2,e3,e4,e5)
 	#define QSE_CPP_EXPLICIT 
 
 	#if defined(__BORLANDC__)
