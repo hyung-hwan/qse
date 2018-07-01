@@ -32,22 +32,22 @@ QSE_BEGIN_NAMESPACE(QSE)
 /////////////////////////////////
 
 
-void* StdMmgr::allocMem (qse_size_t n) 
+void* StdMmgr::allocMem (qse_size_t n) QSE_CPP_NOEXCEPT 
 {
 	return ::malloc (n);
 }
 
-void* StdMmgr::reallocMem (void* ptr, qse_size_t n) 
+void* StdMmgr::reallocMem (void* ptr, qse_size_t n) QSE_CPP_NOEXCEPT
 { 
 	return ::realloc (ptr, n); 
 }
 
-void StdMmgr::freeMem (void* ptr) 
+void StdMmgr::freeMem (void* ptr) QSE_CPP_NOEXCEPT
 {
 	::free (ptr); 
 }
 
-StdMmgr* StdMmgr::getInstance ()
+StdMmgr* StdMmgr::getInstance () QSE_CPP_NOEXCEPT
 {
 	static StdMmgr DFL;
 	return &DFL;

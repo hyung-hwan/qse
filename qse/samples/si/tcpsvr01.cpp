@@ -3,7 +3,7 @@
 #include <qse/si/sio.h>
 #include <qse/si/os.h>
 #include <qse/cmn/mem.h>
-
+#include <qse/cmn/HeapMmgr.hpp>
 
 #include <locale.h>
 #if defined(_WIN32)
@@ -51,6 +51,8 @@ static QSE::TcpServerF<ClientHandler>* g_server;
 
 static int test1 (void)
 {
+	QSE::HeapMmgr heap_mmgr (QSE::Mmgr::getDFL(), 30000);
+
 #if defined(QSE_LANG_CPP11)
 	QSE::TcpServerL<int(QSE::Socket*,QSE::SocketAddress*)> server (
 
@@ -79,7 +81,7 @@ static int test1 (void)
 
 	);
 #else
-	QSE::TcpServerF<ClientHandler> server;
+	QSE::TcpServerF<ClientHandler> server (&heap_mmgr);
 #endif
 
 	server.setThreadStackSize (256000);

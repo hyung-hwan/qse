@@ -29,13 +29,14 @@
 
 #include <qse/si/thr.h>
 #include <qse/Uncopyable.hpp>
+#include <qse/cmn/Mmged.hpp>
 
 QSE_BEGIN_NAMESPACE(QSE)
 
-class Thread: protected qse_thr_t, public Uncopyable
+class Thread: public Uncopyable, public Mmged
 {
 public:
-	// native thread hadnle type
+	// native thread handle type
 	typedef qse_thr_hnd_t Handle;
 
 	enum State
@@ -52,17 +53,17 @@ public:
 		SIGNALS_BLOCKED = QSE_THR_SIGNALS_BLOCKED
 	};
 
-	static Handle getCurrentHandle () QSE_CPP_NOEXCEPT { return qse_get_thr_hnd ();	}
+	static Handle getCurrentHandle () QSE_CPP_NOEXCEPT { return qse_get_thr_hnd(); }
 
-	Thread () QSE_CPP_NOEXCEPT;
+	Thread (Mmgr* mmgr = QSE_NULL) QSE_CPP_NOEXCEPT;
 	virtual ~Thread () QSE_CPP_NOEXCEPT;
 
-	Handle getHandle () const QSE_CPP_NOEXCEPT { return this->__handle; }
-	int getState () const QSE_CPP_NOEXCEPT { return this->__state; }
-	int getReturnCode () const QSE_CPP_NOEXCEPT { return this->__return_code; }
+	Handle getHandle () const QSE_CPP_NOEXCEPT { return this->thr.__handle; }
+	int getState () const QSE_CPP_NOEXCEPT { return this->thr.__state; }
+	int getReturnCode () const QSE_CPP_NOEXCEPT { return this->thr.__return_code; }
 
-	qse_size_t getStackSize () const QSE_CPP_NOEXCEPT { return this->__stacksize; }
-	void setStackSize (qse_size_t num) QSE_CPP_NOEXCEPT { qse_thr_setstacksize(this, num); }
+	qse_size_t getStackSize () const QSE_CPP_NOEXCEPT { return this->thr.__stacksize; }
+	void setStackSize (qse_size_t num) QSE_CPP_NOEXCEPT { qse_thr_setstacksize(&this->thr, num); }
 
 	// execute the main method defined in this class in a thread.
 	virtual int start (int flags = 0) QSE_CPP_NOEXCEPT;
@@ -78,16 +79,17 @@ public:
 	// change the context pointer value
 	void setContext (void* ctx) QSE_CPP_NOEXCEPT { this->__exctx = ctx; }
 
-	int join () QSE_CPP_NOEXCEPT { return qse_thr_join(this); }
-	int detach () QSE_CPP_NOEXCEPT { return qse_thr_detach(this); }
+	int join () QSE_CPP_NOEXCEPT { return qse_thr_join(&this->thr); }
+	int detach () QSE_CPP_NOEXCEPT { return qse_thr_detach(&this->thr); }
 
-	int kill (int sig) QSE_CPP_NOEXCEPT { return qse_thr_kill(this, sig); }
-	int blockSignal (int sig) QSE_CPP_NOEXCEPT { return qse_thr_blocksig(this, sig); }
-	int unblockSignal (int sig) QSE_CPP_NOEXCEPT { return qse_thr_unblocksig(this, sig); }
-	int blockAllSignals () QSE_CPP_NOEXCEPT { return qse_thr_blockallsigs (this); }
-	int unblockAllSignals () QSE_CPP_NOEXCEPT { return qse_thr_unblockallsigs (this); }
+	int kill (int sig) QSE_CPP_NOEXCEPT { return qse_thr_kill(&this->thr, sig); }
+	int blockSignal (int sig) QSE_CPP_NOEXCEPT { return qse_thr_blocksig(&this->thr, sig); }
+	int unblockSignal (int sig) QSE_CPP_NOEXCEPT { return qse_thr_unblocksig(&this->thr, sig); }
+	int blockAllSignals () QSE_CPP_NOEXCEPT { return qse_thr_blockallsigs(&this->thr); }
+	int unblockAllSignals () QSE_CPP_NOEXCEPT { return qse_thr_unblockallsigs(&this->thr); }
 
 protected:
+	qse_thr_t thr;
 	void* __exctx;
 	static Handle INVALID_HANDLE;
 };
@@ -95,6 +97,7 @@ protected:
 class ThreadR: public Thread
 {
 public:
+	ThreadR (Mmgr* mmgr = QSE_NULL) QSE_CPP_NOEXCEPT: Thread(mmgr) {}
 	typedef int (*ThreadRoutine) (Thread* thr);
 
 	// execute the given function in a thread.
@@ -109,10 +112,10 @@ template <typename F>
 class ThreadF: public Thread
 {
 public:
-	ThreadF () QSE_CPP_NOEXCEPT {}
-	ThreadF (const F& f) QSE_CPP_NOEXCEPT: __lfunc(f) {}
+	ThreadF (Mmgr* mmgr = QSE_NULL) QSE_CPP_NOEXCEPT: Thread(mmgr) {}
+	ThreadF (const F& f, Mmgr* mmgr = QSE_NULL) QSE_CPP_NOEXCEPT: Thread(mmgr), __lfunc(f) {}
 #if defined(QSE_CPP_ENABLE_CPP11_MOVE)
-	ThreadF (F&& f) QSE_CPP_NOEXCEPT: __lfunc(QSE_CPP_RVREF(f)) {}
+	ThreadF (F&& f, Mmgr* mmgr = QSE_NULL) QSE_CPP_NOEXCEPT: Thread(mmgr), __lfunc(QSE_CPP_RVREF(f)) {}
 #endif
 
 	static int call_func (qse_thr_t* thr, void* ctx)
@@ -123,7 +126,7 @@ public:
 
 	int start (int flags = 0) QSE_CPP_NOEXCEPT
 	{
-		return qse_thr_start (this, (qse_thr_rtn_t)ThreadF<F>::call_func, this, flags);
+		return qse_thr_start (&this->thr, (qse_thr_rtn_t)ThreadF<F>::call_func, this, flags);
 	}
 
 protected:
@@ -131,7 +134,6 @@ protected:
 };
 
 #if defined(QSE_LANG_CPP11)
-
 
 #if 0
 // i don't want to use std::function. 
@@ -148,7 +150,7 @@ public:
 	int start (X&& f, int flags) QSE_CPP_NOEXCEPT
 	{
 		this->__lfunc = QSE_CPP_RVREF(f);
-		return qse_thr_start (this, (qse_thr_rtn_t)ThreadF::call_func, this, flags);
+		return qse_thr_start(&this->thr, (qse_thr_rtn_t)ThreadF::call_func, this, flags);
 	}
 
 protected:
@@ -164,10 +166,10 @@ template <typename RT, typename... ARGS>
 class ThreadL<RT(ARGS...)>: public Thread
 {
 public:
-	ThreadL () QSE_CPP_NOEXCEPT: __lfunc(nullptr) {}
+	ThreadL (Mmgr* mmgr = QSE_NULL) QSE_CPP_NOEXCEPT: Thread(mmgr), __lfunc(nullptr) {}
 	~ThreadL () QSE_CPP_NOEXCEPT 
 	{ 
-		if (this->__lfunc) delete this->__lfunc; 
+		if (this->__lfunc) this->getMmgr()->dispose(this->__lfunc); //delete this->__lfunc; 
 	}
 
 	static int call_func (qse_thr_t* thr, void* ctx)
@@ -181,18 +183,18 @@ public:
 	//int start (T f, int flags) QSE_CPP_NOEXCEPT
 	{
 		if (this->__state == QSE_THR_RUNNING) return -1;
-		if (this->__lfunc) delete this->__lfunc;
+		if (this->__lfunc) this->getMmgr()->dispose (this->__lfunc); //delete this->__lfunc;
 		try
 		{
 			// TODO: are there any ways to achieve this without memory allocation?
-			this->__lfunc = new TCallable<T> (QSE_CPP_RVREF(f));
+			this->__lfunc = new(this->getMmgr()) TCallable<T> (QSE_CPP_RVREF(f));
 		}
 		catch (...)
 		{
 			this->__lfunc = nullptr;
 			return -1;
 		}
-		return qse_thr_start (this, (qse_thr_rtn_t)ThreadL::call_func, this, flags);
+		return qse_thr_start(&this->thr, (qse_thr_rtn_t)ThreadL::call_func, this, flags);
 	}
 
 protected:

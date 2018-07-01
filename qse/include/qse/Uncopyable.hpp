@@ -42,7 +42,7 @@ QSE_BEGIN_NAMESPACE(QSE)
 class QSE_EXPORT Uncopyable 
 {
 public:
-	Uncopyable () {}
+	Uncopyable () QSE_CPP_NOEXCEPT {}
 	//virtual ~Uncopyable () {}
 
 private:

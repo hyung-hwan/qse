@@ -2,6 +2,7 @@
 #include <qse/si/mtx.h>
 #include <qse/si/sio.h>
 #include <qse/cmn/mem.h>
+#include <qse/cmn/HeapMmgr.hpp>
 
 #include <locale.h>
 #if defined(_WIN32)
@@ -14,6 +15,8 @@
 
 static int g_stopreq = 0;
 static qse_mtx_t* g_prmtx = QSE_NULL;
+
+QSE::HeapMmgr g_heap_mmgr (QSE::Mmgr::getDFL(), 30000);
 
 class MyThread: public QSE::Thread
 {
@@ -126,7 +129,7 @@ static int test1 (void)
 		return -1;
 	}
 
-	QSE::ThreadR thr2;
+	QSE::ThreadR thr2 (&g_heap_mmgr);
 	thr2.setStackSize (64000);
 	thr2.setContext (&localstopreq);
 #if defined(QSE_LANG_CPP11)

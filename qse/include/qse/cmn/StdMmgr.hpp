@@ -40,15 +40,15 @@ QSE_BEGIN_NAMESPACE(QSE)
 class QSE_EXPORT StdMmgr: public Mmgr
 {
 public:
-	StdMmgr (): Mmgr () {}
+	StdMmgr () QSE_CPP_NOEXCEPT: Mmgr () {}
 
-	void* allocMem (qse_size_t n);
-	void* reallocMem (void* ptr, qse_size_t n);
-	void freeMem (void* ptr);
+	void* allocMem (qse_size_t n) QSE_CPP_NOEXCEPT;
+	void* reallocMem (void* ptr, qse_size_t n) QSE_CPP_NOEXCEPT;
+	void freeMem (void* ptr) QSE_CPP_NOEXCEPT;
 
 	/// The getInstance() function returns the stock instance of the StdMmgr
 	/// class.
-	static StdMmgr* getInstance ();
+	static StdMmgr* getInstance () QSE_CPP_NOEXCEPT;
 };
 
 /////////////////////////////////
