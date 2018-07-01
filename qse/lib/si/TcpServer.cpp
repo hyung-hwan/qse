@@ -33,40 +33,40 @@
 #include <unistd.h>
 #include <fcntl.h>
 
+
 QSE_BEGIN_NAMESPACE(QSE)
 
 #include "../cmn/syserr.h"
 IMPLEMENT_SYSERR_TO_ERRNUM (TcpServer::ErrorCode, TcpServer::)
 
-//
-// NOTICE: the guarantee class below could have been placed 
-//         inside TCPServer::Client::run () without supporting 
-//         old C++ compilers.
-//
-class guarantee_tcpsocket_close {
-public:
-	guarantee_tcpsocket_close (Socket* socket, SpinLock* spl): psck(socket), spl(spl) {}
-	~guarantee_tcpsocket_close () 
-	{ 
-		spl->lock ();
-		psck->close (); 
-		spl->unlock ();
-	}
-	Socket* psck;
-	SpinLock* spl;
-};
-
 int TcpServer::Client::main ()
 {
+	int n;
+
 	// blockAllSignals is called inside run because 
 	// Client is instantiated in the TcpServer thread.
 	// so if it is called in the constructor of Client, 
 	// it would just block signals to the TcpProxy thread.
 	this->blockAllSignals (); // don't care about the result.
 
-	guarantee_tcpsocket_close close_socket (&this->socket, &this->csspl);
-	if (this->listener->server->handle_client(&this->socket, &this->address) <= -1) return -1;
-	return 0;
+	try { n = this->listener->server->handle_client(&this->socket, &this->address); }
+	catch (...) { n = -1; }
+
+	this->csspl.lock ();
+	this->socket.close (); 
+	this->csspl.unlock ();
+
+	TcpServer* server = this->getServer();
+
+	server->client_list_spl.lock ();
+	if (!this->claimed)
+	{
+		server->client_list[Client::LIVE].remove (this);
+		server->client_list[Client::DEAD].append (this);
+	}
+	server->client_list_spl.unlock ();
+
+	return n;
 }
 
 int TcpServer::Client::stop () QSE_CPP_NOEXCEPT
@@ -92,15 +92,15 @@ TcpServer::TcpServer (Mmgr* mmgr) QSE_CPP_NOEXCEPT:
 	stop_requested(false), 
 	server_serving(false), 
 	max_connections(0),
-	thread_stack_size(0),
-	client_list(mmgr)
+	thread_stack_size(0)
 {
 }
 
 TcpServer::~TcpServer () QSE_CPP_NOEXCEPT
 {
 	// QSE_ASSERT (this->server_serving == false);
-	this->delete_all_clients ();
+	this->delete_all_clients (Client::LIVE);
+	this->delete_all_clients (Client::DEAD);
 }
 
 void TcpServer::free_all_listeners () QSE_CPP_NOEXCEPT
@@ -158,7 +158,7 @@ void TcpServer::dispatch_mux_event (qse_mux_t* mux, const qse_mux_evt_t* evt) QS
 
 	if (mux_xtn->first_time)
 	{
-		server->delete_dead_clients();
+		server->delete_all_clients(Client::DEAD);
 		mux_xtn->first_time = false;
 	}
 
@@ -175,7 +175,7 @@ void TcpServer::dispatch_mux_event (qse_mux_t* mux, const qse_mux_evt_t* evt) QS
 		/* the reset should be the listener's socket */
 		Listener* lsck = (Listener*)evt->data;
 
-		if (server->max_connections > 0 && server->max_connections <= server->client_list.getSize()) 
+		if (server->max_connections > 0 && server->max_connections <= server->client_list[Client::LIVE].getSize()) 
 		{
 			// too many connections. accept the connection and close it.
 
@@ -205,6 +205,8 @@ void TcpServer::dispatch_mux_event (qse_mux_t* mux, const qse_mux_evt_t* evt) QS
 
 		if (lsck->accept(&client->socket, &client->address, Socket::T_CLOEXEC) <= -1)
 		{
+			QSE_CPP_DELETE_WITH_MMGR (client, Client, server->getMmgr());
+
 			if (server->isStopRequested()) return; /* normal termination requested */
 
 			Socket::ErrorCode lerr = lsck->getErrorCode();
@@ -215,16 +217,9 @@ void TcpServer::dispatch_mux_event (qse_mux_t* mux, const qse_mux_evt_t* evt) QS
 			return;
 		}
 
-		try 
-		{
-			server->client_list.append (client); 
-		}
-		catch (...)
-		{
-			// TODO: logging.
-			QSE_CPP_DELETE_WITH_MMGR (client, Client, server->getMmgr()); // delete client
-			return;
-		}
+		server->client_list_spl.lock ();
+		server->client_list[Client::LIVE].append (client); 
+		server->client_list_spl.unlock ();
 
 		client->setStackSize (server->thread_stack_size);
 	#if defined(_WIN32)
@@ -234,8 +229,11 @@ void TcpServer::dispatch_mux_event (qse_mux_t* mux, const qse_mux_evt_t* evt) QS
 	#endif
 		{
 			// TODO: logging.
-			// don't delete the client object here. as it's int the client_list,
-			// this->delete_dead_clients() should delete this client later.
+
+			server->client_list_spl.lock ();
+			server->client_list[Client::LIVE].remove (client);
+			server->client_list_spl.unlock ();
+			QSE_CPP_DELETE_WITH_MMGR (client, Client, server->getMmgr());
 			return;
 		}
 	}
@@ -401,11 +399,13 @@ int TcpServer::start (const qse_char_t* addrs) QSE_CPP_NOEXCEPT
 			}
 		}
 
-		this->delete_all_clients ();
+		this->delete_all_clients (Client::LIVE);
+		this->delete_all_clients (Client::DEAD);
 	}
 	catch (...) 
 	{
-		this->delete_all_clients ();
+		this->delete_all_clients (Client::LIVE);
+		this->delete_all_clients (Client::DEAD);
 
 		this->setErrorCode (E_EEXCEPT);
 		this->server_serving = false;
@@ -437,56 +437,25 @@ int TcpServer::stop () QSE_CPP_NOEXCEPT
 	return 0;
 }
 
-void TcpServer::delete_dead_clients () QSE_CPP_NOEXCEPT
+void TcpServer::delete_all_clients (Client::State state) QSE_CPP_NOEXCEPT
 {
-	ClientList::Node* np, * np2;
+	Client* np;
 
-	np = this->client_list.getHeadNode();
-	while (np) 
+	while (1)
 	{
-		Client* p = np->value;
-		QSE_ASSERT (p != QSE_NULL);
-
-		if (p->getState() != Thread::RUNNING)
+		this->client_list_spl.lock();
+		np = this->client_list[state].getHead();
+		if (np)
 		{
-		#if !defined(_WIN32)
-			p->join ();
-		#endif
-			QSE_CPP_DELETE_WITH_MMGR (p, Client, this->getMmgr()); // delete p
-			np2 = np; np = np->getNextNode();
-			this->client_list.remove (np2);
-			continue;
+			this->client_list[state].remove (np);
+			np->claimed = true;
 		}
+		this->client_list_spl.unlock();
+		if (!np) break;
 
-		np = np->getNextNode();
-	}
-}
-
-void TcpServer::delete_all_clients () QSE_CPP_NOEXCEPT
-{
-	ClientList::Node* np, * np2;
-	Client* p;
-
-	for (np = this->client_list.getHeadNode(); np; np = np->getNextNode()) 
-	{
-		p = np->value;
-		if (p->getState() == Thread::RUNNING) p->stop();
-	}
-
-	np = this->client_list.getHeadNode();
-	while (np != QSE_NULL) 
-	{
-		p = np->value;
-		QSE_ASSERT (p != QSE_NULL);
-
-	#if defined(_WIN32)
-		while (p->state() == Thread::RUNNING) qse_sleep (300);
-	#else
-		p->join ();
-	#endif
-		QSE_CPP_DELETE_WITH_MMGR (p, Client, this->getMmgr()); // delete p
-		np2 = np; np = np->getNextNode();
-		this->client_list.remove (np2);
+		np->stop();
+		np->join ();
+		QSE_CPP_DELETE_WITH_MMGR (np, Client, this->getMmgr()); // delete np
 	}
 }
 

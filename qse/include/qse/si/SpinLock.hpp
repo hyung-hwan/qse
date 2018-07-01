@@ -43,9 +43,10 @@
 #	include <atomic>
 #endif
 
+#include <qse/si/mtx.h>
 QSE_BEGIN_NAMESPACE(QSE)
 
-class SpinLock
+class SpinLock: public Uncopyable
 {
 public:
 #if defined(QSE_SUPPORT_SPL)
@@ -112,6 +113,39 @@ public:
 
 protected:
 	SpinLock& spl;
+};
+
+
+class Mutex: public Uncopyable
+{
+public:
+	Mutex() QSE_CPP_NOEXCEPT 
+	{
+		qse_mtx_init (&this->mtx, QSE_NULL);
+	}
+	~Mutex() QSE_CPP_NOEXCEPT
+	{
+		qse_mtx_fini (&this->mtx);
+	}
+
+#if 0
+	bool tryock() QSE_CPP_NOEXCEPT
+	{
+	}
+#endif
+
+	void lock () QSE_CPP_NOEXCEPT
+	{
+		qse_mtx_lock (&this->mtx, QSE_NULL);
+	}
+
+	void unlock () QSE_CPP_NOEXCEPT
+	{
+		qse_mtx_unlock (&this->mtx);
+	}
+
+protected:
+	qse_mtx_t mtx;
 };
 
 QSE_END_NAMESPACE(QSE)

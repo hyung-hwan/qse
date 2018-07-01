@@ -31,7 +31,6 @@
 #include <qse/si/SocketAddress.hpp>
 #include <qse/si/Thread.hpp>
 #include <qse/si/SpinLock.hpp>
-#include <qse/cmn/LinkedList.hpp>
 #include <qse/cmn/Mmged.hpp>
 #include <qse/Uncopyable.hpp>
 #include <qse/si/mux.h>
@@ -82,11 +81,11 @@ public:
 
 	qse_size_t getClientCount () const QSE_CPP_NOEXCEPT
 	{ 
-		return this->client_list.getSize(); 
+		return this->client_list[Client::LIVE].getSize(); 
 	}
 	qse_size_t getConnectionCount () const QSE_CPP_NOEXCEPT
 	{
-		return this->client_list.getSize(); 
+		return this->client_list[Client::LIVE].getSize(); 
 	}
 
 	qse_size_t getThreadStackSize () const QSE_CPP_NOEXCEPT
@@ -115,7 +114,12 @@ protected:
 	public:
 		friend class TcpServer;
 
-		Client (Listener* listener) QSE_CPP_NOEXCEPT : listener(listener) {}
+		enum State
+		{
+			DEAD = 0,
+			LIVE = 1
+		};
+		Client (Listener* listener) QSE_CPP_NOEXCEPT: listener(listener), prev_client(QSE_NULL), next_client(QSE_NULL), claimed(false) {}
 
 		int main ();
 		int stop () QSE_CPP_NOEXCEPT;
@@ -126,11 +130,18 @@ protected:
 		TcpServer* getServer() QSE_CPP_NOEXCEPT { return this->listener->server; }
 		const TcpServer* getServer() const QSE_CPP_NOEXCEPT { return this->listener->server; }
 
-	private:
+
+		Client* getNextClient() { return this->next_client; }
+		Client* getPrevClient() { return this->prev_client; }
+
 		Listener* listener;
+		Client* prev_client;
+		Client* next_client;
+		bool claimed;
+
 		QSE::Socket socket;
-		SocketAddress address;
-		SpinLock csspl; /* spin lock for client stop */
+		QSE::SocketAddress address;
+		QSE::SpinLock csspl; // spin lock for client stop 
 	};
 
 	struct ListenerList
@@ -149,7 +160,60 @@ protected:
 		Listener* tail;
 
 		qse_size_t count;
-	} listener_list;
+	};
+
+	struct ClientList
+	{
+		ClientList() QSE_CPP_NOEXCEPT: head(QSE_NULL), tail(QSE_NULL), count(0) {}
+
+		qse_size_t getSize() const { return this->count; }
+		Client* getHead() { return this->head; }
+		Client* getTail() { return this->tail; }
+
+		void append (Client* client)
+		{
+			client->next_client = QSE_NULL;
+			if (this->count == 0) 
+			{
+				this->head = this->tail = client;
+				client->prev_client = QSE_NULL;
+			}
+			else 
+			{
+				client->prev_client = this->tail;
+				this->tail->next_client = client;
+				this->tail = client;
+			}
+
+			this->count++;
+		}
+
+		void remove (Client* client)
+		{
+			if (client->next_client)
+				client->next_client->prev_client = client->prev_client;
+			else
+				this->tail = client->prev_client;
+
+			if (client->prev_client)
+				client->prev_client->next_client = client->next_client;
+			else
+				this->head = client->next_client;
+
+			client->prev_client = QSE_NULL;
+			client->next_client = QSE_NULL;
+			this->count--;
+
+		}
+
+		Client* head;
+		Client* tail;
+		qse_size_t count;
+	};
+
+	ListenerList listener_list;
+	ClientList client_list[2];
+	QSE::SpinLock client_list_spl;
 
 	ErrorCode     errcode;
 	bool          stop_requested;
@@ -157,15 +221,11 @@ protected:
 	qse_size_t    max_connections;
 	qse_size_t    thread_stack_size;
 
-	typedef QSE::LinkedList<Client*> ClientList;
-	ClientList client_list;
-
 	friend class TcpServer::Client;
 	virtual int handle_client (Socket* sock, SocketAddress* addr) = 0;
 
 private:
-	void delete_dead_clients () QSE_CPP_NOEXCEPT;
-	void delete_all_clients  () QSE_CPP_NOEXCEPT;
+	void delete_all_clients  (Client::State state) QSE_CPP_NOEXCEPT;
 
 	int setup_listeners (const qse_char_t* addrs) QSE_CPP_NOEXCEPT;
 	void free_all_listeners () QSE_CPP_NOEXCEPT;
@@ -269,7 +329,6 @@ protected:
 	};
 
 	Callable* __lfunc;
-
 
 	int handle_client (Socket* sock, SocketAddress* addr)
 	{
