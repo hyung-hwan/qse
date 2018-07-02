@@ -54,13 +54,12 @@ int TcpServer::Worker::main ()
 	try { n = this->listener->server->handle_worker(this); }
 	catch (...) { n = -1; }
 
-	this->csspl.lock ();
-	this->socket.close (); 
-	this->csspl.unlock ();
-
 	TcpServer* server = this->getServer();
 
 	server->worker_list_spl.lock ();
+	this->csspl.lock ();
+	this->socket.close (); 
+	this->csspl.unlock ();
 	if (!this->claimed)
 	{
 		server->worker_list[Worker::LIVE].remove (this);
@@ -77,11 +76,6 @@ int TcpServer::Worker::stop () QSE_CPP_NOEXCEPT
 	// the connection by the socket's closing.
 	// therefore, handle_worker() must return
 	// when it detects the end of the connection.
-	//
-	// TODO: must think of a better way to do this 
-	//       as it might not be thread-safe.
-	//       but it is still ok because Worker::stop() 
-	//       is rarely called.
 	this->csspl.lock ();
 	this->socket.shutdown ();
 	this->csspl.unlock ();
@@ -464,11 +458,11 @@ void TcpServer::delete_all_workers (Worker::State state) QSE_CPP_NOEXCEPT
 		{
 			this->worker_list[state].remove (worker);
 			worker->claimed = true;
+			worker->stop();
 		}
 		this->worker_list_spl.unlock();
 		if (!worker) break;
 
-		worker->stop();
 		worker->join ();
 
 		this->release_wid (worker);
