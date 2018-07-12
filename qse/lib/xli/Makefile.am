@@ -12,3 +12,12 @@ libqsexli_la_SOURCES = xli.h xli.c err.c \
 libqsexli_la_LDFLAGS = -L../cmn -L../si -version-info 1:0:0 -no-undefined
 libqsexli_la_LIBADD = -lqsesi -lqsecmn 
 
+
+if ENABLE_CXX
+lib_LTLIBRARIES += libqsexlixx.la
+libqsexlixx_la_SOURCES = SkvEnv.cpp
+libqsexlixx_la_CPPFLAGS = $(CPPFLAGS_LIB_COMMON)
+libqsexlixx_la_LDFLAGS = $(LDFLAGS_LIB_COMMON)
+libqsexlixx_la_LIBADD = -lqsexli -lqsecmnxx -lqsexli -lqsesi -lqsecmn $(LIBADD_LIB_COMMON)
+endif
+
