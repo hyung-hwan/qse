@@ -147,12 +147,8 @@ libqsexli_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(libqsexli_la_LDFLAGS) $(LDFLAGS) -o $@
 libqsexlixx_la_DEPENDENCIES =
 am__libqsexlixx_la_SOURCES_DIST = SkvEnv.cpp
-@ENABLE_CXX_TRUE@am_libqsexlixx_la_OBJECTS = libqsexlixx_la-SkvEnv.lo
+@ENABLE_CXX_TRUE@am_libqsexlixx_la_OBJECTS = SkvEnv.lo
 libqsexlixx_la_OBJECTS = $(am_libqsexlixx_la_OBJECTS)
-libqsexlixx_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
-	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
-	$(AM_CXXFLAGS) $(CXXFLAGS) $(libqsexlixx_la_LDFLAGS) \
-	$(LDFLAGS) -o $@
 @ENABLE_CXX_TRUE@am_libqsexlixx_la_rpath = -rpath $(libdir)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -414,9 +410,7 @@ libqsexli_la_SOURCES = xli.h xli.c err.c \
 libqsexli_la_LDFLAGS = -L../cmn -L../si -version-info 1:0:0 -no-undefined
 libqsexli_la_LIBADD = -lqsesi -lqsecmn 
 @ENABLE_CXX_TRUE@libqsexlixx_la_SOURCES = SkvEnv.cpp
-@ENABLE_CXX_TRUE@libqsexlixx_la_CPPFLAGS = $(CPPFLAGS_LIB_COMMON)
-@ENABLE_CXX_TRUE@libqsexlixx_la_LDFLAGS = $(LDFLAGS_LIB_COMMON)
-@ENABLE_CXX_TRUE@libqsexlixx_la_LIBADD = -lqsexli -lqsecmnxx -lqsexli -lqsesi -lqsecmn $(LIBADD_LIB_COMMON)
+@ENABLE_CXX_TRUE@libqsexlixx_la_LIBADD = -lqsecmnxx -lqsexli -lqsesi -lqsecmn
 all: all-am
 
 .SUFFIXES:
@@ -490,7 +484,7 @@ libqsexli.la: $(libqsexli_la_OBJECTS) $(libqsexli_la_DEPENDENCIES) $(EXTRA_libqs
 	$(AM_V_CCLD)$(libqsexli_la_LINK) -rpath $(libdir) $(libqsexli_la_OBJECTS) $(libqsexli_la_LIBADD) $(LIBS)
 
 libqsexlixx.la: $(libqsexlixx_la_OBJECTS) $(libqsexlixx_la_DEPENDENCIES) $(EXTRA_libqsexlixx_la_DEPENDENCIES) 
-	$(AM_V_CXXLD)$(libqsexlixx_la_LINK) $(am_libqsexlixx_la_rpath) $(libqsexlixx_la_OBJECTS) $(libqsexlixx_la_LIBADD) $(LIBS)
+	$(AM_V_CXXLD)$(CXXLINK) $(am_libqsexlixx_la_rpath) $(libqsexlixx_la_OBJECTS) $(libqsexlixx_la_LIBADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -498,8 +492,8 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/SkvEnv.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/err.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqsexlixx_la-SkvEnv.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/read-ini.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/read-json.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/read.Plo@am__quote@
@@ -550,13 +544,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LTCXXCOMPILE) -c -o $@ $<
-
-libqsexlixx_la-SkvEnv.lo: SkvEnv.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libqsexlixx_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libqsexlixx_la-SkvEnv.lo -MD -MP -MF $(DEPDIR)/libqsexlixx_la-SkvEnv.Tpo -c -o libqsexlixx_la-SkvEnv.lo `test -f 'SkvEnv.cpp' || echo '$(srcdir)/'`SkvEnv.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libqsexlixx_la-SkvEnv.Tpo $(DEPDIR)/libqsexlixx_la-SkvEnv.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='SkvEnv.cpp' object='libqsexlixx_la-SkvEnv.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libqsexlixx_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libqsexlixx_la-SkvEnv.lo `test -f 'SkvEnv.cpp' || echo '$(srcdir)/'`SkvEnv.cpp
 
 mostlyclean-libtool:
 	-rm -f *.lo
