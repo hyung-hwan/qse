@@ -1,1 +1,1 @@
-SUBDIRS = cmn cry si awk sed http rad dhcp
+SUBDIRS = cmn cry si awk sed xli http rad dhcp

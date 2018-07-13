@@ -27,20 +27,55 @@
 #ifndef _QSE_LIB_XLI_SKVENV_CLASS_
 #define _QSE_LIB_XLI_SKVENV_CLASS_
 
+#include <qse/cmn/LinkedList.hpp>
+#include <qse/xli/xli.h>
+
 QSE_BEGIN_NAMESPACE(QSE)
 
-class SkvEnv
+class SkvEnv: public Uncopyable, public Mmged
 {
 public:
-	typedef int (SkvEnv::*ProbeProc) (const xp_char_t* val);
+	enum 
+	{
+		MAX_SCTN_LEN = 64,
+		MAX_KEY_LEN  = 64,
+		// 64 for sctn, 64 for key, 1 for splitter
+		MAX_NAME_LEN = 129,
+		// the default value can't be longer than this
+		MAX_DVAL_LEN = 256
+	};
+
+	typedef int (SkvEnv::*ProbeProc) (const qse_char_t* val);
+	struct Item 
+	{
+		qse_char_t sctn[MAX_SCTN_LEN + 1];
+		qse_char_t key [MAX_KEY_LEN  + 1];
+		qse_char_t name[MAX_NAME_LEN + 1];
+		qse_char_t dval[MAX_DVAL_LEN + 1]; // default value
+		ProbeProc probe;
+	};
+	typedef QSE::LinkedList<Item> ItemList;
+
+	SkvEnv (Mmgr* mmgr = QSE_NULL);
+	~SkvEnv ();
 
 	int addItem (const qse_char_t* name, const qse_char_t* dval, ProbeProc probe);
 	int removeItem (const qse_char_t* name);
 
-	const qse_char_t* setItemValue (const qse_char_t* name, const qse_char_t* val);
+	const qse_char_t* getValue (const qse_char_t* name) const;
+	int setValue (const qse_char_t* name, const qse_char_t* value);
+
+	int load (const qse_char_t* file);
+	int store (const qse_char_t* file);
 
 protected:
+	ItemList item_list;
+	qse_xli_t* xli;
+
 	int split_name (const qse_char_t* name, qse_char_t** sctn, qse_size_t* sctn_len, qse_char_t** key, qse_size_t* key_len);
+	int set_value_with_item (Item& item, const qse_char_t* value);
 };
 
 QSE_END_NAMESPACE(QSE)
+
+#endif

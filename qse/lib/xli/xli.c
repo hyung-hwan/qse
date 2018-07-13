@@ -837,7 +837,7 @@ qse_xli_pair_t* qse_xli_findpair (qse_xli_t* xli, const qse_xli_list_t* list, co
 	{
 		qse_xli_pair_t* pair;
 
-		ptr = get_next_fqpn_segment (xli, ptr, &seg);
+		ptr = get_next_fqpn_segment(xli, ptr, &seg);
 		if (ptr == QSE_NULL) return QSE_NULL;
 
 		if (curlist->type != QSE_XLI_LIST) 
@@ -852,15 +852,15 @@ qse_xli_pair_t* qse_xli_findpair (qse_xli_t* xli, const qse_xli_list_t* list, co
 		switch (seg.idxtype)
 		{
 			case FQPN_SEG_IDX_NONE: 
-				pair = find_pair_by_key_and_alias (xli, curlist, &seg.key, QSE_NULL);
+				pair = find_pair_by_key_and_alias(xli, curlist, &seg.key, QSE_NULL);
 				break;
 
 			case FQPN_SEG_IDX_NUMBER:
-				pair = find_pair_by_key_and_index (xli, curlist, &seg.key, seg.idx.number);
+				pair = find_pair_by_key_and_index(xli, curlist, &seg.key, seg.idx.number);
 				break;
 
 			default: /*case FQPN_SEG_IDX_ALIAS:*/
-				pair = find_pair_by_key_and_alias (xli, curlist, &seg.key, &seg.idx.alias);
+				pair = find_pair_by_key_and_alias(xli, curlist, &seg.key, &seg.idx.alias);
 				break;
 		}
 

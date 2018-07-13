@@ -982,6 +982,7 @@ AC_CONFIG_FILES([
 	samples/si/Makefile 
 	samples/awk/Makefile 
 	samples/sed/Makefile 
+	samples/xli/Makefile 
 	samples/http/Makefile
 	samples/rad/Makefile
 	samples/dhcp/Makefile
