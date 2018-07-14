@@ -24,7 +24,7 @@
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "xli.h"
+#include "xli-prv.h"
 #include <qse/cmn/chr.h>
 
 /*

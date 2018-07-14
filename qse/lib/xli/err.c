@@ -24,7 +24,7 @@
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "xli.h"
+#include "xli-prv.h"
 #include "../cmn/mem-prv.h"
 
 const qse_char_t* qse_xli_dflerrstr (const qse_xli_t* xli, qse_xli_errnum_t errnum)

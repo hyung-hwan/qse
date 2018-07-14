@@ -28,8 +28,10 @@
 
 #include <qse/xli/SkvEnv.hpp>
 #include <qse/xli/stdxli.h>
+
 #include <qse/cmn/str.h>
 #include "../cmn/mem-prv.h"
+#include "xli-prv.h"
 
 #define SCTN_KEY_SPLITTER QSE_T('*')
 
@@ -90,7 +92,7 @@ int SkvEnv::removeItem (const qse_char_t* name)
 
 	if (this->split_name (name, &sctn, &sctn_len, &key, &key_len) == -1) return -1;
 
-	for (ItemList::Node* np = item_list.getHeadNode(); np; np = np->getNextNode()) 
+	for (ItemList::Node* np = this->item_list.getHeadNode(); np; np = np->getNextNode()) 
 	{
 		Item& item = np->value;
 		if (qse_strxcmp(sctn, sctn_len, item.sctn) == 0 &&
@@ -113,7 +115,7 @@ const qse_char_t* SkvEnv::getValue (const qse_char_t* name) const
 
 	QSE_ASSERT (pair->val != QSE_NULL);
 	QSE_ASSERT (pair->val->type == QSE_XLI_STR);
-	
+
 	return (((qse_xli_str_t*)pair->val))->ptr;
 }
 
@@ -172,7 +174,8 @@ int SkvEnv::split_name (const qse_char_t* name, qse_char_t** sctn, qse_size_t* s
 
 int SkvEnv::set_value_with_item (Item& item, const qse_char_t* value)
 {
-	if (item.probe && (this->*item.probe)(value) <= -1) return -1;
+#if 0
+	if (this->probe_item_value(item, value) <= -1) return -1;
 
 	qse_cstr_t v = { (qse_char_t*)value, qse_strlen(value) };
 
@@ -195,7 +198,70 @@ int SkvEnv::set_value_with_item (Item& item, const qse_char_t* value)
 		if (!qse_xli_insertpairwithstr(this->xli, (qse_xli_list_t*)pair->val, QSE_NULL, item.key, QSE_NULL, QSE_NULL, &v, QSE_NULL)) return -1;
 	}
 
+	this->accept_item_value (item, value);
 	return 0;
+#else
+
+	// this function adds/updates the pair with the given value
+	// before it verifies the value. as long as verification is
+	// ok, the value is guaranteed to be set.
+
+	qse_cstr_t v = { (qse_char_t*)value, qse_strlen(value) };
+	qse_xli_pair_t* sctn_pair = QSE_NULL, * kv_pair = QSE_NULL;
+
+	sctn_pair = qse_xli_findpair(this->xli, QSE_NULL, item.sctn);
+	if (sctn_pair)
+	{
+		// section exists.
+		QSE_ASSERT (sctn_pair->val && sctn_pair->val->type == QSE_XLI_LIST);
+		kv_pair = qse_xli_findpair(this->xli, (qse_xli_list_t*)sctn_pair->val, item.key);
+		if (kv_pair)
+		{
+			// key also exists
+			qse_xli_pair_t* existing_kv_pair = kv_pair;
+
+			kv_pair = QSE_NULL;
+			sctn_pair = QSE_NULL;
+
+			qse_xli_str_t* newstrv = qse_xli_makestrval(this->xli, &v, QSE_NULL);
+			if (!newstrv) goto rollback;
+
+			if (this->call_probe_item_value(item, value) <= -1) 
+			{
+				qse_xli_freeval (this->xli, (qse_xli_val_t*)newstrv);
+				goto rollback;
+			}
+
+			qse_xli_freeval (this->xli, existing_kv_pair->val);
+			existing_kv_pair->val = (qse_xli_val_t*)newstrv;
+		}
+		else
+		{
+			kv_pair = qse_xli_insertpairwithstr(this->xli, (qse_xli_list_t*)sctn_pair->val, QSE_NULL, item.key, QSE_NULL, QSE_NULL, &v, QSE_NULL);
+			sctn_pair = QSE_NULL;
+			if (!kv_pair) goto rollback;
+
+			if (this->call_probe_item_value(item, value) <= -1)  goto rollback;
+		}
+	}
+	else
+	{
+		sctn_pair = qse_xli_insertpairwithemptylist(this->xli, QSE_NULL, QSE_NULL, item.sctn, QSE_NULL, QSE_NULL);
+		if (!sctn_pair) return -1;
+
+		kv_pair = qse_xli_insertpairwithstr(this->xli, (qse_xli_list_t*)sctn_pair->val, QSE_NULL, item.key, QSE_NULL, QSE_NULL, &v, QSE_NULL);
+		if (!kv_pair) goto rollback;
+
+		if (this->call_probe_item_value(item, value) <= -1)  goto rollback;
+	}
+
+	return 0;
+
+rollback:
+	if (kv_pair) qse_xli_deletepair (this->xli, kv_pair);
+	if (sctn_pair) qse_xli_deletepair (this->xli, sctn_pair);
+	return -1;
+#endif
 }
 
 int SkvEnv::load (const qse_char_t* path)
@@ -205,7 +271,7 @@ int SkvEnv::load (const qse_char_t* path)
 	if (!this->xli)
 	{
 		// this means that no items have been registered with
-		// this->addItem().
+		// this->addItem(). so loading is meaningless.
 		return -1;
 	}
 
@@ -239,6 +305,7 @@ int SkvEnv::load (const qse_char_t* path)
 		}
 	}
 
+// TODO: check if there are any unknown names. flag it via callbacks???
 	qse_xli_close(xli);
 	return 0;
 }

@@ -24,7 +24,7 @@
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "xli.h"
+#include "xli-prv.h"
 #include <qse/cmn/chr.h>
 
 static qse_xli_root_list_t* make_root (qse_xli_t* xli);

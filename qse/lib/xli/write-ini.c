@@ -24,7 +24,7 @@
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "xli.h"
+#include "xli-prv.h"
 
 static int write_to_current_stream (qse_xli_t* xli, const qse_char_t* ptr, qse_size_t len)
 {
