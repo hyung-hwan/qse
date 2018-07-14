@@ -5,7 +5,7 @@ AM_CPPFLAGS = \
 	-I$(top_srcdir)/include 
 
 lib_LTLIBRARIES = libqsexli.la
-libqsexli_la_SOURCES = xli.h xli.c err.c \
+libqsexli_la_SOURCES = xli-prv.h xli.c err.c \
 	read.c read-ini.c read-json.c \
 	write.c write-ini.c write-json.c \
 	std.c

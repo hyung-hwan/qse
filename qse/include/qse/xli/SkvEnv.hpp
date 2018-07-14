@@ -50,16 +50,16 @@ public:
 	{
 		qse_char_t sctn[MAX_SCTN_LEN + 1];
 		qse_char_t key [MAX_KEY_LEN  + 1];
-		qse_char_t name[MAX_NAME_LEN + 1];
+		qse_char_t name[MAX_NAME_LEN + 1]; // sctn*key
 		qse_char_t dval[MAX_DVAL_LEN + 1]; // default value
 		ProbeProc probe;
 	};
 	typedef QSE::LinkedList<Item> ItemList;
 
 	SkvEnv (Mmgr* mmgr = QSE_NULL);
-	~SkvEnv ();
+	virtual ~SkvEnv ();
 
-	int addItem (const qse_char_t* name, const qse_char_t* dval, ProbeProc probe);
+	int addItem (const qse_char_t* name, const qse_char_t* dval, ProbeProc probe = QSE_NULL);
 	int removeItem (const qse_char_t* name);
 
 	const qse_char_t* getValue (const qse_char_t* name) const;
@@ -74,6 +74,18 @@ protected:
 
 	int split_name (const qse_char_t* name, qse_char_t** sctn, qse_size_t* sctn_len, qse_char_t** key, qse_size_t* key_len);
 	int set_value_with_item (Item& item, const qse_char_t* value);
+
+	virtual int probe_item_value (const Item& item, const qse_char_t* value) 
+	{
+		if (item.probe && (this->*item.probe)(value) <= -1) return -1;
+		return 0;
+	}
+
+	int call_probe_item_value (const Item& item, const qse_char_t* value) 
+	{
+		try { return this->probe_item_value(item, value); }
+		catch (...) { return -1; }
+	}
 };
 
 QSE_END_NAMESPACE(QSE)
