@@ -24,65 +24,45 @@
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _QSE_SI_MUTEX_CLASS_
-#define _QSE_SI_MUTEX_CLASS_
+#ifndef _QSE_SI_CONDITION_CLASS_
+#define _QSE_SI_CONDITION_CLASS_
 
-#include <qse/Types.hpp>
-#include <qse/Uncopyable.hpp>
-#include <qse/si/mtx.h>
+#include <qse/si/cnd.h>
+#include <qse/si/Mutex.hpp>
 
 QSE_BEGIN_NAMESPACE(QSE)
 
-class Mutex: public Uncopyable
+class Condition: public Uncopyable
 {
 public:
-	friend class Condition;
-
-	Mutex() QSE_CPP_NOEXCEPT 
+	Condition() QSE_CPP_NOEXCEPT 
 	{
-		qse_mtx_init (&this->mtx, QSE_NULL);
+		qse_cnd_init (&this->cnd, QSE_NULL);
 	}
-	~Mutex() QSE_CPP_NOEXCEPT
+	~Condition() QSE_CPP_NOEXCEPT
 	{
-		qse_mtx_fini (&this->mtx);
+		qse_cnd_fini (&this->cnd);
 	}
 
-#if 0
-	bool tryock() QSE_CPP_NOEXCEPT
+	void signal ()
 	{
-	}
-#endif
-
-	void lock () QSE_CPP_NOEXCEPT
-	{
-		qse_mtx_lock (&this->mtx, QSE_NULL);
+		qse_cnd_signal (&this->cnd);
 	}
 
-	void unlock () QSE_CPP_NOEXCEPT
+	void broadcast ()
 	{
-		qse_mtx_unlock (&this->mtx);
+		qse_cnd_broadcast (&this->cnd);
+	}
+
+	void wait (Mutex& mtx, const qse_ntime_t* timeout = QSE_NULL)
+	{
+		qse_cnd_wait (&this->cnd, &mtx.mtx, timeout);
 	}
 
 protected:
-	qse_mtx_t mtx;
+	qse_cnd_t cnd;
 };
 
-class ScopedMutexLocker: public Uncopyable
-{
-public:
-	ScopedMutexLocker (Mutex& mtx) QSE_CPP_NOEXCEPT: mtx(mtx)
-	{
-		this->mtx.lock ();
-	}
-
-	~ScopedMutexLocker () QSE_CPP_NOEXCEPT
-	{
-		this->mtx.unlock ();
-	}
-
-protected:
-	Mutex& mtx;
-};
 QSE_END_NAMESPACE(QSE)
 
 #endif

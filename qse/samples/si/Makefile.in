@@ -95,7 +95,7 @@ bin_PROGRAMS = aio01$(EXEEXT) dir01$(EXEEXT) fio01$(EXEEXT) \
 	sio01$(EXEEXT) sio02$(EXEEXT) sio03$(EXEEXT) spl01$(EXEEXT) \
 	task01$(EXEEXT) thr01$(EXEEXT) $(am__EXEEXT_1)
 @WCHAR_TRUE@@WIN32_TRUE@am__append_1 = $(UNICOWS_LIBS)
-@ENABLE_CXX_TRUE@am__append_2 = sck01 spl02 tcpsvr01 thr02
+@ENABLE_CXX_TRUE@am__append_2 = sck01 spl02 tcpsvr01 thr02 thr03
 subdir = samples/si
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ax_check_sign.m4 \
@@ -113,7 +113,8 @@ CONFIG_HEADER = $(top_builddir)/include/qse/config.h
 CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 @ENABLE_CXX_TRUE@am__EXEEXT_1 = sck01$(EXEEXT) spl02$(EXEEXT) \
-@ENABLE_CXX_TRUE@	tcpsvr01$(EXEEXT) thr02$(EXEEXT)
+@ENABLE_CXX_TRUE@	tcpsvr01$(EXEEXT) thr02$(EXEEXT) \
+@ENABLE_CXX_TRUE@	thr03$(EXEEXT)
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
 am_aio01_OBJECTS = aio01.$(OBJEXT)
@@ -223,6 +224,11 @@ am__thr02_SOURCES_DIST = thr02.cpp
 thr02_OBJECTS = $(am_thr02_OBJECTS)
 @ENABLE_CXX_TRUE@thr02_DEPENDENCIES = $(am__DEPENDENCIES_1) \
 @ENABLE_CXX_TRUE@	$(am__DEPENDENCIES_3)
+am__thr03_SOURCES_DIST = thr03.cpp
+@ENABLE_CXX_TRUE@am_thr03_OBJECTS = thr03.$(OBJEXT)
+thr03_OBJECTS = $(am_thr03_OBJECTS)
+@ENABLE_CXX_TRUE@thr03_DEPENDENCIES = $(am__DEPENDENCIES_1) \
+@ENABLE_CXX_TRUE@	$(am__DEPENDENCIES_3)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -282,7 +288,8 @@ SOURCES = $(aio01_SOURCES) $(dir01_SOURCES) $(fio01_SOURCES) \
 	$(pio01_SOURCES) $(rwl01_SOURCES) $(sck01_SOURCES) \
 	$(sio01_SOURCES) $(sio02_SOURCES) $(sio03_SOURCES) \
 	$(spl01_SOURCES) $(spl02_SOURCES) $(task01_SOURCES) \
-	$(tcpsvr01_SOURCES) $(thr01_SOURCES) $(thr02_SOURCES)
+	$(tcpsvr01_SOURCES) $(thr01_SOURCES) $(thr02_SOURCES) \
+	$(thr03_SOURCES)
 DIST_SOURCES = $(aio01_SOURCES) $(dir01_SOURCES) $(fio01_SOURCES) \
 	$(fio02_SOURCES) $(fs01_SOURCES) $(fs02_SOURCES) \
 	$(fs03_SOURCES) $(glob01_SOURCES) $(log01_SOURCES) \
@@ -291,7 +298,7 @@ DIST_SOURCES = $(aio01_SOURCES) $(dir01_SOURCES) $(fio01_SOURCES) \
 	$(sio01_SOURCES) $(sio02_SOURCES) $(sio03_SOURCES) \
 	$(spl01_SOURCES) $(am__spl02_SOURCES_DIST) $(task01_SOURCES) \
 	$(am__tcpsvr01_SOURCES_DIST) $(thr01_SOURCES) \
-	$(am__thr02_SOURCES_DIST)
+	$(am__thr02_SOURCES_DIST) $(am__thr03_SOURCES_DIST)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -517,10 +524,12 @@ thr01_SOURCES = thr01.c
 @ENABLE_CXX_TRUE@spl02_SOURCES = spl02.cpp
 @ENABLE_CXX_TRUE@tcpsvr01_SOURCES = tcpsvr01.cpp
 @ENABLE_CXX_TRUE@thr02_SOURCES = thr02.cpp
+@ENABLE_CXX_TRUE@thr03_SOURCES = thr03.cpp
 @ENABLE_CXX_TRUE@sck01_LDADD = $(CXXLIB) $(LDADD)
 @ENABLE_CXX_TRUE@spl02_LDADD = $(CXXLIB) $(LDADD)
 @ENABLE_CXX_TRUE@tcpsvr01_LDADD = $(CXXLIB) $(LDADD)
 @ENABLE_CXX_TRUE@thr02_LDADD = $(CXXLIB) $(LDADD)
+@ENABLE_CXX_TRUE@thr03_LDADD = $(CXXLIB) $(LDADD)
 all: all-am
 
 .SUFFIXES:
@@ -700,6 +709,10 @@ thr02$(EXEEXT): $(thr02_OBJECTS) $(thr02_DEPENDENCIES) $(EXTRA_thr02_DEPENDENCIE
 	@rm -f thr02$(EXEEXT)
 	$(AM_V_CXXLD)$(CXXLINK) $(thr02_OBJECTS) $(thr02_LDADD) $(LIBS)
 
+thr03$(EXEEXT): $(thr03_OBJECTS) $(thr03_DEPENDENCIES) $(EXTRA_thr03_DEPENDENCIES) 
+	@rm -f thr03$(EXEEXT)
+	$(AM_V_CXXLD)$(CXXLINK) $(thr03_OBJECTS) $(thr03_LDADD) $(LIBS)
+
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
 
@@ -730,6 +743,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tcpsvr01.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/thr01.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/thr02.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/thr03.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
