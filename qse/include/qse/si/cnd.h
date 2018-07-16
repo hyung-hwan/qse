@@ -134,6 +134,11 @@ QSE_EXPORT void qse_cnd_broadcast (
 	qse_cnd_t* cond
 );
 
+/**
+ * The qse_cnd_wait() function blocks the calling thread until the condition
+ * variable is signaled. The caller must lock the mutex before calling this
+ * function and unlock the mutex after this function finishes.
+ */
 QSE_EXPORT void qse_cnd_wait (
 	qse_cnd_t*         cond, 
 	qse_mtx_t*         mutex,
