@@ -23510,7 +23510,7 @@ QSE_PROJECT_AUTHOR="${PACKAGE_BUGREPORT}"
 QSE_PROJECT_URL="${PACKAGE_URL}"
 
 
-ac_config_files="$ac_config_files Makefile README include/Makefile include/qse/Makefile include/qse/cmn/Makefile include/qse/cry/Makefile include/qse/si/Makefile include/qse/awk/Makefile include/qse/sed/Makefile include/qse/xli/Makefile include/qse/http/Makefile include/qse/rad/Makefile include/qse/dhcp/Makefile lib/Makefile lib/cmn/Makefile lib/cry/Makefile lib/si/Makefile lib/awk/Makefile lib/sed/Makefile lib/xli/Makefile lib/http/Makefile lib/rad/Makefile lib/dhcp/Makefile lib/qsecmn.pc lib/qsecry.pc lib/qsesi.pc lib/qsesed.pc lib/qseawk.pc lib/qsexli.pc lib/qsehttp.pc lib/qserad.pc lib/qsedhcp.pc cmd/Makefile cmd/awk/Makefile cmd/sed/Makefile cmd/xli/Makefile cmd/http/Makefile samples/Makefile samples/cmn/Makefile samples/cry/Makefile samples/si/Makefile samples/awk/Makefile samples/sed/Makefile samples/xli/Makefile samples/http/Makefile samples/rad/Makefile samples/dhcp/Makefile regress/Makefile regress/awk/Makefile regress/awk/regress.sh regress/sed/Makefile regress/sed/regress.sh doc/Makefile doc/Doxyfile tools/Makefile"
+ac_config_files="$ac_config_files Makefile README include/Makefile include/qse/Makefile include/qse/cmn/Makefile include/qse/cry/Makefile include/qse/si/Makefile include/qse/awk/Makefile include/qse/sed/Makefile include/qse/xli/Makefile include/qse/http/Makefile include/qse/rad/Makefile include/qse/dhcp/Makefile include/qse/sttp/Makefile lib/Makefile lib/cmn/Makefile lib/cry/Makefile lib/si/Makefile lib/awk/Makefile lib/sed/Makefile lib/xli/Makefile lib/http/Makefile lib/rad/Makefile lib/dhcp/Makefile lib/sttp/Makefile lib/qsecmn.pc lib/qsecry.pc lib/qsesi.pc lib/qsesed.pc lib/qseawk.pc lib/qsexli.pc lib/qsehttp.pc lib/qserad.pc lib/qsedhcp.pc cmd/Makefile cmd/awk/Makefile cmd/sed/Makefile cmd/xli/Makefile cmd/http/Makefile samples/Makefile samples/cmn/Makefile samples/cry/Makefile samples/si/Makefile samples/awk/Makefile samples/sed/Makefile samples/xli/Makefile samples/http/Makefile samples/rad/Makefile samples/dhcp/Makefile regress/Makefile regress/awk/Makefile regress/awk/regress.sh regress/sed/Makefile regress/sed/regress.sh doc/Makefile doc/Doxyfile tools/Makefile"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -24680,6 +24680,7 @@ do
     "include/qse/http/Makefile") CONFIG_FILES="$CONFIG_FILES include/qse/http/Makefile" ;;
     "include/qse/rad/Makefile") CONFIG_FILES="$CONFIG_FILES include/qse/rad/Makefile" ;;
     "include/qse/dhcp/Makefile") CONFIG_FILES="$CONFIG_FILES include/qse/dhcp/Makefile" ;;
+    "include/qse/sttp/Makefile") CONFIG_FILES="$CONFIG_FILES include/qse/sttp/Makefile" ;;
     "lib/Makefile") CONFIG_FILES="$CONFIG_FILES lib/Makefile" ;;
     "lib/cmn/Makefile") CONFIG_FILES="$CONFIG_FILES lib/cmn/Makefile" ;;
     "lib/cry/Makefile") CONFIG_FILES="$CONFIG_FILES lib/cry/Makefile" ;;
@@ -24690,6 +24691,7 @@ do
     "lib/http/Makefile") CONFIG_FILES="$CONFIG_FILES lib/http/Makefile" ;;
     "lib/rad/Makefile") CONFIG_FILES="$CONFIG_FILES lib/rad/Makefile" ;;
     "lib/dhcp/Makefile") CONFIG_FILES="$CONFIG_FILES lib/dhcp/Makefile" ;;
+    "lib/sttp/Makefile") CONFIG_FILES="$CONFIG_FILES lib/sttp/Makefile" ;;
     "lib/qsecmn.pc") CONFIG_FILES="$CONFIG_FILES lib/qsecmn.pc" ;;
     "lib/qsecry.pc") CONFIG_FILES="$CONFIG_FILES lib/qsecry.pc" ;;
     "lib/qsesi.pc") CONFIG_FILES="$CONFIG_FILES lib/qsesi.pc" ;;

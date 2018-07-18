@@ -187,16 +187,11 @@ private:
 public:
 	WcString (): ParentType() {}
 	WcString (Mmgr* mmgr): ParentType(mmgr) {}
-	WcString (int capacity): ParentType(capacity) {}
-	WcString (Mmgr* mmgr, int capacity): ParentType(mmgr, capacity) {}
-	WcString (qse_size_t capacity): ParentType(capacity) {}
-	WcString (Mmgr* mmgr, qse_size_t capacity): ParentType(mmgr, capacity) {}
-	WcString (const qse_wchar_t* str): ParentType(str) {}
-	WcString (Mmgr* mmgr, const qse_wchar_t* str): ParentType(mmgr, str) {}
-	WcString (const qse_wchar_t* str, qse_size_t size): ParentType(str, size) {}
-	WcString (Mmgr* mmgr, const qse_wchar_t* str, qse_size_t size): ParentType(mmgr, str, size) {}
-	WcString (qse_wchar_t c, qse_size_t size): ParentType(c, size) {}
-	WcString (Mmgr* mmgr, qse_wchar_t c, qse_size_t size): ParentType(mmgr, c, size) {}
+	WcString (int capacity, Mmgr* mmgr = QSE_NULL): ParentType(capacity, mmgr) {}
+	WcString (qse_size_t capacity, Mmgr* mmgr = QSE_NULL): ParentType(capacity, mmgr) {}
+	WcString (const qse_wchar_t* str, Mmgr* mmgr = QSE_NULL): ParentType(str, mmgr) {}
+	WcString (const qse_wchar_t* str, qse_size_t size, Mmgr* mmgr = QSE_NULL): ParentType(str, size, mmgr) {}
+	WcString (qse_wchar_t c, qse_size_t size, Mmgr* mmgr = QSE_NULL): ParentType(c, size, mmgr) {}
 	WcString (const WcString& str): ParentType(str) {}
 #if defined(QSE_CPP_ENABLE_CPP11_MOVE)
 	WcString (WcString&& str): ParentType(QSE_CPP_RVREF(str)) {}
@@ -224,16 +219,11 @@ private:
 public:
 	MbString (): ParentType() {}
 	MbString (Mmgr* mmgr): ParentType(mmgr) {}
-	MbString (int capacity): ParentType(capacity) {}
-	MbString (Mmgr* mmgr, int capacity): ParentType(mmgr, capacity) {}
-	MbString (qse_size_t capacity): ParentType(capacity) {}
-	MbString (Mmgr* mmgr, qse_size_t capacity): ParentType(mmgr, capacity) {}
-	MbString (const qse_mchar_t* str): ParentType(str) {}
-	MbString (Mmgr* mmgr, const qse_mchar_t* str): ParentType(mmgr, str) {}
-	MbString (const qse_mchar_t* str, qse_size_t size): ParentType(str, size) {}
-	MbString (Mmgr* mmgr, const qse_mchar_t* str, qse_size_t size): ParentType(mmgr, str, size) {}
-	MbString (qse_mchar_t c, qse_size_t size): ParentType(c, size) {}
-	MbString (Mmgr* mmgr, qse_mchar_t c, qse_size_t size): ParentType(mmgr, c, size) {}
+	MbString (int capacity, Mmgr* mmgr = QSE_NULL): ParentType(capacity, mmgr) {}
+	MbString (qse_size_t capacity, Mmgr* mmgr = QSE_NULL): ParentType(capacity, mmgr) {}
+	MbString (const qse_mchar_t* str, Mmgr* mmgr = QSE_NULL): ParentType(str, mmgr) {}
+	MbString (const qse_mchar_t* str, qse_size_t size, Mmgr* mmgr = QSE_NULL): ParentType(str, size, mmgr) {}
+	MbString (qse_mchar_t c, qse_size_t size, Mmgr* mmgr = QSE_NULL): ParentType(c, size, mmgr) {}
 	MbString (const MbString& str): ParentType(str) {}
 	MbString (const ParentType& str): ParentType(str) {}
 #if defined(QSE_CPP_ENABLE_CPP11_MOVE)

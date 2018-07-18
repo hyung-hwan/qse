@@ -167,23 +167,16 @@ public:
 	typedef StrBase<CHAR_TYPE,NULL_CHAR,OPSET,RESIZER> SelfType;
 	typedef StrBaseData<CHAR_TYPE,NULL_CHAR,OPSET,RESIZER> StringItem;
 
-	/// The StrBase() function creates an empty string with the default memory manager.
-	StrBase (): Mmged(QSE_NULL)
-	{
-		this->_item = new(this->getMmgr()) StringItem (this->getMmgr(), this->round_capacity(DEFAULT_CAPACITY), (const CHAR_TYPE*)QSE_NULL, 0);
-		this->ref_item ();
-	}
-
 	/// The StrBase() function creates an empty string with a memory manager \a mmgr.
-	StrBase (Mmgr* mmgr): Mmged(mmgr)
+	StrBase (Mmgr* mmgr = QSE_NULL): Mmged(mmgr)
 	{
 		this->_item = new(this->getMmgr()) StringItem (this->getMmgr(), this->round_capacity(DEFAULT_CAPACITY), (const CHAR_TYPE*)QSE_NULL, 0);
 		this->ref_item ();
 	}
 
-	StrBase (int capacity): Mmged(QSE_NULL)
+	StrBase (int capacity, Mmgr* mmgr = QSE_NULL): Mmged(mmgr)
 	{
-		if (capacity <= -1)
+		if (capacity <= -1) 
 		{
 			// this is a special constructor to instanatiate a string with no buffer.
 			// it is designed to be followed by truncate() immediately for actual buffer
@@ -204,66 +197,27 @@ public:
 			this->ref_item ();
 		}
 	}
-	StrBase (Mmgr* mmgr, int capacity): Mmged(mmgr)
-	{
-		if (capacity <= -1) 
-		{
-			// this is a special constructor to instanatiate a string with no buffer.
-			// it is intended to be followed by truncate() for actual buffer allocation.
-			this->_item = QSE_NULL;
-		}
-		else
-		{
-			this->_item = new(this->getMmgr()) StringItem (this->getMmgr(), this->round_capacity(capacity), (const CHAR_TYPE*)QSE_NULL, 0);
-			this->ref_item ();
-		}
-	}
 
-	StrBase (qse_size_t capacity): Mmged(QSE_NULL)
+	StrBase (qse_size_t capacity, Mmgr* mmgr = QSE_NULL): Mmged(mmgr)
 	{
 		this->_item = new(this->getMmgr()) StringItem (this->getMmgr(), this->round_capacity(capacity), (const CHAR_TYPE*)QSE_NULL, 0);
 		this->ref_item ();
 	}
 
-	StrBase (Mmgr* mmgr, qse_size_t capacity): Mmged(mmgr)
-	{
-		this->_item = new(this->getMmgr()) StringItem (this->getMmgr(), this->round_capacity(capacity), (const CHAR_TYPE*)QSE_NULL, 0);
-		this->ref_item ();
-	}
-
-	StrBase (const CHAR_TYPE* str): Mmged(QSE_NULL)
+	StrBase (const CHAR_TYPE* str, Mmgr* mmgr = QSE_NULL): Mmged(mmgr)
 	{
 		qse_size_t len = this->_opset.getLength(str);
 		this->_item = new(this->getMmgr()) StringItem (this->getMmgr(), this->round_capacity(len), str, len);
 		this->ref_item ();
 	}
 
-	StrBase (Mmgr* mmgr, const CHAR_TYPE* str): Mmged(mmgr)
-	{
-		qse_size_t len = this->_opset.getLength(str);
-		this->_item = new(this->getMmgr()) StringItem (this->getMmgr(), this->round_capacity(len), str, len);
-		this->ref_item ();
-	}
-
-	StrBase (const CHAR_TYPE* str, qse_size_t size): Mmged(QSE_NULL)
+	StrBase (const CHAR_TYPE* str, qse_size_t size, Mmgr* mmgr = QSE_NULL): Mmged(mmgr)
 	{
 		this->_item = new(this->getMmgr()) StringItem (this->getMmgr(), this->round_capacity(size), str, size);
 		this->ref_item ();
 	}
 
-	StrBase (Mmgr* mmgr, const CHAR_TYPE* str, qse_size_t size): Mmged(mmgr)
-	{
-		this->_item = new(this->getMmgr()) StringItem (this->getMmgr(), this->round_capacity(size), str, size);
-		this->ref_item ();
-	}
-
-	StrBase (CHAR_TYPE c, qse_size_t size): Mmged(QSE_NULL)
-	{
-		this->_item = new(this->getMmgr()) StringItem (this->getMmgr(), this->round_capacity(size), c, size);
-		this->ref_item ();
-	}
-
-	StrBase (Mmgr* mmgr, CHAR_TYPE c, qse_size_t size): Mmged(mmgr)
+	StrBase (CHAR_TYPE c, qse_size_t size, Mmgr* mmgr = QSE_NULL): Mmged(mmgr)
 	{
 		this->_item = new(this->getMmgr()) StringItem (this->getMmgr(), this->round_capacity(size), c, size);
 		this->ref_item ();
@@ -790,7 +744,7 @@ public:
 	void invert (qse_size_t index, qse_size_t size)
 	{
 		QSE_ASSERT (index + size <= this->_item->size);
-	
+
 		if (this->_item->isShared())  this->possess_data ();
 
 		CHAR_TYPE c;

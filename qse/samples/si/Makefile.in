@@ -95,7 +95,7 @@ bin_PROGRAMS = aio01$(EXEEXT) dir01$(EXEEXT) fio01$(EXEEXT) \
 	sio01$(EXEEXT) sio02$(EXEEXT) sio03$(EXEEXT) spl01$(EXEEXT) \
 	task01$(EXEEXT) thr01$(EXEEXT) $(am__EXEEXT_1)
 @WCHAR_TRUE@@WIN32_TRUE@am__append_1 = $(UNICOWS_LIBS)
-@ENABLE_CXX_TRUE@am__append_2 = sck01 spl02 tcpsvr01 thr02 thr03
+@ENABLE_CXX_TRUE@am__append_2 = sck01 spl02 tcpsvr01 tcpsvr02 thr02 thr03
 subdir = samples/si
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ax_check_sign.m4 \
@@ -113,8 +113,8 @@ CONFIG_HEADER = $(top_builddir)/include/qse/config.h
 CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 @ENABLE_CXX_TRUE@am__EXEEXT_1 = sck01$(EXEEXT) spl02$(EXEEXT) \
-@ENABLE_CXX_TRUE@	tcpsvr01$(EXEEXT) thr02$(EXEEXT) \
-@ENABLE_CXX_TRUE@	thr03$(EXEEXT)
+@ENABLE_CXX_TRUE@	tcpsvr01$(EXEEXT) tcpsvr02$(EXEEXT) \
+@ENABLE_CXX_TRUE@	thr02$(EXEEXT) thr03$(EXEEXT)
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
 am_aio01_OBJECTS = aio01.$(OBJEXT)
@@ -215,6 +215,11 @@ am__tcpsvr01_SOURCES_DIST = tcpsvr01.cpp
 tcpsvr01_OBJECTS = $(am_tcpsvr01_OBJECTS)
 @ENABLE_CXX_TRUE@tcpsvr01_DEPENDENCIES = $(am__DEPENDENCIES_1) \
 @ENABLE_CXX_TRUE@	$(am__DEPENDENCIES_3)
+am__tcpsvr02_SOURCES_DIST = tcpsvr02.cpp
+@ENABLE_CXX_TRUE@am_tcpsvr02_OBJECTS = tcpsvr02.$(OBJEXT)
+tcpsvr02_OBJECTS = $(am_tcpsvr02_OBJECTS)
+@ENABLE_CXX_TRUE@tcpsvr02_DEPENDENCIES = $(am__DEPENDENCIES_1) \
+@ENABLE_CXX_TRUE@	$(am__DEPENDENCIES_3)
 am_thr01_OBJECTS = thr01.$(OBJEXT)
 thr01_OBJECTS = $(am_thr01_OBJECTS)
 thr01_LDADD = $(LDADD)
@@ -288,8 +293,8 @@ SOURCES = $(aio01_SOURCES) $(dir01_SOURCES) $(fio01_SOURCES) \
 	$(pio01_SOURCES) $(rwl01_SOURCES) $(sck01_SOURCES) \
 	$(sio01_SOURCES) $(sio02_SOURCES) $(sio03_SOURCES) \
 	$(spl01_SOURCES) $(spl02_SOURCES) $(task01_SOURCES) \
-	$(tcpsvr01_SOURCES) $(thr01_SOURCES) $(thr02_SOURCES) \
-	$(thr03_SOURCES)
+	$(tcpsvr01_SOURCES) $(tcpsvr02_SOURCES) $(thr01_SOURCES) \
+	$(thr02_SOURCES) $(thr03_SOURCES)
 DIST_SOURCES = $(aio01_SOURCES) $(dir01_SOURCES) $(fio01_SOURCES) \
 	$(fio02_SOURCES) $(fs01_SOURCES) $(fs02_SOURCES) \
 	$(fs03_SOURCES) $(glob01_SOURCES) $(log01_SOURCES) \
@@ -297,8 +302,9 @@ DIST_SOURCES = $(aio01_SOURCES) $(dir01_SOURCES) $(fio01_SOURCES) \
 	$(pio01_SOURCES) $(rwl01_SOURCES) $(am__sck01_SOURCES_DIST) \
 	$(sio01_SOURCES) $(sio02_SOURCES) $(sio03_SOURCES) \
 	$(spl01_SOURCES) $(am__spl02_SOURCES_DIST) $(task01_SOURCES) \
-	$(am__tcpsvr01_SOURCES_DIST) $(thr01_SOURCES) \
-	$(am__thr02_SOURCES_DIST) $(am__thr03_SOURCES_DIST)
+	$(am__tcpsvr01_SOURCES_DIST) $(am__tcpsvr02_SOURCES_DIST) \
+	$(thr01_SOURCES) $(am__thr02_SOURCES_DIST) \
+	$(am__thr03_SOURCES_DIST)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -523,11 +529,13 @@ thr01_SOURCES = thr01.c
 @ENABLE_CXX_TRUE@sck01_SOURCES = sck01.cpp
 @ENABLE_CXX_TRUE@spl02_SOURCES = spl02.cpp
 @ENABLE_CXX_TRUE@tcpsvr01_SOURCES = tcpsvr01.cpp
+@ENABLE_CXX_TRUE@tcpsvr02_SOURCES = tcpsvr02.cpp
 @ENABLE_CXX_TRUE@thr02_SOURCES = thr02.cpp
 @ENABLE_CXX_TRUE@thr03_SOURCES = thr03.cpp
 @ENABLE_CXX_TRUE@sck01_LDADD = $(CXXLIB) $(LDADD)
 @ENABLE_CXX_TRUE@spl02_LDADD = $(CXXLIB) $(LDADD)
 @ENABLE_CXX_TRUE@tcpsvr01_LDADD = $(CXXLIB) $(LDADD)
+@ENABLE_CXX_TRUE@tcpsvr02_LDADD = $(CXXLIB) $(LDADD) -L../../lib/sttp -lqsesttpxx
 @ENABLE_CXX_TRUE@thr02_LDADD = $(CXXLIB) $(LDADD)
 @ENABLE_CXX_TRUE@thr03_LDADD = $(CXXLIB) $(LDADD)
 all: all-am
@@ -701,6 +709,10 @@ tcpsvr01$(EXEEXT): $(tcpsvr01_OBJECTS) $(tcpsvr01_DEPENDENCIES) $(EXTRA_tcpsvr01
 	@rm -f tcpsvr01$(EXEEXT)
 	$(AM_V_CXXLD)$(CXXLINK) $(tcpsvr01_OBJECTS) $(tcpsvr01_LDADD) $(LIBS)
 
+tcpsvr02$(EXEEXT): $(tcpsvr02_OBJECTS) $(tcpsvr02_DEPENDENCIES) $(EXTRA_tcpsvr02_DEPENDENCIES) 
+	@rm -f tcpsvr02$(EXEEXT)
+	$(AM_V_CXXLD)$(CXXLINK) $(tcpsvr02_OBJECTS) $(tcpsvr02_LDADD) $(LIBS)
+
 thr01$(EXEEXT): $(thr01_OBJECTS) $(thr01_DEPENDENCIES) $(EXTRA_thr01_DEPENDENCIES) 
 	@rm -f thr01$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(thr01_OBJECTS) $(thr01_LDADD) $(LIBS)
@@ -741,6 +753,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/spl02.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/task01.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tcpsvr01.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tcpsvr02.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/thr01.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/thr02.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/thr03.Po@am__quote@
