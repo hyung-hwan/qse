@@ -1,4 +1,4 @@
-SUBDIRS = cmn cry si sed awk xli http rad dhcp
+SUBDIRS = cmn cry si sed awk xli http rad dhcp sttp
 DIST_SUBDIRS = $(SUBDIRS) 
 
 pkgconfigdir = $(libdir)/pkgconfig

@@ -952,6 +952,7 @@ AC_CONFIG_FILES([
 	include/qse/http/Makefile
 	include/qse/rad/Makefile
 	include/qse/dhcp/Makefile
+	include/qse/sttp/Makefile
 	lib/Makefile 
 	lib/cmn/Makefile 
 	lib/cry/Makefile
@@ -962,6 +963,7 @@ AC_CONFIG_FILES([
 	lib/http/Makefile 
 	lib/rad/Makefile 
 	lib/dhcp/Makefile 
+	lib/sttp/Makefile
 	lib/qsecmn.pc
 	lib/qsecry.pc
 	lib/qsesi.pc

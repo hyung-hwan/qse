@@ -29,6 +29,7 @@
 
 #include <qse/Types.hpp>
 #include <qse/Uncopyable.hpp>
+#include <qse/cmn/Transmittable.hpp>
 #include <qse/si/SocketAddress.hpp>
 #include <qse/si/sck.h>
 
@@ -37,7 +38,7 @@
 QSE_BEGIN_NAMESPACE(QSE)
 /////////////////////////////////
 
-class Socket: public Uncopyable, public Types
+class Socket: public Uncopyable, public Types, public Transmittable
 {
 public:
 	enum Trait
@@ -47,7 +48,7 @@ public:
 	};
 
 	Socket () QSE_CPP_NOEXCEPT;
-	~Socket () QSE_CPP_NOEXCEPT;
+	virtual ~Socket () QSE_CPP_NOEXCEPT;
 
 	ErrorCode getErrorCode () const QSE_CPP_NOEXCEPT { return this->errcode; }
 	void setErrorCode (ErrorCode errcode) QSE_CPP_NOEXCEPT { this->errcode = errcode; }
