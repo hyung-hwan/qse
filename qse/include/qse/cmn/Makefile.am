@@ -51,12 +51,14 @@ pkginclude_HEADERS += \
 	Mmged.hpp \
 	Mmgr.hpp \
 	Mpool.hpp \
+	Named.hpp \
 	RedBlackTree.hpp \
 	RedBlackTable.hpp \
 	ScopedPtr.hpp \
 	SharedPtr.hpp \
-	StrBase.hpp 
+	StrBase.hpp \
 	String.hpp \
-	StdMmgr.hpp
+	StdMmgr.hpp \
+	Transmittable.hpp
 endif
 

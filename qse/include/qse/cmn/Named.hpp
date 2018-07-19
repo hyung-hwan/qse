@@ -12,7 +12,7 @@
        notice, this list of conditions and the following disclaimer in the
        documentation and/or other materials provided with the distribution.
 
-    THIS SOFTWARE IS PROVIDED BY THE AUTHOR "AS IS" AND ANY EXPRESS OR
+    THIS SOFTWARE IS PROVIDED BY THE AUTHOR "AS IS" AND ANY EQSERESS OR
     IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
     OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
     IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
@@ -24,22 +24,61 @@
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _QSE_CMN_TRANSMITTABLE_CLASS_
-#define _QSE_CMN_TRANSMITTABLE_CLASS_
+#ifndef _QSE_CMN_NAMED_CLASS_
+#define _QSE_CMN_NAMED_CLASS_
 
-#include <qse/cmn/time.h>
+#include <qse/Types.hpp>
+#include <qse/cmn/str.h>
 
 QSE_BEGIN_NAMESPACE(QSE)
 
-class Transmittable
+template <int N>
+class Named 
 {
 public:
-	virtual ~Transmittable() QSE_CPP_NOEXCEPT {}
+	Named (const qse_char_t* name = QSE_T("")) QSE_CPP_NOEXCEPT
+	{
+		QSE_ASSERT (name != QSE_NULL);
+		// WARNING: a long name can be truncated
+		qse_strxcpy (this->name_buf, QSE_COUNTOF(this->name_buf), name);
+	}
+	~Named () QSE_CPP_NOEXCEPT {}
 
-	virtual qse_ssize_t send (const void* buf, qse_size_t len) QSE_CPP_NOEXCEPT = 0;
-	virtual qse_ssize_t receive (void* buf, qse_size_t len) QSE_CPP_NOEXCEPT = 0;
+	qse_char_t* getName () QSE_CPP_NOEXCEPT
+	{
+		return this->name_buf;
+	}
+
+	const qse_char_t* getName () const QSE_CPP_NOEXCEPT
+	{
+		return this->name_buf;
+	}
+
+	void setName (const qse_char_t* name) QSE_CPP_NOEXCEPT
+	{
+		QSE_ASSERT (name != QSE_NULL);
+		// WARNING: a long name can be truncated
+		qse_strxcpy (this->name_buf, QSE_COUNTOF(this->name_buf), name);
+	}
+
+	bool isNamed () const QSE_CPP_NOEXCEPT
+	{
+		return this->name_buf[0] != QSE_T('\0');
+	}
+
+	bool isNamed (const qse_char_t* n) const QSE_CPP_NOEXCEPT
+	{
+		return qse_strcmp(this->name_buf, n) == 0;
+	}
+
+	enum 
+	{
+		MAX_NAME_LEN = N
+	};
+
+protected:
+	qse_char_t name_buf[MAX_NAME_LEN + 1]; 
 };
-
 
 QSE_END_NAMESPACE(QSE)
 
