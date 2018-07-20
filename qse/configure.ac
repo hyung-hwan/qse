@@ -418,6 +418,7 @@ fi
 AC_CHECK_SIZEOF(mbstate_t,,[#include <wchar.h>])
 AX_CHECK_NUMVALOF(MB_LEN_MAX,[32],[#include <limits.h>])
 AX_CHECK_NUMVALOF(PATH_MAX,[0],[#include <limits.h>])
+AX_CHECK_NUMVALOF(NSIG,[32],[#include <signal.h>])
 
 AX_CHECK_NUMVALOF(SOCK_STREAM, [-1],   [#include <sys/types.h>
                                         #include <sys/socket.h>
@@ -710,6 +711,8 @@ if test ${ax_cv_numvalof_PATH_MAX} -gt 0
 then
 	AC_DEFINE_UNQUOTED(QSE_PATH_MAX, ${ax_cv_numvalof_PATH_MAX}, [PATH_MAX])
 fi
+
+AC_DEFINE_UNQUOTED(QSE_NSIGS, ${ax_cv_numvalof_NSIG}, [NSIG])
 
 if test ${ax_cv_numvalof_SOCK_STREAM} -ge 0 
 then

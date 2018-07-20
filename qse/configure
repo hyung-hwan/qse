@@ -20926,6 +20926,33 @@ _ACEOF
 
 
 
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: checking numeric value of NSIG" >&5
+$as_echo_n "checking numeric value of NSIG... " >&6; }
+if ${ax_cv_numvalof_NSIG+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if ac_fn_c_compute_int "$LINENO" "(NSIG)" "ax_cv_numvalof_NSIG"        "#include <signal.h>
+"; then :
+
+else
+  ax_cv_numvalof_NSIG=32
+fi
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_numvalof_NSIG" >&5
+$as_echo "$ax_cv_numvalof_NSIG" >&6; }
+
+
+
+cat >>confdefs.h <<_ACEOF
+#define NUMVALOF_NSIG $ax_cv_numvalof_NSIG
+_ACEOF
+
+
+
+
+
+
 
 		{ $as_echo "$as_me:${as_lineno-$LINENO}: checking numeric value of SOCK_STREAM" >&5
 $as_echo_n "checking numeric value of SOCK_STREAM... " >&6; }
@@ -22432,6 +22459,12 @@ cat >>confdefs.h <<_ACEOF
 _ACEOF
 
 fi
+
+
+cat >>confdefs.h <<_ACEOF
+#define QSE_NSIGS ${ax_cv_numvalof_NSIG}
+_ACEOF
+
 
 if test ${ax_cv_numvalof_SOCK_STREAM} -ge 0
 then

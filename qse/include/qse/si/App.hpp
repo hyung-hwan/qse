@@ -24,8 +24,8 @@
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _QSE_SI_APPROOT_H_
-#define _QSE_SI_APPROOT_H_
+#ifndef _QSE_SI_APP_H_
+#define _QSE_SI_APP_H_
 
 #include <qse/Types.hpp>
 #include <qse/Uncopyable.hpp>
@@ -35,11 +35,11 @@
 QSE_BEGIN_NAMESPACE(QSE)
 /////////////////////////////////
 
-class AppRoot: public Uncopyable, public Types, public Mmged
+class App: public Uncopyable, public Types, public Mmged
 {
 public:
-	AppRoot (Mmgr* mmgr): Mmged(mmgr), _root_only(false) {}
-	virtual ~AppRoot () {}
+	App (Mmgr* mmgr) QSE_CPP_NOEXCEPT: Mmged(mmgr), _root_only(false) {}
+	~App () QSE_CPP_NOEXCEPT {}
 
 	int daemonize (bool chdir_to_root = true, int fork_count = 1) QSE_CPP_NOEXCEPT;
 
@@ -53,15 +53,12 @@ public:
 
 protected:
 	bool _root_only;
-#if 0
-	uid_t saved_uid;
-	gid_t saved_gid;
-	gid_t saved_groups[NGROUPS_MAX];
-	qse_size_t saved_ngroups;
 
-	void on_signal () QSE_CPP_NOEXCEPT;
-	void on_signal () QSE_CPP_NOEXCEPT;
-#endif
+public:
+	typedef void (*SignalHandler) (int sig);
+	static int setSignalHandler (int sig, SignalHandler sighr);
+	static int unsetSignalHandler (int sig);
+	static qse_size_t _sighrs[2][QSE_NSIGS];
 };
 
 /////////////////////////////////

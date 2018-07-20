@@ -786,6 +786,9 @@
 /* The size of `MB_LEN_MAX', as computed by valueof. */
 #undef NUMVALOF_MB_LEN_MAX
 
+/* The size of `NSIG', as computed by valueof. */
+#undef NUMVALOF_NSIG
+
 /* The size of `PATH_MAX', as computed by valueof. */
 #undef NUMVALOF_PATH_MAX
 
@@ -870,6 +873,9 @@
 
 /* Define if mode_t is signed */
 #undef QSE_MODE_T_IS_SIGNED
+
+/* NSIG */
+#undef QSE_NSIGS
 
 /* offsetof(struct iovec, iov_base) */
 #undef QSE_OFFSETOF_IOV_BASE

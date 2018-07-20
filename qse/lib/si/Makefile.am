@@ -53,7 +53,7 @@ libqsesi_la_LIBADD = -lqsecmn $(PTHREAD_LIBS) $(SSL_LIBS)
 if ENABLE_CXX
 lib_LTLIBRARIES += libqsesixx.la
 libqsesixx_la_SOURCES = \
-	AppRoot.cpp \
+	App.cpp \
 	SocketAddress.cpp \
 	Socket.cpp \
 	TcpServer.cpp \
