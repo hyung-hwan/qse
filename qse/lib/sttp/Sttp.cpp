@@ -41,7 +41,7 @@ Sttp::Sttp (Transmittable* s, Mmgr* mmgr) QSE_CPP_NOEXCEPT: Mmged(mmgr), p_mediu
 	this->reset ();
 }
 
-Sttp::~Sttp ()
+Sttp::~Sttp () QSE_CPP_NOEXCEPT
 {
 }
 

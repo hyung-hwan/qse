@@ -60,7 +60,7 @@ public:
 	};
 
 	Sttp (Transmittable* s = QSE_NULL, Mmgr* mmgr = QSE_NULL) QSE_CPP_NOEXCEPT;
-	virtual ~Sttp () QSE_CPP_NOEXCEPT;
+	~Sttp () QSE_CPP_NOEXCEPT;
 
 	void reset () QSE_CPP_NOEXCEPT;
 
