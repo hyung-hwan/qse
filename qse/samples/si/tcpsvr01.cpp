@@ -4,6 +4,7 @@
 #include <qse/si/os.h>
 #include <qse/cmn/mem.h>
 #include <qse/cmn/HeapMmgr.hpp>
+#include <qse/si/App.hpp>
 
 
 #include <locale.h>
@@ -110,34 +111,9 @@ static int test1 (void)
 	return 0;
 }
 
-static void handle_sigint (int sig, siginfo_t* siginfo, void* ctx)
+static void handle_sigint (int sig)
 {
 	if (g_server) g_server->stop ();
-}
-
-static void set_signal (int sig, void(*handler)(int, siginfo_t*, void*))
-{
-	struct sigaction sa;
- 
-	memset (&sa, 0, sizeof(sa));
-	/*sa.sa_handler = handler;*/
-	sa.sa_flags = SA_SIGINFO;
-	sa.sa_sigaction = handler;
-	sigemptyset (&sa.sa_mask);
- 
-	sigaction (sig, &sa, NULL);
-}
- 
-static void set_signal_to_default (int sig)
-{
-	struct sigaction sa;
- 
-	memset (&sa, 0, sizeof(sa));
-	sa.sa_handler = SIG_DFL;
-	sa.sa_flags = 0;
-	sigemptyset (&sa.sa_mask);
- 
-	sigaction (sig, &sa, NULL);
 }
  
 int main ()
@@ -161,13 +137,14 @@ int main ()
 	/*qse_setdflcmgrbyid (QSE_CMGR_SLMB);*/
 #endif
 
-	set_signal (SIGINT, handle_sigint);
-
 	qse_open_stdsios ();
+
+	QSE::App::setSignalHandler (SIGINT, handle_sigint);
 	test1();
+	QSE::App::unsetSignalHandler (SIGINT);
+
 	qse_close_stdsios ();
 
-	set_signal_to_default (SIGINT);
 
 	return 0;
 }

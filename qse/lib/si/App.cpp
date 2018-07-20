@@ -24,7 +24,7 @@
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <qse/si/AppRoot.hpp>
+#include <qse/si/App.hpp>
 #include <qse/si/sinfo.h>
 #include "../cmn/syscall.h"
 #include <qse/cmn/mbwc.h>
@@ -33,7 +33,7 @@
 QSE_BEGIN_NAMESPACE(QSE)
 /////////////////////////////////
 
-int AppRoot::daemonize (bool chdir_to_root, int fork_count) QSE_CPP_NOEXCEPT
+int App::daemonize (bool chdir_to_root, int fork_count) QSE_CPP_NOEXCEPT
 {
 	if (this->_root_only && QSE_GETEUID() != 0) return -1;
 
@@ -103,23 +103,23 @@ int AppRoot::daemonize (bool chdir_to_root, int fork_count) QSE_CPP_NOEXCEPT
 
 
 
-int AppRoot::chroot (const qse_mchar_t* mpath) QSE_CPP_NOEXCEPT
+int App::chroot (const qse_mchar_t* mpath) QSE_CPP_NOEXCEPT
 {
 	return QSE_CHROOT (mpath);
 }
 
-int AppRoot::chroot (const qse_wchar_t* wpath) QSE_CPP_NOEXCEPT
+int App::chroot (const qse_wchar_t* wpath) QSE_CPP_NOEXCEPT
 {
 	qse_mchar_t* mpath;
 	mpath = qse_wcstombsdup (wpath, QSE_NULL, this->getMmgr());
 	if (!mpath) return -1;
-	int n = AppRoot::chroot ((const qse_mchar_t*)mpath);
+	int n = App::chroot ((const qse_mchar_t*)mpath);
 	this->getMmgr()->dispose (mpath);
 	return n;
 }
 
 #if 0
-int AppRoot::switchPrivilege (int gid, int uid, bool permanently)
+int App::switchPrivilege (int gid, int uid, bool permanently)
 {
 	gid = QSE_GETGID();
 	uid = QSE_GETUID();
@@ -140,7 +140,7 @@ int AppRoot::switchPrivilege (int gid, int uid, bool permanently)
 	}
 }
 
-int AppRoot::restorePrivilege ()
+int App::restorePrivilege ()
 {
 	if (QSE_GETEUID() != this->saved_euid) seteuid (this->saved_euid);
 	if (QSE_GETEGID() != this->saved_egid) setegid (this->saved_egid);
@@ -149,22 +149,87 @@ int AppRoot::restorePrivilege ()
 }
 #endif
 
-#if 0
-int main ()
+qse_size_t App::_sighrs[2][QSE_NSIGS] = { { 0, }, };
+
+static void dispatch_signal (int sig)
 {
-	AppRoot app;
+	((App::SignalHandler)App::_sighrs[0][sig]) (sig);
+	if (App::_sighrs[1][sig] && App::_sighrs[1][sig] != (qse_size_t)SIG_IGN && App::_sighrs[1][sig] != (qse_size_t)SIG_DFL) 
+	{
+		((App::SignalHandler)App::_sighrs[1][sig]) (sig);
+	}
+}
 
-	app.daemonize();
-	app.chuser ();
-	app.chgroup ();
-	app.chroot ();
+static void dispatch_siginfo (int sig, siginfo_t* si, void* ctx)
+{
+	((App::SignalHandler)App::_sighrs[0][sig]) (sig);
+	if (App::_sighrs[1][sig] && App::_sighrs[1][sig] != (qse_size_t)SIG_IGN && App::_sighrs[1][sig] != (qse_size_t)SIG_DFL) 
+	{
+		((void(*)(int, siginfo_t*, void*))App::_sighrs[1][sig]) (sig, si, ctx);
+	}
+}
 
-	app.catchSignal (SIGINT, xxxxx);
-	app.catchSignal (SIGTERM, xxx);
+// i don't want to use sigset_t in App.hpp.
+// so i place oldsi here as a static variable instead of 
+// static member variable of App
+static struct
+{
+	sigset_t sa_mask;
+	int      sa_flags;
+} oldsi[QSE_NSIGS] = { { 0, 0 }, };
+
+int App::setSignalHandler (int sig, SignalHandler sighr)
+{
+	if (App::_sighrs[0][sig]) return -1; // already set
+
+	struct sigaction sa, oldsa;
+
+	if (::sigaction(sig, QSE_NULL, &oldsa) == -1) return -1;
+
+	if (oldsa.sa_flags & SA_SIGINFO)
+	{
+		sa.sa_sigaction = dispatch_siginfo;
+		sigemptyset (&sa.sa_mask);
+		sa.sa_flags |= SA_SIGINFO;
+	}
+	else
+	{
+		sa.sa_handler = dispatch_signal;
+		sigemptyset (&sa.sa_mask);
+		sa.sa_flags = 0;
+		//sa.sa_flags |= SA_INTERUPT;
+		//sa.sa_flags |= SA_RESTART;
+	}
+
+	if (::sigaction(sig, &sa, QSE_NULL) == -1) return -1;
+
+	App::_sighrs[0][sig] = (qse_size_t)sighr;
+	App::_sighrs[1][sig] = (qse_size_t)oldsa.sa_handler;
+	oldsi[sig].sa_mask = oldsa.sa_mask;
+	oldsi[sig].sa_flags = oldsa.sa_flags;
 
 	return 0;
 }
-#endif
+
+int App::unsetSignalHandler (int sig)
+{
+	if (!App::_sighrs[0][sig]) return -1;
+
+	struct sigaction sa;
+
+	sa.sa_mask = oldsi[sig].sa_mask;
+	sa.sa_flags = oldsi[sig].sa_flags;
+	if (sa.sa_flags & SA_SIGINFO)
+		sa.sa_sigaction = (void(*)(int,siginfo_t*,void*))App::_sighrs[1][sig];
+	else
+		sa.sa_handler = (SignalHandler)App::_sighrs[1][sig];
+
+	if (sigaction (sig, &sa, QSE_NULL) <= -1) return -1;
+
+	App::_sighrs[0][sig] = 0;
+	App::_sighrs[1][sig] = 0;
+	return 0;
+}
 
 /////////////////////////////////
 QSE_END_NAMESPACE(QSE)

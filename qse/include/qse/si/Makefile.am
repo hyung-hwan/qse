@@ -29,7 +29,7 @@ pkginclude_HEADERS = \
 
 if ENABLE_CXX
 pkginclude_HEADERS += \
-	AppRoot.hpp \
+	App.hpp \
 	Condition.hpp \
 	Mutex.hpp \
 	SocketAddress.hpp \

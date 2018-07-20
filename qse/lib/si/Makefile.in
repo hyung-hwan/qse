@@ -161,11 +161,10 @@ libqsesi_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(libqsesi_la_CFLAGS) \
 	$(CFLAGS) $(libqsesi_la_LDFLAGS) $(LDFLAGS) -o $@
 libqsesixx_la_DEPENDENCIES =
-am__libqsesixx_la_SOURCES_DIST = AppRoot.cpp SocketAddress.cpp \
-	Socket.cpp TcpServer.cpp Thread.cpp
-@ENABLE_CXX_TRUE@am_libqsesixx_la_OBJECTS = AppRoot.lo \
-@ENABLE_CXX_TRUE@	SocketAddress.lo Socket.lo TcpServer.lo \
-@ENABLE_CXX_TRUE@	Thread.lo
+am__libqsesixx_la_SOURCES_DIST = App.cpp SocketAddress.cpp Socket.cpp \
+	TcpServer.cpp Thread.cpp
+@ENABLE_CXX_TRUE@am_libqsesixx_la_OBJECTS = App.lo SocketAddress.lo \
+@ENABLE_CXX_TRUE@	Socket.lo TcpServer.lo Thread.lo
 libqsesixx_la_OBJECTS = $(am_libqsesixx_la_OBJECTS)
 libqsesixx_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
@@ -470,7 +469,7 @@ libqsesi_la_CFLAGS = $(PTHREAD_CFLAGS)
 libqsesi_la_LDFLAGS = -L../cmn -version-info 1:0:0 -no-undefined
 libqsesi_la_LIBADD = -lqsecmn $(PTHREAD_LIBS) $(SSL_LIBS)
 @ENABLE_CXX_TRUE@libqsesixx_la_SOURCES = \
-@ENABLE_CXX_TRUE@	AppRoot.cpp \
+@ENABLE_CXX_TRUE@	App.cpp \
 @ENABLE_CXX_TRUE@	SocketAddress.cpp \
 @ENABLE_CXX_TRUE@	Socket.cpp \
 @ENABLE_CXX_TRUE@	TcpServer.cpp \
@@ -559,7 +558,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/AppRoot.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/App.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Socket.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/SocketAddress.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/TcpServer.Plo@am__quote@
