@@ -40,7 +40,7 @@ public:
 		QSE::SttpCmd cmd;
 		while (!server->isStopRequested())
 		{
-			int n = sttp.receiveCmd(cmd);
+			int n = sttp.receiveCmd(&cmd);
 			if (n <= -1)
 			{
 				qse_printf (QSE_T("%s[%zu] -> got error\n"), addrbuf, worker->getWid());
@@ -48,9 +48,12 @@ public:
 			}
 			else if (n == 0) break;
 
+			if (cmd.name == QSE_T("quit")) break;
+
 			g_prt_mutex.lock();
-			qse_printf (QSE_T("received command %s\n"), cmd.name);
+			qse_printf (QSE_T("received command %s\n"), cmd.name.getBuffer());
 			g_prt_mutex.unlock();
+			sttp.sendCmd(cmd);
 		}
 
 		g_prt_mutex.lock();
@@ -94,10 +97,7 @@ static int test1 (void)
 				}
 				else if (n == 0) break;
 
-				if (cmd.name == QSE_T("quit"))
-				{
-					break;
-				}
+				if (cmd.name == QSE_T("quit")) break;
 				
 				g_prt_mutex.lock();
 				qse_printf (QSE_T("%s<%zu> --> received command %s\n"), addrbuf, worker->getWid(), cmd.name.getBuffer());
