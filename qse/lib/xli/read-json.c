@@ -416,6 +416,28 @@ retry:
 		SET_TOKEN_TYPE (xli, tok, type);
 	}
 	/* TODO: negative number, floating-point number, etc */
+	else if (c == QSE_T('-'))
+	{
+		GET_CHAR_TO (xli, c);
+		if (!QSE_ISDIGIT(c))
+		{
+			qse_char_t cc = QSE_T('-');
+			qse_cstr_t ea;
+			ea.ptr = &cc;
+			ea.len = 1;
+			qse_xli_seterror (xli, QSE_XLI_ELXCHR, &ea, &tok->loc);
+			return -1;
+		}
+
+		SET_TOKEN_TYPE (xli, tok, QSE_XLI_TOK_NSTR);
+		ADD_TOKEN_CHAR (xli, tok, QSE_T('-'));
+		do
+		{
+			ADD_TOKEN_CHAR (xli, tok, c);
+			GET_CHAR_TO (xli, c);
+		}
+		while (QSE_ISDIGIT(c));
+	}
 	else if (QSE_ISDIGIT(c))
 	{
 		SET_TOKEN_TYPE (xli, tok, QSE_XLI_TOK_NSTR);
