@@ -359,6 +359,11 @@ protected:
 
 public:
 
+	bool isEmpty() const
+	{
+		return this->_item->size <= 0;
+	}
+
 	qse_size_t getSize () const 
 	{
 		return this->_item->size;
