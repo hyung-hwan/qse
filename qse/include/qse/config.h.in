@@ -421,6 +421,9 @@
 /* pthreads has pthread_mutex_timedlock() */
 #undef HAVE_PTHREAD_MUTEX_TIMEDLOCK
 
+/* pthreads has pthread_mutex_trylock() */
+#undef HAVE_PTHREAD_MUTEX_TRYLOCK
+
 /* Have PTHREAD_PRIO_INHERIT. */
 #undef HAVE_PTHREAD_PRIO_INHERIT
 
