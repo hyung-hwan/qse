@@ -38,7 +38,17 @@ public:
 
 		while (1)
 		{
+		#if 0
 			rqdata->mtx.lock ();
+		#else
+			while (!rqdata->mtx.trylock())
+			{
+				qse_mtx_lock (g_prmtx, QSE_NULL);
+				qse_printf (QSE_T("[%p] -> retrying to lock\n"), this, i);
+				qse_mtx_unlock (g_prmtx);
+			}
+		#endif
+
 			if (rqdata->stop)
 			{
 				rqdata->mtx.unlock ();

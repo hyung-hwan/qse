@@ -202,9 +202,8 @@ int qse_mtx_lock (qse_mtx_t* mtx, const qse_ntime_t* waiting_time)
 		/* TODO: check for B_WOULD_BLOCK */
 		/*if (acquire_sem_etc(mtx->hnd, 1, B_ABSOLUTE_TIMEOUT, 0) != B_NO_ERROR) return -1;*/
 		bigtime_t usec;
-
 		usec = QSE_SECNSEC_TO_USEC (waiting_time->sec, waiting_time->nsec);
-		if (acquire_sem_etc(mtx->hnd, 1, B_TIMEOUT, 0) != B_NO_ERROR) return -1;
+		if (acquire_sem_etc(mtx->hnd, 1, B_TIMEOUT, usec) != B_NO_ERROR) return -1;
 	}
 	else
 	{
@@ -257,6 +256,35 @@ int qse_mtx_unlock (qse_mtx_t* mtx)
 
 #else
 	if (pthread_mutex_unlock ((pthread_mutex_t*)&mtx->hnd) != 0) return -1;
+#endif
+	return 0;
+}
+
+int qse_mtx_trylock (qse_mtx_t* mtx)
+{
+#if defined(_WIN32)
+	if (WaitForSingleObject(mtx->hnd, 0) != WAIT_OBJECT_0) return -1;
+#elif defined(__OS2__)
+	if (DosRequestMutexSem(mtx->hnd, 0) != NO_ERROR) return -1;
+#elif defined(__DOS__)
+	/* nothing to do */
+#elif defined(__BEOS__)
+	if (acquire_sem_etc(mtx->hnd, 1, B_TIMEOUT, 0) != B_NO_ERROR) return -1;
+#else
+	#if defined(HAVE_PTHREAD_MUTEX_TRYLOCK)
+		if (pthread_mutex_trylock((pthread_mutex_t*)&mtx->hnd) != 0) return -1;
+	#elif defined(HAVE_PTHREAD_MUTEX_TIMEDLOCK)
+		qse_ntime_t t;
+		struct timespec ts;
+
+		qse_gettime (&t);
+		ts.tv_sec = t.sec;
+		ts.tv_nsec = t.nsec;
+		if (pthread_mutex_timedlock((pthread_mutex_t*)&mtx->hnd, &ts) != 0) return -1;
+	#else
+		/* not supported. fallback to normal pthread_mutex_lock(). <--- is this really desirable? */
+		if (pthread_mutex_lock ((pthread_mutex_t*)&mtx->hnd) != 0) return -1; 
+	#endif
 #endif
 	return 0;
 }

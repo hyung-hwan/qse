@@ -127,6 +127,9 @@ QSE_EXPORT int qse_mtx_unlock (
 	qse_mtx_t*   mtx
 );
 
+QSE_EXPORT int qse_mtx_trylock (
+	qse_mtx_t* mtx
+);
 
 #ifdef __cplusplus
 }

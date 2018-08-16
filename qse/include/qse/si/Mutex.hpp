@@ -47,12 +47,6 @@ public:
 		qse_mtx_fini (&this->mtx);
 	}
 
-#if 0
-	bool tryock() QSE_CPP_NOEXCEPT
-	{
-	}
-#endif
-
 	void lock () QSE_CPP_NOEXCEPT
 	{
 		qse_mtx_lock (&this->mtx, QSE_NULL);
@@ -61,6 +55,11 @@ public:
 	void unlock () QSE_CPP_NOEXCEPT
 	{
 		qse_mtx_unlock (&this->mtx);
+	}
+
+	bool trylock () QSE_CPP_NOEXCEPT
+	{
+		return qse_mtx_trylock (&this->mtx) >= 0;
 	}
 
 protected:

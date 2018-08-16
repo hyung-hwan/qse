@@ -172,7 +172,7 @@ protected:
 	int put_char (qse_char_t ch) QSE_CPP_NOEXCEPT
 	{
 	#if defined(QSE_CHAR_IS_MCHAR)
-		return this->put_mchar(ch)
+		return this->put_mchar(ch);
 	#else
 		return this->put_wchar(ch);
 	#endif
