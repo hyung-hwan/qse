@@ -18,10 +18,6 @@
 
 QSE::Mutex g_prt_mutex;
 
-#if defined(QSE_LANG_CPP11)
-QSE::TcpServerL<int(QSE::TcpServer::Worker*)>* g_server;
-#else
-
 class ClientHandler
 {
 public:
@@ -55,9 +51,82 @@ public:
 	}
 };
 
+#if defined(QSE_LANG_CPP11)
+static QSE::TcpServerL<int(QSE::TcpServer::Worker*)>* g_server;
+#else
 static QSE::TcpServerF<ClientHandler>* g_server;
 #endif
 
+
+class MyApp: public QSE::App
+{
+public:
+	MyApp(QSE::Mmgr* mmgr): App(mmgr), server(mmgr) {}
+
+	void on_signal (int sig)
+	{
+		switch (sig)
+		{
+			case SIGINT:
+			case SIGTERM:
+			case SIGHUP:
+				this->server.stop();
+				break;
+		}
+	}
+
+	int run ()
+	{
+		this->server.setThreadStackSize (256000);
+		return this->server.start (QSE_T("[::]:9998,0.0.0.0:9998"));
+	}
+
+protected:
+	QSE::TcpServerF<ClientHandler> server;
+};
+
+static int test1()
+{
+	QSE::HeapMmgr heap_mmgr (QSE::Mmgr::getDFL(), 30000);
+	MyApp app (&heap_mmgr);
+	app.handleSignal (SIGINT, true);
+	app.handleSignal (SIGTERM, true);
+	int n = app.run();
+	app.handleSignal (SIGTERM, false);
+	app.handleSignal (SIGINT, false);
+	return n;
+}
+
+int main ()
+{
+#if defined(_WIN32)
+ 	char locale[100];
+	UINT codepage = GetConsoleOutputCP();
+	if (codepage == CP_UTF8)
+	{
+		/*SetConsoleOUtputCP (CP_UTF8);*/
+		qse_setdflcmgrbyid (QSE_CMGR_UTF8);
+	}
+	else
+	{
+		sprintf (locale, ".%u", (unsigned int)codepage);
+		setlocale (LC_ALL, locale);
+		/*qse_setdflcmgrbyid (QSE_CMGR_SLMB);*/
+	}
+#else
+	setlocale (LC_ALL, "");
+	/*qse_setdflcmgrbyid (QSE_CMGR_SLMB);*/
+#endif
+
+	qse_open_stdsios ();
+	test1();
+	qse_close_stdsios ();
+
+	return 0;
+}
+
+
+#if 0 ////////////////////////
 
 static int test1 (void)
 {
@@ -96,7 +165,6 @@ static int test1 (void)
 		}),
 
 		&heap_mmgr
-
 	);
 #else
 	QSE::TcpServerF<ClientHandler> server (&heap_mmgr);
@@ -139,12 +207,13 @@ int main ()
 
 	qse_open_stdsios ();
 
-	QSE::App::setSignalHandler (SIGINT, handle_sigint);
+	//QSE::App::setSignalHandler (SIGINT, handle_sigint);
 	test1();
-	QSE::App::unsetSignalHandler (SIGINT);
+	//QSE::App::unsetSignalHandler (SIGINT);
 
 	qse_close_stdsios ();
 
-
 	return 0;
 }
+
+#endif ////////////////////////

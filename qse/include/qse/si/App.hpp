@@ -38,8 +38,8 @@ QSE_BEGIN_NAMESPACE(QSE)
 class App: public Uncopyable, public Types, public Mmged
 {
 public:
-	App (Mmgr* mmgr) QSE_CPP_NOEXCEPT: Mmged(mmgr), _root_only(false) {}
-	~App () QSE_CPP_NOEXCEPT {}
+	App (Mmgr* mmgr) QSE_CPP_NOEXCEPT;
+	virtual ~App () QSE_CPP_NOEXCEPT;
 
 	int daemonize (bool chdir_to_root = true, int fork_count = 1) QSE_CPP_NOEXCEPT;
 
@@ -51,14 +51,62 @@ public:
 	int restoreUser () QSE_CPP_NOEXCEPT;
 #endif
 
+	virtual void on_signal (int sig) { }
+
 protected:
 	bool _root_only;
 
+private:
+	App* _prev_app;
+	App* _next_app;
+
 public:
+	struct _SigLink
+	{
+		enum 
+		{
+			UNHANDLED,
+			ACCEPTED,
+			IGNORED // handled but ignored
+		};
+
+		_SigLink(): _prev(QSE_NULL), _next(QSE_NULL), _state(UNHANDLED) {}
+		App* _prev;
+		App* _next;
+		int  _state;
+	};
+
+	_SigLink _sig[QSE_NSIGS]; 
+
+public:
+
 	typedef void (*SignalHandler) (int sig);
 	static int setSignalHandler (int sig, SignalHandler sighr);
 	static int unsetSignalHandler (int sig);
 	static qse_size_t _sighrs[2][QSE_NSIGS];
+
+	void handleSignal (int sig, bool accept);
+	void unhandleSignal (int sig);
+};
+
+// functor as a template parameter
+template <typename F>
+class QSE_EXPORT AppF: public App
+{
+public:
+	AppF (Mmgr* mmgr = QSE_NULL) QSE_CPP_NOEXCEPT: App(mmgr) {}
+	AppF (const F& f, Mmgr* mmgr = QSE_NULL) QSE_CPP_NOEXCEPT: App(mmgr), __lfunc(f) {}
+#if defined(QSE_CPP_ENABLE_CPP11_MOVE)
+	AppF (F&& f, Mmgr* mmgr = QSE_NULL) QSE_CPP_NOEXCEPT: App(mmgr), __lfunc(QSE_CPP_RVREF(f)) {}
+#endif
+
+protected:
+	F __lfunc;
+
+	void on_signal (int sig)
+	{
+		this->__lfunc(this, sig);
+	}
 };
 
 /////////////////////////////////
