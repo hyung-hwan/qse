@@ -14,7 +14,6 @@
 #include <string.h>
 
 static int g_stopreq = 0;
-static qse_mtx_t* g_prmtx = QSE_NULL;
 
 QSE::HeapMmgr g_heap_mmgr (QSE::Mmgr::getDFL(), 30000);
 
@@ -29,9 +28,7 @@ public:
 
 		while (!this->stopreq)
 		{
-			qse_mtx_lock (g_prmtx, QSE_NULL);
 			qse_printf (QSE_T("m %p -> %d\n"), this, i);
-			qse_mtx_unlock (g_prmtx);
 			i++;
 			sleep (1);
 		}
@@ -52,9 +49,7 @@ public:
 
 		while (!*stopreqptr)
 		{
-			qse_mtx_lock (g_prmtx, QSE_NULL);
 			qse_printf (QSE_T("fc %p -> %d\n"), this, i);
-			qse_mtx_unlock (g_prmtx);
 			i++;
 			sleep (1);
 		}
@@ -70,9 +65,7 @@ static int func_ptr (QSE::Thread* thr)
 
 	while (!*stopreqptr)
 	{
-		qse_mtx_lock (g_prmtx, QSE_NULL);
 		qse_printf (QSE_T("fp %p -> %d\n"), thr, i);
-		qse_mtx_unlock (g_prmtx);
 		i++;
 		sleep (1);
 	}
@@ -84,8 +77,6 @@ static int test1 (void)
 {
 	int localstopreq = 0;
 
-	g_prmtx = qse_mtx_open (QSE_MMGR_GETDFL(), 0);
-
 #if defined(QSE_LANG_CPP11)
 	auto lambda = [](QSE::Thread* thr)->int 
 	{ 
@@ -94,9 +85,7 @@ static int test1 (void)
 
 		while (!*stopreqptr)
 		{
-			qse_mtx_lock (g_prmtx, QSE_NULL);
 			qse_printf (QSE_T("l %p -> %d\n"), thr, i);
-			qse_mtx_unlock (g_prmtx);
 			i++;
 			sleep (1);
 		}
@@ -110,9 +99,7 @@ static int test1 (void)
 
 		while (!localstopreq)
 		{
-			qse_mtx_lock (g_prmtx, QSE_NULL);
 			qse_printf (QSE_T("lc %p -> %d\n"), thr, i);
-			qse_mtx_unlock (g_prmtx);
 			i++;
 			sleep (1);
 		}
@@ -171,9 +158,7 @@ static int test1 (void)
 
 			while (!localstopreq)
 			{
-				qse_mtx_lock (g_prmtx, QSE_NULL);
 				qse_printf (QSE_T("tl %p -> %d\n"), thr, i);
-				qse_mtx_unlock (g_prmtx);
 				i++;
 				sleep (1);
 			}
@@ -234,7 +219,6 @@ static int test1 (void)
 #endif
 	qse_printf (QSE_T("thread6 ended with retcode %d\n"), thr6.getReturnCode());
 
-	qse_mtx_close (g_prmtx);
 	return 0;
 }
 

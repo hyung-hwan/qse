@@ -16,8 +16,6 @@
 #include <signal.h>
 #include <string.h>
 
-QSE::Mutex g_prt_mutex;
-
 class ClientHandler
 {
 public:
@@ -28,25 +26,19 @@ public:
 		qse_ssize_t n;
 
 		worker->address.toStrBuf(addrbuf, QSE_COUNTOF(addrbuf));
-		g_prt_mutex.lock();
 		qse_printf (QSE_T("hello word..from %s -> wid %zu\n"), addrbuf, worker->getWid());
-		g_prt_mutex.unlock();
 
 		while (!server->isStopRequested())
 		{
 			if ((n = worker->socket.receive(bb, QSE_COUNTOF(bb))) <= 0) 
 			{
-				g_prt_mutex.lock();
 				qse_printf (QSE_T("%zd bytes received from %s\n"), n, addrbuf);
-				g_prt_mutex.unlock();
 				break;
 			}
 			worker->socket.send (bb, n);
 		}
 
-		g_prt_mutex.lock();
 		qse_printf (QSE_T("byte to %s -> wid %zu\n"), addrbuf, worker->getWid());
-		g_prt_mutex.unlock();
 		return 0;
 	}
 };
@@ -70,9 +62,7 @@ public:
 			case SIGINT:
 			case SIGTERM:
 			case SIGHUP:
-				g_prt_mutex.lock();
 				qse_printf (QSE_T("requesting to stop server...app %p server %p\n"), this, &this->server);
-				g_prt_mutex.unlock();
 				this->server.stop();
 				break;
 		}

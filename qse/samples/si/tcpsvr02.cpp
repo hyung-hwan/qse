@@ -16,8 +16,6 @@
 #include <signal.h>
 #include <string.h>
 
-QSE::Mutex g_prt_mutex;
-
 #if defined(QSE_LANG_CPP11)
 QSE::TcpServerL<int(QSE::TcpServer::Worker*)>* g_server;
 #else
@@ -32,9 +30,7 @@ public:
 		qse_ssize_t n;
 
 		worker->address.toStrBuf(addrbuf, QSE_COUNTOF(addrbuf));
-		g_prt_mutex.lock();
 		qse_printf (QSE_T("hello word..from %s[%zu]\n"), addrbuf, worker->getWid());
-		g_prt_mutex.unlock();
 
 		QSE::Sttp sttp (&worker->socket);
 		QSE::SttpCmd cmd;
@@ -50,15 +46,11 @@ public:
 
 			if (cmd.name == QSE_T("quit")) break;
 
-			g_prt_mutex.lock();
 			qse_printf (QSE_T("received command %s\n"), cmd.name.getBuffer());
-			g_prt_mutex.unlock();
 			sttp.sendCmd(cmd);
 		}
 
-		g_prt_mutex.lock();
 		qse_printf (QSE_T("byte to %s -> wid %zu\n"), addrbuf, worker->getWid());
-		g_prt_mutex.unlock();
 		return 0;
 	}
 };
@@ -81,9 +73,7 @@ static int test1 (void)
 			qse_ssize_t n;
 
 			worker->address.toStrBuf(addrbuf, QSE_COUNTOF(addrbuf));
-			g_prt_mutex.lock();
 			qse_printf (QSE_T("hello word..from %s --> wid %zu\n"), addrbuf, worker->getWid());
-			g_prt_mutex.unlock();
 
 			QSE::Sttp sttp (&worker->socket);
 			QSE::SttpCmd cmd;
@@ -98,16 +88,12 @@ static int test1 (void)
 				else if (n == 0) break;
 
 				if (cmd.name == QSE_T("quit")) break;
-				
-				g_prt_mutex.lock();
+
 				qse_printf (QSE_T("%s<%zu> --> received command %s\n"), addrbuf, worker->getWid(), cmd.name.getBuffer());
-				g_prt_mutex.unlock();
 				sttp.sendCmd(cmd);
 			}
 
-			g_prt_mutex.lock();
 			qse_printf (QSE_T("byte to %s -> wid %zu\n"), addrbuf, worker->getWid());
-			g_prt_mutex.unlock();
 			return 0;
 		}),
 

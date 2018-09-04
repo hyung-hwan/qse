@@ -16,7 +16,6 @@
 #include <string.h>
 
 static int g_stopreq = 0;
-static qse_mtx_t* g_prmtx = QSE_NULL;
 
 QSE::HeapMmgr g_heap_mmgr (QSE::Mmgr::getDFL(), 30000);
 
@@ -43,9 +42,7 @@ public:
 		#else
 			while (!rqdata->mtx.trylock())
 			{
-				qse_mtx_lock (g_prmtx, QSE_NULL);
 				qse_printf (QSE_T("[%p] -> retrying to lock\n"), this, i);
-				qse_mtx_unlock (g_prmtx);
 			}
 		#endif
 
@@ -57,23 +54,17 @@ public:
 			rqdata->cnd.wait(rqdata->mtx);
 			rqdata->mtx.unlock ();
 
-			qse_mtx_lock (g_prmtx, QSE_NULL);
 			qse_printf (QSE_T("[%p] -> loop %d\n"), this, i);
-			qse_mtx_unlock (g_prmtx);
 			i++;
 		}
 
-		qse_mtx_lock (g_prmtx, QSE_NULL);
 		qse_printf (QSE_T("[%p] -> exiting\n"), this);
-		qse_mtx_unlock (g_prmtx);
 		return i;
 	}
 };
 
 static int test1 (void)
 {
-	g_prmtx = qse_mtx_open (QSE_MMGR_GETDFL(), 0);
-
 	rq_data_t rqdata;
 	QSE::ThreadF<Waiter> thr[3];
 
@@ -92,9 +83,7 @@ static int test1 (void)
 	{
 		if (g_stopreq) 
 		{
-			qse_mtx_lock (g_prmtx, QSE_NULL);
 			qse_printf (QSE_T("broadcasting stop ---> 1\n"));
-			qse_mtx_unlock (g_prmtx);
 
 			rqdata.mtx.lock ();
 			rqdata.stop = 1;
@@ -109,9 +98,7 @@ static int test1 (void)
 		}
 		if (nterm == 3) break;
 
-		qse_mtx_lock (g_prmtx, QSE_NULL);
 		qse_printf (QSE_T("signalling ....(nterm = %d)\n"), nterm);
-		qse_mtx_unlock (g_prmtx);
 
 		rqdata.cnd.signal ();
 		sleep (1);
@@ -128,7 +115,6 @@ static int test1 (void)
 		qse_printf (QSE_T("thread%d ended with retcode %d\n"), i, thr[i].getReturnCode());
 	}
 
-	qse_mtx_close (g_prmtx);
 	return 0;
 }
 
