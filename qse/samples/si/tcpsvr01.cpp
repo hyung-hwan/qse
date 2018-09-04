@@ -70,6 +70,9 @@ public:
 			case SIGINT:
 			case SIGTERM:
 			case SIGHUP:
+				g_prt_mutex.lock();
+				qse_printf (QSE_T("requesting to stop server...app %p server %p\n"), this, &this->server);
+				g_prt_mutex.unlock();
 				this->server.stop();
 				break;
 		}
@@ -89,11 +92,27 @@ static int test1()
 {
 	QSE::HeapMmgr heap_mmgr (QSE::Mmgr::getDFL(), 30000);
 	MyApp app (&heap_mmgr);
-	app.handleSignal (SIGINT, true);
-	app.handleSignal (SIGTERM, true);
+
+MyApp app2 (&heap_mmgr);
+MyApp app3 (&heap_mmgr);
+MyApp app4 (&heap_mmgr);
+
+	app.subscribeToSignal (SIGINT, true)	;
+	app.subscribeToSignal (SIGTERM, true);
+
+app4.subscribeToSignal (SIGINT, true); 
+app3.subscribeToSignal (SIGINT, true);
+app2.subscribeToSignal (SIGINT, true);
+
+
+
 	int n = app.run();
-	app.handleSignal (SIGTERM, false);
-	app.handleSignal (SIGINT, false);
+	app.subscribeToSignal (SIGTERM, false);
+	app.subscribeToSignal (SIGINT, false);
+
+app4.unsubscribeFromSignal (SIGINT); 
+app3.unsubscribeFromSignal (SIGINT);
+app2.unsubscribeFromSignal (SIGINT);
 	return n;
 }
 

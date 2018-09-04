@@ -34,7 +34,6 @@
 QSE_BEGIN_NAMESPACE(QSE)
 /////////////////////////////////
 
-
 static Mutex g_app_mutex;
 static App* g_app_top = QSE_NULL; // maintain the chain of application objects
 static App* g_app_sig[QSE_NSIGS] = { QSE_NULL, };
@@ -61,9 +60,14 @@ App::App (Mmgr* mmgr) QSE_CPP_NOEXCEPT: Mmged(mmgr), _root_only(false), _prev_ap
 App::~App () QSE_CPP_NOEXCEPT 
 {
 	ScopedMutexLocker sml(g_app_mutex);
+	this->unsubscribe_from_all_signals_no_mutex ();
 	if (this->_next_app) this->_next_app->_prev_app = this->_prev_app;
 	if (this->_prev_app) this->_prev_app->_next_app = this->_next_app;
-	if (this == g_app_top) g_app_top = this->_next_app;
+	if (this == g_app_top) 
+	{
+		QSE_ASSERT (this->_prev_app == QSE_NULL);
+		g_app_top = this->_next_app;
+	}
 }
 
 int App::daemonize (bool chdir_to_root, int fork_count) QSE_CPP_NOEXCEPT
@@ -134,10 +138,9 @@ int App::daemonize (bool chdir_to_root, int fork_count) QSE_CPP_NOEXCEPT
 	return 0;
 }
 
-
 int App::chroot (const qse_mchar_t* mpath) QSE_CPP_NOEXCEPT
 {
-	return QSE_CHROOT (mpath);
+	return QSE_CHROOT(mpath);
 }
 
 int App::chroot (const qse_wchar_t* wpath) QSE_CPP_NOEXCEPT
@@ -145,7 +148,7 @@ int App::chroot (const qse_wchar_t* wpath) QSE_CPP_NOEXCEPT
 	qse_mchar_t* mpath;
 	mpath = qse_wcstombsdup (wpath, QSE_NULL, this->getMmgr());
 	if (!mpath) return -1;
-	int n = App::chroot ((const qse_mchar_t*)mpath);
+	int n = App::chroot((const qse_mchar_t*)mpath);
 	this->getMmgr()->dispose (mpath);
 	return n;
 }
@@ -201,8 +204,13 @@ static void dispatch_siginfo (int sig, siginfo_t* si, void* ctx)
 	}
 }
 
-
 int App::setSignalHandler (int sig, SignalHandler sighr)
+{
+	ScopedMutexLocker sml(g_app_mutex);
+	return App::set_signal_handler_no_mutex (sig, sighr);
+}
+
+int App::set_signal_handler_no_mutex (int sig, SignalHandler sighr)
 {
 	if (App::_sighrs[0][sig]) return -1; // already set
 
@@ -237,6 +245,12 @@ int App::setSignalHandler (int sig, SignalHandler sighr)
 
 int App::unsetSignalHandler (int sig)
 {
+	ScopedMutexLocker sml(g_app_mutex);
+	return App::unset_signal_handler_no_mutex(sig);
+}
+
+int App::unset_signal_handler_no_mutex(int sig)
+{
 	if (!App::_sighrs[0][sig]) return -1;
 
 	struct sigaction sa;
@@ -268,7 +282,7 @@ static void handle_signal (int sig)
 	}
 }
 
-void App::handleSignal (int sig, bool accept)
+int App::subscribeToSignal (int sig, bool accept)
 {
 	QSE_ASSERT (sig >= 0 && sig < QSE_NSIGS);
 
@@ -278,31 +292,56 @@ void App::handleSignal (int sig, bool accept)
 	_SigLink& sl = this->_sig[sig];
 	if (QSE_LIKELY(sl._state == _SigLink::UNHANDLED))
 	{
-		if (!g_app_sig[sig])
+		QSE_ASSERT (sl._prev == QSE_NULL && sl._next == QSE_NULL);
+
+		App* xapp = g_app_sig[sig];
+		App* xapp_xprev = QSE_NULL;
+
+		g_app_sig[sig] = this;
+		sl._state = _SigLink::ACCEPTED;
+		sl._next = xapp;
+		if (xapp) 
+		{
+			xapp_xprev = xapp->_sig[sig]._prev;
+			xapp->_sig[sig]._prev = this;
+		}
+		else
 		{
 			// no application is set to accept this signal.
 			// this is the first time to 
-			App::setSignalHandler (sig, handle_signal);
+			if (App::set_signal_handler_no_mutex(sig, handle_signal) <= -1)
+			{
+				// roll back 
+				g_app_sig[sig] = xapp;
+				if (xapp) xapp->_sig[sig]._prev = xapp_xprev;
+				sl._state = _SigLink::UNHANDLED;
+				sl._next = QSE_NULL;
+				QSE_ASSERT (sl._prev == QSE_NULL);
+				return -1;
+			}
 		}
 
-		sl._state = _SigLink::ACCEPTED;
-		sl._next = g_app_sig[sig];
-		g_app_sig[sig] = this;
+		QSE_ASSERT (sl._prev == QSE_NULL);
 	}
 	else 
 	{
-		// already configured to receive the signal.
+		// already configured to receive the signal. change the state only
 		QSE_ASSERT (g_app_sig[sig] != QSE_NULL);
 		sl._state = reqstate;
 	}
+
+	return 0;
 }
 
-void App::unhandleSignal (int sig)
+void App::unsubscribeFromSignal (int sig)
 {
 	QSE_ASSERT (sig >= 0 && sig < QSE_NSIGS);
-
 	ScopedMutexLocker sml(g_app_mutex);
+	this->unsubscribe_from_signal_no_mutex (sig);
+}
 
+void App::unsubscribe_from_signal_no_mutex (int sig)
+{
 	_SigLink& sl = this->_sig[sig];
 	if (QSE_UNLIKELY(sl._state == _SigLink::UNHANDLED))
 	{
@@ -314,24 +353,29 @@ void App::unhandleSignal (int sig)
 	{
 		QSE_ASSERT (g_app_sig[sig] != QSE_NULL);
 
-		if (g_app_sig[sig] == this) g_app_sig[sig] = sl._next;
-
-		if (sl._next) 
+		if (g_app_sig[sig] == this) 
 		{
-			sl._next->_sig[sig]._prev = sl._prev;
-			sl._next = QSE_NULL;
-		}
-		if (sl._prev)
-		{
-			sl._prev->_sig[sig]._next = sl._next;
-			sl._prev = QSE_NULL;
+			QSE_ASSERT (sl._prev == QSE_NULL);
+			g_app_sig[sig] = sl._next;
 		}
 
-		if (!g_app_sig[sig]) App::unsetSignalHandler (sig);
+		if (sl._next) sl._next->_sig[sig]._prev = sl._prev;
+		if (sl._prev) sl._prev->_sig[sig]._next = sl._next;
+		sl._prev = QSE_NULL;
+		sl._next = QSE_NULL;
+
+		if (!g_app_sig[sig]) App::unset_signal_handler_no_mutex (sig);
 		sl._state = _SigLink::UNHANDLED;
 	}
 }
 
+void App::unsubscribe_from_all_signals_no_mutex()
+{
+	for (int i = 0; i < QSE_NSIGS; i++)
+	{
+		this->unsubscribe_from_signal_no_mutex (i);
+	}
+}
 /////////////////////////////////
 QSE_END_NAMESPACE(QSE)
 /////////////////////////////////
