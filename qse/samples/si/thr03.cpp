@@ -2,7 +2,9 @@
 #include <qse/si/Condition.hpp>
 #include <qse/si/mtx.h>
 #include <qse/si/sio.h>
+#include <qse/si/os.h>
 #include <qse/cmn/mem.h>
+#include <qse/cmn/str.h>
 #include <qse/cmn/HeapMmgr.hpp>
 
 
@@ -11,11 +13,11 @@
 #	include <windows.h>
 #endif
 
-#include <unistd.h>
 #include <signal.h>
 #include <string.h>
 
 static int g_stopreq = 0;
+static qse_ntime_t sleep_interval = { 1, 0 };
 
 QSE::HeapMmgr g_heap_mmgr (QSE::Mmgr::getDFL(), 30000);
 
@@ -101,7 +103,7 @@ static int test1 (void)
 		qse_printf (QSE_T("signalling ....(nterm = %d)\n"), nterm);
 
 		rqdata.cnd.signal ();
-		sleep (1);
+		qse_sleep (&sleep_interval);
 	}
 
 
@@ -161,7 +163,7 @@ int main ()
 	}
 	else
 	{
-		sprintf (locale, ".%u", (unsigned int)codepage);
+		qse_mbsxfmt (locale, QSE_COUNTOF(locale), ".%u", (unsigned int)codepage);
 		setlocale (LC_ALL, locale);
 		/*qse_setdflcmgrbyid (QSE_CMGR_SLMB);*/
 	}

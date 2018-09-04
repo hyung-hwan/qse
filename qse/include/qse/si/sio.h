@@ -401,6 +401,10 @@ QSE_EXPORT int qse_open_stdsios (
 	void
 );
 
+QSE_EXPORT int qse_open_stdsios_with_flags (
+	int flags
+);
+
 QSE_EXPORT void qse_close_stdsios (
 	void
 );

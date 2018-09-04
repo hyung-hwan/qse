@@ -456,8 +456,6 @@ static qse_ssize_t putwc_no_mutex (qse_sio_t* sio, qse_wchar_t c)
 {
 	qse_ssize_t n;
 
-	LOCK (sio);
-
 	sio->errnum = QSE_SIO_ENOERR;
 #if defined(__OS2__)
 	if (c == QSE_WT('\n') && (sio->status & STATUS_LINE_BREAK))
@@ -470,7 +468,6 @@ static qse_ssize_t putwc_no_mutex (qse_sio_t* sio, qse_wchar_t c)
 	if (n <= -1 && sio->errnum == QSE_SIO_ENOERR) 
 		sio->errnum = tio_errnum_to_sio_errnum (&sio->tio.io);
 
-	UNLOCK (sio);
 	return n;
 }
 
@@ -875,15 +872,20 @@ static qse_sio_t* sio_stdout = QSE_NULL;
 static qse_sio_t* sio_stderr = QSE_NULL;
 /* TODO: add sio_stdin, qse_getmbs, etc */
 
-int qse_open_stdsios (void)
+int qse_open_stdsios ()
+{
+	return qse_open_stdsios_with_flags (QSE_SIO_LINEBREAK | QSE_SIO_REENTRANT);
+}
+
+int qse_open_stdsios_with_flags (int flags)
 {
 	if (sio_stdout == QSE_NULL)
 	{
-		sio_stdout = qse_sio_openstd (QSE_MMGR_GETDFL(), 0, QSE_SIO_STDOUT, QSE_SIO_LINEBREAK | QSE_SIO_REENTRANT);
+		sio_stdout = qse_sio_openstd (QSE_MMGR_GETDFL(), 0, QSE_SIO_STDOUT, flags);
 	}
 	if (sio_stderr == QSE_NULL)
 	{
-		sio_stderr = qse_sio_openstd (QSE_MMGR_GETDFL(), 0, QSE_SIO_STDERR, QSE_SIO_LINEBREAK | QSE_SIO_REENTRANT);
+		sio_stderr = qse_sio_openstd (QSE_MMGR_GETDFL(), 0, QSE_SIO_STDERR, flags);
 	}
 
 	if (sio_stdout == QSE_NULL || sio_stderr == QSE_NULL) 
@@ -1031,9 +1033,11 @@ qse_ssize_t qse_errputwcsf (const qse_wchar_t* fmt, ...)
 	fo.conv = mbs_to_wcs;
 
 	va_start (ap, fmt);
+
 	LOCK (sio_stderr);
 	x = qse_wfmtout(fmt, &fo, ap);
 	UNLOCK (sio_stderr);
+
 	va_end (ap);
 
 	return (x <= -1)? -1: fo.count;

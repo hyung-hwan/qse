@@ -2,18 +2,20 @@
 #include <qse/si/Thread.hpp>
 #include <qse/si/mtx.h>
 #include <qse/si/sio.h>
+#include <qse/si/os.h>
 #include <qse/cmn/mem.h>
+#include <qse/cmn/str.h>
 
 #include <locale.h>
 #if defined(_WIN32)
 #	include <windows.h>
 #endif
 
-#include <unistd.h>
 #include <signal.h>
 #include <string.h>
 
 static int g_stopreq = 0;
+static qse_ntime_t sleep_interval = { 1, 0 };
 
 static QSE::SpinLock g_prmtx;
 
@@ -32,7 +34,7 @@ public:
 			qse_printf (QSE_T("m %p -> %d\n"), this, i);
 			g_prmtx.unlock ();
 			i++;
-			sleep (1);
+			qse_sleep (&sleep_interval);
 		}
 
 		return i;
@@ -55,7 +57,7 @@ public:
 			qse_printf (QSE_T("fc %p -> %d\n"), this, i);
 			g_prmtx.unlock ();
 			i++;
-			sleep (1);
+			qse_sleep (&sleep_interval);
 		}
 
 		return i;
@@ -73,7 +75,7 @@ static int func_ptr (QSE::Thread* thr)
 		qse_printf (QSE_T("fp %p -> %d\n"), thr, i);
 		g_prmtx.unlock ();
 		i++;
-		sleep (1);
+		qse_sleep (&sleep_interval);
 	}
 
 	return i;
@@ -95,7 +97,7 @@ static int test1 (void)
 			qse_printf (QSE_T("l %p -> %d\n"), thr, i);
 			g_prmtx.unlock ();
 			i++;
-			sleep (1);
+			qse_sleep (&sleep_interval);
 		}
 
 		return i;
@@ -111,7 +113,7 @@ static int test1 (void)
 			qse_printf (QSE_T("lc %p -> %d\n"), thr, i);
 			g_prmtx.unlock ();
 			i++;
-			sleep (1);
+			qse_sleep (&sleep_interval);
 		}
 
 		return i;
@@ -172,7 +174,7 @@ static int test1 (void)
 				qse_printf (QSE_T("tl %p -> %d\n"), thr, i);
 				g_prmtx.unlock ();
 				i++;
-				sleep (1);
+				qse_sleep (&sleep_interval);
 			}
 
 			return i;
@@ -204,7 +206,7 @@ static int test1 (void)
 		    thr5.getState() == QSE::Thread::TERMINATED &&
 #endif
 		    thr6.getState() == QSE::Thread::TERMINATED) break;
-		sleep (1);
+		qse_sleep (&sleep_interval);
 	}
 
 	if (g_stopreq) 
@@ -277,7 +279,7 @@ int main ()
 	}
 	else
 	{
-		sprintf (locale, ".%u", (unsigned int)codepage);
+		qse_mbsxfmt (locale, QSE_COUNTOF(locale), ".%u", (unsigned int)codepage);
 		setlocale (LC_ALL, locale);
 		/*qse_setdflcmgrbyid (QSE_CMGR_SLMB);*/
 	}
@@ -288,7 +290,7 @@ int main ()
 
 	set_signal (SIGINT, handle_sigint);
 
-	qse_open_stdsios ();
+	qse_open_stdsios_with_flags (QSE_SIO_LINEBREAK);
 	test1();
 	qse_close_stdsios ();
 

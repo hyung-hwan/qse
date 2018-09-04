@@ -1,18 +1,19 @@
 #include <qse/si/thr.h>
 #include <qse/si/sio.h>
+#include <qse/si/os.h>
 #include <qse/cmn/mem.h>
+#include <qse/cmn/str.h>
 
-
-#include <locale.h>
 #if defined(_WIN32)
 #	include <windows.h>
 #endif
 
-#include <unistd.h>
+#include <locale.h>
 #include <signal.h>
 #include <string.h>
 
 static int g_stopreq = 0;
+static qse_ntime_t sleep_interval = { 1, 0 };
 
 struct thr_xtn_t
 {
@@ -20,16 +21,19 @@ struct thr_xtn_t
 };
 typedef struct thr_xtn_t thr_xtn_t;
 
+
+
 static int thr_func (qse_thr_t* thr, void* ctx)
 {
 	int i = 0;
 	thr_xtn_t* xtn = qse_thr_getxtn(thr);
 
+
 	while (!xtn->stopreq)
 	{
 		qse_printf (QSE_T("%d\n"), i);
 		i++;
-		sleep (1);
+		qse_sleep (&sleep_interval);
 	}
 
 	return i;
@@ -58,7 +62,7 @@ static int test1 (void)
 	while (!g_stopreq)
 	{
 		if (qse_thr_getstate(thr) == QSE_THR_TERMINATED) break;
-		sleep (1);
+		qse_sleep (&sleep_interval);
 	}
 
 	if (g_stopreq) 
@@ -118,7 +122,7 @@ int main ()
 	}
 	else
 	{
-		sprintf (locale, ".%u", (unsigned int)codepage);
+		qse_mbsxfmt (locale, QSE_COUNTOF(locale), ".%u", (unsigned int)codepage);
 		setlocale (LC_ALL, locale);
 		/*qse_setdflcmgrbyid (QSE_CMGR_SLMB);*/
 	}
