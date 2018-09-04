@@ -3,17 +3,16 @@
 #include <qse/si/sio.h>
 #include <qse/cmn/mem.h>
 
-
 #include <locale.h>
 #if defined(_WIN32)
 #	include <windows.h>
 #endif
 
-#include <unistd.h>
 #include <signal.h>
 #include <string.h>
 
 static int g_stopreq = 0;
+static qse_ntime_t sleep_interval = { 1, 0 };
 
 struct thr_xtn_t
 {
@@ -34,7 +33,7 @@ static int thr_func (qse_thr_t* thr, void* ctx)
 		qse_printf (QSE_T("%s: [% 16d] [% 16d] [% 16d]\n"), xtn->name, i, i, i);
 		qse_spl_unlock (xtn->spl);
 		i++;
-		/*sleep (1);*/
+		/*qse_sleep (&sleep_interval);*/
 	}
 
 	return i;
@@ -153,7 +152,7 @@ int main ()
 	}
 	else
 	{
-		sprintf (locale, ".%u", (unsigned int)codepage);
+		qse_mbsxfmt (locale, QSE_COUNTOF(locale), ".%u", (unsigned int)codepage);
 		setlocale (LC_ALL, locale);
 		/*qse_setdflcmgrbyid (QSE_CMGR_SLMB);*/
 	}
@@ -164,7 +163,7 @@ int main ()
 
 	set_signal (SIGINT, handle_sigint);
 
-	qse_open_stdsios ();
+	qse_open_stdsios_with_flags (QSE_SIO_LINEBREAK); /* to disable mutex protection on stdout & stderr */
 	test1();
 	qse_close_stdsios ();
 

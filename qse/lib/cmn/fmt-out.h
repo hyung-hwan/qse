@@ -115,14 +115,14 @@ int fmtout (const char_t* fmt, fmtout_t* data, va_list ap)
 
 	struct
 	{
-		qse_mchar_t  sbuf[32];	
+		qse_mchar_t  sbuf[32];
 		qse_mchar_t* ptr;
 		qse_size_t   capa;
 	} fltfmt;
 
 	struct
 	{
-		char_t       sbuf[96];	
+		char_t       sbuf[96];
 		char_t*      ptr;
 		qse_size_t   capa;
 	} fltout;
@@ -513,7 +513,7 @@ reswitch:
 			}
 
 			width -= n;
-		
+
 			if (!(flagc & FLAGC_LEFTADJ) && width > 0)
 			{
 				while (width--) PUT_CHAR(padc);
