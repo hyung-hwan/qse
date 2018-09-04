@@ -35,6 +35,7 @@
 #include <qse/macros.h>
 #include <qse/si/fio.h>
 #include <qse/si/tio.h>
+#include <qse/si/mtx.h>
 #include <stdarg.h>
 
 enum qse_sio_flag_t
@@ -47,6 +48,7 @@ enum qse_sio_flag_t
 	QSE_SIO_IGNOREMBWCERR = (1 << 1),
 	QSE_SIO_NOAUTOFLUSH   = (1 << 2),
 	QSE_SIO_KEEPPATH      = (1 << 3),
+	QSE_SIO_REENTRANT     = (1 << 4),
 
 	/* ensure that the following enumerators are one of
 	 * qse_fio_flags_t enumerators */
@@ -129,6 +131,7 @@ struct qse_sio_t
 	qse_mchar_t outbuf[2048];
 
 	qse_char_t* path;
+	qse_mtx_t* mtx;
 
 #if defined(_WIN32) || defined(__OS2__)
 	int status;

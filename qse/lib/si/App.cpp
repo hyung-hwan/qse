@@ -277,7 +277,13 @@ static void handle_signal (int sig)
 	{
 		App::_SigLink& sl = app->_sig[sig];
 		App* next = sl._next;
-		if (sl._state == App::_SigLink::ACCEPTED) app->on_signal (sig);
+		if (sl._state == App::_SigLink::ACCEPTED) 
+		{
+			// the actual signal handler is called with the mutex locked.
+			// it must not call subscribeToSingal() or unsubscribeFromSingal()
+			// from within the handler.
+			app->on_signal (sig);
+		}
 		app = next;
 	}
 }
@@ -356,6 +362,7 @@ void App::unsubscribe_from_signal_no_mutex (int sig)
 		if (g_app_sig[sig] == this) 
 		{
 			QSE_ASSERT (sl._prev == QSE_NULL);
+			if (!sl._next) App::unset_signal_handler_no_mutex (sig);
 			g_app_sig[sig] = sl._next;
 		}
 
@@ -363,8 +370,6 @@ void App::unsubscribe_from_signal_no_mutex (int sig)
 		if (sl._prev) sl._prev->_sig[sig]._next = sl._next;
 		sl._prev = QSE_NULL;
 		sl._next = QSE_NULL;
-
-		if (!g_app_sig[sig]) App::unset_signal_handler_no_mutex (sig);
 		sl._state = _SigLink::UNHANDLED;
 	}
 }
@@ -376,6 +381,7 @@ void App::unsubscribe_from_all_signals_no_mutex()
 		this->unsubscribe_from_signal_no_mutex (i);
 	}
 }
+
 /////////////////////////////////
 QSE_END_NAMESPACE(QSE)
 /////////////////////////////////
