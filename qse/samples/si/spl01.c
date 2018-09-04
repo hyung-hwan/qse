@@ -75,14 +75,14 @@ static int test1 (void)
 	if (qse_thr_start(thr1, thr_func, QSE_NULL, QSE_THR_SIGNALS_BLOCKED) <= -1)
 	{
 		qse_printf (QSE_T("cannot start thread1\n"));
-		qse_thr_close (thr1	);
+		qse_thr_close (thr1);
 		return -1;
 	}
 
 	if (qse_thr_start(thr2, thr_func, QSE_NULL, QSE_THR_SIGNALS_BLOCKED) <= -1)
 	{
 		qse_printf (QSE_T("cannot start thread1\n"));
-		qse_thr_close (thr1	);
+		qse_thr_close (thr1);
 		return -1;
 	}
 
