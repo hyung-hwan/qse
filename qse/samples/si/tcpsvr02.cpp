@@ -3,6 +3,7 @@
 #include <qse/si/sio.h>
 #include <qse/si/os.h>
 #include <qse/cmn/mem.h>
+#include <qse/cmn/str.h>
 #include <qse/cmn/HeapMmgr.hpp>
 #include <qse/sttp/Sttp.hpp>
 #include <qse/si/App.hpp>
@@ -130,7 +131,7 @@ int main ()
 	}
 	else
 	{
-		sprintf (locale, ".%u", (unsigned int)codepage);
+		qse_mbsxfmt (locale, QSE_COUNTOF(locale), ".%u", (unsigned int)codepage);
 		setlocale (LC_ALL, locale);
 		/*qse_setdflcmgrbyid (QSE_CMGR_SLMB);*/
 	}

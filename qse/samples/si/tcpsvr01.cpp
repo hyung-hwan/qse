@@ -3,6 +3,7 @@
 #include <qse/si/sio.h>
 #include <qse/si/os.h>
 #include <qse/cmn/mem.h>
+#include <qse/cmn/str.h>
 #include <qse/cmn/HeapMmgr.hpp>
 #include <qse/si/App.hpp>
 
@@ -12,9 +13,13 @@
 #	include <windows.h>
 #endif
 
-#include <unistd.h>
 #include <signal.h>
 #include <string.h>
+
+
+#include <sys/wait.h>
+#include <sys/prctl.h>
+#include <unistd.h>
 
 class ClientHandler
 {
@@ -70,8 +75,13 @@ public:
 
 	int run ()
 	{
-		this->server.setThreadStackSize (256000);
-		return this->server.start (QSE_T("[::]:9998,0.0.0.0:9998"));
+		if (this->guardProcess("myapp") > 0)
+		{
+qse_printf (QSE_T("Stareting workd\n"));
+			this->server.setThreadStackSize (256000);
+			return this->server.start (QSE_T("[::]:9998,0.0.0.0:9998"));
+		}
+		return -1;
 	}
 
 protected:
@@ -87,7 +97,7 @@ MyApp app2 (&heap_mmgr);
 MyApp app3 (&heap_mmgr);
 MyApp app4 (&heap_mmgr);
 
-	app.subscribeToSignal (SIGINT, true)	;
+	app.subscribeToSignal (SIGINT, true);
 	app.subscribeToSignal (SIGTERM, true);
 
 app4.subscribeToSignal (SIGINT, true); 
@@ -205,7 +215,7 @@ int main ()
 	}
 	else
 	{
-		sprintf (locale, ".%u", (unsigned int)codepage);
+		qse_mbsxfmt (locale, QSE_COUNTOF(locale), ".%u", (unsigned int)codepage);
 		setlocale (LC_ALL, locale);
 		/*qse_setdflcmgrbyid (QSE_CMGR_SLMB);*/
 	}
