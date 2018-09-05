@@ -382,6 +382,27 @@ void App::unsubscribe_from_all_signals_no_mutex()
 	}
 }
 
+int App::guardProcess (const qse_mchar_t* proc_name)
+{
+// TODO: enhance it
+	while (1)
+	{
+		pid_t pid = ::fork();
+		if (pid == -1) return -1;
+		if (pid == 0) break; // child
+
+		int status;
+		while (::waitpid(pid, &status, 0) != pid);
+		if (WIFEXITED(status) && WEXITSTATUS(status) == 0) 
+		{
+			return 0;
+		}
+	}
+
+	// TODO: if (proc_name) qse_set_proc_name (proc_name);
+	return 1; // the caller must execute the actual work.
+}
+
 /////////////////////////////////
 QSE_END_NAMESPACE(QSE)
 /////////////////////////////////

@@ -53,3 +53,10 @@ void qse_sleep (const qse_ntime_t* interval)
 #endif
 }
 
+/*
+ TODO:
+int qse_set_proc_name (const qse_char_t* name)
+{
+	::prctl(PR_SET_NAME, name, 0, 0, 0);
+}*/
+

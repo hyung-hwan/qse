@@ -53,6 +53,23 @@ public:
 
 	virtual void on_signal (int sig) { }
 
+	int subscribeToSignal (int sig, bool accept);
+	void unsubscribeFromSignal (int sig);
+
+	typedef void (*SignalHandler) (int sig);
+	static qse_size_t _sighrs[2][QSE_NSIGS];
+
+	// You may set a global signal handler with setSignalHandler().
+	// If an application is subscribing to a single with subscribeToSignal(),
+	// this function is doomed to fail. If a successful call to 
+	// setSignalHandler() has been made withoutut unsetSingalHandler() called
+	// yet, a subsequence call to subscribeToSignal() is doomed to fail too.
+	// These two different interfaces are mutually exclusive.
+	static int setSignalHandler (int sig, SignalHandler sighr);
+	static int unsetSignalHandler (int sig);
+
+	int guardProcess (const qse_mchar_t* proc_name);
+
 protected:
 	bool _root_only;
 
@@ -77,21 +94,6 @@ public:
 	};
 
 	_SigLink _sig[QSE_NSIGS]; 
-
-	typedef void (*SignalHandler) (int sig);
-	static qse_size_t _sighrs[2][QSE_NSIGS];
-
-	int subscribeToSignal (int sig, bool accept);
-	void unsubscribeFromSignal (int sig);
-
-	// You may set a global signal handler with setSignalHandler().
-	// If an application is subscribing to a single with subscribeToSignal(),
-	// this function is doomed to fail. If a successful call to 
-	// setSignalHandler() has been made withoutut unsetSingalHandler() called
-	// yet, a subsequence call to subscribeToSignal() is doomed to fail too.
-	// These two different interfaces are mutually exclusive.
-	static int setSignalHandler (int sig, SignalHandler sighr);
-	static int unsetSignalHandler (int sig);
 
 protected:
 	static int set_signal_handler_no_mutex (int sig, SignalHandler sighr);
