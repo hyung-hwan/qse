@@ -40,8 +40,14 @@
 #endif
 
 
-#define LOCK(sio) do { if ((sio)->mtx) qse_mtx_lock ((sio)->mtx, QSE_NULL); } while(0)
-#define UNLOCK(sio) do { if ((sio)->mtx) qse_mtx_unlock ((sio)->mtx); } while(0)
+#define LOCK_OUTPUT(sio) do { if ((sio)->mtx) qse_mtx_lock ((sio)->mtx, QSE_NULL); } while(0)
+#define UNLOCK_OUTPUT(sio) do { if ((sio)->mtx) qse_mtx_unlock ((sio)->mtx); } while(0)
+
+/* TODO: currently, LOCK_INPUT and LOCK_OUTPUT don't have difference.
+ *       can i just use two difference mutex objects to differentiate? */
+#define LOCK_INPUT(sio) do { if ((sio)->mtx) qse_mtx_lock ((sio)->mtx, QSE_NULL); } while(0)
+#define UNLOCK_INPUT(sio) do { if ((sio)->mtx) qse_mtx_unlock ((sio)->mtx); } while(0)
+
 /* internal status codes */
 enum
 {
@@ -308,26 +314,32 @@ qse_ssize_t qse_sio_flush (qse_sio_t* sio)
 {
 	qse_ssize_t n;
 
+	LOCK_OUTPUT (sio);
 	sio->errnum = QSE_SIO_ENOERR;
-	n = qse_tio_flush (&sio->tio.io);
+	n = qse_tio_flush(&sio->tio.io);
 	if (n <= -1 && sio->errnum == QSE_SIO_ENOERR) 
 		sio->errnum = tio_errnum_to_sio_errnum (&sio->tio.io);
+	UNLOCK_OUTPUT (sio);
 	return n;
 }
 
 void qse_sio_drain (qse_sio_t* sio)
 {
+	LOCK_OUTPUT (sio);
 	qse_tio_drain (&sio->tio.io);
+	UNLOCK_OUTPUT (sio);
 }
 
 qse_ssize_t qse_sio_getmb (qse_sio_t* sio, qse_mchar_t* c)
 {
 	qse_ssize_t n;
 
+	LOCK_INPUT (sio);
 	sio->errnum = QSE_SIO_ENOERR;
-	n = qse_tio_readmbs (&sio->tio.io, c, 1);
+	n = qse_tio_readmbs(&sio->tio.io, c, 1);
 	if (n <= -1 && sio->errnum == QSE_SIO_ENOERR) 
 		sio->errnum = tio_errnum_to_sio_errnum (&sio->tio.io);
+	UNLOCK_INPUT (sio);
 
 	return n;
 }
@@ -336,10 +348,12 @@ qse_ssize_t qse_sio_getwc (qse_sio_t* sio, qse_wchar_t* c)
 {
 	qse_ssize_t n;
 
+	LOCK_INPUT (sio);
 	sio->errnum = QSE_SIO_ENOERR;
-	n = qse_tio_readwcs (&sio->tio.io, c, 1);
+	n = qse_tio_readwcs(&sio->tio.io, c, 1);
 	if (n <= -1 && sio->errnum == QSE_SIO_ENOERR) 
 		sio->errnum = tio_errnum_to_sio_errnum (&sio->tio.io);
+	UNLOCK_INPUT (sio);
 
 	return n;
 }
@@ -355,14 +369,17 @@ qse_ssize_t qse_sio_getmbs (qse_sio_t* sio, qse_mchar_t* buf, qse_size_t size)
 	 * so I don't implement any hack here */
 #endif
 
+	LOCK_INPUT (sio);
 	sio->errnum = QSE_SIO_ENOERR;
-	n = qse_tio_readmbs (&sio->tio.io, buf, size - 1);
+	n = qse_tio_readmbs(&sio->tio.io, buf, size - 1);
 	if (n <= -1) 
 	{
 		if (sio->errnum == QSE_SIO_ENOERR)
 			sio->errnum = tio_errnum_to_sio_errnum (&sio->tio.io);
 		return -1;
 	}
+	UNLOCK_INPUT (sio);
+
 	buf[n] = QSE_MT('\0');
 	return n;
 }
@@ -375,10 +392,13 @@ qse_ssize_t qse_sio_getmbsn (qse_sio_t* sio, qse_mchar_t* buf, qse_size_t size)
 	 * so I don't implement any hack here */
 #endif
 
+	LOCK_INPUT (sio);
 	sio->errnum = QSE_SIO_ENOERR;
-	n = qse_tio_readmbs (&sio->tio.io, buf, size);
+	n = qse_tio_readmbs(&sio->tio.io, buf, size);
 	if (n <= -1 && sio->errnum == QSE_SIO_ENOERR) 
 		sio->errnum = tio_errnum_to_sio_errnum (&sio->tio.io);
+	UNLOCK_INPUT (sio);
+
 	return n;
 }
 
@@ -393,19 +413,22 @@ qse_ssize_t qse_sio_getwcs (qse_sio_t* sio, qse_wchar_t* buf, qse_size_t size)
 	 * so I don't implement any hack here */
 #endif
 
+	LOCK_INPUT (sio);
 	sio->errnum = QSE_SIO_ENOERR;
-	n = qse_tio_readwcs (&sio->tio.io, buf, size - 1);
+	n = qse_tio_readwcs(&sio->tio.io, buf, size - 1);
 	if (n <= -1) 
 	{
 		if (sio->errnum == QSE_SIO_ENOERR)
 			sio->errnum = tio_errnum_to_sio_errnum (&sio->tio.io);
 		return -1;
 	}
+	UNLOCK_INPUT (sio);
+
 	buf[n] = QSE_WT('\0');
 	return n;
 }
 
-qse_ssize_t qse_sio_getwcsn (qse_sio_t* sio, qse_wchar_t* buf, qse_size_t size)
+qse_ssize_t qse_sio_getwcsn(qse_sio_t* sio, qse_wchar_t* buf, qse_size_t size)
 {
 	qse_ssize_t n;
 
@@ -414,10 +437,12 @@ qse_ssize_t qse_sio_getwcsn (qse_sio_t* sio, qse_wchar_t* buf, qse_size_t size)
 	 * so I don't implement any hack here */
 #endif
 
+	LOCK_INPUT (sio);
 	sio->errnum = QSE_SIO_ENOERR;
 	n = qse_tio_readwcs (&sio->tio.io, buf, size);
 	if (n <= -1 && sio->errnum == QSE_SIO_ENOERR) 
 		sio->errnum = tio_errnum_to_sio_errnum (&sio->tio.io);
+	UNLOCK_INPUT (sio);
 
 	return n;
 }
@@ -446,9 +471,9 @@ static qse_ssize_t putmb_no_mutex (qse_sio_t* sio, qse_mchar_t c)
 qse_ssize_t qse_sio_putmb (qse_sio_t* sio, qse_mchar_t c)
 {
 	qse_ssize_t n;
-	LOCK (sio);
+	LOCK_OUTPUT (sio);
 	n = putmb_no_mutex(sio, c);
-	UNLOCK (sio);
+	UNLOCK_OUTPUT (sio);
 	return n;
 }
 
@@ -474,9 +499,9 @@ static qse_ssize_t putwc_no_mutex (qse_sio_t* sio, qse_wchar_t c)
 qse_ssize_t qse_sio_putwc (qse_sio_t* sio, qse_wchar_t c)
 {
 	qse_ssize_t n;
-	LOCK (sio);
+	LOCK_OUTPUT (sio);
 	n = putwc_no_mutex(sio, c);
-	UNLOCK (sio);
+	UNLOCK_OUTPUT (sio);
 	return n;
 }
 
@@ -490,24 +515,24 @@ qse_ssize_t qse_sio_putmbs (qse_sio_t* sio, const qse_mchar_t* str)
 #elif defined(__OS2__)
 	if (sio->status & STATUS_LINE_BREAK)
 	{
-		LOCK (sio);
+		LOCK_OUTPUT (sio);
 		for (n = 0; n < QSE_TYPE_MAX(qse_ssize_t) && str[n] != QSE_MT('\0'); n++)
 		{
 			if ((n = putmb_no_mutex(sio, str[n])) <= -1) return n;
 		}
-		UNLOCK (sio);
+		UNLOCK_OUTPUT (sio);
 		return n;
 	}
 #endif
 
-	LOCK (sio);
+	LOCK_OUTPUT (sio);
 
 	sio->errnum = QSE_SIO_ENOERR;
 	n = qse_tio_writembs (&sio->tio.io, str, (qse_size_t)-1);
 	if (n <= -1 && sio->errnum == QSE_SIO_ENOERR) 
 		sio->errnum = tio_errnum_to_sio_errnum (&sio->tio.io);
 
-	UNLOCK (sio);
+	UNLOCK_OUTPUT (sio);
 	return n;
 }
 
@@ -522,24 +547,24 @@ qse_ssize_t qse_sio_putmbsn (qse_sio_t* sio, const qse_mchar_t* str, qse_size_t 
 	if (sio->status & STATUS_LINE_BREAK)
 	{
 		if (size > QSE_TYPE_MAX(qse_ssize_t)) size = QSE_TYPE_MAX(qse_ssize_t);
-		LOCK (sio);
+		LOCK_OUTPUT (sio);
 		for (n = 0; n < size; n++)
 		{
 			if (putmb_no_mutex(sio, str[n]) <= -1) return -1;
 		}
-		UNLOCK (sio);
+		UNLOCK_OUTPUT (sio);
 		return n;
 	}
 #endif
 
-	LOCK (sio);
+	LOCK_OUTPUT (sio);
 
 	sio->errnum = QSE_SIO_ENOERR;
 	n = qse_tio_writembs (&sio->tio.io, str, size);
 	if (n <= -1 && sio->errnum == QSE_SIO_ENOERR) 
 		sio->errnum = tio_errnum_to_sio_errnum (&sio->tio.io);
 
-	UNLOCK (sio);
+	UNLOCK_OUTPUT (sio);
 
 	return n;
 }
@@ -559,9 +584,7 @@ qse_ssize_t qse_sio_putwcs (qse_sio_t* sio, const qse_wchar_t* str)
 
 		for (cur = str, left = qse_wcslen(str); left > 0; cur += count, left -= count)
 		{
-			if (WriteConsoleW (
-				sio->file.handle, cur, left,
-				&count, QSE_NULL) == FALSE) 
+			if (WriteConsoleW(sio->file.handle, cur, left, &count, QSE_NULL) == FALSE) 
 			{
 				sio->errnum = QSE_SIO_ESYSERR;
 				return -1;
@@ -579,24 +602,24 @@ qse_ssize_t qse_sio_putwcs (qse_sio_t* sio, const qse_wchar_t* str)
 #elif defined(__OS2__)
 	if (sio->status & STATUS_LINE_BREAK)
 	{
-		LOCK (sio);
+		LOCK_OUTPUT (sio);
 		for (n = 0; n < QSE_TYPE_MAX(qse_ssize_t) && str[n] != QSE_WT('\0'); n++)
 		{
 			if (putwc_no_mutex(sio, str[n]) <= -1) return -1;
 		}
-		UNLOCK (sio);
+		UNLOCK_OUTPUT (sio);
 		return n;
 	}
 #endif
 
-	LOCK (sio);
+	LOCK_OUTPUT (sio);
 
 	sio->errnum = QSE_SIO_ENOERR;
 	n = qse_tio_writewcs (&sio->tio.io, str, (qse_size_t)-1);
 	if (n <= -1 && sio->errnum == QSE_SIO_ENOERR) 
 		sio->errnum = tio_errnum_to_sio_errnum (&sio->tio.io);
 
-	UNLOCK (sio);
+	UNLOCK_OUTPUT (sio);
 	return n;
 }
 
@@ -627,9 +650,7 @@ qse_ssize_t qse_sio_putwcsn (
 
 		for (cur = str, left = size; left > 0; cur += count, left -= count)
 		{
-			if (WriteConsoleW (
-				sio->file.handle, cur, left, 
-				&count, QSE_NULL) == FALSE) 
+			if (WriteConsoleW(sio->file.handle, cur, left, &count, QSE_NULL) == FALSE) 
 			{
 				sio->errnum = QSE_SIO_ESYSERR;
 				return -1;
@@ -651,29 +672,30 @@ qse_ssize_t qse_sio_putwcsn (
 			}
 		}
 		return cur - str;
-	}	
+	}
+
 #elif defined(__OS2__) 
 	if (sio->status & STATUS_LINE_BREAK)
 	{
 		if (size > QSE_TYPE_MAX(qse_ssize_t)) size = QSE_TYPE_MAX(qse_ssize_t);
-		LOCK (sio);
+		LOCK_OUTPUT (sio);
 		for (n = 0; n < size; n++)
 		{
 			if (putwc_no_mutex (sio, str[n]) <= -1) return -1;
 		}
-		UNLOCK (sio);
+		UNLOCK_OUTPUT (sio);
 		return n;
 	}
 #endif
 
-	LOCK (sio);
+	LOCK_OUTPUT (sio);
 
 	sio->errnum = QSE_SIO_ENOERR;
 	n = qse_tio_writewcs (&sio->tio.io, str, size);
 	if (n <= -1 && sio->errnum == QSE_SIO_ENOERR) 
 		sio->errnum = tio_errnum_to_sio_errnum (&sio->tio.io);
 
-	UNLOCK (sio);
+	UNLOCK_OUTPUT (sio);
 	return n;
 }
 
@@ -714,9 +736,9 @@ qse_ssize_t qse_sio_putmbsf (qse_sio_t* sio, const qse_mchar_t* fmt, ...)
 
 	va_start (ap, fmt);
 
-	LOCK (sio);
+	LOCK_OUTPUT (sio);
 	x = qse_mfmtout(fmt, &fo, ap);
-	UNLOCK (sio);
+	UNLOCK_OUTPUT (sio);
 
 	va_end (ap);
 
@@ -736,9 +758,9 @@ qse_ssize_t qse_sio_putwcsf (qse_sio_t* sio, const qse_wchar_t* fmt, ...)
 
 	va_start (ap, fmt);
 
-	LOCK (sio);
+	LOCK_OUTPUT (sio);
 	x = qse_wfmtout (fmt, &fo, ap);
-	UNLOCK (sio);
+	UNLOCK_OUTPUT (sio);
 
 	va_end (ap);
 
@@ -755,9 +777,9 @@ qse_ssize_t qse_sio_putmbsvf (qse_sio_t* sio, const qse_mchar_t* fmt, va_list ap
 	fo.put = put_mchar;
 	fo.conv = wcs_to_mbs;
 
-	LOCK (sio);
+	LOCK_OUTPUT (sio);
 	n = (qse_mfmtout(fmt, &fo, ap) <= -1)? -1: fo.count;
-	UNLOCK (sio);
+	UNLOCK_OUTPUT (sio);
 
 	return n;
 }
@@ -772,9 +794,9 @@ qse_ssize_t qse_sio_putwcsvf (qse_sio_t* sio, const qse_wchar_t* fmt, va_list ap
 	fo.put = put_wchar;
 	fo.conv = mbs_to_wcs;
 
-	LOCK (sio);
+	LOCK_OUTPUT (sio);
 	n = (qse_wfmtout(fmt, &fo, ap) <= -1)? -1: fo.count;
-	UNLOCK (sio);
+	UNLOCK_OUTPUT (sio);
 
 	return n;
 }
@@ -785,7 +807,7 @@ int qse_sio_getpos (qse_sio_t* sio, qse_sio_pos_t* pos)
 
 	if (qse_sio_flush(sio) <= -1) return -1;
 
-	off = qse_fio_seek (&sio->file, 0, QSE_FIO_CURRENT);
+	off = qse_fio_seek(&sio->file, 0, QSE_FIO_CURRENT);
 	if (off == (qse_fio_off_t)-1) 
 	{
 		sio->errnum = fio_errnum_to_sio_errnum (&sio->file);
@@ -802,7 +824,7 @@ int qse_sio_setpos (qse_sio_t* sio, qse_sio_pos_t pos)
 
 	if (qse_sio_flush(sio) <= -1) return -1;
 
-	off = qse_fio_seek (&sio->file, pos, QSE_FIO_BEGIN);
+	off = qse_fio_seek(&sio->file, pos, QSE_FIO_BEGIN);
 	if (off == (qse_fio_off_t)-1)
 	{
 		sio->errnum = fio_errnum_to_sio_errnum (&sio->file);
@@ -815,15 +837,15 @@ int qse_sio_setpos (qse_sio_t* sio, qse_sio_pos_t pos)
 int qse_sio_truncate (qse_sio_t* sio, qse_sio_pos_t pos)
 {
 	if (qse_sio_flush(sio) <= -1) return -1;
-	return qse_fio_truncate (&sio->file, pos);
+	return qse_fio_truncate(&sio->file, pos);
 }
 
 int qse_sio_seek (qse_sio_t* sio, qse_sio_pos_t* pos, qse_sio_ori_t origin)
 {
 	qse_fio_off_t x;
-	
+
 	if (qse_sio_flush(sio) <= -1) return -1;
-	x = qse_fio_seek (&sio->file, *pos, origin);
+	x = qse_fio_seek(&sio->file, *pos, origin);
 	if (x == (qse_fio_off_t)-1) return -1;
 
 	*pos = x;
@@ -840,7 +862,7 @@ static qse_ssize_t file_input (qse_tio_t* tio, qse_tio_cmd_t cmd, void* buf, qse
 		sio = *(qse_sio_t**)QSE_XTN(tio);
 		QSE_ASSERT (sio != QSE_NULL);
 
-		n = qse_fio_read (&sio->file, buf, size);
+		n = qse_fio_read(&sio->file, buf, size);
 		if (n <= -1) sio->errnum = fio_errnum_to_sio_errnum (&sio->file);
 		return n;
 	}
@@ -858,7 +880,7 @@ static qse_ssize_t file_output (qse_tio_t* tio, qse_tio_cmd_t cmd, void* buf, qs
 		sio = *(qse_sio_t**)QSE_XTN(tio);
 		QSE_ASSERT (sio != QSE_NULL);
 
-		n = qse_fio_write (&sio->file, buf, size);
+		n = qse_fio_write(&sio->file, buf, size);
 		if (n <= -1) sio->errnum = fio_errnum_to_sio_errnum (&sio->file);
 		return n;
 	}
@@ -934,9 +956,9 @@ qse_ssize_t qse_putmbsf (const qse_mchar_t* fmt, ...)
 
 	va_start (ap, fmt);
 
-	LOCK (sio_stdout);
+	LOCK_OUTPUT (sio_stdout);
 	x = qse_mfmtout(fmt, &fo, ap);
-	UNLOCK (sio_stdout);
+	UNLOCK_OUTPUT (sio_stdout);
 
 	va_end (ap);
 
@@ -956,9 +978,9 @@ qse_ssize_t qse_putwcsf (const qse_wchar_t* fmt, ...)
 
 	va_start (ap, fmt);
 
-	LOCK (sio_stdout);
+	LOCK_OUTPUT (sio_stdout);
 	x = qse_wfmtout(fmt, &fo, ap);
-	UNLOCK (sio_stdout);
+	UNLOCK_OUTPUT (sio_stdout);
 
 	va_end (ap);
 
@@ -975,9 +997,9 @@ qse_ssize_t qse_putmbsvf (const qse_mchar_t* fmt, va_list ap)
 	fo.put = put_mchar;
 	fo.conv = wcs_to_mbs;
 
-	LOCK (sio_stdout);
+	LOCK_OUTPUT (sio_stdout);
 	n = (qse_mfmtout(fmt, &fo, ap) <= -1)? -1: fo.count;
-	UNLOCK (sio_stdout);
+	UNLOCK_OUTPUT (sio_stdout);
 
 	return n;
 }
@@ -992,9 +1014,9 @@ qse_ssize_t qse_putwcsvf (const qse_wchar_t* fmt, va_list ap)
 	fo.put = put_wchar;
 	fo.conv = mbs_to_wcs;
 
-	LOCK (sio_stdout);
+	LOCK_OUTPUT (sio_stdout);
 	n = (qse_wfmtout(fmt, &fo, ap) <= -1)? -1: fo.count;
-	UNLOCK (sio_stdout);
+	UNLOCK_OUTPUT (sio_stdout);
 
 	return n;
 }
@@ -1012,9 +1034,9 @@ qse_ssize_t qse_errputmbsf (const qse_mchar_t* fmt, ...)
 
 	va_start (ap, fmt);
 
-	LOCK (sio_stderr);
+	LOCK_OUTPUT (sio_stderr);
 	x = qse_mfmtout(fmt, &fo, ap);
-	UNLOCK (sio_stderr);
+	UNLOCK_OUTPUT (sio_stderr);
 
 	va_end (ap);
 
@@ -1034,9 +1056,9 @@ qse_ssize_t qse_errputwcsf (const qse_wchar_t* fmt, ...)
 
 	va_start (ap, fmt);
 
-	LOCK (sio_stderr);
+	LOCK_OUTPUT (sio_stderr);
 	x = qse_wfmtout(fmt, &fo, ap);
-	UNLOCK (sio_stderr);
+	UNLOCK_OUTPUT (sio_stderr);
 
 	va_end (ap);
 
@@ -1053,9 +1075,9 @@ qse_ssize_t qse_errputmbsvf (const qse_mchar_t* fmt, va_list ap)
 	fo.put = put_mchar;
 	fo.conv = wcs_to_mbs;
 
-	LOCK (sio_stderr);
+	LOCK_OUTPUT (sio_stderr);
 	n = (qse_mfmtout(fmt, &fo, ap) <= -1)? -1: fo.count;
-	UNLOCK (sio_stderr);
+	UNLOCK_OUTPUT (sio_stderr);
 
 	return n;
 }
@@ -1070,9 +1092,9 @@ qse_ssize_t qse_errputwcsvf (const qse_wchar_t* fmt, va_list ap)
 	fo.put = put_wchar;
 	fo.conv = mbs_to_wcs;
 
-	LOCK (sio_stderr);
+	LOCK_OUTPUT (sio_stderr);
 	n = (qse_wfmtout(fmt, &fo, ap) <= -1)? -1: fo.count;
-	UNLOCK (sio_stderr);
+	UNLOCK_OUTPUT (sio_stderr);
 
 	return n;
 }
