@@ -41,20 +41,22 @@ public:
 	App (Mmgr* mmgr) QSE_CPP_NOEXCEPT;
 	virtual ~App () QSE_CPP_NOEXCEPT;
 
-	int daemonize (bool chdir_to_root = true, int fork_count = 1) QSE_CPP_NOEXCEPT;
+	int daemonize (bool chdir_to_root = true, int fork_count = 1, bool root_only = false) QSE_CPP_NOEXCEPT;
 
 	int chroot (const qse_mchar_t* mpath) QSE_CPP_NOEXCEPT;
 	int chroot (const qse_wchar_t* wpath) QSE_CPP_NOEXCEPT;
 
 #if 0
-	int switchUser (uid_t uid, gid_t gid, bool permanently) QSE_CPP_NOEXCEPT;
+	int switchUser (qse_uid_t uid, qse_gid_t gid, bool permanently) QSE_CPP_NOEXCEPT;
 	int restoreUser () QSE_CPP_NOEXCEPT;
 #endif
 
 	virtual void on_signal (int sig) { }
 
 	int subscribeToSignal (int sig, bool accept);
+	int subscribeToAllSignals (bool accept);
 	void unsubscribeFromSignal (int sig);
+	void unsubscribeFromAllSignals ();
 
 	typedef void (*SignalHandler) (int sig);
 	static qse_size_t _sighrs[2][QSE_NSIGS];
@@ -70,17 +72,13 @@ public:
 
 	int guardProcess (const qse_mchar_t* proc_name);
 
-protected:
-	bool _root_only;
-
 private:
 	App* _prev_app;
 	App* _next_app;
 
-public:
 	struct _SigLink
 	{
-		enum 
+		enum State
 		{
 			UNHANDLED,
 			ACCEPTED,
@@ -90,17 +88,23 @@ public:
 		_SigLink(): _prev(QSE_NULL), _next(QSE_NULL), _state(UNHANDLED) {}
 		App* _prev;
 		App* _next;
-		int  _state;
+		State _state;
 	};
 
 	_SigLink _sig[QSE_NSIGS]; 
+	long int _guarded_child_pid;
 
 protected:
 	static int set_signal_handler_no_mutex (int sig, SignalHandler sighr);
 	static int unset_signal_handler_no_mutex (int sig);
 
+	int subscribe_to_signal_no_mutex (int sig, _SigLink::State reqstate);
 	void unsubscribe_from_signal_no_mutex (int sig);
 	void unsubscribe_from_all_signals_no_mutex ();
+
+	void on_guard_signal (int sig);
+	static void handle_signal (int sig);
+
 };
 
 // functor as a template parameter
