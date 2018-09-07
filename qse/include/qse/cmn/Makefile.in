@@ -91,6 +91,7 @@ host_triplet = @host@
 @ENABLE_CXX_TRUE@	Array.hpp \
 @ENABLE_CXX_TRUE@	Association.hpp \
 @ENABLE_CXX_TRUE@	BinaryHeap.hpp \
+@ENABLE_CXX_TRUE@	Bitset.hpp \
 @ENABLE_CXX_TRUE@	HashList.hpp \
 @ENABLE_CXX_TRUE@	HashTable.hpp \
 @ENABLE_CXX_TRUE@	HeapMmgr.hpp \
@@ -149,10 +150,10 @@ am__pkginclude_HEADERS_DIST = alg.h arr.h chr.h cp949.h cp950.h dll.h \
 	main.h map.h mb8.h mbwc.h mem.h oht.h opt.h path.h pma.h rbt.h \
 	rex.h sll.h slmb.h str.h time.h tmr.h tre.h test.h uni.h uri.h \
 	utf8.h xma.h Array.hpp Association.hpp BinaryHeap.hpp \
-	HashList.hpp HashTable.hpp HeapMmgr.hpp LinkedList.hpp \
-	Mmged.hpp Mmgr.hpp Mpool.hpp Named.hpp RedBlackTree.hpp \
-	RedBlackTable.hpp ScopedPtr.hpp SharedPtr.hpp StrBase.hpp \
-	String.hpp StdMmgr.hpp Transmittable.hpp
+	Bitset.hpp HashList.hpp HashTable.hpp HeapMmgr.hpp \
+	LinkedList.hpp Mmged.hpp Mmgr.hpp Mpool.hpp Named.hpp \
+	RedBlackTree.hpp RedBlackTable.hpp ScopedPtr.hpp SharedPtr.hpp \
+	StrBase.hpp String.hpp StdMmgr.hpp Transmittable.hpp
 am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
 am__vpath_adj = case $$p in \
     $(srcdir)/*) f=`echo "$$p" | sed "s|^$$srcdirstrip/||"`;; \
