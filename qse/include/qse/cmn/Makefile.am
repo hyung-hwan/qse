@@ -44,6 +44,7 @@ pkginclude_HEADERS += \
 	Array.hpp \
 	Association.hpp \
 	BinaryHeap.hpp \
+	Bitset.hpp \
 	HashList.hpp \
 	HashTable.hpp \
 	HeapMmgr.hpp \
