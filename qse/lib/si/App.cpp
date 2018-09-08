@@ -293,7 +293,7 @@ int App::unset_signal_handler_no_mutex(int sig)
 
 void App::on_guard_signal (int sig)
 {
-printf ("relaying %d to %d\n", sig, this->_guarded_child_pid);
+printf ("relaying %d to %d\n", sig, (int)this->_guarded_child_pid);
 	::kill (this->_guarded_child_pid, sig);
 }
 
@@ -437,7 +437,7 @@ void App::unsubscribe_from_all_signals_no_mutex()
 	}
 }
 
-int App::guardProcess (const qse_mchar_t* proc_name, /* TODO: get the list of signals to relay??? */)
+int App::guardProcess (const qse_mchar_t* proc_name, const Sigset& signals)
 {
 	while (1)
 	{
@@ -445,8 +445,8 @@ int App::guardProcess (const qse_mchar_t* proc_name, /* TODO: get the list of si
 		if (pid == -1) return -1;
 		if (pid == 0) break; // child
 
-int _SigLink::State old_sig_states[QSE_NSIGS];
-this->subscribeToAllSignals(true);
+//int _SigLink::State old_sig_states[QSE_NSIGS];
+//this->subscribeToAllSignals(true);
 
 		this->_guarded_child_pid = pid;
 

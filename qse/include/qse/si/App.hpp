@@ -30,6 +30,7 @@
 #include <qse/Types.hpp>
 #include <qse/Uncopyable.hpp>
 #include <qse/cmn/Mmged.hpp>
+#include <qse/cmn/Bitset.hpp>
 
 /////////////////////////////////
 QSE_BEGIN_NAMESPACE(QSE)
@@ -38,6 +39,8 @@ QSE_BEGIN_NAMESPACE(QSE)
 class App: public Uncopyable, public Types, public Mmged
 {
 public:
+	typedef QSE::Bitset<QSE_NSIGS> Sigset;
+
 	App (Mmgr* mmgr) QSE_CPP_NOEXCEPT;
 	virtual ~App () QSE_CPP_NOEXCEPT;
 
@@ -70,7 +73,7 @@ public:
 	static int setSignalHandler (int sig, SignalHandler sighr);
 	static int unsetSignalHandler (int sig);
 
-	int guardProcess (const qse_mchar_t* proc_name);
+	int guardProcess (const qse_mchar_t* proc_name, const Sigset& signals);
 
 private:
 	App* _prev_app;
