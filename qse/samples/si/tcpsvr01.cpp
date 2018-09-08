@@ -75,7 +75,13 @@ public:
 
 	int run ()
 	{
-		if (this->guardProcess("myapp") > 0)
+		QSE::App::Sigset signals;
+		signals.set (SIGINT);
+		signals.set (SIGHUP);
+		signals.set (SIGTERM);
+		signals.set (SIGUSR1);
+		signals.set (SIGUSR2);
+		if (this->guardProcess("myapp", signals) > 0)
 		{
 qse_printf (QSE_T("Stareting workd\n"));
 			this->server.setThreadStackSize (256000);

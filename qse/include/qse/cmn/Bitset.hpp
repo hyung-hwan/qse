@@ -32,15 +32,97 @@
 QSE_BEGIN_NAMESPACE(QSE)
 /////////////////////////////////
 
-template <qse_size_t NB>
+template <int NB>
 class Bitset
 {
 public:
-	static const int NW = (NB - 1) / (QSE_SIZEOF(qse_size_t) * 8) + 1;
+	typedef qse_size_t word_type_t;
 
-	
+	static const int NW = (NB - 1) / (QSE_SIZEOF(word_type_t) * 8) + 1;
+
+	Bitset() { this->empty (); }
+
+	bool operator== (const Bitset<NB>& bs) const
+	{
+		// [NOTE] 
+		//   if you happen to have different garbage at the unused part
+		//   of the last word, this equality check may return a wrong result.
+		for (int i = 0; i < NW; i++)
+		{
+			if (this->_w[i] != bs._w[i]) return false;
+		}
+		return true;
+	}
+
+	bool operator!= (const Bitset<NB>& bs) const
+	{
+		return !this->operator==(bs);
+	}
+
+	int get_word_index (int bit) const
+	{
+		return bit / (QSE_SIZEOF(word_type_t) * 8);
+	}
+
+	word_type_t get_word_mask (int bit) const
+	{
+		return ((word_type_t)1) << (bit % (QSE_SIZEOF(word_type_t) * 8));
+	}
+
+	void set (int bit)
+	{
+		this->_w[this->get_word_index(bit)] |= this->get_word_mask(bit);
+	}
+
+	void unset (int bit)
+	{
+		this->_w[this->get_word_index(bit)] &= ~this->get_word_mask(bit);
+	}
+
+	void set (const Bitset<NB>& bs)
+	{
+		// mask on all bits set in bs.
+		for (int i = 0; i < NW; i++)
+		{
+			this->_w[i] |= bs._w[i];
+		}
+	}
+
+	void unset (const Bitset<NB>& bs)
+	{
+		// mask off all bits set in bs.
+		for (int i = 0; i < NW; i++)
+		{
+			this->_w[i] &= ~bs._w[i];
+		}
+	}
+
+	bool isSet (int bit) const
+	{
+		return (this->_w[this->get_word_index(bit)] & this->get_word_mask(bit));
+	}
+
+	bool isEmpty () const
+	{
+		for (int i = 0; i < NW; i++) 
+		{
+			if (this->_w[i]) return false;
+		}
+		return true;
+	}
+
+	void empty ()
+	{
+		for (int i = 0; i < NW; i++) this->_w[i] = 0;
+	}
+
+	void fill ()
+	{
+		for (int i = 0; i < NW; i++) this->_w[i] = ~(word_type_t)0;
+	}
+
 protected:
-	qse_size_t _w[NW];
+	word_type_t _w[NW];
 };
 
 /////////////////////////////////
