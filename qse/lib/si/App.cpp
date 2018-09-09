@@ -261,7 +261,11 @@ int App::unset_signal_handler_no_mutex(int sig)
 	if (sa.sa_flags & SA_SIGINFO)
 		sa.sa_sigaction = (void(*)(int,siginfo_t*,void*))App::_sighrs[1][sig];
 	else
+	{
 		sa.sa_handler = (SignalHandler)App::_sighrs[1][sig];
+printf ("unset signal handler......\n");
+sa.sa_handler = SIG_IGN;
+	}
 
 	if (::sigaction (sig, &sa, QSE_NULL) <= -1) return -1;
 
@@ -279,13 +283,13 @@ int App::unset_signal_handler_no_mutex(int sig)
 	{
 		App::_SigLink& sl = app->_sig[sig];
 		App* next = sl._next;
-		if (sl._state == App::_SigLink::ACCEPTED) 
+		if (sl._state == App::SIGNAL_ACCEPTED) 
 		{
 			// the actual signal handler is called with the mutex locked.
 			// it must not call subscribeToSingal() or unsubscribeFromSingal()
 			// from within the handler.
 			if (app->_guarded_child_pid >= 0) app->on_guard_signal (sig);
-			else	app->on_signal (sig);
+			else app->on_signal (sig);
 		}
 		app = next;
 	}
@@ -297,73 +301,68 @@ printf ("relaying %d to %d\n", sig, (int)this->_guarded_child_pid);
 	::kill (this->_guarded_child_pid, sig);
 }
 
-int App::subscribeToSignal (int sig, bool accept)
+
+App::SignalState App::getSignalSubscription (int sig) const
 {
 	QSE_ASSERT (sig >= 0 && sig < QSE_NSIGS);
-	_SigLink::State reqstate = accept? _SigLink::ACCEPTED: _SigLink::IGNORED;
-	ScopedMutexLocker sml(g_app_mutex);
-	return this->subscribe_to_signal_no_mutex(sig, reqstate);
+	return this->_sig[sig]._state;
 }
 
-int App::subscribeToAllSignals (bool accept)
+int App::setSignalSubscription (int sig, SignalState ss)
 {
-	_SigLink::State reqstate = accept? _SigLink::ACCEPTED: _SigLink::IGNORED;
-	_SigLink::State _old_state[QSE_NSIGS];
-	ScopedMutexLocker sml(g_app_mutex);
-	for (int i = 0; i < QSE_NSIGS; i++)
-	{
-		_old_state[i] = this->_sig[i]._state;
-		if (this->subscribe_to_signal_no_mutex(i, reqstate) <= -1) 
-		{
-			// roll back on a best-efforts basis.
-			while (i > 0)
-			{
-				--i;
-				switch (_old_state[i])
-				{
-					case _SigLink::UNHANDLED:
-						this->unsubscribe_from_signal_no_mutex (i);
-						break;
+	QSE_ASSERT (sig >= 0 && sig < QSE_NSIGS);
 
-					case _SigLink::ACCEPTED:
-					case _SigLink::IGNORED:
-						this->subscribe_to_signal_no_mutex (i, _old_state[i]);
-						break;
-				}
-			}
-			return -1; 
-		}
+	sigset_t sigset;
+	::sigemptyset (&sigset);
+	::sigaddset (&sigset, sig);
+	::sigprocmask (SIG_BLOCK, &sigset, QSE_NULL);
+
+	int n;
+	{
+		ScopedMutexLocker sml(g_app_mutex);
+		n = this->set_signal_subscription_no_mutex(sig, ss);
 	}
-	return 0;
+
+	::sigprocmask (SIG_UNBLOCK, &sigset, QSE_NULL);
+	return n;
 }
 
-void App::unsubscribeFromSignal (int sig)
+int App::set_signal_subscription_no_mutex (int sig, SignalState reqstate)
 {
-	QSE_ASSERT (sig >= 0 && sig < QSE_NSIGS);
-	ScopedMutexLocker sml(g_app_mutex);
-	this->unsubscribe_from_signal_no_mutex (sig);
-}
-
-void App::unsubscribeFromAllSignals ()
-{
-	ScopedMutexLocker sml(g_app_mutex);
-	this->unsubscribe_from_all_signals_no_mutex ();
-}
-
-int App::subscribe_to_signal_no_mutex (int sig, _SigLink::State reqstate)
-{
-	if (sig == SIGKILL || sig == SIGSTOP) return 0;
-
 	_SigLink& sl = this->_sig[sig];
-	if (QSE_LIKELY(sl._state == _SigLink::UNHANDLED))
+	if (QSE_UNLIKELY(sl._state == reqstate)) return 0; // no change
+
+	if (reqstate == SIGNAL_UNHANDLED)
 	{
+		// accepted/ignored -> unhandled
+		QSE_ASSERT (g_app_sig[sig] != QSE_NULL);
+
+		if (g_app_sig[sig] == this) 
+		{
+			QSE_ASSERT (sl._prev == QSE_NULL);
+			if (!sl._next) 
+			{
+				if (App::unset_signal_handler_no_mutex (sig) <= -1) return -1;
+			}
+			g_app_sig[sig] = sl._next;
+		}
+
+		if (sl._next) sl._next->_sig[sig]._prev = sl._prev;
+		if (sl._prev) sl._prev->_sig[sig]._next = sl._next;
+		sl._prev = QSE_NULL;
+		sl._next = QSE_NULL;
+		sl._state = reqstate;
+	}
+	else if (QSE_LIKELY(sl._state == SIGNAL_UNHANDLED))
+	{
+		// unhandled -> accepted/ignored
 		QSE_ASSERT (sl._prev == QSE_NULL && sl._next == QSE_NULL);
 
 		App* xapp = g_app_sig[sig];
 		App* xapp_xprev = QSE_NULL;
 
 		g_app_sig[sig] = this;
-		sl._state = _SigLink::ACCEPTED;
+		sl._state = SIGNAL_ACCEPTED;
 		sl._next = xapp;
 		if (xapp) 
 		{
@@ -379,10 +378,58 @@ int App::subscribe_to_signal_no_mutex (int sig, _SigLink::State reqstate)
 				// roll back 
 				g_app_sig[sig] = xapp;
 				if (xapp) xapp->_sig[sig]._prev = xapp_xprev;
-				sl._state = _SigLink::UNHANDLED;
+				sl._state = SIGNAL_UNHANDLED;
 				sl._next = QSE_NULL;
 				QSE_ASSERT (sl._prev == QSE_NULL);
-if (errno == EINVAL) return 0; /// dirty hack???
+				return -1;
+			}
+		}
+
+		QSE_ASSERT (sl._prev == QSE_NULL);
+	}
+	else 
+	{
+		// accpeted/ignored -> ignored/accepted
+		QSE_ASSERT (g_app_sig[sig] != QSE_NULL);
+		sl._state = reqstate;
+	}
+
+	return reqstate;
+}
+
+
+int App::subscribe_to_signal_no_mutex (int sig, SignalState reqstate)
+{
+	return this->set_signal_subscription_no_mutex (sig, reqstate);
+#if 0
+	_SigLink& sl = this->_sig[sig];
+	if (QSE_LIKELY(sl._state == SIGNAL_UNHANDLED))
+	{
+		QSE_ASSERT (sl._prev == QSE_NULL && sl._next == QSE_NULL);
+
+		App* xapp = g_app_sig[sig];
+		App* xapp_xprev = QSE_NULL;
+
+		g_app_sig[sig] = this;
+		sl._state = SIGNAL_ACCEPTED;
+		sl._next = xapp;
+		if (xapp) 
+		{
+			xapp_xprev = xapp->_sig[sig]._prev;
+			xapp->_sig[sig]._prev = this;
+		}
+		else
+		{
+			// no application is set to accept this signal.
+			// this is the first time to 
+			if (App::set_signal_handler_no_mutex(sig, App::handle_signal) <= -1)
+			{
+				// roll back 
+				g_app_sig[sig] = xapp;
+				if (xapp) xapp->_sig[sig]._prev = xapp_xprev;
+				sl._state = SIGNAL_UNHANDLED;
+				sl._next = QSE_NULL;
+				QSE_ASSERT (sl._prev == QSE_NULL);
 				return -1;
 			}
 		}
@@ -397,14 +444,15 @@ if (errno == EINVAL) return 0; /// dirty hack???
 	}
 
 	return 0;
+#endif
 }
 
 void App::unsubscribe_from_signal_no_mutex (int sig)
 {
-	if (sig == SIGKILL || sig == SIGSTOP) return;
-
+	this->set_signal_subscription_no_mutex (sig, SIGNAL_UNHANDLED);
+#if 0
 	_SigLink& sl = this->_sig[sig];
-	if (QSE_UNLIKELY(sl._state == _SigLink::UNHANDLED))
+	if (QSE_UNLIKELY(sl._state == SIGNAL_UNHANDLED))
 	{
 		QSE_ASSERT (g_app_sig[sig] != this);
 		QSE_ASSERT (sl._prev == QSE_NULL && sl._next == QSE_NULL);
@@ -425,8 +473,9 @@ void App::unsubscribe_from_signal_no_mutex (int sig)
 		if (sl._prev) sl._prev->_sig[sig]._next = sl._next;
 		sl._prev = QSE_NULL;
 		sl._next = QSE_NULL;
-		sl._state = _SigLink::UNHANDLED;
+		sl._state = SIGNAL_UNHANDLED;
 	}
+#endif
 }
 
 void App::unsubscribe_from_all_signals_no_mutex()
@@ -437,16 +486,24 @@ void App::unsubscribe_from_all_signals_no_mutex()
 	}
 }
 
-int App::guardProcess (const qse_mchar_t* proc_name, const Sigset& signals)
+int App::guardProcess (const qse_mchar_t* proc_name, const SignalSet& signals)
 {
+	SignalState old_ss[QSE_NSIGS];
+
 	while (1)
 	{
 		pid_t pid = ::fork();
 		if (pid == -1) return -1;
 		if (pid == 0) break; // child
 
-//int _SigLink::State old_sig_states[QSE_NSIGS];
-//this->subscribeToAllSignals(true);
+		for (int i = 0; i < QSE_NSIGS; i++)
+		{
+			if (signals.isSet(i)) 
+			{
+				old_ss[i] = this->getSignalSubscription(i);
+				this->setSignalSubscription (i, SIGNAL_ACCEPTED);
+			}
+		}
 
 		this->_guarded_child_pid = pid;
 
@@ -462,8 +519,12 @@ int App::guardProcess (const qse_mchar_t* proc_name, const Sigset& signals)
 		}
 
 		this->_guarded_child_pid = -1;
-// TODO: restore signal handlers to the previous states
+		for (int i = 0; i < QSE_NSIGS; i++)
+		{
+			if (signals.isSet(i)) this->setSignalSubscription (i, old_ss[i]);
+		}
 
+printf ("child exited - exited %d exit status %d\n", WIFEXITED(status), WEXITSTATUS(status));
 		if (WIFEXITED(status) && WEXITSTATUS(status) == 0) 
 		{
 			return 0; 

@@ -67,7 +67,7 @@ public:
 			case SIGINT:
 			case SIGTERM:
 			case SIGHUP:
-				qse_printf (QSE_T("requesting to stop server...app %p server %p\n"), this, &this->server);
+				qse_printf (QSE_T("requesting to stop server...app %p server %p - pid %d\n"), this, &this->server, (int)getpid());
 				this->server.stop();
 				break;
 		}
@@ -75,7 +75,7 @@ public:
 
 	int run ()
 	{
-		QSE::App::Sigset signals;
+		QSE::App::SignalSet signals;
 		signals.set (SIGINT);
 		signals.set (SIGHUP);
 		signals.set (SIGTERM);
@@ -99,24 +99,26 @@ static int test1()
 	QSE::HeapMmgr heap_mmgr (QSE::Mmgr::getDFL(), 30000);
 	MyApp app (&heap_mmgr);
 
-//MyApp app2 (&heap_mmgr);
-//MyApp app3 (&heap_mmgr);
-//MyApp app4 (&heap_mmgr);
+MyApp app2 (&heap_mmgr);
+MyApp app3 (&heap_mmgr);
+MyApp app4 (&heap_mmgr);
 
 	app.subscribeToSignal (SIGINT, true);
 	app.subscribeToSignal (SIGTERM, true);
 
-//app4.subscribeToSignal (SIGINT, true); 
-//app3.subscribeToSignal (SIGINT, true);
-//app2.subscribeToSignal (SIGINT, true);
+app4.subscribeToSignal (SIGINT, true); 
+app3.subscribeToSignal (SIGINT, true);
+app2.subscribeToSignal (SIGINT, true);
 
 	int n = app.run();
 	app.subscribeToSignal (SIGTERM, false);
 	app.subscribeToSignal (SIGINT, false);
 
-//app4.unsubscribeFromSignal (SIGINT); 
-//app3.unsubscribeFromSignal (SIGINT);
-//app2.unsubscribeFromSignal (SIGINT);
+app4.unsubscribeFromSignal (SIGINT); 
+app3.unsubscribeFromSignal (SIGINT);
+app2.unsubscribeFromSignal (SIGINT);
+qse_printf (QSE_T("END OF %d\n"), (int)getpid());
+
 	return n;
 }
 
@@ -132,7 +134,7 @@ int main ()
 	}
 	else
 	{
-		sprintf (locale, ".%u", (unsigned int)codepage);
+		qse_mbsxfmt (locale, QSE_COUNTOF(locale), ".%u", (unsigned int)codepage);
 		setlocale (LC_ALL, locale);
 		/*qse_setdflcmgrbyid (QSE_CMGR_SLMB);*/
 	}
@@ -140,6 +142,7 @@ int main ()
 	setlocale (LC_ALL, "");
 	/*qse_setdflcmgrbyid (QSE_CMGR_SLMB);*/
 #endif
+
 
 	qse_open_stdsios ();
 	test1();
