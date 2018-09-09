@@ -39,7 +39,15 @@ QSE_BEGIN_NAMESPACE(QSE)
 class App: public Uncopyable, public Types, public Mmged
 {
 public:
-	typedef QSE::Bitset<QSE_NSIGS> Sigset;
+	typedef QSE::Bitset<QSE_NSIGS> SignalSet;
+
+	enum SignalState
+	{
+		SIGNAL_UNHANDLED,
+		SIGNAL_ACCEPTED,
+		SIGNAL_IGNORED // handled but ignored
+	};
+
 
 	App (Mmgr* mmgr) QSE_CPP_NOEXCEPT;
 	virtual ~App () QSE_CPP_NOEXCEPT;
@@ -56,10 +64,18 @@ public:
 
 	virtual void on_signal (int sig) { }
 
-	int subscribeToSignal (int sig, bool accept);
-	int subscribeToAllSignals (bool accept);
-	void unsubscribeFromSignal (int sig);
-	void unsubscribeFromAllSignals ();
+	SignalState getSignalSubscription (int sig) const;
+	int setSignalSubscription (int sig, SignalState ss);
+
+	int subscribeToSignal (int sig, bool accept)
+	{
+		return this->setSignalSubscription (sig, (accept? SIGNAL_ACCEPTED: SIGNAL_IGNORED));
+	}
+	int unsubscribeFromSignal (int sig)
+	{
+		return this->setSignalSubscription (sig, SIGNAL_UNHANDLED);
+	}
+
 
 	typedef void (*SignalHandler) (int sig);
 	static qse_size_t _sighrs[2][QSE_NSIGS];
@@ -73,7 +89,7 @@ public:
 	static int setSignalHandler (int sig, SignalHandler sighr);
 	static int unsetSignalHandler (int sig);
 
-	int guardProcess (const qse_mchar_t* proc_name, const Sigset& signals);
+	int guardProcess (const qse_mchar_t* proc_name, const SignalSet& signals);
 
 private:
 	App* _prev_app;
@@ -81,17 +97,10 @@ private:
 
 	struct _SigLink
 	{
-		enum State
-		{
-			UNHANDLED,
-			ACCEPTED,
-			IGNORED // handled but ignored
-		};
-
-		_SigLink(): _prev(QSE_NULL), _next(QSE_NULL), _state(UNHANDLED) {}
+		_SigLink(): _prev(QSE_NULL), _next(QSE_NULL), _state(SIGNAL_UNHANDLED) {}
 		App* _prev;
 		App* _next;
-		State _state;
+		SignalState _state;
 	};
 
 	_SigLink _sig[QSE_NSIGS]; 
@@ -101,7 +110,9 @@ protected:
 	static int set_signal_handler_no_mutex (int sig, SignalHandler sighr);
 	static int unset_signal_handler_no_mutex (int sig);
 
-	int subscribe_to_signal_no_mutex (int sig, _SigLink::State reqstate);
+	int set_signal_subscription_no_mutex (int sig, SignalState reqstate);
+
+	int subscribe_to_signal_no_mutex (int sig, SignalState reqstate);
 	void unsubscribe_from_signal_no_mutex (int sig);
 	void unsubscribe_from_all_signals_no_mutex ();
 
