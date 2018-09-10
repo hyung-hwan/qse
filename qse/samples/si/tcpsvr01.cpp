@@ -129,7 +129,7 @@ int main ()
 	UINT codepage = GetConsoleOutputCP();
 	if (codepage == CP_UTF8)
 	{
-		/*SetConsoleOUtputCP (CP_UTF8);*/
+		/*SetConsoleOutputCP (CP_UTF8);*/
 		qse_setdflcmgrbyid (QSE_CMGR_UTF8);
 	}
 	else
@@ -150,96 +150,3 @@ int main ()
 
 	return 0;
 }
-
-
-#if 0 ////////////////////////
-
-static int test1 (void)
-{
-	QSE::HeapMmgr heap_mmgr (QSE::Mmgr::getDFL(), 30000);
-
-#if defined(QSE_LANG_CPP11)
-	QSE::TcpServerL<int(QSE::TcpServer::Worker*)> server (
-
-		// workload by lambda
-		([&server](QSE::TcpServer::Worker* worker) {
-			qse_char_t addrbuf[128];
-			qse_uint8_t bb[256];
-			qse_ssize_t n;
-
-			worker->address.toStrBuf(addrbuf, QSE_COUNTOF(addrbuf));
-			g_prt_mutex.lock();
-			qse_printf (QSE_T("hello word..from %s -> wid %zu\n"), addrbuf, worker->getWid());
-			g_prt_mutex.unlock();
-
-			while (!server.isStopRequested())
-			{
-				if ((n = worker->socket.receive(bb, QSE_COUNTOF(bb))) <= 0) 
-				{
-					g_prt_mutex.lock();
-					qse_printf (QSE_T("%zd bytes received from %s\n"), n, addrbuf);
-					g_prt_mutex.unlock();
-					break;
-				}
-				worker->socket.send (bb, n);
-			}
-
-			g_prt_mutex.lock();
-			qse_printf (QSE_T("byte to %s -> wid %zu\n"), addrbuf, worker->getWid());
-			g_prt_mutex.unlock();
-			return 0;
-		}),
-
-		&heap_mmgr
-	);
-#else
-	QSE::TcpServerF<ClientHandler> server (&heap_mmgr);
-#endif
-
-	server.setThreadStackSize (256000);
-	g_server = &server;
-	//server.start (QSE_T("0.0.0.0:9998"));
-	server.start (QSE_T("[::]:9998,0.0.0.0:9998"));
-	//server.start (QSE_T("[fe80::1c4:a90d:a0f0:d52%wlan0]:9998,0.0.0.0:9998"));
-	g_server = QSE_NULL;
-	return 0;
-}
-
-static void handle_sigint (int sig)
-{
-	if (g_server) g_server->stop ();
-}
- 
-int main ()
-{
-#if defined(_WIN32)
- 	char locale[100];
-	UINT codepage = GetConsoleOutputCP();
-	if (codepage == CP_UTF8)
-	{
-		/*SetConsoleOUtputCP (CP_UTF8);*/
-		qse_setdflcmgrbyid (QSE_CMGR_UTF8);
-	}
-	else
-	{
-		qse_mbsxfmt (locale, QSE_COUNTOF(locale), ".%u", (unsigned int)codepage);
-		setlocale (LC_ALL, locale);
-		/*qse_setdflcmgrbyid (QSE_CMGR_SLMB);*/
-	}
-#else
-	setlocale (LC_ALL, "");
-	/*qse_setdflcmgrbyid (QSE_CMGR_SLMB);*/
-#endif
-
-	qse_open_stdsios ();
-
-	//QSE::App::setSignalHandler (SIGINT, handle_sigint);
-	test1();
-	//QSE::App::unsetSignalHandler (SIGINT);
-
-	qse_close_stdsios ();
-
-	return 0;
-}
-
-#endif ////////////////////////
