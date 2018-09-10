@@ -76,7 +76,6 @@ public:
 		return this->setSignalSubscription (sig, SIGNAL_UNHANDLED);
 	}
 
-
 	typedef void (*SignalHandler) (int sig);
 	static qse_size_t _sighrs[2][QSE_NSIGS];
 
@@ -87,7 +86,7 @@ public:
 	// yet, a subsequence call to subscribeToSignal() is doomed to fail too.
 	// These two different interfaces are mutually exclusive.
 	static int setSignalHandler (int sig, SignalHandler sighr);
-	static int unsetSignalHandler (int sig);
+	static int unsetSignalHandler (int sig, bool ignore = false);
 
 	int guardProcess (const qse_mchar_t* proc_name, const SignalSet& signals);
 
@@ -108,13 +107,9 @@ private:
 
 protected:
 	static int set_signal_handler_no_mutex (int sig, SignalHandler sighr);
-	static int unset_signal_handler_no_mutex (int sig);
+	static int unset_signal_handler_no_mutex (int sig, int ignore);
 
 	int set_signal_subscription_no_mutex (int sig, SignalState reqstate);
-
-	int subscribe_to_signal_no_mutex (int sig, SignalState reqstate);
-	void unsubscribe_from_signal_no_mutex (int sig);
-	void unsubscribe_from_all_signals_no_mutex ();
 
 	void on_guard_signal (int sig);
 	static void handle_signal (int sig);

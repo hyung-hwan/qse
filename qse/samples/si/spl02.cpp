@@ -274,7 +274,7 @@ int main ()
 	UINT codepage = GetConsoleOutputCP();
 	if (codepage == CP_UTF8)
 	{
-		/*SetConsoleOUtputCP (CP_UTF8);*/
+		/*SetConsoleOutputCP (CP_UTF8);*/
 		qse_setdflcmgrbyid (QSE_CMGR_UTF8);
 	}
 	else
