@@ -88,7 +88,7 @@ public:
 	static int setSignalHandler (int sig, SignalHandler sighr);
 	static int unsetSignalHandler (int sig, bool ignore = false);
 
-	int guardProcess (const qse_mchar_t* proc_name, const SignalSet& signals);
+	int guardProcess (const SignalSet& signals, const qse_mchar_t* proc_name = QSE_NULL);
 
 private:
 	App* _prev_app;
@@ -114,26 +114,6 @@ protected:
 	void on_guard_signal (int sig);
 	static void handle_signal (int sig);
 
-};
-
-// functor as a template parameter
-template <typename F>
-class QSE_EXPORT AppF: public App
-{
-public:
-	AppF (Mmgr* mmgr = QSE_NULL) QSE_CPP_NOEXCEPT: App(mmgr) {}
-	AppF (const F& f, Mmgr* mmgr = QSE_NULL) QSE_CPP_NOEXCEPT: App(mmgr), __lfunc(f) {}
-#if defined(QSE_CPP_ENABLE_CPP11_MOVE)
-	AppF (F&& f, Mmgr* mmgr = QSE_NULL) QSE_CPP_NOEXCEPT: App(mmgr), __lfunc(QSE_CPP_RVREF(f)) {}
-#endif
-
-protected:
-	F __lfunc;
-
-	void on_signal (int sig)
-	{
-		this->__lfunc(this, sig);
-	}
 };
 
 /////////////////////////////////

@@ -30,7 +30,6 @@
 #include "../cmn/syscall.h"
 #include <qse/cmn/mbwc.h>
 
-extern "C" { int printf (const char* fmt, ...); }
 /////////////////////////////////
 QSE_BEGIN_NAMESPACE(QSE)
 /////////////////////////////////
@@ -43,7 +42,6 @@ static struct
 	sigset_t sa_mask;
 	int      sa_flags;
 } g_app_oldsi[QSE_NSIGS] = { { 0, 0 }, };
-static bool g_app_sigign_on_exit = false;
 
 class SigScopedMutexLocker
 {
@@ -334,7 +332,6 @@ int App::unset_signal_handler_no_mutex(int sig, int ignore)
 
 void App::on_guard_signal (int sig)
 {
-printf ("relaying %d to %d\n", sig, (int)this->_guarded_child_pid);
 	::kill (this->_guarded_child_pid, sig);
 }
 
@@ -422,7 +419,7 @@ int App::set_signal_subscription_no_mutex (int sig, SignalState reqstate)
 	return reqstate;
 }
 
-int App::guardProcess (const qse_mchar_t* proc_name, const SignalSet& signals)
+int App::guardProcess (const SignalSet& signals, const qse_mchar_t* proc_name)
 {
 	SignalState old_ss[QSE_NSIGS];
 
@@ -430,7 +427,11 @@ int App::guardProcess (const qse_mchar_t* proc_name, const SignalSet& signals)
 	{
 		pid_t pid = ::fork();
 		if (pid == -1) return -1;
-		if (pid == 0) break; // child
+		if (pid == 0) 
+		{
+			::setpgid (0, 0); // change the process group id. 
+			break; // child
+		}
 
 		for (int i = 0; i < QSE_NSIGS; i++)
 		{
@@ -460,10 +461,22 @@ int App::guardProcess (const qse_mchar_t* proc_name, const SignalSet& signals)
 			if (signals.isSet(i)) this->setSignalSubscription (i, old_ss[i]);
 		}
 
-printf ("child exited - exited %d exit status %d\n", WIFEXITED(status), WEXITSTATUS(status));
-		if (WIFEXITED(status) && WEXITSTATUS(status) == 0) 
+		if (WIFEXITED(status))
 		{
-			return 0; 
+			if (WEXITSTATUS(status) == 0) 
+			{
+				// the child has terminated normally and successfully.
+				return 0; 
+			}
+		}
+		else
+		{
+			// the child process aborted or crashed.
+			// let's kill all other processes in the same process group as the child
+			// but is it safe to do this after waitpid() has been called on 'pid'?
+			// it should be mostly safe because most OSes doesn't reuse the same pid
+			// within a very short time.
+			::kill (-pid, SIGKILL); 
 		}
 	}
 
