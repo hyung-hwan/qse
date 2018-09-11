@@ -81,9 +81,9 @@ public:
 		signals.set (SIGTERM);
 		signals.set (SIGUSR1);
 		signals.set (SIGUSR2);
-		if (this->guardProcess("myapp", signals) > 0)
+		if (this->guardProcess(signals) > 0)
 		{
-qse_printf (QSE_T("Stareting workd\n"));
+			qse_printf (QSE_T("Stareting server\n"));
 			this->server.setThreadStackSize (256000);
 			return this->server.start (QSE_T("[::]:9998,0.0.0.0:9998"));
 		}
