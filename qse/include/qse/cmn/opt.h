@@ -102,6 +102,7 @@ struct qse_cli_data_t
 	const qse_char_t** optsta;
 	const qse_char_t*  optasn;
 	qse_cli_opt_t*     opts;
+	void*              ctx;
 
 };
 typedef struct qse_cli_data_t qse_cli_data_t;
