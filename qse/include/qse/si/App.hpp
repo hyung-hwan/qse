@@ -43,11 +43,10 @@ public:
 
 	enum SignalState
 	{
-		SIGNAL_UNHANDLED,
-		SIGNAL_ACCEPTED,
-		SIGNAL_IGNORED // handled but ignored
+		SIGNAL_NEGLECTED, // signal is unhandled at the system level.
+		SIGNAL_ACCEPTED,  // on_signal callback is triggered
+		SIGNAL_DISCARDED  // handled but doesn't trigger the on_signal callback
 	};
-
 
 	App (Mmgr* mmgr = QSE_NULL) QSE_CPP_NOEXCEPT;
 	virtual ~App () QSE_CPP_NOEXCEPT;
@@ -65,15 +64,21 @@ public:
 	virtual void on_signal (int sig) { }
 
 	SignalState getSignalSubscription (int sig) const;
-	int setSignalSubscription (int sig, SignalState ss);
+	int setSignalSubscription (int sig, SignalState ss, bool ignore_if_unhandled = false);
 
-	int subscribeToSignal (int sig, bool accept)
+	int acceptSignal (int sig)
 	{
-		return this->setSignalSubscription (sig, (accept? SIGNAL_ACCEPTED: SIGNAL_IGNORED));
+		return this->setSignalSubscription(sig, SIGNAL_ACCEPTED);
 	}
-	int unsubscribeFromSignal (int sig)
+
+	int discardSignal (int sig)
 	{
-		return this->setSignalSubscription (sig, SIGNAL_UNHANDLED);
+		return this->setSignalSubscription(sig, SIGNAL_DISCARDED);
+	}
+
+	int neglectSignal (int sig)
+	{
+		return this->setSignalSubscription(sig, SIGNAL_NEGLECTED);
 	}
 
 	typedef void (*SignalHandler) (int sig);
@@ -96,7 +101,7 @@ private:
 
 	struct _SigLink
 	{
-		_SigLink(): _prev(QSE_NULL), _next(QSE_NULL), _state(SIGNAL_UNHANDLED) {}
+		_SigLink(): _prev(QSE_NULL), _next(QSE_NULL), _state(SIGNAL_NEGLECTED) {}
 		App* _prev;
 		App* _next;
 		SignalState _state;
@@ -105,15 +110,12 @@ private:
 	_SigLink _sig[QSE_NSIGS]; 
 	long int _guarded_child_pid;
 
-protected:
 	static int set_signal_handler_no_mutex (int sig, SignalHandler sighr);
 	static int unset_signal_handler_no_mutex (int sig, int ignore);
-
-	int set_signal_subscription_no_mutex (int sig, SignalState reqstate);
+	int set_signal_subscription_no_mutex (int sig, SignalState reqstate, bool ignore_if_unhandled);
 
 	void on_guard_signal (int sig);
 	static void handle_signal (int sig);
-
 };
 
 /////////////////////////////////

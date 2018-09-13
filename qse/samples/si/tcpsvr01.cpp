@@ -67,6 +67,8 @@ public:
 			case SIGINT:
 			case SIGTERM:
 			case SIGHUP:
+				// TODO: don't call stop() if this processs is a guardian
+				//       though it's no harm to call stop().
 				qse_printf (QSE_T("requesting to stop server...app %p server %p - pid %d\n"), this, &this->server, (int)getpid());
 				this->server.stop();
 				break;
@@ -103,20 +105,20 @@ MyApp app2 (&heap_mmgr);
 MyApp app3 (&heap_mmgr);
 MyApp app4 (&heap_mmgr);
 
-	app.subscribeToSignal (SIGINT, true);
-	app.subscribeToSignal (SIGTERM, true);
+	app.acceptSignal (SIGINT);
+	app.acceptSignal (SIGTERM);
 
-app4.subscribeToSignal (SIGINT, true); 
-app3.subscribeToSignal (SIGINT, true);
-app2.subscribeToSignal (SIGINT, true);
+app4.acceptSignal (SIGINT);
+app3.acceptSignal (SIGINT);
+app2.acceptSignal (SIGINT);
 
 	int n = app.run();
-	app.subscribeToSignal (SIGTERM, false);
-	app.subscribeToSignal (SIGINT, false);
+	app.discardSignal (SIGTERM);
+	app.discardSignal (SIGINT);
 
-app4.unsubscribeFromSignal (SIGINT); 
-app3.unsubscribeFromSignal (SIGINT);
-app2.unsubscribeFromSignal (SIGINT);
+app4.neglectSignal (SIGINT); 
+app3.neglectSignal (SIGINT);
+app2.neglectSignal (SIGINT);
 qse_printf (QSE_T("END OF %d\n"), (int)getpid());
 
 	return n;

@@ -85,8 +85,19 @@ App::~App () QSE_CPP_NOEXCEPT
 	SigScopedMutexLocker sml(g_app_mutex);
 	for (int i = 0; i < QSE_NSIGS; i++)
 	{
-		this->set_signal_subscription_no_mutex (i, SIGNAL_UNHANDLED);
+		// if the signal handler has not been removed before this application
+		// is destroyed and this is the last application subscribing to 
+		// a signal, i arrange to set the signal handler to SIG_IGN as indicated by
+		// the third argument 'true' to set_signal_subscription_no_mutex().
+		// if the signal is not ignored, the signal received after destruction
+		// of this application object may lead to program crash as the handler
+		// is still associated with the destructed object.
+
+		// if the signal handler has been removed, the following function
+		// actual does nothing.
+		this->set_signal_subscription_no_mutex (i, SIGNAL_NEGLECTED, true);
 	}
+
 	if (this->_next_app) this->_next_app->_prev_app = this->_prev_app;
 	if (this->_prev_app) this->_prev_app->_next_app = this->_next_app;
 	if (this == g_app_top) 
@@ -321,10 +332,10 @@ int App::unset_signal_handler_no_mutex(int sig, int ignore)
 		if (sl._state == App::SIGNAL_ACCEPTED) 
 		{
 			// the actual signal handler is called with the mutex locked.
-			// it must not call subscribeToSingal() or unsubscribeFromSingal()
+			// it must not call acceptSingal()/discardSignal()neglectSingal()
 			// from within the handler.
 			if (app->_guarded_child_pid >= 0) app->on_guard_signal (sig);
-			else app->on_signal (sig);
+			app->on_signal (sig);
 		}
 		app = next;
 	}
@@ -335,28 +346,28 @@ void App::on_guard_signal (int sig)
 	::kill (this->_guarded_child_pid, sig);
 }
 
-
 App::SignalState App::getSignalSubscription (int sig) const
 {
 	QSE_ASSERT (sig >= 0 && sig < QSE_NSIGS);
 	return this->_sig[sig]._state;
 }
 
-int App::setSignalSubscription (int sig, SignalState ss)
+int App::setSignalSubscription (int sig, SignalState ss, bool ignore_if_unhandled)
 {
 	QSE_ASSERT (sig >= 0 && sig < QSE_NSIGS);
 	SigScopedMutexLocker sml(g_app_mutex);
-	return this->set_signal_subscription_no_mutex(sig, ss);
+	return this->set_signal_subscription_no_mutex(sig, ss, ignore_if_unhandled);
 }
 
-int App::set_signal_subscription_no_mutex (int sig, SignalState reqstate)
+int App::set_signal_subscription_no_mutex (int sig, SignalState reqstate, bool ignore_if_unhandled)
 {
 	_SigLink& sl = this->_sig[sig];
+
 	if (QSE_UNLIKELY(sl._state == reqstate)) return 0; // no change
 
-	if (reqstate == SIGNAL_UNHANDLED)
+	if (reqstate == SIGNAL_NEGLECTED)
 	{
-		// accepted/ignored -> unhandled
+		// accepted/discarded -> neglected(unhandled)
 		QSE_ASSERT (g_app_sig[sig] != QSE_NULL);
 
 		if (g_app_sig[sig] == this) 
@@ -364,7 +375,9 @@ int App::set_signal_subscription_no_mutex (int sig, SignalState reqstate)
 			QSE_ASSERT (sl._prev == QSE_NULL);
 			if (!sl._next) 
 			{
-				if (App::unset_signal_handler_no_mutex(sig, true) <= -1) return -1;
+				// this is the last application subscribing to the signal.
+				// let's get rid of the signal handler
+				if (App::unset_signal_handler_no_mutex(sig, ignore_if_unhandled) <= -1) return -1;
 			}
 			g_app_sig[sig] = sl._next;
 		}
@@ -375,9 +388,9 @@ int App::set_signal_subscription_no_mutex (int sig, SignalState reqstate)
 		sl._next = QSE_NULL;
 		sl._state = reqstate;
 	}
-	else if (QSE_LIKELY(sl._state == SIGNAL_UNHANDLED))
+	else if (QSE_LIKELY(sl._state == SIGNAL_NEGLECTED))
 	{
-		// unhandled -> accepted/ignored
+		// neglected(unhandled) -> accepted/discarded
 		QSE_ASSERT (sl._prev == QSE_NULL && sl._next == QSE_NULL);
 
 		App* xapp = g_app_sig[sig];
@@ -400,7 +413,7 @@ int App::set_signal_subscription_no_mutex (int sig, SignalState reqstate)
 				// roll back 
 				g_app_sig[sig] = xapp;
 				if (xapp) xapp->_sig[sig]._prev = xapp_xprev;
-				sl._state = SIGNAL_UNHANDLED;
+				sl._state = SIGNAL_NEGLECTED;
 				sl._next = QSE_NULL;
 				QSE_ASSERT (sl._prev == QSE_NULL);
 				return -1;
@@ -423,25 +436,36 @@ int App::guardProcess (const SignalSet& signals, const qse_mchar_t* proc_name)
 {
 	SignalState old_ss[QSE_NSIGS];
 
+	for (int i = 0; i < QSE_NSIGS; i++)
+	{
+		if (signals.isSet(i)) 
+		{
+			old_ss[i] = this->getSignalSubscription(i);
+			this->setSignalSubscription (i, SIGNAL_ACCEPTED);
+		}
+	}
+
 	while (1)
 	{
 		pid_t pid = ::fork();
 		if (pid == -1) return -1;
 		if (pid == 0) 
 		{
-			::setpgid (0, 0); // change the process group id. 
-			break; // child
-		}
+			// child process
+			this->_guarded_child_pid = -1;
 
-		for (int i = 0; i < QSE_NSIGS; i++)
-		{
-			if (signals.isSet(i)) 
+			for (int i = 0; i < QSE_NSIGS; i++)
 			{
-				old_ss[i] = this->getSignalSubscription(i);
-				this->setSignalSubscription (i, SIGNAL_ACCEPTED);
+				if (signals.isSet(i)) this->setSignalSubscription (i, old_ss[i]);
 			}
+
+			::setpgid (0, 0); // change the process group id. 
+			break; 
 		}
 
+		// ===============================================
+		// the guardian(parent) process
+		// ===============================================
 		this->_guarded_child_pid = pid;
 
 		int status;
@@ -455,17 +479,15 @@ int App::guardProcess (const SignalSet& signals, const qse_mchar_t* proc_name)
 			// ------------------------------------------------------
 		}
 
-		this->_guarded_child_pid = -1;
-		for (int i = 0; i < QSE_NSIGS; i++)
-		{
-			if (signals.isSet(i)) this->setSignalSubscription (i, old_ss[i]);
-		}
-
 		if (WIFEXITED(status))
 		{
 			if (WEXITSTATUS(status) == 0) 
 			{
 				// the child has terminated normally and successfully.
+				for (int i = 0; i < QSE_NSIGS; i++)
+				{
+					if (signals.isSet(i)) this->setSignalSubscription (i, old_ss[i]);
+				}
 				return 0; 
 			}
 		}
