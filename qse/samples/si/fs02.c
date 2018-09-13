@@ -154,7 +154,7 @@ int main (int argc, qse_achar_t* argv[])
 
 	qse_open_stdsios ();
 
-	x = qse_runmain (argc, argv, fs_main);
+	x = qse_run_main (argc, argv, fs_main);
 
 	qse_close_stdsios ();
 

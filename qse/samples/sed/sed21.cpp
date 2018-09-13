@@ -54,6 +54,6 @@ int qse_main (int argc, qse_achar_t* argv[])
 {
 	int x;
 	init_sed_sample_locale ();
-	x = qse_runmain (argc, argv, sed_main);
+	x = qse_run_main (argc, argv, sed_main);
 	return x;
 }

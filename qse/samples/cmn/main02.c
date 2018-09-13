@@ -49,7 +49,7 @@ int qse_main (int argc, qse_achar_t* argv[], qse_achar_t* envp[])
 #endif
 
 	qse_open_stdsios ();
-	x = qse_runmainwithenv (argc, argv, envp, test_main);
+	x = qse_run_mainwithenv (argc, argv, envp, test_main);
 	qse_close_stdsios ();
 	return x;
 }

@@ -112,7 +112,7 @@ int qse_main (int argc, qse_achar_t* argv[])
 	#endif
 	}
 
-	x = qse_runmain (argc,argv,awk_main);
+	x = qse_run_main (argc,argv,awk_main);
 	qse_close_stdsios ();
 	return x;
 }

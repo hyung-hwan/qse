@@ -1243,7 +1243,7 @@ int qse_main (int argc, qse_achar_t* argv[])
 
 	open_mpi (&mpi, argc, argv);
 
-	ret = qse_runmain (argc, argv, awk_main);
+	ret = qse_run_main(argc, argv, awk_main);
 
 	close_mpi (&mpi);
 

@@ -122,7 +122,7 @@ int qse_main (int argc, qse_achar_t* argv[])
 
 	qse_open_stdsios ();
 
-	x = qse_runmain (argc, argv, dir_main);
+	x = qse_run_main (argc, argv, dir_main);
 
 	qse_close_stdsios ();
 

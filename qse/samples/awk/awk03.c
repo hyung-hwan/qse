@@ -173,7 +173,7 @@ int qse_main (int argc, qse_achar_t* argv[])
 	int x;
 	qse_open_stdsios ();
 	init_awk_sample_locale ();
-	x = qse_runmain (argc, argv, awk_main);
+	x = qse_run_main (argc, argv, awk_main);
 	qse_close_stdsios ();
 	return x;
 }

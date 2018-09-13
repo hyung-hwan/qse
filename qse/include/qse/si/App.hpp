@@ -49,7 +49,7 @@ public:
 	};
 
 
-	App (Mmgr* mmgr) QSE_CPP_NOEXCEPT;
+	App (Mmgr* mmgr = QSE_NULL) QSE_CPP_NOEXCEPT;
 	virtual ~App () QSE_CPP_NOEXCEPT;
 
 	int daemonize (bool chdir_to_root = true, int fork_count = 1, bool root_only = false) QSE_CPP_NOEXCEPT;
