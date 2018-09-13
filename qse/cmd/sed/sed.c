@@ -1008,7 +1008,7 @@ int qse_main (int argc, qse_achar_t* argv[])
 #endif
 
 	qse_open_stdsios ();
-	ret = qse_runmain (argc, argv, sed_main);
+	ret = qse_run_main (argc, argv, sed_main);
 	qse_close_stdsios ();
 
 	return ret;

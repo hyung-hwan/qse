@@ -486,7 +486,7 @@ int qse_main (int argc, qse_achar_t* argv[])
 	#endif
 	}
 
-	ret = qse_runmain (argc, argv, awk_main);
+	ret = qse_run_main (argc, argv, awk_main);
 
 #if defined(_WIN32)
 	WSACleanup ();

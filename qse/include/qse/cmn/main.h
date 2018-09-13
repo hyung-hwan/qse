@@ -39,7 +39,7 @@
  * @def qse_main
  * The qse_main macro defines a main function wrapper for an underlying 
  * platform. It is defined to @b main or @b wmain depending on the choice of
- * the default character type #qse_char_t. Combined with the qse_runmain() 
+ * the default character type #qse_char_t. Combined with the qse_run_main() 
  * function, it provides a consistant view to the main function.
  *
  * @typedef qse_achar_t
@@ -69,16 +69,16 @@
 #endif
 
 /**
- * The qse_runmain_handler_t type defines the actual function to be
- * executed by qse_runmain(). Unlike the standard main(), it is passed
+ * The qse_run_main_handler_t type defines the actual function to be
+ * executed by qse_run_main(). Unlike the standard main(), it is passed
  * arguments in the #qse_char_t type.
  */
-typedef int (*qse_runmain_handler_t) (
+typedef int (*qse_run_main_handler_t) (
 	int         argc,
 	qse_char_t* argv[]
 );
 
-typedef int (*qse_runmainwithenv_handler_t) (
+typedef int (*qse_run_main_with_env_handler_t) (
 	int         argc,
 	qse_char_t* argv[],
 	qse_char_t* envp[]
@@ -89,25 +89,25 @@ extern "C" {
 #endif
 
 /**
- * The qse_runmain() function helps to invoke a main function independent of
+ * The qse_run_main() function helps to invoke a main function independent of
  * the character mode configured for the library.
  */
-QSE_EXPORT int qse_runmain (
+QSE_EXPORT int qse_run_main (
 	int                   argc,
 	qse_achar_t*          argv[],
-	qse_runmain_handler_t handler
+	qse_run_main_handler_t handler
 );
 
 /**
- * The qse_runmainwithenv() function helps to invoke a main function 
+ * The qse_run_main_with_env() function helps to invoke a main function 
  * independent of the character mode configured for the library providing
  * the enviroment list.
  */
-QSE_EXPORT int qse_runmainwithenv (
+QSE_EXPORT int qse_run_main_with_env (
 	int                          argc,
 	qse_achar_t*                 argv[],
 	qse_achar_t*                 envp[],
-	qse_runmainwithenv_handler_t handler
+	qse_run_main_with_env_handler_t handler
 );
 
 /* TODO: support more weird main functions. for example,

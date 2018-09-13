@@ -29,8 +29,8 @@
 
 #include "mem-prv.h"
 
-int qse_runmain (
-	int argc, qse_achar_t* argv[], qse_runmain_handler_t handler)
+int qse_run_main (
+	int argc, qse_achar_t* argv[], qse_run_main_handler_t handler)
 {
 #if (defined(QSE_ACHAR_IS_MCHAR) && defined(QSE_CHAR_IS_MCHAR)) || \
     (defined(QSE_ACHAR_IS_WCHAR) && defined(QSE_CHAR_IS_WCHAR))
@@ -71,9 +71,9 @@ oops:
 #endif
 }
 
-int qse_runmainwithenv (
+int qse_run_main_with_env (
 	int argc, qse_achar_t* argv[], 
-	qse_achar_t* envp[], qse_runmainwithenv_handler_t handler)
+	qse_achar_t* envp[], qse_run_main_with_env_handler_t handler)
 {
 #if (defined(QSE_ACHAR_IS_MCHAR) && defined(QSE_CHAR_IS_MCHAR)) || \
     (defined(QSE_ACHAR_IS_WCHAR) && defined(QSE_CHAR_IS_WCHAR))

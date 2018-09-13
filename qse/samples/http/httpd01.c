@@ -144,7 +144,7 @@ int qse_main (int argc, qse_achar_t* argv[])
 	SSL_library_init ();
 #endif
 
-	ret = qse_runmain (argc, argv, httpd_main);
+	ret = qse_run_main (argc, argv, httpd_main);
 
 #if defined(HAVE_SSL)
 	/*ERR_remove_state ();*/

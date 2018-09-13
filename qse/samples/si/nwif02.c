@@ -101,7 +101,7 @@ int qse_main (int argc, qse_achar_t* argv[])
 	/*qse_setdflcmgrbyid (QSE_CMGR_SLMB);*/
 #endif
 	qse_open_stdsios ();
-	ret = qse_runmain (argc, argv, test_main);
+	ret = qse_run_main (argc, argv, test_main);
 	qse_close_stdsios ();
 
 	return ret;
