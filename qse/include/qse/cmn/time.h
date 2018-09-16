@@ -119,17 +119,35 @@ struct qse_btime_t
 	int gmtoff;
 };
 
-#define qse_inittime(x,s,ns) (((x)->sec = (s)), ((x)->nsec = (ns)))
-#define qse_cleartime(x) qse_inittime(x,0,0)
-#define qse_cmptime(x,y) \
-	(((x)->sec == (y)->sec)? ((x)->nsec - (y)->nsec): \
-	                         ((x)->sec -  (y)->sec))
+
+#if defined(QSE_HAVE_INLINE)
+	static QSE_INLINE void qse_inittime(qse_ntime_t* x, qse_long_t s, qse_int32_t nsec)
+	{
+		x->sec = s;
+		x->nsec = nsec;
+	}
+	static QSE_INLINE void qse_cleartime(qse_ntime_t* x) {	qse_inittime (x, 0, 0); }
+	/*static QSE_INLINE int qse_cmptime(qse_ntime_t* x, qse_ntime_t* y)
+	{
+		/* TODO: fix the type and value range issue and replace the macro below.
+		return (x->sec == y->sec)? (x->nsec - y->nsec): (x->sec - y->sec);
+	}*/
+#	define qse_cmptime(x,y) (((x)->sec == (y)->sec)? ((x)->nsec - (y)->nsec): ((x)->sec - (y)->sec))
+
+	static QSE_INLINE int qse_isnegtime(qse_ntime_t* x) { return x->sec < 0; }
+	static QSE_INLINE int qse_ispostime(qse_ntime_t* x) { return x->sec > 0 || (x->sec == 0 && x->nsec > 0); }
+	static QSE_INLINE int qse_iszerotime(qse_ntime_t* x) { return x->sec == 0 && x->nsec == 0; }
+#else
+#	define qse_inittime(x,s,ns) (((x)->sec = (s)), ((x)->nsec = (ns)))
+#	define qse_cleartime(x) qse_inittime(x,0,0)
+#	define qse_cmptime(x,y) (((x)->sec == (y)->sec)? ((x)->nsec - (y)->nsec): ((x)->sec - (y)->sec))
 
 /* if time has been normalized properly, nsec must be equal to or
  * greater than 0. */
-#define qse_isnegtime(x) ((x)->sec < 0)
-#define qse_ispostime(x) ((x)->sec > 0 || ((x)->sec == 0 && (x)->nsec > 0))
-#define qse_iszerotime(x) ((x)->sec == 0 && (x)->nsec == 0)
+#	define qse_isnegtime(x) ((x)->sec < 0)
+#	define qse_ispostime(x) ((x)->sec > 0 || ((x)->sec == 0 && (x)->nsec > 0))
+#	define qse_iszerotime(x) ((x)->sec == 0 && (x)->nsec == 0)
+#endif
 
 
 #if defined(__cplusplus)
