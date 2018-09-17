@@ -129,7 +129,7 @@ struct qse_btime_t
 	static QSE_INLINE void qse_cleartime(qse_ntime_t* x) {	qse_inittime (x, 0, 0); }
 	/*static QSE_INLINE int qse_cmptime(qse_ntime_t* x, qse_ntime_t* y)
 	{
-		/* TODO: fix the type and value range issue and replace the macro below.
+		// TODO: fix the type and value range issue and replace the macro below.
 		return (x->sec == y->sec)? (x->nsec - y->nsec): (x->sec - y->sec);
 	}*/
 #	define qse_cmptime(x,y) (((x)->sec == (y)->sec)? ((x)->nsec - (y)->nsec): ((x)->sec - (y)->sec))
