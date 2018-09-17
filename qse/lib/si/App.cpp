@@ -448,6 +448,7 @@ int App::set_signal_subscription_no_mutex (int sig, SignalState reqstate, bool i
 int App::guardProcess (const SignalSet& signals, const qse_mchar_t* proc_name)
 {
 	SignalState old_ss[QSE_NSIGS];
+	int seq = 0;
 
 	for (int i = 0; i < QSE_NSIGS; i++)
 	{
@@ -460,6 +461,8 @@ int App::guardProcess (const SignalSet& signals, const qse_mchar_t* proc_name)
 
 	while (1)
 	{
+		if (seq < QSE_TYPE_MAX(int)) ++seq;
+
 		pid_t pid = ::fork();
 		if (pid == -1) return -1;
 		if (pid == 0) 
@@ -516,7 +519,7 @@ int App::guardProcess (const SignalSet& signals, const qse_mchar_t* proc_name)
 	}
 
 	// TODO: if (proc_name) qse_set_proc_name (proc_name);
-	return 1; // the caller must execute the actual work.
+	return seq; // the caller must execute the actual work.
 }
 
 /////////////////////////////////
