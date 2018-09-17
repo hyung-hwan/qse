@@ -31,6 +31,7 @@
 #include <qse/Uncopyable.hpp>
 #include <qse/cmn/Mmged.hpp>
 #include <qse/cmn/Bitset.hpp>
+#include <qse/cmn/time.h>
 
 /////////////////////////////////
 QSE_BEGIN_NAMESPACE(QSE)
@@ -55,6 +56,9 @@ public:
 
 	int chroot (const qse_mchar_t* mpath) QSE_CPP_NOEXCEPT;
 	int chroot (const qse_wchar_t* wpath) QSE_CPP_NOEXCEPT;
+
+	void sleep (const qse_ntime_t* duration) QSE_CPP_NOEXCEPT;
+	void sleep (unsigned int seconds) QSE_CPP_NOEXCEPT;
 
 #if 0
 	int switchUser (qse_uid_t uid, qse_gid_t gid, bool permanently) QSE_CPP_NOEXCEPT;

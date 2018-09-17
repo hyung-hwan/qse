@@ -27,8 +27,10 @@
 #include <qse/si/App.hpp>
 #include <qse/si/Mutex.hpp>
 #include <qse/si/sinfo.h>
+#include <qse/si/os.h>
 #include "../cmn/syscall.h"
 #include <qse/cmn/mbwc.h>
+
 
 /////////////////////////////////
 QSE_BEGIN_NAMESPACE(QSE)
@@ -188,6 +190,17 @@ int App::chroot (const qse_wchar_t* wpath) QSE_CPP_NOEXCEPT
 	int n = App::chroot((const qse_mchar_t*)mpath);
 	this->getMmgr()->dispose (mpath);
 	return n;
+}
+
+void App::sleep (const qse_ntime_t* duration) QSE_CPP_NOEXCEPT
+{
+	qse_sleep (duration);
+}
+
+void App::sleep (unsigned int seconds) QSE_CPP_NOEXCEPT
+{
+	static qse_ntime_t duration = { seconds, 0 };
+	qse_sleep (&duration);
 }
 
 #if 0
