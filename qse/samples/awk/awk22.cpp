@@ -2,7 +2,9 @@
 #include <qse/si/sio.h>
 #include <string>
 
-#if defined(QSE_CHAR_IS_WCHAR)
+#if defined(QSE_CHAR_IS_WCHAR) && defined(QSE_WCHAR_IS_CHAR16_T)
+typedef std::basic_string<char16_t> String;
+#elif defined(QSE_CHAR_IS_WCHAR)
 typedef std::wstring String;
 #else
 typedef std::string String;
