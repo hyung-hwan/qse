@@ -15,11 +15,12 @@
 
 #include <signal.h>
 #include <string.h>
-
-
-#include <sys/wait.h>
-#include <sys/prctl.h>
 #include <unistd.h>
+#include <sys/wait.h>
+
+#if defined(__linux)
+#include <sys/prctl.h>
+#endif
 
 class ClientHandler
 {

@@ -10,7 +10,7 @@ void t1 ()
 	QSE::String* z = new QSE::String();
 
 	{
-		QSE::String x (&heap_mmgr, QSE_T("this is a sample string"));
+		QSE::String x (QSE_T("this is a sample string"), &heap_mmgr);
 		QSE::String y (x);
 
 		*z = y;
