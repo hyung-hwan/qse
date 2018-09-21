@@ -1117,13 +1117,13 @@ QSE_EXPORT qse_size_t qse_wcsxncat (
 #	define qse_strcat        qse_mbscat
 #	define qse_strncat       qse_mbsncat
 #	define qse_strcatn       qse_mbscatn
-#	define qse_strxcat       qse_mbsxcat;
+#	define qse_strxcat       qse_mbsxcat
 #	define qse_strxncat      qse_mbsxncat
 #else
 #	define qse_strcat        qse_wcscat
 #	define qse_strncat       qse_wcsncat
 #	define qse_strcatn       qse_wcscatn
-#	define qse_strxcat       qse_wcsxcat;
+#	define qse_strxcat       qse_wcsxcat
 #	define qse_strxncat      qse_wcsxncat
 #endif
 
