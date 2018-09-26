@@ -2777,13 +2777,17 @@ QSE_EXPORT int qse_awk_rtx_valtoflt (
  * memory pointed to by \a l; A string containng '.', 'E', or 'e' is 
  * converted to a floating-pointer number and it is stored into memory
  * pointed to by \a r. If \a strict is 0, the function takes up to the last
- * valid character and never fails. If \a strict is non-zero, an invalid 
+ * valid character and never fails. If \a strict is 1, an invalid 
  * character causes the function to return an error.
  *
  * \return 0 if converted to an integer,
  *         1 if converted to a floating-point number
  *         -1 on error.
  */
+#define QSE_AWK_RTX_STRTONUM_MAKE_OPTION(strict,base) (((strict) & 1) | ((base) << 8))
+#define QSE_AWK_RTX_STRTONUM_GET_OPTION_STRICT(option) ((option) & 1)
+#define QSE_AWK_RTX_STRTONUN_GET_OPTION_BASE(option) ((option) >> 8)
+
 QSE_EXPORT int qse_awk_rtx_strtonum (
 	qse_awk_rtx_t*    rtx, /**< runtime context */
 	int               strict, /**< determines to perform strict check */

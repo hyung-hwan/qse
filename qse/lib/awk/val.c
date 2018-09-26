@@ -443,8 +443,8 @@ qse_awk_val_t* qse_awk_rtx_makenstrvalwithxstr (qse_awk_rtx_t* rtx, const qse_cs
 	qse_awk_int_t l;
 	qse_awk_flt_t r;
 
-	x = qse_awk_rtx_strtonum (rtx, 1, str->ptr, str->len, &l, &r);
-	v = qse_awk_rtx_makestrvalwithxstr (rtx, str);
+	x = qse_awk_rtx_strtonum(rtx, QSE_AWK_RTX_STRTONUM_MAKE_OPTION(1, 0), str->ptr, str->len, &l, &r);
+	v = qse_awk_rtx_makestrvalwithxstr(rtx, str);
 
 	if (v == QSE_NULL) return QSE_NULL;
 
@@ -1555,7 +1555,8 @@ static int val_ref_to_num (
 			if (idx == 0)
 			{
 				return qse_awk_rtx_strtonum (
-					rtx, 0,
+					rtx, 
+					QSE_AWK_RTX_STRTONUM_MAKE_OPTION(0, 0),
 					QSE_STR_PTR(&rtx->inrec.line),
 					QSE_STR_LEN(&rtx->inrec.line),
 					l, r
@@ -1564,7 +1565,8 @@ static int val_ref_to_num (
 			else if (idx <= rtx->inrec.nflds)
 			{
 				return qse_awk_rtx_strtonum (
-					rtx, 0,
+					rtx,
+					QSE_AWK_RTX_STRTONUM_MAKE_OPTION(0, 0),
 					rtx->inrec.flds[idx-1].ptr,
 					rtx->inrec.flds[idx-1].len,
 					l, r
@@ -1573,7 +1575,7 @@ static int val_ref_to_num (
 			else
 			{
 				return qse_awk_rtx_strtonum (
-					rtx, 0, QSE_T(""), 0, l, r
+					rtx, QSE_AWK_RTX_STRTONUM_MAKE_OPTION(0, 0), QSE_T(""), 0, l, r
 				);
 			}
 		}
@@ -1628,7 +1630,8 @@ int qse_awk_rtx_valtonum (
 		case QSE_AWK_VAL_STR:
 		{
 			return qse_awk_rtx_strtonum (
-				rtx, 0,
+				rtx, 
+				QSE_AWK_RTX_STRTONUM_MAKE_OPTION(0, 0),
 				((qse_awk_val_str_t*)v)->val.ptr,
 				((qse_awk_val_str_t*)v)->val.len,
 				l, r
@@ -1691,15 +1694,18 @@ int qse_awk_rtx_valtoflt (
 }
 
 int qse_awk_rtx_strtonum (
-	qse_awk_rtx_t* rtx, int strict,
+	qse_awk_rtx_t* rtx, int option,
 	const qse_char_t* ptr, qse_size_t len, 
 	qse_awk_int_t* l, qse_awk_flt_t* r)
 {
 	const qse_char_t* endptr;
 	const qse_char_t* end;
 
+	int strict = QSE_AWK_RTX_STRTONUM_GET_OPTION_STRICT(option);
+	int base = QSE_AWK_RTX_STRTONUN_GET_OPTION_BASE(option);
+
 	end = ptr + len;
-	*l = qse_awk_strxtoint (rtx->awk, ptr, len, 0, &endptr);
+	*l = qse_awk_strxtoint(rtx->awk, ptr, len, base, &endptr);
 	if (endptr < end)
 	{
 		if (*endptr == QSE_T('.') || *endptr == QSE_T('E') || *endptr == QSE_T('e'))

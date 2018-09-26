@@ -4204,7 +4204,8 @@ static QSE_INLINE int __cmp_int_str (
 		qse_awk_flt_t rr;
 
 		n = qse_awk_rtx_strtonum (
-			rtx, 1, 
+			rtx,
+			QSE_AWK_RTX_STRTONUM_MAKE_OPTION(1, 0),
 			((qse_awk_val_str_t*)right)->val.ptr,
 			((qse_awk_val_str_t*)right)->val.len, 
 			&ll, &rr

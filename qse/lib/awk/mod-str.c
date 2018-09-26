@@ -29,6 +29,7 @@
 #include <qse/cmn/chr.h>
 #include "../cmn/mem-prv.h"
 #include "fnc.h"
+#include "val.h"
 
 static int fnc_normspace (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
@@ -215,6 +216,7 @@ static int fnc_value (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 static int fnc_tonum (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
 	/* str::tonum (value) */
+	/* str::tonum (string, base) */
 
 	qse_awk_val_t* retv;
 	qse_awk_val_t* a0;
@@ -224,18 +226,38 @@ static int fnc_tonum (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 
 	a0 = qse_awk_rtx_getarg(rtx, 0);
 
-	rx = qse_awk_rtx_valtonum (rtx, a0, &lv, &rv);
-	if (rx == 0)
+	if (QSE_AWK_RTX_GETVALTYPE(rtx, a0) == QSE_AWK_VAL_STR && qse_awk_rtx_getnargs(rtx) >= 2)
 	{
-		retv = qse_awk_rtx_makeintval (rtx, lv);
-	}
-	else if (rx >= 1)
-	{
-		retv = qse_awk_rtx_makefltval (rtx, rv);
+		/* if the value is known to be a string, it supports the optional
+		 * base parameter */
+		qse_awk_val_t* a1 = qse_awk_rtx_getarg(rtx, 1);
+		qse_awk_int_t base;
+
+		if (qse_awk_rtx_valtoint(rtx, a1, &base) <= -1) return -1;
+		rx = qse_awk_rtx_strtonum (
+			rtx,
+			QSE_AWK_RTX_STRTONUM_MAKE_OPTION(0, base),
+			((qse_awk_val_str_t*)a0)->val.ptr,
+			((qse_awk_val_str_t*)a0)->val.len,
+			&lv, &rv
+		);
 	}
 	else
 	{
-		retv = qse_awk_rtx_makeintval (rtx, 0);
+		rx = qse_awk_rtx_valtonum(rtx, a0, &lv, &rv);
+	}
+
+	if (rx == 0)
+	{
+		retv = qse_awk_rtx_makeintval(rtx, lv);
+	}
+	else if (rx >= 1)
+	{
+		retv = qse_awk_rtx_makefltval(rtx, rv);
+	}
+	else
+	{
+		retv = qse_awk_rtx_makeintval(rtx, 0);
 	}
 
 	if (!retv) return -1;
@@ -281,7 +303,7 @@ static fnctab_t fnctab[] =
 	{ QSE_T("sub"),       { { 2, 3, QSE_T("xvr") },  qse_awk_fnc_sub,       0 } },
 	{ QSE_T("substr"),    { { 2, 3, QSE_NULL },      qse_awk_fnc_substr,    0 } },
 	{ QSE_T("tolower"),   { { 1, 1, QSE_NULL },      qse_awk_fnc_tolower,   0 } },
-	{ QSE_T("tonum"),     { { 1, 1, QSE_NULL },      fnc_tonum,             0 } },
+	{ QSE_T("tonum"),     { { 1, 2, QSE_NULL },      fnc_tonum,             0 } },
 	{ QSE_T("toupper"),   { { 1, 1, QSE_NULL },      qse_awk_fnc_toupper,   0 } },
 	{ QSE_T("trim"),      { { 1, 1, QSE_NULL },      fnc_trim,              0 } },
 	{ QSE_T("value"),     { { 1, 1, QSE_NULL },      fnc_value,             0 } }
