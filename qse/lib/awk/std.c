@@ -2185,9 +2185,9 @@ static int fnc_setioattr (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 		qse_awk_flt_t r;
 		int x;
 
-		/* no error is returned by qse_awk_rtx_strnum() if the second 
-		 * parameter is 0. so i don't check for an error */
-		x = qse_awk_rtx_strtonum (rtx, 0, ptr[2], len[2], &l, &r);
+		/* no error is returned by qse_awk_rtx_strnum() if the strict option 
+		 * of the second parameter is 0. so i don't check for an error */
+		x = qse_awk_rtx_strtonum(rtx, QSE_AWK_RTX_STRTONUM_MAKE_OPTION(0, 0), ptr[2], len[2], &l, &r);
 		if (x == 0) r = (qse_awk_flt_t)l;
 
 		ioattr = find_or_make_ioattr (rtx, &rxtn->cmgrtab, ptr[0], len[0]);
