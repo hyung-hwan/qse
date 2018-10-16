@@ -25,6 +25,8 @@
  */
 
 #include <qse/cmn/time.h>
+
+#include <qse/cmn/chr.h>
 #include "mem-prv.h"
 
 #if defined(_WIN32)
@@ -612,4 +614,104 @@ void qse_subtime (const qse_ntime_t* x, const qse_ntime_t* y, qse_ntime_t* z)
 		z->sec = z->sec - 1;
 		z->nsec = z->nsec + QSE_NSECS_PER_SEC;
 	}
+}
+
+
+
+int qse_mbs_to_ntime (const qse_mchar_t* text, qse_ntime_t* ntime)
+{
+	const qse_mchar_t* p = text, * cp;
+	qse_ntime_t tv = { 0, 0 };
+	int neg = 0;
+
+	if (*p == QSE_MT('-')) 
+	{
+		neg = 1;
+		p++;
+	}
+	else if (*p == QSE_MT('+'))
+	{
+		p++;
+	}
+
+	cp = p;
+	while (QSE_ISMDIGIT(*p))
+	{
+		qse_long_t oldsec = tv.sec;
+		tv.sec = tv.sec * 10 + (*p - QSE_MT('0'));
+		if (tv.sec < oldsec) return -1; /* overflow? */
+		p++;
+	}
+	if (cp == p) return -1;
+
+	if (*p == QSE_MT('.'))
+	{
+		qse_int32_t base = QSE_SEC_TO_NSEC(1); /* 1000000000 */
+
+		p++;
+		base /= 10; /* the max value is 999999999. 9 digits ony */
+
+		while (*p && QSE_ISMDIGIT(*p) && base > 0)
+		{
+			tv.nsec += (*p - QSE_MT('0')) * base;
+			base /= 10;
+			p++;
+		}
+	}
+
+	if (*p != QSE_MT('\0')) return -1;
+
+	if (neg) tv.sec *= -1;
+	*ntime = tv;
+
+	return 0;
+}
+
+int qse_wcs_to_ntime (const qse_wchar_t* text, qse_ntime_t* ntime)
+{
+	const qse_wchar_t* p = text, * cp;
+	qse_ntime_t tv = { 0, 0 };
+	int neg = 0;
+
+	if (*p == QSE_WT('-')) 
+	{
+		neg = 1;
+		p++;
+	}
+	else if (*p == QSE_WT('+'))
+	{
+		p++;
+	}
+
+	cp = p;
+	while (QSE_ISWDIGIT(*p))
+	{
+		qse_long_t oldsec = tv.sec;
+		tv.sec = tv.sec * 10 +  (*p - QSE_WT('0'));
+		if (tv.sec < oldsec) return -1; /* overflow? */
+		p++;
+	}
+	if (cp == p) return -1;
+
+	if (*p == QSE_WT('.'))
+	{
+		qse_int32_t base = QSE_SEC_TO_NSEC(1); /* 1000000000 */
+
+		p++;
+		base /= 10; /* the max value is 999999999. 9 digits ony */
+
+		while (*p && QSE_ISWDIGIT(*p) && base > 0)
+		{
+			tv.nsec += (*p - QSE_WT('0')) * base;
+			base /= 10;
+			p++;
+		}
+	}
+
+	if (*p != QSE_WT('\0')) return -1;
+
+	if (neg) tv.sec *= -1;
+	*ntime = tv;
+
+	return 0;
 }

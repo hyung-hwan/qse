@@ -221,6 +221,28 @@ QSE_EXPORT void qse_subtime (
 	qse_ntime_t*       z
 );
 
+
+/**
+ * The qse_strtontime() function converts a numeric text to the numeric time.
+ *  seconds.nanoseconds
+ *  10.231
+ */
+QSE_EXPORT int qse_mbs_to_ntime (
+	const qse_mchar_t* text,
+	qse_ntime_t*       ntime
+);
+
+QSE_EXPORT int qse_wcs_to_ntime (
+	const qse_wchar_t* text,
+	qse_ntime_t*       ntime
+);
+
+#if defined(QSE_CHAR_IS_MCHAR)
+#	define qse_str_to_ntime(text,ntime) qse_mbs_to_ntime(text,ntime)
+#else
+#	define qse_str_to_ntime(text,ntime) qse_wcs_to_ntime(text,ntime)
+#endif
+
 #if defined(__cplusplus)
 }
 #endif
