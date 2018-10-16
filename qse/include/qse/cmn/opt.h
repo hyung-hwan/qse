@@ -69,11 +69,15 @@ struct qse_opt_t
 #define QSE_CLI_OPTNAME (1 << 0)
 #define QSE_CLI_OPTVAL  (1 << 1)
 
-#define QSE_CLI_ERROR_INVALID_OPTNAME  1
-#define QSE_CLI_ERROR_MISSING_OPTNAME  2
-#define QSE_CLI_ERROR_REDUNDANT_OPTVAL 3
-#define QSE_CLI_ERROR_MISSING_OPTVAL   4
-#define QSE_CLI_ERROR_MEMORY           5
+enum qse_cli_error_code_t
+{
+	QSE_CLI_ERROR_INVALID_OPTNAME  = 1,
+	QSE_CLI_ERROR_MISSING_OPTNAME  = 2,
+	QSE_CLI_ERROR_REDUNDANT_OPTVAL = 3,
+	QSE_CLI_ERROR_MISSING_OPTVAL   = 4,
+	QSE_CLI_ERROR_MEMORY           = 5
+};
+typedef enum qse_cli_error_code_t qse_cli_error_code_t;
 
 typedef struct qse_cli_opt_t qse_cli_opt_t;
 typedef struct qse_cli_t qse_cli_t;
@@ -89,10 +93,10 @@ struct qse_cli_opt_t
 };
 
 typedef int (*qse_cli_errcb_t) (
-	qse_cli_t*        cli,
-	int               code, 
-	const qse_char_t* qname,
-	const qse_char_t* qval
+	qse_cli_t*           cli,
+	qse_cli_error_code_t code, 
+	const qse_char_t*    qname,
+	const qse_char_t*    qval
 );
 
 struct qse_cli_data_t
