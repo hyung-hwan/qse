@@ -8,7 +8,7 @@ AM_CPPFLAGS = \
 
 lib_LTLIBRARIES = libqsedhcp.la
 libqsedhcp_la_SOURCES =  \
-	dhcpmsg.c
+	dhcp4msg.c dhcp6msg.c
 
 libqsedhcp_la_CFLAGS = 
 libqsedhcp_la_LDFLAGS = -L../cmn -version-info 1:0:0 -no-undefined
