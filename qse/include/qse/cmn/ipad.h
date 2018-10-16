@@ -40,6 +40,35 @@ struct qse_ip4ad_t
 	qse_uint32_t value;
 };
 
+struct qse_ip6ad_t
+{
+	qse_uint8_t value[16];
+};
+
+#define QSE_IP4AD_IS_LOOPBACK(addr) ((((addr)->value) & QSE_CONST_HTON32(0xFF000000)) == QSE_CONST_HTON32(0x7F000000))
+
+#define QSE_IP6AD_IS_LOOPBACK(addr) \
+		((addr)->value[0] == 0 && (addr)->value[1] == 0 && \
+		 (addr)->value[2] == 0 && (addr)->value[3] == 0 && \
+		 (addr)->value[4] == 0 && (addr)->value[5] == 0 && \
+		 (addr)->value[6] == 0 && (addr)->value[7] == 0 && \
+		 (addr)->value[8] == 0 && (addr)->value[9] == 0 && \
+		 (addr)->value[10] == 0 && (addr)->value[11] == 0 && \
+		 (addr)->value[12] == 0 && (addr)->value[13] == 0 && \
+		 (addr)->value[14] == 0 && (addr)->value[15] == 1)
+
+// FE80::/10
+#define QSE_IP6AD_IS_LINK_LOCAL(addr) (this->value[0] == 0xFE && (this->value[1] & 0xC0) == 0x80)
+// FEC0::/10
+#define QSE_IP6AD_IS_SITE_LOCAL(addr) (this->value[0] == 0xFE && (this->value[1] & 0xC0) == 0xC0)
+
+#define QSE_IP6AD_IS_MULTICAST(addr) ((addr)->value[0] == 0xFF)
+#define QSE_IP6AD_IS_MULTICAST_LINK_LOCAL(addr) ((addr)->value[0] == 0xFF && ((addr)->value[1] & 0x0F) == 0x02)
+#define QSE_IP6AD_IS_MULTICAST_SITE_LOCAL(addr) ((addr)->value[0] == 0xFF && ((addr)->value[1] & 0x0F) == 0x05)
+#define QSE_IP6AD_IS_MULTICAST_ORGANIZATION(addr) ((addr)->value[0] == 0xFF && ((addr)->value[1] & 0x0F) == 0x08)
+#define QSE_IP6AD_IS_MULTICAST_GLOBAL(addr) ((addr)->value[0] == 0xFF && ((addr)->value[1] & 0x0F) == 0x0E)
+#define QSE_IP6AD_IS_MULTICAST_INTERFACE_LOCAL(addr) ((addr)->value[0] == 0xFF && ((addr)->value[1] & 0x0F) == 0x01)
+
 #if defined(__cplusplus)
 struct qse_ip4adxx_t: public qse_ip4ad_t
 {
@@ -111,15 +140,132 @@ struct qse_ip4adxx_t: public qse_ip4ad_t
 		return x;
 	}
 };
+
+struct qse_ip6adxx_t: public qse_ip6ad_t
+{
+	struct ad64_t
+	{
+		qse_uint64_t w[2];
+	};
+
+	qse_ip6adxx_t ()
+	{
+		register ad64_t* x = (ad64_t*)this->value;
+		x->w[0] = 0;
+		x->w[1] = 0;
+	}
+
+	qse_ip6adxx_t (qse_uint8_t (*value)[16])
+	{
+		register ad64_t* x = (ad64_t*)this->value;
+		x->w[0] = ((ad64_t*)value)->w[0];
+		x->w[1] = ((ad64_t*)value)->w[1];
+	}
+
+	qse_ip6adxx_t (qse_uint8_t (&value)[16])
+	{
+		register ad64_t* x = (ad64_t*)this->value;
+		x->w[0] = ((ad64_t*)&value)->w[0];
+		x->w[1] = ((ad64_t*)&value)->w[1];
+	}
+
+	bool operator== (const qse_ip4adxx_t& peer) const 
+	{
+		register ad64_t* x = (ad64_t*)this->value;
+		register ad64_t* y = (ad64_t*)&peer.value;
+		return x->w[0] == y->w[0] && x->w[1] == y->w[1];
+	}
+
+	bool operator!= (const qse_ip4adxx_t& peer) const 
+	{
+		register ad64_t* x = (ad64_t*)this->value;
+		register ad64_t* y = (ad64_t*)&peer.value;
+		return x->w[0] != y->w[0] || x->w[1] != y->w[1];
+	}
+
+	qse_ip6adxx_t& operator= (const qse_ip6adxx_t& v)
+	{
+		register ad64_t* x = (ad64_t*)this->value;
+		x->w[0] = ((ad64_t*)&v)->w[0];
+		x->w[1] = ((ad64_t*)&v)->w[1];
+		return *this;
+	}
+
+	bool isZero() const
+	{
+		register ad64_t* x = (ad64_t*)this->value;
+		return x->w[0] == 0 && x->w[1] == 0;
+	}
+
+	bool isLoopback() const
+	{
+		return QSE_IP6AD_IS_LOOPBACK(this);
+	}
+
+	bool isLinkLocal() const
+	{
+		// FE80::/10
+		return QSE_IP6AD_IS_LINK_LOCAL(this);
+	}
+
+	bool isSiteLocal() const
+	{
+		// FEC0::/10
+		return QSE_IP6AD_IS_SITE_LOCAL(this);
+	}
+
+	// multicast addresses
+	// ff02:: Link Local: spans the same topological region as the corresponding unicast scope, i.e. all nodes on the same LAN.
+	// ff05:: Site local: is intended to span a single site
+	// ff08:: Organization scope: Intended to span multiple sizes within the same organization
+	// ff0e:: Global scope, assigned by IANA.
+	// ff01:: Interface local: Spans only a single interface on a node and is useful only for loopback transmission of multicast.
+	bool isMulticast() const
+	{
+		return QSE_IP6AD_IS_MULTICAST(this);
+	}
+
+	bool isMulticastLinkLocal() const
+	{
+		return QSE_IP6AD_IS_MULTICAST_LINK_LOCAL(this);
+	}
+
+	bool isMulticastSiteLocal() const
+	{
+		return QSE_IP6AD_IS_MULTICAST_SITE_LOCAL(this);
+	}
+
+	bool isMulticastOrganization() const
+	{
+		return QSE_IP6AD_IS_MULTICAST_ORGANIZATION(this);
+	}
+
+	bool isMulticastGlobal() const
+	{
+		return QSE_IP6AD_IS_MULTICAST_GLOBAL(this);
+	}
+
+	bool isMulticastInterfaceLocal() const
+	{
+		return QSE_IP6AD_IS_MULTICAST_INTERFACE_LOCAL(this);
+	}
+
+	bool isV4Mapped () const
+	{
+		return this->value[0] == 0x00 && this->value[1] == 0x00 &&
+		       this->value[2] == 0x00 && this->value[3] == 0x00 &&
+		       this->value[4] == 0x00 && this->value[5] == 0x00 &&
+		       this->value[6] == 0x00 && this->value[7] == 0x00 &&
+		       this->value[8] == 0x00 && this->value[9] == 0x00 &&
+		       this->value[10] == 0xFF && this->value[11] == 0xFF;
+	}
+};
 #endif
 
-struct qse_ip6ad_t
-{
-	qse_uint8_t value[16];
-};
 #include <qse/unpack.h>
 
-#define QSE_IP4AD_IN_LOOPBACK(addr) ((((addr)->value) & QSE_CONST_HTON32(0xFF000000)) == QSE_CONST_HTON32(0x7F000000))
+
+
 
 #if defined(__cplusplus)
 extern "C" {

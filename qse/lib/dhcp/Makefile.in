@@ -134,7 +134,8 @@ am__uninstall_files_from_dir = { \
 am__installdirs = "$(DESTDIR)$(libdir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
 libqsedhcp_la_DEPENDENCIES =
-am_libqsedhcp_la_OBJECTS = libqsedhcp_la-dhcpmsg.lo
+am_libqsedhcp_la_OBJECTS = libqsedhcp_la-dhcp4msg.lo \
+	libqsedhcp_la-dhcp6msg.lo
 libqsedhcp_la_OBJECTS = $(am_libqsedhcp_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
@@ -379,7 +380,7 @@ AM_CPPFLAGS = \
 #noinst_HEADERS =
 lib_LTLIBRARIES = libqsedhcp.la
 libqsedhcp_la_SOURCES = \
-	dhcpmsg.c
+	dhcp4msg.c dhcp6msg.c
 
 libqsedhcp_la_CFLAGS = 
 libqsedhcp_la_LDFLAGS = -L../cmn -version-info 1:0:0 -no-undefined
@@ -462,7 +463,8 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqsedhcp_la-dhcpmsg.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqsedhcp_la-dhcp4msg.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqsedhcp_la-dhcp6msg.Plo@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
@@ -485,12 +487,19 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LTCOMPILE) -c -o $@ $<
 
-libqsedhcp_la-dhcpmsg.lo: dhcpmsg.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libqsedhcp_la_CFLAGS) $(CFLAGS) -MT libqsedhcp_la-dhcpmsg.lo -MD -MP -MF $(DEPDIR)/libqsedhcp_la-dhcpmsg.Tpo -c -o libqsedhcp_la-dhcpmsg.lo `test -f 'dhcpmsg.c' || echo '$(srcdir)/'`dhcpmsg.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libqsedhcp_la-dhcpmsg.Tpo $(DEPDIR)/libqsedhcp_la-dhcpmsg.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='dhcpmsg.c' object='libqsedhcp_la-dhcpmsg.lo' libtool=yes @AMDEPBACKSLASH@
+libqsedhcp_la-dhcp4msg.lo: dhcp4msg.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libqsedhcp_la_CFLAGS) $(CFLAGS) -MT libqsedhcp_la-dhcp4msg.lo -MD -MP -MF $(DEPDIR)/libqsedhcp_la-dhcp4msg.Tpo -c -o libqsedhcp_la-dhcp4msg.lo `test -f 'dhcp4msg.c' || echo '$(srcdir)/'`dhcp4msg.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libqsedhcp_la-dhcp4msg.Tpo $(DEPDIR)/libqsedhcp_la-dhcp4msg.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='dhcp4msg.c' object='libqsedhcp_la-dhcp4msg.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libqsedhcp_la_CFLAGS) $(CFLAGS) -c -o libqsedhcp_la-dhcpmsg.lo `test -f 'dhcpmsg.c' || echo '$(srcdir)/'`dhcpmsg.c
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libqsedhcp_la_CFLAGS) $(CFLAGS) -c -o libqsedhcp_la-dhcp4msg.lo `test -f 'dhcp4msg.c' || echo '$(srcdir)/'`dhcp4msg.c
+
+libqsedhcp_la-dhcp6msg.lo: dhcp6msg.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libqsedhcp_la_CFLAGS) $(CFLAGS) -MT libqsedhcp_la-dhcp6msg.lo -MD -MP -MF $(DEPDIR)/libqsedhcp_la-dhcp6msg.Tpo -c -o libqsedhcp_la-dhcp6msg.lo `test -f 'dhcp6msg.c' || echo '$(srcdir)/'`dhcp6msg.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libqsedhcp_la-dhcp6msg.Tpo $(DEPDIR)/libqsedhcp_la-dhcp6msg.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='dhcp6msg.c' object='libqsedhcp_la-dhcp6msg.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libqsedhcp_la_CFLAGS) $(CFLAGS) -c -o libqsedhcp_la-dhcp6msg.lo `test -f 'dhcp6msg.c' || echo '$(srcdir)/'`dhcp6msg.c
 
 mostlyclean-libtool:
 	-rm -f *.lo
