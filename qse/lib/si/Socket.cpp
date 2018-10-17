@@ -48,7 +48,6 @@
 #	include <ifaddrs.h>
 #endif
 
-#include <stdio.h>
 /////////////////////////////////
 QSE_BEGIN_NAMESPACE(QSE)
 /////////////////////////////////
@@ -598,7 +597,12 @@ int Socket::getIfceIndex (const qse_mchar_t* name)
 	struct ifreq ifr;
 
 	QSE_MEMSET (&ifr, 0, QSE_SIZEOF(ifr));
-	qse_mbsxcpy (ifr.ifr_name, QSE_COUNTOF(ifr.ifr_name), name);
+	qse_size_t mlen = qse_mbsxcpy (ifr.ifr_name, QSE_COUNTOF(ifr.ifr_name), name);
+	if (name[mlen] != QSE_MT('\0')) 
+	{
+		this->setErrorCode (E_EINVAL);
+		return -1;
+	}
 
 	if (::ioctl(this->handle, SIOCGIFINDEX, &ifr) == -1) 
 	{
@@ -625,7 +629,7 @@ int Socket::getIfceIndex (const qse_wchar_t* name)
 	QSE_MEMSET (&ifr, 0, QSE_SIZEOF(ifr));
 
 	qse_size_t wlen, mlen = QSE_COUNTOF(ifr.ifr_name);
-	if (qse_wcstombs(name, &wlen, ifr.ifr_name, &mlen) <= -1 || wlen < qse_wcslen(name)) 
+	if (qse_wcstombs(name, &wlen, ifr.ifr_name, &mlen) <= -1 || name[wlen] != QSE_WT('\0')) 
 	{
 		this->setErrorCode (E_EINVAL);
 		return -1;
@@ -716,7 +720,8 @@ int Socket::get_ifce_address (int cmd, const void* name, bool wchar, SocketAddre
 	if (wchar)
 	{
 		qse_size_t wlen, mlen = QSE_COUNTOF(ifr.ifr_name);
-		if (qse_wcstombs((const qse_wchar_t*)name, &wlen, ifr.ifr_name, &mlen) <= -1 || wlen < qse_wcslen((const qse_wchar_t*)name)) 
+		if (qse_wcstombs((const qse_wchar_t*)name, &wlen, ifr.ifr_name, &mlen) <= -1 || 
+		    ((const qse_wchar_t*)name)[wlen] != QSE_WT('\0')) 
 		{
 			this->setErrorCode (E_EINVAL);
 			return -1;
@@ -724,7 +729,12 @@ int Socket::get_ifce_address (int cmd, const void* name, bool wchar, SocketAddre
 	}
 	else
 	{
-		qse_mbsxcpy (ifr.ifr_name, QSE_COUNTOF(ifr.ifr_name), (const qse_mchar_t*)name);
+		qse_size_t mlen = qse_mbsxcpy (ifr.ifr_name, QSE_COUNTOF(ifr.ifr_name), (const qse_mchar_t*)name);
+		if (((const qse_mchar_t*)name)[mlen] != QSE_MT('\0'))
+		{
+			this->setErrorCode (E_EINVAL);
+			return -1;
+		}
 	}
 
 #if defined(HAVE_GETIFADDRS)
