@@ -57,7 +57,7 @@
 
 /* options */
 #define QSE_LOG_KEEP_FILE_OPEN        (1 << 13)
-#define QSE_LOG_MASKED_PRIORITY         (1 << 14)
+#define QSE_LOG_MASKED_PRIORITY       (1 << 14)
 #define QSE_LOG_INCLUDE_PID           (1 << 15)
 #define QSE_LOG_HOST_IN_REMOTE_SYSLOG (1 << 16)
 

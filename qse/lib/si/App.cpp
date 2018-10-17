@@ -136,12 +136,12 @@ int App::daemonize (bool chdir_to_root, int fork_count, bool root_only) QSE_CPP_
 	{
 		int keep[] = { 0, 1, 2};
 
-		if (qse_close_open_fds_using_proc (keep, QSE_COUNTOF(keep)) <= -1)
+		if (qse_close_open_fds_using_proc(keep, QSE_COUNTOF(keep)) <= -1)
 		{
 			for (int i = qse_get_highest_fd(); i >= 3; i--) QSE_CLOSE (i);
 		}
 
-		int fd = QSE_OPEN ("/dev/null", O_RDWR, 0);
+		int fd = QSE_OPEN("/dev/null", O_RDWR, 0);
 		if (fd >= 0)
 		{
 			if (fd != 0) QSE_DUP2 (fd, 0);
