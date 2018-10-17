@@ -24,36 +24,36 @@ static int test1 ()
 		return -1;
 	}
 
-	qse_printf (QSE_T("lo ifindex ===> %d\n"), s.getIfceIndex(QSE_WT("lo")));
-	if (s.getIfceAddress(QSE_WT("lo"), &addr) >= 0)
+	qse_printf (QSE_T("lo ifindex ===> %d\n"), s.getIfceIndex(QSE_MT("lo")));
+	if (s.getIfceAddress(QSE_T("lo"), &addr) >= 0)
 	{
 		qse_char_t buf[256];
 		qse_printf (QSE_T("lo ifaddr ===> [%s]\n"), addr.toStrBuf(buf, QSE_COUNTOF(buf)));
 	}
-	if (s.getIfceNetmask(QSE_WT("lo"), &addr) >= 0)
+	if (s.getIfceNetmask(QSE_T("lo"), &addr) >= 0)
 	{
 		qse_char_t buf[256];
 		qse_printf (QSE_T("lo netmask ===> [%s]\n"), addr.toStrBuf(buf, QSE_COUNTOF(buf)));
 	}
-	if (s.getIfceBroadcast(QSE_WT("lo"), &addr) >= 0)
+	if (s.getIfceBroadcast(QSE_T("lo"), &addr) >= 0)
 	{
 		qse_char_t buf[256];
 		qse_printf (QSE_T("lo broadcast ===> [%s]\n"), addr.toStrBuf(buf, QSE_COUNTOF(buf)));
 	}
 
 
-	qse_printf (QSE_T("eth0 ifindex ===> %d\n"), s.getIfceIndex(QSE_WT("eth0")));
-	if (s.getIfceAddress(QSE_WT("eth0"), &addr) >= 0)
+	qse_printf (QSE_T("eth0 ifindex ===> %d\n"), s.getIfceIndex(QSE_T("eth0")));
+	if (s.getIfceAddress(QSE_T("eth0"), &addr) >= 0)
 	{
 		qse_char_t buf[256];
 		qse_printf (QSE_T("eth0 ifaddr ===> [%s]\n"), addr.toStrBuf(buf, QSE_COUNTOF(buf)));
 	}
-	if (s.getIfceNetmask(QSE_WT("eth0"), &addr) >= 0)
+	if (s.getIfceNetmask(QSE_T("eth0"), &addr) >= 0)
 	{
 		qse_char_t buf[256];
 		qse_printf (QSE_T("eth0 netmask ===> [%s]\n"), addr.toStrBuf(buf, QSE_COUNTOF(buf)));
 	}
-	if (s.getIfceBroadcast(QSE_WT("eth0"), &addr) >= 0)
+	if (s.getIfceBroadcast(QSE_T("eth0"), &addr) >= 0)
 	{
 		qse_char_t buf[256];
 		qse_printf (QSE_T("eth0 broadcast ===> [%s]\n"), addr.toStrBuf(buf, QSE_COUNTOF(buf)));
