@@ -26,6 +26,7 @@
 
 #include <qse/si/Socket.hpp>
 #include <qse/cmn/str.h>
+#include <qse/cmn/mbwc.h>
 #include "../cmn/mem-prv.h"
 
 #include <sys/types.h>
@@ -35,6 +36,19 @@
 #include <fcntl.h>
 #include <unistd.h>
 
+#if defined(HAVE_NET_IF_H)
+#	include <net/if.h>
+#endif
+
+#if defined(HAVE_SYS_IOCTL_H)
+#	include <sys/ioctl.h>
+#endif
+
+#if defined(HAVE_IFADDRS_H)
+#	include <ifaddrs.h>
+#endif
+
+#include <stdio.h>
 /////////////////////////////////
 QSE_BEGIN_NAMESPACE(QSE)
 /////////////////////////////////
@@ -42,7 +56,7 @@ QSE_BEGIN_NAMESPACE(QSE)
 #include "../cmn/syserr.h"
 IMPLEMENT_SYSERR_TO_ERRNUM (Socket::ErrorCode, Socket::)
 
-Socket::Socket () QSE_CPP_NOEXCEPT: handle(QSE_INVALID_SCKHND), errcode(E_ENOERR)
+Socket::Socket () QSE_CPP_NOEXCEPT: handle(QSE_INVALID_SCKHND), domain(-1), errcode(E_ENOERR)
 {
 }
 
@@ -68,7 +82,7 @@ int Socket::open (int domain, int type, int protocol, int traits) QSE_CPP_NOEXCE
 	if (traits & Socket::T_CLOEXEC) type |= SOCK_CLOEXEC;
 open_socket:
 #endif
-	x = ::socket (domain, type, protocol);
+	x = ::socket(domain, type, protocol);
 	if (x == -1)
 	{
 	#if defined(SOCK_NONBLOCK) && defined(SOCK_CLOEXEC)
@@ -113,6 +127,18 @@ open_socket:
 done:
 	this->close (); // close the existing handle if open.
 	this->handle = x;
+
+	// while it seems to be possible to get the domain value from a socket
+	// descriptor with getsockopt(SO_DOMAIN), the method doesn't seem universal.
+	//
+	//   SO_DOMAIN (since Linux 2.6.32)
+	//     Retrieves the socket domain as an  integer,  returning  a  value
+	//     such  as  AF_INET6.   See  socket(2)  for  details.  This socket
+	//     option is read-only.
+	//
+	// let me just store the information in the class 
+
+	this->domain = domain;
 	return 0;
 }
 
@@ -122,6 +148,7 @@ void Socket::close () QSE_CPP_NOEXCEPT
 	{
 		qse_closesckhnd (this->handle);
 		this->handle = QSE_INVALID_SCKHND;
+		this->domain = -1;
 	}
 }
 
@@ -562,6 +589,199 @@ qse_ssize_t Socket::receive (void* buf, qse_size_t len, SocketAddress& srcaddr) 
 	}
 
 	return n; 
+}
+
+
+int Socket::getIfceIndex (const qse_mchar_t* name)
+{
+#if defined(SIOCGIFINDEX)
+	struct ifreq ifr;
+
+	QSE_MEMSET (&ifr, 0, QSE_SIZEOF(ifr));
+	qse_mbsxcpy (ifr.ifr_name, QSE_COUNTOF(ifr.ifr_name), name);
+
+	if (::ioctl(this->handle, SIOCGIFINDEX, &ifr) == -1) 
+	{
+		this->setErrorCode (syserr_to_errnum(errno));
+		return -1;
+	}
+
+	#if defined(ifr_ifindex)
+	return ifr.ifr_ifindex;
+	#else
+	return ifr.ifr_index;
+	#endif
+#else
+	this->setErrorCode (E_ENOIMPL);
+	return -1;
+#endif
+}
+
+int Socket::getIfceIndex (const qse_wchar_t* name)
+{
+#if defined(SIOCGIFINDEX)
+	struct ifreq ifr;
+
+	QSE_MEMSET (&ifr, 0, QSE_SIZEOF(ifr));
+
+	qse_size_t wlen, mlen = QSE_COUNTOF(ifr.ifr_name);
+	if (qse_wcstombs(name, &wlen, ifr.ifr_name, &mlen) <= -1 || wlen < qse_wcslen(name)) 
+	{
+		this->setErrorCode (E_EINVAL);
+		return -1;
+	}
+
+	if (::ioctl(this->handle, SIOCGIFINDEX, &ifr) == -1) 
+	{
+		this->setErrorCode (syserr_to_errnum(errno));
+		return -1;
+	}
+
+	#if defined(ifr_ifindex)
+	return ifr.ifr_ifindex;
+	#else
+	return ifr.ifr_index;
+	#endif
+#else
+	this->setErrorCode (E_ENOIMPL);
+	return -1;
+#endif
+}
+
+int Socket::getIfceAddress (const qse_mchar_t* name, SocketAddress* addr)
+{
+#if defined(SIOCGIFADDR)
+	return this->get_ifce_address(SIOCGIFADDR, name, false, addr);
+#else
+	this->setErrorCode (E_ENOIMPL);
+	return -1;
+#endif
+}
+
+int Socket::getIfceAddress (const qse_wchar_t* name, SocketAddress* addr)
+{
+#if defined(SIOCGIFADDR)
+	return this->get_ifce_address(SIOCGIFADDR, name, true, addr);
+#else
+	this->setErrorCode (E_ENOIMPL);
+	return -1;
+#endif
+}
+
+int Socket::getIfceNetmask(const qse_mchar_t* name, SocketAddress* addr)
+{
+#if defined(SIOCGIFADDR)
+	return this->get_ifce_address(SIOCGIFNETMASK, name, false, addr);
+#else
+	this->setErrorCode (E_ENOIMPL);
+	return -1;
+#endif
+}
+
+int Socket::getIfceNetmask (const qse_wchar_t* name, SocketAddress* addr)
+{
+#if defined(SIOCGIFADDR)
+	return this->get_ifce_address(SIOCGIFNETMASK, name, true, addr);
+#else
+	this->setErrorCode (E_ENOIMPL);
+	return -1;
+#endif
+}
+
+int Socket::getIfceBroadcast(const qse_mchar_t* name, SocketAddress* addr)
+{
+#if defined(SIOCGIFADDR)
+	return this->get_ifce_address(SIOCGIFBRDADDR, name, false, addr);
+#else
+	this->setErrorCode (E_ENOIMPL);
+	return -1;
+#endif
+}
+
+int Socket::getIfceBroadcast (const qse_wchar_t* name, SocketAddress* addr)
+{
+#if defined(SIOCGIFADDR)
+	return this->get_ifce_address(SIOCGIFBRDADDR, name, true, addr);
+#else
+	this->setErrorCode (E_ENOIMPL);
+	return -1;
+#endif
+}
+
+int Socket::get_ifce_address (int cmd, const void* name, bool wchar, SocketAddress* addr)
+{
+	struct ifreq ifr;
+
+	QSE_MEMSET (&ifr, 0, QSE_SIZEOF(ifr));
+	if (wchar)
+	{
+		qse_size_t wlen, mlen = QSE_COUNTOF(ifr.ifr_name);
+		if (qse_wcstombs((const qse_wchar_t*)name, &wlen, ifr.ifr_name, &mlen) <= -1 || wlen < qse_wcslen((const qse_wchar_t*)name)) 
+		{
+			this->setErrorCode (E_EINVAL);
+			return -1;
+		}
+	}
+	else
+	{
+		qse_mbsxcpy (ifr.ifr_name, QSE_COUNTOF(ifr.ifr_name), (const qse_mchar_t*)name);
+	}
+
+#if defined(HAVE_GETIFADDRS)
+	struct ifaddrs* ifa;
+	if (::getifaddrs(&ifa) == 0)
+	{
+		for (struct ifaddrs* ife = ifa; ife; ife = ife->ifa_next)
+		{
+			if (qse_mbscmp (ifr.ifr_name, ife->ifa_name) != 0) continue;
+
+			struct sockaddr* sa = QSE_NULL;
+
+			switch (cmd)
+			{
+				case SIOCGIFADDR:
+					sa = ife->ifa_addr;
+					break;
+
+				case SIOCGIFNETMASK:
+					sa = ife->ifa_netmask;
+					break;
+
+				case SIOCGIFBRDADDR:
+					sa = ife->ifa_broadaddr;
+					break;
+
+				default: 
+					break;
+			}
+
+			if (!sa || !sa->sa_data) continue;
+			if (sa->sa_family != this->domain) continue; /* skip an address that doesn't match the socket's domain */
+
+			*addr = SocketAddress((const qse_skad_t*)sa);
+			freeifaddrs (ifa);
+			return 0;
+		}
+
+		freeifaddrs (ifa);
+	}
+#endif
+
+	if (::ioctl (this->handle, cmd, &ifr) == -1) 
+	{
+		this->setErrorCode (syserr_to_errnum(errno));
+		return -1;
+	}
+
+	struct sockaddr* sa = (struct sockaddr*)&ifr.ifr_addr;
+	if (sa->sa_family != this->domain)
+	{
+		this->setErrorCode (E_ENOENT);
+		return -1;
+	}
+
+	*addr = SocketAddress((const qse_skad_t*)&ifr.ifr_addr);
+	return 0;
 }
 
 /////////////////////////////////

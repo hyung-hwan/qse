@@ -96,11 +96,29 @@ public:
 
 /* TODO: sendmsg, recvmsg */
 
+	// utility functions to retrieve network configuration information.
+	int getIfceIndex (const qse_mchar_t* name);
+	int getIfceIndex (const qse_wchar_t* name);
+
+	// the following 6 functions are provided for backward compatibility.
+	// it is limited to a single address and they may suffer race condition.
+	// for example, you call getIfceAddress() followed by getIfceNetmask().
+	// the network configuration information may change in between.
+	// the address/netmask pair may not be the valid fixed combination.
+	int getIfceAddress (const qse_mchar_t* name, SocketAddress* addr);
+	int getIfceAddress (const qse_wchar_t* name, SocketAddress* addr);
+	int getIfceNetmask (const qse_mchar_t* name, SocketAddress* addr);
+	int getIfceNetmask (const qse_wchar_t* name, SocketAddress* addr);
+	int getIfceBroadcast (const qse_mchar_t* name, SocketAddress* addr);
+	int getIfceBroadcast (const qse_wchar_t* name, SocketAddress* addr);
+
 protected:
 	qse_sck_hnd_t handle;
+	int domain;
 	ErrorCode errcode;
 
 	void set_errcode_with_syserr (int syserr);
+	int get_ifce_address (int cmd, const void* name, bool wchar, SocketAddress* addr);
 };
 
 
