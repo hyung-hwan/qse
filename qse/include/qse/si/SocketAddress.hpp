@@ -70,13 +70,15 @@ public:
 	qse_uint16_t getPort() const QSE_CPP_NOEXCEPT; // in network-byte order
 	void setPort (qse_uint16_t port) QSE_CPP_NOEXCEPT; // in network-byte order
 
+	qse_uint32_t getScopeId () QSE_CPP_NOEXCEPT; // in network-byte order
+	void setScopeId (qse_uint32_t scope_id) QSE_CPP_NOEXCEPT; // in network-byte order
+
 	int set (const qse_skad_t* skad) QSE_CPP_NOEXCEPT; 
 	int set (const qse_nwad_t* nwad) QSE_CPP_NOEXCEPT;
 	int set (const qse_mchar_t* str) QSE_CPP_NOEXCEPT;
 	int set (const qse_wchar_t* str) QSE_CPP_NOEXCEPT;
 	int set (const qse_mchar_t* str, qse_size_t len) QSE_CPP_NOEXCEPT;
 	int set (const qse_wchar_t* str, qse_size_t len) QSE_CPP_NOEXCEPT;
-
 
 	qse_mchar_t* toStrBuf (qse_mchar_t* buf, qse_size_t len) const QSE_CPP_NOEXCEPT;
 	qse_wchar_t* toStrBuf (qse_wchar_t* buf, qse_size_t len) const QSE_CPP_NOEXCEPT;

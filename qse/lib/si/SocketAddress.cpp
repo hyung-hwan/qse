@@ -143,21 +143,21 @@ qse_uint16_t SocketAddress::getPort () const QSE_CPP_NOEXCEPT
 {
 	switch (FAMILY(&this->skad))
 	{
-#if defined(AF_INET)
+	#if defined(AF_INET)
 		case AF_INET:
 		{
 			struct sockaddr_in* v4 = (struct sockaddr_in*)&this->skad;
 			return v4->sin_port;
 		}
-#endif
+	#endif
 
-#if defined(AF_INET6)
+	#if defined(AF_INET6)
 		case AF_INET6:
 		{
 			struct sockaddr_in6* v6 = (struct sockaddr_in6*)&this->skad;
 			return v6->sin6_port;
 		}
-#endif
+	#endif
 	}
 
 	return 0;
@@ -167,14 +167,14 @@ void SocketAddress::setPort (qse_uint16_t port) QSE_CPP_NOEXCEPT
 {
 	switch (FAMILY(&this->skad))
 	{
-#if defined(AF_INET)
+	#if defined(AF_INET)
 		case AF_INET:
 		{
 			struct sockaddr_in* v4 = (struct sockaddr_in*)&this->skad;
 			v4->sin_port = port;
 			break;
 		}
-#endif
+	#endif
 
 #if defined(AF_INET6)
 		case AF_INET6:
@@ -184,6 +184,37 @@ void SocketAddress::setPort (qse_uint16_t port) QSE_CPP_NOEXCEPT
 			break;
 		}
 #endif
+	}
+}
+
+qse_uint32_t SocketAddress::getScopeId () QSE_CPP_NOEXCEPT
+{
+	switch (FAMILY(&this->skad))
+	{
+	#if defined(AF_INET6)
+		case AF_INET6:
+		{
+			struct sockaddr_in6* v6 = (struct sockaddr_in6*)&this->skad;
+			return v6->sin6_scope_id;
+		}
+	#endif
+	}
+
+	return 0;
+}
+
+void SocketAddress::setScopeId (qse_uint32_t scope_id) QSE_CPP_NOEXCEPT
+{
+	switch (FAMILY(&this->skad))
+	{
+	#if defined(AF_INET6)
+		case AF_INET6:
+		{
+			struct sockaddr_in6* v6 = (struct sockaddr_in6*)&this->skad;
+			v6->sin6_scope_id = scope_id;
+			break;
+		}
+	#endif
 	}
 }
 
