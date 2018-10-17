@@ -66,8 +66,13 @@ struct qse_opt_t
 
 
 /* --------------------------------------------------------------------- */
-#define QSE_CLI_OPTNAME (1 << 0)
-#define QSE_CLI_OPTVAL  (1 << 1)
+enum qse_cli_optflag_t
+{
+	QSE_CLI_REQUIRE_OPTNAME      = (1 << 0), /* if set, the option itself is require */
+	QSE_CLI_REQUIRE_OPTVAL       = (1 << 1), /* if set, the option's value is mandatory */
+	QSE_CLI_DISCRETIONARY_OPTVAL = (1 << 2)  /* if set, the option's value is optional. */
+};
+typedef enum qse_cli_optflag_t qse_cli_optflag_t;
 
 enum qse_cli_error_code_t
 {
@@ -86,7 +91,7 @@ struct qse_cli_opt_t
 {
 	/* input */
 	const qse_char_t* name;
-	int requires;
+	int optflags; /* 0 or bitwise-ORed of qse_cli_optflags_t enumerartors */
 
 	/* output - you don't have to initialize this field */
 	qse_char_t* value;

@@ -124,7 +124,7 @@ int qse_parsecli (qse_cli_t* cli, qse_mmgr_t* mmgr, int argc, qse_char_t* const 
 			}
 			else 
 			{
-				if (value && !(opt->requires & QSE_CLI_OPTVAL)) 
+				if (value && !(opt->optflags & (QSE_CLI_REQUIRE_OPTVAL | QSE_CLI_DISCRETIONARY_OPTVAL))) 
 				{
 					if (cli->data.errcb(cli, QSE_CLI_ERROR_REDUNDANT_OPTVAL, name.ptr, value) <= -1) 
 					{
@@ -132,7 +132,7 @@ int qse_parsecli (qse_cli_t* cli, qse_mmgr_t* mmgr, int argc, qse_char_t* const 
 						return -1;
 					}
 				}
-				else if (!value && (opt->requires & QSE_CLI_OPTVAL)) 
+				else if (!value && (opt->optflags & QSE_CLI_REQUIRE_OPTVAL)) 
 				{
 					if (cli->data.errcb(cli, QSE_CLI_ERROR_MISSING_OPTVAL, name.ptr, value) <= -1) 
 					{
@@ -175,7 +175,7 @@ int qse_parsecli (qse_cli_t* cli, qse_mmgr_t* mmgr, int argc, qse_char_t* const 
 
 	for (opt = cli->data.opts; opt->name != QSE_NULL; opt++) 
 	{
-		if ((opt->requires & QSE_CLI_OPTNAME) && opt->value == QSE_NULL) 
+		if ((opt->optflags & QSE_CLI_REQUIRE_OPTNAME) && opt->value == QSE_NULL) 
 		{
 			if (cli->data.errcb(cli, QSE_CLI_ERROR_MISSING_OPTNAME, opt->name, QSE_NULL) <= -1) 
 			{
