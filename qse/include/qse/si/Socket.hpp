@@ -95,6 +95,8 @@ public:
 	qse_ssize_t receive (void* buf, qse_size_t len, SocketAddress& srcaddr) QSE_CPP_NOEXCEPT;
 
 /* TODO: sendmsg, recvmsg */
+	int joinMulticastGroup (const SocketAddress& mcaddr, const SocketAddress& ifaddr);
+	int leaveMulticastGroup (const SocketAddress& mcaddr, const SocketAddress& ifaddr);
 
 	// utility functions to retrieve network configuration information.
 	int getIfceIndex (const qse_mchar_t* name);

@@ -67,10 +67,13 @@ public:
 	void setIpaddr (const qse_ip4ad_t* ipaddr) QSE_CPP_NOEXCEPT;
 	void setIpaddr (const qse_ip6ad_t* ipaddr) QSE_CPP_NOEXCEPT;
 
+	const qse_ip4ad_t* getIp4addr () const QSE_CPP_NOEXCEPT;
+	const qse_ip6ad_t* getIp6addr () const QSE_CPP_NOEXCEPT;
+
 	qse_uint16_t getPort() const QSE_CPP_NOEXCEPT; // in network-byte order
 	void setPort (qse_uint16_t port) QSE_CPP_NOEXCEPT; // in network-byte order
 
-	qse_uint32_t getScopeId () QSE_CPP_NOEXCEPT; // in network-byte order
+	qse_uint32_t getScopeId () const QSE_CPP_NOEXCEPT; // in network-byte order
 	void setScopeId (qse_uint32_t scope_id) QSE_CPP_NOEXCEPT; // in network-byte order
 
 	int set (const qse_skad_t* skad) QSE_CPP_NOEXCEPT; 
