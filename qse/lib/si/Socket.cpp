@@ -104,7 +104,7 @@ open_socket:
 
 	if (traits)
 	{
-		fcntl_v = fcntl(x, F_GETFL, 0);
+		fcntl_v = ::fcntl(x, F_GETFL, 0);
 		if (fcntl_v == -1)
 		{
 		fcntl_failure:
@@ -121,7 +121,7 @@ open_socket:
 		else fcntl_v &= ~O_CLOEXEC;
 	#endif
 
-		if (fcntl(x, F_SETFL, fcntl_v) == -1) goto fcntl_failure;
+		if (::fcntl(x, F_SETFL, fcntl_v) == -1) goto fcntl_failure;
 	}
 
 done:
