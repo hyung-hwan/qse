@@ -139,6 +139,30 @@ void SocketAddress::setIpaddr (const qse_ip6ad_t* ipaddr) QSE_CPP_NOEXCEPT
 #endif
 }
 
+const qse_ip4ad_t* SocketAddress::getIp4addr () const QSE_CPP_NOEXCEPT
+{
+#if defined(AF_INET)
+	if (FAMILY(&this->skad) == AF_INET)
+	{
+		struct sockaddr_in* v4 = (struct sockaddr_in*)&this->skad;
+		return (const qse_ip4ad_t*)&v4->sin_addr;
+	}
+#endif
+	return QSE_NULL;
+}
+
+const qse_ip6ad_t* SocketAddress::getIp6addr () const QSE_CPP_NOEXCEPT
+{
+#if defined(AF_INET6)
+	if (FAMILY(&this->skad) == AF_INET6)
+	{
+		struct sockaddr_in6* v6 = (struct sockaddr_in6*)&this->skad;
+		return (const qse_ip6ad_t*)&v6->sin6_addr;
+	}
+#endif
+	return QSE_NULL;
+}
+
 qse_uint16_t SocketAddress::getPort () const QSE_CPP_NOEXCEPT
 {
 	switch (FAMILY(&this->skad))
@@ -187,7 +211,7 @@ void SocketAddress::setPort (qse_uint16_t port) QSE_CPP_NOEXCEPT
 	}
 }
 
-qse_uint32_t SocketAddress::getScopeId () QSE_CPP_NOEXCEPT
+qse_uint32_t SocketAddress::getScopeId () const QSE_CPP_NOEXCEPT
 {
 	switch (FAMILY(&this->skad))
 	{

@@ -35,6 +35,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <netinet/in.h>
 
 #if defined(HAVE_NET_IF_H)
 #	include <net/if.h>
@@ -590,6 +591,88 @@ qse_ssize_t Socket::receive (void* buf, qse_size_t len, SocketAddress& srcaddr) 
 	return n; 
 }
 
+int Socket::joinMulticastGroup (const SocketAddress& mcaddr, const SocketAddress& ifaddr)
+{
+	int family = mcaddr.getFamily(); // ((struct sockaddr*)mcaddr.getAddrPtr())->sa_family
+
+	if (family != ifaddr.getFamily())
+	{
+		this->setErrorCode (E_EINVAL);
+		return -1;
+	}
+
+	switch (family)
+	{
+	#if defined(AF_INET)
+		case AF_INET:
+		{
+			
+			struct ip_mreq mreq;
+			QSE_MEMSET (&mreq, 0, QSE_SIZEOF(mreq));
+
+			mreq.imr_multiaddr = *(struct in_addr*)mcaddr.getIp4addr();
+			mreq.imr_interface = *(struct in_addr*)ifaddr.getIp4addr();
+			return ::setsockopt(this->handle, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq, QSE_SIZEOF(mreq));
+		}
+	#endif
+
+	#if defined(AF_INET6)
+		case AF_INET6:
+		{
+			struct ipv6_mreq mreq;
+			QSE_MEMSET (&mreq, 0, QSE_SIZEOF(mreq));
+
+			mreq.ipv6mr_multiaddr = *(struct in6_addr*)mcaddr.getIp6addr();
+			mreq.ipv6mr_interface = ifaddr.getScopeId();
+			return ::setsockopt(this->handle, IPPROTO_IPV6, IPV6_JOIN_GROUP, &mreq, QSE_SIZEOF(mreq));
+		}
+	#endif
+	}
+
+	this->setErrorCode (E_ENOIMPL);
+	return -1;
+}
+
+int Socket::leaveMulticastGroup (const SocketAddress& mcaddr, const SocketAddress& ifaddr)
+{
+	int family = mcaddr.getFamily(); // ((struct sockaddr*)mcaddr.getAddrPtr())->sa_family
+
+	if (family != ifaddr.getFamily())
+	{
+		this->setErrorCode (E_EINVAL);
+		return -1;
+	}
+
+	switch (family)
+	{
+	#if defined(AF_INET)
+		case AF_INET:
+		{
+			struct ip_mreq mreq;
+			QSE_MEMSET (&mreq, 0, QSE_SIZEOF(mreq));
+
+			mreq.imr_multiaddr = *(struct in_addr*)mcaddr.getIp4addr();
+			mreq.imr_interface = *(struct in_addr*)ifaddr.getIp4addr();
+			return ::setsockopt(this->handle, IPPROTO_IP, IP_DROP_MEMBERSHIP, &mreq, QSE_SIZEOF(mreq));
+		}
+	#endif
+
+	#if defined(AF_INET6)
+		case AF_INET6:
+		{
+			struct ipv6_mreq mreq;
+			QSE_MEMSET (&mreq, 0, QSE_SIZEOF(mreq));
+
+			mreq.ipv6mr_multiaddr = *(struct in6_addr*)mcaddr.getIp6addr();
+			mreq.ipv6mr_interface = ifaddr.getScopeId();
+			return ::setsockopt(this->handle, IPPROTO_IPV6, IPV6_LEAVE_GROUP, &mreq, QSE_SIZEOF(mreq));
+		}
+	#endif
+	}
+
+	this->setErrorCode (E_ENOIMPL);
+	return -1;
+}
 
 int Socket::getIfceIndex (const qse_mchar_t* name)
 {
@@ -674,7 +757,7 @@ int Socket::getIfceAddress (const qse_wchar_t* name, SocketAddress* addr)
 
 int Socket::getIfceNetmask(const qse_mchar_t* name, SocketAddress* addr)
 {
-#if defined(SIOCGIFADDR)
+#if defined(SIOCGIFNETMASK)
 	return this->get_ifce_address(SIOCGIFNETMASK, name, false, addr);
 #else
 	this->setErrorCode (E_ENOIMPL);
@@ -684,7 +767,7 @@ int Socket::getIfceNetmask(const qse_mchar_t* name, SocketAddress* addr)
 
 int Socket::getIfceNetmask (const qse_wchar_t* name, SocketAddress* addr)
 {
-#if defined(SIOCGIFADDR)
+#if defined(SIOCGIFNETMASK)
 	return this->get_ifce_address(SIOCGIFNETMASK, name, true, addr);
 #else
 	this->setErrorCode (E_ENOIMPL);
@@ -694,7 +777,7 @@ int Socket::getIfceNetmask (const qse_wchar_t* name, SocketAddress* addr)
 
 int Socket::getIfceBroadcast(const qse_mchar_t* name, SocketAddress* addr)
 {
-#if defined(SIOCGIFADDR)
+#if defined(SIOCGIFBRDADDR)
 	return this->get_ifce_address(SIOCGIFBRDADDR, name, false, addr);
 #else
 	this->setErrorCode (E_ENOIMPL);
@@ -704,7 +787,7 @@ int Socket::getIfceBroadcast(const qse_mchar_t* name, SocketAddress* addr)
 
 int Socket::getIfceBroadcast (const qse_wchar_t* name, SocketAddress* addr)
 {
-#if defined(SIOCGIFADDR)
+#if defined(SIOCGIFBRDADDR)
 	return this->get_ifce_address(SIOCGIFBRDADDR, name, true, addr);
 #else
 	this->setErrorCode (E_ENOIMPL);
