@@ -76,9 +76,16 @@ public:
 
 	int shutdown (int how = 2) QSE_CPP_NOEXCEPT;
 	int connect (const SocketAddress& target) QSE_CPP_NOEXCEPT;
+
 	int bind (const SocketAddress& target) QSE_CPP_NOEXCEPT;
+	// bind to the ip address of the interface 
+	int bindToIfceAddr (const qse_mchar_t* ifce, qse_uint16_t port) QSE_CPP_NOEXCEPT;
+	// bind to the ip address of the interface
+	int bindToIfceAddr (const qse_wchar_t* ifce, qse_uint16_t port) QSE_CPP_NOEXCEPT;
+
 	int listen (int backlog = 128) QSE_CPP_NOEXCEPT;
 	int accept (Socket* newsck, SocketAddress* newaddr, int traits = 0) QSE_CPP_NOEXCEPT;
+
 
 	// The send() functions sends data by attemping a single call to the 
 	// underlying system calls

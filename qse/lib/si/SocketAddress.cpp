@@ -85,6 +85,7 @@
 #	define FAMILY(x) (-1)
 #endif
 
+#include <stdio.h>
 /////////////////////////////////
 QSE_BEGIN_NAMESPACE(QSE)
 /////////////////////////////////
@@ -124,6 +125,17 @@ void SocketAddress::setIpaddr (const qse_ip4ad_t* ipaddr) QSE_CPP_NOEXCEPT
 	{
 		struct sockaddr_in* v4 = (struct sockaddr_in*)&this->skad;
 		QSE_MEMCPY (&v4->sin_addr, ipaddr, QSE_SIZEOF(*ipaddr));
+	}
+#endif
+}
+
+void SocketAddress::setIpaddr (const qse_uint32_t ipaddr) QSE_CPP_NOEXCEPT
+{
+#if defined(AF_INET)
+	if (FAMILY(&this->skad) == AF_INET)
+	{
+		struct sockaddr_in* v4 = (struct sockaddr_in*)&this->skad;
+		v4->sin_addr.s_addr = ipaddr;
 	}
 #endif
 }

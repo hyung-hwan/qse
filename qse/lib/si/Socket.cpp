@@ -308,6 +308,20 @@ int Socket::bind (const SocketAddress& target) QSE_CPP_NOEXCEPT
 	return 0;
 }
 
+int Socket::bindToIfceAddr (const qse_mchar_t* ifce, qse_uint16_t port) QSE_CPP_NOEXCEPT
+{
+	SocketAddress addr;
+	if (this->getIfceAddress(ifce, &addr) <= -1) return -1;
+	return this->bind(addr);
+}
+
+int Socket::bindToIfceAddr (const qse_wchar_t* ifce, qse_uint16_t port) QSE_CPP_NOEXCEPT
+{
+	SocketAddress addr;
+	if (this->getIfceAddress(ifce, &addr) <= -1) return -1;
+	return this->bind(addr);
+}
+
 int Socket::listen (int backlog) QSE_CPP_NOEXCEPT
 {
 	QSE_ASSERT (this->handle != QSE_INVALID_SCKHND);
