@@ -52,7 +52,7 @@
 #	endif
 #endif
 
-#if defined(_SCO_DS)
+#if defined(SIOCGIFCONF) && (defined(SIOCGIFANUM) || defined(SIOCGIFNUM))
 static int get_sco_ifconf (struct ifconf* ifc)
 {
 	/* SCO doesn't have have any IFINDEX thing.
@@ -152,7 +152,7 @@ int qse_nwifmbstoindex (const qse_mchar_t* ptr, unsigned int* index)
 	*index = tmpidx;
 	return 0;
 
-#elif defined(_SCO_DS)
+#elif defined(SIOCGIFCONF) && (defined(SIOCGIFANUM) || defined(SIOCGIFNUM))
 
 	struct ifconf ifc;
 	int num, i;
@@ -225,8 +225,7 @@ int qse_nwifmbsntoindex (const qse_mchar_t* ptr, qse_size_t len, unsigned int* i
 	*index = tmpidx;
 	return 0;
 
-#elif defined(_SCO_DS)
-
+#elif defined(SIOCGIFCONF) && (defined(SIOCGIFANUM) || defined(SIOCGIFNUM))
 	struct ifconf ifc;
 	int num, i;
 
