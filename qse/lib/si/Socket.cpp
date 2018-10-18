@@ -322,6 +322,57 @@ int Socket::bindToIfceAddr (const qse_wchar_t* ifce, qse_uint16_t port) QSE_CPP_
 	return this->bind(addr);
 }
 
+int Socket::bindToIfce (const qse_mchar_t* ifce) QSE_CPP_NOEXCEPT
+{
+#if defined(SO_BINDTODEVICE)
+	if (!ifce)
+	{
+		return this->setOption (SOL_SOCKET, SO_BINDTODEVICE, QSE_NULL, 0);
+	}
+	else
+	{
+		struct ifreq ifr;
+		QSE_MEMSET (&ifr, 0, QSE_SIZEOF(ifr));
+		qse_size_t mlen = qse_mbsxcpy (ifr.ifr_name, QSE_COUNTOF(ifr.ifr_name), ifce);
+		if (ifce[mlen] != QSE_MT('\0'))
+		{
+			this->setErrorCode (E_EINVAL);
+			return -1;
+		}
+		return this->setOption (SOL_SOCKET, SO_BINDTODEVICE, (char*)&ifr, QSE_SIZEOF(ifr));
+	}
+#else
+	this->setErrorCode (E_ENOIMPL);
+	return -1;
+#endif
+}
+
+int Socket::bindToIfce (const qse_wchar_t* ifce) QSE_CPP_NOEXCEPT
+{
+#if defined(SO_BINDTODEVICE)
+	if (!ifce)
+	{
+		return this->setOption (SOL_SOCKET, SO_BINDTODEVICE, QSE_NULL, 0);
+	}
+	else
+	{
+		struct ifreq ifr;
+		QSE_MEMSET (&ifr, 0, QSE_SIZEOF(ifr));
+	
+		qse_size_t wlen, mlen = QSE_COUNTOF(ifr.ifr_name);
+		if (qse_wcstombs(ifce, &wlen, ifr.ifr_name, &mlen) <= -1 || ifce[wlen] != QSE_WT('\0')) 
+		{
+			this->setErrorCode (E_EINVAL);
+			return -1;
+		}
+		return this->setOption (SOL_SOCKET, SO_BINDTODEVICE, (char*)&ifr, QSE_SIZEOF(ifr));
+	}
+#else
+	this->setErrorCode (E_ENOIMPL);
+	return -1;
+#endif
+}
+
 int Socket::listen (int backlog) QSE_CPP_NOEXCEPT
 {
 	QSE_ASSERT (this->handle != QSE_INVALID_SCKHND);
@@ -605,7 +656,7 @@ qse_ssize_t Socket::receive (void* buf, qse_size_t len, SocketAddress& srcaddr) 
 	return n; 
 }
 
-int Socket::joinMulticastGroup (const SocketAddress& mcaddr, const SocketAddress& ifaddr)
+int Socket::joinMulticastGroup (const SocketAddress& mcaddr, const SocketAddress& ifaddr) QSE_CPP_NOEXCEPT
 {
 	int family = mcaddr.getFamily(); // ((struct sockaddr*)mcaddr.getAddrPtr())->sa_family
 
@@ -647,7 +698,7 @@ int Socket::joinMulticastGroup (const SocketAddress& mcaddr, const SocketAddress
 	return -1;
 }
 
-int Socket::leaveMulticastGroup (const SocketAddress& mcaddr, const SocketAddress& ifaddr)
+int Socket::leaveMulticastGroup (const SocketAddress& mcaddr, const SocketAddress& ifaddr) QSE_CPP_NOEXCEPT
 {
 	int family = mcaddr.getFamily(); // ((struct sockaddr*)mcaddr.getAddrPtr())->sa_family
 
@@ -688,7 +739,7 @@ int Socket::leaveMulticastGroup (const SocketAddress& mcaddr, const SocketAddres
 	return -1;
 }
 
-int Socket::getIfceIndex (const qse_mchar_t* name)
+int Socket::getIfceIndex (const qse_mchar_t* name) QSE_CPP_NOEXCEPT
 {
 #if defined(SIOCGIFINDEX)
 	struct ifreq ifr;
@@ -718,7 +769,7 @@ int Socket::getIfceIndex (const qse_mchar_t* name)
 #endif
 }
 
-int Socket::getIfceIndex (const qse_wchar_t* name)
+int Socket::getIfceIndex (const qse_wchar_t* name) QSE_CPP_NOEXCEPT
 {
 #if defined(SIOCGIFINDEX)
 	struct ifreq ifr;
@@ -749,7 +800,7 @@ int Socket::getIfceIndex (const qse_wchar_t* name)
 #endif
 }
 
-int Socket::getIfceAddress (const qse_mchar_t* name, SocketAddress* addr)
+int Socket::getIfceAddress (const qse_mchar_t* name, SocketAddress* addr) QSE_CPP_NOEXCEPT
 {
 #if defined(SIOCGIFADDR)
 	return this->get_ifce_address(SIOCGIFADDR, name, false, addr);
@@ -759,7 +810,7 @@ int Socket::getIfceAddress (const qse_mchar_t* name, SocketAddress* addr)
 #endif
 }
 
-int Socket::getIfceAddress (const qse_wchar_t* name, SocketAddress* addr)
+int Socket::getIfceAddress (const qse_wchar_t* name, SocketAddress* addr) QSE_CPP_NOEXCEPT
 {
 #if defined(SIOCGIFADDR)
 	return this->get_ifce_address(SIOCGIFADDR, name, true, addr);
@@ -769,7 +820,7 @@ int Socket::getIfceAddress (const qse_wchar_t* name, SocketAddress* addr)
 #endif
 }
 
-int Socket::getIfceNetmask(const qse_mchar_t* name, SocketAddress* addr)
+int Socket::getIfceNetmask(const qse_mchar_t* name, SocketAddress* addr) QSE_CPP_NOEXCEPT
 {
 #if defined(SIOCGIFNETMASK)
 	return this->get_ifce_address(SIOCGIFNETMASK, name, false, addr);
@@ -779,7 +830,7 @@ int Socket::getIfceNetmask(const qse_mchar_t* name, SocketAddress* addr)
 #endif
 }
 
-int Socket::getIfceNetmask (const qse_wchar_t* name, SocketAddress* addr)
+int Socket::getIfceNetmask (const qse_wchar_t* name, SocketAddress* addr) QSE_CPP_NOEXCEPT
 {
 #if defined(SIOCGIFNETMASK)
 	return this->get_ifce_address(SIOCGIFNETMASK, name, true, addr);
@@ -789,7 +840,7 @@ int Socket::getIfceNetmask (const qse_wchar_t* name, SocketAddress* addr)
 #endif
 }
 
-int Socket::getIfceBroadcast(const qse_mchar_t* name, SocketAddress* addr)
+int Socket::getIfceBroadcast(const qse_mchar_t* name, SocketAddress* addr) QSE_CPP_NOEXCEPT
 {
 #if defined(SIOCGIFBRDADDR)
 	return this->get_ifce_address(SIOCGIFBRDADDR, name, false, addr);
@@ -799,7 +850,7 @@ int Socket::getIfceBroadcast(const qse_mchar_t* name, SocketAddress* addr)
 #endif
 }
 
-int Socket::getIfceBroadcast (const qse_wchar_t* name, SocketAddress* addr)
+int Socket::getIfceBroadcast (const qse_wchar_t* name, SocketAddress* addr) QSE_CPP_NOEXCEPT
 {
 #if defined(SIOCGIFBRDADDR)
 	return this->get_ifce_address(SIOCGIFBRDADDR, name, true, addr);
@@ -826,7 +877,7 @@ int Socket::get_ifce_address (int cmd, const void* name, bool wchar, SocketAddre
 	}
 	else
 	{
-		qse_size_t mlen = qse_mbsxcpy (ifr.ifr_name, QSE_COUNTOF(ifr.ifr_name), (const qse_mchar_t*)name);
+		qse_size_t mlen = qse_mbsxcpy(ifr.ifr_name, QSE_COUNTOF(ifr.ifr_name), (const qse_mchar_t*)name);
 		if (((const qse_mchar_t*)name)[mlen] != QSE_MT('\0'))
 		{
 			this->setErrorCode (E_EINVAL);
@@ -840,7 +891,7 @@ int Socket::get_ifce_address (int cmd, const void* name, bool wchar, SocketAddre
 	{
 		for (struct ifaddrs* ife = ifa; ife; ife = ife->ifa_next)
 		{
-			if (qse_mbscmp (ifr.ifr_name, ife->ifa_name) != 0) continue;
+			if (qse_mbscmp(ifr.ifr_name, ife->ifa_name) != 0) continue;
 
 			struct sockaddr* sa = QSE_NULL;
 
@@ -874,7 +925,7 @@ int Socket::get_ifce_address (int cmd, const void* name, bool wchar, SocketAddre
 	}
 #endif
 
-	if (::ioctl (this->handle, cmd, &ifr) == -1) 
+	if (::ioctl(this->handle, cmd, &ifr) == -1) 
 	{
 		this->setErrorCode (syserr_to_errnum(errno));
 		return -1;
