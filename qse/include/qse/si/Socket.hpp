@@ -58,9 +58,12 @@ public:
 
 	qse_sck_hnd_t getHandle() const QSE_CPP_NOEXCEPT { return this->handle; }
 
+	// -------------------------------------------------------------------- 
+
 	int getOption (int level, int optname, void* optval, qse_sck_len_t* optlen) QSE_CPP_NOEXCEPT;
 	int setOption (int level, int optname, const void* optval, qse_sck_len_t optlen) QSE_CPP_NOEXCEPT;
 
+	// -------------------------------------------------------------------- 
 	int setDebug (int n) QSE_CPP_NOEXCEPT;
 	int setReuseAddr (int n) QSE_CPP_NOEXCEPT;
 	int setReusePort (int n) QSE_CPP_NOEXCEPT;
@@ -74,9 +77,11 @@ public:
 	int setOobInline (int n) QSE_CPP_NOEXCEPT;
 	int setIpv6Only (int n) QSE_CPP_NOEXCEPT;
 
+	// -------------------------------------------------------------------- 
 	int shutdown (int how = 2) QSE_CPP_NOEXCEPT;
 	int connect (const SocketAddress& target) QSE_CPP_NOEXCEPT;
 
+	// -------------------------------------------------------------------- 
 	int bind (const SocketAddress& target) QSE_CPP_NOEXCEPT;
 	// bind to the ip address of the interface 
 	int bindToIfceAddr (const qse_mchar_t* ifce, qse_uint16_t port) QSE_CPP_NOEXCEPT;
@@ -88,10 +93,12 @@ public:
 	// bind to the interface device
 	int bindToIfce (const qse_wchar_t* ifce) QSE_CPP_NOEXCEPT;
 
+	// -------------------------------------------------------------------- 
+
 	int listen (int backlog = 128) QSE_CPP_NOEXCEPT;
 	int accept (Socket* newsck, SocketAddress* newaddr, int traits = 0) QSE_CPP_NOEXCEPT;
 
-
+	// -------------------------------------------------------------------- 
 	// The send() functions sends data by attemping a single call to the 
 	// underlying system calls
 	qse_ssize_t send (const void* buf, qse_size_t len) QSE_CPP_NOEXCEPT;
@@ -106,14 +113,21 @@ public:
 	qse_ssize_t receive (void* buf, qse_size_t len) QSE_CPP_NOEXCEPT;
 	qse_ssize_t receive (void* buf, qse_size_t len, SocketAddress& srcaddr) QSE_CPP_NOEXCEPT;
 
-/* TODO: sendmsg, recvmsg */
+	// -------------------------------------------------------------------- 
+
 	int joinMulticastGroup (const SocketAddress& mcaddr, const SocketAddress& ifaddr) QSE_CPP_NOEXCEPT;
 	int leaveMulticastGroup (const SocketAddress& mcaddr, const SocketAddress& ifaddr) QSE_CPP_NOEXCEPT;
+
+	// -------------------------------------------------------------------- 
 
 	// utility functions to retrieve network configuration information.
 	int getIfceIndex (const qse_mchar_t* name) QSE_CPP_NOEXCEPT;
 	int getIfceIndex (const qse_wchar_t* name) QSE_CPP_NOEXCEPT;
 
+	int getIfceIndex (const qse_mchar_t* name, qse_size_t len) QSE_CPP_NOEXCEPT;
+	int getIfceIndex (const qse_wchar_t* name, qse_size_t len) QSE_CPP_NOEXCEPT;
+
+	// -------------------------------------------------------------------- 
 	// the following 6 functions are provided for backward compatibility.
 	// it is limited to a single address and they may suffer race condition.
 	// for example, you call getIfceAddress() followed by getIfceNetmask().
@@ -126,13 +140,22 @@ public:
 	int getIfceBroadcast (const qse_mchar_t* name, SocketAddress* addr) QSE_CPP_NOEXCEPT;
 	int getIfceBroadcast (const qse_wchar_t* name, SocketAddress* addr) QSE_CPP_NOEXCEPT;
 
+	int getIfceAddress (const qse_mchar_t* name, qse_size_t len, SocketAddress* addr) QSE_CPP_NOEXCEPT;
+	int getIfceAddress (const qse_wchar_t* name, qse_size_t len, SocketAddress* addr) QSE_CPP_NOEXCEPT;
+	int getIfceNetmask (const qse_mchar_t* name, qse_size_t len, SocketAddress* addr) QSE_CPP_NOEXCEPT;
+	int getIfceNetmask (const qse_wchar_t* name, qse_size_t len, SocketAddress* addr) QSE_CPP_NOEXCEPT;
+	int getIfceBroadcast (const qse_mchar_t* name, qse_size_t len, SocketAddress* addr) QSE_CPP_NOEXCEPT;
+	int getIfceBroadcast (const qse_wchar_t* name, qse_size_t len, SocketAddress* addr) QSE_CPP_NOEXCEPT;
+	// -------------------------------------------------------------------- 
+
 protected:
 	qse_sck_hnd_t handle;
 	int domain;
 	ErrorCode errcode;
 
 	void set_errcode_with_syserr (int syserr);
-	int get_ifce_address (int cmd, const void* name, bool wchar, SocketAddress* addr);
+	int get_ifce_index (const void* name, qse_size_t len, bool wchar);
+	int get_ifce_address (int cmd, const void* name, qse_size_t len, bool wchar, SocketAddress* addr);
 };
 
 
