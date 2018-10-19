@@ -741,46 +741,49 @@ int Socket::leaveMulticastGroup (const SocketAddress& mcaddr, const SocketAddres
 
 int Socket::getIfceIndex (const qse_mchar_t* name) QSE_CPP_NOEXCEPT
 {
-#if defined(SIOCGIFINDEX)
-	struct ifreq ifr;
-
-	QSE_MEMSET (&ifr, 0, QSE_SIZEOF(ifr));
-	qse_size_t mlen = qse_mbsxcpy (ifr.ifr_name, QSE_COUNTOF(ifr.ifr_name), name);
-	if (name[mlen] != QSE_MT('\0')) 
-	{
-		this->setErrorCode (E_EINVAL);
-		return -1;
-	}
-
-	if (::ioctl(this->handle, SIOCGIFINDEX, &ifr) == -1) 
-	{
-		this->setErrorCode (syserr_to_errnum(errno));
-		return -1;
-	}
-
-	#if defined(ifr_ifindex)
-	return ifr.ifr_ifindex;
-	#else
-	return ifr.ifr_index;
-	#endif
-#else
-	this->setErrorCode (E_ENOIMPL);
-	return -1;
-#endif
+	return this->get_ifce_index(name, qse_mbslen(name), false);
 }
 
 int Socket::getIfceIndex (const qse_wchar_t* name) QSE_CPP_NOEXCEPT
+{
+	return this->get_ifce_index(name, qse_wcslen(name), false);
+}
+
+int Socket::getIfceIndex (const qse_mchar_t* name, qse_size_t len) QSE_CPP_NOEXCEPT
+{
+	return this->get_ifce_index(name, len, false);
+}
+
+int Socket::getIfceIndex (const qse_wchar_t* name, qse_size_t len) QSE_CPP_NOEXCEPT
+{
+	return this->get_ifce_index(name, len, false);
+}
+
+int Socket::get_ifce_index (const void* name, qse_size_t len, bool wchar)
 {
 #if defined(SIOCGIFINDEX)
 	struct ifreq ifr;
 
 	QSE_MEMSET (&ifr, 0, QSE_SIZEOF(ifr));
 
-	qse_size_t wlen, mlen = QSE_COUNTOF(ifr.ifr_name);
-	if (qse_wcstombs(name, &wlen, ifr.ifr_name, &mlen) <= -1 || name[wlen] != QSE_WT('\0')) 
+	if (wchar)
 	{
-		this->setErrorCode (E_EINVAL);
-		return -1;
+		qse_size_t wlen = len, mlen = QSE_COUNTOF(ifr.ifr_name) - 1;
+		if (qse_wcsntombsn((const qse_wchar_t*)name, &wlen, ifr.ifr_name, &mlen) <= -1 || wlen != len)
+		{
+			this->setErrorCode (E_EINVAL);
+			return -1;
+		}
+		ifr.ifr_name[mlen] = QSE_MT('\0');
+	}
+	else
+	{
+		qse_size_t mlen = qse_mbsxncpy(ifr.ifr_name, QSE_COUNTOF(ifr.ifr_name), (const qse_mchar_t*)name, len);
+		if (mlen != len)
+		{
+			this->setErrorCode (E_EINVAL);
+			return -1;
+		}
 	}
 
 	if (::ioctl(this->handle, SIOCGIFINDEX, &ifr) == -1) 
@@ -802,69 +805,70 @@ int Socket::getIfceIndex (const qse_wchar_t* name) QSE_CPP_NOEXCEPT
 
 int Socket::getIfceAddress (const qse_mchar_t* name, SocketAddress* addr) QSE_CPP_NOEXCEPT
 {
-#if defined(SIOCGIFADDR)
-	return this->get_ifce_address(SIOCGIFADDR, name, false, addr);
-#else
-	this->setErrorCode (E_ENOIMPL);
-	return -1;
-#endif
+	return this->get_ifce_address(SIOCGIFADDR, name, qse_mbslen(name), false, addr);
 }
 
 int Socket::getIfceAddress (const qse_wchar_t* name, SocketAddress* addr) QSE_CPP_NOEXCEPT
 {
-#if defined(SIOCGIFADDR)
-	return this->get_ifce_address(SIOCGIFADDR, name, true, addr);
-#else
-	this->setErrorCode (E_ENOIMPL);
-	return -1;
-#endif
+	return this->get_ifce_address(SIOCGIFADDR, name, qse_wcslen(name), true, addr);
 }
 
 int Socket::getIfceNetmask(const qse_mchar_t* name, SocketAddress* addr) QSE_CPP_NOEXCEPT
 {
-#if defined(SIOCGIFNETMASK)
-	return this->get_ifce_address(SIOCGIFNETMASK, name, false, addr);
-#else
-	this->setErrorCode (E_ENOIMPL);
-	return -1;
-#endif
+	return this->get_ifce_address(SIOCGIFNETMASK, name, qse_mbslen(name), false, addr);
 }
 
 int Socket::getIfceNetmask (const qse_wchar_t* name, SocketAddress* addr) QSE_CPP_NOEXCEPT
 {
-#if defined(SIOCGIFNETMASK)
-	return this->get_ifce_address(SIOCGIFNETMASK, name, true, addr);
-#else
-	this->setErrorCode (E_ENOIMPL);
-	return -1;
-#endif
+	return this->get_ifce_address(SIOCGIFNETMASK, name, qse_wcslen(name), true, addr);
 }
 
 int Socket::getIfceBroadcast(const qse_mchar_t* name, SocketAddress* addr) QSE_CPP_NOEXCEPT
 {
-#if defined(SIOCGIFBRDADDR)
-	return this->get_ifce_address(SIOCGIFBRDADDR, name, false, addr);
-#else
-	this->setErrorCode (E_ENOIMPL);
-	return -1;
-#endif
+	return this->get_ifce_address(SIOCGIFBRDADDR, name, qse_mbslen(name), false, addr);
 }
 
 int Socket::getIfceBroadcast (const qse_wchar_t* name, SocketAddress* addr) QSE_CPP_NOEXCEPT
 {
-#if defined(SIOCGIFBRDADDR)
-	return this->get_ifce_address(SIOCGIFBRDADDR, name, true, addr);
-#else
-	this->setErrorCode (E_ENOIMPL);
-	return -1;
-#endif
+	return this->get_ifce_address(SIOCGIFBRDADDR, name, qse_wcslen(name), true, addr);
 }
 
-int Socket::get_ifce_address (int cmd, const void* name, bool wchar, SocketAddress* addr)
+int Socket::getIfceAddress (const qse_mchar_t* name, qse_size_t len, SocketAddress* addr) QSE_CPP_NOEXCEPT
+{
+	return this->get_ifce_address(SIOCGIFADDR, name, len, false, addr);
+}
+
+int Socket::getIfceAddress (const qse_wchar_t* name, qse_size_t len, SocketAddress* addr) QSE_CPP_NOEXCEPT
+{
+	return this->get_ifce_address(SIOCGIFADDR, name, len, true, addr);
+}
+
+int Socket::getIfceNetmask(const qse_mchar_t* name, qse_size_t len, SocketAddress* addr) QSE_CPP_NOEXCEPT
+{
+	return this->get_ifce_address(SIOCGIFNETMASK, name, len, false, addr);
+}
+
+int Socket::getIfceNetmask (const qse_wchar_t* name, qse_size_t len, SocketAddress* addr) QSE_CPP_NOEXCEPT
+{
+	return this->get_ifce_address(SIOCGIFNETMASK, name, len, true, addr);
+}
+
+int Socket::getIfceBroadcast(const qse_mchar_t* name, qse_size_t len, SocketAddress* addr) QSE_CPP_NOEXCEPT
+{
+	return this->get_ifce_address(SIOCGIFBRDADDR, name, len, false, addr);
+}
+
+int Socket::getIfceBroadcast (const qse_wchar_t* name, qse_size_t len, SocketAddress* addr) QSE_CPP_NOEXCEPT
+{
+	return this->get_ifce_address(SIOCGIFBRDADDR, name, len, true, addr);
+}
+
+int Socket::get_ifce_address (int cmd, const void* name, qse_size_t len, bool wchar, SocketAddress* addr)
 {
 	struct ifreq ifr;
 
 	QSE_MEMSET (&ifr, 0, QSE_SIZEOF(ifr));
+#if 0
 	if (wchar)
 	{
 		qse_size_t wlen, mlen = QSE_COUNTOF(ifr.ifr_name);
@@ -884,6 +888,27 @@ int Socket::get_ifce_address (int cmd, const void* name, bool wchar, SocketAddre
 			return -1;
 		}
 	}
+#else
+	if (wchar)
+	{
+		qse_size_t wlen = len, mlen = QSE_COUNTOF(ifr.ifr_name) - 1;
+		if (qse_wcsntombsn((const qse_wchar_t*)name, &wlen, ifr.ifr_name, &mlen) <= -1 || wlen != len)
+		{
+			this->setErrorCode (E_EINVAL);
+			return -1;
+		}
+		ifr.ifr_name[mlen] = QSE_MT('\0');
+	}
+	else
+	{
+		qse_size_t mlen = qse_mbsxncpy(ifr.ifr_name, QSE_COUNTOF(ifr.ifr_name), (const qse_mchar_t*)name, len);
+		if (mlen != len)
+		{
+			this->setErrorCode (E_EINVAL);
+			return -1;
+		}
+	}
+#endif
 
 #if defined(HAVE_GETIFADDRS)
 	struct ifaddrs* ifa;
