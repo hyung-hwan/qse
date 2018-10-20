@@ -33,6 +33,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 
+
 #define WID_MAP_ALIGN 128
 #define WID_MAX (wid_map_t::WID_INVALID - 1)
 
@@ -397,7 +398,7 @@ int TcpServer::start (const qse_char_t* addrs) QSE_CPP_NOEXCEPT
 
 			mux_xtn->first_time = true;
 
-			n = qse_mux_poll (this->listener_list.mux, QSE_NULL);
+			n = qse_mux_poll(this->listener_list.mux, QSE_NULL);
 			if (n <= -1)
 			{
 				this->setErrorCode (E_ESYSERR); // TODO: proper error code conversion
