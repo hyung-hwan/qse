@@ -97,6 +97,11 @@ public:
 	static int setSignalHandler (int sig, SignalHandler sighr);
 	static int unsetSignalHandler (int sig, bool ignore = false);
 
+	bool isGuardian () const
+	{
+		return this->_guarded_child_pid >= 0;
+	}
+
 	int guardProcess (const SignalSet& signals, const qse_mchar_t* proc_name = QSE_NULL);
 
 private:
