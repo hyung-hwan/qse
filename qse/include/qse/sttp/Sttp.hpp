@@ -181,6 +181,35 @@ protected:
 	int flush_outbuf () QSE_CPP_NOEXCEPT;
 };
 
+
+#if 0
+class SttpStdHandler
+{
+	int operator() (const SttpCmd& cmd)
+	{
+	}
+
+};
+
+template <class HANDLER>
+class SttpX
+{
+	int exec()
+	{
+		if (this->receiveCmd(&cmd) <= -1)
+		{
+		}
+
+		if (this->handler(&cmd) <= -1)
+		{
+		}
+	}
+
+protected:
+	HANDLER handler;
+};
+#endif
+
 QSE_END_NAMESPACE(QSE)
 
 #endif
