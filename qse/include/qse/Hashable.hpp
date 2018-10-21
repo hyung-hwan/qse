@@ -48,11 +48,29 @@ public:
 	/// A class of an hashable object must implement this function.
 	virtual qse_size_t getHashCode () const = 0;
 
-	static qse_size_t getHashCode (qse_size_t init, const qse_char_t* str)
+	static qse_size_t getHashCode (qse_size_t init, const qse_mchar_t* str)
 	{
 		qse_size_t n = init;
 
-		while (*str != QSE_T('\0'))
+		while (*str != QSE_MT('\0'))
+		{
+			n = n * 31 + *((qse_uint8_t*)str);
+			str++;
+		}
+
+		return n;
+	}
+
+	static qse_size_t getHashCode (const qse_mchar_t* str)
+	{
+		return Hashable::getHashCode(0, str);
+	}
+
+	static qse_size_t getHashCode (qse_size_t init, const qse_wchar_t* str)
+	{
+		qse_size_t n = init;
+
+		while (*str != QSE_WT('\0'))
 		{
 			const qse_uint8_t* p = (const qse_uint8_t*)str;
 			for (qse_size_t i = 0; i < QSE_SIZEOF(*str); i++)
@@ -63,9 +81,9 @@ public:
 		return n;
 	}
 
-	static qse_size_t getHashCode (const qse_char_t* str)
+	static qse_size_t getHashCode (const qse_wchar_t* str)
 	{
-		return Hashable::getHashCode (0, str);
+		return Hashable::getHashCode(0, str);
 	}
 
 	static qse_size_t getHashCode (qse_size_t init, const void* data, qse_size_t size)
@@ -98,7 +116,7 @@ public:
 	/// pointed to by \a data of the length \a size.
 	static qse_size_t getHashCode (const void* data, qse_size_t size)
 	{
-		return Hashable::getHashCode (0, data, size);
+		return Hashable::getHashCode(0, data, size);
 	}
 };
 

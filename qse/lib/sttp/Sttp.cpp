@@ -417,28 +417,37 @@ int Sttp::get_token () QSE_CPP_NOEXCEPT
 {
 	while (QSE_ISSPACE(this->sttp_curc)) GET_CHAR (); // skip spaces...
 
-	if (is_ident_char(this->sttp_curc)) return get_ident ();
-	else if (this->sttp_curc == QSE_T('\"') || this->sttp_curc == QSE_T('\'')) 
+	if (is_ident_char(this->sttp_curc)) return this->get_ident ();
+	else
 	{
-		return get_string (sttp_curc);
-	}
-	else if (this->sttp_curc == QSE_T(';')) 
-	{
-		this->token_type = T_SEMICOLON;
-		this->token_value = QSE_T(';');
-		// do not read the next character to terminate a command
-		// get_char ();
-	}
-	else if (this->sttp_curc == QSE_T(',')) 
-	{
-		this->token_type  = T_COMMA;
-		this->token_value = QSE_T(',');
-		GET_CHAR ();
-	}
-	else 
-	{
-		this->p_errcode = E_WRONGCHAR;
-		return -1;
+		switch (this->sttp_curc)
+		{
+			case QSE_T('\"'):
+			case QSE_T('\''):
+				return this->get_string(sttp_curc);
+
+			case QSE_T(';'):
+				this->token_type = T_SEMICOLON;
+				this->token_value = QSE_T(';');
+				// do not read the next character to terminate a command
+				// get_char ();
+				break;
+
+			case QSE_T(','):
+				this->token_type  = T_COMMA;
+				this->token_value = QSE_T(',');
+				GET_CHAR ();
+				break;
+
+			case QSE_CHAR_EOF:
+				this->token_type = T_EOF;
+				this->token_value = this->sttp_curc;
+				break;
+
+			default:
+				this->p_errcode = E_WRONGCHAR;
+				return -1;
+		}
 	}
 
 	return 0;

@@ -232,6 +232,7 @@ public:
 		E_EINTERN, /**< internal error */
 
 		E_ENOMEM,
+		E_NARGS,   /**< wrong number of arguments */
 		E_EINVAL,
 		E_EACCES,
 		E_EPERM,

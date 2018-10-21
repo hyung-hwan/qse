@@ -67,6 +67,11 @@ public:
 		this->name.append (n, size);
 	}
 
+	const QSE::String& getName () const
+	{
+		return this->name;
+	}
+
 	bool isNullCmd () const
 	{
 		return this->name.getSize() == 0;
