@@ -78,7 +78,7 @@ extern "C" {
 
 QSE_EXPORT qse_dhcp6_opt_hdr_t* qse_dhcp6_find_option (
 	const qse_dhcp6_pktinf_t* pkt,
-	int                          code
+	int                       code
 );
 
 #ifdef __cplusplus

@@ -75,21 +75,11 @@
 #endif
 
 
-#if defined(AF_INET)
-#	define FAMILY(x) (((struct sockaddr_in*)(x))->sin_family)
-#elif defined(AF_INET6)
-#	define FAMILY(x) (((struct sockaddr_in6*)(x))->sin6_family)
-#elif defined(AF_UNIX)
-#	define FAMILY(x) (((struct sockaddr_un*)(x))->sun_family)
-#else
-#	define FAMILY(x) (-1)
-#endif
+#define FAMILY(x) (((struct sockaddr*)(x))->sa_family)
 
-#include <stdio.h>
 /////////////////////////////////
 QSE_BEGIN_NAMESPACE(QSE)
 /////////////////////////////////
-
 
 SocketAddress::SocketAddress () QSE_CPP_NOEXCEPT
 {

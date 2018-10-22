@@ -444,7 +444,7 @@ public:
 		return this->getValueAt(0);
 	}
 
-	const T& getLast() const
+	const T& getLast () const
 	{
 		return this->getValueAt(this->getSize() - 1);
 	}
