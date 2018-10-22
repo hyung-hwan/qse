@@ -122,7 +122,7 @@ struct ifaddrmsg
 #define NLMSG_RTA(nlh,len)	((void*)((char*)(nlh)+QSE_SIZEOF(struct qse_nlmsg_hdr_t)+NETLINK_ALIGN(len)))
 #define NLMSG_RTAOK(rta,nlh)	RTA_OK(rta,NLMSG_DATAEND(nlh))
 
-static int netlink_enumerate(int fd, unsigned int seq, int type, int af, qse_nlenum_cb_t cb, void *ctx)
+static int enumerate_netlink(int fd, unsigned int seq, int type, int af, qse_nlenum_cb_t cb, void *ctx)
 {
 	struct qse_nlmsg_hdr_t *h;
 	union 
