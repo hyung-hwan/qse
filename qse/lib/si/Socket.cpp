@@ -116,9 +116,9 @@ open_socket:
 		if (traits & Socket::T_NONBLOCK) fcntl_v |= O_NONBLOCK;
 		else fcntl_v &= ~O_NONBLOCK;
 
-	#if defined(O_CLOEXEC)
-		if (traits & Socket::T_CLOEXEC) fcntl_v |= O_CLOEXEC;
-		else fcntl_v &= ~O_CLOEXEC;
+	#if defined(FD_CLOEXEC)
+		if (traits & Socket::T_CLOEXEC) fcntl_v |= FD_CLOEXEC;
+		else fcntl_v &= ~FD_CLOEXEC;
 	#endif
 
 		if (::fcntl(x, F_SETFL, fcntl_v) == -1) goto fcntl_failure;
@@ -146,7 +146,7 @@ void Socket::close () QSE_CPP_NOEXCEPT
 {
 	if (this->handle != QSE_INVALID_SCKHND)
 	{
-		qse_closesckhnd (this->handle);
+		qse_close_sck (this->handle);
 		this->handle = QSE_INVALID_SCKHND;
 		this->domain = -1;
 	}
@@ -154,16 +154,16 @@ void Socket::close () QSE_CPP_NOEXCEPT
 
 int Socket::getOption (int level, int optname, void* optval, qse_sck_len_t* optlen) QSE_CPP_NOEXCEPT
 {
-	QSE_ASSERT (this->handle != QSE_INVALID_SCKHND);
-	int n = ::getsockopt (this->handle, level, optname, (char*)optval, optlen);
+	QSE_ASSERT (qse_is_sck_valid(this->handle));
+	int n = ::getsockopt(this->handle, level, optname, (char*)optval, optlen);
 	if (n == -1) this->setErrorCode (syserr_to_errnum(errno));
 	return n;
 }
 
 int Socket::setOption (int level, int optname, const void* optval, qse_sck_len_t optlen) QSE_CPP_NOEXCEPT
 {
-	QSE_ASSERT (this->handle != QSE_INVALID_SCKHND);
-	int n = ::setsockopt (this->handle, level, optname, (const char*)optval, optlen);
+	QSE_ASSERT (qse_is_sck_valid(this->handle));
+	int n = ::setsockopt(this->handle, level, optname, (const char*)optval, optlen);
 	if (n == -1) this->setErrorCode (syserr_to_errnum(errno));
 	return n;
 }
@@ -284,7 +284,7 @@ int Socket::shutdown (int how) QSE_CPP_NOEXCEPT
 
 int Socket::connect (const SocketAddress& target) QSE_CPP_NOEXCEPT
 {
-	QSE_ASSERT (this->handle != QSE_INVALID_SCKHND);
+	QSE_ASSERT (qse_is_sck_valid(this->handle));
 
 	if (::connect(this->handle, (struct sockaddr*)target.getAddrPtr(), target.getAddrSize()) == -1)
 	{
@@ -297,7 +297,7 @@ int Socket::connect (const SocketAddress& target) QSE_CPP_NOEXCEPT
 
 int Socket::bind (const SocketAddress& target) QSE_CPP_NOEXCEPT
 {
-	QSE_ASSERT (this->handle != QSE_INVALID_SCKHND);
+	QSE_ASSERT (qse_is_sck_valid(this->handle));
 
 	if (::bind(this->handle, (struct sockaddr*)target.getAddrPtr(), target.getAddrSize()) == -1)
 	{
@@ -375,7 +375,7 @@ int Socket::bindToIfce (const qse_wchar_t* ifce) QSE_CPP_NOEXCEPT
 
 int Socket::listen (int backlog) QSE_CPP_NOEXCEPT
 {
-	QSE_ASSERT (this->handle != QSE_INVALID_SCKHND);
+	QSE_ASSERT (qse_is_sck_valid(this->handle));
 
 	if (::listen(this->handle, backlog) == -1)
 	{
@@ -391,7 +391,7 @@ int Socket::accept (Socket* newsck, SocketAddress* newaddr, int traits) QSE_CPP_
 	int newfd, flag_v;
 	qse_sklen_t addrlen;
 
-	QSE_ASSERT (this->handle != QSE_INVALID_SCKHND);
+	QSE_ASSERT (qse_is_sck_valid(this->handle));
 
 #if defined(SOCK_NONBLOCK) && defined(SOCK_CLOEXEC) && defined(HAVE_ACCEPT4)
 
@@ -440,9 +440,9 @@ int Socket::accept (Socket* newsck, SocketAddress* newaddr, int traits) QSE_CPP_
 			if (traits & Socket::T_NONBLOCK) flag_v |= O_NONBLOCK;
 			else flag_v &= ~O_NONBLOCK;
 
-		#if defined(O_CLOEXEC)
-			if (traits & Socket::T_CLOEXEC) flag_v |= O_CLOEXEC;
-			else flag_v &= ~O_CLOEXEC;
+		#if defined(FD_CLOEXEC)
+			if (traits & Socket::T_CLOEXEC) flag_v |= FD_CLOEXEC;
+			else flag_v &= ~FD_CLOEXEC;
 		#endif
 			
 			if (::fcntl(newfd, F_SETFL, flag_v) == -1) goto fcntl_failure;
@@ -456,7 +456,7 @@ accept_done:
 
 qse_ssize_t Socket::send (const void* buf, qse_size_t len) QSE_CPP_NOEXCEPT
 {
-	QSE_ASSERT (this->handle != QSE_INVALID_SCKHND);
+	QSE_ASSERT (qse_is_sck_valid(this->handle));
 
 	qse_ssize_t n = ::send(this->handle, buf, len, 0);
 	if (n == -1)
@@ -470,7 +470,7 @@ qse_ssize_t Socket::send (const void* buf, qse_size_t len) QSE_CPP_NOEXCEPT
 
 qse_ssize_t Socket::send (const void* buf, qse_size_t len, const SocketAddress& dstaddr) QSE_CPP_NOEXCEPT
 {
-	QSE_ASSERT (this->handle != QSE_INVALID_SCKHND);
+	QSE_ASSERT (qse_is_sck_valid(this->handle));
 
 	qse_ssize_t n = ::sendto(this->handle, buf, len, 0, (struct sockaddr*)dstaddr.getAddrPtr(), dstaddr.getAddrSize());
 	if (n == -1)
@@ -484,7 +484,7 @@ qse_ssize_t Socket::send (const void* buf, qse_size_t len, const SocketAddress& 
 
 int Socket::sendx (const void* buf, qse_size_t len, qse_size_t* total_sent) QSE_CPP_NOEXCEPT
 {
-	QSE_ASSERT (this->handle != QSE_INVALID_SCKHND);
+	QSE_ASSERT (qse_is_sck_valid(this->handle));
 
 	qse_size_t pos = 0;
 
@@ -507,7 +507,7 @@ int Socket::sendx (const void* buf, qse_size_t len, qse_size_t* total_sent) QSE_
 
 int Socket::sendx (const void* buf, qse_size_t len, const SocketAddress& dstaddr, qse_size_t* total_sent) QSE_CPP_NOEXCEPT
 {
-	QSE_ASSERT (this->handle != QSE_INVALID_SCKHND);
+	QSE_ASSERT (qse_is_sck_valid(this->handle));
 
 	qse_size_t pos = 0;
 
@@ -530,7 +530,7 @@ int Socket::sendx (const void* buf, qse_size_t len, const SocketAddress& dstaddr
 
 int Socket::sendx (qse_ioptl_t* iov, int count, qse_size_t* total_sent) QSE_CPP_NOEXCEPT
 {
-	QSE_ASSERT (this->handle != QSE_INVALID_SCKHND);
+	QSE_ASSERT (qse_is_sck_valid(this->handle));
 
 #if defined(HAVE_SENDMSG) || defined(HAVE_WRITEV)
 	int index = 0;
@@ -629,7 +629,7 @@ int Socket::sendx (qse_ioptl_t* iov, int count, qse_size_t* total_sent) QSE_CPP_
 
 qse_ssize_t Socket::receive (void* buf, qse_size_t len) QSE_CPP_NOEXCEPT
 {
-	QSE_ASSERT (this->handle != QSE_INVALID_SCKHND);
+	QSE_ASSERT (qse_is_sck_valid(this->handle));
 
 	qse_ssize_t n = ::recv(this->handle, buf, len, 0);
 	if (n == -1)
@@ -643,7 +643,7 @@ qse_ssize_t Socket::receive (void* buf, qse_size_t len) QSE_CPP_NOEXCEPT
 
 qse_ssize_t Socket::receive (void* buf, qse_size_t len, SocketAddress& srcaddr) QSE_CPP_NOEXCEPT
 {
-	QSE_ASSERT (this->handle != QSE_INVALID_SCKHND);
+	QSE_ASSERT (qse_is_sck_valid(this->handle));
 
 	qse_sklen_t addrlen = srcaddr.getAddrCapa();
 	qse_ssize_t n = ::recvfrom(this->handle, buf, len, 0, (struct sockaddr*)srcaddr.getAddrPtr(), &addrlen);
@@ -868,27 +868,6 @@ int Socket::get_ifce_address (int cmd, const void* name, qse_size_t len, bool wc
 	struct ifreq ifr;
 
 	QSE_MEMSET (&ifr, 0, QSE_SIZEOF(ifr));
-#if 0
-	if (wchar)
-	{
-		qse_size_t wlen, mlen = QSE_COUNTOF(ifr.ifr_name);
-		if (qse_wcstombs((const qse_wchar_t*)name, &wlen, ifr.ifr_name, &mlen) <= -1 || 
-		    ((const qse_wchar_t*)name)[wlen] != QSE_WT('\0')) 
-		{
-			this->setErrorCode (E_EINVAL);
-			return -1;
-		}
-	}
-	else
-	{
-		qse_size_t mlen = qse_mbsxcpy(ifr.ifr_name, QSE_COUNTOF(ifr.ifr_name), (const qse_mchar_t*)name);
-		if (((const qse_mchar_t*)name)[mlen] != QSE_MT('\0'))
-		{
-			this->setErrorCode (E_EINVAL);
-			return -1;
-		}
-	}
-#else
 	if (wchar)
 	{
 		qse_size_t wlen = len, mlen = QSE_COUNTOF(ifr.ifr_name) - 1;
@@ -908,7 +887,6 @@ int Socket::get_ifce_address (int cmd, const void* name, qse_size_t len, bool wc
 			return -1;
 		}
 	}
-#endif
 
 #if defined(HAVE_GETIFADDRS)
 	struct ifaddrs* ifa;

@@ -893,6 +893,13 @@ int qse_fio_init (
 			fio->errnum = syserr_to_errnum (errno);
 			return -1;
 		}
+		else
+		{
+		#if !defined(O_CLOEXEC) && defined(FD_CLOEXEC)
+			int flag = fcntl(handle, F_GETFD);
+			if (flag >= 0) fcntl (handle, F_SETFD, flag | FD_CLOEXEC);
+		#endif
+		}
 
 		/* set some file access hints */
 	#if defined(POSIX_FADV_RANDOM)

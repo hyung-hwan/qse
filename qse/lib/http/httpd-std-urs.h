@@ -141,7 +141,7 @@ static int urs_open (qse_httpd_t* httpd, qse_httpd_urs_t* urs)
 	urs->handle[2] = open_client_socket (httpd, AF_UNIX, type, 0);
 #endif
 
-	if (qse_isvalidsckhnd(urs->handle[2]))
+	if (qse_is_sck_valid(urs->handle[2]))
 	{
 	#if defined(AF_UNIX)
 		qse_ntime_t now;
@@ -160,15 +160,15 @@ static int urs_open (qse_httpd_t* httpd, qse_httpd_urs_t* urs)
 		if (bind (urs->handle[2], (struct sockaddr*)&dc->unix_bind_addr, QSE_SIZEOF(dc->unix_bind_addr)) <= -1)
 		{
 			qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
-			qse_closesckhnd (urs->handle[2]);
+			qse_close_sck (urs->handle[2]);
 			urs->handle[2] = QSE_INVALID_SCKHND;
 		}
 	#endif
 	}
 
-	if (!qse_isvalidsckhnd(urs->handle[0]) && 
-	    !qse_isvalidsckhnd(urs->handle[1]) &&
-	    !qse_isvalidsckhnd(urs->handle[2]))
+	if (!qse_is_sck_valid(urs->handle[0]) && 
+	    !qse_is_sck_valid(urs->handle[1]) &&
+	    !qse_is_sck_valid(urs->handle[2]))
 	{
 		/* don't set the error number here.
 		 * open_client_socket() or bind() above should set the error number */
@@ -207,26 +207,26 @@ static int urs_open (qse_httpd_t* httpd, qse_httpd_urs_t* urs)
 	if (proto == IPPROTO_SCTP)
 	{
 /* TODO: error handling */
-		if (qse_isvalidsckhnd(urs->handle[0])) listen (urs->handle[0], 99);
-		if (qse_isvalidsckhnd(urs->handle[1])) listen (urs->handle[1], 99);
+		if (qse_is_sck_valid(urs->handle[0])) listen (urs->handle[0], 99);
+		if (qse_is_sck_valid(urs->handle[1])) listen (urs->handle[1], 99);
 		/* handle[2] is a unix socket. no special handling for SCTP */
 	}
 #endif
 
 	urs->handle_count = 3;
-	if (qse_isvalidsckhnd(urs->handle[0])) urs->handle_mask |= (1 << 0);
-	if (qse_isvalidsckhnd(urs->handle[1])) urs->handle_mask |= (1 << 1);
-	if (qse_isvalidsckhnd(urs->handle[2])) urs->handle_mask |= (1 << 2);
+	if (qse_is_sck_valid(urs->handle[0])) urs->handle_mask |= (1 << 0);
+	if (qse_is_sck_valid(urs->handle[1])) urs->handle_mask |= (1 << 1);
+	if (qse_is_sck_valid(urs->handle[2])) urs->handle_mask |= (1 << 2);
 
 	urs->ctx = dc;
 	return 0;
 
 oops:
-	if (qse_isvalidsckhnd(urs->handle[0])) qse_closesckhnd (urs->handle[0]);
-	if (qse_isvalidsckhnd(urs->handle[1])) qse_closesckhnd (urs->handle[1]);
-	if (qse_isvalidsckhnd(urs->handle[2])) 
+	if (qse_is_sck_valid(urs->handle[0])) qse_close_sck (urs->handle[0]);
+	if (qse_is_sck_valid(urs->handle[1])) qse_close_sck (urs->handle[1]);
+	if (qse_is_sck_valid(urs->handle[2])) 
 	{
-		qse_closesckhnd (urs->handle[2]);
+		qse_close_sck (urs->handle[2]);
 	#if defined(AF_UNIX)
 		QSE_UNLINK (dc->unix_bind_addr.sun_path);
 	#endif
@@ -264,11 +264,11 @@ static void urs_close (qse_httpd_t* httpd, qse_httpd_urs_t* urs)
 
 	QSE_ASSERT (dc->req_count == 0);
 
-	if (qse_isvalidsckhnd(urs->handle[0])) qse_closesckhnd (urs->handle[0]);
-	if (qse_isvalidsckhnd(urs->handle[1])) qse_closesckhnd (urs->handle[1]);
-	if (qse_isvalidsckhnd(urs->handle[2])) 
+	if (qse_is_sck_valid(urs->handle[0])) qse_close_sck (urs->handle[0]);
+	if (qse_is_sck_valid(urs->handle[1])) qse_close_sck (urs->handle[1]);
+	if (qse_is_sck_valid(urs->handle[2])) 
 	{
-		qse_closesckhnd (urs->handle[2]);
+		qse_close_sck (urs->handle[2]);
 	#if defined(AF_UNIX)
 		QSE_UNLINK (dc->unix_bind_addr.sun_path);
 	#endif

@@ -62,43 +62,48 @@
 	typedef int qse_sck_len_t;
 #endif
 
-enum qse_shutsckhnd_how_t
+enum qse_shut_sck_how_t
 {
 	QSE_SHUTSCKHND_R  = 0,
 	QSE_SHUTSCKHND_W  = 1,
 	QSE_SHUTSCKHND_RW = 2
 };
-typedef enum qse_shutsckhnd_how_t qse_shutsckhnd_how_t;
+typedef enum qse_shut_sck_how_t qse_shut_sck_how_t;
 
 #if defined(__cplusplus)
 extern "C" {
 #endif
 
-QSE_EXPORT int qse_isvalidsckhnd (
+QSE_EXPORT int qse_is_sck_valid (
 	qse_sck_hnd_t handle
 );
 
-QSE_EXPORT void qse_closesckhnd (
+QSE_EXPORT void qse_close_sck (
 	qse_sck_hnd_t handle
 );
 
 
-QSE_EXPORT void qse_shutsckhnd (
-	qse_sck_hnd_t        handle,
-	qse_shutsckhnd_how_t how
+QSE_EXPORT void qse_shut_sck (
+	qse_sck_hnd_t      handle,
+	qse_shut_sck_how_t how
 );
 
-QSE_EXPORT int qse_setscknonblock (
+QSE_EXPORT int qse_set_sck_nonblock (
 	qse_sck_hnd_t handle,
 	int           enabled
 );
 
-QSE_EXPORT int qse_initsckconn (
+QSE_EXPORT int qse_set_sck_cloexec (
+	qse_sck_hnd_t handle,
+	int           enabled
+);
+
+QSE_EXPORT int qse_init_sck_conn (
 	qse_sck_hnd_t     handle,
 	const qse_nwad_t* nwad
 );
 
-QSE_EXPORT int qse_finisckconn (
+QSE_EXPORT int qse_fini_sck_conn (
 	qse_sck_hnd_t handle
 );
 
