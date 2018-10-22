@@ -13,6 +13,7 @@ pkginclude_HEADERS = \
 	log.h \
 	mtx.h \
 	mux.h \
+	netlink.h \
 	nwad.h \
 	nwif.h \
 	nwio.h  \

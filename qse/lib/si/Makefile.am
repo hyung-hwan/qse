@@ -30,6 +30,7 @@ libqsesi_la_SOURCES =  \
 	log.c \
 	mtx.c \
 	mux.c \
+	netlink.c \
 	nwad.c \
 	nwad-skad.c \
 	nwif.c \
