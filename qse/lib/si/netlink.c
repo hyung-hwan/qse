@@ -182,7 +182,7 @@ int qse_nlenum_route (int link_af, int addr_af, qse_nlenum_cb_t cb, void *ctx)
 #endif
 
 	rc = enumerate_netlink(fd, 1, RTM_GETLINK, link_af, cb, ctx);
-	if (rc >= 0) rc = netlink_enumerate(fd, 2, RTM_GETADDR, addr_af, cb, ctx);
+	if (rc >= 0) rc = enumerate_netlink(fd, 2, RTM_GETADDR, addr_af, cb, ctx);
 
 	qse_close_sck (fd);
 	return rc;
