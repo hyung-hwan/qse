@@ -1053,7 +1053,7 @@ int qse_nwio_init (
 				goto oops;
 			}
 
-			qse_closesckhnd (nwio->handle); /* close the listening socket */
+			qse_close_sck (nwio->handle); /* close the listening socket */
 			nwio->handle = handle; /* set the handle to the accepted socket */
 		}
 		else if (flags & QSE_NWIO_UDP)
@@ -1150,7 +1150,7 @@ oops:
 		nwio->tio = QSE_NULL;
 	}
 
-	if (qse_isvalidsckhnd(nwio->handle)) qse_closesckhnd (nwio->handle);
+	if (qse_is_sck_valid(nwio->handle)) qse_close_sck (nwio->handle);
 	return -1;
 }
 
@@ -1164,7 +1164,7 @@ void qse_nwio_fini (qse_nwio_t* nwio)
 		nwio->tio = QSE_NULL;
 	}
 
-	qse_closesckhnd (nwio->handle);
+	qse_close_sck (nwio->handle);
 }
 
 qse_mmgr_t* qse_nwio_getmmgr (qse_nwio_t* nwio)

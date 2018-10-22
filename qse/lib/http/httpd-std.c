@@ -830,7 +830,7 @@ static qse_sck_hnd_t open_client_socket (qse_httpd_t* httpd, int domain, int typ
 	int flag;
 
 	fd = socket (domain, type, proto);
-	if (!qse_isvalidsckhnd(fd)) 
+	if (!qse_is_sck_valid(fd)) 
 	{
 		qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
 		goto oops;
@@ -871,7 +871,7 @@ static qse_sck_hnd_t open_client_socket (qse_httpd_t* httpd, int domain, int typ
 	#endif
  	*/
 
-	if (qse_setscknonblock (fd, 1) <= -1)
+	if (qse_set_sck_nonblock (fd, 1) <= -1)
 	{
 		qse_httpd_seterrnum (httpd, QSE_HTTPD_ESYSERR);
 		goto oops;
@@ -912,7 +912,7 @@ static qse_sck_hnd_t open_client_socket (qse_httpd_t* httpd, int domain, int typ
 	return fd;
 
 oops:
-	if (qse_isvalidsckhnd(fd)) qse_closesckhnd (fd);
+	if (qse_is_sck_valid(fd)) qse_close_sck (fd);
 	return QSE_INVALID_SCKHND;
 }
 
@@ -933,7 +933,7 @@ static int server_open (qse_httpd_t* httpd, qse_httpd_server_t* server)
 	}
 
 	fd = socket (qse_skadfamily(&addr), SOCK_STREAM, IPPROTO_TCP);
-	if (!qse_isvalidsckhnd(fd)) 
+	if (!qse_is_sck_valid(fd)) 
 	{
 		qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
 		goto oops;
@@ -1078,7 +1078,7 @@ bind_ok:
 		goto oops;
 	}
 
-	if (qse_setscknonblock (fd, 1) <= -1) 
+	if (qse_set_sck_nonblock (fd, 1) <= -1) 
 	{
 		qse_httpd_seterrnum (httpd, QSE_HTTPD_ESYSERR);
 		goto oops;
@@ -1088,13 +1088,13 @@ bind_ok:
 	return 0;
 
 oops:
-	if (qse_isvalidsckhnd(fd)) qse_closesckhnd (fd);
+	if (qse_is_sck_valid(fd)) qse_close_sck (fd);
 	return -1;
 }
 
 static void server_close (qse_httpd_t* httpd, qse_httpd_server_t* server)
 {
-	qse_closesckhnd (server->handle);
+	qse_close_sck (server->handle);
 }
 
 static int server_accept (
@@ -1107,7 +1107,7 @@ static int server_accept (
 
 	addrlen = QSE_SIZEOF(addr);
 	fd = accept (server->handle, (struct sockaddr*)&addr, &addrlen);
-	if (!qse_isvalidsckhnd(fd)) 
+	if (!qse_is_sck_valid(fd)) 
 	{
 		qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
 		goto oops;
@@ -1128,7 +1128,7 @@ static int server_accept (
 	if (flag >= 0) fcntl (fd, F_SETFD, flag | FD_CLOEXEC);
 	#endif
 
-	if (qse_setscknonblock (fd, 1) <= -1) 
+	if (qse_set_sck_nonblock (fd, 1) <= -1) 
 	{
 		qse_httpd_seterrnum (httpd, QSE_HTTPD_ESYSERR);
 		goto oops;
@@ -1194,7 +1194,7 @@ static int server_accept (
 	return 0;
 
 oops:
-	if (qse_isvalidsckhnd(fd)) qse_closesckhnd (fd);
+	if (qse_is_sck_valid(fd)) qse_close_sck (fd);
 	return -1;
 }
 
@@ -1202,13 +1202,13 @@ oops:
 
 static void client_close (qse_httpd_t* httpd, qse_httpd_client_t* client)
 {
-	qse_shutsckhnd (client->handle, QSE_SHUTSCKHND_RW);
-	qse_closesckhnd (client->handle);
+	qse_shut_sck (client->handle, QSE_SHUTSCKHND_RW);
+	qse_close_sck (client->handle);
 }
 
 static void client_shutdown (qse_httpd_t* httpd, qse_httpd_client_t* client)
 {
-	qse_shutsckhnd (client->handle, QSE_SHUTSCKHND_RW);
+	qse_shut_sck (client->handle, QSE_SHUTSCKHND_RW);
 }
 
 static qse_ssize_t client_recv (
@@ -1424,7 +1424,7 @@ static int peer_open (qse_httpd_t* httpd, qse_httpd_peer_t* peer)
 	bindaddrsize = qse_nwadtoskad (&peer->local, &bindaddr);
 
 	fd = socket (qse_skadfamily(&connaddr), SOCK_STREAM, IPPROTO_TCP);
-	if (!qse_isvalidsckhnd(fd)) 
+	if (!qse_is_sck_valid(fd)) 
 	{
 		qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
 		goto oops;
@@ -1456,7 +1456,7 @@ static int peer_open (qse_httpd_t* httpd, qse_httpd_peer_t* peer)
 	if (flag >= 0) fcntl (fd, F_SETFD, flag | FD_CLOEXEC);
 	#endif
 
-	if (qse_setscknonblock (fd, 1) <= -1) 
+	if (qse_set_sck_nonblock (fd, 1) <= -1) 
 	{
 		qse_httpd_seterrnum (httpd, QSE_HTTPD_ESYSERR);
 		goto oops;
@@ -1561,7 +1561,7 @@ oops:
 #if defined(USE_SSL)
 	if (ssl) SSL_free (ssl);
 #endif
-	if (qse_isvalidsckhnd(fd)) qse_closesckhnd (fd);
+	if (qse_is_sck_valid(fd)) qse_close_sck (fd);
 	return -1;
 
 	/* -------------------------------------------------------------------- */
@@ -1575,7 +1575,7 @@ static void peer_close (qse_httpd_t* httpd, qse_httpd_peer_t* peer)
 		SSL_free (HANDLE_TO_SSL(peer->handle2));
 	#endif
 	}
-	qse_closesckhnd (peer->handle);
+	qse_close_sck (peer->handle);
 }
 
 static int is_peer_socket_connected (qse_httpd_t* httpd, qse_httpd_peer_t* peer)

@@ -271,11 +271,11 @@ int TcpServer::setup_listeners (const qse_char_t* addrs) QSE_CPP_NOEXCEPT
 		goto oops;
 	}
 
-#if defined(O_CLOEXEC)
+#if defined(FD_CLOEXEC)
 	fcv = ::fcntl(pfd[0], F_GETFD, 0);
-	if (fcv >= 0) ::fcntl(pfd[0], F_SETFD, fcv | O_CLOEXEC);
+	if (fcv >= 0) ::fcntl(pfd[0], F_SETFD, fcv | FD_CLOEXEC);
 	fcv = ::fcntl(pfd[1], F_GETFD, 0);
-	if (fcv >= 0) ::fcntl(pfd[1], F_SETFD, fcv | O_CLOEXEC);
+	if (fcv >= 0) ::fcntl(pfd[1], F_SETFD, fcv | FD_CLOEXEC);
 #endif
 #if defined(O_NONBLOCK)
 	fcv = ::fcntl(pfd[0], F_GETFL, 0);

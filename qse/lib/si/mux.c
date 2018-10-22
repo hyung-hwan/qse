@@ -314,9 +314,9 @@ int qse_mux_init (
 #elif defined(USE_KQUEUE)
 
 	#if defined(HAVE_KQUEUE1) && defined(O_CLOEXEC)
-	mux->kq = kqueue1 (O_CLOEXEC);
+	mux->kq = kqueue1(O_CLOEXEC);
 	#else
-	mux->kq = kqueue ();
+	mux->kq = kqueue();
 	#endif
 	if (mux->kq <= -1)
 	{
@@ -328,16 +328,16 @@ int qse_mux_init (
 	/* nothing to do */
 	#elif defined(FD_CLOEXEC)
 	{
-		int flag = fcntl (mux->kq, F_GETFD);
+		int flag = fcntl(mux->kq, F_GETFD);
 		if (flag >= 0) fcntl (mux->kq, F_SETFD, flag | FD_CLOEXEC);
 	}
 	#endif
 
 #elif defined(USE_EPOLL) 
 	#if defined(HAVE_EPOLL_CREATE1) && defined(O_CLOEXEC)
-	mux->fd = epoll_create1 (O_CLOEXEC);
+	mux->fd = epoll_create1(O_CLOEXEC);
 	#else
-	mux->fd = epoll_create (capahint);
+	mux->fd = epoll_create(capahint);
 	#endif
 	if (mux->fd <= -1) 
 	{
@@ -349,7 +349,7 @@ int qse_mux_init (
 	/* nothing to do */
 	#elif defined(FD_CLOEXEC)
 	{
-		int flag = fcntl (mux->fd, F_GETFD);
+		int flag = fcntl(mux->fd, F_GETFD);
 		if (flag >= 0) fcntl (mux->fd, F_SETFD, flag | FD_CLOEXEC);
 	}
 	#endif

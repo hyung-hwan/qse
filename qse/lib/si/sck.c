@@ -76,7 +76,7 @@
 #	define SHUT_RDWR 2
 #endif
 
-QSE_INLINE int qse_isvalidsckhnd (qse_sck_hnd_t handle)
+QSE_INLINE int qse_is_sck_valid (qse_sck_hnd_t handle)
 {
 #if defined(_WIN32)
 	return handle != QSE_INVALID_SCKHND;
@@ -95,7 +95,7 @@ QSE_INLINE int qse_isvalidsckhnd (qse_sck_hnd_t handle)
 #endif
 }
 
-QSE_INLINE void qse_closesckhnd (qse_sck_hnd_t handle)
+QSE_INLINE void qse_close_sck (qse_sck_hnd_t handle)
 {
 #if defined(_WIN32)
 	closesocket (handle);
@@ -114,7 +114,7 @@ QSE_INLINE void qse_closesckhnd (qse_sck_hnd_t handle)
 #endif
 }
 
-QSE_INLINE void qse_shutsckhnd (qse_sck_hnd_t handle, qse_shutsckhnd_how_t how)
+QSE_INLINE void qse_shut_sck (qse_sck_hnd_t handle, qse_shut_sck_how_t how)
 {
 	static int how_v[] = { SHUT_RD, SHUT_WR, SHUT_RDWR };
 
@@ -148,7 +148,7 @@ QSE_INLINE void qse_shutsckhnd (qse_sck_hnd_t handle, qse_shutsckhnd_how_t how)
 #endif
 }
 
-int qse_setscknonblock (qse_sck_hnd_t handle, int enabled)
+int qse_set_sck_nonblock (qse_sck_hnd_t handle, int enabled)
 {
 #if defined(_WIN32)
 	if (ioctlsocket (handle, FIONBIO, &enabled) == SOCKET_ERROR) return -1;
@@ -166,18 +166,38 @@ int qse_setscknonblock (qse_sck_hnd_t handle, int enabled)
 
 #elif defined(O_NONBLOCK)
 
-	int flag = fcntl (handle, F_GETFL);
-	if (flag >= 0) flag = fcntl (handle, F_SETFL, (enabled? (flag | O_NONBLOCK): (flag & ~O_NONBLOCK)));
+	int flag = fcntl(handle, F_GETFL);
+	if (flag >= 0) flag = fcntl(handle, F_SETFL, (enabled? (flag | O_NONBLOCK): (flag & ~O_NONBLOCK)));
 	if (flag <= -1) return -1;
 	return 0;
 
 #else
-
 	return -1;
 #endif
 }
 
-int qse_initsckconn (qse_sck_hnd_t handle, const qse_nwad_t* nwad)
+int qse_set_sck_cloexec (qse_sck_hnd_t handle, int enabled)
+{
+#if defined(_WIN32)
+	return -1;
+
+#elif defined(__OS2__)
+	return -1;
+
+#elif defined(__DOS__)
+	return -1;
+
+#elif defined(FD_CLOEXEC)
+	int flag = fcntl(handle, F_GETFL);
+	if (flag >= 0) flag = fcntl(handle, F_SETFL, (enabled? (flag | FD_CLOEXEC): (flag & ~FD_CLOEXEC)));
+	if (flag <= -1) return -1;
+	return 0;
+#else
+	return -1;
+#endif
+}
+
+int qse_init_sck_conn (qse_sck_hnd_t handle, const qse_nwad_t* nwad)
 {
 	int n;
 #if defined(_WIN32)
@@ -203,7 +223,7 @@ int qse_initsckconn (qse_sck_hnd_t handle, const qse_nwad_t* nwad)
 	}
 
 	/* attempt to connet */
-	n = connect (handle, (struct sockaddr*)&skad, skadlen);
+	n = connect(handle, (struct sockaddr*)&skad, skadlen);
 	if (n == -1 && WSAGetLastError() != WSAEWOULDBLOCK) 
 	{
 		/* attempt to restore to the blocking mode upon failure.
@@ -233,12 +253,12 @@ int qse_initsckconn (qse_sck_hnd_t handle, const qse_nwad_t* nwad)
 	/* switch to the non-blocking mode */
 	saved = fcntl (handle, F_GETFL, 0);
 	if (saved == -1) return -1;
-	if (fcntl (handle, F_SETFL, saved | O_NONBLOCK) == -1) return -1;
+	if (fcntl(handle, F_SETFL, saved | O_NONBLOCK) == -1) return -1;
 
 	/* attempt to connet */
 	do 
 	{
-		n = connect (handle, (struct sockaddr*)&skad, skadlen);
+		n = connect(handle, (struct sockaddr*)&skad, skadlen);
 	}
 	while (n == -1 && errno == EINTR);
 
@@ -253,7 +273,7 @@ int qse_initsckconn (qse_sck_hnd_t handle, const qse_nwad_t* nwad)
 	return (n == 0)? 1: 0; /* 1: connected, 0: in progress */
 }
 
-int qse_finisckconn (qse_sck_hnd_t handle)
+int qse_fini_sck_conn (qse_sck_hnd_t handle)
 {
 	int ret;
 	qse_sck_len_t len;
@@ -275,7 +295,7 @@ int qse_finisckconn (qse_sck_hnd_t handle)
 	else if (ret == EINPROGRESS) 
 #endif
 	{
-		return 0; /* in preogress */
+		return 0; /* in progress */
 	}
 	else if (ret != 0) 
 	{

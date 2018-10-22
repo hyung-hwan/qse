@@ -1,12 +1,38 @@
+/*
+ * $Id$
+ *
+    Copyright (c) 2006-2014 Chung, Hyung-Hwan. All rights reserved.
+
+    Redistribution and use in source and binary forms, with or without
+    modification, are permitted provided that the following conditions
+    are met:
+    1. Redistributions of source code must retain the above copyright
+       notice, this list of conditions and the following disclaimer.
+    2. Redistributions in binary form must reproduce the above copyright
+       notice, this list of conditions and the following disclaimer in the
+       documentation and/or other materials provided with the distribution.
+
+    THIS SOFTWARE IS PROVIDED BY THE AUTHOR "AS IS" AND ANY EXPRESS OR
+    IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+    OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+    IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+    INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+    NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+    DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+    THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+    (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+    THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+
 /* copied from musl */
 
 #include <qse/si/netlink.h>
+#include <qse/si/sck.h>
 #include "../cmn/mem-prv.h"
-#include "../cmn/syscall.h"
 
 #include <errno.h>
 #include <string.h>
-#include <syscall.h>
 #include <sys/socket.h>
 
 /* linux/netlink.h */
@@ -36,23 +62,23 @@
 
 struct rtattr 
 {
-	unsigned short	rta_len;
-	unsigned short	rta_type;
+	unsigned short int rta_len;
+	unsigned short int rta_type;
 };
 
 struct rtgenmsg 
 {
-	unsigned char	rtgen_family;
+	unsigned char rtgen_family;
 };
 
 struct ifinfomsg 
 {
-	unsigned char	ifi_family;
-	unsigned char	__ifi_pad;
-	unsigned short	ifi_type;
-	int		ifi_index;
-	unsigned	ifi_flags;
-	unsigned	ifi_change;
+	unsigned char ifi_family;
+	unsigned char __ifi_pad;
+	unsigned short int ifi_type;
+	int ifi_index;
+	unsigned int ifi_flags;
+	unsigned int ifi_change;
 };
 
 /* linux/if_link.h */
@@ -66,17 +92,17 @@ struct ifinfomsg
 
 struct ifaddrmsg 
 {
-	qse_uint8_t		ifa_family;
-	qse_uint8_t		ifa_prefixlen;
-	qse_uint8_t		ifa_flags;
-	qse_uint8_t		ifa_scope;
-	qse_uint32_t	ifa_index;
+	qse_uint8_t ifa_family;
+	qse_uint8_t ifa_prefixlen;
+	qse_uint8_t ifa_flags;
+	qse_uint8_t ifa_scope;
+	qse_uint32_t ifa_index;
 };
 
-#define IFA_ADDRESS	1
-#define IFA_LOCAL	2
-#define IFA_LABEL	3
-#define IFA_BROADCAST	4
+#define IFA_ADDRESS   1
+#define IFA_LOCAL     2
+#define IFA_LABEL     3
+#define IFA_BROADCAST 4
 
 /* musl */
 
@@ -96,12 +122,12 @@ struct ifaddrmsg
 #define NLMSG_RTA(nlh,len)	((void*)((char*)(nlh)+QSE_SIZEOF(struct qse_nlmsg_hdr_t)+NETLINK_ALIGN(len)))
 #define NLMSG_RTAOK(rta,nlh)	RTA_OK(rta,NLMSG_DATAEND(nlh))
 
-int qse_nlenum(int fd, unsigned int seq, int type, int af, qse_nlenum_cb_t cb, void *ctx)
+static int netlink_enumerate(int fd, unsigned int seq, int type, int af, qse_nlenum_cb_t cb, void *ctx)
 {
 	struct qse_nlmsg_hdr_t *h;
 	union 
 	{
-		qse_uint8_t buf[8192];
+		qse_uint8_t buf[8192]; /* TODO: is this large enough? */
 		struct 
 		{
 			struct qse_nlmsg_hdr_t nlh;
@@ -109,7 +135,7 @@ int qse_nlenum(int fd, unsigned int seq, int type, int af, qse_nlenum_cb_t cb, v
 		} req;
 		struct qse_nlmsg_hdr_t reply;
 	} u;
-	int r, ret;
+	int r;
 
 	QSE_MEMSET(&u.req, 0, QSE_SIZEOF(u.req));
 	u.req.nlh.nlmsg_len = QSE_SIZEOF(u.req);
@@ -118,7 +144,7 @@ int qse_nlenum(int fd, unsigned int seq, int type, int af, qse_nlenum_cb_t cb, v
 	u.req.nlh.nlmsg_seq = seq;
 	u.req.g.rtgen_family = af;
 	r = send(fd, &u.req, QSE_SIZEOF(u.req), 0);
-	if (r < 0) return r;
+	if (r == -1) return -1;
 
 	while (1) 
 	{
@@ -129,24 +155,37 @@ int qse_nlenum(int fd, unsigned int seq, int type, int af, qse_nlenum_cb_t cb, v
 		{
 			if (h->nlmsg_type == NLMSG_DONE) return 0;
 			if (h->nlmsg_type == NLMSG_ERROR) return -1;
-			ret = cb(h, ctx);
-			if (ret) return ret;
+			if (cb(h, ctx) <= -1) return -1;
 		}
 	}
+
+	return 0;
 }
 
 int qse_nlenum_route (int link_af, int addr_af, qse_nlenum_cb_t cb, void *ctx)
 {
-	int fd, r;
+	int fd, rc;
 
+#if defined(SOCK_CLOEXEC)
 	fd = socket(PF_NETLINK, SOCK_RAW | SOCK_CLOEXEC, NETLINK_ROUTE);
 	if (fd <= -1) return -1;
+#else
+	fd = socket(PF_NETLINK, SOCK_RAW, NETLINK_ROUTE);
+	if (fd <= -1) return -1;
+	else
+	{
+	#if defined(FD_CLOEXEC)
+		int flag = fcntl(fd, F_GETFD);
+		if (flag >= 0) fcntl (fd, F_SETFD, flag | FD_CLOEXEC);
+	#endif
+	}
+#endif
 
-	r = qse_nlenum(fd, 1, RTM_GETLINK, link_af, cb, ctx);
-	if (!r) r = qse_nlenum(fd, 2, RTM_GETADDR, addr_af, cb, ctx);
+	rc = enumerate_netlink(fd, 1, RTM_GETLINK, link_af, cb, ctx);
+	if (rc >= 0) rc = netlink_enumerate(fd, 2, RTM_GETADDR, addr_af, cb, ctx);
 
-	QSE_CLOSE (fd);
-	return r;
+	qse_close_sck (fd);
+	return rc;
 }
 
 #if 0
@@ -159,7 +198,7 @@ int qse_nlenum_route (int link_af, int addr_af, qse_nlenum_cb_t cb, void *ctx)
 #include <syscall.h>
 #include <net/if.h>
 #include <netinet/in.h>
-#include "netlink.h"
+
 
 #define IFADDRS_HASH_SIZE 64
 
@@ -169,9 +208,9 @@ int qse_nlenum_route (int link_af, int addr_af, qse_nlenum_cb_t cb, void *ctx)
  * to extend ssl_addr - callers should be able to still use it. */
 struct sockaddr_ll_hack 
 {
-	unsigned short sll_family, sll_protocol;
+	unsigned short int sll_family, sll_protocol;
 	int sll_ifindex;
-	unsigned short sll_hatype;
+	unsigned short int sll_hatype;
 	unsigned char sll_pkttype, sll_halen;
 	unsigned char sll_addr[24];
 };
@@ -195,9 +234,9 @@ struct ifaddrs_storage
 
 struct ifaddrs_ctx 
 {
-	struct ifaddrs_storage *first;
-	struct ifaddrs_storage *last;
-	struct ifaddrs_storage *hash[IFADDRS_HASH_SIZE];
+	struct ifaddrs_storage* first;
+	struct ifaddrs_storage* last;
+	struct ifaddrs_storage* hash[IFADDRS_HASH_SIZE];
 };
 
 void freeifaddrs(struct ifaddrs *ifp)
@@ -247,7 +286,7 @@ static void gen_netmask(struct sockaddr **r, int af, union sockany *sa, int pref
 	copy_addr(r, af, sa, addr, sizeof(addr), 0);
 }
 
-static void copy_lladdr(struct sockaddr **r, union sockany *sa, void *addr, size_t addrlen, int ifindex, unsigned short hatype)
+static void copy_lladdr(struct sockaddr **r, union sockany *sa, void *addr, size_t addrlen, int ifindex, unsigned short int hatype)
 {
 	if (addrlen > sizeof(sa->ll.sll_addr)) return;
 	sa->ll.sll_family = AF_PACKET;
@@ -258,36 +297,43 @@ static void copy_lladdr(struct sockaddr **r, union sockany *sa, void *addr, size
 	*r = &sa->sa;
 }
 
-static int netlink_msg_to_ifaddr(void *pctx, struct qse_nlmsg_hdr_t *h)
+static int netlink_msg_to_ifaddr (qse_nlmsg_hdr_t* h, void* pctx)
 {
-	struct ifaddrs_ctx *ctx = pctx;
+	struct ifaddrs_ctx* ctx = pctx;
 	struct ifaddrs_storage *ifs, *ifs0;
 	struct ifinfomsg *ifi = NLMSG_DATA(h);
 	struct ifaddrmsg *ifa = NLMSG_DATA(h);
 	struct rtattr *rta;
 	int stats_len = 0;
 
-	if (h->nlmsg_type == RTM_NEWLINK) {
-		for (rta = NLMSG_RTA(h, sizeof(*ifi)); NLMSG_RTAOK(rta, h); rta = RTA_NEXT(rta)) {
+	if (h->nlmsg_type == RTM_NEWLINK) 
+	{
+		for (rta = NLMSG_RTA(h, sizeof(*ifi)); NLMSG_RTAOK(rta, h); rta = RTA_NEXT(rta)) 
+		{
 			if (rta->rta_type != IFLA_STATS) continue;
 			stats_len = RTA_DATALEN(rta);
 			break;
 		}
-	} else {
+	} 
+	else
+	{
 		for (ifs0 = ctx->hash[ifa->ifa_index % IFADDRS_HASH_SIZE]; ifs0; ifs0 = ifs0->hash_next)
-			if (ifs0->index == ifa->ifa_index)
-				break;
+		{
+			if (ifs0->index == ifa->ifa_index) break;
+		}
 		if (!ifs0) return 0;
 	}
 
 	ifs = calloc(1, sizeof(struct ifaddrs_storage) + stats_len);
 	if (ifs == 0) return -1;
 
-	if (h->nlmsg_type == RTM_NEWLINK) {
+	if (h->nlmsg_type == RTM_NEWLINK)
+	{
 		ifs->index = ifi->ifi_index;
 		ifs->ifa.ifa_flags = ifi->ifi_flags;
 
-		for (rta = NLMSG_RTA(h, sizeof(*ifi)); NLMSG_RTAOK(rta, h); rta = RTA_NEXT(rta)) {
+		for (rta = NLMSG_RTA(h, sizeof(*ifi)); NLMSG_RTAOK(rta, h); rta = RTA_NEXT(rta))
+		{
 			switch (rta->rta_type) {
 			case IFLA_IFNAME:
 				if (RTA_DATALEN(rta) < sizeof(ifs->name)) {
@@ -312,7 +358,9 @@ static int netlink_msg_to_ifaddr(void *pctx, struct qse_nlmsg_hdr_t *h)
 			ifs->hash_next = ctx->hash[bucket];
 			ctx->hash[bucket] = ifs;
 		}
-	} else {
+	}
+	else 
+	{
 		ifs->ifa.ifa_name = ifs0->ifa.ifa_name;
 		ifs->ifa.ifa_flags = ifs0->ifa.ifa_flags;
 		for (rta = NLMSG_RTA(h, sizeof(*ifa)); NLMSG_RTAOK(rta, h); rta = RTA_NEXT(rta)) {
@@ -350,22 +398,25 @@ static int netlink_msg_to_ifaddr(void *pctx, struct qse_nlmsg_hdr_t *h)
 			gen_netmask(&ifs->ifa.ifa_netmask, ifa->ifa_family, &ifs->netmask, ifa->ifa_prefixlen);
 	}
 
-	if (ifs->ifa.ifa_name) {
+	if (ifs->ifa.ifa_name) 
+	{
 		if (!ctx->first) ctx->first = ifs;
 		if (ctx->last) ctx->last->ifa.ifa_next = &ifs->ifa;
 		ctx->last = ifs;
-	} else {
+	} 
+	else 
+	{
 		free(ifs);
 	}
 	return 0;
 }
 
-int getifaddrs(struct ifaddrs **ifap)
+int getifaddrs (struct ifaddrs **ifap)
 {
 	struct ifaddrs_ctx _ctx, *ctx = &_ctx;
 	int r;
 	QSE_MEMSET(ctx, 0, sizeof *ctx);
-	r = __rtnetlink_enumerate(AF_UNSPEC, AF_UNSPEC, netlink_msg_to_ifaddr, ctx);
+	r = qse_nlenum_route(AF_UNSPEC, AF_UNSPEC, netlink_msg_to_ifaddr, ctx);
 	if (r == 0) *ifap = &ctx->first->ifa;
 	else freeifaddrs(&ctx->first->ifa);
 	return r;

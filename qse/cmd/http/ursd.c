@@ -201,7 +201,7 @@ static qse_sck_hnd_t open_server_socket (int proto, const qse_nwad_t* bindnwad)
 	}
 
 	s = socket (family, type, proto);
-	if (!qse_isvalidsckhnd(s))
+	if (!qse_is_sck_valid(s))
 	{
 		qse_fprintf (QSE_STDERR, QSE_T("cannot create a socket\n"));
 		goto oops;
@@ -279,7 +279,7 @@ bind_ok:
 	return s;
 
 oops:
-	if (qse_isvalidsckhnd(s)) qse_closesckhnd (s);
+	if (qse_is_sck_valid(s)) qse_close_sck (s);
 	return QSE_INVALID_SCKHND;
 }
 
@@ -879,7 +879,7 @@ oops:
 		for (i = 0; i < npios; i++) stop_rewriter (ursd, &ursd->rewriters[i]);
 		QSE_MMGR_FREE (ursd->mmgr, ursd->rewriters);
 	}
-	if (qse_isvalidsckhnd(ursd->sck)) qse_closesckhnd (ursd->sck);
+	if (qse_is_sck_valid(ursd->sck)) qse_close_sck (ursd->sck);
 	if (ursd->mux) qse_mux_close (ursd->mux);
 	if (ursd->cmdline) QSE_MMGR_FREE(ursd->mmgr, ursd->cmdline);
 
@@ -897,7 +897,7 @@ static void fini_ursd (ursd_t* ursd)
 	QSE_MMGR_FREE (ursd->mmgr, ursd->rewriters);
 
 	delete_from_mux (ursd->mux, ursd->sck, TYPE_SOCKET, 0);
-	qse_closesckhnd (ursd->sck);
+	qse_close_sck (ursd->sck);
 	qse_mux_close (ursd->mux);
 	QSE_MMGR_FREE (ursd->mmgr, ursd->cmdline);
 
