@@ -482,6 +482,67 @@ qse_ssize_t Socket::send (const void* buf, qse_size_t len, const SocketAddress& 
 	return n; 
 }
 
+qse_ssize_t Socket::send (const qse_ioptl_t* iov, int count) QSE_CPP_NOEXCEPT
+{
+	QSE_ASSERT (qse_is_sck_valid(this->handle));
+
+#if defined(HAVE_SENDMSG) || defined(HAVE_WRITEV)
+	ssize_t nwritten;
+
+#if defined(HAVE_SENDMSG)
+	struct msghdr msg;
+	QSE_MEMSET (&msg, 0, QSE_SIZEOF(msg));
+	msg.msg_iov = (struct iovec*)iov;
+	msg.msg_iovlen = count;
+	nwritten = ::sendmsg(this->handle, &msg, 0);
+#else
+	nwritten = ::writev(this->handle, (const struct iovec*)iov, count);
+#endif
+	if (nwritten <= -1)
+	{
+		this->setErrorCode (syserr_to_errnum(errno));
+		return -1;
+	}
+
+	return nwritten;
+#else
+	// TODO: combine to a single buffer .... use sendto.... 
+	this->setErrorCode (E_NOIMPL);
+	return -1;
+#endif
+}
+
+qse_ssize_t Socket::send (const qse_ioptl_t* iov, int count, const SocketAddress& dstaddr) QSE_CPP_NOEXCEPT
+{
+	QSE_ASSERT (qse_is_sck_valid(this->handle));
+
+QSE_ASSERT (qse_is_sck_valid(this->handle));
+
+#if defined(HAVE_SENDMSG)
+	ssize_t nwritten;
+
+	struct msghdr msg;
+	QSE_MEMSET (&msg, 0, QSE_SIZEOF(msg));
+	msg.msg_name = (void*)dstaddr.getAddrPtr();
+	msg.msg_namelen = dstaddr.getAddrSize();
+	msg.msg_iov = (struct iovec*)iov;
+	msg.msg_iovlen = count;
+	nwritten = ::sendmsg(this->handle, &msg, 0);
+	if (nwritten <= -1)
+	{
+		this->setErrorCode (syserr_to_errnum(errno));
+		return -1;
+	}
+
+	return nwritten;
+#else
+	// TODO: combine to a single buffer .... use sendto.... 
+	this->setErrorCode (E_NOIMPL);
+	return -1;
+#endif
+	return -1;
+}
+
 int Socket::sendx (const void* buf, qse_size_t len, qse_size_t* total_sent) QSE_CPP_NOEXCEPT
 {
 	QSE_ASSERT (qse_is_sck_valid(this->handle));
