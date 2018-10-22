@@ -109,6 +109,7 @@ public:
 	int sendx (const void* buf, qse_size_t len, qse_size_t* total_sent = QSE_NULL) QSE_CPP_NOEXCEPT;
 	int sendx (const void* buf, qse_size_t len, const SocketAddress& dstaddr, qse_size_t* total_sent = QSE_NULL) QSE_CPP_NOEXCEPT;
 	int sendx (qse_ioptl_t* vec, int count, qse_size_t* total_sent = QSE_NULL) QSE_CPP_NOEXCEPT;
+	int sendx (qse_ioptl_t* vec, int count, const SocketAddress& dstaddr, qse_size_t* total_sent = QSE_NULL) QSE_CPP_NOEXCEPT;
 
 	qse_ssize_t receive (void* buf, qse_size_t len) QSE_CPP_NOEXCEPT;
 	qse_ssize_t receive (void* buf, qse_size_t len, SocketAddress& srcaddr) QSE_CPP_NOEXCEPT;
