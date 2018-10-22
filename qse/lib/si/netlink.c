@@ -1,7 +1,8 @@
 /* copied from musl */
 
 #include <qse/si/netlink.h>
-#include "../cmn/mem.h"
+#include "../cmn/mem-prv.h"
+#include "../cmn/syscall.h"
 
 #include <errno.h>
 #include <string.h>
