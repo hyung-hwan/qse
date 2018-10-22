@@ -103,9 +103,13 @@ public:
 	// underlying system calls
 	qse_ssize_t send (const void* buf, qse_size_t len) QSE_CPP_NOEXCEPT;
 	qse_ssize_t send (const void* buf, qse_size_t len, const SocketAddress& dstaddr) QSE_CPP_NOEXCEPT;
+	qse_ssize_t send (const qse_ioptl_t* vec, int count) QSE_CPP_NOEXCEPT;
+	qse_ssize_t send (const qse_ioptl_t* vec, int count, const SocketAddress& dstaddr) QSE_CPP_NOEXCEPT;
 
 	// The sendx() functions sends data as much as it can, possibly with multiple
-	// underlying system calls. 
+	// underlying system calls. these are useful for stream sockets and may not
+	// be useful for datagram sockets they may split the given data into more than
+	// one packet.
 	int sendx (const void* buf, qse_size_t len, qse_size_t* total_sent = QSE_NULL) QSE_CPP_NOEXCEPT;
 	int sendx (const void* buf, qse_size_t len, const SocketAddress& dstaddr, qse_size_t* total_sent = QSE_NULL) QSE_CPP_NOEXCEPT;
 	int sendx (qse_ioptl_t* vec, int count, qse_size_t* total_sent = QSE_NULL) QSE_CPP_NOEXCEPT;
