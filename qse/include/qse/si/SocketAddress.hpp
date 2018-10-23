@@ -64,9 +64,9 @@ public:
 		return QSE_SIZEOF(this->skad);
 	}
 
-	void setIpaddr (const qse_ip4ad_t* ipaddr) QSE_CPP_NOEXCEPT;
-	void setIpaddr (const qse_ip6ad_t* ipaddr) QSE_CPP_NOEXCEPT;
-	void setIpaddr (qse_uint32_t ipaddr) QSE_CPP_NOEXCEPT;
+	void setIp4addr (qse_uint32_t ipaddr) QSE_CPP_NOEXCEPT;
+	void setIp4addr (const qse_ip4ad_t* ipaddr) QSE_CPP_NOEXCEPT;
+	void setIp6addr (const qse_ip6ad_t* ipaddr) QSE_CPP_NOEXCEPT;
 
 	const qse_ip4ad_t* getIp4addr () const QSE_CPP_NOEXCEPT;
 	const qse_ip6ad_t* getIp6addr () const QSE_CPP_NOEXCEPT;

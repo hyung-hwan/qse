@@ -23,8 +23,15 @@ qse_dhcp6_opt_hdr_t* qse_dhcp6_find_option (const qse_dhcp6_pktinf_t* pkt, int c
 
 	while (rem >= QSE_SIZEOF(qse_dhcp6_opt_hdr_t))
 	{
-		if (qse_ntoh16(opt->code) == code) return opt;
+		if (qse_ntoh16(opt->code) == code) 
+		{
+			if (rem - QSE_SIZEOF(qse_dhcp6_opt_hdr_t) < qse_ntoh16(opt->len)) return QSE_NULL; /* probably the packet is ill-formed */
+			return opt;
+		}
+
 		rem -= QSE_SIZEOF(qse_dhcp6_opt_hdr_t) + qse_ntoh16(opt->len);
+		opt = (qse_dhcp6_opt_hdr_t*)((qse_uint8_t*)(opt + 1) + qse_ntoh16(opt->len));
+		
 	}
 
 	return QSE_NULL;
