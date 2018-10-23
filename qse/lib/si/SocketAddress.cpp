@@ -108,7 +108,7 @@ int SocketAddress::getFamily () const QSE_CPP_NOEXCEPT
 	//return qse_skadfamily (&this->skad);
 }
 
-void SocketAddress::setIpaddr (const qse_ip4ad_t* ipaddr) QSE_CPP_NOEXCEPT
+void SocketAddress::setIp4addr (const qse_ip4ad_t* ipaddr) QSE_CPP_NOEXCEPT
 {
 #if defined(AF_INET)
 	if (FAMILY(&this->skad) == AF_INET)
@@ -119,7 +119,7 @@ void SocketAddress::setIpaddr (const qse_ip4ad_t* ipaddr) QSE_CPP_NOEXCEPT
 #endif
 }
 
-void SocketAddress::setIpaddr (const qse_uint32_t ipaddr) QSE_CPP_NOEXCEPT
+void SocketAddress::setIp4addr (const qse_uint32_t ipaddr) QSE_CPP_NOEXCEPT
 {
 #if defined(AF_INET)
 	if (FAMILY(&this->skad) == AF_INET)
@@ -130,7 +130,7 @@ void SocketAddress::setIpaddr (const qse_uint32_t ipaddr) QSE_CPP_NOEXCEPT
 #endif
 }
 
-void SocketAddress::setIpaddr (const qse_ip6ad_t* ipaddr) QSE_CPP_NOEXCEPT
+void SocketAddress::setIp6addr (const qse_ip6ad_t* ipaddr) QSE_CPP_NOEXCEPT
 {
 #if defined(AF_INET6)
 	if (FAMILY(&this->skad) == AF_INET6)
