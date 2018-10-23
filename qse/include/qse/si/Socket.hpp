@@ -60,6 +60,9 @@ public:
 
 	// -------------------------------------------------------------------- 
 
+	int getSockName (SocketAddress& addr) QSE_CPP_NOEXCEPT;
+	int getPeerName (SocketAddress& addr) QSE_CPP_NOEXCEPT;
+
 	int getOption (int level, int optname, void* optval, qse_sck_len_t* optlen) QSE_CPP_NOEXCEPT;
 	int setOption (int level, int optname, const void* optval, qse_sck_len_t optlen) QSE_CPP_NOEXCEPT;
 
