@@ -25,6 +25,8 @@
  */
 
 
+#if defined(__linux)
+
 /* copied from musl */
 
 #include <qse/si/netlink.h>
@@ -422,3 +424,7 @@ int getifaddrs (struct ifaddrs **ifap)
 	return r;
 }
 #endif
+
+
+
+#endif /* defined(__linux) */
