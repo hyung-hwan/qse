@@ -152,6 +152,24 @@ void Socket::close () QSE_CPP_NOEXCEPT
 	}
 }
 
+int Socket::getSockName (SocketAddress& addr) QSE_CPP_NOEXCEPT
+{
+	QSE_ASSERT (qse_is_sck_valid(this->handle));
+	qse_sck_len_t len = addr.getAddrCapa();
+	int n = ::getsockname(this->handle, (struct sockaddr*)addr.getAddrPtr(), &len);
+	if (n == -1) this->setErrorCode (syserr_to_errnum(errno));
+	return n;
+}
+
+int Socket::getPeerName (SocketAddress& addr) QSE_CPP_NOEXCEPT
+{
+	QSE_ASSERT (qse_is_sck_valid(this->handle));
+	qse_sck_len_t len = addr.getAddrCapa();
+	int n = ::getpeername(this->handle, (struct sockaddr*)addr.getAddrPtr(), &len);
+	if (n == -1) this->setErrorCode (syserr_to_errnum(errno));
+	return n;
+}
+
 int Socket::getOption (int level, int optname, void* optval, qse_sck_len_t* optlen) QSE_CPP_NOEXCEPT
 {
 	QSE_ASSERT (qse_is_sck_valid(this->handle));
