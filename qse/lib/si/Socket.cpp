@@ -500,6 +500,17 @@ qse_ssize_t Socket::send (const void* buf, qse_size_t len, const SocketAddress& 
 	return n; 
 }
 
+qse_ssize_t Socket::send (const void* buf, qse_size_t len, const SocketAddress& dstaddr, const SocketAddress& srcaddr) QSE_CPP_NOEXCEPT
+{
+	QSE_ASSERT (qse_is_sck_valid(this->handle));
+
+	qse_ioptl_t iov;
+	iov.ptr = (void*)buf;
+	iov.len = len;
+	return this->send(&iov, 1, dstaddr, srcaddr);
+}
+
+
 qse_ssize_t Socket::send (const qse_ioptl_t* iov, int count) QSE_CPP_NOEXCEPT
 {
 	QSE_ASSERT (qse_is_sck_valid(this->handle));
@@ -534,8 +545,6 @@ qse_ssize_t Socket::send (const qse_ioptl_t* iov, int count, const SocketAddress
 {
 	QSE_ASSERT (qse_is_sck_valid(this->handle));
 
-QSE_ASSERT (qse_is_sck_valid(this->handle));
-
 #if defined(HAVE_SENDMSG)
 	ssize_t nwritten;
 
@@ -558,7 +567,80 @@ QSE_ASSERT (qse_is_sck_valid(this->handle));
 	this->setErrorCode (E_NOIMPL);
 	return -1;
 #endif
+}
+
+qse_ssize_t Socket::send (const qse_ioptl_t* iov, int count, const SocketAddress& dstaddr, const SocketAddress& srcaddr) QSE_CPP_NOEXCEPT
+{
+	QSE_ASSERT (qse_is_sck_valid(this->handle));
+
+#if defined(HAVE_SENDMSG)
+	ssize_t nwritten;
+
+	struct msghdr msg;
+	QSE_MEMSET (&msg, 0, QSE_SIZEOF(msg));
+	msg.msg_name = (void*)dstaddr.getAddrPtr();
+	msg.msg_namelen = dstaddr.getAddrSize();
+	msg.msg_iov = (struct iovec*)iov;
+	msg.msg_iovlen = count;
+
+	switch (srcaddr.getFamily())
+	{
+	#if defined(AF_INET)
+		case AF_INET:
+		{
+			qse_uint8_t cmsgbuf[CMSG_SPACE(QSE_SIZEOF(struct in_pktinfo))];
+			msg.msg_control = cmsgbuf;
+			msg.msg_controllen = CMSG_LEN(QSE_SIZEOF(struct in_pktinfo));
+
+			struct cmsghdr* cmsg = CMSG_FIRSTHDR(&msg);
+			cmsg->cmsg_level = IPPROTO_IP;
+			cmsg->cmsg_type = IP_PKTINFO;
+			cmsg->cmsg_len = CMSG_LEN(QSE_SIZEOF(struct in_pktinfo));
+
+			struct in_pktinfo* pi = (struct in_pktinfo*)CMSG_DATA(cmsg);
+			//QSE_MEMSET(pi, 0, QSE_SIZEOF(*pi));
+			pi->ipi_addr = *(struct in_addr*)srcaddr.getIp4addr();
+			pi->ipi_ifindex = 0; // let the kernel choose it
+
+			break;
+		}
+	#endif
+	#if defined(AF_INET6)
+		case AF_INET6:
+		{
+			qse_uint8_t cmsgbuf[CMSG_SPACE(QSE_SIZEOF(struct in6_pktinfo))];
+			msg.msg_control = cmsgbuf;
+			msg.msg_controllen = CMSG_LEN(QSE_SIZEOF(struct in6_pktinfo));;
+
+			struct cmsghdr* cmsg = CMSG_FIRSTHDR(&msg);
+			cmsg->cmsg_level = IPPROTO_IPV6;
+			cmsg->cmsg_type = IPV6_PKTINFO;
+			cmsg->cmsg_len = CMSG_LEN(QSE_SIZEOF(struct in6_pktinfo));;
+
+			struct in6_pktinfo* pi = (struct in6_pktinfo*)CMSG_DATA(cmsg);
+			//QSE_MEMSET(pi, 0, QSE_SIZEOF(*pi));
+			pi->ipi6_addr = *(struct in6_addr*)srcaddr.getIp6addr();
+			pi->ipi6_ifindex = 0; // let the kernel choose it
+
+			break;
+		}
+	#endif
+	}
+
+	nwritten = ::sendmsg(this->handle, &msg, 0);
+	if (nwritten <= -1)
+	{
+		this->setErrorCode (syserr_to_errnum(errno));
+		return -1;
+	}
+
+	return nwritten;
+#else
+	// TODO: combine to a single buffer .... use sendto.... 
+	this->setErrorCode (E_NOIMPL);
 	return -1;
+#endif
+
 }
 
 int Socket::sendx (const void* buf, qse_size_t len, qse_size_t* total_sent) QSE_CPP_NOEXCEPT
