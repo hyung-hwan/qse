@@ -87,7 +87,7 @@ void qse_aio_closeasyncsck (qse_aio_t* aio, qse_aio_sckhnd_t sck)
 
 int qse_aio_makesckasync (qse_aio_t* aio, qse_aio_sckhnd_t sck)
 {
-	return qse_aio_makesyshndasync (aio, (qse_aio_syshnd_t)sck);
+	return qse_aio_makesyshndasync(aio, (qse_aio_syshnd_t)sck);
 }
 
 qse_aio_sckhnd_t qse_aio_openasyncsck (qse_aio_t* aio, int domain, int type, int proto)
@@ -451,7 +451,7 @@ static int dev_sck_make_client (qse_aio_dev_t* dev, void* ctx)
 	qse_aio_dev_sck_t* rdev = (qse_aio_dev_sck_t*)dev;
 	qse_aio_syshnd_t* sck = (qse_aio_syshnd_t*)ctx;
 
-	/* nothing special is done here except setting the sock et handle.
+	/* nothing special is done here except setting the socket handle.
 	 * most of the initialization is done by the listening socket device
 	 * after a client socket has been created. */
 
@@ -1399,7 +1399,7 @@ static int dev_evcb_sck_ready_stateful (qse_aio_dev_t* dev, int events)
 		qse_aio_scklen_t len;
 
 		len = QSE_SIZEOF(errcode);
-		if (getsockopt (rdev->sck, SOL_SOCKET, SO_ERROR, (char*)&errcode, &len) == -1)
+		if (getsockopt(rdev->sck, SOL_SOCKET, SO_ERROR, (char*)&errcode, &len) == -1)
 		{
 			/* the error number is set to the socket error code.
 			 * errno resulting from getsockopt() doesn't reflect the actual

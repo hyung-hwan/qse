@@ -84,7 +84,6 @@ struct QSE_AIO_PACKED qse_aio_ip6addr_t
 };
 typedef struct qse_aio_ip6addr_t qse_aio_ip6addr_t;
 
-
 struct QSE_AIO_PACKED qse_aio_ethhdr_t
 {
 	qse_uint8_t  dest[QSE_AIO_ETHADDR_LEN];

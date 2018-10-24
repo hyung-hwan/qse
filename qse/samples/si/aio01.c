@@ -520,7 +520,7 @@ int main ()
 	SSL_library_init ();
 #endif
 
-	aio = qse_aio_open (QSE_MMGR_GETDFL(), 0, 512, QSE_NULL);
+	aio = qse_aio_open(QSE_MMGR_GETDFL(), 0, 512, QSE_NULL);
 	if (!aio)
 	{
 		printf ("Cannot open aio\n");
@@ -561,7 +561,7 @@ int main ()
 	tcp_make.on_write = tcp_sck_on_write;
 	tcp_make.on_read = tcp_sck_on_read;
 	tcp_make.on_disconnect = tcp_sck_on_disconnect;
-	tcp[0] = qse_aio_dev_sck_make (aio, QSE_SIZEOF(tcp_server_t), &tcp_make);
+	tcp[0] = qse_aio_dev_sck_make(aio, QSE_SIZEOF(tcp_server_t), &tcp_make);
 	if (!tcp[0])
 	{
 		printf ("Cannot make tcp\n");
@@ -581,7 +581,7 @@ int main ()
 	qse_inittime (&tcp_conn.connect_tmout, 5, 0);
 	tcp_conn.on_connect = tcp_sck_on_connect;
 	tcp_conn.options = QSE_AIO_DEV_SCK_CONNECT_SSL;
-	if (qse_aio_dev_sck_connect (tcp[0], &tcp_conn) <= -1)
+	if (qse_aio_dev_sck_connect(tcp[0], &tcp_conn) <= -1)
 	{
 		printf ("qse_aio_dev_sck_connect() failed....\n");
 		/* carry on regardless of failure */
@@ -594,7 +594,7 @@ int main ()
 	tcp_make.on_read = tcp_sck_on_read;
 	tcp_make.on_disconnect = tcp_sck_on_disconnect;
 
-	tcp[1] = qse_aio_dev_sck_make (aio, QSE_SIZEOF(tcp_server_t), &tcp_make);
+	tcp[1] = qse_aio_dev_sck_make(aio, QSE_SIZEOF(tcp_server_t), &tcp_make);
 	if (!tcp[1])
 	{
 		printf ("Cannot make tcp\n");
