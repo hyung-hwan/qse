@@ -230,7 +230,7 @@ struct qse_aio_wq_t
 
 #define QSE_AIO_DEV_HEADERS \
 	qse_aio_t*          aio; \
-	qse_size_t      dev_size; \
+	qse_size_t          dev_size; \
 	int                 dev_capa; \
 	qse_aio_dev_mth_t*  dev_mth; \
 	qse_aio_dev_evcb_t* dev_evcb; \
@@ -295,9 +295,9 @@ extern "C" {
 #endif
 
 QSE_EXPORT qse_aio_t* qse_aio_open (
-	qse_mmgr_t*   mmgr,
-	qse_size_t    xtnsize,
-	qse_size_t    tmrcapa,  /**< initial timer capacity */
+	qse_mmgr_t*       mmgr,
+	qse_size_t        xtnsize,
+	qse_size_t        tmrcapa,  /**< initial timer capacity */
 	qse_aio_errnum_t* errnum
 );
 
@@ -330,10 +330,10 @@ QSE_EXPORT void qse_aio_stop (
 
 QSE_EXPORT qse_aio_dev_t* qse_aio_makedev (
 	qse_aio_t*          aio,
-	qse_size_t      dev_size,
+	qse_size_t          dev_size,
 	qse_aio_dev_mth_t*  dev_mth,
 	qse_aio_dev_evcb_t* dev_evcb,
-	void*            make_ctx
+	void*               make_ctx
 );
 
 QSE_EXPORT void qse_aio_killdev (
@@ -351,12 +351,12 @@ QSE_EXPORT int qse_aio_dev_watch (
 	qse_aio_dev_t*          dev,
 	qse_aio_dev_watch_cmd_t cmd,
 	/** 0 or bitwise-ORed of #QSE_AIO_DEV_EVENT_IN and #QSE_AIO_DEV_EVENT_OUT */
-	int                  events
+	int                     events
 );
 
 QSE_EXPORT int qse_aio_dev_read (
 	qse_aio_dev_t*         dev,
-	int                 enabled
+	int                    enabled
 );
 
 /**
@@ -379,10 +379,10 @@ QSE_EXPORT int qse_aio_dev_write (
 
 QSE_EXPORT int qse_aio_dev_timedwrite (
 	qse_aio_dev_t*           dev,
-	const void*           data,
+	const void*              data,
 	qse_aio_iolen_t          len,
-	const qse_ntime_t*   tmout,
-	void*                 wrctx,
+	const qse_ntime_t*       tmout,
+	void*                    wrctx,
 	const qse_aio_devaddr_t* dstaddr
 );
 
@@ -424,7 +424,7 @@ QSE_EXPORT qse_aio_tmrjob_t* qse_aio_gettmrjob (
 QSE_EXPORT int qse_aio_gettmrjobdeadline (
 	qse_aio_t*            aio,
 	qse_aio_tmridx_t      index,
-	qse_ntime_t*      deadline
+	qse_ntime_t*          deadline
 );
 
 /* ========================================================================= */
