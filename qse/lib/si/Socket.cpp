@@ -588,6 +588,7 @@ qse_ssize_t Socket::send (const qse_ioptl_t* iov, int count, const SocketAddress
 	#if defined(AF_INET)
 		case AF_INET:
 		{
+		#if defined(IP_PKTINFO)
 			qse_uint8_t cmsgbuf[CMSG_SPACE(QSE_SIZEOF(struct in_pktinfo))];
 			msg.msg_control = cmsgbuf;
 			msg.msg_controllen = CMSG_LEN(QSE_SIZEOF(struct in_pktinfo));
@@ -603,6 +604,22 @@ qse_ssize_t Socket::send (const qse_ioptl_t* iov, int count, const SocketAddress
 			pi->ipi_ifindex = 0; // let the kernel choose it
 
 			break;
+		#elif defined(IP_SENDSRCADDR)
+			qse_uint8_t cmsgbuf[CMSG_SPACE(QSE_SIZEOF(struct in_addr))];
+			msg.msg_control = cmsgbuf;
+			msg.msg_controllen = CMSG_LEN(QSE_SIZEOF(struct in_addr));
+
+			struct cmsghdr* cmsg = CMSG_FIRSTHDR(&msg);
+			cmsg->cmsg_level = IPPROTO_IP;
+			cmsg->cmsg_type = IP_SENDSRCADDR;
+			cmsg->cmsg_len = CMSG_LEN(QSE_SIZEOF(struct in_addr));
+
+			struct in_addr* pi = (struct in_addr*)CMSG_DATA(cmsg);
+			*pi = *(struct in_addr*)srcaddr.getIp6addr();
+		#else
+			this->setErrorCode (E_NOIMPL);
+			return -1;
+		#endif
 		}
 	#endif
 	#if defined(AF_INET6)
