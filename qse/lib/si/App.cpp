@@ -31,7 +31,6 @@
 #include "../cmn/syscall.h"
 #include <qse/cmn/mbwc.h>
 
-
 /////////////////////////////////
 QSE_BEGIN_NAMESPACE(QSE)
 /////////////////////////////////
@@ -51,7 +50,7 @@ public:
 	SigScopedMutexLocker (Mutex& mutex): mutex(mutex)
 	{
 		sigset_t sigset;
-		::sigfillset (&sigset);
+		sigfillset (&sigset);
 		::sigprocmask (SIG_BLOCK, &sigset, &this->oldsigset);
 // TODO: would this work properly if this is called within a thread?
 //       do i need to use pthread_sigmask() conditionally?
@@ -271,13 +270,13 @@ int App::set_signal_handler_no_mutex (int sig, SignalHandler sighr)
 	if (oldsa.sa_flags & SA_SIGINFO)
 	{
 		sa.sa_sigaction = dispatch_siginfo;
-		::sigfillset (&sa.sa_mask); // block all signals while the handler is being executed
+		sigfillset (&sa.sa_mask); // block all signals while the handler is being executed
 		sa.sa_flags |= SA_SIGINFO;
 	}
 	else
 	{
 		sa.sa_handler = dispatch_signal;
-		::sigfillset (&sa.sa_mask); 
+		sigfillset (&sa.sa_mask); 
 		sa.sa_flags = 0;
 		//sa.sa_flags |= SA_INTERUPT;
 		//sa.sa_flags |= SA_RESTART;
