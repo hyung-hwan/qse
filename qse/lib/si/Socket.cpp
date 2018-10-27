@@ -536,7 +536,7 @@ qse_ssize_t Socket::send (const qse_ioptl_t* iov, int count) QSE_CPP_NOEXCEPT
 	return nwritten;
 #else
 	// TODO: combine to a single buffer .... use sendto.... 
-	this->setErrorCode (E_NOIMPL);
+	this->setErrorCode (E_ENOIMPL);
 	return -1;
 #endif
 }
@@ -564,7 +564,7 @@ qse_ssize_t Socket::send (const qse_ioptl_t* iov, int count, const SocketAddress
 	return nwritten;
 #else
 	// TODO: combine to a single buffer .... use sendto.... 
-	this->setErrorCode (E_NOIMPL);
+	this->setErrorCode (E_ENOIMPL);
 	return -1;
 #endif
 }
@@ -617,7 +617,7 @@ qse_ssize_t Socket::send (const qse_ioptl_t* iov, int count, const SocketAddress
 			struct in_addr* pi = (struct in_addr*)CMSG_DATA(cmsg);
 			*pi = *(struct in_addr*)srcaddr.getIp6addr();
 		#else
-			this->setErrorCode (E_NOIMPL);
+			this->setErrorCode (E_ENOIMPL);
 			return -1;
 		#endif
 		}
@@ -654,7 +654,7 @@ qse_ssize_t Socket::send (const qse_ioptl_t* iov, int count, const SocketAddress
 	return nwritten;
 #else
 	// TODO: combine to a single buffer .... use sendto.... 
-	this->setErrorCode (E_NOIMPL);
+	this->setErrorCode (E_ENOIMPL);
 	return -1;
 #endif
 
