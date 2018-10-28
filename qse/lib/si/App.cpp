@@ -38,11 +38,15 @@ QSE_BEGIN_NAMESPACE(QSE)
 static Mutex g_app_mutex;
 static App* g_app_top = QSE_NULL; // maintain the chain of application objects
 static App* g_app_sig[QSE_NSIGS] = { QSE_NULL, };
-static struct
+static struct app_sig_t
 {
+	app_sig_t(): sa_flags(0)
+	{
+		sigemptyset (&sa_mask);
+	}
 	sigset_t sa_mask;
 	int      sa_flags;
-} g_app_oldsi[QSE_NSIGS] = { { 0, 0 }, };
+} g_app_oldsi[QSE_NSIGS];
 
 class SigScopedMutexLocker
 {
