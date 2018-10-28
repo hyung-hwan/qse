@@ -600,7 +600,7 @@ static inline qse_uint32_t QSE_ROTR32 (qse_uint32_t v, int i)
 
 #elif defined(__GNUC__) && defined(__GNUC_MINOR__)
 
-	#if (__GNUC__ >= 4) 
+	#if (__GNUC__ >= 5) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 1)
 		#define QSE_HAVE_SYNC_LOCK_TEST_AND_SET
 		#define QSE_HAVE_SYNC_LOCK_RELEASE
 
