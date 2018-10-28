@@ -436,13 +436,20 @@ int TcpServer::stop () QSE_CPP_NOEXCEPT
 {
 	if (this->server_serving) 
 	{
+		// set stop request before writing "Q" to avoid race condition.
+		// after qse_mux_poll() detects activity for "Q" written,
+		// it loops over to another qse_mux_poll(). the stop request
+		// test is done in between. if this looping is faster than
+		// setting stop request after "Q" writing, the second qse_mux_poll()
+		// doesn't see it set to true yet.
+		this->setStopRequested (true);
+
 		this->listener_list.mux_pipe_spl.lock ();
 		if (this->listener_list.mux_pipe[1] >= 0)
 		{
 			::write (this->listener_list.mux_pipe[1], "Q", 1);
 		}
 		this->listener_list.mux_pipe_spl.unlock ();
-		this->setStopRequested (true);
 	}
 	return 0;
 }

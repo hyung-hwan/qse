@@ -344,7 +344,7 @@ int App::unset_signal_handler_no_mutex(int sig, int ignore)
 		if (sl._state == App::SIGNAL_ACCEPTED) 
 		{
 			// the actual signal handler is called with the mutex locked.
-			// it must not call acceptSingal()/discardSignal()neglectSingal()
+			// it must not call acceptSingal()/discardSignal()/neglectSingal()
 			// from within the handler.
 			if (app->_guarded_child_pid >= 0) app->on_guard_signal (sig);
 			app->on_signal (sig);
