@@ -136,6 +136,8 @@ public:
 		Worker* getPrevWorker() { return this->prev_worker; }
 
 		qse_size_t getWid() const { return this->wid; }
+		const QSE::SocketAddress& getSourceAddress() const { return this->address; }
+		const QSE::Socket& getSocket() const { return this->socket; }
 
 		Listener* listener;
 		Worker* prev_worker;

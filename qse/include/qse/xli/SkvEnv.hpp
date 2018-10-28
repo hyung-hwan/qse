@@ -61,6 +61,7 @@ public:
 
 	int addItem (const qse_char_t* name, const qse_char_t* dval, ProbeProc probe = QSE_NULL);
 	int removeItem (const qse_char_t* name);
+	const ItemList& getItemList () const { return this->item_list; }
 
 	const qse_char_t* getValue (const qse_char_t* name) const;
 	int setValue (const qse_char_t* name, const qse_char_t* value);
