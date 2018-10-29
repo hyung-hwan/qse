@@ -16,6 +16,7 @@ libqsexli_la_LIBADD = -lqsesi -lqsecmn
 if ENABLE_CXX
 lib_LTLIBRARIES += libqsexlixx.la
 libqsexlixx_la_SOURCES = SkvEnv.cpp
+libqsexlixx_la_LDFLAGS = -L. -L../cmn -L../si -version-info 1:0:0 -no-undefined
 libqsexlixx_la_LIBADD = -lqsecmnxx -lqsexli -lqsesi -lqsecmn
 endif
 
