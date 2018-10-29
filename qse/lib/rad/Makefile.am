@@ -12,6 +12,6 @@ libqserad_la_SOURCES =  \
 	radmsg.c
 
 libqserad_la_CFLAGS = 
-libqserad_la_LDFLAGS = -L../cmn -L../cry -version-info 1:0:0 -no-undefined
-libqserad_la_LIBADD = -lqsecry -lqsecmn
+libqserad_la_LDFLAGS = -L../cmn -L../si -L../cry -version-info 1:0:0 -no-undefined
+libqserad_la_LIBADD = -lqsecry -lqsesi -lqsecmn
 
