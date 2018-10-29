@@ -10,6 +10,7 @@
 
 #include <signal.h>
 #include <string.h>
+#include <sched.h>
 
 static int g_stopreq = 0;
 static qse_ntime_t sleep_interval = { 1, 0 };
@@ -33,6 +34,7 @@ static int thr_func (qse_thr_t* thr, void* ctx)
 		qse_printf (QSE_T("%s: [% 16d] [% 16d] [% 16d]\n"), xtn->name, i, i, i);
 		qse_spl_unlock (xtn->spl);
 		i++;
+		if (!(i % 15)) sched_yield();
 		/*qse_sleep (&sleep_interval);*/
 	}
 

@@ -210,20 +210,20 @@ asm void qse_spl_unlock (qse_spl_t* spl)
 		unsigned int rc;
 
 		__asm__ volatile (
-			"__back:\n"
+			"1:\n"
 			"lwarx        %0,0,%1\n"  /* load and reserve. rc(%0) = *spl(%1) */
 			"cmpwi        cr0,%0,0\n" /* cr0 = (rc compare-with 0) */
 			"li           %0,0\n"     /* rc = 0(failure) */
-			"bne          cr0,__exit\n"   /* if cr0 != 0, goto _exit; */
+			"bne          cr0,2f\n"   /* if cr0 != 0, goto 2; */
 			"li           %0,1\n"     /* rc = 1(success) */
 			"stwcx.       %0,0,%1\n"  /* *spl(%1) = 1(value in rc) if reserved */
-			"bne          cr0,__back\n"   /* if reservation is lost, goto __back */
+			"bne          cr0,1b\n"   /* if reservation is lost, goto 1 */
 		#if 1
 			"lwsync\n"
 		#else
 			"isync\n"
 		#endif
-			"__exit:\n"
+			"2:\n"
 			: "=&r"(rc)
 			: "r"(spl)
 			: "cr0", "memory"
