@@ -34,6 +34,9 @@
 #if defined(HAVE_SYS_TIME_H)
 #	include <sys/time.h>
 #endif
+#if defined(HAVE_SCHED_H)
+#	include <sched.h>
+#endif
 
 void qse_sleep (const qse_ntime_t* interval)
 {
@@ -60,3 +63,22 @@ int qse_set_proc_name (const qse_char_t* name)
 	::prctl(PR_SET_NAME, name, 0, 0, 0);
 }*/
 
+
+void qse_sched_yield (void)
+{
+#if defined(_WIN32)
+	SwitchToThread ();
+	/* or Sleep (0) */
+#elif defined(__OS2__)
+	DosSleep (0);
+#elif defined(HAVE_SCHED_YIELD)
+	sched_yield();
+#elif defined(HAVE_NANOSLEEP)
+	struct timespec ts;
+	ts.tv_sec = 0;
+	ts.tv_nsec = 0;
+	nanosleep (&ts, &ts);
+#else
+	sleep (0);
+#endif
+}
