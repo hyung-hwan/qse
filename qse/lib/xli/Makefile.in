@@ -149,6 +149,10 @@ libqsexlixx_la_DEPENDENCIES =
 am__libqsexlixx_la_SOURCES_DIST = SkvEnv.cpp
 @ENABLE_CXX_TRUE@am_libqsexlixx_la_OBJECTS = SkvEnv.lo
 libqsexlixx_la_OBJECTS = $(am_libqsexlixx_la_OBJECTS)
+libqsexlixx_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
+	$(AM_CXXFLAGS) $(CXXFLAGS) $(libqsexlixx_la_LDFLAGS) \
+	$(LDFLAGS) -o $@
 @ENABLE_CXX_TRUE@am_libqsexlixx_la_rpath = -rpath $(libdir)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -410,6 +414,7 @@ libqsexli_la_SOURCES = xli-prv.h xli.c err.c \
 libqsexli_la_LDFLAGS = -L../cmn -L../si -version-info 1:0:0 -no-undefined
 libqsexli_la_LIBADD = -lqsesi -lqsecmn 
 @ENABLE_CXX_TRUE@libqsexlixx_la_SOURCES = SkvEnv.cpp
+@ENABLE_CXX_TRUE@libqsexlixx_la_LDFLAGS = -L. -L../cmn -L../si -version-info 1:0:0 -no-undefined
 @ENABLE_CXX_TRUE@libqsexlixx_la_LIBADD = -lqsecmnxx -lqsexli -lqsesi -lqsecmn
 all: all-am
 
@@ -484,7 +489,7 @@ libqsexli.la: $(libqsexli_la_OBJECTS) $(libqsexli_la_DEPENDENCIES) $(EXTRA_libqs
 	$(AM_V_CCLD)$(libqsexli_la_LINK) -rpath $(libdir) $(libqsexli_la_OBJECTS) $(libqsexli_la_LIBADD) $(LIBS)
 
 libqsexlixx.la: $(libqsexlixx_la_OBJECTS) $(libqsexlixx_la_DEPENDENCIES) $(EXTRA_libqsexlixx_la_DEPENDENCIES) 
-	$(AM_V_CXXLD)$(CXXLINK) $(am_libqsexlixx_la_rpath) $(libqsexlixx_la_OBJECTS) $(libqsexlixx_la_LIBADD) $(LIBS)
+	$(AM_V_CXXLD)$(libqsexlixx_la_LINK) $(am_libqsexlixx_la_rpath) $(libqsexlixx_la_OBJECTS) $(libqsexlixx_la_LIBADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)

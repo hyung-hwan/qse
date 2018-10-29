@@ -376,7 +376,7 @@ static int dns_open (qse_httpd_t* httpd, qse_httpd_dns_t* dns)
 	dns->handle[2] = open_client_socket (httpd, AF_UNIX, SOCK_DGRAM, 0);
 #endif
 
-	if (qse_isvalidsckhnd(dns->handle[2]))
+	if (qse_is_sck_valid(dns->handle[2]))
 	{
 	#if defined(AF_UNIX)
 		qse_ntime_t now;
@@ -395,15 +395,15 @@ static int dns_open (qse_httpd_t* httpd, qse_httpd_dns_t* dns)
 		if (bind (dns->handle[2], (struct sockaddr*)&dc->unix_bind_addr, QSE_SIZEOF(dc->unix_bind_addr)) <= -1)
 		{
 			qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
-			qse_closesckhnd (dns->handle[2]);
+			qse_close_sck (dns->handle[2]);
 			dns->handle[2] = QSE_INVALID_SCKHND;
 		}
 	#endif
 	}
 
-	if (!qse_isvalidsckhnd(dns->handle[0]) &&
-	    !qse_isvalidsckhnd(dns->handle[1]) &&
-	    !qse_isvalidsckhnd(dns->handle[2]))
+	if (!qse_is_sck_valid(dns->handle[0]) &&
+	    !qse_is_sck_valid(dns->handle[1]) &&
+	    !qse_is_sck_valid(dns->handle[2]))
 	{
 		/* don't set the error number here.
 		 * open_client_socket() should set it */
@@ -442,20 +442,20 @@ static int dns_open (qse_httpd_t* httpd, qse_httpd_dns_t* dns)
 	}
 
 	dns->handle_count = 3;
-	if (qse_isvalidsckhnd(dns->handle[0])) dns->handle_mask |= (1 << 0);
-	if (qse_isvalidsckhnd(dns->handle[1])) dns->handle_mask |= (1 << 1);
-	if (qse_isvalidsckhnd(dns->handle[2])) dns->handle_mask |= (1 << 2);
+	if (qse_is_sck_valid(dns->handle[0])) dns->handle_mask |= (1 << 0);
+	if (qse_is_sck_valid(dns->handle[1])) dns->handle_mask |= (1 << 1);
+	if (qse_is_sck_valid(dns->handle[2])) dns->handle_mask |= (1 << 2);
 
 	dns->ctx = dc;
 
 	return 0;
 
 oops:
-	if (qse_isvalidsckhnd(dns->handle[0])) qse_closesckhnd (dns->handle[0]);
-	if (qse_isvalidsckhnd(dns->handle[1])) qse_closesckhnd (dns->handle[1]);
-	if (qse_isvalidsckhnd(dns->handle[2]))
+	if (qse_is_sck_valid(dns->handle[0])) qse_close_sck (dns->handle[0]);
+	if (qse_is_sck_valid(dns->handle[1])) qse_close_sck (dns->handle[1]);
+	if (qse_is_sck_valid(dns->handle[2]))
 	{
-		qse_closesckhnd (dns->handle[2]);
+		qse_close_sck (dns->handle[2]);
 	#if defined(AF_UNIX)
 		QSE_UNLINK (dc->unix_bind_addr.sun_path);
 	#endif
@@ -506,11 +506,11 @@ static void dns_close (qse_httpd_t* httpd, qse_httpd_dns_t* dns)
 		}
 	}
 
-	if (qse_isvalidsckhnd(dns->handle[0])) qse_closesckhnd (dns->handle[0]);
-	if (qse_isvalidsckhnd(dns->handle[1])) qse_closesckhnd (dns->handle[1]);
-	if (qse_isvalidsckhnd(dns->handle[2]))
+	if (qse_is_sck_valid(dns->handle[0])) qse_close_sck (dns->handle[0]);
+	if (qse_is_sck_valid(dns->handle[1])) qse_close_sck (dns->handle[1]);
+	if (qse_is_sck_valid(dns->handle[2]))
 	{
-		qse_closesckhnd (dns->handle[2]);
+		qse_close_sck (dns->handle[2]);
 	#if defined(AF_UNIX)
 		QSE_UNLINK (dc->unix_bind_addr.sun_path);
 	#endif
