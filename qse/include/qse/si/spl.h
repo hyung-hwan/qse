@@ -184,6 +184,76 @@ asm void qse_spl_unlock (qse_spl_t* spl)
 	#endif
 	}
 
+#elif defined(__GNUC__) && (defined(__POWERPC__) || defined(__powerpc) || defined(__powerpc__) || defined(__ppc))
+
+	static QSE_INLINE int qse_spl_trylock (qse_spl_t* spl) 
+	{
+
+		/* lwarx	RT, RA, RB
+		 *  RT Specifies target general-purpose register where result of operation is stored.
+		 *  RA Specifies source general-purpose register for EA calculation.
+		 *  RB Specifies source general-purpose register for EA calculation.
+		 * 
+		 * If general-purpose register (GPR) RA = 0, the effective address (EA) is the
+		 * content of GPR RB. Otherwise, the EA is the sum of the content of GPR RA 
+		 * plus the content of GPR RB.
+
+		 * The lwarx instruction loads the word from the location in storage specified
+		 * by the EA into the target GPR RT. In addition, a reservation on the memory
+		 * location is created for use by a subsequent stwcx. instruction.
+
+		 * The lwarx instruction has one syntax form and does not affect the 
+		 * Fixed-Point Exception Register. If the EA is not a multiple of 4, 
+		 * the results are boundedly undefined.
+		 */
+
+		unsigned int rc;
+
+		__asm__ volatile (
+			"__back:\n"
+			"lwarx           %0,0,%1\n"  /* load and reserve. rc(%0) = *spl(%1) */
+			"cmpwi           cr0,%0,0\n" /* cr0 = (rc compare-with 0) */
+			"li              %0,0\n"     /* rc = 0(failure) */
+			"bne-            __exit\n"   /* if cr0 != 0, goto _exit; */
+			"li              %0,1\n"     /* rc = 1(success) */
+			"stwcx.          %0,0,%1\n"  /* *spl(%1) = 1(value in rc) if reserved */
+			"bne-            __back\n"   /* if reservation is lost, goto __back */
+		#if 1
+			"lwsync\n"
+		#else
+			"isync\n"
+		#endif
+			"__exit:\n"
+			: "=&r"(rc)
+			: "r"(spl)
+			: "cr0", "memory"
+		);
+
+		return rc;
+	}
+	static QSE_INLINE void qse_spl_lock (qse_spl_t* spl) 
+	{
+		int x;
+		do
+		{
+			x = qse_spl_trylock(spl);
+		}
+		while (x);
+	}
+	static QSE_INLINE void qse_spl_unlock (qse_spl_t* spl) 
+	{
+		__asm__ volatile (
+		#if 1
+			"lwsync\n" 
+		#else
+			"sync\n" 
+		#endif
+			:
+			:
+			: "memory"
+		);
+		*spl = 0;
+	}
 
 #elif defined(QSE_SPL_NO_UNSUPPORTED_ERROR)
 	/* don't raise the compile time error */
