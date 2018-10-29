@@ -35,7 +35,7 @@
 #include <math.h>
 #if defined(HAVE_QUADMATH_H)
 #	include <quadmath.h>
-#elif defined(QSE_USE_AWK_FLTMAX) && (QSE_AWK_SIZEOF_FLT_T == 16)
+#elif defined(QSE_USE_AWK_FLTMAX) && (QSE_AWK_SIZEOF_FLT_T == 16) && defined(QSE_FLTMAX_REQUIRE_QUADMATH)
 #	error QUADMATH.H NOT AVAILABLE or NOT COMPILABLE
 #endif
 

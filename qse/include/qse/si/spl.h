@@ -211,13 +211,13 @@ asm void qse_spl_unlock (qse_spl_t* spl)
 
 		__asm__ volatile (
 			"__back:\n"
-			"lwarx           %0,0,%1\n"  /* load and reserve. rc(%0) = *spl(%1) */
-			"cmpwi           cr0,%0,0\n" /* cr0 = (rc compare-with 0) */
-			"li              %0,0\n"     /* rc = 0(failure) */
-			"bne-            __exit\n"   /* if cr0 != 0, goto _exit; */
-			"li              %0,1\n"     /* rc = 1(success) */
-			"stwcx.          %0,0,%1\n"  /* *spl(%1) = 1(value in rc) if reserved */
-			"bne-            __back\n"   /* if reservation is lost, goto __back */
+			"lwarx        %0,0,%1\n"  /* load and reserve. rc(%0) = *spl(%1) */
+			"cmpwi        cr0,%0,0\n" /* cr0 = (rc compare-with 0) */
+			"li           %0,0\n"     /* rc = 0(failure) */
+			"bne          cr0,__exit\n"   /* if cr0 != 0, goto _exit; */
+			"li           %0,1\n"     /* rc = 1(success) */
+			"stwcx.       %0,0,%1\n"  /* *spl(%1) = 1(value in rc) if reserved */
+			"bne          cr0,__back\n"   /* if reservation is lost, goto __back */
 		#if 1
 			"lwsync\n"
 		#else
@@ -233,20 +233,17 @@ asm void qse_spl_unlock (qse_spl_t* spl)
 	}
 	static QSE_INLINE void qse_spl_lock (qse_spl_t* spl) 
 	{
-		int x;
-		do
-		{
-			x = qse_spl_trylock(spl);
-		}
-		while (x);
+		while (!qse_spl_trylock(spl)) /* nothing */;
 	}
 	static QSE_INLINE void qse_spl_unlock (qse_spl_t* spl) 
 	{
 		__asm__ volatile (
 		#if 1
 			"lwsync\n" 
-		#else
+		#elif 0
 			"sync\n" 
+		#else
+			"eieio\n" 
 		#endif
 			:
 			:

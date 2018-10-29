@@ -30,6 +30,10 @@
 #include <qse/cmn/time.h>
 #include <stdarg.h>
 
+#if defined(HAVE_UNISTD_H)
+#	include <unistd.h>
+#endif
+
 #if (!defined(__unix__) && !defined(__unix)) || defined(HAVE_PTHREAD)
 
 qse_thr_t* qse_thr_open (qse_mmgr_t* mmgr, qse_size_t xtnsize)
@@ -208,14 +212,24 @@ static int __create_thread (qse_thr_t* thr)
 
 	if (thr->__stacksize > 0)
 	{
-		if (pthread_attr_setstacksize (&attr, thr->__stacksize) != 0)
+		int x;
+		qse_size_t ss = thr->__stacksize;
+	#if defined(PTHREAD_STACK_MIN)
+		if (ss < PTHREAD_STACK_MIN) ss = PTHREAD_STACK_MIN;
+	#endif
+	#if defined(_SC_PAGESIZE)
+		/* some systems(e.g. darwin 8.11.0/macosx) require the size 
+		 * to be page size aligned. */
+		ss = QSE_ALIGNTO(ss, sysconf(_SC_PAGESIZE));
+	#endif
+		if ((x = pthread_attr_setstacksize(&attr, ss)) != 0)
 		{
 			pthread_attr_destroy (&attr);
 			return -1;
 		}
 	}
 
-	if (pthread_create (&thr->__handle, &attr, __thread_main, thr) != 0) 
+	if (pthread_create(&thr->__handle, &attr, __thread_main, thr) != 0) 
 	{
 		pthread_attr_destroy (&attr);
 		return -1;
