@@ -502,9 +502,11 @@ typedef qse_int_t qse_intptr_t;
 	 * for alignment on some platforms */
 	typedef __float128 qse_fltmax_t;
 #	define QSE_SIZEOF_FLTMAX_T QSE_SIZEOF___FLOAT128
+#	define QSE_FLTMAX_REQUIRE_QUADMATH 1
 #else
 	typedef qse_flt_t qse_fltmax_t;
 #	define QSE_SIZEOF_FLTMAX_T QSE_SIZEOF_FLT_T
+#	undef QSE_FLTMAX_REQUIRE_QUADMATH
 #endif
 
 /** \typedef qse_ptrdiff_t
