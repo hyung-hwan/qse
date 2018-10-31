@@ -121,18 +121,17 @@ public:
 		MIN_LOAD_FACTOR = PairList::MIN_LOAD_FACTOR
 	};
 
-	HashTable (qse_size_t capacity = DEFAULT_CAPACITY,
-	           qse_size_t load_factor = DEFAULT_LOAD_FACTOR,
-	           qse_size_t mpb_size = 0):
-		Mmged(QSE_NULL), pair_list(QSE_NULL, capacity, load_factor, mpb_size)
+	HashTable (Mmgr* mmgr = QSE_NULL):
+		Mmged(mmgr), pair_list(DEFAULT_CAPACITY, DEFAULT_LOAD_FACTOR, 0, mmgr)
 	{
 	}
 
-	HashTable (Mmgr* mmgr,
-	           qse_size_t capacity = DEFAULT_CAPACITY,
+
+	HashTable (qse_size_t capacity,
 	           qse_size_t load_factor = DEFAULT_LOAD_FACTOR,
-	           qse_size_t mpb_size = 0):
-		Mmged(mmgr), pair_list(mmgr, capacity, load_factor, mpb_size)
+	           qse_size_t mpb_size = 0,
+	           Mmgr* mmgr = QSE_NULL):
+		Mmged(mmgr), pair_list(capacity, load_factor, mpb_size, mmgr)
 	{
 	}
 

@@ -98,13 +98,11 @@ public:
 	typedef typename PairTree::ConstIterator ConstIterator;
 
 
-	RedBlackTable (qse_size_t mpb_size = 0):
-		Mmged(QSE_NULL), pair_tree(QSE_NULL, mpb_size)
+	RedBlackTable (Mmgr* mmgr = QSE_NULL): Mmged(mmgr), pair_tree(mmgr, 0)
 	{
 	}
 
-	RedBlackTable (Mmgr* mmgr, qse_size_t mpb_size = 0):
-		Mmged(mmgr), pair_tree(mmgr, mpb_size)
+	RedBlackTable (qse_size_t mpb_size, Mmgr* mmgr = QSE_NULL): Mmged(mmgr), pair_tree(mpb_size, mmgr)
 	{
 	}
 

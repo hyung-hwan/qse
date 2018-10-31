@@ -340,17 +340,16 @@ private:
 	}
 
 public:
-	RedBlackTree (qse_size_t mpb_size = 0):
-		Mmged(QSE_NULL), mp(QSE_NULL, QSE_SIZEOF(Node), mpb_size), node_count(0)
+	RedBlackTree (Mmgr* mmgr = QSE_NULL): Mmged(mmgr), mp(mmgr, QSE_SIZEOF(Node), 0), node_count(0)
 	{
 		this->init_tree ();
 	}
 
-	RedBlackTree (Mmgr* mmgr, qse_size_t mpb_size = 0):
-		Mmged(mmgr), mp(mmgr, QSE_SIZEOF(Node), mpb_size), node_count(0)
+	RedBlackTree (qse_size_t mpb_size, Mmgr* mmgr = QSE_NULL): Mmged(mmgr), mp(QSE_NULL, QSE_SIZEOF(Node), mpb_size), node_count(0)
 	{
 		this->init_tree ();
 	}
+
 
 	RedBlackTree (const SelfType& rbt): 
 		Mmged(rbt.getMmgr()),

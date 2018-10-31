@@ -62,7 +62,7 @@ static QSE::TcpServerF<ClientHandler>* g_server;
 
 static int test1 (void)
 {
-	QSE::HeapMmgr heap_mmgr (QSE::Mmgr::getDFL(), 30000);
+	QSE::HeapMmgr heap_mmgr (30000, QSE::Mmgr::getDFL());
 
 #if defined(QSE_LANG_CPP11)
 	QSE::TcpServerL<int(QSE::TcpServer::Worker*)> server (

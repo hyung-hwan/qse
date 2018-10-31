@@ -137,7 +137,7 @@ private:
 				this->nodes[i] = QSE_NULL;
 			}
 
-			this->datum_list = new(this->getMmgr()) DatumList (this->getMmgr(), mpb_size);
+			this->datum_list = new(this->getMmgr()) DatumList(mpb_size, this->getMmgr());
 		}
 		catch (...) 
 		{
@@ -163,20 +163,14 @@ private:
 
 public:
 	HashList (
-		qse_size_t node_capacity = DEFAULT_CAPACITY, 
-		qse_size_t load_factor = DEFAULT_LOAD_FACTOR, 
-		qse_size_t mpb_size = 0): Mmged(QSE_NULL)
+		Mmgr* mmgr = QSE_NULL): Mmged(mmgr)
 	{
-		this->init_list (node_capacity, load_factor, mpb_size);
+		this->init_list (DEFAULT_CAPACITY, DEFAULT_LOAD_FACTOR, 0);
 	}
 
-	HashList (
-		Mmgr* mmgr,
-		qse_size_t node_capacity = DEFAULT_CAPACITY, 
-		qse_size_t load_factor = DEFAULT_LOAD_FACTOR, 
-		qse_size_t mpb_size = 0): Mmged(mmgr)
+	HashList (qse_size_t node_capacity, qse_size_t load_factor = DEFAULT_LOAD_FACTOR, qse_size_t mpb_size = 0, Mmgr* mmgr = QSE_NULL): Mmged(mmgr)
 	{
-		this->init_list (node_capacity, load_factor, mpb_size);
+		this->init_list (DEFAULT_CAPACITY, load_factor, mpb_size);
 	}
 
 	HashList (const SelfType& list): Mmged(list)
@@ -198,8 +192,7 @@ public:
 			}
 
 			// placement new
-			this->datum_list = new(list.getMmgr()) 
-				DatumList (list.getMmgr(), list.getMpool().getBlockSize());
+			this->datum_list = new(list.getMmgr()) DatumList(list.getMpool().getBlockSize(), list.getMmgr());
 		}
 		catch (...) 
 		{
@@ -675,7 +668,7 @@ protected:
 		// to be inserted are yielded off the original list and inserted
 		// without new allocation.
 		//SelfType temp (this->getMmgr(), this->_resizer(this->node_capacity), this->load_factor, mpool.getBlockSize());
-		SelfType temp (this->getMmgr(), this->_resizer(this->node_capacity, this->getGrowthPolicy()), this->load_factor, 0);
+		SelfType temp (this->_resizer(this->node_capacity, this->getGrowthPolicy()), this->load_factor, 0, this->getMmgr());
 		Node* p = this->datum_list->getHeadNode();
 		while (p)
 		{

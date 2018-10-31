@@ -40,7 +40,7 @@ QSE_BEGIN_NAMESPACE(QSE)
 /// managed by another memory manager. 
 ///
 /// \code
-///   QSE::HeapMmgr heap_mmgr (QSE::Mmgr::getDFL(), 30000);
+///   QSE::HeapMmgr heap_mmgr (30000, QSE::Mmgr::getDFL());
 ///   QSE::LinkedList<int> int_list (&heap_mmgr);
 ///   int_list.append (10);
 ///   int_list.append (20);
@@ -49,11 +49,9 @@ QSE_BEGIN_NAMESPACE(QSE)
 class QSE_EXPORT HeapMmgr: public Mmgr, public Mmged
 {
 public:
-	HeapMmgr (qse_size_t heap_size) QSE_CPP_NOEXCEPT;
-
 	/// The constructor function accepts an memory manager \a mmgr that 
 	/// is used to create a heap of the size \a heap_size. 
-	HeapMmgr (Mmgr* mmgr, qse_size_t heap_size) QSE_CPP_NOEXCEPT;
+	HeapMmgr (qse_size_t heap_size, Mmgr* mmgr = QSE_NULL) QSE_CPP_NOEXCEPT;
 
 	/// The destructor function frees the heap. Memory areas returned by
 	/// allocate(), reallocate(), allocMem(), reallocMem() are invalidated

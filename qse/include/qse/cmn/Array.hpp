@@ -106,12 +106,12 @@ public:
 	}
 
 public:
-	Array (qse_size_t capacity = DEFAULT_CAPACITY): Mmged(QSE_NULL)
+	Array (Mmgr* mmgr = QSE_NULL): Mmged(mmgr)
 	{
-		this->init_array (capacity);
+		this->init_array (DEFAULT_CAPACITY);
 	}
 
-	Array (Mmgr* mmgr, qse_size_t capacity = DEFAULT_CAPACITY): Mmged(mmgr)
+	Array (qse_size_t capacity, Mmgr* mmgr = QSE_NULL): Mmged(mmgr)
 	{
 		this->init_array (capacity);
 	}

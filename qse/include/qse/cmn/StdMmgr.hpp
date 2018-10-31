@@ -46,9 +46,11 @@ public:
 	void* reallocMem (void* ptr, qse_size_t n) QSE_CPP_NOEXCEPT;
 	void freeMem (void* ptr) QSE_CPP_NOEXCEPT;
 
+#if 0
 	/// The getInstance() function returns the stock instance of the StdMmgr
 	/// class.
 	static StdMmgr* getInstance () QSE_CPP_NOEXCEPT;
+#endif
 };
 
 /////////////////////////////////

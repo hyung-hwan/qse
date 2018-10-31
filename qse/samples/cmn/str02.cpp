@@ -6,7 +6,7 @@
 
 void t1 ()
 {
-	QSE::HeapMmgr heap_mmgr (QSE::Mmgr::getDFL(), 30000);
+	QSE::HeapMmgr heap_mmgr (30000, QSE::Mmgr::getDFL());
 	QSE::String* z = new QSE::String();
 
 	{

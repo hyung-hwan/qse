@@ -71,10 +71,10 @@ int main ()
 {
 //	qse_open_stdsios ();
 
-	QSE::HeapMmgr heap_mmgr (QSE::Mmgr::getDFL(), 3000000);
+	QSE::HeapMmgr heap_mmgr (3000000, QSE::Mmgr::getDFL());
 	//QSE::HashTable<int,int,IntHasher> int_table (&heap_mmgr, 1000);
-	IntTable int_table (NULL, IntTable::DEFAULT_CAPACITY, IntTable::DEFAULT_LOAD_FACTOR, 1000);
-	//IntTable int_table (NULL, IntTable::DEFAULT_CAPACITY, IntTable::DEFAULT_LOAD_FACTOR, 0);
+	IntTable int_table (IntTable::DEFAULT_CAPACITY, IntTable::DEFAULT_LOAD_FACTOR, 1000);
+	//IntTable int_table (IntTable::DEFAULT_CAPACITY, IntTable::DEFAULT_LOAD_FACTOR, 0);
 printf ("----------\n");
 	for (int i = 0; i < 100; i++)
 	{
@@ -112,8 +112,8 @@ printf ("----------\n");
 	printf ("%d\n", int_table[9990]);
 */
 
-	//Str1Table s1 (NULL, IntTable::DEFAULT_CAPACITY, IntTable::DEFAULT_LOAD_FACTOR, 1000);
-	Str1Table s1 (NULL, IntTable::DEFAULT_CAPACITY, IntTable::DEFAULT_LOAD_FACTOR, 0);
+	//Str1Table s1 (IntTable::DEFAULT_CAPACITY, IntTable::DEFAULT_LOAD_FACTOR, 1000);
+	Str1Table s1 (IntTable::DEFAULT_CAPACITY, IntTable::DEFAULT_LOAD_FACTOR, 0);
 	//Str1Table s1;
 	s1.insert ("hello", 20);
 	s1.insert ("hello", 20);
@@ -150,8 +150,8 @@ printf ("----------\n");
 
 	printf ("------------------\n");
 	{
-		Str1Table s11 (&heap_mmgr, IntTable::DEFAULT_CAPACITY, IntTable::DEFAULT_LOAD_FACTOR, 0);
-		//Str1Table s11 (NULL, IntTable::DEFAULT_CAPACITY, IntTable::DEFAULT_LOAD_FACTOR, 200);
+		Str1Table s11 (IntTable::DEFAULT_CAPACITY, IntTable::DEFAULT_LOAD_FACTOR, 0, &heap_mmgr);
+		//Str1Table s11 (IntTable::DEFAULT_CAPACITY, IntTable::DEFAULT_LOAD_FACTOR, 200);
 		//Str1Table s11;
 
 		for (int i = 0; i < 100; i++)

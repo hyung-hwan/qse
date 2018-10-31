@@ -36,10 +36,10 @@ class SttpCmd: public QSE::Array<QSE::String>
 {
 public:
 	SttpCmd (const qse_char_t* n = QSE_T(""), QSE::Mmgr* mmgr = QSE_NULL): 
-		QSE::Array<QSE::String>(mmgr, 20), name (n) {}
+		QSE::Array<QSE::String>(20, mmgr), name (n) {}
 
 	SttpCmd (const QSE::String& n, QSE::Mmgr* mmgr = QSE_NULL): 
-		QSE::Array<QSE::String>(mmgr, 20), name (n) {}
+		QSE::Array<QSE::String>(20, mmgr), name (n) {}
 
 	qse_size_t getArgCount () const
 	{

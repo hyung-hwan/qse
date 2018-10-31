@@ -123,14 +123,14 @@ public:
 		INVALID_INDEX = ParentType::INVALID_INDEX
 	};
 
-	BinaryHeap (qse_size_t capacity = DEFAULT_CAPACITY): ParentType (QSE_NULL, capacity) {}
+	BinaryHeap (Mmgr* mmgr = QSE_NULL): ParentType(DEFAULT_CAPACITY, mmgr) {}
 
-	BinaryHeap (Mmgr* mmgr, qse_size_t capacity = DEFAULT_CAPACITY): ParentType (mmgr, capacity) {}
+	BinaryHeap (qse_size_t capacity, Mmgr* mmgr = QSE_NULL): ParentType(capacity, mmgr) {}
 
-	BinaryHeap (const SelfType& heap): ParentType (heap) {}
+	BinaryHeap (const SelfType& heap): ParentType(heap) {}
 
 #if defined(QSE_CPP_ENABLE_CPP11_MOVE)
-	BinaryHeap (SelfType&& heap): ParentType (QSE_CPP_RVREF(heap)) {}
+	BinaryHeap (SelfType&& heap): ParentType(QSE_CPP_RVREF(heap)) {}
 #endif
 
 	~BinaryHeap () {}

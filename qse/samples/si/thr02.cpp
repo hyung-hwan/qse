@@ -18,7 +18,7 @@ static int g_stopreq = 0;
 static qse_ntime_t sleep_interval = { 1, 0 };
 
 
-QSE::HeapMmgr g_heap_mmgr (QSE::Mmgr::getDFL(), 30000);
+QSE::HeapMmgr g_heap_mmgr (30000, QSE::Mmgr::getDFL());
 
 class MyThread: public QSE::Thread
 {

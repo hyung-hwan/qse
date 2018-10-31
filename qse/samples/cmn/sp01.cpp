@@ -28,7 +28,7 @@ struct destroy_x_in_mmgr
 
 int main ()
 {
-        QSE::HeapMmgr heap_mmgr (QSE::Mmgr::getDFL(), 30000);
+        QSE::HeapMmgr heap_mmgr (30000, QSE::Mmgr::getDFL());
 
 	{
 		QSE::ScopedPtr<X> x1 (new X);
