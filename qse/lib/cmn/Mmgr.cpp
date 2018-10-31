@@ -73,8 +73,8 @@ Mmgr* Mmgr::dfl_mmgr = QSE_NULL;
 Mmgr* Mmgr::getDFL () QSE_CPP_NOEXCEPT
 {
 	static StdMmgr std_dfl_mmgr;
-	if (!Mmgr::dfl_mmgr) Mmgr::dfl_mmgr = &std_dfl_mmgr;
-	return Mmgr::dfl_mmgr;
+	Mmgr* mmgr = Mmgr::dfl_mmgr;
+	return mmgr? mmgr: &std_dfl_mmgr;
 }
 
 void Mmgr::setDFL (Mmgr* mmgr) QSE_CPP_NOEXCEPT
