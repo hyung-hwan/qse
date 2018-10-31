@@ -39,10 +39,10 @@ int main ()
 {
 //	qse_open_stdsios ();
 
-	QSE::HeapMmgr heap_mmgr (QSE::Mmgr::getDFL(), 3000000);
-	//QSE::RedBlackTable<int,int,IntHasher> int_table (&heap_mmgr, 1000);
-	IntTable int_table (NULL, 1000);
-	//IntTable int_table (NULL, 0);
+	QSE::HeapMmgr heap_mmgr (3000000, QSE::Mmgr::getDFL());
+	//QSE::RedBlackTable<int,int,IntHasher> int_table (1000, &heap_mmgr);
+	IntTable int_table (1000, QSE_NULL);
+	//IntTable int_table (0, QSE_NULL);
 printf ("----------\n");
 	for (int i = 0; i < 100; i++)
 	{
@@ -80,8 +80,8 @@ printf ("----------\n");
 	printf ("%d\n", int_table[9990]);
 */
 
-	//Str1Table s1 (NULL, 1000);
-	Str1Table s1 (NULL, 0);
+	//Str1Table s1 (1000, QSE_NULL);
+	Str1Table s1 (0, QSE_NULL);
 	//Str1Table s1;
 	s1.insert ("hello", 20);
 	s1.insert ("hello", 20);
@@ -118,8 +118,8 @@ printf ("----------\n");
 
 	printf ("------------------\n");
 	{
-		Str1Table s11 (&heap_mmgr, 0);
-		//Str1Table s11 (NULL, 200);
+		Str1Table s11 (0, &heap_mmgr);
+		//Str1Table s11 (200, QSE_NULL);
 		//Str1Table s11;
 
 		for (int i = 0; i < 100; i++)

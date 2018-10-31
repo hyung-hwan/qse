@@ -47,11 +47,14 @@ void StdMmgr::freeMem (void* ptr) QSE_CPP_NOEXCEPT
 	::free (ptr); 
 }
 
+
+#if 0
 StdMmgr* StdMmgr::getInstance () QSE_CPP_NOEXCEPT
 {
 	static StdMmgr DFL;
 	return &DFL;
 }
+#endif
 
 /////////////////////////////////
 QSE_END_NAMESPACE(QSE)

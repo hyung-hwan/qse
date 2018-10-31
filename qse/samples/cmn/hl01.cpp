@@ -93,8 +93,8 @@ printf ("================\n");
 printf ("----------------------\n");
 #endif
 
-	//QSE::HashList<T> h (mmgr, 1000, 75, 1000);
-	QSE::HashList<T> h (mmgr, 1000, 75, 500);
+	//QSE::HashList<T> h (1000, 75, 1000, mmgr);
+	QSE::HashList<T> h (1000, 75, 500, mmgr);
 for (int i = 0; i < 1000; i++)
 {
 	T x(i);
@@ -102,7 +102,7 @@ for (int i = 0; i < 1000; i++)
 }
 printf ("h.getSize() => %d\n", (int)h.getSize());
 
-	QSE::HashList<T> h2 (mmgr, 1000, 75, 700);
+	QSE::HashList<T> h2 (1000, 75, 700, mmgr);
 	h2 = h;
 
 	for (QSE::HashList<T>::Iterator it = h2.getIterator(); it.isLegit(); it++)

@@ -45,8 +45,8 @@ struct destroy_x_in_mmgr
 
 int f2 ()
 {
-	QSE::HeapMmgr heap_mmgr (QSE::Mmgr::getDFL(), 30000);
-	QSE::HeapMmgr heap_mmgr_2 (QSE::Mmgr::getDFL(), 30000);
+	QSE::HeapMmgr heap_mmgr (30000, QSE::Mmgr::getDFL());
+	QSE::HeapMmgr heap_mmgr_2 (30000, QSE::Mmgr::getDFL());
 	QSE::SharedPtr<X> y (new X(1));
 	QSE::SharedPtr<X,QSE::SharedPtrMmgrDeleter<X> > k (&heap_mmgr);
 

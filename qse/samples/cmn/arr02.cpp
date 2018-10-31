@@ -73,8 +73,8 @@ typedef  QSE::Array<PosStr> StrArray;
 
 int main ()
 {
-	//StrArray h (QSE_NULL, 100);
-	StrArray h (QSE_NULL, 15);
+	//StrArray h (100);
+	StrArray h (15);
 	char buf[20];
 
 	for (int i = 0; i < 20; i++)

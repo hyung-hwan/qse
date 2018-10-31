@@ -99,7 +99,7 @@ protected:
 
 static int test1()
 {
-	QSE::HeapMmgr heap_mmgr (QSE::Mmgr::getDFL(), 30000);
+	QSE::HeapMmgr heap_mmgr (30000, QSE::Mmgr::getDFL());
 	MyApp app (&heap_mmgr);
 
 MyApp app2 (&heap_mmgr);

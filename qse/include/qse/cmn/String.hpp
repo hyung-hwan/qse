@@ -185,8 +185,7 @@ private:
 	typedef StrBase<qse_wchar_t, QSE_WT('\0'), WcStringOpset> ParentType;
 
 public:
-	WcString (): ParentType() {}
-	WcString (Mmgr* mmgr): ParentType(mmgr) {}
+	WcString (Mmgr* mmgr = QSE_NULL): ParentType(mmgr) {}
 	WcString (int capacity, Mmgr* mmgr = QSE_NULL): ParentType(capacity, mmgr) {}
 	WcString (qse_size_t capacity, Mmgr* mmgr = QSE_NULL): ParentType(capacity, mmgr) {}
 	WcString (const qse_wchar_t* str, Mmgr* mmgr = QSE_NULL): ParentType(str, mmgr) {}
@@ -217,8 +216,7 @@ private:
 	typedef StrBase<qse_mchar_t, QSE_MT('\0'), MbStringOpset> ParentType;
 
 public:
-	MbString (): ParentType() {}
-	MbString (Mmgr* mmgr): ParentType(mmgr) {}
+	MbString (Mmgr* mmgr = QSE_NULL): ParentType(mmgr) {}
 	MbString (int capacity, Mmgr* mmgr = QSE_NULL): ParentType(capacity, mmgr) {}
 	MbString (qse_size_t capacity, Mmgr* mmgr = QSE_NULL): ParentType(capacity, mmgr) {}
 	MbString (const qse_mchar_t* str, Mmgr* mmgr = QSE_NULL): ParentType(str, mmgr) {}

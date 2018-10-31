@@ -22,7 +22,7 @@ typedef QSE::RedBlackTree<IntPair> IntTree;
 int main ()
 {
 
-	IntTree t (0, 10000);
+	IntTree t (10000, QSE_NULL);
 	//IntTree t (0);
 
 	for (int i = 0; i < 20 ; i++)
@@ -54,7 +54,7 @@ int main ()
 	printf ("------------------\n");
 	t.insert (IntPair(99, 999));
 	t.insert (IntPair(88, 888));
-	//IntTree y (QSE_NULL, 5);
+	//IntTree y (5, QSE_NULL);
 	x = t;
 	for (it = x.getConstIterator(); it.isLegit(); ++it)
 	{
