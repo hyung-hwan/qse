@@ -204,6 +204,19 @@ struct qse_skad_t
 extern "C" {
 #endif
 
+QSE_EXPORT void qse_initnwadwithip4ad (
+	qse_nwad_t*        nwad,
+	qse_uint16_t       port,
+	const qse_ip4ad_t* ipad
+);
+
+QSE_EXPORT void qse_initnwadwithip6ad (
+	qse_nwad_t*        nwad,
+	qse_uint16_t       port,
+	const qse_ip6ad_t* ipad,
+	qse_uint32_t       scopeid
+);
+
 QSE_EXPORT int qse_nwadequal (
 	const qse_nwad_t* x,
 	const qse_nwad_t* y

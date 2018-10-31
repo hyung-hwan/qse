@@ -300,6 +300,54 @@ qse_mchar_t* SocketAddress::toStrBuf (qse_mchar_t* buf, qse_size_t len) const QS
 	return buf;
 }
 
+qse_mchar_t* SocketAddress::ip4addrToStrBuf (const qse_ip4ad_t* ipaddr, qse_mchar_t* buf, qse_size_t len)
+{
+	qse_nwad_t nwad;
+	qse_initnwadwithip4ad (&nwad, 0, ipaddr);
+	qse_nwadtombs (&nwad, buf, len, QSE_NWADTOMBS_ALL);
+	return buf;
+}
+
+qse_mchar_t* SocketAddress::ip4addrToStrBuf (qse_uint32_t ipaddr, qse_mchar_t* buf, qse_size_t len)
+{
+	qse_nwad_t nwad;
+	qse_initnwadwithip4ad (&nwad, 0, (qse_ip4ad_t*)&ipaddr);
+	qse_nwadtombs (&nwad, buf, len, QSE_NWADTOMBS_ALL);
+	return buf;
+}
+
+qse_mchar_t* SocketAddress::ip6addrToStrBuf (const qse_ip6ad_t* ipaddr, qse_mchar_t* buf, qse_size_t len)
+{
+	qse_nwad_t nwad;
+	qse_initnwadwithip6ad (&nwad, 0, ipaddr, 0);
+	qse_nwadtombs (&nwad, buf, len, QSE_NWADTOMBS_ALL);
+	return buf;
+}
+
+qse_wchar_t* SocketAddress::ip4addrToStrBuf (const qse_ip4ad_t* ipaddr, qse_wchar_t* buf, qse_size_t len)
+{
+	qse_nwad_t nwad;
+	qse_initnwadwithip4ad (&nwad, 0, ipaddr);
+	qse_nwadtowcs (&nwad, buf, len, QSE_NWADTOWCS_ALL);
+	return buf;
+}
+
+qse_wchar_t* SocketAddress::ip4addrToStrBuf (qse_uint32_t ipaddr, qse_wchar_t* buf, qse_size_t len)
+{
+	qse_nwad_t nwad;
+	qse_initnwadwithip4ad (&nwad, 0, (qse_ip4ad_t*)&ipaddr);
+	qse_nwadtowcs (&nwad, buf, len, QSE_NWADTOWCS_ALL);
+	return buf;
+}
+
+qse_wchar_t* SocketAddress::ip6addrToStrBuf (const qse_ip6ad_t* ipaddr, qse_wchar_t* buf, qse_size_t len)
+{
+	qse_nwad_t nwad;
+	qse_initnwadwithip6ad (&nwad, 0, ipaddr, 0);
+	qse_nwadtowcs (&nwad, buf, len, QSE_NWADTOWCS_ALL);
+	return buf;
+}
+
 /////////////////////////////////
 QSE_END_NAMESPACE(QSE)
 /////////////////////////////////
