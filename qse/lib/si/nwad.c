@@ -34,6 +34,24 @@
 
 #include "../cmn/mem-prv.h"
 
+
+void qse_initnwadwithip4ad (qse_nwad_t* nwad, qse_uint16_t port,	const qse_ip4ad_t* ipad)
+{
+	QSE_MEMSET (nwad, 0, QSE_SIZEOF(*nwad));
+	nwad->type = QSE_NWAD_IN4;
+	nwad->u.in4.port = port;
+	nwad->u.in4.addr = *ipad;
+};
+
+void qse_initnwadwithip6ad (qse_nwad_t* nwad, qse_uint16_t port, const qse_ip6ad_t* ipad, qse_uint32_t scopeid)
+{
+	QSE_MEMSET (nwad, 0, QSE_SIZEOF(*nwad));
+	nwad->type = QSE_NWAD_IN6;
+	nwad->u.in6.port = port;
+	nwad->u.in6.addr = *ipad;
+	nwad->u.in6.scope = scopeid;
+}
+
 int qse_nwadequal (const qse_nwad_t* x, const qse_nwad_t* y)
 {
 	if (x->type != y->type) return 0;

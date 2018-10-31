@@ -87,6 +87,14 @@ public:
 	qse_mchar_t* toStrBuf (qse_mchar_t* buf, qse_size_t len) const QSE_CPP_NOEXCEPT;
 	qse_wchar_t* toStrBuf (qse_wchar_t* buf, qse_size_t len) const QSE_CPP_NOEXCEPT;
 
+	static qse_mchar_t* ip4addrToStrBuf (const qse_ip4ad_t* ipaddr, qse_mchar_t* buf, qse_size_t len);
+	static qse_mchar_t* ip4addrToStrBuf (qse_uint32_t ipaddr, qse_mchar_t* buf, qse_size_t len);
+	static qse_mchar_t* ip6addrToStrBuf (const qse_ip6ad_t* ipaddr, qse_mchar_t* buf, qse_size_t len);
+	
+	static qse_wchar_t* ip4addrToStrBuf (const qse_ip4ad_t* ipaddr, qse_wchar_t* buf, qse_size_t len);
+	static qse_wchar_t* ip4addrToStrBuf (qse_uint32_t ipaddr, qse_wchar_t* buf, qse_size_t len);
+	static qse_wchar_t* ip6addrToStrBuf (const qse_ip6ad_t* ipaddr, qse_wchar_t* buf, qse_size_t len);
+
 protected:
 	qse_skad_t skad;
 };
