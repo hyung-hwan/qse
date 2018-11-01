@@ -56,19 +56,22 @@ void* Mmgr::callocate (qse_size_t n, bool raise_exception) QSE_CPP_THREXCEPT1(Me
 
 #if 0
 #if defined(__GNUC__)
-static StdMmgr __attribute__((init_priority(101))) std_dfl_mmgr;
+static StdMmgr __attribute__((init_priority(101))) std_dfl_mmgr; <- this solved the problem
 #else
-static StdMmgr std_dfl_mmgr;
+static StdMmgr std_dfl_mmgr; <-- has an issue for undefined initialization order
 #endif
-Mmgr* Mmgr::dfl_mmgr = &std_dfl_mmgr;
-//Mmgr* Mmgr::dfl_mmgr = StdMmgr::getInstance();  <--- has an issue with initialization order
+Mmgr* Mmgr::dfl_mmgr = &std_dfl_mmgr; 
+//Mmgr* Mmgr::dfl_mmgr = StdMmgr::getInstance();  <--- has an issue as well
+Mmgr* Mmgr::getDFL () QSE_CPP_NOEXCEPT
+{
+	return Mmgr::dfl_mmgr;
+}
 #else
 // C++ initialization order across translation units are not defined.
 // so it's tricky to work around this... the init_priority attribute
 // can solve this problem. but it's compiler dependent. 
 // Mmgr::getDFL() resets dfl_mmgr to &std_dfl_mmgr if it's NULL.
 Mmgr* Mmgr::dfl_mmgr = QSE_NULL;
-#endif
 
 Mmgr* Mmgr::getDFL () QSE_CPP_NOEXCEPT
 {
@@ -76,6 +79,7 @@ Mmgr* Mmgr::getDFL () QSE_CPP_NOEXCEPT
 	Mmgr* mmgr = Mmgr::dfl_mmgr;
 	return mmgr? mmgr: &std_dfl_mmgr;
 }
+#endif
 
 void Mmgr::setDFL (Mmgr* mmgr) QSE_CPP_NOEXCEPT
 {
