@@ -2487,7 +2487,7 @@ QSE_EXPORT qse_awk_val_t* qse_awk_rtx_getmapvalfld (
  * \a itr pointing to the first pair.
  */
 QSE_EXPORT qse_awk_val_map_itr_t* qse_awk_rtx_getfirstmapvalitr (
-     qse_awk_rtx_t*         rtx,
+	qse_awk_rtx_t*         rtx,
 	qse_awk_val_t*         map,
 	qse_awk_val_map_itr_t* itr
 );
@@ -2499,7 +2499,7 @@ QSE_EXPORT qse_awk_val_map_itr_t* qse_awk_rtx_getfirstmapvalitr (
  * Otherwise, it returns \a itr pointing to the next pair.
  */
 QSE_EXPORT qse_awk_val_map_itr_t* qse_awk_rtx_getnextmapvalitr (
-     qse_awk_rtx_t*         rtx,
+	qse_awk_rtx_t*         rtx,
 	qse_awk_val_t*         map,
 	qse_awk_val_map_itr_t* itr
 );
