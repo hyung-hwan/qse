@@ -2346,11 +2346,11 @@ done:
 			qse_awk_rtx_refupval (rtx, rv);
 			ret = qse_awk_rtx_setrefval (rtx, (qse_awk_val_ref_t*)qse_awk_rtx_getarg (rtx, 2), rv);
 			qse_awk_rtx_refdownval (rtx, rv);
-			if (ret >= 0) qse_awk_rtx_setretval (rtx, qse_awk_val_zero);
+			if (ret >= 0) qse_awk_rtx_setretval (rtx, QSE_AWK_VAL_ZERO);
 		}
 		else 
 		{
-			qse_awk_rtx_setretval (rtx, qse_awk_val_negone);
+			qse_awk_rtx_setretval (rtx, QSE_AWK_VAL_NEGONE);
 		}
 
 	}

@@ -1244,7 +1244,7 @@ static int prepare_globals (qse_awk_rtx_t* rtx)
 
 	/* override NF to zero */
 	if (qse_awk_rtx_setgbl (
-		rtx, QSE_AWK_GBL_NF, qse_awk_val_zero) <= -1) goto oops;
+		rtx, QSE_AWK_GBL_NF, QSE_AWK_VAL_ZERO) <= -1) goto oops;
 
 	/* return success */
 	return 0;
@@ -1252,7 +1252,7 @@ static int prepare_globals (qse_awk_rtx_t* rtx)
 oops:
 	/* restore the stack_top this way instead of calling __raw_pop()
 	 * as many times as successful __raw_push(). it is ok because
-	 * the values pushed so far are qse_awk_val_nils and qse_awk_val_zeros.
+	 * the values pushed so far are qse_awk_val_nils and QSE_AWK_VAL_ZEROs.
 	 */
 	rtx->stack_top = saved_stack_top;
 	return -1;
@@ -3946,7 +3946,7 @@ static qse_awk_val_t* eval_binop_lor (
 	qse_awk_rtx_refupval (run, lv);
 	if (qse_awk_rtx_valtobool (run, lv)) 
 	{
-		res = qse_awk_val_one;
+		res = QSE_AWK_VAL_ONE;
 	}
 	else
 	{
@@ -3960,7 +3960,7 @@ static qse_awk_val_t* eval_binop_lor (
 		qse_awk_rtx_refupval (run, rv);
 
 		res = qse_awk_rtx_valtobool(run,rv)? 
-			qse_awk_val_one: qse_awk_val_zero;
+			QSE_AWK_VAL_ONE: QSE_AWK_VAL_ZERO;
 		qse_awk_rtx_refdownval (run, rv);
 	}
 
@@ -3999,7 +3999,7 @@ static qse_awk_val_t* eval_binop_land (
 	qse_awk_rtx_refupval (run, lv);
 	if (!qse_awk_rtx_valtobool (run, lv)) 
 	{
-		res = qse_awk_val_zero;
+		res = QSE_AWK_VAL_ZERO;
 	}
 	else
 	{
@@ -4012,7 +4012,7 @@ static qse_awk_val_t* eval_binop_land (
 		}
 		qse_awk_rtx_refupval (run, rv);
 
-		res = qse_awk_rtx_valtobool(run,rv)? qse_awk_val_one: qse_awk_val_zero;
+		res = qse_awk_rtx_valtobool(run,rv)? QSE_AWK_VAL_ONE: QSE_AWK_VAL_ZERO;
 		qse_awk_rtx_refdownval (run, rv);
 	}
 
@@ -4064,7 +4064,7 @@ static qse_awk_val_t* eval_binop_in (
 	{
 		if (str != idxbuf) QSE_AWK_FREE (run->awk, str);
 		qse_awk_rtx_refdownval (run, rv);
-		return qse_awk_val_zero;
+		return QSE_AWK_VAL_ZERO;
 	}
 	else if (rvtype == QSE_AWK_VAL_MAP)
 	{
@@ -4073,7 +4073,7 @@ static qse_awk_val_t* eval_binop_in (
 
 		map = ((qse_awk_val_map_t*)rv)->map;
 		res = (qse_htb_search (map, str, len) == QSE_NULL)? 
-			qse_awk_val_zero: qse_awk_val_one;
+			QSE_AWK_VAL_ZERO: QSE_AWK_VAL_ONE;
 
 		if (str != idxbuf) QSE_AWK_FREE (run->awk, str);
 		qse_awk_rtx_refdownval (run, rv);
@@ -4584,13 +4584,13 @@ static int teq_val (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* righ
 static qse_awk_val_t* eval_binop_teq (
 	qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
 {
-	return teq_val (rtx, left, right)? qse_awk_val_one: qse_awk_val_zero;
+	return teq_val (rtx, left, right)? QSE_AWK_VAL_ONE: QSE_AWK_VAL_ZERO;
 }
 
 static qse_awk_val_t* eval_binop_tne (
 	qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
 {
-	return teq_val (rtx, left, right)? qse_awk_val_zero: qse_awk_val_one;
+	return teq_val (rtx, left, right)? QSE_AWK_VAL_ZERO: QSE_AWK_VAL_ONE;
 }
 
 static qse_awk_val_t* eval_binop_eq (
@@ -4598,7 +4598,7 @@ static qse_awk_val_t* eval_binop_eq (
 {
 	int n = __cmp_val (rtx, left, right);
 	if (n == CMP_ERROR) return QSE_NULL;
-	return (n == 0)? qse_awk_val_one: qse_awk_val_zero;
+	return (n == 0)? QSE_AWK_VAL_ONE: QSE_AWK_VAL_ZERO;
 }
 
 static qse_awk_val_t* eval_binop_ne (
@@ -4606,7 +4606,7 @@ static qse_awk_val_t* eval_binop_ne (
 {
 	int n = __cmp_val (rtx, left, right);
 	if (n == CMP_ERROR) return QSE_NULL;
-	return (n != 0)? qse_awk_val_one: qse_awk_val_zero;
+	return (n != 0)? QSE_AWK_VAL_ONE: QSE_AWK_VAL_ZERO;
 }
 
 static qse_awk_val_t* eval_binop_gt (
@@ -4614,7 +4614,7 @@ static qse_awk_val_t* eval_binop_gt (
 {
 	int n = __cmp_val (rtx, left, right);
 	if (n == CMP_ERROR) return QSE_NULL;
-	return (n > 0)? qse_awk_val_one: qse_awk_val_zero;
+	return (n > 0)? QSE_AWK_VAL_ONE: QSE_AWK_VAL_ZERO;
 }
 
 static qse_awk_val_t* eval_binop_ge (
@@ -4622,7 +4622,7 @@ static qse_awk_val_t* eval_binop_ge (
 {
 	int n = __cmp_val (rtx, left, right);
 	if (n == CMP_ERROR) return QSE_NULL;
-	return (n >= 0)? qse_awk_val_one: qse_awk_val_zero;
+	return (n >= 0)? QSE_AWK_VAL_ONE: QSE_AWK_VAL_ZERO;
 }
 
 static qse_awk_val_t* eval_binop_lt (
@@ -4630,7 +4630,7 @@ static qse_awk_val_t* eval_binop_lt (
 {
 	int n = __cmp_val (rtx, left, right);
 	if (n == CMP_ERROR) return QSE_NULL;
-	return (n < 0)? qse_awk_val_one: qse_awk_val_zero;
+	return (n < 0)? QSE_AWK_VAL_ONE: QSE_AWK_VAL_ZERO;
 }
 
 static qse_awk_val_t* eval_binop_le (
@@ -4638,7 +4638,7 @@ static qse_awk_val_t* eval_binop_le (
 {
 	int n = __cmp_val (rtx, left, right);
 	if (n == CMP_ERROR) return QSE_NULL;
-	return (n <= 0)? qse_awk_val_one: qse_awk_val_zero;
+	return (n <= 0)? QSE_AWK_VAL_ONE: QSE_AWK_VAL_ZERO;
 }
 
 static qse_awk_val_t* eval_binop_lshift (
@@ -6142,7 +6142,7 @@ static qse_awk_val_t* eval_int (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 
 	val = qse_awk_rtx_makeintval (run, ((qse_awk_nde_int_t*)nde)->val);
 	if (val == QSE_NULL) ADJERR_LOC (run, &nde->loc);
-	else if (IS_REAL_POINTER(val)) ((qse_awk_val_int_t*)val)->nde = nde;
+	else if (QSE_AWK_VTR_IS_POINTER(val)) ((qse_awk_val_int_t*)val)->nde = nde;
 
 	return val;
 }

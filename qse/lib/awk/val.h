@@ -66,51 +66,67 @@ struct qse_awk_val_rchunk_t
  * add a field to indicate if a value is static.
  * 
 
-#define IS_STATICVAL(val) \
-	((val) == QSE_NULL || \
-	 (val) == qse_awk_val_nil || \
-	 (val) == qse_awk_val_zls || \
-	 (val) == qse_awk_val_zero || \
-	 (val) == qse_awk_val_one || \
-	 ((val) >= (qse_awk_val_t*)&awk_int[0] && \
-	  (val) <= (qse_awk_val_t*)&awk_int[QSE_COUNTOF(awk_int)-1]))
+#define IS_STATICVAL(val) ((val) == QSE_NULL || (val) == qse_awk_val_nil || (val) == qse_awk_val_zls)
 */
 #define IS_STATICVAL(val) ((val)->stat)
 
 
-
 /* qse_awk_val_t pointer encoding assumes the pointer is an even number.
+ * i shift an integer within a certain range and set bit 0 to 1 to
+ * encode it in a pointer. (vtr = value pointer).
+ *
  * is this a safe assumption? do i have to use memalign or write my own
  * aligned malloc()? */
-#define VAL_NUM_TYPE_BITS        1
-#define VAL_MASK_TYPE_BITS       1 
+#define QSE_AWK_VTR_NUM_TYPE_BITS        1
+#define QSE_AWK_VTR_MASK_TYPE_BITS       1 
 
-#define VAL_TYPE_BITS_POINTER    0
-#define VAL_TYPE_BITS_QUICKINT   1
-#define VAL_SIGN_BIT ((qse_uintptr_t)1 << (QSE_SIZEOF_UINTPTR_T * 8 - 1))
+#define QSE_AWK_VTR_TYPE_BITS_POINTER    0
+#define QSE_AWK_VTR_TYPE_BITS_QUICKINT   1
+#define QSE_AWK_VTR_SIGN_BIT ((qse_uintptr_t)1 << (QSE_SIZEOF_UINTPTR_T * 8 - 1))
 
 /* shrink the bit range by 1 more bit to ease signbit handling. 
  * i want abs(max) == abs(min).
  * i don't want abs(max) + 1 == abs(min). e.g min: -32768, max: 32767
  */
-#define QUICKINT_MAX ((qse_awk_int_t)((~(qse_uintptr_t)0) >> (VAL_NUM_TYPE_BITS + 1)))
-#define QUICKINT_MIN (-QUICKINT_MAX)
+#define QSE_AWK_QUICKINT_MAX ((qse_awk_int_t)((~(qse_uintptr_t)0) >> (QSE_AWK_VTR_NUM_TYPE_BITS + 1)))
+#define QSE_AWK_QUICKINT_MIN (-QSE_AWK_QUICKINT_MAX)
+#define QSE_AWK_IN_QUICKINT_RANGE(i) ((i) >= QSE_AWK_QUICKINT_MIN && (i) <= QSE_AWK_QUICKINT_MAX)
 
-#define IS_QUICKINT(i) ((i) >= QUICKINT_MIN && (i) <= QUICKINT_MAX)
+#define QSE_AWK_VTR_TYPE_BITS(p) (((qse_uintptr_t)(p)) & QSE_AWK_VTR_MASK_TYPE_BITS)
+#define QSE_AWK_VTR_IS_POINTER(p) (QSE_AWK_VTR_TYPE_BITS(p) == QSE_AWK_VTR_TYPE_BITS_POINTER)
+#define QSE_AWK_VTR_IS_QUICKINT(p) (QSE_AWK_VTR_TYPE_BITS(p) == QSE_AWK_VTR_TYPE_BITS_QUICKINT)
 
-#define POINTER_TYPE_BITS(p) (((qse_uintptr_t)(p)) & VAL_MASK_TYPE_BITS)
-#define IS_REAL_POINTER(p) (POINTER_TYPE_BITS(p) == VAL_TYPE_BITS_POINTER)
-#define IS_QUICKINT_POINTER(p) (POINTER_TYPE_BITS(p) == VAL_TYPE_BITS_QUICKINT)
+#define QSE_AWK_QUICKINT_TO_VTR_POSITIVE(i) \
+	(((qse_uintptr_t)(i) << QSE_AWK_VTR_NUM_TYPE_BITS) | QSE_AWK_VTR_TYPE_BITS_QUICKINT)
+
+#define QSE_AWK_QUICKINT_TO_VTR_NEGATIVE(i) \
+	((((qse_uintptr_t)-(i)) << QSE_AWK_VTR_NUM_TYPE_BITS) | QSE_AWK_VTR_TYPE_BITS_QUICKINT | QSE_AWK_VTR_SIGN_BIT)
+
+#define QSE_AWK_QUICKINT_TO_VTR(i) \
+	((qse_awk_val_t*)(((i) < 0)? QSE_AWK_QUICKINT_TO_VTR_NEGATIVE(i): QSE_AWK_QUICKINT_TO_VTR_POSITIVE(i)))
+
+#define QSE_AWK_VTR_ZERO ((qse_awk_val_t*)QSE_AWK_QUICKINT_TO_VTR_POSITIVE(0))
+#define QSE_AWK_VTR_ONE  ((qse_awk_val_t*)QSE_AWK_QUICKINT_TO_VTR_POSITIVE(1))
+#define QSE_AWK_VTR_NEGONE ((qse_awk_val_t*)QSE_AWK_QUICKINT_TO_VTR_NEGATIVE(-1))
 
 /* sizeof(qse_intptr_t) may not be the same as sizeof(qse_awk_int_t).
  * so step-by-step type conversions are needed.
  * e.g) pointer to uintptr_t, uintptr_t to intptr_t, intptr_t to awk_int_t */
-#define POSITIVE_QUICKINT_FROM_POINTER(p) ((qse_intptr_t)((qse_uintptr_t)(p) >> VAL_NUM_TYPE_BITS))
-#define NEGATIVE_QUICKINT_FROM_POINTER(p) (-(qse_intptr_t)(((qse_uintptr_t)(p) & ~VAL_SIGN_BIT) >> VAL_NUM_TYPE_BITS))
-#define GET_QUICKINT_FROM_POINTER(p) (((qse_uintptr_t)(p) & VAL_SIGN_BIT)? NEGATIVE_QUICKINT_FROM_POINTER(p): POSITIVE_QUICKINT_FROM_POINTER(p))
+#define QSE_AWK_VTR_TO_QUICKINT_POSITIVE(p) \
+	((qse_intptr_t)((qse_uintptr_t)(p) >> QSE_AWK_VTR_NUM_TYPE_BITS))
+#define QSE_AWK_VTR_TO_QUICKINT_NEGATIVE(p) \
+	(-(qse_intptr_t)(((qse_uintptr_t)(p) & ~QSE_AWK_VTR_SIGN_BIT) >> QSE_AWK_VTR_NUM_TYPE_BITS))
+#define QSE_AWK_VTR_TO_QUICKINT(p) \
+	(((qse_uintptr_t)(p) & QSE_AWK_VTR_SIGN_BIT)? QSE_AWK_VTR_TO_QUICKINT_NEGATIVE(p): QSE_AWK_VTR_TO_QUICKINT_POSITIVE(p))
 
-#define QSE_AWK_RTX_GETVALTYPE(rtx,p) (IS_QUICKINT_POINTER(p)? QSE_AWK_VAL_INT: (p)->v_type)
-#define QSE_AWK_RTX_GETINTFROMVAL(rtx,p) ((IS_QUICKINT_POINTER(p)? (qse_awk_int_t)GET_QUICKINT_FROM_POINTER(p): ((qse_awk_val_int_t*)(p))->i_val))
+
+#define QSE_AWK_RTX_GETVALTYPE(rtx,p) (QSE_AWK_VTR_IS_QUICKINT(p)? QSE_AWK_VAL_INT: (p)->v_type)
+#define QSE_AWK_RTX_GETINTFROMVAL(rtx,p) ((QSE_AWK_VTR_IS_QUICKINT(p)? (qse_awk_int_t)QSE_AWK_VTR_TO_QUICKINT(p): ((qse_awk_val_int_t*)(p))->i_val))
+
+
+#define QSE_AWK_VAL_ZERO QSE_AWK_VTR_ZERO
+#define QSE_AWK_VAL_ONE  QSE_AWK_VTR_ONE
+#define QSE_AWK_VAL_NEGONE QSE_AWK_VTR_NEGONE
 
 #if defined(__cplusplus)
 extern "C" {
@@ -121,15 +137,6 @@ extern qse_awk_val_t* qse_awk_val_nil;
 
 /* represents an empty string  */
 extern qse_awk_val_t* qse_awk_val_zls;
-
-/* represents a numeric value -1 */
-extern qse_awk_val_t* qse_awk_val_negone;
-
-/* represents a numeric value 0 */
-extern qse_awk_val_t* qse_awk_val_zero;
-
-/* represents a numeric value 1 */
-extern qse_awk_val_t* qse_awk_val_one;
 
 
 void qse_awk_rtx_freeval (
