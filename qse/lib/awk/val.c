@@ -39,45 +39,6 @@ static qse_awk_val_str_t awk_zls = { QSE_AWK_VAL_STR, 0, 1, 0, { QSE_T(""), 0 } 
 qse_awk_val_t* qse_awk_val_nil = (qse_awk_val_t*)&awk_nil;
 qse_awk_val_t* qse_awk_val_zls = (qse_awk_val_t*)&awk_zls; 
 
-/*
- * qse_awk_makeintval() returns a quickint pointer
- * for the value of -1, 0, 1. these static pointers
- * are kind of unnecesary for the quickint potiners.
- * let me keep this table until i redefine 
- * qse_awk_val_negone, qse_awk_val_zero, qse_awk_val_one
- * to proper quickint pointer values.
- * 
- * #define qse_awk_val_zero (qse_awk_val_t*)((qse_uintptr)VAL_TYPE_BITS_QUICKINT)
- * #define qse_awk_val_one  (qse_awk_val_t*)(((qse_uintptr)1 << NUM_TYPE_BITS) | VAL_TYPE_BITS_QUICKINT)
- * #define qse_awk_val_negone  (qse_awk_val_t*)(((qse_uintptr)1 << NUM_TYPE_BITS) | VAL_TYPE_BITS_QUICKINT | VAL_SIGN_BIT)
- */
-static qse_awk_val_int_t awk_int[] =
-{
-	/* type          ref stat nstr val nde */
-	{ QSE_AWK_VAL_INT, 0, 1, 0, -1, QSE_NULL },
-	{ QSE_AWK_VAL_INT, 0, 1, 0,  0, QSE_NULL },
-	{ QSE_AWK_VAL_INT, 0, 1, 0,  1, QSE_NULL }
-};
-
-qse_awk_val_t* qse_awk_val_negone = (qse_awk_val_t*)&awk_int[0];
-qse_awk_val_t* qse_awk_val_zero = (qse_awk_val_t*)&awk_int[1];
-qse_awk_val_t* qse_awk_val_one = (qse_awk_val_t*)&awk_int[2];
-
-static QSE_INLINE qse_awk_val_t* quickint_to_pointer (qse_awk_int_t v)
-{
-	qse_uintptr_t r;
-
-	if (v < 0)
-	{
-		r = (((qse_uintptr_t)-v) << VAL_NUM_TYPE_BITS) | VAL_TYPE_BITS_QUICKINT | VAL_SIGN_BIT;
-	}
-	else
-	{
-		r = ((qse_uintptr_t)v << VAL_NUM_TYPE_BITS) | VAL_TYPE_BITS_QUICKINT;
-	}
-
-	return (qse_awk_val_t*)r;
-}
 
 qse_awk_val_t* qse_getawknilval (void)
 {
@@ -98,17 +59,7 @@ qse_awk_val_t* qse_awk_rtx_makeintval (qse_awk_rtx_t* rtx, qse_awk_int_t v)
 {
 	qse_awk_val_int_t* val;
 
-	if (IS_QUICKINT(v)) return quickint_to_pointer(v);
-
-#if 0
-	/* this is not necesary as the numbers in awk_int are
-	 * covered by QUICKINTs */
-	if (v >= awk_int[0].i_val && 
-	    v <= awk_int[QSE_COUNTOF(awk_int)-1].i_val)
-	{
-		return (qse_awk_val_t*)&awk_int[v-awk_int[0].i_val];
-	}
-#endif
+	if (QSE_AWK_IN_QUICKINT_RANGE(v)) return QSE_AWK_QUICKINT_TO_VTR(v);
 
 	if (rtx->vmgr.ifree == QSE_NULL)
 	{
@@ -775,7 +726,7 @@ qse_awk_val_t* qse_awk_rtx_makefunval (
 
 int QSE_INLINE qse_awk_rtx_isstaticval (qse_awk_rtx_t* rtx, qse_awk_val_t* val)
 {
-	return IS_REAL_POINTER(val) && IS_STATICVAL(val);
+	return QSE_AWK_VTR_IS_POINTER(val) && IS_STATICVAL(val);
 }
 
 int qse_awk_rtx_getvaltype (qse_awk_rtx_t* rtx, qse_awk_val_t* val)
@@ -793,7 +744,7 @@ void qse_awk_rtx_freeval (qse_awk_rtx_t* rtx, qse_awk_val_t* val, int cache)
 {
 	qse_awk_val_type_t vtype;
 
-	if (IS_REAL_POINTER(val))
+	if (QSE_AWK_VTR_IS_POINTER(val))
 	{
 		if (IS_STATICVAL(val)) return;
 
@@ -888,7 +839,7 @@ void qse_awk_rtx_freeval (qse_awk_rtx_t* rtx, qse_awk_val_t* val, int cache)
 
 void qse_awk_rtx_refupval (qse_awk_rtx_t* rtx, qse_awk_val_t* val)
 {
-	if (IS_REAL_POINTER(val))
+	if (QSE_AWK_VTR_IS_POINTER(val))
 	{
 		if (IS_STATICVAL(val)) return;
 
@@ -903,7 +854,7 @@ void qse_awk_rtx_refupval (qse_awk_rtx_t* rtx, qse_awk_val_t* val)
 
 void qse_awk_rtx_refdownval (qse_awk_rtx_t* rtx, qse_awk_val_t* val)
 {
-	if (IS_REAL_POINTER(val))
+	if (QSE_AWK_VTR_IS_POINTER(val))
 	{
 		if (IS_STATICVAL(val)) return;
 
@@ -926,7 +877,7 @@ void qse_awk_rtx_refdownval (qse_awk_rtx_t* rtx, qse_awk_val_t* val)
 
 void qse_awk_rtx_refdownval_nofree (qse_awk_rtx_t* rtx, qse_awk_val_t* val)
 {
-	if (IS_REAL_POINTER(val))
+	if (QSE_AWK_VTR_IS_POINTER(val))
 	{
 		if (IS_STATICVAL(val)) return;
 	

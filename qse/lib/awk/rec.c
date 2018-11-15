@@ -383,7 +383,7 @@ int qse_awk_rtx_clrrec (qse_awk_rtx_t* run, int skip_inrec_line)
 		run->inrec.nflds = 0;
 
 		if (qse_awk_rtx_setgbl (
-			run, QSE_AWK_GBL_NF, qse_awk_val_zero) == -1)
+			run, QSE_AWK_GBL_NF, QSE_AWK_VAL_ZERO) == -1)
 		{
 			/* first of all, this should never happen. 
 			 * if it happened, it would return an error
