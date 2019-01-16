@@ -57,6 +57,12 @@
 #include <stdlib.h> /* getenv, system */
 #include <time.h>
 
+struct mod_ctx_t
+{
+	char* log_ident;
+};
+typedef struct mod_ctx_t mod_ctx_t;
+
 static int fnc_fork (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
 	qse_awk_int_t pid;
@@ -878,9 +884,9 @@ static int fnc_openlog (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	int rx = -1;
 	qse_awk_int_t opt, fac;
 	qse_awk_val_t* retv;
-	qse_char_t* ident; 
+	qse_char_t* ident = QSE_NULL;
 	qse_size_t ident_len;
-
+	mod_ctx_t* mctx = fi->mod->ctx;
 
 #if defined(ENABLE_SYSLOG)
 	ident = qse_awk_rtx_getvalstr(rtx, qse_awk_rtx_getarg(rtx, 0), &ident_len);
@@ -897,11 +903,15 @@ static int fnc_openlog (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	openlog(ident, opt, fac);
 	#else
 	{
+
 		qse_mchar_t* mbs;
 		mbs = qse_wcstombsdup(ident, QSE_NULL, qse_awk_rtx_getmmgr(rtx));
-		if (mbs == QSE_NULL) goto done;
-		openlog(mbs, opt, fac);
-		qse_awk_rtx_freemem (rtx, mbs);
+		if (!mbs) goto done;
+
+		if (mctx->log_ident) qse_awk_rtx_freemem (rtx, mctx->log_ident);
+		mctx->log_ident = mbs;
+
+		openlog (mbs, opt, fac);
 	}
 	#endif
 
@@ -909,6 +919,8 @@ static int fnc_openlog (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 #endif
 
 done:
+	if (ident) qse_awk_rtx_freevalstr(rtx, qse_awk_rtx_getarg(rtx, 0), ident);
+
 	retv = qse_awk_rtx_makeintval(rtx, rx);
 	if (retv == QSE_NULL) return -1;
 
@@ -920,8 +932,14 @@ static int fnc_closelog (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
 	int rx = -1;
 	qse_awk_val_t* retv;
+	mod_ctx_t* mctx = fi->mod->ctx;
 
 #if defined(ENABLE_SYSLOG)
+	if (mctx->log_ident)
+	{
+		qse_awk_rtx_freemem (rtx, mctx->log_ident);
+		mctx->log_ident = QSE_NULL;
+	}
 	closelog ();
 	rx = 0;
 #endif
@@ -938,7 +956,7 @@ static int fnc_writelog (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	int rx = -1;
 	qse_awk_val_t* retv;
 	qse_awk_int_t pri;
-	qse_char_t* msg;
+	qse_char_t* msg = QSE_NULL;
 	qse_size_t msglen;
 
 #if defined(ENABLE_SYSLOG)
@@ -963,6 +981,8 @@ static int fnc_writelog (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 #endif
 
 done:
+	if (msg) qse_awk_rtx_freevalstr(rtx, qse_awk_rtx_getarg(rtx, 1), msg);
+
 	retv = qse_awk_rtx_makeintval(rtx, rx);
 	if (retv == QSE_NULL) return -1;
 
@@ -1157,7 +1177,7 @@ static void fini (qse_awk_mod_t* mod, qse_awk_rtx_t* rtx)
 
 static void unload (qse_awk_mod_t* mod, qse_awk_t* awk)
 {
-	/* TODO: anything */
+	qse_awk_freemem (awk, mod->ctx);
 }
 
 int qse_awk_mod_sys (qse_awk_mod_t* mod, qse_awk_t* awk)
@@ -1167,9 +1187,9 @@ int qse_awk_mod_sys (qse_awk_mod_t* mod, qse_awk_t* awk)
 
 	mod->init = init;
 	mod->fini = fini;
-	/*
-	mod->ctx...
-	 */
+	
+	mod->ctx = qse_awk_callocmem(awk, QSE_SIZEOF(mod_ctx_t));
+	if (!mod->ctx) return -1;
 
 	return 0;
 }
