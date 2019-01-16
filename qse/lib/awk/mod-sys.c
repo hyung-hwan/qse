@@ -49,6 +49,9 @@
 #	if defined(HAVE_SYS_SYSCALL_H)
 #		include <sys/syscall.h>
 #	endif
+
+#	define ENABLE_SYSLOG
+#	include <syslog.h>
 #endif
 
 #include <stdlib.h> /* getenv, system */
@@ -741,17 +744,17 @@ static int fnc_getnwifcfg (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	out.type = QSE_AWK_RTX_VALTOSTR_CPLCPY;
 	out.u.cplcpy.ptr = cfg.name;
 	out.u.cplcpy.len = QSE_COUNTOF(cfg.name);
-	if (qse_awk_rtx_valtostr (rtx, qse_awk_rtx_getarg (rtx, 0), &out) >= 0)
+	if (qse_awk_rtx_valtostr(rtx, qse_awk_rtx_getarg(rtx, 0), &out) >= 0)
 	{
 		qse_awk_int_t type;
 		int rx;
 
-		rx = qse_awk_rtx_valtoint (rtx, qse_awk_rtx_getarg (rtx, 1), &type);
+		rx = qse_awk_rtx_valtoint(rtx, qse_awk_rtx_getarg(rtx, 1), &type);
 		if (rx >= 0)
 		{
 			cfg.type = type;
 
-			if (qse_getnwifcfg (&cfg) >= 0)
+			if (qse_getnwifcfg(&cfg) >= 0)
 			{
 				/* make a map value containg configuration */
 				qse_awk_int_t index, mtu;
@@ -870,6 +873,102 @@ skip_system:
 	return 0;
 }
 
+static int fnc_openlog (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	int rx = -1;
+	qse_awk_int_t opt, fac;
+	qse_awk_val_t* retv;
+	qse_char_t* ident; 
+	qse_size_t ident_len;
+
+
+#if defined(ENABLE_SYSLOG)
+	ident = qse_awk_rtx_getvalstr(rtx, qse_awk_rtx_getarg(rtx, 0), &ident_len);
+	if (!ident) goto done;
+
+	/* the target name contains a null character.
+	 * make system return -1 */
+	if (qse_strxchr(ident, ident_len, QSE_T('\0'))) goto done;
+
+	if (qse_awk_rtx_valtoint(rtx, qse_awk_rtx_getarg(rtx, 1), &opt) <= -1) goto done;
+	if (qse_awk_rtx_valtoint(rtx, qse_awk_rtx_getarg(rtx, 2), &fac) <= -1) goto done;
+
+	#if defined(QSE_CHAR_IS_MCHAR)
+	openlog(ident, opt, fac);
+	#else
+	{
+		qse_mchar_t* mbs;
+		mbs = qse_wcstombsdup(ident, QSE_NULL, qse_awk_rtx_getmmgr(rtx));
+		if (mbs == QSE_NULL) goto done;
+		openlog(mbs, opt, fac);
+		qse_awk_rtx_freemem (rtx, mbs);
+	}
+	#endif
+
+	rx = 0;
+#endif
+
+done:
+	retv = qse_awk_rtx_makeintval(rtx, rx);
+	if (retv == QSE_NULL) return -1;
+
+	qse_awk_rtx_setretval (rtx, retv);
+	return 0;
+}
+
+static int fnc_closelog (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	int rx = -1;
+	qse_awk_val_t* retv;
+
+#if defined(ENABLE_SYSLOG)
+	closelog ();
+	rx = 0;
+#endif
+
+	retv = qse_awk_rtx_makeintval(rtx, rx);
+	if (retv == QSE_NULL) return -1;
+
+	qse_awk_rtx_setretval (rtx, retv);
+	return 0;
+}
+
+static int fnc_writelog (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	int rx = -1;
+	qse_awk_val_t* retv;
+	qse_awk_int_t pri;
+	qse_char_t* msg;
+	qse_size_t msglen;
+
+#if defined(ENABLE_SYSLOG)
+	if (qse_awk_rtx_valtoint(rtx, qse_awk_rtx_getarg(rtx, 0), &pri) <= -1) goto done;
+
+	msg = qse_awk_rtx_getvalstr(rtx, qse_awk_rtx_getarg(rtx, 1), &msglen);
+	if (!msg) goto done;
+
+	if (qse_strxchr(msg, msglen, QSE_T('\0'))) goto done;
+	#if defined(QSE_CHAR_IS_MCHAR)
+	syslog(pri, "%s", msg);
+	#else
+	{
+		qse_mchar_t* mbs;
+		mbs = qse_wcstombsdup(msg, QSE_NULL, qse_awk_rtx_getmmgr(rtx));
+		if (!mbs) goto done;
+		syslog(pri, "%s", mbs);
+		qse_awk_rtx_freemem (rtx, mbs);
+	}
+	#endif
+	rx = 0;
+#endif
+
+done:
+	retv = qse_awk_rtx_makeintval(rtx, rx);
+	if (retv == QSE_NULL) return -1;
+
+	qse_awk_rtx_setretval (rtx, retv);
+	return 0;
+}
 
 typedef struct fnctab_t fnctab_t;
 struct fnctab_t
@@ -889,6 +988,7 @@ static fnctab_t fnctab[] =
 {
 	/* keep this table sorted for binary search in query(). */
 
+	{ QSE_T("closelog"),   { { 0, 0, QSE_NULL     }, fnc_closelog,   0  } },
 	{ QSE_T("fork"),       { { 0, 0, QSE_NULL     }, fnc_fork,       0  } },
 	{ QSE_T("getegid"),    { { 0, 0, QSE_NULL     }, fnc_getegid,    0  } },
 	{ QSE_T("getenv"),     { { 1, 1, QSE_NULL     }, fnc_getenv,     0  } },
@@ -903,12 +1003,14 @@ static fnctab_t fnctab[] =
 	{ QSE_T("getuid"),     { { 0, 0, QSE_NULL     }, fnc_getuid,     0  } },
 	{ QSE_T("kill"),       { { 2, 2, QSE_NULL     }, fnc_kill,       0  } },
 	{ QSE_T("mktime"),     { { 0, 1, QSE_NULL     }, fnc_mktime,     0  } },
+	{ QSE_T("openlog"),    { { 3, 3, QSE_NULL     }, fnc_openlog,    0  } },
 	{ QSE_T("settime"),    { { 1, 1, QSE_NULL     }, fnc_settime,    0  } },
 	{ QSE_T("sleep"),      { { 1, 1, QSE_NULL     }, fnc_sleep,      0  } },
 	{ QSE_T("strftime"),   { { 2, 2, QSE_NULL     }, fnc_strftime,   0  } },
 	{ QSE_T("system"),     { { 1, 1, QSE_NULL     }, fnc_system,     0  } },
 	{ QSE_T("systime"),    { { 0, 0, QSE_NULL     }, fnc_gettime,    0  } }, /* alias to gettime() */
-	{ QSE_T("wait"),       { { 1, 1, QSE_NULL     }, fnc_wait,       0  } }
+	{ QSE_T("wait"),       { { 1, 1, QSE_NULL     }, fnc_wait,       0  } },
+	{ QSE_T("writelog"),   { { 2, 2, QSE_NULL     }, fnc_writelog,   0  } }
 };
 
 #if !defined(SIGHUP)
@@ -939,6 +1041,43 @@ static fnctab_t fnctab[] =
 static inttab_t inttab[] =
 {
 	/* keep this table sorted for binary search in query(). */
+
+#if defined(ENABLE_SYSLOG)
+	{ QSE_T("LOG_FAC_AUTH"),       { LOG_AUTH } },
+	{ QSE_T("LOG_FAC_AUTHPRIV"),   { LOG_AUTHPRIV } },
+	{ QSE_T("LOG_FAC_CRON"),       { LOG_CRON } },
+	{ QSE_T("LOG_FAC_DAEMON"),     { LOG_DAEMON } },
+	{ QSE_T("LOG_FAC_FTP"),        { LOG_FTP } },
+	{ QSE_T("LOG_FAC_KERN"),       { LOG_KERN } },
+	{ QSE_T("LOG_FAC_LOCAL0"),     { LOG_LOCAL0 } },
+	{ QSE_T("LOG_FAC_LOCAL1"),     { LOG_LOCAL1 } },
+	{ QSE_T("LOG_FAC_LOCAL2"),     { LOG_LOCAL2 } },
+	{ QSE_T("LOG_FAC_LOCAL3"),     { LOG_LOCAL3 } },
+	{ QSE_T("LOG_FAC_LOCAL4"),     { LOG_LOCAL4 } },
+	{ QSE_T("LOG_FAC_LOCAL5"),     { LOG_LOCAL5 } },
+	{ QSE_T("LOG_FAC_LOCAL6"),     { LOG_LOCAL6 } },
+	{ QSE_T("LOG_FAC_LOCAL7"),     { LOG_LOCAL7 } },
+	{ QSE_T("LOG_FAC_LPR"),        { LOG_LPR } },
+	{ QSE_T("LOG_FAC_MAIL"),       { LOG_MAIL } },
+	{ QSE_T("LOG_FAC_NEWS"),       { LOG_NEWS } },
+	{ QSE_T("LOG_FAC_SYSLOG"),     { LOG_SYSLOG } },
+	{ QSE_T("LOG_FAC_USER"),       { LOG_USER } },
+	{ QSE_T("LOG_FAC_UUCP"),       { LOG_UUCP } },
+
+	{ QSE_T("LOG_OPT_CONS"),       { LOG_CONS } },
+	{ QSE_T("LOG_OPT_NDELAY"),     { LOG_NDELAY } },
+	{ QSE_T("LOG_OPT_NOWAIT"),     { LOG_NOWAIT } },
+	{ QSE_T("LOG_OPT_PID"),        { LOG_PID } },
+
+	{ QSE_T("LOG_PRI_ALERT"),      { LOG_ALERT } },
+	{ QSE_T("LOG_PRI_CRIT"),       { LOG_CRIT } },
+	{ QSE_T("LOG_PRI_DEBUG"),      { LOG_DEBUG } },
+	{ QSE_T("LOG_PRI_EMERG"),      { LOG_EMERG } },
+	{ QSE_T("LOG_PRI_ERR"),        { LOG_ERR } },
+	{ QSE_T("LOG_PRI_INFO"),       { LOG_INFO } },
+	{ QSE_T("LOG_PRI_NOTICE"),     { LOG_NOTICE } },
+	{ QSE_T("LOG_PRI_WARNING"),    { LOG_WARNING } },
+#endif
 
 	{ QSE_T("NWIFCFG_IN4"), { QSE_NWIFCFG_IN4 } },
 	{ QSE_T("NWIFCFG_IN6"), { QSE_NWIFCFG_IN6 } },
