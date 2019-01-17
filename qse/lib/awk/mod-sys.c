@@ -900,7 +900,17 @@ static int fnc_openlog (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	if (qse_awk_rtx_valtoint(rtx, qse_awk_rtx_getarg(rtx, 2), &fac) <= -1) goto done;
 
 	#if defined(QSE_CHAR_IS_MCHAR)
-	openlog(ident, opt, fac);
+	{
+		qse_mchar_t* mbs;
+
+		mbs = qse_mbsdup(ident, qse_awk_rtx_getmmgr(rtx));
+		if (!mbs) goto done;
+
+		if (mctx->log_ident) qse_awk_rtx_freemem (rtx, mctx->log_ident);
+		mctx->log_ident = mbs;
+
+		openlog(mbs, opt, fac);
+	}
 	#else
 	{
 
