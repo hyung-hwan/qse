@@ -29,6 +29,7 @@
 #include <qse/si/sinfo.h>
 #include <qse/si/os.h>
 #include "../cmn/syscall.h"
+#include "../cmn/mem-prv.h"
 #include <qse/cmn/mbwc.h>
 
 /////////////////////////////////
@@ -271,25 +272,28 @@ int App::set_signal_handler_no_mutex (int sig, SignalHandler sighr)
 
 	if (::sigaction(sig, QSE_NULL, &oldsa) == -1) return -1;
 
+	QSE_MEMSET (&sa, 0, QSE_SIZEOF(sa));
 	if (oldsa.sa_flags & SA_SIGINFO)
 	{
 		sa.sa_sigaction = dispatch_siginfo;
-		sigfillset (&sa.sa_mask); // block all signals while the handler is being executed
-		sa.sa_flags |= SA_SIGINFO;
+		sa.sa_flags = SA_SIGINFO;
 	}
 	else
 	{
 		sa.sa_handler = dispatch_signal;
-		sigfillset (&sa.sa_mask); 
 		sa.sa_flags = 0;
-		//sa.sa_flags |= SA_INTERUPT;
-		//sa.sa_flags |= SA_RESTART;
 	}
+	//sa.sa_flags |= SA_INTERUPT;
+	//sa.sa_flags |= SA_RESTART;
+	sigfillset (&sa.sa_mask); // block all signals while the handler is being executed
 
 	if (::sigaction(sig, &sa, QSE_NULL) == -1) return -1;
 
 	App::_sighrs[0][sig] = (qse_size_t)sighr;
-	App::_sighrs[1][sig] = (qse_size_t)oldsa.sa_handler;
+	if (oldsa.sa_flags & SA_SIGINFO)
+		App::_sighrs[1][sig] = (qse_size_t)oldsa.sa_sigaction;
+	else
+		App::_sighrs[1][sig] = (qse_size_t)oldsa.sa_handler;
 	g_app_oldsi[sig].sa_mask = oldsa.sa_mask;
 	g_app_oldsi[sig].sa_flags = oldsa.sa_flags;
 
@@ -308,6 +312,7 @@ int App::unset_signal_handler_no_mutex(int sig, int ignore)
 
 	struct sigaction sa;
 
+	QSE_MEMSET (&sa, 0, QSE_SIZEOF(sa));
 	sa.sa_mask = g_app_oldsi[sig].sa_mask;
 	sa.sa_flags = g_app_oldsi[sig].sa_flags;
 	if (ignore)
