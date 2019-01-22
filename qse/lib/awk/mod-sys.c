@@ -1035,6 +1035,10 @@ static int fnc_closelog (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 		mctx->log.ident = QSE_NULL;
 	}
 
+	/* back to the local syslog in case writelog() is called
+	 * without another openlog() */
+	mctx->log.type = SYSLOG_LOCAL;
+
 	rx = 0;
 
 	retv = qse_awk_rtx_makeintval(rtx, rx);
