@@ -52,14 +52,35 @@
 
 #	define ENABLE_SYSLOG
 #	include <syslog.h>
+
+#	include <sys/socket.h>
+
 #endif
 
 #include <stdlib.h> /* getenv, system */
 #include <time.h>
 
+#include <qse/si/sio.h>
+typedef enum syslog_type_t syslog_type_t;
+enum syslog_type_t
+{
+	SYSLOG_LOCAL,
+	SYSLOG_REMOTE
+};
+
 struct mod_ctx_t
 {
-	char* log_ident;
+	struct
+	{
+		syslog_type_t type;
+		char* ident;
+		qse_skad_t skad;
+		int syslog_opened; // has openlog() been called?
+		int opt;
+		int fac;
+		int sck;
+		qse_mbs_t* dmsgbuf;
+	} log;
 };
 typedef struct mod_ctx_t mod_ctx_t;
 
@@ -326,7 +347,7 @@ static int fnc_getgid (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 #elif defined(__OS2__)
 	/* TOOD: implement this*/
 	gid = -1;
-	
+
 #elif defined(__DOS__)
 	/* TOOD: implement this*/
 	gid = -1;
@@ -884,12 +905,14 @@ static int fnc_openlog (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	int rx = -1;
 	qse_awk_int_t opt, fac;
 	qse_awk_val_t* retv;
-	qse_char_t* ident = QSE_NULL;
+	qse_char_t* ident = QSE_NULL, * actual_ident;
 	qse_size_t ident_len;
 	qse_mchar_t* mbs_ident;
 	mod_ctx_t* mctx = fi->mod->ctx;
+	qse_nwad_t nwad;
+	syslog_type_t log_type = SYSLOG_LOCAL;
 
-#if defined(ENABLE_SYSLOG)
+
 	ident = qse_awk_rtx_getvalstr(rtx, qse_awk_rtx_getarg(rtx, 0), &ident_len);
 	if (!ident) goto done;
 
@@ -900,19 +923,69 @@ static int fnc_openlog (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	if (qse_awk_rtx_valtoint(rtx, qse_awk_rtx_getarg(rtx, 1), &opt) <= -1) goto done;
 	if (qse_awk_rtx_valtoint(rtx, qse_awk_rtx_getarg(rtx, 2), &fac) <= -1) goto done;
 
+	if (qse_strbeg(ident, QSE_T("remote://")))
+	{
+		qse_char_t* slash;
+		/* "udp://remote-addr:remote-port/syslog-identifier" */
+
+		log_type = SYSLOG_REMOTE;
+		actual_ident = ident + 9;
+		slash = qse_strchr(actual_ident, QSE_T('/'));
+		if (!slash) goto done;
+		if (qse_strntonwad(actual_ident, slash - actual_ident, &nwad) <= -1) goto done;
+		actual_ident = slash + 1;
+	}
+	else if (qse_strbeg(ident, QSE_T("local://")))
+	{
+		/* "local://syslog-identifier" */
+		actual_ident = ident + 8;
+	}
+	else
+	{
+		actual_ident = ident;
+	}
+
 #if defined(QSE_CHAR_IS_MCHAR)
-	mbs_ident = qse_mbsdup(ident, qse_awk_rtx_getmmgr(rtx));
+	mbs_ident = qse_mbsdup(actual_ident, qse_awk_rtx_getmmgr(rtx));
 #else
-	mbs_ident = qse_wcstombsdup(ident, QSE_NULL, qse_awk_rtx_getmmgr(rtx));
+	mbs_ident = qse_wcstombsdup(actual_ident, QSE_NULL, qse_awk_rtx_getmmgr(rtx));
 #endif
 	if (!mbs_ident) goto done;
 
-	if (mctx->log_ident) qse_awk_rtx_freemem (rtx, mctx->log_ident);
-	mctx->log_ident = mbs_ident;
+	if (mctx->log.ident) qse_awk_rtx_freemem (rtx, mctx->log.ident);
+	mctx->log.ident = mbs_ident;
 
-	openlog(mbs_ident, opt, fac);
-	rx = 0;
+#if defined(ENABLE_SYSLOG)
+	if (mctx->log.syslog_opened)
+	{
+		closelog ();
+		mctx->log.syslog_opened = 0;
+	}
 #endif
+	if (mctx->log.sck >= 0)
+	{
+		close (mctx->log.sck);
+		mctx->log.sck = -1;
+	}
+
+	mctx->log.type = log_type;
+	mctx->log.opt = opt;
+	mctx->log.fac = fac;
+	if (mctx->log.type == SYSLOG_LOCAL)
+	{
+	#if defined(ENABLE_SYSLOG)
+		openlog(mbs_ident, opt, fac);
+		mctx->log.syslog_opened = 1;
+	#endif
+	}
+	else if (mctx->log.type == SYSLOG_REMOTE)
+	{
+		qse_nwadtoskad (&nwad, &mctx->log.skad);
+
+		/* TODO: open socket? */
+	}
+
+	rx = 0;
 
 done:
 	if (ident) qse_awk_rtx_freevalstr(rtx, qse_awk_rtx_getarg(rtx, 0), ident);
@@ -930,15 +1003,39 @@ static int fnc_closelog (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	qse_awk_val_t* retv;
 	mod_ctx_t* mctx = fi->mod->ctx;
 
-#if defined(ENABLE_SYSLOG)
-	if (mctx->log_ident)
+	if (mctx->log.type == SYSLOG_LOCAL)
 	{
-		qse_awk_rtx_freemem (rtx, mctx->log_ident);
-		mctx->log_ident = QSE_NULL;
+	#if defined(ENABLE_SYSLOG)
+		closelog ();
+		// closelog() might be called without openlog(). so there is no 
+		// check if syslog_opened is true.
+		// it is just used as an indicator to decide wheter closelog()
+		// upon module finalization(fini).
+		mctx->log.syslog_opened = 0;
+	#endif
 	}
-	closelog ();
+	else if (mctx->log.type == SYSLOG_REMOTE)
+	{
+		if (mctx->log.sck >= 0)
+		{
+			close (mctx->log.sck);
+			mctx->log.sck = -1;
+		}
+
+		if (mctx->log.dmsgbuf)
+		{
+			qse_mbs_close (mctx->log.dmsgbuf);
+			mctx->log.dmsgbuf = QSE_NULL;
+		}
+	}
+
+	if (mctx->log.ident)
+	{
+		qse_awk_rtx_freemem (rtx, mctx->log.ident);
+		mctx->log.ident = QSE_NULL;
+	}
+
 	rx = 0;
-#endif
 
 	retv = qse_awk_rtx_makeintval(rtx, rx);
 	if (retv == QSE_NULL) return -1;
@@ -954,27 +1051,114 @@ static int fnc_writelog (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	qse_awk_int_t pri;
 	qse_char_t* msg = QSE_NULL;
 	qse_size_t msglen;
+	mod_ctx_t* mctx = fi->mod->ctx;
 
-#if defined(ENABLE_SYSLOG)
 	if (qse_awk_rtx_valtoint(rtx, qse_awk_rtx_getarg(rtx, 0), &pri) <= -1) goto done;
 
 	msg = qse_awk_rtx_getvalstr(rtx, qse_awk_rtx_getarg(rtx, 1), &msglen);
 	if (!msg) goto done;
 
 	if (qse_strxchr(msg, msglen, QSE_T('\0'))) goto done;
-	#if defined(QSE_CHAR_IS_MCHAR)
-	syslog(pri, "%s", msg);
-	#else
+
+	if (mctx->log.type == SYSLOG_LOCAL)
 	{
-		qse_mchar_t* mbs;
-		mbs = qse_wcstombsdup(msg, QSE_NULL, qse_awk_rtx_getmmgr(rtx));
-		if (!mbs) goto done;
-		syslog(pri, "%s", mbs);
-		qse_awk_rtx_freemem (rtx, mbs);
-	}
+	#if defined(ENABLE_SYSLOG)
+		#if defined(QSE_CHAR_IS_MCHAR)
+		syslog(pri, "%s", msg);
+		#else
+		{
+			qse_mchar_t* mbs;
+			mbs = qse_wcstombsdup(msg, QSE_NULL, qse_awk_rtx_getmmgr(rtx));
+			if (!mbs) goto done;
+			syslog(pri, "%s", mbs);
+			qse_awk_rtx_freemem (rtx, mbs);
+		}
+		#endif
 	#endif
+	}
+	else if (mctx->log.type == SYSLOG_REMOTE)
+	{
+	#if defined(_WIN32)
+		/* TODO: implement this */
+	#else
+		qse_ntime_t now;
+		qse_btime_t cnow;
+
+		static const qse_mchar_t* __syslog_month_names[] =
+		{
+			QSE_MT("Jan"),
+			QSE_MT("Feb"),
+			QSE_MT("Mar"),
+			QSE_MT("Apr"),
+			QSE_MT("May"),
+			QSE_MT("Jun"),
+			QSE_MT("Jul"),
+			QSE_MT("Aug"),
+			QSE_MT("Sep"),
+			QSE_MT("Oct"),
+			QSE_MT("Nov"),
+			QSE_MT("Dec"),
+		};
+
+		if (mctx->log.sck <= -1)
+		{
+		#if defined(SOCK_CLOEXECX)
+			mctx->log.sck = socket (qse_skadfamily(&mctx->log.skad), SOCK_DGRAM | SOCK_CLOEXEC, 0);
+		#else
+			mctx->log.sck = socket (qse_skadfamily(&mctx->log.skad), SOCK_DGRAM, 0);
+			#if defined(FD_CLOEXEC)
+			if (mctx->log.sck >= 0)
+			{
+				int flag = fcntl (mctx->log.sck, F_GETFD);
+				if (flag >= 0) fcntl (mctx->log.sck, F_SETFD, flag | FD_CLOEXEC);
+			}
+			#endif
+		#endif
+		}
+
+		if (mctx->log.sck >= 0)
+		{
+			///////////////////////////
+			if (!mctx->log.dmsgbuf) mctx->log.dmsgbuf = qse_mbs_open(qse_awk_rtx_getmmgr(rtx), 0, 0);
+			if (!mctx->log.dmsgbuf) goto done;
+
+			if (qse_gettime(&now) || qse_localtime(&now, &cnow) <= -1) goto done;
+
+			if (qse_mbs_fmt (
+				mctx->log.dmsgbuf, QSE_MT("<%d>%s %02d %02d:%02d:%02d "), 
+				(int)(mctx->log.fac | pri),
+				__syslog_month_names[cnow.mon], cnow.mday, 
+				cnow.hour, cnow.min, cnow.sec) == (qse_size_t)-1) goto done;
+
+			if (mctx->log.ident || (mctx->log.opt & LOG_PID))
+			{
+				/* if the identifier is set or LOG_PID is set, the produced tag won't be empty.
+				 * so appending ':' is kind of ok */
+
+				if (qse_mbs_fcat(mctx->log.dmsgbuf, QSE_MT("%hs"), (mctx->log.ident? mctx->log.ident: QSE_MT(""))) == (qse_size_t)-1) goto done;
+
+				if (mctx->log.opt & LOG_PID)
+				{
+					if (qse_mbs_fcat(mctx->log.dmsgbuf, QSE_MT("[%d]"), (int)QSE_GETPID()) == (qse_size_t)-1) goto done;
+				}
+
+				if (qse_mbs_fcat(mctx->log.dmsgbuf, QSE_MT(": ")) == (qse_size_t)-1) goto done;
+			}
+
+		#if defined(QSE_CHAR_IS_MCHAR)
+			if (qse_mbs_fcat(mctx->log.dmsgbuf, QSE_MT("%hs"), msg) == (qse_size_t)-1) goto done;
+		#else
+			if (qse_mbs_fcat(mctx->log.dmsgbuf, QSE_MT("%ls"), msg) == (qse_size_t)-1) goto done;
+		#endif
+
+			/* don't care about output failure */
+			sendto (mctx->log.sck, QSE_MBS_PTR(mctx->log.dmsgbuf), QSE_MBS_LEN(mctx->log.dmsgbuf),
+			        0, (struct sockaddr*)&mctx->log.skad, qse_skadsize(&mctx->log.skad));
+		}
+	#endif
+	}
+
 	rx = 0;
-#endif
 
 done:
 	if (msg) qse_awk_rtx_freevalstr(rtx, qse_awk_rtx_getarg(rtx, 1), msg);
@@ -1160,6 +1344,10 @@ static int query (qse_awk_mod_t* mod, qse_awk_t* awk, const qse_char_t* name, qs
 
 static int init (qse_awk_mod_t* mod, qse_awk_rtx_t* rtx)
 {
+	mod_ctx_t* mctx = (mod_ctx_t*)mod->ctx;
+	mctx->log.type = SYSLOG_LOCAL;
+	mctx->log.syslog_opened = 0;
+	mctx->log.sck = -1;
 	return 0;
 }
 
@@ -1169,11 +1357,45 @@ static void fini (qse_awk_mod_t* mod, qse_awk_rtx_t* rtx)
 	for (each pid for rtx) kill (pid, SIGKILL);
 	for (each pid for rtx) waitpid (pid, QSE_NULL, 0);
 	*/
+
+	mod_ctx_t* mctx = (mod_ctx_t*)mod->ctx;
+
+#if defined(ENABLE_SYSLOG)
+	if (mctx->log.syslog_opened) 
+	{
+		/* closelog() only if openlog() has been called explicitly */
+		closelog ();
+		mctx->log.syslog_opened = 0;
+	}
+#endif
+	
+	if (mctx->log.sck >= 0)
+	{
+	#if defined(_WIN32)
+		/* TODO: implement this */
+	#else
+		close (mctx->log.sck);
+	#endif
+		mctx->log.sck = -1;
+	}
+
+	if (mctx->log.dmsgbuf)
+	{
+		qse_mbs_close (mctx->log.dmsgbuf);
+		mctx->log.dmsgbuf = QSE_NULL;
+	}
+
+	if (mctx->log.ident) 
+	{
+		qse_awk_rtx_freemem (rtx, mctx->log.ident);
+		mctx->log.ident = QSE_NULL;
+	}
 }
 
 static void unload (qse_awk_mod_t* mod, qse_awk_t* awk)
 {
-	qse_awk_freemem (awk, mod->ctx);
+	mod_ctx_t* mctx = (mod_ctx_t*)mod->ctx;
+	qse_awk_freemem (awk, mctx);
 }
 
 int qse_awk_mod_sys (qse_awk_mod_t* mod, qse_awk_t* awk)
@@ -1183,7 +1405,7 @@ int qse_awk_mod_sys (qse_awk_mod_t* mod, qse_awk_t* awk)
 
 	mod->init = init;
 	mod->fini = fini;
-	
+
 	mod->ctx = qse_awk_callocmem(awk, QSE_SIZEOF(mod_ctx_t));
 	if (!mod->ctx) return -1;
 

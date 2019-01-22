@@ -624,7 +624,7 @@ void qse_log_reportv (qse_log_t* log, const qse_char_t* ident, int pri, const qs
 
 		if (id_out)
 		{
-			fpdilen = qse_mbs_fcat (log->dmsgbuf, QSE_MT(": "), log->ident);
+			fpdilen = qse_mbs_fcat (log->dmsgbuf, QSE_MT(": "));
 			if (fpdilen == (qse_size_t)-1) goto done;
 		}
 		else
