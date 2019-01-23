@@ -900,6 +900,58 @@ skip_system:
 	return 0;
 }
 
+static void open_remote_log_socket (qse_awk_rtx_t* rtx, mod_ctx_t* mctx)
+{
+#if defined(_WIN32)
+	/* TODO: implement this */
+#else
+	int sck, flags;
+	int domain = qse_skadfamily(&mctx->log.skad);
+	int type = SOCK_DGRAM;
+
+	QSE_ASSERT (mctx->log.sck <= -1);
+
+
+#if defined(SOCK_NONBLOCK) && defined(SOCK_CLOEXEC)
+	type |= SOCK_NONBLOCK;
+	type |= SOCK_CLOEXEC;
+open_socket:
+#endif
+	sck = socket(domain, type, 0); 
+	if (sck == -1)
+	{
+	#if defined(SOCK_NONBLOCK) && defined(SOCK_CLOEXEC)
+		if (errno == EINVAL && (type & (SOCK_NONBLOCK | SOCK_CLOEXEC)))
+		{
+			type &= ~(SOCK_NONBLOCK | SOCK_CLOEXEC);
+			goto open_socket;
+		}
+	#endif
+		return;
+	}
+	else
+	{
+	#if defined(SOCK_NONBLOCK) && defined(SOCK_CLOEXEC)
+		if (type & (SOCK_NONBLOCK | SOCK_CLOEXEC)) goto done;
+	#endif
+	}
+
+	flags = fcntl(sck, F_GETFD, 0);
+	if (flags == -1) return;
+#if defined(FD_CLOEXEC)
+	flags |= FD_CLOEXEC;
+#endif
+#if defined(O_NONBLOCK)
+	flags |= O_NONBLOCK;
+#endif
+	if (fcntl(sck, F_SETFD, flags) == -1) return;
+
+done:
+	mctx->log.sck = sck;
+
+#endif
+}
+
 static int fnc_openlog (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
 	int rx = -1;
@@ -964,7 +1016,11 @@ static int fnc_openlog (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 #endif
 	if (mctx->log.sck >= 0)
 	{
+	#if defined(_WIN32)
+		/* TODO: impelement this */
+	#else
 		close (mctx->log.sck);
+	#endif
 		mctx->log.sck = -1;
 	}
 
@@ -981,8 +1037,7 @@ static int fnc_openlog (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	else if (mctx->log.type == SYSLOG_REMOTE)
 	{
 		qse_nwadtoskad (&nwad, &mctx->log.skad);
-
-		/* TODO: open socket? */
+		if ((opt & LOG_NDELAY) && mctx->log.sck <= -1) open_remote_log_socket (rtx, mctx);
 	}
 
 	rx = 0;
@@ -1003,30 +1058,37 @@ static int fnc_closelog (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	qse_awk_val_t* retv;
 	mod_ctx_t* mctx = fi->mod->ctx;
 
-	if (mctx->log.type == SYSLOG_LOCAL)
+	switch (mctx->log.type)
 	{
-	#if defined(ENABLE_SYSLOG)
-		closelog ();
-		// closelog() might be called without openlog(). so there is no 
-		// check if syslog_opened is true.
-		// it is just used as an indicator to decide wheter closelog()
-		// upon module finalization(fini).
-		mctx->log.syslog_opened = 0;
-	#endif
-	}
-	else if (mctx->log.type == SYSLOG_REMOTE)
-	{
-		if (mctx->log.sck >= 0)
-		{
-			close (mctx->log.sck);
-			mctx->log.sck = -1;
-		}
+		case SYSLOG_LOCAL:
+		#if defined(ENABLE_SYSLOG)
+			closelog ();
+			/* closelog() might be called without openlog(). so there is no 
+			 * check if syslog_opened is true.
+			 * it is just used as an indicator to decide wheter closelog()
+			 * should be called upon module finalization(fini). */
+			mctx->log.syslog_opened = 0;
+		#endif
+			break;
 
-		if (mctx->log.dmsgbuf)
-		{
-			qse_mbs_close (mctx->log.dmsgbuf);
-			mctx->log.dmsgbuf = QSE_NULL;
-		}
+		case SYSLOG_REMOTE:
+			if (mctx->log.sck >= 0)
+			{
+			#if defined(_WIN32)
+				/* TODO: impelement this */
+			#else
+				close (mctx->log.sck);
+			#endif
+				mctx->log.sck = -1;
+			}
+
+			if (mctx->log.dmsgbuf)
+			{
+				qse_mbs_close (mctx->log.dmsgbuf);
+				mctx->log.dmsgbuf = QSE_NULL;
+			}
+
+			break;
 	}
 
 	if (mctx->log.ident)
@@ -1036,7 +1098,7 @@ static int fnc_closelog (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	}
 
 	/* back to the local syslog in case writelog() is called
-	 * without another openlog() */
+	 * without another openlog() after this closelog() */
 	mctx->log.type = SYSLOG_LOCAL;
 
 	rx = 0;
@@ -1047,6 +1109,7 @@ static int fnc_closelog (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	qse_awk_rtx_setretval (rtx, retv);
 	return 0;
 }
+
 
 static int fnc_writelog (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
@@ -1104,25 +1167,10 @@ static int fnc_writelog (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 			QSE_MT("Dec"),
 		};
 
-		if (mctx->log.sck <= -1)
-		{
-		#if defined(SOCK_CLOEXECX)
-			mctx->log.sck = socket (qse_skadfamily(&mctx->log.skad), SOCK_DGRAM | SOCK_CLOEXEC, 0);
-		#else
-			mctx->log.sck = socket (qse_skadfamily(&mctx->log.skad), SOCK_DGRAM, 0);
-			#if defined(FD_CLOEXEC)
-			if (mctx->log.sck >= 0)
-			{
-				int flag = fcntl (mctx->log.sck, F_GETFD);
-				if (flag >= 0) fcntl (mctx->log.sck, F_SETFD, flag | FD_CLOEXEC);
-			}
-			#endif
-		#endif
-		}
+		if (mctx->log.sck <= -1) open_remote_log_socket (rtx, mctx);
 
 		if (mctx->log.sck >= 0)
 		{
-			///////////////////////////
 			if (!mctx->log.dmsgbuf) mctx->log.dmsgbuf = qse_mbs_open(qse_awk_rtx_getmmgr(rtx), 0, 0);
 			if (!mctx->log.dmsgbuf) goto done;
 
@@ -1367,7 +1415,11 @@ static void fini (qse_awk_mod_t* mod, qse_awk_rtx_t* rtx)
 #if defined(ENABLE_SYSLOG)
 	if (mctx->log.syslog_opened) 
 	{
-		/* closelog() only if openlog() has been called explicitly */
+		/* closelog() only if openlog() has been called explicitly.
+		 * if you call writelog() functions without openlog() and
+		 * end yoru program without closelog(), the program may leak
+		 * some resources created by the writelog() function. (e.g.
+		 * socket to /dev/log) */
 		closelog ();
 		mctx->log.syslog_opened = 0;
 	}
