@@ -5,16 +5,11 @@ AM_CPPFLAGS = \
 	-I$(top_srcdir)/include
 
 noinst_HEADERS = \
-	aio-prv.h \
 	fs-prv.h \
 	glob-imp.h
 
 lib_LTLIBRARIES = libqsesi.la
 libqsesi_la_SOURCES =  \
-	aio.c \
-	aio-pro.c  \
-	aio-sck.c  \
-	aio-tmr.c  \
 	cnd.c \
 	dir.c \
 	fio.c  \
