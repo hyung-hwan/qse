@@ -133,12 +133,11 @@ am__can_run_installinfo = \
     n|no|NO) false;; \
     *) (install-info --version) >/dev/null 2>&1;; \
   esac
-am__pkginclude_HEADERS_DIST = aio.h aio-pro.h aio-sck.h cnd.h dir.h \
-	fio.h fs.h glob.h intr.h log.h mtx.h mux.h netlink.h nwad.h \
-	nwif.h nwio.h os.h pio.h rwl.h sck.h sinfo.h sio.h spl.h \
-	task.h thr.h tio.h App.hpp Condition.hpp Mutex.hpp \
-	SocketAddress.hpp Socket.hpp SpinLock.hpp TcpServer.hpp \
-	Thread.hpp
+am__pkginclude_HEADERS_DIST = cnd.h dir.h fio.h fs.h glob.h intr.h \
+	log.h mtx.h mux.h netlink.h nwad.h nwif.h nwio.h os.h pio.h \
+	rwl.h sck.h sinfo.h sio.h spl.h task.h thr.h tio.h App.hpp \
+	Condition.hpp Mutex.hpp SocketAddress.hpp Socket.hpp \
+	SpinLock.hpp TcpServer.hpp Thread.hpp
 am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
 am__vpath_adj = case $$p in \
     $(srcdir)/*) f=`echo "$$p" | sed "s|^$$srcdirstrip/||"`;; \
@@ -355,10 +354,9 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-pkginclude_HEADERS = aio.h aio-pro.h aio-sck.h cnd.h dir.h fio.h fs.h \
-	glob.h intr.h log.h mtx.h mux.h netlink.h nwad.h nwif.h nwio.h \
-	os.h pio.h rwl.h sck.h sinfo.h sio.h spl.h task.h thr.h tio.h \
-	$(am__append_1)
+pkginclude_HEADERS = cnd.h dir.h fio.h fs.h glob.h intr.h log.h mtx.h \
+	mux.h netlink.h nwad.h nwif.h nwio.h os.h pio.h rwl.h sck.h \
+	sinfo.h sio.h spl.h task.h thr.h tio.h $(am__append_1)
 all: all-am
 
 .SUFFIXES:
