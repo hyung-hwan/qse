@@ -275,13 +275,18 @@ then
 	AC_CHECK_HEADERS([openssl/ssl.h openssl/err.h openssl/engine.h])
 
 	dnl check for an SSL library
-	AC_CHECK_FUNCS([SSL_library_init])
+	dnl i used SSL_library_init at first.
+	dnl starting from  openssl 1.1.0, SSL_library_init was made to a macro 
+	dnl aliasing OPENSSL_init_ssl.
+	dnl   #define SSL_library_init() OPENSSL_init_ssl(0, NULL)
+	dnl instead of checking both, now i use SSL_new.
+	AC_CHECK_FUNCS([SSL_new])
 
-	if test "x$ac_cv_func_SSL_library_init" = "xyes"
+	if test "x$ac_cv_func_SSL_new" = "xyes" 
 	then
 		AC_DEFINE(HAVE_SSL, 1, [ssl support])
 	else
-		AC_CHECK_LIB([ssl], [SSL_library_init], [
+		AC_CHECK_LIB([ssl], [SSL_new], [
 			SSL_LIBS="-lssl"
 			AC_DEFINE(HAVE_SSL, 1, [ssl support])
 
@@ -291,7 +296,7 @@ then
 			])
 
 			dnl only for consistency with AC_CHECK_FUNCS
-			AC_DEFINE(HAVE_SSL_LIBRARY_INIT, 1)
+			AC_DEFINE(HAVE_SSL_NEW, 1)
 		])
 	fi
 

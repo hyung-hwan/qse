@@ -88,12 +88,12 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-bin_PROGRAMS = aio01$(EXEEXT) dir01$(EXEEXT) fio01$(EXEEXT) \
-	fio02$(EXEEXT) fs01$(EXEEXT) fs02$(EXEEXT) fs03$(EXEEXT) \
-	glob01$(EXEEXT) log01$(EXEEXT) nwad01$(EXEEXT) nwif01$(EXEEXT) \
-	nwif02$(EXEEXT) pio01$(EXEEXT) rwl01$(EXEEXT) sck01$(EXEEXT) \
-	sio01$(EXEEXT) sio02$(EXEEXT) sio03$(EXEEXT) spl01$(EXEEXT) \
-	task01$(EXEEXT) thr01$(EXEEXT) $(am__EXEEXT_1)
+bin_PROGRAMS = dir01$(EXEEXT) fio01$(EXEEXT) fio02$(EXEEXT) \
+	fs01$(EXEEXT) fs02$(EXEEXT) fs03$(EXEEXT) glob01$(EXEEXT) \
+	log01$(EXEEXT) nwad01$(EXEEXT) nwif01$(EXEEXT) nwif02$(EXEEXT) \
+	pio01$(EXEEXT) rwl01$(EXEEXT) sck01$(EXEEXT) sio01$(EXEEXT) \
+	sio02$(EXEEXT) sio03$(EXEEXT) spl01$(EXEEXT) task01$(EXEEXT) \
+	thr01$(EXEEXT) $(am__EXEEXT_1)
 @WCHAR_TRUE@@WIN32_TRUE@am__append_1 = $(UNICOWS_LIBS)
 @ENABLE_CXX_TRUE@am__append_2 = sck01 spl02 tcpsvr01 tcpsvr02 thr02 thr03
 subdir = samples/si
@@ -117,20 +117,16 @@ CONFIG_CLEAN_VPATH_FILES =
 @ENABLE_CXX_TRUE@	thr02$(EXEEXT) thr03$(EXEEXT)
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
-am_aio01_OBJECTS = aio01.$(OBJEXT)
-aio01_OBJECTS = $(am_aio01_OBJECTS)
-aio01_LDADD = $(LDADD)
+am_dir01_OBJECTS = dir01.$(OBJEXT)
+dir01_OBJECTS = $(am_dir01_OBJECTS)
+dir01_LDADD = $(LDADD)
 am__DEPENDENCIES_1 =
 @WCHAR_TRUE@@WIN32_TRUE@am__DEPENDENCIES_2 = $(am__DEPENDENCIES_1)
-aio01_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_2)
+dir01_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_2)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
 am__v_lt_1 = 
-am_dir01_OBJECTS = dir01.$(OBJEXT)
-dir01_OBJECTS = $(am_dir01_OBJECTS)
-dir01_LDADD = $(LDADD)
-dir01_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_2)
 am_fio01_OBJECTS = fio01.$(OBJEXT)
 fio01_OBJECTS = $(am_fio01_OBJECTS)
 fio01_LDADD = $(LDADD)
@@ -286,22 +282,22 @@ AM_V_CXXLD = $(am__v_CXXLD_@AM_V@)
 am__v_CXXLD_ = $(am__v_CXXLD_@AM_DEFAULT_V@)
 am__v_CXXLD_0 = @echo "  CXXLD   " $@;
 am__v_CXXLD_1 = 
-SOURCES = $(aio01_SOURCES) $(dir01_SOURCES) $(fio01_SOURCES) \
-	$(fio02_SOURCES) $(fs01_SOURCES) $(fs02_SOURCES) \
-	$(fs03_SOURCES) $(glob01_SOURCES) $(log01_SOURCES) \
-	$(nwad01_SOURCES) $(nwif01_SOURCES) $(nwif02_SOURCES) \
-	$(pio01_SOURCES) $(rwl01_SOURCES) $(sck01_SOURCES) \
-	$(sio01_SOURCES) $(sio02_SOURCES) $(sio03_SOURCES) \
-	$(spl01_SOURCES) $(spl02_SOURCES) $(task01_SOURCES) \
-	$(tcpsvr01_SOURCES) $(tcpsvr02_SOURCES) $(thr01_SOURCES) \
-	$(thr02_SOURCES) $(thr03_SOURCES)
-DIST_SOURCES = $(aio01_SOURCES) $(dir01_SOURCES) $(fio01_SOURCES) \
-	$(fio02_SOURCES) $(fs01_SOURCES) $(fs02_SOURCES) \
-	$(fs03_SOURCES) $(glob01_SOURCES) $(log01_SOURCES) \
-	$(nwad01_SOURCES) $(nwif01_SOURCES) $(nwif02_SOURCES) \
-	$(pio01_SOURCES) $(rwl01_SOURCES) $(am__sck01_SOURCES_DIST) \
-	$(sio01_SOURCES) $(sio02_SOURCES) $(sio03_SOURCES) \
-	$(spl01_SOURCES) $(am__spl02_SOURCES_DIST) $(task01_SOURCES) \
+SOURCES = $(dir01_SOURCES) $(fio01_SOURCES) $(fio02_SOURCES) \
+	$(fs01_SOURCES) $(fs02_SOURCES) $(fs03_SOURCES) \
+	$(glob01_SOURCES) $(log01_SOURCES) $(nwad01_SOURCES) \
+	$(nwif01_SOURCES) $(nwif02_SOURCES) $(pio01_SOURCES) \
+	$(rwl01_SOURCES) $(sck01_SOURCES) $(sio01_SOURCES) \
+	$(sio02_SOURCES) $(sio03_SOURCES) $(spl01_SOURCES) \
+	$(spl02_SOURCES) $(task01_SOURCES) $(tcpsvr01_SOURCES) \
+	$(tcpsvr02_SOURCES) $(thr01_SOURCES) $(thr02_SOURCES) \
+	$(thr03_SOURCES)
+DIST_SOURCES = $(dir01_SOURCES) $(fio01_SOURCES) $(fio02_SOURCES) \
+	$(fs01_SOURCES) $(fs02_SOURCES) $(fs03_SOURCES) \
+	$(glob01_SOURCES) $(log01_SOURCES) $(nwad01_SOURCES) \
+	$(nwif01_SOURCES) $(nwif02_SOURCES) $(pio01_SOURCES) \
+	$(rwl01_SOURCES) $(am__sck01_SOURCES_DIST) $(sio01_SOURCES) \
+	$(sio02_SOURCES) $(sio03_SOURCES) $(spl01_SOURCES) \
+	$(am__spl02_SOURCES_DIST) $(task01_SOURCES) \
 	$(am__tcpsvr01_SOURCES_DIST) $(am__tcpsvr02_SOURCES_DIST) \
 	$(thr01_SOURCES) $(am__thr02_SOURCES_DIST) \
 	$(am__thr03_SOURCES_DIST)
@@ -505,7 +501,6 @@ AM_CPPFLAGS = \
 AM_LDFLAGS = -L../../lib/si  -L../../lib/cmn
 AM_CFLAGS = $(PTHREAD_CFLAGS)
 LDADD = -lqsesi -lqsecmn $(PTHREAD_LIBS) $(am__append_1)
-aio01_SOURCES = aio01.c
 dir01_SOURCES = dir01.c
 fio01_SOURCES = fio01.c
 fio02_SOURCES = fio02.c
@@ -621,10 +616,6 @@ clean-binPROGRAMS:
 	echo " rm -f" $$list; \
 	rm -f $$list
 
-aio01$(EXEEXT): $(aio01_OBJECTS) $(aio01_DEPENDENCIES) $(EXTRA_aio01_DEPENDENCIES) 
-	@rm -f aio01$(EXEEXT)
-	$(AM_V_CCLD)$(LINK) $(aio01_OBJECTS) $(aio01_LDADD) $(LIBS)
-
 dir01$(EXEEXT): $(dir01_OBJECTS) $(dir01_DEPENDENCIES) $(EXTRA_dir01_DEPENDENCIES) 
 	@rm -f dir01$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(dir01_OBJECTS) $(dir01_LDADD) $(LIBS)
@@ -731,7 +722,6 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/aio01.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dir01.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fio01.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fio02.Po@am__quote@
