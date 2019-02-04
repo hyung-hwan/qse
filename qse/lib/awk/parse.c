@@ -364,6 +364,15 @@ static global_t gtab[] =
 	{ QSE_T("RS"),           2,  0 },
 
 	{ QSE_T("RSTART"),       6,  0 },
+
+	/* it decides the field construction behavior when FS is a regular expression and 
+	 * the field splitter is composed of whitespaces only. e.g) FS="[ \t]*";
+	 * if set to a non-zero value, remove leading spaces and trailing spaces off a record
+	 * before field splitting.
+	 * if set to zero, leading spaces and trailing spaces result in 1 empty field respectively.
+	 * if not set, the behavior is dependent on the awk->opt.trait & QSE_AWK_STRIPRECSPC */
+	{ QSE_T("STRIPRECSPC"),  11, 0 }, 
+
 	{ QSE_T("SUBSEP"),       6,  0 }
 };
 

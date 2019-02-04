@@ -1365,6 +1365,7 @@ enum qse_awk_gbl_id_t
 	QSE_AWK_GBL_RLENGTH,
 	QSE_AWK_GBL_RS,
 	QSE_AWK_GBL_RSTART,
+	QSE_AWK_GBL_STRIPRECSPC,
 	QSE_AWK_GBL_SUBSEP,
 
 	/* these are not not the actual IDs and are used internally only 

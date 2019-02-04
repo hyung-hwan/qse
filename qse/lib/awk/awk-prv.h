@@ -316,6 +316,7 @@ struct qse_awk_rtx_t
 		void* rs[2];
 		void* fs[2]; 
 		int ignorecase;
+		int striprecspc;
 
 		qse_awk_int_t nr;
 		qse_awk_int_t fnr;
