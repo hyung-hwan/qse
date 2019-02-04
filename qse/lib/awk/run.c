@@ -657,21 +657,6 @@ static int set_global (
 			break;
 		}
 
-		case QSE_AWK_GBL_SUBSEP:
-		{
-			qse_awk_rtx_valtostr_out_t out;
-
-			out.type = QSE_AWK_RTX_VALTOSTR_CPLDUP;
-			if (qse_awk_rtx_valtostr(rtx, val, &out) <= -1) return -1;
-
-			if (rtx->gbl.subsep.ptr)
-				QSE_AWK_FREE (rtx->awk, rtx->gbl.subsep.ptr);
-			rtx->gbl.subsep.ptr = out.u.cpldup.ptr;
-			rtx->gbl.subsep.len = out.u.cpldup.len;
-
-			break;
-		}
-
 		case QSE_AWK_GBL_STRIPRECSPC:
 		{
 			qse_awk_int_t l;
@@ -685,6 +670,21 @@ static int set_global (
 				rtx->gbl.striprecspc = ((l > 0)? 1: (l < 0)? -1: 0);
 			else 
 				rtx->gbl.striprecspc = ((r > 0.0)? 1: (r < 0.0)? -1: 0);
+			break;
+		}
+
+		case QSE_AWK_GBL_SUBSEP:
+		{
+			qse_awk_rtx_valtostr_out_t out;
+
+			out.type = QSE_AWK_RTX_VALTOSTR_CPLDUP;
+			if (qse_awk_rtx_valtostr(rtx, val, &out) <= -1) return -1;
+
+			if (rtx->gbl.subsep.ptr)
+				QSE_AWK_FREE (rtx->awk, rtx->gbl.subsep.ptr);
+			rtx->gbl.subsep.ptr = out.u.cpldup.ptr;
+			rtx->gbl.subsep.len = out.u.cpldup.len;
+
 			break;
 		}
 	}
