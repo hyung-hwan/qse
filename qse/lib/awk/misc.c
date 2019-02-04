@@ -926,7 +926,7 @@ qse_char_t* qse_awk_rtx_strxntokbyrex (
 			cursub.ptr++;
 			cursub.len--;
 		}
-		else if (rtx->awk->opt.trait & QSE_AWK_STRIPRECSPC)
+		else if (rtx->gbl.striprecspc > 0 || (rtx->gbl.striprecspc < 0 && (rtx->awk->opt.trait & QSE_AWK_STRIPRECSPC)))
 		{
 			/* match at the beginning of the input string */
 			if (match.ptr == substr) 
@@ -976,7 +976,7 @@ exit_loop:
 
 	/* the match is all spaces */
 	*errnum = QSE_AWK_ENOERR;
-	if (rtx->awk->opt.trait & QSE_AWK_STRIPRECSPC)
+	if (rtx->gbl.striprecspc > 0 || (rtx->gbl.striprecspc < 0 && (rtx->awk->opt.trait & QSE_AWK_STRIPRECSPC)))
 	{
 		/* if the match reached the last character in the input string,
 		 * it returns QSE_NULL to terminate tokenization. */

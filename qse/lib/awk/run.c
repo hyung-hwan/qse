@@ -474,8 +474,10 @@ static int set_global (
 
 			if (fs_len > 1 && !(fs_len == 5 && fs_ptr[0] == QSE_T('?')))
 			{
+				/* it's a regular expression if FS contains multiple characters.
+				 * however, it's not a regular expression if it's 5 character
+				 * string beginning with a question mark. */
 				void* rex, * irex;
-			
 				qse_awk_errnum_t errnum;
 
 				if (qse_awk_buildrex (rtx->awk, fs_ptr, fs_len, &errnum, &rex, &irex) <= -1)
@@ -499,11 +501,17 @@ static int set_global (
 
 		case QSE_AWK_GBL_IGNORECASE:
 		{
-			qse_awk_val_type_t vtype = QSE_AWK_RTX_GETVALTYPE (rtx, val);
-			rtx->gbl.ignorecase = 
-				((vtype == QSE_AWK_VAL_INT && QSE_AWK_RTX_GETINTFROMVAL (rtx,val) != 0) ||
-				 (vtype == QSE_AWK_VAL_FLT && ((qse_awk_val_flt_t*)val)->val != 0.0) ||
-				 (vtype == QSE_AWK_VAL_STR && ((qse_awk_val_str_t*)val)->val.len != 0))? 1: 0;
+			qse_awk_int_t l;
+			qse_awk_flt_t r;
+			int vt;
+
+			vt = qse_awk_rtx_valtonum(rtx, val, &l, &r);
+			if (vt <= -1) return -1;
+
+			if (vt == 0) 
+				rtx->gbl.ignorecase = ((l > 0)? 1: (l < 0)? -1: 0);
+			else 
+				rtx->gbl.ignorecase = ((r > 0.0)? 1: (r < 0.0)? -1: 0);
 			break;
 		}
 
@@ -512,12 +520,12 @@ static int set_global (
 			int n;
 			qse_awk_int_t lv;
 
-			n = qse_awk_rtx_valtoint (rtx, val, &lv);
+			n = qse_awk_rtx_valtoint(rtx, val, &lv);
 			if (n <= -1) return -1;
 
 			if (lv < (qse_awk_int_t)rtx->inrec.nflds)
 			{
-				if (shorten_record (rtx, (qse_size_t)lv) == -1)
+				if (shorten_record(rtx, (qse_size_t)lv) == -1)
 				{
 					/* adjust the error line */
 					/*if (var) ADJERR_LOC (rtx, &var->loc);*/
@@ -534,7 +542,7 @@ static int set_global (
 			int n;
 			qse_awk_int_t lv;
 
-			n = qse_awk_rtx_valtoint (rtx, val, &lv);
+			n = qse_awk_rtx_valtoint(rtx, val, &lv);
 			if (n <= -1) return -1;
 
 			rtx->gbl.nr = lv;
@@ -547,7 +555,7 @@ static int set_global (
 			qse_awk_rtx_valtostr_out_t out;
 
 			out.type = QSE_AWK_RTX_VALTOSTR_CPLDUP;
-			if (qse_awk_rtx_valtostr (rtx, val, &out) <= -1) return -1;
+			if (qse_awk_rtx_valtostr(rtx, val, &out) <= -1) return -1;
 
 			for (i = 0; i < out.u.cpldup.len; i++)
 			{
@@ -572,7 +580,7 @@ static int set_global (
 			qse_awk_rtx_valtostr_out_t out;
 
 			out.type = QSE_AWK_RTX_VALTOSTR_CPLDUP;
-			if (qse_awk_rtx_valtostr (rtx, val, &out) <= -1) return -1;
+			if (qse_awk_rtx_valtostr(rtx, val, &out) <= -1) return -1;
 
 			if (rtx->gbl.ofs.ptr != QSE_NULL)
 				QSE_AWK_FREE (rtx->awk, rtx->gbl.ofs.ptr);
@@ -587,7 +595,7 @@ static int set_global (
 			qse_awk_rtx_valtostr_out_t out;
 
 			out.type = QSE_AWK_RTX_VALTOSTR_CPLDUP;
-			if (qse_awk_rtx_valtostr (rtx, val, &out) <= -1) return -1;
+			if (qse_awk_rtx_valtostr(rtx, val, &out) <= -1) return -1;
 
 			if (rtx->gbl.ors.ptr != QSE_NULL)
 				QSE_AWK_FREE (rtx->awk, rtx->gbl.ors.ptr);
@@ -615,7 +623,7 @@ static int set_global (
 				QSE_ASSERT (vtype != QSE_AWK_VAL_REX);
 
 				out.type = QSE_AWK_RTX_VALTOSTR_CPLDUP;
-				if (qse_awk_rtx_valtostr (rtx, val, &out) <= -1) return -1;
+				if (qse_awk_rtx_valtostr(rtx, val, &out) <= -1) return -1;
 
 				rss = out.u.cpldup;
 			}
@@ -633,7 +641,7 @@ static int set_global (
 				qse_awk_errnum_t errnum;
 				
 				/* compile the regular expression */
-				if (qse_awk_buildrex (rtx->awk, rss.ptr, rss.len, &errnum, &rex, &irex) <= -1)
+				if (qse_awk_buildrex(rtx->awk, rss.ptr, rss.len, &errnum, &rex, &irex) <= -1)
 				{
 					SETERR_COD (rtx, errnum);
 					if (vtype != QSE_AWK_VAL_STR) QSE_AWK_FREE (rtx->awk, rss.ptr);
@@ -654,13 +662,29 @@ static int set_global (
 			qse_awk_rtx_valtostr_out_t out;
 
 			out.type = QSE_AWK_RTX_VALTOSTR_CPLDUP;
-			if (qse_awk_rtx_valtostr (rtx, val, &out) <= -1) return -1;
+			if (qse_awk_rtx_valtostr(rtx, val, &out) <= -1) return -1;
 
 			if (rtx->gbl.subsep.ptr)
 				QSE_AWK_FREE (rtx->awk, rtx->gbl.subsep.ptr);
 			rtx->gbl.subsep.ptr = out.u.cpldup.ptr;
 			rtx->gbl.subsep.len = out.u.cpldup.len;
 
+			break;
+		}
+
+		case QSE_AWK_GBL_STRIPRECSPC:
+		{
+			qse_awk_int_t l;
+			qse_awk_flt_t r;
+			int vt;
+
+			vt = qse_awk_rtx_valtonum(rtx, val, &l, &r);
+			if (vt <= -1) return -1;
+
+			if (vt == 0) 
+				rtx->gbl.striprecspc = ((l > 0)? 1: (l < 0)? -1: 0);
+			else 
+				rtx->gbl.striprecspc = ((r > 0.0)? 1: (r < 0.0)? -1: 0);
 			break;
 		}
 	}
@@ -1026,6 +1050,7 @@ static int init_rtx (qse_awk_rtx_t* rtx, qse_awk_t* awk, qse_awk_rio_t* rio)
 	rtx->gbl.fs[0] = QSE_NULL;
 	rtx->gbl.fs[1] = QSE_NULL;
 	rtx->gbl.ignorecase = 0;
+	rtx->gbl.striprecspc = -1;
 
 	return 0;
 

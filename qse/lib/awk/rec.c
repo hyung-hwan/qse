@@ -255,11 +255,13 @@ static int split_record (qse_awk_rtx_t* rtx)
 		switch (how)
 		{
 			case 0:
+				/* 1 character FS */
 				p = qse_awk_rtx_strxntok (
 					rtx, p, len, fs_ptr, fs_len, &tok);
 				break;
 
 			case 1:
+				/* 5 character FS beginning with ? */
 				p = qse_awk_rtx_strxnfld (
 					rtx, p, len, 
 					fs_ptr[1], fs_ptr[2],
@@ -267,6 +269,7 @@ static int split_record (qse_awk_rtx_t* rtx)
 				break;
 
 			default:
+				/* all other cases */
 				p = qse_awk_rtx_strxntokbyrex (
 					rtx, 
 					QSE_STR_PTR(&rtx->inrec.line),
