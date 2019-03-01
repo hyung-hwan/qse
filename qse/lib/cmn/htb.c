@@ -672,7 +672,6 @@ void qse_htb_clear (htb_t* htb)
 	}
 }
 
-
 void qse_htb_walk (htb_t* htb, walker_t walker, void* ctx)
 {
 	size_t i;
@@ -734,29 +733,31 @@ pair_t* qse_htb_getnextpair (htb_t* htb, pair_t* pair, size_t* buckno)
 	return QSE_NULL;
 }
 
-size_t qse_htb_dflhash (
-	const htb_t* htb, const void* kptr, size_t klen)
+size_t qse_htb_dflhash (const htb_t* htb, const void* kptr, size_t klen)
 {
+	const byte_t* p = (const byte_t*)kptr;
+	const byte_t* bound = p + klen;
+#if 0
 	/*size_t h = 2166136261;*/
 	/*size_t h = 0;*/
 	size_t h = 5381;
-	const byte_t* p = (const byte_t*)kptr;
-	const byte_t* bound = p + klen;
 
 	while (p < bound)
 	{
 		/*h = (h * 16777619) ^ *p++;*/
 		/*h = h * 31 + *p++;*/
 		h = ((h << 5) + h) + *p++;
-	}	
+	}
+#else
+	/* SDBM hash */
+	size_t h = 0;
+	while (p < bound) h = (h << 6) + (h << 16) - h + *p++;
+#endif
 
 	return h ; 
 }
 
-int qse_htb_dflcomp (
-	const htb_t* htb, 
-	const void* kptr1, size_t klen1, 
-	const void* kptr2, size_t klen2)
+int qse_htb_dflcomp (const htb_t* htb, const void* kptr1, size_t klen1, const void* kptr2, size_t klen2)
 {
 	if (klen1 == klen2) return QSE_MEMCMP (kptr1, kptr2, KTOB(htb,klen1));
 	/* it just returns 1 to indicate that they are different. */
