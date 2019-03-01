@@ -4,24 +4,30 @@
 #define DATA_PTR(oht,index) \
 	((void*)(((qse_byte_t*)(oht)->data) + ((index) * (oht)->scale)))
 
-static QSE_INLINE_ALWAYS qse_size_t default_hasher (
-	qse_oht_t* oht, const void* data)
+static QSE_INLINE_ALWAYS qse_size_t default_hasher (qse_oht_t* oht, const void* data)
 {
-	qse_size_t h = 5381;
 	const qse_byte_t* p = (const qse_byte_t*)data;
 	const qse_byte_t* bound = p + oht->scale;
+
+#if 0
+	// DJB2 hash
+	qse_size_t h = 5381;
 	while (p < bound) h = ((h << 5) + h) + *p++;
+#else
+	// SDBM hash
+	qse_size_t h = 0;
+	while (p < bound) h = (h << 6) + (h << 16) - h + *p++;
+#endif
+
 	return h ; 
 }
 
-static QSE_INLINE_ALWAYS int default_comper (
-	qse_oht_t* oht, const void* data1, const void* data2)
+static QSE_INLINE_ALWAYS int default_comper (qse_oht_t* oht, const void* data1, const void* data2)
 {
 	return QSE_MEMCMP(data1, data2, oht->scale);
 }
 
-static QSE_INLINE_ALWAYS void default_copier (
-	qse_oht_t* oht, void* dst, const void* src)
+static QSE_INLINE_ALWAYS void default_copier (qse_oht_t* oht, void* dst, const void* src)
 {
 	QSE_MEMCPY (dst, src, oht->scale);
 }

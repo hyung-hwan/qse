@@ -1698,8 +1698,15 @@ int qse_awk_rtx_strtonum (
 
 static qse_awk_uint_t hash (qse_uint8_t* ptr, qse_size_t len)
 {
+	/*
 	qse_awk_uint_t h = 5381;
 	while (len > 0) h = ((h << 5) + h) + ptr[--len];
+	return h;
+	*/
+
+	/* SDBM hash */
+	qse_awk_uint_t h = 0;
+	while (len > 0) h = (h << 6) + (h << 16) - h + ptr[--len];
 	return h;
 }
 

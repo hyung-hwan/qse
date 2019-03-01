@@ -843,7 +843,7 @@ QSE_INLINE qse_uint32_t qse_genhash32_update (const void* data, qse_size_t size,
 
 qse_uint32_t qse_genhash32 (const void *data, qse_size_t size)
 {
-	return qse_genhash32_update (data, size, FNV_MAGIC_INIT);
+	return qse_genhash32_update(data, size, FNV_MAGIC_INIT);
 }
 
 /*
@@ -855,7 +855,7 @@ qse_uint32_t qse_mbshash32 (const qse_mchar_t* p)
 
 	while (*p) 
 	{
-		hash ^= (qse_uint32_t) (*p++);
+		hash ^= (qse_uint32_t)(*p++);
 		hash *= FNV_MAGIC_PRIME;
 	}
 
@@ -873,7 +873,7 @@ qse_uint32_t qse_wcshash32 (const qse_wchar_t* p)
 		hash ^= (qse_uint32_t)(*p);
 		hash *= FNV_MAGIC_PRIME;
 	#else
-		hash = qse_genhash_update (*p, QSE_SIZEOF(*p), hash);
+		hash = qse_genhash_update(*p, QSE_SIZEOF(*p), hash);
 	#endif
 		p++;
 	}
