@@ -281,10 +281,10 @@ qse_htl_t* qse_htl_open (qse_mmgr_t* mmgr, qse_size_t xtnsize, int keysize)
 {
 	qse_htl_t* htl;
 
-	htl = QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(qse_htl_t) + xtnsize);
+	htl = QSE_MMGR_ALLOC(mmgr, QSE_SIZEOF(qse_htl_t) + xtnsize);
 	if (htl == QSE_NULL) return QSE_NULL;
 
-	if (qse_htl_init (htl, mmgr, keysize) <= -1)
+	if (qse_htl_init(htl, mmgr, keysize) <= -1)
 	{
 		QSE_MMGR_FREE (mmgr, htl);
 		return QSE_NULL;

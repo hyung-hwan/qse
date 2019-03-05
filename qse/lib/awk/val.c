@@ -26,6 +26,7 @@
 
 #include "awk-prv.h"
 #include <qse/cmn/mbwc.h>
+#include <qse/hash.h>
 
 #ifdef DEBUG_VAL
 #include <qse/cmn/sio.h>
@@ -1696,17 +1697,10 @@ int qse_awk_rtx_strtonum (
 	return 0; /* int */
 }
 
-static qse_awk_uint_t hash (qse_uint8_t* ptr, qse_size_t len)
+static QSE_INLINE qse_awk_uint_t hash (qse_uint8_t* ptr, qse_size_t len)
 {
-	/*
-	qse_awk_uint_t h = 5381;
-	while (len > 0) h = ((h << 5) + h) + ptr[--len];
-	return h;
-	*/
-
-	/* SDBM hash */
-	qse_awk_uint_t h = 0;
-	while (len > 0) h = (h << 6) + (h << 16) - h + ptr[--len];
+	qse_awk_uint_t h;
+	QSE_HASH_BYTES (h, ptr, len);
 	return h;
 }
 
@@ -1725,18 +1719,18 @@ qse_awk_int_t qse_awk_rtx_hashval (qse_awk_rtx_t* rtx, qse_awk_val_t* v)
 		{
 			qse_awk_int_t tmp = QSE_AWK_RTX_GETINTFROMVAL (rtx, v);
 			/*hv = ((qse_awk_val_int_t*)v)->val;*/
-			hv = (qse_awk_int_t)hash ((qse_uint8_t*)&tmp, QSE_SIZEOF(tmp));
+			hv = (qse_awk_int_t)hash((qse_uint8_t*)&tmp, QSE_SIZEOF(tmp));
 			break;
 		}
 
 		case QSE_AWK_VAL_FLT:
-			hv = (qse_awk_int_t)hash (
+			hv = (qse_awk_int_t)hash(
 				(qse_uint8_t*)&((qse_awk_val_flt_t*)v)->val,
 				QSE_SIZEOF(((qse_awk_val_flt_t*)v)->val));
 			break;
 
 		case QSE_AWK_VAL_STR:
-			hv = (qse_awk_int_t)hash (
+			hv = (qse_awk_int_t)hash(
 				(qse_uint8_t*)((qse_awk_val_str_t*)v)->val.ptr,
 				((qse_awk_val_str_t*)v)->val.len * QSE_SIZEOF(qse_char_t));
 			break;

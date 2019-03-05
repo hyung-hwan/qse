@@ -254,7 +254,6 @@ static qse_uint32_t dict_attr_value_hash (qse_htl_t* htl, const void* data)
 {
 	const qse_raddic_attr_t* v = (const qse_raddic_attr_t*)data;
 	qse_uint32_t hv;
-
 	hv = qse_genhash32(&v->vendor, QSE_SIZEOF(v->vendor));
 	return qse_genhash32_update(&v->attr, QSE_SIZEOF(v->attr), hv);
 }

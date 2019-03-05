@@ -1,4 +1,5 @@
 #include <qse/cmn/oht.h>
+#include <qse/hash.h>
 #include "mem-prv.h"
 
 #define DATA_PTR(oht,index) \
@@ -6,19 +7,8 @@
 
 static QSE_INLINE_ALWAYS qse_size_t default_hasher (qse_oht_t* oht, const void* data)
 {
-	const qse_byte_t* p = (const qse_byte_t*)data;
-	const qse_byte_t* bound = p + oht->scale;
-
-#if 0
-	// DJB2 hash
-	qse_size_t h = 5381;
-	while (p < bound) h = ((h << 5) + h) + *p++;
-#else
-	// SDBM hash
-	qse_size_t h = 0;
-	while (p < bound) h = (h << 6) + (h << 16) - h + *p++;
-#endif
-
+	qse_size_t h;
+	QSE_HASH_BYTES (h, data, oht->scale);
 	return h ; 
 }
 

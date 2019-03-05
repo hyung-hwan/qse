@@ -31,6 +31,7 @@
 /// Privides the Hashable interface class.
 
 #include <qse/Types.hpp>
+#include <qse/hash.h>
 
 /////////////////////////////////
 QSE_BEGIN_NAMESPACE(QSE)
@@ -51,13 +52,7 @@ public:
 	static qse_size_t getHashCode (qse_size_t init, const qse_mchar_t* str)
 	{
 		qse_size_t n = init;
-
-		while (*str != QSE_MT('\0'))
-		{
-			n = n * 31 + *((qse_uint8_t*)str);
-			str++;
-		}
-
+		QSE_HASH_MORE_MBS(n, str);
 		return n;
 	}
 
@@ -69,15 +64,7 @@ public:
 	static qse_size_t getHashCode (qse_size_t init, const qse_wchar_t* str)
 	{
 		qse_size_t n = init;
-
-		while (*str != QSE_WT('\0'))
-		{
-			const qse_uint8_t* p = (const qse_uint8_t*)str;
-			for (qse_size_t i = 0; i < QSE_SIZEOF(*str); i++)
-				n = n * 31 + *p++;
-			str++;
-		}
-
+		QSE_HASH_MORE_WCS(n, str);
 		return n;
 	}
 
@@ -89,26 +76,7 @@ public:
 	static qse_size_t getHashCode (qse_size_t init, const void* data, qse_size_t size)
 	{
 		qse_size_t n = init;
-		const qse_uint8_t* p = (const qse_uint8_t*)data;
-
-		/*
-		for (qse_size_t i = 0; i < size; i++) {
-			n <<= 1;
-			n += *p++;
-		}
-		*/
-
-		for (qse_size_t i = 0; i < size; i++) n = n * 31 + *p++;
-
-		/*
-		for (qse_size_t i = 0; i < size; i++) {
-			n = (n << 4) + *p++;
-			//qse_size_t g = n & 0xF0000000U;
-			qse_size_t g = n & ((qse_size_t)0xF << (qse_sizeof(qse_size_t) * 8 - 4));
-			n &= ~g;
-		}
-		*/
-
+		QSE_HASH_BYTES (n, data, size);
 		return n;
 	}
 
