@@ -60,26 +60,26 @@
 } while(0)
 
 #define QSE_HASH_MORE_VPTL(hv, ptr, len, type) do { \
-	type* __qse_hash_more_values_p = (type*)(ptr); \
-	type* __qse_hash_more_values_q = (type*)__qse_hash_more_values_p + (len); \
-	while (__qse_hash_more_values_p < __qse_hash_more_values_q) \
+	type* __qse_hash_more_vptl_p = (type*)(ptr); \
+	type* __qse_hash_more_vptl_q = (type*)__qse_hash_more_vptl_p + (len); \
+	while (__qse_hash_more_vptl_p < __qse_hash_more_vptl_q) \
 	{ \
-		hv = QSE_HASH_VALUE(hv, *__qse_hash_more_values_p); \
-		__qse_hash_more_values_p++; \
+		hv = QSE_HASH_VALUE(hv, *__qse_hash_more_vptl_p); \
+		__qse_hash_more_vptl_p++; \
 	} \
 } while(0)
 
 #define QSE_HASH_VPTR(hv, ptr, type) do { \
 	hv = QSE_HASH_INIT; \
-	QSE_HASH_MORE_VPTL (hv, ptr, type); \
+	QSE_HASH_MORE_VPTR (hv, ptr, type); \
 } while(0)
 
 #define QSE_HASH_MORE_VPTR(hv, ptr, type) do { \
-	type* __qse_hash_more_values_p = (type*)(ptr); \
-	while (*__qse_hash_more_values_p) \
+	type* __qse_hash_more_vptr_p = (type*)(ptr); \
+	while (*__qse_hash_more_vptr_p) \
 	{ \
-		hv = QSE_HASH_VALUE(hv, *__qse_hash_more_values_p); \
-		__qse_hash_more_values_p++; \
+		hv = QSE_HASH_VALUE(hv, *__qse_hash_more_vptr_p); \
+		__qse_hash_more_vptr_p++; \
 	} \
 } while(0)
 
