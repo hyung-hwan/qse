@@ -43,55 +43,34 @@
 
 #if defined(QSE_HASH_FNV_MAGIC_INIT)
 	/* FNV-1 hash */
+#	define QSE_HASH_INIT QSE_HASH_FNV_MAGIC_INIT
 #	define QSE_HASH_VALUE(hv,v) (((hv) ^ (v)) * QSE_HASH_FNV_MAGIC_PRIME)
-
-#	define QSE_HASH_VALUES(hv, ptr, len, type) do { \
-		hv = QSE_HASH_FNV_MAGIC_INIT; \
-		QSE_HASH_MORE_VALUES (hv, ptr, len, type); \
-	} while(0)
-
-#	define QSE_HASH_MORE_VALUES(hv, ptr, len, type) do { \
-		type* p = (type*)(ptr); \
-		type* q = (type*)p + (len); \
-		while (p < q) { hv = QSE_HASH_VALUE(hv, *p); p++; } \
-	} while(0)
-
-#	define QSE_HASH_VS(hv, ptr, type) do { \
-		hv = QSE_HASH_FNV_MAGIC_INIT; \
-		QSE_HASH_MORE_VALUES (hv, ptr, type); \
-	} while(0)
-
-#	define QSE_HASH_MORE_VS(hv, ptr, type) do { \
-		type* p = (type*)(ptr); \
-		while (*p) { hv = QSE_HASH_VALUE(hv, *p); p++; } \
-	} while(0)
-
 #else
 	/* SDBM hash */
+#	define QSE_HASH_INIT 0
 #	define QSE_HASH_VALUE(hv,v) (((hv) << 6) + ((hv) << 16) - (hv) + (v))
-
-#	define QSE_HASH_VALUES(hv, ptr, len, type) do { \
-		hv = 0; \
-		QSE_HASH_MORE_VALUES (hv, ptr, len, type); \
-	} while(0)
-
-#	define QSE_HASH_MORE_VALUES(hv, ptr, len, type) do { \
-		type* p = (type*)(ptr); \
-		type* q = (type*)p + (len); \
-		while (p < q) { hv = QSE_HASH_VALUE(hv, *p); p++; } \
-	} while(0)
-
-#	define QSE_HASH_VS(hv, ptr, type) do { \
-		hv = 0; \
-		QSE_HASH_MORE_VS (hv, ptr, type); \
-	} while(0)
-
-#	define QSE_HASH_MORE_VS(hv, ptr, type) do { \
-		type* p = (type*)(ptr); \
-		while (*p) { hv = QSE_HASH_VALUE(hv, *p); p++; } \
-	} while(0)
-
 #endif
+
+#define QSE_HASH_VALUES(hv, ptr, len, type) do { \
+	hv = QSE_HASH_INIT; \
+	QSE_HASH_MORE_VALUES (hv, ptr, len, type); \
+} while(0)
+
+#define QSE_HASH_MORE_VALUES(hv, ptr, len, type) do { \
+	type* p = (type*)(ptr); \
+	type* q = (type*)p + (len); \
+	while (p < q) { hv = QSE_HASH_VALUE(hv, *p); p++; } \
+} while(0)
+
+#define QSE_HASH_VSTR(hv, ptr, type) do { \
+	hv = QSE_HASH_INIT; \
+	QSE_HASH_MORE_VALUES (hv, ptr, type); \
+} while(0)
+
+#define QSE_HASH_MORE_VSTR(hv, ptr, type) do { \
+	type* p = (type*)(ptr); \
+	while (*p) { hv = QSE_HASH_VALUE(hv, *p); p++; } \
+} while(0)
 
 #define QSE_HASH_BYTES(hv, ptr, len) QSE_HASH_VALUES(hv, ptr, len, const qse_uint8_t)
 #define QSE_HASH_MORE_BYTES(hv, ptr, len) QSE_HASH_MORE_VALUES(hv, ptr, len, const qse_uint8_t)
@@ -102,11 +81,11 @@
 #define QSE_HASH_WCHARS(hv, ptr, len) QSE_HASH_VALUES(hv, ptr, len, const qse_wchar_t)
 #define QSE_HASH_MORE_WCHARS(hv, ptr, len) QSE_HASH_MORE_VALUES(hv, ptr, len, const qse_wchar_t)
 
-#define QSE_HASH_MBS(hv, ptr) QSE_HASH_VS(hv, ptr, const qse_mchar_t)
-#define QSE_HASH_MORE_MBS(hv, ptr) QSE_HASH_MORE_VS(hv, ptr, const qse_mchar_t)
+#define QSE_HASH_MBS(hv, ptr) QSE_HASH_VSTR(hv, ptr, const qse_mchar_t)
+#define QSE_HASH_MORE_MBS(hv, ptr) QSE_HASH_MORE_VSTR(hv, ptr, const qse_mchar_t)
 
-#define QSE_HASH_WCS(hv, ptr) QSE_HASH_VS(hv, ptr, const qse_wchar_t)
-#define QSE_HASH_MORE_WCS(hv, ptr) QSE_HASH_MORE_VS(hv, ptr, const qse_wchar_t)
+#define QSE_HASH_WCS(hv, ptr) QSE_HASH_VSTR(hv, ptr, const qse_wchar_t)
+#define QSE_HASH_MORE_WCS(hv, ptr) QSE_HASH_MORE_VSTR(hv, ptr, const qse_wchar_t)
 
 #endif
 
