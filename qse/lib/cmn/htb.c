@@ -25,6 +25,7 @@
  */
 
 #include <qse/cmn/htb.h>
+#include <qse/hash.h>
 #include "mem-prv.h"
 
 
@@ -735,25 +736,8 @@ pair_t* qse_htb_getnextpair (htb_t* htb, pair_t* pair, size_t* buckno)
 
 size_t qse_htb_dflhash (const htb_t* htb, const void* kptr, size_t klen)
 {
-	const byte_t* p = (const byte_t*)kptr;
-	const byte_t* bound = p + klen;
-#if 0
-	/*size_t h = 2166136261;*/
-	/*size_t h = 0;*/
-	size_t h = 5381;
-
-	while (p < bound)
-	{
-		/*h = (h * 16777619) ^ *p++;*/
-		/*h = h * 31 + *p++;*/
-		h = ((h << 5) + h) + *p++;
-	}
-#else
-	/* SDBM hash */
-	size_t h = 0;
-	while (p < bound) h = (h << 6) + (h << 16) - h + *p++;
-#endif
-
+	size_t h;
+	QSE_HASH_BYTES (h, kptr, klen);
 	return h ; 
 }
 
