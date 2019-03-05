@@ -136,9 +136,9 @@ am__can_run_installinfo = \
     *) (install-info --version) >/dev/null 2>&1;; \
   esac
 am__pkginclude_HEADERS_DIST = conf-msw.h conf-os2.h conf-dos.h \
-	conf-vms.h conf-mac.h conf-inf.h types.h macros.h pack1.h \
-	unpack.h Types.hpp Growable.hpp Hashable.hpp Uncopyable.hpp \
-	RefCounted.hpp Exception.hpp Cstr.hpp
+	conf-vms.h conf-mac.h conf-inf.h types.h macros.h hash.h \
+	pack1.h unpack.h Types.hpp Growable.hpp Hashable.hpp \
+	Uncopyable.hpp RefCounted.hpp Exception.hpp Cstr.hpp
 am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
 am__vpath_adj = case $$p in \
     $(srcdir)/*) f=`echo "$$p" | sed "s|^$$srcdirstrip/||"`;; \
@@ -382,7 +382,6 @@ pdfdir = @pdfdir@
 prefix = @prefix@
 program_transform_name = @program_transform_name@
 psdir = @psdir@
-runstatedir = @runstatedir@
 sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 srcdir = @srcdir@
@@ -393,7 +392,7 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 SUBDIRS = cmn cry si awk sed xli http rad dhcp sttp
 pkginclude_HEADERS = conf-msw.h conf-os2.h conf-dos.h conf-vms.h \
-	conf-mac.h conf-inf.h types.h macros.h pack1.h unpack.h \
+	conf-mac.h conf-inf.h types.h macros.h hash.h pack1.h unpack.h \
 	$(am__append_1)
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-recursive

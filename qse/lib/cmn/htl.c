@@ -864,7 +864,6 @@ qse_uint32_t qse_mbshash32 (const qse_mchar_t* p)
 
 qse_uint32_t qse_wcshash32 (const qse_wchar_t* p)
 {
-
 	qse_uint32_t hash = FNV_MAGIC_INIT;
 
 	while (*p) 
@@ -908,7 +907,7 @@ qse_uint32_t qse_wcscasehash32 (const qse_wchar_t* p)
 		hash ^= (qse_uint32_t)(wc);
 		hash *= FNV_MAGIC_PRIME;
 	#else
-		hash = qse_genhash_update (&wc, QSE_SIZEOF(wc), hash);
+		hash = qse_genhash_update(&wc, QSE_SIZEOF(wc), hash);
 	#endif
 	}
 

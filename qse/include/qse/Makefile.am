@@ -4,7 +4,7 @@ pkgincludedir = $(includedir)/qse
 
 pkginclude_HEADERS = \
 	conf-msw.h conf-os2.h conf-dos.h conf-vms.h conf-mac.h conf-inf.h \
-	types.h macros.h pack1.h unpack.h 
+	types.h macros.h hash.h pack1.h unpack.h 
 
 if ENABLE_CXX
 pkginclude_HEADERS += \
