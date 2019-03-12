@@ -119,6 +119,8 @@ struct qse_btime_t
 	int gmtoff;
 };
 
+/* number of milliseconds since the Epoch (00:00:00 UTC, Jan 1, 1970) */
+typedef qse_long_t qse_mtime_t;
 
 #if defined(QSE_HAVE_INLINE)
 	static QSE_INLINE void qse_inittime(qse_ntime_t* x, qse_long_t s, qse_int32_t nsec)
@@ -159,6 +161,13 @@ extern "C" {
  */
 QSE_EXPORT int qse_gettime (
 	qse_ntime_t* nt
+);
+
+/**
+ * The qse_getmtime() function gets the current time in milliseconds.
+ */
+QSE_EXPORT int qse_getmtime (
+	qse_mtime_t* mt
 );
 
 /**
@@ -242,6 +251,7 @@ QSE_EXPORT int qse_wcs_to_ntime (
 #else
 #	define qse_str_to_ntime(text,ntime) qse_wcs_to_ntime(text,ntime)
 #endif
+
 
 #if defined(__cplusplus)
 }
