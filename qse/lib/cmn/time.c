@@ -190,6 +190,14 @@ int qse_gettime (qse_ntime_t* t)
 #endif
 }
 
+int qse_getmtime (qse_mtime_t* mt)
+{
+	qse_ntime_t nt;
+	if (qse_gettime(&nt) <= -1) return -1;
+	*mt = QSE_SECNSEC_TO_MSEC(nt.sec, nt.nsec);
+	return 0;
+}
+
 int qse_settime (const qse_ntime_t* t)
 {
 #if defined(_WIN32)
