@@ -207,6 +207,11 @@ void App::sleep (unsigned int seconds) QSE_CPP_NOEXCEPT
 	qse_sleep (&duration);
 }
 
+void App::msleep (const qse_mtime_t duration) QSE_CPP_NOEXCEPT
+{
+	qse_msleep (duration);
+}
+
 #if 0
 int App::switchPrivilege (int gid, int uid, bool permanently)
 {

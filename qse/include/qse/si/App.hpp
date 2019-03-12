@@ -59,6 +59,7 @@ public:
 
 	void sleep (const qse_ntime_t* duration) QSE_CPP_NOEXCEPT;
 	void sleep (unsigned int seconds) QSE_CPP_NOEXCEPT;
+	void msleep (qse_mtime_t duration) QSE_CPP_NOEXCEPT;
 
 #if 0
 	int switchUser (qse_uid_t uid, qse_gid_t gid, bool permanently) QSE_CPP_NOEXCEPT;

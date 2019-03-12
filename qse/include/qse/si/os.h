@@ -42,6 +42,10 @@ QSE_EXPORT void qse_sleep (
 	const qse_ntime_t* interval
 );
 
+QSE_EXPORT void qse_msleep (
+	const qse_mtime_t interval
+);
+
 #if defined(__cplusplus)
 }
 #endif

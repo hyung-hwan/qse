@@ -99,6 +99,11 @@ public:
 		static qse_ntime_t duration = { seconds, 0 };
 		qse_sleep (&duration);
 	}
+
+	void msleep (qse_mtime_t duration) QSE_CPP_NOEXCEPT
+	{
+		qse_msleep (duration);
+	}
 		
 protected:
 	qse_thr_t thr;
