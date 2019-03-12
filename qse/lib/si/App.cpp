@@ -203,7 +203,7 @@ void App::sleep (const qse_ntime_t* duration) QSE_CPP_NOEXCEPT
 
 void App::sleep (unsigned int seconds) QSE_CPP_NOEXCEPT
 {
-	static qse_ntime_t duration = { seconds, 0 };
+	qse_ntime_t duration = { seconds, 0 };
 	qse_sleep (&duration);
 }
 

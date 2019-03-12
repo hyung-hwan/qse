@@ -28,6 +28,7 @@
 #define _QSE_SI_THREAD_CLASS_
 
 #include <qse/si/thr.h>
+#include <qse/si/os.h>
 #include <qse/Uncopyable.hpp>
 #include <qse/cmn/Mmged.hpp>
 
@@ -88,6 +89,17 @@ public:
 	int blockAllSignals () QSE_CPP_NOEXCEPT { return qse_thr_blockallsigs(&this->thr); }
 	int unblockAllSignals () QSE_CPP_NOEXCEPT { return qse_thr_unblockallsigs(&this->thr); }
 
+	void sleep (const qse_ntime_t* duration) QSE_CPP_NOEXCEPT
+	{
+		qse_sleep (duration);
+	}
+
+	void sleep (unsigned int seconds) QSE_CPP_NOEXCEPT
+	{
+		static qse_ntime_t duration = { seconds, 0 };
+		qse_sleep (&duration);
+	}
+		
 protected:
 	qse_thr_t thr;
 	void* __exctx;
