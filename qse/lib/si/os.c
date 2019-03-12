@@ -56,6 +56,23 @@ void qse_sleep (const qse_ntime_t* interval)
 #endif
 }
 
+void qse_msleep (qse_mtime_t interval)
+{
+#if defined(_WIN32)
+	Sleep (interval);
+#elif defined(__OS2__)
+	DosSleep (interval);
+#elif defined(HAVE_NANOSLEEP)
+	struct timespec ts;
+	ts.tv_sec = QSE_MSEC_TO_SEC(interval);
+	interval -= QSE_SEC_TO_MSEC(ts.tv_sec);
+	ts.tv_nsec = QSE_MSEC_TO_NSEC(interval);
+	nanosleep (&ts, &ts);
+#else
+	sleep (QSE_MSEC_TO_SEC(interval));
+#endif
+}
+
 /*
  TODO:
 int qse_set_proc_name (const qse_char_t* name)
