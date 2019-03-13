@@ -505,6 +505,16 @@
 #	define QSE_UTIMENSAT(dirfd,path,times,flags) utimensat(dirfd,path,times,flags)
 #endif
 
+/*
+the library's getcwd() returns char* while the system call returns int.
+so it's not practical to define QSE_GETCWD().
+#if defined(SYS_getcwd) && defined(QSE_USE_SYSCALL)
+#	define QSE_GETCWD(buf,size) syscall(SYS_getcwd,buf,size)
+#else
+#	define QSE_GETCWD(buf,size) getcwd(buf,size)
+#endif
+*/
+
 /* ===== DIRECTORY - not really system calls ===== */
 #define QSE_OPENDIR(name) opendir(name)
 #define QSE_CLOSEDIR(dir) closedir(dir)

@@ -142,14 +142,15 @@ am_libqsesi_la_OBJECTS = libqsesi_la-cnd.lo libqsesi_la-dir.lo \
 	libqsesi_la-fio.lo libqsesi_la-fs.lo libqsesi_la-fs-attr.lo \
 	libqsesi_la-fs-copy.lo libqsesi_la-fs-delete.lo \
 	libqsesi_la-fs-err.lo libqsesi_la-fs-make.lo \
-	libqsesi_la-fs-move.lo libqsesi_la-glob.lo libqsesi_la-intr.lo \
-	libqsesi_la-log.lo libqsesi_la-mtx.lo libqsesi_la-mux.lo \
-	libqsesi_la-netlink.lo libqsesi_la-nwad.lo \
-	libqsesi_la-nwad-skad.lo libqsesi_la-nwif.lo \
-	libqsesi_la-nwif-cfg.lo libqsesi_la-nwio.lo libqsesi_la-os.lo \
-	libqsesi_la-pio.lo libqsesi_la-rwl.lo libqsesi_la-sck.lo \
-	libqsesi_la-sinfo.lo libqsesi_la-sio.lo libqsesi_la-task.lo \
-	libqsesi_la-thr.lo libqsesi_la-tio.lo
+	libqsesi_la-fs-move.lo libqsesi_la-fs-util.lo \
+	libqsesi_la-glob.lo libqsesi_la-intr.lo libqsesi_la-log.lo \
+	libqsesi_la-mtx.lo libqsesi_la-mux.lo libqsesi_la-netlink.lo \
+	libqsesi_la-nwad.lo libqsesi_la-nwad-skad.lo \
+	libqsesi_la-nwif.lo libqsesi_la-nwif-cfg.lo \
+	libqsesi_la-nwio.lo libqsesi_la-os.lo libqsesi_la-pio.lo \
+	libqsesi_la-rwl.lo libqsesi_la-sck.lo libqsesi_la-sinfo.lo \
+	libqsesi_la-sio.lo libqsesi_la-task.lo libqsesi_la-thr.lo \
+	libqsesi_la-tio.lo
 libqsesi_la_OBJECTS = $(am_libqsesi_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
@@ -159,10 +160,11 @@ libqsesi_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(libqsesi_la_CFLAGS) \
 	$(CFLAGS) $(libqsesi_la_LDFLAGS) $(LDFLAGS) -o $@
 libqsesixx_la_DEPENDENCIES =
-am__libqsesixx_la_SOURCES_DIST = App.cpp SocketAddress.cpp Socket.cpp \
-	TcpServer.cpp Thread.cpp
-@ENABLE_CXX_TRUE@am_libqsesixx_la_OBJECTS = App.lo SocketAddress.lo \
-@ENABLE_CXX_TRUE@	Socket.lo TcpServer.lo Thread.lo
+am__libqsesixx_la_SOURCES_DIST = App.cpp Path.cpp SocketAddress.cpp \
+	Socket.cpp TcpServer.cpp Thread.cpp
+@ENABLE_CXX_TRUE@am_libqsesixx_la_OBJECTS = App.lo Path.lo \
+@ENABLE_CXX_TRUE@	SocketAddress.lo Socket.lo TcpServer.lo \
+@ENABLE_CXX_TRUE@	Thread.lo
 libqsesixx_la_OBJECTS = $(am_libqsesixx_la_OBJECTS)
 libqsesixx_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
@@ -437,6 +439,7 @@ libqsesi_la_SOURCES = \
 	fs-err.c \
 	fs-make.c \
 	fs-move.c \
+	fs-util.c \
 	glob.c \
 	intr.c \
 	log.c \
@@ -464,6 +467,7 @@ libqsesi_la_LDFLAGS = -L../cmn -version-info 1:0:0 -no-undefined
 libqsesi_la_LIBADD = -lqsecmn $(PTHREAD_LIBS) $(SSL_LIBS)
 @ENABLE_CXX_TRUE@libqsesixx_la_SOURCES = \
 @ENABLE_CXX_TRUE@	App.cpp \
+@ENABLE_CXX_TRUE@	Path.cpp \
 @ENABLE_CXX_TRUE@	SocketAddress.cpp \
 @ENABLE_CXX_TRUE@	Socket.cpp \
 @ENABLE_CXX_TRUE@	TcpServer.cpp \
@@ -553,6 +557,7 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/App.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Path.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Socket.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/SocketAddress.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/TcpServer.Plo@am__quote@
@@ -566,6 +571,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqsesi_la-fs-err.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqsesi_la-fs-make.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqsesi_la-fs-move.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqsesi_la-fs-util.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqsesi_la-fs.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqsesi_la-glob.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqsesi_la-intr.Plo@am__quote@
@@ -678,6 +684,13 @@ libqsesi_la-fs-move.lo: fs-move.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='fs-move.c' object='libqsesi_la-fs-move.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libqsesi_la_CFLAGS) $(CFLAGS) -c -o libqsesi_la-fs-move.lo `test -f 'fs-move.c' || echo '$(srcdir)/'`fs-move.c
+
+libqsesi_la-fs-util.lo: fs-util.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libqsesi_la_CFLAGS) $(CFLAGS) -MT libqsesi_la-fs-util.lo -MD -MP -MF $(DEPDIR)/libqsesi_la-fs-util.Tpo -c -o libqsesi_la-fs-util.lo `test -f 'fs-util.c' || echo '$(srcdir)/'`fs-util.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libqsesi_la-fs-util.Tpo $(DEPDIR)/libqsesi_la-fs-util.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='fs-util.c' object='libqsesi_la-fs-util.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libqsesi_la_CFLAGS) $(CFLAGS) -c -o libqsesi_la-fs-util.lo `test -f 'fs-util.c' || echo '$(srcdir)/'`fs-util.c
 
 libqsesi_la-glob.lo: glob.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libqsesi_la_CFLAGS) $(CFLAGS) -MT libqsesi_la-glob.lo -MD -MP -MF $(DEPDIR)/libqsesi_la-glob.Tpo -c -o libqsesi_la-glob.lo `test -f 'glob.c' || echo '$(srcdir)/'`glob.c

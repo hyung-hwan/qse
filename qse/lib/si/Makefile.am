@@ -20,6 +20,7 @@ libqsesi_la_SOURCES =  \
 	fs-err.c \
 	fs-make.c \
 	fs-move.c \
+	fs-util.c \
 	glob.c \
 	intr.c \
 	log.c \
@@ -50,6 +51,7 @@ if ENABLE_CXX
 lib_LTLIBRARIES += libqsesixx.la
 libqsesixx_la_SOURCES = \
 	App.cpp \
+	Path.cpp \
 	SocketAddress.cpp \
 	Socket.cpp \
 	TcpServer.cpp \

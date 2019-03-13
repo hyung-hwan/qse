@@ -33,6 +33,10 @@
 #undef strjoinv
 #undef strxjoin
 #undef strxjoinv
+#undef strcajoin
+#undef strcajoinv
+#undef strxcajoin
+#undef strxcajoinv
 #undef strcpy
 #undef strxcpy
 
@@ -41,6 +45,10 @@
 #define strjoinv qse_mbsjoinv
 #define strxjoin qse_mbsxjoin
 #define strxjoinv qse_mbsxjoinv
+#define strcajoin qse_mbscajoin
+#define strcajoinv qse_mbscajoinv
+#define strxcajoin qse_mbsxcajoin
+#define strxcajoinv qse_mbsxcajoinv
 #define strcpy qse_mbscpy
 #define strxcpy qse_mbsxcpy
 #include "str-join.h"
@@ -52,6 +60,10 @@
 #undef strjoinv
 #undef strxjoin
 #undef strxjoinv
+#undef strcajoin
+#undef strcajoinv
+#undef strxcajoin
+#undef strxcajoinv
 #undef strcpy
 #undef strxcpy
 
@@ -60,6 +72,10 @@
 #define strjoinv qse_wcsjoinv
 #define strxjoin qse_wcsxjoin
 #define strxjoinv qse_wcsxjoinv
+#define strcajoin qse_wcscajoin
+#define strcajoinv qse_wcscajoinv
+#define strxcajoin qse_wcsxcajoin
+#define strxcajoinv qse_wcsxcajoinv
 #define strcpy qse_wcscpy
 #define strxcpy qse_wcsxcpy
 #include "str-join.h"

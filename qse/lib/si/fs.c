@@ -614,7 +614,7 @@ qse_fs_ent_t* qse_fs_read (qse_fs_t* fs, int flags)
 		(flags & QSE_FS_ENT_TIME);
 	if (stat_needed)
 	{
-		qse_mchar_t* tmp_name[4];
+		const qse_mchar_t* tmp_name[4];
 		qse_mchar_t* mfname;
 
 /* TODO: use a buffer in info... instead of allocating an deallocating every time */
@@ -622,7 +622,7 @@ qse_fs_ent_t* qse_fs_read (qse_fs_t* fs, int flags)
 		tmp_name[1] = QSE_MT("/");
 		tmp_name[2] = ent->d_name;
 		tmp_name[3] = QSE_NULL;
-		mfname = qse_mbsadup (tmp_name, QSE_NULL, fs->mmgr);
+		mfname = qse_mbsadup(tmp_name, QSE_NULL, fs->mmgr);
 		if (mfname == QSE_NULL)
 		{
 			fs->errnum = QSE_FS_ENOMEM;
