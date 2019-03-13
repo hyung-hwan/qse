@@ -89,14 +89,14 @@ public:
 	int blockAllSignals () QSE_CPP_NOEXCEPT { return qse_thr_blockallsigs(&this->thr); }
 	int unblockAllSignals () QSE_CPP_NOEXCEPT { return qse_thr_unblockallsigs(&this->thr); }
 
-	void sleep (const qse_ntime_t* duration) QSE_CPP_NOEXCEPT
+	void sleep (const qse_ntime_t& duration) QSE_CPP_NOEXCEPT
 	{
-		qse_sleep (duration);
+		qse_sleep (&duration);
 	}
 
-	void sleep (unsigned int seconds) QSE_CPP_NOEXCEPT
+	void sleep (qse_long_t secs, qse_int32_t nsecs = 0) QSE_CPP_NOEXCEPT
 	{
-		static qse_ntime_t duration = { seconds, 0 };
+		static qse_ntime_t duration = { secs, nsecs };
 		qse_sleep (&duration);
 	}
 
@@ -104,7 +104,7 @@ public:
 	{
 		qse_msleep (duration);
 	}
-		
+
 protected:
 	qse_thr_t thr;
 	void* __exctx;

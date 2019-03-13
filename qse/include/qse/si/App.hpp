@@ -32,6 +32,7 @@
 #include <qse/cmn/Mmged.hpp>
 #include <qse/cmn/Bitset.hpp>
 #include <qse/cmn/time.h>
+#include <qse/si/os.h>
 
 /////////////////////////////////
 QSE_BEGIN_NAMESPACE(QSE)
@@ -57,9 +58,21 @@ public:
 	int chroot (const qse_mchar_t* mpath) QSE_CPP_NOEXCEPT;
 	int chroot (const qse_wchar_t* wpath) QSE_CPP_NOEXCEPT;
 
-	void sleep (const qse_ntime_t* duration) QSE_CPP_NOEXCEPT;
-	void sleep (unsigned int seconds) QSE_CPP_NOEXCEPT;
-	void msleep (qse_mtime_t duration) QSE_CPP_NOEXCEPT;
+	void sleep (const qse_ntime_t& duration) QSE_CPP_NOEXCEPT 
+	{ 
+		qse_sleep (&duration); 
+	}
+
+	void sleep (qse_long_t secs, qse_int32_t nsecs = 0) QSE_CPP_NOEXCEPT 
+	{
+		qse_ntime_t duration = { secs, nsecs };
+		qse_sleep (&duration);
+	}
+
+	void msleep (qse_mtime_t duration) QSE_CPP_NOEXCEPT 
+	{
+		qse_msleep (duration); 
+	}
 
 #if 0
 	int switchUser (qse_uid_t uid, qse_gid_t gid, bool permanently) QSE_CPP_NOEXCEPT;
