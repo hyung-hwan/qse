@@ -89,3 +89,70 @@ qse_size_t strjoin (char_t* buf, ...)
 
 	return n;
 }
+
+/* ------------------------------------------------------------------------- */
+
+qse_size_t strxcajoinv (char_t* buf, qse_size_t size, va_list ap)
+{
+	const char_t* p;
+	char_t* ptr;
+	qse_size_t left, n;
+
+	n = strlen(buf);
+	left = size - n;
+	ptr = buf + n;
+
+	while (left > 0) 
+	{
+		p = va_arg (ap, const char_t*);
+		if (p == QSE_NULL) break;
+
+		n = strxcpy(ptr, left, p);
+		left -= n; ptr += n;
+	}
+
+	return size - left;
+}
+
+qse_size_t strxcajoin (char_t* buf, qse_size_t size, ...)
+{
+	va_list ap;
+	qse_size_t n;
+
+	va_start (ap, size);
+	n = strxcajoinv(buf, size, ap);
+	va_end (ap);
+
+	return n;
+}
+
+qse_size_t strcajoinv (char_t* buf, va_list ap)
+{
+	const char_t* p;
+	char_t* ptr = buf + strlen(buf);
+	qse_size_t n;
+
+	while (1)
+	{
+		p = va_arg(ap, const char_t*);
+		if (p == QSE_NULL) break;
+
+		n = strcpy(ptr, p);
+		ptr += n;
+	}
+
+	return ptr - buf;
+}
+
+
+qse_size_t strcajoin (char_t* buf, ...)
+{
+	va_list ap;
+	qse_size_t n;
+
+	va_start (ap, buf);
+	n = strcajoinv(buf, ap);
+	va_end (ap);
+
+	return n;
+}

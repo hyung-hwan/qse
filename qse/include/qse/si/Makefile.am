@@ -30,6 +30,7 @@ pkginclude_HEADERS += \
 	App.hpp \
 	Condition.hpp \
 	Mutex.hpp \
+	Path.hpp \
 	SocketAddress.hpp \
 	Socket.hpp \
 	SpinLock.hpp \

@@ -1152,6 +1152,29 @@ QSE_EXPORT qse_size_t qse_mbsxjoinv (
 	va_list      ap
 );
 
+QSE_EXPORT qse_size_t qse_mbscajoin (
+	qse_mchar_t* buf, 
+	...
+);
+
+QSE_EXPORT qse_size_t qse_mbsxcajoin (
+	qse_mchar_t* buf,
+	qse_size_t   size,
+	...
+);
+
+QSE_EXPORT qse_size_t qse_mbscajoinv (
+	qse_mchar_t* buf, 
+	va_list      ap
+);
+
+QSE_EXPORT qse_size_t qse_mbsxcajoinv (
+	qse_mchar_t* buf,
+	qse_size_t   size,
+	va_list      ap
+);
+
+
 
 /**
  * The qse_wcsjoin() function joins a list of wide-charcter strings into 
@@ -1195,16 +1218,46 @@ QSE_EXPORT qse_size_t qse_wcsxjoinv (
 	va_list      ap
 );
 
+QSE_EXPORT qse_size_t qse_wcscajoin (
+	qse_wchar_t* buf, 
+	...
+);
+
+QSE_EXPORT qse_size_t qse_wcsxcajoin (
+	qse_wchar_t* buf,
+	qse_size_t   size,
+	...
+);
+
+QSE_EXPORT qse_size_t qse_wcscajoinv (
+	qse_wchar_t* buf, 
+	va_list      ap
+);
+
+QSE_EXPORT qse_size_t qse_wcsxcajoinv (
+	qse_wchar_t* buf,
+	qse_size_t   size,
+	va_list      ap
+);
+
 #if defined(QSE_CHAR_IS_MCHAR)
 #	define qse_strjoin         qse_mbsjoin
 #	define qse_strxjoin        qse_mbsxjoin
 #	define qse_strjoinv        qse_mbsjoinv
 #	define qse_strxjoinv       qse_mbsxjoinv
+#	define qse_strcajoin       qse_mbscajoin
+#	define qse_strxcajoin      qse_mbsxcajoin
+#	define qse_strcajoinv      qse_mbscajoinv
+#	define qse_strxcajoinv     qse_mbsxcajoinv
 #else
 #	define qse_strjoin         qse_wcsjoin
 #	define qse_strxjoin        qse_wcsxjoin
 #	define qse_strjoinv        qse_wcsjoinv
 #	define qse_strxjoinv       qse_wcsxjoinv
+#	define qse_strcajoin       qse_wcscajoin
+#	define qse_strxcajoin      qse_wcsxcajoin
+#	define qse_strcajoinv      qse_wcscajoinv
+#	define qse_strxcajoinv     qse_wcsxcajoinv
 #endif
 /* ---------------------------------------------------- */
 

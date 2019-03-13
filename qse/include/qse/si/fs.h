@@ -46,33 +46,7 @@
 #	define QSE_SIZEOF_FS_CHAR_T QSE_SIZEOF_MCHAR_T
 #endif
 
-#if (QSE_SIZEOF_MODE_T == QSE_SIZEOF_LONG)
-#	if defined(QSE_MODE_T_IS_SIGNED)
-		typedef long int qse_fs_mode_t;
-#	else
-		typedef unsigned long int qse_fs_mode_t;
-#	endif
-#elif (QSE_SIZEOF_MODE_T == QSE_SIZEOF_INT)
-#	if defined(QSE_MODE_T_IS_SIGNED)
-		typedef int qse_fs_mode_t;
-#	else
-		typedef unsigned int qse_fs_mode_t;
-#	endif
-#elif (QSE_SIZEOF_MODE_T == QSE_SIZEOF_SHORT)
-#	if defined(QSE_MODE_T_IS_SIGNED)
-		typedef short int qse_fs_mode_t;
-#	else
-		typedef unsigned short int qse_fs_mode_t;
-#	endif
-#elif (QSE_SIZEOF_MODE_T == QSE_SIZEOF_CHAR)
-#	if defined(QSE_MODE_T_IS_SIGNED)
-		typedef signed char qse_fs_mode_t;
-#	else
-		typedef unsigned char qse_fs_mode_t;
-#	endif
-#else
-	typedef unsigned int qse_fs_mode_t;
-#endif
+typedef qse_fmode_t qse_fs_mode_t;
 
 enum qse_fs_errnum_t
 {
@@ -519,6 +493,34 @@ QSE_EXPORT int qse_fs_rmdirwcs (
 #endif
 
 
+/* =========================================================================
+ * GLOBAL UTILITIES NOT USING THE FS OBJECT 
+ * ========================================================================= */
+
+QSE_EXPORT qse_mchar_t* qse_get_current_mbsdir (
+	qse_mchar_t* buf,
+	qse_size_t   size,
+	qse_mmgr_t*  mmgr
+);
+
+QSE_EXPORT qse_wchar_t* qse_get_current_wcsdir (
+	qse_wchar_t* buf,
+	qse_size_t   size,
+	qse_mmgr_t*  mmgr
+);
+
+#if defined(QSE_CHAR_IS_MCHAR)
+#	define qse_get_current_dir(buf,size,mmgr) qse_get_current_mbsdir(buf,size,mmgr)
+#else
+#	define qse_get_current_dir(buf,size,mmgr) qse_get_current_wcsdir(buf,size,mmgr)
+#endif
+
+QSE_EXPORT int qse_get_prog_path (
+	const qse_char_t* argv0,
+	qse_char_t*       buf,
+	qse_size_t        size,
+	qse_mmgr_t*       mmgr
+);
 
 #if defined(__cplusplus)
 }

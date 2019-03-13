@@ -27,11 +27,12 @@
 #ifndef _QSE_SI_PATH_CLASS_
 #define _QSE_SI_PATH_CLASS_
 
-#include <qse/types.h>
-#include <qse/macros.h>
+#include <qse/Types.hpp>
+#include <qse/cmn/Mmged.hpp>
 
 QSE_BEGIN_NAMESPACE(QSE)
-class Path
+
+class Path: public Mmged
 {
 public:
 	enum
@@ -39,74 +40,65 @@ public:
 		MAX_LEN = QSE_PATH_MAX
 	};
 
-	Path ();
-	Path (const qse_char_t* n);
-	Path (const Path& fn);
-	Path& operator= (const Path& fn);
+	Path (Mmgr* mmgr = QSE_NULL) QSE_CPP_NOEXCEPT;
+	Path (const qse_char_t* n, Mmgr* mmgr = QSE_NULL) QSE_CPP_NOEXCEPT;
+	Path (const Path& path) QSE_CPP_NOEXCEPT;
+	Path& operator= (const Path& path) QSE_CPP_NOEXCEPT;
 
-	const qse_char_t* name () const 
-	{
-		return full_path;
-	}
+	// NOTE: the current implementation doesn't have much to benefit from C++11 Move 
+	//       semantics and the rvalue reference. 
 
-	void setName (const qse_char_t* n) 
-	{
-		if (n == QSE_NULL || n[0] == QSE_CHAR('\0')) set_to_root();
-		else {
-			qse_strxcpy (full_path, qse_countof(full_path), n);
-			this->set_base_name ();
-		}
-	}
+	void setName (const qse_char_t* n) QSE_CPP_NOEXCEPT;
 
-	const qse_char_t* baseName () const 
-	{
-		return base_name;
-	}
-	const qse_char_t* baseDir () const 
-	{
-		return base_dir;
-	}
+	const qse_char_t* getName () const QSE_CPP_NOEXCEPT { return this->full_path; }
+	const qse_char_t* getBaseName () const QSE_CPP_NOEXCEPT { return this->base_name; }
+	const qse_char_t* getBaseDir () const QSE_CPP_NOEXCEPT { return this->base_dir; }
 
-	bool exists () 
-	{
-		return exists (full_path);
-	}
-	static bool exists (const qse_char_t* path);
+#if 0
+	bool exists () const QSE_CPP_NOEXCEPT { return this->exists(this->full_path); }
+	static bool exists (const qse_mchar_t* path) QSE_CPP_NOEXCEPT;
+	static bool exists (const qse_wchar_t* path) QSE_CPP_NOEXCEPT;
 
-	int  getSize        (qse_off_t* sz);
-	bool isWritable     ();
-	bool isReadable     ();
-	bool isReadWritable ();
-#ifndef _WIN32
-	bool isExecutable   ();
+	int getSize (qse_foff_t* sz) const QSE_CPP_NOEXCEPT { return this->getSize(this->full_path, sz); }
+	static int getSize (const qse_mchar_t* path, qse_foff_t* sz) QSE_CPP_NOEXCEPT;
+	static int getSize (const qse_wchar_t* path, qse_foff_t* sz) QSE_CPP_NOEXCEPT;
+
+	bool isWritable () const QSE_CPP_NOEXCEPT;
+	bool isReadable () const QSE_CPP_NOEXCEPT;
+	bool isReadWritable () const QSE_CPP_NOEXCEPT;
+	bool isExecutable () const QSE_CPP_NOEXCEPT;
+
+	bool isDir () const QSE_CPP_NOEXCEPT { return this->isDir(this->full_path); }
+	static bool isDir (const qse_char_t* path) QSE_CPP_NOEXCEPT;
+
+	bool isRegular () const QSE_CPP_NOEXCEPT { return this->isRegular(this->full_path); }
+	static bool isRegular (const qse_char_t* path) QSE_CPP_NOEXCEPT;
 #endif
 
-	bool isDirectory () const { return this->isDirectory (full_path); }
-	static bool isDirectory (const qse_char_t* path);
+	int chmod (qse_fmode_t mode) QSE_CPP_NOEXCEPT { return this->chmod(this->full_path, mode); }
+	static int chmod (const qse_mchar_t* path, qse_fmode_t mode) QSE_CPP_NOEXCEPT;
+	static int chmod (const qse_wchar_t* path, qse_fmode_t mode) QSE_CPP_NOEXCEPT;
 
-	bool isRegular () const { return this->isRegular (full_path); }
-	static bool isRegular (const qse_char_t* path);
+	int unlink () QSE_CPP_NOEXCEPT { return this->unlink(this->full_path); }
+	static int unlink (const qse_mchar_t* path) QSE_CPP_NOEXCEPT;
+	static int unlink (const qse_wchar_t* path) QSE_CPP_NOEXCEPT;
 
-	int chmod (qse_mode_t mode);
-	static int chmod (const qse_char_t* path, qse_mode_t mode);
+	int mkdir (qse_fmode_t mode) QSE_CPP_NOEXCEPT { return this->mkdir(this->full_path, mode); }
+	static int mkdir (const qse_mchar_t* path, qse_fmode_t mode) QSE_CPP_NOEXCEPT;
+	static int mkdir (const qse_wchar_t* path, qse_fmode_t mode) QSE_CPP_NOEXCEPT;
 
-	int unlink ();
-	static int unlink (const qse_char_t* path);
-
-	int mkdir (qse_mode_t mode);
-	static int mkdir (const qse_char_t* path, qse_mode_t mode);
-
-	int setToSelf (const qse_char_t* argv0 = QSE_NULL);
+	int setToSelf (const qse_mchar_t* argv0 = QSE_NULL) QSE_CPP_NOEXCEPT;
+	int setToSelf (const qse_wchar_t* argv0 = QSE_NULL) QSE_CPP_NOEXCEPT;
 
 protected:
 	qse_char_t full_path[QSE_PATH_MAX + 1];
 	qse_char_t base_name[QSE_PATH_MAX + 1];
 	qse_char_t base_dir [QSE_PATH_MAX + 1];
 
-	void set_base_name ();
-	void set_to_root ();
+	void set_base_name () QSE_CPP_NOEXCEPT;
+	void set_to_root () QSE_CPP_NOEXCEPT;
 };
 
 QSE_END_NAMESPACE(QSE)
-		
+
 #endif

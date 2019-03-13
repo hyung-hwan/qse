@@ -25,69 +25,109 @@
  */
 
 #include <qse/si/Path.hpp>
+#include <qse/si/fs.h>
+#include <qse/cmn/str.h>
+#include <qse/cmn/mbwc.h>
+#include <qse/cmn/mem.h>
+#include "../cmn/syscall.h"
+
+
 
 QSE_BEGIN_NAMESPACE(QSE)
 
-Path::Path ()
+Path::Path (Mmgr* mmgr) QSE_CPP_NOEXCEPT: Mmged(mmgr)
 {
 	this->set_to_root ();
 }
 
-Path::Path (const qse_char_t* n) 
+Path::Path (const qse_char_t* n, Mmgr* mmgr) QSE_CPP_NOEXCEPT: Mmged(mmgr)
 {
 	this->setName (n);
 }
 
-Path::Path (const Path& fn)
+Path::Path (const Path& path) QSE_CPP_NOEXCEPT: Mmged(path)
 {
-	qse_strxcpy (this->full_path, QSE_COUNTOF(this->full_path), fn.this->full_path);
+	qse_strxcpy (this->full_path, QSE_COUNTOF(this->full_path), path.full_path);
 	this->set_base_name ();
 }
 
-Path& Path::operator= (const Path& fn) 
+Path& Path::operator= (const Path& path) QSE_CPP_NOEXCEPT
 {
-	qse_strxcpy (this->full_path, QSE_COUNTOF(this->full_path), fn.this->full_path);
-	this->set_base_name ();
+	if (this != &path)
+	{
+		this->setMmgr (path.getMmgr());
+		qse_strxcpy (this->full_path, QSE_COUNTOF(this->full_path), path.full_path);
+		this->set_base_name ();
+	}
 	return *this;
 }
 
-bool Path::exists (const qse_char_t* path)
+void Path::setName (const qse_char_t* n) QSE_CPP_NOEXCEPT
 {
-	return ::qse_access (path, QSE_ACCESS_EXIST) == 0;
+	if (n == QSE_NULL || n[0] == QSE_T('\0')) this->set_to_root();
+	else 
+	{
+		qse_strxcpy (this->full_path, QSE_COUNTOF(this->full_path), n);
+		this->set_base_name ();
+	}
 }
 
-int Path::getSize (qse_off_t* sz)
+#if 0
+bool Path::exists (const qse_mchar_t* path) QSE_CPP_NOEXCEPT
 {
-	qse_stat_t buf;
-	if (::qse_stat (this->full_path, &buf) == -1) return -1;
-	*sz = buf.st_size;
+#if defined(QSE_ACCESS) && defined(F_OK)
+	return QSE_ACCESS(path, F_OK) == 0;
+#else
+#	error UNSUPPORTED PLATFORM
+#endif
+}
+
+bool Path::exists (const qse_wchar_t* path) QSE_CPP_NOEXCEPT
+{
+	return true;
+}
+
+int Path::getSize (const qse_mchar_t* path, qse_foff_t* sz) QSE_CPP_NOEXCEPT
+{
+#if defined(QSE_STAT)
+	/* use stat() instead of lstat() to get the information about the actual file whe the path is a symbolic link */
+	qse_stat_t st;
+	if (QSE_STAT(path, &st) == -1) return -1;
+	*sz = st.st_size;
 	return 0;
+#else
+#	error UNSUPPORTED PLATFORM
+#endif
 }
 
-bool Path::isWritable ()
+int Path::getSize (const qse_wchar_t* path, qse_foff_t* sz) QSE_CPP_NOEXCEPT
+{
+	return -1;
+}
+
+bool Path::isWritable () const QSE_CPP_NOEXCEPT
 {
 	return ::qse_access (this->full_path, QSE_ACCESS_WRITE) == 0;
 }
 
-bool Path::isReadable ()
+bool Path::isReadable () const QSE_CPP_NOEXCEPT
 {
 	return ::qse_access (this->full_path, QSE_ACCESS_READ) == 0;
 }
 
-bool Path::isReadWritable ()
+bool Path::isReadWritable () QSE_CPP_NOEXCEPT
 {
-	return ::qse_access (this->full_path, 
-		QSE_ACCESS_READ | QSE_ACCESS_WRITE) == 0;
+	return ::qse_access (this->full_path, QSE_ACCESS_READ | QSE_ACCESS_WRITE) == 0;
 }
 
 #if !defined(_WIN32)
-bool Path::isExecutable ()
+bool Path::isExecutable () QSE_CPP_NOEXCEPT
 {
 	return ::qse_access (this->full_path, QSE_ACCESS_EXECUTE) == 0;
 }
 #endif
 
-bool Path::isDirectory (const qse_char_t* path)
+bool Path::isDir (const qse_char_t* path) QSE_CPP_NOEXCEPT
 {
 	int n;
 	qse_stat_t st;
@@ -101,7 +141,7 @@ bool Path::isDirectory (const qse_char_t* path)
 #endif
 }
 
-bool Path::isRegular (const qse_char_t* path)
+bool Path::isRegular (const qse_char_t* path) QSE_CPP_NOEXCEPT
 {
 	int n;
 	qse_stat_t st;
@@ -114,38 +154,77 @@ bool Path::isRegular (const qse_char_t* path)
 	return S_ISREG(st.st_mode);
 #endif
 }
+#endif
 
-int Path::chmod (qse_mode_t mode)
+
+int Path::chmod (const qse_mchar_t* path, qse_fmode_t mode) QSE_CPP_NOEXCEPT
 {
-	return qse_chmod (this->full_path, mode);
+#if defined(QSE_CHMOD)
+	return QSE_CHMOD(path, mode);
+#else
+#	error UNSUPPORTED PLATFORM
+#endif
 }
 
-int Path::chmod (const qse_char_t* path, qse_mode_t mode)
+int Path::chmod (const qse_wchar_t* path, qse_fmode_t mode) QSE_CPP_NOEXCEPT
 {
-	return qse_chmod (path, mode);
+#if defined(QSE_CHMOD)
+	qse_mchar_t* xpath = qse_wcstombsdup(path, QSE_NULL, QSE_MMGR_GETDFL());
+	if (!xpath) return -1;
+	return QSE_CHMOD(xpath, mode);
+#else
+#	error UNSUPPORTED PLATFORM
+#endif
 }
 
-int Path::unlink ()
+int Path::unlink (const qse_mchar_t* path) QSE_CPP_NOEXCEPT
 {
-	return ::qse_unlink (this->full_path);
+#if defined(QSE_UNLINK)
+	return QSE_UNLINK(path);
+#else
+#	error UNSUPPORTED PLATFORM
+#endif
 }
 
-int Path::mkdir (qse_mode_t mode)
+int Path::unlink (const qse_wchar_t* path) QSE_CPP_NOEXCEPT
 {
-	return ::qse_mkdir(this->full_path, mode);
+#if defined(QSE_UNLINK)
+	qse_mchar_t* xpath = qse_wcstombsdup(path, QSE_NULL, QSE_MMGR_GETDFL());
+	if (!xpath) return -1;
+	return QSE_UNLINK(xpath);
+#else
+#	error UNSUPPORTED PLATFORM
+#endif
 }
 
-int Path::mkdir (const qse_char_t* path, qse_mode_t mode)
+int Path::mkdir (const qse_mchar_t* path, qse_fmode_t mode) QSE_CPP_NOEXCEPT
 {
-	return ::qse_mkdir(path, mode);
+#if defined(QSE_MKDIR)
+	return QSE_MKDIR(path, mode);
+#else
+#	error UNSUPPORTED PLATFORM
+#endif
 }
 
-void Path::set_base_name ()
+int Path::mkdir (const qse_wchar_t* path, qse_fmode_t mode) QSE_CPP_NOEXCEPT
+{
+#if defined(QSE_MKDIR)
+	qse_mchar_t* xpath = qse_wcstombsdup(path, QSE_NULL, QSE_MMGR_GETDFL());
+	if (!xpath) return -1;
+	return QSE_MKDIR(xpath, mode);
+#else
+#	error UNSUPPORTED PLATFORM
+#endif
+}
+
+
+void Path::set_base_name () QSE_CPP_NOEXCEPT
 {
 	qse_size_t len = qse_strlen(this->full_path);
 	QSE_ASSERT (len > 0);
 
-	for (qse_size_t i = len; i > 0; i--) {
+	for (qse_size_t i = len; i > 0; i--) 
+	{
 #if defined(_WIN32)
 		if ((this->full_path[i - 1] == QSE_T('/') || this->full_path[i - 1] == QSE_T('\\')) && i != len) 
 		{
@@ -196,7 +275,7 @@ void Path::set_base_name ()
 		qse_strcpy (this->base_dir, QSE_T(""));
 }
 
-void Path::set_to_root ()
+void Path::set_to_root () QSE_CPP_NOEXCEPT
 {
 	qse_strcpy (this->full_path, QSE_T("/"));
 	//this->set_base_name ();
@@ -204,10 +283,15 @@ void Path::set_to_root ()
 	qse_strcpy (this->base_dir,  QSE_T("/"));
 }
 
-int Path::setToSelf (const qse_char_t* argv0)
+int Path::setToSelf (const qse_mchar_t* argv0) QSE_CPP_NOEXCEPT
+{
+	return 0;
+}
+
+int Path::setToSelf (const qse_wchar_t* argv0) QSE_CPP_NOEXCEPT
 {
 	qse_char_t p[MAX_LEN + 1];
-	if (qse_getpnm(argv0, p, QSE_COUNTOF(p)) == -1) return -1;
+	if (qse_get_prog_path(argv0, p, QSE_COUNTOF(p), this->getMmgr()) == -1) return -1;
 	this->setName (p);
 	return 0;
 }

@@ -914,9 +914,53 @@ typedef struct qse_tmgr_t qse_tmgr_t;
 #elif defined(QSE_HAVE_INT16_T) && (QSE_SIZEOF_OFF_T==2)
 	typedef qse_int16_t qse_foff_t;
 #	define QSE_SIZEOF_FOFF_T QSE_SIZEOF_INT16_T
+#elif defined(QSE_HAVE_INT8_T) && (QSE_SIZEOF_OFF_T==1)
+	typedef qse_int8_t qse_foff_t;
+#	define QSE_SIZEOF_FOFF_T QSE_SIZEOF_INT16_T
 #else
 	typedef qse_int32_t qse_foff_t; /* this line is for doxygen */
-#    error Unsupported platform
+#	error Unsupported platform
+#endif
+
+/**
+ * The #qse_fmode_t type defines an integer that can represent a file offset.
+ * Depending on your system, it's defined to one of #qse_int64_t, #qse_int32_t,
+ * and #qse_int16_t.
+ */
+#if defined(QSE_MODE_T_IS_SIGNED)
+#	if defined(QSE_HAVE_INT64_T) && (QSE_SIZEOF_MODE_T==8)
+		typedef qse_int64_t qse_fmode_t;
+#		define QSE_SIZEOF_FMODE_T QSE_SIZEOF_INT64_T
+#	elif defined(QSE_HAVE_INT32_T) && (QSE_SIZEOF_MODE_T==4)
+		typedef qse_int32_t qse_fmode_t;
+#		define QSE_SIZEOF_FMODE_T QSE_SIZEOF_INT32_T
+#	elif defined(QSE_HAVE_INT16_T) && (QSE_SIZEOF_MODE_T==2)
+		typedef qse_int16_t qse_fmode_t;
+#		define QSE_SIZEOF_FMODE_T QSE_SIZEOF_INT16_T
+#	elif defined(QSE_HAVE_INT8_T) && (QSE_SIZEOF_MODE_T==1)
+		typedef qse_int8_t qse_fmode_t;
+#		define QSE_SIZEOF_FMODE_T QSE_SIZEOF_INT8_T
+#	else
+		typedef qse_int32_t qse_fmode_t; /* this line is for doxygen */
+#		error Unsupported platform
+#	endif
+#else
+#	if defined(QSE_HAVE_INT64_T) && (QSE_SIZEOF_MODE_T==8)
+		typedef qse_uint64_t qse_fmode_t;
+#		define QSE_SIZEOF_FMODE_T QSE_SIZEOF_INT64_T
+#	elif defined(QSE_HAVE_INT32_T) && (QSE_SIZEOF_MODE_T==4)
+		typedef qse_uint32_t qse_fmode_t;
+#		define QSE_SIZEOF_FMODE_T QSE_SIZEOF_INT32_T
+#	elif defined(QSE_HAVE_INT16_T) && (QSE_SIZEOF_MODE_T==2)
+		typedef qse_uint16_t qse_fmode_t;
+#		define QSE_SIZEOF_FMODE_T QSE_SIZEOF_INT16_T
+#	elif defined(QSE_HAVE_INT8_T) && (QSE_SIZEOF_MODE_T==1)
+		typedef qse_uint8_t qse_fmode_t;
+#		define QSE_SIZEOF_FMODE_T QSE_SIZEOF_INT8_T
+#	else
+		typedef qse_uint32_t qse_fmode_t; /* this line is for doxygen */
+#		error Unsupported platform
+#	endif
 #endif
 
 /*
