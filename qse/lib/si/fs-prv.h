@@ -163,14 +163,14 @@ void qse_fs_freefspathforwcs (
 int qse_fs_getattrsys (
 	qse_fs_t*            fs,
 	const qse_fs_char_t* fspath,
-	qse_fs_attr_t*       attr,
+	qse_fattr_t*       attr,
 	int                  flags
 );
 
 int qse_fs_setattrsys (
 	qse_fs_t*            fs,
 	qse_fs_char_t*       path,
-	const qse_fs_attr_t* attr,
+	const qse_fattr_t* attr,
 	int                  flags /** bitwise-ORed #qse_fs_setattr_flag_t enumerators */
 );
 
@@ -183,7 +183,7 @@ int qse_fs_syscpfile (
 int qse_fs_mkdirsys (
 	qse_fs_t*            fs,
 	const qse_fs_char_t* fspath,
-	qse_fs_mode_t        mode
+	qse_fmode_t          mode
 );
 
 int qse_fs_rmfilesys (
@@ -204,6 +204,11 @@ int qse_fs_invokeactcb (
 	qse_fs_char_t*  dst_fspath,
 	qse_uintmax_t   bytes_total,
 	qse_uintmax_t   bytes_done
+);
+
+void qse_stat_to_attr (
+	const qse_stat_t* stat,
+	qse_fattr_t*      attr
 );
 
 #if defined(__cplusplus)

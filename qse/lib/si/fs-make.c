@@ -26,7 +26,7 @@
 
 #include "fs-prv.h"
 
-int qse_fs_mkdirsys (qse_fs_t* fs, const qse_fs_char_t* fspath, qse_fs_mode_t mode)
+int qse_fs_mkdirsys (qse_fs_t* fs, const qse_fs_char_t* fspath, qse_fmode_t mode)
 {
 #if defined(_WIN32)
 
@@ -90,7 +90,7 @@ int qse_fs_mkdirsys (qse_fs_t* fs, const qse_fs_char_t* fspath, qse_fs_mode_t mo
 
 /* --------------------------------------------------------------------- */
 
-static int make_directory_chain (qse_fs_t* fs, qse_fs_char_t* fspath, qse_fs_mode_t mode)
+static int make_directory_chain (qse_fs_t* fs, qse_fs_char_t* fspath, qse_fmode_t mode)
 {
 	qse_fs_char_t* core, * p, c;
 	int ret = 0;
@@ -135,10 +135,10 @@ done:
 	return ret;
 }
 
-int qse_fs_mkdirmbs (qse_fs_t* fs, const qse_mchar_t* path, qse_fs_mode_t mode, int flags)
+int qse_fs_mkdirmbs (qse_fs_t* fs, const qse_mchar_t* path, qse_fmode_t mode, int flags)
 {
 	qse_fs_char_t* fspath;
-	qse_fs_mode_t oldmask;
+	qse_fmode_t oldmask;
 	int ret;
 
 	if (*path == QSE_MT('\0')) 
@@ -175,10 +175,10 @@ int qse_fs_mkdirmbs (qse_fs_t* fs, const qse_mchar_t* path, qse_fs_mode_t mode, 
 	return ret;
 }
 
-int qse_fs_mkdirwcs (qse_fs_t* fs, const qse_wchar_t* path, qse_fs_mode_t mode, int flags)
+int qse_fs_mkdirwcs (qse_fs_t* fs, const qse_wchar_t* path, qse_fmode_t mode, int flags)
 {
 	qse_fs_char_t* fspath;
-	qse_fs_mode_t oldmask;
+	qse_fmode_t oldmask;
 	int ret;
 
 	if (*path == QSE_WT('\0')) 

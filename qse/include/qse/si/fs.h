@@ -36,6 +36,58 @@
 #include <qse/macros.h>
 #include <qse/cmn/time.h>
 
+struct qse_fattr_t
+{
+	unsigned int isdir: 1;
+	unsigned int islnk: 1;
+	unsigned int isreg: 1;
+	unsigned int isblk: 1;
+	unsigned int ischr: 1;
+
+	qse_uintptr_t mode;
+
+	qse_uintmax_t size;
+	qse_uintmax_t ino;
+	qse_uintmax_t dev;
+	qse_uintptr_t uid;
+	qse_uintptr_t gid;
+
+	qse_ntime_t atime; /* last access */
+	qse_ntime_t mtime; /* last modification */
+	qse_ntime_t ctime; /* last status change */
+};
+typedef struct qse_fattr_t qse_fattr_t;
+
+enum qse_fperm_t
+{
+	QSE_FPERM_READ,
+	QSE_FPERM_WRITE,
+	QSE_FPERM_EXEC
+};
+typedef enum qse_fperm_t qse_fperm_t;
+
+enum qse_file_attr_flag_t
+{
+	/* used in qse_set_file_attr() only */
+	QSE_FILE_ATTR_TIME  = (1 << 0),
+	QSE_FILE_ATTR_OWNER = (1 << 1),
+	QSE_FILE_ATTR_MODE  = (1 << 2),
+
+	/* effective in both qse_get_file_attr() and qse_set_file_attr()  */
+	QSE_FILE_ATTR_SYMLINK = (1 << 15) /* work on the symbolic link itself. don't follow */
+};
+typedef enum qse_file_attr_flag_t qse_file_attr_flag_t;
+
+enum qse_file_perm_flag_t
+{
+	QSE_FILE_PERM_SYMLINK = (1 << 15) /* don't follow symbolic link */
+};
+typedef enum qse_file_perm_flag_t qse_file_perm_flag_t;
+
+/* ==========================================================================
+ * FS OBJECT
+ * ========================================================================== */
+
 #if defined(_WIN32) && defined(QSE_CHAR_IS_WCHAR)
 	typedef qse_wchar_t qse_fs_char_t;
 #	define QSE_FS_CHAR_IS_WCHAR
@@ -45,8 +97,6 @@
 #	define QSE_FS_CHAR_IS_MCHAR
 #	define QSE_SIZEOF_FS_CHAR_T QSE_SIZEOF_MCHAR_T
 #endif
-
-typedef qse_fmode_t qse_fs_mode_t;
 
 enum qse_fs_errnum_t
 {
@@ -119,44 +169,7 @@ struct qse_fs_ent_t
 
 typedef struct qse_fs_ent_t qse_fs_ent_t;
 
-struct qse_fs_attr_t
-{
-	unsigned int isdir: 1;
-	unsigned int islnk: 1;
-	unsigned int isreg: 1;
-	unsigned int isblk: 1;
-	unsigned int ischr: 1;
-
-	qse_uintptr_t mode;
-
-	qse_uintmax_t size;
-	qse_uintmax_t ino;
-	qse_uintmax_t dev;
-	qse_uintptr_t uid;
-	qse_uintptr_t gid;
-
-	qse_ntime_t atime; /* last access */
-	qse_ntime_t mtime; /* last modification */
-	qse_ntime_t ctime; /* last status change */
-};
-
-typedef struct qse_fs_attr_t qse_fs_attr_t;
-
-enum qse_fs_getattr_flag_t
-{
-	QSE_FS_GETATTR_SYMLINK = (1 << 15)
-};
-typedef enum qse_fs_getattr_flag_t qse_fs_getattr_flag_t;
-
-enum qse_fs_setattr_flag_t
-{
-	QSE_FS_SETATTR_TIME  = (1 << 0),
-	QSE_FS_SETATTR_OWNER = (1 << 1),
-	QSE_FS_SETATTR_MODE  = (1 << 2),
-
-	QSE_FS_SETATTR_SYMLINK = (1 << 15) /* work on the symbolic link itself. don't follow */
-};
-typedef enum qse_fs_setattr_flag_t qse_fs_setattr_flag_t;
+typedef qse_fattr_t qse_fattr_t;
 
 #if defined(_WIN32)
 typedef void* qse_fs_handle_t;
@@ -364,43 +377,43 @@ QSE_EXPORT int qse_fs_pop (
 QSE_EXPORT int qse_fs_getattronfd (
 	qse_fs_t*            fs,
 	qse_fs_handle_t      fd,
-	qse_fs_attr_t*       attr,
+	qse_fattr_t*         attr,
 	int                  flags
 );
 
 QSE_EXPORT int qse_fs_setattronfd (
 	qse_fs_t*            fs,
 	qse_fs_handle_t      fd,
-	const qse_fs_attr_t* attr,
-	int                  flags /** bitwise-ORed #qse_fs_setattr_flag_t enumerators */
+	const qse_fattr_t*   attr,
+	int                  flags /** bitwise-ORed #qse_file_attr_flag_t enumerators */
 );
 
 QSE_EXPORT int qse_fs_getattrmbs (
 	qse_fs_t*            fs,
 	const qse_mchar_t*   path,
-	qse_fs_attr_t*       attr,
+	qse_fattr_t*         attr,
 	int                  flags
 );
 
 QSE_EXPORT int qse_fs_getattrwcs (
 	qse_fs_t*            fs,
 	const qse_wchar_t*   path,
-	qse_fs_attr_t*       attr,
+	qse_fattr_t*       attr,
 	int                  flags
 );
 
 QSE_EXPORT int qse_fs_setattrmbs (
 	qse_fs_t*            fs,
 	qse_mchar_t*         path,
-	const qse_fs_attr_t* attr,
-	int                  flags /** bitwise-ORed #qse_fs_setattr_flag_t enumerators */
+	const qse_fattr_t*  attr,
+	int                  flags /** bitwise-ORed #qse_file_attr_flag_t enumerators */
 );
 
 QSE_EXPORT int qse_fs_setattrwcs (
 	qse_fs_t*            fs,
 	qse_wchar_t*         path,
-	const qse_fs_attr_t* attr,
-	int                  flags /** bitwise-ORed #qse_fs_setattr_flag_t enumerators */
+	const qse_fattr_t*   attr,
+	int                  flags /** bitwise-ORed #qse_file_attr_flag_t enumerators */
 );
 
 
@@ -418,10 +431,6 @@ QSE_EXPORT int qse_fs_move (
 	const qse_char_t* oldpath,
 	const qse_char_t* newpath
 );
-
-
-
-
 
 
 QSE_EXPORT int qse_fs_cpfilembs (
@@ -447,14 +456,14 @@ QSE_EXPORT int qse_fs_cpfilewcs (
 QSE_EXPORT int qse_fs_mkdirmbs (
 	qse_fs_t*          fs,
 	const qse_mchar_t* path,
-	qse_fs_mode_t      mode,
+	qse_fmode_t        mode,
 	int                flags
 );
 
 QSE_EXPORT int qse_fs_mkdirwcs (
 	qse_fs_t*          fs,
 	const qse_wchar_t* path,
-	qse_fs_mode_t      mode,
+	qse_fmode_t        mode,
 	int                flags
 );
 
@@ -499,27 +508,59 @@ QSE_EXPORT int qse_fs_rmdirwcs (
 
 QSE_EXPORT qse_mchar_t* qse_get_current_mbsdir (
 	qse_mchar_t* buf,
-	qse_size_t   size,
-	qse_mmgr_t*  mmgr
+	qse_size_t   size
 );
 
 QSE_EXPORT qse_wchar_t* qse_get_current_wcsdir (
 	qse_wchar_t* buf,
-	qse_size_t   size,
-	qse_mmgr_t*  mmgr
+	qse_size_t   size
+);
+
+QSE_EXPORT int qse_get_mbsfile_attr (
+	const qse_mchar_t* file,
+	int                flags, /* 0 or bitwise-ORed of the qse_file_attr_flag_t enumerators */
+	qse_fattr_t*       attr
+);
+
+QSE_EXPORT int qse_get_wcsfile_attr (
+	const qse_wchar_t* file,
+	int                flags,  /* 0 or bitwise-ORed of the qse_file_attr_flag_t enumerators */
+	qse_fattr_t*       attr
+);
+
+QSE_EXPORT int qse_check_mbsfile_perm (
+	const qse_mchar_t* file,
+	int                flags, /* 0 or bitwise-ORed of the qse_file_perm_flag_t enumerators */
+	qse_fperm_t        perm
+);
+
+QSE_EXPORT int qse_check_wcsfile_perm (
+	const qse_wchar_t* file,
+	int                flags, /* 0 or bitwise-ORed of the qse_file_perm_flag_t enumerators */
+	qse_fperm_t        perm
 );
 
 #if defined(QSE_CHAR_IS_MCHAR)
-#	define qse_get_current_dir(buf,size,mmgr) qse_get_current_mbsdir(buf,size,mmgr)
+#	define qse_get_current_dir(buf,size) qse_get_current_mbsdir(buf,size)
+#	define qse_get_file_attr(file,flags,attr) qse_get_mbsfile_attr(file,flags,attr)
+#	define qse_check_file_perm(file,flags,perm) qse_check_mbsfile_perm(file,flags,perm)
 #else
-#	define qse_get_current_dir(buf,size,mmgr) qse_get_current_wcsdir(buf,size,mmgr)
+#	define qse_get_current_dir(buf,size) qse_get_current_wcsdir(buf,size)
+#	define qse_get_file_attr(file,flags,attr) qse_get_wcsfile_attr(file,flags,attr)
+#	define qse_check_file_perm(file,flags,perm) qse_check_wcsfile_perm(file,flags,perm)
 #endif
 
-QSE_EXPORT int qse_get_prog_path (
+QSE_EXPORT int qse_get_prog_path_with_mmgr (
 	const qse_char_t* argv0,
 	qse_char_t*       buf,
 	qse_size_t        size,
 	qse_mmgr_t*       mmgr
+);
+
+QSE_EXPORT int qse_get_prog_path (
+	const qse_char_t* argv0,
+	qse_char_t*       buf,
+	qse_size_t        size
 );
 
 #if defined(__cplusplus)

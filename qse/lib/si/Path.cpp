@@ -291,7 +291,7 @@ int Path::setToSelf (const qse_mchar_t* argv0) QSE_CPP_NOEXCEPT
 int Path::setToSelf (const qse_wchar_t* argv0) QSE_CPP_NOEXCEPT
 {
 	qse_char_t p[MAX_LEN + 1];
-	if (qse_get_prog_path(argv0, p, QSE_COUNTOF(p), this->getMmgr()) == -1) return -1;
+	if (qse_get_prog_path_with_mmgr(argv0, p, QSE_COUNTOF(p), this->getMmgr()) == -1) return -1;
 	this->setName (p);
 	return 0;
 }
