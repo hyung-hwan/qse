@@ -87,7 +87,7 @@ void Path::setName (const qse_wchar_t* n) QSE_CPP_NOEXCEPT
 	{
 	#if defined(QSE_CHAR_IS_MCHAR)
 		qse_size_t ml = QSE_COUNTOF(this->full_path), wl;
-		qse_wcstombsall (n, &wl, this->full_path, &ml);
+		qse_wcstombs (n, &wl, this->full_path, &ml);
 	#else
 		qse_wcsxcpy (this->full_path, QSE_COUNTOF(this->full_path), n);
 	#endif
