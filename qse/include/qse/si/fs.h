@@ -170,8 +170,6 @@ struct qse_fs_ent_t
 
 typedef struct qse_fs_ent_t qse_fs_ent_t;
 
-typedef qse_fattr_t qse_fattr_t;
-
 #if defined(_WIN32)
 typedef void* qse_fs_handle_t;
 #else
@@ -399,14 +397,14 @@ QSE_EXPORT int qse_fs_getattrmbs (
 QSE_EXPORT int qse_fs_getattrwcs (
 	qse_fs_t*            fs,
 	const qse_wchar_t*   path,
-	qse_fattr_t*       attr,
+	qse_fattr_t*         attr,
 	int                  flags
 );
 
 QSE_EXPORT int qse_fs_setattrmbs (
 	qse_fs_t*            fs,
 	qse_mchar_t*         path,
-	const qse_fattr_t*  attr,
+	const qse_fattr_t*   attr,
 	int                  flags /** bitwise-ORed #qse_file_attr_flag_t enumerators */
 );
 
