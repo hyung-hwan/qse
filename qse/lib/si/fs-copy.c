@@ -47,13 +47,13 @@ struct cpfile_t
 	int flags;
 	qse_fs_char_t* src_fspath;
 	qse_fs_char_t* dst_fspath;
-	qse_fs_attr_t src_attr;
-	qse_fs_attr_t dst_attr;
+	qse_fattr_t src_attr;
+	qse_fattr_t dst_attr;
 
 };
 typedef struct cpfile_t cpfile_t;
 
-static int is_dir_remembered (qse_fs_t* fs, qse_fs_attr_t* attr)
+static int is_dir_remembered (qse_fs_t* fs, qse_fattr_t* attr)
 {
 	qse_size_t i;
 	devino_t* di;
@@ -67,7 +67,7 @@ static int is_dir_remembered (qse_fs_t* fs, qse_fs_attr_t* attr)
 	return 0;
 }
 
-static int remember_dir_to_history (qse_fs_t* fs, qse_fs_attr_t* attr)
+static int remember_dir_to_history (qse_fs_t* fs, qse_fattr_t* attr)
 {
 	qse_size_t i;
 	devino_t* di;
@@ -126,7 +126,7 @@ static int merge_dstdir_and_srcbase (qse_fs_t* fs, cpfile_t* cpfile)
 	qse_fs_freefspath (fs, QSE_NULL, cpfile->dst_fspath);
 	cpfile->dst_fspath = fstmp;
 
-	if (qse_fs_getattrsys (fs, cpfile->dst_fspath, &cpfile->dst_attr, QSE_FS_GETATTR_SYMLINK) <= -1) 
+	if (qse_fs_getattrsys (fs, cpfile->dst_fspath, &cpfile->dst_attr, QSE_FILE_ATTR_SYMLINK) <= -1) 
 	{
 		/* attribute on the new destination is not available */
 		cpfile->flags &= ~CPFILE_DST_ATTR;
@@ -342,11 +342,11 @@ static int copy_file_in_fs (qse_fs_t* fs, cpfile_t* cpfile)
 
 		if (cpfile->flags & QSE_FS_CPFILE_PRESERVE)
 		{
-			if (qse_fs_setattronfd (fs, out, &cpfile->src_attr, QSE_FS_SETATTR_TIME | QSE_FS_SETATTR_OWNER | QSE_FS_SETATTR_MODE) <= -1)
+			if (qse_fs_setattronfd (fs, out, &cpfile->src_attr, QSE_FILE_ATTR_TIME | QSE_FILE_ATTR_OWNER | QSE_FILE_ATTR_MODE) <= -1)
 			{
 				if (fs->errnum == QSE_FS_ENOIMPL)
 				{
-					if (qse_fs_setattrsys (fs, cpfile->dst_fspath, &cpfile->src_attr, QSE_FS_SETATTR_TIME | QSE_FS_SETATTR_OWNER | QSE_FS_SETATTR_MODE) <= -1) goto oops_2;
+					if (qse_fs_setattrsys (fs, cpfile->dst_fspath, &cpfile->src_attr, QSE_FILE_ATTR_TIME | QSE_FILE_ATTR_OWNER | QSE_FILE_ATTR_MODE) <= -1) goto oops_2;
 				}
 			}
 		}
@@ -374,8 +374,8 @@ static int prepare_cpfile (qse_fs_t* fs, cpfile_t* cpfile)
 	/* error if the source file can't be stat'ed.
 	 * ok if the destination file can't be stat'ed */
 /* TODO: check if flags to getattrsys() is correct */
-	if (qse_fs_getattrsys (fs, cpfile->src_fspath, &cpfile->src_attr, QSE_FS_GETATTR_SYMLINK) <= -1) return -1;
-	if (qse_fs_getattrsys (fs, cpfile->dst_fspath, &cpfile->dst_attr, QSE_FS_GETATTR_SYMLINK) >= 0) cpfile->flags |= CPFILE_DST_ATTR;
+	if (qse_fs_getattrsys (fs, cpfile->src_fspath, &cpfile->src_attr, QSE_FILE_ATTR_SYMLINK) <= -1) return -1;
+	if (qse_fs_getattrsys (fs, cpfile->dst_fspath, &cpfile->dst_attr, QSE_FILE_ATTR_SYMLINK) >= 0) cpfile->flags |= CPFILE_DST_ATTR;
 	return 0;
 }
 
@@ -522,7 +522,7 @@ start_over:
 		}
 
 		/* (re)load the attribute. */
-		if (qse_fs_getattrsys (fs, cpfile->dst_fspath, &cpfile->dst_attr, QSE_FS_GETATTR_SYMLINK) <= -1) goto oops;
+		if (qse_fs_getattrsys (fs, cpfile->dst_fspath, &cpfile->dst_attr, QSE_FILE_ATTR_SYMLINK) <= -1) goto oops;
 		cpfile->flags |= CPFILE_DST_ATTR;
 
 		if (remember_dir_to_history (fs, &cpfile->dst_attr) <= -1) 
