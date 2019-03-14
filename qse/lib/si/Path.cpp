@@ -31,8 +31,6 @@
 #include <qse/cmn/mem.h>
 #include "../cmn/syscall.h"
 
-
-
 QSE_BEGIN_NAMESPACE(QSE)
 
 Path::Path (Mmgr* mmgr) QSE_CPP_NOEXCEPT: Mmged(mmgr)
@@ -40,7 +38,12 @@ Path::Path (Mmgr* mmgr) QSE_CPP_NOEXCEPT: Mmged(mmgr)
 	this->set_to_root ();
 }
 
-Path::Path (const qse_char_t* n, Mmgr* mmgr) QSE_CPP_NOEXCEPT: Mmged(mmgr)
+Path::Path (const qse_mchar_t* n, Mmgr* mmgr) QSE_CPP_NOEXCEPT: Mmged(mmgr)
+{
+	this->setName (n);
+}
+
+Path::Path (const qse_wchar_t* n, Mmgr* mmgr) QSE_CPP_NOEXCEPT: Mmged(mmgr)
 {
 	this->setName (n);
 }
@@ -62,12 +65,32 @@ Path& Path::operator= (const Path& path) QSE_CPP_NOEXCEPT
 	return *this;
 }
 
-void Path::setName (const qse_char_t* n) QSE_CPP_NOEXCEPT
+void Path::setName (const qse_mchar_t* n) QSE_CPP_NOEXCEPT
 {
-	if (n == QSE_NULL || n[0] == QSE_T('\0')) this->set_to_root();
+	if (n == QSE_NULL || n[0] == QSE_MT('\0')) this->set_to_root();
 	else 
 	{
-		qse_strxcpy (this->full_path, QSE_COUNTOF(this->full_path), n);
+	#if defined(QSE_CHAR_IS_MCHAR)
+		qse_mbsxcpy (this->full_path, QSE_COUNTOF(this->full_path), n);
+	#else
+		qse_size_t ml, wl = QSE_COUNTOF(this->full_path);
+		qse_mbstowcsall (n, &ml, this->full_path, &wl);
+	#endif
+		this->set_base_name ();
+	}
+}
+
+void Path::setName (const qse_wchar_t* n) QSE_CPP_NOEXCEPT
+{
+	if (n == QSE_NULL || n[0] == QSE_WT('\0')) this->set_to_root();
+	else 
+	{
+	#if defined(QSE_CHAR_IS_MCHAR)
+		qse_size_t ml = QSE_COUNTOF(this->full_path), wl;
+		qse_wcstombsall (n, &wl, this->full_path, &ml);
+	#else
+		qse_wcsxcpy (this->full_path, QSE_COUNTOF(this->full_path), n);
+	#endif
 		this->set_base_name ();
 	}
 }
@@ -285,13 +308,16 @@ void Path::set_to_root () QSE_CPP_NOEXCEPT
 
 int Path::setToSelf (const qse_mchar_t* argv0) QSE_CPP_NOEXCEPT
 {
+	qse_mchar_t p[MAX_LEN + 1];
+	if (qse_get_prog_mbspath_with_mmgr(argv0, p, QSE_COUNTOF(p), this->getMmgr()) == -1) return -1;
+	this->setName (p);
 	return 0;
 }
 
 int Path::setToSelf (const qse_wchar_t* argv0) QSE_CPP_NOEXCEPT
 {
-	qse_char_t p[MAX_LEN + 1];
-	if (qse_get_prog_path_with_mmgr(argv0, p, QSE_COUNTOF(p), this->getMmgr()) == -1) return -1;
+	qse_wchar_t p[MAX_LEN + 1];
+	if (qse_get_prog_wcspath_with_mmgr(argv0, p, QSE_COUNTOF(p), this->getMmgr()) == -1) return -1;
 	this->setName (p);
 	return 0;
 }

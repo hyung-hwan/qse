@@ -41,14 +41,16 @@ public:
 	};
 
 	Path (Mmgr* mmgr = QSE_NULL) QSE_CPP_NOEXCEPT;
-	Path (const qse_char_t* n, Mmgr* mmgr = QSE_NULL) QSE_CPP_NOEXCEPT;
+	Path (const qse_mchar_t* n, Mmgr* mmgr = QSE_NULL) QSE_CPP_NOEXCEPT;
+	Path (const qse_wchar_t* n, Mmgr* mmgr = QSE_NULL) QSE_CPP_NOEXCEPT;
 	Path (const Path& path) QSE_CPP_NOEXCEPT;
 	Path& operator= (const Path& path) QSE_CPP_NOEXCEPT;
 
 	// NOTE: the current implementation doesn't have much to benefit from C++11 Move 
 	//       semantics and the rvalue reference. 
 
-	void setName (const qse_char_t* n) QSE_CPP_NOEXCEPT;
+	void setName (const qse_wchar_t* n) QSE_CPP_NOEXCEPT;
+	void setName (const qse_mchar_t* n) QSE_CPP_NOEXCEPT;
 
 	const qse_char_t* getName () const QSE_CPP_NOEXCEPT { return this->full_path; }
 	const qse_char_t* getBaseName () const QSE_CPP_NOEXCEPT { return this->base_name; }

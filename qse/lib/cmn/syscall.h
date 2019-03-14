@@ -414,6 +414,12 @@
 #	define QSE_ACCESS(path,mode) access(path,mode)
 #endif
 
+#if defined(SYS_faccessat) && defined(QSE_USE_SYSCALL)
+#	define QSE_FACCESSAT(dirfd,path,mode,flags) syscall(SYS_faccessat,dirfd,path,mode,flags)
+#elif defined(HAVE_FACCESSAT)
+#	define QSE_FACCESSAT(dirfd,path,mode,flags) faccessat(dirfd,path,mode,flags)
+#endif
+
 #if defined(SYS_rename) && defined(QSE_USE_SYSCALL)
 #	define QSE_RENAME(oldpath,newpath) syscall(SYS_rename,oldpath,newpath)
 #else

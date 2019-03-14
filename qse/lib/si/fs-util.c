@@ -36,9 +36,8 @@
 /* ==========================================================================
  * CURRENT WORKING DIRECTORY
  * ========================================================================== */
-qse_mchar_t* qse_get_current_mbsdir (qse_mchar_t* buf, qse_size_t size)
+qse_mchar_t* qse_get_current_mbsdir_with_mmgr (qse_mchar_t* buf, qse_size_t size, qse_mmgr_t* mmgr)
 {
-	qse_mmgr_t* mmgr = QSE_MMGR_GETDFL();
 	qse_mchar_t* tmp;
 
 	if (buf)
@@ -74,10 +73,9 @@ again:
 	return buf;
 }
 
-qse_wchar_t* qse_get_current_wcsdir (qse_wchar_t* buf, qse_size_t size)
+qse_wchar_t* qse_get_current_wcsdir_with_mmgr (qse_wchar_t* buf, qse_size_t size, qse_mmgr_t* mmgr)
 {
 /* TODO: for WIN32, use the unicode API directly */
-	qse_mmgr_t* mmgr = QSE_MMGR_GETDFL();
 	qse_mchar_t* mbsdir;
 	qse_wchar_t* wcsdir;
 	qse_size_t wcslen;
@@ -147,7 +145,7 @@ void qse_stat_to_attr (const qse_stat_t* st, qse_fattr_t* attr)
 #endif
 }
 
-int qse_get_mbsfile_attr (const qse_mchar_t* file, int flags, qse_fattr_t* attr)
+int qse_get_mbsfile_attr_with_mmgr (const qse_mchar_t* file, int flags, qse_fattr_t* attr, qse_mmgr_t* mmgr)
 {
 #if defined(_WIN32)
 	return -1;
@@ -158,7 +156,7 @@ int qse_get_mbsfile_attr (const qse_mchar_t* file, int flags, qse_fattr_t* attr)
 #elif defined(__DOS__)
 	return -1;
 
-#elif defined(HAVE_FSTATAT) && defined(AT_SYMLINK_NOFOLLOW)
+#elif defined(QSE_FSTATAT) && defined(AT_SYMLINK_NOFOLLOW)
 	qse_fstatat_t st;
 	int sysflags = 0;
 
@@ -183,12 +181,11 @@ int qse_get_mbsfile_attr (const qse_mchar_t* file, int flags, qse_fattr_t* attr)
 #endif
 }
 
-int qse_get_wcsfile_attr (const qse_wchar_t* file, int flags, qse_fattr_t* attr)
+int qse_get_wcsfile_attr_with_mmgr (const qse_wchar_t* file, int flags, qse_fattr_t* attr, qse_mmgr_t* mmgr)
 {
 /* TODO: for WIN32, use the unicode API directly */
 	qse_mchar_t* mbsfile;
 	qse_mchar_t mbsfile_buf[QSE_PATH_MAX];
-	qse_mmgr_t* mmgr = QSE_MMGR_GETDFL();
 	qse_size_t wl, ml;
 	int n;
 
@@ -213,15 +210,20 @@ int qse_get_wcsfile_attr (const qse_wchar_t* file, int flags, qse_fattr_t* attr)
 	return n;
 }
 
-int qse_check_mbsfile_perm (const qse_mchar_t* file, int flags, qse_fperm_t perm)
+int qse_check_mbsfile_perm_with_mmgr (const qse_mchar_t* file, int flags, qse_fperm_t perm, qse_mmgr_t* mmgr)
 {
-	return -1;
+#if defined(QSE_FACCESSAT) && defined(AT_SYMLINK_NOFOLLOW)
+	int sysflags = 0;
+	if (flags & QSE_FILE_PERM_SYMLINK) sysflags |= AT_SYMLINK_FOLLOW;
+	return QSE_FACCESSAT(AT_FDCWD, file, perm, sysflags);
+#else
+	return QSE_ACCESS(file, perm);
+#endif
 }
 
-int qse_check_wcsfile_perm (const qse_wchar_t* file, int flags, qse_fperm_t perm)
+int qse_check_wcsfile_perm_with_mmgr (const qse_wchar_t* file, int flags, qse_fperm_t perm, qse_mmgr_t* mmgr)
 {
 /* TODO: for WIN32, use the unicode API directly */
-	qse_mmgr_t* mmgr = QSE_MMGR_GETDFL();
 	qse_mchar_t* mbsfile;
 	qse_mchar_t mbsfile_buf[QSE_PATH_MAX];
 	qse_size_t wl, ml;
@@ -248,54 +250,42 @@ int qse_check_wcsfile_perm (const qse_wchar_t* file, int flags, qse_fperm_t perm
 	return n;
 }
 
-int qse_get_prog_path_with_mmgr (const qse_char_t* argv0, qse_char_t* buf, qse_size_t size, qse_mmgr_t* mmgr)
+int qse_get_prog_mbspath_with_mmgr (const qse_mchar_t* argv0, qse_mchar_t* buf, qse_size_t size, qse_mmgr_t* mmgr)
 {
 #if defined(_WIN32)
-	if (GetModuleFileName(QSE_NULL, buf, size) == 0) return -1;
+	if (GetModuleFileNameA(QSE_NULL, buf, size) == 0) return -1;
 #else
-	if (argv0 == QSE_NULL) return -1;
+	if (!argv0) return -1;
 
-	if (argv0[0] == QSE_T('/')) 
+	if (argv0[0] == QSE_MT('/')) 
 	{
-		/*qse_strxcpy (buf, size, argv0);*/
-		qse_canonpath(argv0, buf, size);
+		qse_canonmbspath(argv0, buf, size);
 	}
-	else if (qse_strchr(argv0, QSE_T('/'))) 
+	else if (qse_mbschr(argv0, QSE_MT('/'))) 
 	{
-		if (!qse_get_current_dir(buf, size)) return -1;
-		qse_strxcajoin (buf, size, QSE_T("/"), argv0, QSE_NULL);
-		qse_canonpath (buf, buf, size);
+		if (!qse_get_current_mbsdir(buf, size)) return -1;
+		qse_mbsxcajoin (buf, size, QSE_MT("/"), argv0, QSE_NULL);
+		qse_canonmbspath (buf, buf, size);
 	}
 	else 
 	{
-		qse_char_t *p, *q, * px = QSE_NULL;
+		qse_mchar_t *p, *q, * px = QSE_NULL;
 		qse_fattr_t attr;
-		qse_char_t dir[QSE_PATH_MAX + 1];
-		qse_char_t pbuf[QSE_PATH_MAX + 1];
+		qse_mchar_t dir[QSE_PATH_MAX + 1];
+		qse_mchar_t pbuf[QSE_PATH_MAX + 1];
 		int first = 1;
 
-#if defined(QSE_CHAR_IS_MCHAR)
 		p = getenv("PATH");
-		if (!p) p = (qse_char_t*)QSE_T("/bin:/usr/bin");
-#else
-		qse_mchar_t* mp = getenv ("PATH");
+		if (!p) p = (qse_mchar_t*)QSE_MT("/bin:/usr/bin");
 
-		if (!mp) p = (qse_char_t*)QSE_T("/bin:/usr/bin");
-		else 
-		{
-			px = qse_mbstowcsdup(mp, QSE_NULL, mmgr);
-			if (!px) return -1;
-			p = px;
-		}
-#endif
 		for (;;) 
 		{
-			while (*p == QSE_T(':')) p++;
-			if (*p == QSE_T('\0')) 
+			while (*p == QSE_MT(':')) p++;
+			if (*p == QSE_MT('\0')) 
 			{
 				if (first) 
 				{
-					p = (qse_char_t*)QSE_T("./");
+					p = (qse_mchar_t*)QSE_MT("./");
 					first = 0;
 				}
 				else 
@@ -306,7 +296,7 @@ int qse_get_prog_path_with_mmgr (const qse_char_t* argv0, qse_char_t* buf, qse_s
 			}
 
 			q = p;
-			while (*p != QSE_T(':') && *p != QSE_T('\0')) p++;
+			while (*p != QSE_MT(':') && *p != QSE_MT('\0')) p++;
 
 			if (p - q >= QSE_COUNTOF(dir) - 1) 
 			{
@@ -314,29 +304,23 @@ int qse_get_prog_path_with_mmgr (const qse_char_t* argv0, qse_char_t* buf, qse_s
 				return -1;
 			}
 
-			qse_strxncpy (dir, QSE_COUNTOF(dir), q, p - q);
-			qse_canonpath (dir, dir, QSE_COUNTOF(dir));
+			qse_mbsxncpy (dir, QSE_COUNTOF(dir), q, p - q);
+			qse_canonmbspath (dir, dir, QSE_COUNTOF(dir));
 
-			qse_strxjoin (pbuf, QSE_COUNTOF(pbuf), dir, QSE_T("/"), argv0, QSE_NULL);
+			qse_mbsxjoin (pbuf, QSE_COUNTOF(pbuf), dir, QSE_MT("/"), argv0, QSE_NULL);
 
-			if (qse_check_file_perm(pbuf, 0, QSE_FPERM_EXEC) >= 0 && 
-			    qse_get_file_attr(pbuf, 0, &attr) >= 0 && attr.isreg) break;
-			/*
-			if (qse_access(pbuf, QSE_ACCESS_EXECUTE) == 0 && 
-			    qse_stat(pbuf, &st) == 0 && S_ISREG(st.st_mode)) 
-			{
-				break;
-			}*/
+			if (qse_check_mbsfile_perm(pbuf, 0, QSE_FPERM_EXEC) >= 0 && 
+			    qse_get_mbsfile_attr(pbuf, 0, &attr) >= 0 && attr.isreg) break;
 		}
 
 		if (px) QSE_MMGR_FREE (mmgr, px);
 
-		if (pbuf[0] == QSE_T('/')) qse_strxcpy (buf, size, pbuf);
+		if (pbuf[0] == QSE_MT('/')) qse_mbsxcpy (buf, size, pbuf);
 		else 
 		{
-			if (!qse_get_current_dir(buf, size)) return -1;
-			qse_strxcajoin (buf, size, QSE_T("/"), pbuf, QSE_NULL);
-			qse_canonpath (buf, buf, size);
+			if (!qse_get_current_mbsdir(buf, size)) return -1;
+			qse_mbsxcajoin (buf, size, QSE_MT("/"), pbuf, QSE_NULL);
+			qse_canonmbspath (buf, buf, size);
 		}
 	}
 #endif
@@ -344,7 +328,89 @@ int qse_get_prog_path_with_mmgr (const qse_char_t* argv0, qse_char_t* buf, qse_s
 	return 0;
 }
 
-int qse_get_prog_path (const qse_char_t* argv0, qse_char_t* buf, qse_size_t size)
+
+int qse_get_prog_wcspath_with_mmgr (const qse_wchar_t* argv0, qse_wchar_t* buf, qse_size_t size, qse_mmgr_t* mmgr)
 {
-	return qse_get_prog_path_with_mmgr(argv0, buf, size, QSE_MMGR_GETDFL());
+#if defined(_WIN32)
+	if (GetModuleFileNameW(QSE_NULL, buf, size) == 0) return -1;
+#else
+	if (argv0 == QSE_NULL) return -1;
+
+	if (argv0[0] == QSE_WT('/')) 
+	{
+		/*qse_wcsxcpy (buf, size, argv0);*/
+		qse_canonwcspath(argv0, buf, size);
+	}
+	else if (qse_wcschr(argv0, QSE_WT('/'))) 
+	{
+		if (!qse_get_current_wcsdir(buf, size)) return -1;
+		qse_wcsxcajoin (buf, size, QSE_WT("/"), argv0, QSE_NULL);
+		qse_canonwcspath (buf, buf, size);
+	}
+	else 
+	{
+		qse_wchar_t *p, *q, * px = QSE_NULL;
+		qse_fattr_t attr;
+		qse_wchar_t dir[QSE_PATH_MAX + 1];
+		qse_wchar_t pbuf[QSE_PATH_MAX + 1];
+		int first = 1;
+
+		qse_mchar_t* mp = getenv ("PATH");
+
+		if (!mp) p = (qse_wchar_t*)QSE_WT("/bin:/usr/bin");
+		else 
+		{
+			px = qse_mbstowcsdup(mp, QSE_NULL, mmgr);
+			if (!px) return -1;
+			p = px;
+		}
+
+		for (;;) 
+		{
+			while (*p == QSE_WT(':')) p++;
+			if (*p == QSE_WT('\0')) 
+			{
+				if (first) 
+				{
+					p = (qse_wchar_t*)QSE_WT("./");
+					first = 0;
+				}
+				else 
+				{
+					if (px) QSE_MMGR_FREE (mmgr, px);
+					return -1;
+				}
+			}
+
+			q = p;
+			while (*p != QSE_WT(':') && *p != QSE_WT('\0')) p++;
+
+			if (p - q >= QSE_COUNTOF(dir) - 1) 
+			{
+				if (px) QSE_MMGR_FREE (mmgr, px);
+				return -1;
+			}
+
+			qse_wcsxncpy (dir, QSE_COUNTOF(dir), q, p - q);
+			qse_canonwcspath (dir, dir, QSE_COUNTOF(dir));
+
+			qse_wcsxjoin (pbuf, QSE_COUNTOF(pbuf), dir, QSE_WT("/"), argv0, QSE_NULL);
+
+			if (qse_check_wcsfile_perm(pbuf, 0, QSE_FPERM_EXEC) >= 0 && 
+			    qse_get_wcsfile_attr(pbuf, 0, &attr) >= 0 && attr.isreg) break;
+		}
+
+		if (px) QSE_MMGR_FREE (mmgr, px);
+
+		if (pbuf[0] == QSE_WT('/')) qse_wcsxcpy (buf, size, pbuf);
+		else 
+		{
+			if (!qse_get_current_wcsdir(buf, size)) return -1;
+			qse_wcsxcajoin (buf, size, QSE_WT("/"), pbuf, QSE_NULL);
+			qse_canonwcspath (buf, buf, size);
+		}
+	}
+#endif
+
+	return 0;
 }

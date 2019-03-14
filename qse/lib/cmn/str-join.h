@@ -104,8 +104,8 @@ qse_size_t strxcajoinv (char_t* buf, qse_size_t size, va_list ap)
 
 	while (left > 0) 
 	{
-		p = va_arg (ap, const char_t*);
-		if (p == QSE_NULL) break;
+		p = va_arg(ap, const char_t*);
+		if (!p) break;
 
 		n = strxcpy(ptr, left, p);
 		left -= n; ptr += n;

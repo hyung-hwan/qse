@@ -35,6 +35,7 @@
 #include <qse/types.h>
 #include <qse/macros.h>
 #include <qse/cmn/time.h>
+#include <qse/cmn/mem.h>
 
 struct qse_fattr_t
 {
@@ -60,9 +61,9 @@ typedef struct qse_fattr_t qse_fattr_t;
 
 enum qse_fperm_t
 {
-	QSE_FPERM_READ,
-	QSE_FPERM_WRITE,
-	QSE_FPERM_EXEC
+	QSE_FPERM_READ  = 4, /* R */
+	QSE_FPERM_WRITE = 2, /* W */
+	QSE_FPERM_EXEC  = 1  /* X */
 };
 typedef enum qse_fperm_t qse_fperm_t;
 
@@ -506,62 +507,93 @@ QSE_EXPORT int qse_fs_rmdirwcs (
  * GLOBAL UTILITIES NOT USING THE FS OBJECT 
  * ========================================================================= */
 
-QSE_EXPORT qse_mchar_t* qse_get_current_mbsdir (
+QSE_EXPORT qse_mchar_t* qse_get_current_mbsdir_with_mmgr (
 	qse_mchar_t* buf,
-	qse_size_t   size
+	qse_size_t   size,
+	qse_mmgr_t*  mmgr
 );
 
-QSE_EXPORT qse_wchar_t* qse_get_current_wcsdir (
+QSE_EXPORT qse_wchar_t* qse_get_current_wcsdir_with_mmgr (
 	qse_wchar_t* buf,
-	qse_size_t   size
+	qse_size_t   size,
+	qse_mmgr_t*  mmgr
 );
 
-QSE_EXPORT int qse_get_mbsfile_attr (
+#define qse_get_current_mbsdir(buf,size) qse_get_current_mbsdir_with_mmgr(buf,size,QSE_MMGR_GETDFL())
+#define qse_get_current_wcsdir(buf,size) qse_get_current_wcsdir_with_mmgr(buf,size,QSE_MMGR_GETDFL())
+
+QSE_EXPORT int qse_get_mbsfile_attr_with_mmgr (
 	const qse_mchar_t* file,
 	int                flags, /* 0 or bitwise-ORed of the qse_file_attr_flag_t enumerators */
-	qse_fattr_t*       attr
+	qse_fattr_t*       attr,
+	qse_mmgr_t*        mmgr
 );
 
-QSE_EXPORT int qse_get_wcsfile_attr (
+QSE_EXPORT int qse_get_wcsfile_attr_with_mmgr (
 	const qse_wchar_t* file,
 	int                flags,  /* 0 or bitwise-ORed of the qse_file_attr_flag_t enumerators */
-	qse_fattr_t*       attr
+	qse_fattr_t*       attr,
+	qse_mmgr_t*        mmgr
 );
 
-QSE_EXPORT int qse_check_mbsfile_perm (
+#define qse_get_mbsfile_attr(file,flags,attr) qse_get_mbsfile_attr_with_mmgr(file,flags,attr,QSE_MMGR_GETDFL())
+#define qse_get_wcsfile_attr(file,flags,attr) qse_get_wcsfile_attr_with_mmgr(file,flags,attr,QSE_MMGR_GETDFL())
+
+QSE_EXPORT int qse_check_mbsfile_perm_with_mmgr (
 	const qse_mchar_t* file,
 	int                flags, /* 0 or bitwise-ORed of the qse_file_perm_flag_t enumerators */
-	qse_fperm_t        perm
+	qse_fperm_t        perm, /* 0 or bitwise-ORed of the qse_fperm_t enumerators */
+	qse_mmgr_t*        mmgr
 );
 
-QSE_EXPORT int qse_check_wcsfile_perm (
+QSE_EXPORT int qse_check_wcsfile_perm_with_mmgr (
 	const qse_wchar_t* file,
 	int                flags, /* 0 or bitwise-ORed of the qse_file_perm_flag_t enumerators */
-	qse_fperm_t        perm
+	qse_fperm_t        perm,
+	qse_mmgr_t*        mmgr
 );
+
+#define qse_check_mbsfile_perm(file,flags,perm) qse_check_mbsfile_perm_with_mmgr(file,flags,perm,QSE_MMGR_GETDFL())
+#define qse_check_wcsfile_perm(file,flags,perm) qse_check_wcsfile_perm_with_mmgr(file,flags,perm,QSE_MMGR_GETDFL())
+
+QSE_EXPORT int qse_get_prog_mbspath_with_mmgr (
+	const qse_mchar_t* argv0,
+	qse_mchar_t*       buf,
+	qse_size_t         size,
+	qse_mmgr_t*        mmgr
+);
+
+QSE_EXPORT int qse_get_prog_wcspath_with_mmgr (
+	const qse_wchar_t* argv0,
+	qse_wchar_t*       buf,
+	qse_size_t         size,
+	qse_mmgr_t*        mmgr
+);
+
+
+#define qse_get_prog_mbspath(argv0,buf,size) qse_get_prog_mbspath_with_mmgr(argv0, buf, size, QSE_MMGR_GETDFL())
+#define qse_get_prog_wcspath(argv0,buf,size) qse_get_prog_wcspath_with_mmgr(argv0, buf, size, QSE_MMGR_GETDFL())
 
 #if defined(QSE_CHAR_IS_MCHAR)
+#	define qse_get_current_dir_with_mmgr(buf,size,mmgr) qse_get_current_mbsdir_with_mmgr(buf,size,mmgr)
 #	define qse_get_current_dir(buf,size) qse_get_current_mbsdir(buf,size)
+#	define qse_get_file_attr_with_mmgr(file,flags,attr,mmgr) qse_get_mbsfile_attr_with_mmgr(file,flags,attr,mmgr)
 #	define qse_get_file_attr(file,flags,attr) qse_get_mbsfile_attr(file,flags,attr)
+#	define qse_check_file_perm_with_mmgr(file,flags,perm,mmgr) qse_check_mbsfile_perm_with_mmgr(file,flags,perm,mmgr)
 #	define qse_check_file_perm(file,flags,perm) qse_check_mbsfile_perm(file,flags,perm)
+#	define qse_get_prog_path_with_mmgr(argv0,buf,size,mmgr) qse_get_prog_mbspath_with_mmgr(argv0,buf,size,mmgr)
+#	define qse_get_prog_path(argv0,buf,size) qse_get_prog_mbspath(argv0,buf,size)
 #else
+#	define qse_get_current_dir_with_mmgr(buf,size,mmgr) qse_get_current_mbsdir_with_mmgr(buf,size,mmgr)
 #	define qse_get_current_dir(buf,size) qse_get_current_wcsdir(buf,size)
+#	define qse_get_file_attr_with_mmgr(file,flags,attr,mmgr) qse_get_wcsfile_attr_with_mmgr(file,flags,attr,mmgr)
 #	define qse_get_file_attr(file,flags,attr) qse_get_wcsfile_attr(file,flags,attr)
+#	define qse_check_file_perm_with_mmgr(file,flags,perm,mmgr) qse_check_wcsfile_perm_with_mmgr(file,flags,perm,mmgr)
 #	define qse_check_file_perm(file,flags,perm) qse_check_wcsfile_perm(file,flags,perm)
+#	define qse_get_prog_path_with_mmgr(argv0,buf,size,mmgr) qse_get_prog_wcspath_with_mmgr(argv0,buf,size,mmgr)
+#	define qse_get_prog_path(argv0,buf,size) qse_get_prog_wcspath(argv0,buf,size)
 #endif
 
-QSE_EXPORT int qse_get_prog_path_with_mmgr (
-	const qse_char_t* argv0,
-	qse_char_t*       buf,
-	qse_size_t        size,
-	qse_mmgr_t*       mmgr
-);
-
-QSE_EXPORT int qse_get_prog_path (
-	const qse_char_t* argv0,
-	qse_char_t*       buf,
-	qse_size_t        size
-);
 
 #if defined(__cplusplus)
 }
