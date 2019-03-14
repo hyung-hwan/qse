@@ -39,6 +39,7 @@
 #undef strxcajoinv
 #undef strcpy
 #undef strxcpy
+#undef strlen
 
 #define char_t qse_mchar_t
 #define strjoin qse_mbsjoin
@@ -51,6 +52,7 @@
 #define strxcajoinv qse_mbsxcajoinv
 #define strcpy qse_mbscpy
 #define strxcpy qse_mbsxcpy
+#define strlen qse_mbslen
 #include "str-join.h"
 
 /* ----------------------------------- */
@@ -66,6 +68,7 @@
 #undef strxcajoinv
 #undef strcpy
 #undef strxcpy
+#undef strlen
 
 #define char_t qse_wchar_t
 #define strjoin qse_wcsjoin
@@ -78,4 +81,5 @@
 #define strxcajoinv qse_wcsxcajoinv
 #define strcpy qse_wcscpy
 #define strxcpy qse_wcsxcpy
+#define strlen qse_wcslen
 #include "str-join.h"

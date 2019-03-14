@@ -42,7 +42,7 @@ static int mbs_to_wcs_with_cmgr (
 	for (mp = mbs; *mp != QSE_MT('\0'); mp++);
 
 	mlen = mp - mbs; wlen = *wcslen;
-	n = mbsn_to_wcsn_with_cmgr (mbs, &mlen, wcs, &wlen, cmgr, all);
+	n = mbsn_to_wcsn_with_cmgr(mbs, &mlen, wcs, &wlen, cmgr, all);
 	if (wcs)
 	{
 		if (wlen < *wcslen) wcs[wlen] = QSE_WT('\0');
@@ -57,14 +57,14 @@ int qse_mbstowcswithcmgr (
 	const qse_mchar_t* mbs, qse_size_t* mbslen,
 	qse_wchar_t* wcs, qse_size_t* wcslen, qse_cmgr_t* cmgr)
 {
-	return mbs_to_wcs_with_cmgr (mbs, mbslen, wcs, wcslen, cmgr, 0);
+	return mbs_to_wcs_with_cmgr(mbs, mbslen, wcs, wcslen, cmgr, 0);
 }
 
 int qse_mbstowcsallwithcmgr (
 	const qse_mchar_t* mbs, qse_size_t* mbslen,
 	qse_wchar_t* wcs, qse_size_t* wcslen, qse_cmgr_t* cmgr)
 {
-	return mbs_to_wcs_with_cmgr (mbs, mbslen, wcs, wcslen, cmgr, 1);
+	return mbs_to_wcs_with_cmgr(mbs, mbslen, wcs, wcslen, cmgr, 1);
 }
 
 static int mbsn_to_wcsn_with_cmgr (
@@ -95,7 +95,7 @@ static int mbsn_to_wcsn_with_cmgr (
 				break;
 			}
 
-			n = cmgr->mbtowc (p, mlen, q);
+			n = cmgr->mbtowc(p, mlen, q);
 			if (n == 0)
 			{
 				/* invalid sequence */
@@ -183,14 +183,14 @@ int qse_mbsntowcsnwithcmgr (
 	const qse_mchar_t* mbs, qse_size_t* mbslen,
 	qse_wchar_t* wcs, qse_size_t* wcslen, qse_cmgr_t* cmgr)
 {
-	return mbsn_to_wcsn_with_cmgr (mbs, mbslen, wcs, wcslen, cmgr, 0);
+	return mbsn_to_wcsn_with_cmgr(mbs, mbslen, wcs, wcslen, cmgr, 0);
 }
 
 int qse_mbsntowcsnallwithcmgr (
 	const qse_mchar_t* mbs, qse_size_t* mbslen,
 	qse_wchar_t* wcs, qse_size_t* wcslen, qse_cmgr_t* cmgr)
 {
-	return mbsn_to_wcsn_with_cmgr (mbs, mbslen, wcs, wcslen, cmgr, 1);
+	return mbsn_to_wcsn_with_cmgr(mbs, mbslen, wcs, wcslen, cmgr, 1);
 }
 
 int qse_mbsntowcsnuptowithcmgr (
@@ -259,8 +259,7 @@ static qse_wchar_t* mbsn_to_wcs_dup_with_cmgr (
 	qse_wchar_t* wcs;
 
 	ml = *mbslen;
-	if (mbsn_to_wcsn_with_cmgr (
-		mbs, &ml, QSE_NULL, &wl, cmgr, all) <= -1) return QSE_NULL;
+	if (mbsn_to_wcsn_with_cmgr(mbs, &ml, QSE_NULL, &wl, cmgr, all) <= -1) return QSE_NULL;
 
 	wl++; /* for terminating null */
 	wcs = QSE_MMGR_ALLOC (mmgr, wl * QSE_SIZEOF(*wcs));	

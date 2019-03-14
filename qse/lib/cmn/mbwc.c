@@ -50,7 +50,7 @@ static qse_cmgr_t builtin_cmgr[] =
 #endif
 };
 
-#define DEFAULT_CMGR QSE_CMGR_SLMB
+#define DEFAULT_CMGR QSE_CMGR_UTF8
 
 static qse_cmgr_t* dfl_cmgr = &builtin_cmgr[DEFAULT_CMGR];
 static qse_cmgr_finder_t cmgr_finder = QSE_NULL;
