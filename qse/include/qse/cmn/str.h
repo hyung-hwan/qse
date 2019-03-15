@@ -2463,10 +2463,33 @@ QSE_EXPORT int qse_wcshextobin (
 	qse_size_t         buflen
 );
 
+
+#define QSE_BYTETOSTR_RADIXMASK (0xFF)
+#define QSE_BYTETOSTR_LOWERCASE (1 << 8)
+
+qse_size_t qse_bytetombs (
+	qse_byte_t   byte,  
+	qse_mchar_t* buf,
+	qse_size_t   size,
+	int          flagged_radix,
+	qse_mchar_t  fill
+);
+
+qse_size_t qse_bytetowcs (
+	qse_byte_t   byte,  
+	qse_wchar_t* buf,
+	qse_size_t   size,
+	int          flagged_radix,
+	qse_wchar_t  fill
+);
+
+
 #if defined(QSE_CHAR_IS_MCHAR)
 #	define qse_strhextobin qse_mbshextobin
+#	define qse_bytetostr qse_bytetombs
 #else
 #	define qse_strhextobin qse_wcshextobin
+#	define qse_bytetostr qse_bytetowcs
 #endif
 
 QSE_EXPORT qse_size_t qse_mbsdel (
