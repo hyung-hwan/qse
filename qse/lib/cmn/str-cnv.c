@@ -420,3 +420,75 @@ int qse_wcshextobin (const qse_wchar_t* hex, qse_size_t hexlen, qse_uint8_t* buf
 
 	return 0;
 }
+
+
+/*---------------------------------------------------------------
+ * Byte to string conversion
+ *---------------------------------------------------------------*/
+qse_size_t qse_bytetombs (qse_byte_t byte, qse_mchar_t* buf, qse_size_t size, int flagged_radix, qse_mchar_t fill)
+{
+	qse_mchar_t tmp[(QSE_SIZEOF(qse_byte_t) * 8)];
+	qse_mchar_t* p = tmp, * bp = buf, * be = buf + size - 1;
+	int radix;
+	qse_mchar_t radix_char;
+
+	radix = (flagged_radix & QSE_BYTETOSTR_RADIXMASK);
+	radix_char = (flagged_radix & QSE_BYTETOSTR_LOWERCASE)? QSE_MT('a'): QSE_MT('A');
+	if (radix < 2 || radix > 36 || size <= 0) return 0;
+
+	do 
+	{
+		qse_byte_t digit = byte % radix;	
+		if (digit < 10) *p++ = digit + QSE_MT('0');
+		else *p++ = digit + radix_char - 10;
+		byte /= radix;
+	}
+	while (byte > 0);
+
+	if (fill != QSE_MT('\0')) 
+	{
+		while (size - 1 > p - tmp) 
+		{
+			*bp++ = fill;
+			size--;
+		}
+	}
+
+	while (p > tmp && bp < be) *bp++ = *--p;
+	*bp = QSE_MT('\0');
+	return bp - buf;
+}
+
+qse_size_t qse_bytetowcs (qse_byte_t byte, qse_wchar_t* buf, qse_size_t size, int flagged_radix, qse_wchar_t fill)
+{
+	qse_wchar_t tmp[(QSE_SIZEOF(qse_byte_t) * 8)];
+	qse_wchar_t* p = tmp, * bp = buf, * be = buf + size - 1;
+	int radix;
+	qse_wchar_t radix_char;
+
+	radix = (flagged_radix & QSE_BYTETOSTR_RADIXMASK);
+	radix_char = (flagged_radix & QSE_BYTETOSTR_LOWERCASE)? QSE_WT('a'): QSE_WT('A');
+	if (radix < 2 || radix > 36 || size <= 0) return 0;
+
+	do 
+	{
+		qse_byte_t digit = byte % radix;	
+		if (digit < 10) *p++ = digit + QSE_WT('0');
+		else *p++ = digit + radix_char - 10;
+		byte /= radix;
+	}
+	while (byte > 0);
+
+	if (fill != QSE_WT('\0')) 
+	{
+		while (size - 1 > p - tmp) 
+		{
+			*bp++ = fill;
+			size--;
+		}
+	}
+
+	while (p > tmp && bp < be) *bp++ = *--p;
+	*bp = QSE_WT('\0');
+	return bp - buf;
+}

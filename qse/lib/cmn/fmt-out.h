@@ -109,6 +109,7 @@ int fmtout (const char_t* fmt, fmtout_t* data, va_list ap)
 	char_t ach, padc, * sp;
 	ochar_t oach, * osp;
 	qse_size_t oslen, slen;
+	qse_byte_t* bytep;
 	int lm_flag, lm_dflag, flagc, numlen;
 	qse_uintmax_t num = 0;
 	int stop = 0;
@@ -367,8 +368,7 @@ reswitch:
 			flagc |= FLAGC_LENMOD;
 			goto reswitch;
 		}
-			
-			
+
 		/* end of length modifiers */
 
 		case T('n'):
@@ -538,10 +538,18 @@ reswitch:
 			/* get the length */
 			for (oslen = 0; osp[oslen]; oslen++);
 
-			if (data->conv (osp, &oslen, QSE_NULL, &slen, data->ctx) <= -1)
+			if (ch == T('K'))
 			{
-				/* conversion error */
-				goto oops;
+				oslen = 1;
+				slen = 2;
+			}
+			else
+			{
+				if (data->conv (osp, &oslen, QSE_NULL, &slen, data->ctx) <= -1)
+				{
+					/* conversion error */
+					goto oops;
+				}
 			}
 
 			/* slen hold the length after conversion */
@@ -568,8 +576,17 @@ reswitch:
 				#endif
 					conv_len = QSE_COUNTOF(conv_buf);
 
-					/* this must not fail since the dry-run above was successful */
-					data->conv (&osp[tot_len], &src_len, conv_buf, &conv_len, data->ctx);
+					if (ch == T('K'))
+					{
+						src_len = 1;
+						conv_len = 2;
+						qse_bytetombs(osp[tot_len], conv_buf, 2, 16, '0');
+					}
+					else
+					{
+						/* this must not fail since the dry-run above was successful */
+						data->conv (&osp[tot_len], &src_len, conv_buf, &conv_len, data->ctx);
+					}
 					tot_len += src_len;
 
 					/* stop outputting if a converted character can't be printed 
@@ -588,6 +605,42 @@ reswitch:
 			if ((flagc & FLAGC_LEFTADJ) && width > 0)
 			{
 				while (width--) PUT_CHAR (padc);
+			}
+			break;
+
+		case T('k'):
+			/* zerpad must not take effect for 's'. H & L doesn't take effect on 'k' */
+			if (flagc & FLAGC_ZEROPAD) padc = T(' ');
+
+			bytep = va_arg (ap, qse_byte_t*);
+			if (bytep == QSE_NULL) p = T("(null)");
+
+			if (flagc & FLAGC_DOT)
+			{
+				for (n = 0; n < precision && bytep[n]; n++);
+			}
+			else
+			{
+				for (n = 0; bytep[n]; n++);
+			}
+
+			width -= (n * 2);
+
+			if (!(flagc & FLAGC_LEFTADJ) && width > 0)
+			{
+				while (width--) PUT_CHAR(padc);
+			}
+			while (n--) 
+			{
+				qse_mchar_t xbuf[3];
+				qse_bytetombs (*bytep, xbuf, QSE_COUNTOF(xbuf), 16, QSE_MT('0'));
+				PUT_CHAR(xbuf[0]);
+				PUT_CHAR(xbuf[1]);
+				bytep++;
+			}
+			if ((flagc & FLAGC_LEFTADJ) && width > 0)
+			{
+				while (width--) PUT_CHAR(padc);
 			}
 			break;
 
@@ -652,7 +705,7 @@ reswitch:
 		#if (QSE_SIZEOF___FLOAT128 > 0) && defined(HAVE_QUADMATH_SNPRINTF)
 			else if (lm_flag & (LF_QD | LF_Q))
 			{
-				v_qd = va_arg (ap, __float128);	
+				v_qd = va_arg(ap, __float128);
 				dtype = LF_QD;
 			}
 		#endif
