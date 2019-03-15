@@ -428,7 +428,7 @@ reswitch:
 			goto number;
 
 		case T('c'):
-			/* zerpad must not take effect for 'c' */
+			/* zeropad must not take effect for 'c' */
 			if (flagc & FLAGC_ZEROPAD) padc = T(' '); 
 			if (((lm_flag & LF_H) && (QSE_SIZEOF(char_t) > QSE_SIZEOF(ochar_t))) ||
 			    ((lm_flag & LF_L) && (QSE_SIZEOF(char_t) < QSE_SIZEOF(ochar_t)))) goto uppercase_c;
@@ -450,7 +450,7 @@ reswitch:
 			break;
 
 		case T('C'):
-			/* zerpad must not take effect for 'C' */
+			/* zeropad must not take effect for 'C' */
 			if (flagc & FLAGC_ZEROPAD) padc = T(' ');
 			if (((lm_flag & LF_H) && (QSE_SIZEOF(char_t) < QSE_SIZEOF(ochar_t))) ||
 			    ((lm_flag & LF_L) && (QSE_SIZEOF(char_t) > QSE_SIZEOF(ochar_t)))) goto lowercase_c;
@@ -494,7 +494,7 @@ reswitch:
 			break;
 
 		case T('s'):
-			/* zerpad must not take effect for 's' */
+			/* zeropad must not take effect for 's' */
 			if (flagc & FLAGC_ZEROPAD) padc = T(' ');
 			if (((lm_flag & LF_H) && (QSE_SIZEOF(char_t) > QSE_SIZEOF(ochar_t))) ||
 			    ((lm_flag & LF_L) && (QSE_SIZEOF(char_t) < QSE_SIZEOF(ochar_t)))) goto uppercase_s;
@@ -526,7 +526,7 @@ reswitch:
 			break;
 
 		case T('S'):
-			/* zerpad must not take effect for 'S' */
+			/* zeropad must not take effect for 'S' */
 			if (flagc & FLAGC_ZEROPAD) padc = T(' ');
 			if (((lm_flag & LF_H) && (QSE_SIZEOF(char_t) < QSE_SIZEOF(ochar_t))) ||
 			    ((lm_flag & LF_L) && (QSE_SIZEOF(char_t) > QSE_SIZEOF(ochar_t)))) goto lowercase_s;
@@ -538,18 +538,10 @@ reswitch:
 			/* get the length */
 			for (oslen = 0; osp[oslen]; oslen++);
 
-			if (ch == T('K'))
+			if (data->conv(osp, &oslen, QSE_NULL, &slen, data->ctx) <= -1)
 			{
-				oslen = 1;
-				slen = 2;
-			}
-			else
-			{
-				if (data->conv (osp, &oslen, QSE_NULL, &slen, data->ctx) <= -1)
-				{
-					/* conversion error */
-					goto oops;
-				}
+				/* conversion error */
+				goto oops;
 			}
 
 			/* slen hold the length after conversion */
@@ -576,17 +568,9 @@ reswitch:
 				#endif
 					conv_len = QSE_COUNTOF(conv_buf);
 
-					if (ch == T('K'))
-					{
-						src_len = 1;
-						conv_len = 2;
-						qse_bytetombs(osp[tot_len], conv_buf, 2, 16, '0');
-					}
-					else
-					{
-						/* this must not fail since the dry-run above was successful */
-						data->conv (&osp[tot_len], &src_len, conv_buf, &conv_len, data->ctx);
-					}
+					/* this must not fail since the dry-run above was successful */
+					data->conv (&osp[tot_len], &src_len, conv_buf, &conv_len, data->ctx);
+
 					tot_len += src_len;
 
 					/* stop outputting if a converted character can't be printed 
@@ -609,34 +593,73 @@ reswitch:
 			break;
 
 		case T('k'):
-			/* zerpad must not take effect for 's'. H & L doesn't take effect on 'k' */
+		case T('K'):
+			/* zeropad must not take effect for 's'. 'h' & 'l' doesn't take effect on 'k' */
 			if (flagc & FLAGC_ZEROPAD) padc = T(' ');
 
-			bytep = va_arg (ap, qse_byte_t*);
-			if (bytep == QSE_NULL) p = T("(null)");
+			/* with 'k' or 'K', i don't substitute "(null)" for the NULL pointer */
+			bytep = va_arg(ap, qse_byte_t*);
 
-			if (flagc & FLAGC_DOT)
+			if (ch == T('k'))
 			{
-				for (n = 0; n < precision && bytep[n]; n++);
+				if (flagc & FLAGC_DOT)
+				{
+					/* if precision is specifed, it doesn't stop at the value of zero unlike 's' or 'S' */
+					for (n = 0; n < precision; n++) /* nothing */;
+				}
+				else
+				{
+					for (n = 0; bytep[n]; n++) /* nothing */;
+				}
+				width -= (n * 4);
 			}
 			else
 			{
-				for (n = 0; bytep[n]; n++);
+				if (flagc & FLAGC_DOT)
+				{
+					/* if precision is specifed, it doesn't stop at the value of zero unlike 's' or 'S' */
+					for (n = 0; n < precision; n++) width -= QSE_ISPRINT(bytep[n])? 1: 4;
+				}
+				else
+				{
+					for (n = 0; bytep[n]; n++) width -= QSE_ISPRINT(bytep[n])? 1: 4;
+				}
 			}
-
-			width -= (n * 2);
 
 			if (!(flagc & FLAGC_LEFTADJ) && width > 0)
 			{
 				while (width--) PUT_CHAR(padc);
 			}
-			while (n--) 
+
+			if (ch == T('k'))
 			{
-				qse_mchar_t xbuf[3];
-				qse_bytetombs (*bytep, xbuf, QSE_COUNTOF(xbuf), 16, QSE_MT('0'));
-				PUT_CHAR(xbuf[0]);
-				PUT_CHAR(xbuf[1]);
-				bytep++;
+				while (n--) 
+				{
+					qse_mchar_t xbuf[3];
+					qse_bytetombs (*bytep, xbuf, QSE_COUNTOF(xbuf), 16, QSE_MT('0'));
+					PUT_CHAR('\\');
+					PUT_CHAR('x');
+					PUT_CHAR(xbuf[0]);
+					PUT_CHAR(xbuf[1]);
+					bytep++;
+				}
+			}
+			else
+			{
+				while (n--) 
+				{
+					if (QSE_ISPRINT(*bytep)) PUT_CHAR(*bytep);
+					else
+					{
+						qse_mchar_t xbuf[3];
+						qse_bytetombs (*bytep, xbuf, QSE_COUNTOF(xbuf), 16, QSE_MT('0'));
+						PUT_CHAR('\\');
+						PUT_CHAR('x');
+						PUT_CHAR(xbuf[0]);
+						PUT_CHAR(xbuf[1]);
+					}
+					bytep++;
+				}
 			}
 			if ((flagc & FLAGC_LEFTADJ) && width > 0)
 			{
