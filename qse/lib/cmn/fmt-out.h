@@ -594,11 +594,23 @@ reswitch:
 
 		case T('k'):
 		case T('K'):
-			/* zeropad must not take effect for 's'. 'h' & 'l' doesn't take effect on 'k' */
+		{
+			int k_hex_width;
+			/* zeropad must not take effect for 's'. 
+			 * 'h' & 'l' is not used to differentiate qse_mchar_t and qse_wchar_t
+			 * because 'k' means qse_byte_t. 
+			 * 'l', results in uppercase hexadecimal letters. 
+			 * 'h' drops the leading \x in the output 
+			 */
 			if (flagc & FLAGC_ZEROPAD) padc = T(' ');
+
+/*
+no \x + printable as usual -> h,  \x, all hex -> l
+lowercase -> k, uppercase K */
 
 			/* with 'k' or 'K', i don't substitute "(null)" for the NULL pointer */
 			bytep = va_arg(ap, qse_byte_t*);
+			k_hex_width = (lm_flag & LF_H)? 2: 4;
 
 			if (ch == T('k'))
 			{
@@ -611,18 +623,18 @@ reswitch:
 				{
 					for (n = 0; bytep[n]; n++) /* nothing */;
 				}
-				width -= (n * 4);
+				width -= (n * k_hex_width);
 			}
 			else
 			{
 				if (flagc & FLAGC_DOT)
 				{
 					/* if precision is specifed, it doesn't stop at the value of zero unlike 's' or 'S' */
-					for (n = 0; n < precision; n++) width -= QSE_ISPRINT(bytep[n])? 1: 4;
+					for (n = 0; n < precision; n++) width -= QSE_ISMPRINT(bytep[n])? 1: k_hex_width;
 				}
 				else
 				{
-					for (n = 0; bytep[n]; n++) width -= QSE_ISPRINT(bytep[n])? 1: 4;
+					for (n = 0; bytep[n]; n++) width -= QSE_ISMPRINT(bytep[n])? 1: k_hex_width;
 				}
 			}
 
@@ -636,9 +648,12 @@ reswitch:
 				while (n--) 
 				{
 					qse_mchar_t xbuf[3];
-					qse_bytetombs (*bytep, xbuf, QSE_COUNTOF(xbuf), 16, QSE_MT('0'));
-					PUT_CHAR('\\');
-					PUT_CHAR('x');
+					qse_bytetombs (*bytep, xbuf, QSE_COUNTOF(xbuf), (16 | ((lm_flag & LF_L)? 0: QSE_BYTETOSTR_LOWERCASE)), QSE_MT('0'));
+					if (!(lm_flag & LF_H))
+					{
+						PUT_CHAR('\\');
+						PUT_CHAR('x');
+					}
 					PUT_CHAR(xbuf[0]);
 					PUT_CHAR(xbuf[1]);
 					bytep++;
@@ -648,13 +663,17 @@ reswitch:
 			{
 				while (n--) 
 				{
-					if (QSE_ISPRINT(*bytep)) PUT_CHAR(*bytep);
+					if (QSE_ISMPRINT(*bytep)) PUT_CHAR(*bytep);
 					else
 					{
 						qse_mchar_t xbuf[3];
-						qse_bytetombs (*bytep, xbuf, QSE_COUNTOF(xbuf), 16, QSE_MT('0'));
-						PUT_CHAR('\\');
-						PUT_CHAR('x');
+						
+						qse_bytetombs (*bytep, xbuf, QSE_COUNTOF(xbuf), (16 | ((lm_flag & LF_L)? 0: QSE_BYTETOSTR_LOWERCASE)), QSE_MT('0'));
+						if (!(lm_flag & LF_H))
+						{
+							PUT_CHAR('\\');
+							PUT_CHAR('x');
+						}
 						PUT_CHAR(xbuf[0]);
 						PUT_CHAR(xbuf[1]);
 					}
@@ -666,6 +685,7 @@ reswitch:
 				while (width--) PUT_CHAR(padc);
 			}
 			break;
+		}
 
 		case T('e'):
 		case T('E'):
