@@ -601,19 +601,38 @@ reswitch:
 			 * because 'k' means qse_byte_t. 
 			 * 'l', results in uppercase hexadecimal letters. 
 			 * 'h' drops the leading \x in the output 
+			 * --------------------------------------------------------
+			 * hk -> \x + non-printable in lowercase hex
+			 * k -> all in lowercase hex
+			 * lk -> \x +  all in lowercase hex
+			 * --------------------------------------------------------
+			 * hK -> \x + non-printable in uppercase hex
+			 * K -> all in uppercase hex
+			 * lK -> \x +  all in uppercase hex
+			 * --------------------------------------------------------
+			 * with 'k' or 'K', i don't substitute "(null)" for the NULL pointer
 			 */
 			if (flagc & FLAGC_ZEROPAD) padc = T(' ');
 
-/*
-no \x + printable as usual -> h,  \x, all hex -> l
-lowercase -> k, uppercase K */
-
-			/* with 'k' or 'K', i don't substitute "(null)" for the NULL pointer */
 			bytep = va_arg(ap, qse_byte_t*);
-			k_hex_width = (lm_flag & LF_H)? 2: 4;
+			k_hex_width = (lm_flag & (LF_H | LF_L))? 4: 2;
 
-			if (ch == T('k'))
+			if (lm_flag & LF_H)
 			{
+				/* to print non-printables in hex */
+				if (flagc & FLAGC_DOT)
+				{
+					/* if precision is specifed, it doesn't stop at the value of zero unlike 's' or 'S' */
+					for (n = 0; n < precision; n++) width -= QSE_ISMPRINT(bytep[n])? 1: k_hex_width;
+				}
+				else
+				{
+					for (n = 0; bytep[n]; n++) width -= QSE_ISMPRINT(bytep[n])? 1: k_hex_width;
+				}
+			}
+			else
+			{
+				/* to print all in hex */
 				if (flagc & FLAGC_DOT)
 				{
 					/* if precision is specifed, it doesn't stop at the value of zero unlike 's' or 'S' */
@@ -625,61 +644,33 @@ lowercase -> k, uppercase K */
 				}
 				width -= (n * k_hex_width);
 			}
-			else
-			{
-				if (flagc & FLAGC_DOT)
-				{
-					/* if precision is specifed, it doesn't stop at the value of zero unlike 's' or 'S' */
-					for (n = 0; n < precision; n++) width -= QSE_ISMPRINT(bytep[n])? 1: k_hex_width;
-				}
-				else
-				{
-					for (n = 0; bytep[n]; n++) width -= QSE_ISMPRINT(bytep[n])? 1: k_hex_width;
-				}
-			}
 
 			if (!(flagc & FLAGC_LEFTADJ) && width > 0)
 			{
 				while (width--) PUT_CHAR(padc);
 			}
 
-			if (ch == T('k'))
+			while (n--) 
 			{
-				while (n--) 
+				if ((lm_flag & LF_H) && QSE_ISMPRINT(*bytep)) 
+				{
+					PUT_CHAR(*bytep);
+				}
+				else
 				{
 					qse_mchar_t xbuf[3];
-					qse_bytetombs (*bytep, xbuf, QSE_COUNTOF(xbuf), (16 | ((lm_flag & LF_L)? 0: QSE_BYTETOSTR_LOWERCASE)), QSE_MT('0'));
-					if (!(lm_flag & LF_H))
+					qse_bytetombs (*bytep, xbuf, QSE_COUNTOF(xbuf), (16 | (ch == T('k')? QSE_BYTETOSTR_LOWERCASE: 0)), QSE_MT('0'));
+					if (lm_flag & (LF_H | LF_L))
 					{
 						PUT_CHAR('\\');
 						PUT_CHAR('x');
 					}
 					PUT_CHAR(xbuf[0]);
 					PUT_CHAR(xbuf[1]);
-					bytep++;
 				}
+				bytep++;
 			}
-			else
-			{
-				while (n--) 
-				{
-					if (QSE_ISMPRINT(*bytep)) PUT_CHAR(*bytep);
-					else
-					{
-						qse_mchar_t xbuf[3];
-						
-						qse_bytetombs (*bytep, xbuf, QSE_COUNTOF(xbuf), (16 | ((lm_flag & LF_L)? 0: QSE_BYTETOSTR_LOWERCASE)), QSE_MT('0'));
-						if (!(lm_flag & LF_H))
-						{
-							PUT_CHAR('\\');
-							PUT_CHAR('x');
-						}
-						PUT_CHAR(xbuf[0]);
-						PUT_CHAR(xbuf[1]);
-					}
-					bytep++;
-				}
-			}
+
 			if ((flagc & FLAGC_LEFTADJ) && width > 0)
 			{
 				while (width--) PUT_CHAR(padc);
