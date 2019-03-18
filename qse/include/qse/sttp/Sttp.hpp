@@ -56,7 +56,8 @@ public:
 		E_SEMICOLON,
 		E_TOOMANYARGS,
 		E_WRONGARG,
-		E_WRONGCHAR
+		E_WRONGCHAR,
+		__NERRCODES__
 	};
 
 	Sttp (Transmittable* s = QSE_NULL, Mmgr* mmgr = QSE_NULL) QSE_CPP_NOEXCEPT;
@@ -91,7 +92,7 @@ public:
 		this->opt_send_newline = opt;
 	}
 
-	ErrorCode getErrorCode() const QSE_CPP_NOEXCEPT
+	int getErrorCode() const QSE_CPP_NOEXCEPT
 	{
 		return this->p_errcode;
 	}
@@ -122,6 +123,11 @@ public:
 
 	const qse_char_t* getErrorStr () const QSE_CPP_NOEXCEPT;
 
+	void setErrorCode (int code) QSE_CPP_NOEXCEPT
+	{
+		this->p_errcode = code;
+	}
+
 protected:
 	enum 
 	{
@@ -142,7 +148,7 @@ protected:
 	};
 
 	Transmittable* p_medium;
-	ErrorCode p_errcode;
+	int p_errcode; /* ErrorCode */
 
 	qse_mchar_t inbuf [MAX_INBUF_LEN];
 	qse_mchar_t outbuf[MAX_OUTBUF_LEN];
