@@ -39,9 +39,6 @@ QSE_BEGIN_NAMESPACE(QSE)
 class Sttp: public Mmged, public Uncopyable
 {
 public:
-	//
-	// additional error codes 
-	//
 	enum ErrorCode
 	{
 		E_NOERR = 0,
@@ -67,20 +64,20 @@ public:
 
 	qse_size_t getMaxRawCmdLen () const QSE_CPP_NOEXCEPT
 	{
-		return max_raw_cmd_len;
+		return this->max_raw_cmd_len;
 	}
 	void setMaxRawCmdLen (qse_size_t v) QSE_CPP_NOEXCEPT
 	{
-		max_raw_cmd_len = v;
+		this->max_raw_cmd_len = v;
 	}
 
-	qse_size_t maxArgCount () const QSE_CPP_NOEXCEPT
+	qse_size_t setMaxArgCount () const QSE_CPP_NOEXCEPT
 	{
-		return max_arg_count;
+		return this->max_arg_count;
 	}
 	void setMaxArgCount (qse_size_t v) QSE_CPP_NOEXCEPT
 	{
-		max_arg_count = v;
+		this->max_arg_count = v;
 	}
 
 	bool getOptSendNewline () const QSE_CPP_NOEXCEPT
@@ -163,7 +160,7 @@ protected:
 	bool opt_send_newline;
 
 	TokenType token_type;
-	String token_value;
+	QSE::String token_value;
 
 	int get_char () QSE_CPP_NOEXCEPT;
 	int get_token () QSE_CPP_NOEXCEPT;
