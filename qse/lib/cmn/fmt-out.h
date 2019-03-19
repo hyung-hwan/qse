@@ -91,14 +91,25 @@ static char_t* sprintn (char_t* nbuf, qse_uintmax_t num, int base, int *lenp, in
  *       I/O error occurs  */
 
 #undef PUT_CHAR
+#undef PUT_BYTE_IN_HEX
+#undef BYTE_PRINTABLE
 
 #define PUT_CHAR(c) do { \
 	int xx; \
 	if (data->count >= data->limit) goto done; \
-	if ((xx = data->put (c, data->ctx)) <= -1) goto oops; \
+	if ((xx = data->put(c, data->ctx)) <= -1) goto oops; \
 	if (xx == 0) goto done; \
 	data->count++; \
 } while (0)
+
+#define PUT_BYTE_IN_HEX(byte,extra_flags) do { \
+	qse_mchar_t __xbuf[3]; \
+	qse_bytetombs ((byte), __xbuf, QSE_COUNTOF(__xbuf), (16 | (extra_flags)), '0'); \
+	PUT_CHAR(__xbuf[0]); \
+	PUT_CHAR(__xbuf[1]); \
+} while (0)
+
+#define BYTE_PRINTABLE(x) ((x >= 'a' && x <= 'z') || (x >= 'A' &&  x <= 'Z') || (x >= '0' && x <= '9') || (x == ' '))
 
 int fmtout (const char_t* fmt, fmtout_t* data, va_list ap)
 {
@@ -619,15 +630,15 @@ reswitch:
 
 			if (lm_flag & LF_H)
 			{
-				/* to print non-printables in hex */
+				/* to print non-printables in hex. i don't use ismprint() to avoid escaping a backslash itself. */
 				if (flagc & FLAGC_DOT)
 				{
 					/* if precision is specifed, it doesn't stop at the value of zero unlike 's' or 'S' */
-					for (n = 0; n < precision; n++) width -= QSE_ISMPRINT(bytep[n])? 1: k_hex_width;
+					for (n = 0; n < precision; n++) width -= BYTE_PRINTABLE(bytep[n])? 1: k_hex_width;
 				}
 				else
 				{
-					for (n = 0; bytep[n]; n++) width -= QSE_ISMPRINT(bytep[n])? 1: k_hex_width;
+					for (n = 0; bytep[n]; n++) width -= BYTE_PRINTABLE(bytep[n])? 1: k_hex_width;
 				}
 			}
 			else
@@ -652,7 +663,7 @@ reswitch:
 
 			while (n--) 
 			{
-				if ((lm_flag & LF_H) && QSE_ISMPRINT(*bytep)) 
+				if ((lm_flag & LF_H) && BYTE_PRINTABLE(*bytep)) 
 				{
 					PUT_CHAR(*bytep);
 				}
@@ -672,6 +683,84 @@ reswitch:
 			}
 
 			if ((flagc & FLAGC_LEFTADJ) && width > 0)
+			{
+				while (width--) PUT_CHAR(padc);
+			}
+			break;
+		}
+
+		case T('w'):
+		case T('W'):
+		{
+			/* unicode string in unicode escape sequence.
+			 * 
+			 * hw -> \uXXXX, \UXXXXXXXX, printable-byte(only in ascii range)
+			 * w -> \uXXXX, \UXXXXXXXX
+			 * lw -> all in \UXXXXXXXX
+			 */
+			const qse_wchar_t* usp;
+			qse_size_t uwid;
+
+			if (flagc & FLAGC_ZEROPAD) padc = ' ';
+			usp = va_arg(ap, qse_wchar_t*);
+
+			if (flagc & FLAGC_DOT)
+			{
+				/* if precision is specifed, it doesn't stop at the value of zero unlike 's' or 'S' */
+				for (n = 0; n < precision; n++) 
+				{
+					if ((lm_flag & LF_H) && BYTE_PRINTABLE(usp[n])) uwid = 1;
+					else if (!(lm_flag & LF_L) && usp[n] <= 0xFFFF) uwid = 6;
+					else uwid = 10;
+					width -= uwid;
+				}
+			}
+			else
+			{
+				for (n = 0; usp[n]; n++)
+				{
+					if ((lm_flag & LF_H) && BYTE_PRINTABLE(usp[n])) uwid = 1;
+					else if (!(lm_flag & LF_L) && usp[n] <= 0xFFFF) uwid = 6;
+					else uwid = 10;
+					width -= uwid;
+				}
+			}
+
+			if (!(flagc & FLAGC_LEFTADJ) && width > 0) 
+			{
+				while (width--) PUT_CHAR(padc);
+			}
+
+			while (n--) 
+			{
+				if ((lm_flag & LF_H) && BYTE_PRINTABLE(*usp)) 
+				{
+					PUT_CHAR(*usp);
+				}
+				else if (!(lm_flag & LF_L) && *usp <= 0xFFFF) 
+				{
+					qse_uint16_t u16 = *usp;
+					int extra_flags = ((ch) == 'w'? QSE_BYTETOSTR_LOWERCASE: 0);
+					PUT_CHAR('\\');
+					PUT_CHAR('u');
+					PUT_BYTE_IN_HEX((u16 >> 8) & 0xFF, extra_flags);
+					PUT_BYTE_IN_HEX(u16 & 0xFF, extra_flags);
+				}
+				else
+				{
+					qse_uint32_t u32 = *usp;
+					int extra_flags = ((ch) == 'w'? QSE_BYTETOSTR_LOWERCASE: 0);
+					PUT_CHAR('\\');
+					PUT_CHAR('U');
+					PUT_BYTE_IN_HEX((u32 >> 24) & 0xFF, extra_flags);
+					PUT_BYTE_IN_HEX((u32 >> 16) & 0xFF, extra_flags);
+					PUT_BYTE_IN_HEX((u32 >> 8) & 0xFF, extra_flags);
+					PUT_BYTE_IN_HEX(u32 & 0xFF, extra_flags);
+				}
+				usp++;
+			}
+
+			if ((flagc & FLAGC_LEFTADJ) && width > 0) 
 			{
 				while (width--) PUT_CHAR(padc);
 			}
