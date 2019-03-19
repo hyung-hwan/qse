@@ -5707,7 +5707,9 @@ static int get_string (
 			{
 				qse_char_t rc;
 
-				rc = (escaped == QSE_TYPE_MAX(qse_size_t))? QSE_T('x'):
+				/*rc = (escaped == QSE_TYPE_MAX(qse_size_t))? QSE_T('x'):
+				     (escaped == 4)? QSE_T('u'): QSE_T('U');*/
+				rc = (escaped == 2)? QSE_T('x'):
 				     (escaped == 4)? QSE_T('u'): QSE_T('U');
 				if (digit_count == 0) 
 					ADD_TOKEN_CHAR (awk, tok, rc);
@@ -5751,7 +5753,8 @@ static int get_string (
 			}
 			else if (c == QSE_T('x')) 
 			{
-				escaped = QSE_TYPE_MAX(qse_size_t);
+				/*escaped = QSE_TYPE_MAX(qse_size_t);*/
+				escaped = 2; /* i find allowing only 2 hexadigits more useful though it may break compatibilty with other awk implementations */
 				digit_count = 0;
 				c_acc = 0;
 				continue;
