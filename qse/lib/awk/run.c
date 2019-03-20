@@ -7521,7 +7521,7 @@ wp_mod_main:
 				}
 			}
 
-#define BYTE_PRINTABLE(x) ((x) <= 0x7F && QSE_ISMPRINT(x) && (x) != '\\')
+			#define BYTE_PRINTABLE(x) ((x) <= 0x7F && (x) != '\\' && QSE_ISMPRINT(x))
 
 			if (fmt[i] == QSE_T('k')) bytetostr_flagged_radix |= QSE_BYTETOSTR_LOWERCASE;
 
