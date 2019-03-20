@@ -109,7 +109,7 @@ static char_t* sprintn (char_t* nbuf, qse_uintmax_t num, int base, int *lenp, in
 	PUT_CHAR(__xbuf[1]); \
 } while (0)
 
-#define BYTE_PRINTABLE(x) ((x >= 'a' && x <= 'z') || (x >= 'A' &&  x <= 'Z') || (x >= '0' && x <= '9') || (x == ' '))
+#define BYTE_PRINTABLE(x) ((x) <= 0x7F && QSE_ISMPRINT(x) && (x) != '\\')
 
 int fmtout (const char_t* fmt, fmtout_t* data, va_list ap)
 {
