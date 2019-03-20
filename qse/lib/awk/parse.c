@@ -25,6 +25,7 @@
  */
 
 #include "awk-prv.h"
+#include <qse/cmn/utf8.h>
 
 #if !defined(QSE_AWK_DEFAULT_MODPREFIX)
 #	if defined(_WIN32)
@@ -184,73 +185,44 @@ static int parse_progunit (qse_awk_t* awk);
 static qse_awk_t* collect_globals (qse_awk_t* awk);
 static void adjust_static_globals (qse_awk_t* awk);
 static qse_size_t find_global (qse_awk_t* awk, const qse_cstr_t* name);
-static qse_awk_t* collect_locals (
-	qse_awk_t* awk, qse_size_t nlcls, int istop);
+static qse_awk_t* collect_locals (qse_awk_t* awk, qse_size_t nlcls, int istop);
 
 static qse_awk_nde_t* parse_function (qse_awk_t* awk);
 static qse_awk_nde_t* parse_begin (qse_awk_t* awk);
 static qse_awk_nde_t* parse_end (qse_awk_t* awk);
-static qse_awk_chain_t* parse_action_block (
-	qse_awk_t* awk, qse_awk_nde_t* ptn, int blockless);
+static qse_awk_chain_t* parse_action_block (qse_awk_t* awk, qse_awk_nde_t* ptn, int blockless);
 
-static qse_awk_nde_t* parse_block_dc (
-	qse_awk_t* awk, const qse_awk_loc_t* xloc, int istop);
+static qse_awk_nde_t* parse_block_dc (qse_awk_t* awk, const qse_awk_loc_t* xloc, int istop);
 
-static qse_awk_nde_t* parse_statement (
-	qse_awk_t* awk, const qse_awk_loc_t* xloc);
+static qse_awk_nde_t* parse_statement (qse_awk_t* awk, const qse_awk_loc_t* xloc);
 
-static qse_awk_nde_t* parse_expr_withdc (
-	qse_awk_t* awk, const qse_awk_loc_t* xloc);
+static qse_awk_nde_t* parse_expr_withdc (qse_awk_t* awk, const qse_awk_loc_t* xloc);
 
-static qse_awk_nde_t* parse_logical_or (
-	qse_awk_t* awk, const qse_awk_loc_t* xloc);
-static qse_awk_nde_t* parse_logical_and (
-	qse_awk_t* awk, const qse_awk_loc_t* xloc);
-static qse_awk_nde_t* parse_in (
-	qse_awk_t* awk, const qse_awk_loc_t* xloc);
-static qse_awk_nde_t* parse_regex_match (
-	qse_awk_t* awk, const qse_awk_loc_t* xloc);
-static qse_awk_nde_t* parse_bitwise_or (
-	qse_awk_t* awk, const qse_awk_loc_t* xloc);
-static qse_awk_nde_t* parse_bitwise_xor (
-	qse_awk_t* awk, const qse_awk_loc_t* xloc);
-static qse_awk_nde_t* parse_bitwise_and (
-	qse_awk_t* awk, const qse_awk_loc_t* xloc);
-static qse_awk_nde_t* parse_equality (
-	qse_awk_t* awk, const qse_awk_loc_t* xloc);
-static qse_awk_nde_t* parse_relational (
-	qse_awk_t* awk, const qse_awk_loc_t* xloc);
-static qse_awk_nde_t* parse_shift (
-	qse_awk_t* awk, const qse_awk_loc_t* xloc);
-static qse_awk_nde_t* parse_concat (
-	qse_awk_t* awk, const qse_awk_loc_t* xloc);
-static qse_awk_nde_t* parse_additive (
-	qse_awk_t* awk, const qse_awk_loc_t* xloc);
-static qse_awk_nde_t* parse_multiplicative (
-	qse_awk_t* awk, const qse_awk_loc_t* xloc);
+static qse_awk_nde_t* parse_logical_or (qse_awk_t* awk, const qse_awk_loc_t* xloc);
+static qse_awk_nde_t* parse_logical_and (qse_awk_t* awk, const qse_awk_loc_t* xloc);
+static qse_awk_nde_t* parse_in (qse_awk_t* awk, const qse_awk_loc_t* xloc);
+static qse_awk_nde_t* parse_regex_match (qse_awk_t* awk, const qse_awk_loc_t* xloc);
+static qse_awk_nde_t* parse_bitwise_or (qse_awk_t* awk, const qse_awk_loc_t* xloc);
+static qse_awk_nde_t* parse_bitwise_xor (qse_awk_t* awk, const qse_awk_loc_t* xloc);
+static qse_awk_nde_t* parse_bitwise_and (qse_awk_t* awk, const qse_awk_loc_t* xloc);
+static qse_awk_nde_t* parse_equality (qse_awk_t* awk, const qse_awk_loc_t* xloc);
+static qse_awk_nde_t* parse_relational (qse_awk_t* awk, const qse_awk_loc_t* xloc);
+static qse_awk_nde_t* parse_shift (qse_awk_t* awk, const qse_awk_loc_t* xloc);
+static qse_awk_nde_t* parse_concat (qse_awk_t* awk, const qse_awk_loc_t* xloc);
+static qse_awk_nde_t* parse_additive (qse_awk_t* awk, const qse_awk_loc_t* xloc);
+static qse_awk_nde_t* parse_multiplicative (qse_awk_t* awk, const qse_awk_loc_t* xloc);
 
-static qse_awk_nde_t* parse_unary (
-	qse_awk_t* awk, const qse_awk_loc_t* xloc);
-static qse_awk_nde_t* parse_exponent (
-	qse_awk_t* awk, const qse_awk_loc_t* xloc);
-static qse_awk_nde_t* parse_unary_exp (
-	qse_awk_t* awk, const qse_awk_loc_t* xloc);
-static qse_awk_nde_t* parse_increment (
-	qse_awk_t* awk, const qse_awk_loc_t* xloc);
-static qse_awk_nde_t* parse_primary (
-	qse_awk_t* awk, const qse_awk_loc_t* xloc);
-static qse_awk_nde_t* parse_primary_ident (
-	qse_awk_t* awk, const qse_awk_loc_t* xloc);
+static qse_awk_nde_t* parse_unary (qse_awk_t* awk, const qse_awk_loc_t* xloc);
+static qse_awk_nde_t* parse_exponent (qse_awk_t* awk, const qse_awk_loc_t* xloc);
+static qse_awk_nde_t* parse_unary_exp (qse_awk_t* awk, const qse_awk_loc_t* xloc);
+static qse_awk_nde_t* parse_increment (qse_awk_t* awk, const qse_awk_loc_t* xloc);
+static qse_awk_nde_t* parse_primary (qse_awk_t* awk, const qse_awk_loc_t* xloc);
+static qse_awk_nde_t* parse_primary_ident (qse_awk_t* awk, const qse_awk_loc_t* xloc);
 
-static qse_awk_nde_t* parse_hashidx (
-	qse_awk_t* awk, const qse_cstr_t* name, const qse_awk_loc_t* xloc);
-static qse_awk_nde_t* parse_fncall (
-	qse_awk_t* awk, const qse_cstr_t* name,
-	qse_awk_fnc_t* fnc, const qse_awk_loc_t* xloc, int noarg);
+static qse_awk_nde_t* parse_hashidx (qse_awk_t* awk, const qse_cstr_t* name, const qse_awk_loc_t* xloc);
+static qse_awk_nde_t* parse_fncall (qse_awk_t* awk, const qse_cstr_t* name, qse_awk_fnc_t* fnc, const qse_awk_loc_t* xloc, int noarg);
 
-static qse_awk_nde_t* parse_primary_ident_segs (
-	qse_awk_t* awk, const qse_awk_loc_t* xloc, const qse_cstr_t* full, 
-	const qse_cstr_t segs[], int nsegs);
+static qse_awk_nde_t* parse_primary_ident_segs (qse_awk_t* awk, const qse_awk_loc_t* xloc, const qse_cstr_t* full, const qse_cstr_t segs[], int nsegs);
 
 static int get_token (qse_awk_t* awk);
 static int preget_token (qse_awk_t* awk);
@@ -261,8 +233,7 @@ static int skip_comment (qse_awk_t* awk);
 static int classify_ident (qse_awk_t* awk, const qse_cstr_t* name);
 
 static int deparse (qse_awk_t* awk);
-static qse_htb_walk_t deparse_func (
-	qse_htb_t* map, qse_htb_pair_t* pair, void* arg);
+static qse_htb_walk_t deparse_func (qse_htb_t* map, qse_htb_pair_t* pair, void* arg);
 static int put_char (qse_awk_t* awk, qse_char_t c);
 static int flush_out (qse_awk_t* awk);
 
@@ -405,6 +376,23 @@ static global_t gtab[] =
 			return -1; \
 		} \
 	} while (0)
+
+#if defined(QSE_CHAR_IS_MCHAR)
+
+#	define ADD_TOKEN_UINT32(awk,tok,c) \
+	do { \
+		if (c <= 0xFF) ADD_TOKEN_CHAR(awk, tok, c); \
+		else  \
+		{ \
+			qse_mchar_t __xbuf[QSE_MBLEN_MAX + 1]; \
+			qse_size_t __len, __i; \
+			__len = qse_uctoutf8(c, __xbuf, QSE_COUNTOF(__xbuf)); /* use utf8 all the time */ \
+			for (__i = 0; __i < __len; __i++) ADD_TOKEN_CHAR(awk, tok, __xbuf[__i]); \
+		} \
+	} while (0)
+#else
+#	define ADD_TOKEN_UINT32(awk,tok,c) ADD_TOKEN_CHAR(awk,tok,c);
+#endif
 
 #define MATCH(awk,tok_type) ((awk)->tok.type == (tok_type))
 #define MATCH_RANGE(awk,tok_type_start,tok_type_end) ((awk)->tok.type >= (tok_type_start) && (awk)->tok.type <= (tok_type_end))
@@ -5627,6 +5615,12 @@ static int get_number (qse_awk_t* awk, qse_awk_tok_t* tok)
 	return 0;
 }
 
+/* i think allowing only up to 2 hexadigits is more useful though it 
+ * may break compatibilty with other awk implementations. If you want
+ * more than 2, define HEX_DIGIT_LIMIT_FOR_X to QSE_TYPE_MAX(qse_size_t). */
+/*#define HEX_DIGIT_LIMIT_FOR_X (QSE_TYPE_MAX(qse_size_t))*/
+#define HEX_DIGIT_LIMIT_FOR_X (2)
+
 static int get_string (
 	qse_awk_t* awk, qse_char_t end_char, 
 	qse_char_t esc_char, int keep_esc_char,
@@ -5635,7 +5629,7 @@ static int get_string (
 	qse_cint_t c;
 	qse_size_t escaped = preescaped;
 	qse_size_t digit_count = 0;
-	qse_cint_t c_acc = 0;
+	qse_uint32_t c_acc = 0;
 
 	while (1)
 	{
@@ -5656,19 +5650,19 @@ static int get_string (
 				if (digit_count >= escaped) 
 				{
 					/* should i limit the max to 0xFF/0377? 
-					 * if (c_acc > 0377) c_acc = 0377;*/
-					ADD_TOKEN_CHAR (awk, tok, c_acc);
+					 if (c_acc > 0377) c_acc = 0377; */
+					ADD_TOKEN_UINT32 (awk, tok, c_acc);
 					escaped = 0;
 				}
 				continue;
 			}
 			else
 			{
-				ADD_TOKEN_CHAR (awk, tok, c_acc);
+				ADD_TOKEN_UINT32 (awk, tok, c_acc);
 				escaped = 0;
 			}
 		}
-		else if (escaped == QSE_TYPE_MAX(qse_size_t) || escaped == 4 || escaped == 8)
+		else if (escaped == HEX_DIGIT_LIMIT_FOR_X || escaped == 4 || escaped == 8)
 		{
 			if (c >= QSE_T('0') && c <= QSE_T('9'))
 			{
@@ -5676,7 +5670,7 @@ static int get_string (
 				digit_count++;
 				if (digit_count >= escaped) 
 				{
-					ADD_TOKEN_CHAR (awk, tok, c_acc);
+					ADD_TOKEN_UINT32 (awk, tok, c_acc);
 					escaped = 0;
 				}
 				continue;
@@ -5687,7 +5681,7 @@ static int get_string (
 				digit_count++;
 				if (digit_count >= escaped) 
 				{
-					ADD_TOKEN_CHAR (awk, tok, c_acc);
+					ADD_TOKEN_UINT32 (awk, tok, c_acc);
 					escaped = 0;
 				}
 				continue;
@@ -5698,7 +5692,7 @@ static int get_string (
 				digit_count++;
 				if (digit_count >= escaped) 
 				{
-					ADD_TOKEN_CHAR (awk, tok, c_acc);
+					ADD_TOKEN_UINT32 (awk, tok, c_acc);
 					escaped = 0;
 				}
 				continue;
@@ -5707,13 +5701,19 @@ static int get_string (
 			{
 				qse_char_t rc;
 
-				/*rc = (escaped == QSE_TYPE_MAX(qse_size_t))? QSE_T('x'):
-				     (escaped == 4)? QSE_T('u'): QSE_T('U');*/
-				rc = (escaped == 2)? QSE_T('x'):
+				rc = (escaped == HEX_DIGIT_LIMIT_FOR_X)? QSE_T('x'):
 				     (escaped == 4)? QSE_T('u'): QSE_T('U');
 				if (digit_count == 0) 
+				{
+					/* no valid character after the escaper.
+					 * keep the escaper as it is. consider this input:
+					 *   \xGG
+					 * 'c' is at the first G. this part is to restore the
+					 * \x part. since \x is not followed by any hexadecimal
+					 * digits, it's literally 'x' */
 					ADD_TOKEN_CHAR (awk, tok, rc);
-				else ADD_TOKEN_CHAR (awk, tok, c_acc);
+				}
+				else ADD_TOKEN_UINT32 (awk, tok, c_acc);
 
 				escaped = 0;
 			}
@@ -5753,28 +5753,29 @@ static int get_string (
 			}
 			else if (c == QSE_T('x')) 
 			{
-				/*escaped = QSE_TYPE_MAX(qse_size_t);*/
-				escaped = 2; /* i find allowing only 2 hexadigits more useful though it may break compatibilty with other awk implementations */
+				escaped = HEX_DIGIT_LIMIT_FOR_X;
 				digit_count = 0;
 				c_acc = 0;
 				continue;
 			}
-		#if defined(QSE_CHAR_IS_WCHAR)
-			else if (c == QSE_T('u') && QSE_SIZEOF(qse_char_t) >= 2) 
+			else if (c == QSE_T('u')) 
 			{
+				/* in the MCHAR mode, the \u letter will get converted to UTF-8 sequences.
+				 * see ADD_TOKEN_UINT32(). */
 				escaped = 4;
 				digit_count = 0;
 				c_acc = 0;
 				continue;
 			}
-			else if (c == QSE_T('U') && QSE_SIZEOF(qse_char_t) >= 4) 
+			else if (c == QSE_T('U')) 
 			{
+				/* in the MCHAR mode, the \u letter will get converted to UTF-8 sequences 
+				 * see ADD_TOKEN_UINT32(). */
 				escaped = 8;
 				digit_count = 0;
 				c_acc = 0;
 				continue;
 			}
-		#endif
 			else if (keep_esc_char) 
 			{
 				/* if the following character doesn't compose a proper

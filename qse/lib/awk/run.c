@@ -7426,13 +7426,14 @@ wp_mod_main:
 
 			qse_awk_rtx_refdownval (rtx, v);
 		}
-		else if (fmt[i] == QSE_T('s')) 
+		else if (fmt[i] == QSE_T('s') || fmt[i] == QSE_T('k') || fmt[i] == QSE_T('K')) 
 		{
 			qse_char_t* str_ptr, * str_free = QSE_NULL;
 			qse_size_t str_len;
 			qse_awk_int_t k;
 			qse_awk_val_t* v;
 			qse_awk_val_type_t vtype;
+			int bytetostr_flagged_radix = 16;
 
 			if (args == QSE_NULL)
 			{
@@ -7486,7 +7487,7 @@ wp_mod_main:
 						SETERR_COD (rtx, QSE_AWK_EFMTCNV);
 						return QSE_NULL;
 					}
-		
+
 					out.type = QSE_AWK_RTX_VALTOSTR_CPLDUP;
 					if (qse_awk_rtx_valtostr (rtx, v, &out) <= -1)
 					{
@@ -7509,10 +7510,9 @@ wp_mod_main:
 				/* right align */
 				while (wp[WP_WIDTH] > wp[WP_PRECISION]) 
 				{
-					if (qse_str_ccat (out, QSE_T(' ')) == -1) 
+					if (qse_str_ccat(out, QSE_T(' ')) == -1) 
 					{ 
-						if (str_free != QSE_NULL) 
-							QSE_AWK_FREE (rtx->awk, str_free);
+						if (str_free) QSE_AWK_FREE (rtx->awk, str_free);
 						qse_awk_rtx_refdownval (rtx, v);
 						SETERR_COD (rtx, QSE_AWK_ENOMEM);
 						return QSE_NULL; 
@@ -7521,26 +7521,65 @@ wp_mod_main:
 				}
 			}
 
+#define BYTE_PRINTABLE(x) ((x) <= 0x7F && QSE_ISMPRINT(x) && (x) != '\\')
+
+			if (fmt[i] == QSE_T('k')) bytetostr_flagged_radix |= QSE_BYTETOSTR_LOWERCASE;
+
 			for (k = 0; k < wp[WP_PRECISION]; k++) 
 			{
-				if (qse_str_ccat (out, str_ptr[k]) == -1) 
-				{ 
-					if (str_free != QSE_NULL) 
-						QSE_AWK_FREE (rtx->awk, str_free);
-					qse_awk_rtx_refdownval (rtx, v);
-					SETERR_COD (rtx, QSE_AWK_ENOMEM);
-					return QSE_NULL; 
-				} 
+				if (fmt[i] != QSE_T('s') && !BYTE_PRINTABLE(str_ptr[k]))
+				{
+					qse_char_t xbuf[3];
+					if (str_ptr[k] <= 0xFF)
+					{
+						if (qse_str_ncat (out, QSE_T("\\x"), 2) == (qse_size_t)-1) goto s_fail;
+						qse_bytetostr(str_ptr[k], xbuf, QSE_COUNTOF(xbuf), bytetostr_flagged_radix, QSE_T('0'));
+						if (qse_str_ncat (out, xbuf, 2) == (qse_size_t)-1) goto s_fail;
+					}
+					else if (str_ptr[k] <= 0xFFFF)
+					{
+						qse_uint16_t u16 = str_ptr[k];
+						if (qse_str_ncat (out, QSE_T("\\u"), 2) == (qse_size_t)-1) goto s_fail;
+						qse_bytetostr((u16 >> 8) & 0xFF, xbuf, QSE_COUNTOF(xbuf), bytetostr_flagged_radix, QSE_T('0'));
+						if (qse_str_ncat (out, xbuf, 2) == (qse_size_t)-1) goto s_fail;
+						qse_bytetostr(u16 & 0xFF, xbuf, QSE_COUNTOF(xbuf), bytetostr_flagged_radix, QSE_T('0'));
+						if (qse_str_ncat (out, xbuf, 2) == (qse_size_t)-1) goto s_fail;
+					}
+					else
+					{
+						qse_uint32_t u32 = str_ptr[k];
+						if (qse_str_ncat (out, QSE_T("\\U"), 2) == (qse_size_t)-1) goto s_fail;
+						qse_bytetostr((u32 >> 24) & 0xFF, xbuf, QSE_COUNTOF(xbuf), bytetostr_flagged_radix, QSE_T('0'));
+						if (qse_str_ncat (out, xbuf, 2) == (qse_size_t)-1) goto s_fail;
+						qse_bytetostr((u32 >> 16) & 0xFF, xbuf, QSE_COUNTOF(xbuf), bytetostr_flagged_radix, QSE_T('0'));
+						if (qse_str_ncat (out, xbuf, 2) == (qse_size_t)-1) goto s_fail;
+						qse_bytetostr((u32 >> 8) & 0xFF, xbuf, QSE_COUNTOF(xbuf), bytetostr_flagged_radix, QSE_T('0'));
+						if (qse_str_ncat (out, xbuf, 2) == (qse_size_t)-1) goto s_fail;
+						qse_bytetostr(u32 & 0xFF, xbuf, QSE_COUNTOF(xbuf), bytetostr_flagged_radix, QSE_T('0'));
+						if (qse_str_ncat (out, xbuf, 2) == (qse_size_t)-1) goto s_fail;
+					}
+				}
+				else
+				{
+					if (qse_str_ccat(out, str_ptr[k]) ==  (qse_size_t)-1) 
+					{
+					s_fail:
+						if (str_free) QSE_AWK_FREE (rtx->awk, str_free);
+						qse_awk_rtx_refdownval (rtx, v);
+						SETERR_COD (rtx, QSE_AWK_ENOMEM);
+						return QSE_NULL; 
+					}
+				}
 			}
 
-			if (str_free != QSE_NULL) QSE_AWK_FREE (rtx->awk, str_free);
+			if (str_free) QSE_AWK_FREE (rtx->awk, str_free);
 
 			if (flags & FLAG_MINUS)
 			{
 				/* left align */
 				while (wp[WP_WIDTH] > wp[WP_PRECISION]) 
 				{
-					if (qse_str_ccat (out, QSE_T(' ')) == -1) 
+					if (qse_str_ccat(out, QSE_T(' ')) == (qse_size_t)-1) 
 					{ 
 						qse_awk_rtx_refdownval (rtx, v);
 						SETERR_COD (rtx, QSE_AWK_ENOMEM);
