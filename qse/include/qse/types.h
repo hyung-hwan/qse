@@ -754,6 +754,18 @@ typedef struct qse_wcstr_t qse_wcstr_t;
 	typedef qse_wcstr_t qse_cstr_t;
 #endif
 
+
+/**
+ * The qse_u8ptl_t type defines a structure with a pointer to 8-bit unsigned
+ * integer string and its length.
+ */
+struct qse_u8ptl_t
+{
+	qse_uint8_t* ptr;
+	qse_size_t   len;
+};
+typedef struct qse_u8ptl_t qse_u8ptl_t;
+
 /** 
  * The qse_xptl_t type defines a pair type of a pointer and a length.
  */

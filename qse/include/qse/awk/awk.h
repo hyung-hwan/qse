@@ -133,14 +133,14 @@ typedef qse_floc_t qse_awk_loc_t;
  */
 /*
 #define QSE_AWK_VAL_HDR \
-	unsigned int type: 3; \
-	unsigned int ref: 26; \
+	unsigned int type: 4; \
+	unsigned int ref: 25; \
 	unsigned int stat: 1; \
 	unsigned int nstr: 2
 */
 #define QSE_AWK_VAL_HDR \
-	qse_uintptr_t v_type: 3; \
-	qse_uintptr_t ref: ((QSE_SIZEOF_UINTPTR_T * 8) - 6); \
+	qse_uintptr_t v_type: 4; \
+	qse_uintptr_t ref: ((QSE_SIZEOF_UINTPTR_T * 8) - 7); \
 	qse_uintptr_t stat: 1; \
 	qse_uintptr_t nstr: 2
 
@@ -200,6 +200,17 @@ struct qse_awk_val_str_t
 	qse_cstr_t  val;
 };
 typedef struct qse_awk_val_str_t  qse_awk_val_str_t;
+
+/**
+ * The qse_awk_val_str_t type is a string type. The type field is
+ * #QSE_AWK_VAL_BYTEARR.
+ */
+struct qse_awk_val_bytearr_t
+{
+	QSE_AWK_VAL_HDR;
+	qse_u8ptl_t val;
+};
+typedef struct qse_awk_val_bytearr_t qse_awk_val_bytearr_t;
 
 /**
  * The qse_awk_val_rex_t type is a regular expression type.  The type field 
@@ -1383,18 +1394,19 @@ typedef enum qse_awk_gbl_id_t qse_awk_gbl_id_t;
  */
 enum qse_awk_val_type_t
 {
-	/* the values between QSE_AWK_VAL_NIL and QSE_AWK_VAL_STR inclusive
+	/* the values between QSE_AWK_VAL_NIL and QSE_AWK_VAL_MAP inclusive
 	 * must be synchronized with an internal table of the __cmp_val 
 	 * function in run.c */
-	QSE_AWK_VAL_NIL  = 0, /**< nil */
-	QSE_AWK_VAL_INT  = 1, /**< integer */
-	QSE_AWK_VAL_FLT  = 2, /**< floating-pointer number */
-	QSE_AWK_VAL_STR  = 3, /**< string */
-	QSE_AWK_VAL_MAP  = 4, /**< map */
+	QSE_AWK_VAL_NIL     = 0, /**< nil */
+	QSE_AWK_VAL_INT     = 1, /**< integer */
+	QSE_AWK_VAL_FLT     = 2, /**< floating-pointer number */
+	QSE_AWK_VAL_STR     = 3, /**< string */
+	QSE_AWK_VAL_BYTEARR = 4, /**< byte array */
+	QSE_AWK_VAL_MAP     = 5, /**< map */
 
-	QSE_AWK_VAL_REX  = 5, /**< regular expression */
-	QSE_AWK_VAL_REF  = 6, /**< reference to other types */
-	QSE_AWK_VAL_FUN  = 7
+	QSE_AWK_VAL_REX     = 6, /**< regular expression */
+	QSE_AWK_VAL_REF     = 7, /**< reference to other types */
+	QSE_AWK_VAL_FUN     = 8
 };
 typedef enum qse_awk_val_type_t qse_awk_val_type_t;
 
@@ -2422,6 +2434,16 @@ QSE_EXPORT qse_awk_val_t* qse_awk_rtx_makenstrvalwithstr (
 QSE_EXPORT qse_awk_val_t* qse_awk_rtx_makenstrvalwithxstr (
 	qse_awk_rtx_t*    rtx,
 	const qse_cstr_t* str 
+);
+
+/**
+ * The qse_awk_rtx_makebytearrvaal() function create a byte array value.
+ * \return value on success, #QSE_NULL on failure
+ */
+qse_awk_val_t* qse_awk_rtx_makebytearrval (
+	qse_awk_rtx_t*     rtx,
+	const qse_uint8_t* ptr,
+	qse_size_t         len
 );
 
 /**
