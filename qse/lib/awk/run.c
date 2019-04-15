@@ -825,8 +825,7 @@ static qse_rbt_walk_t fini_module (qse_rbt_t* rbt, qse_rbt_pair_t* pair, void* c
 	return QSE_RBT_WALK_FORWARD;
 }
 
-qse_awk_rtx_t* qse_awk_rtx_open (
-	qse_awk_t* awk, qse_size_t xtnsize, qse_awk_rio_t* rio)
+qse_awk_rtx_t* qse_awk_rtx_open (qse_awk_t* awk, qse_size_t xtnsize, qse_awk_rio_t* rio)
 {
 	qse_awk_rtx_t* rtx;
 	struct module_init_ctx_t mic;
@@ -846,9 +845,8 @@ qse_awk_rtx_t* qse_awk_rtx_open (
 	}
 	
 	/* allocate the storage for the rtx object */
-	rtx = (qse_awk_rtx_t*) QSE_AWK_ALLOC (
-		awk, QSE_SIZEOF(qse_awk_rtx_t) + xtnsize);
-	if (rtx == QSE_NULL)
+	rtx = (qse_awk_rtx_t*)QSE_AWK_ALLOC(awk, QSE_SIZEOF(qse_awk_rtx_t) + xtnsize);
+	if (!rtx)
 	{
 		/* if it fails, the failure is reported thru 
 		 * the awk object */
@@ -987,6 +985,7 @@ static int init_rtx (qse_awk_rtx_t* rtx, qse_awk_t* awk, qse_awk_rio_t* rio)
 	};
 
 	rtx->awk = awk;
+	rtx->cmgr = qse_getdflcmgr();
 
 	CLRERR (rtx);
 
@@ -1009,32 +1008,28 @@ static int init_rtx (qse_awk_rtx_t* rtx, qse_awk_t* awk, qse_awk_rio_t* rio)
 	rtx->inrec.maxflds = 0;
 	rtx->inrec.d0 = qse_awk_val_nil;
 
-	if (qse_str_init (&rtx->inrec.line, MMGR(rtx), DEF_BUF_CAPA) <= -1) goto oops_0;
-	if (qse_str_init (&rtx->inrec.linew, MMGR(rtx), DEF_BUF_CAPA) <= -1) goto oops_1;
-	if (qse_str_init (&rtx->inrec.lineg, MMGR(rtx), DEF_BUF_CAPA) <= -1) goto oops_2;
-	if (qse_str_init (&rtx->format.out, MMGR(rtx), 256) <= -1) goto oops_3;
-	if (qse_str_init (&rtx->format.fmt, MMGR(rtx), 256) <= -1) goto oops_4;
+	if (qse_str_init(&rtx->inrec.line, MMGR(rtx), DEF_BUF_CAPA) <= -1) goto oops_0;
+	if (qse_str_init(&rtx->inrec.linew, MMGR(rtx), DEF_BUF_CAPA) <= -1) goto oops_1;
+	if (qse_str_init(&rtx->inrec.lineg, MMGR(rtx), DEF_BUF_CAPA) <= -1) goto oops_2;
+	if (qse_str_init(&rtx->format.out, MMGR(rtx), 256) <= -1) goto oops_3;
+	if (qse_str_init(&rtx->format.fmt, MMGR(rtx), 256) <= -1) goto oops_4;
 
-	rtx->named = qse_htb_open (MMGR(rtx), QSE_SIZEOF(rtx), 1024, 70, QSE_SIZEOF(qse_char_t), 1);
-	if (rtx->named == QSE_NULL) goto oops_5;
+	rtx->named = qse_htb_open(MMGR(rtx), QSE_SIZEOF(rtx), 1024, 70, QSE_SIZEOF(qse_char_t), 1);
+	if (!rtx->named) goto oops_5;
 	*(qse_awk_rtx_t**)QSE_XTN(rtx->named) = rtx;
 	qse_htb_setstyle (rtx->named, &style_for_named);
 
-	rtx->format.tmp.ptr = (qse_char_t*)
-		QSE_AWK_ALLOC (rtx->awk, 4096*QSE_SIZEOF(qse_char_t*));
-	if (rtx->format.tmp.ptr == QSE_NULL) goto oops_6;
+	rtx->format.tmp.ptr = (qse_char_t*)QSE_AWK_ALLOC(rtx->awk, 4096*QSE_SIZEOF(qse_char_t*));
+	if (!rtx->format.tmp.ptr) goto oops_6;
 	rtx->format.tmp.len = 4096;
 	rtx->format.tmp.inc = 4096*2;
 
 	if (rtx->awk->tree.chain_size > 0)
 	{
-		rtx->pattern_range_state = (qse_byte_t*) QSE_AWK_ALLOC (
-			rtx->awk, rtx->awk->tree.chain_size*QSE_SIZEOF(qse_byte_t));
-		if (rtx->pattern_range_state == QSE_NULL) goto oops_7;
+		rtx->pattern_range_state = (qse_byte_t*)QSE_AWK_ALLOC(rtx->awk, rtx->awk->tree.chain_size * QSE_SIZEOF(qse_byte_t));
+		if (!rtx->pattern_range_state) goto oops_7;
 
-		QSE_MEMSET (
-			rtx->pattern_range_state, 0, 
-			rtx->awk->tree.chain_size * QSE_SIZEOF(qse_byte_t));
+		QSE_MEMSET (rtx->pattern_range_state, 0, rtx->awk->tree.chain_size * QSE_SIZEOF(qse_byte_t));
 	}
 	else rtx->pattern_range_state = QSE_NULL;
 

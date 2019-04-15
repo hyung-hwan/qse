@@ -123,12 +123,10 @@ protected:
 	int __build_environ (Run* run, void* envptr);
 
 	// intrinsic functions 
-	qse_cmgr_t* getcmgr (const char_t* ioname);
+	qse_cmgr_t* getiocmgr (const char_t* ioname);
 
-	int setioattr (Run& run, Value& ret, Value* args, size_t nargs,
-		const char_t* name, size_t len);
-	int getioattr (Run& run, Value& ret, Value* args, size_t nargs,
-		const char_t* name, size_t len);
+	int setioattr (Run& run, Value& ret, Value* args, size_t nargs, const char_t* name, size_t len);
+	int getioattr (Run& run, Value& ret, Value* args, size_t nargs, const char_t* name, size_t len);
 
 	// pipe io handlers 
 	int openPipe (Pipe& io);
