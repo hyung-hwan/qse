@@ -937,7 +937,7 @@ static int val_ref_to_bool (qse_awk_rtx_t* rtx, const qse_awk_val_ref_t* ref)
 		{
 			qse_size_t idx;
 			idx = (qse_size_t)ref->adr;
-			return qse_awk_rtx_valtobool (rtx, RTX_STACK_GBL (rtx, idx));
+			return qse_awk_rtx_valtobool(rtx, RTX_STACK_GBL (rtx, idx));
 		}
 
 		default:
@@ -950,7 +950,7 @@ static int val_ref_to_bool (qse_awk_rtx_t* rtx, const qse_awk_val_ref_t* ref)
 			QSE_ASSERT (QSE_AWK_RTX_GETVALTYPE (rtx, *xref)!= QSE_AWK_VAL_REF); 
 
 			/* make a recursive call back to the caller */
-			return qse_awk_rtx_valtobool (rtx, *xref);
+			return qse_awk_rtx_valtobool(rtx, *xref);
 		}
 	}
 }
@@ -972,6 +972,8 @@ int qse_awk_rtx_valtobool (qse_awk_rtx_t* rtx, const qse_awk_val_t* val)
 			return ((qse_awk_val_flt_t*)val)->val != 0.0;
 		case QSE_AWK_VAL_STR:
 			return ((qse_awk_val_str_t*)val)->val.len > 0;
+		case QSE_AWK_VAL_BYTEARR:
+			return ((qse_awk_val_bytearr_t*)val)->val.len > 0;
 		case QSE_AWK_VAL_REX: /* TODO: is this correct? */
 			return ((qse_awk_val_rex_t*)val)->str.len > 0;
 		case QSE_AWK_VAL_MAP:
@@ -987,9 +989,7 @@ int qse_awk_rtx_valtobool (qse_awk_rtx_t* rtx, const qse_awk_val_t* val)
 	return 0;
 }
 
-static int str_to_str (
-	qse_awk_rtx_t* rtx, const qse_char_t* str, qse_size_t str_len,
-	qse_awk_rtx_valtostr_out_t* out)
+static int str_to_str (qse_awk_rtx_t* rtx, const qse_char_t* str, qse_size_t str_len, qse_awk_rtx_valtostr_out_t* out)
 {
 	int type = out->type & ~QSE_AWK_RTX_VALTOSTR_PRINT;
 
@@ -1007,12 +1007,11 @@ static int str_to_str (
 			if (str_len >= out->u.cplcpy.len)
 			{
 				qse_awk_rtx_seterrnum (rtx, QSE_AWK_EINVAL, QSE_NULL);
-				out->u.cplcpy.len = str_len + 1;
+				out->u.cplcpy.len = str_len + 1; /* set the required length */
 				return -1;
 			}
 
-			out->u.cplcpy.len = 
-				qse_strncpy (out->u.cplcpy.ptr, str, str_len);
+			out->u.cplcpy.len = qse_strncpy(out->u.cplcpy.ptr, str, str_len);
 			return 0;
 		}
 
@@ -1020,8 +1019,8 @@ static int str_to_str (
 		{
 			qse_char_t* tmp;
 
-			tmp = QSE_AWK_STRXDUP (rtx->awk, str, str_len);
-			if (tmp == QSE_NULL) 
+			tmp = QSE_AWK_STRXDUP(rtx->awk, str, str_len);
+			if (!tmp) 
 			{
 				qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
 				return -1;
@@ -1031,13 +1030,13 @@ static int str_to_str (
 			out->u.cpldup.len = str_len;
 			return 0;
 		}
-			
+
 		case QSE_AWK_RTX_VALTOSTR_STRP:
 		{
 			qse_size_t n;
 
 			qse_str_clear (out->u.strp);
-			n = qse_str_ncat (out->u.strp, str, str_len);
+			n = qse_str_ncat(out->u.strp, str, str_len);
 			if (n == (qse_size_t)-1)
 			{
 				qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
@@ -1050,7 +1049,7 @@ static int str_to_str (
 		{
 			qse_size_t n;
 
-			n = qse_str_ncat (out->u.strpcat, str, str_len);
+			n = qse_str_ncat(out->u.strpcat, str, str_len);
 			if (n == (qse_size_t)-1)
 			{
 				qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
@@ -1064,9 +1063,82 @@ static int str_to_str (
 	return -1;
 }
 
-static int val_int_to_str (
-	qse_awk_rtx_t* rtx, const qse_awk_val_int_t* v,
-	qse_awk_rtx_valtostr_out_t* out)
+#if defined(QSE_CHAR_IS_MCHAR)
+#	define mbs_to_str(rtx,str,str_len,out) str_to_str(rtx,str,str_len,out)
+#else
+static int mbs_to_str (qse_awk_rtx_t* rtx, const qse_mchar_t* str, qse_size_t str_len, qse_awk_rtx_valtostr_out_t* out)
+{
+	int type = out->type & ~QSE_AWK_RTX_VALTOSTR_PRINT;
+
+	switch (type)
+	{
+		case QSE_AWK_RTX_VALTOSTR_CPL:
+			/* conversion is required. i can't simply return it. let CPL
+			 * behave like CPLCPY. fall thru */
+		case QSE_AWK_RTX_VALTOSTR_CPLCPY:
+		{
+			if (str_len >= out->u.cplcpy.len)
+			{
+				qse_awk_rtx_seterrnum (rtx, QSE_AWK_EINVAL, QSE_NULL);
+				out->u.cplcpy.len = str_len + 1; /* set the required length */
+				return -1;
+			}
+
+			out->u.cplcpy.len = qse_strncpy(out->u.cplcpy.ptr, str, str_len);
+			return 0;
+		}
+
+		case QSE_AWK_RTX_VALTOSTR_CPLDUP:
+		{
+			qse_char_t* tmp;
+
+			tmp = QSE_AWK_STRXDUP(rtx->awk, str, str_len);
+			if (!tmp) 
+			{
+				qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
+				return -1;
+			}
+
+			out->u.cpldup.ptr = tmp;
+			out->u.cpldup.len = str_len;
+			return 0;
+		}
+
+		case QSE_AWK_RTX_VALTOSTR_STRP:
+		{
+			qse_size_t n;
+
+			qse_str_clear (out->u.strp);
+			n = qse_str_ncat(out->u.strp, str, str_len);
+			if (n == (qse_size_t)-1)
+			{
+				qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
+				return -1;
+			}
+			return 0;
+		}
+
+		case QSE_AWK_RTX_VALTOSTR_STRPCAT:
+		{
+			qse_size_t n;
+
+			n = qse_str_ncat(out->u.strpcat, str, str_len);
+			if (n == (qse_size_t)-1)
+			{
+				qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
+				return -1;
+			}
+			return 0;
+		}
+	}
+
+	qse_awk_rtx_seterrnum (rtx, QSE_AWK_EINVAL, QSE_NULL);
+	return -1;
+}
+#endif
+
+
+static int val_int_to_str (qse_awk_rtx_t* rtx, const qse_awk_val_int_t* v, qse_awk_rtx_valtostr_out_t* out)
 {
 	qse_char_t* tmp;
 	qse_size_t rlen = 0;
@@ -1111,9 +1183,8 @@ static int val_int_to_str (
 			break;
 
 		case QSE_AWK_RTX_VALTOSTR_CPLDUP:
-			tmp = QSE_AWK_ALLOC (
-				rtx->awk, (rlen + 1) * QSE_SIZEOF(qse_char_t));
-			if (tmp == QSE_NULL)
+			tmp = QSE_AWK_ALLOC(rtx->awk, (rlen + 1) * QSE_SIZEOF(qse_char_t));
+			if (!tmp)
 			{
 				qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
 				return -1;
@@ -1135,7 +1206,7 @@ static int val_int_to_str (
 			tmp = QSE_STR_PTR(out->u.strp);
 
 			/* extend the buffer */
-			n = qse_str_nccat (out->u.strp, QSE_T(' '), rlen);
+			n = qse_str_nccats(out->u.strp, QSE_T(' '), rlen);
 			if (n == (qse_size_t)-1)
 			{
 				qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
@@ -1152,7 +1223,7 @@ static int val_int_to_str (
 			tmp = QSE_STR_PTR(out->u.strpcat) + QSE_STR_LEN(out->u.strpcat);
 
 			/* extend the buffer */
-			n = qse_str_nccat (out->u.strpcat, QSE_T(' '), rlen);
+			n = qse_str_nccat(out->u.strpcat, QSE_T(' '), rlen);
 			if (n == (qse_size_t)-1)
 			{
 				qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
@@ -1187,9 +1258,7 @@ static int val_int_to_str (
 	return 0;
 }
 
-static int val_flt_to_str (
-	qse_awk_rtx_t* rtx, const qse_awk_val_flt_t* v,
-	qse_awk_rtx_valtostr_out_t* out)
+static int val_flt_to_str (qse_awk_rtx_t* rtx, const qse_awk_val_flt_t* v, qse_awk_rtx_valtostr_out_t* out)
 {
 	qse_char_t* tmp;
 	qse_size_t tmp_len;
@@ -1208,14 +1277,14 @@ static int val_flt_to_str (
 		tmp_len = rtx->gbl.convfmt.len;
 	}
 
-	if (qse_str_init (&buf, rtx->awk->mmgr, 256) <= -1)
+	if (qse_str_init(&buf, rtx->awk->mmgr, 256) <= -1)
 	{
 		qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
 		return -1;
 	}
 	buf_inited = 1;
 
-	if (qse_str_init (&fbu, rtx->awk->mmgr, 256) <= -1)
+	if (qse_str_init(&fbu, rtx->awk->mmgr, 256) <= -1)
 	{
 		qse_str_fini (&buf);
 		qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
@@ -1223,7 +1292,7 @@ static int val_flt_to_str (
 	}
 	fbu_inited = 1;
 
-	tmp = qse_awk_rtx_format (rtx, &buf, &fbu, tmp, tmp_len, 
+	tmp = qse_awk_rtx_format(rtx, &buf, &fbu, tmp, tmp_len, 
 		(qse_size_t)-1, (qse_awk_nde_t*)v, &tmp_len);
 	if (tmp == QSE_NULL) goto oops;
 
@@ -1303,9 +1372,7 @@ oops:
 	return -1;
 }
 
-static int val_ref_to_str (
-	qse_awk_rtx_t* rtx, const qse_awk_val_ref_t* ref,
-	qse_awk_rtx_valtostr_out_t* out)
+static int val_ref_to_str (qse_awk_rtx_t* rtx, const qse_awk_val_ref_t* ref, qse_awk_rtx_valtostr_out_t* out)
 {
 	switch (ref->id)
 	{
@@ -1372,40 +1439,47 @@ int qse_awk_rtx_valtostr (
 	{
 		case QSE_AWK_VAL_NIL:
 		{
-			return str_to_str (rtx, QSE_T(""), 0, out);
+			return str_to_str(rtx, QSE_T(""), 0, out);
 		}
 
 		case QSE_AWK_VAL_INT:
 		{
-			return val_int_to_str (
-				rtx, (qse_awk_val_int_t*)v, out);
+			return val_int_to_str(rtx, (qse_awk_val_int_t*)v, out);
 		}
 
 		case QSE_AWK_VAL_FLT:
 		{
-			return val_flt_to_str (
-				rtx, (qse_awk_val_flt_t*)v, out);
+			return val_flt_to_str(rtx, (qse_awk_val_flt_t*)v, out);
 		}
 
 		case QSE_AWK_VAL_STR:
 		{
 			qse_awk_val_str_t* vs = (qse_awk_val_str_t*)v;
-			return str_to_str (rtx, vs->val.ptr, vs->val.len, out);
+			return str_to_str(rtx, vs->val.ptr, vs->val.len, out);
+		}
+
+		case QSE_AWK_VAL_BYTEARR:
+		{
+			qse_awk_val_bytearr_t* vs = (qse_awk_val_bytearr_t*)v;
+		#if defined(QSE_CHAR_IS_MCHAR)
+			return str_to_str(rtx, vs->val.ptr, vs->val.len, out);
+		#else
+			return mbs_to_str(rtx, vs->val.ptr, vs->val.len, out);
+		#endif
 		}
 
 		case QSE_AWK_VAL_MAP:
 		{
 			if (rtx->awk->opt.trait & QSE_AWK_FLEXMAP)
 			{
-				return str_to_str (rtx, QSE_T("#MAP"), 4, out);
+				return str_to_str(rtx, QSE_T("#MAP"), 4, out);
 			}
 			break;
 		}
 
 		case QSE_AWK_VAL_REF:
 		{
-			return val_ref_to_str (
-				rtx, (qse_awk_val_ref_t*)v, out);
+			return val_ref_to_str(rtx, (qse_awk_val_ref_t*)v, out);
 		}
 	}
 
@@ -1796,15 +1870,23 @@ int qse_awk_rtx_setrefval (qse_awk_rtx_t* rtx, qse_awk_val_ref_t* ref, qse_awk_v
 					 * for no duplication. jumping to the default case
 					 * and callingqse_awk_rtx_valtostrdup() would also work, anyway. */
 					qse_awk_rtx_refupval (rtx, val);
-					x = qse_awk_rtx_setrec (rtx, (qse_size_t)ref->adr, &((qse_awk_val_str_t*)val)->val);
+					x = qse_awk_rtx_setrec(rtx, (qse_size_t)ref->adr, &((qse_awk_val_str_t*)val)->val);
 					qse_awk_rtx_refdownval (rtx, val);
 					return x;
 				}
 
-#if 0
-/* TODO: */
 				case QSE_AWK_VAL_BYTEARR:
-#endif
+				#if defined(QSE_CHAR_IS_MCHAR)
+				{
+					/* same as str in the mchar mode */
+					int x;
+					qse_awk_rtx_refupval (rtx, val);
+					x = qse_awk_rtx_setrec(rtx, (qse_size_t)ref->adr, &((qse_awk_val_bytearr_t*)val)->val);
+					qse_awk_rtx_refdownval (rtx, val);
+					return x;
+				}
+				#endif
+					/* fall thru */
 
 				default:
 				{
