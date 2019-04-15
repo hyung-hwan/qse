@@ -812,6 +812,10 @@ void qse_awk_rtx_freeval (qse_awk_rtx_t* rtx, qse_awk_val_t* val, int cache)
 				break;
 			}
 
+			case QSE_AWK_VAL_BYTEARR:
+				QSE_AWK_FREE (rtx->awk, val);
+				break;
+
 			case QSE_AWK_VAL_REX:
 			{
 				/* don't free ptr as it is inlined to val
@@ -1077,22 +1081,31 @@ static int mbs_to_str (qse_awk_rtx_t* rtx, const qse_mchar_t* str, qse_size_t st
 			 * behave like CPLCPY. fall thru */
 		case QSE_AWK_RTX_VALTOSTR_CPLCPY:
 		{
-			if (str_len >= out->u.cplcpy.len)
+			qse_size_t mbslen, wcslen;
+
+			mbslen = str_len;
+			wcslen = out->u.cplcpy.len;
+			if (qse_mbsntowcsnwithcmgr(str, &mbslen, out->u.cplcpy.ptr, &wcslen, rtx->cmgr) <= -1)
 			{
-				qse_awk_rtx_seterrnum (rtx, QSE_AWK_EINVAL, QSE_NULL);
-				out->u.cplcpy.len = str_len + 1; /* set the required length */
+				qse_awk_rtx_seterrnum (rtx, QSE_AWK_EINVAL, QSE_NULL); /* TODO: change error code */
 				return -1;
 			}
 
-			out->u.cplcpy.len = qse_strncpy(out->u.cplcpy.ptr, str, str_len);
+			if (mbslen < str_len)
+			{
+				/* TODO: ... */
+			}
+			out->u.cplcpy.len = wcslen;
 			return 0;
 		}
 
 		case QSE_AWK_RTX_VALTOSTR_CPLDUP:
 		{
 			qse_char_t* tmp;
+			qse_size_t mbslen, wcslen;
 
-			tmp = QSE_AWK_STRXDUP(rtx->awk, str, str_len);
+			mbslen = str_len;
+			tmp = qse_mbsntowcsdupwithcmgr(str, &mbslen, &wcslen, rtx->awk->mmgr, rtx->cmgr);
 			if (!tmp) 
 			{
 				qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
@@ -1100,7 +1113,7 @@ static int mbs_to_str (qse_awk_rtx_t* rtx, const qse_mchar_t* str, qse_size_t st
 			}
 
 			out->u.cpldup.ptr = tmp;
-			out->u.cpldup.len = str_len;
+			out->u.cpldup.len = wcslen;
 			return 0;
 		}
 
@@ -1206,7 +1219,7 @@ static int val_int_to_str (qse_awk_rtx_t* rtx, const qse_awk_val_int_t* v, qse_a
 			tmp = QSE_STR_PTR(out->u.strp);
 
 			/* extend the buffer */
-			n = qse_str_nccats(out->u.strp, QSE_T(' '), rlen);
+			n = qse_str_nccat(out->u.strp, QSE_T(' '), rlen);
 			if (n == (qse_size_t)-1)
 			{
 				qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
@@ -1886,7 +1899,7 @@ int qse_awk_rtx_setrefval (qse_awk_rtx_t* rtx, qse_awk_val_ref_t* ref, qse_awk_v
 					return x;
 				}
 				#endif
-					/* fall thru */
+					/* fall thru otherwise */
 
 				default:
 				{

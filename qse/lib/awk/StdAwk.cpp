@@ -329,12 +329,12 @@ int StdAwk::make_additional_globals (Run* run)
 	return 0;
 }
 
-qse_cmgr_t* StdAwk::getcmgr (const char_t* ioname)
+qse_cmgr_t* StdAwk::getiocmgr (const char_t* ioname)
 {
 	QSE_ASSERT (this->cmgrtab_inited == true);
 
 #if defined(QSE_CHAR_IS_WCHAR)
-	ioattr_t* ioattr = get_ioattr (ioname, qse_strlen(ioname));
+	ioattr_t* ioattr = get_ioattr(ioname, qse_strlen(ioname));
 	if (ioattr) return ioattr->cmgr;
 #endif
 	return QSE_NULL;
@@ -521,7 +521,7 @@ int StdAwk::open_nwio (Pipe& io, int flags, void* nwad)
 	if (handle == QSE_NULL) return -1;
 
 #if defined(QSE_CHAR_IS_WCHAR)
-	qse_cmgr_t* cmgr = this->getcmgr (io.getName());
+	qse_cmgr_t* cmgr = this->getiocmgr(io.getName());
 	if (cmgr) qse_nwio_setcmgr (handle, cmgr);
 #endif
 
@@ -566,7 +566,7 @@ int StdAwk::open_pio (Pipe& io)
 	if (pio == QSE_NULL) return -1;
 
 #if defined(QSE_CHAR_IS_WCHAR)
-	qse_cmgr_t* cmgr = this->getcmgr (io.getName());
+	qse_cmgr_t* cmgr = this->getiocmgr(io.getName());
 	if (cmgr) 
 	{
 		qse_pio_setcmgr (pio, QSE_PIO_IN, cmgr);
@@ -697,10 +697,10 @@ int StdAwk::openFile (File& io)
 			break;
 	}
 
-	sio = qse_sio_open (this->getMmgr(), 0, io.getName(), flags);	
-	if (sio == NULL) return -1;
+	sio = qse_sio_open(this->getMmgr(), 0, io.getName(), flags);
+	if (!sio) return -1;
 #if defined(QSE_CHAR_IS_WCHAR)
-	qse_cmgr_t* cmgr = this->getcmgr (io.getName());
+	qse_cmgr_t* cmgr = this->getiocmgr(io.getName());
 	if (cmgr) qse_sio_setcmgr (sio, cmgr);
 #endif
 
@@ -716,17 +716,17 @@ int StdAwk::closeFile (File& io)
 
 StdAwk::ssize_t StdAwk::readFile (File& io, char_t* buf, size_t len) 
 {
-	return qse_sio_getstrn ((qse_sio_t*)io.getHandle(), buf, len);
+	return qse_sio_getstrn((qse_sio_t*)io.getHandle(), buf, len);
 }
 
 StdAwk::ssize_t StdAwk::writeFile (File& io, const char_t* buf, size_t len)
 {
-	return qse_sio_putstrn ((qse_sio_t*)io.getHandle(), buf, len);
+	return qse_sio_putstrn((qse_sio_t*)io.getHandle(), buf, len);
 }
 
 int StdAwk::flushFile (File& io) 
 { 
-	return qse_sio_flush ((qse_sio_t*)io.getHandle());
+	return qse_sio_flush((qse_sio_t*)io.getHandle());
 }
 
 void StdAwk::setConsoleCmgr (const qse_cmgr_t* cmgr)

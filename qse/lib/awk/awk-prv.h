@@ -385,6 +385,7 @@ struct qse_awk_rtx_t
 	qse_awk_errinf_t errinf;
 
 	qse_awk_t* awk;
+	qse_cmgr_t* cmgr; /* internal default cmgr */
 	qse_awk_rtx_ecb_t* ecb;
 };
 

@@ -1080,7 +1080,7 @@ static qse_ssize_t nwio_handler_open (
 
 #if defined(QSE_CHAR_IS_WCHAR)
 	{
-		qse_cmgr_t* cmgr = qse_awk_rtx_getcmgrstd (rtx, riod->name);
+		qse_cmgr_t* cmgr = qse_awk_rtx_getiocmgrstd(rtx, riod->name);
 		if (cmgr) qse_nwio_setcmgr (handle, cmgr);
 	}
 #endif
@@ -1202,7 +1202,7 @@ static qse_ssize_t pio_handler_open (
 
 #if defined(QSE_CHAR_IS_WCHAR)
 	{
-		qse_cmgr_t* cmgr = qse_awk_rtx_getcmgrstd (rtx, riod->name);
+		qse_cmgr_t* cmgr = qse_awk_rtx_getiocmgrstd(rtx, riod->name);
 		if (cmgr)	
 		{
 			qse_pio_setcmgr (handle, QSE_PIO_IN, cmgr);
@@ -1304,10 +1304,9 @@ static qse_ssize_t awk_rio_pipe (
 			ioattr_t* ioattr;
 			rxtn_t* rxtn;
 
-			rxtn = (rxtn_t*) QSE_XTN (rtx);
+			rxtn = (rxtn_t*)QSE_XTN(rtx);
 
-			ioattr = get_ioattr (
-				&rxtn->cmgrtab, riod->name, qse_strlen(riod->name));
+			ioattr = get_ioattr(&rxtn->cmgrtab, riod->name, qse_strlen(riod->name));
 			if (ioattr)
 			{
 				tmout = &tmout_buf;
@@ -1317,7 +1316,7 @@ static qse_ssize_t awk_rio_pipe (
 				tmout->a = ioattr->tmout[3];
 			}
 
-			return nwio_handler_open (rtx, riod, flags, &nwad, tmout);
+			return nwio_handler_open(rtx, riod, flags, &nwad, tmout);
 		}
 	}
 	else if (riod->uflags > 0)
@@ -1369,7 +1368,7 @@ static qse_ssize_t awk_rio_file (
 
 #if defined(QSE_CHAR_IS_WCHAR)
 			{
-				qse_cmgr_t* cmgr = qse_awk_rtx_getcmgrstd (rtx, riod->name);
+				qse_cmgr_t* cmgr = qse_awk_rtx_getiocmgrstd(rtx, riod->name);
 				if (cmgr) qse_sio_setcmgr (handle, cmgr);
 			}
 #endif
@@ -2021,27 +2020,20 @@ qse_awk_rtx_t* qse_awk_rtx_openstd (
 	rio.file = awk_rio_file;
 	rio.console = awk_rio_console;
 
-	rtx = qse_awk_rtx_open (
-		awk, 
-		QSE_SIZEOF(rxtn_t) + xtnsize,
-		&rio
-	);
-	if (rtx == QSE_NULL) return QSE_NULL;
+	rtx = qse_awk_rtx_open(awk, QSE_SIZEOF(rxtn_t) + xtnsize, &rio);
+	if (!rtx) return QSE_NULL;
 
 	rxtn = (rxtn_t*) QSE_XTN (rtx);
 
 	if (rtx->awk->opt.trait & QSE_AWK_RIO)
 	{
-		if (qse_htb_init (
-			&rxtn->cmgrtab, awk->mmgr, 256, 70, 
-			QSE_SIZEOF(qse_char_t), 1) <= -1)
+		if (qse_htb_init(&rxtn->cmgrtab, awk->mmgr, 256, 70, QSE_SIZEOF(qse_char_t), 1) <= -1)
 		{
 			qse_awk_rtx_close (rtx);
 			qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);
 			return QSE_NULL;
 		}
-		qse_htb_setstyle (&rxtn->cmgrtab, 
-			qse_gethtbstyle(QSE_HTB_STYLE_INLINE_COPIERS));
+		qse_htb_setstyle (&rxtn->cmgrtab, qse_gethtbstyle(QSE_HTB_STYLE_INLINE_COPIERS));
 		rxtn->cmgrtab_inited = 1;
 	}
 
@@ -2190,7 +2182,7 @@ static int fnc_setioattr (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 		x = qse_awk_rtx_strtonum(rtx, QSE_AWK_RTX_STRTONUM_MAKE_OPTION(0, 0), ptr[2], len[2], &l, &r);
 		if (x == 0) r = (qse_awk_flt_t)l;
 
-		ioattr = find_or_make_ioattr (rtx, &rxtn->cmgrtab, ptr[0], len[0]);
+		ioattr = find_or_make_ioattr(rtx, &rxtn->cmgrtab, ptr[0], len[0]);
 		if (ioattr == QSE_NULL) 
 		{
 			ret = -1;
@@ -2223,7 +2215,7 @@ static int fnc_setioattr (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 		}
 		else
 		{
-			cmgr = qse_findcmgr (ptr[2]);
+			cmgr = qse_findcmgr(ptr[2]);
 			if (cmgr == QSE_NULL) 
 			{
 				fret = -1;
@@ -2231,7 +2223,7 @@ static int fnc_setioattr (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 			}
 		}
 
-		ioattr = find_or_make_ioattr (rtx, &rxtn->cmgrtab, ptr[0], len[0]);
+		ioattr = find_or_make_ioattr(rtx, &rxtn->cmgrtab, ptr[0], len[0]);
 		if (ioattr == QSE_NULL) 
 		{
 			ret = -1;
@@ -2358,7 +2350,7 @@ done:
 	return ret;
 }
 
-qse_cmgr_t* qse_awk_rtx_getcmgrstd (qse_awk_rtx_t* rtx, const qse_char_t* ioname)
+qse_cmgr_t* qse_awk_rtx_getiocmgrstd (qse_awk_rtx_t* rtx, const qse_char_t* ioname)
 {
 #if defined(QSE_CHAR_IS_WCHAR)
 	rxtn_t* rxtn;
@@ -2367,7 +2359,7 @@ qse_cmgr_t* qse_awk_rtx_getcmgrstd (qse_awk_rtx_t* rtx, const qse_char_t* ioname
 	rxtn = (rxtn_t*) QSE_XTN (rtx);
 	QSE_ASSERT (rxtn->cmgrtab_inited == 1);
 
-	ioattr = get_ioattr (&rxtn->cmgrtab, ioname, qse_strlen(ioname));
+	ioattr = get_ioattr(&rxtn->cmgrtab, ioname, qse_strlen(ioname));
 	if (ioattr) return ioattr->cmgr;
 #endif
 	return QSE_NULL;
