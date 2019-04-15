@@ -5571,7 +5571,7 @@ static int get_number (qse_awk_t* awk, qse_awk_tok_t* tok)
 		}
 	}
 
-	while (QSE_AWK_ISDIGIT (awk, c)) 
+	while (QSE_AWK_ISDIGIT(awk, c)) 
 	{
 		ADD_TOKEN_CHAR (awk, tok, c);
 		GET_CHAR_TO (awk, c);
@@ -5585,7 +5585,7 @@ static int get_number (qse_awk_t* awk, qse_awk_tok_t* tok)
 		ADD_TOKEN_CHAR (awk, tok, c);
 		GET_CHAR_TO (awk, c);
 
-		while (QSE_AWK_ISDIGIT (awk, c))
+		while (QSE_AWK_ISDIGIT(awk, c))
 		{
 			ADD_TOKEN_CHAR (awk, tok, c);
 			GET_CHAR_TO (awk, c);
@@ -5605,7 +5605,7 @@ static int get_number (qse_awk_t* awk, qse_awk_tok_t* tok)
 			GET_CHAR_TO (awk, c);
 		}
 
-		while (QSE_AWK_ISDIGIT (awk, c))
+		while (QSE_AWK_ISDIGIT(awk, c))
 		{
 			ADD_TOKEN_CHAR (awk, tok, c);
 			GET_CHAR_TO (awk, c);
@@ -5879,7 +5879,7 @@ static int skip_spaces (qse_awk_t* awk)
 	}
 	else
 	{
-		while (QSE_AWK_ISSPACE (awk, c)) GET_CHAR_TO (awk, c);
+		while (QSE_AWK_ISSPACE(awk, c)) GET_CHAR_TO (awk, c);
 	}
 
 	return 0;
@@ -6105,7 +6105,7 @@ retry:
 		SET_TOKEN_TYPE (awk, tok, TOK_NEWLINE);
 		GET_CHAR (awk);
 	}
-	else if (QSE_AWK_ISDIGIT (awk, c)/*|| c == QSE_T('.')*/)
+	else if (QSE_AWK_ISDIGIT(awk, c)/*|| c == QSE_T('.')*/)
 	{
 		if (get_number (awk, tok) <= -1) return -1;
 	}
@@ -6119,7 +6119,7 @@ retry:
 		unget_char (awk, &awk->sio.last);	
 		awk->sio.last = lc;
 
-		if (QSE_AWK_ISDIGIT (awk, c))
+		if (QSE_AWK_ISDIGIT(awk, c))
 		{
 			/* for a token such as .123 */
 			if (get_number (awk, tok) <= -1) return -1;
@@ -6137,7 +6137,7 @@ retry:
 		ADD_TOKEN_CHAR (awk, tok, c);
 		GET_CHAR_TO (awk, c);
 
-		if (c != QSE_T('_') && !QSE_AWK_ISALPHA (awk, c))
+		if (c != QSE_T('_') && !QSE_AWK_ISALPHA(awk, c))
 		{
 			/* this extended keyword is empty, 
 			 * not followed by a valid word */
@@ -6152,8 +6152,8 @@ retry:
 			GET_CHAR_TO (awk, c);
 		} 
 		while (c == QSE_T('_') || 
-		       QSE_AWK_ISALPHA (awk, c) || 
-		       QSE_AWK_ISDIGIT (awk, c));
+		       QSE_AWK_ISALPHA(awk, c) || 
+		       QSE_AWK_ISDIGIT(awk, c));
 
 		type = classify_ident (awk, QSE_STR_XSTR(tok->name));
 		if (type == TOK_IDENT)
@@ -6163,7 +6163,7 @@ retry:
 		}
 		SET_TOKEN_TYPE (awk, tok, type);
 	}
-	else if (c == QSE_T('_') || QSE_AWK_ISALPHA (awk, c))
+	else if (c == QSE_T('_') || QSE_AWK_ISALPHA(awk, c))
 	{
 		int type;
 
@@ -6174,8 +6174,8 @@ retry:
 			GET_CHAR_TO (awk, c);
 		} 
 		while (c == QSE_T('_') || 
-		       QSE_AWK_ISALPHA (awk, c) || 
-		       QSE_AWK_ISDIGIT (awk, c));
+		       QSE_AWK_ISALPHA(awk, c) || 
+		       QSE_AWK_ISDIGIT(awk, c));
 
 		type = classify_ident (awk, QSE_STR_XSTR(tok->name));
 		SET_TOKEN_TYPE (awk, tok, type);

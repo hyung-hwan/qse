@@ -1420,8 +1420,7 @@ int qse_awk_rtx_valtostr (
 	return -1;
 }
 
-qse_char_t* qse_awk_rtx_valtostrdup (
-	qse_awk_rtx_t* rtx, const qse_awk_val_t* v, qse_size_t* len)
+qse_char_t* qse_awk_rtx_valtostrdup (qse_awk_rtx_t* rtx, const qse_awk_val_t* v, qse_size_t* len)
 {
 	qse_awk_rtx_valtostr_out_t out;
 
@@ -1432,14 +1431,13 @@ qse_char_t* qse_awk_rtx_valtostrdup (
 	return out.u.cpldup.ptr;
 }
 
-qse_mchar_t* qse_awk_rtx_valtombsdup (
-	qse_awk_rtx_t* rtx, const qse_awk_val_t* v, qse_size_t* len)
+qse_mchar_t* qse_awk_rtx_valtombsdup (qse_awk_rtx_t* rtx, const qse_awk_val_t* v, qse_size_t* len)
 {
 #if defined(QSE_CHAR_IS_MCHAR)
 	qse_awk_rtx_valtostr_out_t out;
 
 	out.type = QSE_AWK_RTX_VALTOSTR_CPLDUP;
-	if (qse_awk_rtx_valtostr (rtx, v, &out) <= -1) return QSE_NULL;
+	if (qse_awk_rtx_valtostr(rtx, v, &out) <= -1) return QSE_NULL;
 
 	if (len) *len = out.u.cpldup.len;
 	return out.u.cpldup.ptr;
@@ -1448,16 +1446,15 @@ qse_mchar_t* qse_awk_rtx_valtombsdup (
 	qse_mchar_t* mbs;
 
 	out.type = QSE_AWK_RTX_VALTOSTR_CPLDUP;
-	if (qse_awk_rtx_valtostr (rtx, v, &out) <= -1) return QSE_NULL;
+	if (qse_awk_rtx_valtostr(rtx, v, &out) <= -1) return QSE_NULL;
 
-	mbs = qse_wcsntombsdup (out.u.cpldup.ptr, out.u.cpldup.len, len, rtx->awk->mmgr);
+	mbs = qse_wcsntombsdup(out.u.cpldup.ptr, out.u.cpldup.len, len, rtx->awk->mmgr);
 	QSE_AWK_FREE (rtx->awk, out.u.cpldup.ptr);
 	return mbs;
 #endif
 }
 
-qse_wchar_t* qse_awk_rtx_valtowcsdup (
-	qse_awk_rtx_t* rtx, const qse_awk_val_t* v, qse_size_t* len)
+qse_wchar_t* qse_awk_rtx_valtowcsdup (qse_awk_rtx_t* rtx, const qse_awk_val_t* v, qse_size_t* len)
 {
 #if defined(QSE_CHAR_IS_MCHAR)
 	qse_awk_rtx_valtostr_out_t out;
@@ -1480,8 +1477,7 @@ qse_wchar_t* qse_awk_rtx_valtowcsdup (
 #endif
 }
 
-qse_char_t* qse_awk_rtx_getvalstr (
-	qse_awk_rtx_t* rtx, const qse_awk_val_t* v, qse_size_t* len)
+qse_char_t* qse_awk_rtx_getvalstr (qse_awk_rtx_t* rtx, const qse_awk_val_t* v, qse_size_t* len)
 {
 	if (QSE_AWK_RTX_GETVALTYPE(rtx, v) == QSE_AWK_VAL_STR)
 	{
@@ -1494,8 +1490,7 @@ qse_char_t* qse_awk_rtx_getvalstr (
 	}
 }
 
-void qse_awk_rtx_freevalstr (
-	qse_awk_rtx_t* rtx, const qse_awk_val_t* v, qse_char_t* str)
+void qse_awk_rtx_freevalstr (qse_awk_rtx_t* rtx, const qse_awk_val_t* v, qse_char_t* str)
 {
 	if (QSE_AWK_RTX_GETVALTYPE(rtx, v) != QSE_AWK_VAL_STR ||
 	    str != ((qse_awk_val_str_t*)v)->val.ptr)
@@ -1504,8 +1499,7 @@ void qse_awk_rtx_freevalstr (
 	}
 }
 
-static int val_ref_to_num (
-	qse_awk_rtx_t* rtx, const qse_awk_val_ref_t* ref, qse_awk_int_t* l, qse_awk_flt_t* r)
+static int val_ref_to_num (qse_awk_rtx_t* rtx, const qse_awk_val_ref_t* ref, qse_awk_int_t* l, qse_awk_flt_t* r)
 {
 	switch (ref->id)
 	{
@@ -1516,7 +1510,7 @@ static int val_ref_to_num (
 			idx = (qse_size_t)ref->adr;
 			if (idx == 0)
 			{
-				return qse_awk_rtx_strtonum (
+				return qse_awk_rtx_strtonum(
 					rtx, 
 					QSE_AWK_RTX_STRTONUM_MAKE_OPTION(0, 0),
 					QSE_STR_PTR(&rtx->inrec.line),
@@ -1526,7 +1520,7 @@ static int val_ref_to_num (
 			}
 			else if (idx <= rtx->inrec.nflds)
 			{
-				return qse_awk_rtx_strtonum (
+				return qse_awk_rtx_strtonum(
 					rtx,
 					QSE_AWK_RTX_STRTONUM_MAKE_OPTION(0, 0),
 					rtx->inrec.flds[idx-1].ptr,
@@ -1536,7 +1530,7 @@ static int val_ref_to_num (
 			}
 			else
 			{
-				return qse_awk_rtx_strtonum (
+				return qse_awk_rtx_strtonum(
 					rtx, QSE_AWK_RTX_STRTONUM_MAKE_OPTION(0, 0), QSE_T(""), 0, l, r
 				);
 			}
@@ -1558,14 +1552,13 @@ static int val_ref_to_num (
 			QSE_ASSERT (QSE_AWK_RTX_GETVALTYPE (rtx, *xref) != QSE_AWK_VAL_REF); 
 
 			/* make a recursive call back to the caller */
-			return qse_awk_rtx_valtonum (rtx, *xref, l, r);
+			return qse_awk_rtx_valtonum(rtx, *xref, l, r);
 		}
 	}
 }
 
 
-int qse_awk_rtx_valtonum (
-	qse_awk_rtx_t* rtx, const qse_awk_val_t* v, qse_awk_int_t* l, qse_awk_flt_t* r)
+int qse_awk_rtx_valtonum (qse_awk_rtx_t* rtx, const qse_awk_val_t* v, qse_awk_int_t* l, qse_awk_flt_t* r)
 {
 	qse_awk_val_type_t vtype = QSE_AWK_RTX_GETVALTYPE (rtx, v);
 
@@ -1600,8 +1593,6 @@ int qse_awk_rtx_valtonum (
 			);
 		}
 
-#if 0
-/* TODO: */
 		case QSE_AWK_VAL_BYTEARR:
 		{
 			return qse_awk_rtx_mbstonum (
@@ -1612,7 +1603,6 @@ int qse_awk_rtx_valtonum (
 				l, r
 			);
 		}
-#endif
 
 		case QSE_AWK_VAL_MAP:
 		{
@@ -1625,7 +1615,7 @@ int qse_awk_rtx_valtonum (
 
 		case QSE_AWK_VAL_REF:
 		{
-			return val_ref_to_num (rtx, (qse_awk_val_ref_t*)v, l, r);
+			return val_ref_to_num(rtx, (qse_awk_val_ref_t*)v, l, r);
 		}
 	}
 
@@ -1640,13 +1630,12 @@ int qse_awk_rtx_valtonum (
 	return -1; /* error */
 }
 
-int qse_awk_rtx_valtoint (
-	qse_awk_rtx_t* rtx, const qse_awk_val_t* v, qse_awk_int_t* l)
+int qse_awk_rtx_valtoint (qse_awk_rtx_t* rtx, const qse_awk_val_t* v, qse_awk_int_t* l)
 {
 	int n;
 	qse_awk_flt_t r;
 
-	n = qse_awk_rtx_valtonum (rtx, v, l, &r);
+	n = qse_awk_rtx_valtonum(rtx, v, l, &r);
 	if (n == 1) 
 	{
 		*l = (qse_awk_int_t)r;
@@ -1656,70 +1645,58 @@ int qse_awk_rtx_valtoint (
 	return n;
 }
 
-int qse_awk_rtx_valtoflt (
-	qse_awk_rtx_t* rtx, const qse_awk_val_t* v, qse_awk_flt_t* r)
+int qse_awk_rtx_valtoflt (qse_awk_rtx_t* rtx, const qse_awk_val_t* v, qse_awk_flt_t* r)
 {
 	int n;
 	qse_awk_int_t l;
 
-	n = qse_awk_rtx_valtonum (rtx, v, &l, r);
+	n = qse_awk_rtx_valtonum(rtx, v, &l, r);
 	if (n == 0) *r = (qse_awk_flt_t)l;
 	else if (n == 1) n = 0;
 
 	return n;
 }
 
-int qse_awk_rtx_strtonum (
-	qse_awk_rtx_t* rtx, int option,
-	const qse_char_t* ptr, qse_size_t len, 
-	qse_awk_int_t* l, qse_awk_flt_t* r)
-{
-	const qse_char_t* endptr;
-	const qse_char_t* end;
+/* ========================================================================== */
+#undef awk_rtx_strtonum
+#undef awk_strxtoint
+#undef awk_strxtoflt
+#undef char_t
+#undef AWK_ISDIGIT
+#undef _T
 
-	int strict = QSE_AWK_RTX_STRTONUM_GET_OPTION_STRICT(option);
-	int base = QSE_AWK_RTX_STRTONUN_GET_OPTION_BASE(option);
+#define awk_rtx_strtonum qse_awk_rtx_mbstonum
+#define awk_strxtoint qse_awk_mbsxtoint
+#define awk_strxtoflt qse_awk_mbsxtoflt
+#define char_t qse_mchar_t
+#define AWK_ISDIGIT QSE_AWK_ISMDIGIT
+#define _T QSE_MT
+#include "val-imp.h"
 
-	end = ptr + len;
-	*l = qse_awk_strxtoint(rtx->awk, ptr, len, base, &endptr);
-	if (endptr < end)
-	{
-		if (*endptr == QSE_T('.') || *endptr == QSE_T('E') || *endptr == QSE_T('e'))
-		{
-		handle_float:
-			*r = qse_awk_strxtoflt (rtx->awk, ptr, len, &endptr);
-			if (strict && endptr < end) return -1;
-			return 1; /* flt */
-		}
-		else if (QSE_AWK_ISDIGIT(awk, *endptr))
-		{
-			const qse_char_t* p = endptr;
-			do { p++; } while (p < end && QSE_AWK_ISDIGIT(awk, *p));
-			if (p < end && (*p == QSE_T('.') || *p == QSE_T('E') || *p == QSE_T('e'))) 
-			{
-				/* it's probably an floating-point number. 
-				 * 
- 				 *  BEGIN { b=99; printf "%f\n", (0 b 1.112); }
-				 *
-				 * for the above code, this function gets '0991.112'.
-				 * and endptr points to '9' after qse_awk_strxtoint() as
-				 * the numeric string beginning with 0 is treated 
-				 * as an octal number. 
-				 * 
-				 * getting side-tracked, 
-				 *   BEGIN { b=99; printf "%f\n", (0 b 1.000); }
-				 * the above code cause this function to get 0991, not 0991.000
-				 * because of the default CONVFMT '%.6g' which doesn't produce '.000'.
-				 * so such a number is not treated as a floating-point number.
-				 */
-				goto handle_float;
-			}
-		}
-	}
+/* ------------------------------------------------------------------------- */
+#undef awk_rtx_strtonum
+#undef awk_strxtoint
+#undef awk_strxtoflt
+#undef char_t
+#undef AWK_ISDIGIT
+#undef _T
+/* ------------------------------------------------------------------------- */
 
-	if (strict && endptr < end) return -1;
-	return 0; /* int */
-}
+#define awk_rtx_strtonum qse_awk_rtx_wcstonum
+#define awk_strxtoint qse_awk_wcsxtoint
+#define awk_strxtoflt qse_awk_wcsxtoflt
+#define char_t qse_wchar_t
+#define AWK_ISDIGIT QSE_AWK_ISWDIGIT
+#define _T QSE_WT
+#include "val-imp.h"
+
+#undef awk_rtx_strtonum
+#undef awk_strxtoint
+#undef awk_strxtoflt
+#undef char_t
+#undef AWK_ISDIGIT
+#undef _T
+/* ========================================================================== */
 
 static QSE_INLINE qse_awk_uint_t hash (qse_uint8_t* ptr, qse_size_t len)
 {
@@ -1741,23 +1718,32 @@ qse_awk_int_t qse_awk_rtx_hashval (qse_awk_rtx_t* rtx, qse_awk_val_t* v)
 
 		case QSE_AWK_VAL_INT:
 		{
-			qse_awk_int_t tmp = QSE_AWK_RTX_GETINTFROMVAL (rtx, v);
+			qse_awk_int_t tmp = QSE_AWK_RTX_GETINTFROMVAL(rtx, v);
 			/*hv = ((qse_awk_val_int_t*)v)->val;*/
 			hv = (qse_awk_int_t)hash((qse_uint8_t*)&tmp, QSE_SIZEOF(tmp));
 			break;
 		}
 
 		case QSE_AWK_VAL_FLT:
-			hv = (qse_awk_int_t)hash(
-				(qse_uint8_t*)&((qse_awk_val_flt_t*)v)->val,
-				QSE_SIZEOF(((qse_awk_val_flt_t*)v)->val));
+		{
+			qse_awk_val_flt_t* dv = (qse_awk_val_flt_t*)v;
+			hv = (qse_awk_int_t)hash((qse_uint8_t*)&dv->val, QSE_SIZEOF(dv->val));
 			break;
+		}
 
 		case QSE_AWK_VAL_STR:
-			hv = (qse_awk_int_t)hash(
-				(qse_uint8_t*)((qse_awk_val_str_t*)v)->val.ptr,
-				((qse_awk_val_str_t*)v)->val.len * QSE_SIZEOF(qse_char_t));
+		{
+			qse_awk_val_str_t* dv = (qse_awk_val_str_t*)v;
+			hv = (qse_awk_int_t)hash((qse_uint8_t*)dv->val.ptr, dv->val.len * QSE_SIZEOF(*dv->val.ptr));
 			break;
+		}
+
+		case QSE_AWK_VAL_BYTEARR:
+		{
+			qse_awk_val_bytearr_t* dv = (qse_awk_val_bytearr_t*)v;
+			hv = (qse_awk_int_t)hash((qse_uint8_t*)dv->val.ptr, dv->val.len * QSE_SIZEOF(*dv->val.ptr));
+			break;
+		}
 
 		default:
 
@@ -1806,27 +1792,28 @@ int qse_awk_rtx_setrefval (qse_awk_rtx_t* rtx, qse_awk_val_ref_t* ref, qse_awk_v
 				case QSE_AWK_VAL_STR:
 				{
 					int x;
-
 					/* handle this separately from the default case
 					 * for no duplication. jumping to the default case
 					 * and callingqse_awk_rtx_valtostrdup() would also work, anyway. */
 					qse_awk_rtx_refupval (rtx, val);
-					x = qse_awk_rtx_setrec (
-						rtx, (qse_size_t)ref->adr, 
-						&((qse_awk_val_str_t*)val)->val
-					);
+					x = qse_awk_rtx_setrec (rtx, (qse_size_t)ref->adr, &((qse_awk_val_str_t*)val)->val);
 					qse_awk_rtx_refdownval (rtx, val);
 					return x;
 				}
+
+#if 0
+/* TODO: */
+				case QSE_AWK_VAL_BYTEARR:
+#endif
 
 				default:
 				{
 					qse_cstr_t str;
 					int x;
-	
-					str.ptr = qse_awk_rtx_valtostrdup (rtx, val, &str.len);
+
+					str.ptr = qse_awk_rtx_valtostrdup(rtx, val, &str.len);
 					qse_awk_rtx_refupval (rtx, val);
-					x = qse_awk_rtx_setrec (rtx, (qse_size_t)ref->adr, &str);
+					x = qse_awk_rtx_setrec(rtx, (qse_size_t)ref->adr, &str);
 					qse_awk_rtx_refdownval (rtx, val);
 					QSE_AWK_FREE (rtx->awk, str.ptr);
 					return x;
@@ -1835,7 +1822,7 @@ int qse_awk_rtx_setrefval (qse_awk_rtx_t* rtx, qse_awk_val_ref_t* ref, qse_awk_v
 		}
 
 		case QSE_AWK_VAL_REF_GBL:
-			return qse_awk_rtx_setgbl (rtx, (int)ref->adr, val);
+			return qse_awk_rtx_setgbl(rtx, (int)ref->adr, val);
 
 		case QSE_AWK_VAL_REF_NAMEDIDX:
 		case QSE_AWK_VAL_REF_GBLIDX:

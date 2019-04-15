@@ -376,7 +376,7 @@ retry:
 		ADD_TOKEN_CHAR (xli, tok, c);
 		GET_CHAR_TO (xli, c);
 
-		if (!QSE_ISALPHA (c))
+		if (!QSE_ISALPHA(c))
 		{
 			/* this directive is empty, not followed by a valid word */
 			qse_xli_seterror (xli, QSE_XLI_EXKWEM, QSE_NULL, &tok->loc);
@@ -390,7 +390,7 @@ retry:
 			ADD_TOKEN_CHAR (xli, tok, c);
 			GET_CHAR_TO (xli, c);
 		} 
-		while (QSE_ISALPHA (c));
+		while (QSE_ISALPHA(c));
 
 		type = classify_ident(xli, QSE_STR_XSTR(tok->name));
 		if (type == QSE_XLI_TOK_IDENT)
@@ -401,7 +401,7 @@ retry:
 		}
 		SET_TOKEN_TYPE (xli, tok, type);
 	}
-	else if (c == QSE_T('_') || QSE_ISALPHA (c))
+	else if (c == QSE_T('_') || QSE_ISALPHA(c))
 	{
 		qse_xli_tok_type_t type;
 

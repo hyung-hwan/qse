@@ -1896,29 +1896,63 @@ QSE_EXPORT qse_char_t* qse_awk_cstrdup (
 );
 
 /**
- * The qse_awk_strxtoint() function converts a string to an integer.
+ * The qse_awk_mbsxtoint() function converts a multi-byte string to an integer.
  */
-QSE_EXPORT qse_awk_int_t qse_awk_strxtoint (
-	qse_awk_t*         awk,
-	const qse_char_t*  str,
-	qse_size_t         len,
-	int                base,
-	const qse_char_t** endptr
+QSE_EXPORT qse_awk_int_t qse_awk_mbsxtoint (
+	qse_awk_t*           awk,
+	const qse_mchar_t*   str,
+	qse_size_t           len,
+	int                  base,
+	const qse_mchar_t**  endptr
 );
 
 /**
- * The qse_awk_strxtoflt() function converts a string to a floating-point
+ * The qse_awk_wcsxtoint() function converts a wide character string to an integer.
+ */
+QSE_EXPORT qse_awk_int_t qse_awk_wcsxtoint (
+	qse_awk_t*          awk,
+	const qse_wchar_t*  str,
+	qse_size_t          len,
+	int                 base,
+	const qse_wchar_t** endptr
+);
+
+#if defined(QSE_CHAR_IS_MCHAR)
+#	define qse_awk_strxtoint(awk,str,len,base,endptr) qse_awk_mbsxtoint(awk,str,len,base,endptr)
+#else
+#	define qse_awk_strxtoint(awk,str,len,base,endptr) qse_awk_wcsxtoint(awk,str,len,base,endptr)
+#endif
+
+/**
+ * The qse_awk_mbsxtoflt() function converts a multi-byte string to a floating-point
  * number.
  */
-QSE_EXPORT qse_awk_flt_t qse_awk_strxtoflt (
-	qse_awk_t*         awk,
-	const qse_char_t*  str,
-	qse_size_t         len, 
-	const qse_char_t** endptr
+QSE_EXPORT qse_awk_flt_t qse_awk_mbsxtoflt (
+	qse_awk_t*          awk,
+	const qse_mchar_t*  str,
+	qse_size_t          len, 
+	const qse_mchar_t** endptr
 );
 
 /**
- * The qse_awk_longtostr() functon converts an integer to a string.
+ * The qse_awk_wcsxtoflt() function converts a wide character string to a floating-point
+ * number.
+ */
+QSE_EXPORT qse_awk_flt_t qse_awk_wcsxtoflt (
+	qse_awk_t*          awk,
+	const qse_wchar_t*  str,
+	qse_size_t          len, 
+	const qse_wchar_t** endptr
+);
+
+#if defined(QSE_CHAR_IS_MCHAR)
+#	define qse_awk_strxtoflt(awk,str,len,endptr) qse_awk_mbsxtoflt(awk,str,len,endptr)
+#else
+#	define qse_awk_strxtoflt(awk,str,len,endptr) qse_awk_wcsxtoflt(awk,str,len,endptr)
+#endif
+
+/**
+ * The qse_awk_inttostr() functon converts an integer to a string.
  */
 QSE_EXPORT qse_size_t qse_awk_inttostr (
 	qse_awk_t*        awk,
@@ -2811,15 +2845,29 @@ QSE_EXPORT int qse_awk_rtx_valtoflt (
 #define QSE_AWK_RTX_STRTONUM_GET_OPTION_STRICT(option) ((option) & 1)
 #define QSE_AWK_RTX_STRTONUN_GET_OPTION_BASE(option) ((option) >> 8)
 
-QSE_EXPORT int qse_awk_rtx_strtonum (
-	qse_awk_rtx_t*    rtx, /**< runtime context */
-	int               strict, /**< determines to perform strict check */
-	const qse_char_t* ptr, /**< points to a string to convert */
-	qse_size_t        len, /**< number of characters in a string */
-	qse_awk_int_t*    l,   /**< stores a converted integer */
-	qse_awk_flt_t*    r    /**< stores a converted floating-poing number */
+QSE_EXPORT int qse_awk_rtx_mbstonum (
+	qse_awk_rtx_t*     rtx, /**< runtime context */
+	int                strict, /**< determines to perform strict check */
+	const qse_mchar_t* ptr, /**< points to a string to convert */
+	qse_size_t         len, /**< number of characters in a string */
+	qse_awk_int_t*     l,   /**< stores a converted integer */
+	qse_awk_flt_t*     r    /**< stores a converted floating-poing number */
 );
 
+QSE_EXPORT int qse_awk_rtx_wcstonum (
+	qse_awk_rtx_t*     rtx, /**< runtime context */
+	int                strict, /**< determines to perform strict check */
+	const qse_wchar_t* ptr, /**< points to a string to convert */
+	qse_size_t         len, /**< number of characters in a string */
+	qse_awk_int_t*     l,   /**< stores a converted integer */
+	qse_awk_flt_t*     r    /**< stores a converted floating-poing number */
+);
+
+#if defined(QSE_CHAR_IS_MCHAR)
+#	define qse_awk_rtx_strtonum(rtx,strict,ptr,len,l,r) qse_awk_rtx_mbstonum(rtx,strict,ptr,len,l,r)
+#else
+#	define qse_awk_rtx_strtonum(rtx,strict,ptr,len,l,r) qse_awk_rtx_wcstonum(rtx,strict,ptr,len,l,r)
+#endif
 /**
  * The qse_awk_rtx_hashval() function hashes a simple value
  * to a positive integer. It returns -1 for a inhashable value.

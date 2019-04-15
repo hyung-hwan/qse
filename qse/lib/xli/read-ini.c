@@ -223,7 +223,7 @@ static int get_token_into (qse_xli_t* xli, qse_xli_tok_t* tok)
 			ADD_TOKEN_CHAR (xli, tok, c);
 		}
 	}
-	else if (c == QSE_T('_') || QSE_ISALPHA (c) || 
+	else if (c == QSE_T('_') || QSE_ISALPHA(c) || 
 	         ((xli->opt.trait & QSE_XLI_LEADDIGIT) && QSE_ISDIGIT(c)))
 	{
 		int lead_digit = QSE_ISDIGIT(c);
@@ -238,7 +238,7 @@ static int get_token_into (qse_xli_t* xli, qse_xli_tok_t* tok)
 
 			if (c == QSE_T('_') || c == QSE_T('-') || 
 			    c == QSE_T(':') || c == QSE_T('*') ||
-			    c == QSE_T('/') || QSE_ISALPHA (c)) 
+			    c == QSE_T('/') || QSE_ISALPHA(c)) 
 			{
 				all_digits = 0;
 			}
