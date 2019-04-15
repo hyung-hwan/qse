@@ -82,510 +82,57 @@ qse_char_t* qse_awk_cstrdup (qse_awk_t* awk, const qse_cstr_t* s)
 	return ptr;
 }
 
-qse_awk_int_t qse_awk_strxtoint (
-	qse_awk_t* awk, const qse_char_t* str, qse_size_t len,
-	int base, const qse_char_t** endptr)
-{
-	qse_awk_int_t n = 0;
-	const qse_char_t* p;
-	const qse_char_t* end;
-	qse_size_t rem;
-	int digit, negative = 0;
+/* ========================================================================= */
+#undef awk_strxtoint
+#undef awk_strtoflt
+#undef awk_strxtoflt
+#undef char_t
+#undef cint_t
+#undef AWK_ISSPACE
+#undef AWK_ISDIGIT
+#undef _T
 
-	QSE_ASSERT (base < 37); 
+#define awk_strxtoint qse_awk_mbsxtoint
+#define awk_strtoflt qse_awk_mbstoflt
+#define awk_strxtoflt qse_awk_mbsxtoflt
+#define char_t qse_mchar_t
+#define cint_t qse_mcint_t
+#define AWK_ISSPACE QSE_AWK_ISMSPACE
+#define AWK_ISDIGIT QSE_AWK_ISMDIGIT
+#define _T QSE_MT
+#include "misc-imp.h"
 
-	p = str; 
-	end = str + len;
-	
-	if (awk->opt.trait & QSE_AWK_STRIPSTRSPC)
-	{
-		/* strip off leading spaces */
-		while (p < end && QSE_AWK_ISSPACE(awk,*p)) p++;
-	}
+/* ------------------------------------------------------------------------- */
+#undef awk_strxtoint
+#undef awk_strtoflt
+#undef awk_strxtoflt
+#undef char_t
+#undef cint_t
+#undef AWK_ISSPACE
+#undef AWK_ISDIGIT
+#undef _T
+/* ------------------------------------------------------------------------- */
 
-	/* check for a sign */
-	while (p < end)
-	{
-		if (*p == QSE_T('-')) 
-		{
-			negative = ~negative;
-			p++;
-		}
-		else if (*p == QSE_T('+')) p++;
-		else break;
-	}
+#define awk_strxtoint qse_awk_wcsxtoint
+#define awk_strtoflt qse_awk_wcstoflt
+#define awk_strxtoflt qse_awk_wcsxtoflt
+#define char_t qse_wchar_t
+#define cint_t qse_wcint_t
+#define AWK_ISSPACE QSE_AWK_ISWSPACE
+#define AWK_ISDIGIT QSE_AWK_ISWDIGIT
+#define _T QSE_WT
+#include "misc-imp.h"
 
-	/* check for a binary/octal/hexadecimal notation */
-	rem = end - p;
-	if (base == 0) 
-	{
-		if (rem >= 1 && *p == QSE_T('0')) 
-		{
-			p++;
+#undef awk_strxtoint
+#undef awk_strtoflt
+#undef awk_strxtoflt
+#undef char_t
+#undef cint_t
+#undef AWK_ISSPACE
+#undef AWK_ISDIGIT
+#undef _T
+/* ========================================================================= */
 
-			if (rem == 1) base = 8;
-			else if (*p == QSE_T('x') || *p == QSE_T('X'))
-			{
-				p++; base = 16;
-			} 
-			else if (*p == QSE_T('b') || *p == QSE_T('B'))
-			{
-				p++; base = 2;
-			}
-			else base = 8;
-		}
-		else base = 10;
-	} 
-	else if (rem >= 2 && base == 16)
-	{
-		if (*p == QSE_T('0') && 
-		    (*(p+1) == QSE_T('x') || *(p+1) == QSE_T('X'))) p += 2; 
-	}
-	else if (rem >= 2 && base == 2)
-	{
-		if (*p == QSE_T('0') && 
-		    (*(p+1) == QSE_T('b') || *(p+1) == QSE_T('B'))) p += 2; 
-	}
-
-	/* process the digits */
-	while (p < end)
-	{
-		if (*p >= QSE_T('0') && *p <= QSE_T('9'))
-			digit = *p - QSE_T('0');
-		else if (*p >= QSE_T('A') && *p <= QSE_T('Z'))
-			digit = *p - QSE_T('A') + 10;
-		else if (*p >= QSE_T('a') && *p <= QSE_T('z'))
-			digit = *p - QSE_T('a') + 10;
-		else break;
-
-		if (digit >= base) break;
-		n = n * base + digit;
-
-		p++;
-	}
-
-	if (endptr) *endptr = p;
-	return (negative)? -n: n;
-}
-
-
-/*
- * qse_awk_strtoflt is almost a replica of strtod.
- *
- * strtod.c --
- *
- *      Source code for the "strtod" library procedure.
- *
- * Copyright (c) 1988-1993 The Regents of the University of California.
- * Copyright (c) 1994 Sun Microsystems, Inc.
- *
- * Permission to use, copy, modify, and distribute this
- * software and its documentation for any purpose and without
- * fee is hereby granted, provided that the above copyright
- * notice appear in all copies.  The University of California
- * makes no representations about the suitability of this
- * software for any purpose.  It is provided "as is" without
- * express or implied warranty.
- */
-
-/*
- *                double(64bits)    extended(80-bits)    quadruple(128-bits)
- *  exponent      11 bits           15 bits              15 bits
- *  fraction      52 bits           63 bits              112 bits
- *  sign          1 bit             1 bit                1 bit
- *  integer                         1 bit
- */         
-#define MAX_EXPONENT 511
-
-qse_awk_flt_t qse_awk_strtoflt (qse_awk_t* awk, const qse_char_t* str)
-{
-	/* 
-	 * Table giving binary powers of 10. Entry is 10^2^i.  
-	 * Used to convert decimal exponents into floating-point numbers.
-	 */ 
-	static qse_awk_flt_t powers_of_10[] = 
-	{
-		10.,    100.,   1.0e4,   1.0e8,   1.0e16,
-		1.0e32, 1.0e64, 1.0e128, 1.0e256
-	};
-
-	qse_awk_flt_t fraction, dbl_exp, * d;
-	const qse_char_t* p;
-	qse_cint_t c;
-	int exp = 0;		/* Exponent read from "EX" field */
-
-	/* 
-	 * Exponent that derives from the fractional part.  Under normal 
-	 * circumstatnces, it is the negative of the number of digits in F.
-	 * However, if I is very long, the last digits of I get dropped 
-	 * (otherwise a long I with a large negative exponent could cause an
-	 * unnecessary overflow on I alone).  In this case, frac_exp is 
-	 * incremented one for each dropped digit. 
-	 */
-
-	int frac_exp;
-	int mant_size; /* Number of digits in mantissa. */
-	int dec_pt;    /* Number of mantissa digits BEFORE decimal point */
-	const qse_char_t *pexp;  /* Temporarily holds location of exponent in string */
-	int negative = 0, exp_negative = 0;
-
-	p = str;
-
-	if (awk->opt.trait & QSE_AWK_STRIPSTRSPC)
-	{
-		/* strip off leading spaces */ 
-		while (QSE_AWK_ISSPACE(awk,*p)) p++;
-	}
-
-	/* check for a sign */
-	while (*p != QSE_T('\0')) 
-	{
-		if (*p == QSE_T('-')) 
-		{
-			negative = ~negative;
-			p++;
-		}
-		else if (*p == QSE_T('+')) p++;
-		else break;
-	}
-
-	/* Count the number of digits in the mantissa (including the decimal
-	 * point), and also locate the decimal point. */
-	dec_pt = -1;
-	for (mant_size = 0; ; mant_size++) 
-	{
-		c = *p;
-		if (!QSE_AWK_ISDIGIT (awk, c)) 
-		{
-			if ((c != QSE_T('.')) || (dec_pt >= 0)) break;
-			dec_pt = mant_size;
-		}
-		p++;
-	}
-
-	/*
-	 * Now suck up the digits in the mantissa.  Use two integers to
-	 * collect 9 digits each (this is faster than using floating-point).
-	 * If the mantissa has more than 18 digits, ignore the extras, since
-	 * they can't affect the value anyway.
-	 */
-	pexp = p;
-	p -= mant_size;
-	if (dec_pt < 0) 
-	{
-		dec_pt = mant_size;
-	} 
-	else 
-	{
-		mant_size--;	/* One of the digits was the point */
-	}
-
-	if (mant_size > 18) 
-	{
-		frac_exp = dec_pt - 18;
-		mant_size = 18;
-	} 
-	else 
-	{
-		frac_exp = dec_pt - mant_size;
-	}
-
-	if (mant_size == 0) 
-	{
-		fraction = 0.0;
-		/*p = str;*/
-		p = pexp;
-		goto done;
-	} 
-	else 
-	{
-		int frac1, frac2;
-		frac1 = 0;
-		for ( ; mant_size > 9; mant_size--) 
-		{
-			c = *p;
-			p++;
-			if (c == QSE_T('.')) 
-			{
-				c = *p;
-				p++;
-			}
-			frac1 = 10 * frac1 + (c - QSE_T('0'));
-		}
-		frac2 = 0;
-		for (; mant_size > 0; mant_size--) {
-			c = *p;
-			p++;
-			if (c == QSE_T('.')) 
-			{
-				c = *p;
-				p++;
-			}
-			frac2 = 10*frac2 + (c - QSE_T('0'));
-		}
-		fraction = (1.0e9 * frac1) + frac2;
-	}
-
-	/* Skim off the exponent */
-	p = pexp;
-	if ((*p == QSE_T('E')) || (*p == QSE_T('e'))) 
-	{
-		p++;
-		if (*p == QSE_T('-')) 
-		{
-			exp_negative = 1;
-			p++;
-		} 
-		else 
-		{
-			if (*p == QSE_T('+')) p++;
-			exp_negative = 0;
-		}
-		if (!QSE_AWK_ISDIGIT (awk, *p)) 
-		{
-			/* p = pexp; */
-			/* goto done; */
-			goto no_exp;
-		}
-		while (QSE_AWK_ISDIGIT (awk, *p)) 
-		{
-			exp = exp * 10 + (*p - QSE_T('0'));
-			p++;
-		}
-	}
-
-no_exp:
-	if (exp_negative) exp = frac_exp - exp;
-	else exp = frac_exp + exp;
-
-	/*
-	 * Generate a floating-point number that represents the exponent.
-	 * Do this by processing the exponent one bit at a time to combine
-	 * many powers of 2 of 10. Then combine the exponent with the
-	 * fraction.
-	 */
-	if (exp < 0) 
-	{
-		exp_negative = 1;
-		exp = -exp;
-	} 
-	else exp_negative = 0;
-
-	if (exp > MAX_EXPONENT) exp = MAX_EXPONENT;
-
-	dbl_exp = 1.0;
-
-	for (d = powers_of_10; exp != 0; exp >>= 1, d++) 
-	{
-		if (exp & 01) dbl_exp *= *d;
-	}
-
-	if (exp_negative) fraction /= dbl_exp;
-	else fraction *= dbl_exp;
-
-done:
-	return (negative)? -fraction: fraction;
-}
-
-qse_awk_flt_t qse_awk_strxtoflt (
-	qse_awk_t* awk, const qse_char_t* str, qse_size_t len, 
-	const qse_char_t** endptr)
-{
-	/* 
-	 * Table giving binary powers of 10. Entry is 10^2^i.  
-	 * Used to convert decimal exponents into floating-point numbers.
-	 */ 
-	static qse_awk_flt_t powers_of_10[] = 
-	{
-		10.,    100.,   1.0e4,   1.0e8,   1.0e16,
-		1.0e32, 1.0e64, 1.0e128, 1.0e256
-	};
-
-	qse_awk_flt_t fraction, dbl_exp, * d;
-	const qse_char_t* p, * end;
-	qse_cint_t c;
-	int exp = 0; /* Exponent read from "EX" field */
-
-	/* 
-	 * Exponent that derives from the fractional part.  Under normal 
-	 * circumstatnces, it is the negative of the number of digits in F.
-	 * However, if I is very long, the last digits of I get dropped 
-	 * (otherwise a long I with a large negative exponent could cause an
-	 * unnecessary overflow on I alone).  In this case, frac_exp is 
-	 * incremented one for each dropped digit. 
-	 */
-
-	int frac_exp;
-	int mant_size; /* Number of digits in mantissa. */
-	int dec_pt;    /* Number of mantissa digits BEFORE decimal point */
-	const qse_char_t *pexp;  /* Temporarily holds location of exponent in string */
-	int negative = 0, exp_negative = 0;
-
-	p = str;
-	end = str + len;
-
-	/* Strip off leading blanks and check for a sign */
-	/*while (QSE_AWK_ISSPACE(awk,*p)) p++;*/
-
-	/*while (*p != QSE_T('\0')) */
-	while (p < end)
-	{
-		if (*p == QSE_T('-')) 
-		{
-			negative = ~negative;
-			p++;
-		}
-		else if (*p == QSE_T('+')) p++;
-		else break;
-	}
-
-	/* Count the number of digits in the mantissa (including the decimal
-	 * point), and also locate the decimal point. */
-	dec_pt = -1;
-	/*for (mant_size = 0; ; mant_size++) */
-	for (mant_size = 0; p < end; mant_size++) 
-	{
-		c = *p;
-		if (!QSE_AWK_ISDIGIT (awk, c)) 
-		{
-			if (c != QSE_T('.') || dec_pt >= 0) break;
-			dec_pt = mant_size;
-		}
-		p++;
-	}
-
-	/*
-	 * Now suck up the digits in the mantissa.  Use two integers to
-	 * collect 9 digits each (this is faster than using floating-point).
-	 * If the mantissa has more than 18 digits, ignore the extras, since
-	 * they can't affect the value anyway.
-	 */
-	pexp = p;
-	p -= mant_size;
-	if (dec_pt < 0) 
-	{
-		dec_pt = mant_size;
-	} 
-	else 
-	{
-		mant_size--;	/* One of the digits was the point */
-	}
-
-	if (mant_size > 18)  /* TODO: is 18 correct for qse_awk_flt_t??? */
-	{
-		frac_exp = dec_pt - 18;
-		mant_size = 18;
-	} 
-	else 
-	{
-		frac_exp = dec_pt - mant_size;
-	}
-
-	if (mant_size == 0) 
-	{
-		fraction = 0.0;
-		/*p = str;*/
-		p = pexp;
-		goto done;
-	} 
-	else 
-	{
-		int frac1, frac2;
-
-		frac1 = 0;
-		for ( ; mant_size > 9; mant_size--) 
-		{
-			c = *p;
-			p++;
-			if (c == QSE_T('.')) 
-			{
-				c = *p;
-				p++;
-			}
-			frac1 = 10 * frac1 + (c - QSE_T('0'));
-		}
-
-		frac2 = 0;
-		for (; mant_size > 0; mant_size--) {
-			c = *p++;
-			if (c == QSE_T('.')) 
-			{
-				c = *p;
-				p++;
-			}
-			frac2 = 10 * frac2 + (c - QSE_T('0'));
-		}
-		fraction = (1.0e9 * frac1) + frac2;
-	}
-
-	/* Skim off the exponent */
-	p = pexp;
-	if (p < end && (*p == QSE_T('E') || *p == QSE_T('e'))) 
-	{
-		p++;
-
-		if (p < end) 
-		{
-			if (*p == QSE_T('-')) 
-			{
-				exp_negative = 1;
-				p++;
-			} 
-			else 
-			{
-				if (*p == QSE_T('+')) p++;
-				exp_negative = 0;
-			}
-		}
-		else exp_negative = 0;
-
-		if (!(p < end && QSE_AWK_ISDIGIT (awk, *p))) 
-		{
-			/*p = pexp;*/
-			/*goto done;*/
-			goto no_exp;
-		}
-
-		while (p < end && QSE_AWK_ISDIGIT (awk, *p)) 
-		{
-			exp = exp * 10 + (*p - QSE_T('0'));
-			p++;
-		}
-	}
-
-no_exp:
-	if (exp_negative) exp = frac_exp - exp;
-	else exp = frac_exp + exp;
-
-	/*
-	 * Generate a floating-point number that represents the exponent.
-	 * Do this by processing the exponent one bit at a time to combine
-	 * many powers of 2 of 10. Then combine the exponent with the
-	 * fraction.
-	 */
-	if (exp < 0) 
-	{
-		exp_negative = 1;
-		exp = -exp;
-	} 
-	else exp_negative = 0;
-
-	if (exp > MAX_EXPONENT) exp = MAX_EXPONENT;
-
-	dbl_exp = 1.0;
-
-	for (d = powers_of_10; exp != 0; exp >>= 1, d++) 
-	{
-		if (exp & 01) dbl_exp *= *d;
-	}
-
-	if (exp_negative) fraction /= dbl_exp;
-	else fraction *= dbl_exp;
-
-done:
-	if (endptr != QSE_NULL) *endptr = p;
-	return (negative)? -fraction: fraction;
-}
 
 qse_size_t qse_awk_inttostr (
 	qse_awk_t* awk, qse_awk_int_t value, 
