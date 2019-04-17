@@ -1011,7 +1011,7 @@ static int str_to_str (qse_awk_rtx_t* rtx, const qse_char_t* str, qse_size_t str
 			if (str_len >= out->u.cplcpy.len)
 			{
 				qse_awk_rtx_seterrnum (rtx, QSE_AWK_EINVAL, QSE_NULL);
-				out->u.cplcpy.len = str_len + 1; /* set the required length */
+				/*out->u.cplcpy.len = str_len + 1;*/ /* set the required length */
 				return -1;
 			}
 
@@ -1085,17 +1085,15 @@ static int mbs_to_str (qse_awk_rtx_t* rtx, const qse_mchar_t* str, qse_size_t st
 
 			mbslen = str_len;
 			wcslen = out->u.cplcpy.len;
-			if (qse_mbsntowcsnwithcmgr(str, &mbslen, out->u.cplcpy.ptr, &wcslen, rtx->cmgr) <= -1)
+			if (qse_mbsntowcsnallwithcmgr(str, &mbslen, out->u.cplcpy.ptr, &wcslen, rtx->cmgr) <= -1 || wcslen >= out->u.cplcpy.len)
 			{
 				qse_awk_rtx_seterrnum (rtx, QSE_AWK_EINVAL, QSE_NULL); /* TODO: change error code */
 				return -1;
 			}
 
-			if (mbslen < str_len)
-			{
-				/* TODO: ... */
-			}
+			out->u.cplcpy.ptr[wcslen] = QSE_T('\0');
 			out->u.cplcpy.len = wcslen;
+
 			return 0;
 		}
 
@@ -1105,7 +1103,7 @@ static int mbs_to_str (qse_awk_rtx_t* rtx, const qse_mchar_t* str, qse_size_t st
 			qse_size_t mbslen, wcslen;
 
 			mbslen = str_len;
-			tmp = qse_mbsntowcsdupwithcmgr(str, &mbslen, &wcslen, rtx->awk->mmgr, rtx->cmgr);
+			tmp = qse_mbsntowcsalldupwithcmgr(str, &mbslen, &wcslen, rtx->awk->mmgr, rtx->cmgr);
 			if (!tmp) 
 			{
 				qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
@@ -1122,7 +1120,7 @@ static int mbs_to_str (qse_awk_rtx_t* rtx, const qse_mchar_t* str, qse_size_t st
 			qse_size_t n;
 
 			qse_str_clear (out->u.strp);
-			n = qse_str_ncat(out->u.strp, str, str_len);
+			n = qse_str_ncatmbs(out->u.strp, str, str_len);
 			if (n == (qse_size_t)-1)
 			{
 				qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
@@ -1135,7 +1133,7 @@ static int mbs_to_str (qse_awk_rtx_t* rtx, const qse_mchar_t* str, qse_size_t st
 		{
 			qse_size_t n;
 
-			n = qse_str_ncat(out->u.strpcat, str, str_len);
+			n = qse_str_ncatmbs(out->u.strpcat, str, str_len);
 			if (n == (qse_size_t)-1)
 			{
 				qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
@@ -1399,7 +1397,7 @@ static int val_ref_to_str (qse_awk_rtx_t* rtx, const qse_awk_val_ref_t* ref, qse
 			idx = (qse_size_t)ref->adr;
 			if (idx == 0)
 			{
-				return str_to_str (
+				return str_to_str(
 					rtx,
 					QSE_STR_PTR(&rtx->inrec.line),
 					QSE_STR_LEN(&rtx->inrec.line),
@@ -1408,7 +1406,7 @@ static int val_ref_to_str (qse_awk_rtx_t* rtx, const qse_awk_val_ref_t* ref, qse
 			}
 			else if (idx <= rtx->inrec.nflds)
 			{
-				return str_to_str (
+				return str_to_str(
 					rtx,
 					rtx->inrec.flds[idx-1].ptr,
 					rtx->inrec.flds[idx-1].len,
@@ -1417,7 +1415,7 @@ static int val_ref_to_str (qse_awk_rtx_t* rtx, const qse_awk_val_ref_t* ref, qse
 			}
 			else
 			{
-				return str_to_str (rtx, QSE_T(""), 0, out);
+				return str_to_str(rtx, QSE_T(""), 0, out);
 			}
 		}
 
@@ -1548,9 +1546,9 @@ qse_wchar_t* qse_awk_rtx_valtowcsdup (qse_awk_rtx_t* rtx, const qse_awk_val_t* v
 	qse_wchar_t* wcs;
 
 	out.type = QSE_AWK_RTX_VALTOSTR_CPLDUP;
-	if (qse_awk_rtx_valtostr (rtx, v, &out) <= -1) return QSE_NULL;
+	if (qse_awk_rtx_valtostr(rtx, v, &out) <= -1) return QSE_NULL;
 
-	wcs = qse_mbsntowcsdup (out.u.cpldup.ptr, out.u.cpldup.len, len, rtx->awk->mmgr);
+	wcs = qse_mbsntowcsdup(out.u.cpldup.ptr, out.u.cpldup.len, len, rtx->awk->mmgr);
 	QSE_AWK_FREE (rtx->awk, out.u.cpldup.ptr);
 	return wcs;
 #else

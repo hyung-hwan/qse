@@ -300,7 +300,7 @@ static int resize_for_ncat (str_t* str, qse_size_t len)
 		{
 			/* let the user determine the new capacity.
 			 * pass the minimum capacity required as a hint */
-			ncapa = str->sizer (str, mincapa);
+			ncapa = str->sizer(str, mincapa);
 			/* if no change in capacity, return current length */
 			if (ncapa == str->capa) return 0;
 		}
@@ -308,7 +308,7 @@ static int resize_for_ncat (str_t* str, qse_size_t len)
 		/* change the capacity */
 		do
 		{
-			if (str_setcapa (str, ncapa) != (qse_size_t)-1) break;
+			if (str_setcapa(str, ncapa) != (qse_size_t)-1) break;
 			if (ncapa <= mincapa) return -1;
 			ncapa--;
 		}
@@ -318,7 +318,7 @@ static int resize_for_ncat (str_t* str, qse_size_t len)
 	{
 		QSE_ASSERT (str->val.ptr == QSE_NULL);
 		QSE_ASSERT (str->val.len <= 0);
-		if (str_setcapa (str, 1) == (qse_size_t)-1) return -1;
+		if (str_setcapa(str, 1) == (qse_size_t)-1) return -1;
 	}
 
 	return 1;
@@ -329,7 +329,7 @@ qse_size_t str_ncat (str_t* str, const char_t* s, qse_size_t len)
 	int n;
 	qse_size_t i, j;
 
-	n = resize_for_ncat (str, len);
+	n = resize_for_ncat(str, len);
 	if (n <= -1) return (qse_size_t)-1;
 	if (n == 0) return str->val.len;
 
@@ -357,13 +357,13 @@ qse_size_t str_nrcat (str_t* str, const char_t* s, qse_size_t len)
 	int n;
 	qse_size_t i, j;
 
-	n = resize_for_ncat (str, len);
+	n = resize_for_ncat(str, len);
 	if (n <= -1) return (qse_size_t)-1;
 	if (n == 0) return str->val.len;
 
 	if (len > str->capa - str->val.len) len = str->capa - str->val.len;
 
-	for (i = len, j = str->val.len ; i > 0; j++) str->val.ptr[j] = s[--i];	
+	for (i = len, j = str->val.len ; i > 0; j++) str->val.ptr[j] = s[--i];
 	str->val.ptr[j] = T('\0');
 	str->val.len = j;
 
@@ -483,7 +483,7 @@ qse_size_t str_vfcat (str_t* str, const char_t* fmt, va_list ap)
 		str->val.len = old_len;
 
 		/* resizing is required */
-		x = resize_for_ncat (str, fo.count);
+		x = resize_for_ncat(str, fo.count);
 
 		if (x <= -1) return (qse_size_t)-1;
 		if (x >= 1)
@@ -524,7 +524,7 @@ qse_size_t str_vfmt (str_t* str, const char_t* fmt, va_list ap)
 	if (fmtout (fmt, &fo, ap) <= -1) return (qse_size_t)-1;
 
 	str_clear (str);
-	x = resize_for_ncat (str, fo.count);
+	x = resize_for_ncat(str, fo.count);
 
 	if (x <= -1) return (qse_size_t)-1;
 	if (x >= 1)

@@ -1,3 +1,4 @@
+#include <qse/cmn/test.h>
 #include <qse/cmn/mem.h>
 #include <qse/cmn/str.h>
 #include <qse/si/sio.h>
@@ -399,6 +400,50 @@ static int test17 (void)
 	return 0;
 }
 
+static int test18 (void)
+{
+	qse_str_t* s1 = QSE_NULL;
+
+	s1 = qse_str_open (QSE_MMGR_GETDFL(), 0, 5);	
+	if (s1 == QSE_NULL)
+	{
+		qse_printf (QSE_T("cannot open a string\n"));
+		return -1;
+	}
+
+	qse_str_ncat (s1, QSE_T("["), 1);
+	qse_str_ncatwcs (s1, QSE_WT("hello"), 5);
+	qse_str_ncatmbs (s1, QSE_MT("world"), 5);
+	qse_str_ncat (s1, QSE_T("]"), 1);
+
+	QSE_TESASSERT1 (QSE_STR_LEN(s1) == 12, QSE_T("wrong length of dynamic string"));
+
+	qse_str_ncatmbs (s1, QSE_MT("\xEB\xAC\xB4\xEB\xAC\xB4\xEB\xAC\xB4"), 9);
+
+#if defined(QSE_CHAR_IS_MCHAR)
+	QSE_TESASSERT1 (QSE_STR_LEN(s1) == 21, QSE_T("wrong length of dynamic string"));
+#else
+	QSE_TESASSERT1 (QSE_STR_LEN(s1) == 15, QSE_T("wrong length of dynamic string"));
+#endif
+
+	qse_str_ncatwcs (s1, QSE_WT("날아올라라"), 5);
+
+#if defined(QSE_CHAR_IS_MCHAR)
+	QSE_TESASSERT1 (QSE_STR_LEN(s1) == 36, QSE_T("wrong length of dynamic string"));
+#else
+	QSE_TESASSERT1 (QSE_STR_LEN(s1) == 20, QSE_T("wrong length of dynamic string"));
+#endif
+
+	qse_printf (QSE_T("\t%js\n"), QSE_STR_PTR(s1));
+	qse_str_close (s1);
+
+	qse_printf (QSE_T("\tOK\n"));
+	return 0;
+
+oops:
+	if (s1) qse_str_close (s1);
+	return -1;
+}
 
 int main ()
 {
@@ -433,6 +478,7 @@ int main ()
 	R (test15);
 	R (test16);
 	R (test17);
+	R (test18);
 
 	qse_close_stdsios ();
 
