@@ -71,14 +71,14 @@ static int wcs_to_mbs (
 	const qse_wchar_t* wcs, qse_size_t* wcslen,
 	qse_mchar_t* mbs, qse_size_t* mbslen, void* ctx)
 {
-	return qse_wcsntombsnwithcmgr (wcs, wcslen, mbs, mbslen, qse_getdflcmgr());
+	return qse_wcsntombsnwithcmgr(wcs, wcslen, mbs, mbslen, qse_getdflcmgr());
 }
 
 static int mbs_to_wcs (
 	const qse_mchar_t* mbs, qse_size_t* mbslen, 
 	qse_wchar_t* wcs, qse_size_t* wcslen, void* ctx)
 {
-	return qse_mbsntowcsnwithcmgr (mbs, mbslen, wcs, wcslen, qse_getdflcmgr());
+	return qse_mbsntowcsnwithcmgr(mbs, mbslen, wcs, wcslen, qse_getdflcmgr());
 }
 
 /* -------------------------------------------------------- */
@@ -278,3 +278,42 @@ static int mbs_to_wcs (
 #define str_fcat qse_wcs_fcat 
 #define str_vfcat qse_wcs_vfcat 
 #include "str-dyn.h"
+
+
+qse_size_t qse_mbs_ncatwcs (qse_mbs_t* str, const qse_wchar_t* s, qse_size_t len)
+{
+	qse_size_t mbslen, wcslen;
+	qse_cmgr_t* cmgr = qse_getdflcmgr();
+
+	wcslen = len;
+	if (qse_wcsntombsnwithcmgr(s, &wcslen, QSE_NULL, &mbslen, cmgr) <= -1) return (qse_size_t)-1;
+
+	if (resize_for_mbs_ncat(str, mbslen) <= 0) return -1;
+
+	wcslen = len;
+	mbslen = str->capa - str->val.len;
+	qse_wcsntombsnwithcmgr(s, &wcslen, &str->val.ptr[str->val.len], &mbslen, cmgr);
+	str->val.len += mbslen;
+	str->val.ptr[str->val.len] = QSE_MT('\0');
+
+	return str->val.len;
+}
+
+qse_size_t qse_wcs_ncatmbs (qse_wcs_t* str, const qse_mchar_t* s, qse_size_t len)
+{
+	qse_size_t mbslen, wcslen;
+	qse_cmgr_t* cmgr = qse_getdflcmgr();
+
+	mbslen = len;
+	if (qse_mbsntowcsnallwithcmgr(s, &mbslen, QSE_NULL, &wcslen, cmgr) <= -1) return (qse_size_t)-1;
+
+	if (resize_for_wcs_ncat(str, wcslen) <= 0) return -1;
+
+	mbslen = len;
+	wcslen = str->capa - str->val.len;
+	qse_mbsntowcsnallwithcmgr(s, &mbslen, &str->val.ptr[str->val.len], &wcslen, cmgr);
+	str->val.len += wcslen;
+	str->val.ptr[str->val.len] = QSE_WT('\0');
+
+	return str->val.len;
+}
