@@ -417,6 +417,76 @@ static int print_expr (qse_awk_t* awk, qse_awk_nde_t* nde)
 			break;
 		}
 
+		case QSE_AWK_NDE_MBS:
+		{
+			qse_mchar_t* ptr;
+			qse_size_t len, i;
+
+			PUT_SRCSTR (awk, QSE_T("M\""));
+			ptr = ((qse_awk_nde_mbs_t*)nde)->ptr;
+			len = ((qse_awk_nde_mbs_t*)nde)->len;
+			for (i = 0; i < len; i++)
+			{
+				/* TODO: maybe more de-escaping?? */
+				switch (ptr[i])
+				{
+					case QSE_MT('\n'):
+						PUT_SRCSTR (awk, QSE_T("\\n"));
+						break;
+					case QSE_MT('\r'):
+						PUT_SRCSTR (awk, QSE_T("\\r"));
+						break;
+					case QSE_MT('\t'):
+						PUT_SRCSTR (awk, QSE_T("\\t"));
+						break;
+					case QSE_MT('\f'):
+						PUT_SRCSTR (awk, QSE_T("\\f"));
+						break;
+					case QSE_MT('\b'):
+						PUT_SRCSTR (awk, QSE_T("\\b"));
+						break;
+					case QSE_MT('\v'):
+						PUT_SRCSTR (awk, QSE_T("\\v"));
+						break;
+					case QSE_MT('\a'):
+						PUT_SRCSTR (awk, QSE_T("\\a"));
+						break;
+					case QSE_MT('\0'):
+						PUT_SRCSTR (awk, QSE_T("\\0"));
+						break;
+					case QSE_MT('\"'):
+						PUT_SRCSTR (awk, QSE_T("\\\""));
+						break;
+					case QSE_MT('\\'):
+						PUT_SRCSTR (awk, QSE_T("\\\\"));
+						break;
+					default:
+					{
+					#if defined(QSE_CHAR_IS_MCHAR)
+						PUT_SRCSTRN (awk, &ptr[i], 1);
+					#else
+						qse_char_t wc = ptr[i];
+						if (QSE_AWK_BYTE_PRINTABLE(wc))
+						{
+							PUT_SRCSTRN (awk, &wc, 1);
+						}
+						else
+						{
+							qse_mchar_t xbuf[3];
+							qse_bytetombs (wc, xbuf, QSE_COUNTOF(xbuf), 16, '0');
+							PUT_SRCSTR (awk, QSE_T("\\x"));
+							wc = xbuf[0]; PUT_SRCSTRN (awk, &wc, 1);
+							wc = xbuf[1]; PUT_SRCSTRN (awk, &wc, 1);
+						}
+					#endif
+						break;
+					}
+				}
+			}
+			PUT_SRCSTR (awk, QSE_T("\""));
+			break;
+		}
+
 		case QSE_AWK_NDE_REX:
 		{
 			PUT_SRCSTR (awk, QSE_T("/"));
@@ -1313,6 +1383,13 @@ void qse_awk_clrpt (qse_awk_t* awk, qse_awk_nde_t* tree)
 			case QSE_AWK_NDE_STR:
 			{
 				QSE_AWK_FREE (awk, ((qse_awk_nde_str_t*)p)->ptr);
+				QSE_AWK_FREE (awk, p);
+				break;
+			}
+
+			case QSE_AWK_NDE_MBS:
+			{
+				QSE_AWK_FREE (awk, ((qse_awk_nde_mbs_t*)p)->ptr);
 				QSE_AWK_FREE (awk, p);
 				break;
 			}
