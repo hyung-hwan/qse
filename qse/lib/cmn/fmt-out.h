@@ -92,7 +92,6 @@ static char_t* sprintn (char_t* nbuf, qse_uintmax_t num, int base, int *lenp, in
 
 #undef PUT_CHAR
 #undef PUT_BYTE_IN_HEX
-#undef BYTE_PRINTABLE
 
 #define PUT_CHAR(c) do { \
 	int xx; \

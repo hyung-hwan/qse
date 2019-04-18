@@ -26,6 +26,7 @@
 
 #include "awk-prv.h"
 #include <qse/cmn/utf8.h>
+#include <qse/cmn/mbwc.h>
 
 #if !defined(QSE_AWK_DEFAULT_MODPREFIX)
 #	if defined(_WIN32)
@@ -148,6 +149,7 @@ enum tok_t
 	TOK_INT,
 	TOK_FLT,
 	TOK_STR,
+	TOK_MBS,
 	TOK_REX,
 
 	__TOKEN_COUNT__
@@ -871,7 +873,7 @@ static int parse_progunit (qse_awk_t* awk)
 		}
 	
 		if (get_token(awk) <= -1) return -1;
-	
+
 		if (!MATCH(awk,TOK_STR))
 		{
 			SETERR_LOC (awk, QSE_AWK_EINCLSTR, &awk->ptok.loc);
@@ -4410,7 +4412,53 @@ oops:
 	return QSE_NULL;
 }
 
-static qse_awk_nde_t* parse_primary_rex  (qse_awk_t* awk, const qse_awk_loc_t* xloc)
+static qse_awk_nde_t* parse_primary_mbs (qse_awk_t* awk, const qse_awk_loc_t* xloc)
+{
+	qse_awk_nde_mbs_t* nde;
+
+	nde = (qse_awk_nde_mbs_t*)qse_awk_callocmem(awk, QSE_SIZEOF(*nde));
+	if (nde == QSE_NULL) 
+	{
+		ADJERR_LOC (awk, xloc);
+		return QSE_NULL;
+	}
+
+	nde->type = QSE_AWK_NDE_MBS;
+	nde->loc = *xloc;
+
+#if defined(QSE_CHAR_IS_MCHAR)
+	nde->len = QSE_STR_LEN(awk->tok.name);
+	nde->ptr = qse_awk_cstrdup(awk, QSE_STR_XSTR(awk->tok.name));
+	if (!nde->ptr) goto oops;
+#else
+	{
+		qse_size_t wcslen, mbslen;
+		wcslen = QSE_STR_LEN(awk->tok.name);
+
+		/* the MBS token doesn't include a character greater than 0xFF in awk->tok.name though it is a wide character string.
+		 * so i simply use QSE_CMGR_MB8 to store it in a byte string */
+		nde->ptr = qse_wcsntombsdupwithcmgr(QSE_STR_PTR(awk->tok.name), wcslen, &mbslen, awk->mmgr, qse_findcmgrbyid(QSE_CMGR_MB8));
+		if (!nde->ptr)
+		{
+			qse_awk_seterror (awk, QSE_AWK_ENOMEM, QSE_NULL, xloc);
+			goto oops;
+		}
+		nde->len = mbslen;
+	}
+#endif
+
+	if (get_token(awk) <= -1) goto oops;
+
+	return (qse_awk_nde_t*)nde;
+
+oops:
+	QSE_ASSERT (nde != QSE_NULL);
+	if (nde->ptr) QSE_AWK_FREE (awk, nde->ptr);
+	QSE_AWK_FREE (awk, nde);
+	return QSE_NULL;
+}
+
+static qse_awk_nde_t* parse_primary_rex (qse_awk_t* awk, const qse_awk_loc_t* xloc)
 {
 	qse_awk_nde_rex_t* nde;
 	qse_awk_errnum_t errnum;
@@ -4686,29 +4734,32 @@ static qse_awk_nde_t* parse_primary_nopipe (qse_awk_t* awk, const qse_awk_loc_t*
 	switch (awk->tok.type)
 	{
 		case TOK_IDENT:
-			return parse_primary_ident (awk, xloc);
+			return parse_primary_ident(awk, xloc);
 
 		case TOK_INT:
-			return parse_primary_int (awk, xloc);
+			return parse_primary_int(awk, xloc);
 
 		case TOK_FLT:
-			return parse_primary_flt (awk, xloc);
+			return parse_primary_flt(awk, xloc);
 
 		case TOK_STR:
-			return parse_primary_str (awk, xloc);
+			return parse_primary_str(awk, xloc);
+
+		case TOK_MBS:
+			return parse_primary_mbs(awk, xloc);
 
 		case TOK_DIV:
 		case TOK_DIV_ASSN:
-			return parse_primary_rex (awk, xloc);
+			return parse_primary_rex(awk, xloc);
 
 		case TOK_DOLLAR:
-			return parse_primary_positional (awk, xloc);
+			return parse_primary_positional(awk, xloc);
 
 		case TOK_LPAREN:
-			return parse_primary_lparen (awk, xloc);
+			return parse_primary_lparen(awk, xloc);
 
 		case TOK_GETLINE:
-			return parse_primary_getline (awk, xloc);
+			return parse_primary_getline(awk, xloc);
 
 		default:
 			/* in the tolerant mode, we treat print and printf 
@@ -5623,7 +5674,7 @@ static int get_number (qse_awk_t* awk, qse_awk_tok_t* tok)
 
 static int get_string (
 	qse_awk_t* awk, qse_char_t end_char, 
-	qse_char_t esc_char, int keep_esc_char,
+	qse_char_t esc_char, int keep_esc_char, int byte_only,
 	qse_size_t preescaped, qse_awk_tok_t* tok)
 {
 	qse_cint_t c;
@@ -5640,6 +5691,15 @@ static int get_string (
 			SETERR_LOC (awk, QSE_AWK_ESTRNC, &awk->tok.loc);
 			return -1;
 		}
+
+	#if !defined(QSE_CHAR_IS_MCHAR)
+		if (byte_only && c != '\\' && !QSE_AWK_BYTE_PRINTABLE(c))
+		{
+			qse_char_t wc = c;
+			SETERR_ARG_LOC (awk, QSE_AWK_EMBSCHR, &wc, 1, &awk->tok.loc);
+			return -1;
+		}
+	#endif
 
 		if (escaped == 3)
 		{
@@ -5758,7 +5818,7 @@ static int get_string (
 				c_acc = 0;
 				continue;
 			}
-			else if (c == QSE_T('u')) 
+			else if (!byte_only && c == QSE_T('u')) 
 			{
 				/* in the MCHAR mode, the \u letter will get converted to UTF-8 sequences.
 				 * see ADD_TOKEN_UINT32(). */
@@ -5767,7 +5827,7 @@ static int get_string (
 				c_acc = 0;
 				continue;
 			}
-			else if (c == QSE_T('U')) 
+			else if (!byte_only && c == QSE_T('U')) 
 			{
 				/* in the MCHAR mode, the \u letter will get converted to UTF-8 sequences 
 				 * see ADD_TOKEN_UINT32(). */
@@ -5827,8 +5887,46 @@ static int get_rexstr (qse_awk_t* awk, qse_awk_tok_t* tok)
 			 * begins with reading the next character */
 			ADD_TOKEN_CHAR (awk, tok, awk->sio.last.c);
 		}
-		return get_string (awk, QSE_T('/'), QSE_T('\\'), 1, preescaped, tok);
+		return get_string(awk, QSE_T('/'), QSE_T('\\'), 1, 0, preescaped, tok);
 	}
+}
+
+
+static int get_single_quoted_string (qse_awk_t* awk, int byte_only, qse_awk_tok_t* tok)
+{
+	qse_cint_t c;
+
+	while (1)
+	{
+		GET_CHAR_TO (awk, c);
+
+		if (c == QSE_CHAR_EOF)
+		{
+			SETERR_LOC (awk, QSE_AWK_ESTRNC, &awk->tok.loc);
+			return -1;
+		}
+
+	#if !defined(QSE_CHAR_IS_MCHAR)
+		if (byte_only && c != '\\' && !QSE_AWK_BYTE_PRINTABLE(c))
+		{
+			qse_char_t wc = c;
+			SETERR_ARG_LOC (awk, QSE_AWK_EMBSCHR, &wc, 1, &awk->tok.loc);
+			return -1;
+		}
+	#endif
+
+
+		if (c == QSE_T('\''))
+		{
+			/* terminating quote */
+			GET_CHAR (awk);
+			break;
+		}
+
+		ADD_TOKEN_CHAR (awk, tok, c);
+	}
+
+	return 0;
 }
 
 static int skip_spaces (qse_awk_t* awk)
@@ -6155,7 +6253,7 @@ retry:
 		       QSE_AWK_ISALPHA(awk, c) || 
 		       QSE_AWK_ISDIGIT(awk, c));
 
-		type = classify_ident (awk, QSE_STR_XSTR(tok->name));
+		type = classify_ident(awk, QSE_STR_XSTR(tok->name));
 		if (type == TOK_IDENT)
 		{
 			SETERR_TOK (awk, QSE_AWK_EXKWNR);
@@ -6163,54 +6261,52 @@ retry:
 		}
 		SET_TOKEN_TYPE (awk, tok, type);
 	}
+	else if (c == 'M')
+	{
+		GET_CHAR_TO (awk, c);
+		if (c == '\"')
+		{
+			/* multi-byte string */
+			SET_TOKEN_TYPE (awk, tok, TOK_MBS);
+			if (get_string(awk, c, QSE_T('\\'), 0, 1, 0, tok) <= -1) return -1;
+		}
+		else if (c == '\'')
+		{
+			SET_TOKEN_TYPE (awk, tok, TOK_MBS);
+			if (get_single_quoted_string(awk, 1, tok) <= -1) return -1;
+		}
+		else
+		{
+			goto process_identifier;
+		}
+	}
 	else if (c == QSE_T('_') || QSE_AWK_ISALPHA(awk, c))
 	{
 		int type;
 
+	process_identifier:
 		/* identifier */
 		do 
 		{
 			ADD_TOKEN_CHAR (awk, tok, c);
 			GET_CHAR_TO (awk, c);
 		} 
-		while (c == QSE_T('_') || 
-		       QSE_AWK_ISALPHA(awk, c) || 
-		       QSE_AWK_ISDIGIT(awk, c));
+		while (c == QSE_T('_') || QSE_AWK_ISALPHA(awk, c) || QSE_AWK_ISDIGIT(awk, c));
 
-		type = classify_ident (awk, QSE_STR_XSTR(tok->name));
+		type = classify_ident(awk, QSE_STR_XSTR(tok->name));
 		SET_TOKEN_TYPE (awk, tok, type);
 	}
 	else if (c == QSE_T('\"'))
 	{
 		/* double-quoted string */
 		SET_TOKEN_TYPE (awk, tok, TOK_STR);
-		if (get_string (awk, c, QSE_T('\\'), 0, 0, tok) <= -1) return -1;
+		if (get_string(awk, c, QSE_T('\\'), 0, 0, 0, tok) <= -1) return -1;
 	}
 	else if (c == QSE_T('\''))
 	{
 		/* single-quoted string - no escaping */
-
 		SET_TOKEN_TYPE (awk, tok, TOK_STR);
-
-		while (1)
-		{
-			GET_CHAR_TO (awk, c);
-
-			if (c == QSE_CHAR_EOF)
-			{
-				SETERR_LOC (awk, QSE_AWK_ESTRNC, &awk->tok.loc);
-				return -1;
-			}
-
-			if (c == QSE_T('\''))
-			{
-				/* terminating quote */
-				GET_CHAR (awk);
-				break;
-			}
-
-			ADD_TOKEN_CHAR (awk, tok, c);
-		}
+		if (get_single_quoted_string(awk, 0, tok) <= -1) return -1;
 	}
 	else
 	{
@@ -6916,4 +7012,3 @@ done:
 	n = mdp->mod.query (&mdp->mod, awk, segs[1].ptr, sym);
 	return (n <= -1)? QSE_NULL: &mdp->mod;
 }
-

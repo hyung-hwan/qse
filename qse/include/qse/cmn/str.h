@@ -3639,21 +3639,23 @@ QSE_EXPORT qse_size_t qse_wcs_vfmt (
 QSE_EXPORT qse_size_t qse_mbs_ncatwcs (
 	qse_mbs_t*         str,
 	const qse_wchar_t* s,
-	qse_size_t         len
+	qse_size_t         len,
+	qse_cmgr_t*        cmgr
 );
 
 qse_size_t qse_wcs_ncatmbs (
 	qse_wcs_t*         str,
 	const qse_mchar_t* s,
-	qse_size_t         len
+	qse_size_t         len,
+	qse_cmgr_t*        cmgr
 );
 
 #if defined(QSE_CHAR_IS_MCHAR)
-#	define qse_str_ncatwcs(str,s,len) qse_mbs_ncatwcs(str,s,len)
-#	define qse_str_ncatmbs(str,s,len) qse_mbs_ncat(str,s,len)
+#	define qse_str_ncatwcs(str,s,len,cmgr) qse_mbs_ncatwcs(str,s,len,cmgr)
+#	define qse_str_ncatmbs(str,s,len,cmgr) qse_mbs_ncat(str,s,len)
 #else
-#	define qse_str_ncatwcs(str,s,len) qse_wcs_ncat(str,s,len)
-#	define qse_str_ncatmbs(str,s,len) qse_wcs_ncatmbs(str,s,len)
+#	define qse_str_ncatwcs(str,s,len,cmgr) qse_wcs_ncat(str,s,len)
+#	define qse_str_ncatmbs(str,s,len,cmgr) qse_wcs_ncatmbs(str,s,len,cmgr)
 #endif
 
 #if defined(__cplusplus)

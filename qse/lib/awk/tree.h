@@ -61,6 +61,7 @@ typedef struct qse_awk_nde_int_t       qse_awk_nde_int_t;
 typedef struct qse_awk_nde_flt_t       qse_awk_nde_flt_t;
 
 typedef struct qse_awk_nde_str_t       qse_awk_nde_str_t;
+typedef struct qse_awk_nde_mbs_t       qse_awk_nde_mbs_t;
 typedef struct qse_awk_nde_rex_t       qse_awk_nde_rex_t;
 typedef struct qse_awk_nde_var_t       qse_awk_nde_var_t;
 typedef struct qse_awk_nde_fncall_t    qse_awk_nde_fncall_t;
@@ -154,6 +155,14 @@ struct qse_awk_nde_str_t
 	QSE_AWK_NDE_HDR;
 	qse_char_t* ptr;
 	qse_size_t  len;
+};
+
+/* QSE_AWK_NDE_MBS */
+struct qse_awk_nde_mbs_t
+{
+	QSE_AWK_NDE_HDR;
+	qse_mchar_t* ptr;
+	qse_size_t   len;
 };
 
 /* QSE_AWK_NDE_REX */

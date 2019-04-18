@@ -25,6 +25,7 @@
  */
 
 #include "awk-prv.h"
+#include <qse/cmn/mbwc.h>
 
 static void free_fun (qse_htb_t* map, void* vptr, qse_size_t vlen)
 {
@@ -144,6 +145,7 @@ int qse_awk_init (qse_awk_t* awk, qse_mmgr_t* mmgr, const qse_awk_prm_t* prm)
 
 	/* remember the memory manager */
 	awk->mmgr = mmgr;
+	awk->cmgr = qse_getdflcmgr();
 
 	/* initialize error handling fields */
 	awk->errinf.num = QSE_AWK_ENOERR;
@@ -166,9 +168,9 @@ int qse_awk_init (qse_awk_t* awk, qse_mmgr_t* mmgr, const qse_awk_prm_t* prm)
 	}
 	awk->prm = *prm;
 
-	if (init_token (mmgr, &awk->ptok) <= -1 ||
-	    init_token (mmgr, &awk->tok) <= -1 ||
-	    init_token (mmgr, &awk->ntok) <= -1) 
+	if (init_token(mmgr, &awk->ptok) <= -1 ||
+	    init_token(mmgr, &awk->tok) <= -1 ||
+	    init_token(mmgr, &awk->ntok) <= -1) 
 	{
 		qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);
 		goto oops;

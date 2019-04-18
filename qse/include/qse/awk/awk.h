@@ -203,14 +203,14 @@ typedef struct qse_awk_val_str_t  qse_awk_val_str_t;
 
 /**
  * The qse_awk_val_str_t type is a string type. The type field is
- * #QSE_AWK_VAL_BYTEARR.
+ * #QSE_AWK_VAL_MBS.
  */
-struct qse_awk_val_bytearr_t
+struct qse_awk_val_mbs_t
 {
 	QSE_AWK_VAL_HDR;
-	qse_u8ptl_t val;
+	qse_mcstr_t val;
 };
-typedef struct qse_awk_val_bytearr_t qse_awk_val_bytearr_t;
+typedef struct qse_awk_val_mbs_t qse_awk_val_mbs_t;
 
 /**
  * The qse_awk_val_rex_t type is a regular expression type.  The type field 
@@ -358,7 +358,7 @@ enum qse_awk_nde_type_t
 
 	/* expression */
 	/* if you change the following values including their order,
-	 * you should change __eval_func of __eval_expression 
+	 * you should change __evaluator of __eval_expression 
 	 * in run.c accordingly */
 	QSE_AWK_NDE_GRP, 
 	QSE_AWK_NDE_ASS,
@@ -372,6 +372,7 @@ enum qse_awk_nde_type_t
 	QSE_AWK_NDE_INT,
 	QSE_AWK_NDE_FLT,
 	QSE_AWK_NDE_STR,
+	QSE_AWK_NDE_MBS,
 	QSE_AWK_NDE_REX,
 
 	/* keep this order for the following items otherwise, you may have 
@@ -1211,6 +1212,7 @@ enum qse_awk_errnum_t
 	QSE_AWK_EEOF,    /**< unexpected end of source */
 	QSE_AWK_ECMTNC,  /**< comment not closed properly */
 	QSE_AWK_ESTRNC,  /**< string or regular expression not closed */
+	QSE_AWK_EMBSCHR, /**< invalid mbs character '%{0}' */
 	QSE_AWK_ELBRACE, /**< left brace expected in place of '${0}' */
 	QSE_AWK_ELPAREN, /**< left parenthesis expected in place of '${0}' */
 	QSE_AWK_ERPAREN, /**< right parenthesis expected in place of '${0}' */
@@ -1401,7 +1403,7 @@ enum qse_awk_val_type_t
 	QSE_AWK_VAL_INT     = 1, /**< integer */
 	QSE_AWK_VAL_FLT     = 2, /**< floating-pointer number */
 	QSE_AWK_VAL_STR     = 3, /**< string */
-	QSE_AWK_VAL_BYTEARR = 4, /**< byte array */
+	QSE_AWK_VAL_MBS = 4, /**< byte array */
 	QSE_AWK_VAL_MAP     = 5, /**< map */
 
 	QSE_AWK_VAL_REX     = 6, /**< regular expression */
@@ -2474,9 +2476,9 @@ QSE_EXPORT qse_awk_val_t* qse_awk_rtx_makenstrvalwithxstr (
  * The qse_awk_rtx_makebytearrvaal() function create a byte array value.
  * \return value on success, #QSE_NULL on failure
  */
-qse_awk_val_t* qse_awk_rtx_makebytearrval (
+qse_awk_val_t* qse_awk_rtx_makembsval (
 	qse_awk_rtx_t*     rtx,
-	const qse_uint8_t* ptr,
+	const qse_mchar_t* ptr,
 	qse_size_t         len
 );
 

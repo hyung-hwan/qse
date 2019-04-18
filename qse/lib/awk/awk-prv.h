@@ -107,6 +107,8 @@ typedef struct qse_awk_tree_t qse_awk_tree_t;
 #define QSE_AWK_STRDUP(awk,str) (qse_strdup(str,(awk)->mmgr))
 #define QSE_AWK_STRXDUP(awk,str,len) (qse_strxdup(str,len,(awk)->mmgr))
 
+#define QSE_AWK_BYTE_PRINTABLE(x) ((x) <= 0x7F && (x) != '\\' && QSE_ISMPRINT(x))
+
 enum qse_awk_rio_type_t
 {
 	/* rio types available */
@@ -149,6 +151,7 @@ struct qse_awk_tok_t
 struct qse_awk_t
 {
 	qse_mmgr_t* mmgr;
+	qse_cmgr_t* cmgr;
 
 	/* primitive functions */
 	qse_awk_prm_t  prm;
@@ -385,7 +388,6 @@ struct qse_awk_rtx_t
 	qse_awk_errinf_t errinf;
 
 	qse_awk_t* awk;
-	qse_cmgr_t* cmgr; /* internal default cmgr */
 	qse_awk_rtx_ecb_t* ecb;
 };
 

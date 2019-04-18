@@ -250,6 +250,7 @@ static qse_awk_val_t** get_reference_indexed (
 static qse_awk_val_t* eval_int (qse_awk_rtx_t* run, qse_awk_nde_t* nde);
 static qse_awk_val_t* eval_real (qse_awk_rtx_t* run, qse_awk_nde_t* nde);
 static qse_awk_val_t* eval_str (qse_awk_rtx_t* run, qse_awk_nde_t* nde);
+static qse_awk_val_t* eval_mbs (qse_awk_rtx_t* run, qse_awk_nde_t* nde);
 static qse_awk_val_t* eval_rex (qse_awk_rtx_t* run, qse_awk_nde_t* nde);
 static qse_awk_val_t* eval_named (qse_awk_rtx_t* run, qse_awk_nde_t* nde);
 static qse_awk_val_t* eval_gbl (qse_awk_rtx_t* run, qse_awk_nde_t* nde);
@@ -985,7 +986,6 @@ static int init_rtx (qse_awk_rtx_t* rtx, qse_awk_t* awk, qse_awk_rio_t* rio)
 	};
 
 	rtx->awk = awk;
-	rtx->cmgr = qse_getdflcmgr();
 
 	CLRERR (rtx);
 
@@ -3294,6 +3294,7 @@ static qse_awk_val_t* eval_expression0 (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 		eval_int,
 		eval_real,
 		eval_str,
+		eval_mbs,
 		eval_rex,
 		eval_named,
 		eval_gbl,
@@ -4179,7 +4180,7 @@ static QSE_INLINE int __cmp_nil_str (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qs
 
 static QSE_INLINE int __cmp_nil_bytearr (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
 {
-	return (((qse_awk_val_bytearr_t*)right)->val.len == 0)? 0: -1;
+	return (((qse_awk_val_mbs_t*)right)->val.len == 0)? 0: -1;
 }
 
 static QSE_INLINE int __cmp_nil_map (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
@@ -4467,7 +4468,7 @@ static QSE_INLINE int __cmp_str_str (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qs
 static QSE_INLINE int __cmp_str_bytearr (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
 {
 	qse_awk_val_str_t* ls = (qse_awk_val_str_t*)left;
-	qse_awk_val_bytearr_t* rs = (qse_awk_val_bytearr_t*)right;
+	qse_awk_val_mbs_t* rs = (qse_awk_val_mbs_t*)right;
 
 #if (QSE_SIZEOF_MCHAR_T != QSE_SIZEOF_UINT8_T)
 #	error Unsupported size of qse_mchar_t
@@ -4501,7 +4502,7 @@ static QSE_INLINE int __cmp_str_map (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qs
 
 static QSE_INLINE int __cmp_bytearr_nil (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
 {
-	return (((qse_awk_val_bytearr_t*)left)->val.len == 0)? 0: 1;
+	return (((qse_awk_val_mbs_t*)left)->val.len == 0)? 0: 1;
 }
 
 static QSE_INLINE int __cmp_bytearr_int (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
@@ -4521,8 +4522,8 @@ static QSE_INLINE int __cmp_bytearr_str (qse_awk_rtx_t* rtx, qse_awk_val_t* left
 
 static QSE_INLINE int __cmp_bytearr_bytearr (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
 {
-	qse_awk_val_bytearr_t* ls = (qse_awk_val_bytearr_t*)left;
-	qse_awk_val_bytearr_t* rs = (qse_awk_val_bytearr_t*)right;
+	qse_awk_val_mbs_t* ls = (qse_awk_val_mbs_t*)left;
+	qse_awk_val_mbs_t* rs = (qse_awk_val_mbs_t*)right;
 #if (QSE_SIZEOF_MCHAR_T != QSE_SIZEOF_UINT8_T)
 #	error Unsupported size of qse_mchar_t
 #endif
@@ -4609,7 +4610,7 @@ static int __cmp_val(
 	 * QSE_AWK_VAL_INT  = 1
 	 * QSE_AWK_VAL_FLT  = 2
 	 * QSE_AWK_VAL_STR  = 3
-	 * QSE_AWK_VAL_BYTEARR = 4
+	 * QSE_AWK_VAL_MBS = 4
 	 * QSE_AWK_VAL_MAP  = 5
 	 */
 	return func[lvtype * 6 + rvtype](rtx, left, right);
@@ -4651,12 +4652,12 @@ static int teq_val (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* righ
 						((qse_awk_val_str_t*)right)->val.len) == 0;
 					break;
 
-				case QSE_AWK_VAL_BYTEARR:
+				case QSE_AWK_VAL_MBS:
 					n = qse_mbsxncmp (
-						((qse_awk_val_bytearr_t*)left)->val.ptr,
-						((qse_awk_val_bytearr_t*)left)->val.len,
-						((qse_awk_val_bytearr_t*)right)->val.ptr,
-						((qse_awk_val_bytearr_t*)right)->val.len) == 0;
+						((qse_awk_val_mbs_t*)left)->val.ptr,
+						((qse_awk_val_mbs_t*)left)->val.len,
+						((qse_awk_val_mbs_t*)right)->val.ptr,
+						((qse_awk_val_mbs_t*)right)->val.len) == 0;
 					break;
 
 				default:
@@ -6262,6 +6263,19 @@ static qse_awk_val_t* eval_str (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 	return val;
 }
 
+static qse_awk_val_t* eval_mbs (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
+{
+	qse_awk_val_t* val;
+
+	val = qse_awk_rtx_makembsval (run,
+		((qse_awk_nde_mbs_t*)nde)->ptr,
+		((qse_awk_nde_mbs_t*)nde)->len);
+	if (val == QSE_NULL) ADJERR_LOC (run, &nde->loc);
+
+	return val;
+}
+
+
 static qse_awk_val_t* eval_rex (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 {
 	qse_awk_val_t* val;
@@ -7329,7 +7343,7 @@ wp_mod_main:
 			qse_awk_val_t* v;
 			qse_awk_flt_t r;
 			int n;
-	
+
 		#if defined(QSE_USE_AWK_FLTMAX)
 			FMT_CHAR (QSE_T('j'));
 		#else
@@ -7438,6 +7452,16 @@ wp_mod_main:
 					else ch = QSE_T('\0');
 					break;
 
+				case QSE_AWK_VAL_MBS:
+					ch_len = ((qse_awk_val_mbs_t*)v)->val.len;
+					if (ch_len > 0) 
+					{
+						ch = ((qse_awk_val_mbs_t*)v)->val.ptr[0];
+						ch_len = 1;
+					}
+					else ch = QSE_T('\0');
+					break;
+
 				default:
 					qse_awk_rtx_refdownval (rtx, v);
 					SETERR_COD (rtx, QSE_AWK_EVALTOCHR);
@@ -7531,7 +7555,7 @@ wp_mod_main:
 
 			qse_awk_rtx_refupval (rtx, v);
 
-			vtype = QSE_AWK_RTX_GETVALTYPE (rtx, v);
+			vtype = QSE_AWK_RTX_GETVALTYPE(rtx, v);
 			switch (vtype)
 			{
 				case QSE_AWK_VAL_NIL:
@@ -7543,6 +7567,17 @@ wp_mod_main:
 					str_ptr = ((qse_awk_val_str_t*)v)->val.ptr;
 					str_len = ((qse_awk_val_str_t*)v)->val.len;
 					break;
+
+				case QSE_AWK_VAL_MBS:
+				#if defined(QSE_CHAR_IS_MCHAR)
+					str_ptr = ((qse_awk_val_mbs_t*)v)->val.ptr;
+					str_len = ((qse_awk_val_mbs_t*)v)->val.len;
+					break;
+				#else
+					str_ptr = (qse_char_t*)((qse_awk_val_mbs_t*)v)->val.ptr;
+					str_len = ((qse_awk_val_mbs_t*)v)->val.len;
+					break;
+				#endif
 
 				default:
 				{
@@ -7556,7 +7591,7 @@ wp_mod_main:
 					}
 
 					out.type = QSE_AWK_RTX_VALTOSTR_CPLDUP;
-					if (qse_awk_rtx_valtostr (rtx, v, &out) <= -1)
+					if (qse_awk_rtx_valtostr(rtx, v, &out) <= -1)
 					{
 						qse_awk_rtx_refdownval (rtx, v);
 						return QSE_NULL;
@@ -7588,47 +7623,54 @@ wp_mod_main:
 				}
 			}
 
-			#define BYTE_PRINTABLE(x) ((x) <= 0x7F && (x) != '\\' && QSE_ISMPRINT(x))
-
 			if (fmt[i] == QSE_T('k')) bytetostr_flagged_radix |= QSE_BYTETOSTR_LOWERCASE;
 
 			for (k = 0; k < wp[WP_PRECISION]; k++) 
 			{
-				if (fmt[i] != QSE_T('s') && !BYTE_PRINTABLE(str_ptr[k]))
+				qse_char_t curc;
+
+			#if defined(QSE_CHAR_IS_MCHAR)
+				curc = str_ptr[k];
+			#else
+				if (vtype == QSE_AWK_VAL_MBS) curc = (qse_uint8_t)((qse_mchar_t*)str_ptr)[k];
+				else curc = str_ptr[k];
+			#endif
+
+				if (fmt[i] != QSE_T('s') && !QSE_AWK_BYTE_PRINTABLE(curc))
 				{
 					qse_char_t xbuf[3];
-					if (str_ptr[k] <= 0xFF)
+					if (curc <= 0xFF)
 					{
-						if (qse_str_ncat (out, QSE_T("\\x"), 2) == (qse_size_t)-1) goto s_fail;
-						qse_bytetostr(str_ptr[k], xbuf, QSE_COUNTOF(xbuf), bytetostr_flagged_radix, QSE_T('0'));
-						if (qse_str_ncat (out, xbuf, 2) == (qse_size_t)-1) goto s_fail;
+						if (qse_str_ncat(out, QSE_T("\\x"), 2) == (qse_size_t)-1) goto s_fail;
+						qse_bytetostr(curc, xbuf, QSE_COUNTOF(xbuf), bytetostr_flagged_radix, QSE_T('0'));
+						if (qse_str_ncat(out, xbuf, 2) == (qse_size_t)-1) goto s_fail;
 					}
-					else if (str_ptr[k] <= 0xFFFF)
+					else if (curc <= 0xFFFF)
 					{
-						qse_uint16_t u16 = str_ptr[k];
-						if (qse_str_ncat (out, QSE_T("\\u"), 2) == (qse_size_t)-1) goto s_fail;
+						qse_uint16_t u16 = curc;
+						if (qse_str_ncat(out, QSE_T("\\u"), 2) == (qse_size_t)-1) goto s_fail;
 						qse_bytetostr((u16 >> 8) & 0xFF, xbuf, QSE_COUNTOF(xbuf), bytetostr_flagged_radix, QSE_T('0'));
-						if (qse_str_ncat (out, xbuf, 2) == (qse_size_t)-1) goto s_fail;
+						if (qse_str_ncat(out, xbuf, 2) == (qse_size_t)-1) goto s_fail;
 						qse_bytetostr(u16 & 0xFF, xbuf, QSE_COUNTOF(xbuf), bytetostr_flagged_radix, QSE_T('0'));
-						if (qse_str_ncat (out, xbuf, 2) == (qse_size_t)-1) goto s_fail;
+						if (qse_str_ncat(out, xbuf, 2) == (qse_size_t)-1) goto s_fail;
 					}
 					else
 					{
-						qse_uint32_t u32 = str_ptr[k];
-						if (qse_str_ncat (out, QSE_T("\\U"), 2) == (qse_size_t)-1) goto s_fail;
+						qse_uint32_t u32 = curc;
+						if (qse_str_ncat(out, QSE_T("\\U"), 2) == (qse_size_t)-1) goto s_fail;
 						qse_bytetostr((u32 >> 24) & 0xFF, xbuf, QSE_COUNTOF(xbuf), bytetostr_flagged_radix, QSE_T('0'));
-						if (qse_str_ncat (out, xbuf, 2) == (qse_size_t)-1) goto s_fail;
+						if (qse_str_ncat(out, xbuf, 2) == (qse_size_t)-1) goto s_fail;
 						qse_bytetostr((u32 >> 16) & 0xFF, xbuf, QSE_COUNTOF(xbuf), bytetostr_flagged_radix, QSE_T('0'));
-						if (qse_str_ncat (out, xbuf, 2) == (qse_size_t)-1) goto s_fail;
+						if (qse_str_ncat(out, xbuf, 2) == (qse_size_t)-1) goto s_fail;
 						qse_bytetostr((u32 >> 8) & 0xFF, xbuf, QSE_COUNTOF(xbuf), bytetostr_flagged_radix, QSE_T('0'));
-						if (qse_str_ncat (out, xbuf, 2) == (qse_size_t)-1) goto s_fail;
+						if (qse_str_ncat(out, xbuf, 2) == (qse_size_t)-1) goto s_fail;
 						qse_bytetostr(u32 & 0xFF, xbuf, QSE_COUNTOF(xbuf), bytetostr_flagged_radix, QSE_T('0'));
-						if (qse_str_ncat (out, xbuf, 2) == (qse_size_t)-1) goto s_fail;
+						if (qse_str_ncat(out, xbuf, 2) == (qse_size_t)-1) goto s_fail;
 					}
 				}
 				else
 				{
-					if (qse_str_ccat(out, str_ptr[k]) ==  (qse_size_t)-1) 
+					if (qse_str_ccat(out, curc) == (qse_size_t)-1) 
 					{
 					s_fail:
 						if (str_free) QSE_AWK_FREE (rtx->awk, str_free);
@@ -7657,7 +7699,6 @@ wp_mod_main:
 			}
 
 			qse_awk_rtx_refdownval (rtx, v);
-
 		}
 		else 
 		{

@@ -280,10 +280,9 @@ static int mbs_to_wcs (
 #include "str-dyn.h"
 
 
-qse_size_t qse_mbs_ncatwcs (qse_mbs_t* str, const qse_wchar_t* s, qse_size_t len)
+qse_size_t qse_mbs_ncatwcs (qse_mbs_t* str, const qse_wchar_t* s, qse_size_t len, qse_cmgr_t* cmgr)
 {
 	qse_size_t mbslen, wcslen;
-	qse_cmgr_t* cmgr = qse_getdflcmgr();
 
 	wcslen = len;
 	if (qse_wcsntombsnwithcmgr(s, &wcslen, QSE_NULL, &mbslen, cmgr) <= -1) return (qse_size_t)-1;
@@ -299,10 +298,9 @@ qse_size_t qse_mbs_ncatwcs (qse_mbs_t* str, const qse_wchar_t* s, qse_size_t len
 	return str->val.len;
 }
 
-qse_size_t qse_wcs_ncatmbs (qse_wcs_t* str, const qse_mchar_t* s, qse_size_t len)
+qse_size_t qse_wcs_ncatmbs (qse_wcs_t* str, const qse_mchar_t* s, qse_size_t len, qse_cmgr_t* cmgr)
 {
 	qse_size_t mbslen, wcslen;
-	qse_cmgr_t* cmgr = qse_getdflcmgr();
 
 	mbslen = len;
 	if (qse_mbsntowcsnallwithcmgr(s, &mbslen, QSE_NULL, &wcslen, cmgr) <= -1) return (qse_size_t)-1;
