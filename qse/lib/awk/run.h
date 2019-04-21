@@ -123,6 +123,17 @@ qse_char_t* qse_awk_rtx_format (
 	qse_size_t*       len
 );
 
+qse_mchar_t* qse_awk_rtx_formatmbs (
+	qse_awk_rtx_t*     run, 
+	qse_mbs_t*         out, 
+	qse_mbs_t*         fbu,
+	const qse_mchar_t* fmt, 
+	qse_size_t         fmt_len, 
+	qse_size_t         nargs_on_stack, 
+	qse_awk_nde_t*     args, 
+	qse_size_t*        len
+);
+
 #if defined(__cplusplus)
 }
 #endif

@@ -381,6 +381,19 @@ struct qse_awk_rtx_t
 
 	struct
 	{
+		qse_mbs_t fmt;
+		qse_mbs_t out;
+
+		struct
+		{
+			qse_mchar_t* ptr;
+			qse_size_t len; /* length */
+			qse_size_t inc; /* increment */
+		} tmp;
+	} formatmbs;
+
+	struct
+	{
 		qse_size_t block;
 		qse_size_t expr; /* expression */
 	} depth;
