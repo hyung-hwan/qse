@@ -683,24 +683,29 @@ typedef int qse_mcint_t;
  * #QSE_CHAR_EOF.
  */
 #if defined(QSE_CHAR_IS_MCHAR)
+#	define QSE_SIZEOF_CHAR_T QSE_SIZEOF_MCHAR_T
 	typedef qse_mchar_t qse_char_t;
 	typedef qse_mchau_t qse_chau_t;
 	typedef qse_mcint_t qse_cint_t;
 #elif defined(QSE_CHAR_IS_WCHAR)
+#	define QSE_SIZEOF_CHAR_T QSE_SIZEOF_WCHAR_T
 	typedef qse_wchar_t qse_char_t;
 	typedef qse_wchau_t qse_chau_t;
 	typedef qse_wcint_t qse_cint_t;
+
 #else
 	/* If the character type is not determined in the conf_xxx files */
 
 #	if defined(_WIN32)
 #		if defined(UNICODE) || defined(_UNICODE)
 #			define QSE_CHAR_IS_WCHAR
+#			define QSE_SIZEOF_CHAR_T QSE_SIZEOF_WCHAR_T
 			typedef qse_wchar_t qse_char_t;
 			typedef qse_wchau_t qse_chau_t;
 			typedef qse_wcint_t qse_cint_t;
 #		else
 #			define QSE_CHAR_IS_MCHAR
+#			define QSE_SIZEOF_CHAR_T QSE_SIZEOF_MCHAR_T
 			typedef qse_mchar_t qse_char_t;
 			typedef qse_mchau_t qse_chau_t;
 			typedef qse_mcint_t qse_cint_t;
