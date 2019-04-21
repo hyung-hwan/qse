@@ -365,6 +365,13 @@ QSE_EXPORT qse_ssize_t qse_pio_write (
 	qse_size_t    size   /**< data size */
 );
 
+QSE_EXPORT qse_ssize_t qse_pio_writebytes (
+	qse_pio_t*    pio,   /**< pio object */
+	qse_pio_hid_t hid,   /**< handle ID */
+	const void*   data,  /**< data to write */
+	qse_size_t    size   /**< data size */
+);
+
 /**
  * The qse_pio_flush() flushes buffered data if #QSE_PIO_TEXT has been 
  * specified to qse_pio_open() and qse_pio_init().

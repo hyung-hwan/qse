@@ -35,13 +35,17 @@ int qse_awk_rtx_readio (
 	qse_awk_rtx_t* run, int in_type, 
 	const qse_char_t* name, qse_str_t* buf);
 
-int qse_awk_rtx_writeio_val (
+int qse_awk_rtx_writeioval (
 	qse_awk_rtx_t* run, int out_type, 
 	const qse_char_t* name, qse_awk_val_t* v);
 
-int qse_awk_rtx_writeio_str (
+int qse_awk_rtx_writeiostr (
 	qse_awk_rtx_t* run, int out_type, 
 	const qse_char_t* name, qse_char_t* str, qse_size_t len);
+
+int qse_awk_rtx_writeiobytes (
+	qse_awk_rtx_t* run, int out_type, 
+	const qse_char_t* name, qse_mchar_t* str, qse_size_t len);
 
 int qse_awk_rtx_flushio (
 	qse_awk_rtx_t* run, int out_type, const qse_char_t* name);

@@ -5692,8 +5692,10 @@ static int get_string (
 			return -1;
 		}
 
-	#if !defined(QSE_CHAR_IS_MCHAR)
-		if (byte_only && c != '\\' && !QSE_AWK_BYTE_PRINTABLE(c))
+	#if defined(QSE_CHAR_IS_MCHAR)
+		/* nothing extra to handle byte_only */
+	#else
+		if (byte_only && c != QSE_T('\\') && !QSE_AWK_BYTE_PRINTABLE(c))
 		{
 			qse_char_t wc = c;
 			SETERR_ARG_LOC (awk, QSE_AWK_EMBSCHR, &wc, 1, &awk->tok.loc);
@@ -5906,15 +5908,16 @@ static int get_single_quoted_string (qse_awk_t* awk, int byte_only, qse_awk_tok_
 			return -1;
 		}
 
-	#if !defined(QSE_CHAR_IS_MCHAR)
-		if (byte_only && c != '\\' && !QSE_AWK_BYTE_PRINTABLE(c))
+	#if defined(QSE_CHAR_IS_MCHAR)
+		/* nothing extra to handle byte_only */
+	#else
+		if (byte_only && c != QSE_T('\\') && !QSE_AWK_BYTE_PRINTABLE(c))
 		{
 			qse_char_t wc = c;
 			SETERR_ARG_LOC (awk, QSE_AWK_EMBSCHR, &wc, 1, &awk->tok.loc);
 			return -1;
 		}
 	#endif
-
 
 		if (c == QSE_T('\''))
 		{
@@ -6195,7 +6198,7 @@ retry:
 
 		ADD_TOKEN_STR (awk, tok, QSE_T("<EOF>"), 5);
 		SET_TOKEN_TYPE (awk, tok, TOK_EOF);
-	}	
+	}
 	else if (c == QSE_T('\n')) 
 	{
 		/*ADD_TOKEN_CHAR (awk, tok, QSE_T('\n'));*/
@@ -6214,13 +6217,13 @@ retry:
 		lc = awk->sio.last;
 		GET_CHAR_TO (awk, c);
 
-		unget_char (awk, &awk->sio.last);	
+		unget_char (awk, &awk->sio.last);
 		awk->sio.last = lc;
 
 		if (QSE_AWK_ISDIGIT(awk, c))
 		{
 			/* for a token such as .123 */
-			if (get_number (awk, tok) <= -1) return -1;
+			if (get_number(awk, tok) <= -1) return -1;
 		}
 		else 
 		{
@@ -6249,9 +6252,7 @@ retry:
 			ADD_TOKEN_CHAR (awk, tok, c);
 			GET_CHAR_TO (awk, c);
 		} 
-		while (c == QSE_T('_') || 
-		       QSE_AWK_ISALPHA(awk, c) || 
-		       QSE_AWK_ISDIGIT(awk, c));
+		while (c == QSE_T('_') || QSE_AWK_ISALPHA(awk, c) || QSE_AWK_ISDIGIT(awk, c));
 
 		type = classify_ident(awk, QSE_STR_XSTR(tok->name));
 		if (type == TOK_IDENT)
@@ -6261,22 +6262,23 @@ retry:
 		}
 		SET_TOKEN_TYPE (awk, tok, type);
 	}
-	else if (c == 'M')
+	else if (c == QSE_T('B'))
 	{
 		GET_CHAR_TO (awk, c);
-		if (c == '\"')
+		if (c == QSE_T('\"'))
 		{
-			/* multi-byte string */
+			/* multi-byte string/byte array */
 			SET_TOKEN_TYPE (awk, tok, TOK_MBS);
 			if (get_string(awk, c, QSE_T('\\'), 0, 1, 0, tok) <= -1) return -1;
 		}
-		else if (c == '\'')
+		else if (c == QSE_T('\''))
 		{
 			SET_TOKEN_TYPE (awk, tok, TOK_MBS);
 			if (get_single_quoted_string(awk, 1, tok) <= -1) return -1;
 		}
 		else
 		{
+			ADD_TOKEN_CHAR (awk, tok, QSE_T('B'));
 			goto process_identifier;
 		}
 	}

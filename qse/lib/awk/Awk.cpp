@@ -1800,11 +1800,9 @@ Awk::ssize_t Awk::writeSource (
 	}
 }
 
-Awk::ssize_t Awk::pipeHandler (
-	rtx_t* rtx, rio_cmd_t cmd, rio_arg_t* riod,
-	char_t* data, size_t count)
+Awk::ssize_t Awk::pipeHandler (rtx_t* rtx, rio_cmd_t cmd, rio_arg_t* riod, void* data, size_t count)
 {
-	rxtn_t* rxtn = (rxtn_t*) QSE_XTN (rtx);
+	rxtn_t* rxtn = (rxtn_t*)QSE_XTN(rtx);
 	Awk* awk = rxtn->run->awk;
 
 	QSE_ASSERT ((riod->type & 0xFF) == QSE_AWK_RIO_PIPE);
@@ -1812,23 +1810,25 @@ Awk::ssize_t Awk::pipeHandler (
 	Pipe pipe (rxtn->run, riod);
 
 	try
-	{	
+	{
 		if (awk->pipe_handler)
 		{
 			switch (cmd)
 			{
 				case QSE_AWK_RIO_OPEN:
-					return awk->pipe_handler->open (pipe);
+					return awk->pipe_handler->open(pipe);
 				case QSE_AWK_RIO_CLOSE:
-					return awk->pipe_handler->close (pipe);
-	
+					return awk->pipe_handler->close(pipe);
+
 				case QSE_AWK_RIO_READ:
-					return awk->pipe_handler->read (pipe, data, count);
+					return awk->pipe_handler->read(pipe, (qse_char_t*)data, count);
 				case QSE_AWK_RIO_WRITE:
-					return awk->pipe_handler->write (pipe, data, count);
-	
+					return awk->pipe_handler->write(pipe, (const qse_char_t*)data, count);
+				case QSE_AWK_RIO_WRITE_BYTES:
+					return awk->pipe_handler->writeBytes(pipe, (const qse_mchar_t*)data, count);
+
 				case QSE_AWK_RIO_FLUSH:
-					return awk->pipe_handler->flush (pipe);
+					return awk->pipe_handler->flush(pipe);
 	
 				default:
 					return -1;
@@ -1839,17 +1839,19 @@ Awk::ssize_t Awk::pipeHandler (
 			switch (cmd)
 			{
 				case QSE_AWK_RIO_OPEN:
-					return awk->openPipe (pipe);
+					return awk->openPipe(pipe);
 				case QSE_AWK_RIO_CLOSE:
-					return awk->closePipe (pipe);
-	
+					return awk->closePipe(pipe);
+
 				case QSE_AWK_RIO_READ:
-					return awk->readPipe (pipe, data, count);
+					return awk->readPipe(pipe, (qse_char_t*)data, count);
 				case QSE_AWK_RIO_WRITE:
-					return awk->writePipe (pipe, data, count);
+					return awk->writePipe(pipe, (const qse_char_t*)data, count);
+				case QSE_AWK_RIO_WRITE_BYTES:
+					return awk->writePipeBytes(pipe, (const qse_mchar_t*)data, count);
 	
 				case QSE_AWK_RIO_FLUSH:
-					return awk->flushPipe (pipe);
+					return awk->flushPipe(pipe);
 	
 				default:
 					return -1;
@@ -1862,11 +1864,9 @@ Awk::ssize_t Awk::pipeHandler (
 	}
 }
 
-Awk::ssize_t Awk::fileHandler (
-	rtx_t* rtx, rio_cmd_t cmd, rio_arg_t* riod,
-	char_t* data, size_t count)
+Awk::ssize_t Awk::fileHandler (rtx_t* rtx, rio_cmd_t cmd, rio_arg_t* riod, void* data, size_t count)
 {
-	rxtn_t* rxtn = (rxtn_t*) QSE_XTN (rtx);
+	rxtn_t* rxtn = (rxtn_t*)QSE_XTN(rtx);
 	Awk* awk = rxtn->run->awk;
 
 	QSE_ASSERT ((riod->type & 0xFF) == QSE_AWK_RIO_FILE);
@@ -1880,17 +1880,19 @@ Awk::ssize_t Awk::fileHandler (
 			switch (cmd)
 			{
 				case QSE_AWK_RIO_OPEN:
-					return awk->file_handler->open (file);
+					return awk->file_handler->open(file);
 				case QSE_AWK_RIO_CLOSE:
-					return awk->file_handler->close (file);
-	
+					return awk->file_handler->close(file);
+
 				case QSE_AWK_RIO_READ:
-					return awk->file_handler->read (file, data, count);
+					return awk->file_handler->read(file, (qse_char_t*)data, count);
 				case QSE_AWK_RIO_WRITE:
-					return awk->file_handler->write (file, data, count);
-	
+					return awk->file_handler->write(file, (const qse_char_t*)data, count);
+				case QSE_AWK_RIO_WRITE_BYTES:
+					return awk->file_handler->writeBytes(file, (const qse_mchar_t*)data, count);
+
 				case QSE_AWK_RIO_FLUSH:
-					return awk->file_handler->flush (file);
+					return awk->file_handler->flush(file);
 	
 				default:
 					return -1;
@@ -1901,17 +1903,19 @@ Awk::ssize_t Awk::fileHandler (
 			switch (cmd)
 			{
 				case QSE_AWK_RIO_OPEN:
-					return awk->openFile (file);
+					return awk->openFile(file);
 				case QSE_AWK_RIO_CLOSE:
-					return awk->closeFile (file);
+					return awk->closeFile(file);
 
 				case QSE_AWK_RIO_READ:
-					return awk->readFile (file, data, count);
+					return awk->readFile(file, (qse_char_t*)data, count);
 				case QSE_AWK_RIO_WRITE:
-					return awk->writeFile (file, data, count);
+					return awk->writeFile(file, (const qse_char_t*)data, count);
+				case QSE_AWK_RIO_WRITE_BYTES:
+					return awk->writeFileBytes(file, (const qse_mchar_t*)data, count);
 
 				case QSE_AWK_RIO_FLUSH:
-					return awk->flushFile (file);
+					return awk->flushFile(file);
 
 				default:
 					return -1;
@@ -1924,9 +1928,7 @@ Awk::ssize_t Awk::fileHandler (
 	}
 }
 
-Awk::ssize_t Awk::consoleHandler (
-	rtx_t* rtx, rio_cmd_t cmd, rio_arg_t* riod,
-	char_t* data, size_t count)
+Awk::ssize_t Awk::consoleHandler (rtx_t* rtx, rio_cmd_t cmd, rio_arg_t* riod, void* data, size_t count)
 {
 	rxtn_t* rxtn = (rxtn_t*) QSE_XTN (rtx);
 	Awk* awk = rxtn->run->awk;
@@ -1942,19 +1944,21 @@ Awk::ssize_t Awk::consoleHandler (
 			switch (cmd)
 			{
 				case QSE_AWK_RIO_OPEN:
-					return awk->console_handler->open (console);
+					return awk->console_handler->open(console);
 				case QSE_AWK_RIO_CLOSE:
-					return awk->console_handler->close (console);
+					return awk->console_handler->close(console);
 
 				case QSE_AWK_RIO_READ:
-					return awk->console_handler->read (console, data, count);
+					return awk->console_handler->read(console, (qse_char_t*)data, count);
 				case QSE_AWK_RIO_WRITE:
-					return awk->console_handler->write (console, data, count);
+					return awk->console_handler->write(console, (const qse_char_t*)data, count);
+				case QSE_AWK_RIO_WRITE_BYTES:
+					return awk->console_handler->writeBytes(console, (const qse_mchar_t*)data, count);
 
 				case QSE_AWK_RIO_FLUSH:
-					return awk->console_handler->flush (console);
+					return awk->console_handler->flush(console);
 				case QSE_AWK_RIO_NEXT:
-					return awk->console_handler->next (console);
+					return awk->console_handler->next(console);
 
 				default:
 					return -1;
@@ -1965,19 +1969,21 @@ Awk::ssize_t Awk::consoleHandler (
 			switch (cmd)
 			{
 				case QSE_AWK_RIO_OPEN:
-					return awk->openConsole (console);
+					return awk->openConsole(console);
 				case QSE_AWK_RIO_CLOSE:
-					return awk->closeConsole (console);
+					return awk->closeConsole(console);
 
 				case QSE_AWK_RIO_READ:
-					return awk->readConsole (console, data, count);
+					return awk->readConsole(console, (qse_char_t*)data, count);
 				case QSE_AWK_RIO_WRITE:
-					return awk->writeConsole (console, data, count);
+					return awk->writeConsole(console, (const qse_char_t*)data, count);
+				case QSE_AWK_RIO_WRITE_BYTES:
+					return awk->writeConsoleBytes(console, (const qse_mchar_t*)data, count);
 
 				case QSE_AWK_RIO_FLUSH:
-					return awk->flushConsole (console);
+					return awk->flushConsole(console);
 				case QSE_AWK_RIO_NEXT:
-					return awk->nextConsole (console);
+					return awk->nextConsole(console);
 
 				default:
 					return -1;
@@ -1990,7 +1996,7 @@ Awk::ssize_t Awk::consoleHandler (
 	}
 }
 
-int Awk::openPipe  (Pipe& io)
+int Awk::openPipe (Pipe& io)
 {
 	((Run*)io)->setError (QSE_AWK_ENOIMPL);
 	return -1;

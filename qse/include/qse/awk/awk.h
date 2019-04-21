@@ -586,13 +586,15 @@ typedef qse_ssize_t (*qse_awk_sio_impl_t) (
  */
 enum qse_awk_rio_cmd_t
 {
-	QSE_AWK_RIO_OPEN   = 0, /**< open a stream */
-	QSE_AWK_RIO_CLOSE  = 1, /**< close a stream */
-	QSE_AWK_RIO_READ   = 2, /**< read a stream */
-	QSE_AWK_RIO_WRITE  = 3, /**< write to a stream */
-	QSE_AWK_RIO_FLUSH  = 4, /**< flush buffered data to a stream */
-	QSE_AWK_RIO_NEXT   = 5  /**< close the current stream and 
-	                             open the next stream (only for console) */
+	QSE_AWK_RIO_OPEN        = 0, /**< open a stream */
+	QSE_AWK_RIO_CLOSE       = 1, /**< close a stream */
+	QSE_AWK_RIO_READ        = 2, /**< read a stream */
+	QSE_AWK_RIO_WRITE       = 3, /**< write to a stream */
+	/*QSE_AWK_RIO_READ_BYTES  = 4,*/
+	QSE_AWK_RIO_WRITE_BYTES = 5,
+	QSE_AWK_RIO_FLUSH       = 6, /**< flush buffered data to a stream */
+	QSE_AWK_RIO_NEXT        = 7  /**< close the current stream and 
+	                                open the next stream (only for console) */
 };
 typedef enum qse_awk_rio_cmd_t qse_awk_rio_cmd_t;
 
@@ -644,7 +646,7 @@ struct qse_awk_rio_arg_t
 
 	/* read-write. a user handler can do whatever it likes to do with these. */
 	void*                 handle;    /**< I/O handle set by a handler */
-	int                   uflags;    /**< flags set by a handler */
+	int                   uflags;    /**< user-flags set by a handler */
 
 	/*--  from here down, internal use only --*/
 	int type; 
@@ -676,7 +678,7 @@ typedef qse_ssize_t (*qse_awk_rio_impl_t) (
 	qse_awk_rtx_t*      rtx,
 	qse_awk_rio_cmd_t   cmd,
 	qse_awk_rio_arg_t*  arg,
-	qse_char_t*         data,
+	void*               data,
 	qse_size_t          count
 );
 

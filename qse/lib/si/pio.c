@@ -131,8 +131,7 @@ static void free_param (qse_pio_t* pio, param_t* param)
 	if (param->mcmd) QSE_MMGR_FREE (pio->mmgr, param->mcmd);
 }
 
-static int make_param (
-	qse_pio_t* pio, const qse_char_t* cmd, int flags, param_t* param)
+static int make_param (qse_pio_t* pio, const qse_char_t* cmd, int flags, param_t* param)
 {
 #if defined(QSE_CHAR_IS_MCHAR)
 	qse_mchar_t* mcmd = QSE_NULL;
@@ -1876,8 +1875,7 @@ qse_pio_pid_t qse_pio_getchild (const qse_pio_t* pio)
 	return pio->child;
 }
 
-static qse_ssize_t pio_read (
-	qse_pio_t* pio, void* buf, qse_size_t size, qse_pio_hnd_t hnd)
+static qse_ssize_t pio_read (qse_pio_t* pio, void* buf, qse_size_t size, qse_pio_hnd_t hnd)
 {
 #if defined(_WIN32)
 	DWORD count;
@@ -1942,7 +1940,7 @@ static qse_ssize_t pio_read (
 		size = QSE_TYPE_MAX(qse_ssize_t) & QSE_TYPE_MAX(size_t);
 
 reread:
-	n = QSE_READ (hnd, buf, size);
+	n = QSE_READ(hnd, buf, size);
 	if (n <= -1) 
 	{
 		if (errno == EINTR)
@@ -1961,17 +1959,16 @@ reread:
 #endif
 }
 
-qse_ssize_t qse_pio_read (
-	qse_pio_t* pio, qse_pio_hid_t hid, void* buf, qse_size_t size)
+qse_ssize_t qse_pio_read (qse_pio_t* pio, qse_pio_hid_t hid, void* buf, qse_size_t size)
 {
 	if (pio->pin[hid].tio == QSE_NULL) 
-		return pio_read (pio, buf, size, pio->pin[hid].handle);
+		return pio_read(pio, buf, size, pio->pin[hid].handle);
 	else
 	{
 		qse_ssize_t n;
 
 		pio->errnum = QSE_PIO_ENOERR;
-		n = qse_tio_read (pio->pin[hid].tio, buf, size);
+		n = qse_tio_read(pio->pin[hid].tio, buf, size);
 		if (n <= -1 && pio->errnum == QSE_PIO_ENOERR) 
 			pio->errnum = tio_errnum_to_pio_errnum (pio->pin[hid].tio);
 
@@ -1979,8 +1976,7 @@ qse_ssize_t qse_pio_read (
 	}
 }
 
-static qse_ssize_t pio_write (
-	qse_pio_t* pio, const void* data, qse_size_t size, qse_pio_hnd_t hnd)
+static qse_ssize_t pio_write (qse_pio_t* pio, const void* data, qse_size_t size, qse_pio_hnd_t hnd)
 {
 #if defined(_WIN32)
 	DWORD count;
@@ -2059,23 +2055,29 @@ rewrite:
 #endif
 }
 
-qse_ssize_t qse_pio_write (
-	qse_pio_t* pio, qse_pio_hid_t hid,
-	const void* data, qse_size_t size)
+qse_ssize_t qse_pio_write (qse_pio_t* pio, qse_pio_hid_t hid, const void* data, qse_size_t size)
 {
 	if (pio->pin[hid].tio == QSE_NULL)
-		return pio_write (pio, data, size, pio->pin[hid].handle);
+		return pio_write(pio, data, size, pio->pin[hid].handle);
 	else
 	{
 		qse_ssize_t n;
 
 		pio->errnum = QSE_PIO_ENOERR;	
-		n = qse_tio_write (pio->pin[hid].tio, data, size);
+		n = qse_tio_write(pio->pin[hid].tio, data, size);
 		if (n <= -1 && pio->errnum == QSE_PIO_ENOERR) 
 			pio->errnum = tio_errnum_to_pio_errnum (pio->pin[hid].tio);
 
 		return n;
 	}
+}
+
+qse_ssize_t qse_pio_writebytes (qse_pio_t* pio, qse_pio_hid_t hid, const void* data, qse_size_t size)
+{
+	if (pio->pin[hid].tio == QSE_NULL)
+		return pio_write(pio, data, size, pio->pin[hid].handle);
+	else
+		return qse_tio_writembs(pio->pin[hid].tio, data, size);
 }
 
 qse_ssize_t qse_pio_flush (qse_pio_t* pio, qse_pio_hid_t hid)
@@ -2085,9 +2087,9 @@ qse_ssize_t qse_pio_flush (qse_pio_t* pio, qse_pio_hid_t hid)
 	if (pio->pin[hid].tio == QSE_NULL) return 0;
 
 	pio->errnum = QSE_PIO_ENOERR;	
-	n = qse_tio_flush (pio->pin[hid].tio);
+	n = qse_tio_flush(pio->pin[hid].tio);
 	if (n <= -1 && pio->errnum == QSE_PIO_ENOERR) 
-		pio->errnum = tio_errnum_to_pio_errnum (pio->pin[hid].tio);
+		pio->errnum = tio_errnum_to_pio_errnum(pio->pin[hid].tio);
 
 	return n;
 }
@@ -2346,8 +2348,7 @@ int qse_pio_kill (qse_pio_t* pio)
 #endif
 }
 
-static qse_ssize_t pio_input (
-	qse_tio_t* tio, qse_tio_cmd_t cmd, void* buf, qse_size_t size)
+static qse_ssize_t pio_input (qse_tio_t* tio, qse_tio_cmd_t cmd, void* buf, qse_size_t size)
 {
 	if (cmd == QSE_TIO_DATA) 
 	{
@@ -2363,8 +2364,7 @@ static qse_ssize_t pio_input (
 	return 0;
 }
 
-static qse_ssize_t pio_output (
-	qse_tio_t* tio, qse_tio_cmd_t cmd, void* buf, qse_size_t size)
+static qse_ssize_t pio_output (qse_tio_t* tio, qse_tio_cmd_t cmd, void* buf, qse_size_t size)
 {
 	if (cmd == QSE_TIO_DATA) 
 	{

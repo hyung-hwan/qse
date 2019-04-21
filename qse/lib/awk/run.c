@@ -1884,7 +1884,7 @@ static int run_block0 (qse_awk_rtx_t* rtx, qse_awk_nde_blk_t* nde)
 		/* blockless pattern - execute print $0*/
 		qse_awk_rtx_refupval (rtx, rtx->inrec.d0);
 
-		n = qse_awk_rtx_writeio_str (rtx,
+		n = qse_awk_rtx_writeiostr (rtx,
 			QSE_AWK_OUT_CONSOLE, QSE_T(""),
 			QSE_STR_PTR(&rtx->inrec.line),
 			QSE_STR_LEN(&rtx->inrec.line));
@@ -1895,7 +1895,7 @@ static int run_block0 (qse_awk_rtx_t* rtx, qse_awk_nde_blk_t* nde)
 			return -1;
 		}
 
-		n = qse_awk_rtx_writeio_str (
+		n = qse_awk_rtx_writeiostr (
 			rtx, QSE_AWK_OUT_CONSOLE, QSE_T(""),
 			rtx->gbl.ors.ptr, rtx->gbl.ors.len);
 		if (n == -1)
@@ -2893,12 +2893,12 @@ static int run_print (qse_awk_rtx_t* rtx, qse_awk_nde_print_t* nde)
 		qse_size_t len;
 
 		/* if so, resolve the destination name */
-		out_v = eval_expression (rtx, nde->out);
+		out_v = eval_expression(rtx, nde->out);
 		if (!out_v) return -1;
 
 		qse_awk_rtx_refupval (rtx, out_v);
 
-		out = qse_awk_rtx_getvalstr (rtx, out_v, &len);
+		out = qse_awk_rtx_getvalstr(rtx, out_v, &len);
 		if (!out) goto oops;
 
 		if (len <= 0) 
@@ -2935,10 +2935,7 @@ static int run_print (qse_awk_rtx_t* rtx, qse_awk_nde_print_t* nde)
 	{
 		/* if it doesn't have any arguments, print the entire 
 		 * input record */
-		n = qse_awk_rtx_writeio_str (
-			rtx, nde->out_type, dst,
-			QSE_STR_PTR(&rtx->inrec.line),
-			QSE_STR_LEN(&rtx->inrec.line));
+		n = qse_awk_rtx_writeiostr(rtx, nde->out_type, dst, QSE_STR_PTR(&rtx->inrec.line), QSE_STR_LEN(&rtx->inrec.line));
 		if (n <= -1 /*&& rtx->errinf.num != QSE_AWK_EIOIMPL*/)
 		{
 			if (rtx->awk->opt.trait & QSE_AWK_TOLERANT)
@@ -2970,10 +2967,7 @@ static int run_print (qse_awk_rtx_t* rtx, qse_awk_nde_print_t* nde)
 		{
 			if (np != head)
 			{
-				n = qse_awk_rtx_writeio_str (
-					rtx, nde->out_type, dst, 
-					rtx->gbl.ofs.ptr, 
-					rtx->gbl.ofs.len);
+				n = qse_awk_rtx_writeiostr(rtx, nde->out_type, dst, rtx->gbl.ofs.ptr, rtx->gbl.ofs.len);
 				if (n <= -1 /*&& rtx->errinf.num != QSE_AWK_EIOIMPL*/) 
 				{
 					if (rtx->awk->opt.trait & QSE_AWK_TOLERANT)
@@ -2987,11 +2981,11 @@ static int run_print (qse_awk_rtx_t* rtx, qse_awk_nde_print_t* nde)
 				}
 			}
 
-			v = eval_expression (rtx, np);
+			v = eval_expression(rtx, np);
 			if (v == QSE_NULL) goto oops_1;
 
 			qse_awk_rtx_refupval (rtx, v);
-			n = qse_awk_rtx_writeio_val (rtx, nde->out_type, dst, v);
+			n = qse_awk_rtx_writeioval(rtx, nde->out_type, dst, v);
 			qse_awk_rtx_refdownval (rtx, v);
 
 			if (n <= -1 /*&& rtx->errinf.num != QSE_AWK_EIOIMPL*/) 
@@ -3009,9 +3003,7 @@ static int run_print (qse_awk_rtx_t* rtx, qse_awk_nde_print_t* nde)
 	}
 
 	/* print the value ORS to terminate the operation */
-	n = qse_awk_rtx_writeio_str (
-		rtx, nde->out_type, dst, 
-		rtx->gbl.ors.ptr, rtx->gbl.ors.len);
+	n = qse_awk_rtx_writeiostr(rtx, nde->out_type, dst, rtx->gbl.ors.ptr, rtx->gbl.ors.len);
 	if (n <= -1 /*&& rtx->errinf.num != QSE_AWK_EIOIMPL*/)
 	{
 		if (rtx->awk->opt.trait & QSE_AWK_TOLERANT)
@@ -3124,7 +3116,7 @@ static int run_printf (qse_awk_rtx_t* rtx, qse_awk_nde_print_t* nde)
 	{
 		/* the remaining arguments are ignored as the format cannot 
 		 * contain any % characters. e.g. printf (1, "xxxx") */
-		n = qse_awk_rtx_writeio_val (rtx, nde->out_type, dst, v);
+		n = qse_awk_rtx_writeioval(rtx, nde->out_type, dst, v);
 		qse_awk_rtx_refdownval (rtx, v);
 
 		if (n <= -1 /*&& rtx->errinf.num != QSE_AWK_EIOIMPL*/)
@@ -3151,7 +3143,7 @@ static int run_printf (qse_awk_rtx_t* rtx, qse_awk_nde_print_t* nde)
 		}
 	}
 
-	if (qse_awk_rtx_flushio (rtx, nde->out_type, dst) <= -1)
+	if (qse_awk_rtx_flushio(rtx, nde->out_type, dst) <= -1)
 	{
 		if (rtx->awk->opt.trait & QSE_AWK_TOLERANT) xret = PRINT_IOERR;
 		else goto oops_1;
@@ -3186,11 +3178,10 @@ static int output_formatted (
 	qse_size_t len;
 	int n;
 
-	ptr = qse_awk_rtx_format (
-		rtx, QSE_NULL, QSE_NULL, fmt, fmt_len, 0, args, &len);
+	ptr = qse_awk_rtx_format(rtx, QSE_NULL, QSE_NULL, fmt, fmt_len, 0, args, &len);
 	if (ptr == QSE_NULL) return -1;
 
-	n = qse_awk_rtx_writeio_str (rtx, out_type, dst, ptr, len);
+	n = qse_awk_rtx_writeiostr(rtx, out_type, dst, ptr, len);
 	if (n <= -1 /*&& rtx->errinf.num != QSE_AWK_EIOIMPL*/) 
 	{
 		if (rtx->awk->opt.trait & QSE_AWK_TOLERANT)

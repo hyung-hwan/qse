@@ -1329,15 +1329,14 @@ int qse_awk_fnc_sprintf (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	fbu_inited = 1;
 
 	a0 = qse_awk_rtx_getarg (rtx, 0);
-	cs0.ptr = qse_awk_rtx_getvalstr (rtx, a0, &cs0.len);
+	cs0.ptr = qse_awk_rtx_getvalstr(rtx, a0, &cs0.len);
 	if (cs0.ptr == QSE_NULL) goto oops;
 
-	x.ptr = qse_awk_rtx_format (rtx, 
-		&out, &fbu, cs0.ptr, cs0.len, nargs, QSE_NULL, &x.len);
+	x.ptr = qse_awk_rtx_format(rtx, &out, &fbu, cs0.ptr, cs0.len, nargs, QSE_NULL, &x.len);
 	qse_awk_rtx_freevalstr (rtx, a0, cs0.ptr);
-	if (x.ptr == QSE_NULL) goto oops;
+	if (!x.ptr) goto oops;
 	
-	a0 = qse_awk_rtx_makestrvalwithxstr (rtx, &x);
+	a0 = qse_awk_rtx_makestrvalwithxstr(rtx, &x);
 	if (a0 == QSE_NULL)  goto oops;
 
 	qse_str_fini (&fbu);

@@ -196,8 +196,7 @@ static int find_rio_in (
 	return 0;
 }
 
-static QSE_INLINE int resolve_rs (
-	qse_awk_rtx_t* rtx, qse_awk_val_t* rs, qse_cstr_t* rrs)
+static QSE_INLINE int resolve_rs (qse_awk_rtx_t* rtx, qse_awk_val_t* rs, qse_cstr_t* rrs)
 {
 	int ret = 0;
 	qse_awk_val_type_t rs_vtype;
@@ -226,8 +225,7 @@ static QSE_INLINE int resolve_rs (
 	return ret;
 }
 
-static QSE_INLINE int match_long_rs (
-	qse_awk_rtx_t* run, qse_str_t* buf, qse_awk_rio_arg_t* p)
+static QSE_INLINE int match_long_rs (qse_awk_rtx_t* run, qse_str_t* buf, qse_awk_rio_arg_t* p)
 {
 	qse_cstr_t match;
 	qse_awk_errnum_t errnum;
@@ -295,9 +293,7 @@ static QSE_INLINE int match_long_rs (
 	return ret;
 }
 
-int qse_awk_rtx_readio (
-	qse_awk_rtx_t* run, int in_type,
-	const qse_char_t* name, qse_str_t* buf)
+int qse_awk_rtx_readio (qse_awk_rtx_t* run, int in_type, const qse_char_t* name, qse_str_t* buf)
 {
 	qse_awk_rio_arg_t* p;
 	qse_awk_rio_impl_t handler;
@@ -554,7 +550,7 @@ int qse_awk_rtx_readio (
 				}
 				else line_len++;
 
-				if (qse_str_ccat (buf, c) == (qse_size_t)-1)
+				if (qse_str_ccat(buf, c) == (qse_size_t)-1)
 				{
 					qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM, QSE_NULL);
 					ret = -1;
@@ -640,56 +636,45 @@ int qse_awk_rtx_readio (
 	return ret;
 }
 
-int qse_awk_rtx_writeio_val (
-	qse_awk_rtx_t* run, int out_type, 
-	const qse_char_t* name, qse_awk_val_t* v)
+int qse_awk_rtx_writeioval (qse_awk_rtx_t* run, int out_type, const qse_char_t* name, qse_awk_val_t* v)
 {
-	qse_char_t* str;
-	qse_size_t len;
-	int n;
 	qse_awk_val_type_t vtype;
-
-
 	vtype = QSE_AWK_RTX_GETVALTYPE (run, v);
 
-	if (vtype == QSE_AWK_VAL_STR)
+	switch (vtype)
 	{
-		str = ((qse_awk_val_str_t*)v)->val.ptr;
-		len = ((qse_awk_val_str_t*)v)->val.len;
-	}
-	else
-	{
-		qse_awk_rtx_valtostr_out_t out;
+		case QSE_AWK_VAL_STR:
+			return qse_awk_rtx_writeiostr(run, out_type, name, ((qse_awk_val_str_t*)v)->val.ptr, ((qse_awk_val_str_t*)v)->val.len);
 
-		out.type = QSE_AWK_RTX_VALTOSTR_CPLDUP |
-		           QSE_AWK_RTX_VALTOSTR_PRINT;
-		if (qse_awk_rtx_valtostr (run, v, &out) <= -1) return -1;
+		case QSE_AWK_VAL_MBS:
+			return qse_awk_rtx_writeiobytes(run, out_type, name, ((qse_awk_val_mbs_t*)v)->val.ptr, ((qse_awk_val_mbs_t*)v)->val.len);
 
-		str = out.u.cpldup.ptr;
-		len = out.u.cpldup.len;
-	}
+		default:
+		{
+			qse_awk_rtx_valtostr_out_t out;
+			int n;
 
-	n = qse_awk_rtx_writeio_str (run, out_type, name, str, len);
-
-	if (vtype == QSE_AWK_VAL_STR) 
-	{
-		/* nothing to free */
+			out.type = QSE_AWK_RTX_VALTOSTR_CPLDUP | QSE_AWK_RTX_VALTOSTR_PRINT;
+			if (qse_awk_rtx_valtostr(run, v, &out) <= -1) return -1;
+			n = qse_awk_rtx_writeiostr(run, out_type, name, out.u.cpldup.ptr, out.u.cpldup.len);
+			QSE_AWK_FREE (run->awk, out.u.cpldup.ptr);
+			return n;
+		}
 	}
-	else
-	{
-		QSE_AWK_FREE (run->awk, str);
-	}
-	return n;
 }
 
-int qse_awk_rtx_writeio_str (
-	qse_awk_rtx_t* run, int out_type, 
-	const qse_char_t* name, qse_char_t* str, qse_size_t len)
+struct write_io_data_t
 {
-	qse_awk_rio_arg_t* p = run->rio.chain;
+	qse_awk_rio_arg_t* p;
 	qse_awk_rio_impl_t handler;
-	int io_type, io_mode, io_mask; 
-	qse_ssize_t n;
+};
+typedef struct write_io_data_t write_io_data_t;
+
+static int prepare_for_write_io_data (qse_awk_rtx_t* rtx, int out_type, const qse_char_t* name, write_io_data_t* wid)
+{
+	qse_awk_rio_arg_t* p = rtx->rio.chain;
+	qse_awk_rio_impl_t handler;
+	int io_type, io_mode, io_mask, n;
 
 	QSE_ASSERT (out_type >= 0 && out_type <= QSE_COUNTOF(out_type_map));
 	QSE_ASSERT (out_type >= 0 && out_type <= QSE_COUNTOF(out_mode_map));
@@ -700,11 +685,11 @@ int qse_awk_rtx_writeio_str (
 	io_mode = out_mode_map[out_type];
 	io_mask = out_mask_map[out_type];
 
-	handler = run->rio.handler[io_type];
+	handler = rtx->rio.handler[io_type];
 	if (handler == QSE_NULL)
 	{
 		/* no I/O handler provided */
-		qse_awk_rtx_seterrnum (run, QSE_AWK_EIOUSER, QSE_NULL);
+		qse_awk_rtx_seterrnum (rtx, QSE_AWK_EIOUSER, QSE_NULL);
 		return -1;
 	}
 
@@ -721,29 +706,27 @@ int qse_awk_rtx_writeio_str (
 		 *    print "1111" >> "1.tmp"
 		 *    print "1111" > "1.tmp"
 		 */
-		if (p->type == (io_type | io_mask) && 
-		    qse_strcmp (p->name, name) == 0) break;
+		if (p->type == (io_type | io_mask) && qse_strcmp(p->name, name) == 0) break;
 		p = p->next;
 	}
 
 	/* if there is not corresponding rio for name, create one */
 	if (p == QSE_NULL)
 	{
-		p = (qse_awk_rio_arg_t*) QSE_AWK_ALLOC (
-			run->awk, QSE_SIZEOF(qse_awk_rio_arg_t));
+		p = (qse_awk_rio_arg_t*)QSE_AWK_ALLOC(rtx->awk, QSE_SIZEOF(qse_awk_rio_arg_t));
 		if (p == QSE_NULL)
 		{
-			qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM, QSE_NULL);
+			qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
 			return -1;
 		}
 		
 		QSE_MEMSET (p, 0, QSE_SIZEOF(*p));
 
-		p->name = QSE_AWK_STRDUP (run->awk, name);
+		p->name = QSE_AWK_STRDUP(rtx->awk, name);
 		if (p->name == QSE_NULL)
 		{
-			QSE_AWK_FREE (run->awk, p);
-			qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM, QSE_NULL);
+			QSE_AWK_FREE (rtx->awk, p);
+			qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
 			return -1;
 		}
 
@@ -759,52 +742,55 @@ int qse_awk_rtx_writeio_str (
 		p->out.eos = 0;
 		*/
 
-		qse_awk_rtx_seterrnum (run, QSE_AWK_ENOERR, QSE_NULL);
-		n = handler (run, QSE_AWK_RIO_OPEN, p, QSE_NULL, 0);
+		qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOERR, QSE_NULL);
+		n = handler(rtx, QSE_AWK_RIO_OPEN, p, QSE_NULL, 0);
 		if (n <= -1)
 		{
-			QSE_AWK_FREE (run->awk, p->name);
-			QSE_AWK_FREE (run->awk, p);
+			QSE_AWK_FREE (rtx->awk, p->name);
+			QSE_AWK_FREE (rtx->awk, p);
 
-			if (run->errinf.num == QSE_AWK_ENOERR)
-				qse_awk_rtx_seterrnum (run, QSE_AWK_EIOIMPL, QSE_NULL);
+			if (rtx->errinf.num == QSE_AWK_ENOERR)
+				qse_awk_rtx_seterrnum (rtx, QSE_AWK_EIOIMPL, QSE_NULL);
 
 			return -1;
 		}
 
 		/* chain it */
-		p->next = run->rio.chain;
-		run->rio.chain = p;
+		p->next = rtx->rio.chain;
+		rtx->rio.chain = p;
 	}
 
-	if (p->out.eos) 
-	{
-		/* no more streams */
-		return 0;
-	}
+	if (p->out.eos) return 0; /* no more streams */
+	if (p->out.eof) return 0; /* it has reached the end of the stream but this function has been recalled */
 
-	if (p->out.eof) 
-	{
-		/* it has reached the end of the stream but this function
-		 * has been recalled */
-		return 0;
-	}
+	wid->handler = handler;
+	wid->p = p;
+	return 1;
+}
+
+int qse_awk_rtx_writeiostr (qse_awk_rtx_t* rtx, int out_type, const qse_char_t* name, qse_char_t* str, qse_size_t len)
+{
+	int x;
+	write_io_data_t wid;
+
+	if ((x = prepare_for_write_io_data(rtx, out_type, name, &wid)) <= 0) return x;
 
 	while (len > 0)
 	{
-		qse_awk_rtx_seterrnum (run, QSE_AWK_ENOERR, QSE_NULL);
-		n = handler (run, QSE_AWK_RIO_WRITE, p, str, len);
+		qse_ssize_t n;
+
+		qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOERR, QSE_NULL);
+		n = wid.handler(rtx, QSE_AWK_RIO_WRITE, wid.p, str, len);
 		if (n <= -1) 
 		{
-			if (run->errinf.num == QSE_AWK_ENOERR)
-				qse_awk_rtx_seterrnum (run, QSE_AWK_EIOIMPL, QSE_NULL);
-
+			if (rtx->errinf.num == QSE_AWK_ENOERR)
+				qse_awk_rtx_seterrnum (rtx, QSE_AWK_EIOIMPL, QSE_NULL);
 			return -1;
 		}
 
 		if (n == 0) 
 		{
-			p->out.eof = 1;
+			wid.p->out.eof = 1;
 			return 0;
 		}
 
@@ -815,8 +801,40 @@ int qse_awk_rtx_writeio_str (
 	return 1;
 }
 
-int qse_awk_rtx_flushio (
-	qse_awk_rtx_t* run, int out_type, const qse_char_t* name)
+int qse_awk_rtx_writeiobytes (qse_awk_rtx_t* rtx, int out_type, const qse_char_t* name, qse_mchar_t* str, qse_size_t len)
+{
+	int x;
+	write_io_data_t wid;
+
+	if ((x = prepare_for_write_io_data(rtx, out_type, name, &wid)) <= 0) return x;
+
+	while (len > 0)
+	{
+		qse_ssize_t n;
+
+		qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOERR, QSE_NULL);
+		n = wid.handler(rtx, QSE_AWK_RIO_WRITE_BYTES, wid.p, str, len);
+		if (n <= -1) 
+		{
+			if (rtx->errinf.num == QSE_AWK_ENOERR)
+				qse_awk_rtx_seterrnum (rtx, QSE_AWK_EIOIMPL, QSE_NULL);
+			return -1;
+		}
+
+		if (n == 0) 
+		{
+			wid.p->out.eof = 1;
+			return 0;
+		}
+
+		len -= n;
+		str += n;
+	}
+
+	return 1;
+}
+
+int qse_awk_rtx_flushio (qse_awk_rtx_t* run, int out_type, const qse_char_t* name)
 {
 	qse_awk_rio_arg_t* p = run->rio.chain;
 	qse_awk_rio_impl_t handler;
@@ -852,7 +870,7 @@ int qse_awk_rtx_flushio (
 		    (name == QSE_NULL || qse_strcmp(p->name,name) == 0)) 
 		{
 			qse_awk_rtx_seterrnum (run, QSE_AWK_ENOERR, QSE_NULL);
-			n = handler (run, QSE_AWK_RIO_FLUSH, p, QSE_NULL, 0);
+			n = handler(run, QSE_AWK_RIO_FLUSH, p, QSE_NULL, 0);
 
 			if (n <= -1) 
 			{

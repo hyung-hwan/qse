@@ -422,7 +422,7 @@ static int print_expr (qse_awk_t* awk, qse_awk_nde_t* nde)
 			qse_mchar_t* ptr;
 			qse_size_t len, i;
 
-			PUT_SRCSTR (awk, QSE_T("M\""));
+			PUT_SRCSTR (awk, QSE_T("B\""));
 			ptr = ((qse_awk_nde_mbs_t*)nde)->ptr;
 			len = ((qse_awk_nde_mbs_t*)nde)->len;
 			for (i = 0; i < len; i++)

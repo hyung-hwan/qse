@@ -386,6 +386,7 @@ public:
 			virtual int     close (Pipe& io) = 0;
 			virtual ssize_t read  (Pipe& io, char_t* buf, size_t len) = 0;
 			virtual ssize_t write (Pipe& io, const char_t* buf, size_t len) = 0;
+			virtual ssize_t writeBytes (Pipe& io, const qse_mchar_t* buf, size_t len) = 0;
 			virtual int     flush (Pipe& io) = 0;
 		};
 
@@ -430,6 +431,7 @@ public:
 			virtual int     close (File& io) = 0;
 			virtual ssize_t read  (File& io, char_t* buf, size_t len) = 0;
 			virtual ssize_t write (File& io, const char_t* buf, size_t len) = 0;
+			virtual ssize_t writeBytes (File& io, const qse_mchar_t* buf, size_t len) = 0;
 			virtual int     flush (File& io) = 0;
 		};
 
@@ -492,6 +494,8 @@ public:
 			/// characters written. It can return 0 to indicate EOF and -1 
 			/// for failure.
 			virtual ssize_t write (Console& io, const char_t* buf, size_t len) = 0;
+
+			virtual ssize_t writeBytes (Console& io, const qse_mchar_t* buf, size_t len) = 0;
 
 			/// You may choose to buffer the data passed to the write() 
 			/// function and perform actual writing when flush() is called. 
@@ -1282,6 +1286,7 @@ protected:
 
 	virtual ssize_t readPipe  (Pipe& io, char_t* buf, size_t len);
 	virtual ssize_t writePipe (Pipe& io, const char_t* buf, size_t len);
+	virtual ssize_t writePipeBytes (Pipe& io, const qse_mchar_t* buf, size_t len);
 	virtual int     flushPipe (Pipe& io);
 	/// \}
 
@@ -1295,6 +1300,7 @@ protected:
 	virtual int     closeFile (File& io);
 	virtual ssize_t readFile  (File& io, char_t* buf, size_t len);
 	virtual ssize_t writeFile (File& io, const char_t* buf, size_t len);
+	virtual ssize_t writeFileBytes (File& io, const qse_mchar_t* buf, size_t len);
 	virtual int     flushFile (File& io);
 	/// \}
 
@@ -1308,6 +1314,7 @@ protected:
 	virtual int     closeConsole (Console& io);
 	virtual ssize_t readConsole  (Console& io, char_t* buf, size_t len);
 	virtual ssize_t writeConsole (Console& io, const char_t* buf, size_t len);
+	virtual ssize_t writeConsoleBytes (Console& io, const qse_mchar_t* buf, size_t len);
 	virtual int     flushConsole (Console& io);
 	virtual int     nextConsole  (Console& io);
 	/// \}
@@ -1330,13 +1337,13 @@ protected:
 
 	static ssize_t pipeHandler (
 		rtx_t* rtx, rio_cmd_t cmd, rio_arg_t* riod,
-		char_t* data, size_t count);
+		void* data, size_t count);
 	static ssize_t fileHandler (
 		rtx_t* rtx, rio_cmd_t cmd, rio_arg_t* riod,
-		char_t* data, size_t count);
+		void* data, size_t count);
 	static ssize_t consoleHandler (
 		rtx_t* rtx, rio_cmd_t cmd, rio_arg_t* riod,
-		char_t* data, size_t count);
+		void* data, size_t count);
 
 	static int functionHandler (rtx_t* rtx, const fnc_info_t* fi);
 
