@@ -1303,8 +1303,7 @@ static int val_flt_to_str (qse_awk_rtx_t* rtx, const qse_awk_val_flt_t* v, qse_a
 	}
 	fbu_inited = 1;
 
-	tmp = qse_awk_rtx_format(rtx, &buf, &fbu, tmp, tmp_len, 
-		(qse_size_t)-1, (qse_awk_nde_t*)v, &tmp_len);
+	tmp = qse_awk_rtx_format(rtx, &buf, &fbu, tmp, tmp_len, (qse_size_t)-1, (qse_awk_nde_t*)v, &tmp_len);
 	if (tmp == QSE_NULL) goto oops;
 
 	switch (type)

@@ -214,6 +214,12 @@ QSE_EXPORT qse_ssize_t qse_nwio_write (
 	qse_size_t   size
 );
 
+QSE_EXPORT qse_ssize_t qse_nwio_writebytes (
+	qse_nwio_t* nwio,
+	const void* data,
+	qse_size_t  size
+);
+
 #if defined(__cplusplus)
 }
 #endif

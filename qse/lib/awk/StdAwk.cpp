@@ -664,8 +664,15 @@ StdAwk::ssize_t StdAwk::readPipe (Pipe& io, char_t* buf, size_t len)
 StdAwk::ssize_t StdAwk::writePipe (Pipe& io, const char_t* buf, size_t len) 
 { 
 	return (io.getUflags() > 0)?
-		qse_nwio_write ((qse_nwio_t*)io.getHandle(), buf, len):
-		qse_pio_write ((qse_pio_t*)io.getHandle(), QSE_PIO_IN, buf, len);
+		qse_nwio_write((qse_nwio_t*)io.getHandle(), buf, len):
+		qse_pio_write((qse_pio_t*)io.getHandle(), QSE_PIO_IN, buf, len);
+}
+
+StdAwk::ssize_t StdAwk::writePipeBytes (Pipe& io, const qse_mchar_t* buf, size_t len) 
+{ 
+	return (io.getUflags() > 0)?
+		qse_nwio_writebytes((qse_nwio_t*)io.getHandle(), buf, len):
+		qse_pio_writebytes((qse_pio_t*)io.getHandle(), QSE_PIO_IN, buf, len);
 }
 
 int StdAwk::flushPipe (Pipe& io) 
@@ -723,6 +730,12 @@ StdAwk::ssize_t StdAwk::writeFile (File& io, const char_t* buf, size_t len)
 {
 	return qse_sio_putstrn((qse_sio_t*)io.getHandle(), buf, len);
 }
+
+StdAwk::ssize_t StdAwk::writeFileBytes (File& io, const qse_mchar_t* buf, size_t len)
+{
+	return qse_sio_putmbsn((qse_sio_t*)io.getHandle(), buf, len);
+}
+
 
 int StdAwk::flushFile (File& io) 
 { 
@@ -1050,11 +1063,12 @@ StdAwk::ssize_t StdAwk::readConsole (Console& io, char_t* data, size_t size)
 
 StdAwk::ssize_t StdAwk::writeConsole (Console& io, const char_t* data, size_t size) 
 {
-	return qse_sio_putstrn (
-		(qse_sio_t*)io.getHandle(),
-		data,
-		size
-	);
+	return qse_sio_putstrn((qse_sio_t*)io.getHandle(), data, size);
+}
+
+StdAwk::ssize_t StdAwk::writeConsoleBytes (Console& io, const qse_mchar_t* data, size_t size) 
+{
+	return qse_sio_putmbsn((qse_sio_t*)io.getHandle(), data, size);
 }
 
 int StdAwk::flushConsole (Console& io) 

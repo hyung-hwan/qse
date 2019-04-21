@@ -131,7 +131,7 @@ static int split_record (qse_awk_rtx_t* rtx)
 	}
 	else 
 	{
-		fs_ptr = qse_awk_rtx_valtostrdup (rtx, fs, &fs_len);
+		fs_ptr = qse_awk_rtx_valtostrdup(rtx, fs, &fs_len);
 		if (fs_ptr == QSE_NULL) return -1;
 		fs_free = fs_ptr;
 	}

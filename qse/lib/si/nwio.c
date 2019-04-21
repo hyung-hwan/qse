@@ -1599,20 +1599,30 @@ qse_ssize_t qse_nwio_write (qse_nwio_t* nwio, const void* data, qse_size_t size)
 {
 	if (nwio->tio == QSE_NULL)
 	{
-		return nwio_write (nwio, data, size);
+		return nwio_write(nwio, data, size);
 	}
 	else
 	{
 		qse_ssize_t n;
 
-		nwio->errnum = QSE_NWIO_ENOERR;	
-		n = qse_tio_write (nwio->tio, data, size);
+		nwio->errnum = QSE_NWIO_ENOERR;
+		n = qse_tio_write(nwio->tio, data, size);
 		if (n <= -1 && nwio->errnum == QSE_NWIO_ENOERR) 
 			nwio->errnum = tio_errnum_to_nwio_errnum (nwio->tio);
 
 		return n;
 	}
 }
+
+
+qse_ssize_t qse_nwio_writebytes (qse_nwio_t* nwio, const void* data, qse_size_t size)
+{
+	if (nwio->tio == QSE_NULL)
+		return nwio_write(nwio, data, size);
+	else
+		return qse_tio_writembs(nwio->tio, data, size);
+}
+
 
 /* ---------------------------------------------------------- */
 

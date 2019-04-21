@@ -133,6 +133,7 @@ protected:
 	int closePipe (Pipe& io);
 	ssize_t readPipe  (Pipe& io, char_t* buf, size_t len);
 	ssize_t writePipe (Pipe& io, const char_t* buf, size_t len);
+	ssize_t writePipeBytes (Pipe& io, const qse_mchar_t* buf, size_t len);
 	int flushPipe (Pipe& io);
 
 	// file io handlers 
@@ -140,6 +141,7 @@ protected:
 	int closeFile (File& io);
 	ssize_t readFile (File& io, char_t* buf, size_t len);
 	ssize_t writeFile (File& io, const char_t* buf, size_t len);
+	ssize_t writeFileBytes (File& io, const qse_mchar_t* buf, size_t len);
 	int flushFile (File& io);
 
 	// console io handlers 
@@ -147,6 +149,7 @@ protected:
 	int closeConsole (Console& io);
 	ssize_t readConsole (Console& io, char_t* buf, size_t len);
 	ssize_t writeConsole (Console& io, const char_t* buf, size_t len);
+	ssize_t writeConsoleBytes (Console& io, const qse_mchar_t* buf, size_t len);
 	int flushConsole (Console& io);
 	int nextConsole (Console& io);
 
