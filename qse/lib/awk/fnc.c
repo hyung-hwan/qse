@@ -1303,48 +1303,95 @@ int qse_awk_fnc_sprintf (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
 	qse_size_t nargs;
 	qse_awk_val_t* a0;
-	qse_str_t out, fbu;
-	int out_inited = 0, fbu_inited = 0;
-	qse_cstr_t cs0;
-	qse_cstr_t x;
+	qse_awk_val_type_t vtype;
 
 	nargs = qse_awk_rtx_getnargs (rtx);
 	QSE_ASSERT (nargs > 0);
 
-	if (qse_str_init (&out, rtx->awk->mmgr, 256) <= -1)
+	a0 = qse_awk_rtx_getarg(rtx, 0);
+	vtype = QSE_AWK_RTX_GETVALTYPE(rtx, a0);
+	if (vtype == QSE_AWK_VAL_MBS)
 	{
-		qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
-		goto oops;
-	}
-	out_inited = 1;
+		qse_mbs_t out, fbu;
+		int out_inited = 0, fbu_inited = 0;
+		qse_mcstr_t cs0;
+		qse_mcstr_t x;
 
-	if (qse_str_init (&fbu, rtx->awk->mmgr, 256) <= -1)
+		if (qse_mbs_init(&out, rtx->awk->mmgr, 256) <= -1)
+		{
+			qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
+			goto oops_mbs;
+		}
+		out_inited = 1;
+
+		if (qse_mbs_init(&fbu, rtx->awk->mmgr, 256) <= -1)
+		{
+			qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
+			goto oops_mbs;
+		}
+		fbu_inited = 1;
+
+		cs0.ptr = qse_awk_rtx_getvalmbs(rtx, a0, &cs0.len);
+		if (cs0.ptr == QSE_NULL) goto oops_mbs;
+
+		x.ptr = qse_awk_rtx_formatmbs(rtx, &out, &fbu, cs0.ptr, cs0.len, nargs, QSE_NULL, &x.len);
+		qse_awk_rtx_freevalmbs (rtx, a0, cs0.ptr);
+		if (!x.ptr) goto oops_mbs;
+		
+		a0 = qse_awk_rtx_makembsvalwithmxstr(rtx, &x);
+		if (a0 == QSE_NULL) goto oops_mbs;
+
+		qse_mbs_fini (&fbu);
+		qse_mbs_fini (&out);
+		qse_awk_rtx_setretval (rtx, a0);
+		return 0;
+
+	oops_mbs:
+		if (fbu_inited) qse_mbs_fini (&fbu);
+		if (out_inited) qse_mbs_fini (&out);
+		return -1;
+	}
+	else
 	{
-		qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
-		goto oops;
+		qse_str_t out, fbu;
+		int out_inited = 0, fbu_inited = 0;
+		qse_cstr_t cs0;
+		qse_cstr_t x;
+
+		if (qse_str_init(&out, rtx->awk->mmgr, 256) <= -1)
+		{
+			qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
+			goto oops;
+		}
+		out_inited = 1;
+
+		if (qse_str_init(&fbu, rtx->awk->mmgr, 256) <= -1)
+		{
+			qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
+			goto oops;
+		}
+		fbu_inited = 1;
+
+		cs0.ptr = qse_awk_rtx_getvalstr(rtx, a0, &cs0.len);
+		if (cs0.ptr == QSE_NULL) goto oops;
+
+		x.ptr = qse_awk_rtx_format(rtx, &out, &fbu, cs0.ptr, cs0.len, nargs, QSE_NULL, &x.len);
+		qse_awk_rtx_freevalstr (rtx, a0, cs0.ptr);
+		if (!x.ptr) goto oops;
+		
+		a0 = qse_awk_rtx_makestrvalwithxstr(rtx, &x);
+		if (a0 == QSE_NULL) goto oops;
+
+		qse_str_fini (&fbu);
+		qse_str_fini (&out);
+		qse_awk_rtx_setretval (rtx, a0);
+		return 0;
+
+	oops:
+		if (fbu_inited) qse_str_fini (&fbu);
+		if (out_inited) qse_str_fini (&out);
+		return -1;
 	}
-	fbu_inited = 1;
-
-	a0 = qse_awk_rtx_getarg (rtx, 0);
-	cs0.ptr = qse_awk_rtx_getvalstr(rtx, a0, &cs0.len);
-	if (cs0.ptr == QSE_NULL) goto oops;
-
-	x.ptr = qse_awk_rtx_format(rtx, &out, &fbu, cs0.ptr, cs0.len, nargs, QSE_NULL, &x.len);
-	qse_awk_rtx_freevalstr (rtx, a0, cs0.ptr);
-	if (!x.ptr) goto oops;
-	
-	a0 = qse_awk_rtx_makestrvalwithxstr(rtx, &x);
-	if (a0 == QSE_NULL)  goto oops;
-
-	qse_str_fini (&fbu);
-	qse_str_fini (&out);
-	qse_awk_rtx_setretval (rtx, a0);
-	return 0;
-
-oops:
-	if (fbu_inited) qse_str_fini (&fbu);
-	if (out_inited) qse_str_fini (&out);
-	return -1;
 }
 
 static int fnc_int (qse_awk_rtx_t* run, const qse_awk_fnc_info_t* fi)
