@@ -1696,7 +1696,7 @@ int qse_awk_rtx_valtonum (qse_awk_rtx_t* rtx, const qse_awk_val_t* v, qse_awk_in
 
 		case QSE_AWK_VAL_STR:
 		{
-			return qse_awk_rtx_strtonum (
+			return qse_awk_rtx_strtonum(
 				rtx, 
 				QSE_AWK_RTX_STRTONUM_MAKE_OPTION(0, 0),
 				((qse_awk_val_str_t*)v)->val.ptr,
@@ -1707,7 +1707,7 @@ int qse_awk_rtx_valtonum (qse_awk_rtx_t* rtx, const qse_awk_val_t* v, qse_awk_in
 
 		case QSE_AWK_VAL_MBS:
 		{
-			return qse_awk_rtx_mbstonum (
+			return qse_awk_rtx_mbstonum(
 				rtx, 
 				QSE_AWK_RTX_STRTONUM_MAKE_OPTION(0, 0),
 				((qse_awk_val_mbs_t*)v)->val.ptr,
