@@ -2484,6 +2484,11 @@ qse_awk_val_t* qse_awk_rtx_makembsval (
 	qse_size_t         len
 );
 
+qse_awk_val_t* qse_awk_rtx_makembsvalwithmxstr (
+	qse_awk_rtx_t*     rtx,
+	const qse_mcstr_t* mxstr
+);
+
 /**
  * The qse_awk_rtx_makerexval() function creates a regular expression value.
  * \return value on success, #QSE_NULL on failure
@@ -2787,6 +2792,19 @@ QSE_EXPORT void qse_awk_rtx_freevalstr (
 	qse_awk_rtx_t*       rtx, /**< runtime context */
 	const qse_awk_val_t* val, /**< value to convert */
 	qse_char_t*          str  /**< string pointer */
+);
+
+
+QSE_EXPORT qse_mchar_t* qse_awk_rtx_getvalmbs (
+	qse_awk_rtx_t*       rtx, /**< runtime context */
+	const qse_awk_val_t* val, /**< value to convert */
+	qse_size_t*          len  /**< result length */
+);
+
+QSE_EXPORT void qse_awk_rtx_freevalmbs (
+	qse_awk_rtx_t*       rtx, /**< runtime context */
+	const qse_awk_val_t* val, /**< value to convert */
+	qse_mchar_t*          str  /**< string pointer */
 );
 
 /**
