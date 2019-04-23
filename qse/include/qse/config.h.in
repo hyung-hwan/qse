@@ -283,6 +283,9 @@
 /* Define to 1 if you have the `kqueue1' function. */
 #undef HAVE_KQUEUE1
 
+/* Define to 1 if you have the `lchown' function. */
+#undef HAVE_LCHOWN
+
 /* Define to 1 if you have the <linux/ethtool.h> header file. */
 #undef HAVE_LINUX_ETHTOOL_H
 
