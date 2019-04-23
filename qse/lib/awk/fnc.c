@@ -423,9 +423,9 @@ static int index_or_rindex (qse_awk_rtx_t* rtx, int rindex)
 	qse_size_t len0, len1;
 	qse_awk_int_t idx, boundary = 1;
 
-	nargs = qse_awk_rtx_getnargs (rtx);
-	a0 = qse_awk_rtx_getarg (rtx, 0);
-	a1 = qse_awk_rtx_getarg (rtx, 1);
+	nargs = qse_awk_rtx_getnargs(rtx);
+	a0 = qse_awk_rtx_getarg(rtx, 0);
+	a1 = qse_awk_rtx_getarg(rtx, 1);
 
 	/*
 	index ("abc", "d", 3);
@@ -437,15 +437,15 @@ static int index_or_rindex (qse_awk_rtx_t* rtx, int rindex)
 		qse_awk_val_t* a2;
 		int n;
 
-		a2 = qse_awk_rtx_getarg (rtx, 2);
-		n = qse_awk_rtx_valtoint (rtx, a2, &boundary);
+		a2 = qse_awk_rtx_getarg(rtx, 2);
+		n = qse_awk_rtx_valtoint(rtx, a2, &boundary);
 		if (n <= -1) return -1;
 	}
 
-	str0 = qse_awk_rtx_getvalstr (rtx, a0, &len0);
+	str0 = qse_awk_rtx_getvalstr(rtx, a0, &len0);
 	if (str0 == QSE_NULL) return -1;
 
-	str1 = qse_awk_rtx_getvalstr (rtx, a1, &len1);
+	str1 = qse_awk_rtx_getvalstr(rtx, a1, &len1);
 	if (str1 == QSE_NULL)
 	{
 		qse_awk_rtx_freevalstr (rtx, a0, str0);
@@ -470,15 +470,15 @@ static int index_or_rindex (qse_awk_rtx_t* rtx, int rindex)
 	{
 		/* 'boundary' acts as an end position */
 		ptr = rtx->gbl.ignorecase?
-			qse_strxnrcasestr (&str0[0], boundary, str1, len1):
-			qse_strxnrstr (&str0[0], boundary, str1, len1);
+			qse_strxnrcasestr(&str0[0], boundary, str1, len1):
+			qse_strxnrstr(&str0[0], boundary, str1, len1);
 	}
 	else
 	{
 		/* 'boundary' acts as an start position */
 		ptr = rtx->gbl.ignorecase?
-			qse_strxncasestr (&str0[boundary-1], len0-boundary+1, str1, len1):
-			qse_strxnstr (&str0[boundary-1], len0-boundary+1, str1, len1);
+			qse_strxncasestr(&str0[boundary-1], len0-boundary+1, str1, len1):
+			qse_strxnstr(&str0[boundary-1], len0-boundary+1, str1, len1);
 	}
 
 	idx = (ptr == QSE_NULL)? 0: ((qse_awk_int_t)(ptr-str0) + 1);
@@ -486,7 +486,7 @@ static int index_or_rindex (qse_awk_rtx_t* rtx, int rindex)
 	qse_awk_rtx_freevalstr (rtx, a1, str1);
 	qse_awk_rtx_freevalstr (rtx, a0, str0);
 
-	a0 = qse_awk_rtx_makeintval (rtx, idx);
+	a0 = qse_awk_rtx_makeintval(rtx, idx);
 	if (a0 == QSE_NULL) return -1;
 
 	qse_awk_rtx_setretval (rtx, a0);

@@ -92,8 +92,13 @@ bin_PROGRAMS = awk01$(EXEEXT) awk02$(EXEEXT) awk03$(EXEEXT) \
 	awk04$(EXEEXT) awk05$(EXEEXT) awk06$(EXEEXT) awk07$(EXEEXT) \
 	awk08$(EXEEXT) awk09$(EXEEXT) awk10$(EXEEXT) awk11$(EXEEXT) \
 	awk12$(EXEEXT) awk15$(EXEEXT) $(am__EXEEXT_1)
-@WCHAR_TRUE@@WIN32_TRUE@am__append_1 = $(UNICOWS_LIBS)
-@ENABLE_CXX_TRUE@am__append_2 = awk21 awk22 awk23 awk24 awk25 awk26 awk27 awk28
+
+# you must adjust the value of DEFAULT_MODPOSTFIX according to
+# -version-info in ../../lib/awk/Makefile.am
+@WIN32_TRUE@am__append_1 = -DDEFAULT_MODPREFIX=\"libqseawk-\" -DDEFAULT_MODPOSTFIX=\"-1\"
+@WIN32_FALSE@am__append_2 = -DDEFAULT_MODPREFIX=\"$(libdir)/libqseawk-\" -DDEFAULT_MODPOSTFIX=\"\"
+@WCHAR_TRUE@@WIN32_TRUE@am__append_3 = $(UNICOWS_LIBS)
+@ENABLE_CXX_TRUE@am__append_4 = awk21 awk22 awk23 awk24 awk25 awk26 awk27 awk28
 subdir = samples/awk
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ax_check_sign.m4 \
@@ -466,6 +471,7 @@ pdfdir = @pdfdir@
 prefix = @prefix@
 program_transform_name = @program_transform_name@
 psdir = @psdir@
+runstatedir = @runstatedir@
 sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 srcdir = @srcdir@
@@ -475,13 +481,10 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AUTOMAKE_OPTIONS = nostdinc
-AM_CPPFLAGS = \
-	-I$(top_builddir)/include \
-	-I$(top_srcdir)/include \
-	-I$(includedir)
-
+AM_CPPFLAGS = -I$(top_builddir)/include -I$(top_srcdir)/include \
+	-I$(includedir) $(am__append_1) $(am__append_2)
 AM_LDFLAGS = -L../../lib/awk -L../../lib/cmn
-LDADD = -lqseawk -lqsecmn $(LIBM) $(am__append_1)
+LDADD = -lqseawk -lqsecmn $(LIBM) $(am__append_3)
 CMNFILES = awk00.c awk00.h
 awk01_SOURCES = awk01.c 
 awk02_SOURCES = awk02.c $(CMNFILES)

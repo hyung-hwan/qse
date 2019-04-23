@@ -959,6 +959,8 @@ public:
 	/// called close() for finalization before the destructor is executed.
 	virtual ~Awk () {}
 
+	qse_cmgr_t* getCmgr () const;
+
 	///
 	/// The open() function initializes an interpreter. 
 	/// You must call this function before doing anything meaningful.

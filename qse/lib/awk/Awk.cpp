@@ -1228,6 +1228,12 @@ void Awk::close ()
 	this->clearError ();
 }
 
+qse_cmgr_t* Awk::getCmgr () const
+{
+	if (!this->awk) return QSE_NULL;
+	return this->awk->cmgr;
+}
+
 void Awk::uponClosing ()
 {
 	// nothing to do

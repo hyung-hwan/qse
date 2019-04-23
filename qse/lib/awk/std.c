@@ -252,7 +252,7 @@ void* qse_awk_stdmodopen (qse_awk_t* awk, const qse_awk_mod_spec_t* spec)
 	#if defined(QSE_CHAR_IS_MCHAR)
 	modpath = qse_mbsadup (tmp, QSE_NULL, awk->mmgr);
 	#else
-	modpath = qse_wcsatombsdup (tmp, QSE_NULL, awk->mmgr);
+	modpath = qse_wcsatombsdupwithcmgr(tmp, QSE_NULL, awk->mmgr, awk->cmgr);
 	#endif
 	if (!modpath)
 	{
@@ -324,7 +324,7 @@ void* qse_awk_stdmodopen (qse_awk_t* awk, const qse_awk_mod_spec_t* spec)
 	#if defined(QSE_CHAR_IS_MCHAR)
 	modpath = qse_mbsadup (tmp, QSE_NULL, awk->mmgr);
 	#else
-	modpath = qse_wcsatombsdup (tmp, QSE_NULL, awk->mmgr);
+	modpath = qse_wcsatombsdupwithcmgr(tmp, QSE_NULL, awk->mmgr, awk->cmgr);
 	#endif
 	if (!modpath)
 	{
@@ -359,9 +359,9 @@ void* qse_awk_stdmodopen (qse_awk_t* awk, const qse_awk_mod_spec_t* spec)
 	tmp[count] = QSE_NULL;
 
 	#if defined(QSE_CHAR_IS_MCHAR)
-	modpath = qse_mbsadup (tmp, QSE_NULL, awk->mmgr);
+	modpath = qse_mbsadup(tmp, QSE_NULL, awk->mmgr);
 	#else
-	modpath = qse_wcsatombsdup (tmp, QSE_NULL, awk->mmgr);
+	modpath = qse_wcsatombsdupwithcmgr(tmp, QSE_NULL, awk->mmgr, awk->cmgr);
 	#endif
 	if (!modpath)
 	{
@@ -390,9 +390,9 @@ void* qse_awk_stdmodopen (qse_awk_t* awk, const qse_awk_mod_spec_t* spec)
 	tmp[count] = QSE_NULL;
 
 	#if defined(QSE_CHAR_IS_MCHAR)
-	modpath = qse_mbsadup (tmp, QSE_NULL, awk->mmgr);
+	modpath = qse_mbsadup(tmp, QSE_NULL, awk->mmgr);
 	#else
-	modpath = qse_wcsatombsdup (tmp, QSE_NULL, awk->mmgr);
+	modpath = qse_wcsatombsdupwithcmgr(tmp, QSE_NULL, awk->mmgr, awk->cmgr);
 	#endif
 	if (!modpath)
 	{
@@ -437,7 +437,7 @@ void* qse_awk_stdmodsym (qse_awk_t* awk, void* handle, const qse_char_t* name)
 #if defined(QSE_CHAR_IS_MCHAR)
 	mname = name;
 #else
-	mname = qse_wcstombsdup (name, QSE_NULL, awk->mmgr);
+	mname = qse_wcstombsdupwithcmgr(name, QSE_NULL, awk->mmgr, awk->cmgr);
 	if (!mname)
 	{
 		qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);
@@ -1818,8 +1818,8 @@ static int __build_environ (
 			/* mbstowcsdup() may fail for invalid encoding. as the environment 
 			 * variaables are not under control, call mbstowcsalldup() instead 
 			 * to go on despite encoding failure */
-			kptr = qse_mbstowcsalldup (envarr[count], &klen, rtx->awk->mmgr); 
-			vptr = qse_mbstowcsalldup (eq + 1, QSE_NULL, rtx->awk->mmgr);
+			kptr = qse_mbstowcsalldupwithcmgr(envarr[count], &klen, rtx->awk->mmgr, rtx->awk->cmgr); 
+			vptr = qse_mbstowcsalldupwithcmgr(eq + 1, QSE_NULL, rtx->awk->mmgr, rtx->awk->cmgr);
 			if (kptr == QSE_NULL || vptr == QSE_NULL)
 			{
 				if (kptr) QSE_MMGR_FREE (rtx->awk->mmgr, kptr);
@@ -1832,13 +1832,13 @@ static int __build_environ (
 
 			*eq = QSE_MT('=');
 		#else
-			eq = qse_wcschr (envarr[count], QSE_WT('='));
+			eq = qse_wcschr(envarr[count], QSE_WT('='));
 			if (eq == QSE_NULL || eq == envarr[count]) continue;
 
 			*eq = QSE_WT('\0');
 
-			kptr = qse_wcstombsdup (envarr[count], &klen, rtx->awk->mmgr); 
-			vptr = qse_wcstombsdup (eq + 1, QSE_NULL, rtx->awk->mmgr);
+			kptr = qse_wcstombsdupwithcmgr(envarr[count], &klen, rtx->awk->mmgr, rtx->awk->cmgr); 
+			vptr = qse_wcstombsdupwithcmgr(eq + 1, QSE_NULL, rtx->awk->mmgr, rtx->awk->cmgr);
 			if (kptr == QSE_NULL || vptr == QSE_NULL)
 			{
 				if (kptr) QSE_MMGR_FREE (rtx->awk->mmgr, kptr);

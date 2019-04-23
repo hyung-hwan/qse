@@ -770,7 +770,7 @@ static int fnc_uci_load  (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	{
 		qse_mchar_t* item;
 
-		item = qse_awk_rtx_valtombsdup (rtx, qse_awk_rtx_getarg(rtx, 1), QSE_NULL);
+		item = qse_awk_rtx_valtombsdup(rtx, qse_awk_rtx_getarg(rtx, 1), QSE_NULL);
 		if (item)
 		{
 			ret = load_byid (rtx, list, id, item);
@@ -833,7 +833,7 @@ static int fnc_uci_save  (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	{
 		qse_mchar_t* item;
 
-		item = qse_awk_rtx_valtombsdup (rtx, qse_awk_rtx_getarg(rtx, 1), QSE_NULL);
+		item = qse_awk_rtx_valtombsdup(rtx, qse_awk_rtx_getarg(rtx, 1), QSE_NULL);
 		if (item)
 		{
 			ret = save_byid (rtx, list, id, item);
@@ -870,7 +870,7 @@ static int fnc_uci_commit (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	{
 		qse_mchar_t* item;
 
-		item = qse_awk_rtx_valtombsdup (rtx, qse_awk_rtx_getarg(rtx, 1), QSE_NULL);
+		item = qse_awk_rtx_valtombsdup(rtx, qse_awk_rtx_getarg(rtx, 1), QSE_NULL);
 		if (item)
 		{
 			ret = commit_byid (rtx, list, id, item);
@@ -907,7 +907,7 @@ static int fnc_uci_revert (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	{
 		qse_mchar_t* item;
 
-		item = qse_awk_rtx_valtombsdup (rtx, qse_awk_rtx_getarg(rtx, 1), QSE_NULL);
+		item = qse_awk_rtx_valtombsdup(rtx, qse_awk_rtx_getarg(rtx, 1), QSE_NULL);
 		if (item)
 		{
 			ret = revert_byid (rtx, list, id, item);
@@ -944,7 +944,7 @@ static int fnc_uci_delete (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	{
 		qse_mchar_t* item;
 
-		item = qse_awk_rtx_valtombsdup (rtx, qse_awk_rtx_getarg(rtx, 1), QSE_NULL);
+		item = qse_awk_rtx_valtombsdup(rtx, qse_awk_rtx_getarg(rtx, 1), QSE_NULL);
 		if (item)
 		{
 			ret = delete_byid (rtx, list, id, item);
@@ -981,7 +981,7 @@ static int fnc_uci_rename (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	{
 		qse_mchar_t* item;
 
-		item = qse_awk_rtx_valtombsdup (rtx, qse_awk_rtx_getarg(rtx, 1), QSE_NULL);
+		item = qse_awk_rtx_valtombsdup(rtx, qse_awk_rtx_getarg(rtx, 1), QSE_NULL);
 		if (item)
 		{
 			ret = rename_byid (rtx, list, id, item);
@@ -1018,7 +1018,7 @@ static int fnc_uci_set (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	{
 		qse_mchar_t* item;
 
-		item = qse_awk_rtx_valtombsdup (rtx, qse_awk_rtx_getarg(rtx, 1), QSE_NULL);
+		item = qse_awk_rtx_valtombsdup(rtx, qse_awk_rtx_getarg(rtx, 1), QSE_NULL);
 		if (item)
 		{
 			ret = set_byid (rtx, list, id, item);
@@ -1055,8 +1055,8 @@ static int fnc_uci_addsection (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	{
 		qse_mchar_t* item, * type;
 
-		item = qse_awk_rtx_valtombsdup (rtx, qse_awk_rtx_getarg(rtx, 1), QSE_NULL);
-		type = qse_awk_rtx_valtombsdup (rtx, qse_awk_rtx_getarg(rtx, 2), QSE_NULL);
+		item = qse_awk_rtx_valtombsdup(rtx, qse_awk_rtx_getarg(rtx, 1), QSE_NULL);
+		type = qse_awk_rtx_valtombsdup(rtx, qse_awk_rtx_getarg(rtx, 2), QSE_NULL);
 		if (item && type)
 		{
 			ret = addsection_byid (rtx, list, id, item, type);
@@ -1095,7 +1095,7 @@ static int fnc_uci_addlist (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	{
 		qse_mchar_t* item;
 
-		item = qse_awk_rtx_valtombsdup (rtx, qse_awk_rtx_getarg(rtx, 1), QSE_NULL);
+		item = qse_awk_rtx_valtombsdup(rtx, qse_awk_rtx_getarg(rtx, 1), QSE_NULL);
 		if (item)
 		{
 			ret = addlist_byid (rtx, list, id, item);
@@ -1132,7 +1132,7 @@ static int fnc_uci_setconfdir  (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi
 	{
 		qse_mchar_t* item;
 
-		item = qse_awk_rtx_valtombsdup (rtx, qse_awk_rtx_getarg(rtx, 1), QSE_NULL);
+		item = qse_awk_rtx_valtombsdup(rtx, qse_awk_rtx_getarg(rtx, 1), QSE_NULL);
 		if (item)
 		{
 			ret = setconfdir_byid (rtx, list, id, item);
@@ -1170,7 +1170,7 @@ static int fnc_uci_setsavedir  (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi
 	{
 		qse_mchar_t* item;
 
-		item = qse_awk_rtx_valtombsdup (rtx, qse_awk_rtx_getarg(rtx, 1), QSE_NULL);
+		item = qse_awk_rtx_valtombsdup(rtx, qse_awk_rtx_getarg(rtx, 1), QSE_NULL);
 		if (item)
 		{
 			ret = setsavedir_byid (rtx, list, id, item);
@@ -1207,7 +1207,7 @@ static int fnc_uci_adddeltapath  (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* 
 	{
 		qse_mchar_t* item;
 
-		item = qse_awk_rtx_valtombsdup (rtx, qse_awk_rtx_getarg(rtx, 1), QSE_NULL);
+		item = qse_awk_rtx_valtombsdup(rtx, qse_awk_rtx_getarg(rtx, 1), QSE_NULL);
 		if (item)
 		{
 			ret = adddeltapath_byid (rtx, list, id, item);
@@ -1243,7 +1243,7 @@ static int fnc_uci_getoption (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	{
 		qse_mchar_t* item;
 
-		item = qse_awk_rtx_valtombsdup (rtx, qse_awk_rtx_getarg(rtx, 1), QSE_NULL);
+		item = qse_awk_rtx_valtombsdup(rtx, qse_awk_rtx_getarg(rtx, 1), QSE_NULL);
 		if (item)
 		{
 			ret = getoption_byid (rtx, list, id, item, qse_awk_rtx_getarg (rtx, 2));
@@ -1272,16 +1272,16 @@ static int fnc_uci_getsection (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	
 	list = rtx_to_list (rtx, fi);
 
-	ret = qse_awk_rtx_valtoint (rtx, qse_awk_rtx_getarg (rtx, 0), &id);
+	ret = qse_awk_rtx_valtoint(rtx, qse_awk_rtx_getarg (rtx, 0), &id);
 	if (ret <= -1) ret = -UCI_ERR_INVAL;
 	else
 	{
 		qse_mchar_t* item;
 
-		item = qse_awk_rtx_valtombsdup (rtx, qse_awk_rtx_getarg (rtx, 1), QSE_NULL);
+		item = qse_awk_rtx_valtombsdup(rtx, qse_awk_rtx_getarg (rtx, 1), QSE_NULL);
 		if (item)
 		{
-			ret = getsection_byid (rtx, list, id, item, qse_awk_rtx_getarg (rtx, 2));
+			ret = getsection_byid(rtx, list, id, item, qse_awk_rtx_getarg (rtx, 2));
 			qse_awk_rtx_freemem (rtx, item);
 			if (ret == -9999) return -1;
 		}

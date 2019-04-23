@@ -10,6 +10,14 @@ bin_PROGRAMS = awk01 awk02 awk03 awk04 awk05 awk06 awk07 awk08 awk09 awk10 awk11
 AM_LDFLAGS = -L../../lib/awk -L../../lib/cmn
 LDADD = -lqseawk -lqsecmn $(LIBM)
 
+if WIN32
+# you must adjust the value of DEFAULT_MODPOSTFIX according to
+# -version-info in ../../lib/awk/Makefile.am
+AM_CPPFLAGS += -DDEFAULT_MODPREFIX=\"libqseawk-\" -DDEFAULT_MODPOSTFIX=\"-1\"
+else
+AM_CPPFLAGS += -DDEFAULT_MODPREFIX=\"$(libdir)/libqseawk-\" -DDEFAULT_MODPOSTFIX=\"\"
+endif
+
 if WIN32 
 if WCHAR
 LDADD += $(UNICOWS_LIBS)

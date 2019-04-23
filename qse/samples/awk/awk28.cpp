@@ -121,6 +121,21 @@ protected:
 		}
 		return size;
 	}
+
+	StdAwk::ssize_t writeBytes (StdAwk::Console& io, const qse_mchar_t* data, size_t size) 
+	{
+		/*
+		try { this->output.append (data, size); }
+		catch (...) 
+		{ 
+			((StdAwk::Run*)io)->setError (QSE_AWK_ENOMEM);
+			return -1; 
+		}
+		return size;
+		*/
+		((StdAwk::Run*)io)->setError (QSE_AWK_ENOIMPL);
+		return -1; 
+	}
 };
 
 static void print_error (
