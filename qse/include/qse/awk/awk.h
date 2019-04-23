@@ -2231,6 +2231,11 @@ QSE_EXPORT qse_mmgr_t* qse_awk_rtx_getmmgr (
 	qse_awk_rtx_t* rtx /**< runtime context */
 );
 
+QSE_EXPORT qse_cmgr_t* qse_awk_rtx_getcmgr (
+	qse_awk_rtx_t* rtx /**< runtime context */
+);
+
+
 /**
  * The qse_awk_rtx_getxtn() function gets the pointer to the extension area
  * created with qse_awk_rtx_open().

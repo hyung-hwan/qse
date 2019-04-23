@@ -37,18 +37,33 @@ static int fnc_normspace (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	 * - trim leading and trailing spaces
 	 * - replace a series of spaces to a single space
 	 */
-	qse_cstr_t path;
 	qse_awk_val_t* retv;
 	qse_awk_val_t* a0;
 
 	a0 = qse_awk_rtx_getarg(rtx, 0);
+	if (QSE_AWK_RTX_GETVALTYPE(rtx, a0) == QSE_AWK_VAL_MBS)
+	{
+		qse_mchar_t* str0;
+		qse_size_t len0;
 
-	path.ptr = qse_awk_rtx_getvalstr (rtx, a0, &path.len);
-	if (!path.ptr) return -1;
+		str0 = qse_awk_rtx_valtombsdup(rtx, a0, &len0);
+		if (!str0) return -1;
+		len0 = qse_mbsxpac(str0, len0);
+		retv = qse_awk_rtx_makembsval(rtx, str0, len0);
+		qse_awk_rtx_freemem (rtx, str0);
+	}
+	else
+	{
+		qse_char_t* str0;
+		qse_size_t len0;
 
-	path.len = qse_strxpac (path.ptr, path.len);
-	retv = qse_awk_rtx_makestrval (rtx, path.ptr, path.len);
-	qse_awk_rtx_freevalstr (rtx, a0, path.ptr);
+		str0 = qse_awk_rtx_valtostrdup(rtx, a0, &len0);
+		if (!str0) return -1;
+		len0 = qse_strxpac(str0, len0);
+		retv = qse_awk_rtx_makestrval(rtx, str0, len0);
+		qse_awk_rtx_freemem (rtx, str0);
+	}
+
 	if (!retv) return -1;
 	qse_awk_rtx_setretval (rtx, retv);
 
@@ -57,64 +72,107 @@ static int fnc_normspace (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 
 static int trim (qse_awk_rtx_t* rtx, int flags)
 {
-	qse_cstr_t path;
-	qse_char_t* npath;
 	qse_awk_val_t* retv;
 	qse_awk_val_t* a0;
 
 	a0 = qse_awk_rtx_getarg(rtx, 0);
 
-	path.ptr = qse_awk_rtx_getvalstr (rtx, a0, &path.len);
-	if (!path.ptr) return -1;
+	if (QSE_AWK_RTX_GETVALTYPE(rtx, a0) == QSE_AWK_VAL_MBS)
+	{
+		qse_mcstr_t path;
+		qse_mchar_t* npath;
+		path.ptr = ((qse_awk_val_mbs_t*)a0)->val.ptr;
+		path.len = ((qse_awk_val_mbs_t*)a0)->val.len;
+		npath = qse_mbsxtrmx(path.ptr, &path.len, flags);
+		retv = qse_awk_rtx_makembsval(rtx, npath, path.len);
+	}
+	else
+	{
+		qse_cstr_t path;
+		qse_char_t* npath;
+		path.ptr = qse_awk_rtx_getvalstr(rtx, a0, &path.len);
+		if (!path.ptr) return -1;
+		/* because qse_strxtrmx() returns the pointer and the legnth without 
+		 * affecting the string given, it's safe to pass the original value.
+		 * qse_awk_rtx_getvalstr() doesn't duplicate the value if it's of 
+		 * the string type. */
+		npath = qse_strxtrmx(path.ptr, &path.len, flags); 
+		retv = qse_awk_rtx_makestrval(rtx, npath, path.len);
+		qse_awk_rtx_freevalstr (rtx, a0, path.ptr);
+	}
 
-	npath = qse_strxtrmx (path.ptr, &path.len, flags);
-	retv = qse_awk_rtx_makestrval (rtx, npath, path.len);
-	qse_awk_rtx_freevalstr (rtx, a0, path.ptr);
 	if (!retv) return -1;
 	qse_awk_rtx_setretval (rtx, retv);
-
 	return 0;
 }
 
 static int fnc_trim (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
-	return trim (rtx, QSE_STRTRMX_LEFT | QSE_STRTRMX_RIGHT);
+	return trim(rtx, QSE_STRTRMX_LEFT | QSE_STRTRMX_RIGHT);
 }
 static int fnc_ltrim (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
-	return trim (rtx, QSE_STRTRMX_LEFT);
+	return trim(rtx, QSE_STRTRMX_LEFT);
 }
 static int fnc_rtrim (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
-	return trim (rtx, QSE_STRTRMX_RIGHT);
+	return trim(rtx, QSE_STRTRMX_RIGHT);
 }  
 
 static int is_class (qse_awk_rtx_t* rtx, qse_ctype_t ctype)
 {
 	qse_awk_val_t* a0;
-	qse_char_t* str0;
-	qse_size_t len0;
 	int tmp;
 
 	a0 = qse_awk_rtx_getarg (rtx, 0);
 
-	str0 = qse_awk_rtx_getvalstr (rtx, a0, &len0);
-	if (!str0) return -1;
+	if (QSE_AWK_RTX_GETVALTYPE(rtx, a0) == QSE_AWK_VAL_MBS)
+	{
+		qse_mchar_t* str0;
+		qse_size_t len0;
 
-	if (len0 <= 0) tmp = 0;
+		str0 = ((qse_awk_val_mbs_t*)a0)->val.ptr;
+		len0 = ((qse_awk_val_mbs_t*)a0)->val.len;
+
+		if (len0 <= 0) tmp = 0;
+		else
+		{
+			tmp = 1;
+			do
+			{
+				len0--;
+				if (!qse_ismctype(str0[len0], ctype)) 
+				{
+					tmp = 0;
+					break;
+				}
+			}
+			while (len0 > 0);
+		}
+	}
 	else
 	{
-		tmp = 1;
-		do
+		qse_char_t* str0;
+		qse_size_t len0;
+
+		str0 = qse_awk_rtx_getvalstr(rtx, a0, &len0);
+		if (!str0) return -1;
+
+		if (len0 <= 0) tmp = 0;
+		else
 		{
-			len0--;
-			if (!qse_isctype(str0[len0], ctype)) 
+			tmp = 1;
+			do
 			{
-				tmp = 0;
-				break;
+				len0--;
+				if (!qse_isctype(str0[len0], ctype)) 
+				{
+					tmp = 0;
+					break;
+				}
 			}
+			while (len0 > 0);
 		}
-		while (len0 > 0);
 		qse_awk_rtx_freevalstr (rtx, a0, str0);
 	}
 
@@ -127,85 +185,116 @@ static int is_class (qse_awk_rtx_t* rtx, qse_ctype_t ctype)
 
 static int fnc_isalnum (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
-	return is_class (rtx, QSE_CTYPE_ALNUM);
+	return is_class(rtx, QSE_CTYPE_ALNUM);
 }
 
 static int fnc_isalpha (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
-	return is_class (rtx, QSE_CTYPE_ALPHA);
+	return is_class(rtx, QSE_CTYPE_ALPHA);
 }
 
 static int fnc_isblank (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
-	return is_class (rtx, QSE_CTYPE_BLANK);
+	return is_class(rtx, QSE_CTYPE_BLANK);
 }
 
 static int fnc_iscntrl (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
-	return is_class (rtx, QSE_CTYPE_CNTRL);
+	return is_class(rtx, QSE_CTYPE_CNTRL);
 }
 
 static int fnc_isdigit (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
-	return is_class (rtx, QSE_CTYPE_DIGIT);
+	return is_class(rtx, QSE_CTYPE_DIGIT);
 }
 
 static int fnc_isgraph (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
-	return is_class (rtx, QSE_CTYPE_GRAPH);
+	return is_class(rtx, QSE_CTYPE_GRAPH);
 }
 
 static int fnc_islower (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
-	return is_class (rtx, QSE_CTYPE_LOWER);
+	return is_class(rtx, QSE_CTYPE_LOWER);
 }
 
 static int fnc_isprint (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
-	return is_class (rtx, QSE_CTYPE_PRINT);
+	return is_class(rtx, QSE_CTYPE_PRINT);
 }
 
 static int fnc_ispunct (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
-	return is_class (rtx, QSE_CTYPE_PUNCT);
+	return is_class(rtx, QSE_CTYPE_PUNCT);
 }
 
 static int fnc_isspace (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
-	return is_class (rtx, QSE_CTYPE_SPACE);
+	return is_class(rtx, QSE_CTYPE_SPACE);
 }
 
 static int fnc_isupper (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
-	return is_class (rtx, QSE_CTYPE_UPPER);
+	return is_class(rtx, QSE_CTYPE_UPPER);
 }
 
 static int fnc_isxdigit (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
-	return is_class (rtx, QSE_CTYPE_XDIGIT);
+	return is_class(rtx, QSE_CTYPE_XDIGIT);
 }
 
 static int fnc_value (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
 	/* return the numeric value for the first character.
 	 * you can use sprintf("%c", num_val) for reverse conversion. */
-
-	qse_cstr_t path;
 	qse_awk_val_t* retv;
 	qse_awk_val_t* a0;
+	qse_awk_int_t iv = -1;
 
 	a0 = qse_awk_rtx_getarg(rtx, 0);
 
-	path.ptr = qse_awk_rtx_getvalstr (rtx, a0, &path.len);
-	if (path.ptr && path.len >= 1)
+	if (QSE_AWK_RTX_GETVALTYPE(rtx, a0) == QSE_AWK_VAL_MBS)
 	{
-	#if defined(QSE_CHAR_IS_MCHAR)
-		/* typecasting in case qse_mchar_t is signed */
-		retv = qse_awk_rtx_makeintval (rtx, (unsigned char)path.ptr[0]);
-	#else
-		retv = qse_awk_rtx_makeintval (rtx, path.ptr[0]);
-	#endif
-		qse_awk_rtx_freevalstr (rtx, a0, path.ptr);
+		qse_mchar_t* str0;
+		qse_size_t len0;
+
+		str0 = ((qse_awk_val_mbs_t*)a0)->val.ptr;
+		len0 = ((qse_awk_val_mbs_t*)a0)->val.len;
+
+		if (len0 >= 1)
+		{
+		#if defined(QSE_CHAR_IS_MCHAR)
+			/* typecasting in case qse_mchar_t is signed */
+			iv = (unsigned char)str0[0];
+		#else
+			iv = str0[0];
+		#endif
+		}
+	}
+	else
+	{
+		qse_char_t* str0;
+		qse_size_t len0;
+
+		str0 = qse_awk_rtx_getvalstr(rtx, a0, &len0);
+		if (!str0) return -1;
+
+		if (len0 >= 1)
+		{
+		#if defined(QSE_CHAR_IS_MCHAR)
+			/* typecasting in case qse_mchar_t is signed */
+			iv = (unsigned char)str0[0];
+		#else
+			iv = str0[0];
+		#endif
+		}
+
+		qse_awk_rtx_freevalstr(rtx, a0, str0);
+	}
+
+	if (iv >= 0)
+	{
+		retv = qse_awk_rtx_makeintval(rtx, iv);
 		if (!retv) return -1;
 		qse_awk_rtx_setretval (rtx, retv);
 	}
@@ -215,8 +304,8 @@ static int fnc_value (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 
 static int fnc_tonum (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
-	/* str::tonum (value) */
-	/* str::tonum (string, base) */
+	/* str::tonum(value) */
+	/* str::tonum(string, base) */
 
 	qse_awk_val_t* retv;
 	qse_awk_val_t* a0;
@@ -226,6 +315,22 @@ static int fnc_tonum (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 
 	a0 = qse_awk_rtx_getarg(rtx, 0);
 
+	if (QSE_AWK_RTX_GETVALTYPE(rtx, a0) == QSE_AWK_VAL_MBS && qse_awk_rtx_getnargs(rtx) >= 2)
+	{
+		/* if the value is known to be a byte string, it supports the optional
+		 * base parameter */
+		qse_awk_val_t* a1 = qse_awk_rtx_getarg(rtx, 1);
+		qse_awk_int_t base;
+
+		if (qse_awk_rtx_valtoint(rtx, a1, &base) <= -1) return -1;
+		rx = qse_awk_rtx_mbstonum (
+			rtx,
+			QSE_AWK_RTX_STRTONUM_MAKE_OPTION(0, base),
+			((qse_awk_val_mbs_t*)a0)->val.ptr,
+			((qse_awk_val_mbs_t*)a0)->val.len,
+			&lv, &rv
+		);
+	}
 	if (QSE_AWK_RTX_GETVALTYPE(rtx, a0) == QSE_AWK_VAL_STR && qse_awk_rtx_getnargs(rtx) >= 2)
 	{
 		/* if the value is known to be a string, it supports the optional

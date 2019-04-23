@@ -54,6 +54,7 @@
 #endif
 
 #define MMGR(rtx) ((rtx)->awk->mmgr)
+#define CMGR(rtx) ((rtx)->awk->cmgr)
 
 enum exit_level_t
 {
@@ -779,6 +780,11 @@ qse_mmgr_t* qse_awk_rtx_getmmgr (qse_awk_rtx_t* rtx)
 	return MMGR(rtx);
 }
 
+qse_cmgr_t* qse_awk_rtx_getcmgr (qse_awk_rtx_t* rtx)
+{
+	return CMGR(rtx);
+}
+
 qse_htb_t* qse_awk_rtx_getnvmap (qse_awk_rtx_t* rtx)
 {
 	return rtx->named;
@@ -960,14 +966,12 @@ void qse_awk_rtx_pushecb (qse_awk_rtx_t* rtx, qse_awk_rtx_ecb_t* ecb)
 
 static void free_namedval (qse_htb_t* map, void* dptr, qse_size_t dlen)
 {
-	qse_awk_rtx_refdownval (
-		*(qse_awk_rtx_t**)QSE_XTN(map), dptr);
+	qse_awk_rtx_refdownval (*(qse_awk_rtx_t**)QSE_XTN(map), dptr);
 }
 
 static void same_namedval (qse_htb_t* map, void* dptr, qse_size_t dlen)
 {
-	qse_awk_rtx_refdownval_nofree (
-		*(qse_awk_rtx_t**)QSE_XTN(map), dptr);
+	qse_awk_rtx_refdownval_nofree (*(qse_awk_rtx_t**)QSE_XTN(map), dptr);
 }
 
 static int init_rtx (qse_awk_rtx_t* rtx, qse_awk_t* awk, qse_awk_rio_t* rio)
@@ -1327,7 +1331,6 @@ static int defaultify_globals (qse_awk_rtx_t* rtx)
 	qse_awk_val_t* tmp;
 	qse_size_t i, j;
 	int stridx;
-
 
 	stridx = (rtx->awk->opt.trait & QSE_AWK_CRLF)? 1: 0;
 	for (i = 0; i < QSE_COUNTOF(gtab); i++)
@@ -4514,7 +4517,7 @@ static QSE_INLINE int __cmp_str_bytearr (qse_awk_rtx_t* rtx, qse_awk_val_t* left
 	qse_size_t mbslen;
 	int n;
 
-	mbsptr = qse_wcsntombsdup(ls->val.ptr, ls->val.len, &mbslen, qse_awk_rtx_getmmgr(rtx));
+	mbsptr = qse_wcsntombsdupwithcmgr(ls->val.ptr, ls->val.len, &mbslen, MMGR(rtx), CMGR(rtx));
 	if (!mbsptr)
 	{
 		qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);

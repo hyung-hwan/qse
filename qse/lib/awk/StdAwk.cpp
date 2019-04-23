@@ -45,6 +45,17 @@
 #	endif
 #endif
 
+
+// TODO: remove the following definitions and find a way to share the similar definitions in std.c 
+#if defined(QSE_ENABLE_LIBLTDL)
+#	define USE_LTDL
+#elif defined(HAVE_DLFCN_H)
+#	define USE_DLFCN
+#else
+#	error UNSUPPORTED DYNAMIC LINKER
+#endif
+
+
 /////////////////////////////////
 QSE_BEGIN_NAMESPACE(QSE)
 /////////////////////////////////
@@ -117,6 +128,10 @@ int StdAwk::open ()
 
 	if (!this->stdmod_up)
 	{
+	#if defined(USE_DLFCN)
+		if (qse_awk_setopt(awk, QSE_AWK_MODPOSTFIX, QSE_T(".so")) <= -1) goto oops;
+	#endif
+
 		if (qse_awk_stdmodstartup (this->awk) <= -1) goto oops;
 		this->stdmod_up = true;
 	}
@@ -233,6 +248,7 @@ int StdAwk::__build_environ (Run* run, void* envptr)
 		qse_char_t* kptr, * vptr;
 		qse_size_t klen, count;
 		qse_mmgr_t* mmgr = ((Awk*)*run)->getMmgr();
+		qse_cmgr_t* cmgr = ((Awk*)*run)->getCmgr();
 
 		for (count = 0; envarr[count]; count++)
 		{
@@ -250,8 +266,8 @@ int StdAwk::__build_environ (Run* run, void* envptr)
 
 			*eq = QSE_MT('\0');
 
-			kptr = qse_mbstowcsdup (envarr[count], &klen, mmgr);
-			vptr = qse_mbstowcsdup (eq + 1, QSE_NULL, mmgr);
+			kptr = qse_mbstowcsalldupwithcmgr(envarr[count], &klen, mmgr, cmgr);
+			vptr = qse_mbstowcsalldupwithcmgr(eq + 1, QSE_NULL, mmgr, cmgr);
 			if (kptr == QSE_NULL || vptr == QSE_NULL)
 			{
 				if (kptr) QSE_MMGR_FREE (mmgr, kptr);
@@ -271,8 +287,8 @@ int StdAwk::__build_environ (Run* run, void* envptr)
 
 			*eq = QSE_WT('\0');
 
-			kptr = qse_wcstombsdup (envarr[count], &klen, mmgr); 
-			vptr = qse_wcstombsdup (eq + 1, QSE_NULL, mmgr);
+			kptr = qse_wcstombsdupwithcmgr(envarr[count], &klen, mmgr, cmgr); 
+			vptr = qse_wcstombsdupwithcmgr(eq + 1, QSE_NULL, mmgr, cmgr);
 			if (kptr == QSE_NULL || vptr == QSE_NULL)
 			{
 				if (kptr) QSE_MMGR_FREE (mmgr, kptr);

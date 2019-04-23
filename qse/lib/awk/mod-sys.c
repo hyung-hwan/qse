@@ -619,7 +619,7 @@ static int fnc_strftime (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	qse_size_t len;
 	qse_awk_val_t* retv;
 
-	fmt = qse_awk_rtx_valtombsdup (rtx, qse_awk_rtx_getarg (rtx, 0), &len);
+	fmt = qse_awk_rtx_valtombsdup(rtx, qse_awk_rtx_getarg(rtx, 0), &len);
 	if (fmt) 
 	{
 		qse_ntime_t nt;
@@ -636,7 +636,7 @@ static int fnc_strftime (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 			nt.sec = tmpsec;
 		}
 
-		if (qse_localtime (&nt, &bt) >= 0)
+		if (qse_localtime(&nt, &bt) >= 0)
 		{
 			qse_mchar_t tmpbuf[64], * tmpptr;
 			struct tm tm;
@@ -721,7 +721,7 @@ I use 'count' to limit the maximum number of retries when 0 is returned.
 			}
 			qse_awk_rtx_freemem (rtx, fmt);
 
-			retv = qse_awk_rtx_makestrvalwithmbs (rtx, tmpptr);
+			retv = qse_awk_rtx_makestrvalwithmbs(rtx, tmpptr);
 			if (tmpptr && tmpptr != tmpbuf) qse_awk_rtx_freemem (rtx, tmpptr);
 			if (retv == QSE_NULL) return -1;
 
@@ -741,7 +741,7 @@ static int fnc_getenv (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	qse_size_t len;
 	qse_awk_val_t* retv;
 
-	var = qse_awk_rtx_valtombsdup (
+	var = qse_awk_rtx_valtombsdup(
 		rtx, qse_awk_rtx_getarg (rtx, 0), &len);
 	if (var)
 	{
@@ -878,7 +878,7 @@ static int fnc_system (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 
 	{
 		qse_mchar_t* mbs;
-		mbs = qse_wcstombsdup (str, QSE_NULL, qse_awk_rtx_getmmgr(rtx));
+		mbs = qse_wcstombsdupwithcmgr(str, QSE_NULL, qse_awk_rtx_getmmgr(rtx), qse_awk_rtx_getcmgr(rtx));
 		if (mbs == QSE_NULL) 
 		{
 			n = -1;
@@ -1000,7 +1000,7 @@ static int fnc_openlog (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 #if defined(QSE_CHAR_IS_MCHAR)
 	mbs_ident = qse_mbsdup(actual_ident, qse_awk_rtx_getmmgr(rtx));
 #else
-	mbs_ident = qse_wcstombsdup(actual_ident, QSE_NULL, qse_awk_rtx_getmmgr(rtx));
+	mbs_ident = qse_wcstombsdupwithcmgr(actual_ident, QSE_NULL, qse_awk_rtx_getmmgr(rtx), qse_awk_rtx_getcmgr(rtx));
 #endif
 	if (!mbs_ident) goto done;
 
@@ -1135,7 +1135,7 @@ static int fnc_writelog (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 		#else
 		{
 			qse_mchar_t* mbs;
-			mbs = qse_wcstombsdup(msg, QSE_NULL, qse_awk_rtx_getmmgr(rtx));
+			mbs = qse_wcstombsdupwithcmgr(msg, QSE_NULL, qse_awk_rtx_getmmgr(rtx), qse_awk_rtx_getcmgr(rtx));
 			if (!mbs) goto done;
 			syslog(pri, "%s", mbs);
 			qse_awk_rtx_freemem (rtx, mbs);
