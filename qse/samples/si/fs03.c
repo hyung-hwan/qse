@@ -23,6 +23,7 @@ static void print_usage (const qse_char_t* argv0)
 	qse_fprintf (QSE_STDERR, QSE_T("  -r            recursive\n"));
 	qse_fprintf (QSE_STDERR, QSE_T("  -s            symlink\n"));
 	qse_fprintf (QSE_STDERR, QSE_T("  -g            glob\n"));
+	qse_fprintf (QSE_STDERR, QSE_T("  -w            chown instead. wins over other options. honors -s\n"));
 }
 
 static int fs_actcb (qse_fs_t* fs, qse_fs_action_t act, const qse_char_t* srcpath, const qse_char_t* dstpath, qse_uintmax_t total, qse_uintmax_t done)
@@ -66,10 +67,11 @@ static int fs_main (int argc, qse_char_t* argv[])
 	int ret = 0;
 	qse_cint_t c;
 	int cpfile_flags = 0;
+	int act_chown = 0;
 
 	static qse_opt_t opt = 
 	{
-		QSE_T("foprsg"),
+		QSE_T("foprsgw"),
 		QSE_NULL
 	};
 
@@ -101,6 +103,10 @@ static int fs_main (int argc, qse_char_t* argv[])
 				cpfile_flags |= QSE_FS_CPFILE_GLOB;
 				break;
 
+			case QSE_T('w'):
+				act_chown = 1;
+				break;
+
 			case QSE_T('?'):
 				qse_fprintf (QSE_STDERR, QSE_T("illegal option - '%c'\n"), opt.opt);
 				goto wrong_usage;
@@ -118,14 +124,30 @@ static int fs_main (int argc, qse_char_t* argv[])
 
 	fs = qse_fs_open (QSE_MMGR_GETDFL(), 0);
 
-	qse_memset (&cbs, 0, QSE_SIZEOF(cbs));
-	cbs.actcb = fs_actcb;
-	qse_fs_setopt (fs, QSE_FS_CBS, &cbs);
-
-	if (qse_fs_cpfile (fs, argv[opt.ind], argv[opt.ind + 1], cpfile_flags) <= -1)
+	if (act_chown)
 	{
-		qse_fprintf (QSE_STDERR, QSE_T("cannot copy file - %d\n"), qse_fs_geterrnum(fs));
-		ret = -1;
+		qse_fattr_t attr;
+		int attr_flags = QSE_FILE_ATTR_OWNER;
+		if (cpfile_flags & QSE_FS_CPFILE_SYMLINK) attr_flags |= QSE_FILE_ATTR_SYMLINK;
+		attr.uid = qse_strtoulong(argv[opt.ind], 10, QSE_NULL);
+		attr.gid = -1;
+		if (qse_fs_setattr(fs, argv[opt.ind + 1], &attr, attr_flags) <= -1)
+		{
+			qse_fprintf (QSE_STDERR, QSE_T("cannot change file uid - %d\n"), qse_fs_geterrnum(fs));
+			ret = -1;
+		}
+	}
+	else
+	{
+		qse_memset (&cbs, 0, QSE_SIZEOF(cbs));
+		cbs.actcb = fs_actcb;
+		qse_fs_setopt (fs, QSE_FS_CBS, &cbs);
+
+		if (qse_fs_cpfile(fs, argv[opt.ind], argv[opt.ind + 1], cpfile_flags) <= -1)
+		{
+			qse_fprintf (QSE_STDERR, QSE_T("cannot copy file - %d\n"), qse_fs_geterrnum(fs));
+			ret = -1;
+		}
 	}
 
 	qse_fs_close (fs);

@@ -346,9 +346,9 @@ int qse_fs_setattrsys (qse_fs_t* fs, qse_fs_char_t* path, const qse_fattr_t* att
 		int x;
 
 		if (flags & QSE_FILE_ATTR_SYMLINK)
-			x = QSE_LCHOWN (path, attr->uid, attr->gid);
+			x = QSE_LCHOWN(path, attr->uid, attr->gid);
 		else
-			x = QSE_CHOWN (path, attr->uid, attr->gid);
+			x = QSE_CHOWN(path, attr->uid, attr->gid);
 
 		if (x <= -1)
 		{

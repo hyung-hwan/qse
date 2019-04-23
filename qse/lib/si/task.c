@@ -35,6 +35,7 @@
 #else 
 #	include <setjmp.h>
 #	if defined(HAVE_UCONTEXT_H)
+#		include <signal.h> /* for old DARWIN/MACOSX */
 #		include <ucontext.h>
 #	endif
 #	if defined(HAVE_MAKECONTEXT) && defined(HAVE_SWAPCONTEXT) && \
