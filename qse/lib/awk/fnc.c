@@ -559,8 +559,6 @@ int qse_awk_fnc_substr (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
 	qse_size_t nargs;
 	qse_awk_val_t* a0, * a1, * a2, * r;
-	qse_char_t* str;
-	qse_size_t len;
 	qse_awk_int_t lindex, lcount;
 	int n;
 
@@ -571,45 +569,50 @@ int qse_awk_fnc_substr (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	a1 = qse_awk_rtx_getarg(rtx, 1);
 	a2 = (nargs >= 3)? qse_awk_rtx_getarg(rtx, 2): QSE_NULL;
 
-	str = qse_awk_rtx_getvalstr(rtx, a0, &len);
-	if (str == QSE_NULL) return -1;
-
 	n = qse_awk_rtx_valtoint(rtx, a1, &lindex);
-	if (n <= -1) 
-	{
-		qse_awk_rtx_freevalstr (rtx, a0, str);
-		return -1;
-	}
+	if (n <= -1) return -1;
 
-	if (a2 == QSE_NULL) lcount = (qse_awk_int_t)len;
-	else 
+	if (a2)
 	{
 		n = qse_awk_rtx_valtoint(rtx, a2, &lcount);
-		if (n <= -1) 
-		{
-			qse_awk_rtx_freevalstr (rtx, a0, str);
-			return -1;
-		}
+		if (n <= -1) return -1;
+		if (lcount < 0) lcount = 0;
 	}
+	else lcount = QSE_TYPE_MAX(qse_awk_int_t);
 
 	lindex = lindex - 1;
-	if (lindex >= (qse_awk_int_t)len) lindex = (qse_awk_int_t)len;
-	else if (lindex < 0) lindex = 0;
+	if (lindex < 0) lindex = 0;
 
-	if (lcount < 0) lcount = 0;
-	else if (lcount > (qse_awk_int_t)len - lindex) 
+	if (QSE_AWK_RTX_GETVALTYPE(rtx, a0) == QSE_AWK_VAL_MBS)
 	{
-		lcount = (qse_awk_int_t)len - lindex;
+		qse_mchar_t* str;
+		qse_size_t len;
+
+		str = ((qse_awk_val_mbs_t*)a0)->val.ptr;
+		len = ((qse_awk_val_mbs_t*)a0)->val.len;
+
+		if (lindex >= (qse_awk_int_t)len) lindex = (qse_awk_int_t)len;
+		if (lcount > (qse_awk_int_t)len - lindex) lcount = (qse_awk_int_t)len - lindex;
+
+		r = qse_awk_rtx_makembsval(rtx, &str[lindex], (qse_size_t)lcount);
+		if (!r) return -1;
 	}
-
-	r = qse_awk_rtx_makestrval(rtx, &str[lindex], (qse_size_t)lcount);
-	if (r == QSE_NULL)
+	else
 	{
+		qse_char_t* str;
+		qse_size_t len;
+
+		str = qse_awk_rtx_getvalstr(rtx, a0, &len);
+		if (!str) return -1;
+
+		if (lindex >= (qse_awk_int_t)len) lindex = (qse_awk_int_t)len;
+		if (lcount > (qse_awk_int_t)len - lindex) lcount = (qse_awk_int_t)len - lindex;
+
+		r = qse_awk_rtx_makestrval(rtx, &str[lindex], (qse_size_t)lcount);
 		qse_awk_rtx_freevalstr (rtx, a0, str);
-		return -1;
+		if (!r) return -1;
 	}
 
-	qse_awk_rtx_freevalstr (rtx, a0, str);
 	qse_awk_rtx_setretval (rtx, r);
 	return 0;
 }
@@ -648,19 +651,6 @@ int qse_awk_fnc_split (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 
 	QSE_ASSERT (a1_vtype == QSE_AWK_VAL_REF);
 
-/*
-	if (a0->type == QSE_AWK_VAL_STR)
-	{
-		str.ptr = ((qse_awk_val_str_t*)a0)->val.ptr;
-		str.len = ((qse_awk_val_str_t*)a0)->val.len;
-	}
-	else 
-	{
-		str.ptr = qse_awk_rtx_valtostrdup (rtx, a0, &str.len);
-		if (str.ptr == QSE_NULL) return -1;
-		str_free = (qse_char_t*)str.ptr;
-	}
-*/
 	str.ptr = qse_awk_rtx_getvalstr(rtx, a0, &str.len);
 	if (str.ptr == QSE_NULL) goto oops;
 
