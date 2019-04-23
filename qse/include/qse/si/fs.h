@@ -337,7 +337,7 @@ QSE_EXPORT void* qse_fs_getxtn (
 #if defined(QSE_HAVE_INLINE)
 static QSE_INLINE qse_fs_errnum_t qse_fs_geterrnum (qse_fs_t* fs) { return fs->errnum; }
 #else
-#	define qse_fs_geterrnum(fs) ((fs)->errnum)
+#	define qse_fs_geterrnum(fs) (((qse_fs_t*)(fs))->errnum)
 #endif
 
 QSE_EXPORT int qse_fs_getopt (
@@ -418,10 +418,10 @@ QSE_EXPORT int qse_fs_setattrwcs (
 
 #if defined(QSE_CHAR_IS_MCHAR)
 #	define qse_fs_getattr(fs,path,attr,flags) qse_fs_getattrmbs(fs,path,attr,flags)
-#	define qse_fs_setattr(fs,path,attr,flags) qse_fssetattrmbs(fs,path,attr,flags)
+#	define qse_fs_setattr(fs,path,attr,flags) qse_fs_setattrmbs(fs,path,attr,flags)
 #else
 #	define qse_fs_getattr(fs,path,attr,flags) qse_fs_getattrwcs(fs,path,attr,flags)
-#	define qse_fs_setattr(fs,path,attr,flags) qse_fssetattrwcs(fs,path,attr,flags)
+#	define qse_fs_setattr(fs,path,attr,flags) qse_fs_setattrwcs(fs,path,attr,flags)
 #endif
 
 

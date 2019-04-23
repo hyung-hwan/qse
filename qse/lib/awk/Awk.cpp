@@ -2020,6 +2020,12 @@ Awk::ssize_t Awk::writePipe (Pipe& io, const char_t* buf, size_t len)
 	return -1;
 }
 
+Awk::ssize_t Awk::writePipeBytes (Pipe& io, const qse_mchar_t* buf, size_t len)
+{
+	((Run*)io)->setError (QSE_AWK_ENOIMPL);
+	return -1;
+}
+
 int Awk::flushPipe (Pipe& io)
 {
 	((Run*)io)->setError (QSE_AWK_ENOIMPL);
@@ -2050,6 +2056,12 @@ Awk::ssize_t Awk::writeFile (File& io, const char_t* buf, size_t len)
 	return -1;
 }
 
+Awk::ssize_t Awk::writeFileBytes (File& io, const qse_mchar_t* buf, size_t len)
+{
+	((Run*)io)->setError (QSE_AWK_ENOIMPL);
+	return -1;
+}
+
 int Awk::flushFile (File& io)
 {
 	((Run*)io)->setError (QSE_AWK_ENOIMPL);
@@ -2075,6 +2087,12 @@ Awk::ssize_t Awk::readConsole (Console& io, char_t* buf, size_t len)
 }
 
 Awk::ssize_t Awk::writeConsole (Console& io, const char_t* buf, size_t len)
+{
+	((Run*)io)->setError (QSE_AWK_ENOIMPL);
+	return -1;
+}
+
+Awk::ssize_t Awk::writeConsoleBytes (Console& io, const qse_mchar_t* buf, size_t len)
 {
 	((Run*)io)->setError (QSE_AWK_ENOIMPL);
 	return -1;

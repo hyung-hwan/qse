@@ -338,7 +338,10 @@
 #	define QSE_CHROOT(path) QSE_LIBCALL1(chroot,path)
 #endif
 
-#if defined(SYS_lchown) && defined(QSE_USE_SYSCALL)
+#if !defined(SYS_lchown) && !defined(HAVE_LCHOWN) && defined(__APPLE__) && defined(__MACH__) && defined(__POWERPC__)
+	/* special handling for old darwin/macosx sdks */
+#	define QSE_LCHOWN(path,owner,group) syscall(364,path,owner,group)
+#elif defined(SYS_lchown) && defined(QSE_USE_SYSCALL)
 #	define QSE_LCHOWN(path,owner,group) syscall(SYS_lchown,path,owner,group)
 #else
 #	define QSE_LCHOWN(path,owner,group) QSE_LIBCALL3(lchown,path,owner,group)
