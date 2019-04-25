@@ -331,7 +331,7 @@ static int fnc_tonum (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 			&lv, &rv
 		);
 	}
-	if (QSE_AWK_RTX_GETVALTYPE(rtx, a0) == QSE_AWK_VAL_STR && qse_awk_rtx_getnargs(rtx) >= 2)
+	else if (QSE_AWK_RTX_GETVALTYPE(rtx, a0) == QSE_AWK_VAL_STR && qse_awk_rtx_getnargs(rtx) >= 2)
 	{
 		/* if the value is known to be a string, it supports the optional
 		 * base parameter */

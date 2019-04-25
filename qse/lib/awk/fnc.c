@@ -419,8 +419,6 @@ static int index_or_rindex (qse_awk_rtx_t* rtx, int rindex)
 	 * care about IGNORECASE. */
 	qse_size_t nargs;
 	qse_awk_val_t* a0, * a1;
-	qse_char_t* str0, * str1, * ptr;
-	qse_size_t len0, len1;
 	qse_awk_int_t idx, boundary = 1;
 
 	nargs = qse_awk_rtx_getnargs(rtx);
@@ -442,49 +440,99 @@ static int index_or_rindex (qse_awk_rtx_t* rtx, int rindex)
 		if (n <= -1) return -1;
 	}
 
-	str0 = qse_awk_rtx_getvalstr(rtx, a0, &len0);
-	if (str0 == QSE_NULL) return -1;
-
-	str1 = qse_awk_rtx_getvalstr(rtx, a1, &len1);
-	if (str1 == QSE_NULL)
+	if (QSE_AWK_RTX_GETVALTYPE(rtx, a0) == QSE_AWK_VAL_MBS)
 	{
+		qse_mchar_t* str0, * str1, * ptr;
+		qse_size_t len0, len1;
+
+		str0 = ((qse_awk_val_mbs_t*)a0)->val.ptr;
+		len0 = ((qse_awk_val_mbs_t*)a0)->val.len;
+
+		str1 = qse_awk_rtx_getvalmbs(rtx, a1, &len1);
+		if (!str1) return -1;
+
+		if (nargs < 3)
+		{
+			boundary = rindex? len0: 1;
+		}
+		else
+		{
+			if (boundary == 0) boundary = 1;
+			else if (boundary < 0) boundary = len0 + boundary + 1;
+		}
+
+		if (boundary > len0 || boundary <= 0)
+		{
+			ptr = QSE_NULL;
+		}
+		else if (rindex)
+		{
+			/* 'boundary' acts as an end position */
+			ptr = rtx->gbl.ignorecase?
+				qse_mbsxnrcasestr(&str0[0], boundary, str1, len1):
+				qse_mbsxnrstr(&str0[0], boundary, str1, len1);
+		}
+		else
+		{
+			/* 'boundary' acts as an start position */
+			ptr = rtx->gbl.ignorecase?
+				qse_mbsxncasestr(&str0[boundary-1], len0 -boundary + 1, str1, len1):
+				qse_mbsxnstr(&str0[boundary-1], len0 - boundary + 1, str1, len1);
+		}
+
+		idx = (ptr == QSE_NULL)? 0: ((qse_awk_int_t)(ptr - str0) + 1);
+
+		qse_awk_rtx_freevalmbs (rtx, a1, str1);
+	}
+	else
+	{
+		qse_char_t* str0, * str1, * ptr;
+		qse_size_t len0, len1;
+
+		str0 = qse_awk_rtx_getvalstr(rtx, a0, &len0);
+		if (!str0) return -1;
+
+		str1 = qse_awk_rtx_getvalstr(rtx, a1, &len1);
+		if (!str1)
+		{
+			qse_awk_rtx_freevalstr (rtx, a0, str0);
+			return -1;
+		}
+
+		if (nargs < 3)
+		{
+			boundary = rindex? len0: 1;
+		}
+		else
+		{
+			if (boundary == 0) boundary = 1;
+			else if (boundary < 0) boundary = len0 + boundary + 1;
+		}
+
+		if (boundary > len0 || boundary <= 0)
+		{
+			ptr = QSE_NULL;
+		}
+		else if (rindex)
+		{
+			/* 'boundary' acts as an end position */
+			ptr = rtx->gbl.ignorecase?
+				qse_strxnrcasestr(&str0[0], boundary, str1, len1):
+				qse_strxnrstr(&str0[0], boundary, str1, len1);
+		}
+		else
+		{
+			/* 'boundary' acts as an start position */
+			ptr = rtx->gbl.ignorecase?
+				qse_strxncasestr(&str0[boundary-1], len0 - boundary + 1, str1, len1):
+				qse_strxnstr(&str0[boundary-1], len0 - boundary + 1, str1, len1);
+		}
+
+		idx = (ptr == QSE_NULL)? 0: ((qse_awk_int_t)(ptr - str0) + 1);
+
+		qse_awk_rtx_freevalstr (rtx, a1, str1);
 		qse_awk_rtx_freevalstr (rtx, a0, str0);
-		return -1;
 	}
-
-	if (nargs < 3)
-	{
-		boundary = rindex? len0: 1;
-	}
-	else
-	{
-		if (boundary == 0) boundary = 1;
-		else if (boundary < 0) boundary = len0 + boundary + 1;
-	}
-
-	if (boundary > len0 || boundary <= 0)
-	{
-		ptr = QSE_NULL;
-	}
-	else if (rindex)
-	{
-		/* 'boundary' acts as an end position */
-		ptr = rtx->gbl.ignorecase?
-			qse_strxnrcasestr(&str0[0], boundary, str1, len1):
-			qse_strxnrstr(&str0[0], boundary, str1, len1);
-	}
-	else
-	{
-		/* 'boundary' acts as an start position */
-		ptr = rtx->gbl.ignorecase?
-			qse_strxncasestr(&str0[boundary-1], len0-boundary+1, str1, len1):
-			qse_strxnstr(&str0[boundary-1], len0-boundary+1, str1, len1);
-	}
-
-	idx = (ptr == QSE_NULL)? 0: ((qse_awk_int_t)(ptr-str0) + 1);
-
-	qse_awk_rtx_freevalstr (rtx, a1, str1);
-	qse_awk_rtx_freevalstr (rtx, a0, str0);
 
 	a0 = qse_awk_rtx_makeintval(rtx, idx);
 	if (a0 == QSE_NULL) return -1;
@@ -657,7 +705,7 @@ int qse_awk_fnc_split (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	if (a2 == QSE_NULL)
 	{
 		/* get the value from FS */
-		t1 = qse_awk_rtx_getgbl (rtx, QSE_AWK_GBL_FS);
+		t1 = qse_awk_rtx_getgbl(rtx, QSE_AWK_GBL_FS);
 		t1_vtype = QSE_AWK_RTX_GETVALTYPE (rtx, t1);
 		if (t1_vtype == QSE_AWK_VAL_NIL)
 		{
@@ -1158,12 +1206,12 @@ oops:
 
 int qse_awk_fnc_gsub (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
-	return __substitute (rtx, 0);
+	return __substitute(rtx, 0);
 }
 
 int qse_awk_fnc_sub (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
-	return __substitute (rtx, 1);
+	return __substitute(rtx, 1);
 }
 
 int qse_awk_fnc_match (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
