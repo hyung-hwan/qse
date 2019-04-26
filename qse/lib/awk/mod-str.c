@@ -425,7 +425,7 @@ static int query (qse_awk_mod_t* mod, qse_awk_t* awk, const qse_char_t* name, qs
 	{
 		mid = left + (right - left) / 2;
 
-		n = qse_strcmp (fnctab[mid].name, name);
+		n = qse_strcmp(fnctab[mid].name, name);
 		if (n > 0) right = mid - 1; 
 		else if (n < 0) left = mid + 1;
 		else
