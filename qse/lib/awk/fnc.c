@@ -30,6 +30,7 @@ static int fnc_close (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi);
 static int fnc_fflush (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi);
 static int fnc_int (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi);
 static int fnc_typename (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi);
+static int fnc_isnil (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi);
 static int fnc_asort (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi);
 
 #define A_MAX QSE_TYPE_MAX(int)
@@ -59,6 +60,7 @@ static qse_awk_fnc_t sysfnctab[] =
 	/* type info/conversion */
 	{ {QSE_T("int"),      3}, 0, { {1,     1, QSE_NULL},       fnc_int,              0 }, QSE_NULL},
 	{ {QSE_T("typename"), 8}, 0, { {1,     1, QSE_NULL},       fnc_typename,         0 }, QSE_NULL},
+	{ {QSE_T("isnil"),    5}, 0, { {1,     1, QSE_NULL},       fnc_isnil,         0 }, QSE_NULL},
 
 	/* array sort */
 	{ {QSE_T("asort"),    5}, 0, { {1,     3, QSE_NULL},       fnc_asort,            0 }, QSE_NULL},
@@ -1491,6 +1493,20 @@ static int fnc_typename (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	name = qse_awk_rtx_getvaltypename(rtx, a0);
 
 	r = qse_awk_rtx_makestrval(rtx, name, qse_strlen(name));
+	if (r == QSE_NULL) return -1;
+
+	qse_awk_rtx_setretval (rtx, r);
+	return 0;
+}
+
+static int fnc_isnil (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	qse_awk_val_t* a0;
+	qse_awk_val_t* r;
+
+	a0 = qse_awk_rtx_getarg(rtx, 0);
+
+	r = qse_awk_rtx_makeintval(rtx, QSE_AWK_RTX_GETVALTYPE(rtx, a0) == QSE_AWK_VAL_NIL);
 	if (r == QSE_NULL) return -1;
 
 	qse_awk_rtx_setretval (rtx, r);

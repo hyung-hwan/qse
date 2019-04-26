@@ -702,9 +702,8 @@ qse_awk_val_t* qse_awk_rtx_makerefval (
 	}
 	else
 	{
-		val = (qse_awk_val_ref_t*) QSE_AWK_ALLOC (
-			rtx->awk, QSE_SIZEOF(qse_awk_val_ref_t));
-		if (val == QSE_NULL)
+		val = (qse_awk_val_ref_t*)QSE_AWK_ALLOC(rtx->awk, QSE_SIZEOF(qse_awk_val_ref_t));
+		if (!val)
 		{
 			qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
 			return QSE_NULL;
@@ -720,14 +719,12 @@ qse_awk_val_t* qse_awk_rtx_makerefval (
 
 	return (qse_awk_val_t*)val;
 }
-qse_awk_val_t* qse_awk_rtx_makefunval (
-	qse_awk_rtx_t* rtx, const qse_awk_fun_t* fun)
+qse_awk_val_t* qse_awk_rtx_makefunval (qse_awk_rtx_t* rtx, const qse_awk_fun_t* fun)
 {
 	qse_awk_val_fun_t* val;
 
-	val = (qse_awk_val_fun_t*) QSE_AWK_ALLOC (
-		rtx->awk, QSE_SIZEOF(qse_awk_val_fun_t));
-	if (val == QSE_NULL)
+	val = (qse_awk_val_fun_t*)QSE_AWK_ALLOC(rtx->awk, QSE_SIZEOF(qse_awk_val_fun_t));
+	if (!val)
 	{
 		qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
 		return QSE_NULL;
@@ -870,8 +867,12 @@ void qse_awk_rtx_freeval (qse_awk_rtx_t* rtx, qse_awk_val_t* val, int cache)
 				else QSE_AWK_FREE (rtx->awk, val);
 				break;
 			}
-		}
 
+			case QSE_AWK_VAL_FUN:
+				/* nothing to do */
+				break;
+
+		}
 	}
 }
 
@@ -1008,6 +1009,9 @@ int qse_awk_rtx_valtobool (qse_awk_rtx_t* rtx, const qse_awk_val_t* val)
 			return QSE_HTB_SIZE(((qse_awk_val_map_t*)val)->map) > 0;
 		case QSE_AWK_VAL_REF:
 			return val_ref_to_bool (rtx, (qse_awk_val_ref_t*)val);
+		case QSE_AWK_VAL_FUN:
+			/* return always true */
+			return 1;
 	}
 
 	QSE_ASSERTX (
@@ -1512,6 +1516,11 @@ int qse_awk_rtx_valtostr (qse_awk_rtx_t* rtx, const qse_awk_val_t* v, qse_awk_rt
 		{
 			return val_ref_to_str(rtx, (qse_awk_val_ref_t*)v, out);
 		}
+
+		case QSE_AWK_VAL_FUN:
+		{
+			return qse_awk_rtx_makestrval2(rtx, QSE_T("@@"), 1, ((qse_awk_val_fun_t*)v)->fun->name.ptr, ((qse_awk_val_fun_t*)v)->fun->name.len);
+		}
 	}
 
 
@@ -1742,7 +1751,7 @@ static int val_ref_to_num (qse_awk_rtx_t* rtx, const qse_awk_val_ref_t* ref, qse
 			/* A reference value is not able to point to another 
 			 * refernce value for the way values are represented
 			 * in QSEAWK */
-			QSE_ASSERT (QSE_AWK_RTX_GETVALTYPE (rtx, *xref) != QSE_AWK_VAL_REF); 
+			QSE_ASSERT (QSE_AWK_RTX_GETVALTYPE(rtx, *xref) != QSE_AWK_VAL_REF); 
 
 			/* make a recursive call back to the caller */
 			return qse_awk_rtx_valtonum(rtx, *xref, l, r);
@@ -1804,11 +1813,18 @@ int qse_awk_rtx_valtonum (qse_awk_rtx_t* rtx, const qse_awk_val_t* v, qse_awk_in
 				*l = QSE_HTB_SIZE(((qse_awk_val_map_t*)v)->map);
 				return 0; /* long */
 			}
+			break;
 		}
 
 		case QSE_AWK_VAL_REF:
 		{
 			return val_ref_to_num(rtx, (qse_awk_val_ref_t*)v, l, r);
+		}
+
+		case QSE_AWK_VAL_FUN:
+		{
+			/* TODO: */
+			break;
 		}
 	}
 
@@ -2131,7 +2147,7 @@ void qse_awk_dprintval (qse_awk_rtx_t* run, qse_awk_val_t* val)
 			break;
 
 		case QSE_AWK_VAL_REX:
-			qse_errputstrf (QSE_T("REX[%s]"), ((qse_awk_val_rex_t*)val)->ptr);
+			qse_errputstrf (QSE_T("/%s/"), ((qse_awk_val_rex_t*)val)->ptr);
 			break;
 
 		case QSE_AWK_VAL_MAP:
@@ -2139,11 +2155,15 @@ void qse_awk_dprintval (qse_awk_rtx_t* run, qse_awk_val_t* val)
 			qse_htb_walk (((qse_awk_val_map_t*)val)->map, print_pair, run);
 			qse_errputstrf (QSE_T("]"));
 			break;
-	
+
 		case QSE_AWK_VAL_REF:
 			qse_errputstrf (QSE_T("REF[id=%d,val="), ((qse_awk_val_ref_t*)val)->id);
 			qse_awk_dprintval (run, *((qse_awk_val_ref_t*)val)->adr);
 			qse_errputstrf (QSE_T("]"));
+			break;
+
+		case QSE_AWK_VAL_FUN:
+			qse_errputstrf (QSE_T("@@%.*s"), (int)((qse_awk_val_fun_t*)val)->fun->name.len, ((qse_awk_val_fun_t*)val)->fun->name.ptr);
 			break;
 
 		default:

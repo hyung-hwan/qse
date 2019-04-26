@@ -1214,9 +1214,7 @@ void qse_awk_clrpt (qse_awk_t* awk, qse_awk_nde_t* tree)
 				qse_awk_nde_if_t* px = (qse_awk_nde_if_t*)p;
 				qse_awk_clrpt (awk, px->test);
 				qse_awk_clrpt (awk, px->then_part);
-
-				if (px->else_part != QSE_NULL)
-					qse_awk_clrpt (awk, px->else_part);
+				if (px->else_part) qse_awk_clrpt (awk, px->else_part);
 				QSE_AWK_FREE (awk, p);
 				break;
 			}
@@ -1233,13 +1231,9 @@ void qse_awk_clrpt (qse_awk_t* awk, qse_awk_nde_t* tree)
 			case QSE_AWK_NDE_FOR:
 			{
 				qse_awk_nde_for_t* px = (qse_awk_nde_for_t*)p;
-
-				if (px->init != QSE_NULL)
-					qse_awk_clrpt (awk, px->init);
-				if (px->test != QSE_NULL)
-					qse_awk_clrpt (awk, px->test);
-				if (px->incr != QSE_NULL)
-					qse_awk_clrpt (awk, px->incr);
+				if (px->init) qse_awk_clrpt (awk, px->init);
+				if (px->test) qse_awk_clrpt (awk, px->test);
+				if (px->incr) qse_awk_clrpt (awk, px->incr);
 				qse_awk_clrpt (awk, px->body);
 				QSE_AWK_FREE (awk, p);
 				break;
@@ -1267,10 +1261,8 @@ void qse_awk_clrpt (qse_awk_t* awk, qse_awk_nde_t* tree)
 
 			case QSE_AWK_NDE_RETURN:
 			{
-				qse_awk_nde_return_t* px =
-					(qse_awk_nde_return_t*)p;
-				if (px->val != QSE_NULL) 
-					qse_awk_clrpt (awk, px->val);
+				qse_awk_nde_return_t* px = (qse_awk_nde_return_t*)p;
+				if (px->val) qse_awk_clrpt (awk, px->val);
 				QSE_AWK_FREE (awk, p);
 				break;
 			}
@@ -1307,12 +1299,9 @@ void qse_awk_clrpt (qse_awk_t* awk, qse_awk_nde_t* tree)
 			case QSE_AWK_NDE_PRINT:
 			case QSE_AWK_NDE_PRINTF:
 			{
-				qse_awk_nde_print_t* px = 
-					(qse_awk_nde_print_t*)p;
-				if (px->args != QSE_NULL) 
-					qse_awk_clrpt (awk, px->args);
-				if (px->out != QSE_NULL) 
-					qse_awk_clrpt (awk, px->out);
+				qse_awk_nde_print_t* px = (qse_awk_nde_print_t*)p;
+				if (px->args) qse_awk_clrpt (awk, px->args);
+				if (px->out) qse_awk_clrpt (awk, px->out);
 				QSE_AWK_FREE (awk, p);
 				break;
 			}
@@ -1423,8 +1412,7 @@ void qse_awk_clrpt (qse_awk_t* awk, qse_awk_nde_t* tree)
 				qse_awk_nde_var_t* px = (qse_awk_nde_var_t*)p;
 				QSE_ASSERT (px->idx != QSE_NULL);
 				qse_awk_clrpt (awk, px->idx);
-				if (px->id.name.ptr != QSE_NULL)
-					QSE_AWK_FREE (awk, px->id.name.ptr);
+				if (px->id.name.ptr) QSE_AWK_FREE (awk, px->id.name.ptr);
 				QSE_AWK_FREE (awk, p);
 				break;
 			}
@@ -1457,12 +1445,9 @@ void qse_awk_clrpt (qse_awk_t* awk, qse_awk_nde_t* tree)
 
 			case QSE_AWK_NDE_GETLINE:
 			{
-				qse_awk_nde_getline_t* px = 
-					(qse_awk_nde_getline_t*)p;
-				if (px->var != QSE_NULL) 
-					qse_awk_clrpt (awk, px->var);
-				if (px->in != QSE_NULL) 
-					qse_awk_clrpt (awk, px->in);
+				qse_awk_nde_getline_t* px = (qse_awk_nde_getline_t*)p;
+				if (px->var) qse_awk_clrpt (awk, px->var);
+				if (px->in) qse_awk_clrpt (awk, px->in);
 				QSE_AWK_FREE (awk, p);
 				break;
 			}
