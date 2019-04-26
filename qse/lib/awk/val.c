@@ -40,7 +40,6 @@ static qse_awk_val_str_t awk_zls = { QSE_AWK_VAL_STR, 0, 1, 0, { QSE_T(""), 0 } 
 qse_awk_val_t* qse_awk_val_nil = (qse_awk_val_t*)&awk_nil;
 qse_awk_val_t* qse_awk_val_zls = (qse_awk_val_t*)&awk_zls; 
 
-
 qse_awk_val_t* qse_getawknilval (void)
 {
 	return (qse_awk_val_t*)&awk_nil;
@@ -747,13 +746,32 @@ int QSE_INLINE qse_awk_rtx_isstaticval (qse_awk_rtx_t* rtx, qse_awk_val_t* val)
 
 int qse_awk_rtx_getvaltype (qse_awk_rtx_t* rtx, qse_awk_val_t* val)
 {
-	return QSE_AWK_RTX_GETVALTYPE (rtx, val);
+	return QSE_AWK_RTX_GETVALTYPE(rtx, val);
+}
+
+const qse_char_t* qse_awk_rtx_getvaltypename(qse_awk_rtx_t* rtx, qse_awk_val_t* val)
+{
+	static const qse_char_t* __val_type_name[] =
+	{
+		/* synchronize this table with enum qse_awk_val_type_t in awk.h */
+		QSE_T("nil"),
+		QSE_T("int"),
+		QSE_T("flt"),
+		QSE_T("str"),
+		QSE_T("mbs"),
+		QSE_T("map"),
+		QSE_T("rex"),
+		QSE_T("ref"),
+		QSE_T("fun")
+	};
+
+	return __val_type_name[QSE_AWK_RTX_GETVALTYPE(rtx, val)];
 }
 
 
 int qse_awk_rtx_getintfromval (qse_awk_rtx_t* rtx, qse_awk_val_t* val)
 {
-	return QSE_AWK_RTX_GETINTFROMVAL (rtx, val);
+	return QSE_AWK_RTX_GETINTFROMVAL(rtx, val);
 }
 
 void qse_awk_rtx_freeval (qse_awk_rtx_t* rtx, qse_awk_val_t* val, int cache)

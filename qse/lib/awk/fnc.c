@@ -26,10 +26,11 @@
 
 #include "awk-prv.h"
  
-static int fnc_close   (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi);
-static int fnc_fflush  (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi);
-static int fnc_int     (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi);
-static int fnc_asort   (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi);
+static int fnc_close (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi);
+static int fnc_fflush (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi);
+static int fnc_int (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi);
+static int fnc_typename (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi);
+static int fnc_asort (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi);
 
 #define A_MAX QSE_TYPE_MAX(int)
 
@@ -55,8 +56,9 @@ static qse_awk_fnc_t sysfnctab[] =
 	{ {QSE_T("close"),    5}, 0, { {1,     2, QSE_NULL},       fnc_close,  QSE_AWK_RIO }, QSE_NULL},
 	{ {QSE_T("fflush"),   6}, 0, { {0,     1, QSE_NULL},       fnc_fflush, QSE_AWK_RIO }, QSE_NULL},
 
-	/* integer conversion */
+	/* type info/conversion */
 	{ {QSE_T("int"),      3}, 0, { {1,     1, QSE_NULL},       fnc_int,              0 }, QSE_NULL},
+	{ {QSE_T("typename"), 8}, 0, { {1,     1, QSE_NULL},       fnc_typename,         0 }, QSE_NULL},
 
 	/* array sort */
 	{ {QSE_T("asort"),    5}, 0, { {1,     3, QSE_NULL},       fnc_asort,            0 }, QSE_NULL},
@@ -109,7 +111,7 @@ qse_awk_fnc_t* qse_awk_addfnc (qse_awk_t* awk, const qse_char_t* name, const qse
 	 * such a function registered won't take effect because
 	 * the word is treated as a keyword */
 
-	if (qse_awk_findfnc (awk, &ncs) != QSE_NULL)
+	if (qse_awk_findfnc(awk, &ncs) != QSE_NULL)
 	{
 		qse_awk_seterrnum (awk, QSE_AWK_EEXIST, &ncs);
 		return QSE_NULL;
@@ -1245,6 +1247,14 @@ int qse_awk_fnc_match (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 		if (nargs >= 4) a3 = qse_awk_rtx_getarg(rtx, 3);
 	}
 
+#if 0
+	if (QSE_AWK_RTX_GETVALTYPE(rtx, a0) == QSE_AWK_VAL_MBS)
+	{
+		str0 = ((qse_awk_val_mbs_t*)a0)->val.ptr;
+		len0 = ((qse_awk_val_mbs_t*)a0)->val.len;
+	}
+#endif
+
 	str0 = qse_awk_rtx_getvalstr(rtx, a0, &len0);
 	if (str0 == QSE_NULL) return -1;
 
@@ -1268,7 +1278,7 @@ int qse_awk_fnc_match (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	qse_awk_rtx_freevalstr (rtx, a0, str0);
 
 	/* RSTART: 0 on no match */
-	idx = (n == 0)? 0: ((qse_awk_int_t)(mat.ptr-str0) + 1);
+	idx = (n == 0)? 0: ((qse_awk_int_t)(mat.ptr - str0) + 1);
 
 	x0 = qse_awk_rtx_makeintval(rtx, idx);
 	if (!x0) goto oops;
@@ -1465,6 +1475,22 @@ static int fnc_int (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	if (n <= -1) return -1;
 
 	r = qse_awk_rtx_makeintval(rtx, lv);
+	if (r == QSE_NULL) return -1;
+
+	qse_awk_rtx_setretval (rtx, r);
+	return 0;
+}
+
+static int fnc_typename (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	qse_awk_val_t* a0;
+	qse_awk_val_t* r;
+	const qse_char_t* name;
+
+	a0 = qse_awk_rtx_getarg(rtx, 0);
+	name = qse_awk_rtx_getvaltypename(rtx, a0);
+
+	r = qse_awk_rtx_makestrval(rtx, name, qse_strlen(name));
 	if (r == QSE_NULL) return -1;
 
 	qse_awk_rtx_setretval (rtx, r);

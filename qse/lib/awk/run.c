@@ -6549,7 +6549,7 @@ static qse_awk_val_t* eval_getline (qse_awk_rtx_t* rtx, qse_awk_nde_t* nde)
 read_console_again:
 	qse_str_clear (&rtx->inrec.lineg);
 
-	n = qse_awk_rtx_readio (rtx, p->in_type, dst, buf);
+	n = qse_awk_rtx_readio(rtx, p->in_type, dst, buf);
 
 	if (p->in)
 	{
@@ -6570,10 +6570,11 @@ read_console_again:
 			QSE_ASSERT (p->in == QSE_NULL);
 			if (rtx->nrflt.limit > 0)
 			{
+				/* record filter based on record number(NR) */
 				if (((rtx->gbl.nr / rtx->nrflt.limit) % rtx->nrflt.size) != rtx->nrflt.rank)
 				{
-					if (update_fnr (rtx, rtx->gbl.fnr + 1, rtx->gbl.nr + 1) <= -1) return QSE_NULL;
-					/* this jump is a bit dirty. the 'if' block below qse_awk_rtx_readion()
+					if (update_fnr(rtx, rtx->gbl.fnr + 1, rtx->gbl.nr + 1) <= -1) return QSE_NULL;
+					/* this jump is a bit dirty. the 'if' block below qse_awk_rtx_readio()
 					 * will never be true. but this makes code confusing */
 					goto read_console_again; 
 				}
@@ -6583,14 +6584,14 @@ read_console_again:
 		if (p->var == QSE_NULL)
 		{
 			/* set $0 with the input value */
-			x = qse_awk_rtx_setrec (rtx, 0, QSE_STR_XSTR(buf));
+			x = qse_awk_rtx_setrec(rtx, 0, QSE_STR_XSTR(buf));
 			if (x <= -1) return QSE_NULL;
 		}
 		else
 		{
 			qse_awk_val_t* v;
 
-			v = qse_awk_rtx_makestrvalwithxstr (rtx, QSE_STR_XSTR(buf));
+			v = qse_awk_rtx_makestrvalwithxstr(rtx, QSE_STR_XSTR(buf));
 			if (v == QSE_NULL)
 			{
 				ADJERR_LOC (rtx, &nde->loc);
@@ -6605,7 +6606,7 @@ read_console_again:
 
 		/* update FNR & NR if reading from console */
 		if (p->in_type == QSE_AWK_IN_CONSOLE &&
-		    update_fnr (rtx, rtx->gbl.fnr + 1, rtx->gbl.nr + 1) <= -1) 
+		    update_fnr(rtx, rtx->gbl.fnr + 1, rtx->gbl.nr + 1) <= -1) 
 		{
 			return QSE_NULL;
 		}

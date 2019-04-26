@@ -740,7 +740,6 @@ int qse_awk_buildrex (
 }
 
 #if !defined(USE_REX)
-
 static int matchtre (
 	qse_awk_t* awk, qse_tre_t* tre, int opt, 
 	const qse_cstr_t* str, qse_cstr_t* mat, 
@@ -751,7 +750,7 @@ static int matchtre (
 	qse_tre_match_t match[10];
 
 	QSE_MEMSET (match, 0, QSE_SIZEOF(match));
-	n = qse_tre_execx (tre, str->ptr, str->len, match, QSE_COUNTOF(match), opt);
+	n = qse_tre_execx(tre, str->ptr, str->len, match, QSE_COUNTOF(match), opt);
 	if (n <= -1)
 	{
 		if (QSE_TRE_ERRNUM(tre) == QSE_TRE_ENOMATCH) return 0;
@@ -763,7 +762,7 @@ static int matchtre (
 #endif
 		*errnum = (QSE_TRE_ERRNUM(tre) == QSE_TRE_ENOMEM)? 
 			QSE_AWK_ENOMEM: QSE_AWK_EREXMA;
-		return -1;	
+		return -1;
 	}
 
 	QSE_ASSERT (match[0].rm_so != -1);

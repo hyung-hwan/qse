@@ -78,9 +78,7 @@ void* qse_tre_getxtn (qse_tre_t* tre)
 	return QSE_XTN (tre);
 }
 
-int qse_tre_compx (
-	qse_tre_t* tre, const qse_char_t* regex, qse_size_t n,
-	unsigned int* nsubmat, int cflags)
+int qse_tre_compx (qse_tre_t* tre, const qse_char_t* regex, qse_size_t n, unsigned int* nsubmat, int cflags)
 {
 	int ret;
 
@@ -90,12 +88,12 @@ int qse_tre_compx (
 		tre->TRE_REGEX_T_FIELD = QSE_NULL;
 	}
 
-	ret = tre_compile (tre, regex, n, cflags);
+	ret = tre_compile(tre, regex, n, cflags);
 	if (ret > 0) 
 	{
 		tre->TRE_REGEX_T_FIELD = QSE_NULL; /* just to make sure */
 		tre->errnum = ret;
-		return -1;	
+		return -1;
 	}
 	
 	if (nsubmat) 
@@ -105,14 +103,9 @@ int qse_tre_compx (
 	return 0;
 }
 
-int qse_tre_comp (
-	qse_tre_t* tre, const qse_char_t* regex,
-	unsigned int* nsubmat, int cflags)
+int qse_tre_comp (qse_tre_t* tre, const qse_char_t* regex, unsigned int* nsubmat, int cflags)
 {
-	return qse_tre_compx (
-		tre, regex, (regex? qse_strlen(regex):0), 
-		nsubmat, cflags
-	);
+	return qse_tre_compx(tre, regex, (regex? qse_strlen(regex):0), nsubmat, cflags);
 }
 
 /* Fills the POSIX.2 regmatch_t array according to the TNFA tag and match

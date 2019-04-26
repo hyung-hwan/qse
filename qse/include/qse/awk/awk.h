@@ -1400,12 +1400,12 @@ enum qse_awk_val_type_t
 {
 	/* the values between QSE_AWK_VAL_NIL and QSE_AWK_VAL_MAP inclusive
 	 * must be synchronized with an internal table of the __cmp_val 
-	 * function in run.c */
+	 * function in run.c and the __val_type_name in val.c */
 	QSE_AWK_VAL_NIL     = 0, /**< nil */
 	QSE_AWK_VAL_INT     = 1, /**< integer */
 	QSE_AWK_VAL_FLT     = 2, /**< floating-pointer number */
 	QSE_AWK_VAL_STR     = 3, /**< string */
-	QSE_AWK_VAL_MBS = 4, /**< byte array */
+	QSE_AWK_VAL_MBS     = 4, /**< byte array */
 	QSE_AWK_VAL_MAP     = 5, /**< map */
 
 	QSE_AWK_VAL_REX     = 6, /**< regular expression */
@@ -2603,6 +2603,11 @@ QSE_EXPORT int qse_awk_rtx_isstaticval (
 );
 
 QSE_EXPORT int qse_awk_rtx_getvaltype (
+	qse_awk_rtx_t* rtx,
+	qse_awk_val_t* val
+);
+
+QSE_EXPORT const qse_char_t* qse_awk_rtx_getvaltypename (
 	qse_awk_rtx_t* rtx,
 	qse_awk_val_t* val
 );
