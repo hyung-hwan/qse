@@ -2349,7 +2349,7 @@ QSE_EXPORT int qse_awk_rtx_setrec (
 );
 
 /**
- * The qse_awk_rtx_isnilval(0 function determines if a value
+ * The qse_awk_rtx_isnilval() function determines if a value
  * is a nil value.
  */
 QSE_EXPORT int qse_awk_rtx_isnilval (
