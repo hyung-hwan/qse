@@ -598,11 +598,26 @@ can't confict with named variables and globals variables.
  Built-in Functions
 -------------------------
 
+- close
+- fflush
+- int
+- typename
+- isnil
 - index
 - length
+- substr
+- split
+- tolower
+- toupper
+- gsub
+- sub
+- match
+- sprintf
+- mktime
+- strftime
+- systime
 
 TBD.
-
 
  Function Calls
 -----------------------

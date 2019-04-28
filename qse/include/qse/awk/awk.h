@@ -152,7 +152,7 @@ typedef qse_floc_t qse_awk_loc_t;
  */
 struct qse_awk_val_t
 {
-	QSE_AWK_VAL_HDR;	
+	QSE_AWK_VAL_HDR;
 };
 typedef struct qse_awk_val_t qse_awk_val_t;
 
@@ -369,6 +369,7 @@ enum qse_awk_nde_type_t
 	QSE_AWK_NDE_CND,
 	QSE_AWK_NDE_FNC,
 	QSE_AWK_NDE_FUN,
+	QSE_AWK_NDE_FCV,
 	QSE_AWK_NDE_INT,
 	QSE_AWK_NDE_FLT,
 	QSE_AWK_NDE_STR,

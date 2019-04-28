@@ -59,23 +59,23 @@ static qse_awk_fnc_t sysfnctab[] =
 
 	/* type info/conversion */
 	{ {QSE_T("int"),      3}, 0, { {1,     1, QSE_NULL},       fnc_int,              0 }, QSE_NULL},
+	{ {QSE_T("isnil"),    5}, 0, { {1,     1, QSE_NULL},       fnc_isnil,            0 }, QSE_NULL},
 	{ {QSE_T("typename"), 8}, 0, { {1,     1, QSE_NULL},       fnc_typename,         0 }, QSE_NULL},
-	{ {QSE_T("isnil"),    5}, 0, { {1,     1, QSE_NULL},       fnc_isnil,         0 }, QSE_NULL},
 
 	/* array sort */
 	{ {QSE_T("asort"),    5}, 0, { {1,     3, QSE_NULL},       fnc_asort,            0 }, QSE_NULL},
  
 	/* string functions */
+	{ {QSE_T("gsub"),     4}, 0, { {2,     3, QSE_T("xvr")},  qse_awk_fnc_gsub,     0 }, QSE_NULL},
 	{ {QSE_T("index"),    5}, 0, { {2,     3, QSE_NULL},      qse_awk_fnc_index,    0 }, QSE_NULL},
-	{ {QSE_T("substr"),   6}, 0, { {2,     3, QSE_NULL},      qse_awk_fnc_substr,   0 }, QSE_NULL},
 	{ {QSE_T("length"),   6}, 1, { {0,     1, QSE_NULL},      qse_awk_fnc_length,   0 }, QSE_NULL},
+	{ {QSE_T("match"),    5}, 0, { {2,     4, QSE_T("vxvr")}, qse_awk_fnc_match,    0 }, QSE_NULL},
 	{ {QSE_T("split"),    5}, 0, { {2,     3, QSE_T("vrx")},  qse_awk_fnc_split,    0 }, QSE_NULL},
+	{ {QSE_T("sprintf"),  7}, 0, { {1, A_MAX, QSE_NULL},      qse_awk_fnc_sprintf,  0 }, QSE_NULL},
+	{ {QSE_T("sub"),      3}, 0, { {2,     3, QSE_T("xvr")},  qse_awk_fnc_sub,      0 }, QSE_NULL},
+	{ {QSE_T("substr"),   6}, 0, { {2,     3, QSE_NULL},      qse_awk_fnc_substr,   0 }, QSE_NULL},
 	{ {QSE_T("tolower"),  7}, 0, { {1,     1, QSE_NULL},      qse_awk_fnc_tolower,  0 }, QSE_NULL},
 	{ {QSE_T("toupper"),  7}, 0, { {1,     1, QSE_NULL},      qse_awk_fnc_toupper,  0 }, QSE_NULL},
-	{ {QSE_T("gsub"),     4}, 0, { {2,     3, QSE_T("xvr")},  qse_awk_fnc_gsub,     0 }, QSE_NULL},
-	{ {QSE_T("sub"),      3}, 0, { {2,     3, QSE_T("xvr")},  qse_awk_fnc_sub,      0 }, QSE_NULL},
-	{ {QSE_T("match"),    5}, 0, { {2,     4, QSE_T("vxvr")}, qse_awk_fnc_match,    0 }, QSE_NULL},
-	{ {QSE_T("sprintf"),  7}, 0, { {1, A_MAX, QSE_NULL},      qse_awk_fnc_sprintf,  0 }, QSE_NULL},
 
 	/* math functions */
 	{ {QSE_T("sin"),      3}, 0, { {A_MAX, 0, QSE_T("math") },   QSE_NULL,         0 }, QSE_NULL},

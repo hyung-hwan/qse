@@ -230,6 +230,7 @@ static qse_awk_val_t* eval_fun_ex (
 
 static qse_awk_val_t* eval_fnc (qse_awk_rtx_t* run, qse_awk_nde_t* nde);
 static qse_awk_val_t* eval_fun (qse_awk_rtx_t* run, qse_awk_nde_t* nde);
+static qse_awk_val_t* eval_fcv (qse_awk_rtx_t* run, qse_awk_nde_t* nde);
 
 static qse_awk_val_t* __eval_call (
 	qse_awk_rtx_t* run,
@@ -252,7 +253,7 @@ static qse_awk_val_t** get_reference_indexed (
 	qse_awk_rtx_t* run, qse_awk_nde_var_t* nde, qse_awk_val_t** val);
 
 static qse_awk_val_t* eval_int (qse_awk_rtx_t* run, qse_awk_nde_t* nde);
-static qse_awk_val_t* eval_real (qse_awk_rtx_t* run, qse_awk_nde_t* nde);
+static qse_awk_val_t* eval_flt (qse_awk_rtx_t* run, qse_awk_nde_t* nde);
 static qse_awk_val_t* eval_str (qse_awk_rtx_t* run, qse_awk_nde_t* nde);
 static qse_awk_val_t* eval_mbs (qse_awk_rtx_t* run, qse_awk_nde_t* nde);
 static qse_awk_val_t* eval_rex (qse_awk_rtx_t* run, qse_awk_nde_t* nde);
@@ -3327,8 +3328,9 @@ static qse_awk_val_t* eval_expression0 (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 		eval_cnd,
 		eval_fnc,
 		eval_fun,
+		eval_fcv,
 		eval_int,
-		eval_real,
+		eval_flt,
 		eval_str,
 		eval_mbs,
 		eval_rex,
@@ -3482,8 +3484,7 @@ static qse_awk_val_t* eval_assignment (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 	return ret;
 }
 
-static qse_awk_val_t* do_assignment (
-	qse_awk_rtx_t* rtx, qse_awk_nde_t* var, qse_awk_val_t* val)
+static qse_awk_val_t* do_assignment (qse_awk_rtx_t* rtx, qse_awk_nde_t* var, qse_awk_val_t* val)
 {
 	qse_awk_val_t* ret;
 	qse_awk_errnum_t errnum;
@@ -3535,8 +3536,7 @@ exit_on_error:
 	return QSE_NULL;
 }
 
-static qse_awk_val_t* do_assignment_nonidx (
-	qse_awk_rtx_t* run, qse_awk_nde_var_t* var, qse_awk_val_t* val)
+static qse_awk_val_t* do_assignment_nonidx (qse_awk_rtx_t* run, qse_awk_nde_var_t* var, qse_awk_val_t* val)
 {
 	qse_awk_val_type_t vtype;
 
@@ -3662,8 +3662,7 @@ static qse_awk_val_t* do_assignment_nonidx (
 	return val;
 }
 
-static qse_awk_val_t* do_assignment_idx (
-	qse_awk_rtx_t* rtx, qse_awk_nde_var_t* var, qse_awk_val_t* val)
+static qse_awk_val_t* do_assignment_idx (qse_awk_rtx_t* rtx, qse_awk_nde_var_t* var, qse_awk_val_t* val)
 {
 	qse_awk_val_map_t* map;
 	qse_awk_val_type_t mvtype;
@@ -3814,8 +3813,7 @@ retry:
 	return val;
 }
 
-static qse_awk_val_t* do_assignment_pos (
-	qse_awk_rtx_t* rtx, qse_awk_nde_pos_t* pos, qse_awk_val_t* val)
+static qse_awk_val_t* do_assignment_pos (qse_awk_rtx_t* rtx, qse_awk_nde_pos_t* pos, qse_awk_val_t* val)
 {
 	qse_awk_val_t* v;
 	qse_awk_val_type_t vtype;
@@ -4027,8 +4025,7 @@ static qse_awk_val_t* eval_binop_lor (
 	return res;
 }
 
-static qse_awk_val_t* eval_binop_land (
-	qse_awk_rtx_t* run, qse_awk_nde_t* left, qse_awk_nde_t* right)
+static qse_awk_val_t* eval_binop_land (qse_awk_rtx_t* run, qse_awk_nde_t* left, qse_awk_nde_t* right)
 {
 	/*
 	qse_awk_val_t* res = QSE_NULL;
@@ -4079,8 +4076,7 @@ static qse_awk_val_t* eval_binop_land (
 	return res;
 }
 
-static qse_awk_val_t* eval_binop_in (
-	qse_awk_rtx_t* run, qse_awk_nde_t* left, qse_awk_nde_t* right)
+static qse_awk_val_t* eval_binop_in (qse_awk_rtx_t* run, qse_awk_nde_t* left, qse_awk_nde_t* right)
 {
 	qse_awk_val_t* rv;
 	qse_awk_val_type_t rvtype;
@@ -4710,68 +4706,59 @@ static int teq_val (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* righ
 	return n;
 }
 
-static qse_awk_val_t* eval_binop_teq (
-	qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
+static qse_awk_val_t* eval_binop_teq (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
 {
 	return teq_val (rtx, left, right)? QSE_AWK_VAL_ONE: QSE_AWK_VAL_ZERO;
 }
 
-static qse_awk_val_t* eval_binop_tne (
-	qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
+static qse_awk_val_t* eval_binop_tne (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
 {
 	return teq_val (rtx, left, right)? QSE_AWK_VAL_ZERO: QSE_AWK_VAL_ONE;
 }
 
-static qse_awk_val_t* eval_binop_eq (
-	qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
+static qse_awk_val_t* eval_binop_eq (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
 {
 	int n = __cmp_val(rtx, left, right);
 	if (n == CMP_ERROR) return QSE_NULL;
 	return (n == 0)? QSE_AWK_VAL_ONE: QSE_AWK_VAL_ZERO;
 }
 
-static qse_awk_val_t* eval_binop_ne (
-	qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
+static qse_awk_val_t* eval_binop_ne (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
 {
 	int n = __cmp_val(rtx, left, right);
 	if (n == CMP_ERROR) return QSE_NULL;
 	return (n != 0)? QSE_AWK_VAL_ONE: QSE_AWK_VAL_ZERO;
 }
 
-static qse_awk_val_t* eval_binop_gt (
-	qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
+static qse_awk_val_t* eval_binop_gt (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
 {
 	int n = __cmp_val(rtx, left, right);
 	if (n == CMP_ERROR) return QSE_NULL;
 	return (n > 0)? QSE_AWK_VAL_ONE: QSE_AWK_VAL_ZERO;
 }
 
-static qse_awk_val_t* eval_binop_ge (
-	qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
+static qse_awk_val_t* eval_binop_ge (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
 {
 	int n = __cmp_val(rtx, left, right);
 	if (n == CMP_ERROR) return QSE_NULL;
 	return (n >= 0)? QSE_AWK_VAL_ONE: QSE_AWK_VAL_ZERO;
 }
 
-static qse_awk_val_t* eval_binop_lt (
-	qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
+static qse_awk_val_t* eval_binop_lt (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
 {
 	int n = __cmp_val(rtx, left, right);
 	if (n == CMP_ERROR) return QSE_NULL;
 	return (n < 0)? QSE_AWK_VAL_ONE: QSE_AWK_VAL_ZERO;
 }
 
-static qse_awk_val_t* eval_binop_le (
-	qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
+static qse_awk_val_t* eval_binop_le (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
 {
 	int n = __cmp_val(rtx, left, right);
 	if (n == CMP_ERROR) return QSE_NULL;
 	return (n <= 0)? QSE_AWK_VAL_ONE: QSE_AWK_VAL_ZERO;
 }
 
-static qse_awk_val_t* eval_binop_lshift (
-	qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
+static qse_awk_val_t* eval_binop_lshift (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
 {
 	qse_awk_int_t l1, l2;
 
@@ -4785,8 +4772,7 @@ static qse_awk_val_t* eval_binop_lshift (
 	return qse_awk_rtx_makeintval(rtx, l1 << l2);
 }
 
-static qse_awk_val_t* eval_binop_rshift (
-	qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
+static qse_awk_val_t* eval_binop_rshift (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
 {
 	qse_awk_int_t l1, l2;
 
@@ -4800,8 +4786,7 @@ static qse_awk_val_t* eval_binop_rshift (
 	return qse_awk_rtx_makeintval (rtx, l1 >> l2);
 }
 
-static qse_awk_val_t* eval_binop_plus (
-	qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
+static qse_awk_val_t* eval_binop_plus (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
 {
 	int n1, n2, n3;
 	qse_awk_int_t l1, l2;
@@ -4831,8 +4816,7 @@ static qse_awk_val_t* eval_binop_plus (
 	                  qse_awk_rtx_makefltval(rtx,(qse_awk_flt_t)r1+(qse_awk_flt_t)r2);
 }
 
-static qse_awk_val_t* eval_binop_minus (
-	qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
+static qse_awk_val_t* eval_binop_minus (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
 {
 	int n1, n2, n3;
 	qse_awk_int_t l1, l2;
@@ -4855,8 +4839,7 @@ static qse_awk_val_t* eval_binop_minus (
 	                  qse_awk_rtx_makefltval(rtx,(qse_awk_flt_t)r1-(qse_awk_flt_t)r2);
 }
 
-static qse_awk_val_t* eval_binop_mul (
-	qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
+static qse_awk_val_t* eval_binop_mul (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
 {
 	int n1, n2, n3;
 	qse_awk_int_t l1, l2;
@@ -4879,8 +4862,7 @@ static qse_awk_val_t* eval_binop_mul (
 	                  qse_awk_rtx_makefltval(rtx,(qse_awk_flt_t)r1*(qse_awk_flt_t)r2);
 }
 
-static qse_awk_val_t* eval_binop_div (
-	qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
+static qse_awk_val_t* eval_binop_div (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
 {
 	int n1, n2, n3;
 	qse_awk_int_t l1, l2;
@@ -4937,8 +4919,7 @@ static qse_awk_val_t* eval_binop_div (
 	return res;
 }
 
-static qse_awk_val_t* eval_binop_idiv (
-	qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
+static qse_awk_val_t* eval_binop_idiv (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
 {
 	int n1, n2, n3;
 	qse_awk_int_t l1, l2;
@@ -4986,8 +4967,7 @@ static qse_awk_val_t* eval_binop_idiv (
 	return res;
 }
 
-static qse_awk_val_t* eval_binop_mod (
-	qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
+static qse_awk_val_t* eval_binop_mod (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
 {
 	int n1, n2, n3;
 	qse_awk_int_t l1, l2;
@@ -5044,8 +5024,7 @@ static qse_awk_val_t* eval_binop_mod (
 	return res;
 }
 
-static qse_awk_val_t* eval_binop_exp (
-	qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
+static qse_awk_val_t* eval_binop_exp (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
 {
 	int n1, n2, n3;
 	qse_awk_int_t l1, l2;
@@ -5190,8 +5169,7 @@ static qse_awk_val_t* eval_binop_match0 (
 	return res;
 }
 
-static qse_awk_val_t* eval_binop_ma (
-	qse_awk_rtx_t* run, qse_awk_nde_t* left, qse_awk_nde_t* right)
+static qse_awk_val_t* eval_binop_ma (qse_awk_rtx_t* run, qse_awk_nde_t* left, qse_awk_nde_t* right)
 {
 	qse_awk_val_t* lv, * rv, * res;
 
@@ -5220,8 +5198,7 @@ static qse_awk_val_t* eval_binop_ma (
 	return res;
 }
 
-static qse_awk_val_t* eval_binop_nm (
-	qse_awk_rtx_t* run, qse_awk_nde_t* left, qse_awk_nde_t* right)
+static qse_awk_val_t* eval_binop_nm (qse_awk_rtx_t* run, qse_awk_nde_t* left, qse_awk_nde_t* right)
 {
 	qse_awk_val_t* lv, * rv, * res;
 
@@ -5618,12 +5595,8 @@ static qse_awk_val_t* eval_cnd (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 
 	qse_awk_rtx_refupval (run, tv);
 
-	QSE_ASSERT (
-		cnd->left->next == QSE_NULL && 
-		cnd->right->next == QSE_NULL);
-	v = (qse_awk_rtx_valtobool (run, tv))?
-		eval_expression (run, cnd->left):
-		eval_expression (run, cnd->right);
+	QSE_ASSERT (cnd->left->next == QSE_NULL && cnd->right->next == QSE_NULL);
+	v = (qse_awk_rtx_valtobool (run, tv))? eval_expression(run, cnd->left): eval_expression(run, cnd->right);
 
 	qse_awk_rtx_refdownval (run, tv);
 	return v;
@@ -5632,34 +5605,23 @@ static qse_awk_val_t* eval_cnd (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 static qse_awk_val_t* eval_fnc (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 {
 	/* intrinsic function */
-
 	qse_awk_nde_fncall_t* call = (qse_awk_nde_fncall_t*)nde;
-
 	/* the parser must make sure taht the number of arguments 
 	 * is proper */ 
-	QSE_ASSERT (call->nargs >= call->u.fnc.spec.arg.min && 
-	            call->nargs <= call->u.fnc.spec.arg.max); 
-
-	return eval_call (
-		run, nde, call->u.fnc.spec.arg.spec,
-		QSE_NULL, QSE_NULL, QSE_NULL);
+	QSE_ASSERT (call->nargs >= call->u.fnc.spec.arg.min && call->nargs <= call->u.fnc.spec.arg.max); 
+	return eval_call(run, nde, call->u.fnc.spec.arg.spec, QSE_NULL, QSE_NULL, QSE_NULL);
 }
 
-static qse_awk_val_t* eval_fun_ex (
-	qse_awk_rtx_t* rtx, qse_awk_nde_t* nde,
-	void(*errhandler)(void*), void* eharg)
+static QSE_INLINE qse_awk_val_t* eval_fun_ex (qse_awk_rtx_t* rtx, qse_awk_nde_t* nde, void(*errhandler)(void*), void* eharg)
 {
 	qse_awk_nde_fncall_t* call = (qse_awk_nde_fncall_t*)nde;
 	qse_awk_fun_t* fun;
 	qse_htb_pair_t* pair;
 
-	pair = qse_htb_search (rtx->awk->tree.funs,
-		call->u.fun.name.ptr, call->u.fun.name.len);
+	pair = qse_htb_search(rtx->awk->tree.funs, call->u.fun.name.ptr, call->u.fun.name.len);
 	if (pair == QSE_NULL) 
 	{
-		SETERR_ARGX_LOC (
-			rtx, QSE_AWK_EFUNNF,
-			&call->u.fun.name, &nde->loc);
+		SETERR_ARGX_LOC (rtx, QSE_AWK_EFUNNF, &call->u.fun.name, &nde->loc);
 		return QSE_NULL;
 	}
 
@@ -5674,18 +5636,42 @@ static qse_awk_val_t* eval_fun_ex (
 		return QSE_NULL;
 	}
 
-	return eval_call (rtx, nde, QSE_NULL, fun, errhandler, eharg);
+	return eval_call(rtx, nde, QSE_NULL, fun, errhandler, eharg);
 }
 
-static qse_awk_val_t* eval_fun (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
+static qse_awk_val_t* eval_fun (qse_awk_rtx_t* rtx, qse_awk_nde_t* nde)
 {
-	return eval_fun_ex (run, nde, QSE_NULL, QSE_NULL);
+	return eval_fun_ex(rtx, nde, QSE_NULL, QSE_NULL);
+}
+
+static qse_awk_val_t* eval_fcv (qse_awk_rtx_t* rtx, qse_awk_nde_t* nde)
+{
+	qse_awk_nde_fncall_t* call = (qse_awk_nde_fncall_t*)nde;
+	qse_awk_val_t* fv, * rv;
+
+	fv = eval_expression(rtx, (qse_awk_nde_t*)call->u.fcv.var);
+	if (!fv) return QSE_NULL;
+
+	qse_awk_rtx_refupval (rtx, fv);
+	if (QSE_AWK_RTX_GETVALTYPE(rtx, fv) != QSE_AWK_VAL_FUN)
+	{
+		/*SETERR_ARGX_LOC (rtx, QSE_AWK_EFUNNF, &call->u.fun.name, &nde->loc);*/
+/*printf ("NOT FUNCTION VALUE\n");*/
+		rv = QSE_NULL;
+	}
+	else
+	{
+		rv = eval_call(rtx, nde, QSE_NULL, ((qse_awk_val_fun_t*)fv)->fun, QSE_NULL, QSE_NULL	);
+	}
+	qse_awk_rtx_refdownval (rtx, fv);
+
+	return rv;
 }
 
 /* run->stack_base has not been set for this  
  * stack frame. so the RTX_STACK_ARG macro cannot be used as in 
  * qse_awk_rtx_refdownval (run, RTX_STACK_ARG(run,nargs));*/ 
-#define UNWIND_RTX_RTX_STACK_ARG(rtx,nargs) \
+#define UNWIND_RTX_STACK_ARG(rtx,nargs) \
 	do { \
 		while ((nargs) > 0) \
 		{ \
@@ -5695,7 +5681,7 @@ static qse_awk_val_t* eval_fun (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 		} \
 	} while (0)
 
-#define UNWIND_RTX_RTX_STACK_BASE(rtx) \
+#define UNWIND_RTX_STACK_BASE(rtx) \
 	do { \
 		__raw_pop (rtx); /* nargs */ \
 		__raw_pop (rtx); /* return */ \
@@ -5705,8 +5691,8 @@ static qse_awk_val_t* eval_fun (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 
 #define UNWIND_RTX_STACK(rtx,nargs) \
 	do { \
-		UNWIND_RTX_RTX_STACK_ARG(rtx,nargs); \
-		UNWIND_RTX_RTX_STACK_BASE(rtx); \
+		UNWIND_RTX_STACK_ARG(rtx,nargs); \
+		UNWIND_RTX_STACK_BASE(rtx); \
 	} while (0)
 
 static qse_awk_val_t* __eval_call (
@@ -5810,7 +5796,7 @@ static qse_awk_val_t* __eval_call (
 	nargs = argpusher (run, call, apdata);
 	if (nargs == (qse_size_t)-1)
 	{
-		UNWIND_RTX_RTX_STACK_BASE (run);
+		UNWIND_RTX_STACK_BASE (run);
 		return QSE_NULL;
 	}
 
@@ -5957,8 +5943,7 @@ static qse_awk_val_t* __eval_call (
 	return (n == -1)? QSE_NULL: v;
 }
 
-static qse_size_t push_arg_from_vals (
-	qse_awk_rtx_t* rtx, qse_awk_nde_fncall_t* call, void* data)
+static qse_size_t push_arg_from_vals (qse_awk_rtx_t* rtx, qse_awk_nde_fncall_t* call, void* data)
 {
 	struct pafv* pafv = (struct pafv*)data;
 	qse_size_t nargs = 0;
@@ -5975,7 +5960,7 @@ static qse_size_t push_arg_from_vals (
 			qse_awk_rtx_refupval (rtx, pafv->args[nargs]);
 			qse_awk_rtx_refdownval (rtx, pafv->args[nargs]);
 
-			UNWIND_RTX_RTX_STACK_ARG (rtx, nargs);
+			UNWIND_RTX_STACK_ARG (rtx, nargs);
 			SETERR_LOC (rtx, QSE_AWK_ENOMEM, &call->loc);
 			return (qse_size_t)-1;
 		}
@@ -5986,8 +5971,7 @@ static qse_size_t push_arg_from_vals (
 	return nargs; 
 }
 
-static qse_size_t push_arg_from_nde (
-	qse_awk_rtx_t* rtx, qse_awk_nde_fncall_t* call, void* data)
+static qse_size_t push_arg_from_nde (qse_awk_rtx_t* rtx, qse_awk_nde_fncall_t* call, void* data)
 {
 	qse_awk_nde_t* p;
 	qse_awk_val_t* v;
@@ -6009,7 +5993,7 @@ static qse_size_t push_arg_from_nde (
 			      
 			if (get_reference (rtx, p, &ref) == -1)
 			{
-				UNWIND_RTX_RTX_STACK_ARG (rtx, nargs);
+				UNWIND_RTX_STACK_ARG (rtx, nargs);
 				return (qse_size_t)-1;
 			}
 
@@ -6032,7 +6016,7 @@ static qse_size_t push_arg_from_nde (
 
 		if (v == QSE_NULL)
 		{
-			UNWIND_RTX_RTX_STACK_ARG (rtx, nargs);
+			UNWIND_RTX_STACK_ARG (rtx, nargs);
 			return (qse_size_t)-1;
 		}
 
@@ -6046,7 +6030,7 @@ static qse_size_t push_arg_from_nde (
 			qse_awk_rtx_refupval (rtx, v);
 			qse_awk_rtx_refdownval (rtx, v);
 
-			UNWIND_RTX_RTX_STACK_ARG (rtx, nargs);
+			UNWIND_RTX_STACK_ARG (rtx, nargs);
 			SETERR_LOC (rtx, QSE_AWK_ENOMEM, &call->loc);
 			return (qse_size_t)-1;
 		}
@@ -6057,19 +6041,12 @@ static qse_size_t push_arg_from_nde (
 	return nargs;
 }
 
-static qse_awk_val_t* eval_call (
-	qse_awk_rtx_t* rtx, qse_awk_nde_t* nde, 
-	const qse_char_t* fnc_arg_spec, qse_awk_fun_t* fun, 
-	void(*errhandler)(void*), void* eharg)
+static qse_awk_val_t* eval_call (qse_awk_rtx_t* rtx, qse_awk_nde_t* nde, const qse_char_t* fnc_arg_spec, qse_awk_fun_t* fun, void(*errhandler)(void*), void* eharg)
 {
-	return __eval_call (
-		rtx, nde, fnc_arg_spec, fun, 
-		push_arg_from_nde, (void*)fnc_arg_spec,
-		errhandler, eharg);
+	return __eval_call (rtx, nde, fnc_arg_spec, fun, push_arg_from_nde, (void*)fnc_arg_spec, errhandler, eharg);
 }
 
-static int get_reference (
-	qse_awk_rtx_t* run, qse_awk_nde_t* nde, qse_awk_val_t*** ref)
+static int get_reference (qse_awk_rtx_t* rtx, qse_awk_nde_t* nde, qse_awk_val_t*** ref)
 {
 	qse_awk_nde_var_t* tgt = (qse_awk_nde_var_t*)nde;
 	qse_awk_val_t** tmp;
@@ -6082,19 +6059,16 @@ static int get_reference (
 		{
 			qse_htb_pair_t* pair;
 
-			pair = qse_htb_search (
-				run->named, tgt->id.name.ptr, tgt->id.name.len);
+			pair = qse_htb_search(rtx->named, tgt->id.name.ptr, tgt->id.name.len);
 			if (pair == QSE_NULL)
 			{
 				/* it is bad that the named variable has to be
 				 * created in the function named "__get_refernce".
 				 * would there be any better ways to avoid this? */
-				pair = qse_htb_upsert (
-					run->named, tgt->id.name.ptr,
-					tgt->id.name.len, qse_awk_val_nil, 0);
+				pair = qse_htb_upsert(rtx->named, tgt->id.name.ptr, tgt->id.name.len, qse_awk_val_nil, 0);
 				if (pair == QSE_NULL) 
 				{
-					SETERR_LOC (run, QSE_AWK_ENOMEM, &nde->loc);
+					SETERR_LOC (rtx, QSE_AWK_ENOMEM, &nde->loc);
 					return -1;
 				}
 			}
@@ -6104,60 +6078,53 @@ static int get_reference (
 		}
 		
 		case QSE_AWK_NDE_GBL:
-			/* *ref = (qse_awk_val_t**)&RTX_STACK_GBL(run,tgt->id.idxa); */
+			/* *ref = (qse_awk_val_t**)&RTX_STACK_GBL(rtx,tgt->id.idxa); */
 			*ref = (qse_awk_val_t**)((qse_size_t)tgt->id.idxa);
 			return 0;
 
 		case QSE_AWK_NDE_LCL:
-			*ref = (qse_awk_val_t**)&RTX_STACK_LCL(run,tgt->id.idxa);
+			*ref = (qse_awk_val_t**)&RTX_STACK_LCL(rtx,tgt->id.idxa);
 			return 0;
 
 		case QSE_AWK_NDE_ARG:
-			*ref = (qse_awk_val_t**)&RTX_STACK_ARG(run,tgt->id.idxa);
+			*ref = (qse_awk_val_t**)&RTX_STACK_ARG(rtx,tgt->id.idxa);
 			return 0;
 
 		case QSE_AWK_NDE_NAMEDIDX:
 		{
 			qse_htb_pair_t* pair;
 
-			pair = qse_htb_search (
-				run->named, tgt->id.name.ptr, tgt->id.name.len);
+			pair = qse_htb_search(rtx->named, tgt->id.name.ptr, tgt->id.name.len);
 			if (pair == QSE_NULL)
 			{
-				pair = qse_htb_upsert (
-					run->named, tgt->id.name.ptr,
-					tgt->id.name.len, qse_awk_val_nil, 0);
+				pair = qse_htb_upsert(rtx->named, tgt->id.name.ptr, tgt->id.name.len, qse_awk_val_nil, 0);
 				if (pair == QSE_NULL) 
 				{
-					SETERR_LOC (run, QSE_AWK_ENOMEM, &nde->loc);
+					SETERR_LOC (rtx, QSE_AWK_ENOMEM, &nde->loc);
 					return -1;
 				}
 			}
 
-			tmp = get_reference_indexed (
-				run, tgt, (qse_awk_val_t**)&QSE_HTB_VPTR(pair));
+			tmp = get_reference_indexed(rtx, tgt, (qse_awk_val_t**)&QSE_HTB_VPTR(pair));
 			if (tmp == QSE_NULL) return -1;
 			*ref = tmp;
 			return 0;
 		}
 		
 		case QSE_AWK_NDE_GBLIDX:
-			tmp = get_reference_indexed (run, tgt, 
-				(qse_awk_val_t**)&RTX_STACK_GBL(run,tgt->id.idxa));
+			tmp = get_reference_indexed (rtx, tgt, (qse_awk_val_t**)&RTX_STACK_GBL(rtx,tgt->id.idxa));
 			if (tmp == QSE_NULL) return -1;
 			*ref = tmp;
 			return 0;
 
 		case QSE_AWK_NDE_LCLIDX:
-			tmp = get_reference_indexed (run, tgt, 
-				(qse_awk_val_t**)&RTX_STACK_LCL(run,tgt->id.idxa));
+			tmp = get_reference_indexed (rtx, tgt, (qse_awk_val_t**)&RTX_STACK_LCL(rtx,tgt->id.idxa));
 			if (tmp == QSE_NULL) return -1;
 			*ref = tmp;
 			return 0;
 
 		case QSE_AWK_NDE_ARGIDX:
-			tmp = get_reference_indexed (run, tgt, 
-				(qse_awk_val_t**)&RTX_STACK_ARG(run,tgt->id.idxa));
+			tmp = get_reference_indexed(rtx, tgt, (qse_awk_val_t**)&RTX_STACK_ARG(rtx,tgt->id.idxa));
 			if (tmp == QSE_NULL) return -1;
 			*ref = tmp;
 			return 0;
@@ -6170,22 +6137,22 @@ static int get_reference (
 	
 			/* the position number is returned for the positional 
 			 * variable unlike other reference types. */
-			v = eval_expression (run, ((qse_awk_nde_pos_t*)nde)->val);
+			v = eval_expression(rtx, ((qse_awk_nde_pos_t*)nde)->val);
 			if (v == QSE_NULL) return -1;
 	
-			qse_awk_rtx_refupval (run, v);
-			n = qse_awk_rtx_valtoint (run, v, &lv);
-			qse_awk_rtx_refdownval (run, v);
+			qse_awk_rtx_refupval (rtx, v);
+			n = qse_awk_rtx_valtoint(rtx, v, &lv);
+			qse_awk_rtx_refdownval (rtx, v);
 	
 			if (n <= -1) 
 			{
-				SETERR_LOC (run, QSE_AWK_EPOSIDX, &nde->loc);
+				SETERR_LOC (rtx, QSE_AWK_EPOSIDX, &nde->loc);
 				return -1;
 			}
 	
 			if (!IS_VALID_POSIDX(lv)) 
 			{
-				SETERR_LOC (run, QSE_AWK_EPOSIDX, &nde->loc);
+				SETERR_LOC (rtx, QSE_AWK_EPOSIDX, &nde->loc);
 				return -1;
 			}
 
@@ -6194,13 +6161,12 @@ static int get_reference (
 		}
 
 		default:
-			SETERR_LOC (run, QSE_AWK_ENOTREF, &nde->loc);
+			SETERR_LOC (rtx, QSE_AWK_ENOTREF, &nde->loc);
 			return -1;
 	}
 }
 
-static qse_awk_val_t** get_reference_indexed (
-	qse_awk_rtx_t* run, qse_awk_nde_var_t* nde, qse_awk_val_t** val)
+static qse_awk_val_t** get_reference_indexed (qse_awk_rtx_t* rtx, qse_awk_nde_var_t* nde, qse_awk_val_t** val)
 {
 	qse_htb_pair_t* pair;
 	qse_char_t* str;
@@ -6210,144 +6176,117 @@ static qse_awk_val_t** get_reference_indexed (
 
 	QSE_ASSERT (val != QSE_NULL);
 
-	vtype = QSE_AWK_RTX_GETVALTYPE (rtx, *val);
+	vtype = QSE_AWK_RTX_GETVALTYPE(rtx, *val);
 	if (vtype == QSE_AWK_VAL_NIL)
 	{
 		qse_awk_val_t* tmp;
 
-		tmp = qse_awk_rtx_makemapval (run);
+		tmp = qse_awk_rtx_makemapval (rtx);
 		if (tmp == QSE_NULL)
 		{
-			ADJERR_LOC (run, &nde->loc);
+			ADJERR_LOC (rtx, &nde->loc);
 			return QSE_NULL;
 		}
 
-		qse_awk_rtx_refdownval (run, *val);
+		qse_awk_rtx_refdownval (rtx, *val);
 		*val = tmp;
-		qse_awk_rtx_refupval (run, (qse_awk_val_t*)*val);
+		qse_awk_rtx_refupval (rtx, (qse_awk_val_t*)*val);
 	}
 	else if (vtype != QSE_AWK_VAL_MAP) 
 	{
-		SETERR_LOC (run, QSE_AWK_ENOTMAP, &nde->loc);
+		SETERR_LOC (rtx, QSE_AWK_ENOTMAP, &nde->loc);
 		return QSE_NULL;
 	}
 
 	QSE_ASSERT (nde->idx != QSE_NULL);
 
 	len = QSE_COUNTOF(idxbuf);
-	str = idxnde_to_str (run, nde->idx, idxbuf, &len);
+	str = idxnde_to_str (rtx, nde->idx, idxbuf, &len);
 	if (str == QSE_NULL) return QSE_NULL;
 
-	pair = qse_htb_search ((*(qse_awk_val_map_t**)val)->map, str, len);
+	pair = qse_htb_search((*(qse_awk_val_map_t**)val)->map, str, len);
 	if (pair == QSE_NULL)
 	{
-		pair = qse_htb_upsert (
-			(*(qse_awk_val_map_t**)val)->map, 
-			str, len, qse_awk_val_nil, 0);
+		pair = qse_htb_upsert((*(qse_awk_val_map_t**)val)->map, str, len, qse_awk_val_nil, 0);
 		if (pair == QSE_NULL)
 		{
-			if (str != idxbuf) QSE_AWK_FREE (run->awk, str);
-			SETERR_LOC (run, QSE_AWK_ENOMEM, &nde->loc);
+			if (str != idxbuf) QSE_AWK_FREE (rtx->awk, str);
+			SETERR_LOC (rtx, QSE_AWK_ENOMEM, &nde->loc);
 			return QSE_NULL;
 		}
 
-		qse_awk_rtx_refupval (run, QSE_HTB_VPTR(pair));
+		qse_awk_rtx_refupval (rtx, QSE_HTB_VPTR(pair));
 	}
 
-	if (str != idxbuf) QSE_AWK_FREE (run->awk, str);
+	if (str != idxbuf) QSE_AWK_FREE (rtx->awk, str);
 	return (qse_awk_val_t**)&QSE_HTB_VPTR(pair);
 }
 
-static qse_awk_val_t* eval_int (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
+static qse_awk_val_t* eval_int (qse_awk_rtx_t* rtx, qse_awk_nde_t* nde)
 {
 	qse_awk_val_t* val;
-
-	val = qse_awk_rtx_makeintval (run, ((qse_awk_nde_int_t*)nde)->val);
-	if (val == QSE_NULL) ADJERR_LOC (run, &nde->loc);
+	val = qse_awk_rtx_makeintval(rtx, ((qse_awk_nde_int_t*)nde)->val);
+	if (val == QSE_NULL) ADJERR_LOC (rtx, &nde->loc);
 	else if (QSE_AWK_VTR_IS_POINTER(val)) ((qse_awk_val_int_t*)val)->nde = nde;
-
 	return val;
 }
 
-static qse_awk_val_t* eval_real (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
+static qse_awk_val_t* eval_flt (qse_awk_rtx_t* rtx, qse_awk_nde_t* nde)
 {
 	qse_awk_val_t* val;
-
-	val = qse_awk_rtx_makefltval (run, ((qse_awk_nde_flt_t*)nde)->val);
-	if (val == QSE_NULL) ADJERR_LOC (run, &nde->loc);
+	val = qse_awk_rtx_makefltval(rtx, ((qse_awk_nde_flt_t*)nde)->val);
+	if (val == QSE_NULL) ADJERR_LOC (rtx, &nde->loc);
 	else ((qse_awk_val_flt_t*)val)->nde = nde;
-
 	return val;
 }
 
-static qse_awk_val_t* eval_str (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
+static qse_awk_val_t* eval_str (qse_awk_rtx_t* rtx, qse_awk_nde_t* nde)
 {
 	qse_awk_val_t* val;
-
-	val = qse_awk_rtx_makestrval (run,
-		((qse_awk_nde_str_t*)nde)->ptr,
-		((qse_awk_nde_str_t*)nde)->len);
-	if (val == QSE_NULL) ADJERR_LOC (run, &nde->loc);
-
+	val = qse_awk_rtx_makestrval(rtx, ((qse_awk_nde_str_t*)nde)->ptr, ((qse_awk_nde_str_t*)nde)->len);
+	if (val == QSE_NULL) ADJERR_LOC (rtx, &nde->loc);
 	return val;
 }
 
-static qse_awk_val_t* eval_mbs (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
+static qse_awk_val_t* eval_mbs (qse_awk_rtx_t* rtx, qse_awk_nde_t* nde)
 {
 	qse_awk_val_t* val;
-
-	val = qse_awk_rtx_makembsval (run,
-		((qse_awk_nde_mbs_t*)nde)->ptr,
-		((qse_awk_nde_mbs_t*)nde)->len);
-	if (val == QSE_NULL) ADJERR_LOC (run, &nde->loc);
-
+	val = qse_awk_rtx_makembsval(rtx, ((qse_awk_nde_mbs_t*)nde)->ptr, ((qse_awk_nde_mbs_t*)nde)->len);
+	if (val == QSE_NULL) ADJERR_LOC (rtx, &nde->loc);
 	return val;
 }
 
-
-static qse_awk_val_t* eval_rex (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
+static qse_awk_val_t* eval_rex (qse_awk_rtx_t* rtx, qse_awk_nde_t* nde)
 {
 	qse_awk_val_t* val;
-
-	val = qse_awk_rtx_makerexval (run,
-		&((qse_awk_nde_rex_t*)nde)->str,
-		((qse_awk_nde_rex_t*)nde)->code
-	);
-	if (val == QSE_NULL) ADJERR_LOC (run, &nde->loc);
-
+	val = qse_awk_rtx_makerexval(rtx, &((qse_awk_nde_rex_t*)nde)->str, ((qse_awk_nde_rex_t*)nde)->code);
+	if (val == QSE_NULL) ADJERR_LOC (rtx, &nde->loc);
 	return val;
 }
 
-static qse_awk_val_t* eval_named (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
+static qse_awk_val_t* eval_named (qse_awk_rtx_t* rtx, qse_awk_nde_t* nde)
 {
 	qse_htb_pair_t* pair;
-		       
-	pair = qse_htb_search (
-		run->named, 
-		((qse_awk_nde_var_t*)nde)->id.name.ptr, 
-		((qse_awk_nde_var_t*)nde)->id.name.len
-	);
-
+	pair = qse_htb_search (rtx->named, ((qse_awk_nde_var_t*)nde)->id.name.ptr, ((qse_awk_nde_var_t*)nde)->id.name.len);
 	return (pair == QSE_NULL)? qse_awk_val_nil: QSE_HTB_VPTR(pair);
 }
 
-static qse_awk_val_t* eval_gbl (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
+static qse_awk_val_t* eval_gbl (qse_awk_rtx_t* rtx, qse_awk_nde_t* nde)
 {
-	return RTX_STACK_GBL(run,((qse_awk_nde_var_t*)nde)->id.idxa);
+	return RTX_STACK_GBL(rtx,((qse_awk_nde_var_t*)nde)->id.idxa);
 }
 
-static qse_awk_val_t* eval_lcl (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
+static qse_awk_val_t* eval_lcl (qse_awk_rtx_t* rtx, qse_awk_nde_t* nde)
 {
-	return RTX_STACK_LCL(run,((qse_awk_nde_var_t*)nde)->id.idxa);
+	return RTX_STACK_LCL(rtx,((qse_awk_nde_var_t*)nde)->id.idxa);
 }
 
-static qse_awk_val_t* eval_arg (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
+static qse_awk_val_t* eval_arg (qse_awk_rtx_t* rtx, qse_awk_nde_t* nde)
 {
-	return RTX_STACK_ARG(run,((qse_awk_nde_var_t*)nde)->id.idxa);
+	return RTX_STACK_ARG(rtx,((qse_awk_nde_var_t*)nde)->id.idxa);
 }
 
-static qse_awk_val_t* eval_indexed (
-	qse_awk_rtx_t* run, qse_awk_nde_var_t* nde, qse_awk_val_t** val)
+static qse_awk_val_t* eval_indexed (qse_awk_rtx_t* rtx, qse_awk_nde_var_t* nde, qse_awk_val_t** val)
 {
 	qse_htb_pair_t* pair;
 	qse_char_t* str;
@@ -6357,79 +6296,74 @@ static qse_awk_val_t* eval_indexed (
 
 	QSE_ASSERT (val != QSE_NULL);
 
-	vtype = QSE_AWK_RTX_GETVALTYPE (run, *val);
+	vtype = QSE_AWK_RTX_GETVALTYPE(rtx, *val);
 	if (vtype == QSE_AWK_VAL_NIL)
 	{
 		qse_awk_val_t* tmp;
 
-		tmp = qse_awk_rtx_makemapval (run);
+		tmp = qse_awk_rtx_makemapval(rtx);
 		if (tmp == QSE_NULL)
 		{
-			ADJERR_LOC (run, &nde->loc);
+			ADJERR_LOC (rtx, &nde->loc);
 			return QSE_NULL;
 		}
 
-		qse_awk_rtx_refdownval (run, *val);
+		qse_awk_rtx_refdownval (rtx, *val);
 		*val = tmp;
-		qse_awk_rtx_refupval (run, (qse_awk_val_t*)*val);
+		qse_awk_rtx_refupval (rtx, (qse_awk_val_t*)*val);
 	}
 	else if (vtype != QSE_AWK_VAL_MAP) 
 	{
-		SETERR_LOC (run, QSE_AWK_ENOTMAP, &nde->loc);
+		SETERR_LOC (rtx, QSE_AWK_ENOTMAP, &nde->loc);
 		return QSE_NULL;
 	}
 
 	QSE_ASSERT (nde->idx != QSE_NULL);
 
 	len = QSE_COUNTOF(idxbuf);
-	str = idxnde_to_str (run, nde->idx, idxbuf, &len);
+	str = idxnde_to_str(rtx, nde->idx, idxbuf, &len);
 	if (str == QSE_NULL) return QSE_NULL;
 
-	pair = qse_htb_search ((*(qse_awk_val_map_t**)val)->map, str, len);
-	if (str != idxbuf) QSE_AWK_FREE (run->awk, str);
+	pair = qse_htb_search((*(qse_awk_val_map_t**)val)->map, str, len);
+	if (str != idxbuf) QSE_AWK_FREE (rtx->awk, str);
 
-	return (pair == QSE_NULL)? qse_awk_val_nil: 
-	                           (qse_awk_val_t*)QSE_HTB_VPTR(pair);
+	return (pair == QSE_NULL)? qse_awk_val_nil: (qse_awk_val_t*)QSE_HTB_VPTR(pair);
 }
 
-static qse_awk_val_t* eval_namedidx (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
+static qse_awk_val_t* eval_namedidx (qse_awk_rtx_t* rtx, qse_awk_nde_t* nde)
 {
 	qse_awk_nde_var_t* tgt = (qse_awk_nde_var_t*)nde;
 	qse_htb_pair_t* pair;
 
-	pair = qse_htb_search (run->named, tgt->id.name.ptr, tgt->id.name.len);
+	pair = qse_htb_search(rtx->named, tgt->id.name.ptr, tgt->id.name.len);
 	if (pair == QSE_NULL)
 	{
-		pair = qse_htb_upsert (run->named, 
-			tgt->id.name.ptr, tgt->id.name.len, qse_awk_val_nil, 0);
+		pair = qse_htb_upsert(rtx->named, tgt->id.name.ptr, tgt->id.name.len, qse_awk_val_nil, 0);
 		if (pair == QSE_NULL) 
 		{
-			SETERR_LOC (run, QSE_AWK_ENOMEM, &nde->loc);
+			SETERR_LOC (rtx, QSE_AWK_ENOMEM, &nde->loc);
 			return QSE_NULL;
 		}
 
-		qse_awk_rtx_refupval (run, QSE_HTB_VPTR(pair)); 
+		qse_awk_rtx_refupval (rtx, QSE_HTB_VPTR(pair)); 
 	}
 
-	return eval_indexed (run, tgt, (qse_awk_val_t**)&QSE_HTB_VPTR(pair));
+	return eval_indexed (rtx, tgt, (qse_awk_val_t**)&QSE_HTB_VPTR(pair));
 }
 
-static qse_awk_val_t* eval_gblidx (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
+static qse_awk_val_t* eval_gblidx (qse_awk_rtx_t* rtx, qse_awk_nde_t* nde)
 {
-	return eval_indexed (run, (qse_awk_nde_var_t*)nde, 
-		(qse_awk_val_t**)&RTX_STACK_GBL(run,((qse_awk_nde_var_t*)nde)->id.idxa));
+	return eval_indexed(rtx, (qse_awk_nde_var_t*)nde, (qse_awk_val_t**)&RTX_STACK_GBL(rtx,((qse_awk_nde_var_t*)nde)->id.idxa));
 }
 
-static qse_awk_val_t* eval_lclidx (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
+static qse_awk_val_t* eval_lclidx (qse_awk_rtx_t* rtx, qse_awk_nde_t* nde)
 {
-	return eval_indexed (run, (qse_awk_nde_var_t*)nde, 
-		(qse_awk_val_t**)&RTX_STACK_LCL(run,((qse_awk_nde_var_t*)nde)->id.idxa));
+	return eval_indexed(rtx, (qse_awk_nde_var_t*)nde, (qse_awk_val_t**)&RTX_STACK_LCL(rtx,((qse_awk_nde_var_t*)nde)->id.idxa));
 }
 
-static qse_awk_val_t* eval_argidx (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
+static qse_awk_val_t* eval_argidx (qse_awk_rtx_t* rtx, qse_awk_nde_t* nde)
 {
-	return eval_indexed (run, (qse_awk_nde_var_t*)nde,
-		(qse_awk_val_t**)&RTX_STACK_ARG(run,((qse_awk_nde_var_t*)nde)->id.idxa));
+	return eval_indexed(rtx, (qse_awk_nde_var_t*)nde, (qse_awk_val_t**)&RTX_STACK_ARG(rtx,((qse_awk_nde_var_t*)nde)->id.idxa));
 }
 
 static qse_awk_val_t* eval_pos (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
