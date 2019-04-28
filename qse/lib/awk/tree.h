@@ -206,6 +206,11 @@ struct qse_awk_nde_fncall_t
 			qse_awk_fnc_info_t info;
 			qse_awk_fnc_spec_t spec;
 		} fnc;
+
+		struct
+		{
+			qse_awk_nde_var_t* var;
+		} fcv;
 	} u;
 	qse_awk_nde_t* args;
 	qse_size_t nargs;
