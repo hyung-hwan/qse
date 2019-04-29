@@ -224,13 +224,13 @@ static qse_awk_val_t* eval_incpre (qse_awk_rtx_t* run, qse_awk_nde_t* nde);
 static qse_awk_val_t* eval_incpst (qse_awk_rtx_t* run, qse_awk_nde_t* nde);
 static qse_awk_val_t* eval_cnd (qse_awk_rtx_t* run, qse_awk_nde_t* nde);
 
-static qse_awk_val_t* eval_fun_ex (
+static qse_awk_val_t* eval_fncall_fncall_fun_ex (
 	qse_awk_rtx_t* run, qse_awk_nde_t* nde, 
 	void(*errhandler)(void*), void* eharg);
 
-static qse_awk_val_t* eval_fnc (qse_awk_rtx_t* run, qse_awk_nde_t* nde);
-static qse_awk_val_t* eval_fun (qse_awk_rtx_t* run, qse_awk_nde_t* nde);
-static qse_awk_val_t* eval_fcv (qse_awk_rtx_t* run, qse_awk_nde_t* nde);
+static qse_awk_val_t* eval_fncall_fnc (qse_awk_rtx_t* run, qse_awk_nde_t* nde);
+static qse_awk_val_t* eval_fncall_fncall_fun (qse_awk_rtx_t* run, qse_awk_nde_t* nde);
+static qse_awk_val_t* eval_fncall_var (qse_awk_rtx_t* run, qse_awk_nde_t* nde);
 
 static qse_awk_val_t* __eval_call (
 	qse_awk_rtx_t* run,
@@ -257,6 +257,7 @@ static qse_awk_val_t* eval_flt (qse_awk_rtx_t* run, qse_awk_nde_t* nde);
 static qse_awk_val_t* eval_str (qse_awk_rtx_t* run, qse_awk_nde_t* nde);
 static qse_awk_val_t* eval_mbs (qse_awk_rtx_t* run, qse_awk_nde_t* nde);
 static qse_awk_val_t* eval_rex (qse_awk_rtx_t* run, qse_awk_nde_t* nde);
+static qse_awk_val_t* eval_fun (qse_awk_rtx_t* run, qse_awk_nde_t* nde);
 static qse_awk_val_t* eval_named (qse_awk_rtx_t* run, qse_awk_nde_t* nde);
 static qse_awk_val_t* eval_gbl (qse_awk_rtx_t* run, qse_awk_nde_t* nde);
 static qse_awk_val_t* eval_lcl (qse_awk_rtx_t* run, qse_awk_nde_t* nde);
@@ -1630,7 +1631,7 @@ qse_awk_val_t* qse_awk_rtx_callfun (
 
 	/* forge a fake node containing a function call */
 	QSE_MEMSET (&call, 0, QSE_SIZEOF(call));
-	call.type = QSE_AWK_NDE_FUN;
+	call.type = QSE_AWK_NDE_FNCALL_FUN;
 	call.u.fun.name = fun->name;
 	call.nargs = nargs;
 
@@ -3326,14 +3327,15 @@ static qse_awk_val_t* eval_expression0 (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 		eval_incpre,
 		eval_incpst,
 		eval_cnd,
-		eval_fnc,
-		eval_fun,
-		eval_fcv,
+		eval_fncall_fnc,
+		eval_fncall_fncall_fun,
+		eval_fncall_var,
 		eval_int,
 		eval_flt,
 		eval_str,
 		eval_mbs,
 		eval_rex,
+		eval_fun,
 		eval_named,
 		eval_gbl,
 		eval_lcl,
@@ -3350,10 +3352,9 @@ static qse_awk_val_t* eval_expression0 (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 
 	qse_awk_val_t* v;
 
-	QSE_ASSERT (nde->type >= QSE_AWK_NDE_GRP &&
-		(nde->type - QSE_AWK_NDE_GRP) < QSE_COUNTOF(__evaluator));
+	QSE_ASSERT (nde->type >= QSE_AWK_NDE_GRP && (nde->type - QSE_AWK_NDE_GRP) < QSE_COUNTOF(__evaluator));
 
-	v = __evaluator[nde->type-QSE_AWK_NDE_GRP] (run, nde);
+	v = __evaluator[nde->type-QSE_AWK_NDE_GRP](run, nde);
 
 	if (v != QSE_NULL && run->exit_level >= EXIT_GLOBAL)
 	{
@@ -5602,7 +5603,7 @@ static qse_awk_val_t* eval_cnd (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 	return v;
 }
 
-static qse_awk_val_t* eval_fnc (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
+static qse_awk_val_t* eval_fncall_fnc (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 {
 	/* intrinsic function */
 	qse_awk_nde_fncall_t* call = (qse_awk_nde_fncall_t*)nde;
@@ -5612,7 +5613,7 @@ static qse_awk_val_t* eval_fnc (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 	return eval_call(run, nde, call->u.fnc.spec.arg.spec, QSE_NULL, QSE_NULL, QSE_NULL);
 }
 
-static QSE_INLINE qse_awk_val_t* eval_fun_ex (qse_awk_rtx_t* rtx, qse_awk_nde_t* nde, void(*errhandler)(void*), void* eharg)
+static QSE_INLINE qse_awk_val_t* eval_fncall_fncall_fun_ex (qse_awk_rtx_t* rtx, qse_awk_nde_t* nde, void(*errhandler)(void*), void* eharg)
 {
 	qse_awk_nde_fncall_t* call = (qse_awk_nde_fncall_t*)nde;
 	qse_awk_fun_t* fun;
@@ -5639,29 +5640,28 @@ static QSE_INLINE qse_awk_val_t* eval_fun_ex (qse_awk_rtx_t* rtx, qse_awk_nde_t*
 	return eval_call(rtx, nde, QSE_NULL, fun, errhandler, eharg);
 }
 
-static qse_awk_val_t* eval_fun (qse_awk_rtx_t* rtx, qse_awk_nde_t* nde)
+static qse_awk_val_t* eval_fncall_fncall_fun (qse_awk_rtx_t* rtx, qse_awk_nde_t* nde)
 {
-	return eval_fun_ex(rtx, nde, QSE_NULL, QSE_NULL);
+	return eval_fncall_fncall_fun_ex(rtx, nde, QSE_NULL, QSE_NULL);
 }
 
-static qse_awk_val_t* eval_fcv (qse_awk_rtx_t* rtx, qse_awk_nde_t* nde)
+static qse_awk_val_t* eval_fncall_var (qse_awk_rtx_t* rtx, qse_awk_nde_t* nde)
 {
 	qse_awk_nde_fncall_t* call = (qse_awk_nde_fncall_t*)nde;
 	qse_awk_val_t* fv, * rv;
 
-	fv = eval_expression(rtx, (qse_awk_nde_t*)call->u.fcv.var);
+	fv = eval_expression(rtx, (qse_awk_nde_t*)call->u.var.var);
 	if (!fv) return QSE_NULL;
 
 	qse_awk_rtx_refupval (rtx, fv);
 	if (QSE_AWK_RTX_GETVALTYPE(rtx, fv) != QSE_AWK_VAL_FUN)
 	{
-		/*SETERR_ARGX_LOC (rtx, QSE_AWK_EFUNNF, &call->u.fun.name, &nde->loc);*/
-/*printf ("NOT FUNCTION VALUE\n");*/
+		SETERR_ARGX_LOC (rtx, QSE_AWK_ENOTFUN, &call->u.var.var->id.name, &nde->loc);
 		rv = QSE_NULL;
 	}
 	else
 	{
-		rv = eval_call(rtx, nde, QSE_NULL, ((qse_awk_val_fun_t*)fv)->fun, QSE_NULL, QSE_NULL	);
+		rv = eval_call(rtx, nde, QSE_NULL, ((qse_awk_val_fun_t*)fv)->fun, QSE_NULL, QSE_NULL);
 	}
 	qse_awk_rtx_refdownval (rtx, fv);
 
@@ -6002,19 +6002,18 @@ static qse_size_t push_arg_from_nde (qse_awk_rtx_t* rtx, qse_awk_nde_fncall_t* c
 			v = qse_awk_rtx_makerefval (
 				rtx, p->type-QSE_AWK_NDE_NAMED, ref);
 		}
-		else if (fnc_arg_spec && 
-		         fnc_arg_spec[nargs] == QSE_T('x'))
+		else if (fnc_arg_spec && fnc_arg_spec[nargs] == QSE_T('x'))
 		{
 			/* a regular expression is passed to 
 			 * the function as it is */
-			v = eval_expression0 (rtx, p);
+			v = eval_expression0(rtx, p);
 		}
 		else
 		{
-			v = eval_expression (rtx, p);
+			v = eval_expression(rtx, p);
 		}
 
-		if (v == QSE_NULL)
+		if (!v)
 		{
 			UNWIND_RTX_STACK_ARG (rtx, nargs);
 			return (qse_size_t)-1;
@@ -6043,7 +6042,7 @@ static qse_size_t push_arg_from_nde (qse_awk_rtx_t* rtx, qse_awk_nde_fncall_t* c
 
 static qse_awk_val_t* eval_call (qse_awk_rtx_t* rtx, qse_awk_nde_t* nde, const qse_char_t* fnc_arg_spec, qse_awk_fun_t* fun, void(*errhandler)(void*), void* eharg)
 {
-	return __eval_call (rtx, nde, fnc_arg_spec, fun, push_arg_from_nde, (void*)fnc_arg_spec, errhandler, eharg);
+	return __eval_call(rtx, nde, fnc_arg_spec, fun, push_arg_from_nde, (void*)fnc_arg_spec, errhandler, eharg);
 }
 
 static int get_reference (qse_awk_rtx_t* rtx, qse_awk_nde_t* nde, qse_awk_val_t*** ref)
@@ -6261,6 +6260,32 @@ static qse_awk_val_t* eval_rex (qse_awk_rtx_t* rtx, qse_awk_nde_t* nde)
 	qse_awk_val_t* val;
 	val = qse_awk_rtx_makerexval(rtx, &((qse_awk_nde_rex_t*)nde)->str, ((qse_awk_nde_rex_t*)nde)->code);
 	if (val == QSE_NULL) ADJERR_LOC (rtx, &nde->loc);
+	return val;
+}
+
+static qse_awk_val_t* eval_fun (qse_awk_rtx_t* rtx, qse_awk_nde_t* nde)
+{
+	qse_awk_val_t* val;
+	qse_awk_fun_t* fun;
+	qse_htb_pair_t* pair;
+
+	fun = ((qse_awk_nde_fun_t*)nde)->ptr;
+	if (!fun)
+	{
+		/* TODO: support bultin functions?, support module functions? */
+		pair = qse_htb_search(rtx->awk->tree.funs, ((qse_awk_nde_fun_t*)nde)->name.ptr, ((qse_awk_nde_fun_t*)nde)->name.len);
+		if (!pair)
+		{
+			SETERR_ARGX_LOC (rtx, QSE_AWK_EFUNNF, &((qse_awk_nde_fun_t*)nde)->name, &nde->loc);
+			return QSE_NULL;
+		}
+
+		fun = (qse_awk_fun_t*)QSE_HTB_VPTR(pair);
+		QSE_ASSERT (fun != QSE_NULL);
+	}
+
+	val = qse_awk_rtx_makefunval(rtx, fun); 
+	if (!val) ADJERR_LOC (rtx, &nde->loc);
 	return val;
 }
 

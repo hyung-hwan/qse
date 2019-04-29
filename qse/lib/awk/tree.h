@@ -59,10 +59,11 @@ typedef struct qse_awk_nde_pos_t       qse_awk_nde_pos_t;
 
 typedef struct qse_awk_nde_int_t       qse_awk_nde_int_t;
 typedef struct qse_awk_nde_flt_t       qse_awk_nde_flt_t;
-
 typedef struct qse_awk_nde_str_t       qse_awk_nde_str_t;
 typedef struct qse_awk_nde_mbs_t       qse_awk_nde_mbs_t;
 typedef struct qse_awk_nde_rex_t       qse_awk_nde_rex_t;
+typedef struct qse_awk_nde_fun_t       qse_awk_nde_fun_t;
+
 typedef struct qse_awk_nde_var_t       qse_awk_nde_var_t;
 typedef struct qse_awk_nde_fncall_t    qse_awk_nde_fncall_t;
 typedef struct qse_awk_nde_getline_t   qse_awk_nde_getline_t;
@@ -173,6 +174,14 @@ struct qse_awk_nde_rex_t
 	void*       code[2]; /* [0]: case sensitive, [1]: case insensitive */
 };
 
+/* QSE_AWK_NDE_FUN - function as a value */
+struct qse_awk_nde_fun_t
+{
+	QSE_AWK_NDE_HDR;
+	qse_cstr_t name; /* function name */
+	qse_awk_fun_t* ptr; /* QSE_NULL or actual pointer */
+};
+
 /* QSE_AWK_NDE_NAMED, QSE_AWK_NDE_GBL, 
  * QSE_AWK_NDE_LCL, QSE_AWK_NDE_ARG 
  * QSE_AWK_NDE_NAMEDIDX, QSE_AWK_NDE_GBLIDX, 
@@ -188,7 +197,7 @@ struct qse_awk_nde_var_t
 	qse_awk_nde_t* idx; /* QSE_NULL for non-XXXXIDX */
 };
 
-/* QSE_AWK_NDE_FNC, QSE_AWK_NDE_FUN */
+/* QSE_AWK_NDE_FNCALL_FNC, QSE_AWK_NDE_FNCALL_FUN, QSE_AWK_NDE_FNCALL_VAR */
 struct qse_awk_nde_fncall_t
 {
 	QSE_AWK_NDE_HDR;
@@ -210,7 +219,7 @@ struct qse_awk_nde_fncall_t
 		struct
 		{
 			qse_awk_nde_var_t* var;
-		} fcv;
+		} var;
 	} u;
 	qse_awk_nde_t* args;
 	qse_size_t nargs;

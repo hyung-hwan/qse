@@ -367,14 +367,15 @@ enum qse_awk_nde_type_t
 	QSE_AWK_NDE_EXP_INCPRE,
 	QSE_AWK_NDE_EXP_INCPST,
 	QSE_AWK_NDE_CND,
-	QSE_AWK_NDE_FNC,
-	QSE_AWK_NDE_FUN,
-	QSE_AWK_NDE_FCV,
+	QSE_AWK_NDE_FNCALL_FNC,
+	QSE_AWK_NDE_FNCALL_FUN,
+	QSE_AWK_NDE_FNCALL_VAR,
 	QSE_AWK_NDE_INT,
 	QSE_AWK_NDE_FLT,
 	QSE_AWK_NDE_STR,
 	QSE_AWK_NDE_MBS,
 	QSE_AWK_NDE_REX,
+	QSE_AWK_NDE_FUN,
 
 	/* keep this order for the following items otherwise, you may have 
 	 * to change eval_incpre and eval_incpst in run.c as well as
@@ -1276,6 +1277,7 @@ enum qse_awk_errnum_t
 	QSE_AWK_EARGTF,        /**< too few arguments */
 	QSE_AWK_EARGTM,        /**< too many arguments */
 	QSE_AWK_EFUNNF,        /**< function '${0}' not found */
+	QSE_AWK_ENOTFUN,       /**< non-function value in '%{0}' */
 	QSE_AWK_ENOTDEL,       /**< '${0}' not deletable */
 	QSE_AWK_ENOTMAP,       /**< value not a map */
 	QSE_AWK_ENOTMAPIN,     /**< right-hand side of 'in' not a map */
