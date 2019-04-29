@@ -119,6 +119,7 @@ const qse_char_t* qse_awk_dflerrstr (const qse_awk_t* awk, qse_awk_errnum_t errn
 		QSE_T("too few arguments"),
 		QSE_T("too many arguments"),
 		QSE_T("function '${0}' not found"),
+		QSE_T("non-function value in '${0}'"),
 		QSE_T("'${0}' not deletable"),
 		QSE_T("value not a map"),
 		QSE_T("right-hand side of the 'in' operator not a map"),

@@ -497,6 +497,14 @@ static int print_expr (qse_awk_t* awk, qse_awk_nde_t* nde)
 			break;
 		}
 
+		case QSE_AWK_NDE_FUN:
+		{
+			PUT_SRCSTRN (awk,
+				((qse_awk_nde_fun_t*)nde)->name.ptr, 
+				((qse_awk_nde_fun_t*)nde)->name.len);
+			break;
+		}
+
 		case QSE_AWK_NDE_ARG:
 		{
 			qse_char_t tmp[QSE_SIZEOF(qse_awk_int_t)*8+2]; 
@@ -710,7 +718,7 @@ static int print_expr (qse_awk_t* awk, qse_awk_nde_t* nde)
 			break;
 		}
 
-		case QSE_AWK_NDE_FNC:
+		case QSE_AWK_NDE_FNCALL_FNC:
 		{
 			qse_awk_nde_fncall_t* px = (qse_awk_nde_fncall_t*)nde;
 			PUT_SRCSTRN (awk, px->u.fnc.info.name.ptr, px->u.fnc.info.name.len);
@@ -720,7 +728,7 @@ static int print_expr (qse_awk_t* awk, qse_awk_nde_t* nde)
 			break;
 		}
 
-		case QSE_AWK_NDE_FUN:
+		case QSE_AWK_NDE_FNCALL_FUN:
 		{
 			qse_awk_nde_fncall_t* px = (qse_awk_nde_fncall_t*)nde;
 			PUT_SRCSTRN (awk, px->u.fun.name.ptr, px->u.fun.name.len);
@@ -730,10 +738,10 @@ static int print_expr (qse_awk_t* awk, qse_awk_nde_t* nde)
 			break;
 		}
 
-		case QSE_AWK_NDE_FCV:
+		case QSE_AWK_NDE_FNCALL_VAR:
 		{
 			qse_awk_nde_fncall_t* px = (qse_awk_nde_fncall_t*)nde;
-			PRINT_EXPR (awk, (qse_awk_nde_t*)px->u.fcv.var);
+			PRINT_EXPR (awk, (qse_awk_nde_t*)px->u.var.var);
 			PUT_SRCSTR (awk, QSE_T("("));
 			PRINT_EXPR_LIST (awk, px->args);
 			PUT_SRCSTR (awk, QSE_T(")"));
@@ -1402,6 +1410,13 @@ void qse_awk_clrpt (qse_awk_t* awk, qse_awk_nde_t* tree)
 				break;
 			}
 
+			case QSE_AWK_NDE_FUN:
+			{
+				QSE_AWK_FREE (awk, ((qse_awk_nde_fun_t*)p)->name.ptr);
+				QSE_AWK_FREE (awk, p);
+				break;
+			}
+
 			case QSE_AWK_NDE_NAMED:
 			case QSE_AWK_NDE_GBL:
 			case QSE_AWK_NDE_LCL:
@@ -1434,7 +1449,7 @@ void qse_awk_clrpt (qse_awk_t* awk, qse_awk_nde_t* tree)
 				break;
 			}
 
-			case QSE_AWK_NDE_FNC:
+			case QSE_AWK_NDE_FNCALL_FNC:
 			{
 				qse_awk_nde_fncall_t* px = (qse_awk_nde_fncall_t*)p;
 				/* QSE_AWK_FREE (awk, px->u.fnc); */
@@ -1444,7 +1459,7 @@ void qse_awk_clrpt (qse_awk_t* awk, qse_awk_nde_t* tree)
 				break;
 			}
 
-			case QSE_AWK_NDE_FUN:
+			case QSE_AWK_NDE_FNCALL_FUN:
 			{
 				qse_awk_nde_fncall_t* px = (qse_awk_nde_fncall_t*)p;
 				QSE_AWK_FREE (awk, px->u.fun.name.ptr);
@@ -1453,10 +1468,10 @@ void qse_awk_clrpt (qse_awk_t* awk, qse_awk_nde_t* tree)
 				break;
 			}
 
-			case QSE_AWK_NDE_FCV:
+			case QSE_AWK_NDE_FNCALL_VAR:
 			{
 				qse_awk_nde_fncall_t* px = (qse_awk_nde_fncall_t*)p;
-				qse_awk_clrpt (awk, px->u.fcv.var);
+				qse_awk_clrpt (awk, (qse_awk_nde_t*)px->u.var.var);
 				qse_awk_clrpt (awk, px->args);
 				QSE_AWK_FREE (awk, p);
 				break;

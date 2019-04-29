@@ -54,6 +54,22 @@ typedef struct qse_awk_tree_t qse_awk_tree_t;
 #define FEATURE_SCACHE_BLOCK_UNIT 16
 #define FEATURE_SCACHE_BLOCK_SIZE 128
 
+/* [NOTE] the function value support implemented is very limited.
+ *        it supports very primitive way to call a function via a variable.
+ *        only user-defined functions are supported. neither builtin functions
+ *        nor module functions are not supported yet.
+ *   -----------------------------------------------------
+ *   function x(a,b,c) { print a, b, c; }
+ *   BEGIN { q = x; q(1, 2, 3); } # this works
+ *   BEGIN { q[1]=x; q[1](1,2,3); } # this doesn't work. same as q[1] %% (1, 2, 3) or q[1] %% 3
+ *   BEGIN { q[1]=x; y=q[1]; y(1,2,3); } # this works.
+ *   -----------------------------------------------------
+ *   function __printer(a,b,c) { print a, b, c; }
+ *   function show(printer, a,b,c) { printer(a, b, c); }  
+ *   BEGIN { show(__printer, 10, 20, 30); } ## passing the function value as an argumnet is ok.
+ */
+#define ENABLE_FEATURE_FUN_AS_VALUE
+
 #define QSE_AWK_MAX_GBLS 9999
 #define QSE_AWK_MAX_LCLS  9999
 #define QSE_AWK_MAX_PARAMS  9999
