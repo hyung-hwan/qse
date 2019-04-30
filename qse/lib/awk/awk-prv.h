@@ -166,8 +166,8 @@ struct qse_awk_tok_t
 
 struct qse_awk_t
 {
-	qse_mmgr_t* mmgr;
-	qse_cmgr_t* cmgr;
+	/* exposed fields via qse_awk_alt_t */
+	QSE_AWK_HDR;
 
 	/* primitive functions */
 	qse_awk_prm_t  prm;

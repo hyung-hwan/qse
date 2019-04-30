@@ -348,9 +348,9 @@ void qse_awk_clear (qse_awk_t* awk)
 	awk->parse.depth.expr = 0;
 	awk->parse.depth.incl = 0;
 
-	/* clear parse trees */	
+	/* clear parse trees */
 	/*awk->tree.ngbls_base = 0;
-	awk->tree.ngbls = 0;	 */
+	awk->tree.ngbls = 0; */
 	awk->tree.ngbls = awk->tree.ngbls_base;
 
 	awk->tree.cur_fun.ptr = QSE_NULL;
@@ -362,7 +362,7 @@ void qse_awk_clear (qse_awk_t* awk)
 		/*QSE_ASSERT (awk->tree.begin->next == QSE_NULL);*/
 		qse_awk_clrpt (awk, awk->tree.begin);
 		awk->tree.begin = QSE_NULL;
-		awk->tree.begin_tail = QSE_NULL;	
+		awk->tree.begin_tail = QSE_NULL;
 	}
 
 	if (awk->tree.end != QSE_NULL) 
@@ -370,7 +370,7 @@ void qse_awk_clear (qse_awk_t* awk)
 		/*QSE_ASSERT (awk->tree.end->next == QSE_NULL);*/
 		qse_awk_clrpt (awk, awk->tree.end);
 		awk->tree.end = QSE_NULL;
-		awk->tree.end_tail = QSE_NULL;	
+		awk->tree.end_tail = QSE_NULL;
 	}
 
 	while (awk->tree.chain != QSE_NULL) 
@@ -395,11 +395,6 @@ void qse_awk_clear (qse_awk_t* awk)
 	 */
 }
 
-qse_mmgr_t* qse_awk_getmmgr (qse_awk_t* awk)
-{
-	return awk->mmgr;
-}
-
 void* qse_awk_getxtn (qse_awk_t* awk)
 {
 	return QSE_XTN (awk);
@@ -419,13 +414,13 @@ static int dup_str_opt (qse_awk_t* awk, const void* value, qse_cstr_t* tmp)
 {
 	if (value)
 	{
-		tmp->ptr = qse_strdup (value, awk->mmgr);
-		if (tmp->ptr == QSE_NULL)
+		tmp->ptr = qse_strdup(value, awk->mmgr);
+		if (!tmp->ptr)
 		{
 			qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);
 			return -1;
 		}
-		tmp->len = qse_strlen (tmp->ptr);
+		tmp->len = qse_strlen(tmp->ptr);
 	}
 	else
 	{

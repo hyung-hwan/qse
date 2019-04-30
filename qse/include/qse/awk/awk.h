@@ -91,6 +91,17 @@ typedef qse_flt_t qse_awk_flt_t;
  */
 typedef struct qse_awk_t qse_awk_t;
 
+#define QSE_AWK_HDR \
+	qse_mmgr_t* mmgr; \
+	qse_cmgr_t* cmgr
+
+typedef struct qse_awk_alt_t qse_awk_alt_t;
+struct qse_awk_alt_t
+{
+	/* ensure that qse_awk_alt_t matches the beginning part of qse_awk_t */
+	QSE_AWK_HDR;
+};
+
 /** \struct qse_awk_rtx_t
  * The #qse_awk_rtx_t type defines a runtime context. A runtime context 
  * maintains runtime state for a running script. You can create multiple
@@ -1401,7 +1412,7 @@ typedef enum qse_awk_gbl_id_t qse_awk_gbl_id_t;
  */
 enum qse_awk_val_type_t
 {
-	/* the values between QSE_AWK_VAL_NIL and QSE_AWK_VAL_MAP inclusive
+	/* the values between QSE_AWK_VAL_NIL and QSE_AWK_VAL_FUN inclusive
 	 * must be synchronized with an internal table of the __cmp_val 
 	 * function in run.c and the __val_type_name in val.c */
 	QSE_AWK_VAL_NIL     = 0, /**< nil */
@@ -1409,11 +1420,11 @@ enum qse_awk_val_type_t
 	QSE_AWK_VAL_FLT     = 2, /**< floating-pointer number */
 	QSE_AWK_VAL_STR     = 3, /**< string */
 	QSE_AWK_VAL_MBS     = 4, /**< byte array */
-	QSE_AWK_VAL_MAP     = 5, /**< map */
+	QSE_AWK_VAL_FUN     = 5, /**< function pointer */
+	QSE_AWK_VAL_MAP     = 6, /**< map */
 
-	QSE_AWK_VAL_REX     = 6, /**< regular expression */
-	QSE_AWK_VAL_REF     = 7, /**< reference to other types */
-	QSE_AWK_VAL_FUN     = 8
+	QSE_AWK_VAL_REX     = 7, /**< regular expression */
+	QSE_AWK_VAL_REF     = 8  /**< reference to other types */
 };
 typedef enum qse_awk_val_type_t qse_awk_val_type_t;
 
@@ -1525,9 +1536,15 @@ QSE_EXPORT void qse_awk_close (
  * The qse_awk_getmmgr() function gets the memory manager used in
  * qse_awk_open().
  */
-QSE_EXPORT qse_mmgr_t* qse_awk_getmmgr (
-	qse_awk_t* awk
-); 
+#if defined(MOO_HAVE_INLINE)
+	static MOO_INLINE qse_mmgr_t* qse_awk_getmmgr (qse_awk_t* awk) { return awk->mmgr; }
+	static MOO_INLINE qse_cmgr_t* qse_awk_getcmgr (qse_awk_t* awk) { return awk->cmgr; }
+	static MOO_INLINE void qse_setcmgr (qse_awk_t* awk, qse_awk_cmgr_t* cmgr) { awk->cmgr = cmgr; }
+#else
+#	define qse_awk_getmmgr(awk) (((qse_awk_alt_t*)(awk))->mmgr)
+#	define qse_awk_getcmgr(awk) (((qse_awk_alt_t*)(awk))->cmgr)
+#	define qse_awk_setcmgr(awk,mgr) (((qse_awk_alt_t*)(awk))->cmgr = (mgr))
+#endif
 
 /** 
  * The qse_awk_getxtn() function gets the poniter to the beginning
