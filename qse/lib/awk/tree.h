@@ -179,7 +179,7 @@ struct qse_awk_nde_fun_t
 {
 	QSE_AWK_NDE_HDR;
 	qse_cstr_t name; /* function name */
-	qse_awk_fun_t* ptr; /* QSE_NULL or actual pointer */
+	qse_awk_fun_t* funptr; /* QSE_NULL or actual pointer */
 };
 
 /* QSE_AWK_NDE_NAMED, QSE_AWK_NDE_GBL, 

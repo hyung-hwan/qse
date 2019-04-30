@@ -4252,8 +4252,10 @@ static qse_awk_nde_t* parse_increment (qse_awk_t* awk, const qse_awk_loc_t* xloc
 #define FNTYPE_FNC 1
 #define FNTYPE_FUN 2
 
-static QSE_INLINE int isfunname (qse_awk_t* awk, const qse_cstr_t* name)
+static QSE_INLINE int isfunname (qse_awk_t* awk, const qse_cstr_t* name, qse_awk_fun_t** fun)
 {
+	qse_htb_pair_t* pair;
+
 	/* check if it is an awk function being processed currently */
 	if (awk->tree.cur_fun.ptr)
 	{
@@ -4265,14 +4267,20 @@ static QSE_INLINE int isfunname (qse_awk_t* awk, const qse_cstr_t* name)
 	}
 
 	/* check the funtion name in the function table */
-	if (qse_htb_search(awk->tree.funs, name->ptr, name->len) != QSE_NULL)
+	pair = qse_htb_search(awk->tree.funs, name->ptr, name->len);
+	if (pair)
 	{
 		/* one of the functions defined previously */
+		if (fun) 
+		{
+			*fun = (qse_awk_fun_t*)QSE_HTB_VPTR(pair);
+			QSE_ASSERT (*fun != QSE_NULL);
+		}
 		return FNTYPE_FUN;
 	}
 
 	/* check if it is a function not resolved so far */
-	if (qse_htb_search(awk->parse.funs, name->ptr, name->len) != QSE_NULL) 
+	if (qse_htb_search(awk->parse.funs, name->ptr, name->len)) 
 	{
 		/* one of the function calls not resolved so far. */ 
 		return FNTYPE_FUN;
@@ -4289,7 +4297,7 @@ static QSE_INLINE int isfnname (qse_awk_t* awk, const qse_cstr_t* name)
 		return FNTYPE_FNC;
 	}
 
-	return isfunname(awk, name);
+	return isfunname(awk, name, QSE_NULL);
 }
 
 static qse_awk_nde_t* parse_primary_int  (qse_awk_t* awk, const qse_awk_loc_t* xloc)
@@ -4981,7 +4989,7 @@ oops:
 }
 
 #if defined(ENABLE_FEATURE_FUN_AS_VALUE)
-static qse_awk_nde_t* parse_fun_as_value  (qse_awk_t* awk, const qse_cstr_t* name, const qse_awk_loc_t* xloc)
+static qse_awk_nde_t* parse_fun_as_value  (qse_awk_t* awk, const qse_cstr_t* name, const qse_awk_loc_t* xloc, qse_awk_fun_t* funptr)
 {
 	qse_awk_nde_fun_t* nde;
 
@@ -4997,6 +5005,7 @@ static qse_awk_nde_t* parse_fun_as_value  (qse_awk_t* awk, const qse_cstr_t* nam
 	nde->loc = *xloc;
 	nde->name.ptr = name->ptr;
 	nde->name.len = name->len;
+	nde->funptr = funptr;
 
 
 	return (qse_awk_nde_t*)nde;
@@ -5067,8 +5076,9 @@ static qse_awk_nde_t* parse_primary_ident_noseg (qse_awk_t* awk, const qse_awk_l
 	else
 	{
 		int fntype;
+		qse_awk_fun_t* funptr = QSE_NULL;
 
-		fntype = isfunname(awk, name);
+		fntype = isfunname(awk, name, &funptr);
 
 		if (fntype)
 		{
@@ -5084,7 +5094,7 @@ static qse_awk_nde_t* parse_primary_ident_noseg (qse_awk_t* awk, const qse_awk_l
 			{
 				/* function name appeared without () */
 			#if defined(ENABLE_FEATURE_FUN_AS_VALUE)
-				nde = parse_fun_as_value(awk, name, xloc);
+				nde = parse_fun_as_value(awk, name, xloc, funptr);
 			#else
 				SETERR_ARG_LOC (awk, QSE_AWK_EFUNRED, name->ptr, name->len, xloc);
 			#endif

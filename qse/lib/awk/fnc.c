@@ -594,7 +594,7 @@ int qse_awk_fnc_length (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 
 			default:
 				/* convert to string and get length */
-				str = qse_awk_rtx_valtostrdup (rtx, v, &len);
+				str = qse_awk_rtx_valtostrdup(rtx, v, &len);
 				if (str == QSE_NULL) return -1;
 				QSE_AWK_FREE (rtx->awk, str);
 		}
@@ -1517,7 +1517,6 @@ static int fnc_asort (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
 	qse_size_t nargs;
 	qse_awk_val_t* a0;
-	qse_awk_int_t lv;
 	qse_awk_val_t* r;
 	int n;
 
@@ -1527,12 +1526,7 @@ static int fnc_asort (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 
 	a0 = qse_awk_rtx_getarg(rtx, 0);
 
-	n = qse_awk_rtx_valtoint(rtx, a0, &lv);
-	if (n <= -1) return -1;
-
-	r = qse_awk_rtx_makeintval(rtx, lv);
-	if (r == QSE_NULL) return -1;
-
+	r = qse_awk_rtx_makeintval(rtx, QSE_AWK_RTX_GETVALTYPE(rtx, a0) == QSE_AWK_VAL_NIL);
 	qse_awk_rtx_setretval (rtx, r);
 	return 0;
 }

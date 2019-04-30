@@ -4188,46 +4188,106 @@ static qse_awk_val_t* eval_binop_band (
 	return qse_awk_rtx_makeintval (rtx, l1 & l2);
 }
 
-static QSE_INLINE int __cmp_nil_nil (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
+/* -------------------------------------------------------------------- */
+
+enum cmp_op_t
+{
+	CMP_OP_EQ = 0,
+	CMP_OP_NE = 1,
+	CMP_OP_GT = 2,
+	CMP_OP_GE = 3,
+	CMP_OP_LT = 4,
+	CMP_OP_LE = 5
+};
+typedef enum cmp_op_t cmp_op_t;
+
+static QSE_INLINE cmp_op_t inverse_cmp_op (cmp_op_t op)
+{
+	static cmp_op_t inverse_cmp_op_tab[] = 
+	{
+		CMP_OP_NE,
+		CMP_OP_EQ,
+		CMP_OP_LT,
+		CMP_OP_LE,
+		CMP_OP_GT,
+		CMP_OP_GE
+	};
+	return inverse_cmp_op_tab[op];
+}
+
+static QSE_INLINE int __cmp_ensure_not_equal (cmp_op_t op_hint)
+{
+	/* checking equality is mostly obvious. however, it is not possible
+	 * to test if one is less/greater than the other for some operands.
+	 * this function return a number that ensures to make NE to true and 
+	 * all other operations false */
+
+	switch (op_hint)
+	{
+		case CMP_OP_EQ:
+		case CMP_OP_NE:
+			return 1;  /* not equal */
+
+		case CMP_OP_GT:
+		case CMP_OP_LT:
+			return 0; /* make GT or LT to be false by claiming equal */
+
+		case CMP_OP_GE:
+			return -1; /* make GE false by claiming less */
+		case CMP_OP_LE: 
+			return 1;  /* make LE false by claiming greater */
+	}
+}
+
+/* -------------------------------------------------------------------- */
+static QSE_INLINE int __cmp_nil_nil (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right, cmp_op_t op_hint)
 {
 	return 0;
 }
 
-static QSE_INLINE int __cmp_nil_int (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
+static QSE_INLINE int __cmp_nil_int (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right, cmp_op_t op_hint)
 {
 	qse_awk_int_t v = QSE_AWK_RTX_GETINTFROMVAL (rtx, right);
 	return (v < 0)? 1: ((v > 0)? -1: 0);
 }
 
-static QSE_INLINE int __cmp_nil_flt (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
+static QSE_INLINE int __cmp_nil_flt (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right, cmp_op_t op_hint)
 {
 	if (((qse_awk_val_flt_t*)right)->val < 0) return 1;
 	if (((qse_awk_val_flt_t*)right)->val > 0) return -1;
 	return 0;
 }
 
-static QSE_INLINE int __cmp_nil_str (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
+static QSE_INLINE int __cmp_nil_str (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right, cmp_op_t op_hint)
 {
 	return (((qse_awk_val_str_t*)right)->val.len == 0)? 0: -1;
 }
 
-static QSE_INLINE int __cmp_nil_bytearr (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
+static QSE_INLINE int __cmp_nil_mbs (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right, cmp_op_t op_hint)
 {
 	return (((qse_awk_val_mbs_t*)right)->val.len == 0)? 0: -1;
 }
 
-static QSE_INLINE int __cmp_nil_map (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
+static QSE_INLINE int __cmp_nil_fun (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right, cmp_op_t op_hint)
+{
+	/* != -> true, all others -> false */
+	return __cmp_ensure_not_equal(op_hint);
+}
+
+static QSE_INLINE int __cmp_nil_map (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right, cmp_op_t op_hint)
 {
 	return (QSE_HTB_SIZE(((qse_awk_val_map_t*)right)->map) == 0)? 0: -1;
 }
 
-static QSE_INLINE int __cmp_int_nil (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
+/* -------------------------------------------------------------------- */
+
+static QSE_INLINE int __cmp_int_nil (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right, cmp_op_t op_hint)
 {
 	qse_awk_int_t v = QSE_AWK_RTX_GETINTFROMVAL(rtx, left);
 	return (v > 0)? 1: ((v < 0)? -1: 0);
 }
 
-static QSE_INLINE int __cmp_int_int (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
+static QSE_INLINE int __cmp_int_int (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right, cmp_op_t op_hint)
 {
 
 	qse_awk_int_t v1 = QSE_AWK_RTX_GETINTFROMVAL(rtx, left);
@@ -4236,7 +4296,7 @@ static QSE_INLINE int __cmp_int_int (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qs
 }
 
 static QSE_INLINE int __cmp_int_flt (
-	qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
+	qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right, cmp_op_t op_hint)
 {
 	qse_awk_int_t v1 = QSE_AWK_RTX_GETINTFROMVAL (rtx, left);
 	if (v1 > ((qse_awk_val_flt_t*)right)->val) return 1;
@@ -4244,9 +4304,10 @@ static QSE_INLINE int __cmp_int_flt (
 	return 0;
 }
 
-static QSE_INLINE int __cmp_int_str (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
+static QSE_INLINE int __cmp_int_str (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right, cmp_op_t op_hint)
 {
-	qse_awk_rtx_valtostr_out_t out;
+	qse_char_t* str0;
+	qse_size_t len0;
 	int n;
 
 	/* SCO CC doesn't seem to handle right->nstr > 0 properly */
@@ -4263,7 +4324,7 @@ static QSE_INLINE int __cmp_int_str (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qs
 			&ll, &rr
 		);
 
-		v1 = QSE_AWK_RTX_GETINTFROMVAL (rtx, left);
+		v1 = QSE_AWK_RTX_GETINTFROMVAL(rtx, left);
 		if (n == 0)
 		{
 			/* a numeric integral string */
@@ -4276,40 +4337,76 @@ static QSE_INLINE int __cmp_int_str (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qs
 		}
 	}
 
-	out.type = QSE_AWK_RTX_VALTOSTR_CPLDUP;
-	if (qse_awk_rtx_valtostr(rtx, left, &out) <= -1) return CMP_ERROR;
+	str0 = qse_awk_rtx_valtostrdup(rtx, left, &len0);
+	if (!str0) return CMP_ERROR;
 
 	if (rtx->gbl.ignorecase)
 	{
-		n = qse_strxncasecmp(
-			out.u.cpldup.ptr,
-			out.u.cpldup.len,
-			((qse_awk_val_str_t*)right)->val.ptr, 
-			((qse_awk_val_str_t*)right)->val.len
-		);
+		n = qse_strxncasecmp(str0, len0, ((qse_awk_val_str_t*)right)->val.ptr, ((qse_awk_val_str_t*)right)->val.len);
 	}
 	else
 	{
-		n = qse_strxncmp(
-			out.u.cpldup.ptr,
-			out.u.cpldup.len,
-			((qse_awk_val_str_t*)right)->val.ptr, 
-			((qse_awk_val_str_t*)right)->val.len
-		);
+		n = qse_strxncmp(str0, len0, ((qse_awk_val_str_t*)right)->val.ptr, ((qse_awk_val_str_t*)right)->val.len);
 	}
 
-	QSE_AWK_FREE (rtx->awk, out.u.cpldup.ptr);
+	qse_awk_rtx_freemem (rtx, str0);
 	return n;
 }
 
-static QSE_INLINE int __cmp_int_bytearr (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
+static QSE_INLINE int __cmp_int_mbs (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right, cmp_op_t op_hint)
 {
-	/* can't compare an integer with a byte array */
-	SETERR_COD (rtx, QSE_AWK_EOPERAND);
-	return CMP_ERROR; 
+	qse_mchar_t* str0;
+	qse_size_t len0;
+	int n;
+
+	if (rtx->awk->opt.trait & QSE_AWK_NCMPONSTR || right->nstr /*> 0*/)
+	{
+		qse_awk_int_t ll, v1;
+		qse_awk_flt_t rr;
+
+		n = qse_awk_rtx_mbstonum (
+			rtx,
+			QSE_AWK_RTX_STRTONUM_MAKE_OPTION(1, 0),
+			((qse_awk_val_mbs_t*)right)->val.ptr,
+			((qse_awk_val_mbs_t*)right)->val.len, 
+			&ll, &rr
+		);
+
+		v1 = QSE_AWK_RTX_GETINTFROMVAL(rtx, left);
+		if (n == 0)
+		{
+			/* a numeric integral string */
+			return (v1 > ll)? 1: ((v1 < ll)? -1: 0);
+		}
+		else if (n > 0)
+		{
+			/* a numeric floating-point string */
+			return (v1 > rr)? 1: ((v1 < rr)? -1: 0);
+		}
+	}
+
+	str0 = qse_awk_rtx_valtombsdup(rtx, left, &len0);
+	if (!str0) return QSE_NULL;
+
+	if (rtx->gbl.ignorecase)
+	{
+		n = qse_mbsxncasecmp(str0, len0, ((qse_awk_val_mbs_t*)right)->val.ptr, ((qse_awk_val_mbs_t*)right)->val.len);
+	}
+	else
+	{
+		n = qse_mbsxncmp(str0, len0, ((qse_awk_val_mbs_t*)right)->val.ptr, ((qse_awk_val_mbs_t*)right)->val.len);
+	}
+
+	qse_awk_rtx_freemem (rtx, str0);
+	return n;
 }
 
-static QSE_INLINE int __cmp_int_map (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
+static QSE_INLINE int __cmp_int_fun (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right, cmp_op_t op_hint)
+{
+	return __cmp_ensure_not_equal(op_hint);
+}
+
+static QSE_INLINE int __cmp_int_map (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right, cmp_op_t op_hint)
 {
 	/* compare an integer and the size of a map */
 	qse_awk_int_t v1 = QSE_AWK_RTX_GETINTFROMVAL(rtx, left);
@@ -4319,14 +4416,16 @@ static QSE_INLINE int __cmp_int_map (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qs
 	return 0;
 }
 
-static QSE_INLINE int __cmp_flt_nil (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
+/* -------------------------------------------------------------------- */
+
+static QSE_INLINE int __cmp_flt_nil (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right, cmp_op_t op_hint)
 {
 	if (((qse_awk_val_flt_t*)left)->val > 0) return 1;
 	if (((qse_awk_val_flt_t*)left)->val < 0) return -1;
 	return 0;
 }
 
-static int __cmp_flt_int (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
+static QSE_INLINE int __cmp_flt_int (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right, cmp_op_t op_hint)
 {
 	qse_awk_int_t v2 = QSE_AWK_RTX_GETINTFROMVAL (rtx, right);
 	if (((qse_awk_val_flt_t*)left)->val > v2) return 1;
@@ -4334,7 +4433,7 @@ static int __cmp_flt_int (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t
 	return 0;
 }
 
-static int __cmp_flt_flt (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
+static QSE_INLINE int __cmp_flt_flt (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right, cmp_op_t op_hint)
 {
 	if (((qse_awk_val_flt_t*)left)->val > 
 	    ((qse_awk_val_flt_t*)right)->val) return 1;
@@ -4343,9 +4442,10 @@ static int __cmp_flt_flt (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t
 	return 0;
 }
 
-static int __cmp_flt_str (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
+static QSE_INLINE int __cmp_flt_str (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right, cmp_op_t op_hint)
 {
-	qse_awk_rtx_valtostr_out_t out;
+	qse_char_t* str0;
+	qse_size_t len0;
 	int n;
 
 	/* SCO CC doesn't seem to handle right->nstr > 0 properly */
@@ -4354,54 +4454,71 @@ static int __cmp_flt_str (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t
 		const qse_char_t* end;
 		qse_awk_flt_t rr;
 
-		rr = qse_awk_strxtoflt (
-			rtx->awk,
-			((qse_awk_val_str_t*)right)->val.ptr,
-			((qse_awk_val_str_t*)right)->val.len, 
-			&end
-		);
-		if (end == ((qse_awk_val_str_t*)right)->val.ptr + 
-		           ((qse_awk_val_str_t*)right)->val.len)
+		rr = qse_awk_strxtoflt(rtx->awk, ((qse_awk_val_str_t*)right)->val.ptr, ((qse_awk_val_str_t*)right)->val.len, &end);
+		if (end == ((qse_awk_val_str_t*)right)->val.ptr + ((qse_awk_val_str_t*)right)->val.len)
 		{
 			return (((qse_awk_val_flt_t*)left)->val > rr)? 1:
 			       (((qse_awk_val_flt_t*)left)->val < rr)? -1: 0;
 		}
 	}
 
-	out.type = QSE_AWK_RTX_VALTOSTR_CPLDUP;
-	if (qse_awk_rtx_valtostr(rtx, left, &out) <= -1) return CMP_ERROR;
+	str0 = qse_awk_rtx_valtostrdup(rtx, left, &len0);
+	if (!str0) return CMP_ERROR;
 
 	if (rtx->gbl.ignorecase)
 	{
-		n = qse_strxncasecmp (
-			out.u.cpldup.ptr,
-			out.u.cpldup.len,
-			((qse_awk_val_str_t*)right)->val.ptr, 
-			((qse_awk_val_str_t*)right)->val.len
-		);
+		n = qse_strxncasecmp(str0, len0, ((qse_awk_val_str_t*)right)->val.ptr, ((qse_awk_val_str_t*)right)->val.len);
 	}
 	else
 	{
-		n = qse_strxncmp (
-			out.u.cpldup.ptr,
-			out.u.cpldup.len,
-			((qse_awk_val_str_t*)right)->val.ptr, 
-			((qse_awk_val_str_t*)right)->val.len
-		);
+		n = qse_strxncmp(str0, len0, ((qse_awk_val_str_t*)right)->val.ptr, ((qse_awk_val_str_t*)right)->val.len);
 	}
 
-	QSE_AWK_FREE (rtx->awk, out.u.cpldup.ptr);
+	qse_awk_rtx_freemem (rtx, str0);
 	return n;
 }
 
-static int __cmp_flt_bytearr (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
+static QSE_INLINE int __cmp_flt_mbs (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right, cmp_op_t op_hint)
 {
-	/* can't compare a float with a byte array */
-	SETERR_COD (rtx, QSE_AWK_EOPERAND);
-	return CMP_ERROR; 
+	qse_mchar_t* str0;
+	qse_size_t len0;
+	int n;
+
+	if (rtx->awk->opt.trait & QSE_AWK_NCMPONSTR || right->nstr /*> 0*/)
+	{
+		const qse_mchar_t* end;
+		qse_awk_flt_t rr;
+
+		rr = qse_awk_mbsxtoflt(rtx->awk, ((qse_awk_val_mbs_t*)right)->val.ptr, ((qse_awk_val_mbs_t*)right)->val.len, &end);
+		if (end == ((qse_awk_val_mbs_t*)right)->val.ptr + ((qse_awk_val_mbs_t*)right)->val.len)
+		{
+			return (((qse_awk_val_flt_t*)left)->val > rr)? 1:
+			       (((qse_awk_val_flt_t*)left)->val < rr)? -1: 0;
+		}
+	}
+
+	str0 = qse_awk_rtx_valtombsdup(rtx, left, &len0);
+	if (!str0) return CMP_ERROR;
+
+	if (rtx->gbl.ignorecase)
+	{
+		n = qse_mbsxncasecmp(str0, len0, ((qse_awk_val_mbs_t*)right)->val.ptr, ((qse_awk_val_mbs_t*)right)->val.len);
+	}
+	else
+	{
+		n = qse_mbsxncmp(str0, len0, ((qse_awk_val_mbs_t*)right)->val.ptr, ((qse_awk_val_mbs_t*)right)->val.len);
+	}
+
+	qse_awk_rtx_freemem (rtx, str0);
+	return n;
 }
 
-static QSE_INLINE int __cmp_flt_map (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
+static QSE_INLINE int __cmp_flt_fun (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right, cmp_op_t op_hint)
+{
+	return __cmp_ensure_not_equal(op_hint);
+}
+
+static QSE_INLINE int __cmp_flt_map (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right, cmp_op_t op_hint)
 {
 	/* compare a float with the size of a map */
 	qse_awk_int_t v2 = QSE_HTB_SIZE(((qse_awk_val_map_t*)right)->map);
@@ -4410,22 +4527,30 @@ static QSE_INLINE int __cmp_flt_map (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qs
 	return 0;
 }
 
-static QSE_INLINE int __cmp_str_nil (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
+/* -------------------------------------------------------------------- */
+
+static QSE_INLINE int __cmp_str_nil (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right, cmp_op_t op_hint)
 {
 	return (((qse_awk_val_str_t*)left)->val.len == 0)? 0: 1;
 }
 
-static QSE_INLINE int __cmp_str_int (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
+static QSE_INLINE int __cmp_str_int (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right, cmp_op_t op_hint)
 {
-	return -__cmp_int_str(rtx, right, left);
+	int n;
+	n = __cmp_int_str(rtx, right, left, inverse_cmp_op(op_hint));
+	if (n == CMP_ERROR) return CMP_ERROR;
+	return -n;
 }
 
-static QSE_INLINE int __cmp_str_flt (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
+static QSE_INLINE int __cmp_str_flt (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right, cmp_op_t op_hint)
 {
-	return -__cmp_flt_str (rtx, right, left);
+	int n;
+	n = __cmp_flt_str(rtx, right, left, inverse_cmp_op(op_hint));
+	if (n == CMP_ERROR) return CMP_ERROR;
+	return -n;
 }
 
-static QSE_INLINE int __cmp_str_str (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
+static QSE_INLINE int __cmp_str_str (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right, cmp_op_t op_hint)
 {
 	qse_awk_val_str_t* ls, * rs;
 
@@ -4498,7 +4623,7 @@ static QSE_INLINE int __cmp_str_str (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qs
 	}
 }
 
-static QSE_INLINE int __cmp_str_bytearr (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
+static QSE_INLINE int __cmp_str_mbs (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right, cmp_op_t op_hint)
 {
 	qse_awk_val_str_t* ls = (qse_awk_val_str_t*)left;
 	qse_awk_val_mbs_t* rs = (qse_awk_val_mbs_t*)right;
@@ -4526,34 +4651,48 @@ static QSE_INLINE int __cmp_str_bytearr (qse_awk_rtx_t* rtx, qse_awk_val_t* left
 #endif
 }
 
-static QSE_INLINE int __cmp_str_map (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
+static QSE_INLINE int __cmp_str_fun (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right, cmp_op_t op_hint)
 {
-	/* can't compare a map with a string */
-	SETERR_COD (rtx, QSE_AWK_EOPERAND);
-	return CMP_ERROR; 
+	return __cmp_ensure_not_equal(op_hint);
 }
 
-static QSE_INLINE int __cmp_bytearr_nil (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
+static QSE_INLINE int __cmp_str_map (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right, cmp_op_t op_hint)
+{
+	return __cmp_ensure_not_equal(op_hint);
+}
+
+/* -------------------------------------------------------------------- */
+
+static QSE_INLINE int __cmp_mbs_nil (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right, cmp_op_t op_hint)
 {
 	return (((qse_awk_val_mbs_t*)left)->val.len == 0)? 0: 1;
 }
 
-static QSE_INLINE int __cmp_bytearr_int (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
+static QSE_INLINE int __cmp_mbs_int (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right, cmp_op_t op_hint)
 {
-	return -__cmp_int_bytearr(rtx, right, left);
+	int n;
+	n = __cmp_int_mbs(rtx, right, left, inverse_cmp_op(op_hint));
+	if (n == CMP_ERROR) return CMP_ERROR;
+	return -n;
 }
 
-static QSE_INLINE int __cmp_bytearr_flt (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
+static QSE_INLINE int __cmp_mbs_flt (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right, cmp_op_t op_hint)
 {
-	return -__cmp_flt_bytearr(rtx, right, left);
+	int n;
+	n = __cmp_flt_mbs(rtx, right, left, inverse_cmp_op(op_hint));
+	if (n == CMP_ERROR) return CMP_ERROR;
+	return -n;
 }
 
-static QSE_INLINE int __cmp_bytearr_str (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
+static QSE_INLINE int __cmp_mbs_str (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right, cmp_op_t op_hint)
 {
-	return -__cmp_str_bytearr(rtx, right, left);
+	int n;
+	n = __cmp_str_mbs(rtx, right, left, inverse_cmp_op(op_hint));
+	if (n == CMP_ERROR) return CMP_ERROR;
+	return -n;
 }
 
-static QSE_INLINE int __cmp_bytearr_bytearr (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
+static QSE_INLINE int __cmp_mbs_mbs (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right, cmp_op_t op_hint)
 {
 	qse_awk_val_mbs_t* ls = (qse_awk_val_mbs_t*)left;
 	qse_awk_val_mbs_t* rs = (qse_awk_val_mbs_t*)right;
@@ -4563,66 +4702,119 @@ static QSE_INLINE int __cmp_bytearr_bytearr (qse_awk_rtx_t* rtx, qse_awk_val_t* 
 	return qse_mbsxncmp(ls->val.ptr, ls->val.len, rs->val.ptr, rs->val.len);
 }
 
-static QSE_INLINE int __cmp_bytearr_map (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
+static QSE_INLINE int __cmp_mbs_fun (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right, cmp_op_t op_hint)
 {
-	/* can't compare a byte array with a map */
-	SETERR_COD (rtx, QSE_AWK_EOPERAND);
-	return CMP_ERROR; 
+	return __cmp_ensure_not_equal(op_hint);
 }
 
-
-static QSE_INLINE int __cmp_map_nil (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
+static QSE_INLINE int __cmp_mbs_map (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right, cmp_op_t op_hint)
 {
-	return -__cmp_nil_map (rtx, right, left);
+	return __cmp_ensure_not_equal(op_hint);
 }
 
-static QSE_INLINE int __cmp_map_int (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
+/* -------------------------------------------------------------------- */
+
+static QSE_INLINE int __cmp_fun_nil (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right, cmp_op_t op_hint)
 {
-	return -__cmp_int_map (rtx, right, left);
+	return __cmp_ensure_not_equal(op_hint);
 }
 
-static QSE_INLINE int __cmp_map_flt (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
+static QSE_INLINE int __cmp_fun_int (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right, cmp_op_t op_hint)
 {
-	return -__cmp_flt_map (rtx, right, left);
+	return __cmp_ensure_not_equal(op_hint);
 }
 
-static QSE_INLINE int __cmp_map_str (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
+static QSE_INLINE int __cmp_fun_flt (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right, cmp_op_t op_hint)
 {
-	/* can't compare a map with a string */
-	SETERR_COD (rtx, QSE_AWK_EOPERAND);
-	return CMP_ERROR; 
+	return __cmp_ensure_not_equal(op_hint);
 }
 
-static QSE_INLINE int __cmp_map_bytearr (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
+static QSE_INLINE int __cmp_fun_str (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right, cmp_op_t op_hint)
 {
-	/* can't compare a map with a byte array */
-	SETERR_COD (rtx, QSE_AWK_EOPERAND);
-	return CMP_ERROR; 
+	return __cmp_ensure_not_equal(op_hint);
 }
 
-static QSE_INLINE int __cmp_map_map (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
+static QSE_INLINE int __cmp_fun_mbs (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right, cmp_op_t op_hint)
+{
+	return __cmp_ensure_not_equal(op_hint);
+}
+
+static QSE_INLINE int __cmp_fun_fun (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right, cmp_op_t op_hint)
+{
+	return (((qse_awk_val_fun_t*)left)->fun == ((qse_awk_val_fun_t*)right)->fun)? 0: __cmp_ensure_not_equal(op_hint);
+}
+
+static QSE_INLINE int __cmp_fun_map (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right, cmp_op_t op_hint)
+{
+	return __cmp_ensure_not_equal(op_hint);
+}
+
+/* -------------------------------------------------------------------- */
+
+static QSE_INLINE int __cmp_map_nil (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right, cmp_op_t op_hint)
+{
+	int n;
+	n = __cmp_nil_map(rtx, right, left, inverse_cmp_op(op_hint));
+	if (n == CMP_ERROR) return CMP_ERROR;
+	return -n;
+}
+
+static QSE_INLINE int __cmp_map_int (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right, cmp_op_t op_hint)
+{
+	int n;
+	n = __cmp_int_map(rtx, right, left, inverse_cmp_op(op_hint));
+	if (n == CMP_ERROR) return CMP_ERROR;
+	return -n;
+}
+
+static QSE_INLINE int __cmp_map_flt (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right, cmp_op_t op_hint)
+{
+	int n;
+	n = __cmp_flt_map(rtx, right, left, inverse_cmp_op(op_hint));
+	if (n == CMP_ERROR) return CMP_ERROR;
+	return -n;
+}
+
+static QSE_INLINE int __cmp_map_str (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right, cmp_op_t op_hint)
+{
+	return __cmp_ensure_not_equal(op_hint);
+}
+
+static QSE_INLINE int __cmp_map_mbs (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right, cmp_op_t op_hint)
+{
+	return __cmp_ensure_not_equal(op_hint);
+}
+
+static QSE_INLINE int __cmp_map_fun (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right, cmp_op_t op_hint)
+{
+	return __cmp_ensure_not_equal(op_hint);
+}
+
+static QSE_INLINE int __cmp_map_map (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right, cmp_op_t op_hint)
 {
 	/* can't compare a map with a map */
 	SETERR_COD (rtx, QSE_AWK_EOPERAND);
 	return CMP_ERROR; 
 }
+/* -------------------------------------------------------------------- */
 
-static int __cmp_val(
-	qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
+
+static QSE_INLINE int __cmp_val(qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right, cmp_op_t op_hint)
 {
 	qse_awk_val_type_t lvtype, rvtype;
-	typedef int (*cmp_val_t) (qse_awk_rtx_t*, qse_awk_val_t*, qse_awk_val_t*);
+	typedef int (*cmp_val_t) (qse_awk_rtx_t*, qse_awk_val_t*, qse_awk_val_t*, cmp_op_t op_hint);
 
 	static cmp_val_t func[] =
 	{
 		/* this table must be synchronized with 
 		 * the QSE_AWK_VAL_XXX values in awk.h */
-		__cmp_nil_nil,      __cmp_nil_int,      __cmp_nil_flt,      __cmp_nil_str,      __cmp_nil_bytearr,     __cmp_nil_map,
-		__cmp_int_nil,      __cmp_int_int,      __cmp_int_flt,      __cmp_int_str,      __cmp_int_bytearr,     __cmp_int_map,
-		__cmp_flt_nil,      __cmp_flt_int,      __cmp_flt_flt,      __cmp_flt_str,      __cmp_flt_bytearr,     __cmp_flt_map,
-		__cmp_str_nil,      __cmp_str_int,      __cmp_str_flt,      __cmp_str_str,      __cmp_str_bytearr,     __cmp_str_map,
-		__cmp_bytearr_nil,  __cmp_bytearr_int,  __cmp_bytearr_flt,  __cmp_bytearr_str,  __cmp_bytearr_bytearr, __cmp_bytearr_map,
-		__cmp_map_nil,      __cmp_map_int,      __cmp_map_flt,      __cmp_map_str,      __cmp_map_bytearr,     __cmp_map_map
+		__cmp_nil_nil, __cmp_nil_int, __cmp_nil_flt, __cmp_nil_str, __cmp_nil_mbs, __cmp_nil_fun, __cmp_nil_map,  
+		__cmp_int_nil, __cmp_int_int, __cmp_int_flt, __cmp_int_str, __cmp_int_mbs, __cmp_int_fun, __cmp_int_map,
+		__cmp_flt_nil, __cmp_flt_int, __cmp_flt_flt, __cmp_flt_str, __cmp_flt_mbs, __cmp_flt_fun, __cmp_flt_map,
+		__cmp_str_nil, __cmp_str_int, __cmp_str_flt, __cmp_str_str, __cmp_str_mbs, __cmp_str_fun, __cmp_str_map,
+		__cmp_mbs_nil, __cmp_mbs_int, __cmp_mbs_flt, __cmp_mbs_str, __cmp_mbs_mbs, __cmp_mbs_fun, __cmp_mbs_map,
+		__cmp_fun_nil, __cmp_fun_int, __cmp_fun_flt, __cmp_fun_str, __cmp_fun_mbs, __cmp_fun_fun, __cmp_fun_map,
+		__cmp_map_nil, __cmp_map_int, __cmp_map_flt, __cmp_map_str, __cmp_map_mbs, __cmp_map_fun, __cmp_map_map
 	};
 
 	lvtype = QSE_AWK_RTX_GETVALTYPE(rtx, left);
@@ -4639,14 +4831,20 @@ static int __cmp_val(
 	QSE_ASSERT (rvtype >= QSE_AWK_VAL_NIL && rvtype <= QSE_AWK_VAL_MAP);
 
 	/* mapping fomula and table layout assume:
-	 * QSE_AWK_VAL_NIL  = 0
-	 * QSE_AWK_VAL_INT  = 1
-	 * QSE_AWK_VAL_FLT  = 2
-	 * QSE_AWK_VAL_STR  = 3
-	 * QSE_AWK_VAL_MBS = 4
-	 * QSE_AWK_VAL_MAP  = 5
+	 *  QSE_AWK_VAL_NIL  = 0
+	 *  QSE_AWK_VAL_INT  = 1
+	 *  QSE_AWK_VAL_FLT  = 2
+	 *  QSE_AWK_VAL_STR  = 3
+	 *  QSE_AWK_VAL_MBS  = 4
+	 *  QSE_AWK_VAL_FUN  = 5
+	 *  QSE_AWK_VAL_MAP  = 6
+	 * 
+	 * op_hint indicate the operation in progress when this function is called.
+	 * this hint doesn't require the comparison function to compare using this
+	 * operation. the comparision function should return 0 if equal, -1 if less,
+	 * 1 if greater, CMP_ERROR upon error regardless of this hint.
 	 */
-	return func[lvtype * 6 + rvtype](rtx, left, right);
+	return func[lvtype * 7 + rvtype](rtx, left, right, op_hint);
 }
 
 static int teq_val (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
@@ -4693,6 +4891,10 @@ static int teq_val (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* righ
 						((qse_awk_val_mbs_t*)right)->val.len) == 0;
 					break;
 
+				case QSE_AWK_VAL_FUN:
+					n = ((qse_awk_val_fun_t*)left)->fun == ((qse_awk_val_fun_t*)right)->fun;
+					break;
+
 				default:
 					/* map-x and map-y are always different regardless of
 					 * their contents. however, if they are pointing to the
@@ -4709,52 +4911,52 @@ static int teq_val (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* righ
 
 static qse_awk_val_t* eval_binop_teq (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
 {
-	return teq_val (rtx, left, right)? QSE_AWK_VAL_ONE: QSE_AWK_VAL_ZERO;
+	return teq_val(rtx, left, right)? QSE_AWK_VAL_ONE: QSE_AWK_VAL_ZERO;
 }
 
 static qse_awk_val_t* eval_binop_tne (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
 {
-	return teq_val (rtx, left, right)? QSE_AWK_VAL_ZERO: QSE_AWK_VAL_ONE;
+	return teq_val(rtx, left, right)? QSE_AWK_VAL_ZERO: QSE_AWK_VAL_ONE;
 }
 
 static qse_awk_val_t* eval_binop_eq (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
 {
-	int n = __cmp_val(rtx, left, right);
+	int n = __cmp_val(rtx, left, right, CMP_OP_EQ);
 	if (n == CMP_ERROR) return QSE_NULL;
 	return (n == 0)? QSE_AWK_VAL_ONE: QSE_AWK_VAL_ZERO;
 }
 
 static qse_awk_val_t* eval_binop_ne (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
 {
-	int n = __cmp_val(rtx, left, right);
+	int n = __cmp_val(rtx, left, right, CMP_OP_NE);
 	if (n == CMP_ERROR) return QSE_NULL;
 	return (n != 0)? QSE_AWK_VAL_ONE: QSE_AWK_VAL_ZERO;
 }
 
 static qse_awk_val_t* eval_binop_gt (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
 {
-	int n = __cmp_val(rtx, left, right);
+	int n = __cmp_val(rtx, left, right, CMP_OP_GT);
 	if (n == CMP_ERROR) return QSE_NULL;
 	return (n > 0)? QSE_AWK_VAL_ONE: QSE_AWK_VAL_ZERO;
 }
 
 static qse_awk_val_t* eval_binop_ge (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
 {
-	int n = __cmp_val(rtx, left, right);
+	int n = __cmp_val(rtx, left, right, CMP_OP_GE);
 	if (n == CMP_ERROR) return QSE_NULL;
 	return (n >= 0)? QSE_AWK_VAL_ONE: QSE_AWK_VAL_ZERO;
 }
 
 static qse_awk_val_t* eval_binop_lt (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
 {
-	int n = __cmp_val(rtx, left, right);
+	int n = __cmp_val(rtx, left, right, CMP_OP_LT);
 	if (n == CMP_ERROR) return QSE_NULL;
 	return (n < 0)? QSE_AWK_VAL_ONE: QSE_AWK_VAL_ZERO;
 }
 
 static qse_awk_val_t* eval_binop_le (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
 {
-	int n = __cmp_val(rtx, left, right);
+	int n = __cmp_val(rtx, left, right, CMP_OP_LE);
 	if (n == CMP_ERROR) return QSE_NULL;
 	return (n <= 0)? QSE_AWK_VAL_ONE: QSE_AWK_VAL_ZERO;
 }
@@ -6267,11 +6469,13 @@ static qse_awk_val_t* eval_fun (qse_awk_rtx_t* rtx, qse_awk_nde_t* nde)
 {
 	qse_awk_val_t* val;
 	qse_awk_fun_t* fun;
-	qse_htb_pair_t* pair;
+	
 
-	fun = ((qse_awk_nde_fun_t*)nde)->ptr;
+	fun = ((qse_awk_nde_fun_t*)nde)->funptr;
 	if (!fun)
 	{
+		qse_htb_pair_t* pair;
+
 		/* TODO: support bultin functions?, support module functions? */
 		pair = qse_htb_search(rtx->awk->tree.funs, ((qse_awk_nde_fun_t*)nde)->name.ptr, ((qse_awk_nde_fun_t*)nde)->name.len);
 		if (!pair)
