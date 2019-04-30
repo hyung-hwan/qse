@@ -1516,15 +1516,41 @@ static int fnc_isnil (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 static int fnc_asort (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
 	qse_size_t nargs;
-	qse_awk_val_t* a0;
+	qse_awk_val_t* a0, * a2;
 	qse_awk_val_t* r;
 	int n;
 
-/* TODO: .......................... */
 	nargs = qse_awk_rtx_getnargs(rtx);
-	QSE_ASSERT (nargs == 1);
 
 	a0 = qse_awk_rtx_getarg(rtx, 0);
+	if (QSE_AWK_RTX_GETVALTYPE(rtx, a0) != QSE_AWK_VAL_MAP)
+	{
+		qse_awk_rtx_seterrnum (rtx, QSE_AWK_EINVAL, QSE_NULL);
+		return -1;
+	}
+
+	if (nargs >= 2)
+	{
+		qse_awk_fun_t* fun;
+
+		a2 = qse_awk_rtx_getarg(rtx, 2);
+		if (QSE_AWK_RTX_GETVALTYPE(rtx, a2) != QSE_AWK_VAL_FUN)
+		{
+			qse_awk_rtx_seterrnum (rtx, QSE_AWK_EINVAL, QSE_NULL);
+			return -1;
+		}
+
+		fun = ((qse_awk_val_fun_t*)a2)->fun;
+		if (fun->nargs < 2) 
+		{
+			/* the comparison accepts less than 2 arguments */
+			qse_awk_rtx_seterrnum (rtx, QSE_AWK_EINVAL, QSE_NULL);
+			return -1;
+		}
+
+
+		/* TODO: complete this function */
+	}
 
 	r = qse_awk_rtx_makeintval(rtx, QSE_AWK_RTX_GETVALTYPE(rtx, a0) == QSE_AWK_VAL_NIL);
 	qse_awk_rtx_setretval (rtx, r);
