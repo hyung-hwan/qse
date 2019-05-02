@@ -133,6 +133,13 @@ qse_mchar_t* qse_awk_rtx_formatmbs (
 	qse_size_t*        len
 );
 
+int qse_awk_rtx_cmpval (
+	qse_awk_rtx_t* rtx,
+	qse_awk_val_t* left,
+	qse_awk_val_t* right,
+	int*           ret
+);
+
 #if defined(__cplusplus)
 }
 #endif

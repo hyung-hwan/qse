@@ -97,9 +97,7 @@ static QSE_INLINE void swapfunc (
 
 #define vecswap(a,b,n) if ((n) > 0) swapfunc(a, b, n, swaptype)
 
-static QSE_INLINE qse_byte_t* med3 (
-	qse_byte_t* a, qse_byte_t* b, qse_byte_t* c, 
-	qse_sort_comper_t comper, void* ctx)
+static QSE_INLINE qse_byte_t* med3 (qse_byte_t* a, qse_byte_t* b, qse_byte_t* c, qse_sort_comper_t comper, void* ctx)
 {
 	if (comper(a, b, ctx) < 0) 
 	{
@@ -113,9 +111,7 @@ static QSE_INLINE qse_byte_t* med3 (
 	}
 }
 
-void qse_qsort (
-	void* base, qse_size_t nmemb, qse_size_t size, 
-	qse_sort_comper_t comper, void* ctx)
+void qse_qsort (void* base, qse_size_t nmemb, qse_size_t size, qse_sort_comper_t comper, void* ctx)
 {
 	qse_byte_t*pa, *pb, *pc, *pd, *pl, *pm, *pn;
 	int swaptype, swap_cnt;
@@ -132,8 +128,7 @@ loop:
 		for (pm = (qse_byte_t*)a + size;
 		     pm < (qse_byte_t*) a + nmemb * size; pm += size)
 		{
-			for (pl = pm; pl > (qse_byte_t*)a &&
-			              comper(pl - size, pl, ctx) > 0; pl -= size)
+			for (pl = pm; pl > (qse_byte_t*)a && comper(pl - size, pl, ctx) > 0; pl -= size)
 			{
 				swap(pl, pl - size);
 			}

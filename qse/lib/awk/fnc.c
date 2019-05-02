@@ -25,7 +25,9 @@
  */
 
 #include "awk-prv.h"
- 
+#include <qse/cmn/alg.h>
+#include <qse/cmn/fmt.h>
+
 static int fnc_close (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi);
 static int fnc_fflush (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi);
 static int fnc_int (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi);
@@ -1529,16 +1531,23 @@ static int fnc_ismap (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	return 0;
 }
 
+static QSE_INLINE int asort_compare (const void* x1, const void* x2, void* ctx)
+{
+	int n;
+	if (qse_awk_rtx_cmpval((qse_awk_rtx_t*)ctx, (qse_awk_val_t*)x1, (qse_awk_val_t*)x2, &n) <= -1) return -1;
+	return n;
+}
+
 static int fnc_asort (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
 	qse_size_t nargs;
 	qse_awk_val_t* a0, * a2;
-	qse_awk_val_t* r;
+	qse_awk_val_t* r, * rmap;
 	qse_awk_int_t rv = 0; /* as if no element in the map */
 	qse_awk_val_map_itr_t itr;
 	qse_awk_fun_t* fun;
 	qse_size_t msz, i;
-	const qse_awk_val_t** va;
+	qse_awk_val_t** va;
 
 	nargs = qse_awk_rtx_getnargs(rtx);
 
@@ -1579,15 +1588,47 @@ static int fnc_asort (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	msz = qse_htb_getsize(((qse_awk_val_map_t*)a0)->map);
 	QSE_ASSERT (msz > 0);
 
-	va = (const qse_awk_val_t**)qse_awk_rtx_allocmem(rtx, msz * QSE_SIZEOF(qse_awk_val_t*));
+	va = (qse_awk_val_t**)qse_awk_rtx_allocmem(rtx, msz * QSE_SIZEOF(qse_awk_val_t*));
 	if (!va) return -1;
 
 	i = 0;
 	do
 	{
-		va[i++] = QSE_AWK_VAL_MAP_ITR_VAL(&itr);
+		va[i++] = (qse_awk_val_t*)QSE_AWK_VAL_MAP_ITR_VAL(&itr);
 	}
 	while (qse_awk_rtx_getnextmapvalitr(rtx, a0, &itr));
+
+	qse_qsort (va, msz, QSE_SIZEOF(*va), asort_compare, rtx);
+
+	rmap = qse_awk_rtx_makemapval(rtx);
+	if (!rmap) 
+	{
+		qse_awk_rtx_freemem (rtx, va);
+		return -1;
+	}
+
+	for (i = 0; i < msz; i++)
+	{
+		qse_char_t ridx[128];
+		qse_size_t ridx_len;
+
+		ridx_len = qse_fmtuintmax (
+			ridx,
+			QSE_COUNTOF(ridx),
+			i,
+			10 | QSE_FMTINTMAX_NOTRUNC | QSE_FMTINTMAX_NONULL,
+			-1,
+			QSE_T('\0'),
+			QSE_NULL
+		);
+
+		if (qse_awk_rtx_setmapvalfld (rtx, rmap, ridx, ridx_len, va[i]) == QSE_NULL)
+		{
+			qse_awk_rtx_freeval (rtx, rmap, 0);
+			qse_awk_rtx_freemem (rtx, va);
+			return -1;
+		}
+	}
 
 	{
 	#if 0
@@ -1609,6 +1650,10 @@ static int fnc_asort (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 
 	rv = msz;
 	qse_awk_rtx_freemem (rtx, va);
+/* TODO: set the resulting map back to a0.
+ *       or to a1 if a1 is given */
+qse_awk_rtx_setretval (rtx, rmap);
+return 0;
 
 done:
 	r = qse_awk_rtx_makeintval(rtx, rv);
