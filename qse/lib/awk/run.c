@@ -1023,8 +1023,8 @@ static int init_rtx (qse_awk_rtx_t* rtx, qse_awk_t* awk, qse_awk_rio_t* rio)
 	if (qse_str_init(&rtx->format.out, MMGR(rtx), 256) <= -1) goto oops_3;
 	if (qse_str_init(&rtx->format.fmt, MMGR(rtx), 256) <= -1) goto oops_4;
 
-	if (qse_str_init(&rtx->formatmbs.out, MMGR(rtx), 256) <= -1) goto oops_5;
-	if (qse_str_init(&rtx->formatmbs.fmt, MMGR(rtx), 256) <= -1) goto oops_6;
+	if (qse_mbs_init(&rtx->formatmbs.out, MMGR(rtx), 256) <= -1) goto oops_5;
+	if (qse_mbs_init(&rtx->formatmbs.fmt, MMGR(rtx), 256) <= -1) goto oops_6;
 
 	rtx->named = qse_htb_open(MMGR(rtx), QSE_SIZEOF(rtx), 1024, 70, QSE_SIZEOF(qse_char_t), 1);
 	if (!rtx->named) goto oops_7;
@@ -1073,9 +1073,9 @@ oops_9:
 oops_8:
 	qse_htb_close (rtx->named);
 oops_7:
-	qse_str_fini (&rtx->formatmbs.fmt);
+	qse_mbs_fini (&rtx->formatmbs.fmt);
 oops_6:
-	qse_str_fini (&rtx->formatmbs.out);
+	qse_mbs_fini (&rtx->formatmbs.out);
 oops_5:
 	qse_str_fini (&rtx->format.fmt);
 oops_4:
@@ -1158,8 +1158,8 @@ static void fini_rtx (qse_awk_rtx_t* rtx, int fini_globals)
 	QSE_AWK_FREE (rtx->awk, rtx->formatmbs.tmp.ptr);
 	rtx->formatmbs.tmp.ptr = QSE_NULL;
 	rtx->formatmbs.tmp.len = 0;
-	qse_str_fini (&rtx->formatmbs.fmt);
-	qse_str_fini (&rtx->formatmbs.out);
+	qse_mbs_fini (&rtx->formatmbs.fmt);
+	qse_mbs_fini (&rtx->formatmbs.out);
 
 	QSE_AWK_FREE (rtx->awk, rtx->format.tmp.ptr);
 	rtx->format.tmp.ptr = QSE_NULL;
@@ -4192,12 +4192,13 @@ static qse_awk_val_t* eval_binop_band (
 
 enum cmp_op_t
 {
-	CMP_OP_EQ = 0,
-	CMP_OP_NE = 1,
-	CMP_OP_GT = 2,
-	CMP_OP_GE = 3,
-	CMP_OP_LT = 4,
-	CMP_OP_LE = 5
+	CMP_OP_NONE = 0,
+	CMP_OP_EQ = 1,
+	CMP_OP_NE = 2,
+	CMP_OP_GT = 3,
+	CMP_OP_GE = 4,
+	CMP_OP_LT = 5,
+	CMP_OP_LE = 6
 };
 typedef enum cmp_op_t cmp_op_t;
 
@@ -4205,6 +4206,7 @@ static QSE_INLINE cmp_op_t inverse_cmp_op (cmp_op_t op)
 {
 	static cmp_op_t inverse_cmp_op_tab[] = 
 	{
+		CMP_OP_NONE,
 		CMP_OP_NE,
 		CMP_OP_EQ,
 		CMP_OP_LT,
@@ -4215,7 +4217,7 @@ static QSE_INLINE cmp_op_t inverse_cmp_op (cmp_op_t op)
 	return inverse_cmp_op_tab[op];
 }
 
-static QSE_INLINE int __cmp_ensure_not_equal (cmp_op_t op_hint)
+static QSE_INLINE int __cmp_ensure_not_equal (qse_awk_rtx_t* rtx, cmp_op_t op_hint)
 {
 	/* checking equality is mostly obvious. however, it is not possible
 	 * to test if one is less/greater than the other for some operands.
@@ -4236,6 +4238,10 @@ static QSE_INLINE int __cmp_ensure_not_equal (cmp_op_t op_hint)
 			return -1; /* make GE false by claiming less */
 		case CMP_OP_LE: 
 			return 1;  /* make LE false by claiming greater */
+
+		default:
+			SETERR_COD (rtx, QSE_AWK_EOPERAND);
+			return -1;
 	}
 }
 
@@ -4271,7 +4277,7 @@ static QSE_INLINE int __cmp_nil_mbs (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qs
 static QSE_INLINE int __cmp_nil_fun (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right, cmp_op_t op_hint)
 {
 	/* != -> true, all others -> false */
-	return __cmp_ensure_not_equal(op_hint);
+	return __cmp_ensure_not_equal(rtx, op_hint);
 }
 
 static QSE_INLINE int __cmp_nil_map (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right, cmp_op_t op_hint)
@@ -4403,7 +4409,7 @@ static QSE_INLINE int __cmp_int_mbs (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qs
 
 static QSE_INLINE int __cmp_int_fun (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right, cmp_op_t op_hint)
 {
-	return __cmp_ensure_not_equal(op_hint);
+	return __cmp_ensure_not_equal(rtx, op_hint);
 }
 
 static QSE_INLINE int __cmp_int_map (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right, cmp_op_t op_hint)
@@ -4515,7 +4521,7 @@ static QSE_INLINE int __cmp_flt_mbs (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qs
 
 static QSE_INLINE int __cmp_flt_fun (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right, cmp_op_t op_hint)
 {
-	return __cmp_ensure_not_equal(op_hint);
+	return __cmp_ensure_not_equal(rtx, op_hint);
 }
 
 static QSE_INLINE int __cmp_flt_map (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right, cmp_op_t op_hint)
@@ -4653,12 +4659,12 @@ static QSE_INLINE int __cmp_str_mbs (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qs
 
 static QSE_INLINE int __cmp_str_fun (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right, cmp_op_t op_hint)
 {
-	return __cmp_ensure_not_equal(op_hint);
+	return __cmp_ensure_not_equal(rtx, op_hint);
 }
 
 static QSE_INLINE int __cmp_str_map (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right, cmp_op_t op_hint)
 {
-	return __cmp_ensure_not_equal(op_hint);
+	return __cmp_ensure_not_equal(rtx, op_hint);
 }
 
 /* -------------------------------------------------------------------- */
@@ -4704,49 +4710,49 @@ static QSE_INLINE int __cmp_mbs_mbs (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qs
 
 static QSE_INLINE int __cmp_mbs_fun (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right, cmp_op_t op_hint)
 {
-	return __cmp_ensure_not_equal(op_hint);
+	return __cmp_ensure_not_equal(rtx, op_hint);
 }
 
 static QSE_INLINE int __cmp_mbs_map (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right, cmp_op_t op_hint)
 {
-	return __cmp_ensure_not_equal(op_hint);
+	return __cmp_ensure_not_equal(rtx, op_hint);
 }
 
 /* -------------------------------------------------------------------- */
 
 static QSE_INLINE int __cmp_fun_nil (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right, cmp_op_t op_hint)
 {
-	return __cmp_ensure_not_equal(op_hint);
+	return __cmp_ensure_not_equal(rtx, op_hint);
 }
 
 static QSE_INLINE int __cmp_fun_int (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right, cmp_op_t op_hint)
 {
-	return __cmp_ensure_not_equal(op_hint);
+	return __cmp_ensure_not_equal(rtx, op_hint);
 }
 
 static QSE_INLINE int __cmp_fun_flt (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right, cmp_op_t op_hint)
 {
-	return __cmp_ensure_not_equal(op_hint);
+	return __cmp_ensure_not_equal(rtx, op_hint);
 }
 
 static QSE_INLINE int __cmp_fun_str (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right, cmp_op_t op_hint)
 {
-	return __cmp_ensure_not_equal(op_hint);
+	return __cmp_ensure_not_equal(rtx, op_hint);
 }
 
 static QSE_INLINE int __cmp_fun_mbs (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right, cmp_op_t op_hint)
 {
-	return __cmp_ensure_not_equal(op_hint);
+	return __cmp_ensure_not_equal(rtx, op_hint);
 }
 
 static QSE_INLINE int __cmp_fun_fun (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right, cmp_op_t op_hint)
 {
-	return (((qse_awk_val_fun_t*)left)->fun == ((qse_awk_val_fun_t*)right)->fun)? 0: __cmp_ensure_not_equal(op_hint);
+	return (((qse_awk_val_fun_t*)left)->fun == ((qse_awk_val_fun_t*)right)->fun)? 0: __cmp_ensure_not_equal(rtx, op_hint);
 }
 
 static QSE_INLINE int __cmp_fun_map (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right, cmp_op_t op_hint)
 {
-	return __cmp_ensure_not_equal(op_hint);
+	return __cmp_ensure_not_equal(rtx, op_hint);
 }
 
 /* -------------------------------------------------------------------- */
@@ -4777,17 +4783,17 @@ static QSE_INLINE int __cmp_map_flt (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qs
 
 static QSE_INLINE int __cmp_map_str (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right, cmp_op_t op_hint)
 {
-	return __cmp_ensure_not_equal(op_hint);
+	return __cmp_ensure_not_equal(rtx, op_hint);
 }
 
 static QSE_INLINE int __cmp_map_mbs (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right, cmp_op_t op_hint)
 {
-	return __cmp_ensure_not_equal(op_hint);
+	return __cmp_ensure_not_equal(rtx, op_hint);
 }
 
 static QSE_INLINE int __cmp_map_fun (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right, cmp_op_t op_hint)
 {
-	return __cmp_ensure_not_equal(op_hint);
+	return __cmp_ensure_not_equal(rtx, op_hint);
 }
 
 static QSE_INLINE int __cmp_map_map (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right, cmp_op_t op_hint)
@@ -4799,8 +4805,9 @@ static QSE_INLINE int __cmp_map_map (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qs
 /* -------------------------------------------------------------------- */
 
 
-static QSE_INLINE int __cmp_val(qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right, cmp_op_t op_hint)
+static QSE_INLINE int __cmp_val (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right, cmp_op_t op_hint, int* ret)
 {
+	int n;
 	qse_awk_val_type_t lvtype, rvtype;
 	typedef int (*cmp_val_t) (qse_awk_rtx_t*, qse_awk_val_t*, qse_awk_val_t*, cmp_op_t op_hint);
 
@@ -4824,7 +4831,7 @@ static QSE_INLINE int __cmp_val(qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk
 	{
 		/* a map can't be compared againt other values */
 		SETERR_COD (rtx, QSE_AWK_EOPERAND);
-		return CMP_ERROR; 
+		return -1;
 	}
 
 	QSE_ASSERT (lvtype >= QSE_AWK_VAL_NIL && lvtype <= QSE_AWK_VAL_MAP);
@@ -4844,7 +4851,16 @@ static QSE_INLINE int __cmp_val(qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk
 	 * operation. the comparision function should return 0 if equal, -1 if less,
 	 * 1 if greater, CMP_ERROR upon error regardless of this hint.
 	 */
-	return func[lvtype * 7 + rvtype](rtx, left, right, op_hint);
+	n = func[lvtype * 7 + rvtype](rtx, left, right, op_hint);
+	if (n == CMP_ERROR) return -1;
+
+	*ret = n;
+	return 0;
+}
+
+int qse_awk_rtx_cmpval (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right, int* ret)
+{
+	return __cmp_val(rtx, left, right, CMP_OP_NONE, ret);
 }
 
 static int teq_val (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
@@ -4921,43 +4937,43 @@ static qse_awk_val_t* eval_binop_tne (qse_awk_rtx_t* rtx, qse_awk_val_t* left, q
 
 static qse_awk_val_t* eval_binop_eq (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
 {
-	int n = __cmp_val(rtx, left, right, CMP_OP_EQ);
-	if (n == CMP_ERROR) return QSE_NULL;
+	int n;
+	if (__cmp_val(rtx, left, right, CMP_OP_EQ, &n) <= -1) return QSE_NULL;
 	return (n == 0)? QSE_AWK_VAL_ONE: QSE_AWK_VAL_ZERO;
 }
 
 static qse_awk_val_t* eval_binop_ne (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
 {
-	int n = __cmp_val(rtx, left, right, CMP_OP_NE);
-	if (n == CMP_ERROR) return QSE_NULL;
+	int n;
+	if (__cmp_val(rtx, left, right, CMP_OP_NE, &n) <= -1) return QSE_NULL;
 	return (n != 0)? QSE_AWK_VAL_ONE: QSE_AWK_VAL_ZERO;
 }
 
 static qse_awk_val_t* eval_binop_gt (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
 {
-	int n = __cmp_val(rtx, left, right, CMP_OP_GT);
-	if (n == CMP_ERROR) return QSE_NULL;
+	int n;
+	if (__cmp_val(rtx, left, right, CMP_OP_GT, &n) <= -1) return QSE_NULL;
 	return (n > 0)? QSE_AWK_VAL_ONE: QSE_AWK_VAL_ZERO;
 }
 
 static qse_awk_val_t* eval_binop_ge (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
 {
-	int n = __cmp_val(rtx, left, right, CMP_OP_GE);
-	if (n == CMP_ERROR) return QSE_NULL;
+	int n;
+	if (__cmp_val(rtx, left, right, CMP_OP_GE, &n) <= -1) return QSE_NULL;
 	return (n >= 0)? QSE_AWK_VAL_ONE: QSE_AWK_VAL_ZERO;
 }
 
 static qse_awk_val_t* eval_binop_lt (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
 {
-	int n = __cmp_val(rtx, left, right, CMP_OP_LT);
-	if (n == CMP_ERROR) return QSE_NULL;
+	int n;
+	if (__cmp_val(rtx, left, right, CMP_OP_LT, &n) <= -1) return QSE_NULL;
 	return (n < 0)? QSE_AWK_VAL_ONE: QSE_AWK_VAL_ZERO;
 }
 
 static qse_awk_val_t* eval_binop_le (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
 {
-	int n = __cmp_val(rtx, left, right, CMP_OP_LE);
-	if (n == CMP_ERROR) return QSE_NULL;
+	int n;
+	if (__cmp_val(rtx, left, right, CMP_OP_LE, &n) <= -1) return QSE_NULL;
 	return (n <= 0)? QSE_AWK_VAL_ONE: QSE_AWK_VAL_ZERO;
 }
 
