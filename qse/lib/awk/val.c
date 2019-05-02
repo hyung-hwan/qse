@@ -61,7 +61,7 @@ qse_awk_val_t* qse_awk_rtx_makeintval (qse_awk_rtx_t* rtx, qse_awk_int_t v)
 
 	if (QSE_AWK_IN_QUICKINT_RANGE(v)) return QSE_AWK_QUICKINT_TO_VTR(v);
 
-	if (rtx->vmgr.ifree == QSE_NULL)
+	if (!rtx->vmgr.ifree)
 	{
 		qse_awk_val_ichunk_t* c;
 		/*qse_awk_val_int_t* x;*/
@@ -72,16 +72,10 @@ qse_awk_val_t* qse_awk_rtx_makeintval (qse_awk_rtx_t* rtx, qse_awk_int_t v)
 		 * aligned memory access - using the code commented out
 		 * will cause a fault on such a platform */
 
-		/* c = QSE_AWK_ALLOC (run->awk, 
-			QSE_SIZEOF(qse_awk_val_chunk_t)+
-			QSE_SIZEOF(qse_awk_val_int_t)*CHUNKSIZE); */
-		c = QSE_AWK_ALLOC (rtx->awk, QSE_SIZEOF(qse_awk_val_ichunk_t));
-		if (c == QSE_NULL)
-		{
-			qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
-			return QSE_NULL;
-		}
-
+		/* c = qse_awk_rtx_allocmem(rtx, QSE_SIZEOF(qse_awk_val_chunk_t) + QSE_SIZEOF(qse_awk_val_int_t)*CHUNKSIZE); */
+		c = qse_awk_rtx_allocmem(rtx, QSE_SIZEOF(qse_awk_val_ichunk_t));
+		if (!c) return QSE_NULL;
+		
 		c->next = rtx->vmgr.ichunk;
 		/*run->vmgr.ichunk = c;*/
 		rtx->vmgr.ichunk = (qse_awk_val_chunk_t*)c;
@@ -127,15 +121,9 @@ qse_awk_val_t* qse_awk_rtx_makefltval (qse_awk_rtx_t* rtx, qse_awk_flt_t v)
 		/*qse_awk_val_flt_t* x;*/
 		qse_size_t i;
 
-		/* c = QSE_AWK_ALLOC (run->awk, 
-			QSE_SIZEOF(qse_awk_val_chunk_t)+
-			QSE_SIZEOF(qse_awk_val_flt_t)*CHUNKSIZE); */
-		c = QSE_AWK_ALLOC (rtx->awk, QSE_SIZEOF(qse_awk_val_rchunk_t));
-		if (c == QSE_NULL)
-		{
-			qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
-			return QSE_NULL;
-		}
+		/* c = qse_awk_rtx_allocmem (rtx, QSE_SIZEOF(qse_awk_val_chunk_t) + QSE_SIZEOF(qse_awk_val_flt_t) * CHUNKSIZE); */
+		c = qse_awk_rtx_allocmem(rtx, QSE_SIZEOF(qse_awk_val_rchunk_t));
+		if (!c) return QSE_NULL;
 
 		c->next = rtx->vmgr.rchunk;
 		/*run->vmgr.rchunk = c;*/
@@ -193,12 +181,8 @@ qse_awk_val_t* qse_awk_rtx_makestrvalwithxstr (qse_awk_rtx_t* rtx, const qse_cst
 	}
 #endif
 
-	val = (qse_awk_val_str_t*)QSE_AWK_ALLOC(rtx->awk, QSE_SIZEOF(qse_awk_val_str_t) + (rlen + 1) * QSE_SIZEOF(qse_char_t));
-	if (val == QSE_NULL) 
-	{
-		qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
-		return QSE_NULL;
-	}
+	val = (qse_awk_val_str_t*)qse_awk_rtx_callocmem(rtx, QSE_SIZEOF(qse_awk_val_str_t) + (rlen + 1) * QSE_SIZEOF(qse_char_t));
+	if (!val) return QSE_NULL;
 
 #ifdef ENABLE_FEATURE_SCACHE
 init:
@@ -338,15 +322,8 @@ qse_awk_val_t* qse_awk_rtx_makestrval2 (qse_awk_rtx_t* rtx, const qse_char_t* st
 	}
 #endif
 
-	val = (qse_awk_val_str_t*) QSE_AWK_ALLOC (
-		rtx->awk,
-		QSE_SIZEOF(qse_awk_val_str_t) +
-		(rlen+1)*QSE_SIZEOF(qse_char_t));
-	if (val == QSE_NULL) 
-	{
-		qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
-		return QSE_NULL;
-	}
+	val = (qse_awk_val_str_t*)qse_awk_rtx_callocmem(rtx, QSE_SIZEOF(qse_awk_val_str_t) + ((rlen + 1) * QSE_SIZEOF(qse_char_t)));
+	if (!val) return QSE_NULL;
 
 #ifdef ENABLE_FEATURE_SCACHE
 init:
@@ -402,12 +379,8 @@ qse_awk_val_t* qse_awk_rtx_makembsval (qse_awk_rtx_t* rtx, const qse_mchar_t* pt
 	qse_awk_val_mbs_t* val = QSE_NULL;
 	qse_size_t xsz  = len * QSE_SIZEOF(*ptr);
 
-	val = (qse_awk_val_mbs_t*)qse_awk_callocmem(rtx->awk, QSE_SIZEOF(qse_awk_val_mbs_t) + xsz + QSE_SIZEOF(*ptr));
-	if (val == QSE_NULL) 
-	{
-		qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
-		return QSE_NULL;
-	}
+	val = (qse_awk_val_mbs_t*)qse_awk_rtx_callocmem(rtx, QSE_SIZEOF(qse_awk_val_mbs_t) + xsz + QSE_SIZEOF(*ptr));
+	if (!val) return QSE_NULL;
 
 	val->v_type = QSE_AWK_VAL_MBS;
 	val->ref = 0;
@@ -437,12 +410,8 @@ qse_awk_val_t* qse_awk_rtx_makerexval (qse_awk_rtx_t* rtx, const qse_cstr_t* str
 	 * the total size is just large enough for all these.
 	 */
 	totsz = QSE_SIZEOF(*val) + (QSE_SIZEOF(*str->ptr) * (str->len + 1));
-	val = (qse_awk_val_rex_t*)qse_awk_callocmem(rtx->awk, totsz);
-	if (val == QSE_NULL) 
-	{
-		qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
-		return QSE_NULL;
-	}
+	val = (qse_awk_val_rex_t*)qse_awk_rtx_callocmem(rtx, totsz);
+	if (!val) return QSE_NULL;
 
 	val->v_type = QSE_AWK_VAL_REX;
 	val->ref = 0;
@@ -508,38 +477,24 @@ qse_awk_val_t* qse_awk_rtx_makemapval (qse_awk_rtx_t* rtx)
 
 	/* CHECK */
 	/* 
-	val = (qse_awk_val_map_t*) QSE_AWK_ALLOC (
-		run->awk, QSE_SIZEOF(qse_awk_val_map_t) );
-	if (val == QSE_NULL) 
-	{
-		qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM, QSE_NULL);
-		return QSE_NULL;
-	}
+	val = (qse_awk_val_map_t*)qse_awk_rtx_callocmem(rtx, QSE_SIZEOF(qse_awk_val_map_t));
+	if (!val) return QSE_NULL;
 
 	val->type = QSE_AWK_VAL_MAP;
 	val->ref = 0;
 	val->stat = 0;
 	val->nstr = 0;
-	val->map = qse_htb_open (
-		run, 256, 70, free_mapval, same_mapval, run->awk->mmgr);
+	val->map = qse_htb_open(run, 256, 70, free_mapval, same_mapval, run->awk->mmgr);
 	if (val->map == QSE_NULL)
 	{
-		QSE_AWK_FREE (run->awk, val);
+		qse_awk_rtx_freemem (rtx, val);
 		qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM, QSE_NULL);
 		return QSE_NULL;
 	}
 	*/
 
-	val = (qse_awk_val_map_t*) QSE_AWK_ALLOC (
-		rtx->awk,
-		QSE_SIZEOF(qse_awk_val_map_t) +
-		QSE_SIZEOF(qse_htb_t) +
-		QSE_SIZEOF(rtx));
-	if (val == QSE_NULL) 
-	{
-		qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
-		return QSE_NULL;
-	}
+	val = (qse_awk_val_map_t*)qse_awk_rtx_callocmem(rtx, QSE_SIZEOF(qse_awk_val_map_t) + QSE_SIZEOF(qse_htb_t) + QSE_SIZEOF(rtx));
+	if (!val) return QSE_NULL;
 
 	val->v_type = QSE_AWK_VAL_MAP;
 	val->ref = 0;
@@ -547,11 +502,9 @@ qse_awk_val_t* qse_awk_rtx_makemapval (qse_awk_rtx_t* rtx)
 	val->nstr = 0;
 	val->map = (qse_htb_t*)(val + 1);
 
-	if (qse_htb_init (
-		val->map, rtx->awk->mmgr, 
-		256, 70, QSE_SIZEOF(qse_char_t), 1) <= -1)
+	if (qse_htb_init(val->map, rtx->awk->mmgr, 256, 70, QSE_SIZEOF(qse_char_t), 1) <= -1)
 	{
-		QSE_AWK_FREE (rtx->awk, val);
+		qse_awk_rtx_freemem (rtx->awk, val);
 		qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
 		return QSE_NULL;
 	}
@@ -567,8 +520,8 @@ qse_awk_val_t* qse_awk_rtx_makemapvalwithdata (qse_awk_rtx_t* rtx, qse_awk_val_m
 	qse_awk_val_t* map, * tmp;
 	qse_awk_val_map_data_t* p;
 
-	map = qse_awk_rtx_makemapval (rtx);
-	if (map == QSE_NULL) return QSE_NULL;
+	map = qse_awk_rtx_makemapval(rtx);
+	if (!map) return QSE_NULL;
 
 	for (p = data; p->key.ptr; p++)
 	{
@@ -657,7 +610,7 @@ qse_awk_val_t* qse_awk_rtx_getmapvalfld (
 
 	QSE_ASSERT (QSE_AWK_RTX_GETVALTYPE (rtx, map) == QSE_AWK_VAL_MAP);
 
-	pair = qse_htb_search (((qse_awk_val_map_t*)map)->map, kptr, klen);
+	pair = qse_htb_search(((qse_awk_val_map_t*)map)->map, kptr, klen);
 	if (pair == QSE_NULL)
 	{
 		/* the given key is not found in the map.
@@ -669,7 +622,7 @@ qse_awk_val_t* qse_awk_rtx_getmapvalfld (
 		qse_awk_rtx_seterrnum (rtx, QSE_AWK_EINVAL, QSE_NULL);
 		return QSE_NULL;
 	}
-		
+
 	return QSE_HTB_VPTR(pair);
 }
 
@@ -677,7 +630,6 @@ qse_awk_val_map_itr_t* qse_awk_rtx_getfirstmapvalitr (
 	qse_awk_rtx_t* rtx, qse_awk_val_t* map, qse_awk_val_map_itr_t* itr)
 {
 	QSE_ASSERT (QSE_AWK_RTX_GETVALTYPE (rtx, map) == QSE_AWK_VAL_MAP);
-
 	itr->pair = qse_htb_getfirstpair (((qse_awk_val_map_t*)map)->map, &itr->buckno);
 	return itr->pair? itr: QSE_NULL;
 }
@@ -686,13 +638,11 @@ qse_awk_val_map_itr_t* qse_awk_rtx_getnextmapvalitr (
 	qse_awk_rtx_t* rtx, qse_awk_val_t* map, qse_awk_val_map_itr_t* itr)
 {
 	QSE_ASSERT (QSE_AWK_RTX_GETVALTYPE (rtx, map) == QSE_AWK_VAL_MAP);
-
 	itr->pair = qse_htb_getnextpair (((qse_awk_val_map_t*)map)->map, itr->pair, &itr->buckno);
 	return itr->pair? itr: QSE_NULL;
 }
 
-qse_awk_val_t* qse_awk_rtx_makerefval (
-	qse_awk_rtx_t* rtx, int id, qse_awk_val_t** adr)
+qse_awk_val_t* qse_awk_rtx_makerefval (qse_awk_rtx_t* rtx, int id, qse_awk_val_t** adr)
 {
 	qse_awk_val_ref_t* val;
 
@@ -702,12 +652,8 @@ qse_awk_val_t* qse_awk_rtx_makerefval (
 	}
 	else
 	{
-		val = (qse_awk_val_ref_t*)qse_awk_callocmem(rtx->awk, QSE_SIZEOF(*val));
-		if (!val)
-		{
-			qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
-			return QSE_NULL;
-		}
+		val = (qse_awk_val_ref_t*)qse_awk_rtx_callocmem(rtx, QSE_SIZEOF(*val));
+		if (!val) return QSE_NULL;
 	}
 
 	val->v_type = QSE_AWK_VAL_REF;
@@ -723,12 +669,8 @@ qse_awk_val_t* qse_awk_rtx_makefunval (qse_awk_rtx_t* rtx, const qse_awk_fun_t* 
 {
 	qse_awk_val_fun_t* val;
 
-	val = (qse_awk_val_fun_t*)qse_awk_callocmem(rtx->awk, QSE_SIZEOF(*val));
-	if (!val)
-	{
-		qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
-		return QSE_NULL;
-	}
+	val = (qse_awk_val_fun_t*)qse_awk_rtx_callocmem(rtx, QSE_SIZEOF(*val));
+	if (!val) return QSE_NULL;
 
 	val->v_type = QSE_AWK_VAL_FUN;
 	val->ref = 0;
@@ -1224,12 +1166,8 @@ static int val_int_to_str (qse_awk_rtx_t* rtx, const qse_awk_val_int_t* v, qse_a
 			break;
 
 		case QSE_AWK_RTX_VALTOSTR_CPLDUP:
-			tmp = QSE_AWK_ALLOC(rtx->awk, (rlen + 1) * QSE_SIZEOF(qse_char_t));
-			if (!tmp)
-			{
-				qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
-				return -1;
-			}
+			tmp = qse_awk_rtx_allocmem(rtx, (rlen + 1) * QSE_SIZEOF(qse_char_t));
+			if (!tmp) return -1;
 
 			tmp[rlen] = QSE_T('\0');
 			out->u.cpldup.ptr = tmp;

@@ -1,3 +1,4 @@
+/* this file is supposed to be included by val.c */
 
 int awk_rtx_strtonum (qse_awk_rtx_t* rtx, int option, const char_t* ptr, qse_size_t len, qse_awk_int_t* l, qse_awk_flt_t* r)
 {

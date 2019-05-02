@@ -81,12 +81,12 @@ qse_awk_t* qse_awk_open (qse_mmgr_t* mmgr, qse_size_t xtnsize, const qse_awk_prm
 {
 	qse_awk_t* awk;
 
-	awk = (qse_awk_t*) QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(qse_awk_t) + xtnsize);
+	awk = (qse_awk_t*)QSE_MMGR_ALLOC(mmgr, QSE_SIZEOF(qse_awk_t) + xtnsize);
 	if (awk)
 	{
 		int xret;
 
-		xret = qse_awk_init (awk, mmgr, prm);
+		xret = qse_awk_init(awk, mmgr, prm);
 		if (xret <= -1)
 		{
 			if (errnum) *errnum = qse_awk_geterrnum(awk);

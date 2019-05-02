@@ -31,6 +31,7 @@
 #include <qse/macros.h>
 #include <qse/cmn/htb.h>
 #include <qse/cmn/str.h>
+#include <qse/cmn/mem.h>
 
 /** \file
  * An embeddable AWK interpreter is defined in this header file.
@@ -128,6 +129,17 @@ struct qse_awk_alt_t
  * \sa qse_awk_t qse_awk_rtx_open qse_awk_rio_t
  */
 typedef struct qse_awk_rtx_t qse_awk_rtx_t;
+
+#define QSE_AWK_RTX_HDR \
+	int id; \
+	qse_awk_t* awk
+
+typedef struct qse_awk_rtx_alt_t qse_awk_rtx_alt_t;
+struct qse_awk_rtx_alt_t
+{
+	/* ensure that qse_awk_rtx_alt_t matches the beginning part of qse_awk_rtx_t */
+	QSE_AWK_RTX_HDR;
+};
 
 /**
  * The qse_awk_loc_t type defines a structure to hold location.
@@ -1872,10 +1884,15 @@ QSE_EXPORT void* qse_awk_callocmem (
 /**
  * The qse_awk_freemem() function frees dynamic memory allocated.
  */
-QSE_EXPORT void qse_awk_freemem (
-	qse_awk_t* awk, /**< awk */
-	void*      ptr  /**< memory block to free */
-);
+#if defined(QSE_HAVE_INLINE)
+static QSE_INLINE void qse_awk_freemem (qse_awk_t* awk, void* ptr)
+{
+	QSE_MMGR_FREE (((qse_awk_alt_t*)(awk))->mmgr, ptr);
+}
+#else
+#	define qse_awk_freemem(awk, ptr) QSE_MMGR_FREE(((qse_awk_alt_t*)(awk))->mmgr, ptr);
+#endif
+
 
 /**
  * The qse_awk_strdup() function is used to duplicate a string using
@@ -2986,10 +3003,14 @@ QSE_EXPORT void* qse_awk_rtx_callocmem (
  * The qse_awk_rtx_freemem() function frees a memory block pointed to by \a ptr
  * using the memory manager of a runtime ocntext \a rtx.
  */
-QSE_EXPORT void qse_awk_rtx_freemem (
-	qse_awk_rtx_t* rtx, /**< runtime context */
-	void*          ptr  /**< memory block pointer */
-);
+#if defined(QSE_HAVE_INLINE)
+static QSE_INLINE void qse_awk_rtx_freemem (qse_awk_rtx_t* rtx, void* ptr)
+{
+	qse_awk_freemem (((qse_awk_rtx_alt_t*)rtx)->awk, ptr);
+}
+#else
+#	define qse_awk_rtx_freemem(rtx,ptr) qse_awk_freemem(((qse_awk_rtx_alt_t*)rtx)->awk, ptr)
+#endif
 
 /**
  * The qse_getawknilval() function returns the pointer to the predefined
