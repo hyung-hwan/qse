@@ -304,7 +304,8 @@ struct qse_awk_chain_t
 
 struct qse_awk_rtx_t
 {
-	int id;
+	QSE_AWK_RTX_HDR;
+
 	qse_htb_t* named;
 
 	void** stack;
@@ -415,8 +416,6 @@ struct qse_awk_rtx_t
 	} depth;
 
 	qse_awk_errinf_t errinf;
-
-	qse_awk_t* awk;
 	qse_awk_rtx_ecb_t* ecb;
 };
 

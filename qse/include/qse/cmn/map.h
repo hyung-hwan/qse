@@ -123,7 +123,7 @@
 #	define qse_map_id_t                             qse_rbt_id_t
 #	define qse_map_t                                qse_rbt_t
 #	define qse_map_pair_t                           qse_rbt_pair_t
-#	define qse_map_style_t                         qse_rbt_style_t
+#	define qse_map_style_t                          qse_rbt_style_t
 #	define qse_map_cbserter_t                       qse_rbt_cbserter_t
 #	define qse_map_walker_t                         qse_rbt_walker_t
 #	define QSE_MAP_COPIER_SIMPLE                    QSE_RBT_COPIER_SIMPLE
@@ -132,8 +132,8 @@
 #	define QSE_MAP_FREEER_DEFAULT                   QSE_RBT_FREEER_DEFAULT
 #	define QSE_MAP_COMPER_DEFAULT                   QSE_RBT_COMPER_DEFAULT
 #	define QSE_MAP_KEEPER_DEFAULT                   QSE_RBT_KEEPER_DEFAULT
-/*#	define QSE_MAP_SIZER_DEFAULT 
-#	define QSE_MAP_HASHER_DEFAULT*/
+#	define QSE_MAP_SIZER_DEFAULT                    (QSE_NULL)
+#	define QSE_MAP_HASHER_DEFAULT                   (QSE_NULL)
 #	define QSE_MAP_SIZE(map)                        QSE_RBT_SIZE(map)
 #	define QSE_MAP_KCOPIER(map)                     QSE_RBT_KCOPIER(map)
 #	define QSE_MAP_VCOPIER(map)                     QSE_RBT_VCOPIER(map)

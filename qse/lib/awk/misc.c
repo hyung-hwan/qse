@@ -56,11 +56,6 @@ void* qse_awk_reallocmem (qse_awk_t* awk, void* ptr, qse_size_t size)
 	return nptr;
 }
 
-void qse_awk_freemem (qse_awk_t* awk, void* ptr)
-{
-	QSE_AWK_FREE (awk, ptr);
-}
-
 qse_char_t* qse_awk_strdup (qse_awk_t* awk, const qse_char_t* s)
 {
 	qse_char_t* ptr = QSE_AWK_STRDUP(awk, s);
@@ -926,10 +921,5 @@ void* qse_awk_rtx_callocmem (qse_awk_rtx_t* rtx, qse_size_t size)
 	if (ptr) QSE_MEMSET (ptr, 0, size);
 	else qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
 	return ptr;
-}
-
-void qse_awk_rtx_freemem (qse_awk_rtx_t* rtx, void* ptr)
-{
-	QSE_AWK_FREE (rtx->awk, ptr);
 }
 
