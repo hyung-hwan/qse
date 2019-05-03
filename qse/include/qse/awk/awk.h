@@ -1548,15 +1548,15 @@ QSE_EXPORT void qse_awk_close (
  * The qse_awk_getmmgr() function gets the memory manager used in
  * qse_awk_open().
  */
-#if defined(MOO_HAVE_INLINE)
-	static MOO_INLINE qse_mmgr_t* qse_awk_getmmgr (qse_awk_t* awk) { return awk->mmgr; }
-	static MOO_INLINE qse_cmgr_t* qse_awk_getcmgr (qse_awk_t* awk) { return awk->cmgr; }
-	static MOO_INLINE void qse_setcmgr (qse_awk_t* awk, qse_awk_cmgr_t* cmgr) { awk->cmgr = cmgr; }
+#if defined(QSE_HAVE_INLINE)
+static QSE_INLINE qse_mmgr_t* qse_awk_getmmgr (qse_awk_t* awk) { return ((qse_awk_alt_t*)awk)->mmgr; }
+static QSE_INLINE qse_cmgr_t* qse_awk_getcmgr (qse_awk_t* awk) { return ((qse_awk_alt_t*)awk)->cmgr; }
+static QSE_INLINE void qse_awk_setcmgr (qse_awk_t* awk, qse_cmgr_t* cmgr) { ((qse_awk_alt_t*)awk)->cmgr = cmgr; }
 #else
 #	define qse_awk_getmmgr(awk) (((qse_awk_alt_t*)(awk))->mmgr)
 #	define qse_awk_getcmgr(awk) (((qse_awk_alt_t*)(awk))->cmgr)
-#	define qse_awk_setcmgr(awk,mgr) (((qse_awk_alt_t*)(awk))->cmgr = (mgr))
-#endif
+#	define qse_awk_setcmgr(awk,_cmgr) (((qse_awk_alt_t*)(awk))->cmgr = (_cmgr))
+#endif /* QSE_HAVE_INLINE */
 
 /** 
  * The qse_awk_getxtn() function gets the poniter to the beginning
@@ -2252,26 +2252,38 @@ QSE_EXPORT int qse_awk_rtx_setofilename (
 	qse_size_t        len  /**< name length */
 );
 
+
+#if defined(QSE_HAVE_INLINE)
+
 /**
  * The qse_awk_rtx_getawk() function gets the owner of a runtime context \a rtx.
  * \return owner of a runtime context \a rtx.
  */
-QSE_EXPORT qse_awk_t* qse_awk_rtx_getawk (
-	qse_awk_rtx_t* rtx /**< runtime context */
-);
+static QSE_INLINE qse_awk_t* qse_awk_rtx_getawk (qse_awk_rtx_t* rtx) 
+{
+	return ((qse_awk_rtx_alt_t*)rtx)->awk; 
+}
 
 /**
  * The qse_awk_rtx_getmmgr() function gets the memory manager of a runtime
  * context.
  */
-QSE_EXPORT qse_mmgr_t* qse_awk_rtx_getmmgr (
-	qse_awk_rtx_t* rtx /**< runtime context */
-);
+static QSE_INLINE qse_mmgr_t* qse_awk_rtx_getmmgr (qse_awk_rtx_t* rtx) 
+{
+	return qse_awk_getmmgr(qse_awk_rtx_getawk(rtx)); 
+}
 
-QSE_EXPORT qse_cmgr_t* qse_awk_rtx_getcmgr (
-	qse_awk_rtx_t* rtx /**< runtime context */
-);
+static QSE_INLINE qse_cmgr_t* qse_awk_rtx_getcmgr (qse_awk_rtx_t* rtx) 
+{ 
+	return qse_awk_getcmgr(qse_awk_rtx_getawk(rtx)); 
+}
 
+#else
+#	define qse_awk_rtx_getawk(rtx) (((qse_awk_rtx_alt_t*)(rtx))->awk)
+#	define qse_awk_rtx_getmmgr(rtx) (qse_awk_getmmgr(qse_awk_rtx_getawk(rtx)))
+#	define qse_awk_rtx_getcmgr(rtx) (qse_awk_getcmgr(qse_awk_rtx_getawk(rtx)))
+
+#endif /* QSE_HAVE_INLINE */
 
 /**
  * The qse_awk_rtx_getxtn() function gets the pointer to the extension area
