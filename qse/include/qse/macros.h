@@ -37,7 +37,7 @@
  * This file contains various useful macro definitions.
  */
 
-#if defined(__STDC_VERSION__) && (__STDC_VERSION__>=199901L)
+#if defined(__cplusplus) || (defined(__STDC_VERSION__) && (__STDC_VERSION__>=199901L))
 #	define QSE_INLINE inline
 #	define QSE_HAVE_INLINE
 #elif defined(__GNUC__) && defined(__GNUC_GNU_INLINE__)
@@ -538,6 +538,16 @@ static inline qse_uint32_t QSE_ROTR32 (qse_uint32_t v, int i)
 		#define QSE_HAVE_BUILTIN_CTZLL
 	#endif
 
+	#if __has_builtin(__builtin_clz)
+		#define QSE_HAVE_BUILTIN_CLZ
+	#endif
+	#if __has_builtin(__builtin_clzl)
+		#define QSE_HAVE_BUILTIN_CLZL
+	#endif
+	#if __has_builtin(__builtin_clzll)
+		#define QSE_HAVE_BUILTIN_CLZLL
+	#endif
+
 	#if __has_builtin(__builtin_uadd_overflow)
 		#define QSE_HAVE_BUILTIN_UADD_OVERFLOW 
 	#endif
@@ -598,6 +608,19 @@ static inline qse_uint32_t QSE_ROTR32 (qse_uint32_t v, int i)
 		#define QSE_HAVE_SYNC_VAL_COMPARE_AND_SWAP
 	#endif
 
+	#if __has_builtin(__builtin_bswap16)
+		#define QSE_HAVE_BUILTIN_BSWAP16
+	#endif
+	#if __has_builtin(__builtin_bswap32)
+		#define QSE_HAVE_BUILTIN_BSWAP32
+	#endif
+	#if __has_builtin(__builtin_bswap64)
+		#define QSE_HAVE_BUILTIN_BSWAP64
+	#endif
+	#if __has_builtin(__builtin_bswap128)
+		#define QSE_HAVE_BUILTIN_BSWAP128
+	#endif
+
 #elif defined(__GNUC__) && defined(__GNUC_MINOR__)
 
 	#if (__GNUC__ >= 5) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 1)
@@ -611,6 +634,11 @@ static inline qse_uint32_t QSE_ROTR32 (qse_uint32_t v, int i)
 
 	#if (__GNUC__ >= 4) || (__GNUC__ == 3 && __GNUC_MINOR__ >= 4)
 		#define QSE_HAVE_BUILTIN_CTZ
+		#define QSE_HAVE_BUILTIN_CTZL
+		#define QSE_HAVE_BUILTIN_CTZLL
+		#define QSE_HAVE_BUILTIN_CLZ
+		#define QSE_HAVE_BUILTIN_CLZL
+		#define QSE_HAVE_BUILTIN_CLZLL
 		#define QSE_HAVE_BUILTIN_EXPECT
 	#endif
 
@@ -630,6 +658,16 @@ static inline qse_uint32_t QSE_ROTR32 (qse_uint32_t v, int i)
 		#define QSE_HAVE_BUILTIN_SMULLL_OVERFLOW
 	#endif
 
+	#if (__GNUC__ >= 5) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 8)
+		/* 4.8.0 or later */
+		#define QSE_HAVE_BUILTIN_BSWAP16
+	#endif
+	#if (__GNUC__ >= 5) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 3)
+		/* 4.3.0 or later */
+		#define QSE_HAVE_BUILTIN_BSWAP32
+		#define QSE_HAVE_BUILTIN_BSWAP64
+		/*#define QSE_HAVE_BUILTIN_BSWAP128*/
+	#endif
 #endif
 
 #if defined(QSE_HAVE_BUILTIN_EXPECT)

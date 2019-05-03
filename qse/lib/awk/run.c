@@ -772,21 +772,6 @@ void* qse_awk_rtx_getxtn (qse_awk_rtx_t* rtx)
 	return QSE_XTN(rtx);
 }
 
-qse_awk_t* qse_awk_rtx_getawk (qse_awk_rtx_t* rtx)
-{
-	return rtx->awk;
-}
-
-qse_mmgr_t* qse_awk_rtx_getmmgr (qse_awk_rtx_t* rtx)
-{
-	return MMGR(rtx);
-}
-
-qse_cmgr_t* qse_awk_rtx_getcmgr (qse_awk_rtx_t* rtx)
-{
-	return CMGR(rtx);
-}
-
 qse_htb_t* qse_awk_rtx_getnvmap (qse_awk_rtx_t* rtx)
 {
 	return rtx->named;
