@@ -193,7 +193,7 @@ init:
 	val->nstr = 0;
 	val->val.len = str->len;
 	val->val.ptr = (qse_char_t*)(val + 1);
-	qse_strncpy (val->val.ptr, str->ptr, str->len);
+	if (str->ptr) qse_strncpy (val->val.ptr, str->ptr, str->len);
 
 #ifdef DEBUG_VAL
 	qse_errputstrf (QSE_T("makestrval => %p\n"), val);
@@ -245,7 +245,7 @@ qse_awk_val_t* qse_awk_rtx_makestrvalwithwcs (qse_awk_rtx_t* rtx, const qse_wcha
 
 qse_awk_val_t* qse_awk_rtx_makestrvalwithstr (qse_awk_rtx_t* rtx, const qse_char_t* str)
 {
-	return qse_awk_rtx_makestrval (rtx, str, qse_strlen(str));
+	return qse_awk_rtx_makestrval(rtx, str, qse_strlen(str));
 }
 
 qse_awk_val_t* qse_awk_rtx_makestrvalwithmxstr (qse_awk_rtx_t* rtx, const qse_mcstr_t* mxstr)
@@ -388,7 +388,7 @@ qse_awk_val_t* qse_awk_rtx_makembsval (qse_awk_rtx_t* rtx, const qse_mchar_t* pt
 	val->nstr = 0;
 	val->val.len = len;
 	val->val.ptr = (qse_mchar_t*)(val + 1);
-	QSE_MEMCPY (val->val.ptr, ptr, xsz);
+	if (ptr) QSE_MEMCPY (val->val.ptr, ptr, xsz);
 	val->val.ptr[len] = QSE_MT('\0');
 
 	return (qse_awk_val_t*)val;

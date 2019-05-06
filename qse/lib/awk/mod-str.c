@@ -243,15 +243,58 @@ static int fnc_isxdigit (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	return is_class(rtx, QSE_CTYPE_XDIGIT);
 }
 
-static int fnc_value (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+static int fnc_fromcharcode (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
-	/* return the numeric value for the first character.
-	 * you can use sprintf("%c", num_val) for reverse conversion. */
+	/* create a string from a series of charcter codes */
+
+	qse_awk_val_t* retv;
+	qse_size_t nargs, i;
+	qse_chau_t* ptr0; /* to guarantee the unsigned code conversion */
+
+	nargs = qse_awk_rtx_getnargs(rtx);
+
+	retv = qse_awk_rtx_makestrval(rtx, QSE_NULL, nargs);
+	if (!retv) return -1;
+
+	ptr0 = (qse_chau_t*)((qse_awk_val_str_t*)retv)->val.ptr;
+
+	for (i = 0; i < nargs; i++)
+	{
+		qse_awk_val_t* a0;
+		qse_awk_int_t cc;
+
+		a0 = qse_awk_rtx_getarg(rtx, i);
+		if (qse_awk_rtx_valtoint(rtx, a0, &cc) <= -1) 
+		{
+			qse_awk_rtx_freeval (rtx, retv, 0);
+			return -1;
+		}
+
+		ptr0[i] = cc;
+	}
+
+	qse_awk_rtx_setretval (rtx, retv);
+	return 0;
+}
+
+static int fnc_tocharcode (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	/* return the numeric value for the first character or the character of the given position.
+	 * you can use sprintf("%c", num_val) or str::fromcharcode(num_val) for reverse conversion. */
 	qse_awk_val_t* retv;
 	qse_awk_val_t* a0;
 	qse_awk_int_t iv = -1;
+	qse_awk_int_t pos = 0;
 
 	a0 = qse_awk_rtx_getarg(rtx, 0);
+	if  (qse_awk_rtx_getnargs(rtx) >= 2)
+	{
+		/* optional index. must be between 1 and the string length inclusive */
+		qse_awk_val_t* a1;
+		a1 = qse_awk_rtx_getarg(rtx, 1);
+		if (qse_awk_rtx_valtoint(rtx, a1, &pos) <= -1) return -1;
+		pos--; /* 1 based indexing. range check to be done before accessing below */
+	}
 
 	if (QSE_AWK_RTX_GETVALTYPE(rtx, a0) == QSE_AWK_VAL_MBS)
 	{
@@ -261,13 +304,13 @@ static int fnc_value (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 		str0 = ((qse_awk_val_mbs_t*)a0)->val.ptr;
 		len0 = ((qse_awk_val_mbs_t*)a0)->val.len;
 
-		if (len0 >= 1)
+		if (pos >= 0 && pos < len0)
 		{
 		#if defined(QSE_CHAR_IS_MCHAR)
 			/* typecasting in case qse_mchar_t is signed */
-			iv = (unsigned char)str0[0];
+			iv = (unsigned char)str0[pos];
 		#else
-			iv = str0[0];
+			iv = str0[pos];
 		#endif
 		}
 	}
@@ -279,13 +322,13 @@ static int fnc_value (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 		str0 = qse_awk_rtx_getvalstr(rtx, a0, &len0);
 		if (!str0) return -1;
 
-		if (len0 >= 1)
+		if (pos >= 0 && pos < len0)
 		{
 		#if defined(QSE_CHAR_IS_MCHAR)
 			/* typecasting in case qse_mchar_t is signed */
-			iv = (unsigned char)str0[0];
+			iv = (unsigned char)str0[pos];
 		#else
-			iv = str0[0];
+			iv = str0[pos];
 		#endif
 		}
 
@@ -383,35 +426,37 @@ struct fnctab_t
 static fnctab_t fnctab[] =
 {
 	/* keep this table sorted for binary search in query(). */
-	{ QSE_T("gsub"),      { { 2, 3, QSE_T("xvr")},   qse_awk_fnc_gsub,      0 } },
-	{ QSE_T("index"),     { { 2, 3, QSE_NULL },      qse_awk_fnc_index,     0 } },
-	{ QSE_T("isalnum"),   { { 1, 1, QSE_NULL },      fnc_isalnum,           0 } },
-	{ QSE_T("isalpha"),   { { 1, 1, QSE_NULL },      fnc_isalpha,           0 } },
-	{ QSE_T("isblank"),   { { 1, 1, QSE_NULL },      fnc_isblank,           0 } },
-	{ QSE_T("iscntrl"),   { { 1, 1, QSE_NULL },      fnc_iscntrl,           0 } },
-	{ QSE_T("isdigit"),   { { 1, 1, QSE_NULL },      fnc_isdigit,           0 } },
-	{ QSE_T("isgraph"),   { { 1, 1, QSE_NULL },      fnc_isgraph,           0 } },
-	{ QSE_T("islower"),   { { 1, 1, QSE_NULL },      fnc_islower,           0 } },
-	{ QSE_T("isprint"),   { { 1, 1, QSE_NULL },      fnc_isprint,           0 } },
-	{ QSE_T("ispunct"),   { { 1, 1, QSE_NULL },      fnc_ispunct,           0 } },
-	{ QSE_T("isspace"),   { { 1, 1, QSE_NULL },      fnc_isspace,           0 } },
-	{ QSE_T("isupper"),   { { 1, 1, QSE_NULL },      fnc_isupper,           0 } },
-	{ QSE_T("isxdigit"),  { { 1, 1, QSE_NULL },      fnc_isxdigit,          0 } },
-	{ QSE_T("length"),    { { 1, 1, QSE_NULL },      qse_awk_fnc_length,    0 } },
-	{ QSE_T("ltrim"),     { { 1, 1, QSE_NULL },      fnc_ltrim,             0 } },
-	{ QSE_T("match"),     { { 2, 4, QSE_T("vxvr") }, qse_awk_fnc_match,     0 } },
-	{ QSE_T("normspace"), { { 1, 1, QSE_NULL },      fnc_normspace,         0 } },
-	{ QSE_T("printf"),    { { 1, A_MAX, QSE_NULL },  qse_awk_fnc_sprintf,   0 } },
-	{ QSE_T("rindex"),    { { 2, 3, QSE_NULL },      qse_awk_fnc_rindex,    0 } },
-	{ QSE_T("rtrim"),     { { 1, 1, QSE_NULL },      fnc_rtrim,             0 } },
-	{ QSE_T("split"),     { { 2, 3, QSE_T("vrx") },  qse_awk_fnc_split,     0 } },
-	{ QSE_T("sub"),       { { 2, 3, QSE_T("xvr") },  qse_awk_fnc_sub,       0 } },
-	{ QSE_T("substr"),    { { 2, 3, QSE_NULL },      qse_awk_fnc_substr,    0 } },
-	{ QSE_T("tolower"),   { { 1, 1, QSE_NULL },      qse_awk_fnc_tolower,   0 } },
-	{ QSE_T("tonum"),     { { 1, 2, QSE_NULL },      fnc_tonum,             0 } },
-	{ QSE_T("toupper"),   { { 1, 1, QSE_NULL },      qse_awk_fnc_toupper,   0 } },
-	{ QSE_T("trim"),      { { 1, 1, QSE_NULL },      fnc_trim,              0 } },
-	{ QSE_T("value"),     { { 1, 1, QSE_NULL },      fnc_value,             0 } }
+	{ QSE_T("fromcharcode"), { { 0, A_MAX, QSE_NULL },  fnc_fromcharcode,      0 } },
+	{ QSE_T("gsub"),         { { 2, 3, QSE_T("xvr")},   qse_awk_fnc_gsub,      0 } },
+	{ QSE_T("index"),        { { 2, 3, QSE_NULL },      qse_awk_fnc_index,     0 } },
+	{ QSE_T("isalnum"),      { { 1, 1, QSE_NULL },      fnc_isalnum,           0 } },
+	{ QSE_T("isalpha"),      { { 1, 1, QSE_NULL },      fnc_isalpha,           0 } },
+	{ QSE_T("isblank"),      { { 1, 1, QSE_NULL },      fnc_isblank,           0 } },
+	{ QSE_T("iscntrl"),      { { 1, 1, QSE_NULL },      fnc_iscntrl,           0 } },
+	{ QSE_T("isdigit"),      { { 1, 1, QSE_NULL },      fnc_isdigit,           0 } },
+	{ QSE_T("isgraph"),      { { 1, 1, QSE_NULL },      fnc_isgraph,           0 } },
+	{ QSE_T("islower"),      { { 1, 1, QSE_NULL },      fnc_islower,           0 } },
+	{ QSE_T("isprint"),      { { 1, 1, QSE_NULL },      fnc_isprint,           0 } },
+	{ QSE_T("ispunct"),      { { 1, 1, QSE_NULL },      fnc_ispunct,           0 } },
+	{ QSE_T("isspace"),      { { 1, 1, QSE_NULL },      fnc_isspace,           0 } },
+	{ QSE_T("isupper"),      { { 1, 1, QSE_NULL },      fnc_isupper,           0 } },
+	{ QSE_T("isxdigit"),     { { 1, 1, QSE_NULL },      fnc_isxdigit,          0 } },
+	{ QSE_T("length"),       { { 1, 1, QSE_NULL },      qse_awk_fnc_length,    0 } },
+	{ QSE_T("ltrim"),        { { 1, 1, QSE_NULL },      fnc_ltrim,             0 } },
+	{ QSE_T("match"),        { { 2, 4, QSE_T("vxvr") }, qse_awk_fnc_match,     0 } },
+	{ QSE_T("normspace"),    { { 1, 1, QSE_NULL },      fnc_normspace,         0 } },
+	{ QSE_T("printf"),       { { 1, A_MAX, QSE_NULL },  qse_awk_fnc_sprintf,   0 } },
+	{ QSE_T("rindex"),       { { 2, 3, QSE_NULL },      qse_awk_fnc_rindex,    0 } },
+	{ QSE_T("rtrim"),        { { 1, 1, QSE_NULL },      fnc_rtrim,             0 } },
+	{ QSE_T("split"),        { { 2, 3, QSE_T("vrx") },  qse_awk_fnc_split,     0 } },
+	{ QSE_T("sub"),          { { 2, 3, QSE_T("xvr") },  qse_awk_fnc_sub,       0 } },
+	{ QSE_T("substr"),       { { 2, 3, QSE_NULL },      qse_awk_fnc_substr,    0 } },
+	{ QSE_T("tocharcode"),   { { 1, 2, QSE_NULL },      fnc_tocharcode,        0 } },
+	{ QSE_T("tolower"),      { { 1, 1, QSE_NULL },      qse_awk_fnc_tolower,   0 } },
+	{ QSE_T("tonum"),        { { 1, 2, QSE_NULL },      fnc_tonum,             0 } },
+	{ QSE_T("toupper"),      { { 1, 1, QSE_NULL },      qse_awk_fnc_toupper,   0 } },
+	{ QSE_T("trim"),         { { 1, 1, QSE_NULL },      fnc_trim,              0 } }
+	
 };
 
 static int query (qse_awk_mod_t* mod, qse_awk_t* awk, const qse_char_t* name, qse_awk_mod_sym_t* sym)
