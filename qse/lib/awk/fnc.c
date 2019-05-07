@@ -45,7 +45,7 @@ static int fnc_asort (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi);
  *
  * - v: value. pass it after normal evaluation.
  * - r: pass a variable by reference
- * - x: regular expression as it it. not evaluated as /rex/ ~ $0.
+ * - x: regular expression as it is. not evaluated as /rex/ ~ $0.
  *
  * If the first character of the specifer is 'R', all
  * parameters are passed by reference regarless of the remaining
@@ -67,30 +67,30 @@ static qse_awk_fnc_t sysfnctab[] =
 	{ {QSE_T("typename"), 8}, 0, { {1,     1, QSE_NULL},       fnc_typename,         0 }, QSE_NULL},
 
 	/* array sort */
-	{ {QSE_T("asort"),    5}, 0, { {1,     3, QSE_NULL},       fnc_asort,            0 }, QSE_NULL},
+	{ {QSE_T("asort"),    5}, 0, { {1,     3, QSE_T("rrv")},   fnc_asort,            0 }, QSE_NULL},
  
 	/* string functions */
-	{ {QSE_T("gsub"),     4}, 0, { {2,     3, QSE_T("xvr")},  qse_awk_fnc_gsub,     0 }, QSE_NULL},
-	{ {QSE_T("index"),    5}, 0, { {2,     3, QSE_NULL},      qse_awk_fnc_index,    0 }, QSE_NULL},
-	{ {QSE_T("length"),   6}, 1, { {0,     1, QSE_NULL},      qse_awk_fnc_length,   0 }, QSE_NULL},
-	{ {QSE_T("match"),    5}, 0, { {2,     4, QSE_T("vxvr")}, qse_awk_fnc_match,    0 }, QSE_NULL},
-	{ {QSE_T("split"),    5}, 0, { {2,     3, QSE_T("vrx")},  qse_awk_fnc_split,    0 }, QSE_NULL},
-	{ {QSE_T("sprintf"),  7}, 0, { {1, A_MAX, QSE_NULL},      qse_awk_fnc_sprintf,  0 }, QSE_NULL},
-	{ {QSE_T("sub"),      3}, 0, { {2,     3, QSE_T("xvr")},  qse_awk_fnc_sub,      0 }, QSE_NULL},
-	{ {QSE_T("substr"),   6}, 0, { {2,     3, QSE_NULL},      qse_awk_fnc_substr,   0 }, QSE_NULL},
-	{ {QSE_T("tolower"),  7}, 0, { {1,     1, QSE_NULL},      qse_awk_fnc_tolower,  0 }, QSE_NULL},
-	{ {QSE_T("toupper"),  7}, 0, { {1,     1, QSE_NULL},      qse_awk_fnc_toupper,  0 }, QSE_NULL},
+	{ {QSE_T("gsub"),     4}, 0, { {2,     3, QSE_T("xvr")},   qse_awk_fnc_gsub,     0 }, QSE_NULL},
+	{ {QSE_T("index"),    5}, 0, { {2,     3, QSE_NULL},       qse_awk_fnc_index,    0 }, QSE_NULL},
+	{ {QSE_T("length"),   6}, 1, { {0,     1, QSE_NULL},       qse_awk_fnc_length,   0 }, QSE_NULL},
+	{ {QSE_T("match"),    5}, 0, { {2,     4, QSE_T("vxvr")},  qse_awk_fnc_match,    0 }, QSE_NULL},
+	{ {QSE_T("split"),    5}, 0, { {2,     3, QSE_T("vrx")},   qse_awk_fnc_split,    0 }, QSE_NULL},
+	{ {QSE_T("sprintf"),  7}, 0, { {1, A_MAX, QSE_NULL},       qse_awk_fnc_sprintf,  0 }, QSE_NULL},
+	{ {QSE_T("sub"),      3}, 0, { {2,     3, QSE_T("xvr")},   qse_awk_fnc_sub,      0 }, QSE_NULL},
+	{ {QSE_T("substr"),   6}, 0, { {2,     3, QSE_NULL},       qse_awk_fnc_substr,   0 }, QSE_NULL},
+	{ {QSE_T("tolower"),  7}, 0, { {1,     1, QSE_NULL},       qse_awk_fnc_tolower,  0 }, QSE_NULL},
+	{ {QSE_T("toupper"),  7}, 0, { {1,     1, QSE_NULL},       qse_awk_fnc_toupper,  0 }, QSE_NULL},
 
 	/* math functions */
-	{ {QSE_T("sin"),      3}, 0, { {A_MAX, 0, QSE_T("math") },   QSE_NULL,         0 }, QSE_NULL},
-	{ {QSE_T("cos"),      3}, 0, { {A_MAX, 0, QSE_T("math") },   QSE_NULL,         0 }, QSE_NULL},
-	{ {QSE_T("tan"),      3}, 0, { {A_MAX, 0, QSE_T("math") },   QSE_NULL,         0 }, QSE_NULL},
-	{ {QSE_T("atan"),     4}, 0, { {A_MAX, 0, QSE_T("math") },   QSE_NULL,         0 }, QSE_NULL},
-	{ {QSE_T("atan2"),    5}, 0, { {A_MAX, 0, QSE_T("math") },   QSE_NULL,         0 }, QSE_NULL},
-	{ {QSE_T("log"),      3}, 0, { {A_MAX, 0, QSE_T("math") },   QSE_NULL,         0 }, QSE_NULL},
-	{ {QSE_T("log10"),    5}, 0, { {A_MAX, 0, QSE_T("math") },   QSE_NULL,         0 }, QSE_NULL},
-	{ {QSE_T("exp"),      3}, 0, { {A_MAX, 0, QSE_T("math") },   QSE_NULL,         0 }, QSE_NULL},
-	{ {QSE_T("sqrt"),     4}, 0, { {A_MAX, 0, QSE_T("math") },   QSE_NULL,         0 }, QSE_NULL},
+	{ {QSE_T("sin"),      3}, 0, { {A_MAX, 0, QSE_T("math") },  QSE_NULL,         0 }, QSE_NULL},
+	{ {QSE_T("cos"),      3}, 0, { {A_MAX, 0, QSE_T("math") },  QSE_NULL,         0 }, QSE_NULL},
+	{ {QSE_T("tan"),      3}, 0, { {A_MAX, 0, QSE_T("math") },  QSE_NULL,         0 }, QSE_NULL},
+	{ {QSE_T("atan"),     4}, 0, { {A_MAX, 0, QSE_T("math") },  QSE_NULL,         0 }, QSE_NULL},
+	{ {QSE_T("atan2"),    5}, 0, { {A_MAX, 0, QSE_T("math") },  QSE_NULL,         0 }, QSE_NULL},
+	{ {QSE_T("log"),      3}, 0, { {A_MAX, 0, QSE_T("math") },  QSE_NULL,         0 }, QSE_NULL},
+	{ {QSE_T("log10"),    5}, 0, { {A_MAX, 0, QSE_T("math") },  QSE_NULL,         0 }, QSE_NULL},
+	{ {QSE_T("exp"),      3}, 0, { {A_MAX, 0, QSE_T("math") },  QSE_NULL,         0 }, QSE_NULL},
+	{ {QSE_T("sqrt"),     4}, 0, { {A_MAX, 0, QSE_T("math") },  QSE_NULL,         0 }, QSE_NULL},
 
 	/* time functions */
 	{ {QSE_T("mktime"),   6}, 0, { {A_MAX, 0, QSE_T("sys") },   QSE_NULL,          0 }, QSE_NULL},
@@ -704,7 +704,6 @@ int qse_awk_fnc_split (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	a2 = (nargs >= 3)? qse_awk_rtx_getarg (rtx, 2): QSE_NULL;
 
 	a1_vtype = QSE_AWK_RTX_GETVALTYPE (rtx, a1);
-
 	QSE_ASSERT (a1_vtype == QSE_AWK_VAL_REF);
 
 	str.ptr = qse_awk_rtx_getvalstr(rtx, a0, &str.len);
@@ -714,7 +713,7 @@ int qse_awk_fnc_split (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	{
 		/* get the value from FS */
 		t1 = qse_awk_rtx_getgbl(rtx, QSE_AWK_GBL_FS);
-		t1_vtype = QSE_AWK_RTX_GETVALTYPE (rtx, t1);
+		t1_vtype = QSE_AWK_RTX_GETVALTYPE(rtx, t1);
 		if (t1_vtype == QSE_AWK_VAL_NIL)
 		{
 			fs.ptr = QSE_T(" ");
@@ -727,7 +726,7 @@ int qse_awk_fnc_split (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 		}
 		else
 		{
-			fs.ptr = qse_awk_rtx_valtostrdup (rtx, t1, &fs.len);
+			fs.ptr = qse_awk_rtx_valtostrdup(rtx, t1, &fs.len);
 			if (fs.ptr == QSE_NULL) goto oops;
 			fs_free = (qse_char_t*)fs.ptr;
 		}
@@ -801,15 +800,11 @@ int qse_awk_fnc_split (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 
 		if (fs.len <= 1)
 		{
-			p = qse_awk_rtx_strxntok (rtx, 
-				p, str.len, fs.ptr, fs.len, &tok);
+			p = qse_awk_rtx_strxntok(rtx, p, str.len, fs.ptr, fs.len, &tok);
 		}
 		else
 		{
-			p = qse_awk_rtx_strxntokbyrex (
-				rtx, str.ptr, org_len, p, str.len, 
-				fs_rex, &tok, &errnum
-			); 
+			p = qse_awk_rtx_strxntokbyrex(rtx, str.ptr, org_len, p, str.len, fs_rex, &tok, &errnum); 
 			if (p == QSE_NULL && errnum != QSE_AWK_ENOERR)
 			{
 				qse_awk_rtx_seterrnum (rtx, errnum, QSE_NULL);
@@ -821,7 +816,7 @@ int qse_awk_fnc_split (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 		{
 			/* no field at all*/
 			break; 
-		}	
+		}
 
 		QSE_ASSERT ((tok.ptr != QSE_NULL && tok.len > 0) || tok.len == 0);
 
@@ -848,13 +843,13 @@ int qse_awk_fnc_split (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	/*if (str_free) QSE_AWK_FREE (rtx->awk, str_free);*/
 	qse_awk_rtx_freevalstr (rtx, a0, str.ptr);
 
-	if (fs_free) QSE_AWK_FREE (rtx->awk, fs_free);
+	if (fs_free) qse_awk_rtx_freemem (rtx, fs_free);
 
 	if (fs_rex_free) 
 	{
 		if (rtx->gbl.ignorecase)
 			qse_awk_freerex (rtx->awk, QSE_NULL, fs_rex_free);
-		else	
+		else
 			qse_awk_freerex (rtx->awk, fs_rex_free, QSE_NULL);
 	}
 
@@ -870,13 +865,13 @@ oops:
 	/*if (str_free) QSE_AWK_FREE (rtx->awk, str_free);*/
 	if (str.ptr) qse_awk_rtx_freevalstr (rtx, a0, str.ptr);
 
-	if (fs_free) QSE_AWK_FREE (rtx->awk, fs_free);
+	if (fs_free) qse_awk_rtx_freemem (rtx, fs_free);
 
 	if (fs_rex_free) 
 	{
 		if (rtx->gbl.ignorecase)
 			qse_awk_freerex (rtx->awk, QSE_NULL, fs_rex_free);
-		else	
+		else
 			qse_awk_freerex (rtx->awk, fs_rex_free, QSE_NULL);
 	}
 	return -1;
@@ -1531,31 +1526,58 @@ static int fnc_ismap (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	return 0;
 }
 
-static QSE_INLINE int asort_compare (const void* x1, const void* x2, void* ctx)
+static QSE_INLINE int asort_compare (const void* x1, const void* x2, void* ctx, int* cv)
 {
 	int n;
-	if (qse_awk_rtx_cmpval((qse_awk_rtx_t*)ctx, (qse_awk_val_t*)x1, (qse_awk_val_t*)x2, &n) <= -1) return -1;
-	return n;
+	if (qse_awk_rtx_cmpval((qse_awk_rtx_t*)ctx, *(qse_awk_val_t**)x1, *(qse_awk_val_t**)x2, &n) <= -1) return -1;
+	*cv = n;
+	return 0;
+}
+
+struct cud_t
+{
+	qse_awk_rtx_t* rtx;
+	qse_awk_fun_t* fun;
+};
+
+static QSE_INLINE int asort_compare_ud (const void* x1, const void* x2, void* ctx, int* cv)
+{
+	struct cud_t* cud = (struct cud_t*)ctx;
+	qse_awk_val_t* r, * args[2];
+	qse_awk_int_t rv;
+
+	args[0] = *(qse_awk_val_t**)x1;
+	args[1] = *(qse_awk_val_t**)x2;
+	r = qse_awk_rtx_callfun(cud->rtx, cud->fun, args, 2); 
+	if (!r) return -1;
+	if (qse_awk_rtx_valtoint(cud->rtx, r,  &rv) <= -1) return -1;
+	*cv = rv;
+	return 0;
 }
 
 static int fnc_asort (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
 	qse_size_t nargs;
-	qse_awk_val_t* a0, * a2;
+	qse_awk_val_t* a0, * a0_val, * a1, * a2;
+	qse_awk_val_type_t a0_type, v_type;
 	qse_awk_val_t* r, * rmap;
 	qse_awk_int_t rv = 0; /* as if no element in the map */
 	qse_awk_val_map_itr_t itr;
-	qse_awk_fun_t* fun;
+	qse_awk_fun_t* fun = QSE_NULL;
 	qse_size_t msz, i;
 	qse_awk_val_t** va;
+	int x;
 
 	nargs = qse_awk_rtx_getnargs(rtx);
 
 	a0 = qse_awk_rtx_getarg(rtx, 0);
-	
-	if (QSE_AWK_RTX_GETVALTYPE(rtx, a0) != QSE_AWK_VAL_MAP)
+	a0_type = QSE_AWK_RTX_GETVALTYPE(rtx, a0);
+	QSE_ASSERT (a0_type == QSE_AWK_VAL_REF);
+
+	v_type = qse_awk_rtx_getrefvaltype(rtx, (qse_awk_val_ref_t*)a0);
+	if (v_type != QSE_AWK_VAL_MAP)
 	{
-		if (QSE_AWK_RTX_GETVALTYPE(rtx, a0) == QSE_AWK_VAL_NIL)
+		if (v_type == QSE_AWK_VAL_NIL)
 		{
 			/* treat it as an empty value */
 			goto done;
@@ -1565,30 +1587,43 @@ static int fnc_asort (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 		return -1;
 	}
 
+	a0_val = qse_awk_rtx_getrefval(rtx, (qse_awk_val_ref_t*)a0);
+	QSE_ASSERT (QSE_AWK_RTX_GETVALTYPE(rtx, a0_val) == QSE_AWK_VAL_MAP);
+
 	if (nargs >= 2)
 	{
-		a2 = qse_awk_rtx_getarg(rtx, 2);
-		if (QSE_AWK_RTX_GETVALTYPE(rtx, a2) != QSE_AWK_VAL_FUN)
+		a1 = qse_awk_rtx_getarg(rtx, 1); /* destination map */
+		
+		if (nargs >= 3)
 		{
-			qse_awk_rtx_seterrnum (rtx, QSE_AWK_EINVAL, QSE_NULL);
-			return -1;
-		}
+			a2 = qse_awk_rtx_getarg(rtx, 2);
+			if (QSE_AWK_RTX_GETVALTYPE(rtx, a2) != QSE_AWK_VAL_FUN)
+			{
+				qse_awk_rtx_seterrnum (rtx, QSE_AWK_EINVAL, QSE_NULL);
+				return -1;
+			}
 
-		fun = ((qse_awk_val_fun_t*)a2)->fun;
-		if (fun->nargs < 2) 
-		{
-			/* the comparison accepts less than 2 arguments */
-			qse_awk_rtx_seterrnum (rtx, QSE_AWK_EINVAL, QSE_NULL);
-			return -1;
+			fun = ((qse_awk_val_fun_t*)a2)->fun;
+			if (fun->nargs < 2) 
+			{
+				/* the comparison accepts less than 2 arguments */
+				qse_awk_rtx_seterrnum (rtx, QSE_AWK_EINVAL, QSE_NULL);
+				return -1;
+			}
 		}
 	}
+	else
+	{
+		a1 = a0; /* let a0 be the destination. a0 is both source and destination */
+	}
 
-	if (!qse_awk_rtx_getfirstmapvalitr(rtx, a0, &itr)) goto done; /* map empty */
 
-	msz = qse_htb_getsize(((qse_awk_val_map_t*)a0)->map);
+	if (!qse_awk_rtx_getfirstmapvalitr(rtx, a0_val, &itr)) goto done; /* map empty */
+
+	msz = qse_htb_getsize(((qse_awk_val_map_t*)a0_val)->map);
 	QSE_ASSERT (msz > 0);
 
-	va = (qse_awk_val_t**)qse_awk_rtx_allocmem(rtx, msz * QSE_SIZEOF(qse_awk_val_t*));
+	va = (qse_awk_val_t**)qse_awk_rtx_allocmem(rtx, msz * QSE_SIZEOF(*va));
 	if (!va) return -1;
 
 	i = 0;
@@ -1596,9 +1631,25 @@ static int fnc_asort (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	{
 		va[i++] = (qse_awk_val_t*)QSE_AWK_VAL_MAP_ITR_VAL(&itr);
 	}
-	while (qse_awk_rtx_getnextmapvalitr(rtx, a0, &itr));
+	while (qse_awk_rtx_getnextmapvalitr(rtx, a0_val, &itr));
 
-	qse_qsort (va, msz, QSE_SIZEOF(*va), asort_compare, rtx);
+	if (fun)
+	{
+		struct cud_t cud;
+		cud.rtx = rtx;
+		cud.fun = fun;
+		x = qse_qsortx(va, msz, QSE_SIZEOF(*va), asort_compare_ud, &cud);
+	}
+	else
+	{
+		x = qse_qsortx(va, msz, QSE_SIZEOF(*va), asort_compare, rtx);
+	}
+
+	if (x <= -1)
+	{
+		qse_awk_rtx_freemem (rtx, va);
+		return -1;
+	}
 
 	rmap = qse_awk_rtx_makemapval(rtx);
 	if (!rmap) 
@@ -1622,7 +1673,7 @@ static int fnc_asort (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 			QSE_NULL
 		);
 
-		if (qse_awk_rtx_setmapvalfld (rtx, rmap, ridx, ridx_len, va[i]) == QSE_NULL)
+		if (qse_awk_rtx_setmapvalfld(rtx, rmap, ridx, ridx_len, va[i]) == QSE_NULL)
 		{
 			qse_awk_rtx_freeval (rtx, rmap, 0);
 			qse_awk_rtx_freemem (rtx, va);
@@ -1630,30 +1681,13 @@ static int fnc_asort (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 		}
 	}
 
-	{
-	#if 0
-		/* TODO: complete this function */
-		r = qse_awk_rtx_callfun(rtx, fun, valargs, nargs);
-		if (qse_awk_rtx_valtoint(rtx, r,  &rv) <= -1) return -1;
-
-		if (rv > 0)
-		{
-		}
-		else if (rv < 0)
-		{
-		}
-		else
-		{
-		}
-	#endif
-	}
-
 	rv = msz;
 	qse_awk_rtx_freemem (rtx, va);
-/* TODO: set the resulting map back to a0.
- *       or to a1 if a1 is given */
-qse_awk_rtx_setretval (rtx, rmap);
-return 0;
+
+	qse_awk_rtx_refupval (rtx, rmap);
+	x = qse_awk_rtx_setrefval (rtx, (qse_awk_val_ref_t*)a1, rmap);
+	qse_awk_rtx_refdownval (rtx, rmap);
+	if (x <= -1) return -1;
 
 done:
 	r = qse_awk_rtx_makeintval(rtx, rv);

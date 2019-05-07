@@ -56,9 +56,22 @@ typedef int (*qse_search_comper_t) (
 );
 
 /**
+ * The qse_search_comperx_t type defines a search callback function.
+ * It should return 0 on success and -1 on failure. the comparsion
+ * result must be put back into the variable pointed to by \a cv.
+ */
+typedef int (*qse_search_comperx_t) (
+	const void* ptr1, 
+	const void* ptr2, 
+	void*       ctx,
+	int *       cv
+);
+
+/**
  * The qse_sort_comper_t type defines a sort callback function.
  */
 typedef qse_search_comper_t qse_sort_comper_t;
+typedef qse_search_comperx_t qse_sort_comperx_t;
 
 #if defined(__cplusplus)
 extern "C" {
@@ -132,6 +145,14 @@ QSE_EXPORT void qse_qsort (
 	qse_size_t        size,
 	qse_sort_comper_t comper,
 	void*             ctx
+);
+
+QSE_EXPORT int qse_qsortx (
+	void*              base,
+	qse_size_t         nmemb,
+	qse_size_t         size,
+	qse_sort_comperx_t comper,
+	void*              ctx
 );
 
 

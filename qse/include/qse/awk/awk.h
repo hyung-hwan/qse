@@ -2958,6 +2958,21 @@ QSE_EXPORT qse_awk_int_t qse_awk_rtx_hashval (
 	qse_awk_val_t* v
 );
 
+
+/**
+ * The qse_awk_rtx_getrefvaltype() function returns the type of the value
+ * that the given reference points to.
+ */
+QSE_EXPORT qse_awk_val_type_t qse_awk_rtx_getrefvaltype (
+	qse_awk_rtx_t*     rtx,
+	qse_awk_val_ref_t* ref
+);
+
+QSE_EXPORT qse_awk_val_t* qse_awk_rtx_getrefval (
+	qse_awk_rtx_t*     rtx,
+	qse_awk_val_ref_t* ref
+);
+
 /**
  * The qse_awk_rtx_setrefval() function changes the value
  * of a variable referenced in \a ref. 

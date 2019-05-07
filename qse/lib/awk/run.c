@@ -1650,7 +1650,7 @@ qse_awk_val_t* qse_awk_rtx_callfun (
 	}
 	else
 	{
-		/* thr return value captured in termination by exit()
+		/* the return value captured in termination by exit()
 		 * is reference-counted up in capture_retval_on_exit().
 		 * let's do the same thing for the return value normally
 		 * returned. */
@@ -5996,7 +5996,7 @@ static qse_awk_val_t* __eval_call (
 	}
 
 	/* push all arguments onto the stack */
-	nargs = argpusher (run, call, apdata);
+	nargs = argpusher(run, call, apdata);
 	if (nargs == (qse_size_t)-1)
 	{
 		UNWIND_RTX_STACK_BASE (run);
@@ -6049,7 +6049,7 @@ static qse_awk_val_t* __eval_call (
 		{
 			run->errinf.num = QSE_AWK_ENOERR;
 
-			n = call->u.fnc.spec.impl (run, &call->u.fnc.info);
+			n = call->u.fnc.spec.impl(run, &call->u.fnc.info);
 
 			if (n <= -1)
 			{

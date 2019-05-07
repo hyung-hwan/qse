@@ -1911,6 +1911,69 @@ qse_awk_int_t qse_awk_rtx_hashval (qse_awk_rtx_t* rtx, qse_awk_val_t* v)
 	return hv  & ~(((qse_awk_uint_t)1) << ((QSE_SIZEOF(qse_awk_uint_t) * 8) - 1));
 }
 
+qse_awk_val_type_t qse_awk_rtx_getrefvaltype (qse_awk_rtx_t* rtx, qse_awk_val_ref_t* ref)
+{
+	/* return the type of the value that the reference points to */
+	switch (ref->id)
+	{
+		case QSE_AWK_VAL_REF_POS:
+		{
+			return QSE_AWK_VAL_STR;
+		}
+		case QSE_AWK_VAL_REF_GBL:
+		{
+			qse_size_t idx;
+			qse_awk_val_t* v;
+			idx = (qse_size_t)ref->adr;
+			v = RTX_STACK_GBL(rtx, idx);
+			return QSE_AWK_RTX_GETVALTYPE(rtx, v);
+		}
+
+		default:
+		{
+			qse_awk_val_t** xref = (qse_awk_val_t**)ref->adr;
+			qse_awk_val_t* v;
+
+			/* A reference value is not able to point to another 
+			 * refernce value for the way values are represented
+			 * in QSEAWK */
+			v = *xref;
+			QSE_ASSERT (QSE_AWK_RTX_GETVALTYPE(rtx, v) != QSE_AWK_VAL_REF); 
+			return QSE_AWK_RTX_GETVALTYPE(rtx, v);
+		}
+	}
+}
+
+qse_awk_val_t* qse_awk_rtx_getrefval (qse_awk_rtx_t* rtx, qse_awk_val_ref_t* ref)
+{
+	switch (ref->id)
+	{
+		case QSE_AWK_VAL_REF_POS:
+		{
+			/* a positional doesn't contain a value. you should use qse_awk_rtx_valtoXXX()
+			 * like qse_awk_rtx_valtostr(), qse_Awk_rtx_valtoint() */
+			return QSE_NULL;
+		}
+
+		case QSE_AWK_VAL_REF_GBL:
+		{
+			qse_size_t idx;
+			idx = (qse_size_t)ref->adr;
+			return RTX_STACK_GBL(rtx, idx);
+		}
+
+		default:
+		{
+			qse_awk_val_t** xref = (qse_awk_val_t**)ref->adr;
+			/* A reference value is not able to point to another 
+			 * refernce value for the way values are represented
+			 * in QSEAWK */
+			QSE_ASSERT (QSE_AWK_RTX_GETVALTYPE (rtx, *xref)!= QSE_AWK_VAL_REF); 
+			return *xref;
+		}
+	}
+}
+
 int qse_awk_rtx_setrefval (qse_awk_rtx_t* rtx, qse_awk_val_ref_t* ref, qse_awk_val_t* val)
 {
 	qse_awk_val_type_t vtype = QSE_AWK_RTX_GETVALTYPE (rtx, val);
@@ -2001,7 +2064,7 @@ int qse_awk_rtx_setrefval (qse_awk_rtx_t* rtx, qse_awk_val_ref_t* ref, qse_awk_v
 			qse_awk_val_type_t rref_vtype;
 
 			rref = (qse_awk_val_t**)ref->adr; /* old value pointer */
-			rref_vtype = QSE_AWK_RTX_GETVALTYPE (rtx, *rref); /* old value type */
+			rref_vtype = QSE_AWK_RTX_GETVALTYPE(rtx, *rref); /* old value type */
 			if (vtype == QSE_AWK_VAL_MAP)
 			{
 				/* new value: map, old value: nil or map => ok */
