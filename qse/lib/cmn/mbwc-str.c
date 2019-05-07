@@ -419,15 +419,17 @@ int qse_wcstombswithcmgr (
 		{
 			qse_size_t n;
 
-			n = cmgr->wctomb (*p, mbsbuf, QSE_COUNTOF(mbsbuf));
+			n = cmgr->wctomb(*p, mbsbuf, QSE_COUNTOF(mbsbuf));
 			if (n == 0) 
 			{
 				ret = -1;
 				break; /* illegal character */
 			}
 
-			/* it assumes that mbs is large enough to hold a character */
-			QSE_ASSERT (n <= QSE_COUNTOF(mbs));
+			/* it assumes that mbsbuf is large enough to hold a character.
+			 * since mbsbuf is of the QSE_MBLEN_MAX size, the return value
+			 * must not exceed the size of mbsbuf. */
+			QSE_ASSERT (n <= QSE_COUNTOF(mbsbuf));
 
 			p++; mlen += n;
 		}
