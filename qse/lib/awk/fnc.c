@@ -35,6 +35,7 @@ static int fnc_typename (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi);
 static int fnc_isnil (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi);
 static int fnc_ismap (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi);
 static int fnc_asort (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi);
+static int fnc_asorti (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi);
 
 #define A_MAX QSE_TYPE_MAX(int)
 
@@ -66,8 +67,9 @@ static qse_awk_fnc_t sysfnctab[] =
 	{ {QSE_T("ismap"),    5}, 0, { {1,     1, QSE_NULL},       fnc_ismap,            0 }, QSE_NULL},
 	{ {QSE_T("typename"), 8}, 0, { {1,     1, QSE_NULL},       fnc_typename,         0 }, QSE_NULL},
 
-	/* array sort */
+	/* map(array) sort */
 	{ {QSE_T("asort"),    5}, 0, { {1,     3, QSE_T("rrv")},   fnc_asort,            0 }, QSE_NULL},
+	{ {QSE_T("asorti"),   6}, 0, { {1,     3, QSE_T("rrv")},   fnc_asorti,           0 }, QSE_NULL},
  
 	/* string functions */
 	{ {QSE_T("gsub"),     4}, 0, { {2,     3, QSE_T("xvr")},   qse_awk_fnc_gsub,     0 }, QSE_NULL},
@@ -1555,7 +1557,7 @@ static QSE_INLINE int asort_compare_ud (const void* x1, const void* x2, void* ct
 	return 0;
 }
 
-static int fnc_asort (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+static QSE_INLINE int __fnc_asort (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi, int sort_keys)
 {
 	qse_size_t nargs;
 	qse_awk_val_t* a0, * a0_val, * a1, * a2;
@@ -1617,7 +1619,6 @@ static int fnc_asort (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 		a1 = a0; /* let a0 be the destination. a0 is both source and destination */
 	}
 
-
 	if (!qse_awk_rtx_getfirstmapvalitr(rtx, a0_val, &itr)) goto done; /* map empty */
 
 	msz = qse_htb_getsize(((qse_awk_val_map_t*)a0_val)->map);
@@ -1625,13 +1626,35 @@ static int fnc_asort (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 
 	va = (qse_awk_val_t**)qse_awk_rtx_allocmem(rtx, msz * QSE_SIZEOF(*va));
 	if (!va) return -1;
-
 	i = 0;
-	do
+	if (sort_keys)
 	{
-		va[i++] = (qse_awk_val_t*)QSE_AWK_VAL_MAP_ITR_VAL(&itr);
+		do
+		{
+			const qse_cstr_t* key = QSE_AWK_VAL_MAP_ITR_KEY(&itr);
+			va[i] = qse_awk_rtx_makestrvalwithxstr(rtx, key);
+			if (!va[i]) 
+			{
+				while (i > 0)
+				{
+					--i;
+					qse_awk_rtx_freeval (rtx, va[i], 0);
+				}
+				qse_awk_rtx_freemem (rtx, va);
+				return -1;
+			}
+			i++;
+		}
+		while (qse_awk_rtx_getnextmapvalitr(rtx, a0_val, &itr));
 	}
-	while (qse_awk_rtx_getnextmapvalitr(rtx, a0_val, &itr));
+	else
+	{
+		do
+		{
+			va[i++] = (qse_awk_val_t*)QSE_AWK_VAL_MAP_ITR_VAL(&itr);
+		}
+		while (qse_awk_rtx_getnextmapvalitr(rtx, a0_val, &itr));
+	}
 
 	if (fun)
 	{
@@ -1645,15 +1668,12 @@ static int fnc_asort (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 		x = qse_qsortx(va, msz, QSE_SIZEOF(*va), asort_compare, rtx);
 	}
 
-	if (x <= -1)
+	if (x <= -1 || !(rmap = qse_awk_rtx_makemapval(rtx)))
 	{
-		qse_awk_rtx_freemem (rtx, va);
-		return -1;
-	}
-
-	rmap = qse_awk_rtx_makemapval(rtx);
-	if (!rmap) 
-	{
+		if (sort_keys)
+		{
+			for (i = 0; i < msz; i++) qse_awk_rtx_freeval (rtx, va[i], 0);
+		}
 		qse_awk_rtx_freemem (rtx, va);
 		return -1;
 	}
@@ -1675,7 +1695,17 @@ static int fnc_asort (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 
 		if (qse_awk_rtx_setmapvalfld(rtx, rmap, ridx, ridx_len, va[i]) == QSE_NULL)
 		{
-			qse_awk_rtx_freeval (rtx, rmap, 0);
+			qse_awk_rtx_freeval (rtx, rmap, 0); /* this delete the elements added. */
+			if (sort_keys)
+			{
+				/* delete the elements not added yet */
+				do
+				{
+					qse_awk_rtx_freeval(rtx, va[i], 0);
+					i++;
+				}
+				while (i < msz);
+			}
 			qse_awk_rtx_freemem (rtx, va);
 			return -1;
 		}
@@ -1693,4 +1723,14 @@ done:
 	r = qse_awk_rtx_makeintval(rtx, rv);
 	qse_awk_rtx_setretval (rtx, r);
 	return 0;
+}
+
+static int fnc_asort (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	return __fnc_asort(rtx, fi, 0);
+}
+
+static int fnc_asorti (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	return __fnc_asort(rtx, fi, 1);
 }
