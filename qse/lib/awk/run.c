@@ -4377,7 +4377,7 @@ static QSE_INLINE int __cmp_int_mbs (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qs
 	}
 
 	str0 = qse_awk_rtx_valtombsdup(rtx, left, &len0);
-	if (!str0) return QSE_NULL;
+	if (!str0) return -1;
 
 	if (rtx->gbl.ignorecase)
 	{
