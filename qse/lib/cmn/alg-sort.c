@@ -64,8 +64,8 @@
 /*
  * Qsort routine from Bentley & McIlroy's "Engineering a Sort Function".
  */
-#define swapcode(TYPE,parmi,parmj,n) { \
-	qse_size_t i = (n) / sizeof (TYPE); \
+#define swapcode(TYPE,parmi,parmj,n) do { \
+	qse_size_t i = (n) / QSE_SIZEOF (TYPE); \
 	register TYPE *pi = (TYPE*)(parmi); \
 	register TYPE *pj = (TYPE*)(parmj); \
 	do { 						\
@@ -73,29 +73,38 @@
 		*pi++ = *pj;	\
 		*pj++ = t;		\
 	} while (--i > 0);	\
-}
+} while(0)
 
-#define SWAPINIT(a,size) \
-	swaptype = ((qse_byte_t*)a-(qse_byte_t*)0)%sizeof(long) || \
-	           size % sizeof(long) ? 2 : size == sizeof(long)? 0 : 1;
 
-static QSE_INLINE void swapfunc (
-	qse_byte_t* a, qse_byte_t* b, int n, int swaptype)
-{
-	if (swaptype <= 1) 
-		swapcode(long, a, b, n)
-	else
-		swapcode(qse_byte_t, a, b, n)
-}
+#define get_swaptype(a, elemsize) (((qse_byte_t*)(a) - (qse_byte_t*)0) % QSE_SIZEOF(long) || elemsize % QSE_SIZEOF(long)? 2 : elemsize == QSE_SIZEOF(long)? 0 : 1)
 
-#define swap(a, b) \
-	if (swaptype == 0) { \
-		long t = *(long*)(a); \
-		*(long*)(a) = *(long*)(b); \
-		*(long*)(b) = t; \
-	} else swapfunc(a, b, size, swaptype)
-
-#define vecswap(a,b,n) if ((n) > 0) swapfunc(a, b, n, swaptype)
+#define swap(a, b, elemsize) do { \
+	switch (swaptype) \
+	{ \
+		case 0: \
+		{ \
+			long t = *(long*)(a); \
+			*(long*)(a) = *(long*)(b); \
+			*(long*)(b) = t; \
+			break; \
+		} \
+		case 1: \
+			swapcode(long, a, b, elemsize); \
+			break; \
+		default: \
+			swapcode(qse_byte_t, a, b, elemsize); \
+			break; \
+	} \
+} while(0)
+	
+	
+#define vecswap(a,b,n) do {  \
+	if ((n) > 0)  \
+	{ \
+		if (swaptype <= 1) swapcode(long, a, b, n); \
+		else swapcode(qse_byte_t, a, b, n);  \
+	} \
+} while(0)
 
 static QSE_INLINE qse_byte_t* med3 (qse_byte_t* a, qse_byte_t* b, qse_byte_t* c, qse_sort_comper_t comper, void* ctx)
 {
@@ -111,26 +120,48 @@ static QSE_INLINE qse_byte_t* med3 (qse_byte_t* a, qse_byte_t* b, qse_byte_t* c,
 	}
 }
 
+static QSE_INLINE qse_byte_t* med3x (qse_byte_t* a, qse_byte_t* b, qse_byte_t* c, qse_sort_comperx_t comper, void* ctx)
+{
+	int n;
+
+	if (comper(a, b, ctx, &n) <= -1) return QSE_NULL;
+	if (n < 0)
+	{
+		if (comper(b, c, ctx, &n) <= -1) return QSE_NULL;
+		if (n < 0) return b;
+
+		if (comper(a, c, ctx, &n) <= -1) return QSE_NULL;
+		return (n < 0)? c: a;
+	}
+	else 
+	{
+		if (comper(b, c, ctx, &n) <= -1) return QSE_NULL;
+		if (n > 0) return b;
+		if (comper(a, c, ctx, &n) <= -1) return QSE_NULL;
+		return (n > 0)? c: a;
+	}
+}
+
 void qse_qsort (void* base, qse_size_t nmemb, qse_size_t size, qse_sort_comper_t comper, void* ctx)
 {
-	qse_byte_t*pa, *pb, *pc, *pd, *pl, *pm, *pn;
+	qse_byte_t* pa, * pb, * pc, * pd, * pl, * pm, * pn;
 	int swaptype, swap_cnt;
 	long r;
 	qse_size_t d;
-	register qse_byte_t*a = (qse_byte_t*)base;
+	register qse_byte_t* a = (qse_byte_t*)base;
 
 loop:	
-	SWAPINIT(a, size);
+	swaptype = get_swaptype(a, size);
 
 	swap_cnt = 0;
 	if (nmemb < 7) 
 	{
-		for (pm = (qse_byte_t*)a + size;
-		     pm < (qse_byte_t*) a + nmemb * size; pm += size)
+		qse_byte_t* end = (qse_byte_t*)a + (nmemb * size);
+		for (pm = (qse_byte_t*)a + size; pm < end; pm += size)
 		{
 			for (pl = pm; pl > (qse_byte_t*)a && comper(pl - size, pl, ctx) > 0; pl -= size)
 			{
-				swap(pl, pl - size);
+				swap(pl, pl - size, size);
 			}
 		}
 		return;
@@ -149,7 +180,7 @@ loop:
 		}
 		pm = med3(pl, pm, pn, comper, ctx);
 	}
-	swap(a, pm);
+	swap(a, pm, size);
 	pa = pb = (qse_byte_t*)a + size;
 
 	pc = pd = (qse_byte_t*)a + (nmemb - 1) * size;
@@ -160,7 +191,7 @@ loop:
 			if (r == 0) 
 			{
 				swap_cnt = 1;
-				swap(pa, pb);
+				swap(pa, pb, size);
 				pa += size;
 			}
 			pb += size;
@@ -170,13 +201,13 @@ loop:
 			if (r == 0) 
 			{
 				swap_cnt = 1;
-				swap(pc, pd);
+				swap(pc, pd, size);
 				pd -= size;
 			}
 			pc -= size;
 		}
 		if (pb > pc) break;
-		swap (pb, pc);
+		swap (pb, pc, size);
 		swap_cnt = 1;
 		pb += size;
 		pc -= size;
@@ -188,10 +219,9 @@ loop:
 		for (pm = (qse_byte_t*)a + size; 
 		     pm < (qse_byte_t*)a + nmemb * size; pm += size)
 		{
-			for (pl = pm; pl > (qse_byte_t*)a && 
-			              comper(pl - size, pl, ctx) > 0; pl -= size)
+			for (pl = pm; pl > (qse_byte_t*)a && comper(pl - size, pl, ctx) > 0; pl -= size)
 			{
-				swap(pl, pl - size);
+				swap(pl, pl - size, size);
 			}
 		}
 		return;
@@ -213,6 +243,134 @@ loop:
 		goto loop;
 	}
 /*	qsort(pn - r, r / size, size, comper);*/
+}
+
+int qse_qsortx (void* base, qse_size_t nmemb, qse_size_t size, qse_sort_comperx_t comper, void* ctx)
+{
+	qse_byte_t* pa, * pb, * pc, * pd, * pl, * pm, * pn;
+	int swaptype, swap_cnt;
+	long r;
+	int n;
+	qse_size_t d;
+	register qse_byte_t* a = (qse_byte_t*)base;
+
+loop:	
+	swaptype = get_swaptype(a, size);
+
+	swap_cnt = 0;
+	if (nmemb < 7) 
+	{
+		qse_byte_t* end = (qse_byte_t*)a + (nmemb * size);
+		for (pm = (qse_byte_t*)a + size; pm < end; pm += size)
+		{
+			pl = pm;
+			while (pl > (qse_byte_t*)a)
+			{
+				qse_byte_t* pl2 = pl - size;
+				if (comper(pl2, pl, ctx, &n) <= -1) return -1;
+				if (n <= 0) break;
+				swap (pl, pl2, size);
+				pl = pl2;
+			}
+		}
+		return 0;
+	}
+	pm = (qse_byte_t*)a + (nmemb / 2) * size;
+	if (nmemb > 7) 
+	{
+		pl = (qse_byte_t*)a;
+		pn = (qse_byte_t*)a + (nmemb - 1) * size;
+		if (nmemb > 40) 
+		{
+			d = (nmemb / 8) * size;
+			pl = med3x(pl, pl + d, pl + 2 * d, comper, ctx);
+			if (!pl) return -1;
+			pm = med3x(pm - d, pm, pm + d, comper, ctx);
+			if (!pm) return -1;
+			pn = med3x(pn - 2 * d, pn - d, pn, comper, ctx);
+			if (!pn) return -1;
+		}
+		pm = med3x(pl, pm, pn, comper, ctx);
+		if (!pm) return -1;
+	}
+	swap(a, pm, size);
+	pa = pb = (qse_byte_t*)a + size;
+
+	pc = pd = (qse_byte_t*)a + (nmemb - 1) * size;
+	for (;;) 
+	{
+		while (pb <= pc)
+		{
+			if (comper(pb, a, ctx, &n) <= -1) return -1;
+			if (n > 0) break;
+
+			if (n == 0) 
+			{
+				swap_cnt = 1;
+				swap(pa, pb, size);
+				pa += size;
+			}
+			pb += size;
+		}
+		while (pb <= pc)
+		{
+			if (comper(pc, a, ctx, &n) <= -1) return -1;
+			if (n < 0) break;
+
+			if (n == 0) 
+			{
+				swap_cnt = 1;
+				swap(pc, pd, size);
+				pd -= size;
+			}
+			pc -= size;
+		}
+		if (pb > pc) break;
+		swap (pb, pc, size);
+		swap_cnt = 1;
+		pb += size;
+		pc -= size;
+	}
+
+	if (swap_cnt == 0) 
+	{
+		/* switch to insertion sort */
+		qse_byte_t* end = (qse_byte_t*)a + (nmemb * size);
+		for (pm = (qse_byte_t*)a + size; pm < end; pm += size)
+		{
+			pl = pm;
+			while (pl > (qse_byte_t*)a)
+			{
+				if (comper(pl - size, pl, ctx, &n) <= -1) return -1;
+				if (n <= 0) break;
+				swap(pl, pl - size, size);
+				pl = pl - size;
+			}
+		}
+		return 0;
+	}
+
+	pn = (qse_byte_t*)a + nmemb * size;
+	r = qsort_min(pa - (qse_byte_t*)a, pb - pa);
+	vecswap (a, pb - r, r);
+	r = qsort_min (pd - pc, pn - pd - size);
+	vecswap (pb, pn - r, r);
+
+	if ((r = pb - pa) > size) 
+	{
+		if (qse_qsortx(a, r / size, size, comper, ctx) <= -1) return -1;
+	}
+
+	if ((r = pd - pc) > size) 
+	{
+		/* Iterate rather than recurse to save stack space */
+		a = pn - r;
+		nmemb = r / size;
+		goto loop;
+	}
+/*	qsortx(pn - r, r / size, size, comper);*/
+
+	return 0;
 }
 
 #if 0
