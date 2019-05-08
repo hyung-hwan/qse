@@ -1681,6 +1681,14 @@ QSE_EXPORT void qse_awk_seterrnum (
 	                           *   an error message */
 );
 
+QSE_EXPORT void qse_awk_seterrfmt (
+	qse_awk_t*              awk,
+	qse_awk_errnum_t        errnum,
+	qse_awk_loc_t*          errloc,
+	const qse_char_t*       msgfmt,
+	...
+);
+
 /**
  * The qse_awk_seterrinf() function sets the error information. This function
  * may be useful if you want to set a custom error message rather than letting
@@ -1690,6 +1698,7 @@ QSE_EXPORT void qse_awk_seterrinf (
 	qse_awk_t*              awk,   /**< awk */
 	const qse_awk_errinf_t* errinf /**< error information */
 );
+
 
 /**
  * The qse_awk_geterror() function gets error information via parameters.
@@ -2365,6 +2374,14 @@ QSE_EXPORT void qse_awk_rtx_seterrnum (
 QSE_EXPORT void qse_awk_rtx_seterrinf (
 	qse_awk_rtx_t*          rtx,   /**< runtime context */
 	const qse_awk_errinf_t* errinf /**< error information */
+);
+
+QSE_EXPORT void qse_awk_rtx_seterrfmt (
+	qse_awk_rtx_t*       rtx,
+	qse_awk_errnum_t     errnum,
+	const qse_awk_loc_t* errloc,
+	const qse_char_t*    errfmt,
+	...
 );
 
 /**

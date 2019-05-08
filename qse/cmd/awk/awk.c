@@ -206,7 +206,7 @@ static qse_htb_walk_t print_awk_value (
 		else
 		{
 			dprint (QSE_T("***OUT OF MEMORY***\n"));
-		}	
+		}
 	}
 	else
 	{
