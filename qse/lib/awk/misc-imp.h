@@ -1,3 +1,4 @@
+/* this file is supposed to be included by misc.c */
 
 
 qse_awk_int_t awk_strxtoint (qse_awk_t* awk, const char_t* str, qse_size_t len, int base, const char_t** endptr)

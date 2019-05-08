@@ -31,7 +31,7 @@ endif
 noinst_HEADERS = awk-prv.h err.h rio.h val.h fnc.h misc.h parse.h run.h tree.h std.h
 
 lib_LTLIBRARIES = libqseawk.la
-libqseawk_la_SOURCES = awk.c err.c tree.c parse.c run.c rec.c val.c fnc.c misc.c rio.c std.c 
+libqseawk_la_SOURCES = awk.c err.c tree.c parse.c run.c rec.c val.c val-imp.h fnc.c misc.c misc-imp.h rio.c std.c
 libqseawk_la_CPPFLAGS = $(CPPFLAGS_LIB_COMMON)
 libqseawk_la_LDFLAGS = $(LDFLAGS_LIB_COMMON)
 libqseawk_la_LIBADD = $(LIBADD_LIB_COMMON)
