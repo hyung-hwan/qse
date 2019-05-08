@@ -1562,7 +1562,7 @@ static QSE_INLINE int __fnc_asort (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t*
 	qse_size_t nargs;
 	qse_awk_val_t* a0, * a0_val, * a1, * a2;
 	qse_awk_val_type_t a0_type, v_type;
-	qse_awk_val_t* r, * rmap;
+	qse_awk_val_t* r, * rmap = QSE_NULL;
 	qse_awk_int_t rv = 0; /* as if no element in the map */
 	qse_awk_val_map_itr_t itr;
 	qse_awk_fun_t* fun = QSE_NULL;
@@ -1585,7 +1585,7 @@ static QSE_INLINE int __fnc_asort (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t*
 			goto done;
 		}
 
-		qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOTMAP, QSE_NULL);
+		qse_awk_rtx_seterrfmt (rtx, QSE_AWK_ENOTMAP, QSE_NULL, QSE_T("source not a map"));
 		return -1;
 	}
 
@@ -1601,7 +1601,7 @@ static QSE_INLINE int __fnc_asort (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t*
 			a2 = qse_awk_rtx_getarg(rtx, 2);
 			if (QSE_AWK_RTX_GETVALTYPE(rtx, a2) != QSE_AWK_VAL_FUN)
 			{
-				qse_awk_rtx_seterrnum (rtx, QSE_AWK_EINVAL, QSE_NULL);
+				qse_awk_rtx_seterrfmt (rtx, QSE_AWK_EINVAL, QSE_NULL, QSE_T("comparator not a function"));
 				return -1;
 			}
 
@@ -1609,7 +1609,7 @@ static QSE_INLINE int __fnc_asort (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t*
 			if (fun->nargs < 2) 
 			{
 				/* the comparison accepts less than 2 arguments */
-				qse_awk_rtx_seterrnum (rtx, QSE_AWK_EINVAL, QSE_NULL);
+				qse_awk_rtx_seterrfmt (rtx, QSE_AWK_EINVAL, QSE_NULL, QSE_T("%.*s not accepting 2 arguments"), (int)fun->name.len, fun->name.ptr);
 				return -1;
 			}
 		}
@@ -1638,11 +1638,12 @@ static QSE_INLINE int __fnc_asort (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t*
 				while (i > 0)
 				{
 					--i;
-					qse_awk_rtx_freeval (rtx, va[i], 0);
+					qse_awk_rtx_refdownval (rtx, va[i]);
 				}
 				qse_awk_rtx_freemem (rtx, va);
 				return -1;
 			}
+			qse_awk_rtx_refupval (rtx, va[i]);
 			i++;
 		}
 		while (qse_awk_rtx_getnextmapvalitr(rtx, a0_val, &itr));
@@ -1651,7 +1652,9 @@ static QSE_INLINE int __fnc_asort (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t*
 	{
 		do
 		{
-			va[i++] = (qse_awk_val_t*)QSE_AWK_VAL_MAP_ITR_VAL(&itr);
+			va[i] = (qse_awk_val_t*)QSE_AWK_VAL_MAP_ITR_VAL(&itr);
+			qse_awk_rtx_refupval (rtx, va[i]);
+			i++;
 		}
 		while (qse_awk_rtx_getnextmapvalitr(rtx, a0_val, &itr));
 	}
@@ -1670,17 +1673,14 @@ static QSE_INLINE int __fnc_asort (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t*
 
 	if (x <= -1 || !(rmap = qse_awk_rtx_makemapval(rtx)))
 	{
-		if (sort_keys)
-		{
-			for (i = 0; i < msz; i++) qse_awk_rtx_freeval (rtx, va[i], 0);
-		}
+		for (i = 0; i < msz; i++) qse_awk_rtx_refdownval (rtx, va[i]);
 		qse_awk_rtx_freemem (rtx, va);
 		return -1;
 	}
 
 	for (i = 0; i < msz; i++)
 	{
-		qse_char_t ridx[128];
+		qse_char_t ridx[128]; /* TODO: make it dynamic? can overflow? */
 		qse_size_t ridx_len;
 
 		ridx_len = qse_fmtuintmax (
@@ -1695,32 +1695,42 @@ static QSE_INLINE int __fnc_asort (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t*
 
 		if (qse_awk_rtx_setmapvalfld(rtx, rmap, ridx, ridx_len, va[i]) == QSE_NULL)
 		{
-			qse_awk_rtx_freeval (rtx, rmap, 0); /* this delete the elements added. */
-			if (sort_keys)
+			/* decrement the reference count of the values not added to the map */
+			do
 			{
-				/* delete the elements not added yet */
-				do
-				{
-					qse_awk_rtx_freeval(rtx, va[i], 0);
-					i++;
-				}
-				while (i < msz);
+				qse_awk_rtx_refdownval (rtx, va[i]);
+				i++;
 			}
+			while (i < msz);
+			qse_awk_rtx_freeval (rtx, rmap, 0); /* this derefs the elements added. */
 			qse_awk_rtx_freemem (rtx, va);
 			return -1;
 		}
+
+		qse_awk_rtx_refdownval (rtx, va[i]); /* deref it as it has been added to the map */
 	}
 
 	rv = msz;
 	qse_awk_rtx_freemem (rtx, va);
 
-	qse_awk_rtx_refupval (rtx, rmap);
-	x = qse_awk_rtx_setrefval (rtx, (qse_awk_val_ref_t*)a1, rmap);
-	qse_awk_rtx_refdownval (rtx, rmap);
-	if (x <= -1) return -1;
-
 done:
 	r = qse_awk_rtx_makeintval(rtx, rv);
+	if (!r) return -1;
+
+	if (rmap)
+	{
+		/* rmap can be NULL when a jump has been made for an empty source 
+		 * at the beginning of this fucntion */
+		qse_awk_rtx_refupval (rtx, rmap);
+		x = qse_awk_rtx_setrefval (rtx, (qse_awk_val_ref_t*)a1, rmap);
+		qse_awk_rtx_refdownval (rtx, rmap);
+		if (x <= -1) 
+		{
+			qse_awk_rtx_freeval (rtx, r, 0);
+			return -1;
+		}
+	}
+
 	qse_awk_rtx_setretval (rtx, r);
 	return 0;
 }

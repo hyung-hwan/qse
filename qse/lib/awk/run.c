@@ -1197,10 +1197,8 @@ static void fini_rtx (qse_awk_rtx_t* rtx, int fini_globals)
 		{
 			while (rtx->scache_count[i] > 0)
 			{
-				qse_awk_val_str_t* t = 
-					rtx->scache[i][--rtx->scache_count[i]];
-				qse_awk_rtx_freeval (
-					rtx, (qse_awk_val_t*)t, 0);
+				qse_awk_val_str_t* t = rtx->scache[i][--rtx->scache_count[i]];
+				qse_awk_rtx_freeval (rtx, (qse_awk_val_t*)t, 0);
 			}
 		}
 	}

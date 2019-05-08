@@ -652,7 +652,7 @@ int Awk::Value::setIndexedVal (Run* r, const Index& idx, val_t* v)
 {
 	QSE_ASSERT (r != QSE_NULL);
 
-	if (QSE_AWK_RTX_GETVALTYPE (r->rtx, val) != QSE_AWK_VAL_MAP)
+	if (QSE_AWK_RTX_GETVALTYPE (r->rtx, this->val) != QSE_AWK_VAL_MAP)
 	{
 		// the previous value is not a map. 
 		// a new map value needs to be created first.
@@ -666,8 +666,7 @@ int Awk::Value::setIndexedVal (Run* r, const Index& idx, val_t* v)
 		qse_awk_rtx_refupval (r->rtx, map);
 
 		// update the map with a given value 
-		if (qse_awk_rtx_setmapvalfld (
-			r->rtx, map, idx.ptr, idx.len, v) == QSE_NULL)
+		if (qse_awk_rtx_setmapvalfld(r->rtx, map, idx.ptr, idx.len, v) == QSE_NULL)
 		{
 			qse_awk_rtx_refdownval (r->rtx, map);
 			r->awk->retrieveError (r);
@@ -678,7 +677,7 @@ int Awk::Value::setIndexedVal (Run* r, const Index& idx, val_t* v)
 		if (this->run) 
 		{
 			// if val is not nil, this->run can't be NULL
-			qse_awk_rtx_refdownval (this->run->rtx, val);
+			qse_awk_rtx_refdownval (this->run->rtx, this->val);
 		}
 
 		this->run = r;
@@ -700,8 +699,7 @@ int Awk::Value::setIndexedVal (Run* r, const Index& idx, val_t* v)
 		}
 
 		// update the map with a given value 
-		if (qse_awk_rtx_setmapvalfld (
-			r->rtx, val, idx.ptr, idx.len, v) == QSE_NULL)
+		if (qse_awk_rtx_setmapvalfld(r->rtx, val, idx.ptr, idx.len, v) == QSE_NULL)
 		{
 			r->awk->retrieveError (r);
 			return -1;
