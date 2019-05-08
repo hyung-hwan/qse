@@ -951,7 +951,6 @@ AC_SUBST(QSE_PROJECT_URL, "${PACKAGE_URL}")
 
 AC_CONFIG_FILES([
 	Makefile 
-	README
 	include/Makefile
 	include/qse/Makefile
 	include/qse/cmn/Makefile

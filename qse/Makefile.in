@@ -104,7 +104,7 @@ am__CONFIG_DISTCLEAN_FILES = config.status config.cache config.log \
  configure.lineno config.status.lineno
 mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/include/qse/config.h
-CONFIG_CLEAN_FILES = README
+CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -161,7 +161,7 @@ am__define_uniq_tagged_files = \
 ETAGS = etags
 CTAGS = ctags
 CSCOPE = cscope
-am__DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/README.in \
+am__DIST_COMMON = $(srcdir)/Makefile.in \
 	$(top_srcdir)/ac/ar-lib $(top_srcdir)/ac/compile \
 	$(top_srcdir)/ac/config.guess $(top_srcdir)/ac/config.sub \
 	$(top_srcdir)/ac/install-sh $(top_srcdir)/ac/ltmain.sh \
@@ -376,7 +376,7 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AUTOMAKE_OPTION = foreign
 ACLOCAL_AMFLAGS = -I m4
-EXTRA_DIST = LICENSE \
+EXTRA_DIST = LICENSE README \
 	bld/qse.bkl bld/readme.txt bld/os2.bkgen bld/win32.bkgen \
 	bld/os2-watcom/makefile bld/win32-watcom/makefile \
 	bld/win32-msvc/makefile bld/win32-borland/makefile
@@ -419,8 +419,6 @@ $(top_srcdir)/configure:  $(am__configure_deps)
 $(ACLOCAL_M4):  $(am__aclocal_m4_deps)
 	$(am__cd) $(srcdir) && $(ACLOCAL) $(ACLOCAL_AMFLAGS)
 $(am__aclocal_m4_deps):
-README: $(top_builddir)/config.status $(srcdir)/README.in
-	cd $(top_builddir) && $(SHELL) ./config.status $@
 
 mostlyclean-libtool:
 	-rm -f *.lo
