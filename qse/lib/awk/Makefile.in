@@ -258,7 +258,7 @@ am__DEPENDENCIES_4 = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_2) \
 libqseawk_la_DEPENDENCIES = $(am__DEPENDENCIES_4) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_5)
 am__libqseawk_la_SOURCES_DIST = awk.c err.c tree.c parse.c run.c rec.c \
-	val.c fnc.c misc.c rio.c std.c mod-dir.c mod-dir.h mod-math.c \
+	val.c val-imp.h fnc.c misc.c misc-imp.h rio.c std.c mod-dir.c mod-dir.h mod-math.c \
 	mod-math.h mod-sed.c mod-sed.h mod-str.c mod-str.h mod-sys.c \
 	mod-sys.h mod-mpi.c mod-mpi.h mod-uci.c mod-uci.h
 @ENABLE_STATIC_MODULE_TRUE@am__objects_1 = libqseawk_la-mod-dir.lo \
@@ -562,8 +562,8 @@ LIBADD_LIB_COMMON = -lqsecmn -lqsesi $(LIBM) $(am__append_1) \
 	$(am__append_2)
 noinst_HEADERS = awk-prv.h err.h rio.h val.h fnc.h misc.h parse.h run.h tree.h std.h
 lib_LTLIBRARIES = libqseawk.la $(am__append_5)
-libqseawk_la_SOURCES = awk.c err.c tree.c parse.c run.c rec.c val.c \
-	fnc.c misc.c rio.c std.c $(am__append_6) $(am__append_8) \
+libqseawk_la_SOURCES = awk.c err.c tree.c parse.c run.c rec.c val.c val-imp.h \
+	fnc.c misc.c misc-imp.h rio.c std.c $(am__append_6) $(am__append_8) \
 	$(am__append_11)
 libqseawk_la_CPPFLAGS = $(CPPFLAGS_LIB_COMMON) $(am__append_9)
 libqseawk_la_LDFLAGS = $(LDFLAGS_LIB_COMMON) $(am__append_10)
