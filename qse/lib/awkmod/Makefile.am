@@ -23,6 +23,10 @@ if ENABLE_AWKMOD_MPI
 noinst_LTLIBRARIES += libqseawk-mpi.la
 endif
 
+if ENABLE_AWKMOD_MYSQL
+noinst_LTLIBRARIES += libqseawk-mysql.la
+endif
+
 if ENABLE_AWKMOD_SED
 noinst_LTLIBRARIES += libqseawk-sed.la
 endif
@@ -69,6 +73,13 @@ libqseawk_mpi_la_SOURCES = mod-mpi.c mod-mpi.h
 libqseawk_mpi_la_CPPFLAGS = $(CPPFLAGS_COMMON) $(MPI_CFLAGS)
 libqseawk_mpi_la_LDFLAGS = $(LDFLAGS_COMMON) $(MPI_CLDFLAGS)
 libqseawk_mpi_la_LIBADD = $(LIBADD_COMMON)
+endif
+
+if ENABLE_AWKMOD_MYSQL
+libqseawk_mysql_la_SOURCES = mod-mysql.c mod-mysql.h
+libqseawk_mysql_la_CPPFLAGS = $(CPPFLAGS_COMMON)
+libqseawk_mysql_la_LDFLAGS = $(LDFLAGS_COMMON)
+libqseawk_mysql_la_LIBADD = $(LIBADD_COMMON) -lmysqlclient_r
 endif
 
 if ENABLE_AWKMOD_SED

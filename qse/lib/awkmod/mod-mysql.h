@@ -24,8 +24,8 @@
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _QSE_LIB_AWKMOD_MPI_H_
-#define _QSE_LIB_AWKMOD_MPI_H_
+#ifndef _QSE_LIB_AWKMOD_MYSQL_H_
+#define _QSE_LIB_AWKMOD_MYSQL_H_
 
 #include <qse/awk/awk.h>
 
@@ -33,7 +33,7 @@
 extern "C" {
 #endif
 
-QSE_EXPORT int qse_awk_mod_mpi (qse_awk_mod_t* mod, qse_awk_t* awk);
+QSE_EXPORT int qse_awk_mod_mysql (qse_awk_mod_t* mod, qse_awk_t* awk);
 
 #if defined(__cplusplus)
 }

@@ -6840,15 +6840,16 @@ int qse_awk_putsrcstrn (
 #include "mod-str.h"
 #include "mod-sys.h"
 
-#if defined(MOO_ENABLE_AWKMOD_SED)
-#include "../../mod/awk/mod-sed.h"
+#if defined(MOO_ENABLE_AWKMOD_MPI)
+#include "../awkmod/mod-sed.h"
 #endif
 
-#if defined(HAVE_MPI)
-#	include "mod-mpi.h"
+#if defined(MOO_ENABLE_AWKMOD_SED)
+#include "../awkmod/mod-sed.h"
 #endif
-#if defined(HAVE_UCI)
-#	include "mod-uci.h"
+
+#if defined(MOO_ENABLE_AWKMOD_UCI)
+#include "../awkmod/mod-uci.h"
 #endif
 
 /* 

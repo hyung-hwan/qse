@@ -69,6 +69,11 @@ libqseawk_la_LIBADD += -lqseawk-mpi
 libqseawk_la_DEPENDENCIES += ../awkmod/libqseawk-mpi.la
 endif
 
+if ENABLE_AWKMOD_MYSQL
+libqseawk_la_LIBADD += -lqseawk-mysql
+libqseawk_la_DEPENDENCIES += ../awkmod/libqseawk-mysql.la
+endif
+
 if ENABLE_AWKMOD_SED
 libqseawk_la_LIBADD += -lqseawk-sed
 libqseawk_la_DEPENDENCIES += ../awkmod/libqseawk-sed.la

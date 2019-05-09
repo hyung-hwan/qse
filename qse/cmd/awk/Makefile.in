@@ -97,8 +97,6 @@ bin_PROGRAMS = qseawk$(EXEEXT)
 @ENABLE_LIBLTDL_TRUE@am__append_3 = $(LTDL_LIBS)
 @ENABLE_LIBLTDL_FALSE@am__append_4 = $(DL_LIBS)
 @WCHAR_TRUE@@WIN32_TRUE@am__append_5 = $(UNICOWS_LIBS)
-@ENABLE_STATIC_MODULE_TRUE@am__append_6 = -L../../lib/sed
-@ENABLE_STATIC_MODULE_TRUE@am__append_7 = -lqsesed
 subdir = cmd/awk
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ax_check_sign.m4 \
@@ -125,7 +123,7 @@ am__DEPENDENCIES_1 =
 @WCHAR_TRUE@@WIN32_TRUE@am__DEPENDENCIES_4 = $(am__DEPENDENCIES_1)
 qseawk_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_2) $(am__DEPENDENCIES_3) \
-	$(am__DEPENDENCIES_4) $(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_4)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
@@ -365,11 +363,9 @@ AM_CPPFLAGS = -I$(top_builddir)/include -I$(top_srcdir)/include \
 	$(LTDLINCL) $(am__append_1) $(am__append_2)
 qseawk_SOURCES = awk.c
 qseawk_CFLAGS = $(PTHREAD_CFLAGS)
-qseawk_LDFLAGS = -L../../lib/awk -L../../lib/si -L../../lib/cmn \
-	$(am__append_6)
+qseawk_LDFLAGS = -L../../lib/awk -L../../lib/si -L../../lib/cmn 
 qseawk_LDADD = -lqseawk -lqsesi -lqsecmn $(LIBM) $(PTHREAD_LIBS) \
-	$(am__append_3) $(am__append_4) $(am__append_5) \
-	$(am__append_7)
+	$(am__append_3) $(am__append_4) $(am__append_5)
 all: all-am
 
 .SUFFIXES:
