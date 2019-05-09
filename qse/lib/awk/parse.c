@@ -689,6 +689,7 @@ int qse_awk_parse (qse_awk_t* awk, qse_awk_sio_t* sio)
 	awk->sio.last.c = QSE_CHAR_EOF;
 	awk->sio.arg.line = 1;
 	awk->sio.arg.colm = 1;
+	awk->sio.arg.pragmas = 0;
 	awk->sio.inp = &awk->sio.arg;
 
 	n = parse (awk);
@@ -711,9 +712,7 @@ static int end_include (qse_awk_t* awk)
 	 * retry to read a character from an outer file */
 
 	CLRERR (awk);
-	x = awk->sio.inf (
-		awk, QSE_AWK_SIO_CLOSE, 
-		awk->sio.inp, QSE_NULL, 0);
+	x = awk->sio.inf(awk, QSE_AWK_SIO_CLOSE, awk->sio.inp, QSE_NULL, 0);
 
 	/* if closing has failed, still destroy the
 	 * sio structure first as normal and return
@@ -731,8 +730,7 @@ static int end_include (qse_awk_t* awk)
 	if (x != 0)
 	{
 		/* the failure mentioned above is returned here */
-		if (ISNOERR(awk))
-			SETERR_ARG (awk, QSE_AWK_ECLOSE, QSE_T("<SIN>"), 5);
+		if (ISNOERR(awk)) SETERR_ARG (awk, QSE_AWK_ECLOSE, QSE_T("<SIN>"), 5);
 		return -1;
 	}
 
@@ -762,13 +760,13 @@ static int begin_include (qse_awk_t* awk)
 	if (awk->opt.incldirs.ptr)
 	{
 		/* include directory is set... */
-/* TODO: */
+/* TODO: search target files in these directories */
 	}
 
 	/* store the include-file name into a list
 	 * and this list is not deleted after qse_awk_parse.
 	 * the errinfo.loc.file can point to a string here. */
-	link = (qse_link_t*) qse_awk_callocmem (awk, QSE_SIZEOF(*link) + 
+	link = (qse_link_t*)qse_awk_callocmem(awk, QSE_SIZEOF(*link) + 
 		QSE_SIZEOF(*arg) + QSE_SIZEOF(qse_char_t) * (QSE_STR_LEN(awk->tok.name) + 1));
 	if (link == QSE_NULL)
 	{
@@ -779,7 +777,7 @@ static int begin_include (qse_awk_t* awk)
 	link->link = awk->sio_names;
 	awk->sio_names = link;
 
-	arg = (qse_awk_sio_arg_t*) qse_awk_callocmem (awk, QSE_SIZEOF(*awk));
+	arg = (qse_awk_sio_arg_t*)qse_awk_callocmem(awk, QSE_SIZEOF(*awk));
 	if (arg == QSE_NULL)
 	{
 		ADJERR_LOC (awk, &awk->ptok.loc);
@@ -789,12 +787,13 @@ static int begin_include (qse_awk_t* awk)
 	arg->name = (const qse_char_t*)(link + 1);
 	arg->line = 1;
 	arg->colm = 1;
+	arg->pragmas = 0;
 
 	/* let the argument's prev field point to the current */
 	arg->prev = awk->sio.inp;
 
 	CLRERR (awk);
-	if (awk->sio.inf (awk, QSE_AWK_SIO_OPEN, arg, QSE_NULL, 0) <= -1)
+	if (awk->sio.inf(awk, QSE_AWK_SIO_OPEN, arg, QSE_NULL, 0) <= -1)
 	{
 		if (ISNOERR(awk)) SETERR_TOK (awk, QSE_AWK_EOPEN);
 		else awk->errinf.loc = awk->tok.loc; /* adjust error location */
@@ -808,7 +807,7 @@ static int begin_include (qse_awk_t* awk)
 	/* read in the first character in the included file. 
 	 * so the next call to get_token() sees the character read
 	 * from this file. */
-	if (get_char (awk) <= -1 || get_token (awk) <= -1) 
+	if (get_char(awk) <= -1 || get_token(awk) <= -1) 
 	{
 		end_include (awk); 
 		/* i don't jump to oops since i've called 
@@ -821,7 +820,7 @@ static int begin_include (qse_awk_t* awk)
 oops:
 	/* i don't need to free 'link'  here since it's linked to awk->sio_names
 	 * that's freed at the beginning of qse_awk_parse() or by qse_awk_close(). */
-	if (arg) QSE_AWK_FREE (awk, arg);
+	if (arg) qse_awk_freemem (awk, arg);
 	return -1;
 }
 
