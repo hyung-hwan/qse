@@ -498,7 +498,6 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AUTOMAKE_OPTIONS = nostdinc
-AM_CFLAGS = $(PTHREAD_CFLAGS)
 CPPFLAGS_ALL_COMMON = \
 	-I$(top_builddir)/include \
 	-I$(top_srcdir)/include
