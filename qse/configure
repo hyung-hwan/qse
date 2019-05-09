@@ -649,6 +649,12 @@ QSE_SIZEOF_INT
 QSE_SIZEOF_LONG
 QSE_SIZEOF_LONG_LONG
 QSE_SIZEOF_WCHAR_T
+ENABLE_AWKMOD_UCI_FALSE
+ENABLE_AWKMOD_UCI_TRUE
+ENABLE_AWKMOD_SED_FALSE
+ENABLE_AWKMOD_SED_TRUE
+ENABLE_AWKMOD_MPI_FALSE
+ENABLE_AWKMOD_MPI_TRUE
 ENABLE_STATIC_MODULE_FALSE
 ENABLE_STATIC_MODULE_TRUE
 PTHREAD_CFLAGS
@@ -845,6 +851,10 @@ enable_reentrant
 enable_awk_intmax
 enable_awk_fltmax
 enable_sed_tracer
+enable_static_module
+enable_awkmod_mpi
+enable_awkmod_sed
+enable_awkmod_uci
 '
       ac_precious_vars='build_alias
 host_alias
@@ -1511,6 +1521,11 @@ Optional Features:
   --enable-awk-fltmax     use qse_fltmax_t for floating-point numbers in AWK
                           (default. no)
   --enable-sed-tracer     enable qse_sed_setexectracer() (default. yes)
+  --enable-static-module  build modules statically into the main
+                          library(default. no)
+  --enable-awkmod-mpi     enable the mpi module for awk(default. yes)
+  --enable-awkmod-sed     enable the sed module for awk(default. yes)
+  --enable-awkmod-uci     enable the uci module for awk(default. no)
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -19380,7 +19395,7 @@ rm -f core conftest.err conftest.$ac_objext \
          fi
 
 
- if test "${have_C_mpi}" = "yes" ; then
+ if test "x${have_C_mpi}" = "xyes" ; then
   HAVE_C_MPI_TRUE=
   HAVE_C_MPI_FALSE='#'
 else
@@ -19430,7 +19445,7 @@ if test "x$ac_cv_lib_uci_uci_alloc_context" = xyes; then :
 fi
 
 
- if test "${ac_cv_lib_uci_uci_alloc_context}" = "yes" -a "${ac_cv_header_uci_h}" = "yes"; then
+ if test "x${ac_cv_lib_uci_uci_alloc_context}" = "xyes" -a "x${ac_cv_header_uci_h}" = "xyes"; then
   HAVE_LIBUCI_TRUE=
   HAVE_LIBUCI_FALSE='#'
 else
@@ -23542,19 +23557,92 @@ $as_echo "#define QSE_ENABLE_SED_TRACER /**/" >>confdefs.h
 
 fi
 
-if test "${enable_shared}" = "no" -a "${enable_static}" = "yes"
-then
-
-$as_echo "#define QSE_ENABLE_STATIC_MODULE /**/" >>confdefs.h
+# Check whether --enable-static-module was given.
+if test "${enable_static_module+set}" = set; then :
+  enableval=$enable_static_module; enable_static_module_is=$enableval
+else
+  enable_static_module_is=no
 
 fi
- if test "${enable_shared}" = "no" -a "${enable_static}" = "yes"; then
+
+if test "x${enable_shared}" = "xno" -a "x${enable_static}" = "xyes"
+then
+	enable_static_module_is="yes"
+fi
+
+if test "${enable_static_module_is}" = "yes"
+then
+
+$as_echo "#define MOO_ENABLE_STATIC_MODULE 1" >>confdefs.h
+
+fi
+ if test "x${enable_static_module_is}" = "xyes"; then
   ENABLE_STATIC_MODULE_TRUE=
   ENABLE_STATIC_MODULE_FALSE='#'
 else
   ENABLE_STATIC_MODULE_TRUE='#'
   ENABLE_STATIC_MODULE_FALSE=
 fi
+
+
+# Check whether --enable-awkmod-mpi was given.
+if test "${enable_awkmod_mpi+set}" = set; then :
+  enableval=$enable_awkmod_mpi; enable_awkmod_mpi_is=$enableval
+else
+  enable_awkmod_mpi_is=yes
+
+fi
+
+if test "x${have_C_mpi}" != "xyes"
+then
+	enable_awkmod_mpi_is="no"
+fi
+ if test "x${enable_awkmod_mpi_is}" = "xyes"; then
+  ENABLE_AWKMOD_MPI_TRUE=
+  ENABLE_AWKMOD_MPI_FALSE='#'
+else
+  ENABLE_AWKMOD_MPI_TRUE='#'
+  ENABLE_AWKMOD_MPI_FALSE=
+fi
+
+
+# Check whether --enable-awkmod-sed was given.
+if test "${enable_awkmod_sed+set}" = set; then :
+  enableval=$enable_awkmod_sed; enable_awkmod_sed_is=$enableval
+else
+  enable_awkmod_sed_is=yes
+
+fi
+
+ if test "x${enable_awkmod_sed_is}" = "xyes"; then
+  ENABLE_AWKMOD_SED_TRUE=
+  ENABLE_AWKMOD_SED_FALSE='#'
+else
+  ENABLE_AWKMOD_SED_TRUE='#'
+  ENABLE_AWKMOD_SED_FALSE=
+fi
+
+
+# Check whether --enable-awkmod-uci was given.
+if test "${enable_awkmod_uci+set}" = set; then :
+  enableval=$enable_awkmod_uci; enable_awkmod_uci_is=$enableval
+else
+  enable_awkmod_uci_is=no
+
+fi
+
+if test "x${ac_cv_lib_uci_uci_alloc_context}" != "xyes" -o "x${ac_cv_header_uci_h}" = "xyes"
+then
+	enable_awkmod_uci_is="no"
+fi
+ if test "x${enable_awkmod_uci_is}" = "xyes"; then
+  ENABLE_AWKMOD_UCI_TRUE=
+  ENABLE_AWKMOD_UCI_FALSE='#'
+else
+  ENABLE_AWKMOD_UCI_TRUE='#'
+  ENABLE_AWKMOD_UCI_FALSE=
+fi
+
 
 
 QSE_SIZEOF_WCHAR_T=$ac_cv_sizeof_wchar_t
@@ -23587,7 +23675,7 @@ QSE_PROJECT_AUTHOR="${PACKAGE_BUGREPORT}"
 QSE_PROJECT_URL="${PACKAGE_URL}"
 
 
-ac_config_files="$ac_config_files Makefile include/Makefile include/qse/Makefile include/qse/cmn/Makefile include/qse/cry/Makefile include/qse/si/Makefile include/qse/awk/Makefile include/qse/sed/Makefile include/qse/xli/Makefile include/qse/http/Makefile include/qse/rad/Makefile include/qse/dhcp/Makefile include/qse/sttp/Makefile lib/Makefile lib/cmn/Makefile lib/cry/Makefile lib/si/Makefile lib/awk/Makefile lib/sed/Makefile lib/xli/Makefile lib/http/Makefile lib/rad/Makefile lib/dhcp/Makefile lib/sttp/Makefile lib/qsecmn.pc lib/qsecry.pc lib/qsesi.pc lib/qsesed.pc lib/qseawk.pc lib/qsexli.pc lib/qsehttp.pc lib/qserad.pc lib/qsedhcp.pc cmd/Makefile cmd/awk/Makefile cmd/sed/Makefile cmd/xli/Makefile cmd/http/Makefile samples/Makefile samples/cmn/Makefile samples/cry/Makefile samples/si/Makefile samples/awk/Makefile samples/sed/Makefile samples/xli/Makefile samples/http/Makefile samples/rad/Makefile samples/dhcp/Makefile regress/Makefile regress/awk/Makefile regress/awk/regress.sh regress/sed/Makefile regress/sed/regress.sh doc/Makefile doc/Doxyfile tools/Makefile"
+ac_config_files="$ac_config_files Makefile include/Makefile include/qse/Makefile include/qse/cmn/Makefile include/qse/cry/Makefile include/qse/si/Makefile include/qse/awk/Makefile include/qse/sed/Makefile include/qse/xli/Makefile include/qse/http/Makefile include/qse/rad/Makefile include/qse/dhcp/Makefile include/qse/sttp/Makefile lib/Makefile lib/cmn/Makefile lib/cry/Makefile lib/si/Makefile lib/awk/Makefile lib/sed/Makefile lib/xli/Makefile lib/http/Makefile lib/rad/Makefile lib/dhcp/Makefile lib/sttp/Makefile lib/qsecmn.pc lib/qsecry.pc lib/qsesi.pc lib/qsesed.pc lib/qseawk.pc lib/qsexli.pc lib/qsehttp.pc lib/qserad.pc lib/qsedhcp.pc mod/Makefile mod/awk/Makefile cmd/Makefile cmd/awk/Makefile cmd/sed/Makefile cmd/xli/Makefile cmd/http/Makefile samples/Makefile samples/cmn/Makefile samples/cry/Makefile samples/si/Makefile samples/awk/Makefile samples/sed/Makefile samples/xli/Makefile samples/http/Makefile samples/rad/Makefile samples/dhcp/Makefile regress/Makefile regress/awk/Makefile regress/awk/regress.sh regress/sed/Makefile regress/sed/regress.sh doc/Makefile doc/Doxyfile tools/Makefile"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -23765,6 +23853,18 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${ENABLE_STATIC_MODULE_TRUE}" && test -z "${ENABLE_STATIC_MODULE_FALSE}"; then
   as_fn_error $? "conditional \"ENABLE_STATIC_MODULE\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${ENABLE_AWKMOD_MPI_TRUE}" && test -z "${ENABLE_AWKMOD_MPI_FALSE}"; then
+  as_fn_error $? "conditional \"ENABLE_AWKMOD_MPI\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${ENABLE_AWKMOD_SED_TRUE}" && test -z "${ENABLE_AWKMOD_SED_FALSE}"; then
+  as_fn_error $? "conditional \"ENABLE_AWKMOD_SED\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${ENABLE_AWKMOD_UCI_TRUE}" && test -z "${ENABLE_AWKMOD_UCI_FALSE}"; then
+  as_fn_error $? "conditional \"ENABLE_AWKMOD_UCI\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 
@@ -24777,6 +24877,8 @@ do
     "lib/qsehttp.pc") CONFIG_FILES="$CONFIG_FILES lib/qsehttp.pc" ;;
     "lib/qserad.pc") CONFIG_FILES="$CONFIG_FILES lib/qserad.pc" ;;
     "lib/qsedhcp.pc") CONFIG_FILES="$CONFIG_FILES lib/qsedhcp.pc" ;;
+    "mod/Makefile") CONFIG_FILES="$CONFIG_FILES mod/Makefile" ;;
+    "mod/awk/Makefile") CONFIG_FILES="$CONFIG_FILES mod/awk/Makefile" ;;
     "cmd/Makefile") CONFIG_FILES="$CONFIG_FILES cmd/Makefile" ;;
     "cmd/awk/Makefile") CONFIG_FILES="$CONFIG_FILES cmd/awk/Makefile" ;;
     "cmd/sed/Makefile") CONFIG_FILES="$CONFIG_FILES cmd/sed/Makefile" ;;
