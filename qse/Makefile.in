@@ -381,8 +381,7 @@ EXTRA_DIST = LICENSE README \
 	bld/os2-watcom/makefile bld/win32-watcom/makefile \
 	bld/win32-msvc/makefile bld/win32-borland/makefile
 
-@ENABLE_STATIC_MODULE_FALSE@SUBDIRS = include lib mod cmd
-@ENABLE_STATIC_MODULE_TRUE@SUBDIRS = include mod lib cmd
+SUBDIRS = include lib cmd
 DIST_SUBDIRS = $(SUBDIRS) regress samples doc tools
 all: all-recursive
 

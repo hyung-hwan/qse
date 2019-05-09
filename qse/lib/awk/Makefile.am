@@ -7,7 +7,7 @@ CPPFLAGS_ALL_COMMON = \
 	-I$(top_srcdir)/include
 
 if ENABLE_STATIC_MODULE
-LDFLAGS_ALL_COMMON = -L../../mod/awk -L../cmn -L../si 
+LDFLAGS_ALL_COMMON = -L../awkmod -L../cmn -L../si 
 else
 LDFLAGS_ALL_COMMON = -L. -L../cmn -L../si 
 endif
@@ -66,17 +66,17 @@ libqseawk_la_SOURCES += \
 
 if ENABLE_AWKMOD_MPI
 libqseawk_la_LIBADD += -lqseawk-mpi
-libqseawk_la_DEPENDENCIES += $(abs_builddir)/../../mod/awk/libqseawk-mpi.la
+libqseawk_la_DEPENDENCIES += ../awkmod/libqseawk-mpi.la
 endif
 
 if ENABLE_AWKMOD_SED
 libqseawk_la_LIBADD += -lqseawk-sed
-libqseawk_la_DEPENDENCIES += $(abs_builddir)/../../mod/awk/libqseawk-sed.la
+libqseawk_la_DEPENDENCIES += ../awkmod/libqseawk-sed.la
 endif
 
 if ENABLE_AWKMOD_UCI
 libqseawk_la_LIBADD += -lqseawk-uci
-libqseawk_la_DEPENDENCIES += $(abs_builddir)/../../mod/awk/libqseawk-uci.la
+libqseawk_la_DEPENDENCIES += ../awkmod/libqseawk-uci.la
 endif
 
 else

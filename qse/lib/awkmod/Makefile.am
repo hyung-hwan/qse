@@ -38,8 +38,8 @@ else
 #-------------------------------------------------
 # DYNAMIC MODULES
 #-------------------------------------------------
-LDFLAGS_COMMON = -L../../lib/awk -L../../lib/si -L../../lib/cmn -L$(libdir) -version-info 1:0:0 -no-undefined
-LIBADD_COMMON = -lqseawk -lqsesi  -lqsecmn
+LDFLAGS_COMMON = -L../awk -L../si -L../cmn -L$(libdir) -version-info 1:0:0 -no-undefined
+LIBADD_COMMON = -lqseawk -lqsesi -lqsecmn
 
 pkgmodexecdir = $(libdir)
 pkgmodexec_LTLIBRARIES =
@@ -74,7 +74,7 @@ endif
 if ENABLE_AWKMOD_SED
 libqseawk_sed_la_SOURCES = mod-sed.c mod-sed.h
 libqseawk_sed_la_CPPFLAGS = $(CPPFLAGS_COMMON)
-libqseawk_sed_la_LDFLAGS = $(LDFLAGS_COMMON) -L../../lib/sed
+libqseawk_sed_la_LDFLAGS = $(LDFLAGS_COMMON) -L../sed
 libqseawk_sed_la_LIBADD = $(LIBADD_COMMON) -lqsesed
 endif
 

@@ -94,7 +94,7 @@ host_triplet = @host@
 @ENABLE_AWKMOD_MPI_TRUE@@ENABLE_STATIC_MODULE_FALSE@am__append_4 = libqseawk-mpi.la
 @ENABLE_AWKMOD_SED_TRUE@@ENABLE_STATIC_MODULE_FALSE@am__append_5 = libqseawk-sed.la
 @ENABLE_AWKMOD_UCI_TRUE@@ENABLE_STATIC_MODULE_FALSE@am__append_6 = libqseawk-uci.la
-subdir = mod/awk
+subdir = lib/awkmod
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ax_check_sign.m4 \
 	$(top_srcdir)/m4/ax_cxx_namespace.m4 \
@@ -430,7 +430,7 @@ CPPFLAGS_COMMON = \
 #-------------------------------------------------
 # DYNAMIC MODULES
 #-------------------------------------------------
-@ENABLE_STATIC_MODULE_FALSE@LDFLAGS_COMMON = -L../../lib/awk -L../../lib/si -L../../lib/cmn -L$(libdir) -version-info 1:0:0 -no-undefined
+@ENABLE_STATIC_MODULE_FALSE@LDFLAGS_COMMON = -L../awk -L../si -L../cmn -L$(libdir) -version-info 1:0:0 -no-undefined
 
 ##################################################
 ##################################################
@@ -439,7 +439,7 @@ CPPFLAGS_COMMON = \
 # STATIC MODULES BUILT INTO MAIN LIBRARY
 #-------------------------------------------------
 @ENABLE_STATIC_MODULE_TRUE@LDFLAGS_COMMON = -L$(libdir) -version-info 1:0:0 -no-undefined
-@ENABLE_STATIC_MODULE_FALSE@LIBADD_COMMON = -lqseawk -lqsesi  -lqsecmn
+@ENABLE_STATIC_MODULE_FALSE@LIBADD_COMMON = -lqseawk -lqsesi -lqsecmn
 @ENABLE_STATIC_MODULE_TRUE@LIBADD_COMMON = 
 @ENABLE_STATIC_MODULE_TRUE@noinst_LTLIBRARIES = $(am__append_1) \
 @ENABLE_STATIC_MODULE_TRUE@	$(am__append_2) $(am__append_3)
@@ -459,7 +459,7 @@ CPPFLAGS_COMMON = \
 @ENABLE_AWKMOD_MPI_TRUE@libqseawk_mpi_la_LIBADD = $(LIBADD_COMMON)
 @ENABLE_AWKMOD_SED_TRUE@libqseawk_sed_la_SOURCES = mod-sed.c mod-sed.h
 @ENABLE_AWKMOD_SED_TRUE@libqseawk_sed_la_CPPFLAGS = $(CPPFLAGS_COMMON)
-@ENABLE_AWKMOD_SED_TRUE@libqseawk_sed_la_LDFLAGS = $(LDFLAGS_COMMON) -L../../lib/sed
+@ENABLE_AWKMOD_SED_TRUE@libqseawk_sed_la_LDFLAGS = $(LDFLAGS_COMMON) -L../sed
 @ENABLE_AWKMOD_SED_TRUE@libqseawk_sed_la_LIBADD = $(LIBADD_COMMON) -lqsesed
 @ENABLE_AWKMOD_UCI_TRUE@libqseawk_uci_la_SOURCES = mod-uci.c mod-uci.h
 @ENABLE_AWKMOD_UCI_TRUE@libqseawk_uci_la_CPPFLAGS = $(CPPFLAGS_COMMON)
@@ -478,9 +478,9 @@ $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign mod/awk/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign lib/awkmod/Makefile'; \
 	$(am__cd) $(top_srcdir) && \
-	  $(AUTOMAKE) --foreign mod/awk/Makefile
+	  $(AUTOMAKE) --foreign lib/awkmod/Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
 	  *config.status*) \
