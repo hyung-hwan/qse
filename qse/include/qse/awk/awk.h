@@ -157,15 +157,17 @@ typedef qse_floc_t qse_awk_loc_t;
 /*
 #define QSE_AWK_VAL_HDR \
 	unsigned int type: 4; \
-	unsigned int ref: 25; \
+	unsigned int ref: 24; \
 	unsigned int stat: 1; \
-	unsigned int nstr: 2
+	unsigned int nstr: 2; \
+	unsigned int fcb: 1
 */
 #define QSE_AWK_VAL_HDR \
 	qse_uintptr_t v_type: 4; \
-	qse_uintptr_t ref: ((QSE_SIZEOF_UINTPTR_T * 8) - 7); \
+	qse_uintptr_t ref: ((QSE_SIZEOF_UINTPTR_T * 8) - 8); \
 	qse_uintptr_t stat: 1; \
-	qse_uintptr_t nstr: 2
+	qse_uintptr_t nstr: 2; \
+	qse_uintptr_t fcb: 1
 
 /**
  * The qse_awk_val_t type is an abstract value type. A value commonly contains:

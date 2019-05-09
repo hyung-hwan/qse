@@ -85,7 +85,8 @@ endif
 if ENABLE_AWKMOD_SED
 libqseawk_sed_la_SOURCES = mod-sed.c mod-sed.h
 libqseawk_sed_la_CPPFLAGS = $(CPPFLAGS_COMMON)
-libqseawk_sed_la_LDFLAGS = $(LDFLAGS_COMMON) -L../sed
+## ../sed must be placed before LDFLAGS_COMMON because it should precede $(libdir)
+libqseawk_sed_la_LDFLAGS = -L../sed $(LDFLAGS_COMMON)
 libqseawk_sed_la_LIBADD = $(LIBADD_COMMON) -lqsesed
 endif
 
