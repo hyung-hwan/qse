@@ -26,7 +26,7 @@
 
 #include "mod-sed.h"
 #include <qse/sed/stdsed.h>
-#include "../../lib/cmn/mem-prv.h"
+#include "../cmn/mem-prv.h"
 
 #if 0
 static int fnc_errno (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)

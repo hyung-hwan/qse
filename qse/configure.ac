@@ -1012,6 +1012,7 @@ AC_CONFIG_FILES([
 	lib/cry/Makefile
 	lib/si/Makefile 
 	lib/awk/Makefile 
+	lib/awkmod/Makefile
 	lib/sed/Makefile 
 	lib/xli/Makefile 
 	lib/http/Makefile 
@@ -1027,8 +1028,6 @@ AC_CONFIG_FILES([
 	lib/qsehttp.pc
 	lib/qserad.pc
 	lib/qsedhcp.pc
-	mod/Makefile
-	mod/awk/Makefile
 	cmd/Makefile 
 	cmd/awk/Makefile 
 	cmd/sed/Makefile 

@@ -1,4 +1,8 @@
-SUBDIRS = cmn cry si sed awk xli http rad dhcp sttp
+if ENABLE_STATIC_MODULE
+SUBDIRS = cmn cry si sed awkmod awk xli http rad dhcp sttp
+else
+SUBDIRS = cmn cry si sed awk awkmod xli http rad dhcp sttp
+endif
 DIST_SUBDIRS = $(SUBDIRS) 
 
 pkgconfigdir = $(libdir)/pkgconfig
