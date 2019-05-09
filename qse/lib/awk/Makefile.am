@@ -1,6 +1,6 @@
 AUTOMAKE_OPTIONS = nostdinc
 
-AM_CFLAGS = $(PTHREAD_CFLAGS)
+##AM_CFLAGS = $(PTHREAD_CFLAGS)
 
 CPPFLAGS_ALL_COMMON = \
 	-I$(top_builddir)/include \
