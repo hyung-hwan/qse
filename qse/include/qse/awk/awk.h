@@ -595,6 +595,7 @@ struct qse_awk_sio_arg_t
 	qse_size_t colm;
 
 	qse_awk_sio_lxc_t last;
+	int pragmas;
 };
 
 /**
