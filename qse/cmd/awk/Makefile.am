@@ -33,8 +33,3 @@ if WCHAR
 qseawk_LDADD += $(UNICOWS_LIBS)
 endif
 endif
-
-if ENABLE_STATIC_MODULE
-qseawk_LDFLAGS += -L../../lib/sed
-qseawk_LDADD += -lqsesed
-endif

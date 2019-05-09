@@ -109,10 +109,12 @@ host_triplet = @host@
 
 @ENABLE_AWKMOD_MPI_TRUE@@ENABLE_STATIC_MODULE_TRUE@am__append_7 = -lqseawk-mpi
 @ENABLE_AWKMOD_MPI_TRUE@@ENABLE_STATIC_MODULE_TRUE@am__append_8 = ../awkmod/libqseawk-mpi.la
-@ENABLE_AWKMOD_SED_TRUE@@ENABLE_STATIC_MODULE_TRUE@am__append_9 = -lqseawk-sed
-@ENABLE_AWKMOD_SED_TRUE@@ENABLE_STATIC_MODULE_TRUE@am__append_10 = ../awkmod/libqseawk-sed.la
-@ENABLE_AWKMOD_UCI_TRUE@@ENABLE_STATIC_MODULE_TRUE@am__append_11 = -lqseawk-uci
-@ENABLE_AWKMOD_UCI_TRUE@@ENABLE_STATIC_MODULE_TRUE@am__append_12 = ../awkmod/libqseawk-uci.la
+@ENABLE_AWKMOD_MYSQL_TRUE@@ENABLE_STATIC_MODULE_TRUE@am__append_9 = -lqseawk-mysql
+@ENABLE_AWKMOD_MYSQL_TRUE@@ENABLE_STATIC_MODULE_TRUE@am__append_10 = ../awkmod/libqseawk-mysql.la
+@ENABLE_AWKMOD_SED_TRUE@@ENABLE_STATIC_MODULE_TRUE@am__append_11 = -lqseawk-sed
+@ENABLE_AWKMOD_SED_TRUE@@ENABLE_STATIC_MODULE_TRUE@am__append_12 = ../awkmod/libqseawk-sed.la
+@ENABLE_AWKMOD_UCI_TRUE@@ENABLE_STATIC_MODULE_TRUE@am__append_13 = -lqseawk-uci
+@ENABLE_AWKMOD_UCI_TRUE@@ENABLE_STATIC_MODULE_TRUE@am__append_14 = ../awkmod/libqseawk-uci.la
 subdir = lib/awk
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ax_check_sign.m4 \
@@ -519,9 +521,9 @@ libqseawk_la_SOURCES = awk.c err.c tree.c parse.c run.c rec.c val.c \
 libqseawk_la_CPPFLAGS = $(CPPFLAGS_LIB_COMMON)
 libqseawk_la_LDFLAGS = $(LDFLAGS_LIB_COMMON)
 libqseawk_la_LIBADD = $(LIBADD_LIB_COMMON) $(am__append_7) \
-	$(am__append_9) $(am__append_11)
+	$(am__append_9) $(am__append_11) $(am__append_13)
 libqseawk_la_DEPENDENCIES = $(am__append_8) $(am__append_10) \
-	$(am__append_12)
+	$(am__append_12) $(am__append_14)
 @ENABLE_CXX_TRUE@libqseawkxx_la_SOURCES = Awk.cpp StdAwk.cpp
 @ENABLE_CXX_TRUE@libqseawkxx_la_CPPFLAGS = $(CPPFLAGS_LIB_COMMON)
 @ENABLE_CXX_TRUE@libqseawkxx_la_LDFLAGS = $(LDFLAGS_LIB_COMMON)

@@ -653,6 +653,8 @@ ENABLE_AWKMOD_UCI_FALSE
 ENABLE_AWKMOD_UCI_TRUE
 ENABLE_AWKMOD_SED_FALSE
 ENABLE_AWKMOD_SED_TRUE
+ENABLE_AWKMOD_MYSQL_FALSE
+ENABLE_AWKMOD_MYSQL_TRUE
 ENABLE_AWKMOD_MPI_FALSE
 ENABLE_AWKMOD_MPI_TRUE
 ENABLE_STATIC_MODULE_FALSE
@@ -853,6 +855,7 @@ enable_awk_fltmax
 enable_sed_tracer
 enable_static_module
 enable_awkmod_mpi
+enable_awkmod_mysql
 enable_awkmod_sed
 enable_awkmod_uci
 '
@@ -1524,6 +1527,7 @@ Optional Features:
   --enable-static-module  build modules statically into the main
                           library(default. no)
   --enable-awkmod-mpi     enable the mpi module for awk(default. yes)
+  --enable-awkmod-mysql   enable the mysql module for awk(default. yes)
   --enable-awkmod-sed     enable the sed module for awk(default. yes)
   --enable-awkmod-uci     enable the uci module for awk(default. no)
 
@@ -23606,6 +23610,24 @@ else
 fi
 
 
+# Check whether --enable-awkmod-mysql was given.
+if test "${enable_awkmod_mysql+set}" = set; then :
+  enableval=$enable_awkmod_mysql; enable_awkmod_mysql_is=$enableval
+else
+  enable_awkmod_mysql_is=yes
+
+fi
+
+ if test "x${enable_awkmod_mysql_is}" = "xyes"; then
+  ENABLE_AWKMOD_MYSQL_TRUE=
+  ENABLE_AWKMOD_MYSQL_FALSE='#'
+else
+  ENABLE_AWKMOD_MYSQL_TRUE='#'
+  ENABLE_AWKMOD_MYSQL_FALSE=
+fi
+
+
+
 # Check whether --enable-awkmod-sed was given.
 if test "${enable_awkmod_sed+set}" = set; then :
   enableval=$enable_awkmod_sed; enable_awkmod_sed_is=$enableval
@@ -23857,6 +23879,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${ENABLE_AWKMOD_MPI_TRUE}" && test -z "${ENABLE_AWKMOD_MPI_FALSE}"; then
   as_fn_error $? "conditional \"ENABLE_AWKMOD_MPI\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${ENABLE_AWKMOD_MYSQL_TRUE}" && test -z "${ENABLE_AWKMOD_MYSQL_FALSE}"; then
+  as_fn_error $? "conditional \"ENABLE_AWKMOD_MYSQL\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${ENABLE_AWKMOD_SED_TRUE}" && test -z "${ENABLE_AWKMOD_SED_FALSE}"; then

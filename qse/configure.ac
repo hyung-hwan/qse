@@ -956,6 +956,19 @@ then
 fi
 AM_CONDITIONAL(ENABLE_AWKMOD_MPI, test "x${enable_awkmod_mpi_is}" = "xyes")
 
+dnl ==== enable-awkawk-mysql ====
+AC_ARG_ENABLE([awkmod-mysql],
+	[AS_HELP_STRING([--enable-awkmod-mysql],[enable the mysql module for awk(default. yes)])],
+	enable_awkmod_mysql_is=$enableval,
+	enable_awkmod_mysql_is=yes
+)
+dnl if test "x${have_C_mysql}" != "xyes"
+dnl then
+dnl 	enable_awkmod_mysql_is="no"
+dnl fi
+AM_CONDITIONAL(ENABLE_AWKMOD_MYSQL, test "x${enable_awkmod_mysql_is}" = "xyes")
+
+
 dnl ==== enable-awkawk-sed ====
 AC_ARG_ENABLE([awkmod-sed],
 	[AS_HELP_STRING([--enable-awkmod-sed],[enable the sed module for awk(default. yes)])],

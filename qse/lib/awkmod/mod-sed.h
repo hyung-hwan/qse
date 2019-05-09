@@ -24,8 +24,8 @@
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _QSE_LIB_AWK_MOD_SED_H_
-#define _QSE_LIB_AWK_MOD_SED_H_
+#ifndef _QSE_LIB_AWKMOD_SED_H_
+#define _QSE_LIB_AWKMOD_SED_H_
 
 #include <qse/awk/awk.h>
 

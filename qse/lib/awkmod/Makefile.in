@@ -89,11 +89,12 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 @ENABLE_AWKMOD_MPI_TRUE@@ENABLE_STATIC_MODULE_TRUE@am__append_1 = libqseawk-mpi.la
-@ENABLE_AWKMOD_SED_TRUE@@ENABLE_STATIC_MODULE_TRUE@am__append_2 = libqseawk-sed.la
-@ENABLE_AWKMOD_UCI_TRUE@@ENABLE_STATIC_MODULE_TRUE@am__append_3 = libqseawk-uci.la
-@ENABLE_AWKMOD_MPI_TRUE@@ENABLE_STATIC_MODULE_FALSE@am__append_4 = libqseawk-mpi.la
-@ENABLE_AWKMOD_SED_TRUE@@ENABLE_STATIC_MODULE_FALSE@am__append_5 = libqseawk-sed.la
-@ENABLE_AWKMOD_UCI_TRUE@@ENABLE_STATIC_MODULE_FALSE@am__append_6 = libqseawk-uci.la
+@ENABLE_AWKMOD_MYSQL_TRUE@@ENABLE_STATIC_MODULE_TRUE@am__append_2 = libqseawk-mysql.la
+@ENABLE_AWKMOD_SED_TRUE@@ENABLE_STATIC_MODULE_TRUE@am__append_3 = libqseawk-sed.la
+@ENABLE_AWKMOD_UCI_TRUE@@ENABLE_STATIC_MODULE_TRUE@am__append_4 = libqseawk-uci.la
+@ENABLE_AWKMOD_MPI_TRUE@@ENABLE_STATIC_MODULE_FALSE@am__append_5 = libqseawk-mpi.la
+@ENABLE_AWKMOD_SED_TRUE@@ENABLE_STATIC_MODULE_FALSE@am__append_6 = libqseawk-sed.la
+@ENABLE_AWKMOD_UCI_TRUE@@ENABLE_STATIC_MODULE_FALSE@am__append_7 = libqseawk-uci.la
 subdir = lib/awkmod
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ax_check_sign.m4 \
@@ -158,6 +159,17 @@ libqseawk_mpi_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
 @ENABLE_AWKMOD_MPI_TRUE@@ENABLE_STATIC_MODULE_FALSE@	-rpath \
 @ENABLE_AWKMOD_MPI_TRUE@@ENABLE_STATIC_MODULE_FALSE@	$(pkgmodexecdir)
 @ENABLE_AWKMOD_MPI_TRUE@@ENABLE_STATIC_MODULE_TRUE@am_libqseawk_mpi_la_rpath =
+@ENABLE_AWKMOD_MYSQL_TRUE@libqseawk_mysql_la_DEPENDENCIES =  \
+@ENABLE_AWKMOD_MYSQL_TRUE@	$(am__DEPENDENCIES_1)
+am__libqseawk_mysql_la_SOURCES_DIST = mod-mysql.c mod-mysql.h
+@ENABLE_AWKMOD_MYSQL_TRUE@am_libqseawk_mysql_la_OBJECTS =  \
+@ENABLE_AWKMOD_MYSQL_TRUE@	libqseawk_mysql_la-mod-mysql.lo
+libqseawk_mysql_la_OBJECTS = $(am_libqseawk_mysql_la_OBJECTS)
+libqseawk_mysql_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
+	$(AM_CFLAGS) $(CFLAGS) $(libqseawk_mysql_la_LDFLAGS) \
+	$(LDFLAGS) -o $@
+@ENABLE_AWKMOD_MYSQL_TRUE@@ENABLE_STATIC_MODULE_TRUE@am_libqseawk_mysql_la_rpath =
 @ENABLE_AWKMOD_SED_TRUE@libqseawk_sed_la_DEPENDENCIES =  \
 @ENABLE_AWKMOD_SED_TRUE@	$(am__DEPENDENCIES_1)
 am__libqseawk_sed_la_SOURCES_DIST = mod-sed.c mod-sed.h
@@ -221,9 +233,10 @@ AM_V_CCLD = $(am__v_CCLD_@AM_V@)
 am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
 am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
-SOURCES = $(libqseawk_mpi_la_SOURCES) $(libqseawk_sed_la_SOURCES) \
-	$(libqseawk_uci_la_SOURCES)
+SOURCES = $(libqseawk_mpi_la_SOURCES) $(libqseawk_mysql_la_SOURCES) \
+	$(libqseawk_sed_la_SOURCES) $(libqseawk_uci_la_SOURCES)
 DIST_SOURCES = $(am__libqseawk_mpi_la_SOURCES_DIST) \
+	$(am__libqseawk_mysql_la_SOURCES_DIST) \
 	$(am__libqseawk_sed_la_SOURCES_DIST) \
 	$(am__libqseawk_uci_la_SOURCES_DIST)
 am__can_run_installinfo = \
@@ -442,10 +455,11 @@ CPPFLAGS_COMMON = \
 @ENABLE_STATIC_MODULE_FALSE@LIBADD_COMMON = -lqseawk -lqsesi -lqsecmn
 @ENABLE_STATIC_MODULE_TRUE@LIBADD_COMMON = 
 @ENABLE_STATIC_MODULE_TRUE@noinst_LTLIBRARIES = $(am__append_1) \
-@ENABLE_STATIC_MODULE_TRUE@	$(am__append_2) $(am__append_3)
+@ENABLE_STATIC_MODULE_TRUE@	$(am__append_2) $(am__append_3) \
+@ENABLE_STATIC_MODULE_TRUE@	$(am__append_4)
 @ENABLE_STATIC_MODULE_FALSE@pkgmodexecdir = $(libdir)
-@ENABLE_STATIC_MODULE_FALSE@pkgmodexec_LTLIBRARIES = $(am__append_4) \
-@ENABLE_STATIC_MODULE_FALSE@	$(am__append_5) $(am__append_6)
+@ENABLE_STATIC_MODULE_FALSE@pkgmodexec_LTLIBRARIES = $(am__append_5) \
+@ENABLE_STATIC_MODULE_FALSE@	$(am__append_6) $(am__append_7)
 
 ##################################################
 ##################################################
@@ -457,6 +471,10 @@ CPPFLAGS_COMMON = \
 @ENABLE_AWKMOD_MPI_TRUE@libqseawk_mpi_la_CPPFLAGS = $(CPPFLAGS_COMMON) $(MPI_CFLAGS)
 @ENABLE_AWKMOD_MPI_TRUE@libqseawk_mpi_la_LDFLAGS = $(LDFLAGS_COMMON) $(MPI_CLDFLAGS)
 @ENABLE_AWKMOD_MPI_TRUE@libqseawk_mpi_la_LIBADD = $(LIBADD_COMMON)
+@ENABLE_AWKMOD_MYSQL_TRUE@libqseawk_mysql_la_SOURCES = mod-mysql.c mod-mysql.h
+@ENABLE_AWKMOD_MYSQL_TRUE@libqseawk_mysql_la_CPPFLAGS = $(CPPFLAGS_COMMON)
+@ENABLE_AWKMOD_MYSQL_TRUE@libqseawk_mysql_la_LDFLAGS = $(LDFLAGS_COMMON)
+@ENABLE_AWKMOD_MYSQL_TRUE@libqseawk_mysql_la_LIBADD = $(LIBADD_COMMON) -lmysqlclient_r
 @ENABLE_AWKMOD_SED_TRUE@libqseawk_sed_la_SOURCES = mod-sed.c mod-sed.h
 @ENABLE_AWKMOD_SED_TRUE@libqseawk_sed_la_CPPFLAGS = $(CPPFLAGS_COMMON)
 @ENABLE_AWKMOD_SED_TRUE@libqseawk_sed_la_LDFLAGS = $(LDFLAGS_COMMON) -L../sed
@@ -548,6 +566,9 @@ clean-pkgmodexecLTLIBRARIES:
 libqseawk-mpi.la: $(libqseawk_mpi_la_OBJECTS) $(libqseawk_mpi_la_DEPENDENCIES) $(EXTRA_libqseawk_mpi_la_DEPENDENCIES) 
 	$(AM_V_CCLD)$(libqseawk_mpi_la_LINK) $(am_libqseawk_mpi_la_rpath) $(libqseawk_mpi_la_OBJECTS) $(libqseawk_mpi_la_LIBADD) $(LIBS)
 
+libqseawk-mysql.la: $(libqseawk_mysql_la_OBJECTS) $(libqseawk_mysql_la_DEPENDENCIES) $(EXTRA_libqseawk_mysql_la_DEPENDENCIES) 
+	$(AM_V_CCLD)$(libqseawk_mysql_la_LINK) $(am_libqseawk_mysql_la_rpath) $(libqseawk_mysql_la_OBJECTS) $(libqseawk_mysql_la_LIBADD) $(LIBS)
+
 libqseawk-sed.la: $(libqseawk_sed_la_OBJECTS) $(libqseawk_sed_la_DEPENDENCIES) $(EXTRA_libqseawk_sed_la_DEPENDENCIES) 
 	$(AM_V_CCLD)$(libqseawk_sed_la_LINK) $(am_libqseawk_sed_la_rpath) $(libqseawk_sed_la_OBJECTS) $(libqseawk_sed_la_LIBADD) $(LIBS)
 
@@ -561,6 +582,7 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqseawk_mpi_la-mod-mpi.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqseawk_mysql_la-mod-mysql.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqseawk_sed_la-mod-sed.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqseawk_uci_la-mod-uci.Plo@am__quote@
 
@@ -591,6 +613,13 @@ libqseawk_mpi_la-mod-mpi.lo: mod-mpi.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='mod-mpi.c' object='libqseawk_mpi_la-mod-mpi.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libqseawk_mpi_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libqseawk_mpi_la-mod-mpi.lo `test -f 'mod-mpi.c' || echo '$(srcdir)/'`mod-mpi.c
+
+libqseawk_mysql_la-mod-mysql.lo: mod-mysql.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libqseawk_mysql_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libqseawk_mysql_la-mod-mysql.lo -MD -MP -MF $(DEPDIR)/libqseawk_mysql_la-mod-mysql.Tpo -c -o libqseawk_mysql_la-mod-mysql.lo `test -f 'mod-mysql.c' || echo '$(srcdir)/'`mod-mysql.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libqseawk_mysql_la-mod-mysql.Tpo $(DEPDIR)/libqseawk_mysql_la-mod-mysql.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='mod-mysql.c' object='libqseawk_mysql_la-mod-mysql.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libqseawk_mysql_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libqseawk_mysql_la-mod-mysql.lo `test -f 'mod-mysql.c' || echo '$(srcdir)/'`mod-mysql.c
 
 libqseawk_sed_la-mod-sed.lo: mod-sed.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libqseawk_sed_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libqseawk_sed_la-mod-sed.lo -MD -MP -MF $(DEPDIR)/libqseawk_sed_la-mod-sed.Tpo -c -o libqseawk_sed_la-mod-sed.lo `test -f 'mod-sed.c' || echo '$(srcdir)/'`mod-sed.c
