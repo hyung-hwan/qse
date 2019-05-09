@@ -309,13 +309,13 @@ AC_SUBST(SSL_LIBS)
 
 dnl MPI (optional)
 LX_FIND_MPI(C)
-AM_CONDITIONAL(HAVE_C_MPI, test "${have_C_mpi}" = "yes" )
+AM_CONDITIONAL(HAVE_C_MPI, test "x${have_C_mpi}" = "xyes" )
 dnl AM_CONDITIONAL(HAVE_CXX_MPI, test "${have_CXX_mpi}" = "yes" )
 
 dnl libuci (optional)
 AC_CHECK_LIB([uci], [uci_alloc_context], [UCI_LIBS="-luci"])
 AC_SUBST(UCI_LIBS)
-AM_CONDITIONAL(HAVE_LIBUCI, test "${ac_cv_lib_uci_uci_alloc_context}" = "yes" -a "${ac_cv_header_uci_h}" = "yes")
+AM_CONDITIONAL(HAVE_LIBUCI, test "x${ac_cv_lib_uci_uci_alloc_context}" = "xyes" -a "x${ac_cv_header_uci_h}" = "xyes")
 
 dnl libmysqlclient
 AX_LIB_MYSQL()
@@ -927,11 +927,55 @@ then
 	AC_DEFINE([QSE_ENABLE_SED_TRACER],[],[enable qse_sed_setexectracer()])
 fi
 
-if test "${enable_shared}" = "no" -a "${enable_static}" = "yes"
+dnl ===== enable-static-module =====
+AC_ARG_ENABLE([static-module],
+	[AS_HELP_STRING([--enable-static-module],[build modules statically into the main library(default. no)])],
+	enable_static_module_is=$enableval,
+	enable_static_module_is=no
+)
+if test "x${enable_shared}" = "xno" -a "x${enable_static}" = "xyes"
 then
-	AC_DEFINE([QSE_ENABLE_STATIC_MODULE],[],[link modules statically into the main library])
+	enable_static_module_is="yes"
 fi
-AM_CONDITIONAL(ENABLE_STATIC_MODULE, test "${enable_shared}" = "no" -a "${enable_static}" = "yes")
+
+if test "${enable_static_module_is}" = "yes"
+then
+	AC_DEFINE([MOO_ENABLE_STATIC_MODULE],[1],[link modules statically into the main library])
+fi
+AM_CONDITIONAL(ENABLE_STATIC_MODULE, test "x${enable_static_module_is}" = "xyes")
+
+dnl ==== enable-awkawk-mpi ====
+AC_ARG_ENABLE([awkmod-mpi],
+	[AS_HELP_STRING([--enable-awkmod-mpi],[enable the mpi module for awk(default. yes)])],
+	enable_awkmod_mpi_is=$enableval,
+	enable_awkmod_mpi_is=yes
+)
+if test "x${have_C_mpi}" != "xyes"
+then
+	enable_awkmod_mpi_is="no"
+fi
+AM_CONDITIONAL(ENABLE_AWKMOD_MPI, test "x${enable_awkmod_mpi_is}" = "xyes")
+
+dnl ==== enable-awkawk-sed ====
+AC_ARG_ENABLE([awkmod-sed],
+	[AS_HELP_STRING([--enable-awkmod-sed],[enable the sed module for awk(default. yes)])],
+	enable_awkmod_sed_is=$enableval,
+	enable_awkmod_sed_is=yes
+)
+AM_CONDITIONAL(ENABLE_AWKMOD_SED, test "x${enable_awkmod_sed_is}" = "xyes")
+
+dnl ==== enable-awkawk-uci ====
+AC_ARG_ENABLE([awkmod-uci],
+	[AS_HELP_STRING([--enable-awkmod-uci],[enable the uci module for awk(default. no)])],
+	enable_awkmod_uci_is=$enableval,
+	enable_awkmod_uci_is=no
+)
+if test "x${ac_cv_lib_uci_uci_alloc_context}" != "xyes" -o "x${ac_cv_header_uci_h}" = "xyes"
+then
+	enable_awkmod_uci_is="no"
+fi
+AM_CONDITIONAL(ENABLE_AWKMOD_UCI, test "x${enable_awkmod_uci_is}" = "xyes")
+
 
 AC_SUBST(QSE_SIZEOF_WCHAR_T, $ac_cv_sizeof_wchar_t)
 AC_SUBST(QSE_SIZEOF_LONG_LONG, $ac_cv_sizeof_long_long)
@@ -983,6 +1027,8 @@ AC_CONFIG_FILES([
 	lib/qsehttp.pc
 	lib/qserad.pc
 	lib/qsedhcp.pc
+	mod/Makefile
+	mod/awk/Makefile
 	cmd/Makefile 
 	cmd/awk/Makefile 
 	cmd/sed/Makefile 
