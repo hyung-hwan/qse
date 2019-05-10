@@ -216,6 +216,9 @@ struct qse_awk_t
 			qse_size_t incl;
 		} depth;
 
+		/* current pragma values */
+		int pragmas; 
+
 		/* function calls */
 		qse_htb_t* funs;
 

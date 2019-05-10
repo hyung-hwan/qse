@@ -574,8 +574,9 @@ static int print_expr (qse_awk_t* awk, qse_awk_nde_t* nde)
 
 			if (px->id.idxa != (qse_size_t)-1) 
 			{
-
-				if (!(awk->opt.trait & QSE_AWK_IMPLICIT))
+				/* deparsing is global. so i can't honor awk->parse.pragmas 
+				 * which can change in each input file. let me just check awk->opt.trait */
+				if (!(awk->opt.trait & QSE_AWK_IMPLICIT)) 
 				{
 					/* no implicit(named) variable is allowed.
 					 * use the actual name */
@@ -616,6 +617,8 @@ static int print_expr (qse_awk_t* awk, qse_awk_nde_t* nde)
 
 			if (px->id.idxa != (qse_size_t)-1) 
 			{
+				/* deparsing is global. so i can't honor awk->parse.pragmas 
+				 * which can change in each input file. let me just check awk->opt.trait */
 				if (!(awk->opt.trait & QSE_AWK_IMPLICIT))
 				{
 					/* no implicit(named) variable is allowed.
