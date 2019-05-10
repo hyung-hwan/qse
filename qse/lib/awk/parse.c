@@ -118,6 +118,7 @@ enum tok_t
 	TOK_XGLOBAL,
 	TOK_XLOCAL, 
 	TOK_XINCLUDE,
+	TOK_XPRAGMA,
 	TOK_XABORT,
 	TOK_XRESET,
 
@@ -262,6 +263,7 @@ static kwent_t kwtab[] =
 	{ { QSE_T("@global"),      7 }, TOK_XGLOBAL,     0 },
 	{ { QSE_T("@include"),     8 }, TOK_XINCLUDE,    0 },
 	{ { QSE_T("@local"),       6 }, TOK_XLOCAL,      0 },
+	{ { QSE_T("@pragma"),      7 }, TOK_XPRAGMA,     0 },
 	{ { QSE_T("@reset"),       6 }, TOK_XRESET,      0 },
 	{ { QSE_T("BEGIN"),        5 }, TOK_BEGIN,       QSE_AWK_PABLOCK },
 	{ { QSE_T("END"),          3 }, TOK_END,         QSE_AWK_PABLOCK },
@@ -692,7 +694,7 @@ int qse_awk_parse (qse_awk_t* awk, qse_awk_sio_t* sio)
 	awk->sio.arg.pragmas = 0;
 	awk->sio.inp = &awk->sio.arg;
 
-	n = parse (awk);
+	n = parse(awk);
 	if (n == 0  && awk->sio.outf != QSE_NULL) n = deparse (awk);
 
 	QSE_ASSERT (awk->parse.depth.loop == 0);
@@ -724,7 +726,9 @@ static int end_include (qse_awk_t* awk)
 	awk->sio.inp = awk->sio.inp->prev;
 
 	QSE_ASSERT (cur->name != QSE_NULL);
-	QSE_AWK_FREE (awk, cur);
+	/* restore the pragma values */
+	awk->parse.pragmas = cur->pragmas;
+	qse_awk_freemem (awk, cur);
 	awk->parse.depth.incl--;
 
 	if (x != 0)
@@ -787,7 +791,7 @@ static int begin_include (qse_awk_t* awk)
 	arg->name = (const qse_char_t*)(link + 1);
 	arg->line = 1;
 	arg->colm = 1;
-	arg->pragmas = 0;
+	
 
 	/* let the argument's prev field point to the current */
 	arg->prev = awk->sio.inp;
@@ -799,6 +803,13 @@ static int begin_include (qse_awk_t* awk)
 		else awk->errinf.loc = awk->tok.loc; /* adjust error location */
 		goto oops;
 	}
+
+	/* store the pragma value */
+	arg->pragmas = awk->parse.pragmas;
+	/* but don't change awk->parse.pragmas. it means the included file inherits
+	 * the existing progma values. 
+	awk->parse.pragmas = (awk->option.trait & QSE_AWK_IMPLICIT);
+	*/
 
 	/* i update the current pointer after opening is successful */
 	awk->sio.inp = arg;
@@ -837,7 +848,7 @@ static int parse_progunit (qse_awk_t* awk)
 
 	QSE_ASSERT (awk->parse.depth.loop == 0);
 
-	if (MATCH(awk,TOK_XGLOBAL)) 
+	if (MATCH(awk, TOK_XGLOBAL)) 
 	{
 		qse_size_t ngbls;
 
@@ -847,16 +858,14 @@ static int parse_progunit (qse_awk_t* awk)
 
 		QSE_ASSERT (awk->tree.ngbls == QSE_ARR_SIZE(awk->parse.gbls));
 		ngbls = awk->tree.ngbls;
-		if (collect_globals (awk) == QSE_NULL) 
+		if (collect_globals(awk) == QSE_NULL) 
 		{
-			qse_arr_delete (
-				awk->parse.gbls, ngbls, 
-				QSE_ARR_SIZE(awk->parse.gbls) - ngbls);
+			qse_arr_delete (awk->parse.gbls, ngbls, QSE_ARR_SIZE(awk->parse.gbls) - ngbls);
 			awk->tree.ngbls = ngbls;
 			return -1;
 		}
 	}
-	else if (MATCH(awk,TOK_XINCLUDE))
+	else if (MATCH(awk, TOK_XINCLUDE))
 	{
 		if (awk->opt.depth.s.incl > 0 &&
 		    awk->parse.depth.incl >=  awk->opt.depth.s.incl)
@@ -867,25 +876,74 @@ static int parse_progunit (qse_awk_t* awk)
 	
 		if (get_token(awk) <= -1) return -1;
 
-		if (!MATCH(awk,TOK_STR))
+		if (!MATCH(awk, TOK_STR))
 		{
 			SETERR_LOC (awk, QSE_AWK_EINCLSTR, &awk->ptok.loc);
 			return -1;
 		}
-	
-		if (begin_include (awk) <= -1) return -1;
-	
+
+		if (begin_include(awk) <= -1) return -1;
+
 		/* i just return without doing anything special
 		 * after having setting up the environment for file 
 		 * inclusion. the loop in parse() proceeds to call 
 		 * parse_progunit() */
 	}
-	else if (MATCH(awk,TOK_FUNCTION)) 
+	else if (MATCH(awk, TOK_XPRAGMA))
+	{
+		qse_cstr_t name;
+
+		if (get_token(awk) <= -1) return -1;
+		if (!MATCH(awk, TOK_IDENT))
+		{
+			qse_awk_seterrfmt (awk, QSE_AWK_EIDENT, &awk->ptok.loc, QSE_T("identifier expected for '@pragma'"));
+			return -1;
+		}
+
+		name.len = QSE_STR_LEN(awk->tok.name);
+		name.ptr = QSE_STR_PTR(awk->tok.name);
+
+		if (qse_strxcmp(name.ptr, name.len, QSE_T("implicit")) == 0)
+		{
+
+			if (get_token(awk) <= -1) return -1;
+			if (!MATCH(awk, TOK_IDENT))
+			{
+			error_ident_on_off_expected_for_implicit:
+				qse_awk_seterrfmt (awk, QSE_AWK_EIDENT, &awk->ptok.loc, QSE_T("identifier 'on' or 'off' expected for 'implicit'"));
+				return -1;
+			}
+
+			name.len = QSE_STR_LEN(awk->tok.name);
+			name.ptr = QSE_STR_PTR(awk->tok.name);
+			if (qse_strxcmp(name.ptr, name.len, QSE_T("on")) == 0)
+			{
+				awk->parse.pragmas |= QSE_AWK_IMPLICIT;
+			}
+			else if (qse_strxcmp(name.ptr, name.len, QSE_T("off")) == 0)
+			{
+				awk->parse.pragmas &= ~QSE_AWK_IMPLICIT;
+			}
+			else
+			{
+				goto error_ident_on_off_expected_for_implicit;
+			}
+		}
+		else
+		{
+			qse_awk_seterrfmt (awk, QSE_AWK_EIDENT, &awk->ptok.loc, QSE_T("unknown @pragma identifier - %.*s"), (int)name.len, name.ptr);
+			return -1;
+		}
+
+		if (get_token(awk) <= -1) return -1;
+		if (MATCH(awk,TOK_SEMICOLON) && get_token(awk) <= -1) return -1;
+	}
+	else if (MATCH(awk, TOK_FUNCTION)) 
 	{
 		awk->parse.id.block = PARSE_FUNCTION;
-		if (parse_function (awk) == QSE_NULL) return -1;
+		if (parse_function(awk) == QSE_NULL) return -1;
 	}
-	else if (MATCH(awk,TOK_BEGIN)) 
+	else if (MATCH(awk, TOK_BEGIN)) 
 	{
 		if ((awk->opt.trait & QSE_AWK_PABLOCK) == 0)
 		{
@@ -896,7 +954,7 @@ static int parse_progunit (qse_awk_t* awk)
 		awk->parse.id.block = PARSE_BEGIN;
 		if (get_token(awk) <= -1) return -1; 
 
-		if (MATCH(awk,TOK_NEWLINE) || MATCH(awk,TOK_EOF))
+		if (MATCH(awk, TOK_NEWLINE) || MATCH(awk, TOK_EOF))
 		{
 			/* when QSE_AWK_NEWLINE is set,
 	   		 * BEGIN and { should be located on the same line */
@@ -904,20 +962,19 @@ static int parse_progunit (qse_awk_t* awk)
 			return -1;
 		}
 
-		if (!MATCH(awk,TOK_LBRACE)) 
+		if (!MATCH(awk, TOK_LBRACE)) 
 		{
 			SETERR_TOK (awk, QSE_AWK_ELBRACE);
 			return -1;
 		}
 
 		awk->parse.id.block = PARSE_BEGIN_BLOCK;
-		if (parse_begin (awk) == QSE_NULL) return -1;
+		if (parse_begin(awk) == QSE_NULL) return -1;
 
 		/* skip a semicolon after an action block if any */
-		if (MATCH(awk,TOK_SEMICOLON) && 
-		    get_token (awk) <= -1) return -1;
+		if (MATCH(awk, TOK_SEMICOLON) && get_token(awk) <= -1) return -1;
 	}
-	else if (MATCH(awk,TOK_END)) 
+	else if (MATCH(awk, TOK_END)) 
 	{
 		if ((awk->opt.trait & QSE_AWK_PABLOCK) == 0)
 		{
@@ -928,7 +985,7 @@ static int parse_progunit (qse_awk_t* awk)
 		awk->parse.id.block = PARSE_END;
 		if (get_token(awk) <= -1) return -1; 
 
-		if (MATCH(awk,TOK_NEWLINE) || MATCH(awk,TOK_EOF))
+		if (MATCH(awk, TOK_NEWLINE) || MATCH(awk, TOK_EOF))
 		{
 			/* when QSE_AWK_NEWLINE is set,
 	   		 * END and { should be located on the same line */
@@ -936,20 +993,19 @@ static int parse_progunit (qse_awk_t* awk)
 			return -1;
 		}
 
-		if (!MATCH(awk,TOK_LBRACE)) 
+		if (!MATCH(awk, TOK_LBRACE)) 
 		{
 			SETERR_TOK (awk, QSE_AWK_ELBRACE);
 			return -1;
 		}
 
 		awk->parse.id.block = PARSE_END_BLOCK;
-		if (parse_end (awk) == QSE_NULL) return -1;
+		if (parse_end(awk) == QSE_NULL) return -1;
 
 		/* skip a semicolon after an action block if any */
-		if (MATCH(awk,TOK_SEMICOLON) && 
-		    get_token (awk) <= -1) return -1;
+		if (MATCH(awk,TOK_SEMICOLON) && get_token (awk) <= -1) return -1;
 	}
-	else if (MATCH(awk,TOK_LBRACE))
+	else if (MATCH(awk, TOK_LBRACE))
 	{
 		/* patternless block */
 		if ((awk->opt.trait & QSE_AWK_PABLOCK) == 0)
@@ -959,11 +1015,10 @@ static int parse_progunit (qse_awk_t* awk)
 		}
 
 		awk->parse.id.block = PARSE_ACTION_BLOCK;
-		if (parse_action_block (awk, QSE_NULL, 0) == QSE_NULL) return -1;
+		if (parse_action_block(awk, QSE_NULL, 0) == QSE_NULL) return -1;
 
 		/* skip a semicolon after an action block if any */
-		if (MATCH(awk,TOK_SEMICOLON) && 
-		    get_token (awk) <= -1) return -1;
+		if (MATCH(awk, TOK_SEMICOLON) && get_token(awk) <= -1) return -1;
 	}
 	else
 	{
@@ -1442,8 +1497,7 @@ static qse_awk_chain_t* parse_action_block (
 	return chain;
 }
 
-static qse_awk_nde_t* parse_block (
-	qse_awk_t* awk, const qse_awk_loc_t* xloc, int istop) 
+static qse_awk_nde_t* parse_block (qse_awk_t* awk, const qse_awk_loc_t* xloc, int istop) 
 {
 	qse_awk_nde_t* head, * curr, * nde;
 	qse_awk_nde_blk_t* block;
@@ -5099,7 +5153,8 @@ static qse_awk_nde_t* parse_primary_ident_noseg (qse_awk_t* awk, const qse_awk_l
 			#endif
 			}
 		}
-		else if (awk->opt.trait & QSE_AWK_IMPLICIT) 
+		/*else if (awk->opt.trait & QSE_AWK_IMPLICIT) */
+		else if (awk->parse.pragmas & QSE_AWK_IMPLICIT)
 		{
 			/* if the name is followed by ( without spaces,
 			 * it's considered a function call though the name 
@@ -5420,7 +5475,8 @@ static qse_awk_nde_t* parse_hashidx (qse_awk_t* awk, const qse_cstr_t* name, con
 		return (qse_awk_nde_t*)nde;
 	}
 
-	if (awk->opt.trait & QSE_AWK_IMPLICIT) 
+	/*if (awk->opt.trait & QSE_AWK_IMPLICIT) */
+	if (awk->parse.pragmas & QSE_AWK_IMPLICIT)
 	{
 		int fnname = isfnname(awk, name);
 		switch (fnname)
@@ -6524,74 +6580,44 @@ static int deparse (qse_awk_t* awk)
 
 		qse_awk_getkwname (awk, QSE_AWK_KWID_XGLOBAL, &kw);
 		if (qse_awk_putsrcstrn(awk,kw.ptr,kw.len) <= -1 ||
-		    qse_awk_putsrcstr (awk, QSE_T(" ")) <= -1)
-		{
-			EXIT_DEPARSE ();
-		}
+		    qse_awk_putsrcstr (awk, QSE_T(" ")) <= -1) EXIT_DEPARSE ();
 
 		for (i = awk->tree.ngbls_base; i < awk->tree.ngbls - 1; i++) 
 		{
 			if (!(awk->opt.trait & QSE_AWK_IMPLICIT))
 			{
-				/* use the actual name if no named variable 
-				 * is allowed */
-				if (qse_awk_putsrcstrn (awk, 
-					QSE_ARR_DPTR(awk->parse.gbls,i),
-					QSE_ARR_DLEN(awk->parse.gbls,i)) <= -1)
-				{
-					EXIT_DEPARSE ();
-				}
+				/* use the actual name if no named variable is allowed */
+				if (qse_awk_putsrcstrn (awk, QSE_ARR_DPTR(awk->parse.gbls, i), QSE_ARR_DLEN(awk->parse.gbls, i)) <= -1) EXIT_DEPARSE ();
 			}
 			else
 			{
-				len = qse_awk_inttostr (
-					awk, (qse_awk_int_t)i, 
-					10, QSE_T("__g"), tmp, QSE_COUNTOF(tmp));
+				len = qse_awk_inttostr (awk, (qse_awk_int_t)i, 10, QSE_T("__g"), tmp, QSE_COUNTOF(tmp));
 				QSE_ASSERT (len != (qse_size_t)-1);
-				if (qse_awk_putsrcstrn (awk, tmp, len) <= -1)
-				{
-					EXIT_DEPARSE ();
-				}
+				if (qse_awk_putsrcstrn (awk, tmp, len) <= -1) EXIT_DEPARSE ();
 			}
 
-			if (qse_awk_putsrcstr (awk, QSE_T(", ")) <= -1)
-				EXIT_DEPARSE ();
+			if (qse_awk_putsrcstr (awk, QSE_T(", ")) <= -1) EXIT_DEPARSE ();
 		}
 
 		if (!(awk->opt.trait & QSE_AWK_IMPLICIT))
 		{
-			if (qse_awk_putsrcstrn (awk, 
-				QSE_ARR_DPTR(awk->parse.gbls,i),
-				QSE_ARR_DLEN(awk->parse.gbls,i)) <= -1)
-			{
-				EXIT_DEPARSE ();
-			}
+			/* use the actual name if no named variable is allowed */
+			if (qse_awk_putsrcstrn(awk, QSE_ARR_DPTR(awk->parse.gbls,i), QSE_ARR_DLEN(awk->parse.gbls,i)) <= -1) EXIT_DEPARSE ();
 		}
 		else
 		{
-			len = qse_awk_inttostr (	
-				awk, (qse_awk_int_t)i, 
-				10, QSE_T("__g"), tmp, QSE_COUNTOF(tmp));
+			len = qse_awk_inttostr(awk, (qse_awk_int_t)i, 10, QSE_T("__g"), tmp, QSE_COUNTOF(tmp));
 			QSE_ASSERT (len != (qse_size_t)-1);
-			if (qse_awk_putsrcstrn (awk, tmp, len) <= -1)
-			{
-				EXIT_DEPARSE ();
-			}
+			if (qse_awk_putsrcstrn (awk, tmp, len) <= -1) EXIT_DEPARSE ();
 		}
 
 		if (awk->opt.trait & QSE_AWK_CRLF)
 		{
-			if (qse_awk_putsrcstr (awk, QSE_T(";\r\n\r\n")) <= -1)
-			{
-				EXIT_DEPARSE ();
-			}
+			if (qse_awk_putsrcstr(awk, QSE_T(";\r\n\r\n")) <= -1) EXIT_DEPARSE ();
 		}
 		else
 		{
-			if (qse_awk_putsrcstr (awk, QSE_T(";\n\n")) <= -1)
-			{
-				EXIT_DEPARSE ();
-			}
+			if (qse_awk_putsrcstr(awk, QSE_T(";\n\n")) <= -1) EXIT_DEPARSE ();
 		}
 	}
 
@@ -6601,10 +6627,7 @@ static int deparse (qse_awk_t* awk)
 	df.ret = 0;
 
 	qse_htb_walk (awk->tree.funs, deparse_func, &df);
-	if (df.ret <= -1)
-	{
-		EXIT_DEPARSE ();
-	}
+	if (df.ret <= -1) EXIT_DEPARSE ();
 
 	for (nde = awk->tree.begin; nde != QSE_NULL; nde = nde->next)
 	{
@@ -6629,8 +6652,7 @@ static int deparse (qse_awk_t* awk)
 	{
 		if (chain->pattern != QSE_NULL) 
 		{
-			if (qse_awk_prnptnpt (awk, chain->pattern) <= -1)
-				EXIT_DEPARSE ();
+			if (qse_awk_prnptnpt (awk, chain->pattern) <= -1) EXIT_DEPARSE ();
 		}
 
 		if (chain->action == QSE_NULL) 
@@ -6638,34 +6660,28 @@ static int deparse (qse_awk_t* awk)
 			/* blockless pattern */
 			if (awk->opt.trait & QSE_AWK_CRLF)
 			{
-				if (put_char (awk, QSE_T('\r')) <= -1)
-					EXIT_DEPARSE ();
+				if (put_char (awk, QSE_T('\r')) <= -1) EXIT_DEPARSE ();
 			}
 
-			if (put_char (awk, QSE_T('\n')) <= -1)
-				EXIT_DEPARSE ();
+			if (put_char (awk, QSE_T('\n')) <= -1) EXIT_DEPARSE ();
 		}
 		else 
 		{
 			if (chain->pattern != QSE_NULL)
 			{
-				if (put_char (awk, QSE_T(' ')) <= -1)
-					EXIT_DEPARSE ();
+				if (put_char (awk, QSE_T(' ')) <= -1) EXIT_DEPARSE ();
 			}
-			if (qse_awk_prnpt (awk, chain->action) <= -1)
-				EXIT_DEPARSE ();
+			if (qse_awk_prnpt (awk, chain->action) <= -1) EXIT_DEPARSE ();
 		}
 
 		if (awk->opt.trait & QSE_AWK_CRLF)
 		{
-			if (put_char (awk, QSE_T('\r')) <= -1)
-				EXIT_DEPARSE ();
+			if (put_char (awk, QSE_T('\r')) <= -1) EXIT_DEPARSE ();
 		}
 
-		if (put_char (awk, QSE_T('\n')) <= -1)
-			EXIT_DEPARSE ();
+		if (put_char (awk, QSE_T('\n')) <= -1) EXIT_DEPARSE ();
 
-		chain = chain->next;	
+		chain = chain->next;
 	}
 
 	for (nde = awk->tree.end; nde != QSE_NULL; nde = nde->next)
@@ -6692,13 +6708,11 @@ static int deparse (qse_awk_t* awk)
 
 exit_deparse:
 	if (n == 0) CLRERR (awk);
-	if (awk->sio.outf (
-		awk, QSE_AWK_SIO_CLOSE, &awk->sio.arg, QSE_NULL, 0) != 0)
+	if (awk->sio.outf(awk, QSE_AWK_SIO_CLOSE, &awk->sio.arg, QSE_NULL, 0) != 0)
 	{
 		if (n == 0)
 		{
-			if (ISNOERR(awk)) 
-				SETERR_ARG (awk, QSE_AWK_ECLOSE, QSE_T("<SOUT>"), 6);
+			if (ISNOERR(awk)) SETERR_ARG (awk, QSE_AWK_ECLOSE, QSE_T("<SOUT>"), 6);
 			n = -1;
 		}
 	}
@@ -6706,8 +6720,7 @@ exit_deparse:
 	return n;
 }
 
-static qse_htb_walk_t deparse_func (
-	qse_htb_t* map, qse_htb_pair_t* pair, void* arg)
+static qse_htb_walk_t deparse_func (qse_htb_t* map, qse_htb_pair_t* pair, void* arg)
 {
 	struct deparse_func_t* df = (struct deparse_func_t*)arg;
 	qse_awk_fun_t* fun = (qse_awk_fun_t*)QSE_HTB_VPTR(pair);

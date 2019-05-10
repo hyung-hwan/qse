@@ -347,6 +347,7 @@ void qse_awk_clear (qse_awk_t* awk)
 	awk->parse.depth.loop = 0;
 	awk->parse.depth.expr = 0;
 	awk->parse.depth.incl = 0;
+	awk->parse.pragmas = (awk->opt.trait & QSE_AWK_IMPLICIT); 
 
 	/* clear parse trees */
 	/*awk->tree.ngbls_base = 0;
