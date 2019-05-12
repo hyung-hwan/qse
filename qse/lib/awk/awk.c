@@ -293,6 +293,7 @@ void qse_awk_fini (qse_awk_t* awk)
 	fini_token (&awk->tok);
 	fini_token (&awk->ptok);
 
+	if (awk->parse.incl_hist.ptr) qse_awk_freemem (awk, awk->parse.incl_hist.ptr);
 	qse_awk_clearsionames (awk);
 
 	/* destroy dynamically allocated options */
@@ -349,6 +350,8 @@ void qse_awk_clear (qse_awk_t* awk)
 	awk->parse.depth.incl = 0;
 	awk->parse.pragmas = (awk->opt.trait & QSE_AWK_IMPLICIT); 
 
+	awk->parse.incl_hist.count =0;
+
 	/* clear parse trees */
 	/*awk->tree.ngbls_base = 0;
 	awk->tree.ngbls = 0; */
@@ -358,7 +361,7 @@ void qse_awk_clear (qse_awk_t* awk)
 	awk->tree.cur_fun.len = 0;
 	qse_htb_clear (awk->tree.funs);
 
-	if (awk->tree.begin != QSE_NULL) 
+	if (awk->tree.begin) 
 	{
 		/*QSE_ASSERT (awk->tree.begin->next == QSE_NULL);*/
 		qse_awk_clrpt (awk, awk->tree.begin);
@@ -366,7 +369,7 @@ void qse_awk_clear (qse_awk_t* awk)
 		awk->tree.begin_tail = QSE_NULL;
 	}
 
-	if (awk->tree.end != QSE_NULL) 
+	if (awk->tree.end) 
 	{
 		/*QSE_ASSERT (awk->tree.end->next == QSE_NULL);*/
 		qse_awk_clrpt (awk, awk->tree.end);
@@ -374,7 +377,7 @@ void qse_awk_clear (qse_awk_t* awk)
 		awk->tree.end_tail = QSE_NULL;
 	}
 
-	while (awk->tree.chain != QSE_NULL) 
+	while (awk->tree.chain) 
 	{
 		qse_awk_chain_t* next = awk->tree.chain->next;
 
@@ -398,7 +401,7 @@ void qse_awk_clear (qse_awk_t* awk)
 
 void* qse_awk_getxtn (qse_awk_t* awk)
 {
-	return QSE_XTN (awk);
+	return QSE_XTN(awk);
 }
 
 void qse_awk_getprm (qse_awk_t* awk, qse_awk_prm_t* prm)
