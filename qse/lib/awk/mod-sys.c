@@ -105,7 +105,7 @@ static int fnc_fork (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	pid = fork ();
 #endif
 
-	retv = qse_awk_rtx_makeintval (rtx, pid);
+	retv = qse_awk_rtx_makeintval(rtx, pid);
 	if (retv == QSE_NULL) return -1;
 
 	qse_awk_rtx_setretval (rtx, retv);
@@ -117,29 +117,112 @@ static int fnc_wait (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	qse_awk_int_t pid;
 	qse_awk_val_t* retv;
 	int rx;
+	qse_size_t nargs;
+	qse_awk_int_t opts = 0;
+	int status;
 
-/* TODO: handle more parameters */
+	nargs = qse_awk_rtx_getnargs(rtx);
+	if (nargs >= 3)
+	{
+		if (qse_awk_rtx_valtoint(rtx, qse_awk_rtx_getarg(rtx, 2), &opts) <= -1) return -1;
+	}
 
-	rx = qse_awk_rtx_valtoint (rtx, qse_awk_rtx_getarg (rtx, 0), &pid);
+	rx = qse_awk_rtx_valtoint(rtx, qse_awk_rtx_getarg(rtx, 0), &pid);
 	if (rx >= 0)
 	{
 #if defined(_WIN32)
 		/* TOOD: implement this*/
 		rx = -1;
+		status = 0;
 #elif defined(__OS2__)
 		/* TOOD: implement this*/
 		rx = -1;
+		status = 0;
 #elif defined(__DOS__)
 		/* TOOD: implement this*/
 		rx = -1;
+		status = 0;
 #else
-		rx = waitpid (pid, QSE_NULL, 0);
+		rx = waitpid(pid, &status, opts);
 #endif
 	}
 
-	retv = qse_awk_rtx_makeintval (rtx, rx);
-	if (retv == QSE_NULL) return -1;
+	retv = qse_awk_rtx_makeintval(rtx, rx);
+	if (!retv) return -1;
 
+	if (nargs >= 2)
+	{
+		qse_awk_val_t* sv;
+		int x;
+
+		sv = qse_awk_rtx_makeintval(rtx, status);
+		if (!sv) return -1;
+
+		qse_awk_rtx_refupval (rtx, sv);
+		x = qse_awk_rtx_setrefval(rtx, (qse_awk_val_ref_t*)qse_awk_rtx_getarg(rtx, 1), sv);
+		qse_awk_rtx_refdownval (rtx, sv);
+		if (x <= -1)  
+		{
+			qse_awk_rtx_freemem (rtx, retv);
+			return -1;
+		}
+	}
+
+	qse_awk_rtx_setretval (rtx, retv);
+	return 0;
+}
+
+static int fnc_wifexited (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	qse_awk_int_t wstatus;
+	qse_awk_val_t* retv;
+	if (qse_awk_rtx_valtoint(rtx, qse_awk_rtx_getarg(rtx, 0), &wstatus) <= -1) return -1;
+	retv = qse_awk_rtx_makeintval(rtx, WIFEXITED(wstatus));
+	if (!retv) return -1;
+	qse_awk_rtx_setretval (rtx, retv);
+	return 0;
+}
+
+static int fnc_wexitstatus (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	qse_awk_int_t wstatus;
+	qse_awk_val_t* retv;
+	if (qse_awk_rtx_valtoint(rtx, qse_awk_rtx_getarg(rtx, 0), &wstatus) <= -1) return -1;
+	retv = qse_awk_rtx_makeintval(rtx, WEXITSTATUS(wstatus));
+	if (!retv) return -1;
+	qse_awk_rtx_setretval (rtx, retv);
+	return 0;
+}
+
+static int fnc_wifsignaled (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	qse_awk_int_t wstatus;
+	qse_awk_val_t* retv;
+	if (qse_awk_rtx_valtoint(rtx, qse_awk_rtx_getarg(rtx, 0), &wstatus) <= -1) return -1;
+	retv = qse_awk_rtx_makeintval(rtx, WIFSIGNALED(wstatus));
+	if (!retv) return -1;
+	qse_awk_rtx_setretval (rtx, retv);
+	return 0;
+}
+
+static int fnc_wtermsig (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	qse_awk_int_t wstatus;
+	qse_awk_val_t* retv;
+	if (qse_awk_rtx_valtoint(rtx, qse_awk_rtx_getarg(rtx, 0), &wstatus) <= -1) return -1;
+	retv = qse_awk_rtx_makeintval(rtx, WTERMSIG(wstatus));
+	if (!retv) return -1;
+	qse_awk_rtx_setretval (rtx, retv);
+	return 0;
+}
+
+static int fnc_wcoredump (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	qse_awk_int_t wstatus;
+	qse_awk_val_t* retv;
+	if (qse_awk_rtx_valtoint(rtx, qse_awk_rtx_getarg(rtx, 0), &wstatus) <= -1) return -1;
+	retv = qse_awk_rtx_makeintval(rtx, WCOREDUMP(wstatus));
+	if (!retv) return -1;
 	qse_awk_rtx_setretval (rtx, retv);
 	return 0;
 }
@@ -150,8 +233,8 @@ static int fnc_kill (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	qse_awk_val_t* retv;
 	int rx;
 
-	if (qse_awk_rtx_valtoint (rtx, qse_awk_rtx_getarg (rtx, 0), &pid) <= -1 ||
-	    qse_awk_rtx_valtoint (rtx, qse_awk_rtx_getarg (rtx, 1), &sig) <= -1)
+	if (qse_awk_rtx_valtoint(rtx, qse_awk_rtx_getarg (rtx, 0), &pid) <= -1 ||
+	    qse_awk_rtx_valtoint(rtx, qse_awk_rtx_getarg (rtx, 1), &sig) <= -1)
 	{
 		rx = -1;
 	}
@@ -426,7 +509,7 @@ static int fnc_sleep (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	qse_awk_val_t* retv;
 	int rx;
 
-	rx = qse_awk_rtx_valtonum (rtx, qse_awk_rtx_getarg (rtx, 0), &lv, &fv);
+	rx = qse_awk_rtx_valtonum(rtx, qse_awk_rtx_getarg (rtx, 0), &lv, &fv);
 	if (rx == 0)
 	{
 #if defined(_WIN32)
@@ -534,7 +617,7 @@ static int fnc_mktime (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	qse_size_t nargs;
 	qse_awk_val_t* retv;
 
-	nargs = qse_awk_rtx_getnargs (rtx);
+	nargs = qse_awk_rtx_getnargs(rtx);
 	if (nargs >= 1)
 	{
 		int sign;
@@ -1240,29 +1323,34 @@ static fnctab_t fnctab[] =
 {
 	/* keep this table sorted for binary search in query(). */
 
-	{ QSE_T("closelog"),   { { 0, 0, QSE_NULL     }, fnc_closelog,   0  } },
-	{ QSE_T("fork"),       { { 0, 0, QSE_NULL     }, fnc_fork,       0  } },
-	{ QSE_T("getegid"),    { { 0, 0, QSE_NULL     }, fnc_getegid,    0  } },
-	{ QSE_T("getenv"),     { { 1, 1, QSE_NULL     }, fnc_getenv,     0  } },
-	{ QSE_T("geteuid"),    { { 0, 0, QSE_NULL     }, fnc_geteuid,    0  } },
-	{ QSE_T("getgid"),     { { 0, 0, QSE_NULL     }, fnc_getgid,     0  } },
-	{ QSE_T("getnwifcfg"), { { 3, 3, QSE_T("vvr") }, fnc_getnwifcfg, 0  } },
-	{ QSE_T("getpgid"),    { { 0, 0, QSE_NULL     }, fnc_getpgid,    0  } },
-	{ QSE_T("getpid"),     { { 0, 0, QSE_NULL     }, fnc_getpid,     0  } },
-	{ QSE_T("getppid"),    { { 0, 0, QSE_NULL     }, fnc_getppid,    0  } },
-	{ QSE_T("gettid"),     { { 0, 0, QSE_NULL     }, fnc_gettid,     0  } },
-	{ QSE_T("gettime"),    { { 0, 0, QSE_NULL     }, fnc_gettime,    0  } },
-	{ QSE_T("getuid"),     { { 0, 0, QSE_NULL     }, fnc_getuid,     0  } },
-	{ QSE_T("kill"),       { { 2, 2, QSE_NULL     }, fnc_kill,       0  } },
-	{ QSE_T("mktime"),     { { 0, 1, QSE_NULL     }, fnc_mktime,     0  } },
-	{ QSE_T("openlog"),    { { 3, 3, QSE_NULL     }, fnc_openlog,    0  } },
-	{ QSE_T("settime"),    { { 1, 1, QSE_NULL     }, fnc_settime,    0  } },
-	{ QSE_T("sleep"),      { { 1, 1, QSE_NULL     }, fnc_sleep,      0  } },
-	{ QSE_T("strftime"),   { { 2, 2, QSE_NULL     }, fnc_strftime,   0  } },
-	{ QSE_T("system"),     { { 1, 1, QSE_NULL     }, fnc_system,     0  } },
-	{ QSE_T("systime"),    { { 0, 0, QSE_NULL     }, fnc_gettime,    0  } }, /* alias to gettime() */
-	{ QSE_T("wait"),       { { 1, 1, QSE_NULL     }, fnc_wait,       0  } },
-	{ QSE_T("writelog"),   { { 2, 2, QSE_NULL     }, fnc_writelog,   0  } }
+	{ QSE_T("WCOREDUMP"),   { { 1, 1, QSE_NULL     }, fnc_wcoredump,   0  } },
+	{ QSE_T("WEXITSTATUS"), { { 1, 1, QSE_NULL     }, fnc_wexitstatus, 0  } },
+	{ QSE_T("WIFEXITED"),   { { 1, 1, QSE_NULL     }, fnc_wifexited,   0  } },
+	{ QSE_T("WIFSIGNALED"), { { 1, 1, QSE_NULL     }, fnc_wifsignaled, 0  } },
+	{ QSE_T("WTERMSIG"),    { { 1, 1, QSE_NULL     }, fnc_wtermsig,    0  } },
+	{ QSE_T("closelog"),    { { 0, 0, QSE_NULL     }, fnc_closelog,    0  } },
+	{ QSE_T("fork"),        { { 0, 0, QSE_NULL     }, fnc_fork,        0  } },
+	{ QSE_T("getegid"),     { { 0, 0, QSE_NULL     }, fnc_getegid,     0  } },
+	{ QSE_T("getenv"),      { { 1, 1, QSE_NULL     }, fnc_getenv,      0  } },
+	{ QSE_T("geteuid"),     { { 0, 0, QSE_NULL     }, fnc_geteuid,     0  } },
+	{ QSE_T("getgid"),      { { 0, 0, QSE_NULL     }, fnc_getgid,      0  } },
+	{ QSE_T("getnwifcfg"),  { { 3, 3, QSE_T("vvr") }, fnc_getnwifcfg,  0  } },
+	{ QSE_T("getpgid"),     { { 0, 0, QSE_NULL     }, fnc_getpgid,     0  } },
+	{ QSE_T("getpid"),      { { 0, 0, QSE_NULL     }, fnc_getpid,      0  } },
+	{ QSE_T("getppid"),     { { 0, 0, QSE_NULL     }, fnc_getppid,     0  } },
+	{ QSE_T("gettid"),      { { 0, 0, QSE_NULL     }, fnc_gettid,      0  } },
+	{ QSE_T("gettime"),     { { 0, 0, QSE_NULL     }, fnc_gettime,     0  } },
+	{ QSE_T("getuid"),      { { 0, 0, QSE_NULL     }, fnc_getuid,      0  } },
+	{ QSE_T("kill"),        { { 2, 2, QSE_NULL     }, fnc_kill,        0  } },
+	{ QSE_T("mktime"),      { { 0, 1, QSE_NULL     }, fnc_mktime,      0  } },
+	{ QSE_T("openlog"),     { { 3, 3, QSE_NULL     }, fnc_openlog,     0  } },
+	{ QSE_T("settime"),     { { 1, 1, QSE_NULL     }, fnc_settime,     0  } },
+	{ QSE_T("sleep"),       { { 1, 1, QSE_NULL     }, fnc_sleep,       0  } },
+	{ QSE_T("strftime"),    { { 2, 2, QSE_NULL     }, fnc_strftime,    0  } },
+	{ QSE_T("system"),      { { 1, 1, QSE_NULL     }, fnc_system,      0  } },
+	{ QSE_T("systime"),     { { 0, 0, QSE_NULL     }, fnc_gettime,     0  } }, /* alias to gettime() */
+	{ QSE_T("wait"),        { { 1, 3, QSE_T("vrv") }, fnc_wait,        0  } },
+	{ QSE_T("writelog"),    { { 2, 2, QSE_NULL     }, fnc_writelog,    0  } }
 };
 
 #if !defined(SIGHUP)
@@ -1341,11 +1429,9 @@ static inttab_t inttab[] =
 	{ QSE_T("SIGKILL"), { SIGKILL } },
 	{ QSE_T("SIGQUIT"), { SIGQUIT } },
 	{ QSE_T("SIGSEGV"), { SIGSEGV } },
-	{ QSE_T("SIGTERM"), { SIGTERM } }
+	{ QSE_T("SIGTERM"), { SIGTERM } },
 
-/*
-	{ QSE_T("WNOHANG"), { WNOHANG } },
-*/
+	{ QSE_T("WNOHANG"), { WNOHANG } }
 };
 
 static int query (qse_awk_mod_t* mod, qse_awk_t* awk, const qse_char_t* name, qse_awk_mod_sym_t* sym)

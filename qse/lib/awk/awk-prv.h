@@ -243,6 +243,13 @@ struct qse_awk_t
 		 */
 		qse_size_t lparen_seq;
 		qse_size_t lparen_last_closed;
+
+		struct
+		{
+			qse_uint8_t* ptr;
+			qse_size_t count;
+			qse_size_t capa;
+		} incl_hist;
 	} parse;
 
 	/* source code management */

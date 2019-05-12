@@ -666,8 +666,7 @@ static int open_parsestd (qse_awk_t* awk, qse_awk_sio_arg_t* arg, xtn_t* xtn, qs
 	}
 }
 
-static qse_ssize_t sf_in_open (
-	qse_awk_t* awk, qse_awk_sio_arg_t* arg, xtn_t* xtn)
+static qse_ssize_t sf_in_open (qse_awk_t* awk, qse_awk_sio_arg_t* arg, xtn_t* xtn)
 {
 	if (arg->prev == QSE_NULL)
 	{
@@ -707,12 +706,12 @@ static qse_ssize_t sf_in_open (
 		{
 			const qse_char_t* outer;
 
-			outer = qse_sio_getpath (arg->prev->handle);
+			outer = qse_sio_getpath(arg->prev->handle);
 			if (outer)
 			{
 				const qse_char_t* base;
 
-				base = qse_basename (outer);
+				base = qse_basename(outer);
 				if (base != outer && arg->name[0] != QSE_T('/'))
 				{
 					qse_size_t tmplen, totlen, dirlen;
@@ -721,11 +720,8 @@ static qse_ssize_t sf_in_open (
 					totlen = qse_strlen(arg->name) + dirlen;
 					if (totlen >= QSE_COUNTOF(fbuf))
 					{
-						dbuf = qse_awk_allocmem (
-							awk, QSE_SIZEOF(qse_char_t) * (totlen + 1)
-						);
-						if (dbuf == QSE_NULL) return -1;
-	
+						dbuf = qse_awk_allocmem(awk, QSE_SIZEOF(qse_char_t) * (totlen + 1));
+						if (!dbuf) return -1;
 						path = dbuf;
 					}
 					else path = fbuf;
@@ -740,8 +736,8 @@ static qse_ssize_t sf_in_open (
 			awk->mmgr, 0, path, QSE_SIO_READ | QSE_SIO_IGNOREMBWCERR | QSE_SIO_KEEPPATH
 		);
 
-		if (dbuf) QSE_MMGR_FREE (awk->mmgr, dbuf);
-		if (arg->handle == QSE_NULL)
+		if (dbuf) qse_awk_freemem (awk, dbuf);
+		if (!arg->handle)
 		{
 			qse_cstr_t ea;
 			ea.ptr = (qse_char_t*)arg->name;
@@ -750,12 +746,12 @@ static qse_ssize_t sf_in_open (
 			return -1;
 		}
 
+/* TODO: set arg->unique_id.... to support @inclone */
 		return 0;
 	}
 }
 
-static qse_ssize_t sf_in_close (
-	qse_awk_t* awk, qse_awk_sio_arg_t* arg, xtn_t* xtn)
+static qse_ssize_t sf_in_close (qse_awk_t* awk, qse_awk_sio_arg_t* arg, xtn_t* xtn)
 {
 	if (arg->prev == QSE_NULL)
 	{
@@ -785,9 +781,7 @@ static qse_ssize_t sf_in_close (
 	return 0;
 }
 
-static qse_ssize_t sf_in_read (
-	qse_awk_t* awk, qse_awk_sio_arg_t* arg,
-	qse_char_t* data, qse_size_t size, xtn_t* xtn)
+static qse_ssize_t sf_in_read (qse_awk_t* awk, qse_awk_sio_arg_t* arg, qse_char_t* data, qse_size_t size, xtn_t* xtn)
 {
 	if (arg->prev == QSE_NULL)
 	{
@@ -876,9 +870,7 @@ static qse_ssize_t sf_in_read (
 	}
 }
 
-static qse_ssize_t sf_in (
-	qse_awk_t* awk, qse_awk_sio_cmd_t cmd, 
-	qse_awk_sio_arg_t* arg, qse_char_t* data, qse_size_t size)
+static qse_ssize_t sf_in (qse_awk_t* awk, qse_awk_sio_cmd_t cmd, qse_awk_sio_arg_t* arg, qse_char_t* data, qse_size_t size)
 {
 	xtn_t* xtn = QSE_XTN (awk);
 
@@ -899,9 +891,7 @@ static qse_ssize_t sf_in (
 	}
 }
 
-static qse_ssize_t sf_out (
-	qse_awk_t* awk, qse_awk_sio_cmd_t cmd, 
-	qse_awk_sio_arg_t* arg, qse_char_t* data, qse_size_t size)
+static qse_ssize_t sf_out (qse_awk_t* awk, qse_awk_sio_cmd_t cmd, qse_awk_sio_arg_t* arg, qse_char_t* data, qse_size_t size)
 {
 	xtn_t* xtn = QSE_XTN (awk);
 
@@ -915,7 +905,6 @@ static qse_ssize_t sf_out (
 					if (xtn->s.out.x->u.file.path == QSE_NULL ||
 					    (xtn->s.out.x->u.file.path[0] == QSE_T('-') &&
 					     xtn->s.out.x->u.file.path[1] == QSE_T('\0')))
-
 					{
 						/* no path name or - -> stdout */
 						xtn->s.out.u.file.sio = open_sio_std (

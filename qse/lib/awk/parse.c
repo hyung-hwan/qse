@@ -117,6 +117,7 @@ enum tok_t
 	/* === extended reserved words === */
 	TOK_XGLOBAL,
 	TOK_XLOCAL, 
+	TOK_XINCLONE,
 	TOK_XINCLUDE,
 	TOK_XPRAGMA,
 	TOK_XABORT,
@@ -261,6 +262,7 @@ static kwent_t kwtab[] =
 	 * also keep it sorted by the first field for binary search */
 	{ { QSE_T("@abort"),       6 }, TOK_XABORT,      0 },
 	{ { QSE_T("@global"),      7 }, TOK_XGLOBAL,     0 },
+	{ { QSE_T("@inclone"),     8 }, TOK_XINCLONE,    0 },
 	{ { QSE_T("@include"),     8 }, TOK_XINCLUDE,    0 },
 	{ { QSE_T("@local"),       6 }, TOK_XLOCAL,      0 },
 	{ { QSE_T("@pragma"),      7 }, TOK_XPRAGMA,     0 },
@@ -742,7 +744,37 @@ static int end_include (qse_awk_t* awk)
 	return 1; /* ended the included file successfully */
 }
 
-static int begin_include (qse_awk_t* awk)
+static int ever_included (qse_awk_t* awk, qse_awk_sio_arg_t* arg)
+{
+	qse_size_t i;
+	for (i = 0; i < awk->parse.incl_hist.count; i++)
+	{
+		if (QSE_MEMCMP(&awk->parse.incl_hist.ptr[i * QSE_SIZEOF(arg->unique_id)], arg->unique_id, QSE_SIZEOF(arg->unique_id)) == 0) return 1;
+	}
+	return 0;
+}
+
+static int record_ever_included (qse_awk_t* awk, qse_awk_sio_arg_t* arg)
+{
+	if (awk->parse.incl_hist.count >= awk->parse.incl_hist.capa)
+	{
+		qse_uint8_t* tmp;
+		qse_size_t newcapa;
+
+		newcapa = awk->parse.incl_hist.capa + 128;
+		tmp = (qse_uint8_t*)qse_awk_reallocmem(awk, awk->parse.incl_hist.ptr, newcapa * QSE_SIZEOF(arg->unique_id));
+		if (!tmp) return -1;
+
+		awk->parse.incl_hist.ptr = tmp;
+		awk->parse.incl_hist.capa = newcapa;
+	}
+
+	QSE_MEMCPY (&awk->parse.incl_hist.ptr[awk->parse.incl_hist.count * QSE_SIZEOF(arg->unique_id)], arg->unique_id, QSE_SIZEOF(arg->unique_id));
+	awk->parse.incl_hist.count++;
+	return 0;
+}
+
+static int begin_include (qse_awk_t* awk, int once)
 {
 	qse_awk_sio_arg_t* arg = QSE_NULL;
 	qse_link_t* link;
@@ -769,7 +801,7 @@ static int begin_include (qse_awk_t* awk)
 
 	/* store the include-file name into a list
 	 * and this list is not deleted after qse_awk_parse.
-	 * the errinfo.loc.file can point to a string here. */
+	 * the errinfo.loc.file can point to a include_oncestring here. */
 	link = (qse_link_t*)qse_awk_callocmem(awk, QSE_SIZEOF(*link) + 
 		QSE_SIZEOF(*arg) + QSE_SIZEOF(qse_char_t) * (QSE_STR_LEN(awk->tok.name) + 1));
 	if (link == QSE_NULL)
@@ -791,7 +823,6 @@ static int begin_include (qse_awk_t* awk)
 	arg->name = (const qse_char_t*)(link + 1);
 	arg->line = 1;
 	arg->colm = 1;
-	
 
 	/* let the argument's prev field point to the current */
 	arg->prev = awk->sio.inp;
@@ -815,15 +846,23 @@ static int begin_include (qse_awk_t* awk)
 	awk->sio.inp = arg;
 	awk->parse.depth.incl++;
 
-	/* read in the first character in the included file. 
-	 * so the next call to get_token() sees the character read
-	 * from this file. */
-	if (get_char(awk) <= -1 || get_token(awk) <= -1) 
+	if (once && ever_included(awk, arg))
 	{
 		end_include (awk); 
-		/* i don't jump to oops since i've called 
-		 * end_include() where awk->sio.inp/arg is freed. */
-		return -1;
+		/* it has been included previously. don't include this file again. */
+	}
+	else
+	{
+		/* read in the first character in the included file. 
+		 * so the next call to get_token() sees the character read
+		 * from this file. */
+		if (record_ever_included(awk, arg) <= -1 || get_char(awk) <= -1 || get_token(awk) <= -1)
+		{
+			end_include (awk); 
+			/* i don't jump to oops since i've called 
+			 * end_include() where awk->sio.inp/arg is freed. */
+			return -1;
+		}
 	}
 
 	return 0;
@@ -865,15 +904,18 @@ static int parse_progunit (qse_awk_t* awk)
 			return -1;
 		}
 	}
-	else if (MATCH(awk, TOK_XINCLUDE))
+	else if (MATCH(awk, TOK_XINCLUDE) || MATCH(awk, TOK_XINCLONE))
 	{
+		int once;
+
 		if (awk->opt.depth.s.incl > 0 &&
 		    awk->parse.depth.incl >=  awk->opt.depth.s.incl)
 		{
 			SETERR_LOC (awk, QSE_AWK_EINCLTD, &awk->ptok.loc);
 			return -1;
 		}
-	
+
+		once = MATCH(awk, TOK_XINCLONE);
 		if (get_token(awk) <= -1) return -1;
 
 		if (!MATCH(awk, TOK_STR))
@@ -882,7 +924,7 @@ static int parse_progunit (qse_awk_t* awk)
 			return -1;
 		}
 
-		if (begin_include(awk) <= -1) return -1;
+		if (begin_include(awk, once) <= -1) return -1;
 
 		/* i just return without doing anything special
 		 * after having setting up the environment for file 
@@ -1515,16 +1557,19 @@ static qse_awk_nde_t* parse_block (qse_awk_t* awk, const qse_awk_loc_t* xloc, in
 			if (get_token(awk) <= -1) return QSE_NULL;
 		}
 
-		if (MATCH(awk,TOK_XINCLUDE))
+		if (MATCH(awk,TOK_XINCLUDE) || MATCH(awk, TOK_XINCLONE))
 		{
 			/* @include ... */
+			int once;
+
 			if (awk->opt.depth.s.incl > 0 &&
 			    awk->parse.depth.incl >=  awk->opt.depth.s.incl)
 			{
 				SETERR_LOC (awk, QSE_AWK_EINCLTD, &awk->ptok.loc);
 				return QSE_NULL;
 			}
-		
+
+			once = MATCH(awk, TOK_XINCLONE);
 			if (get_token(awk) <= -1) return QSE_NULL;
 	
 			if (!MATCH(awk,TOK_STR))
@@ -1532,25 +1577,21 @@ static qse_awk_nde_t* parse_block (qse_awk_t* awk, const qse_awk_loc_t* xloc, in
 				SETERR_LOC (awk, QSE_AWK_EINCLSTR, &awk->ptok.loc);
 				return QSE_NULL;
 			}
-		
-			if (begin_include (awk) <= -1) return QSE_NULL;
+
+			if (begin_include(awk, once) <= -1) return QSE_NULL;
 		}
 		else if (MATCH(awk,TOK_XLOCAL))
 		{
 			/* @local ... */
 			if (get_token(awk) <= -1) 
 			{
-				qse_arr_delete (
-					awk->parse.lcls, nlcls, 
-					QSE_ARR_SIZE(awk->parse.lcls)-nlcls);
+				qse_arr_delete (awk->parse.lcls, nlcls, QSE_ARR_SIZE(awk->parse.lcls)-nlcls);
 				return QSE_NULL;
 			}
 	
 			if (collect_locals (awk, nlcls, istop) == QSE_NULL)
 			{
-				qse_arr_delete (
-					awk->parse.lcls, nlcls, 
-					QSE_ARR_SIZE(awk->parse.lcls)-nlcls);
+				qse_arr_delete (awk->parse.lcls, nlcls, QSE_ARR_SIZE(awk->parse.lcls)-nlcls);
 				return QSE_NULL;
 			}
 		}
@@ -1594,15 +1635,18 @@ static qse_awk_nde_t* parse_block (qse_awk_t* awk, const qse_awk_loc_t* xloc, in
 			break;
 		}
 
-		if (MATCH(awk,TOK_XINCLUDE))
+		else if (MATCH(awk, TOK_XINCLUDE) || MATCH(awk, TOK_XINCLONE))
 		{
+			int once;
+
 			if (awk->opt.depth.s.incl > 0 &&
 			    awk->parse.depth.incl >=  awk->opt.depth.s.incl)
 			{
 				SETERR_LOC (awk, QSE_AWK_EINCLTD, &awk->ptok.loc);
 				return QSE_NULL;
 			}
-		
+
+			once = MATCH(awk, TOK_XINCLONE);
 			if (get_token(awk) <= -1) return QSE_NULL;
 	
 			if (!MATCH(awk,TOK_STR))
@@ -1610,8 +1654,8 @@ static qse_awk_nde_t* parse_block (qse_awk_t* awk, const qse_awk_loc_t* xloc, in
 				SETERR_LOC (awk, QSE_AWK_EINCLSTR, &awk->ptok.loc);
 				return QSE_NULL;
 			}
-		
-			if (begin_include (awk) <= -1) return QSE_NULL;
+
+			if (begin_include(awk, once) <= -1) return QSE_NULL;
 		}
 		else
 		{
