@@ -1192,7 +1192,7 @@ void qse_nwio_setcmgr (qse_nwio_t* nwio, qse_cmgr_t* cmgr)
 	if (nwio->tio) qse_tio_setcmgr (nwio->tio, cmgr);
 }
 
-qse_nwio_hnd_t qse_nwio_gethandle (const qse_nwio_t* nwio)
+qse_nwio_hnd_t qse_nwio_gethnd (const qse_nwio_t* nwio)
 {
 	return nwio->handle;
 }

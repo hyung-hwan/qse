@@ -759,8 +759,7 @@ static int occbound (comp_t* com, qse_rex_node_t* n)
 				bound = bound * 10 + com->c.value - QSE_T('0');
 				if (getc_noesc(com) <= -1) return -1;
 			}
-			while (com->c.value >= QSE_T('0') && 
-			       com->c.value <= QSE_T('9'));
+			while (com->c.value >= QSE_T('0') && com->c.value <= QSE_T('9'));
 
 			n->occ.max = bound;
 		}
@@ -768,7 +767,7 @@ static int occbound (comp_t* com, qse_rex_node_t* n)
 	}
 	else n->occ.max = n->occ.min;
 
-	if (n->occ.min > n->occ.min)
+	if (n->occ.min > n->occ.max)
 	{
 		/* invalid occurrences range */
 		com->rex->errnum = QSE_REX_EBOUND;
@@ -1103,15 +1102,14 @@ static qse_rex_node_t* comp_branches (comp_t* c, qse_rex_node_t* ge)
 	return left;
 }
 
-qse_rex_node_t* qse_rex_comp (
-	qse_rex_t* rex, const qse_char_t* ptr, qse_size_t len)
+qse_rex_node_t* qse_rex_comp (qse_rex_t* rex, const qse_char_t* ptr, qse_size_t len)
 {
 	comp_t c;
 	qse_rex_node_t* end, * body;
 
 	c.rex = rex;
 	c.re.ptr = ptr;
-	c.re.len = len;	
+	c.re.len = len;
 
 	c.ptr = ptr;
 	c.end = ptr + len;

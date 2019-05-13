@@ -580,10 +580,10 @@ struct qse_awk_sio_arg_t
 	/**
 	 * [OUT] unique id set by an input handler. it is used for a single time inclusion check.
 	 */
-	qse_uint8_t unique_id[16];
+	qse_uint8_t unique_id[QSE_SIZEOF_INTPTR_T * 2];
 
 	/**
- 	 * [IN] points to the includer. #QSE_NULL for the toplevel.
+	 * [IN] points to the includer. #QSE_NULL for the toplevel.
 	 * 
 	 */
 	qse_awk_sio_arg_t* prev;

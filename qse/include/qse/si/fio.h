@@ -237,9 +237,9 @@ QSE_EXPORT qse_fio_errnum_t qse_fio_geterrnum (
 );
 
 /**
- * The qse_fio_gethandle() function returns the native file handle.
+ * The qse_fio_gethnd() function returns the native file handle.
  */
-QSE_EXPORT qse_fio_hnd_t qse_fio_gethandle (
+QSE_EXPORT qse_fio_hnd_t qse_fio_gethnd (
 	const qse_fio_t* fio
 );
 

@@ -320,10 +320,10 @@ QSE_EXPORT void qse_pio_setcmgr (
 );
 
 /**
- * The qse_pio_gethandle() function gets a pipe handle.
+ * The qse_pio_gethnd() function gets a pipe handle.
  * \return pipe handle
  */
-QSE_EXPORT qse_pio_hnd_t qse_pio_gethandle (
+QSE_EXPORT qse_pio_hnd_t qse_pio_gethnd (
 	const qse_pio_t* pio, /**< pio object */
 	qse_pio_hid_t    hid  /**< handle ID */
 );

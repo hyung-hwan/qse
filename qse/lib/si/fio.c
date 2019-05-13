@@ -354,7 +354,7 @@ int qse_fio_init (
 		}
 		if (handle == INVALID_HANDLE_VALUE) 
 		{
-			DWORD e = GetLastError();	
+			DWORD e = GetLastError();
 			if (!fellback && e == ERROR_INVALID_PARAMETER && 
 			    ((share_mode & FILE_SHARE_DELETE) || (flags & QSE_FIO_APPEND)))
 			{
@@ -957,7 +957,7 @@ qse_fio_errnum_t qse_fio_geterrnum (const qse_fio_t* fio)
 	return fio->errnum;
 }
 
-qse_fio_hnd_t qse_fio_gethandle (const qse_fio_t* fio)
+qse_fio_hnd_t qse_fio_gethnd (const qse_fio_t* fio)
 {
 	return fio->handle;
 }

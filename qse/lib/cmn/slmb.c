@@ -123,9 +123,7 @@ qse_size_t qse_slwcrtoslmb (
 #endif
 }
 
-qse_size_t qse_slmbrtoslwc (
-	const qse_mchar_t* mb, qse_size_t mbl, 
-	qse_wchar_t* wc, qse_mbstate_t* state)
+qse_size_t qse_slmbrtoslwc (const qse_mchar_t* mb, qse_size_t mbl, qse_wchar_t* wc, qse_mbstate_t* state)
 {
 #if defined(FORCE_UTF8)
 
@@ -152,43 +150,15 @@ qse_size_t qse_slmbrtoslwc (
 	}
 
 	return dbcslen;
-#elif defined(__sun__) && defined(HAVE_MBRTOWC)
-	/* 
-	 * Read comments in qse_slmbrlen().
-	 */
-
-	size_t n;
-
-	QSE_ASSERT (mb != QSE_NULL);
-	QSE_ASSERT (mbl > 0);
-
-	if (wc)
-	{
-		n = mbrtowc (wc, mb, mbl, (mbstate_t*)state);
-		if (n == 0) 
-		{
-			*wc = QSE_WT('\0');
-			return 1;
-		}
-	}
-	else
-	{
-		qse_wchar_t dummy;
-		n = mbrtowc (&dummy, mb, mbl, (mbstate_t*)state);
-		if (n == 0) return 1;
-	}
-
-	if (n == (size_t)-1) return 0; /* invalid sequence */
-	if (n == (size_t)-2) return mbl + 1; /* incomplete sequence */
-	return (qse_size_t)n;
 
 #elif defined(HAVE_MBRTOWC)
 	size_t n;
+	wchar_t tc;
 
 	QSE_ASSERT (mb != QSE_NULL);
 	QSE_ASSERT (mbl > 0);
 
-	n = mbrtowc (wc, mb, mbl, (mbstate_t*)state);
+	n = mbrtowc(&tc, mb, mbl, (mbstate_t*)state);
 	if (n == 0) 
 	{
 		if (wc) *wc = QSE_WT('\0');
@@ -197,6 +167,8 @@ qse_size_t qse_slmbrtoslwc (
 
 	if (n == (size_t)-1) return 0; /* invalid sequence */
 	if (n == (size_t)-2) return mbl + 1; /* incomplete sequence */
+
+	if (wc) *wc = tc; /* if sizeof(qse_wchar_t) < sizeof(wchar_t), *wc may get truncated */
 	return (qse_size_t)n;
 
 #else
@@ -205,8 +177,7 @@ qse_size_t qse_slmbrtoslwc (
 #endif
 }
 
-qse_size_t qse_slmbrlen (
-	const qse_mchar_t* mb, qse_size_t mbl, qse_mbstate_t* state)
+qse_size_t qse_slmbrlen (const qse_mchar_t* mb, qse_size_t mbl, qse_mbstate_t* state)
 {
 #if defined(FORCE_UTF8)
 	return qse_utf8len (mb, mbl);
@@ -267,7 +238,7 @@ qse_size_t qse_slmbrlen (
 	QSE_ASSERT (mb != QSE_NULL);
 	QSE_ASSERT (mbl > 0);
 
-	n = mbrlen (mb, mbl, (mbstate_t*)state);
+	n = mbrlen(mb, mbl, (mbstate_t*)state);
 	if (n == 0) return 1; /* a null character */
 
 	if (n == (size_t)-1) return 0; /* invalid sequence */
@@ -276,7 +247,7 @@ qse_size_t qse_slmbrlen (
 	return (qse_size_t)n;
 
 	#if 0
-	n = mblen (mb, mbl);
+	n = mblen(mb, mbl);
 	if (n == (size_t)-1) return 0; /* invalid or incomplete sequence */
 	if (n == 0) return 1; /* a null character */
 	return (qse_size_t)n;

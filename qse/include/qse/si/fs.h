@@ -48,8 +48,8 @@ struct qse_fattr_t
 	qse_uintptr_t mode;
 
 	qse_uintmax_t size;
-	qse_uintmax_t ino;
-	qse_uintmax_t dev;
+	qse_uintptr_t ino;
+	qse_uintptr_t dev;
 	qse_uintptr_t uid;
 	qse_uintptr_t gid;
 
