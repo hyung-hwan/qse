@@ -1135,7 +1135,7 @@ static void open_mpi (mpi_t* mpi, int argc, qse_achar_t* argv[])
 
 	if (lt_dlinit () != 0) return;
 
-	if (lt_dladvise_init (&adv) != 0) goto oops;
+	if (lt_dladvise_init(&adv) != 0) goto oops;
 
 	/* If i don't set the global option, loading may end up with an error
 	 * like this depending on your MPI library.
@@ -1143,23 +1143,23 @@ static void open_mpi (mpi_t* mpi, int argc, qse_achar_t* argv[])
 	 *  symbol lookup error: /usr/lib/openmpi/lib/openmpi/mca_paffinity_linux.so: undefined symbol: mca_base_param_reg_int
 	 */
 
-	if (lt_dladvise_global (&adv) != 0 || lt_dladvise_ext (&adv) != 0)
+	if (lt_dladvise_global(&adv) != 0 || lt_dladvise_ext(&adv) != 0)
 	{
 		lt_dladvise_destroy (&adv);
 		goto oops;
 	}
 
-	mpi->h = lt_dlopenadvise (DEFAULT_MODPREFIX "mpi" DEFAULT_MODPOSTFIX, adv);
+	mpi->h = lt_dlopenadvise(DEFAULT_MODPREFIX "mpi" DEFAULT_MODPOSTFIX, adv);
 	lt_dladvise_destroy (&adv);
 
 	if (mpi->h)
 	{
-		mpi->i = lt_dlsym (mpi->h, "qse_awk_mod_mpi_init");
-		mpi->f = lt_dlsym (mpi->h, "qse_awk_mod_mpi_fini");
+		mpi->i = lt_dlsym(mpi->h, "qse_awk_mod_mpi_init");
+		mpi->f = lt_dlsym(mpi->h, "qse_awk_mod_mpi_fini");
 
 		if (mpi->i == QSE_NULL || 
 		    mpi->f == QSE_NULL ||
-		    mpi->i (argc, argv) <= -1)
+		    mpi->i(argc, argv) <= -1)
 		{
 			lt_dlclose (mpi->h);
 			mpi->h = QSE_NULL;

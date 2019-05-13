@@ -25,9 +25,41 @@
  */
 
 #include "mod-mysql.h"
+#include <mysql/mysql.h>
+
+#define __IMAP_NODE_T_DATA  MYSQL ctx;
+#define __IMAP_LIST_T_DATA /* nothing */
+#define __IMAP_LIST_T sql_list_t
+#define __IMAP_NODE_T sql_node_t
+#define __MAKE_IMAP_NODE __new_sql_node
+#define __FREE_IMAP_NODE __free_sql_node
+#include "../lib/awk/imap-imp.h"
+
+static sql_node_t* new_sql_node (qse_awk_rtx_t* rtx, sql_list_t* list)
+{
+	sql_node_t* node;
+
+	node = __new_sql_node(rtx, list);
+	if (!node) return QSE_NULL;
+
+	if (mysql_init(&node->ctx) == QSE_NULL)
+	{
+		__free_sql_node (rtx, list, node);
+		return QSE_NULL;
+	}
+
+	return node;
+}
+
+static void free_sql_node (qse_awk_rtx_t* rtx, sql_list_t* list, sql_node_t* node)
+{
+	mysqL_close (&node->ctx);
+	__free_sql_node (rtx, list, node);
+}
 
 static int fnc_open (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
+	sql_node_t* node;
 	return -1;
 }
 
@@ -115,12 +147,14 @@ static int query (qse_awk_mod_t* mod, qse_awk_t* awk, const qse_char_t* name, qs
 
 static int init (qse_awk_mod_t* mod, qse_awk_rtx_t* rtx)
 {
+	mysql_library_init (0, QSE_NULL, QSE_NULL);
 	return 0;
 }
 
 static void fini (qse_awk_mod_t* mod, qse_awk_rtx_t* rtx)
 {
 	/* TODO: anything */
+	mysql_library_end ();
 }
 
 static void unload (qse_awk_mod_t* mod, qse_awk_t* awk)
@@ -139,5 +173,19 @@ int qse_awk_mod_mysql (qse_awk_mod_t* mod, qse_awk_t* awk)
 	mod->ctx...
 	 */
 
+	
+
 	return 0;
+}
+
+
+int qse_awk_mod_mysql_init (int argc, qse_achar_t* argv[])
+{
+	if (mysql_library_init(argc, argv, QSE_NULL) != 0) return -1;
+	return 0;
+}
+
+void qse_awk_mod_mysql_fini (void)
+{
+	mysql_library_end ();
 }
