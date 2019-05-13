@@ -62,31 +62,6 @@ enum
 	DIR_EMAPTOSCALAR
 };
 
-struct dir_node_t
-{
-	int id;
-	qse_dir_t* ctx;
-	dir_node_t* prev;
-	dir_node_t* next;
-};
-
-struct dir_list_t
-{
-	dir_node_t* head;
-	dir_node_t* tail;
-	dir_node_t* free;
-	
-	/* mapping table to map 'id' to 'node' */
-	struct
-	{
-		dir_node_t** tab;
-		qse_size_t capa;
-		qse_size_t high;
-	} map;
-
-	int errnum;
-};
-
 static int dir_err_to_errnum (qse_dir_errnum_t num)
 {
 	switch (num)
@@ -103,7 +78,7 @@ static int dir_err_to_errnum (qse_dir_errnum_t num)
 			return DIR_EPERM;
 		case QSE_DIR_ENOENT:
 			return DIR_ENOENT;
-		default:	
+		default:
 			return DIR_EOTHER;
 	}
 }
@@ -126,136 +101,51 @@ static int awk_err_to_errnum (qse_awk_errnum_t num)
 			return DIR_ENOENT;
 		case QSE_AWK_EMAPTOSCALAR:
 			return DIR_EMAPTOSCALAR;
-		default:	
+		default:
 			return DIR_EOTHER;
 	}
 }
 
+#define __IMAP_NODE_T_DATA qse_dir_t* ctx;
+#define __IMAP_LIST_T_DATA int errnum;
+#define __IMAP_LIST_T dir_list_t
+#define __IMAP_NODE_T dir_node_t
+#define __MAKE_IMAP_NODE __new_dir_node
+#define __FREE_IMAP_NODE __free_dir_node
+#include "imap-imp.h"
+
 static dir_node_t* new_dir_node (qse_awk_rtx_t* rtx, dir_list_t* list, const qse_char_t* path, qse_awk_int_t flags)
 {
-	/* create a new context node and append it to the list tail */
 	dir_node_t* node;
 	qse_dir_errnum_t oe;
 
-	node = QSE_NULL;
-
-	if (list->free) node = list->free;
-	else
+	node = __new_dir_node(rtx, list);
+	if (!node) 
 	{
-		node = qse_awk_rtx_callocmem (rtx, QSE_SIZEOF(*node));
-		if (!node) 
-		{
-			list->errnum = DIR_ENOMEM;
-			goto oops;
-		}
+		list->errnum = DIR_ENOMEM;
+		return QSE_NULL;
 	}
 
-	node->ctx = qse_dir_open (qse_awk_rtx_getmmgr(rtx), 0, path, flags, &oe);
+	node->ctx = qse_dir_open(qse_awk_rtx_getmmgr(rtx), 0, path, flags, &oe);
 	if (!node->ctx) 
 	{
-		list->errnum = dir_err_to_errnum (oe);
-		goto oops;
+		list->errnum = dir_err_to_errnum(oe);
+		__free_dir_node (rtx, list, node);
+		return QSE_NULL;
 	}
-
-	if (node == list->free) list->free = node->next;
-	else
-	{
-		if (list->map.high <= list->map.capa)
-		{
-			qse_size_t newcapa;
-			dir_node_t** tmp;
-
-			newcapa = list->map.capa + 64;
-			if (newcapa < list->map.capa) goto oops; /* overflow */
-
-			tmp = (dir_node_t**) qse_awk_rtx_reallocmem (
-				rtx, list->map.tab, QSE_SIZEOF(*tmp) * newcapa);
-			if (!tmp) 
-			{
-				list->errnum = DIR_ENOMEM;
-				goto oops;
-			}
-
-			QSE_MEMSET (&tmp[list->map.capa], 0, 
-				QSE_SIZEOF(*tmp) * (newcapa - list->map.capa));
-
-			list->map.tab = tmp;
-			list->map.capa = newcapa;
-		}
-
-		node->id = list->map.high;
-		QSE_ASSERT (list->map.tab[node->id] == QSE_NULL);
-		list->map.tab[node->id] = node;
-		list->map.high++;
-	}
-
-	/* append it to the tail */
-	node->next = QSE_NULL;
-	node->prev = list->tail;
-	if (list->tail) list->tail->next = node;
-	else list->head = node;
-	list->tail = node;
 
 	return node;
-
-oops:
-	if (node) qse_awk_rtx_freemem (rtx, node);
-	return QSE_NULL;
 }
 
 static void free_dir_node (qse_awk_rtx_t* rtx, dir_list_t* list, dir_node_t* node)
 {
-	if (node->prev) node->prev->next = node->next;
-	if (node->next) node->next->prev = node->prev;
-	if (list->head == node) list->head = node->next;
-	if (list->tail == node) list->tail = node->prev;
-
-	list->map.tab[node->id] = QSE_NULL;
-
 	if (node->ctx) 
 	{
-		qse_dir_close (node->ctx);
-	}
-
-	if (list->map.high == node->id + 1)
-	{
-		/* destroy the actual node if the node to be freed has the
-		 * highest id */
-		QSE_MMGR_FREE (qse_awk_rtx_getmmgr(rtx), node);
-		list->map.high--;
-	}
-	else
-	{
-		/* otherwise, chain the node to the free list */
+		qse_dir_close(node->ctx);
 		node->ctx = QSE_NULL;
-		node->next = list->free;
-		list->free = node;
 	}
-
-	/* however, i destroy the whole free list when all the nodes are
-	 * chanined to the free list */
-	if (list->head == QSE_NULL) 
-	{
-		qse_mmgr_t* mmgr;
-		dir_node_t* curnode;
-
-		mmgr = qse_awk_rtx_getmmgr(rtx);
-
-		while (list->free)
-		{
-			curnode = list->free;
-			list->free = list->free->next;
-			QSE_ASSERT (curnode->ctx == QSE_NULL);
-			QSE_MMGR_FREE (mmgr, curnode);
-		}
-
-		QSE_MMGR_FREE (mmgr, list->map.tab);
-		list->map.high = 0;
-		list->map.capa = 0;
-		list->map.tab = QSE_NULL;
-	}
+	__free_dir_node (rtx, list, node);
 }
-
 /* ------------------------------------------------------------------------ */
 
 static int close_byid (qse_awk_rtx_t* rtx, dir_list_t* list, qse_awk_int_t id)
@@ -276,7 +166,7 @@ static int reset_byid (qse_awk_rtx_t* rtx, dir_list_t* list, qse_awk_int_t id, c
 {
 	if (id >= 0 && id < list->map.high && list->map.tab[id]) 
 	{
-		if (qse_dir_reset (list->map.tab[id]->ctx, path) <= -1)
+		if (qse_dir_reset(list->map.tab[id]->ctx, path) <= -1)
 		{
 			list->errnum = dir_err_to_errnum (qse_dir_geterrnum (list->map.tab[id]->ctx));
 			return -1;
@@ -298,10 +188,10 @@ static int read_byid (qse_awk_rtx_t* rtx, dir_list_t* list, qse_awk_int_t id, qs
 		qse_dir_ent_t ent;	
 		qse_awk_val_t* tmp;
 
-		y = qse_dir_read (list->map.tab[id]->ctx, &ent);
+		y = qse_dir_read(list->map.tab[id]->ctx, &ent);
 		if (y <= -1) 
 		{
-			list->errnum = dir_err_to_errnum (qse_dir_geterrnum (list->map.tab[id]->ctx));
+			list->errnum = dir_err_to_errnum(qse_dir_geterrnum (list->map.tab[id]->ctx));
 			return -1;
 		}
 
@@ -336,7 +226,7 @@ static int read_byid (qse_awk_rtx_t* rtx, dir_list_t* list, qse_awk_int_t id, qs
 static QSE_INLINE dir_list_t* rtx_to_list (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
 	qse_rbt_pair_t* pair;
-	pair = qse_rbt_search ((qse_rbt_t*)fi->mod->ctx, &rtx, QSE_SIZEOF(rtx));
+	pair = qse_rbt_search((qse_rbt_t*)fi->mod->ctx, &rtx, QSE_SIZEOF(rtx));
 	QSE_ASSERT (pair != QSE_NULL);
 	return (dir_list_t*)QSE_RBT_VPTR(pair);
 }
@@ -346,7 +236,7 @@ static int fnc_dir_errno (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	dir_list_t* list;
 	qse_awk_val_t* retv;
 
-	list = rtx_to_list (rtx, fi);
+	list = rtx_to_list(rtx, fi);
 
 	retv = qse_awk_rtx_makeintval (rtx, list->errnum);
 	if (retv == QSE_NULL) return -1;
@@ -375,7 +265,7 @@ static int fnc_dir_errstr (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	qse_awk_val_t* retv;
 	qse_awk_int_t errnum;
 
-	list = rtx_to_list (rtx, fi);
+	list = rtx_to_list(rtx, fi);
 
 	if (qse_awk_rtx_getnargs (rtx) <= 0 ||
 	    qse_awk_rtx_valtoint (rtx, qse_awk_rtx_getarg (rtx, 0), &errnum) <= -1)
@@ -402,7 +292,7 @@ static int fnc_dir_open (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	qse_awk_val_t* a0;
 	qse_awk_int_t flags = 0;
 
-	list = rtx_to_list (rtx, fi);
+	list = rtx_to_list(rtx, fi);
 
 	a0 = qse_awk_rtx_getarg (rtx, 0);
 	path = qse_awk_rtx_getvalstr (rtx, a0, QSE_NULL);
@@ -445,18 +335,18 @@ static int fnc_dir_close (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	dir_list_t* list;
 	qse_awk_int_t id;
 	int ret;
-	
-	list = rtx_to_list (rtx, fi);
 
-	ret = qse_awk_rtx_valtoint (rtx, qse_awk_rtx_getarg (rtx, 0), &id);
+	list = rtx_to_list(rtx, fi);
+
+	ret = qse_awk_rtx_valtoint(rtx, qse_awk_rtx_getarg (rtx, 0), &id);
 	if (ret <= -1)
 	{
-		list->errnum = awk_err_to_errnum (qse_awk_rtx_geterrnum (rtx));
+		list->errnum = awk_err_to_errnum(qse_awk_rtx_geterrnum (rtx));
 		ret = -1;
 	}
 	else
 	{
-		ret = close_byid (rtx, list, id);
+		ret = close_byid(rtx, list, id);
 	}
 
 	qse_awk_rtx_setretval (rtx, qse_awk_rtx_makeintval (rtx, ret));
@@ -470,7 +360,7 @@ static int fnc_dir_reset (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	int ret;
 	qse_char_t* path;
 	
-	list = rtx_to_list (rtx, fi);
+	list = rtx_to_list(rtx, fi);
 
 	ret = qse_awk_rtx_valtoint (rtx, qse_awk_rtx_getarg (rtx, 0), &id);
 	if (ret <= -1)
@@ -506,13 +396,13 @@ static int fnc_dir_read  (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	dir_list_t* list;
 	qse_awk_int_t id;
 	int ret;
-	
-	list = rtx_to_list (rtx, fi);
 
-	ret = qse_awk_rtx_valtoint (rtx, qse_awk_rtx_getarg (rtx, 0), &id);
+	list = rtx_to_list(rtx, fi);
+
+	ret = qse_awk_rtx_valtoint(rtx, qse_awk_rtx_getarg (rtx, 0), &id);
 	if (ret <= -1) 
 	{
-		list->errnum = awk_err_to_errnum (qse_awk_rtx_geterrnum (rtx));
+		list->errnum = awk_err_to_errnum(qse_awk_rtx_geterrnum (rtx));
 	}
 	else
 	{
@@ -630,7 +520,7 @@ static void fini (qse_awk_mod_t* mod, qse_awk_rtx_t* rtx)
 	rbt = (qse_rbt_t*)mod->ctx;
 
 	/* garbage clean-up */
-	pair = qse_rbt_search  (rbt, &rtx, QSE_SIZEOF(rtx));
+	pair = qse_rbt_search(rbt, &rtx, QSE_SIZEOF(rtx));
 	if (pair)
 	{
 		dir_list_t* list;
@@ -669,7 +559,7 @@ int qse_awk_mod_dir (qse_awk_mod_t* mod, qse_awk_t* awk)
 	mod->init = init;
 	mod->fini = fini;
 
-	rbt = qse_rbt_open (qse_awk_getmmgr(awk), 0, 1, 1);
+	rbt = qse_rbt_open(qse_awk_getmmgr(awk), 0, 1, 1);
 	if (rbt == QSE_NULL) 
 	{
 		qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);

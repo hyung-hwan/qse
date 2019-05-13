@@ -282,11 +282,11 @@ int qse_awk_mod_mpi (qse_awk_mod_t* mod, qse_awk_t* awk)
  * and the module wasn't built. So you can't access mpi::xxx symbols either 
  */
 
-QSE_EXPORT int qse_awk_mod_mpi_init (int argc, qse_achar_t* argv[])
+int qse_awk_mod_mpi_init (int argc, qse_achar_t* argv[])
 {
 	int rx;
 
-	if (MPI_Init (&argc, &argv) != MPI_SUCCESS) rx = -1;
+	if (MPI_Init(&argc, &argv) != MPI_SUCCESS) rx = -1;
 	else
 	{
 		MPI_Comm_set_errhandler (MPI_COMM_WORLD, MPI_ERRORS_RETURN);
@@ -296,7 +296,7 @@ QSE_EXPORT int qse_awk_mod_mpi_init (int argc, qse_achar_t* argv[])
 	return rx;
 }
 
-QSE_EXPORT void qse_awk_mod_mpi_fini (void)
+void qse_awk_mod_mpi_fini (void)
 {
 	MPI_Finalize ();
 }

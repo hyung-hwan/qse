@@ -35,6 +35,10 @@ extern "C" {
 
 QSE_EXPORT int qse_awk_mod_mpi (qse_awk_mod_t* mod, qse_awk_t* awk);
 
+
+QSE_EXPORT int qse_awk_mod_mpi_init (int argc, qse_achar_t* argv[]);
+QSE_EXPORT void qse_awk_mod_mpi_fini (void);
+
 #if defined(__cplusplus)
 }
 #endif
