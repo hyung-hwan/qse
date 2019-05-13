@@ -208,7 +208,7 @@ QSE_EXPORT void qse_sio_setcmgr (
 	qse_cmgr_t* cmgr
 );
 
-QSE_EXPORT qse_sio_hnd_t qse_sio_gethandle (
+QSE_EXPORT qse_sio_hnd_t qse_sio_gethnd (
 	const qse_sio_t* sio
 );
 

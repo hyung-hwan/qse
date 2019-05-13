@@ -265,10 +265,10 @@ bind_ok:
 		hb.spp_hbinterval = 5000;
 		hb.spp_pathmaxrxt = 1;
 
-		if (setsockopt (s, SOL_SCTP, SCTP_PEER_ADDR_PARAMS, &hb, QSE_SIZEOF(hb)) <= -1) goto oops;
+		if (setsockopt(s, SOL_SCTP, SCTP_PEER_ADDR_PARAMS, &hb, QSE_SIZEOF(hb)) <= -1) goto oops;
 		#endif
 
-		if (listen (s, 99) <= -1)
+		if (listen(s, 99) <= -1)
 		{
 			qse_fprintf (QSE_STDERR, QSE_T("cannot set listen on sctp socket\n"));
 			goto oops;
@@ -360,7 +360,7 @@ static void start_rewriter (ursd_t* ursd, rewriter_t* rewriter)
 
 	if (rewriter->pio)
 	{
-		if (insert_to_mux (ursd->mux, qse_pio_gethandle(rewriter->pio, QSE_PIO_OUT), TYPE_PIO_OUT, rewriter->index) <= -1) 
+		if (insert_to_mux (ursd->mux, qse_pio_gethnd(rewriter->pio, QSE_PIO_OUT), TYPE_PIO_OUT, rewriter->index) <= -1) 
 		{
 			/* error logging */
 			qse_pio_kill (rewriter->pio);
@@ -376,11 +376,11 @@ static void stop_rewriter (ursd_t* ursd, rewriter_t* rewriter)
 	{
 		if (rewriter->pio_in_in_mux)
 		{
-			delete_from_mux (ursd->mux, qse_pio_gethandle(rewriter->pio, QSE_PIO_IN), TYPE_PIO_IN, rewriter->index);
+			delete_from_mux (ursd->mux, qse_pio_gethnd(rewriter->pio, QSE_PIO_IN), TYPE_PIO_IN, rewriter->index);
 			rewriter->pio_in_in_mux = 0;
 		}
 
-		delete_from_mux (ursd->mux, qse_pio_gethandle(rewriter->pio, QSE_PIO_OUT), TYPE_PIO_OUT, rewriter->index);
+		delete_from_mux (ursd->mux, qse_pio_gethnd(rewriter->pio, QSE_PIO_OUT), TYPE_PIO_OUT, rewriter->index);
 
 		qse_pio_kill (rewriter->pio);
 		qse_pio_close (rewriter->pio);
@@ -439,7 +439,7 @@ static void release_rewriter (ursd_t* ursd, rewriter_t* rewriter, int send_empty
 	if (rewriter->pio_in_in_mux)
 	{
 		QSE_ASSERT (rewriter->pio);
-		delete_from_mux (ursd->mux, qse_pio_gethandle(rewriter->pio, QSE_PIO_IN), TYPE_PIO_IN, rewriter->index);
+		delete_from_mux (ursd->mux, qse_pio_gethnd(rewriter->pio, QSE_PIO_IN), TYPE_PIO_IN, rewriter->index);
 		rewriter->pio_in_in_mux = 0;
 	}
 
@@ -466,7 +466,7 @@ static void seize_rewriter (ursd_t* ursd, rewriter_t* rewriter)
 
 	if (rewriter->pio_in_in_mux)
 	{
-		delete_from_mux (ursd->mux, qse_pio_gethandle(rewriter->pio, QSE_PIO_IN), TYPE_PIO_IN, rewriter->index);
+		delete_from_mux (ursd->mux, qse_pio_gethnd(rewriter->pio, QSE_PIO_IN), TYPE_PIO_IN, rewriter->index);
 		rewriter->pio_in_in_mux = 0;
 	}
 
@@ -489,7 +489,7 @@ static int feed_rewriter (ursd_t* ursd, rewriter_t* rewriter)
 			if (qse_pio_geterrnum(rewriter->pio) == QSE_PIO_EAGAIN)
 			{
 				if (rewriter->pio_in_in_mux || 
-				    insert_to_mux (ursd->mux, qse_pio_gethandle(rewriter->pio, QSE_PIO_IN), TYPE_PIO_IN, rewriter->index) >= 0)
+				    insert_to_mux (ursd->mux, qse_pio_gethnd(rewriter->pio, QSE_PIO_IN), TYPE_PIO_IN, rewriter->index) >= 0)
 				{
 					/* this is partial success. the request has not 
 					   been passed to the rewriter in its entirety yet. */

@@ -206,7 +206,7 @@ int qse_get_wcsfile_attr_with_mmgr (const qse_wchar_t* file, int flags, qse_fatt
 
 	n = qse_get_mbsfile_attr(mbsfile, flags, attr);
 
-	if (mbsfile != mbsfile_buf)	QSE_MMGR_FREE (mmgr, mbsfile);
+	if (mbsfile != mbsfile_buf) QSE_MMGR_FREE (mmgr, mbsfile);
 	return n;
 }
 

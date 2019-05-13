@@ -169,9 +169,9 @@ QSE_EXPORT qse_nwio_errnum_t qse_nwio_geterrnum (
 );
 
 /**
- * The qse_nwio_gethandle() function returns the native file handle.
+ * The qse_nwio_gethnd() function returns the native file handle.
  */
-QSE_EXPORT qse_nwio_hnd_t qse_nwio_gethandle (
+QSE_EXPORT qse_nwio_hnd_t qse_nwio_gethnd (
 	const qse_nwio_t* nwio
 );
 

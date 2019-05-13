@@ -449,7 +449,7 @@ static QSE_INLINE qse_ssize_t __send_file (
 	qse_ssize_t ret;
 	qse_fio_hnd_t fh;
 
-	fh = qse_fio_gethandle (HANDLE_TO_FIO(in_fd));
+	fh = qse_fio_gethnd (HANDLE_TO_FIO(in_fd));
 
 	#if !defined(_LP64) && (QSE_SIZEOF_VOID_P<8) && defined(HAVE_SENDFILE64)
 	ret =  sendfile64 (out_fd, fh, offset, count);
@@ -464,7 +464,7 @@ static QSE_INLINE qse_ssize_t __send_file (
 	qse_ssize_t ret;
 	qse_fio_hnd_t fh;
 
-	fh = qse_fio_gethandle (HANDLE_TO_FIO(in_fd));
+	fh = qse_fio_gethnd (HANDLE_TO_FIO(in_fd));
 	#if defined(__FreeBSD__)
 	{
 		off_t nsent;
@@ -487,7 +487,7 @@ static QSE_INLINE qse_ssize_t __send_file (
 	qse_ssize_t ret;
 	qse_fio_hnd_t fh;
 
-	fh = qse_fio_gethandle (HANDLE_TO_FIO(in_fd));
+	fh = qse_fio_gethnd (HANDLE_TO_FIO(in_fd));
 	ret = sendfile64 (out_fd, fh, offset, count);
 	if (ret <= -1) qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
 	return ret;
@@ -505,7 +505,7 @@ static QSE_INLINE qse_ssize_t __send_file (
 	ssize_t ret;
 	qse_fio_hnd_t fh;
 
-	fh = qse_fio_gethandle (HANDLE_TO_FIO(in_fd));
+	fh = qse_fio_gethnd (HANDLE_TO_FIO(in_fd));
 
 	vec.sfv_fd = fh;
 	vec.sfv_flag = 0;

@@ -298,9 +298,9 @@ void qse_sio_setcmgr (qse_sio_t* sio, qse_cmgr_t* cmgr)
 	qse_tio_setcmgr (&sio->tio.io, cmgr);
 }
 
-qse_sio_hnd_t qse_sio_gethandle (const qse_sio_t* sio)
+qse_sio_hnd_t qse_sio_gethnd (const qse_sio_t* sio)
 {
-	/*return qse_fio_gethandle (&sio->file);*/
+	/*return qse_fio_gethnd (&sio->file);*/
 	return QSE_FIO_HANDLE(&sio->file);
 }
 

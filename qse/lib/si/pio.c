@@ -1865,7 +1865,7 @@ void qse_pio_setcmgr (qse_pio_t* pio, qse_pio_hid_t hid, qse_cmgr_t* cmgr)
 	if (pio->pin[hid].tio) qse_tio_setcmgr (pio->pin[hid].tio, cmgr);
 }
 
-qse_pio_hnd_t qse_pio_gethandle (const qse_pio_t* pio, qse_pio_hid_t hid)
+qse_pio_hnd_t qse_pio_gethnd (const qse_pio_t* pio, qse_pio_hid_t hid)
 {
 	return pio->pin[hid].handle;
 }

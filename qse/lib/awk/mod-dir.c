@@ -80,8 +80,8 @@ struct dir_list_t
 	struct
 	{
 		dir_node_t** tab;
-		int capa;
-		int high;
+		qse_size_t capa;
+		qse_size_t high;
 	} map;
 
 	int errnum;
@@ -162,7 +162,7 @@ static dir_node_t* new_dir_node (qse_awk_rtx_t* rtx, dir_list_t* list, const qse
 	{
 		if (list->map.high <= list->map.capa)
 		{
-			int newcapa;
+			qse_size_t newcapa;
 			dir_node_t** tmp;
 
 			newcapa = list->map.capa + 64;
@@ -307,10 +307,10 @@ static int read_byid (qse_awk_rtx_t* rtx, dir_list_t* list, qse_awk_int_t id, qs
 
 		if (y == 0) return 0; /* no more entry */
 
-		tmp = qse_awk_rtx_makestrvalwithstr (rtx, ent.name);	
+		tmp = qse_awk_rtx_makestrvalwithstr(rtx, ent.name);
 		if (!tmp)
 		{
-			list->errnum = awk_err_to_errnum (qse_awk_rtx_geterrnum (rtx));
+			list->errnum = awk_err_to_errnum(qse_awk_rtx_geterrnum (rtx));
 			return -1;
 		}
 		else
@@ -408,8 +408,8 @@ static int fnc_dir_open (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	path = qse_awk_rtx_getvalstr (rtx, a0, QSE_NULL);
 	if (path)
 	{
-		if (qse_awk_rtx_getnargs (rtx) >= 2 &&
-	            qse_awk_rtx_valtoint (rtx, qse_awk_rtx_getarg (rtx, 1), &flags) <= -1)
+		if (qse_awk_rtx_getnargs (rtx) >= 2 && 
+		    qse_awk_rtx_valtoint (rtx, qse_awk_rtx_getarg (rtx, 1), &flags) <= -1)
 		{
 			qse_awk_rtx_freevalstr (rtx, a0, path);
 			goto oops;
@@ -516,13 +516,13 @@ static int fnc_dir_read  (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	}
 	else
 	{
-		ret = read_byid (rtx, list, id, (qse_awk_val_ref_t*)qse_awk_rtx_getarg (rtx, 1));
+		ret = read_byid(rtx, list, id, (qse_awk_val_ref_t*)qse_awk_rtx_getarg(rtx, 1));
 		if (ret == -9999) return -1;
 	}
 
 	/* no error check for qse_awk_rtx_makeintval() here since ret 
 	 * is 0, 1, -1. it will never fail for those numbers */
-	qse_awk_rtx_setretval (rtx, qse_awk_rtx_makeintval (rtx, ret));
+	qse_awk_rtx_setretval (rtx, qse_awk_rtx_makeintval(rtx, ret));
 	return 0;
 }
 

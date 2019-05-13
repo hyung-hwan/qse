@@ -117,8 +117,8 @@ enum tok_t
 	/* === extended reserved words === */
 	TOK_XGLOBAL,
 	TOK_XLOCAL, 
-	TOK_XINCLONE,
 	TOK_XINCLUDE,
+	TOK_XINCLUDE_ONCE,
 	TOK_XPRAGMA,
 	TOK_XABORT,
 	TOK_XRESET,
@@ -260,33 +260,33 @@ static kwent_t kwtab[] =
 {
 	/* keep this table in sync with the kw_t enums in <parse.h>.
 	 * also keep it sorted by the first field for binary search */
-	{ { QSE_T("@abort"),       6 }, TOK_XABORT,      0 },
-	{ { QSE_T("@global"),      7 }, TOK_XGLOBAL,     0 },
-	{ { QSE_T("@inclone"),     8 }, TOK_XINCLONE,    0 },
-	{ { QSE_T("@include"),     8 }, TOK_XINCLUDE,    0 },
-	{ { QSE_T("@local"),       6 }, TOK_XLOCAL,      0 },
-	{ { QSE_T("@pragma"),      7 }, TOK_XPRAGMA,     0 },
-	{ { QSE_T("@reset"),       6 }, TOK_XRESET,      0 },
-	{ { QSE_T("BEGIN"),        5 }, TOK_BEGIN,       QSE_AWK_PABLOCK },
-	{ { QSE_T("END"),          3 }, TOK_END,         QSE_AWK_PABLOCK },
-	{ { QSE_T("break"),        5 }, TOK_BREAK,       0 },
-	{ { QSE_T("continue"),     8 }, TOK_CONTINUE,    0 },
-	{ { QSE_T("delete"),       6 }, TOK_DELETE,      0 },
-	{ { QSE_T("do"),           2 }, TOK_DO,          0 },
-	{ { QSE_T("else"),         4 }, TOK_ELSE,        0 },
-	{ { QSE_T("exit"),         4 }, TOK_EXIT,        0 },
-	{ { QSE_T("for"),          3 }, TOK_FOR,         0 },
-	{ { QSE_T("function"),     8 }, TOK_FUNCTION,    0 },
-	{ { QSE_T("getline"),      7 }, TOK_GETLINE,     QSE_AWK_RIO },
-	{ { QSE_T("if"),           2 }, TOK_IF,          0 },
-	{ { QSE_T("in"),           2 }, TOK_IN,          0 },
-	{ { QSE_T("next"),         4 }, TOK_NEXT,        QSE_AWK_PABLOCK },
-	{ { QSE_T("nextfile"),     8 }, TOK_NEXTFILE,    QSE_AWK_PABLOCK },
-	{ { QSE_T("nextofile"),    9 }, TOK_NEXTOFILE,   QSE_AWK_PABLOCK | QSE_AWK_NEXTOFILE },
-	{ { QSE_T("print"),        5 }, TOK_PRINT,       QSE_AWK_RIO },
-	{ { QSE_T("printf"),       6 }, TOK_PRINTF,      QSE_AWK_RIO },
-	{ { QSE_T("return"),       6 }, TOK_RETURN,      0 },
-	{ { QSE_T("while"),        5 }, TOK_WHILE,       0 }
+	{ { QSE_T("@abort"),         6 }, TOK_XABORT,        0 },
+	{ { QSE_T("@global"),        7 }, TOK_XGLOBAL,       0 },
+	{ { QSE_T("@include"),       8 }, TOK_XINCLUDE,      0 },
+	{ { QSE_T("@include_once"), 13 }, TOK_XINCLUDE_ONCE, 0 },
+	{ { QSE_T("@local"),         6 }, TOK_XLOCAL,        0 },
+	{ { QSE_T("@pragma"),        7 }, TOK_XPRAGMA,       0 },
+	{ { QSE_T("@reset"),         6 }, TOK_XRESET,        0 },
+	{ { QSE_T("BEGIN"),          5 }, TOK_BEGIN,         QSE_AWK_PABLOCK },
+	{ { QSE_T("END"),            3 }, TOK_END,           QSE_AWK_PABLOCK },
+	{ { QSE_T("break"),          5 }, TOK_BREAK,         0 },
+	{ { QSE_T("continue"),       8 }, TOK_CONTINUE,      0 },
+	{ { QSE_T("delete"),         6 }, TOK_DELETE,        0 },
+	{ { QSE_T("do"),             2 }, TOK_DO,            0 },
+	{ { QSE_T("else"),           4 }, TOK_ELSE,          0 },
+	{ { QSE_T("exit"),           4 }, TOK_EXIT,          0 },
+	{ { QSE_T("for"),            3 }, TOK_FOR,           0 },
+	{ { QSE_T("function"),       8 }, TOK_FUNCTION,      0 },
+	{ { QSE_T("getline"),        7 }, TOK_GETLINE,       QSE_AWK_RIO },
+	{ { QSE_T("if"),             2 }, TOK_IF,            0 },
+	{ { QSE_T("in"),             2 }, TOK_IN,            0 },
+	{ { QSE_T("next"),           4 }, TOK_NEXT,          QSE_AWK_PABLOCK },
+	{ { QSE_T("nextfile"),       8 }, TOK_NEXTFILE,      QSE_AWK_PABLOCK },
+	{ { QSE_T("nextofile"),      9 }, TOK_NEXTOFILE,     QSE_AWK_PABLOCK | QSE_AWK_NEXTOFILE },
+	{ { QSE_T("print"),          5 }, TOK_PRINT,         QSE_AWK_RIO },
+	{ { QSE_T("printf"),         6 }, TOK_PRINTF,        QSE_AWK_RIO },
+	{ { QSE_T("return"),         6 }, TOK_RETURN,        0 },
+	{ { QSE_T("while"),          5 }, TOK_WHILE,         0 }
 };
 
 typedef struct global_t global_t;
@@ -850,6 +850,12 @@ static int begin_include (qse_awk_t* awk, int once)
 	{
 		end_include (awk); 
 		/* it has been included previously. don't include this file again. */
+		if (get_token(awk) <= -1) return -1; /* skip the include file name */
+		if (MATCH(awk, TOK_SEMICOLON) || MATCH(awk, TOK_NEWLINE))
+		{
+
+			if (get_token(awk) <= -1) return -1; /* skip the semicolon */
+		}
 	}
 	else
 	{
@@ -904,7 +910,7 @@ static int parse_progunit (qse_awk_t* awk)
 			return -1;
 		}
 	}
-	else if (MATCH(awk, TOK_XINCLUDE) || MATCH(awk, TOK_XINCLONE))
+	else if (MATCH(awk, TOK_XINCLUDE) || MATCH(awk, TOK_XINCLUDE_ONCE))
 	{
 		int once;
 
@@ -915,7 +921,7 @@ static int parse_progunit (qse_awk_t* awk)
 			return -1;
 		}
 
-		once = MATCH(awk, TOK_XINCLONE);
+		once = MATCH(awk, TOK_XINCLUDE_ONCE);
 		if (get_token(awk) <= -1) return -1;
 
 		if (!MATCH(awk, TOK_STR))
@@ -1557,7 +1563,7 @@ static qse_awk_nde_t* parse_block (qse_awk_t* awk, const qse_awk_loc_t* xloc, in
 			if (get_token(awk) <= -1) return QSE_NULL;
 		}
 
-		if (MATCH(awk,TOK_XINCLUDE) || MATCH(awk, TOK_XINCLONE))
+		if (MATCH(awk,TOK_XINCLUDE) || MATCH(awk, TOK_XINCLUDE_ONCE))
 		{
 			/* @include ... */
 			int once;
@@ -1569,7 +1575,7 @@ static qse_awk_nde_t* parse_block (qse_awk_t* awk, const qse_awk_loc_t* xloc, in
 				return QSE_NULL;
 			}
 
-			once = MATCH(awk, TOK_XINCLONE);
+			once = MATCH(awk, TOK_XINCLUDE_ONCE);
 			if (get_token(awk) <= -1) return QSE_NULL;
 	
 			if (!MATCH(awk,TOK_STR))
@@ -1635,7 +1641,7 @@ static qse_awk_nde_t* parse_block (qse_awk_t* awk, const qse_awk_loc_t* xloc, in
 			break;
 		}
 
-		else if (MATCH(awk, TOK_XINCLUDE) || MATCH(awk, TOK_XINCLONE))
+		else if (MATCH(awk, TOK_XINCLUDE) || MATCH(awk, TOK_XINCLUDE_ONCE))
 		{
 			int once;
 
@@ -1646,9 +1652,9 @@ static qse_awk_nde_t* parse_block (qse_awk_t* awk, const qse_awk_loc_t* xloc, in
 				return QSE_NULL;
 			}
 
-			once = MATCH(awk, TOK_XINCLONE);
+			once = MATCH(awk, TOK_XINCLUDE_ONCE);
 			if (get_token(awk) <= -1) return QSE_NULL;
-	
+
 			if (!MATCH(awk,TOK_STR))
 			{
 				SETERR_LOC (awk, QSE_AWK_EINCLSTR, &awk->ptok.loc);
@@ -6299,7 +6305,7 @@ retry:
 
 	if (c == QSE_CHAR_EOF) 
 	{
-		n = end_include (awk);
+		n = end_include(awk);
 		if (n <= -1) return -1;
 		if (n >= 1) 
 		{

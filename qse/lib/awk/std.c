@@ -35,6 +35,7 @@
 #include <qse/si/sio.h>
 #include <qse/si/pio.h>
 #include <qse/si/nwio.h>
+#include <qse/si/fs.h>
 #include "../cmn/mem-prv.h"
 
 #include <stdarg.h>
@@ -698,7 +699,8 @@ static qse_ssize_t sf_in_open (qse_awk_t* awk, qse_awk_sio_arg_t* arg, xtn_t* xt
 		const qse_char_t* path;
 		qse_char_t fbuf[64];
 		qse_char_t* dbuf = QSE_NULL;
-	
+		qse_fattr_t fattr;
+
 		QSE_ASSERT (arg->name != QSE_NULL);
 
 		path = arg->name;
@@ -746,7 +748,20 @@ static qse_ssize_t sf_in_open (qse_awk_t* awk, qse_awk_sio_arg_t* arg, xtn_t* xt
 			return -1;
 		}
 
-/* TODO: set arg->unique_id.... to support @inclone */
+		/* TODO: use the system handle(file descriptor) instead of the path? */
+		/*syshnd = qse_sio_gethnd(arg->handle);*/
+		if (qse_get_file_attr_with_mmgr(path, 0, &fattr, awk->mmgr) >= 0)
+		{
+			struct
+			{
+				qse_uintptr_t ino;
+				qse_uintptr_t dev;
+			} tmp;
+			tmp.ino = fattr.ino;
+			tmp.dev = fattr.dev;
+			QSE_MEMCPY (&arg->unique_id[0], &tmp, (QSE_SIZEOF(tmp) > QSE_SIZEOF(arg->unique_id)? QSE_SIZEOF(arg->unique_id): QSE_SIZEOF(fattr.ino)));
+		}
+
 		return 0;
 	}
 }
