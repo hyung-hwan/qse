@@ -179,13 +179,13 @@ int qse_awk_mod_mysql (qse_awk_mod_t* mod, qse_awk_t* awk)
 }
 
 
-int qse_awk_mod_mysql_init (int argc, qse_achar_t* argv[])
+QSE_EXPORT int qse_awk_mod_mysql_init (int argc, qse_achar_t* argv[])
 {
 	if (mysql_library_init(argc, argv, QSE_NULL) != 0) return -1;
 	return 0;
 }
 
-void qse_awk_mod_mysql_fini (void)
+QSE_EXPORT void qse_awk_mod_mysql_fini (void)
 {
 	mysql_library_end ();
 }
