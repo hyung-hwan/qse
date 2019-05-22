@@ -46,9 +46,6 @@ BEGIN {
 #include <qse/cmn/rbt.h>
 #include "../cmn/mem-prv.h"
 
-typedef struct dir_list_t dir_list_t;
-typedef struct dir_node_t dir_node_t;
-
 enum
 {
 	DIR_ENOERR,
@@ -217,7 +214,7 @@ static int read_byid (qse_awk_rtx_t* rtx, dir_list_t* list, qse_awk_int_t id, qs
 	else
 	{
 		list->errnum = DIR_EINVAL;
-		return -1;	
+		return -1;
 	}
 }
 
@@ -294,18 +291,18 @@ static int fnc_dir_open (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 
 	list = rtx_to_list(rtx, fi);
 
-	a0 = qse_awk_rtx_getarg (rtx, 0);
-	path = qse_awk_rtx_getvalstr (rtx, a0, QSE_NULL);
+	a0 = qse_awk_rtx_getarg(rtx, 0);
+	path = qse_awk_rtx_getvalstr(rtx, a0, QSE_NULL);
 	if (path)
 	{
-		if (qse_awk_rtx_getnargs (rtx) >= 2 && 
-		    qse_awk_rtx_valtoint (rtx, qse_awk_rtx_getarg (rtx, 1), &flags) <= -1)
+		if (qse_awk_rtx_getnargs(rtx) >= 2 && 
+		    qse_awk_rtx_valtoint(rtx, qse_awk_rtx_getarg(rtx, 1), &flags) <= -1)
 		{
 			qse_awk_rtx_freevalstr (rtx, a0, path);
 			goto oops;
 		}
 
-		node = new_dir_node (rtx, list, path, flags);
+		node = new_dir_node(rtx, list, path, flags);
 		if (node) ret = node->id;
 		else ret = -1;
 		qse_awk_rtx_freevalstr (rtx, a0, path);
@@ -313,13 +310,13 @@ static int fnc_dir_open (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	else
 	{
 	oops:
-		list->errnum = awk_err_to_errnum (qse_awk_rtx_geterrnum (rtx));
+		list->errnum = awk_err_to_errnum(qse_awk_rtx_geterrnum(rtx));
 		ret = -1;
 	}
 
 	/* ret may not be a statically managed number. 
 	 * error checking is required */
-	retv = qse_awk_rtx_makeintval (rtx, ret);
+	retv = qse_awk_rtx_makeintval(rtx, ret);
 	if (retv == QSE_NULL)
 	{
 		if (node) free_dir_node (rtx, list, node);
@@ -338,10 +335,10 @@ static int fnc_dir_close (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 
 	list = rtx_to_list(rtx, fi);
 
-	ret = qse_awk_rtx_valtoint(rtx, qse_awk_rtx_getarg (rtx, 0), &id);
+	ret = qse_awk_rtx_valtoint(rtx, qse_awk_rtx_getarg(rtx, 0), &id);
 	if (ret <= -1)
 	{
-		list->errnum = awk_err_to_errnum(qse_awk_rtx_geterrnum (rtx));
+		list->errnum = awk_err_to_errnum(qse_awk_rtx_geterrnum(rtx));
 		ret = -1;
 	}
 	else
@@ -349,7 +346,7 @@ static int fnc_dir_close (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 		ret = close_byid(rtx, list, id);
 	}
 
-	qse_awk_rtx_setretval (rtx, qse_awk_rtx_makeintval (rtx, ret));
+	qse_awk_rtx_setretval (rtx, qse_awk_rtx_makeintval(rtx, ret));
 	return 0;
 }
 

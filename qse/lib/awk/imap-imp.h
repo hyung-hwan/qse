@@ -36,6 +36,7 @@ struct __IMAP_NODE_T
 	__IMAP_NODE_T_DATA
 };
 
+typedef struct __IMAP_LIST_T __IMAP_LIST_T;
 struct __IMAP_LIST_T
 {
 	__IMAP_NODE_T* head;

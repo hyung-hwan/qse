@@ -26,9 +26,12 @@
 
 #include "mod-mysql.h"
 #include <mysql/mysql.h>
+#include "../cmn/mem-prv.h"
+#include <qse/cmn/main.h>
+#include <qse/cmn/rbt.h>
 
-#define __IMAP_NODE_T_DATA  MYSQL ctx;
-#define __IMAP_LIST_T_DATA /* nothing */
+#define __IMAP_NODE_T_DATA  MYSQL* ctx;
+#define __IMAP_LIST_T_DATA  int errnum;
 #define __IMAP_LIST_T sql_list_t
 #define __IMAP_NODE_T sql_node_t
 #define __MAKE_IMAP_NODE __new_sql_node
@@ -42,9 +45,10 @@ static sql_node_t* new_sql_node (qse_awk_rtx_t* rtx, sql_list_t* list)
 	node = __new_sql_node(rtx, list);
 	if (!node) return QSE_NULL;
 
-	if (mysql_init(&node->ctx) == QSE_NULL)
+	node->ctx = mysql_init(QSE_NULL);
+	if (!node->ctx)
 	{
-		__free_sql_node (rtx, list, node);
+		qse_awk_rtx_seterrfmt (rtx, QSE_AWK_ENOMEM, QSE_NULL, QSE_T("unable to allocate a mysql object"));
 		return QSE_NULL;
 	}
 
@@ -53,19 +57,86 @@ static sql_node_t* new_sql_node (qse_awk_rtx_t* rtx, sql_list_t* list)
 
 static void free_sql_node (qse_awk_rtx_t* rtx, sql_list_t* list, sql_node_t* node)
 {
-	mysqL_close (&node->ctx);
+	mysql_close (node->ctx);
 	__free_sql_node (rtx, list, node);
 }
 
+/* ------------------------------------------------------------------------ */
+
+static int close_byid (qse_awk_rtx_t* rtx, sql_list_t* list, qse_awk_int_t id)
+{
+	if (id >= 0 && id < list->map.high && list->map.tab[id]) 
+	{
+		free_sql_node (rtx, list, list->map.tab[id]);
+		return 0;
+	}
+	else
+	{
+/* TODO: enhance error */
+		list->errnum = QSE_AWK_EINVAL;
+		return -1;
+	}
+}
+
+/* ------------------------------------------------------------------------ */
+
+static QSE_INLINE sql_list_t* rtx_to_list (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	qse_rbt_pair_t* pair;
+	pair = qse_rbt_search((qse_rbt_t*)fi->mod->ctx, &rtx, QSE_SIZEOF(rtx));
+	QSE_ASSERT (pair != QSE_NULL);
+	return (sql_list_t*)QSE_RBT_VPTR(pair);
+}
+
+
 static int fnc_open (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
-	sql_node_t* node;
-	return -1;
+	sql_list_t* list;
+	sql_node_t* node = QSE_NULL;
+	qse_awk_int_t ret;
+	qse_awk_val_t* retv;
+
+	list = rtx_to_list(rtx, fi);
+
+	node = new_sql_node(rtx, list/*, path, flags*/);
+	if (node) ret = node->id;
+	else ret = -1;
+
+
+	/* ret may not be a statically managed number. 
+	 * error checking is required */
+	retv = qse_awk_rtx_makeintval(rtx, ret);
+	if (retv == QSE_NULL)
+	{
+		if (node) free_sql_node (rtx, list, node);
+		return -1;
+	}
+
+	qse_awk_rtx_setretval (rtx, retv);
+	return 0;
 }
 
 static int fnc_close (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
-	return -1;
+	sql_list_t* list;
+	qse_awk_int_t id;
+	int ret;
+
+	list = rtx_to_list(rtx, fi);
+
+	ret = qse_awk_rtx_valtoint(rtx, qse_awk_rtx_getarg(rtx, 0), &id);
+	if (ret <= -1)
+	{
+		list->errnum = qse_awk_rtx_geterrnum(rtx);
+		ret = -1;
+	}
+	else
+	{
+		ret = close_byid(rtx, list, id);
+	}
+
+	qse_awk_rtx_setretval (rtx, qse_awk_rtx_makeintval(rtx, ret));
+	return 0;
 }
 
 static int fnc_connect (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
@@ -147,34 +218,77 @@ static int query (qse_awk_mod_t* mod, qse_awk_t* awk, const qse_char_t* name, qs
 
 static int init (qse_awk_mod_t* mod, qse_awk_rtx_t* rtx)
 {
-	mysql_library_init (0, QSE_NULL, QSE_NULL);
+	qse_rbt_t* rbt;
+	sql_list_t list;
+
+	rbt = (qse_rbt_t*)mod->ctx;
+
+	QSE_MEMSET (&list, 0, QSE_SIZEOF(list));
+	if (qse_rbt_insert (rbt, &rtx, QSE_SIZEOF(rtx), &list, QSE_SIZEOF(list)) == QSE_NULL) 
+	{
+		qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
+		return -1;
+	}
+
 	return 0;
 }
 
 static void fini (qse_awk_mod_t* mod, qse_awk_rtx_t* rtx)
 {
-	/* TODO: anything */
-	mysql_library_end ();
+	qse_rbt_t* rbt;
+	qse_rbt_pair_t* pair;
+	
+	rbt = (qse_rbt_t*)mod->ctx;
+
+	/* garbage clean-up */
+	pair = qse_rbt_search(rbt, &rtx, QSE_SIZEOF(rtx));
+	if (pair)
+	{
+		sql_list_t* list;
+		sql_node_t* node, * next;
+
+		list = QSE_RBT_VPTR(pair);
+		node = list->head;
+		while (node)
+		{
+			next = node->next;
+			free_sql_node (rtx, list, node);
+			node = next;
+		}
+
+		qse_rbt_delete (rbt, &rtx, QSE_SIZEOF(rtx));
+	}
 }
 
 static void unload (qse_awk_mod_t* mod, qse_awk_t* awk)
 {
-	/* TODO: anything */
+	qse_rbt_t* rbt;
+
+	rbt = (qse_rbt_t*)mod->ctx;
+
+	QSE_ASSERT (QSE_RBT_SIZE(rbt) == 0);
+	qse_rbt_close (rbt);
 }
 
 int qse_awk_mod_mysql (qse_awk_mod_t* mod, qse_awk_t* awk)
 {
+	qse_rbt_t* rbt;
+
 	mod->query = query;
 	mod->unload = unload;
 
 	mod->init = init;
 	mod->fini = fini;
-	/*
-	mod->ctx...
-	 */
 
-	
+	rbt = qse_rbt_open(qse_awk_getmmgr(awk), 0, 1, 1);
+	if (rbt == QSE_NULL) 
+	{
+		qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);
+		return -1;
+	}
+	qse_rbt_setstyle (rbt, qse_getrbtstyle(QSE_RBT_STYLE_INLINE_COPIERS));
 
+	mod->ctx = rbt;
 	return 0;
 }
 

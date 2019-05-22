@@ -52,6 +52,10 @@ if ENABLE_AWKMOD_MPI
 pkgmodexec_LTLIBRARIES += libqseawk-mpi.la
 endif
 
+if ENABLE_AWKMOD_MYSQL
+pkgmodexec_LTLIBRARIES += libqseawk-mysql.la
+endif
+
 if ENABLE_AWKMOD_SED
 pkgmodexec_LTLIBRARIES += libqseawk-sed.la
 endif
