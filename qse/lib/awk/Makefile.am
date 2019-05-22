@@ -49,7 +49,7 @@ libqseawkxx_la_SOURCES = Awk.cpp StdAwk.cpp
 libqseawkxx_la_CPPFLAGS = $(CPPFLAGS_LIB_COMMON)
 libqseawkxx_la_LDFLAGS = $(LDFLAGS_LIB_COMMON)
 libqseawkxx_la_LIBADD = -lqseawk -lqsecmnxx -lqseawk -lqsesi -lqsecmn $(LIBADD_LIB_COMMON) 
-libqseawkxx_la_DEPENDENCIES =
+libqseawkxx_la_DEPENDENCIES = libqseawk.la
 endif
 
 if ENABLE_STATIC_MODULE
