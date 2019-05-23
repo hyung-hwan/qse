@@ -30,7 +30,7 @@
 #include <qse/cmn/main.h>
 #include <qse/cmn/rbt.h>
 
-#define __IMAP_NODE_T_DATA  MYSQL* ctx;
+#define __IMAP_NODE_T_DATA  MYSQL* mysql;
 #define __IMAP_LIST_T_DATA  int errnum;
 #define __IMAP_LIST_T sql_list_t
 #define __IMAP_NODE_T sql_node_t
@@ -45,8 +45,8 @@ static sql_node_t* new_sql_node (qse_awk_rtx_t* rtx, sql_list_t* list)
 	node = __new_sql_node(rtx, list);
 	if (!node) return QSE_NULL;
 
-	node->ctx = mysql_init(QSE_NULL);
-	if (!node->ctx)
+	node->mysql = mysql_init(QSE_NULL);
+	if (!node->mysql)
 	{
 		qse_awk_rtx_seterrfmt (rtx, QSE_AWK_ENOMEM, QSE_NULL, QSE_T("unable to allocate a mysql object"));
 		return QSE_NULL;
@@ -57,25 +57,9 @@ static sql_node_t* new_sql_node (qse_awk_rtx_t* rtx, sql_list_t* list)
 
 static void free_sql_node (qse_awk_rtx_t* rtx, sql_list_t* list, sql_node_t* node)
 {
-	mysql_close (node->ctx);
+	mysql_close (node->mysql);
+	node->mysql = QSE_NULL;
 	__free_sql_node (rtx, list, node);
-}
-
-/* ------------------------------------------------------------------------ */
-
-static int close_byid (qse_awk_rtx_t* rtx, sql_list_t* list, qse_awk_int_t id)
-{
-	if (id >= 0 && id < list->map.high && list->map.tab[id]) 
-	{
-		free_sql_node (rtx, list, list->map.tab[id]);
-		return 0;
-	}
-	else
-	{
-/* TODO: enhance error */
-		list->errnum = QSE_AWK_EINVAL;
-		return -1;
-	}
 }
 
 /* ------------------------------------------------------------------------ */
@@ -88,6 +72,11 @@ static QSE_INLINE sql_list_t* rtx_to_list (qse_awk_rtx_t* rtx, const qse_awk_fnc
 	return (sql_list_t*)QSE_RBT_VPTR(pair);
 }
 
+static QSE_INLINE sql_node_t* get_list_node (sql_list_t* list, qse_awk_int_t id)
+{
+	if (id < 0 || id >= list->map.high || !list->map.tab[id]) return QSE_NULL;
+	return list->map.tab[id];
+}
 
 static int fnc_open (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
@@ -98,10 +87,9 @@ static int fnc_open (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 
 	list = rtx_to_list(rtx, fi);
 
-	node = new_sql_node(rtx, list/*, path, flags*/);
+	node = new_sql_node(rtx, list);
 	if (node) ret = node->id;
 	else ret = -1;
-
 
 	/* ret may not be a statically managed number. 
 	 * error checking is required */
@@ -119,6 +107,7 @@ static int fnc_open (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 static int fnc_close (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
 	sql_list_t* list;
+	sql_node_t* node;
 	qse_awk_int_t id;
 	int ret;
 
@@ -130,9 +119,15 @@ static int fnc_close (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 		list->errnum = qse_awk_rtx_geterrnum(rtx);
 		ret = -1;
 	}
+	else if (!(node = get_list_node(list, id)))
+	{
+/* TODO: enhance error */
+		list->errnum = QSE_AWK_EINVAL;
+		ret = -1;
+	}
 	else
 	{
-		ret = close_byid(rtx, list, id);
+		free_sql_node (rtx, list, node);
 	}
 
 	qse_awk_rtx_setretval (rtx, qse_awk_rtx_makeintval(rtx, ret));
@@ -141,7 +136,37 @@ static int fnc_close (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 
 static int fnc_connect (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
-	return -1;
+	sql_list_t* list;
+	sql_node_t* node;
+	qse_awk_int_t id;
+	int ret;
+
+	list = rtx_to_list(rtx, fi);
+
+	ret = qse_awk_rtx_valtoint(rtx, qse_awk_rtx_getarg(rtx, 0), &id);
+	if (ret <= -1)
+	{
+		list->errnum = qse_awk_rtx_geterrnum(rtx);
+		ret = -1;
+	}
+	else if (!(node = get_list_node(list, id)))
+	{
+/* TODO: enhance error */
+		list->errnum = QSE_AWK_EINVAL;
+		ret = -1;
+	}
+	else
+	{
+		if (!mysql_real_connect(node->mysql, QSE_NULL, QSE_NULL, QSE_NULL, QSE_NULL, 0, QSE_NULL, 0))
+		{
+/* TODO: capture error message... */
+			list->errnum = QSE_AWK_ESYSERR;
+			ret = -1;
+		}
+	}
+
+	qse_awk_rtx_setretval (rtx, qse_awk_rtx_makeintval(rtx, ret));
+	return 0;
 }
 
 static int fnc_query (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
@@ -163,8 +188,8 @@ static fnctab_t fnctab[] =
 {
 	/* keep this table sorted for binary search in query(). */
 	{ QSE_T("close"),        { { 1, 1, QSE_NULL },   fnc_close,     0 } },
-	{ QSE_T("connect"),      { { 1, 1, QSE_NULL },   fnc_connect,   0 } },
-	{ QSE_T("open"),         { { 1, 1, QSE_NULL },   fnc_open,      0 } },
+	{ QSE_T("connect"),      { { 4, 1, QSE_NULL },   fnc_connect,   0 } },
+	{ QSE_T("open"),         { { 0, 0, QSE_NULL },   fnc_open,      0 } },
 	{ QSE_T("query"),        { { 2, 3, QSE_NULL },   fnc_query,     0 } },
 };
 
