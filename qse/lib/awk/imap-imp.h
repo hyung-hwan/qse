@@ -144,7 +144,6 @@ static void __FREE_IMAP_NODE (qse_awk_rtx_t* rtx, __IMAP_LIST_T* list, __IMAP_NO
 		{
 			curnode = list->free;
 			list->free = list->free->next;
-			QSE_ASSERT (curnode->ctx == QSE_NULL);
 			qse_awk_rtx_freemem (rtx, curnode);
 		}
 
