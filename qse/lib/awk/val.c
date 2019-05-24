@@ -1963,7 +1963,7 @@ qse_awk_val_t* qse_awk_rtx_getrefval (qse_awk_rtx_t* rtx, qse_awk_val_ref_t* ref
 		case QSE_AWK_VAL_REF_POS:
 		{
 			/* a positional doesn't contain a value. you should use qse_awk_rtx_valtoXXX()
-			 * like qse_awk_rtx_valtostr(), qse_Awk_rtx_valtoint() */
+			 * like qse_awk_rtx_valtostr(), qse_awk_rtx_valtoint() */
 			return QSE_NULL;
 		}
 

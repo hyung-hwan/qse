@@ -62,6 +62,22 @@ static void free_sql_node (qse_awk_rtx_t* rtx, sql_list_t* list, sql_node_t* nod
 	__free_sql_node (rtx, list, node);
 }
 
+#undef __IMAP_NODE_T_DATA
+#undef __IMAP_LIST_T_DATA
+#undef __IMAP_LIST_T
+#undef __IMAP_NODE_T
+#undef __MAKE_IMAP_NODE
+#undef __FREE_IMAP_NODE
+
+#define __IMAP_NODE_T_DATA  MYSQL_RES* res;
+#define __IMAP_LIST_T_DATA  int errnum;
+#define __IMAP_LIST_T res_list_t
+#define __IMAP_NODE_T res_node_t
+#define __MAKE_IMAP_NODE __new_res_node
+#define __FREE_IMAP_NODE __free_res_node
+#include "../lib/awk/imap-imp.h"
+
+
 /* ------------------------------------------------------------------------ */
 
 static QSE_INLINE sql_list_t* rtx_to_list (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
@@ -139,41 +155,140 @@ static int fnc_connect (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	sql_list_t* list;
 	sql_node_t* node;
 	qse_awk_int_t id;
-	int ret;
+	int ret = -1;
+
+	qse_awk_val_t* a1, * a2, * a3;
+	qse_mchar_t* host = QSE_NULL;
+	qse_mchar_t* user = QSE_NULL;
+	qse_mchar_t* pass = QSE_NULL;
 
 	list = rtx_to_list(rtx, fi);
 
-	ret = qse_awk_rtx_valtoint(rtx, qse_awk_rtx_getarg(rtx, 0), &id);
-	if (ret <= -1)
+	if (qse_awk_rtx_valtoint(rtx, qse_awk_rtx_getarg(rtx, 0), &id) <= -1)
 	{
 		list->errnum = qse_awk_rtx_geterrnum(rtx);
-		ret = -1;
 	}
 	else if (!(node = get_list_node(list, id)))
 	{
 /* TODO: enhance error */
 		list->errnum = QSE_AWK_EINVAL;
-		ret = -1;
 	}
 	else
 	{
-		if (!mysql_real_connect(node->mysql, QSE_NULL, QSE_NULL, QSE_NULL, QSE_NULL, 0, QSE_NULL, 0))
+		a1 = qse_awk_rtx_getarg(rtx, 1);
+		a2 = qse_awk_rtx_getarg(rtx, 2);
+		a3 = qse_awk_rtx_getarg(rtx, 3);
+
+		host = qse_awk_rtx_getvalmbs(rtx, a1, QSE_NULL);
+		if (!host) goto done; /* TODO: set list->errnum ... */
+		user = qse_awk_rtx_getvalmbs(rtx, a2, QSE_NULL);
+		if (!user) goto done;
+		pass = qse_awk_rtx_getvalmbs(rtx, a3, QSE_NULL);
+		if (!pass) goto done;
+
+		if (!mysql_real_connect(node->mysql, host, user, pass, QSE_NULL, 0, QSE_NULL, 0))
 		{
 /* TODO: capture error message... */
 			list->errnum = QSE_AWK_ESYSERR;
-			ret = -1;
+			goto done;
 		}
+
+		ret = 0;
 	}
 
+done:
 	qse_awk_rtx_setretval (rtx, qse_awk_rtx_makeintval(rtx, ret));
 	return 0;
 }
 
 static int fnc_query (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
-	return -1;
+	sql_list_t* list;
+	sql_node_t* node;
+	qse_awk_int_t id;
+	int ret = -1;
+
+	qse_awk_val_t* a1;
+	qse_mchar_t* qstr = QSE_NULL;
+
+	list = rtx_to_list(rtx, fi);
+
+	if (qse_awk_rtx_valtoint(rtx, qse_awk_rtx_getarg(rtx, 0), &id) <= -1)
+	{
+		list->errnum = qse_awk_rtx_geterrnum(rtx);
+	}
+	else if (!(node = get_list_node(list, id)))
+	{
+/* TODO: enhance error */
+		list->errnum = QSE_AWK_EINVAL;
+	}
+	else
+	{
+		qse_size_t qlen;
+		a1 = qse_awk_rtx_getarg(rtx, 1);
+
+
+		qstr = qse_awk_rtx_getvalmbs(rtx, a1, &qlen);
+		if (!qstr) goto done; /* TODO: set list->errnum ... */
+
+		if (mysql_real_query(node->mysql, qstr, qlen) != 0)
+		{
+/* TODO: capture error message... */
+			list->errnum = QSE_AWK_ESYSERR;
+			goto done;
+		}
+
+		ret = 0;
+	}
+
+done:
+	qse_awk_rtx_setretval (rtx, qse_awk_rtx_makeintval(rtx, ret));
+	return 0;
 }
 
+static int fnc_store_result (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	sql_list_t* list;
+	sql_node_t* node;
+	qse_awk_int_t id;
+	int ret = -1;
+
+	list = rtx_to_list(rtx, fi);
+
+	if (qse_awk_rtx_valtoint(rtx, qse_awk_rtx_getarg(rtx, 0), &id) <= -1)
+	{
+		list->errnum = qse_awk_rtx_geterrnum(rtx);
+	}
+	else if (!(node = get_list_node(list, id)))
+	{
+/* TODO: enhance error */
+		list->errnum = QSE_AWK_EINVAL;
+	}
+	else
+	{
+		MYSQL_RES* res;
+
+		res = mysql_store_result(node->mysql);
+		if (!res)
+		{
+/* TODO: capture error message... */
+			list->errnum = QSE_AWK_ESYSERR;
+			goto done;
+		}
+
+/* register this pointer to ASSSSS */
+		ret = 0;
+	}
+
+done:
+	qse_awk_rtx_setretval (rtx, qse_awk_rtx_makeintval(rtx, ret));
+	return 0;
+}
+
+static int fnc_free_result (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	return 0;
+}
 
 typedef struct fnctab_t fnctab_t;
 struct fnctab_t
@@ -187,10 +302,12 @@ struct fnctab_t
 static fnctab_t fnctab[] =
 {
 	/* keep this table sorted for binary search in query(). */
-	{ QSE_T("close"),        { { 1, 1, QSE_NULL },   fnc_close,     0 } },
-	{ QSE_T("connect"),      { { 4, 1, QSE_NULL },   fnc_connect,   0 } },
-	{ QSE_T("open"),         { { 0, 0, QSE_NULL },   fnc_open,      0 } },
-	{ QSE_T("query"),        { { 2, 3, QSE_NULL },   fnc_query,     0 } },
+	{ QSE_T("close"),        { { 1, 1, QSE_NULL },   fnc_close,          0 } },
+	{ QSE_T("connect"),      { { 4, 8, QSE_NULL },   fnc_connect,        0 } },
+	{ QSE_T("free_result"),  { { 1, 1, QSE_NULL },   fnc_free_result,    0 } },
+	{ QSE_T("open"),         { { 0, 0, QSE_NULL },   fnc_open,           0 } },
+	{ QSE_T("query"),        { { 2, 2, QSE_NULL },   fnc_query,          0 } },
+	{ QSE_T("store_result"), { { 1, 1, QSE_NULL },   fnc_store_result,   0 } }
 };
 
 static int query (qse_awk_mod_t* mod, qse_awk_t* awk, const qse_char_t* name, qse_awk_mod_sym_t* sym)

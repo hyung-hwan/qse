@@ -193,7 +193,7 @@ static qse_htb_walk_t print_awk_value (
 
 	qse_awk_rtx_geterrinf (rtx, &oerrinf);
 
-	str = qse_awk_rtx_valtostrdup (rtx, QSE_HTB_VPTR(pair), &len);
+	str = qse_awk_rtx_valtostrdup(rtx, QSE_HTB_VPTR(pair), &len);
 	if (str == QSE_NULL)
 	{
 		if (qse_awk_rtx_geterrnum(rtx) == QSE_AWK_EVALTOSTR)
