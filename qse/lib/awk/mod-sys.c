@@ -920,7 +920,7 @@ static int fnc_getnwifcfg (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 				{
 					int x;
 					qse_awk_rtx_refupval (rtx, tmp);
-					x = qse_awk_rtx_setrefval (rtx, (qse_awk_val_ref_t*)qse_awk_rtx_getarg (rtx, 2), tmp);
+					x = qse_awk_rtx_setrefval (rtx, (qse_awk_val_ref_t*)qse_awk_rtx_getarg(rtx, 2), tmp);
 					qse_awk_rtx_refdownval (rtx, tmp);
 					if (x <= -1) return -1;
 					ret = 0;
