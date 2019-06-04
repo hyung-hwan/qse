@@ -264,15 +264,15 @@ static int fnc_dir_errstr (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 
 	list = rtx_to_list(rtx, fi);
 
-	if (qse_awk_rtx_getnargs (rtx) <= 0 ||
-	    qse_awk_rtx_valtoint (rtx, qse_awk_rtx_getarg (rtx, 0), &errnum) <= -1)
+	if (qse_awk_rtx_getnargs(rtx) <= 0 ||
+	    qse_awk_rtx_valtoint(rtx, qse_awk_rtx_getarg (rtx, 0), &errnum) <= -1)
 	{
 		errnum = list->errnum;
 	}
 
 	if (errnum < 0 || errnum >= QSE_COUNTOF(errmsg)) errnum = QSE_COUNTOF(errmsg) - 1;
 
-	retv = qse_awk_rtx_makestrvalwithstr (rtx, errmsg[errnum]);
+	retv = qse_awk_rtx_makestrvalwithstr(rtx, errmsg[errnum]);
 	if (retv == QSE_NULL) return -1;
 
 	qse_awk_rtx_setretval (rtx, retv);

@@ -30,8 +30,8 @@
 #include <qse/cmn/main.h>
 #include <qse/cmn/rbt.h>
 
-#define __IMAP_NODE_T_DATA  MYSQL* mysql;
-#define __IMAP_LIST_T_DATA  int errnum;
+#define __IMAP_NODE_T_DATA  MYSQL* mysql; int connect_ever_attempted;
+#define __IMAP_LIST_T_DATA  int errnum; qse_char_t errmsg[256];
 #define __IMAP_LIST_T sql_list_t
 #define __IMAP_NODE_T sql_node_t
 #define __MAKE_IMAP_NODE __new_sql_node
@@ -46,7 +46,7 @@
 #undef __FREE_IMAP_NODE
 
 #define __IMAP_NODE_T_DATA  MYSQL_RES* res; unsigned int num_fields;
-#define __IMAP_LIST_T_DATA  int errnum;
+#define __IMAP_LIST_T_DATA  /* int errnum; */
 #define __IMAP_LIST_T res_list_t
 #define __IMAP_NODE_T res_node_t
 #define __MAKE_IMAP_NODE __new_res_node
@@ -141,18 +141,87 @@ static QSE_INLINE res_node_t* get_res_list_node (res_list_t* res_list, qse_awk_i
 
 /* ------------------------------------------------------------------------ */
 
+static void set_error_on_sql_list (qse_awk_rtx_t* rtx, sql_list_t* sql_list, const qse_char_t* errfmt, ...)
+{
+	if (errfmt)
+	{
+		va_list ap;
+		va_start (ap, errfmt);
+		qse_strxvfmt (sql_list->errmsg, QSE_COUNTOF(sql_list->errmsg), errfmt, ap);
+		va_end (ap);
+	}
+	else
+	{
+		qse_strxcpy (sql_list->errmsg, QSE_COUNTOF(sql_list->errmsg), qse_awk_rtx_geterrmsg(rtx));
+	}
+}
+
+static int fnc_errmsg (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	sql_list_t* sql_list;
+	qse_awk_val_t* retv;
+
+	sql_list = rtx_to_sql_list(rtx, fi);
+	retv = qse_awk_rtx_makestrvalwithstr(rtx, sql_list->errmsg);
+	if (!retv) return -1;
+
+	qse_awk_rtx_setretval (rtx, retv);
+	return 0;
+}
+
+/* ------------------------------------------------------------------------ */
+
+static sql_node_t* get_sql_list_node_with_arg (qse_awk_rtx_t* rtx, sql_list_t* sql_list, qse_awk_val_t* arg)
+{
+	qse_awk_int_t id;
+	sql_node_t* sql_node;
+
+	if (qse_awk_rtx_valtoint(rtx, arg, &id) <= -1)
+	{
+		set_error_on_sql_list (rtx, sql_list, QSE_T("illegal instance id"));
+		return QSE_NULL;
+	}
+	else if (!(sql_node = get_sql_list_node(sql_list, id)))
+	{
+		set_error_on_sql_list (rtx, sql_list, QSE_T("invalid instance id - %zd"), (qse_size_t)id);
+		return QSE_NULL;
+	}
+
+	return sql_node;
+}
+
+static res_node_t* get_res_list_node_with_arg (qse_awk_rtx_t* rtx, sql_list_t* sql_list, res_list_t* res_list, qse_awk_val_t* arg)
+{
+	qse_awk_int_t id;
+	res_node_t* res_node;
+
+	if (qse_awk_rtx_valtoint(rtx, arg, &id) <= -1)
+	{
+		set_error_on_sql_list (rtx, sql_list, QSE_T("illegal result id"));
+		return QSE_NULL;
+	}
+	else if (!(res_node = get_res_list_node(res_list, id)))
+	{
+		set_error_on_sql_list (rtx, sql_list, QSE_T("invalid result id - %zd"), (qse_size_t)id);
+		return QSE_NULL;
+	}
+
+	return res_node;
+}
+
+/* ------------------------------------------------------------------------ */
 static int fnc_open (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
 	sql_list_t* sql_list;
 	sql_node_t* sql_node = QSE_NULL;
-	qse_awk_int_t ret;
+	qse_awk_int_t ret = -1;
 	qse_awk_val_t* retv;
 
 	sql_list = rtx_to_sql_list(rtx, fi);
 
 	sql_node = new_sql_node(rtx, sql_list);
 	if (sql_node) ret = sql_node->id;
-	else ret = -1;
+	else set_error_on_sql_list (rtx, sql_list, QSE_NULL);
 
 	/* ret may not be a statically managed number. 
 	 * error checking is required */
@@ -171,26 +240,14 @@ static int fnc_close (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
 	sql_list_t* sql_list;
 	sql_node_t* sql_node;
-	qse_awk_int_t id;
-	int ret;
+	int ret = -1;
 
 	sql_list = rtx_to_sql_list(rtx, fi);
-
-	ret = qse_awk_rtx_valtoint(rtx, qse_awk_rtx_getarg(rtx, 0), &id);
-	if (ret <= -1)
-	{
-		sql_list->errnum = qse_awk_rtx_geterrnum(rtx);
-		ret = -1;
-	}
-	else if (!(sql_node = get_sql_list_node(sql_list, id)))
-	{
-/* TODO: enhance error */
-		sql_list->errnum = QSE_AWK_EINVAL;
-		ret = -1;
-	}
-	else
+	sql_node = get_sql_list_node_with_arg(rtx, sql_list, qse_awk_rtx_getarg(rtx, 0));
+	if (sql_node)
 	{
 		free_sql_node (rtx, sql_list, sql_node);
+		ret = 0;
 	}
 
 	qse_awk_rtx_setretval (rtx, qse_awk_rtx_makeintval(rtx, ret));
@@ -201,8 +258,7 @@ static int fnc_connect (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
 	sql_list_t* sql_list;
 	sql_node_t* sql_node;
-	qse_awk_int_t id;
-	int ret = -1;
+	int ret = -1, take_rtx_err = 0;
 
 	qse_awk_val_t* a1, * a2, * a3;
 	qse_mchar_t* host = QSE_NULL;
@@ -210,33 +266,60 @@ static int fnc_connect (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	qse_mchar_t* pass = QSE_NULL;
 
 	sql_list = rtx_to_sql_list(rtx, fi);
-
-	if (qse_awk_rtx_valtoint(rtx, qse_awk_rtx_getarg(rtx, 0), &id) <= -1)
-	{
-		sql_list->errnum = qse_awk_rtx_geterrnum(rtx);
-	}
-	else if (!(sql_node = get_sql_list_node(sql_list, id)))
-	{
-/* TODO: enhance error */
-		sql_list->errnum = QSE_AWK_EINVAL;
-	}
-	else
+	sql_node = get_sql_list_node_with_arg(rtx, sql_list, qse_awk_rtx_getarg(rtx, 0));
+	if (sql_node)
 	{
 		a1 = qse_awk_rtx_getarg(rtx, 1);
 		a2 = qse_awk_rtx_getarg(rtx, 2);
 		a3 = qse_awk_rtx_getarg(rtx, 3);
 
 		host = qse_awk_rtx_getvalmbs(rtx, a1, QSE_NULL);
-		if (!host) goto done; /* TODO: set sql_list->errnum ... */
+		if (!host) { take_rtx_err = 1; goto done; }
 		user = qse_awk_rtx_getvalmbs(rtx, a2, QSE_NULL);
-		if (!user) goto done;
+		if (!user) { take_rtx_err = 1; goto done; }
 		pass = qse_awk_rtx_getvalmbs(rtx, a3, QSE_NULL);
-		if (!pass) goto done;
+		if (!pass) { take_rtx_err = 1; goto done; }
 
 		if (!mysql_real_connect(sql_node->mysql, host, user, pass, QSE_NULL, 0, QSE_NULL, 0))
 		{
-/* TODO: capture error message... */
-			sql_list->errnum = QSE_AWK_ESYSERR;
+			set_error_on_sql_list (rtx, sql_list, QSE_T("%hs"), mysql_error(sql_node->mysql));
+			sql_node->connect_ever_attempted = 1; /* doesn't matter if mysql_real_connect() failed */
+			goto done;
+		}
+
+		sql_node->connect_ever_attempted = 1;
+		ret = 0;
+	}
+
+done:
+	if (take_rtx_err) set_error_on_sql_list (rtx, sql_list, QSE_NULL);
+	if (pass) qse_awk_rtx_freevalmbs (rtx, a3, pass);
+	if (user) qse_awk_rtx_freevalmbs (rtx, a2, user);
+	if (host) qse_awk_rtx_freevalmbs (rtx, a1, host);
+
+	qse_awk_rtx_setretval (rtx, qse_awk_rtx_makeintval(rtx, ret));
+	return 0;
+}
+
+static int fnc_ping (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	sql_list_t* sql_list;
+	sql_node_t* sql_node;
+	int ret = -1, take_rtx_err = 0;
+
+	sql_list = rtx_to_sql_list(rtx, fi);
+	sql_node = get_sql_list_node_with_arg(rtx, sql_list, qse_awk_rtx_getarg(rtx, 0));
+	if (sql_node)
+	{
+		if (!sql_node->connect_ever_attempted)
+		{
+			set_error_on_sql_list (rtx, sql_list, QSE_T("not connected"));
+			goto done;
+		}
+
+		if (mysql_ping(sql_node->mysql) != 0)
+		{
+			set_error_on_sql_list (rtx, sql_list, QSE_T("%hs"), mysql_error(sql_node->mysql));
 			goto done;
 		}
 
@@ -244,46 +327,379 @@ static int fnc_connect (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	}
 
 done:
-	if (pass) qse_awk_rtx_freevalmbs (rtx, a3, pass);
-	if (user) qse_awk_rtx_freevalmbs (rtx, a2, user);
-	if (host) qse_awk_rtx_freevalmbs (rtx, a1, host);
+	if (take_rtx_err) set_error_on_sql_list (rtx, sql_list, QSE_NULL);
 	qse_awk_rtx_setretval (rtx, qse_awk_rtx_makeintval(rtx, ret));
 	return 0;
+
+oops:
+	if (take_rtx_err) set_error_on_sql_list (rtx, sql_list, QSE_NULL);
+	return -1;
+}
+
+#if 0
+static int fnc_get_option (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	sql_list_t* sql_list;
+	sql_node_t* sql_node;
+	int ret = -1, take_rtx_err = 0;
+
+	sql_list = rtx_to_sql_list(rtx, fi);
+	sql_node = get_sql_list_node_with_arg(rtx, sql_list, qse_awk_rtx_getarg(rtx, 0));
+	if (sql_node)
+	{
+		qse_awk_int_t id, tv;
+		union
+		{
+			unsigned int ui;
+			int b;
+		} v;
+
+		if (qse_awk_rtx_valtoint(rtx, qse_awk_rtx_getarg(rtx, 1), &id) <= -1)
+		{
+			take_rtx_err = 1;
+			goto oops;
+		}
+
+		if (!sql_node->connect_ever_attempted)
+		{
+			set_error_on_sql_list (rtx, sql_list, QSE_T("not connected"));
+			goto done;
+		}
+
+		switch (id)
+		{
+			case MYSQL_OPT_CONNECT_TIMEOUT:
+			case MYSQL_OPT_READ_TIMEOUT:
+			case MYSQL_OPT_WRITE_TIMEOUT:
+				/* unsigned int * */
+				if (mysql_get_option(sql_node->mysql, id, &v.ui) != 0)
+				{
+					set_error_on_sql_list (rtx, sql_list, QSE_T("%hs"), mysql_errstr(sql_node->mysql));
+					goto done;
+				}
+
+				retv = qse_awk_rtx_makeintval(rtx, v.ui);
+				if (qse_awk_rtx_setrefval(rtx, (qse_awk_val_ref_t*)qse_awk_rtx_getarg(rtx, 2), retv) <= -1)
+				{
+					qse_awk_rtx_refupval(rtx, retv);
+					qse_awk_rtx_refdownval(rtx, retv);
+					goto oops;
+				}
+				break;
+
+			case MYSQL_OPT_RECONNECT:
+				/* bool * */
+				if (mysql_get_option(sql_node->mysql, id, &v.b) != 0)
+				{
+					set_error_on_sql_list (rtx, sql_list, QSE_T("%hs"), mysql_errstr(sql_node->mysql));
+					goto done;
+				}
+
+				retv = qse_awk_rtx_makeintval(rtx, v.b);
+				if (!retv) goto oops;
+
+				if (qse_awk_rtx_setrefval(rtx, (qse_awk_val_ref_t*)qse_awk_rtx_getarg(rtx, 2), retv) <= -1) 
+				{
+					qse_awk_rtx_refupval(rtx, retv);
+					qse_awk_rtx_refdownval(rtx, retv);
+					goto oops;
+				}
+				break;
+
+			default:
+				set_error_on_sql_list (rtx, sql_list, QSE_T("unsupported option id - %zd"), (qse_size_t)id);
+				goto done;
+		}
+
+		ret = 0;
+	}
+
+done:
+	if (take_rtx_err) set_error_on_sql_list (rtx, sql_list, QSE_NULL);
+	qse_awk_rtx_setretval (rtx, qse_awk_rtx_makeintval(rtx, ret));
+	return 0;
+
+oops:
+	if (take_rtx_err) set_error_on_sql_list (rtx, sql_list, QSE_NULL);
+	return -1;
+}
+#endif
+
+static int fnc_set_option (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	sql_list_t* sql_list;
+	sql_node_t* sql_node;
+	int ret = -1, take_rtx_err = 0;
+
+	sql_list = rtx_to_sql_list(rtx, fi);
+	sql_node = get_sql_list_node_with_arg(rtx, sql_list, qse_awk_rtx_getarg(rtx, 0));
+	if (sql_node)
+	{
+		qse_awk_int_t id, tv;
+		void* vptr;
+		union
+		{
+			unsigned int ui;
+			int b;
+		} v;
+
+		if (qse_awk_rtx_valtoint(rtx, qse_awk_rtx_getarg(rtx, 1), &id) <= -1)
+		{
+			take_rtx_err = 1;
+			goto oops;
+		}
+
+		/* this function must not check sql_node->connect_ever_attempted */
+
+		switch (id)
+		{
+			case MYSQL_OPT_CONNECT_TIMEOUT:
+			case MYSQL_OPT_READ_TIMEOUT:
+			case MYSQL_OPT_WRITE_TIMEOUT:
+				/* unsigned int * */
+				if (qse_awk_rtx_valtoint(rtx, qse_awk_rtx_getarg(rtx, 2), &tv) <= -1)
+				{
+					take_rtx_err = 1;
+					goto oops;
+				}
+
+				v.ui = tv;
+				vptr = &v.ui;
+				break;
+
+			case MYSQL_OPT_RECONNECT:
+				/* bool * */
+				if (qse_awk_rtx_valtoint(rtx, qse_awk_rtx_getarg(rtx, 2), &tv) <= -1)
+				{
+					take_rtx_err = 1;
+					goto oops;
+				}
+
+				v.b = tv;
+				vptr = &v.b;
+				break;
+
+			default:
+				set_error_on_sql_list (rtx, sql_list, QSE_T("unsupported option id - %zd"), (qse_size_t)id);
+				goto done;
+		}
+
+printf ("%d %d\n", (int)id, *(int*)vptr);
+		if (mysql_options(sql_node->mysql, id, vptr) != 0)
+		{
+			set_error_on_sql_list (rtx, sql_list, QSE_T("%hs"), mysql_error(sql_node->mysql));
+			goto done;
+		}
+
+		ret = 0;
+	}
+
+done:
+	if (take_rtx_err) set_error_on_sql_list (rtx, sql_list, QSE_NULL);
+	qse_awk_rtx_setretval (rtx, qse_awk_rtx_makeintval(rtx, ret));
+	return 0;
+
+oops:
+	if (take_rtx_err) set_error_on_sql_list (rtx, sql_list, QSE_NULL);
+	return -1;
+}
+
+static int fnc_autocommit (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	sql_list_t* sql_list;
+	sql_node_t* sql_node;
+	int ret = -1, take_rtx_err = 0;
+
+	sql_list = rtx_to_sql_list(rtx, fi);
+	sql_node = get_sql_list_node_with_arg(rtx, sql_list, qse_awk_rtx_getarg(rtx, 0));
+	if (sql_node)
+	{
+		int v;
+
+		v = qse_awk_rtx_valtobool(rtx, qse_awk_rtx_getarg(rtx, 1));
+		if (v <= -1) { take_rtx_err = 1; goto oops; }
+
+		if (!sql_node->connect_ever_attempted)
+		{
+			set_error_on_sql_list (rtx, sql_list, QSE_T("not connected"));
+			goto done;
+		}
+
+		if (mysql_autocommit(sql_node->mysql, v) != 0)
+		{
+			set_error_on_sql_list (rtx, sql_list, QSE_T("%hs"), mysql_error(sql_node->mysql));
+			goto done;
+		}
+
+		ret = 0;
+	}
+
+done:
+	if (take_rtx_err) set_error_on_sql_list (rtx, sql_list, QSE_NULL);
+	qse_awk_rtx_setretval (rtx, qse_awk_rtx_makeintval(rtx, ret));
+	return 0;
+
+oops:
+	if (take_rtx_err) set_error_on_sql_list (rtx, sql_list, QSE_NULL);
+	return -1;
+}
+
+static int fnc_commit (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	sql_list_t* sql_list;
+	sql_node_t* sql_node;
+	int ret = -1, take_rtx_err = 0;
+
+	sql_list = rtx_to_sql_list(rtx, fi);
+	sql_node = get_sql_list_node_with_arg(rtx, sql_list, qse_awk_rtx_getarg(rtx, 0));
+	if (sql_node)
+	{
+		int v;
+
+		v = qse_awk_rtx_valtobool(rtx, qse_awk_rtx_getarg(rtx, 1));
+		if (v <= -1) { take_rtx_err = 1; goto oops; }
+
+		if (!sql_node->connect_ever_attempted)
+		{
+			set_error_on_sql_list (rtx, sql_list, QSE_T("not connected"));
+			goto done;
+		}
+
+		if (mysql_commit(sql_node->mysql) != 0)
+		{
+			set_error_on_sql_list (rtx, sql_list, QSE_T("%hs"), mysql_error(sql_node->mysql));
+			goto done;
+		}
+
+		ret = 0;
+	}
+
+done:
+	if (take_rtx_err) set_error_on_sql_list (rtx, sql_list, QSE_NULL);
+	qse_awk_rtx_setretval (rtx, qse_awk_rtx_makeintval(rtx, ret));
+	return 0;
+
+oops:
+	if (take_rtx_err) set_error_on_sql_list (rtx, sql_list, QSE_NULL);
+	return -1;
+}
+
+static int fnc_rollback (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	sql_list_t* sql_list;
+	sql_node_t* sql_node;
+	int ret = -1, take_rtx_err = 0;
+
+	sql_list = rtx_to_sql_list(rtx, fi);
+	sql_node = get_sql_list_node_with_arg(rtx, sql_list, qse_awk_rtx_getarg(rtx, 0));
+	if (sql_node)
+	{
+		int v;
+
+		v = qse_awk_rtx_valtobool(rtx, qse_awk_rtx_getarg(rtx, 1));
+		if (v <= -1) { take_rtx_err = 1; goto oops; }
+
+		if (!sql_node->connect_ever_attempted)
+		{
+			set_error_on_sql_list (rtx, sql_list, QSE_T("not connected"));
+			goto done;
+		}
+
+		if (mysql_rollback(sql_node->mysql) != 0)
+		{
+			set_error_on_sql_list (rtx, sql_list, QSE_T("%hs"), mysql_error(sql_node->mysql));
+			goto done;
+		}
+
+		ret = 0;
+	}
+
+done:
+	if (take_rtx_err) set_error_on_sql_list (rtx, sql_list, QSE_NULL);
+	qse_awk_rtx_setretval (rtx, qse_awk_rtx_makeintval(rtx, ret));
+	return 0;
+
+oops:
+	if (take_rtx_err) set_error_on_sql_list (rtx, sql_list, QSE_NULL);
+	return -1;
+}
+
+static int fnc_escape_string (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	sql_list_t* sql_list;
+	sql_node_t* sql_node;
+	int take_rtx_err = 0;
+
+	qse_awk_val_t* a1, *retv;
+	qse_mchar_t* qstr = QSE_NULL;
+	qse_mchar_t* ebuf = QSE_NULL;
+
+	sql_list = rtx_to_sql_list(rtx, fi);
+	sql_node = get_sql_list_node_with_arg(rtx, sql_list, qse_awk_rtx_getarg(rtx, 0));
+	if (sql_node)
+	{
+		qse_size_t qlen;
+		
+		a1 = qse_awk_rtx_getarg(rtx, 1);
+
+		qstr = qse_awk_rtx_getvalmbs(rtx, a1, &qlen);
+		if (!qstr) { take_rtx_err = 1; goto oops; }
+
+		ebuf = qse_awk_rtx_allocmem(rtx, (qlen * 2 + 1) * QSE_SIZEOF(*qstr));
+		if (!ebuf) { take_rtx_err = 1; goto oops; }
+
+		if (mysql_real_escape_string(sql_node->mysql, ebuf, qstr, qlen) != 0)
+		{
+			set_error_on_sql_list (rtx, sql_list, QSE_T("%hs"), mysql_error(sql_node->mysql));
+			goto done;
+		}
+	}
+
+done:
+	if (take_rtx_err) set_error_on_sql_list (rtx, sql_list, QSE_NULL);
+	if (qstr) qse_awk_rtx_freevalmbs (rtx, a1, qstr);
+	retv = ebuf? qse_awk_rtx_makestrvalwithmbs(rtx, ebuf): qse_awk_rtx_makenilval(rtx);
+	if (ebuf) qse_awk_rtx_freemem (rtx, ebuf);
+	if (!retv) return -1;
+
+	qse_awk_rtx_setretval (rtx, retv);
+	return 0;
+
+oops:
+	if (take_rtx_err) set_error_on_sql_list (rtx, sql_list, QSE_NULL);
+	if (qstr) qse_awk_rtx_freevalmbs (rtx, a1, qstr);
+	if (ebuf) qse_awk_rtx_freemem (rtx, ebuf);
+	return -1;
 }
 
 static int fnc_query (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
 	sql_list_t* sql_list;
 	sql_node_t* sql_node;
-	qse_awk_int_t id;
-	int ret = -1;
+	int ret = -1, take_rtx_err = 0;
 
 	qse_awk_val_t* a1;
 	qse_mchar_t* qstr = QSE_NULL;
 
 	sql_list = rtx_to_sql_list(rtx, fi);
-
-	if (qse_awk_rtx_valtoint(rtx, qse_awk_rtx_getarg(rtx, 0), &id) <= -1)
-	{
-		sql_list->errnum = qse_awk_rtx_geterrnum(rtx);
-	}
-	else if (!(sql_node = get_sql_list_node(sql_list, id)))
-	{
-/* TODO: enhance error */
-		sql_list->errnum = QSE_AWK_EINVAL;
-	}
-	else
+	sql_node = get_sql_list_node_with_arg(rtx, sql_list, qse_awk_rtx_getarg(rtx, 0));
+	if (sql_node)
 	{
 		qse_size_t qlen;
 		a1 = qse_awk_rtx_getarg(rtx, 1);
 
 		qstr = qse_awk_rtx_getvalmbs(rtx, a1, &qlen);
-		if (!qstr) goto done; /* TODO: set sql_list->errnum ... */
+		if (!qstr) { take_rtx_err = 1; goto oops; }
+
+		if (!sql_node->connect_ever_attempted)
+		{
+			set_error_on_sql_list (rtx, sql_list, QSE_T("not connected"));
+			goto done;
+		}
 
 		if (mysql_real_query(sql_node->mysql, qstr, qlen) != 0)
 		{
-/* TODO: capture error message... */
-			sql_list->errnum = QSE_AWK_ESYSERR;
+			set_error_on_sql_list (rtx, sql_list, QSE_T("%hs"), mysql_error(sql_node->mysql));
 			goto done;
 		}
 
@@ -291,30 +707,26 @@ static int fnc_query (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	}
 
 done:
+	if (take_rtx_err) set_error_on_sql_list (rtx, sql_list, QSE_NULL);
 	if (qstr) qse_awk_rtx_freevalmbs (rtx, a1, qstr);
 	qse_awk_rtx_setretval (rtx, qse_awk_rtx_makeintval(rtx, ret));
 	return 0;
+
+oops:
+	if (take_rtx_err) set_error_on_sql_list (rtx, sql_list, QSE_NULL);
+	if (qstr) qse_awk_rtx_freevalmbs (rtx, a1, qstr);
+	return -1;
 }
 
 static int fnc_store_result (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
 	sql_list_t* sql_list;
 	sql_node_t* sql_node;
-	qse_awk_int_t id;
-	int ret = -1;
+	int ret = -1, take_rtx_err = 0;
 
 	sql_list = rtx_to_sql_list(rtx, fi);
-
-	if (qse_awk_rtx_valtoint(rtx, qse_awk_rtx_getarg(rtx, 0), &id) <= -1)
-	{
-		sql_list->errnum = qse_awk_rtx_geterrnum(rtx);
-	}
-	else if (!(sql_node = get_sql_list_node(sql_list, id)))
-	{
-/* TODO: enhance error */
-		sql_list->errnum = QSE_AWK_EINVAL;
-	}
-	else
+	sql_node = get_sql_list_node_with_arg(rtx, sql_list, qse_awk_rtx_getarg(rtx, 0));
+	if (sql_node)
 	{
 		res_list_t* res_list;
 		res_node_t* res_node;
@@ -322,11 +734,19 @@ static int fnc_store_result (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 
 		res_list = rtx_to_res_list(rtx, fi);
 
+		if (!sql_node->connect_ever_attempted)
+		{
+			set_error_on_sql_list (rtx, sql_list, QSE_T("not connected"));
+			goto done;
+		}
+
 		res = mysql_store_result(sql_node->mysql);
 		if (!res)
 		{
-/* TODO: capture error message... */
-			sql_list->errnum = QSE_AWK_ESYSERR;
+			if (mysql_errno(sql_node->mysql) == 0)
+				set_error_on_sql_list (rtx, sql_list, QSE_T("no result"));
+			else
+				set_error_on_sql_list (rtx, sql_list, QSE_T("%hs"), mysql_error(sql_node->mysql));
 			goto done;
 		}
 
@@ -334,6 +754,7 @@ static int fnc_store_result (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 		if (!res_node)	
 		{
 			mysql_free_result (res);
+			take_rtx_err = 1;
 			goto done;
 		}
 
@@ -341,29 +762,22 @@ static int fnc_store_result (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	}
 
 done:
+	if (take_rtx_err) set_error_on_sql_list (rtx, sql_list, QSE_NULL);
 	qse_awk_rtx_setretval (rtx, qse_awk_rtx_makeintval(rtx, ret));
 	return 0;
 }
 
 static int fnc_free_result (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
+	sql_list_t* sql_list;
 	res_list_t* res_list;
 	res_node_t* res_node;
-	qse_awk_int_t id;
 	int ret = -1;
 
+	sql_list = rtx_to_sql_list(rtx, fi);
 	res_list = rtx_to_res_list(rtx, fi);
-
-	if (qse_awk_rtx_valtoint(rtx, qse_awk_rtx_getarg(rtx, 0), &id) <= -1)
-	{
-		res_list->errnum = qse_awk_rtx_geterrnum(rtx);
-	}
-	else if (!(res_node = get_res_list_node(res_list, id)))
-	{
-/* TODO: enhance error */
-		res_list->errnum = QSE_AWK_EINVAL;
-	}
-	else
+	res_node = get_res_list_node_with_arg(rtx, sql_list, res_list, qse_awk_rtx_getarg(rtx, 0));
+	if (res_node)
 	{
 		free_res_node (rtx, res_list, res_node);
 		ret = 0;
@@ -375,51 +789,34 @@ static int fnc_free_result (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 
 static int fnc_fetch_row (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
+	sql_list_t* sql_list;
 	res_list_t* res_list;
 	res_node_t* res_node;
-	qse_awk_int_t id;
-	int ret = -1;
+	int ret = -1, take_rtx_err = 0;
+	qse_awk_val_t* row_map = QSE_NULL;
 
+	sql_list = rtx_to_sql_list(rtx, fi);
 	res_list = rtx_to_res_list(rtx, fi);
-
-	if (qse_awk_rtx_valtoint(rtx, qse_awk_rtx_getarg(rtx, 0), &id) <= -1)
-	{
-		res_list->errnum = qse_awk_rtx_geterrnum(rtx);
-	}
-	else if (!(res_node = get_res_list_node(res_list, id)))
-	{
-/* TODO: enhance error */
-		res_list->errnum = QSE_AWK_EINVAL;
-	}
-	else
+	res_node = get_res_list_node_with_arg(rtx, sql_list, res_list, qse_awk_rtx_getarg(rtx, 0));
+	if (res_node)
 	{
 		MYSQL_ROW row;
 		unsigned int i;
-		qse_awk_val_t* row_map, * row_val;
+		qse_awk_val_t* row_val;
 		int x;
 
 		row = mysql_fetch_row(res_node->res);
 		if (!row)
 		{
+			/* no more row in the result */
 			ret = 0;
 			goto done;
 		}
 
 		row_map = qse_awk_rtx_makemapval(rtx);
-		if (!row_map) 
-		{
-			/* TODO set erro rmessage */
-			goto done;
-		}
+		if (!row_map) goto oops;
 
 		qse_awk_rtx_refupval (rtx, row_map);
-		x = qse_awk_rtx_setrefval(rtx, (qse_awk_val_ref_t*)qse_awk_rtx_getarg(rtx, 1), row_map);
-		qse_awk_rtx_refdownval (rtx, row_map);
-		if (x <= -1)
-		{
-			/* TODO set erro rmessage */
-			goto done;
-		}
 
 		for (i = 0; i < res_node->num_fields; )
 		{
@@ -430,11 +827,7 @@ static int fnc_fetch_row (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 			{
 /* TODO: consider using make multi byte string - qse_awk_rtx_makembsstr */
 				row_val = qse_awk_rtx_makestrvalwithmbs(rtx, row[i]);
-				if (!row_val)
-				{
-					/* TODO set erro rmessage */
-					goto done;
-				}
+				if (!row_val) goto oops;
 			}
 			else
 			{
@@ -451,17 +844,28 @@ static int fnc_fetch_row (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 			{
 				qse_awk_rtx_refupval (rtx, row_val);
 				qse_awk_rtx_refdownval (rtx, row_val);
-			/* TODO: set error message */
-				goto done;
+				goto oops;
 			}
 		}
 
-		ret = 1;
+		x = qse_awk_rtx_setrefval(rtx, (qse_awk_val_ref_t*)qse_awk_rtx_getarg(rtx, 1), row_map);
+
+		qse_awk_rtx_refdownval (rtx, row_map);
+		row_map = QSE_NULL;
+
+		if (x <= -1) goto oops;
+		ret = 1; /* indicate that there is a row */
 	}
 
 done:
+	if (take_rtx_err) set_error_on_sql_list (rtx, sql_list, QSE_NULL);
 	qse_awk_rtx_setretval (rtx, qse_awk_rtx_makeintval(rtx, ret));
 	return 0;
+
+
+oops:
+	if (row_map) qse_awk_rtx_refdownval (rtx, row_map);
+	return -1;
 }
 
 typedef struct fnctab_t fnctab_t;
@@ -471,18 +875,43 @@ struct fnctab_t
 	qse_awk_mod_sym_fnc_t info;
 };
 
+typedef struct inttab_t inttab_t;
+struct inttab_t
+{
+	const qse_char_t* name;
+	qse_awk_mod_sym_int_t info;
+};
+
+
 #define A_MAX QSE_TYPE_MAX(int)
 
 static fnctab_t fnctab[] =
 {
 	/* keep this table sorted for binary search in query(). */
-	{ QSE_T("close"),        { { 1, 1, QSE_NULL },     fnc_close,          0 } },
-	{ QSE_T("connect"),      { { 4, 8, QSE_NULL },     fnc_connect,        0 } },
-	{ QSE_T("fetch_row"),    { { 2, 2, QSE_T("vr") },  fnc_fetch_row,      0 } },
-	{ QSE_T("free_result"),  { { 1, 1, QSE_NULL },     fnc_free_result,    0 } },
-	{ QSE_T("open"),         { { 0, 0, QSE_NULL },     fnc_open,           0 } },
-	{ QSE_T("query"),        { { 2, 2, QSE_NULL },     fnc_query,          0 } },
-	{ QSE_T("store_result"), { { 1, 1, QSE_NULL },     fnc_store_result,   0 } }
+	{ QSE_T("autocommit"),    { { 1, 1, QSE_NULL },     fnc_autocommit,     0 } },
+	{ QSE_T("close"),         { { 1, 1, QSE_NULL },     fnc_close,          0 } },
+	{ QSE_T("commit"),        { { 1, 1, QSE_NULL },     fnc_commit,         0 } },
+	{ QSE_T("connect"),       { { 4, 8, QSE_NULL },     fnc_connect,        0 } },
+	{ QSE_T("errmsg"),        { { 0, 0, QSE_NULL },     fnc_errmsg,         0 } },
+	{ QSE_T("escape_string"), { { 2, 2, QSE_NULL },     fnc_escape_string,  0 } },
+	{ QSE_T("fetch_row"),     { { 2, 2, QSE_T("vr") },  fnc_fetch_row,      0 } },
+	{ QSE_T("free_result"),   { { 1, 1, QSE_NULL },     fnc_free_result,    0 } },
+	/*{ QSE_T("get_option"),    { { 3, 3, QSE_T("vr") },  fnc_get_option,     0 } },*/
+	{ QSE_T("open"),          { { 0, 0, QSE_NULL },     fnc_open,           0 } },
+	{ QSE_T("ping"),          { { 1, 1, QSE_NULL },     fnc_ping,           0 } },
+	{ QSE_T("query"),         { { 2, 2, QSE_NULL },     fnc_query,          0 } },
+	{ QSE_T("rollback"),      { { 1, 1, QSE_NULL },     fnc_rollback,       0 } },
+	{ QSE_T("set_option"),    { { 3, 3, QSE_NULL },     fnc_set_option,     0 } },
+	{ QSE_T("store_result"),  { { 1, 1, QSE_NULL },     fnc_store_result,   0 } }
+};
+
+static inttab_t inttab[] =
+{
+	/* keep this table sorted for binary search in query(). */
+	{ QSE_T("OPT_CONNECT_TIMEOUT"), { MYSQL_OPT_CONNECT_TIMEOUT } },
+	{ QSE_T("OPT_READ_TIMEOUT"),    { MYSQL_OPT_READ_TIMEOUT    } },
+	{ QSE_T("OPT_RECONNECT"),       { MYSQL_OPT_RECONNECT       } },
+	{ QSE_T("OPT_WRITE_TIMEOUT"),   { MYSQL_OPT_WRITE_TIMEOUT   } }
 };
 
 static int query (qse_awk_mod_t* mod, qse_awk_t* awk, const qse_char_t* name, qse_awk_mod_sym_t* sym)
@@ -507,7 +936,6 @@ static int query (qse_awk_mod_t* mod, qse_awk_t* awk, const qse_char_t* name, qs
 		}
 	}
 
-#if 0
 	left = 0; right = QSE_COUNTOF(inttab) - 1;
 	while (left <= right)
 	{
@@ -522,8 +950,8 @@ static int query (qse_awk_mod_t* mod, qse_awk_t* awk, const qse_char_t* name, qs
 			sym->u.in = inttab[mid].info;
 			return 0;
 		}
-     }
-#endif
+	}
+
 
 	ea.ptr = (qse_char_t*)name;
 	ea.len = qse_strlen(name);
@@ -568,7 +996,7 @@ static void fini (qse_awk_mod_t* mod, qse_awk_rtx_t* rtx)
 		data = (rtx_data_t*)QSE_RBT_VPTR(pair);
 
 		res_node = data->res_list.head;
-		while (sql_node)
+		while (res_node)
 		{
 			res_next = res_node->next;
 			free_res_node (rtx, &data->res_list, res_node);
