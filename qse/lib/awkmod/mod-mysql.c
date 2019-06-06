@@ -421,27 +421,49 @@ static int fnc_connect (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	sql_node_t* sql_node;
 	int ret = -1, take_rtx_err = 0;
 
-	qse_awk_val_t* a1, * a2, * a3;
+	qse_awk_val_t* a1, * a2, * a3, * a4, * a6;
 	qse_mchar_t* host = QSE_NULL;
 	qse_mchar_t* user = QSE_NULL;
 	qse_mchar_t* pass = QSE_NULL;
+	qse_mchar_t* db = QSE_NULL;
+	qse_awk_int_t port = 0;
+	qse_mchar_t* usck = QSE_NULL;
 
 	sql_list = rtx_to_sql_list(rtx, fi);
 	sql_node = get_sql_list_node_with_arg(rtx, sql_list, qse_awk_rtx_getarg(rtx, 0));
 	if (sql_node)
 	{
+		qse_size_t nargs;
+
+		nargs = qse_awk_rtx_getnargs(rtx);
+
 		a1 = qse_awk_rtx_getarg(rtx, 1);
 		a2 = qse_awk_rtx_getarg(rtx, 2);
 		a3 = qse_awk_rtx_getarg(rtx, 3);
 
-		host = qse_awk_rtx_getvalmbs(rtx, a1, QSE_NULL);
-		if (!host) { take_rtx_err = 1; goto done; }
-		user = qse_awk_rtx_getvalmbs(rtx, a2, QSE_NULL);
-		if (!user) { take_rtx_err = 1; goto done; }
-		pass = qse_awk_rtx_getvalmbs(rtx, a3, QSE_NULL);
-		if (!pass) { take_rtx_err = 1; goto done; }
+		if (!(host = qse_awk_rtx_getvalmbs(rtx, a1, QSE_NULL)) ||
+		    !(user = qse_awk_rtx_getvalmbs(rtx, a2, QSE_NULL)) ||
+		    !(pass = qse_awk_rtx_getvalmbs(rtx, a3, QSE_NULL)))
+		{
+		arg_fail:
+			take_rtx_err = 1;
+			goto done; 
+		}
 
-		if (!mysql_real_connect(sql_node->mysql, host, user, pass, QSE_NULL, 0, QSE_NULL, 0))
+		if (nargs >= 5)
+		{
+			a4 = qse_awk_rtx_getarg(rtx, 4);
+			if (!(db = qse_awk_rtx_getvalmbs(rtx, a4, QSE_NULL))) goto arg_fail;
+			if (nargs >= 6 && qse_awk_rtx_valtoint(rtx, qse_awk_rtx_getarg(rtx, 5), &port) <= -1) goto arg_fail;
+
+			if (nargs >= 7)
+			{
+				a6 = qse_awk_rtx_getarg(rtx, 6);
+				if (!(usck = qse_awk_rtx_getvalmbs(rtx, a6, QSE_NULL))) goto arg_fail;
+			}
+		}
+
+		if (!mysql_real_connect(sql_node->mysql, host, user, pass, db, port, usck, 0))
 		{
 			set_error_on_sql_list (rtx, sql_list, QSE_T("%hs"), mysql_error(sql_node->mysql));
 			sql_node->connect_ever_attempted = 1; /* doesn't matter if mysql_real_connect() failed */
@@ -454,6 +476,8 @@ static int fnc_connect (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 
 done:
 	if (take_rtx_err) set_error_on_sql_list (rtx, sql_list, QSE_NULL);
+	if (usck) qse_awk_rtx_freevalmbs (rtx, a6, usck);
+	if (db) qse_awk_rtx_freevalmbs (rtx, a4, db);
 	if (pass) qse_awk_rtx_freevalmbs (rtx, a3, pass);
 	if (user) qse_awk_rtx_freevalmbs (rtx, a2, user);
 	if (host) qse_awk_rtx_freevalmbs (rtx, a1, host);
@@ -501,6 +525,45 @@ oops:
 	if (take_rtx_err) set_error_on_sql_list (rtx, sql_list, QSE_NULL);
 	return -1;
 }
+
+static int fnc_select_db (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	sql_list_t* sql_list;
+	sql_node_t* sql_node;
+	qse_awk_val_t* a1;
+	qse_mchar_t* db = QSE_NULL;
+	int ret = -1, take_rtx_err = 0;
+
+	sql_list = rtx_to_sql_list(rtx, fi);
+	sql_node = get_sql_list_node_with_arg(rtx, sql_list, qse_awk_rtx_getarg(rtx, 0));
+	if (sql_node)
+	{
+		a1 = qse_awk_rtx_getarg(rtx, 1);
+
+		if (!(db = qse_awk_rtx_getvalmbs(rtx, a1, QSE_NULL))) { take_rtx_err = 1; goto oops; }
+
+		ENSURE_CONNECT_EVER_ATTEMPTED(rtx, sql_list, sql_node);
+
+		if (mysql_select_db(sql_node->mysql, db) != 0)
+		{
+			set_error_on_sql_list (rtx, sql_list, QSE_T("%hs"), mysql_error(sql_node->mysql));
+			goto done;
+		}
+
+		ret = 0;
+	}
+
+done:
+	if (take_rtx_err) set_error_on_sql_list (rtx, sql_list, QSE_NULL);
+	if (db) qse_awk_rtx_freevalmbs (rtx, a1, db);
+	qse_awk_rtx_setretval (rtx, qse_awk_rtx_makeintval(rtx, ret));
+	return 0;
+
+oops:
+	if (take_rtx_err) set_error_on_sql_list (rtx, sql_list, QSE_NULL);
+	return -1;
+}
+
 
 static int fnc_autocommit (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
@@ -931,7 +994,7 @@ static fnctab_t fnctab[] =
 	{ QSE_T("autocommit"),        { { 2, 2, QSE_NULL },     fnc_autocommit,     0 } },
 	{ QSE_T("close"),             { { 1, 1, QSE_NULL },     fnc_close,          0 } },
 	{ QSE_T("commit"),            { { 1, 1, QSE_NULL },     fnc_commit,         0 } },
-	{ QSE_T("connect"),           { { 4, 8, QSE_NULL },     fnc_connect,        0 } },
+	{ QSE_T("connect"),           { { 4, 7, QSE_NULL },     fnc_connect,        0 } },
 	{ QSE_T("errmsg"),            { { 0, 0, QSE_NULL },     fnc_errmsg,         0 } },
 	{ QSE_T("escape_string"),     { { 3, 3, QSE_T("vvr") }, fnc_escape_string,  0 } },
 	{ QSE_T("fetch_row"),         { { 2, 2, QSE_T("vr") },  fnc_fetch_row,      0 } },
@@ -941,6 +1004,7 @@ static fnctab_t fnctab[] =
 	{ QSE_T("ping"),              { { 1, 1, QSE_NULL },     fnc_ping,           0 } },
 	{ QSE_T("query"),             { { 2, 2, QSE_NULL },     fnc_query,          0 } },
 	{ QSE_T("rollback"),          { { 1, 1, QSE_NULL },     fnc_rollback,       0 } },
+	{ QSE_T("select_db"),         { { 2, 2, QSE_NULL },     fnc_select_db,     0 } },
 	{ QSE_T("set_option"),        { { 3, 3, QSE_NULL },     fnc_set_option,     0 } },
 	{ QSE_T("store_result"),      { { 1, 1, QSE_NULL },     fnc_store_result,   0 } }
 };
