@@ -1,7 +1,7 @@
 /*
  * $Id$
  *
-    Copyright (c) 2006-2014 Chung, Hyung-Hwan. All rights reserved.
+    Copyright (c) 2006-2019 Chung, Hyung-Hwan. All rights reserved.
 
     Redistribution and use in source and binary forms, with or without
     modification, are permitted provided that the following conditions
@@ -159,7 +159,7 @@ static qse_mmgr_t xma_mmgr =
 static void print_version (void)
 {
 	qse_fprintf (QSE_STDOUT, QSE_T("QSESED %hs\n"), QSE_PACKAGE_VERSION);
-	qse_fprintf (QSE_STDOUT, QSE_T("Copyright 2006-2014 Chung, Hyung-Hwan\n"));
+	qse_fprintf (QSE_STDOUT, QSE_T("Copyright 2006-2019 Chung, Hyung-Hwan\n"));
 }
 
 static void print_usage (qse_sio_t* out, int argc, qse_char_t* argv[])
