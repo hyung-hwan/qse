@@ -6989,7 +6989,7 @@ static qse_awk_mod_t* query_module (
 		/* TODO: binary search ... */
 		for (n = 0; n < QSE_COUNTOF(static_modtab); n++)
 		{
-			if (qse_strcmp (static_modtab[n].modname, segs[0].ptr) == 0) 
+			if (qse_strcmp(static_modtab[n].modname, segs[0].ptr) == 0) 
 			{
 				load = static_modtab[n].modload;
 				break;
@@ -7014,7 +7014,7 @@ static qse_awk_mod_t* query_module (
 
 			/* i copy-insert 'md' into the table before calling 'load'.
 			 * to pass the same address to load(), query(), etc */
-			pair = qse_rbt_insert (awk->modtab, segs[0].ptr, segs[0].len, &md, QSE_SIZEOF(md));
+			pair = qse_rbt_insert(awk->modtab, segs[0].ptr, segs[0].len, &md, QSE_SIZEOF(md));
 			if (pair == QSE_NULL)
 			{
 				qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);
@@ -7031,10 +7031,10 @@ static qse_awk_mod_t* query_module (
 			goto done;
 		}
 #endif
+		qse_awk_seterrnum (awk, QSE_AWK_ENOERR, QSE_NULL);
 
 		/* attempt to find an external module */
 		QSE_MEMSET (&spec, 0, QSE_SIZEOF(spec));
-
 		if (awk->opt.mod[0].len > 0)
 			spec.prefix = awk->opt.mod[0].ptr;
 		else spec.prefix = QSE_T(QSE_AWK_DEFAULT_MODPREFIX);
@@ -7042,7 +7042,7 @@ static qse_awk_mod_t* query_module (
 		if (awk->opt.mod[1].len > 0)
 			spec.postfix = awk->opt.mod[1].ptr;
 		else spec.postfix = QSE_T(QSE_AWK_DEFAULT_MODPOSTFIX);
-		
+
 		QSE_MEMSET (&md, 0, QSE_SIZEOF(md));
 		if (awk->prm.modopen && awk->prm.modsym && awk->prm.modclose)
 		{
@@ -7053,31 +7053,44 @@ static qse_awk_mod_t* query_module (
 
 		if (md.handle == QSE_NULL) 
 		{
-			ea.ptr = segs[0].ptr;
-			ea.len = segs[0].len;
-			qse_awk_seterror (awk, QSE_AWK_ENOENT, &ea, QSE_NULL);
+			if (qse_awk_geterrnum(awk) == QSE_AWK_ENOERR)
+			{
+				qse_awk_seterrfmt (awk, QSE_AWK_ENOENT, QSE_NULL, QSE_T("module '%.*js' not found"), (int)segs[0].len, segs[0].ptr);
+			}
+			else
+			{
+				const qse_char_t* olderrmsg = qse_awk_backuperrmsg(awk);
+				qse_awk_seterrfmt (awk, QSE_AWK_ENOENT, QSE_NULL, QSE_T("module '%.*js' not found - %js"), (int)segs[0].len, segs[0].ptr, olderrmsg);
+			}
 			return QSE_NULL;
 		}
 
 		buflen = qse_strcpy (&buf[13], segs[0].ptr);
 		/* attempt qse_awk_mod_xxx */
-		load = awk->prm.modsym (awk, md.handle, &buf[1]);
+		load = awk->prm.modsym(awk, md.handle, &buf[1]);
 		if (!load) 
 		{
 			/* attempt _qse_awk_mod_xxx */
-			load = awk->prm.modsym (awk, md.handle, &buf[0]);
+			load = awk->prm.modsym(awk, md.handle, &buf[0]);
 			if (!load)
 			{
+				qse_awk_seterrnum (awk, QSE_AWK_ENOERR, QSE_NULL);
+
 				/* attempt qse_awk_mod_xxx_ */
 				buf[13 + buflen] = QSE_T('_');
 				buf[13 + buflen + 1] = QSE_T('\0');
-				load = awk->prm.modsym (awk, md.handle, &buf[1]);
+				load = awk->prm.modsym(awk, md.handle, &buf[1]);
 				if (!load)
 				{
-					ea.ptr = &buf[1];
-					ea.len = 12 + buflen;
-					qse_awk_seterror (awk, QSE_AWK_ENOENT, &ea, QSE_NULL);
-
+					if (qse_awk_geterrnum(awk) == QSE_AWK_ENOERR)
+					{
+						qse_awk_seterrfmt (awk, QSE_AWK_ENOENT, QSE_NULL, QSE_T("module '%.*js' not found"), (int)(12 + buflen));
+					}
+					else
+					{
+						qse_char_t* olderrmsg = qse_awk_backuperrmsg(awk);
+						qse_awk_seterrfmt (awk, QSE_AWK_ENOENT, QSE_NULL, QSE_T("module '%.*js' not found - %js"), (int)(12 + buflen), &buf[1], olderrmsg);
+					}
 					awk->prm.modclose (awk, md.handle);
 					return QSE_NULL;
 				}

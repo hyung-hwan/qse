@@ -402,6 +402,10 @@ void* qse_awk_stdmodopen (qse_awk_t* awk, const qse_awk_mod_spec_t* spec)
 	}
 
 	h = dlopen(modpath, RTLD_NOW);
+	if (!h)
+	{
+		qse_awk_seterrfmt (awk, QSE_AWK_ESYSERR, QSE_NULL, QSE_T("%hs"), dlerror());
+	}
 
 	QSE_MMGR_FREE (awk->mmgr, modpath);
 

@@ -81,7 +81,7 @@ public:
 	/// allocation. if it fails, it raise an exception if it's
 	/// configured to do so.
 	///
-	void* allocate (qse_size_t n, bool raise_exception = true) QSE_CPP_THREXCEPT1(MemoryError)
+	void* allocate (qse_size_t n, bool raise_exception = true) /*QSE_CPP_THREXCEPT1(MemoryError)*/
 	{
 		void* xptr = this->allocMem (n);
 		if (!xptr && raise_exception) QSE_THROW (MemoryError);
@@ -92,14 +92,14 @@ public:
 	/// The callocate() function allocates memory like allocate() and 
 	/// clears the memory before returning.
 	///
-	void* callocate (qse_size_t n, bool raise_exception = true) QSE_CPP_THREXCEPT1(MemoryError);
+	void* callocate (qse_size_t n, bool raise_exception = true) /*QSE_CPP_THREXCEPT1(MemoryError)*/;
 
 	///
 	/// The reallocate() function calls reallocMem() for memory
 	/// reallocation. if it fails, it raise an exception if it's
 	/// configured to do so.
 	///
-	void* reallocate (void* ptr, qse_size_t n, bool raise_exception = true) QSE_CPP_THREXCEPT1(MemoryError)
+	void* reallocate (void* ptr, qse_size_t n, bool raise_exception = true) /*QSE_CPP_THREXCEPT1(MemoryError)*/
 	{
 		void* xptr = this->reallocMem (ptr, n);
 		if (!xptr && raise_exception) QSE_THROW (MemoryError);
@@ -171,7 +171,7 @@ protected:
 QSE_END_NAMESPACE(QSE)
 /////////////////////////////////
 
-QSE_EXPORT void* operator new (qse_size_t size, QSE::Mmgr* mmgr) QSE_CPP_THREXCEPT1(QSE::Mmgr::MemoryError);
+QSE_EXPORT void* operator new (qse_size_t size, QSE::Mmgr* mmgr) /*QSE_CPP_THREXCEPT1(QSE::Mmgr::MemoryError)*/;
 
 #if defined(QSE_CPP_NO_OPERATOR_DELETE_OVERLOADING)
 QSE_EXPORT void qse_operator_delete (void* ptr, QSE::Mmgr* mmgr);
@@ -179,7 +179,7 @@ QSE_EXPORT void qse_operator_delete (void* ptr, QSE::Mmgr* mmgr);
 QSE_EXPORT void operator delete (void* ptr, QSE::Mmgr* mmgr);
 #endif
 
-QSE_EXPORT void* operator new (qse_size_t size, QSE::Mmgr* mmgr, void* existing_ptr) QSE_CPP_THREXCEPT1(QSE::Mmgr::MemoryError);
+QSE_EXPORT void* operator new (qse_size_t size, QSE::Mmgr* mmgr, void* existing_ptr) /*QSE_CPP_THREXCEPT1(QSE::Mmgr::MemoryError)*/;
 
 #if 0
 // i found no way to delete an array allocated with

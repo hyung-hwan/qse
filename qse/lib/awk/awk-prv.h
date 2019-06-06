@@ -290,6 +290,7 @@ struct qse_awk_t
 	/* housekeeping */
 	qse_awk_errstr_t errstr;
 	qse_awk_errinf_t errinf;
+	qse_char_t errmsg_backup[256];
 
 	int stopall;
 	qse_awk_ecb_t* ecb;
@@ -426,6 +427,8 @@ struct qse_awk_rtx_t
 	} depth;
 
 	qse_awk_errinf_t errinf;
+	qse_char_t errmsg_backup[256];
+
 	qse_awk_rtx_ecb_t* ecb;
 };
 
