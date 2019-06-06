@@ -1639,12 +1639,12 @@ qse_awk_val_t* qse_awk_rtx_callfun (
 		&crdata
 	);
 
-	if (v == QSE_NULL)
+	if (!v)
 	{
 		/* an error occurred. let's check if it is caused by exit().
 		 * if so, the return value should have been captured into
 		 * crdata.val. */
-		if (crdata.val != QSE_NULL) v = crdata.val; /* yet it is */
+		if (crdata.val) v = crdata.val; /* yet it is */
 	}
 	else
 	{

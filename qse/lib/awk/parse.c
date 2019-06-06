@@ -6940,9 +6940,7 @@ static struct
 };
 #endif
 
-static qse_awk_mod_t* query_module (
-	qse_awk_t* awk, const qse_cstr_t segs[], int nsegs,
-	qse_awk_mod_sym_t* sym)
+static qse_awk_mod_t* query_module (qse_awk_t* awk, const qse_cstr_t segs[], int nsegs, qse_awk_mod_sym_t* sym)
 {
 
 	qse_rbt_pair_t* pair;
@@ -7108,7 +7106,7 @@ static qse_awk_mod_t* query_module (
 		}
 
 		mdp = (qse_awk_mod_data_t*)QSE_RBT_VPTR(pair);
-		if (load (&mdp->mod, awk) <= -1)
+		if (load(&mdp->mod, awk) <= -1)
 		{
 			qse_rbt_delete (awk->modtab, segs[0].ptr, segs[0].len);
 			awk->prm.modclose (awk, mdp->handle);
@@ -7117,6 +7115,20 @@ static qse_awk_mod_t* query_module (
 	}
 
 done:
-	n = mdp->mod.query (&mdp->mod, awk, segs[1].ptr, sym);
-	return (n <= -1)? QSE_NULL: &mdp->mod;
+	qse_awk_seterrnum (awk, QSE_AWK_ENOERR, QSE_NULL);
+	n = mdp->mod.query(&mdp->mod, awk, segs[1].ptr, sym);
+	if (n <= -1)
+	{
+		if (qse_awk_geterrnum(awk) == QSE_AWK_ENOERR)
+		{
+			qse_awk_seterrfmt (awk, QSE_AWK_ENOENT, QSE_NULL, QSE_T("unable to find '%.*js' in module '%.*js'"), (int)segs[1].len, segs[1].ptr, (int)segs[0].len, segs[0].ptr);
+		}
+		else
+		{
+			qse_char_t* olderrmsg = qse_awk_backuperrmsg(awk);
+			qse_awk_seterrfmt (awk, QSE_AWK_ENOENT, QSE_NULL, QSE_T("unable to find '%.*js' in module '%.*js' - %js"), (int)segs[1].len, segs[1].ptr, (int)segs[0].len, segs[0].ptr, olderrmsg);
+		}
+		return QSE_NULL;
+	}
+	return &mdp->mod;
 }
