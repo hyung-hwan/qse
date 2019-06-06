@@ -1667,6 +1667,11 @@ QSE_EXPORT const qse_char_t* qse_awk_geterrmsg (
 	const qse_awk_t* awk /**< awk */
 );
 
+QSE_EXPORT const qse_char_t* qse_awk_backuperrmsg (
+	qse_awk_t* awk /**< awk */
+);
+
+
 /**
  * The qse_awk_geterrinf() function copies error information into memory
  * pointed to by \a errinf from \a awk.
@@ -2342,6 +2347,10 @@ QSE_EXPORT const qse_awk_loc_t* qse_awk_rtx_geterrloc (
  */
 QSE_EXPORT const qse_char_t* qse_awk_rtx_geterrmsg (
 	const qse_awk_rtx_t* rtx /**< runtime context */
+);
+
+QSE_EXPORT const qse_char_t* qse_awk_rtx_backuperrmsg (
+	qse_awk_rtx_t* rtx /**< runtime context */
 );
 
 /**
