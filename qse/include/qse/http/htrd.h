@@ -1,7 +1,7 @@
 /*
  * $Id: htrd.h 223 2008-06-26 06:44:41Z baconevi $
  *
-    Copyright (c) 2006-2014 Chung, Hyung-Hwan. All rights reserved.
+    Copyright (c) 2006-2019 Chung, Hyung-Hwan. All rights reserved.
 
     Redistribution and use in source and binary forms, with or without
     modification, are permitted provided that the following conditions

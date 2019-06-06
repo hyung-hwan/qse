@@ -1,7 +1,7 @@
 /*
  * $Id: types.h 560 2011-09-06 14:18:36Z hyunghwan.chung $
  *
-    Copyright (c) 2006-2014 Chung, Hyung-Hwan. All rights reserved.
+    Copyright (c) 2006-2019 Chung, Hyung-Hwan. All rights reserved.
 
     Redistribution and use in source and binary forms, with or without
     modification, are permitted provided that the following conditions

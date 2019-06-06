@@ -81,9 +81,9 @@ endif
 
 if ENABLE_AWKMOD_MYSQL
 libqseawk_mysql_la_SOURCES = mod-mysql.c mod-mysql.h
-libqseawk_mysql_la_CPPFLAGS = $(CPPFLAGS_COMMON)
-libqseawk_mysql_la_LDFLAGS = $(LDFLAGS_COMMON)
-libqseawk_mysql_la_LIBADD = $(LIBADD_COMMON) -lmysqlclient_r
+libqseawk_mysql_la_CPPFLAGS = $(CPPFLAGS_COMMON) $(MYSQL_CFLAGS)
+libqseawk_mysql_la_LDFLAGS = $(LDFLAGS_COMMON) $(MYSQL_LDFLAGS)
+libqseawk_mysql_la_LIBADD = $(LIBADD_COMMON) 
 endif
 
 if ENABLE_AWKMOD_SED
