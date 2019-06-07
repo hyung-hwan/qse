@@ -35,6 +35,7 @@ static void free_fun (qse_htb_t* map, void* vptr, qse_size_t vlen)
 	/* f->name doesn't have to be freed */
 	/*qse_awk_freemem (awk, f->name);*/
 
+	if (f->argspec) qse_awk_freemem (awk, f->argspec);
 	qse_awk_clrpt (awk, f->body);
 	qse_awk_freemem (awk, f);
 }

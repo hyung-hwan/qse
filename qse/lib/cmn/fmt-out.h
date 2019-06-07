@@ -700,7 +700,7 @@ reswitch:
 			const qse_wchar_t* usp;
 			qse_size_t uwid;
 
-			if (flagc & FLAGC_ZEROPAD) padc = ' ';
+			if (flagc & FLAGC_ZEROPAD) padc = T(' ');
 			usp = va_arg(ap, qse_wchar_t*);
 
 			if (flagc & FLAGC_DOT)
