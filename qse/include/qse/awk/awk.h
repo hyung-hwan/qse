@@ -448,6 +448,7 @@ struct qse_awk_fun_t
 {
 	qse_cstr_t     name;
 	qse_size_t     nargs;
+	qse_char_t*    argspec; /* similar to  the argument spec of qse_awk_fnc_arg_t. supports v & r only */
 	qse_awk_nde_t* body;
 };
 typedef struct qse_awk_fun_t qse_awk_fun_t;

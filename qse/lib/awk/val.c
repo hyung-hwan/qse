@@ -220,7 +220,7 @@ qse_awk_val_t* qse_awk_rtx_makestrvalwithmbs (qse_awk_rtx_t* rtx, const qse_mcha
 	}
 
 	v = qse_awk_rtx_makestrvalwithxstr (rtx, &tmp);
-	QSE_AWK_FREE (rtx->awk, tmp.ptr);
+	qse_awk_rtx_freemem (rtx, tmp.ptr);
 	return v;
 #endif
 }
@@ -239,7 +239,7 @@ qse_awk_val_t* qse_awk_rtx_makestrvalwithwcs (qse_awk_rtx_t* rtx, const qse_wcha
 	}
 
 	v = qse_awk_rtx_makestrvalwithxstr (rtx, &tmp);
-	QSE_AWK_FREE (rtx->awk, tmp.ptr);
+	qse_awk_rtx_freemem (rtx, tmp.ptr);
 	return v;
 #else
 	return qse_awk_rtx_makestrval (rtx, wcs, qse_wcslen(wcs));
@@ -269,7 +269,7 @@ qse_awk_val_t* qse_awk_rtx_makestrvalwithmxstr (qse_awk_rtx_t* rtx, const qse_mc
 	}
 
 	v = qse_awk_rtx_makestrvalwithxstr(rtx, &tmp);
-	QSE_AWK_FREE (rtx->awk, tmp.ptr);
+	qse_awk_rtx_freemem (rtx, tmp.ptr);
 	return v;
 #endif
 }
@@ -290,7 +290,7 @@ qse_awk_val_t* qse_awk_rtx_makestrvalwithwxstr (qse_awk_rtx_t* rtx, const qse_wc
 	}
 
 	v = qse_awk_rtx_makestrvalwithxstr(rtx, &tmp);
-	QSE_AWK_FREE (rtx->awk, tmp.ptr);
+	qse_awk_rtx_freemem (rtx, tmp.ptr);
 	return v;
 #else
 	return qse_awk_rtx_makestrvalwithxstr(rtx, wxstr);
@@ -745,7 +745,7 @@ void qse_awk_rtx_freeval (qse_awk_rtx_t* rtx, qse_awk_val_t* val, int cache)
 		{
 			case QSE_AWK_VAL_NIL:
 			{
-				QSE_AWK_FREE (rtx->awk, val);
+				qse_awk_rtx_freemem (rtx, val);
 				break;
 			}
 			
@@ -778,23 +778,23 @@ void qse_awk_rtx_freeval (qse_awk_rtx_t* rtx, qse_awk_val_t* val, int cache)
 						rtx->scache[i][rtx->scache_count[i]++] = v;
 						v->nstr = 0;
 					}
-					else QSE_AWK_FREE (rtx->awk, val);
+					else qse_awk_rtx_freemem (rtx, val);
 				}
 				else 
 			#endif
-					QSE_AWK_FREE (rtx->awk, val);
+					qse_awk_rtx_freemem (rtx, val);
 
 				break;
 			}
 
 			case QSE_AWK_VAL_MBS:
-				QSE_AWK_FREE (rtx->awk, val);
+				qse_awk_rtx_freemem (rtx, val);
 				break;
 
 			case QSE_AWK_VAL_REX:
 			{
 				/* don't free ptr as it is inlined to val
-				QSE_AWK_FREE (rtx->awk, ((qse_awk_val_rex_t*)val)->ptr);
+				qse_awk_rtx_freemem (rtx, ((qse_awk_val_rex_t*)val)->ptr);
 				 */
 			
 				/* code is just a pointer to a regular expression stored
@@ -802,18 +802,18 @@ void qse_awk_rtx_freeval (qse_awk_rtx_t* rtx, qse_awk_val_t* val, int cache)
 				qse_awk_freerex (rtx->awk, ((qse_awk_val_rex_t*)val)->code[0], ((qse_awk_val_rex_t*)val)->code[1]);
 				 */
 
-				QSE_AWK_FREE (rtx->awk, val);
+				qse_awk_rtx_freemem (rtx, val);
 				break;
 			}
 
 			case QSE_AWK_VAL_FUN:
-				QSE_AWK_FREE (rtx->awk, val);
+				qse_awk_rtx_freemem (rtx, val);
 				break;
 
 			case QSE_AWK_VAL_MAP:
 			{
 				qse_htb_fini (((qse_awk_val_map_t*)val)->map);
-				QSE_AWK_FREE (rtx->awk, val);
+				qse_awk_rtx_freemem (rtx, val);
 				break;
 			}
 
@@ -823,7 +823,7 @@ void qse_awk_rtx_freeval (qse_awk_rtx_t* rtx, qse_awk_val_t* val, int cache)
 				{
 					rtx->rcache[rtx->rcache_count++] = (qse_awk_val_ref_t*)val;	
 				}
-				else QSE_AWK_FREE (rtx->awk, val);
+				else qse_awk_rtx_freemem (rtx, val);
 				break;
 			}
 
@@ -887,7 +887,7 @@ void qse_awk_rtx_freevalchunk (qse_awk_rtx_t* rtx, qse_awk_val_chunk_t* chunk)
 	while (chunk != QSE_NULL)
 	{
 		qse_awk_val_chunk_t* next = chunk->next;
-		QSE_AWK_FREE (rtx->awk, chunk);
+		qse_awk_rtx_freemem (rtx, chunk);
 		chunk = next;
 	}
 }
@@ -2048,7 +2048,7 @@ int qse_awk_rtx_setrefval (qse_awk_rtx_t* rtx, qse_awk_val_ref_t* ref, qse_awk_v
 					qse_awk_rtx_refupval (rtx, val);
 					x = qse_awk_rtx_setrec(rtx, (qse_size_t)ref->adr, &str);
 					qse_awk_rtx_refdownval (rtx, val);
-					QSE_AWK_FREE (rtx->awk, str.ptr);
+					qse_awk_rtx_freemem (rtx, str.ptr);
 					return x;
 				}
 			}
