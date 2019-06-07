@@ -33,17 +33,17 @@ static void free_fun (qse_htb_t* map, void* vptr, qse_size_t vlen)
 	qse_awk_fun_t* f = (qse_awk_fun_t*)vptr;
 
 	/* f->name doesn't have to be freed */
-	/*QSE_AWK_FREE (awk, f->name);*/
+	/*qse_awk_freemem (awk, f->name);*/
 
 	qse_awk_clrpt (awk, f->body);
-	QSE_AWK_FREE (awk, f);
+	qse_awk_freemem (awk, f);
 }
 
 static void free_fnc (qse_htb_t* map, void* vptr, qse_size_t vlen)
 {
 	qse_awk_t* awk = *(qse_awk_t**)QSE_XTN(map);
 	qse_awk_fnc_t* f = (qse_awk_fnc_t*)vptr;
-	QSE_AWK_FREE (awk, f);
+	qse_awk_freemem (awk, f);
 }
 
 static int init_token (qse_mmgr_t* mmgr, qse_awk_tok_t* tok)
@@ -299,7 +299,7 @@ void qse_awk_fini (qse_awk_t* awk)
 	/* destroy dynamically allocated options */
 	for (i = 0; i < QSE_COUNTOF(awk->opt.mod); i++)
 	{
-		if (awk->opt.mod[i].ptr) QSE_AWK_FREE (awk, awk->opt.mod[i].ptr);
+		if (awk->opt.mod[i].ptr) qse_awk_freemem (awk, awk->opt.mod[i].ptr);
 	}
 }
 
@@ -385,7 +385,7 @@ void qse_awk_clear (qse_awk_t* awk)
 			qse_awk_clrpt (awk, awk->tree.chain->pattern);
 		if (awk->tree.chain->action != QSE_NULL)
 			qse_awk_clrpt (awk, awk->tree.chain->action);
-		QSE_AWK_FREE (awk, awk->tree.chain);
+		qse_awk_freemem (awk, awk->tree.chain);
 		awk->tree.chain = next;
 	}
 
@@ -452,7 +452,7 @@ int qse_awk_setopt (qse_awk_t* awk, qse_awk_opt_t id, const void* value)
 			if (dup_str_opt (awk, value, &tmp) <= -1) return -1;
 
 			idx = id - QSE_AWK_MODPREFIX;
-			if (awk->opt.mod[idx].ptr) QSE_AWK_FREE (awk, awk->opt.mod[idx].ptr);
+			if (awk->opt.mod[idx].ptr) qse_awk_freemem (awk, awk->opt.mod[idx].ptr);
 
 			awk->opt.mod[idx] = tmp;
 			return 0;
@@ -462,7 +462,7 @@ int qse_awk_setopt (qse_awk_t* awk, qse_awk_opt_t id, const void* value)
 		{
 			qse_cstr_t tmp;
 			if (dup_str_opt (awk, value, &tmp) <= -1) return -1;
-			if (awk->opt.incldirs.ptr) QSE_AWK_FREE (awk, awk->opt.incldirs.ptr);
+			if (awk->opt.incldirs.ptr) qse_awk_freemem (awk, awk->opt.incldirs.ptr);
 			awk->opt.incldirs = tmp;
 			return 0;
 		}

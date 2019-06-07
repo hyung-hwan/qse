@@ -622,7 +622,7 @@ oops:
 			prev = awk->sio.inp->prev;
 
 			QSE_ASSERT (awk->sio.inp->name != QSE_NULL);
-			QSE_AWK_FREE (awk, awk->sio.inp);
+			qse_awk_freemem (awk, awk->sio.inp);
 
 			awk->sio.inp = prev;
 		}
@@ -634,8 +634,7 @@ oops:
 		CLRERR (awk);
 	}
 
-	if (awk->sio.inf (
-		awk, QSE_AWK_SIO_CLOSE, awk->sio.inp, QSE_NULL, 0) != 0)
+	if (awk->sio.inf(awk, QSE_AWK_SIO_CLOSE, awk->sio.inp, QSE_NULL, 0) != 0)
 	{
 		if (ret == 0)
 		{
@@ -663,7 +662,7 @@ void qse_awk_clearsionames (qse_awk_t* awk)
 	{
 		cur = awk->sio_names;
 		awk->sio_names = cur->link;
-		QSE_AWK_FREE (awk, cur);
+		qse_awk_freemem (awk, cur);
 	}
 }
 
@@ -2626,7 +2625,7 @@ static qse_awk_nde_t* parse_return (qse_awk_t* awk, const qse_awk_loc_t* xloc)
 		val = parse_expr_withdc (awk, &eloc);
 		if (val == QSE_NULL) 
 		{
-			QSE_AWK_FREE (awk, nde);
+			qse_awk_freemem (awk, nde);
 			return QSE_NULL;
 		}
 	}
@@ -2666,7 +2665,7 @@ static qse_awk_nde_t* parse_exit (qse_awk_t* awk, const qse_awk_loc_t* xloc)
 		val = parse_expr_withdc (awk, &eloc);
 		if (val == QSE_NULL) 
 		{
-			QSE_AWK_FREE (awk, nde);
+			qse_awk_freemem (awk, nde);
 			return QSE_NULL;
 		}
 	}
@@ -2971,7 +2970,7 @@ static qse_awk_nde_t* parse_print (qse_awk_t* awk, const qse_awk_loc_t* xloc)
 					out = ep->right;
 					out_type = tab[i].out;
 
-					QSE_AWK_FREE (awk, tmp);
+					qse_awk_freemem (awk, tmp);
 					break;
 				}
 			}
@@ -3672,7 +3671,7 @@ static QSE_INLINE void update_int_node (
 	node->val = lv;
 	if (node->str)
 	{
-		QSE_AWK_FREE (awk, node->str);
+		qse_awk_freemem (awk, node->str);
 		node->str = QSE_NULL;
 		node->len = 0;
 	}
@@ -3684,7 +3683,7 @@ static QSE_INLINE void update_flt_node (
 	node->val = rv;
 	if (node->str)
 	{
-		QSE_AWK_FREE (awk, node->str);
+		qse_awk_freemem (awk, node->str);
 		node->str = QSE_NULL;
 		node->len = 0;
 	}
@@ -4432,8 +4431,8 @@ static qse_awk_nde_t* parse_primary_int  (qse_awk_t* awk, const qse_awk_loc_t* x
 
 oops:
 	QSE_ASSERT (nde != QSE_NULL);
-	if (nde->str) QSE_AWK_FREE (awk, nde->str);
-	QSE_AWK_FREE (awk, nde);
+	if (nde->str) qse_awk_freemem (awk, nde->str);
+	qse_awk_freemem (awk, nde);
 	return QSE_NULL;
 }
 
@@ -4466,8 +4465,8 @@ static qse_awk_nde_t* parse_primary_flt  (qse_awk_t* awk, const qse_awk_loc_t* x
 
 oops:
 	QSE_ASSERT (nde != QSE_NULL);
-	if (nde->str) QSE_AWK_FREE (awk, nde->str);
-	QSE_AWK_FREE (awk, nde);
+	if (nde->str) qse_awk_freemem (awk, nde->str);
+	qse_awk_freemem (awk, nde);
 	return QSE_NULL;
 }
 
@@ -4492,8 +4491,8 @@ static qse_awk_nde_t* parse_primary_str  (qse_awk_t* awk, const qse_awk_loc_t* x
 
 oops:
 	QSE_ASSERT (nde != QSE_NULL);
-	if (nde->ptr) QSE_AWK_FREE (awk, nde->ptr);
-	QSE_AWK_FREE (awk, nde);
+	if (nde->ptr) qse_awk_freemem (awk, nde->ptr);
+	qse_awk_freemem (awk, nde);
 	return QSE_NULL;
 }
 
@@ -4538,8 +4537,8 @@ static qse_awk_nde_t* parse_primary_mbs (qse_awk_t* awk, const qse_awk_loc_t* xl
 
 oops:
 	QSE_ASSERT (nde != QSE_NULL);
-	if (nde->ptr) QSE_AWK_FREE (awk, nde->ptr);
-	QSE_AWK_FREE (awk, nde);
+	if (nde->ptr) qse_awk_freemem (awk, nde->ptr);
+	qse_awk_freemem (awk, nde);
 	return QSE_NULL;
 }
 
@@ -4592,8 +4591,8 @@ static qse_awk_nde_t* parse_primary_rex (qse_awk_t* awk, const qse_awk_loc_t* xl
 oops:
 	QSE_ASSERT (nde != QSE_NULL);
 	if (nde->code[0]) qse_awk_freerex (awk, nde->code[0], nde->code[1]);
-	if (nde->str.ptr) QSE_AWK_FREE (awk, nde->str.ptr);
-	QSE_AWK_FREE (awk, nde);
+	if (nde->str.ptr) qse_awk_freemem (awk, nde->str.ptr);
+	qse_awk_freemem (awk, nde);
 	return QSE_NULL;
 }
 
@@ -4624,7 +4623,7 @@ oops:
 	if (nde) 
 	{
 		if (nde->val) qse_awk_clrpt (awk, nde->val);
-		QSE_AWK_FREE (awk, nde);
+		qse_awk_freemem (awk, nde);
 	}
 	return QSE_NULL;
 }
@@ -4809,7 +4808,7 @@ oops:
 	{
 		if (nde->in) qse_awk_clrpt (awk, nde->in);
 		if (nde->var) qse_awk_clrpt (awk, nde->var);
-		QSE_AWK_FREE (awk, nde);
+		qse_awk_freemem (awk, nde);
 	}
 	return QSE_NULL;
 }
@@ -5258,7 +5257,7 @@ static qse_awk_nde_t* parse_primary_ident_noseg (qse_awk_t* awk, const qse_awk_l
 					if (qse_htb_upsert(awk->parse.named, name->ptr, name->len, QSE_NULL, 0) == QSE_NULL)
 					{
 						SETERR_LOC (awk, QSE_AWK_ENOMEM, xloc);
-						QSE_AWK_FREE (awk, tmp);
+						qse_awk_freemem (awk, tmp);
 					}
 					else
 					{

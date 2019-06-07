@@ -1219,14 +1219,14 @@ void qse_awk_clrpt (qse_awk_t* awk, qse_awk_nde_t* tree)
 		{
 			case QSE_AWK_NDE_NULL:
 			{
-				QSE_AWK_FREE (awk, p);
+				qse_awk_freemem (awk, p);
 				break;
 			}
 
 			case QSE_AWK_NDE_BLK:
 			{
 				qse_awk_clrpt (awk, ((qse_awk_nde_blk_t*)p)->body);
-				QSE_AWK_FREE (awk, p);
+				qse_awk_freemem (awk, p);
 				break;
 			}
 
@@ -1236,7 +1236,7 @@ void qse_awk_clrpt (qse_awk_t* awk, qse_awk_nde_t* tree)
 				qse_awk_clrpt (awk, px->test);
 				qse_awk_clrpt (awk, px->then_part);
 				if (px->else_part) qse_awk_clrpt (awk, px->else_part);
-				QSE_AWK_FREE (awk, p);
+				qse_awk_freemem (awk, p);
 				break;
 			}
 
@@ -1245,7 +1245,7 @@ void qse_awk_clrpt (qse_awk_t* awk, qse_awk_nde_t* tree)
 			{
 				qse_awk_clrpt (awk, ((qse_awk_nde_while_t*)p)->test);
 				qse_awk_clrpt (awk, ((qse_awk_nde_while_t*)p)->body);
-				QSE_AWK_FREE (awk, p);
+				qse_awk_freemem (awk, p);
 				break;
 			}
 
@@ -1256,7 +1256,7 @@ void qse_awk_clrpt (qse_awk_t* awk, qse_awk_nde_t* tree)
 				if (px->test) qse_awk_clrpt (awk, px->test);
 				if (px->incr) qse_awk_clrpt (awk, px->incr);
 				qse_awk_clrpt (awk, px->body);
-				QSE_AWK_FREE (awk, p);
+				qse_awk_freemem (awk, p);
 				break;
 			}
 
@@ -1264,19 +1264,19 @@ void qse_awk_clrpt (qse_awk_t* awk, qse_awk_nde_t* tree)
 			{
 				qse_awk_clrpt (awk, ((qse_awk_nde_foreach_t*)p)->test);
 				qse_awk_clrpt (awk, ((qse_awk_nde_foreach_t*)p)->body);
-				QSE_AWK_FREE (awk, p);
+				qse_awk_freemem (awk, p);
 				break;
 			}
 
 			case QSE_AWK_NDE_BREAK:
 			{
-				QSE_AWK_FREE (awk, p);
+				qse_awk_freemem (awk, p);
 				break;
 			}
 
 			case QSE_AWK_NDE_CONTINUE:
 			{
-				QSE_AWK_FREE (awk, p);
+				qse_awk_freemem (awk, p);
 				break;
 			}
 
@@ -1284,7 +1284,7 @@ void qse_awk_clrpt (qse_awk_t* awk, qse_awk_nde_t* tree)
 			{
 				qse_awk_nde_return_t* px = (qse_awk_nde_return_t*)p;
 				if (px->val) qse_awk_clrpt (awk, px->val);
-				QSE_AWK_FREE (awk, p);
+				qse_awk_freemem (awk, p);
 				break;
 			}
 
@@ -1292,28 +1292,28 @@ void qse_awk_clrpt (qse_awk_t* awk, qse_awk_nde_t* tree)
 			{
 				if (((qse_awk_nde_exit_t*)p)->val != QSE_NULL) 
 					qse_awk_clrpt (awk, ((qse_awk_nde_exit_t*)p)->val);
-				QSE_AWK_FREE (awk, p);
+				qse_awk_freemem (awk, p);
 				break;
 			}
 
 			case QSE_AWK_NDE_NEXT:
 			case QSE_AWK_NDE_NEXTFILE:
 			{
-				QSE_AWK_FREE (awk, p);
+				qse_awk_freemem (awk, p);
 				break;
 			}
 
 			case QSE_AWK_NDE_DELETE:
 			{
 				qse_awk_clrpt (awk, ((qse_awk_nde_delete_t*)p)->var);
-				QSE_AWK_FREE (awk, p);
+				qse_awk_freemem (awk, p);
 				break;
 			}
 
 			case QSE_AWK_NDE_RESET:
 			{
 				qse_awk_clrpt (awk, ((qse_awk_nde_reset_t*)p)->var);
-				QSE_AWK_FREE (awk, p);
+				qse_awk_freemem (awk, p);
 				break;
 			}
 
@@ -1323,14 +1323,14 @@ void qse_awk_clrpt (qse_awk_t* awk, qse_awk_nde_t* tree)
 				qse_awk_nde_print_t* px = (qse_awk_nde_print_t*)p;
 				if (px->args) qse_awk_clrpt (awk, px->args);
 				if (px->out) qse_awk_clrpt (awk, px->out);
-				QSE_AWK_FREE (awk, p);
+				qse_awk_freemem (awk, p);
 				break;
 			}
 
 			case QSE_AWK_NDE_GRP:
 			{
 				qse_awk_clrpt (awk, ((qse_awk_nde_grp_t*)p)->body);
-				QSE_AWK_FREE (awk, p);
+				qse_awk_freemem (awk, p);
 				break;
 			}
 
@@ -1338,7 +1338,7 @@ void qse_awk_clrpt (qse_awk_t* awk, qse_awk_nde_t* tree)
 			{
 				qse_awk_clrpt (awk, ((qse_awk_nde_ass_t*)p)->left);
 				qse_awk_clrpt (awk, ((qse_awk_nde_ass_t*)p)->right);
-				QSE_AWK_FREE (awk, p);
+				qse_awk_freemem (awk, p);
 				break;
 			}
 
@@ -1350,7 +1350,7 @@ void qse_awk_clrpt (qse_awk_t* awk, qse_awk_nde_t* tree)
 
 				qse_awk_clrpt (awk, px->left);
 				qse_awk_clrpt (awk, px->right);
-				QSE_AWK_FREE (awk, p);
+				qse_awk_freemem (awk, p);
 				break;
 			}
 
@@ -1361,7 +1361,7 @@ void qse_awk_clrpt (qse_awk_t* awk, qse_awk_nde_t* tree)
 				qse_awk_nde_exp_t* px = (qse_awk_nde_exp_t*)p;
 				QSE_ASSERT (px->right == QSE_NULL);
 				qse_awk_clrpt (awk, px->left);
-				QSE_AWK_FREE (awk, p);
+				qse_awk_freemem (awk, p);
 				break;
 			}
 
@@ -1370,37 +1370,37 @@ void qse_awk_clrpt (qse_awk_t* awk, qse_awk_nde_t* tree)
 				qse_awk_clrpt (awk, ((qse_awk_nde_cnd_t*)p)->test);
 				qse_awk_clrpt (awk, ((qse_awk_nde_cnd_t*)p)->left);
 				qse_awk_clrpt (awk, ((qse_awk_nde_cnd_t*)p)->right);
-				QSE_AWK_FREE (awk, p);
+				qse_awk_freemem (awk, p);
 				break;
 			}
 
 			case QSE_AWK_NDE_INT:
 			{
 				if (((qse_awk_nde_int_t*)p)->str)
-					QSE_AWK_FREE (awk, ((qse_awk_nde_int_t*)p)->str);
-				QSE_AWK_FREE (awk, p);
+					qse_awk_freemem (awk, ((qse_awk_nde_int_t*)p)->str);
+				qse_awk_freemem (awk, p);
 				break;
 			}
 
 			case QSE_AWK_NDE_FLT:
 			{
 				if (((qse_awk_nde_flt_t*)p)->str)
-					QSE_AWK_FREE (awk, ((qse_awk_nde_flt_t*)p)->str);
-				QSE_AWK_FREE (awk, p);
+					qse_awk_freemem (awk, ((qse_awk_nde_flt_t*)p)->str);
+				qse_awk_freemem (awk, p);
 				break;
 			}
 
 			case QSE_AWK_NDE_STR:
 			{
-				QSE_AWK_FREE (awk, ((qse_awk_nde_str_t*)p)->ptr);
-				QSE_AWK_FREE (awk, p);
+				qse_awk_freemem (awk, ((qse_awk_nde_str_t*)p)->ptr);
+				qse_awk_freemem (awk, p);
 				break;
 			}
 
 			case QSE_AWK_NDE_MBS:
 			{
-				QSE_AWK_FREE (awk, ((qse_awk_nde_mbs_t*)p)->ptr);
-				QSE_AWK_FREE (awk, p);
+				qse_awk_freemem (awk, ((qse_awk_nde_mbs_t*)p)->ptr);
+				qse_awk_freemem (awk, p);
 				break;
 			}
 
@@ -1408,15 +1408,15 @@ void qse_awk_clrpt (qse_awk_t* awk, qse_awk_nde_t* tree)
 			{
 				qse_awk_nde_rex_t* rex = (qse_awk_nde_rex_t*)p;
 				qse_awk_freerex (awk, rex->code[0], rex->code[1]);
-				QSE_AWK_FREE (awk, ((qse_awk_nde_rex_t*)p)->str.ptr);
-				QSE_AWK_FREE (awk, p);
+				qse_awk_freemem (awk, ((qse_awk_nde_rex_t*)p)->str.ptr);
+				qse_awk_freemem (awk, p);
 				break;
 			}
 
 			case QSE_AWK_NDE_FUN:
 			{
-				QSE_AWK_FREE (awk, ((qse_awk_nde_fun_t*)p)->name.ptr);
-				QSE_AWK_FREE (awk, p);
+				qse_awk_freemem (awk, ((qse_awk_nde_fun_t*)p)->name.ptr);
+				qse_awk_freemem (awk, p);
 				break;
 			}
 
@@ -1427,8 +1427,8 @@ void qse_awk_clrpt (qse_awk_t* awk, qse_awk_nde_t* tree)
 			{
 				qse_awk_nde_var_t* px = (qse_awk_nde_var_t*)p;
 				QSE_ASSERT (px->idx == QSE_NULL);
-				if (px->id.name.ptr) QSE_AWK_FREE (awk, px->id.name.ptr);
-				QSE_AWK_FREE (awk, p);
+				if (px->id.name.ptr) qse_awk_freemem (awk, px->id.name.ptr);
+				qse_awk_freemem (awk, p);
 				break;
 			}
 
@@ -1440,34 +1440,34 @@ void qse_awk_clrpt (qse_awk_t* awk, qse_awk_nde_t* tree)
 				qse_awk_nde_var_t* px = (qse_awk_nde_var_t*)p;
 				QSE_ASSERT (px->idx != QSE_NULL);
 				qse_awk_clrpt (awk, px->idx);
-				if (px->id.name.ptr) QSE_AWK_FREE (awk, px->id.name.ptr);
-				QSE_AWK_FREE (awk, p);
+				if (px->id.name.ptr) qse_awk_freemem (awk, px->id.name.ptr);
+				qse_awk_freemem (awk, p);
 				break;
 			}
 
 			case QSE_AWK_NDE_POS:
 			{
 				qse_awk_clrpt (awk, ((qse_awk_nde_pos_t*)p)->val);
-				QSE_AWK_FREE (awk, p);
+				qse_awk_freemem (awk, p);
 				break;
 			}
 
 			case QSE_AWK_NDE_FNCALL_FNC:
 			{
 				qse_awk_nde_fncall_t* px = (qse_awk_nde_fncall_t*)p;
-				/* QSE_AWK_FREE (awk, px->u.fnc); */
-				QSE_AWK_FREE (awk, px->u.fnc.info.name.ptr);
+				/* qse_awk_freemem (awk, px->u.fnc); */
+				qse_awk_freemem (awk, px->u.fnc.info.name.ptr);
 				qse_awk_clrpt (awk, px->args);
-				QSE_AWK_FREE (awk, p);
+				qse_awk_freemem (awk, p);
 				break;
 			}
 
 			case QSE_AWK_NDE_FNCALL_FUN:
 			{
 				qse_awk_nde_fncall_t* px = (qse_awk_nde_fncall_t*)p;
-				QSE_AWK_FREE (awk, px->u.fun.name.ptr);
+				qse_awk_freemem (awk, px->u.fun.name.ptr);
 				qse_awk_clrpt (awk, px->args);
-				QSE_AWK_FREE (awk, p);
+				qse_awk_freemem (awk, p);
 				break;
 			}
 
@@ -1476,7 +1476,7 @@ void qse_awk_clrpt (qse_awk_t* awk, qse_awk_nde_t* tree)
 				qse_awk_nde_fncall_t* px = (qse_awk_nde_fncall_t*)p;
 				qse_awk_clrpt (awk, (qse_awk_nde_t*)px->u.var.var);
 				qse_awk_clrpt (awk, px->args);
-				QSE_AWK_FREE (awk, p);
+				qse_awk_freemem (awk, p);
 				break;
 			}
 
@@ -1485,14 +1485,14 @@ void qse_awk_clrpt (qse_awk_t* awk, qse_awk_nde_t* tree)
 				qse_awk_nde_getline_t* px = (qse_awk_nde_getline_t*)p;
 				if (px->var) qse_awk_clrpt (awk, px->var);
 				if (px->in) qse_awk_clrpt (awk, px->in);
-				QSE_AWK_FREE (awk, p);
+				qse_awk_freemem (awk, p);
 				break;
 			}
 
 			default:
 			{
 				QSE_ASSERT (!"should never happen - invalid node type");
-				QSE_AWK_FREE (awk, p);
+				qse_awk_freemem (awk, p);
 				break;
 			}
 		}
