@@ -864,7 +864,7 @@ struct qse_awk_fnc_spec_t
 	/** 
 	 * when this field is set to a non-zero value bitwise-ORed of 
 	 * #qse_awk_trait_t enumerators, the function is available if 
-	 * this field bitwise-ANDed the global trait option produces
+	 * this field bitwise-ANDed with the global trait option produces
 	 * this field itself.
 	 * 
 	 * this field doesn't take effect for a module function.

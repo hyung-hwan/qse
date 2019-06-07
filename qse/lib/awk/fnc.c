@@ -58,46 +58,46 @@ static int fnc_asorti (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi);
 static qse_awk_fnc_t sysfnctab[] = 
 {
 	/* io functions */
-	{ {QSE_T("close"),    5}, 0, { {1,     2, QSE_NULL},       fnc_close,  QSE_AWK_RIO }, QSE_NULL},
-	{ {QSE_T("fflush"),   6}, 0, { {0,     1, QSE_NULL},       fnc_fflush, QSE_AWK_RIO }, QSE_NULL},
+	{ {QSE_T("close"),    5}, 0, { {1,     2, QSE_NULL},        fnc_close,  QSE_AWK_RIO }, QSE_NULL},
+	{ {QSE_T("fflush"),    6}, 0, { {0,     1, QSE_NULL},        fnc_fflush,  QSE_AWK_RIO }, QSE_NULL},
 
 	/* type info/conversion */
-	{ {QSE_T("int"),      3}, 0, { {1,     1, QSE_NULL},       fnc_int,              0 }, QSE_NULL},
-	{ {QSE_T("isnil"),    5}, 0, { {1,     1, QSE_NULL},       fnc_isnil,            0 }, QSE_NULL},
-	{ {QSE_T("ismap"),    5}, 0, { {1,     1, QSE_NULL},       fnc_ismap,            0 }, QSE_NULL},
-	{ {QSE_T("typename"), 8}, 0, { {1,     1, QSE_NULL},       fnc_typename,         0 }, QSE_NULL},
+	{ {QSE_T("int"),      3}, 0, { {1,     1, QSE_NULL},        fnc_int,              0 }, QSE_NULL},
+	{ {QSE_T("isnil"),    5}, 0, { {1,     1, QSE_NULL},        fnc_isnil,            0 }, QSE_NULL},
+	{ {QSE_T("ismap"),    5}, 0, { {1,     1, QSE_NULL},        fnc_ismap,            0 }, QSE_NULL},
+	{ {QSE_T("typename"), 8}, 0, { {1,     1, QSE_NULL},        fnc_typename,         0 }, QSE_NULL},
 
 	/* map(array) sort */
-	{ {QSE_T("asort"),    5}, 0, { {1,     3, QSE_T("rrv")},   fnc_asort,            0 }, QSE_NULL},
-	{ {QSE_T("asorti"),   6}, 0, { {1,     3, QSE_T("rrv")},   fnc_asorti,           0 }, QSE_NULL},
+	{ {QSE_T("asort"),    5}, 0, { {1,     3, QSE_T("rrv")},    fnc_asort,            0 }, QSE_NULL},
+	{ {QSE_T("asorti"),   6}, 0, { {1,     3, QSE_T("rrv")},    fnc_asorti,           0 }, QSE_NULL},
  
 	/* string functions */
-	{ {QSE_T("gsub"),     4}, 0, { {2,     3, QSE_T("xvr")},   qse_awk_fnc_gsub,     0 }, QSE_NULL},
-	{ {QSE_T("index"),    5}, 0, { {2,     3, QSE_NULL},       qse_awk_fnc_index,    0 }, QSE_NULL},
-	{ {QSE_T("length"),   6}, 1, { {0,     1, QSE_NULL},       qse_awk_fnc_length,   0 }, QSE_NULL},
-	{ {QSE_T("match"),    5}, 0, { {2,     4, QSE_T("vxvr")},  qse_awk_fnc_match,    0 }, QSE_NULL},
-	{ {QSE_T("split"),    5}, 0, { {2,     3, QSE_T("vrx")},   qse_awk_fnc_split,    0 }, QSE_NULL},
-	{ {QSE_T("sprintf"),  7}, 0, { {1, A_MAX, QSE_NULL},       qse_awk_fnc_sprintf,  0 }, QSE_NULL},
-	{ {QSE_T("sub"),      3}, 0, { {2,     3, QSE_T("xvr")},   qse_awk_fnc_sub,      0 }, QSE_NULL},
-	{ {QSE_T("substr"),   6}, 0, { {2,     3, QSE_NULL},       qse_awk_fnc_substr,   0 }, QSE_NULL},
-	{ {QSE_T("tolower"),  7}, 0, { {1,     1, QSE_NULL},       qse_awk_fnc_tolower,  0 }, QSE_NULL},
-	{ {QSE_T("toupper"),  7}, 0, { {1,     1, QSE_NULL},       qse_awk_fnc_toupper,  0 }, QSE_NULL},
+	{ {QSE_T("gsub"),     4}, 0, { {2,     3, QSE_T("xvr")},    qse_awk_fnc_gsub,     0 }, QSE_NULL},
+	{ {QSE_T("index"),    5}, 0, { {2,     3, QSE_NULL},        qse_awk_fnc_index,    0 }, QSE_NULL},
+	{ {QSE_T("length"),   6}, 1, { {0,     1, QSE_NULL},        qse_awk_fnc_length,   0 }, QSE_NULL},
+	{ {QSE_T("match"),    5}, 0, { {2,     4, QSE_T("vxvr")},   qse_awk_fnc_match,    0 }, QSE_NULL},
+	{ {QSE_T("split"),    5}, 0, { {2,     3, QSE_T("vrx")},    qse_awk_fnc_split,    0 }, QSE_NULL},
+	{ {QSE_T("sprintf"),  7}, 0, { {1, A_MAX, QSE_NULL},        qse_awk_fnc_sprintf,  0 }, QSE_NULL},
+	{ {QSE_T("sub"),      3}, 0, { {2,     3, QSE_T("xvr")},    qse_awk_fnc_sub,      0 }, QSE_NULL},
+	{ {QSE_T("substr"),   6}, 0, { {2,     3, QSE_NULL},        qse_awk_fnc_substr,   0 }, QSE_NULL},
+	{ {QSE_T("tolower"),  7}, 0, { {1,     1, QSE_NULL},        qse_awk_fnc_tolower,  0 }, QSE_NULL},
+	{ {QSE_T("toupper"),  7}, 0, { {1,     1, QSE_NULL},        qse_awk_fnc_toupper,  0 }, QSE_NULL},
 
 	/* math functions */
-	{ {QSE_T("sin"),      3}, 0, { {A_MAX, 0, QSE_T("math") },  QSE_NULL,         0 }, QSE_NULL},
-	{ {QSE_T("cos"),      3}, 0, { {A_MAX, 0, QSE_T("math") },  QSE_NULL,         0 }, QSE_NULL},
-	{ {QSE_T("tan"),      3}, 0, { {A_MAX, 0, QSE_T("math") },  QSE_NULL,         0 }, QSE_NULL},
-	{ {QSE_T("atan"),     4}, 0, { {A_MAX, 0, QSE_T("math") },  QSE_NULL,         0 }, QSE_NULL},
-	{ {QSE_T("atan2"),    5}, 0, { {A_MAX, 0, QSE_T("math") },  QSE_NULL,         0 }, QSE_NULL},
-	{ {QSE_T("log"),      3}, 0, { {A_MAX, 0, QSE_T("math") },  QSE_NULL,         0 }, QSE_NULL},
-	{ {QSE_T("log10"),    5}, 0, { {A_MAX, 0, QSE_T("math") },  QSE_NULL,         0 }, QSE_NULL},
-	{ {QSE_T("exp"),      3}, 0, { {A_MAX, 0, QSE_T("math") },  QSE_NULL,         0 }, QSE_NULL},
-	{ {QSE_T("sqrt"),     4}, 0, { {A_MAX, 0, QSE_T("math") },  QSE_NULL,         0 }, QSE_NULL},
+	{ {QSE_T("sin"),      3}, 0, { {A_MAX, 0, QSE_T("math") },  QSE_NULL,             0 }, QSE_NULL},
+	{ {QSE_T("cos"),      3}, 0, { {A_MAX, 0, QSE_T("math") },  QSE_NULL,             0 }, QSE_NULL},
+	{ {QSE_T("tan"),      3}, 0, { {A_MAX, 0, QSE_T("math") },  QSE_NULL,             0 }, QSE_NULL},
+	{ {QSE_T("atan"),     4}, 0, { {A_MAX, 0, QSE_T("math") },  QSE_NULL,             0 }, QSE_NULL},
+	{ {QSE_T("atan2"),    5}, 0, { {A_MAX, 0, QSE_T("math") },  QSE_NULL,             0 }, QSE_NULL},
+	{ {QSE_T("log"),      3}, 0, { {A_MAX, 0, QSE_T("math") },  QSE_NULL,             0 }, QSE_NULL},
+	{ {QSE_T("log10"),    5}, 0, { {A_MAX, 0, QSE_T("math") },  QSE_NULL,             0 }, QSE_NULL},
+	{ {QSE_T("exp"),      3}, 0, { {A_MAX, 0, QSE_T("math") },  QSE_NULL,             0 }, QSE_NULL},
+	{ {QSE_T("sqrt"),     4}, 0, { {A_MAX, 0, QSE_T("math") },  QSE_NULL,             0 }, QSE_NULL},
 
 	/* time functions */
-	{ {QSE_T("mktime"),   6}, 0, { {A_MAX, 0, QSE_T("sys") },   QSE_NULL,          0 }, QSE_NULL},
-	{ {QSE_T("strftime"), 8}, 0, { {A_MAX, 0, QSE_T("sys") },   QSE_NULL,          0 }, QSE_NULL},
-	{ {QSE_T("systime"),  7}, 0, { {A_MAX, 0, QSE_T("sys") },   QSE_NULL,          0 }, QSE_NULL}
+	{ {QSE_T("mktime"),   6}, 0, { {A_MAX, 0, QSE_T("sys") },   QSE_NULL,             0 }, QSE_NULL},
+	{ {QSE_T("strftime"), 8}, 0, { {A_MAX, 0, QSE_T("sys") },   QSE_NULL,             0 }, QSE_NULL},
+	{ {QSE_T("systime"),  7}, 0, { {A_MAX, 0, QSE_T("sys") },   QSE_NULL,             0 }, QSE_NULL}
 };
 
 qse_awk_fnc_t* qse_awk_addfnc (qse_awk_t* awk, const qse_char_t* name, const qse_awk_fnc_spec_t* spec)
