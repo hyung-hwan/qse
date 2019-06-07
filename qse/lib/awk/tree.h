@@ -206,6 +206,7 @@ struct qse_awk_nde_fncall_t
 		struct
 		{
 			qse_cstr_t name;
+			qse_awk_fun_t* fun; /* cache it */
 		} fun;
 
 		/* minimum information of a intrinsic function 

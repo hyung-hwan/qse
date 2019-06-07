@@ -1301,9 +1301,7 @@ int Awk::loop (Value* ret)
 	return 0;
 }
 
-int Awk::call (
-	const char_t* name, Value* ret,
-	const Value* args, size_t nargs)
+int Awk::call (const char_t* name, Value* ret, const Value* args, size_t nargs)
 {
 	QSE_ASSERT (this->awk != QSE_NULL);
 	QSE_ASSERT (this->runctx.rtx != QSE_NULL);
@@ -1329,7 +1327,7 @@ int Awk::call (
 		for (size_t i = 0; i < nargs; i++) ptr[i] = (val_t*)args[i];
 	}
 
-	val_t* rv = qse_awk_rtx_call (this->runctx.rtx, name, ptr, nargs);
+	val_t* rv = qse_awk_rtx_call(this->runctx.rtx, name, ptr, nargs);
 
 	if (ptr != QSE_NULL && ptr != buf) qse_awk_freemem (awk, ptr);
 
