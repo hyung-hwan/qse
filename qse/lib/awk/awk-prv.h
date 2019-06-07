@@ -302,7 +302,7 @@ struct qse_awk_chain_t
 {
 	qse_awk_nde_t* pattern;
 	qse_awk_nde_t* action;
-	qse_awk_chain_t* next;	
+	qse_awk_chain_t* next;
 };
 
 #define RTX_STACK_AT(rtx,n) ((rtx)->stack[(rtx)->stack_base+(n)])
@@ -438,6 +438,18 @@ struct qse_awk_mod_data_t
 	void* handle;
 	qse_awk_mod_t mod;
 };
+
+
+#define QSE_AWK_RTX_INIT_REF_VAL(refval, _id, _adr, _nrefs) \
+	do { \
+		(refval)->v_type = QSE_AWK_VAL_REF; \
+		(refval)->ref = (_nrefs); \
+		(refval)->stat = 0; \
+		(refval)->nstr = 0; \
+		(refval)->fcb = 0; \
+		(refval)->id = (_id); \
+		(refval)->adr = (_adr); \
+	} while(0);
 
 #if defined(__cplusplus)
 extern "C" {
