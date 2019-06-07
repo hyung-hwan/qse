@@ -2660,7 +2660,7 @@ static int run_delete_unnamed (qse_awk_rtx_t* rtx, qse_awk_nde_var_t* var)
 				int x;
 
 				qse_awk_rtx_refupval (rtx, tmp);
-				x = qse_awk_rtx_setgbl (rtx, (int)var->id.idxa, tmp);
+				x = qse_awk_rtx_setgbl(rtx, (int)var->id.idxa, tmp);
 				qse_awk_rtx_refdownval (rtx, tmp);
 
 				if (x <= -1)
@@ -3192,7 +3192,7 @@ static qse_awk_val_t* eval_expression (qse_awk_rtx_t* rtx, qse_awk_nde_t* nde)
 		 */
 		qse_awk_rtx_refupval (rtx, v);
 
-		if (QSE_AWK_RTX_GETVALTYPE (rtx, rtx->inrec.d0) == QSE_AWK_VAL_NIL)
+		if (QSE_AWK_RTX_GETVALTYPE(rtx, rtx->inrec.d0) == QSE_AWK_VAL_NIL)
 		{
 			/* the record has never been read. 
 			 * probably, this function has been triggered
@@ -3210,7 +3210,7 @@ static qse_awk_val_t* eval_expression (qse_awk_rtx_t* rtx, qse_awk_nde_t* nde)
 			vs.len = ((qse_awk_val_str_t*)rtx->inrec.d0)->val.len;
 		}
 
-		n = qse_awk_rtx_matchrex (rtx, v, &vs, &vs, QSE_NULL, QSE_NULL);
+		n = qse_awk_rtx_matchrex(rtx, v, &vs, &vs, QSE_NULL, QSE_NULL);
 		if (n <= -1)
 		{
 			ADJERR_LOC (rtx, &nde->loc);
@@ -3219,7 +3219,7 @@ static qse_awk_val_t* eval_expression (qse_awk_rtx_t* rtx, qse_awk_nde_t* nde)
 		}
 		qse_awk_rtx_refdownval (rtx, v);
 
-		v = qse_awk_rtx_makeintval (rtx, (n != 0));
+		v = qse_awk_rtx_makeintval(rtx, (n != 0));
 		if (v == QSE_NULL) 
 		{
 			/* adjust error line */
@@ -3231,7 +3231,7 @@ static qse_awk_val_t* eval_expression (qse_awk_rtx_t* rtx, qse_awk_nde_t* nde)
 	return v;
 }
 
-static qse_awk_val_t* eval_expression0 (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
+static qse_awk_val_t* eval_expression0 (qse_awk_rtx_t* rtx, qse_awk_nde_t* nde)
 {
 	static eval_expr_t __evaluator[] =
 	{
@@ -3271,18 +3271,18 @@ static qse_awk_val_t* eval_expression0 (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 
 	QSE_ASSERT (nde->type >= QSE_AWK_NDE_GRP && (nde->type - QSE_AWK_NDE_GRP) < QSE_COUNTOF(__evaluator));
 
-	v = __evaluator[nde->type-QSE_AWK_NDE_GRP](run, nde);
+	v = __evaluator[nde->type-QSE_AWK_NDE_GRP](rtx, nde);
 
-	if (v != QSE_NULL && run->exit_level >= EXIT_GLOBAL)
+	if (v != QSE_NULL && rtx->exit_level >= EXIT_GLOBAL)
 	{
-		qse_awk_rtx_refupval (run, v);
-		qse_awk_rtx_refdownval (run, v);
+		qse_awk_rtx_refupval (rtx, v);
+		qse_awk_rtx_refdownval (rtx, v);
 
 		/* returns QSE_NULL as if an error occurred but
 		 * clears the error number. run_main will 
 		 * detect this condition and treat it as a 
 		 * non-error condition.*/
-		run->errinf.num = QSE_AWK_ENOERR;
+		rtx->errinf.num = QSE_AWK_ENOERR;
 		return QSE_NULL;
 	}
 
@@ -3331,7 +3331,7 @@ loop:
 	return val;
 }
 
-static qse_awk_val_t* eval_assignment (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
+static qse_awk_val_t* eval_assignment (qse_awk_rtx_t* rtx, qse_awk_nde_t* nde)
 {
 	qse_awk_val_t* val, * ret;
 	qse_awk_nde_ass_t* ass = (qse_awk_nde_ass_t*)nde;
@@ -3340,17 +3340,17 @@ static qse_awk_val_t* eval_assignment (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 	QSE_ASSERT (ass->right != QSE_NULL);
 
 	QSE_ASSERT (ass->right->next == QSE_NULL);
-	val = eval_expression (run, ass->right);
+	val = eval_expression (rtx, ass->right);
 	if (val == QSE_NULL) return QSE_NULL;
 
-	qse_awk_rtx_refupval (run, val);
+	qse_awk_rtx_refupval (rtx, val);
 
 	if (ass->opcode != QSE_AWK_ASSOP_NONE)
 	{
 		qse_awk_val_t* val2, * tmp;
 		static binop_func_t binop_func[] =
 		{
-			/* this table must match qse_awk_assop_type_t in run.h */
+			/* this table must match qse_awk_assop_type_t in rtx.h */
 			QSE_NULL, /* QSE_AWK_ASSOP_NONE */
 			eval_binop_plus,
 			eval_binop_minus,
@@ -3368,36 +3368,36 @@ static qse_awk_val_t* eval_assignment (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 		};
 
 		QSE_ASSERT (ass->left->next == QSE_NULL);
-		val2 = eval_expression (run, ass->left);
+		val2 = eval_expression(rtx, ass->left);
 		if (val2 == QSE_NULL)
 		{
-			qse_awk_rtx_refdownval (run, val);
+			qse_awk_rtx_refdownval (rtx, val);
 			return QSE_NULL;
 		}
 
-		qse_awk_rtx_refupval (run, val2);
+		qse_awk_rtx_refupval (rtx, val2);
 
 		QSE_ASSERT (ass->opcode >= 0);
 		QSE_ASSERT (ass->opcode < QSE_COUNTOF(binop_func));
 		QSE_ASSERT (binop_func[ass->opcode] != QSE_NULL);
 
-		tmp = binop_func[ass->opcode] (run, val2, val);
+		tmp = binop_func[ass->opcode](rtx, val2, val);
 		if (tmp == QSE_NULL)
 		{
-			qse_awk_rtx_refdownval (run, val2);
-			qse_awk_rtx_refdownval (run, val);
+			qse_awk_rtx_refdownval (rtx, val2);
+			qse_awk_rtx_refdownval (rtx, val);
 			return QSE_NULL;
 		}
 
-		qse_awk_rtx_refdownval (run, val2);
-		qse_awk_rtx_refdownval (run, val);
+		qse_awk_rtx_refdownval (rtx, val2);
+		qse_awk_rtx_refdownval (rtx, val);
 
 		val = tmp;
-		qse_awk_rtx_refupval (run, val);
+		qse_awk_rtx_refupval (rtx, val);
 	}
 
-	ret = do_assignment (run, ass->left, val);
-	qse_awk_rtx_refdownval (run, val);
+	ret = do_assignment(rtx, ass->left, val);
+	qse_awk_rtx_refdownval (rtx, val);
 
 	return ret;
 }
@@ -3507,7 +3507,7 @@ static qse_awk_val_t* do_assignment_nonidx (qse_awk_rtx_t* run, qse_awk_nde_var_
 
 		case QSE_AWK_NDE_GBL:
 		{
-			if (set_global (run, var->id.idxa, var, val, 1) == -1) 
+			if (set_global(run, var->id.idxa, var, val, 1) == -1) 
 			{
 				ADJERR_LOC (run, &var->loc);
 				return QSE_NULL;
@@ -3550,7 +3550,7 @@ static qse_awk_val_t* do_assignment_nonidx (qse_awk_rtx_t* run, qse_awk_nde_var_
 
 			if (!(run->awk->opt.trait & QSE_AWK_FLEXMAP))
 			{
-				if (QSE_AWK_RTX_GETVALTYPE (rtx, old) == QSE_AWK_VAL_MAP)
+				if (QSE_AWK_RTX_GETVALTYPE(rtx, old) == QSE_AWK_VAL_MAP)
 				{
 					/* old value is a map - it can only be accessed through indexing. */
 					qse_awk_errnum_t errnum;
@@ -3599,8 +3599,7 @@ retry:
 		case QSE_AWK_NDE_NAMEDIDX:
 		{
 			qse_htb_pair_t* pair;
-			pair = qse_htb_search (
-				rtx->named, var->id.name.ptr, var->id.name.len);
+			pair = qse_htb_search(rtx->named, var->id.name.ptr, var->id.name.len);
 			map = (pair == QSE_NULL)? 
 				(qse_awk_val_map_t*)qse_awk_val_nil: 
 				(qse_awk_val_map_t*)QSE_HTB_VPTR(pair);
@@ -3641,7 +3640,7 @@ retry:
 				 * of the previous value here as it is done by 
 				 * qse_htb_upsert */
 				qse_awk_rtx_refupval (rtx, tmp);
-				if (qse_htb_upsert (rtx->named, var->id.name.ptr, var->id.name.len, tmp, 0) == QSE_NULL)
+				if (qse_htb_upsert(rtx->named, var->id.name.ptr, var->id.name.len, tmp, 0) == QSE_NULL)
 				{
 					qse_awk_rtx_refdownval (rtx, tmp);
 					SETERR_LOC (rtx, QSE_AWK_ENOMEM, &var->loc);
@@ -3709,7 +3708,7 @@ retry:
 	}
 
 	len = QSE_COUNTOF(idxbuf);
-	str = idxnde_to_str (rtx, var->idx, idxbuf, &len);
+	str = idxnde_to_str(rtx, var->idx, idxbuf, &len);
 	if (str == QSE_NULL) return QSE_NULL;
 
 #ifdef DEBUG_RUN
@@ -3717,7 +3716,7 @@ retry:
 		str, (int)map->ref, (int)map->type);
 #endif
 
-	if (qse_htb_upsert (map->map, str, len, val, 0) == QSE_NULL)
+	if (qse_htb_upsert(map->map, str, len, val, 0) == QSE_NULL)
 	{
 		if (str != idxbuf) qse_awk_rtx_freemem (rtx, str);
 		SETERR_LOC (rtx, QSE_AWK_ENOMEM, &var->loc);
@@ -5360,7 +5359,7 @@ static qse_awk_val_t* eval_binop_nm (qse_awk_rtx_t* run, qse_awk_nde_t* left, qs
 	return res;
 }
 
-static qse_awk_val_t* eval_unary (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
+static qse_awk_val_t* eval_unary (qse_awk_rtx_t* rtx, qse_awk_nde_t* nde)
 {
 	qse_awk_val_t* left, * res = QSE_NULL;
 	qse_awk_nde_exp_t* exp = (qse_awk_nde_exp_t*)nde;
@@ -5379,19 +5378,19 @@ static qse_awk_val_t* eval_unary (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 		exp->opcode == QSE_AWK_UNROP_BNOT);
 
 	QSE_ASSERT (exp->left->next == QSE_NULL);
-	left = eval_expression (run, exp->left);
+	left = eval_expression (rtx, exp->left);
 	if (left == QSE_NULL) return QSE_NULL;
 
-	qse_awk_rtx_refupval (run, left);
+	qse_awk_rtx_refupval (rtx, left);
 
 	switch (exp->opcode)
 	{
 		case QSE_AWK_UNROP_MINUS:
-			n = qse_awk_rtx_valtonum (run, left, &l, &r);
+			n = qse_awk_rtx_valtonum (rtx, left, &l, &r);
 			if (n <= -1) goto exit_func;
 
-			res = (n == 0)? qse_awk_rtx_makeintval (run, -l):
-			                qse_awk_rtx_makefltval (run, -r);
+			res = (n == 0)? qse_awk_rtx_makeintval (rtx, -l):
+			                qse_awk_rtx_makefltval (rtx, -r);
 			break;
 
 		case QSE_AWK_UNROP_LNOT:
@@ -5400,37 +5399,37 @@ static qse_awk_val_t* eval_unary (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 				/* 0 if the string length is greater than 0.
 				 * 1 if it's empty */
 				res = qse_awk_rtx_makeintval (
-					run, !(((qse_awk_val_str_t*)left)->val.len > 0));
+					rtx, !(((qse_awk_val_str_t*)left)->val.len > 0));
 			}
 			else
 			{
-				n = qse_awk_rtx_valtonum (run, left, &l, &r);
+				n = qse_awk_rtx_valtonum (rtx, left, &l, &r);
 				if (n <= -1) goto exit_func;
 
-				res = (n == 0)? qse_awk_rtx_makeintval (run, !l):
-				                qse_awk_rtx_makefltval (run, !r);
+				res = (n == 0)? qse_awk_rtx_makeintval (rtx, !l):
+				                qse_awk_rtx_makefltval (rtx, !r);
 			}
 			break;
 	
 		case QSE_AWK_UNROP_BNOT:
-			n = qse_awk_rtx_valtoint (run, left, &l);
+			n = qse_awk_rtx_valtoint (rtx, left, &l);
 			if (n <= -1) goto exit_func;
 
-			res = qse_awk_rtx_makeintval (run, ~l);
+			res = qse_awk_rtx_makeintval (rtx, ~l);
 			break;
 
 		case QSE_AWK_UNROP_PLUS:
-			n = qse_awk_rtx_valtonum (run, left, &l, &r);
+			n = qse_awk_rtx_valtonum (rtx, left, &l, &r);
 			if (n <= -1) goto exit_func;
 
-			res = (n == 0)? qse_awk_rtx_makeintval (run, l):
-			                qse_awk_rtx_makefltval (run, r);
+			res = (n == 0)? qse_awk_rtx_makeintval (rtx, l):
+			                qse_awk_rtx_makefltval (rtx, r);
 			break;
 	}
 
 exit_func:
-	qse_awk_rtx_refdownval (run, left);
-	if (res == QSE_NULL) ADJERR_LOC (run, &nde->loc);
+	qse_awk_rtx_refdownval (rtx, left);
+	if (res == QSE_NULL) ADJERR_LOC (rtx, &nde->loc);
 	return res;
 }
 
@@ -5840,8 +5839,8 @@ static qse_awk_val_t* eval_fncall_var (qse_awk_rtx_t* rtx, qse_awk_nde_t* nde)
 
 #define UNWIND_RTX_STACK(rtx,nargs) \
 	do { \
-		UNWIND_RTX_STACK_ARG(rtx,nargs); \
-		UNWIND_RTX_STACK_BASE(rtx); \
+		UNWIND_RTX_STACK_ARG (rtx,nargs); \
+		UNWIND_RTX_STACK_BASE (rtx); \
 	} while (0)
 
 static qse_awk_val_t* __eval_call (
@@ -5903,6 +5902,7 @@ static qse_awk_val_t* __eval_call (
 #ifdef DEBUG_RUN
 	qse_errputstrf (QSE_T("setting up function stack frame top=%zd base=%zd\n"), (qse_size_t)rtx->stack_top, (qse_size_t)rtx->stack_base);
 #endif
+
 	if (__raw_push(rtx,(void*)rtx->stack_base) == -1) 
 	{
 		SETERR_LOC (rtx, QSE_AWK_ENOMEM, &nde->loc);
@@ -5949,6 +5949,26 @@ static qse_awk_val_t* __eval_call (
 	{
 		/* extra step for normal awk functions */
 
+		if (fun->argspec)
+		{
+			/* sanity check for call-by-reference parameters of a normal awk function.
+			 * it tests if each call-by-reference argument is referenceable. */
+			qse_awk_nde_t* p = call->args;
+			for (i = 0; i < nargs; i++)
+			{
+				if (fun->argspec[i] == QSE_T('r'))
+				{
+					qse_awk_val_t** ref;
+					if (get_reference(rtx, p, &ref) <= -1)
+					{
+						UNWIND_RTX_STACK (rtx, nargs);
+						return QSE_NULL;
+					}
+				}
+				p = p->next;
+			}
+		}
+
 		while (nargs < fun->nargs)
 		{
 			/* push as many nils as the number of missing actual arguments */
@@ -5967,7 +5987,7 @@ static qse_awk_val_t* __eval_call (
 	RTX_STACK_NARGS(rtx) = (void*)nargs;
 	
 #ifdef DEBUG_RUN
-	qse_errputstrf (QSE_T("rtxning function body\n"));
+	qse_errputstrf (QSE_T("running function body\n"));
 #endif
 
 	if (fun)
@@ -6025,24 +6045,16 @@ static qse_awk_val_t* __eval_call (
 		 * the intrinsic functions are not handled here but their implementation would
 		 * call qse_awk_rtx_setrefval() */
 
-		qse_awk_nde_t* p;
-
-		p = call->args;
+		qse_awk_nde_t* p = call->args;
 		for (i = 0; i < nargs; i++)
 		{
 			if (fun->argspec[i] == QSE_T('r'))
 			{
-/* TODO: change this part.. */
 				qse_awk_val_t** ref;
-				qse_awk_val_ref_t* refv;
-
-/* TODO: ERROR CHECK. no extra memory set */
-				get_reference (rtx, p, &ref);
-				refv = qse_awk_rtx_makerefval(rtx, p->type - QSE_AWK_NDE_NAMED, ref);
-
-				qse_awk_rtx_refupval (rtx, refv);
-				qse_awk_rtx_setrefval (rtx, refv, RTX_STACK_ARG(rtx, i));
-				qse_awk_rtx_refdownval (rtx, refv);
+				qse_awk_val_ref_t refv;
+				get_reference (rtx, p, &ref); /* no failure check as it must succeed here for the check done above */
+				QSE_AWK_RTX_INIT_REF_VAL (&refv, p->type - QSE_AWK_NDE_NAMED, ref, 5); /* initialize a fake reference variable */
+				qse_awk_rtx_setrefval (rtx, &refv, RTX_STACK_ARG(rtx, i));
 			}
 
 			qse_awk_rtx_refdownval (rtx, RTX_STACK_ARG(rtx,i));
@@ -6125,7 +6137,7 @@ static qse_size_t push_arg_from_vals (qse_awk_rtx_t* rtx, qse_awk_nde_fncall_t* 
 
 	for (nargs = 0; nargs < pafv->nargs; nargs++)
 	{
-		if (__raw_push (rtx, pafv->args[nargs]) == -1) 
+		if (__raw_push(rtx, pafv->args[nargs]) == -1) 
 		{
 			/* ugly - arg needs to be freed if it doesn't have
 			 * any reference. but its reference has not been 
@@ -6161,7 +6173,7 @@ static qse_size_t push_arg_from_nde (qse_awk_rtx_t* rtx, qse_awk_nde_fncall_t* c
 		{
 			qse_awk_val_t** ref;
 
-			if (get_reference(rtx, p, &ref) == -1)
+			if (get_reference(rtx, p, &ref) <= -1)
 			{
 				UNWIND_RTX_STACK_ARG (rtx, nargs);
 				return (qse_size_t)-1;
@@ -6274,13 +6286,13 @@ static int get_reference (qse_awk_rtx_t* rtx, qse_awk_nde_t* nde, qse_awk_val_t*
 		}
 		
 		case QSE_AWK_NDE_GBLIDX:
-			tmp = get_reference_indexed (rtx, tgt, (qse_awk_val_t**)&RTX_STACK_GBL(rtx,tgt->id.idxa));
+			tmp = get_reference_indexed(rtx, tgt, (qse_awk_val_t**)&RTX_STACK_GBL(rtx,tgt->id.idxa));
 			if (tmp == QSE_NULL) return -1;
 			*ref = tmp;
 			return 0;
 
 		case QSE_AWK_NDE_LCLIDX:
-			tmp = get_reference_indexed (rtx, tgt, (qse_awk_val_t**)&RTX_STACK_LCL(rtx,tgt->id.idxa));
+			tmp = get_reference_indexed(rtx, tgt, (qse_awk_val_t**)&RTX_STACK_LCL(rtx,tgt->id.idxa));
 			if (tmp == QSE_NULL) return -1;
 			*ref = tmp;
 			return 0;
@@ -6290,7 +6302,7 @@ static int get_reference (qse_awk_rtx_t* rtx, qse_awk_nde_t* nde, qse_awk_val_t*
 			if (tmp == QSE_NULL) return -1;
 			*ref = tmp;
 			return 0;
-	
+
 		case QSE_AWK_NDE_POS:
 		{
 			int n;
@@ -6311,7 +6323,7 @@ static int get_reference (qse_awk_rtx_t* rtx, qse_awk_nde_t* nde, qse_awk_val_t*
 				SETERR_LOC (rtx, QSE_AWK_EPOSIDX, &nde->loc);
 				return -1;
 			}
-	
+
 			if (!IS_VALID_POSIDX(lv)) 
 			{
 				SETERR_LOC (rtx, QSE_AWK_EPOSIDX, &nde->loc);

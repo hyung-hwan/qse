@@ -2659,7 +2659,6 @@ QSE_EXPORT qse_awk_val_map_itr_t* qse_awk_rtx_getnextmapvalitr (
 	qse_awk_val_map_itr_t* itr
 );
 
-
 /**
  * The qse_awk_rtx_makerefval() function creates a reference value.
  * \return value on success, #QSE_NULL on failure

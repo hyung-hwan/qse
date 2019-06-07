@@ -664,16 +664,10 @@ qse_awk_val_t* qse_awk_rtx_makerefval (qse_awk_rtx_t* rtx, int id, qse_awk_val_t
 		if (!val) return QSE_NULL;
 	}
 
-	val->v_type = QSE_AWK_VAL_REF;
-	val->ref = 0;
-	val->stat = 0;
-	val->nstr = 0;
-	val->fcb = 0;
-	val->id = id;
-	val->adr = adr;
-
+	QSE_AWK_RTX_INIT_REF_VAL (val, id, adr, 0);
 	return (qse_awk_val_t*)val;
 }
+
 qse_awk_val_t* qse_awk_rtx_makefunval (qse_awk_rtx_t* rtx, const qse_awk_fun_t* fun)
 {
 	qse_awk_val_fun_t* val;
@@ -944,13 +938,13 @@ int qse_awk_rtx_valtobool (qse_awk_rtx_t* rtx, const qse_awk_val_t* val)
 
 	if (val == QSE_NULL) return 0;
 
-	vtype = QSE_AWK_RTX_GETVALTYPE (rtx, val);
+	vtype = QSE_AWK_RTX_GETVALTYPE(rtx, val);
 	switch (vtype)
 	{
 		case QSE_AWK_VAL_NIL:
 			return 0;
 		case QSE_AWK_VAL_INT:
-			return QSE_AWK_RTX_GETINTFROMVAL (rtx, val) != 0;
+			return QSE_AWK_RTX_GETINTFROMVAL(rtx, val) != 0;
 		case QSE_AWK_VAL_FLT:
 			return ((qse_awk_val_flt_t*)val)->val != 0.0;
 		case QSE_AWK_VAL_STR:
@@ -966,7 +960,7 @@ int qse_awk_rtx_valtobool (qse_awk_rtx_t* rtx, const qse_awk_val_t* val)
 			/* true if the map size is greater than 0. false if not */
 			return QSE_HTB_SIZE(((qse_awk_val_map_t*)val)->map) > 0;
 		case QSE_AWK_VAL_REF:
-			return val_ref_to_bool (rtx, (qse_awk_val_ref_t*)val);
+			return val_ref_to_bool(rtx, (qse_awk_val_ref_t*)val);
 	}
 
 	QSE_ASSERTX (
