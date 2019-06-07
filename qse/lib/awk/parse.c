@@ -5340,12 +5340,12 @@ static qse_awk_nde_t* parse_primary_ident_segs (qse_awk_t* awk, const qse_awk_lo
 				break;
 
 			case QSE_AWK_MOD_INT:
-				nde = new_int_node (awk, sym.u.in.val, xloc);
+				nde = new_int_node(awk, sym.u.in.val, xloc);
 				/* i don't remember the symbol in the original form */
 				break;
 
 			case QSE_AWK_MOD_FLT:
-				nde = new_flt_node (awk, sym.u.flt.val, xloc);
+				nde = new_flt_node(awk, sym.u.flt.val, xloc);
 				/* i don't remember the symbol in the original form */
 				break;
 
@@ -5372,7 +5372,7 @@ static qse_awk_nde_t* parse_primary_ident (qse_awk_t* awk, const qse_awk_loc_t* 
 
 	if (nsegs <= 1)
 	{
-		nde = parse_primary_ident_noseg (awk, xloc, &name[0]);
+		nde = parse_primary_ident_noseg(awk, xloc, &name[0]);
 		if (!nde) qse_awk_freemem (awk, name[0].ptr);
 	}
 	else
@@ -5388,8 +5388,8 @@ static qse_awk_nde_t* parse_primary_ident (qse_awk_t* awk, const qse_awk_loc_t* 
 			capa = qse_strncpy (&full.ptr[0], name[0].ptr, name[0].len);
 			for (i = 1; i < nsegs; i++) 
 			{
-				capa += qse_strcpy (&full.ptr[capa], QSE_T("::"));
-				capa += qse_strncpy (&full.ptr[capa], name[i].ptr, name[i].len);
+				capa += qse_strcpy(&full.ptr[capa], QSE_T("::"));
+				capa += qse_strncpy(&full.ptr[capa], name[i].ptr, name[i].len);
 			}
 			full.ptr[capa] = QSE_T('\0');
 			full.len = capa;
@@ -7086,7 +7086,7 @@ static qse_awk_mod_t* query_module (qse_awk_t* awk, const qse_cstr_t segs[], int
 					}
 					else
 					{
-						qse_char_t* olderrmsg = qse_awk_backuperrmsg(awk);
+						const qse_char_t* olderrmsg = qse_awk_backuperrmsg(awk);
 						qse_awk_seterrfmt (awk, QSE_AWK_ENOENT, QSE_NULL, QSE_T("module '%.*js' not found - %js"), (int)(12 + buflen), &buf[1], olderrmsg);
 					}
 					awk->prm.modclose (awk, md.handle);
@@ -7125,7 +7125,7 @@ done:
 		}
 		else
 		{
-			qse_char_t* olderrmsg = qse_awk_backuperrmsg(awk);
+			const qse_char_t* olderrmsg = qse_awk_backuperrmsg(awk);
 			qse_awk_seterrfmt (awk, QSE_AWK_ENOENT, QSE_NULL, QSE_T("unable to find '%.*js' in module '%.*js' - %js"), (int)segs[1].len, segs[1].ptr, (int)segs[0].len, segs[0].ptr, olderrmsg);
 		}
 		return QSE_NULL;
