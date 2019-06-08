@@ -1553,9 +1553,9 @@ qse_awk_val_t* qse_awk_rtx_callfun (qse_awk_rtx_t* rtx, qse_awk_fun_t* fun, qse_
 
 	if (fun->argspec)
 	{
-		/* this function contains call-by-reference parameters.
+		/* this function contains pass-by-reference parameters.
 		 * i don't support the call here as it requires variables */
-		qse_awk_rtx_seterrfmt (rtx, QSE_AWK_EPERM, QSE_NULL, QSE_T("not allowed to call '%.*js' with call-by-reference parameters"), (int)fun->name.len, fun->name.ptr);
+		qse_awk_rtx_seterrfmt (rtx, QSE_AWK_EPERM, QSE_NULL, QSE_T("not allowed to call '%.*js' with pass-by-reference parameters"), (int)fun->name.len, fun->name.ptr);
 		return QSE_NULL;
 	}
 
@@ -5949,16 +5949,19 @@ static qse_awk_val_t* __eval_call (
 	{
 		/* extra step for normal awk functions */
 
+		
 		if (fun->argspec)
 		{
-			/* sanity check for call-by-reference parameters of a normal awk function.
-			 * it tests if each call-by-reference argument is referenceable. */
+			/* sanity check for pass-by-reference parameters of a normal awk function.
+			 * it tests if each pass-by-reference argument is referenceable. */
+			
 			qse_awk_nde_t* p = call->args;
 			for (i = 0; i < nargs; i++)
 			{
 				if (fun->argspec[i] == QSE_T('r'))
 				{
 					qse_awk_val_t** ref;
+
 					if (get_reference(rtx, p, &ref) <= -1)
 					{
 						UNWIND_RTX_STACK (rtx, nargs);
@@ -5985,7 +5988,7 @@ static qse_awk_val_t* __eval_call (
 
 	rtx->stack_base = saved_stack_top;
 	RTX_STACK_NARGS(rtx) = (void*)nargs;
-	
+
 #ifdef DEBUG_RUN
 	qse_errputstrf (QSE_T("running function body\n"));
 #endif
@@ -6039,11 +6042,20 @@ static qse_awk_val_t* __eval_call (
 	qse_errputstrf (QSE_T("block rtx complete nargs = %d\n"), (int)nargs); 
 #endif
 
-	if (fun && fun->argspec)
+	if (fun && fun->argspec && nargs > 0)
 	{
-		/* set back the values for call-by-reference parameters of normal functions.
+		/* set back the values for pass-by-reference parameters of normal functions.
 		 * the intrinsic functions are not handled here but their implementation would
 		 * call qse_awk_rtx_setrefval() */
+
+		/* even if fun->argspec exists, nargs may still be 0. so i test if nargs > 0.
+		 *   function x(a1, &a2) {}
+		 *   BEGIN { x(); }
+		 * all parameters are nils in this case. fun->nargs is 2 but call->nargs or  nargs is 0.
+		 */
+
+		qse_size_t cur_stack_base = rtx->stack_base;
+		qse_size_t prev_stack_base = (qse_size_t)rtx->stack[rtx->stack_base+0];
 
 		qse_awk_nde_t* p = call->args;
 		for (i = 0; i < nargs; i++)
@@ -6052,8 +6064,14 @@ static qse_awk_val_t* __eval_call (
 			{
 				qse_awk_val_t** ref;
 				qse_awk_val_ref_t refv;
+
+				/* UGLY */
+				rtx->stack_base = prev_stack_base;
 				get_reference (rtx, p, &ref); /* no failure check as it must succeed here for the check done above */
-				QSE_AWK_RTX_INIT_REF_VAL (&refv, p->type - QSE_AWK_NDE_NAMED, ref, 5); /* initialize a fake reference variable */
+				rtx->stack_base = cur_stack_base;
+				/* UGLY */
+
+				QSE_AWK_RTX_INIT_REF_VAL (&refv, p->type - QSE_AWK_NDE_NAMED, ref, 9); /* initialize a fake reference variable. 9 chosen randomly */
 				qse_awk_rtx_setrefval (rtx, &refv, RTX_STACK_ARG(rtx, i));
 			}
 
@@ -6067,6 +6085,9 @@ static qse_awk_val_t* __eval_call (
 		{
 			qse_awk_rtx_refdownval (rtx, RTX_STACK_ARG(rtx,i));
 		}
+
+		/* no refdown on arguments at position between nargs and fun->nargs 
+		 * even if they were reference, there is no effect(no copy back). */
 	}
 
 #ifdef DEBUG_RUN
@@ -6109,7 +6130,7 @@ static qse_awk_val_t* __eval_call (
 		RTX_STACK_RETVAL(rtx) = qse_awk_val_nil;
 	}
 	else
-	{	
+	{
 		/* this trick has been mentioned in rtx_return.
 		 * adjust the reference count of the return value.
 		 * the value must not be freed even if the reference count
@@ -6217,6 +6238,7 @@ static qse_size_t push_arg_from_nde (qse_awk_rtx_t* rtx, qse_awk_nde_fncall_t* c
 		qse_awk_rtx_refupval (rtx, v);
 	}
 
+	QSE_ASSERT (call->nargs == nargs);
 	return nargs;
 }
 
@@ -6236,11 +6258,10 @@ static int get_reference (qse_awk_rtx_t* rtx, qse_awk_nde_t* nde, qse_awk_val_t*
 			pair = qse_htb_search(rtx->named, tgt->id.name.ptr, tgt->id.name.len);
 			if (pair == QSE_NULL)
 			{
-				/* it is bad that the named variable has to be
-				 * created in the function named "__get_refernce".
+				/* it is bad that the named variable has to be created here.
 				 * would there be any better ways to avoid this? */
 				pair = qse_htb_upsert(rtx->named, tgt->id.name.ptr, tgt->id.name.len, qse_awk_val_nil, 0);
-				if (pair == QSE_NULL) 
+				if (!pair) 
 				{
 					SETERR_LOC (rtx, QSE_AWK_ENOMEM, &nde->loc);
 					return -1;
@@ -6769,11 +6790,11 @@ static int __raw_push (qse_awk_rtx_t* rtx, void* val)
 	{
 		void** tmp;
 		qse_size_t n;
-	       
+
 		n = rtx->stack_limit + RTX_STACK_INCREMENT;
 
 		tmp = (void**)qse_awk_rtx_reallocmem(rtx, rtx->stack, n * QSE_SIZEOF(void*)); 
-		if (tmp == QSE_NULL) return -1;
+		if (!tmp) return -1;
 
 		rtx->stack = tmp;
 		rtx->stack_limit = n;
@@ -6897,7 +6918,7 @@ static int shorten_record (qse_awk_rtx_t* rtx, qse_size_t nflds)
 	if (nflds > 1) qse_awk_rtx_refdownval (rtx, v);
 
 	v = (qse_awk_val_t*)qse_awk_rtx_makestrvalwithxstr(rtx, QSE_STR_XSTR(&tmp));
-	if (v == QSE_NULL) 
+	if (!v) 
 	{
 		qse_str_fini (&tmp);
 		return -1;
@@ -6926,19 +6947,19 @@ static qse_char_t* idxnde_to_str (qse_awk_rtx_t* rtx, qse_awk_nde_t* nde, qse_ch
 
 	QSE_ASSERT (nde != QSE_NULL);
 
-	if (nde->next == QSE_NULL)
+	if (!nde->next)
 	{
 		qse_awk_rtx_valtostr_out_t out;
 
 		/* single node index */
 		idx = eval_expression (rtx, nde);
-		if (idx == QSE_NULL) return QSE_NULL;
+		if (!idx) return QSE_NULL;
 
 		qse_awk_rtx_refupval (rtx, idx);
 
 		str = QSE_NULL;
 
-		if (buf != QSE_NULL)
+		if (buf)
 		{
 			/* try with a fixed-size buffer if given */
 			out.type = QSE_AWK_RTX_VALTOSTR_CPLCPY;
@@ -6953,12 +6974,12 @@ static qse_char_t* idxnde_to_str (qse_awk_rtx_t* rtx, qse_awk_nde_t* nde, qse_ch
 			}
 		}
 
-		if (str == QSE_NULL)
+		if (!str)
 		{
 			/* if no fixed-size buffer was given or the fixed-size 
 			 * conversion failed, switch to the dynamic mode */
 			out.type = QSE_AWK_RTX_VALTOSTR_CPLDUP;
-			if (qse_awk_rtx_valtostr (rtx, idx, &out) <= -1)
+			if (qse_awk_rtx_valtostr(rtx, idx, &out) <= -1)
 			{
 				qse_awk_rtx_refdownval (rtx, idx);
 				ADJERR_LOC (rtx, &nde->loc);
@@ -6981,16 +7002,16 @@ static qse_char_t* idxnde_to_str (qse_awk_rtx_t* rtx, qse_awk_nde_t* nde, qse_ch
 		out.type = QSE_AWK_RTX_VALTOSTR_STRPCAT;
 		out.u.strpcat = &idxstr;
 
-		if (qse_str_init (&idxstr, MMGR(rtx), DEF_BUF_CAPA) <= -1) 
+		if (qse_str_init(&idxstr, MMGR(rtx), DEF_BUF_CAPA) <= -1) 
 		{
 			SETERR_LOC (rtx, QSE_AWK_ENOMEM, &nde->loc);
 			return QSE_NULL;
 		}
 
-		while (nde != QSE_NULL)
+		while (nde)
 		{
-			idx = eval_expression (rtx, nde);
-			if (idx == QSE_NULL) 
+			idx = eval_expression(rtx, nde);
+			if (!idx) 
 			{
 				qse_str_fini (&idxstr);
 				return QSE_NULL;
@@ -6998,10 +7019,7 @@ static qse_char_t* idxnde_to_str (qse_awk_rtx_t* rtx, qse_awk_nde_t* nde, qse_ch
 
 			qse_awk_rtx_refupval (rtx, idx);
 
-			if (QSE_STR_LEN(&idxstr) > 0 &&
-			    qse_str_ncat (&idxstr, 
-			    	rtx->gbl.subsep.ptr, 
-			    	rtx->gbl.subsep.len) == (qse_size_t)-1)
+			if (QSE_STR_LEN(&idxstr) > 0 && qse_str_ncat(&idxstr, rtx->gbl.subsep.ptr, rtx->gbl.subsep.len) == (qse_size_t)-1)
 			{
 				qse_awk_rtx_refdownval (rtx, idx);
 				qse_str_fini (&idxstr);
@@ -7009,7 +7027,7 @@ static qse_char_t* idxnde_to_str (qse_awk_rtx_t* rtx, qse_awk_nde_t* nde, qse_ch
 				return QSE_NULL;
 			}
 
-			if (qse_awk_rtx_valtostr (rtx, idx, &out) <= -1)
+			if (qse_awk_rtx_valtostr(rtx, idx, &out) <= -1)
 			{
 				qse_awk_rtx_refdownval (rtx, idx);
 				qse_str_fini (&idxstr);
