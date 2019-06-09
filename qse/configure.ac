@@ -940,7 +940,7 @@ fi
 
 if test "${enable_static_module_is}" = "yes"
 then
-	AC_DEFINE([MOO_ENABLE_STATIC_MODULE],[1],[link modules statically into the main library])
+	AC_DEFINE([QSE_ENABLE_STATIC_MODULE],[1],[link modules statically into the main library])
 fi
 AM_CONDITIONAL(ENABLE_STATIC_MODULE, test "x${enable_static_module_is}" = "xyes")
 
