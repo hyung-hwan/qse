@@ -6881,19 +6881,19 @@ int qse_awk_putsrcstrn (
 #include "mod-str.h"
 #include "mod-sys.h"
 
-#if defined(MOO_ENABLE_AWKMOD_MPI)
+#if defined(QSE_ENABLE_AWKMOD_MPI)
 #include "../awkmod/mod-mpi.h"
 #endif
 
-#if defined(MOO_ENABLE_AWKMOD_MYSQL)
+#if defined(QSE_ENABLE_AWKMOD_MYSQL)
 #include "../awkmod/mod-mysql.h"
 #endif
 
-#if defined(MOO_ENABLE_AWKMOD_SED)
+#if defined(QSE_ENABLE_AWKMOD_SED)
 #include "../awkmod/mod-sed.h"
 #endif
 
-#if defined(MOO_ENABLE_AWKMOD_UCI)
+#if defined(QSE_ENABLE_AWKMOD_UCI)
 #include "../awkmod/mod-uci.h"
 #endif
 
@@ -6911,18 +6911,18 @@ static struct
 {
 	{ QSE_T("dir"),    qse_awk_mod_dir },
 	{ QSE_T("math"),   qse_awk_mod_math },
-#if defined(MOO_ENABLE_AWKMOD_MPI)
+#if defined(QSE_ENABLE_AWKMOD_MPI)
 	{ QSE_T("mpi"),    qse_awk_mod_mpi },
 #endif
-#if defined(MOO_ENABLE_AWKMOD_MYSQL)
+#if defined(QSE_ENABLE_AWKMOD_MYSQL)
 	{ QSE_T("mysql"),  qse_awk_mod_mysql },
 #endif
-#if defined(MOO_ENABLE_AWKMOD_SED)
+#if defined(QSE_ENABLE_AWKMOD_SED)
 	{ QSE_T("sed"),    qse_awk_mod_sed },
 #endif
 	{ QSE_T("str"),    qse_awk_mod_str },
 	{ QSE_T("sys"),    qse_awk_mod_sys },
-#if defined(MOO_ENABLE_AWKMOD_UCI)
+#if defined(QSE_ENABLE_AWKMOD_UCI)
 	{ QSE_T("uci"),    qse_awk_mod_uci }
 #endif
 };
