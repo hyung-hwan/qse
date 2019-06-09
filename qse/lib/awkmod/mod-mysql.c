@@ -578,7 +578,6 @@ static int fnc_autocommit (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 		int v;
 
 		v = qse_awk_rtx_valtobool(rtx, qse_awk_rtx_getarg(rtx, 1));
-		if (v <= -1) { take_rtx_err = 1; goto oops; }
 
 		ENSURE_CONNECT_EVER_ATTEMPTED(rtx, sql_list, sql_node);
 
@@ -614,7 +613,6 @@ static int fnc_commit (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 		int v;
 
 		v = qse_awk_rtx_valtobool(rtx, qse_awk_rtx_getarg(rtx, 1));
-		if (v <= -1) { take_rtx_err = 1; goto oops; }
 
 		ENSURE_CONNECT_EVER_ATTEMPTED(rtx, sql_list, sql_node);
 
@@ -650,7 +648,6 @@ static int fnc_rollback (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 		int v;
 
 		v = qse_awk_rtx_valtobool(rtx, qse_awk_rtx_getarg(rtx, 1));
-		if (v <= -1) { take_rtx_err = 1; goto oops; }
 
 		ENSURE_CONNECT_EVER_ATTEMPTED(rtx, sql_list, sql_node);
 

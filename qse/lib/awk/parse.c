@@ -692,7 +692,7 @@ int qse_awk_parse (qse_awk_t* awk, qse_awk_sio_t* sio)
 	awk->sio.last.c = QSE_CHAR_EOF;
 	awk->sio.arg.line = 1;
 	awk->sio.arg.colm = 1;
-	awk->sio.arg.pragmas = 0;
+	awk->sio.arg.pragma_trait = 0;
 	awk->sio.inp = &awk->sio.arg;
 
 	n = parse(awk);
@@ -728,7 +728,7 @@ static int end_include (qse_awk_t* awk)
 
 	QSE_ASSERT (cur->name != QSE_NULL);
 	/* restore the pragma values */
-	awk->parse.pragmas = cur->pragmas;
+	awk->parse.pragma.trait = cur->pragma_trait;
 	qse_awk_freemem (awk, cur);
 	awk->parse.depth.incl--;
 
@@ -835,10 +835,10 @@ static int begin_include (qse_awk_t* awk, int once)
 	}
 
 	/* store the pragma value */
-	arg->pragmas = awk->parse.pragmas;
-	/* but don't change awk->parse.pragmas. it means the included file inherits
+	arg->pragma_trait = awk->parse.pragma.trait;
+	/* but don't change awk->parse.pragma.trait. it means the included file inherits
 	 * the existing progma values. 
-	awk->parse.pragmas = (awk->option.trait & QSE_AWK_IMPLICIT);
+	awk->parse.pragma.trait = (awk->opt.trait & QSE_AWK_IMPLICIT);
 	*/
 
 	/* i update the current pointer after opening is successful */
@@ -952,7 +952,8 @@ static int parse_progunit (qse_awk_t* awk)
 
 		if (qse_strxcmp(name.ptr, name.len, QSE_T("implicit")) == 0)
 		{
-
+			/* @pragma implicit on
+			 * @pragma implicit off */
 			if (get_token(awk) <= -1) return -1;
 			if (!MATCH(awk, TOK_IDENT))
 			{
@@ -965,16 +966,32 @@ static int parse_progunit (qse_awk_t* awk)
 			name.ptr = QSE_STR_PTR(awk->tok.name);
 			if (qse_strxcmp(name.ptr, name.len, QSE_T("on")) == 0)
 			{
-				awk->parse.pragmas |= QSE_AWK_IMPLICIT;
+				awk->parse.pragma.trait |= QSE_AWK_IMPLICIT;
 			}
 			else if (qse_strxcmp(name.ptr, name.len, QSE_T("off")) == 0)
 			{
-				awk->parse.pragmas &= ~QSE_AWK_IMPLICIT;
+				awk->parse.pragma.trait &= ~QSE_AWK_IMPLICIT;
 			}
 			else
 			{
 				goto error_ident_on_off_expected_for_implicit;
 			}
+		}
+		else if (qse_strxcmp(name.ptr, name.len, QSE_T("stack_limit")) == 0)
+		{
+			qse_long_t sl;
+
+			/* @pragma stack_limit 99999 */
+			if (get_token(awk) <= -1) return -1;
+			if (!MATCH(awk, TOK_INT))
+			{
+				SETERR_TOK (awk, QSE_AWK_EINTLIT);
+				return -1;
+			}
+
+			sl = qse_strxtolong(QSE_STR_PTR(awk->tok.name), QSE_STR_LEN(awk->tok.name), 10, QSE_NULL);
+			/* take the specified value if it's greater than the existing value */
+			if (sl > awk->parse.pragma.rtx_stack_limit) awk->parse.pragma.rtx_stack_limit = sl;
 		}
 		else
 		{
@@ -5167,7 +5184,7 @@ static qse_awk_nde_t* parse_primary_ident_noseg (qse_awk_t* awk, const qse_awk_l
 			}
 		}
 		/*else if (awk->opt.trait & QSE_AWK_IMPLICIT) */
-		else if (awk->parse.pragmas & QSE_AWK_IMPLICIT)
+		else if (awk->parse.pragma.trait & QSE_AWK_IMPLICIT)
 		{
 			/* if the name is followed by ( without spaces,
 			 * it's considered a function call though the name 
@@ -5489,7 +5506,7 @@ static qse_awk_nde_t* parse_hashidx (qse_awk_t* awk, const qse_cstr_t* name, con
 	}
 
 	/*if (awk->opt.trait & QSE_AWK_IMPLICIT) */
-	if (awk->parse.pragmas & QSE_AWK_IMPLICIT)
+	if (awk->parse.pragma.trait & QSE_AWK_IMPLICIT)
 	{
 		int fnname = isfnname(awk, name);
 		switch (fnname)

@@ -67,6 +67,7 @@ const qse_char_t* qse_awk_dflerrstr (const qse_awk_t* awk, qse_awk_errnum_t errn
 		QSE_T("comma expected in place of '${0}'"),
 		QSE_T("semicolon expected in place of '${0}'"),
 		QSE_T("colon expected in place of '${0}'"),
+		QSE_T("integer literal expected in place of '${0}'"),
 		QSE_T("statement not ending with a semicolon"),
 		QSE_T("keyword 'in' expected in place of '${0}'"),
 		QSE_T("right-hand side of 'in' not a variable"),
@@ -113,6 +114,7 @@ const qse_char_t* qse_awk_dflerrstr (const qse_awk_t* awk, qse_awk_errnum_t errn
 		QSE_T("'${0}' not recognized"),
 		QSE_T("@ not followed by a valid word"),
 
+		QSE_T("stack error"),
 		QSE_T("divide by zero"),
 		QSE_T("invalid operand"),
 		QSE_T("wrong position index"),

@@ -515,8 +515,8 @@ qse_awk_t* qse_awk_openstdwithmmgr (qse_mmgr_t* mmgr, qse_size_t xtnsize, qse_aw
 	prm.modsym = qse_awk_stdmodsym;
 
 	/* create an object */
-	awk = qse_awk_open (mmgr, QSE_SIZEOF(xtn_t) + xtnsize, &prm, errnum);
-	if (awk == QSE_NULL) return QSE_NULL;
+	awk = qse_awk_open(mmgr, QSE_SIZEOF(xtn_t) + xtnsize, &prm, errnum);
+	if (!awk) return QSE_NULL;
 
 
 #if defined(USE_DLFCN)
@@ -533,13 +533,13 @@ qse_awk_t* qse_awk_openstdwithmmgr (qse_mmgr_t* mmgr, qse_size_t xtnsize, qse_aw
 	 * QSE_MEMSET (xtn, 0, QSE_SIZEOF(*xtn));*/
 
 	/* add intrinsic global variables and functions */
-	if (add_globals(awk) <= -1 || add_functions (awk) <= -1) 
+	if (add_globals(awk) <= -1 || add_functions(awk) <= -1) 
 	{
 		if (errnum) *errnum = qse_awk_geterrnum(awk);
 		goto oops;
 	}
 
-	if (qse_awk_stdmodstartup (awk) <= -1) 
+	if (qse_awk_stdmodstartup(awk) <= -1) 
 	{
 		xtn->stdmod_up = 0;
 		/* carry on regardless of failure */

@@ -181,6 +181,7 @@ int qse_awk_init (qse_awk_t* awk, qse_mmgr_t* mmgr, const qse_awk_prm_t* prm)
 #if defined(__OS2__) || defined(_WIN32) || defined(__DOS__)
 	awk->opt.trait |= QSE_AWK_CRLF;
 #endif
+	awk->opt.rtx_stack_limit = QSE_AWK_DFL_RTX_STACK_LIMIT;
 
 	awk->tree.ngbls = 0;
 	awk->tree.ngbls_base = 0;
@@ -321,7 +322,9 @@ void qse_awk_clear (qse_awk_t* awk)
 	qse_awk_ecb_t* ecb;
 
 	for (ecb = awk->ecb; ecb; ecb = ecb->next)
+	{
 		if (ecb->clear) ecb->clear (awk);
+	}
 
 	awk->stopall = 0;
 
@@ -349,7 +352,8 @@ void qse_awk_clear (qse_awk_t* awk)
 	awk->parse.depth.loop = 0;
 	awk->parse.depth.expr = 0;
 	awk->parse.depth.incl = 0;
-	awk->parse.pragmas = (awk->opt.trait & QSE_AWK_IMPLICIT); 
+	awk->parse.pragma.trait = (awk->opt.trait & QSE_AWK_IMPLICIT); 
+	awk->parse.pragma.rtx_stack_limit = 0;
 
 	awk->parse.incl_hist.count =0;
 
@@ -477,6 +481,10 @@ int qse_awk_setopt (qse_awk_t* awk, qse_awk_opt_t id, const void* value)
 		case QSE_AWK_DEPTH_REX_MATCH:
 			awk->opt.depth.a[id - QSE_AWK_DEPTH_INCLUDE] = *(const qse_size_t*)value;
 			return 0;
+
+		case QSE_AWK_RTX_STACK_LIMIT:
+			awk->opt.rtx_stack_limit = *(const qse_size_t*)value;
+			return 0;
 	}
 
 	qse_awk_seterrnum (awk, QSE_AWK_EINVAL, QSE_NULL);
@@ -508,6 +516,10 @@ int qse_awk_getopt (qse_awk_t* awk, qse_awk_opt_t id, void* value)
 		case QSE_AWK_DEPTH_REX_BUILD:
 		case QSE_AWK_DEPTH_REX_MATCH:
 			*(qse_size_t*)value = awk->opt.depth.a[id - QSE_AWK_DEPTH_INCLUDE];
+			return 0;
+
+		case QSE_AWK_RTX_STACK_LIMIT:
+			*(qse_size_t*)value = awk->opt.rtx_stack_limit;
 			return 0;
 	};
 
