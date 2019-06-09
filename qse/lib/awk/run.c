@@ -123,7 +123,6 @@ static int run_pblocks  (qse_awk_rtx_t* rtx);
 static int run_pblock_chain (qse_awk_rtx_t* rtx, qse_awk_chain_t* cha);
 static int run_pblock (qse_awk_rtx_t* rtx, qse_awk_chain_t* cha, qse_size_t bno);
 static int run_block (qse_awk_rtx_t* rtx, qse_awk_nde_blk_t* nde);
-static int run_block0 (qse_awk_rtx_t* rtx, qse_awk_nde_blk_t* nde);
 static int run_statement (qse_awk_rtx_t* rtx, qse_awk_nde_t* nde);
 static int run_if (qse_awk_rtx_t* rtx, qse_awk_nde_if_t* nde);
 static int run_while (qse_awk_rtx_t* rtx, qse_awk_nde_while_t* nde);
@@ -1808,25 +1807,7 @@ static int run_pblock (qse_awk_rtx_t* rtx, qse_awk_chain_t* cha, qse_size_t bno)
 	return 0;
 }
 
-static int run_block (qse_awk_rtx_t* rtx, qse_awk_nde_blk_t* nde)
-{
-	int n;
-
-	if (rtx->awk->opt.depth.s.block_run > 0 &&
-	    rtx->depth.block >= rtx->awk->opt.depth.s.block_run)
-	{
-		SETERR_LOC (rtx, QSE_AWK_EBLKNST, &nde->loc);
-		return -1;;
-	}
-
-	rtx->depth.block++;
-	n = run_block0(rtx, nde);
-	rtx->depth.block--;
-
-	return n;
-}
-
-static int run_block0 (qse_awk_rtx_t* rtx, qse_awk_nde_blk_t* nde)
+static QSE_INLINE int run_block0 (qse_awk_rtx_t* rtx, qse_awk_nde_blk_t* nde)
 {
 	qse_awk_nde_t* p;
 	qse_size_t nlcls;
@@ -1910,6 +1891,24 @@ static int run_block0 (qse_awk_rtx_t* rtx, qse_awk_nde_blk_t* nde)
 		qse_awk_rtx_refdownval (rtx, RTX_STACK_LCL(rtx,nlcls));
 		__raw_pop (rtx);
 	}
+
+	return n;
+}
+
+static int run_block (qse_awk_rtx_t* rtx, qse_awk_nde_blk_t* nde)
+{
+	int n;
+
+	if (rtx->awk->opt.depth.s.block_run > 0 &&
+	    rtx->depth.block >= rtx->awk->opt.depth.s.block_run)
+	{
+		SETERR_LOC (rtx, QSE_AWK_EBLKNST, &nde->loc);
+		return -1;;
+	}
+
+	rtx->depth.block++;
+	n = run_block0(rtx, nde);
+	rtx->depth.block--;
 
 	return n;
 }

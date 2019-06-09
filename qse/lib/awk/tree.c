@@ -574,7 +574,7 @@ static int print_expr (qse_awk_t* awk, qse_awk_nde_t* nde)
 
 			if (px->id.idxa != (qse_size_t)-1) 
 			{
-				/* deparsing is global. so i can't honor awk->parse.pragmas 
+				/* deparsing is global. so i can't honor awk->parse.pragma.trait 
 				 * which can change in each input file. let me just check awk->opt.trait */
 				if (!(awk->opt.trait & QSE_AWK_IMPLICIT)) 
 				{
@@ -617,7 +617,7 @@ static int print_expr (qse_awk_t* awk, qse_awk_nde_t* nde)
 
 			if (px->id.idxa != (qse_size_t)-1) 
 			{
-				/* deparsing is global. so i can't honor awk->parse.pragmas 
+				/* deparsing is global. so i can't honor awk->parse.pragma.trait 
 				 * which can change in each input file. let me just check awk->opt.trait */
 				if (!(awk->opt.trait & QSE_AWK_IMPLICIT))
 				{
