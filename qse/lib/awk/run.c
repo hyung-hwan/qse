@@ -6004,9 +6004,7 @@ static qse_awk_val_t* __eval_call (
 		n = 0;
 
 		/* intrinsic function */
-		QSE_ASSERT (
-			call->nargs >= call->u.fnc.spec.arg.min &&
-			call->nargs <= call->u.fnc.spec.arg.max);
+		QSE_ASSERT (call->nargs >= call->u.fnc.spec.arg.min && call->nargs <= call->u.fnc.spec.arg.max);
 
 		if (call->u.fnc.spec.impl)
 		{
@@ -6042,23 +6040,23 @@ static qse_awk_val_t* __eval_call (
 	qse_errputstrf (QSE_T("block rtx complete nargs = %d\n"), (int)nargs); 
 #endif
 
-	if (fun && fun->argspec && nargs > 0)
+	if (fun && fun->argspec && call->nargs > 0)
 	{
 		/* set back the values for pass-by-reference parameters of normal functions.
 		 * the intrinsic functions are not handled here but their implementation would
 		 * call qse_awk_rtx_setrefval() */
 
-		/* even if fun->argspec exists, nargs may still be 0. so i test if nargs > 0.
+		/* even if fun->argspec exists, call->nargs may still be 0. so i test if call->nargs > 0.
 		 *   function x(a1, &a2) {}
 		 *   BEGIN { x(); }
-		 * all parameters are nils in this case. fun->nargs is 2 but call->nargs or  nargs is 0.
+		 * all parameters are nils in this case. nargs and fun->nargs are 2 but call->nargs is 0.
 		 */
 
 		qse_size_t cur_stack_base = rtx->stack_base;
 		qse_size_t prev_stack_base = (qse_size_t)rtx->stack[rtx->stack_base + 0];
 
 		qse_awk_nde_t* p = call->args;
-		for (i = 0; i < nargs; i++)
+		for (i = 0; i < call->nargs; i++)
 		{
 			if (fun->argspec[i] == QSE_T('r'))
 			{
@@ -6082,6 +6080,11 @@ static qse_awk_val_t* __eval_call (
 			qse_awk_rtx_refdownval (rtx, RTX_STACK_ARG(rtx,i));
 			p = p->next;
 		}
+
+		for (i = call->nargs; i < nargs; i++)
+		{
+			qse_awk_rtx_refdownval (rtx, RTX_STACK_ARG(rtx,i));
+		}
 	}
 	else
 	{
@@ -6089,9 +6092,6 @@ static qse_awk_val_t* __eval_call (
 		{
 			qse_awk_rtx_refdownval (rtx, RTX_STACK_ARG(rtx,i));
 		}
-
-		/* no refdown on arguments at position between nargs and fun->nargs 
-		 * even if they were reference, there is no effect(no copy back). */
 	}
 
 #ifdef DEBUG_RUN
