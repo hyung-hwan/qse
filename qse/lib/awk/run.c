@@ -922,15 +922,19 @@ static int init_rtx (qse_awk_rtx_t* rtx, qse_awk_t* awk, qse_awk_rio_t* rio)
 		QSE_HTB_SIZER_DEFAULT,
 		QSE_HTB_HASHER_DEFAULT
 	};
+	qse_size_t stack_limit;
 
 	rtx->awk = awk;
 
 	CLRERR (rtx);
 
-	rtx->stack = QSE_NULL;
+	stack_limit = awk->parse.pragma.rtx_stack_limit > 0? awk->parse.pragma.rtx_stack_limit: awk->opt.rtx_stack_limit;
+	if (stack_limit < QSE_AWK_MIN_RTX_STACK_LIMIT) stack_limit = QSE_AWK_MIN_RTX_STACK_LIMIT;
+	rtx->stack = qse_awk_rtx_allocmem(rtx, stack_limit * QSE_SIZEOF(void*));
+	if (!rtx->stack) goto oops_0;
 	rtx->stack_top = 0;
 	rtx->stack_base = 0;
-	rtx->stack_limit = 0;
+	rtx->stack_limit = stack_limit;
 
 	rtx->exit_level = EXIT_NONE;
 
@@ -946,34 +950,34 @@ static int init_rtx (qse_awk_rtx_t* rtx, qse_awk_t* awk, qse_awk_rio_t* rio)
 	rtx->inrec.maxflds = 0;
 	rtx->inrec.d0 = qse_awk_val_nil;
 
-	if (qse_str_init(&rtx->inrec.line, MMGR(rtx), DEF_BUF_CAPA) <= -1) goto oops_0;
-	if (qse_str_init(&rtx->inrec.linew, MMGR(rtx), DEF_BUF_CAPA) <= -1) goto oops_1;
-	if (qse_str_init(&rtx->inrec.lineg, MMGR(rtx), DEF_BUF_CAPA) <= -1) goto oops_2;
-	if (qse_str_init(&rtx->format.out, MMGR(rtx), 256) <= -1) goto oops_3;
-	if (qse_str_init(&rtx->format.fmt, MMGR(rtx), 256) <= -1) goto oops_4;
+	if (qse_str_init(&rtx->inrec.line, MMGR(rtx), DEF_BUF_CAPA) <= -1) goto oops_1;
+	if (qse_str_init(&rtx->inrec.linew, MMGR(rtx), DEF_BUF_CAPA) <= -1) goto oops_2;
+	if (qse_str_init(&rtx->inrec.lineg, MMGR(rtx), DEF_BUF_CAPA) <= -1) goto oops_3;
+	if (qse_str_init(&rtx->format.out, MMGR(rtx), 256) <= -1) goto oops_4;
+	if (qse_str_init(&rtx->format.fmt, MMGR(rtx), 256) <= -1) goto oops_5;
 
-	if (qse_mbs_init(&rtx->formatmbs.out, MMGR(rtx), 256) <= -1) goto oops_5;
-	if (qse_mbs_init(&rtx->formatmbs.fmt, MMGR(rtx), 256) <= -1) goto oops_6;
+	if (qse_mbs_init(&rtx->formatmbs.out, MMGR(rtx), 256) <= -1) goto oops_6;
+	if (qse_mbs_init(&rtx->formatmbs.fmt, MMGR(rtx), 256) <= -1) goto oops_7;
 
 	rtx->named = qse_htb_open(MMGR(rtx), QSE_SIZEOF(rtx), 1024, 70, QSE_SIZEOF(qse_char_t), 1);
-	if (!rtx->named) goto oops_7;
+	if (!rtx->named) goto oops_8;
 	*(qse_awk_rtx_t**)QSE_XTN(rtx->named) = rtx;
 	qse_htb_setstyle (rtx->named, &style_for_named);
 
 	rtx->format.tmp.ptr = (qse_char_t*)qse_awk_rtx_allocmem(rtx, 4096 * QSE_SIZEOF(qse_char_t)); 
-	if (!rtx->format.tmp.ptr) goto oops_8; /* the error is set on the awk object after this jump is made */
+	if (!rtx->format.tmp.ptr) goto oops_9; /* the error is set on the awk object after this jump is made */
 	rtx->format.tmp.len = 4096;
 	rtx->format.tmp.inc = 4096 * 2;
 
 	rtx->formatmbs.tmp.ptr = (qse_mchar_t*)qse_awk_rtx_allocmem(rtx, 4096 * QSE_SIZEOF(qse_mchar_t));
-	if (!rtx->formatmbs.tmp.ptr) goto oops_9;
+	if (!rtx->formatmbs.tmp.ptr) goto oops_10;
 	rtx->formatmbs.tmp.len = 4096;
 	rtx->formatmbs.tmp.inc = 4096 * 2;
 
 	if (rtx->awk->tree.chain_size > 0)
 	{
 		rtx->pattern_range_state = (qse_byte_t*)qse_awk_rtx_allocmem(rtx, rtx->awk->tree.chain_size * QSE_SIZEOF(qse_byte_t));
-		if (!rtx->pattern_range_state) goto oops_10;
+		if (!rtx->pattern_range_state) goto oops_11;
 		QSE_MEMSET (rtx->pattern_range_state, 0, rtx->awk->tree.chain_size * QSE_SIZEOF(qse_byte_t));
 	}
 	else rtx->pattern_range_state = QSE_NULL;
@@ -995,26 +999,28 @@ static int init_rtx (qse_awk_rtx_t* rtx, qse_awk_t* awk, qse_awk_rio_t* rio)
 
 	return 0;
 
-oops_10:
+oops_11:
 	qse_awk_rtx_freemem (rtx, rtx->formatmbs.tmp.ptr);
-oops_9:
+oops_10:
 	qse_awk_rtx_freemem (rtx, rtx->format.tmp.ptr);
-oops_8:
+oops_9:
 	qse_htb_close (rtx->named);
-oops_7:
+oops_8:
 	qse_mbs_fini (&rtx->formatmbs.fmt);
-oops_6:
+oops_7:
 	qse_mbs_fini (&rtx->formatmbs.out);
-oops_5:
+oops_6:
 	qse_str_fini (&rtx->format.fmt);
-oops_4:
+oops_5:
 	qse_str_fini (&rtx->format.out);
-oops_3:
+oops_4:
 	qse_str_fini (&rtx->inrec.lineg);
-oops_2:
+oops_3:
 	qse_str_fini (&rtx->inrec.linew);
-oops_1:
+oops_2:
 	qse_str_fini (&rtx->inrec.line);
+oops_1:
+	qse_awk_freemem (rtx, rtx->stack);
 oops_0:
 	qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);
 	return -1;
@@ -1378,8 +1384,8 @@ static void exit_stack_frame (qse_awk_rtx_t* run)
 	 * the 4 entries pushed in enter_stack_frame(). */
 	QSE_ASSERT ((run->stack_top-run->stack_base) == 4);
 
-	run->stack_top = (qse_size_t)run->stack[run->stack_base+1];
-	run->stack_base = (qse_size_t)run->stack[run->stack_base+0];
+	run->stack_top = (qse_size_t)run->stack[run->stack_base + 1];
+	run->stack_base = (qse_size_t)run->stack[run->stack_base + 0];
 }
 
 static qse_awk_val_t* run_bpae_loop (qse_awk_rtx_t* rtx)
@@ -1736,7 +1742,7 @@ static int run_pblock (qse_awk_rtx_t* rtx, qse_awk_chain_t* cha, qse_size_t bno)
 
 			qse_awk_rtx_refupval (rtx, v1);
 
-			if (qse_awk_rtx_valtobool (rtx, v1))
+			if (qse_awk_rtx_valtobool(rtx, v1))
 			{
 				rtx->active_block = blk;
 				if (run_block (rtx, blk) == -1)
@@ -1762,7 +1768,7 @@ static int run_pblock (qse_awk_rtx_t* rtx, qse_awk_chain_t* cha, qse_size_t bno)
 				if (v1 == QSE_NULL) return -1;
 				qse_awk_rtx_refupval (rtx, v1);
 
-				if (qse_awk_rtx_valtobool (rtx, v1))
+				if (qse_awk_rtx_valtobool(rtx, v1))
 				{
 					rtx->active_block = blk;
 					if (run_block (rtx, blk) == -1)
@@ -1787,7 +1793,7 @@ static int run_pblock (qse_awk_rtx_t* rtx, qse_awk_chain_t* cha, qse_size_t bno)
 				rtx->active_block = blk;
 				if (run_block (rtx, blk) == -1)
 				{
-					qse_awk_rtx_refdownval (rtx, v2);
+					qse_awk_rtx_refdownval(rtx, v2);
 					return -1;
 				}
 
@@ -1814,9 +1820,9 @@ static int run_block (qse_awk_rtx_t* rtx, qse_awk_nde_blk_t* nde)
 	}
 
 	rtx->depth.block++;
-	n = run_block0 (rtx, nde);
+	n = run_block0(rtx, nde);
 	rtx->depth.block--;
-	
+
 	return n;
 }
 
@@ -1832,21 +1838,16 @@ static int run_block0 (qse_awk_rtx_t* rtx, qse_awk_nde_blk_t* nde)
 		/* blockless pattern - execute print $0*/
 		qse_awk_rtx_refupval (rtx, rtx->inrec.d0);
 
-		n = qse_awk_rtx_writeiostr (rtx,
-			QSE_AWK_OUT_CONSOLE, QSE_T(""),
-			QSE_STR_PTR(&rtx->inrec.line),
-			QSE_STR_LEN(&rtx->inrec.line));
-		if (n == -1)
+		n = qse_awk_rtx_writeiostr(rtx, QSE_AWK_OUT_CONSOLE, QSE_T(""), QSE_STR_PTR(&rtx->inrec.line), QSE_STR_LEN(&rtx->inrec.line));
+		if (n <= -1)
 		{
 			qse_awk_rtx_refdownval (rtx, rtx->inrec.d0);
 			ADJERR_LOC (rtx, &nde->loc);
 			return -1;
 		}
 
-		n = qse_awk_rtx_writeiostr (
-			rtx, QSE_AWK_OUT_CONSOLE, QSE_T(""),
-			rtx->gbl.ors.ptr, rtx->gbl.ors.len);
-		if (n == -1)
+		n = qse_awk_rtx_writeiostr(rtx, QSE_AWK_OUT_CONSOLE, QSE_T(""), rtx->gbl.ors.ptr, rtx->gbl.ors.len);
+		if (n <= -1)
 		{
 			qse_awk_rtx_refdownval (rtx, rtx->inrec.d0);
 			ADJERR_LOC (rtx, &nde->loc);
@@ -1874,7 +1875,7 @@ static int run_block0 (qse_awk_rtx_t* rtx, qse_awk_nde_blk_t* nde)
 	while (nlcls > 0)
 	{
 		--nlcls;
-		if (__raw_push(rtx,qse_awk_val_nil) == -1)
+		if (__raw_push(rtx,qse_awk_val_nil) <= -1)
 		{
 			/* restore stack top */
 			rtx->stack_top = saved_stack_top;
@@ -1890,7 +1891,7 @@ static int run_block0 (qse_awk_rtx_t* rtx, qse_awk_nde_blk_t* nde)
 
 	while (p != QSE_NULL && rtx->exit_level == EXIT_NONE)
 	{
-		if (run_statement (rtx, p) == -1)
+		if (run_statement(rtx, p) <= -1)
 		{
 			n = -1;
 			break;
@@ -2028,13 +2029,13 @@ static int run_if (qse_awk_rtx_t* rtx, qse_awk_nde_if_t* nde)
 	if (test == QSE_NULL) return -1;
 
 	qse_awk_rtx_refupval (rtx, test);
-	if (qse_awk_rtx_valtobool (rtx, test))
+	if (qse_awk_rtx_valtobool(rtx, test))
 	{
-		n = run_statement (rtx, nde->then_part);
+		n = run_statement(rtx, nde->then_part);
 	}
-	else if (nde->else_part != QSE_NULL)
+	else if (nde->else_part)
 	{
-		n = run_statement (rtx, nde->else_part);
+		n = run_statement(rtx, nde->else_part);
 	}
 
 	qse_awk_rtx_refdownval (rtx, test); /* TODO: is this correct?*/
@@ -2055,14 +2056,14 @@ static int run_while (qse_awk_rtx_t* rtx, qse_awk_nde_while_t* nde)
 		{
 			ON_STATEMENT (rtx, nde->test);
 
-			test = eval_expression (rtx, nde->test);
-			if (test == QSE_NULL) return -1;
+			test = eval_expression(rtx, nde->test);
+			if (!test) return -1;
 
 			qse_awk_rtx_refupval (rtx, test);
 
-			if (qse_awk_rtx_valtobool (rtx, test))
+			if (qse_awk_rtx_valtobool(rtx, test))
 			{
-				if (run_statement(rtx,nde->body) == -1)
+				if (run_statement(rtx,nde->body) <= -1)
 				{
 					qse_awk_rtx_refdownval (rtx, test);
 					return -1;
@@ -2077,7 +2078,7 @@ static int run_while (qse_awk_rtx_t* rtx, qse_awk_nde_while_t* nde)
 			qse_awk_rtx_refdownval (rtx, test);
 
 			if (rtx->exit_level == EXIT_BREAK)
-			{	
+			{
 				rtx->exit_level = EXIT_NONE;
 				break;
 			}
@@ -2097,10 +2098,10 @@ static int run_while (qse_awk_rtx_t* rtx, qse_awk_nde_while_t* nde)
 
 		do
 		{
-			if (run_statement(rtx,nde->body) == -1) return -1;
+			if (run_statement(rtx,nde->body) <= -1) return -1;
 
 			if (rtx->exit_level == EXIT_BREAK)
-			{	
+			{
 				rtx->exit_level = EXIT_NONE;
 				break;
 			}
@@ -2112,12 +2113,12 @@ static int run_while (qse_awk_rtx_t* rtx, qse_awk_nde_while_t* nde)
 
 			ON_STATEMENT (rtx, nde->test);
 
-			test = eval_expression (rtx, nde->test);
-			if (test == QSE_NULL) return -1;
+			test = eval_expression(rtx, nde->test);
+			if (!test) return -1;
 
 			qse_awk_rtx_refupval (rtx, test);
 
-			if (!qse_awk_rtx_valtobool (rtx, test))
+			if (!qse_awk_rtx_valtobool(rtx, test))
 			{
 				qse_awk_rtx_refdownval (rtx, test);
 				break;
@@ -2162,7 +2163,7 @@ static int run_for (qse_awk_rtx_t* rtx, qse_awk_nde_for_t* nde)
 			if (test == QSE_NULL) return -1;
 
 			qse_awk_rtx_refupval (rtx, test);
-			if (qse_awk_rtx_valtobool (rtx, test))
+			if (qse_awk_rtx_valtobool(rtx, test))
 			{
 				if (run_statement(rtx,nde->body) == -1)
 				{
@@ -3915,7 +3916,7 @@ static qse_awk_val_t* eval_binop_lor (
 	if (lv == QSE_NULL) return QSE_NULL;
 
 	qse_awk_rtx_refupval (run, lv);
-	if (qse_awk_rtx_valtobool (run, lv)) 
+	if (qse_awk_rtx_valtobool(run, lv)) 
 	{
 		res = QSE_AWK_VAL_ONE;
 	}
@@ -3967,7 +3968,7 @@ static qse_awk_val_t* eval_binop_land (qse_awk_rtx_t* run, qse_awk_nde_t* left, 
 	if (lv == QSE_NULL) return QSE_NULL;
 
 	qse_awk_rtx_refupval (run, lv);
-	if (!qse_awk_rtx_valtobool (run, lv)) 
+	if (!qse_awk_rtx_valtobool(run, lv)) 
 	{
 		res = QSE_AWK_VAL_ZERO;
 	}
@@ -5728,7 +5729,7 @@ static qse_awk_val_t* eval_cnd (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 	qse_awk_rtx_refupval (run, tv);
 
 	QSE_ASSERT (cnd->left->next == QSE_NULL && cnd->right->next == QSE_NULL);
-	v = (qse_awk_rtx_valtobool (run, tv))? eval_expression(run, cnd->left): eval_expression(run, cnd->right);
+	v = (qse_awk_rtx_valtobool(run, tv))? eval_expression(run, cnd->left): eval_expression(run, cnd->right);
 
 	qse_awk_rtx_refdownval (run, tv);
 	return v;
@@ -6055,7 +6056,7 @@ static qse_awk_val_t* __eval_call (
 		 */
 
 		qse_size_t cur_stack_base = rtx->stack_base;
-		qse_size_t prev_stack_base = (qse_size_t)rtx->stack[rtx->stack_base+0];
+		qse_size_t prev_stack_base = (qse_size_t)rtx->stack[rtx->stack_base + 0];
 
 		qse_awk_nde_t* p = call->args;
 		for (i = 0; i < nargs; i++)
@@ -6065,11 +6066,15 @@ static qse_awk_val_t* __eval_call (
 				qse_awk_val_t** ref;
 				qse_awk_val_ref_t refv;
 
-				/* UGLY */
-				rtx->stack_base = prev_stack_base;
+				/* if an argument passed is a local variable or a parameter to the previous caller,
+				 * the argument node information stored is relative to the previous stack frame.
+				 * i revert rtx->stack_base to the previous stack frame base before calling 
+				 * get_reference() and restors it back to the current base. this tactic
+				 * is very ugly because the assumptions for this is dependent on get_reference()
+				 * implementation */
+				rtx->stack_base = prev_stack_base; /* UGLY */
 				get_reference (rtx, p, &ref); /* no failure check as it must succeed here for the check done above */
-				rtx->stack_base = cur_stack_base;
-				/* UGLY */
+				rtx->stack_base = cur_stack_base; /* UGLY */
 
 				QSE_AWK_RTX_INIT_REF_VAL (&refv, p->type - QSE_AWK_NDE_NAMED, ref, 9); /* initialize a fake reference variable. 9 chosen randomly */
 				qse_awk_rtx_setrefval (rtx, &refv, RTX_STACK_ARG(rtx, i));
@@ -6140,8 +6145,8 @@ static qse_awk_val_t* __eval_call (
 		qse_awk_rtx_refdownval_nofree (rtx, v);
 	}
 
-	rtx->stack_top =  (qse_size_t)rtx->stack[rtx->stack_base+1];
-	rtx->stack_base = (qse_size_t)rtx->stack[rtx->stack_base+0];
+	rtx->stack_top =  (qse_size_t)rtx->stack[rtx->stack_base + 1];
+	rtx->stack_base = (qse_size_t)rtx->stack[rtx->stack_base + 0];
 
 	if (rtx->exit_level == EXIT_FUNCTION) rtx->exit_level = EXIT_NONE;
 
@@ -6788,6 +6793,7 @@ static int __raw_push (qse_awk_rtx_t* rtx, void* val)
 {
 	if (rtx->stack_top >= rtx->stack_limit)
 	{
+		/*
 		void** tmp;
 		qse_size_t n;
 
@@ -6798,6 +6804,9 @@ static int __raw_push (qse_awk_rtx_t* rtx, void* val)
 
 		rtx->stack = tmp;
 		rtx->stack_limit = n;
+		*/
+		qse_awk_rtx_seterrfmt (rtx, QSE_AWK_ESTACK, QSE_NULL, QSE_T("runtime stack full"));
+		return -1;
 	}
 
 	rtx->stack[rtx->stack_top++] = val;

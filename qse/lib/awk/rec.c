@@ -410,7 +410,7 @@ static int recomp_record_fields (qse_awk_rtx_t* run, qse_size_t lv, const qse_cs
 		 * the field spaces are resized */
 
 		tmp = qse_awk_rtx_reallocmem(run, run->inrec.flds, QSE_SIZEOF(*run->inrec.flds) * max);
-		if (!tmp == QSE_NULL) return -1;
+		if (!tmp) return -1;
 
 		run->inrec.flds = tmp;
 		run->inrec.maxflds = max;

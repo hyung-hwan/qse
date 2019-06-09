@@ -1359,7 +1359,7 @@ int Awk::init_runctx ()
 	rio.file    = fileHandler;
 	rio.console = consoleHandler;
 
-	rtx_t* rtx = qse_awk_rtx_open (awk, QSE_SIZEOF(rxtn_t), &rio);
+	rtx_t* rtx = qse_awk_rtx_open(awk, QSE_SIZEOF(rxtn_t), &rio);
 	if (rtx == QSE_NULL) 
 	{
 		this->retrieveError();
@@ -1368,7 +1368,7 @@ int Awk::init_runctx ()
 
 	runctx.rtx = rtx;
 
-	rxtn_t* rxtn = (rxtn_t*) QSE_XTN (rtx);
+	rxtn_t* rxtn = (rxtn_t*)QSE_XTN(rtx);
 	rxtn->run = &runctx;
 
 	return 0;

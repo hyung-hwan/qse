@@ -74,6 +74,9 @@ typedef struct qse_awk_tree_t qse_awk_tree_t;
 #define QSE_AWK_MAX_LCLS  9999
 #define QSE_AWK_MAX_PARAMS  9999
 
+#define QSE_AWK_DFL_RTX_STACK_LIMIT 5120
+#define QSE_AWK_MIN_RTX_STACK_LIMIT 512
+
 #define QSE_AWK_ALLOC(awk,size)       QSE_MMGR_ALLOC((awk)->mmgr,size)
 #define QSE_AWK_REALLOC(awk,ptr,size) QSE_MMGR_REALLOC((awk)->mmgr,ptr,size)
 #define QSE_AWK_FREE(awk,ptr)         QSE_MMGR_FREE((awk)->mmgr,ptr)
@@ -193,6 +196,8 @@ struct qse_awk_t
 				qse_size_t rex_match;
 			} s;
 		} depth;
+
+		qse_size_t rtx_stack_limit;
 	} opt;
 
 	/* parse tree */
@@ -217,7 +222,11 @@ struct qse_awk_t
 		} depth;
 
 		/* current pragma values */
-		int pragmas; 
+		struct
+		{
+			int trait;
+			qse_size_t rtx_stack_limit;
+		} pragma;
 
 		/* function calls */
 		qse_htb_t* funs;
@@ -312,12 +321,6 @@ struct qse_awk_chain_t
 #define RTX_STACK_RETVAL(rtx) RTX_STACK_AT(rtx,2)
 #define RTX_STACK_GBL(rtx,n) ((rtx)->stack[(n)])
 #define RTX_STACK_RETVAL_GBL(rtx) ((rtx)->stack[(rtx)->awk->tree.ngbls+2])
-
-#define RTX_STACK_AT_OVER_BASE(rtx,_base,n) ((rtx)->stack[(_base)+(n)])
-#define RTX_STACK_NARGS_OVER_BASE(rtx,_base) RTX_STACK_AT_OVER_BASE(rtx,_base,3)
-#define RTX_STACK_ARG_OVER_BASE(rtx,_base,n) RTX_STACK_AT_OVER_BASE(rtx,_base,3+1+(n))
-#define RTX_STACK_LCL_OVER_BASE(rtx,_base,n) RTX_STACK_AT_OVER_BASE(rtx,_base,3+(qse_size_t)RTX_STACK_NARGS(rtx)+1+(n))
-#define RTX_STACK_RETVAL_OVER_BASE(rtx,_base) RTX_STACK_AT_OVER_BASE(rtx,_base,2)
 
 struct qse_awk_rtx_t
 {

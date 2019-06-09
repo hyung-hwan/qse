@@ -601,7 +601,7 @@ struct qse_awk_sio_arg_t
 	qse_size_t colm;
 
 	qse_awk_sio_lxc_t last;
-	int pragmas;
+	int pragma_trait;
 };
 
 /**
@@ -1087,7 +1087,9 @@ enum qse_awk_opt_t
 	QSE_AWK_DEPTH_EXPR_PARSE,
 	QSE_AWK_DEPTH_EXPR_RUN,
 	QSE_AWK_DEPTH_REX_BUILD,
-	QSE_AWK_DEPTH_REX_MATCH
+	QSE_AWK_DEPTH_REX_MATCH,
+
+	QSE_AWK_RTX_STACK_LIMIT
 };
 typedef enum qse_awk_opt_t qse_awk_opt_t;
 
@@ -1256,6 +1258,7 @@ enum qse_awk_errnum_t
 	QSE_AWK_ECOMMA,  /**< comma expected in place of '${0}' */
 	QSE_AWK_ESCOLON, /**< semicolon expected in place of '${0}' */
 	QSE_AWK_ECOLON,  /**< colon expected in place of '${0}' */
+	QSE_AWK_EINTLIT, /**< integer literal expected in place of '${0}' */
 	QSE_AWK_ESTMEND, /**< statement not ending with a semicolon */
 	QSE_AWK_EKWIN,   /**< keyword 'in' expected in place of '${0}' */
 	QSE_AWK_ENOTVAR, /**< right-hand side of 'in' not a variable */
@@ -1303,6 +1306,7 @@ enum qse_awk_errnum_t
 	QSE_AWK_EXKWEM,    /**< @ not followed by a valid word  */
 
 	/* run time error */
+	QSE_AWK_ESTACK,        /**< stack error */
 	QSE_AWK_EDIVBY0,       /**< divide by zero */
 	QSE_AWK_EOPERAND,      /**< invalid operand */
 	QSE_AWK_EPOSIDX,       /**< wrong position index */
