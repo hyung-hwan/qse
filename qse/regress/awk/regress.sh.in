@@ -7,7 +7,7 @@ echo_so()
 	do
 		echo -n "$1 "
 		shift
-	done		
+	done
 	echo
 	tput rmso
 }
@@ -219,7 +219,9 @@ run_scripts()
 	valgrind="${1}"
 	extraopts="${2}"
 	echo "${PROGS}" > "${TMPFILE}"
-	
+
+	curdir="`pwd`"
+
 	while read prog
 	do
 		[ -z "${prog}" ] && continue
@@ -229,34 +231,47 @@ run_scripts()
 		readinfile="`echo ${prog} | cut -d! -f3`"
 		awkopts="`echo ${prog} | cut -d! -f4`"
 		orgscript="${script}"
-	
+
 		[ -z "${script}" ] && continue
 
 		script_path="@abs_srcdir@/${script}"
-		datafile_path="@abs_srcdir@/${datafile}"
+		script_dp_path="@abs_builddir@/${script}.dp"
 		readinfile_path="@abs_srcdir@/${readinfile}"
+		datafile_path=""
+		[ -n "${datafile}" ] && {
+			for i in ${datafile}
+			do
+				[ -f "@abs_srcdir@/${i}" ] && datafile_path="${datafile_path} @abs_srcdir@/${i}"
+			done
+		}
 
-		[ -f "${script}".dp ] && script="${script}.dp"
-		[ -f "${script_path}" ] || 
-		{
+		[ -f "${script_path}" ] || {
 			echo_so "${script} not found"
 			continue
 		}
 	
-		[ -z "${readinfile}" ] && 
-		{
+		[ -z "${readinfile}" ] && {
 			readinfile="/dev/stdin"
 			readinfile_path="/dev/stdin"
 		}
 
-		# if the datafile does not exist, let's not use the original name
-		[ -f "${datafile_path}" ] || datafile_path="$datafile"
-
 		echo_title "${valgrind} ${QSEAWK_BASENAME} ${extraopts} ${awkopts} -f ${orgscript} ${datafile} <${readinfile} 2>&1"
-		${valgrind} ${QSEAWK} ${extraopts} -d "${script}.dp" ${awkopts} -f ${script_path} ${datafile_path} <${readinfile_path} 2>&1
-	
+
+		if [ -f "${script_dp_path}" ]
+		then
+			# run the deparsed script
+			cd "`dirname ${script_dp_path}`"
+			${valgrind} ${QSEAWK} ${extraopts} ${awkopts} -f "`basename ${script_dp_path}`" ${datafile_path} <${readinfile_path} 2>&1
+			cd "$curdir"
+		else
+			# run the orignal script
+			cd "`dirname ${script_path}`"
+			${valgrind} ${QSEAWK} ${extraopts} -d "${script_dp_path}" ${awkopts} -f "`basename ${script_path}`" ${datafile_path} <${readinfile_path} 2>&1
+			cd "$curdir"
+		fi
+
 	done < "${TMPFILE}" 
-	
+
 	rm -f "${TMPFILE}"
 }
 
