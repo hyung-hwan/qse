@@ -6829,8 +6829,7 @@ read_again:
 	}
 
 #ifdef DEBUG_RUN
-	qse_errputstrf (QSE_T("record len = %d str=[%.*s]\n"), 
-		(int)QSE_STR_LEN(buf), (int)QSE_STR_LEN(buf), QSE_STR_PTR(buf));
+	qse_errputstrf (QSE_T("record len = %d str=[%.*s]\n"), (int)QSE_STR_LEN(buf), (int)QSE_STR_LEN(buf), QSE_STR_PTR(buf));
 #endif
 	if (n == 0) 
 	{
@@ -6867,7 +6866,7 @@ static int shorten_record (qse_awk_rtx_t* rtx, qse_size_t nflds)
 	{
 		v = RTX_STACK_GBL(rtx, QSE_AWK_GBL_OFS);
 		qse_awk_rtx_refupval (rtx, v);
-		vtype = QSE_AWK_RTX_GETVALTYPE (rtx, v);
+		vtype = QSE_AWK_RTX_GETVALTYPE(rtx, v);
 
 		if (vtype == QSE_AWK_VAL_NIL)
 		{
