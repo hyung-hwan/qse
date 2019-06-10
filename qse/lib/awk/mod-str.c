@@ -106,8 +106,17 @@ static int trim (qse_awk_rtx_t* rtx, int flags)
 	return 0;
 }
 
+#define TRIM_FLAG_PAC_SPACES (1 << 0)
+
 static int fnc_trim (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
+	if (qse_awk_rtx_getnargs(rtx) >= 2)
+	{
+		qse_awk_int_t iv;
+		if (qse_awk_rtx_valtoint(rtx, qse_awk_rtx_getarg(rtx, 1), &iv) <= -1) return -1;
+		if (iv & TRIM_FLAG_PAC_SPACES) return fnc_normspace(rtx, fi);
+	}
+
 	return trim(rtx, QSE_STRTRMX_LEFT | QSE_STRTRMX_RIGHT);
 }
 static int fnc_ltrim (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
@@ -421,6 +430,13 @@ struct fnctab_t
 	qse_awk_mod_sym_fnc_t info;
 };
 
+typedef struct inttab_t inttab_t;
+struct inttab_t
+{
+	const qse_char_t* name;
+	qse_awk_mod_sym_int_t info;
+};
+
 #define A_MAX QSE_TYPE_MAX(int)
 
 static fnctab_t fnctab[] =
@@ -444,7 +460,7 @@ static fnctab_t fnctab[] =
 	{ QSE_T("length"),       { { 1, 1, QSE_NULL },      qse_awk_fnc_length,    0 } },
 	{ QSE_T("ltrim"),        { { 1, 1, QSE_NULL },      fnc_ltrim,             0 } },
 	{ QSE_T("match"),        { { 2, 4, QSE_T("vxvr") }, qse_awk_fnc_match,     0 } },
-	{ QSE_T("normspace"),    { { 1, 1, QSE_NULL },      fnc_normspace,         0 } },
+	{ QSE_T("normspace"),    { { 1, 1, QSE_NULL },      fnc_normspace,         0 } }, /* deprecated, use trim("xxx", str::TRIM_PAC_SPACES) */
 	{ QSE_T("printf"),       { { 1, A_MAX, QSE_NULL },  qse_awk_fnc_sprintf,   0 } },
 	{ QSE_T("rindex"),       { { 2, 3, QSE_NULL },      qse_awk_fnc_rindex,    0 } },
 	{ QSE_T("rtrim"),        { { 1, 1, QSE_NULL },      fnc_rtrim,             0 } },
@@ -455,8 +471,13 @@ static fnctab_t fnctab[] =
 	{ QSE_T("tolower"),      { { 1, 1, QSE_NULL },      qse_awk_fnc_tolower,   0 } },
 	{ QSE_T("tonum"),        { { 1, 2, QSE_NULL },      fnc_tonum,             0 } },
 	{ QSE_T("toupper"),      { { 1, 1, QSE_NULL },      qse_awk_fnc_toupper,   0 } },
-	{ QSE_T("trim"),         { { 1, 1, QSE_NULL },      fnc_trim,              0 } }
-	
+	{ QSE_T("trim"),         { { 1, 2, QSE_NULL },      fnc_trim,              0 } }
+};
+
+static inttab_t inttab[] =
+{
+	/* keep this table sorted for binary search in query(). */
+	{ QSE_T("TRIM_PAC_SPACES"), { TRIM_FLAG_PAC_SPACES } }
 };
 
 static int query (qse_awk_mod_t* mod, qse_awk_t* awk, const qse_char_t* name, qse_awk_mod_sym_t* sym)
@@ -481,7 +502,6 @@ static int query (qse_awk_mod_t* mod, qse_awk_t* awk, const qse_char_t* name, qs
 		}
 	}
 
-#if 0
 	left = 0; right = QSE_COUNTOF(inttab) - 1;
 	while (left <= right)
 	{
@@ -497,7 +517,6 @@ static int query (qse_awk_mod_t* mod, qse_awk_t* awk, const qse_char_t* name, qs
 			return 0;
 		}
      }
-#endif
 
 	ea.ptr = (qse_char_t*)name;
 	ea.len = qse_strlen(name);
