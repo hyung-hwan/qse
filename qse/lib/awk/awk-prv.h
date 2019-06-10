@@ -76,6 +76,11 @@ typedef struct qse_awk_tree_t qse_awk_tree_t;
 
 #define QSE_AWK_DFL_RTX_STACK_LIMIT 5120
 #define QSE_AWK_MIN_RTX_STACK_LIMIT 512
+#if (QSE_SIZEOF_VOID_P <= 4)
+#	define QSE_AWK_MAX_RTX_STACK_LIMIT ((qse_size_t)1 << (QSE_SIZEOF_VOID_P * 4 + 1))
+#else
+#	define QSE_AWK_MAX_RTX_STACK_LIMIT ((qse_size_t)1 << (QSE_SIZEOF_VOID_P * 4))
+#endif
 
 #define QSE_AWK_ALLOC(awk,size)       QSE_MMGR_ALLOC((awk)->mmgr,size)
 #define QSE_AWK_REALLOC(awk,ptr,size) QSE_MMGR_REALLOC((awk)->mmgr,ptr,size)
