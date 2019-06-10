@@ -8,7 +8,7 @@ lib_LTLIBRARIES = libqsexli.la
 libqsexli_la_SOURCES = xli-prv.h xli.c err.c \
 	read.c read-ini.c read-json.c \
 	write.c write-ini.c write-json.c \
-	std.c
+	std.c json.c
 libqsexli_la_LDFLAGS = -L../cmn -L../si -version-info 1:0:0 -no-undefined
 libqsexli_la_LIBADD = -lqsesi -lqsecmn 
 

@@ -1,6 +1,6 @@
 pkgincludedir= $(includedir)/qse/xli
 
-pkginclude_HEADERS = xli.h stdxli.h
+pkginclude_HEADERS = xli.h stdxli.h json.h
 
 
 if ENABLE_CXX
