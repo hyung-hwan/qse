@@ -484,6 +484,8 @@ int qse_awk_setopt (qse_awk_t* awk, qse_awk_opt_t id, const void* value)
 
 		case QSE_AWK_RTX_STACK_LIMIT:
 			awk->opt.rtx_stack_limit = *(const qse_size_t*)value;
+			if (awk->opt.rtx_stack_limit < QSE_AWK_MIN_RTX_STACK_LIMIT) awk->opt.rtx_stack_limit = QSE_AWK_MIN_RTX_STACK_LIMIT;
+			else if (awk->opt.rtx_stack_limit > QSE_AWK_MAX_RTX_STACK_LIMIT) awk->opt.rtx_stack_limit = QSE_AWK_MAX_RTX_STACK_LIMIT;
 			return 0;
 	}
 

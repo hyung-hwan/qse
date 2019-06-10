@@ -990,8 +990,11 @@ static int parse_progunit (qse_awk_t* awk)
 			}
 
 			sl = qse_strxtolong(QSE_STR_PTR(awk->tok.name), QSE_STR_LEN(awk->tok.name), 10, QSE_NULL);
+			if (sl < QSE_AWK_MIN_RTX_STACK_LIMIT) sl = QSE_AWK_MIN_RTX_STACK_LIMIT;
+			else if (sl > QSE_AWK_MAX_RTX_STACK_LIMIT) sl = QSE_AWK_MAX_RTX_STACK_LIMIT;
 			/* take the specified value if it's greater than the existing value */
 			if (sl > awk->parse.pragma.rtx_stack_limit) awk->parse.pragma.rtx_stack_limit = sl;
+			
 		}
 		else
 		{
@@ -6558,16 +6561,24 @@ static int deparse (qse_awk_t* awk)
 	QSE_MEMSET (&awk->sio.arg, 0, QSE_SIZEOF(awk->sio.arg));
 
 	CLRERR (awk);
-	op = awk->sio.outf (
-		awk, QSE_AWK_SIO_OPEN, &awk->sio.arg, QSE_NULL, 0);
+	op = awk->sio.outf(awk, QSE_AWK_SIO_OPEN, &awk->sio.arg, QSE_NULL, 0);
 	if (op <= -1)
 	{
-		if (ISNOERR(awk)) 
-			SETERR_ARG (awk, QSE_AWK_EOPEN, QSE_T("<SOUT>"), 6);
+		if (ISNOERR(awk)) SETERR_ARG (awk, QSE_AWK_EOPEN, QSE_T("<SOUT>"), 6);
 		return -1;
 	}
 
 #define EXIT_DEPARSE() do { n = -1; goto exit_deparse; } while(0)
+
+	if (awk->parse.pragma.rtx_stack_limit > 0 && awk->parse.pragma.rtx_stack_limit != awk->opt.rtx_stack_limit)
+	{
+		qse_size_t len;
+
+		len = qse_awk_inttostr(awk, (qse_awk_int_t)awk->parse.pragma.rtx_stack_limit, 10, QSE_NULL, tmp, QSE_COUNTOF(tmp));
+		if (qse_awk_putsrcstr(awk, QSE_T("@pragma stack_limit ")) <= -1 ||
+		    qse_awk_putsrcstrn (awk, tmp, len) <= -1 ||
+		    qse_awk_putsrcstr(awk, QSE_T(";\n")) <= -1) EXIT_DEPARSE ();
+	}
 
 	if (awk->tree.ngbls > awk->tree.ngbls_base) 
 	{
@@ -6576,8 +6587,7 @@ static int deparse (qse_awk_t* awk)
 		QSE_ASSERT (awk->tree.ngbls > 0);
 
 		qse_awk_getkwname (awk, QSE_AWK_KWID_XGLOBAL, &kw);
-		if (qse_awk_putsrcstrn(awk,kw.ptr,kw.len) <= -1 ||
-		    qse_awk_putsrcstr (awk, QSE_T(" ")) <= -1) EXIT_DEPARSE ();
+		if (qse_awk_putsrcstrn(awk, kw.ptr, kw.len) <= -1 || qse_awk_putsrcstr (awk, QSE_T(" ")) <= -1) EXIT_DEPARSE ();
 
 		for (i = awk->tree.ngbls_base; i < awk->tree.ngbls - 1; i++) 
 		{
@@ -6588,7 +6598,7 @@ static int deparse (qse_awk_t* awk)
 			}
 			else
 			{
-				len = qse_awk_inttostr (awk, (qse_awk_int_t)i, 10, QSE_T("__g"), tmp, QSE_COUNTOF(tmp));
+				len = qse_awk_inttostr(awk, (qse_awk_int_t)i, 10, QSE_T("__g"), tmp, QSE_COUNTOF(tmp));
 				QSE_ASSERT (len != (qse_size_t)-1);
 				if (qse_awk_putsrcstrn (awk, tmp, len) <= -1) EXIT_DEPARSE ();
 			}
