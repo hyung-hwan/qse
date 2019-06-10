@@ -124,7 +124,7 @@ am__can_run_installinfo = \
     n|no|NO) false;; \
     *) (install-info --version) >/dev/null 2>&1;; \
   esac
-am__pkginclude_HEADERS_DIST = xli.h stdxli.h SkvEnv.hpp
+am__pkginclude_HEADERS_DIST = xli.h stdxli.h json.h SkvEnv.hpp
 am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
 am__vpath_adj = case $$p in \
     $(srcdir)/*) f=`echo "$$p" | sed "s|^$$srcdirstrip/||"`;; \
@@ -342,7 +342,7 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-pkginclude_HEADERS = xli.h stdxli.h $(am__append_1)
+pkginclude_HEADERS = xli.h stdxli.h json.h $(am__append_1)
 all: all-am
 
 .SUFFIXES:

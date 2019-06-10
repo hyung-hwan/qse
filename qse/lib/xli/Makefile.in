@@ -136,7 +136,8 @@ am__installdirs = "$(DESTDIR)$(libdir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
 libqsexli_la_DEPENDENCIES =
 am_libqsexli_la_OBJECTS = xli.lo err.lo read.lo read-ini.lo \
-	read-json.lo write.lo write-ini.lo write-json.lo std.lo
+	read-json.lo write.lo write-ini.lo write-json.lo std.lo \
+	json.lo
 libqsexli_la_OBJECTS = $(am_libqsexli_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
@@ -410,7 +411,7 @@ lib_LTLIBRARIES = libqsexli.la $(am__append_1)
 libqsexli_la_SOURCES = xli-prv.h xli.c err.c \
 	read.c read-ini.c read-json.c \
 	write.c write-ini.c write-json.c \
-	std.c
+	std.c json.c
 
 libqsexli_la_LDFLAGS = -L../cmn -L../si -version-info 1:0:0 -no-undefined
 libqsexli_la_LIBADD = -lqsesi -lqsecmn 
@@ -500,6 +501,7 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/SkvEnv.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/err.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/json.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/read-ini.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/read-json.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/read.Plo@am__quote@
