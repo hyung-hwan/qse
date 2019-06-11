@@ -114,15 +114,38 @@ static int add_char_to_token (qse_json_t* json, qse_char_t ch)
 		qse_char_t* tmp;
 		qse_size_t newcapa;
 
-		newcapa = QSE_ALIGNTO_POW2(json->tok.len + 1, QSE_JSON_TOKEN_NAME_ALIGN);
+		newcapa = QSE_ALIGNTO_POW2(json->tok.len + 2, QSE_JSON_TOKEN_NAME_ALIGN); /* +2 here because of -1 when setting newcapa */
 		tmp = (qse_char_t*)qse_json_reallocmem(json, json->tok.ptr, newcapa * QSE_SIZEOF(*tmp));
 		if (!tmp) return -1;
 
-		json->tok_capa = newcapa;
+		json->tok_capa = newcapa - 1; /* -1 to secure space for terminating null */
 		json->tok.ptr = tmp;
 	}
 
 	json->tok.ptr[json->tok.len++] = ch;
+	json->tok.ptr[json->tok.len] = QSE_T('\0');
+	return 0;
+}
+
+static int add_chars_to_token (qse_json_t* json, const qse_char_t* ptr, qse_size_t len)
+{
+	qse_size_t i;
+	
+	if (json->tok_capa - json->tok.len > len)
+	{
+		qse_char_t* tmp;
+		qse_size_t newcapa;
+
+		newcapa = QSE_ALIGNTO_POW2(json->tok.len + len + 1, QSE_JSON_TOKEN_NAME_ALIGN);
+		tmp = (qse_char_t*)qse_json_reallocmem(json, json->tok.ptr, newcapa * QSE_SIZEOF(*tmp));
+		if (!tmp) return -1;
+
+		json->tok_capa = newcapa - 1;
+		json->tok.ptr = tmp;
+	}
+
+	for (i = 0; i < len; i++)  
+		json->tok.ptr[json->tok.len++] = ptr[i];
 	json->tok.ptr[json->tok.len] = QSE_T('\0');
 	return 0;
 }
@@ -245,30 +268,24 @@ static int handle_string_value_char (qse_json_t* json, qse_cint_t c)
 		{
 			ret = 0;
 		add_sv_acc:
-		#if defined(QSE_OOCH_IS_BCH)
+		#if defined(QSE_CHAR_IS_WCHAR)
+			if (add_char_to_token(json, json->state_stack->u.sv.acc) <= -1) return -1;
+		#else
 			/* convert the character to utf8 */
 			{
-				qse_mchar_t bcsbuf[QSE_BCSIZE_MAX];
-				qse_size_t ucslen, bcslen;
+				qse_mchar_t bcsbuf[QSE_MBLEN_MAX];
+				qse_size_t n;
 
-				ucslen = 1;
-				bcslen = QSE_COUNTOF(bcsbuf);
-				if (qse_conv_uchars_to_bchars_with_cmgr(&json->state_stack->u.sv.acc, &ucslen, bcsbuf, &bcslen, qse_json_getcmgr(json)) <= -1)
+				n = json->cmgr->wctomb(json->state_stack->u.sv.acc, bcsbuf, QSE_COUNTOF(bcsbuf));
+				if (n == 0 || n > QSE_COUNTOF(bcsbuf))
 				{
+					/* illegal character or buffer to small */
 					qse_json_seterrfmt (json, QSE_JSON_EECERR, QSE_T("unable to convert %jc"), json->state_stack->u.sv.acc);
 					return -1;
 				}
-				else
-				{
-					qse_size_t i;
-					for (i = 0; i < bcslen; i++)
-					{
-						if (add_char_to_token(json, bcsbuf[i]) <= -1) return -1;
-					}
-				}
+
+				if (add_chars_to_token(json, bcsbuf, n) <= -1) return -1;
 			}
-		#else
-			if (add_char_to_token(json, json->state_stack->u.sv.acc) <= -1) return -1;
 		#endif
 			json->state_stack->u.sv.escaped = 0;
 		}
@@ -689,7 +706,7 @@ static int handle_char_in_dic (qse_json_t* json, qse_cint_t c)
 
 /* ========================================================================= */
 
-static int handle_char (qse_json_t* json, qse_cint_t c, qse_size_t nbytes)
+static int handle_char (qse_json_t* json, qse_cint_t c)
 {
 	int x;
 
@@ -762,41 +779,35 @@ static int feed_json_data (qse_json_t* json, const qse_mchar_t* data, qse_size_t
 	while (ptr < end)
 	{
 		qse_cint_t c;
-		qse_size_t bcslen;
 
-	#if defined(QSE_OOCH_IS_UCH)
-		qse_size_t ucslen;
+	#if defined(QSE_CHAR_IS_WCHAR)
 		qse_char_t uc;
-		int n;
+		qse_size_t bcslen;
+		qse_size_t n;
 
 		bcslen = end - ptr;
-		ucslen = 1;
-
-		n = qse_conv_bchars_to_uchars_with_cmgr(ptr, &bcslen, &uc, &ucslen, json->cmgr, 0);
-		if (n <= -1)
+		n = json->cmgr->mbtowc(ptr, bcslen, &uc);
+		if (n == 0)
 		{
-			if (n == -3)
-			{
-				/* incomplete sequence */
-				*xlen = ptr - data;
-				return 0; /* feed more for incomplete sequence */
-			}
-
-			/* advance 1 byte without proper conversion */
+			/* invalid sequence */
 			uc = *ptr;
-			bcslen = 1;
+			n = 1;
+		}
+		else if (n > bcslen)
+		{
+			/* incomplete sequence */
+			*xlen = bcslen; /* need at lease this much */
+			return 0; /* feed more for incomplete sequence */
 		}
 
-		ptr += bcslen;
+		ptr += n;
 		c = uc;
 	#else
-		bcslen = 1;
 		c = *ptr++;
 	#endif
 
-
-		/* handle a signle character */
-		if (handle_char(json, c, bcslen) <= -1) goto oops;
+		/* handle a single character */
+		if (handle_char(json, c) <= -1) goto oops;
 	}
 
 	*xlen = ptr - data;
