@@ -401,9 +401,13 @@ int TcpServer::start (const qse_char_t* addrs) QSE_CPP_NOEXCEPT
 			n = qse_mux_poll(this->listener_list.mux, QSE_NULL);
 			if (n <= -1)
 			{
-				this->setErrorCode (E_ESYSERR); // TODO: proper error code conversion
-				xret = -1;
-				break;
+				qse_mux_errnum_t merr = qse_mux_geterrnum(this->listener_list.mux);
+				if (merr != QSE_MUX_EINTR)
+				{
+					this->setErrorCode (E_ESYSERR); // TODO: proper error code conversion
+					xret = -1;
+					break;
+				}
 			}
 		}
 

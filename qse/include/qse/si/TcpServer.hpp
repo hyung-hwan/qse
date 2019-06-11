@@ -256,7 +256,6 @@ protected:
 	friend class TcpServer::Worker;
 	virtual int handle_worker (Worker* worker) = 0;
 
-
 private:
 	void delete_all_workers (Worker::State state) QSE_CPP_NOEXCEPT;
 
@@ -283,7 +282,29 @@ public:
 	TcpServerF (F&& f, Mmgr* mmgr = QSE_NULL) QSE_CPP_NOEXCEPT: TcpServer(mmgr), __lfunc(QSE_CPP_RVREF(f)) {}
 #endif
 
-protected:
+private:
+	F __lfunc;
+
+	int handle_worker (Worker* worker)
+	{
+		return this->__lfunc(this, worker);
+	}
+};
+
+// functor + extra data in the functor
+template <typename F, typename D>
+class QSE_EXPORT TcpServerFD: public TcpServer
+{
+public:
+	TcpServerFD (Mmgr* mmgr = QSE_NULL) QSE_CPP_NOEXCEPT: TcpServer(mmgr) {}
+	TcpServerFD (const F& f, Mmgr* mmgr = QSE_NULL) QSE_CPP_NOEXCEPT: TcpServer(mmgr), __lfunc(f) {}
+	TcpServerFD (const D& d, Mmgr* mmgr = QSE_NULL) QSE_CPP_NOEXCEPT: TcpServer(mmgr), __lfunc(d) {}
+#if defined(QSE_CPP_ENABLE_CPP11_MOVE)
+	TcpServerFD (F&& f, Mmgr* mmgr = QSE_NULL) QSE_CPP_NOEXCEPT: TcpServer(mmgr), __lfunc(QSE_CPP_RVREF(f)) {}
+	TcpServerFD (D&& d, Mmgr* mmgr = QSE_NULL) QSE_CPP_NOEXCEPT: TcpServer(mmgr), __lfunc(QSE_CPP_RVREF(d)) {}
+#endif
+
+private:
 	F __lfunc;
 
 	int handle_worker (Worker* worker)
@@ -346,7 +367,7 @@ public:
 		return 0;
 	}
 
-protected:
+private:
 	class Callable
 	{
 	public:

@@ -150,6 +150,33 @@ protected:
 	F __lfunc;
 };
 
+template <typename F, typename D>
+class QSE_EXPORT ThreadFD: public Thread
+{
+public:
+	ThreadFD (Mmgr* mmgr = QSE_NULL) QSE_CPP_NOEXCEPT: Thread(mmgr) {}
+	ThreadFD (const F& f, Mmgr* mmgr = QSE_NULL) QSE_CPP_NOEXCEPT: Thread(mmgr), __lfunc(f) {}
+	ThreadFD (const D& d, Mmgr* mmgr = QSE_NULL) QSE_CPP_NOEXCEPT: Thread(mmgr), __lfunc(d) {}
+#if defined(QSE_CPP_ENABLE_CPP11_MOVE)
+	ThreadFD (F&& f, Mmgr* mmgr = QSE_NULL) QSE_CPP_NOEXCEPT: Thread(mmgr), __lfunc(QSE_CPP_RVREF(f)) {}
+	ThreadFD (D&& d, Mmgr* mmgr = QSE_NULL) QSE_CPP_NOEXCEPT: Thread(mmgr), __lfunc(QSE_CPP_RVREF(d)) {}
+#endif
+
+	static int call_func (qse_thr_t* thr, void* ctx)
+	{
+		ThreadFD<F,D>* t = (ThreadFD<F,D>*)ctx;
+		return t->__lfunc (t);
+	}
+
+	int start (int flags = 0) QSE_CPP_NOEXCEPT
+	{
+		return qse_thr_start (&this->thr, (qse_thr_rtn_t)ThreadFD<F,D>::call_func, this, flags);
+	}
+
+protected:
+	F __lfunc;
+};
+
 #if defined(QSE_LANG_CPP11)
 
 #if 0

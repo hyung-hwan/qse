@@ -99,8 +99,10 @@ QSE_EXPORT int qse_wfmtout (
 );
 
 #if defined(QSE_CHAR_IS_MCHAR)
+#	define qse_fmtout_t qse_mfmtout_t
 #	define qse_fmtout(fmt,fo,ap) qse_mfmtout(fmt,fo,ap)
 #else
+#	define qse_fmtout_t qse_wfmtout_t
 #	define qse_fmtout(fmt,fo,ap) qse_wfmtout(fmt,fo,ap)
 #endif
 

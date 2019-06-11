@@ -61,6 +61,12 @@ public:
 	}
 };
 
+class FunctorWithI: public Functor
+{
+public:
+	FunctorWithI (int* x)  {}
+};
+
 static int func_ptr (QSE::Thread* thr)
 {
 	int i = 0;
@@ -183,6 +189,12 @@ static int test1 (void)
 	{
 		qse_printf (QSE_T("cannot start thread6\n"));
 		return -1;
+	}
+
+	{
+		int t = 20;
+		QSE::ThreadFD<FunctorWithI, int*> thr7 (&t);
+		// just keep this here to see if QSE::ThreadFD<> can be instantiated syntatically
 	}
 
 	while (!g_stopreq)

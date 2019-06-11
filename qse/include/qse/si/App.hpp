@@ -32,11 +32,19 @@
 #include <qse/cmn/Mmged.hpp>
 #include <qse/cmn/Bitset.hpp>
 #include <qse/cmn/time.h>
+#include <qse/si/Mutex.hpp>
 #include <qse/si/os.h>
+#include <stdarg.h>
 
 /////////////////////////////////
 QSE_BEGIN_NAMESPACE(QSE)
 /////////////////////////////////
+
+#define QSE_APP_LOG_ENABLED(app, mask) (((app)->getLogMask() & mask) == mask)
+#define QSE_APP_LOG0(app, mask, fmt)  do { if (QSE_APP_LOG_ENABLED(app, mask)) app->logfmt(mask, fmt); } while(0)
+#define QSE_APP_LOG1(app, mask, fmt, a1)  do { if (QSE_APP_LOG_ENABLED(app, mask)) app->logfmt(mask, fmt, a1); } while(0)
+#define QSE_APP_LOG2(app, mask, fmt, a1, a2)  do { if (QSE_APP_LOG_ENABLED(app, mask)) app->logfmt(mask, fmt, a1, a2); } while(0)
+#define QSE_APP_LOG3(app, mask, fmt, a1, a2, a3)  do { if (QSE_APP_LOG_ENABLED(app, mask)) app->logfmt(mask, fmt, a1, a2, a3); } while(0)
 
 class App: public Uncopyable, public Types, public Mmged
 {
@@ -94,19 +102,25 @@ public:
 		return this->setSignalSubscription(sig, SIGNAL_DISCARDED);
 	}
 
-	int neglectSignal (int sig)
+	// The neglectSignal() function restored the signal handler
+	// to the previous signal handler remembered. If no signal 
+	// handler was set up before this application object has been
+	// initialized, no signal handler is established for the given
+	// signal. the ignore_if_unhandled is true, this function
+	// sets up signal handle to ignore the handler instead.
+	int neglectSignal (int sig, bool ignore_if_unhandled = false)
 	{
-		return this->setSignalSubscription(sig, SIGNAL_NEGLECTED);
+		return this->setSignalSubscription(sig, SIGNAL_NEGLECTED, ignore_if_unhandled);
 	}
 
 	typedef void (*SignalHandler) (int sig);
 	static qse_size_t _sighrs[2][QSE_NSIGS];
 
 	// You may set a global signal handler with setSignalHandler().
-	// If an application is subscribing to a single with subscribeToSignal(),
+	// If an application is subscribing to a signal with subscribeToSignal(),
 	// this function is doomed to fail. If a successful call to 
-	// setSignalHandler() has been made withoutut unsetSingalHandler() called
-	// yet, a subsequence call to subscribeToSignal() is doomed to fail too.
+	// setSignalHandler() has been made without unsetSingalHandler() called
+	// yet, a subsequent call to subscribeToSignal() is doomed to fail too.
 	// These two different interfaces are mutually exclusive.
 	static int setSignalHandler (int sig, SignalHandler sighr);
 	static int unsetSignalHandler (int sig, bool ignore = false);
@@ -117,6 +131,54 @@ public:
 	}
 
 	int guardProcess (const SignalSet& signals, const qse_mchar_t* proc_name = QSE_NULL);
+
+
+	// =============================================================
+	// LOGGING SUPPORT
+	// =============================================================
+
+	enum log_mask_t
+	{
+		LOG_DEBUG      = (1 << 0),
+		LOG_INFO       = (1 << 1),
+		LOG_WARN       = (1 << 2),
+		LOG_ERROR      = (1 << 3),
+		LOG_FATAL      = (1 << 4),
+
+		LOG_TYPE_0     = (1 << 6),
+		LOG_TYPE_1     = (1 << 7),
+		LOG_TYPE_2     = (1 << 8),
+		LOG_TYPE_3     = (1 << 9),
+		LOG_TYPE_4     = (1 << 10),
+		LOG_TYPE_5     = (1 << 11),
+		LOG_TYPE_6     = (1 << 12),
+		LOG_TYPE_7     = (1 << 13),
+		LOG_TYPE_8     = (1 << 14),
+		LOG_TYPE_9     = (1 << 15),
+
+		LOG_ALL_LEVELS = (LOG_DEBUG  | LOG_INFO | LOG_WARN | LOG_ERROR | LOG_FATAL),
+		LOG_ALL_TYPES = (LOG_TYPE_0 | LOG_TYPE_1 | LOG_TYPE_2 | LOG_TYPE_3 | LOG_TYPE_4 | LOG_TYPE_5 | LOG_TYPE_6 | LOG_TYPE_7 | LOG_TYPE_8 | LOG_TYPE_9)
+	};
+
+	void setLogMask (int mask) { this->_log.mask = mask; }
+	int getLogMask () const { return this->_log.mask; }
+
+	void logfmt (int mask, const qse_char_t* fmt, ...)
+	{
+		va_list ap;
+		va_start (ap, fmt);
+		logfmtv (mask, fmt, ap);
+		va_end (ap);
+	}
+
+	void logfmtv (int mask, const qse_char_t* fmt, va_list ap);
+
+protected:
+	virtual void log_write (int mask, const qse_char_t* msg, qse_size_t len)
+	{
+		// do nothing 
+		// subclasses should override this if needed.
+	}
 
 private:
 	App* _prev_app;
@@ -133,12 +195,26 @@ private:
 	_SigLink _sig[QSE_NSIGS]; 
 	long int _guarded_child_pid;
 
+	struct log_t
+	{
+		log_t (App* app): mask(0), last_mask(0), len(0), mtx(app->getMmgr())
+		{
+		}
+
+		int mask, last_mask;
+		qse_size_t len;
+		qse_char_t buf[256];
+		QSE::Mutex mtx;
+	} _log;
+
 	static int set_signal_handler_no_mutex (int sig, SignalHandler sighr);
 	static int unset_signal_handler_no_mutex (int sig, int ignore);
 	int set_signal_subscription_no_mutex (int sig, SignalState reqstate, bool ignore_if_unhandled);
 
 	void on_guard_signal (int sig);
 	static void handle_signal (int sig);
+
+	static int put_char_to_log_buf (qse_char_t c, void* ctx);
 };
 
 /////////////////////////////////

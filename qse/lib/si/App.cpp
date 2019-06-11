@@ -30,6 +30,7 @@
 #include <qse/si/os.h>
 #include "../cmn/syscall.h"
 #include "../cmn/mem-prv.h"
+#include "../cmn/fmt-prv.h"
 #include <qse/cmn/mbwc.h>
 
 /////////////////////////////////
@@ -72,7 +73,7 @@ protected:
 	sigset_t oldsigset;
 };
 
-App::App (Mmgr* mmgr) QSE_CPP_NOEXCEPT: Mmged(mmgr), _prev_app(QSE_NULL), _next_app(QSE_NULL), _guarded_child_pid(-1)
+App::App (Mmgr* mmgr) QSE_CPP_NOEXCEPT: Mmged(mmgr), _prev_app(QSE_NULL), _next_app(QSE_NULL), _guarded_child_pid(-1), _log(this)
 {
 	SigScopedMutexLocker sml(g_app_mutex);
 	if (!g_app_top)
@@ -467,6 +468,8 @@ int App::guardProcess (const SignalSet& signals, const qse_mchar_t* proc_name)
 			// child process
 			this->_guarded_child_pid = -1;
 
+			// the child process has inherited the signal handlers.
+			// restore the signal handlers of the child process to the original handlers.
 			for (int i = 0; i < QSE_NSIGS; i++)
 			{
 				if (signals.isSet(i)) this->setSignalSubscription (i, old_ss[i]);
@@ -517,6 +520,59 @@ int App::guardProcess (const SignalSet& signals, const qse_mchar_t* proc_name)
 
 	// TODO: if (proc_name) qse_set_proc_name (proc_name);
 	return seq; // the caller must execute the actual work.
+}
+
+
+int App::put_char_to_log_buf (qse_char_t c, void* ctx)
+{
+	App* app = (App*)ctx;
+	if (app->_log.len >= QSE_COUNTOF(app->_log.buf) - 1) // -1 for the lien terminator appending in App::logfmtv()
+	{
+		app->log_write (app->_log.last_mask, app->_log.buf, app->_log.len); 
+		app->_log.len = 0;
+	}
+
+	app->_log.buf[app->_log.len++] = c;
+	if (c == QSE_T('\n'))
+	{
+		app->log_write (app->_log.last_mask, app->_log.buf, app->_log.len); 
+		app->_log.len = 0;
+	}
+
+	return 1;
+}
+
+void App::logfmtv (int mask, const qse_char_t* fmt, va_list ap)
+{
+	/*if (this->threaded)*/ this->_log.mtx.lock ();
+
+	if (this->_log.len > 0 && this->_log.last_mask != mask)
+	{
+		if (this->_log.buf[this->_log.len - 1] != QSE_T('\n'))
+		{
+			// no line ending - append a line terminator
+			this->_log.buf[this->_log.len++] = QSE_T('\n');
+		}
+		this->log_write (this->_log.last_mask, this->_log.buf, this->_log.len); 
+		this->_log.len = 0;
+	}
+
+	qse_fmtout_t fo;
+
+	fo.count = 0;
+	fo.limit = QSE_TYPE_MAX(qse_size_t) - 1;
+	fo.ctx = this;
+	fo.put = put_char_to_log_buf;
+#if defined(QSE_CHAR_IS_WCHAR)
+	fo.conv = QSE_NULL;
+#else
+	fo.conv = QSE_NULL;
+#endif
+
+	this->_log.last_mask = mask;
+	qse_fmtout(fmt, &fo, ap);
+
+	/*if (this->threaded)*/ this->_log.mtx.unlock ();
 }
 
 /////////////////////////////////
