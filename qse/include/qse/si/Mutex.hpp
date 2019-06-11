@@ -38,9 +38,9 @@ class Mutex: public Uncopyable
 public:
 	friend class Condition;
 
-	Mutex() QSE_CPP_NOEXCEPT 
+	Mutex (Mmgr* mmgr = QSE_NULL) QSE_CPP_NOEXCEPT
 	{
-		qse_mtx_init (&this->mtx, QSE_NULL);
+		qse_mtx_init (&this->mtx, mmgr);
 	}
 	~Mutex() QSE_CPP_NOEXCEPT
 	{
