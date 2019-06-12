@@ -45,7 +45,8 @@ enum qse_json_errnum_t
 
 	QSE_JSON_ENOMEM,
 	QSE_JSON_EINVAL,
-	QSE_JSON_EFINIS
+	QSE_JSON_EFINIS,
+	QSE_JSON_EECERR
 };
 typedef enum qse_json_errnum_t qse_json_errnum_t;
 

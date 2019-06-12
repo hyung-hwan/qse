@@ -1019,7 +1019,7 @@ oops_3:
 oops_2:
 	qse_str_fini (&rtx->inrec.line);
 oops_1:
-	qse_awk_freemem (rtx, rtx->stack);
+	qse_awk_rtx_freemem (rtx, rtx->stack);
 oops_0:
 	qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);
 	return -1;
