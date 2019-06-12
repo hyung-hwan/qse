@@ -282,7 +282,7 @@ qse_awk_val_t* qse_awk_rtx_makestrvalwithwxstr (qse_awk_rtx_t* rtx, const qse_wc
 	qse_size_t wcslen;
 
 	wcslen = wxstr->len;
-	tmp.ptr = qse_wcsntombsdupwithcmgr(wxstr->ptr, &wcslen, &tmp.len, rtx->awk->mmgr, rtx->awk->cmgr);
+	tmp.ptr = qse_wcsntombsdupwithcmgr(wxstr->ptr, wcslen, &tmp.len, rtx->awk->mmgr, rtx->awk->cmgr);
 	if (tmp.ptr == QSE_NULL)
 	{
 		qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
@@ -1513,7 +1513,12 @@ qse_mchar_t* qse_awk_rtx_valtombsdup (qse_awk_rtx_t* rtx, const qse_awk_val_t* v
 		str0 = qse_awk_rtx_getvalstr(rtx, v, &len0);
 		if (!str0) return QSE_NULL;
 
+	#if defined(QSE_CHAR_IS_MCHAR)
+		mbs = qse_strxdup(str0, len0, rtx->awk->mmgr);
+	#else
 		mbs = qse_wcsntombsdupwithcmgr(str0, len0, &len1, rtx->awk->mmgr, rtx->awk->cmgr);
+	#endif
+
 		qse_awk_rtx_freevalstr (rtx, v, str0);
 		if (!mbs) 
 		{
@@ -1554,7 +1559,7 @@ qse_wchar_t* qse_awk_rtx_valtowcsdup (qse_awk_rtx_t* rtx, const qse_awk_val_t* v
 		{
 		#if defined(QSE_CHAR_IS_MCHAR)
 			qse_size_t wcslen, mbslen;
-			mbslen = ((qse_awk_val_str_t*)v)->val.len
+			mbslen = ((qse_awk_val_str_t*)v)->val.len;
 			wcs = qse_mbsntowcsalldupwithcmgr(((qse_awk_val_str_t*)v)->val.ptr, &mbslen, &wcslen, rtx->awk->mmgr, rtx->awk->cmgr);
 		#else
 			wcs = qse_strxdup(((qse_awk_val_str_t*)v)->val.ptr, ((qse_awk_val_str_t*)v)->val.len, rtx->awk->mmgr);
@@ -1582,7 +1587,7 @@ qse_wchar_t* qse_awk_rtx_valtowcsdup (qse_awk_rtx_t* rtx, const qse_awk_val_t* v
 			dup = qse_awk_rtx_valtostrdup(rtx, v, &duplen);
 			if (!dup) return QSE_NULL;
 
-			wcs = qse_mbsntowcsalldupwithcmgr(dup, duplen, &wcslen, rtx->awk->mmgr, rtx->awk->cmgr);
+			wcs = qse_mbsntowcsalldupwithcmgr(dup, &duplen, &wcslen, rtx->awk->mmgr, rtx->awk->cmgr);
 			qse_awk_rtx_freemem (rtx, dup);
 			if (!wcs)
 			{
@@ -2049,6 +2054,7 @@ int qse_awk_rtx_setrefval (qse_awk_rtx_t* rtx, qse_awk_val_ref_t* ref, qse_awk_v
 		}
 
 		case QSE_AWK_VAL_REF_GBL:
+			/* ref->adr is the index to the global variables, not a real pointer address for QSE_AWK_VAL_REF_GBL */
 			return qse_awk_rtx_setgbl(rtx, (int)ref->adr, val);
 
 		case QSE_AWK_VAL_REF_NAMEDIDX:

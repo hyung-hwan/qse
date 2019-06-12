@@ -532,7 +532,7 @@ static int reset_to_path (qse_dir_t* dir, const qse_char_t* path)
 
 	if (dir->flags & QSE_DIR_MBSPATH)
 	{
-		mptr = make_mbsdos_path (dir, (const qse_mchar_t*)path);
+		mptr = make_mbsdos_path(dir, (const qse_mchar_t*)path);
 	}
 	else
 	{
@@ -540,16 +540,16 @@ static int reset_to_path (qse_dir_t* dir, const qse_char_t* path)
 
 		QSE_ASSERT (dir->flags & QSE_DIR_WCSPATH);
 
-		wptr = make_wcsdos_path (dir, (const qse_wchar_t*)path);
+		wptr = make_wcsdos_path(dir, (const qse_wchar_t*)path);
 		if (wptr == QSE_NULL) return -1;
-		mptr = wcs_to_mbuf (dir, wptr, &dir->mbuf);
+		mptr = wcs_to_mbuf(dir, wptr, &dir->mbuf);
 	}
 	if (mptr == QSE_NULL) return -1;
 
-	rc = _dos_findfirst (mptr, _A_NORMAL | _A_SUBDIR, &dir->f);
+	rc = _dos_findfirst(mptr, _A_NORMAL | _A_SUBDIR, &dir->f);
 	if (rc != 0) 
 	{
-		dir->errnum = syserr_to_errnum (errno);
+		dir->errnum = syserr_to_errnum(errno);
 		return -1;
 	}
 
@@ -562,36 +562,33 @@ static int reset_to_path (qse_dir_t* dir, const qse_char_t* path)
 
 	if (dir->flags & QSE_DIR_MBSPATH)
 	{
-		const qse_mchar_t* mpath;
-
-		mpath = (const qse_mchar_t*)path;
-		dp = QSE_OPENDIR (mpath == QSE_MT('\0')? QSE_MT("."): mpath);
+		const qse_mchar_t* mpath = (const qse_mchar_t*)path;
+		dp = QSE_OPENDIR(mpath[0] == QSE_MT('\0')? QSE_MT("."): mpath);
 	}
 	else
 	{
-
 		const qse_wchar_t* wpath;
 		QSE_ASSERT (dir->flags & QSE_DIR_WCSPATH);
 
 		wpath = (const qse_wchar_t*)path;
 		if (wpath[0] == QSE_WT('\0'))
 		{
-			dp = QSE_OPENDIR (QSE_MT("."));
+			dp = QSE_OPENDIR(QSE_MT("."));
 		}
 		else
 		{
 			qse_mchar_t* mptr;
 
-			mptr = wcs_to_mbuf (dir, wpath, &dir->mbuf);
+			mptr = wcs_to_mbuf(dir, wpath, &dir->mbuf);
 			if (mptr == QSE_NULL) return -1;
 
-			dp = QSE_OPENDIR (mptr);
+			dp = QSE_OPENDIR(mptr);
 		}
 	}
 
 	if (dp == QSE_NULL) 
 	{
-		dir->errnum = syserr_to_errnum (errno);
+		dir->errnum = syserr_to_errnum(errno);
 		return -1;
 	}
 

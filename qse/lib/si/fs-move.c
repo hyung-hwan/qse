@@ -208,11 +208,11 @@ int qse_fs_move (qse_fs_t* fs, const qse_char_t* oldpath, const qse_char_t* newp
 	QSE_MEMSET (&fop, 0, QSE_SIZEOF(fop));
 
 	#if defined(QSE_CHAR_IS_MCHAR)
-	fop.old_path = oldpath;
-	fop.new_path = newpath;
+	fop.old_path = (qse_char_t*)oldpath;
+	fop.new_path = (qse_char_t*)newpath;
 	#else
-	fop.old_path = qse_wcstombsdup (oldpath, QSE_NULL, fs->mmgr);
-	fop.new_path = qse_wcstombsdup (newpath, QSE_NULL, fs->mmgr);
+	fop.old_path = qse_wcstombsdup(oldpath, QSE_NULL, fs->mmgr);
+	fop.new_path = qse_wcstombsdup(newpath, QSE_NULL, fs->mmgr);
 	if (fop.old_path == QSE_NULL || fop.old_path == QSE_NULL)
 	{
 		fs->errnum = QSE_FS_ENOMEM;
@@ -281,16 +281,16 @@ int qse_fs_move (qse_fs_t* fs, const qse_char_t* oldpath, const qse_char_t* newp
 			{
 				/* the destination is a directory. move the source file
 				 * into the destination directory */
-				const qse_wchar_t* arr[4];
+				const qse_char_t* arr[4];
 
 				arr[0] = newpath;
 				arr[1] = QSE_T("/");
 				arr[2] = qse_basename(oldpath);
 				arr[3] = QSE_NULL;
 			#if defined(QSE_CHAR_IS_MCHAR)
-				fop.new_path2 = qse_stradup (arr, QSE_NULL, fs->mmgr);
+				fop.new_path2 = qse_stradup(arr, QSE_NULL, fs->mmgr);
 			#else
-				fop.new_path2 = qse_wcsatombsdup (arr, QSE_NULL, fs->mmgr);	
+				fop.new_path2 = qse_wcsatombsdup(arr, QSE_NULL, fs->mmgr);	
 			#endif
 				if (fop.new_path2 == QSE_NULL)
 				{

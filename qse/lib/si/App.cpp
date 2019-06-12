@@ -75,6 +75,8 @@ protected:
 
 App::App (Mmgr* mmgr) QSE_CPP_NOEXCEPT: Mmged(mmgr), _prev_app(QSE_NULL), _next_app(QSE_NULL), _guarded_child_pid(-1), _log(this)
 {
+	this->_cmgr = qse_getdflcmgr();
+
 	SigScopedMutexLocker sml(g_app_mutex);
 	if (!g_app_top)
 	{
@@ -542,6 +544,18 @@ int App::put_char_to_log_buf (qse_char_t c, void* ctx)
 	return 1;
 }
 
+static int wcs_to_mbs (const qse_wchar_t* wcs, qse_size_t* wcslen, qse_mchar_t* mbs, qse_size_t* mbslen, void* ctx)
+{
+	App* app = (App*)ctx;
+	return qse_wcsntombsnwithcmgr (wcs, wcslen, mbs, mbslen, app->getCmgr());
+}
+
+static int mbs_to_wcs (const qse_mchar_t* mbs, qse_size_t* mbslen, qse_wchar_t* wcs, qse_size_t* wcslen, void* ctx)
+{
+	App* app = (App*)ctx;
+	return qse_mbsntowcsnwithcmgr (mbs, mbslen, wcs, wcslen, app->getCmgr());
+}
+
 void App::logfmtv (int mask, const qse_char_t* fmt, va_list ap)
 {
 	/*if (this->threaded)*/ this->_log.mtx.lock ();
@@ -563,10 +577,10 @@ void App::logfmtv (int mask, const qse_char_t* fmt, va_list ap)
 	fo.limit = QSE_TYPE_MAX(qse_size_t) - 1;
 	fo.ctx = this;
 	fo.put = put_char_to_log_buf;
-#if defined(QSE_CHAR_IS_WCHAR)
-	fo.conv = QSE_NULL;
+#if defined(QSE_CHAR_IS_MCHAR)
+	fo.conv = wcs_to_mbs;
 #else
-	fo.conv = QSE_NULL;
+	fo.conv = mbs_to_wcs;
 #endif
 
 	this->_log.last_mask = mask;

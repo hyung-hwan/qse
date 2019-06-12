@@ -440,7 +440,7 @@ void* qse_awk_stdmodsym (qse_awk_t* awk, void* handle, const qse_char_t* name)
 	qse_mchar_t* mname;
 
 #if defined(QSE_CHAR_IS_MCHAR)
-	mname = name;
+	mname = (qse_mchar_t*)name;
 #else
 	mname = qse_wcstombsdupwithcmgr(name, QSE_NULL, awk->mmgr, awk->cmgr);
 	if (!mname)

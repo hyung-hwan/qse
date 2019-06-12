@@ -45,6 +45,12 @@ QSE_BEGIN_NAMESPACE(QSE)
 #define QSE_APP_LOG1(app, mask, fmt, a1)  do { if (QSE_APP_LOG_ENABLED(app, mask)) app->logfmt(mask, fmt, a1); } while(0)
 #define QSE_APP_LOG2(app, mask, fmt, a1, a2)  do { if (QSE_APP_LOG_ENABLED(app, mask)) app->logfmt(mask, fmt, a1, a2); } while(0)
 #define QSE_APP_LOG3(app, mask, fmt, a1, a2, a3)  do { if (QSE_APP_LOG_ENABLED(app, mask)) app->logfmt(mask, fmt, a1, a2, a3); } while(0)
+#define QSE_APP_LOG4(app, mask, fmt, a1, a2, a3, a4)  do { if (QSE_APP_LOG_ENABLED(app, mask)) app->logfmt(mask, fmt, a1, a2, a3, a4); } while(0)
+#define QSE_APP_LOG5(app, mask, fmt, a1, a2, a3, a4, a5)  do { if (QSE_APP_LOG_ENABLED(app, mask)) app->logfmt(mask, fmt, a1, a2, a3, a4, a5); } while(0)
+#define QSE_APP_LOG6(app, mask, fmt, a1, a2, a3, a4, a5, a6)  do { if (QSE_APP_LOG_ENABLED(app, mask)) app->logfmt(mask, fmt, a1, a2, a3, a4, a5, a6); } while(0)
+#define QSE_APP_LOG7(app, mask, fmt, a1, a2, a3, a4, a5, a6, a7)  do { if (QSE_APP_LOG_ENABLED(app, mask)) app->logfmt(mask, fmt, a1, a2, a3, a4, a5, a6, a7); } while(0)
+#define QSE_APP_LOG8(app, mask, fmt, a1, a2, a3, a4, a5, a6, a7, a8)  do { if (QSE_APP_LOG_ENABLED(app, mask)) app->logfmt(mask, fmt, a1, a2, a3, a4, a5, a6, a7, a8); } while(0)
+#define QSE_APP_LOG9(app, mask, fmt, a1, a2, a3, a4, a5, a6, a7, a8, a9)  do { if (QSE_APP_LOG_ENABLED(app, mask)) app->logfmt(mask, fmt, a1, a2, a3, a4, a5, a6, a7, a8, a9); } while(0)
 
 class App: public Uncopyable, public Types, public Mmged
 {
@@ -60,6 +66,19 @@ public:
 
 	App (Mmgr* mmgr = QSE_NULL) QSE_CPP_NOEXCEPT;
 	virtual ~App () QSE_CPP_NOEXCEPT;
+
+	void setCmgr (qse_cmgr_t* cmgr) QSE_CPP_NOEXCEPT
+	{
+		this->_cmgr = cmgr;
+	}
+	qse_cmgr_t* getCmgr () QSE_CPP_NOEXCEPT
+	{
+		return this->_cmgr;
+	}
+	const qse_cmgr_t* getCmgr () const QSE_CPP_NOEXCEPT
+	{
+		return this->_cmgr;
+	}
 
 	int daemonize (bool chdir_to_root = true, int fork_count = 1, bool root_only = false) QSE_CPP_NOEXCEPT;
 
@@ -195,6 +214,7 @@ private:
 	_SigLink _sig[QSE_NSIGS]; 
 	long int _guarded_child_pid;
 
+	qse_cmgr_t* _cmgr;
 	struct log_t
 	{
 		log_t (App* app): mask(0), last_mask(0), len(0), mtx(app->getMmgr())

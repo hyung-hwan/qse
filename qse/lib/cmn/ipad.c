@@ -469,8 +469,7 @@ int qse_wcsntoip6ad (const qse_wchar_t* src, qse_size_t len, qse_ip6ad_t* ipad)
 	return 0;
 }
 
-qse_size_t qse_ip6adtombs (
-	const qse_ip6ad_t* ipad, qse_mchar_t* buf, qse_size_t size)
+qse_size_t qse_ip6adtombs (const qse_ip6ad_t* ipad, qse_mchar_t* buf, qse_size_t size)
 {
 	/*
 	 * Note that int32_t and int16_t need only be "at least" large enough
@@ -498,7 +497,9 @@ qse_size_t qse_ip6adtombs (
 	for (i = 0; i < QSE_SIZEOF(ipad->value); i++)
 		words[i / 2] |= (ipad->value[i] << ((1 - (i % 2)) << 3));
 	best.base = -1;
+	best.len = 0;
 	cur.base = -1;
+	cur.len = 0;
 
 	for (i = 0; i < IP6ADDR_NWORDS; i++) 
 	{
@@ -571,8 +572,7 @@ qse_size_t qse_ip6adtombs (
 #undef IP6ADDR_NWORDS
 }
 
-qse_size_t qse_ip6adtowcs (
-	const qse_ip6ad_t* ipad, qse_wchar_t* buf, qse_size_t size)
+qse_size_t qse_ip6adtowcs (const qse_ip6ad_t* ipad, qse_wchar_t* buf, qse_size_t size)
 {
 	/*
 	 * Note that int32_t and int16_t need only be "at least" large enough
@@ -600,7 +600,9 @@ qse_size_t qse_ip6adtowcs (
 	for (i = 0; i < QSE_SIZEOF(ipad->value); i++)
 		words[i / 2] |= (ipad->value[i] << ((1 - (i % 2)) << 3));
 	best.base = -1;
+	best.len = 0;
 	cur.base = -1;
+	cur.len = 0;
 
 	for (i = 0; i < IP6ADDR_NWORDS; i++) 
 	{
