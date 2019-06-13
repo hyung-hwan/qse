@@ -520,18 +520,18 @@ static int fnc_sleep (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 		rx = 0;
 #elif defined(__DOS__)
 		#if (defined(__WATCOMC__) && (__WATCOMC__ < 1200))
-			sleep (lv);	
+			sleep (lv);
 			rx = 0;
 		#else
-			rx = sleep (lv);	
+			rx = sleep (lv);
 		#endif
 #elif defined(HAVE_NANOSLEEP)
 		struct timespec req;
 		req.tv_sec = lv;
 		req.tv_nsec = 0;
-		rx = nanosleep (&req, QSE_NULL);
+		rx = nanosleep(&req, QSE_NULL);
 #else
-		rx = sleep (lv);	
+		rx = sleep(lv);
 #endif
 	}
 	else if (rx >= 1)
@@ -545,28 +545,28 @@ static int fnc_sleep (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 #elif defined(__DOS__)
 		/* no high-resolution sleep() is available */
 		#if (defined(__WATCOMC__) && (__WATCOMC__ < 1200))
-			sleep ((qse_awk_int_t)fv);	
+			sleep ((qse_awk_int_t)fv);
 			rx = 0;
 		#else
-			rx = sleep ((qse_awk_int_t)fv);	
+			rx = sleep((qse_awk_int_t)fv);
 		#endif;
 #elif defined(HAVE_NANOSLEEP)
 		struct timespec req;
 		req.tv_sec = (qse_awk_int_t)fv;
 		req.tv_nsec = QSE_SEC_TO_NSEC(fv - req.tv_sec);
-		rx = nanosleep (&req, QSE_NULL);
+		rx = nanosleep(&req, QSE_NULL);
 #elif defined(HAVE_SELECT)
 		struct timeval req;
 		req.tv_sec = (qse_awk_int_t)fv;
 		req.tv_usec = QSE_SEC_TO_USEC(fv - req.tv_sec);
-		rx = select (0, QSE_NULL, QSE_NULL, QSE_NULL, &req);
+		rx = select(0, QSE_NULL, QSE_NULL, QSE_NULL, &req);
 #else
 		/* no high-resolution sleep() is available */
-		rx = sleep ((qse_awk_int_t)fv);	
+		rx = sleep((qse_awk_int_t)fv);
 #endif
 	}
 
-	retv = qse_awk_rtx_makeintval (rtx, rx);
+	retv = qse_awk_rtx_makeintval(rtx, rx);
 	if (retv == QSE_NULL) return -1;
 
 	qse_awk_rtx_setretval (rtx, retv);
