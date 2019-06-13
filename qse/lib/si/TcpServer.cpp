@@ -32,6 +32,7 @@
 #include <errno.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <string.h>
 
 
 #define WID_MAP_ALIGN 128
@@ -85,7 +86,6 @@ int TcpServer::Worker::stop () QSE_CPP_NOEXCEPT
 
 TcpServer::TcpServer (Mmgr* mmgr) QSE_CPP_NOEXCEPT: 
 	Mmged(mmgr),
-	errcode(E_ENOERR),
 	stop_requested(false), 
 	server_serving(false), 
 	max_connections(0),
@@ -116,7 +116,7 @@ void TcpServer::free_all_listeners () QSE_CPP_NOEXCEPT
 
 		lp->close ();
 
-		QSE_CPP_DELETE_WITH_MMGR(lp, Listener, this->getMmgr()); // delete lp
+		QSE_CPP_DELETE_WITH_MMGR (lp, Listener, this->getMmgr()); // delete lp
 	}
 
 	if (this->listener_list.mux_pipe[0] >= 0)
@@ -255,10 +255,14 @@ int TcpServer::setup_listeners (const qse_char_t* addrs) QSE_CPP_NOEXCEPT
 	int fcv, pfd[2] = { -1, - 1 };
 	SocketAddress sockaddr;
 
+	errno = 0;
 	mux = qse_mux_open(this->getMmgr(), QSE_SIZEOF(mux_xtn_t), TcpServer::dispatch_mux_event, 1024, QSE_NULL); 
 	if (!mux)
 	{
-		this->setErrorCode (syserr_to_errnum(errno));
+		if (errno != 0)
+			this->setErrorFmt (syserr_to_errnum(errno), QSE_T("%hs"), strerror(errno));
+		else
+			this->setErrorCode (E_ENOMEM);
 		return -1;
 	}
 	mux_xtn_t* mux_xtn = (mux_xtn_t*)qse_mux_getxtn(mux);
@@ -267,7 +271,7 @@ int TcpServer::setup_listeners (const qse_char_t* addrs) QSE_CPP_NOEXCEPT
 
 	if (::pipe(pfd) <= -1)
 	{
-		this->setErrorCode (syserr_to_errnum(errno));
+		this->setErrorFmt (syserr_to_errnum(errno), QSE_T("%hs"), strerror(errno));
 		goto oops;
 	}
 
@@ -294,11 +298,13 @@ int TcpServer::setup_listeners (const qse_char_t* addrs) QSE_CPP_NOEXCEPT
 		goto oops;
 	}
 
+	this->setErrorCode (E_ENOERR);
+
 	addr_ptr = addrs;
 	while (1)
 	{
 		qse_size_t addr_len;
-		Listener* lsck;
+		Listener* lsck = QSE_NULL;
 		Socket sock;
 
 		comma = qse_strchr(addr_ptr, QSE_T(','));
@@ -307,8 +313,8 @@ int TcpServer::setup_listeners (const qse_char_t* addrs) QSE_CPP_NOEXCEPT
 
 		if (sockaddr.set(addr_ptr, addr_len) <= -1)
 		{
-			/* TOOD: logging */
-			goto next_segment;
+			/* TODO: set error */
+			goto skip_segment;
 		}
 
 		try 
@@ -317,14 +323,14 @@ int TcpServer::setup_listeners (const qse_char_t* addrs) QSE_CPP_NOEXCEPT
 		}
 		catch (...) 
 		{
-			/* TODO: logging... */
-			goto next_segment;
+			/* TODO: set error */
+			goto skip_segment;
 		}
 
 		if (lsck->open(sockaddr.getFamily(), QSE_SOCK_STREAM, 0, Socket::T_CLOEXEC | Socket::T_NONBLOCK) <= -1)
 		{
-			/* TODO: logging */
-			goto next_segment;
+			this->setErrorFmt (syserr_to_errnum(errno), QSE_T("%hs"), strerror(errno));
+			goto skip_segment;
 		}
 
 		lsck->setReuseAddr (1);
@@ -332,9 +338,8 @@ int TcpServer::setup_listeners (const qse_char_t* addrs) QSE_CPP_NOEXCEPT
 
 		if (lsck->bind(sockaddr) <= -1 || lsck->listen() <= -1)
 		{
-			/* TODO: logging */
-			lsck->close ();
-			goto next_segment;
+			this->setErrorFmt (syserr_to_errnum(errno), QSE_T("%hs"), strerror(errno));
+			goto skip_segment;
 		}
 
 		QSE_MEMSET (&ev, 0, QSE_SIZEOF(ev));
@@ -343,23 +348,43 @@ int TcpServer::setup_listeners (const qse_char_t* addrs) QSE_CPP_NOEXCEPT
 		ev.data = lsck;
 		if (qse_mux_insert(mux, &ev) <= -1)
 		{
-			/* TODO: logging */
-			lsck->close ();
-			goto next_segment;
+			/* TODO: set error */
+			goto skip_segment;
 		}
 
 		lsck->address = sockaddr;
 		lsck->next_listener = this->listener_list.head;
 		this->listener_list.head = lsck;
 		this->listener_list.count++;
+		goto segment_done;  // lsck has been added to the listener list. i must not close and destroy it
 
-	next_segment:
+	skip_segment:
+		if (lsck)
+		{
+			lsck->close();
+			QSE_CPP_DELETE_WITH_MMGR (lsck, Listener, this->getMmgr());
+			lsck = QSE_NULL;
+		}
+
+	segment_done:
 		if (!comma) break;
 		addr_ptr = comma + 1;
 	}
 
-	if (!this->listener_list.head) goto oops;
-	
+	if (!this->listener_list.head) 
+	{
+		if (this->getErrorCode() == E_ENOERR)
+		{
+			this->setErrorFmt (E_EINVAL, QSE_T("unable to create liteners with %js"), addrs);
+		}
+		else
+		{
+			const qse_char_t* emb = this->backupErrorMsg();
+			this->setErrorFmt (E_EINVAL, QSE_T("unable to create liteners with %js - %js"), addrs, emb);
+		}
+		goto oops;
+	}
+
 	this->listener_list.mux = mux;
 	this->listener_list.mux_pipe[0] = pfd[0];
 	this->listener_list.mux_pipe[1] = pfd[1];

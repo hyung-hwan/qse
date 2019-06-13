@@ -225,6 +225,8 @@ public:
 	/** defines common error codes */
 	enum ErrorCode
 	{
+		/* [NOTE] if you change items here, you must change the stock error description in ErrorGrab */
+
 		E_ENOERR,  /**< no error */
 		E_EOTHER,  /**< other error */
 		E_ENOIMPL, /**< not implemented */
@@ -236,14 +238,15 @@ public:
 		E_EINVAL,
 		E_EACCES,
 		E_EPERM,
+
 		E_ENOENT,
 		E_EEXIST,
 		E_ENOTDIR,
 		E_EINTR,
 		E_EPIPE,
+
 		E_EINPROG, /* in progress */
 		E_EAGAIN,   /* resource unavailable unavailable */
-
 		E_EEXCEPT /**< exception */
 	};
 };

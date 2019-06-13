@@ -33,6 +33,7 @@
 #include <qse/si/SpinLock.hpp>
 #include <qse/cmn/Mmged.hpp>
 #include <qse/Uncopyable.hpp>
+#include <qse/cmn/ErrorGrab.hpp>
 #include <qse/si/mux.h>
 
 QSE_BEGIN_NAMESPACE(QSE)
@@ -40,7 +41,7 @@ QSE_BEGIN_NAMESPACE(QSE)
 // The TcpServer class implements a simple block TCP server that start a thread
 // for each connection accepted.
 
-class QSE_EXPORT TcpServer: public Uncopyable, public Mmged, public Types
+class QSE_EXPORT TcpServer: public Uncopyable, public Mmged, public Types, public ErrorGrab
 {
 public:
 	TcpServer (Mmgr* mmgr = QSE_NULL) QSE_CPP_NOEXCEPT;
@@ -48,9 +49,6 @@ public:
 
 	virtual int start (const qse_char_t* addrs) QSE_CPP_NOEXCEPT;
 	virtual int stop () QSE_CPP_NOEXCEPT;
-
-	ErrorCode getErrorCode () const QSE_CPP_NOEXCEPT { return this->errcode; }
-	void setErrorCode (ErrorCode errcode) QSE_CPP_NOEXCEPT { this->errcode = errcode; }
 
 	bool isServing () const QSE_CPP_NOEXCEPT
 	{ 
@@ -247,7 +245,6 @@ protected:
 	WorkerList worker_list[2];
 	QSE::SpinLock worker_list_spl;
 
-	ErrorCode     errcode;
 	bool          stop_requested;
 	bool          server_serving;
 	qse_size_t    max_connections;

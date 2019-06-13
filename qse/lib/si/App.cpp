@@ -445,7 +445,7 @@ int App::set_signal_subscription_no_mutex (int sig, SignalState reqstate, bool i
 	return reqstate;
 }
 
-int App::guardProcess (const SignalSet& signals, const qse_mchar_t* proc_name)
+int App::guardProcess (const SignalSet& signals, qse_mtime_t guard_pause_ms, const qse_mchar_t* proc_name)
 {
 	SignalState old_ss[QSE_NSIGS];
 	int seq = 0;
@@ -518,6 +518,8 @@ int App::guardProcess (const SignalSet& signals, const qse_mchar_t* proc_name)
 			// within a very short time.
 			::kill (-pid, SIGKILL); 
 		}
+
+		if (guard_pause_ms > 0) qse_msleep (guard_pause_ms);
 	}
 
 	// TODO: if (proc_name) qse_set_proc_name (proc_name);
