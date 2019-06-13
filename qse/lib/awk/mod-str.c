@@ -354,6 +354,64 @@ static int fnc_tocharcode (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	return 0;
 }
 
+
+static int fnc_frommbs (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	/* str::frommbs(B"byte-string") */
+	qse_awk_val_t* a0, * r;
+
+	a0 = qse_awk_rtx_getarg(rtx, 0);
+	switch (QSE_AWK_RTX_GETVALTYPE(rtx, a0))
+	{
+
+		case QSE_AWK_VAL_STR:
+			r = a0;
+			break;
+
+		default:
+		{
+			qse_cstr_t str;
+			str.ptr = qse_awk_rtx_getvalstr(rtx, a0, &str.len);
+			if (!str.ptr) return -1;
+			r = qse_awk_rtx_makestrvalwithxstr(rtx, &str);
+			qse_awk_rtx_freevalstr (rtx, a0, str.ptr);
+			if (!r) return -1;
+			break;
+		}
+	}
+
+	qse_awk_rtx_setretval (rtx, r);
+	return 0;
+}
+
+static int fnc_tombs (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	/* str::tombs("string") */
+	qse_awk_val_t* a0, * r;
+
+	a0 = qse_awk_rtx_getarg(rtx, 0);
+	switch (QSE_AWK_RTX_GETVALTYPE(rtx, a0))
+	{
+		case QSE_AWK_VAL_MBS:
+			r = a0;
+			break;
+
+		default:
+		{
+			qse_mcstr_t str;
+			str.ptr = qse_awk_rtx_getvalmbs(rtx, a0, &str.len);
+			if (!str.ptr) return -1;
+			r = qse_awk_rtx_makembsvalwithmxstr(rtx, &str);
+			qse_awk_rtx_freevalmbs (rtx, a0, str.ptr);
+			if (!r) return -1;
+			break;
+		}
+	}
+
+	qse_awk_rtx_setretval (rtx, r);
+	return 0;
+}
+
 static int fnc_tonum (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
 	/* str::tonum(value) */
@@ -443,6 +501,7 @@ static fnctab_t fnctab[] =
 {
 	/* keep this table sorted for binary search in query(). */
 	{ QSE_T("fromcharcode"), { { 0, A_MAX, QSE_NULL },  fnc_fromcharcode,      0 } },
+	{ QSE_T("frommbs"),      { { 1, 1, QSE_NULL },      fnc_frommbs,           0 } },
 	{ QSE_T("gsub"),         { { 2, 3, QSE_T("xvr")},   qse_awk_fnc_gsub,      0 } },
 	{ QSE_T("index"),        { { 2, 3, QSE_NULL },      qse_awk_fnc_index,     0 } },
 	{ QSE_T("isalnum"),      { { 1, 1, QSE_NULL },      fnc_isalnum,           0 } },
@@ -469,6 +528,7 @@ static fnctab_t fnctab[] =
 	{ QSE_T("substr"),       { { 2, 3, QSE_NULL },      qse_awk_fnc_substr,    0 } },
 	{ QSE_T("tocharcode"),   { { 1, 2, QSE_NULL },      fnc_tocharcode,        0 } },
 	{ QSE_T("tolower"),      { { 1, 1, QSE_NULL },      qse_awk_fnc_tolower,   0 } },
+	{ QSE_T("tombs"),        { { 1, 1, QSE_NULL },      fnc_tombs,             0 } },
 	{ QSE_T("tonum"),        { { 1, 2, QSE_NULL },      fnc_tonum,             0 } },
 	{ QSE_T("toupper"),      { { 1, 1, QSE_NULL },      qse_awk_fnc_toupper,   0 } },
 	{ QSE_T("trim"),         { { 1, 2, QSE_NULL },      fnc_trim,              0 } }

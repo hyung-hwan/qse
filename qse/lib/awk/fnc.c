@@ -983,9 +983,9 @@ static int __substitute (qse_awk_rtx_t* rtx, qse_awk_int_t max_count)
 	nargs = qse_awk_rtx_getnargs (rtx);
 	QSE_ASSERT (nargs >= 2 && nargs <= 3);
 
-	a0 = qse_awk_rtx_getarg (rtx, 0);
-	a1 = qse_awk_rtx_getarg (rtx, 1);
-	a2 = (nargs >= 3)? qse_awk_rtx_getarg (rtx, 2): QSE_NULL;
+	a0 = qse_awk_rtx_getarg(rtx, 0);
+	a1 = qse_awk_rtx_getarg(rtx, 1);
+	a2 = (nargs >= 3)? qse_awk_rtx_getarg(rtx, 2): QSE_NULL;
 
 	a0_vtype = QSE_AWK_RTX_GETVALTYPE (rtx, a0);
 	QSE_ASSERT (a2 == QSE_NULL || QSE_AWK_RTX_GETVALTYPE(rtx, a2) == QSE_AWK_VAL_REF);
