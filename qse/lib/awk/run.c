@@ -3071,7 +3071,7 @@ static int run_printf (qse_awk_rtx_t* rtx, qse_awk_nde_print_t* nde)
 
 		case QSE_AWK_VAL_MBS:
 			/* perform the formatted output */
-			n = output_formatted_bytes (rtx, nde->out_type, dst, ((qse_awk_val_mbs_t*)v)->val.ptr, ((qse_awk_val_mbs_t*)v)->val.len, head->next);
+			n = output_formatted_bytes(rtx, nde->out_type, dst, ((qse_awk_val_mbs_t*)v)->val.ptr, ((qse_awk_val_mbs_t*)v)->val.len, head->next);
 			qse_awk_rtx_refdownval (rtx, v);
 			if (n <= -1)
 			{

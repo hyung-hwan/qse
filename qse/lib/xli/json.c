@@ -796,7 +796,7 @@ static int feed_json_data (qse_json_t* json, const qse_mchar_t* data, qse_size_t
 		else if (n > bcslen)
 		{
 			/* incomplete sequence */
-			*xlen = bcslen; /* need at lease this much */
+			*xlen = ptr - data; /* didn't manage to process in full */
 			return 0; /* feed more for incomplete sequence */
 		}
 
