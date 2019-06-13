@@ -33,16 +33,17 @@
 
 QSE_BEGIN_NAMESPACE(QSE)
 
+template <typename ERRCODE, int MSGSZ>
 class QSE_EXPORT ErrorGrab
 {
 public:
-	ErrorGrab(): _errcode(Types::E_ENOERR) 
+	ErrorGrab(): _errcode((ERRCODE)0)
 	{
 		this->_errmsg[0] = QSE_T('\0');
 		this->_errmsg_backup[0] = QSE_T('\0');
 	}
 
-	Types::ErrorCode getErrorCode () const QSE_CPP_NOEXCEPT { return this->_errcode; }
+	ERRCODE getErrorCode () const QSE_CPP_NOEXCEPT { return this->_errcode; }
 
 	const qse_char_t* getErrorMsg () const QSE_CPP_NOEXCEPT { return this->_errmsg; }
 	const qse_char_t* backupErrorMsg () QSE_CPP_NOEXCEPT  
@@ -51,13 +52,13 @@ public:
 		return this->_errmsg_backup;
 	}
 
-	void setErrorFmtv (Types::ErrorCode errcode, const qse_char_t* fmt, va_list ap) QSE_CPP_NOEXCEPT
+	void setErrorFmtv (ERRCODE errcode, const qse_char_t* fmt, va_list ap) QSE_CPP_NOEXCEPT
 	{
 		this->_errcode = errcode;
 		qse_strxvfmt (this->_errmsg, QSE_COUNTOF(this->_errmsg), fmt, ap);
 	}
 
-	void setErrorFmt (Types::ErrorCode errcode, const qse_char_t* fmt, ...) QSE_CPP_NOEXCEPT
+	void setErrorFmt (ERRCODE errcode, const qse_char_t* fmt, ...) QSE_CPP_NOEXCEPT
 	{
 		va_list ap;
 		va_start (ap, fmt);
@@ -65,13 +66,16 @@ public:
 		va_end (ap);
 	}
 
-	void setErrorCode (Types::ErrorCode errcode);
+	void setErrorCode (ERRCODE errcode);
 
 private:
-	Types::ErrorCode _errcode;
-	qse_char_t _errmsg_backup[256];
-	qse_char_t _errmsg[256];
+	ERRCODE _errcode;
+	qse_char_t _errmsg_backup[MSGSZ];
+	qse_char_t _errmsg[MSGSZ];
 };
+
+typedef ErrorGrab<Types::ErrorCode, 128> ErrorGrab128;
+typedef ErrorGrab<Types::ErrorCode, 256> ErrorGrab256;
 
 QSE_END_NAMESPACE(QSE)
 

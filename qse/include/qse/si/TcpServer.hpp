@@ -41,7 +41,7 @@ QSE_BEGIN_NAMESPACE(QSE)
 // The TcpServer class implements a simple block TCP server that start a thread
 // for each connection accepted.
 
-class QSE_EXPORT TcpServer: public Uncopyable, public Mmged, public Types, public ErrorGrab
+class QSE_EXPORT TcpServer: public Uncopyable, public Mmged, public Types, public ErrorGrab256
 {
 public:
 	TcpServer (Mmgr* mmgr = QSE_NULL) QSE_CPP_NOEXCEPT;
