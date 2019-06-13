@@ -1061,7 +1061,8 @@ static int mbs_to_str (qse_awk_rtx_t* rtx, const qse_mchar_t* str, qse_size_t st
 
 			mbslen = str_len;
 			wcslen = out->u.cplcpy.len;
-			if (qse_mbsntowcsnallwithcmgr(str, &mbslen, out->u.cplcpy.ptr, &wcslen, qse_findcmgrbyid(QSE_CMGR_MB8)) <= -1 || wcslen >= out->u.cplcpy.len)
+			/*if (qse_mbsntowcsnallwithcmgr(str, &mbslen, out->u.cplcpy.ptr, &wcslen, qse_findcmgrbyid(QSE_CMGR_MB8)) <= -1 || wcslen >= out->u.cplcpy.len)*/
+			if (qse_mbsntowcsnallwithcmgr(str, &mbslen, out->u.cplcpy.ptr, &wcslen, rtx->awk->cmgr) <= -1 || wcslen >= out->u.cplcpy.len)
 			{
 				qse_awk_rtx_seterrnum (rtx, QSE_AWK_EINVAL, QSE_NULL); /* TODO: change error code */
 				return -1;
@@ -1079,7 +1080,8 @@ static int mbs_to_str (qse_awk_rtx_t* rtx, const qse_mchar_t* str, qse_size_t st
 			qse_size_t mbslen, wcslen;
 
 			mbslen = str_len;
-			tmp = qse_mbsntowcsalldupwithcmgr(str, &mbslen, &wcslen, rtx->awk->mmgr, qse_findcmgrbyid(QSE_CMGR_MB8));
+			/*tmp = qse_mbsntowcsalldupwithcmgr(str, &mbslen, &wcslen, rtx->awk->mmgr, qse_findcmgrbyid(QSE_CMGR_MB8));*/
+			tmp = qse_mbsntowcsalldupwithcmgr(str, &mbslen, &wcslen, rtx->awk->mmgr, rtx->awk->cmgr);
 			if (!tmp) 
 			{
 				qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
@@ -1096,7 +1098,8 @@ static int mbs_to_str (qse_awk_rtx_t* rtx, const qse_mchar_t* str, qse_size_t st
 			qse_size_t n;
 
 			qse_str_clear (out->u.strp);
-			n = qse_str_ncatmbs(out->u.strp, str, str_len, qse_findcmgrbyid(QSE_CMGR_MB8));
+			/*n = qse_str_ncatmbs(out->u.strp, str, str_len, qse_findcmgrbyid(QSE_CMGR_MB8));*/
+			n = qse_str_ncatmbs(out->u.strp, str, str_len, rtx->awk->cmgr);
 			if (n == (qse_size_t)-1)
 			{
 				qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
@@ -1109,7 +1112,8 @@ static int mbs_to_str (qse_awk_rtx_t* rtx, const qse_mchar_t* str, qse_size_t st
 		{
 			qse_size_t n;
 
-			n = qse_str_ncatmbs(out->u.strpcat, str, str_len, qse_findcmgrbyid(QSE_CMGR_MB8));
+			/*n = qse_str_ncatmbs(out->u.strpcat, str, str_len, qse_findcmgrbyid(QSE_CMGR_MB8));*/
+			n = qse_str_ncatmbs(out->u.strpcat, str, str_len, rtx->awk->cmgr);
 			if (n == (qse_size_t)-1)
 			{
 				qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
@@ -1515,10 +1519,10 @@ qse_mchar_t* qse_awk_rtx_valtombsdup (qse_awk_rtx_t* rtx, const qse_awk_val_t* v
 
 	#if defined(QSE_CHAR_IS_MCHAR)
 		mbs = qse_strxdup(str0, len0, rtx->awk->mmgr);
+		len1 = len0;
 	#else
 		mbs = qse_wcsntombsdupwithcmgr(str0, len0, &len1, rtx->awk->mmgr, rtx->awk->cmgr);
 	#endif
-
 		qse_awk_rtx_freevalstr (rtx, v, str0);
 		if (!mbs) 
 		{
