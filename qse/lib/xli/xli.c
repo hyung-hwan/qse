@@ -655,8 +655,7 @@ qse_xli_list_t* qse_xli_yieldroot (qse_xli_t* xli)
 
 /* ------------------------------------------------------ */
 
-static qse_size_t count_pairs_by_key (
-	qse_xli_t* xli, const qse_xli_list_t* list, const qse_cstr_t* key)
+static qse_size_t count_pairs_by_key (qse_xli_t* xli, const qse_xli_list_t* list, const qse_cstr_t* key)
 {
 	qse_xli_atom_t* p;
 	qse_size_t count = 0;
@@ -677,9 +676,7 @@ static qse_size_t count_pairs_by_key (
 	return count;
 }
 
-static qse_xli_pair_t* find_pair_by_key_and_alias (
-	qse_xli_t* xli, const qse_xli_list_t* list, 
-	const qse_cstr_t* key, const qse_cstr_t* alias)
+static qse_xli_pair_t* find_pair_by_key_and_alias (qse_xli_t* xli, const qse_xli_list_t* list, const qse_cstr_t* key, const qse_cstr_t* alias)
 {
 	qse_xli_atom_t* p;
 
@@ -703,9 +700,7 @@ static qse_xli_pair_t* find_pair_by_key_and_alias (
 	return QSE_NULL;
 }
 
-static qse_xli_pair_t* find_pair_by_key_and_index (
-	qse_xli_t* xli, const qse_xli_list_t* list, 
-	const qse_cstr_t* key, qse_size_t index)
+static qse_xli_pair_t* find_pair_by_key_and_index (qse_xli_t* xli, const qse_xli_list_t* list, const qse_cstr_t* key, qse_size_t index)
 {
 	qse_xli_atom_t* p;
 	qse_size_t count = 0;
@@ -824,7 +819,7 @@ inval:
 	return QSE_NULL;
 }
 
-qse_xli_pair_t* qse_xli_findpair (qse_xli_t* xli, const qse_xli_list_t* list, const qse_char_t* fqpn)
+static qse_xli_pair_t* __find_pair (qse_xli_t* xli, const qse_xli_list_t* list, const qse_char_t* fqpn, qse_xli_list_t** owning_list, qse_cstr_t* last_key_seg)
 {
 	const qse_char_t* ptr;
 	const qse_xli_list_t* curlist;
@@ -865,7 +860,12 @@ qse_xli_pair_t* qse_xli_findpair (qse_xli_t* xli, const qse_xli_list_t* list, co
 		}
 
 		if (pair == QSE_NULL) goto noent;
-		if (*ptr == QSE_T('\0')) return pair; /* no more segments */
+		if (*ptr == QSE_T('\0')) 
+		{
+			if (last_key_seg) *last_key_seg = seg.key;
+			if (owning_list) *owning_list = curlist;
+			return pair; /* no more segments */
+		}
 
 		/* more segments to handle */
 		QSE_ASSERT (*ptr == xli->opt.key_splitter);
@@ -886,68 +886,24 @@ noent:
 	return QSE_NULL;
 }
 
-#include <qse/si/sio.h>
+qse_xli_pair_t* qse_xli_findpair (qse_xli_t* xli, const qse_xli_list_t* list, const qse_char_t* fqpn)
+{
+	return __find_pair(xli, list, fqpn, QSE_NULL, QSE_NULL);
+}
+
 qse_xli_pair_t* qse_xli_findpairatindex (qse_xli_t* xli, const qse_xli_list_t* list, const qse_char_t* fqpn, qse_size_t idx)
 {
-	const qse_char_t* ptr;
-	const qse_xli_list_t* curlist;
-	fqpn_seg_t seg;
+	qse_xli_list_t* owning_list;
+	qse_cstr_t last_key_seg;
+	qse_xli_pair_t* pair;
 
-	curlist = list? list: &xli->root->list;
+	/* find a pair with the given fully qualified name. the last segment is not supposed to contain an index. */
+	pair = __find_pair(xli, list, fqpn, &owning_list, &last_key_seg);
+	if (!pair) return QSE_NULL;
 
-	ptr = fqpn;
-	while (1)
-	{
-		qse_xli_pair_t* pair;
-
-		ptr = get_next_fqpn_segment(xli, ptr, &seg);
-		if (ptr == QSE_NULL) return QSE_NULL;
-
-		if (curlist->type != QSE_XLI_LIST) 
-		{
-			/* check the type of curlist. this check is needed
-			 * because of the unconditional switching at the bottom of the 
-			 * this loop. this implementation strategy has been chosen
-			 * to provide the segment name easily when setting the error. */
-			goto noent;
-		}
-
-qse_printf (QSE_T(">>>> key [%js]\n"), seg.key);
-		switch (seg.idxtype)
-		{
-			case FQPN_SEG_IDX_NONE: 
-				pair = find_pair_by_key_and_alias(xli, curlist, &seg.key, QSE_NULL);
-				break;
-
-			case FQPN_SEG_IDX_NUMBER:
-				pair = find_pair_by_key_and_index(xli, curlist, &seg.key, seg.idx.number);
-				break;
-
-			default: /*case FQPN_SEG_IDX_ALIAS:*/
-				pair = find_pair_by_key_and_alias(xli, curlist, &seg.key, &seg.idx.alias);
-				break;
-		}
-
-		if (pair == QSE_NULL) goto noent;
-		if (*ptr == QSE_T('\0')) return pair; /* no more segments */
-
-		/* more segments to handle */
-		QSE_ASSERT (*ptr == xli->opt.key_splitter);
-		ptr++; /* skip . */
-
-		/* switch to the value regardless of its type.
-		 * check if it is a list in the beginning of the loop
-		 * just after having gotten the next segment alias */
-		curlist = (qse_xli_list_t*)pair->val;
-	}
-
-	/* this part must never be reached */
-	qse_xli_seterrnum (xli, QSE_XLI_EINTERN, QSE_NULL);
-	return QSE_NULL;
-
-noent:
-	qse_xli_seterrnum (xli, QSE_XLI_ENOENT, &seg.ki);
-	return QSE_NULL;
+	/* use the given index to look for a value at specific position */
+	if (idx > 0) pair = find_pair_by_key_and_index(xli, owning_list, &last_key_seg, idx);
+	return pair;
 }
 
 qse_xli_pair_t* qse_xli_setpairwithstr (qse_xli_t* xli, const qse_xli_list_t* list, const qse_char_t* fqpn, const qse_cstr_t* value, const qse_char_t* strtag)
