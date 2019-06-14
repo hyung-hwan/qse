@@ -33,17 +33,17 @@
 
 QSE_BEGIN_NAMESPACE(QSE)
 
-template <typename ERRCODE, typename ERRCODETOSTR, int MSGSZ>
+template <typename ERRNUM, typename ERRNUMTOSTR, int MSGSZ>
 class QSE_EXPORT ErrorGrab
 {
 public:
-	ErrorGrab(): _errcode((ERRCODE)0)
+	ErrorGrab(): _errnum((ERRNUM)0)
 	{
 		this->_errmsg[0] = QSE_T('\0');
 		this->_errmsg_backup[0] = QSE_T('\0');
 	}
 
-	ERRCODE getErrorCode () const QSE_CPP_NOEXCEPT { return this->_errcode; }
+	ERRNUM getErrorNumber () const QSE_CPP_NOEXCEPT { return this->_errnum; }
 
 	const qse_char_t* getErrorMsg () const QSE_CPP_NOEXCEPT { return this->_errmsg; }
 	const qse_char_t* backupErrorMsg () QSE_CPP_NOEXCEPT  
@@ -52,41 +52,41 @@ public:
 		return this->_errmsg_backup;
 	}
 
-	void setErrorFmtv (ERRCODE errcode, const qse_char_t* fmt, va_list ap) QSE_CPP_NOEXCEPT
+	void setErrorFmtv (ERRNUM errnum, const qse_char_t* fmt, va_list ap) QSE_CPP_NOEXCEPT
 	{
-		this->_errcode = errcode;
+		this->_errnum = errnum;
 		qse_strxvfmt (this->_errmsg, QSE_COUNTOF(this->_errmsg), fmt, ap);
 	}
 
-	void setErrorFmt (ERRCODE errcode, const qse_char_t* fmt, ...) QSE_CPP_NOEXCEPT
+	void setErrorFmt (ERRNUM errnum, const qse_char_t* fmt, ...) QSE_CPP_NOEXCEPT
 	{
 		va_list ap;
 		va_start (ap, fmt);
-		this->setErrorFmtv (errcode, fmt, ap);
+		this->setErrorFmtv (errnum, fmt, ap);
 		va_end (ap);
 	}
 
-	void setErrorCode (ERRCODE errcode)
+	void setErrorNumber (ERRNUM errnum)
 	{
-		this->_errcode = errcode;
-		qse_strxcpy (this->_errmsg, QSE_COUNTOF(this->_errmsg), this->_errtostr(errcode));
+		this->_errnum = errnum;
+		qse_strxcpy (this->_errmsg, QSE_COUNTOF(this->_errmsg), this->_errtostr(errnum));
 	}
 
 private:
-	ERRCODE _errcode;
-	ERRCODETOSTR _errtostr;
+	ERRNUM _errnum;
+	ERRNUMTOSTR _errtostr;
 	qse_char_t _errmsg_backup[MSGSZ];
 	qse_char_t _errmsg[MSGSZ];
 };
 
-// the stock functor class to convert the Types::ErrorCode to a string
-struct TypesErrorCodeToStr
+// the stock functor class to convert the Types::ErrorNumber to a string
+struct TypesErrorNumberToStr
 {
-	const qse_char_t* operator() (Types::ErrorCode errcode);
+	const qse_char_t* operator() (Types::ErrorNumber errnum);
 };
 
-typedef ErrorGrab<Types::ErrorCode, TypesErrorCodeToStr, 128> ErrorGrab128;
-typedef ErrorGrab<Types::ErrorCode, TypesErrorCodeToStr, 256> ErrorGrab256;
+typedef ErrorGrab<Types::ErrorNumber, TypesErrorNumberToStr, 128> ErrorGrab128;
+typedef ErrorGrab<Types::ErrorNumber, TypesErrorNumberToStr, 256> ErrorGrab256;
 
 QSE_END_NAMESPACE(QSE)
 

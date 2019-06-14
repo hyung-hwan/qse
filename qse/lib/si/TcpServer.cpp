@@ -41,7 +41,7 @@
 QSE_BEGIN_NAMESPACE(QSE)
 
 #include "../cmn/syserr.h"
-IMPLEMENT_SYSERR_TO_ERRNUM (TcpServer::ErrorCode, TcpServer::)
+IMPLEMENT_SYSERR_TO_ERRNUM (TcpServer::ErrorNumber, TcpServer::)
 
 int TcpServer::Worker::main ()
 {
@@ -205,10 +205,10 @@ void TcpServer::dispatch_mux_event (qse_mux_t* mux, const qse_mux_evt_t* evt) QS
 
 			if (server->isStopRequested()) return; /* normal termination requested */
 
-			Socket::ErrorCode lerr = lsck->getErrorCode();
+			Socket::ErrorNumber lerr = lsck->getErrorNumber();
 			if (lerr == Socket::E_EINTR || lerr == Socket::E_EAGAIN) return;
 
-			server->setErrorCode (lerr);
+			server->setErrorNumber (lerr);
 			server->stop ();
 			return;
 		}
@@ -262,7 +262,7 @@ int TcpServer::setup_listeners (const qse_char_t* addrs) QSE_CPP_NOEXCEPT
 		if (errno != 0)
 			this->setErrorFmt (syserr_to_errnum(errno), QSE_T("%hs"), strerror(errno));
 		else
-			this->setErrorCode (E_ENOMEM);
+			this->setErrorNumber (E_ENOMEM);
 		return -1;
 	}
 	mux_xtn_t* mux_xtn = (mux_xtn_t*)qse_mux_getxtn(mux);
@@ -294,11 +294,11 @@ int TcpServer::setup_listeners (const qse_char_t* addrs) QSE_CPP_NOEXCEPT
 	ev.data = QSE_NULL;
 	if (qse_mux_insert(mux, &ev) <= -1)
 	{
-		this->setErrorCode (E_ESYSERR);
+		this->setErrorNumber (E_ESYSERR);
 		goto oops;
 	}
 
-	this->setErrorCode (E_ENOERR);
+	this->setErrorNumber (E_ENOERR);
 
 	addr_ptr = addrs;
 	while (1)
@@ -373,7 +373,7 @@ int TcpServer::setup_listeners (const qse_char_t* addrs) QSE_CPP_NOEXCEPT
 
 	if (!this->listener_list.head) 
 	{
-		if (this->getErrorCode() == E_ENOERR)
+		if (this->getErrorNumber() == E_ENOERR)
 		{
 			this->setErrorFmt (E_EINVAL, QSE_T("unable to create liteners with %js"), addrs);
 		}
@@ -429,7 +429,7 @@ int TcpServer::start (const qse_char_t* addrs) QSE_CPP_NOEXCEPT
 				qse_mux_errnum_t merr = qse_mux_geterrnum(this->listener_list.mux);
 				if (merr != QSE_MUX_EINTR)
 				{
-					this->setErrorCode (E_ESYSERR); // TODO: proper error code conversion
+					this->setErrorNumber (E_ESYSERR); // TODO: proper error code conversion
 					xret = -1;
 					break;
 				}
@@ -444,7 +444,7 @@ int TcpServer::start (const qse_char_t* addrs) QSE_CPP_NOEXCEPT
 		this->delete_all_workers (Worker::LIVE);
 		this->delete_all_workers (Worker::DEAD);
 
-		this->setErrorCode (E_EEXCEPT);
+		this->setErrorNumber (E_EEXCEPT);
 		this->server_serving = false;
 		this->setStopRequested (false);
 		this->free_all_listeners ();
@@ -521,17 +521,17 @@ int TcpServer::prepare_to_acquire_wid () QSE_CPP_NOEXCEPT
 	{
 		if (this->wid_map.capa >= WID_MAX)
 		{
-			this->setErrorCode (E_ENOMEM); // TODO: proper error code
+			this->setErrorNumber (E_ENOMEM); // TODO: proper error code
 			return -1;
 		}
 
 		new_capa = WID_MAX;
 	}
 
-	tmp = (wid_map_data_t*)QSE_MMGR_REALLOC(this->getMmgr(), this->wid_map.ptr, QSE_SIZEOF(*tmp) * new_capa);
+	tmp = (wid_map_data_t*)this->getMmgr()->reallocate(this->wid_map.ptr, QSE_SIZEOF(*tmp) * new_capa, false);
 	if (!tmp) 
 	{
-		this->setErrorCode (E_ENOMEM);
+		this->setErrorNumber (E_ENOMEM);
 		return -1;
 	}
 
@@ -591,7 +591,7 @@ void TcpServer::free_wid_map () QSE_CPP_NOEXCEPT
 {
 	if (this->wid_map.ptr)
 	{
-		QSE_MMGR_FREE (this->getMmgr(), this->wid_map.ptr);
+		this->getMmgr()->dispose (this->wid_map.ptr);
 		this->wid_map.capa = 0;
 		this->wid_map.free_first = wid_map_t::WID_INVALID;
 		this->wid_map.free_last = wid_map_t::WID_INVALID;

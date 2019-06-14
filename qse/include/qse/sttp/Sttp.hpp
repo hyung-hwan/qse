@@ -39,7 +39,7 @@ QSE_BEGIN_NAMESPACE(QSE)
 class Sttp: public Mmged, public Uncopyable
 {
 public:
-	enum ErrorCode
+	enum ErrorNumber
 	{
 		E_NOERR = 0,
 		E_MEMORY,
@@ -53,8 +53,7 @@ public:
 		E_SEMICOLON,
 		E_TOOMANYARGS,
 		E_WRONGARG,
-		E_WRONGCHAR,
-		__NERRCODES__
+		E_WRONGCHAR
 	};
 
 	Sttp (Transmittable* s = QSE_NULL, Mmgr* mmgr = QSE_NULL) QSE_CPP_NOEXCEPT;
@@ -89,7 +88,7 @@ public:
 		this->opt_send_newline = opt;
 	}
 
-	int getErrorCode() const QSE_CPP_NOEXCEPT
+	int getErrorNumber() const QSE_CPP_NOEXCEPT
 	{
 		return this->p_errcode;
 	}
@@ -105,8 +104,8 @@ public:
 	// Socket sck;
 	// Sttp sttp(sck);
 	// if (sttp->receiveCmd(&cmd) <= -1 && 
-	//     sttp->getErrorCode() == Sttp::E_RECEIVE &&
-	//     sck->getErrorCode() == Socket::E_EAGAIN) { ... }
+	//     sttp->getErrorNumber() == Sttp::E_RECEIVE &&
+	//     sck->getErrorNumber() == Socket::E_EAGAIN) { ... }
 	// \endcode
 	//
 	// \return 1 if a command is received. 0 if end of input is detected
@@ -120,7 +119,7 @@ public:
 
 	const qse_char_t* getErrorStr () const QSE_CPP_NOEXCEPT;
 
-	void setErrorCode (int code) QSE_CPP_NOEXCEPT
+	void setErrorNumber (int code) QSE_CPP_NOEXCEPT
 	{
 		this->p_errcode = code;
 	}
@@ -145,7 +144,7 @@ protected:
 	};
 
 	Transmittable* p_medium;
-	int p_errcode; /* ErrorCode */
+	int p_errcode; /* ErrorNumber */
 
 	qse_mchar_t inbuf [MAX_INBUF_LEN];
 	qse_mchar_t outbuf[MAX_OUTBUF_LEN];

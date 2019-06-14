@@ -355,7 +355,7 @@ public:
 		}
 		catch (...)
 		{
-			this->setErrorCode (E_ENOMEM);
+			this->setErrorNumber (E_ENOMEM);
 			return -1;
 		}
 
@@ -390,7 +390,7 @@ private:
 	{
 		if (!this->__lfunc)
 		{
-			//this->setErrorCode (TcpServer::E_ENOMEM or E_EINVAL??);
+			//this->setErrorNumber (TcpServer::E_ENOMEM or E_EINVAL??);
 			return -1;
 		}
 
