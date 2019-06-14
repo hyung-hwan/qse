@@ -735,6 +735,13 @@ QSE_EXPORT qse_xli_pair_t* qse_xli_findpair (
 	const qse_char_t*      fqpn
 );
 
+QSE_EXPORT qse_xli_pair_t* qse_xli_findpairatindex (
+	qse_xli_t*             xli,
+	const qse_xli_list_t*  list,
+	const qse_char_t*      fqpn,
+	qse_size_t             index
+);
+
 /**
  * The qse_xli_setpairwithstr() finds an existing pair with the fully qualified
  * pair name and updates its value with a new string value.

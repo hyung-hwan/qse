@@ -886,6 +886,70 @@ noent:
 	return QSE_NULL;
 }
 
+#include <qse/si/sio.h>
+qse_xli_pair_t* qse_xli_findpairatindex (qse_xli_t* xli, const qse_xli_list_t* list, const qse_char_t* fqpn, qse_size_t idx)
+{
+	const qse_char_t* ptr;
+	const qse_xli_list_t* curlist;
+	fqpn_seg_t seg;
+
+	curlist = list? list: &xli->root->list;
+
+	ptr = fqpn;
+	while (1)
+	{
+		qse_xli_pair_t* pair;
+
+		ptr = get_next_fqpn_segment(xli, ptr, &seg);
+		if (ptr == QSE_NULL) return QSE_NULL;
+
+		if (curlist->type != QSE_XLI_LIST) 
+		{
+			/* check the type of curlist. this check is needed
+			 * because of the unconditional switching at the bottom of the 
+			 * this loop. this implementation strategy has been chosen
+			 * to provide the segment name easily when setting the error. */
+			goto noent;
+		}
+
+qse_printf (QSE_T(">>>> key [%js]\n"), seg.key);
+		switch (seg.idxtype)
+		{
+			case FQPN_SEG_IDX_NONE: 
+				pair = find_pair_by_key_and_alias(xli, curlist, &seg.key, QSE_NULL);
+				break;
+
+			case FQPN_SEG_IDX_NUMBER:
+				pair = find_pair_by_key_and_index(xli, curlist, &seg.key, seg.idx.number);
+				break;
+
+			default: /*case FQPN_SEG_IDX_ALIAS:*/
+				pair = find_pair_by_key_and_alias(xli, curlist, &seg.key, &seg.idx.alias);
+				break;
+		}
+
+		if (pair == QSE_NULL) goto noent;
+		if (*ptr == QSE_T('\0')) return pair; /* no more segments */
+
+		/* more segments to handle */
+		QSE_ASSERT (*ptr == xli->opt.key_splitter);
+		ptr++; /* skip . */
+
+		/* switch to the value regardless of its type.
+		 * check if it is a list in the beginning of the loop
+		 * just after having gotten the next segment alias */
+		curlist = (qse_xli_list_t*)pair->val;
+	}
+
+	/* this part must never be reached */
+	qse_xli_seterrnum (xli, QSE_XLI_EINTERN, QSE_NULL);
+	return QSE_NULL;
+
+noent:
+	qse_xli_seterrnum (xli, QSE_XLI_ENOENT, &seg.ki);
+	return QSE_NULL;
+}
+
 qse_xli_pair_t* qse_xli_setpairwithstr (qse_xli_t* xli, const qse_xli_list_t* list, const qse_char_t* fqpn, const qse_cstr_t* value, const qse_char_t* strtag)
 {
 	qse_xli_pair_t* pair, * xpair;

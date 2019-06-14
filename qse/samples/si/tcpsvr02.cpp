@@ -18,29 +18,29 @@
 #include <string.h>
 
 #if defined(QSE_LANG_CPP11)
-QSE::TcpServerL<int(QSE::TcpServer::Worker*)>* g_server;
+QSE::TcpServerL<int(QSE::TcpServer::Connection*)>* g_server;
 #else
 
 class ClientHandler
 {
 public:
-	int operator() (QSE::TcpServer* server, QSE::TcpServer::Worker* worker)
+	int operator() (QSE::TcpServer* server, QSE::TcpServer::Connection* connection)
 	{
 		qse_char_t addrbuf[128];
 		qse_uint8_t bb[256];
 		qse_ssize_t n;
 
-		worker->address.toStrBuf(addrbuf, QSE_COUNTOF(addrbuf));
-		qse_printf (QSE_T("hello word..from %s[%zu]\n"), addrbuf, worker->getWid());
+		connection->address.toStrBuf(addrbuf, QSE_COUNTOF(addrbuf));
+		qse_printf (QSE_T("hello word..from %s[%zu]\n"), addrbuf, connection->getWid());
 
-		QSE::Sttp sttp (&worker->socket);
+		QSE::Sttp sttp (&connection->socket);
 		QSE::SttpCmd cmd;
 		while (!server->isStopRequested())
 		{
 			int n = sttp.receiveCmd(&cmd);
 			if (n <= -1)
 			{
-				qse_printf (QSE_T("%s[%zu] -> got error\n"), addrbuf, worker->getWid());
+				qse_printf (QSE_T("%s[%zu] -> got error\n"), addrbuf, connection->getWid());
 				break;
 			}
 			else if (n == 0) break;
@@ -51,7 +51,7 @@ public:
 			sttp.sendCmd(cmd);
 		}
 
-		qse_printf (QSE_T("byte to %s -> wid %zu\n"), addrbuf, worker->getWid());
+		qse_printf (QSE_T("byte to %s -> wid %zu\n"), addrbuf, connection->getWid());
 		return 0;
 	}
 };
@@ -65,36 +65,36 @@ static int test1 (void)
 	QSE::HeapMmgr heap_mmgr (30000, QSE::Mmgr::getDFL());
 
 #if defined(QSE_LANG_CPP11)
-	QSE::TcpServerL<int(QSE::TcpServer::Worker*)> server (
+	QSE::TcpServerL<int(QSE::TcpServer::Connection*)> server (
 
 		// workload by lambda
-		([&server](QSE::TcpServer::Worker* worker) {
+		([&server](QSE::TcpServer::Connection* connection) {
 			qse_char_t addrbuf[128];
 			qse_uint8_t bb[256];
 			qse_ssize_t n;
 
-			worker->address.toStrBuf(addrbuf, QSE_COUNTOF(addrbuf));
-			qse_printf (QSE_T("hello word..from %s --> wid %zu\n"), addrbuf, worker->getWid());
+			connection->address.toStrBuf(addrbuf, QSE_COUNTOF(addrbuf));
+			qse_printf (QSE_T("hello word..from %s --> wid %zu\n"), addrbuf, connection->getWid());
 
-			QSE::Sttp sttp (&worker->socket);
+			QSE::Sttp sttp (&connection->socket);
 			QSE::SttpCmd cmd;
 			while (!server.isStopRequested())
 			{
 				int n = sttp.receiveCmd(&cmd);
 				if (n <= -1)
 				{
-					qse_printf (QSE_T("%s<%zu> --> got error\n"), addrbuf, worker->getWid());
+					qse_printf (QSE_T("%s<%zu> --> got error\n"), addrbuf, connection->getWid());
 					break;
 				}
 				else if (n == 0) break;
 
 				if (cmd.name == QSE_T("quit")) break;
 
-				qse_printf (QSE_T("%s<%zu> --> received command %s\n"), addrbuf, worker->getWid(), cmd.name.getBuffer());
+				qse_printf (QSE_T("%s<%zu> --> received command %s\n"), addrbuf, connection->getWid(), cmd.name.getBuffer());
 				sttp.sendCmd(cmd);
 			}
 
-			qse_printf (QSE_T("byte to %s -> wid %zu\n"), addrbuf, worker->getWid());
+			qse_printf (QSE_T("byte to %s -> wid %zu\n"), addrbuf, connection->getWid());
 			return 0;
 		}),
 

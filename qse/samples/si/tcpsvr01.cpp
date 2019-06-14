@@ -25,32 +25,32 @@
 class ClientHandler
 {
 public:
-	int operator() (QSE::TcpServer* server, QSE::TcpServer::Worker* worker)
+	int operator() (QSE::TcpServer* server, QSE::TcpServer::Connection* connection)
 	{
 		qse_char_t addrbuf[128];
 		qse_uint8_t bb[256];
 		qse_ssize_t n;
 
-		worker->address.toStrBuf(addrbuf, QSE_COUNTOF(addrbuf));
-		qse_printf (QSE_T("hello word..from %s -> wid %zu\n"), addrbuf, worker->getWid());
+		connection->address.toStrBuf(addrbuf, QSE_COUNTOF(addrbuf));
+		qse_printf (QSE_T("hello word..from %s -> wid %zu\n"), addrbuf, connection->getWid());
 
 		while (!server->isStopRequested())
 		{
-			if ((n = worker->socket.receive(bb, QSE_COUNTOF(bb))) <= 0) 
+			if ((n = connection->socket.receive(bb, QSE_COUNTOF(bb))) <= 0) 
 			{
 				qse_printf (QSE_T("%zd bytes received from %s\n"), n, addrbuf);
 				break;
 			}
-			worker->socket.send (bb, n);
+			connection->socket.send (bb, n);
 		}
 
-		qse_printf (QSE_T("byte to %s -> wid %zu\n"), addrbuf, worker->getWid());
+		qse_printf (QSE_T("byte to %s -> wid %zu\n"), addrbuf, connection->getWid());
 		return 0;
 	}
 };
 
 #if defined(QSE_LANG_CPP11)
-static QSE::TcpServerL<int(QSE::TcpServer::Worker*)>* g_server;
+static QSE::TcpServerL<int(QSE::TcpServer::Connection*)>* g_server;
 #else
 static QSE::TcpServerF<ClientHandler>* g_server;
 #endif
