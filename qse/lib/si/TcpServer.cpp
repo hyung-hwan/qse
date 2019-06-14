@@ -176,7 +176,7 @@ void TcpServer::dispatch_mux_event (qse_mux_t* mux, const qse_mux_evt_t* evt) QS
 		if (server->max_connections > 0 && server->max_connections <= server->worker_list[Worker::LIVE].getSize()) 
 		{
 			// too many connections. accept the connection and close it.
-			// TODO: logging.
+			server->errlogfmt (QSE_T("too many connections - %zu\n"), server->worker_list[Worker::LIVE].getSize());
 			goto accept_and_drop;
 		}
 
@@ -189,18 +189,19 @@ void TcpServer::dispatch_mux_event (qse_mux_t* mux, const qse_mux_evt_t* evt) QS
 		catch (...) 
 		{
 			// memory alloc failed. accept the connection and close it.
-			// TODO: logging.
+			server->errlogfmt (QSE_T("unable to instantiate worker\n"));
 			goto accept_and_drop;
 		}
 		if (server->wid_map.free_first == wid_map_t::WID_INVALID && server->prepare_to_acquire_wid() <= -1)
 		{
+			server->errlogfmt (QSE_T("unable to assign id to worker\n"));
 			QSE_CPP_DELETE_WITH_MMGR (worker, Worker, server->getMmgr());
-			// TODO: logging
 			goto accept_and_drop;
 		}
 
 		if (lsck->accept(&worker->socket, &worker->address, Socket::T_CLOEXEC) <= -1)
 		{
+			server->errlogfmt (QSE_T("unable to accept connection - %hs\n"), strerror(errno));
 			QSE_CPP_DELETE_WITH_MMGR (worker, Worker, server->getMmgr());
 
 			if (server->isStopRequested()) return; /* normal termination requested */
@@ -225,7 +226,8 @@ void TcpServer::dispatch_mux_event (qse_mux_t* mux, const qse_mux_evt_t* evt) QS
 		if (worker->start(0) <= -1)
 	#endif
 		{
-			// TODO: logging.
+			qse_char_t addrbuf[128];
+			server->errlogfmt (QSE_T("unable to start worker for connection from %s\n"), worker->address.toStrBuf(addrbuf, QSE_COUNTOF(addrbuf)));
 
 			server->worker_list_spl.lock ();
 			server->worker_list[Worker::LIVE].remove (worker);
@@ -241,8 +243,12 @@ void TcpServer::dispatch_mux_event (qse_mux_t* mux, const qse_mux_evt_t* evt) QS
 	accept_and_drop:
 		Socket s;
 		SocketAddress sa;
-		if (lsck->accept(&s, &sa, Socket::T_CLOEXEC) >= 0) s.close();
-		// TODO: logging.
+		if (lsck->accept(&s, &sa, Socket::T_CLOEXEC) >= 0) 
+		{
+			qse_char_t addrbuf[128];
+			server->errlogfmt (QSE_T("accepted but dropped connection from %s\n"), sa.toStrBuf(addrbuf, QSE_COUNTOF(addrbuf)));
+			s.close();
+		}
 	}
 
 }
@@ -313,7 +319,7 @@ int TcpServer::setup_listeners (const qse_char_t* addrs) QSE_CPP_NOEXCEPT
 
 		if (sockaddr.set(addr_ptr, addr_len) <= -1)
 		{
-			/* TODO: set error */
+			this->errlogfmt (QSE_T("unrecognized listener address - %.*js\n"), (int)addr_len, addr_ptr);
 			goto skip_segment;
 		}
 
@@ -323,13 +329,15 @@ int TcpServer::setup_listeners (const qse_char_t* addrs) QSE_CPP_NOEXCEPT
 		}
 		catch (...) 
 		{
-			/* TODO: set error */
+			this->errlogfmt (QSE_T("unable to instantiate listener\n"));
 			goto skip_segment;
 		}
 
 		if (lsck->open(sockaddr.getFamily(), QSE_SOCK_STREAM, 0, Socket::T_CLOEXEC | Socket::T_NONBLOCK) <= -1)
 		{
-			this->setErrorFmt (syserr_to_errnum(errno), QSE_T("%hs"), strerror(errno));
+			int xerrno = errno;
+			this->errlogfmt (QSE_T("unable to open listener socket on %.*js on %hs\n"), (int)addr_len, addr_ptr, strerror(xerrno));
+			this->setErrorFmt (syserr_to_errnum(xerrno), QSE_T("%hs"), strerror(xerrno));
 			goto skip_segment;
 		}
 
@@ -338,7 +346,9 @@ int TcpServer::setup_listeners (const qse_char_t* addrs) QSE_CPP_NOEXCEPT
 
 		if (lsck->bind(sockaddr) <= -1 || lsck->listen() <= -1)
 		{
-			this->setErrorFmt (syserr_to_errnum(errno), QSE_T("%hs"), strerror(errno));
+			int xerrno = errno;
+			this->errlogfmt (QSE_T("unable to bind/listen on %.*js - %hs\n"), (int)addr_len, addr_ptr, strerror(xerrno));
+			this->setErrorFmt (syserr_to_errnum(xerrno), QSE_T("%hs"), strerror(xerrno));
 			goto skip_segment;
 		}
 
@@ -348,7 +358,7 @@ int TcpServer::setup_listeners (const qse_char_t* addrs) QSE_CPP_NOEXCEPT
 		ev.data = lsck;
 		if (qse_mux_insert(mux, &ev) <= -1)
 		{
-			/* TODO: set error */
+			this->errlogfmt (QSE_T("unable to register listener on %.*js to multiplexer\n"), (int)addr_len, addr_ptr);
 			goto skip_segment;
 		}
 
