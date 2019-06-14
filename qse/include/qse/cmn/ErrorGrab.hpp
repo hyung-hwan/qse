@@ -33,7 +33,7 @@
 
 QSE_BEGIN_NAMESPACE(QSE)
 
-template <typename ERRCODE, int MSGSZ>
+template <typename ERRCODE, typename ERRCODETOSTR, int MSGSZ>
 class QSE_EXPORT ErrorGrab
 {
 public:
@@ -66,16 +66,27 @@ public:
 		va_end (ap);
 	}
 
-	void setErrorCode (ERRCODE errcode);
+	void setErrorCode (ERRCODE errcode)
+	{
+		this->_errcode = errcode;
+		qse_strxcpy (this->_errmsg, QSE_COUNTOF(this->_errmsg), this->_errtostr(errcode));
+	}
 
 private:
 	ERRCODE _errcode;
+	ERRCODETOSTR _errtostr;
 	qse_char_t _errmsg_backup[MSGSZ];
 	qse_char_t _errmsg[MSGSZ];
 };
 
-typedef ErrorGrab<Types::ErrorCode, 128> ErrorGrab128;
-typedef ErrorGrab<Types::ErrorCode, 256> ErrorGrab256;
+// the stock functor class to convert the Types::ErrorCode to a string
+struct TypesErrorCodeToStr
+{
+	const qse_char_t* operator() (Types::ErrorCode errcode);
+};
+
+typedef ErrorGrab<Types::ErrorCode, TypesErrorCodeToStr, 128> ErrorGrab128;
+typedef ErrorGrab<Types::ErrorCode, TypesErrorCodeToStr, 256> ErrorGrab256;
 
 QSE_END_NAMESPACE(QSE)
 
