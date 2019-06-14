@@ -397,14 +397,11 @@ public:
 		return INVALID_INDEX;
 	}
 
-	// i don't want expose a non-const accessor as i don't like
-	// a proper update procesure to be skipped. 
-	// use setValueAt() or update() to modify the existing element.
-	//T& operator[] (qse_size_t index)
-	//{
-	//	QSE_ASSERT (index < this->count);
-	//	return this->buffer[index];
-	//}
+	T& operator[] (qse_size_t index)
+	{
+		QSE_ASSERT (index < this->count);
+		return this->buffer[index];
+	}
 
 	const T& operator[] (qse_size_t index) const
 	{
@@ -412,14 +409,11 @@ public:
 		return this->buffer[index];
 	}
 
-	// i don't want expose a non-const accessor as i don't like
-	// a proper update procesure to be skipped. 
-	// use setValueAt() or update() to modify the existing element.
-	//T& getValueAt (qse_size_t index)
-	//{
-	//	QSE_ASSERT (index < this->count);
-	//	return this->buffer[index];
-	//}
+	T& getValueAt (qse_size_t index)
+	{
+		QSE_ASSERT (index < this->count);
+		return this->buffer[index];
+	}
 
 	const T& getValueAt (qse_size_t index) const
 	{
