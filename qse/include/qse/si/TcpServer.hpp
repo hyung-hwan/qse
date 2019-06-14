@@ -252,6 +252,7 @@ protected:
 
 	friend class TcpServer::Worker;
 	virtual int handle_worker (Worker* worker) = 0;
+	virtual void errlogfmt (const qse_char_t* fmt, ...) { /* do nothing. subclasses may override this */ }
 
 private:
 	void delete_all_workers (Worker::State state) QSE_CPP_NOEXCEPT;
