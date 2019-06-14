@@ -50,8 +50,8 @@ public:
 	Socket () QSE_CPP_NOEXCEPT;
 	virtual ~Socket () QSE_CPP_NOEXCEPT;
 
-	ErrorCode getErrorCode () const QSE_CPP_NOEXCEPT { return this->errcode; }
-	void setErrorCode (ErrorCode errcode) QSE_CPP_NOEXCEPT { this->errcode = errcode; }
+	ErrorNumber getErrorNumber () const QSE_CPP_NOEXCEPT { return this->errcode; }
+	void setErrorNumber (ErrorNumber errcode) QSE_CPP_NOEXCEPT { this->errcode = errcode; }
 
 	int open (int domain, int type, int protocol, int traits = 0) QSE_CPP_NOEXCEPT;
 	void close () QSE_CPP_NOEXCEPT;
@@ -161,7 +161,7 @@ public:
 protected:
 	qse_sck_hnd_t handle;
 	int domain;
-	ErrorCode errcode;
+	ErrorNumber errcode;
 
 	void set_errcode_with_syserr (int syserr);
 	int get_ifce_index (const void* name, qse_size_t len, bool wchar);

@@ -223,9 +223,9 @@ public:
 
 
 	/** defines common error codes */
-	enum ErrorCode
+	enum ErrorNumber
 	{
-		/* [NOTE] if you change items here, you must change the stock error description in ErrorGrab */
+		/* [NOTE] if you change items here, you must change the stock error description in TypesErrorNumberToStr::operator() */
 
 		E_ENOERR,  /**< no error */
 		E_EOTHER,  /**< other error */
