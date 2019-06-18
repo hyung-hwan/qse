@@ -6647,34 +6647,22 @@ static qse_awk_val_t* eval_getline (qse_awk_rtx_t* rtx, qse_awk_nde_t* nde)
 		qse_size_t len;
 		qse_awk_rtx_valtostr_out_t out;
 
-		v = eval_expression (rtx, p->in);
-		if (v == QSE_NULL) return QSE_NULL;
+		v = eval_expression(rtx, p->in);
+		if (!v) return QSE_NULL;
 
 		qse_awk_rtx_refupval (rtx, v);
-		vtype = QSE_AWK_RTX_GETVALTYPE (rtx, v);
-		if (vtype == QSE_AWK_VAL_STR)
+		dst = qse_awk_rtx_getvalstr(rtx, v, &len);
+		if (!dst) 
 		{
-			dst = ((qse_awk_val_str_t*)v)->val.ptr;
-			len = ((qse_awk_val_str_t*)v)->val.len;
-		}
-		else
-		{
-			out.type = QSE_AWK_RTX_VALTOSTR_CPLDUP;
-			x = qse_awk_rtx_valtostr (rtx, v, &out);
 			qse_awk_rtx_refdownval (rtx, v);
-			if (x <= -1) return QSE_NULL;
-
-			dst = out.u.cpldup.ptr;
-			len = out.u.cpldup.len;
+			return QSE_NULL;
 		}
 
-		if (len <= 0) 
+		if (len <= 0)
 		{
-			/* the input source name is empty.
-			 * make getline return -1 */
-			if (vtype == QSE_AWK_VAL_STR) 
-				qse_awk_rtx_refdownval (rtx, v);
-			else qse_awk_rtx_freemem (rtx, dst);
+		
+			qse_awk_rtx_freevalstr (rtx, v, dst);
+			qse_awk_rtx_refdownval (rtx, v);
 
 			n = -1;
 			goto skip_read;
@@ -6688,10 +6676,8 @@ static qse_awk_val_t* eval_getline (qse_awk_rtx_t* rtx, qse_awk_nde_t* nde)
 				 * character. make getline return -1.
 				 * unlike print & printf, it is not a hard
 				 * error  */
-				if (vtype == QSE_AWK_VAL_STR) 
-					qse_awk_rtx_refdownval (rtx, v);
-				else qse_awk_rtx_freemem (rtx, dst);
-
+				qse_awk_rtx_freevalstr (rtx, v, dst);
+				qse_awk_rtx_refdownval (rtx, v);
 				n = -1;
 				goto skip_read;
 			}
@@ -6705,11 +6691,10 @@ read_console_again:
 
 	n = qse_awk_rtx_readio(rtx, p->in_type, dst, buf);
 
-	if (p->in)
+	if (p->in) 
 	{
-		if (vtype == QSE_AWK_VAL_STR) 
-			qse_awk_rtx_refdownval (rtx, v);
-		else qse_awk_rtx_freemem (rtx, dst);
+		qse_awk_rtx_freevalstr (rtx, v, dst);
+		qse_awk_rtx_refdownval (rtx, v);
 	}
 
 	if (n <= -1) 

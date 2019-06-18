@@ -2874,7 +2874,7 @@ QSE_EXPORT qse_wchar_t* qse_awk_rtx_valtowcsdup (
 #define qse_awk_rtx_valtowcsdup(rtx, val, len) qse_awk_rtx_valtowcsdupwithcmgr(rtx, val, len, qse_awk_rtx_getcmgr(rtx))
 
 #if defined(QSE_CHAR_IS_MCHAR)
-#	define qse_awk_rtx_valtostrdupwithcmgr(rtx, val, len, cmgr) qse_awk_rtx_valtombsdup(rtx, val, len, cmgr)
+#	define qse_awk_rtx_valtostrdupwithcmgr(rtx, val, len, cmgr) qse_awk_rtx_valtombsdupwithcmgr(rtx, val, len, cmgr)
 #	define qse_awk_rtx_valtostrdup(rtx, val, len) qse_awk_rtx_valtombsdup(rtx, val, len)
 #else
 #	define qse_awk_rtx_valtostrdupwithcmgr(rtx, val, len, cmgr) qse_awk_rtx_valtowcsdupwithcmgr(rtx, val, len, cmgr)

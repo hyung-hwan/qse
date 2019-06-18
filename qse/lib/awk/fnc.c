@@ -216,22 +216,22 @@ static int fnc_close (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	qse_char_t* name, * opt = QSE_NULL;
 	qse_size_t len, optlen = 0;
        
-	nargs = qse_awk_rtx_getnargs (rtx);
+	nargs = qse_awk_rtx_getnargs(rtx);
 	QSE_ASSERT (nargs == 1 || nargs == 2);
 
 	a0 = qse_awk_rtx_getarg (rtx, 0);
-	if (nargs >= 2) a1 = qse_awk_rtx_getarg (rtx, 1);
+	if (nargs >= 2) a1 = qse_awk_rtx_getarg(rtx, 1);
 	QSE_ASSERT (a0 != QSE_NULL);
 
-	name = qse_awk_rtx_getvalstr (rtx, a0, &len);
+	name = qse_awk_rtx_getvalstr(rtx, a0, &len);
 	if (name == QSE_NULL) return -1;
 
 	if (a1)
 	{
-		opt = qse_awk_rtx_getvalstr (rtx, a1, &optlen);
+		opt = qse_awk_rtx_getvalstr(rtx, a1, &optlen);
 		if (opt == QSE_NULL) 
 		{
-			qse_awk_rtx_freevalstr (rtx, a0, name);
+			qse_awk_rtx_freevalstr(rtx, a0, name);
 			return -1;
 		}
 	}
@@ -263,8 +263,7 @@ static int fnc_close (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 
 	if (opt)
 	{
-		if (optlen != 1 || 
-		    (opt[0] != QSE_T('r') && opt[0] != QSE_T('w')))
+		if (optlen != 1 || (opt[0] != QSE_T('r') && opt[0] != QSE_T('w')))
 		{
 			n = -1;
 			goto skip_close;
@@ -292,25 +291,24 @@ skip_close:
 	return 0;
 }
 
-static int flush_io (
-	qse_awk_rtx_t* run, int rio, const qse_char_t* name, int n)
+static int flush_io (qse_awk_rtx_t* rtx, int rio, const qse_char_t* name, int n)
 {
 	int n2;
 
-	if (run->rio.handler[rio] != QSE_NULL)
+	if (rtx->rio.handler[rio] != QSE_NULL)
 	{
-		n2 = qse_awk_rtx_flushio (run, rio, name);
+		n2 = qse_awk_rtx_flushio (rtx, rio, name);
 		if (n2 <= -1)
 		{
 			/*
-			if (run->errinf.num == QSE_AWK_EIOIMPL) n = -1;
-			else if (run->errinf.num == QSE_AWK_EIONMNF) 
+			if (rtx->errinf.num == QSE_AWK_EIOIMPL) n = -1;
+			else if (rtx->errinf.num == QSE_AWK_EIONMNF) 
 			{
 				if (n != 0) n = -2;
 			}
 			else n = -99; 
 			*/	
-			if (run->errinf.num == QSE_AWK_EIONMNF) 
+			if (rtx->errinf.num == QSE_AWK_EIONMNF) 
 			{
 				if (n != 0) n = -2;
 			}
