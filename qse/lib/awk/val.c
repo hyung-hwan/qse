@@ -1589,7 +1589,7 @@ qse_wchar_t* qse_awk_rtx_valtowcsdupwithcmgr (qse_awk_rtx_t* rtx, const qse_awk_
 			out.type = QSE_AWK_RTX_VALTOSTR_CPLDUP;
 			if (qse_awk_rtx_valtostr(rtx, v, &out) <= -1) return QSE_NULL;
 
-			wcs = qse_mbsntowcsalldupwithcmgr(dup, &out.u.cpldup.len, &wcslen, rtx->awk->mmgr, cmgr);
+			wcs = qse_mbsntowcsalldupwithcmgr(out.u.cpldup.ptr, &out.u.cpldup.len, &wcslen, rtx->awk->mmgr, cmgr);
 			qse_awk_rtx_freemem (rtx, out.u.cpldup.ptr);
 			if (!wcs)
 			{
