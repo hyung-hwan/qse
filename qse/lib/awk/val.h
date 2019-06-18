@@ -66,7 +66,7 @@ struct qse_awk_val_rchunk_t
  * add a field to indicate if a value is static.
  * 
 
-#define IS_STATICVAL(val) ((val) == QSE_NULL || (val) == qse_awk_val_nil || (val) == qse_awk_val_zls)
+#define IS_STATICVAL(val) ((val) == QSE_NULL || (val) == qse_awk_val_nil || (val) == qse_awk_val_zls || (val) == qse_awk_val_zlm)
 */
 #define IS_STATICVAL(val) ((val)->stat)
 

@@ -2892,11 +2892,14 @@ QSE_EXPORT void qse_awk_rtx_freevalstr (
 );
 
 
-QSE_EXPORT qse_mchar_t* qse_awk_rtx_getvalmbs (
+QSE_EXPORT qse_mchar_t* qse_awk_rtx_getvalmbswithcmgr (
 	qse_awk_rtx_t*       rtx, /**< runtime context */
 	const qse_awk_val_t* val, /**< value to convert */
-	qse_size_t*          len  /**< result length */
+	qse_size_t*          len, /**< result length */
+	qse_cmgr_t*          cmgr
 );
+
+#define qse_awk_rtx_getvalmbs(rtx,val,len) qse_awk_rtx_getvalmbswithcmgr(rtx, val, len, qse_awk_rtx_getcmgr(rtx))
 
 QSE_EXPORT void qse_awk_rtx_freevalmbs (
 	qse_awk_rtx_t*       rtx, /**< runtime context */

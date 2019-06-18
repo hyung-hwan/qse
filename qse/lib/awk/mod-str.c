@@ -27,6 +27,7 @@
 #include "mod-str.h"
 #include <qse/cmn/str.h>
 #include <qse/cmn/chr.h>
+#include <qse/cmn/mbwc.h>
 #include "../cmn/mem-prv.h"
 #include "fnc.h"
 #include "val.h"
@@ -357,13 +358,32 @@ static int fnc_tocharcode (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 
 static int fnc_frommbs (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
-	/* str::frommbs(B"byte-string") */
+	/* str::frommbs(B"byte-string" [, "encoding-name"]) */
 	qse_awk_val_t* a0, * r;
+	qse_cmgr_t* cmgr = qse_awk_rtx_getcmgr(rtx);
+
+	if (qse_awk_rtx_getnargs(rtx) >= 2)
+	{
+		qse_awk_val_t* a1;
+		qse_cstr_t enc;
+
+		a1 = qse_awk_rtx_getarg(rtx, 1);
+		enc.ptr = qse_awk_rtx_getvalstr(rtx, a1, &enc.len);
+		if (!enc.ptr) return -1;
+		cmgr = (enc.len == qse_strlen(enc.ptr))? qse_findcmgr(enc.ptr): QSE_NULL;
+		qse_awk_rtx_freevalstr (rtx, a1, enc.ptr);
+
+		if (!cmgr) 
+		{
+			/* if the encoding name is not known, return a zero-length string */
+			r = qse_awk_rtx_makestrval(rtx, QSE_NULL, 0); /* this never fails for length 0 */
+			goto done;
+		}
+	}
 
 	a0 = qse_awk_rtx_getarg(rtx, 0);
 	switch (QSE_AWK_RTX_GETVALTYPE(rtx, a0))
 	{
-
 		case QSE_AWK_VAL_STR:
 			r = a0;
 			break;
@@ -380,14 +400,34 @@ static int fnc_frommbs (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 		}
 	}
 
+done:
 	qse_awk_rtx_setretval (rtx, r);
 	return 0;
 }
 
 static int fnc_tombs (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
-	/* str::tombs("string") */
+	/* str::tombs("string", [, "encoding-name"]) */
 	qse_awk_val_t* a0, * r;
+	qse_cmgr_t* cmgr = qse_awk_rtx_getcmgr(rtx);
+
+	if (qse_awk_rtx_getnargs(rtx) >= 2)
+	{
+		qse_awk_val_t* a1;
+		qse_cstr_t enc;
+		a1 = qse_awk_rtx_getarg(rtx, 1);
+		enc.ptr = qse_awk_rtx_getvalstr(rtx, a1, &enc.len);
+		if (!enc.ptr) return -1;
+		cmgr = (enc.len == qse_strlen(enc.ptr))? qse_findcmgr(enc.ptr): QSE_NULL;
+		qse_awk_rtx_freevalstr (rtx, a1, enc.ptr);
+
+		if (!cmgr) 
+		{
+			/* if the encoding name is not known, return a zero-length string */
+			r = qse_awk_rtx_makembsval(rtx, QSE_NULL, 0); /* this never fails for length 0 */
+			goto done;
+		}
+	}
 
 	a0 = qse_awk_rtx_getarg(rtx, 0);
 	switch (QSE_AWK_RTX_GETVALTYPE(rtx, a0))
@@ -399,7 +439,7 @@ static int fnc_tombs (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 		default:
 		{
 			qse_mcstr_t str;
-			str.ptr = qse_awk_rtx_getvalmbs(rtx, a0, &str.len);
+			str.ptr = qse_awk_rtx_getvalmbswithcmgr(rtx, a0, &str.len, cmgr);
 			if (!str.ptr) return -1;
 			r = qse_awk_rtx_makembsvalwithmxstr(rtx, &str);
 			qse_awk_rtx_freevalmbs (rtx, a0, str.ptr);
@@ -408,6 +448,7 @@ static int fnc_tombs (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 		}
 	}
 
+done:
 	qse_awk_rtx_setretval (rtx, r);
 	return 0;
 }
@@ -501,7 +542,7 @@ static fnctab_t fnctab[] =
 {
 	/* keep this table sorted for binary search in query(). */
 	{ QSE_T("fromcharcode"), { { 0, A_MAX, QSE_NULL },  fnc_fromcharcode,      0 } },
-	{ QSE_T("frommbs"),      { { 1, 1, QSE_NULL },      fnc_frommbs,           0 } },
+	{ QSE_T("frommbs"),      { { 1, 2, QSE_NULL },      fnc_frommbs,           0 } },
 	{ QSE_T("gsub"),         { { 2, 3, QSE_T("xvr")},   qse_awk_fnc_gsub,      0 } },
 	{ QSE_T("index"),        { { 2, 3, QSE_NULL },      qse_awk_fnc_index,     0 } },
 	{ QSE_T("isalnum"),      { { 1, 1, QSE_NULL },      fnc_isalnum,           0 } },
@@ -528,7 +569,7 @@ static fnctab_t fnctab[] =
 	{ QSE_T("substr"),       { { 2, 3, QSE_NULL },      qse_awk_fnc_substr,    0 } },
 	{ QSE_T("tocharcode"),   { { 1, 2, QSE_NULL },      fnc_tocharcode,        0 } },
 	{ QSE_T("tolower"),      { { 1, 1, QSE_NULL },      qse_awk_fnc_tolower,   0 } },
-	{ QSE_T("tombs"),        { { 1, 1, QSE_NULL },      fnc_tombs,             0 } },
+	{ QSE_T("tombs"),        { { 1, 2, QSE_NULL },      fnc_tombs,             0 } },
 	{ QSE_T("tonum"),        { { 1, 2, QSE_NULL },      fnc_tonum,             0 } },
 	{ QSE_T("toupper"),      { { 1, 1, QSE_NULL },      qse_awk_fnc_toupper,   0 } },
 	{ QSE_T("trim"),         { { 1, 2, QSE_NULL },      fnc_trim,              0 } }
