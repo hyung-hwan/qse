@@ -358,7 +358,12 @@ static int fnc_tocharcode (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 
 static int fnc_frommbs (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
-	/* str::frommbs(B"byte-string" [, "encoding-name"]) */
+	/* str::frommbs(B"byte-string" [, "encoding-name"])
+	 * 
+	 * if you use a supported encoding name, it may look like this:
+	 *   a = str::frommbs(B"\xC7\xD1\xB1\xDB", "cp949");
+	 *   printf ("%K\n", a);
+	 */
 	qse_awk_val_t* a0, * r;
 	qse_cmgr_t* cmgr = qse_awk_rtx_getcmgr(rtx);
 
@@ -367,10 +372,13 @@ static int fnc_frommbs (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 		qse_awk_val_t* a1;
 		qse_cstr_t enc;
 
+		
 		a1 = qse_awk_rtx_getarg(rtx, 1);
 		enc.ptr = qse_awk_rtx_getvalstr(rtx, a1, &enc.len);
 		if (!enc.ptr) return -1;
-		cmgr = (enc.len == qse_strlen(enc.ptr))? qse_findcmgr(enc.ptr): QSE_NULL;
+		/* if encoding name is an empty string, qse_Findcmgr() returns the default cmgr. 
+		 * i don't want that behavior. */
+		cmgr = (enc.len > 0 && enc.len == qse_strlen(enc.ptr))? qse_findcmgr(enc.ptr): QSE_NULL;
 		qse_awk_rtx_freevalstr (rtx, a1, enc.ptr);
 
 		if (!cmgr) 
@@ -391,7 +399,7 @@ static int fnc_frommbs (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 		default:
 		{
 			qse_cstr_t str;
-			str.ptr = qse_awk_rtx_getvalstr(rtx, a0, &str.len);
+			str.ptr = qse_awk_rtx_getvalstrwithcmgr(rtx, a0, &str.len, cmgr);
 			if (!str.ptr) return -1;
 			r = qse_awk_rtx_makestrvalwithxstr(rtx, &str);
 			qse_awk_rtx_freevalstr (rtx, a0, str.ptr);
@@ -407,7 +415,13 @@ done:
 
 static int fnc_tombs (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
-	/* str::tombs("string", [, "encoding-name"]) */
+	/* str::tombs("string", [, "encoding-name"]) 
+	 * 
+	 * if you use a supported encoding name, it may look like this:
+	 *   a = str::tombs("\uD55C\uAE00", "cp949"); 
+	 *   printf (B"%K\n", a); 
+	 */
+
 	qse_awk_val_t* a0, * r;
 	qse_cmgr_t* cmgr = qse_awk_rtx_getcmgr(rtx);
 
@@ -418,7 +432,9 @@ static int fnc_tombs (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 		a1 = qse_awk_rtx_getarg(rtx, 1);
 		enc.ptr = qse_awk_rtx_getvalstr(rtx, a1, &enc.len);
 		if (!enc.ptr) return -1;
-		cmgr = (enc.len == qse_strlen(enc.ptr))? qse_findcmgr(enc.ptr): QSE_NULL;
+		/* if encoding name is an empty string, qse_Findcmgr() returns the default cmgr. 
+		 * i don't want that behavior. */
+		cmgr = (enc.len > 0 && enc.len == qse_strlen(enc.ptr))? qse_findcmgr(enc.ptr): QSE_NULL;
 		qse_awk_rtx_freevalstr (rtx, a1, enc.ptr);
 
 		if (!cmgr) 
@@ -490,7 +506,7 @@ static int fnc_tonum (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 		qse_awk_int_t base;
 
 		if (qse_awk_rtx_valtoint(rtx, a1, &base) <= -1) return -1;
-		rx = qse_awk_rtx_strtonum (
+		rx = qse_awk_rtx_strtonum(
 			rtx,
 			QSE_AWK_RTX_STRTONUM_MAKE_OPTION(0, base),
 			((qse_awk_val_str_t*)a0)->val.ptr,

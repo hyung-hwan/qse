@@ -2846,24 +2846,40 @@ QSE_EXPORT int qse_awk_rtx_valtostr (
  * \return character pointer to a string converted on success,
  *         #QSE_NULL on failure
  */
-QSE_EXPORT qse_char_t* qse_awk_rtx_valtostrdup (
+#if 0
+QSE_EXPORT qse_char_t* qse_awk_rtx_valtostrdupwithcmgr (
 	qse_awk_rtx_t*       rtx, /**< runtime context */
 	const qse_awk_val_t* val, /**< value to convert */
-	qse_size_t*          len  /**< result length */
+	qse_size_t*          len,  /**< result length */
+	qse_cmgr_t*          cmgr
 );
+#endif
 
 QSE_EXPORT qse_mchar_t* qse_awk_rtx_valtombsdup (
 	qse_awk_rtx_t*       rtx, /**< runtime context */
 	const qse_awk_val_t* val, /**< value to convert */
-	qse_size_t*          len  /**< result length */
+	qse_size_t*          len, /**< result length */
+	qse_cmgr_t*          cmgr
 );
 
 QSE_EXPORT qse_wchar_t* qse_awk_rtx_valtowcsdup (
 	qse_awk_rtx_t*       rtx, /**< runtime context */
 	const qse_awk_val_t* val, /**< value to convert */
-	qse_size_t*          len  /**< result length */
+	qse_size_t*          len, /**< result length */
+	qse_cmgr_t*          cmgr
 );
 
+
+#define qse_awk_rtx_valtombsdup(rtx, val, len) qse_awk_rtx_valtombsdupwithcmgr(rtx, val, len, qse_awk_rtx_getcmgr(rtx))
+#define qse_awk_rtx_valtowcsdup(rtx, val, len) qse_awk_rtx_valtowcsdupwithcmgr(rtx, val, len, qse_awk_rtx_getcmgr(rtx))
+
+#if defined(QSE_CHAR_IS_MCHAR)
+#	define qse_awk_rtx_valtostrdupwithcmgr(rtx, val, len, cmgr) qse_awk_rtx_valtombsdup(rtx, val, len, cmgr)
+#	define qse_awk_rtx_valtostrdup(rtx, val, len) qse_awk_rtx_valtombsdup(rtx, val, len)
+#else
+#	define qse_awk_rtx_valtostrdupwithcmgr(rtx, val, len, cmgr) qse_awk_rtx_valtowcsdupwithcmgr(rtx, val, len, cmgr)
+#	define qse_awk_rtx_valtostrdup(rtx, val, len) qse_awk_rtx_valtowcsdup(rtx, val, len)
+#endif
 
 /**
  * The qse_awk_rtx_getvalstr() function returns a string
@@ -2873,11 +2889,14 @@ QSE_EXPORT qse_wchar_t* qse_awk_rtx_valtowcsdup (
  * qse_awk_rtx_valtostrdup(). The length of the returned
  * string is stored into the location pointed to by \a len.
  */
-QSE_EXPORT qse_char_t* qse_awk_rtx_getvalstr (
+QSE_EXPORT qse_char_t* qse_awk_rtx_getvalstrwithcmgr (
 	qse_awk_rtx_t*       rtx, /**< runtime context */
 	const qse_awk_val_t* val, /**< value to convert */
-	qse_size_t*          len  /**< result length */
+	qse_size_t*          len, /**< result length */
+	qse_cmgr_t*          cmgr
 );
+
+#define qse_awk_rtx_getvalstr(rtx,val,len) qse_awk_rtx_getvalstrwithcmgr(rtx, val, len, qse_awk_rtx_getcmgr(rtx))
 
 /**
  * The qse_awk_rtx_freevalstr() function frees the memory pointed 
@@ -2899,7 +2918,7 @@ QSE_EXPORT qse_mchar_t* qse_awk_rtx_getvalmbswithcmgr (
 	qse_cmgr_t*          cmgr
 );
 
-#define qse_awk_rtx_getvalmbs(rtx,val,len) qse_awk_rtx_getvalmbswithcmgr(rtx, val, len, qse_awk_rtx_getcmgr(rtx))
+#define qse_awk_rtx_getvalmbs(rtx, val, len) qse_awk_rtx_getvalmbswithcmgr(rtx, val, len, qse_awk_rtx_getcmgr(rtx))
 
 QSE_EXPORT void qse_awk_rtx_freevalmbs (
 	qse_awk_rtx_t*       rtx, /**< runtime context */
