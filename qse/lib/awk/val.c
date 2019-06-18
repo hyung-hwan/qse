@@ -1583,14 +1583,14 @@ qse_wchar_t* qse_awk_rtx_valtowcsdupwithcmgr (qse_awk_rtx_t* rtx, const qse_awk_
 		default:
 		{
 		#if defined(QSE_CHAR_IS_MCHAR)
-			qse_size_t duplen, wcslen;
-			qse_char_t* dup;
+			qse_size_t wcslen;
+			qse_awk_rtx_valtostr_out_t out;
 
-			dup = qse_awk_rtx_valtostrdup(rtx, v, &duplen);
-			if (!dup) return QSE_NULL;
+			out.type = QSE_AWK_RTX_VALTOSTR_CPLDUP;
+			if (qse_awk_rtx_valtostr(rtx, v, &out) <= -1) return QSE_NULL;
 
-			wcs = qse_mbsntowcsalldupwithcmgr(dup, &duplen, &wcslen, rtx->awk->mmgr, cmgr);
-			qse_awk_rtx_freemem (rtx, dup);
+			wcs = qse_mbsntowcsalldupwithcmgr(dup, &out.u.cpldup.len, &wcslen, rtx->awk->mmgr, cmgr);
+			qse_awk_rtx_freemem (rtx, out.u.cpldup.ptr);
 			if (!wcs)
 			{
 				qse_awk_rtx_seterror (rtx, QSE_AWK_ENOMEM, QSE_NULL, QSE_NULL);
@@ -1599,10 +1599,13 @@ qse_wchar_t* qse_awk_rtx_valtowcsdupwithcmgr (qse_awk_rtx_t* rtx, const qse_awk_
 
 			if (len) *len = wcslen;
 		#else
-			qse_size_t wcslen;
-			wcs = qse_awk_rtx_valtostrdup(rtx, v, &wcslen);
-			if (!wcs) return QSE_NULL;
-			if (len) *len = wcslen;
+			qse_awk_rtx_valtostr_out_t out;
+
+			out.type = QSE_AWK_RTX_VALTOSTR_CPLDUP;
+			if (qse_awk_rtx_valtostr(rtx, v, &out) <= -1) return QSE_NULL;
+
+			wcs = out.u.cpldup.ptr;
+			if (len) *len = out.u.cpldup.len;
 		#endif
 			break;
 		}
