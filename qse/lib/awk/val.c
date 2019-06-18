@@ -36,9 +36,11 @@
 
 static qse_awk_val_nil_t awk_nil = { QSE_AWK_VAL_NIL, 0, 1, 0, 0 };
 static qse_awk_val_str_t awk_zls = { QSE_AWK_VAL_STR, 0, 1, 0, 0, { QSE_T(""), 0 } };
+static qse_awk_val_mbs_t awk_zlm = { QSE_AWK_VAL_MBS, 0, 1, 0, 0, { QSE_MT(""), 0 } };
 
 qse_awk_val_t* qse_awk_val_nil = (qse_awk_val_t*)&awk_nil;
 qse_awk_val_t* qse_awk_val_zls = (qse_awk_val_t*)&awk_zls; 
+qse_awk_val_t* qse_awk_val_zlm = (qse_awk_val_t*)&awk_zlm;
 
 qse_awk_val_t* qse_getawknilval (void)
 {
@@ -167,10 +169,13 @@ qse_awk_val_t* qse_awk_rtx_makestrvalwithxstr (qse_awk_rtx_t* rtx, const qse_cst
 {
 	qse_awk_val_str_t* val = QSE_NULL;
 	qse_size_t rlen = str->len;
-
 #ifdef ENABLE_FEATURE_SCACHE
 	qse_size_t i;
+#endif
 
+	if (rlen <= 0) return qse_awk_val_zls;
+
+#ifdef ENABLE_FEATURE_SCACHE
 	i = rlen / FEATURE_SCACHE_BLOCK_UNIT;
 	if (i < QSE_COUNTOF(rtx->scache_count))
 	{
@@ -381,7 +386,11 @@ qse_awk_val_t* qse_awk_rtx_makenstrvalwithxstr (qse_awk_rtx_t* rtx, const qse_cs
 qse_awk_val_t* qse_awk_rtx_makembsval (qse_awk_rtx_t* rtx, const qse_mchar_t* ptr, qse_size_t len)
 {
 	qse_awk_val_mbs_t* val = QSE_NULL;
-	qse_size_t xsz  = len * QSE_SIZEOF(*ptr);
+	qse_size_t xsz;
+
+	if (len <= 0) return qse_awk_val_zlm;
+
+	xsz = len * QSE_SIZEOF(*ptr);
 
 	val = (qse_awk_val_mbs_t*)qse_awk_rtx_callocmem(rtx, QSE_SIZEOF(qse_awk_val_mbs_t) + xsz + QSE_SIZEOF(*ptr));
 	if (!val) return QSE_NULL;
@@ -1635,6 +1644,7 @@ void qse_awk_rtx_freevalstr (qse_awk_rtx_t* rtx, const qse_awk_val_t* v, qse_cha
 }
 
 
+#if 0
 qse_mchar_t* qse_awk_rtx_getvalmbs (qse_awk_rtx_t* rtx, const qse_awk_val_t* v, qse_size_t* len)
 {
 	if (QSE_AWK_RTX_GETVALTYPE(rtx, v) == QSE_AWK_VAL_MBS)
@@ -1645,6 +1655,20 @@ qse_mchar_t* qse_awk_rtx_getvalmbs (qse_awk_rtx_t* rtx, const qse_awk_val_t* v, 
 	else
 	{
 		return qse_awk_rtx_valtombsdup(rtx, v, len);
+	}
+}
+#endif
+
+qse_mchar_t* qse_awk_rtx_getvalmbswithcmgr (qse_awk_rtx_t* rtx, const qse_awk_val_t* v, qse_size_t* len, qse_cmgr_t* cmgr)
+{
+	if (QSE_AWK_RTX_GETVALTYPE(rtx, v) == QSE_AWK_VAL_MBS)
+	{
+		if (len) *len = ((qse_awk_val_mbs_t*)v)->val.len;
+		return ((qse_awk_val_mbs_t*)v)->val.ptr;
+	}
+	else
+	{
+		return qse_awk_rtx_valtombsdup(rtx, v, len); /* TODO: */
 	}
 }
 
