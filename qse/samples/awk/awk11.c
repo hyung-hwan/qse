@@ -39,7 +39,8 @@ static qse_ssize_t new_pipe_handler (
 	qse_char_t* data, qse_size_t size)
 {
 	struct rtx_xtn_t* xtn;
-	xtn = qse_awk_rtx_getxtnstd (rtx);
+
+	xtn = qse_awk_rtx_getxtn(rtx);
 
 	if (cmd == QSE_AWK_RIO_OPEN)
 		qse_fprintf (QSE_STDERR, QSE_T("LOG: Executing [%s] for piping\n"), riod->name);
@@ -55,7 +56,7 @@ static void extend_pipe_handler (qse_awk_rtx_t* rtx)
 	struct rtx_xtn_t* xtn;
 	qse_awk_rio_t rio;
 
-	xtn = qse_awk_rtx_getxtnstd (rtx);
+	xtn = qse_awk_rtx_getxtn(rtx);
 
 	/* get the previous handler functions */
 	qse_awk_rtx_getrio (rtx, &rio); 

@@ -26,7 +26,7 @@ static int awk_main (int argc, qse_char_t* argv[])
 	ginfo_t* ginfo;
 
 	/* create an awk object */
-	awk = qse_awk_openstd (QSE_SIZEOF(*ginfo), QSE_NULL);
+	awk = qse_awk_openstd(QSE_SIZEOF(*ginfo), QSE_NULL);
 	if (awk == QSE_NULL)  
 	{
 		qse_fprintf (QSE_STDERR, QSE_T("ERROR: cannot open awk\n"));
@@ -36,7 +36,7 @@ static int awk_main (int argc, qse_char_t* argv[])
 	/* add global variables G1, G2, and G3. store the IDs to the extension 
 	 * area. the extension area is used for demonstration. there is no special
 	 * need to use it when adding global variables. */
-	ginfo = qse_awk_getxtnstd (awk);
+	ginfo = qse_awk_getxtn(awk);
 	for (i = 0; i < QSE_COUNTOF(ginfo->g); i++)
 	{
 		qse_char_t name[] = QSE_T("GX");

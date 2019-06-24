@@ -94,7 +94,7 @@ qse_awk_t* qse_awk_open (qse_mmgr_t* mmgr, qse_size_t xtnsize, const qse_awk_prm
 			QSE_MMGR_FREE (mmgr, awk);
 			awk = QSE_NULL;
 		}
-		else QSE_MEMSET (QSE_XTN(awk), 0, xtnsize);
+		else QSE_MEMSET (awk + 1, 0, xtnsize);
 	}
 	else if (errnum) *errnum = QSE_AWK_ENOMEM;
 
@@ -104,7 +104,7 @@ qse_awk_t* qse_awk_open (qse_mmgr_t* mmgr, qse_size_t xtnsize, const qse_awk_prm
 void qse_awk_close (qse_awk_t* awk)
 {
 	qse_awk_fini (awk);
-	QSE_MMGR_FREE (awk->mmgr, awk);
+	QSE_MMGR_FREE (awk->_mmgr, awk);
 }
 
 int qse_awk_init (qse_awk_t* awk, qse_mmgr_t* mmgr, const qse_awk_prm_t* prm)
@@ -145,8 +145,9 @@ int qse_awk_init (qse_awk_t* awk, qse_mmgr_t* mmgr, const qse_awk_prm_t* prm)
 	QSE_MEMSET (awk, 0, QSE_SIZEOF(*awk));
 
 	/* remember the memory manager */
-	awk->mmgr = mmgr;
-	awk->cmgr = qse_getdflcmgr();
+	awk->_instsize = QSE_SIZEOF(*awk);
+	awk->_mmgr = mmgr;
+	awk->_cmgr = qse_getdflcmgr();
 
 	/* initialize error handling fields */
 	awk->errinf.num = QSE_AWK_ENOERR;
@@ -404,11 +405,6 @@ void qse_awk_clear (qse_awk_t* awk)
 	 */
 }
 
-void* qse_awk_getxtn (qse_awk_t* awk)
-{
-	return QSE_XTN(awk);
-}
-
 void qse_awk_getprm (qse_awk_t* awk, qse_awk_prm_t* prm)
 {
 	*prm = awk->prm;
@@ -423,7 +419,7 @@ static int dup_str_opt (qse_awk_t* awk, const void* value, qse_cstr_t* tmp)
 {
 	if (value)
 	{
-		tmp->ptr = qse_strdup(value, awk->mmgr);
+		tmp->ptr = qse_strdup(value, qse_awk_getmmgr(awk));
 		if (!tmp->ptr)
 		{
 			qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);

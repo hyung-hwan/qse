@@ -72,7 +72,7 @@ qse_char_t* qse_awk_strxdup (qse_awk_t* awk, const qse_char_t* s, qse_size_t l)
 
 qse_char_t* qse_awk_cstrdup (qse_awk_t* awk, const qse_cstr_t* s)
 {
-	qse_char_t* ptr = qse_cstrdup(s, awk->mmgr);
+	qse_char_t* ptr = qse_cstrdup(s, qse_awk_getmmgr(awk));
 	if (!ptr) qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);
 	return ptr;
 }
@@ -655,7 +655,7 @@ int qse_awk_buildrex (
 	if (code || icode)
 	{
 		p = qse_buildrex (
-			awk->mmgr, awk->opt.depth.s.rex_build,
+			qse_awk_getmmgr(awk), awk->opt.depth.s.rex_build,
 			((awk->opt.trait & QSE_AWK_REXBOUND)? 0: QSE_REX_NOBOUND),
 			ptn, len, &err
 		);
@@ -677,7 +677,7 @@ int qse_awk_buildrex (
 
 	if (code)
 	{
-		tre = qse_tre_open (awk->mmgr, 0);
+		tre = qse_tre_open(qse_awk_getmmgr(awk), 0);
 		if (tre == QSE_NULL)
 		{
 			*errnum = QSE_AWK_ENOMEM;
@@ -703,7 +703,7 @@ int qse_awk_buildrex (
 
 	if (icode) 
 	{
-		itre = qse_tre_open (awk->mmgr, 0);
+		itre = qse_tre_open(qse_awk_getmmgr(awk), 0);
 		if (itre == QSE_NULL)
 		{
 			if (tre) qse_tre_close (tre);
@@ -797,7 +797,7 @@ int qse_awk_matchrex (
 
 	/* submatch is not supported */
 	x = qse_matchrex (
-		awk->mmgr, awk->opt.depth.s.rex_match, code, 
+		qse_awk_getmmgr(awk), awk->opt.depth.s.rex_match, code, 
 		(icase? QSE_REX_IGNORECASE: 0), str, substr, match, &err);
 	if (x <= -1) *errnum = rexerr_to_errnum(err);
 	return x;
@@ -873,7 +873,7 @@ int qse_awk_rtx_matchrex (
 #if defined(USE_REX)
 	/* submatch not supported */
 	x = qse_matchrex (
-		rtx->awk->mmgr, rtx->awk->opt.depth.s.rex_match,
+		qse_awk_rtx_getmmgr(rtx), rtx->awk->opt.depth.s.rex_match,
 		code, (icase? QSE_REX_IGNORECASE: 0),
 		str, substr, match, &rexerr);
 	if (x <= -1) qse_awk_rtx_seterrnum (rtx, rexerr_to_errnum(rexerr), QSE_NULL);

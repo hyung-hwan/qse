@@ -93,8 +93,9 @@ typedef qse_flt_t qse_awk_flt_t;
 typedef struct qse_awk_t qse_awk_t;
 
 #define QSE_AWK_HDR \
-	qse_mmgr_t* mmgr; \
-	qse_cmgr_t* cmgr
+	qse_size_t  _instsize; \
+	qse_mmgr_t* _mmgr; \
+	qse_cmgr_t* _cmgr
 
 typedef struct qse_awk_alt_t qse_awk_alt_t;
 struct qse_awk_alt_t
@@ -131,6 +132,7 @@ struct qse_awk_alt_t
 typedef struct qse_awk_rtx_t qse_awk_rtx_t;
 
 #define QSE_AWK_RTX_HDR \
+	qse_size_t _instsize; \
 	int id; \
 	qse_awk_t* awk
 
@@ -1385,7 +1387,7 @@ typedef struct qse_awk_errinf_t qse_awk_errinf_t;
  * object with the qse_awk_seterrstr() function to customize an error string.
  */
 typedef const qse_char_t* (*qse_awk_errstr_t) (
-	const qse_awk_t* awk,   /**< awk */
+	qse_awk_t*       awk,   /**< awk */
 	qse_awk_errnum_t num    /**< error number */
 );
 
@@ -1562,22 +1564,16 @@ QSE_EXPORT void qse_awk_close (
  * qse_awk_open().
  */
 #if defined(QSE_HAVE_INLINE)
-static QSE_INLINE qse_mmgr_t* qse_awk_getmmgr (qse_awk_t* awk) { return ((qse_awk_alt_t*)awk)->mmgr; }
-static QSE_INLINE qse_cmgr_t* qse_awk_getcmgr (qse_awk_t* awk) { return ((qse_awk_alt_t*)awk)->cmgr; }
-static QSE_INLINE void qse_awk_setcmgr (qse_awk_t* awk, qse_cmgr_t* cmgr) { ((qse_awk_alt_t*)awk)->cmgr = cmgr; }
+static QSE_INLINE void* qse_awk_getxtn (qse_awk_t* awk) { return (void*)((qse_uint8_t*)awk + ((qse_awk_alt_t*)awk)->_instsize); }
+static QSE_INLINE qse_mmgr_t* qse_awk_getmmgr (qse_awk_t* awk) { return ((qse_awk_alt_t*)awk)->_mmgr; }
+static QSE_INLINE qse_cmgr_t* qse_awk_getcmgr (qse_awk_t* awk) { return ((qse_awk_alt_t*)awk)->_cmgr; }
+static QSE_INLINE void qse_awk_setcmgr (qse_awk_t* awk, qse_cmgr_t* cmgr) { ((qse_awk_alt_t*)awk)->_cmgr = cmgr; }
 #else
-#	define qse_awk_getmmgr(awk) (((qse_awk_alt_t*)(awk))->mmgr)
-#	define qse_awk_getcmgr(awk) (((qse_awk_alt_t*)(awk))->cmgr)
-#	define qse_awk_setcmgr(awk,_cmgr) (((qse_awk_alt_t*)(awk))->cmgr = (_cmgr))
+#       define qse_awk_getxtn(awk) ((void*)((qse_uint8_t*)awk + ((qse_awk_alt_t*)awk)->_instsize))
+#	define qse_awk_getmmgr(awk) (((qse_awk_alt_t*)(awk))->_mmgr)
+#	define qse_awk_getcmgr(awk) (((qse_awk_alt_t*)(awk))->_cmgr)
+#	define qse_awk_setcmgr(awk,_cmgr) (((qse_awk_alt_t*)(awk))->_cmgr = (_cmgr))
 #endif /* QSE_HAVE_INLINE */
-
-/** 
- * The qse_awk_getxtn() function gets the poniter to the beginning
- * of the extension area created with qse_awk_open ().
- */
-QSE_EXPORT void* qse_awk_getxtn (
-	qse_awk_t* awk
-);
 
 /**
  * The qse_awk_getprm() function retrieves primitive functions
@@ -1914,10 +1910,10 @@ QSE_EXPORT void* qse_awk_callocmem (
 #if defined(QSE_HAVE_INLINE)
 static QSE_INLINE void qse_awk_freemem (qse_awk_t* awk, void* ptr)
 {
-	QSE_MMGR_FREE (((qse_awk_alt_t*)(awk))->mmgr, ptr);
+	QSE_MMGR_FREE (((qse_awk_alt_t*)(awk))->_mmgr, ptr);
 }
 #else
-#	define qse_awk_freemem(awk, ptr) QSE_MMGR_FREE(((qse_awk_alt_t*)(awk))->mmgr, ptr);
+#	define qse_awk_freemem(awk, ptr) QSE_MMGR_FREE(((qse_awk_alt_t*)(awk))->_mmgr, ptr);
 #endif
 
 
@@ -2283,6 +2279,15 @@ QSE_EXPORT int qse_awk_rtx_setofilename (
 #if defined(QSE_HAVE_INLINE)
 
 /**
+ * The qse_awk_rtx_getxtn() function gets the pointer to the extension area
+ * created with qse_awk_rtx_open().
+ */
+static QSE_INLINE void* qse_awk_rtx_getxtn (qse_awk_rtx_t* rtx) 
+{
+	return (void*)((qse_uint8_t*)rtx + ((qse_awk_rtx_alt_t*)rtx)->_instsize); 
+}
+
+/**
  * The qse_awk_rtx_getawk() function gets the owner of a runtime context \a rtx.
  * \return owner of a runtime context \a rtx.
  */
@@ -2306,19 +2311,12 @@ static QSE_INLINE qse_cmgr_t* qse_awk_rtx_getcmgr (qse_awk_rtx_t* rtx)
 }
 
 #else
+#	define qse_awk_rtx_getxtn(rtx) ((void*)((qse_uint8_t*)rtx + ((qse_awk_rtx_alt_t*)rtx)->_instsize))
 #	define qse_awk_rtx_getawk(rtx) (((qse_awk_rtx_alt_t*)(rtx))->awk)
 #	define qse_awk_rtx_getmmgr(rtx) (qse_awk_getmmgr(qse_awk_rtx_getawk(rtx)))
 #	define qse_awk_rtx_getcmgr(rtx) (qse_awk_getcmgr(qse_awk_rtx_getawk(rtx)))
 
 #endif /* QSE_HAVE_INLINE */
-
-/**
- * The qse_awk_rtx_getxtn() function gets the pointer to the extension area
- * created with qse_awk_rtx_open().
- */
-QSE_EXPORT void* qse_awk_rtx_getxtn (
-	qse_awk_rtx_t* rtx /**< runtime context */
-);
 
 /**
  * The qse_awk_rtx_getnvmap() gets the map of named variables 

@@ -217,7 +217,7 @@ qse_awk_val_t* qse_awk_rtx_makestrvalwithmbs (qse_awk_rtx_t* rtx, const qse_mcha
 	qse_awk_val_t* v;
 	qse_wcstr_t tmp;
 
-	tmp.ptr = qse_mbstowcsalldupwithcmgr(mbs, &tmp.len, rtx->awk->mmgr, rtx->awk->cmgr);
+	tmp.ptr = qse_mbstowcsalldupwithcmgr(mbs, &tmp.len, qse_awk_rtx_getmmgr(rtx), qse_awk_rtx_getcmgr(rtx));
 	if (tmp.ptr == QSE_NULL)
 	{
 		qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
@@ -236,7 +236,7 @@ qse_awk_val_t* qse_awk_rtx_makestrvalwithwcs (qse_awk_rtx_t* rtx, const qse_wcha
 	qse_awk_val_t* v;
 	qse_mcstr_t tmp;
 
-	tmp.ptr = qse_wcstombsdupwithcmgr(wcs, &tmp.len, rtx->awk->mmgr, rtx->awk->cmgr);
+	tmp.ptr = qse_wcstombsdupwithcmgr(wcs, &tmp.len, qse_awk_rtx_getmmgr(rtx), qse_awk_rtx_getcmgr(rtx));
 	if (tmp.ptr == QSE_NULL)
 	{
 		qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
@@ -266,7 +266,7 @@ qse_awk_val_t* qse_awk_rtx_makestrvalwithmxstr (qse_awk_rtx_t* rtx, const qse_mc
 	qse_size_t mbslen;
 
 	mbslen = mxstr->len;
-	tmp.ptr = qse_mbsntowcsalldupwithcmgr(mxstr->ptr, &mbslen, &tmp.len, rtx->awk->mmgr, rtx->awk->cmgr);
+	tmp.ptr = qse_mbsntowcsalldupwithcmgr(mxstr->ptr, &mbslen, &tmp.len, qse_awk_rtx_getmmgr(rtx), qse_awk_rtx_getcmgr(rtx));
 	if (tmp.ptr == QSE_NULL)
 	{
 		qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
@@ -287,7 +287,7 @@ qse_awk_val_t* qse_awk_rtx_makestrvalwithwxstr (qse_awk_rtx_t* rtx, const qse_wc
 	qse_size_t wcslen;
 
 	wcslen = wxstr->len;
-	tmp.ptr = qse_wcsntombsdupwithcmgr(wxstr->ptr, wcslen, &tmp.len, rtx->awk->mmgr, rtx->awk->cmgr);
+	tmp.ptr = qse_wcsntombsdupwithcmgr(wxstr->ptr, wcslen, &tmp.len, qse_awk_rtx_getmmgr(rtx), qse_awk_rtx_getcmgr(rtx));
 	if (tmp.ptr == QSE_NULL)
 	{
 		qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
@@ -500,7 +500,7 @@ qse_awk_val_t* qse_awk_rtx_makemapval (qse_awk_rtx_t* rtx)
 	val->stat = 0;
 	val->nstr = 0;
 	val->fcb = 0;
-	val->map = qse_htb_open(run, 256, 70, free_mapval, same_mapval, run->awk->mmgr);
+	val->map = qse_htb_open(run, 256, 70, free_mapval, same_mapval, qse_awk_rtx_getmmgr(run));
 	if (val->map == QSE_NULL)
 	{
 		qse_awk_rtx_freemem (rtx, val);
@@ -519,7 +519,7 @@ qse_awk_val_t* qse_awk_rtx_makemapval (qse_awk_rtx_t* rtx)
 	val->fcb = 0;
 	val->map = (qse_htb_t*)(val + 1);
 
-	if (qse_htb_init(val->map, rtx->awk->mmgr, 256, 70, QSE_SIZEOF(qse_char_t), 1) <= -1)
+	if (qse_htb_init(val->map, qse_awk_rtx_getmmgr(rtx), 256, 70, QSE_SIZEOF(qse_char_t), 1) <= -1)
 	{
 		qse_awk_rtx_freemem (rtx, val);
 		qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
@@ -1071,7 +1071,7 @@ static int mbs_to_str (qse_awk_rtx_t* rtx, const qse_mchar_t* str, qse_size_t st
 			mbslen = str_len;
 			wcslen = out->u.cplcpy.len;
 			/*if (qse_mbsntowcsnallwithcmgr(str, &mbslen, out->u.cplcpy.ptr, &wcslen, qse_findcmgrbyid(QSE_CMGR_MB8)) <= -1 || wcslen >= out->u.cplcpy.len)*/
-			if (qse_mbsntowcsnallwithcmgr(str, &mbslen, out->u.cplcpy.ptr, &wcslen, rtx->awk->cmgr) <= -1 || wcslen >= out->u.cplcpy.len)
+			if (qse_mbsntowcsnallwithcmgr(str, &mbslen, out->u.cplcpy.ptr, &wcslen, qse_awk_rtx_getcmgr(rtx)) <= -1 || wcslen >= out->u.cplcpy.len)
 			{
 				qse_awk_rtx_seterrnum (rtx, QSE_AWK_EINVAL, QSE_NULL); /* TODO: change error code */
 				return -1;
@@ -1089,8 +1089,8 @@ static int mbs_to_str (qse_awk_rtx_t* rtx, const qse_mchar_t* str, qse_size_t st
 			qse_size_t mbslen, wcslen;
 
 			mbslen = str_len;
-			/*tmp = qse_mbsntowcsalldupwithcmgr(str, &mbslen, &wcslen, rtx->awk->mmgr, qse_findcmgrbyid(QSE_CMGR_MB8));*/
-			tmp = qse_mbsntowcsalldupwithcmgr(str, &mbslen, &wcslen, rtx->awk->mmgr, rtx->awk->cmgr);
+			/*tmp = qse_mbsntowcsalldupwithcmgr(str, &mbslen, &wcslen, qse_awk_rtx_getmmgr(rtx), qse_findcmgrbyid(QSE_CMGR_MB8));*/
+			tmp = qse_mbsntowcsalldupwithcmgr(str, &mbslen, &wcslen, qse_awk_rtx_getmmgr(rtx), qse_awk_rtx_getcmgr(rtx));
 			if (!tmp) 
 			{
 				qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
@@ -1108,7 +1108,7 @@ static int mbs_to_str (qse_awk_rtx_t* rtx, const qse_mchar_t* str, qse_size_t st
 
 			qse_str_clear (out->u.strp);
 			/*n = qse_str_ncatmbs(out->u.strp, str, str_len, qse_findcmgrbyid(QSE_CMGR_MB8));*/
-			n = qse_str_ncatmbs(out->u.strp, str, str_len, rtx->awk->cmgr);
+			n = qse_str_ncatmbs(out->u.strp, str, str_len, qse_awk_rtx_getcmgr(rtx));
 			if (n == (qse_size_t)-1)
 			{
 				qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
@@ -1122,7 +1122,7 @@ static int mbs_to_str (qse_awk_rtx_t* rtx, const qse_mchar_t* str, qse_size_t st
 			qse_size_t n;
 
 			/*n = qse_str_ncatmbs(out->u.strpcat, str, str_len, qse_findcmgrbyid(QSE_CMGR_MB8));*/
-			n = qse_str_ncatmbs(out->u.strpcat, str, str_len, rtx->awk->cmgr);
+			n = qse_str_ncatmbs(out->u.strpcat, str, str_len, qse_awk_rtx_getcmgr(rtx));
 			if (n == (qse_size_t)-1)
 			{
 				qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
@@ -1273,14 +1273,14 @@ static int val_flt_to_str (qse_awk_rtx_t* rtx, const qse_awk_val_flt_t* v, qse_a
 		tmp_len = rtx->gbl.convfmt.len;
 	}
 
-	if (qse_str_init(&buf, rtx->awk->mmgr, 256) <= -1)
+	if (qse_str_init(&buf, qse_awk_rtx_getmmgr(rtx), 256) <= -1)
 	{
 		qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
 		return -1;
 	}
 	buf_inited = 1;
 
-	if (qse_str_init(&fbu, rtx->awk->mmgr, 256) <= -1)
+	if (qse_str_init(&fbu, qse_awk_rtx_getmmgr(rtx), 256) <= -1)
 	{
 		qse_str_fini (&buf);
 		qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
@@ -1498,7 +1498,7 @@ qse_mchar_t* qse_awk_rtx_valtombsdupwithcmgr (qse_awk_rtx_t* rtx, const qse_awk_
 
 	if (QSE_AWK_RTX_GETVALTYPE(rtx,v) == QSE_AWK_VAL_MBS)
 	{
-		mbs = qse_mbsxdup(((qse_awk_val_mbs_t*)v)->val.ptr, ((qse_awk_val_mbs_t*)v)->val.len, rtx->awk->mmgr);
+		mbs = qse_mbsxdup(((qse_awk_val_mbs_t*)v)->val.ptr, ((qse_awk_val_mbs_t*)v)->val.len, qse_awk_rtx_getmmgr(rtx));
 		if (!mbs) 
 		{
 			qse_awk_rtx_seterror (rtx, QSE_AWK_ENOMEM, QSE_NULL, QSE_NULL);
@@ -1516,10 +1516,10 @@ qse_mchar_t* qse_awk_rtx_valtombsdupwithcmgr (qse_awk_rtx_t* rtx, const qse_awk_
 		if (!str0) return QSE_NULL;
 
 	#if defined(QSE_CHAR_IS_MCHAR)
-		mbs = qse_strxdup(str0, len0, rtx->awk->mmgr);
+		mbs = qse_strxdup(str0, len0, qse_awk_rtx_getmmgr(rtx));
 		len1 = len0;
 	#else
-		mbs = qse_wcsntombsdupwithcmgr(str0, len0, &len1, rtx->awk->mmgr, cmgr);
+		mbs = qse_wcsntombsdupwithcmgr(str0, len0, &len1, qse_awk_rtx_getmmgr(rtx), cmgr);
 	#endif
 		qse_awk_rtx_freevalstr (rtx, v, str0);
 		if (!mbs) 
@@ -1546,7 +1546,7 @@ qse_wchar_t* qse_awk_rtx_valtowcsdupwithcmgr (qse_awk_rtx_t* rtx, const qse_awk_
 		{
 			qse_size_t mbslen, wcslen;
 			mbslen = ((qse_awk_val_mbs_t*)v)->val.len;
-			wcs = qse_mbsntowcsalldupwithcmgr(((qse_awk_val_mbs_t*)v)->val.ptr, &mbslen, &wcslen, rtx->awk->mmgr, cmgr);
+			wcs = qse_mbsntowcsalldupwithcmgr(((qse_awk_val_mbs_t*)v)->val.ptr, &mbslen, &wcslen, qse_awk_rtx_getmmgr(rtx), cmgr);
 			if (!wcs) 
 			{
 				qse_awk_rtx_seterror (rtx, QSE_AWK_ENOMEM, QSE_NULL, QSE_NULL);
@@ -1562,9 +1562,9 @@ qse_wchar_t* qse_awk_rtx_valtowcsdupwithcmgr (qse_awk_rtx_t* rtx, const qse_awk_
 		#if defined(QSE_CHAR_IS_MCHAR)
 			qse_size_t wcslen, mbslen;
 			mbslen = ((qse_awk_val_str_t*)v)->val.len;
-			wcs = qse_mbsntowcsalldupwithcmgr(((qse_awk_val_str_t*)v)->val.ptr, &mbslen, &wcslen, rtx->awk->mmgr, cmgr);
+			wcs = qse_mbsntowcsalldupwithcmgr(((qse_awk_val_str_t*)v)->val.ptr, &mbslen, &wcslen, qse_awk_rtx_getmmgr(rtx), cmgr);
 		#else
-			wcs = qse_strxdup(((qse_awk_val_str_t*)v)->val.ptr, ((qse_awk_val_str_t*)v)->val.len, rtx->awk->mmgr);
+			wcs = qse_strxdup(((qse_awk_val_str_t*)v)->val.ptr, ((qse_awk_val_str_t*)v)->val.len, qse_awk_rtx_getmmgr(rtx));
 		#endif
 			if (!wcs) 
 			{
@@ -1589,7 +1589,7 @@ qse_wchar_t* qse_awk_rtx_valtowcsdupwithcmgr (qse_awk_rtx_t* rtx, const qse_awk_
 			out.type = QSE_AWK_RTX_VALTOSTR_CPLDUP;
 			if (qse_awk_rtx_valtostr(rtx, v, &out) <= -1) return QSE_NULL;
 
-			wcs = qse_mbsntowcsalldupwithcmgr(out.u.cpldup.ptr, &out.u.cpldup.len, &wcslen, rtx->awk->mmgr, cmgr);
+			wcs = qse_mbsntowcsalldupwithcmgr(out.u.cpldup.ptr, &out.u.cpldup.len, &wcslen, qse_awk_rtx_getmmgr(rtx), cmgr);
 			qse_awk_rtx_freemem (rtx, out.u.cpldup.ptr);
 			if (!wcs)
 			{

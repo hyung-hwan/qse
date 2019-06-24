@@ -50,6 +50,14 @@ struct rxtn_t
 
 Awk::NoSource Awk::Source::NONE;
 
+#if defined(QSE_HAVE_INLINE)
+static QSE_INLINE xtn_t* GET_XTN(qse_awk_t* awk) { return (xtn_t*)((qse_uint8_t*)qse_awk_getxtn(awk) - QSE_SIZEOF(xtn_t)); }
+static QSE_INLINE rxtn_t* GET_RXTN(qse_awk_rtx_t* rtx) { return (rxtn_t*)((qse_uint8_t*)qse_awk_rtx_getxtn(rtx) - QSE_SIZEOF(rxtn_t)); }
+#else
+#define GET_XTN(awk) ((xtn_t*)((qse_uint8_t*)qse_awk_getxtn(awk) - QSE_SIZEOF(xtn_t)))
+#define GET_RXTN(rtx) ((rxtn_t*)((qse_uint8_t*)qse_awk_rtx_getxtn(rtx) - QSE_SIZEOF(rxtn_t)))
+#endif
+
 //////////////////////////////////////////////////////////////////
 // Awk::RIO
 //////////////////////////////////////////////////////////////////
@@ -1039,9 +1047,9 @@ const Awk::char_t* Awk::getErrorString (errnum_t num) const
 	return dflerrstr (awk, num);
 }
 
-const Awk::char_t* Awk::xerrstr (const awk_t* a, errnum_t num) 
+const Awk::char_t* Awk::xerrstr (awk_t* a, errnum_t num) 
 {
-	Awk* awk = *(Awk**)QSE_XTN(a);
+	Awk* awk = *(Awk**)GET_XTN(a);
 	return awk->getErrorString (num);
 }
 
@@ -1143,15 +1151,17 @@ int Awk::open ()
 	prm.modsym   = modsym;
 
 	qse_awk_errnum_t errnum;
-	this->awk = qse_awk_open (this->getMmgr(), QSE_SIZEOF(xtn_t), &prm, &errnum);
+	this->awk = qse_awk_open(this->getMmgr(), QSE_SIZEOF(xtn_t), &prm, &errnum);
 	if (!this->awk)
 	{
 		this->setError (errnum);
 		return -1;
 	}
 
+	this->awk->_instsize += QSE_SIZEOF(xtn_t);
+
 	// associate this Awk object with the underlying awk object
-	xtn_t* xtn = (xtn_t*) QSE_XTN (this->awk);
+	xtn_t* xtn = (xtn_t*)GET_XTN(this->awk);
 	xtn->awk = this;
 	xtn->ecb.close = fini_xtn;
 	xtn->ecb.clear = clear_xtn;
@@ -1229,7 +1239,7 @@ void Awk::close ()
 qse_cmgr_t* Awk::getCmgr () const
 {
 	if (!this->awk) return QSE_NULL;
-	return this->awk->cmgr;
+	return qse_awk_getcmgr(this->awk);
 }
 
 void Awk::uponClosing ()
@@ -1368,7 +1378,7 @@ int Awk::init_runctx ()
 
 	runctx.rtx = rtx;
 
-	rxtn_t* rxtn = (rxtn_t*)QSE_XTN(rtx);
+	rxtn_t* rxtn = GET_RXTN(rtx);
 	rxtn->run = &runctx;
 
 	return 0;
@@ -1766,7 +1776,7 @@ Awk::ssize_t Awk::readSource (
 	awk_t* awk, sio_cmd_t cmd, sio_arg_t* arg,
 	char_t* data, size_t count)
 {
-	xtn_t* xtn = (xtn_t*) QSE_XTN (awk);
+	xtn_t* xtn = GET_XTN(awk);
 	Source::Data sdat (xtn->awk, Source::READ, arg);
 
 	switch (cmd)
@@ -1786,7 +1796,7 @@ Awk::ssize_t Awk::writeSource (
 	awk_t* awk, qse_awk_sio_cmd_t cmd, sio_arg_t* arg,
 	char_t* data, size_t count)
 {
-	xtn_t* xtn = (xtn_t*) QSE_XTN (awk);
+	xtn_t* xtn = GET_XTN(awk);
 	Source::Data sdat (xtn->awk, Source::WRITE, arg);
 
 	switch (cmd)
@@ -1804,7 +1814,7 @@ Awk::ssize_t Awk::writeSource (
 
 Awk::ssize_t Awk::pipeHandler (rtx_t* rtx, rio_cmd_t cmd, rio_arg_t* riod, void* data, size_t count)
 {
-	rxtn_t* rxtn = (rxtn_t*)QSE_XTN(rtx);
+	rxtn_t* rxtn = GET_RXTN(rtx);
 	Awk* awk = rxtn->run->awk;
 
 	QSE_ASSERT ((riod->type & 0xFF) == QSE_AWK_RIO_PIPE);
@@ -1868,7 +1878,7 @@ Awk::ssize_t Awk::pipeHandler (rtx_t* rtx, rio_cmd_t cmd, rio_arg_t* riod, void*
 
 Awk::ssize_t Awk::fileHandler (rtx_t* rtx, rio_cmd_t cmd, rio_arg_t* riod, void* data, size_t count)
 {
-	rxtn_t* rxtn = (rxtn_t*)QSE_XTN(rtx);
+	rxtn_t* rxtn = GET_RXTN(rtx);
 	Awk* awk = rxtn->run->awk;
 
 	QSE_ASSERT ((riod->type & 0xFF) == QSE_AWK_RIO_FILE);
@@ -1932,7 +1942,7 @@ Awk::ssize_t Awk::fileHandler (rtx_t* rtx, rio_cmd_t cmd, rio_arg_t* riod, void*
 
 Awk::ssize_t Awk::consoleHandler (rtx_t* rtx, rio_cmd_t cmd, rio_arg_t* riod, void* data, size_t count)
 {
-	rxtn_t* rxtn = (rxtn_t*) QSE_XTN (rtx);
+	rxtn_t* rxtn = GET_RXTN(rtx);
 	Awk* awk = rxtn->run->awk;
 
 	QSE_ASSERT ((riod->type & 0xFF) == QSE_AWK_RIO_CONSOLE);
@@ -2114,37 +2124,37 @@ int Awk::nextConsole (Console& io)
 
 int Awk::functionHandler (rtx_t* rtx, const fnc_info_t* fi)
 {
-	rxtn_t* rxtn = (rxtn_t*) QSE_XTN (rtx);
+	rxtn_t* rxtn = GET_RXTN(rtx);
 	return rxtn->run->awk->dispatch_function (rxtn->run, fi);
 }	
 	
 Awk::flt_t Awk::pow (awk_t* awk, flt_t x, flt_t y)
 {
-	xtn_t* xtn = (xtn_t*) QSE_XTN (awk);
+	xtn_t* xtn = GET_XTN(awk);
 	return xtn->awk->pow (x, y);
 }
 
 Awk::flt_t Awk::mod (awk_t* awk, flt_t x, flt_t y)
 {
-	xtn_t* xtn = (xtn_t*) QSE_XTN (awk);
+	xtn_t* xtn = GET_XTN(awk);
 	return xtn->awk->mod (x, y);
 }
 
 void* Awk::modopen (awk_t* awk, const mod_spec_t* spec)
 {
-	xtn_t* xtn = (xtn_t*) QSE_XTN (awk);
+	xtn_t* xtn = GET_XTN(awk);
 	return xtn->awk->modopen (spec);
 }
 
 void Awk::modclose (awk_t* awk, void* handle)
 {
-	xtn_t* xtn = (xtn_t*) QSE_XTN (awk);
+	xtn_t* xtn = GET_XTN(awk);
 	xtn->awk->modclose (handle);
 }
 
 void* Awk::modsym (awk_t* awk, void* handle, const char_t* name)
 {
-	xtn_t* xtn = (xtn_t*) QSE_XTN (awk);
+	xtn_t* xtn = GET_XTN(awk);
 	return xtn->awk->modsym (handle, name);
 }
 /////////////////////////////////

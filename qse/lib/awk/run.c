@@ -53,9 +53,6 @@
 #	error unsupported. qse_awk_int_t too big
 #endif
 
-#define MMGR(rtx) ((rtx)->awk->mmgr)
-#define CMGR(rtx) ((rtx)->awk->cmgr)
-
 enum exit_level_t
 {
 	EXIT_NONE,
@@ -710,11 +707,6 @@ int qse_awk_rtx_setofilename (qse_awk_rtx_t* rtx, const qse_char_t* name, qse_si
 	return n;
 }
 
-void* qse_awk_rtx_getxtn (qse_awk_rtx_t* rtx)
-{
-	return QSE_XTN(rtx);
-}
-
 qse_htb_t* qse_awk_rtx_getnvmap (qse_awk_rtx_t* rtx)
 {
 	return rtx->named;
@@ -794,6 +786,7 @@ qse_awk_rtx_t* qse_awk_rtx_open (qse_awk_t* awk, qse_size_t xtnsize, qse_awk_rio
 
 	/* initialize the rtx object */
 	QSE_MEMSET (rtx, 0, QSE_SIZEOF(qse_awk_rtx_t) + xtnsize);
+	rtx->_instsize = QSE_SIZEOF(qse_awk_rtx_t);
 	if (init_rtx(rtx, awk, rio) <= -1) 
 	{
 		qse_awk_freemem (awk, rtx);
@@ -949,16 +942,16 @@ static int init_rtx (qse_awk_rtx_t* rtx, qse_awk_t* awk, qse_awk_rio_t* rio)
 	rtx->inrec.maxflds = 0;
 	rtx->inrec.d0 = qse_awk_val_nil;
 
-	if (qse_str_init(&rtx->inrec.line, MMGR(rtx), DEF_BUF_CAPA) <= -1) goto oops_1;
-	if (qse_str_init(&rtx->inrec.linew, MMGR(rtx), DEF_BUF_CAPA) <= -1) goto oops_2;
-	if (qse_str_init(&rtx->inrec.lineg, MMGR(rtx), DEF_BUF_CAPA) <= -1) goto oops_3;
-	if (qse_str_init(&rtx->format.out, MMGR(rtx), 256) <= -1) goto oops_4;
-	if (qse_str_init(&rtx->format.fmt, MMGR(rtx), 256) <= -1) goto oops_5;
+	if (qse_str_init(&rtx->inrec.line, qse_awk_rtx_getmmgr(rtx), DEF_BUF_CAPA) <= -1) goto oops_1;
+	if (qse_str_init(&rtx->inrec.linew, qse_awk_rtx_getmmgr(rtx), DEF_BUF_CAPA) <= -1) goto oops_2;
+	if (qse_str_init(&rtx->inrec.lineg, qse_awk_rtx_getmmgr(rtx), DEF_BUF_CAPA) <= -1) goto oops_3;
+	if (qse_str_init(&rtx->format.out, qse_awk_rtx_getmmgr(rtx), 256) <= -1) goto oops_4;
+	if (qse_str_init(&rtx->format.fmt, qse_awk_rtx_getmmgr(rtx), 256) <= -1) goto oops_5;
 
-	if (qse_mbs_init(&rtx->formatmbs.out, MMGR(rtx), 256) <= -1) goto oops_6;
-	if (qse_mbs_init(&rtx->formatmbs.fmt, MMGR(rtx), 256) <= -1) goto oops_7;
+	if (qse_mbs_init(&rtx->formatmbs.out, qse_awk_rtx_getmmgr(rtx), 256) <= -1) goto oops_6;
+	if (qse_mbs_init(&rtx->formatmbs.fmt, qse_awk_rtx_getmmgr(rtx), 256) <= -1) goto oops_7;
 
-	rtx->named = qse_htb_open(MMGR(rtx), QSE_SIZEOF(rtx), 1024, 70, QSE_SIZEOF(qse_char_t), 1);
+	rtx->named = qse_htb_open(qse_awk_rtx_getmmgr(rtx), QSE_SIZEOF(rtx), 1024, 70, QSE_SIZEOF(qse_char_t), 1);
 	if (!rtx->named) goto oops_8;
 	*(qse_awk_rtx_t**)QSE_XTN(rtx->named) = rtx;
 	qse_htb_setstyle (rtx->named, &style_for_named);
@@ -4559,7 +4552,7 @@ static QSE_INLINE int __cmp_str_mbs (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qs
 	qse_size_t mbslen;
 	int n;
 
-	mbsptr = qse_wcsntombsdupwithcmgr(ls->val.ptr, ls->val.len, &mbslen, MMGR(rtx), CMGR(rtx));
+	mbsptr = qse_wcsntombsdupwithcmgr(ls->val.ptr, ls->val.len, &mbslen, qse_awk_rtx_getmmgr(rtx), qse_awk_rtx_getcmgr(rtx));
 	if (!mbsptr)
 	{
 		qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
@@ -6877,7 +6870,7 @@ static int shorten_record (qse_awk_rtx_t* rtx, qse_size_t nflds)
 		}
 	}
 
-	if (qse_str_init(&tmp, MMGR(rtx), QSE_STR_LEN(&rtx->inrec.line)) <= -1)
+	if (qse_str_init(&tmp, qse_awk_rtx_getmmgr(rtx), QSE_STR_LEN(&rtx->inrec.line)) <= -1)
 	{
 		if (ofs_free) qse_awk_rtx_freemem (rtx, ofs_free);
 		if (nflds > 1) qse_awk_rtx_refdownval (rtx, v);
@@ -6994,7 +6987,7 @@ static qse_char_t* idxnde_to_str (qse_awk_rtx_t* rtx, qse_awk_nde_t* nde, qse_ch
 		out.type = QSE_AWK_RTX_VALTOSTR_STRPCAT;
 		out.u.strpcat = &idxstr;
 
-		if (qse_str_init(&idxstr, MMGR(rtx), DEF_BUF_CAPA) <= -1) 
+		if (qse_str_init(&idxstr, qse_awk_rtx_getmmgr(rtx), DEF_BUF_CAPA) <= -1) 
 		{
 			SETERR_LOC (rtx, QSE_AWK_ENOMEM, &nde->loc);
 			return QSE_NULL;

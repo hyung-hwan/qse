@@ -118,15 +118,6 @@ QSE_EXPORT qse_awk_t* qse_awk_openstdwithmmgr (
 );
 
 /**
- * The qse_awk_getxtnstd() gets the pointer to extension area created with 
- * qse_awk_openstd() or qse_awk_openstdwithmmgr(). You must not call 
- * qse_awk_getxtn() for sunch an object.
- */
-QSE_EXPORT void* qse_awk_getxtnstd (
-	qse_awk_t* awk
-);
-
-/**
  * The qse_awk_parsestd() functions parses source script.
  * The code below shows how to parse a literal string 'BEGIN { print 10; }' 
  * and deparses it out to a buffer 'buf'.
