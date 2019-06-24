@@ -71,6 +71,12 @@ typedef struct xtn_t
 	qse_xli_ecb_t ecb;
 } xtn_t;
 
+#if defined(QSE_HAVE_INLINE)
+static QSE_INLINE xtn_t* GET_XTN(qse_xli_t* xli) { return (xtn_t*)((qse_uint8_t*)qse_xli_getxtn(xli) - QSE_SIZEOF(xtn_t)); }
+#else
+#define GET_XTN(xli) ((xtn_t*)((qse_uint8_t*)qse_xli_getxtn(xli) - QSE_SIZEOF(xtn_t)))
+#endif
+
 qse_xli_t* qse_xli_openstd (qse_size_t xtnsize, qse_size_t rootxtnsize, qse_xli_errnum_t* errnum)
 {
 	return qse_xli_openstdwithmmgr (QSE_MMGR_GETDFL(), xtnsize, rootxtnsize, errnum);
@@ -92,11 +98,13 @@ qse_xli_t* qse_xli_openstdwithmmgr (qse_mmgr_t* mmgr, qse_size_t xtnsize, qse_si
 	xtn_t* xtn;
 
 	/* create an object */
-	xli = qse_xli_open (mmgr, QSE_SIZEOF(xtn_t) + xtnsize, rootxtnsize, errnum);
+	xli = qse_xli_open(mmgr, QSE_SIZEOF(xtn_t) + xtnsize, rootxtnsize, errnum);
 	if (xli == QSE_NULL) goto oops;
 
+	xli->_instsize += QSE_SIZEOF(xtn_t);
+
 	/* initialize extension */
-	xtn = (xtn_t*) QSE_XTN (xli);
+	xtn = GET_XTN(xli);
 	/* the extension area has been cleared in qse_httpd_open().
 	 * QSE_MEMSET (xtn, 0, QSE_SIZEOF(*xtn));*/
 
@@ -111,15 +119,10 @@ oops:
 	return QSE_NULL;
 }
 
-void* qse_xli_getxtnstd (qse_xli_t* xli)
-{
-	return (void*)((xtn_t*)QSE_XTN(xli) + 1);
-}
-
 static qse_sio_t* open_sio (qse_xli_t* xli, const qse_char_t* file, int flags)
 {
 	qse_sio_t* sio;
-	sio = qse_sio_open (xli->mmgr, 0, file, flags);
+	sio = qse_sio_open(qse_xli_getmmgr(xli), 0, file, flags);
 	if (sio == QSE_NULL)
 	{
 		qse_cstr_t errarg;
@@ -140,7 +143,7 @@ static qse_cstr_t sio_std_names[] =
 static qse_sio_t* open_sio_std (qse_xli_t* xli, qse_sio_std_t std, int flags)
 {
 	qse_sio_t* sio;
-	sio = qse_sio_openstd (xli->mmgr, 0, std, flags);
+	sio = qse_sio_openstd (qse_xli_getmmgr(xli), 0, std, flags);
 	if (sio == QSE_NULL) qse_xli_seterrnum (xli, QSE_XLI_EIOFIL, &sio_std_names[std]);
 	return sio;
 }
@@ -234,10 +237,10 @@ static qse_ssize_t sf_in_open (qse_xli_t* xli, qse_xli_io_arg_t* arg, xtn_t* xtn
 		}
 
 		arg->handle = qse_sio_open (
-			xli->mmgr, 0, path, QSE_SIO_READ | QSE_SIO_IGNOREMBWCERR | QSE_SIO_KEEPPATH
+			qse_xli_getmmgr(xli), 0, path, QSE_SIO_READ | QSE_SIO_IGNOREMBWCERR | QSE_SIO_KEEPPATH
 		);
 
-		if (dbuf) QSE_MMGR_FREE (xli->mmgr, dbuf);
+		if (dbuf) qse_xli_freemem (xli, dbuf);
 		if (arg->handle == QSE_NULL)
 		{
 			qse_cstr_t ea;
@@ -347,7 +350,7 @@ static qse_ssize_t sf_in (
 	qse_xli_t* xli, qse_xli_io_cmd_t cmd, 
 	qse_xli_io_arg_t* arg, qse_char_t* data, qse_size_t size)
 {
-	xtn_t* xtn = QSE_XTN (xli);
+	xtn_t* xtn = GET_XTN(xli);
 
 	QSE_ASSERT (arg != QSE_NULL);
 
@@ -401,7 +404,7 @@ static qse_ssize_t sf_out_open (qse_xli_t* xli, qse_xli_io_arg_t* arg, xtn_t* xt
 				return 0;
 	
 			case QSE_XLI_IOSTD_STR:
-				xtn->s.out.u.str.buf = qse_str_open (xli->mmgr, 0, 512);
+				xtn->s.out.u.str.buf = qse_str_open(qse_xli_getmmgr(xli), 0, 512);
 				if (xtn->s.out.u.str.buf == QSE_NULL)
 				{
 					qse_xli_seterrnum (xli, QSE_XLI_ENOMEM, QSE_NULL);
@@ -461,10 +464,10 @@ static qse_ssize_t sf_out_open (qse_xli_t* xli, qse_xli_io_arg_t* arg, xtn_t* xt
 		}
 
 		arg->handle = qse_sio_open (
-			xli->mmgr, 0, path, QSE_SIO_WRITE | QSE_SIO_CREATE | QSE_SIO_TRUNCATE | QSE_SIO_IGNOREMBWCERR | QSE_SIO_KEEPPATH
+			qse_xli_getmmgr(xli), 0, path, QSE_SIO_WRITE | QSE_SIO_CREATE | QSE_SIO_TRUNCATE | QSE_SIO_IGNOREMBWCERR | QSE_SIO_KEEPPATH
 		);
 
-		if (dbuf) QSE_MMGR_FREE (xli->mmgr, dbuf);
+		if (dbuf) qse_xli_freemem (xli, dbuf);
 		if (arg->handle == QSE_NULL)
 		{
 			qse_cstr_t ea;
@@ -578,7 +581,7 @@ static qse_ssize_t sf_out (
 	qse_xli_t* xli, qse_xli_io_cmd_t cmd, 
 	qse_xli_io_arg_t* arg, qse_char_t* data, qse_size_t size)
 {
-	xtn_t* xtn = QSE_XTN (xli);
+	xtn_t* xtn = GET_XTN(xli);
 
 	QSE_ASSERT (arg != QSE_NULL);
 
@@ -601,7 +604,7 @@ static qse_ssize_t sf_out (
 
 int qse_xli_readstd (qse_xli_t* xli, qse_xli_iostd_t* in)
 {
-	xtn_t* xtn = (xtn_t*) QSE_XTN (xli);
+	xtn_t* xtn = GET_XTN(xli);
 
 	if (in == QSE_NULL || (in->type != QSE_XLI_IOSTD_FILE && 
 	                       in->type != QSE_XLI_IOSTD_STR))
@@ -619,7 +622,7 @@ int qse_xli_readstd (qse_xli_t* xli, qse_xli_iostd_t* in)
 
 int qse_xli_readinistd (qse_xli_t* xli, qse_xli_iostd_t* in)
 {
-	xtn_t* xtn = (xtn_t*) QSE_XTN (xli);
+	xtn_t* xtn = GET_XTN(xli);
 
 	if (in == QSE_NULL || (in->type != QSE_XLI_IOSTD_FILE && 
 	                       in->type != QSE_XLI_IOSTD_STR))
@@ -636,7 +639,7 @@ int qse_xli_readinistd (qse_xli_t* xli, qse_xli_iostd_t* in)
 
 int qse_xli_readjsonstd (qse_xli_t* xli, qse_xli_iostd_t* in)
 {
-	xtn_t* xtn = (xtn_t*) QSE_XTN (xli);
+	xtn_t* xtn = GET_XTN(xli);
 
 	if (in == QSE_NULL || (in->type != QSE_XLI_IOSTD_FILE && 
 	                       in->type != QSE_XLI_IOSTD_STR))
@@ -654,7 +657,7 @@ int qse_xli_readjsonstd (qse_xli_t* xli, qse_xli_iostd_t* in)
 int qse_xli_writestd (qse_xli_t* xli, qse_xli_list_t* root_list, qse_xli_iostd_t* out)
 {
 	int n;
-	xtn_t* xtn = (xtn_t*) QSE_XTN (xli);
+	xtn_t* xtn = GET_XTN(xli);
 
 	if (out == QSE_NULL || (out->type != QSE_XLI_IOSTD_FILE && 
 	                        out->type != QSE_XLI_IOSTD_STR))
@@ -684,7 +687,7 @@ int qse_xli_writestd (qse_xli_t* xli, qse_xli_list_t* root_list, qse_xli_iostd_t
 int qse_xli_writeinistd (qse_xli_t* xli, qse_xli_list_t* root_list, qse_xli_iostd_t* out)
 {
 	int n;
-	xtn_t* xtn = (xtn_t*) QSE_XTN (xli);
+	xtn_t* xtn = GET_XTN(xli);
 
 	if (out == QSE_NULL || (out->type != QSE_XLI_IOSTD_FILE && 
 	                        out->type != QSE_XLI_IOSTD_STR))
@@ -714,7 +717,7 @@ int qse_xli_writeinistd (qse_xli_t* xli, qse_xli_list_t* root_list, qse_xli_iost
 int qse_xli_writejsonstd (qse_xli_t* xli, qse_xli_list_t* root_list, qse_xli_iostd_t* out)
 {
 	int n;
-	xtn_t* xtn = (xtn_t*) QSE_XTN (xli);
+	xtn_t* xtn = GET_XTN(xli);
 
 	if (out == QSE_NULL || (out->type != QSE_XLI_IOSTD_FILE && 
 	                        out->type != QSE_XLI_IOSTD_STR))

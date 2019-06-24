@@ -258,7 +258,7 @@ static int end_include (qse_xli_t* xli, int noeof)
 	xli->rio.inp = xli->rio.inp->prev;
 
 	QSE_ASSERT (cur->name != QSE_NULL);
-	QSE_MMGR_FREE (xli->mmgr, cur);
+	qse_xli_freemem (xli, cur);
 	/* xli->parse.depth.incl--; */
 
 	if ((xli->opt.trait & QSE_XLI_KEEPFILE) && !noeof && 
@@ -329,7 +329,7 @@ oops:
 	/* i don't need to free 'link' since it's linked to
 	 * xli->rio_names that's freed at the beginning of qse_xli_read()
 	 * or by qse_xli_fini() */
-	if (arg) QSE_MMGR_FREE (xli->mmgr, arg);
+	if (arg) qse_xli_freemem (xli, arg);
 	return -1;
 }
 
@@ -675,7 +675,7 @@ static int read_pair (qse_xli_t* xli, rpair_t* pair)
 
 	if (check_token_for_key_eligibility(xli, xli->parlink->list) <= -1) goto oops;
 
-	key = qse_strdup(QSE_STR_PTR(xli->tok.name), xli->mmgr);
+	key = qse_strdup(QSE_STR_PTR(xli->tok.name), qse_xli_getmmgr(xli));
 	if (key == QSE_NULL) 
 	{
 		qse_xli_seterrnum (xli, QSE_XLI_ENOMEM, QSE_NULL); 
@@ -702,7 +702,7 @@ static int read_pair (qse_xli_t* xli, rpair_t* pair)
 
 oops:
 	if (val) qse_xli_freeval (xli, val);
-	if (key) QSE_MMGR_FREE (xli->mmgr, key);
+	if (key) qse_xli_freemem (xli, key);
 	return -1;
 }
 
@@ -797,7 +797,7 @@ static int __read_list (qse_xli_t* xli)
 			p = qse_xli_insertpair(xli, xli->parlink->list, QSE_NULL, rpair.key, QSE_NULL, QSE_NULL, rpair.val);
 			if (!p)
 			{
-				QSE_MMGR_FREE (xli->mmgr, rpair.key);
+				qse_xli_freemem (xli, rpair.key);
 				qse_xli_freeval (xli, rpair.val);
 				return -1;
 			}
@@ -805,7 +805,7 @@ static int __read_list (qse_xli_t* xli)
 			if (xli->opt.cbs.pair_read) xli->opt.cbs.pair_read (xli, p, &ploc);
 
 			/* clear the duplicated key. the key is also duplicated in qse_xli_insertpair(). don't need it */
-			QSE_MMGR_FREE (xli->mmgr, rpair.key);
+			qse_xli_freemem (xli, rpair.key);
 
 			if (get_token(xli) <= -1) return -1;
 
@@ -1003,7 +1003,7 @@ oops:
 
 		prev = xli->rio.inp->prev;
 		QSE_ASSERT (xli->rio.inp->name != QSE_NULL);
-		QSE_MMGR_FREE (xli->mmgr, xli->rio.inp);
+		qse_xli_freemem (xli, xli->rio.inp);
 		xli->rio.inp = prev;
 	}
 	

@@ -366,7 +366,7 @@ static int read_list (qse_xli_t* xli)
 
 				QSE_ASSERT (key.ptr == QSE_NULL);
 				key.len = QSE_STR_LEN(xli->tok.name);
-				key.ptr = qse_strdup (QSE_STR_PTR(xli->tok.name), xli->mmgr);
+				key.ptr = qse_strdup(QSE_STR_PTR(xli->tok.name), qse_xli_getmmgr(xli));
 				if (key.ptr == QSE_NULL) 
 				{
 					qse_xli_seterrnum (xli, QSE_XLI_ENOMEM, QSE_NULL); 
@@ -398,7 +398,7 @@ static int read_list (qse_xli_t* xli)
 
 					pair = qse_xli_insertpairwithstr (xli, curlist, QSE_NULL, key.ptr, QSE_NULL, QSE_NULL, &empty, QSE_NULL);
 
-					QSE_MMGR_FREE (xli->mmgr, key.ptr);
+					qse_xli_freemem (xli, key.ptr);
 					key.ptr = QSE_NULL;
 
 					if (pair == QSE_NULL) goto oops;
@@ -410,7 +410,7 @@ static int read_list (qse_xli_t* xli)
 					/* add a new pair with the initial string segment */
 					pair = qse_xli_insertpairwithstr (xli, curlist, QSE_NULL, key.ptr, QSE_NULL, QSE_NULL, QSE_STR_XSTR(xli->tok.name), QSE_NULL);
 
-					QSE_MMGR_FREE (xli->mmgr, key.ptr);
+					qse_xli_freemem (xli, key.ptr);
 					key.ptr = QSE_NULL;
 
 					if (pair == QSE_NULL) goto oops;
@@ -432,7 +432,7 @@ static int read_list (qse_xli_t* xli)
 	return 0;
 
 oops:
-	if (key.ptr) QSE_MMGR_FREE (xli->mmgr, key.ptr);
+	if (key.ptr) qse_xli_freemem (xli, key.ptr);
 	return -1;
 }
 
@@ -505,7 +505,7 @@ oops:
 
 		prev = xli->rio.inp->prev;
 		QSE_ASSERT (xli->rio.inp->name != QSE_NULL);
-		QSE_MMGR_FREE (xli->mmgr, xli->rio.inp);
+		qse_xli_freemem (xli, xli->rio.inp);
 		xli->rio.inp = prev;
 	}
 	

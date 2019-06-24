@@ -115,15 +115,6 @@ QSE_EXPORT qse_xli_t* qse_xli_openstdwithmmgr (
 	qse_xli_errnum_t* errnum
 );
 
-/**
- * The qse_xli_getxtnstd() gets the pointer to extension area created with 
- * qse_xli_openstd() or qse_xli_openstdwithmmgr(). You must not call 
- * qse_xli_getxtn() for sunch an object.
- */
-QSE_EXPORT void* qse_xli_getxtnstd (
-	qse_xli_t* xli
-);
-
 QSE_EXPORT int qse_xli_readstd (
 	qse_xli_t*       xli,
 	qse_xli_iostd_t* in

@@ -384,7 +384,7 @@ static int end_include (qse_xli_t* xli, int noeof)
 	xli->rio.inp = xli->rio.inp->prev;
 
 	QSE_ASSERT (cur->name != QSE_NULL);
-	QSE_MMGR_FREE (xli->mmgr, cur);
+	qse_xli_freemem (xli, cur);
 	/* xli->parse.depth.incl--; */
 
 	if ((xli->opt.trait & QSE_XLI_KEEPFILE) && !noeof && 
@@ -407,7 +407,7 @@ static int begin_include (qse_xli_t* xli)
 	qse_link_t* link;
 	qse_xli_io_arg_t* arg = QSE_NULL;
 
-	link = (qse_link_t*) qse_xli_callocmem (xli, 
+	link = (qse_link_t*)qse_xli_callocmem(xli, 
 		QSE_SIZEOF(*link) + QSE_SIZEOF(qse_char_t) * (QSE_STR_LEN(xli->tok.name) + 1));
 	if (link == QSE_NULL) goto oops;
 
@@ -415,7 +415,7 @@ static int begin_include (qse_xli_t* xli)
 	link->link = xli->rio_names;
 	xli->rio_names = link;
 
-	arg = (qse_xli_io_arg_t*) qse_xli_callocmem (xli, QSE_SIZEOF(*arg));
+	arg = (qse_xli_io_arg_t*)qse_xli_callocmem(xli, QSE_SIZEOF(*arg));
 	if (arg == QSE_NULL) goto oops;
 
 	arg->name = (const qse_char_t*)(link + 1);
@@ -455,7 +455,7 @@ oops:
 	/* i don't need to free 'link' since it's linked to
 	 * xli->rio_names that's freed at the beginning of qse_xli_read()
 	 * or by qse_xli_fini() */
-	if (arg) QSE_MMGR_FREE (xli->mmgr, arg);
+	if (arg) qse_xli_freemem (xli, arg);
 	return -1;
 }
 
@@ -764,7 +764,7 @@ static int read_pair (qse_xli_t* xli, const qse_char_t* keytag, const qse_xli_sc
 
 	kloc = xli->tok.loc;
 	key.len = QSE_STR_LEN(xli->tok.name);
-	key.ptr = qse_strdup (QSE_STR_PTR(xli->tok.name), xli->mmgr);
+	key.ptr = qse_strdup (QSE_STR_PTR(xli->tok.name), qse_xli_getmmgr(xli));
 	if (key.ptr == QSE_NULL) 
 	{
 		qse_xli_seterrnum (xli, QSE_XLI_ENOMEM, QSE_NULL); 
@@ -847,7 +847,7 @@ static int read_pair (qse_xli_t* xli, const qse_char_t* keytag, const qse_xli_sc
 				atom = atom->prev;
 			}
 
-			name = qse_strdup (QSE_STR_PTR(xli->tok.name), xli->mmgr);
+			name = qse_strdup (QSE_STR_PTR(xli->tok.name), qse_xli_getmmgr(xli));
 			if (name == QSE_NULL) 
 			{
 				qse_xli_seterrnum (xli, QSE_XLI_ENOMEM, QSE_NULL); 
@@ -871,7 +871,7 @@ static int read_pair (qse_xli_t* xli, const qse_char_t* keytag, const qse_xli_sc
 
 		if ((xli->opt.trait & QSE_XLI_STRTAG) && MATCH(xli, QSE_XLI_TOK_TAG))
 		{
-			strtag = qse_strxdup (QSE_STR_PTR(xli->tok.name), QSE_STR_LEN(xli->tok.name), xli->mmgr);
+			strtag = qse_strxdup (QSE_STR_PTR(xli->tok.name), QSE_STR_LEN(xli->tok.name), qse_xli_getmmgr(xli));
 			if (strtag == QSE_NULL)
 			{
 				qse_xli_seterrnum (xli, QSE_XLI_ENOMEM, QSE_NULL); 
@@ -938,13 +938,13 @@ static int read_pair (qse_xli_t* xli, const qse_char_t* keytag, const qse_xli_sc
 
 					if (strtag) 
 					{
-						QSE_MMGR_FREE (xli->mmgr, strtag);
+						qse_xli_freemem (xli, strtag);
 						strtag = QSE_NULL;
 					}
 
 					if ((xli->opt.trait & QSE_XLI_STRTAG) && MATCH(xli, QSE_XLI_TOK_TAG))
 					{
-						strtag = qse_strxdup (QSE_STR_PTR(xli->tok.name), QSE_STR_LEN(xli->tok.name), xli->mmgr);
+						strtag = qse_strxdup (QSE_STR_PTR(xli->tok.name), QSE_STR_LEN(xli->tok.name), qse_xli_getmmgr(xli));
 						if (strtag == QSE_NULL)
 						{
 							qse_xli_seterrnum (xli, QSE_XLI_ENOMEM, QSE_NULL); 
@@ -1070,17 +1070,17 @@ static int read_pair (qse_xli_t* xli, const qse_char_t* keytag, const qse_xli_sc
 		goto oops;
 	}
 
-	if (strtag) QSE_MMGR_FREE (xli->mmgr, strtag);
-	QSE_MMGR_FREE (xli->mmgr, name);
-	QSE_MMGR_FREE (xli->mmgr, key.ptr);
+	if (strtag) qse_xli_freemem (xli, strtag);
+	qse_xli_freemem (xli, name);
+	qse_xli_freemem (xli, key.ptr);
 	qse_str_setlen (xli->dotted_curkey, dotted_curkey_len);
 	return 0;
 	
 oops:
 	xli->tok_status &= ~TOK_STATUS_ENABLE_NSTR;
-	if (strtag) QSE_MMGR_FREE (xli->mmgr, strtag);
-	if (name) QSE_MMGR_FREE (xli->mmgr, name);
-	if (key.ptr) QSE_MMGR_FREE (xli->mmgr, key.ptr);
+	if (strtag) qse_xli_freemem (xli, strtag);
+	if (name) qse_xli_freemem (xli, name);
+	if (key.ptr) qse_xli_freemem (xli, key.ptr);
 	if (dotted_curkey_len != (qse_size_t)-1)
 		qse_str_setlen (xli->dotted_curkey, dotted_curkey_len);
 	return -1;
@@ -1090,7 +1090,7 @@ qse_xli_list_link_t* qse_xli_makelistlink (qse_xli_t* xli, qse_xli_list_t* parli
 {
 	qse_xli_list_link_t* link;
 
-	link = (qse_xli_list_link_t*) qse_xli_callocmem (xli, QSE_SIZEOF(*link));
+	link = (qse_xli_list_link_t*)qse_xli_callocmem(xli, QSE_SIZEOF(*link));
 	if (link == QSE_NULL) return QSE_NULL;
 
 	link->list = parlist;
@@ -1128,7 +1128,7 @@ static int __read_list (qse_xli_t* xli, const qse_xli_scm_t* override)
 			qse_char_t* keytag;
 			int x;
 
-			keytag = qse_strxdup (QSE_STR_PTR(xli->tok.name), QSE_STR_LEN(xli->tok.name), xli->mmgr);
+			keytag = qse_strxdup (QSE_STR_PTR(xli->tok.name), QSE_STR_LEN(xli->tok.name), qse_xli_getmmgr(xli));
 			if (keytag == QSE_NULL)
 			{
 				qse_xli_seterrnum (xli, QSE_XLI_ENOMEM, QSE_NULL); 
@@ -1137,19 +1137,19 @@ static int __read_list (qse_xli_t* xli, const qse_xli_scm_t* override)
 
 			if (get_token(xli) <= -1) 
 			{
-				QSE_MMGR_FREE (xli->mmgr, keytag);
+				qse_xli_freemem (xli, keytag);
 				return -1;
 			}
 
 			if (!MATCH(xli, QSE_XLI_TOK_IDENT) && !MATCH(xli, QSE_XLI_TOK_DQSTR) && !MATCH(xli, QSE_XLI_TOK_SQSTR))
 			{
-				QSE_MMGR_FREE (xli->mmgr, keytag);
+				qse_xli_freemem (xli, keytag);
 				qse_xli_seterror (xli, QSE_XLI_ENOKEY, QSE_NULL, &xli->tok.loc);
 				return -1;
 			}
 
 			x = read_pair(xli, keytag, override);
-			QSE_MMGR_FREE (xli->mmgr, keytag);
+			qse_xli_freemem (xli, keytag);
 			if (x <= -1) return -1;
 		}
 		else if (MATCH(xli, QSE_XLI_TOK_IDENT) || MATCH(xli, QSE_XLI_TOK_DQSTR) || MATCH(xli, QSE_XLI_TOK_SQSTR))
@@ -1221,7 +1221,7 @@ void qse_xli_clearrionames (qse_xli_t* xli)
 	{
 		cur = xli->rio_names;
 		xli->rio_names = cur->link;
-		QSE_MMGR_FREE (xli->mmgr, cur);
+		qse_xli_freemem (xli, cur);
 	}
 }
 
@@ -1277,7 +1277,7 @@ oops:
 
 		prev = xli->rio.inp->prev;
 		QSE_ASSERT (xli->rio.inp->name != QSE_NULL);
-		QSE_MMGR_FREE (xli->mmgr, xli->rio.inp);
+		qse_xli_freemem (xli, xli->rio.inp);
 		xli->rio.inp = prev;
 	}
 	

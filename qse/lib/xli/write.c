@@ -388,7 +388,7 @@ void qse_xli_clearwionames (qse_xli_t* xli)
 	{
 		cur = xli->wio_names;
 		xli->wio_names = cur->link;
-		QSE_MMGR_FREE (xli->mmgr, cur);
+		qse_xli_freemem (xli, cur);
 	}
 }
 

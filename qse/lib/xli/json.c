@@ -75,9 +75,7 @@ struct qse_json_state_node_t
 
 struct qse_json_t
 {
-	qse_mmgr_t* mmgr;
-	qse_cmgr_t* cmgr;
-	qse_json_prim_t prim;
+	QSE_JSON_HDR;
 
 	qse_json_errnum_t errnum;
 	struct
@@ -86,6 +84,8 @@ struct qse_json_t
 		qse_char_t buf[256];
 		/*qse_size_t len;*/
 	} errmsg;
+
+	qse_json_prim_t prim;
 
 	struct
 	{
@@ -276,7 +276,7 @@ static int handle_string_value_char (qse_json_t* json, qse_cint_t c)
 				qse_mchar_t bcsbuf[QSE_MBLEN_MAX];
 				qse_size_t n;
 
-				n = json->cmgr->wctomb(json->state_stack->u.sv.acc, bcsbuf, QSE_COUNTOF(bcsbuf));
+				n = json->_cmgr->wctomb(json->state_stack->u.sv.acc, bcsbuf, QSE_COUNTOF(bcsbuf));
 				if (n == 0 || n > QSE_COUNTOF(bcsbuf))
 				{
 					/* illegal character or buffer to small */
@@ -786,7 +786,7 @@ static int feed_json_data (qse_json_t* json, const qse_mchar_t* data, qse_size_t
 		qse_size_t n;
 
 		bcslen = end - ptr;
-		n = json->cmgr->mbtowc(ptr, bcslen, &uc);
+		n = json->_cmgr->mbtowc(ptr, bcslen, &uc);
 		if (n == 0)
 		{
 			/* invalid sequence */
@@ -834,8 +834,9 @@ qse_json_t* qse_json_open (qse_mmgr_t* mmgr, qse_size_t xtnsize, qse_json_prim_t
 	}
 
 	QSE_MEMSET (json, 0, QSE_SIZEOF(*json) + xtnsize);
-	json->mmgr = mmgr;
-	json->cmgr = qse_getdflcmgr();
+	json->_instsize = QSE_SIZEOF(*json);
+	json->_mmgr = mmgr;
+	json->_cmgr = qse_getdflcmgr();
 	json->prim = *prim;
 
 	json->state_top.state = QSE_JSON_STATE_START;
@@ -849,7 +850,7 @@ void qse_json_close (qse_json_t* json)
 {
 	pop_all_states (json);
 	if (json->tok.ptr) qse_json_freemem (json, json->tok.ptr);
-	QSE_MMGR_FREE (json->mmgr, json);
+	QSE_MMGR_FREE (json->_mmgr, json);
 }
 
 int qse_json_setoption (qse_json_t* json, qse_json_option_t id, const void* value)
@@ -876,27 +877,6 @@ int qse_json_getoption (qse_json_t* json, qse_json_option_t id, void* value)
 
 	qse_json_seterrnum (json, QSE_JSON_EINVAL);
 	return -1;
-}
-
-
-void* qse_json_getxtn (qse_json_t* json)
-{
-	return (void*)(json + 1);
-}
-
-qse_mmgr_t* qse_json_getmmgr (qse_json_t* json)
-{
-	return json->mmgr;
-}
-
-qse_cmgr_t* qse_json_getcmgr (qse_json_t* json)
-{
-	return json->cmgr;
-}
-
-void qse_json_setcmgr (qse_json_t* json, qse_cmgr_t* cmgr)
-{
-	json->cmgr = cmgr;
 }
 
 qse_json_errnum_t qse_json_geterrnum (qse_json_t* json)
@@ -951,7 +931,7 @@ void* qse_json_allocmem (qse_json_t* json, qse_size_t size)
 {
 	void* ptr;
 
-	ptr = QSE_MMGR_ALLOC(json->mmgr, size);
+	ptr = QSE_MMGR_ALLOC(qse_json_getmmgr(json), size);
 	if (!ptr) qse_json_seterrnum (json, QSE_JSON_ENOMEM);
 	return ptr;
 }
@@ -960,7 +940,7 @@ void* qse_json_callocmem (qse_json_t* json, qse_size_t size)
 {
 	void* ptr;
 
-	ptr = QSE_MMGR_ALLOC(json->mmgr, size);
+	ptr = QSE_MMGR_ALLOC(qse_json_getmmgr(json), size);
 	if (!ptr) qse_json_seterrnum (json, QSE_JSON_ENOMEM);
 	else QSE_MEMSET (ptr, 0, size);
 	return ptr;
@@ -968,14 +948,14 @@ void* qse_json_callocmem (qse_json_t* json, qse_size_t size)
 
 void* qse_json_reallocmem (qse_json_t* json, void* ptr, qse_size_t size)
 {
-	ptr = QSE_MMGR_REALLOC(json->mmgr, ptr, size);
+	ptr = QSE_MMGR_REALLOC(qse_json_getmmgr(json), ptr, size);
 	if (!ptr) qse_json_seterrnum (json, QSE_JSON_ENOMEM);
 	return ptr;
 }
 
 void qse_json_freemem (qse_json_t* json, void* ptr)
 {
-	QSE_MMGR_FREE (json->mmgr, ptr);
+	QSE_MMGR_FREE (qse_json_getmmgr(json), ptr);
 }
 
 /* ========================================================================= */

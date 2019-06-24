@@ -527,6 +527,8 @@ qse_awk_t* qse_awk_openstdwithmmgr (qse_mmgr_t* mmgr, qse_size_t xtnsize, qse_aw
 	awk = qse_awk_open(mmgr, QSE_SIZEOF(xtn_t) + xtnsize, &prm, errnum);
 	if (!awk) return QSE_NULL;
 
+	/* adjust the object size by the sizeof xtn_t so that qse_getxtn() returns the right pointer. */
+	awk->_instsize += QSE_SIZEOF(xtn_t);
 
 #if defined(USE_DLFCN)
 	if (qse_awk_setopt(awk, QSE_AWK_MODPOSTFIX, QSE_T(".so")) <= -1) 
@@ -535,9 +537,6 @@ qse_awk_t* qse_awk_openstdwithmmgr (qse_mmgr_t* mmgr, qse_size_t xtnsize, qse_aw
 		goto oops;
 	}
 #endif
-
-	/* adjust the object size by the sizeof xtn_t so that qse_getxtn() returns the right pointer. */
-	awk->_instsize += QSE_SIZEOF(xtn_t);
 
 	/* initialize extension */
 	xtn = GET_XTN(awk);

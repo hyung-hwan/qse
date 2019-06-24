@@ -35,6 +35,18 @@
  */
 typedef struct qse_json_t qse_json_t;
 
+#define QSE_JSON_HDR \
+	qse_size_t _instsize; \
+	qse_mmgr_t* _mmgr; \
+	qse_cmgr_t* _cmgr
+
+typedef struct qse_json_alt_t qse_json_alt_t;
+struct qse_json_alt_t
+{
+	/* ensure that qse_json_t matches the beginning part of qse_json_t */
+	QSE_JSON_HDR;
+};
+
 enum qse_json_errnum_t
 {
 	QSE_JSON_ENOERR = 0,
@@ -155,22 +167,17 @@ QSE_EXPORT int qse_json_getoption (
 );
 
 
-QSE_EXPORT void* qse_json_getxtn (
-	qse_json_t* json
-);
-
-QSE_EXPORT qse_mmgr_t* qse_json_getmmgr (
-	qse_json_t* json
-);
-
-QSE_EXPORT qse_cmgr_t* qse_json_getcmgr (
-	qse_json_t* json
-);
-
-QSE_EXPORT void qse_json_setcmgr (
-	qse_json_t* json,
-	qse_cmgr_t*   cmgr
-);
+#if defined(QSE_HAVE_INLINE)
+static QSE_INLINE void* qse_json_getxtn (qse_json_t* json) { return (void*)((qse_uint8_t*)json + ((qse_json_alt_t*)json)->_instsize); }
+static QSE_INLINE qse_mmgr_t* qse_json_getmmgr (qse_json_t* json) { return ((qse_json_alt_t*)json)->_mmgr; }
+static QSE_INLINE qse_cmgr_t* qse_json_getcmgr (qse_json_t* json) { return ((qse_json_alt_t*)json)->_cmgr; }
+static QSE_INLINE void qse_json_setcmgr (qse_json_t* json, qse_cmgr_t* cmgr) { ((qse_json_alt_t*)json)->_cmgr = cmgr; }
+#else
+#       define qse_json_getxtn(json) ((void*)((qse_uint8_t*)json + ((qse_json_alt_t*)json)->_instsize))
+#	define qse_json_getmmgr(json) (((qse_json_alt_t*)(json))->_mmgr)
+#	define qse_json_getcmgr(json) (((qse_json_alt_t*)(json))->_cmgr)
+#	define qse_json_setcmgr(json,_cmgr) (((qse_json_alt_t*)(json))->_cmgr = (_cmgr))
+#endif /* QSE_HAVE_INLINE */
 
 
 QSE_EXPORT qse_json_errnum_t qse_json_geterrnum (

@@ -90,7 +90,7 @@ struct qse_xli_root_list_t
 
 struct qse_xli_t
 {
-	qse_mmgr_t* mmgr;
+	QSE_XLI_HDR;
 
 	qse_xli_errstr_t errstr; /**< error string getter */
 	qse_xli_errnum_t errnum; /**< stores an error number */
