@@ -94,7 +94,7 @@ qse_awk_t* qse_awk_open (qse_mmgr_t* mmgr, qse_size_t xtnsize, const qse_awk_prm
 			QSE_MMGR_FREE (mmgr, awk);
 			awk = QSE_NULL;
 		}
-		else QSE_MEMSET (awk + 1, 0, xtnsize);
+		else QSE_MEMSET (QSE_XTN(awk), 0, xtnsize);
 	}
 	else if (errnum) *errnum = QSE_AWK_ENOMEM;
 

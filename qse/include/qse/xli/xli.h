@@ -50,6 +50,17 @@
 
 typedef struct qse_xli_t qse_xli_t;
 
+#define QSE_XLI_HDR \
+	qse_size_t _instsize; \
+	qse_mmgr_t* _mmgr
+
+typedef struct qse_xli_alt_t qse_xli_alt_t;
+struct qse_xli_alt_t
+{
+	/* ensure that qse_xli_t matches the beginning part of qse_xli_t */
+	QSE_XLI_HDR;
+};
+
 enum qse_xli_errnum_t
 {
 	QSE_XLI_ENOERR,  /**< no error */
@@ -482,13 +493,13 @@ QSE_EXPORT void qse_xli_close (
 	qse_xli_t* xli
 );
 
-QSE_EXPORT qse_mmgr_t* qse_xli_getmmgr (
-	qse_xli_t* xli
-);
-
-QSE_EXPORT void* qse_xli_getxtn (
-	qse_xli_t* xli
-);
+#if defined(QSE_HAVE_INLINE)
+static QSE_INLINE void* qse_xli_getxtn (qse_xli_t* xli) { return (void*)((qse_uint8_t*)xli + ((qse_xli_alt_t*)xli)->_instsize); }
+static QSE_INLINE qse_mmgr_t* qse_xli_getmmgr (qse_xli_t* xli) { return ((qse_xli_alt_t*)xli)->_mmgr; }
+#else
+#	define qse_xli_getxtn(xli) ((void*)((qse_uint8_t*)xli + ((qse_xli_alt_t*)xli)->_instsize))
+#	define qse_xli_getmmgr(xli) (((qse_xli_alt_t*)(xli))->_mmgr)
+#endif /* QSE_HAVE_INLINE */
 
 QSE_EXPORT void qse_xli_pushecb (
 	qse_xli_t*     xli,

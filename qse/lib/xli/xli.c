@@ -60,13 +60,14 @@ void qse_xli_close (qse_xli_t* xli)
 		if (ecb->close) ecb->close (xli);
 
 	qse_xli_fini (xli);
-	QSE_MMGR_FREE (xli->mmgr, xli);
+	QSE_MMGR_FREE (xli->_mmgr, xli);
 }
 
 int qse_xli_init (qse_xli_t* xli, qse_mmgr_t* mmgr, qse_size_t rootxtnsize)
 {
 	QSE_MEMSET (xli, 0, QSE_SIZEOF(*xli));
-	xli->mmgr = mmgr;
+	xli->_instsize = QSE_SIZEOF(*xli);
+	xli->_mmgr = mmgr;
 	xli->errstr = qse_xli_dflerrstr;
 	xli->opt.root_xtnsize = rootxtnsize;
 	xli->opt.key_splitter = QSE_T('.');
@@ -100,21 +101,11 @@ oops:
 void qse_xli_fini (qse_xli_t* xli)
 {
 	qse_xli_clear (xli);
-	QSE_MMGR_FREE (xli->mmgr, xli->root);
+	QSE_MMGR_FREE (qse_xli_getmmgr(xli), xli->root);
 
 	qse_rbt_close (xli->schema);
 	qse_str_close (xli->tok.name);
 	qse_str_close (xli->dotted_curkey);
-}
-
-qse_mmgr_t* qse_xli_getmmgr (qse_xli_t* xli)
-{
-	return xli->mmgr;
-}
-
-void* qse_xli_getxtn (qse_xli_t* xli)
-{
-	return QSE_XTN (xli);
 }
 
 int qse_xli_setopt (qse_xli_t* xli, qse_xli_opt_t id, const void* value)
@@ -204,7 +195,7 @@ void* qse_xli_allocmem (qse_xli_t* xli, qse_size_t size)
 {
 	void* ptr;
 
-	ptr = QSE_MMGR_ALLOC (xli->mmgr, size);
+	ptr = QSE_MMGR_ALLOC (qse_xli_getmmgr(xli), size);
 	if (!ptr) qse_xli_seterrnum (xli, QSE_XLI_ENOMEM, QSE_NULL);
 	return ptr;
 }
@@ -213,7 +204,7 @@ void* qse_xli_callocmem (qse_xli_t* xli, qse_size_t size)
 {
 	void* ptr;
 
-	ptr = QSE_MMGR_ALLOC (xli->mmgr, size);
+	ptr = QSE_MMGR_ALLOC (qse_xli_getmmgr(xli), size);
 	if (!ptr) qse_xli_seterrnum (xli, QSE_XLI_ENOMEM, QSE_NULL);
 	else QSE_MEMSET (ptr, 0, size);
 	return ptr;
@@ -221,7 +212,7 @@ void* qse_xli_callocmem (qse_xli_t* xli, qse_size_t size)
 
 void qse_xli_freemem (qse_xli_t* xli, void* ptr)
 {
-	QSE_MMGR_FREE (xli->mmgr, ptr);
+	QSE_MMGR_FREE (qse_xli_getmmgr(xli), ptr);
 }
 /* ------------------------------------------------------ */
 
@@ -355,7 +346,7 @@ void qse_xli_deletepair (qse_xli_t* xli, qse_xli_pair_t* pair)
 	}
 
 	free_val (xli->root, pair->val);
-	QSE_MMGR_FREE (xli->mmgr, pair);
+	QSE_MMGR_FREE (qse_xli_getmmgr(xli), pair);
 }
 
 /* ------------------------------------------------------ */
@@ -603,7 +594,7 @@ static qse_xli_root_list_t* make_root (qse_xli_t* xli)
 {
 	qse_xli_root_list_t* tmp;
 
-	tmp = QSE_MMGR_ALLOC (xli->mmgr, QSE_SIZEOF(*tmp) + xli->opt.root_xtnsize);
+	tmp = QSE_MMGR_ALLOC (qse_xli_getmmgr(xli), QSE_SIZEOF(*tmp) + xli->opt.root_xtnsize);
 	if (!tmp) 
 	{
 		qse_xli_seterrnum (xli, QSE_XLI_ENOMEM, QSE_NULL);
@@ -615,7 +606,7 @@ static qse_xli_root_list_t* make_root (qse_xli_t* xli)
 	tmp->xnil.type = QSE_XLI_NIL;
 	tmp->xtrue.type = QSE_XLI_TRUE;
 	tmp->xfalse.type = QSE_XLI_FALSE;
-	tmp->mmgr = xli->mmgr;
+	tmp->mmgr = qse_xli_getmmgr(xli);
 
 	return tmp;
 }

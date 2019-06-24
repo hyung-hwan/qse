@@ -161,15 +161,6 @@ QSE_EXPORT qse_awk_rtx_t* qse_awk_rtx_openstd (
 );
 
 /**
- * The qse_awk_rtx_getxtnstd() function gets the pointer to extension area
- * created with qse_awk_rtx_openstd().
- */
-QSE_EXPORT void* qse_awk_rtx_getxtnstd (
-	qse_awk_rtx_t* rtx
-);
-
-
-/**
  * The qse_awk_rtx_getiocmgrstd() function gets the current character 
  * manager associated with a particular I/O target indicated by the name 
  * \a ioname if #QSE_CHAR_IS_WCHAR is defined. It always returns #QSE_NULL
