@@ -82,9 +82,9 @@ typedef struct qse_awk_tree_t qse_awk_tree_t;
 #	define QSE_AWK_MAX_RTX_STACK_LIMIT ((qse_size_t)1 << (QSE_SIZEOF_VOID_P * 4))
 #endif
 
-#define QSE_AWK_ALLOC(awk,size)       QSE_MMGR_ALLOC((awk)->mmgr,size)
-#define QSE_AWK_REALLOC(awk,ptr,size) QSE_MMGR_REALLOC((awk)->mmgr,ptr,size)
-#define QSE_AWK_FREE(awk,ptr)         QSE_MMGR_FREE((awk)->mmgr,ptr)
+#define QSE_AWK_ALLOC(awk,size)       QSE_MMGR_ALLOC(qse_awk_getmmgr(awk),size)
+#define QSE_AWK_REALLOC(awk,ptr,size) QSE_MMGR_REALLOC(qse_awk_getmmgr(awk),ptr,size)
+#define QSE_AWK_FREE(awk,ptr)         QSE_MMGR_FREE(qse_awk_getmmgr(awk),ptr)
 
 #define QSE_AWK_ISUPPER(awk,c)  QSE_ISUPPER(c)
 #define QSE_AWK_ISLOWER(awk,c)  QSE_ISLOWER(c)
@@ -128,8 +128,8 @@ typedef struct qse_awk_tree_t qse_awk_tree_t;
 #define QSE_AWK_TOWUPPER(awk,c)  QSE_TOWUPPER(c)
 #define QSE_AWK_TOWLOWER(awk,c)  QSE_TOWLOWER(c)
 
-#define QSE_AWK_STRDUP(awk,str) (qse_strdup(str,(awk)->mmgr))
-#define QSE_AWK_STRXDUP(awk,str,len) (qse_strxdup(str,len,(awk)->mmgr))
+#define QSE_AWK_STRDUP(awk,str) (qse_strdup(str,qse_awk_getmmgr(awk)))
+#define QSE_AWK_STRXDUP(awk,str,len) (qse_strxdup(str,len,qse_awk_getmmgr(awk)))
 
 #define QSE_AWK_BYTE_PRINTABLE(x) ((x) <= 0x7F && (x) != '\\' && QSE_ISMPRINT(x))
 

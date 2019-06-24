@@ -1411,7 +1411,7 @@ private:
 	void fini_runctx ();
 	int dispatch_function (Run* run, const fnc_info_t* fi);
 
-	static const char_t* xerrstr (const awk_t* a, errnum_t num);
+	static const char_t* xerrstr (awk_t* a, errnum_t num);
 };
 
 /////////////////////////////////

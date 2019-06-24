@@ -1020,7 +1020,7 @@ static int __substitute (qse_awk_rtx_t* rtx, qse_awk_int_t max_count)
 		s2_free = (qse_char_t*)s2.ptr;
 	}
 
-	if (qse_str_init (&new, rtx->awk->mmgr, s2.len) <= -1)
+	if (qse_str_init (&new, qse_awk_rtx_getmmgr(rtx), s2.len) <= -1)
 	{
 		qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
 		goto oops;
@@ -1381,14 +1381,14 @@ int qse_awk_fnc_sprintf (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 		qse_mcstr_t cs0;
 		qse_mcstr_t x;
 
-		if (qse_mbs_init(&out, rtx->awk->mmgr, 256) <= -1)
+		if (qse_mbs_init(&out, qse_awk_rtx_getmmgr(rtx), 256) <= -1)
 		{
 			qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
 			goto oops_mbs;
 		}
 		out_inited = 1;
 
-		if (qse_mbs_init(&fbu, rtx->awk->mmgr, 256) <= -1)
+		if (qse_mbs_init(&fbu, qse_awk_rtx_getmmgr(rtx), 256) <= -1)
 		{
 			qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
 			goto oops_mbs;
@@ -1422,14 +1422,14 @@ int qse_awk_fnc_sprintf (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 		qse_cstr_t cs0;
 		qse_cstr_t x;
 
-		if (qse_str_init(&out, rtx->awk->mmgr, 256) <= -1)
+		if (qse_str_init(&out, qse_awk_rtx_getmmgr(rtx), 256) <= -1)
 		{
 			qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
 			goto oops;
 		}
 		out_inited = 1;
 
-		if (qse_str_init(&fbu, rtx->awk->mmgr, 256) <= -1)
+		if (qse_str_init(&fbu, qse_awk_rtx_getmmgr(rtx), 256) <= -1)
 		{
 			qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
 			goto oops;

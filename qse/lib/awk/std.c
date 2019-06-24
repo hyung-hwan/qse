@@ -158,6 +158,15 @@ typedef struct ioattr_t
 	qse_ntime_t tmout[4];
 } ioattr_t;
 
+#if defined(QSE_HAVE_INLINE)
+static QSE_INLINE xtn_t* GET_XTN(qse_awk_t* awk) { return (xtn_t*)((qse_uint8_t*)qse_awk_getxtn(awk) - QSE_SIZEOF(xtn_t)); }
+static QSE_INLINE rxtn_t* GET_RXTN(qse_awk_rtx_t* rtx) { return (rxtn_t*)((qse_uint8_t*)qse_awk_rtx_getxtn(rtx) - QSE_SIZEOF(rxtn_t)); }
+#else
+#define GET_XTN(awk) ((xtn_t*)((qse_uint8_t*)qse_awk_getxtn(awk) - QSE_SIZEOF(xtn_t)))
+#define GET_RXTN(rtx) ((rxtn_t*)((qse_uint8_t*)qse_awk_rtx_getxtn(rtx) - QSE_SIZEOF(rxtn_t)))
+#endif
+
+
 static ioattr_t* get_ioattr (qse_htb_t* tab, const qse_char_t* ptr, qse_size_t len);
 
 qse_awk_flt_t qse_awk_stdmathpow (qse_awk_t* awk, qse_awk_flt_t x, qse_awk_flt_t y)
@@ -222,7 +231,7 @@ void qse_awk_stdmodshutdown (qse_awk_t* awk)
 
 static void* std_mod_open_checked (qse_awk_t* awk, const qse_awk_mod_spec_t* spec)
 {
-	xtn_t* xtn = QSE_XTN(awk);
+	xtn_t* xtn = GET_XTN(awk);
 
 	if (!xtn->stdmod_up)
 	{
@@ -251,9 +260,9 @@ void* qse_awk_stdmodopen (qse_awk_t* awk, const qse_awk_mod_spec_t* spec)
 	tmp[count] = QSE_NULL;
 
 	#if defined(QSE_CHAR_IS_MCHAR)
-	modpath = qse_mbsadup (tmp, QSE_NULL, awk->mmgr);
+	modpath = qse_mbsadup (tmp, QSE_NULL, qse_awk_getmmgr(awk));
 	#else
-	modpath = qse_wcsatombsdupwithcmgr(tmp, QSE_NULL, awk->mmgr, awk->cmgr);
+	modpath = qse_wcsatombsdupwithcmgr(tmp, QSE_NULL, qse_awk_getmmgr(awk), qse_awk_getcmgr(awk));
 	#endif
 	if (!modpath)
 	{
@@ -276,7 +285,7 @@ void* qse_awk_stdmodopen (qse_awk_t* awk, const qse_awk_mod_spec_t* spec)
 
 	lt_dladvise_destroy (&adv);
 
-	QSE_MMGR_FREE (awk->mmgr, modpath);
+	QSE_MMGR_FREE (qse_awk_getmmgr(awk), modpath);
 
 	return h;
 
@@ -293,7 +302,7 @@ void* qse_awk_stdmodopen (qse_awk_t* awk, const qse_awk_mod_spec_t* spec)
 	if (spec->postfix) tmp[count++] = spec->postfix;
 	tmp[count] = QSE_NULL;
 
-	modpath = qse_stradup (tmp, QSE_NULL, awk->mmgr);
+	modpath = qse_stradup (tmp, QSE_NULL, qse_awk_getmmgr(awk));
 	if (!modpath)
 	{
 		qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);
@@ -302,7 +311,7 @@ void* qse_awk_stdmodopen (qse_awk_t* awk, const qse_awk_mod_spec_t* spec)
 
 	h = LoadLibrary (modpath);
 
-	QSE_MMGR_FREE (awk->mmgr, modpath);
+	QSE_MMGR_FREE (qse_awk_getmmgr(awk), modpath);
 	
 	QSE_ASSERT (QSE_SIZEOF(h) <= QSE_SIZEOF(void*));
 	return h;
@@ -323,9 +332,9 @@ void* qse_awk_stdmodopen (qse_awk_t* awk, const qse_awk_mod_spec_t* spec)
 	tmp[count] = QSE_NULL;
 
 	#if defined(QSE_CHAR_IS_MCHAR)
-	modpath = qse_mbsadup (tmp, QSE_NULL, awk->mmgr);
+	modpath = qse_mbsadup (tmp, QSE_NULL, qse_awk_getmmgr(awk));
 	#else
-	modpath = qse_wcsatombsdupwithcmgr(tmp, QSE_NULL, awk->mmgr, awk->cmgr);
+	modpath = qse_wcsatombsdupwithcmgr(tmp, QSE_NULL, qse_awk_getmmgr(awk), qse_awk_getcmgr(awk));
 	#endif
 	if (!modpath)
 	{
@@ -338,7 +347,7 @@ void* qse_awk_stdmodopen (qse_awk_t* awk, const qse_awk_mod_spec_t* spec)
 	rc = DosLoadModule (errbuf, QSE_COUNTOF(errbuf) - 1, modpath, &h);
 	if (rc != NO_ERROR) h = QSE_NULL;
 
-	QSE_MMGR_FREE (awk->mmgr, modpath);
+	QSE_MMGR_FREE (qse_awk_getmmgr(awk), modpath);
 
 	QSE_ASSERT (QSE_SIZEOF(h) <= QSE_SIZEOF(void*));
 	return h;
@@ -360,9 +369,9 @@ void* qse_awk_stdmodopen (qse_awk_t* awk, const qse_awk_mod_spec_t* spec)
 	tmp[count] = QSE_NULL;
 
 	#if defined(QSE_CHAR_IS_MCHAR)
-	modpath = qse_mbsadup(tmp, QSE_NULL, awk->mmgr);
+	modpath = qse_mbsadup(tmp, QSE_NULL, qse_awk_getmmgr(awk));
 	#else
-	modpath = qse_wcsatombsdupwithcmgr(tmp, QSE_NULL, awk->mmgr, awk->cmgr);
+	modpath = qse_wcsatombsdupwithcmgr(tmp, QSE_NULL, qse_awk_getmmgr(awk), qse_awk_getcmgr(awk));
 	#endif
 	if (!modpath)
 	{
@@ -372,7 +381,7 @@ void* qse_awk_stdmodopen (qse_awk_t* awk, const qse_awk_mod_spec_t* spec)
 
 	h = LoadModule (modpath);
 
-	QSE_MMGR_FREE (awk->mmgr, modpath);
+	QSE_MMGR_FREE (qse_awk_getmmgr(awk), modpath);
 	
 	QSE_ASSERT (QSE_SIZEOF(h) <= QSE_SIZEOF(void*));
 	return h;
@@ -391,9 +400,9 @@ void* qse_awk_stdmodopen (qse_awk_t* awk, const qse_awk_mod_spec_t* spec)
 	tmp[count] = QSE_NULL;
 
 	#if defined(QSE_CHAR_IS_MCHAR)
-	modpath = qse_mbsadup(tmp, QSE_NULL, awk->mmgr);
+	modpath = qse_mbsadup(tmp, QSE_NULL, qse_awk_getmmgr(awk));
 	#else
-	modpath = qse_wcsatombsdupwithcmgr(tmp, QSE_NULL, awk->mmgr, awk->cmgr);
+	modpath = qse_wcsatombsdupwithcmgr(tmp, QSE_NULL, qse_awk_getmmgr(awk), qse_awk_getcmgr(awk));
 	#endif
 	if (!modpath)
 	{
@@ -407,7 +416,7 @@ void* qse_awk_stdmodopen (qse_awk_t* awk, const qse_awk_mod_spec_t* spec)
 		qse_awk_seterrfmt (awk, QSE_AWK_ESYSERR, QSE_NULL, QSE_T("%hs"), dlerror());
 	}
 
-	QSE_MMGR_FREE (awk->mmgr, modpath);
+	QSE_MMGR_FREE (qse_awk_getmmgr(awk), modpath);
 
 	return h;
 
@@ -442,7 +451,7 @@ void* qse_awk_stdmodsym (qse_awk_t* awk, void* handle, const qse_char_t* name)
 #if defined(QSE_CHAR_IS_MCHAR)
 	mname = (qse_mchar_t*)name;
 #else
-	mname = qse_wcstombsdupwithcmgr(name, QSE_NULL, awk->mmgr, awk->cmgr);
+	mname = qse_wcstombsdupwithcmgr(name, QSE_NULL, qse_awk_getmmgr(awk), qse_awk_getcmgr(awk));
 	if (!mname)
 	{
 		qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);
@@ -472,7 +481,7 @@ void* qse_awk_stdmodsym (qse_awk_t* awk, void* handle, const qse_char_t* name)
 #if defined(QSE_CHAR_IS_MCHAR)
 	/* nothing to do */
 #else
-	QSE_MMGR_FREE (awk->mmgr, mname);
+	QSE_MMGR_FREE (qse_awk_getmmgr(awk), mname);
 #endif
 
 	return s;
@@ -488,7 +497,7 @@ qse_awk_t* qse_awk_openstd (qse_size_t xtnsize, qse_awk_errnum_t* errnum)
 
 static void fini_xtn (qse_awk_t* awk)
 {
-	xtn_t* xtn = QSE_XTN (awk);
+	xtn_t* xtn = GET_XTN(awk);
 	if (xtn->stdmod_up)
 	{
 		qse_awk_stdmodshutdown (awk);
@@ -527,8 +536,11 @@ qse_awk_t* qse_awk_openstdwithmmgr (qse_mmgr_t* mmgr, qse_size_t xtnsize, qse_aw
 	}
 #endif
 
+	/* adjust the object size by the sizeof xtn_t so that qse_getxtn() returns the right pointer. */
+	awk->_instsize += QSE_SIZEOF(xtn_t);
+
 	/* initialize extension */
-	xtn = (xtn_t*) QSE_XTN (awk);
+	xtn = GET_XTN(awk);
 	/* the extension area has been cleared in qse_awk_open().
 	 * QSE_MEMSET (xtn, 0, QSE_SIZEOF(*xtn));*/
 
@@ -560,15 +572,10 @@ oops:
 	return QSE_NULL;
 }
 
-void* qse_awk_getxtnstd (qse_awk_t* awk)
-{
-	return (void*)((xtn_t*)QSE_XTN(awk) + 1);
-}
-
 static qse_sio_t* open_sio (qse_awk_t* awk, const qse_char_t* file, int flags)
 {
 	qse_sio_t* sio;
-	sio = qse_sio_open (awk->mmgr, 0, file, flags);
+	sio = qse_sio_open (qse_awk_getmmgr(awk), 0, file, flags);
 	if (sio == QSE_NULL)
 	{
 		qse_cstr_t errarg;
@@ -582,7 +589,7 @@ static qse_sio_t* open_sio (qse_awk_t* awk, const qse_char_t* file, int flags)
 static qse_sio_t* open_sio_rtx (qse_awk_rtx_t* rtx, const qse_char_t* file, int flags)
 {
 	qse_sio_t* sio;
-	sio = qse_sio_open (rtx->awk->mmgr, 0, file, flags);
+	sio = qse_sio_open (qse_awk_rtx_getmmgr(rtx), 0, file, flags);
 	if (sio == QSE_NULL)
 	{
 		qse_cstr_t errarg;
@@ -603,7 +610,7 @@ static qse_cstr_t sio_std_names[] =
 static qse_sio_t* open_sio_std (qse_awk_t* awk, qse_sio_std_t std, int flags)
 {
 	qse_sio_t* sio;
-	sio = qse_sio_openstd (awk->mmgr, 0, std, flags);
+	sio = qse_sio_openstd (qse_awk_getmmgr(awk), 0, std, flags);
 	if (sio == QSE_NULL) qse_awk_seterrnum (awk, QSE_AWK_EOPEN, &sio_std_names[std]);
 	return sio;
 }
@@ -612,7 +619,7 @@ static qse_sio_t* open_sio_std_rtx (qse_awk_rtx_t* rtx, qse_sio_std_t std, int f
 {
 	qse_sio_t* sio;
 
-	sio = qse_sio_openstd (rtx->awk->mmgr, 0, std, flags);
+	sio = qse_sio_openstd (qse_awk_rtx_getmmgr(rtx), 0, std, flags);
 	if (sio == QSE_NULL) qse_awk_rtx_seterrnum (rtx, QSE_AWK_EOPEN, &sio_std_names[std]);
 	return sio;
 }
@@ -739,7 +746,7 @@ static qse_ssize_t sf_in_open (qse_awk_t* awk, qse_awk_sio_arg_t* arg, xtn_t* xt
 		}
 
 		arg->handle = qse_sio_open (
-			awk->mmgr, 0, path, QSE_SIO_READ | QSE_SIO_IGNOREMBWCERR | QSE_SIO_KEEPPATH
+			qse_awk_getmmgr(awk), 0, path, QSE_SIO_READ | QSE_SIO_IGNOREMBWCERR | QSE_SIO_KEEPPATH
 		);
 
 		if (dbuf) qse_awk_freemem (awk, dbuf);
@@ -754,7 +761,7 @@ static qse_ssize_t sf_in_open (qse_awk_t* awk, qse_awk_sio_arg_t* arg, xtn_t* xt
 
 		/* TODO: use the system handle(file descriptor) instead of the path? */
 		/*syshnd = qse_sio_gethnd(arg->handle);*/
-		if (qse_get_file_attr_with_mmgr(path, 0, &fattr, awk->mmgr) >= 0)
+		if (qse_get_file_attr_with_mmgr(path, 0, &fattr, qse_awk_getmmgr(awk)) >= 0)
 		{
 			struct
 			{
@@ -891,7 +898,7 @@ static qse_ssize_t sf_in_read (qse_awk_t* awk, qse_awk_sio_arg_t* arg, qse_char_
 
 static qse_ssize_t sf_in (qse_awk_t* awk, qse_awk_sio_cmd_t cmd, qse_awk_sio_arg_t* arg, qse_char_t* data, qse_size_t size)
 {
-	xtn_t* xtn = QSE_XTN (awk);
+	xtn_t* xtn = GET_XTN(awk);
 
 	switch (cmd)
 	{
@@ -912,7 +919,7 @@ static qse_ssize_t sf_in (qse_awk_t* awk, qse_awk_sio_cmd_t cmd, qse_awk_sio_arg
 
 static qse_ssize_t sf_out (qse_awk_t* awk, qse_awk_sio_cmd_t cmd, qse_awk_sio_arg_t* arg, qse_char_t* data, qse_size_t size)
 {
-	xtn_t* xtn = QSE_XTN (awk);
+	xtn_t* xtn = GET_XTN(awk);
 
 	switch (cmd)
 	{
@@ -947,7 +954,7 @@ static qse_ssize_t sf_out (qse_awk_t* awk, qse_awk_sio_cmd_t cmd, qse_awk_sio_ar
 					return 1;
 
 				case QSE_AWK_PARSESTD_STR:
-					xtn->s.out.u.str.buf = qse_str_open (awk->mmgr, 0, 512);
+					xtn->s.out.u.str.buf = qse_str_open (qse_awk_getmmgr(awk), 0, 512);
 					if (xtn->s.out.u.str.buf == QSE_NULL)
 					{
 						qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);
@@ -1025,7 +1032,7 @@ static qse_ssize_t sf_out (qse_awk_t* awk, qse_awk_sio_cmd_t cmd, qse_awk_sio_ar
 int qse_awk_parsestd (qse_awk_t* awk, qse_awk_parsestd_t in[], qse_awk_parsestd_t* out)
 {
 	qse_awk_sio_t sio;
-	xtn_t* xtn = (xtn_t*) QSE_XTN (awk);
+	xtn_t* xtn = GET_XTN(awk);
 	int n;
 
 	if (in == QSE_NULL || (in[0].type != QSE_AWK_PARSESTD_FILE && 
@@ -1183,7 +1190,7 @@ static qse_ssize_t pio_handler_open (qse_awk_rtx_t* rtx, qse_awk_rio_arg_t* riod
 	}
 
 	handle = qse_pio_open (
-		rtx->awk->mmgr,
+		qse_awk_rtx_getmmgr(rtx),
 		0, 
 		riod->name, 
 		QSE_NULL,
@@ -1280,7 +1287,7 @@ static qse_ssize_t awk_rio_pipe (qse_awk_rtx_t* rtx, qse_awk_rio_cmd_t cmd, qse_
 			ioattr_t* ioattr;
 			rxtn_t* rxtn;
 
-			rxtn = (rxtn_t*)QSE_XTN(rtx);
+			rxtn = GET_RXTN(rtx);
 
 			ioattr = get_ioattr(&rxtn->cmgrtab, riod->name, qse_strlen(riod->name));
 			if (ioattr)
@@ -1327,7 +1334,7 @@ static qse_ssize_t awk_rio_file (qse_awk_rtx_t* rtx, qse_awk_rio_cmd_t cmd, qse_
 					return -1; 
 			}
 
-			handle = qse_sio_open (rtx->awk->mmgr, 0, riod->name, flags);
+			handle = qse_sio_open (qse_awk_rtx_getmmgr(rtx), 0, riod->name, flags);
 			if (handle == QSE_NULL) 
 			{
 				qse_cstr_t errarg;
@@ -1374,12 +1381,12 @@ static qse_ssize_t awk_rio_file (qse_awk_rtx_t* rtx, qse_awk_rio_cmd_t cmd, qse_
 
 static int open_rio_console (qse_awk_rtx_t* rtx, qse_awk_rio_arg_t* riod)
 {
-	rxtn_t* rxtn = (rxtn_t*) QSE_XTN (rtx);
+	rxtn_t* rxtn = GET_RXTN(rtx);
 	qse_sio_t* sio;
 
 	if (riod->mode == QSE_AWK_RIO_CONSOLE_READ)
 	{
-		xtn_t* xtn = (xtn_t*)QSE_XTN(rtx->awk);
+		xtn_t* xtn = (xtn_t*)GET_XTN(rtx->awk);
 
 		if (rxtn->c.in.files == QSE_NULL)
 		{
@@ -1671,8 +1678,8 @@ static qse_ssize_t awk_rio_console (qse_awk_rtx_t* rtx, qse_awk_rio_cmd_t cmd, q
 
 static void fini_rxtn (qse_awk_rtx_t* rtx)
 {
-	rxtn_t* rxtn = (rxtn_t*) QSE_XTN (rtx);
-	/*xtn_t* xtn = (xtn_t*) QSE_XTN (rtx->awk);*/
+	rxtn_t* rxtn = GET_RXTN(rtx);
+	/*xtn_t* xtn = (xtn_t*)GET_XTN(rtx->awk);*/
 
 	if (rxtn->cmgrtab_inited)
 	{
@@ -1826,12 +1833,12 @@ static int __build_environ (
 			/* mbstowcsdup() may fail for invalid encoding. as the environment 
 			 * variaables are not under control, call mbstowcsalldup() instead 
 			 * to go on despite encoding failure */
-			kptr = qse_mbstowcsalldupwithcmgr(envarr[count], &klen, rtx->awk->mmgr, rtx->awk->cmgr); 
-			vptr = qse_mbstowcsalldupwithcmgr(eq + 1, QSE_NULL, rtx->awk->mmgr, rtx->awk->cmgr);
+			kptr = qse_mbstowcsalldupwithcmgr(envarr[count], &klen, qse_awk_rtx_getmmgr(rtx), qse_awk_rtx_getcmgr(rtx)); 
+			vptr = qse_mbstowcsalldupwithcmgr(eq + 1, QSE_NULL, qse_awk_rtx_getmmgr(rtx), qse_awk_rtx_getcmgr(rtx));
 			if (kptr == QSE_NULL || vptr == QSE_NULL)
 			{
-				if (kptr) QSE_MMGR_FREE (rtx->awk->mmgr, kptr);
-				if (vptr) QSE_MMGR_FREE (rtx->awk->mmgr, vptr);
+				if (kptr) QSE_MMGR_FREE (qse_awk_rtx_getmmgr(rtx), kptr);
+				if (vptr) QSE_MMGR_FREE (qse_awk_rtx_getmmgr(rtx), vptr);
 				qse_awk_rtx_refdownval (rtx, v_env);
 
 				qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL); 
@@ -1845,12 +1852,12 @@ static int __build_environ (
 
 			*eq = QSE_WT('\0');
 
-			kptr = qse_wcstombsdupwithcmgr(envarr[count], &klen, rtx->awk->mmgr, rtx->awk->cmgr); 
-			vptr = qse_wcstombsdupwithcmgr(eq + 1, QSE_NULL, rtx->awk->mmgr, rtx->awk->cmgr);
+			kptr = qse_wcstombsdupwithcmgr(envarr[count], &klen, qse_awk_rtx_getmmgr(rtx), qse_awk_rtx_getcmgr(rtx)); 
+			vptr = qse_wcstombsdupwithcmgr(eq + 1, QSE_NULL, qse_awk_rtx_getmmgr(rtx), qse_awk_rtx_getcmgr(rtx));
 			if (kptr == QSE_NULL || vptr == QSE_NULL)
 			{
-				if (kptr) QSE_MMGR_FREE (rtx->awk->mmgr, kptr);
-				if (vptr) QSE_MMGR_FREE (rtx->awk->mmgr, vptr);
+				if (kptr) QSE_MMGR_FREE (qse_awk_rtx_getmmgr(rtx), kptr);
+				if (vptr) QSE_MMGR_FREE (qse_awk_rtx_getmmgr(rtx), vptr);
 				qse_awk_rtx_refdownval (rtx, v_env);
 
 				qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
@@ -1870,8 +1877,8 @@ static int __build_environ (
 		     (defined(QSE_ENV_CHAR_IS_WCHAR) && defined(QSE_CHAR_IS_WCHAR)))
 				/* nothing to do */
 		#else
-				if (vptr) QSE_MMGR_FREE (rtx->awk->mmgr, vptr);
-				if (kptr) QSE_MMGR_FREE (rtx->awk->mmgr, kptr);
+				if (vptr) QSE_MMGR_FREE (qse_awk_rtx_getmmgr(rtx), vptr);
+				if (kptr) QSE_MMGR_FREE (qse_awk_rtx_getmmgr(rtx), kptr);
 		#endif
 				qse_awk_rtx_refdownval (rtx, v_env);
 				return -1;
@@ -1894,8 +1901,8 @@ static int __build_environ (
 		     (defined(QSE_ENV_CHAR_IS_WCHAR) && defined(QSE_CHAR_IS_WCHAR)))
 				/* nothing to do */
 		#else
-				if (vptr) QSE_MMGR_FREE (rtx->awk->mmgr, vptr);
-				if (kptr) QSE_MMGR_FREE (rtx->awk->mmgr, kptr);
+				if (vptr) QSE_MMGR_FREE (qse_awk_rtx_getmmgr(rtx), vptr);
+				if (kptr) QSE_MMGR_FREE (qse_awk_rtx_getmmgr(rtx), kptr);
 		#endif
 
 				/* the values previously assigned into the
@@ -1910,8 +1917,8 @@ static int __build_environ (
 		     (defined(QSE_ENV_CHAR_IS_WCHAR) && defined(QSE_CHAR_IS_WCHAR)))
 				/* nothing to do */
 		#else
-			if (vptr) QSE_MMGR_FREE (rtx->awk->mmgr, vptr);
-			if (kptr) QSE_MMGR_FREE (rtx->awk->mmgr, kptr);
+			if (vptr) QSE_MMGR_FREE (qse_awk_rtx_getmmgr(rtx), vptr);
+			if (kptr) QSE_MMGR_FREE (qse_awk_rtx_getmmgr(rtx), kptr);
 		#endif
 		}
 	}
@@ -1931,7 +1938,7 @@ static int build_environ (qse_awk_rtx_t* rtx, int gbl_id)
 	qse_env_t env;
 	int xret;
 
-	if (qse_env_init (&env, rtx->awk->mmgr, 1) <= -1)
+	if (qse_env_init(&env, qse_awk_rtx_getmmgr(rtx), 1) <= -1)
 	{
 		qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
 		return -1;
@@ -1966,7 +1973,7 @@ qse_awk_rtx_t* qse_awk_rtx_openstd (
 	rxtn_t* rxtn;
 	xtn_t* xtn;
 
-	xtn = (xtn_t*)QSE_XTN (awk);
+	xtn = GET_XTN(awk);
 
 	rio.pipe = awk_rio_pipe;
 	rio.file = awk_rio_file;
@@ -1975,11 +1982,13 @@ qse_awk_rtx_t* qse_awk_rtx_openstd (
 	rtx = qse_awk_rtx_open(awk, QSE_SIZEOF(rxtn_t) + xtnsize, &rio);
 	if (!rtx) return QSE_NULL;
 
-	rxtn = (rxtn_t*) QSE_XTN (rtx);
+	rtx->_instsize += QSE_SIZEOF(rxtn_t);
+
+	rxtn = GET_RXTN(rtx);
 
 	if (rtx->awk->opt.trait & QSE_AWK_RIO)
 	{
-		if (qse_htb_init(&rxtn->cmgrtab, awk->mmgr, 256, 70, QSE_SIZEOF(qse_char_t), 1) <= -1)
+		if (qse_htb_init(&rxtn->cmgrtab, qse_awk_getmmgr(awk), 256, 70, QSE_SIZEOF(qse_char_t), 1) <= -1)
 		{
 			qse_awk_rtx_close (rtx);
 			qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);
@@ -2031,12 +2040,6 @@ qse_awk_rtx_t* qse_awk_rtx_openstd (
 
 	return rtx;
 }
-
-void* qse_awk_rtx_getxtnstd (qse_awk_rtx_t* rtx)
-{
-	return (void*)((rxtn_t*)QSE_XTN(rtx) + 1);
-}
-
 
 static int timeout_code (const qse_char_t* name)
 {
@@ -2101,7 +2104,7 @@ static int fnc_setioattr (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	int i, ret = 0, fret = 0;
 	int tmout;
 
-	rxtn = (rxtn_t*) QSE_XTN (rtx);
+	rxtn = GET_RXTN(rtx);
 	QSE_ASSERT (rxtn->cmgrtab_inited == 1);
 
 	for (i = 0; i < 3; i++)
@@ -2223,7 +2226,7 @@ static int fnc_getioattr (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	ioattr_t* ioattr;
 	ioattr_t ioattr_buf;
 
-	rxtn = (rxtn_t*) QSE_XTN (rtx);
+	rxtn = GET_RXTN(rtx);
 	QSE_ASSERT (rxtn->cmgrtab_inited == 1);
 
 	for (i = 0; i < 2; i++)
@@ -2305,10 +2308,9 @@ done:
 qse_cmgr_t* qse_awk_rtx_getiocmgrstd (qse_awk_rtx_t* rtx, const qse_char_t* ioname)
 {
 #if defined(QSE_CHAR_IS_WCHAR)
-	rxtn_t* rxtn;
+	rxtn_t* rxtn = GET_RXTN(rtx);
 	ioattr_t* ioattr;
 
-	rxtn = (rxtn_t*) QSE_XTN (rtx);
 	QSE_ASSERT (rxtn->cmgrtab_inited == 1);
 
 	ioattr = get_ioattr(&rxtn->cmgrtab, ioname, qse_strlen(ioname));
@@ -2319,9 +2321,7 @@ qse_cmgr_t* qse_awk_rtx_getiocmgrstd (qse_awk_rtx_t* rtx, const qse_char_t* iona
 
 static int add_globals (qse_awk_t* awk)
 {
-	xtn_t* xtn;
-
-	xtn = (xtn_t*) QSE_XTN (awk);
+	xtn_t* xtn = GET_XTN(awk);
 
 	xtn->gbl_argc = qse_awk_addgbl (awk, QSE_T("ARGC"));
 	xtn->gbl_argv = qse_awk_addgbl (awk, QSE_T("ARGV"));

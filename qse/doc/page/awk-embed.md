@@ -78,8 +78,8 @@ use this extension area to store data associated with the object.
 You can specify the size of the extension area when calling qse_awk_open(),
 qse_awk_rtx_open(), qse_awk_openstd(), and qse_awk_rtx_openstd(). 
 These functions iniitlize the area to zeros. You can get the pointer
-to the beginning of the area with qse_awk_getxtn(), qse_awk_rtx_getxtn(),
-qse_awk_getxtnstd(), qse_awk_rtx_getxtnstd() respectively.
+to the beginning of the area with qse_awk_getxtn() and qse_awk_rtx_getxtn().
+
 
 In the sample above, the string and the buffer used for I/O customization
 are declared globally. When you have multiple runtime contexts and independent

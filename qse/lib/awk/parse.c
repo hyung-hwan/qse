@@ -4473,7 +4473,7 @@ static qse_awk_nde_t* parse_primary_mbs (qse_awk_t* awk, const qse_awk_loc_t* xl
 
 		/* the MBS token doesn't include a character greater than 0xFF in awk->tok.name though it is a wide character string.
 		 * so i simply use QSE_CMGR_MB8 to store it in a byte string */
-		nde->ptr = qse_wcsntombsdupwithcmgr(QSE_STR_PTR(awk->tok.name), wcslen, &mbslen, awk->mmgr, qse_findcmgrbyid(QSE_CMGR_MB8));
+		nde->ptr = qse_wcsntombsdupwithcmgr(QSE_STR_PTR(awk->tok.name), wcslen, &mbslen, qse_awk_getmmgr(awk), qse_findcmgrbyid(QSE_CMGR_MB8));
 		if (!nde->ptr)
 		{
 			qse_awk_seterror (awk, QSE_AWK_ENOMEM, QSE_NULL, xloc);

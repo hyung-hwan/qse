@@ -30,7 +30,7 @@ static qse_ssize_t handle_console (
      qse_char_t*         data,
      qse_size_t          count)
 {
-	console_t* con = qse_awk_rtx_getxtnstd (rtx);
+	console_t* con = qse_awk_rtx_getxtn(rtx);
 
 	/* this function is called separately for the console input and console
 	 * output. however, since i don't maintain underlying resources like
@@ -129,7 +129,7 @@ static int awk_main (int argc, qse_char_t* argv[])
 	}
 
 	/* get the pointer to the extension area. */
-	con = (console_t*)qse_awk_rtx_getxtnstd (rtx);
+	con = (console_t*)qse_awk_rtx_getxtn(rtx);
 	/* initialize fields that require non-zero values. 
 	 * the entire extension area was initialized to zeros 
 	 * when it was created. */
