@@ -478,16 +478,16 @@ static int cgi_add_env (
 		tmp[1] = suffix; 
 		tmp[2] = QSE_NULL;
 
-		tr = qse_mbsadup  (tmp, QSE_NULL, httpd->mmgr);
+		tr = qse_mbsadup(tmp, QSE_NULL, qse_httpd_getmmgr(httpd));
 		if (tr) 
 		{
 			qse_canonmbspath (tr, tr, 0);
 			if (qse_env_insertmbs (env, QSE_MT("PATH_TRANSLATED"), tr) <= -1) 
 			{
-				QSE_MMGR_FREE (httpd->mmgr, tr);
+				QSE_MMGR_FREE (qse_httpd_getmmgr(httpd), tr);
 				goto oops_nomem;
 			}
-			QSE_MMGR_FREE (httpd->mmgr, tr);
+			QSE_MMGR_FREE (qse_httpd_getmmgr(httpd), tr);
 		}
 		if (qse_env_insertmbs (env, QSE_MT("PATH_INFO"), suffix) <= -1) goto  oops_nomem;
 	}
@@ -795,7 +795,7 @@ static int task_init_cgi (
 		else 
 		{
 			/* do chunking to cgi */
-			cgi->reqfwdbuf = qse_mbs_open (httpd->mmgr, 0, (len < 512? 512: len));
+			cgi->reqfwdbuf = qse_mbs_open (qse_httpd_getmmgr(httpd), 0, (len < 512? 512: len));
 			if (cgi->reqfwdbuf == QSE_NULL) 
 			{
 				httpd->errnum = QSE_HTTPD_ENOMEM;
@@ -832,7 +832,7 @@ static int task_init_cgi (
 	{	
 		/* create a buffer to hold request content from the client
 		 * and copy content received already */
-		cgi->reqfwdbuf = qse_mbs_open (httpd->mmgr, 0, (len < 512? 512: len));
+		cgi->reqfwdbuf = qse_mbs_open (qse_httpd_getmmgr(httpd), 0, (len < 512? 512: len));
 		if (cgi->reqfwdbuf == QSE_NULL) 
 		{
 			httpd->errnum = QSE_HTTPD_ENOMEM;
@@ -886,7 +886,7 @@ static int task_init_cgi (
 	}
 
 done:
-	cgi->env = qse_env_open (httpd->mmgr, 0, 0);
+	cgi->env = qse_env_open (qse_httpd_getmmgr(httpd), 0, 0);
 	if (cgi->env == QSE_NULL) 
 	{
 		httpd->errnum = QSE_HTTPD_ENOMEM;
@@ -1462,7 +1462,7 @@ static int task_main_cgi (
 	else
 	{
 		cgi_script_htrd_xtn_t* xtn;
-		cgi->script_htrd = qse_htrd_open (httpd->mmgr, QSE_SIZEOF(cgi_script_htrd_xtn_t));
+		cgi->script_htrd = qse_htrd_open (qse_httpd_getmmgr(httpd), QSE_SIZEOF(cgi_script_htrd_xtn_t));
 		if (cgi->script_htrd == QSE_NULL) goto oops;
 
 		xtn = (cgi_script_htrd_xtn_t*) qse_htrd_getxtn (cgi->script_htrd);
@@ -1477,7 +1477,7 @@ static int task_main_cgi (
 			QSE_HTRD_REQUEST
 		);
 
-		cgi->res = qse_mbs_open (httpd->mmgr, 0, 256);
+		cgi->res = qse_mbs_open (qse_httpd_getmmgr(httpd), 0, 256);
 		if (cgi->res == QSE_NULL) goto oops;
 	}
 
@@ -1507,17 +1507,17 @@ static int task_main_cgi (
 			tmp[1] = QSE_MT(" ");
 			tmp[2] = cgi->path;
 			tmp[3] = QSE_NULL;
-			xpath = qse_mbsadup (tmp, QSE_NULL, httpd->mmgr);
+			xpath = qse_mbsadup (tmp, QSE_NULL, qse_httpd_getmmgr(httpd));
 			if (xpath == QSE_NULL) goto oops;
 		}
 		else xpath = cgi->path;
 	}
 
 	x = qse_pio_init (
-		&cgi->pio, httpd->mmgr, (const qse_char_t*)xpath,
+		&cgi->pio, qse_httpd_getmmgr(httpd), (const qse_char_t*)xpath,
 		cgi->env, pio_options);
 	if (xpath != cgi->path && 
-	    xpath != (qse_mchar_t*)&cgi->fnc) QSE_MMGR_FREE (httpd->mmgr, xpath);
+	    xpath != (qse_mchar_t*)&cgi->fnc) QSE_MMGR_FREE (qse_httpd_getmmgr(httpd), xpath);
 
 	if (x <= -1)
 	{

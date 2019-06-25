@@ -1559,12 +1559,16 @@ QSE_EXPORT void qse_awk_close (
 	qse_awk_t* awk /**< awk */
 );
 
+#if defined(QSE_HAVE_INLINE)
+/**
+ * The qse_awk_getxtn() function returns the pointer to the extension area
+ * placed behind the actual awk object.
+ */
+static QSE_INLINE void* qse_awk_getxtn (qse_awk_t* awk) { return (void*)((qse_uint8_t*)awk + ((qse_awk_alt_t*)awk)->_instsize); }
 /**
  * The qse_awk_getmmgr() function gets the memory manager used in
  * qse_awk_open().
  */
-#if defined(QSE_HAVE_INLINE)
-static QSE_INLINE void* qse_awk_getxtn (qse_awk_t* awk) { return (void*)((qse_uint8_t*)awk + ((qse_awk_alt_t*)awk)->_instsize); }
 static QSE_INLINE qse_mmgr_t* qse_awk_getmmgr (qse_awk_t* awk) { return ((qse_awk_alt_t*)awk)->_mmgr; }
 static QSE_INLINE qse_cmgr_t* qse_awk_getcmgr (qse_awk_t* awk) { return ((qse_awk_alt_t*)awk)->_cmgr; }
 static QSE_INLINE void qse_awk_setcmgr (qse_awk_t* awk, qse_cmgr_t* cmgr) { ((qse_awk_alt_t*)awk)->_cmgr = cmgr; }
@@ -1609,7 +1613,7 @@ QSE_EXPORT void qse_awk_clear (
  * The qse_awk_geterrstr() gets an error string getter.
  */
 QSE_EXPORT qse_awk_errstr_t qse_awk_geterrstr (
-	const qse_awk_t* awk    /**< awk */
+	qse_awk_t* awk    /**< awk */
 );
 
 /**
@@ -1647,7 +1651,7 @@ QSE_EXPORT void qse_awk_seterrstr (
  * \return error number
  */
 QSE_EXPORT qse_awk_errnum_t qse_awk_geterrnum (
-	const qse_awk_t* awk /**< awk */
+	qse_awk_t* awk /**< awk */
 );
 
 /**
@@ -1655,7 +1659,7 @@ QSE_EXPORT qse_awk_errnum_t qse_awk_geterrnum (
  * last error has occurred.
  */
 QSE_EXPORT const qse_awk_loc_t* qse_awk_geterrloc (
-	const qse_awk_t* awk /**< awk */
+	qse_awk_t* awk /**< awk */
 );
 
 /**
@@ -1665,7 +1669,7 @@ QSE_EXPORT const qse_awk_loc_t* qse_awk_geterrloc (
  * \return error message
  */
 QSE_EXPORT const qse_char_t* qse_awk_geterrmsg (
-	const qse_awk_t* awk /**< awk */
+	qse_awk_t* awk /**< awk */
 );
 
 QSE_EXPORT const qse_char_t* qse_awk_backuperrmsg (
@@ -1678,7 +1682,7 @@ QSE_EXPORT const qse_char_t* qse_awk_backuperrmsg (
  * pointed to by \a errinf from \a awk.
  */
 QSE_EXPORT void qse_awk_geterrinf (
-	const qse_awk_t*  awk,   /**< awk */
+	qse_awk_t*        awk,   /**< awk */
 	qse_awk_errinf_t* errinf /**< error information buffer */
 );
 
@@ -1718,7 +1722,7 @@ QSE_EXPORT void qse_awk_seterrinf (
  * The qse_awk_geterror() function gets error information via parameters.
  */
 QSE_EXPORT void qse_awk_geterror (
-	const qse_awk_t*   awk,    /**< awk */
+	qse_awk_t*         awk,    /**< awk */
 	qse_awk_errnum_t*  errnum, /**< error number */
 	const qse_char_t** errmsg, /**< error message */
 	qse_awk_loc_t*     errloc  /**< error location */
@@ -2331,7 +2335,7 @@ QSE_EXPORT qse_htb_t* qse_awk_rtx_getnvmap (
  * \return error number
  */
 QSE_EXPORT qse_awk_errnum_t qse_awk_rtx_geterrnum (
-	const qse_awk_rtx_t* rtx /**< runtime context */
+	qse_awk_rtx_t* rtx /**< runtime context */
 );
 
 /**
@@ -2340,7 +2344,7 @@ QSE_EXPORT qse_awk_errnum_t qse_awk_rtx_geterrnum (
  * \return error location
  */
 QSE_EXPORT const qse_awk_loc_t* qse_awk_rtx_geterrloc (
-	const qse_awk_rtx_t* rtx /**< runtime context */
+	qse_awk_rtx_t* rtx /**< runtime context */
 );
 
 /**
@@ -2349,7 +2353,7 @@ QSE_EXPORT const qse_awk_loc_t* qse_awk_rtx_geterrloc (
  * \return error message
  */
 QSE_EXPORT const qse_char_t* qse_awk_rtx_geterrmsg (
-	const qse_awk_rtx_t* rtx /**< runtime context */
+	qse_awk_rtx_t* rtx /**< runtime context */
 );
 
 QSE_EXPORT const qse_char_t* qse_awk_rtx_backuperrmsg (
@@ -2361,7 +2365,7 @@ QSE_EXPORT const qse_char_t* qse_awk_rtx_backuperrmsg (
  * pointed to by \a errinf from a runtime context \a rtx.
  */
 QSE_EXPORT void qse_awk_rtx_geterrinf (
-	const qse_awk_rtx_t* rtx,   /**< runtime context */
+	qse_awk_rtx_t*       rtx,   /**< runtime context */
 	qse_awk_errinf_t*    errinf /**< error information */
 );
 
@@ -2372,7 +2376,7 @@ QSE_EXPORT void qse_awk_rtx_geterrinf (
  * \a errmsg; the error line into memory pointed to by \a errlin.
  */
 QSE_EXPORT void qse_awk_rtx_geterror (
-	const qse_awk_rtx_t* rtx,    /**< runtime context */
+	qse_awk_rtx_t*       rtx,    /**< runtime context */
 	qse_awk_errnum_t*    errnum, /**< error number */
 	const qse_char_t**   errmsg, /**< error message */
 	qse_awk_loc_t*       errloc  /**< error location */

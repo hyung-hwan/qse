@@ -15,7 +15,7 @@ static void* mod_open (qse_httpd_t* httpd, const qse_char_t* sysname)
 	#if defined(QSE_CHAR_IS_MCHAR)
 	modpath = sysname;
 	#else
-	modpath = qse_wcstombsdup (sysname, QSE_NULL, httpd->mmgr);
+	modpath = qse_wcstombsdup (sysname, QSE_NULL, qse_httpd_getmmgr(httpd));
 	if (!modpath)
 	{
 		qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOMEM);
@@ -29,7 +29,7 @@ static void* mod_open (qse_httpd_t* httpd, const qse_char_t* sysname)
 	#if defined(QSE_CHAR_IS_MCHAR)
 	/* do nothing */
 	#else
-	QSE_MMGR_FREE (httpd->mmgr, modpath);
+	QSE_MMGR_FREE (qse_httpd_getmmgr(httpd), modpath);
 	#endif
 
 	return h;
@@ -54,7 +54,7 @@ static void* mod_open (qse_httpd_t* httpd, const qse_char_t* sysname)
 	#if defined(QSE_CHAR_IS_MCHAR)
 	modpath = sysname;
 	#else
-	modpath = qse_wcstombsdup (sysname, QSE_NULL, httpd->mmgr);
+	modpath = qse_wcstombsdup (sysname, QSE_NULL, qse_httpd_getmmgr(httpd));
 	if (!modpath)
 	{
 		qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOMEM);
@@ -74,7 +74,7 @@ static void* mod_open (qse_httpd_t* httpd, const qse_char_t* sysname)
 	#if defined(QSE_CHAR_IS_MCHAR)
 	/* do nothing */
 	#else
-	QSE_MMGR_FREE (httpd->mmgr, modpath);
+	QSE_MMGR_FREE (qse_httpd_getmmgr(httpd), modpath);
 	#endif
 
 	QSE_ASSERT (QSE_SIZEOF(h) <= QSE_SIZEOF(void*));
@@ -91,7 +91,7 @@ static void* mod_open (qse_httpd_t* httpd, const qse_char_t* sysname)
 	#if defined(QSE_CHAR_IS_MCHAR)
 	modpath = sysname;
 	#else
-	modpath = qse_wcstombsdup (sysname, QSE_NULL, httpd->mmgr);
+	modpath = qse_wcstombsdup (sysname, QSE_NULL, qse_httpd_getmmgr(httpd));
 	if (!modpath)
 	{
 		qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOMEM);
@@ -105,7 +105,7 @@ static void* mod_open (qse_httpd_t* httpd, const qse_char_t* sysname)
 	#if defined(QSE_CHAR_IS_MCHAR)
 	/* do nothing */
 	#else
-	QSE_MMGR_FREE (httpd->mmgr, modpath);
+	QSE_MMGR_FREE (qse_httpd_getmmgr(httpd), modpath);
 	#endif
 
 	QSE_ASSERT (QSE_SIZEOF(h) <= QSE_SIZEOF(void*));
@@ -118,7 +118,7 @@ static void* mod_open (qse_httpd_t* httpd, const qse_char_t* sysname)
 	#if defined(QSE_CHAR_IS_MCHAR)
 	modpath = sysname;
 	#else
-	modpath = qse_wcstombsdup (sysname, QSE_NULL, httpd->mmgr);
+	modpath = qse_wcstombsdup (sysname, QSE_NULL, qse_httpd_getmmgr(httpd));
 	if (!modpath)
 	{
 		qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOMEM);
@@ -132,7 +132,7 @@ static void* mod_open (qse_httpd_t* httpd, const qse_char_t* sysname)
 	#if defined(QSE_CHAR_IS_MCHAR)
 	/* do nothing */
 	#else
-	QSE_MMGR_FREE (httpd->mmgr, modpath);
+	QSE_MMGR_FREE (qse_httpd_getmmgr(httpd), modpath);
 	#endif
 
 	return h;
@@ -168,7 +168,7 @@ static void* mod_symbol (qse_httpd_t* httpd, void* handle, const qse_char_t* nam
 #if defined(QSE_CHAR_IS_MCHAR)
 	mname = name;
 #else
-	mname = qse_wcstombsdup (name, QSE_NULL, httpd->mmgr);
+	mname = qse_wcstombsdup (name, QSE_NULL, qse_httpd_getmmgr(httpd));
 	if (!mname)
 	{
 		qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOMEM);
@@ -207,7 +207,7 @@ static void* mod_symbol (qse_httpd_t* httpd, void* handle, const qse_char_t* nam
 #if defined(QSE_CHAR_IS_MCHAR)
 	/* nothing to do */
 #else
-	QSE_MMGR_FREE (httpd->mmgr, mname);
+	QSE_MMGR_FREE (qse_httpd_getmmgr(httpd), mname);
 #endif
 
 	return s;

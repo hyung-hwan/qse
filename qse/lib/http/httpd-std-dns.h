@@ -295,9 +295,7 @@ static int dns_open (qse_httpd_t* httpd, qse_httpd_dns_t* dns)
 {
 	qse_nwad_t nwad;
 	dns_ctx_t* dc;
-	httpd_xtn_t* httpd_xtn;
-
-	httpd_xtn = qse_httpd_getxtn (httpd);
+	httpd_xtn_t* httpd_xtn = GET_HTTPD_XTN(httpd);
 
 	dns->handle[0] = QSE_INVALID_SCKHND;
 	dns->handle[1] = QSE_INVALID_SCKHND;
@@ -605,7 +603,7 @@ static dns_ans_t* dns_get_answer_from_cache (dns_ctx_t* dc, const qse_mchar_t* n
 static int dns_recv (qse_httpd_t* httpd, qse_httpd_dns_t* dns, qse_httpd_hnd_t handle)
 {
 	dns_ctx_t* dc = (dns_ctx_t*)dns->ctx;
-	httpd_xtn_t* httpd_xtn;
+	httpd_xtn_t* httpd_xtn = GET_HTTPD_XTN(httpd);
 
 	qse_skad_t fromaddr;
 	qse_sck_len_t fromlen;
@@ -626,8 +624,6 @@ static int dns_recv (qse_httpd_t* httpd, qse_httpd_dns_t* dns, qse_httpd_hnd_t h
 	qse_nwad_t nwad;
 	qse_nwad_t* resolved_nwad = QSE_NULL;
 	int cache_ttl = 0;
-
-	httpd_xtn = qse_httpd_getxtn (httpd);
 
 	fromlen = QSE_SIZEOF(fromaddr);
 	len = recvfrom (handle, buf, QSE_SIZEOF(buf), 0, (struct sockaddr*)&fromaddr, &fromlen);
@@ -838,7 +834,7 @@ static void tmr_dns_tmout_handle (qse_tmr_t* tmr, const qse_ntime_t* now, qse_tm
 		/*httpd_xtn_t* httpd_xtn;*/
 		qse_tmr_event_t tmout_event;
 
-		/*httpd_xtn = qse_httpd_getxtn (dc->httpd);*/
+		/*httpd_xtn = GET_HTTPD_XTN(dc->httpd);*/
 
 		QSE_MEMSET (&tmout_event, 0, QSE_SIZEOF(tmout_event));
 		qse_gettime (&tmout_event.when);
@@ -898,7 +894,7 @@ static void tmr_dns_tmout_handle (qse_tmr_t* tmr, const qse_ntime_t* now, qse_tm
 static int dns_send (qse_httpd_t* httpd, qse_httpd_dns_t* dns, const qse_mchar_t* name, qse_httpd_resolve_t resol, const qse_httpd_dns_server_t* dns_server, void* ctx)
 {
 	dns_ctx_t* dc = (dns_ctx_t*)dns->ctx;
-	httpd_xtn_t* httpd_xtn;
+	httpd_xtn_t* httpd_xtn = GET_HTTPD_XTN(httpd);
 
 	qse_uint32_t seq;
 	qse_uint16_t xid;
@@ -907,8 +903,6 @@ static int dns_send (qse_httpd_t* httpd, qse_httpd_dns_t* dns, const qse_mchar_t
 	dns_ans_t* ans;
 	qse_tmr_event_t tmout_event;
 	int dns_flags;
-
-	httpd_xtn = qse_httpd_getxtn (httpd);
 
 	ans = dns_get_answer_from_cache (dc, name);
 	if (ans)

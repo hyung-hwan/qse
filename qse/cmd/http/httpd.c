@@ -290,7 +290,7 @@ static void sig_reconf (int sig)
 	if (g_httpd) 
 	{
 		httpd_xtn_t* httpd_xtn;
-		httpd_xtn = qse_httpd_getxtnstd (g_httpd);
+		httpd_xtn = qse_httpd_getxtn(g_httpd);
 		httpd_xtn->impede_code = sig;
 		qse_httpd_impede (g_httpd);
 	}
@@ -429,7 +429,7 @@ static int make_resource (
 {
 	server_xtn_t* server_xtn;
 
-	server_xtn = qse_httpd_getserverstdxtn (httpd, client->server);
+	server_xtn = qse_httpd_getserverxtn(httpd, client->server);
 
 	if (server_xtn->orgmakersrc (httpd, client, req, rsrc) <= -1) return -1;
 	if (server_xtn->nodir && rsrc->type == QSE_HTTPD_RSRC_DIR)
@@ -448,7 +448,7 @@ static void free_resource (
 {
 	server_xtn_t* server_xtn;
 
-	server_xtn = qse_httpd_getserverstdxtn (httpd, client->server);
+	server_xtn = qse_httpd_getserverxtn(httpd, client->server);
 	server_xtn->orgfreersrc (httpd, client, req, rsrc);
 }
 /* --------------------------------------------------------------------- */
@@ -748,8 +748,8 @@ static int query_server (
 	server_xtn_t* server_xtn;
 	loccfg_t* loccfg = QSE_NULL;
 
-	httpd_xtn = qse_httpd_getxtnstd (httpd);
-	server_xtn = qse_httpd_getserverstdxtn (httpd, server);
+	httpd_xtn = qse_httpd_getxtn(httpd);
+	server_xtn = qse_httpd_getserverxtn(httpd, server);
 
 	if (code == QSE_HTTPD_SERVERSTD_SSL)
 	{
@@ -1733,7 +1733,7 @@ static int load_loccfg (qse_httpd_t* httpd, qse_xli_t* xli, qse_xli_list_t* list
 {
 	/*httpd_xtn_t* httpd_xtn;
 
-	httpd_xtn = qse_httpd_getxtnstd (httpd);*/
+	httpd_xtn = qse_httpd_getxtn(httpd);*/
 
 	if (load_loccfg_basic (httpd, xli, list, cfg) <= -1 ||
 	    load_loccfg_index (httpd, xli, list, cfg) <= -1 ||
@@ -1900,8 +1900,8 @@ static int load_server_config (qse_httpd_t* httpd, qse_httpd_server_t* server, q
 		QSE_HTB_HASHER_DEFAULT
 	};
 
-	httpd_xtn = qse_httpd_getxtnstd (httpd);
-	server_xtn = qse_httpd_getserverstdxtn (httpd, server);
+	httpd_xtn = qse_httpd_getxtn(httpd);
+	server_xtn = qse_httpd_getserverxtn(httpd, server);
 
 	/* load the server-wide configuration not specific to host/location */
 	for (i = 0; i < SCFG_MAX; i++)
@@ -2007,7 +2007,7 @@ static void free_server_config (qse_httpd_t* httpd, qse_httpd_server_t* server)
 	server_xtn_t* server_xtn;
 	qse_size_t i;
 
-	server_xtn = qse_httpd_getserverstdxtn (httpd, server);
+	server_xtn = qse_httpd_getserverxtn(httpd, server);
 
 	for (i = 0; i < SCFG_MAX; i++)
 	{
@@ -2033,7 +2033,7 @@ static qse_httpd_server_t* attach_server (qse_httpd_t* httpd, int num, qse_xli_l
 	server_xtn_t* server_xtn;
 	qse_xli_pair_t* pair;
 
-	httpd_xtn = qse_httpd_getxtnstd (httpd);
+	httpd_xtn = qse_httpd_getxtn(httpd);
 
 	qse_memset (&dope, 0, QSE_SIZEOF(dope));
 
@@ -2081,7 +2081,7 @@ static qse_httpd_server_t* attach_server (qse_httpd_t* httpd, int num, qse_xli_l
 		return QSE_NULL;
 	}
 
-	server_xtn = qse_httpd_getserverstdxtn (httpd, xserver);
+	server_xtn = qse_httpd_getserverxtn(httpd, xserver);
 
 	/* remember original callbacks  */
 	qse_httpd_getserverstdopt (httpd, xserver, QSE_HTTPD_SERVERSTD_QUERY, &server_xtn->orgquery);
@@ -2110,7 +2110,7 @@ static int load_hook_modules (qse_httpd_t* httpd, qse_xli_list_t* hook_list)
 	
 	int i;
 
-	httpd_xtn = qse_httpd_getxtnstd (httpd);
+	httpd_xtn = qse_httpd_getxtn(httpd);
 
 	for (i = 0; ; i++)
 	{
@@ -2315,7 +2315,7 @@ static int open_config_file (qse_httpd_t* httpd)
 	};
 
 
-	httpd_xtn = (httpd_xtn_t*) qse_httpd_getxtnstd (httpd);
+	httpd_xtn = (httpd_xtn_t*)qse_httpd_getxtn(httpd);
 	QSE_ASSERT (httpd_xtn->xli == QSE_NULL);
 
 	httpd_xtn->xli = qse_xli_openstd (0, 0, QSE_NULL);
@@ -2372,7 +2372,7 @@ static int close_config_file (qse_httpd_t* httpd)
 {
 	httpd_xtn_t* httpd_xtn;
 
-	httpd_xtn = (httpd_xtn_t*) qse_httpd_getxtnstd (httpd);
+	httpd_xtn = (httpd_xtn_t*)qse_httpd_getxtn(httpd);
 	if (httpd_xtn->xli)
 	{
 		qse_xli_close (httpd_xtn->xli);
@@ -2387,7 +2387,7 @@ static void set_limit (qse_httpd_t* httpd, const qse_char_t* name, int what)
 	qse_xli_pair_t* pair;
 	httpd_xtn_t* httpd_xtn;
 
-	httpd_xtn = (httpd_xtn_t*)qse_httpd_getxtnstd (httpd);
+	httpd_xtn = (httpd_xtn_t*)qse_httpd_getxtn(httpd);
 
 	pair = qse_xli_findpair (httpd_xtn->xli, QSE_NULL, name);
 	if (pair)
@@ -2426,7 +2426,7 @@ static int load_config (qse_httpd_t* httpd)
 	httpd_xtn_t* httpd_xtn;
 	int i;
 
-	httpd_xtn = (httpd_xtn_t*)qse_httpd_getxtnstd (httpd);
+	httpd_xtn = (httpd_xtn_t*)qse_httpd_getxtn(httpd);
 
 	if (open_config_file (httpd) <= -1) goto oops;
 
@@ -2506,14 +2506,13 @@ oops:
 
 static void reconf_server (qse_httpd_t* httpd, qse_httpd_server_t* server)
 {
-	httpd_xtn_t* httpd_xtn;
+	httpd_xtn_t* httpd_xtn = (httpd_xtn_t*)qse_httpd_getxtn(httpd);
 	server_xtn_t* server_xtn;
 	qse_xli_pair_t* pair;
 
 	/* reconfigure the server when the server is impeded in sig_reconf(). */
 
-	httpd_xtn = qse_httpd_getxtnstd (httpd);
-	server_xtn = qse_httpd_getserverstdxtn (httpd, server);
+	server_xtn = qse_httpd_getserverxtn(httpd, server);
 
 	if (httpd_xtn->xli)
 	{
@@ -2531,11 +2530,10 @@ static void reconf_server (qse_httpd_t* httpd, qse_httpd_server_t* server)
 
 static void impede_httpd (qse_httpd_t* httpd)
 {
-	httpd_xtn_t* httpd_xtn;
+	httpd_xtn_t* httpd_xtn = (httpd_xtn_t*)qse_httpd_getxtn(httpd);
 
 	/* reconfigure the server when the server is impeded in sig_reconf(). */
 
-	httpd_xtn = qse_httpd_getxtnstd (httpd);
 	if (httpd_xtn->impede_code == 9999)
 	{
 		qse_httpd_stop (httpd);
@@ -2564,9 +2562,7 @@ static void impede_httpd (qse_httpd_t* httpd)
 
 static int prerewrite_url (qse_httpd_t* httpd, qse_httpd_client_t* client, qse_htre_t* req, const qse_mchar_t* host, qse_mchar_t** url)
 {
-	httpd_xtn_t* httpd_xtn;
-
-	httpd_xtn = qse_httpd_getxtnstd (httpd);
+	httpd_xtn_t* httpd_xtn = (httpd_xtn_t*)qse_httpd_getxtn(httpd);
 
 printf ("PREREWRITING.....................\n");
 /*
@@ -2583,10 +2579,8 @@ printf ("PREREWRITING.....................\n");
 
 static void logact_httpd (qse_httpd_t* httpd, const qse_httpd_act_t* act)
 {
-	/*httpd_xtn_t* httpd_xtn;*/
+	/*httpd_xtn_t* httpd_xtn = (httpd_xtn_t*)qse_httpd_getxtn(httpd);*/
 	qse_char_t tmp[128], tmp2[128], tmp3[128];
-
-	/*httpd_xtn = qse_httpd_getxtnstd (httpd);*/
 
 	switch (act->code)
 	{
@@ -2727,8 +2721,7 @@ wrongusage:
 
 static void free_httpd_xtn (qse_httpd_t* httpd)
 {
-	httpd_xtn_t* httpd_xtn;
-	httpd_xtn = qse_httpd_getxtnstd (httpd);
+	httpd_xtn_t* httpd_xtn = (httpd_xtn_t*)qse_httpd_getxtn(httpd);
 	free_loccfg_contents (httpd, &httpd_xtn->dflcfg);
 }
 
@@ -2746,7 +2739,7 @@ static int httpd_main (int argc, qse_char_t* argv[])
 	if (ret <= -1) return -1;
 	if (ret == 0) return 0;
 
-	httpd = qse_httpd_openstd (QSE_SIZEOF(httpd_xtn_t), QSE_NULL);
+	httpd = qse_httpd_openstd(QSE_SIZEOF(httpd_xtn_t), QSE_NULL);
 	if (httpd == QSE_NULL)
 	{
 		qse_fprintf (QSE_STDERR, QSE_T("ERROR: Cannot open httpd\n"));
@@ -2756,7 +2749,7 @@ static int httpd_main (int argc, qse_char_t* argv[])
 	qse_memset (&ecb, 0, QSE_SIZEOF(ecb));
 	ecb.close = free_httpd_xtn;
 	qse_httpd_pushecb (httpd, &ecb);
-	httpd_xtn = qse_httpd_getxtnstd (httpd);
+	httpd_xtn = (httpd_xtn_t*)qse_httpd_getxtn(httpd);
 	httpd_xtn->cfgfile = g_cfgfile;
 
 	if (load_config (httpd) <= -1) goto oops;
@@ -2815,11 +2808,10 @@ static void interrupt new_keyboard_handler (void)
 {
 	if (!impeded_for_keyboard && g_httpd) 
 	{
-		httpd_xtn_t* httpd_xtn;
+		httpd_xtn_t* httpd_xtn = (httpd_xtn_t*)qse_httpd_getxtn(g_httpd);
 		int c;
 
 /* TODO: read a keystroke... etc */
-		httpd_xtn = qse_httpd_getxtnstd (g_httpd);
 		httpd_xtn->impede_code = 9999;
 		qse_httpd_impede (g_httpd);
 		impeded_for_keyboard = 1;

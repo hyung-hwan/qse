@@ -100,10 +100,8 @@ static int urs_open (qse_httpd_t* httpd, qse_httpd_urs_t* urs)
 {
 	qse_nwad_t nwad;
 	urs_ctx_t* dc;
-	httpd_xtn_t* httpd_xtn;
+	httpd_xtn_t* httpd_xtn = GET_HTTPD_XTN(httpd);
 	int type, proto = 0; /*IPPROTO_UDP;*/ /*IPPROTO_SCTP*/
-
-	httpd_xtn = qse_httpd_getxtn (httpd);
 
 	urs->handle[0] = QSE_INVALID_SCKHND;
 	urs->handle[1] = QSE_INVALID_SCKHND;
@@ -280,7 +278,7 @@ static void urs_close (qse_httpd_t* httpd, qse_httpd_urs_t* urs)
 static int urs_recv (qse_httpd_t* httpd, qse_httpd_urs_t* urs, qse_httpd_hnd_t handle)
 {
 	urs_ctx_t* dc = (urs_ctx_t*)urs->ctx;
-	/*httpd_xtn_t* httpd_xtn;*/
+	/*httpd_xtn_t* httpd_xtn = GET_HTTPD_XTN(httpd);*/
 
 	qse_skad_t fromaddr;
 	qse_sck_len_t fromlen;
@@ -290,8 +288,6 @@ static int urs_recv (qse_httpd_t* httpd, qse_httpd_urs_t* urs, qse_httpd_hnd_t h
 	urs_pkt_t* pkt;
 	urs_req_t* req;
 	qse_mchar_t* spc;
-
-	/*httpd_xtn = qse_httpd_getxtn (httpd);*/
 
 /* TODO: use recvmsg with MSG_ERRQUEUE... set socket option IP_RECVERR... */
 	fromlen = QSE_SIZEOF(fromaddr);
@@ -363,10 +359,8 @@ static void tmr_urs_tmout_handle (qse_tmr_t* tmr, const qse_ntime_t* now, qse_tm
 	 *---------------------------------------------------------------- */
 	if (req->urs_retries > 0)
 	{
-		/*httpd_xtn_t* httpd_xtn;*/
+		/*httpd_xtn_t* httpd_xtn = GET_HTTPD_XTN(dc->httpd);*/
 		qse_tmr_event_t tmout_event;
-
-		/*httpd_xtn = qse_httpd_getxtn (dc->httpd);*/
 
 		QSE_MEMSET (&tmout_event, 0, QSE_SIZEOF(tmout_event));
 		qse_gettime (&tmout_event.when);
@@ -422,15 +416,13 @@ printf ("urs timed out....\n");
 static int urs_send (qse_httpd_t* httpd, qse_httpd_urs_t* urs, const qse_mchar_t* url, qse_httpd_rewrite_t rewrite, const qse_httpd_urs_server_t* urs_server, void* ctx)
 {
 	urs_ctx_t* dc = (urs_ctx_t*)urs->ctx;
-	httpd_xtn_t* httpd_xtn;
+	httpd_xtn_t* httpd_xtn = GET_HTTPD_XTN(httpd);
 
 	qse_uint16_t xid;
 	qse_uint32_t seq;
 	urs_req_t* req = QSE_NULL;
 	qse_size_t url_len;
 	qse_tmr_event_t tmout_event;
-
-	httpd_xtn = qse_httpd_getxtn (httpd);
 
 	if (dc->req_count >= QSE_COUNTOF(dc->reqs))
 	{

@@ -306,13 +306,10 @@ protected:
 
 
 private:
-	static ssize_t sin (
-		sed_t* s, io_cmd_t cmd, io_arg_t* arg, char_t* buf, size_t len);
-	static ssize_t xin (
-		sed_t* s, io_cmd_t cmd, io_arg_t* arg, char_t* buf, size_t len);
-	static ssize_t xout (
-		sed_t* s, io_cmd_t cmd, io_arg_t* arg, char_t* dat, size_t len);
-	static const char_t* xerrstr (const sed_t* s, errnum_t num);
+	static ssize_t sin (sed_t* s, io_cmd_t cmd, io_arg_t* arg, char_t* buf, size_t len);
+	static ssize_t xin (sed_t* s, io_cmd_t cmd, io_arg_t* arg, char_t* buf, size_t len);
+	static ssize_t xout (sed_t* s, io_cmd_t cmd, io_arg_t* arg, char_t* dat, size_t len);
+	static const char_t* xerrstr (sed_t* s, errnum_t num);
 };
 
 /////////////////////////////////

@@ -160,7 +160,7 @@ static qse_size_t format_dirent (
 	 *       a lot of file names to escape. */
 
 	/* perform percent-encoding for the anchor */
-	encname = qse_perenchttpstrdup (0, dirent->name, httpd->mmgr);
+	encname = qse_perenchttpstrdup (0, dirent->name, qse_httpd_getmmgr(httpd));
 	if (encname == QSE_NULL)
 	{
 		httpd->errnum = QSE_HTTPD_ENOMEM;
@@ -171,7 +171,7 @@ static qse_size_t format_dirent (
 	escname = qse_httpd_escapehtml (httpd, dirent->name);
 	if (escname == QSE_NULL) 
 	{
-		if (encname != dirent->name) QSE_MMGR_FREE (httpd->mmgr, encname);
+		if (encname != dirent->name) QSE_MMGR_FREE (qse_httpd_getmmgr(httpd), encname);
 		return -1;
 	}
 
@@ -205,7 +205,7 @@ static qse_size_t format_dirent (
 	);
 
 	if (escname != dirent->name) qse_httpd_freemem (httpd, escname);
-	if (encname != dirent->name) QSE_MMGR_FREE (httpd->mmgr, encname);
+	if (encname != dirent->name) QSE_MMGR_FREE (qse_httpd_getmmgr(httpd), encname);
 
 	if (x == (qse_size_t)-1) httpd->errnum = QSE_HTTPD_ENOBUF;
 	return x;

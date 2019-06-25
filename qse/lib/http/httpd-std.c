@@ -168,7 +168,6 @@ typedef struct server_xtn_t server_xtn_t;
 struct server_xtn_t
 {
 	qse_httpd_server_detach_t detach;
-
 	qse_httpd_serverstd_query_t query;
 	qse_httpd_serverstd_makersrc_t makersrc;
 	qse_httpd_serverstd_freersrc_t freersrc;
@@ -635,14 +634,21 @@ struct httpd_xtn_t
 	qse_httpd_ursstd_t urs;
 };
 
+#if defined(QSE_HAVE_INLINE)
+static QSE_INLINE httpd_xtn_t* GET_HTTPD_XTN(qse_httpd_t* httpd) { return (httpd_xtn_t*)((qse_uint8_t*)qse_httpd_getxtn(httpd) - QSE_SIZEOF(httpd_xtn_t)); }
+static QSE_INLINE server_xtn_t* GET_SERVER_XTN(qse_httpd_t* httpd,qse_httpd_server_t* server) { return (server_xtn_t*)((qse_uint8_t*)qse_httpd_getserverxtn(httpd, server) - QSE_SIZEOF(server_xtn_t)); }
+#else
+#define GET_HTTPD_XTN(httpd) ((httpd_xtn_t*)((qse_uint8_t*)qse_httpd_getxtn(httpd) - QSE_SIZEOF(httpd_xtn_t)))
+#define GET_SERVER_XTN(httpd,server) ((server_xtn_t*)((qse_uint8_t*)qse_httpd_getserverxtn(httpd, server) - QSE_SIZEOF(server_xtn_t)))
+#endif
+
+
 #if defined(USE_SSL)
 static int init_server_ssl (qse_httpd_t* httpd, qse_httpd_server_t* server)
 {
 	SSL_CTX* ssl_ctx = QSE_NULL;
-	server_xtn_t* server_xtn;
+	server_xtn_t* server_xtn = GET_SERVER_XTN(httpd, server);
 	qse_httpd_serverstd_ssl_t ssl;
-
-	server_xtn = (server_xtn_t*)qse_httpd_getserverxtn (httpd, server);
 
 	if (server_xtn->query (httpd, server, QSE_HTTPD_SERVERSTD_SSL, QSE_NULL, &ssl) <= -1)
 	{
@@ -707,9 +713,7 @@ static void fini_server_ssl (server_xtn_t* xtn)
 static int init_xtn_peer_ssl (qse_httpd_t* httpd)
 {
 	SSL_CTX* peer_ctx = QSE_NULL;
-	httpd_xtn_t* xtn;
-
-	xtn = (httpd_xtn_t*)qse_httpd_getxtn (httpd);
+	httpd_xtn_t* xtn = GET_HTTPD_XTN(httpd);
 
 	peer_ctx = SSL_CTX_new (SSLv23_client_method());
 	if (!peer_ctx) 
@@ -738,8 +742,7 @@ static void fini_xtn_peer_ssl (httpd_xtn_t* xtn)
 
 static void cleanup_standard_httpd (qse_httpd_t* httpd)
 {
-	httpd_xtn_t* xtn;
-	xtn = (httpd_xtn_t*)qse_httpd_getxtn (httpd);
+	httpd_xtn_t* xtn = GET_HTTPD_XTN(httpd);
 
 #if defined(USE_SSL)
 	if (xtn->ssl_peer_ctx) fini_xtn_peer_ssl (xtn);
@@ -766,7 +769,9 @@ qse_httpd_t* qse_httpd_openstdwithmmgr (qse_mmgr_t* mmgr, qse_size_t xtnsize, qs
 	httpd = qse_httpd_open (mmgr, QSE_SIZEOF(httpd_xtn_t) + xtnsize, errnum);
 	if (httpd == QSE_NULL) goto oops;
 
-	xtn = (httpd_xtn_t*)qse_httpd_getxtn (httpd);
+	httpd->_instsize += QSE_SIZEOF(httpd_xtn_t);
+
+	xtn = GET_HTTPD_XTN(httpd);
 	/* the extension area has been cleared in qse_httpd_open().
 	 * QSE_MEMSET (xtn, 0, QSE_SIZEOF(*xtn));*/
 
@@ -815,11 +820,6 @@ oops:
 #endif
 	if (httpd) qse_httpd_close (httpd);
 	return QSE_NULL;
-}
-
-void* qse_httpd_getxtnstd (qse_httpd_t* httpd)
-{
-	return (void*)((httpd_xtn_t*)QSE_XTN(httpd) + 1);
 }
 
 /* ------------------------------------------------------------------- */
@@ -1299,9 +1299,7 @@ static int client_accepted (qse_httpd_t* httpd, qse_httpd_client_t* client)
 	#if defined(USE_SSL)
 		int ret;
 		SSL* ssl;
-		server_xtn_t* server_xtn;
-
-		server_xtn = (server_xtn_t*)qse_httpd_getserverxtn (httpd, client->server);
+		server_xtn_t* server_xtn = GET_SERVER_XTN(httpd, client->server);
 
 		if (!server_xtn->ssl_ctx)
 		{
@@ -1389,7 +1387,7 @@ static int peer_open (qse_httpd_t* httpd, qse_httpd_peer_t* peer)
 {
 	/* -------------------------------------------------------------------- */
 
-	httpd_xtn_t* xtn;
+	httpd_xtn_t* xtn = GET_HTTPD_XTN(httpd);
 	qse_skad_t connaddr, bindaddr;
 	int connaddrsize, bindaddrsize;
 	int connected = 1;
@@ -1409,7 +1407,6 @@ static int peer_open (qse_httpd_t* httpd, qse_httpd_peer_t* peer)
 	int flag;
 #endif
 
-	xtn = (httpd_xtn_t*) qse_httpd_getxtn (httpd);
 	
 	/* turn off internally used bits */
 	peer->flags &= ~QSE_HTTPD_PEER_ALL_INTERNALS;
@@ -1775,7 +1772,7 @@ static void dispatch_muxcb (qse_mux_t* mux, const qse_mux_evt_t* evt)
 	qse_httpd_hnd_t handle;
 	int mask = 0;
 
-	xtn = qse_mux_getxtn (mux);
+	xtn = qse_mux_getxtn(mux);
 	handle = evt->hnd;
 
 	if (evt->mask & QSE_MUX_IN) mask |= QSE_HTTPD_MUX_READ;
@@ -1790,14 +1787,14 @@ static void* mux_open (qse_httpd_t* httpd, qse_httpd_muxcb_t cbfun)
 	qse_mux_t* mux;
 	mux_xtn_t* xtn;
 
-	mux = qse_mux_open (httpd->mmgr, QSE_SIZEOF(*xtn), dispatch_muxcb, 256, QSE_NULL);
+	mux = qse_mux_open (qse_httpd_getmmgr(httpd), QSE_SIZEOF(*xtn), dispatch_muxcb, 256, QSE_NULL);
 	if (!mux)
 	{
 		qse_httpd_seterrnum (httpd, QSE_HTTPD_ESYSERR);
 		return QSE_NULL;
 	}
 
-	xtn = qse_mux_getxtn (mux);
+	xtn = qse_mux_getxtn(mux);
 	xtn->httpd = httpd;
 	xtn->cbfun = cbfun;
 	return mux;
@@ -2148,7 +2145,7 @@ static qse_fio_t* __open_file (qse_httpd_t* httpd, const qse_mchar_t* path, int 
 	fio = qse_httpd_allocmem (httpd, QSE_SIZEOF(*fio));
 	if (fio == QSE_NULL) return QSE_NULL;
 
-	if (qse_fio_init (fio, httpd->mmgr, (const qse_char_t*)path, fio_flags, fio_mode) <= -1)
+	if (qse_fio_init (fio, qse_httpd_getmmgr(httpd), (const qse_char_t*)path, fio_flags, fio_mode) <= -1)
 	{
 		qse_httpd_seterrnum (httpd, fioerr_to_errnum(qse_fio_geterrnum(fio)));
 		qse_httpd_freemem (httpd, fio);
@@ -2327,23 +2324,23 @@ static int dir_open (qse_httpd_t* httpd, const qse_mchar_t* path, qse_httpd_hnd_
 	dir_t* d;
 	qse_dir_errnum_t direrrnum;
 
-	d = QSE_MMGR_ALLOC (httpd->mmgr, QSE_SIZEOF(*d));
+	d = QSE_MMGR_ALLOC (qse_httpd_getmmgr(httpd), QSE_SIZEOF(*d));
 	if (d == QSE_NULL) 
 	{
 		qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOMEM);
 		return -1;
 	}
 
-	d->path = qse_mbsdup (path, httpd->mmgr);
+	d->path = qse_mbsdup (path, qse_httpd_getmmgr(httpd));
 	if (d->path == QSE_NULL)
 	{
 		qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOMEM);
-		QSE_MMGR_FREE (httpd->mmgr, d);
+		QSE_MMGR_FREE (qse_httpd_getmmgr(httpd), d);
 		return -1;
 	}
 
 	d->dp = qse_dir_open (
-		httpd->mmgr, 0, 
+		qse_httpd_getmmgr(httpd), 0, 
 		(const qse_char_t*)d->path, 
 		QSE_DIR_MBSPATH | QSE_DIR_SORT,
 		&direrrnum
@@ -2351,8 +2348,8 @@ static int dir_open (qse_httpd_t* httpd, const qse_mchar_t* path, qse_httpd_hnd_
 	if (d->dp == QSE_NULL)
 	{
 		qse_httpd_seterrnum (httpd, direrr_to_errnum(direrrnum));
-		QSE_MMGR_FREE (httpd->mmgr, d->path);
-		QSE_MMGR_FREE (httpd->mmgr, d);
+		QSE_MMGR_FREE (qse_httpd_getmmgr(httpd), d->path);
+		QSE_MMGR_FREE (qse_httpd_getmmgr(httpd), d);
 		return -1;
 	}
 
@@ -2372,8 +2369,8 @@ static void dir_close (qse_httpd_t* httpd, qse_httpd_hnd_t handle)
 
 	qse_dir_close (d->dp);
 
-	QSE_MMGR_FREE (httpd->mmgr, d->path);
-	QSE_MMGR_FREE (httpd->mmgr, d);
+	QSE_MMGR_FREE (qse_httpd_getmmgr(httpd), d->path);
+	QSE_MMGR_FREE (qse_httpd_getmmgr(httpd), d);
 }
 
 static int dir_read (qse_httpd_t* httpd, qse_httpd_hnd_t handle, qse_httpd_dirent_t* dirent)
@@ -2394,7 +2391,7 @@ static int dir_read (qse_httpd_t* httpd, qse_httpd_hnd_t handle, qse_httpd_diren
 	else if (n == 0) return 0;
 
 	/* i assume that d->path ends with a slash */
-	fpath = qse_mbsdup2 (d->path, (const qse_mchar_t*)de.name, httpd->mmgr);
+	fpath = qse_mbsdup2 (d->path, (const qse_mchar_t*)de.name, qse_httpd_getmmgr(httpd));
 	if (fpath == QSE_NULL)
 	{
 		qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOMEM);
@@ -2402,7 +2399,7 @@ static int dir_read (qse_httpd_t* httpd, qse_httpd_hnd_t handle, qse_httpd_diren
 	}
 
 	n = stat_file (httpd, fpath, &dirent->stat, 0);	
-	QSE_MMGR_FREE (httpd->mmgr, fpath);
+	QSE_MMGR_FREE (qse_httpd_getmmgr(httpd), fpath);
 	if (n <= -1) QSE_MEMSET (dirent, 0, QSE_SIZEOF(*dirent));
 
 	dirent->name = (const qse_mchar_t*)de.name;
@@ -2426,15 +2423,13 @@ static qse_htb_walk_t walk (qse_htb_t* htb, qse_htb_pair_t* pair, void* ctx)
 }
 #endif
 
-static int process_request (
-	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_htre_t* req, int peek)
+static int process_request (qse_httpd_t* httpd, qse_httpd_client_t* client, qse_htre_t* req, int peek)
 {
+	server_xtn_t* server_xtn = GET_SERVER_XTN(httpd, client->server);
 	qse_httpd_task_t* task;
-	server_xtn_t* server_xtn;
 	qse_http_method_t mth;
 	qse_httpd_rsrc_t rsrc;
 
-	server_xtn = (server_xtn_t*)qse_httpd_getserverxtn (httpd, client->server);
 
 	/* percent-decode the query path to the original buffer
 	 * since i'm not going to need it in the original form
@@ -2628,14 +2623,11 @@ static int poke_request (
 	return process_request (httpd, client, req, 0);
 }
 
-static int format_error (
-	qse_httpd_t* httpd, qse_httpd_client_t* client, int code, qse_mchar_t* buf, int bufsz)
+static int format_error (qse_httpd_t* httpd, qse_httpd_client_t* client, int code, qse_mchar_t* buf, int bufsz)
 {
+	server_xtn_t* server_xtn = GET_SERVER_XTN(httpd, client->server);
 	qse_size_t n;
-	server_xtn_t* server_xtn;
 	const qse_mchar_t* head, * foot, * msg;
-
-	server_xtn = qse_httpd_getserverxtn (httpd, client->server);
 
 	if (server_xtn->query (httpd, client->server, QSE_HTTPD_SERVERSTD_ERRHEAD, QSE_NULL, &head) <= -1) head = QSE_NULL;
 	if (head == QSE_NULL) head = QSE_MT("<style type='text/css'>body { background-color:#d0e4fe; font-size: 0.9em; } div.header { font-weight: bold; margin-bottom: 5px; } div.footer { border-top: 1px solid #99AABB; text-align: right; }</style>");
@@ -2796,32 +2788,32 @@ static void free_resource (
 	{
 		case QSE_HTTPD_RSRC_CGI:
 			if (target->u.cgi.suffix) 
-				QSE_MMGR_FREE (httpd->mmgr, (qse_mchar_t*)target->u.cgi.suffix);
+				QSE_MMGR_FREE (qse_httpd_getmmgr(httpd), (qse_mchar_t*)target->u.cgi.suffix);
 			if (target->u.cgi.script != qpath) 
-				QSE_MMGR_FREE (httpd->mmgr, (qse_mchar_t*)target->u.cgi.script);
+				QSE_MMGR_FREE (qse_httpd_getmmgr(httpd), (qse_mchar_t*)target->u.cgi.script);
 			if (!(target->u.cgi.flags & QSE_HTTPD_RSRC_CGI_FNC))
 			{
 				if (target->u.cgi.path != qpath)
-					QSE_MMGR_FREE (httpd->mmgr, (qse_mchar_t*)target->u.cgi.path);
+					QSE_MMGR_FREE (qse_httpd_getmmgr(httpd), (qse_mchar_t*)target->u.cgi.path);
 				if (target->u.cgi.shebang)
-					QSE_MMGR_FREE (httpd->mmgr, (qse_mchar_t*)target->u.cgi.shebang);
+					QSE_MMGR_FREE (qse_httpd_getmmgr(httpd), (qse_mchar_t*)target->u.cgi.shebang);
 			}
 
 			break;
 
 		case QSE_HTTPD_RSRC_DIR:
 			if (target->u.dir.path != qpath)
-				QSE_MMGR_FREE (httpd->mmgr, (qse_mchar_t*)target->u.dir.path);
+				QSE_MMGR_FREE (qse_httpd_getmmgr(httpd), (qse_mchar_t*)target->u.dir.path);
 			break;
 
 		case QSE_HTTPD_RSRC_FILE:
 			if (target->u.file.path != qpath)
-				QSE_MMGR_FREE (httpd->mmgr, (qse_mchar_t*)target->u.file.path);
+				QSE_MMGR_FREE (qse_httpd_getmmgr(httpd), (qse_mchar_t*)target->u.file.path);
 			break;
 
 		case QSE_HTTPD_RSRC_RELOC:
 			if (target->u.reloc.target != qpath)
-				QSE_MMGR_FREE (httpd->mmgr, (qse_mchar_t*)target->u.reloc.target);
+				QSE_MMGR_FREE (qse_httpd_getmmgr(httpd), (qse_mchar_t*)target->u.reloc.target);
 			break;
 
 		default:
@@ -2844,7 +2836,7 @@ static qse_mchar_t* merge_paths (
 		ta[idx++] = path;
 	}
 	ta[idx++] = QSE_NULL;
-	xpath = qse_mbsadup (ta, QSE_NULL, httpd->mmgr);
+	xpath = qse_mbsadup (ta, QSE_NULL, qse_httpd_getmmgr(httpd));
 	if (xpath == QSE_NULL)
 	{
 		httpd->errnum = QSE_HTTPD_ENOMEM;
@@ -2904,13 +2896,11 @@ static int attempt_cgi (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_htre_t* req, 
 	struct rsrc_tmp_t* tmp, qse_httpd_rsrc_t* target)
 {
-	server_xtn_t* server_xtn;
+	server_xtn_t* server_xtn = GET_SERVER_XTN(httpd, client->server);
 	qse_mchar_t* shebang = QSE_NULL;
 	qse_mchar_t* suffix = QSE_NULL;
 	qse_mchar_t* script = QSE_NULL;
 	qse_httpd_serverstd_cgi_t cgi;
-
-	server_xtn = qse_httpd_getserverxtn (httpd, client->server);
 
 	if (tmp->final_match)
 	{
@@ -2940,7 +2930,7 @@ static int attempt_cgi (
 				/* free tmp->xpath here upon success since it's not used for relocation.
 				 * upon failure, it is freed by the caller. so the 'oops' part 
 				 * of this function doesn't free it. */
-				QSE_MMGR_FREE (httpd->mmgr, tmp->xpath);
+				QSE_MMGR_FREE (qse_httpd_getmmgr(httpd), tmp->xpath);
 				return 1;
 			}
 			else script = (qse_mchar_t*)tmp->qpath;
@@ -3004,8 +2994,8 @@ static int attempt_cgi (
 							/* the script name is composed of the orginal query path.
 							 * the pointer held in 'slash' is valid for tmp->qpath as
 							 * tmp->qpath_rp is at most the tail part of tmp->qpath. */
-							script = qse_mbsxdup (tmp->qpath, slash - tmp->qpath, httpd->mmgr);
-							suffix = qse_mbsdup (slash, httpd->mmgr);
+							script = qse_mbsxdup (tmp->qpath, slash - tmp->qpath, qse_httpd_getmmgr(httpd));
+							suffix = qse_mbsdup (slash, qse_httpd_getmmgr(httpd));
 							if (!script || !suffix) goto oops;
 
 							goto bingo;
@@ -3051,7 +3041,7 @@ static int attempt_cgi (
 				if (server_xtn->query (httpd, client->server, QSE_HTTPD_SERVERSTD_CGI, &qinfo, &cgi) >= 0 && cgi.cgi && cgi.fncptr)
 				{
 					/* virtual cgi script */
-					script = qse_mbsdup (tmp->qpath, httpd->mmgr);
+					script = qse_mbsdup (tmp->qpath, qse_httpd_getmmgr(httpd));
 					if (!script) goto oops;
 					suffix = QSE_NULL;
 
@@ -3085,7 +3075,7 @@ bingo:
 	{
 		if (cgi.shebang)
 		{
-			shebang = qse_mbsdup (cgi.shebang, httpd->mmgr);
+			shebang = qse_mbsdup (cgi.shebang, qse_httpd_getmmgr(httpd));
 			if (shebang == QSE_NULL) goto oops;
 		}
 
@@ -3101,9 +3091,9 @@ bingo:
 
 oops:
 	httpd->errnum = QSE_HTTPD_ENOMEM;
-	if (shebang) QSE_MMGR_FREE (httpd->mmgr, shebang);
-	if (suffix) QSE_MMGR_FREE (httpd->mmgr, suffix);
-	if (script && script != tmp->qpath) QSE_MMGR_FREE (httpd->mmgr, script);
+	if (shebang) QSE_MMGR_FREE (qse_httpd_getmmgr(httpd), shebang);
+	if (suffix) QSE_MMGR_FREE (qse_httpd_getmmgr(httpd), suffix);
+	if (script && script != tmp->qpath) QSE_MMGR_FREE (qse_httpd_getmmgr(httpd), script);
 	return -1;
 }
 
@@ -3111,7 +3101,7 @@ static int make_resource (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, 
 	qse_htre_t* req, qse_httpd_rsrc_t* target)
 {
-	server_xtn_t* server_xtn;
+	server_xtn_t* server_xtn = GET_SERVER_XTN(httpd, client->server);
 	struct rsrc_tmp_t tmp;
 
 	qse_httpd_stat_t st;
@@ -3124,8 +3114,6 @@ static int make_resource (
 	tmp.qpath_len = qse_mbslen (tmp.qpath);
 
 	QSE_MEMSET (target, 0, QSE_SIZEOF(*target));
-
-	server_xtn = qse_httpd_getserverxtn (httpd, client->server);
 
 	QSE_MEMSET (&qinfo, 0, QSE_SIZEOF(qinfo));
 	qinfo.req = req;
@@ -3314,20 +3302,20 @@ auth_ok:
 					tpath = merge_paths (httpd, tmp.xpath, ptr);
 					if (tpath == QSE_NULL) 
 					{
-						QSE_MMGR_FREE (httpd->mmgr, tmp.xpath);
+						QSE_MMGR_FREE (qse_httpd_getmmgr(httpd), tmp.xpath);
 						return -1;
 					}
 
 					if (httpd->opt.scb.file.stat (httpd, tpath, &st) >= 0 && !st.isdir)
 					{
 						/* the index file is found */
-						QSE_MMGR_FREE (httpd->mmgr, tmp.xpath);
+						QSE_MMGR_FREE (qse_httpd_getmmgr(httpd), tmp.xpath);
 						tmp.xpath = tpath;
 						tmp.idxfile = ptr;
 						goto attempt_file;
 					}
 
-					QSE_MMGR_FREE (httpd->mmgr, tpath);
+					QSE_MMGR_FREE (qse_httpd_getmmgr(httpd), tpath);
 				}
 			}
 
@@ -3340,7 +3328,7 @@ auth_ok:
 				qse_htre_discardcontent (req);
 				target->type = QSE_HTTPD_RSRC_ERROR;
 				/* free xpath since it won't be used */
-				QSE_MMGR_FREE (httpd->mmgr, tmp.xpath);
+				QSE_MMGR_FREE (qse_httpd_getmmgr(httpd), tmp.xpath);
 			}
 			else if (tmp.qpath[tmp.qpath_len - 1] != QSE_MT('/'))
 			{
@@ -3350,7 +3338,7 @@ auth_ok:
 				target->u.reloc.flags = QSE_HTTPD_RSRC_RELOC_APPENDSLASH | QSE_HTTPD_RSRC_RELOC_PERMANENT;
 				target->u.reloc.target = tmp.qpath;
 				/* free xpath since it won't be used */
-				QSE_MMGR_FREE (httpd->mmgr, tmp.xpath);
+				QSE_MMGR_FREE (qse_httpd_getmmgr(httpd), tmp.xpath);
 			}
 			else
 			{
@@ -3375,7 +3363,7 @@ auth_ok:
 		n = attempt_cgi (httpd, client, req, &tmp, target);
 		if (n <= -1) 
 		{
-			QSE_MMGR_FREE (httpd->mmgr, tmp.xpath);
+			QSE_MMGR_FREE (qse_httpd_getmmgr(httpd), tmp.xpath);
 			return -1;
 		}
 		if (n >= 1) 
@@ -3384,7 +3372,7 @@ auth_ok:
 			{
 				/* tmp.xpath is not set to target->u.cgi.path when
 				 * this flag is set. it must be deallocated */
-				QSE_MMGR_FREE (httpd->mmgr, tmp.xpath);
+				QSE_MMGR_FREE (qse_httpd_getmmgr(httpd), tmp.xpath);
 			}
 			return 0;
 		}
@@ -3400,7 +3388,7 @@ auth_ok:
 		{
 			/* free xpath since it won't be used */
 			qse_htre_discardcontent (req);
-			QSE_MMGR_FREE (httpd->mmgr, tmp.xpath);
+			QSE_MMGR_FREE (qse_httpd_getmmgr(httpd), tmp.xpath);
 			target->type = QSE_HTTPD_RSRC_ERROR;
 		}
 		else
@@ -3411,7 +3399,7 @@ auth_ok:
 				qse_htre_discardcontent (req);
 
 				/* free xpath since it won't be used */
-				QSE_MMGR_FREE (httpd->mmgr, tmp.xpath);
+				QSE_MMGR_FREE (qse_httpd_getmmgr(httpd), tmp.xpath);
 
 				/* create a relocation resource */
 				target->type = QSE_HTTPD_RSRC_RELOC;
@@ -3447,11 +3435,9 @@ auth_ok:
 
 static void detach_server (qse_httpd_t* httpd, qse_httpd_server_t* server)
 {
-	server_xtn_t* server_xtn;
-
-	server_xtn = (server_xtn_t*) qse_httpd_getserverxtn (httpd, server);
+	server_xtn_t* server_xtn = GET_SERVER_XTN(httpd, server);
 	if (server_xtn->detach) server_xtn->detach (httpd, server);
-	if (server_xtn->auth.ptr) QSE_MMGR_FREE (httpd->mmgr, server_xtn->auth.ptr);
+	if (server_xtn->auth.ptr) QSE_MMGR_FREE (qse_httpd_getmmgr(httpd), server_xtn->auth.ptr);
 
 #if defined(USE_SSL)
 	if (server_xtn->ssl_ctx) fini_server_ssl (server_xtn);
@@ -3605,10 +3591,12 @@ qse_httpd_server_t* qse_httpd_attachserverstd (
 	/* detach_server() is called when the server is detached */
 	xdope.detach = detach_server;
 
-	xserver = qse_httpd_attachserver (httpd, &xdope, QSE_SIZEOF(*server_xtn) + xtnsize);
+	xserver = qse_httpd_attachserver(httpd, &xdope, QSE_SIZEOF(*server_xtn) + xtnsize);
 	if (xserver == QSE_NULL) return QSE_NULL;
 
-	server_xtn = qse_httpd_getserverxtn (httpd, xserver);
+	xserver->_instsize += QSE_SIZEOF(*server_xtn);
+
+	server_xtn = GET_SERVER_XTN(httpd, xserver);
 	QSE_MEMSET (server_xtn, 0, QSE_SIZEOF(*server_xtn));
 
 	/* chain the original detach function */
@@ -3705,9 +3693,7 @@ int qse_httpd_getserverstdopt (
 	qse_httpd_t* httpd, qse_httpd_server_t* server,
 	qse_httpd_serverstd_opt_t id, void* value)
 {
-	server_xtn_t* server_xtn;
-
-	server_xtn = qse_httpd_getserverxtn (httpd, server);
+	server_xtn_t* server_xtn = GET_SERVER_XTN(httpd, server);
 
 	switch (id)
 	{
@@ -3733,9 +3719,7 @@ int qse_httpd_setserverstdopt (
 	qse_httpd_t* httpd, qse_httpd_server_t* server,
 	qse_httpd_serverstd_opt_t id, const void* value)
 {
-	server_xtn_t* server_xtn;
-
-	server_xtn = qse_httpd_getserverxtn (httpd, server);
+	server_xtn_t* server_xtn = GET_SERVER_XTN(httpd, server);
 
 	switch (id)
 	{
@@ -3756,18 +3740,11 @@ int qse_httpd_setserverstdopt (
 	return -1;
 }
 
-
-void* qse_httpd_getserverstdxtn (qse_httpd_t* httpd, qse_httpd_server_t* server)
-{
-	server_xtn_t* xtn = qse_httpd_getserverxtn (httpd, server);
-	return (void*)(xtn + 1);
-}
-
 /* ------------------------------------------------------------------- */
 
 int qse_httpd_loopstd (qse_httpd_t* httpd, const qse_httpd_dnsstd_t* dns, const qse_httpd_ursstd_t* urs)
 {
-	httpd_xtn_t* httpd_xtn = qse_httpd_getxtn (httpd);
+	httpd_xtn_t* httpd_xtn = GET_HTTPD_XTN(httpd);
 
 	/* default dns server info */
 	if (dns)

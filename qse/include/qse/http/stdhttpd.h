@@ -233,10 +233,6 @@ QSE_EXPORT qse_httpd_t* qse_httpd_openstdwithmmgr (
 	qse_httpd_errnum_t* errnum
 );
 
-QSE_EXPORT void* qse_httpd_getxtnstd (
-	qse_httpd_t* httpd
-);
-
 QSE_EXPORT qse_httpd_server_t* qse_httpd_attachserverstd (
 	qse_httpd_t*                   httpd,
 	const qse_httpd_server_dope_t* dope,
@@ -266,11 +262,6 @@ QSE_EXPORT int qse_httpd_setserverstdopt (
 	qse_httpd_server_t*       server,
 	qse_httpd_serverstd_opt_t id,
 	const void*               value
-);
-
-QSE_EXPORT void* qse_httpd_getserverstdxtn (
-	qse_httpd_t*         httpd,
-	qse_httpd_server_t*  server
 );
 
 QSE_EXPORT int qse_httpd_loopstd (

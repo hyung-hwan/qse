@@ -62,6 +62,17 @@
  */
 typedef struct qse_sed_t qse_sed_t;
 
+#define QSE_SED_HDR \
+	qse_size_t  _instsize; \
+	qse_mmgr_t* _mmgr
+
+typedef struct qse_sed_alt_t qse_sed_alt_t;
+struct qse_sed_alt_t
+{
+	/* ensure that qse_sed_alt_t matches the beginning part of qse_sed_t */
+	QSE_SED_HDR;
+};
+
 typedef struct qse_sed_loc_t qse_sed_loc_t;
 typedef struct qse_sed_adr_t qse_sed_adr_t; 
 typedef struct qse_sed_cmd_t qse_sed_cmd_t;
@@ -274,7 +285,7 @@ typedef enum qse_sed_errnum_t qse_sed_errnum_t;
  * editor with the qse_sed_seterrstr() function to customize an error string.
  */
 typedef const qse_char_t* (*qse_sed_errstr_t) (
-	const qse_sed_t* sed,   /**< stream editor */
+	qse_sed_t*       sed,   /**< stream editor */
 	qse_sed_errnum_t num    /**< an error number */
 );
 
@@ -436,22 +447,23 @@ QSE_EXPORT void qse_sed_close (
 	qse_sed_t* sed /**< stream editor */
 );
 
-/**
- * The  qse_sed_getmmgr() function returns the memory
- * manager used in qse_sed_open().
- */
-QSE_EXPORT qse_mmgr_t* qse_sed_getmmgr (
-	qse_sed_t* sed
-); 
 
+
+#if defined(QSE_HAVE_INLINE)
 /**
- * The qse_sed_getxtn() function returns the pointer
- * to the beginning of the extension area created with 
+ * The qse_sed_getxtn() function returns the pointer to the extension area
+ * placed behind the actual sed object.
+ */
+static QSE_INLINE void* qse_sed_getxtn (qse_sed_t* sed) { return (void*)((qse_uint8_t*)sed + ((qse_sed_alt_t*)sed)->_instsize); }
+/**
+ * The qse_sed_getmmgr() function gets the memory manager used in
  * qse_sed_open().
  */
-QSE_EXPORT void* qse_sed_getxtn (
-	qse_sed_t* sed
-);
+static QSE_INLINE qse_mmgr_t* qse_sed_getmmgr (qse_sed_t* sed) { return ((qse_sed_alt_t*)sed)->_mmgr; }
+#else
+#       define qse_sed_getxtn(sed) ((void*)((qse_uint8_t*)sed + ((qse_sed_alt_t*)sed)->_instsize))
+#       define qse_sed_getmmgr(sed) (((qse_sed_alt_t*)(sed))->_mmgr)
+#endif /* QSE_HAVE_INLINE */
 
 
 /**
@@ -492,7 +504,7 @@ QSE_EXPORT int qse_sed_setopt (
  * The qse_sed_geterrstr() gets an error string getter.
  */
 QSE_EXPORT qse_sed_errstr_t qse_sed_geterrstr (
-	const qse_sed_t* sed    /**< stream editor */
+	qse_sed_t* sed    /**< stream editor */
 );
 
 /**
@@ -529,7 +541,7 @@ QSE_EXPORT void qse_sed_seterrstr (
  * @return error number
  */
 QSE_EXPORT qse_sed_errnum_t qse_sed_geterrnum (
-	const qse_sed_t* sed /**< stream editor */
+	qse_sed_t* sed /**< stream editor */
 );
 
 /**
@@ -538,7 +550,7 @@ QSE_EXPORT qse_sed_errnum_t qse_sed_geterrnum (
  * @return error location
  */
 QSE_EXPORT const qse_sed_loc_t* qse_sed_geterrloc (
-	const qse_sed_t* sed /**< stream editor */
+	qse_sed_t* sed /**< stream editor */
 );
 
 /**
@@ -546,7 +558,7 @@ QSE_EXPORT const qse_sed_loc_t* qse_sed_geterrloc (
  * @return error message pointer
  */
 QSE_EXPORT const qse_char_t* qse_sed_geterrmsg (
-	const qse_sed_t* sed /**< stream editor */
+	qse_sed_t* sed /**< stream editor */
 );
 
 /**
@@ -555,7 +567,7 @@ QSE_EXPORT const qse_char_t* qse_sed_geterrmsg (
  * to by each parameter.
  */
 QSE_EXPORT void qse_sed_geterror (
-	const qse_sed_t*   sed,    /**< stream editor */
+	qse_sed_t*         sed,    /**< stream editor */
 	qse_sed_errnum_t*  errnum, /**< error number */
 	const qse_char_t** errmsg, /**< error message */
 	qse_sed_loc_t*     errloc  /**< error location */

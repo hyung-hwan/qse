@@ -37,6 +37,18 @@
 #include <qse/si/nwad.h>
 
 typedef struct qse_httpd_t        qse_httpd_t;
+
+#define QSE_HTTPD_HDR \
+	qse_size_t  _instsize; \
+	qse_mmgr_t* _mmgr
+
+typedef struct qse_httpd_alt_t qse_httpd_alt_t;
+struct qse_httpd_alt_t
+{
+	/* ensure that qse_httpd_alt_t matches the beginning part of qse_httpd_t */
+	QSE_HTTPD_HDR;
+};
+
 typedef struct qse_httpd_mate_t   qse_httpd_mate_t;
 typedef struct qse_httpd_server_t qse_httpd_server_t;
 typedef struct qse_httpd_client_t qse_httpd_client_t;
@@ -676,6 +688,7 @@ typedef enum qse_httpd_mate_type_t  qse_httpd_mate_type_t;
 /* it contains header fields common between 
  * qse_httpd_cleint_t and qse_httpd_server_t. */
 #define QSE_HTTPD_MATE_HDR \
+	qse_size_t _instsize; \
 	qse_httpd_mate_type_t type
 
 struct qse_httpd_mate_t
@@ -1077,13 +1090,22 @@ QSE_EXPORT void qse_httpd_close (
 	qse_httpd_t* httpd 
 );
 
-QSE_EXPORT qse_mmgr_t* qse_httpd_getmmgr (
-	qse_httpd_t* httpd
-); 
 
-QSE_EXPORT void* qse_httpd_getxtn (
-	qse_httpd_t* httpd
-);
+#if defined(QSE_HAVE_INLINE)
+/**
+ * The qse_httpd_getxtn() function returns the pointer to the extension area
+ * placed behind the actual httpd object.
+ */
+static QSE_INLINE void* qse_httpd_getxtn (qse_httpd_t* httpd) { return (void*)((qse_uint8_t*)httpd + ((qse_httpd_alt_t*)httpd)->_instsize); }
+/**
+ * The qse_httpd_gethttpd() function gets the memory manager used in
+ * qse_httpd_open().
+ */
+static QSE_INLINE qse_mmgr_t* qse_httpd_getmmgr (qse_httpd_t* httpd) { return ((qse_httpd_alt_t*)httpd)->_mmgr; }
+#else
+#       define qse_httpd_getxtn(httpd) ((void*)((qse_uint8_t*)httpd + ((qse_httpd_alt_t*)httpd)->_instsize))
+#       define qse_httpd_getmmgr(httpd) (((qse_httpd_alt_t*)(httpd))->_mmgr)
+#endif /* QSE_HAVE_INLINE */
 
 QSE_EXPORT qse_httpd_errnum_t qse_httpd_geterrnum (
 	qse_httpd_t* httpd
@@ -1140,9 +1162,6 @@ QSE_EXPORT void qse_httpd_stop (
 QSE_EXPORT void qse_httpd_impede (
 	qse_httpd_t* httpd
 );
-
-#define qse_httpd_getserverxtn(httpd,server) ((void*)(server+1))
-
 QSE_EXPORT qse_httpd_server_t* qse_httpd_attachserver (
 	qse_httpd_t*                   httpd,
 	const qse_httpd_server_dope_t* dope,
@@ -1153,6 +1172,12 @@ QSE_EXPORT void qse_httpd_detachserver (
 	qse_httpd_t*        httpd,
 	qse_httpd_server_t* server
 );
+
+#if defined(QSE_HAVE_INLINE)
+static QSE_INLINE void* qse_httpd_getserverxtn (qse_httpd_t* httpd, qse_httpd_server_t* server) { return (void*)((qse_uint8_t*)server + ((qse_httpd_mate_t*)server)->_instsize); }
+#else
+#       define qse_httpd_getserverxtn(httpd, server) ((void*)((qse_uint8_t*)server + ((qse_httpd_mate_t*)server)->_instsize))
+#endif
 
 QSE_EXPORT qse_httpd_server_t* qse_httpd_getfirstserver (
 	qse_httpd_t* httpd
