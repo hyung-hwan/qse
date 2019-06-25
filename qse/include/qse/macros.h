@@ -327,7 +327,13 @@
 /**
  * The QSE_XTN() macro is a convenience macro to retrieve the pointer to 
  * extension space located at the end of an object. The type of the object
- * should be known in advance for it to work properly.
+ * should be known in advance for it to work properly. 
+ * 
+ * however, most object types provide a specialized function to retreive
+ * the extension pointer. for instance, if the type is qse_sample_t,
+ * the corresponding function is qse_sample_getmmgr().
+ *
+ * Use the specialized function over QSE_XTN() wherever possible.
  */
 #define QSE_XTN(obj) ((void*)(obj + 1))
 
