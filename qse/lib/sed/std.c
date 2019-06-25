@@ -61,6 +61,11 @@ struct xtn_t
 	} e;
 };
 
+#if defined(QSE_HAVE_INLINE)
+static QSE_INLINE xtn_t* GET_XTN(qse_sed_t* sed) { return (xtn_t*)((qse_uint8_t*)qse_sed_getxtn(sed) - QSE_SIZEOF(xtn_t)); }
+#else
+#define GET_XTN(sed) ((xtn_t*)((qse_uint8_t*)qse_sed_getxtn(sed) - QSE_SIZEOF(xtn_t)))
+#endif
 
 static int int_to_str (qse_size_t val, qse_char_t* buf, qse_size_t buflen)
 {
@@ -107,12 +112,14 @@ qse_sed_t* qse_sed_openstd (qse_size_t xtnsize, qse_sed_errnum_t* errnum)
 
 qse_sed_t* qse_sed_openstdwithmmgr (qse_mmgr_t* mmgr, qse_size_t xtnsize, qse_sed_errnum_t* errnum)
 {
-	return qse_sed_open (mmgr, QSE_SIZEOF(xtn_t) + xtnsize, errnum);
-}
+	qse_sed_t* sed;
 
-void* qse_sed_getxtnstd (qse_sed_t* sed)
-{
-	return (void*)((xtn_t*)QSE_XTN(sed) + 1);
+	sed = qse_sed_open (mmgr, QSE_SIZEOF(xtn_t) + xtnsize, errnum);
+	if (!sed) return QSE_NULL;
+
+	sed->_instsize += QSE_SIZEOF(xtn_t);
+
+	return sed;
 }
 
 static int verify_iostd_in  (qse_sed_t* sed, qse_sed_iostd_t in[])
@@ -145,7 +152,7 @@ static qse_sio_t* open_sio_file (qse_sed_t* sed, const qse_char_t* file, int fla
 {
 	qse_sio_t* sio;
 
-	sio = qse_sio_open (sed->mmgr, 0, file, flags);
+	sio = qse_sio_open(qse_sed_getmmgr(sed), 0, file, flags);
 	if (sio == QSE_NULL)
 	{
 		qse_cstr_t ea;
@@ -173,7 +180,7 @@ static qse_sio_t* open_sio_std (qse_sed_t* sed, qse_sio_std_t std, int flags)
 {
 	qse_sio_t* sio;
 
-	sio = qse_sio_openstd (sed->mmgr, 0, std, flags);
+	sio = qse_sio_openstd(qse_sed_getmmgr(sed), 0, std, flags);
 	if (sio == QSE_NULL)
 	{
 		qse_cstr_t ea;
@@ -214,7 +221,7 @@ static void close_main_stream (
 static int open_input_stream (
 	qse_sed_t* sed, qse_sed_io_arg_t* arg, qse_sed_iostd_t* io, xtn_in_t* base)
 {
-	xtn_t* xtn = (xtn_t*) QSE_XTN (sed);
+	xtn_t* xtn = GET_XTN(sed);
 
 	QSE_ASSERT (io != QSE_NULL);
 	switch (io->type)
@@ -295,7 +302,7 @@ static int open_input_stream (
 
 static int open_output_stream (qse_sed_t* sed, qse_sed_io_arg_t* arg, qse_sed_iostd_t* io)
 {
-	xtn_t* xtn = (xtn_t*) QSE_XTN (sed);
+	xtn_t* xtn = GET_XTN(sed);
 
 	QSE_ASSERT (io != QSE_NULL);
 	switch (io->type)
@@ -334,7 +341,7 @@ static int open_output_stream (qse_sed_t* sed, qse_sed_io_arg_t* arg, qse_sed_io
 
 		case QSE_SED_IOSTD_STR:
 			/* don't store anything to arg->handle */
-			xtn->e.out.memstr = qse_str_open (sed->mmgr, 0, 512);
+			xtn->e.out.memstr = qse_str_open(qse_sed_getmmgr(sed), 0, 512);
 			if (xtn->e.out.memstr == QSE_NULL)
 			{
 				qse_sed_seterrnum (sed, QSE_SED_ENOMEM, QSE_NULL);
@@ -362,7 +369,7 @@ static qse_ssize_t read_input_stream (
 	qse_sed_t* sed, qse_sed_io_arg_t* arg,
 	qse_char_t* buf, qse_size_t len, xtn_in_t* base)
 {
-	xtn_t* xtn = (xtn_t*) QSE_XTN (sed);
+	xtn_t* xtn = GET_XTN(sed);
 	qse_sed_iostd_t* io, * next;
 	void* old, * new;
 	qse_ssize_t n = 0;
@@ -485,7 +492,7 @@ static qse_ssize_t s_in (
 	qse_sed_t* sed, qse_sed_io_cmd_t cmd, qse_sed_io_arg_t* arg,
 	qse_char_t* buf, qse_size_t len)
 {
-	xtn_t* xtn = (xtn_t*) QSE_XTN (sed);
+	xtn_t* xtn = GET_XTN(sed);
 
 	switch (cmd)
 	{
@@ -523,7 +530,7 @@ static qse_ssize_t x_in (
 	qse_char_t* buf, qse_size_t len)
 {
 	qse_sio_t* sio;
-	xtn_t* xtn = (xtn_t*) QSE_XTN (sed);
+	xtn_t* xtn = GET_XTN(sed);
 
 	switch (cmd)
 	{
@@ -623,7 +630,7 @@ static qse_ssize_t x_out (
 	qse_sed_t* sed, qse_sed_io_cmd_t cmd, qse_sed_io_arg_t* arg,
 	qse_char_t* dat, qse_size_t len)
 {
-	xtn_t* xtn = (xtn_t*) QSE_XTN (sed);
+	xtn_t* xtn = GET_XTN(sed);
 	qse_sio_t* sio;
 
 	switch (cmd)
@@ -769,7 +776,7 @@ static qse_ssize_t x_out (
 
 int qse_sed_compstd (qse_sed_t* sed, qse_sed_iostd_t in[], qse_size_t* count)
 {
-	xtn_t* xtn = (xtn_t*) QSE_XTN (sed);
+	xtn_t* xtn = GET_XTN(sed);
 	int ret;
 
 	if (in == QSE_NULL)
@@ -795,7 +802,7 @@ int qse_sed_execstd (
 	qse_sed_t* sed, qse_sed_iostd_t in[], qse_sed_iostd_t* out)
 {
 	int n;
-	xtn_t* xtn = (xtn_t*) QSE_XTN (sed);
+	xtn_t* xtn = GET_XTN(sed);
 
 	if (in && verify_iostd_in (sed, in) <= -1) return -1;
 
