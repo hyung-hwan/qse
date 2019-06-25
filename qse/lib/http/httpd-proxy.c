@@ -1055,7 +1055,7 @@ static int task_init_proxy (qse_httpd_t* httpd, qse_httpd_client_t* client, qse_
 	/* TODO: DETERMINE THIS SIZE */
 	len = MAX_SEND_SIZE;
 
-	proxy->reqfwdbuf = qse_mbs_open (httpd->mmgr, 0, (len < 512? 512: len));
+	proxy->reqfwdbuf = qse_mbs_open (qse_httpd_getmmgr(httpd), 0, (len < 512? 512: len));
 	if (proxy->reqfwdbuf == QSE_NULL) goto nomem_oops;
 
 	if (proxy->flags & PROXY_RAW)
@@ -1094,12 +1094,12 @@ static int task_init_proxy (qse_httpd_t* httpd, qse_httpd_client_t* client, qse_
 			qse_size_t x;
 
 			qpath = qse_htre_getqpath(arg->req);
-			qpath_enc = qse_perenchttpstrdup (QSE_PERENCHTTPSTR_KEEP_SLASH, qpath, httpd->mmgr);
+			qpath_enc = qse_perenchttpstrdup (QSE_PERENCHTTPSTR_KEEP_SLASH, qpath, qse_httpd_getmmgr(httpd));
 			if (qpath_enc == QSE_NULL) goto nomem_oops;
 			
 
 			x = qse_mbs_cat (proxy->reqfwdbuf, qpath_enc);
-			if (qpath != qpath_enc) QSE_MMGR_FREE (httpd->mmgr, qpath_enc);
+			if (qpath != qpath_enc) QSE_MMGR_FREE (qse_httpd_getmmgr(httpd), qpath_enc);
 
 			if (x == (qse_size_t)-1) goto nomem_oops;
 		#else
@@ -2381,7 +2381,7 @@ static int task_main_proxy (qse_httpd_t* httpd, qse_httpd_client_t* client, qse_
 	if (!(proxy->flags & PROXY_RAW))
 	{
 		/* set up a http reader to read a response from the peer */
-		proxy->peer_htrd = qse_htrd_open (httpd->mmgr, QSE_SIZEOF(proxy_peer_htrd_xtn_t));
+		proxy->peer_htrd = qse_htrd_open (qse_httpd_getmmgr(httpd), QSE_SIZEOF(proxy_peer_htrd_xtn_t));
 		if (proxy->peer_htrd == QSE_NULL) goto oops;
 		xtn = (proxy_peer_htrd_xtn_t*) qse_htrd_getxtn (proxy->peer_htrd);
 		xtn->proxy = proxy;
@@ -2391,7 +2391,7 @@ static int task_main_proxy (qse_httpd_t* httpd, qse_httpd_client_t* client, qse_
 		qse_htrd_setopt (proxy->peer_htrd, QSE_HTRD_RESPONSE | QSE_HTRD_TRAILERS);
 	}
 
-	proxy->res = qse_mbs_open (httpd->mmgr, 0, 256);
+	proxy->res = qse_mbs_open (qse_httpd_getmmgr(httpd), 0, 256);
 	if (proxy->res == QSE_NULL) goto oops;
 	proxy->res_consumed = 0;
 	proxy->res_pending = 0;

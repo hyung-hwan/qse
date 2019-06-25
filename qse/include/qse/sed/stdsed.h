@@ -103,8 +103,7 @@ extern "C" {
 
 /**
  * The qse_sed_openstd() function creates a stream editor with the default
- * memory manager and initializes it. Use qse_sed_getxtnstd() to get the 
- * pointer to the extension area. Do not use qse_sed_getxtn() for this.
+ * memory manager and initializes it. 
  * \return pointer to a stream editor on success, #QSE_NULL on failure.
  */
 QSE_EXPORT qse_sed_t* qse_sed_openstd (
@@ -115,23 +114,13 @@ QSE_EXPORT qse_sed_t* qse_sed_openstd (
 /**
  * The qse_sed_openstdwithmmgr() function creates a stream editor with a 
  * user-defined memory manager. It is equivalent to qse_sed_openstd(), 
- * except that you can specify your own memory manager.Use qse_sed_getxtnstd(), 
- * not qse_sed_getxtn() to get the pointer to the extension area.
+ * except that you can specify your own memory manager.
  * \return pointer to a stream editor on success, #QSE_NULL on failure.
  */
 QSE_EXPORT qse_sed_t* qse_sed_openstdwithmmgr (
 	qse_mmgr_t*       mmgr,     /**< memory manager */
 	qse_size_t        xtnsize,  /**< extension size in bytes */
 	qse_sed_errnum_t* errnum
-);
-
-/**
- * The qse_sed_getxtnstd() gets the pointer to extension space. 
- * Note that you must not call qse_sed_getxtn() for a stream editor
- * created with qse_sed_openstd() and qse_sed_openstdwithmmgr().
- */
-QSE_EXPORT void* qse_sed_getxtnstd (
-	qse_sed_t* sed /**< stream editor */
 );
 
 /**

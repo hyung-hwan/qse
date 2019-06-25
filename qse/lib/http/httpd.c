@@ -72,7 +72,7 @@ qse_httpd_t* qse_httpd_open (qse_mmgr_t* mmgr, qse_size_t xtnsize, qse_httpd_err
 {
 	qse_httpd_t* httpd;
 
-	httpd = (qse_httpd_t*) QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(qse_httpd_t) + xtnsize);
+	httpd = (qse_httpd_t*)QSE_MMGR_ALLOC(mmgr, QSE_SIZEOF(qse_httpd_t) + xtnsize);
 	if (httpd)
 	{
 		if (qse_httpd_init (httpd, mmgr) <= -1)
@@ -91,7 +91,7 @@ qse_httpd_t* qse_httpd_open (qse_mmgr_t* mmgr, qse_size_t xtnsize, qse_httpd_err
 void qse_httpd_close (qse_httpd_t* httpd)
 {
 	qse_httpd_fini (httpd);
-	QSE_MMGR_FREE (httpd->mmgr, httpd);
+	QSE_MMGR_FREE (httpd->_mmgr, httpd);
 }
 
 int qse_httpd_init (qse_httpd_t* httpd, qse_mmgr_t* mmgr)
@@ -100,7 +100,9 @@ int qse_httpd_init (qse_httpd_t* httpd, qse_mmgr_t* mmgr)
 
 	QSE_MEMSET (httpd, 0, QSE_SIZEOF(*httpd));
 
-	httpd->mmgr = mmgr;
+	httpd->_instsize = QSE_SIZEOF(*httpd);
+	httpd->_mmgr = mmgr;
+
 	httpd->tmr = qse_tmr_open (mmgr, QSE_SIZEOF(tmr_xtn_t), 2048);
 	if (httpd->tmr == QSE_NULL) return -1;
 
@@ -119,6 +121,7 @@ int qse_httpd_init (qse_httpd_t* httpd, qse_mmgr_t* mmgr)
 void qse_httpd_fini (qse_httpd_t* httpd)
 {
 	qse_httpd_ecb_t* ecb;
+	qse_size_t i;
 
 	unload_all_modules (httpd);
 
@@ -127,6 +130,16 @@ void qse_httpd_fini (qse_httpd_t* httpd)
 
 	free_server_list (httpd);
 	qse_tmr_close (httpd->tmr);
+
+	for (i = 0; i < QSE_COUNTOF(httpd->opt.mod); i++)
+	{
+		if (httpd->opt.mod[i].ptr)
+		{
+			qse_httpd_freemem (httpd, httpd->opt.mod[i].ptr);
+			httpd->opt.mod[i].ptr = QSE_NULL;
+			httpd->opt.mod[i].len = 0;
+		}
+	}
 }
 
 void qse_httpd_stop (qse_httpd_t* httpd)
@@ -149,21 +162,11 @@ void qse_httpd_seterrnum (qse_httpd_t* httpd, qse_httpd_errnum_t errnum)
 	httpd->errnum = errnum;
 }
 
-qse_mmgr_t* qse_httpd_getmmgr (qse_httpd_t* httpd)
-{
-	return httpd->mmgr;
-}
-
-void* qse_httpd_getxtn (qse_httpd_t* httpd)
-{
-	return QSE_XTN (httpd);
-}
-
 static int dup_str_opt (qse_httpd_t* httpd, const void* value, qse_cstr_t* tmp)
 {
 	if (value)
 	{
-		tmp->ptr = qse_strdup (value, httpd->mmgr);
+		tmp->ptr = qse_strdup(value, qse_httpd_getmmgr(httpd));
 		if (tmp->ptr == QSE_NULL)
 		{
 			qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOMEM);
@@ -236,10 +239,10 @@ int qse_httpd_setopt (qse_httpd_t* httpd, qse_httpd_opt_t id, const void* value)
 			qse_cstr_t tmp;
 			int idx;
 
-			if (dup_str_opt (httpd, value, &tmp) <= -1) return -1;
+			if (dup_str_opt(httpd, value, &tmp) <= -1) return -1;
 
 			idx = id - QSE_HTTPD_MODPREFIX;
-			if (httpd->opt.mod[idx].ptr) QSE_MMGR_FREE (httpd->mmgr, httpd->opt.mod[idx].ptr);
+			if (httpd->opt.mod[idx].ptr) qse_httpd_freemem (httpd, httpd->opt.mod[idx].ptr);
 
 			httpd->opt.mod[idx] = tmp;
 			return 0;
@@ -276,32 +279,32 @@ void qse_httpd_pushecb (qse_httpd_t* httpd, qse_httpd_ecb_t* ecb)
 
 /* ----------------------------------------------------------------------- */
 
-QSE_INLINE void* qse_httpd_allocmem (qse_httpd_t* httpd, qse_size_t size)
+void* qse_httpd_allocmem (qse_httpd_t* httpd, qse_size_t size)
 {
-	void* ptr = QSE_MMGR_ALLOC (httpd->mmgr, size);
+	void* ptr = QSE_MMGR_ALLOC (qse_httpd_getmmgr(httpd), size);
 	if (ptr == QSE_NULL) httpd->errnum = QSE_HTTPD_ENOMEM;
 	return ptr;
 }
 
-QSE_INLINE void* qse_httpd_callocmem (qse_httpd_t* httpd, qse_size_t size)
+void* qse_httpd_callocmem (qse_httpd_t* httpd, qse_size_t size)
 {
-	void* ptr = QSE_MMGR_ALLOC (httpd->mmgr, size);
+	void* ptr = QSE_MMGR_ALLOC (qse_httpd_getmmgr(httpd), size);
 	if (ptr == QSE_NULL) httpd->errnum = QSE_HTTPD_ENOMEM;
 	else QSE_MEMSET (ptr, 0, size);
 	return ptr;
 }
 
-QSE_INLINE void* qse_httpd_reallocmem (
+void* qse_httpd_reallocmem (
 	qse_httpd_t* httpd, void* ptr, qse_size_t size)
 {
-	void* nptr = QSE_MMGR_REALLOC (httpd->mmgr, ptr, size);
+	void* nptr = QSE_MMGR_REALLOC (qse_httpd_getmmgr(httpd), ptr, size);
 	if (nptr == QSE_NULL) httpd->errnum = QSE_HTTPD_ENOMEM;
 	return nptr;
 }
 
-QSE_INLINE void qse_httpd_freemem (qse_httpd_t* httpd, void* ptr)
+void qse_httpd_freemem (qse_httpd_t* httpd, void* ptr)
 {
-	QSE_MMGR_FREE (httpd->mmgr, ptr);
+	QSE_MMGR_FREE (qse_httpd_getmmgr(httpd), ptr);
 }
 
 qse_mchar_t* qse_httpd_strtombsdup (qse_httpd_t* httpd, const qse_char_t* str)
@@ -309,9 +312,9 @@ qse_mchar_t* qse_httpd_strtombsdup (qse_httpd_t* httpd, const qse_char_t* str)
 	qse_mchar_t* mptr;
 
 #if defined(QSE_CHAR_IS_MCHAR)
-	mptr = qse_mbsdup (str, httpd->mmgr);
+	mptr = qse_mbsdup (str, qse_httpd_getmmgr(httpd));
 #else
-	mptr = qse_wcstombsdup (str, QSE_NULL, httpd->mmgr);
+	mptr = qse_wcstombsdup (str, QSE_NULL, qse_httpd_getmmgr(httpd));
 #endif
 
 	if (mptr == QSE_NULL) httpd->errnum = QSE_HTTPD_ENOMEM;
@@ -323,9 +326,9 @@ qse_mchar_t* qse_httpd_strntombsdup (qse_httpd_t* httpd, const qse_char_t* str, 
 	qse_mchar_t* mptr;
 
 #if defined(QSE_CHAR_IS_MCHAR)
-	mptr = qse_mbsxdup (str, len, httpd->mmgr);
+	mptr = qse_mbsxdup (str, len, qse_httpd_getmmgr(httpd));
 #else
-	mptr = qse_wcsntombsdup (str, len, QSE_NULL, httpd->mmgr);
+	mptr = qse_wcsntombsdup (str, len, QSE_NULL, qse_httpd_getmmgr(httpd));
 #endif
 
 	if (mptr == QSE_NULL) httpd->errnum = QSE_HTTPD_ENOMEM;
@@ -336,7 +339,7 @@ qse_mchar_t* qse_httpd_mbsdup (qse_httpd_t* httpd, const qse_mchar_t* str)
 {
 	qse_mchar_t* mptr;
 
-	mptr = qse_mbsdup (str, httpd->mmgr);
+	mptr = qse_mbsdup (str, qse_httpd_getmmgr(httpd));
 	if (mptr == QSE_NULL) httpd->errnum = QSE_HTTPD_ENOMEM;
 
 	return mptr;
@@ -346,7 +349,7 @@ qse_mchar_t* qse_httpd_mbsxdup (qse_httpd_t* httpd, const qse_mchar_t* str, qse_
 {
 	qse_mchar_t* mptr;
 
-	mptr = qse_mbsxdup (str, len, httpd->mmgr);
+	mptr = qse_mbsxdup (str, len, qse_httpd_getmmgr(httpd));
 	if (mptr == QSE_NULL) httpd->errnum = QSE_HTTPD_ENOMEM;
 
 	return mptr;
@@ -583,14 +586,14 @@ qse_httpd_peer_t* qse_httpd_decacheproxypeer (
 /* ----------------------------------------------------------------------- */
 static int htrd_peek_request (qse_htrd_t* htrd, qse_htre_t* req)
 {
-	htrd_xtn_t* xtn = (htrd_xtn_t*) qse_htrd_getxtn (htrd);
-	return xtn->httpd->opt.rcb.peekreq (xtn->httpd, xtn->client, req);
+	htrd_xtn_t* xtn = (htrd_xtn_t*)qse_htrd_getxtn(htrd);
+	return xtn->httpd->opt.rcb.peekreq(xtn->httpd, xtn->client, req);
 }
 
 static int htrd_poke_request (qse_htrd_t* htrd, qse_htre_t* req)
 {
-	htrd_xtn_t* xtn = (htrd_xtn_t*) qse_htrd_getxtn (htrd);
-	return xtn->httpd->opt.rcb.pokereq (xtn->httpd, xtn->client, req);
+	htrd_xtn_t* xtn = (htrd_xtn_t*)qse_htrd_getxtn(htrd);
+	return xtn->httpd->opt.rcb.pokereq(xtn->httpd, xtn->client, req);
 }
 
 static qse_htrd_recbs_t htrd_recbs =
@@ -620,14 +623,15 @@ static qse_httpd_client_t* new_client (qse_httpd_t* httpd, qse_httpd_client_t* t
 	qse_tmr_event_t idle_event;
 	htrd_xtn_t* xtn;
 
-	client = qse_httpd_allocmem (httpd, QSE_SIZEOF(*client));
+	client = qse_httpd_allocmem(httpd, QSE_SIZEOF(*client));
 	if (client == QSE_NULL) goto oops;
 
 	QSE_MEMSET (client, 0, QSE_SIZEOF(*client));
 	client->tmr_idle = QSE_TMR_INVALID_INDEX;
 
+	client->_instsize = QSE_SIZEOF(*client);
 	client->type = QSE_HTTPD_CLIENT;
-	client->htrd = qse_htrd_open (httpd->mmgr, QSE_SIZEOF(*xtn));
+	client->htrd = qse_htrd_open (qse_httpd_getmmgr(httpd), QSE_SIZEOF(*xtn));
 	if (client->htrd == QSE_NULL) 
 	{
 		httpd->errnum = QSE_HTTPD_ENOMEM;
@@ -663,7 +667,7 @@ static qse_httpd_client_t* new_client (qse_httpd_t* httpd, qse_httpd_client_t* t
 	client->server = tmpl->server;
 	client->initial_ifindex = tmpl->initial_ifindex;
 
-	xtn = (htrd_xtn_t*)qse_htrd_getxtn (client->htrd);
+	xtn = (htrd_xtn_t*)qse_htrd_getxtn(client->htrd);
 	xtn->httpd = httpd;
 	xtn->client = client;
 
@@ -1031,6 +1035,7 @@ qse_httpd_server_t* qse_httpd_attachserver (
 	server = qse_httpd_callocmem (httpd, QSE_SIZEOF(*server) + xtnsize);
 	if (server == QSE_NULL) return QSE_NULL;
 
+	server->_instsize = QSE_SIZEOF(*server);
 	server->type = QSE_HTTPD_SERVER;
 	/* copy the server dope */
 	server->dope = *dope;

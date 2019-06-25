@@ -1,5 +1,6 @@
 #include <qse/sed/StdSed.hpp>
 #include <qse/cmn/main.h>
+#include <qse/Exception.hpp>
 #include <iostream>
 #include "sed00.h"
 
@@ -15,29 +16,22 @@
 class MySed: protected QSE::StdSed
 {
 public:
-	class Error
-	{ 
-	public:
-		Error (const char_t* msg) throw (): msg (msg) {}
-		const char_t* getMessage() const throw() { return msg; }
-	protected:
-		const char_t* msg;
-	};
+	QSE_EXCEPTION(Error);
 
-	MySed () { if (open() <= -1) throw Error (QSE_T("cannot open")); }
-	~MySed () { close (); }
+	MySed () { if (this->open() <= -1) QSE_THROW_WITH_MSG (Error, QSE_T("cannot open sed")); }
+	~MySed () { this->close (); }
 
 	void compile (const char_t* sptr)
 	{
 		QSE::StdSed::StringStream stream(sptr);
 		if (QSE::StdSed::compile (stream) <= -1)
-			throw Error (getErrorMessage());
+			QSE_THROW_WITH_MSG(Error, this->getErrorMessage());
 	}
 
 	void execute (Stream& stream)
 	{
 		if (QSE::StdSed::execute (stream) <= -1)
-			throw Error (getErrorMessage());
+			QSE_THROW_WITH_MSG(Error, this->getErrorMessage());
 	}
 };
 
@@ -57,7 +51,7 @@ int sed_main (int argc, qse_char_t* argv[])
 	}
 	catch (MySed::Error& err)
 	{
-		xcout << QSE_T("ERROR: ") << err.getMessage() << std::endl;
+		xcout << QSE_T("ERROR: ") << QSE_EXCEPTION_MSG(err) << std::endl;
 		return -1;
 	}
 
