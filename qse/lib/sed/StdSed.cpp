@@ -38,7 +38,7 @@ static qse_sio_t* open_sio (StdSed::Stream::Data& io, const qse_char_t* file, in
 {
 	qse_sio_t* sio;
 
-	sio = qse_sio_open (((StdSed::sed_t*)io)->mmgr, 0, file, flags);
+	sio = qse_sio_open(qse_sed_getmmgr((StdSed::sed_t*)io), 0, file, flags);
 	if (sio == QSE_NULL)
 	{
 		qse_cstr_t ea;
@@ -59,7 +59,7 @@ static qse_sio_t* open_sio_std (StdSed::Stream::Data& io, qse_sio_std_t std, int
 		QSE_T("stderr"),
 	};
 
-	sio = qse_sio_openstd (((StdSed::sed_t*)io)->mmgr, 0, std, flags);
+	sio = qse_sio_openstd(qse_sed_getmmgr((StdSed::sed_t*)io), 0, std, flags);
 	if (sio == QSE_NULL)
 	{
 		qse_cstr_t ea;

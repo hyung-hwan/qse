@@ -72,12 +72,12 @@ struct qse_sed_unknown_cid_t
  */
 struct qse_sed_t
 {
-	qse_mmgr_t* mmgr;
+	QSE_SED_HDR;
 
-	qse_sed_errstr_t errstr; /**< error string getter */
 	qse_sed_errnum_t errnum; /**< stores an error number */
 	qse_char_t errmsg[128];  /**< error message holder */
 	qse_sed_loc_t errloc;    /**< location of the last error */
+	qse_sed_errstr_t errstr; /**< error string getter */
 
 	struct 
 	{
@@ -236,7 +236,7 @@ void qse_sed_fini (
 );
 
 const qse_char_t* qse_sed_dflerrstr (
-	const qse_sed_t* sed, 
+	qse_sed_t* sed, 
 	qse_sed_errnum_t errnum
 );
 

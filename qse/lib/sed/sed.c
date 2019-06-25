@@ -70,7 +70,7 @@ qse_sed_t* qse_sed_open (qse_mmgr_t* mmgr, qse_size_t xtnsize, qse_sed_errnum_t*
 	sed = (qse_sed_t*) QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(qse_sed_t) + xtnsize);
 	if (sed)
 	{
-		if (qse_sed_init (sed, mmgr) <= -1)
+		if (qse_sed_init(sed, mmgr) <= -1)
 		{
 			if (errnum) *errnum = qse_sed_geterrnum(sed);
 			QSE_MMGR_FREE (mmgr, sed);
@@ -91,13 +91,14 @@ void qse_sed_close (qse_sed_t* sed)
 		if (ecb->close) ecb->close (sed);
 
 	qse_sed_fini (sed);
-	QSE_MMGR_FREE (sed->mmgr, sed);
+	QSE_MMGR_FREE (sed->_mmgr, sed);
 }
 
 int qse_sed_init (qse_sed_t* sed, qse_mmgr_t* mmgr)
 {
 	QSE_MEMSET (sed, 0, QSE_SIZEOF(*sed));
-	sed->mmgr = mmgr;
+	sed->_instsize = QSE_SIZEOF(*sed);
+	sed->_mmgr = mmgr;
 	sed->errstr = qse_sed_dflerrstr;
 
 	if (qse_str_init (&sed->tmp.rex, mmgr, 0) <= -1) goto oops_1;
@@ -144,7 +145,7 @@ void qse_sed_fini (qse_sed_t* sed)
 	free_all_cids (sed);
 
 	if (sed->e.cutf.flds != sed->e.cutf.sflds) 
-		QSE_MMGR_FREE (sed->mmgr, sed->e.cutf.flds);
+		qse_sed_freemem (sed, sed->e.cutf.flds);
 
 	qse_str_fini (&sed->e.txt.scratch);
 	qse_str_fini (&sed->e.txt.hold);
@@ -153,16 +154,6 @@ void qse_sed_fini (qse_sed_t* sed)
 	qse_map_fini (&sed->tmp.labs);
 	qse_str_fini (&sed->tmp.lab);
 	qse_str_fini (&sed->tmp.rex);
-}
-
-qse_mmgr_t* qse_sed_getmmgr (qse_sed_t* sed)
-{
-	return sed->mmgr;
-}
-
-void* qse_sed_getxtn (qse_sed_t* sed)
-{
-	return QSE_XTN (sed);
 }
 
 int qse_sed_setopt (qse_sed_t* sed, qse_sed_opt_t id, const void* value)
@@ -234,7 +225,7 @@ static void* build_rex (
 	if ((sed->opt.trait & QSE_SED_EXTENDEDREX) == 0) opt |= QSE_REX_NOBOUND;
 
 	rex = qse_buildrex (
-		sed->mmgr, sed->opt.depth.rex.build,
+		qse_sed_getmmgr(sed), sed->opt.depth.rex.build,
 		opt, str->ptr, str->len, QSE_NULL
 	);
 	if (rex == QSE_NULL)
@@ -253,27 +244,27 @@ static void* build_rex (
 	if (ignorecase) xopt |= REG_ICASE;
 	if (sed->opt.trait & QSE_SED_EXTENDEDREX) xopt |= REG_EXTENDED;
 
-	rex = QSE_MMGR_ALLOC (sed->mmgr, QSE_SIZEOF(*rex));
+	rex = qse_sed_allocmem(sed, QSE_SIZEOF(*rex));
 	if (rex == QSE_NULL)
 	{
 		SETERR0 (sed, QSE_SED_ENOMEM, loc);
 		return QSE_NULL;
 	}
 
-	strz = qse_strxdup (str->ptr, str->len, sed->mmgr);
+	strz = qse_strxdup (str->ptr, str->len, qse_sed_getmmgr(sed));
 	if (strz == QSE_NULL)
 	{
-		QSE_MMGR_FREE (sed->mmgr, rex);
+		qse_sed_freemem (sed, rex);
 		SETERR0 (sed, QSE_SED_ENOMEM, loc);
 		return QSE_NULL;
 	}
 
 	xopt = regcomp (rex, strz, xopt);
-	QSE_MMGR_FREE (sed->mmgr, strz);
+	qse_sed_freemem (sed, strz);
 
 	if (xopt != 0)
 	{
-		QSE_MMGR_FREE (sed->mmgr, rex);
+		qse_sed_freemem (sed, rex);
 		SETERR1 (sed, QSE_SED_EREXBL, str->ptr, str->len, loc);
 		return QSE_NULL;
 	}
@@ -284,7 +275,7 @@ static void* build_rex (
 	qse_tre_t* tre;
 	int opt = 0;
 
-	tre = qse_tre_open (sed->mmgr, 0);
+	tre = qse_tre_open(qse_sed_getmmgr(sed), 0);
 	if (tre == QSE_NULL)
 	{
 		SETERR0 (sed, QSE_SED_ENOMEM, loc);
@@ -313,10 +304,10 @@ static void* build_rex (
 static QSE_INLINE void free_rex (qse_sed_t* sed, void* rex)
 {
 #if defined(USE_REX)
-	qse_freerex (sed->mmgr, rex);
+	qse_freerex (qse_sed_getmmgr(sed), rex);
 #elif defined(QSE_CHAR_IS_MCHAR) && defined(USE_REGEX)
 	regfree (rex);
-	QSE_MMGR_FREE (sed->mmgr, rex);
+	qse_sed_freemem (sed, rex);
 #else
 	qse_tre_close (rex);
 #endif
@@ -335,14 +326,14 @@ static int matchtre (
 
 	if (opt & QSE_TRE_NOTBOL) xopt |= REG_NOTBOL;
 
-	strz = qse_strxdup (str->ptr, str->len, sed->mmgr);
+	strz = qse_strxdup(str->ptr, str->len, qse_sed_getmmgr(sed));
 	if (strz == QSE_NULL)
 	{
 		SETERR0 (sed, QSE_SED_ENOMEM, loc);
 		return -1;	
 	}
 	xopt = regexec ((regex_t*)tre, strz, QSE_COUNTOF(match), match, xopt);
-	QSE_MMGR_FREE (sed->mmgr, strz);
+	qse_sed_freemem (sed, strz);
 	if (xopt == REG_NOMATCH) return 0;
 #else
 
@@ -573,7 +564,7 @@ static void free_all_command_blocks (qse_sed_t* sed)
 		qse_sed_cmd_blk_t* nxt = b->next;
 
 		while (b->len > 0) free_command (sed, &b->buf[--b->len]);
-		if (b != &sed->cmd.fb) QSE_MMGR_FREE (sed->mmgr, b);
+		if (b != &sed->cmd.fb) qse_sed_freemem (sed, b);
 
 		b = nxt;	
 	}
@@ -594,7 +585,7 @@ static void free_command (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 		case QSE_SED_CMD_INSERT:
 		case QSE_SED_CMD_CHANGE:
 			if (cmd->u.text.ptr)
-				QSE_MMGR_FREE (sed->mmgr, cmd->u.text.ptr);
+				qse_sed_freemem (sed, cmd->u.text.ptr);
 			break;
 
 		case QSE_SED_CMD_READ_FILE:
@@ -602,27 +593,27 @@ static void free_command (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 		case QSE_SED_CMD_WRITE_FILE:
 		case QSE_SED_CMD_WRITE_FILELN:
 			if (cmd->u.file.ptr)
-				QSE_MMGR_FREE (sed->mmgr, cmd->u.file.ptr);
+				qse_sed_freemem (sed, cmd->u.file.ptr);
 			break;
 
 		case QSE_SED_CMD_BRANCH:
 		case QSE_SED_CMD_BRANCH_COND:
 			if (cmd->u.branch.label.ptr)
-				QSE_MMGR_FREE (sed->mmgr, cmd->u.branch.label.ptr);
+				qse_sed_freemem (sed, cmd->u.branch.label.ptr);
 			break;
 	
 		case QSE_SED_CMD_SUBSTITUTE:
 			if (cmd->u.subst.file.ptr)
-				QSE_MMGR_FREE (sed->mmgr, cmd->u.subst.file.ptr);
+				qse_sed_freemem (sed, cmd->u.subst.file.ptr);
 			if (cmd->u.subst.rpl.ptr)
-				QSE_MMGR_FREE (sed->mmgr, cmd->u.subst.rpl.ptr);
+				qse_sed_freemem (sed, cmd->u.subst.rpl.ptr);
 			if (cmd->u.subst.rex && cmd->u.subst.rex != EMPTY_REX)
 				free_rex (sed, cmd->u.subst.rex);
 			break;
 
 		case QSE_SED_CMD_TRANSLATE:
 			if (cmd->u.transet.ptr)
-				QSE_MMGR_FREE (sed->mmgr, cmd->u.transet.ptr);
+				qse_sed_freemem (sed, cmd->u.transet.ptr);
 			break;
 
 		case QSE_SED_CMD_CUT:
@@ -642,7 +633,7 @@ static void free_all_cids (qse_sed_t* sed)
 	while (sed->src.cid)
 	{
 		qse_sed_cid_t* next = sed->src.cid->next;
-		QSE_MMGR_FREE (sed->mmgr, sed->src.cid);
+		qse_sed_freemem (sed, sed->src.cid);
 		sed->src.cid = next;
 	}
 }
@@ -1023,7 +1014,7 @@ do { \
 	qse_cint_t c;
 	qse_str_t* t = QSE_NULL;
 
-	t = qse_str_open (sed->mmgr, 0, 128);
+	t = qse_str_open(qse_sed_getmmgr(sed), 0, 128);
 	if (t == QSE_NULL) goto oops;
 
 	c = CURSC (sed);
@@ -1208,7 +1199,7 @@ static int get_branch_target (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 		return terminate_command (sed);
 	}
 
-	t = qse_str_open (sed->mmgr, 0, 32);
+	t = qse_str_open(qse_sed_getmmgr(sed), 0, 32);
 	if (t == QSE_NULL) 
 	{
 		SETERR0 (sed, QSE_SED_ENOMEM, QSE_NULL);
@@ -1266,7 +1257,7 @@ static int get_file (qse_sed_t* sed, qse_cstr_t* xstr)
 		goto oops;	
 	}
 
-	t = qse_str_open (sed->mmgr, 0, 32);
+	t = qse_str_open(qse_sed_getmmgr(sed), 0, 32);
 	if (t == QSE_NULL) 
 	{
 		SETERR0 (sed, QSE_SED_ENOMEM, QSE_NULL);
@@ -1366,15 +1357,15 @@ static int get_subst (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 	t[0] = &sed->tmp.rex;
 	qse_str_clear (t[0]);
 
-	t[1] = qse_str_open (sed->mmgr, 0, 32);
+	t[1] = qse_str_open(qse_sed_getmmgr(sed), 0, 32);
 	if (t[1] == QSE_NULL) 
 	{
 		SETERR0 (sed, QSE_SED_ENOMEM, QSE_NULL);
 		goto oops;
 	}
 
-	if (pickup_rex (sed, delim, 0, cmd, t[0]) <= -1) goto oops;
-	if (pickup_rex (sed, delim, 1, cmd, t[1]) <= -1) goto oops;
+	if (pickup_rex(sed, delim, 0, cmd, t[0]) <= -1) goto oops;
+	if (pickup_rex(sed, delim, 1, cmd, t[1]) <= -1) goto oops;
 
 	/* skip spaces before options */
 	do { NXTSC_GOTO (sed, c, oops); } while (IS_SPACE(c));
@@ -1488,7 +1479,7 @@ static int get_transet (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 		goto oops;
 	}
 
-	t = qse_str_open (sed->mmgr, 0, 32);
+	t = qse_str_open(qse_sed_getmmgr(sed), 0, 32);
 	if (t == QSE_NULL) 
 	{
 		SETERR0 (sed, QSE_SED_ENOMEM, QSE_NULL);
@@ -1592,7 +1583,7 @@ static void free_all_cut_selector_blocks (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 	for (b = cmd->u.cut.fb; b; b = next)
 	{
 		next = b->next;
-		QSE_MMGR_FREE (sed->mmgr, b);
+		qse_sed_freemem (sed, b);
 	}
 
 	cmd->u.cut.lb = QSE_NULL;
@@ -2662,7 +2653,7 @@ static int link_append (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 		qse_sed_app_t* app;
 
 		/* otherwise, link it using a linked list */
-		app = QSE_MMGR_ALLOC (sed->mmgr, QSE_SIZEOF(*app));
+		app = qse_sed_allocmem(sed, QSE_SIZEOF(*app));
 		if (app == QSE_NULL)
 		{
 			SETERR0 (sed, QSE_SED_ENOMEM, &cmd->loc);
@@ -2690,7 +2681,7 @@ static void free_appends (qse_sed_t* sed)
 	while (app)
 	{	
 		next = app->next;
-		QSE_MMGR_FREE (sed->mmgr, app);
+		qse_sed_freemem (sed, app);
 		app = next;
 	}
 
@@ -2829,7 +2820,7 @@ static int do_subst (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 
 #if defined(USE_REX)
 			n = qse_matchrex (
-				sed->mmgr, 
+				qse_sed_getmmgr(sed),
 				sed->opt.depth.rex.match,
 				rex, opt,
 				&str, &cur, &mat, &errnum
@@ -3292,7 +3283,7 @@ static int match_a (qse_sed_t* sed, qse_sed_cmd_t* cmd, qse_sed_adr_t* a)
 			}
 #if defined(USE_REX)
 			n = qse_matchrex (
-				sed->mmgr, 
+				qse_sed_getmmgr(sed),
 				sed->opt.depth.rex.match,
 				rex, 0,
 				&line, &line,
@@ -3868,7 +3859,7 @@ static int init_command_block_for_exec (qse_sed_t* sed, qse_sed_cmd_blk_t* b)
 				c->u.branch.target = QSE_MAP_VPTR(pair);
 
 				/* free resolved label name */ 
-				QSE_MMGR_FREE (sed->mmgr, lab->ptr);
+				qse_sed_freemem (sed, lab->ptr);
 				lab->ptr = QSE_NULL;
 				lab->len = 0;
 			}
@@ -3980,7 +3971,7 @@ int qse_sed_exec (qse_sed_t* sed, qse_sed_io_impl_t inf, qse_sed_io_impl_t outf)
 	sed->e.out.eof = 0;
 	sed->e.out.len = 0;
 	if (qse_map_init (
-		&sed->e.out.files, sed->mmgr, 
+		&sed->e.out.files, qse_sed_getmmgr(sed),
 		128, 70, QSE_SIZEOF(qse_char_t), 1) <= -1)
 	{
 		SETERR0 (sed, QSE_SED_ENOMEM, QSE_NULL);
@@ -3994,7 +3985,7 @@ int qse_sed_exec (qse_sed_t* sed, qse_sed_io_impl_t inf, qse_sed_io_impl_t outf)
 	sed->e.in.len = 0;
 	sed->e.in.pos = 0;
 	sed->e.in.num = 0;
-	if (qse_str_init (&sed->e.in.line, sed->mmgr, 256) <= -1)
+	if (qse_str_init (&sed->e.in.line, qse_sed_getmmgr(sed), 256) <= -1)
 	{
 		qse_map_fini (&sed->e.out.files);
 		SETERR0 (sed, QSE_SED_ENOMEM, QSE_NULL);
@@ -4132,8 +4123,7 @@ const qse_char_t* qse_sed_setcompid (qse_sed_t* sed, const qse_char_t* id)
 	if (id == QSE_NULL) id = QSE_T("");
 
 	len = qse_strlen (id);
-	cid = QSE_MMGR_ALLOC (sed->mmgr, 
-		QSE_SIZEOF(*cid) + ((len + 1) * QSE_SIZEOF(*id)));
+	cid = qse_sed_allocmem(sed, QSE_SIZEOF(*cid) + ((len + 1) * QSE_SIZEOF(*id)));
 	if (cid == QSE_NULL) 
 	{
 		/* mark that an error has occurred */ 
@@ -4175,15 +4165,14 @@ void qse_sed_pushecb (qse_sed_t* sed, qse_sed_ecb_t* ecb)
 
 void* qse_sed_allocmem (qse_sed_t* sed, qse_size_t size)
 {
-	void* ptr = QSE_MMGR_ALLOC (sed->mmgr, size);
-	if (ptr == QSE_NULL) 
-		qse_sed_seterrnum (sed, QSE_SED_ENOMEM, QSE_NULL);
+	void* ptr = QSE_MMGR_ALLOC(qse_sed_getmmgr(sed), size);
+	if (ptr == QSE_NULL) qse_sed_seterrnum (sed, QSE_SED_ENOMEM, QSE_NULL);
 	return ptr;
 }
 
 void* qse_sed_callocmem (qse_sed_t* sed, qse_size_t size)
 {
-	void* ptr = QSE_MMGR_ALLOC (sed->mmgr, size);
+	void* ptr = QSE_MMGR_ALLOC(qse_sed_getmmgr(sed), size);
 	if (ptr) QSE_MEMSET (ptr, 0, size);
 	else qse_sed_seterrnum (sed, QSE_SED_ENOMEM, QSE_NULL);
 	return ptr;
@@ -4191,14 +4180,14 @@ void* qse_sed_callocmem (qse_sed_t* sed, qse_size_t size)
 
 void* qse_sed_reallocmem (qse_sed_t* sed, void* ptr, qse_size_t size)
 {
-	void* nptr = QSE_MMGR_REALLOC (sed->mmgr, ptr, size);
+	void* nptr = QSE_MMGR_REALLOC(qse_sed_getmmgr(sed), ptr, size);
 	if (nptr == QSE_NULL) qse_sed_seterrnum (sed, QSE_SED_ENOMEM, QSE_NULL);
 	return nptr;
 }
 
 void qse_sed_freemem (qse_sed_t* sed, void* ptr)
 {
-	QSE_MMGR_FREE (sed->mmgr, ptr);
+	QSE_MMGR_FREE (qse_sed_getmmgr(sed), ptr);
 }
 
 
