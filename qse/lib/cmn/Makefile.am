@@ -129,6 +129,7 @@ libqsecmnxx_la_SOURCES = \
 	ErrorGrab.cpp Mmgr.cpp StdMmgr.cpp HeapMmgr.cpp Mmged.cpp Mpool.cpp String.cpp
 libqsecmnxx_la_LDFLAGS = -version-info 1:0:0 -no-undefined
 libqsecmnxx_la_LIBADD = -lqsecmn
+libqsecmnxx_la_DEPENDENCIES = libqsecmn.la
 
 endif
 

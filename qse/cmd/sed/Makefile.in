@@ -112,7 +112,6 @@ am_qsesed_OBJECTS = qsesed-sed.$(OBJEXT)
 qsesed_OBJECTS = $(am_qsesed_OBJECTS)
 am__DEPENDENCIES_1 =
 @WCHAR_TRUE@@WIN32_TRUE@am__DEPENDENCIES_2 = $(am__DEPENDENCIES_1)
-qsesed_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_2)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
@@ -358,6 +357,7 @@ qsesed_CFLAGS = $(PTHREAD_CFLAGS)
 qsesed_LDFLAGS = -L../../lib/sed -L../../lib/si -L../../lib/cmn 
 qsesed_LDADD = -lqsesed -lqsesi -lqsecmn $(PTHREAD_LIBS) \
 	$(am__append_1)
+qsesed_DEPENDENCIES = ../../lib/sed/libqsesed.la ../../lib/si/libqsesi.la ../../lib/cmn/libqsecmn.la
 all: all-am
 
 .SUFFIXES:

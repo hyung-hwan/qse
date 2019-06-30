@@ -133,7 +133,6 @@ am__uninstall_files_from_dir = { \
   }
 am__installdirs = "$(DESTDIR)$(libdir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
-libqsedhcp_la_DEPENDENCIES =
 am_libqsedhcp_la_OBJECTS = libqsedhcp_la-dhcp4msg.lo \
 	libqsedhcp_la-dhcp6msg.lo
 libqsedhcp_la_OBJECTS = $(am_libqsedhcp_la_OBJECTS)
@@ -386,6 +385,7 @@ libqsedhcp_la_SOURCES = \
 libqsedhcp_la_CFLAGS = 
 libqsedhcp_la_LDFLAGS = -L../cmn -version-info 1:0:0 -no-undefined
 libqsedhcp_la_LIBADD = -lqsecmn
+libqsedhcp_la_DEPENDENCIES = ../../lib/cmn/libqsecmn.la
 all: all-am
 
 .SUFFIXES:

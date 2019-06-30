@@ -10,6 +10,7 @@ qsesed_SOURCES = sed.c
 qsesed_CFLAGS = $(PTHREAD_CFLAGS)
 qsesed_LDFLAGS = -L../../lib/sed -L../../lib/si -L../../lib/cmn 
 qsesed_LDADD = -lqsesed -lqsesi -lqsecmn $(PTHREAD_LIBS)
+qsesed_DEPENDENCIES = ../../lib/sed/libqsesed.la ../../lib/si/libqsesi.la ../../lib/cmn/libqsecmn.la
 
 if WIN32 
 if WCHAR

@@ -13,4 +13,4 @@ libqsedhcp_la_SOURCES =  \
 libqsedhcp_la_CFLAGS = 
 libqsedhcp_la_LDFLAGS = -L../cmn -version-info 1:0:0 -no-undefined
 libqsedhcp_la_LIBADD = -lqsecmn
-
+libqsedhcp_la_DEPENDENCIES = ../../lib/cmn/libqsecmn.la

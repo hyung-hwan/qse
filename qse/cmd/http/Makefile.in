@@ -113,7 +113,6 @@ am_qsehttpd_OBJECTS = httpd.$(OBJEXT)
 qsehttpd_OBJECTS = $(am_qsehttpd_OBJECTS)
 am__DEPENDENCIES_1 =
 @WCHAR_TRUE@@WIN32_TRUE@am__DEPENDENCIES_2 = $(am__DEPENDENCIES_1)
-qsehttpd_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_2)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
@@ -123,7 +122,6 @@ qsehttpd_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(qsehttpd_LDFLAGS) $(LDFLAGS) -o $@
 am_qseursd_OBJECTS = ursd.$(OBJEXT)
 qseursd_OBJECTS = $(am_qseursd_OBJECTS)
-qseursd_DEPENDENCIES =
 qseursd_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(qseursd_LDFLAGS) $(LDFLAGS) -o $@
@@ -394,9 +392,11 @@ qsehttpd_SOURCES = httpd.c
 qsehttpd_LDFLAGS = -L../../lib/xli -L../../lib/http -L../../lib/si -L../../lib/cmn  
 qsehttpd_LDADD = -lqsexli -lqsehttp -lqsesi -lqsecmn $(SSL_LIBS) \
 	$(am__append_1)
+qsehttpd_DEPENDENCIES = ../../lib/xli/libqsexli.la ../../lib/http/libqsehttp.la ../../lib/si/libqsesi.la ../../lib/cmn/libqsecmn.la
 qseursd_SOURCES = ursd.c
 qseursd_LDFLAGS = -L../../lib/si -L../../lib/cmn
 qseursd_LDADD = -lqsesi -lqsecmn 
+qseursd_DEPENDENCIES = ../../lib/si/libqsesi.la ../../lib/cmn/libqsecmn.la
 EXTRA_DIST = $(qsecfg_DATA)
 all: all-am
 

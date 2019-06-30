@@ -89,6 +89,7 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 @ENABLE_CXX_TRUE@am__append_1 = libqsexlixx.la
+@ENABLE_CXX_FALSE@libqsexlixx_la_DEPENDENCIES =
 subdir = lib/xli
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ax_check_sign.m4 \
@@ -134,7 +135,6 @@ am__uninstall_files_from_dir = { \
   }
 am__installdirs = "$(DESTDIR)$(libdir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
-libqsexli_la_DEPENDENCIES =
 am_libqsexli_la_OBJECTS = xli.lo err.lo read.lo read-ini.lo \
 	read-json.lo write.lo write-ini.lo write-json.lo std.lo \
 	json.lo
@@ -146,7 +146,6 @@ am__v_lt_1 =
 libqsexli_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(libqsexli_la_LDFLAGS) $(LDFLAGS) -o $@
-libqsexlixx_la_DEPENDENCIES =
 am__libqsexlixx_la_SOURCES_DIST = SkvEnv.cpp
 @ENABLE_CXX_TRUE@am_libqsexlixx_la_OBJECTS = SkvEnv.lo
 libqsexlixx_la_OBJECTS = $(am_libqsexlixx_la_OBJECTS)
@@ -415,9 +414,11 @@ libqsexli_la_SOURCES = xli-prv.h xli.c err.c \
 
 libqsexli_la_LDFLAGS = -L../cmn -L../si -version-info 1:0:0 -no-undefined
 libqsexli_la_LIBADD = -lqsesi -lqsecmn 
+libqsexli_la_DEPENDENCIES = ../../lib/si/libqsesi.la ../../lib/cmn/libqsecmn.la
 @ENABLE_CXX_TRUE@libqsexlixx_la_SOURCES = SkvEnv.cpp
 @ENABLE_CXX_TRUE@libqsexlixx_la_LDFLAGS = -L. -L../cmn -L../si -version-info 1:0:0 -no-undefined
 @ENABLE_CXX_TRUE@libqsexlixx_la_LIBADD = -lqsecmnxx -lqsexli -lqsesi -lqsecmn
+@ENABLE_CXX_TRUE@libqsexlixx_la_DEPENDENCIES = libqsexli.la  ../../lib/cmn/libqsecmnxx.la ../../lib/si/libqsesi.la ../../lib/cmn/libqsecmn.la
 all: all-am
 
 .SUFFIXES:
