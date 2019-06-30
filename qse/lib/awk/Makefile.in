@@ -162,8 +162,6 @@ am__uninstall_files_from_dir = { \
 am__installdirs = "$(DESTDIR)$(libdir)" "$(DESTDIR)$(modexecdir)"
 LTLIBRARIES = $(lib_LTLIBRARIES) $(modexec_LTLIBRARIES)
 am__DEPENDENCIES_1 =
-@ENABLE_STATIC_MODULE_FALSE@libqseawk_dir_la_DEPENDENCIES =  \
-@ENABLE_STATIC_MODULE_FALSE@	$(am__DEPENDENCIES_1)
 am__libqseawk_dir_la_SOURCES_DIST = mod-dir.c mod-dir.h
 @ENABLE_STATIC_MODULE_FALSE@am_libqseawk_dir_la_OBJECTS =  \
 @ENABLE_STATIC_MODULE_FALSE@	libqseawk_dir_la-mod-dir.lo
@@ -178,8 +176,6 @@ libqseawk_dir_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
 	-o $@
 @ENABLE_STATIC_MODULE_FALSE@am_libqseawk_dir_la_rpath = -rpath \
 @ENABLE_STATIC_MODULE_FALSE@	$(modexecdir)
-@ENABLE_STATIC_MODULE_FALSE@libqseawk_math_la_DEPENDENCIES =  \
-@ENABLE_STATIC_MODULE_FALSE@	$(am__DEPENDENCIES_1)
 am__libqseawk_math_la_SOURCES_DIST = mod-math.c mod-math.h
 @ENABLE_STATIC_MODULE_FALSE@am_libqseawk_math_la_OBJECTS =  \
 @ENABLE_STATIC_MODULE_FALSE@	libqseawk_math_la-mod-math.lo
@@ -190,8 +186,6 @@ libqseawk_math_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
 	-o $@
 @ENABLE_STATIC_MODULE_FALSE@am_libqseawk_math_la_rpath = -rpath \
 @ENABLE_STATIC_MODULE_FALSE@	$(modexecdir)
-@ENABLE_STATIC_MODULE_FALSE@libqseawk_str_la_DEPENDENCIES =  \
-@ENABLE_STATIC_MODULE_FALSE@	$(am__DEPENDENCIES_1)
 am__libqseawk_str_la_SOURCES_DIST = mod-str.c mod-str.h
 @ENABLE_STATIC_MODULE_FALSE@am_libqseawk_str_la_OBJECTS =  \
 @ENABLE_STATIC_MODULE_FALSE@	libqseawk_str_la-mod-str.lo
@@ -202,8 +196,6 @@ libqseawk_str_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
 	-o $@
 @ENABLE_STATIC_MODULE_FALSE@am_libqseawk_str_la_rpath = -rpath \
 @ENABLE_STATIC_MODULE_FALSE@	$(modexecdir)
-@ENABLE_STATIC_MODULE_FALSE@libqseawk_sys_la_DEPENDENCIES =  \
-@ENABLE_STATIC_MODULE_FALSE@	$(am__DEPENDENCIES_1)
 am__libqseawk_sys_la_SOURCES_DIST = mod-sys.c mod-sys.h
 @ENABLE_STATIC_MODULE_FALSE@am_libqseawk_sys_la_OBJECTS =  \
 @ENABLE_STATIC_MODULE_FALSE@	libqseawk_sys_la-mod-sys.lo
@@ -537,6 +529,7 @@ libqseawk_la_DEPENDENCIES = $(am__append_8) $(am__append_10) \
 @ENABLE_STATIC_MODULE_FALSE@CPPFLAGS_MOD_COMMON = $(CPPFLAGS_ALL_COMMON)
 @ENABLE_STATIC_MODULE_FALSE@LDFLAGS_MOD_COMMON = $(LDFLAGS_ALL_COMMON)
 @ENABLE_STATIC_MODULE_FALSE@LIBADD_MOD_COMMON = -lqseawk -lqsecmn
+@ENABLE_STATIC_MODULE_FALSE@DEPENDENCIES_MOD_COMMON = ../../lib/awk/libqseawk.la ../../lib/awk/libqsecmn.la
 @ENABLE_STATIC_MODULE_FALSE@modexecdir = $(libdir)
 @ENABLE_STATIC_MODULE_FALSE@modexec_LTLIBRARIES = libqseawk-dir.la \
 @ENABLE_STATIC_MODULE_FALSE@	libqseawk-math.la libqseawk-str.la \
@@ -545,18 +538,22 @@ libqseawk_la_DEPENDENCIES = $(am__append_8) $(am__append_10) \
 @ENABLE_STATIC_MODULE_FALSE@libqseawk_dir_la_CPPFLAGS = $(CPPFLAGS_MOD_COMMON)
 @ENABLE_STATIC_MODULE_FALSE@libqseawk_dir_la_LDFLAGS = $(LDFLAGS_MOD_COMMON) -L../si
 @ENABLE_STATIC_MODULE_FALSE@libqseawk_dir_la_LIBADD = $(LIBADD_MOD_COMMON) -lqsesi
+@ENABLE_STATIC_MODULE_FALSE@libqseawk_dir_la_DEPENDENCIES = $(DEPENDENCIES_MOD_COMMON) ../../lib/si/libqsesi.la
 @ENABLE_STATIC_MODULE_FALSE@libqseawk_math_la_SOURCES = mod-math.c mod-math.h
 @ENABLE_STATIC_MODULE_FALSE@libqseawk_math_la_CPPFLAGS = $(CPPFLAGS_MOD_COMMON)
 @ENABLE_STATIC_MODULE_FALSE@libqseawk_math_la_LDFLAGS = $(LDFLAGS_MOD_COMMON)
 @ENABLE_STATIC_MODULE_FALSE@libqseawk_math_la_LIBADD = $(LIBADD_MOD_COMMON)
+@ENABLE_STATIC_MODULE_FALSE@libqseawk_math_la_DEPENDENCIES = $(DEPENDENCIES_MOD_COMMON)
 @ENABLE_STATIC_MODULE_FALSE@libqseawk_str_la_SOURCES = mod-str.c mod-str.h
 @ENABLE_STATIC_MODULE_FALSE@libqseawk_str_la_CPPFLAGS = $(CPPFLAGS_MOD_COMMON)
 @ENABLE_STATIC_MODULE_FALSE@libqseawk_str_la_LDFLAGS = $(LDFLAGS_MOD_COMMON)
 @ENABLE_STATIC_MODULE_FALSE@libqseawk_str_la_LIBADD = $(LIBADD_MOD_COMMON)
+@ENABLE_STATIC_MODULE_FALSE@libqseawk_str_la_DEPENDENCIES = $(DEPENDENCIES_MOD_COMMON)
 @ENABLE_STATIC_MODULE_FALSE@libqseawk_sys_la_SOURCES = mod-sys.c mod-sys.h
 @ENABLE_STATIC_MODULE_FALSE@libqseawk_sys_la_CPPFLAGS = $(CPPFLAGS_MOD_COMMON)
 @ENABLE_STATIC_MODULE_FALSE@libqseawk_sys_la_LDFLAGS = $(LDFLAGS_MOD_COMMON) -L../si
 @ENABLE_STATIC_MODULE_FALSE@libqseawk_sys_la_LIBADD = $(LIBADD_MOD_COMMON) -lqsesi
+@ENABLE_STATIC_MODULE_FALSE@libqseawk_sys_la_DEPENDENCIES = $(DEPENDENCIES_MOD_COMMON)
 all: all-am
 
 .SUFFIXES:
