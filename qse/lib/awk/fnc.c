@@ -47,10 +47,6 @@ static int fnc_asorti (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi);
  * - v: value. pass it after normal evaluation.
  * - r: pass a variable by reference
  * - x: regular expression as it is. not evaluated as /rex/ ~ $0.
- *
- * If the first character of the specifer is 'R', all
- * parameters are passed by reference regarless of the remaining
- * chracters.
  * 
  * NOTE: If min is greater than max, the specifier indicate the 
  * name of the module  where the function is located.
@@ -59,7 +55,7 @@ static qse_awk_fnc_t sysfnctab[] =
 {
 	/* io functions */
 	{ {QSE_T("close"),    5}, 0, { {1,     2, QSE_NULL},        fnc_close,  QSE_AWK_RIO }, QSE_NULL},
-	{ {QSE_T("fflush"),    6}, 0, { {0,     1, QSE_NULL},        fnc_fflush,  QSE_AWK_RIO }, QSE_NULL},
+	{ {QSE_T("fflush"),   6}, 0, { {0,     1, QSE_NULL},        fnc_fflush,  QSE_AWK_RIO }, QSE_NULL},
 
 	/* type info/conversion */
 	{ {QSE_T("int"),      3}, 0, { {1,     1, QSE_NULL},        fnc_int,              0 }, QSE_NULL},

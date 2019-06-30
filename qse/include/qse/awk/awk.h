@@ -287,7 +287,8 @@ struct qse_awk_val_ref_t
 		QSE_AWK_VAL_REF_GBLIDX,   /**< member of global map variable */
 		QSE_AWK_VAL_REF_LCLIDX,   /**< member of local map variable */
 		QSE_AWK_VAL_REF_ARGIDX,   /**< member of map argument */
-		QSE_AWK_VAL_REF_POS       /**< positional variable */
+		QSE_AWK_VAL_REF_POS,      /**< positional variable */
+		/*QSE_AWK_VAL_REF_ADDR*/      /**< arbitrary address to a value. the value pointer that resides outside the awk realm. */
 	} id;
 
 	/* if id is QSE_AWK_VAL_REF_POS, adr holds the index of a 

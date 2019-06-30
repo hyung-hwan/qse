@@ -902,7 +902,7 @@ static int val_ref_to_bool (qse_awk_rtx_t* rtx, const qse_awk_val_ref_t* ref)
 		case QSE_AWK_VAL_REF_POS:
 		{
 			qse_size_t idx;
-	       
+
 			idx = (qse_size_t)ref->adr;
 			if (idx == 0)
 			{

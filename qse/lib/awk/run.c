@@ -64,10 +64,11 @@ enum exit_level_t
 	EXIT_ABORT
 };
 
-struct pafv
+struct pafv_t
 {
-	qse_awk_val_t** args;
-	qse_size_t      nargs;
+	qse_awk_val_t**   args;
+	qse_size_t        nargs;
+	const qse_char_t* argspec;
 };
 
 #define DEFAULT_CONVFMT  QSE_T("%.6g")
@@ -1209,7 +1210,7 @@ static int prepare_globals (qse_awk_rtx_t* rtx)
 	while (ngbls > 0)
 	{
 		--ngbls;
-		if (__raw_push(rtx,qse_awk_val_nil) == -1)
+		if (__raw_push(rtx,qse_awk_val_nil) <= -1)
 		{
 			SETERR_COD (rtx, QSE_AWK_ENOMEM);
 			goto oops;
@@ -1346,16 +1347,16 @@ static int enter_stack_frame (qse_awk_rtx_t* rtx)
 	saved_stack_top = rtx->stack_top;
 
 	/* push the current stack base */
-	if (__raw_push(rtx,(void*)rtx->stack_base) == -1) goto oops;
+	if (__raw_push(rtx,(void*)rtx->stack_base) <= -1) goto oops;
 
 	/* push the current stack top before push the current stack base */
-	if (__raw_push(rtx,(void*)saved_stack_top) == -1) goto oops;
+	if (__raw_push(rtx,(void*)saved_stack_top) <= -1) goto oops;
 	
 	/* secure space for a return value */
-	if (__raw_push(rtx,qse_awk_val_nil) == -1) goto oops;
+	if (__raw_push(rtx,qse_awk_val_nil) <= -1) goto oops;
 	
 	/* secure space for RTX_STACK_NARGS */
-	if (__raw_push(rtx,qse_awk_val_nil) == -1) goto oops;
+	if (__raw_push(rtx,qse_awk_val_nil) <= -1) goto oops;
 
 	/* let the stack top remembered be the base of a new stack frame */
 	rtx->stack_base = saved_stack_top;
@@ -1532,13 +1533,14 @@ qse_awk_val_t* qse_awk_rtx_callfun (qse_awk_rtx_t* rtx, qse_awk_fun_t* fun, qse_
 {
 	struct capture_retval_data_t crdata;
 	qse_awk_val_t* v;
-	struct pafv pafv/*= { args, nargs }*/;
+	struct pafv_t pafv/*= { args, nargs }*/;
 	qse_awk_nde_fncall_t call;
 
 	QSE_ASSERT (fun != QSE_NULL);
 
 	pafv.args = args;
 	pafv.nargs = nargs;
+	pafv.argspec = fun->argspec;
 
 	if (rtx->exit_level >= EXIT_GLOBAL) 
 	{
@@ -1549,6 +1551,7 @@ qse_awk_val_t* qse_awk_rtx_callfun (qse_awk_rtx_t* rtx, qse_awk_fun_t* fun, qse_
 	}
 	/*rtx->exit_level = EXIT_NONE;*/
 
+#if 0
 	if (fun->argspec)
 	{
 		/* this function contains pass-by-reference parameters.
@@ -1556,18 +1559,20 @@ qse_awk_val_t* qse_awk_rtx_callfun (qse_awk_rtx_t* rtx, qse_awk_fun_t* fun, qse_
 		qse_awk_rtx_seterrfmt (rtx, QSE_AWK_EPERM, QSE_NULL, QSE_T("not allowed to call '%.*js' with pass-by-reference parameters"), (int)fun->name.len, fun->name.ptr);
 		return QSE_NULL;
 	}
+#endif
 
 	/* forge a fake node containing a function call */
 	QSE_MEMSET (&call, 0, QSE_SIZEOF(call));
 	call.type = QSE_AWK_NDE_FNCALL_FUN;
 	call.u.fun.name = fun->name;
 	call.nargs = nargs;
+	/* keep QSE_NULL in call.args so that __eval_call() knows it's a fake call structure */
 
 	/* check if the number of arguments given is more than expected */
 	if (nargs > fun->nargs)
 	{
 		/* TODO: is this correct? what if i want to 
-		 *       allow arbitarary numbers of arguments? */
+		 *       allow arbitrary numbers of arguments? */
 		SETERR_COD (rtx, QSE_AWK_EARGTM);
 		return QSE_NULL;
 	}
@@ -5896,13 +5901,13 @@ static qse_awk_val_t* __eval_call (
 	qse_errputstrf (QSE_T("setting up function stack frame top=%zd base=%zd\n"), (qse_size_t)rtx->stack_top, (qse_size_t)rtx->stack_base);
 #endif
 
-	if (__raw_push(rtx,(void*)rtx->stack_base) == -1) 
+	if (__raw_push(rtx,(void*)rtx->stack_base) <= -1) 
 	{
 		SETERR_LOC (rtx, QSE_AWK_ENOMEM, &nde->loc);
 		return QSE_NULL;
 	}
 
-	if (__raw_push(rtx,(void*)saved_stack_top) == -1) 
+	if (__raw_push(rtx,(void*)saved_stack_top) <= -1) 
 	{
 		__raw_pop (rtx);
 		SETERR_LOC (rtx, QSE_AWK_ENOMEM, &nde->loc);
@@ -5910,7 +5915,7 @@ static qse_awk_val_t* __eval_call (
 	}
 
 	/* secure space for a return value. */
-	if (__raw_push(rtx,qse_awk_val_nil) == -1)
+	if (__raw_push(rtx,qse_awk_val_nil) <= -1)
 	{
 		__raw_pop (rtx);
 		__raw_pop (rtx);
@@ -5919,7 +5924,7 @@ static qse_awk_val_t* __eval_call (
 	}
 
 	/* secure space for nargs */
-	if (__raw_push(rtx,qse_awk_val_nil) == -1)
+	if (__raw_push(rtx,qse_awk_val_nil) <= -1)
 	{
 		__raw_pop (rtx);
 		__raw_pop (rtx);
@@ -5942,12 +5947,11 @@ static qse_awk_val_t* __eval_call (
 	{
 		/* extra step for normal awk functions */
 
-		
-		if (fun->argspec)
+		if (fun->argspec && call->args) /* qse_awk_rtx_callfun() sets up a fake call structure with nargs > 0 but args == QSE_NULL */
 		{
 			/* sanity check for pass-by-reference parameters of a normal awk function.
 			 * it tests if each pass-by-reference argument is referenceable. */
-			
+
 			qse_awk_nde_t* p = call->args;
 			for (i = 0; i < nargs; i++)
 			{
@@ -5968,7 +5972,7 @@ static qse_awk_val_t* __eval_call (
 		while (nargs < fun->nargs)
 		{
 			/* push as many nils as the number of missing actual arguments */
-			if (__raw_push(rtx,qse_awk_val_nil) == -1)
+			if (__raw_push(rtx, qse_awk_val_nil) <= -1)
 			{
 				UNWIND_RTX_STACK (rtx, nargs);
 				SETERR_LOC (rtx, QSE_AWK_ENOMEM, &nde->loc);
@@ -6048,30 +6052,40 @@ static qse_awk_val_t* __eval_call (
 		qse_size_t cur_stack_base = rtx->stack_base;
 		qse_size_t prev_stack_base = (qse_size_t)rtx->stack[rtx->stack_base + 0];
 
-		qse_awk_nde_t* p = call->args;
-		for (i = 0; i < call->nargs; i++)
+		if (call->args) /* qse_awk_rtx_callfun() sets up a fake call structure with nargs > 0 but args == QSE_NULL */
 		{
-			if (fun->argspec[i] == QSE_T('r'))
+			qse_awk_nde_t* p = call->args;
+			for (i = 0; i < call->nargs; i++)
 			{
-				qse_awk_val_t** ref;
-				qse_awk_val_ref_t refv;
+				if (fun->argspec[i] == QSE_T('r'))
+				{
+					qse_awk_val_t** ref;
+					qse_awk_val_ref_t refv;
 
-				/* if an argument passed is a local variable or a parameter to the previous caller,
-				 * the argument node information stored is relative to the previous stack frame.
-				 * i revert rtx->stack_base to the previous stack frame base before calling 
-				 * get_reference() and restors it back to the current base. this tactic
-				 * is very ugly because the assumptions for this is dependent on get_reference()
-				 * implementation */
-				rtx->stack_base = prev_stack_base; /* UGLY */
-				get_reference (rtx, p, &ref); /* no failure check as it must succeed here for the check done above */
-				rtx->stack_base = cur_stack_base; /* UGLY */
+					/* if an argument passed is a local variable or a parameter to the previous caller,
+					 * the argument node information stored is relative to the previous stack frame.
+					 * i revert rtx->stack_base to the previous stack frame base before calling 
+					 * get_reference() and restors it back to the current base. this tactic
+					 * is very ugly because the assumptions for this is dependent on get_reference()
+					 * implementation */
+					rtx->stack_base = prev_stack_base; /* UGLY */
+					get_reference (rtx, p, &ref); /* no failure check as it must succeed here for the check done above */
+					rtx->stack_base = cur_stack_base; /* UGLY */
 
-				QSE_AWK_RTX_INIT_REF_VAL (&refv, p->type - QSE_AWK_NDE_NAMED, ref, 9); /* initialize a fake reference variable. 9 chosen randomly */
-				qse_awk_rtx_setrefval (rtx, &refv, RTX_STACK_ARG(rtx, i));
+					QSE_AWK_RTX_INIT_REF_VAL (&refv, p->type - QSE_AWK_NDE_NAMED, ref, 9); /* initialize a fake reference variable. 9 chosen randomly */
+					qse_awk_rtx_setrefval (rtx, &refv, RTX_STACK_ARG(rtx, i));
+				}
+
+				qse_awk_rtx_refdownval (rtx, RTX_STACK_ARG(rtx,i));
+				p = p->next;
 			}
-
-			qse_awk_rtx_refdownval (rtx, RTX_STACK_ARG(rtx,i));
-			p = p->next;
+		}
+		else
+		{
+			for (i = 0; i < call->nargs; i++)
+			{
+				qse_awk_rtx_refdownval (rtx, RTX_STACK_ARG(rtx,i));
+			}
 		}
 
 		for (i = call->nargs; i < nargs; i++)
@@ -6150,27 +6164,56 @@ static qse_awk_val_t* __eval_call (
 
 static qse_size_t push_arg_from_vals (qse_awk_rtx_t* rtx, qse_awk_nde_fncall_t* call, void* data)
 {
-	struct pafv* pafv = (struct pafv*)data;
+	struct pafv_t* pafv = (struct pafv_t*)data;
 	qse_size_t nargs = 0;
 
 	for (nargs = 0; nargs < pafv->nargs; nargs++)
 	{
-		if (__raw_push(rtx, pafv->args[nargs]) == -1) 
+		if (pafv->argspec && pafv->argspec[nargs] == QSE_T('r'))
 		{
-			/* ugly - arg needs to be freed if it doesn't have
-			 * any reference. but its reference has not been 
-			 * updated yet as it is carried out after successful
-			 * stack push. so it adds up a reference and 
-			 * dereferences it */
-			qse_awk_rtx_refupval (rtx, pafv->args[nargs]);
-			qse_awk_rtx_refdownval (rtx, pafv->args[nargs]);
+			qse_awk_val_t** ref;
+			qse_awk_val_t* v;
 
-			UNWIND_RTX_STACK_ARG (rtx, nargs);
-			SETERR_LOC (rtx, QSE_AWK_ENOMEM, &call->loc);
-			return (qse_size_t)-1;
+			ref = (qse_awk_val_t**)&pafv->args[nargs];
+			v = qse_awk_rtx_makerefval(rtx, QSE_AWK_VAL_REF_LCL, ref); /* this type(QSE_AWK_VAL_REF_LCL) is fake */
+			if (!v)
+			{
+				UNWIND_RTX_STACK_ARG (rtx, nargs);
+				SETERR_LOC (rtx, QSE_AWK_ENOMEM, &call->loc);
+				return (qse_size_t)-1;
+			}
+
+			if (__raw_push(rtx, v)  <= -1)
+			{
+				qse_awk_rtx_refupval (rtx, v);
+				qse_awk_rtx_refdownval (rtx, v);
+
+				UNWIND_RTX_STACK_ARG (rtx, nargs);
+				SETERR_LOC (rtx, QSE_AWK_ENOMEM, &call->loc);
+				return (qse_size_t)-1;
+			}
+
+			qse_awk_rtx_refupval (rtx, v);
 		}
+		else
+		{
+			if (__raw_push(rtx, pafv->args[nargs]) <= -1) 
+			{
+				/* ugly - arg needs to be freed if it doesn't have
+				 * any reference. but its reference has not been 
+				 * updated yet as it is carried out after successful
+				 * stack push. so it adds up a reference and 
+				 * dereferences it */
+				qse_awk_rtx_refupval (rtx, pafv->args[nargs]);
+				qse_awk_rtx_refdownval (rtx, pafv->args[nargs]);
 
-		qse_awk_rtx_refupval (rtx, pafv->args[nargs]);
+				UNWIND_RTX_STACK_ARG (rtx, nargs);
+				SETERR_LOC (rtx, QSE_AWK_ENOMEM, &call->loc);
+				return (qse_size_t)-1;
+			}
+
+			qse_awk_rtx_refupval (rtx, pafv->args[nargs]);
+		}
 	}
 
 	return nargs; 
@@ -6187,7 +6230,7 @@ static qse_size_t push_arg_from_nde (qse_awk_rtx_t* rtx, qse_awk_nde_fncall_t* c
 	{
 		/* if fnc_arg_spec is to be provided, it must contain as many characters as nargs */
 
-		if (fnc_arg_spec && (fnc_arg_spec[nargs] == QSE_T('r') || fnc_arg_spec[0] == QSE_T('R')))
+		if (fnc_arg_spec && fnc_arg_spec[nargs] == QSE_T('r'))
 		{
 			qse_awk_val_t** ref;
 
@@ -6217,7 +6260,7 @@ static qse_size_t push_arg_from_nde (qse_awk_rtx_t* rtx, qse_awk_nde_fncall_t* c
 			return (qse_size_t)-1;
 		}
 
-		if (__raw_push(rtx,v) == -1) 
+		if (__raw_push(rtx,v) <= -1) 
 		{
 			/* ugly - v needs to be freed if it doesn't have
 			 * any reference. but its reference has not been 
@@ -6331,11 +6374,11 @@ static int get_reference (qse_awk_rtx_t* rtx, qse_awk_nde_t* nde, qse_awk_val_t*
 			 * variable unlike other reference types. */
 			v = eval_expression(rtx, ((qse_awk_nde_pos_t*)nde)->val);
 			if (v == QSE_NULL) return -1;
-	
+
 			qse_awk_rtx_refupval (rtx, v);
 			n = qse_awk_rtx_valtoint(rtx, v, &lv);
 			qse_awk_rtx_refdownval (rtx, v);
-	
+
 			if (n <= -1) 
 			{
 				SETERR_LOC (rtx, QSE_AWK_EPOSIDX, &nde->loc);
