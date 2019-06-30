@@ -92,6 +92,7 @@ else
 CPPFLAGS_MOD_COMMON = $(CPPFLAGS_ALL_COMMON)
 LDFLAGS_MOD_COMMON = $(LDFLAGS_ALL_COMMON)
 LIBADD_MOD_COMMON = -lqseawk -lqsecmn
+DEPENDENCIES_MOD_COMMON = ../../lib/awk/libqseawk.la ../../lib/awk/libqsecmn.la
 
 modexecdir = $(libdir)
 
@@ -100,23 +101,27 @@ libqseawk_dir_la_SOURCES = mod-dir.c mod-dir.h
 libqseawk_dir_la_CPPFLAGS = $(CPPFLAGS_MOD_COMMON)
 libqseawk_dir_la_LDFLAGS = $(LDFLAGS_MOD_COMMON) -L../si
 libqseawk_dir_la_LIBADD = $(LIBADD_MOD_COMMON) -lqsesi
+libqseawk_dir_la_DEPENDENCIES = $(DEPENDENCIES_MOD_COMMON) ../../lib/si/libqsesi.la
 
 modexec_LTLIBRARIES += libqseawk-math.la
 libqseawk_math_la_SOURCES = mod-math.c mod-math.h
 libqseawk_math_la_CPPFLAGS = $(CPPFLAGS_MOD_COMMON)
 libqseawk_math_la_LDFLAGS = $(LDFLAGS_MOD_COMMON)
 libqseawk_math_la_LIBADD = $(LIBADD_MOD_COMMON)
+libqseawk_math_la_DEPENDENCIES = $(DEPENDENCIES_MOD_COMMON)
 
 modexec_LTLIBRARIES += libqseawk-str.la
 libqseawk_str_la_SOURCES = mod-str.c mod-str.h
 libqseawk_str_la_CPPFLAGS = $(CPPFLAGS_MOD_COMMON)
 libqseawk_str_la_LDFLAGS = $(LDFLAGS_MOD_COMMON)
 libqseawk_str_la_LIBADD = $(LIBADD_MOD_COMMON)
+libqseawk_str_la_DEPENDENCIES = $(DEPENDENCIES_MOD_COMMON)
 
 modexec_LTLIBRARIES += libqseawk-sys.la
 libqseawk_sys_la_SOURCES = mod-sys.c mod-sys.h
 libqseawk_sys_la_CPPFLAGS = $(CPPFLAGS_MOD_COMMON)
 libqseawk_sys_la_LDFLAGS = $(LDFLAGS_MOD_COMMON) -L../si
 libqseawk_sys_la_LIBADD = $(LIBADD_MOD_COMMON) -lqsesi
+libqseawk_sys_la_DEPENDENCIES = $(DEPENDENCIES_MOD_COMMON)
 
 endif
