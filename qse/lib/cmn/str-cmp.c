@@ -180,9 +180,7 @@ int qse_wcsxcmp (const qse_wchar_t* s1, qse_size_t ln, const qse_wchar_t* s2)
 	return (s1 < end)? 1: ((*s2 == QSE_WT('\0'))? 0: -1);
 }
 
-int qse_wcsxncmp (
-	const qse_wchar_t* s1, qse_size_t ln1, 
-	const qse_wchar_t* s2, qse_size_t ln2)
+int qse_wcsxncmp (const qse_wchar_t* s1, qse_size_t ln1, const qse_wchar_t* s2, qse_size_t ln2)
 {
 	qse_wchau_t c1, c2;
 	const qse_wchar_t* end1 = s1 + ln1;
@@ -230,9 +228,7 @@ int qse_wcsxcasecmp (const qse_wchar_t* s1, qse_size_t ln, const qse_wchar_t* s2
 	return (s1 < end)? 1: ((*s2 == QSE_WT('\0'))? 0: -1);
 }
 
-int qse_wcsxncasecmp (
-	const qse_wchar_t* s1, qse_size_t ln1, 
-	const qse_wchar_t* s2, qse_size_t ln2)
+int qse_wcsxncasecmp (const qse_wchar_t* s1, qse_size_t ln1, const qse_wchar_t* s2, qse_size_t ln2)
 {
 	qse_wchau_t c1, c2;
 	const qse_wchar_t* end1 = s1 + ln1;

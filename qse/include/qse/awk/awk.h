@@ -287,8 +287,7 @@ struct qse_awk_val_ref_t
 		QSE_AWK_VAL_REF_GBLIDX,   /**< member of global map variable */
 		QSE_AWK_VAL_REF_LCLIDX,   /**< member of local map variable */
 		QSE_AWK_VAL_REF_ARGIDX,   /**< member of map argument */
-		QSE_AWK_VAL_REF_POS,      /**< positional variable */
-		/*QSE_AWK_VAL_REF_ADDR*/      /**< arbitrary address to a value. the value pointer that resides outside the awk realm. */
+		QSE_AWK_VAL_REF_POS       /**< positional variable */
 	} id;
 
 	/* if id is QSE_AWK_VAL_REF_POS, adr holds the index of a 
@@ -2833,39 +2832,32 @@ QSE_EXPORT int qse_awk_rtx_valtostr (
 );
 
 /**
- * The qse_awk_rtx_valtostrdup() function provides a shortcut to the 
- * qse_awk_rtx_valtostr() function with the #QSE_AWK_RTX_VALTOSTR_CPLDUP type.
- * It returns the pointer to a string converted from \a val and stores its 
- * length to memory pointed to by \a len. You should free the returned
- * memory block after use. See the code snippet below for a simple usage.
+ * The qse_awk_rtx_valtostrdupwithcmgr() function duplicates a string value and returns
+ * the pointer to it. If the given value is not a string, it converts the non-string
+ * value to a string and duplicates it. It stores the length of the resulting
+ * string in memory pointed to by \a len.
+ * You should free the returned memory block after use. See the code snippet below
+ * for a simple usage.
  *
  * \code
- * ptr = qse_awk_rtx_valtostrdup (rtx, v, &len);
- * if (str == QSE_NULL) handle_error();
- * qse_printf (QSE_T("%.*s\n"), (int)len, ptr);
+ * ptr = qse_awk_rtx_valtowcsdupwithcmgr(rtx, v, &len, qse_awk_rtx_getcmgr(rtx));
+ * if (!str) handle_error();
+ * qse_printf (QSE_T("%.*ls\n"), (int)len, ptr);
  * qse_awk_rtx_free (rtx, ptr);
  * \endcode
  *
- * \return character pointer to a string converted on success,
+ * \return character pointer to a duplicated string on success,
  *         #QSE_NULL on failure
  */
-#if 0
-QSE_EXPORT qse_char_t* qse_awk_rtx_valtostrdupwithcmgr (
-	qse_awk_rtx_t*       rtx, /**< runtime context */
-	const qse_awk_val_t* val, /**< value to convert */
-	qse_size_t*          len,  /**< result length */
-	qse_cmgr_t*          cmgr
-);
-#endif
 
-QSE_EXPORT qse_mchar_t* qse_awk_rtx_valtombsdup (
+QSE_EXPORT qse_mchar_t* qse_awk_rtx_valtombsdupwithcmgr (
 	qse_awk_rtx_t*       rtx, /**< runtime context */
 	const qse_awk_val_t* val, /**< value to convert */
 	qse_size_t*          len, /**< result length */
 	qse_cmgr_t*          cmgr
 );
 
-QSE_EXPORT qse_wchar_t* qse_awk_rtx_valtowcsdup (
+QSE_EXPORT qse_wchar_t* qse_awk_rtx_valtowcsdupwithcmgr (
 	qse_awk_rtx_t*       rtx, /**< runtime context */
 	const qse_awk_val_t* val, /**< value to convert */
 	qse_size_t*          len, /**< result length */
