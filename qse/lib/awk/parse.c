@@ -4563,11 +4563,11 @@ static qse_awk_nde_t* parse_primary_positional (qse_awk_t* awk, const qse_awk_lo
 	nde->type = QSE_AWK_NDE_POS;
 	nde->loc = *xloc;
 
-	if (get_token(awk)) return QSE_NULL;
-		
+	if (get_token(awk) <= -1) return QSE_NULL;
+
 	ploc = awk->tok.loc;
-	nde->val = parse_primary (awk, &ploc);
-	if (nde->val == QSE_NULL) goto oops;
+	nde->val = parse_primary(awk, &ploc);
+	if (!nde->val) goto oops;
 
 	return (qse_awk_nde_t*)nde;
 
@@ -4594,8 +4594,8 @@ static qse_awk_nde_t* parse_primary_lparen (qse_awk_t* awk, const qse_awk_loc_t*
 
 	/* parse the sub-expression inside the parentheses */
 	eloc = awk->tok.loc;
-	nde = parse_expr_withdc (awk, &eloc);
-	if (nde == QSE_NULL) return QSE_NULL;
+	nde = parse_expr_withdc(awk, &eloc);
+	if (!nde) return QSE_NULL;
 
 	/* parse subsequent expressions separated by a comma, if any */
 	last = nde;
@@ -4612,8 +4612,8 @@ static qse_awk_nde_t* parse_primary_lparen (qse_awk_t* awk, const qse_awk_loc_t*
 		while (MATCH(awk,TOK_NEWLINE));
 
 		eloc = awk->tok.loc;
-		tmp = parse_expr_withdc (awk, &eloc);
-		if (tmp == QSE_NULL) goto oops;
+		tmp = parse_expr_withdc(awk, &eloc);
+		if (!tmp) goto oops;
 
 		QSE_ASSERT (tmp->next == QSE_NULL);
 		last->next = tmp;
@@ -4642,29 +4642,25 @@ static qse_awk_nde_t* parse_primary_lparen (qse_awk_t* awk, const qse_awk_loc_t*
 
 		qse_awk_nde_grp_t* tmp;
 
-		if ((awk->parse.id.stmt != TOK_PRINT &&
-		     awk->parse.id.stmt != TOK_PRINTF) ||
-		    awk->parse.depth.expr != 1)
+		if ((awk->parse.id.stmt != TOK_PRINT && awk->parse.id.stmt != TOK_PRINTF) || awk->parse.depth.expr != 1)
 		{
-			if (!(awk->opt.trait & QSE_AWK_TOLERANT) &&
-			    !MATCH(awk,TOK_IN))
+			if (!(awk->opt.trait & QSE_AWK_TOLERANT) && !MATCH(awk,TOK_IN))
 			{
 				SETERR_TOK (awk, QSE_AWK_EKWIN);
 				goto oops;
 			}
 		}
 
-		tmp = (qse_awk_nde_grp_t*) qse_awk_callocmem (
-			awk, QSE_SIZEOF(qse_awk_nde_grp_t));
-		if (tmp == QSE_NULL)
+		tmp = (qse_awk_nde_grp_t*)qse_awk_callocmem(awk, QSE_SIZEOF(qse_awk_nde_grp_t));
+		if (!tmp)
 		{
 			ADJERR_LOC (awk, xloc);
 			goto oops;
-		}	
+		}
 
 		tmp->type = QSE_AWK_NDE_GRP;
 		tmp->loc = *xloc;
-		tmp->body = nde;		
+		tmp->body = nde;
 
 		nde = (qse_awk_nde_t*)tmp;
 	}

@@ -21,6 +21,7 @@ qseawk_SOURCES = awk.c
 qseawk_CFLAGS = $(PTHREAD_CFLAGS)
 qseawk_LDFLAGS = -L../../lib/awk -L../../lib/si -L../../lib/cmn 
 qseawk_LDADD = -lqseawk -lqsesi -lqsecmn $(LIBM) $(PTHREAD_LIBS)
+qseawk_DEPENDENCIES = ../../lib/awk/libqseawk.la ../../lib/si/libqsesi.la ../../lib/cmn/libqsecmn.la
 
 if ENABLE_LIBLTDL
 qseawk_LDADD += $(LTDL_LIBS)
