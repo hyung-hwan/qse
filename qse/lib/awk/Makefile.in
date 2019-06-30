@@ -529,7 +529,7 @@ libqseawk_la_DEPENDENCIES = $(am__append_8) $(am__append_10) \
 @ENABLE_STATIC_MODULE_FALSE@CPPFLAGS_MOD_COMMON = $(CPPFLAGS_ALL_COMMON)
 @ENABLE_STATIC_MODULE_FALSE@LDFLAGS_MOD_COMMON = $(LDFLAGS_ALL_COMMON)
 @ENABLE_STATIC_MODULE_FALSE@LIBADD_MOD_COMMON = -lqseawk -lqsecmn
-@ENABLE_STATIC_MODULE_FALSE@DEPENDENCIES_MOD_COMMON = ../../lib/awk/libqseawk.la ../../lib/awk/libqsecmn.la
+@ENABLE_STATIC_MODULE_FALSE@DEPENDENCIES_MOD_COMMON = ../../lib/awk/libqseawk.la ../../lib/cmn/libqsecmn.la
 @ENABLE_STATIC_MODULE_FALSE@modexecdir = $(libdir)
 @ENABLE_STATIC_MODULE_FALSE@modexec_LTLIBRARIES = libqseawk-dir.la \
 @ENABLE_STATIC_MODULE_FALSE@	libqseawk-math.la libqseawk-str.la \

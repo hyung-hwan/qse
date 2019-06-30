@@ -92,7 +92,7 @@ else
 CPPFLAGS_MOD_COMMON = $(CPPFLAGS_ALL_COMMON)
 LDFLAGS_MOD_COMMON = $(LDFLAGS_ALL_COMMON)
 LIBADD_MOD_COMMON = -lqseawk -lqsecmn
-DEPENDENCIES_MOD_COMMON = ../../lib/awk/libqseawk.la ../../lib/awk/libqsecmn.la
+DEPENDENCIES_MOD_COMMON = ../../lib/awk/libqseawk.la ../../lib/cmn/libqsecmn.la
 
 modexecdir = $(libdir)
 
