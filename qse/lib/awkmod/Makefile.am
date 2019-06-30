@@ -92,6 +92,7 @@ libqseawk_sed_la_CPPFLAGS = $(CPPFLAGS_COMMON)
 ## ../sed must be placed before LDFLAGS_COMMON because it should precede $(libdir)
 libqseawk_sed_la_LDFLAGS = -L../sed $(LDFLAGS_COMMON)
 libqseawk_sed_la_LIBADD = $(LIBADD_COMMON) -lqsesed
+libqseawk_sed_la_DEPENDENCIES = ../../lib/sed/libqsesed.la
 endif
 
 if ENABLE_AWKMOD_UCI

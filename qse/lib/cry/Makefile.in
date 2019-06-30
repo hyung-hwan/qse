@@ -133,7 +133,6 @@ am__uninstall_files_from_dir = { \
   }
 am__installdirs = "$(DESTDIR)$(libdir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
-libqsecry_la_DEPENDENCIES =
 am_libqsecry_la_OBJECTS = libqsecry_la-blowfish.lo \
 	libqsecry_la-kseed.lo libqsecry_la-md5.lo
 libqsecry_la_OBJECTS = $(am_libqsecry_la_OBJECTS)
@@ -388,6 +387,7 @@ libqsecry_la_SOURCES = \
 libqsecry_la_CFLAGS = 
 libqsecry_la_LDFLAGS = -L../cmn -version-info 1:0:0 -no-undefined
 libqsecry_la_LIBADD = -lqsecmn 
+libqsecry_la_DEPENDENCIES = ../../lib/cmn/libqsecmn.la
 all: all-am
 
 .SUFFIXES:

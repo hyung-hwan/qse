@@ -9,6 +9,7 @@ bin_PROGRAMS = qsexli
 qsexli_SOURCES = xli.c
 qsexli_LDFLAGS = -L../../lib/xli -L../../lib/si -L../../lib/cmn 
 qsexli_LDADD = -lqsexli -lqsesi -lqsecmn
+qsexli_DEPENDENCIES = ../../lib/xli/libqsexli.la ../../lib/si/libqsesi.la ../../lib/cmn/libqsecmn.la
 
 if WIN32 
 if WCHAR

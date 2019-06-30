@@ -112,7 +112,6 @@ am_qsexli_OBJECTS = xli.$(OBJEXT)
 qsexli_OBJECTS = $(am_qsexli_OBJECTS)
 am__DEPENDENCIES_1 =
 @WCHAR_TRUE@@WIN32_TRUE@am__DEPENDENCIES_2 = $(am__DEPENDENCIES_1)
-qsexli_DEPENDENCIES = $(am__DEPENDENCIES_2)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
@@ -356,6 +355,7 @@ AM_CPPFLAGS = \
 qsexli_SOURCES = xli.c
 qsexli_LDFLAGS = -L../../lib/xli -L../../lib/si -L../../lib/cmn 
 qsexli_LDADD = -lqsexli -lqsesi -lqsecmn $(am__append_1)
+qsexli_DEPENDENCIES = ../../lib/xli/libqsexli.la ../../lib/si/libqsesi.la ../../lib/cmn/libqsecmn.la
 all: all-am
 
 .SUFFIXES:

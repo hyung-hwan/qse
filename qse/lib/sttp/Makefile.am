@@ -13,5 +13,6 @@ lib_LTLIBRARIES += libqsesttpxx.la
 libqsesttpxx_la_SOURCES = Sttp.cpp
 libqsesttpxx_la_LDFLAGS = -L. -L../cmn -L../si -version-info 1:0:0 -no-undefined
 libqsesttpxx_la_LIBADD = -lqsecmnxx -lqsesi -lqsecmn
+libqsesttpxx_la_DEPENDENCIES = ../../lib/cmn/libqsecmnxx.la ../../lib/si/libqsesi.la ../../lib/cmn/libqsecmn.la
 endif
 

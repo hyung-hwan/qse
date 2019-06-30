@@ -133,7 +133,6 @@ am__uninstall_files_from_dir = { \
   }
 am__installdirs = "$(DESTDIR)$(libdir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
-libqserad_la_DEPENDENCIES =
 am_libqserad_la_OBJECTS = libqserad_la-raddic.lo \
 	libqserad_la-radmsg.lo
 libqserad_la_OBJECTS = $(am_libqserad_la_OBJECTS)
@@ -387,6 +386,7 @@ libqserad_la_SOURCES = \
 libqserad_la_CFLAGS = 
 libqserad_la_LDFLAGS = -L../cmn -L../si -L../cry -version-info 1:0:0 -no-undefined
 libqserad_la_LIBADD = -lqsecry -lqsesi -lqsecmn
+libqserad_la_DEPENDENCIES = ../../lib/cry/libqsecry.la  ../../lib/si/libqsesi.la ../../lib/cmn/libqsecmn.la
 all: all-am
 
 .SUFFIXES:

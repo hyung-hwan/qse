@@ -15,4 +15,4 @@ libqsecry_la_SOURCES =  \
 libqsecry_la_CFLAGS = 
 libqsecry_la_LDFLAGS = -L../cmn -version-info 1:0:0 -no-undefined
 libqsecry_la_LIBADD = -lqsecmn 
-
+libqsecry_la_DEPENDENCIES = ../../lib/cmn/libqsecmn.la

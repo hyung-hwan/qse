@@ -174,8 +174,6 @@ libqseawk_mysql_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
 @ENABLE_AWKMOD_MYSQL_TRUE@@ENABLE_STATIC_MODULE_FALSE@	-rpath \
 @ENABLE_AWKMOD_MYSQL_TRUE@@ENABLE_STATIC_MODULE_FALSE@	$(pkgmodexecdir)
 @ENABLE_AWKMOD_MYSQL_TRUE@@ENABLE_STATIC_MODULE_TRUE@am_libqseawk_mysql_la_rpath =
-@ENABLE_AWKMOD_SED_TRUE@libqseawk_sed_la_DEPENDENCIES =  \
-@ENABLE_AWKMOD_SED_TRUE@	$(am__DEPENDENCIES_1)
 am__libqseawk_sed_la_SOURCES_DIST = mod-sed.c mod-sed.h
 @ENABLE_AWKMOD_SED_TRUE@am_libqseawk_sed_la_OBJECTS =  \
 @ENABLE_AWKMOD_SED_TRUE@	libqseawk_sed_la-mod-sed.lo
@@ -485,6 +483,7 @@ CPPFLAGS_COMMON = \
 @ENABLE_AWKMOD_SED_TRUE@libqseawk_sed_la_CPPFLAGS = $(CPPFLAGS_COMMON)
 @ENABLE_AWKMOD_SED_TRUE@libqseawk_sed_la_LDFLAGS = -L../sed $(LDFLAGS_COMMON)
 @ENABLE_AWKMOD_SED_TRUE@libqseawk_sed_la_LIBADD = $(LIBADD_COMMON) -lqsesed
+@ENABLE_AWKMOD_SED_TRUE@libqseawk_sed_la_DEPENDENCIES = ../../lib/sed/libqsesed.la
 @ENABLE_AWKMOD_UCI_TRUE@libqseawk_uci_la_SOURCES = mod-uci.c mod-uci.h
 @ENABLE_AWKMOD_UCI_TRUE@libqseawk_uci_la_CPPFLAGS = $(CPPFLAGS_COMMON)
 @ENABLE_AWKMOD_UCI_TRUE@libqseawk_uci_la_LDFLAGS = $(LDFLAGS_COMMON)

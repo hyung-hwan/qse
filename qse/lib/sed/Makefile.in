@@ -90,6 +90,7 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 @ENABLE_CXX_TRUE@am__append_1 = libqsesedxx.la
+@ENABLE_CXX_FALSE@libqsesedxx_la_DEPENDENCIES =
 subdir = lib/sed
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ax_check_sign.m4 \
@@ -136,7 +137,6 @@ am__uninstall_files_from_dir = { \
   }
 am__installdirs = "$(DESTDIR)$(libdir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
-libqsesed_la_DEPENDENCIES =
 am_libqsesed_la_OBJECTS = sed.lo err.lo std.lo
 libqsesed_la_OBJECTS = $(am_libqsesed_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
@@ -146,7 +146,6 @@ am__v_lt_1 =
 libqsesed_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(libqsesed_la_LDFLAGS) $(LDFLAGS) -o $@
-libqsesedxx_la_DEPENDENCIES =
 am__libqsesedxx_la_SOURCES_DIST = Sed.cpp StdSed.cpp
 @ENABLE_CXX_TRUE@am_libqsesedxx_la_OBJECTS = Sed.lo StdSed.lo
 libqsesedxx_la_OBJECTS = $(am_libqsesedxx_la_OBJECTS)
@@ -413,9 +412,11 @@ lib_LTLIBRARIES = libqsesed.la $(am__append_1)
 libqsesed_la_SOURCES = sed.c err.c std.c
 libqsesed_la_LDFLAGS = -L../cmn -L../si -version-info 1:0:0 -no-undefined
 libqsesed_la_LIBADD = -lqsecmn  -lqsesi
+libqsesed_la_DEPENDENCIES = ../../lib/cmn/libqsecmn.la ../../lib/si/libqsesi.la
 @ENABLE_CXX_TRUE@libqsesedxx_la_SOURCES = Sed.cpp StdSed.cpp
 @ENABLE_CXX_TRUE@libqsesedxx_la_LDFLAGS = -L. -L../cmn -L../si -version-info 1:0:0 -no-undefined
 @ENABLE_CXX_TRUE@libqsesedxx_la_LIBADD = -lqsesed -lqsecmnxx -lqsesi -lqsecmn 
+@ENABLE_CXX_TRUE@libqsesedxx_la_DEPENDENCIES = libqsesed.la ../../lib/cmn/libqsecmnxx.la ../../lib/si/libqsesi.la ../../lib/cmn/libqsecmn.la
 all: all-am
 
 .SUFFIXES:
