@@ -506,6 +506,7 @@ CPPFLAGS_LIB_COMMON = $(CPPFLAGS_ALL_COMMON) $(LTDLINCL) \
 LDFLAGS_LIB_COMMON = $(LDFLAGS_ALL_COMMON) -version-info 1:0:0 -no-undefined
 LIBADD_LIB_COMMON = -lqsecmn -lqsesi $(LIBM) $(am__append_1) \
 	$(am__append_2)
+DEPENDENCIES_LIB_COMMON = ../../lib/cmn/libqsecmn.la ../../lib/si/libqsesi.la
 noinst_HEADERS = awk-prv.h err.h rio.h val.h fnc.h misc.h parse.h run.h tree.h std.h
 lib_LTLIBRARIES = libqseawk.la $(am__append_5)
 libqseawk_la_SOURCES = awk.c err.c tree.c parse.c run.c rec.c val.c \
@@ -515,8 +516,8 @@ libqseawk_la_CPPFLAGS = $(CPPFLAGS_LIB_COMMON)
 libqseawk_la_LDFLAGS = $(LDFLAGS_LIB_COMMON)
 libqseawk_la_LIBADD = $(LIBADD_LIB_COMMON) $(am__append_7) \
 	$(am__append_9) $(am__append_11) $(am__append_13)
-libqseawk_la_DEPENDENCIES = $(am__append_8) $(am__append_10) \
-	$(am__append_12) $(am__append_14)
+libqseawk_la_DEPENDENCIES = $(DEPENDENCIES_LIB_COMMON) $(am__append_8) \
+	$(am__append_10) $(am__append_12) $(am__append_14)
 @ENABLE_CXX_TRUE@libqseawkxx_la_SOURCES = Awk.cpp StdAwk.cpp
 @ENABLE_CXX_TRUE@libqseawkxx_la_CPPFLAGS = $(CPPFLAGS_LIB_COMMON)
 @ENABLE_CXX_TRUE@libqseawkxx_la_LDFLAGS = $(LDFLAGS_LIB_COMMON)
@@ -529,7 +530,7 @@ libqseawk_la_DEPENDENCIES = $(am__append_8) $(am__append_10) \
 @ENABLE_STATIC_MODULE_FALSE@CPPFLAGS_MOD_COMMON = $(CPPFLAGS_ALL_COMMON)
 @ENABLE_STATIC_MODULE_FALSE@LDFLAGS_MOD_COMMON = $(LDFLAGS_ALL_COMMON)
 @ENABLE_STATIC_MODULE_FALSE@LIBADD_MOD_COMMON = -lqseawk -lqsecmn
-@ENABLE_STATIC_MODULE_FALSE@DEPENDENCIES_MOD_COMMON = ../../lib/awk/libqseawk.la ../../lib/cmn/libqsecmn.la
+@ENABLE_STATIC_MODULE_FALSE@DEPENDENCIES_MOD_COMMON = libqseawk.la ../../lib/cmn/libqsecmn.la
 @ENABLE_STATIC_MODULE_FALSE@modexecdir = $(libdir)
 @ENABLE_STATIC_MODULE_FALSE@modexec_LTLIBRARIES = libqseawk-dir.la \
 @ENABLE_STATIC_MODULE_FALSE@	libqseawk-math.la libqseawk-str.la \
@@ -553,7 +554,7 @@ libqseawk_la_DEPENDENCIES = $(am__append_8) $(am__append_10) \
 @ENABLE_STATIC_MODULE_FALSE@libqseawk_sys_la_CPPFLAGS = $(CPPFLAGS_MOD_COMMON)
 @ENABLE_STATIC_MODULE_FALSE@libqseawk_sys_la_LDFLAGS = $(LDFLAGS_MOD_COMMON) -L../si
 @ENABLE_STATIC_MODULE_FALSE@libqseawk_sys_la_LIBADD = $(LIBADD_MOD_COMMON) -lqsesi
-@ENABLE_STATIC_MODULE_FALSE@libqseawk_sys_la_DEPENDENCIES = $(DEPENDENCIES_MOD_COMMON)
+@ENABLE_STATIC_MODULE_FALSE@libqseawk_sys_la_DEPENDENCIES = $(DEPENDENCIES_MOD_COMMON) ../../lib/si/libqsesi.la
 all: all-am
 
 .SUFFIXES:

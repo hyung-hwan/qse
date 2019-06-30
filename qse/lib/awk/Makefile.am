@@ -19,6 +19,7 @@ endif
 CPPFLAGS_LIB_COMMON = $(CPPFLAGS_ALL_COMMON) $(LTDLINCL)
 LDFLAGS_LIB_COMMON = $(LDFLAGS_ALL_COMMON) -version-info 1:0:0 -no-undefined
 LIBADD_LIB_COMMON = -lqsecmn -lqsesi $(LIBM)
+DEPENDENCIES_LIB_COMMON = ../../lib/cmn/libqsecmn.la ../../lib/si/libqsesi.la
 
 if ENABLE_LIBLTDL
 LIBADD_LIB_COMMON += $(LTDL_LIBS)
@@ -41,7 +42,7 @@ libqseawk_la_SOURCES = awk.c err.c tree.c parse.c run.c rec.c val.c val-imp.h fn
 libqseawk_la_CPPFLAGS = $(CPPFLAGS_LIB_COMMON)
 libqseawk_la_LDFLAGS = $(LDFLAGS_LIB_COMMON)
 libqseawk_la_LIBADD = $(LIBADD_LIB_COMMON)
-libqseawk_la_DEPENDENCIES =
+libqseawk_la_DEPENDENCIES = $(DEPENDENCIES_LIB_COMMON)
 
 if ENABLE_CXX
 lib_LTLIBRARIES += libqseawkxx.la
@@ -92,7 +93,7 @@ else
 CPPFLAGS_MOD_COMMON = $(CPPFLAGS_ALL_COMMON)
 LDFLAGS_MOD_COMMON = $(LDFLAGS_ALL_COMMON)
 LIBADD_MOD_COMMON = -lqseawk -lqsecmn
-DEPENDENCIES_MOD_COMMON = ../../lib/awk/libqseawk.la ../../lib/cmn/libqsecmn.la
+DEPENDENCIES_MOD_COMMON = libqseawk.la ../../lib/cmn/libqsecmn.la
 
 modexecdir = $(libdir)
 
@@ -122,6 +123,6 @@ libqseawk_sys_la_SOURCES = mod-sys.c mod-sys.h
 libqseawk_sys_la_CPPFLAGS = $(CPPFLAGS_MOD_COMMON)
 libqseawk_sys_la_LDFLAGS = $(LDFLAGS_MOD_COMMON) -L../si
 libqseawk_sys_la_LIBADD = $(LIBADD_MOD_COMMON) -lqsesi
-libqseawk_sys_la_DEPENDENCIES = $(DEPENDENCIES_MOD_COMMON)
+libqseawk_sys_la_DEPENDENCIES = $(DEPENDENCIES_MOD_COMMON) ../../lib/si/libqsesi.la
 
 endif
