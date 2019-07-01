@@ -746,7 +746,17 @@ static int fnc_strftime (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 			tm.tm_isdst = bt.isdst;
 		#if defined(HAVE_STRUCT_TM_TM_GMTOFF)
 			tm.tm_gmtoff = bt.gmtoff;
+		#elif defined(HAVE_STRUCT_TM___TM_GMTOFF)
+			tm.__tm_gmtoff = bt.gmtoff;
 		#endif
+			if (flags & STRFTIME_UTC)
+			{
+			#if defined(HAVE_STRUCT_TM_TM_ZONE)
+				tm.tm_zone = "GMT";
+			#elif defined(HAVE_STRUCT_TM___TM_ZONE)
+				tm.__tm_zone = "GMT";
+			#endif
+			}
 
 			sl = strftime(tmpbuf, QSE_COUNTOF(tmpbuf), fmt, &tm);
 			if (sl <= 0 || sl >= QSE_COUNTOF(tmpbuf))

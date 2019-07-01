@@ -328,6 +328,9 @@ AC_CHECK_MEMBERS([struct stat.st_birthtim.tv_nsec])
 AC_CHECK_MEMBERS([struct stat.st_mtimespec.tv_nsec])
 AC_CHECK_MEMBERS([struct stat.st_birthtimespec.tv_nsec])
 AC_CHECK_MEMBERS([struct tm.tm_gmtoff],,,[[#include <time.h>]])
+AC_CHECK_MEMBERS([struct tm.__tm_gmtoff],,,[[#include <time.h>]])
+AC_CHECK_MEMBERS([struct tm.tm_zone],,,[[#include <time.h>]])
+AC_CHECK_MEMBERS([struct tm.__tm_zone],,,[[#include <time.h>]])
 
 
 AC_CHECK_MEMBERS([struct ifreq.ifr_ifindex, struct ifreq.ifr_mtu], [], [],
