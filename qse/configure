@@ -19906,6 +19906,39 @@ _ACEOF
 
 fi
 
+ac_fn_c_check_member "$LINENO" "struct tm" "__tm_gmtoff" "ac_cv_member_struct_tm___tm_gmtoff" "#include <time.h>
+"
+if test "x$ac_cv_member_struct_tm___tm_gmtoff" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_STRUCT_TM___TM_GMTOFF 1
+_ACEOF
+
+
+fi
+
+ac_fn_c_check_member "$LINENO" "struct tm" "tm_zone" "ac_cv_member_struct_tm_tm_zone" "#include <time.h>
+"
+if test "x$ac_cv_member_struct_tm_tm_zone" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_STRUCT_TM_TM_ZONE 1
+_ACEOF
+
+
+fi
+
+ac_fn_c_check_member "$LINENO" "struct tm" "__tm_zone" "ac_cv_member_struct_tm___tm_zone" "#include <time.h>
+"
+if test "x$ac_cv_member_struct_tm___tm_zone" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_STRUCT_TM___TM_ZONE 1
+_ACEOF
+
+
+fi
+
 
 
 ac_fn_c_check_member "$LINENO" "struct ifreq" "ifr_ifindex" "ac_cv_member_struct_ifreq_ifr_ifindex" "#include <sys/types.h>

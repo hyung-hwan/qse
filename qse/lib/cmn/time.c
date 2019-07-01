@@ -393,6 +393,8 @@ int qse_gmtime (const qse_ntime_t* nt, qse_btime_t* bt)
 	bt->isdst = tm->tm_isdst;
 #if defined(HAVE_STRUCT_TM_TM_GMTOFF)
 	bt->gmtoff = tm->tm_gmtoff;
+#elif defined(HAVE_STRUCT_TM___TM_GMTOFF)
+	bt->gmtoff = tm->__tm_gmtoff;
 #endif
 
 	return 0;
@@ -444,6 +446,8 @@ int qse_localtime (const qse_ntime_t* nt, qse_btime_t* bt)
 	bt->isdst = tm->tm_isdst;
 #if defined(HAVE_STRUCT_TM_TM_GMTOFF)
 	bt->gmtoff = tm->tm_gmtoff;
+#elif defined(HAVE_STRUCT_TM___TM_GMTOFF)
+	bt->gmtoff = tm->__tm_gmtoff;
 #else
 	bt->gmtoff = QSE_TYPE_MIN(int); /* unknown */
 #endif
@@ -493,6 +497,8 @@ int qse_timegm (const qse_btime_t* bt, qse_ntime_t* nt)
 	tm.tm_isdst = bt->isdst;
 #if defined(HAVE_STRUCT_TM_TM_GMTOFF)
 	tm->tm_gmtoff = bt->gmtoff; /* i don't think this is needed. but just keep it */
+#elif defined(HAVE_STRUCT_TM___TM_GMTOFF)
+	tm->__tm_gmtoff = bt->gmtoff;
 #endif
 
 #if defined(HAVE_TIMEGM)
@@ -582,6 +588,8 @@ int qse_timelocal (const qse_btime_t* bt, qse_ntime_t* nt)
 	tm.tm_isdst = bt->isdst;
 #if defined(HAVE_STRUCT_TM_TM_GMTOFF)
 	tm.tm_gmtoff = bt->gmtoff; /* i don't think this is needed. but just keep it */
+#elif defined(HAVE_STRUCT_TM___TM_GMTOFF)
+	tm->__tm_gmtoff = bt->gmtoff;
 #endif
 
 #if defined(HAVE_TIMELOCAL)

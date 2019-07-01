@@ -601,6 +601,15 @@
 /* Define to 1 if `tm_gmtoff' is a member of `struct tm'. */
 #undef HAVE_STRUCT_TM_TM_GMTOFF
 
+/* Define to 1 if `tm_zone' is a member of `struct tm'. */
+#undef HAVE_STRUCT_TM_TM_ZONE
+
+/* Define to 1 if `__tm_gmtoff' is a member of `struct tm'. */
+#undef HAVE_STRUCT_TM___TM_GMTOFF
+
+/* Define to 1 if `__tm_zone' is a member of `struct tm'. */
+#undef HAVE_STRUCT_TM___TM_ZONE
+
 /* Define to 1 if you have the `swapcontext' function. */
 #undef HAVE_SWAPCONTEXT
 
