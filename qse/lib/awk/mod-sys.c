@@ -688,7 +688,7 @@ static int fnc_mktime (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 		qse_gettime (&nt);
 	}
 
-	retv = qse_awk_rtx_makeintval (rtx, nt.sec);
+	retv = qse_awk_rtx_makeintval(rtx, nt.sec);
 	if (retv == QSE_NULL) return -1;
 
 	qse_awk_rtx_setretval (rtx, retv);
@@ -696,8 +696,16 @@ static int fnc_mktime (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 }
 
 
+#define STRFTIME_UTC (1 << 0)
+
 static int fnc_strftime (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
+
+	/*
+	sys::strftime("%Y-%m-%d %H:%M:%S %z", sys::gettime()); 
+	sys::strftime("%Y-%m-%d %H:%M:%S %z", sys::gettime(), sys::STRFTIME_UTC);
+	*/
+
 	qse_mchar_t* fmt;
 	qse_size_t len;
 	qse_awk_val_t* retv;
@@ -707,10 +715,10 @@ static int fnc_strftime (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	{
 		qse_ntime_t nt;
 		qse_btime_t bt;
-		qse_awk_int_t tmpsec;
+		qse_awk_int_t tmpsec, flags = 0;
 
 		nt.nsec = 0;
-		if (qse_awk_rtx_valtoint (rtx, qse_awk_rtx_getarg (rtx, 1), &tmpsec) <= -1) 
+		if (qse_awk_rtx_valtoint(rtx, qse_awk_rtx_getarg(rtx, 1), &tmpsec) <= -1) 
 		{
 			nt.sec = 0;
 		}
@@ -719,7 +727,10 @@ static int fnc_strftime (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 			nt.sec = tmpsec;
 		}
 
-		if (qse_localtime(&nt, &bt) >= 0)
+		
+		if (qse_awk_rtx_getnargs(rtx) >= 3 && qse_awk_rtx_valtoint(rtx, qse_awk_rtx_getarg(rtx, 2), &flags) <= -1) flags = 0;
+
+		if (((flags & STRFTIME_UTC)? qse_gmtime(&nt, &bt): qse_localtime(&nt, &bt)) >= 0)
 		{
 			qse_mchar_t tmpbuf[64], * tmpptr;
 			struct tm tm;
@@ -733,8 +744,11 @@ static int fnc_strftime (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 			tm.tm_min = bt.min;
 			tm.tm_sec = bt.sec;
 			tm.tm_isdst = bt.isdst;
+		#if defined(HAVE_STRUCT_TM_TM_GMTOFF)
+			tm.tm_gmtoff = bt.gmtoff;
+		#endif
 
-			sl = strftime (tmpbuf, QSE_COUNTOF(tmpbuf), fmt, &tm);
+			sl = strftime(tmpbuf, QSE_COUNTOF(tmpbuf), fmt, &tm);
 			if (sl <= 0 || sl >= QSE_COUNTOF(tmpbuf))
 			{
 				/* buffer too small */
@@ -784,7 +798,7 @@ I use 'count' to limit the maximum number of retries when 0 is returned.
 					count--;
 
 					tmpcapa *= 2;
-					tmp = qse_awk_rtx_reallocmem (rtx, tmpptr, tmpcapa * QSE_SIZEOF(*tmpptr));
+					tmp = (qse_mchar_t*)qse_awk_rtx_reallocmem(rtx, tmpptr, tmpcapa * QSE_SIZEOF(*tmpptr));
 					if (!tmp) 
 					{
 						if (tmpptr) qse_awk_rtx_freemem (rtx, tmpptr);
@@ -794,7 +808,7 @@ I use 'count' to limit the maximum number of retries when 0 is returned.
 					}
 
 					tmpptr = tmp;
-					sl = strftime (tmpptr, tmpcapa, fmt, &tm);
+					sl = strftime(tmpptr, tmpcapa, fmt, &tm);
 				}
 				while (sl <= 0 || sl >= tmpcapa);
 			}
@@ -1346,7 +1360,7 @@ static fnctab_t fnctab[] =
 	{ QSE_T("openlog"),     { { 3, 3, QSE_NULL     }, fnc_openlog,     0  } },
 	{ QSE_T("settime"),     { { 1, 1, QSE_NULL     }, fnc_settime,     0  } },
 	{ QSE_T("sleep"),       { { 1, 1, QSE_NULL     }, fnc_sleep,       0  } },
-	{ QSE_T("strftime"),    { { 2, 2, QSE_NULL     }, fnc_strftime,    0  } },
+	{ QSE_T("strftime"),    { { 2, 3, QSE_NULL     }, fnc_strftime,    0  } },
 	{ QSE_T("system"),      { { 1, 1, QSE_NULL     }, fnc_system,      0  } },
 	{ QSE_T("systime"),     { { 0, 0, QSE_NULL     }, fnc_gettime,     0  } }, /* alias to gettime() */
 	{ QSE_T("wait"),        { { 1, 3, QSE_T("vrv") }, fnc_wait,        0  } },
@@ -1430,6 +1444,8 @@ static inttab_t inttab[] =
 	{ QSE_T("SIGQUIT"), { SIGQUIT } },
 	{ QSE_T("SIGSEGV"), { SIGSEGV } },
 	{ QSE_T("SIGTERM"), { SIGTERM } },
+
+	{ QSE_T("STRFTIME_UTC"), { STRFTIME_UTC } },
 
 	{ QSE_T("WNOHANG"), { WNOHANG } }
 };
