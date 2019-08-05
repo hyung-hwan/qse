@@ -1009,6 +1009,58 @@ skip_system:
 }
 
 /* ------------------------------------------------------------ */
+static int fnc_chmod (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	qse_awk_val_t* v, * a0;
+	qse_char_t* str;
+	qse_size_t len;
+	int n = 0;
+	qse_awk_int_t mode;
+
+	a0 = qse_awk_rtx_getarg (rtx, 0);
+	str = qse_awk_rtx_getvalstr (rtx, a0, &len);
+	if (!str) return -1;
+
+	/* the target name contains a null character.
+	 * make system return -1 */
+	if (qse_strxchr(str, len, QSE_T('\0')))
+	{
+		n = -1;
+		goto skip_mkdir;
+	}
+
+	if (qse_awk_rtx_valtoint(rtx, qse_awk_rtx_getarg(rtx, 1), &mode) <= -1) mode = 0777;
+
+#if defined(_WIN32)
+	n = _tchmod(str, mode);
+#elif defined(QSE_CHAR_IS_MCHAR)
+	n = chmod(str, mode);
+#else
+
+	{
+		qse_mchar_t* mbs;
+		mbs = qse_wcstombsdupwithcmgr(str, QSE_NULL, qse_awk_rtx_getmmgr(rtx), qse_awk_rtx_getcmgr(rtx));
+		if (mbs == QSE_NULL) 
+		{
+			n = -1;
+			goto skip_mkdir;
+		}
+		n = chmod(mbs, mode);
+		qse_awk_rtx_freemem (rtx, mbs);
+	}
+
+#endif
+
+skip_mkdir:
+	qse_awk_rtx_freevalstr (rtx, a0, str);
+
+	v = qse_awk_rtx_makeintval (rtx, (qse_awk_int_t)n);
+	if (v == QSE_NULL) return -1;
+
+	qse_awk_rtx_setretval (rtx, v);
+	return 0;
+}
+
 static int fnc_mkdir (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
 	qse_awk_val_t* v, * a0;
@@ -1458,6 +1510,7 @@ static fnctab_t fnctab[] =
 	{ QSE_T("WIFEXITED"),   { { 1, 1, QSE_NULL     }, fnc_wifexited,   0  } },
 	{ QSE_T("WIFSIGNALED"), { { 1, 1, QSE_NULL     }, fnc_wifsignaled, 0  } },
 	{ QSE_T("WTERMSIG"),    { { 1, 1, QSE_NULL     }, fnc_wtermsig,    0  } },
+	{ QSE_T("chmod"),       { { 2, 2, QSE_NULL     }, fnc_chmod,       0  } },
 	{ QSE_T("closelog"),    { { 0, 0, QSE_NULL     }, fnc_closelog,    0  } },
 	{ QSE_T("fork"),        { { 0, 0, QSE_NULL     }, fnc_fork,        0  } },
 	{ QSE_T("getegid"),     { { 0, 0, QSE_NULL     }, fnc_getegid,     0  } },
