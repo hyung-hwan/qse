@@ -957,6 +957,7 @@ static int fnc_getnwifcfg (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	qse_awk_rtx_setretval (rtx, qse_awk_rtx_makeintval (rtx, ret));
 	return 0;
 }
+/* ------------------------------------------------------------ */
 
 static int fnc_system (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
@@ -1007,6 +1008,109 @@ skip_system:
 	return 0;
 }
 
+/* ------------------------------------------------------------ */
+static int fnc_mkdir (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	qse_awk_val_t* v, * a0;
+	qse_char_t* str;
+	qse_size_t len;
+	int n = 0;
+	qse_awk_int_t mode;
+
+	a0 = qse_awk_rtx_getarg (rtx, 0);
+	str = qse_awk_rtx_getvalstr (rtx, a0, &len);
+	if (!str) return -1;
+
+	/* the target name contains a null character.
+	 * make system return -1 */
+	if (qse_strxchr(str, len, QSE_T('\0')))
+	{
+		n = -1;
+		goto skip_mkdir;
+	}
+
+	if (qse_awk_rtx_getnargs(rtx) >= 2 && qse_awk_rtx_valtoint(rtx, qse_awk_rtx_getarg(rtx, 1), &mode) <= -1) mode = 0777;
+
+#if defined(_WIN32)
+	n = _tmkdir(str);
+#elif defined(QSE_CHAR_IS_MCHAR)
+	n = mkdir(str, mode);
+#else
+
+	{
+		qse_mchar_t* mbs;
+		mbs = qse_wcstombsdupwithcmgr(str, QSE_NULL, qse_awk_rtx_getmmgr(rtx), qse_awk_rtx_getcmgr(rtx));
+		if (mbs == QSE_NULL) 
+		{
+			n = -1;
+			goto skip_mkdir;
+		}
+		n = mkdir(mbs, mode);
+		qse_awk_rtx_freemem (rtx, mbs);
+	}
+
+#endif
+
+skip_mkdir:
+	qse_awk_rtx_freevalstr (rtx, a0, str);
+
+	v = qse_awk_rtx_makeintval (rtx, (qse_awk_int_t)n);
+	if (v == QSE_NULL) return -1;
+
+	qse_awk_rtx_setretval (rtx, v);
+	return 0;
+}
+
+static int fnc_unlink (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	qse_awk_val_t* v, * a0;
+	qse_char_t* str;
+	qse_size_t len;
+	int n = 0;
+
+	a0 = qse_awk_rtx_getarg (rtx, 0);
+	str = qse_awk_rtx_getvalstr(rtx, a0, &len);
+	if (!str) return -1;
+
+	/* the target name contains a null character.
+	 * make system return -1 */
+	if (qse_strxchr(str, len, QSE_T('\0')))
+	{
+		n = -1;
+		goto skip_unlink;
+	}
+
+#if defined(_WIN32)
+	n = _tunlink(str);
+#elif defined(QSE_CHAR_IS_MCHAR)
+	n = unlink(str);
+#else
+
+	{
+		qse_mchar_t* mbs;
+		mbs = qse_wcstombsdupwithcmgr(str, QSE_NULL, qse_awk_rtx_getmmgr(rtx), qse_awk_rtx_getcmgr(rtx));
+		if (mbs == QSE_NULL) 
+		{
+			n = -1;
+			goto skip_unlink;
+		}
+		n = unlink(mbs);
+		qse_awk_rtx_freemem (rtx, mbs);
+	}
+
+#endif
+
+skip_unlink:
+	qse_awk_rtx_freevalstr (rtx, a0, str);
+
+	v = qse_awk_rtx_makeintval (rtx, (qse_awk_int_t)n);
+	if (v == QSE_NULL) return -1;
+
+	qse_awk_rtx_setretval (rtx, v);
+	return 0;
+}
+
+/* ------------------------------------------------------------ */
 static void open_remote_log_socket (qse_awk_rtx_t* rtx, mod_ctx_t* mctx)
 {
 #if defined(_WIN32)
@@ -1329,6 +1433,8 @@ done:
 	return 0;
 }
 
+/* ------------------------------------------------------------ */
+
 typedef struct fnctab_t fnctab_t;
 struct fnctab_t
 {
@@ -1366,6 +1472,7 @@ static fnctab_t fnctab[] =
 	{ QSE_T("gettime"),     { { 0, 0, QSE_NULL     }, fnc_gettime,     0  } },
 	{ QSE_T("getuid"),      { { 0, 0, QSE_NULL     }, fnc_getuid,      0  } },
 	{ QSE_T("kill"),        { { 2, 2, QSE_NULL     }, fnc_kill,        0  } },
+	{ QSE_T("mkdir"),       { { 1, 2, QSE_NULL     }, fnc_mkdir,       0  } },
 	{ QSE_T("mktime"),      { { 0, 1, QSE_NULL     }, fnc_mktime,      0  } },
 	{ QSE_T("openlog"),     { { 3, 3, QSE_NULL     }, fnc_openlog,     0  } },
 	{ QSE_T("settime"),     { { 1, 1, QSE_NULL     }, fnc_settime,     0  } },
@@ -1373,6 +1480,7 @@ static fnctab_t fnctab[] =
 	{ QSE_T("strftime"),    { { 2, 3, QSE_NULL     }, fnc_strftime,    0  } },
 	{ QSE_T("system"),      { { 1, 1, QSE_NULL     }, fnc_system,      0  } },
 	{ QSE_T("systime"),     { { 0, 0, QSE_NULL     }, fnc_gettime,     0  } }, /* alias to gettime() */
+	{ QSE_T("unlink"),      { { 1, 1, QSE_NULL     }, fnc_unlink,      0  } },
 	{ QSE_T("wait"),        { { 1, 3, QSE_T("vrv") }, fnc_wait,        0  } },
 	{ QSE_T("writelog"),    { { 2, 2, QSE_NULL     }, fnc_writelog,    0  } }
 };
