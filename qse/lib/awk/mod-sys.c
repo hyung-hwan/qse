@@ -218,6 +218,56 @@ static int fnc_close (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	return 0;
 }
 
+static int fnc_read (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	sys_list_t* sys_list;
+	sys_node_t* sys_node;
+	int ret = -1;
+
+	sys_list = rtx_to_sys_list(rtx, fi);
+	sys_node = get_sys_list_node_with_arg(rtx, sys_list, qse_awk_rtx_getarg(rtx, 0));
+	if (sys_node)
+	{
+		/*ret = read(sys_node->ctx.fd, dptr, dlen);*/
+		/* TODO: implement this */
+	}
+
+	qse_awk_rtx_setretval (rtx, qse_awk_rtx_makeintval(rtx, ret));
+	return 0;
+}
+
+static int fnc_write (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	sys_list_t* sys_list;
+	sys_node_t* sys_node;
+	qse_awk_int_t ret = -1;
+
+	sys_list = rtx_to_sys_list(rtx, fi);
+	sys_node = get_sys_list_node_with_arg(rtx, sys_list, qse_awk_rtx_getarg(rtx, 0));
+	if (sys_node)
+	{
+		qse_mchar_t* dptr;
+		qse_size_t dlen;
+		qse_awk_val_t* a1;
+
+		a1 = qse_awk_rtx_getarg(rtx, 1);
+		dptr = qse_awk_rtx_getvalmbs(rtx, a1, &dlen);
+		if (dptr)
+		{
+			ret = write(sys_node->ctx.fd, dptr, dlen);
+			if (ret == -1) set_error_on_sys_list_with_syserr(rtx, sys_list);
+			qse_awk_rtx_freevalmbs (rtx, a1, dptr);
+		}
+		else
+		{
+			set_error_on_sys_list (rtx, sys_list, QSE_NULL);
+		}
+	}
+
+	qse_awk_rtx_setretval (rtx, qse_awk_rtx_makeintval(rtx, ret));
+	return 0;
+}
+
 static int fnc_open (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
 	sys_list_t* sys_list;
@@ -1754,6 +1804,7 @@ static fnctab_t fnctab[] =
 	{ QSE_T("mktime"),      { { 0, 1, QSE_NULL     }, fnc_mktime,      0  } },
 	{ QSE_T("open"),        { { 2, 3, QSE_NULL     }, fnc_open,        0  } },
 	{ QSE_T("openlog"),     { { 3, 3, QSE_NULL     }, fnc_openlog,     0  } },
+	{ QSE_T("read"),        { { 2, 2, QSE_T("vr")  }, fnc_read,        0  } },
 	{ QSE_T("settime"),     { { 1, 1, QSE_NULL     }, fnc_settime,     0  } },
 	{ QSE_T("sleep"),       { { 1, 1, QSE_NULL     }, fnc_sleep,       0  } },
 	{ QSE_T("strftime"),    { { 2, 3, QSE_NULL     }, fnc_strftime,    0  } },
@@ -1761,6 +1812,7 @@ static fnctab_t fnctab[] =
 	{ QSE_T("systime"),     { { 0, 0, QSE_NULL     }, fnc_gettime,     0  } }, /* alias to gettime() */
 	{ QSE_T("unlink"),      { { 1, 1, QSE_NULL     }, fnc_unlink,      0  } },
 	{ QSE_T("wait"),        { { 1, 3, QSE_T("vrv") }, fnc_wait,        0  } },
+	{ QSE_T("write"),       { { 2, 2, QSE_NULL     }, fnc_write,       0  } },
 	{ QSE_T("writelog"),    { { 2, 2, QSE_NULL     }, fnc_writelog,    0  } }
 };
 
