@@ -29,8 +29,10 @@
 #include <qse/cmn/chr.h>
 #include <qse/cmn/time.h>
 #include <qse/cmn/mbwc.h>
+#include <qse/cmn/rbt.h>
 #include <qse/si/nwad.h>
 #include <qse/si/nwif.h>
+#include <qse/si/sio.h>
 #include "../cmn/mem-prv.h"
 
 #if defined(_WIN32)
@@ -59,8 +61,13 @@
 
 #include <stdlib.h> /* getenv, system */
 #include <time.h>
+#include <errno.h>
+#include <string.h>
 
-#include <qse/si/sio.h>
+
+#define DEFAULT_MODE (0777)
+/* ------------------------------------------------------------------------ */
+
 typedef enum syslog_type_t syslog_type_t;
 enum syslog_type_t
 {
@@ -70,6 +77,8 @@ enum syslog_type_t
 
 struct mod_ctx_t
 {
+	qse_rbt_t* rtxtab;
+
 	struct
 	{
 		syslog_type_t type;
@@ -84,6 +93,205 @@ struct mod_ctx_t
 };
 typedef struct mod_ctx_t mod_ctx_t;
 
+/* ------------------------------------------------------------------------ */
+
+struct sys_data_t
+{
+	int fd;
+};
+typedef struct sys_data_t sys_data_t;
+
+#define __IMAP_NODE_T_DATA sys_data_t ctx;
+#define __IMAP_LIST_T_DATA qse_char_t errmsg[256];
+#define __IMAP_LIST_T sys_list_t
+#define __IMAP_NODE_T sys_node_t
+#define __MAKE_IMAP_NODE __new_sys_node
+#define __FREE_IMAP_NODE __free_sys_node
+#include "imap-imp.h"
+
+struct rtx_data_t
+{
+	sys_list_t sys_list;
+};
+typedef struct rtx_data_t rtx_data_t;
+
+/* ------------------------------------------------------------------------ */
+
+static void set_error_on_sys_list (qse_awk_rtx_t* rtx, sys_list_t* sys_list, const qse_char_t* errfmt, ...)
+{
+	if (errfmt)
+	{
+		va_list ap;
+		va_start (ap, errfmt);
+		qse_strxvfmt (sys_list->errmsg, QSE_COUNTOF(sys_list->errmsg), errfmt, ap);
+		va_end (ap);
+	}
+	else
+	{
+		qse_strxcpy (sys_list->errmsg, QSE_COUNTOF(sys_list->errmsg), qse_awk_rtx_geterrmsg(rtx));
+	}
+}
+
+static QSE_INLINE void set_error_on_sys_list_with_syserr (qse_awk_rtx_t* rtx, sys_list_t* sys_list)
+{
+	set_error_on_sys_list (rtx, sys_list, QSE_T("%hs"), strerror(errno));
+}
+
+/* ------------------------------------------------------------------------ */
+
+static sys_node_t* new_sys_node (qse_awk_rtx_t* rtx, sys_list_t* list, int fd)
+{
+	sys_node_t* node;
+
+	node = __new_sys_node(rtx, list);
+	if (!node) return QSE_NULL;
+
+	node->ctx.fd = fd;
+	return node;
+}
+
+static void free_sys_node (qse_awk_rtx_t* rtx, sys_list_t* list, sys_node_t* node)
+{
+	if (node->ctx.fd >= 0) 
+	{
+		close (node->ctx.fd);
+		node->ctx.fd = -1;
+	}
+	__free_sys_node (rtx, list, node);
+}
+
+/* ------------------------------------------------------------------------ */
+
+static QSE_INLINE sys_list_t* rtx_to_sys_list (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	mod_ctx_t* mctx = (mod_ctx_t*)fi->mod->ctx;
+	qse_rbt_pair_t* pair;
+
+	pair = qse_rbt_search(mctx->rtxtab, &rtx, QSE_SIZEOF(rtx));
+	QSE_ASSERT (pair != QSE_NULL);
+	return (sys_list_t*)QSE_RBT_VPTR(pair);
+}
+
+static QSE_INLINE sys_node_t* get_sys_list_node (sys_list_t* sys_list, qse_awk_int_t id)
+{
+	if (id < 0 || id >= sys_list->map.high || !sys_list->map.tab[id]) return QSE_NULL;
+	return sys_list->map.tab[id];
+}
+
+/* ------------------------------------------------------------------------ */
+
+
+static sys_node_t* get_sys_list_node_with_arg (qse_awk_rtx_t* rtx, sys_list_t* sys_list, qse_awk_val_t* arg)
+{
+	qse_awk_int_t id;
+	sys_node_t* sys_node;
+
+	if (qse_awk_rtx_valtoint(rtx, arg, &id) <= -1)
+	{
+		set_error_on_sys_list (rtx, sys_list, QSE_T("illegal instance id"));
+		return QSE_NULL;
+	}
+	else if (!(sys_node = get_sys_list_node(sys_list, id)))
+	{
+		set_error_on_sys_list (rtx, sys_list, QSE_T("invalid instance id - %zd"), (qse_size_t)id);
+		return QSE_NULL;
+	}
+
+	return sys_node;
+}
+
+static int fnc_close (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	sys_list_t* sys_list;
+	sys_node_t* sys_node;
+	int ret = -1;
+
+	sys_list = rtx_to_sys_list(rtx, fi);
+	sys_node = get_sys_list_node_with_arg(rtx, sys_list, qse_awk_rtx_getarg(rtx, 0));
+	if (sys_node)
+	{
+		free_sys_node (rtx, sys_list, sys_node);
+		ret = 0;
+	}
+
+	qse_awk_rtx_setretval (rtx, qse_awk_rtx_makeintval(rtx, ret));
+	return 0;
+}
+
+static int fnc_open (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	sys_list_t* sys_list;
+	sys_node_t* sys_node = QSE_NULL;
+	qse_awk_int_t ret = -1, flags = 0, mode = DEFAULT_MODE;
+	int fd = -1;
+	qse_mchar_t* pstr;
+	qse_size_t plen;
+	qse_awk_val_t* a0;
+	qse_awk_val_t* retv;
+
+	sys_list = rtx_to_sys_list(rtx, fi);
+
+	if (qse_awk_rtx_valtoint(rtx, qse_awk_rtx_getarg(rtx, 1), &flags) <= -1) flags = O_RDONLY;
+	if (qse_awk_rtx_getnargs(rtx) >= 3 && qse_awk_rtx_valtoint(rtx, qse_awk_rtx_getarg(rtx, 2), &mode) <= -1) mode = DEFAULT_MODE;
+
+#if defined(O_LARGEFILE)
+	flags |= O_LARGEFILE;
+#endif
+
+	a0 = qse_awk_rtx_getarg(rtx, 0);
+	pstr = qse_awk_rtx_getvalmbs(rtx, a0, &plen);
+	if (!pstr) goto fail;
+	fd = open(pstr, flags, mode);
+	qse_awk_rtx_freevalmbs (rtx, a0, pstr);
+
+	if (fd >= 0)
+	{
+		sys_node = new_sys_node(rtx, sys_list, fd);
+		if (sys_node) 
+		{
+			ret = sys_node->id;
+		}
+		else 
+		{
+		fail:
+			set_error_on_sys_list (rtx, sys_list, QSE_NULL);
+		}
+	}
+	else
+	{
+		set_error_on_sys_list_with_syserr (rtx, sys_list);
+	}
+
+	/* ret may not be a statically managed number. 
+	 * error checking is required */
+	retv = qse_awk_rtx_makeintval(rtx, ret);
+	if (retv == QSE_NULL)
+	{
+		if (sys_node) free_sys_node (rtx, sys_list, sys_node);
+		return -1;
+	}
+
+	qse_awk_rtx_setretval (rtx, retv);
+	return 0;
+}
+
+/* ------------------------------------------------------------------------ */
+
+static int fnc_errmsg (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	sys_list_t* sys_list;
+	qse_awk_val_t* retv;
+
+	sys_list = rtx_to_sys_list(rtx, fi);
+	retv = qse_awk_rtx_makestrvalwithstr(rtx, sys_list->errmsg);
+	if (!retv) return -1;
+
+	qse_awk_rtx_setretval (rtx, retv);
+	return 0;
+}
+
+/* ------------------------------------------------------------------------ */
+
 static int fnc_fork (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
 	qse_awk_int_t pid;
@@ -92,17 +300,20 @@ static int fnc_fork (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 #if defined(_WIN32)
 	/* TOOD: implement this*/
 	pid = -1;
-	
+	set_error_on_sys_list (rtx, rtx_to_sys_list(rtx, fi), QSE_T("not implemented"));
 #elif defined(__OS2__)
 	/* TOOD: implement this*/
 	pid = -1;
+	set_error_on_sys_list (rtx, rtx_to_sys_list(rtx, fi), QSE_T("not implemented"));
 	
 #elif defined(__DOS__)
 	/* TOOD: implement this*/
 	pid = -1;
+	set_error_on_sys_list (rtx, rtx_to_sys_list(rtx, fi), QSE_T("not implemented"));
 
 #else
 	pid = fork ();
+	if (pid <= -1) set_error_on_sys_list_with_syserr (rtx, rtx_to_sys_list(rtx, fi));
 #endif
 
 	retv = qse_awk_rtx_makeintval(rtx, pid);
@@ -134,16 +345,20 @@ static int fnc_wait (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 		/* TOOD: implement this*/
 		rx = -1;
 		status = 0;
+		set_error_on_sys_list (rtx, rtx_to_sys_list(rtx, fi), QSE_T("not implemented"));
 #elif defined(__OS2__)
 		/* TOOD: implement this*/
 		rx = -1;
 		status = 0;
+		set_error_on_sys_list (rtx, rtx_to_sys_list(rtx, fi), QSE_T("not implemented"));
 #elif defined(__DOS__)
 		/* TOOD: implement this*/
 		rx = -1;
 		status = 0;
+		set_error_on_sys_list (rtx, rtx_to_sys_list(rtx, fi), QSE_T("not implemented"));
 #else
 		rx = waitpid(pid, &status, opts);
+		if (rx <= -1) set_error_on_sys_list_with_syserr (rtx, rtx_to_sys_list(rtx, fi));
 #endif
 	}
 
@@ -243,14 +458,18 @@ static int fnc_kill (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 #if defined(_WIN32)
 		/* TOOD: implement this*/
 		rx = -1;
+		set_error_on_sys_list (rtx, rtx_to_sys_list(rtx, fi), QSE_T("not implemented"));
 #elif defined(__OS2__)
 		/* TOOD: implement this*/
 		rx = -1;
+		set_error_on_sys_list (rtx, rtx_to_sys_list(rtx, fi), QSE_T("not implemented"));
 #elif defined(__DOS__)
 		/* TOOD: implement this*/
 		rx = -1;
+		set_error_on_sys_list (rtx, rtx_to_sys_list(rtx, fi), QSE_T("not implemented"));
 #else
-		rx = kill (pid, sig);
+		rx = kill(pid, sig);
+		if (rx == -1) set_error_on_sys_list_with_syserr (rtx, rtx_to_sys_list(rtx, fi));
 #endif
 	}
 
@@ -269,23 +488,26 @@ static int fnc_getpgid (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 #if defined(_WIN32)
 	/* TOOD: implement this*/
 	pid = -1;
-	
+	set_error_on_sys_list (rtx, rtx_to_sys_list(rtx, fi), QSE_T("not implemented"));
 #elif defined(__OS2__)
 	/* TOOD: implement this*/
 	pid = -1;
-	
+	set_error_on_sys_list (rtx, rtx_to_sys_list(rtx, fi), QSE_T("not implemented"));
 #elif defined(__DOS__)
 	/* TOOD: implement this*/
 	pid = -1;
-
+	set_error_on_sys_list (rtx, rtx_to_sys_list(rtx, fi), QSE_T("not implemented"));
 #else
 	/* TODO: support specifing calling process id other than 0 */
 	#if defined(HAVE_GETPGID)
-	pid = getpgid (0);
+	pid = getpgid(0);
+	if (pid == -1) set_error_on_sys_list_with_syserr (rtx, rtx_to_sys_list(rtx, fi));
 	#elif defined(HAVE_GETPGRP)
-	pid = getpgrp ();
+	pid = getpgrp();
+	if (pid == -1) set_error_on_sys_list_with_syserr (rtx, rtx_to_sys_list(rtx, fi));
 	#else
 	pid = -1;
+	set_error_on_sys_list (rtx, rtx_to_sys_list(rtx, fi), QSE_T("not supported"));
 	#endif
 #endif
 
@@ -303,20 +525,21 @@ static int fnc_getpid (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 
 #if defined(_WIN32)
 	pid = GetCurrentProcessId();
-	
+
 #elif defined(__OS2__)
 	PTIB tib;
 	PPIB pib;
 
-	pid = (DosGetInfoBlocks (&tib, &pib) == NO_ERROR)?
-		pib->pib_ulpid: -1;
-	
+	pid = (DosGetInfoBlocks(&tib, &pib) == NO_ERROR)? pib->pib_ulpid: -1;
+
 #elif defined(__DOS__)
 	/* TOOD: implement this*/
 	pid = -1;
+	set_error_on_sys_list (rtx, rtx_to_sys_list(rtx, fi), QSE_T("not implemented"));
 
 #else
 	pid = getpid ();
+	/* getpid() never fails */
 #endif
 
 	retv = qse_awk_rtx_makeintval (rtx, pid);
@@ -349,7 +572,7 @@ static int fnc_gettid (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	#if defined(SYS_gettid) && defined(QSE_SYSCALL0)
 	QSE_SYSCALL0 (pid, SYS_gettid);
 	#elif defined(SYS_gettid)
-	pid = syscall (SYS_gettid);
+	pid = syscall(SYS_gettid);
 	#else
 	pid = -1;
 	#endif
@@ -1029,7 +1252,7 @@ static int fnc_chmod (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 		goto skip_mkdir;
 	}
 
-	if (qse_awk_rtx_valtoint(rtx, qse_awk_rtx_getarg(rtx, 1), &mode) <= -1) mode = 0777;
+	if (qse_awk_rtx_valtoint(rtx, qse_awk_rtx_getarg(rtx, 1), &mode) <= -1) mode = DEFAULT_MODE;
 
 #if defined(_WIN32)
 	n = _tchmod(str, mode);
@@ -1081,7 +1304,7 @@ static int fnc_mkdir (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 		goto skip_mkdir;
 	}
 
-	if (qse_awk_rtx_getnargs(rtx) >= 2 && qse_awk_rtx_valtoint(rtx, qse_awk_rtx_getarg(rtx, 1), &mode) <= -1) mode = 0777;
+	if (qse_awk_rtx_getnargs(rtx) >= 2 && qse_awk_rtx_valtoint(rtx, qse_awk_rtx_getarg(rtx, 1), &mode) <= -1) mode = DEFAULT_MODE;
 
 #if defined(_WIN32)
 	n = _tmkdir(str);
@@ -1223,7 +1446,7 @@ static int fnc_openlog (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	qse_char_t* ident = QSE_NULL, * actual_ident;
 	qse_size_t ident_len;
 	qse_mchar_t* mbs_ident;
-	mod_ctx_t* mctx = fi->mod->ctx;
+	mod_ctx_t* mctx = (mod_ctx_t*)fi->mod->ctx;
 	qse_nwad_t nwad;
 	syslog_type_t log_type = SYSLOG_LOCAL;
 
@@ -1319,7 +1542,7 @@ static int fnc_closelog (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
 	int rx = -1;
 	qse_awk_val_t* retv;
-	mod_ctx_t* mctx = fi->mod->ctx;
+	mod_ctx_t* mctx = (mod_ctx_t*)fi->mod->ctx;
 
 	switch (mctx->log.type)
 	{
@@ -1381,7 +1604,7 @@ static int fnc_writelog (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	qse_awk_int_t pri;
 	qse_char_t* msg = QSE_NULL;
 	qse_size_t msglen;
-	mod_ctx_t* mctx = fi->mod->ctx;
+	mod_ctx_t* mctx = (mod_ctx_t*)fi->mod->ctx;
 
 	if (qse_awk_rtx_valtoint(rtx, qse_awk_rtx_getarg(rtx, 0), &pri) <= -1) goto done;
 
@@ -1511,7 +1734,9 @@ static fnctab_t fnctab[] =
 	{ QSE_T("WIFSIGNALED"), { { 1, 1, QSE_NULL     }, fnc_wifsignaled, 0  } },
 	{ QSE_T("WTERMSIG"),    { { 1, 1, QSE_NULL     }, fnc_wtermsig,    0  } },
 	{ QSE_T("chmod"),       { { 2, 2, QSE_NULL     }, fnc_chmod,       0  } },
+	{ QSE_T("close"),       { { 1, 1, QSE_NULL     }, fnc_close,       0  } },
 	{ QSE_T("closelog"),    { { 0, 0, QSE_NULL     }, fnc_closelog,    0  } },
+	{ QSE_T("errmsg"),      { { 0, 0, QSE_NULL     }, fnc_errmsg,      0  } },
 	{ QSE_T("fork"),        { { 0, 0, QSE_NULL     }, fnc_fork,        0  } },
 	{ QSE_T("getegid"),     { { 0, 0, QSE_NULL     }, fnc_getegid,     0  } },
 	{ QSE_T("getenv"),      { { 1, 1, QSE_NULL     }, fnc_getenv,      0  } },
@@ -1527,6 +1752,7 @@ static fnctab_t fnctab[] =
 	{ QSE_T("kill"),        { { 2, 2, QSE_NULL     }, fnc_kill,        0  } },
 	{ QSE_T("mkdir"),       { { 1, 2, QSE_NULL     }, fnc_mkdir,       0  } },
 	{ QSE_T("mktime"),      { { 0, 1, QSE_NULL     }, fnc_mktime,      0  } },
+	{ QSE_T("open"),        { { 2, 3, QSE_NULL     }, fnc_open,        0  } },
 	{ QSE_T("openlog"),     { { 3, 3, QSE_NULL     }, fnc_openlog,     0  } },
 	{ QSE_T("settime"),     { { 1, 1, QSE_NULL     }, fnc_settime,     0  } },
 	{ QSE_T("sleep"),       { { 1, 1, QSE_NULL     }, fnc_sleep,       0  } },
@@ -1607,6 +1833,55 @@ static inttab_t inttab[] =
 	{ QSE_T("NWIFCFG_IN4"), { QSE_NWIFCFG_IN4 } },
 	{ QSE_T("NWIFCFG_IN6"), { QSE_NWIFCFG_IN6 } },
 
+#if defined(O_APPEND)
+	{ QSE_T("O_APPEND"),    { O_APPEND } },
+#endif
+#if defined(O_ASYNC)
+	{ QSE_T("O_ASYNC"),     { O_ASYNC } },
+#endif
+#if defined(O_CLOEXEC)
+	{ QSE_T("O_CLOEXEC"),   { O_CLOEXEC } },
+#endif
+#if defined(O_CREAT)
+	{ QSE_T("O_CREAT"),     { O_CREAT } },
+#endif
+#if defined(O_DIRECTORY)
+	{ QSE_T("O_DIRECTORY"), { O_DIRECTORY } },
+#endif
+#if defined(O_DSYNC)
+	{ QSE_T("O_DSYNC"),     { O_DSYNC } },
+#endif
+#if defined(O_EXCL)
+	{ QSE_T("O_EXCL"),      { O_EXCL } },
+#endif
+#if defined(O_NOATIME)
+	{ QSE_T("O_NOATIME"),   { O_NOATIME} },
+#endif
+#if defined(O_NOCTTY)
+	{ QSE_T("O_NOCTTY"),    { O_NOCTTY} },
+#endif
+#if defined(O_NOFOLLOW)
+	{ QSE_T("O_NOFOLLOW"),  { O_NOFOLLOW } },
+#endif
+#if defined(O_NONBLOCK)
+	{ QSE_T("O_NONBLOCK"),  { O_NONBLOCK } },
+#endif
+#if defined(O_RDONLY)
+	{ QSE_T("O_RDONLY"),    { O_RDONLY } },
+#endif
+#if defined(O_RDWR)
+	{ QSE_T("O_RDWR"),      { O_RDWR } },
+#endif
+#if defined(O_SYNC)
+	{ QSE_T("O_SYNC"),      { O_SYNC } },
+#endif
+#if defined(O_TRUNC)
+	{ QSE_T("O_TRUNC"),     { O_TRUNC } },
+#endif
+#if defined(O_WRONLY)
+	{ QSE_T("O_WRONLY"),    { O_WRONLY } },
+#endif
+
 	{ QSE_T("SIGABRT"), { SIGABRT } },
 	{ QSE_T("SIGALRM"), { SIGALRM } },
 	{ QSE_T("SIGHUP"),  { SIGHUP } },
@@ -1670,9 +1945,19 @@ static int query (qse_awk_mod_t* mod, qse_awk_t* awk, const qse_char_t* name, qs
 static int init (qse_awk_mod_t* mod, qse_awk_rtx_t* rtx)
 {
 	mod_ctx_t* mctx = (mod_ctx_t*)mod->ctx;
+	rtx_data_t data;
+
 	mctx->log.type = SYSLOG_LOCAL;
 	mctx->log.syslog_opened = 0;
 	mctx->log.sck = -1;
+
+	QSE_MEMSET (&data, 0, QSE_SIZEOF(data));
+	if (qse_rbt_insert(mctx->rtxtab, &rtx, QSE_SIZEOF(rtx), &data, QSE_SIZEOF(data)) == QSE_NULL) 
+	{
+		qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
+		return -1;
+	}
+
 	return 0;
 }
 
@@ -1684,6 +1969,28 @@ static void fini (qse_awk_mod_t* mod, qse_awk_rtx_t* rtx)
 	*/
 
 	mod_ctx_t* mctx = (mod_ctx_t*)mod->ctx;
+	qse_rbt_pair_t* pair;
+
+	/* garbage clean-up */
+	pair = qse_rbt_search(mctx->rtxtab, &rtx, QSE_SIZEOF(rtx));
+	if (pair)
+	{
+		rtx_data_t* data;
+		sys_node_t* sys_node, * sys_next;
+
+		data = (rtx_data_t*)QSE_RBT_VPTR(pair);
+
+		sys_node = data->sys_list.head;
+		while (sys_node)
+		{
+			sys_next = sys_node->next;
+			free_sys_node (rtx, &data->sys_list, sys_node);
+			sys_node = sys_next;
+		}
+
+		qse_rbt_delete (mctx->rtxtab, &rtx, QSE_SIZEOF(rtx));
+	}
+
 
 #if defined(ENABLE_SYSLOG)
 	if (mctx->log.syslog_opened) 
@@ -1724,11 +2031,17 @@ static void fini (qse_awk_mod_t* mod, qse_awk_rtx_t* rtx)
 static void unload (qse_awk_mod_t* mod, qse_awk_t* awk)
 {
 	mod_ctx_t* mctx = (mod_ctx_t*)mod->ctx;
+
+	QSE_ASSERT (QSE_RBT_SIZE(mctx->rtxtab) == 0);
+	qse_rbt_close (mctx->rtxtab);
+
 	qse_awk_freemem (awk, mctx);
 }
 
 int qse_awk_mod_sys (qse_awk_mod_t* mod, qse_awk_t* awk)
 {
+	qse_rbt_t* rbt;
+
 	mod->query = query;
 	mod->unload = unload;
 
@@ -1738,6 +2051,16 @@ int qse_awk_mod_sys (qse_awk_mod_t* mod, qse_awk_t* awk)
 	mod->ctx = qse_awk_callocmem(awk, QSE_SIZEOF(mod_ctx_t));
 	if (!mod->ctx) return -1;
 
+	rbt = qse_rbt_open(qse_awk_getmmgr(awk), 0, 1, 1);
+	if (rbt == QSE_NULL) 
+	{
+		qse_awk_freemem (awk, mod->ctx);
+		qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);
+		return -1;
+	}
+	qse_rbt_setstyle (rbt, qse_getrbtstyle(QSE_RBT_STYLE_INLINE_COPIERS));
+
+	((mod_ctx_t*)mod->ctx)->rtxtab = rbt;
 	return 0;
 }
 
