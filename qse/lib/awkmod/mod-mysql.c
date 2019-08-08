@@ -1060,8 +1060,6 @@ static int query (qse_awk_mod_t* mod, qse_awk_t* awk, const qse_char_t* name, qs
 	return -1;
 }
 
-/* TODO: proper resource management */
-
 static int init (qse_awk_mod_t* mod, qse_awk_rtx_t* rtx)
 {
 	qse_rbt_t* rbt;
@@ -1070,7 +1068,7 @@ static int init (qse_awk_mod_t* mod, qse_awk_rtx_t* rtx)
 	rbt = (qse_rbt_t*)mod->ctx;
 
 	QSE_MEMSET (&data, 0, QSE_SIZEOF(data));
-	if (qse_rbt_insert (rbt, &rtx, QSE_SIZEOF(rtx), &data, QSE_SIZEOF(data)) == QSE_NULL) 
+	if (qse_rbt_insert(rbt, &rtx, QSE_SIZEOF(rtx), &data, QSE_SIZEOF(data)) == QSE_NULL) 
 	{
 		qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
 		return -1;
