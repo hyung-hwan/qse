@@ -95,14 +95,22 @@ typedef struct mod_ctx_t mod_ctx_t;
 
 /* ------------------------------------------------------------------------ */
 
-struct sys_data_t
+struct sys_node_data_t
 {
 	int fd;
 };
-typedef struct sys_data_t sys_data_t;
+typedef struct sys_node_data_t sys_node_data_t;
 
-#define __IMAP_NODE_T_DATA sys_data_t ctx;
-#define __IMAP_LIST_T_DATA qse_char_t errmsg[256];
+struct sys_list_data_t
+{
+	qse_char_t errmsg[256];
+	qse_mchar_t* readbuf;
+	qse_size_t readbuf_capa;
+};
+typedef struct sys_list_data_t sys_list_data_t;
+
+#define __IMAP_NODE_T_DATA sys_node_data_t ctx;
+#define __IMAP_LIST_T_DATA sys_list_data_t ctx;
 #define __IMAP_LIST_T sys_list_t
 #define __IMAP_NODE_T sys_node_t
 #define __MAKE_IMAP_NODE __new_sys_node
@@ -123,12 +131,12 @@ static void set_error_on_sys_list (qse_awk_rtx_t* rtx, sys_list_t* sys_list, con
 	{
 		va_list ap;
 		va_start (ap, errfmt);
-		qse_strxvfmt (sys_list->errmsg, QSE_COUNTOF(sys_list->errmsg), errfmt, ap);
+		qse_strxvfmt (sys_list->ctx.errmsg, QSE_COUNTOF(sys_list->ctx.errmsg), errfmt, ap);
 		va_end (ap);
 	}
 	else
 	{
-		qse_strxcpy (sys_list->errmsg, QSE_COUNTOF(sys_list->errmsg), qse_awk_rtx_geterrmsg(rtx));
+		qse_strxcpy (sys_list->ctx.errmsg, QSE_COUNTOF(sys_list->ctx.errmsg), qse_awk_rtx_geterrmsg(rtx));
 	}
 }
 
@@ -218,55 +226,13 @@ static int fnc_close (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	return 0;
 }
 
-static int fnc_read (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
-{
-	sys_list_t* sys_list;
-	sys_node_t* sys_node;
-	int ret = -1;
-
-	sys_list = rtx_to_sys_list(rtx, fi);
-	sys_node = get_sys_list_node_with_arg(rtx, sys_list, qse_awk_rtx_getarg(rtx, 0));
-	if (sys_node)
-	{
-		/*ret = read(sys_node->ctx.fd, dptr, dlen);*/
-		/* TODO: implement this */
-	}
-
-	qse_awk_rtx_setretval (rtx, qse_awk_rtx_makeintval(rtx, ret));
-	return 0;
-}
-
-static int fnc_write (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
-{
-	sys_list_t* sys_list;
-	sys_node_t* sys_node;
-	qse_awk_int_t ret = -1;
-
-	sys_list = rtx_to_sys_list(rtx, fi);
-	sys_node = get_sys_list_node_with_arg(rtx, sys_list, qse_awk_rtx_getarg(rtx, 0));
-	if (sys_node)
-	{
-		qse_mchar_t* dptr;
-		qse_size_t dlen;
-		qse_awk_val_t* a1;
-
-		a1 = qse_awk_rtx_getarg(rtx, 1);
-		dptr = qse_awk_rtx_getvalmbs(rtx, a1, &dlen);
-		if (dptr)
-		{
-			ret = write(sys_node->ctx.fd, dptr, dlen);
-			if (ret == -1) set_error_on_sys_list_with_syserr(rtx, sys_list);
-			qse_awk_rtx_freevalmbs (rtx, a1, dptr);
-		}
-		else
-		{
-			set_error_on_sys_list (rtx, sys_list, QSE_NULL);
-		}
-	}
-
-	qse_awk_rtx_setretval (rtx, qse_awk_rtx_makeintval(rtx, ret));
-	return 0;
-}
+/*
+  BEGIN {
+     f = sys::open ("/tmp/test.txt", O_RDONLY);
+     while (sys::read(f, x, 10) > 0) printf (B"%s", x);
+     sys::close (f);
+  }
+*/
 
 static int fnc_open (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
@@ -325,6 +291,90 @@ static int fnc_open (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	return 0;
 }
 
+static int fnc_read (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	sys_list_t* sys_list;
+	sys_node_t* sys_node;
+	qse_awk_int_t ret = -1;
+	qse_awk_int_t reqsize = 8192;
+
+	if (qse_awk_rtx_getnargs(rtx) >= 3 && qse_awk_rtx_valtoint(rtx, qse_awk_rtx_getarg(rtx, 2), &reqsize) <= -1) reqsize = 8192;
+
+	sys_list = rtx_to_sys_list(rtx, fi);
+	sys_node = get_sys_list_node_with_arg(rtx, sys_list, qse_awk_rtx_getarg(rtx, 0));
+	if (sys_node)
+	{
+		if (reqsize > sys_list->ctx.readbuf_capa)
+		{
+			qse_mchar_t* tmp = qse_awk_rtx_reallocmem(rtx, sys_list->ctx.readbuf, reqsize);
+			if (!tmp)
+			{
+				set_error_on_sys_list (rtx, sys_list, QSE_NULL);
+				goto done;
+			}
+			sys_list->ctx.readbuf = tmp;
+			sys_list->ctx.readbuf_capa = reqsize;
+		}
+
+		ret = read(sys_node->ctx.fd, sys_list->ctx.readbuf, reqsize);
+		if (ret <= 0) 
+		{
+			if (ret <= -1) set_error_on_sys_list_with_syserr(rtx, sys_list);
+			goto done;
+		}
+
+		if (ret > 0)
+		{
+			qse_awk_val_t* sv;
+			int x;
+
+			sv = qse_awk_rtx_makembsval(rtx, sys_list->ctx.readbuf, ret);
+			if (!sv) return -1;
+
+			qse_awk_rtx_refupval (rtx, sv);
+			x = qse_awk_rtx_setrefval(rtx, (qse_awk_val_ref_t*)qse_awk_rtx_getarg(rtx, 1), sv);
+			qse_awk_rtx_refdownval (rtx, sv);
+			if (x <= -1) return -1;
+		}
+	}
+
+done:
+	qse_awk_rtx_setretval (rtx, qse_awk_rtx_makeintval(rtx, ret));
+	return 0;
+}
+
+static int fnc_write (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	sys_list_t* sys_list;
+	sys_node_t* sys_node;
+	qse_awk_int_t ret = -1;
+
+	sys_list = rtx_to_sys_list(rtx, fi);
+	sys_node = get_sys_list_node_with_arg(rtx, sys_list, qse_awk_rtx_getarg(rtx, 0));
+	if (sys_node)
+	{
+		qse_mchar_t* dptr;
+		qse_size_t dlen;
+		qse_awk_val_t* a1;
+
+		a1 = qse_awk_rtx_getarg(rtx, 1);
+		dptr = qse_awk_rtx_getvalmbs(rtx, a1, &dlen);
+		if (dptr)
+		{
+			ret = write(sys_node->ctx.fd, dptr, dlen);
+			if (ret == -1) set_error_on_sys_list_with_syserr(rtx, sys_list);
+			qse_awk_rtx_freevalmbs (rtx, a1, dptr);
+		}
+		else
+		{
+			set_error_on_sys_list (rtx, sys_list, QSE_NULL);
+		}
+	}
+
+	qse_awk_rtx_setretval (rtx, qse_awk_rtx_makeintval(rtx, ret));
+	return 0;
+}
+
 /* ------------------------------------------------------------------------ */
 
 static int fnc_errmsg (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
@@ -333,7 +383,7 @@ static int fnc_errmsg (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	qse_awk_val_t* retv;
 
 	sys_list = rtx_to_sys_list(rtx, fi);
-	retv = qse_awk_rtx_makestrvalwithstr(rtx, sys_list->errmsg);
+	retv = qse_awk_rtx_makestrvalwithstr(rtx, sys_list->ctx.errmsg);
 	if (!retv) return -1;
 
 	qse_awk_rtx_setretval (rtx, retv);
@@ -1804,7 +1854,7 @@ static fnctab_t fnctab[] =
 	{ QSE_T("mktime"),      { { 0, 1, QSE_NULL     }, fnc_mktime,      0  } },
 	{ QSE_T("open"),        { { 2, 3, QSE_NULL     }, fnc_open,        0  } },
 	{ QSE_T("openlog"),     { { 3, 3, QSE_NULL     }, fnc_openlog,     0  } },
-	{ QSE_T("read"),        { { 2, 2, QSE_T("vr")  }, fnc_read,        0  } },
+	{ QSE_T("read"),        { { 2, 3, QSE_T("vrv") }, fnc_read,        0  } },
 	{ QSE_T("settime"),     { { 1, 1, QSE_NULL     }, fnc_settime,     0  } },
 	{ QSE_T("sleep"),       { { 1, 1, QSE_NULL     }, fnc_sleep,       0  } },
 	{ QSE_T("strftime"),    { { 2, 3, QSE_NULL     }, fnc_strftime,    0  } },
@@ -2040,6 +2090,12 @@ static void fini (qse_awk_mod_t* mod, qse_awk_rtx_t* rtx)
 			sys_node = sys_next;
 		}
 
+		if (data->sys_list.ctx.readbuf)
+		{
+			qse_awk_rtx_freemem (rtx, data->sys_list.ctx.readbuf);
+			data->sys_list.ctx.readbuf = QSE_NULL;
+			data->sys_list.ctx.readbuf_capa = 0;
+		}
 		qse_rbt_delete (mctx->rtxtab, &rtx, QSE_SIZEOF(rtx));
 	}
 
