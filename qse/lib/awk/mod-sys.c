@@ -25,6 +25,7 @@
  */
 
 #include "mod-sys.h"
+#include "val.h" /* QSE_AWK_QUICKINT_MAX.. need to exclude this line if the items gets available in qse/awk/awk.h */
 #include <qse/cmn/str.h>
 #include <qse/cmn/chr.h>
 #include <qse/cmn/time.h>
@@ -247,8 +248,8 @@ static int fnc_open (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 
 	sys_list = rtx_to_sys_list(rtx, fi);
 
-	if (qse_awk_rtx_valtoint(rtx, qse_awk_rtx_getarg(rtx, 1), &flags) <= -1) flags = O_RDONLY;
-	if (qse_awk_rtx_getnargs(rtx) >= 3 && qse_awk_rtx_valtoint(rtx, qse_awk_rtx_getarg(rtx, 2), &mode) <= -1) mode = DEFAULT_MODE;
+	if (qse_awk_rtx_valtoint(rtx, qse_awk_rtx_getarg(rtx, 1), &flags) <= -1 || flags < 0) flags = O_RDONLY;
+	if (qse_awk_rtx_getnargs(rtx) >= 3 && (qse_awk_rtx_valtoint(rtx, qse_awk_rtx_getarg(rtx, 2), &mode) <= -1 || mode < 0)) mode = DEFAULT_MODE;
 
 #if defined(O_LARGEFILE)
 	flags |= O_LARGEFILE;
@@ -298,7 +299,8 @@ static int fnc_read (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	qse_awk_int_t ret = -1;
 	qse_awk_int_t reqsize = 8192;
 
-	if (qse_awk_rtx_getnargs(rtx) >= 3 && qse_awk_rtx_valtoint(rtx, qse_awk_rtx_getarg(rtx, 2), &reqsize) <= -1) reqsize = 8192;
+	if (qse_awk_rtx_getnargs(rtx) >= 3 && (qse_awk_rtx_valtoint(rtx, qse_awk_rtx_getarg(rtx, 2), &reqsize) <= -1 || reqsize <= 0)) reqsize = 8192;
+	if (reqsize > QSE_AWK_QUICKINT_MAX) reqsize = QSE_AWK_QUICKINT_MAX;
 
 	sys_list = rtx_to_sys_list(rtx, fi);
 	sys_node = get_sys_list_node_with_arg(rtx, sys_list, qse_awk_rtx_getarg(rtx, 0));
@@ -339,6 +341,8 @@ static int fnc_read (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	}
 
 done:
+	/* the value in 'ret' never exceeds QSE_AWK_QUICKINT_MAX as 'reqsize' has been limited to
+	 * it before the call to 'read'. so it's safe not to check the result of qse_awk_rtx_makeintval() */
 	qse_awk_rtx_setretval (rtx, qse_awk_rtx_makeintval(rtx, ret));
 	return 0;
 }
@@ -362,7 +366,7 @@ static int fnc_write (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 		if (dptr)
 		{
 			ret = write(sys_node->ctx.fd, dptr, dlen);
-			if (ret == -1) set_error_on_sys_list_with_syserr(rtx, sys_list);
+			if (ret <= -1) set_error_on_sys_list_with_syserr(rtx, sys_list);
 			qse_awk_rtx_freevalmbs (rtx, a1, dptr);
 		}
 		else
@@ -569,7 +573,7 @@ static int fnc_kill (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 		set_error_on_sys_list (rtx, rtx_to_sys_list(rtx, fi), QSE_T("not implemented"));
 #else
 		rx = kill(pid, sig);
-		if (rx == -1) set_error_on_sys_list_with_syserr (rtx, rtx_to_sys_list(rtx, fi));
+		if (rx <= -1) set_error_on_sys_list_with_syserr (rtx, rtx_to_sys_list(rtx, fi));
 #endif
 	}
 
@@ -601,10 +605,10 @@ static int fnc_getpgid (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	/* TODO: support specifing calling process id other than 0 */
 	#if defined(HAVE_GETPGID)
 	pid = getpgid(0);
-	if (pid == -1) set_error_on_sys_list_with_syserr (rtx, rtx_to_sys_list(rtx, fi));
+	if (pid <= -1) set_error_on_sys_list_with_syserr (rtx, rtx_to_sys_list(rtx, fi));
 	#elif defined(HAVE_GETPGRP)
 	pid = getpgrp();
-	if (pid == -1) set_error_on_sys_list_with_syserr (rtx, rtx_to_sys_list(rtx, fi));
+	if (pid <= -1) set_error_on_sys_list_with_syserr (rtx, rtx_to_sys_list(rtx, fi));
 	#else
 	pid = -1;
 	set_error_on_sys_list (rtx, rtx_to_sys_list(rtx, fi), QSE_T("not supported"));
@@ -1051,7 +1055,7 @@ static int fnc_strftime (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 		}
 
 		
-		if (qse_awk_rtx_getnargs(rtx) >= 3 && qse_awk_rtx_valtoint(rtx, qse_awk_rtx_getarg(rtx, 2), &flags) <= -1) flags = 0;
+		if (qse_awk_rtx_getnargs(rtx) >= 3 && (qse_awk_rtx_valtoint(rtx, qse_awk_rtx_getarg(rtx, 2), &flags) <= -1 || flags < 0)) flags = 0;
 
 		if (((flags & STRFTIME_UTC)? qse_gmtime(&nt, &bt): qse_localtime(&nt, &bt)) >= 0)
 		{
@@ -1352,7 +1356,7 @@ static int fnc_chmod (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 		goto skip_mkdir;
 	}
 
-	if (qse_awk_rtx_valtoint(rtx, qse_awk_rtx_getarg(rtx, 1), &mode) <= -1) mode = DEFAULT_MODE;
+	if (qse_awk_rtx_valtoint(rtx, qse_awk_rtx_getarg(rtx, 1), &mode) <= -1 || mode < 0) mode = DEFAULT_MODE;
 
 #if defined(_WIN32)
 	n = _tchmod(str, mode);
@@ -1404,7 +1408,7 @@ static int fnc_mkdir (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 		goto skip_mkdir;
 	}
 
-	if (qse_awk_rtx_getnargs(rtx) >= 2 && qse_awk_rtx_valtoint(rtx, qse_awk_rtx_getarg(rtx, 1), &mode) <= -1) mode = DEFAULT_MODE;
+	if (qse_awk_rtx_getnargs(rtx) >= 2 && (qse_awk_rtx_valtoint(rtx, qse_awk_rtx_getarg(rtx, 1), &mode) <= -1 || mode < 0)) mode = DEFAULT_MODE;
 
 #if defined(_WIN32)
 	n = _tmkdir(str);
@@ -1504,7 +1508,7 @@ static void open_remote_log_socket (qse_awk_rtx_t* rtx, mod_ctx_t* mctx)
 open_socket:
 #endif
 	sck = socket(domain, type, 0); 
-	if (sck == -1)
+	if (sck <= -1)
 	{
 	#if defined(SOCK_NONBLOCK) && defined(SOCK_CLOEXEC)
 		if (errno == EINVAL && (type & (SOCK_NONBLOCK | SOCK_CLOEXEC)))
@@ -1523,14 +1527,14 @@ open_socket:
 	}
 
 	flags = fcntl(sck, F_GETFD, 0);
-	if (flags == -1) return;
+	if (flags <= -1) return;
 #if defined(FD_CLOEXEC)
 	flags |= FD_CLOEXEC;
 #endif
 #if defined(O_NONBLOCK)
 	flags |= O_NONBLOCK;
 #endif
-	if (fcntl(sck, F_SETFD, flags) == -1) return;
+	if (fcntl(sck, F_SETFD, flags) <= -1) return;
 
 done:
 	mctx->log.sck = sck;
