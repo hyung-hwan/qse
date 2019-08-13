@@ -153,6 +153,19 @@ void qse_md5_update (qse_md5_t* md5, const void* data, qse_uint32_t len)
 	QSE_MEMCPY (&md5->buffer[index], &input[i], len - i);
 }
 
+void qse_md5_updatex (qse_md5_t* md5, const void* data, qse_size_t len)
+{
+	const qse_uint8_t* input = (qse_uint8_t*)data;
+	while (len > QSE_TYPE_MAX(qse_uint32_t))
+	{
+		qse_md5_update (md5, input, QSE_TYPE_MAX(qse_uint32_t));
+		input += QSE_TYPE_MAX(qse_uint32_t);
+		len -= QSE_TYPE_MAX(qse_uint32_t);
+	}
+
+	qse_md5_update (md5, input, len);
+}
+
 qse_size_t qse_md5_digest (qse_md5_t* md5, void* digest, qse_size_t size)
 {
 	qse_uint8_t bits[8];

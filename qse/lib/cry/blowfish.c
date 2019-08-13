@@ -45,7 +45,7 @@
 		qse_uint32_t zero:8;
 	};
 #else
-	#error "Error: endian not known"
+	#error UNKNOWN ENDIAN
 #endif
 typedef struct WordByte WordByte;
 

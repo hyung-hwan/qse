@@ -10,7 +10,8 @@ lib_LTLIBRARIES = libqsecry.la
 libqsecry_la_SOURCES =  \
 	blowfish.c  \
 	kseed.c \
-	md5.c
+	md5.c \
+	sha1.c
 
 libqsecry_la_CFLAGS = 
 libqsecry_la_LDFLAGS = -L../cmn -version-info 1:0:0 -no-undefined
