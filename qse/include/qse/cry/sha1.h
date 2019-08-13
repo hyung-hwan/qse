@@ -24,50 +24,51 @@
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _QSE_CRY_MD5_H_
-#define _QSE_CRY_MD5_H_
+
+#ifndef _QSE_CRY_SHA1_H_
+#define _QSE_CRY_SHA1_H_
+
+#define QSE_SHA1_DIGEST_LEN 20
 
 #include <qse/types.h>
 #include <qse/macros.h>
 
-#define QSE_MD5_DIGEST_LEN 16
-
-struct qse_md5_t
+struct qse_sha1_t 
 {
-	qse_uint32_t  count[2];
-	qse_uint32_t  state[4];
-	qse_uint8_t   buffer[64];
+	qse_uint32_t state[5];
+	qse_uint32_t count[2];
+	qse_uint8_t  buffer[64];
 };
-typedef struct qse_md5_t qse_md5_t;
+typedef struct qse_sha1_t qse_sha1_t;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-QSE_EXPORT void qse_md5_initialize (
-	qse_md5_t* md5
+QSE_EXPORT void qse_sha1_initialize (
+	qse_sha1_t* ctx
 );
 
-QSE_EXPORT void qse_md5_update (
-	qse_md5_t*   md5,
+QSE_EXPORT void qse_sha1_update (
+	qse_sha1_t*  sha1, 
 	const void*  data,
 	qse_uint32_t len
 );
 
-QSE_EXPORT void qse_md5_updatex (
-	qse_md5_t*   md5,
-	const void*  data,
-	qse_size_t   len
+QSE_EXPORT void qse_sha1_updatex (
+	qse_sha1_t* sha1, 
+	const void* data,
+	qse_size_t  len
 );
 
-QSE_EXPORT qse_size_t qse_md5_digest (
-	qse_md5_t* md5,
-	void*      digest,
-	qse_size_t size
+QSE_EXPORT qse_size_t qse_sha1_finalize (
+	qse_sha1_t* sha1,
+	void*       digest,
+	qse_size_t  size
 );
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif
+#endif /* SHA1_H */
