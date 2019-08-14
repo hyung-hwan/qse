@@ -134,7 +134,8 @@ am__uninstall_files_from_dir = { \
 am__installdirs = "$(DESTDIR)$(libdir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
 am_libqsecry_la_OBJECTS = libqsecry_la-blowfish.lo \
-	libqsecry_la-kseed.lo libqsecry_la-md5.lo libqsecry_la-sha1.lo
+	libqsecry_la-kseed.lo libqsecry_la-md5.lo libqsecry_la-sha1.lo \
+	libqsecry_la-sha2.lo
 libqsecry_la_OBJECTS = $(am_libqsecry_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
@@ -161,7 +162,8 @@ am__maybe_remake_depfiles = depfiles
 am__depfiles_remade = ./$(DEPDIR)/libqsecry_la-blowfish.Plo \
 	./$(DEPDIR)/libqsecry_la-kseed.Plo \
 	./$(DEPDIR)/libqsecry_la-md5.Plo \
-	./$(DEPDIR)/libqsecry_la-sha1.Plo
+	./$(DEPDIR)/libqsecry_la-sha1.Plo \
+	./$(DEPDIR)/libqsecry_la-sha2.Plo
 am__mv = mv -f
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
@@ -386,7 +388,8 @@ libqsecry_la_SOURCES = \
 	blowfish.c  \
 	kseed.c \
 	md5.c \
-	sha1.c
+	sha1.c \
+	sha2.c
 
 libqsecry_la_CFLAGS = 
 libqsecry_la_LDFLAGS = -L../cmn -version-info 1:0:0 -no-undefined
@@ -474,6 +477,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqsecry_la-kseed.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqsecry_la-md5.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqsecry_la-sha1.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqsecry_la-sha2.Plo@am__quote@ # am--include-marker
 
 $(am__depfiles_remade):
 	@$(MKDIR_P) $(@D)
@@ -529,6 +533,13 @@ libqsecry_la-sha1.lo: sha1.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='sha1.c' object='libqsecry_la-sha1.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libqsecry_la_CFLAGS) $(CFLAGS) -c -o libqsecry_la-sha1.lo `test -f 'sha1.c' || echo '$(srcdir)/'`sha1.c
+
+libqsecry_la-sha2.lo: sha2.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libqsecry_la_CFLAGS) $(CFLAGS) -MT libqsecry_la-sha2.lo -MD -MP -MF $(DEPDIR)/libqsecry_la-sha2.Tpo -c -o libqsecry_la-sha2.lo `test -f 'sha2.c' || echo '$(srcdir)/'`sha2.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libqsecry_la-sha2.Tpo $(DEPDIR)/libqsecry_la-sha2.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='sha2.c' object='libqsecry_la-sha2.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libqsecry_la_CFLAGS) $(CFLAGS) -c -o libqsecry_la-sha2.lo `test -f 'sha2.c' || echo '$(srcdir)/'`sha2.c
 
 mostlyclean-libtool:
 	-rm -f *.lo
@@ -668,6 +679,7 @@ distclean: distclean-am
 	-rm -f ./$(DEPDIR)/libqsecry_la-kseed.Plo
 	-rm -f ./$(DEPDIR)/libqsecry_la-md5.Plo
 	-rm -f ./$(DEPDIR)/libqsecry_la-sha1.Plo
+	-rm -f ./$(DEPDIR)/libqsecry_la-sha2.Plo
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-tags
@@ -717,6 +729,7 @@ maintainer-clean: maintainer-clean-am
 	-rm -f ./$(DEPDIR)/libqsecry_la-kseed.Plo
 	-rm -f ./$(DEPDIR)/libqsecry_la-md5.Plo
 	-rm -f ./$(DEPDIR)/libqsecry_la-sha1.Plo
+	-rm -f ./$(DEPDIR)/libqsecry_la-sha2.Plo
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 

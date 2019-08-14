@@ -61,7 +61,7 @@ QSE_EXPORT void qse_sha1_updatex (
 	qse_size_t  len
 );
 
-QSE_EXPORT qse_size_t qse_sha1_finalize (
+QSE_EXPORT qse_size_t qse_sha1_digest (
 	qse_sha1_t* sha1,
 	void*       digest,
 	qse_size_t  size

@@ -88,7 +88,7 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-bin_PROGRAMS = bf01$(EXEEXT)
+bin_PROGRAMS = bf01$(EXEEXT) sha01$(EXEEXT)
 @WCHAR_TRUE@@WIN32_TRUE@am__append_1 = $(UNICOWS_LIBS)
 subdir = samples/cry
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -118,6 +118,10 @@ AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
 am__v_lt_1 = 
+am_sha01_OBJECTS = sha01.$(OBJEXT)
+sha01_OBJECTS = $(am_sha01_OBJECTS)
+sha01_LDADD = $(LDADD)
+sha01_DEPENDENCIES = $(am__DEPENDENCIES_2)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -133,7 +137,7 @@ am__v_at_1 =
 DEFAULT_INCLUDES = 
 depcomp = $(SHELL) $(top_srcdir)/ac/depcomp
 am__maybe_remake_depfiles = depfiles
-am__depfiles_remade = ./$(DEPDIR)/bf01.Po
+am__depfiles_remade = ./$(DEPDIR)/bf01.Po ./$(DEPDIR)/sha01.Po
 am__mv = mv -f
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
@@ -153,8 +157,8 @@ AM_V_CCLD = $(am__v_CCLD_@AM_V@)
 am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
 am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
-SOURCES = $(bf01_SOURCES)
-DIST_SOURCES = $(bf01_SOURCES)
+SOURCES = $(bf01_SOURCES) $(sha01_SOURCES)
+DIST_SOURCES = $(bf01_SOURCES) $(sha01_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -355,6 +359,7 @@ AM_CPPFLAGS = \
 AM_LDFLAGS = -L../../lib/cry  -L../../lib/si -L../../lib/cmn
 LDADD = -lqsecry -lqsesi -lqsecmn $(am__append_1)
 bf01_SOURCES = bf01.c
+sha01_SOURCES = sha01.c
 all: all-am
 
 .SUFFIXES:
@@ -442,6 +447,10 @@ bf01$(EXEEXT): $(bf01_OBJECTS) $(bf01_DEPENDENCIES) $(EXTRA_bf01_DEPENDENCIES)
 	@rm -f bf01$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(bf01_OBJECTS) $(bf01_LDADD) $(LIBS)
 
+sha01$(EXEEXT): $(sha01_OBJECTS) $(sha01_DEPENDENCIES) $(EXTRA_sha01_DEPENDENCIES) 
+	@rm -f sha01$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(sha01_OBJECTS) $(sha01_LDADD) $(LIBS)
+
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
 
@@ -449,6 +458,7 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/bf01.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sha01.Po@am__quote@ # am--include-marker
 
 $(am__depfiles_remade):
 	@$(MKDIR_P) $(@D)
@@ -611,6 +621,7 @@ clean-am: clean-binPROGRAMS clean-generic clean-libtool mostlyclean-am
 
 distclean: distclean-am
 		-rm -f ./$(DEPDIR)/bf01.Po
+	-rm -f ./$(DEPDIR)/sha01.Po
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-tags
@@ -657,6 +668,7 @@ installcheck-am:
 
 maintainer-clean: maintainer-clean-am
 		-rm -f ./$(DEPDIR)/bf01.Po
+	-rm -f ./$(DEPDIR)/sha01.Po
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 

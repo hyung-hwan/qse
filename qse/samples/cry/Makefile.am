@@ -7,7 +7,8 @@ AM_CPPFLAGS = \
 
 
 bin_PROGRAMS = \
-	bf01
+	bf01 \
+	sha01
 	
 AM_LDFLAGS = -L../../lib/cry  -L../../lib/si -L../../lib/cmn
 LDADD = -lqsecry -lqsesi -lqsecmn 
@@ -19,3 +20,4 @@ endif
 endif
 
 bf01_SOURCES = bf01.c
+sha01_SOURCES = sha01.c
