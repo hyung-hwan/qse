@@ -192,7 +192,7 @@ static void SHA1Transform(qse_uint32_t state[5], const qse_uint8_t buffer[64])
 #endif
 }
 
-void qse_sha1_init (qse_sha1_t* sha1)
+void qse_sha1_initialize (qse_sha1_t* sha1)
 {
 	/* SHA1 initialization constants */
 	sha1->state[0] = 0x67452301;
@@ -244,7 +244,7 @@ void qse_sha1_updatex (qse_sha1_t* sha1, const void* data, qse_size_t len)
 }
 
 /* Add padding and return the message digest. */
-qse_size_t qse_sha1_finalize (qse_sha1_t* sha1, void* digest, qse_size_t size)
+qse_size_t qse_sha1_digest (qse_sha1_t* sha1, void* digest, qse_size_t size)
 {
 	qse_size_t i;
 	qse_uint8_t* output = digest;

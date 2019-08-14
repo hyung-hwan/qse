@@ -11,7 +11,8 @@ libqsecry_la_SOURCES =  \
 	blowfish.c  \
 	kseed.c \
 	md5.c \
-	sha1.c
+	sha1.c \
+	sha2.c
 
 libqsecry_la_CFLAGS = 
 libqsecry_la_LDFLAGS = -L../cmn -version-info 1:0:0 -no-undefined
