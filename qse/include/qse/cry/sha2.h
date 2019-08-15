@@ -66,22 +66,18 @@
 #include <qse/types.h>
 #include <qse/macros.h>
 
-/*** SHA-256/384/512 Various Length Definitions ***********************/
-#define QSE_SHA256_BLOCK_LEN		(64)
-#define QSE_SHA256_DIGEST_LEN		(32)
-#define QSE_SHA384_BLOCK_LEN		(128)
-#define QSE_SHA384_DIGEST_LEN		(48)
-#define QSE_SHA512_BLOCK_LEN		(128)
-#define QSE_SHA512_DIGEST_LEN		(64)
-
-
-/*** SHA-256/384/512 Context Structures *******************************/
+#define QSE_SHA256_BLOCK_LEN   (64)
+#define QSE_SHA256_DIGEST_LEN  (32)
+#define QSE_SHA384_BLOCK_LEN   (128)
+#define QSE_SHA384_DIGEST_LEN  (48)
+#define QSE_SHA512_BLOCK_LEN   (128)
+#define QSE_SHA512_DIGEST_LEN  (64)
 
 struct qse_sha256_t 
 {
-	qse_uint32_t state[8];
+	qse_uint32_t  state[8];
 	qse_uint64_t  bitcount;
-	qse_uint8_t  buffer[QSE_SHA256_BLOCK_LEN];
+	qse_uint8_t   buffer[QSE_SHA256_BLOCK_LEN];
 };
 typedef struct qse_sha256_t qse_sha256_t;
 

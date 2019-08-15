@@ -28,16 +28,17 @@
 #ifndef _QSE_CRY_SHA1_H_
 #define _QSE_CRY_SHA1_H_
 
-#define QSE_SHA1_DIGEST_LEN 20
-
 #include <qse/types.h>
 #include <qse/macros.h>
+
+#define QSE_SHA1_DIGEST_LEN (20)
+#define QSE_SHA1_BLOCK_LEN  (64)
 
 struct qse_sha1_t 
 {
 	qse_uint32_t state[5];
 	qse_uint32_t count[2];
-	qse_uint8_t  buffer[64];
+	qse_uint8_t  buffer[QSE_SHA1_BLOCK_LEN];
 };
 typedef struct qse_sha1_t qse_sha1_t;
 
