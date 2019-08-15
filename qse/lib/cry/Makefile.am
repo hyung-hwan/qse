@@ -9,6 +9,7 @@ AM_CPPFLAGS = \
 lib_LTLIBRARIES = libqsecry.la
 libqsecry_la_SOURCES =  \
 	blowfish.c  \
+	hmac.c \
 	kseed.c \
 	md5.c \
 	sha1.c \

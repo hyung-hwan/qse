@@ -341,6 +341,7 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 pkginclude_HEADERS = \
 	blowfish.h \
+	hmac.h \
 	kseed.h \
 	md5.h \
 	sha1.h \

@@ -30,13 +30,14 @@
 #include <qse/types.h>
 #include <qse/macros.h>
 
-#define QSE_MD5_DIGEST_LEN 16
+#define QSE_MD5_DIGEST_LEN (16)
+#define QSE_MD5_BLOCK_LEN  (64)
 
 struct qse_md5_t
 {
 	qse_uint32_t  count[2];
 	qse_uint32_t  state[4];
-	qse_uint8_t   buffer[64];
+	qse_uint8_t   buffer[QSE_MD5_BLOCK_LEN];
 };
 typedef struct qse_md5_t qse_md5_t;
 
