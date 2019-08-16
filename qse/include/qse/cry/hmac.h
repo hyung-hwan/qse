@@ -89,6 +89,41 @@ qse_size_t qse_hmac_digest (
 	qse_size_t   size
 );
 
+
+
+qse_size_t qse_get_hmac_digest_size (
+	qse_hmac_sha_type_t sha_type
+);
+
+qse_size_t qse_get_hmac_block_size (
+	qse_hmac_sha_type_t sha_type
+);
+
+
+
+/* given an array of pointer and length pairs, it creates a string 
+ * prefixed with hmac followed by the pair values encoded in hexdecimal
+ * digits seperated by a dash 
+ */
+qse_mchar_t* qse_encode_hmacstr (
+	qse_hmac_sha_type_t sha_type,
+	const qse_uint8_t*  keyptr,
+	qse_size_t          keylen,
+	qse_xptl_t*         data,
+	qse_size_t          count,
+	qse_mmgr_t*         mmgr
+);
+
+qse_xptl_t* qse_decode_hmacstr (
+	qse_hmac_sha_type_t sha_type,
+	const qse_uint8_t*  keyptr,
+	qse_size_t          keylen,
+	const qse_mchar_t*  hmacstr,
+	qse_size_t*         count,
+	qse_mmgr_t*         mmgr
+);
+
+
 #if defined(__cplusplus)
 }
 #endif
