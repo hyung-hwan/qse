@@ -29,6 +29,7 @@
 
 #include <qse/Types.hpp>
 #include <qse/Uncopyable.hpp>
+#include <qse/cmn/Mmgr.hpp>
 #include <qse/si/mtx.h>
 
 QSE_BEGIN_NAMESPACE(QSE)
