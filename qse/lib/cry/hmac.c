@@ -245,8 +245,9 @@ qse_size_t qse_hmac_digest (qse_hmac_t* ctx, qse_uint8_t* digest, qse_size_t siz
 }
 
 
+/* ------------------------------------------------------------------------ */
 
-qse_mchar_t* qse_encode_hmacstr (qse_hmac_sha_type_t sha_type, const qse_uint8_t* keyptr, qse_size_t keylen, qse_xptl_t* data, qse_size_t count, qse_mmgr_t* mmgr)
+qse_mchar_t* qse_encode_hmacmbs (qse_hmac_sha_type_t sha_type, const qse_uint8_t* keyptr, qse_size_t keylen, qse_xptl_t* data, qse_size_t count, qse_mmgr_t* mmgr)
 {
 	qse_size_t reqsize = 0, i , j;
 	qse_mchar_t* buf, * ptr;
@@ -277,13 +278,14 @@ qse_mchar_t* qse_encode_hmacstr (qse_hmac_sha_type_t sha_type, const qse_uint8_t
 	qse_hmac_digest (&hmac, digest, digest_len);
 
 	ptr = buf;
-	for (i = 0; i < digest_len; i++) ptr += qse_mbsfmt(ptr, ("%02x"), digest[i]);
+	for (i = 0; i < digest_len; i++) ptr += qse_mbsfmt(ptr, QSE_MT("%02x"), digest[i]);
 	*ptr = '-';
 
 	return buf;
 }
 
-qse_xptl_t* qse_decode_hmacstr (qse_hmac_sha_type_t sha_type, const qse_uint8_t* keyptr, qse_size_t keylen, const qse_mchar_t* hmacstr, qse_size_t* count, qse_mmgr_t* mmgr)
+
+qse_xptl_t* qse_decode_hmacmbs (qse_hmac_sha_type_t sha_type, const qse_uint8_t* keyptr, qse_size_t keylen, const qse_mchar_t* hmacstr, qse_size_t* count, qse_mmgr_t* mmgr)
 {
 	qse_uint8_t digest[QSE_HMAC_MAX_DIGEST_LEN];
 	qse_uint8_t orgdig[QSE_HMAC_MAX_DIGEST_LEN];
@@ -346,6 +348,117 @@ qse_xptl_t* qse_decode_hmacstr (qse_hmac_sha_type_t sha_type, const qse_uint8_t*
 		xptl++;
 
 		if (*ptr == QSE_MT('\0')) break;
+		ptr++;
+	}
+
+	*count = segcount;
+	return (qse_xptl_t*)data;
+}
+
+/* ------------------------------------------------------------------------ */
+
+
+qse_wchar_t* qse_encode_hmacwcs (qse_hmac_sha_type_t sha_type, const qse_uint8_t* keyptr, qse_size_t keylen, qse_xptl_t* data, qse_size_t count, qse_mmgr_t* mmgr)
+{
+	qse_size_t reqsize = 0, i , j;
+	qse_wchar_t* buf, * ptr;
+	qse_xptl_t* dptr;
+	qse_hmac_t hmac;
+	qse_uint8_t digest[QSE_HMAC_MAX_DIGEST_LEN];
+	qse_size_t digest_len = sha_digest_size(sha_type);
+
+	for (i = 0, dptr = data; i < count; i++, dptr++) reqsize += 1 + (dptr->len * 2);
+	reqsize += digest_len * 2 + 1;
+
+	buf = (qse_wchar_t*)QSE_MMGR_ALLOC(mmgr, reqsize * QSE_SIZEOF(*buf));
+	if (!buf) return QSE_NULL;
+
+	ptr = &buf[digest_len * 2 + 1];
+	for (i = 0, dptr = data; i < count; i++, dptr++)
+	{
+		for (j = 0; j < dptr->len; j++) 
+		{
+			ptr += qse_wcsfmt(ptr, QSE_WT("%02x"), *((qse_uint8_t*)dptr->ptr + j));
+		}
+		if (i < count - 1) *ptr++ = QSE_WT('-');
+	}
+	*ptr = '\0';
+
+	qse_hmac_initialize (&hmac, sha_type, keyptr, keylen);
+	qse_hmac_update (&hmac, (const qse_uint8_t*)&buf[digest_len * 2 + 1], ptr - &buf[digest_len * 2 + 1]);
+	qse_hmac_digest (&hmac, digest, digest_len);
+
+	ptr = buf;
+	for (i = 0; i < digest_len; i++) ptr += qse_wcsfmt(ptr, QSE_WT("%02x"), digest[i]);
+	*ptr = '-';
+
+	return buf;
+}
+
+
+qse_xptl_t* qse_decode_hmacwcs (qse_hmac_sha_type_t sha_type, const qse_uint8_t* keyptr, qse_size_t keylen, const qse_wchar_t* hmacstr, qse_size_t* count, qse_mmgr_t* mmgr)
+{
+	qse_uint8_t digest[QSE_HMAC_MAX_DIGEST_LEN];
+	qse_uint8_t orgdig[QSE_HMAC_MAX_DIGEST_LEN];
+	qse_size_t digest_len = sha_digest_size(sha_type);
+	const qse_wchar_t* ptr, * segptr, * segstart;
+	qse_size_t seglen, reqlen = 0, segcount = 0, i;
+	qse_uint8_t* data, * uptr;
+	qse_xptl_t* xptl;
+	qse_hmac_t hmac;
+
+	for (ptr = hmacstr, i = 0; *ptr != QSE_WT('\0') && *ptr != QSE_WT('-'); ptr += 2, i++)
+	{
+		if (!QSE_ISWXDIGIT(ptr[0]) || !QSE_ISWXDIGIT(ptr[1])) return QSE_NULL;
+		if (i >= digest_len) return QSE_NULL; /* digest too long */
+		orgdig[i] = QSE_WXDIGITTONUM(ptr[0]) * 16 + QSE_WXDIGITTONUM(ptr[1]);
+	}
+
+	if (*ptr == QSE_WT('\0')) return QSE_NULL; /* no dash found after digest */
+	if (i != digest_len) return QSE_NULL; /* digest too short */
+	ptr++;
+	qse_hmac_initialize (&hmac, sha_type, keyptr, keylen);
+	qse_hmac_update (&hmac, (const qse_uint8_t*)ptr, qse_wcslen(ptr));
+	qse_hmac_digest (&hmac, digest, digest_len);
+
+	if (QSE_MEMCMP(digest, orgdig, digest_len) != 0) return QSE_NULL; /* wrong hmac */
+
+	segstart = ptr;
+	while (1)
+	{
+		segptr = ptr;
+
+		for (ptr = segptr; *ptr != QSE_WT('\0') && *ptr != QSE_WT('-'); ptr++) ;
+		seglen = ptr - segptr;
+
+		if (seglen & 1) return QSE_NULL; /* odd-length segment */
+
+		reqlen += (seglen >> 1) + QSE_SIZEOF(*xptl);
+		segcount++;
+
+		if (*ptr == QSE_WT('\0')) break;
+		ptr++;
+	}
+
+	data = (qse_uint8_t*)QSE_MMGR_ALLOC(mmgr, reqlen);
+	if (!data) return QSE_NULL;
+
+	ptr = segstart;
+	xptl = (qse_xptl_t*)data;
+	uptr = data + (segcount * QSE_SIZEOF(*xptl)); 
+	while (1)
+	{
+		segptr = ptr;
+
+		xptl->ptr = uptr;
+		for (ptr = segptr, i = 0; *ptr != QSE_WT('\0') && *ptr != QSE_WT('-'); ptr += 2, i++)
+		{
+			*uptr++ = QSE_WXDIGITTONUM(ptr[0]) * 16 + QSE_WXDIGITTONUM(ptr[1]);
+		}
+		xptl->len = i;
+		xptl++;
+
+		if (*ptr == QSE_WT('\0')) break;
 		ptr++;
 	}
 

@@ -105,7 +105,7 @@ qse_size_t qse_get_hmac_block_size (
  * prefixed with hmac followed by the pair values encoded in hexdecimal
  * digits seperated by a dash 
  */
-qse_mchar_t* qse_encode_hmacstr (
+qse_mchar_t* qse_encode_hmacmbs (
 	qse_hmac_sha_type_t sha_type,
 	const qse_uint8_t*  keyptr,
 	qse_size_t          keylen,
@@ -114,15 +114,42 @@ qse_mchar_t* qse_encode_hmacstr (
 	qse_mmgr_t*         mmgr
 );
 
-qse_xptl_t* qse_decode_hmacstr (
+qse_xptl_t* qse_decode_hmacmbs (
 	qse_hmac_sha_type_t sha_type,
 	const qse_uint8_t*  keyptr,
 	qse_size_t          keylen,
-	const qse_mchar_t*  hmacstr,
+	const qse_mchar_t*  hmacmbs,
 	qse_size_t*         count,
 	qse_mmgr_t*         mmgr
 );
 
+
+qse_wchar_t* qse_encode_hmacwcs (
+	qse_hmac_sha_type_t sha_type,
+	const qse_uint8_t*  keyptr,
+	qse_size_t          keylen,
+	qse_xptl_t*         data,
+	qse_size_t          count,
+	qse_mmgr_t*         mmgr
+);
+
+qse_xptl_t* qse_decode_hmacwcs (
+	qse_hmac_sha_type_t sha_type,
+	const qse_uint8_t*  keyptr,
+	qse_size_t          keylen,
+	const qse_wchar_t*  hmacwcs,
+	qse_size_t*         count,
+	qse_mmgr_t*         mmgr
+);
+
+
+#if defined(QSE_CHAR_IS_MCHAR)
+#	define qse_encode_hmacstr qse_encode_hmacmbs
+#	define qse_decode_hmacstr qse_decode_hmacmbs
+#else
+#	define qse_encode_hmacstr qse_encode_hmacwcs
+#	define qse_decode_hmacstr qse_decode_hmacwcs
+#endif
 
 #if defined(__cplusplus)
 }
