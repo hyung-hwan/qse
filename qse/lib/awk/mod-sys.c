@@ -381,6 +381,98 @@ static int fnc_write (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 
 /* ------------------------------------------------------------------------ */
 
+/*
+	if (sys::pipe(p0, p1) <= -1)
+	{
+		 print "pipe error";
+		 return -1;
+	}
+	a = sys::fork();
+	if (a <= -1)
+	{
+		 print "fork error";
+		 sys::close (p0);
+		 sys::close (p1);
+	}
+	else if (a > 0)
+	{
+		 ## child
+		 printf ("child.... %d %d %d\n", sys::getpid(), p0, p1);
+		 sys::close (p1);
+		 while (1)
+		 {
+			    n = sys::read (p0, k, 3);
+			    if (n <= 0) break;
+			    print k;
+		 }
+		 sys::close (p0);
+	}
+	else
+	{
+		 ## parent
+		 printf ("parent.... %d %d %d\n", sys::getpid(), p0, p1);
+		 sys::close (p0);
+		 sys::write (p1, B"hello");
+		 sys::write (p1, B"world");
+		 sys::close (p1);
+	}
+*/
+
+static int fnc_pipe (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	/* create low-level pipes */
+
+	sys_list_t* sys_list;
+	sys_node_t* sys_node;
+	int ret = -1;
+	int fds[2];
+
+	sys_list = rtx_to_sys_list(rtx, fi);
+
+/* TODO: use pipe2 if possible */
+	if (pipe(fds) >= 0)
+	{
+		sys_node_t* node1, * node2;
+
+		node1 = new_sys_node(rtx, sys_list, fds[0]);
+		node2 = new_sys_node(rtx, sys_list, fds[1]);
+		if (node1 && node2)
+		{
+			qse_awk_val_t* v;
+			int x;
+
+			v = qse_awk_rtx_makeintval(rtx, node1->id);
+			qse_awk_rtx_refupval (rtx, v);
+			x = qse_awk_rtx_setrefval (rtx, (qse_awk_val_ref_t*)qse_awk_rtx_getarg(rtx, 0), v);
+			qse_awk_rtx_refdownval (rtx, v);
+			if (x <= -1) return -1;
+
+			v = qse_awk_rtx_makeintval(rtx, node2->id);
+			qse_awk_rtx_refupval (rtx, v);
+			x = qse_awk_rtx_setrefval (rtx, (qse_awk_val_ref_t*)qse_awk_rtx_getarg(rtx, 1), v);
+			qse_awk_rtx_refdownval (rtx, v);
+			if (x <= -1) return -1;
+
+			ret = 0;
+		}
+		else
+		{
+			set_error_on_sys_list (rtx, sys_list, QSE_NULL);
+			if (node2) free_sys_node (rtx, sys_list, node2);
+			if (node1) free_sys_node (rtx, sys_list, node1);
+		}
+	}
+	else
+	{
+		set_error_on_sys_list_with_syserr (rtx, sys_list);
+	}
+
+	qse_awk_rtx_setretval (rtx, qse_awk_rtx_makeintval(rtx, ret));
+	return 0;
+}
+
+/* ------------------------------------------------------------------------ */
+
 static int fnc_errmsg (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
 	sys_list_t* sys_list;
@@ -1858,6 +1950,7 @@ static fnctab_t fnctab[] =
 	{ QSE_T("mktime"),      { { 0, 1, QSE_NULL     }, fnc_mktime,      0  } },
 	{ QSE_T("open"),        { { 2, 3, QSE_NULL     }, fnc_open,        0  } },
 	{ QSE_T("openlog"),     { { 3, 3, QSE_NULL     }, fnc_openlog,     0  } },
+	{ QSE_T("pipe"),        { { 2, 2, QSE_T("rr")  }, fnc_pipe,        0  } },
 	{ QSE_T("read"),        { { 2, 3, QSE_T("vrv") }, fnc_read,        0  } },
 	{ QSE_T("settime"),     { { 1, 1, QSE_NULL     }, fnc_settime,     0  } },
 	{ QSE_T("sleep"),       { { 1, 1, QSE_NULL     }, fnc_sleep,       0  } },
