@@ -397,6 +397,9 @@
 /* Define to 1 if you have the <openssl/ssl.h> header file. */
 #undef HAVE_OPENSSL_SSL_H
 
+/* Define to 1 if you have the `pipe2' function. */
+#undef HAVE_PIPE2
+
 /* Define to 1 if you have the <poll.h> header file. */
 #undef HAVE_POLL_H
 
