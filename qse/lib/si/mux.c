@@ -386,6 +386,7 @@ void qse_mux_fini (qse_mux_t* mux)
 
 		QSE_MMGR_FREE (mux->mmgr, mux->me.ptr);
 		mux->me.ubound = 0;
+		mux->me.ptr = QSE_NULL;
 		mux->maxhnd = -1;
 	}
 
@@ -404,6 +405,7 @@ void qse_mux_fini (qse_mux_t* mux)
 
 		QSE_MMGR_FREE (mux->mmgr, mux->me.ptr);
 		mux->me.ubound = 0;
+		mux->me.ptr = QSE_NULL;
 	}
 
 #elif defined(USE_EPOLL)
@@ -414,6 +416,7 @@ void qse_mux_fini (qse_mux_t* mux)
 		QSE_MMGR_FREE (mux->mmgr, mux->ee.ptr);
 		mux->ee.len = 0;
 		mux->ee.capa = 0;
+		mux->ee.ptr = QSE_NULL;
 	}
 
 	if (mux->me.ptr)
@@ -422,12 +425,12 @@ void qse_mux_fini (qse_mux_t* mux)
 
 		for (i = 0; i < mux->me.ubound; i++)
 		{
-			if (mux->me.ptr[i]) 
-				QSE_MMGR_FREE (mux->mmgr, mux->me.ptr[i]);
+			if (mux->me.ptr[i]) QSE_MMGR_FREE (mux->mmgr, mux->me.ptr[i]);
 		}
 
 		QSE_MMGR_FREE (mux->mmgr, mux->me.ptr);
 		mux->me.ubound = 0;
+		mux->me.ptr = QSE_NULL;
 	}
 
 #elif defined(__OS2__)
@@ -443,9 +446,14 @@ void qse_mux_fini (qse_mux_t* mux)
 
 		QSE_MMGR_FREE (mux->mmgr, mux->me.ptr);
 		mux->me.ubound = 0;
+		mux->me.ptr = QSE_NULL;
 	}
 
-	if (mux->fdarr) QSE_MMGR_FREE (mux->mmgr, mux->fdarr);
+	if (mux->fdarr) 
+	{
+		QSE_MMGR_FREE (mux->mmgr, mux->fdarr);
+		mux->fdarr = QSE_NULL;
+	}
 #endif
 }
 
@@ -480,7 +488,7 @@ int qse_mux_insert (qse_mux_t* mux, const qse_mux_evt_t* evt)
 #endif
 
 	/* sanity check */
-	if (!(evt->mask & (QSE_MUX_IN | QSE_MUX_OUT)) || evt->hnd < 0) 
+	if (evt && (!(evt->mask & (QSE_MUX_IN | QSE_MUX_OUT)) || evt->hnd < 0)) 
 	{
 		mux->errnum = QSE_MUX_EINVAL;
 		return -1;
@@ -497,9 +505,9 @@ int qse_mux_insert (qse_mux_t* mux, const qse_mux_evt_t* evt)
 		int ubound;
 
 		ubound = evt->hnd + 1;
-		ubound = QSE_ALIGNTO_POW2 (ubound, 128);
+		ubound = QSE_ALIGNTO_POW2(ubound, 128);
 
-		tmp = QSE_MMGR_REALLOC (mux->mmgr, mux->me.ptr, QSE_SIZEOF(*mux->me.ptr) * ubound);
+		tmp = QSE_MMGR_REALLOC(mux->mmgr, mux->me.ptr, QSE_SIZEOF(*mux->me.ptr) * ubound);
 		if (tmp == QSE_NULL)
 		{
 			mux->errnum = QSE_MUX_ENOMEM;
@@ -513,7 +521,7 @@ int qse_mux_insert (qse_mux_t* mux, const qse_mux_evt_t* evt)
 
 	if (!mux->me.ptr[evt->hnd])
 	{
-		mux->me.ptr[evt->hnd] = QSE_MMGR_ALLOC (mux->mmgr, QSE_SIZEOF(*evt));
+		mux->me.ptr[evt->hnd] = QSE_MMGR_ALLOC(mux->mmgr, QSE_SIZEOF(*evt));
 		if (!mux->me.ptr[evt->hnd])
 		{
 			mux->errnum = QSE_MUX_ENOMEM;
@@ -535,15 +543,13 @@ int qse_mux_insert (qse_mux_t* mux, const qse_mux_evt_t* evt)
 
 	if (evt->mask & QSE_MUX_IN)
 	{
-		EV_SET (&chlist[count], evt->hnd, 
-			EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, 0);
+		EV_SET (&chlist[count], evt->hnd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, 0);
 		count++;
 	}
 
 	if (evt->mask & QSE_MUX_OUT)
 	{
-		EV_SET (&chlist[count], evt->hnd,
-			EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, 0);
+		EV_SET (&chlist[count], evt->hnd, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, 0);
 		count++;
 	}
 
@@ -555,9 +561,9 @@ int qse_mux_insert (qse_mux_t* mux, const qse_mux_evt_t* evt)
 		int ubound;
 
 		ubound = evt->hnd + 1;
-		ubound = QSE_ALIGNTO_POW2 (ubound, 128);
+		ubound = QSE_ALIGNTO_POW2(ubound, 128);
 
-		tmp = QSE_MMGR_REALLOC (mux->mmgr, mux->me.ptr, QSE_SIZEOF(*mux->me.ptr) * ubound);
+		tmp = QSE_MMGR_REALLOC(mux->mmgr, mux->me.ptr, QSE_SIZEOF(*mux->me.ptr) * ubound);
 		if (tmp == QSE_NULL)
 		{
 			mux->errnum = QSE_MUX_ENOMEM;
@@ -571,7 +577,7 @@ int qse_mux_insert (qse_mux_t* mux, const qse_mux_evt_t* evt)
 
 	if (!mux->me.ptr[evt->hnd])
 	{
-		mux->me.ptr[evt->hnd] = QSE_MMGR_ALLOC (mux->mmgr, QSE_SIZEOF(*evt));
+		mux->me.ptr[evt->hnd] = QSE_MMGR_ALLOC(mux->mmgr, QSE_SIZEOF(*evt));
 		if (!mux->me.ptr[evt->hnd])
 		{
 			mux->errnum = QSE_MUX_ENOMEM;
@@ -604,9 +610,9 @@ int qse_mux_insert (qse_mux_t* mux, const qse_mux_evt_t* evt)
 		int ubound;
 
 		ubound = evt->hnd + 1;
-		ubound = QSE_ALIGNTO_POW2 (ubound, 128);
+		ubound = QSE_ALIGNTO_POW2(ubound, 128);
 
-		tmp = QSE_MMGR_REALLOC (mux->mmgr, mux->me.ptr, QSE_SIZEOF(*mux->me.ptr) * ubound);
+		tmp = QSE_MMGR_REALLOC(mux->mmgr, mux->me.ptr, QSE_SIZEOF(*mux->me.ptr) * ubound);
 		if (tmp == QSE_NULL)
 		{
 			mux->errnum = QSE_MUX_ENOMEM;
@@ -637,11 +643,9 @@ int qse_mux_insert (qse_mux_t* mux, const qse_mux_evt_t* evt)
 		qse_size_t newcapa;
 
 		newcapa = (mux->ee.capa + 1) * 2;
-		newcapa = QSE_ALIGNTO_POW2 (newcapa, 256);
+		newcapa = QSE_ALIGNTO_POW2(newcapa, 256);
 
-		tmp = QSE_MMGR_REALLOC (
-			mux->mmgr, mux->ee.ptr,
-			QSE_SIZEOF(*mux->ee.ptr) * newcapa);
+		tmp = QSE_MMGR_REALLOC(mux->mmgr, mux->ee.ptr, QSE_SIZEOF(*mux->ee.ptr) * newcapa);
 		if (tmp == QSE_NULL) 
 		{
 			mux->errnum = QSE_MUX_ENOMEM;
@@ -652,7 +656,7 @@ int qse_mux_insert (qse_mux_t* mux, const qse_mux_evt_t* evt)
 		mux->ee.capa = newcapa;
 	}
 
-	if (epoll_ctl (mux->fd, EPOLL_CTL_ADD, evt->hnd, &ev) == -1) 
+	if (epoll_ctl(mux->fd, EPOLL_CTL_ADD, evt->hnd, &ev) == -1) 
 	{
 		mux->errnum = skerr_to_errnum (errno);
 		return -1;
@@ -671,9 +675,9 @@ int qse_mux_insert (qse_mux_t* mux, const qse_mux_evt_t* evt)
 		int ubound;
 
 		ubound = evt->hnd + 1;
-		ubound = QSE_ALIGNTO_POW2 (ubound, 128);
+		ubound = QSE_ALIGNTO_POW2(ubound, 128);
 
-		tmp = QSE_MMGR_REALLOC (mux->mmgr, mux->me.ptr, QSE_SIZEOF(*mux->me.ptr) * ubound);
+		tmp = QSE_MMGR_REALLOC(mux->mmgr, mux->me.ptr, QSE_SIZEOF(*mux->me.ptr) * ubound);
 		if (tmp == QSE_NULL)
 		{
 			mux->errnum = QSE_MUX_ENOMEM;
@@ -681,7 +685,7 @@ int qse_mux_insert (qse_mux_t* mux, const qse_mux_evt_t* evt)
 		}
 
 		/* maintain this array double the size of the highest handle + 1 */
-		fatmp = QSE_MMGR_REALLOC (mux->mmgr, mux->fdarr, QSE_SIZEOF(*mux->fdarr) * (ubound * 2));
+		fatmp = QSE_MMGR_REALLOC(mux->mmgr, mux->fdarr, QSE_SIZEOF(*mux->fdarr) * (ubound * 2));
 		if (fatmp == QSE_NULL)
 		{
 			QSE_MMGR_FREE (mux->mmgr, tmp);
@@ -697,7 +701,7 @@ int qse_mux_insert (qse_mux_t* mux, const qse_mux_evt_t* evt)
 
 	if (!mux->me.ptr[evt->hnd])
 	{
-		mux->me.ptr[evt->hnd] = QSE_MMGR_ALLOC (mux->mmgr, QSE_SIZEOF(*evt));
+		mux->me.ptr[evt->hnd] = QSE_MMGR_ALLOC(mux->mmgr, QSE_SIZEOF(*evt));
 		if (!mux->me.ptr[evt->hnd])
 		{
 			mux->errnum = QSE_MUX_ENOMEM;
@@ -954,22 +958,41 @@ int qse_mux_poll (qse_mux_t* mux, const qse_ntime_t* tmout)
 #elif defined(USE_EPOLL)
 	int nfds, i;
 	qse_mux_evt_t* evt, xevt;
+	int epoll_tmout;
 
-	nfds = epoll_wait(
-		mux->fd, mux->ee.ptr, mux->ee.len, 
-		(tmout? QSE_SECNSEC_TO_MSEC(tmout->sec,tmout->nsec): -1)
-	);
-	if (nfds <= -1)
+	epoll_tmout = tmout? QSE_SECNSEC_TO_MSEC(tmout->sec,tmout->nsec): -1;
+
+	if (mux->ee.len <= 0)
 	{
-		mux->errnum = skerr_to_errnum(errno);
-		return -1;
+		/* epoll_wait() requires the third parameter to be greater than 0.
+		 * so let me use a dummy variable to prevent an EINVAL error by epoll_wait() */
+
+		struct epoll_event dummy;
+		nfds = epoll_wait(mux->fd, &dummy, 1, epoll_tmout);
+		if (nfds <= -1)
+		{
+			mux->errnum = skerr_to_errnum(errno);
+			return -1;
+		}
+
+		/* nfds is supposed to be 0 as no file descriptors are watched. */
+		nfds = 0; /* but reset this to 0 just in case. */
+	}
+	else
+	{
+		nfds = epoll_wait(mux->fd, mux->ee.ptr, mux->ee.len, epoll_tmout);
+		if (nfds <= -1)
+		{
+			mux->errnum = skerr_to_errnum(errno);
+			return -1;
+		}
 	}
 
 	for (i = 0; i < nfds; i++) 
 	{
 		/*int hnd = mux->ee.ptr[i].data.fd;
 		evt = mux->me.ptr[hnd];
-		QSE_ASSERT (evt->hnd == hnd); */
+		QSE_ASSERT (evt->hnd == hnd);*/
 
 		evt = mux->ee.ptr[i].data.ptr;
 
