@@ -321,7 +321,20 @@ static int fnc_read (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 		ret = read(sys_node->ctx.fd, sys_list->ctx.readbuf, reqsize);
 		if (ret <= 0) 
 		{
-			if (ret <= -1) set_error_on_sys_list_with_syserr(rtx, sys_list);
+			if (ret <= -1) 
+			{
+				if (errno == EINTR) ret = -3;
+			#if defined(EAGAIN) && defined(EWOULDBLOCK) && (EAGAIN == EWOULDBLOCK)
+				else if (errno == EAGAIN) ret = -2;
+			#elif defined(EAGAIN) && defined(EWOULDBLOCK) && (EAGAIN != EWOULDBLOCK)
+				else if (errno == EAGAIN || errno == EWOULDBLOCK) ret = -2;
+			#elif defined(EAGAIN)
+				else if (errno == EAGAIN) ret = -2;
+			#elif defined(EWOULDBLOCK)
+				else if (errno == EWOULDBLOCK) ret = -2;
+			#endif
+				set_error_on_sys_list_with_syserr(rtx, sys_list);
+			}
 			goto done;
 		}
 
@@ -366,7 +379,20 @@ static int fnc_write (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 		if (dptr)
 		{
 			ret = write(sys_node->ctx.fd, dptr, dlen);
-			if (ret <= -1) set_error_on_sys_list_with_syserr(rtx, sys_list);
+			if (ret <= -1) 
+			{
+				if (errno == EINTR) ret = -3;
+			#if defined(EAGAIN) && defined(EWOULDBLOCK) && (EAGAIN == EWOULDBLOCK)
+				else if (errno == EAGAIN) ret = -2;
+			#elif defined(EAGAIN) && defined(EWOULDBLOCK) && (EAGAIN != EWOULDBLOCK)
+				else if (errno == EAGAIN || errno == EWOULDBLOCK) ret = -2;
+			#elif defined(EAGAIN)
+				else if (errno == EAGAIN) ret = -2;
+			#elif defined(EWOULDBLOCK)
+				else if (errno == EWOULDBLOCK) ret = -2;
+			#endif
+				set_error_on_sys_list_with_syserr(rtx, sys_list);
+			}
 			qse_awk_rtx_freevalmbs (rtx, a1, dptr);
 		}
 		else
@@ -382,7 +408,8 @@ static int fnc_write (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 /* ------------------------------------------------------------------------ */
 
 /*
-	if (sys::pipe(p0, p1) <= -1)
+	##if (sys::pipe(p0, p1) <= -1)
+	if (sys::pipe(p0, p1, sys::O_NONBLOCK | sys::O_CLOEXEC) <= -1)
 	{
 		 print "pipe error";
 		 return -1;
@@ -390,31 +417,36 @@ static int fnc_write (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	a = sys::fork();
 	if (a <= -1)
 	{
-		 print "fork error";
-		 sys::close (p0);
-		 sys::close (p1);
+		print "fork error";
+		sys::close (p0);
+		sys::close (p1);
 	}
 	else if (a > 0)
 	{
-		 ## child
-		 printf ("child.... %d %d %d\n", sys::getpid(), p0, p1);
-		 sys::close (p1);
-		 while (1)
-		 {
-			    n = sys::read (p0, k, 3);
-			    if (n <= 0) break;
-			    print k;
-		 }
-		 sys::close (p0);
+		## child
+		printf ("child.... %d %d %d\n", sys::getpid(), p0, p1);
+		sys::close (p1);
+		while (1)
+		{
+			n = sys::read (p0, k, 3);
+			if (n <= 0)
+			{
+				if (n == -2) continue; ## nonblock but data not available
+				if (n <= -1) print "ERROR: " sys::errmsg();
+				break;
+			}
+			print k;
+		}
+		sys::close (p0);
 	}
 	else
 	{
-		 ## parent
-		 printf ("parent.... %d %d %d\n", sys::getpid(), p0, p1);
-		 sys::close (p0);
-		 sys::write (p1, B"hello");
-		 sys::write (p1, B"world");
-		 sys::close (p1);
+		## parent
+		printf ("parent.... %d %d %d\n", sys::getpid(), p0, p1);
+		sys::close (p0);
+		sys::write (p1, B"hello");
+		sys::write (p1, B"world");
+		sys::close (p1);
 	}
 */
 
@@ -426,14 +458,42 @@ static int fnc_pipe (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	sys_node_t* sys_node;
 	int ret = -1;
 	int fds[2];
+	qse_awk_int_t flags = 0;
 
 	sys_list = rtx_to_sys_list(rtx, fi);
 
-/* TODO: use pipe2 if possible */
+	if (qse_awk_rtx_getnargs(rtx) >= 3 && (qse_awk_rtx_valtoint(rtx, qse_awk_rtx_getarg(rtx, 2), &flags) <= -1 || flags < 0)) flags = 0;
+
+#if defined(HAVE_PIPE2)
+	if (pipe2(fds, flags) >= 0)
+#else
 	if (pipe(fds) >= 0)
+#endif
 	{
 		sys_node_t* node1, * node2;
 
+	#if defined(HAVE_PIPE2)
+		/* do nothing extra */
+	#else
+		if (flags > 0)
+		{
+			int nflags = 0;
+
+			/* needs translation from O_XXXX to FD_XXXX */
+		#if defined(O_CLOEXEC) && defined(FD_CLOEXEC)
+			if (flags & O_CLOEXEC) nflags |= FD_CLOEXEC;
+		#endif
+		#if defined(O_NONBLOCK) && defined(FD_NONBLOCK)
+			if (flags & O_NONBLOCK) nflags |= FD_NONBLOCK;
+		#endif
+
+			if (nflags > 0)
+			{
+				fcntl (fds[0], F_SETFD, nflags);
+				fcntl (fds[1], F_SETFD, nflags);
+			}
+		}
+	#endif
 		node1 = new_sys_node(rtx, sys_list, fds[0]);
 		node2 = new_sys_node(rtx, sys_list, fds[1]);
 		if (node1 && node2)
@@ -1950,7 +2010,7 @@ static fnctab_t fnctab[] =
 	{ QSE_T("mktime"),      { { 0, 1, QSE_NULL     }, fnc_mktime,      0  } },
 	{ QSE_T("open"),        { { 2, 3, QSE_NULL     }, fnc_open,        0  } },
 	{ QSE_T("openlog"),     { { 3, 3, QSE_NULL     }, fnc_openlog,     0  } },
-	{ QSE_T("pipe"),        { { 2, 2, QSE_T("rr")  }, fnc_pipe,        0  } },
+	{ QSE_T("pipe"),        { { 2, 3, QSE_T("rrv") }, fnc_pipe,        0  } },
 	{ QSE_T("read"),        { { 2, 3, QSE_T("vrv") }, fnc_read,        0  } },
 	{ QSE_T("settime"),     { { 1, 1, QSE_NULL     }, fnc_settime,     0  } },
 	{ QSE_T("sleep"),       { { 1, 1, QSE_NULL     }, fnc_sleep,       0  } },
@@ -1991,7 +2051,6 @@ static fnctab_t fnctab[] =
 static inttab_t inttab[] =
 {
 	/* keep this table sorted for binary search in query(). */
-
 #if defined(ENABLE_SYSLOG)
 	{ QSE_T("LOG_FAC_AUTH"),       { LOG_AUTH } },
 	{ QSE_T("LOG_FAC_AUTHPRIV"),   { LOG_AUTHPRIV } },

@@ -118,8 +118,8 @@ dnl check functions
 AC_CHECK_FUNCS([uselocale])
 AC_CHECK_FUNCS([mbrlen mbrtowc wcrtomb])
 AC_CHECK_FUNCS([mbsnrtowcs mbsrtowcs wcsnrtombs wcsrtombs])
-AC_CHECK_FUNCS([wctype iswctype wctrans towctrans])
-AC_CHECK_FUNCS([isblank iswblank])
+AC_CHECK_FUNCS([wctype iswctype wctrans towctrans isblank iswblank])
+AC_CHECK_FUNCS([snprintf _vsnprintf _vsnwprintf])
 AC_CHECK_FUNCS([lseek64 ftruncate64 readdir64 dirfd])
 AC_CHECK_FUNCS([stat64 fstat64 lstat64 fstatat64])
 AC_CHECK_FUNCS([fstat fstatat])
@@ -130,8 +130,7 @@ AC_CHECK_FUNCS([sysconf prctl fdopendir setrlimit getrlimit getpgid getpgrp])
 AC_CHECK_FUNCS([backtrace backtrace_symbols])
 AC_CHECK_FUNCS([fork vfork posix_spawn gettid nanosleep select])
 AC_CHECK_FUNCS([makecontext swapcontext getcontext setcontext])
-AC_CHECK_FUNCS([snprintf _vsnprintf _vsnwprintf])
-AC_CHECK_FUNCS([accept4 sendmsg recvmsg writev readv])
+AC_CHECK_FUNCS([pipe2 accept4 sendmsg recvmsg writev readv])
 
 OLDLIBS="$LIBS"
 LIBS="$LIBM $LIBS"
