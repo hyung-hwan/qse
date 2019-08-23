@@ -67,6 +67,16 @@
 
 
 #define DEFAULT_MODE (0777)
+
+#define RX_ERROR (-1)
+#define RX_EAGAIN (-2)
+#define RX_EINTR (-3)
+#define RX_EINVAL (-4)
+#define RX_ECHILD (-5)
+#define RX_EPERM (-6)
+#define RX_ENOMEM (-7)
+#define RX_ENOSYS (-7)
+
 /* ------------------------------------------------------------------------ */
 
 typedef enum syslog_type_t syslog_type_t;
@@ -126,6 +136,28 @@ typedef struct rtx_data_t rtx_data_t;
 
 /* ------------------------------------------------------------------------ */
 
+static int syserr_to_rx_code (int syserr)
+{
+	switch (syserr)
+	{
+	#if defined(EAGAIN) && defined(EWOULDBLOCK) && (EAGAIN == EWOULDBLOCK)
+		case EAGAIN: return RX_EAGAIN;
+	#elif defined(EAGAIN) && defined(EWOULDBLOCK) && (EAGAIN != EWOULDBLOCK)
+		case EAGAIN: case EWOULDBLOCK: return RX_EAGAIN;
+	#elif defined(EAGAIN)
+		case EAGAIN: return RX_EAGAIN;
+	#elif defined(EWOULDBLOCK)
+		case EWOULDBLOCK: return RX_EAGAIN;
+	#endif
+		case EINTR:  return RX_EINTR;
+		case EINVAL: return RX_EINVAL;
+		case ECHILD: return RX_ECHILD;
+		case EPERM:  return RX_EPERM;
+		case ENOMEM:  return RX_ENOMEM;
+		case ENOSYS:  return RX_ENOSYS;
+		default: return RX_ERROR;
+	}
+}
 static void set_error_on_sys_list (qse_awk_rtx_t* rtx, sys_list_t* sys_list, const qse_char_t* errfmt, ...)
 {
 	if (errfmt)
@@ -213,17 +245,17 @@ static int fnc_close (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
 	sys_list_t* sys_list;
 	sys_node_t* sys_node;
-	int ret = -1;
+	int rx = RX_ERROR;
 
 	sys_list = rtx_to_sys_list(rtx, fi);
 	sys_node = get_sys_list_node_with_arg(rtx, sys_list, qse_awk_rtx_getarg(rtx, 0));
 	if (sys_node)
 	{
 		free_sys_node (rtx, sys_list, sys_node);
-		ret = 0;
+		rx = 0;
 	}
 
-	qse_awk_rtx_setretval (rtx, qse_awk_rtx_makeintval(rtx, ret));
+	qse_awk_rtx_setretval (rtx, qse_awk_rtx_makeintval(rtx, rx));
 	return 0;
 }
 
@@ -239,7 +271,7 @@ static int fnc_open (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
 	sys_list_t* sys_list;
 	sys_node_t* sys_node = QSE_NULL;
-	qse_awk_int_t ret = -1, flags = 0, mode = DEFAULT_MODE;
+	qse_awk_int_t rx = RX_ERROR, flags = 0, mode = DEFAULT_MODE;
 	int fd = -1;
 	qse_mchar_t* pstr;
 	qse_size_t plen;
@@ -266,7 +298,7 @@ static int fnc_open (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 		sys_node = new_sys_node(rtx, sys_list, fd);
 		if (sys_node) 
 		{
-			ret = sys_node->id;
+			rx = sys_node->id;
 		}
 		else 
 		{
@@ -276,12 +308,13 @@ static int fnc_open (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	}
 	else
 	{
+		rx = syserr_to_rx_code(errno);
 		set_error_on_sys_list_with_syserr (rtx, sys_list);
 	}
 
-	/* ret may not be a statically managed number. 
+	/* rx may not be a statically managed number. 
 	 * error checking is required */
-	retv = qse_awk_rtx_makeintval(rtx, ret);
+	retv = qse_awk_rtx_makeintval(rtx, rx);
 	if (retv == QSE_NULL)
 	{
 		if (sys_node) free_sys_node (rtx, sys_list, sys_node);
@@ -296,7 +329,7 @@ static int fnc_read (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
 	sys_list_t* sys_list;
 	sys_node_t* sys_node;
-	qse_awk_int_t ret = -1;
+	qse_awk_int_t rx = RX_ERROR;
 	qse_awk_int_t reqsize = 8192;
 
 	if (qse_awk_rtx_getnargs(rtx) >= 3 && (qse_awk_rtx_valtoint(rtx, qse_awk_rtx_getarg(rtx, 2), &reqsize) <= -1 || reqsize <= 0)) reqsize = 8192;
@@ -318,32 +351,23 @@ static int fnc_read (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 			sys_list->ctx.readbuf_capa = reqsize;
 		}
 
-		ret = read(sys_node->ctx.fd, sys_list->ctx.readbuf, reqsize);
-		if (ret <= 0) 
+		rx = read(sys_node->ctx.fd, sys_list->ctx.readbuf, reqsize);
+		if (rx <= 0) 
 		{
-			if (ret <= -1) 
+			if (rx <= -1) 
 			{
-				if (errno == EINTR) ret = -3;
-			#if defined(EAGAIN) && defined(EWOULDBLOCK) && (EAGAIN == EWOULDBLOCK)
-				else if (errno == EAGAIN) ret = -2;
-			#elif defined(EAGAIN) && defined(EWOULDBLOCK) && (EAGAIN != EWOULDBLOCK)
-				else if (errno == EAGAIN || errno == EWOULDBLOCK) ret = -2;
-			#elif defined(EAGAIN)
-				else if (errno == EAGAIN) ret = -2;
-			#elif defined(EWOULDBLOCK)
-				else if (errno == EWOULDBLOCK) ret = -2;
-			#endif
+				rx = syserr_to_rx_code(errno);
 				set_error_on_sys_list_with_syserr(rtx, sys_list);
 			}
 			goto done;
 		}
 
-		if (ret > 0)
+		if (rx > 0)
 		{
 			qse_awk_val_t* sv;
 			int x;
 
-			sv = qse_awk_rtx_makembsval(rtx, sys_list->ctx.readbuf, ret);
+			sv = qse_awk_rtx_makembsval(rtx, sys_list->ctx.readbuf, rx);
 			if (!sv) return -1;
 
 			qse_awk_rtx_refupval (rtx, sv);
@@ -354,9 +378,9 @@ static int fnc_read (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	}
 
 done:
-	/* the value in 'ret' never exceeds QSE_AWK_QUICKINT_MAX as 'reqsize' has been limited to
+	/* the value in 'rx' never exceeds QSE_AWK_QUICKINT_MAX as 'reqsize' has been limited to
 	 * it before the call to 'read'. so it's safe not to check the result of qse_awk_rtx_makeintval() */
-	qse_awk_rtx_setretval (rtx, qse_awk_rtx_makeintval(rtx, ret));
+	qse_awk_rtx_setretval (rtx, qse_awk_rtx_makeintval(rtx, rx));
 	return 0;
 }
 
@@ -364,7 +388,7 @@ static int fnc_write (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
 	sys_list_t* sys_list;
 	sys_node_t* sys_node;
-	qse_awk_int_t ret = -1;
+	qse_awk_int_t rx = RX_ERROR;
 
 	sys_list = rtx_to_sys_list(rtx, fi);
 	sys_node = get_sys_list_node_with_arg(rtx, sys_list, qse_awk_rtx_getarg(rtx, 0));
@@ -378,19 +402,10 @@ static int fnc_write (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 		dptr = qse_awk_rtx_getvalmbs(rtx, a1, &dlen);
 		if (dptr)
 		{
-			ret = write(sys_node->ctx.fd, dptr, dlen);
-			if (ret <= -1) 
+			rx = write(sys_node->ctx.fd, dptr, dlen);
+			if (rx <= -1) 
 			{
-				if (errno == EINTR) ret = -3;
-			#if defined(EAGAIN) && defined(EWOULDBLOCK) && (EAGAIN == EWOULDBLOCK)
-				else if (errno == EAGAIN) ret = -2;
-			#elif defined(EAGAIN) && defined(EWOULDBLOCK) && (EAGAIN != EWOULDBLOCK)
-				else if (errno == EAGAIN || errno == EWOULDBLOCK) ret = -2;
-			#elif defined(EAGAIN)
-				else if (errno == EAGAIN) ret = -2;
-			#elif defined(EWOULDBLOCK)
-				else if (errno == EWOULDBLOCK) ret = -2;
-			#endif
+				rx = syserr_to_rx_code(errno);
 				set_error_on_sys_list_with_syserr(rtx, sys_list);
 			}
 			qse_awk_rtx_freevalmbs (rtx, a1, dptr);
@@ -401,7 +416,7 @@ static int fnc_write (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 		}
 	}
 
-	qse_awk_rtx_setretval (rtx, qse_awk_rtx_makeintval(rtx, ret));
+	qse_awk_rtx_setretval (rtx, qse_awk_rtx_makeintval(rtx, rx));
 	return 0;
 }
 
@@ -456,8 +471,7 @@ static int fnc_pipe (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	/* create low-level pipes */
 
 	sys_list_t* sys_list;
-	sys_node_t* sys_node;
-	int ret = -1;
+	int rx = RX_ERROR;
 	int fds[2];
 	qse_awk_int_t flags = 0;
 
@@ -514,7 +528,7 @@ static int fnc_pipe (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 			qse_awk_rtx_refdownval (rtx, v);
 			if (x <= -1) return -1;
 
-			ret = 0;
+			rx = 0;
 		}
 		else
 		{
@@ -525,10 +539,11 @@ static int fnc_pipe (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	}
 	else
 	{
+		rx = syserr_to_rx_code(errno);
 		set_error_on_sys_list_with_syserr (rtx, sys_list);
 	}
 
-	qse_awk_rtx_setretval (rtx, qse_awk_rtx_makeintval(rtx, ret));
+	qse_awk_rtx_setretval (rtx, qse_awk_rtx_makeintval(rtx, rx));
 	return 0;
 }
 
@@ -556,21 +571,25 @@ static int fnc_fork (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 
 #if defined(_WIN32)
 	/* TOOD: implement this*/
-	pid = -1;
+	pid = RX_ERROR;
 	set_error_on_sys_list (rtx, rtx_to_sys_list(rtx, fi), QSE_T("not implemented"));
 #elif defined(__OS2__)
 	/* TOOD: implement this*/
-	pid = -1;
+	pid = RX_ERROR;
 	set_error_on_sys_list (rtx, rtx_to_sys_list(rtx, fi), QSE_T("not implemented"));
 	
 #elif defined(__DOS__)
 	/* TOOD: implement this*/
-	pid = -1;
+	pid = RX_ERROR;
 	set_error_on_sys_list (rtx, rtx_to_sys_list(rtx, fi), QSE_T("not implemented"));
 
 #else
-	pid = fork ();
-	if (pid <= -1) set_error_on_sys_list_with_syserr (rtx, rtx_to_sys_list(rtx, fi));
+	pid = fork();
+	if (pid <= -1) 
+	{
+		pid = syserr_to_rx_code(errno);
+		set_error_on_sys_list_with_syserr (rtx, rtx_to_sys_list(rtx, fi));
+	}
 #endif
 
 	retv = qse_awk_rtx_makeintval(rtx, pid);
@@ -600,22 +619,26 @@ static int fnc_wait (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	{
 #if defined(_WIN32)
 		/* TOOD: implement this*/
-		rx = -1;
+		rx = RX_ERROR;
 		status = 0;
 		set_error_on_sys_list (rtx, rtx_to_sys_list(rtx, fi), QSE_T("not implemented"));
 #elif defined(__OS2__)
 		/* TOOD: implement this*/
-		rx = -1;
+		rx = RX_ERROR;
 		status = 0;
 		set_error_on_sys_list (rtx, rtx_to_sys_list(rtx, fi), QSE_T("not implemented"));
 #elif defined(__DOS__)
 		/* TOOD: implement this*/
-		rx = -1;
+		rx = RX_ERROR;
 		status = 0;
 		set_error_on_sys_list (rtx, rtx_to_sys_list(rtx, fi), QSE_T("not implemented"));
 #else
 		rx = waitpid(pid, &status, opts);
-		if (rx <= -1) set_error_on_sys_list_with_syserr (rtx, rtx_to_sys_list(rtx, fi));
+		if (rx <= -1) 
+		{
+			rx = syserr_to_rx_code(errno);
+			set_error_on_sys_list_with_syserr (rtx, rtx_to_sys_list(rtx, fi));
+		}
 #endif
 	}
 
@@ -708,29 +731,33 @@ static int fnc_kill (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	if (qse_awk_rtx_valtoint(rtx, qse_awk_rtx_getarg (rtx, 0), &pid) <= -1 ||
 	    qse_awk_rtx_valtoint(rtx, qse_awk_rtx_getarg (rtx, 1), &sig) <= -1)
 	{
-		rx = -1;
+		rx = RX_ERROR;
 	}
 	else
 	{
 #if defined(_WIN32)
 		/* TOOD: implement this*/
-		rx = -1;
+		rx = RX_ERROR;
 		set_error_on_sys_list (rtx, rtx_to_sys_list(rtx, fi), QSE_T("not implemented"));
 #elif defined(__OS2__)
 		/* TOOD: implement this*/
-		rx = -1;
+		rx = RX_ERROR;
 		set_error_on_sys_list (rtx, rtx_to_sys_list(rtx, fi), QSE_T("not implemented"));
 #elif defined(__DOS__)
 		/* TOOD: implement this*/
-		rx = -1;
+		rx = RX_ERROR;
 		set_error_on_sys_list (rtx, rtx_to_sys_list(rtx, fi), QSE_T("not implemented"));
 #else
 		rx = kill(pid, sig);
-		if (rx <= -1) set_error_on_sys_list_with_syserr (rtx, rtx_to_sys_list(rtx, fi));
+		if (rx <= -1) 
+		{
+			rx = syserr_to_rx_code(errno);
+			set_error_on_sys_list_with_syserr (rtx, rtx_to_sys_list(rtx, fi));
+		}
 #endif
 	}
 
-	retv = qse_awk_rtx_makeintval (rtx, rx);
+	retv = qse_awk_rtx_makeintval(rtx, rx);
 	if (retv == QSE_NULL) return -1;
 
 	qse_awk_rtx_setretval (rtx, retv);
@@ -768,7 +795,7 @@ static int fnc_getpgid (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	#endif
 #endif
 
-	retv = qse_awk_rtx_makeintval (rtx, pid);
+	retv = qse_awk_rtx_makeintval(rtx, pid);
 	if (retv == QSE_NULL) return -1;
 
 	qse_awk_rtx_setretval (rtx, retv);
@@ -1076,11 +1103,11 @@ static int fnc_settime (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 
 	now.nsec = 0;
 
-	if (qse_awk_rtx_valtoint (rtx, qse_awk_rtx_getarg (rtx, 0), &tmp) <= -1) rx = -1;
+	if (qse_awk_rtx_valtoint(rtx, qse_awk_rtx_getarg (rtx, 0), &tmp) <= -1) rx = -1;
 	else
 	{
 		now.sec = tmp;
-		if (qse_settime (&now) <= -1) rx = -1;
+		if (qse_settime(&now) <= -1) rx = -1;
 		else rx = 0;
 	}
 
