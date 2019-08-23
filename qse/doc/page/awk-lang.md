@@ -1366,6 +1366,95 @@ The *dir* module provides an interface to read file names in a specified directo
  }
 ~~~~~
 
+### System ###
+
+- sys::chmod
+- sys::close
+- sys::errmsg
+- sys::fork
+- sys::getegid
+- sys::getenv
+- sys::geteuid
+- sys::getgid
+- sys::getpid
+- sys::getppid
+- sys::gettid
+- sys::gettime
+- sys::getuid
+- sys::kill
+- sys::mkdir
+- sys::mktime
+- sys::open
+- sys::pipe
+- sys::read
+- sys::setttime
+- sys::sleep
+- sys::strftime
+- sys::system
+- sys::unlink
+- sys::wait
+- sys::write
+
+~~~~~{.awk}
+BEGIN {
+        f = sys::open("/etc/sysctl.conf", sys::O_RDONLY);
+        while (sys::read(f, x, 10) > 0) printf (B"%s", x);
+        sys::close (f);
+}
+~~~~~
+
+~~~~~{.awk}
+BEGIN {
+	if (sys::pipe(p0, p1, sys::O_CLOEXEC | sys::O_NONBLOCK) <= -1)
+	##if (sys::pipe(p0, p1, sys::O_CLOEXEC) <= -1)
+	##if (sys::pipe(p0, p1) <= -1)
+	{
+		print "pipe error";
+		return -1;
+	}
+	a = sys::fork();
+	if (a <= -1) 
+	{
+		print "fork error";
+		sys::close (p0);
+		sys::close (p1);
+	}
+	else if (a == 0)
+	{
+		## child
+		printf ("child.... %d %d %d\n", sys::getpid(), p0, p1);
+		sys::close (p1);
+		while (1)
+		{
+			n = sys::read (p0, k, 3);
+			if (n <= 0) 
+			{
+				if (n == -2) continue;
+				if (n <= -1) print "ERROR: " sys::errmsg();
+				break;
+			}
+			print k;
+		}
+		sys::close (p0);
+		return 123;
+	}
+	else
+	{
+		## parent
+		printf ("parent.... %d %d %d\n", sys::getpid(), p0, p1);
+		sys::close (p0);
+		sys::write (p1, B"hello");
+		sys::write (p1, B"world");
+		sys::close (p1);
+
+		##sys::wait(a, status, sys::WNOHANG);
+		while (sys::wait(a, status) != a);
+		if (sys::WIFEXITED(status)) print "Exit code: " sys::WEXITSTATUS(status);
+		else print "Child terminated abnormally"
+	}
+}
+~~~~~
+
 ### SED ###
 
 The *sed* module provides built-in sed capabilities.
@@ -1376,7 +1465,7 @@ The *sed* module provides built-in sed capabilities.
 
 ~~~~~{.awk}
  BEGIN { 
-    x = sed::file_to_file ("s/[a-z]/#/g", "in.txt", "out.txt");
+    x = sed::file_to_file("s/[a-z]/#/g", "in.txt", "out.txt");
     if (x <= -1) printf ("ERROR: %s\n"), sed::errstr(x));
  }
 ~~~~~
