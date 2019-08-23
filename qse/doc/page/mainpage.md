@@ -13,7 +13,7 @@ aspects of embedding application and an embedded object from each other.
 The library is licensed under the GNU Lesser General Public License version 3:
 http://www.gnu.org/licenses/
 
-The project webpage: http://code.abiyo.net/@qse or http://qse.googlecode.com
+The project webpage: https://code.miflux.com/@qse or https://github.com/hyung-hwan/qse
 
 For further information, contact:
 Chung, Hyung-Hwan <hyunghwan.chung@gmail.com>

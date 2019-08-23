@@ -229,7 +229,7 @@ static int fnc_close (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 
 /*
   BEGIN {
-     f = sys::open ("/tmp/test.txt", O_RDONLY);
+     f = sys::open ("/tmp/test.txt", sys::O_RDONLY);
      while (sys::read(f, x, 10) > 0) printf (B"%s", x);
      sys::close (f);
   }
@@ -421,7 +421,7 @@ static int fnc_write (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 		sys::close (p0);
 		sys::close (p1);
 	}
-	else if (a > 0)
+	else if (a == 0)
 	{
 		## child
 		printf ("child.... %d %d %d\n", sys::getpid(), p0, p1);
@@ -447,6 +447,7 @@ static int fnc_write (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 		sys::write (p1, B"hello");
 		sys::write (p1, B"world");
 		sys::close (p1);
+		sys::wait(a);
 	}
 */
 
