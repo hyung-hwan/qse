@@ -488,7 +488,7 @@ int qse_mux_insert (qse_mux_t* mux, const qse_mux_evt_t* evt)
 #endif
 
 	/* sanity check */
-	if (evt && (!(evt->mask & (QSE_MUX_IN | QSE_MUX_OUT)) || evt->hnd < 0)) 
+	if (!(evt->mask & (QSE_MUX_IN | QSE_MUX_OUT)) || evt->hnd < 0) 
 	{
 		mux->errnum = QSE_MUX_EINVAL;
 		return -1;
