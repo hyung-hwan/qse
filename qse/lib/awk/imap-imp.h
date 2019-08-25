@@ -77,7 +77,7 @@ static __IMAP_NODE_T* __MAKE_IMAP_NODE (qse_awk_rtx_t* rtx, __IMAP_LIST_T* list)
 			__IMAP_NODE_T** tmp;
 
 			inc = QSE_TYPE_MAX(int) - list->map.capa;
-			if (inc == 0) goto oops; /* too many ndoes */
+			if (inc == 0) goto oops; /* too many nodes */
 
 			if (inc > 64) inc = 64;
 			newcapa = (qse_size_t)list->map.capa + inc;

@@ -25,7 +25,7 @@
  */
 
 #include "mod-sys.h"
-#include "val.h" /* QSE_AWK_QUICKINT_MAX.. need to exclude this line if the items gets available in qse/awk/awk.h */
+#include "val.h" /* for QSE_AWK_QUICKINT_MAX */
 #include <qse/cmn/str.h>
 #include <qse/cmn/chr.h>
 #include <qse/cmn/time.h>
@@ -66,7 +66,6 @@
 #include <errno.h>
 #include <string.h>
 
-
 #define DEFAULT_MODE (0777)
 
 enum sys_rc_t
@@ -80,8 +79,10 @@ enum sys_rc_t
 	RC_EINVAL = -7,
 	RC_ECHILD = -8,
 	RC_EPERM = -9,
-	RC_EBADF = -10
-	
+	RC_EBADF = -10,
+	RC_ENOENT = -11,
+	RC_EEXIST = -12,
+	RC_ENOTDIR = -13
 };
 typedef enum sys_rc_t sys_rc_t;
 
@@ -182,6 +183,40 @@ static QSE_INLINE sys_rc_t syserr_to_rc (int syserr)
 	}
 }
 
+static QSE_INLINE sys_rc_t direrr_to_rc (qse_dir_errnum_t direrr)
+{
+	switch (direrr)
+	{
+		case QSE_DIR_ENOIMPL: return RC_ENOIMPL;
+		case QSE_DIR_ENOMEM: return RC_ENOMEM;
+		case QSE_DIR_EINVAL: return RC_EINVAL;
+		case QSE_DIR_EPERM: return RC_EPERM;
+		case QSE_DIR_ENOENT: return RC_ENOENT;
+		case QSE_DIR_EEXIST: return RC_EEXIST;
+		case QSE_DIR_ENOTDIR: return RC_ENOTDIR;
+		case QSE_DIR_EINTR: return RC_EINTR;
+		case QSE_DIR_EAGAIN: return RC_EAGAIN;
+
+		default: return RC_ERROR;
+	}
+}
+
+static QSE_INLINE sys_rc_t awkerr_to_rc (qse_dir_errnum_t awkerr)
+{
+	switch (awkerr)
+	{
+		case QSE_AWK_ENOIMPL: return RC_ENOIMPL;
+		case QSE_AWK_ENOMEM: return RC_ENOMEM;
+		case QSE_AWK_EINVAL: return RC_EINVAL;
+		case QSE_AWK_EPERM: return RC_EPERM;
+		case QSE_AWK_ENOENT: return RC_ENOENT;
+		case QSE_AWK_EEXIST: return RC_EEXIST;
+
+		default: return RC_ERROR;
+	}
+}
+
+
 static const qse_char_t* rc_to_errstr (sys_rc_t rc)
 {
 	switch (rc)
@@ -189,10 +224,13 @@ static const qse_char_t* rc_to_errstr (sys_rc_t rc)
 		case RC_EAGAIN:  return QSE_T("resource temporarily unavailable");
 		case RC_EBADF:   return QSE_T("bad file descriptor");
 		case RC_ECHILD:  return QSE_T("no child processes");
+		case RC_EEXIST:  return QSE_T("file exists");
 		case RC_EINTR:   return QSE_T("interrupted");
 		case RC_EINVAL:  return QSE_T("invalid argument");
+		case RC_ENOENT:  return QSE_T("no such file or directory");
 		case RC_ENOIMPL: return QSE_T("not implemented"); /* not implemented in this module */
 		case RC_ENOMEM:  return QSE_T("not enough space");
+		case RC_ENOTDIR: return QSE_T("not a directory");
 		case RC_ENOSYS:  return QSE_T("not implemented in system");
 		case RC_EPERM:   return QSE_T("operation not permitted");
 		case RC_ERROR:   return QSE_T("error");
@@ -364,11 +402,10 @@ static int fnc_open (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	sys_list_t* sys_list;
 	sys_node_t* sys_node = QSE_NULL;
 	qse_awk_int_t rx = RC_ERROR, flags = 0, mode = DEFAULT_MODE;
-	int fd = RC_ERROR;
+	int fd;
 	qse_mchar_t* pstr;
 	qse_size_t plen;
 	qse_awk_val_t* a0;
-	qse_awk_val_t* retv;
 
 	sys_list = rtx_to_sys_list(rtx, fi);
 
@@ -394,6 +431,7 @@ static int fnc_open (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 		}
 		else 
 		{
+			close (fd);
 		fail:
 			set_errmsg_on_sys_list (rtx, sys_list, QSE_NULL);
 		}
@@ -404,16 +442,8 @@ static int fnc_open (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 		set_errmsg_on_sys_list_with_syserr (rtx, sys_list);
 	}
 
-	/* rx may not be a statically managed number. 
-	 * error checking is required */
-	retv = qse_awk_rtx_makeintval(rtx, rx);
-	if (retv == QSE_NULL)
-	{
-		if (sys_node) free_sys_node (rtx, sys_list, sys_node);
-		return -1;
-	}
-
-	qse_awk_rtx_setretval (rtx, retv);
+	QSE_ASSERT (QSE_AWK_IN_QUICKINT_RANGE(rx));
+	qse_awk_rtx_setretval (rtx, qse_awk_rtx_makeintval(rtx, rx));
 	return 0;
 }
 
@@ -453,8 +483,7 @@ static int fnc_read (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 			}
 			goto done;
 		}
-
-		if (rx > 0)
+		else
 		{
 			qse_awk_val_t* sv;
 			int x;
@@ -551,7 +580,7 @@ static int fnc_write (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 				if (n == sys::RC_EAGAIN) continue; ## nonblock but data not available
 				if (n != 0) print "ERROR: " sys::errmsg();
 				break;
-			}	
+			}
 			print k;
 		}
 		sys::close (p0);
@@ -619,16 +648,24 @@ static int fnc_pipe (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 			int x;
 
 			v = qse_awk_rtx_makeintval(rtx, node1->id);
+			if (!v) 
+			{
+			fail:
+				free_sys_node (rtx, sys_list, node1);
+				free_sys_node (rtx, sys_list, node2);
+				return -1;
+			}
 			qse_awk_rtx_refupval (rtx, v);
 			x = qse_awk_rtx_setrefval (rtx, (qse_awk_val_ref_t*)qse_awk_rtx_getarg(rtx, 0), v);
 			qse_awk_rtx_refdownval (rtx, v);
-			if (x <= -1) return -1;
+			if (x <= -1) goto fail;
 
 			v = qse_awk_rtx_makeintval(rtx, node2->id);
+			if (!v) goto fail;
 			qse_awk_rtx_refupval (rtx, v);
 			x = qse_awk_rtx_setrefval (rtx, (qse_awk_val_ref_t*)qse_awk_rtx_getarg(rtx, 1), v);
 			qse_awk_rtx_refdownval (rtx, v);
-			if (x <= -1) return -1;
+			if (x <= -1) goto fail;
 
 			rx = 0;
 		}
@@ -645,6 +682,143 @@ static int fnc_pipe (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 		set_errmsg_on_sys_list_with_syserr (rtx, sys_list);
 	}
 
+	qse_awk_rtx_setretval (rtx, qse_awk_rtx_makeintval(rtx, rx));
+	return 0;
+}
+/* ------------------------------------------------------------------------ */
+
+/*
+        d = sys::opendir("/etc", sys::DIR_SORT);
+        if (d >= 0)
+        {
+                while (sys::readdir(d,a) > 0) print a;
+                sys::closedir(d);
+        }
+*/
+
+static int fnc_opendir (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	sys_list_t* sys_list;
+	sys_node_t* sys_node = QSE_NULL;
+	qse_awk_int_t rx = RC_ERROR, flags = 0;
+	qse_char_t* pstr;
+	qse_size_t plen;
+	qse_awk_val_t* a0;
+	qse_dir_t* dir;
+	qse_dir_errnum_t oe;
+
+	sys_list = rtx_to_sys_list(rtx, fi);
+
+	if (qse_awk_rtx_getnargs(rtx) >= 2 && (qse_awk_rtx_valtoint(rtx, qse_awk_rtx_getarg(rtx, 1), &flags) <= -1 || flags < 0)) flags = 0;
+
+	a0 = qse_awk_rtx_getarg(rtx, 0);
+	pstr = qse_awk_rtx_getvalstr(rtx, a0, &plen);
+	if (!pstr) goto fail;
+	dir = qse_dir_open(qse_awk_rtx_getmmgr(rtx), 0, pstr, flags, &oe);
+	qse_awk_rtx_freevalstr (rtx, a0, pstr);
+
+	if (dir)
+	{
+		sys_node = new_sys_node_dir(rtx, sys_list, dir);
+		if (sys_node) 
+		{
+			rx = sys_node->id;
+		}
+		else 
+		{
+			qse_dir_close(dir);
+		fail:
+			set_errmsg_on_sys_list (rtx, sys_list, QSE_NULL);
+		}
+	}
+	else
+	{
+		rx = direrr_to_rc(oe);
+		set_errmsg_on_sys_list (rtx, sys_list, rc_to_errstr(rx));
+	}
+
+	QSE_ASSERT (QSE_AWK_IN_QUICKINT_RANGE(rx));
+	qse_awk_rtx_setretval (rtx, qse_awk_rtx_makeintval(rtx, rx));
+	return 0;
+}
+
+static int fnc_closedir (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	sys_list_t* sys_list;
+	sys_node_t* sys_node;
+	int rx = RC_ERROR;
+
+	sys_list = rtx_to_sys_list(rtx, fi);
+	sys_node = get_sys_list_node_with_arg(rtx, sys_list, qse_awk_rtx_getarg(rtx, 0));
+	if (sys_node && sys_node->ctx.type == SYS_NODE_DATA_DIR)
+	{
+		/* even  if free_sys_node can handle other types, sys::closedir() is allowed to
+		 * close nodes of the SYS_NODE_DATA_DIR type only */
+		free_sys_node (rtx, sys_list, sys_node);
+		rx = 0;
+	}
+	else
+	{
+		rx = RC_EINVAL;
+		set_errmsg_on_sys_list (rtx, sys_list, rc_to_errstr(rx));
+	}
+
+	qse_awk_rtx_setretval (rtx, qse_awk_rtx_makeintval(rtx, rx));
+	return 0;
+}
+
+static int fnc_readdir (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	sys_list_t* sys_list;
+	sys_node_t* sys_node;
+	qse_awk_int_t rx = RC_ERROR;
+
+	sys_list = rtx_to_sys_list(rtx, fi);
+	sys_node = get_sys_list_node_with_arg(rtx, sys_list, qse_awk_rtx_getarg(rtx, 0));
+	if (sys_node && sys_node->ctx.type == SYS_NODE_DATA_DIR)
+	{
+		int y;
+		qse_dir_ent_t ent;
+		qse_awk_val_t* tmp;
+
+		y = qse_dir_read(sys_node->ctx.u.dir, &ent);
+		if (y <= -1) 
+		{
+			rx = direrr_to_rc(qse_dir_geterrnum(sys_node->ctx.u.dir));
+			set_errmsg_on_sys_list (rtx, sys_list, rc_to_errstr(rx));
+		}
+		else if (y == 0) 
+		{
+			rx = 0; /* no more entry */
+		}
+		else
+		{
+			tmp = qse_awk_rtx_makestrvalwithstr(rtx, ent.name);
+			if (!tmp)
+			{
+				rx = awkerr_to_rc(qse_awk_rtx_geterrnum(rtx));
+				set_errmsg_on_sys_list (rtx, sys_list, rc_to_errstr(rx));
+			}
+			else
+			{
+				int n;
+				qse_awk_rtx_refupval (rtx, tmp);
+				n = qse_awk_rtx_setrefval (rtx, (qse_awk_val_ref_t*)qse_awk_rtx_getarg(rtx, 1), tmp);
+				qse_awk_rtx_refdownval (rtx, tmp);
+				if (n <= -1) return -1;
+
+				rx = 1; /* has entry */
+			}
+		}
+	}
+	else 
+	{
+		rx = RC_EINVAL;
+		set_errmsg_on_sys_list (rtx, sys_list, rc_to_errstr(rx));
+	}
+
+	/* the value in 'rx' never exceeds QSE_AWK_QUICKINT_MAX as 'reqsize' has been limited to
+	 * it before the call to 'read'. so it's safe not to check the result of qse_awk_rtx_makeintval() */
 	qse_awk_rtx_setretval (rtx, qse_awk_rtx_makeintval(rtx, rx));
 	return 0;
 }
@@ -2104,6 +2278,7 @@ static fnctab_t fnctab[] =
 	{ QSE_T("WTERMSIG"),    { { 1, 1, QSE_NULL     }, fnc_wtermsig,    0  } },
 	{ QSE_T("chmod"),       { { 2, 2, QSE_NULL     }, fnc_chmod,       0  } },
 	{ QSE_T("close"),       { { 1, 1, QSE_NULL     }, fnc_close,       0  } },
+	{ QSE_T("closedir"),    { { 1, 1, QSE_NULL     }, fnc_closedir,    0  } },
 	{ QSE_T("closelog"),    { { 0, 0, QSE_NULL     }, fnc_closelog,    0  } },
 	{ QSE_T("errmsg"),      { { 0, 0, QSE_NULL     }, fnc_errmsg,      0  } },
 	{ QSE_T("fork"),        { { 0, 0, QSE_NULL     }, fnc_fork,        0  } },
@@ -2122,9 +2297,11 @@ static fnctab_t fnctab[] =
 	{ QSE_T("mkdir"),       { { 1, 2, QSE_NULL     }, fnc_mkdir,       0  } },
 	{ QSE_T("mktime"),      { { 0, 1, QSE_NULL     }, fnc_mktime,      0  } },
 	{ QSE_T("open"),        { { 2, 3, QSE_NULL     }, fnc_open,        0  } },
+	{ QSE_T("opendir"),     { { 1, 2, QSE_NULL     }, fnc_opendir,     0  } },
 	{ QSE_T("openlog"),     { { 3, 3, QSE_NULL     }, fnc_openlog,     0  } },
 	{ QSE_T("pipe"),        { { 2, 3, QSE_T("rrv") }, fnc_pipe,        0  } },
 	{ QSE_T("read"),        { { 2, 3, QSE_T("vrv") }, fnc_read,        0  } },
+	{ QSE_T("readdir"),     { { 2, 2, QSE_T("vr")  }, fnc_readdir,     0  } },
 	{ QSE_T("settime"),     { { 1, 1, QSE_NULL     }, fnc_settime,     0  } },
 	{ QSE_T("sleep"),       { { 1, 1, QSE_NULL     }, fnc_sleep,       0  } },
 	{ QSE_T("strftime"),    { { 2, 3, QSE_NULL     }, fnc_strftime,    0  } },
@@ -2164,6 +2341,8 @@ static fnctab_t fnctab[] =
 static inttab_t inttab[] =
 {
 	/* keep this table sorted for binary search in query(). */
+	{ QSE_T("DIR_SORT"),           { QSE_DIR_SORT } },
+
 #if defined(ENABLE_SYSLOG)
 	{ QSE_T("LOG_FAC_AUTH"),       { LOG_AUTH } },
 	{ QSE_T("LOG_FAC_AUTHPRIV"),   { LOG_AUTHPRIV } },
@@ -2256,11 +2435,14 @@ static inttab_t inttab[] =
 	{ QSE_T("RC_EAGAIN"),  { RC_EAGAIN } },
 	{ QSE_T("RC_EBADF"),   { RC_EBADF } },
 	{ QSE_T("RC_ECHILD"),  { RC_ECHILD } },
-	{ QSE_T("RC_ENOIMPL"), { RC_ENOIMPL } },
-	{ QSE_T("RC_ENOMEM"),  { RC_ENOMEM } },
-	{ QSE_T("RC_ENOSYS"),  { RC_ENOSYS } },
+	{ QSE_T("RC_EEXIST"),  { RC_EEXIST } },
 	{ QSE_T("RC_EINTR"),   { RC_EINTR } },
 	{ QSE_T("RC_EINVAL"),  { RC_EINVAL } },
+	{ QSE_T("RC_ENOENT"),  { RC_ENOENT } },
+	{ QSE_T("RC_ENOIMPL"), { RC_ENOIMPL } },
+	{ QSE_T("RC_ENOMEM"),  { RC_ENOMEM } },
+	{ QSE_T("RC_ENOTDIR"), { RC_ENOTDIR } },
+	{ QSE_T("RC_ENOSYS"),  { RC_ENOSYS } },
 	{ QSE_T("RC_EPERM"),   { RC_EPERM } },
 	{ QSE_T("RC_ERROR"),   { RC_ERROR } },
 

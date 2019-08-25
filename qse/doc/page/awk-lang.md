@@ -1370,6 +1370,7 @@ The *dir* module provides an interface to read file names in a specified directo
 
 - sys::chmod
 - sys::close
+- sys::closedir
 - sys::errmsg
 - sys::fork
 - sys::getegid
@@ -1385,8 +1386,10 @@ The *dir* module provides an interface to read file names in a specified directo
 - sys::mkdir
 - sys::mktime
 - sys::open
+- sys::opendir
 - sys::pipe
 - sys::read
+- sys::readdir
 - sys::setttime
 - sys::sleep
 - sys::strftime
@@ -1451,6 +1454,17 @@ BEGIN {
 		while (sys::wait(a, status) != a);
 		if (sys::WIFEXITED(status)) print "Exit code: " sys::WEXITSTATUS(status);
 		else print "Child terminated abnormally"
+	}
+}
+~~~~~
+
+~~~~~{.awk}
+BEGIN {
+	d = sys::opendir("/etc", sys::DIR_SORT);
+	if (d >= 0)
+	{
+		while (sys::readdir(d,a) > 0) print a;
+		sys::closedir(d);
 	}
 }
 ~~~~~
