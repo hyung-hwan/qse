@@ -34,6 +34,7 @@
 #include <qse/si/nwad.h>
 #include <qse/si/nwif.h>
 #include <qse/si/sio.h>
+#include <qse/si/dir.h>
 #include "../cmn/mem-prv.h"
 
 #if defined(_WIN32)
@@ -68,14 +69,21 @@
 
 #define DEFAULT_MODE (0777)
 
-#define RX_ERROR (-1)
-#define RX_EAGAIN (-2)
-#define RX_EINTR (-3)
-#define RX_EINVAL (-4)
-#define RX_ECHILD (-5)
-#define RX_EPERM (-6)
-#define RX_ENOMEM (-7)
-#define RX_ENOSYS (-7)
+enum sys_rc_t
+{
+	RC_ERROR = -1,
+	RC_ENOIMPL = -2,
+	RC_ENOSYS = -3,
+	RC_ENOMEM = -4,
+	RC_EAGAIN = -5,
+	RC_EINTR = -6,
+	RC_EINVAL = -7,
+	RC_ECHILD = -8,
+	RC_EPERM = -9,
+	RC_EBADF = -10
+	
+};
+typedef enum sys_rc_t sys_rc_t;
 
 /* ------------------------------------------------------------------------ */
 
@@ -106,9 +114,21 @@ typedef struct mod_ctx_t mod_ctx_t;
 
 /* ------------------------------------------------------------------------ */
 
+enum sys_node_data_type_t
+{
+	SYS_NODE_DATA_FD,
+	SYS_NODE_DATA_DIR
+};
+typedef enum sys_node_data_type_t sys_node_data_type_t;
+
 struct sys_node_data_t
 {
-	int fd;
+	sys_node_data_type_t type;
+	union
+	{
+		int fd;
+		qse_dir_t* dir;
+	} u;
 };
 typedef struct sys_node_data_t sys_node_data_t;
 
@@ -136,29 +156,51 @@ typedef struct rtx_data_t rtx_data_t;
 
 /* ------------------------------------------------------------------------ */
 
-static int syserr_to_rx_code (int syserr)
+static QSE_INLINE sys_rc_t syserr_to_rc (int syserr)
 {
 	switch (syserr)
 	{
 	#if defined(EAGAIN) && defined(EWOULDBLOCK) && (EAGAIN == EWOULDBLOCK)
-		case EAGAIN: return RX_EAGAIN;
+		case EAGAIN: return RC_EAGAIN;
 	#elif defined(EAGAIN) && defined(EWOULDBLOCK) && (EAGAIN != EWOULDBLOCK)
-		case EAGAIN: case EWOULDBLOCK: return RX_EAGAIN;
+		case EAGAIN: case EWOULDBLOCK: return RC_EAGAIN;
 	#elif defined(EAGAIN)
-		case EAGAIN: return RX_EAGAIN;
+		case EAGAIN: return RC_EAGAIN;
 	#elif defined(EWOULDBLOCK)
-		case EWOULDBLOCK: return RX_EAGAIN;
+		case EWOULDBLOCK: return RC_EAGAIN;
 	#endif
-		case EINTR:  return RX_EINTR;
-		case EINVAL: return RX_EINVAL;
-		case ECHILD: return RX_ECHILD;
-		case EPERM:  return RX_EPERM;
-		case ENOMEM:  return RX_ENOMEM;
-		case ENOSYS:  return RX_ENOSYS;
-		default: return RX_ERROR;
+
+		case EBADF: return RC_EBADF;
+		case ECHILD: return RC_ECHILD;
+		case EINTR:  return RC_EINTR;
+		case EINVAL: return RC_EINVAL;
+		case ENOMEM:  return RC_ENOMEM;
+		case ENOSYS:  return RC_ENOSYS;
+		case EPERM:  return RC_EPERM;
+
+		default: return RC_ERROR;
 	}
 }
-static void set_error_on_sys_list (qse_awk_rtx_t* rtx, sys_list_t* sys_list, const qse_char_t* errfmt, ...)
+
+static const qse_char_t* rc_to_errstr (sys_rc_t rc)
+{
+	switch (rc)
+	{
+		case RC_EAGAIN:  return QSE_T("resource temporarily unavailable");
+		case RC_EBADF:   return QSE_T("bad file descriptor");
+		case RC_ECHILD:  return QSE_T("no child processes");
+		case RC_EINTR:   return QSE_T("interrupted");
+		case RC_EINVAL:  return QSE_T("invalid argument");
+		case RC_ENOIMPL: return QSE_T("not implemented"); /* not implemented in this module */
+		case RC_ENOMEM:  return QSE_T("not enough space");
+		case RC_ENOSYS:  return QSE_T("not implemented in system");
+		case RC_EPERM:   return QSE_T("operation not permitted");
+		case RC_ERROR:   return QSE_T("error");
+		default:         return QSE_T("unknown error");
+	};
+}
+
+static void set_errmsg_on_sys_list (qse_awk_rtx_t* rtx, sys_list_t* sys_list, const qse_char_t* errfmt, ...)
 {
 	if (errfmt)
 	{
@@ -173,30 +215,57 @@ static void set_error_on_sys_list (qse_awk_rtx_t* rtx, sys_list_t* sys_list, con
 	}
 }
 
-static QSE_INLINE void set_error_on_sys_list_with_syserr (qse_awk_rtx_t* rtx, sys_list_t* sys_list)
+static QSE_INLINE void set_errmsg_on_sys_list_with_syserr (qse_awk_rtx_t* rtx, sys_list_t* sys_list)
 {
-	set_error_on_sys_list (rtx, sys_list, QSE_T("%hs"), strerror(errno));
+	set_errmsg_on_sys_list (rtx, sys_list, QSE_T("%hs"), strerror(errno));
 }
+
 
 /* ------------------------------------------------------------------------ */
 
-static sys_node_t* new_sys_node (qse_awk_rtx_t* rtx, sys_list_t* list, int fd)
+static sys_node_t* new_sys_node_fd (qse_awk_rtx_t* rtx, sys_list_t* list, int fd)
 {
 	sys_node_t* node;
 
 	node = __new_sys_node(rtx, list);
 	if (!node) return QSE_NULL;
 
-	node->ctx.fd = fd;
+	node->ctx.type = SYS_NODE_DATA_FD;
+	node->ctx.u.fd = fd;
+	return node;
+}
+
+static sys_node_t* new_sys_node_dir (qse_awk_rtx_t* rtx, sys_list_t* list, qse_dir_t* dir)
+{
+	sys_node_t* node;
+
+	node = __new_sys_node(rtx, list);
+	if (!node) return QSE_NULL;
+
+	node->ctx.type = SYS_NODE_DATA_DIR;
+	node->ctx.u.dir = dir;
 	return node;
 }
 
 static void free_sys_node (qse_awk_rtx_t* rtx, sys_list_t* list, sys_node_t* node)
 {
-	if (node->ctx.fd >= 0) 
+	switch (node->ctx.type)
 	{
-		close (node->ctx.fd);
-		node->ctx.fd = -1;
+		case SYS_NODE_DATA_FD:
+			if (node->ctx.u.fd >= 0) 
+			{
+				close (node->ctx.u.fd);
+				node->ctx.u.fd = -1;
+			}
+			break;
+
+		case  SYS_NODE_DATA_DIR:
+			if (node->ctx.u.dir)
+			{
+				qse_dir_close (node->ctx.u.dir);
+				node->ctx.u.dir = QSE_NULL;
+			}
+			break;
 	}
 	__free_sys_node (rtx, list, node);
 }
@@ -221,7 +290,6 @@ static QSE_INLINE sys_node_t* get_sys_list_node (sys_list_t* sys_list, qse_awk_i
 
 /* ------------------------------------------------------------------------ */
 
-
 static sys_node_t* get_sys_list_node_with_arg (qse_awk_rtx_t* rtx, sys_list_t* sys_list, qse_awk_val_t* arg)
 {
 	qse_awk_int_t id;
@@ -229,30 +297,54 @@ static sys_node_t* get_sys_list_node_with_arg (qse_awk_rtx_t* rtx, sys_list_t* s
 
 	if (qse_awk_rtx_valtoint(rtx, arg, &id) <= -1)
 	{
-		set_error_on_sys_list (rtx, sys_list, QSE_T("illegal instance id"));
+		set_errmsg_on_sys_list (rtx, sys_list, QSE_T("illegal instance id"));
 		return QSE_NULL;
 	}
 	else if (!(sys_node = get_sys_list_node(sys_list, id)))
 	{
-		set_error_on_sys_list (rtx, sys_list, QSE_T("invalid instance id - %zd"), (qse_size_t)id);
+		set_errmsg_on_sys_list (rtx, sys_list, QSE_T("invalid instance id - %zd"), (qse_size_t)id);
 		return QSE_NULL;
 	}
 
 	return sys_node;
 }
 
+/* ------------------------------------------------------------------------ */
+
+static int fnc_errmsg (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	sys_list_t* sys_list;
+	qse_awk_val_t* retv;
+
+	sys_list = rtx_to_sys_list(rtx, fi);
+	retv = qse_awk_rtx_makestrvalwithstr(rtx, sys_list->ctx.errmsg);
+	if (!retv) return -1;
+
+	qse_awk_rtx_setretval (rtx, retv);
+	return 0;
+}
+
+/* ------------------------------------------------------------------------ */
+
 static int fnc_close (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
 	sys_list_t* sys_list;
 	sys_node_t* sys_node;
-	int rx = RX_ERROR;
+	int rx = RC_ERROR;
 
 	sys_list = rtx_to_sys_list(rtx, fi);
 	sys_node = get_sys_list_node_with_arg(rtx, sys_list, qse_awk_rtx_getarg(rtx, 0));
-	if (sys_node)
+	if (sys_node && sys_node->ctx.type == SYS_NODE_DATA_FD)
 	{
+		/* even  if free_sys_node can handle other types, sys::close() is allowed to
+		 * close nodes of the SYS_NODE_DATA_FD type only */
 		free_sys_node (rtx, sys_list, sys_node);
 		rx = 0;
+	}
+	else
+	{
+		rx = RC_EINVAL;
+		set_errmsg_on_sys_list (rtx, sys_list, rc_to_errstr(rx));
 	}
 
 	qse_awk_rtx_setretval (rtx, qse_awk_rtx_makeintval(rtx, rx));
@@ -271,8 +363,8 @@ static int fnc_open (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
 	sys_list_t* sys_list;
 	sys_node_t* sys_node = QSE_NULL;
-	qse_awk_int_t rx = RX_ERROR, flags = 0, mode = DEFAULT_MODE;
-	int fd = -1;
+	qse_awk_int_t rx = RC_ERROR, flags = 0, mode = DEFAULT_MODE;
+	int fd = RC_ERROR;
 	qse_mchar_t* pstr;
 	qse_size_t plen;
 	qse_awk_val_t* a0;
@@ -295,7 +387,7 @@ static int fnc_open (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 
 	if (fd >= 0)
 	{
-		sys_node = new_sys_node(rtx, sys_list, fd);
+		sys_node = new_sys_node_fd(rtx, sys_list, fd);
 		if (sys_node) 
 		{
 			rx = sys_node->id;
@@ -303,13 +395,13 @@ static int fnc_open (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 		else 
 		{
 		fail:
-			set_error_on_sys_list (rtx, sys_list, QSE_NULL);
+			set_errmsg_on_sys_list (rtx, sys_list, QSE_NULL);
 		}
 	}
 	else
 	{
-		rx = syserr_to_rx_code(errno);
-		set_error_on_sys_list_with_syserr (rtx, sys_list);
+		rx = syserr_to_rc(errno);
+		set_errmsg_on_sys_list_with_syserr (rtx, sys_list);
 	}
 
 	/* rx may not be a statically managed number. 
@@ -329,7 +421,7 @@ static int fnc_read (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
 	sys_list_t* sys_list;
 	sys_node_t* sys_node;
-	qse_awk_int_t rx = RX_ERROR;
+	qse_awk_int_t rx = RC_ERROR;
 	qse_awk_int_t reqsize = 8192;
 
 	if (qse_awk_rtx_getnargs(rtx) >= 3 && (qse_awk_rtx_valtoint(rtx, qse_awk_rtx_getarg(rtx, 2), &reqsize) <= -1 || reqsize <= 0)) reqsize = 8192;
@@ -337,27 +429,27 @@ static int fnc_read (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 
 	sys_list = rtx_to_sys_list(rtx, fi);
 	sys_node = get_sys_list_node_with_arg(rtx, sys_list, qse_awk_rtx_getarg(rtx, 0));
-	if (sys_node)
+	if (sys_node && sys_node->ctx.type == SYS_NODE_DATA_FD)
 	{
 		if (reqsize > sys_list->ctx.readbuf_capa)
 		{
 			qse_mchar_t* tmp = qse_awk_rtx_reallocmem(rtx, sys_list->ctx.readbuf, reqsize);
 			if (!tmp)
 			{
-				set_error_on_sys_list (rtx, sys_list, QSE_NULL);
+				set_errmsg_on_sys_list (rtx, sys_list, QSE_NULL);
 				goto done;
 			}
 			sys_list->ctx.readbuf = tmp;
 			sys_list->ctx.readbuf_capa = reqsize;
 		}
 
-		rx = read(sys_node->ctx.fd, sys_list->ctx.readbuf, reqsize);
+		rx = read(sys_node->ctx.u.fd, sys_list->ctx.readbuf, reqsize);
 		if (rx <= 0) 
 		{
 			if (rx <= -1) 
 			{
-				rx = syserr_to_rx_code(errno);
-				set_error_on_sys_list_with_syserr(rtx, sys_list);
+				rx = syserr_to_rc(errno);
+				set_errmsg_on_sys_list_with_syserr(rtx, sys_list);
 			}
 			goto done;
 		}
@@ -376,6 +468,11 @@ static int fnc_read (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 			if (x <= -1) return -1;
 		}
 	}
+	else 
+	{
+		rx = RC_EINVAL;
+		set_errmsg_on_sys_list (rtx, sys_list, rc_to_errstr(rx));
+	}
 
 done:
 	/* the value in 'rx' never exceeds QSE_AWK_QUICKINT_MAX as 'reqsize' has been limited to
@@ -388,11 +485,11 @@ static int fnc_write (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
 	sys_list_t* sys_list;
 	sys_node_t* sys_node;
-	qse_awk_int_t rx = RX_ERROR;
+	qse_awk_int_t rx = RC_ERROR;
 
 	sys_list = rtx_to_sys_list(rtx, fi);
 	sys_node = get_sys_list_node_with_arg(rtx, sys_list, qse_awk_rtx_getarg(rtx, 0));
-	if (sys_node)
+	if (sys_node && sys_node->ctx.type == SYS_NODE_DATA_FD)
 	{
 		qse_mchar_t* dptr;
 		qse_size_t dlen;
@@ -402,18 +499,23 @@ static int fnc_write (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 		dptr = qse_awk_rtx_getvalmbs(rtx, a1, &dlen);
 		if (dptr)
 		{
-			rx = write(sys_node->ctx.fd, dptr, dlen);
+			rx = write(sys_node->ctx.u.fd, dptr, dlen);
 			if (rx <= -1) 
 			{
-				rx = syserr_to_rx_code(errno);
-				set_error_on_sys_list_with_syserr(rtx, sys_list);
+				rx = syserr_to_rc(errno);
+				set_errmsg_on_sys_list_with_syserr(rtx, sys_list);
 			}
 			qse_awk_rtx_freevalmbs (rtx, a1, dptr);
 		}
 		else
 		{
-			set_error_on_sys_list (rtx, sys_list, QSE_NULL);
+			set_errmsg_on_sys_list (rtx, sys_list, QSE_NULL);
 		}
+	}
+	else
+	{
+		rx = RC_EINVAL;
+		set_errmsg_on_sys_list (rtx, sys_list, rc_to_errstr(rx));
 	}
 
 	qse_awk_rtx_setretval (rtx, qse_awk_rtx_makeintval(rtx, rx));
@@ -446,10 +548,10 @@ static int fnc_write (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 			n = sys::read (p0, k, 3);
 			if (n <= 0)
 			{
-				if (n == -2) continue; ## nonblock but data not available
-				if (n <= -1) print "ERROR: " sys::errmsg();
+				if (n == sys::RC_EAGAIN) continue; ## nonblock but data not available
+				if (n != 0) print "ERROR: " sys::errmsg();
 				break;
-			}
+			}	
 			print k;
 		}
 		sys::close (p0);
@@ -471,7 +573,7 @@ static int fnc_pipe (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	/* create low-level pipes */
 
 	sys_list_t* sys_list;
-	int rx = RX_ERROR;
+	int rx = RC_ERROR;
 	int fds[2];
 	qse_awk_int_t flags = 0;
 
@@ -509,8 +611,8 @@ static int fnc_pipe (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 			}
 		}
 	#endif
-		node1 = new_sys_node(rtx, sys_list, fds[0]);
-		node2 = new_sys_node(rtx, sys_list, fds[1]);
+		node1 = new_sys_node_fd(rtx, sys_list, fds[0]);
+		node2 = new_sys_node_fd(rtx, sys_list, fds[1]);
 		if (node1 && node2)
 		{
 			qse_awk_val_t* v;
@@ -532,33 +634,18 @@ static int fnc_pipe (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 		}
 		else
 		{
-			set_error_on_sys_list (rtx, sys_list, QSE_NULL);
+			set_errmsg_on_sys_list (rtx, sys_list, QSE_NULL);
 			if (node2) free_sys_node (rtx, sys_list, node2);
 			if (node1) free_sys_node (rtx, sys_list, node1);
 		}
 	}
 	else
 	{
-		rx = syserr_to_rx_code(errno);
-		set_error_on_sys_list_with_syserr (rtx, sys_list);
+		rx = syserr_to_rc(errno);
+		set_errmsg_on_sys_list_with_syserr (rtx, sys_list);
 	}
 
 	qse_awk_rtx_setretval (rtx, qse_awk_rtx_makeintval(rtx, rx));
-	return 0;
-}
-
-/* ------------------------------------------------------------------------ */
-
-static int fnc_errmsg (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
-{
-	sys_list_t* sys_list;
-	qse_awk_val_t* retv;
-
-	sys_list = rtx_to_sys_list(rtx, fi);
-	retv = qse_awk_rtx_makestrvalwithstr(rtx, sys_list->ctx.errmsg);
-	if (!retv) return -1;
-
-	qse_awk_rtx_setretval (rtx, retv);
 	return 0;
 }
 
@@ -571,24 +658,22 @@ static int fnc_fork (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 
 #if defined(_WIN32)
 	/* TOOD: implement this*/
-	pid = RX_ERROR;
-	set_error_on_sys_list (rtx, rtx_to_sys_list(rtx, fi), QSE_T("not implemented"));
+	pid = RC_ENOIMPL;
+	set_errmsg_on_sys_list (rtx, rtx_to_sys_list(rtx, fi), rc_to_errstr(pid));
 #elif defined(__OS2__)
 	/* TOOD: implement this*/
-	pid = RX_ERROR;
-	set_error_on_sys_list (rtx, rtx_to_sys_list(rtx, fi), QSE_T("not implemented"));
-	
+	pid = RC_ENOIMPL;
+	set_errmsg_on_sys_list (rtx, rtx_to_sys_list(rtx, fi), rc_to_errstr(pid));
 #elif defined(__DOS__)
 	/* TOOD: implement this*/
-	pid = RX_ERROR;
-	set_error_on_sys_list (rtx, rtx_to_sys_list(rtx, fi), QSE_T("not implemented"));
-
+	pid = RC_ENOIMPL;
+	set_errmsg_on_sys_list (rtx, rtx_to_sys_list(rtx, fi), rc_to_errstr(pid));
 #else
 	pid = fork();
 	if (pid <= -1) 
 	{
-		pid = syserr_to_rx_code(errno);
-		set_error_on_sys_list_with_syserr (rtx, rtx_to_sys_list(rtx, fi));
+		pid = syserr_to_rc(errno);
+		set_errmsg_on_sys_list_with_syserr (rtx, rtx_to_sys_list(rtx, fi));
 	}
 #endif
 
@@ -619,25 +704,25 @@ static int fnc_wait (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	{
 #if defined(_WIN32)
 		/* TOOD: implement this*/
-		rx = RX_ERROR;
+		rx = RC_ENOIMPL;
+		set_errmsg_on_sys_list (rtx, rtx_to_sys_list(rtx, fi), rc_to_errstr(rx));
 		status = 0;
-		set_error_on_sys_list (rtx, rtx_to_sys_list(rtx, fi), QSE_T("not implemented"));
 #elif defined(__OS2__)
 		/* TOOD: implement this*/
-		rx = RX_ERROR;
+		rx = RC_ENOIMPL;
+		set_errmsg_on_sys_list (rtx, rtx_to_sys_list(rtx, fi), rc_to_errstr(rx));
 		status = 0;
-		set_error_on_sys_list (rtx, rtx_to_sys_list(rtx, fi), QSE_T("not implemented"));
 #elif defined(__DOS__)
 		/* TOOD: implement this*/
-		rx = RX_ERROR;
+		rx = RC_ENOIMPL;
+		set_errmsg_on_sys_list (rtx, rtx_to_sys_list(rtx, fi), rc_to_errstr(rx));
 		status = 0;
-		set_error_on_sys_list (rtx, rtx_to_sys_list(rtx, fi), QSE_T("not implemented"));
 #else
 		rx = waitpid(pid, &status, opts);
 		if (rx <= -1) 
 		{
-			rx = syserr_to_rx_code(errno);
-			set_error_on_sys_list_with_syserr (rtx, rtx_to_sys_list(rtx, fi));
+			rx = syserr_to_rc(errno);
+			set_errmsg_on_sys_list_with_syserr (rtx, rtx_to_sys_list(rtx, fi));
 		}
 #endif
 	}
@@ -731,28 +816,28 @@ static int fnc_kill (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	if (qse_awk_rtx_valtoint(rtx, qse_awk_rtx_getarg (rtx, 0), &pid) <= -1 ||
 	    qse_awk_rtx_valtoint(rtx, qse_awk_rtx_getarg (rtx, 1), &sig) <= -1)
 	{
-		rx = RX_ERROR;
+		rx = RC_ERROR;
 	}
 	else
 	{
 #if defined(_WIN32)
 		/* TOOD: implement this*/
-		rx = RX_ERROR;
-		set_error_on_sys_list (rtx, rtx_to_sys_list(rtx, fi), QSE_T("not implemented"));
+		rx = RC_ENOIMPL;
+		set_errmsg_on_sys_list (rtx, rtx_to_sys_list(rtx, fi), rc_to_errstr(rx));
 #elif defined(__OS2__)
 		/* TOOD: implement this*/
-		rx = RX_ERROR;
-		set_error_on_sys_list (rtx, rtx_to_sys_list(rtx, fi), QSE_T("not implemented"));
+		rx = RC_ENOIMPL;
+		set_errmsg_on_sys_list (rtx, rtx_to_sys_list(rtx, fi), rc_to_errstr(rx));
 #elif defined(__DOS__)
 		/* TOOD: implement this*/
-		rx = RX_ERROR;
-		set_error_on_sys_list (rtx, rtx_to_sys_list(rtx, fi), QSE_T("not implemented"));
+		rx = RC_ENOIMPL;
+		set_errmsg_on_sys_list (rtx, rtx_to_sys_list(rtx, fi), rc_to_errstr(rx));
 #else
 		rx = kill(pid, sig);
 		if (rx <= -1) 
 		{
-			rx = syserr_to_rx_code(errno);
-			set_error_on_sys_list_with_syserr (rtx, rtx_to_sys_list(rtx, fi));
+			rx = syserr_to_rc(errno);
+			set_errmsg_on_sys_list_with_syserr (rtx, rtx_to_sys_list(rtx, fi));
 		}
 #endif
 	}
@@ -771,27 +856,27 @@ static int fnc_getpgid (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 
 #if defined(_WIN32)
 	/* TOOD: implement this*/
-	pid = -1;
-	set_error_on_sys_list (rtx, rtx_to_sys_list(rtx, fi), QSE_T("not implemented"));
+	pid = RC_ENOIMPL;
+	set_errmsg_on_sys_list (rtx, rtx_to_sys_list(rtx, fi), rc_to_errstr(pid));
 #elif defined(__OS2__)
 	/* TOOD: implement this*/
-	pid = -1;
-	set_error_on_sys_list (rtx, rtx_to_sys_list(rtx, fi), QSE_T("not implemented"));
+	pid = RC_ENOIMPL;
+	set_errmsg_on_sys_list (rtx, rtx_to_sys_list(rtx, fi), rc_to_errstr(pid));
 #elif defined(__DOS__)
 	/* TOOD: implement this*/
-	pid = -1;
-	set_error_on_sys_list (rtx, rtx_to_sys_list(rtx, fi), QSE_T("not implemented"));
+	pid = RC_ENOIMPL;
+	set_errmsg_on_sys_list (rtx, rtx_to_sys_list(rtx, fi), rc_to_errstr(pid));
 #else
 	/* TODO: support specifing calling process id other than 0 */
 	#if defined(HAVE_GETPGID)
 	pid = getpgid(0);
-	if (pid <= -1) set_error_on_sys_list_with_syserr (rtx, rtx_to_sys_list(rtx, fi));
+	if (pid <= -1) set_errmsg_on_sys_list_with_syserr (rtx, rtx_to_sys_list(rtx, fi));
 	#elif defined(HAVE_GETPGRP)
 	pid = getpgrp();
-	if (pid <= -1) set_error_on_sys_list_with_syserr (rtx, rtx_to_sys_list(rtx, fi));
+	if (pid <= -1) set_errmsg_on_sys_list_with_syserr (rtx, rtx_to_sys_list(rtx, fi));
 	#else
-	pid = -1;
-	set_error_on_sys_list (rtx, rtx_to_sys_list(rtx, fi), QSE_T("not supported"));
+	pid = RC_ENOIMPL;
+	set_errmsg_on_sys_list (rtx, rtx_to_sys_list(rtx, fi), rc_to_errstr(pid));
 	#endif
 #endif
 
@@ -818,8 +903,8 @@ static int fnc_getpid (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 
 #elif defined(__DOS__)
 	/* TOOD: implement this*/
-	pid = -1;
-	set_error_on_sys_list (rtx, rtx_to_sys_list(rtx, fi), QSE_T("not implemented"));
+	pid = RC_ENOIMPL;
+	set_errmsg_on_sys_list (rtx, rtx_to_sys_list(rtx, fi), rc_to_errstr(pid));
 
 #else
 	pid = getpid ();
@@ -2168,6 +2253,17 @@ static inttab_t inttab[] =
 	{ QSE_T("O_WRONLY"),    { O_WRONLY } },
 #endif
 
+	{ QSE_T("RC_EAGAIN"),  { RC_EAGAIN } },
+	{ QSE_T("RC_EBADF"),   { RC_EBADF } },
+	{ QSE_T("RC_ECHILD"),  { RC_ECHILD } },
+	{ QSE_T("RC_ENOIMPL"), { RC_ENOIMPL } },
+	{ QSE_T("RC_ENOMEM"),  { RC_ENOMEM } },
+	{ QSE_T("RC_ENOSYS"),  { RC_ENOSYS } },
+	{ QSE_T("RC_EINTR"),   { RC_EINTR } },
+	{ QSE_T("RC_EINVAL"),  { RC_EINVAL } },
+	{ QSE_T("RC_EPERM"),   { RC_EPERM } },
+	{ QSE_T("RC_ERROR"),   { RC_ERROR } },
+
 	{ QSE_T("SIGABRT"), { SIGABRT } },
 	{ QSE_T("SIGALRM"), { SIGALRM } },
 	{ QSE_T("SIGHUP"),  { SIGHUP } },
@@ -2355,4 +2451,3 @@ int qse_awk_mod_sys (qse_awk_mod_t* mod, qse_awk_t* awk)
 	((mod_ctx_t*)mod->ctx)->rtxtab = rbt;
 	return 0;
 }
-
