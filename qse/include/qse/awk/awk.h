@@ -1503,7 +1503,6 @@ struct qse_awk_rtx_valtostr_out_t
 };
 typedef struct qse_awk_rtx_valtostr_out_t qse_awk_rtx_valtostr_out_t;
 
-
 /* record filter using NR */
 struct qse_awk_nrflt_t
 {
