@@ -567,5 +567,3 @@ int qse_awk_mod_dir (qse_awk_mod_t* mod, qse_awk_t* awk)
 	mod->ctx = rbt;
 	return 0;
 }
-
-       

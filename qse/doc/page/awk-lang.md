@@ -1429,8 +1429,8 @@ BEGIN {
 			n = sys::read (p0, k, 3);
 			if (n <= 0) 
 			{
-				if (n == -2) continue;
-				if (n <= -1) print "ERROR: " sys::errmsg();
+				if (n == sys::RC_EAGAIN) continue; ## nonblock but data not available
+				if (n != 0) print "ERROR: " sys::errmsg();
 				break;
 			}
 			print k;
