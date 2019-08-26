@@ -484,7 +484,7 @@ static int fnc_openfd (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 		rx = awkerr_to_rc(qse_awk_rtx_geterrnum(rtx));
 		set_errmsg_on_sys_list (rtx, sys_list, QSE_NULL);
 	}
-	else if (fd >= 0)
+	else if (fd >= 0 && fd <= QSE_TYPE_MAX(int))
 	{
 		sys_node_t* sys_node;
 

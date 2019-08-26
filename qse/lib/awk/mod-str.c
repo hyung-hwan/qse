@@ -30,6 +30,7 @@
 #include <qse/cmn/mbwc.h>
 #include "../cmn/mem-prv.h"
 #include "fnc.h"
+#include "val.h"
 
 static int fnc_normspace (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {

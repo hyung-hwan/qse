@@ -61,16 +61,16 @@ static __IMAP_NODE_T* __MAKE_IMAP_NODE (qse_awk_rtx_t* rtx, __IMAP_LIST_T* list)
 
 	node = QSE_NULL;
 
-	if (list->free) node = list->free;
+	if (list->free) 
+	{
+		node = list->free;
+		list->free = node->next;
+	}
 	else
 	{
 		node = qse_awk_rtx_callocmem(rtx, QSE_SIZEOF(*node));
 		if (!node) goto oops;
-	}
-
-	if (node == list->free) list->free = node->next;
-	else
-	{
+		
 		if (list->map.high <= list->map.capa)
 		{
 			qse_size_t newcapa, inc;
@@ -92,10 +92,11 @@ static __IMAP_NODE_T* __MAKE_IMAP_NODE (qse_awk_rtx_t* rtx, __IMAP_LIST_T* list)
 		}
 
 		node->id = list->map.high;
-		QSE_ASSERT (list->map.tab[node->id] == QSE_NULL);
-		list->map.tab[node->id] = node;
 		list->map.high++;
 	}
+
+	QSE_ASSERT (list->map.tab[node->id] == QSE_NULL);
+	list->map.tab[node->id] = node;
 
 	/* append it to the tail */
 	node->next = QSE_NULL;
