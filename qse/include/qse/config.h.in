@@ -124,6 +124,12 @@
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #undef HAVE_DLFCN_H
 
+/* Define to 1 if you have the `dup2' function. */
+#undef HAVE_DUP2
+
+/* Define to 1 if you have the `dup3' function. */
+#undef HAVE_DUP3
+
 /* Define to 1 if you have the `ENGINE_cleanup' function. */
 #undef HAVE_ENGINE_CLEANUP
 

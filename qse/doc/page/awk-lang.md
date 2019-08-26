@@ -1371,6 +1371,7 @@ The *dir* module provides an interface to read file names in a specified directo
 - sys::chmod
 - sys::close
 - sys::closedir
+- sys::dup
 - sys::errmsg
 - sys::fork
 - sys::getegid
@@ -1387,6 +1388,7 @@ The *dir* module provides an interface to read file names in a specified directo
 - sys::mktime
 - sys::open
 - sys::opendir
+- sys::openfd
 - sys::pipe
 - sys::read
 - sys::readdir
@@ -1403,6 +1405,16 @@ BEGIN {
         f = sys::open("/etc/sysctl.conf", sys::O_RDONLY);
         while (sys::read(f, x, 10) > 0) printf (B"%s", x);
         sys::close (f);
+}
+~~~~~
+
+~~~~~{.awk}
+BEGIN {
+	a = sys::openfd(1);
+	sys::write (a, B"let me write something here\n");
+	sys::close (a, sys::C_KEEPFD); ## set C_KEEPFD to release 1 without closing it.
+	##sys::close (a);
+	print "done\n";
 }
 ~~~~~
 
@@ -1455,6 +1467,27 @@ BEGIN {
 		if (sys::WIFEXITED(status)) print "Exit code: " sys::WEXITSTATUS(status);
 		else print "Child terminated abnormally"
 	}
+}
+~~~~~
+
+~~~~~{.awk}
+BEGIN {
+	a = sys::open("/etc/inittab", sys::O_RDONLY);
+	x = sys::open("/etc/fstab", sys::O_RDONLY);
+
+	b = sys::dup(a);
+	sys::close(a);
+
+	while (sys::read(b, abc, 100) > 0) printf (B"%s", abc);
+
+	print "-------------------------------";
+
+	c = sys::dup(x, b, sys::O_CLOEXEC);
+	## assertion: b == c
+	sys::close (x);
+
+	while (sys::read(c, abc, 100) > 0) printf (B"%s", abc);
+	sys::close (c);
 }
 ~~~~~
 
