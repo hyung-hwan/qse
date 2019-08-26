@@ -68,6 +68,8 @@
 
 #define DEFAULT_MODE (0777)
 
+#define CLOSE_KEEPFD (1 << 0)
+
 enum sys_rc_t
 {
 	RC_ERROR = -1,
@@ -369,13 +371,22 @@ static int fnc_close (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	sys_list_t* sys_list;
 	sys_node_t* sys_node;
 	int rx = RC_ERROR;
+	qse_awk_int_t cflags;
 
 	sys_list = rtx_to_sys_list(rtx, fi);
 	sys_node = get_sys_list_node_with_arg(rtx, sys_list, qse_awk_rtx_getarg(rtx, 0));
+
+	if (qse_awk_rtx_getnargs(rtx) >= 2 && (qse_awk_rtx_valtoint(rtx, qse_awk_rtx_getarg(rtx, 1), &cflags) <= -1 || cflags < 0)) cflags = 0;
+
 	if (sys_node && sys_node->ctx.type == SYS_NODE_DATA_FD)
 	{
-		/* even  if free_sys_node can handle other types, sys::close() is allowed to
+		/* although free_sys_node can handle other types, sys::close() is allowed to
 		 * close nodes of the SYS_NODE_DATA_FD type only */
+		if (cflags & CLOSE_KEEPFD)  /* this flag applies to file descriptors only */
+		{
+			sys_node->ctx.u.fd = -1; /* you may leak the original file descriptor. */
+		}
+
 		free_sys_node (rtx, sys_list, sys_node);
 		rx = 0;
 	}
@@ -400,8 +411,8 @@ static int fnc_close (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 static int fnc_open (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
 	sys_list_t* sys_list;
-	sys_node_t* sys_node = QSE_NULL;
-	qse_awk_int_t rx = RC_ERROR, flags = 0, mode = DEFAULT_MODE;
+	
+	qse_awk_int_t rx = RC_ERROR, oflags = 0, mode = DEFAULT_MODE;
 	int fd;
 	qse_mchar_t* pstr;
 	qse_size_t plen;
@@ -409,30 +420,33 @@ static int fnc_open (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 
 	sys_list = rtx_to_sys_list(rtx, fi);
 
-	if (qse_awk_rtx_valtoint(rtx, qse_awk_rtx_getarg(rtx, 1), &flags) <= -1 || flags < 0) flags = O_RDONLY;
+	if (qse_awk_rtx_valtoint(rtx, qse_awk_rtx_getarg(rtx, 1), &oflags) <= -1 || oflags < 0) oflags = O_RDONLY;
 	if (qse_awk_rtx_getnargs(rtx) >= 3 && (qse_awk_rtx_valtoint(rtx, qse_awk_rtx_getarg(rtx, 2), &mode) <= -1 || mode < 0)) mode = DEFAULT_MODE;
 
 #if defined(O_LARGEFILE)
-	flags |= O_LARGEFILE;
+	oflags |= O_LARGEFILE;
 #endif
 
 	a0 = qse_awk_rtx_getarg(rtx, 0);
 	pstr = qse_awk_rtx_getvalmbs(rtx, a0, &plen);
 	if (!pstr) goto fail;
-	fd = open(pstr, flags, mode);
+	fd = open(pstr, oflags, mode);
 	qse_awk_rtx_freevalmbs (rtx, a0, pstr);
 
 	if (fd >= 0)
 	{
-		sys_node = new_sys_node_fd(rtx, sys_list, fd);
-		if (sys_node) 
+		sys_node_t* new_node;
+
+		new_node = new_sys_node_fd(rtx, sys_list, fd);
+		if (new_node) 
 		{
-			rx = sys_node->id;
+			rx = new_node->id;
 		}
 		else 
 		{
 			close (fd);
 		fail:
+			rx = awkerr_to_rc(qse_awk_rtx_geterrnum(rtx));
 			set_errmsg_on_sys_list (rtx, sys_list, QSE_NULL);
 		}
 	}
@@ -446,6 +460,56 @@ static int fnc_open (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	qse_awk_rtx_setretval (rtx, qse_awk_rtx_makeintval(rtx, rx));
 	return 0;
 }
+
+/*
+	a = sys::openfd(1);
+	sys::write (a, B"let me write something here\n");
+	sys::close (a, sys::C_KEEPFD); ## set C_KEEPFD to release 1 without closing it.
+	##sys::close (a);
+	print "done\n";
+*/
+
+static int fnc_openfd (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	/* wrap a raw system file descriptor into the internal management node */
+
+	sys_list_t* sys_list;
+	qse_awk_int_t rx = RC_ERROR;
+	qse_awk_int_t fd;
+
+	sys_list = rtx_to_sys_list(rtx, fi);
+
+	if (qse_awk_rtx_valtoint(rtx, qse_awk_rtx_getarg(rtx, 0), &fd) <= -1)
+	{
+		rx = awkerr_to_rc(qse_awk_rtx_geterrnum(rtx));
+		set_errmsg_on_sys_list (rtx, sys_list, QSE_NULL);
+	}
+	else if (fd >= 0)
+	{
+		sys_node_t* sys_node;
+
+		sys_node = new_sys_node_fd(rtx, sys_list, fd);
+		if (sys_node) 
+		{
+			rx = sys_node->id;
+		}
+		else 
+		{
+			rx = awkerr_to_rc(qse_awk_rtx_geterrnum(rtx));
+			set_errmsg_on_sys_list (rtx, sys_list, QSE_NULL);
+		}
+	}
+	else
+	{
+		rx = RC_EINVAL;
+		set_errmsg_on_sys_list (rtx, sys_list, rc_to_errstr(rx));
+	}
+
+	QSE_ASSERT (QSE_AWK_IN_QUICKINT_RANGE(rx));
+	qse_awk_rtx_setretval (rtx, qse_awk_rtx_makeintval(rtx, rx));
+	return 0;
+}
+
 
 static int fnc_read (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
@@ -543,6 +607,114 @@ static int fnc_write (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	}
 	else
 	{
+		rx = RC_EINVAL;
+		set_errmsg_on_sys_list (rtx, sys_list, rc_to_errstr(rx));
+	}
+
+	qse_awk_rtx_setretval (rtx, qse_awk_rtx_makeintval(rtx, rx));
+	return 0;
+}
+
+/* ------------------------------------------------------------------------ */
+
+/*
+	a = sys::open("/etc/inittab", sys::O_RDONLY);
+	x = sys::open("/etc/fstab", sys::O_RDONLY);
+
+	b = sys::dup(a);
+	sys::close(a);
+
+	while (sys::read(b, abc, 100) > 0) printf (B"%s", abc);
+
+	print "-------------------------------";
+
+	c = sys::dup(x, b, sys::O_CLOEXEC);
+	## assertion: b == c
+	sys::close (x);
+
+	while (sys::read(c, abc, 100) > 0) printf (B"%s", abc);
+	sys::close (c);
+*/
+
+static int fnc_dup (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	sys_list_t* sys_list;
+	sys_node_t* sys_node, * sys_node2 = QSE_NULL;
+	qse_awk_int_t rx = RC_ERROR;
+	qse_awk_int_t oflags = 0;
+
+	sys_list = rtx_to_sys_list(rtx, fi);
+	sys_node = get_sys_list_node_with_arg(rtx, sys_list, qse_awk_rtx_getarg(rtx, 0));
+	if (qse_awk_rtx_getnargs(rtx) >= 2)
+	{
+		sys_node2 = get_sys_list_node_with_arg(rtx, sys_list, qse_awk_rtx_getarg(rtx, 1));
+		if (!sys_node2 || sys_node2->ctx.type != SYS_NODE_DATA_FD) goto fail_einval;
+		if (qse_awk_rtx_getnargs(rtx) >= 3 && (qse_awk_rtx_valtoint(rtx, qse_awk_rtx_getarg(rtx, 2), &oflags) <= -1 || oflags < 0)) oflags = 0;
+	}
+
+	if (sys_node && sys_node->ctx.type == SYS_NODE_DATA_FD)
+	{
+		int fd;
+
+		if (sys_node2)
+		{
+		#if defined(HAVE_DUP3)
+			fd = dup3(sys_node->ctx.u.fd, sys_node2->ctx.u.fd, oflags);
+		#else
+			fd = dup2(sys_node->ctx.u.fd);
+		#endif
+			if (fd >= 0)
+			{
+		#if defined(HAVE_DUP3)
+				/* nothing extra for dup3 */
+		#else
+				if (oflags)
+				{
+					int nflags = 0;
+					if (oflags & O_CLOEXEC) nflags |= FD_CLOEXEC;
+					/*if (oflags & O_NONBLOCK) nflags |= FD_NONBLOCK;  dup3() doesn't seem to support NONBLOCK. */
+					if (nflags) fcntl (fd, F_SETFD, nflags);
+				
+				}
+		#endif
+				sys_node2->ctx.u.fd = fd; /* dup2 or dup3 closes the descriptor implicitly */
+				rx = sys_node2->id;
+			}
+			else
+			{
+				rx = syserr_to_rc(errno);
+				set_errmsg_on_sys_list_with_syserr (rtx, sys_list);
+			}
+		}
+		else
+		{
+			fd = dup(sys_node->ctx.u.fd);
+			if (fd >= 0)
+			{
+				sys_node_t* new_node;
+
+				new_node = new_sys_node_fd(rtx, sys_list, fd);
+				if (new_node) 
+				{
+					rx = new_node->id;
+				}
+				else 
+				{
+					close (fd);
+					rx = awkerr_to_rc(qse_awk_rtx_geterrnum(rtx));
+					set_errmsg_on_sys_list (rtx, sys_list, QSE_NULL);
+				}
+			}
+			else
+			{
+				rx = syserr_to_rc(errno);
+				set_errmsg_on_sys_list_with_syserr (rtx, sys_list);
+			}
+		}
+	}
+	else
+	{
+	fail_einval:
 		rx = RC_EINVAL;
 		set_errmsg_on_sys_list (rtx, sys_list, rc_to_errstr(rx));
 	}
@@ -685,6 +857,8 @@ static int fnc_pipe (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	qse_awk_rtx_setretval (rtx, qse_awk_rtx_makeintval(rtx, rx));
 	return 0;
 }
+
+
 /* ------------------------------------------------------------------------ */
 
 /*
@@ -752,7 +926,7 @@ static int fnc_closedir (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	sys_node = get_sys_list_node_with_arg(rtx, sys_list, qse_awk_rtx_getarg(rtx, 0));
 	if (sys_node && sys_node->ctx.type == SYS_NODE_DATA_DIR)
 	{
-		/* even  if free_sys_node can handle other types, sys::closedir() is allowed to
+		/* although free_sys_node() can handle other types, sys::closedir() is allowed to
 		 * close nodes of the SYS_NODE_DATA_DIR type only */
 		free_sys_node (rtx, sys_list, sys_node);
 		rx = 0;
@@ -2277,9 +2451,10 @@ static fnctab_t fnctab[] =
 	{ QSE_T("WIFSIGNALED"), { { 1, 1, QSE_NULL     }, fnc_wifsignaled, 0  } },
 	{ QSE_T("WTERMSIG"),    { { 1, 1, QSE_NULL     }, fnc_wtermsig,    0  } },
 	{ QSE_T("chmod"),       { { 2, 2, QSE_NULL     }, fnc_chmod,       0  } },
-	{ QSE_T("close"),       { { 1, 1, QSE_NULL     }, fnc_close,       0  } },
+	{ QSE_T("close"),       { { 1, 2, QSE_NULL     }, fnc_close,       0  } },
 	{ QSE_T("closedir"),    { { 1, 1, QSE_NULL     }, fnc_closedir,    0  } },
 	{ QSE_T("closelog"),    { { 0, 0, QSE_NULL     }, fnc_closelog,    0  } },
+	{ QSE_T("dup"),         { { 1, 3, QSE_NULL     }, fnc_dup,         0  } },
 	{ QSE_T("errmsg"),      { { 0, 0, QSE_NULL     }, fnc_errmsg,      0  } },
 	{ QSE_T("fork"),        { { 0, 0, QSE_NULL     }, fnc_fork,        0  } },
 	{ QSE_T("getegid"),     { { 0, 0, QSE_NULL     }, fnc_getegid,     0  } },
@@ -2298,6 +2473,7 @@ static fnctab_t fnctab[] =
 	{ QSE_T("mktime"),      { { 0, 1, QSE_NULL     }, fnc_mktime,      0  } },
 	{ QSE_T("open"),        { { 2, 3, QSE_NULL     }, fnc_open,        0  } },
 	{ QSE_T("opendir"),     { { 1, 2, QSE_NULL     }, fnc_opendir,     0  } },
+	{ QSE_T("openfd"),      { { 1, 1, QSE_NULL     }, fnc_openfd,      0  } },
 	{ QSE_T("openlog"),     { { 3, 3, QSE_NULL     }, fnc_openlog,     0  } },
 	{ QSE_T("pipe"),        { { 2, 3, QSE_T("rrv") }, fnc_pipe,        0  } },
 	{ QSE_T("read"),        { { 2, 3, QSE_T("vrv") }, fnc_read,        0  } },
@@ -2341,6 +2517,8 @@ static fnctab_t fnctab[] =
 static inttab_t inttab[] =
 {
 	/* keep this table sorted for binary search in query(). */
+	{ QSE_T("C_KEEPFD"),           { CLOSE_KEEPFD } },
+
 	{ QSE_T("DIR_SORT"),           { QSE_DIR_SORT } },
 
 #if defined(ENABLE_SYSLOG)

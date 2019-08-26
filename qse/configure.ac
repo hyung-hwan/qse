@@ -130,7 +130,7 @@ AC_CHECK_FUNCS([sysconf prctl fdopendir setrlimit getrlimit getpgid getpgrp])
 AC_CHECK_FUNCS([backtrace backtrace_symbols])
 AC_CHECK_FUNCS([fork vfork posix_spawn gettid nanosleep select])
 AC_CHECK_FUNCS([makecontext swapcontext getcontext setcontext])
-AC_CHECK_FUNCS([pipe2 accept4 sendmsg recvmsg writev readv])
+AC_CHECK_FUNCS([dup2 dup3 pipe2 accept4 sendmsg recvmsg writev readv])
 
 OLDLIBS="$LIBS"
 LIBS="$LIBM $LIBS"

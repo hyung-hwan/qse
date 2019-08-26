@@ -242,25 +242,25 @@ typedef qse_awk_val_t* (*binop_func_t) (qse_awk_rtx_t* rtx, qse_awk_val_t* left,
 typedef qse_awk_val_t* (*eval_expr_t) (qse_awk_rtx_t* rtx, qse_awk_nde_t* nde);
 
 
-QSE_INLINE qse_size_t qse_awk_rtx_getnargs (qse_awk_rtx_t* run)
+QSE_INLINE qse_size_t qse_awk_rtx_getnargs (qse_awk_rtx_t* rtx)
 {
-	return (qse_size_t) RTX_STACK_NARGS (run);
+	return (qse_size_t) RTX_STACK_NARGS(rtx);
 }
 
-QSE_INLINE qse_awk_val_t* qse_awk_rtx_getarg (qse_awk_rtx_t* run, qse_size_t idx)
+QSE_INLINE qse_awk_val_t* qse_awk_rtx_getarg (qse_awk_rtx_t* rtx, qse_size_t idx)
 {
-	return RTX_STACK_ARG (run, idx);
+	return RTX_STACK_ARG(rtx, idx);
 }
 
-QSE_INLINE qse_awk_val_t* qse_awk_rtx_getgbl (qse_awk_rtx_t* run, int id)
+QSE_INLINE qse_awk_val_t* qse_awk_rtx_getgbl (qse_awk_rtx_t* rtx, int id)
 {
-	QSE_ASSERT (id >= 0 && id < (int)QSE_ARR_SIZE(run->awk->parse.gbls));
-	return RTX_STACK_GBL (run, id);
+	QSE_ASSERT (id >= 0 && id < (int)QSE_ARR_SIZE(rtx->awk->parse.gbls));
+	return RTX_STACK_GBL(rtx, id);
 }
 
-const qse_cstr_t* qse_awk_rtx_getsubsep (qse_awk_rtx_t* run)
+const qse_cstr_t* qse_awk_rtx_getsubsep (qse_awk_rtx_t* rtx)
 {
-	return &run->gbl.subsep;
+	return &rtx->gbl.subsep;
 }
 
 /* internal function to set a value to a global variable.
