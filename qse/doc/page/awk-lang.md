@@ -1493,6 +1493,55 @@ BEGIN {
 
 ~~~~~{.awk}
 BEGIN {
+	if (sys::pipe(p0, p1, sys::O_NONBLOCK | sys::O_CLOEXEC) <= -1)
+	{
+		 print "pipe error";
+		 return -1;
+	}
+	a = sys::fork();
+	if (a <= -1)
+	{
+		print "fork error";
+		sys::close (p0);
+		sys::close (p1);
+	}
+	else if (a == 0)
+	{
+		## child
+		sys::close (p0);
+
+		stdout = sys::openfd(1);
+		sys::dup(p1, stdout);
+
+		print B"hello world";
+		print B"testing sys::dup()";
+		print B"writing to standard output..";
+
+		sys::close (p1);
+		sys::close (stdout);
+	}
+	else
+	{
+		sys::close (p1);
+		while (1)
+		{
+			n = sys::read(p0, k, 10);
+			if (n <= 0)
+			{
+				if (n == sys::RC_EAGAIN) continue; ## nonblock but data not available
+				if (n != 0) print "ERROR: " sys::errmsg();
+				break;
+			}
+			print "[" k "]";
+		}
+		sys::close (p0);
+		sys::wait(a);
+	}
+}
+~~~~~
+
+~~~~~{.awk}
+BEGIN {
 	d = sys::opendir("/etc", sys::DIR_SORT);
 	if (d >= 0)
 	{
