@@ -1926,7 +1926,99 @@ int qse_awk_addgbl (qse_awk_t* awk, const qse_char_t* name)
 		return -1;
 	}
 
-	n = add_global (awk, &ncs, QSE_NULL, 0);
+	n = add_global(awk, &ncs, QSE_NULL, 0);
+
+	/* update the count of the static globals. 
+	 * the total global count has been updated inside add_global. */
+	if (n >= 0) awk->tree.ngbls_base++; 
+
+	return n;
+}
+
+int qse_awk_addgblwithwcs (qse_awk_t* awk, const qse_wchar_t* name)
+{
+	int n;
+	qse_wcstr_t ncs;
+
+	if (awk->tree.ngbls > awk->tree.ngbls_base) 
+	{
+		/* this function is not allowed after qse_awk_parse is called */
+		SETERR_COD (awk, QSE_AWK_EPERM);
+		return -1;
+	}
+
+	ncs.ptr = (qse_wchar_t*)name;
+	ncs.len = qse_wcslen(name);;
+	if (ncs.len <= 0)
+	{
+		SETERR_COD (awk, QSE_AWK_EINVAL);
+		return -1;
+	}
+
+#if defined(QSE_CHAR_IS_MCHAR)
+	{
+		qse_mcstr_t mbs;
+
+		mbs.ptr = qse_wcstombsdupwithcmgr(name, &mbs.len, awk->_mmgr, awk->_cmgr);
+		if (!mbs.ptr)
+		{
+			SETERR_COD (awk, QSE_AWK_ENOMEM); /* TODO: it could be encoidng error too?? how to tell? */
+			return -1;
+		}
+
+		n = add_global(awk, &mbs, QSE_NULL, 0);
+
+		qse_awk_freemem (awk, mbs.ptr);
+	}
+#else
+	n = add_global(awk, &ncs, QSE_NULL, 0);
+#endif
+
+	/* update the count of the static globals. 
+	 * the total global count has been updated inside add_global. */
+	if (n >= 0) awk->tree.ngbls_base++; 
+
+	return n;
+}
+
+int qse_awk_addgblwithmbs (qse_awk_t* awk, const qse_mchar_t* name)
+{
+	int n;
+	qse_mcstr_t ncs;
+
+	if (awk->tree.ngbls > awk->tree.ngbls_base) 
+	{
+		/* this function is not allowed after qse_awk_parse is called */
+		SETERR_COD (awk, QSE_AWK_EPERM);
+		return -1;
+	}
+
+	ncs.ptr = (qse_mchar_t*)name;
+	ncs.len = qse_mbslen(name);;
+	if (ncs.len <= 0)
+	{
+		SETERR_COD (awk, QSE_AWK_EINVAL);
+		return -1;
+	}
+
+#if defined(QSE_CHAR_IS_MCHAR)
+	n = add_global(awk, &ncs, QSE_NULL, 0);
+#else
+	{
+		qse_wcstr_t wcs;
+	
+		wcs.ptr = qse_mbstowcsdupwithcmgr(name, &wcs.len, awk->_mmgr, awk->_cmgr);
+		if (!wcs.ptr)
+		{
+			SETERR_COD (awk, QSE_AWK_ENOMEM); /* TODO: it could be encoidng error too?? how to tell? */
+			return -1;
+		}
+
+		n = add_global(awk, &wcs, QSE_NULL, 0);
+
+		qse_awk_freemem (awk, wcs.ptr);
+	}
+#endif
 
 	/* update the count of the static globals. 
 	 * the total global count has been updated inside add_global. */
