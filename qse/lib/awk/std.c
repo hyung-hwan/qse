@@ -2322,9 +2322,9 @@ static int add_globals (qse_awk_t* awk)
 {
 	xtn_t* xtn = GET_XTN(awk);
 
-	xtn->gbl_argc = qse_awk_addgbl (awk, QSE_T("ARGC"));
-	xtn->gbl_argv = qse_awk_addgbl (awk, QSE_T("ARGV"));
-	xtn->gbl_environ = qse_awk_addgbl (awk,  QSE_T("ENVIRON"));
+	xtn->gbl_argc = qse_awk_addgbl(awk, QSE_T("ARGC"));
+	xtn->gbl_argv = qse_awk_addgbl(awk, QSE_T("ARGV"));
+	xtn->gbl_environ = qse_awk_addgbl(awk,  QSE_T("ENVIRON"));
 
 	return (xtn->gbl_argc <= -1 || 
 	        xtn->gbl_argv <= -1 ||
