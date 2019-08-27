@@ -467,8 +467,10 @@ function advance()
         }
     }
     if (match(line, "^[()'.]") ||
-        match(line, "^[_A-Za-z0-9=!@$%&*<>?+\\-*/:]+") ||
-        match(line, "^[ \\t]+")) {
+        ##match(line, "^[_A-Za-z0-9=!@$%&*<>?+\\-*/:]+") ||
+        match(line, "^[-_A-Za-z0-9=!@$%&*<>?+\\*/:]+") ||
+        ##match(line, "^[ \\t]+")) {
+        match(line, "^[ \t]+")) {
         token = substr(line, RSTART, RLENGTH)
         line = substr(line, RLENGTH+1)
     } else if (line == "" || substr(line, 1, 1) == ";")
