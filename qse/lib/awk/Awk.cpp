@@ -1324,8 +1324,7 @@ int Awk::call (const char_t* name, Value* ret, const Value* args, size_t nargs)
 		if (nargs <= QSE_COUNTOF(buf)) ptr = buf;
 		else
 		{
-			ptr = (val_t**) qse_awk_allocmem (
-				awk, QSE_SIZEOF(val_t*) * nargs);
+			ptr = (val_t**)qse_awk_allocmem(awk, QSE_SIZEOF(val_t*) * nargs);
 			if (ptr == QSE_NULL)
 			{
 				this->runctx.setError (QSE_AWK_ENOMEM);

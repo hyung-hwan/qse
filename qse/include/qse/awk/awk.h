@@ -1780,32 +1780,70 @@ QSE_EXPORT void qse_awk_pushecb (
 );
 
 /**
- * The qse_awk_addgbl() function adds an intrinsic global variable.
+ * The qse_awk_addgblwithmbs() function adds an intrinsic global variable.
  * \return the ID of the global variable added on success, -1 on failure.
  */
-QSE_EXPORT int qse_awk_addgbl (
-	qse_awk_t*        awk,   /**< awk */
-	const qse_char_t* name   /**< variable name */
+QSE_EXPORT int qse_awk_addgblwithmbs (
+	qse_awk_t*         awk,   /**< awk */
+	const qse_mchar_t* name   /**< variable name */
 );
 
 /**
- * The qse_awk_delgbl() function deletes an intrinsic global variable by name.
+ * The qse_awk_addgblwithwcs() function adds an intrinsic global variable.
+ * \return the ID of the global variable added on success, -1 on failure.
+ */
+QSE_EXPORT int qse_awk_addgblwithwcs (
+	qse_awk_t*         awk,   /**< awk */
+	const qse_wchar_t* name   /**< variable name */
+);
+
+/**
+ * The qse_awk_delgblwithmbs() function deletes an intrinsic global variable by name.
  * \return 0 on success, -1 on failure
  */
-QSE_EXPORT int qse_awk_delgbl (
-	qse_awk_t*        awk,  /**< awk */
-	const qse_char_t* name  /**< variable name */
+QSE_EXPORT int qse_awk_delgblwithmbs (
+	qse_awk_t*         awk,  /**< awk */
+	const qse_mchar_t* name  /**< variable name */
 );
 
 /**
- * The qse_awk_findgbl() function returns the numeric ID of an intrinsic global
+ * The qse_awk_delgblwithwcs() function deletes an intrinsic global variable by name.
+ * \return 0 on success, -1 on failure
+ */
+QSE_EXPORT int qse_awk_delgblwithwcs (
+	qse_awk_t*         awk,  /**< awk */
+	const qse_wchar_t* name  /**< variable name */
+);
+
+/**
+ * The qse_awk_findgblwithmbs() function returns the numeric ID of an intrinsic global
  * variable.
  * \return number >= 0 on success, -1 on failure
  */
-QSE_EXPORT int qse_awk_findgbl (
-	qse_awk_t*        awk,  /**< awk */
-	const qse_char_t* name  /**< variable name */
+QSE_EXPORT int qse_awk_findgblwithmbs (
+	qse_awk_t*         awk,  /**< awk */
+	const qse_mchar_t* name  /**< variable name */
 );
+
+/**
+ * The qse_awk_findgblwithwcs() function returns the numeric ID of an intrinsic global
+ * variable.
+ * \return number >= 0 on success, -1 on failure
+ */
+QSE_EXPORT int qse_awk_findgblwithwcs (
+	qse_awk_t*         awk,  /**< awk */
+	const qse_wchar_t* name  /**< variable name */
+);
+
+#if defined(QSE_CHAR_IS_MCHAR)
+#	define qse_awk_addgbl qse_awk_addgblwithmbs
+#	define qse_awk_delgbl qse_awk_delgblwithmbs
+#	define qse_awk_findgbl qse_awk_findgblwithmbs
+#else
+#	define qse_awk_addgbl qse_awk_addgblwithwcs
+#	define qse_awk_delgbl qse_awk_delgblwithwcs
+#	define qse_awk_findgbl qse_awk_findgblwithwcs
+#endif
 
 /**
  * The qse_awk_addfnc() function adds an intrinsic function.
@@ -1960,6 +1998,19 @@ QSE_EXPORT qse_char_t* qse_awk_strxdup (
 QSE_EXPORT qse_char_t* qse_awk_cstrdup (
 	qse_awk_t*        awk, /**< awk */
 	const qse_cstr_t* str  /**< string */
+);
+
+
+QSE_EXPORT qse_wchar_t* qse_awk_mbstowcsdup (
+	qse_awk_t*         awk,
+	const qse_mchar_t* mbs,
+	qse_size_t*        wcslen
+);
+
+QSE_EXPORT qse_mchar_t* qse_awk_wcstombsdup (
+	qse_awk_t*         awk,
+	const qse_wchar_t* wcs,
+	qse_size_t*        mbslen
 );
 
 /**
