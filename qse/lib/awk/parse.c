@@ -1864,7 +1864,7 @@ static int add_global (qse_awk_t* awk, const qse_cstr_t* name, qse_awk_loc_t* xl
 		return -1;
 	}
 
-#if 0	
+#if 0
 	/* TODO: need to check if it conflicts with a named variable to 
 	 * disallow such a program shown below (IMPLICIT & EXPLICIT on)
 	 *  BEGIN {X=20; x(); x(); x(); print X}
@@ -1906,18 +1906,10 @@ static int add_global (qse_awk_t* awk, const qse_cstr_t* name, qse_awk_loc_t* xl
 	return (int)ngbls;
 }
 
-int qse_awk_addgbl (qse_awk_t* awk, const qse_char_t* name)
+int qse_awk_addgblwithmbs (qse_awk_t* awk, const qse_mchar_t* name)
 {
 	int n;
-	qse_cstr_t ncs;
-
-	ncs.ptr = (qse_char_t*)name;
-	ncs.len = qse_strlen(name);;
-	if (ncs.len <= 0)
-	{
-		SETERR_COD (awk, QSE_AWK_EINVAL);
-		return -1;
-	}
+	qse_mcstr_t ncs;
 
 	if (awk->tree.ngbls > awk->tree.ngbls_base) 
 	{
@@ -1926,7 +1918,25 @@ int qse_awk_addgbl (qse_awk_t* awk, const qse_char_t* name)
 		return -1;
 	}
 
+	ncs.ptr = (qse_mchar_t*)name;
+	ncs.len = qse_mbslen(name);;
+	if (ncs.len <= 0)
+	{
+		SETERR_COD (awk, QSE_AWK_EINVAL);
+		return -1;
+	}
+
+#if defined(QSE_CHAR_IS_MCHAR)
 	n = add_global(awk, &ncs, QSE_NULL, 0);
+#else
+	{
+		qse_wcstr_t wcs;
+		wcs.ptr = qse_awk_mbstowcsdup(awk, ncs.ptr, &wcs.len);
+		if (!wcs.ptr) return -1;
+		n = add_global(awk, &wcs, QSE_NULL, 0);
+		qse_awk_freemem (awk, wcs.ptr);
+	}
+#endif
 
 	/* update the count of the static globals. 
 	 * the total global count has been updated inside add_global. */
@@ -1958,16 +1968,9 @@ int qse_awk_addgblwithwcs (qse_awk_t* awk, const qse_wchar_t* name)
 #if defined(QSE_CHAR_IS_MCHAR)
 	{
 		qse_mcstr_t mbs;
-
-		mbs.ptr = qse_wcstombsdupwithcmgr(name, &mbs.len, awk->_mmgr, awk->_cmgr);
-		if (!mbs.ptr)
-		{
-			SETERR_COD (awk, QSE_AWK_ENOMEM); /* TODO: it could be encoidng error too?? how to tell? */
-			return -1;
-		}
-
+		mbs.ptr = qse_awk_wcstombsdup(awk, ncs.ptr, &mbs.len);
+		if (!mbs.ptr) return -1;
 		n = add_global(awk, &mbs, QSE_NULL, 0);
-
 		qse_awk_freemem (awk, mbs.ptr);
 	}
 #else
@@ -1981,62 +1984,17 @@ int qse_awk_addgblwithwcs (qse_awk_t* awk, const qse_wchar_t* name)
 	return n;
 }
 
-int qse_awk_addgblwithmbs (qse_awk_t* awk, const qse_mchar_t* name)
-{
-	int n;
-	qse_mcstr_t ncs;
-
-	if (awk->tree.ngbls > awk->tree.ngbls_base) 
-	{
-		/* this function is not allowed after qse_awk_parse is called */
-		SETERR_COD (awk, QSE_AWK_EPERM);
-		return -1;
-	}
-
-	ncs.ptr = (qse_mchar_t*)name;
-	ncs.len = qse_mbslen(name);;
-	if (ncs.len <= 0)
-	{
-		SETERR_COD (awk, QSE_AWK_EINVAL);
-		return -1;
-	}
-
-#if defined(QSE_CHAR_IS_MCHAR)
-	n = add_global(awk, &ncs, QSE_NULL, 0);
-#else
-	{
-		qse_wcstr_t wcs;
-	
-		wcs.ptr = qse_mbstowcsdupwithcmgr(name, &wcs.len, awk->_mmgr, awk->_cmgr);
-		if (!wcs.ptr)
-		{
-			SETERR_COD (awk, QSE_AWK_ENOMEM); /* TODO: it could be encoidng error too?? how to tell? */
-			return -1;
-		}
-
-		n = add_global(awk, &wcs, QSE_NULL, 0);
-
-		qse_awk_freemem (awk, wcs.ptr);
-	}
-#endif
-
-	/* update the count of the static globals. 
-	 * the total global count has been updated inside add_global. */
-	if (n >= 0) awk->tree.ngbls_base++; 
-
-	return n;
-}
-
 #define QSE_AWK_NUM_STATIC_GBLS \
 	(QSE_AWK_MAX_GBL_ID-QSE_AWK_MIN_GBL_ID+1)
 
-int qse_awk_delgbl (qse_awk_t* awk, const qse_char_t* name)
+int qse_awk_delgblwithmbs (qse_awk_t* awk, const qse_mchar_t* name)
 {
 	qse_size_t n;
-	qse_cstr_t ncs;
+	qse_mcstr_t ncs;
+	qse_wcstr_t wcs;
 
-	ncs.ptr = (qse_char_t*)name;
-	ncs.len = qse_strlen (name);
+	ncs.ptr = (qse_mchar_t*)name;
+	ncs.len = qse_mbslen(name);
 
 	if (awk->tree.ngbls > awk->tree.ngbls_base) 
 	{
@@ -2045,12 +2003,25 @@ int qse_awk_delgbl (qse_awk_t* awk, const qse_char_t* name)
 		return -1;
 	}
 
+#if defined(QSE_CHAR_IS_MCHAR)
 	n = qse_arr_search(awk->parse.gbls, QSE_AWK_NUM_STATIC_GBLS, ncs.ptr, ncs.len);
 	if (n == QSE_ARR_NIL)
 	{
 		qse_awk_seterrnum (awk, QSE_AWK_ENOENT, &ncs);
 		return -1;
 	}
+#else
+	wcs.ptr = qse_awk_mbstowcsdup(awk, ncs.ptr, &wcs.len);
+	if (!wcs.ptr) return -1;
+	n = qse_arr_search(awk->parse.gbls, QSE_AWK_NUM_STATIC_GBLS, wcs.ptr, wcs.len);
+	if (n == QSE_ARR_NIL)
+	{
+		qse_awk_seterrnum (awk, QSE_AWK_ENOENT, &wcs);
+		qse_awk_freemem (awk, wcs.ptr);
+		return -1;
+	}
+	qse_awk_freemem (awk, wcs.ptr);
+#endif
 
 	/* invalidate the name if deletion is requested.
 	 * this approach does not delete the entry.
@@ -2067,23 +2038,123 @@ int qse_awk_delgbl (qse_awk_t* awk, const qse_char_t* name)
 	return 0;
 }
 
-int qse_awk_findgbl (qse_awk_t* awk, const qse_char_t* name)
+int qse_awk_delgblwithwcs (qse_awk_t* awk, const qse_wchar_t* name)
 {
 	qse_size_t n;
-	qse_cstr_t ncs;
+	qse_wcstr_t ncs;
+	qse_mcstr_t mbs;
 
-	ncs.ptr = (qse_char_t*)name;
-	ncs.len = qse_strlen (name);
+	ncs.ptr = (qse_wchar_t*)name;
+	ncs.len = qse_wcslen(name);
 
+	if (awk->tree.ngbls > awk->tree.ngbls_base) 
+	{
+		/* this function is not allow after qse_awk_parse is called */
+		qse_awk_seterrnum (awk, QSE_AWK_EPERM, QSE_NULL);
+		return -1;
+	}
+
+#if defined(QSE_CHAR_IS_MCHAR)
+	mbs.ptr = qse_awk_wcstombsdup(awk, ncs.ptr, &mbs.len);
+	if (!mbs.ptr) return -1;
+	n = qse_arr_search(awk->parse.gbls, QSE_AWK_NUM_STATIC_GBLS, mbs.ptr, mbs.len);
+	if (n == QSE_ARR_NIL)
+	{
+		qse_awk_seterrnum (awk, QSE_AWK_ENOENT, &mbs);
+		qse_awk_freemem (awk, mbs.ptr);
+		return -1;
+	}
+	qse_awk_freemem (awk, mbs.ptr);
+#else
 	n = qse_arr_search(awk->parse.gbls, QSE_AWK_NUM_STATIC_GBLS, ncs.ptr, ncs.len);
 	if (n == QSE_ARR_NIL)
 	{
 		qse_awk_seterrnum (awk, QSE_AWK_ENOENT, &ncs);
 		return -1;
 	}
+#endif
+	
+
+	/* invalidate the name if deletion is requested.
+	 * this approach does not delete the entry.
+	 * if qse_delgbl() is called with the same name
+	 * again, the entry will be appended again. 
+	 * never call this funciton unless it is really required. */
+	/*
+	awk->parse.gbls.buf[n].name.ptr[0] = QSE_T('\0');
+	awk->parse.gbls.buf[n].name.len = 0;
+	*/
+	n = qse_arr_uplete (awk->parse.gbls, n, 1);
+	QSE_ASSERT (n == 1);
+
+	return 0;
+}
+
+int qse_awk_findgblwithmbs (qse_awk_t* awk, const qse_mchar_t* name)
+{
+	qse_size_t n;
+	qse_mcstr_t ncs;
+	qse_wcstr_t wcs;
+
+	ncs.ptr = (qse_mchar_t*)name;
+	ncs.len = qse_mbslen(name);
+
+#if defined(QSE_CHAR_IS_MCHAR)
+	n = qse_arr_search(awk->parse.gbls, QSE_AWK_NUM_STATIC_GBLS, ncs.ptr, ncs.len);
+	if (n == QSE_ARR_NIL)
+	{
+		qse_awk_seterrnum (awk, QSE_AWK_ENOENT, &ncs);
+		return -1;
+	}
+#else
+	wcs.ptr = qse_awk_mbstowcsdup(awk, ncs.ptr, &wcs.len);
+	if (!wcs.ptr) return -1;
+	n = qse_arr_search(awk->parse.gbls, QSE_AWK_NUM_STATIC_GBLS, wcs.ptr, wcs.len);
+	if (n == QSE_ARR_NIL)
+	{
+		qse_awk_seterrnum (awk, QSE_AWK_ENOENT, &wcs);
+		qse_awk_freemem (awk, wcs.ptr);
+		return -1;
+	}
+	qse_awk_freemem (awk, wcs.ptr);
+#endif
 
 	return (int)n;
 }
+
+int qse_awk_findgblwithwcs (qse_awk_t* awk, const qse_wchar_t* name)
+{
+	qse_size_t n;
+	qse_wcstr_t ncs;
+	qse_mcstr_t mbs;
+
+	ncs.ptr = (qse_wchar_t*)name;
+	ncs.len = qse_wcslen(name);
+
+#if defined(QSE_CHAR_IS_MCHAR)
+	
+	mbs.ptr = qse_awk_wcstombsdup(awk, ncs.ptr, &mbs.len);
+	if (!mbs.ptr) return -1;
+	n = qse_arr_search(awk->parse.gbls, QSE_AWK_NUM_STATIC_GBLS, mbs.ptr, mbs.len);
+	if (n == QSE_ARR_NIL)
+	{
+		qse_awk_seterrnum (awk, QSE_AWK_ENOENT, &mbs);
+		qse_awk_freemem (awk, mbs.ptr);
+		return -1;
+	}
+	qse_awk_freemem (awk, mbs.ptr);
+#else
+	n = qse_arr_search(awk->parse.gbls, QSE_AWK_NUM_STATIC_GBLS, ncs.ptr, ncs.len);
+	if (n == QSE_ARR_NIL)
+	{
+		qse_awk_seterrnum (awk, QSE_AWK_ENOENT, &ncs);
+		return -1;
+	}
+#endif
+
+	return (int)n;
+}
+
 
 static qse_awk_t* collect_globals (qse_awk_t* awk)
 {

@@ -34,6 +34,8 @@
 #	include <qse/cmn/tre.h>
 #endif
 
+#include <qse/cmn/mbwc.h>
+
 void* qse_awk_allocmem (qse_awk_t* awk, qse_size_t size)
 {
 	void* ptr = QSE_AWK_ALLOC(awk, size);
@@ -75,6 +77,50 @@ qse_char_t* qse_awk_cstrdup (qse_awk_t* awk, const qse_cstr_t* s)
 	qse_char_t* ptr = qse_cstrdup(s, qse_awk_getmmgr(awk));
 	if (!ptr) qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);
 	return ptr;
+}
+
+
+
+qse_wchar_t* qse_awk_mbstowcsdup (qse_awk_t* awk, const qse_mchar_t* mbs, qse_size_t* _wcslen)
+{
+	qse_size_t mbslen, wcslen;
+	qse_wchar_t* wcs;
+
+	/* if i use qse_mbstowcsdupwithcmgr(), i cannot pinpoint the exact failure cause.
+	 * let's do it differently. */
+	if (qse_mbstowcswithcmgr(mbs, &mbslen, QSE_NULL, &wcslen, awk->_cmgr) <= -1)
+	{
+		qse_awk_seterrnum (awk, QSE_AWK_EINVAL, QSE_NULL);
+		return QSE_NULL;
+	}
+
+	wcs = qse_awk_allocmem(awk, QSE_SIZEOF(*wcs) * (wcslen + 1));
+	if (!wcs) return QSE_NULL;
+
+	wcslen = wcslen + 1;
+	qse_mbstowcswithcmgr (mbs, &mbslen, wcs, &wcslen, awk->_cmgr);
+	if (_wcslen) *_wcslen = wcslen;
+	return wcs;
+}
+
+qse_mchar_t* qse_awk_wcstombsdup (qse_awk_t* awk, const qse_wchar_t* wcs, qse_size_t* _mbslen)
+{
+	qse_size_t mbslen, wcslen;
+	qse_mchar_t* mbs;
+
+	if (qse_wcstombswithcmgr(wcs, &wcslen, QSE_NULL, &mbslen, awk->_cmgr) <= -1)
+	{
+		qse_awk_seterrnum (awk, QSE_AWK_EINVAL, QSE_NULL);
+		return QSE_NULL;
+	}
+
+	mbs = qse_awk_allocmem(awk, QSE_SIZEOF(*mbs) * (mbslen + 1));
+	if (!mbs) return QSE_NULL;
+
+	mbslen = mbslen + 1;
+	qse_wcstombswithcmgr (wcs, &wcslen, mbs, &mbslen, awk->_cmgr);
+	if (_mbslen) *_mbslen = mbslen;
+	return mbs;
 }
 
 /* ========================================================================= */

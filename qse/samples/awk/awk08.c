@@ -4,12 +4,12 @@
 #include "awk00.h"
 
 static const qse_char_t* src = QSE_T(
-	"BEGIN { G0 = 10; G1 = \"hello, world\"; G2 = sin(90); match (\"abcdefg\", /[c-f]+/); }"
+	"BEGIN { G0 = 10; G1 = \"hello, world\"; G2 = sin(90); G3=33; G4=44; G5=55; G6=66; G7=77; G8=88; G9=99; match (\"abcdefg\", /[c-f]+/); }"
 );
 
 struct ginfo_t
 {
-	int g[3];
+	int g[10];
 };
 
 typedef struct ginfo_t ginfo_t;
@@ -40,8 +40,17 @@ static int awk_main (int argc, qse_char_t* argv[])
 	for (i = 0; i < QSE_COUNTOF(ginfo->g); i++)
 	{
 		qse_char_t name[] = QSE_T("GX");
+		qse_wchar_t wname[] = QSE_WT("GX");
+		qse_mchar_t mname[] = QSE_MT("GX");
 		name[1] = QSE_T('0') + i; 
-		ginfo->g[i] = qse_awk_addgbl (awk, name);
+		wname[1] = QSE_WT('0') + i;
+		mname[1] = QSE_MT('0') + i;
+		if (i < 3)
+			ginfo->g[i] = qse_awk_addgblwithmbs(awk, mname);
+		else if (i < 6)
+			ginfo->g[i] = qse_awk_addgblwithwcs(awk, wname);
+		else	
+			ginfo->g[i] = qse_awk_addgbl(awk, name);
 		if (ginfo->g[i] <= -1)
 		{
 			qse_fprintf (QSE_STDERR, QSE_T("ERROR: %s\n"), qse_awk_geterrmsg(awk));
