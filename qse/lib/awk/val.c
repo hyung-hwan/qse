@@ -1495,39 +1495,80 @@ int qse_awk_rtx_valtostr (qse_awk_rtx_t* rtx, const qse_awk_val_t* v, qse_awk_rt
 qse_mchar_t* qse_awk_rtx_valtombsdupwithcmgr (qse_awk_rtx_t* rtx, const qse_awk_val_t* v, qse_size_t* len, qse_cmgr_t* cmgr)
 {
 	qse_mchar_t* mbs;
+	qse_awk_val_type_t vtype;
 
-	if (QSE_AWK_RTX_GETVALTYPE(rtx,v) == QSE_AWK_VAL_MBS)
+	vtype = QSE_AWK_RTX_GETVALTYPE(rtx,v);
+
+	switch (vtype)
 	{
-		mbs = qse_mbsxdup(((qse_awk_val_mbs_t*)v)->val.ptr, ((qse_awk_val_mbs_t*)v)->val.len, qse_awk_rtx_getmmgr(rtx));
-		if (!mbs) 
+		case QSE_AWK_VAL_MBS:
 		{
-			qse_awk_rtx_seterror (rtx, QSE_AWK_ENOMEM, QSE_NULL, QSE_NULL);
-			return QSE_NULL;
+			mbs = qse_mbsxdup(((qse_awk_val_mbs_t*)v)->val.ptr, ((qse_awk_val_mbs_t*)v)->val.len, qse_awk_rtx_getmmgr(rtx));
+			if (!mbs) 
+			{
+				qse_awk_rtx_seterror (rtx, QSE_AWK_ENOMEM, QSE_NULL, QSE_NULL);
+				return QSE_NULL;
+			}
+
+			if (len) *len = ((qse_awk_val_mbs_t*)v)->val.len;
+			break;
+		}
+		
+		case QSE_AWK_VAL_STR:
+		{
+		#if defined(QSE_CHAR_IS_MCHAR)
+			mbs = qse_strxdup(((qse_awk_val_str_t*)v)->val.ptr, ((qse_awk_val_str_t*)v)->val.len, qse_awk_rtx_getmmgr(rtx));
+			if (!mbs) 
+			{
+				qse_awk_rtx_seterror (rtx, QSE_AWK_ENOMEM, QSE_NULL, QSE_NULL);
+				return QSE_NULL;
+			}
+
+			if (len) *len = ((qse_awk_val_str_t*)v)->val.len;
+		#else
+			qse_size_t mbslen, wcslen;
+			wcslen = ((qse_awk_val_str_t*)v)->val.len;
+			mbs = qse_wcsntombsdupwithcmgr(((qse_awk_val_str_t*)v)->val.ptr, wcslen, &mbslen, qse_awk_rtx_getmmgr(rtx), cmgr);
+			if (!mbs) 
+			{
+				qse_awk_rtx_seterror (rtx, QSE_AWK_ENOMEM, QSE_NULL, QSE_NULL);
+				return QSE_NULL;
+			}
+
+			if (len) *len = mbslen;
+		#endif
+			break;
 		}
 
-		if (len) *len = ((qse_awk_val_mbs_t*)v)->val.len;
-	}
-	else
-	{
-		qse_char_t* str0;
-		qse_size_t len0, len1;
-
-		str0 = qse_awk_rtx_getvalstr(rtx, v, &len0);
-		if (!str0) return QSE_NULL;
-
-	#if defined(QSE_CHAR_IS_MCHAR)
-		mbs = qse_strxdup(str0, len0, qse_awk_rtx_getmmgr(rtx));
-		len1 = len0;
-	#else
-		mbs = qse_wcsntombsdupwithcmgr(str0, len0, &len1, qse_awk_rtx_getmmgr(rtx), cmgr);
-	#endif
-		qse_awk_rtx_freevalstr (rtx, v, str0);
-		if (!mbs) 
+		default:
 		{
-			qse_awk_rtx_seterror (rtx, QSE_AWK_ENOMEM, QSE_NULL, QSE_NULL);
-			return QSE_NULL;
+		#if defined(QSE_CHAR_IS_MCHAR)
+			qse_awk_rtx_valtostr_out_t out;
+
+			out.type = QSE_AWK_RTX_VALTOSTR_CPLDUP;
+			if (qse_awk_rtx_valtostr(rtx, v, &out) <= -1) return QSE_NULL;
+
+			mbs = out.u.cpldup.ptr;
+			if (len) *len = out.u.cpldup.len;
+		#else
+			qse_size_t mbslen;
+			qse_awk_rtx_valtostr_out_t out;
+
+			out.type = QSE_AWK_RTX_VALTOSTR_CPLDUP;
+			if (qse_awk_rtx_valtostr(rtx, v, &out) <= -1) return QSE_NULL;
+
+			mbs = qse_wcsntombsdupwithcmgr(out.u.cpldup.ptr, out.u.cpldup.len, &mbslen, qse_awk_rtx_getmmgr(rtx), cmgr);
+			qse_awk_rtx_freemem (rtx, out.u.cpldup.ptr);
+			if (!mbs)
+			{
+				qse_awk_rtx_seterror (rtx, QSE_AWK_ENOMEM, QSE_NULL, QSE_NULL);
+				return QSE_NULL;
+			}
+
+			if (len) *len = mbslen;
+		#endif
+			break;
 		}
-		if (len) *len = len1;
 	}
 
 	return mbs;

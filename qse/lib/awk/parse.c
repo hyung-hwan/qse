@@ -1759,11 +1759,7 @@ int qse_awk_initgbls (qse_awk_t* awk)
 	{
 		qse_size_t g;
 
-		g = qse_arr_insert (
-			awk->parse.gbls,
-			QSE_ARR_SIZE(awk->parse.gbls),
-			(qse_char_t*)gtab[id].name,
-			gtab[id].namelen);
+		g = qse_arr_insert(awk->parse.gbls, QSE_ARR_SIZE(awk->parse.gbls), (qse_char_t*)gtab[id].name, gtab[id].namelen);
 		if (g == QSE_ARR_NIL) return -1;
 
 		QSE_ASSERT ((int)g == id);
@@ -1772,8 +1768,7 @@ int qse_awk_initgbls (qse_awk_t* awk)
 		awk->tree.ngbls++;
 	}
 
-	QSE_ASSERT (awk->tree.ngbls_base == 
-		QSE_AWK_MAX_GBL_ID-QSE_AWK_MIN_GBL_ID+1);
+	QSE_ASSERT (awk->tree.ngbls_base == QSE_AWK_MAX_GBL_ID-QSE_AWK_MIN_GBL_ID+1);
 	return 0;
 }
 
@@ -1781,8 +1776,7 @@ static void adjust_static_globals (qse_awk_t* awk)
 {
 	int id;
 
-	QSE_ASSERT (awk->tree.ngbls_base >=
-		QSE_AWK_MAX_GBL_ID - QSE_AWK_MAX_GBL_ID + 1);
+	QSE_ASSERT (awk->tree.ngbls_base >= QSE_AWK_MAX_GBL_ID - QSE_AWK_MAX_GBL_ID + 1);
 
 	for (id = QSE_AWK_MIN_GBL_ID; id <= QSE_AWK_MAX_GBL_ID; id++)
 	{
@@ -2032,7 +2026,7 @@ int qse_awk_delgblwithmbs (qse_awk_t* awk, const qse_mchar_t* name)
 	awk->parse.gbls.buf[n].name.ptr[0] = QSE_T('\0');
 	awk->parse.gbls.buf[n].name.len = 0;
 	*/
-	n = qse_arr_uplete (awk->parse.gbls, n, 1);
+	n = qse_arr_uplete(awk->parse.gbls, n, 1);
 	QSE_ASSERT (n == 1);
 
 	return 0;
@@ -2073,7 +2067,6 @@ int qse_awk_delgblwithwcs (qse_awk_t* awk, const qse_wchar_t* name)
 		return -1;
 	}
 #endif
-	
 
 	/* invalidate the name if deletion is requested.
 	 * this approach does not delete the entry.
@@ -2084,7 +2077,7 @@ int qse_awk_delgblwithwcs (qse_awk_t* awk, const qse_wchar_t* name)
 	awk->parse.gbls.buf[n].name.ptr[0] = QSE_T('\0');
 	awk->parse.gbls.buf[n].name.len = 0;
 	*/
-	n = qse_arr_uplete (awk->parse.gbls, n, 1);
+	n = qse_arr_uplete(awk->parse.gbls, n, 1);
 	QSE_ASSERT (n == 1);
 
 	return 0;
@@ -2132,7 +2125,6 @@ int qse_awk_findgblwithwcs (qse_awk_t* awk, const qse_wchar_t* name)
 	ncs.len = qse_wcslen(name);
 
 #if defined(QSE_CHAR_IS_MCHAR)
-	
 	mbs.ptr = qse_awk_wcstombsdup(awk, ncs.ptr, &mbs.len);
 	if (!mbs.ptr) return -1;
 	n = qse_arr_search(awk->parse.gbls, QSE_AWK_NUM_STATIC_GBLS, mbs.ptr, mbs.len);
