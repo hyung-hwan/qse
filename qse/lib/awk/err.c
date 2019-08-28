@@ -194,7 +194,7 @@ const qse_awk_loc_t* qse_awk_geterrloc (qse_awk_t* awk)
 	return &awk->errinf.loc;
 }
 
-const qse_mchar_t* qse_awk_getmerrmsg (qse_awk_t* awk)
+const qse_mchar_t* qse_awk_geterrmsgasmbs (qse_awk_t* awk)
 {
 #if defined(QSE_CHAR_IS_MCHAR)
 	return (awk->errinf.msg[0] == QSE_T('\0'))?
@@ -213,7 +213,7 @@ const qse_mchar_t* qse_awk_getmerrmsg (qse_awk_t* awk)
 #endif
 }
 
-const qse_wchar_t* qse_awk_getwerrmsg (qse_awk_t* awk)
+const qse_wchar_t* qse_awk_geterrmsgaswcs (qse_awk_t* awk)
 {
 #if defined(QSE_CHAR_IS_MCHAR)
 	const qse_char_t* msg;
@@ -310,7 +310,7 @@ const qse_awk_loc_t* qse_awk_rtx_geterrloc (qse_awk_rtx_t* rtx)
 	return &rtx->errinf.loc;
 }
 
-const qse_mchar_t* qse_awk_rtx_getmerrmsg (qse_awk_rtx_t* rtx)
+const qse_mchar_t* qse_awk_rtx_geterrmsgasmbs (qse_awk_rtx_t* rtx)
 {
 #if defined(QSE_CHAR_IS_MCHAR)
 	return (rtx->errinf.msg[0] == QSE_T('\0')) ?
@@ -329,7 +329,7 @@ const qse_mchar_t* qse_awk_rtx_getmerrmsg (qse_awk_rtx_t* rtx)
 #endif
 }
 
-const qse_wchar_t* qse_awk_rtx_getwerrmsg (qse_awk_rtx_t* rtx)
+const qse_wchar_t* qse_awk_rtx_geterrmsgaswcs (qse_awk_rtx_t* rtx)
 {
 #if defined(QSE_CHAR_IS_MCHAR)
 	const qse_char_t* msg;

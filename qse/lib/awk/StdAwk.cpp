@@ -1208,20 +1208,20 @@ int StdAwk::SourceFile::open (Data& io)
 		file = ioname;
 		if (io.getPrevHandle())
 		{
-			const char_t* outer;
+			const qse_char_t* outer;
 
 			outer = qse_sio_getpath ((qse_sio_t*)io.getPrevHandle());
 			if (outer)
 			{
 				const qse_char_t* base;
 
-				base = qse_basename (outer);
+				base = qse_basename(outer);
 				if (base != outer && ioname[0] != QSE_T('/'))
 				{
 					size_t tmplen, totlen, dirlen;
 				
 					dirlen = base - outer;
-						totlen = qse_strlen(ioname) + dirlen;
+					totlen = qse_strlen(ioname) + dirlen;
 					if (totlen >= QSE_COUNTOF(fbuf))
 					{
 						dbuf = (qse_char_t*) QSE_MMGR_ALLOC (
@@ -1309,7 +1309,7 @@ int StdAwk::SourceString::open (Data& io)
 			{
 				const qse_char_t* base;
 	
-				base = qse_basename (outer);
+				base = qse_basename(outer);
 				if (base != outer && ioname[0] != QSE_T('/'))
 				{
 					size_t tmplen, totlen, dirlen;
@@ -1318,7 +1318,7 @@ int StdAwk::SourceString::open (Data& io)
 					totlen = qse_strlen(ioname) + dirlen;
 					if (totlen >= QSE_COUNTOF(fbuf))
 					{
-						dbuf = (qse_char_t*) QSE_MMGR_ALLOC (
+						dbuf = (qse_char_t*)QSE_MMGR_ALLOC(
 							((Awk*)io)->getMmgr(),
 							QSE_SIZEOF(qse_char_t) * (totlen + 1)
 						);
