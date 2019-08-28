@@ -518,7 +518,7 @@ qse_mchar_t* qse_wcstombsdupwithcmgr (
 
 	ml++; /* for the terminating null character */
 
-	mbs = QSE_MMGR_ALLOC (mmgr, ml * QSE_SIZEOF(*mbs));	
+	mbs = QSE_MMGR_ALLOC(mmgr, ml * QSE_SIZEOF(*mbs));	
 	if (mbs == QSE_NULL) return QSE_NULL;
 
 	qse_wcstombswithcmgr (wcs, &wl, mbs, &ml, cmgr);
@@ -531,15 +531,17 @@ qse_mchar_t* qse_wcsntombsdupwithcmgr (
 	const qse_wchar_t* wcs, qse_size_t wcslen,
 	qse_size_t* mbslen, qse_mmgr_t* mmgr, qse_cmgr_t* cmgr)
 {
-	qse_size_t ml;
+	qse_size_t wl, ml;
 	qse_mchar_t* mbs;
 
-	if (qse_wcsntombsnwithcmgr (wcs, &wcslen, QSE_NULL, &ml, cmgr) <= -1) return QSE_NULL;
+	wl = wcslen;
+	if (qse_wcsntombsnwithcmgr(wcs, &wl, QSE_NULL, &ml, cmgr) <= -1) return QSE_NULL;
 
 	mbs = QSE_MMGR_ALLOC (mmgr, (ml + 1) * QSE_SIZEOF(*mbs));	
 	if (mbs == QSE_NULL) return QSE_NULL;
 
-	qse_wcsntombsnwithcmgr (wcs, &wcslen, mbs, &ml, cmgr);
+	wl = wcslen;
+	qse_wcsntombsnwithcmgr (wcs, &wl, mbs, &ml, cmgr);
 	mbs[ml] = QSE_MT('\0');
 
 	if (mbslen) *mbslen = ml;

@@ -48,7 +48,14 @@ struct qse_awk_fnc_t
 extern "C" {
 #endif
 
-qse_awk_fnc_t* qse_awk_findfnc (qse_awk_t* awk, const qse_cstr_t* name);
+qse_awk_fnc_t* qse_awk_findfncwithmcstr (qse_awk_t* awk, const qse_mcstr_t* name);
+qse_awk_fnc_t* qse_awk_findfncwithwcstr (qse_awk_t* awk, const qse_wcstr_t* name);
+
+#if defined(QSE_CHAR_IS_MCHAR)
+#	define qse_awk_findfncwithcstr qse_awk_findfncwithmcstr
+#else
+#	define qse_awk_findfncwithcstr qse_awk_findfncwithwcstr
+#endif
 
 /* EXPORT is required for linking on windows as they are referenced by mod-str.c */
 QSE_EXPORT int qse_awk_fnc_gsub    (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi);

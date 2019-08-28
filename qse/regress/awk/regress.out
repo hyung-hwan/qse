@@ -937,7 +937,7 @@ my hello
 my hello
 my hello
 my hello
-ERROR: CODE 17 LINE 6 COLUMN 1 FILE /home/hyung-hwan/workspace/qse/bld/x86_64-linux-wchar-debug-shared/../../regress/awk/lang-002.awk - block nested too deeply
+ERROR: CODE 17 LINE 6 COLUMN 1 FILE lang-002.awk - block nested too deeply
 --------------------------------------------------------------------------------
 [CMD]  qseawk  --newline=on -d- -f lang-003.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
@@ -956,7 +956,7 @@ BEGIN {
 --------------------------------------------------------------------------------
 [CMD]  qseawk  --newline=on -d- -f lang-004.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
-ERROR: CODE 44 LINE 3 COLUMN 9 FILE /home/hyung-hwan/workspace/qse/bld/x86_64-linux-wchar-debug-shared/../../regress/awk/lang-004.awk - function 'a' redefined
+ERROR: CODE 44 LINE 3 COLUMN 9 FILE lang-004.awk - function 'a' redefined
 --------------------------------------------------------------------------------
 [CMD]  qseawk  --implicit=off --newline=on -d- -f lang-005.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
@@ -984,7 +984,7 @@ BEGIN {
 --------------------------------------------------------------------------------
 [CMD]  qseawk  --implicit=off --newline=on -d- -f lang-006.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
-ERROR: CODE 45 LINE 5 COLUMN 10 FILE /home/hyung-hwan/workspace/qse/bld/x86_64-linux-wchar-debug-shared/../../regress/awk/lang-006.awk - global variable 'a' redefined
+ERROR: CODE 45 LINE 5 COLUMN 10 FILE lang-006.awk - global variable 'a' redefined
 --------------------------------------------------------------------------------
 [CMD]  qseawk  --implicit=on --newline=on -d- -f lang-007.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
@@ -1352,7 +1352,7 @@ BEGIN {
 	printf ("%s\n",10.34);
 }
 
-ERROR: CODE 110 LINE 3 COLUMN 2 FILE /home/hyung-hwan/workspace/qse/bld/x86_64-linux-wchar-debug-shared/../../regress/awk/lang-013.awk - recursion detected in format conversion
+ERROR: CODE 110 LINE 3 COLUMN 2 FILE lang-013.awk - recursion detected in format conversion
 --------------------------------------------------------------------------------
 [CMD]  qseawk  --newline=on -d- -f lang-014.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
@@ -1367,7 +1367,7 @@ BEGIN {
 --------------------------------------------------------------------------------
 [CMD]  qseawk  --newline=on -d- -f lang-015.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
-ERROR: CODE 17 LINE 3 COLUMN 50 FILE /home/hyung-hwan/workspace/qse/bld/x86_64-linux-wchar-debug-shared/../../regress/awk/lang-015.awk - block nested too deeply
+ERROR: CODE 17 LINE 3 COLUMN 50 FILE lang-015.awk - block nested too deeply
 --------------------------------------------------------------------------------
 [CMD]  qseawk  --newline=on -d- -f lang-016.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
@@ -1481,27 +1481,27 @@ END {
 --------------------------------------------------------------------------------
 [CMD]  qseawk  --newline=on -d- -f lang-018.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
-ERROR: CODE 49 LINE 1 COLUMN 9 FILE /home/hyung-hwan/workspace/qse/bld/x86_64-linux-wchar-debug-shared/../../regress/awk/lang-018.awk - duplicate global variable 'ARGV'
+ERROR: CODE 49 LINE 1 COLUMN 9 FILE lang-018.awk - duplicate global variable 'ARGV'
 --------------------------------------------------------------------------------
 [CMD]  qseawk  --newline=on -d- -f lang-019.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
-ERROR: CODE 51 LINE 1 COLUMN 15 FILE /home/hyung-hwan/workspace/qse/bld/x86_64-linux-wchar-debug-shared/../../regress/awk/lang-019.awk - '+' not a valid parameter name
+ERROR: CODE 51 LINE 1 COLUMN 15 FILE lang-019.awk - '+' not a valid parameter name
 --------------------------------------------------------------------------------
 [CMD]  qseawk  --newline=on -d- -f lang-020.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
-ERROR: CODE 52 LINE 1 COLUMN 9 FILE /home/hyung-hwan/workspace/qse/bld/x86_64-linux-wchar-debug-shared/../../regress/awk/lang-020.awk - '+' not a valid variable name
+ERROR: CODE 52 LINE 1 COLUMN 9 FILE lang-020.awk - '+' not a valid variable name
 --------------------------------------------------------------------------------
 [CMD]  qseawk  --newline=on -d- -f lang-021.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
-ERROR: CODE 52 LINE 3 COLUMN 9 FILE /home/hyung-hwan/workspace/qse/bld/x86_64-linux-wchar-debug-shared/../../regress/awk/lang-021.awk - '+' not a valid variable name
+ERROR: CODE 52 LINE 3 COLUMN 9 FILE lang-021.awk - '+' not a valid variable name
 --------------------------------------------------------------------------------
 [CMD]  qseawk  --newline=on -d- -f lang-022.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
-ERROR: CODE 25 LINE 2 COLUMN 9 FILE /home/hyung-hwan/workspace/qse/bld/x86_64-linux-wchar-debug-shared/../../regress/awk/lang-022.awk - left parenthesis expected in place of '='
+ERROR: CODE 25 LINE 2 COLUMN 9 FILE lang-022.awk - left parenthesis expected in place of '='
 --------------------------------------------------------------------------------
 [CMD]  qseawk  --newline=on -d- -f lang-023.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
-ERROR: CODE 30 LINE 5 COLUMN 20 FILE /home/hyung-hwan/workspace/qse/bld/x86_64-linux-wchar-debug-shared/../../regress/awk/lang-023.awk - colon expected in place of ';'
+ERROR: CODE 30 LINE 5 COLUMN 20 FILE lang-023.awk - colon expected in place of ';'
 --------------------------------------------------------------------------------
 [CMD]  qseawk  --newline=on -d- -f lang-024.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
@@ -1533,7 +1533,7 @@ BEGIN {
 	delete iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiix;
 }
 
-ERROR: CODE 81 LINE 3 COLUMN 9 FILE /home/hyung-hwan/workspace/qse/bld/x86_64-linux-wchar-debug-shared/../../regress/awk/lang-025.awk - 'iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiix' not deletable
+ERROR: CODE 81 LINE 3 COLUMN 9 FILE lang-025.awk - 'iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiix' not deletable
 --------------------------------------------------------------------------------
 [CMD]  qseawk  --newline=on -d- -f lang-026.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
@@ -1549,15 +1549,15 @@ abc
 --------------------------------------------------------------------------------
 [CMD]  qseawk  --newline=on -d- -f lang-027.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
-ERROR: CODE 19 LINE 2 COLUMN 1 FILE /home/hyung-hwan/workspace/qse/bld/x86_64-linux-wchar-debug-shared/../../regress/awk/lang-027.awk - invalid character '<NUL>'
+ERROR: CODE 19 LINE 2 COLUMN 1 FILE lang-027.awk - invalid character '<NUL>'
 --------------------------------------------------------------------------------
 [CMD]  qseawk  --newline=on -d- -f lang-028.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
-ERROR: CODE 43 LINE 2 COLUMN 10 FILE /home/hyung-hwan/workspace/qse/bld/x86_64-linux-wchar-debug-shared/../../regress/awk/lang-028.awk - intrinsic function 'substr' redefined
+ERROR: CODE 43 LINE 2 COLUMN 10 FILE lang-028.awk - intrinsic function 'substr' redefined
 --------------------------------------------------------------------------------
 [CMD]  qseawk  --newline=on -d- -f lang-029.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
-ERROR: CODE 44 LINE 9 COLUMN 10 FILE /home/hyung-hwan/workspace/qse/bld/x86_64-linux-wchar-debug-shared/../../regress/awk/lang-029.awk - function 'abc' redefined
+ERROR: CODE 44 LINE 9 COLUMN 10 FILE lang-029.awk - function 'abc' redefined
 --------------------------------------------------------------------------------
 [CMD]  qseawk  --newline=on -d- -f lang-030.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
@@ -1667,7 +1667,7 @@ BEGIN {
 ---------------------
 9210
 --------------------------------------------------------------------------------
-[CMD]  qseawk  --newline=on -d- -vdatadir=/home/hyung-hwan/workspace/qse/bld/x86_64-linux-wchar-debug-shared/../../regress/awk -vdatafile=passwd.dat -f lang-033.awk  </dev/stdin 2>&1 
+[CMD]  qseawk  --newline=on -d- -vdatadir=awk -vdatafile=passwd.dat -f lang-033.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 BEGIN {
 	while (((((("cat "   datadir)   "/")   datafile) | getline x) > 0))
@@ -1734,7 +1734,7 @@ xx: 13
 xx: 14
 xx: 15
 --------------------------------------------------------------------------------
-[CMD]  qseawk  --newline=on -d- -vdatadir=/home/hyung-hwan/workspace/qse/bld/x86_64-linux-wchar-debug-shared/../../regress/awk -vdatafile=lang-035.dat1 -vgroupname=lang-035 -f lang-035.awk lang-035.dat2 </dev/stdin 2>&1 
+[CMD]  qseawk  --newline=on -d- -vdatadir=awk -vdatafile=lang-035.dat1 -vgroupname=lang-035 -f lang-035.awk lang-035.dat2 </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 BEGIN {
 	max_cid_vars = 100;
@@ -2344,7 +2344,7 @@ nan
 8103.08
 3
 --------------------------------------------------------------------------------
-[CMD]  qseawk  --newline=on -d- -vdatadir=/home/hyung-hwan/workspace/qse/bld/x86_64-linux-wchar-debug-shared/../../regress/awk -vdatafile=lang-046.dat1 -f lang-046.awk lang-046.dat2 </dev/stdin 2>&1 
+[CMD]  qseawk  --newline=on -d- -vdatadir=awk -vdatafile=lang-046.dat1 -f lang-046.awk lang-046.dat2 </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 1
 
@@ -2456,7 +2456,7 @@ BEGIN {
 --------------------------------------------------------------------------------
 [CMD]  qseawk  --newline=on -d- -f lang-049.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
-ERROR: CODE 62 LINE 2 COLUMN 9 FILE /home/hyung-hwan/workspace/qse/bld/x86_64-linux-wchar-debug-shared/../../regress/awk/lang-049.awk - no argument provided
+ERROR: CODE 62 LINE 2 COLUMN 9 FILE lang-049.awk - no argument provided
 --------------------------------------------------------------------------------
 [CMD]  qseawk  --newline=on --flexmap=off -d- -f lang-050.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
@@ -2467,7 +2467,7 @@ BEGIN {
 		print i,a[i];
 }
 
-ERROR: CODE 91 LINE 6 COLUMN 2 FILE /home/hyung-hwan/workspace/qse/bld/x86_64-linux-wchar-debug-shared/../../regress/awk/lang-050.awk - cannot change a scalar to a map
+ERROR: CODE 91 LINE 6 COLUMN 2 FILE lang-050.awk - cannot change a scalar to a map
 --------------------------------------------------------------------------------
 [CMD]  qseawk  --newline=on --flexmap=on -d- -f lang-050.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
@@ -2488,7 +2488,7 @@ BEGIN {
 		print i,ARGC[i];
 }
 
-ERROR: CODE 94 LINE 7 COLUMN 2 FILE /home/hyung-hwan/workspace/qse/bld/x86_64-linux-wchar-debug-shared/../../regress/awk/lang-051.awk - cannot change a scalar 'ARGC' to a map
+ERROR: CODE 94 LINE 7 COLUMN 2 FILE lang-051.awk - cannot change a scalar 'ARGC' to a map
 --------------------------------------------------------------------------------
 [CMD]  qseawk  --newline=on --flexmap=on -d- -f lang-051.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
@@ -2544,7 +2544,7 @@ BEGIN {
 		print i,a[i];
 }
 
-ERROR: CODE 92 LINE 10 COLUMN 2 FILE /home/hyung-hwan/workspace/qse/bld/x86_64-linux-wchar-debug-shared/../../regress/awk/lang-053.awk - cannot change a map 'a' to another map
+ERROR: CODE 92 LINE 10 COLUMN 2 FILE lang-053.awk - cannot change a map 'a' to another map
 --------------------------------------------------------------------------------
 [CMD]  qseawk  --newline=on --flexmap=on -d- -f lang-053.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
@@ -2568,7 +2568,7 @@ BEGIN {
 	print ARGV;
 }
 
-ERROR: CODE 93 LINE 4 COLUMN 8 FILE /home/hyung-hwan/workspace/qse/bld/x86_64-linux-wchar-debug-shared/../../regress/awk/lang-054.awk - cannot change a map 'ARGV' to a scalar
+ERROR: CODE 93 LINE 4 COLUMN 8 FILE lang-054.awk - cannot change a map 'ARGV' to a scalar
 --------------------------------------------------------------------------------
 [CMD]  qseawk  --newline=on --flexmap=on -d- -f lang-054.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
@@ -2666,7 +2666,7 @@ Result      Ra   Rb  Connect    Error
 1.E12
 99X
 --------------------------------------------------------------------------------
-[CMD]  qseawk  -vQSEAWK="/home/hyung-hwan/workspace/qse/bld/x86_64-linux-wchar-debug-shared/cmd/awk/.libs/qseawk" -vSCRIPT_PATH="/home/hyung-hwan/workspace/qse/bld/x86_64-linux-wchar-debug-shared/../../regress/awk" -f quicksort2.awk quicksort2.dat </dev/stdin 2>&1 
+[CMD]  qseawk  -vQSEAWK="/home/hyung-hwan/workspace/qse/bld/x86_64-linux-wchar-debug-shared/cmd/awk/.libs/qseawk" -vSCRIPT_PATH="awk" -f quicksort2.awk quicksort2.dat </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 0.0000000000
 0.11111111111111111111111111111

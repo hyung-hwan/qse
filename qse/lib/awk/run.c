@@ -6754,7 +6754,7 @@ read_console_again:
 		{
 			qse_awk_val_t* v;
 
-			v = qse_awk_rtx_makestrvalwithxstr(rtx, QSE_STR_XSTR(buf));
+			v = qse_awk_rtx_makestrvalwithcstr(rtx, QSE_STR_XSTR(buf));
 			if (v == QSE_NULL)
 			{
 				ADJERR_LOC (rtx, &nde->loc);
@@ -6933,7 +6933,7 @@ static int shorten_record (qse_awk_rtx_t* rtx, qse_size_t nflds)
 	if (ofs_free) qse_awk_rtx_freemem (rtx, ofs_free);
 	if (nflds > 1) qse_awk_rtx_refdownval (rtx, v);
 
-	v = (qse_awk_val_t*)qse_awk_rtx_makestrvalwithxstr(rtx, QSE_STR_XSTR(&tmp));
+	v = (qse_awk_val_t*)qse_awk_rtx_makestrvalwithcstr(rtx, QSE_STR_XSTR(&tmp));
 	if (!v) 
 	{
 		qse_str_fini (&tmp);

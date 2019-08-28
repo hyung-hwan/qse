@@ -401,7 +401,7 @@ static int fnc_frommbs (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 			qse_cstr_t str;
 			str.ptr = qse_awk_rtx_getvalstrwithcmgr(rtx, a0, &str.len, cmgr);
 			if (!str.ptr) return -1;
-			r = qse_awk_rtx_makestrvalwithxstr(rtx, &str);
+			r = qse_awk_rtx_makestrvalwithcstr(rtx, &str);
 			qse_awk_rtx_freevalstr (rtx, a0, str.ptr);
 			if (!r) return -1;
 			break;
@@ -457,7 +457,7 @@ static int fnc_tombs (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 			qse_mcstr_t str;
 			str.ptr = qse_awk_rtx_getvalmbswithcmgr(rtx, a0, &str.len, cmgr);
 			if (!str.ptr) return -1;
-			r = qse_awk_rtx_makembsvalwithmxstr(rtx, &str);
+			r = qse_awk_rtx_makembsvalwithmcstr(rtx, &str);
 			qse_awk_rtx_freevalmbs (rtx, a0, str.ptr);
 			if (!r) return -1;
 			break;

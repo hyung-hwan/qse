@@ -304,7 +304,12 @@ struct qse_awk_t
 	/* housekeeping */
 	qse_awk_errstr_t errstr;
 	qse_awk_errinf_t errinf;
-	qse_char_t errmsg_backup[256];
+	qse_char_t errmsg_backup[QSE_AWK_ERRINF_MSG_SIZE];
+#if defined(QSE_CHAR_IS_MCHAR)
+	qse_wchar_t werrmsg[QSE_AWK_ERRINF_MSG_SIZE];
+#else
+	qse_mchar_t merrmsg[QSE_AWK_ERRINF_MSG_SIZE * 2];
+#endif
 
 	int stopall;
 	qse_awk_ecb_t* ecb;
@@ -441,7 +446,12 @@ struct qse_awk_rtx_t
 	} depth;
 
 	qse_awk_errinf_t errinf;
-	qse_char_t errmsg_backup[256];
+	qse_char_t errmsg_backup[QSE_AWK_ERRINF_MSG_SIZE];
+#if defined(QSE_CHAR_IS_MCHAR)
+	qse_wchar_t werrmsg[QSE_AWK_ERRINF_MSG_SIZE];
+#else
+	qse_mchar_t merrmsg[QSE_AWK_ERRINF_MSG_SIZE * 2];
+#endif
 
 	qse_awk_rtx_ecb_t* ecb;
 };

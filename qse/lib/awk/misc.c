@@ -88,17 +88,18 @@ qse_wchar_t* qse_awk_mbstowcsdup (qse_awk_t* awk, const qse_mchar_t* mbs, qse_si
 
 	/* if i use qse_mbstowcsdupwithcmgr(), i cannot pinpoint the exact failure cause.
 	 * let's do it differently. */
-	if (qse_mbstowcswithcmgr(mbs, &mbslen, QSE_NULL, &wcslen, awk->_cmgr) <= -1)
+	if (qse_mbstowcswithcmgr(mbs, &mbslen, QSE_NULL, &wcslen, qse_awk_getcmgr(awk)) <= -1)
 	{
 		qse_awk_seterrnum (awk, QSE_AWK_EINVAL, QSE_NULL);
 		return QSE_NULL;
 	}
 
-	wcs = qse_awk_allocmem(awk, QSE_SIZEOF(*wcs) * (wcslen + 1));
+	wcslen = wcslen + 1; /* for terminating null */
+
+	wcs = qse_awk_allocmem(awk, QSE_SIZEOF(*wcs) * wcslen);
 	if (!wcs) return QSE_NULL;
 
-	wcslen = wcslen + 1;
-	qse_mbstowcswithcmgr (mbs, &mbslen, wcs, &wcslen, awk->_cmgr);
+	qse_mbstowcswithcmgr (mbs, &mbslen, wcs, &wcslen, qse_awk_getcmgr(awk));
 	if (_wcslen) *_wcslen = wcslen;
 	return wcs;
 }
@@ -108,7 +109,56 @@ qse_mchar_t* qse_awk_wcstombsdup (qse_awk_t* awk, const qse_wchar_t* wcs, qse_si
 	qse_size_t mbslen, wcslen;
 	qse_mchar_t* mbs;
 
-	if (qse_wcstombswithcmgr(wcs, &wcslen, QSE_NULL, &mbslen, awk->_cmgr) <= -1)
+	if (qse_wcstombswithcmgr(wcs, &wcslen, QSE_NULL, &mbslen, qse_awk_getcmgr(awk)) <= -1)
+	{
+		qse_awk_seterrnum (awk, QSE_AWK_EINVAL, QSE_NULL);
+		return QSE_NULL;
+	}
+
+	mbslen = mbslen + 1; /* for terminating null */
+
+	mbs = qse_awk_allocmem(awk, QSE_SIZEOF(*mbs) * mbslen);
+	if (!mbs) return QSE_NULL;
+
+	qse_wcstombswithcmgr (wcs, &wcslen, mbs, &mbslen, qse_awk_getcmgr(awk));
+	if (_mbslen) *_mbslen = mbslen;
+	return mbs;
+}
+
+
+qse_wchar_t* qse_awk_mbsntowcsdup (qse_awk_t* awk, const qse_mchar_t* mbs, qse_size_t _mbslen, qse_size_t* _wcslen)
+{
+	qse_size_t mbslen, wcslen;
+	qse_wchar_t* wcs;
+
+	/* if i use qse_mbstowcsdupwithcmgr(), i cannot pinpoint the exact failure cause.
+	 * let's do it differently. */
+	mbslen = _mbslen;
+	if (qse_mbsntowcsnwithcmgr(mbs, &mbslen, QSE_NULL, &wcslen, qse_awk_getcmgr(awk)) <= -1)
+	{
+		qse_awk_seterrnum (awk, QSE_AWK_EINVAL, QSE_NULL);
+		return QSE_NULL;
+	}
+
+	wcs = qse_awk_allocmem(awk, QSE_SIZEOF(*wcs) * (wcslen + 1));
+	if (!wcs) return QSE_NULL;
+
+	mbslen= _mbslen;
+	qse_mbsntowcsnwithcmgr (mbs, &mbslen, wcs, &wcslen, qse_awk_getcmgr(awk));
+	wcs[wcslen] = QSE_WT('\0');
+
+	if (_wcslen) *_wcslen = wcslen;
+	return wcs;
+}
+
+
+qse_mchar_t* qse_awk_wcsntombsdup (qse_awk_t* awk, const qse_wchar_t* wcs, qse_size_t _wcslen, qse_size_t* _mbslen)
+{
+	qse_size_t mbslen, wcslen;
+	qse_mchar_t* mbs;
+
+	wcslen = _wcslen;
+	if (qse_wcsntombsnwithcmgr(wcs, &wcslen, QSE_NULL, &mbslen, qse_awk_getcmgr(awk)) <= -1)
 	{
 		qse_awk_seterrnum (awk, QSE_AWK_EINVAL, QSE_NULL);
 		return QSE_NULL;
@@ -117,8 +167,10 @@ qse_mchar_t* qse_awk_wcstombsdup (qse_awk_t* awk, const qse_wchar_t* wcs, qse_si
 	mbs = qse_awk_allocmem(awk, QSE_SIZEOF(*mbs) * (mbslen + 1));
 	if (!mbs) return QSE_NULL;
 
-	mbslen = mbslen + 1;
-	qse_wcstombswithcmgr (wcs, &wcslen, mbs, &mbslen, awk->_cmgr);
+	wcslen = _wcslen;
+	qse_wcsntombsnwithcmgr (wcs, &wcslen, mbs, &mbslen, qse_awk_getcmgr(awk));
+	mbs[mbslen] = QSE_MT('\0');
+
 	if (_mbslen) *_mbslen = mbslen;
 	return mbs;
 }

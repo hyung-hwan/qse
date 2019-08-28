@@ -1125,7 +1125,11 @@ public:
 	/// \return integer >= 0 on success, -1 on failure.
 	///
 	int addGlobal (
-		const char_t* name ///< variable name
+		const qse_mchar_t* name ///< variable name
+	);
+
+	int addGlobal (
+		const qse_wchar_t* name ///< variable name
 	);
 
 	///
@@ -1134,16 +1138,23 @@ public:
 	/// \return 0 on success, -1 on failure.
 	///
 	int deleteGlobal (
-		const char_t* name ///< variable name
+		const qse_mchar_t* name ///< variable name
+	);
+
+	int deleteGlobal (
+		const qse_wchar_t* name ///< variable name
 	);
 
 	///
-	/// The addGlobal() function returns the numeric ID of an intrinsic 
+	/// The findGlobal() function returns the numeric ID of an intrinsic 
 	//  global variable. 
 	/// \return integer >= 0 on success, -1 on failure.
 	///
 	int findGlobal (
-		const char_t* name ///> variable name
+		const qse_mchar_t* name ///> variable name
+	);
+	int findGlobal (
+		const qse_wchar_t* name ///> variable name
 	);
 
 	///
@@ -1186,12 +1197,21 @@ public:
 	/// function.
 	///
 	int addFunction (
-		const char_t* name,      ///< function name
-		size_t minArgs,          ///< minimum numbers of arguments
-		size_t maxArgs,          ///< maximum numbers of arguments
-		const char_t* argSpec,   ///< argument specification
-		FunctionHandler handler, ///< function handler
-		int    validOpts = 0     ///< valid if these options are set
+		const qse_mchar_t* name,      ///< function name
+		size_t minArgs,               ///< minimum numbers of arguments
+		size_t maxArgs,               ///< maximum numbers of arguments
+		const qse_mchar_t* argSpec,   ///< argument specification
+		FunctionHandler handler,      ///< function handler
+		int    validOpts = 0          ///< valid if these options are set
+	);
+
+	int addFunction (
+		const qse_wchar_t* name,      ///< function name
+		size_t minArgs,               ///< minimum numbers of arguments
+		size_t maxArgs,               ///< maximum numbers of arguments
+		const qse_wchar_t* argSpec,   ///< argument specification
+		FunctionHandler handler,      ///< function handler
+		int    validOpts = 0          ///< valid if these options are set
 	);
 
 	///
