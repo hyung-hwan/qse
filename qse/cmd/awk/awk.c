@@ -225,7 +225,7 @@ static qse_htb_walk_t set_global (qse_htb_t* map, qse_htb_pair_t* pair, void* ar
 	qse_awk_rtx_t* rtx = (qse_awk_rtx_t*)arg;
 	struct gvmv_t* gvmv = (struct gvmv_t*)QSE_HTB_VPTR(pair);
 
-	v = qse_awk_rtx_makenstrvalwithxstr(rtx, &gvmv->str);
+	v = qse_awk_rtx_makenstrvalwithcstr(rtx, &gvmv->str);
 	if (v == QSE_NULL) return QSE_HTB_WALK_STOP;
 
 	qse_awk_rtx_refupval (rtx, v);

@@ -815,7 +815,6 @@ typedef struct qse_awk_rio_t qse_awk_rio_t;
 /* ------------------------------------------------------------------------ */
 
 typedef struct qse_awk_fnc_t      qse_awk_fnc_t;
-typedef struct qse_awk_fnc_spec_t qse_awk_fnc_spec_t;
 typedef struct qse_awk_fnc_info_t qse_awk_fnc_info_t;
 
 /**
@@ -827,15 +826,15 @@ typedef int (*qse_awk_fnc_impl_t) (
 );
 
 /**
- * The qse_awk_fnc_arg_t type defines a structure to describe arguments
+ * The qse_awk_fnc_marg_t type defines a structure to describe arguments
  * to an implicit function.
  */
-struct qse_awk_fnc_arg_t
+struct qse_awk_fnc_marg_t
 {
-	/** numbers of argument for a function */
+	/** minimum numbers of argument for a function */
 	qse_size_t min; 
 
-	/** numbers of argument for a function */
+	/** maximum numbers of argument for a function */
 	qse_size_t max; 
 
 	/** 
@@ -848,18 +847,30 @@ struct qse_awk_fnc_arg_t
 	 *  - r: reference
 	 *  - x: regular expression
 	 */
-	const qse_char_t* spec;
+	const qse_mchar_t* spec;
 };
-typedef struct qse_awk_fnc_arg_t qse_awk_fnc_arg_t;
+typedef struct qse_awk_fnc_marg_t qse_awk_fnc_marg_t;
 
 /**
- * The qse_awk_fnc_spec_t type defines a structure to hold the specification
+ * The qse_awk_fnc_warg_t type defines a structure to describe arguments
+ * to an implicit function.
+ */
+struct qse_awk_fnc_warg_t
+{
+	qse_size_t min; 
+	qse_size_t max; 
+	const qse_wchar_t* spec;
+};
+typedef struct qse_awk_fnc_warg_t qse_awk_fnc_warg_t;
+
+/**
+ * The qse_awk_fnc_mspec_t type defines a structure to hold the specification
  * of an intrinsic function or a module function.
  */ 
-struct qse_awk_fnc_spec_t
+struct qse_awk_fnc_mspec_t
 {
 	/** argument descriptor */
-	qse_awk_fnc_arg_t arg;
+	qse_awk_fnc_marg_t arg;
 
 	/** pointer to the function implementing this function */
 	qse_awk_fnc_impl_t impl;
@@ -874,6 +885,39 @@ struct qse_awk_fnc_spec_t
 	 */
 	int trait; 
 };
+typedef struct qse_awk_fnc_mspec_t qse_awk_fnc_mspec_t;
+
+/**
+ * The qse_awk_fnc_wspec_t type defines a structure to hold the specification
+ * of an intrinsic function or a module function.
+ */ 
+struct qse_awk_fnc_wspec_t
+{
+	/** argument descriptor */
+	qse_awk_fnc_warg_t arg;
+
+	/** pointer to the function implementing this function */
+	qse_awk_fnc_impl_t impl;
+
+	/** 
+	 * when this field is set to a non-zero value bitwise-ORed of 
+	 * #qse_awk_trait_t enumerators, the function is available if 
+	 * this field bitwise-ANDed with the global trait option produces
+	 * this field itself.
+	 * 
+	 * this field doesn't take effect for a module function.
+	 */
+	int trait; 
+};
+typedef struct qse_awk_fnc_wspec_t qse_awk_fnc_wspec_t;
+
+#if defined(QSE_CHAR_IS_MCHAR)
+typedef qse_awk_fnc_marg_t qse_awk_fnc_arg_t;
+typedef qse_awk_fnc_mspec_t qse_awk_fnc_spec_t;
+#else
+typedef qse_awk_fnc_warg_t qse_awk_fnc_arg_t;
+typedef qse_awk_fnc_wspec_t qse_awk_fnc_spec_t;
+#endif
 
 /* ------------------------------------------------------------------------ */
 
@@ -1368,13 +1412,14 @@ enum qse_awk_errnum_t
 };
 typedef enum qse_awk_errnum_t qse_awk_errnum_t;
 
+#define QSE_AWK_ERRINF_MSG_SIZE 256
 /** 
  * The qse_awk_errinf_t type defines a placeholder for error information.
  */
 struct qse_awk_errinf_t
 {
 	qse_awk_errnum_t num;      /**< error number */
-	qse_char_t       msg[256]; /**< error message */
+	qse_char_t       msg[QSE_AWK_ERRINF_MSG_SIZE]; /**< error message */
 	qse_awk_loc_t    loc;      /**< error location */
 };
 typedef struct qse_awk_errinf_t qse_awk_errinf_t;
@@ -1662,14 +1707,32 @@ QSE_EXPORT const qse_awk_loc_t* qse_awk_geterrloc (
 );
 
 /**
- * The qse_awk_geterrmsg() function returns the error message describing
+ * The qse_awk_getmerrmsg() function returns the error message describing
  * the last error occurred. 
  *
  * \return error message
  */
-QSE_EXPORT const qse_char_t* qse_awk_geterrmsg (
+QSE_EXPORT const qse_mchar_t* qse_awk_getmerrmsg (
 	qse_awk_t* awk /**< awk */
 );
+
+/**
+ * The qse_awk_getwerrmsg() function returns the error message describing
+ * the last error occurred. 
+ *
+ * \return error message
+ */
+QSE_EXPORT const qse_wchar_t* qse_awk_getwerrmsg (
+	qse_awk_t* awk /**< awk */
+);
+
+
+#if defined(QSE_CHAR_IS_MCHAR)
+#	define qse_awk_geterrmsg qse_awk_getmerrmsg
+#else
+#	define qse_awk_geterrmsg qse_awk_getwerrmsg
+#endif
+
 
 QSE_EXPORT const qse_char_t* qse_awk_backuperrmsg (
 	qse_awk_t* awk /**< awk */
@@ -1846,22 +1909,48 @@ QSE_EXPORT int qse_awk_findgblwithwcs (
 #endif
 
 /**
- * The qse_awk_addfnc() function adds an intrinsic function.
+ * The qse_awk_addfncwithmbs() function adds an intrinsic function.
  */
-QSE_EXPORT qse_awk_fnc_t* qse_awk_addfnc (
-	qse_awk_t*                awk,
-	const qse_char_t*         name,
-	const qse_awk_fnc_spec_t* spec
+QSE_EXPORT qse_awk_fnc_t* qse_awk_addfncwithmbs (
+	qse_awk_t*                 awk,
+	const qse_mchar_t*         name,
+	const qse_awk_fnc_mspec_t* spec
 );
 
 /**
- * The qse_awk_delfnc() function deletes an intrinsic function by name.
+ * The qse_awk_addfncwithwcs() function adds an intrinsic function.
+ */
+QSE_EXPORT qse_awk_fnc_t* qse_awk_addfncwithwcs (
+	qse_awk_t*                 awk,
+	const qse_wchar_t*         name,
+	const qse_awk_fnc_wspec_t* spec
+);
+
+/**
+ * The qse_awk_delfncwithmbs() function deletes an intrinsic function by name.
  * \return 0 on success, -1 on failure
  */
-QSE_EXPORT int qse_awk_delfnc (
-	qse_awk_t*        awk,  /**< awk */
-	const qse_char_t* name  /**< function name */
+QSE_EXPORT int qse_awk_delfncwithmbs (
+	qse_awk_t*         awk,  /**< awk */
+	const qse_mchar_t* name  /**< function name */
 );
+
+/**
+ * The qse_awk_delfncwithwcs() function deletes an intrinsic function by name.
+ * \return 0 on success, -1 on failure
+ */
+QSE_EXPORT int qse_awk_delfncwithwcs (
+	qse_awk_t*         awk,  /**< awk */
+	const qse_wchar_t* name  /**< function name */
+);
+
+#if defined(QSE_CHAR_IS_MCHAR)
+#	define qse_awk_addfnc qse_awk_addfncwithmbs
+#	define qse_awk_delfnc qse_awk_delfncwithmbs
+#else
+#	define qse_awk_addfnc qse_awk_addfncwithwcs
+#	define qse_awk_delfnc qse_awk_delfncwithwcs
+#endif
 
 /**
  * The qse_awk_clrfnc() function deletes all intrinsic functions
@@ -2007,9 +2096,23 @@ QSE_EXPORT qse_wchar_t* qse_awk_mbstowcsdup (
 	qse_size_t*        wcslen
 );
 
+QSE_EXPORT qse_wchar_t* qse_awk_mbsntowcsdup (
+	qse_awk_t*         awk,
+	const qse_mchar_t* mbs,
+	qse_size_t         mbslen,
+	qse_size_t*        wcslen
+);
+
 QSE_EXPORT qse_mchar_t* qse_awk_wcstombsdup (
 	qse_awk_t*         awk,
 	const qse_wchar_t* wcs,
+	qse_size_t*        mbslen
+);
+
+qse_mchar_t* qse_awk_wcsntombsdup (
+	qse_awk_t*         awk,
+	const qse_wchar_t* wcs,
+	qse_size_t         wcslen,
 	qse_size_t*        mbslen
 );
 
@@ -2398,13 +2501,28 @@ QSE_EXPORT const qse_awk_loc_t* qse_awk_rtx_geterrloc (
 );
 
 /**
- * The qse_awk_rtx_geterrmsg() function gets the string describing the last 
+ * The qse_awk_rtx_getmerrmsg() function gets the string describing the last 
  * error occurred during runtime.
  * \return error message
  */
-QSE_EXPORT const qse_char_t* qse_awk_rtx_geterrmsg (
+QSE_EXPORT const qse_mchar_t* qse_awk_rtx_getmerrmsg (
 	qse_awk_rtx_t* rtx /**< runtime context */
 );
+
+/**
+ * The qse_awk_rtx_getwerrmsg() function gets the string describing the last 
+ * error occurred during runtime.
+ * \return error message
+ */
+QSE_EXPORT const qse_wchar_t* qse_awk_rtx_getwerrmsg (
+	qse_awk_rtx_t* rtx /**< runtime context */
+);
+
+#if defined(QSE_CHAR_IS_MCHAR)
+#	define qse_awk_rtx_geterrmsg qse_awk_rtx_getmerrmsg
+#else
+#	define qse_awk_rtx_geterrmsg qse_awk_rtx_getwerrmsg
+#endif
 
 QSE_EXPORT const qse_char_t* qse_awk_rtx_backuperrmsg (
 	qse_awk_rtx_t* rtx /**< runtime context */
@@ -2555,20 +2673,20 @@ QSE_EXPORT qse_awk_val_t* qse_awk_rtx_makestrvalwithwcs (
 );
 
 /**
- * The qse_awk_rtx_makestrvalwithxstr() function creates a string value.
+ * The qse_awk_rtx_makestrvalwithcstr() function creates a string value.
  * \return value on success, #QSE_NULL on failure
  */
-QSE_EXPORT qse_awk_val_t* qse_awk_rtx_makestrvalwithxstr (
+QSE_EXPORT qse_awk_val_t* qse_awk_rtx_makestrvalwithcstr (
 	qse_awk_rtx_t*    rtx,
 	const qse_cstr_t* str
 );
 
-QSE_EXPORT qse_awk_val_t* qse_awk_rtx_makestrvalwithmxstr (
+QSE_EXPORT qse_awk_val_t* qse_awk_rtx_makestrvalwithmcstr (
 	qse_awk_rtx_t*     rtx,
 	const qse_mcstr_t* mxstr
 );
 
-QSE_EXPORT qse_awk_val_t* qse_awk_rtx_makestrvalwithwxstr (
+QSE_EXPORT qse_awk_val_t* qse_awk_rtx_makestrvalwithwcstr (
 	qse_awk_rtx_t*     rtx,
 	const qse_wcstr_t* wxstr
 );
@@ -2614,7 +2732,7 @@ QSE_EXPORT qse_awk_val_t* qse_awk_rtx_makenstrvalwithstr (
  * \b nstr is 1.
  * \return value on success, #QSE_NULL on failure
  */
-QSE_EXPORT qse_awk_val_t* qse_awk_rtx_makenstrvalwithxstr (
+QSE_EXPORT qse_awk_val_t* qse_awk_rtx_makenstrvalwithcstr (
 	qse_awk_rtx_t*    rtx,
 	const qse_cstr_t* str 
 );
@@ -2629,7 +2747,7 @@ qse_awk_val_t* qse_awk_rtx_makembsval (
 	qse_size_t         len
 );
 
-qse_awk_val_t* qse_awk_rtx_makembsvalwithmxstr (
+qse_awk_val_t* qse_awk_rtx_makembsvalwithmcstr (
 	qse_awk_rtx_t*     rtx,
 	const qse_mcstr_t* mxstr
 );

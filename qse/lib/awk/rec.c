@@ -54,7 +54,7 @@ int qse_awk_rtx_setrec (
 			}
 		}
 
-		v = qse_awk_rtx_makenstrvalwithxstr (run, str);
+		v = qse_awk_rtx_makenstrvalwithcstr (run, str);
 
 		if (v == QSE_NULL)
 		{
@@ -83,7 +83,7 @@ int qse_awk_rtx_setrec (
 		}
 	
 		/* recompose $0 */
-		v = qse_awk_rtx_makestrvalwithxstr (run, QSE_STR_XSTR(&run->inrec.line));
+		v = qse_awk_rtx_makestrvalwithcstr (run, QSE_STR_XSTR(&run->inrec.line));
 		if (v == QSE_NULL)
 		{
 			qse_awk_rtx_clrrec (run, 0);
@@ -321,7 +321,7 @@ static int split_record (qse_awk_rtx_t* rtx)
 
 		rtx->inrec.flds[rtx->inrec.nflds].ptr = tok.ptr;
 		rtx->inrec.flds[rtx->inrec.nflds].len = tok.len;
-		rtx->inrec.flds[rtx->inrec.nflds].val = qse_awk_rtx_makenstrvalwithxstr (rtx, &tok);
+		rtx->inrec.flds[rtx->inrec.nflds].val = qse_awk_rtx_makenstrvalwithcstr (rtx, &tok);
 
 		if (rtx->inrec.flds[rtx->inrec.nflds].val == QSE_NULL)
 		{
@@ -446,7 +446,7 @@ static int recomp_record_fields (qse_awk_rtx_t* run, qse_size_t lv, const qse_cs
 				return -1;
 			}
 
-			tmp = qse_awk_rtx_makestrvalwithxstr (run, str);
+			tmp = qse_awk_rtx_makestrvalwithcstr (run, str);
 			if (tmp == QSE_NULL) return -1;
 
 			if (i < nflds)

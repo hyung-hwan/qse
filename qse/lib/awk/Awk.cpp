@@ -615,8 +615,8 @@ int Awk::Value::setStr (Run* r, const char_t* str, size_t len, bool numeric)
 	cstr.ptr = (char_t*)str;
 	cstr.len = len;
 
-	tmp = numeric? qse_awk_rtx_makenstrvalwithxstr (r->rtx, &cstr):
-	               qse_awk_rtx_makestrvalwithxstr (r->rtx, &cstr);
+	tmp = numeric? qse_awk_rtx_makenstrvalwithcstr (r->rtx, &cstr):
+	               qse_awk_rtx_makestrvalwithcstr (r->rtx, &cstr);
 	if (tmp == QSE_NULL)
 	{
 		r->awk->retrieveError (r);
@@ -776,8 +776,8 @@ int Awk::Value::setIndexedStr (
 	cstr.ptr = (char_t*)str;
 	cstr.len = len;
 
-	tmp = numeric? qse_awk_rtx_makenstrvalwithxstr (r->rtx, &cstr):
-	               qse_awk_rtx_makestrvalwithxstr (r->rtx, &cstr);
+	tmp = numeric? qse_awk_rtx_makenstrvalwithcstr (r->rtx, &cstr):
+	               qse_awk_rtx_makestrvalwithcstr (r->rtx, &cstr);
 	if (tmp == QSE_NULL) 
 	{
 		r->awk->retrieveError (r);
@@ -1641,14 +1641,14 @@ void Awk::xstrs_t::clear (awk_t* awk)
 int Awk::addArgument (const char_t* arg, size_t len) 
 {
 	QSE_ASSERT (awk != QSE_NULL);
-	int n = runarg.add (awk, arg, len);
+	int n = runarg.add(awk, arg, len);
 	if (n <= -1) this->setError (QSE_AWK_ENOMEM);
 	return n;
 }
 
 int Awk::addArgument (const char_t* arg) 
 {
-	return addArgument (arg, qse_strlen(arg));
+	return addArgument(arg, qse_strlen(arg));
 }
 
 void Awk::clearArguments () 
@@ -1656,26 +1656,51 @@ void Awk::clearArguments ()
 	runarg.clear (awk);
 }
 
-int Awk::addGlobal (const char_t* name) 
+int Awk::addGlobal(const qse_mchar_t* name) 
 {
 	QSE_ASSERT (awk != QSE_NULL);
-	int n = qse_awk_addgbl (awk, name);
+	int n = qse_awk_addgblwithmbs(awk, name);
 	if (n <= -1) this->retrieveError ();
 	return n;
 }
 
-int Awk::deleteGlobal (const char_t* name) 
+int Awk::addGlobal(const qse_wchar_t* name) 
 {
 	QSE_ASSERT (awk != QSE_NULL);
-	int n = qse_awk_delgbl (awk, name);
+	int n = qse_awk_addgblwithwcs(awk, name);
 	if (n <= -1) this->retrieveError ();
 	return n;
 }
 
-int Awk::findGlobal (const char_t* name) 
+int Awk::deleteGlobal (const qse_mchar_t* name) 
 {
 	QSE_ASSERT (awk != QSE_NULL);
-	int n = qse_awk_findgbl (awk, name);
+	int n = qse_awk_delgblwithmbs(awk, name);
+	if (n <= -1) this->retrieveError ();
+	return n;
+}
+
+int Awk::deleteGlobal (const qse_wchar_t* name) 
+{
+	QSE_ASSERT (awk != QSE_NULL);
+	int n = qse_awk_delgblwithwcs(awk, name);
+	if (n <= -1) this->retrieveError ();
+	return n;
+}
+
+
+int Awk::findGlobal (const qse_mchar_t* name) 
+{
+	QSE_ASSERT (awk != QSE_NULL);
+	int n = qse_awk_findgblwithmbs(awk, name);
+	if (n <= -1) this->retrieveError ();
+	return n;
+}
+
+int Awk::findGlobal (const qse_wchar_t* name) 
+{
+	QSE_ASSERT (awk != QSE_NULL);
+	int n = qse_awk_findgblwithwcs(awk, name);
 	if (n <= -1) this->retrieveError ();
 	return n;
 }
@@ -1707,12 +1732,12 @@ int Awk::getGlobal (int id, Value& v)
 }
 
 int Awk::addFunction (
-	const char_t* name, size_t minArgs, size_t maxArgs, 
-	const char_t* argSpec, FunctionHandler handler, int validOpts)
+	const qse_mchar_t* name, size_t minArgs, size_t maxArgs, 
+	const qse_mchar_t* argSpec, FunctionHandler handler, int validOpts)
 {
 	QSE_ASSERT (awk != QSE_NULL);
 
-	fnc_spec_t spec;
+	qse_awk_fnc_mspec_t spec;
 
 	QSE_MEMSET (&spec, 0, QSE_SIZEOF(spec));
 	spec.arg.min = minArgs;
@@ -1721,7 +1746,7 @@ int Awk::addFunction (
 	spec.impl = this->functionHandler;
 	spec.trait = validOpts;
 
-	qse_awk_fnc_t* fnc = qse_awk_addfnc (awk, name, &spec);
+	qse_awk_fnc_t* fnc = qse_awk_addfncwithmbs(awk, name, &spec);
 	if (fnc == QSE_NULL) 
 	{
 		this->retrieveError ();
@@ -1735,17 +1760,62 @@ int Awk::addFunction (
 	//
 	// the function name exists in the underlying function table.
 	// use the pointer to the name to maintain the hash table.
-	qse_htb_pair_t* pair = qse_htb_upsert (
-		this->functionMap, (char_t*)fnc->name.ptr, fnc->name.len, &handler, QSE_SIZEOF(handler));
+	qse_htb_pair_t* pair = qse_htb_upsert(this->functionMap, (char_t*)fnc->name.ptr, fnc->name.len, &handler, QSE_SIZEOF(handler));
 #else
 	FunctionMap::Pair* pair;
-	try { pair = this->functionMap.upsert (Cstr(fnc->name.ptr, fnc->name.len), handler); }
+	try { pair = this->functionMap.upsert(Cstr(fnc->name.ptr, fnc->name.len), handler); }
 	catch (...) { pair = QSE_NULL; }
 #endif
 
 	if (pair == QSE_NULL)
 	{
-		qse_awk_delfnc (awk, name);
+		qse_awk_delfncwithmbs (awk, name);
+		this->setError (QSE_AWK_ENOMEM);
+		return -1;
+	}
+
+	return 0;
+}
+
+int Awk::addFunction (
+	const qse_wchar_t* name, size_t minArgs, size_t maxArgs, 
+	const qse_wchar_t* argSpec, FunctionHandler handler, int validOpts)
+{
+	QSE_ASSERT (awk != QSE_NULL);
+
+	qse_awk_fnc_wspec_t spec;
+
+	QSE_MEMSET (&spec, 0, QSE_SIZEOF(spec));
+	spec.arg.min = minArgs;
+	spec.arg.max = maxArgs;
+	spec.arg.spec = argSpec;
+	spec.impl = this->functionHandler;
+	spec.trait = validOpts;
+
+	qse_awk_fnc_t* fnc = qse_awk_addfncwithwcs(awk, name, &spec);
+	if (fnc == QSE_NULL) 
+	{
+		this->retrieveError ();
+		return -1;
+	}
+
+#if defined(QSE_AWK_USE_HTB_FOR_FUNCTION_MAP)
+	// handler is a pointer to a member function. 
+	// sizeof(handler) is likely to be greater than sizeof(void*)
+	// copy the handler pointer into the table.
+	//
+	// the function name exists in the underlying function table.
+	// use the pointer to the name to maintain the hash table.
+	qse_htb_pair_t* pair = qse_htb_upsert(this->functionMap, (char_t*)fnc->name.ptr, fnc->name.len, &handler, QSE_SIZEOF(handler));
+#else
+	FunctionMap::Pair* pair;
+	try { pair = this->functionMap.upsert(Cstr(fnc->name.ptr, fnc->name.len), handler); }
+	catch (...) { pair = QSE_NULL; }
+#endif
+
+	if (pair == QSE_NULL)
+	{
+		qse_awk_delfncwithwcs (awk, name);
 		this->setError (QSE_AWK_ENOMEM);
 		return -1;
 	}
@@ -1757,7 +1827,7 @@ int Awk::deleteFunction (const char_t* name)
 {
 	QSE_ASSERT (awk != QSE_NULL);
 
-	int n = qse_awk_delfnc (awk, name);
+	int n = qse_awk_delfnc(awk, name);
 	if (n == 0) 
 	{
 #if defined(QSE_AWK_USE_HTB_FOR_FUNCTION_MAP)

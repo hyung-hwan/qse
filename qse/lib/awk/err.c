@@ -25,6 +25,7 @@
  */
 
 #include "awk-prv.h"
+#include <qse/cmn/mbwc.h>
 
 const qse_char_t* qse_awk_dflerrstr (qse_awk_t* awk, qse_awk_errnum_t errnum)
 {
@@ -193,10 +194,43 @@ const qse_awk_loc_t* qse_awk_geterrloc (qse_awk_t* awk)
 	return &awk->errinf.loc;
 }
 
-const qse_char_t* qse_awk_geterrmsg (qse_awk_t* awk)
+const qse_mchar_t* qse_awk_getmerrmsg (qse_awk_t* awk)
 {
+#if defined(QSE_CHAR_IS_MCHAR)
 	return (awk->errinf.msg[0] == QSE_T('\0'))?
 		qse_awk_geterrstr(awk)(awk,awk->errinf.num): awk->errinf.msg;
+#else
+	const qse_char_t* msg;
+	qse_size_t wcslen, mbslen;
+
+	msg = (awk->errinf.msg[0] == QSE_T('\0'))?
+		qse_awk_geterrstr(awk)(awk,awk->errinf.num): awk->errinf.msg;
+
+	mbslen = QSE_COUNTOF(awk->merrmsg);
+	qse_wcstombswithcmgr(msg, &wcslen, awk->merrmsg, &mbslen, qse_awk_getcmgr(awk));
+
+	return awk->merrmsg;
+#endif
+}
+
+const qse_wchar_t* qse_awk_getwerrmsg (qse_awk_t* awk)
+{
+#if defined(QSE_CHAR_IS_MCHAR)
+	const qse_char_t* msg;
+	qse_size_t wcslen, mbslen;
+
+	msg = (awk->errinf.msg[0] == QSE_T('\0'))?
+		qse_awk_geterrstr(awk)(awk,awk->errinf.num): awk->errinf.msg;
+
+	wcslen = QSE_COUNTOF(awk->werrmsg);
+	qse_mbstowcsallwithcmgr (msg, &mbslen, awk->werrmsg, &wcslen, qse_awk_getcmgr(awk));
+
+	return awk->werrmsg;
+#else
+	return (awk->errinf.msg[0] == QSE_T('\0'))?
+		qse_awk_geterrstr(awk)(awk,awk->errinf.num): awk->errinf.msg;
+#endif
+	
 }
 
 void qse_awk_geterrinf (qse_awk_t* awk, qse_awk_errinf_t* errinf)
@@ -276,10 +310,42 @@ const qse_awk_loc_t* qse_awk_rtx_geterrloc (qse_awk_rtx_t* rtx)
 	return &rtx->errinf.loc;
 }
 
-const qse_char_t* qse_awk_rtx_geterrmsg (qse_awk_rtx_t* rtx)
+const qse_mchar_t* qse_awk_rtx_getmerrmsg (qse_awk_rtx_t* rtx)
 {
+#if defined(QSE_CHAR_IS_MCHAR)
 	return (rtx->errinf.msg[0] == QSE_T('\0')) ?
 		qse_awk_geterrstr(rtx->awk)(rtx->awk,rtx->errinf.num): rtx->errinf.msg;
+#else
+	const qse_char_t* msg;
+	qse_size_t wcslen, mbslen;
+
+	msg = (rtx->errinf.msg[0] == QSE_T('\0')) ?
+		qse_awk_geterrstr(rtx->awk)(rtx->awk,rtx->errinf.num): rtx->errinf.msg;
+
+	mbslen = QSE_COUNTOF(rtx->merrmsg);
+	qse_wcstombswithcmgr(msg, &wcslen, rtx->merrmsg, &mbslen, qse_awk_rtx_getcmgr(rtx));
+
+	return rtx->merrmsg;
+#endif
+}
+
+const qse_wchar_t* qse_awk_rtx_getwerrmsg (qse_awk_rtx_t* rtx)
+{
+#if defined(QSE_CHAR_IS_MCHAR)
+	const qse_char_t* msg;
+	qse_size_t wcslen, mbslen;
+
+	msg = (rtx->errinf.msg[0] == QSE_T('\0')) ?
+		qse_awk_geterrstr(rtx->awk)(rtx->awk,rtx->errinf.num): rtx->errinf.msg;
+
+	wcslen = QSE_COUNTOF(rtx->werrmsg);
+	qse_mbstowcsallwithcmgr (msg, &mbslen, rtx->werrmsg, &wcslen, qse_awk_rtx_getcmgr(rtx));
+
+	return rtx->werrmsg;
+#else
+	return (rtx->errinf.msg[0] == QSE_T('\0')) ?
+		qse_awk_geterrstr(rtx->awk)(rtx->awk,rtx->errinf.num): rtx->errinf.msg;
+#endif
 }
 
 void qse_awk_rtx_geterrinf (qse_awk_rtx_t* rtx, qse_awk_errinf_t* errinf)

@@ -1227,7 +1227,7 @@ static qse_awk_nde_t* parse_function (qse_awk_t* awk)
 	/* note that i'm assigning to rederr in the 'if' conditions below.
  	 * i'm not checking equality */
 	    /* check if it is a builtin function */
-	if ((qse_awk_findfnc (awk, &name) != QSE_NULL && (rederr = QSE_AWK_EFNCRED)) ||
+	if ((qse_awk_findfncwithcstr(awk, &name) != QSE_NULL && (rederr = QSE_AWK_EFNCRED)) ||
 	    /* check if it has already been defined as a function */
 	    (qse_htb_search (awk->tree.funs, name.ptr, name.len) != QSE_NULL && (rederr = QSE_AWK_EFUNRED)) ||
 	    /* check if it conflicts with a named variable */
@@ -1830,7 +1830,7 @@ static int add_global (qse_awk_t* awk, const qse_cstr_t* name, qse_awk_loc_t* xl
 	}
 
 	/* check if it conflicts with a builtin function name */
-	if (qse_awk_findfnc(awk, name) != QSE_NULL)
+	if (qse_awk_findfncwithcstr(awk, name) != QSE_NULL)
 	{
 		SETERR_ARG_LOC (awk, QSE_AWK_EFNCRED, name->ptr, name->len, xloc);
 		return -1;
@@ -2225,7 +2225,7 @@ static qse_awk_t* collect_locals (qse_awk_t* awk, qse_size_t nlcls, int istop)
 
 		/* check if it conflicts with a builtin function name 
 		 * function f() { local length; } */
-		if (qse_awk_findfnc (awk, &lcl) != QSE_NULL)
+		if (qse_awk_findfncwithcstr(awk, &lcl) != QSE_NULL)
 		{
 			SETERR_ARG_LOC (awk, QSE_AWK_EFNCRED, lcl.ptr, lcl.len, &awk->tok.loc);
 			return QSE_NULL;
@@ -4500,7 +4500,7 @@ static QSE_INLINE int isfunname (qse_awk_t* awk, const qse_cstr_t* name, qse_awk
 
 static QSE_INLINE int isfnname (qse_awk_t* awk, const qse_cstr_t* name)
 {
-	if (qse_awk_findfnc(awk, name) != QSE_NULL) 
+	if (qse_awk_findfncwithcstr(awk, name) != QSE_NULL) 
 	{
 		/* implicit function */
 		return FNTYPE_FNC;
@@ -5223,7 +5223,7 @@ static qse_awk_nde_t* parse_primary_ident_noseg (qse_awk_t* awk, const qse_awk_l
 	qse_awk_nde_t* nde = QSE_NULL;
 
 	/* check if name is an intrinsic function name */
-	fnc = qse_awk_findfnc(awk, name);
+	fnc = qse_awk_findfncwithcstr(awk, name);
 	if (fnc)
 	{
 		if (MATCH(awk,TOK_LPAREN) || fnc->dfl0)

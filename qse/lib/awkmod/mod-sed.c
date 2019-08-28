@@ -182,7 +182,7 @@ static int fnc_str_to_str (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 		goto oops;
 	}
 
-	tmp = qse_awk_rtx_makestrvalwithxstr (rtx, &outstr);
+	tmp = qse_awk_rtx_makestrvalwithcstr (rtx, &outstr);
 	qse_sed_freemem (sed, outstr.ptr);
 
 	if (!tmp)
