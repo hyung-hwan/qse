@@ -1707,30 +1707,30 @@ QSE_EXPORT const qse_awk_loc_t* qse_awk_geterrloc (
 );
 
 /**
- * The qse_awk_getmerrmsg() function returns the error message describing
+ * The qse_awk_geterrmsgasmbs() function returns the error message describing
  * the last error occurred. 
  *
  * \return error message
  */
-QSE_EXPORT const qse_mchar_t* qse_awk_getmerrmsg (
+QSE_EXPORT const qse_mchar_t* qse_awk_geterrmsgasmbs (
 	qse_awk_t* awk /**< awk */
 );
 
 /**
- * The qse_awk_getwerrmsg() function returns the error message describing
+ * The qse_awk_geterrmsgaswcs() function returns the error message describing
  * the last error occurred. 
  *
  * \return error message
  */
-QSE_EXPORT const qse_wchar_t* qse_awk_getwerrmsg (
+QSE_EXPORT const qse_wchar_t* qse_awk_geterrmsgaswcs (
 	qse_awk_t* awk /**< awk */
 );
 
 
 #if defined(QSE_CHAR_IS_MCHAR)
-#	define qse_awk_geterrmsg qse_awk_getmerrmsg
+#	define qse_awk_geterrmsg qse_awk_geterrmsgasmbs
 #else
-#	define qse_awk_geterrmsg qse_awk_getwerrmsg
+#	define qse_awk_geterrmsg qse_awk_geterrmsgaswcs
 #endif
 
 
@@ -2231,14 +2231,30 @@ QSE_EXPORT qse_awk_val_t* qse_awk_rtx_loop (
 );
 
 /**
- * The qse_awk_rtx_findfun() function finds the function structure by name
- * and returns the pointer to it if one is found. It returns #QSE_NULL if
- * it fails to find a function by the \a name.
+ * The qse_awk_rtx_findfunwithmbs() function finds the function structure by 
+ * name and returns the pointer to it if one is found. It returns #QSE_NULL
+ * if it fails to find a function by the \a name.
  */
-QSE_EXPORT qse_awk_fun_t* qse_awk_rtx_findfun (
-	qse_awk_rtx_t*    rtx, /**< runtime context */
-	const qse_char_t* name /**< function name */
+QSE_EXPORT qse_awk_fun_t* qse_awk_rtx_findfunwithmbs (
+	qse_awk_rtx_t*     rtx, /**< runtime context */
+	const qse_mchar_t* name /**< function name */
 );
+
+/**
+ * The qse_awk_rtx_findfunwithwcs() function finds the function structure by 
+ * name and returns the pointer to it if one is found. It returns #QSE_NULL
+ * if it fails to find a function by the \a name.
+ */
+QSE_EXPORT qse_awk_fun_t* qse_awk_rtx_findfunwithwcs (
+	qse_awk_rtx_t*     rtx, /**< runtime context */
+	const qse_wchar_t* name /**< function name */
+);
+
+#if defined(QSE_CHAR_IS_MCHAR)
+#	define qse_awk_rtx_findfun qse_awk_rtx_findfunwithmbs
+#else
+#	define qse_awk_rtx_findfun qse_awk_rtx_findfunwithwcs
+#endif
 
 /**
  * The qse_awk_rtx_callfun() function invokes an AWK function described by
@@ -2253,7 +2269,7 @@ QSE_EXPORT qse_awk_val_t* qse_awk_rtx_callfun (
 );
 
 /**
- * The qse_awk_rtx_call() function invokes an AWK function named \a name. 
+ * The qse_awk_rtx_callwithmbs() function invokes an AWK function named \a name. 
  * However, it is not able to invoke an intrinsic function such as split(). 
  * The #QSE_AWK_PABLOCK option can be turned off to make illegal the BEGIN 
  * blocks, the pattern-action blocks, and the END blocks.
@@ -2263,9 +2279,9 @@ QSE_EXPORT qse_awk_val_t* qse_awk_rtx_callfun (
  * rtx = qse_awk_rtx_open (awk, 0, rio);
  * if (rtx)
  * {
- *     v = qse_awk_rtx_call (rtx, QSE_T("init"), QSE_NULL, 0);
+ *     v = qse_awk_rtx_callwithmbs (rtx, QSE_MT("init"), QSE_NULL, 0);
  *     if (v) qse_awk_rtx_refdownval (rtx, v);
- *     qse_awk_rtx_call (rtx, QSE_T("fini"), QSE_NULL, 0);
+ *     qse_awk_rtx_callwithmbs (rtx, QSE_MT("fini"), QSE_NULL, 0);
  *     if (v) qse_awk_rtx_refdownval (rtx, v);
  *     qse_awk_rtx_close (rtx);
  * }
@@ -2273,12 +2289,46 @@ QSE_EXPORT qse_awk_val_t* qse_awk_rtx_callfun (
  *
  * \return 0 on success, -1 on failure
  */
-QSE_EXPORT qse_awk_val_t* qse_awk_rtx_call (
-	qse_awk_rtx_t*    rtx,    /**< runtime context */
-	const qse_char_t* name,   /**< function name */
-	qse_awk_val_t*    args[], /**< arguments to the function */
-	qse_size_t        nargs   /**< the number of arguments */
+QSE_EXPORT qse_awk_val_t* qse_awk_rtx_callwithmbs (
+	qse_awk_rtx_t*     rtx,    /**< runtime context */
+	const qse_mchar_t* name,   /**< function name */
+	qse_awk_val_t*     args[], /**< arguments to the function */
+	qse_size_t         nargs   /**< the number of arguments */
 );
+
+/**
+ * The qse_awk_rtx_callwithwcs() function invokes an AWK function named \a name. 
+ * However, it is not able to invoke an intrinsic function such as split(). 
+ * The #QSE_AWK_PABLOCK option can be turned off to make illegal the BEGIN 
+ * blocks, the pattern-action blocks, and the END blocks.
+ *
+ * The example shows typical usage of the function.
+ * \code
+ * rtx = qse_awk_rtx_open (awk, 0, rio);
+ * if (rtx)
+ * {
+ *     v = qse_awk_rtx_callwithwcs (rtx, QSE_WT("init"), QSE_NULL, 0);
+ *     if (v) qse_awk_rtx_refdownval (rtx, v);
+ *     qse_awk_rtx_callwithwcs (rtx, QSE_WT("fini"), QSE_NULL, 0);
+ *     if (v) qse_awk_rtx_refdownval (rtx, v);
+ *     qse_awk_rtx_close (rtx);
+ * }
+ * \endcode
+ *
+ * \return 0 on success, -1 on failure
+ */
+QSE_EXPORT qse_awk_val_t* qse_awk_rtx_callwithwcs (
+	qse_awk_rtx_t*     rtx,    /**< runtime context */
+	const qse_wchar_t* name,   /**< function name */
+	qse_awk_val_t*     args[], /**< arguments to the function */
+	qse_size_t         nargs   /**< the number of arguments */
+);
+
+#if defined(QSE_CHAR_IS_MCHAR)
+#	define qse_awk_rtx_call qse_awk_rtx_callwithmbs
+#else
+#	define qse_awk_rtx_call qse_awk_rtx_callwithwcs
+#endif
 
 /**
  * The qse_awk_rtx_callwithstrs() function is the same as qse_awk_rtx_call()
@@ -2501,27 +2551,27 @@ QSE_EXPORT const qse_awk_loc_t* qse_awk_rtx_geterrloc (
 );
 
 /**
- * The qse_awk_rtx_getmerrmsg() function gets the string describing the last 
+ * The qse_awk_rtx_geterrmsgasmbs() function gets the string describing the last 
  * error occurred during runtime.
  * \return error message
  */
-QSE_EXPORT const qse_mchar_t* qse_awk_rtx_getmerrmsg (
+QSE_EXPORT const qse_mchar_t* qse_awk_rtx_geterrmsgasmbs (
 	qse_awk_rtx_t* rtx /**< runtime context */
 );
 
 /**
- * The qse_awk_rtx_getwerrmsg() function gets the string describing the last 
+ * The qse_awk_rtx_geterrmsgaswcs() function gets the string describing the last 
  * error occurred during runtime.
  * \return error message
  */
-QSE_EXPORT const qse_wchar_t* qse_awk_rtx_getwerrmsg (
+QSE_EXPORT const qse_wchar_t* qse_awk_rtx_geterrmsgaswcs (
 	qse_awk_rtx_t* rtx /**< runtime context */
 );
 
 #if defined(QSE_CHAR_IS_MCHAR)
-#	define qse_awk_rtx_geterrmsg qse_awk_rtx_getmerrmsg
+#	define qse_awk_rtx_geterrmsg qse_awk_rtx_geterrmsgasmbs
 #else
-#	define qse_awk_rtx_geterrmsg qse_awk_rtx_getwerrmsg
+#	define qse_awk_rtx_geterrmsg qse_awk_rtx_geterrmsgaswcs
 #endif
 
 QSE_EXPORT const qse_char_t* qse_awk_rtx_backuperrmsg (
@@ -3261,6 +3311,34 @@ static QSE_INLINE void qse_awk_rtx_freemem (qse_awk_rtx_t* rtx, void* ptr)
 #else
 #	define qse_awk_rtx_freemem(rtx,ptr) qse_awk_freemem(((qse_awk_rtx_alt_t*)rtx)->awk, ptr)
 #endif
+
+
+QSE_EXPORT qse_wchar_t* qse_awk_rtx_mbstowcsdup (
+	qse_awk_rtx_t*     rtx,
+	const qse_mchar_t* mbs,
+	qse_size_t*        wcslen
+);
+
+QSE_EXPORT qse_wchar_t* qse_awk_rtx_mbsntowcsdup (
+	qse_awk_rtx_t*     rtx,
+	const qse_mchar_t* mbs,
+	qse_size_t         mbslen,
+	qse_size_t*        wcslen
+);
+
+QSE_EXPORT qse_mchar_t* qse_awk_rtx_wcstombsdup (
+	qse_awk_rtx_t*     rtx,
+	const qse_wchar_t* wcs,
+	qse_size_t*        mbslen
+);
+
+qse_mchar_t* qse_awk_rtx_wcsntombsdup (
+	qse_awk_rtx_t*     rtx,
+	const qse_wchar_t* wcs,
+	qse_size_t         wcslen,
+	qse_size_t*        mbslen
+);
+
 
 /**
  * The qse_getawknilval() function returns the pointer to the predefined

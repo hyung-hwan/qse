@@ -1508,7 +1508,7 @@ qse_awk_val_t* qse_awk_rtx_loop (qse_awk_rtx_t* rtx)
 }
 
 /* find an AWK function by name */
-qse_awk_fun_t* qse_awk_rtx_findfun (qse_awk_rtx_t* rtx, const qse_char_t* name)
+static qse_awk_fun_t* find_fun (qse_awk_rtx_t* rtx, const qse_char_t* name)
 {
 	qse_htb_pair_t* pair;
 
@@ -1526,6 +1526,36 @@ qse_awk_fun_t* qse_awk_rtx_findfun (qse_awk_rtx_t* rtx, const qse_char_t* name)
 	}
 
 	return (qse_awk_fun_t*)QSE_HTB_VPTR(pair);
+}
+
+qse_awk_fun_t* qse_awk_rtx_findfunwithmbs (qse_awk_rtx_t* rtx, const qse_mchar_t* name)
+{
+#if defined(QSE_CHAR_IS_MCHAR)
+	return find_fun(rtx, name);
+#else
+	qse_mcstr_t mbs;
+	qse_awk_fun_t* fun;
+	mbs.ptr = qse_awk_rtx_wcstombsdup(rtx, name, &mbs.len);
+	if (!mbs.ptr) return -1;
+	fun = find_fun(rtx, mbs.ptr);
+	qse_awk_rtx_freemem (rtx, mbs.ptr);
+	return fun;
+#endif
+}
+
+qse_awk_fun_t* qse_awk_rtx_findfunwithwcs (qse_awk_rtx_t* rtx, const qse_wchar_t* name)
+{
+#if defined(QSE_CHAR_IS_MCHAR)
+	qse_wcstr_t wcs;
+	qse_awk_fun_t* fun;
+	wcs.ptr = qse_awk_rtx_mbstowcsdup(rtx, name, &wcs.len);
+	if (!wcs.ptr) return -1;
+	fun = find_fun(rtx, wcs.ptr);
+	qse_awk_rtx_freemem (rtx, wcs.ptr);
+	return fun;
+#else
+	return find_fun(rtx, name);
+#endif
 }
 
 /* call an AWK function by the function structure */
@@ -1606,11 +1636,21 @@ qse_awk_val_t* qse_awk_rtx_callfun (qse_awk_rtx_t* rtx, qse_awk_fun_t* fun, qse_
 }
 
 /* call an AWK function by name */
-qse_awk_val_t* qse_awk_rtx_call (qse_awk_rtx_t* rtx, const qse_char_t* name, qse_awk_val_t* args[], qse_size_t nargs)
+qse_awk_val_t* qse_awk_rtx_callwithmbs (qse_awk_rtx_t* rtx, const qse_mchar_t* name, qse_awk_val_t* args[], qse_size_t nargs)
 {
 	qse_awk_fun_t* fun;
 
-	fun = qse_awk_rtx_findfun(rtx, name);
+	fun = qse_awk_rtx_findfunwithmbs(rtx, name);
+	if (!fun) return QSE_NULL;
+
+	return qse_awk_rtx_callfun(rtx, fun, args, nargs);
+}
+
+qse_awk_val_t* qse_awk_rtx_callwithwcs (qse_awk_rtx_t* rtx, const qse_wchar_t* name, qse_awk_val_t* args[], qse_size_t nargs)
+{
+	qse_awk_fun_t* fun;
+
+	fun = qse_awk_rtx_findfunwithwcs(rtx, name);
 	if (!fun) return QSE_NULL;
 
 	return qse_awk_rtx_callfun(rtx, fun, args, nargs);

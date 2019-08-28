@@ -211,7 +211,7 @@ static qse_ssize_t sf_in_open (qse_xli_t* xli, qse_xli_io_arg_t* arg, xtn_t* xtn
 				const qse_char_t* base;
 	
 				/* i'm being included from another file */
-				base = qse_basename (outer);
+				base = qse_basename(outer);
 				if (base != outer && arg->name[0] != QSE_T('/'))
 				{
 					qse_size_t tmplen, totlen, dirlen;
@@ -438,7 +438,7 @@ static qse_ssize_t sf_out_open (qse_xli_t* xli, qse_xli_io_arg_t* arg, xtn_t* xt
 				const qse_char_t* base;
 	
 				/* i'm being included from another file */
-				base = qse_basename (outer);
+				base = qse_basename(outer);
 				if (base != outer && arg->name[0] != QSE_T('/'))
 				{
 					qse_size_t tmplen, totlen, dirlen;

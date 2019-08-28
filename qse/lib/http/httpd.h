@@ -43,12 +43,12 @@
 #if defined(QSE_HTTPD_DEBUG)
 #	include <qse/si/sio.h>
 #	include <qse/cmn/path.h>
-#	define HTTPD_DBGOUT0(fmt) qse_putmbsf("%06d %-20hs " fmt, (int)__LINE__, qse_mbsbasename(__FILE__))
-#	define HTTPD_DBGOUT1(fmt,a1) qse_putmbsf("%06d %-20hs " fmt, (int)__LINE__, qse_mbsbasename(__FILE__), (a1))
-#	define HTTPD_DBGOUT2(fmt,a1,a2) qse_putmbsf("%06d %-20hs " fmt, (int)__LINE__, qse_mbsbasename(__FILE__), (a1), (a2))
-#	define HTTPD_DBGOUT3(fmt,a1,a2,a3) qse_putmbsf("%06d %-20hs " fmt, (int)__LINE__, qse_mbsbasename(__FILE__), (a1), (a2), (a3))
-#	define HTTPD_DBGOUT4(fmt,a1,a2,a3,a4) qse_putmbsf("%06d %-20hs " fmt, (int)__LINE__, qse_mbsbasename(__FILE__), (a1), (a2), (a3), (a4))
-#	define HTTPD_DBGOUT5(fmt,a1,a2,a3,a4,a5) qse_putmbsf("%06d %-20hs " fmt, (int)__LINE__, qse_mbsbasename(__FILE__), (a1), (a2), (a3), (a4), (a5))
+#	define HTTPD_DBGOUT0(fmt) qse_putmbsf("%06d %-20hs " fmt, (int)__LINE__, qse_basenameasmbs(__FILE__))
+#	define HTTPD_DBGOUT1(fmt,a1) qse_putmbsf("%06d %-20hs " fmt, (int)__LINE__, qse_basenameasmbs(__FILE__), (a1))
+#	define HTTPD_DBGOUT2(fmt,a1,a2) qse_putmbsf("%06d %-20hs " fmt, (int)__LINE__, qse_basenameasmbs(__FILE__), (a1), (a2))
+#	define HTTPD_DBGOUT3(fmt,a1,a2,a3) qse_putmbsf("%06d %-20hs " fmt, (int)__LINE__, qse_basenameasmbs(__FILE__), (a1), (a2), (a3))
+#	define HTTPD_DBGOUT4(fmt,a1,a2,a3,a4) qse_putmbsf("%06d %-20hs " fmt, (int)__LINE__, qse_basenameasmbs(__FILE__), (a1), (a2), (a3), (a4))
+#	define HTTPD_DBGOUT5(fmt,a1,a2,a3,a4,a5) qse_putmbsf("%06d %-20hs " fmt, (int)__LINE__, qse_basenameasmbs(__FILE__), (a1), (a2), (a3), (a4), (a5))
 #else
 #	define HTTPD_DBGOUT0(fmt)
 #	define HTTPD_DBGOUT1(fmt,a1)

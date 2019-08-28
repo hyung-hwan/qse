@@ -1021,3 +1021,101 @@ void* qse_awk_rtx_callocmem (qse_awk_rtx_t* rtx, qse_size_t size)
 	return ptr;
 }
 
+
+
+
+
+
+qse_wchar_t* qse_awk_rtx_mbstowcsdup (qse_awk_rtx_t* rtx, const qse_mchar_t* mbs, qse_size_t* _wcslen)
+{
+	qse_size_t mbslen, wcslen;
+	qse_wchar_t* wcs;
+
+	/* if i use qse_mbstowcsdupwithcmgr(), i cannot pinpoint the exact failure cause.
+	 * let's do it differently. */
+	if (qse_mbstowcswithcmgr(mbs, &mbslen, QSE_NULL, &wcslen, qse_awk_rtx_getcmgr(rtx)) <= -1)
+	{
+		qse_awk_rtx_seterrnum (rtx, QSE_AWK_EINVAL, QSE_NULL);
+		return QSE_NULL;
+	}
+
+	wcslen = wcslen + 1; /* for terminating null */
+
+	wcs = qse_awk_rtx_allocmem(rtx, QSE_SIZEOF(*wcs) * wcslen);
+	if (!wcs) return QSE_NULL;
+
+	qse_mbstowcswithcmgr (mbs, &mbslen, wcs, &wcslen, qse_awk_rtx_getcmgr(rtx));
+	if (_wcslen) *_wcslen = wcslen;
+	return wcs;
+}
+
+qse_mchar_t* qse_awk_rtx_wcstombsdup (qse_awk_rtx_t* rtx, const qse_wchar_t* wcs, qse_size_t* _mbslen)
+{
+	qse_size_t mbslen, wcslen;
+	qse_mchar_t* mbs;
+
+	if (qse_wcstombswithcmgr(wcs, &wcslen, QSE_NULL, &mbslen, qse_awk_rtx_getcmgr(rtx)) <= -1)
+	{
+		qse_awk_rtx_seterrnum (rtx, QSE_AWK_EINVAL, QSE_NULL);
+		return QSE_NULL;
+	}
+
+	mbslen = mbslen + 1; /* for terminating null */
+
+	mbs = qse_awk_rtx_allocmem(rtx, QSE_SIZEOF(*mbs) * mbslen);
+	if (!mbs) return QSE_NULL;
+
+	qse_wcstombswithcmgr (wcs, &wcslen, mbs, &mbslen, qse_awk_rtx_getcmgr(rtx));
+	if (_mbslen) *_mbslen = mbslen;
+	return mbs;
+}
+
+
+qse_wchar_t* qse_awk_rtx_mbsntowcsdup (qse_awk_rtx_t* rtx, const qse_mchar_t* mbs, qse_size_t _mbslen, qse_size_t* _wcslen)
+{
+	qse_size_t mbslen, wcslen;
+	qse_wchar_t* wcs;
+
+	/* if i use qse_mbstowcsdupwithcmgr(), i cannot pinpoint the exact failure cause.
+	 * let's do it differently. */
+	mbslen = _mbslen;
+	if (qse_mbsntowcsnwithcmgr(mbs, &mbslen, QSE_NULL, &wcslen, qse_awk_rtx_getcmgr(rtx)) <= -1)
+	{
+		qse_awk_rtx_seterrnum (rtx, QSE_AWK_EINVAL, QSE_NULL);
+		return QSE_NULL;
+	}
+
+	wcs = qse_awk_rtx_allocmem(rtx, QSE_SIZEOF(*wcs) * (wcslen + 1));
+	if (!wcs) return QSE_NULL;
+
+	mbslen= _mbslen;
+	qse_mbsntowcsnwithcmgr (mbs, &mbslen, wcs, &wcslen, qse_awk_rtx_getcmgr(rtx));
+	wcs[wcslen] = QSE_WT('\0');
+
+	if (_wcslen) *_wcslen = wcslen;
+	return wcs;
+}
+
+
+qse_mchar_t* qse_awk_rtx_wcsntombsdup (qse_awk_rtx_t* rtx, const qse_wchar_t* wcs, qse_size_t _wcslen, qse_size_t* _mbslen)
+{
+	qse_size_t mbslen, wcslen;
+	qse_mchar_t* mbs;
+
+	wcslen = _wcslen;
+	if (qse_wcsntombsnwithcmgr(wcs, &wcslen, QSE_NULL, &mbslen, qse_awk_rtx_getcmgr(rtx)) <= -1)
+	{
+		qse_awk_rtx_seterrnum (rtx, QSE_AWK_EINVAL, QSE_NULL);
+		return QSE_NULL;
+	}
+
+	mbs = qse_awk_rtx_allocmem(rtx, QSE_SIZEOF(*mbs) * (mbslen + 1));
+	if (!mbs) return QSE_NULL;
+
+	wcslen = _wcslen;
+	qse_wcsntombsnwithcmgr (wcs, &wcslen, mbs, &mbslen, qse_awk_rtx_getcmgr(rtx));
+	mbs[mbslen] = QSE_MT('\0');
+
+	if (_mbslen) *_mbslen = mbslen;
+	return mbs;
+}
