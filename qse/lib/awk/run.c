@@ -1533,12 +1533,12 @@ qse_awk_fun_t* qse_awk_rtx_findfunwithmbs (qse_awk_rtx_t* rtx, const qse_mchar_t
 #if defined(QSE_CHAR_IS_MCHAR)
 	return find_fun(rtx, name);
 #else
-	qse_mcstr_t mbs;
+	qse_wcstr_t wcs;
 	qse_awk_fun_t* fun;
-	mbs.ptr = qse_awk_rtx_wcstombsdup(rtx, name, &mbs.len);
-	if (!mbs.ptr) return -1;
-	fun = find_fun(rtx, mbs.ptr);
-	qse_awk_rtx_freemem (rtx, mbs.ptr);
+	wcs.ptr = qse_awk_rtx_mbstowcsdup(rtx, name, &wcs.len);
+	if (!wcs.ptr) return QSE_NULL;
+	fun = find_fun(rtx, wcs.ptr);
+	qse_awk_rtx_freemem (rtx, wcs.ptr);
 	return fun;
 #endif
 }
@@ -1546,12 +1546,12 @@ qse_awk_fun_t* qse_awk_rtx_findfunwithmbs (qse_awk_rtx_t* rtx, const qse_mchar_t
 qse_awk_fun_t* qse_awk_rtx_findfunwithwcs (qse_awk_rtx_t* rtx, const qse_wchar_t* name)
 {
 #if defined(QSE_CHAR_IS_MCHAR)
-	qse_wcstr_t wcs;
+	qse_mcstr_t mbs;
 	qse_awk_fun_t* fun;
-	wcs.ptr = qse_awk_rtx_mbstowcsdup(rtx, name, &wcs.len);
-	if (!wcs.ptr) return -1;
-	fun = find_fun(rtx, wcs.ptr);
-	qse_awk_rtx_freemem (rtx, wcs.ptr);
+	mbs.ptr = qse_awk_rtx_wcstombsdup(rtx, name, &mbs.len);
+	if (!mbs.ptr) return QSE_NULL;
+	fun = find_fun(rtx, mbs.ptr);
+	qse_awk_rtx_freemem (rtx, mbs.ptr);
 	return fun;
 #else
 	return find_fun(rtx, name);
