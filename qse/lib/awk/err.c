@@ -320,7 +320,7 @@ const qse_mchar_t* qse_awk_rtx_geterrmsgasmbs (qse_awk_rtx_t* rtx)
 	qse_size_t wcslen, mbslen;
 
 	msg = (rtx->errinf.msg[0] == QSE_T('\0')) ?
-		qse_awk_geterrstr(rtx->awk)(rtx->awk,rtx->errinf.num): rtx->errinf.msg;
+		qse_awk_geterrstr(rtx->awk)(rtx->awk, rtx->errinf.num): rtx->errinf.msg;
 
 	mbslen = QSE_COUNTOF(rtx->merrmsg);
 	qse_wcstombswithcmgr(msg, &wcslen, rtx->merrmsg, &mbslen, qse_awk_rtx_getcmgr(rtx));
