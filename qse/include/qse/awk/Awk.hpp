@@ -697,6 +697,9 @@ public:
 		operator int_t () const;
 		operator flt_t () const;
 		operator const char_t* () const;
+	#if defined(QSE_CHAR_IS_WCHAR)
+		operator const qse_mchar_t* () const;
+	#endif
 
 		val_t* toVal () const
 		{
@@ -718,13 +721,28 @@ public:
 			const char_t* p;
 			size_t l;
 
-			if (getStr (&p, &l) == -1) 
+			if (this->getStr(&p, &l) <= -1) 
 			{
-				p = getEmptyStr();
+				p = this->getEmptyStr();
 				l = 0;
 			}
 			
-			if (len != QSE_NULL) *len = l;
+			if (len) *len = l;
+			return p;
+		}
+
+		const qse_mchar_t* toMbs (size_t* len) const
+		{
+			const qse_mchar_t* p;
+			size_t l;
+
+			if (this->getMbs(&p, &l) <= -1) 
+			{
+				p = this->getEmptyMbs();
+				l = 0;
+			}
+			
+			if (len) *len = l;
 			return p;
 		}
 
@@ -732,6 +750,7 @@ public:
 		int getFlt (flt_t* v) const;
 		int getNum (int_t* lv, flt_t* fv) const;
 		int getStr (const char_t** str, size_t* len) const;
+		int getMbs (const qse_mchar_t** str, size_t* len) const;
 
 		int setVal (val_t* v);
 		int setVal (Run* r, val_t* v);
@@ -740,70 +759,33 @@ public:
 		int setInt (Run* r, int_t v);
 		int setFlt (flt_t v);
 		int setFlt (Run* r, flt_t v);
+
 		int setStr (const char_t* str, size_t len, bool numeric = false);
 		int setStr (Run* r, const char_t* str, size_t len, bool numeric = false);
 		int setStr (const char_t* str, bool numeric = false);
 		int setStr (Run* r, const char_t* str, bool numeric = false);
 
-		int setIndexedVal (
-			const Index& idx,
-			val_t*       v
-		);
+		int setMbs (const qse_mchar_t* str, size_t len);
+		int setMbs (Run* r, const qse_mchar_t* str, size_t len);
+		int setMbs (const qse_mchar_t* str);
+		int setMbs (Run* r, const qse_mchar_t* str);
 
-		int setIndexedVal (
-			Run*         r, 
-			const Index& idx, 
-			val_t*       v
-		);
+		int setIndexedVal (const Index& idx, val_t* v);
+		int setIndexedVal (Run* r, const Index& idx, val_t* v);
+		int setIndexedInt (const Index& idx, int_t v);
+		int setIndexedInt (Run* r, const Index& idx, int_t v);
+		int setIndexedFlt (const Index& idx, flt_t v);
+		int setIndexedFlt (Run* r, const Index&  idx, flt_t v);
 
-		int setIndexedInt (
-			const Index& idx,
-			int_t       v
-		);
+		int setIndexedStr (const Index& idx, const char_t* str, size_t len, bool numeric = false);
+		int setIndexedStr (Run* r, const Index& idx, const char_t* str, size_t len, bool numeric = false);
+		int setIndexedStr (const Index& idx, const char_t* str, bool  numeric = false);
+		int setIndexedStr (Run* r, const Index&  idx, const char_t* str, bool  numeric = false);
 
-		int setIndexedInt (
-			Run* r,
-			const Index& idx,
-			int_t v);
-
-		int setIndexedFlt (
-			const Index&  idx,
-			flt_t        v
-		);
-
-		int setIndexedFlt (
-			Run*          r,
-			const Index&  idx,
-			flt_t        v
-		);
-
-		int setIndexedStr (
-			const Index&  idx,
-			const char_t* str,
-			size_t        len,
-			bool  numeric = false
-		);
-
-		int setIndexedStr (
-			Run*          r,
-			const Index&  idx,
-			const char_t* str,
-			size_t        len,
-			bool  numeric = false
-		);
-
-		int setIndexedStr (
-			const Index&  idx,
-			const char_t* str,
-			bool  numeric = false
-		);
-
-		int setIndexedStr (
-			Run*          r,
-			const Index&  idx,
-			const char_t* str,
-			bool  numeric = false
-		);
+		int setIndexedMbs (const Index& idx, const qse_mchar_t* str, size_t len);
+		int setIndexedMbs (Run* r, const Index& idx, const qse_mchar_t* str, size_t len);
+		int setIndexedMbs (const Index& idx, const qse_mchar_t* str);
+		int setIndexedMbs (Run* r, const Index&  idx, const qse_mchar_t* str);
 
 		///
 		/// The isIndexed() function determines if a value is arrayed.
@@ -848,12 +830,14 @@ public:
 		val_t* val;
 
 		mutable struct
-		{	
+		{
 			qse_cstr_t str;
+			qse_mcstr_t mbs;
 		} cached;
 
 	public:
 		static const char_t* getEmptyStr();
+		static const qse_mchar_t* getEmptyMbs();
 	};
 
 public:

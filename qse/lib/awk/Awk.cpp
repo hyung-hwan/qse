@@ -210,6 +210,11 @@ const Awk::char_t* Awk::Value::getEmptyStr()
 	static const Awk::char_t* EMPTY_STRING = QSE_T("");
 	return EMPTY_STRING;
 }
+const qse_mchar_t* Awk::Value::getEmptyMbs()
+{
+	static const qse_mchar_t* EMPTY_STRING = QSE_MT("");
+	return EMPTY_STRING;
+}
 
 Awk::Value::IntIndex::IntIndex (int_t x)
 {
@@ -309,27 +314,34 @@ Awk::Value::Value (): run (QSE_NULL), val (qse_get_awk_nil_val())
 {
 	cached.str.ptr = QSE_NULL;
 	cached.str.len = 0;
+	cached.mbs.ptr = QSE_NULL;
+	cached.mbs.len = 0;
 }
 
 Awk::Value::Value (Run& run): run (&run), val (qse_get_awk_nil_val()) 
 {
 	cached.str.ptr = QSE_NULL;
 	cached.str.len = 0;
+	cached.mbs.ptr = QSE_NULL;
+	cached.mbs.len = 0;
 }
 
 Awk::Value::Value (Run* run): run (run), val (qse_get_awk_nil_val()) 
 {
 	cached.str.ptr = QSE_NULL;
 	cached.str.len = 0;
+	cached.mbs.ptr = QSE_NULL;
+	cached.mbs.len = 0;
 }
 
-Awk::Value::Value (const Value& v): run (v.run), val (v.val)
+Awk::Value::Value (const Value& v): run(v.run), val(v.val)
 {
-	if (run != QSE_NULL)
-		qse_awk_rtx_refupval (run->rtx, val);
+	if (run) qse_awk_rtx_refupval (run->rtx, val);
 
 	cached.str.ptr = QSE_NULL;
 	cached.str.len = 0;
+	cached.mbs.ptr = QSE_NULL;
+	cached.mbs.len = 0;
 }
 
 Awk::Value::~Value ()
@@ -337,8 +349,8 @@ Awk::Value::~Value ()
 	if (run != QSE_NULL)
 	{
 		qse_awk_rtx_refdownval (run->rtx, val);
-		if (cached.str.ptr != QSE_NULL)
-			qse_awk_rtx_freemem (run->rtx, cached.str.ptr);
+		if (cached.str.ptr) qse_awk_rtx_freemem (run->rtx, cached.str.ptr);
+		if (cached.mbs.ptr) qse_awk_rtx_freemem (run->rtx, cached.mbs.ptr);
 	}
 }
 
@@ -346,37 +358,48 @@ Awk::Value& Awk::Value::operator= (const Value& v)
 {
 	if (this == &v) return *this;
 
-	if (run != QSE_NULL)
+	if (run)
 	{
 		qse_awk_rtx_refdownval (run->rtx, val);
-		if (cached.str.ptr != QSE_NULL)
+		if (cached.str.ptr)
 		{
 			qse_awk_rtx_freemem (run->rtx, cached.str.ptr);
 			cached.str.ptr = QSE_NULL;
 			cached.str.len = 0;
+		}
+		if (cached.mbs.ptr)
+		{
+			qse_awk_rtx_freemem (run->rtx, cached.mbs.ptr);
+			cached.mbs.ptr = QSE_NULL;
+			cached.mbs.len = 0;
 		}
 	}
 
 	run = v.run;
 	val = v.val;
 
-	if (run != QSE_NULL)
-		qse_awk_rtx_refupval (run->rtx, val);
+	if (run) qse_awk_rtx_refupval (run->rtx, val);
 
 	return *this;
 }
-	
+
 void Awk::Value::clear ()
 {
-	if (run != QSE_NULL)
+	if (run)
 	{
 		qse_awk_rtx_refdownval (run->rtx, val);
 
-		if (cached.str.ptr != QSE_NULL)
+		if (cached.str.ptr)
 		{
 			qse_awk_rtx_freemem (run->rtx, cached.str.ptr);
 			cached.str.ptr = QSE_NULL;
 			cached.str.len = 0;
+		}
+		if (cached.mbs.ptr)
+		{
+			qse_awk_rtx_freemem (run->rtx, cached.mbs.ptr);
+			cached.mbs.ptr = QSE_NULL;
+			cached.mbs.len = 0;
 		}
 
 		run = QSE_NULL;
@@ -387,14 +410,14 @@ void Awk::Value::clear ()
 Awk::Value::operator Awk::int_t () const
 {
 	int_t v;
-	if (getInt (&v) <= -1) v = 0;
+	if (this->getInt(&v) <= -1) v = 0;
 	return v;
 }
 
 Awk::Value::operator Awk::flt_t () const
 {
 	flt_t v;
-	if (getFlt (&v) <= -1) v = 0.0;
+	if (this->getFlt(&v) <= -1) v = 0.0;
 	return v;
 }
 
@@ -402,9 +425,19 @@ Awk::Value::operator const Awk::char_t* () const
 {
 	const Awk::char_t* ptr;
 	size_t len;
-	if (Awk::Value::getStr (&ptr, &len) <= -1) ptr = getEmptyStr();
+	if (Awk::Value::getStr(&ptr, &len) <= -1) ptr = getEmptyStr();
 	return ptr;
 }
+
+#if defined(QSE_CHAR_IS_WCHAR)
+Awk::Value::operator const qse_mchar_t* () const
+{
+	const qse_mchar_t* ptr;
+	size_t len;
+	if (Awk::Value::getMbs(&ptr, &len) <= -1) ptr = getEmptyMbs();
+	return ptr;
+}
+#endif
 
 int Awk::Value::getInt (int_t* v) const
 {
@@ -412,9 +445,9 @@ int Awk::Value::getInt (int_t* v) const
 
 	QSE_ASSERT (this->val != QSE_NULL);
 
-	if (run != QSE_NULL)
+	if (this->run)
 	{
-		int n = qse_awk_rtx_valtoint (this->run->rtx, this->val, &lv);
+		int n = qse_awk_rtx_valtoint(this->run->rtx, this->val, &lv);
 		if (n <= -1) 
 		{
 			run->awk->retrieveError (this->run);
@@ -434,7 +467,7 @@ int Awk::Value::getFlt (flt_t* v) const
 
 	if (this->run)
 	{
-		int n = qse_awk_rtx_valtoflt (this->run->rtx, this->val, &rv);
+		int n = qse_awk_rtx_valtoflt(this->run->rtx, this->val, &rv);
 		if (n <= -1)
 		{
 			run->awk->retrieveError (this->run);
@@ -450,9 +483,9 @@ int Awk::Value::getNum (int_t* lv, flt_t* fv) const
 {
 	QSE_ASSERT (this->val != QSE_NULL);
 
-	if (this->run != QSE_NULL)
+	if (this->run)
 	{
-		int n = qse_awk_rtx_valtonum (this->run->rtx, this->val, lv, fv);
+		int n = qse_awk_rtx_valtonum(this->run->rtx, this->val, lv, fv);
 		if (n <= -1)
 		{
 			run->awk->retrieveError (this->run);
@@ -474,18 +507,18 @@ int Awk::Value::getStr (const char_t** str, size_t* len) const
 
 	if (this->run)
 	{
-		if (QSE_AWK_RTX_GETVALTYPE (this->run->rtx, this->val) == QSE_AWK_VAL_STR)
+		if (QSE_AWK_RTX_GETVALTYPE(this->run->rtx, this->val) == QSE_AWK_VAL_STR)
 		{
 			p = ((qse_awk_val_str_t*)this->val)->val.ptr;
 			l = ((qse_awk_val_str_t*)this->val)->val.len;
 		}
 		else
 		{
-			if (cached.str.ptr == QSE_NULL)
+			if (!cached.str.ptr)
 			{
 				qse_awk_rtx_valtostr_out_t out;
 				out.type = QSE_AWK_RTX_VALTOSTR_CPLDUP;
-				if (qse_awk_rtx_valtostr (this->run->rtx, this->val, &out) <= -1)
+				if (qse_awk_rtx_valtostr(this->run->rtx, this->val, &out) <= -1)
 				{
 					run->awk->retrieveError (this->run);
 					return -1;
@@ -511,6 +544,48 @@ int Awk::Value::getStr (const char_t** str, size_t* len) const
 	return 0;
 }
 
+int Awk::Value::getMbs (const qse_mchar_t** str, size_t* len) const
+{
+	const qse_mchar_t* p = getEmptyMbs();
+	size_t l = 0;
+
+	QSE_ASSERT (this->val != QSE_NULL);
+
+	if (this->run)
+	{
+		if (QSE_AWK_RTX_GETVALTYPE(this->run->rtx, this->val) == QSE_AWK_VAL_MBS)
+		{
+			p = ((qse_awk_val_mbs_t*)this->val)->val.ptr;
+			l = ((qse_awk_val_mbs_t*)this->val)->val.len;
+		}
+		else
+		{
+			if (!cached.mbs.ptr)
+			{
+				p = qse_awk_rtx_valtombsdup(this->run->rtx, this->val, &l);
+				if (!p)
+				{
+					run->awk->retrieveError (this->run);
+					return -1;
+				}
+
+				cached.mbs.ptr = (qse_mchar_t*)p;
+				cached.mbs.len = l;
+			}
+			else
+			{
+				p = cached.mbs.ptr;
+				l = cached.mbs.len;
+			}
+		}
+	}
+
+	*str = p;
+	*len = l;
+
+	return 0;
+}
+
 int Awk::Value::setVal (val_t* v)
 {
 	if (this->run == QSE_NULL) 
@@ -519,7 +594,7 @@ int Awk::Value::setVal (val_t* v)
 		 * set an error number for the same reason */
 		return -1;
 	}
-	return setVal (this->run, v);
+	return this->setVal(this->run, v);
 }
 
 int Awk::Value::setVal (Run* r, val_t* v)
@@ -527,15 +602,22 @@ int Awk::Value::setVal (Run* r, val_t* v)
 	if (this->run != QSE_NULL)
 	{
 		qse_awk_rtx_refdownval (this->run->rtx, val);
-		if (cached.str.ptr != QSE_NULL)
+		if (cached.str.ptr)
 		{
 			qse_awk_rtx_freemem (this->run->rtx, cached.str.ptr);
 			cached.str.ptr = QSE_NULL;
 			cached.str.len = 0;
 		}
+		if (cached.mbs.ptr)
+		{
+			qse_awk_rtx_freemem (this->run->rtx, cached.mbs.ptr);
+			cached.mbs.ptr = QSE_NULL;
+			cached.mbs.len = 0;
+		}
 	}
 
 	QSE_ASSERT (cached.str.ptr == QSE_NULL);
+	QSE_ASSERT (cached.mbs.ptr == QSE_NULL);
 	qse_awk_rtx_refupval (r->rtx, v);
 
 	this->run = r;
@@ -552,20 +634,20 @@ int Awk::Value::setInt (int_t v)
 		 * set an error number for the same reason */
 		return -1;
 	}
-	return setInt (this->run, v);
+	return this->setInt(this->run, v);
 }
 
 int Awk::Value::setInt (Run* r, int_t v)
 {
 	val_t* tmp;
-	tmp = qse_awk_rtx_makeintval (r->rtx, v);
+	tmp = qse_awk_rtx_makeintval(r->rtx, v);
 	if (tmp == QSE_NULL) 
 	{
 		r->awk->retrieveError (r);
 		return -1;
 	}
 
-	int n = setVal (r, tmp);
+	int n = this->setVal(r, tmp);
 	QSE_ASSERT (n == 0);
 	return n;
 }
@@ -578,20 +660,20 @@ int Awk::Value::setFlt (flt_t v)
 		 * set an error number for the same reason */
 		return -1;
 	}
-	return setFlt (this->run, v);
+	return this->setFlt(this->run, v);
 }
 
 int Awk::Value::setFlt (Run* r, flt_t v)
 {
 	val_t* tmp;
-	tmp = qse_awk_rtx_makefltval (r->rtx, v);
+	tmp = qse_awk_rtx_makefltval(r->rtx, v);
 	if (tmp == QSE_NULL)
 	{
 		r->awk->retrieveError (r);
 		return -1;
 	}
-			
-	int n = setVal (r, tmp);
+
+	int n = this->setVal(r, tmp);
 	QSE_ASSERT (n == 0);
 	return n;
 }
@@ -604,7 +686,7 @@ int Awk::Value::setStr (const char_t* str, size_t len, bool numeric)
 		 * set an error number for the same reason */
 		return -1; 
 	}
-	return setStr (this->run, str, len, numeric);
+	return this->setStr(this->run, str, len, numeric);
 }
 
 int Awk::Value::setStr (Run* r, const char_t* str, size_t len, bool numeric)
@@ -615,15 +697,15 @@ int Awk::Value::setStr (Run* r, const char_t* str, size_t len, bool numeric)
 	cstr.ptr = (char_t*)str;
 	cstr.len = len;
 
-	tmp = numeric? qse_awk_rtx_makenstrvalwithcstr (r->rtx, &cstr):
-	               qse_awk_rtx_makestrvalwithcstr (r->rtx, &cstr);
+	tmp = numeric? qse_awk_rtx_makenstrvalwithcstr(r->rtx, &cstr):
+	               qse_awk_rtx_makestrvalwithcstr(r->rtx, &cstr);
 	if (tmp == QSE_NULL)
 	{
 		r->awk->retrieveError (r);
 		return -1;
 	}
 
-	int n = setVal (r, tmp);
+	int n = this->setVal(r, tmp);
 	QSE_ASSERT (n == 0);
 	return n;
 }
@@ -631,21 +713,74 @@ int Awk::Value::setStr (Run* r, const char_t* str, size_t len, bool numeric)
 int Awk::Value::setStr (const char_t* str, bool numeric)
 {
 	if (this->run == QSE_NULL) return -1;
-	return setStr (this->run, str, numeric);
+	return this->setStr(this->run, str, numeric);
 }
 
 int Awk::Value::setStr (Run* r, const char_t* str, bool numeric)
 {
 	val_t* tmp;
-	tmp = numeric? qse_awk_rtx_makenstrvalwithstr (r->rtx, str):
-	               qse_awk_rtx_makestrvalwithstr (r->rtx, str);
+	tmp = numeric? qse_awk_rtx_makenstrvalwithstr(r->rtx, str):
+	               qse_awk_rtx_makestrvalwithstr(r->rtx, str);
 	if (tmp == QSE_NULL) 
 	{
 		r->awk->retrieveError (r);
 		return -1;
 	}
 
-	int n = setVal (r, tmp);
+	int n = this->setVal(r, tmp);
+	QSE_ASSERT (n == 0);
+	return n;
+}
+
+
+int Awk::Value::setMbs (const qse_mchar_t* str, size_t len)
+{
+	if (this->run == QSE_NULL) 
+	{
+		/* no runtime context assoicated. unfortunately, i can't 
+		 * set an error number for the same reason */
+		return -1; 
+	}
+	return this->setMbs(this->run, str, len);
+}
+
+int Awk::Value::setMbs (Run* r, const qse_mchar_t* str, size_t len)
+{
+	val_t* tmp;
+
+	qse_mcstr_t cstr;
+	cstr.ptr = (qse_mchar_t*)str;
+	cstr.len = len;
+
+	tmp = qse_awk_rtx_makembsvalwithmcstr(r->rtx, &cstr);
+	if (!tmp)
+	{
+		r->awk->retrieveError (r);
+		return -1;
+	}
+
+	int n = this->setVal(r, tmp);
+	QSE_ASSERT (n == 0);
+	return n;
+}
+
+int Awk::Value::setMbs (const qse_mchar_t* str)
+{
+	if (this->run == QSE_NULL) return -1;
+	return this->setMbs(this->run, str);
+}
+
+int Awk::Value::setMbs (Run* r, const qse_mchar_t* str)
+{
+	val_t* tmp;
+	tmp = qse_awk_rtx_makembsval(r->rtx, str, qse_mbslen(str));
+	if (!tmp) 
+	{
+		r->awk->retrieveError (r);
+		return -1;
+	}
+
+	int n = this->setVal(r, tmp);
 	QSE_ASSERT (n == 0);
 	return n;
 }
@@ -653,7 +788,7 @@ int Awk::Value::setStr (Run* r, const char_t* str, bool numeric)
 int Awk::Value::setIndexedVal (const Index& idx, val_t* v)
 {
 	if (this->run == QSE_NULL) return -1;
-	return setIndexedVal (this->run, idx, v);
+	return this->setIndexedVal (this->run, idx, v);
 }
 
 int Awk::Value::setIndexedVal (Run* r, const Index& idx, val_t* v)
@@ -664,7 +799,7 @@ int Awk::Value::setIndexedVal (Run* r, const Index& idx, val_t* v)
 	{
 		// the previous value is not a map. 
 		// a new map value needs to be created first.
-		val_t* map = qse_awk_rtx_makemapval (r->rtx);
+		val_t* map = qse_awk_rtx_makemapval(r->rtx);
 		if (map == QSE_NULL) 
 		{
 			r->awk->retrieveError (r);
@@ -720,7 +855,7 @@ int Awk::Value::setIndexedVal (Run* r, const Index& idx, val_t* v)
 int Awk::Value::setIndexedInt (const Index& idx, int_t v)
 {
 	if (run == QSE_NULL) return -1;
-	return setIndexedInt (run, idx, v);
+	return this->setIndexedInt (run, idx, v);
 }
 
 int Awk::Value::setIndexedInt (Run* r, const Index& idx, int_t v)
@@ -733,7 +868,7 @@ int Awk::Value::setIndexedInt (Run* r, const Index& idx, int_t v)
 	}
 
 	qse_awk_rtx_refupval (r->rtx, tmp);
-	int n = setIndexedVal (r, idx, tmp);
+	int n = this->setIndexedVal(r, idx, tmp);
 	qse_awk_rtx_refdownval (r->rtx, tmp);
 
 	return n;
@@ -742,12 +877,12 @@ int Awk::Value::setIndexedInt (Run* r, const Index& idx, int_t v)
 int Awk::Value::setIndexedFlt (const Index& idx, flt_t v)
 {
 	if (run == QSE_NULL) return -1;
-	return setIndexedFlt (run, idx, v);
+	return this->setIndexedFlt(run, idx, v);
 }
 
 int Awk::Value::setIndexedFlt (Run* r, const Index& idx, flt_t v)
 {
-	val_t* tmp = qse_awk_rtx_makefltval (r->rtx, v);
+	val_t* tmp = qse_awk_rtx_makefltval(r->rtx, v);
 	if (tmp == QSE_NULL) 
 	{
 		r->awk->retrieveError (r);
@@ -755,7 +890,7 @@ int Awk::Value::setIndexedFlt (Run* r, const Index& idx, flt_t v)
 	}
 
 	qse_awk_rtx_refupval (r->rtx, tmp);
-	int n = setIndexedVal (r, idx, tmp);
+	int n = this->setIndexedVal(r, idx, tmp);
 	qse_awk_rtx_refdownval (r->rtx, tmp);
 
 	return n;
@@ -764,7 +899,7 @@ int Awk::Value::setIndexedFlt (Run* r, const Index& idx, flt_t v)
 int Awk::Value::setIndexedStr (const Index& idx, const char_t* str, size_t len, bool numeric)
 {
 	if (run == QSE_NULL) return -1;
-	return setIndexedStr (run, idx, str, len, numeric);
+	return this->setIndexedStr(run, idx, str, len, numeric);
 }
 
 int Awk::Value::setIndexedStr (
@@ -776,8 +911,8 @@ int Awk::Value::setIndexedStr (
 	cstr.ptr = (char_t*)str;
 	cstr.len = len;
 
-	tmp = numeric? qse_awk_rtx_makenstrvalwithcstr (r->rtx, &cstr):
-	               qse_awk_rtx_makestrvalwithcstr (r->rtx, &cstr);
+	tmp = numeric? qse_awk_rtx_makenstrvalwithcstr(r->rtx, &cstr):
+	               qse_awk_rtx_makestrvalwithcstr(r->rtx, &cstr);
 	if (tmp == QSE_NULL) 
 	{
 		r->awk->retrieveError (r);
@@ -785,7 +920,7 @@ int Awk::Value::setIndexedStr (
 	}
 
 	qse_awk_rtx_refupval (r->rtx, tmp);
-	int n = setIndexedVal (r, idx, tmp);
+	int n = this->setIndexedVal(r, idx, tmp);
 	qse_awk_rtx_refdownval (r->rtx, tmp);
 
 	return n;
@@ -794,14 +929,14 @@ int Awk::Value::setIndexedStr (
 int Awk::Value::setIndexedStr (const Index& idx, const char_t* str, bool numeric)
 {
 	if (run == QSE_NULL) return -1;
-	return setIndexedStr (run, idx, str, numeric);
+	return this->setIndexedStr(run, idx, str, numeric);
 }
 
 int Awk::Value::setIndexedStr (Run* r, const Index& idx, const char_t* str, bool numeric)
 {
 	val_t* tmp;
-	tmp = numeric? qse_awk_rtx_makenstrvalwithstr (r->rtx, str):
-	               qse_awk_rtx_makestrvalwithstr (r->rtx, str);
+	tmp = numeric? qse_awk_rtx_makenstrvalwithstr(r->rtx, str):
+	               qse_awk_rtx_makestrvalwithstr(r->rtx, str);
 	if (tmp == QSE_NULL)
 	{
 		r->awk->retrieveError (r);
@@ -809,16 +944,68 @@ int Awk::Value::setIndexedStr (Run* r, const Index& idx, const char_t* str, bool
 	}
 
 	qse_awk_rtx_refupval (r->rtx, tmp);
-	int n = setIndexedVal (r, idx, tmp);
+	int n = this->setIndexedVal(r, idx, tmp);
 	qse_awk_rtx_refdownval (r->rtx, tmp);
 
 	return n;
 }
 
+int Awk::Value::setIndexedMbs (const Index& idx, const qse_mchar_t* str, size_t len)
+{
+	if (run == QSE_NULL) return -1;
+	return this->setIndexedMbs(run, idx, str, len);
+}
+
+int Awk::Value::setIndexedMbs (Run* r, const Index& idx, const qse_mchar_t* str, size_t len)
+{
+	val_t* tmp;
+
+	qse_mcstr_t cstr;
+	cstr.ptr = (qse_mchar_t*)str;
+	cstr.len = len;
+
+	tmp = qse_awk_rtx_makembsvalwithmcstr(r->rtx, &cstr);
+	if (!tmp) 
+	{
+		r->awk->retrieveError (r);
+		return -1;
+	}
+
+	qse_awk_rtx_refupval (r->rtx, tmp);
+	int n = this->setIndexedVal(r, idx, tmp);
+	qse_awk_rtx_refdownval (r->rtx, tmp);
+
+	return n;
+}
+
+int Awk::Value::setIndexedMbs (const Index& idx, const qse_mchar_t* str)
+{
+	if (run == QSE_NULL) return -1;
+	return this->setIndexedMbs(run, idx, str);
+}
+
+int Awk::Value::setIndexedMbs (Run* r, const Index& idx, const qse_mchar_t* str)
+{
+	val_t* tmp;
+	tmp = qse_awk_rtx_makembsval(r->rtx, str, qse_mbslen(str));
+	if (tmp == QSE_NULL)
+	{
+		r->awk->retrieveError (r);
+		return -1;
+	}
+
+	qse_awk_rtx_refupval (r->rtx, tmp);
+	int n = this->setIndexedVal(r, idx, tmp);
+	qse_awk_rtx_refdownval (r->rtx, tmp);
+
+	return n;
+}
+
+
 bool Awk::Value::isIndexed () const
 {
 	QSE_ASSERT (val != QSE_NULL);
-	return QSE_AWK_RTX_GETVALTYPE (this->run->rtx, val) == QSE_AWK_VAL_MAP;
+	return QSE_AWK_RTX_GETVALTYPE(this->run->rtx, val) == QSE_AWK_VAL_MAP;
 }
 
 int Awk::Value::getIndexed (const Index& idx, Value* v) const
@@ -826,15 +1013,14 @@ int Awk::Value::getIndexed (const Index& idx, Value* v) const
 	QSE_ASSERT (val != QSE_NULL);
 
 	// not a map. v is just nil. not an error 
-	if (QSE_AWK_RTX_GETVALTYPE (this->run->rtx, val) != QSE_AWK_VAL_MAP) 
+	if (QSE_AWK_RTX_GETVALTYPE(this->run->rtx, val) != QSE_AWK_VAL_MAP) 
 	{
 		v->clear ();
 		return 0;
 	}
 
 	// get the value from the map.
-	val_t* fv = qse_awk_rtx_getmapvalfld (
-		this->run->rtx, val, (char_t*)idx.ptr, idx.len);
+	val_t* fv = qse_awk_rtx_getmapvalfld(this->run->rtx, val, (char_t*)idx.ptr, idx.len);
 
 	// the key is not found. it is not an error. v is just nil 
 	if (fv == QSE_NULL)
@@ -858,7 +1044,7 @@ Awk::Value::IndexIterator Awk::Value::getFirstIndex (Index* idx) const
 	Awk::Value::IndexIterator itr;
 	qse_awk_val_map_itr_t* iptr;
 
-	iptr = qse_awk_rtx_getfirstmapvalitr (this->run->rtx, this->val, &itr);
+	iptr = qse_awk_rtx_getfirstmapvalitr(this->run->rtx, this->val, &itr);
 	if (iptr == QSE_NULL) return IndexIterator::END; // no more key
 
 	idx->set (QSE_AWK_VAL_MAP_ITR_KEY(iptr));
@@ -878,7 +1064,7 @@ Awk::Value::IndexIterator Awk::Value::getNextIndex (
 	Awk::Value::IndexIterator itr (curitr);
 	qse_awk_val_map_itr_t* iptr;
 
-	iptr = qse_awk_rtx_getnextmapvalitr (this->run->rtx, this->val, &itr);
+	iptr = qse_awk_rtx_getnextmapvalitr(this->run->rtx, this->val, &itr);
 	if (iptr == QSE_NULL) return IndexIterator::END; // no more key
 
 	idx->set (QSE_AWK_VAL_MAP_ITR_KEY(iptr));
@@ -1507,7 +1693,7 @@ int Awk::dispatch_function (Run* run, const fnc_info_t* fi)
 		try 
 		{ 
 			//args = (Value*)::operator new (QSE_SIZEOF(Value) * nargs, this->getMmgr()); 
-			args = (Value*)this->getMmgr()->allocate (QSE_SIZEOF(Value) * nargs);
+			args = (Value*)this->getMmgr()->allocate(QSE_SIZEOF(Value) * nargs);
 		}
 		catch (...) { args = QSE_NULL; }
 		if (args == QSE_NULL) 
@@ -1562,7 +1748,7 @@ int Awk::dispatch_function (Run* run, const fnc_info_t* fi)
 				case qse_awk_val_ref_t::QSE_AWK_VAL_REF_GBL:
 				{
 					qse_size_t idx = (qse_size_t)ref->adr;
-					qse_awk_val_t* val = (qse_awk_val_t*)RTX_STACK_GBL (run->rtx, idx);
+					qse_awk_val_t* val = (qse_awk_val_t*)RTX_STACK_GBL(run->rtx, idx);
 					xx = args[i].setVal (run, val);
 					break;
 				}
@@ -1600,10 +1786,10 @@ int Awk::dispatch_function (Run* run, const fnc_info_t* fi)
 			QSE_ASSERTX (args[i].run == run, 
 				"Do NOT change the run field from function handler");
 
-			val_t* v = qse_awk_rtx_getarg (run->rtx, i);
-			if (QSE_AWK_RTX_GETVALTYPE (run->rtx, v) == QSE_AWK_VAL_REF)
+			val_t* v = qse_awk_rtx_getarg(run->rtx, i);
+			if (QSE_AWK_RTX_GETVALTYPE(run->rtx, v) == QSE_AWK_VAL_REF)
 			{
-				if (qse_awk_rtx_setrefval (run->rtx, (qse_awk_val_ref_t*)v, args[i].toVal()) <= -1)
+				if (qse_awk_rtx_setrefval(run->rtx, (qse_awk_val_ref_t*)v, args[i].toVal()) <= -1)
 				{
 					n = -1;
 					break;
@@ -1647,8 +1833,7 @@ int Awk::xstrs_t::add (awk_t* awk, const char_t* arg, size_t len)
 		size_t capa = this->capa;
 
 		capa += 64;
-		ptr = (qse_cstr_t*) qse_awk_reallocmem (
-			awk, this->ptr, QSE_SIZEOF(qse_cstr_t)*(capa+1));
+		ptr = (qse_cstr_t*)qse_awk_reallocmem(awk, this->ptr, QSE_SIZEOF(qse_cstr_t)*(capa+1));
 		if (ptr == QSE_NULL) return -1;
 
 		this->ptr = ptr;
@@ -1656,7 +1841,7 @@ int Awk::xstrs_t::add (awk_t* awk, const char_t* arg, size_t len)
 	}
 
 	this->ptr[this->len].len = len;
-	this->ptr[this->len].ptr = qse_awk_strxdup (awk, arg, len);
+	this->ptr[this->len].ptr = qse_awk_strxdup(awk, arg, len);
 	if (this->ptr[this->len].ptr == QSE_NULL) return -1;
 
 	this->len++;
