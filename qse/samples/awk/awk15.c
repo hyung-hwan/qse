@@ -27,6 +27,8 @@
 #include <qse/awk/awk.h>
 #include <qse/awk/stdawk.h>
 #include <qse/cmn/mem.h>
+#include <qse/cmn/path.h>
+#include <qse/cmn/str.h>
 #include <qse/si/sio.h>
 
 static const qse_char_t* src = QSE_T(
@@ -40,7 +42,7 @@ static const qse_char_t* src = QSE_T(
 	"}"
 );
 
-int main ()
+int main (int argc, char* argv[])
 {
 	qse_awk_t* awk = QSE_NULL;
 	qse_awk_rtx_t* rtx = QSE_NULL;
@@ -49,11 +51,23 @@ int main ()
 	qse_awk_parsestd_t psin[2];
 	qse_awk_parsestd_t psout;
 
-	int ret;
+	int ret, omode = 0;
 
 	qse_open_stdsios ();
 
-	awk = qse_awk_openstd (0, QSE_NULL);
+	if (argc >= 2)
+	{
+		if (argc == 2 && qse_mbscmp(argv[1], "-m") == 0) omode = 1;
+		else if (argc == 2 && qse_mbscmp(argv[1], "-w") == 0) omode = 2;
+		else
+		{
+			qse_fprintf (QSE_STDERR, QSE_T("USAGE: %hs [-m | -w]\n"), qse_basenameasmbs(argv[0]));
+			ret = -1; goto oops;
+		}
+	}
+
+
+	awk = qse_awk_openstd(0, QSE_NULL);
 	if (awk == QSE_NULL)  
 	{
 		qse_fprintf (QSE_STDERR, QSE_T("ERROR: cannot open awk\n"));
@@ -65,44 +79,68 @@ int main ()
 	psin[0].u.str.len = qse_strlen(src);
 	psin[1].type = QSE_AWK_PARSESTD_NULL;
 
-	psout.type = QSE_AWK_PARSESTD_STR;
+	switch (omode)
+	{
+		case 1:
+			psout.type = QSE_AWK_PARSESTD_MBS;
+			break;
+		case 2:
+			psout.type = QSE_AWK_PARSESTD_WCS;
+			break;
+
+		default:
+			psout.type = QSE_AWK_PARSESTD_STR;
+			break;
 	/* ps.out.u.str.ptr and ps.out.u.str.len are set when qse_awk_parsestd() 
 	 * returns success */
+	}
 
-	ret = qse_awk_parsestd (awk, psin, &psout);
+	ret = qse_awk_parsestd(awk, psin, &psout);
 	if (ret <= -1)
 	{
-		qse_fprintf (QSE_STDERR, QSE_T("ERROR: %s\n"), 
-			qse_awk_geterrmsg(awk));
+		qse_fprintf (QSE_STDERR, QSE_T("ERROR: %s\n"), qse_awk_geterrmsg(awk));
 		ret = -1; goto oops;
 	}
 
-	qse_printf (QSE_T("DEPARSED SOURCE:\n%s\n"), psout.u.str.ptr);
+	qse_printf (QSE_T("DEPARSED SOURCE:\n"));
+	switch (omode)
+	{
+		case 1:
+			qse_printf (QSE_T("%hs\n"), psout.u.mbs.ptr);
+			qse_awk_freemem (awk, psout.u.mbs.ptr);
+			break;
+
+		case 2:
+			qse_printf (QSE_T("%ls\n"), psout.u.wcs.ptr);
+			qse_awk_freemem (awk, psout.u.wcs.ptr);
+			break;
+
+		default:
+			qse_printf (QSE_T("%js\n"), psout.u.str.ptr);
+			qse_awk_freemem (awk, psout.u.str.ptr);
+			break;
+	}
 	qse_printf (QSE_T("=================================\n"));
 	qse_fflush (QSE_STDOUT);
-
-	QSE_MMGR_FREE (qse_awk_getmmgr(awk), psout.u.str.ptr);
 
 	rtx = qse_awk_rtx_openstd (
 		awk, 
 		0,
-		QSE_T("awk02"),
+		QSE_T("awk15"),
 		QSE_NULL,  /* stdin */
 		QSE_NULL,  /* stdout */
 		QSE_NULL   /* default cmgr */
 	);
 	if (rtx == QSE_NULL) 
 	{
-		qse_fprintf (QSE_STDERR, QSE_T("ERROR: %s\n"), 
-			qse_awk_geterrmsg(awk));
+		qse_fprintf (QSE_STDERR, QSE_T("ERROR: %s\n"), qse_awk_geterrmsg(awk));
 		ret = -1; goto oops;
 	}
 	
-	retv = qse_awk_rtx_loop (rtx);
+	retv = qse_awk_rtx_loop(rtx);
 	if (retv == QSE_NULL)
 	{
-		qse_fprintf (QSE_STDERR, QSE_T("ERROR: %s\n"), 
-			qse_awk_rtx_geterrmsg(rtx));
+		qse_fprintf (QSE_STDERR, QSE_T("ERROR: %s\n"), qse_awk_rtx_geterrmsg(rtx));
 		ret = -1; goto oops;
 	}
 
