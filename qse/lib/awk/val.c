@@ -42,7 +42,7 @@ qse_awk_val_t* qse_awk_val_nil = (qse_awk_val_t*)&awk_nil;
 qse_awk_val_t* qse_awk_val_zls = (qse_awk_val_t*)&awk_zls; 
 qse_awk_val_t* qse_awk_val_zlm = (qse_awk_val_t*)&awk_zlm;
 
-qse_awk_val_t* qse_getawknilval (void)
+qse_awk_val_t* qse_get_awk_nil_val (void)
 {
 	return (qse_awk_val_t*)&awk_nil;
 }
