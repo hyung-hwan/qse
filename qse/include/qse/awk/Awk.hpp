@@ -1046,10 +1046,20 @@ public:
 	/// The call() function invokes a function named \a name.
 	///
 	int call (
-		const char_t* name,  ///< function name
-		Value*        ret,   ///< return value holder
-		const Value*  args,  ///< argument array
-		size_t        nargs  ///< number of arguments
+		const qse_mchar_t* name,  ///< function name
+		Value*             ret,   ///< return value holder
+		const Value*       args,  ///< argument array
+		size_t             nargs  ///< number of arguments
+	);
+
+	///
+	/// The call() function invokes a function named \a name.
+	///
+	int call (
+		const qse_wchar_t* name,  ///< function name
+		Value*             ret,   ///< return value holder
+		const Value*       args,  ///< argument array
+		size_t             nargs  ///< number of arguments
 	);
 
 	///

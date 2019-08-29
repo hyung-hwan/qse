@@ -3341,10 +3341,10 @@ qse_mchar_t* qse_awk_rtx_wcsntombsdup (
 
 
 /**
- * The qse_getawknilval() function returns the pointer to the predefined
+ * The qse_get_awk_nil_val() function returns the pointer to the predefined
  * nil value. you can call this without creating a runtime context. 
  */
-QSE_EXPORT qse_awk_val_t* qse_getawknilval (
+QSE_EXPORT qse_awk_val_t* qse_get_awk_nil_val (
 	void
 );
 

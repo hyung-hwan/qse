@@ -305,19 +305,19 @@ void Awk::Value::operator delete[] (void* ptr)
 }
 #endif
 
-Awk::Value::Value (): run (QSE_NULL), val (qse_getawknilval()) 
+Awk::Value::Value (): run (QSE_NULL), val (qse_get_awk_nil_val()) 
 {
 	cached.str.ptr = QSE_NULL;
 	cached.str.len = 0;
 }
 
-Awk::Value::Value (Run& run): run (&run), val (qse_getawknilval()) 
+Awk::Value::Value (Run& run): run (&run), val (qse_get_awk_nil_val()) 
 {
 	cached.str.ptr = QSE_NULL;
 	cached.str.len = 0;
 }
 
-Awk::Value::Value (Run* run): run (run), val (qse_getawknilval()) 
+Awk::Value::Value (Run* run): run (run), val (qse_get_awk_nil_val()) 
 {
 	cached.str.ptr = QSE_NULL;
 	cached.str.len = 0;
@@ -380,7 +380,7 @@ void Awk::Value::clear ()
 		}
 
 		run = QSE_NULL;
-		val = qse_getawknilval();
+		val = qse_get_awk_nil_val();
 	}
 }
 
@@ -1124,13 +1124,13 @@ void Awk::retrieveError (Run* run)
 
 static void fini_xtn (qse_awk_t* awk)
 {
-	xtn_t* xtn = (xtn_t*)qse_awk_getxtn(awk);
+	xtn_t* xtn = GET_XTN(awk);
 	xtn->awk->uponClosing ();
 }
 
 static void clear_xtn (qse_awk_t* awk)
 {
-	xtn_t* xtn = (xtn_t*)qse_awk_getxtn(awk);
+	xtn_t* xtn = GET_XTN(awk);
 	xtn->awk->uponClearing ();
 }
 
@@ -1311,7 +1311,7 @@ int Awk::loop (Value* ret)
 	return 0;
 }
 
-int Awk::call (const char_t* name, Value* ret, const Value* args, size_t nargs)
+int Awk::call (const qse_mchar_t* name, Value* ret, const Value* args, size_t nargs)
 {
 	QSE_ASSERT (this->awk != QSE_NULL);
 	QSE_ASSERT (this->runctx.rtx != QSE_NULL);
@@ -1336,7 +1336,48 @@ int Awk::call (const char_t* name, Value* ret, const Value* args, size_t nargs)
 		for (size_t i = 0; i < nargs; i++) ptr[i] = (val_t*)args[i];
 	}
 
-	val_t* rv = qse_awk_rtx_call(this->runctx.rtx, name, ptr, nargs);
+	val_t* rv = qse_awk_rtx_callwithmbs(this->runctx.rtx, name, ptr, nargs);
+
+	if (ptr != QSE_NULL && ptr != buf) qse_awk_freemem (awk, ptr);
+
+	if (rv == QSE_NULL) 
+	{
+		this->retrieveError (&this->runctx);
+		return -1;
+	}
+
+	ret->setVal (&this->runctx, rv);
+
+	qse_awk_rtx_refdownval (this->runctx.rtx, rv);
+	return 0;
+}
+
+int Awk::call (const qse_wchar_t* name, Value* ret, const Value* args, size_t nargs)
+{
+	QSE_ASSERT (this->awk != QSE_NULL);
+	QSE_ASSERT (this->runctx.rtx != QSE_NULL);
+
+	val_t* buf[16];
+	val_t** ptr = QSE_NULL;
+
+	if (args != QSE_NULL)
+	{
+		if (nargs <= QSE_COUNTOF(buf)) ptr = buf;
+		else
+		{
+			ptr = (val_t**)qse_awk_allocmem(awk, QSE_SIZEOF(val_t*) * nargs);
+			if (ptr == QSE_NULL)
+			{
+				this->runctx.setError (QSE_AWK_ENOMEM);
+				this->retrieveError (&this->runctx);
+				return -1;
+			}
+		}
+
+		for (size_t i = 0; i < nargs; i++) ptr[i] = (val_t*)args[i];
+	}
+
+	val_t* rv = qse_awk_rtx_callwithwcs(this->runctx.rtx, name, ptr, nargs);
 
 	if (ptr != QSE_NULL && ptr != buf) qse_awk_freemem (awk, ptr);
 
