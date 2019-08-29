@@ -46,7 +46,10 @@ enum qse_awk_parsestd_type_t
 {
 	QSE_AWK_PARSESTD_NULL  = 0, /**< pseudo-value to indicate no script */
 	QSE_AWK_PARSESTD_FILE  = 1, /**< file */
-	QSE_AWK_PARSESTD_STR   = 2  /**< length-bounded string */
+	QSE_AWK_PARSESTD_STR   = 2,  /**< length-bounded string */
+	QSE_AWK_PARSESTD_MBS   = 3,
+	QSE_AWK_PARSESTD_WCS   = 4
+	
 };
 typedef enum qse_awk_parsestd_type_t qse_awk_parsestd_type_t;
 
@@ -86,6 +89,8 @@ struct qse_awk_parsestd_t
 		 * avoid memory leaks. 
 		 */
 		qse_cstr_t str;
+		qse_mcstr_t mbs;
+		qse_wcstr_t wcs;
 	} u;
 };
 
@@ -146,19 +151,40 @@ QSE_EXPORT int qse_awk_parsestd (
 );
 
 /**
- * The qse_awk_rtx_openstd() function creates a standard runtime context.
+ * The qse_awk_rtx_openstdwithmbs() function creates a standard runtime context.
  * The caller should keep the contents of \a icf and \a ocf valid throughout
  * the lifetime of the runtime context created. The \a cmgr is set to the
  * streams created with \a icf and \a ocf if it is not #QSE_NULL.
  */
-QSE_EXPORT qse_awk_rtx_t* qse_awk_rtx_openstd (
-	qse_awk_t*        awk,
-	qse_size_t        xtnsize,
-	const qse_char_t* id,
-	const qse_char_t* icf[],
-	const qse_char_t* ocf[],
-	qse_cmgr_t*       cmgr
+QSE_EXPORT qse_awk_rtx_t* qse_awk_rtx_openstdwithmbs (
+	qse_awk_t*         awk,
+	qse_size_t         xtnsize,
+	const qse_mchar_t* id,
+	const qse_mchar_t* icf[],
+	const qse_mchar_t* ocf[],
+	qse_cmgr_t*        cmgr
 );
+
+/**
+ * The qse_awk_rtx_openstdwithwcs() function creates a standard runtime context.
+ * The caller should keep the contents of \a icf and \a ocf valid throughout
+ * the lifetime of the runtime context created. The \a cmgr is set to the
+ * streams created with \a icf and \a ocf if it is not #QSE_NULL.
+ */
+QSE_EXPORT qse_awk_rtx_t* qse_awk_rtx_openstdwithwcs (
+	qse_awk_t*         awk,
+	qse_size_t         xtnsize,
+	const qse_wchar_t* id,
+	const qse_wchar_t* icf[],
+	const qse_wchar_t* ocf[],
+	qse_cmgr_t*        cmgr
+);
+
+#if defined(QSE_CHAR_IS_MCHAR)
+#	define qse_awk_rtx_openstd qse_awk_rtx_openstdwithmbs
+#else
+#	define qse_awk_rtx_openstd qse_awk_rtx_openstdwithwcs 
+#endif
 
 /**
  * The qse_awk_rtx_getiocmgrstd() function gets the current character 
