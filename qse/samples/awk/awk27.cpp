@@ -82,7 +82,8 @@ static int run_awk (QSE::StdAwk& awk)
 	// output the result in various types
 	qse_printf (QSE_T("RESULT: (int) [%lld]\n"), (long long)ret.toInt());
 	qse_printf (QSE_T("        (flt) [%Lf]\n"), (long double)ret.toFlt());
-	qse_printf (QSE_T("        (str) [%s]\n"), ret.toStr(QSE_NULL));
+	qse_printf (QSE_T("        (str) [%js]\n"), ret.toStr(QSE_NULL));
+	qse_printf (QSE_T("        (mbs) [%hs]\n"), ret.toMbs(QSE_NULL));
 
 	// ret = sine (ret);
 	arg[0] = ret;
@@ -91,7 +92,8 @@ static int run_awk (QSE::StdAwk& awk)
 	// output the result in various types
 	qse_printf (QSE_T("RESULT: (int) [%lld]\n"), (long long)ret.toInt());
 	qse_printf (QSE_T("        (flt) [%Lf]\n"), (long double)ret.toFlt());
-	qse_printf (QSE_T("        (str) [%s]\n"), ret.toStr(QSE_NULL));
+	qse_printf (QSE_T("        (str) [%js]\n"), ret.toStr(QSE_NULL));
+	qse_printf (QSE_T("        (mbs) [%hs]\n"), ret.toMbs(QSE_NULL));
 
 	return 0;
 }
