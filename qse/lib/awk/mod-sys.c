@@ -661,7 +661,7 @@ static int fnc_dup (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 		#if defined(HAVE_DUP3)
 			fd = dup3(sys_node->ctx.u.fd, sys_node2->ctx.u.fd, oflags);
 		#else
-			fd = dup2(sys_node->ctx.u.fd);
+			fd = dup2(sys_node->ctx.u.fd, sys_node2->ctx.u.fd);
 		#endif
 			if (fd >= 0)
 			{
@@ -671,8 +671,12 @@ static int fnc_dup (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 				if (oflags)
 				{
 					int nflags = 0;
+				#if defined(O_CLOEXEC) && defined(FD_CLOEXEC)
 					if (oflags & O_CLOEXEC) nflags |= FD_CLOEXEC;
+				#endif
+				#if defined(O_NONBLOCK) && defined(FD_NONBLOCK)
 					/*if (oflags & O_NONBLOCK) nflags |= FD_NONBLOCK;  dup3() doesn't seem to support NONBLOCK. */
+				#endif
 					if (nflags) fcntl (fd, F_SETFD, nflags);
 				
 				}
