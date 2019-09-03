@@ -1656,7 +1656,7 @@ static int open_rio_console (qse_awk_rtx_t* rtx, qse_awk_rio_arg_t* riod)
 			 * 'BEGIN { ARGV[1]="file3"; } 
 			 *        { print $0; }' file1 file2
 			 */
-			argv = qse_awk_rtx_getgbl (rtx, xtn->gbl_argv);
+			argv = qse_awk_rtx_getgbl(rtx, xtn->gbl_argv);
 			QSE_ASSERT (argv != QSE_NULL);
 			QSE_ASSERT (QSE_AWK_RTX_GETVALTYPE (rtx, argv) == QSE_AWK_VAL_MAP);
 
@@ -1961,7 +1961,7 @@ static int build_argcv (
 	}
 	else argc = 1;
 
-	v_argc = qse_awk_rtx_makeintval (rtx, (qse_awk_int_t)argc);
+	v_argc = qse_awk_rtx_makeintval(rtx, (qse_awk_int_t)argc);
 	if (v_argc == QSE_NULL)
 	{
 		qse_awk_rtx_refdownval (rtx, v_argv);
@@ -1970,14 +1970,14 @@ static int build_argcv (
 
 	qse_awk_rtx_refupval (rtx, v_argc);
 
-	if (qse_awk_rtx_setgbl (rtx, argc_id, v_argc) <= -1)
+	if (qse_awk_rtx_setgbl(rtx, argc_id, v_argc) <= -1)
 	{
 		qse_awk_rtx_refdownval (rtx, v_argc);
 		qse_awk_rtx_refdownval (rtx, v_argv);
 		return -1;
 	}
 
-	if (qse_awk_rtx_setgbl (rtx, argv_id, v_argv) <= -1)
+	if (qse_awk_rtx_setgbl(rtx, argv_id, v_argv) <= -1)
 	{
 		qse_awk_rtx_refdownval (rtx, v_argc);
 		qse_awk_rtx_refdownval (rtx, v_argv);
@@ -1990,8 +1990,7 @@ static int build_argcv (
 	return 0;
 }
  
-static int __build_environ (
-	qse_awk_rtx_t* rtx, int gbl_id, qse_env_char_t* envarr[])
+static int __build_environ (qse_awk_rtx_t* rtx, int gbl_id, qse_env_char_t* envarr[])
 {
 	qse_awk_val_t* v_env;
 	qse_awk_val_t* v_tmp;

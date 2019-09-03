@@ -277,7 +277,7 @@ htb_t* qse_htb_open (
 	htb = (htb_t*) QSE_MMGR_ALLOC (mmgr, SIZEOF(htb_t) + xtnsize);
 	if (htb == QSE_NULL) return QSE_NULL;
 
-	if (qse_htb_init (htb, mmgr, capa, factor, kscale, vscale) <= -1)
+	if (qse_htb_init(htb, mmgr, capa, factor, kscale, vscale) <= -1)
 	{
 		QSE_MMGR_FREE (mmgr, htb);
 		return QSE_NULL;
@@ -313,7 +313,7 @@ int qse_htb_init (
 	QSE_MEMSET (htb, 0, SIZEOF(*htb));
 	htb->mmgr = mmgr;
 
-	htb->bucket = QSE_MMGR_ALLOC (mmgr, capa*SIZEOF(pair_t*));
+	htb->bucket = QSE_MMGR_ALLOC(mmgr, capa * SIZEOF(pair_t*));
 	if (htb->bucket == QSE_NULL) return -1;
 
 	/*for (i = 0; i < capa; i++) htb->bucket[i] = QSE_NULL;*/

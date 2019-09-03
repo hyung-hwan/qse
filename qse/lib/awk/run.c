@@ -1218,8 +1218,7 @@ static int prepare_globals (qse_awk_rtx_t* rtx)
 	}	
 
 	/* override NF to zero */
-	if (qse_awk_rtx_setgbl (
-		rtx, QSE_AWK_GBL_NF, QSE_AWK_VAL_ZERO) <= -1) goto oops;
+	if (qse_awk_rtx_setgbl(rtx, QSE_AWK_GBL_NF, QSE_AWK_VAL_ZERO) <= -1) goto oops;
 
 	/* return success */
 	return 0;
@@ -1277,7 +1276,7 @@ static int defaultify_globals (qse_awk_rtx_t* rtx)
 
 		QSE_ASSERT (RTX_STACK_GBL(rtx,gtab[i].idx) == qse_awk_val_nil);
 
-		if (qse_awk_rtx_setgbl (rtx, gtab[i].idx, tmp) == -1)
+		if (qse_awk_rtx_setgbl(rtx, gtab[i].idx, tmp) == -1)
 		{
 			for (j = 0; j < i; j++)
 			{

@@ -56,12 +56,12 @@ void* Mmgr::callocate (qse_size_t n, bool raise_exception) /*QSE_CPP_THREXCEPT1(
 
 #if 0
 #if defined(__GNUC__)
-static StdMmgr __attribute__((init_priority(101))) std_dfl_mmgr; <- this solved the problem
+static StdMmgr __attribute__((init_priority(101))) std_dfl_mmgr; //<- this solved the problem
 #else
-static StdMmgr std_dfl_mmgr; <-- has an issue for undefined initialization order
+static StdMmgr std_dfl_mmgr; //<-- has an issue for undefined initialization order
 #endif
 Mmgr* Mmgr::dfl_mmgr = &std_dfl_mmgr; 
-//Mmgr* Mmgr::dfl_mmgr = StdMmgr::getInstance();  <--- has an issue as well
+//Mmgr* Mmgr::dfl_mmgr = StdMmgr::getInstance();  //<--- has an issue as well
 Mmgr* Mmgr::getDFL () QSE_CPP_NOEXCEPT
 {
 	return Mmgr::dfl_mmgr;
