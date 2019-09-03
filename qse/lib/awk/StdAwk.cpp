@@ -188,7 +188,7 @@ void StdAwk::uponClosing ()
 
 StdAwk::Run* StdAwk::parse (Source& in, Source& out)
 {
-	Run* run = Awk::parse (in, out);
+	Run* run = Awk::parse(in, out);
 
 	if (this->cmgrtab_inited) 
 	{
@@ -203,19 +203,16 @@ StdAwk::Run* StdAwk::parse (Source& in, Source& out)
 		// but if you call parse() multiple times while
 		// setting and unsetting QSE_AWK_RIO in-between,
 		// cmgrtab can still be initialized when QSE_AWK_RIO is not set.
-		if (qse_htb_init (
-			&this->cmgrtab, this->getMmgr(), 256, 70,
-			QSE_SIZEOF(qse_char_t), 1) <= -1)
+		if (qse_htb_init(&this->cmgrtab, this->getMmgr(), 256, 70, QSE_SIZEOF(qse_char_t), 1) <= -1)
 		{
 			this->setError (QSE_AWK_ENOMEM);
 			return QSE_NULL;
 		}
-		qse_htb_setstyle (&this->cmgrtab,
-			qse_gethtbstyle(QSE_HTB_STYLE_INLINE_KEY_COPIER));
+		qse_htb_setstyle (&this->cmgrtab, qse_gethtbstyle(QSE_HTB_STYLE_INLINE_KEY_COPIER));
 		this->cmgrtab_inited = true;
 	}
 
-	if (run && make_additional_globals (run) <= -1) return QSE_NULL;
+	if (run && make_additional_globals(run) <= -1) return QSE_NULL;
 	
 	return run;
 }

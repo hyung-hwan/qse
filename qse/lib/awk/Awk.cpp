@@ -1391,9 +1391,6 @@ int Awk::open ()
 #endif
 
 	// push the call back after everything else is ok.
-	// the uponDemise() is called only if Awk::open() is fully successful.
-	// it won't be called when qse_awk_close() is called for functionMap
-	// opening failure above.
 	qse_awk_pushecb (this->awk, &xtn->ecb);
 	return 0;
 }
@@ -1457,14 +1454,14 @@ Awk::Run* Awk::parse (Source& in, Source& out)
 	sio.in = readSource;
 	sio.out = (source_writer == QSE_NULL)? QSE_NULL: writeSource;
 
-	int n = qse_awk_parse (awk, &sio);
+	int n = qse_awk_parse(awk, &sio);
 	if (n <= -1) 
 	{
 		this->retrieveError ();
 		return QSE_NULL;
 	}
 
-	if (init_runctx() <= -1) return QSE_NULL;
+	if (this->init_runctx() <= -1) return QSE_NULL;
 	return &this->runctx;
 }
 
@@ -1602,6 +1599,7 @@ int Awk::init_runctx ()
 		return -1;
 	}
 
+	rtx->_instsize += QSE_SIZEOF(rxtn_t);
 	runctx.rtx = rtx;
 
 	rxtn_t* rxtn = GET_RXTN(rtx);
