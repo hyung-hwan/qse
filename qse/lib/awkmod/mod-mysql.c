@@ -30,6 +30,10 @@
 #include <qse/cmn/main.h>
 #include <qse/cmn/rbt.h>
 
+#if !defined(MYSQL_OPT_RECONNECT)
+#	define DUMMY_OPT_RECONNECT 31231 /* randomly chosen */
+#endif
+
 #define __IMAP_NODE_T_DATA  MYSQL* mysql; int connect_ever_attempted;
 #define __IMAP_LIST_T_DATA  int errnum; qse_char_t errmsg[256];
 #define __IMAP_LIST_T sql_list_t
@@ -299,6 +303,7 @@ static int fnc_get_option (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 				}
 				break;
 
+		#if defined(MYSQL_OPT_RECONNECT)
 			case MYSQL_OPT_RECONNECT:
 				/* bool * */
 				if (mysql_get_option(sql_node->mysql, id, &v.b) != 0)
@@ -317,6 +322,16 @@ static int fnc_get_option (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 					goto oops;
 				}
 				break;
+		#else
+				/* the system without MYSQL_OPT_RECONNECT available. return 1 all the time */
+				if (qse_awk_rtx_setrefval(rtx, (qse_awk_val_ref_t*)qse_awk_rtx_getarg(rtx, 2), qse_awk_rtx_makeintval(rtx, 1)) <= -1) 
+				{
+					qse_awk_rtx_refupval(rtx, retv);
+					qse_awk_rtx_refdownval(rtx, retv);
+					goto oops;
+				}
+				break;
+		#endif
 
 			default:
 				set_error_on_sql_list (rtx, sql_list, QSE_T("unsupported option id - %zd"), (qse_size_t)id);
@@ -379,6 +394,7 @@ static int fnc_set_option (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 				vptr = &v.ui;
 				break;
 
+		#if defined(MYSQL_OPT_RECONNECT)
 			case MYSQL_OPT_RECONNECT:
 				/* bool * */
 				if (qse_awk_rtx_valtoint(rtx, qse_awk_rtx_getarg(rtx, 2), &tv) <= -1)
@@ -390,6 +406,11 @@ static int fnc_set_option (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 				v.b = tv;
 				vptr = &v.b;
 				break;
+		#else
+			case DUMMY_OPT_RECONNECT:
+				ret = 0;
+				goto done;		
+		#endif
 
 			default:
 				set_error_on_sql_list (rtx, sql_list, QSE_T("unsupported option id - %zd"), (qse_size_t)id);
@@ -1011,7 +1032,11 @@ static inttab_t inttab[] =
 	/* keep this table sorted for binary search in query(). */
 	{ QSE_T("OPT_CONNECT_TIMEOUT"), { MYSQL_OPT_CONNECT_TIMEOUT } },
 	{ QSE_T("OPT_READ_TIMEOUT"),    { MYSQL_OPT_READ_TIMEOUT    } },
+#if defined(MYSQL_OPT_RECONNECT)
 	{ QSE_T("OPT_RECONNECT"),       { MYSQL_OPT_RECONNECT       } },
+#else
+	{ QSE_T("OPT_RECONNECT"),       { DUMMY_OPT_RECONNECT       } },
+#endif
 	{ QSE_T("OPT_WRITE_TIMEOUT"),   { MYSQL_OPT_WRITE_TIMEOUT   } }
 };
 
