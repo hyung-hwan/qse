@@ -1418,6 +1418,31 @@ QSE_EXPORT int qse_wcszcasecmp (
 #	define qse_strzcasecmp          qse_wcszcasecmp
 #endif
 
+/**
+ * The wcsmbscmp() function compares a wide-character string
+ * wit a byte string without considering charcter encoding.
+ * It compares each wide-character in s1 with each byte in s2. 
+ */
+QSE_EXPORT int qse_wcsmbscmp (
+	const qse_wchar_t* s1,
+	const qse_mchar_t* s2
+);
+
+#define qse_mbswcscmp(s1, s2) (-qse_wcsmbscmp(s2, s1))
+
+QSE_EXPORT int qse_wcsxmbscmp (
+	const qse_wchar_t* s1,
+	qse_size_t         ln,
+	const qse_mchar_t* s2
+);
+
+QSE_EXPORT int qse_mbsxwcscmp (
+	const qse_mchar_t* s1,
+	qse_size_t         ln,
+	const qse_wchar_t* s2
+);
+
+
 QSE_EXPORT qse_mchar_t* qse_mbsdup (
 	const qse_mchar_t* str,
 	qse_mmgr_t*        mmgr

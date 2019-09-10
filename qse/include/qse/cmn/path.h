@@ -129,10 +129,10 @@ QSE_EXPORT int qse_ismbsdrivecurpath (
 );
 
 /**
- * The qse_basenameasmbs() function returns the pointer to the file name 
+ * The qse_mbsbasename() function returns the pointer to the file name 
  * segment in a multibyte path name.
  */
-QSE_EXPORT const qse_mchar_t* qse_basenameasmbs (
+QSE_EXPORT const qse_mchar_t* qse_mbsbasename (
 	const qse_mchar_t* path
 );
 
@@ -237,10 +237,10 @@ QSE_EXPORT int qse_iswcsdrivecurpath (
 );
 
 /**
- * The qse_basenameaswcs() function returns the pointer to the file name 
+ * The qse_wcsbasename() function returns the pointer to the file name 
  * segment in a wide-character path name.
  */
-QSE_EXPORT const qse_wchar_t* qse_basenameaswcs (
+QSE_EXPORT const qse_wchar_t* qse_wcsbasename (
 	const qse_wchar_t* path
 );
 
@@ -313,7 +313,7 @@ QSE_EXPORT qse_wchar_t* qse_mergewcspathdup (
 #	define qse_isdrivepath(p)            qse_ismbsdrivepath(p)
 #	define qse_isdriveabspath(p)         qse_ismbsdriveabspath(p)
 #	define qse_isdrivecurpath(p)         qse_ismbsdrivecurpath(p)
-#	define qse_basename(path)            qse_basenameasmbs(path)
+#	define qse_basename(path)            qse_mbsbasename(path)
 #	define qse_pathcore(p)               qse_mbspathcore(p)
 #	define qse_canonpath(p,c,f)          qse_canonmbspath(p,c,f)
 #	define qse_mergepathdup(d,f,m)       qse_mergembspathdup(d,f,m)
@@ -323,7 +323,7 @@ QSE_EXPORT qse_wchar_t* qse_mergewcspathdup (
 #	define qse_isdrivepath(p)            qse_iswcsdrivepath(p)
 #	define qse_isdriveabspath(p)         qse_iswcsdriveabspath(p)
 #	define qse_isdrivecurpath(p)         qse_iswcsdrivecurpath(p)
-#	define qse_basename(path)            qse_basenameaswcs(path)
+#	define qse_basename(path)            qse_wcsbasename(path)
 #	define qse_pathcore(p)               qse_wcspathcore(p)
 #	define qse_canonpath(p,c,f)          qse_canonwcspath(p,c,f)
 #	define qse_mergepathdup(d,f,m)       qse_mergewcspathdup(d,f,m)

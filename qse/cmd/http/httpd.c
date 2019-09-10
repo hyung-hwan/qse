@@ -879,7 +879,7 @@ found:
 			if (apath)
 			{
 				const qse_mchar_t* base;
-				base = qse_basenameasmbs (apath);
+				base = qse_mbsbasename (apath);
 
 				for (i = 0; i < QSE_COUNTOF(loccfg->auth_rule); i++)
 				{
@@ -977,7 +977,7 @@ found:
 #endif
 			if (!qinfo->xpath_nx)
 			{
-				xpath_base = qse_basenameasmbs (qinfo->xpath);
+				xpath_base = qse_mbsbasename (qinfo->xpath);
 				for (i = 0; i < QSE_COUNTOF(loccfg->cgi); i++)
 				{
 					struct cgi_t* cgi;
@@ -1004,7 +1004,7 @@ found:
 			qse_size_t i;
 			const qse_mchar_t* xpath_base;
 
-			xpath_base = qse_basenameasmbs (qinfo->xpath);
+			xpath_base = qse_mbsbasename (qinfo->xpath);
 
 			*(const qse_mchar_t**)result = QSE_NULL;
 			for (i = 0; i < QSE_COUNTOF(loccfg->mime); i++)
@@ -1043,7 +1043,7 @@ found:
 
 					id = (code == QSE_HTTPD_SERVERSTD_DIRACC)? 0: 1;
 		
-					xpath_base = qse_basenameasmbs (qinfo->xpath);
+					xpath_base = qse_mbsbasename (qinfo->xpath);
 
 					*(int*)result = 200;
 					for (i = 0; i < QSE_COUNTOF(loccfg->access[id]); i++)
