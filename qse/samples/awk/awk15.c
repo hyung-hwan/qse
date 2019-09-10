@@ -61,7 +61,7 @@ int main (int argc, char* argv[])
 		else if (argc == 2 && qse_mbscmp(argv[1], "-w") == 0) omode = 2;
 		else
 		{
-			qse_fprintf (QSE_STDERR, QSE_T("USAGE: %hs [-m | -w]\n"), qse_basenameasmbs(argv[0]));
+			qse_fprintf (QSE_STDERR, QSE_T("USAGE: %hs [-m | -w]\n"), qse_mbsbasename(argv[0]));
 			ret = -1; goto oops;
 		}
 	}

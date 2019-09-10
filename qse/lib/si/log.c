@@ -27,6 +27,7 @@
 #include <qse/si/log.h>
 #include <qse/cmn/str.h>
 #include <qse/cmn/time.h>
+#include <qse/cmn/mbwc.h>
 #include "../cmn/mem-prv.h"
 #include "../cmn/va_copy.h"
 
@@ -204,7 +205,7 @@ qse_log_t* qse_log_open (qse_mmgr_t* mmgr, qse_size_t xtnsize, const qse_char_t*
 	log = (qse_log_t*) QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(qse_log_t) + xtnsize);
 	if (log)
 	{
-		 if (qse_log_init (log, mmgr, ident, potflags, target) <= -1)
+		 if (qse_log_init(log, mmgr, ident, potflags, target) <= -1)
 		 {
 			QSE_MMGR_FREE (mmgr, log);
 			return QSE_NULL;
@@ -234,7 +235,7 @@ int qse_log_init (qse_log_t* log, qse_mmgr_t* mmgr, const qse_char_t* ident, int
 	{
 		if (qse_strlen(target->file) >= QSE_COUNTOF(log->t.file.pathbuf))
 		{
-			log->t.file.path = qse_strdup (target->file, log->mmgr);
+			log->t.file.path = qse_strdup(target->file, log->mmgr);
 			if (!log->t.file.path) return -1;
 		}
 		else
@@ -321,7 +322,7 @@ void qse_log_fini (qse_log_t* log)
 }
 
 
-void qse_log_setident (qse_log_t* log, const qse_char_t* ident)
+static QSE_INLINE void set_ident (qse_log_t* log, const qse_char_t* ident)
 {
 	/* set the base identifer to use */
 	if (ident) 
@@ -339,9 +340,35 @@ void qse_log_setident (qse_log_t* log, const qse_char_t* ident)
 		closelog ();
 		log->t.syslog.opened = 0;
 		/* it will be opened again with the new identifier in the
- 		 * output function if necessary. */
+		 * output function if necessary. */
 	}
 }
+
+
+void qse_log_setidentwithmbs (qse_log_t* log, const qse_mchar_t* ident)
+{
+#if defined(QSE_CHAR_IS_MCHAR)
+	set_ident(log, ident);
+#else
+	qse_wchar_t* id;
+	id = qse_mbstowcsdup(ident, QSE_NULL, log->mmgr);
+	if (id) set_ident(log, id); /* don't care about failure */
+	QSE_MMGR_FREE (log->mmgr, id);
+#endif
+}
+
+void qse_log_setidentwithwcs (qse_log_t* log, const qse_wchar_t* ident)
+{
+#if defined(QSE_CHAR_IS_MCHAR)
+	qse_mchar_t* id;
+	id = qse_wcstombsdup(ident, QSE_NULL, log->mmgr);
+	if (id) set_ident(log, id); /* don't care about failure */
+	QSE_MMGR_FREE (log->mmgr, id);
+#else
+	set_ident(log, ident);
+#endif
+}
+
 
 int qse_log_settarget (qse_log_t* log, int flags, const qse_log_target_t* target)
 {
@@ -566,7 +593,7 @@ void qse_log_reportv (qse_log_t* log, const qse_char_t* ident, int pri, const qs
 		if (!log->dmsgbuf) goto done;
 
 #if defined(QSE_CHAR_IS_WCHAR)
-		if (!log->wmsgbuf) log->wmsgbuf = qse_wcs_open (log->mmgr, 0, 0);
+		if (!log->wmsgbuf) log->wmsgbuf = qse_wcs_open(log->mmgr, 0, 0);
 		if (!log->wmsgbuf) goto done;
 #endif
 
@@ -602,30 +629,30 @@ void qse_log_reportv (qse_log_t* log, const qse_char_t* ident, int pri, const qs
 
 		if (log->ident[0])
 		{
-			if (qse_mbs_fcat (log->dmsgbuf, identfmt, log->ident) == (qse_size_t)-1) goto done;
+			if (qse_mbs_fcat(log->dmsgbuf, identfmt, log->ident) == (qse_size_t)-1) goto done;
 			if (ident && ident[0] && 
-			    qse_mbs_fcat (log->dmsgbuf, identparenfmt, ident) == (qse_size_t)-1) goto done;
+			    qse_mbs_fcat(log->dmsgbuf, identparenfmt, ident) == (qse_size_t)-1) goto done;
 			id_out = 1;
 		}
 		else
 		{
 			if (ident && ident[0])
 			{
-				if (qse_mbs_fcat (log->dmsgbuf, identfmt, ident) == (qse_size_t)-1) goto done;
+				if (qse_mbs_fcat(log->dmsgbuf, identfmt, ident) == (qse_size_t)-1) goto done;
 				id_out = 1;
 			}
 		}
 
 		if (log->flags & QSE_LOG_INCLUDE_PID)
 		{
-			fpdilen = qse_mbs_fcat (log->dmsgbuf, QSE_MT("[%d]"), (int)QSE_GETPID());
+			fpdilen = qse_mbs_fcat(log->dmsgbuf, QSE_MT("[%d]"), (int)QSE_GETPID());
 			if (fpdilen == (qse_size_t)-1) goto done;
 			id_out = 1;
 		}
 
 		if (id_out)
 		{
-			fpdilen = qse_mbs_fcat (log->dmsgbuf, QSE_MT(": "));
+			fpdilen = qse_mbs_fcat(log->dmsgbuf, QSE_MT(": "));
 			if (fpdilen == (qse_size_t)-1) goto done;
 		}
 		else
@@ -635,10 +662,10 @@ void qse_log_reportv (qse_log_t* log, const qse_char_t* ident, int pri, const qs
 
 		va_copy (xap, ap);
 	#if defined(QSE_CHAR_IS_MCHAR)
-		if (qse_mbs_vfcat (log->dmsgbuf, fmt, xap) == (qse_size_t)-1) goto done;
+		if (qse_mbs_vfcat(log->dmsgbuf, fmt, xap) == (qse_size_t)-1) goto done;
 	#else
-		if (qse_wcs_vfmt (log->wmsgbuf, fmt, xap) == (qse_size_t)-1 ||
-		    qse_mbs_fcat (log->dmsgbuf, QSE_MT("%.*ls"), QSE_WCS_LEN(log->wmsgbuf), QSE_WCS_PTR(log->wmsgbuf)) == (qse_size_t)-1) goto done;
+		if (qse_wcs_vfmt(log->wmsgbuf, fmt, xap) == (qse_size_t)-1 ||
+		    qse_mbs_fcat(log->dmsgbuf, QSE_MT("%.*ls"), QSE_WCS_LEN(log->wmsgbuf), QSE_WCS_PTR(log->wmsgbuf)) == (qse_size_t)-1) goto done;
 	#endif
 
 		if (log->flags & QSE_LOG_SYSLOG) 
@@ -762,22 +789,26 @@ qse_size_t qse_make_log_priority_name (int pri, const qse_char_t* delim, qse_cha
 	return tlen;
 }
 
-int qse_get_log_priority_by_name (const qse_char_t* name, const qse_char_t* delim)
+int qse_get_log_priority_by_wcsname (const qse_wchar_t* name, const qse_wchar_t* delim)
 {
 	qse_size_t i;
-	qse_cstr_t tok;
-	const qse_char_t* ptr;
+	qse_wcstr_t tok;
+	const qse_wchar_t* ptr;
 	int pri = 0;
 
 	ptr = name;
 	while (ptr)
 	{
-		ptr = qse_strtok (ptr, delim, &tok);
+		ptr = qse_wcstok(ptr, delim, &tok);
 		if (tok.ptr)
 		{
 			for (i = 0; i < QSE_COUNTOF(__priority_names); i++)
 			{
+			#if defined(QSE_CHAR_IS_MCHAR)
+				if (qse_wcsxmbscmp(tok.ptr, tok.len, __priority_names[i]) == 0) 
+			#else
 				if (qse_strxcmp(tok.ptr, tok.len, __priority_names[i]) == 0) 
+			#endif
 				{
 					pri |= (1UL << i);
 					break;
@@ -790,14 +821,69 @@ int qse_get_log_priority_by_name (const qse_char_t* name, const qse_char_t* deli
 	return pri;
 }
 
+int qse_get_log_priority_by_mbsname (const qse_mchar_t* name, const qse_mchar_t* delim)
+{
+	qse_size_t i;
+	qse_mcstr_t tok;
+	const qse_mchar_t* ptr;
+	int pri = 0;
 
-int qse_get_log_facility_by_name (const qse_char_t* name, qse_log_facility_t* fcode)
+	ptr = name;
+	while (ptr)
+	{
+		ptr = qse_mbstok(ptr, delim, &tok);
+		if (tok.ptr)
+		{
+			for (i = 0; i < QSE_COUNTOF(__priority_names); i++)
+			{
+			#if defined(QSE_CHAR_IS_MCHAR)
+				if (qse_strxcmp(tok.ptr, tok.len, __priority_names[i]) == 0) 
+			#else
+				if (qse_mbsxwcscmp(tok.ptr, tok.len, __priority_names[i]) == 0) 
+			#endif
+				{
+					pri |= (1UL << i);
+					break;
+				}
+			}
+			if (i >= QSE_COUNTOF(__priority_names)) return 0; /* unknown name included */
+		}
+	}
+
+	return pri;
+}
+
+int qse_get_log_facility_by_wcsname (const qse_wchar_t* name, qse_log_facility_t* fcode)
 {
 	qse_size_t i;
 
 	for (i = 0; i < QSE_COUNTOF(__syslog_fac_info); i++)
 	{
-		if (qse_strcmp (__syslog_fac_info[i].name, name) == 0)
+	#if defined(QSE_CHAR_IS_MCHAR)
+		if (qse_mbswcscmp(__syslog_fac_info[i].name, name) == 0)
+	#else
+		if (qse_wcscmp(__syslog_fac_info[i].name, name) == 0)
+	#endif
+		{
+			*fcode = __syslog_fac_info[i].code;
+			return 0;
+		}
+	}
+
+	return -1;
+}
+
+int qse_get_log_facility_by_mbsname (const qse_mchar_t* name, qse_log_facility_t* fcode)
+{
+	qse_size_t i;
+
+	for (i = 0; i < QSE_COUNTOF(__syslog_fac_info); i++)
+	{
+	#if defined(QSE_CHAR_IS_MCHAR)
+		if (qse_mbscmp(__syslog_fac_info[i].name, name) == 0)
+	#else
+		if (qse_wcsmbscmp(__syslog_fac_info[i].name, name) == 0)
+	#endif
 		{
 			*fcode = __syslog_fac_info[i].code;
 			return 0;

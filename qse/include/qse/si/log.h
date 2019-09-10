@@ -290,10 +290,21 @@ static QSE_INLINE void* qse_log_getxtn (qse_log_t* log) { return QSE_XTN(log); }
 #define qse_log_getxtn(log) (QSE_XTN(log))
 #endif
 
-QSE_EXPORT void qse_log_setident (
-	qse_log_t*        log,
-	const qse_char_t* ident
+QSE_EXPORT void qse_log_setidentwithmbs (
+	qse_log_t*         log,
+	const qse_mchar_t* ident
 );
+
+QSE_EXPORT void qse_log_setidentwithwcs (
+	qse_log_t*         log,
+	const qse_wchar_t* ident
+);
+
+#if defined(QSE_CHAR_IS_MCHAR)
+#	define qse_log_setident qse_log_setidentwithmbs
+#else
+#	define qse_log_setident qse_log_setidentwithwcs
+#endif
 
 /**
  * \return 0 on success, -1 on failure
@@ -385,15 +396,33 @@ QSE_EXPORT qse_size_t qse_make_log_priority_name (
  * \return an integer bitwised-ORed of priority bits if \a name is valid. 
  *         0 if \a name is invalid or empty.
  */
-QSE_EXPORT int qse_get_log_priority_by_name (
-	const qse_char_t* name,
-	const qse_char_t* delim
+QSE_EXPORT int qse_get_log_priority_by_mbsname (
+	const qse_mchar_t* name,
+	const qse_mchar_t* delim
 );
 
-QSE_EXPORT int qse_get_log_facility_by_name (
-	const qse_char_t*   name,
+QSE_EXPORT int qse_get_log_priority_by_wcsname (
+	const qse_wchar_t* name,
+	const qse_wchar_t* delim
+);
+
+QSE_EXPORT int qse_get_log_facility_by_mbsname (
+	const qse_mchar_t*   name,
 	qse_log_facility_t* fcode
 );
+
+QSE_EXPORT int qse_get_log_facility_by_wcsname (
+	const qse_wchar_t*   name,
+	qse_log_facility_t* fcode
+);
+
+#if defined(QSE_CHAR_IS_MCHAR)
+#	define qse_get_log_priority_by_name qse_get_log_priority_by_mbsname
+#	define qse_get_log_facility_by_name qse_get_log_facility_by_mbsname
+#else
+#	define qse_get_log_priority_by_name qse_get_log_priority_by_wcsname
+#	define qse_get_log_facility_by_name qse_get_log_facility_by_wcsname
+#endif
 
 #ifdef __cplusplus
 }

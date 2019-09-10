@@ -166,7 +166,7 @@ int main (int argc, char* argv[])
 		switch (c)
 		{
 			case 'h':
-				print_usage (qse_basenameasmbs(argv[0]));
+				print_usage (qse_mbsbasename(argv[0]));
 				return 0;
 
 			case 'k':

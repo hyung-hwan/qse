@@ -275,3 +275,42 @@ int qse_wcszcasecmp (const qse_wchar_t* s1, const qse_wchar_t* s2, qse_size_t n)
 
 	return (QSE_TOWUPPER((qse_wchau_t)*s1) > QSE_TOWUPPER((qse_wchau_t)*s2))? 1: -1;
 }
+
+/* ------------------------------------------------------------- */
+
+int qse_wcsmbscmp (const qse_wchar_t* s1, const qse_mchar_t* s2)
+{
+	while (*s1 == *s2) 
+	{
+		if (*s1 == QSE_WT('\0')) return 0;
+		s1++; s2++;
+	}
+
+	return (*s1 > *s2)? 1: -1;
+}
+
+int qse_wcsxmbscmp (const qse_wchar_t* s1, qse_size_t ln, const qse_mchar_t* s2)
+{
+	const qse_wchar_t* end = s1 + ln;
+
+	while (s1 < end && *s2 != QSE_MT('\0'))
+	{
+		if (*s1 != *s2) return ((qse_wchau_t)*s1 > (qse_wchau_t)(qse_mchau_t)*s2)? 1: -1;
+		s1++; s2++;
+	}
+
+	return (s1 < end)? 1: ((*s2 == QSE_MT('\0'))? 0: -1);
+}
+
+int qse_mbsxwcscmp (const qse_mchar_t* s1, qse_size_t ln, const qse_wchar_t* s2)
+{
+	const qse_mchar_t* end = s1 + ln;
+
+	while (s1 < end && *s2 != QSE_WT('\0'))
+	{
+		if (*s1 != *s2) return ((qse_wchau_t)(qse_mchau_t)*s1 > (qse_wchau_t)*s2)? 1: -1;
+		s1++; s2++;
+	}
+
+	return (s1 < end)? 1: ((*s2 == QSE_WT('\0'))? 0: -1);
+}

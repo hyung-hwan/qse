@@ -30,7 +30,7 @@
 #define IS_MSEP(c) QSE_ISPATHMBSEP(c)
 #define IS_WSEP(c) QSE_ISPATHWCSEP(c)
 
-const qse_mchar_t* qse_basenameasmbs (const qse_mchar_t* path)
+const qse_mchar_t* qse_mbsbasename (const qse_mchar_t* path)
 {
 	const qse_mchar_t* p, * last = QSE_NULL;
 
@@ -42,7 +42,7 @@ const qse_mchar_t* qse_basenameasmbs (const qse_mchar_t* path)
 	return (last == QSE_NULL)? path: (last + 1);
 }
 
-const qse_wchar_t* qse_basenameaswcs (const qse_wchar_t* path)
+const qse_wchar_t* qse_wcsbasename (const qse_wchar_t* path)
 {
 	const qse_wchar_t* p, * last = QSE_NULL;
 
@@ -61,7 +61,7 @@ qse_mchar_t* qse_substmbsbasenamedup (const qse_mchar_t* path, const qse_mchar_t
 	qse_mcstr_t seg[3];
 	qse_size_t idx = 0;
 
-	b = qse_basenameasmbs(path);
+	b = qse_mbsbasename(path);
 	if (b)
 	{
 		seg[idx].ptr = (qse_mchar_t*)path;
@@ -85,7 +85,7 @@ qse_wchar_t* qse_substwcsbasenamedup (const qse_wchar_t* path, const qse_wchar_t
 	qse_wcstr_t seg[3];
 	qse_size_t idx = 0;
 
-	b = qse_basenameaswcs(path);
+	b = qse_wcsbasename(path);
 	if (b)
 	{
 		seg[idx].ptr = (qse_wchar_t*)path;

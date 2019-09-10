@@ -1126,11 +1126,11 @@ static void open_mpi (mpi_t* mpi, int argc, qse_achar_t* argv[])
 #if defined(USE_LTDL)
 
 	#if defined(QSE_ACHAR_IS_MCHAR)
-	if (qse_mbscmp (qse_basenameasmbs(argv[0]), QSE_MT("qseawkmp")) != 0 &&
-	    qse_mbscmp (qse_basenameasmbs(argv[0]), QSE_MT("qseawkmpi")) != 0) return;
+	if (qse_mbscmp(qse_mbsbasename(argv[0]), QSE_MT("qseawkmp")) != 0 &&
+	    qse_mbscmp(qse_mbsbasename(argv[0]), QSE_MT("qseawkmpi")) != 0) return;
 	#else
-	if (qse_wcscmp (qse_basenameaswcs(argv[0]), QSE_WT("qseawkmp")) != 0 &&
-	    qse_wcscmp (qse_basenameaswcs(argv[0]), QSE_WT("qseawkmpi")) != 0) return;
+	if (qse_wcscmp(qse_wcsbasename(argv[0]), QSE_WT("qseawkmp")) != 0 &&
+	    qse_wcscmp(qse_wcsbasename(argv[0]), QSE_WT("qseawkmpi")) != 0) return;
 	#endif
 
 	if (lt_dlinit () != 0) return;

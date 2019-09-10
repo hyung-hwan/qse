@@ -321,7 +321,7 @@ int App::unset_signal_handler_no_mutex(int sig, int ignore)
 		sa.sa_handler = (SignalHandler)App::_sighrs[1][sig];
 	}
 
-	if (::sigaction (sig, &sa, QSE_NULL) <= -1) return -1;
+	if (::sigaction(sig, &sa, QSE_NULL) <= -1) return -1;
 
 	App::_sighrs[0][sig] = 0;
 	App::_sighrs[1][sig] = 0;
