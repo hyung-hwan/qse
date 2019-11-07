@@ -114,6 +114,13 @@ App::~App () QSE_CPP_NOEXCEPT
 		QSE_ASSERT (this->_prev_app == QSE_NULL);
 		g_app_top = this->_next_app;
 	}
+
+
+	if (this->_log.logger)
+	{
+		qse_log_close (this->_log.logger);
+		this->_log.logger = QSE_NULL;
+	}
 }
 
 int App::daemonize (bool chdir_to_root, int fork_count, bool root_only) QSE_CPP_NOEXCEPT
@@ -530,8 +537,15 @@ int App::guardProcess (const SignalSet& signals, qse_mtime_t guard_pause_ms, con
 int App::put_char_to_log_buf (qse_char_t c, void* ctx)
 {
 	App* app = (App*)ctx;
-	if (app->_log.len >= QSE_COUNTOF(app->_log.buf) - 1) // -1 for the lien terminator appending in App::logfmtv()
+
+	if (app->_log.len >= QSE_COUNTOF(app->_log.buf) - 1)
 	{
+		if (app->_log.buf[app->_log.len - 1] != '\n')
+		{
+			/* no line ending - append a line terminator */
+			app->_log.buf[app->_log.len++] = '\n';
+		}
+
 		app->log_write (app->_log.last_mask, app->_log.buf, app->_log.len); 
 		app->_log.len = 0;
 	}
@@ -594,6 +608,22 @@ void App::logfmtv (int mask, const qse_char_t* fmt, va_list ap)
 // default log message output implementation
 void App::log_write (int mask, const qse_char_t* msg, qse_size_t len)
 {
+	if (!this->_log.logger) 
+	{
+		qse_log_target_t target;
+
+// TODO: ...
+		QSE_MEMSET (&target, 0, QSE_SIZEOF(target));
+		target.file = QSE_T("app.log");
+		this->_log.logger = qse_log_open(this->getMmgr(), 0, QSE_T("app"), QSE_LOG_INCLUDE_PID | QSE_LOG_ALL_PRIORITIES | QSE_LOG_FILE | QSE_LOG_CONSOLE, &target);
+	}
+
+	if (this->_log.logger) 
+	{
+// TOOD: add qse_log_write() which doesn't do formatting??
+		// the last character is \n. qse_log_report() knows to terminate a line. so exclude it from reporting
+		qse_log_report (this->_log.logger, QSE_NULL, QSE_LOG_LOCAL0 | QSE_LOG_INFO, QSE_T("%.*js"), (int)(len - 1), msg);
+	}
 }
 
 

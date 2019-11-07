@@ -54,6 +54,10 @@
 #define QSE_LOG_NOTICE          (1 << 5)
 #define QSE_LOG_INFO            (1 << 6)
 #define QSE_LOG_DEBUG           (1 << 7)
+#define QSE_LOG_ALL_PRIORITIES  \
+	(QSE_LOG_PANIC | QSE_LOG_ALERT | QSE_LOG_CRITICAL | \
+	 QSE_LOG_ERROR | QSE_LOG_WARNING | QSE_LOG_NOTICE | \
+	 QSE_LOG_INFO | QSE_LOG_DEBUG)
 
 /* options */
 #define QSE_LOG_KEEP_FILE_OPEN        (1 << 13)
