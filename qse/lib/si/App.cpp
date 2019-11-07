@@ -549,13 +549,13 @@ int App::put_char_to_log_buf (qse_char_t c, void* ctx)
 static int wcs_to_mbs (const qse_wchar_t* wcs, qse_size_t* wcslen, qse_mchar_t* mbs, qse_size_t* mbslen, void* ctx)
 {
 	App* app = (App*)ctx;
-	return qse_wcsntombsnwithcmgr (wcs, wcslen, mbs, mbslen, app->getCmgr());
+	return qse_wcsntombsnwithcmgr(wcs, wcslen, mbs, mbslen, app->getCmgr());
 }
 
 static int mbs_to_wcs (const qse_mchar_t* mbs, qse_size_t* mbslen, qse_wchar_t* wcs, qse_size_t* wcslen, void* ctx)
 {
 	App* app = (App*)ctx;
-	return qse_mbsntowcsnwithcmgr (mbs, mbslen, wcs, wcslen, app->getCmgr());
+	return qse_mbsntowcsnwithcmgr(mbs, mbslen, wcs, wcslen, app->getCmgr());
 }
 
 void App::logfmtv (int mask, const qse_char_t* fmt, va_list ap)
@@ -590,6 +590,12 @@ void App::logfmtv (int mask, const qse_char_t* fmt, va_list ap)
 
 	/*if (this->threaded)*/ this->_log.mtx.unlock ();
 }
+
+// default log message output implementation
+void App::log_write (int mask, const qse_char_t* msg, qse_size_t len)
+{
+}
+
 
 /////////////////////////////////
 QSE_END_NAMESPACE(QSE)
