@@ -70,7 +70,7 @@ public:
 			case SIGHUP:
 				// TODO: don't call stop() if this processs is a guardian
 				//       though it's no harm to call stop().
-				qse_printf (QSE_T("requesting to stop server...app %p server %p - pid %d\n"), this, &this->server, (int)getpid());
+				QSE_APP_LOG3 (this, MyApp::LOG_INFO | MyApp::LOG_TYPE_0, QSE_T("requesting to stop server...app %p server %p - pid %d\n"), this, &this->server, (int)getpid());
 				this->server.stop();
 				break;
 		}
@@ -86,7 +86,9 @@ public:
 		signals.set (SIGUSR2);
 		if (this->guardProcess(signals) > 0)
 		{
-			qse_printf (QSE_T("Stareting server\n"));
+			this->setLogMask (MyApp::LOG_ALL_LEVELS | MyApp::LOG_ALL_TYPES);
+
+			QSE_APP_LOG0 (this, MyApp::LOG_INFO | MyApp::LOG_TYPE_0, QSE_T("Stareting server\n"));
 			this->server.setThreadStackSize (256000);
 			return this->server.start (QSE_T("[::]:9998,0.0.0.0:9998"));
 		}
@@ -120,7 +122,7 @@ app2.acceptSignal (SIGINT);
 app4.neglectSignal (SIGINT); 
 app3.neglectSignal (SIGINT);
 app2.neglectSignal (SIGINT);
-qse_printf (QSE_T("END OF %d\n"), (int)getpid());
+QSE_APP_LOG1 (&app, MyApp::LOG_INFO | MyApp::LOG_TYPE_0, QSE_T("END OF %d\n"), (int)getpid());
 
 	return n;
 }

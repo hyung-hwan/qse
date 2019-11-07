@@ -36,21 +36,23 @@
 #include <qse/si/os.h>
 #include <stdarg.h>
 
+#include <qse/si/log.h>
+
 /////////////////////////////////
 QSE_BEGIN_NAMESPACE(QSE)
 /////////////////////////////////
 
 #define QSE_APP_LOG_ENABLED(app, mask) (((app)->getLogMask() & (mask)) == (mask))
-#define QSE_APP_LOG0(app, mask, fmt)  do { if (QSE_APP_LOG_ENABLED(app, (mask))) app->logfmt((mask), fmt); } while(0)
-#define QSE_APP_LOG1(app, mask, fmt, a1)  do { if (QSE_APP_LOG_ENABLED(app, (mask))) app->logfmt((mask), fmt, a1); } while(0)
-#define QSE_APP_LOG2(app, mask, fmt, a1, a2)  do { if (QSE_APP_LOG_ENABLED(app, (mask))) app->logfmt((mask), fmt, a1, a2); } while(0)
-#define QSE_APP_LOG3(app, mask, fmt, a1, a2, a3)  do { if (QSE_APP_LOG_ENABLED(app, (mask))) app->logfmt((mask), fmt, a1, a2, a3); } while(0)
-#define QSE_APP_LOG4(app, mask, fmt, a1, a2, a3, a4)  do { if (QSE_APP_LOG_ENABLED(app, (mask))) app->logfmt((mask), fmt, a1, a2, a3, a4); } while(0)
-#define QSE_APP_LOG5(app, mask, fmt, a1, a2, a3, a4, a5)  do { if (QSE_APP_LOG_ENABLED(app, (mask))) app->logfmt((mask), fmt, a1, a2, a3, a4, a5); } while(0)
-#define QSE_APP_LOG6(app, mask, fmt, a1, a2, a3, a4, a5, a6)  do { if (QSE_APP_LOG_ENABLED(app, (mask))) app->logfmt((mask), fmt, a1, a2, a3, a4, a5, a6); } while(0)
-#define QSE_APP_LOG7(app, mask, fmt, a1, a2, a3, a4, a5, a6, a7)  do { if (QSE_APP_LOG_ENABLED(app, (mask))) app->logfmt((mask), fmt, a1, a2, a3, a4, a5, a6, a7); } while(0)
-#define QSE_APP_LOG8(app, mask, fmt, a1, a2, a3, a4, a5, a6, a7, a8)  do { if (QSE_APP_LOG_ENABLED(app, (mask))) app->logfmt((mask), fmt, a1, a2, a3, a4, a5, a6, a7, a8); } while(0)
-#define QSE_APP_LOG9(app, mask, fmt, a1, a2, a3, a4, a5, a6, a7, a8, a9)  do { if (QSE_APP_LOG_ENABLED(app, (mask))) app->logfmt((mask), fmt, a1, a2, a3, a4, a5, a6, a7, a8, a9); } while(0)
+#define QSE_APP_LOG0(app, mask, fmt)  do { if (QSE_APP_LOG_ENABLED(app, (mask))) (app)->logfmt((mask), fmt); } while(0)
+#define QSE_APP_LOG1(app, mask, fmt, a1)  do { if (QSE_APP_LOG_ENABLED(app, (mask))) (app)->logfmt((mask), fmt, a1); } while(0)
+#define QSE_APP_LOG2(app, mask, fmt, a1, a2)  do { if (QSE_APP_LOG_ENABLED(app, (mask))) (app)->logfmt((mask), fmt, a1, a2); } while(0)
+#define QSE_APP_LOG3(app, mask, fmt, a1, a2, a3)  do { if (QSE_APP_LOG_ENABLED(app, (mask))) (app)->logfmt((mask), fmt, a1, a2, a3); } while(0)
+#define QSE_APP_LOG4(app, mask, fmt, a1, a2, a3, a4)  do { if (QSE_APP_LOG_ENABLED(app, (mask))) (app)->logfmt((mask), fmt, a1, a2, a3, a4); } while(0)
+#define QSE_APP_LOG5(app, mask, fmt, a1, a2, a3, a4, a5)  do { if (QSE_APP_LOG_ENABLED(app, (mask))) (app)->logfmt((mask), fmt, a1, a2, a3, a4, a5); } while(0)
+#define QSE_APP_LOG6(app, mask, fmt, a1, a2, a3, a4, a5, a6)  do { if (QSE_APP_LOG_ENABLED(app, (mask))) (app)->logfmt((mask), fmt, a1, a2, a3, a4, a5, a6); } while(0)
+#define QSE_APP_LOG7(app, mask, fmt, a1, a2, a3, a4, a5, a6, a7)  do { if (QSE_APP_LOG_ENABLED(app, (mask))) (app)->logfmt((mask), fmt, a1, a2, a3, a4, a5, a6, a7); } while(0)
+#define QSE_APP_LOG8(app, mask, fmt, a1, a2, a3, a4, a5, a6, a7, a8)  do { if (QSE_APP_LOG_ENABLED(app, (mask))) (app)->logfmt((mask), fmt, a1, a2, a3, a4, a5, a6, a7, a8); } while(0)
+#define QSE_APP_LOG9(app, mask, fmt, a1, a2, a3, a4, a5, a6, a7, a8, a9)  do { if (QSE_APP_LOG_ENABLED(app, (mask))) (app)->logfmt((mask), fmt, a1, a2, a3, a4, a5, a6, a7, a8, a9); } while(0)
 
 class App: public Uncopyable, public Types, public Mmged
 {
@@ -214,7 +216,7 @@ private:
 	qse_cmgr_t* _cmgr;
 	struct log_t
 	{
-		log_t (App* app): mask(0), last_mask(0), len(0), mtx(app->getMmgr())
+		log_t (App* app): mask(0), last_mask(0), len(0), mtx(app->getMmgr()), logger(QSE_NULL)
 		{
 		}
 
@@ -222,6 +224,7 @@ private:
 		qse_size_t len;
 		qse_char_t buf[256];
 		QSE::Mutex mtx;
+		qse_log_t* logger;
 	} _log;
 
 	static int set_signal_handler_no_mutex (int sig, SignalHandler sighr);
