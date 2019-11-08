@@ -184,6 +184,19 @@ public:
 	void setLogMask (int mask) { this->_log.mask = mask; }
 	int getLogMask () const { return this->_log.mask; }
 
+/*
+	void setLogTarget (int flags, const qse_log_target_t& target)
+	{
+		if (this->_log.logger) qse_log_settarget (this->_log.logger, flags, &target);
+	}
+
+	void setLogOption (int oflags)
+	{
+		qse_log_setoption (&this->_log.logger, oflags);
+	}
+*/
+
+	
 	void logfmt (int mask, const qse_char_t* fmt, ...)
 	{
 		va_list ap;
@@ -216,7 +229,7 @@ private:
 	qse_cmgr_t* _cmgr;
 	struct log_t
 	{
-		log_t (App* app): mask(0), last_mask(0), len(0), mtx(app->getMmgr()), logger(QSE_NULL)
+		log_t (App* app): mask(0), last_mask(0), len(0), mtx(app->getMmgr())
 		{
 		}
 
@@ -224,7 +237,7 @@ private:
 		qse_size_t len;
 		qse_char_t buf[256];
 		QSE::Mutex mtx;
-		qse_log_t* logger;
+		qse_log_t logger;
 	} _log;
 
 	static int set_signal_handler_no_mutex (int sig, SignalHandler sighr);

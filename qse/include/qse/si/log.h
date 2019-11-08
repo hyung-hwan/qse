@@ -271,10 +271,10 @@ QSE_EXPORT void qse_log_close (
 );
 
 QSE_EXPORT int qse_log_init (
-	qse_log_t*        log,
-	qse_mmgr_t*       mmgr,
-	const qse_char_t* ident,
-	int               potflags,
+	qse_log_t*              log,
+	qse_mmgr_t*             mmgr,
+	const qse_char_t*       ident,
+	int                     potflags,
 	const qse_log_target_t* target
 );
 
