@@ -76,6 +76,7 @@ protected:
 App::App (Mmgr* mmgr) QSE_CPP_NOEXCEPT: Mmged(mmgr), _prev_app(QSE_NULL), _next_app(QSE_NULL), _guarded_child_pid(-1), _log(this)
 {
 	this->_cmgr = qse_getdflcmgr();
+	qse_log_init(&this->_log.logger, this->getMmgr(), QSE_T("app"), 0, QSE_NULL);
 
 	SigScopedMutexLocker sml(g_app_mutex);
 	if (!g_app_top)
@@ -115,12 +116,7 @@ App::~App () QSE_CPP_NOEXCEPT
 		g_app_top = this->_next_app;
 	}
 
-
-	if (this->_log.logger)
-	{
-		qse_log_close (this->_log.logger);
-		this->_log.logger = QSE_NULL;
-	}
+	qse_log_fini (&this->_log.logger);
 }
 
 int App::daemonize (bool chdir_to_root, int fork_count, bool root_only) QSE_CPP_NOEXCEPT
@@ -608,24 +604,9 @@ void App::logfmtv (int mask, const qse_char_t* fmt, va_list ap)
 // default log message output implementation
 void App::log_write (int mask, const qse_char_t* msg, qse_size_t len)
 {
-	if (!this->_log.logger) 
-	{
-		qse_log_target_t target;
-
-// TODO: ...
-		QSE_MEMSET (&target, 0, QSE_SIZEOF(target));
-		target.file = QSE_T("app.log");
-		this->_log.logger = qse_log_open(this->getMmgr(), 0, QSE_T("app"), QSE_LOG_INCLUDE_PID | QSE_LOG_ALL_PRIORITIES | QSE_LOG_FILE | QSE_LOG_CONSOLE, &target);
-	}
-
-	if (this->_log.logger) 
-	{
-// TOOD: add qse_log_write() which doesn't do formatting??
-		// the last character is \n. qse_log_report() knows to terminate a line. so exclude it from reporting
-		qse_log_report (this->_log.logger, QSE_NULL, QSE_LOG_LOCAL0 | QSE_LOG_INFO, QSE_T("%.*js"), (int)(len - 1), msg);
-	}
+	// the last character is \n. qse_log_report() knows to terminate a line. so exclude it from reporting
+	qse_log_report (&this->_log.logger, QSE_NULL, QSE_LOG_LOCAL0 | QSE_LOG_INFO, QSE_T("%.*js"), (int)(len - 1), msg);
 }
-
 
 /////////////////////////////////
 QSE_END_NAMESPACE(QSE)

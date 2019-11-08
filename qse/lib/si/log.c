@@ -556,7 +556,7 @@ void qse_log_reportv (qse_log_t* log, const qse_char_t* ident, int pri, const qs
 	if (log->flags & QSE_LOG_CONSOLE) 
 	{
 		if (!log->t.console.sio) 
-			log->t.console.sio = qse_sio_openstd (log->mmgr, 0, QSE_SIO_STDERR, QSE_SIO_APPEND | QSE_SIO_IGNOREMBWCERR);
+			log->t.console.sio = qse_sio_openstd(log->mmgr, 0, QSE_SIO_STDERR, QSE_SIO_APPEND | QSE_SIO_IGNOREMBWCERR);
 		if (log->t.console.sio)
 		{
 			va_list xap;
@@ -568,7 +568,7 @@ void qse_log_reportv (qse_log_t* log, const qse_char_t* ident, int pri, const qs
 	if (log->flags & QSE_LOG_FILE) 
 	{
 		if (!log->t.file.sio)
-			log->t.file.sio = qse_sio_open (log->mmgr, 0, log->t.file.path, QSE_SIO_CREATE | QSE_SIO_APPEND | QSE_SIO_IGNOREMBWCERR);
+			log->t.file.sio = qse_sio_open(log->mmgr, 0, log->t.file.path, QSE_SIO_CREATE | QSE_SIO_APPEND | QSE_SIO_IGNOREMBWCERR);
 		if (log->t.file.sio)
 		{
 			va_list xap;

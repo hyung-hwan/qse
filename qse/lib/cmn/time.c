@@ -356,27 +356,27 @@ int qse_gmtime (const qse_ntime_t* nt, qse_btime_t* bt)
 
 	/* TODO: remove dependency on gmtime/gmtime_r */
 #if defined(_WIN32)
-	tm = gmtime (&t);
+	tm = gmtime(&t);
 #elif defined(__OS2__)
 #	if defined(__WATCOMC__)
 		struct tm btm;
-		tm = _gmtime (&t, &btm);
+		tm = _gmtime(&t, &btm);
 #	else
 #		error Please support other compilers 
 #	endif
 #elif defined(__DOS__)
 #	if defined(__WATCOMC__)
 		struct tm btm;
-		tm = _gmtime (&t, &btm);
+		tm = _gmtime(&t, &btm);
 #	else
 #		error Please support other compilers
 #	endif
 #elif defined(HAVE_GMTIME_R)
 	struct tm btm;
-	tm = gmtime_r (&t, &btm);
+	tm = gmtime_r(&t, &btm);
 #else
 	/* thread unsafe */
-	tm = gmtime_r (&t);
+	tm = gmtime_r(&t);
 #endif
 	if (tm == QSE_NULL) return -1;
 	
@@ -409,27 +409,27 @@ int qse_localtime (const qse_ntime_t* nt, qse_btime_t* bt)
 
 	/* TODO: remove dependency on localtime/localtime_r */
 #if defined(_WIN32)
-	tm = localtime (&t);
+	tm = localtime(&t);
 #elif defined(__OS2__)
 #	if defined(__WATCOMC__)
 		struct tm btm;
-		tm = _localtime (&t, &btm);
+		tm = _localtime(&t, &btm);
 #	else
 #		error Please support other compilers 
 #	endif
 #elif defined(__DOS__)
 #	if defined(__WATCOMC__)
 		struct tm btm;
-		tm = _localtime (&t, &btm);
+		tm = _localtime(&t, &btm);
 #	else
 #		error Please support other compilers
 #	endif
 #elif defined(HAVE_LOCALTIME_R)
 	struct tm btm;
-	tm = localtime_r (&t, &btm);
+	tm = localtime_r(&t, &btm);
 #else
 	/* thread unsafe */
-	tm = localtime (&t);
+	tm = localtime(&t);
 #endif
 	if (tm == QSE_NULL) return -1;
 
@@ -448,6 +448,18 @@ int qse_localtime (const qse_ntime_t* nt, qse_btime_t* bt)
 	bt->gmtoff = tm->tm_gmtoff;
 #elif defined(HAVE_STRUCT_TM___TM_GMTOFF)
 	bt->gmtoff = tm->__tm_gmtoff;
+#elif defined(_WIN32)
+	{
+		TIME_ZONE_INFORMATION tzi;
+		if (GetTimeZoneInformation(&tzi) != TIME_ZONE_ID_INVALID)
+		{
+			bt->gmtoff = -((int)tiz.Bias * 60);
+		}
+		else
+		{
+			bt->gmtoff = QSE_TYPE_MIN(int); /* unknown */
+		}
+	}
 #else
 	bt->gmtoff = QSE_TYPE_MIN(int); /* unknown */
 #endif
