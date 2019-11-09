@@ -46,32 +46,35 @@
 
 
 /* priority */
-#define QSE_LOG_PANIC           (1 << 0)
-#define QSE_LOG_ALERT           (1 << 1)
-#define QSE_LOG_CRITICAL        (1 << 2)
-#define QSE_LOG_ERROR           (1 << 3)
-#define QSE_LOG_WARNING         (1 << 4)
-#define QSE_LOG_NOTICE          (1 << 5)
-#define QSE_LOG_INFO            (1 << 6)
-#define QSE_LOG_DEBUG           (1 << 7)
-#define QSE_LOG_ALL_PRIORITIES  \
-	(QSE_LOG_PANIC | QSE_LOG_ALERT | QSE_LOG_CRITICAL | \
-	 QSE_LOG_ERROR | QSE_LOG_WARNING | QSE_LOG_NOTICE | \
-	 QSE_LOG_INFO | QSE_LOG_DEBUG)
 
-/* options */
-#define QSE_LOG_KEEP_FILE_OPEN        (1 << 13)
-#define QSE_LOG_MASKED_PRIORITY       (1 << 14)
-#define QSE_LOG_INCLUDE_PID           (1 << 15)
-#define QSE_LOG_HOST_IN_REMOTE_SYSLOG (1 << 16)
+enum qse_log_priority_flag_t /* bit 0 to 7. potentially to be extended beyond */
+{
+	QSE_LOG_PANIC           = (1 << 0),
+	QSE_LOG_ALERT           = (1 << 1),
+	QSE_LOG_CRITICAL        = (1 << 2),
+	QSE_LOG_ERROR           = (1 << 3),
+	QSE_LOG_WARNING         = (1 << 4),
+	QSE_LOG_NOTICE          = (1 << 5),
+	QSE_LOG_INFO            = (1 << 6),
+	QSE_LOG_DEBUG           = (1 << 7),
+	QSE_LOG_ALL_PRIORITIES  = (QSE_LOG_PANIC | QSE_LOG_ALERT | QSE_LOG_CRITICAL | QSE_LOG_ERROR | QSE_LOG_WARNING | QSE_LOG_NOTICE | QSE_LOG_INFO | QSE_LOG_DEBUG)
+};
 
-/* target */
-#define QSE_LOG_CONSOLE         (1 << 20)
-#define QSE_LOG_FILE            (1 << 21)
-#define QSE_LOG_SYSLOG          (1 << 22)
-#define QSE_LOG_SYSLOG_REMOTE   (1 << 23)
+enum qse_log_option_flag_t /* bit 12 to 19 */
+{
+	QSE_LOG_KEEP_FILE_OPEN        = (1 << 12),
+	QSE_LOG_MASKED_PRIORITY       = (1 << 13),
+	QSE_LOG_INCLUDE_PID           = (1 << 14),
+	QSE_LOG_HOST_IN_REMOTE_SYSLOG = (1 << 15),
+};
 
-
+enum qse_log_target_flag_t /* bit 20 to 31 */
+{
+	QSE_LOG_CONSOLE       =  (1 << 20),
+	QSE_LOG_FILE          =  (1 << 21),
+	QSE_LOG_SYSLOG        =  (1 << 22),
+	QSE_LOG_SYSLOG_REMOTE =  (1 << 23)
+};
 
 /* facility */
 enum qse_log_facility_t
@@ -247,23 +250,23 @@ struct qse_log_t
 };
 
 
-struct qse_log_target_t
+struct qse_log_target_data_t
 {
 	const qse_char_t* file;
 	qse_skad_t        syslog_remote;
 };
-typedef struct qse_log_target_t qse_log_target_t;
+typedef struct qse_log_target_data_t qse_log_target_data_t;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 QSE_EXPORT qse_log_t* qse_log_open (
-	qse_mmgr_t*               mmgr,
-	qse_size_t                xtnsize,
-	const qse_char_t*         ident,
-	int                       potflags, /* priority + option + target bits */
-	const qse_log_target_t*   target
+	qse_mmgr_t*                  mmgr,
+	qse_size_t                   xtnsize,
+	const qse_char_t*            ident,
+	int                          potflags, /* priority + option + target bits */
+	const qse_log_target_data_t* target_data
 );
 
 QSE_EXPORT void qse_log_close (
@@ -275,7 +278,7 @@ QSE_EXPORT int qse_log_init (
 	qse_mmgr_t*             mmgr,
 	const qse_char_t*       ident,
 	int                     potflags,
-	const qse_log_target_t* target
+	const qse_log_target_data_t* target_data
 );
 
 QSE_EXPORT void qse_log_fini (
@@ -314,17 +317,17 @@ QSE_EXPORT void qse_log_setidentwithwcs (
  * \return 0 on success, -1 on failure
  */
 QSE_EXPORT int qse_log_settarget (
-	qse_log_t*              log,
-	int                     flags,
-	const qse_log_target_t* target
+	qse_log_t*                   log,
+	int                          target_flags,
+	const qse_log_target_data_t* target_data
 );
 
 /** 
- * \return an integer bitwise-ORed of the target bits.
+ * \return target flags which is an integer bitwise-ORed of the target bits.
  */
 QSE_EXPORT int qse_log_gettarget (
-	qse_log_t*        log,
-	qse_log_target_t* target
+	qse_log_t*             log,
+	qse_log_target_data_t* target_data
 );
 
 QSE_EXPORT void qse_log_setoption (

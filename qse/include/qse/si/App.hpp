@@ -184,19 +184,23 @@ public:
 	void setLogMask (int mask) { this->_log.mask = mask; }
 	int getLogMask () const { return this->_log.mask; }
 
-/*
-	void setLogTarget (int flags, const qse_log_target_t& target)
-	{
-		if (this->_log.logger) qse_log_settarget (this->_log.logger, flags, &target);
-	}
-
 	void setLogOption (int oflags)
 	{
 		qse_log_setoption (&this->_log.logger, oflags);
 	}
-*/
 
-	
+	void
+
+	void setLogTarget (int target_flags, const qse_log_target_data_t& target)
+	{
+		qse_log_settarget (this->_log.logger, target_flags, &target);
+	}
+
+	int getLogTarget (qse_log_target_data_t& target)
+	{
+		return qse_log_gettarget(this->_log.logger, &target);
+	}
+
 	void logfmt (int mask, const qse_char_t* fmt, ...)
 	{
 		va_list ap;

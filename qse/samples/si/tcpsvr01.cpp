@@ -86,6 +86,10 @@ public:
 		signals.set (SIGUSR2);
 		if (this->guardProcess(signals) > 0)
 		{
+			int target_flags;
+			qse_log_target_data_t target_data;
+
+			this->setLogTarget (target_flags, target_data);
 			this->setLogMask (MyApp::LOG_ALL_LEVELS | MyApp::LOG_ALL_TYPES);
 
 			QSE_APP_LOG0 (this, MyApp::LOG_INFO | MyApp::LOG_TYPE_0, QSE_T("Stareting server\n"));

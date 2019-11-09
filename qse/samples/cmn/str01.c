@@ -1,6 +1,7 @@
 #include <qse/cmn/test.h>
 #include <qse/cmn/mem.h>
 #include <qse/cmn/str.h>
+#include <qse/cmn/mbwc.h>
 #include <qse/si/sio.h>
 
 #include <locale.h>
@@ -412,13 +413,13 @@ static int test18 (void)
 	}
 
 	qse_str_ncat (s1, QSE_T("["), 1);
-	qse_str_ncatwcs (s1, QSE_WT("hello"), 5);
-	qse_str_ncatmbs (s1, QSE_MT("world"), 5);
+	qse_str_ncatwcs (s1, QSE_WT("hello"), 5, qse_findcmgrbyid(QSE_CMGR_UTF8));
+	qse_str_ncatmbs (s1, QSE_MT("world"), 5, qse_findcmgrbyid(QSE_CMGR_UTF8));
 	qse_str_ncat (s1, QSE_T("]"), 1);
 
 	QSE_TESASSERT1 (QSE_STR_LEN(s1) == 12, QSE_T("wrong length of dynamic string"));
 
-	qse_str_ncatmbs (s1, QSE_MT("\xEB\xAC\xB4\xEB\xAC\xB4\xEB\xAC\xB4"), 9);
+	qse_str_ncatmbs (s1, QSE_MT("\xEB\xAC\xB4\xEB\xAC\xB4\xEB\xAC\xB4"), 9, qse_findcmgrbyid(QSE_CMGR_UTF8));
 
 #if defined(QSE_CHAR_IS_MCHAR)
 	QSE_TESASSERT1 (QSE_STR_LEN(s1) == 21, QSE_T("wrong length of dynamic string"));
@@ -426,7 +427,7 @@ static int test18 (void)
 	QSE_TESASSERT1 (QSE_STR_LEN(s1) == 15, QSE_T("wrong length of dynamic string"));
 #endif
 
-	qse_str_ncatwcs (s1, QSE_WT("날아올라라"), 5);
+	qse_str_ncatwcs (s1, QSE_WT("날아올라라"), 5, qse_findcmgrbyid(QSE_CMGR_UTF8));
 
 #if defined(QSE_CHAR_IS_MCHAR)
 	QSE_TESASSERT1 (QSE_STR_LEN(s1) == 36, QSE_T("wrong length of dynamic string"));
