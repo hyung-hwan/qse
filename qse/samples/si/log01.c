@@ -47,7 +47,7 @@ static void t1_sub001 (qse_log_t* log)
 static void t1 (void)
 {
 	qse_log_t* log;
-	qse_log_target_t t;
+	qse_log_target_data_t t;
 #if defined(QSE_HAVE_INT128_T)
 	qse_int128_t q = 0x1234567890;
 #elif defined(QSE_HAVE_INT64_T)
@@ -79,7 +79,7 @@ static void t1 (void)
 
 		if (i == 4)
 		{
-			qse_log_target_t t2;
+			qse_log_target_data_t t2;
 
 			qse_log_gettarget (log, &t2);
 			qse_strtonwad (QSE_T("127.0.0.1:514"), &nwad);
