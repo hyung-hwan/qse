@@ -63,9 +63,8 @@ enum qse_log_priority_flag_t /* bit 0 to 7. potentially to be extended beyond */
 enum qse_log_option_flag_t /* bit 12 to 19 */
 {
 	QSE_LOG_KEEP_FILE_OPEN        = (1 << 12),
-	QSE_LOG_MASKED_PRIORITY       = (1 << 13),
-	QSE_LOG_INCLUDE_PID           = (1 << 14),
-	QSE_LOG_HOST_IN_REMOTE_SYSLOG = (1 << 15),
+	QSE_LOG_INCLUDE_PID           = (1 << 13),
+	QSE_LOG_HOST_IN_REMOTE_SYSLOG = (1 << 14),
 };
 
 enum qse_log_target_flag_t /* bit 20 to 31 */
@@ -274,10 +273,10 @@ QSE_EXPORT void qse_log_close (
 );
 
 QSE_EXPORT int qse_log_init (
-	qse_log_t*              log,
-	qse_mmgr_t*             mmgr,
-	const qse_char_t*       ident,
-	int                     potflags,
+	qse_log_t*                   log,
+	qse_mmgr_t*                  mmgr,
+	const qse_char_t*            ident,
+	int                          potflags,
 	const qse_log_target_data_t* target_data
 );
 

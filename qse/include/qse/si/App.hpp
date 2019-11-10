@@ -30,31 +30,32 @@
 #include <qse/Types.hpp>
 #include <qse/Uncopyable.hpp>
 #include <qse/cmn/Mmged.hpp>
+#include <qse/cmn/Named.hpp>
 #include <qse/cmn/Bitset.hpp>
 #include <qse/cmn/time.h>
 #include <qse/si/Mutex.hpp>
 #include <qse/si/os.h>
+#include <qse/si/log.h>
 #include <stdarg.h>
 
-#include <qse/si/log.h>
 
 /////////////////////////////////
 QSE_BEGIN_NAMESPACE(QSE)
 /////////////////////////////////
 
-#define QSE_APP_LOG_ENABLED(app, mask) (((app)->getLogMask() & (mask)) == (mask))
-#define QSE_APP_LOG0(app, mask, fmt)  do { if (QSE_APP_LOG_ENABLED(app, (mask))) (app)->logfmt((mask), fmt); } while(0)
-#define QSE_APP_LOG1(app, mask, fmt, a1)  do { if (QSE_APP_LOG_ENABLED(app, (mask))) (app)->logfmt((mask), fmt, a1); } while(0)
-#define QSE_APP_LOG2(app, mask, fmt, a1, a2)  do { if (QSE_APP_LOG_ENABLED(app, (mask))) (app)->logfmt((mask), fmt, a1, a2); } while(0)
-#define QSE_APP_LOG3(app, mask, fmt, a1, a2, a3)  do { if (QSE_APP_LOG_ENABLED(app, (mask))) (app)->logfmt((mask), fmt, a1, a2, a3); } while(0)
-#define QSE_APP_LOG4(app, mask, fmt, a1, a2, a3, a4)  do { if (QSE_APP_LOG_ENABLED(app, (mask))) (app)->logfmt((mask), fmt, a1, a2, a3, a4); } while(0)
-#define QSE_APP_LOG5(app, mask, fmt, a1, a2, a3, a4, a5)  do { if (QSE_APP_LOG_ENABLED(app, (mask))) (app)->logfmt((mask), fmt, a1, a2, a3, a4, a5); } while(0)
-#define QSE_APP_LOG6(app, mask, fmt, a1, a2, a3, a4, a5, a6)  do { if (QSE_APP_LOG_ENABLED(app, (mask))) (app)->logfmt((mask), fmt, a1, a2, a3, a4, a5, a6); } while(0)
-#define QSE_APP_LOG7(app, mask, fmt, a1, a2, a3, a4, a5, a6, a7)  do { if (QSE_APP_LOG_ENABLED(app, (mask))) (app)->logfmt((mask), fmt, a1, a2, a3, a4, a5, a6, a7); } while(0)
-#define QSE_APP_LOG8(app, mask, fmt, a1, a2, a3, a4, a5, a6, a7, a8)  do { if (QSE_APP_LOG_ENABLED(app, (mask))) (app)->logfmt((mask), fmt, a1, a2, a3, a4, a5, a6, a7, a8); } while(0)
-#define QSE_APP_LOG9(app, mask, fmt, a1, a2, a3, a4, a5, a6, a7, a8, a9)  do { if (QSE_APP_LOG_ENABLED(app, (mask))) (app)->logfmt((mask), fmt, a1, a2, a3, a4, a5, a6, a7, a8, a9); } while(0)
+#define QSE_APP_LOG_ENABLED(app, pri) (((app)->getLogPriorityMask() & (pri)) == (pri))
+#define QSE_APP_LOG0(app, pri, fmt)  do { if (QSE_APP_LOG_ENABLED(app, (pri))) (app)->logfmt((pri), fmt); } while(0)
+#define QSE_APP_LOG1(app, pri, fmt, a1)  do { if (QSE_APP_LOG_ENABLED(app, (pri))) (app)->logfmt((pri), fmt, a1); } while(0)
+#define QSE_APP_LOG2(app, pri, fmt, a1, a2)  do { if (QSE_APP_LOG_ENABLED(app, (pri))) (app)->logfmt((pri), fmt, a1, a2); } while(0)
+#define QSE_APP_LOG3(app, pri, fmt, a1, a2, a3)  do { if (QSE_APP_LOG_ENABLED(app, (pri))) (app)->logfmt((pri), fmt, a1, a2, a3); } while(0)
+#define QSE_APP_LOG4(app, pri, fmt, a1, a2, a3, a4)  do { if (QSE_APP_LOG_ENABLED(app, (pri))) (app)->logfmt((pri), fmt, a1, a2, a3, a4); } while(0)
+#define QSE_APP_LOG5(app, pri, fmt, a1, a2, a3, a4, a5)  do { if (QSE_APP_LOG_ENABLED(app, (pri))) (app)->logfmt((pri), fmt, a1, a2, a3, a4, a5); } while(0)
+#define QSE_APP_LOG6(app, pri, fmt, a1, a2, a3, a4, a5, a6)  do { if (QSE_APP_LOG_ENABLED(app, (pri))) (app)->logfmt((pri), fmt, a1, a2, a3, a4, a5, a6); } while(0)
+#define QSE_APP_LOG7(app, pri, fmt, a1, a2, a3, a4, a5, a6, a7)  do { if (QSE_APP_LOG_ENABLED(app, (pri))) (app)->logfmt((pri), fmt, a1, a2, a3, a4, a5, a6, a7); } while(0)
+#define QSE_APP_LOG8(app, pri, fmt, a1, a2, a3, a4, a5, a6, a7, a8)  do { if (QSE_APP_LOG_ENABLED(app, (pri))) (app)->logfmt((pri), fmt, a1, a2, a3, a4, a5, a6, a7, a8); } while(0)
+#define QSE_APP_LOG9(app, pri, fmt, a1, a2, a3, a4, a5, a6, a7, a8, a9)  do { if (QSE_APP_LOG_ENABLED(app, (pri))) (app)->logfmt((pri), fmt, a1, a2, a3, a4, a5, a6, a7, a8, a9); } while(0)
 
-class App: public Uncopyable, public Types, public Mmged
+class App: public Uncopyable, public Types, public Mmged, public Named<32>
 {
 public:
 	typedef QSE::Bitset<QSE_NSIGS> SignalSet;
@@ -68,6 +69,8 @@ public:
 
 	App (Mmgr* mmgr = QSE_NULL) QSE_CPP_NOEXCEPT;
 	virtual ~App () QSE_CPP_NOEXCEPT;
+
+	void setName (const qse_char_t* name) QSE_CPP_NOEXCEPT;
 
 	void setCmgr (qse_cmgr_t* cmgr) QSE_CPP_NOEXCEPT
 	{
@@ -157,63 +160,47 @@ public:
 	// =============================================================
 	// LOGGING SUPPORT
 	// =============================================================
-
-	enum log_mask_t
+	void setSyslogFacility (qse_log_facility_t fac) /* useful for syslog is set as a target */
 	{
-		LOG_DEBUG      = (1 << 0),
-		LOG_INFO       = (1 << 1),
-		LOG_WARN       = (1 << 2),
-		LOG_ERROR      = (1 << 3),
-		LOG_FATAL      = (1 << 4),
-
-		LOG_TYPE_0     = (1 << 6),
-		LOG_TYPE_1     = (1 << 7),
-		LOG_TYPE_2     = (1 << 8),
-		LOG_TYPE_3     = (1 << 9),
-		LOG_TYPE_4     = (1 << 10),
-		LOG_TYPE_5     = (1 << 11),
-		LOG_TYPE_6     = (1 << 12),
-		LOG_TYPE_7     = (1 << 13),
-		LOG_TYPE_8     = (1 << 14),
-		LOG_TYPE_9     = (1 << 15),
-
-		LOG_ALL_LEVELS = (LOG_DEBUG  | LOG_INFO | LOG_WARN | LOG_ERROR | LOG_FATAL),
-		LOG_ALL_TYPES = (LOG_TYPE_0 | LOG_TYPE_1 | LOG_TYPE_2 | LOG_TYPE_3 | LOG_TYPE_4 | LOG_TYPE_5 | LOG_TYPE_6 | LOG_TYPE_7 | LOG_TYPE_8 | LOG_TYPE_9)
-	};
-
-	void setLogMask (int mask) { this->_log.mask = mask; }
-	int getLogMask () const { return this->_log.mask; }
-
-	void setLogOption (int oflags)
-	{
-		qse_log_setoption (&this->_log.logger, oflags);
+		qse_log_setsyslogfacility (&this->_log.logger, fac);
 	}
 
-	void
+	void setLogPriorityMask (int pri_mask) { this->_log.pri_mask = pri_mask;  }
+	int getLogPriorityMask () const { return this->_log.pri_mask; }
+
+	void setLogOption (int option_flags) /* 0 or bitwise-OR'ed of qse_log_option_flag_t bits */
+	{
+		qse_log_setoption (&this->_log.logger, option_flags);
+	}
+
+	int getLogOption () const
+	{
+		return qse_log_getoption(&this->_log.logger);
+	}
 
 	void setLogTarget (int target_flags, const qse_log_target_data_t& target)
 	{
-		qse_log_settarget (this->_log.logger, target_flags, &target);
+		qse_log_settarget (&this->_log.logger, target_flags, &target);
 	}
 
-	int getLogTarget (qse_log_target_data_t& target)
+	int getLogTarget (qse_log_target_data_t& target) const
 	{
-		return qse_log_gettarget(this->_log.logger, &target);
+		return qse_log_gettarget(&this->_log.logger, &target);
 	}
 
-	void logfmt (int mask, const qse_char_t* fmt, ...)
+	void logfmt (qse_log_priority_flag_t pri, const qse_char_t* fmt, ...)
 	{
 		va_list ap;
 		va_start (ap, fmt);
-		logfmtv (mask, fmt, ap);
+		logfmtv (pri, fmt, ap);
 		va_end (ap);
 	}
 
-	void logfmtv (int mask, const qse_char_t* fmt, va_list ap);
+	void logfmtv (qse_log_priority_flag_t pri, const qse_char_t* fmt, va_list ap);
 
 protected:
 	// subclasses may override this if the defaulg logging output is not desired.
-	virtual void log_write (int mask, const qse_char_t* msg, qse_size_t len);
+	virtual void log_write (qse_log_priority_flag_t mask, const qse_char_t* msg, qse_size_t len);
 
 private:
 	App* _prev_app;
@@ -233,15 +220,16 @@ private:
 	qse_cmgr_t* _cmgr;
 	struct log_t
 	{
-		log_t (App* app): mask(0), last_mask(0), len(0), mtx(app->getMmgr())
+		log_t (App* app): pri_mask(0), last_pri(QSE_LOG_PANIC), len(0), mtx(app->getMmgr())
 		{
 		}
 
-		int mask, last_mask;
+		int pri_mask; /* what priorities to log */
+		qse_log_priority_flag_t last_pri;
 		qse_size_t len;
 		qse_char_t buf[256];
 		QSE::Mutex mtx;
-		qse_log_t logger;
+		mutable qse_log_t logger;
 	} _log;
 
 	static int set_signal_handler_no_mutex (int sig, SignalHandler sighr);

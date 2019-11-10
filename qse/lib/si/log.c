@@ -165,37 +165,7 @@ static struct syslog_fac_info_t __syslog_fac_info[] =
 
 static QSE_INLINE int get_active_priority_bits (int flags)
 {
-	int priority_bits = 0;
-
-	if (flags & QSE_LOG_MASKED_PRIORITY)
-	{
-		priority_bits = flags & QSE_LOG_MASK_PRIORITY;
-	}
-	else
-	{
-		int pri = flags & QSE_LOG_MASK_PRIORITY;
-		switch (pri)
-		{
-			case QSE_LOG_DEBUG:
-				priority_bits |= QSE_LOG_DEBUG;
-			case QSE_LOG_INFO:
-				priority_bits |= QSE_LOG_INFO;
-			case QSE_LOG_NOTICE:
-				priority_bits |= QSE_LOG_NOTICE;
-			case QSE_LOG_WARNING:
-				priority_bits |= QSE_LOG_WARNING;
-			case QSE_LOG_ERROR:
-				priority_bits |= QSE_LOG_ERROR;
-			case QSE_LOG_CRITICAL:
-				priority_bits |= QSE_LOG_CRITICAL;
-			case QSE_LOG_ALERT:
-				priority_bits |= QSE_LOG_ALERT;
-			case QSE_LOG_PANIC:
-				priority_bits |= QSE_LOG_PANIC;
-		}
-	}
-
-	return priority_bits;
+	return flags & QSE_LOG_MASK_PRIORITY;
 }
 
 qse_log_t* qse_log_open (qse_mmgr_t* mmgr, qse_size_t xtnsize, const qse_char_t* ident, int potflags, const qse_log_target_data_t* target_data)
@@ -269,7 +239,7 @@ int qse_log_init (qse_log_t* log, qse_mmgr_t* mmgr, const qse_char_t* ident, int
 #else
 	log->syslog_facility = QSE_LOG_USER;
 #endif
-	
+
 	return 0;
 }
 
@@ -451,7 +421,7 @@ void qse_log_setoption (qse_log_t* log, int option)
 void qse_log_setpriority (qse_log_t* log, int priority)
 {
 	log->flags = (log->flags & (QSE_LOG_MASK_TARGET | QSE_LOG_MASK_OPTION)) | (priority & QSE_LOG_MASK_PRIORITY);
-	log->active_priority_bits = get_active_priority_bits (log->flags);
+	log->active_priority_bits = get_active_priority_bits(log->flags);
 }
 
 void qse_log_setsyslogfacility (qse_log_t* log, qse_log_facility_t facility)
@@ -517,14 +487,7 @@ void qse_log_reportv (qse_log_t* log, const qse_char_t* ident, int pri, const qs
 
 	if ((log->flags & QSE_LOG_MASK_TARGET) == 0) return; /* no target */
 
-	if (log->flags & QSE_LOG_MASKED_PRIORITY)
-	{
-		if (!(pri & (log->flags & QSE_LOG_MASK_PRIORITY))) return;
-	}
-	else
-	{
-		if (pri > (log->flags & QSE_LOG_MASK_PRIORITY)) return;
-	}
+	if (!(pri & (log->flags & QSE_LOG_MASK_PRIORITY))) return; /* excluded priority*/
 
 	if (qse_gettime(&now) || qse_localtime(&now, &cnow) <= -1) return;
 
