@@ -40,35 +40,35 @@ public:
 	{
 		QSE_ASSERT (name != QSE_NULL);
 		// WARNING: a long name can be truncated
-		qse_strxcpy (this->name_buf, QSE_COUNTOF(this->name_buf), name);
+		qse_strxcpy (this->_name_buf, QSE_COUNTOF(this->_name_buf), name);
 	}
 	~Named () QSE_CPP_NOEXCEPT {}
 
 	qse_char_t* getName () QSE_CPP_NOEXCEPT
 	{
-		return this->name_buf;
+		return this->_name_buf;
 	}
 
 	const qse_char_t* getName () const QSE_CPP_NOEXCEPT
 	{
-		return this->name_buf;
+		return this->_name_buf;
 	}
 
 	void setName (const qse_char_t* name) QSE_CPP_NOEXCEPT
 	{
 		QSE_ASSERT (name != QSE_NULL);
 		// WARNING: a long name can be truncated
-		qse_strxcpy (this->name_buf, QSE_COUNTOF(this->name_buf), name);
+		qse_strxcpy (this->_name_buf, QSE_COUNTOF(this->_name_buf), name);
 	}
 
 	bool isNamed () const QSE_CPP_NOEXCEPT
 	{
-		return this->name_buf[0] != QSE_T('\0');
+		return this->_name_buf[0] != QSE_T('\0');
 	}
 
 	bool isNamed (const qse_char_t* n) const QSE_CPP_NOEXCEPT
 	{
-		return qse_strcmp(this->name_buf, n) == 0;
+		return qse_strcmp(this->_name_buf, n) == 0;
 	}
 
 	enum 
@@ -77,7 +77,7 @@ public:
 	};
 
 protected:
-	qse_char_t name_buf[MAX_NAME_LEN + 1]; 
+	qse_char_t _name_buf[MAX_NAME_LEN + 1]; 
 };
 
 QSE_END_NAMESPACE(QSE)

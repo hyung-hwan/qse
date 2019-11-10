@@ -70,7 +70,7 @@ public:
 			case SIGHUP:
 				// TODO: don't call stop() if this processs is a guardian
 				//       though it's no harm to call stop().
-				QSE_APP_LOG3 (this, MyApp::LOG_INFO | MyApp::LOG_TYPE_0, QSE_T("requesting to stop server...app %p server %p - pid %d\n"), this, &this->server, (int)getpid());
+				QSE_APP_LOG3 (this, QSE_LOG_INFO, QSE_T("requesting to stop server...app %p server %p - pid %d\n"), this, &this->server, (int)getpid());
 				this->server.stop();
 				break;
 		}
@@ -87,12 +87,18 @@ public:
 		if (this->guardProcess(signals) > 0)
 		{
 			int target_flags;
-			qse_log_target_data_t target_data;
+			qse_log_target_data_t target_data; 
+			target_data.file = QSE_T("tcpsvr01.log");
 
-			this->setLogTarget (target_flags, target_data);
-			this->setLogMask (MyApp::LOG_ALL_LEVELS | MyApp::LOG_ALL_TYPES);
+			this->setName (QSE_T("tcpsvr01"));
+			this->setLogTarget (QSE_LOG_CONSOLE | QSE_LOG_FILE, target_data);
+			this->setLogPriorityMask (QSE_LOG_ALL_PRIORITIES);
+			this->setLogOption (QSE_LOG_KEEP_FILE_OPEN | QSE_LOG_INCLUDE_PID);
 
-			QSE_APP_LOG0 (this, MyApp::LOG_INFO | MyApp::LOG_TYPE_0, QSE_T("Stareting server\n"));
+			QSE_APP_LOG0 (this, QSE_LOG_DEBUG, QSE_T("Starting server\n"));
+			QSE_APP_LOG0 (this, QSE_LOG_DEBUG, QSE_T("hello"));
+			QSE_APP_LOG0 (this, QSE_LOG_INFO, QSE_T(" <tcpsvr01r> "));
+			QSE_APP_LOG0 (this, QSE_LOG_INFO, QSE_T("started\n"));
 			this->server.setThreadStackSize (256000);
 			return this->server.start (QSE_T("[::]:9998,0.0.0.0:9998"));
 		}
@@ -126,7 +132,7 @@ app2.acceptSignal (SIGINT);
 app4.neglectSignal (SIGINT); 
 app3.neglectSignal (SIGINT);
 app2.neglectSignal (SIGINT);
-QSE_APP_LOG1 (&app, MyApp::LOG_INFO | MyApp::LOG_TYPE_0, QSE_T("END OF %d\n"), (int)getpid());
+QSE_APP_LOG1 (&app, QSE_LOG_INFO, QSE_T("END OF %d\n"), (int)getpid());
 
 	return n;
 }

@@ -76,7 +76,10 @@ protected:
 App::App (Mmgr* mmgr) QSE_CPP_NOEXCEPT: Mmged(mmgr), _prev_app(QSE_NULL), _next_app(QSE_NULL), _guarded_child_pid(-1), _log(this)
 {
 	this->_cmgr = qse_getdflcmgr();
-	qse_log_init(&this->_log.logger, this->getMmgr(), QSE_T("app"), 0, QSE_NULL);
+
+	// instead of relying on the logger's priority masking, the class will do its own masking.
+	// set the prioriy mask to QSE_LOG_ALL_PRIORITIES.
+	qse_log_init(&this->_log.logger, this->getMmgr(), QSE_T(""), QSE_LOG_ALL_PRIORITIES, QSE_NULL);
 
 	SigScopedMutexLocker sml(g_app_mutex);
 	if (!g_app_top)
@@ -117,6 +120,12 @@ App::~App () QSE_CPP_NOEXCEPT
 	}
 
 	qse_log_fini (&this->_log.logger);
+}
+
+void App::setName (const qse_char_t* name) QSE_CPP_NOEXCEPT
+{
+	QSE::Named<32>::setName (name);
+	qse_log_setident (&this->_log.logger, name);
 }
 
 int App::daemonize (bool chdir_to_root, int fork_count, bool root_only) QSE_CPP_NOEXCEPT
@@ -542,14 +551,14 @@ int App::put_char_to_log_buf (qse_char_t c, void* ctx)
 			app->_log.buf[app->_log.len++] = '\n';
 		}
 
-		app->log_write (app->_log.last_mask, app->_log.buf, app->_log.len); 
+		app->log_write (app->_log.last_pri, app->_log.buf, app->_log.len); 
 		app->_log.len = 0;
 	}
 
 	app->_log.buf[app->_log.len++] = c;
 	if (c == QSE_T('\n'))
 	{
-		app->log_write (app->_log.last_mask, app->_log.buf, app->_log.len); 
+		app->log_write (app->_log.last_pri, app->_log.buf, app->_log.len); 
 		app->_log.len = 0;
 	}
 
@@ -568,18 +577,18 @@ static int mbs_to_wcs (const qse_mchar_t* mbs, qse_size_t* mbslen, qse_wchar_t* 
 	return qse_mbsntowcsnwithcmgr(mbs, mbslen, wcs, wcslen, app->getCmgr());
 }
 
-void App::logfmtv (int mask, const qse_char_t* fmt, va_list ap)
+void App::logfmtv (qse_log_priority_flag_t pri, const qse_char_t* fmt, va_list ap)
 {
 	/*if (this->threaded)*/ this->_log.mtx.lock ();
 
-	if (this->_log.len > 0 && this->_log.last_mask != mask)
+	if (this->_log.len > 0 && this->_log.last_pri != pri)
 	{
 		if (this->_log.buf[this->_log.len - 1] != QSE_T('\n'))
 		{
 			// no line ending - append a line terminator
 			this->_log.buf[this->_log.len++] = QSE_T('\n');
 		}
-		this->log_write (this->_log.last_mask, this->_log.buf, this->_log.len); 
+		this->log_write (this->_log.last_pri, this->_log.buf, this->_log.len); 
 		this->_log.len = 0;
 	}
 
@@ -595,17 +604,17 @@ void App::logfmtv (int mask, const qse_char_t* fmt, va_list ap)
 	fo.conv = mbs_to_wcs;
 #endif
 
-	this->_log.last_mask = mask;
+	this->_log.last_pri = pri;
 	qse_fmtout(fmt, &fo, ap);
 
 	/*if (this->threaded)*/ this->_log.mtx.unlock ();
 }
 
 // default log message output implementation
-void App::log_write (int mask, const qse_char_t* msg, qse_size_t len)
+void App::log_write (qse_log_priority_flag_t pri, const qse_char_t* msg, qse_size_t len)
 {
 	// the last character is \n. qse_log_report() knows to terminate a line. so exclude it from reporting
-	qse_log_report (&this->_log.logger, QSE_NULL, QSE_LOG_LOCAL0 | QSE_LOG_INFO, QSE_T("%.*js"), (int)(len - 1), msg);
+	qse_log_report (&this->_log.logger, QSE_NULL, pri, QSE_T("%.*js"), (int)(len - 1), msg);
 }
 
 /////////////////////////////////
