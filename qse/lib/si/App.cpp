@@ -457,6 +457,51 @@ int App::set_signal_subscription_no_mutex (int sig, SignalState reqstate, bool i
 	return reqstate;
 }
 
+int App::acceptSignals (const SignalSet& signals)
+{
+	int n = 0;
+
+	for (int i = 0; i < QSE_NSIGS; i++)
+	{
+		if (signals.isSet(i)) 
+		{
+			if (this->setSignalSubscription(i, SIGNAL_ACCEPTED) <= -1) n = -1;
+		}
+	}
+
+	return n;
+}
+
+int App::discardSignals (const SignalSet& signals)
+{
+	int n = 0;
+
+	for (int i = 0; i < QSE_NSIGS; i++)
+	{
+		if (signals.isSet(i)) 
+		{
+			if (this->setSignalSubscription(i, SIGNAL_DISCARDED) <= -1) n = -1;
+		}
+	}
+
+	return n;
+}
+
+int App::neglectSignals (const SignalSet& signals, bool ignore_if_unhandled)
+{
+	int n = 0;
+
+	for (int i = 0; i < QSE_NSIGS; i++)
+	{
+		if (signals.isSet(i)) 
+		{
+			if (this->setSignalSubscription(i, SIGNAL_NEGLECTED, ignore_if_unhandled) <= -1) n = -1;
+		}
+	}
+
+	return n;
+}
+
 int App::guardProcess (const SignalSet& signals, qse_mtime_t guard_pause_ms, const qse_mchar_t* proc_name)
 {
 	SignalState old_ss[QSE_NSIGS];
