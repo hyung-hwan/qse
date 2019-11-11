@@ -137,6 +137,11 @@ public:
 		return this->setSignalSubscription(sig, SIGNAL_NEGLECTED, ignore_if_unhandled);
 	}
 
+	int acceptSignals (const SignalSet& signals);
+	int discardSignals (const SignalSet& signals);
+	int neglectSignals (const SignalSet& signals, bool ignore_if_unhandled = false);
+
+
 	typedef void (*SignalHandler) (int sig);
 	static qse_size_t _sighrs[2][QSE_NSIGS];
 
