@@ -493,7 +493,7 @@ static void stop_run (void* arg)
 	int e = errno;
 #endif
 
-	qse_sed_stop (g_sed);
+	qse_sed_halt (g_sed);
 
 #if !defined(_WIN32) && !defined(__OS2__) && !defined(__DOS__)
 	errno = e;
@@ -879,7 +879,7 @@ static int sed_main (int argc, qse_char_t* argv[])
 				QSE_MMGR_FREE (qse_sed_getmmgr(sed), tmpl_tmpfile);
 			}
 
-			if (qse_sed_isstop (sed)) break;
+			if (qse_sed_ishalt (sed)) break;
 		}
 
 		if (output) qse_sio_close (output->u.sio);

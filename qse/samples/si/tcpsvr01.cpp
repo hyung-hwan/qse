@@ -71,7 +71,7 @@ public:
 				// TODO: don't call stop() if this processs is a guardian
 				//       though it's no harm to call stop().
 				QSE_APP_LOG3 (this, QSE_LOG_INFO, QSE_T("requesting to stop server...app %p server %p - pid %d\n"), this, &this->server, (int)getpid());
-				this->server.stop();
+				this->server.halt();
 				break;
 		}
 	}
@@ -100,7 +100,7 @@ public:
 			QSE_APP_LOG0 (this, QSE_LOG_INFO, QSE_T(" <tcpsvr01r> "));
 			QSE_APP_LOG0 (this, QSE_LOG_INFO, QSE_T("started\n"));
 			this->server.setThreadStackSize (256000);
-			return this->server.start (QSE_T("[::]:9998,0.0.0.0:9998"));
+			return this->server.execute(QSE_T("[::]:9998,0.0.0.0:9998"));
 		}
 		return -1;
 	}

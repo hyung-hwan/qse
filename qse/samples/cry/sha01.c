@@ -200,7 +200,7 @@ int main (int argc, char* argv[])
 
 			case '?':
 			case ':':
-				print_usage (qse_basenameasmbs(argv[0]));
+				print_usage (qse_mbsbasename(argv[0]));
 				return -1;
 		}
 	}

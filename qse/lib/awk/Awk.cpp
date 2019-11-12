@@ -1099,16 +1099,16 @@ Awk::Run::operator Awk::rtx_t* () const
 	return this->rtx;
 }
 
-void Awk::Run::stop () const 
+void Awk::Run::halt () const 
 {
 	QSE_ASSERT (this->rtx != QSE_NULL);
-	qse_awk_rtx_stop (this->rtx);
+	qse_awk_rtx_halt (this->rtx);
 }
 
-bool Awk::Run::isStop () const
+bool Awk::Run::isHalt () const
 {
 	QSE_ASSERT (this->rtx != QSE_NULL);
-	return qse_awk_rtx_isstop (this->rtx)? true: false;
+	return qse_awk_rtx_ishalt (this->rtx)? true: false;
 }
 
 Awk::errnum_t Awk::Run::getErrorNumber () const 
@@ -1576,10 +1576,10 @@ int Awk::call (const qse_wchar_t* name, Value* ret, const Value* args, size_t na
 	return 0;
 }
 
-void Awk::stop () 
+void Awk::halt () 
 {
 	QSE_ASSERT (awk != QSE_NULL);
-	qse_awk_stopall (awk);
+	qse_awk_haltall (awk);
 }
 
 int Awk::init_runctx () 

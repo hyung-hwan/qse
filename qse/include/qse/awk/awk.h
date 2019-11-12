@@ -2344,26 +2344,26 @@ QSE_EXPORT qse_awk_val_t* qse_awk_rtx_callwithstrs (
 );
 
 /**
- * The qse_awk_stopall() function aborts all active runtime contexts
+ * The qse_awk_haltall() function aborts all active runtime contexts
  * associated with \a awk.
  */
-QSE_EXPORT void qse_awk_stopall (
+QSE_EXPORT void qse_awk_haltall (
 	qse_awk_t* awk /**< awk */
 );
 
 /**
- * The qse_awk_rtx_isstop() function tests if qse_awk_rtx_stop() has been 
+ * The qse_awk_rtx_ishalt() function tests if qse_awk_rtx_halt() has been 
  * called.
  */
-QSE_EXPORT int qse_awk_rtx_isstop (
+QSE_EXPORT int qse_awk_rtx_ishalt (
 	qse_awk_rtx_t* rtx /**< runtime context */
 );
 
 /**
- * The qse_awk_rtx_stop() function causes an active runtime context \a rtx to 
+ * The qse_awk_rtx_halt() function causes an active runtime context \a rtx to 
  * be aborted. 
  */
-QSE_EXPORT void qse_awk_rtx_stop (
+QSE_EXPORT void qse_awk_rtx_halt (
 	qse_awk_rtx_t* rtx /**< runtime context */
 );
 

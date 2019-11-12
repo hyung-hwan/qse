@@ -246,7 +246,7 @@ static int setsignal (int sig, void(*handler)(int), int restart)
 static void stop_run (int sig)
 {
 	int e = errno;
-	if (app_awk) app_awk->stop ();
+	if (app_awk) app_awk->halt ();
 	errno = e;
 }
 #endif

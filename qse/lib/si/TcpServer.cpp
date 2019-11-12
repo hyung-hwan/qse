@@ -72,7 +72,7 @@ int TcpServer::Connection::main ()
 	return n;
 }
 
-int TcpServer::Connection::stop () QSE_CPP_NOEXCEPT
+int TcpServer::Connection::halt () QSE_CPP_NOEXCEPT
 {
 	// the receiver will be notified of the end of 
 	// the connection by the socket's closing.
@@ -86,7 +86,7 @@ int TcpServer::Connection::stop () QSE_CPP_NOEXCEPT
 
 TcpServer::TcpServer (Mmgr* mmgr) QSE_CPP_NOEXCEPT: 
 	Mmged(mmgr),
-	_stop_requested(false), 
+	_halt_requested(false), 
 	_server_serving(false), 
 	_max_connections(0),
 	_thread_stack_size(0)
@@ -164,7 +164,7 @@ void TcpServer::dispatch_mux_event (qse_mux_t* mux, const qse_mux_evt_t* evt) QS
 
 	if (evt->data == NULL)
 	{
-		/* just consume data written by TcpServer::stop() */
+		/* just consume data written by TcpServer::halt() */
 		char tmp[128];
 		while (::read(server->_listener_list.mux_pipe[0], tmp, QSE_SIZEOF(tmp)) > 0) /* nothing */;
 	}
@@ -210,7 +210,7 @@ void TcpServer::dispatch_mux_event (qse_mux_t* mux, const qse_mux_evt_t* evt) QS
 			if (lerr == Socket::E_EINTR || lerr == Socket::E_EAGAIN) return;
 
 			server->setErrorNumber (lerr);
-			server->stop ();
+			server->halt ();
 			return;
 		}
 
@@ -409,7 +409,7 @@ oops:
 	return -1;
 }
 
-int TcpServer::start (const qse_char_t* addrs) QSE_CPP_NOEXCEPT
+int TcpServer::execute (const qse_char_t* addrs) QSE_CPP_NOEXCEPT
 {
 	int xret = 0;
 
@@ -471,7 +471,7 @@ int TcpServer::start (const qse_char_t* addrs) QSE_CPP_NOEXCEPT
 	return xret;
 }
 
-int TcpServer::stop () QSE_CPP_NOEXCEPT
+int TcpServer::halt () QSE_CPP_NOEXCEPT
 {
 	if (this->_server_serving) 
 	{

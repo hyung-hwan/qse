@@ -90,16 +90,16 @@ int Sed::execute (Stream& iostream)
 	return qse_sed_exec (sed, xin, xout);
 }
 
-void Sed::stop ()
+void Sed::halt ()
 {
 	QSE_ASSERT (sed != QSE_NULL);
-	qse_sed_stop (sed);
+	qse_sed_halt (sed);
 }
 
-bool Sed::isStop () const
+bool Sed::isHalt () const
 {
 	QSE_ASSERT (sed != QSE_NULL);
-	return qse_sed_isstop (sed);
+	return qse_sed_ishalt (sed);
 }
 
 int Sed::getTrait () const

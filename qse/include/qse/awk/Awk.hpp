@@ -861,8 +861,8 @@ public:
 		operator Awk* () const;
 		operator rtx_t* () const;
 
-		void stop () const;
-		bool isStop () const;
+		void halt () const;
+		bool isHalt () const;
 
 		errnum_t getErrorNumber () const;
 		loc_t getErrorLocation () const;
@@ -1047,9 +1047,9 @@ public:
 	);
 
 	///
-	/// The stop() function makes request to abort execution
+	/// The halt() function makes request to abort execution
 	///
-	void stop ();
+	void halt ();
 	/// \}
 
 	///
