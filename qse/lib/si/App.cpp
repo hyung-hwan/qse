@@ -392,7 +392,7 @@ int App::set_signal_subscription_no_mutex (int sig, SignalState reqstate, bool i
 
 	if (reqstate == SIGNAL_NEGLECTED)
 	{
-		// accepted/discarded -> neglected(unhandled)
+		// accepted/discarded->neglected(unhandled)
 		QSE_ASSERT (g_app_sig[sig] != QSE_NULL);
 
 		if (g_app_sig[sig] == this) 
@@ -415,14 +415,14 @@ int App::set_signal_subscription_no_mutex (int sig, SignalState reqstate, bool i
 	}
 	else if (QSE_LIKELY(sl._state == SIGNAL_NEGLECTED))
 	{
-		// neglected(unhandled) -> accepted/discarded
+		// neglected(unhandled)->accepted/discarded
 		QSE_ASSERT (sl._prev == QSE_NULL && sl._next == QSE_NULL);
 
 		App* xapp = g_app_sig[sig];
 		App* xapp_xprev = QSE_NULL;
 
 		g_app_sig[sig] = this;
-		sl._state = SIGNAL_ACCEPTED;
+		sl._state = reqstate;
 		sl._next = xapp;
 		if (xapp) 
 		{
@@ -449,7 +449,7 @@ int App::set_signal_subscription_no_mutex (int sig, SignalState reqstate, bool i
 	}
 	else 
 	{
-		// accpeted/ignored -> ignored/accepted
+		// accpeted->discarded or discarded->accepted
 		QSE_ASSERT (g_app_sig[sig] != QSE_NULL);
 		sl._state = reqstate;
 	}
