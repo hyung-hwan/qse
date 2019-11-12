@@ -311,7 +311,7 @@ struct qse_awk_t
 	qse_mchar_t merrmsg[QSE_AWK_ERRINF_MSG_SIZE * 2];
 #endif
 
-	int stopall;
+	int haltall;
 	qse_awk_ecb_t* ecb;
 
 	qse_rbt_t* modtab;

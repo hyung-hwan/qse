@@ -160,7 +160,7 @@ static void stop_run (void* arg)
 	int e = errno;
 #endif
 
-	qse_awk_rtx_stop (app_rtx);
+	qse_awk_rtx_halt (app_rtx);
 
 #if !defined(_WIN32) && !defined(__OS2__) && !defined(__DOS__)
 	errno = e;

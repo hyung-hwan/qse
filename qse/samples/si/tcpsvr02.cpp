@@ -107,16 +107,16 @@ static int test1 (void)
 
 	server.setThreadStackSize (256000);
 	g_server = &server;
-	//server.start (QSE_T("0.0.0.0:9998"));
-	server.start (QSE_T("[::]:9998,0.0.0.0:9998"));
-	//server.start (QSE_T("[fe80::1c4:a90d:a0f0:d52%wlan0]:9998,0.0.0.0:9998"));
+	//server.execute (QSE_T("0.0.0.0:9998"));
+	server.execute (QSE_T("[::]:9998,0.0.0.0:9998"));
+	//server.execute (QSE_T("[fe80::1c4:a90d:a0f0:d52%wlan0]:9998,0.0.0.0:9998"));
 	g_server = QSE_NULL;
 	return 0;
 }
 
 static void handle_sigint (int sig)
 {
-	if (g_server) g_server->stop ();
+	if (g_server) g_server->halt ();
 }
 
 int main ()

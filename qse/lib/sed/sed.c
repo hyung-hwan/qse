@@ -3953,7 +3953,7 @@ int qse_sed_exec (qse_sed_t* sed, qse_sed_io_impl_t inf, qse_sed_io_impl_t outf)
 #endif
 	};
 
-	sed->e.stopreq = 0;
+	sed->e.haltreq = 0;
 	sed->e.last_rex = QSE_NULL;
 
 	sed->e.subst_done = 0;
@@ -4020,7 +4020,7 @@ int qse_sed_exec (qse_sed_t* sed, qse_sed_io_impl_t inf, qse_sed_io_impl_t outf)
 		goto done;
 	}
 
-	while (!sed->e.stopreq)
+	while (!sed->e.haltreq)
 	{
 #if defined(QSE_ENABLE_SED_TRACER)
 		if (sed->opt.tracer) sed->opt.tracer (sed, QSE_SED_TRACER_READ, QSE_NULL);
@@ -4068,7 +4068,7 @@ int qse_sed_exec (qse_sed_t* sed, qse_sed_io_impl_t inf, qse_sed_io_impl_t outf)
 					if (emit_output (sed, 0) <= -1) ret = -1;
 					goto done;
 				}
-				if (sed->e.stopreq) goto done;
+				if (sed->e.haltreq) goto done;
 				if (j == &sed->cmd.again) goto again;
 
 				/* go to the next command */
@@ -4093,14 +4093,14 @@ done3:
 	return ret;
 }
 
-void qse_sed_stop (qse_sed_t* sed)
+void qse_sed_halt (qse_sed_t* sed)
 {
-	sed->e.stopreq = 1;
+	sed->e.haltreq = 1;
 }
 
-int qse_sed_isstop (qse_sed_t* sed)
+int qse_sed_ishalt (qse_sed_t* sed)
 {
-	return sed->e.stopreq;
+	return sed->e.haltreq;
 }
 
 const qse_char_t* qse_sed_getcompid (qse_sed_t* sed)

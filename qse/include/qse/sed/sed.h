@@ -644,17 +644,17 @@ QSE_EXPORT int qse_sed_exec (
 );
 
 /**
- * The qse_sed_stop() function breaks running loop in qse_sed_exec().
+ * The qse_sed_halt() function breaks running loop in qse_sed_exec().
  * It doesn't affect blocking calls in stream handlers.
  */
-QSE_EXPORT void qse_sed_stop (
+QSE_EXPORT void qse_sed_halt (
 	qse_sed_t* sed   /**< stream editor */
 );
 
 /**
- * The qse_sed_isstop() functions tests if qse_sed_stop() is called.
+ * The qse_sed_ishalt() functions tests if qse_sed_halt() is called.
  */
-QSE_EXPORT int qse_sed_isstop (
+QSE_EXPORT int qse_sed_ishalt (
 	qse_sed_t* sed   /**< stream editor */
 );
 	

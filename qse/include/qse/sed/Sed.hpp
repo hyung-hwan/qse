@@ -201,17 +201,17 @@ public:
 	int execute (Stream& iostream);
 
 	///
-	/// The stop() function makes a request to break a running loop
+	/// The halt() function makes a request to break a running loop
 	/// inside execute(). Note that this does not affect blocking 
 	/// operations in user-defined stream handlers.
 	///
-	void stop ();
+	void halt ();
 
 	///
-	/// The isStop() function returns true if stop() has been called
+	/// The isHalt() function returns true if halt() has been called
 	/// since the last call to execute(), false otherwise.
 	///
-	bool isStop () const;
+	bool isHalt () const;
 
 	///
 	/// The getTrait() function gets the current traits.

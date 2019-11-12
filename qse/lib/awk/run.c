@@ -851,14 +851,14 @@ void qse_awk_rtx_close (qse_awk_rtx_t* rtx)
 	qse_awk_freemem (rtx->awk, rtx);
 }
 
-void qse_awk_rtx_stop (qse_awk_rtx_t* rtx)
+void qse_awk_rtx_halt (qse_awk_rtx_t* rtx)
 {
 	rtx->exit_level = EXIT_ABORT;
 }
 
-int qse_awk_rtx_isstop (qse_awk_rtx_t* rtx)
+int qse_awk_rtx_ishalt (qse_awk_rtx_t* rtx)
 {
-	return (rtx->exit_level == EXIT_ABORT || rtx->awk->stopall);
+	return (rtx->exit_level == EXIT_ABORT || rtx->awk->haltall);
 }
 
 void qse_awk_rtx_getrio (qse_awk_rtx_t* rtx, qse_awk_rio_t* rio)
@@ -1436,7 +1436,7 @@ static qse_awk_val_t* run_bpae_loop (qse_awk_rtx_t* rtx)
 	}
 
 	/* execute END blocks. the first END block is executed if the 
-	 * program is not explicitly aborted with qse_awk_rtx_stop().*/
+	 * program is not explicitly aborted with qse_awk_rtx_halt().*/
 	for (nde = rtx->awk->tree.end;
 	     ret == 0 && nde != QSE_NULL && rtx->exit_level < EXIT_ABORT;
 	     nde = nde->next) 
@@ -1574,7 +1574,7 @@ qse_awk_val_t* qse_awk_rtx_callfun (qse_awk_rtx_t* rtx, qse_awk_fun_t* fun, qse_
 	if (rtx->exit_level >= EXIT_GLOBAL) 
 	{
 		/* cannot call the function again when exit() is called
-		 * in an AWK program or qse_awk_rtx_stop() is invoked */
+		 * in an AWK program or qse_awk_rtx_halt() is invoked */
 		SETERR_COD (rtx, QSE_AWK_EPERM);
 		return QSE_NULL;
 	}
@@ -1950,7 +1950,7 @@ static int run_block (qse_awk_rtx_t* rtx, qse_awk_nde_blk_t* nde)
 
 #define ON_STATEMENT(rtx,nde) QSE_BLOCK ( \
 	qse_awk_rtx_ecb_t* ecb; \
-	if ((rtx)->awk->stopall) (rtx)->exit_level = EXIT_ABORT; \
+	if ((rtx)->awk->haltall) (rtx)->exit_level = EXIT_ABORT; \
 	for (ecb = (rtx)->ecb; ecb; ecb = ecb->next) \
 		if (ecb->stmt) ecb->stmt (rtx, nde);  \
 )

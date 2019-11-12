@@ -217,8 +217,8 @@ struct qse_sed_t
 		int subst_done;
 		void* last_rex;	
 
-		/** stop requested */
-		int stopreq;
+		/** halt requested */
+		int haltreq;
 	} e;
 };
 

@@ -155,7 +155,7 @@ int qse_awk_init (qse_awk_t* awk, qse_mmgr_t* mmgr, const qse_awk_prm_t* prm)
 	awk->errinf.loc.colm = 0;
 	awk->errinf.loc.file = QSE_NULL;
 	awk->errstr = qse_awk_dflerrstr;
-	awk->stopall = 0;
+	awk->haltall = 0;
 
 	/* progagate the primitive functions */
 	QSE_ASSERT (prm             != QSE_NULL);
@@ -327,7 +327,7 @@ void qse_awk_clear (qse_awk_t* awk)
 		if (ecb->clear) ecb->clear (awk);
 	}
 
-	awk->stopall = 0;
+	awk->haltall = 0;
 
 	clear_token (&awk->tok);
 	clear_token (&awk->ntok);
@@ -525,9 +525,9 @@ int qse_awk_getopt (qse_awk_t* awk, qse_awk_opt_t id, void* value)
 	return -1;
 }
 
-void qse_awk_stopall (qse_awk_t* awk)
+void qse_awk_haltall (qse_awk_t* awk)
 {
-	awk->stopall = 1;
+	awk->haltall = 1;
 	qse_awk_seterrnum (awk, QSE_AWK_EINVAL, QSE_NULL);
 }
 

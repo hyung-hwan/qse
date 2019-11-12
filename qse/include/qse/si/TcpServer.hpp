@@ -47,8 +47,8 @@ public:
 	TcpServer (Mmgr* mmgr = QSE_NULL) QSE_CPP_NOEXCEPT;
 	virtual ~TcpServer () QSE_CPP_NOEXCEPT;
 
-	virtual int start (const qse_char_t* addrs) QSE_CPP_NOEXCEPT;
-	virtual int stop () QSE_CPP_NOEXCEPT;
+	virtual int execute (const qse_char_t* addrs) QSE_CPP_NOEXCEPT;
+	virtual int halt () QSE_CPP_NOEXCEPT;
 
 	bool isServing () const QSE_CPP_NOEXCEPT
 	{ 
@@ -57,11 +57,11 @@ public:
 
 	bool isStopRequested () const QSE_CPP_NOEXCEPT
 	{
-		return this->_stop_requested;
+		return this->_halt_requested;
 	}
 	void setStopRequested (bool req) QSE_CPP_NOEXCEPT
 	{
-		this->_stop_requested = req;
+		this->_halt_requested = req;
 	}
 
 	qse_size_t getMaxConnections () const QSE_CPP_NOEXCEPT
@@ -117,7 +117,7 @@ public:
 		Connection (Listener* listener) QSE_CPP_NOEXCEPT: listener(listener), prev_connection(QSE_NULL), next_connection(QSE_NULL), claimed(false), wid(_wid_map_t::WID_INVALID) {}
 
 		int main ();
-		int stop () QSE_CPP_NOEXCEPT;
+		int halt () QSE_CPP_NOEXCEPT;
 
 		Listener* getListener() QSE_CPP_NOEXCEPT { return this->listener; }
 		const Listener* getListener() const QSE_CPP_NOEXCEPT { return this->listener; }
@@ -140,7 +140,7 @@ public:
 
 		QSE::Socket socket;
 		QSE::SocketAddress address;
-		QSE::SpinLock csspl; // spin lock for connection stop 
+		QSE::SpinLock csspl; // spin lock for connection halt 
 	};
 
 private:
@@ -238,7 +238,7 @@ private:
 	ListenerList   _listener_list;
 	ConnectionList _connection_list[2];
 	QSE::SpinLock  _connection_list_spl;
-	bool           _stop_requested;
+	bool           _halt_requested;
 	bool           _server_serving;
 	qse_size_t     _max_connections;
 	qse_size_t     _thread_stack_size;
