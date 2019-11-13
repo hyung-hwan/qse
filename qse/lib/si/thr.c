@@ -183,7 +183,7 @@ static int __create_thread (qse_thr_t* thr)
 	TID tid;
 
 	/* default stack size to 81920(4096 * 20) */
-	tid = _beginthread (__thread_main, NULL, (thr->__stacksize > 0? thr->__stacksize: 81920), thr);
+	tid = _beginthread(__thread_main, NULL, (thr->__stacksize > 0? thr->__stacksize: 81920), thr);
 	if (tid == -1) return -1;
 
 	thr->__handle = tid;

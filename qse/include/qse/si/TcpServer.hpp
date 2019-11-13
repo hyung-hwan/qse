@@ -35,6 +35,7 @@
 #include <qse/Uncopyable.hpp>
 #include <qse/cmn/ErrorGrab.hpp>
 #include <qse/si/mux.h>
+#include <qse/si/log.h>
 
 QSE_BEGIN_NAMESPACE(QSE)
 
@@ -55,11 +56,11 @@ public:
 		return this->_server_serving; 
 	}
 
-	bool isStopRequested () const QSE_CPP_NOEXCEPT
+	bool isHaltRequested () const QSE_CPP_NOEXCEPT
 	{
 		return this->_halt_requested;
 	}
-	void setStopRequested (bool req) QSE_CPP_NOEXCEPT
+	void setHaltRequested (bool req) QSE_CPP_NOEXCEPT
 	{
 		this->_halt_requested = req;
 	}
@@ -117,7 +118,7 @@ public:
 		Connection (Listener* listener) QSE_CPP_NOEXCEPT: listener(listener), prev_connection(QSE_NULL), next_connection(QSE_NULL), claimed(false), wid(_wid_map_t::WID_INVALID) {}
 
 		int main ();
-		int halt () QSE_CPP_NOEXCEPT;
+		int stop () QSE_CPP_NOEXCEPT;
 
 		Listener* getListener() QSE_CPP_NOEXCEPT { return this->listener; }
 		const Listener* getListener() const QSE_CPP_NOEXCEPT { return this->listener; }
@@ -246,7 +247,7 @@ private:
 protected:
 	friend class TcpServer::Connection;
 	virtual int handle_connection (Connection* connection) = 0;
-	virtual void errlogfmt (const qse_char_t* fmt, ...) { /* do nothing. subclasses may override this */ }
+	virtual void logfmt (qse_log_priority_flag_t pri, const qse_char_t* fmt, ...) { /* do nothing. subclasses may override this */ }
 
 private:
 	void delete_all_connections (Connection::State state) QSE_CPP_NOEXCEPT;
@@ -257,7 +258,7 @@ private:
 	int prepare_to_acquire_wid () QSE_CPP_NOEXCEPT;
 	void acquire_wid (Connection* connection) QSE_CPP_NOEXCEPT;
 	void release_wid (Connection* connection) QSE_CPP_NOEXCEPT;
-	void free__wid_map () QSE_CPP_NOEXCEPT;
+	void free_wid_map () QSE_CPP_NOEXCEPT;
 
 	static void dispatch_mux_event (qse_mux_t* mux, const qse_mux_evt_t* evt) QSE_CPP_NOEXCEPT;
 };

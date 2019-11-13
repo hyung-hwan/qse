@@ -58,6 +58,8 @@ int TcpServer::Connection::main ()
 
 	TcpServer* server = this->getServer();
 
+	server->logfmt (QSE_LOG_INFO, QSE_T("closing connection[%d]\n"), (int)this->socket.getHandle());
+
 	server->_connection_list_spl.lock ();
 	this->csspl.lock ();
 	this->socket.close (); 
@@ -72,7 +74,7 @@ int TcpServer::Connection::main ()
 	return n;
 }
 
-int TcpServer::Connection::halt () QSE_CPP_NOEXCEPT
+int TcpServer::Connection::stop () QSE_CPP_NOEXCEPT
 {
 	// the receiver will be notified of the end of 
 	// the connection by the socket's closing.
@@ -114,6 +116,7 @@ void TcpServer::free_all_listeners () QSE_CPP_NOEXCEPT
 		evt.hnd = lp->getHandle();
 		qse_mux_delete (this->_listener_list.mux, &evt);
 
+		this->logfmt (QSE_LOG_INFO, QSE_T("closing listener[%d]\n"), (int)evt.hnd);
 		lp->close ();
 
 		QSE_CPP_DELETE_WITH_MMGR (lp, Listener, this->getMmgr()); // delete lp
@@ -176,7 +179,7 @@ void TcpServer::dispatch_mux_event (qse_mux_t* mux, const qse_mux_evt_t* evt) QS
 		if (server->_max_connections > 0 && server->_max_connections <= server->_connection_list[Connection::LIVE].getSize()) 
 		{
 			// too many connections. accept the connection and close it.
-			server->errlogfmt (QSE_T("too many connections - %zu\n"), server->_connection_list[Connection::LIVE].getSize());
+			server->logfmt (QSE_LOG_ERROR, QSE_T("too many connections - %zu\n"), server->_connection_list[Connection::LIVE].getSize());
 			goto accept_and_drop;
 		}
 
@@ -189,22 +192,22 @@ void TcpServer::dispatch_mux_event (qse_mux_t* mux, const qse_mux_evt_t* evt) QS
 		catch (...) 
 		{
 			// memory alloc failed. accept the connection and close it.
-			server->errlogfmt (QSE_T("unable to instantiate connection\n"));
+			server->logfmt (QSE_LOG_ERROR, QSE_T("unable to instantiate connection\n"));
 			goto accept_and_drop;
 		}
 		if (server->_wid_map.free_first == _wid_map_t::WID_INVALID && server->prepare_to_acquire_wid() <= -1)
 		{
-			server->errlogfmt (QSE_T("unable to assign id to connection\n"));
+			server->logfmt (QSE_LOG_ERROR, QSE_T("unable to assign id to connection\n"));
 			QSE_CPP_DELETE_WITH_MMGR (connection, Connection, server->getMmgr());
 			goto accept_and_drop;
 		}
 
 		if (lsck->accept(&connection->socket, &connection->address, Socket::T_CLOEXEC) <= -1)
 		{
-			server->errlogfmt (QSE_T("unable to accept connection - %hs\n"), strerror(errno));
+			server->logfmt (QSE_LOG_ERROR, QSE_T("unable to accept connection - %hs\n"), strerror(errno));
 			QSE_CPP_DELETE_WITH_MMGR (connection, Connection, server->getMmgr());
 
-			if (server->isStopRequested()) return; /* normal termination requested */
+			if (server->isHaltRequested()) return; /* normal termination requested */
 
 			Socket::ErrorNumber lerr = lsck->getErrorNumber();
 			if (lerr == Socket::E_EINTR || lerr == Socket::E_EAGAIN) return;
@@ -227,7 +230,7 @@ void TcpServer::dispatch_mux_event (qse_mux_t* mux, const qse_mux_evt_t* evt) QS
 	#endif
 		{
 			qse_char_t addrbuf[128];
-			server->errlogfmt (QSE_T("unable to start connection for connection from %s\n"), connection->address.toStrBuf(addrbuf, QSE_COUNTOF(addrbuf)));
+			server->logfmt (QSE_LOG_ERROR, QSE_T("unable to start connection for connection from %s\n"), connection->address.toStrBuf(addrbuf, QSE_COUNTOF(addrbuf)));
 
 			server->_connection_list_spl.lock ();
 			server->_connection_list[Connection::LIVE].remove (connection);
@@ -235,22 +238,25 @@ void TcpServer::dispatch_mux_event (qse_mux_t* mux, const qse_mux_evt_t* evt) QS
 
 			server->release_wid (connection);
 			QSE_CPP_DELETE_WITH_MMGR (connection, Connection, server->getMmgr());
-			return;
 		}
-
+		else
+		{
+			qse_char_t addrbuf[128];
+			server->logfmt (QSE_LOG_INFO, QSE_T("connection[%d] from %s\n"), (int)connection->socket.getHandle(), connection->address.toStrBuf(addrbuf, QSE_COUNTOF(addrbuf)));
+		}
 		return;
 
 	accept_and_drop:
 		Socket s;
 		SocketAddress sa;
+
 		if (lsck->accept(&s, &sa, Socket::T_CLOEXEC) >= 0) 
 		{
 			qse_char_t addrbuf[128];
-			server->errlogfmt (QSE_T("accepted but dropped connection from %s\n"), sa.toStrBuf(addrbuf, QSE_COUNTOF(addrbuf)));
+			server->logfmt (QSE_LOG_ERROR, QSE_T("accepted but dropped connection from %s\n"), sa.toStrBuf(addrbuf, QSE_COUNTOF(addrbuf)));
 			s.close();
 		}
 	}
-
 }
 
 int TcpServer::setup_listeners (const qse_char_t* addrs) QSE_CPP_NOEXCEPT
@@ -319,7 +325,7 @@ int TcpServer::setup_listeners (const qse_char_t* addrs) QSE_CPP_NOEXCEPT
 
 		if (sockaddr.set(addr_ptr, addr_len) <= -1)
 		{
-			this->errlogfmt (QSE_T("unrecognized listener address - %.*js\n"), (int)addr_len, addr_ptr);
+			this->logfmt (QSE_LOG_ERROR, QSE_T("unrecognized listener address - %.*js\n"), (int)addr_len, addr_ptr);
 			goto skip_segment;
 		}
 
@@ -329,14 +335,14 @@ int TcpServer::setup_listeners (const qse_char_t* addrs) QSE_CPP_NOEXCEPT
 		}
 		catch (...) 
 		{
-			this->errlogfmt (QSE_T("unable to instantiate listener\n"));
+			this->logfmt (QSE_LOG_ERROR, QSE_T("unable to instantiate listener\n"));
 			goto skip_segment;
 		}
 
 		if (lsck->open(sockaddr.getFamily(), QSE_SOCK_STREAM, 0, Socket::T_CLOEXEC | Socket::T_NONBLOCK) <= -1)
 		{
 			int xerrno = errno;
-			this->errlogfmt (QSE_T("unable to open listener socket on %.*js on %hs\n"), (int)addr_len, addr_ptr, strerror(xerrno));
+			this->logfmt (QSE_LOG_ERROR, QSE_T("unable to open listener socket on %.*js on %hs\n"), (int)addr_len, addr_ptr, strerror(xerrno));
 			this->setErrorFmt (syserr_to_errnum(xerrno), QSE_T("%hs"), strerror(xerrno));
 			goto skip_segment;
 		}
@@ -347,7 +353,7 @@ int TcpServer::setup_listeners (const qse_char_t* addrs) QSE_CPP_NOEXCEPT
 		if (lsck->bind(sockaddr) <= -1 || lsck->listen() <= -1)
 		{
 			int xerrno = errno;
-			this->errlogfmt (QSE_T("unable to bind/listen on %.*js - %hs\n"), (int)addr_len, addr_ptr, strerror(xerrno));
+			this->logfmt (QSE_LOG_ERROR, QSE_T("unable to bind/listen on %.*js - %hs\n"), (int)addr_len, addr_ptr, strerror(xerrno));
 			this->setErrorFmt (syserr_to_errnum(xerrno), QSE_T("%hs"), strerror(xerrno));
 			goto skip_segment;
 		}
@@ -358,10 +364,11 @@ int TcpServer::setup_listeners (const qse_char_t* addrs) QSE_CPP_NOEXCEPT
 		ev.data = lsck;
 		if (qse_mux_insert(mux, &ev) <= -1)
 		{
-			this->errlogfmt (QSE_T("unable to register listener on %.*js to multiplexer\n"), (int)addr_len, addr_ptr);
+			this->logfmt (QSE_LOG_ERROR, QSE_T("unable to register listener on %.*js to multiplexer\n"), (int)addr_len, addr_ptr);
 			goto skip_segment;
 		}
 
+		this->logfmt (QSE_LOG_INFO, QSE_T("listener[%d] on %.*js\n"), (int)ev.hnd, (int)addr_len, addr_ptr);
 		lsck->address = sockaddr;
 		lsck->next_listener = this->_listener_list.head;
 		this->_listener_list.head = lsck;
@@ -414,20 +421,20 @@ int TcpServer::execute (const qse_char_t* addrs) QSE_CPP_NOEXCEPT
 	int xret = 0;
 
 	this->_server_serving = true;
-	this->setStopRequested (false);
+	this->setHaltRequested (false);
 
 	try 
 	{
 		if (this->setup_listeners(addrs) <= -1)
 		{
 			this->_server_serving = false;
-			this->setStopRequested (false);
+			this->setHaltRequested (false);
 			return -1;
 		}
 
 		mux_xtn_t* mux_xtn = (mux_xtn_t*)qse_mux_getxtn(this->_listener_list.mux);
 
-		while (!this->isStopRequested()) 
+		while (!this->isHaltRequested()) 
 		{
 			int n;
 
@@ -456,17 +463,17 @@ int TcpServer::execute (const qse_char_t* addrs) QSE_CPP_NOEXCEPT
 
 		this->setErrorNumber (E_EEXCEPT);
 		this->_server_serving = false;
-		this->setStopRequested (false);
+		this->setHaltRequested (false);
 		this->free_all_listeners ();
-		this->free__wid_map ();
+		this->free_wid_map ();
 
 		return -1;
 	}
 
 	this->_server_serving = false;
-	this->setStopRequested (false);
+	this->setHaltRequested (false);
 	this->free_all_listeners ();
-	this->free__wid_map ();
+	this->free_wid_map ();
 
 	return xret;
 }
@@ -475,13 +482,13 @@ int TcpServer::halt () QSE_CPP_NOEXCEPT
 {
 	if (this->_server_serving) 
 	{
-		// set stop request before writing "Q" to avoid race condition.
+		// set halt request before writing "Q" to avoid race condition.
 		// after qse_mux_poll() detects activity for "Q" written,
 		// it loops over to another qse_mux_poll(). the stop request
 		// test is done in between. if this looping is faster than
 		// setting stop request after "Q" writing, the second qse_mux_poll()
 		// doesn't see it set to true yet.
-		this->setStopRequested (true);
+		this->setHaltRequested (true);
 
 		this->_listener_list.mux_pipe_spl.lock ();
 		if (this->_listener_list.mux_pipe[1] >= 0)
@@ -597,7 +604,7 @@ void TcpServer::release_wid (Connection* connection) QSE_CPP_NOEXCEPT
 	connection->wid = _wid_map_t::WID_INVALID;
 }
 
-void TcpServer::free__wid_map () QSE_CPP_NOEXCEPT
+void TcpServer::free_wid_map () QSE_CPP_NOEXCEPT
 {
 	if (this->_wid_map.ptr)
 	{
