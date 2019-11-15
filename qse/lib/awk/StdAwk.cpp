@@ -433,7 +433,7 @@ int StdAwk::setioattr (
 		else
 		{
 			qse_awk_flt_t nsec;
-			ioattr->tmout[tmout].sec = (qse_int_t)fv;
+			ioattr->tmout[tmout].sec = (qse_awk_int_t)fv;
 			nsec = fv - ioattr->tmout[tmout].sec;
 			ioattr->tmout[tmout].nsec = QSE_SEC_TO_NSEC(nsec);
 		}
