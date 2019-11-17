@@ -87,6 +87,7 @@ static int mbs_to_wcs (
 #undef cstr_t
 #undef str_sizer_t
 #undef T
+#undef STR_LEN
 #undef strlen
 #undef strncpy
 #undef strxpac
@@ -135,6 +136,7 @@ static int mbs_to_wcs (
 #define cstr_t qse_mcstr_t
 #define str_sizer_t qse_mbs_sizer_t
 #define T(x) QSE_MT(x)
+#define STR_LEN(x) QSE_MBS_LEN(x)
 #define strlen(x) qse_mbslen(x)
 #define strncpy(x,y,z) qse_mbsncpy(x,y,z)
 #define strxpac(x,y) qse_mbsxpac(x,y)
@@ -186,6 +188,7 @@ static int mbs_to_wcs (
 #undef cstr_t
 #undef str_sizer_t
 #undef T
+#undef STR_LEN
 #undef strlen
 #undef strncpy
 #undef strxpac
@@ -234,6 +237,7 @@ static int mbs_to_wcs (
 #define cstr_t qse_wcstr_t
 #define str_sizer_t qse_wcs_sizer_t
 #define T(x) QSE_WT(x)
+#define STR_LEN(x) QSE_WCS_LEN(x)
 #define strlen(x) qse_wcslen(x)
 #define strncpy(x,y,z) qse_wcsncpy(x,y,z)
 #define strxpac(x,y) qse_wcsxpac(x,y)

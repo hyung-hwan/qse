@@ -105,11 +105,7 @@ int str_yield (str_t* str, cstr_t* buf, qse_size_t newcapa)
 		tmp[0] = T('\0');
 	}
 
-	if (buf != QSE_NULL)
-	{
-		buf->ptr = str->val.ptr;
-		buf->len = str->val.len;
-	}
+	if (buf) *buf = str->val;
 
 	str->val.ptr = tmp;
 	str->val.len = 0;
@@ -182,7 +178,7 @@ qse_size_t str_setcapa (str_t* str, qse_size_t capa)
 
 qse_size_t str_getlen (str_t* str)
 {
-	return QSE_MBS_LEN (str);
+	return STR_LEN(str);
 }
 
 qse_size_t str_setlen (str_t* str, qse_size_t len)
@@ -197,8 +193,7 @@ qse_size_t str_setlen (str_t* str, qse_size_t len)
 
 	if (len > str->capa)
 	{
-		if (str_setcapa (str, len) == (qse_size_t)-1) 
-			return (qse_size_t)-1;
+		if (str_setcapa(str, len) == (qse_size_t)-1) return (qse_size_t)-1;
 	}
 
 	while (str->val.len < len) str->val.ptr[str->val.len++] = T(' ');
