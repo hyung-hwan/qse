@@ -129,7 +129,7 @@ int qse_fmtintmaxtowcs (
 		signchar = QSE_WT('+');
 		absvalue = value;
 	}
-	else if (base_and_flags & QSE_FMTINTMAXTOMBS_EMPTYSIGN)
+	else if (base_and_flags & QSE_FMTINTMAXTOWCS_EMPTYSIGN)
 	{
 		signchar = QSE_WT(' ');
 		absvalue = value;
@@ -156,7 +156,7 @@ int qse_fmtuintmaxtowcs (
 	{
 		signchar = QSE_WT('+');
 	}
-	else if (base_and_flags & QSE_FMTINTMAXTOMBS_EMPTYSIGN)
+	else if (base_and_flags & QSE_FMTINTMAXTOWCS_EMPTYSIGN)
 	{
 		signchar = QSE_WT(' ');
 	}
