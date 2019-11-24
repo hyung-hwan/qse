@@ -375,7 +375,7 @@ int qse_wcstoctype (const qse_wchar_t* name, qse_wctype_t* id)
 		mid = left + (right - left) / 2;
 		kwp = &wtab[mid];
 
-		n = qse_wcscmp (name, wtab->name);
+		n = qse_wcscmp(name, kwp->name);
 		if (n > 0) 
 		{
 			/* if left, right, mid were of qse_size_t,
@@ -407,7 +407,7 @@ int qse_wcsntoctype (const qse_wchar_t* name, qse_size_t len, qse_wctype_t* id)
 		mid = left + (right - left) / 2;
 		kwp = &wtab[mid];
 
-		n = qse_wcsxcmp (name, len, kwp->name);
+		n = qse_wcsxcmp(name, len, kwp->name);
 		if (n < 0) 
 		{
 			/* if left, right, mid were of qse_size_t,
@@ -459,7 +459,7 @@ int qse_mbstoctype (const qse_mchar_t* name, qse_mctype_t* id)
 		mid = left + (right - left) / 2;
 		kwp = &mtab[mid];
 
-		n = qse_mbscmp (name, mtab->name);
+		n = qse_mbscmp(name, kwp->name);
 		if (n > 0) 
 		{
 			/* if left, right, mid were of qse_size_t,
@@ -491,7 +491,7 @@ int qse_mbsntoctype (const qse_mchar_t* name, qse_size_t len, qse_mctype_t* id)
 		mid = left + (right - left) / 2;
 		kwp = &mtab[mid];
 
-		n = qse_mbsxcmp (name, len, kwp->name);
+		n = qse_mbsxcmp(name, len, kwp->name);
 		if (n < 0) 
 		{
 			/* if left, right, mid were of qse_size_t,
