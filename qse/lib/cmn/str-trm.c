@@ -57,7 +57,7 @@ qse_mchar_t* qse_mbstrmx (qse_mchar_t* str, int opt)
 		{
 			/* the entire string need to ne deleted */
 			if ((opt & QSE_MBSTRMX_RIGHT) || 
-			    (opt && QSE_MBSTRMX_LEFT)) str[0] = QSE_MT('\0');
+			    (opt & QSE_MBSTRMX_LEFT)) str[0] = QSE_MT('\0');
 		}
 	}
 
@@ -99,7 +99,7 @@ qse_mchar_t* qse_mbsxtrmx (qse_mchar_t* str, qse_size_t* len, int opt)
 		{
 			/* the entire string need to ne deleted */
 			if ((opt & QSE_MBSTRMX_RIGHT) || 
-			    (opt && QSE_MBSTRMX_LEFT)) *len = 0;
+			    (opt & QSE_MBSTRMX_LEFT)) *len = 0;
 		}
 	}
 
@@ -134,9 +134,9 @@ qse_wchar_t* qse_wcstrmx (qse_wchar_t* str, int opt)
 		}
 		else
 		{
-			/* the entire string need to ne deleted */
+			/* the entire string need to be deleted */
 			if ((opt & QSE_WCSTRMX_RIGHT) || 
-			    (opt && QSE_WCSTRMX_LEFT)) str[0] = QSE_MT('\0');
+			    (opt & QSE_WCSTRMX_LEFT)) str[0] = QSE_MT('\0');
 		}
 	}
 
@@ -178,7 +178,7 @@ qse_wchar_t* qse_wcsxtrmx (qse_wchar_t* str, qse_size_t* len, int opt)
 		{
 			/* the entire string need to ne deleted */
 			if ((opt & QSE_WCSTRMX_RIGHT) || 
-			    (opt && QSE_WCSTRMX_LEFT)) *len = 0;
+			    (opt & QSE_WCSTRMX_LEFT)) *len = 0;
 		}
 	}
 
