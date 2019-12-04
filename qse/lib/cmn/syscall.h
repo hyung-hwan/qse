@@ -544,7 +544,7 @@ so it's not practical to define QSE_GETCWD().
 #endif
 #define QSE_DIR DIR
 
-#if defined(HAVE_READDIR64)
+#if !defined(_LP64) && (QSE_SIZEOF_VOID_P<8) && defined(HAVE_READDIR64)
 	typedef struct dirent64 qse_dirent_t;
 #	define QSE_READDIR(x) readdir64(x)
 #else
