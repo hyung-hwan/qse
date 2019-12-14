@@ -437,7 +437,7 @@ static global_t gtab[] =
 
 #define SETERR_ARG(awk,code,ep,el) SETERR_ARG_LOC(awk,code,ep,el,QSE_NULL)
 
-#define ADJERR_LOC(rtx,l) do { (awk)->errinf.loc = *(l); } while (0)
+#define ADJERR_LOC(awk,l) do { (awk)->errinf.loc = *(l); } while (0)
 
 static QSE_INLINE int is_plain_var (qse_awk_nde_t* nde)
 {
