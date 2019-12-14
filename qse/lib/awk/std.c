@@ -2416,6 +2416,7 @@ static ioattr_t* find_or_make_ioattr (
 		if (pair == QSE_NULL)
 		{
 			qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
+			return QSE_NULL;
 		}
 	}
 
