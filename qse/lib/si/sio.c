@@ -376,6 +376,7 @@ qse_ssize_t qse_sio_getmbs (qse_sio_t* sio, qse_mchar_t* buf, qse_size_t size)
 	{
 		if (sio->errnum == QSE_SIO_ENOERR)
 			sio->errnum = tio_errnum_to_sio_errnum (&sio->tio.io);
+		UNLOCK_INPUT (sio);
 		return -1;
 	}
 	UNLOCK_INPUT (sio);
@@ -420,6 +421,7 @@ qse_ssize_t qse_sio_getwcs (qse_sio_t* sio, qse_wchar_t* buf, qse_size_t size)
 	{
 		if (sio->errnum == QSE_SIO_ENOERR)
 			sio->errnum = tio_errnum_to_sio_errnum (&sio->tio.io);
+		UNLOCK_INPUT (sio);
 		return -1;
 	}
 	UNLOCK_INPUT (sio);
@@ -518,7 +520,11 @@ qse_ssize_t qse_sio_putmbs (qse_sio_t* sio, const qse_mchar_t* str)
 		LOCK_OUTPUT (sio);
 		for (n = 0; n < QSE_TYPE_MAX(qse_ssize_t) && str[n] != QSE_MT('\0'); n++)
 		{
-			if ((n = putmb_no_mutex(sio, str[n])) <= -1) return n;
+			if ((n = putmb_no_mutex(sio, str[n])) <= -1) 
+			{
+				UNLOCK_OUTPUT (sio);
+				return n;
+			}
 		}
 		UNLOCK_OUTPUT (sio);
 		return n;
@@ -550,7 +556,11 @@ qse_ssize_t qse_sio_putmbsn (qse_sio_t* sio, const qse_mchar_t* str, qse_size_t 
 		LOCK_OUTPUT (sio);
 		for (n = 0; n < size; n++)
 		{
-			if (putmb_no_mutex(sio, str[n]) <= -1) return -1;
+			if (putmb_no_mutex(sio, str[n]) <= -1) 
+			{
+				UNLOCK_OUTPUT (sio);
+				return -1;
+			}
 		}
 		UNLOCK_OUTPUT (sio);
 		return n;
@@ -580,13 +590,19 @@ qse_ssize_t qse_sio_putwcs (qse_sio_t* sio, const qse_wchar_t* str)
 		DWORD count, left;
 		const qse_wchar_t* cur;
 
-		if (qse_sio_flush (sio) <= -1) return -1; /* can't do buffering */
+		LOCK_OUTPUT (sio);
+		if (qse_sio_flush (sio) <= -1)
+		{
+			return -1; /* can't do buffering */
+			UNLOCK_OUTPUT (sio);
+		}
 
 		for (cur = str, left = qse_wcslen(str); left > 0; cur += count, left -= count)
 		{
 			if (WriteConsoleW(sio->file.handle, cur, left, &count, QSE_NULL) == FALSE) 
 			{
 				sio->errnum = QSE_SIO_ESYSERR;
+				UNLOCK_OUTPUT (sio);
 				return -1;
 			}
 			if (count == 0) break;
@@ -594,9 +610,11 @@ qse_ssize_t qse_sio_putwcs (qse_sio_t* sio, const qse_wchar_t* str)
 			if (count > left) 
 			{
 				sio->errnum = QSE_SIO_ESYSERR;
+				UNLOCK_OUTPUT (sio);
 				return -1;
 			}
 		}
+		UNLOCK_OUTPUT (sio);
 		return cur - str;
 	}
 #elif defined(__OS2__)
@@ -605,7 +623,11 @@ qse_ssize_t qse_sio_putwcs (qse_sio_t* sio, const qse_wchar_t* str)
 		LOCK_OUTPUT (sio);
 		for (n = 0; n < QSE_TYPE_MAX(qse_ssize_t) && str[n] != QSE_WT('\0'); n++)
 		{
-			if (putwc_no_mutex(sio, str[n]) <= -1) return -1;
+			if (putwc_no_mutex(sio, str[n]) <= -1) 
+			{
+				UNLOCK_OUTPUT (sio);
+				return -1;
+			}
 		}
 		UNLOCK_OUTPUT (sio);
 		return n;
@@ -646,13 +668,19 @@ qse_ssize_t qse_sio_putwcsn (
 		DWORD count, left;
 		const qse_wchar_t* cur;
 
-		if (qse_sio_flush (sio) <= -1) return -1; /* can't do buffering */
+		LOCK_OUTPUT (sio);
+		if (qse_sio_flush (sio) <= -1)
+		{
+			UNLOCK_OUTPUT (sio);
+			return -1; /* can't do buffering */
+		}
 
 		for (cur = str, left = size; left > 0; cur += count, left -= count)
 		{
 			if (WriteConsoleW(sio->file.handle, cur, left, &count, QSE_NULL) == FALSE) 
 			{
 				sio->errnum = QSE_SIO_ESYSERR;
+				UNLOCK_OUTPUT (sio);
 				return -1;
 			}
 			if (count == 0) break;
@@ -668,9 +696,11 @@ qse_ssize_t qse_sio_putwcsn (
 			if (count > left) 
 			{
 				sio->errnum = QSE_SIO_ESYSERR;
+				UNLOCK_OUTPUT (sio);
 				return -1;
 			}
 		}
+		UNLOCK_OUTPUT (sio);
 		return cur - str;
 	}
 
@@ -681,7 +711,11 @@ qse_ssize_t qse_sio_putwcsn (
 		LOCK_OUTPUT (sio);
 		for (n = 0; n < size; n++)
 		{
-			if (putwc_no_mutex (sio, str[n]) <= -1) return -1;
+			if (putwc_no_mutex(sio, str[n]) <= -1) 
+			{
+				UNLOCK_OUTPUT (sio);
+				return -1;
+			}
 		}
 		UNLOCK_OUTPUT (sio);
 		return n;
