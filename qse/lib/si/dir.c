@@ -883,10 +883,10 @@ int qse_dir_read (qse_dir_t* dir, qse_dir_ent_t* ent)
 		int x;
 		void* name;
 
-		x = read_dir_to_buf (dir, &name);
+		x = read_dir_to_buf(dir, &name);
 		if (x >= 1)
 		{
-			QSE_MEMSET (ent, 0, QSE_SIZEOF(ent));
+			QSE_MEMSET (ent, 0, QSE_SIZEOF(*ent));
 			ent->name = name;
 		}
 
