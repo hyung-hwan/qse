@@ -801,8 +801,7 @@ static int begin_include (qse_awk_t* awk, int once)
 	/* store the include-file name into a list
 	 * and this list is not deleted after qse_awk_parse.
 	 * the errinfo.loc.file can point to a include_oncestring here. */
-	link = (qse_link_t*)qse_awk_callocmem(awk, QSE_SIZEOF(*link) + 
-		QSE_SIZEOF(*arg) + QSE_SIZEOF(qse_char_t) * (QSE_STR_LEN(awk->tok.name) + 1));
+	link = (qse_link_t*)qse_awk_callocmem(awk, QSE_SIZEOF(*link) + QSE_SIZEOF(qse_char_t) * (QSE_STR_LEN(awk->tok.name) + 1));
 	if (link == QSE_NULL)
 	{
 		ADJERR_LOC (awk, &awk->ptok.loc);
@@ -812,7 +811,7 @@ static int begin_include (qse_awk_t* awk, int once)
 	link->link = awk->sio_names;
 	awk->sio_names = link;
 
-	arg = (qse_awk_sio_arg_t*)qse_awk_callocmem(awk, QSE_SIZEOF(*awk));
+	arg = (qse_awk_sio_arg_t*)qse_awk_callocmem(awk, QSE_SIZEOF(*arg));
 	if (arg == QSE_NULL)
 	{
 		ADJERR_LOC (awk, &awk->ptok.loc);
