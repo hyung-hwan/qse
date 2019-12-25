@@ -2381,7 +2381,7 @@ static int fnc_writelog (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 			if (!mctx->log.dmsgbuf) mctx->log.dmsgbuf = qse_mbs_open(qse_awk_rtx_getmmgr(rtx), 0, 0);
 			if (!mctx->log.dmsgbuf) goto done;
 
-			if (qse_gettime(&now) || qse_localtime(&now, &cnow) <= -1) goto done;
+			if (qse_gettime(&now) <= -1 || qse_localtime(&now, &cnow) <= -1) goto done;
 
 			if (qse_mbs_fmt (
 				mctx->log.dmsgbuf, QSE_MT("<%d>%s %02d %02d:%02d:%02d "), 
