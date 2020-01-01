@@ -773,6 +773,8 @@ int qse_awk_buildrex (
 	qse_tre_t* itre = QSE_NULL;
 	int opt = QSE_TRE_EXTENDED;
 
+	if (!(awk->opt.trait & QSE_AWK_REXBOUND)) opt |= QSE_TRE_NOBOUND;
+
 	if (code)
 	{
 		tre = qse_tre_open(qse_awk_getmmgr(awk), 0);
@@ -781,8 +783,6 @@ int qse_awk_buildrex (
 			*errnum = QSE_AWK_ENOMEM;
 			return -1;
 		}
-
-		if (!(awk->opt.trait & QSE_AWK_REXBOUND)) opt |= QSE_TRE_NOBOUND;
 
 		if (qse_tre_compx (tre, ptn, len, QSE_NULL, opt) <= -1)
 		{
