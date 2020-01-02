@@ -559,7 +559,7 @@ qse_size_t qse_ip6adtombs (const qse_ip6ad_t* ipad, qse_mchar_t* buf, qse_size_t
 
 		tp += qse_fmtuintmaxtombs (
 			tp, QSE_COUNTOF(tmp) - (tp - tmp), 
-			words[i], 16, 0, QSE_WT('\0'), QSE_NULL);
+			words[i], 16, 0, QSE_MT('\0'), QSE_NULL);
 	}
 
 	/* Was it a trailing run of 0x00's? */
