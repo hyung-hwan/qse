@@ -1819,6 +1819,7 @@ static int fnc_getnwifcfg (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	qse_awk_rtx_valtostr_out_t out;
 	int ret = -1;
 
+	QSE_MEMSET (&cfg, 0, QSE_SIZEOF(cfg));
 	out.type = QSE_AWK_RTX_VALTOSTR_CPLCPY;
 	out.u.cplcpy.ptr = cfg.name;
 	out.u.cplcpy.len = QSE_COUNTOF(cfg.name);
