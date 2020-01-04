@@ -788,13 +788,13 @@ static int fnc_escape_string (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 
 done:
 	if (take_rtx_err) set_error_on_sql_list (rtx, sql_list, QSE_NULL);
-	if (take_rtx_err) set_error_on_sql_list (rtx, sql_list, QSE_NULL);
 	if (ebuf) qse_awk_rtx_freemem (rtx, ebuf);
 	if (qstr) qse_awk_rtx_freevalmbs (rtx, a1, qstr);
 	qse_awk_rtx_setretval (rtx, qse_awk_rtx_makeintval(rtx, ret));
 	return 0;
 
 oops:
+	if (take_rtx_err) set_error_on_sql_list (rtx, sql_list, QSE_NULL);
 	if (ebuf) qse_awk_rtx_freemem (rtx, ebuf);
 	if (qstr) qse_awk_rtx_freevalmbs (rtx, a1, qstr);
 	return -1;
