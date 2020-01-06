@@ -1001,6 +1001,52 @@ static int fnc_readdir (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	return 0;
 }
 
+static int fnc_resetdir (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	sys_list_t* sys_list;
+	sys_node_t* sys_node;
+	qse_awk_int_t rx = RC_ERROR;
+
+	sys_list = rtx_to_sys_list(rtx, fi);
+	sys_node = get_sys_list_node_with_arg(rtx, sys_list, qse_awk_rtx_getarg(rtx, 0));
+
+	if (sys_node && sys_node->ctx.type == SYS_NODE_DATA_DIR)
+	{
+		qse_char_t* path;
+		qse_awk_val_t* a1;
+
+		a1 = qse_awk_rtx_getarg(rtx, 1);
+		path = qse_awk_rtx_getvalstr(rtx, a1, QSE_NULL);
+		if (path)
+		{
+			if (qse_dir_reset(sys_node->ctx.u.dir, path) <= -1) 
+			{
+				rx = direrr_to_rc(qse_dir_geterrnum(sys_node->ctx.u.dir));
+				set_errmsg_on_sys_list (rtx, sys_list, rc_to_errstr(rx));
+			}
+			else
+			{
+				rx = 0; /* success */
+				qse_awk_rtx_freevalstr (rtx, a1, path);
+			}
+		}
+		else
+		{
+			rx = awkerr_to_rc(qse_awk_rtx_geterrnum(rtx));
+			set_errmsg_on_sys_list (rtx, sys_list, rc_to_errstr(rx));
+		}
+	}
+	else
+	{
+		rx = RC_EINVAL;
+		set_errmsg_on_sys_list (rtx, sys_list, rc_to_errstr(rx));
+	}
+
+	/* no error check for qse_awk_rtx_makeintval() here since ret 
+	 * is 0 or -1. it will never fail for those numbers */
+	qse_awk_rtx_setretval (rtx, qse_awk_rtx_makeintval(rtx, rx));
+	return 0;
+}
 /* ------------------------------------------------------------------------ */
 
 static int fnc_fork (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
@@ -2483,6 +2529,7 @@ static fnctab_t fnctab[] =
 	{ QSE_T("pipe"),        { { 2, 3, QSE_T("rrv") }, fnc_pipe,        0  } },
 	{ QSE_T("read"),        { { 2, 3, QSE_T("vrv") }, fnc_read,        0  } },
 	{ QSE_T("readdir"),     { { 2, 2, QSE_T("vr")  }, fnc_readdir,     0  } },
+	{ QSE_T("resetdir"),    { { 2, 2, QSE_NULL     }, fnc_resetdir,    0  } },
 	{ QSE_T("settime"),     { { 1, 1, QSE_NULL     }, fnc_settime,     0  } },
 	{ QSE_T("sleep"),       { { 1, 1, QSE_NULL     }, fnc_sleep,       0  } },
 	{ QSE_T("strftime"),    { { 2, 3, QSE_NULL     }, fnc_strftime,    0  } },
