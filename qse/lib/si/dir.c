@@ -430,6 +430,8 @@ static int reset_to_path (qse_dir_t* dir, const qse_char_t* path)
 #if defined(_WIN32)
 	/* ------------------------------------------------------------------- */
 	const qse_char_t* tptr;
+	HANDLE dh;
+	WIN32_FIND_DATA wfd;
 
 	dir->status &= ~STATUS_DONE;
 	dir->status &= ~STATUS_DONE_ERR;
@@ -438,7 +440,7 @@ static int reset_to_path (qse_dir_t* dir, const qse_char_t* path)
 	{
 		qse_mchar_t* mptr;
 
-		mptr = make_mbsdos_path (dir, (const qse_mchar_t*)path);
+		mptr = make_mbsdos_path(dir, (const qse_mchar_t*)path);
 		if (mptr == QSE_NULL) return -1;
 
 	#if defined(QSE_CHAR_IS_MCHAR)
@@ -463,13 +465,17 @@ static int reset_to_path (qse_dir_t* dir, const qse_char_t* path)
 	}
 	if (tptr == QSE_NULL) return -1;
 
-	dir->h = FindFirstFile (tptr, &dir->wfd);
-	if (dir->h == INVALID_HANDLE_VALUE) 
+	dh = FindFirstFile(tptr, &wfd);
+	if (dh == INVALID_HANDLE_VALUE) 
 	{
 		dir->errnum = syserr_to_errnum (GetLastError());
 		return -1;
 	}
 
+	close_dir_safely (dir);
+
+	dir->h = dh;
+	dir->wfd = wfd;
 	return 0;
 	/* ------------------------------------------------------------------- */
 
@@ -478,9 +484,13 @@ static int reset_to_path (qse_dir_t* dir, const qse_char_t* path)
 	/* ------------------------------------------------------------------- */
 	APIRET rc;
 	const qse_mchar_t* mptr;
-
-	dir->h = HDIR_CREATE;
-	dir->count = 1;
+	HDIR h = HDIR_CREATE;
+	#if defined(FIL_STANDARDL)
+	FILEFINDBUF3L ffb = { 0 };
+	#else
+	FILEFINDBUF3 ffb = { 0 };
+	#endif
+	ULONG count = 1;
 
 	if (dir->flags & QSE_DIR_MBSPATH)
 	{
@@ -499,11 +509,11 @@ static int reset_to_path (qse_dir_t* dir, const qse_char_t* path)
 
 	rc = DosFindFirst (
 		mptr,
-		&dir->h, 
+		&h, 
 		FILE_DIRECTORY | FILE_READONLY,
-		&dir->ffb,
+		&ffb,
 		QSE_SIZEOF(dir->ffb),
-		&dir->count,
+		&count,
 	#if defined(FIL_STANDARDL) 
 		FIL_STANDARDL
 	#else
@@ -517,6 +527,11 @@ static int reset_to_path (qse_dir_t* dir, const qse_char_t* path)
 		return -1;
 	}
 
+	close_dir_safely (dir);
+
+	dir->h = h;
+	dir->ffb = ffb;
+	dir->count = count;
 	dir->status |= STATUS_OPENED;
 	return 0;
 	/* ------------------------------------------------------------------- */
@@ -526,6 +541,7 @@ static int reset_to_path (qse_dir_t* dir, const qse_char_t* path)
 	/* ------------------------------------------------------------------- */
 	unsigned int rc;
 	const qse_mchar_t* mptr;
+	struct find_t f;
 
 	dir->status &= ~STATUS_DONE;
 	dir->status &= ~STATUS_DONE_ERR;
@@ -546,13 +562,16 @@ static int reset_to_path (qse_dir_t* dir, const qse_char_t* path)
 	}
 	if (mptr == QSE_NULL) return -1;
 
-	rc = _dos_findfirst(mptr, _A_NORMAL | _A_SUBDIR, &dir->f);
+	rc = _dos_findfirst(mptr, _A_NORMAL | _A_SUBDIR, &f);
 	if (rc != 0) 
 	{
 		dir->errnum = syserr_to_errnum(errno);
 		return -1;
 	}
 
+	close_dir_safely (dir);
+
+	dir->f = f;
 	dir->status |= STATUS_OPENED;
 	return 0;
 	/* ------------------------------------------------------------------- */
@@ -592,6 +611,8 @@ static int reset_to_path (qse_dir_t* dir, const qse_char_t* path)
 		return -1;
 	}
 
+	close_dir_safely (dir);
+
 	dir->dp = dp;
 	return 0;
 #endif 
@@ -599,8 +620,7 @@ static int reset_to_path (qse_dir_t* dir, const qse_char_t* path)
 
 int qse_dir_reset (qse_dir_t* dir, const qse_char_t* path)
 {
-	close_dir_safely (dir);
-	if (reset_to_path (dir, path) <= -1) return -1;
+	if (reset_to_path(dir, path) <= -1) return -1;
 
 	if (dir->flags & QSE_DIR_SORT)
 	{
@@ -631,7 +651,7 @@ static int read_dir_to_buf (qse_dir_t* dir, void** name)
 		/* skip . and .. */
 		while (IS_CURDIR(dir->wfd.cFileName) || IS_PREVDIR(dir->wfd.cFileName))
 		{
-			if (FindNextFile (dir->h, &dir->wfd) == FALSE) 
+			if (FindNextFile(dir->h, &dir->wfd) == FALSE) 
 			{
 				DWORD x = GetLastError();
 				if (x == ERROR_NO_MORE_FILES) 
@@ -653,9 +673,9 @@ static int read_dir_to_buf (qse_dir_t* dir, void** name)
 	if (dir->flags & QSE_DIR_MBSPATH)
 	{
 	#if defined(QSE_CHAR_IS_MCHAR)
-		if (mbs_to_mbuf (dir, dir->wfd.cFileName, &dir->mbuf) == QSE_NULL) return -1;
+		if (mbs_to_mbuf(dir, dir->wfd.cFileName, &dir->mbuf) == QSE_NULL) return -1;
 	#else
-		if (wcs_to_mbuf (dir, dir->wfd.cFileName, &dir->mbuf) == QSE_NULL) return -1;
+		if (wcs_to_mbuf(dir, dir->wfd.cFileName, &dir->mbuf) == QSE_NULL) return -1;
 	#endif
 		*name = QSE_MBS_PTR(&dir->mbuf);
 	}
