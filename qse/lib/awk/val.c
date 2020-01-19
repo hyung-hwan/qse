@@ -50,7 +50,6 @@ qse_awk_val_t* qse_get_awk_nil_val (void)
 int qse_awk_rtx_isnilval (qse_awk_rtx_t* rtx, qse_awk_val_t* val)
 {
 	return val == (qse_awk_val_t*)&awk_nil || (QSE_AWK_VTR_IS_POINTER(val) && val->v_type == QSE_AWK_VAL_NIL);
-
 }
 
 qse_awk_val_t* qse_awk_rtx_makenilval (qse_awk_rtx_t* rtx)
