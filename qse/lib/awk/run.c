@@ -2505,71 +2505,26 @@ static int run_nextoutfile (qse_awk_rtx_t* rtx, qse_awk_nde_nextfile_t* nde)
 
 static int run_nextfile (qse_awk_rtx_t* rtx, qse_awk_nde_nextfile_t* nde)
 {
-	return (nde->out)? 
-		run_nextoutfile (rtx, nde): 
-		run_nextinfile (rtx, nde);
+	return (nde->out)?  run_nextoutfile(rtx, nde): run_nextinfile(rtx, nde);
 }
 
-static int delete_indexed (
-	qse_awk_rtx_t* rtx, qse_htb_t* map, qse_awk_nde_var_t* var)
+static int delete_indexed (qse_awk_rtx_t* rtx, qse_htb_t* map, qse_awk_nde_var_t* var)
 {
-	qse_awk_val_t* idx;
+	qse_char_t* iptr;
+	qse_size_t ilen;
+	qse_char_t idxbuf[IDXBUFSIZE];
 
 	QSE_ASSERT (var->idx != QSE_NULL);
 
-	idx = eval_expression (rtx, var->idx);
-	if (idx == QSE_NULL) return -1;
+	/* delete x["abc"];
+	 * delete x[20,"abc"]; */
+	ilen = QSE_COUNTOF(idxbuf);
+	iptr = idxnde_to_str(rtx, var->idx, idxbuf, &ilen);
+	if (!iptr) return -1;
 
-	qse_awk_rtx_refupval (rtx, idx);
+	qse_htb_delete (map, iptr, ilen);
 
-	if (QSE_AWK_RTX_GETVALTYPE (rtx, idx) == QSE_AWK_VAL_STR)
-	{
-		/* delete x["abc"] */
-
-		qse_htb_delete (
-			map, 
-			((qse_awk_val_str_t*)idx)->val.ptr,
-			((qse_awk_val_str_t*)idx)->val.len
-		);
-		qse_awk_rtx_refdownval (rtx, idx);
-	}
-	else
-	{
-		/* delete x[20] */
-		qse_char_t buf[IDXBUFSIZE];
-		qse_awk_rtx_valtostr_out_t out;
-
-		/* try with a fixed-size buffer */
-		out.type = QSE_AWK_RTX_VALTOSTR_CPLCPY;
-		out.u.cplcpy.ptr = buf;
-		out.u.cplcpy.len = QSE_COUNTOF(buf);
-		if (qse_awk_rtx_valtostr (rtx, idx, &out) <= -1)
-		{
-			int n;
-
-			/* retry it in dynamic mode */
-			out.type = QSE_AWK_RTX_VALTOSTR_CPLDUP;
-			n = qse_awk_rtx_valtostr (rtx, idx, &out);
-			qse_awk_rtx_refdownval (rtx, idx);
-			if (n <= -1)
-			{
-				/* change the error line */
-				ADJERR_LOC (rtx, &var->loc);
-				return -1;
-			}
-			else
-			{
-				qse_htb_delete (map, out.u.cpldup.ptr, out.u.cpldup.len);
-				qse_awk_rtx_freemem (rtx, out.u.cpldup.ptr);
-			}
-		}
-		else 
-		{
-			qse_awk_rtx_refdownval (rtx, idx);
-			qse_htb_delete (map, out.u.cplcpy.ptr, out.u.cplcpy.len);
-		}
-	}
-
+	if (iptr != idxbuf) qse_awk_rtx_freemem (rtx, iptr);
 	return 0;
 }
 
