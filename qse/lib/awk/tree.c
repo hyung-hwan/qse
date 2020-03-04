@@ -86,8 +86,7 @@ static const qse_char_t* unrop_str[] =
 	QSE_T("+"),
 	QSE_T("-"),
 	QSE_T("!"),
-	QSE_T("~~"),
-	QSE_T("`")
+	QSE_T("~")
 };
 
 static const qse_char_t* incop_str[] =

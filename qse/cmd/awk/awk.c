@@ -183,8 +183,7 @@ static void unset_intr_run (void)
 #endif
 }
 
-static qse_htb_walk_t print_awk_value (
-	qse_htb_t* map, qse_htb_pair_t* pair, void* arg)
+static qse_htb_walk_t print_awk_value (qse_htb_t* map, qse_htb_pair_t* pair, void* arg)
 {
 	qse_awk_rtx_t* rtx = (qse_awk_rtx_t*)arg;
 	qse_char_t* str;
@@ -848,19 +847,28 @@ static void print_rtxerr (qse_awk_rtx_t* rtx)
 	);
 }
 
+struct add_global_ctx_t
+{
+	qse_awk_t* awk;
+	int fail;
+};
+
 qse_htb_walk_t add_global (qse_htb_t* map, qse_htb_pair_t* pair, void* arg)
 {
-	qse_awk_t* awk = (qse_awk_t*)arg;
+	struct add_global_ctx_t* ctx = (struct add_global_ctx_t*)arg;
 	struct gvmv_t* gvmv = (struct gvmv_t*)QSE_HTB_VPTR(pair);
 
 	/* the key was inserted to the table with a null at the end
 	 * and the key length was even incremetned for that.
 	 * so i can pass the pointer without other adjustments. */
-	gvmv->idx = qse_awk_addgbl (awk, QSE_HTB_KPTR(pair));
-	if (gvmv->idx <= -1) return QSE_HTB_WALK_STOP;
+	gvmv->idx = qse_awk_addgbl(ctx->awk, QSE_HTB_KPTR(pair));
+	if (gvmv->idx <= -1) 
+	{
+		ctx->fail = 1;
+		return QSE_HTB_WALK_STOP;
+	}
 	return QSE_HTB_WALK_FORWARD;
 }
-
 
 static void* xma_alloc (qse_mmgr_t* mmgr, qse_size_t size)
 {
@@ -940,6 +948,7 @@ static int awk_main (int argc, qse_char_t* argv[])
 	qse_awk_val_t* retv;
 	int i;
 	struct arg_t arg;
+	struct add_global_ctx_t agctx;
 	int ret = -1;
 
 #if defined(ENABLE_CALLBACK)
@@ -1021,16 +1030,16 @@ static int awk_main (int argc, qse_char_t* argv[])
 		qse_awk_setopt (awk, QSE_AWK_DEPTH_INCLUDE, &tmp);
 	}
 
-	qse_awk_seterrnum (awk, QSE_AWK_ENOERR, QSE_NULL);
-	qse_htb_walk (arg.gvm, add_global, awk);
-	if (qse_awk_geterrnum(awk) != QSE_AWK_ENOERR)
+	agctx.awk = awk;
+	agctx.fail = 0;
+	qse_htb_walk (arg.gvm, add_global, &agctx);
+	if (agctx.fail)
 	{
 		print_awkerr (awk);
 		goto oops;
 	}
 	
-	if (qse_awk_parsestd (awk, arg.psin,
-		((arg.osf == QSE_NULL)? QSE_NULL: &psout)) <= -1)
+	if (qse_awk_parsestd(awk, arg.psin, ((arg.osf == QSE_NULL)? QSE_NULL: &psout)) <= -1)
 	{
 		print_awkerr (awk);
 		goto oops;
