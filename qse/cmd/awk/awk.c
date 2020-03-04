@@ -218,18 +218,28 @@ static qse_htb_walk_t print_awk_value (qse_htb_t* map, qse_htb_pair_t* pair, voi
 	return QSE_HTB_WALK_FORWARD;
 }
 
+struct set_global_ctx_t
+{
+	qse_awk_rtx_t* rtx;
+	int fail;
+};
+
 static qse_htb_walk_t set_global (qse_htb_t* map, qse_htb_pair_t* pair, void* arg)
 {
 	qse_awk_val_t* v;
-	qse_awk_rtx_t* rtx = (qse_awk_rtx_t*)arg;
+	struct set_global_ctx_t* ctx = (struct set_global_ctx_t*)arg;
 	struct gvmv_t* gvmv = (struct gvmv_t*)QSE_HTB_VPTR(pair);
 
-	v = qse_awk_rtx_makenstrvalwithcstr(rtx, &gvmv->str);
-	if (v == QSE_NULL) return QSE_HTB_WALK_STOP;
+	v = qse_awk_rtx_makenstrvalwithcstr(ctx->rtx, &gvmv->str);
+	if (v == QSE_NULL) 
+	{
+		ctx->fail = 1;
+		return QSE_HTB_WALK_STOP;
+	}
 
-	qse_awk_rtx_refupval (rtx, v);
-	qse_awk_rtx_setgbl (rtx, gvmv->idx, v);
-	qse_awk_rtx_refdownval (rtx, v);
+	qse_awk_rtx_refupval (ctx->rtx, v);
+	qse_awk_rtx_setgbl (ctx->rtx, gvmv->idx, v);
+	qse_awk_rtx_refdownval (ctx->rtx, v);
 
 	return QSE_HTB_WALK_FORWARD;
 }
@@ -254,9 +264,11 @@ static int apply_fs_and_gvm (qse_awk_rtx_t* rtx, struct arg_t* arg)
 	{
 		/* set the value of user-defined global variables 
 		 * to a runtime context */
-		qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOERR, QSE_NULL);
-		qse_htb_walk (arg->gvm, set_global, rtx);
-		if (qse_awk_rtx_geterrnum(rtx) != QSE_AWK_ENOERR) return -1;
+		struct set_global_ctx_t ctx;
+		ctx.fail = 0;
+		ctx.rtx = rtx;
+		qse_htb_walk (arg->gvm, set_global, &ctx);
+		if (ctx.fail) return -1;
 	}
 
 	return 0;
