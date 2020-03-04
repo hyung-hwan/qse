@@ -75,7 +75,7 @@ enum tok_t
 	TOK_LT,
 	TOK_GE,
 	TOK_GT,
-	TOK_MA,   /* ~ - match */
+	TOK_TILDE,   /* ~ - match or unary bitwise negation*/
 	TOK_NM,   /* !~ -  not match */
 	TOK_LNOT, /* ! - logical negation */
 	TOK_PLUS,
@@ -91,7 +91,6 @@ enum tok_t
 	TOK_BOR,
 	TOK_BXOR, /* ^^ - bitwise-xor */
 	TOK_BAND,
-	TOK_BNOT, /* ~~ - used for unary bitwise-not */
 	TOK_RS,
 	TOK_LS,
 	TOK_IN,
@@ -3993,7 +3992,7 @@ static qse_awk_nde_t* parse_regex_match (qse_awk_t* awk, const qse_awk_loc_t* xl
 {
 	static binmap_t map[] =
 	{
-		{ TOK_MA,  QSE_AWK_BINOP_MA },
+		{ TOK_TILDE,  QSE_AWK_BINOP_MA },
 		{ TOK_NM,  QSE_AWK_BINOP_NM },
 		{ TOK_EOF, 0 },
 	};
@@ -4096,7 +4095,7 @@ static qse_awk_nde_t* parse_concat (qse_awk_t* awk, const qse_awk_loc_t* xloc)
 			if (MATCH(awk,TOK_LPAREN) || MATCH(awk,TOK_DOLLAR) ||
 			   /* unary operators */
 			   MATCH(awk,TOK_PLUS) || MATCH(awk,TOK_MINUS) ||
-			   MATCH(awk,TOK_LNOT) || MATCH(awk,TOK_BNOT) || 
+			   MATCH(awk,TOK_LNOT) || /*MATCH(awk,TOK_TILDE) ||*/
 			   /* increment operators */
 			   MATCH(awk,TOK_PLUSPLUS) || MATCH(awk,TOK_MINUSMINUS) ||
 			   ((awk->opt.trait & QSE_AWK_TOLERANT) && 
@@ -4166,7 +4165,7 @@ static qse_awk_nde_t* parse_unary (qse_awk_t* awk, const qse_awk_loc_t* xloc)
 	opcode = (MATCH(awk,TOK_PLUS))?  QSE_AWK_UNROP_PLUS:
 	         (MATCH(awk,TOK_MINUS))? QSE_AWK_UNROP_MINUS:
 	         (MATCH(awk,TOK_LNOT))?  QSE_AWK_UNROP_LNOT:
-	         (MATCH(awk,TOK_BNOT))?  QSE_AWK_UNROP_BNOT: -1;
+	         (MATCH(awk,TOK_TILDE))?  QSE_AWK_UNROP_BNOT: -1;
 
 	/*if (opcode <= -1) return parse_increment (awk);*/
 	if (opcode <= -1) return parse_exponent (awk, xloc);
@@ -4313,7 +4312,7 @@ static qse_awk_nde_t* parse_unary_exp (qse_awk_t* awk, const qse_awk_loc_t* xloc
 	opcode = (MATCH(awk,TOK_PLUS))?  QSE_AWK_UNROP_PLUS:
 	         (MATCH(awk,TOK_MINUS))? QSE_AWK_UNROP_MINUS:
 	         (MATCH(awk,TOK_LNOT))?  QSE_AWK_UNROP_LNOT:
-	         (MATCH(awk,TOK_BNOT))?  QSE_AWK_UNROP_BNOT: -1;
+	         (MATCH(awk,TOK_TILDE))?  QSE_AWK_UNROP_BNOT: -1;
 
 	if (opcode <= -1) return parse_increment (awk, xloc);
 
@@ -6333,8 +6332,7 @@ static int get_symbols (qse_awk_t* awk, qse_cint_t c, qse_awk_tok_t* tok)
 		{ QSE_T("%%"),  2, TOK_CONCAT,       0 },
 		{ QSE_T("%="),  2, TOK_MOD_ASSN,     0 },
 		{ QSE_T("%"),   1, TOK_MOD,          0 },
-		{ QSE_T("~~"),  2, TOK_BNOT,         0 },
-		{ QSE_T("~"),   1, TOK_MA,           0 },
+		{ QSE_T("~"),   1, TOK_TILDE,        0 },
 		{ QSE_T("("),   1, TOK_LPAREN,       0 },
 		{ QSE_T(")"),   1, TOK_RPAREN,       0 },
 		{ QSE_T("{"),   1, TOK_LBRACE,       0 },
