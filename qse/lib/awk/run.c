@@ -72,6 +72,7 @@ struct pafv_t
 };
 
 #define DEFAULT_CONVFMT  QSE_T("%.6g")
+#define DEFAULT_FS       QSE_T(" ")
 #define DEFAULT_OFMT     QSE_T("%.6g")
 #define DEFAULT_OFS      QSE_T(" ")
 #define DEFAULT_ORS      QSE_T("\n")
@@ -1248,6 +1249,7 @@ static int defaultify_globals (qse_awk_rtx_t* rtx)
 	{
 		{ QSE_AWK_GBL_CONVFMT,    { DEFAULT_CONVFMT, DEFAULT_CONVFMT  } },
 		{ QSE_AWK_GBL_FILENAME,   { QSE_NULL,        QSE_NULL         } },
+		{ QSE_AWK_GBL_FS,         { DEFAULT_FS,      DEFAULT_FS       } },
 		{ QSE_AWK_GBL_OFILENAME,  { QSE_NULL,        QSE_NULL         } },
 		{ QSE_AWK_GBL_OFMT,       { DEFAULT_OFMT,    DEFAULT_OFMT     } },
 		{ QSE_AWK_GBL_OFS,        { DEFAULT_OFS,     DEFAULT_OFS      } },
