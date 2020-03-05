@@ -1658,7 +1658,14 @@ static int open_rio_console (qse_awk_rtx_t* rtx, qse_awk_rio_arg_t* riod)
 			 */
 			argv = qse_awk_rtx_getgbl(rtx, xtn->gbl_argv);
 			QSE_ASSERT (argv != QSE_NULL);
-			QSE_ASSERT (QSE_AWK_RTX_GETVALTYPE (rtx, argv) == QSE_AWK_VAL_MAP);
+			if (QSE_AWK_RTX_GETVALTYPE(rtx, argv) != QSE_AWK_VAL_MAP)
+			{
+				/* with FLEXMAP on, you can change ARGV to a scalar.
+				 *   BEGIN { ARGV="xxx"; }
+				 * you must not do this. */
+				qse_awk_rtx_seterrfmt (rtx, QSE_AWK_EINVAL, QSE_NULL, QSE_T("phony value in ARGV"));
+				return -1;
+			}
 
 			map = ((qse_awk_val_map_t*)argv)->map;
 			QSE_ASSERT (map != QSE_NULL);
