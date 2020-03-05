@@ -1245,7 +1245,7 @@ static int defaultify_globals (qse_awk_rtx_t* rtx)
 		int idx;
 		const qse_char_t* str[2];
 	};
-	static struct gtab_t gtab[7] =
+	static struct gtab_t gtab[8] =
 	{
 		{ QSE_AWK_GBL_CONVFMT,    { DEFAULT_CONVFMT, DEFAULT_CONVFMT  } },
 		{ QSE_AWK_GBL_FILENAME,   { QSE_NULL,        QSE_NULL         } },
