@@ -2657,6 +2657,15 @@ QSE_EXPORT int qse_awk_rtx_setrec (
 );
 
 /**
+ * The qse_awk_rtx_truncrec() function lowered the number of fields in a record.
+ * The caller must ensure that \a nflds is less than the current number of fields
+ */
+QSE_EXPORT int qse_awk_rtx_truncrec (
+	qse_awk_rtx_t* rtx,
+	qse_size_t     nflds
+);
+
+/**
  * The qse_awk_rtx_isnilval() function determines if a value
  * is a nil value.
  */
