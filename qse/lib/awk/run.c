@@ -4361,7 +4361,7 @@ static QSE_INLINE int __cmp_flt_str (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qs
 	int n;
 
 	/* SCO CC doesn't seem to handle right->nstr > 0 properly */
-	if (rtx->awk->opt.trait & QSE_AWK_NCMPONSTR || right->nstr /*> 0*/)
+	if ((rtx->awk->opt.trait & QSE_AWK_NCMPONSTR) || right->nstr /*> 0*/)
 	{
 		const qse_char_t* end;
 		qse_awk_flt_t rr;
@@ -4396,7 +4396,7 @@ static QSE_INLINE int __cmp_flt_mbs (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qs
 	qse_size_t len0;
 	int n;
 
-	if (rtx->awk->opt.trait & QSE_AWK_NCMPONSTR || right->nstr /*> 0*/)
+	if ((rtx->awk->opt.trait & QSE_AWK_NCMPONSTR) || right->nstr /*> 0*/)
 	{
 		const qse_mchar_t* end;
 		qse_awk_flt_t rr;
@@ -7010,6 +7010,7 @@ static qse_char_t* idxnde_to_str (qse_awk_rtx_t* rtx, qse_awk_nde_t* nde, qse_ch
 		qse_str_t idxstr;
 		qse_cstr_t tmp;
 		qse_awk_rtx_valtostr_out_t out;
+		qse_awk_nde_t* xnde;
 
 		out.type = QSE_AWK_RTX_VALTOSTR_STRPCAT;
 		out.u.strpcat = &idxstr;
@@ -7020,6 +7021,7 @@ static qse_char_t* idxnde_to_str (qse_awk_rtx_t* rtx, qse_awk_nde_t* nde, qse_ch
 			return QSE_NULL;
 		}
 
+		xnde = nde;
 		while (nde)
 		{
 			idx = eval_expression(rtx, nde);
@@ -7031,7 +7033,7 @@ static qse_char_t* idxnde_to_str (qse_awk_rtx_t* rtx, qse_awk_nde_t* nde, qse_ch
 
 			qse_awk_rtx_refupval (rtx, idx);
 
-			if (QSE_STR_LEN(&idxstr) > 0 && qse_str_ncat(&idxstr, rtx->gbl.subsep.ptr, rtx->gbl.subsep.len) == (qse_size_t)-1)
+			if (nde != xnde && qse_str_ncat(&idxstr, rtx->gbl.subsep.ptr, rtx->gbl.subsep.len) == (qse_size_t)-1)
 			{
 				qse_awk_rtx_refdownval (rtx, idx);
 				qse_str_fini (&idxstr);
