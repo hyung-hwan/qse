@@ -356,7 +356,7 @@ static int set_global (qse_awk_rtx_t* rtx, int idx, qse_awk_nde_var_t* var, qse_
 		}
 	}
 
-	if (old == val) 
+	if (old == val && idx != QSE_AWK_GBL_NF) /* read the comment in the case block for HAWK_GBL_NF below */
 	{
 		/* if the old value is the same as the new value, don't take any actions.
 		 * note that several inspections have been performed before this check,
@@ -486,8 +486,16 @@ static int set_global (qse_awk_rtx_t* rtx, int idx, qse_awk_nde_var_t* var, qse_
 				return -1;
 			}
 
-			if (lv < (qse_awk_int_t)rtx->inrec.nflds)
+			if (lv < (qse_awk_int_t)rtx->inrec.nflds || (assign && lv == (qse_int_t)rtx->inrec.nflds))
 			{
+				/* when NF is assigned a value, it should rebuild $X values.
+				 * even when there is no change in the value like NF = NF,
+				 * it has to rebuil $X values with the current OFS value.
+				 *  { OFS=":"; NF=NF; print $0; }
+				 * the NF=value assignment is indicated by a non-zero value in the 'assign' variable.
+				 * 'assign' is 0 if this function is called from a different context such as
+				 * explicit call to qse_awk_rtx_setgbl().
+				 */
 				if (qse_awk_rtx_truncrec(rtx, (qse_size_t)lv) == -1)
 				{
 					/* adjust the error line */
@@ -503,9 +511,13 @@ static int set_global (qse_awk_rtx_t* rtx, int idx, qse_awk_nde_var_t* var, qse_
 				if (qse_awk_rtx_setrec(rtx, lv, &cs) <= -1) return -1;
 			}
 
+			/* for all other globals, it returns before this switch/case block is reached
+			 * if the same value is assigned. but NF change requires extra action to take 
+			 * as coded before this switch/code block */
+			if (old == val) return 0;
+
 			break;
 		}
-
 
 		case QSE_AWK_GBL_NR:
 		{
