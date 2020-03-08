@@ -7230,7 +7230,7 @@ wp_mod_main:
 		if (fmt[i] == QSE_T('d') || fmt[i] == QSE_T('i') || 
 		    fmt[i] == QSE_T('x') || fmt[i] == QSE_T('X') ||
 		    fmt[i] == QSE_T('b') || fmt[i] == QSE_T('B') ||
-		    fmt[i] == QSE_T('o'))
+		    fmt[i] == QSE_T('o') || fmt[i] == QSE_T('u'))
 		{
 			qse_awk_val_t* v;
 			qse_awk_int_t l;
@@ -7365,6 +7365,8 @@ wp_mod_main:
 					}
 					break;
 	
+				case QSE_T('u'):
+					fmt_uint = 1;
 				default:
 					fmt_flags |= 10;
 					if (flags & FLAG_PLUS) 
@@ -7545,23 +7547,13 @@ wp_mod_main:
 					break;
 
 				case QSE_AWK_VAL_STR:
-					ch_len = ((qse_awk_val_str_t*)v)->val.len;
-					if (ch_len > 0) 
-					{
-						ch = ((qse_awk_val_str_t*)v)->val.ptr[0];
-						ch_len = 1;
-					}
-					else ch = QSE_T('\0');
+					ch = (((qse_awk_val_str_t*)v)->val.len > 0)?  ((qse_awk_val_str_t*)v)->val.ptr[0]: '\0';
+					ch_len = 1;
 					break;
 
 				case QSE_AWK_VAL_MBS:
-					ch_len = ((qse_awk_val_mbs_t*)v)->val.len;
-					if (ch_len > 0) 
-					{
-						ch = ((qse_awk_val_mbs_t*)v)->val.ptr[0];
-						ch_len = 1;
-					}
-					else ch = QSE_T('\0');
+					ch = (((qse_awk_val_mbs_t*)v)->val.len > 0)?  ((qse_awk_val_mbs_t*)v)->val.ptr[0]: '\0';
+					ch_len = 1;
 					break;
 
 				default:
