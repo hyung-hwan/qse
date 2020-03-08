@@ -1828,39 +1828,22 @@ static int run_pblock (qse_awk_rtx_t* rtx, qse_awk_chain_t* cha, qse_size_t bno)
 				v1 = eval_expression(rtx, ptn);
 				if (!v1) return -1;
 				qse_awk_rtx_refupval (rtx, v1);
-
-				if (qse_awk_rtx_valtobool(rtx, v1))
-				{
-					rtx->active_block = blk;
-					if (run_block(rtx, blk) <= -1)
-					{
-						qse_awk_rtx_refdownval (rtx, v1);
-						return -1;
-					}
-
-					rtx->pattern_range_state[bno] = 1;
-				}
-
+				rtx->pattern_range_state[bno] = qse_awk_rtx_valtobool(rtx, v1);
 				qse_awk_rtx_refdownval (rtx, v1);
 			}
-			else if (rtx->pattern_range_state[bno] == 1)
+
+			if (rtx->pattern_range_state[bno] == 1)
 			{
 				qse_awk_val_t* v2;
 
 				v2 = eval_expression(rtx, ptn->next);
 				if (!v2) return -1;
 				qse_awk_rtx_refupval (rtx, v2);
+				rtx->pattern_range_state[bno] = !qse_awk_rtx_valtobool(rtx, v2);
+				qse_awk_rtx_refdownval (rtx, v2);
 
 				rtx->active_block = blk;
-				if (run_block(rtx, blk) <= -1)
-				{
-					qse_awk_rtx_refdownval(rtx, v2);
-					return -1;
-				}
-
-				if (qse_awk_rtx_valtobool(rtx, v2)) rtx->pattern_range_state[bno] = 0;
-
-				qse_awk_rtx_refdownval (rtx, v2);
+				if (run_block(rtx, blk) <= -1) return -1;
 			}
 		}
 	}
