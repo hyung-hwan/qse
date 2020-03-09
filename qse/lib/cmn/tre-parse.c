@@ -278,6 +278,15 @@ tre_parse_bracket_items(tre_parse_ctx_t *ctx, int negate,
 				if (min > max)
 					status = REG_ERANGE;
 			}
+		/* QSE: handle \ as an escaper */
+			else if (re + 1 < ctx->re_end && *re == CHAR_BACKSLASH)
+			{
+				/* escaped character inside [] */
+				min = max = *(re + 1);
+				re += 2;
+			}
+		/* END QSE */
+
 			else if (re + 1 < ctx->re_end
 			         && *re == CHAR_LBRACKET && *(re + 1) == CHAR_PERIOD)
 				status = REG_ECOLLATE;
