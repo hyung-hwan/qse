@@ -1274,11 +1274,14 @@ static int __substitute (qse_awk_rtx_t* rtx, qse_awk_int_t max_count)
 		skip_one_char:
 			/* special treatment is needed if match length is 0 */
 
-			m = qse_str_ncat (&new, cur.ptr, 1);
-			if (m == (qse_size_t)-1)
+			if (cur.ptr < s2_end)
 			{
-				qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
-				goto oops;
+				m = qse_str_ncat (&new, cur.ptr, 1);
+				if (m == (qse_size_t)-1)
+				{
+					qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
+					goto oops;
+				}
 			}
 
 			cur.ptr++; cur.len--;
