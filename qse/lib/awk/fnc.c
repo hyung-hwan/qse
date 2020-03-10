@@ -1413,7 +1413,11 @@ int qse_awk_fnc_match (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 		tmp.len = len0 - start + 1;
 
 		n = qse_awk_rtx_matchrex(rtx, a1, &tmp, &tmp, &mat, (nargs >= 4? submat: QSE_NULL));
-		if (n <= -1) return -1;
+		if (n <= -1) 
+		{
+			qse_awk_rtx_freevalstr (rtx, a0, str0);
+			return -1;
+		}
 	}
 
 	qse_awk_rtx_freevalstr (rtx, a0, str0);
