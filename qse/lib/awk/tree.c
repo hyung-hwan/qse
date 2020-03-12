@@ -715,8 +715,9 @@ static int print_expr (qse_awk_t* awk, qse_awk_nde_t* nde)
 
 		case QSE_AWK_NDE_POS:
 		{
-			PUT_SRCSTR (awk, QSE_T("$"));
+			PUT_SRCSTR (awk, QSE_T("$("));
 			PRINT_EXPR (awk, ((qse_awk_nde_pos_t*)nde)->val);
+			PUT_SRCSTR (awk, QSE_T(")"));
 			break;
 		}
 
