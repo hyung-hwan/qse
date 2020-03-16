@@ -1838,6 +1838,10 @@ static qse_ssize_t awk_rio_console (qse_awk_rtx_t* rtx, qse_awk_rio_cmd_t cmd, q
 				}
 
 				if (sio) qse_sio_close (sio);
+
+				/* reset FNR to 0 here since the caller doesn't know that the file has changed. */
+				qse_awk_rtx_setgbl(rtx, QSE_AWK_GBL_FNR, qse_awk_rtx_makeintval(rtx, 0));
+
 			}
 		
 			return nn;
