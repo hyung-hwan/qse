@@ -1076,6 +1076,10 @@ StdAwk::ssize_t StdAwk::readConsole (Console& io, char_t* data, size_t size)
 		}
 
 		if (sio) qse_sio_close (sio);
+
+		/* reset FNR to 0 here since the caller doesn't know that the file has changed. */
+		((Run*)io)->setGlobal (QSE_AWK_GBL_FNR, (qse_awk_int_t)0);
+
 	}
 
 	return nn;
