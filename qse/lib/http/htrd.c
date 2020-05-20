@@ -397,7 +397,15 @@ static qse_mchar_t* parse_initial_line (qse_htrd_t* htrd, qse_mchar_t* line)
 
 		/* the url must be followed by a space */
 		if (!is_space_octet(*p)) goto badre;
-		param.len = p - param.ptr; /* length of the param part */
+		if (param.ptr) 
+		{
+			param.len = p - param.ptr; /* length of the param part */
+		}
+		else 
+		{
+			tmp.len = p - tmp.ptr;
+			param.len = 0;
+		}
 		*p = QSE_MT('\0');  /* null-terminate the path or param part */
 
 		if (param.ptr)
