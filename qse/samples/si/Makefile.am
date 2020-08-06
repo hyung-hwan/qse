@@ -29,6 +29,7 @@ bin_PROGRAMS = \
 	
 AM_LDFLAGS = -L../../lib/si  -L../../lib/cmn
 AM_CFLAGS = $(PTHREAD_CFLAGS)
+AM_CXXFLAGS = $(PTHREAD_CFLAGS)
 LDADD = -lqsesi -lqsecmn $(PTHREAD_LIBS)
 
 if WIN32 
@@ -61,8 +62,6 @@ thr01_SOURCES = thr01.c
 
 if ENABLE_CXX
 
-CXXLIB = -lqsesixx -lqsecmnxx
-
 bin_PROGRAMS += sck01 spl02 tcpsvr01 tcpsvr02 thr02 thr03
 
 sck01_SOURCES = sck01.cpp
@@ -72,12 +71,7 @@ tcpsvr02_SOURCES = tcpsvr02.cpp
 thr02_SOURCES = thr02.cpp
 thr03_SOURCES = thr03.cpp
 
-sck01_LDADD = $(CXXLIB) $(LDADD)
-spl02_LDADD = $(CXXLIB) $(LDADD)
-tcpsvr01_LDADD = $(CXXLIB) $(LDADD)
-tcpsvr02_LDADD = $(CXXLIB) $(LDADD) -L../../lib/sttp -lqsesttpxx
-thr02_LDADD = $(CXXLIB) $(LDADD)
-thr03_LDADD = $(CXXLIB) $(LDADD)
+tcpsvr02_LDADD = $(LDADD) -L../../lib/sttp -lqsesttp
 
 endif
 

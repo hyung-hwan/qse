@@ -30,6 +30,7 @@
 #include <qse/Types.hpp>
 #include <qse/Uncopyable.hpp>
 #include <qse/cmn/Transmittable.hpp>
+#include <qse/cmn/ErrorGrab.hpp>
 #include <qse/si/SocketAddress.hpp>
 #include <qse/si/sck.h>
 
@@ -38,7 +39,7 @@
 QSE_BEGIN_NAMESPACE(QSE)
 /////////////////////////////////
 
-class Socket: public Uncopyable, public Types, public Transmittable
+class Socket: public Uncopyable, public Types, public Transmittable, public ErrorGrab64
 {
 public:
 	enum Trait
@@ -49,9 +50,6 @@ public:
 
 	Socket () QSE_CPP_NOEXCEPT;
 	virtual ~Socket () QSE_CPP_NOEXCEPT;
-
-	ErrorNumber getErrorNumber () const QSE_CPP_NOEXCEPT { return this->errcode; }
-	void setErrorNumber (ErrorNumber errcode) QSE_CPP_NOEXCEPT { this->errcode = errcode; }
 
 	int open (int domain, int type, int protocol, int traits = 0) QSE_CPP_NOEXCEPT;
 	void close () QSE_CPP_NOEXCEPT;
@@ -161,9 +159,7 @@ public:
 protected:
 	qse_sck_hnd_t handle;
 	int domain;
-	ErrorNumber errcode;
 
-	void set_errcode_with_syserr (int syserr);
 	int get_ifce_index (const void* name, qse_size_t len, bool wchar);
 	int get_ifce_address (int cmd, const void* name, qse_size_t len, bool wchar, SocketAddress* addr);
 };

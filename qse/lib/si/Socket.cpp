@@ -36,6 +36,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <netinet/in.h>
+#include <string.h> // strerror
 
 #if defined(HAVE_NET_IF_H)
 #	include <net/if.h>
@@ -56,7 +57,7 @@ QSE_BEGIN_NAMESPACE(QSE)
 #include "../cmn/syserr.h"
 IMPLEMENT_SYSERR_TO_ERRNUM (Socket::ErrorNumber, Socket::)
 
-Socket::Socket () QSE_CPP_NOEXCEPT: handle(QSE_INVALID_SCKHND), domain(-1), errcode(E_ENOERR)
+Socket::Socket () QSE_CPP_NOEXCEPT: handle(QSE_INVALID_SCKHND), domain(-1)
 {
 }
 
@@ -92,7 +93,7 @@ open_socket:
 			goto open_socket;
 		}
 	#endif
-		this->setErrorNumber (syserr_to_errnum(errno));
+		this->setErrorFmt (syserr_to_errnum(errno), QSE_T("%hs"), strerror(errno));
 		return -1;
 	}
 	else
@@ -108,7 +109,7 @@ open_socket:
 		if (fcntl_v == -1)
 		{
 		fcntl_failure:
-			this->setErrorNumber (syserr_to_errnum(errno));
+			this->setErrorFmt (syserr_to_errnum(errno), QSE_T("%hs"), strerror(errno));
 			::close (x);
 			return -1;
 		}
@@ -157,7 +158,7 @@ int Socket::getSockName (SocketAddress& addr) QSE_CPP_NOEXCEPT
 	QSE_ASSERT (qse_is_sck_valid(this->handle));
 	qse_sck_len_t len = addr.getAddrCapa();
 	int n = ::getsockname(this->handle, (struct sockaddr*)addr.getAddrPtr(), &len);
-	if (n == -1) this->setErrorNumber (syserr_to_errnum(errno));
+	if (n == -1) this->setErrorFmt (syserr_to_errnum(errno), QSE_T("%hs"), strerror(errno));
 	return n;
 }
 
@@ -166,7 +167,7 @@ int Socket::getPeerName (SocketAddress& addr) QSE_CPP_NOEXCEPT
 	QSE_ASSERT (qse_is_sck_valid(this->handle));
 	qse_sck_len_t len = addr.getAddrCapa();
 	int n = ::getpeername(this->handle, (struct sockaddr*)addr.getAddrPtr(), &len);
-	if (n == -1) this->setErrorNumber (syserr_to_errnum(errno));
+	if (n == -1) this->setErrorFmt (syserr_to_errnum(errno), QSE_T("%hs"), strerror(errno));
 	return n;
 }
 
@@ -174,7 +175,7 @@ int Socket::getOption (int level, int optname, void* optval, qse_sck_len_t* optl
 {
 	QSE_ASSERT (qse_is_sck_valid(this->handle));
 	int n = ::getsockopt(this->handle, level, optname, (char*)optval, optlen);
-	if (n == -1) this->setErrorNumber (syserr_to_errnum(errno));
+	if (n == -1) this->setErrorFmt (syserr_to_errnum(errno), QSE_T("%hs"), strerror(errno));
 	return n;
 }
 
@@ -182,24 +183,24 @@ int Socket::setOption (int level, int optname, const void* optval, qse_sck_len_t
 {
 	QSE_ASSERT (qse_is_sck_valid(this->handle));
 	int n = ::setsockopt(this->handle, level, optname, (const char*)optval, optlen);
-	if (n == -1) this->setErrorNumber (syserr_to_errnum(errno));
+	if (n == -1) this->setErrorFmt (syserr_to_errnum(errno), QSE_T("%hs"), strerror(errno));
 	return n;
 }
 
 int Socket::setDebug (int n) QSE_CPP_NOEXCEPT
 {
-	return this->setOption (SOL_SOCKET, SO_DEBUG, (char*)&n, QSE_SIZEOF(n));
+	return this->setOption(SOL_SOCKET, SO_DEBUG, (char*)&n, QSE_SIZEOF(n));
 };
 
 int Socket::setReuseAddr (int n) QSE_CPP_NOEXCEPT
 {
-	return this->setOption (SOL_SOCKET, SO_REUSEADDR, (char*)&n, QSE_SIZEOF(n));
+	return this->setOption(SOL_SOCKET, SO_REUSEADDR, (char*)&n, QSE_SIZEOF(n));
 }
 
 int Socket::setReusePort (int n) QSE_CPP_NOEXCEPT
 {
 #if defined(SO_REUSEPORT)
-	return this->setOption (SOL_SOCKET, SO_REUSEPORT, (char*)&n, QSE_SIZEOF(n));
+	return this->setOption(SOL_SOCKET, SO_REUSEPORT, (char*)&n, QSE_SIZEOF(n));
 #else
 	this->setErrorNumber (E_ENOIMPL);
 	return -1;
@@ -208,7 +209,7 @@ int Socket::setReusePort (int n) QSE_CPP_NOEXCEPT
 
 int Socket::setKeepAlive (int n, int keepidle, int keepintvl, int keepcnt) QSE_CPP_NOEXCEPT
 {
-	if (this->setOption (SOL_SOCKET, SO_KEEPALIVE, (char*)&n, QSE_SIZEOF(n)) <= -1) return -1;
+	if (this->setOption(SOL_SOCKET, SO_KEEPALIVE, (char*)&n, QSE_SIZEOF(n)) <= -1) return -1;
 
 	// the following values are just hints. 
 	// i don't care about success and failure
@@ -226,17 +227,17 @@ int Socket::setKeepAlive (int n, int keepidle, int keepintvl, int keepcnt) QSE_C
 
 int Socket::setBroadcast (int n) QSE_CPP_NOEXCEPT
 {
-	return this->setOption (SOL_SOCKET, SO_BROADCAST, (char*)&n, QSE_SIZEOF(n));
+	return this->setOption(SOL_SOCKET, SO_BROADCAST, (char*)&n, QSE_SIZEOF(n));
 }
 
 int Socket::setSendBuf (unsigned int size)  QSE_CPP_NOEXCEPT
 {
-	return this->setOption (SOL_SOCKET, SO_SNDBUF, (char*)&size, QSE_SIZEOF(size));
+	return this->setOption(SOL_SOCKET, SO_SNDBUF, (char*)&size, QSE_SIZEOF(size));
 }
 
 int Socket::setRecvBuf (unsigned int size) QSE_CPP_NOEXCEPT
 {
-	return this->setOption (SOL_SOCKET, SO_RCVBUF, (char*)&size, QSE_SIZEOF(size));
+	return this->setOption(SOL_SOCKET, SO_RCVBUF, (char*)&size, QSE_SIZEOF(size));
 }
 
 int Socket::setLingerOn (int sec) QSE_CPP_NOEXCEPT
@@ -244,7 +245,7 @@ int Socket::setLingerOn (int sec) QSE_CPP_NOEXCEPT
 	struct linger lng;
 	lng.l_onoff = 1;
 	lng.l_linger = sec;
-	return this->setOption (SOL_SOCKET, SO_LINGER, (char*)&lng, QSE_SIZEOF(lng));
+	return this->setOption(SOL_SOCKET, SO_LINGER, (char*)&lng, QSE_SIZEOF(lng));
 }
 
 int Socket::setLingerOff () QSE_CPP_NOEXCEPT
@@ -252,13 +253,13 @@ int Socket::setLingerOff () QSE_CPP_NOEXCEPT
 	struct linger lng;
 	lng.l_onoff = 0;
 	lng.l_linger = 0;
-	return this->setOption (SOL_SOCKET, SO_LINGER, (char*)&lng, QSE_SIZEOF(lng));
+	return this->setOption(SOL_SOCKET, SO_LINGER, (char*)&lng, QSE_SIZEOF(lng));
 }
 
 int Socket::setTcpNodelay (int n) QSE_CPP_NOEXCEPT
 {
 #if defined(TCP_NODELAY)
-	return this->setOption (IPPROTO_TCP, TCP_NODELAY, (char*)&n, QSE_SIZEOF(n));
+	return this->setOption(IPPROTO_TCP, TCP_NODELAY, (char*)&n, QSE_SIZEOF(n));
 #else
 	this->setErrorNumber (E_ENOIMPL);
 	return -1;
@@ -268,7 +269,7 @@ int Socket::setTcpNodelay (int n) QSE_CPP_NOEXCEPT
 int Socket::setOobInline (int n) QSE_CPP_NOEXCEPT
 {
 #if defined(SO_OOBINLINE)
-	return this->setOption (SOL_SOCKET, SO_OOBINLINE, (char*)&n, QSE_SIZEOF(n));
+	return this->setOption(SOL_SOCKET, SO_OOBINLINE, (char*)&n, QSE_SIZEOF(n));
 #else
 	this->setErrorNumber (E_ENOIMPL);
 	return -1;
@@ -278,7 +279,7 @@ int Socket::setOobInline (int n) QSE_CPP_NOEXCEPT
 int Socket::setIpv6Only (int n) QSE_CPP_NOEXCEPT
 {
 #if defined(IPV6_V6ONLY)
-	return this->setOption (IPPROTO_IPV6, IPV6_V6ONLY, (char*)&n, QSE_SIZEOF(n));
+	return this->setOption(IPPROTO_IPV6, IPV6_V6ONLY, (char*)&n, QSE_SIZEOF(n));
 #else
 	this->setErrorNumber (E_ENOIMPL);
 	return -1;
@@ -292,7 +293,7 @@ int Socket::shutdown (int how) QSE_CPP_NOEXCEPT
 		// i put this guard to allow multiple calls to shutdown().
 		if (::shutdown(this->handle, how) == -1)
 		{
-			this->setErrorNumber (syserr_to_errnum(errno));
+			this->setErrorFmt (syserr_to_errnum(errno), QSE_T("%hs"), strerror(errno));
 			return -1;
 		}
 	}
@@ -306,7 +307,7 @@ int Socket::connect (const SocketAddress& target) QSE_CPP_NOEXCEPT
 
 	if (::connect(this->handle, (struct sockaddr*)target.getAddrPtr(), target.getAddrSize()) == -1)
 	{
-		this->setErrorNumber (syserr_to_errnum(errno));
+		this->setErrorFmt (syserr_to_errnum(errno), QSE_T("%hs"), strerror(errno));
 		return -1;
 	}
 
@@ -319,7 +320,7 @@ int Socket::bind (const SocketAddress& target) QSE_CPP_NOEXCEPT
 
 	if (::bind(this->handle, (struct sockaddr*)target.getAddrPtr(), target.getAddrSize()) == -1)
 	{
-		this->setErrorNumber (syserr_to_errnum(errno));
+		this->setErrorFmt (syserr_to_errnum(errno), QSE_T("%hs"), strerror(errno));
 		return -1;
 	}
 
@@ -370,7 +371,7 @@ int Socket::bindToIfce (const qse_wchar_t* ifce) QSE_CPP_NOEXCEPT
 #if defined(SO_BINDTODEVICE)
 	if (!ifce)
 	{
-		return this->setOption (SOL_SOCKET, SO_BINDTODEVICE, QSE_NULL, 0);
+		return this->setOption(SOL_SOCKET, SO_BINDTODEVICE, QSE_NULL, 0);
 	}
 	else
 	{
@@ -383,7 +384,7 @@ int Socket::bindToIfce (const qse_wchar_t* ifce) QSE_CPP_NOEXCEPT
 			this->setErrorNumber (E_EINVAL);
 			return -1;
 		}
-		return this->setOption (SOL_SOCKET, SO_BINDTODEVICE, (char*)&ifr, QSE_SIZEOF(ifr));
+		return this->setOption(SOL_SOCKET, SO_BINDTODEVICE, (char*)&ifr, QSE_SIZEOF(ifr));
 	}
 #else
 	this->setErrorNumber (E_ENOIMPL);
@@ -397,7 +398,7 @@ int Socket::listen (int backlog) QSE_CPP_NOEXCEPT
 
 	if (::listen(this->handle, backlog) == -1)
 	{
-		this->setErrorNumber (syserr_to_errnum(errno));
+		this->setErrorFmt (syserr_to_errnum(errno), QSE_T("%hs"), strerror(errno));
 		return -1;
 	}
 
@@ -423,7 +424,7 @@ int Socket::accept (Socket* newsck, SocketAddress* newaddr, int traits) QSE_CPP_
 	{
 		if (errno != ENOSYS)
 		{
-			this->setErrorNumber (syserr_to_errnum(errno));
+			this->setErrorFmt (syserr_to_errnum(errno), QSE_T("%hs"), strerror(errno));
 			return -1;
 		}
 
@@ -439,7 +440,7 @@ int Socket::accept (Socket* newsck, SocketAddress* newaddr, int traits) QSE_CPP_
 	newfd = ::accept(this->handle, (struct sockaddr*)newaddr->getAddrPtr(), &addrlen);
 	if (newfd == -1)
 	{
-		this->setErrorNumber (syserr_to_errnum(errno));
+		this->setErrorFmt (syserr_to_errnum(errno), QSE_T("%hs"), strerror(errno));
 		return -1;
 	}
 
@@ -449,7 +450,7 @@ int Socket::accept (Socket* newsck, SocketAddress* newaddr, int traits) QSE_CPP_
 		if (flag_v == -1)
 		{
 		fcntl_failure:
-			this->setErrorNumber (syserr_to_errnum(errno));
+			this->setErrorFmt (syserr_to_errnum(errno), QSE_T("%hs"), strerror(errno));
 			::close (newfd);
 			return -1;
 		}
@@ -479,7 +480,7 @@ qse_ssize_t Socket::send (const void* buf, qse_size_t len) QSE_CPP_NOEXCEPT
 	qse_ssize_t n = ::send(this->handle, buf, len, 0);
 	if (n == -1)
 	{
-		this->setErrorNumber (syserr_to_errnum(errno));
+		this->setErrorFmt (syserr_to_errnum(errno), QSE_T("%hs"), strerror(errno));
 		return -1;
 	}
 
@@ -493,7 +494,7 @@ qse_ssize_t Socket::send (const void* buf, qse_size_t len, const SocketAddress& 
 	qse_ssize_t n = ::sendto(this->handle, buf, len, 0, (struct sockaddr*)dstaddr.getAddrPtr(), dstaddr.getAddrSize());
 	if (n == -1)
 	{
-		this->setErrorNumber (syserr_to_errnum(errno));
+		this->setErrorFmt (syserr_to_errnum(errno), QSE_T("%hs"), strerror(errno));
 		return -1;
 	}
 
@@ -529,7 +530,7 @@ qse_ssize_t Socket::send (const qse_ioptl_t* iov, int count) QSE_CPP_NOEXCEPT
 #endif
 	if (nwritten <= -1)
 	{
-		this->setErrorNumber (syserr_to_errnum(errno));
+		this->setErrorFmt (syserr_to_errnum(errno), QSE_T("%hs"), strerror(errno));
 		return -1;
 	}
 
@@ -557,7 +558,7 @@ qse_ssize_t Socket::send (const qse_ioptl_t* iov, int count, const SocketAddress
 	nwritten = ::sendmsg(this->handle, &msg, 0);
 	if (nwritten <= -1)
 	{
-		this->setErrorNumber (syserr_to_errnum(errno));
+		this->setErrorFmt (syserr_to_errnum(errno), QSE_T("%hs"), strerror(errno));
 		return -1;
 	}
 
@@ -671,7 +672,7 @@ int Socket::sendx (const void* buf, qse_size_t len, qse_size_t* total_sent) QSE_
 		qse_ssize_t n = ::send(this->handle, (char*)buf + pos, len - pos, 0);
 		if (n <= -1)
 		{
-			this->setErrorNumber (syserr_to_errnum(errno));
+			this->setErrorFmt (syserr_to_errnum(errno), QSE_T("%hs"), strerror(errno));
 			if (total_sent) *total_sent = pos;
 			return -1;
 		}
@@ -694,7 +695,7 @@ int Socket::sendx (const void* buf, qse_size_t len, const SocketAddress& dstaddr
 		qse_ssize_t n = ::sendto(this->handle, (char*)buf + pos, len - pos, 0, (struct sockaddr*)dstaddr.getAddrPtr(), dstaddr.getAddrSize());
 		if (n == -1)
 		{
-			this->setErrorNumber (syserr_to_errnum(errno));
+			this->setErrorFmt (syserr_to_errnum(errno), QSE_T("%hs"), strerror(errno));
 			if (total_sent) *total_sent = pos;
 			return -1;
 		}
@@ -734,7 +735,7 @@ int Socket::sendx (qse_ioptl_t* iov, int count, qse_size_t* total_sent) QSE_CPP_
 	#endif
 		if (nwritten <= -1)
 		{
-			this->setErrorNumber (syserr_to_errnum(errno));
+			this->setErrorFmt (syserr_to_errnum(errno), QSE_T("%hs"), strerror(errno));
 			if (backup_index >= 0) iov[backup_index] = backup;
 			if (total_sent) *total_sent = total; 
 			return -1;
@@ -784,7 +785,7 @@ int Socket::sendx (qse_ioptl_t* iov, int count, qse_size_t* total_sent) QSE_CPP_
 		nwritten = ::send(this->handle, (qse_uint8_t*)v->ptr + pos, rem, 0);
 		if (nwritten <= -1) 
 		{
-			this->setErrorNumber (syserr_to_errnum(errno));
+			this->setErrorFmt (syserr_to_errnum(errno), QSE_T("%hs"), strerror(errno));
 			if (total_sent) *total_sent = total; 
 			return -1;
 		}
@@ -829,7 +830,7 @@ int Socket::sendx (qse_ioptl_t* iov, int count, const SocketAddress& dstaddr, qs
 		nwritten = ::sendmsg(this->handle, &msg, 0);
 		if (nwritten <= -1)
 		{
-			this->setErrorNumber (syserr_to_errnum(errno));
+			this->setErrorFmt (syserr_to_errnum(errno), QSE_T("%hs"), strerror(errno));
 			if (backup_index >= 0) iov[backup_index] = backup;
 			if (total_sent) *total_sent = total; 
 			return -1;
@@ -879,7 +880,7 @@ int Socket::sendx (qse_ioptl_t* iov, int count, const SocketAddress& dstaddr, qs
 		nwritten = ::sendto(this->handle, (qse_uint8_t*)v->ptr + pos, rem, 0);
 		if (nwritten <= -1) 
 		{
-			this->setErrorNumber (syserr_to_errnum(errno));
+			this->setErrorFmt (syserr_to_errnum(errno), QSE_T("%hs"), strerror(errno));
 			if (total_sent) *total_sent = total; 
 			return -1;
 		}
@@ -907,7 +908,7 @@ qse_ssize_t Socket::receive (void* buf, qse_size_t len) QSE_CPP_NOEXCEPT
 	qse_ssize_t n = ::recv(this->handle, buf, len, 0);
 	if (n == -1)
 	{
-		this->setErrorNumber (syserr_to_errnum(errno));
+		this->setErrorFmt (syserr_to_errnum(errno), QSE_T("%hs"), strerror(errno));
 		return -1;
 	}
 
@@ -922,7 +923,7 @@ qse_ssize_t Socket::receive (void* buf, qse_size_t len, SocketAddress& srcaddr) 
 	qse_ssize_t n = ::recvfrom(this->handle, buf, len, 0, (struct sockaddr*)srcaddr.getAddrPtr(), &addrlen);
 	if (n == -1)
 	{
-		this->setErrorNumber (syserr_to_errnum(errno));
+		this->setErrorFmt (syserr_to_errnum(errno), QSE_T("%hs"), strerror(errno));
 		return -1;
 	}
 
@@ -1061,7 +1062,7 @@ int Socket::get_ifce_index (const void* name, qse_size_t len, bool wchar)
 
 	if (::ioctl(this->handle, SIOCGIFINDEX, &ifr) == -1) 
 	{
-		this->setErrorNumber (syserr_to_errnum(errno));
+		this->setErrorFmt (syserr_to_errnum(errno), QSE_T("%hs"), strerror(errno));
 		return -1;
 	}
 

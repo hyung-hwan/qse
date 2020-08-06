@@ -10,9 +10,10 @@ bin_PROGRAMS = \
 	bf01 \
 	sha01
 	
-AM_LDFLAGS = -L../../lib/cry  -L../../lib/si -L../../lib/cmn
-LDADD = -lqsecry -lqsesi -lqsecmn 
 
+AM_CFLAGS = $(PTHREAD_CFLAGS)
+AM_LDFLAGS = -L../../lib/cry  -L../../lib/si -L../../lib/cmn
+LDADD = -lqsecry -lqsesi -lqsecmn $(LIBM) $(PTHREAD_LIBS)
 if WIN32 
 if WCHAR
 LDADD += $(UNICOWS_LIBS)

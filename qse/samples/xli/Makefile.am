@@ -19,10 +19,6 @@ endif
 
 if ENABLE_CXX
 
-CXXLIB = -lqsexlixx -lqsecmnxx
-
 skvenv01_SOURCES = skvenv01.cpp
-
-skvenv01_LDADD = $(CXXLIB) $(LDADD) 
 
 endif

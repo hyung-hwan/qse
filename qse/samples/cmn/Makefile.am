@@ -35,8 +35,10 @@ bin_PROGRAMS = \
 	uri01 \
 	xma 
 	
+AM_CFLAGS = $(PTHREAD_CFLAGS)
+AM_CXXFLAGS = $(PTHREAD_CFLAGS)
 AM_LDFLAGS = -L../../lib/si  -L../../lib/cmn
-LDADD = -lqsesi -lqsecmn 
+LDADD = -lqsesi -lqsecmn $(LIBM) $(PTHREAD_LIBS)
 
 if WIN32 
 if WCHAR
@@ -79,36 +81,25 @@ if ENABLE_CXX
 bin_PROGRAMS += arr02 arr03 bh01 bh02 hl01 htb02 rbt02 rbt03 sp01 sp02 str02
 
 arr02_SOURCES = arr02.cpp
-arr02_LDADD = $(LDADD) -lqsecmnxx
 
 arr03_SOURCES = arr03.cpp
-arr03_LDADD = $(LDADD) -lqsecmnxx
 
 bh01_SOURCES = bh01.cpp
-bh01_LDADD = $(LDADD) -lqsecmnxx
 
 bh02_SOURCES = bh02.cpp
-bh02_LDADD = $(LDADD) -lqsecmnxx
 
 hl01_SOURCES = hl01.cpp
-hl01_LDADD = $(LDADD) -lqsecmnxx
 
 htb02_SOURCES = htb02.cpp
-htb02_LDADD = $(LDADD) -lqsecmnxx
 
 rbt02_SOURCES = rbt02.cpp #RedBlackTree
-rbt02_LDADD = $(LDADD) -lqsecmnxx
 
 rbt03_SOURCES = rbt03.cpp #RedBlackTable
-rbt03_LDADD = $(LDADD) -lqsecmnxx
 
 sp01_SOURCES = sp01.cpp # ScopedPtr
-sp01_LDADD = $(LDADD) -lqsecmnxx
 
 sp02_SOURCES = sp02.cpp # SharedPtr
-sp02_LDADD = $(LDADD) -lqsecmnxx
 
 str02_SOURCES = str02.cpp # SharedPtr
-str02_LDADD = $(LDADD) -lqsecmnxx
 
 endif

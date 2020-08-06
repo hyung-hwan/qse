@@ -113,7 +113,8 @@ bf01_OBJECTS = $(am_bf01_OBJECTS)
 bf01_LDADD = $(LDADD)
 am__DEPENDENCIES_1 =
 @WCHAR_TRUE@@WIN32_TRUE@am__DEPENDENCIES_2 = $(am__DEPENDENCIES_1)
-bf01_DEPENDENCIES = $(am__DEPENDENCIES_2)
+bf01_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_2)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
@@ -121,7 +122,8 @@ am__v_lt_1 =
 am_sha01_OBJECTS = sha01.$(OBJEXT)
 sha01_OBJECTS = $(am_sha01_OBJECTS)
 sha01_LDADD = $(LDADD)
-sha01_DEPENDENCIES = $(am__DEPENDENCIES_2)
+sha01_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_2)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -356,8 +358,10 @@ AM_CPPFLAGS = \
 	-I$(top_srcdir)/include \
 	-I$(includedir)
 
+AM_CFLAGS = $(PTHREAD_CFLAGS)
 AM_LDFLAGS = -L../../lib/cry  -L../../lib/si -L../../lib/cmn
-LDADD = -lqsecry -lqsesi -lqsecmn $(am__append_1)
+LDADD = -lqsecry -lqsesi -lqsecmn $(LIBM) $(PTHREAD_LIBS) \
+	$(am__append_1)
 bf01_SOURCES = bf01.c
 sha01_SOURCES = sha01.c
 all: all-am

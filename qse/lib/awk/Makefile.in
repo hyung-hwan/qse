@@ -96,7 +96,7 @@ host_triplet = @host@
 # to the first number in -version-info above
 @WIN32_TRUE@am__append_3 = -DQSE_AWK_DEFAULT_MODPREFIX=\"libqseawk-\" -DQSE_AWK_DEFAULT_MODPOSTFIX=\"-1\"
 @WIN32_FALSE@am__append_4 = -DQSE_AWK_DEFAULT_MODPREFIX=\"$(libdir)/libqseawk-\" -DQSE_AWK_DEFAULT_MODPOSTFIX=\"\"
-@ENABLE_CXX_TRUE@am__append_5 = libqseawkxx.la
+@ENABLE_CXX_TRUE@am__append_5 = Awk.cpp StdAwk.cpp
 
 ##################################################
 # STATIC MODULES BUILT INTO MAIN LIBRARY
@@ -212,9 +212,11 @@ am__DEPENDENCIES_4 = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_2) \
 	$(am__DEPENDENCIES_3)
 am__libqseawk_la_SOURCES_DIST = awk.c err.c tree.c parse.c run.c rec.c \
 	val.c val-imp.h fnc.c imap-imp.h misc.c misc-imp.h rio.c std.c \
-	mod-dir.c mod-dir.h mod-math.c mod-math.h mod-str.c mod-str.h \
-	mod-sys.c mod-sys.h
-@ENABLE_STATIC_MODULE_TRUE@am__objects_1 = libqseawk_la-mod-dir.lo \
+	Awk.cpp StdAwk.cpp mod-dir.c mod-dir.h mod-math.c mod-math.h \
+	mod-str.c mod-str.h mod-sys.c mod-sys.h
+@ENABLE_CXX_TRUE@am__objects_1 = libqseawk_la-Awk.lo \
+@ENABLE_CXX_TRUE@	libqseawk_la-StdAwk.lo
+@ENABLE_STATIC_MODULE_TRUE@am__objects_2 = libqseawk_la-mod-dir.lo \
 @ENABLE_STATIC_MODULE_TRUE@	libqseawk_la-mod-math.lo \
 @ENABLE_STATIC_MODULE_TRUE@	libqseawk_la-mod-str.lo \
 @ENABLE_STATIC_MODULE_TRUE@	libqseawk_la-mod-sys.lo
@@ -222,20 +224,11 @@ am_libqseawk_la_OBJECTS = libqseawk_la-awk.lo libqseawk_la-err.lo \
 	libqseawk_la-tree.lo libqseawk_la-parse.lo libqseawk_la-run.lo \
 	libqseawk_la-rec.lo libqseawk_la-val.lo libqseawk_la-fnc.lo \
 	libqseawk_la-misc.lo libqseawk_la-rio.lo libqseawk_la-std.lo \
-	$(am__objects_1)
+	$(am__objects_1) $(am__objects_2)
 libqseawk_la_OBJECTS = $(am_libqseawk_la_OBJECTS)
-libqseawk_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
-	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
-	$(libqseawk_la_LDFLAGS) $(LDFLAGS) -o $@
-am__libqseawkxx_la_SOURCES_DIST = Awk.cpp StdAwk.cpp
-@ENABLE_CXX_TRUE@am_libqseawkxx_la_OBJECTS = libqseawkxx_la-Awk.lo \
-@ENABLE_CXX_TRUE@	libqseawkxx_la-StdAwk.lo
-libqseawkxx_la_OBJECTS = $(am_libqseawkxx_la_OBJECTS)
-libqseawkxx_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
-	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
-	$(AM_CXXFLAGS) $(CXXFLAGS) $(libqseawkxx_la_LDFLAGS) \
-	$(LDFLAGS) -o $@
-@ENABLE_CXX_TRUE@am_libqseawkxx_la_rpath = -rpath $(libdir)
+libqseawk_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
+	$(CXXFLAGS) $(libqseawk_la_LDFLAGS) $(LDFLAGS) -o $@
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -252,6 +245,8 @@ DEFAULT_INCLUDES =
 depcomp = $(SHELL) $(top_srcdir)/ac/depcomp
 am__maybe_remake_depfiles = depfiles
 am__depfiles_remade = ./$(DEPDIR)/libqseawk_dir_la-mod-dir.Plo \
+	./$(DEPDIR)/libqseawk_la-Awk.Plo \
+	./$(DEPDIR)/libqseawk_la-StdAwk.Plo \
 	./$(DEPDIR)/libqseawk_la-awk.Plo \
 	./$(DEPDIR)/libqseawk_la-err.Plo \
 	./$(DEPDIR)/libqseawk_la-fnc.Plo \
@@ -269,9 +264,7 @@ am__depfiles_remade = ./$(DEPDIR)/libqseawk_dir_la-mod-dir.Plo \
 	./$(DEPDIR)/libqseawk_la-val.Plo \
 	./$(DEPDIR)/libqseawk_math_la-mod-math.Plo \
 	./$(DEPDIR)/libqseawk_str_la-mod-str.Plo \
-	./$(DEPDIR)/libqseawk_sys_la-mod-sys.Plo \
-	./$(DEPDIR)/libqseawkxx_la-Awk.Plo \
-	./$(DEPDIR)/libqseawkxx_la-StdAwk.Plo
+	./$(DEPDIR)/libqseawk_sys_la-mod-sys.Plo
 am__mv = mv -f
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
@@ -311,13 +304,12 @@ am__v_CXXLD_0 = @echo "  CXXLD   " $@;
 am__v_CXXLD_1 = 
 SOURCES = $(libqseawk_dir_la_SOURCES) $(libqseawk_math_la_SOURCES) \
 	$(libqseawk_str_la_SOURCES) $(libqseawk_sys_la_SOURCES) \
-	$(libqseawk_la_SOURCES) $(libqseawkxx_la_SOURCES)
+	$(libqseawk_la_SOURCES)
 DIST_SOURCES = $(am__libqseawk_dir_la_SOURCES_DIST) \
 	$(am__libqseawk_math_la_SOURCES_DIST) \
 	$(am__libqseawk_str_la_SOURCES_DIST) \
 	$(am__libqseawk_sys_la_SOURCES_DIST) \
-	$(am__libqseawk_la_SOURCES_DIST) \
-	$(am__libqseawkxx_la_SOURCES_DIST)
+	$(am__libqseawk_la_SOURCES_DIST)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -528,21 +520,16 @@ LIBADD_LIB_COMMON = -lqsecmn -lqsesi $(LIBM) $(am__append_1) \
 	$(am__append_2)
 DEPENDENCIES_LIB_COMMON = ../../lib/cmn/libqsecmn.la ../../lib/si/libqsesi.la
 noinst_HEADERS = awk-prv.h err.h rio.h val.h fnc.h misc.h parse.h run.h tree.h std.h
-lib_LTLIBRARIES = libqseawk.la $(am__append_5)
+lib_LTLIBRARIES = libqseawk.la
 libqseawk_la_SOURCES = awk.c err.c tree.c parse.c run.c rec.c val.c \
 	val-imp.h fnc.c imap-imp.h misc.c misc-imp.h rio.c std.c \
-	$(am__append_6)
+	$(am__append_5) $(am__append_6)
 libqseawk_la_CPPFLAGS = $(CPPFLAGS_LIB_COMMON)
 libqseawk_la_LDFLAGS = $(LDFLAGS_LIB_COMMON)
 libqseawk_la_LIBADD = $(LIBADD_LIB_COMMON) $(am__append_7) \
 	$(am__append_9) $(am__append_11) $(am__append_13)
 libqseawk_la_DEPENDENCIES = $(DEPENDENCIES_LIB_COMMON) $(am__append_8) \
 	$(am__append_10) $(am__append_12) $(am__append_14)
-@ENABLE_CXX_TRUE@libqseawkxx_la_SOURCES = Awk.cpp StdAwk.cpp
-@ENABLE_CXX_TRUE@libqseawkxx_la_CPPFLAGS = $(CPPFLAGS_LIB_COMMON)
-@ENABLE_CXX_TRUE@libqseawkxx_la_LDFLAGS = $(LDFLAGS_LIB_COMMON)
-@ENABLE_CXX_TRUE@libqseawkxx_la_LIBADD = -lqseawk -lqsecmnxx -lqseawk -lqsesi -lqsecmn $(LIBADD_LIB_COMMON) 
-@ENABLE_CXX_TRUE@libqseawkxx_la_DEPENDENCIES = libqseawk.la
 
 ##################################################
 # DYNAMIC MODULES 
@@ -692,10 +679,7 @@ libqseawk-sys.la: $(libqseawk_sys_la_OBJECTS) $(libqseawk_sys_la_DEPENDENCIES) $
 	$(AM_V_CCLD)$(libqseawk_sys_la_LINK) $(am_libqseawk_sys_la_rpath) $(libqseawk_sys_la_OBJECTS) $(libqseawk_sys_la_LIBADD) $(LIBS)
 
 libqseawk.la: $(libqseawk_la_OBJECTS) $(libqseawk_la_DEPENDENCIES) $(EXTRA_libqseawk_la_DEPENDENCIES) 
-	$(AM_V_CCLD)$(libqseawk_la_LINK) -rpath $(libdir) $(libqseawk_la_OBJECTS) $(libqseawk_la_LIBADD) $(LIBS)
-
-libqseawkxx.la: $(libqseawkxx_la_OBJECTS) $(libqseawkxx_la_DEPENDENCIES) $(EXTRA_libqseawkxx_la_DEPENDENCIES) 
-	$(AM_V_CXXLD)$(libqseawkxx_la_LINK) $(am_libqseawkxx_la_rpath) $(libqseawkxx_la_OBJECTS) $(libqseawkxx_la_LIBADD) $(LIBS)
+	$(AM_V_CXXLD)$(libqseawk_la_LINK) -rpath $(libdir) $(libqseawk_la_OBJECTS) $(libqseawk_la_LIBADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -704,6 +688,8 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqseawk_dir_la-mod-dir.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqseawk_la-Awk.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqseawk_la-StdAwk.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqseawk_la-awk.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqseawk_la-err.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqseawk_la-fnc.Plo@am__quote@ # am--include-marker
@@ -722,8 +708,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqseawk_math_la-mod-math.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqseawk_str_la-mod-str.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqseawk_sys_la-mod-sys.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqseawkxx_la-Awk.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqseawkxx_la-StdAwk.Plo@am__quote@ # am--include-marker
 
 $(am__depfiles_remade):
 	@$(MKDIR_P) $(@D)
@@ -906,19 +890,19 @@ libqseawk_la-mod-sys.lo: mod-sys.c
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LTCXXCOMPILE) -c -o $@ $<
 
-libqseawkxx_la-Awk.lo: Awk.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libqseawkxx_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libqseawkxx_la-Awk.lo -MD -MP -MF $(DEPDIR)/libqseawkxx_la-Awk.Tpo -c -o libqseawkxx_la-Awk.lo `test -f 'Awk.cpp' || echo '$(srcdir)/'`Awk.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libqseawkxx_la-Awk.Tpo $(DEPDIR)/libqseawkxx_la-Awk.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='Awk.cpp' object='libqseawkxx_la-Awk.lo' libtool=yes @AMDEPBACKSLASH@
+libqseawk_la-Awk.lo: Awk.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libqseawk_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libqseawk_la-Awk.lo -MD -MP -MF $(DEPDIR)/libqseawk_la-Awk.Tpo -c -o libqseawk_la-Awk.lo `test -f 'Awk.cpp' || echo '$(srcdir)/'`Awk.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libqseawk_la-Awk.Tpo $(DEPDIR)/libqseawk_la-Awk.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='Awk.cpp' object='libqseawk_la-Awk.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libqseawkxx_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libqseawkxx_la-Awk.lo `test -f 'Awk.cpp' || echo '$(srcdir)/'`Awk.cpp
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libqseawk_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libqseawk_la-Awk.lo `test -f 'Awk.cpp' || echo '$(srcdir)/'`Awk.cpp
 
-libqseawkxx_la-StdAwk.lo: StdAwk.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libqseawkxx_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libqseawkxx_la-StdAwk.lo -MD -MP -MF $(DEPDIR)/libqseawkxx_la-StdAwk.Tpo -c -o libqseawkxx_la-StdAwk.lo `test -f 'StdAwk.cpp' || echo '$(srcdir)/'`StdAwk.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libqseawkxx_la-StdAwk.Tpo $(DEPDIR)/libqseawkxx_la-StdAwk.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='StdAwk.cpp' object='libqseawkxx_la-StdAwk.lo' libtool=yes @AMDEPBACKSLASH@
+libqseawk_la-StdAwk.lo: StdAwk.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libqseawk_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libqseawk_la-StdAwk.lo -MD -MP -MF $(DEPDIR)/libqseawk_la-StdAwk.Tpo -c -o libqseawk_la-StdAwk.lo `test -f 'StdAwk.cpp' || echo '$(srcdir)/'`StdAwk.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libqseawk_la-StdAwk.Tpo $(DEPDIR)/libqseawk_la-StdAwk.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='StdAwk.cpp' object='libqseawk_la-StdAwk.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libqseawkxx_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libqseawkxx_la-StdAwk.lo `test -f 'StdAwk.cpp' || echo '$(srcdir)/'`StdAwk.cpp
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libqseawk_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libqseawk_la-StdAwk.lo `test -f 'StdAwk.cpp' || echo '$(srcdir)/'`StdAwk.cpp
 
 mostlyclean-libtool:
 	-rm -f *.lo
@@ -1055,6 +1039,8 @@ clean-am: clean-generic clean-libLTLIBRARIES clean-libtool \
 
 distclean: distclean-am
 		-rm -f ./$(DEPDIR)/libqseawk_dir_la-mod-dir.Plo
+	-rm -f ./$(DEPDIR)/libqseawk_la-Awk.Plo
+	-rm -f ./$(DEPDIR)/libqseawk_la-StdAwk.Plo
 	-rm -f ./$(DEPDIR)/libqseawk_la-awk.Plo
 	-rm -f ./$(DEPDIR)/libqseawk_la-err.Plo
 	-rm -f ./$(DEPDIR)/libqseawk_la-fnc.Plo
@@ -1073,8 +1059,6 @@ distclean: distclean-am
 	-rm -f ./$(DEPDIR)/libqseawk_math_la-mod-math.Plo
 	-rm -f ./$(DEPDIR)/libqseawk_str_la-mod-str.Plo
 	-rm -f ./$(DEPDIR)/libqseawk_sys_la-mod-sys.Plo
-	-rm -f ./$(DEPDIR)/libqseawkxx_la-Awk.Plo
-	-rm -f ./$(DEPDIR)/libqseawkxx_la-StdAwk.Plo
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-tags
@@ -1121,6 +1105,8 @@ installcheck-am:
 
 maintainer-clean: maintainer-clean-am
 		-rm -f ./$(DEPDIR)/libqseawk_dir_la-mod-dir.Plo
+	-rm -f ./$(DEPDIR)/libqseawk_la-Awk.Plo
+	-rm -f ./$(DEPDIR)/libqseawk_la-StdAwk.Plo
 	-rm -f ./$(DEPDIR)/libqseawk_la-awk.Plo
 	-rm -f ./$(DEPDIR)/libqseawk_la-err.Plo
 	-rm -f ./$(DEPDIR)/libqseawk_la-fnc.Plo
@@ -1139,8 +1125,6 @@ maintainer-clean: maintainer-clean-am
 	-rm -f ./$(DEPDIR)/libqseawk_math_la-mod-math.Plo
 	-rm -f ./$(DEPDIR)/libqseawk_str_la-mod-str.Plo
 	-rm -f ./$(DEPDIR)/libqseawk_sys_la-mod-sys.Plo
-	-rm -f ./$(DEPDIR)/libqseawkxx_la-Awk.Plo
-	-rm -f ./$(DEPDIR)/libqseawkxx_la-StdAwk.Plo
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 

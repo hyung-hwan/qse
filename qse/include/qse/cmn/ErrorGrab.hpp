@@ -85,6 +85,7 @@ struct TypesErrorNumberToStr
 	const qse_char_t* operator() (Types::ErrorNumber errnum);
 };
 
+typedef ErrorGrab<Types::ErrorNumber, TypesErrorNumberToStr, 64> ErrorGrab64;
 typedef ErrorGrab<Types::ErrorNumber, TypesErrorNumberToStr, 128> ErrorGrab128;
 typedef ErrorGrab<Types::ErrorNumber, TypesErrorNumberToStr, 256> ErrorGrab256;
 
