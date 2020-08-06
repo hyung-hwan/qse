@@ -83,7 +83,7 @@ public:
 	///
 	void* allocate (qse_size_t n, bool raise_exception = true) /*QSE_CPP_THREXCEPT1(MemoryError)*/
 	{
-		void* xptr = this->allocMem (n);
+		void* xptr = this->allocMem(n);
 		if (!xptr && raise_exception) QSE_THROW (MemoryError);
 		return xptr;
 	}
@@ -101,7 +101,7 @@ public:
 	///
 	void* reallocate (void* ptr, qse_size_t n, bool raise_exception = true) /*QSE_CPP_THREXCEPT1(MemoryError)*/
 	{
-		void* xptr = this->reallocMem (ptr, n);
+		void* xptr = this->reallocMem(ptr, n);
 		if (!xptr && raise_exception) QSE_THROW (MemoryError);
 		return xptr;
 	}

@@ -61,10 +61,20 @@ public:
 		this->insertLast (QSE::String(n, size));
 	}
 
+	void addArg (const QSE::String& str)
+	{
+		this->insertLast (str);
+	}
+
 	void setName (const qse_char_t* n, qse_size_t size)
 	{
 		this->name.truncate (0);
 		this->name.append (n, size);
+	}
+
+	void setName (const QSE::String& str)
+	{
+		this->name = str;
 	}
 
 	const QSE::String& getName () const
@@ -75,6 +85,12 @@ public:
 	bool isNullCmd () const
 	{
 		return this->name.getSize() == 0;
+	}
+
+	void clear ()
+	{
+		this->name.clear ();
+		QSE::Array<QSE::String>::clear ();
 	}
 
 	QSE::String name;

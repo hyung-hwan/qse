@@ -89,8 +89,14 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-@ENABLE_CXX_TRUE@am__append_1 = libqsesixx.la
-@ENABLE_CXX_FALSE@libqsesixx_la_DEPENDENCIES =
+@ENABLE_CXX_TRUE@am__append_1 = \
+@ENABLE_CXX_TRUE@	App.cpp \
+@ENABLE_CXX_TRUE@	Path.cpp \
+@ENABLE_CXX_TRUE@	SocketAddress.cpp \
+@ENABLE_CXX_TRUE@	Socket.cpp \
+@ENABLE_CXX_TRUE@	TcpServer.cpp \
+@ENABLE_CXX_TRUE@	Thread.cpp
+
 subdir = lib/si
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ax_check_sign.m4 \
@@ -138,6 +144,14 @@ am__uninstall_files_from_dir = { \
 am__installdirs = "$(DESTDIR)$(libdir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
 am__DEPENDENCIES_1 =
+am__libqsesi_la_SOURCES_DIST = cnd.c dir.c fio.c fs.c fs-attr.c \
+	fs-copy.c fs-delete.c fs-err.c fs-make.c fs-move.c fs-util.c \
+	glob.c intr.c log.c mtx.c mux.c netlink.c nwad.c nwad-skad.c \
+	nwif.c nwif-cfg.c nwio.c os.c pio.c rwl.c sck.c sinfo.c sio.c \
+	task.c thr.c thr-prv.h tio.c App.cpp Path.cpp \
+	SocketAddress.cpp Socket.cpp TcpServer.cpp Thread.cpp
+@ENABLE_CXX_TRUE@am__objects_1 = App.lo Path.lo SocketAddress.lo \
+@ENABLE_CXX_TRUE@	Socket.lo TcpServer.lo Thread.lo
 am_libqsesi_la_OBJECTS = libqsesi_la-cnd.lo libqsesi_la-dir.lo \
 	libqsesi_la-fio.lo libqsesi_la-fs.lo libqsesi_la-fs-attr.lo \
 	libqsesi_la-fs-copy.lo libqsesi_la-fs-delete.lo \
@@ -150,26 +164,15 @@ am_libqsesi_la_OBJECTS = libqsesi_la-cnd.lo libqsesi_la-dir.lo \
 	libqsesi_la-nwio.lo libqsesi_la-os.lo libqsesi_la-pio.lo \
 	libqsesi_la-rwl.lo libqsesi_la-sck.lo libqsesi_la-sinfo.lo \
 	libqsesi_la-sio.lo libqsesi_la-task.lo libqsesi_la-thr.lo \
-	libqsesi_la-tio.lo
+	libqsesi_la-tio.lo $(am__objects_1)
 libqsesi_la_OBJECTS = $(am_libqsesi_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
 am__v_lt_1 = 
-libqsesi_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
-	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(libqsesi_la_CFLAGS) \
-	$(CFLAGS) $(libqsesi_la_LDFLAGS) $(LDFLAGS) -o $@
-am__libqsesixx_la_SOURCES_DIST = App.cpp Path.cpp SocketAddress.cpp \
-	Socket.cpp TcpServer.cpp Thread.cpp
-@ENABLE_CXX_TRUE@am_libqsesixx_la_OBJECTS = App.lo Path.lo \
-@ENABLE_CXX_TRUE@	SocketAddress.lo Socket.lo TcpServer.lo \
-@ENABLE_CXX_TRUE@	Thread.lo
-libqsesixx_la_OBJECTS = $(am_libqsesixx_la_OBJECTS)
-libqsesixx_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
-	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
-	$(AM_CXXFLAGS) $(CXXFLAGS) $(libqsesixx_la_LDFLAGS) $(LDFLAGS) \
-	-o $@
-@ENABLE_CXX_TRUE@am_libqsesixx_la_rpath = -rpath $(libdir)
+libqsesi_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
+	$(CXXFLAGS) $(libqsesi_la_LDFLAGS) $(LDFLAGS) -o $@
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -255,9 +258,8 @@ AM_V_CXXLD = $(am__v_CXXLD_@AM_V@)
 am__v_CXXLD_ = $(am__v_CXXLD_@AM_DEFAULT_V@)
 am__v_CXXLD_0 = @echo "  CXXLD   " $@;
 am__v_CXXLD_1 = 
-SOURCES = $(libqsesi_la_SOURCES) $(libqsesixx_la_SOURCES)
-DIST_SOURCES = $(libqsesi_la_SOURCES) \
-	$(am__libqsesixx_la_SOURCES_DIST)
+SOURCES = $(libqsesi_la_SOURCES)
+DIST_SOURCES = $(am__libqsesi_la_SOURCES_DIST)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -459,56 +461,16 @@ noinst_HEADERS = \
 	fs-prv.h \
 	glob-imp.h
 
-lib_LTLIBRARIES = libqsesi.la $(am__append_1)
-libqsesi_la_SOURCES = \
-	cnd.c \
-	dir.c \
-	fio.c  \
-	fs.c \
-	fs-attr.c \
-	fs-copy.c \
-	fs-delete.c \
-	fs-err.c \
-	fs-make.c \
-	fs-move.c \
-	fs-util.c \
-	glob.c \
-	intr.c \
-	log.c \
-	mtx.c \
-	mux.c \
-	netlink.c \
-	nwad.c \
-	nwad-skad.c \
-	nwif.c \
-	nwif-cfg.c \
-	nwio.c  \
-	os.c \
-	pio.c  \
-	rwl.c \
-	sck.c \
-	sinfo.c \
-	sio.c  \
-	task.c \
-	thr.c \
-	thr-prv.h \
-	tio.c
-
+lib_LTLIBRARIES = libqsesi.la
+libqsesi_la_SOURCES = cnd.c dir.c fio.c fs.c fs-attr.c fs-copy.c \
+	fs-delete.c fs-err.c fs-make.c fs-move.c fs-util.c glob.c \
+	intr.c log.c mtx.c mux.c netlink.c nwad.c nwad-skad.c nwif.c \
+	nwif-cfg.c nwio.c os.c pio.c rwl.c sck.c sinfo.c sio.c task.c \
+	thr.c thr-prv.h tio.c $(am__append_1)
 libqsesi_la_CFLAGS = $(PTHREAD_CFLAGS)
 libqsesi_la_LDFLAGS = -L../cmn -version-info 1:0:0 -no-undefined
 libqsesi_la_LIBADD = -lqsecmn $(PTHREAD_LIBS) $(SSL_LIBS)
 libqsesi_la_DEPENDENCIES = ../../lib/cmn/libqsecmn.la
-@ENABLE_CXX_TRUE@libqsesixx_la_SOURCES = \
-@ENABLE_CXX_TRUE@	App.cpp \
-@ENABLE_CXX_TRUE@	Path.cpp \
-@ENABLE_CXX_TRUE@	SocketAddress.cpp \
-@ENABLE_CXX_TRUE@	Socket.cpp \
-@ENABLE_CXX_TRUE@	TcpServer.cpp \
-@ENABLE_CXX_TRUE@	Thread.cpp
-
-@ENABLE_CXX_TRUE@libqsesixx_la_LDFLAGS = -L. -L../cmn -version-info 1:0:0 -no-undefined
-@ENABLE_CXX_TRUE@libqsesixx_la_LIBADD = -lqsecmnxx -lqsesi -lqsecmn 
-@ENABLE_CXX_TRUE@libqsesixx_la_DEPENDENCIES = ../../lib/cmn/libqsecmnxx.la libqsesi.la ../../lib/cmn/libqsecmn.la
 all: all-am
 
 .SUFFIXES:
@@ -579,10 +541,7 @@ clean-libLTLIBRARIES:
 	}
 
 libqsesi.la: $(libqsesi_la_OBJECTS) $(libqsesi_la_DEPENDENCIES) $(EXTRA_libqsesi_la_DEPENDENCIES) 
-	$(AM_V_CCLD)$(libqsesi_la_LINK) -rpath $(libdir) $(libqsesi_la_OBJECTS) $(libqsesi_la_LIBADD) $(LIBS)
-
-libqsesixx.la: $(libqsesixx_la_OBJECTS) $(libqsesixx_la_DEPENDENCIES) $(EXTRA_libqsesixx_la_DEPENDENCIES) 
-	$(AM_V_CXXLD)$(libqsesixx_la_LINK) $(am_libqsesixx_la_rpath) $(libqsesixx_la_OBJECTS) $(libqsesixx_la_LIBADD) $(LIBS)
+	$(AM_V_CXXLD)$(libqsesi_la_LINK) -rpath $(libdir) $(libqsesi_la_OBJECTS) $(libqsesi_la_LIBADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)

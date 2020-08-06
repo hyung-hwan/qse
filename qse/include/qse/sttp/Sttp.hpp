@@ -30,187 +30,133 @@
 
 #include <qse/Uncopyable.hpp>
 #include <qse/cmn/Mmged.hpp>
-#include <qse/cmn/Transmittable.hpp>
-#include <qse/cmn/time.h>
+#include <qse/cmn/ErrorGrab.hpp>
 #include <qse/sttp/SttpCmd.hpp>
 
 QSE_BEGIN_NAMESPACE(QSE)
 
-class Sttp: public Mmged, public Uncopyable
+class QSE_EXPORT Sttp: public Mmged, public Uncopyable, public Types, public ErrorGrab64
 {
 public:
-	enum ErrorNumber
+	Sttp (Mmgr* mmgr = QSE_NULL) QSE_CPP_NOEXCEPT;
+	virtual ~Sttp ();
+
+	void reset ();
+	int feed (const qse_uint8_t* data, qse_size_t len, qse_size_t* rem);
+
+	int beginWrite (const qse_mchar_t* cmd);
+	int beginWrite (const qse_wchar_t* cmd);
+	int writeWordArg (const qse_mchar_t* arg);
+	int writeWordArg (const qse_wchar_t* arg);
+	int writeStringArg (const qse_mchar_t* arg);
+	int writeStringArg (const qse_mchar_t* arg, qse_size_t len);
+	int writeStringArg (const qse_wchar_t* arg);
+	int writeStringArg (const qse_wchar_t* arg, qse_size_t len);
+	int endWrite ();
+
+	int sendCmd (const qse_mchar_t* name, qse_size_t nargs, ...);
+	int sendCmd (const qse_wchar_t* name, qse_size_t nargs, ...);
+	int sendCmdL (const qse_mchar_t* name, qse_size_t nargs, ...);
+	int sendCmdL (const qse_wchar_t* name, qse_size_t nargs, ...);
+
+	// ------------------------------------------------------------------
+
+	virtual int handle_command (const SttpCmd& cmd)
 	{
-		E_NOERR = 0,
-		E_MEMORY,
-		E_RECEIVE,
-		E_SEND,
-		E_UTF8_CONV,
-		E_CMDNAME,
-		E_CMDPROC,      // user cmd proc returned -1
-		E_UNKNOWNCMD,   // unknown command received
-		E_TOOLONGCMD,
-		E_SEMICOLON,
-		E_TOOMANYARGS,
-		E_WRONGARG,
-		E_WRONGCHAR
+		// it's the subclssases' responsibility to implement this
+		return 0;
+	}
+
+	virtual int write_bytes (const qse_uint8_t* data, qse_size_t len)
+	{
+		// it's the subclssases' responsibility to implement this
+		return 0;
+	}
+
+	// ------------------------------------------------------------------
+
+private:
+	enum rd_state_t
+	{
+		STATE_START,
+		STATE_IN_NAME,
+		STATE_IN_PARAM_LIST,
+		STATE_IN_PARAM_WORD,
+		STATE_IN_PARAM_STRING,
 	};
 
-	Sttp (Transmittable* s = QSE_NULL, Mmgr* mmgr = QSE_NULL) QSE_CPP_NOEXCEPT;
-	~Sttp () QSE_CPP_NOEXCEPT;
-
-	void reset () QSE_CPP_NOEXCEPT;
-
-	qse_size_t getMaxRawCmdLen () const QSE_CPP_NOEXCEPT
+	struct rd_state_node_t
 	{
-		return this->max_raw_cmd_len;
-	}
-	void setMaxRawCmdLen (qse_size_t v) QSE_CPP_NOEXCEPT
-	{
-		this->max_raw_cmd_len = v;
-	}
-
-	qse_size_t setMaxArgCount () const QSE_CPP_NOEXCEPT
-	{
-		return this->max_arg_count;
-	}
-	void setMaxArgCount (qse_size_t v) QSE_CPP_NOEXCEPT
-	{
-		this->max_arg_count = v;
-	}
-
-	bool getOptSendNewline () const QSE_CPP_NOEXCEPT
-	{
-		return this->opt_send_newline;
-	}
-	void setOptSendNewline (bool opt) QSE_CPP_NOEXCEPT
-	{
-		this->opt_send_newline = opt;
-	}
-
-	int getErrorNumber() const QSE_CPP_NOEXCEPT
-	{
-		return this->p_errcode;
-	}
-
-	// The receiveCmd() function reads a complete command and stores
-	// it to the command object pointed to by \a cmd. 
-	//
-	// Upon failure, if the error code is #ERR_RECEIVE, you can check
-	// the error code of the medium set to find more about the error.
-	// See the following pseudo code.
-	//
-	// \code
-	// Socket sck;
-	// Sttp sttp(sck);
-	// if (sttp->receiveCmd(&cmd) <= -1 && 
-	//     sttp->getErrorNumber() == Sttp::E_RECEIVE &&
-	//     sck->getErrorNumber() == Socket::E_EAGAIN) { ... }
-	// \endcode
-	//
-	// \return 1 if a command is received. 0 if end of input is detected
-	//         -1 if an error has occurred.
-	int receiveCmd (SttpCmd* cmd) QSE_CPP_NOEXCEPT;
-
-	int sendCmd  (const SttpCmd& cmd) QSE_CPP_NOEXCEPT;
-	int sendCmd  (const qse_char_t* name, qse_size_t nargs, ...) QSE_CPP_NOEXCEPT;
-	int sendCmdL (const qse_char_t* name, qse_size_t nargs, ...) QSE_CPP_NOEXCEPT;
-	int sendCmdL (const qse_char_t* name, qse_size_t nmlen, qse_size_t nargs, ...) QSE_CPP_NOEXCEPT;
-
-	const qse_char_t* getErrorStr () const QSE_CPP_NOEXCEPT;
-
-	void setErrorNumber (int code) QSE_CPP_NOEXCEPT
-	{
-		this->p_errcode = code;
-	}
-
-protected:
-	enum 
-	{
-		MAX_RAW_CMD_LEN  = 1024 * 1000,
-		MAX_ARG_COUNT    = 20,
-		MAX_INBUF_LEN    = 1024,
-		MAX_OUTBUF_LEN   = 1024
-
-	};
-
-	enum TokenType 
-	{
-		T_EOF         = 1,
-		T_STRING      = 2,
-		T_IDENT       = 3,
-		T_SEMICOLON   = 4,
-		T_COMMA       = 5
-	};
-
-	Transmittable* p_medium;
-	int p_errcode; /* ErrorNumber */
-
-	qse_mchar_t inbuf [MAX_INBUF_LEN];
-	qse_mchar_t outbuf[MAX_OUTBUF_LEN];
-	qse_size_t  inbuf_len;
-	qse_size_t  outbuf_len;
-	qse_size_t  sttp_curp;
-	qse_cint_t  sttp_curc;
-
-	qse_size_t max_raw_cmd_len;
-	qse_size_t max_arg_count;
-	qse_size_t raw_cmd_len;
-	bool opt_send_newline;
-
-	TokenType token_type;
-	QSE::String token_value;
-
-	int get_char () QSE_CPP_NOEXCEPT;
-	int get_token () QSE_CPP_NOEXCEPT;
-	int get_ident () QSE_CPP_NOEXCEPT;
-	int get_string (qse_char_t end) QSE_CPP_NOEXCEPT;
-	qse_cint_t translate_escaped_char (qse_cint_t c) QSE_CPP_NOEXCEPT;
-	bool is_ident_char (qse_cint_t c) QSE_CPP_NOEXCEPT;
-
-	int put_mchar (qse_mchar_t ch) QSE_CPP_NOEXCEPT;
-	int put_wchar (qse_wchar_t ch) QSE_CPP_NOEXCEPT;
-
-	int put_char (qse_char_t ch) QSE_CPP_NOEXCEPT
-	{
-	#if defined(QSE_CHAR_IS_MCHAR)
-		return this->put_mchar(ch);
-	#else
-		return this->put_wchar(ch);
-	#endif
-	}
-
-	int flush_outbuf () QSE_CPP_NOEXCEPT;
-};
-
-
-#if 0
-class SttpStdHandler
-{
-	int operator() (const SttpCmd& cmd)
-	{
-	}
-
-};
-
-template <class HANDLER>
-class SttpX
-{
-	int exec()
-	{
-		if (this->receiveCmd(&cmd) <= -1)
+		rd_state_t state;
+		union
 		{
-		}
+			struct
+			{
+				bool got_value;
+			} ipl; /* in parameter list */
+			struct
+			{
+				int escaped;
+				int digit_count;
+				qse_wchar_t acc;
+				qse_char_t qc;
+			} ps; /* parameter string */
+		} u;
+		rd_state_node_t* next;
+	};
 
-		if (this->handler(&cmd) <= -1)
-		{
-		}
+	rd_state_node_t rd_rd_state_top;
+	rd_state_node_t* rd_state_stack;
+	SttpCmd command;
+	QSE::String token;
+	qse_uint8_t rd_lo[QSE_MBLEN_MAX];
+	qse_size_t rd_lo_len;
+
+	qse_uint8_t wr_buf[4096];
+	qse_size_t wr_buf_len;
+	int wr_arg_count;
+
+	int feed_chunk (const qse_uint8_t* data, qse_size_t len, qse_size_t* xlen);
+	int handle_char (qse_char_t c);
+	int handle_start_char (qse_char_t c);
+	int handle_name_char (qse_char_t c);
+	int handle_param_list_char (qse_char_t c);
+	int handle_param_word_char (qse_char_t c);
+	int handle_param_string_char (qse_char_t c);
+
+	bool is_space_char (qse_char_t c)
+	{
+		return QSE_ISSPACE(c);
 	}
 
-protected:
-	HANDLER handler;
+	bool is_ident_char (qse_char_t c)
+	{
+		return QSE_ISALNUM(c) || c == QSE_T('_') || c == QSE_T('.') || c == QSE_T('*') || c == QSE_T('@');
+	}
+
+	void add_char_to_token (qse_char_t c)
+	{
+		this->token.append (c);
+	}
+
+	void add_chars_to_token (const qse_char_t* ptr, qse_size_t len)
+	{
+		this->token.append (ptr, len);
+	}
+
+	void clear_token ()
+	{
+		this->token.clear ();
+	}
+
+	int push_read_state (rd_state_t state);
+	void pop_read_state ();
+	void pop_all_read_states ();
+
+
+	int write_char (qse_wchar_t c);
+	int write_char (qse_mchar_t c);
 };
-#endif
 
 QSE_END_NAMESPACE(QSE)
 

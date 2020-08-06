@@ -50,7 +50,7 @@ void Mmgr::free_mem (mmgr_t* mmgr, void* ptr) QSE_CPP_NOEXCEPT
 void* Mmgr::callocate (qse_size_t n, bool raise_exception) /*QSE_CPP_THREXCEPT1(MemoryError)*/
 {
 	void* ptr = this->allocate(n, raise_exception);
-	QSE_MEMSET (ptr, 0, n);
+	if (ptr) QSE_MEMSET (ptr, 0, n);
 	return ptr;
 }
 

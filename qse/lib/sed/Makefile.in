@@ -89,8 +89,7 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-@ENABLE_CXX_TRUE@am__append_1 = libqsesedxx.la
-@ENABLE_CXX_FALSE@libqsesedxx_la_DEPENDENCIES =
+@ENABLE_CXX_TRUE@am__append_1 = Sed.cpp StdSed.cpp
 subdir = lib/sed
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ax_check_sign.m4 \
@@ -137,23 +136,17 @@ am__uninstall_files_from_dir = { \
   }
 am__installdirs = "$(DESTDIR)$(libdir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
-am_libqsesed_la_OBJECTS = sed.lo err.lo std.lo
+am__libqsesed_la_SOURCES_DIST = sed.c err.c std.c Sed.cpp StdSed.cpp
+@ENABLE_CXX_TRUE@am__objects_1 = Sed.lo StdSed.lo
+am_libqsesed_la_OBJECTS = sed.lo err.lo std.lo $(am__objects_1)
 libqsesed_la_OBJECTS = $(am_libqsesed_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
 am__v_lt_1 = 
-libqsesed_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
-	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
-	$(libqsesed_la_LDFLAGS) $(LDFLAGS) -o $@
-am__libqsesedxx_la_SOURCES_DIST = Sed.cpp StdSed.cpp
-@ENABLE_CXX_TRUE@am_libqsesedxx_la_OBJECTS = Sed.lo StdSed.lo
-libqsesedxx_la_OBJECTS = $(am_libqsesedxx_la_OBJECTS)
-libqsesedxx_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
-	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
-	$(AM_CXXFLAGS) $(CXXFLAGS) $(libqsesedxx_la_LDFLAGS) \
-	$(LDFLAGS) -o $@
-@ENABLE_CXX_TRUE@am_libqsesedxx_la_rpath = -rpath $(libdir)
+libqsesed_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
+	$(CXXFLAGS) $(libqsesed_la_LDFLAGS) $(LDFLAGS) -o $@
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -208,9 +201,8 @@ AM_V_CXXLD = $(am__v_CXXLD_@AM_V@)
 am__v_CXXLD_ = $(am__v_CXXLD_@AM_DEFAULT_V@)
 am__v_CXXLD_0 = @echo "  CXXLD   " $@;
 am__v_CXXLD_1 = 
-SOURCES = $(libqsesed_la_SOURCES) $(libqsesedxx_la_SOURCES)
-DIST_SOURCES = $(libqsesed_la_SOURCES) \
-	$(am__libqsesedxx_la_SOURCES_DIST)
+SOURCES = $(libqsesed_la_SOURCES)
+DIST_SOURCES = $(am__libqsesed_la_SOURCES_DIST)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -409,15 +401,11 @@ AM_CPPFLAGS = \
 	-I$(top_srcdir)/include
 
 noinst_HEADERS = sed-prv.h
-lib_LTLIBRARIES = libqsesed.la $(am__append_1)
-libqsesed_la_SOURCES = sed.c err.c std.c
+lib_LTLIBRARIES = libqsesed.la
+libqsesed_la_SOURCES = sed.c err.c std.c $(am__append_1)
 libqsesed_la_LDFLAGS = -L../cmn -L../si -version-info 1:0:0 -no-undefined
 libqsesed_la_LIBADD = -lqsecmn  -lqsesi
 libqsesed_la_DEPENDENCIES = ../../lib/cmn/libqsecmn.la ../../lib/si/libqsesi.la
-@ENABLE_CXX_TRUE@libqsesedxx_la_SOURCES = Sed.cpp StdSed.cpp
-@ENABLE_CXX_TRUE@libqsesedxx_la_LDFLAGS = -L. -L../cmn -L../si -version-info 1:0:0 -no-undefined
-@ENABLE_CXX_TRUE@libqsesedxx_la_LIBADD = -lqsesed -lqsecmnxx -lqsesi -lqsecmn 
-@ENABLE_CXX_TRUE@libqsesedxx_la_DEPENDENCIES = libqsesed.la ../../lib/cmn/libqsecmnxx.la ../../lib/si/libqsesi.la ../../lib/cmn/libqsecmn.la
 all: all-am
 
 .SUFFIXES:
@@ -488,10 +476,7 @@ clean-libLTLIBRARIES:
 	}
 
 libqsesed.la: $(libqsesed_la_OBJECTS) $(libqsesed_la_DEPENDENCIES) $(EXTRA_libqsesed_la_DEPENDENCIES) 
-	$(AM_V_CCLD)$(libqsesed_la_LINK) -rpath $(libdir) $(libqsesed_la_OBJECTS) $(libqsesed_la_LIBADD) $(LIBS)
-
-libqsesedxx.la: $(libqsesedxx_la_OBJECTS) $(libqsesedxx_la_DEPENDENCIES) $(EXTRA_libqsesedxx_la_DEPENDENCIES) 
-	$(AM_V_CXXLD)$(libqsesedxx_la_LINK) $(am_libqsesedxx_la_rpath) $(libqsesedxx_la_OBJECTS) $(libqsesedxx_la_LIBADD) $(LIBS)
+	$(AM_V_CXXLD)$(libqsesed_la_LINK) -rpath $(libdir) $(libqsesed_la_OBJECTS) $(libqsesed_la_LIBADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)

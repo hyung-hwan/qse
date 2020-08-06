@@ -29,13 +29,9 @@ sed03_LDADD = $(LDADD)
 
 if ENABLE_CXX
 
-CXXLIB = -lqsesedxx -lqsecmnxx
 bin_PROGRAMS += sed21 sed22
 
 sed21_SOURCES = sed21.cpp $(CMNFILES)
-sed21_LDADD = $(CXXLIB) $(LDADD)
-
 sed22_SOURCES = sed22.cpp $(CMNFILES)
-sed22_LDADD = $(CXXLIB) $(LDADD)
 
 endif

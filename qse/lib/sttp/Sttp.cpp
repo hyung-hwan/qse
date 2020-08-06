@@ -26,590 +26,763 @@
 
 
 #include <qse/sttp/Sttp.hpp>
+
 #include <qse/cmn/chr.h>
 #include <qse/cmn/utf8.h>
 #include "../cmn/mem-prv.h"
 
-#define GET_CHAR()        if (this->get_char() <= -1) return -1;
-#define GET_TOKEN()       if (this->get_token() <= -1) return -1;
-#define PUT_CHAR(x)       if (this->put_char(x) <= -1) return -1;
-
 QSE_BEGIN_NAMESPACE(QSE)
 
-Sttp::Sttp (Transmittable* s, Mmgr* mmgr) QSE_CPP_NOEXCEPT: Mmged(mmgr), p_medium(s)
+Sttp::Sttp (Mmgr* mmgr) QSE_CPP_NOEXCEPT: Mmged(mmgr)
 {
-	this->reset ();
+	this->rd_rd_state_top.state = STATE_START;
+	this->rd_rd_state_top.next = QSE_NULL;
+	this->rd_state_stack = &this->rd_rd_state_top;
+	this->rd_lo_len = 0;
+
+	this->wr_buf_len = 0;
+	this->wr_arg_count = 0;
 }
 
-Sttp::~Sttp () QSE_CPP_NOEXCEPT
+Sttp::~Sttp ()
 {
+	this->pop_all_read_states ();
 }
 
-void Sttp::reset () QSE_CPP_NOEXCEPT
+void Sttp::reset ()
 {
-	this->inbuf_len       = 0;
-	this->outbuf_len      = 0;
-	this->sttp_curp       = 0;
-	this->sttp_curc       = QSE_T('\0');
+	this->pop_all_read_states ();
+	this->rd_lo_len = 0;
 
-	this->max_raw_cmd_len  = MAX_RAW_CMD_LEN;
-	this->max_arg_count    = MAX_ARG_COUNT;
-	this->raw_cmd_len      = 0;
-
-	this->opt_send_newline = true;
+	this->wr_buf_len = 0;
+	this->wr_arg_count = 0;
 }
 
-int Sttp::receiveCmd (SttpCmd* cmd) QSE_CPP_NOEXCEPT
+int Sttp::feed (const qse_uint8_t* data, qse_size_t len, qse_size_t* rem)
 {
-	QSE_ASSERT (p_medium != QSE_NULL);
+	qse_size_t xlen, pos = 0, alen = len;
 
-	this->p_errcode = E_NOERR;
-	this->raw_cmd_len = 0;
-
-	GET_CHAR ();
-	GET_TOKEN();
-
-	/*
-	if (this->token_type == T_SEMICOLON) { 
-		// null command
-		cmd->clear ();
-		return 0;
-	}
-	*/
-
-	if (this->token_type == T_EOF) return 0; // no more command. end of input
-
-	if (this->token_type != T_IDENT) 
+	if (this->rd_lo_len > 0)
 	{
-		this->p_errcode = E_CMDNAME;
-		return -1;
-	}
-
-	cmd->clear ();
-	try { cmd->setName (token_value.getBuffer(), token_value.getSize()); } 
-	catch (...) 
-	{ 
-		this->p_errcode= E_MEMORY;
-		return -1;
-	}
-
-	while (1)
-	{
-		GET_TOKEN();
-		switch (this->token_type)
+		int n;
+		while (1)
 		{
-			case T_STRING:
-				try { cmd->addArg (token_value.getBuffer(), token_value.getSize()); }
-				catch (...)
-				{
-					this->p_errcode = E_MEMORY;
-					return -1;
-				}
-				break;
+			this->rd_lo[this->rd_lo_len++] = data[pos++];
+			alen--;
 
-			case T_IDENT:
-				// you don't have to quote a string owing to this.
-				try { cmd->addArg (token_value.getBuffer(), token_value.getSize()); }
-				catch (...)
-				{
-					this->p_errcode = E_MEMORY;
-					return -1;
-				}
-				break;
-
-			default:
-				if (cmd->getArgCount() == 0) break;
-				this->p_errcode = E_WRONGARG;
-				return -1;
-		}
-
-		GET_TOKEN();
-		if (this->token_type != T_COMMA) break;
-		if (cmd->getArgCount() >= this->max_arg_count) 
-		{
-			this->p_errcode = E_TOOMANYARGS;
-			return -1;
-		}
-	}
-
-	if (this->token_type != T_SEMICOLON) 
-	{
-		this->p_errcode = E_SEMICOLON;
-		return -1;
-	}
-
-	return 1; // got a command
-}
-
-int Sttp::sendCmd (const SttpCmd& cmd) QSE_CPP_NOEXCEPT
-{
-	this->p_errcode = E_NOERR;
-
-	const qse_char_t* p = (const qse_char_t*)cmd.name;
-	if (*p == QSE_T('\0')) return 0; // don't send a null command
-
-	while (*p != QSE_T('\0')) PUT_CHAR(*p++); 
-
-	qse_size_t nargs = cmd.getArgCount();
-	if (nargs > 0) 
-	{
-		PUT_CHAR (QSE_T(' '));
-
-		for (qse_size_t i = 0; i < nargs; i++) 
-		{
-			const qse_char_t* arg = cmd.getArgAt(i);
-			qse_size_t arg_len = cmd.getArgLenAt(i);
-
-			PUT_CHAR (QSE_T('\"'));
-			for (qse_size_t j = 0; j < arg_len; j++) 
+			n = this->feed_chunk(this->rd_lo, this->rd_lo_len, &xlen);
+			if (n <= -1) return -1;
+			if (n == 0 && xlen == 0)
 			{
-				// Don't have to send a backslash when encryption is on
-				// because only 16 characters from 'A' TO 'P' are used
-				if (arg[j] == QSE_T('\\') || 
-				    arg[j] == QSE_T('\"')) PUT_CHAR ('\\');
-				PUT_CHAR (arg[j]);
+				/* not complete - incomplete sequence */
+				if (alen > 0) continue; /* but still has more data given */
+				goto done; /* still not resolved the incomplete sequence */
 			}
-			PUT_CHAR (QSE_T('\"'));
 
-			if (i < nargs - 1) PUT_CHAR (QSE_T(','));
+			break;
 		}
+		QSE_ASSERT (xlen == this->rd_lo_len);
+		this->rd_lo_len = 0;
 	}
 
-	PUT_CHAR (QSE_T(';'));
-	if (this->opt_send_newline) 
+	while (alen > 0)
 	{
-		PUT_CHAR (QSE_T('\r'));
-		PUT_CHAR (QSE_T('\n'));
-	}
-	return this->flush_outbuf();
-}
+		int n = this->feed_chunk(&data[pos], alen, &xlen);
+		if (n <= -1) return -1;
 
+		pos += xlen;
+		alen -= xlen;
 
-int Sttp::sendCmd (const qse_char_t* name, qse_size_t nargs = 0, ...) QSE_CPP_NOEXCEPT
-{
-	this->p_errcode = E_NOERR;
-
-	const qse_char_t* p = name;
-	if (*p == QSE_T('\0')) return 0; // don't send a null command
-
-	while (*p != QSE_T('\0')) PUT_CHAR (*p++);
-
-	if (nargs > 0) 
-	{
-		va_list ap;
-		va_start (ap, nargs);
-
-		PUT_CHAR (QSE_T(' '));
-		for (qse_size_t i = 1; i <= nargs; i++) 
+		if (rem) 
 		{
-			p = va_arg (ap, qse_char_t*);
-
-			PUT_CHAR (QSE_T('\"'));
-			while (*p) 
-			{
-				if (*p == QSE_T('\\') || *p == QSE_T('\"')) PUT_CHAR (QSE_T('\\'));
-				PUT_CHAR (*p++); 
-			}
-			PUT_CHAR (QSE_T('\"'));
-	
-			if (i < nargs) PUT_CHAR (QSE_T(','));
-		}
-		va_end (ap);
-	}
-
-	PUT_CHAR (QSE_T(';'));
-	if (this->opt_send_newline) 
-	{
-		PUT_CHAR (QSE_T('\r'));
-		PUT_CHAR (QSE_T('\n'));
-	}
-	return this->flush_outbuf();
-}
-
-int Sttp::sendCmdL (const qse_char_t* name, qse_size_t nargs = 0, ...) QSE_CPP_NOEXCEPT
-{
-	this->p_errcode = E_NOERR;
-
-	const qse_char_t* p = name;
-	if (*p == QSE_T('\0')) return 0; // don't send a null command
-
-	while (*p != QSE_T('\0')) PUT_CHAR (*p++);
-
-	if (nargs > 0) 
-	{
-		va_list ap;
-		va_start (ap, nargs);
-
-		PUT_CHAR (QSE_T(' '));
-		for (qse_size_t i = 1; i <= nargs; i++) 
-		{
-			p = va_arg (ap, qse_char_t*);
-			qse_size_t len = va_arg (ap, qse_size_t);
-
-			PUT_CHAR (QSE_T('\"'));
-			while (len > 0) 
-			{
-				if (*p == QSE_T('\\') || *p == QSE_T('\"')) PUT_CHAR (QSE_T('\\'));
-				PUT_CHAR (*p++); 
-				len--;
-			}
-			PUT_CHAR (QSE_T('\"'));
-
-			if (i < nargs) PUT_CHAR (QSE_T(','));
-		}
-		va_end (ap);
-	}
-
-	PUT_CHAR (QSE_T(';'));
-	if (this->opt_send_newline) 
-	{
-		PUT_CHAR (QSE_T('\r'));
-		PUT_CHAR (QSE_T('\n'));
-	}
-	return this->flush_outbuf();
-}
-
-int Sttp::sendCmdL (const qse_char_t* name, qse_size_t nmlen, qse_size_t nargs = 0, ...) QSE_CPP_NOEXCEPT
-{
-	this->p_errcode = E_NOERR;
-
-	qse_char_t* p = (qse_char_t*)name;
-	if (*p == QSE_T('\0')) return 0; // don't send a null command
-
-	//while (*p != QSE_T('\0')) PUT_CHAR (*p++);
-	while (nmlen > 0) 
-	{
-		PUT_CHAR (*p++);
-		nmlen--;
-	}
-
-	if (nargs > 0) 
-	{
-		va_list ap;
-
-		va_start (ap, nargs);
-
-		PUT_CHAR (QSE_T(' '));
-		for (qse_size_t i = 1; i <= nargs; i++) 
-		{
-			p = va_arg (ap, qse_char_t*);
-			qse_size_t len = va_arg (ap, qse_size_t);
-
-			PUT_CHAR (QSE_T('\"'));
-			while (len > 0) 
-			{
-				if (*p == QSE_T('\\') || *p == QSE_T('\"')) PUT_CHAR (QSE_T('\\'));
-				PUT_CHAR (*p++); 
-				len--;
-			}
-			PUT_CHAR (QSE_T('\"'));
-
-			if (i < nargs) PUT_CHAR (QSE_T(','));
+			/*
+			n=-1 error  
+			n=0 need more data                 rem > 0 -> incomplete sequence             rem == 0 incomplete command
+			n=1 completed at least a command   rem > 0 -> more command data at the back.  rem == 0. no more command
+			*/
+			break;
 		}
 
-		va_end (ap);
-	}
-
-	PUT_CHAR (QSE_T(';'));
-	if (this->opt_send_newline) 
-	{
-		PUT_CHAR (QSE_T('\r'));
-		PUT_CHAR (QSE_T('\n'));
-	}
-	return this->flush_outbuf();
-}
-
-
-int Sttp::get_char () QSE_CPP_NOEXCEPT
-{
-	qse_size_t remain = 0;
-
-	if (this->sttp_curp == this->inbuf_len) 
-	{
-		qse_ssize_t n; 
-
-		if (this->sttp_curc == QSE_CHAR_EOF)
-		{
-			/* called again after EOF is received. */
-			this->p_errcode = E_RECEIVE;
-			return -1;
-		}
-
-#if defined(QSE_CHAR_IS_WCHAR)
-	get_char_utf8:
-#endif
-		n = this->p_medium->receive(&inbuf[remain], QSE_COUNTOF(inbuf) - remain);
-		if (n <= -1) 
-		{
-			this->p_errcode = E_RECEIVE;
-			return -1;
-		}
 		if (n == 0)
 		{
-			// no more input
-// TODO: if EOF has been read already, raise an error
-
-			this->sttp_curc = QSE_CHAR_EOF;
-			return 0;
+			while (alen > 0)
+			{
+				/* the unprocessed data is due to an incomplete sequence */
+				this->rd_lo[this->rd_lo_len++] = data[pos++];
+				alen--;
+			}
+			break;
 		}
-
-		this->sttp_curp = 0;
-		this->inbuf_len = (qse_size_t)n + remain;
-	} 
-
-#if defined(QSE_CHAR_IS_WCHAR)
-
-	remain = this->inbuf_len - this->sttp_curp;
-
-	qse_size_t seqlen = qse_utf8len(&this->inbuf[this->sttp_curp], remain);
-	if (seqlen == 0) 
-	{
-		// invalid sequence
-		this->sttp_curp++; // skip one byte
-		this->p_errcode = E_UTF8_CONV;
-		return -1;
 	}
 
-	if (remain < seqlen) 
-	{
-		// incomplete sequence. must read further...
-		qse_memcpy (this->inbuf, &this->inbuf[this->sttp_curp], remain);
-		this->sttp_curp = 0;
-		this->inbuf_len = remain;
-		goto get_char_utf8;
-	}
-
-	qse_wchar_t wch;
-	qse_size_t n = qse_utf8touc(&this->inbuf[this->sttp_curp], seqlen, &wch);
-	if (n == 0) 
-	{
-		// this part is not likely to be reached for qse_utf8len() above.
-		// but keep it for completeness
-		this->sttp_curp++; // still must skip a character
-		this->p_errcode = E_UTF8_CONV;
-		return -1;
-	}
-
-	this->sttp_curc = wch;
-	this->sttp_curp += n;
-#else
-	this->sttp_curc = this->inbuf[this->sttp_curp++];
-#endif
-
-	/*
-	if (sttp_curc == QSE_T('\0')) {
-		this->p_errcode = E_WRONGCHAR;
-		return -1;
-	}
-	*/
-
-	if (raw_cmd_len >= max_raw_cmd_len) 
-	{
-		this->p_errcode = E_TOOLONGCMD;
-		return -1;
-	}
-	raw_cmd_len++;
-
+done:
+	if (rem) *rem = alen;
 	return 0;
 }
 
-int Sttp::get_token () QSE_CPP_NOEXCEPT
+int Sttp::feed_chunk (const qse_uint8_t* data, qse_size_t len, qse_size_t* xlen)
 {
-	while (QSE_ISSPACE(this->sttp_curc)) GET_CHAR (); // skip spaces...
+	const qse_uint8_t* ptr, * end, * optr;
+	bool ever_completed = false;
 
-	if (is_ident_char(this->sttp_curc)) return this->get_ident ();
+	ptr = data;
+	end = ptr + len;
+
+//printf ("FEED => len=%d  [", (int)len);
+//for (int i = 0; i < len; i++) printf ("%u ", data[i]);
+//printf ("]\n");
+	while (ptr < end)
+	{
+		qse_char_t c;
+
+		optr = ptr;
+	#if defined(QSE_CHAR_IS_MCHAR)
+		c = *ptr++;
+	#else
+		qse_size_t bcslen = end - ptr;
+		qse_wchar_t uc;
+		qse_size_t n = qse_utf8touc((const qse_mchar_t*)ptr, bcslen, &uc);
+		if (n == 0) 
+		{
+			/* invalid sequence */
+			this->setErrorFmt (E_EINVAL, QSE_T("invalid utf8 sequence starting with 0x%lx"), (unsigned long int)*ptr);
+			return -1;
+		}
+		else if (n > bcslen) 
+		{
+			/* incomplete sequence */
+			break;
+		}
+
+		ptr += n;
+		c = uc;
+	#endif
+
+		if (this->rd_state_stack->state == STATE_START && this->is_space_char(c)) continue;
+		if (ever_completed) 
+		{
+			ptr = optr;
+			break;
+		}
+
+		if (this->handle_char(c) <= -1)  return -1; /* error */
+		if (this->rd_state_stack->state == STATE_START) ever_completed = true; // don't break here to consume some space after the semicolon
+	}
+
+	*xlen = ptr - data;
+	return ever_completed? 1: 0;
+}
+
+int Sttp::handle_char (qse_char_t c)
+{
+	int x;
+
+start_over:
+	switch (this->rd_state_stack->state)
+	{
+		case STATE_START:
+			x = this->handle_start_char(c);
+			break;
+
+		case STATE_IN_NAME:
+			x = this->handle_name_char(c);
+			break;
+
+		case STATE_IN_PARAM_LIST:
+			x = this->handle_param_list_char(c);
+			break;
+
+		case STATE_IN_PARAM_WORD:
+			x = this->handle_param_word_char(c);
+			break;
+
+		case STATE_IN_PARAM_STRING:
+			x = this->handle_param_string_char(c);
+			break;
+
+		default:
+			this->setErrorNumber (E_EINTERN);
+			x = -1;
+			break;
+	}
+
+	if (x <= -1) return -1;
+	if (x == 0) goto start_over;
+
+	return x;
+}
+
+#define PUSH_READ_STATE(x) if (this->push_read_state(x) <= -1) return -1;
+
+int Sttp::handle_start_char (qse_char_t c)
+{
+	if (this->is_ident_char(c))
+	{
+		this->token.append (c);
+		PUSH_READ_STATE (STATE_IN_NAME);
+		return 1;
+	}
+#if 0
+	else if (c == ';')
+	{
+		// empty command
+	}
+#endif
 	else
 	{
-		switch (this->sttp_curc)
-		{
-			case QSE_T('\"'):
-			case QSE_T('\''):
-				return this->get_string(sttp_curc);
-
-			case QSE_T(';'):
-				this->token_type = T_SEMICOLON;
-				this->token_value = QSE_T(';');
-				// do not read the next character to terminate a command
-				// get_char ();
-				break;
-
-			case QSE_T(','):
-				this->token_type  = T_COMMA;
-				this->token_value = QSE_T(',');
-				GET_CHAR ();
-				break;
-
-			case QSE_CHAR_EOF:
-				this->token_type = T_EOF;
-				this->token_value = this->sttp_curc;
-				break;
-
-			default:
-				this->p_errcode = E_WRONGCHAR;
-				return -1;
-		}
+		this->setErrorFmt (E_EINVAL, QSE_T("invalid start character 0x%lx[%jc]"), (unsigned long int)c, c);
+		return -1;
 	}
-
-	return 0;
 }
 
-int Sttp::get_ident () QSE_CPP_NOEXCEPT
+int Sttp::handle_name_char (qse_char_t c)
 {
-	this->token_type  = T_IDENT;
-	this->token_value = QSE_T("");
-
-	while (is_ident_char(this->sttp_curc)) 
+	if (this->is_ident_char(c))
 	{
-		this->token_value.append (this->sttp_curc);
-		GET_CHAR ();
+		this->token.append (c);
 	}
-
-	return 0;
-}
-
-int Sttp::get_string (qse_char_t end) QSE_CPP_NOEXCEPT
-{
-	bool escaped = false;
-
-	this->token_type  = T_STRING;
-	this->token_value = QSE_T("");
-
-	GET_CHAR ();
-	while (1)
+	else if (this->is_space_char(c))
 	{
-		if (escaped == true) 
-		{
-			this->sttp_curc = this->translate_escaped_char(this->sttp_curc);
-			escaped = false;
-		}
-		else 
-		{
-			if (this->sttp_curc == end) 
-			{
-				GET_CHAR ();
-				break;
-			}
-			else if (this->sttp_curc == QSE_T('\\')) 
-			{
-				GET_CHAR ();
-				escaped = true;
-				continue;
-			}
-		}
-
-		this->token_value.append (this->sttp_curc);
-		GET_CHAR ();
+		this->command.setName (this->token);
+		this->clear_token ();
+		this->pop_read_state ();
+		PUSH_READ_STATE (STATE_IN_PARAM_LIST);
 	}
-
-	return 0;
-}
-
-qse_cint_t Sttp::translate_escaped_char (qse_cint_t c) QSE_CPP_NOEXCEPT
-{
-	if (c == QSE_T('n')) c = QSE_T('\n');
-	else if (c == QSE_T('t')) c = QSE_T('\t');
-	else if (c == QSE_T('r')) c = QSE_T('\r');
-	else if (c == QSE_T('v')) c = QSE_T('\v');
-	else if (c == QSE_T('f')) c = QSE_T('\f');
-	else if (c == QSE_T('a')) c = QSE_T('\a');
-	else if (c == QSE_T('b')) c = QSE_T('\b');
-	//else if (c == QSE_T('0')) c = QSE_T('\0');
-
-	return c;
-}
-
-bool Sttp::is_ident_char (qse_cint_t c) QSE_CPP_NOEXCEPT
-{
-	return QSE_ISALNUM(c) || c == QSE_T('_') || c == QSE_T('.') || c == QSE_T('*') || c == QSE_T('@');
-}
-
-/////////////////////////////////////////////////////////////////////////
-
-int Sttp::put_mchar (qse_mchar_t ch) QSE_CPP_NOEXCEPT
-{
-	this->outbuf[outbuf_len++] = ch;
-	if (this->outbuf_len >= QSE_COUNTOF(outbuf)) return this->flush_outbuf();
-	return 0;
-}
-
-int Sttp::put_wchar (qse_wchar_t ch) QSE_CPP_NOEXCEPT
-{
-	qse_mchar_t buf[QSE_UTF8LEN_MAX];
-	qse_size_t len = qse_uctoutf8(ch, buf, QSE_COUNTOF(buf));
-	if (len == 0 || len > QSE_COUNTOF(buf)) 
+	else if (c == ';')
 	{
-		this->p_errcode = E_UTF8_CONV;
+		this->command.setName (this->token);
+		this->clear_token ();
+		this->pop_read_state ();
+
+		int x = this->handle_command(this->command);
+		this->command.clear ();
+		if (x <= -1) return -1;
+	}
+	else
+	{
+		this->setErrorFmt (E_EINVAL, QSE_T("invalid character 0x%lx[%jc] in the command name"), (unsigned long int)c, c);
 		return -1;
 	}
 
-	for (qse_size_t i = 0; i < len; i++) 
-	{
-		if (this->put_mchar(buf[i]) == -1) return -1;
-	}
-	return 0;
+	return 1;
 }
 
-
-int Sttp::flush_outbuf () QSE_CPP_NOEXCEPT
+int Sttp::handle_param_list_char (qse_char_t c)
 {
-	if (this->outbuf_len > 0) 
+	if (c == ';')
 	{
-		qse_size_t pos = 0;
-
-		do
+		if (this->rd_state_stack->u.ipl.got_value || this->command.getArgCount() == 0)
 		{
-			qse_ssize_t n = this->p_medium->send(&this->outbuf[pos], this->outbuf_len);
-			if (n <= -1)
-			{
-				if (pos > 0) QSE_MEMCPY (&this->outbuf[0], &this->outbuf[pos], this->outbuf_len * QSE_SIZEOF(this->outbuf[0]));
-				this->p_errcode = E_SEND;
-				return -1;
-			}
+			this->command.addArg (this->token);
+			this->clear_token();
+			this->rd_state_stack->u.ipl.got_value = false;
+			this->pop_read_state (); // back to the START state.
 
-			this->outbuf_len -= n;
-			pos += n;
+			int x = this->handle_command (this->command);
+			this->command.clear ();
+			if (x <= -1) return -1;
 		}
-		while (this->outbuf_len > 0);
+		else
+		{
+			this->setErrorFmt (E_EINVAL, QSE_T("no parameter after a comma"));
+			return -1;
+		}
+	}
+	else if (c == ',')
+	{
+		if (this->rd_state_stack->u.ipl.got_value)
+		{
+			this->command.addArg (this->token);
+			this->clear_token();
+			this->rd_state_stack->u.ipl.got_value = false;
+		}
+		else
+		{
+			this->setErrorFmt (E_EINVAL, QSE_T("redundant comma"));
+			return -1;
+		}
+	}
+	else if (this->is_space_char(c))
+	{
+		// do nothing;
+	}
+	else
+	{
+		if (this->rd_state_stack->u.ipl.got_value)
+		{
+			// comma required.
+			this->setErrorFmt (E_EINVAL, QSE_T("comma required"));
+			return -1;
+		}
+
+		if (c == '\"' || c == '\'')
+		{
+			this->rd_state_stack->u.ipl.got_value = true;
+			PUSH_READ_STATE (STATE_IN_PARAM_STRING);
+			this->rd_state_stack->u.ps.qc = c;
+			this->clear_token ();
+			return 1;
+		}
+		else if (this->is_ident_char(c))
+		{
+			this->rd_state_stack->u.ipl.got_value = true;
+			PUSH_READ_STATE (STATE_IN_PARAM_WORD);
+			this->clear_token ();
+			this->add_char_to_token (c);
+			return 1;
+		}
+		else
+		{
+			this->setErrorFmt (E_EINVAL, QSE_T("invalid character 0x%lx[%jc]"), (unsigned long int)c, c);
+			return -1;
+		}
+	}
+
+	return 1;
+}
+
+int Sttp::handle_param_word_char (qse_char_t c)
+{
+	if (this->is_ident_char(c))
+	{
+		this->token.append (c);
 		return 1;
 	}
 
+	this->pop_read_state ();
+	return 0;  /* let handle_char() to handle this comma again */
+}
+
+static QSE_INLINE qse_char_t unescape (qse_char_t c)
+{
+	switch (c)
+	{
+		case 'a': return '\a';
+		case 'b': return '\b';
+		case 'f': return '\f';
+		case 'n': return '\n';
+		case 'r': return '\r';
+		case 't': return '\t';
+		case 'v': return '\v';
+		default: return c;
+	}
+}
+
+int Sttp::handle_param_string_char (qse_char_t c)
+{
+	int ret = 1;
+
+	if (this->rd_state_stack->u.ps.escaped == 3)
+	{
+		if (c >= '0' && c <= '7')
+		{
+			this->rd_state_stack->u.ps.acc = this->rd_state_stack->u.ps.acc * 8 + c - '0';
+			this->rd_state_stack->u.ps.digit_count++;
+			if (this->rd_state_stack->u.ps.digit_count >= this->rd_state_stack->u.ps.escaped) goto add_sv_acc;
+		}
+		else
+		{
+			ret = 0;
+			goto add_sv_acc;
+		}
+	}
+	else if (this->rd_state_stack->u.ps.escaped >= 2)
+	{
+		if (c >= '0' && c <= '9')
+		{
+			this->rd_state_stack->u.ps.acc = this->rd_state_stack->u.ps.acc * 16 + c - '0';
+			this->rd_state_stack->u.ps.digit_count++;
+			if (this->rd_state_stack->u.ps.digit_count >= this->rd_state_stack->u.ps.escaped) goto add_sv_acc;
+		}
+		else if (c >= 'a' && c <= 'f')
+		{
+			this->rd_state_stack->u.ps.acc = this->rd_state_stack->u.ps.acc * 16 + c - 'a' + 10;
+			this->rd_state_stack->u.ps.digit_count++;
+			if (this->rd_state_stack->u.ps.digit_count >= this->rd_state_stack->u.ps.escaped) goto add_sv_acc;
+		}
+		else if (c >= 'A' && c <= 'F')
+		{
+			this->rd_state_stack->u.ps.acc = this->rd_state_stack->u.ps.acc * 16 + c - 'A' + 10;
+			this->rd_state_stack->u.ps.digit_count++;
+			if (this->rd_state_stack->u.ps.digit_count >= this->rd_state_stack->u.ps.escaped) goto add_sv_acc;
+		}
+		else
+		{
+			ret = 0;
+		add_sv_acc:
+		#if defined(QSE_CHAR_IS_MCHAR)
+			/* convert the character to utf8 */
+			qse_mchar_t bcsbuf[QSE_MBLEN_MAX];
+			qse_size_t n;
+
+			n = qse_uctoutf8(this->rd_state_stack->u.ps.acc, bcsbuf, QSE_COUNTOF(bcsbuf));
+			if (n == 0 || n > QSE_COUNTOF(bcsbuf))
+			{
+				// illegal character or buffer to small 
+				this->setErrorFmt (E_EINVAL, QSE_T("unable to convert 0x%lx to utf8"), this->rd_state_stack->u.ps.acc);
+				return -1;
+			}
+
+			this->add_chars_to_token(bcsbuf, n);
+		#else
+			this->add_char_to_token(this->rd_state_stack->u.ps.acc);
+		#endif
+			this->rd_state_stack->u.ps.escaped = 0;
+		}
+	}
+	else if (this->rd_state_stack->u.ps.escaped == 1)
+	{
+		if (c >= '0' && c <= '8') 
+		{
+			this->rd_state_stack->u.ps.escaped = 3;
+			this->rd_state_stack->u.ps.digit_count = 0;
+			this->rd_state_stack->u.ps.acc = c - '0';
+		}
+		else if (c == 'x')
+		{
+			this->rd_state_stack->u.ps.escaped = 2;
+			this->rd_state_stack->u.ps.digit_count = 0;
+			this->rd_state_stack->u.ps.acc = 0;
+		}
+		else if (c == 'u')
+		{
+			this->rd_state_stack->u.ps.escaped = 4;
+			this->rd_state_stack->u.ps.digit_count = 0;
+			this->rd_state_stack->u.ps.acc = 0;
+		}
+		else if (c == 'U')
+		{
+			this->rd_state_stack->u.ps.escaped = 8;
+			this->rd_state_stack->u.ps.digit_count = 0;
+			this->rd_state_stack->u.ps.acc = 0;
+		}
+		else
+		{
+			this->rd_state_stack->u.ps.escaped = 0;
+			this->add_char_to_token(unescape(c));
+		}
+	}
+	else if (c == '\\')
+	{
+		this->rd_state_stack->u.ps.escaped = 1;
+	}
+	else if (c == this->rd_state_stack->u.ps.qc)
+	{
+		this->pop_read_state ();
+	}
+	else
+	{
+		this->add_char_to_token(c);
+	}
+
+	return ret;
+}
+
+int Sttp::push_read_state (rd_state_t state)
+{
+	rd_state_node_t* ss;
+
+	ss = (rd_state_node_t*)this->getMmgr()->callocate(QSE_SIZEOF(*ss), false);
+	if (!ss) 
+	{
+		this->setErrorNumber (E_ENOMEM);
+		return -1;
+	}
+
+	ss->state = state;
+	ss->next = this->rd_state_stack;
+
+	this->rd_state_stack = ss;
+	return 0;
+}
+
+void Sttp::pop_read_state ()
+{
+	rd_state_node_t* ss;
+
+	ss = this->rd_state_stack;
+	QSE_ASSERT (ss != QSE_NULL && ss != &this->rd_rd_state_top);
+	this->rd_state_stack = ss->next;
+
+	// anything todo here?
+
+	/* TODO: don't free this. move it to the free list? */
+	this->getMmgr()->dispose(ss);
+}
+
+void Sttp::pop_all_read_states ()
+{
+	while (this->rd_state_stack != &this->rd_rd_state_top) this->pop_read_state ();
+}
+
+
+#define WRITE_CHAR(x) if (this->write_char(x) <= -1) return -1;
+
+int Sttp::beginWrite (const qse_mchar_t* cmd)
+{
+	const qse_mchar_t* ptr = cmd;
+	this->wr_arg_count = 0;
+	while (*ptr != '\0') WRITE_CHAR(*ptr++);
+	return 0;
+}
+
+int Sttp::beginWrite (const qse_wchar_t* cmd)
+{
+	const qse_wchar_t* ptr = cmd;
+	this->wr_arg_count = 0;
+	while (*ptr != '\0') WRITE_CHAR(*ptr++);
+	return 0;
+}
+
+int Sttp::writeWordArg (const qse_mchar_t* arg)
+{
+	const qse_mchar_t* ptr = arg;
+	if (this->wr_arg_count > 0)  WRITE_CHAR(',');
+	WRITE_CHAR (' ');
+	while (*ptr != '\0') WRITE_CHAR(*ptr++);
+	this->wr_arg_count++;
+	return 0;
+}
+
+int Sttp::writeWordArg (const qse_wchar_t* arg)
+{
+	const qse_wchar_t* ptr = arg;
+	if (this->wr_arg_count > 0)  WRITE_CHAR(',');
+	WRITE_CHAR (' ');
+	while (*ptr != '\0') WRITE_CHAR(*ptr++);
+	this->wr_arg_count++;
+	return 0;
+}
+
+int Sttp::writeStringArg (const qse_mchar_t* arg)
+{
+	const qse_mchar_t* ptr = arg;
+	if (this->wr_arg_count > 0)  WRITE_CHAR(',');
+
+	WRITE_CHAR(' ');
+	WRITE_CHAR('\"');
+
+	while (*ptr != '\0') 
+	{
+		if (*ptr == '\"' || *ptr == '\\')  WRITE_CHAR('\\');
+		WRITE_CHAR(*ptr++);
+	}
+
+	WRITE_CHAR('\"');
+	this->wr_arg_count++;
+	return 0;
+}
+
+int Sttp::writeStringArg (const qse_mchar_t* arg, qse_size_t len)
+{
+	const qse_mchar_t* ptr = arg;
+	const qse_mchar_t* end = arg + len;
+
+	if (this->wr_arg_count > 0)  WRITE_CHAR(',');
+
+	WRITE_CHAR(' ');
+	WRITE_CHAR('\"');
+
+	while (ptr < end)
+	{
+		if (*ptr == '\"' || *ptr == '\\')  WRITE_CHAR('\\');
+		WRITE_CHAR(*ptr++);
+	}
+
+	WRITE_CHAR('\"');
+	this->wr_arg_count++;
+	return 0;
+}
+
+int Sttp::writeStringArg (const qse_wchar_t* arg)
+{
+	const qse_wchar_t* ptr = arg;
+	if (this->wr_arg_count > 0)  WRITE_CHAR(',');
+
+	WRITE_CHAR(' ');
+	WRITE_CHAR('\"');
+
+	while (*ptr != '\0') 
+	{
+		if (*ptr == '\"' || *ptr == '\\')  WRITE_CHAR('\\');
+		WRITE_CHAR(*ptr++);
+	}
+
+	WRITE_CHAR('\"');
+	this->wr_arg_count++;
+	return 0;
+}
+
+int Sttp::writeStringArg (const qse_wchar_t* arg, qse_size_t len)
+{
+	const qse_wchar_t* ptr = arg;
+	const qse_wchar_t* end = arg + len;
+
+	if (this->wr_arg_count > 0)  WRITE_CHAR(',');
+
+	WRITE_CHAR(' ');
+	WRITE_CHAR('\"');
+
+	while (ptr < end)
+	{
+		if (*ptr == '\"' || *ptr == '\\')  WRITE_CHAR('\\');
+		WRITE_CHAR(*ptr++);
+	}
+
+	WRITE_CHAR('\"');
+	this->wr_arg_count++;
 	return 0;
 }
 
 
-const qse_char_t* Sttp::getErrorStr () const QSE_CPP_NOEXCEPT
+int Sttp::endWrite ()
 {
-	switch (this->p_errcode) 
+	WRITE_CHAR(';');
+	WRITE_CHAR('\n');
+	if (this->wr_buf_len > 0)
 	{
-		case E_NOERR:
-			return QSE_T("no error");
-		case E_MEMORY:
-			return QSE_T("memory exhausted");
-		case E_RECEIVE:
-			return QSE_T("failed receive over medium");
-		case E_SEND:
-			return QSE_T("failed send over medium");
-		case E_UTF8_CONV:
-			return QSE_T("utf8 conversion failure");
-		case E_CMDNAME: 
-			return QSE_T("command name expected");
-		case E_CMDPROC: 
-			return QSE_T("command procedure exit");
-		case E_UNKNOWNCMD: 
-			return QSE_T("unknown command");
-		case E_TOOLONGCMD: 
-			return QSE_T("command too long");
-		case E_SEMICOLON: 
-			return QSE_T("semicolon expected");
-		case E_TOOMANYARGS: 
-			return QSE_T("too many command arguments");
-		case E_WRONGARG: 
-			return QSE_T("wrong command argument");
-		case E_WRONGCHAR: 
-			return QSE_T("wrong character");
-		default:
-			return QSE_T("unknown error");
+		if (this->write_bytes(this->wr_buf, this->wr_buf_len) <= -1) return -1;
+		this->wr_buf_len = 0;
 	}
+	return 0;
+}
+
+
+int Sttp::write_char (qse_mchar_t c)
+{
+	if (this->wr_buf_len >= QSE_COUNTOF(this->wr_buf))
+	{
+		if (this->write_bytes (this->wr_buf, this->wr_buf_len) <= -1) return -1;
+		this->wr_buf_len = 0;
+	}
+
+	this->wr_buf[this->wr_buf_len++] = c;
+	return 0;
+}
+
+int Sttp::write_char (qse_wchar_t c)
+{
+	qse_mchar_t bcsbuf[QSE_MBLEN_MAX];
+	qse_size_t n;
+
+	n = qse_uctoutf8(c, bcsbuf, QSE_COUNTOF(bcsbuf));
+	if (n == 0 || n > QSE_COUNTOF(bcsbuf))
+	{
+		this->setErrorFmt (E_EINVAL, QSE_T("unable to convert 0x%lx to utf8"), (unsigned long int)c);
+		return -1;
+	}
+
+	for (qse_size_t i = 0; i < n; i++) 
+	{
+		if (this->write_char(bcsbuf[i]) <= -1) return -1;
+	}
+	return 0;
+}
+
+int Sttp::sendCmd (const qse_mchar_t* name, qse_size_t nargs = 0, ...)
+{
+	if (name[0] == '\0') return 0; // don't send a null command
+	if (this->beginWrite(name) <= -1) return -1;
+
+	if (nargs > 0)
+	{
+		va_list ap;
+		va_start (ap, nargs);
+
+		for (qse_size_t i = 1; i <= nargs; i++)
+		{
+			qse_mchar_t* p = va_arg(ap, qse_mchar_t*);
+			if (this->writeStringArg(p) <= -1)
+			{
+				va_end (ap);
+				return -1;
+			}
+		}
+		va_end (ap);
+	}
+
+	if (this->endWrite() <= -1) return -1;
+	return 0;
+}
+
+int Sttp::sendCmd (const qse_wchar_t* name, qse_size_t nargs = 0, ...)
+{
+	if (name[0] == '\0') return 0; // don't send a null command
+	if (this->beginWrite(name) <= -1) return -1;
+
+	if (nargs > 0)
+	{
+		va_list ap;
+		va_start (ap, nargs);
+
+		for (qse_size_t i = 1; i <= nargs; i++)
+		{
+			qse_wchar_t* p = va_arg(ap, qse_wchar_t*);
+			if (this->writeStringArg(p) <= -1)
+			{
+				va_end (ap);
+				return -1;
+			}
+		}
+		va_end (ap);
+	}
+
+	if (this->endWrite() <= -1) return -1;
+	return 0;
+}
+
+int Sttp::sendCmdL (const qse_mchar_t* name, qse_size_t nargs = 0, ...)
+{
+	if (name[0] == '\0') return 0; // don't send a null command
+	if (this->beginWrite(name) <= -1) return -1;
+
+	if (nargs > 0)
+	{
+		va_list ap;
+		va_start (ap, nargs);
+
+		for (qse_size_t i = 1; i <= nargs; i++)
+		{
+			qse_mchar_t* p = va_arg(ap, qse_mchar_t*);
+			qse_size_t l = va_arg(ap, qse_size_t);
+			if (this->writeStringArg(p, l) <= -1)
+			{
+				va_end (ap);
+				return -1;
+			}
+		}
+		va_end (ap);
+	}
+
+	if (this->endWrite() <= -1) return -1;
+	return 0;
+}
+
+int Sttp::sendCmdL (const qse_wchar_t* name, qse_size_t nargs = 0, ...)
+{
+	if (name[0] == '\0') return 0; // don't send a null command
+	if (this->beginWrite(name) <= -1) return -1;
+
+	if (nargs > 0)
+	{
+		va_list ap;
+		va_start (ap, nargs);
+
+		for (qse_size_t i = 1; i <= nargs; i++)
+		{
+			qse_wchar_t* p = va_arg(ap, qse_wchar_t*);
+			qse_size_t l = va_arg(ap, qse_size_t);
+			if (this->writeStringArg(p, l) <= -1)
+			{
+				va_end (ap);
+				return -1;
+			}
+		}
+		va_end (ap);
+	}
+
+	if (this->endWrite() <= -1) return -1;
+	return 0;
 }
 
 QSE_END_NAMESPACE(QSE)

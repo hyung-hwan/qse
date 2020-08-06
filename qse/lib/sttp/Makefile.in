@@ -88,8 +88,7 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-@ENABLE_CXX_TRUE@am__append_1 = libqsesttpxx.la
-@ENABLE_CXX_FALSE@libqsesttpxx_la_DEPENDENCIES =
+@ENABLE_CXX_TRUE@am__append_1 = Sttp.cpp
 subdir = lib/sttp
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ax_check_sign.m4 \
@@ -135,18 +134,15 @@ am__uninstall_files_from_dir = { \
   }
 am__installdirs = "$(DESTDIR)$(libdir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
-am__libqsesttpxx_la_SOURCES_DIST = Sttp.cpp
-@ENABLE_CXX_TRUE@am_libqsesttpxx_la_OBJECTS = Sttp.lo
-libqsesttpxx_la_OBJECTS = $(am_libqsesttpxx_la_OBJECTS)
+libqsesttp_la_LIBADD =
+am__libqsesttp_la_SOURCES_DIST = Sttp.cpp
+@ENABLE_CXX_TRUE@am__objects_1 = Sttp.lo
+am_libqsesttp_la_OBJECTS = $(am__objects_1)
+libqsesttp_la_OBJECTS = $(am_libqsesttp_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
 am__v_lt_1 = 
-libqsesttpxx_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
-	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
-	$(AM_CXXFLAGS) $(CXXFLAGS) $(libqsesttpxx_la_LDFLAGS) \
-	$(LDFLAGS) -o $@
-@ENABLE_CXX_TRUE@am_libqsesttpxx_la_rpath = -rpath $(libdir)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -182,8 +178,8 @@ AM_V_CXXLD = $(am__v_CXXLD_@AM_V@)
 am__v_CXXLD_ = $(am__v_CXXLD_@AM_DEFAULT_V@)
 am__v_CXXLD_0 = @echo "  CXXLD   " $@;
 am__v_CXXLD_1 = 
-SOURCES = $(libqsesttpxx_la_SOURCES)
-DIST_SOURCES = $(am__libqsesttpxx_la_SOURCES_DIST)
+SOURCES = $(libqsesttp_la_SOURCES)
+DIST_SOURCES = $(am__libqsesttp_la_SOURCES_DIST)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -382,11 +378,8 @@ AM_CPPFLAGS = \
 
 
 #noinst_HEADERS =
-lib_LTLIBRARIES = $(am__append_1)
-@ENABLE_CXX_TRUE@libqsesttpxx_la_SOURCES = Sttp.cpp
-@ENABLE_CXX_TRUE@libqsesttpxx_la_LDFLAGS = -L. -L../cmn -L../si -version-info 1:0:0 -no-undefined
-@ENABLE_CXX_TRUE@libqsesttpxx_la_LIBADD = -lqsecmnxx -lqsesi -lqsecmn
-@ENABLE_CXX_TRUE@libqsesttpxx_la_DEPENDENCIES = ../../lib/cmn/libqsecmnxx.la ../../lib/si/libqsesi.la ../../lib/cmn/libqsecmn.la
+lib_LTLIBRARIES = libqsesttp.la
+libqsesttp_la_SOURCES = $(am__append_1)
 all: all-am
 
 .SUFFIXES:
@@ -456,8 +449,8 @@ clean-libLTLIBRARIES:
 	  rm -f $${locs}; \
 	}
 
-libqsesttpxx.la: $(libqsesttpxx_la_OBJECTS) $(libqsesttpxx_la_DEPENDENCIES) $(EXTRA_libqsesttpxx_la_DEPENDENCIES) 
-	$(AM_V_CXXLD)$(libqsesttpxx_la_LINK) $(am_libqsesttpxx_la_rpath) $(libqsesttpxx_la_OBJECTS) $(libqsesttpxx_la_LIBADD) $(LIBS)
+libqsesttp.la: $(libqsesttp_la_OBJECTS) $(libqsesttp_la_DEPENDENCIES) $(EXTRA_libqsesttp_la_DEPENDENCIES) 
+	$(AM_V_CXXLD)$(CXXLINK) -rpath $(libdir) $(libqsesttp_la_OBJECTS) $(libqsesttp_la_LIBADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)

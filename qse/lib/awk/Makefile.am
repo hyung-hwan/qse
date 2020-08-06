@@ -45,12 +45,7 @@ libqseawk_la_LIBADD = $(LIBADD_LIB_COMMON)
 libqseawk_la_DEPENDENCIES = $(DEPENDENCIES_LIB_COMMON)
 
 if ENABLE_CXX
-lib_LTLIBRARIES += libqseawkxx.la
-libqseawkxx_la_SOURCES = Awk.cpp StdAwk.cpp
-libqseawkxx_la_CPPFLAGS = $(CPPFLAGS_LIB_COMMON)
-libqseawkxx_la_LDFLAGS = $(LDFLAGS_LIB_COMMON)
-libqseawkxx_la_LIBADD = -lqseawk -lqsecmnxx -lqseawk -lqsesi -lqsecmn $(LIBADD_LIB_COMMON) 
-libqseawkxx_la_DEPENDENCIES = libqseawk.la
+libqseawk_la_SOURCES += Awk.cpp StdAwk.cpp
 endif
 
 if ENABLE_STATIC_MODULE

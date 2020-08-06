@@ -109,7 +109,7 @@ CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)" "$(DESTDIR)$(qsecfgdir)"
 PROGRAMS = $(bin_PROGRAMS)
-am_qsehttpd_OBJECTS = httpd.$(OBJEXT)
+am_qsehttpd_OBJECTS = qsehttpd-httpd.$(OBJEXT)
 qsehttpd_OBJECTS = $(am_qsehttpd_OBJECTS)
 am__DEPENDENCIES_1 =
 @WCHAR_TRUE@@WIN32_TRUE@am__DEPENDENCIES_2 = $(am__DEPENDENCIES_1)
@@ -118,13 +118,13 @@ am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
 am__v_lt_1 = 
 qsehttpd_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
-	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
-	$(qsehttpd_LDFLAGS) $(LDFLAGS) -o $@
-am_qseursd_OBJECTS = ursd.$(OBJEXT)
+	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(qsehttpd_CFLAGS) \
+	$(CFLAGS) $(qsehttpd_LDFLAGS) $(LDFLAGS) -o $@
+am_qseursd_OBJECTS = qseursd-ursd.$(OBJEXT)
 qseursd_OBJECTS = $(am_qseursd_OBJECTS)
 qseursd_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
-	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
-	$(qseursd_LDFLAGS) $(LDFLAGS) -o $@
+	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(qseursd_CFLAGS) \
+	$(CFLAGS) $(qseursd_LDFLAGS) $(LDFLAGS) -o $@
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -140,7 +140,8 @@ am__v_at_1 =
 DEFAULT_INCLUDES = 
 depcomp = $(SHELL) $(top_srcdir)/ac/depcomp
 am__maybe_remake_depfiles = depfiles
-am__depfiles_remade = ./$(DEPDIR)/httpd.Po ./$(DEPDIR)/ursd.Po
+am__depfiles_remade = ./$(DEPDIR)/qsehttpd-httpd.Po \
+	./$(DEPDIR)/qseursd-ursd.Po
 am__mv = mv -f
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
@@ -389,13 +390,15 @@ AM_CPPFLAGS = \
 qsecfgdir = $(sysconfdir)/qse
 qsecfg_DATA = httpd.conf httpd-mime.conf
 qsehttpd_SOURCES = httpd.c
+qsehttpd_CFLAGS = $(PTHREAD_CFLAGS)
 qsehttpd_LDFLAGS = -L../../lib/xli -L../../lib/http -L../../lib/si -L../../lib/cmn  
 qsehttpd_LDADD = -lqsexli -lqsehttp -lqsesi -lqsecmn $(SSL_LIBS) \
-	$(am__append_1)
+	$(LIBM) $(PTHREAD_LIBS) $(am__append_1)
 qsehttpd_DEPENDENCIES = ../../lib/xli/libqsexli.la ../../lib/http/libqsehttp.la ../../lib/si/libqsesi.la ../../lib/cmn/libqsecmn.la
 qseursd_SOURCES = ursd.c
+qseursd_CFLAGS = $(PTHREAD_CFLAGS)
 qseursd_LDFLAGS = -L../../lib/si -L../../lib/cmn
-qseursd_LDADD = -lqsesi -lqsecmn 
+qseursd_LDADD = -lqsesi -lqsecmn $(LIBM) $(PTHREAD_LIBS)
 qseursd_DEPENDENCIES = ../../lib/si/libqsesi.la ../../lib/cmn/libqsecmn.la
 EXTRA_DIST = $(qsecfg_DATA)
 all: all-am
@@ -495,8 +498,8 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/httpd.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ursd.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/qsehttpd-httpd.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/qseursd-ursd.Po@am__quote@ # am--include-marker
 
 $(am__depfiles_remade):
 	@$(MKDIR_P) $(@D)
@@ -524,6 +527,34 @@ am--depfiles: $(am__depfiles_remade)
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LTCOMPILE) -c -o $@ $<
+
+qsehttpd-httpd.o: httpd.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(qsehttpd_CFLAGS) $(CFLAGS) -MT qsehttpd-httpd.o -MD -MP -MF $(DEPDIR)/qsehttpd-httpd.Tpo -c -o qsehttpd-httpd.o `test -f 'httpd.c' || echo '$(srcdir)/'`httpd.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/qsehttpd-httpd.Tpo $(DEPDIR)/qsehttpd-httpd.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='httpd.c' object='qsehttpd-httpd.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(qsehttpd_CFLAGS) $(CFLAGS) -c -o qsehttpd-httpd.o `test -f 'httpd.c' || echo '$(srcdir)/'`httpd.c
+
+qsehttpd-httpd.obj: httpd.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(qsehttpd_CFLAGS) $(CFLAGS) -MT qsehttpd-httpd.obj -MD -MP -MF $(DEPDIR)/qsehttpd-httpd.Tpo -c -o qsehttpd-httpd.obj `if test -f 'httpd.c'; then $(CYGPATH_W) 'httpd.c'; else $(CYGPATH_W) '$(srcdir)/httpd.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/qsehttpd-httpd.Tpo $(DEPDIR)/qsehttpd-httpd.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='httpd.c' object='qsehttpd-httpd.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(qsehttpd_CFLAGS) $(CFLAGS) -c -o qsehttpd-httpd.obj `if test -f 'httpd.c'; then $(CYGPATH_W) 'httpd.c'; else $(CYGPATH_W) '$(srcdir)/httpd.c'; fi`
+
+qseursd-ursd.o: ursd.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(qseursd_CFLAGS) $(CFLAGS) -MT qseursd-ursd.o -MD -MP -MF $(DEPDIR)/qseursd-ursd.Tpo -c -o qseursd-ursd.o `test -f 'ursd.c' || echo '$(srcdir)/'`ursd.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/qseursd-ursd.Tpo $(DEPDIR)/qseursd-ursd.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='ursd.c' object='qseursd-ursd.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(qseursd_CFLAGS) $(CFLAGS) -c -o qseursd-ursd.o `test -f 'ursd.c' || echo '$(srcdir)/'`ursd.c
+
+qseursd-ursd.obj: ursd.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(qseursd_CFLAGS) $(CFLAGS) -MT qseursd-ursd.obj -MD -MP -MF $(DEPDIR)/qseursd-ursd.Tpo -c -o qseursd-ursd.obj `if test -f 'ursd.c'; then $(CYGPATH_W) 'ursd.c'; else $(CYGPATH_W) '$(srcdir)/ursd.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/qseursd-ursd.Tpo $(DEPDIR)/qseursd-ursd.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='ursd.c' object='qseursd-ursd.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(qseursd_CFLAGS) $(CFLAGS) -c -o qseursd-ursd.obj `if test -f 'ursd.c'; then $(CYGPATH_W) 'ursd.c'; else $(CYGPATH_W) '$(srcdir)/ursd.c'; fi`
 
 mostlyclean-libtool:
 	-rm -f *.lo
@@ -679,8 +710,8 @@ clean: clean-am
 clean-am: clean-binPROGRAMS clean-generic clean-libtool mostlyclean-am
 
 distclean: distclean-am
-		-rm -f ./$(DEPDIR)/httpd.Po
-	-rm -f ./$(DEPDIR)/ursd.Po
+		-rm -f ./$(DEPDIR)/qsehttpd-httpd.Po
+	-rm -f ./$(DEPDIR)/qseursd-ursd.Po
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-tags
@@ -726,8 +757,8 @@ install-ps-am:
 installcheck-am:
 
 maintainer-clean: maintainer-clean-am
-		-rm -f ./$(DEPDIR)/httpd.Po
-	-rm -f ./$(DEPDIR)/ursd.Po
+		-rm -f ./$(DEPDIR)/qsehttpd-httpd.Po
+	-rm -f ./$(DEPDIR)/qseursd-ursd.Po
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 
