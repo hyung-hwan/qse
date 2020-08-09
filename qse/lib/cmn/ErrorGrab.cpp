@@ -28,34 +28,86 @@
 
 QSE_BEGIN_NAMESPACE(QSE)
 
-static const qse_char_t* _errstr[] =
+#define MSG_ENOERR  "no error"
+#define MSG_EOTHER  "other error"
+#define MSG_ENOIMPL "not implemented"
+#define MSG_ESYSERR "subsystem error"
+#define MSG_EINTERN "internal error"
+
+#define MSG_ENOMEM  "insufficient memory"
+#define MSG_ENARGS  "wrong number of arguments"
+#define MSG_EINVAL "invalid parameter or data"
+#define MSG_EACCES "access denied"
+#define MSG_EPERM "operation not allowed"
+
+#define MSG_ENOENT "no such data"
+#define MSG_EEXIST "data exists"
+#define MSG_ENOTDIR "not directory"
+#define MSG_EINTR "interrupted"
+#define MSG_EPIPE "pipe error"
+
+#define MSG_EINPROG "in progress"
+#define MSG_EAGAIN  "resource unavailable unavailable"
+#define MSG_EEXCEPT "exception"
+
+static const qse_mchar_t* _merrstr[] =
 {
-	QSE_T("no error"),
-	QSE_T("other error"),
-	QSE_T("not implemented"),
-	QSE_T("subsystem error"),
-	QSE_T("internal error"),
+	MSG_ENOERR,
+	MSG_EOTHER,
+	MSG_ENOIMPL,
+	MSG_ESYSERR,
+	MSG_EINTERN,
 
-	QSE_T("insufficient memory"),
-	QSE_T("wrong number of arguments"),
-	QSE_T("invalid parameter or data"),
-	QSE_T("access denied"),
-	QSE_T("operation not allowed"),
+	MSG_ENOMEM,
+	MSG_ENARGS,
+	MSG_EINVAL,
+	MSG_EACCES,
+	MSG_EPERM,
 
-	QSE_T("data not found"),
-	QSE_T("existing data"),
-	QSE_T("not directory"),
-	QSE_T("interrupted"),
-	QSE_T("pipe error"),
+	MSG_ENOENT,
+	MSG_EEXIST,
+	MSG_ENOTDIR,
+	MSG_EINTR,
+	MSG_EPIPE,
 
-	QSE_T("in progress"),
-	QSE_T("resource unavailable"),
-	QSE_T("exception")
+	MSG_EINPROG,
+	MSG_EAGAIN,
+	MSG_EEXCEPT
 };
 
-const qse_char_t* TypesErrorNumberToStr::operator() (Types::ErrorNumber errnum)
+static const qse_wchar_t* _werrstr[] =
 {
-	return errnum >= QSE_COUNTOF(_errstr)? QSE_T("unknown error"): _errstr[errnum];
+	QSE_WT(MSG_ENOERR),
+	QSE_WT(MSG_EOTHER),
+	QSE_WT(MSG_ENOIMPL),
+	QSE_WT(MSG_ESYSERR),
+	QSE_WT(MSG_EINTERN),
+
+	QSE_WT(MSG_ENOMEM),
+	QSE_WT(MSG_ENARGS),
+	QSE_WT(MSG_EINVAL),
+	QSE_WT(MSG_EACCES),
+	QSE_WT(MSG_EPERM),
+
+	QSE_WT(MSG_ENOENT),
+	QSE_WT(MSG_EEXIST),
+	QSE_WT(MSG_ENOTDIR),
+	QSE_WT(MSG_EINTR),
+	QSE_WT(MSG_EPIPE),
+
+	QSE_WT(MSG_EINPROG),
+	QSE_WT(MSG_EAGAIN),
+	QSE_WT(MSG_EEXCEPT)
+};
+
+const qse_wchar_t* TypesErrorNumberToWcstr::operator() (Types::ErrorNumber errnum)
+{
+	return errnum >= QSE_COUNTOF(_werrstr)? QSE_WT("unknown error"): _werrstr[errnum];
+}
+
+const qse_mchar_t* TypesErrorNumberToMbstr::operator() (Types::ErrorNumber errnum)
+{
+	return errnum >= QSE_COUNTOF(_merrstr)? QSE_MT("unknown error"): _merrstr[errnum];
 }
 
 QSE_END_NAMESPACE(QSE)

@@ -80,10 +80,21 @@ private:
 };
 
 // the stock functor class to convert the Types::ErrorNumber to a string
-struct TypesErrorNumberToStr
+struct TypesErrorNumberToWcstr
 {
-	const qse_char_t* operator() (Types::ErrorNumber errnum);
+	const qse_wchar_t* operator() (Types::ErrorNumber errnum);
 };
+
+struct TypesErrorNumberToMbstr
+{
+	const qse_mchar_t* operator() (Types::ErrorNumber errnum);
+};
+
+#if defined(QSE_CHAR_IS_MCHAR)
+typedef TypesErrorNumberToMbstr TypesErrorNumberToStr;
+#else
+typedef TypesErrorNumberToWcstr TypesErrorNumberToStr;
+#endif
 
 typedef ErrorGrab<Types::ErrorNumber, TypesErrorNumberToStr, 64> ErrorGrab64;
 typedef ErrorGrab<Types::ErrorNumber, TypesErrorNumberToStr, 128> ErrorGrab128;
