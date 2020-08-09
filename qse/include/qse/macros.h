@@ -279,27 +279,28 @@
 /** 
  * The #QSE_MT macro maps a multi-byte literal string literal as it is. 
  */
-#define QSE_MT(txt)   (txt)
+#define QSE_MT_I(txt) (txt)
+#define QSE_MT(txt)   QSE_MT_I(txt)
 
 #if defined(QSE_WCHAR_IS_CHAR16_T)
 #	define QSE_WQ_I(val)  (u ## #val)
-#	define QSE_WQ(val)    QSE_WQ_I(val)
 #else
 #	define QSE_WQ_I(val)  (L ## #val)
-#	define QSE_WQ(val)    QSE_WQ_I(val)
 #endif
+#define QSE_WQ(val)    QSE_WQ_I(val)
 
 /** 
  * The #QSE_WT macro maps a multi-byte literal string to a wide character 
  * string by prefixing it with \b L.
  */
 #if (QSE_SIZEOF_WCHAR_T == QSE_SIZEOF_MCHAR_T)
-#	define QSE_WT(txt)    (txt)
+#	define QSE_WT_I(txt)    (txt)
 #elif defined(QSE_WCHAR_IS_CHAR16_T)
-#	define QSE_WT(txt)    (u ## txt)
+#	define QSE_WT_I(txt)    (u ## txt)
 #else
-#	define QSE_WT(txt)    (L ## txt)
+#	define QSE_WT_I(txt)    (L ## txt)
 #endif
+#define QSE_WT(txt)    QSE_WT_I(txt)
 
 /** \def QSE_T
  * The #QSE_T macro maps to #QSE_MT if #QSE_CHAR_IS_MCHAR is defined, and to
