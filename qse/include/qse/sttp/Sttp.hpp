@@ -32,6 +32,7 @@
 #include <qse/cmn/Mmged.hpp>
 #include <qse/cmn/ErrorGrab.hpp>
 #include <qse/sttp/SttpCmd.hpp>
+#include <stdarg.h>
 
 QSE_BEGIN_NAMESPACE(QSE)
 
@@ -58,6 +59,10 @@ public:
 	int sendCmd (const qse_wchar_t* name, qse_size_t nargs, ...);
 	int sendCmdL (const qse_mchar_t* name, qse_size_t nargs, ...);
 	int sendCmdL (const qse_wchar_t* name, qse_size_t nargs, ...);
+
+	int sendCmdV (const qse_mchar_t* name, qse_size_t nargs, va_list ap);
+	int sendCmdV (const qse_wchar_t* name, qse_size_t nargs, va_list ap);
+	// TODO: sendCmdLV
 
 	// ------------------------------------------------------------------
 

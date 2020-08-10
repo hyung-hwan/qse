@@ -679,59 +679,32 @@ int Sttp::write_char (qse_wchar_t c)
 	return 0;
 }
 
-int Sttp::sendCmd (const qse_mchar_t* name, qse_size_t nargs = 0, ...)
+
+int Sttp::sendCmd (const qse_mchar_t* name, qse_size_t nargs, ...)
 {
-	if (name[0] == '\0') return 0; // don't send a null command
-	if (this->beginWrite(name) <= -1) return -1;
+	int n;
 
-	if (nargs > 0)
-	{
-		va_list ap;
-		va_start (ap, nargs);
+	va_list ap;
+	va_start (ap, nargs);
+	n = this->sendCmd(name, nargs, ap);
+	va_end (ap);
 
-		for (qse_size_t i = 1; i <= nargs; i++)
-		{
-			qse_mchar_t* p = va_arg(ap, qse_mchar_t*);
-			if (this->writeStringArg(p) <= -1)
-			{
-				va_end (ap);
-				return -1;
-			}
-		}
-		va_end (ap);
-	}
-
-	if (this->endWrite() <= -1) return -1;
-	return 0;
+	return n;
 }
 
-int Sttp::sendCmd (const qse_wchar_t* name, qse_size_t nargs = 0, ...)
+int Sttp::sendCmd (const qse_wchar_t* name, qse_size_t nargs, ...)
 {
-	if (name[0] == '\0') return 0; // don't send a null command
-	if (this->beginWrite(name) <= -1) return -1;
+	int n;
 
-	if (nargs > 0)
-	{
-		va_list ap;
-		va_start (ap, nargs);
+	va_list ap;
+	va_start (ap, nargs);
+	n = this->sendCmd(name, nargs, ap);
+	va_end (ap);
 
-		for (qse_size_t i = 1; i <= nargs; i++)
-		{
-			qse_wchar_t* p = va_arg(ap, qse_wchar_t*);
-			if (this->writeStringArg(p) <= -1)
-			{
-				va_end (ap);
-				return -1;
-			}
-		}
-		va_end (ap);
-	}
-
-	if (this->endWrite() <= -1) return -1;
-	return 0;
+	return n;
 }
 
-int Sttp::sendCmdL (const qse_mchar_t* name, qse_size_t nargs = 0, ...)
+int Sttp::sendCmdL (const qse_mchar_t* name, qse_size_t nargs, ...)
 {
 	if (name[0] == '\0') return 0; // don't send a null command
 	if (this->beginWrite(name) <= -1) return -1;
@@ -758,7 +731,7 @@ int Sttp::sendCmdL (const qse_mchar_t* name, qse_size_t nargs = 0, ...)
 	return 0;
 }
 
-int Sttp::sendCmdL (const qse_wchar_t* name, qse_size_t nargs = 0, ...)
+int Sttp::sendCmdL (const qse_wchar_t* name, qse_size_t nargs, ...)
 {
 	if (name[0] == '\0') return 0; // don't send a null command
 	if (this->beginWrite(name) <= -1) return -1;
@@ -784,5 +757,50 @@ int Sttp::sendCmdL (const qse_wchar_t* name, qse_size_t nargs = 0, ...)
 	if (this->endWrite() <= -1) return -1;
 	return 0;
 }
+
+int Sttp::sendCmdV (const qse_mchar_t* name, qse_size_t nargs, va_list ap)
+{
+	if (name[0] == '\0') return 0; // don't send a null command
+	if (this->beginWrite(name) <= -1) return -1;
+
+	if (nargs > 0)
+	{
+		for (qse_size_t i = 1; i <= nargs; i++)
+		{
+			qse_mchar_t* p = va_arg(ap, qse_mchar_t*);
+			if (this->writeStringArg(p) <= -1)
+			{
+				va_end (ap);
+				return -1;
+			}
+		}
+	}
+
+	if (this->endWrite() <= -1) return -1;
+	return 0;
+}
+
+int Sttp::sendCmdV (const qse_wchar_t* name, qse_size_t nargs, va_list ap)
+{
+	if (name[0] == '\0') return 0; // don't send a null command
+	if (this->beginWrite(name) <= -1) return -1;
+
+	if (nargs > 0)
+	{
+		for (qse_size_t i = 1; i <= nargs; i++)
+		{
+			qse_wchar_t* p = va_arg(ap, qse_wchar_t*);
+			if (this->writeStringArg(p) <= -1)
+			{
+				va_end (ap);
+				return -1;
+			}
+		}
+	}
+
+	if (this->endWrite() <= -1) return -1;
+	return 0;
+}
+
 
 QSE_END_NAMESPACE(QSE)
