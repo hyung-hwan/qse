@@ -131,7 +131,7 @@ private:
 
 	bool is_ident_char (qse_char_t c)
 	{
-		return QSE_ISALNUM(c) || c == QSE_T('_') || c == QSE_T('.') || c == QSE_T('*') || c == QSE_T('@');
+		return QSE_ISALNUM(c) || c == QSE_T('_') || c == QSE_T('-') || c == QSE_T('.') || c == QSE_T('*') || c == QSE_T('@');
 	}
 
 	void add_char_to_token (qse_char_t c)
