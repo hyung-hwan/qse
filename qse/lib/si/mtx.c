@@ -118,7 +118,7 @@ int qse_mtx_init (qse_mtx_t* mtx, qse_mmgr_t* mmgr)
 	qse_ensure (pthread_mutex_init (&mtx->hnd, &attr) == 0);
 	qse_ensure (pthread_mutexattr_destroy (&attr) == 0);
 	*/
-	if (pthread_mutex_init ((pthread_mutex_t*)&mtx->hnd, QSE_NULL) != 0) return -1;
+	if (pthread_mutex_init((pthread_mutex_t*)&mtx->hnd, QSE_NULL) != 0) return -1;
 #endif
 
 	return 0;
@@ -229,8 +229,7 @@ int qse_mtx_lock (qse_mtx_t* mtx, const qse_ntime_t* waiting_time)
 	else
 	{
 	#endif
-		if (pthread_mutex_lock ((pthread_mutex_t*)&mtx->hnd) != 0) return -1;
-
+		if (pthread_mutex_lock((pthread_mutex_t*)&mtx->hnd) != 0) return -1;
 	#if defined(HAVE_PTHREAD_MUTEX_TIMEDLOCK)
 	}
 	#endif
