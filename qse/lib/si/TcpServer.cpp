@@ -58,7 +58,7 @@ int TcpServer::Connection::main ()
 
 	TcpServer* server = this->getServer();
 
-	server->logfmt (QSE_LOG_INFO, QSE_T("closing connection[%d]\n"), (int)this->socket.getHandle());
+	server->logfmt (QSE_LOG_INFO, QSE_T("closing connection[h=%d,w=%zu]\n"), (int)this->socket.getHandle(), this->getWid());
 
 	server->_connection_list_spl.lock ();
 	this->csspl.lock ();
@@ -242,7 +242,7 @@ void TcpServer::dispatch_mux_event (qse_mux_t* mux, const qse_mux_evt_t* evt) QS
 		else
 		{
 			qse_char_t addrbuf[128];
-			server->logfmt (QSE_LOG_INFO, QSE_T("connection[%d] from %s\n"), (int)connection->socket.getHandle(), connection->address.toStrBuf(addrbuf, QSE_COUNTOF(addrbuf)));
+			server->logfmt (QSE_LOG_INFO, QSE_T("connection[h=%d,w=%zu] from %s\n"), (int)connection->socket.getHandle(), connection->getWid(), connection->address.toStrBuf(addrbuf, QSE_COUNTOF(addrbuf)));
 		}
 		return;
 
