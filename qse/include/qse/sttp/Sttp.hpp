@@ -62,7 +62,8 @@ public:
 
 	int sendCmdV (const qse_mchar_t* name, qse_size_t nargs, va_list ap);
 	int sendCmdV (const qse_wchar_t* name, qse_size_t nargs, va_list ap);
-	// TODO: sendCmdLV
+	int sendCmdLV (const qse_mchar_t* name, qse_size_t nargs, va_list ap);
+	int sendCmdLV (const qse_wchar_t* name, qse_size_t nargs, va_list ap);
 
 	// ------------------------------------------------------------------
 
