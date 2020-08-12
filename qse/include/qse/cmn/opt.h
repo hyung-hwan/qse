@@ -68,7 +68,7 @@ struct qse_opt_t
 /* --------------------------------------------------------------------- */
 enum qse_cli_optflag_t
 {
-	QSE_CLI_REQUIRE_OPTNAME      = (1 << 0), /* if set, the option itself is require */
+	QSE_CLI_REQUIRE_OPTNAME      = (1 << 0), /* if set, the option itself is required */
 	QSE_CLI_REQUIRE_OPTVAL       = (1 << 1), /* if set, the option's value is mandatory */
 	QSE_CLI_DISCRETIONARY_OPTVAL = (1 << 2)  /* if set, the option's value is optional. */
 };
