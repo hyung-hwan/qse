@@ -438,6 +438,17 @@ public:
 		return this->_item->buffer[index];
 	}
 
+	const CHAR_TYPE& getLastChar () const
+	{
+		QSE_ASSERT (this->_item->size > 0);
+		return this->getCharAt(this->_item->size - 1);
+	}
+
+	const CHAR_TYPE& getFirstChar () const
+	{
+		return this->getCharAt(0);
+	}
+
 	void setCharAt (qse_size_t index, CHAR_TYPE c)
 	{
 		QSE_ASSERT (index < this->_item->size);

@@ -159,7 +159,7 @@ public:
 		return this->_guarded_child_pid >= 0;
 	}
 
-	int guardProcess (const SignalSet& signals, qse_mtime_t guard_pause_ms = 0, const qse_mchar_t* proc_name = QSE_NULL);
+	int guardProcess (const SignalSet& signals, bool _guard = true, qse_mtime_t guard_pause_ms = 0, const qse_mchar_t* proc_name = QSE_NULL);
 
 
 	// =============================================================
