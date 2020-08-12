@@ -23,6 +23,7 @@
     (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#include <stdio.h>
 
 #include <qse/si/App.hpp>
 #include <qse/si/Mutex.hpp>
@@ -502,7 +503,7 @@ int App::neglectSignals (const SignalSet& signals, bool ignore_if_unhandled)
 	return n;
 }
 
-int App::guardProcess (const SignalSet& signals, qse_mtime_t guard_pause_ms, const qse_mchar_t* proc_name)
+int App::guardProcess (const SignalSet& signals, bool _guard, qse_mtime_t guard_pause_ms, const qse_mchar_t* proc_name)
 {
 	SignalState old_ss[QSE_NSIGS];
 	int seq = 0;
@@ -558,6 +559,7 @@ int App::guardProcess (const SignalSet& signals, qse_mtime_t guard_pause_ms, con
 		{
 			if (WEXITSTATUS(status) == 0) 
 			{
+			exit_ok:
 				// the child has terminated normally and successfully.
 				for (int i = 0; i < QSE_NSIGS; i++)
 				{
@@ -575,6 +577,8 @@ int App::guardProcess (const SignalSet& signals, qse_mtime_t guard_pause_ms, con
 			// within a very short time.
 			::kill (-pid, SIGKILL); 
 		}
+
+		if (!_guard) goto exit_ok; // no guard;
 
 		if (guard_pause_ms > 0) qse_msleep (guard_pause_ms);
 	}

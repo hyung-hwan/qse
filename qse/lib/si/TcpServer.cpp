@@ -27,6 +27,7 @@
 #include <qse/si/TcpServer.hpp>
 #include <qse/si/os.h>
 #include <qse/cmn/str.h>
+#include <qse/cmn/chr.h>
 #include "../cmn/mem-prv.h"
 
 #include <errno.h>
@@ -259,6 +260,24 @@ void TcpServer::dispatch_mux_event (qse_mux_t* mux, const qse_mux_evt_t* evt) QS
 	}
 }
 
+static const qse_char_t* strip_enclosing_spaces (const qse_char_t* ptr, qse_size_t* len)
+{
+	const qse_char_t* end = ptr + *len;
+	while (ptr < end)
+	{
+		if (!QSE_ISSPACE(*ptr)) break;
+		ptr++;
+	}
+
+	while (end > ptr)
+	{
+		if (!QSE_ISSPACE(end[-1])) break;
+		end--;
+	}
+	*len = end - ptr;
+	return ptr;
+}
+
 int TcpServer::setup_listeners (const qse_char_t* addrs) QSE_CPP_NOEXCEPT
 {
 	const qse_char_t* addr_ptr, * comma;
@@ -321,8 +340,8 @@ int TcpServer::setup_listeners (const qse_char_t* addrs) QSE_CPP_NOEXCEPT
 
 		comma = qse_strchr(addr_ptr, QSE_T(','));
 		addr_len = comma? comma - addr_ptr: qse_strlen(addr_ptr);
-		/* [NOTE] no whitespaces are allowed before and after a comma */
 
+		addr_ptr = strip_enclosing_spaces(addr_ptr, &addr_len);
 		if (sockaddr.set(addr_ptr, addr_len) <= -1)
 		{
 			this->logfmt (QSE_LOG_ERROR, QSE_T("unrecognized listener address - %.*js\n"), (int)addr_len, addr_ptr);
