@@ -759,21 +759,46 @@ int qse_get_log_priority_by_wcsname (const qse_wchar_t* name, const qse_wchar_t*
 	const qse_wchar_t* ptr;
 	int pri = 0;
 
+	/* panic, info, debug,
+	 * +info
+	 */
 	ptr = name;
 	while (ptr)
 	{
 		ptr = qse_wcstok(ptr, delim, &tok);
 		if (tok.ptr)
 		{
+			int plus = 0;
+
+			if (tok.len > 0 && tok.ptr[0] == '+')
+			{
+				tok.ptr++;
+				tok.len--;
+				plus = 1;
+			}
+
 			for (i = 0; i < QSE_COUNTOF(__priority_names); i++)
 			{
+
 			#if defined(QSE_CHAR_IS_MCHAR)
 				if (qse_wcsxmbscmp(tok.ptr, tok.len, __priority_names[i]) == 0) 
 			#else
 				if (qse_strxcmp(tok.ptr, tok.len, __priority_names[i]) == 0) 
 			#endif
 				{
-					pri |= (1UL << i);
+					if (plus)
+					{
+						qse_size_t j;
+						for (j = i; ; j--) 
+						{
+							pri |= (1UL << j);
+							if (j == 0) break;
+						}
+					}
+					else
+					{
+						pri |= (1UL << i);
+					}
 					break;
 				}
 			}
@@ -791,21 +816,46 @@ int qse_get_log_priority_by_mbsname (const qse_mchar_t* name, const qse_mchar_t*
 	const qse_mchar_t* ptr;
 	int pri = 0;
 
+	/* panic, info, debug,
+	 * +info
+	 */
 	ptr = name;
 	while (ptr)
 	{
 		ptr = qse_mbstok(ptr, delim, &tok);
 		if (tok.ptr)
 		{
+			int plus = 0;
+
+			if (tok.len > 0 && tok.ptr[0] == '+')
+			{
+				tok.ptr++;
+				tok.len--;
+				plus = 1;
+			}
+
 			for (i = 0; i < QSE_COUNTOF(__priority_names); i++)
 			{
+
 			#if defined(QSE_CHAR_IS_MCHAR)
 				if (qse_strxcmp(tok.ptr, tok.len, __priority_names[i]) == 0) 
 			#else
 				if (qse_mbsxwcscmp(tok.ptr, tok.len, __priority_names[i]) == 0) 
 			#endif
 				{
-					pri |= (1UL << i);
+					if (plus)
+					{
+						qse_size_t j;
+						for (j = i; ; j--) 
+						{
+							pri |= (1UL << j);
+							if (j == 0) break;
+						}
+					}
+					else
+					{
+						pri |= (1UL << i);
+					}
 					break;
 				}
 			}
