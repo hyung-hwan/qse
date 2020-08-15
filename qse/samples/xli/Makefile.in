@@ -111,11 +111,10 @@ PROGRAMS = $(bin_PROGRAMS)
 am__skvenv01_SOURCES_DIST = skvenv01.cpp
 @ENABLE_CXX_TRUE@am_skvenv01_OBJECTS = skvenv01.$(OBJEXT)
 skvenv01_OBJECTS = $(am_skvenv01_OBJECTS)
+skvenv01_LDADD = $(LDADD)
 am__DEPENDENCIES_1 =
 @WCHAR_TRUE@@WIN32_TRUE@am__DEPENDENCIES_2 = $(am__DEPENDENCIES_1)
-am__DEPENDENCIES_3 = $(am__DEPENDENCIES_2)
-@ENABLE_CXX_TRUE@skvenv01_DEPENDENCIES = $(am__DEPENDENCIES_1) \
-@ENABLE_CXX_TRUE@	$(am__DEPENDENCIES_3)
+skvenv01_DEPENDENCIES = $(am__DEPENDENCIES_2)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
@@ -244,6 +243,7 @@ MPI_CLDFLAGS = @MPI_CLDFLAGS@
 MYSQL_CFLAGS = @MYSQL_CFLAGS@
 MYSQL_CONFIG = @MYSQL_CONFIG@
 MYSQL_LDFLAGS = @MYSQL_LDFLAGS@
+MYSQL_LIBS = @MYSQL_LIBS@
 MYSQL_VERSION = @MYSQL_VERSION@
 NM = @NM@
 NMEDIT = @NMEDIT@
@@ -340,6 +340,7 @@ pdfdir = @pdfdir@
 prefix = @prefix@
 program_transform_name = @program_transform_name@
 psdir = @psdir@
+runstatedir = @runstatedir@
 sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 srcdir = @srcdir@
@@ -356,9 +357,7 @@ AM_CPPFLAGS = \
 
 AM_LDFLAGS = -L../../lib/cmn -L../../lib/si -L../../lib/xli 
 LDADD = -lqsexli -lqsesi -lqsecmn $(am__append_1)
-@ENABLE_CXX_TRUE@CXXLIB = -lqsexlixx -lqsecmnxx
 @ENABLE_CXX_TRUE@skvenv01_SOURCES = skvenv01.cpp
-@ENABLE_CXX_TRUE@skvenv01_LDADD = $(CXXLIB) $(LDADD) 
 all: all-am
 
 .SUFFIXES:
