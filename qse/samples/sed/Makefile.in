@@ -131,13 +131,13 @@ sed03_DEPENDENCIES = $(am__DEPENDENCIES_3)
 am__sed21_SOURCES_DIST = sed21.cpp sed00.c sed00.h
 @ENABLE_CXX_TRUE@am_sed21_OBJECTS = sed21.$(OBJEXT) $(am__objects_1)
 sed21_OBJECTS = $(am_sed21_OBJECTS)
-@ENABLE_CXX_TRUE@sed21_DEPENDENCIES = $(am__DEPENDENCIES_1) \
-@ENABLE_CXX_TRUE@	$(am__DEPENDENCIES_3)
+sed21_LDADD = $(LDADD)
+sed21_DEPENDENCIES = $(am__DEPENDENCIES_2)
 am__sed22_SOURCES_DIST = sed22.cpp sed00.c sed00.h
 @ENABLE_CXX_TRUE@am_sed22_OBJECTS = sed22.$(OBJEXT) $(am__objects_1)
 sed22_OBJECTS = $(am_sed22_OBJECTS)
-@ENABLE_CXX_TRUE@sed22_DEPENDENCIES = $(am__DEPENDENCIES_1) \
-@ENABLE_CXX_TRUE@	$(am__DEPENDENCIES_3)
+sed22_LDADD = $(LDADD)
+sed22_DEPENDENCIES = $(am__DEPENDENCIES_2)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -284,6 +284,7 @@ MPI_CLDFLAGS = @MPI_CLDFLAGS@
 MYSQL_CFLAGS = @MYSQL_CFLAGS@
 MYSQL_CONFIG = @MYSQL_CONFIG@
 MYSQL_LDFLAGS = @MYSQL_LDFLAGS@
+MYSQL_LIBS = @MYSQL_LIBS@
 MYSQL_VERSION = @MYSQL_VERSION@
 NM = @NM@
 NMEDIT = @NMEDIT@
@@ -380,6 +381,7 @@ pdfdir = @pdfdir@
 prefix = @prefix@
 program_transform_name = @program_transform_name@
 psdir = @psdir@
+runstatedir = @runstatedir@
 sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 srcdir = @srcdir@
@@ -403,11 +405,8 @@ sed02_SOURCES = sed02.c $(CMNFILES)
 sed02_LDADD = $(LDADD)
 sed03_SOURCES = sed03.c $(CMNFILES)
 sed03_LDADD = $(LDADD)
-@ENABLE_CXX_TRUE@CXXLIB = -lqsesedxx -lqsecmnxx
 @ENABLE_CXX_TRUE@sed21_SOURCES = sed21.cpp $(CMNFILES)
-@ENABLE_CXX_TRUE@sed21_LDADD = $(CXXLIB) $(LDADD)
 @ENABLE_CXX_TRUE@sed22_SOURCES = sed22.cpp $(CMNFILES)
-@ENABLE_CXX_TRUE@sed22_LDADD = $(CXXLIB) $(LDADD)
 all: all-am
 
 .SUFFIXES:

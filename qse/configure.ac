@@ -317,7 +317,7 @@ AC_SUBST(UCI_LIBS)
 AM_CONDITIONAL(HAVE_LIBUCI, test "x${ac_cv_lib_uci_uci_alloc_context}" = "xyes" -a "x${ac_cv_header_uci_h}" = "xyes")
 
 dnl libmysqlclient
-AX_LIB_MYSQL()
+AX_LIB_MYSQL
 
 AC_STRUCT_DIRENT_D_TYPE
 AC_CHECK_MEMBERS([DIR.d_fd, DIR.dd_fd],,,[[#include <dirent.h>]])
@@ -891,13 +891,11 @@ test "${ax_cv_cxx_have_std_namespace}" = "yes" || enable_cxx_is="no"
 AM_CONDITIONAL(ENABLE_CXX, test "${enable_cxx_is}" = "yes" )
 
 AX_PTHREAD()
-AC_ARG_ENABLE([reentrant], [AS_HELP_STRING([--enable-reentrant],[add thread options (default. no)])],
-	enable_reentrant_is=$enableval,enable_reentrant_is=no)
-if test "$enable_reentrant_is" = "yes"
-then
-	[CFLAGS="$CFLAGS $PTHREAD_CFLAGS"]
-	[CXXFLAGS="$CXXFLAGS $PTHREAD_CFLAGS"]
-fi
+AC_ARG_ENABLE([pthread-flags], [AS_HELP_STRING([--enable-pthread-flags],[add thread options (default. yes)])],
+	enable_pthread_flags_is=$enableval,enable_pthread_flags_is=yes)
+dnl actual actions depending  on  this option is at the end of this script 
+dnl becuase it changes CFLAGS, CXXFLAGS, LIBS and i don't want that to change 
+dnl while the configure script runs various tests.
 
 AC_ARG_ENABLE([awk-intmax], 
 	[AS_HELP_STRING([--enable-awk-intmax],[use qse_intmax_t for integers in AWK (default. no)])],
@@ -964,10 +962,10 @@ AC_ARG_ENABLE([awkmod-mysql],
 	enable_awkmod_mysql_is=$enableval,
 	enable_awkmod_mysql_is=yes
 )
-dnl if test "x${have_C_mysql}" != "xyes"
-dnl then
-dnl 	enable_awkmod_mysql_is="no"
-dnl fi
+if test "x${found_mysql}" != "xyes"
+then
+	enable_awkmod_mysql_is="no"
+fi
 AM_CONDITIONAL(ENABLE_AWKMOD_MYSQL, test "x${enable_awkmod_mysql_is}" = "xyes")
 
 
@@ -992,6 +990,15 @@ fi
 AM_CONDITIONAL(ENABLE_AWKMOD_UCI, test "x${enable_awkmod_uci_is}" = "xyes")
 
 
+dnl ==== include pthread options to the default flags ====
+if test "$enable_pthread_flags_is" = "yes"
+then
+	[CFLAGS="$CFLAGS $PTHREAD_CFLAGS"]
+	[CXXFLAGS="$CXXFLAGS $PTHREAD_CFLAGS"]
+	[LIBS="$LIBS $PTHREAD_LIBS"]
+fi
+
+dnl ====  subsititution of some key items ====
 AC_SUBST(QSE_SIZEOF_WCHAR_T, $ac_cv_sizeof_wchar_t)
 AC_SUBST(QSE_SIZEOF_LONG_LONG, $ac_cv_sizeof_long_long)
 AC_SUBST(QSE_SIZEOF_LONG, $ac_cv_sizeof_long)

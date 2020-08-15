@@ -252,6 +252,7 @@ MPI_CLDFLAGS = @MPI_CLDFLAGS@
 MYSQL_CFLAGS = @MYSQL_CFLAGS@
 MYSQL_CONFIG = @MYSQL_CONFIG@
 MYSQL_LDFLAGS = @MYSQL_LDFLAGS@
+MYSQL_LIBS = @MYSQL_LIBS@
 MYSQL_VERSION = @MYSQL_VERSION@
 NM = @NM@
 NMEDIT = @NMEDIT@
@@ -348,6 +349,7 @@ pdfdir = @pdfdir@
 prefix = @prefix@
 program_transform_name = @program_transform_name@
 psdir = @psdir@
+runstatedir = @runstatedir@
 sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 srcdir = @srcdir@
@@ -360,10 +362,10 @@ AUTOMAKE_OPTIONS = nostdinc
 AM_CPPFLAGS = -I$(top_builddir)/include -I$(top_srcdir)/include \
 	$(LTDLINCL) $(am__append_1) $(am__append_2)
 qseawk_SOURCES = awk.c
-qseawk_CFLAGS = $(PTHREAD_CFLAGS)
+qseawk_CFLAGS = $(CFLAGS)
 qseawk_LDFLAGS = -L../../lib/awk -L../../lib/si -L../../lib/cmn 
-qseawk_LDADD = -lqseawk -lqsesi -lqsecmn $(LIBM) $(PTHREAD_LIBS) \
-	$(am__append_3) $(am__append_4) $(am__append_5)
+qseawk_LDADD = -lqseawk -lqsesi -lqsecmn $(LIBM) $(am__append_3) \
+	$(am__append_4) $(am__append_5)
 qseawk_DEPENDENCIES = ../../lib/awk/libqseawk.la ../../lib/si/libqsesi.la ../../lib/cmn/libqsecmn.la
 all: all-am
 

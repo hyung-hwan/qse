@@ -18,9 +18,9 @@ endif
 bin_PROGRAMS = qseawk
 
 qseawk_SOURCES = awk.c
-qseawk_CFLAGS = $(PTHREAD_CFLAGS)
+qseawk_CFLAGS = $(CFLAGS)
 qseawk_LDFLAGS = -L../../lib/awk -L../../lib/si -L../../lib/cmn 
-qseawk_LDADD = -lqseawk -lqsesi -lqsecmn $(LIBM) $(PTHREAD_LIBS)
+qseawk_LDADD = -lqseawk -lqsesi -lqsecmn $(LIBM) 
 qseawk_DEPENDENCIES = ../../lib/awk/libqseawk.la ../../lib/si/libqsesi.la ../../lib/cmn/libqsecmn.la
 
 if ENABLE_LIBLTDL

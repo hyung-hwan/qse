@@ -25,7 +25,7 @@
  */
 
 #include "mod-mysql.h"
-#include <mysql/mysql.h>
+#include <mysql.h>
 #include "../cmn/mem-prv.h"
 #include <qse/cmn/main.h>
 #include <qse/cmn/rbt.h>
