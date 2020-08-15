@@ -11,9 +11,7 @@ AM_LDFLAGS = -L../../lib/cmn -L../../lib/si -L../../lib/dhcp
 LDADD = -lqsedhcp -lqsesi -lqsecmn 
 
 if WIN32 
-if WCHAR
 LDADD += $(UNICOWS_LIBS)
-endif
 endif
 
 dhcp01_SOURCES = dhcp01.c

@@ -34,7 +34,7 @@ public:
 		connection->address.toStrBuf(addrbuf, QSE_COUNTOF(addrbuf));
 		qse_printf (QSE_T("hello word..from %s -> wid %zu\n"), addrbuf, connection->getWid());
 
-		while (!server->isStopRequested())
+		while (!server->isHaltRequested())
 		{
 			if ((n = connection->socket.receive(bb, QSE_COUNTOF(bb))) <= 0) 
 			{

@@ -35,7 +35,7 @@ public:
 
 		QSE::Sttp sttp (&connection->socket);
 		QSE::SttpCmd cmd;
-		while (!server->isStopRequested())
+		while (!server->isHaltRequested())
 		{
 			int n = sttp.receiveCmd(&cmd);
 			if (n <= -1)

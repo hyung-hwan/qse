@@ -13,7 +13,5 @@ qsexli_LDADD = -lqsexli -lqsesi -lqsecmn $(LIBM) $(PTHREAD_LIBS)
 qsexli_DEPENDENCIES = ../../lib/xli/libqsexli.la ../../lib/si/libqsesi.la ../../lib/cmn/libqsecmn.la
 
 if WIN32 
-if WCHAR
 qsexli_LDADD += $(UNICOWS_LIBS)
-endif
 endif

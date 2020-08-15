@@ -13,7 +13,5 @@ qsesed_LDADD = -lqsesed -lqsesi -lqsecmn $(PTHREAD_LIBS)
 qsesed_DEPENDENCIES = ../../lib/sed/libqsesed.la ../../lib/si/libqsesi.la ../../lib/cmn/libqsecmn.la
 
 if WIN32 
-if WCHAR
 qsesed_LDADD += $(UNICOWS_LIBS)
-endif
 endif

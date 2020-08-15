@@ -10,9 +10,7 @@ AM_LDFLAGS = -L../../lib/cmn -L../../lib/sed
 LDADD = -lqsesed -lqsecmn 
 
 if WIN32 
-if WCHAR
 LDADD += $(UNICOWS_LIBS)
-endif
 endif
 
 CMNFILES = sed00.c sed00.h

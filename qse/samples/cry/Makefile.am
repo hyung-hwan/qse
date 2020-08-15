@@ -11,13 +11,11 @@ bin_PROGRAMS = \
 	sha01
 	
 
-AM_CFLAGS = $(PTHREAD_CFLAGS)
 AM_LDFLAGS = -L../../lib/cry  -L../../lib/si -L../../lib/cmn
-LDADD = -lqsecry -lqsesi -lqsecmn $(LIBM) $(PTHREAD_LIBS)
+LDADD = -lqsecry -lqsesi -lqsecmn $(LIBM)
+
 if WIN32 
-if WCHAR
 LDADD += $(UNICOWS_LIBS)
-endif
 endif
 
 bf01_SOURCES = bf01.c
