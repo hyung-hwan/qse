@@ -35,15 +35,11 @@ bin_PROGRAMS = \
 	uri01 \
 	xma 
 	
-AM_CFLAGS = $(PTHREAD_CFLAGS)
-AM_CXXFLAGS = $(PTHREAD_CFLAGS)
 AM_LDFLAGS = -L../../lib/si  -L../../lib/cmn
-LDADD = -lqsesi -lqsecmn $(LIBM) $(PTHREAD_LIBS)
+LDADD = -lqsesi -lqsecmn $(LIBM) 
 
 if WIN32 
-if WCHAR
 LDADD += $(UNICOWS_LIBS)
-endif
 endif
 
 chr01_SOURCES = chr01.c

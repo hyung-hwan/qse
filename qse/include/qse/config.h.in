@@ -105,6 +105,9 @@
 /* Define to 1 if you have the `CRYPTO_cleanup_all_ex_data' function. */
 #undef HAVE_CRYPTO_CLEANUP_ALL_EX_DATA
 
+/* define if the compiler supports basic C++11 syntax */
+#undef HAVE_CXX11
+
 /* Define if c++ supports namespace std. */
 #undef HAVE_CXX_NAMESPACE_STD
 
@@ -862,12 +865,6 @@
 /* AF_UNIX */
 #undef QSE_AF_UNIX
 
-/* The default character type is the multi-byte character type */
-#undef QSE_CHAR_IS_MCHAR
-
-/* The default character type is the wide character type */
-#undef QSE_CHAR_IS_WCHAR
-
 /* use the bundled unicode routines */
 #undef QSE_ENABLE_BUNDLED_UNICODE
 
@@ -879,6 +876,9 @@
 
 /* link modules statically into the main library */
 #undef QSE_ENABLE_STATIC_MODULE
+
+/* Use the wide-character type as the default character type */
+#undef QSE_ENABLE_WIDE_CHAR
 
 /* include more built-in cmgrs like cp949 and cp950 */
 #undef QSE_ENABLE_XCMGRS
@@ -930,6 +930,9 @@
 
 /* PATH_MAX */
 #undef QSE_PATH_MAX
+
+/* Prefix wide-character literals with L */
+#undef QSE_PREFER_PREFIX_L
 
 /* Define if pthread_cond_t is signed */
 #undef QSE_PTHREAD_MUTEX_T_IS_SIGNED
@@ -1057,8 +1060,8 @@
 /* use the syscall() function to invoke a system call */
 #undef QSE_USE_SYSCALL
 
-/* specify preference for char16_t as qse_wchar_t */
-#undef QSE_WCHAR_PREFER_CHAR16
+/* Wide-character type size */
+#undef QSE_WIDE_CHAR_SIZE
 
 /* The size of `char', as computed by sizeof. */
 #undef SIZEOF_CHAR
@@ -1185,3 +1188,14 @@
 #  undef WORDS_BIGENDIAN
 # endif
 #endif
+
+/* Enable large inode numbers on Mac OS X 10.5.  */
+#ifndef _DARWIN_USE_64_BIT_INODE
+# define _DARWIN_USE_64_BIT_INODE 1
+#endif
+
+/* Number of bits in a file offset, on hosts where this is settable. */
+#undef _FILE_OFFSET_BITS
+
+/* Define for large files, on AIX-style hosts. */
+#undef _LARGE_FILES

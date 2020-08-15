@@ -11,9 +11,7 @@ AM_LDFLAGS = -L../../lib/cmn -L../../lib/si -L../../lib/rad
 LDADD = -lqserad -lqsesi -lqsecmn 
 
 if WIN32 
-if WCHAR
 LDADD += $(UNICOWS_LIBS)
-endif
 endif
 
 raddic01_SOURCES = raddic01.c

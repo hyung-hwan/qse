@@ -282,10 +282,14 @@
 #define QSE_MT_I(txt) (txt)
 #define QSE_MT(txt)   QSE_MT_I(txt)
 
-#if defined(QSE_WCHAR_IS_CHAR16_T)
-#	define QSE_WQ_I(val)  (u ## #val)
+#if (QSE_SIZEOF_WCHAR_T == QSE_SIZEOF_MCHAR_T)
+#	define QSE_WQ_I(val)    (#val)
+#elif defined(QSE_USE_PREFIX_BIG_U)
+#	define QSE_WQ_I(val)    (U ## #val)
+#elif defined(QSE_USE_PREFIX_SMALL_U)
+#	define QSE_WQ_I(val)    (u ## #val)
 #else
-#	define QSE_WQ_I(val)  (L ## #val)
+#	define QSE_WQ_I(val)    (L ## #val)
 #endif
 #define QSE_WQ(val)    QSE_WQ_I(val)
 
@@ -295,7 +299,9 @@
  */
 #if (QSE_SIZEOF_WCHAR_T == QSE_SIZEOF_MCHAR_T)
 #	define QSE_WT_I(txt)    (txt)
-#elif defined(QSE_WCHAR_IS_CHAR16_T)
+#elif defined(QSE_USE_PREFIX_BIG_U)
+#	define QSE_WT_I(txt)    (U ## txt)
+#elif defined(QSE_USE_PREFIX_SMALL_U)
 #	define QSE_WT_I(txt)    (u ## txt)
 #else
 #	define QSE_WT_I(txt)    (L ## txt)

@@ -17,9 +17,7 @@ qsehttpd_LDADD = -lqsexli -lqsehttp -lqsesi -lqsecmn $(SSL_LIBS) $(LIBM) $(PTHRE
 qsehttpd_DEPENDENCIES = ../../lib/xli/libqsexli.la ../../lib/http/libqsehttp.la ../../lib/si/libqsesi.la ../../lib/cmn/libqsecmn.la
 
 if WIN32 
-if WCHAR
 qsehttpd_LDADD += $(UNICOWS_LIBS)
-endif
 endif
 
 qseursd_SOURCES = ursd.c

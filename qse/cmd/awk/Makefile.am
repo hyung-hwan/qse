@@ -30,7 +30,5 @@ qseawk_LDADD += $(DL_LIBS)
 endif
 
 if WIN32
-if WCHAR
 qseawk_LDADD += $(UNICOWS_LIBS)
-endif
 endif

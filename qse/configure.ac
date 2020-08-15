@@ -33,6 +33,9 @@ AC_CHECK_PROG(HAVE_CXX, $CXX, yes, no)
 dnl check if the C++ compiler supports namespace
 AX_CXX_NAMESPACE_STD
 
+dnl HAVE_CXX11
+AX_CXX_COMPILE_STDCXX(11, , optional)
+
 dnl determine some key programs
 AC_PROG_INSTALL
 AC_PROG_EGREP
@@ -72,9 +75,11 @@ dnl indicate the existence of config.h
 CFLAGS="$CFLAGS -DQSE_HAVE_CONFIG_H"
 CXXFLAGS="$CXXFLAGS -DQSE_HAVE_CONFIG_H"
 
+QSE_TRY_CFLAGS([-fshort-wchar])
+QSE_TRY_CFLAGS([-fno-short-wchar])
+
 dnl make visible the 64-bit interface to the file system
-CFLAGS="$CFLAGS -D_LARGEFILE64_SOURCE"
-CXXFLAGS="$CXXFLAGS -D_LARGEFILE64_SOURCE"
+AC_SYS_LARGEFILE()
 
 dnl define the WIN32 conditional if necessary
 case "$host" in
@@ -91,6 +96,84 @@ AM_CONDITIONAL(WIN32, test "x${platform_win32}" = "xyes" )
 dnl check the math library (check if -lm is needed)
 LT_LIB_M
 AC_SUBST(LIBM, $LIBM)
+
+
+dnl ===== enable-unicode =====
+dnl this enable option is placed way above other options
+dnl as -fshort-wchar affects the size of wchar_t.
+AC_ARG_ENABLE([wide-char], 
+	[AS_HELP_STRING([--enable-wide-char],[Use the wide-character type as the default character type. one of yes, no, yes:2, yes:4, no:2, no:4 (default. yes)])],
+	enable_wide_char=$enableval,
+	enable_wide_char=yes
+)
+if test "${enable_wide_char}" = "yes:4" -o "${enable_wide_char}" = "yes:4w"
+then
+	AC_DEFINE([QSE_WIDE_CHAR_SIZE],[4],[Wide-character type size])
+	AC_DEFINE([QSE_ENABLE_WIDE_CHAR],[1],[Use the wide-character type as the default character type])
+	if test "${platform_win32}" = "yes"
+	then
+		[CFLAGS="$CFLAGS -DUNICODE -D_UNICODE"]
+		[CXXFLAGS="$CXXFLAGS -DUNICODE -D_UNICODE"]
+	fi 
+
+	if test "${ac_cv_cflags__fno_short_wchar}" = "yes"
+	then
+		[CFLAGS="$CFLAGS -fno-short-wchar"]
+		[CXXFLAGS="$CXXFLAGS -fno-short-wchar"]
+	fi
+	if test "${enable_wide_char}" = "yes:4w"
+	then
+		AC_DEFINE([QSE_PREFER_PREFIX_L],[1],[Prefix wide-character literals with L])
+	fi
+
+elif test "${enable_wide_char}" = "yes:2" -o "${enable_wide_char}" = "yes:2w" -o "${enable_wide_char}" = "yes"
+then
+	AC_DEFINE([QSE_WIDE_CHAR_SIZE],[2],[Wide-character type size])
+	AC_DEFINE([QSE_ENABLE_WIDE_CHAR],[1],[Use the wide-character type as the default character type])
+	if test "${platform_win32}" = "yes"
+	then
+		[CFLAGS="$CFLAGS -DUNICODE -D_UNICODE"]
+		[CXXFLAGS="$CXXFLAGS -DUNICODE -D_UNICODE"]
+	fi
+	if test "${ac_cv_cflags__fshort_wchar}" = "yes"
+	then
+		[CFLAGS="$CFLAGS -fshort-wchar"]
+		[CXXFLAGS="$CXXFLAGS -fshort-wchar"]
+	fi
+	if test "${enable_wide_char}" = "yes:2w"
+	then
+		AC_DEFINE([QSE_PREFER_PREFIX_L],[1],[Prefix wide-character literals with L])
+	fi
+
+elif test "${enable_wide_char}" = "no:4" -o test "${enable_wide_char}" = "no:4w"
+then
+	AC_DEFINE([QSE_WIDE_CHAR_SIZE],[4],[Wide-character type size])
+
+	if test "${ac_cv_cflags__fno_short_wchar}" = "yes"
+	then
+		[CFLAGS="$CFLAGS -fno-short-wchar"]
+		[CXXFLAGS="$CXXFLAGS -fno-short-wchar"]
+	fi
+
+	if test "${enable_wide_char}" = "no:4w"
+	then
+		AC_DEFINE([QSE_PREFER_PREFIX_L],[1],[Prefix wide-character literals with L])
+	fi
+else
+	dnl no:2, no:2w, no, or anything else
+	AC_DEFINE([QSE_WIDE_CHAR_SIZE],[2],[Wide-character type size])
+
+	if test "${ac_cv_cflags__fshort_wchar}" = "yes"
+	then
+		[CFLAGS="$CFLAGS -fshort-wchar"]
+		[CXXFLAGS="$CXXFLAGS -fshort-wchar"]
+	fi
+
+	if test "${enable_wide_char}" = "no:2w"
+	then
+		AC_DEFINE([QSE_PREFER_PREFIX_L],[1],[Prefix wide-character literals with L])
+	fi
+fi
 
 dnl check header files.
 AC_HEADER_STDC
@@ -252,7 +335,7 @@ fi
 
 AC_CHECK_FUNCS([kqueue kqueue1 kevent])
 
-
+AX_PTHREAD()
 AC_CHECK_LIB([pthread], [pthread_mutex_timedlock],  [
 	AC_DEFINE([HAVE_PTHREAD_MUTEX_TIMEDLOCK],1,[pthreads has pthread_mutex_timedlock()])
 ])
@@ -813,29 +896,6 @@ AM_CONDITIONAL(ENABLE_LIBLTDL, test "x${enable_libltdl_is}" = "xyes")
 
 
 dnl define extra options
-AC_ARG_ENABLE([wchar], [AS_HELP_STRING([--enable-wchar],[Use the wide character type as the default charater type when enabled (default. yes)])],
-	enable_wchar_is=$enableval,enable_wchar_is=yes)
-test "${ac_cv_sizeof_wchar_t}" = "0" && enable_wchar_is=no
-test "${ac_cv_sizeof_wchar_t}" = "1" && enable_wchar_is=no
-if test "${enable_wchar_is}" = "yes"
-then
-	AC_DEFINE([QSE_CHAR_IS_WCHAR],[],[The default character type is the wide character type])
-	AC_SUBST(CHAR_MODE, "QSE_CHAR_IS_WCHAR")
-else
-	AC_DEFINE([QSE_CHAR_IS_MCHAR],[],[The default character type is the multi-byte character type])
-	AC_SUBST(CHAR_MODE, "QSE_CHAR_IS_MCHAR")
-fi
-AM_CONDITIONAL(WCHAR, test "${enable_wchar_is}" = "yes")
-
-
-AC_ARG_ENABLE([wchar-prefer-char16], [AS_HELP_STRING([--enable-wchar-prefer-char16],[Use char16_t for qse_wchar_t if possible(default. no)])],
-	enable_wchar_prefer_char16=$enableval,enable_wchar_prefer_char16=no)
-if test "${enable_wchar_prefer_char16}" = "yes"
-then
-	AC_DEFINE([QSE_WCHAR_PREFER_CHAR16],[],[specify preference for char16_t as qse_wchar_t])
-fi
-
-
 AC_ARG_ENABLE([bundled-unicode], [AS_HELP_STRING([--enable-bundled-unicode],[use thn bundled unicode routines (default. no)])],
 	enable_bundled_unicode_is=$enableval,enable_bundled_unicode_is=yes)
 if test "${ac_cv_header_wctype_h}" = "no" -o "${ac_cv_func_wctrans}" = "no" -o "${ac_cv_func_wctype}" = "no"
@@ -889,13 +949,6 @@ dnl disable c++ if the compiler is too old.
 test "${ax_cv_cxx_have_std_namespace}" = "yes" || enable_cxx_is="no"
 
 AM_CONDITIONAL(ENABLE_CXX, test "${enable_cxx_is}" = "yes" )
-
-AX_PTHREAD()
-AC_ARG_ENABLE([pthread-flags], [AS_HELP_STRING([--enable-pthread-flags],[add thread options (default. yes)])],
-	enable_pthread_flags_is=$enableval,enable_pthread_flags_is=yes)
-dnl actual actions depending  on  this option is at the end of this script 
-dnl becuase it changes CFLAGS, CXXFLAGS, LIBS and i don't want that to change 
-dnl while the configure script runs various tests.
 
 AC_ARG_ENABLE([awk-intmax], 
 	[AS_HELP_STRING([--enable-awk-intmax],[use qse_intmax_t for integers in AWK (default. no)])],
@@ -991,6 +1044,10 @@ AM_CONDITIONAL(ENABLE_AWKMOD_UCI, test "x${enable_awkmod_uci_is}" = "xyes")
 
 
 dnl ==== include pthread options to the default flags ====
+dnl keep this as  the last option as it changes the default compile flags.
+dnl otherwise, other tests may get affected if this option is on.
+AC_ARG_ENABLE([pthread-flags], [AS_HELP_STRING([--enable-pthread-flags],[add thread flags to CFLAGS, CXXFLAGS, LIBS(default. yes)])],
+	enable_pthread_flags_is=$enableval,enable_pthread_flags_is=yes)
 if test "$enable_pthread_flags_is" = "yes"
 then
 	[CFLAGS="$CFLAGS $PTHREAD_CFLAGS"]

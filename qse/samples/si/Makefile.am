@@ -28,14 +28,10 @@ bin_PROGRAMS = \
 	thr01
 	
 AM_LDFLAGS = -L../../lib/si  -L../../lib/cmn
-AM_CFLAGS = $(PTHREAD_CFLAGS)
-AM_CXXFLAGS = $(PTHREAD_CFLAGS)
-LDADD = -lqsesi -lqsecmn $(PTHREAD_LIBS)
+LDADD = -lqsesi -lqsecmn 
 
 if WIN32 
-if WCHAR
 LDADD += $(UNICOWS_LIBS)
-endif
 endif
 
 dir01_SOURCES = dir01.c

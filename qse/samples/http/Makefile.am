@@ -8,12 +8,10 @@ AM_CPPFLAGS = \
 bin_PROGRAMS = httpd01 
 
 AM_LDFLAGS = -L../../lib/cmn -L../../lib/http 
-LDADD = -lqsehttp -lqsecmn $(PTHREAD_LIBS) $(SOCKET_LIBS) $(SENDFILE_LIBS)
+LDADD = -lqsehttp -lqsecmn $(SOCKET_LIBS) $(SENDFILE_LIBS)
 
 if WIN32 
-if WCHAR
 LDADD += $(UNICOWS_LIBS)
-endif
 endif
 
 httpd01_SOURCES = httpd01.c
