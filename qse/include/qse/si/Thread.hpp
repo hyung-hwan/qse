@@ -118,7 +118,9 @@ public:
 	typedef int (*ThreadRoutine) (Thread* thr);
 
 	// execute the given function in a thread.
-	virtual int start (ThreadRoutine rtn, int flags = 0) QSE_CPP_NOEXCEPT;
+	// this is supposed to hide Thread::start(int flags).
+	// in this class, the start() method must be given the ThreadRoutine point.
+	virtual int start (ThreadRoutine rtn, int flags = 0) QSE_CPP_NOEXCEPT QSE_CPP_OVERRIDE;
 
 protected:
 	ThreadRoutine __tmprtn;
