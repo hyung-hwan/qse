@@ -506,8 +506,8 @@ protected:
 	{
 		QSE_ASSERT (index < this->node_count);
 
-		register Node* np;
-		register qse_size_t cnt;
+		Node* np;
+		qse_size_t cnt;
 
 		if (index < (this->node_count >> 1)) 
 		{
