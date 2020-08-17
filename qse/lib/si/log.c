@@ -760,7 +760,8 @@ int qse_get_log_priority_by_wcsname (const qse_wchar_t* name, const qse_wchar_t*
 	int pri = 0;
 
 	/* panic, info, debug,
-	 * +info
+	 * info+
+	 * debug+, info!
 	 */
 	ptr = name;
 	while (ptr)
@@ -768,14 +769,8 @@ int qse_get_log_priority_by_wcsname (const qse_wchar_t* name, const qse_wchar_t*
 		ptr = qse_wcstok(ptr, delim, &tok);
 		if (tok.ptr)
 		{
-			int plus = 0;
-
-			if (tok.len > 0 && tok.ptr[0] == '+')
-			{
-				tok.ptr++;
-				tok.len--;
-				plus = 1;
-			}
+			qse_wchar_t marker = '\0';
+			if (tok.len > 0 && (tok.ptr[tok.len - 1] == '+' || tok.ptr[tok.len - 1] == '-' || tok.ptr[tok.len - 1] == '!')) marker = tok.ptr[--tok.len];
 
 			for (i = 0; i < QSE_COUNTOF(__priority_names); i++)
 			{
@@ -786,14 +781,19 @@ int qse_get_log_priority_by_wcsname (const qse_wchar_t* name, const qse_wchar_t*
 				if (qse_strxcmp(tok.ptr, tok.len, __priority_names[i]) == 0) 
 			#endif
 				{
-					if (plus)
+					if (marker == '+')
 					{
 						qse_size_t j;
-						for (j = i; ; j--) 
-						{
-							pri |= (1UL << j);
-							if (j == 0) break;
-						}
+						for (j = 0; j <= i ; j++) pri |= (1UL << j);
+					}
+					else if (marker == '-')
+					{
+						qse_size_t j;
+						for (j = i; j < QSE_COUNTOF(__priority_names); j++) pri |= (1UL << j);
+					}
+					else if (marker == '!')
+					{
+						pri &= ~(1UL << i);
 					}
 					else
 					{
@@ -817,7 +817,8 @@ int qse_get_log_priority_by_mbsname (const qse_mchar_t* name, const qse_mchar_t*
 	int pri = 0;
 
 	/* panic, info, debug,
-	 * +info
+	 * info+
+	 * debug+, info!
 	 */
 	ptr = name;
 	while (ptr)
@@ -825,14 +826,8 @@ int qse_get_log_priority_by_mbsname (const qse_mchar_t* name, const qse_mchar_t*
 		ptr = qse_mbstok(ptr, delim, &tok);
 		if (tok.ptr)
 		{
-			int plus = 0;
-
-			if (tok.len > 0 && tok.ptr[0] == '+')
-			{
-				tok.ptr++;
-				tok.len--;
-				plus = 1;
-			}
+			qse_mchar_t marker = '\0';
+			if (tok.len > 0 && (tok.ptr[tok.len - 1] == '+' || tok.ptr[tok.len - 1] == '-' || tok.ptr[tok.len - 1] == '!')) marker = tok.ptr[--tok.len];
 
 			for (i = 0; i < QSE_COUNTOF(__priority_names); i++)
 			{
@@ -843,14 +838,19 @@ int qse_get_log_priority_by_mbsname (const qse_mchar_t* name, const qse_mchar_t*
 				if (qse_mbsxwcscmp(tok.ptr, tok.len, __priority_names[i]) == 0) 
 			#endif
 				{
-					if (plus)
+					if (marker == '+')
 					{
 						qse_size_t j;
-						for (j = i; ; j--) 
-						{
-							pri |= (1UL << j);
-							if (j == 0) break;
-						}
+						for (j = 0; j <= i ; j++) pri |= (1UL << j);
+					}
+					else if (marker == '-')
+					{
+						qse_size_t j;
+						for (j = i; j < QSE_COUNTOF(__priority_names); j++) pri |= (1UL << j);
+					}
+					else if (marker == '!')
+					{
+						pri &= ~(1UL << i);
 					}
 					else
 					{
