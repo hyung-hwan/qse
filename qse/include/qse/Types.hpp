@@ -44,6 +44,7 @@
 	#define QSE_CPP_THREXCEPT4(e1,e2,e3,e4) throw(e1,e2,e3,e4)
 	#define QSE_CPP_THREXCEPT5(e1,e2,e3,e4,e5) throw(e1,e2,e3,e4,e5)
 	#define QSE_CPP_EXPLICIT explicit
+	#define QSE_CPP_OVERRIDE override
 
 	/// The QSE_CPP_ENABLE_CPP11_MOVE macro enables C++11 move semantics
 	/// in various classes.
@@ -69,6 +70,7 @@
 	#define QSE_CPP_THREXCEPT4(e1,e2,e3,e4) throw(e1,e2,e3,e4)
 	#define QSE_CPP_THREXCEPT5(e1,e2,e3,e4,e5) throw(e1,e2,e3,e4,e5)
 	#define QSE_CPP_EXPLICIT 
+	#define QSE_CPP_OVERRIDE
 
 	#define QSE_CPP_CALL_DESTRUCTOR(ptr, class_name) ((ptr)->~class_name())
 	#define QSE_CPP_CALL_PLACEMENT_DELETE1(ptr, arg1) (::operator delete((ptr), (arg1)))
@@ -81,6 +83,7 @@
 	#define QSE_CPP_THREXCEPT4(e1,e2,e3,e4)
 	#define QSE_CPP_THREXCEPT5(e1,e2,e3,e4,e5)
 	#define QSE_CPP_EXPLICIT 
+	#define QSE_CPP_OVERRIDE 
 
 	#if defined(__BORLANDC__)
 
