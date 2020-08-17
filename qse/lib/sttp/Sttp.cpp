@@ -273,12 +273,12 @@ int Sttp::handle_param_list_char (qse_char_t c)
 	{
 		if (this->rd_state_stack->u.ipl.got_value || this->command.getArgCount() == 0)
 		{
-			this->command.addArg (this->token);
+			if (this->rd_state_stack->u.ipl.got_value) this->command.addArg (this->token);
 			this->clear_token();
 			this->rd_state_stack->u.ipl.got_value = false;
 			this->pop_read_state (); // back to the START state.
 
-			int x = this->handle_command (this->command);
+			int x = this->handle_command(this->command);
 			this->command.clear ();
 			if (x <= -1) return -1;
 		}
