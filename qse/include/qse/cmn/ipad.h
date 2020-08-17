@@ -150,42 +150,42 @@ struct qse_ip6adxx_t: public qse_ip6ad_t
 
 	qse_ip6adxx_t ()
 	{
-		register ad64_t* x = (ad64_t*)this->value;
+		ad64_t* x = (ad64_t*)this->value;
 		x->w[0] = 0;
 		x->w[1] = 0;
 	}
 
 	qse_ip6adxx_t (qse_uint8_t (*value)[16])
 	{
-		register ad64_t* x = (ad64_t*)this->value;
+		ad64_t* x = (ad64_t*)this->value;
 		x->w[0] = ((ad64_t*)value)->w[0];
 		x->w[1] = ((ad64_t*)value)->w[1];
 	}
 
 	qse_ip6adxx_t (qse_uint8_t (&value)[16])
 	{
-		register ad64_t* x = (ad64_t*)this->value;
+		ad64_t* x = (ad64_t*)this->value;
 		x->w[0] = ((ad64_t*)&value)->w[0];
 		x->w[1] = ((ad64_t*)&value)->w[1];
 	}
 
 	bool operator== (const qse_ip4adxx_t& peer) const 
 	{
-		register ad64_t* x = (ad64_t*)this->value;
-		register ad64_t* y = (ad64_t*)&peer.value;
+		ad64_t* x = (ad64_t*)this->value;
+		ad64_t* y = (ad64_t*)&peer.value;
 		return x->w[0] == y->w[0] && x->w[1] == y->w[1];
 	}
 
 	bool operator!= (const qse_ip4adxx_t& peer) const 
 	{
-		register ad64_t* x = (ad64_t*)this->value;
-		register ad64_t* y = (ad64_t*)&peer.value;
+		ad64_t* x = (ad64_t*)this->value;
+		ad64_t* y = (ad64_t*)&peer.value;
 		return x->w[0] != y->w[0] || x->w[1] != y->w[1];
 	}
 
 	qse_ip6adxx_t& operator= (const qse_ip6adxx_t& v)
 	{
-		register ad64_t* x = (ad64_t*)this->value;
+		ad64_t* x = (ad64_t*)this->value;
 		x->w[0] = ((ad64_t*)&v)->w[0];
 		x->w[1] = ((ad64_t*)&v)->w[1];
 		return *this;
@@ -193,7 +193,7 @@ struct qse_ip6adxx_t: public qse_ip6ad_t
 
 	bool isZero() const
 	{
-		register ad64_t* x = (ad64_t*)this->value;
+		ad64_t* x = (ad64_t*)this->value;
 		return x->w[0] == 0 && x->w[1] == 0;
 	}
 
