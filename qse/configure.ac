@@ -1122,6 +1122,7 @@ AC_CONFIG_FILES([
 	samples/http/Makefile
 	samples/rad/Makefile
 	samples/dhcp/Makefile
+	samples/app/Makefile
 	regress/Makefile
 	regress/awk/Makefile
 	regress/awk/regress.sh
