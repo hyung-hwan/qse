@@ -685,7 +685,7 @@ int Sttp::sendCmd (const qse_mchar_t* name, qse_size_t nargs, ...)
 	int n;
 	va_list ap;
 	va_start (ap, nargs);
-	n = this->sendCmd(name, nargs, ap);
+	n = this->sendCmdV(name, nargs, ap);
 	va_end (ap);
 	return n;
 }
@@ -695,7 +695,7 @@ int Sttp::sendCmd (const qse_wchar_t* name, qse_size_t nargs, ...)
 	int n;
 	va_list ap;
 	va_start (ap, nargs);
-	n = this->sendCmd(name, nargs, ap);
+	n = this->sendCmdV(name, nargs, ap);
 	va_end (ap);
 	return n;
 }
@@ -705,7 +705,7 @@ int Sttp::sendCmdL (const qse_mchar_t* name, qse_size_t nargs, ...)
 	int n;
 	va_list ap;
 	va_start (ap, nargs);
-	n = this->sendCmdL(name, nargs, ap);
+	n = this->sendCmdLV(name, nargs, ap);
 	va_end (ap);
 	return n;
 }
@@ -715,7 +715,7 @@ int Sttp::sendCmdL (const qse_wchar_t* name, qse_size_t nargs, ...)
 	int n;
 	va_list ap;
 	va_start (ap, nargs);
-	n = this->sendCmdL(name, nargs, ap);
+	n = this->sendCmdLV(name, nargs, ap);
 	va_end (ap);
 	return n;
 }

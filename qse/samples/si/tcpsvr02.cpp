@@ -17,6 +17,33 @@
 #include <signal.h>
 #include <string.h>
 
+class Proto: public QSE::Sttp
+{
+public:
+	Proto (QSE::Socket* sck): sck(sck) {}
+
+	int handle_command (const QSE::SttpCmd& cmd)
+	{
+		qse_printf (QSE_T("command -> %js\n"), cmd.name.getData());
+		int n = this->sendCmd(QSE_T("OK"), 1, cmd.name.getData());
+		if (cmd.name == QSE_T("quit"))
+		{
+			sck->shutdown ();
+		}
+		return n;
+	}
+
+	int write_bytes (const qse_uint8_t* data, qse_size_t len)
+	{
+		int n = this->sck->sendx(data, len, QSE_NULL);
+		if (QSE_UNLIKELY(n <= -1)) this->setErrorFmt(E_ESYSERR, QSE_T("%js"), sck->getErrorMsg());
+		return n;
+	}
+
+protected:
+	QSE::Socket* sck;
+};
+
 #if defined(QSE_LANG_CPP11)
 QSE::TcpServerL<int(QSE::TcpServer::Connection*)>* g_server;
 #else
@@ -33,22 +60,22 @@ public:
 		connection->address.toStrBuf(addrbuf, QSE_COUNTOF(addrbuf));
 		qse_printf (QSE_T("hello word..from %s[%zu]\n"), addrbuf, connection->getWid());
 
-		QSE::Sttp sttp (&connection->socket);
-		QSE::SttpCmd cmd;
+		Proto proto (&connection->socket);
+
 		while (!server->isHaltRequested())
 		{
-			int n = sttp.receiveCmd(&cmd);
-			if (n <= -1)
+			if ((n = connection->socket.receive(bb, QSE_COUNTOF(bb))) <= 0)
 			{
-				qse_printf (QSE_T("%s[%zu] -> got error\n"), addrbuf, connection->getWid());
+				if (n <= -1)
+					qse_printf (QSE_T("%s[%zu] -> got error\n"), addrbuf, connection->getWid());
 				break;
 			}
-			else if (n == 0) break;
 
-			if (cmd.name == QSE_T("quit")) break;
-
-			qse_printf (QSE_T("received command %s\n"), cmd.name.getBuffer());
-			sttp.sendCmd(cmd);
+			if (proto.feed(bb, n, QSE_NULL) <= -1)
+			{
+				qse_printf (QSE_T("%s[%zu] -> protocol error - %js\n"), addrbuf, connection->getWid(), proto.getErrorMsg());
+				break;
+			}
 		}
 
 		qse_printf (QSE_T("byte to %s -> wid %zu\n"), addrbuf, connection->getWid());
@@ -76,22 +103,22 @@ static int test1 (void)
 			connection->address.toStrBuf(addrbuf, QSE_COUNTOF(addrbuf));
 			qse_printf (QSE_T("hello word..from %s --> wid %zu\n"), addrbuf, connection->getWid());
 
-			QSE::Sttp sttp (&connection->socket);
-			QSE::SttpCmd cmd;
-			while (!server.isStopRequested())
+			Proto proto (&connection->socket);
+
+			while (!server.isHaltRequested())
 			{
-				int n = sttp.receiveCmd(&cmd);
-				if (n <= -1)
+				if ((n = connection->socket.receive(bb, QSE_COUNTOF(bb))) <= 0)
 				{
-					qse_printf (QSE_T("%s<%zu> --> got error\n"), addrbuf, connection->getWid());
+					if (n <= -1)
+						qse_printf (QSE_T("%s[%zu] -> got error\n"), addrbuf, connection->getWid());
 					break;
 				}
-				else if (n == 0) break;
 
-				if (cmd.name == QSE_T("quit")) break;
-
-				qse_printf (QSE_T("%s<%zu> --> received command %s\n"), addrbuf, connection->getWid(), cmd.name.getBuffer());
-				sttp.sendCmd(cmd);
+				if (proto.feed(bb, n, QSE_NULL) <= -1)
+				{
+					qse_printf (QSE_T("%s[%zu] -> protocol error - %js\n"), addrbuf, connection->getWid(), proto.getErrorMsg());
+					break;
+				}
 			}
 
 			qse_printf (QSE_T("byte to %s -> wid %zu\n"), addrbuf, connection->getWid());
