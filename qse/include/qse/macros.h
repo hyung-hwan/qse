@@ -37,6 +37,23 @@
  * This file contains various useful macro definitions.
  */
 
+/* =========================================================================
+ * STATIC ASSERTION
+ * =========================================================================*/
+#define QSE_STATIC_JOIN_INNER(x, y) x ## y
+#define QSE_STATIC_JOIN(x, y) QSE_STATIC_JOIN_INNER(x, y)
+
+#if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201112L)
+#	define QSE_STATIC_ASSERT(expr)  _Static_assert (expr, "invalid assertion")
+#elif defined(__cplusplus) && (__cplusplus >= 201103L)
+#	define QSE_STATIC_ASSERT(expr) static_assert (expr, "invalid assertion")
+#else
+#	define QSE_STATIC_ASSERT(expr) typedef char QSE_STATIC_JOIN(QSE_STATIC_ASSERT_T_, __LINE__)[(expr)? 1: -1] QSE_UNUSED
+#endif
+
+#define QSE_STATIC_ASSERT_EXPR(expr) ((void)QSE_SIZEOF(char[(expr)? 1: -1]))
+
+
 #if defined(__cplusplus) || (defined(__STDC_VERSION__) && (__STDC_VERSION__>=199901L))
 #	define QSE_INLINE inline
 #	define QSE_HAVE_INLINE
@@ -307,7 +324,7 @@
 #	define QSE_WT_I(txt)    (L ## txt)
 
 	/* if this assertion fails, you should check the compiler flags determining the size of wchar_t */
-	HAWK_STATIC_ASSERT (sizeof(L'X') == HAWK_SIZEOF_WCHAR_T);
+	QSE_STATIC_ASSERT (sizeof(L'X') == QSE_SIZEOF_WCHAR_T);
 #endif
 #define QSE_WT(txt)    QSE_WT_I(txt)
 
@@ -380,23 +397,6 @@ QSE_EXPORT void qse_assert_failed (
 #if defined(__cplusplus)
 }
 #endif
-
-
-/* =========================================================================
- * STATIC ASSERTION
- * =========================================================================*/
-#define QSE_STATIC_JOIN_INNER(x, y) x ## y
-#define QSE_STATIC_JOIN(x, y) QSE_STATIC_JOIN_INNER(x, y)
-
-#if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201112L)
-#	define QSE_STATIC_ASSERT(expr)  _Static_assert (expr, "invalid assertion")
-#elif defined(__cplusplus) && (__cplusplus >= 201103L)
-#	define QSE_STATIC_ASSERT(expr) static_assert (expr, "invalid assertion")
-#else
-#	define QSE_STATIC_ASSERT(expr) typedef char QSE_STATIC_JOIN(QSE_STATIC_ASSERT_T_, __LINE__)[(expr)? 1: -1] QSE_UNUSED
-#endif
-
-#define QSE_STATIC_ASSERT_EXPR(expr) ((void)QSE_SIZEOF(char[(expr)? 1: -1]))
 
 /* ---------------------------------------------------------------------- 
  * INTEGER LIMITS
