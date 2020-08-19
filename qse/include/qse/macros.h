@@ -305,6 +305,9 @@
 #	define QSE_WT_I(txt)    (u ## txt)
 #else
 #	define QSE_WT_I(txt)    (L ## txt)
+
+	/* if this assertion fails, you should check the compiler flags determining the size of wchar_t */
+	HAWK_STATIC_ASSERT (sizeof(L'X') == HAWK_SIZEOF_WCHAR_T);
 #endif
 #define QSE_WT(txt)    QSE_WT_I(txt)
 

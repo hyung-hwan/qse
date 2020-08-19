@@ -892,6 +892,12 @@
 /* Unknown Endian */
 #undef QSE_ENDIAN_UNKNOWN
 
+/* char32_t literal prefix */
+#undef QSE_HAVE_PREFIX_BIG_U
+
+/* char16_t literal prefix */
+#undef QSE_HAVE_PREFIX_SMALL_U
+
 /* MB_LEN_MAX */
 #undef QSE_MBLEN_MAX
 
@@ -970,6 +976,9 @@
 /* sizeof(mode_t) */
 #undef QSE_SIZEOF_MODE_T
 
+/* sizeof(wchar_t) */
+#undef QSE_SIZEOF_NATIVE_WCHAR_T
+
 /* sizeof(off64_t) */
 #undef QSE_SIZEOF_OFF64_T
 
@@ -1014,9 +1023,6 @@
 
 /* sizeof(void*) */
 #undef QSE_SIZEOF_VOID_P
-
-/* sizeof(wchar_t) */
-#undef QSE_SIZEOF_WCHAR_T
 
 /* sizeof(__float128) */
 #undef QSE_SIZEOF___FLOAT128

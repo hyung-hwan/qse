@@ -98,7 +98,7 @@ LT_LIB_M
 AC_SUBST(LIBM, $LIBM)
 
 
-dnl ===== enable-unicode =====
+dnl ===== enable-wide-char =====
 dnl this enable option is placed way above other options
 dnl as -fshort-wchar affects the size of wchar_t.
 AC_ARG_ENABLE([wide-char], 
@@ -174,6 +174,22 @@ else
 		AC_DEFINE([QSE_PREFER_PREFIX_L],[1],[Prefix wide-character literals with L])
 	fi
 fi
+
+AC_MSG_CHECKING([for char16_t literal])
+AC_LINK_IFELSE(
+	[AC_LANG_PROGRAM([], [const void* x = u"ab cd ef gh";])],
+	[AC_MSG_RESULT(yes)
+	 AC_DEFINE([QSE_HAVE_PREFIX_SMALL_U], [1], [char16_t literal prefix])],
+	[AC_MSG_RESULT(no)]
+)
+
+AC_MSG_CHECKING([for char32_t literal])
+AC_LINK_IFELSE(
+	[AC_LANG_PROGRAM([], [const void* x = U"ab cd ef gh";])],
+	[AC_MSG_RESULT(yes)
+	 AC_DEFINE([QSE_HAVE_PREFIX_BIG_U], [1], [char32_t literal prefix])],
+	[AC_MSG_RESULT(no)]
+)
 
 dnl check header files.
 AC_HEADER_STDC
@@ -793,7 +809,7 @@ AC_DEFINE_UNQUOTED(QSE_SIZEOF_DOUBLE, ${ac_cv_sizeof_double}, [sizeof(double)])
 AC_DEFINE_UNQUOTED(QSE_SIZEOF_LONG_DOUBLE, ${ac_cv_sizeof_long_double}, [sizeof(long double)])
 AC_DEFINE_UNQUOTED(QSE_SIZEOF___FLOAT128, ${ac_cv_sizeof___float128}, [sizeof(__float128)])
 
-AC_DEFINE_UNQUOTED(QSE_SIZEOF_WCHAR_T, ${ac_cv_sizeof_wchar_t}, [sizeof(wchar_t)])
+AC_DEFINE_UNQUOTED(QSE_SIZEOF_NATIVE_WCHAR_T, ${ac_cv_sizeof_wchar_t}, [sizeof(wchar_t)])
 AC_DEFINE_UNQUOTED(QSE_SIZEOF_OFF_T, ${ac_cv_sizeof_off_t}, [sizeof(off_t)])
 AC_DEFINE_UNQUOTED(QSE_SIZEOF_OFF64_T, ${ac_cv_sizeof_off64_t}, [sizeof(off64_t)])
 AC_DEFINE_UNQUOTED(QSE_SIZEOF_MODE_T, ${ac_cv_sizeof_mode_t}, [sizeof(mode_t)])
@@ -1056,19 +1072,6 @@ then
 fi
 
 dnl ====  subsititution of some key items ====
-AC_SUBST(QSE_SIZEOF_WCHAR_T, $ac_cv_sizeof_wchar_t)
-AC_SUBST(QSE_SIZEOF_LONG_LONG, $ac_cv_sizeof_long_long)
-AC_SUBST(QSE_SIZEOF_LONG, $ac_cv_sizeof_long)
-AC_SUBST(QSE_SIZEOF_INT, $ac_cv_sizeof_int)
-AC_SUBST(QSE_SIZEOF_SHORT, $ac_cv_sizeof_short)
-AC_SUBST(QSE_SIZEOF_CHAR, $ac_cv_sizeof_char)
-AC_SUBST(QSE_SIZEOF_VOID_P, $ac_cv_sizeof_void_p)
-AC_SUBST(QSE_SIZEOF_FLOAT, $ac_cv_sizeof_float)
-AC_SUBST(QSE_SIZEOF_DOUBLE, $ac_cv_sizeof_double)
-AC_SUBST(QSE_SIZEOF_LONG_DOUBLE, $ac_cv_sizeof_long_double)
-AC_SUBST(QSE_SIZEOF_OFF_T, $ac_cv_sizeof_off_t)
-AC_SUBST(QSE_SIZEOF_OFF64_T, $ac_cv_sizeof_off64_t)
-
 AC_SUBST(QSE_PROJECT_AUTHOR, "${PACKAGE_BUGREPORT}")
 AC_SUBST(QSE_PROJECT_URL, "${PACKAGE_URL}")
 
