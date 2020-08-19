@@ -557,7 +557,7 @@ typedef int qse_mcint_t;
 #		define QSE_SIZEOF_WCHAR_T 2
 #		define QSE_USE_PREFIX_SMALL_U
 #	endif
-#elif defined(__cplusplus) && defined(QSE_WIDE_CHAR_SIZE) && (QSE_WIDE_CHAR_SIZE >= 4) && (QSE_SIZEOF_WCHAR_T >= 4)
+#elif defined(__cplusplus) && defined(QSE_WIDE_CHAR_SIZE) && (QSE_WIDE_CHAR_SIZE >= 4) && (QSE_SIZEOF_NATIVE_WCHAR_T >= 4)
 	typedef wchar_t           qse_wchar_t;
 	typedef qse_uint32_t      qse_wchau_t;
 #	define QSE_SIZEOF_WCHAR_T 4
@@ -566,7 +566,7 @@ typedef int qse_mcint_t;
 	// for this library.
 	QSE_STATIC_ASSERT (QSE_WIDE_CHAR_SIZE == sizeof(qse_wchar_t));
 
-#elif defined(__cplusplus) && defined(QSE_WIDE_CHAR_SIZE) && (QSE_WIDE_CHAR_SIZE == 2) && (QSE_SIZEOF_WCHAR_T == 2)
+#elif defined(__cplusplus) && defined(QSE_WIDE_CHAR_SIZE) && (QSE_WIDE_CHAR_SIZE == 2) && (QSE_SIZEOF_NATIVE_WCHAR_T == 2)
 	typedef wchar_t           qse_wchar_t;
 	typedef qse_uint16_t      qse_wchau_t;
 #	define QSE_SIZEOF_WCHAR_T 2
@@ -578,7 +578,7 @@ typedef int qse_mcint_t;
 	//   gcc/g++/clang/clang++: -fshort-wchar makes wchar_t to 2 bytes.
 	QSE_STATIC_ASSERT (QSE_WIDE_CHAR_SIZE == sizeof(qse_wchar_t));
 
-#elif defined(QSE_WIDE_CHAR_SIZE) && (QSE_WIDE_CHAR_SIZE >= 4) && defined(__GNUC__) && defined(__CHAR32_TYPE__)
+#elif defined(QSE_WIDE_CHAR_SIZE) && (QSE_WIDE_CHAR_SIZE >= 4) && defined(__CHAR32_TYPE__) && defined(QSE_HAVE_PREFIX_BIG_U)
 	typedef __CHAR32_TYPE__    qse_wchar_t;
 	typedef qse_uint32_t        qse_wchau_t;
 #	define QSE_SIZEOF_WCHAR_T 4
@@ -591,7 +591,7 @@ typedef int qse_mcint_t;
 	typedef qse_uint32_t      qse_wchau_t;
 #	define QSE_SIZEOF_WCHAR_T 4
 
-#elif defined(__GNUC__) && defined(__CHAR16_TYPE__)
+#elif defined(__CHAR16_TYPE__) && defined(QSE_HAVE_PREFIX_SMALL_U)
 	typedef __CHAR16_TYPE__    qse_wchar_t;
 	typedef qse_uint16_t       qse_wchau_t;
 #	define QSE_SIZEOF_WCHAR_T 2

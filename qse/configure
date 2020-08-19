@@ -637,18 +637,6 @@ LTLIBOBJS
 LIBOBJS
 QSE_PROJECT_URL
 QSE_PROJECT_AUTHOR
-QSE_SIZEOF_OFF64_T
-QSE_SIZEOF_OFF_T
-QSE_SIZEOF_LONG_DOUBLE
-QSE_SIZEOF_DOUBLE
-QSE_SIZEOF_FLOAT
-QSE_SIZEOF_VOID_P
-QSE_SIZEOF_CHAR
-QSE_SIZEOF_SHORT
-QSE_SIZEOF_INT
-QSE_SIZEOF_LONG
-QSE_SIZEOF_LONG_LONG
-QSE_SIZEOF_WCHAR_T
 ENABLE_AWKMOD_UCI_FALSE
 ENABLE_AWKMOD_UCI_TRUE
 ENABLE_AWKMOD_SED_FALSE
@@ -18829,6 +18817,60 @@ $as_echo "#define QSE_PREFER_PREFIX_L 1" >>confdefs.h
 	fi
 fi
 
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for char16_t literal" >&5
+$as_echo_n "checking for char16_t literal... " >&6; }
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+const void* x = u"ab cd ef gh";
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+
+$as_echo "#define QSE_HAVE_PREFIX_SMALL_U 1" >>confdefs.h
+
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for char32_t literal" >&5
+$as_echo_n "checking for char32_t literal... " >&6; }
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+const void* x = U"ab cd ef gh";
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+
+$as_echo "#define QSE_HAVE_PREFIX_BIG_U 1" >>confdefs.h
+
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for ANSI C header files" >&5
 $as_echo_n "checking for ANSI C header files... " >&6; }
 if ${ac_cv_header_stdc+:} false; then :
@@ -24337,7 +24379,7 @@ _ACEOF
 
 
 cat >>confdefs.h <<_ACEOF
-#define QSE_SIZEOF_WCHAR_T ${ac_cv_sizeof_wchar_t}
+#define QSE_SIZEOF_NATIVE_WCHAR_T ${ac_cv_sizeof_wchar_t}
 _ACEOF
 
 
@@ -25079,31 +25121,6 @@ then
 	CXXFLAGS="$CXXFLAGS $PTHREAD_CFLAGS"
 	LIBS="$LIBS $PTHREAD_LIBS"
 fi
-
-QSE_SIZEOF_WCHAR_T=$ac_cv_sizeof_wchar_t
-
-QSE_SIZEOF_LONG_LONG=$ac_cv_sizeof_long_long
-
-QSE_SIZEOF_LONG=$ac_cv_sizeof_long
-
-QSE_SIZEOF_INT=$ac_cv_sizeof_int
-
-QSE_SIZEOF_SHORT=$ac_cv_sizeof_short
-
-QSE_SIZEOF_CHAR=$ac_cv_sizeof_char
-
-QSE_SIZEOF_VOID_P=$ac_cv_sizeof_void_p
-
-QSE_SIZEOF_FLOAT=$ac_cv_sizeof_float
-
-QSE_SIZEOF_DOUBLE=$ac_cv_sizeof_double
-
-QSE_SIZEOF_LONG_DOUBLE=$ac_cv_sizeof_long_double
-
-QSE_SIZEOF_OFF_T=$ac_cv_sizeof_off_t
-
-QSE_SIZEOF_OFF64_T=$ac_cv_sizeof_off64_t
-
 
 QSE_PROJECT_AUTHOR="${PACKAGE_BUGREPORT}"
 
