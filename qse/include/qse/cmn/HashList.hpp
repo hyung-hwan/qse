@@ -492,22 +492,22 @@ public:
 
 	Node* insert (const T& datum)
 	{
-		return this->inject (datum, -1, QSE_NULL);
+		return this->inject(datum, -1, QSE_NULL);
 	}
 
 	Node* ensert (const T& datum)
 	{
-		return this->inject (datum, 0, QSE_NULL);
+		return this->inject(datum, 0, QSE_NULL);
 	}
 
 	Node* upsert (const T& datum)
 	{
-		return this->inject (datum, 1, QSE_NULL);
+		return this->inject(datum, 1, QSE_NULL);
 	}
 
 	Node* update (const T& datum)
 	{
-		Node* node = this->find_node (datum);
+		Node* node = this->find_node(datum);
 		if (node) node->value = datum;
 		return node;
 	}

@@ -310,7 +310,7 @@ int qse_mbsspl (
 	qse_mchar_t* s, const qse_mchar_t* delim,
 	qse_mchar_t lquote, qse_mchar_t rquote, qse_mchar_t escape)
 {
-	return qse_mbsspltrn (s, delim, lquote, rquote, escape, QSE_NULL);
+	return qse_mbsspltrn(s, delim, lquote, rquote, escape, QSE_NULL);
 }
 
 int qse_wcsspltrn (
@@ -596,5 +596,5 @@ int qse_wcsspl (
 	qse_wchar_t* s, const qse_wchar_t* delim,
 	qse_wchar_t lquote, qse_wchar_t rquote, qse_wchar_t escape)
 {
-	return qse_wcsspltrn (s, delim, lquote, rquote, escape, QSE_NULL);
+	return qse_wcsspltrn(s, delim, lquote, rquote, escape, QSE_NULL);
 }

@@ -381,6 +381,15 @@ QSE_EXPORT int qse_prefixtoip6ad (
 	qse_ip6ad_t* ipad
 );
 
+
+/*
+ * The qse_ip4adtoprefix() function returns the prefix length
+ * of the given IPv4 address mask.
+ */
+QSE_EXPORT int qse_ip4adtoprefix (
+	const qse_ip4ad_t* ipad
+);
+
 #if defined(__cplusplus)
 }
 #endif

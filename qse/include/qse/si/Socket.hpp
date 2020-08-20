@@ -55,6 +55,7 @@ public:
 	void close () QSE_CPP_NOEXCEPT;
 
 	qse_sck_hnd_t getHandle() const QSE_CPP_NOEXCEPT { return this->handle; }
+	bool isOpen() const QSE_CPP_NOEXCEPT { return this->handle != QSE_INVALID_SCKHND; }
 
 	// -------------------------------------------------------------------- 
 
