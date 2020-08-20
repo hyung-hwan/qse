@@ -734,3 +734,54 @@ int qse_prefixtoip6ad (int prefix, qse_ip6ad_t* ipad)
 
 	return 0;
 }
+
+#define __COUNTUP(x,cnt,rest) \
+switch (x) \
+{ \
+	case 0xFF000000: \
+		cnt += 8; break; \
+	case 0x00000000: \
+		if (rest) return -1; break; \
+	case 0xFE000000: cnt++; \
+	case 0xFC000000: cnt++; \
+	case 0xF8000000: cnt++; \
+	case 0XF0000000: cnt++; \
+	case 0xE0000000: cnt++; \
+	case 0xC0000000: cnt++; \
+	case 0x80000000: cnt++; \
+		if (rest) return -1; break; \
+	default: return -1; \
+}
+
+int qse_ip4adtoprefix (const qse_ip4ad_t* ipad)
+{
+	int pfx = 0;
+	qse_uint32_t x, nm;
+
+	nm = qse_ntoh32(ipad->value);
+
+	if (nm) 
+	{
+		x = nm & 0xFF000000; nm <<= 8;
+		__COUNTUP (x, pfx, nm);
+	}
+	if (nm) 
+	{
+		x = nm & 0xFF000000; nm <<= 8;
+		__COUNTUP (x, pfx, nm);
+	}
+	if (nm) 
+	{
+		x = nm & 0xFF000000; nm <<= 8;
+		__COUNTUP (x, pfx, nm);
+	}
+	if (nm) 
+	{
+		x = nm & 0xFF000000; 
+		__COUNTUP (x, pfx, 0);
+	}
+
+	return pfx;
+}
+
+/* TODO: qse_ip6adtoprefix() */
