@@ -286,6 +286,19 @@ int Socket::setIpv6Only (int n) QSE_CPP_NOEXCEPT
 #endif
 }
 
+int Socket::setNonBlock (int n) QSE_CPP_NOEXCEPT
+{
+	QSE_ASSERT (qse_is_sck_valid(this->handle));
+
+	if (qse_set_sck_nonblock(this->handle, n) <= -1)
+	{
+		this->setErrorFmt (syserr_to_errnum(errno), QSE_T("%hs"), strerror(errno));
+		return -1;
+	}
+
+	return 0;
+}
+
 int Socket::shutdown (int how) QSE_CPP_NOEXCEPT
 {
 	if (this->handle != QSE_INVALID_SCKHND)
@@ -313,6 +326,33 @@ int Socket::connect (const SocketAddress& target) QSE_CPP_NOEXCEPT
 
 	return 0;
 }
+
+int Socket::initConnectNB (const SocketAddress& target) QSE_CPP_NOEXCEPT
+{
+	QSE_ASSERT (qse_is_sck_valid(this->handle));
+
+	if (qse_init_sck_conn(this->handle, target.getAddrPtr()) <= -1)
+	{
+		this->setErrorFmt (syserr_to_errnum(errno), QSE_T("%hs"), strerror(errno));
+		return -1;
+	}
+
+	return 0;
+}
+
+int Socket::finiConnectNB () QSE_CPP_NOEXCEPT
+{
+	QSE_ASSERT (qse_is_sck_valid(this->handle));
+
+	if (qse_fini_sck_conn(this->handle) <= -1)
+	{
+		this->setErrorFmt (syserr_to_errnum(errno), QSE_T("%hs"), strerror(errno));
+		return -1;
+	}
+
+	return 0;
+}
+
 
 int Socket::bind (const SocketAddress& target) QSE_CPP_NOEXCEPT
 {

@@ -73,7 +73,12 @@ typedef enum qse_mux_errnum_t qse_mux_errnum_t;
 enum qse_mux_evtmask_t
 {
 	QSE_MUX_IN  = (1 << 0),
-	QSE_MUX_OUT = (1 << 1)
+	QSE_MUX_OUT = (1 << 1),
+
+	/* output only below - available if the underlying system multiplexer returns relevant information  */
+	QSE_MUX_RDHUP = (1 << 2),
+	QSE_MUX_HUP = (1 << 3),
+	QSE_MUX_ERR = (1 << 4)
 };
 typedef enum qse_mux_evtmask_t qse_mux_evtmask_t;
 

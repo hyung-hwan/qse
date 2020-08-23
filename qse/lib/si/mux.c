@@ -1000,9 +1000,12 @@ int qse_mux_poll (qse_mux_t* mux, const qse_ntime_t* tmout)
 		xevt.mask = 0;
 		if (mux->ee.ptr[i].events & EPOLLIN) xevt.mask |= QSE_MUX_IN;
 		if (mux->ee.ptr[i].events & EPOLLOUT) xevt.mask |= QSE_MUX_OUT;
-
-		if (mux->ee.ptr[i].events & (EPOLLHUP | EPOLLERR))
+		if (mux->ee.ptr[i].events & (EPOLLRDHUP | EPOLLHUP | EPOLLERR))
 		{
+			if (mux->ee.ptr[i].events & EPOLLRDHUP) xevt.mask |= QSE_MUX_RDHUP;
+			if (mux->ee.ptr[i].events & EPOLLHUP) xevt.mask |= QSE_MUX_HUP;
+			if (mux->ee.ptr[i].events & EPOLLERR) xevt.mask |= QSE_MUX_ERR;
+
 			if (evt->mask & QSE_MUX_IN) xevt.mask |= QSE_MUX_IN;
 			if (evt->mask & QSE_MUX_OUT) xevt.mask |= QSE_MUX_OUT;
 		}

@@ -100,7 +100,7 @@ QSE_EXPORT int qse_set_sck_cloexec (
 
 QSE_EXPORT int qse_init_sck_conn (
 	qse_sck_hnd_t     handle,
-	const qse_nwad_t* nwad
+	const qse_skad_t* skad
 );
 
 QSE_EXPORT int qse_fini_sck_conn (
