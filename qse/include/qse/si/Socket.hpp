@@ -78,10 +78,14 @@ public:
 	int setTcpNodelay (int n) QSE_CPP_NOEXCEPT;
 	int setOobInline (int n) QSE_CPP_NOEXCEPT;
 	int setIpv6Only (int n) QSE_CPP_NOEXCEPT;
+	int setNonBlock (int n) QSE_CPP_NOEXCEPT;
 
 	// -------------------------------------------------------------------- 
 	int shutdown (int how = 2) QSE_CPP_NOEXCEPT;
 	int connect (const SocketAddress& target) QSE_CPP_NOEXCEPT;
+
+	int initConnectNB (const SocketAddress& target) QSE_CPP_NOEXCEPT;
+	int finiConnectNB () QSE_CPP_NOEXCEPT;
 
 	// -------------------------------------------------------------------- 
 	int bind (const SocketAddress& target) QSE_CPP_NOEXCEPT;

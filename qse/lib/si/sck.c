@@ -197,7 +197,7 @@ int qse_set_sck_cloexec (qse_sck_hnd_t handle, int enabled)
 #endif
 }
 
-int qse_init_sck_conn (qse_sck_hnd_t handle, const qse_nwad_t* nwad)
+int qse_init_sck_conn (qse_sck_hnd_t handle, const qse_skad_t* skad)
 {
 	int n;
 #if defined(_WIN32)
@@ -207,11 +207,6 @@ int qse_init_sck_conn (qse_sck_hnd_t handle, const qse_nwad_t* nwad)
 #else
 	int saved = 0;
 #endif
-	qse_skad_t skad;
-	int skadlen;
-
-	skadlen = qse_nwadtoskad (nwad, &skad);
-	if (skadlen <= -1) return -1;
 
 #if defined(_WIN32)
 	/* switch to the non-blocking mode */
@@ -223,7 +218,7 @@ int qse_init_sck_conn (qse_sck_hnd_t handle, const qse_nwad_t* nwad)
 	}
 
 	/* attempt to connet */
-	n = connect(handle, (struct sockaddr*)&skad, skadlen);
+	n = connect(handle, (struct sockaddr*)skad, qse_skadsize(skad));
 	if (n == -1 && WSAGetLastError() != WSAEWOULDBLOCK) 
 	{
 		/* attempt to restore to the blocking mode upon failure.
@@ -235,10 +230,10 @@ int qse_init_sck_conn (qse_sck_hnd_t handle, const qse_nwad_t* nwad)
 #elif defined(__OS2__)
 
 	enabled = 1;
-	if (ioctl (handle, FIONBIO, (char*)&enabled, sizeof(enabled)) <= -1) return -1;
+	if (ioctl(handle, FIONBIO, (char*)&enabled, sizeof(enabled)) <= -1) return -1;
 
 	/* attempt to connet */
-	n = connect (handle, (struct sockaddr*)&skad, skadlen);
+	n = connect (handle, (struct sockaddr*)skad, qse_skadsize(skad));
 	if (n == -1 && sock_errno() != EINPROGRESS)
 	{
 		/* attempt to restore to the blocking mode upon failure.
@@ -250,21 +245,21 @@ int qse_init_sck_conn (qse_sck_hnd_t handle, const qse_nwad_t* nwad)
 
 #else
 
-	/* switch to the non-blocking mode */
+	/* switch to the non-blocking mode if necessary */
 	saved = fcntl (handle, F_GETFL, 0);
 	if (saved == -1) return -1;
-	if (fcntl(handle, F_SETFL, saved | O_NONBLOCK) == -1) return -1;
+	if (!(saved & O_NONBLOCK) && fcntl(handle, F_SETFL, saved | O_NONBLOCK) == -1) return -1;
 
 	/* attempt to connet */
 	do 
 	{
-		n = connect(handle, (struct sockaddr*)&skad, skadlen);
+		n = connect(handle, (struct sockaddr*)skad, qse_skadsize(skad));
 	}
 	while (n == -1 && errno == EINTR);
 
 	if (n == -1 && errno != EINPROGRESS) 
 	{
-		fcntl (handle, F_SETFL, saved); /* restore the flags upon failure */
+		if (!(saved & O_NONBLOCK)) fcntl (handle, F_SETFL, saved); /* restore the flags upon failure */
 		return -1;
 	}
 #endif
