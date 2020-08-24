@@ -23113,6 +23113,64 @@ _ACEOF
 
 
 
+
+
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: checking numeric value of IFNAMSIZ" >&5
+$as_echo_n "checking numeric value of IFNAMSIZ... " >&6; }
+if ${ax_cv_numvalof_IFNAMSIZ+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if ac_fn_c_compute_int "$LINENO" "(IFNAMSIZ)" "ax_cv_numvalof_IFNAMSIZ"        "#include <sys/types.h>
+                                        #include <sys/socket.h>
+                                        #include <net/if.h>
+"; then :
+
+else
+  ax_cv_numvalof_IFNAMSIZ=-1
+fi
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_numvalof_IFNAMSIZ" >&5
+$as_echo "$ax_cv_numvalof_IFNAMSIZ" >&6; }
+
+
+
+cat >>confdefs.h <<_ACEOF
+#define NUMVALOF_IFNAMSIZ $ax_cv_numvalof_IFNAMSIZ
+_ACEOF
+
+
+
+
+
+
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: checking numeric value of IF_NAMESIZE" >&5
+$as_echo_n "checking numeric value of IF_NAMESIZE... " >&6; }
+if ${ax_cv_numvalof_IF_NAMESIZE+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if ac_fn_c_compute_int "$LINENO" "(IF_NAMESIZE)" "ax_cv_numvalof_IF_NAMESIZE"        "#include <sys/types.h>
+                                        #include <sys/socket.h>
+                                        #include <net/if.h>
+"; then :
+
+else
+  ax_cv_numvalof_IF_NAMESIZE=-1
+fi
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_numvalof_IF_NAMESIZE" >&5
+$as_echo "$ax_cv_numvalof_IF_NAMESIZE" >&6; }
+
+
+
+cat >>confdefs.h <<_ACEOF
+#define NUMVALOF_IF_NAMESIZE $ax_cv_numvalof_IF_NAMESIZE
+_ACEOF
+
+
+
+
 if test "x${platform_win32}" = "xyes"
 then
 	# The cast to long int works around a bug in the HP C Compiler
@@ -24476,6 +24534,21 @@ then
 
 cat >>confdefs.h <<_ACEOF
 #define QSE_AF_UNIX ${ax_cv_numvalof_AF_UNIX}
+_ACEOF
+
+fi
+if test ${ax_cv_numvalof_IFNAMSIZ} -ge 0
+then
+
+cat >>confdefs.h <<_ACEOF
+#define QSE_IF_NAMESIZE ${ax_cv_numvalof_IFNAMSIZ}
+_ACEOF
+
+elif test ${ax_cv_numvalof_IF_NAMESIZE} -ge 0
+then
+
+cat >>confdefs.h <<_ACEOF
+#define QSE_IF_NAMESIZE ${ax_cv_numvalof_IF_NAMESIZE}
 _ACEOF
 
 fi

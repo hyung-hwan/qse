@@ -54,6 +54,7 @@ public:
 	int open (int domain, int type, int protocol, int traits = 0) QSE_CPP_NOEXCEPT;
 	void close () QSE_CPP_NOEXCEPT;
 
+	int getDomain () const QSE_CPP_NOEXCEPT { return this->domain; }
 	qse_sck_hnd_t getHandle() const QSE_CPP_NOEXCEPT { return this->handle; }
 	bool isOpen() const QSE_CPP_NOEXCEPT { return this->handle != QSE_INVALID_SCKHND; }
 
@@ -64,6 +65,10 @@ public:
 
 	int getOption (int level, int optname, void* optval, qse_sck_len_t* optlen) QSE_CPP_NOEXCEPT;
 	int setOption (int level, int optname, const void* optval, qse_sck_len_t optlen) QSE_CPP_NOEXCEPT;
+
+	// -------------------------------------------------------------------- 
+	int getSendBuf (unsigned int& n) QSE_CPP_NOEXCEPT;
+	int getRecvBuf (unsigned int& n) QSE_CPP_NOEXCEPT;
 
 	// -------------------------------------------------------------------- 
 	int setDebug (int n) QSE_CPP_NOEXCEPT;

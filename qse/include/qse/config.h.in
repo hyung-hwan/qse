@@ -810,6 +810,12 @@
 /* The size of `AF_UNIX', as computed by valueof. */
 #undef NUMVALOF_AF_UNIX
 
+/* The size of `IFNAMSIZ', as computed by valueof. */
+#undef NUMVALOF_IFNAMSIZ
+
+/* The size of `IF_NAMESIZE', as computed by valueof. */
+#undef NUMVALOF_IF_NAMESIZE
+
 /* The size of `MB_LEN_MAX', as computed by valueof. */
 #undef NUMVALOF_MB_LEN_MAX
 
@@ -897,6 +903,9 @@
 
 /* char16_t literal prefix */
 #undef QSE_HAVE_PREFIX_SMALL_U
+
+/* IF_NAMESIZE */
+#undef QSE_IF_NAMESIZE
 
 /* MB_LEN_MAX */
 #undef QSE_MBLEN_MAX

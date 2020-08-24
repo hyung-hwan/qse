@@ -16,7 +16,6 @@ static int test1 ()
 {
 	QSE::Socket s;
 	QSE::SocketAddress addr;
-	qse_ioptl_t k[3];
 
 	if (s.open (QSE_AF_INET6, QSE_SOCK_STREAM, 0) <= -1)
 	{
@@ -61,15 +60,21 @@ static int test1 ()
 
 
 	addr.set ("[::1]:9999");
-	s.connect (addr);
-
-	k[0].ptr = (void*)"hello";
-	k[0].len = 5;
-	k[1].ptr = (void*)"world";
-	k[1].len = 5;
-	k[2].ptr = (void*)"forever";
-	k[2].len = 7;
-	s.sendx (k, 3);
+	if (s.connect(addr) <= -1)
+	{
+		qse_printf (QSE_T("unable to connect to [::1]:9999\n"));
+	}
+	else
+	{
+		qse_ioptl_t k[3];
+		k[0].ptr = (void*)"hello";
+		k[0].len = 5;
+		k[1].ptr = (void*)"world";
+		k[1].len = 5;
+		k[2].ptr = (void*)"forever";
+		k[2].len = 7;
+		s.sendx (k, 3);
+	}
 
 	return 0;
 }

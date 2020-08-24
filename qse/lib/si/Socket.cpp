@@ -187,6 +187,18 @@ int Socket::setOption (int level, int optname, const void* optval, qse_sck_len_t
 	return n;
 }
 
+int Socket::getSendBuf (unsigned int& size)  QSE_CPP_NOEXCEPT
+{
+	qse_sck_len_t optlen = QSE_SIZEOF(size);
+	return this->getOption(SOL_SOCKET, SO_SNDBUF, (char*)&size, &optlen);
+}
+
+int Socket::getRecvBuf (unsigned int& size)  QSE_CPP_NOEXCEPT
+{
+	qse_sck_len_t optlen = QSE_SIZEOF(size);
+	return this->getOption(SOL_SOCKET, SO_RCVBUF, (char*)&size, &optlen);
+}
+
 int Socket::setDebug (int n) QSE_CPP_NOEXCEPT
 {
 	return this->setOption(SOL_SOCKET, SO_DEBUG, (char*)&n, QSE_SIZEOF(n));
