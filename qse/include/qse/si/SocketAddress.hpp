@@ -29,6 +29,7 @@
 
 #include <qse/Types.hpp>
 #include <qse/si/nwad.h>
+#include <qse/cmn/String.hpp>
 
 /////////////////////////////////
 QSE_BEGIN_NAMESPACE(QSE)
@@ -86,6 +87,10 @@ public:
 
 	qse_mchar_t* toStrBuf (qse_mchar_t* buf, qse_size_t len) const QSE_CPP_NOEXCEPT;
 	qse_wchar_t* toStrBuf (qse_wchar_t* buf, qse_size_t len) const QSE_CPP_NOEXCEPT;
+
+	QSE::MbString toMbString (QSE::Mmgr* mmgr = QSE_NULL) const;
+	QSE::WcString toWcString (QSE::Mmgr* mmgr = QSE_NULL) const;
+	QSE::String toString (QSE::Mmgr* mmgr = QSE_NULL) const;
 
 	static qse_mchar_t* ip4addrToStrBuf (const qse_ip4ad_t* ipaddr, qse_mchar_t* buf, qse_size_t len);
 	static qse_mchar_t* ip4addrToStrBuf (qse_uint32_t ipaddr, qse_mchar_t* buf, qse_size_t len);

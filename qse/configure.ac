@@ -551,6 +551,12 @@ AX_CHECK_NUMVALOF(AF_PACKET,   [-1],   [#include <sys/types.h>
 AX_CHECK_NUMVALOF(AF_UNIX,     [-1],   [#include <sys/types.h>
                                         #include <sys/socket.h>
                                         #include <sys/un.h>])
+AX_CHECK_NUMVALOF(IFNAMSIZ,    [-1],   [#include <sys/types.h>
+                                        #include <sys/socket.h>
+                                        #include <net/if.h>])
+AX_CHECK_NUMVALOF(IF_NAMESIZE,  [-1],   [#include <sys/types.h>
+                                        #include <sys/socket.h>
+                                        #include <net/if.h>])
 
 if test "x${platform_win32}" = "xyes"
 then
@@ -850,6 +856,13 @@ fi
 if test ${ax_cv_numvalof_AF_UNIX} -ge 0 
 then
 	AC_DEFINE_UNQUOTED(QSE_AF_UNIX, ${ax_cv_numvalof_AF_UNIX}, [AF_UNIX])
+fi
+if test ${ax_cv_numvalof_IFNAMSIZ} -ge 0 
+then
+	AC_DEFINE_UNQUOTED(QSE_IF_NAMESIZE, ${ax_cv_numvalof_IFNAMSIZ}, [IF_NAMESIZE])
+elif test ${ax_cv_numvalof_IF_NAMESIZE} -ge 0 
+then
+	AC_DEFINE_UNQUOTED(QSE_IF_NAMESIZE, ${ax_cv_numvalof_IF_NAMESIZE}, [IF_NAMESIZE])
 fi
 
 AC_DEFINE_UNQUOTED(QSE_SIZEOF_STRUCT_SOCKADDR_IN, ${ac_cv_sizeof_struct_sockaddr_in}, [sizeof(struct sockaddr_in)])

@@ -300,6 +300,36 @@ qse_mchar_t* SocketAddress::toStrBuf (qse_mchar_t* buf, qse_size_t len) const QS
 	return buf;
 }
 
+QSE::MbString SocketAddress::toMbString (QSE::Mmgr* mmgr) const
+{
+	QSE::MbString buf(256, mmgr);
+	qse_nwad_t nwad;
+	qse_skadtonwad (&this->skad, &nwad);
+	qse_size_t n = qse_nwadtombs(&nwad, (qse_mchar_t*)buf.getBuffer(), buf.getCapacity(), QSE_NWADTOMBS_ALL);
+	buf.truncate (n);
+	return buf;
+}
+
+QSE::WcString SocketAddress::toWcString (QSE::Mmgr* mmgr) const
+{
+	QSE::WcString buf(256, mmgr);
+	qse_nwad_t nwad;
+	qse_skadtonwad (&this->skad, &nwad);
+	qse_size_t n = qse_nwadtowcs(&nwad, (qse_wchar_t*)buf.getBuffer(), buf.getCapacity(), QSE_NWADTOWCS_ALL);
+	buf.truncate (n);
+	return buf;
+}
+
+QSE::String SocketAddress::toString (QSE::Mmgr* mmgr) const
+{
+	QSE::String buf(256, mmgr);
+	qse_nwad_t nwad;
+	qse_skadtonwad (&this->skad, &nwad);
+	qse_size_t n = qse_nwadtostr(&nwad, (qse_char_t*)buf.getBuffer(), buf.getCapacity(), QSE_NWADTOSTR_ALL);
+	buf.truncate (n);
+	return buf;
+}
+
 qse_mchar_t* SocketAddress::ip4addrToStrBuf (const qse_ip4ad_t* ipaddr, qse_mchar_t* buf, qse_size_t len)
 {
 	qse_nwad_t nwad;

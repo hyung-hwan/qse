@@ -73,10 +73,10 @@
 	(QSE_IS_LEAPYEAR(year)? QSE_DAYS_PER_LEAPYEAR: QSE_DAYS_PER_NORMYEAR)
 
 #define QSE_SECNSEC_TO_MSEC(sec,nsec) \
-	(((qse_long_t)(sec) * QSE_MSECS_PER_SEC) + ((qse_long_t)(nsec) / QSE_NSECS_PER_MSEC))
+	(((qse_ntime_sec_t)(sec) * QSE_MSECS_PER_SEC) + ((qse_ntime_sec_t)(nsec) / QSE_NSECS_PER_MSEC))
 
 #define QSE_SECNSEC_TO_USEC(sec,nsec) \
-	(((qse_long_t)(sec) * QSE_USECS_PER_SEC) + ((qse_long_t)(nsec) / QSE_NSECS_PER_USEC))
+	(((qse_ntime_sec_t)(sec) * QSE_USECS_PER_SEC) + ((qse_ntime_sec_t)(nsec) / QSE_NSECS_PER_USEC))
 
 #define QSE_SEC_TO_MSEC(sec) ((sec) * QSE_MSECS_PER_SEC)
 #define QSE_MSEC_TO_SEC(sec) ((sec) / QSE_MSECS_PER_SEC)
@@ -93,6 +93,9 @@
 #define QSE_SEC_TO_USEC(sec) ((sec) * QSE_USECS_PER_SEC)
 #define QSE_USEC_TO_SEC(usec) ((usec) / QSE_USECS_PER_SEC)
 
+typedef qse_long_t qse_ntime_sec_t;
+typedef qse_int32_t qse_ntime_nsec_t;
+
 /**
  * The qse_ntime_t type defines a numeric time type expressed in the 
  *  number of milliseconds since the Epoch (00:00:00 UTC, Jan 1, 1970).
@@ -100,8 +103,8 @@
 typedef struct qse_ntime_t qse_ntime_t;
 struct qse_ntime_t
 {
-	qse_long_t  sec;
-	qse_int32_t nsec; /* nanoseconds */
+	qse_ntime_sec_t  sec;
+	qse_ntime_nsec_t nsec; /* nanoseconds */
 };
 
 typedef struct qse_btime_t qse_btime_t;
@@ -123,7 +126,7 @@ struct qse_btime_t
 typedef qse_long_t qse_mtime_t;
 
 #if defined(QSE_HAVE_INLINE)
-	static QSE_INLINE void qse_inittime(qse_ntime_t* x, qse_long_t s, qse_int32_t nsec)
+	static QSE_INLINE void qse_inittime(qse_ntime_t* x, qse_ntime_sec_t s, qse_ntime_nsec_t nsec)
 	{
 		x->sec = s;
 		x->nsec = nsec;
