@@ -378,6 +378,70 @@ qse_wchar_t* SocketAddress::ip6addrToStrBuf (const qse_ip6ad_t* ipaddr, qse_wcha
 	return buf;
 }
 
+#if 0
+/* 
+ * NOTICE: 
+ *   When host is "", the address is resolved to localhost.
+ *   When host is XP_NULL, the address is resolved to INADDR_ANY 
+ *   or IN6ADDR_ANY_INIT depending on the address family.
+ */
+int SocketAddress::resolve_address (const qse_char_t* service, const qse_char_t* host, int family, int type, int* errnum)
+{
+	struct addrinfo hints;
+	struct addrinfo* info, * p;
+ 
+	QSE_ASSERT (family == QSE_AF_UNSPEC || family == QSE_AF_INET || family == QSE_AF_INET6);
+	QSE_ASSERT (errnum != QSE_NULL);
+ 
+	QSE_MEMSET (&hints, 0, QSE_SIZEOF(hints));
+	hints.ai_family = family;
+	hints.ai_socktype = type;
+	if (host == QSE_NULL) hints.ai_flags = AI_PASSIVE; 
+	else if (host[0] == QSE_T('\0')) host = QSE_NULL;
+ 
+#if defined(QSE_CHAR_IS_MCHAR)
+	*errnum = ::getaddrinfo (host, service, &hints, &info);
+#else
+	qse_mchar_t mb_host[MAX_HOST_LEN + 1];
+	qse_mchar_t mb_service[MAX_SERVICE_LEN + 1];
+	qse_mchar_t* p_host = QSE_NULL;
+	qse_mchar_t* p_service = QSE_NULL;
+ 
+	if (host) {
+		if (qse_wcstomcs (host, mb_host, QSE_COUNTOF(mb_host)) == 0) 
+		{
+			*errnum = EAI_NONAME;
+			return -1;
+		}
+		p_host = mb_host;
+	}
+	if (service) 
+	{
+		if (qse_wcstomcs (service, mb_service, QSE_COUNTOF(mb_service)) == 0) 
+		{
+			*errnum = EAI_NONAME;
+			return -1;
+		}
+		p_service = mb_service;
+	}
+	*errnum = ::getaddrinfo(p_host, p_service, &hints, &info);	
+#endif
+	if (*errnum != 0) return -1;
+	
+	for (p = info; p; p = p->ai_next) 
+	{
+		if (family != V0 && p->ai_family != family) continue;
+		if (type != 0 && p->ai_socktype != type) continue;
+		if (QSE_SIZEOF(this->address_storage) < p->ai_addrlen) continue;
+ 
+		QSE_MEMCPY (&this->address_storage, p->ai_addr, p->ai_addrlen);
+		break;
+	}
+	::freeaddrinfo (info);
+	return 0;
+}
+
+#endif
 /////////////////////////////////
 QSE_END_NAMESPACE(QSE)
 /////////////////////////////////
