@@ -539,6 +539,8 @@ AX_CHECK_NUMVALOF(SOCK_RAW,    [-1],   [#include <sys/types.h>
                                         #include <sys/socket.h>
                                         #include <netinet/in.h>])
 
+AX_CHECK_NUMVALOF(AF_UNSPEC,   [-1],   [#include <sys/types.h>
+                                        #include <sys/socket.h>])
 AX_CHECK_NUMVALOF(AF_INET,     [-1],   [#include <sys/types.h>
                                         #include <sys/socket.h>
                                         #include <netinet/in.h>])
@@ -840,6 +842,10 @@ fi
 if test ${ax_cv_numvalof_SOCK_RAW} -ge 0 
 then
 	AC_DEFINE_UNQUOTED(QSE_SOCK_RAW, ${ax_cv_numvalof_SOCK_RAW}, [SOCK_RAW])
+fi
+if test ${ax_cv_numvalof_AF_UNSPEC} -ge 0 
+then
+	AC_DEFINE_UNQUOTED(QSE_AF_UNSPEC, ${ax_cv_numvalof_AF_UNSPEC}, [AF_UNSPEC])
 fi
 if test ${ax_cv_numvalof_AF_INET} -ge 0 
 then

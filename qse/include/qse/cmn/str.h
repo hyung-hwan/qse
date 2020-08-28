@@ -167,7 +167,19 @@ typedef qse_wchar_t* (*qse_wcssubst_t) (
 	 (c>=QSE_T('A') && c<=QSE_T('Z'))? ((c-QSE_T('A')+10<base)? (c-QSE_T('A')+10): base): \
 	 (c>=QSE_T('a') && c<=QSE_T('z'))? ((c-QSE_T('a')+10<base)? (c-QSE_T('a')+10): base): base)
 
-/* qse_strtonum (const qse_char_t* nptr, qse_char_t** endptr, int base) */
+/* int qse_mchartonum (qse_mchar_t c, int base) */
+#define QSE_MCHARTONUM(c,base) \
+	((c>=QSE_MT('0') && c<=QSE_MT('9'))? ((c-QSE_MT('0')<base)? (c-QSE_MT('0')): base): \
+	 (c>=QSE_MT('A') && c<=QSE_MT('Z'))? ((c-QSE_MT('A')+10<base)? (c-QSE_MT('A')+10): base): \
+	 (c>=QSE_MT('a') && c<=QSE_MT('z'))? ((c-QSE_MT('a')+10<base)? (c-QSE_MT('a')+10): base): base)
+
+/* int qse_wchartonum (qse_wchar_t c, int base) */
+#define QSE_WCHARTONUM(c,base) \
+	((c>=QSE_WT('0') && c<=QSE_WT('9'))? ((c-QSE_WT('0')<base)? (c-QSE_WT('0')): base): \
+	 (c>=QSE_WT('A') && c<=QSE_WT('Z'))? ((c-QSE_WT('A')+10<base)? (c-QSE_WT('A')+10): base): \
+	 (c>=QSE_WT('a') && c<=QSE_WT('z'))? ((c-QSE_WT('a')+10<base)? (c-QSE_WT('a')+10): base): base)
+
+/* qse_strtonum (const qse_char_t* nptr, qse_char_t** endptr, int base, int allowneg) */
 #define QSE_STRTONUM(value,nptr,endptr,base,allowneg) do {\
 	int __ston_f = 0, __ston_v; \
 	const qse_char_t* __ston_ptr = nptr; \
@@ -194,7 +206,7 @@ typedef qse_wchar_t* (*qse_wcssubst_t) (
 	if (__ston_f > 0) value *= -1; \
 } while(0)
 
-/* qse_strxtonum (const qse_char_t* nptr, qse_size_t len, qse_char_char** endptr, int base) */
+/* qse_strxtonum (const qse_char_t* nptr, qse_size_t len, qse_char_char** endptr, int base, int allowneg) */
 #define QSE_STRXTONUM(value,nptr,len,endptr,base,allowneg) do {\
 	int __ston_f = 0, __ston_v; \
 	const qse_char_t* __ston_ptr = nptr; \
@@ -223,13 +235,7 @@ typedef qse_wchar_t* (*qse_wcssubst_t) (
 	if (__ston_f > 0) value *= -1; \
 } while(0)
 
-/* int qse_mchartonum (qse_mchar_t c, int base) */
-#define QSE_MCHARTONUM(c,base) \
-	((c>=QSE_MT('0') && c<=QSE_MT('9'))? ((c-QSE_MT('0')<base)? (c-QSE_MT('0')): base): \
-	 (c>=QSE_MT('A') && c<=QSE_MT('Z'))? ((c-QSE_MT('A')+10<base)? (c-QSE_MT('A')+10): base): \
-	 (c>=QSE_MT('a') && c<=QSE_MT('z'))? ((c-QSE_MT('a')+10<base)? (c-QSE_MT('a')+10): base): base)
-
-/* qse_strtonum (const qse_mchar_t* nptr, qse_mchar_t** endptr, int base) */
+/* qse_strtonum (const qse_mchar_t* nptr, qse_mchar_t** endptr, int base, int allowneg) */
 #define QSE_MBSTONUM(value,nptr,endptr,base,allowneg) do {\
 	int __ston_f = 0, __ston_v; \
 	const qse_mchar_t* __ston_ptr = nptr; \
@@ -256,7 +262,7 @@ typedef qse_wchar_t* (*qse_wcssubst_t) (
 	if (__ston_f > 0) value *= -1; \
 } while(0)
 
-/* qse_strxtonum (const qse_mchar_t* nptr, qse_size_t len, qse_mchar_t** endptr, int base) */
+/* qse_strxtonum (const qse_mchar_t* nptr, qse_size_t len, qse_mchar_t** endptr, int base, int allowneg) */
 #define QSE_MBSXTONUM(value,nptr,len,endptr,base,allowneg) do {\
 	int __ston_f = 0, __ston_v; \
 	const qse_mchar_t* __ston_ptr = nptr; \
@@ -285,13 +291,7 @@ typedef qse_wchar_t* (*qse_wcssubst_t) (
 	if (__ston_f > 0) value *= -1; \
 } while(0)
 
-/* int qse_wchartonum (qse_wchar_t c, int base) */
-#define QSE_WCHARTONUM(c,base) \
-	((c>=QSE_WT('0') && c<=QSE_WT('9'))? ((c-QSE_WT('0')<base)? (c-QSE_WT('0')): base): \
-	 (c>=QSE_WT('A') && c<=QSE_WT('Z'))? ((c-QSE_WT('A')+10<base)? (c-QSE_WT('A')+10): base): \
-	 (c>=QSE_WT('a') && c<=QSE_WT('z'))? ((c-QSE_WT('a')+10<base)? (c-QSE_WT('a')+10): base): base)
-
-/* qse_strtonum (const qse_wchar_t* nptr, qse_wchar_t** endptr, int base) */
+/* qse_strtonum (const qse_wchar_t* nptr, qse_wchar_t** endptr, int base, int allowneg) */
 #define QSE_WCSTONUM(value,nptr,endptr,base,allowneg) do {\
 	int __ston_f = 0, __ston_v; \
 	const qse_wchar_t* __ston_ptr = nptr; \
@@ -318,7 +318,7 @@ typedef qse_wchar_t* (*qse_wcssubst_t) (
 	if (__ston_f > 0) value *= -1; \
 } while(0)
 
-/* qse_strxtonum (const qse_wchar_t* nptr, qse_size_t len, qse_wchar_t** endptr, int base) */
+/* qse_strxtonum (const qse_wchar_t* nptr, qse_size_t len, qse_wchar_t** endptr, int base, int allowneg) */
 #define QSE_WCSXTONUM(value,nptr,len,endptr,base,allowneg) do {\
 	int __ston_f = 0, __ston_v; \
 	const qse_wchar_t* __ston_ptr = nptr; \

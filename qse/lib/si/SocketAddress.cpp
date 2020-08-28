@@ -26,6 +26,7 @@
 
 
 #include <qse/si/SocketAddress.hpp>
+#include <qse/cmn/mbwc.h>
 #include "../cmn/mem-prv.h"
 
 #if defined(_WIN32)
@@ -63,6 +64,7 @@
 #	if defined(HAVE_SYS_UN_H)
 #		include <sys/un.h>
 #	endif
+#	include <netdb.h>
 
 #	if defined(QSE_SIZEOF_STRUCT_SOCKADDR_IN6) && (QSE_SIZEOF_STRUCT_SOCKADDR_IN6 <= 0)
 #		undef AF_INET6
@@ -284,6 +286,112 @@ int SocketAddress::set (const qse_wchar_t* str, qse_size_t len) QSE_CPP_NOEXCEPT
 	return qse_nwadtoskad(&nwad, &this->skad);
 }
 
+/* 
+ * NOTICE: 
+ *   When host is "", the address is resolved to localhost.
+ *   When host is XP_NULL, the address is resolved to INADDR_ANY 
+ *   or IN6ADDR_ANY_INIT depending on the address family.
+ */
+int SocketAddress::resolve (const qse_mchar_t* service, const qse_mchar_t* host, int family, int type) QSE_CPP_NOEXCEPT
+{
+	struct addrinfo hints;
+	struct addrinfo* info, * p;
+	int x;
+ 
+	QSE_ASSERT (family == QSE_AF_UNSPEC || family == QSE_AF_INET || family == QSE_AF_INET6);
+ 
+	QSE_MEMSET (&hints, 0, QSE_SIZEOF(hints));
+	hints.ai_family = family;
+	hints.ai_socktype = type;
+	if (!host) hints.ai_flags = AI_PASSIVE; 
+	else if (host[0] == '\0') host = QSE_NULL;
+
+	x = ::getaddrinfo(host, service, &hints, &info);
+	if (x != 0) return -1;
+	
+	for (p = info; p; p = p->ai_next) 
+	{
+		if (family != QSE_AF_UNSPEC && p->ai_family != family) continue;
+		if (type != 0 && p->ai_socktype != type) continue;
+		if (QSE_SIZEOF(this->skad) < p->ai_addrlen) continue;
+ 
+		QSE_MEMCPY (&this->skad, p->ai_addr, p->ai_addrlen);
+		break;
+	}
+	::freeaddrinfo (info);
+	return 0;
+}
+
+int SocketAddress::resolve (const qse_wchar_t* service, const qse_wchar_t* host, int family, int type) QSE_CPP_NOEXCEPT
+{
+	struct addrinfo hints;
+	struct addrinfo* info, * p;
+	int x;
+ 
+	QSE_ASSERT (family == QSE_AF_UNSPEC || family == QSE_AF_INET || family == QSE_AF_INET6);
+ 
+	QSE_MEMSET (&hints, 0, QSE_SIZEOF(hints));
+	hints.ai_family = family;
+	hints.ai_socktype = type;
+	if (!host) hints.ai_flags = AI_PASSIVE; 
+	else if (host[0] == '\0') host = QSE_NULL;
+
+	qse_mchar_t mb_host[NI_MAXHOST + 1];
+	qse_mchar_t mb_service[NI_MAXSERV + 1];
+	qse_mchar_t* p_host = QSE_NULL;
+	qse_mchar_t* p_service = QSE_NULL;
+ 
+	if (host) 
+	{
+		qse_size_t wcslen, mbslen = QSE_COUNTOF(mb_host);
+		if (qse_wcstombs(host, &wcslen, mb_host, &mbslen) <= -1)  return -1;
+		p_host = mb_host;
+	}
+	if (service) 
+	{
+		qse_size_t wcslen, mbslen = QSE_COUNTOF(mb_service);
+
+		if (qse_wcstombs(service, &wcslen, mb_service, &mbslen) <= -1) return -1;
+		p_service = mb_service;
+	}
+	x = ::getaddrinfo(p_host, p_service, &hints, &info);	
+	if (x != 0) return -1;
+	
+	for (p = info; p; p = p->ai_next) 
+	{
+		if (family != QSE_AF_UNSPEC && p->ai_family != family) continue;
+		if (type != 0 && p->ai_socktype != type) continue;
+		if (QSE_SIZEOF(this->skad) < p->ai_addrlen) continue;
+ 
+		QSE_MEMCPY (&this->skad, p->ai_addr, p->ai_addrlen);
+		break;
+	}
+	::freeaddrinfo (info);
+	return 0;
+}
+
+
+bool SocketAddress::isLoopBack () const QSE_CPP_NOEXCEPT
+{
+	switch (FAMILY(&this->skad))
+	{
+		case AF_INET:
+		{
+			struct sockaddr_in* v4 = (struct sockaddr_in*)&this->skad;
+			return v4->sin_addr.s_addr == QSE_CONST_HTON32(0x7F000001);
+		}
+	
+		case AF_INET6:
+		{
+			struct sockaddr_in6* v6 = (struct sockaddr_in6*)&this->skad;
+			qse_uint32_t* x = (qse_uint32_t*)v6->sin6_addr.s6_addr; // TODO: is this alignment safe? 
+			return x[0] == 0 && x[1] == 0 && x[2] == 0 && x[3] == 1;
+		}
+	}
+
+	return false;
+}
+
 qse_wchar_t* SocketAddress::toStrBuf (qse_wchar_t* buf, qse_size_t len) const QSE_CPP_NOEXCEPT
 {
 	qse_nwad_t nwad;
@@ -378,70 +486,6 @@ qse_wchar_t* SocketAddress::ip6addrToStrBuf (const qse_ip6ad_t* ipaddr, qse_wcha
 	return buf;
 }
 
-#if 0
-/* 
- * NOTICE: 
- *   When host is "", the address is resolved to localhost.
- *   When host is XP_NULL, the address is resolved to INADDR_ANY 
- *   or IN6ADDR_ANY_INIT depending on the address family.
- */
-int SocketAddress::resolve_address (const qse_char_t* service, const qse_char_t* host, int family, int type, int* errnum)
-{
-	struct addrinfo hints;
-	struct addrinfo* info, * p;
- 
-	QSE_ASSERT (family == QSE_AF_UNSPEC || family == QSE_AF_INET || family == QSE_AF_INET6);
-	QSE_ASSERT (errnum != QSE_NULL);
- 
-	QSE_MEMSET (&hints, 0, QSE_SIZEOF(hints));
-	hints.ai_family = family;
-	hints.ai_socktype = type;
-	if (host == QSE_NULL) hints.ai_flags = AI_PASSIVE; 
-	else if (host[0] == QSE_T('\0')) host = QSE_NULL;
- 
-#if defined(QSE_CHAR_IS_MCHAR)
-	*errnum = ::getaddrinfo (host, service, &hints, &info);
-#else
-	qse_mchar_t mb_host[MAX_HOST_LEN + 1];
-	qse_mchar_t mb_service[MAX_SERVICE_LEN + 1];
-	qse_mchar_t* p_host = QSE_NULL;
-	qse_mchar_t* p_service = QSE_NULL;
- 
-	if (host) {
-		if (qse_wcstomcs (host, mb_host, QSE_COUNTOF(mb_host)) == 0) 
-		{
-			*errnum = EAI_NONAME;
-			return -1;
-		}
-		p_host = mb_host;
-	}
-	if (service) 
-	{
-		if (qse_wcstomcs (service, mb_service, QSE_COUNTOF(mb_service)) == 0) 
-		{
-			*errnum = EAI_NONAME;
-			return -1;
-		}
-		p_service = mb_service;
-	}
-	*errnum = ::getaddrinfo(p_host, p_service, &hints, &info);	
-#endif
-	if (*errnum != 0) return -1;
-	
-	for (p = info; p; p = p->ai_next) 
-	{
-		if (family != V0 && p->ai_family != family) continue;
-		if (type != 0 && p->ai_socktype != type) continue;
-		if (QSE_SIZEOF(this->address_storage) < p->ai_addrlen) continue;
- 
-		QSE_MEMCPY (&this->address_storage, p->ai_addr, p->ai_addrlen);
-		break;
-	}
-	::freeaddrinfo (info);
-	return 0;
-}
-
-#endif
 /////////////////////////////////
 QSE_END_NAMESPACE(QSE)
 /////////////////////////////////

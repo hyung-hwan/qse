@@ -213,37 +213,37 @@ int qse_wcstombs (
 	const qse_wchar_t* wcs, qse_size_t* wcslen,
 	qse_mchar_t* mbs, qse_size_t* mbslen)
 {
-	return qse_wcstombswithcmgr (wcs, wcslen, mbs, mbslen, dfl_cmgr);
+	return qse_wcstombswithcmgr(wcs, wcslen, mbs, mbslen, dfl_cmgr);
 }
 
 int qse_wcsntombsn (
 	const qse_wchar_t* wcs, qse_size_t* wcslen,
 	qse_mchar_t* mbs, qse_size_t* mbslen)
 {
-	return qse_wcsntombsnwithcmgr (wcs, wcslen, mbs, mbslen, dfl_cmgr);
+	return qse_wcsntombsnwithcmgr(wcs, wcslen, mbs, mbslen, dfl_cmgr);
 }
 
 qse_mchar_t* qse_wcstombsdup (
 	const qse_wchar_t* wcs, qse_size_t* mbslen, qse_mmgr_t* mmgr)
 {
-	return qse_wcstombsdupwithcmgr (wcs, mbslen, mmgr, dfl_cmgr);
+	return qse_wcstombsdupwithcmgr(wcs, mbslen, mmgr, dfl_cmgr);
 }
 
 qse_mchar_t* qse_wcsntombsdup (
 	const qse_wchar_t* wcs, qse_size_t wcslen, 
 	qse_size_t* mbslen, qse_mmgr_t* mmgr)
 {
-	return qse_wcsntombsdupwithcmgr (wcs, wcslen, mbslen, mmgr, dfl_cmgr);
+	return qse_wcsntombsdupwithcmgr(wcs, wcslen, mbslen, mmgr, dfl_cmgr);
 }
 
 qse_mchar_t* qse_wcsatombsdup (
 	const qse_wchar_t* wcs[], qse_size_t* mbslen, qse_mmgr_t* mmgr)
 {
-	return qse_wcsatombsdupwithcmgr (wcs, mbslen, mmgr, dfl_cmgr);
+	return qse_wcsatombsdupwithcmgr(wcs, mbslen, mmgr, dfl_cmgr);
 }
 
 qse_mchar_t* qse_wcsnatombsdup (
 	const qse_wcstr_t wcs[], qse_size_t* mbslen, qse_mmgr_t* mmgr)
 {
-	return qse_wcsnatombsdupwithcmgr (wcs, mbslen, mmgr, dfl_cmgr);
+	return qse_wcsnatombsdupwithcmgr(wcs, mbslen, mmgr, dfl_cmgr);
 }

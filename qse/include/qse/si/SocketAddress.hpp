@@ -78,12 +78,24 @@ public:
 	qse_uint32_t getScopeId () const QSE_CPP_NOEXCEPT; // in network-byte order
 	void setScopeId (qse_uint32_t scope_id) QSE_CPP_NOEXCEPT; // in network-byte order
 
+	// set address with ip address strings
 	int set (const qse_skad_t* skad) QSE_CPP_NOEXCEPT; 
 	int set (const qse_nwad_t* nwad) QSE_CPP_NOEXCEPT;
 	int set (const qse_mchar_t* str) QSE_CPP_NOEXCEPT;
 	int set (const qse_wchar_t* str) QSE_CPP_NOEXCEPT;
 	int set (const qse_mchar_t* str, qse_size_t len) QSE_CPP_NOEXCEPT;
 	int set (const qse_wchar_t* str, qse_size_t len) QSE_CPP_NOEXCEPT;
+
+	// set address with ip address strings or host/service names
+	int resolve (const qse_mchar_t* service, const qse_mchar_t* host, int family, int type) QSE_CPP_NOEXCEPT;
+	int resolve (const qse_wchar_t* service, const qse_wchar_t* host, int family, int type) QSE_CPP_NOEXCEPT;
+	int resolve (const qse_mchar_t* service, const qse_mchar_t* host, int type) QSE_CPP_NOEXCEPT { return this->resolve(service, host, this->getFamily(), type); }
+	int resolve (const qse_wchar_t* service, const qse_wchar_t* host, int type) QSE_CPP_NOEXCEPT { return this->resolve(service, host, this->getFamily(), type); }
+
+	bool isLoopBack () const QSE_CPP_NOEXCEPT;
+	// TODO: isLinkLocal() const QSE_CPP_NOEXCEPT
+	// TODO: isSiteLocal() const QSE_CPP_NOEXCEPT
+	// TODO: isV4Mapped() const QSE_CPP_NOEXCEPT
 
 	qse_mchar_t* toStrBuf (qse_mchar_t* buf, qse_size_t len) const QSE_CPP_NOEXCEPT;
 	qse_wchar_t* toStrBuf (qse_wchar_t* buf, qse_size_t len) const QSE_CPP_NOEXCEPT;

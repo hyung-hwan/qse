@@ -810,6 +810,9 @@
 /* The size of `AF_UNIX', as computed by valueof. */
 #undef NUMVALOF_AF_UNIX
 
+/* The size of `AF_UNSPEC', as computed by valueof. */
+#undef NUMVALOF_AF_UNSPEC
+
 /* The size of `IFNAMSIZ', as computed by valueof. */
 #undef NUMVALOF_IFNAMSIZ
 
@@ -870,6 +873,9 @@
 
 /* AF_UNIX */
 #undef QSE_AF_UNIX
+
+/* AF_UNSPEC */
+#undef QSE_AF_UNSPEC
 
 /* use the bundled unicode routines */
 #undef QSE_ENABLE_BUNDLED_UNICODE
