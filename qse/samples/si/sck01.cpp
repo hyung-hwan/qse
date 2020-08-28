@@ -23,6 +23,19 @@ static int test1 ()
 		return -1;
 	}
 
+	//if (addr.resolve(QSE_T("0"), QSE_T("tango6.miflux.com"), QSE_SOCK_STREAM) >= 0)
+	if (addr.resolve(QSE_T("0"), QSE_T("code.miflux.com"), QSE_SOCK_STREAM) >= 0)
+	{
+		qse_printf (QSE_T("code.miflux.com ===> [%js]\n"), (const qse_char_t*)addr.toString());
+	}
+
+	// if 'addr' is set to IPv6 above, this resolve() will fail if the given host doesn't have an IPv6 address
+	// specifying the family to QSE_AF_INET overrides this behavior.
+	if (addr.resolve(QSE_T("https"), QSE_T("code.miflux.com"), QSE_AF_INET, QSE_SOCK_STREAM) >= 0)
+	{
+		qse_printf (QSE_T("code.miflux.com:https ===> [%js]\n"), (const qse_char_t*)addr.toString());
+	}
+
 	qse_printf (QSE_T("lo ifindex ===> %d\n"), s.getIfceIndex(QSE_MT("lo")));
 	if (s.getIfceAddress(QSE_T("lo"), &addr) >= 0)
 	{

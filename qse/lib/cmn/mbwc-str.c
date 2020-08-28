@@ -145,7 +145,7 @@ static int mbsn_to_wcsn_with_cmgr (
 		{
 			qse_size_t n;
 
-			n = cmgr->mbtowc (p, mlen, &w);
+			n = cmgr->mbtowc(p, mlen, &w);
 			if (n == 0)
 			{
 				/* invalid sequence */
@@ -301,12 +301,12 @@ static qse_wchar_t* mbs_to_wcs_dup_with_cmgr (const qse_mchar_t* mbs, qse_size_t
 
 qse_wchar_t* qse_mbstowcsdupwithcmgr (const qse_mchar_t* mbs, qse_size_t* wcslen, qse_mmgr_t* mmgr, qse_cmgr_t* cmgr)
 {
-	return mbs_to_wcs_dup_with_cmgr (mbs, wcslen, mmgr, cmgr, 0);
+	return mbs_to_wcs_dup_with_cmgr(mbs, wcslen, mmgr, cmgr, 0);
 }
 
 qse_wchar_t* qse_mbstowcsalldupwithcmgr (const qse_mchar_t* mbs, qse_size_t* wcslen, qse_mmgr_t* mmgr, qse_cmgr_t* cmgr)
 {
-	return mbs_to_wcs_dup_with_cmgr (mbs, wcslen, mmgr, cmgr, 1);
+	return mbs_to_wcs_dup_with_cmgr(mbs, wcslen, mmgr, cmgr, 1);
 }
 
 static qse_wchar_t* mbsa_to_wcs_dup_with_cmgr (const qse_mchar_t* mbs[], qse_size_t* wcslen, qse_mmgr_t* mmgr, qse_cmgr_t* cmgr, int all)
@@ -344,12 +344,12 @@ static qse_wchar_t* mbsa_to_wcs_dup_with_cmgr (const qse_mchar_t* mbs[], qse_siz
 
 qse_wchar_t* qse_mbsatowcsdupwithcmgr (const qse_mchar_t* mbs[], qse_size_t* wcslen, qse_mmgr_t* mmgr, qse_cmgr_t* cmgr)
 {
-	return mbsa_to_wcs_dup_with_cmgr (mbs, wcslen, mmgr, cmgr, 0);
+	return mbsa_to_wcs_dup_with_cmgr(mbs, wcslen, mmgr, cmgr, 0);
 }
 
 qse_wchar_t* qse_mbsatowcsalldupwithcmgr (const qse_mchar_t* mbs[], qse_size_t* wcslen, qse_mmgr_t* mmgr, qse_cmgr_t* cmgr)
 {
-	return mbsa_to_wcs_dup_with_cmgr (mbs, wcslen, mmgr, cmgr, 1);
+	return mbsa_to_wcs_dup_with_cmgr(mbs, wcslen, mmgr, cmgr, 1);
 }
 
 /* ======================================================================== */

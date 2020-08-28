@@ -132,7 +132,7 @@ typedef qse_long_t qse_mtime_t;
 		x->nsec = nsec;
 	}
 	static QSE_INLINE void qse_cleartime(qse_ntime_t* x) {	qse_inittime (x, 0, 0); }
-	/*static QSE_INLINE int qse_cmptime(qse_ntime_t* x, qse_ntime_t* y)
+	/*static QSE_INLINE int qse_cmptime(const qse_ntime_t* x, const qse_ntime_t* y)
 	{
 		// TODO: fix the type and value range issue and replace the macro below.
 		return (x->sec == y->sec)? (x->nsec - y->nsec): (x->sec - y->sec);
