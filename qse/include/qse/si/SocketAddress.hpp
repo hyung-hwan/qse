@@ -116,6 +116,18 @@ protected:
 	qse_skad_t skad;
 };
 
+
+#if 0
+class IfceAddress
+{
+	QSE::String   name;
+	unsigned int  flags;
+	SocketAddress addr;
+	SocketAddress netmask;
+	SocketAddress broadcast; // also used as dstaddr for a point-to-point interface
+};
+#endif
+
 /////////////////////////////////
 QSE_END_NAMESPACE(QSE)
 /////////////////////////////////

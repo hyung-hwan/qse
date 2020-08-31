@@ -146,25 +146,24 @@ public:
 	int getIfceIndex (const qse_wchar_t* name, qse_size_t len) QSE_CPP_NOEXCEPT;
 
 	// -------------------------------------------------------------------- 
-	// the following 6 functions are provided for backward compatibility.
+	// the following 24 functions are provided for backward compatibility.
 	// it is limited to a single address and they may suffer race condition.
 	// for example, you call getIfceAddress() followed by getIfceNetmask().
 	// the network configuration information may change in between.
 	// the address/netmask pair may not be the valid fixed combination.
-	int getIfceAddress (const qse_mchar_t* name, SocketAddress* addr, int family) QSE_CPP_NOEXCEPT;
-	int getIfceAddress (const qse_wchar_t* name, SocketAddress* addr, int family) QSE_CPP_NOEXCEPT;
-	int getIfceAddress (const qse_mchar_t* name, SocketAddress* addr) QSE_CPP_NOEXCEPT
-	{
-		return this->getIfceAddress(name, addr, this->domain);
-	}
-	int getIfceAddress (const qse_wchar_t* name, SocketAddress* addr) QSE_CPP_NOEXCEPT
-	{
-		return this->getIfceAddress(name, addr, this->domain);
-	}
+	int getIfceAddress (const qse_mchar_t* name, SocketAddress* addr) QSE_CPP_NOEXCEPT;
+	int getIfceAddress (const qse_wchar_t* name, SocketAddress* addr) QSE_CPP_NOEXCEPT;
 	int getIfceNetmask (const qse_mchar_t* name, SocketAddress* addr) QSE_CPP_NOEXCEPT;
 	int getIfceNetmask (const qse_wchar_t* name, SocketAddress* addr) QSE_CPP_NOEXCEPT;
 	int getIfceBroadcast (const qse_mchar_t* name, SocketAddress* addr) QSE_CPP_NOEXCEPT;
 	int getIfceBroadcast (const qse_wchar_t* name, SocketAddress* addr) QSE_CPP_NOEXCEPT;
+
+	int getIfceAddress (const qse_mchar_t* name, SocketAddress* addr, int family) QSE_CPP_NOEXCEPT;
+	int getIfceAddress (const qse_wchar_t* name, SocketAddress* addr, int family) QSE_CPP_NOEXCEPT;
+	int getIfceNetmask (const qse_mchar_t* name, SocketAddress* addr, int family) QSE_CPP_NOEXCEPT;
+	int getIfceNetmask (const qse_wchar_t* name, SocketAddress* addr, int family) QSE_CPP_NOEXCEPT;
+	int getIfceBroadcast (const qse_mchar_t* name, SocketAddress* addr, int family) QSE_CPP_NOEXCEPT;
+	int getIfceBroadcast (const qse_wchar_t* name, SocketAddress* addr, int family) QSE_CPP_NOEXCEPT;
 
 	int getIfceAddress (const qse_mchar_t* name, qse_size_t len, SocketAddress* addr) QSE_CPP_NOEXCEPT;
 	int getIfceAddress (const qse_wchar_t* name, qse_size_t len, SocketAddress* addr) QSE_CPP_NOEXCEPT;
@@ -172,6 +171,13 @@ public:
 	int getIfceNetmask (const qse_wchar_t* name, qse_size_t len, SocketAddress* addr) QSE_CPP_NOEXCEPT;
 	int getIfceBroadcast (const qse_mchar_t* name, qse_size_t len, SocketAddress* addr) QSE_CPP_NOEXCEPT;
 	int getIfceBroadcast (const qse_wchar_t* name, qse_size_t len, SocketAddress* addr) QSE_CPP_NOEXCEPT;
+
+	int getIfceAddress (const qse_mchar_t* name, qse_size_t len, SocketAddress* addr, int family) QSE_CPP_NOEXCEPT;
+	int getIfceAddress (const qse_wchar_t* name, qse_size_t len, SocketAddress* addr, int family) QSE_CPP_NOEXCEPT;
+	int getIfceNetmask (const qse_mchar_t* name, qse_size_t len, SocketAddress* addr, int family) QSE_CPP_NOEXCEPT;
+	int getIfceNetmask (const qse_wchar_t* name, qse_size_t len, SocketAddress* addr, int family) QSE_CPP_NOEXCEPT;
+	int getIfceBroadcast (const qse_mchar_t* name, qse_size_t len, SocketAddress* addr, int family) QSE_CPP_NOEXCEPT;
+	int getIfceBroadcast (const qse_wchar_t* name, qse_size_t len, SocketAddress* addr, int family) QSE_CPP_NOEXCEPT;
 	// -------------------------------------------------------------------- 
 
 protected:
@@ -179,7 +185,7 @@ protected:
 	int domain;
 
 	int get_ifce_index (const void* name, qse_size_t len, bool wchar);
-	int get_ifce_address (int cmd, const void* name, qse_size_t len, bool wchar, SocketAddress* addr);
+	int get_ifce_address (int cmd, const void* name, qse_size_t len, bool wchar, SocketAddress* addr, int family);
 };
 
 

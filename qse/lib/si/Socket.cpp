@@ -1129,67 +1129,134 @@ int Socket::get_ifce_index (const void* name, qse_size_t len, bool wchar)
 #endif
 }
 
+// ----------------------------------------------------------------------------
 int Socket::getIfceAddress (const qse_mchar_t* name, SocketAddress* addr) QSE_CPP_NOEXCEPT
 {
-	return this->get_ifce_address(SIOCGIFADDR, name, qse_mbslen(name), false, addr);
+	return this->get_ifce_address(SIOCGIFADDR, name, qse_mbslen(name), false, addr, this->domain);
 }
 
 int Socket::getIfceAddress (const qse_wchar_t* name, SocketAddress* addr) QSE_CPP_NOEXCEPT
 {
-	return this->get_ifce_address(SIOCGIFADDR, name, qse_wcslen(name), true, addr);
+	return this->get_ifce_address(SIOCGIFADDR, name, qse_wcslen(name), true, addr, this->domain);
 }
 
 int Socket::getIfceNetmask(const qse_mchar_t* name, SocketAddress* addr) QSE_CPP_NOEXCEPT
 {
-	return this->get_ifce_address(SIOCGIFNETMASK, name, qse_mbslen(name), false, addr);
+	return this->get_ifce_address(SIOCGIFNETMASK, name, qse_mbslen(name), false, addr, this->domain);
 }
 
 int Socket::getIfceNetmask (const qse_wchar_t* name, SocketAddress* addr) QSE_CPP_NOEXCEPT
 {
-	return this->get_ifce_address(SIOCGIFNETMASK, name, qse_wcslen(name), true, addr);
+	return this->get_ifce_address(SIOCGIFNETMASK, name, qse_wcslen(name), true, addr, this->domain);
 }
 
 int Socket::getIfceBroadcast(const qse_mchar_t* name, SocketAddress* addr) QSE_CPP_NOEXCEPT
 {
-	return this->get_ifce_address(SIOCGIFBRDADDR, name, qse_mbslen(name), false, addr);
+	return this->get_ifce_address(SIOCGIFBRDADDR, name, qse_mbslen(name), false, addr, this->domain);
 }
 
 int Socket::getIfceBroadcast (const qse_wchar_t* name, SocketAddress* addr) QSE_CPP_NOEXCEPT
 {
-	return this->get_ifce_address(SIOCGIFBRDADDR, name, qse_wcslen(name), true, addr);
+	return this->get_ifce_address(SIOCGIFBRDADDR, name, qse_wcslen(name), true, addr, this->domain);
 }
+
+// ----------------------------------------------------------------------------
+int Socket::getIfceAddress (const qse_mchar_t* name, SocketAddress* addr, int family) QSE_CPP_NOEXCEPT
+{
+	return this->get_ifce_address(SIOCGIFADDR, name, qse_mbslen(name), false, addr, family);
+}
+
+int Socket::getIfceAddress (const qse_wchar_t* name, SocketAddress* addr, int family) QSE_CPP_NOEXCEPT
+{
+	return this->get_ifce_address(SIOCGIFADDR, name, qse_wcslen(name), true, addr, family);
+}
+
+int Socket::getIfceNetmask(const qse_mchar_t* name, SocketAddress* addr, int family) QSE_CPP_NOEXCEPT
+{
+	return this->get_ifce_address(SIOCGIFNETMASK, name, qse_mbslen(name), false, addr, family);
+}
+
+int Socket::getIfceNetmask (const qse_wchar_t* name, SocketAddress* addr, int family) QSE_CPP_NOEXCEPT
+{
+	return this->get_ifce_address(SIOCGIFNETMASK, name, qse_wcslen(name), true, addr, family);
+}
+
+int Socket::getIfceBroadcast(const qse_mchar_t* name, SocketAddress* addr, int family) QSE_CPP_NOEXCEPT
+{
+	return this->get_ifce_address(SIOCGIFBRDADDR, name, qse_mbslen(name), false, addr, family);
+}
+
+int Socket::getIfceBroadcast (const qse_wchar_t* name, SocketAddress* addr, int family) QSE_CPP_NOEXCEPT
+{
+	return this->get_ifce_address(SIOCGIFBRDADDR, name, qse_wcslen(name), true, addr, family);
+}
+
+// ----------------------------------------------------------------------------
 
 int Socket::getIfceAddress (const qse_mchar_t* name, qse_size_t len, SocketAddress* addr) QSE_CPP_NOEXCEPT
 {
-	return this->get_ifce_address(SIOCGIFADDR, name, len, false, addr);
+	return this->get_ifce_address(SIOCGIFADDR, name, len, false, addr, this->domain);
 }
 
 int Socket::getIfceAddress (const qse_wchar_t* name, qse_size_t len, SocketAddress* addr) QSE_CPP_NOEXCEPT
 {
-	return this->get_ifce_address(SIOCGIFADDR, name, len, true, addr);
+	return this->get_ifce_address(SIOCGIFADDR, name, len, true, addr, this->domain);
 }
 
 int Socket::getIfceNetmask(const qse_mchar_t* name, qse_size_t len, SocketAddress* addr) QSE_CPP_NOEXCEPT
 {
-	return this->get_ifce_address(SIOCGIFNETMASK, name, len, false, addr);
+	return this->get_ifce_address(SIOCGIFNETMASK, name, len, false, addr, this->domain);
 }
 
 int Socket::getIfceNetmask (const qse_wchar_t* name, qse_size_t len, SocketAddress* addr) QSE_CPP_NOEXCEPT
 {
-	return this->get_ifce_address(SIOCGIFNETMASK, name, len, true, addr);
+	return this->get_ifce_address(SIOCGIFNETMASK, name, len, true, addr, this->domain);
 }
 
 int Socket::getIfceBroadcast(const qse_mchar_t* name, qse_size_t len, SocketAddress* addr) QSE_CPP_NOEXCEPT
 {
-	return this->get_ifce_address(SIOCGIFBRDADDR, name, len, false, addr);
+	return this->get_ifce_address(SIOCGIFBRDADDR, name, len, false, addr, this->domain);
 }
 
 int Socket::getIfceBroadcast (const qse_wchar_t* name, qse_size_t len, SocketAddress* addr) QSE_CPP_NOEXCEPT
 {
-	return this->get_ifce_address(SIOCGIFBRDADDR, name, len, true, addr);
+	return this->get_ifce_address(SIOCGIFBRDADDR, name, len, true, addr, this->domain);
+}
+// ----------------------------------------------------------------------------
+
+
+int Socket::getIfceAddress (const qse_mchar_t* name, qse_size_t len, SocketAddress* addr, int family) QSE_CPP_NOEXCEPT
+{
+	return this->get_ifce_address(SIOCGIFADDR, name, len, false, addr, family);
 }
 
-int Socket::get_ifce_address (int cmd, const void* name, qse_size_t len, bool wchar, SocketAddress* addr)
+int Socket::getIfceAddress (const qse_wchar_t* name, qse_size_t len, SocketAddress* addr, int family) QSE_CPP_NOEXCEPT
+{
+	return this->get_ifce_address(SIOCGIFADDR, name, len, true, addr, family);
+}
+
+int Socket::getIfceNetmask(const qse_mchar_t* name, qse_size_t len, SocketAddress* addr, int family) QSE_CPP_NOEXCEPT
+{
+	return this->get_ifce_address(SIOCGIFNETMASK, name, len, false, addr, family);
+}
+
+int Socket::getIfceNetmask (const qse_wchar_t* name, qse_size_t len, SocketAddress* addr, int family) QSE_CPP_NOEXCEPT
+{
+	return this->get_ifce_address(SIOCGIFNETMASK, name, len, true, addr, family);
+}
+
+int Socket::getIfceBroadcast(const qse_mchar_t* name, qse_size_t len, SocketAddress* addr, int family) QSE_CPP_NOEXCEPT
+{
+	return this->get_ifce_address(SIOCGIFBRDADDR, name, len, false, addr, family);
+}
+
+int Socket::getIfceBroadcast (const qse_wchar_t* name, qse_size_t len, SocketAddress* addr, int family) QSE_CPP_NOEXCEPT
+{
+	return this->get_ifce_address(SIOCGIFBRDADDR, name, len, true, addr, family);
+}
+
+// ----------------------------------------------------------------------------
+int Socket::get_ifce_address (int cmd, const void* name, qse_size_t len, bool wchar, SocketAddress* addr, int family)
 {
 	struct ifreq ifr;
 
@@ -1243,7 +1310,7 @@ int Socket::get_ifce_address (int cmd, const void* name, qse_size_t len, bool wc
 			}
 
 			if (!sa || !sa->sa_data) continue;
-			if (sa->sa_family != this->domain) continue; /* skip an address that doesn't match the socket's domain */
+			if (sa->sa_family != family) continue; /* skip an address that doesn't match given domain */
 
 			//*addr = SocketAddress((const qse_skad_t*)sa);
 			addr->set ((const qse_skad_t*)sa);
