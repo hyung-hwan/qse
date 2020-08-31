@@ -1245,7 +1245,8 @@ int Socket::get_ifce_address (int cmd, const void* name, qse_size_t len, bool wc
 			if (!sa || !sa->sa_data) continue;
 			if (sa->sa_family != this->domain) continue; /* skip an address that doesn't match the socket's domain */
 
-			*addr = SocketAddress((const qse_skad_t*)sa);
+			//*addr = SocketAddress((const qse_skad_t*)sa);
+			addr->set ((const qse_skad_t*)sa);
 			freeifaddrs (ifa);
 			return 0;
 		}
@@ -1267,7 +1268,8 @@ int Socket::get_ifce_address (int cmd, const void* name, qse_size_t len, bool wc
 		return -1;
 	}
 
-	*addr = SocketAddress((const qse_skad_t*)&ifr.ifr_addr);
+	//*addr = SocketAddress((const qse_skad_t*)&ifr.ifr_addr);
+	addr->set ((const qse_skad_t*)&ifr.ifr_addr);
 	return 0;
 }
 

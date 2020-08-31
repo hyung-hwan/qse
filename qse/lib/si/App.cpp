@@ -54,7 +54,7 @@ static struct app_sig_t
 class SigScopedMutexLocker
 {
 public:
-	SigScopedMutexLocker (Mutex& mutex): mutex(mutex)
+	SigScopedMutexLocker (Mutex& mutex) QSE_CPP_NOEXCEPT: mutex(mutex)
 	{
 		sigset_t sigset;
 		sigfillset (&sigset);
@@ -64,7 +64,7 @@ public:
 		this->mutex.lock ();
 	}
 
-	~SigScopedMutexLocker ()
+	~SigScopedMutexLocker () QSE_CPP_NOEXCEPT
 	{
 		this->mutex.unlock ();
 		::sigprocmask (SIG_SETMASK, &this->oldsigset, QSE_NULL);
@@ -263,13 +263,13 @@ static void dispatch_siginfo (int sig, siginfo_t* si, void* ctx)
 	}
 }
 
-int App::setSignalHandler (int sig, SignalHandler sighr)
+int App::setSignalHandler (int sig, SignalHandler sighr) QSE_CPP_NOEXCEPT
 {
 	SigScopedMutexLocker sml(g_app_mutex);
 	return App::set_signal_handler_no_mutex (sig, sighr);
 }
 
-int App::set_signal_handler_no_mutex (int sig, SignalHandler sighr)
+int App::set_signal_handler_no_mutex (int sig, SignalHandler sighr) QSE_CPP_NOEXCEPT
 {
 	if (App::_sighrs[0][sig]) return -1; // already set
 
@@ -305,13 +305,13 @@ int App::set_signal_handler_no_mutex (int sig, SignalHandler sighr)
 	return 0;
 }
 
-int App::unsetSignalHandler (int sig, bool ignore)
+int App::unsetSignalHandler (int sig, bool ignore) QSE_CPP_NOEXCEPT
 {
 	SigScopedMutexLocker sml(g_app_mutex);
 	return App::unset_signal_handler_no_mutex(sig, ignore);
 }
 
-int App::unset_signal_handler_no_mutex(int sig, int ignore)
+int App::unset_signal_handler_no_mutex(int sig, int ignore) QSE_CPP_NOEXCEPT
 {
 	if (!App::_sighrs[0][sig]) return -1;
 
@@ -341,7 +341,7 @@ int App::unset_signal_handler_no_mutex(int sig, int ignore)
 	return 0;
 }
 
-/*static*/ void App::handle_signal (int sig)
+/*static*/ void App::handle_signal (int sig) QSE_CPP_NOEXCEPT
 {
 	// Note: i use ScopedMutexLocker in the signal handler
 	//       whereas I use SigScopedMutexLocker in other functions. 
@@ -367,25 +367,25 @@ int App::unset_signal_handler_no_mutex(int sig, int ignore)
 	}
 }
 
-void App::on_guard_signal (int sig)
+void App::on_guard_signal (int sig) QSE_CPP_NOEXCEPT
 {
 	::kill (this->_guarded_child_pid, sig);
 }
 
-App::SignalState App::getSignalSubscription (int sig) const
+App::SignalState App::getSignalSubscription (int sig) const QSE_CPP_NOEXCEPT
 {
 	QSE_ASSERT (sig >= 0 && sig < QSE_NSIGS);
 	return this->_sig[sig]._state;
 }
 
-int App::setSignalSubscription (int sig, SignalState ss, bool ignore_if_unhandled)
+int App::setSignalSubscription (int sig, SignalState ss, bool ignore_if_unhandled) QSE_CPP_NOEXCEPT
 {
 	QSE_ASSERT (sig >= 0 && sig < QSE_NSIGS);
 	SigScopedMutexLocker sml(g_app_mutex);
 	return this->set_signal_subscription_no_mutex(sig, ss, ignore_if_unhandled);
 }
 
-int App::set_signal_subscription_no_mutex (int sig, SignalState reqstate, bool ignore_if_unhandled)
+int App::set_signal_subscription_no_mutex (int sig, SignalState reqstate, bool ignore_if_unhandled) QSE_CPP_NOEXCEPT
 {
 	_SigLink& sl = this->_sig[sig];
 
@@ -458,7 +458,7 @@ int App::set_signal_subscription_no_mutex (int sig, SignalState reqstate, bool i
 	return reqstate;
 }
 
-int App::acceptSignals (const SignalSet& signals)
+int App::acceptSignals (const SignalSet& signals) QSE_CPP_NOEXCEPT
 {
 	int n = 0;
 
@@ -473,7 +473,7 @@ int App::acceptSignals (const SignalSet& signals)
 	return n;
 }
 
-int App::discardSignals (const SignalSet& signals)
+int App::discardSignals (const SignalSet& signals) QSE_CPP_NOEXCEPT
 {
 	int n = 0;
 
@@ -488,7 +488,7 @@ int App::discardSignals (const SignalSet& signals)
 	return n;
 }
 
-int App::neglectSignals (const SignalSet& signals, bool ignore_if_unhandled)
+int App::neglectSignals (const SignalSet& signals, bool ignore_if_unhandled) QSE_CPP_NOEXCEPT
 {
 	int n = 0;
 
@@ -503,7 +503,7 @@ int App::neglectSignals (const SignalSet& signals, bool ignore_if_unhandled)
 	return n;
 }
 
-int App::guardProcess (const SignalSet& signals, bool _guard, qse_mtime_t guard_pause_ms, const qse_mchar_t* proc_name)
+int App::guardProcess (const SignalSet& signals, bool _guard, qse_mtime_t guard_pause_ms, const qse_mchar_t* proc_name) QSE_CPP_NOEXCEPT
 {
 	SignalState old_ss[QSE_NSIGS];
 	int seq = 0;
@@ -588,7 +588,7 @@ int App::guardProcess (const SignalSet& signals, bool _guard, qse_mtime_t guard_
 }
 
 
-int App::put_char_to_log_buf (qse_char_t c, void* ctx)
+int App::put_char_to_log_buf (qse_char_t c, void* ctx) QSE_CPP_NOEXCEPT
 {
 	App* app = (App*)ctx;
 
@@ -626,7 +626,7 @@ static int mbs_to_wcs (const qse_mchar_t* mbs, qse_size_t* mbslen, qse_wchar_t* 
 	return qse_mbsntowcsnwithcmgr(mbs, mbslen, wcs, wcslen, app->getCmgr());
 }
 
-void App::logfmtv (qse_log_priority_flag_t pri, const qse_char_t* fmt, va_list ap)
+void App::logfmtv (qse_log_priority_flag_t pri, const qse_char_t* fmt, va_list ap) QSE_CPP_NOEXCEPT
 {
 	/*if (this->threaded)*/ this->_log.mtx.lock ();
 
@@ -660,7 +660,7 @@ void App::logfmtv (qse_log_priority_flag_t pri, const qse_char_t* fmt, va_list a
 }
 
 // default log message output implementation
-void App::log_write (qse_log_priority_flag_t pri, const qse_char_t* msg, qse_size_t len)
+void App::log_write (qse_log_priority_flag_t pri, const qse_char_t* msg, qse_size_t len) QSE_CPP_NOEXCEPT
 {
 	// the last character is \n. qse_log_report() knows to terminate a line. so exclude it from reporting
 	qse_log_report (&this->_log.logger, QSE_NULL, pri, QSE_T("%.*js"), (int)(len - 1), msg);
