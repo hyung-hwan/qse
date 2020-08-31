@@ -19,7 +19,6 @@ static void print_usage (const qse_cli_t* cli)
 	qse_fprintf (QSE_STDERR, QSE_T(" --loglevel=string specify logging levels\n"));
 	qse_fprintf (QSE_STDERR, QSE_T(" --gate-addresses=string\n"));
 	qse_fprintf (QSE_STDERR, QSE_T("                   specify the control channel address\n"));
-	qse_fprintf (QSE_STDERR, QSE_T(" --chroot=path     speficy the special root\n"));
 	qse_fprintf (QSE_STDERR, QSE_T("\n"));
 	qse_fprintf (QSE_STDERR, QSE_T("logging type string: one or more of the followings delimited by a comma:\n"));
 	qse_fprintf (QSE_STDERR, QSE_T("  console,  file, syslog\n"));
