@@ -113,15 +113,15 @@ public:
 
 	virtual void on_signal (int sig) { }
 
-	SignalState getSignalSubscription (int sig) const;
-	int setSignalSubscription (int sig, SignalState ss, bool ignore_if_unhandled = false);
+	SignalState getSignalSubscription (int sig) const QSE_CPP_NOEXCEPT;
+	int setSignalSubscription (int sig, SignalState ss, bool ignore_if_unhandled = false) QSE_CPP_NOEXCEPT;
 
-	int acceptSignal (int sig)
+	int acceptSignal (int sig) QSE_CPP_NOEXCEPT
 	{
 		return this->setSignalSubscription(sig, SIGNAL_ACCEPTED);
 	}
 
-	int discardSignal (int sig)
+	int discardSignal (int sig) QSE_CPP_NOEXCEPT
 	{
 		return this->setSignalSubscription(sig, SIGNAL_DISCARDED);
 	}
@@ -132,14 +132,14 @@ public:
 	// initialized, no signal handler is established for the given
 	// signal. the ignore_if_unhandled is true, this function
 	// sets up signal handle to ignore the handler instead.
-	int neglectSignal (int sig, bool ignore_if_unhandled = false)
+	int neglectSignal (int sig, bool ignore_if_unhandled = false) QSE_CPP_NOEXCEPT
 	{
 		return this->setSignalSubscription(sig, SIGNAL_NEGLECTED, ignore_if_unhandled);
 	}
 
-	int acceptSignals (const SignalSet& signals);
-	int discardSignals (const SignalSet& signals);
-	int neglectSignals (const SignalSet& signals, bool ignore_if_unhandled = false);
+	int acceptSignals (const SignalSet& signals) QSE_CPP_NOEXCEPT;
+	int discardSignals (const SignalSet& signals) QSE_CPP_NOEXCEPT;
+	int neglectSignals (const SignalSet& signals, bool ignore_if_unhandled = false) QSE_CPP_NOEXCEPT;
 
 
 	typedef void (*SignalHandler) (int sig);
@@ -151,49 +151,49 @@ public:
 	// setSignalHandler() has been made without unsetSingalHandler() called
 	// yet, a subsequent call to subscribeToSignal() is doomed to fail too.
 	// These two different interfaces are mutually exclusive.
-	static int setSignalHandler (int sig, SignalHandler sighr);
-	static int unsetSignalHandler (int sig, bool ignore = false);
+	static int setSignalHandler (int sig, SignalHandler sighr) QSE_CPP_NOEXCEPT;
+	static int unsetSignalHandler (int sig, bool ignore = false) QSE_CPP_NOEXCEPT;
 
-	bool isGuardian () const
+	bool isGuardian () const QSE_CPP_NOEXCEPT
 	{
 		return this->_guarded_child_pid >= 0;
 	}
 
-	int guardProcess (const SignalSet& signals, bool _guard = true, qse_mtime_t guard_pause_ms = 0, const qse_mchar_t* proc_name = QSE_NULL);
+	int guardProcess (const SignalSet& signals, bool _guard = true, qse_mtime_t guard_pause_ms = 0, const qse_mchar_t* proc_name = QSE_NULL) QSE_CPP_NOEXCEPT;
 
 
 	// =============================================================
 	// LOGGING SUPPORT
 	// =============================================================
-	void setSyslogFacility (qse_log_facility_t fac) /* useful for syslog is set as a target */
+	void setSyslogFacility (qse_log_facility_t fac) QSE_CPP_NOEXCEPT /* useful for syslog is set as a target */
 	{
 		qse_log_setsyslogfacility (&this->_log.logger, fac);
 	}
 
-	void setLogPriorityMask (int pri_mask) { this->_log.pri_mask = pri_mask;  }
-	int getLogPriorityMask () const { return this->_log.pri_mask; }
+	void setLogPriorityMask (int pri_mask) QSE_CPP_NOEXCEPT { this->_log.pri_mask = pri_mask;  }
+	int getLogPriorityMask () const QSE_CPP_NOEXCEPT { return this->_log.pri_mask; }
 
-	void setLogOption (int option_flags) /* 0 or bitwise-OR'ed of qse_log_option_flag_t bits */
+	void setLogOption (int option_flags) QSE_CPP_NOEXCEPT /* 0 or bitwise-OR'ed of qse_log_option_flag_t bits */
 	{
 		qse_log_setoption (&this->_log.logger, option_flags);
 	}
 
-	int getLogOption () const
+	int getLogOption () const QSE_CPP_NOEXCEPT
 	{
 		return qse_log_getoption(&this->_log.logger);
 	}
 
-	void setLogTarget (int target_flags, const qse_log_target_data_t& target)
+	void setLogTarget (int target_flags, const qse_log_target_data_t& target) QSE_CPP_NOEXCEPT
 	{
 		qse_log_settarget (&this->_log.logger, target_flags, &target);
 	}
 
-	int getLogTarget (qse_log_target_data_t& target) const
+	int getLogTarget (qse_log_target_data_t& target) const QSE_CPP_NOEXCEPT
 	{
 		return qse_log_gettarget(&this->_log.logger, &target);
 	}
 
-	void logfmt (qse_log_priority_flag_t pri, const qse_char_t* fmt, ...)
+	void logfmt (qse_log_priority_flag_t pri, const qse_char_t* fmt, ...) QSE_CPP_NOEXCEPT
 	{
 		va_list ap;
 		va_start (ap, fmt);
@@ -201,11 +201,11 @@ public:
 		va_end (ap);
 	}
 
-	void logfmtv (qse_log_priority_flag_t pri, const qse_char_t* fmt, va_list ap);
+	void logfmtv (qse_log_priority_flag_t pri, const qse_char_t* fmt, va_list ap) QSE_CPP_NOEXCEPT;
 
 protected:
 	// subclasses may override this if the defaulg logging output is not desired.
-	virtual void log_write (qse_log_priority_flag_t mask, const qse_char_t* msg, qse_size_t len);
+	virtual void log_write (qse_log_priority_flag_t mask, const qse_char_t* msg, qse_size_t len) QSE_CPP_NOEXCEPT;
 
 private:
 	App* _prev_app;
@@ -237,14 +237,14 @@ private:
 		mutable qse_log_t logger;
 	} _log;
 
-	static int set_signal_handler_no_mutex (int sig, SignalHandler sighr);
-	static int unset_signal_handler_no_mutex (int sig, int ignore);
-	int set_signal_subscription_no_mutex (int sig, SignalState reqstate, bool ignore_if_unhandled);
+	static int set_signal_handler_no_mutex (int sig, SignalHandler sighr) QSE_CPP_NOEXCEPT;
+	static int unset_signal_handler_no_mutex (int sig, int ignore) QSE_CPP_NOEXCEPT;
+	int set_signal_subscription_no_mutex (int sig, SignalState reqstate, bool ignore_if_unhandled) QSE_CPP_NOEXCEPT;
 
-	void on_guard_signal (int sig);
-	static void handle_signal (int sig);
+	void on_guard_signal (int sig) QSE_CPP_NOEXCEPT;
+	static void handle_signal (int sig) QSE_CPP_NOEXCEPT;
 
-	static int put_char_to_log_buf (qse_char_t c, void* ctx);
+	static int put_char_to_log_buf (qse_char_t c, void* ctx) QSE_CPP_NOEXCEPT;
 };
 
 /////////////////////////////////
