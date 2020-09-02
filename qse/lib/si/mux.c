@@ -626,7 +626,7 @@ int qse_mux_insert (qse_mux_t* mux, const qse_mux_evt_t* evt)
 
 	if (!mux->me.ptr[evt->hnd])
 	{
-		mux->me.ptr[evt->hnd] = QSE_MMGR_ALLOC (mux->mmgr, QSE_SIZEOF(*evt));
+		mux->me.ptr[evt->hnd] = QSE_MMGR_ALLOC(mux->mmgr, QSE_SIZEOF(*evt));
 		if (!mux->me.ptr[evt->hnd])
 		{
 			mux->errnum = QSE_MUX_ENOMEM;
@@ -819,7 +819,7 @@ done:
 		return -1;
 	}
 
-	if (epoll_ctl (mux->fd, EPOLL_CTL_DEL, evt->hnd, QSE_NULL) <= -1)
+	if (epoll_ctl(mux->fd, EPOLL_CTL_DEL, evt->hnd, QSE_NULL) <= -1)
 	{
 		mux->errnum = skerr_to_errnum(errno);
 		return -1;

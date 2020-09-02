@@ -356,13 +356,14 @@ int Socket::finiConnectNB () QSE_CPP_NOEXCEPT
 {
 	QSE_ASSERT (qse_is_sck_valid(this->handle));
 
-	if (qse_fini_sck_conn(this->handle) <= -1)
+	int n;
+	if ((n = qse_fini_sck_conn(this->handle)) <= -1)
 	{
 		this->setErrorFmt (syserr_to_errnum(errno), QSE_T("%hs"), strerror(errno));
 		return -1;
 	}
 
-	return 0;
+	return n;
 }
 
 
@@ -522,6 +523,7 @@ int Socket::accept (Socket* newsck, SocketAddress* newaddr, int traits) QSE_CPP_
 
 accept_done:
 	newsck->handle = newfd;
+	newsck->domain = this->domain; // the new socket inherits the listener's domain.
 	return 0;
 }
 
