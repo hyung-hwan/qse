@@ -289,7 +289,7 @@ int SocketAddress::set (const qse_wchar_t* str, qse_size_t len) QSE_CPP_NOEXCEPT
 /* 
  * NOTICE: 
  *   When host is "", the address is resolved to localhost.
- *   When host is XP_NULL, the address is resolved to INADDR_ANY 
+ *   When host is QSE_NULL, the address is resolved to INADDR_ANY 
  *   or IN6ADDR_ANY_INIT depending on the address family.
  */
 int SocketAddress::resolve (const qse_mchar_t* service, const qse_mchar_t* host, int family, int type) QSE_CPP_NOEXCEPT
@@ -354,6 +354,7 @@ int SocketAddress::resolve (const qse_wchar_t* service, const qse_wchar_t* host,
 		if (qse_wcstombs(service, &wcslen, mb_service, &mbslen) <= -1) return -1;
 		p_service = mb_service;
 	}
+
 	x = ::getaddrinfo(p_host, p_service, &hints, &info);	
 	if (x != 0) return -1;
 	

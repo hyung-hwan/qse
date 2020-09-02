@@ -619,14 +619,64 @@ void qse_addtime (const qse_ntime_t* x, const qse_ntime_t* y, qse_ntime_t* z)
 	QSE_ASSERT (x->nsec >= 0 && x->nsec < QSE_NSECS_PER_SEC);
 	QSE_ASSERT (y->nsec >= 0 && y->nsec < QSE_NSECS_PER_SEC);
 
+#if 0
 	z->sec = x->sec + y->sec;
 	z->nsec = x->nsec + y->nsec;
 
-	if (z->nsec >= QSE_NSECS_PER_SEC)
+	while (z->nsec >= QSE_NSECS_PER_SEC)
 	{
 		z->sec = z->sec + 1;
 		z->nsec = z->nsec - QSE_NSECS_PER_SEC;
 	}
+#else
+	qse_ntime_sec_t xs, ys;
+	qse_ntime_nsec_t ns;
+
+	ns = x->nsec + y->nsec;
+	if (ns >= QSE_NSECS_PER_SEC)
+	{
+		ns = ns - QSE_NSECS_PER_SEC;
+		if (x->sec == QSE_TYPE_MAX(qse_ntime_sec_t))
+		{
+			if (y->sec >= 0) goto overflow;
+			xs = x->sec;
+			ys = y->sec + 1; /* this won't overflow */
+		}
+		else
+		{
+			xs = x->sec + 1; /* this won't overflow */
+			ys = y->sec;
+		}
+	}
+	else
+	{
+		xs = x->sec;
+		ys = y->sec;
+	}
+
+	if ((ys >= 1 && xs > QSE_TYPE_MAX(qse_ntime_sec_t) - ys) ||
+	    (ys <= -1 && xs < QSE_TYPE_MIN(qse_ntime_sec_t) - ys))
+	{
+		if (xs >= 0)
+		{
+		overflow:
+			xs = QSE_TYPE_MAX(qse_ntime_sec_t);
+			ns = QSE_NSECS_PER_SEC - 1;
+		}
+		else
+		{
+			xs = QSE_TYPE_MIN(qse_ntime_sec_t);
+			ns = 0;
+		}
+	}
+	else
+	{
+		xs = xs + ys;
+	}
+
+	z->sec = xs;
+	z->nsec = ns;
+#endif
 }
 
 void qse_subtime (const qse_ntime_t* x, const qse_ntime_t* y, qse_ntime_t* z)
@@ -634,17 +684,65 @@ void qse_subtime (const qse_ntime_t* x, const qse_ntime_t* y, qse_ntime_t* z)
 	QSE_ASSERT (x->nsec >= 0 && x->nsec < QSE_NSECS_PER_SEC);
 	QSE_ASSERT (y->nsec >= 0 && y->nsec < QSE_NSECS_PER_SEC);
 
+#if 0
 	z->sec = x->sec - y->sec;
 	z->nsec = x->nsec - y->nsec;
 
-	if (z->nsec < 0)
+	while (z->nsec < 0)
 	{
 		z->sec = z->sec - 1;
 		z->nsec = z->nsec + QSE_NSECS_PER_SEC;
 	}
+#else
+	qse_ntime_sec_t xs, ys;
+	qse_ntime_nsec_t ns;
+
+	ns = x->nsec - y->nsec;
+	if (ns < 0)
+	{
+		ns = ns + QSE_NSECS_PER_SEC;
+		if (x->sec == QSE_TYPE_MIN(qse_ntime_sec_t))
+		{
+			if (y->sec <= 0) goto underflow;
+			xs = x->sec;
+			ys = y->sec - 1; /* this won't underflow */
+		}
+		else
+		{
+			xs = x->sec - 1; /* this won't underflow */
+			ys = y->sec;
+		}
+	}
+	else
+	{
+		xs = x->sec;
+		ys = y->sec;
+	}
+
+	if ((ys >= 1 && xs < QSE_TYPE_MIN(qse_ntime_sec_t) + ys) ||
+	    (ys <= -1 && xs > QSE_TYPE_MAX(qse_ntime_sec_t) + ys))
+	{
+		if (xs >= 0)
+		{
+			xs = QSE_TYPE_MAX(qse_ntime_sec_t);
+			ns = QSE_NSECS_PER_SEC - 1;
+		}
+		else
+		{
+		underflow:
+			xs = QSE_TYPE_MIN(qse_ntime_sec_t);
+			ns = 0;
+		}
+	} 
+	else
+	{
+		xs = xs - ys;
+	}
+
+	z->sec = xs;
+	z->nsec = ns;
+#endif
 }
-
-
 
 int qse_mbs_to_ntime (const qse_mchar_t* text, qse_ntime_t* ntime)
 {

@@ -93,7 +93,7 @@
 #define QSE_SEC_TO_USEC(sec) ((sec) * QSE_USECS_PER_SEC)
 #define QSE_USEC_TO_SEC(usec) ((usec) / QSE_USECS_PER_SEC)
 
-typedef qse_long_t qse_ntime_sec_t;
+typedef qse_int64_t qse_ntime_sec_t;
 typedef qse_int32_t qse_ntime_nsec_t;
 
 /**
