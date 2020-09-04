@@ -74,7 +74,7 @@ if ENABLE_CXX
 #rex02_CXXFLAGS = -I/usr/lib/wx/include/gtk2-unicode-release-2.8 -I/usr/include/wx-2.8 -D_FILE_OFFSET_BITS=64 -D_LARGE_FILES -D__WXGTK__ -pthread 
 #rex02_LDFLAGS = -pthread -Wl,-Bsymbolic-functions  -lwx_gtk2ud_richtext-2.8 -lwx_gtk2ud_aui-2.8 -lwx_gtk2ud_xrc-2.8 -lwx_gtk2ud_qa-2.8 -lwx_gtk2ud_html-2.8 -lwx_gtk2ud_adv-2.8 -lwx_gtk2ud_core-2.8 -lwx_baseud_xml-2.8 -lwx_baseud_net-2.8 -lwx_baseud-2.8 
 
-bin_PROGRAMS += arr02 arr03 bh01 bh02 hl01 htb02 rbt02 rbt03 sp01 sp02 str02
+bin_PROGRAMS += arr02 arr03 bh01 bh02 bh03 hl01 htb02 rbt02 rbt03 sp01 sp02 str02
 
 arr02_SOURCES = arr02.cpp
 
@@ -83,6 +83,8 @@ arr03_SOURCES = arr03.cpp
 bh01_SOURCES = bh01.cpp
 
 bh02_SOURCES = bh02.cpp
+
+bh03_SOURCES = bh03.cpp
 
 hl01_SOURCES = hl01.cpp
 

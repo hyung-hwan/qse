@@ -240,7 +240,6 @@ public:
 
 		if (this->count == 1)
 		{
-			QSE_ASSERT (index == 0);
 			ParentType::remove (this->count - 1);
 		}
 		else if (this->count > 1)
@@ -251,11 +250,14 @@ public:
 			// copy the last item to the position to remove 
 			ParentType::update (index, QSE_CPP_RVREF(this->buffer[this->count - 1]));
 
-			// delete the last item
-			ParentType::remove (this->count - 1);
+			// decrement the count as if the last item has been deleted.
+			this->count = this->count - 1;
 			
 			// relocate the item
-			(this->greater_than (this->buffer[index], old))? this->sift_up(index): this->sift_down(index);
+			(this->greater_than(this->buffer[index], old))? this->sift_up(index): this->sift_down(index);
+
+			// call the positioner on the actual item removed
+			this->_positioner (old, INVALID_INDEX);
 		}
 	}
 

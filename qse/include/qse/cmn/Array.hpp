@@ -547,18 +547,18 @@ public:
 	qse_size_t upsert (qse_size_t index, const T& value)
 	{
 		if (index < this->count)
-			return this->update (index, value);
+			return this->update(index, value);
 		else
-			return this->insert (index, value);
+			return this->insert(index, value);
 	}
 
 #if defined(QSE_CPP_ENABLE_CPP11_MOVE)
 	qse_size_t upsert (qse_size_t index, T&& value)
 	{
 		if (index < this->count)
-			return this->update (index, QSE_CPP_RVREF(value));
+			return this->update(index, QSE_CPP_RVREF(value));
 		else
-			return this->insert (index, QSE_CPP_RVREF(value));
+			return this->insert(index, QSE_CPP_RVREF(value));
 	}
 #endif
 
@@ -567,7 +567,7 @@ public:
 		if (index < this->count)
 			return index; // no update
 		else
-			return this->insert (index, value);
+			return this->insert(index, value);
 	}
 
 #if defined(QSE_CPP_ENABLE_CPP11_MOVE)
@@ -576,31 +576,31 @@ public:
 		if (index < this->count)
 			return index; // no update
 		else
-			return this->insert (index, QSE_CPP_RVREF(value));
+			return this->insert(index, QSE_CPP_RVREF(value));
 	}
 #endif
 
 	qse_size_t insertFirst (const T& value)
 	{
-		return this->insert (0, value);
+		return this->insert(0, value);
 	}
 
 #if defined(QSE_CPP_ENABLE_CPP11_MOVE)
 	qse_size_t insertFirst (T&& value)
 	{
-		return this->insert (0, QSE_CPP_RVREF(value));
+		return this->insert(0, QSE_CPP_RVREF(value));
 	}
 #endif
 
 	qse_size_t insertLast (const T& value)
 	{
-		return this->insert (this->getSize(), value);
+		return this->insert(this->getSize(), value);
 	}
 
 #if defined(QSE_CPP_ENABLE_CPP11_MOVE)
 	qse_size_t insertLast (T&& value)
 	{
-		return this->insert (this->getSize(), QSE_CPP_RVREF(value));
+		return this->insert(this->getSize(), QSE_CPP_RVREF(value));
 	}
 #endif
 
