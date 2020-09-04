@@ -93,7 +93,11 @@
 #define QSE_SEC_TO_USEC(sec) ((sec) * QSE_USECS_PER_SEC)
 #define QSE_USEC_TO_SEC(usec) ((usec) / QSE_USECS_PER_SEC)
 
+#if defined(QSE_SIZEOF_INT64_T) && (QSE_SIZEOF_INT64_T > 0)
 typedef qse_int64_t qse_ntime_sec_t;
+#else
+typedef qse_int32_t qse_ntime_sec_t;
+#endif
 typedef qse_int32_t qse_ntime_nsec_t;
 
 /**
