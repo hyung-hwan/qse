@@ -294,6 +294,7 @@ int qse_fini_sck_conn (qse_sck_hnd_t handle)
 	}
 	else if (ret != 0) 
 	{
+		errno = ret;
 		return -1; /* failure */
 	}
 

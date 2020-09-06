@@ -393,6 +393,49 @@ bool SocketAddress::isLoopBack () const QSE_CPP_NOEXCEPT
 	return false;
 }
 
+bool SocketAddress::isInIpSubnet (const qse_nwad_t* addr, int prefix) const QSE_CPP_NOEXCEPT
+{
+	switch (addr->type)
+	{
+		case QSE_NWAD_IN4:
+			if (prefix >= 1 && prefix <= 32)
+			{
+				const qse_ip4ad_t* me = this->getIp4addr();
+				if (me)
+				{
+					qse_ip4ad_t mask;
+					qse_prefixtoip4ad (prefix, &mask);
+					return (me->value & mask.value) == (addr->u.in4.addr.value & mask.value);
+				}
+			}
+			break;
+
+		case QSE_NWAD_IN6:
+			if (prefix >= 1 && prefix <= 128)
+			{
+				const qse_ip6ad_t* me = this->getIp6addr();
+				if (me)
+				{
+					qse_ip6ad_t mask;
+					qse_prefixtoip6ad (prefix, &mask);
+					const qse_uint32_t* x = (const qse_uint32_t*)me->value;
+					const qse_uint32_t* y = (const qse_uint32_t*)addr->u.in6.addr.value;
+					const qse_uint32_t* z = (const qse_uint32_t*)mask.value;
+					return (x[0] & z[0]) == (y[0] & z[0]) &&
+					       (x[1] & z[1]) == (y[1] & z[1]) &&
+					       (x[2] & z[2]) == (y[2] & z[2]) &&
+					       (x[3] & z[3]) == (y[3] & z[3]);
+				}
+			}
+			break;
+
+		default: 
+			break;
+	}
+
+	return false;
+}
+
 qse_wchar_t* SocketAddress::toStrBuf (qse_wchar_t* buf, qse_size_t len) const QSE_CPP_NOEXCEPT
 {
 	qse_nwad_t nwad;

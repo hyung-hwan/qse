@@ -249,6 +249,15 @@ QSE_EXPORT qse_uint16_t qse_getnwadport (
 );
 
 /**
+ * The qse_getnwadipsize() function returns the size of the contained
+ * IP address. If the given \a nwad doesn't represent  an IP address,
+ * it returns 0.
+ */
+QSE_EXPORT int qse_getnwadipsize (
+	qse_nwad_t* nwad
+);
+
+/**
  * The qse_mbstonwad() function converts a multi-byte string \a mbs to a 
  * network address and stores it to memory pointed to by \a nwad.
  */
