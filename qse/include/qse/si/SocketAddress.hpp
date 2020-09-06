@@ -96,6 +96,11 @@ public:
 	// TODO: isLinkLocal() const QSE_CPP_NOEXCEPT
 	// TODO: isSiteLocal() const QSE_CPP_NOEXCEPT
 	// TODO: isV4Mapped() const QSE_CPP_NOEXCEPT
+	//
+	//TODO: bool isInIpSubnet (const qse_ip4ad_t* addr, int prefix) const  QSE_CPP_NOEXCEPT;
+	//TODO: bool isInIpSubnet (const qse_ip6ad_t* addr, int prefix) const  QSE_CPP_NOEXCEPT;
+	bool isInIpSubnet (const qse_nwad_t* addr, int prefix) const  QSE_CPP_NOEXCEPT;
+	//TODO: bool isInIpSubnet (const qse_skad_t* addr, int prefix) const  QSE_CPP_NOEXCEPT;
 
 	qse_mchar_t* toStrBuf (qse_mchar_t* buf, qse_size_t len) const QSE_CPP_NOEXCEPT;
 	qse_wchar_t* toStrBuf (qse_wchar_t* buf, qse_size_t len) const QSE_CPP_NOEXCEPT;
