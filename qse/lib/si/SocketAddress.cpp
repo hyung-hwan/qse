@@ -378,20 +378,89 @@ bool SocketAddress::isLoopBack () const QSE_CPP_NOEXCEPT
 	{
 		case AF_INET:
 		{
+			// 127.0.0.0/8
 			struct sockaddr_in* v4 = (struct sockaddr_in*)&this->skad;
-			return v4->sin_addr.s_addr == QSE_CONST_HTON32(0x7F000001);
+			return (v4->sin_addr.s_addr & QSE_CONST_HTON32(0xFF000000u)) == QSE_CONST_HTON32(0x7F000000u);
 		}
 	
 		case AF_INET6:
 		{
 			struct sockaddr_in6* v6 = (struct sockaddr_in6*)&this->skad;
 			qse_uint32_t* x = (qse_uint32_t*)v6->sin6_addr.s6_addr; // TODO: is this alignment safe? 
-			return x[0] == 0 && x[1] == 0 && x[2] == 0 && x[3] == 1;
+			return (x[0] == 0 && x[1] == 0 && x[2] == 0 && x[3] == QSE_CONST_HTON32(1)) || 
+			       (this->isV4Mapped() && (x[3] & QSE_CONST_HTON32(0xFF000000u)) == QSE_CONST_HTON32(0x7F000000u));
 		}
 	}
 
 	return false;
 }
+
+bool SocketAddress::isLinkLocal() const QSE_CPP_NOEXCEPT
+{
+	switch (FAMILY(&this->skad))
+	{
+		case AF_INET:
+		{
+			// 169.254.0.0/16
+			struct sockaddr_in* v4 = (struct sockaddr_in*)&this->skad;
+			return (v4->sin_addr.s_addr & QSE_CONST_HTON32(0xFFFF0000u)) == QSE_CONST_HTON32(0xA9FE0000u);
+		}
+
+		case AF_INET6:
+		{
+			// FE80::/10
+			struct sockaddr_in6* v6 = (struct sockaddr_in6*)&this->skad;
+			return v6->sin6_addr.s6_addr[0] == 0xFE && (v6->sin6_addr.s6_addr[1] & 0xC0) == 0x80;
+		}
+	}
+
+	return false;
+}
+
+bool SocketAddress::isSiteLocal() const QSE_CPP_NOEXCEPT
+{
+	if (FAMILY(&this->skad) != AF_INET6) return false;
+
+	// FEC0::/10
+	struct sockaddr_in6* v6 = (struct sockaddr_in6*)&this->skad;
+	return v6->sin6_addr.s6_addr[0] == 0xFE && (v6->sin6_addr.s6_addr[1] & 0xC0) == 0xC0;
+}
+
+bool SocketAddress::isMulticast() const QSE_CPP_NOEXCEPT
+{
+	switch (FAMILY(&this->skad))
+	{
+		case AF_INET:
+		{
+			// 224.0.0.0/4
+			struct sockaddr_in* v4 = (struct sockaddr_in*)&this->skad;
+			return (v4->sin_addr.s_addr & QSE_CONST_HTON32(0xF0000000u)) == QSE_CONST_HTON32(0xE0000000u);
+		}
+
+		case AF_INET6:
+		{
+			// FF00::/8
+			struct sockaddr_in6* v6 = (struct sockaddr_in6*)&this->skad;
+			return v6->sin6_addr.s6_addr[0] == 0xFF;
+		}
+	}
+
+	return false;
+}
+
+bool SocketAddress::isV4Mapped() const QSE_CPP_NOEXCEPT
+{
+	if (FAMILY(&this->skad) != AF_INET6) return false;
+
+	struct sockaddr_in6* v6 = (struct sockaddr_in6*)&this->skad;
+	return v6->sin6_addr.s6_addr[0] == 0x00 && v6->sin6_addr.s6_addr[1] == 0x00 &&
+	       v6->sin6_addr.s6_addr[2] == 0x00 && v6->sin6_addr.s6_addr[3] == 0x00 &&
+	       v6->sin6_addr.s6_addr[4] == 0x00 && v6->sin6_addr.s6_addr[5] == 0x00 &&
+	       v6->sin6_addr.s6_addr[6] == 0x00 && v6->sin6_addr.s6_addr[7] == 0x00 &&
+	       v6->sin6_addr.s6_addr[8] == 0x00 && v6->sin6_addr.s6_addr[9] == 0x00 &&
+	       v6->sin6_addr.s6_addr[10] == 0xFF && v6->sin6_addr.s6_addr[11] == 0xFF;
+}
+
 
 bool SocketAddress::isInIpSubnet (const qse_nwad_t* addr, int prefix) const QSE_CPP_NOEXCEPT
 {

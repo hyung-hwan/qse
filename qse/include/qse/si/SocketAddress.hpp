@@ -38,6 +38,14 @@ QSE_BEGIN_NAMESPACE(QSE)
 class SocketAddress
 {
 public:
+	enum
+	{
+		MAX_IP4AD_STR_LEN = 15, // nnn.nnn.nnn.nnn
+		MAX_IP6AD_STR_LEN = 45, // XXXX:XXXX:XXXX:XXXX:XXXX:XXXX:XXXX:XXXX, XXXX:XXXX:XXXX:XXXX:XXXX:XXXX:nnn.nnn.nnn.nnn 
+		MAX_IP4AD_PORT_STR_LEN = 21, // nnn.nnn.nnn.nnn:AAAAA 
+		MAX_IP6AD_PORT_STR_LEN = 53 // [....]:AAAAA
+	};
+
 	SocketAddress () QSE_CPP_NOEXCEPT;
 	SocketAddress (int family) QSE_CPP_NOEXCEPT;
 	SocketAddress (const qse_skad_t* skad) QSE_CPP_NOEXCEPT;
@@ -93,10 +101,11 @@ public:
 	int resolve (const qse_wchar_t* service, const qse_wchar_t* host, int type) QSE_CPP_NOEXCEPT { return this->resolve(service, host, this->getFamily(), type); }
 
 	bool isLoopBack () const QSE_CPP_NOEXCEPT;
-	// TODO: isLinkLocal() const QSE_CPP_NOEXCEPT
-	// TODO: isSiteLocal() const QSE_CPP_NOEXCEPT
-	// TODO: isV4Mapped() const QSE_CPP_NOEXCEPT
-	//
+	bool isLinkLocal() const QSE_CPP_NOEXCEPT;
+	bool isSiteLocal() const QSE_CPP_NOEXCEPT;
+	bool isMulticast() const QSE_CPP_NOEXCEPT;
+	bool isV4Mapped() const QSE_CPP_NOEXCEPT;
+	
 	//TODO: bool isInIpSubnet (const qse_ip4ad_t* addr, int prefix) const  QSE_CPP_NOEXCEPT;
 	//TODO: bool isInIpSubnet (const qse_ip6ad_t* addr, int prefix) const  QSE_CPP_NOEXCEPT;
 	bool isInIpSubnet (const qse_nwad_t* addr, int prefix) const  QSE_CPP_NOEXCEPT;

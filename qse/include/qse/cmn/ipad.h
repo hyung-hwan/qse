@@ -45,8 +45,14 @@ struct qse_ip6ad_t
 	qse_uint8_t value[16];
 };
 
-#define QSE_IP4AD_IS_LOOPBACK(addr) ((((addr)->value) & QSE_CONST_HTON32(0xFF000000)) == QSE_CONST_HTON32(0x7F000000))
+/* 127.0.0.0/8 */
+#define QSE_IP4AD_IS_LOOPBACK(addr) ((((addr)->value) & QSE_CONST_HTON32(0xFF000000u)) == QSE_CONST_HTON32(0x7F000000u))
+/* 169.254.0.0/16 */
+#define QSE_IP4AD_IS_LINK_LOCAL(addr) ((((addr)->value) & QSE_CONST_HTON32(0xFFFF0000u)) == QSE_CONST_HTON32(0xA9FE0000u))
+/* 224.0.0.0/4 */
+#define QSE_IP4AD_IS_MULTICAST(addr) ((((addr)->value) & QSE_CONST_HTON32(0xF0000000u)) == QSE_CONST_HTON32(0xE0000000u))
 
+/* ::1 */
 #define QSE_IP6AD_IS_LOOPBACK(addr) \
 		((addr)->value[0] == 0 && (addr)->value[1] == 0 && \
 		 (addr)->value[2] == 0 && (addr)->value[3] == 0 && \
@@ -57,11 +63,13 @@ struct qse_ip6ad_t
 		 (addr)->value[12] == 0 && (addr)->value[13] == 0 && \
 		 (addr)->value[14] == 0 && (addr)->value[15] == 1)
 
-// FE80::/10
+
+/* FE80::/10 */
 #define QSE_IP6AD_IS_LINK_LOCAL(addr) (this->value[0] == 0xFE && (this->value[1] & 0xC0) == 0x80)
-// FEC0::/10
+/* FEC0::/10 */
 #define QSE_IP6AD_IS_SITE_LOCAL(addr) (this->value[0] == 0xFE && (this->value[1] & 0xC0) == 0xC0)
 
+/* FF00::/8 */
 #define QSE_IP6AD_IS_MULTICAST(addr) ((addr)->value[0] == 0xFF)
 #define QSE_IP6AD_IS_MULTICAST_LINK_LOCAL(addr) ((addr)->value[0] == 0xFF && ((addr)->value[1] & 0x0F) == 0x02)
 #define QSE_IP6AD_IS_MULTICAST_SITE_LOCAL(addr) ((addr)->value[0] == 0xFF && ((addr)->value[1] & 0x0F) == 0x05)
