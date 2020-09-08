@@ -337,12 +337,24 @@ QSE_EXPORT int qse_skadfamily (
 
 
 /**
- * The qse_skadlength() function returns the socket address size
+ * The qse_skadsize() function returns the socket address size
  * of a given address \a skad.
  */
 QSE_EXPORT int qse_skadsize (
 	const qse_skad_t* skad
 );
+
+/**
+ * The qse_skadrealsize() function returns the socket address size
+ * of a given address \a skad. It differs from qse_skadsize() in that
+ * it returns the size of the actual data instead of the whole address
+ * structure. For example, the null-terminated path in a local domain
+ * socket address may be shorter than the actual path buffer. 
+ */
+QSE_EXPORT int qse_skadrealsize (
+	const qse_skad_t* skad
+);
+
 
 #if defined(__cplusplus)
 }

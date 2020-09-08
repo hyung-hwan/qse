@@ -104,6 +104,14 @@ SocketAddress::SocketAddress (const qse_nwad_t* nwad) QSE_CPP_NOEXCEPT
 	this->set (nwad);
 }
 
+bool SocketAddress::operator== (const SocketAddress& addr) const QSE_CPP_NOEXCEPT
+{
+	if (this == &addr) return true;
+	if (FAMILY(&this->skad) != FAMILY(&addr.skad)) return false;
+	if (this->getAddrRealSize() != addr.getAddrRealSize()) return false;
+	return QSE_MEMCMP(this->getAddrPtr(), addr.getAddrPtr(), addr.getAddrRealSize()) == 0;
+}
+
 int SocketAddress::getFamily () const QSE_CPP_NOEXCEPT
 {
 	return FAMILY(&this->skad);

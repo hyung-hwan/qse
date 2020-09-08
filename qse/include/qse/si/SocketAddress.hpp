@@ -61,6 +61,8 @@ public:
 	SocketAddress (const qse_skad_t* skad) QSE_CPP_NOEXCEPT;
 	SocketAddress (const qse_nwad_t* nwad) QSE_CPP_NOEXCEPT;
 
+	bool operator== (const SocketAddress& addr) const QSE_CPP_NOEXCEPT;
+
 	int getFamily () const QSE_CPP_NOEXCEPT;
 
 	qse_skad_t* getAddrPtr() QSE_CPP_NOEXCEPT
@@ -76,6 +78,11 @@ public:
 	int getAddrSize () const QSE_CPP_NOEXCEPT
 	{
 		return qse_skadsize(&this->skad);
+	}
+
+	int getAddrRealSize () const QSE_CPP_NOEXCEPT
+	{
+		return qse_skadrealsize(&this->skad);
 	}
 
 	int getAddrCapa() const QSE_CPP_NOEXCEPT
