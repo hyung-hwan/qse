@@ -43,7 +43,17 @@ public:
 		MAX_IP4AD_STR_LEN = 15, // nnn.nnn.nnn.nnn
 		MAX_IP6AD_STR_LEN = 45, // XXXX:XXXX:XXXX:XXXX:XXXX:XXXX:XXXX:XXXX, XXXX:XXXX:XXXX:XXXX:XXXX:XXXX:nnn.nnn.nnn.nnn 
 		MAX_IP4AD_PORT_STR_LEN = 21, // nnn.nnn.nnn.nnn:AAAAA 
-		MAX_IP6AD_PORT_STR_LEN = 53 // [....]:AAAAA
+		MAX_IP6AD_PORT_STR_LEN = 53,// [....]:AAAAA
+		MAX_LOCAL_STR_LEN = QSE_NWAD_LOCAL_MAX_PATH + 1, // when converted back, @ may be added - /tmp/xxx.sck or @xxx.sck
+
+		MAX_IPAD_STR_LEN = MAX_IP6AD_STR_LEN,
+		MAX_IPAD_PORT_STR_LEN = MAX_IP6AD_PORT_STR_LEN,
+
+	#if (QSE_NWAD_LOCAL_MAX_PATH > 53)
+		MAX_STR_LEN = MAX_LOCAL_STR_LEN
+	#else
+		MAX_STR_LEN = MAX_IP6AD_PORT_STR_LEN
+	#endif
 	};
 
 	SocketAddress () QSE_CPP_NOEXCEPT;
