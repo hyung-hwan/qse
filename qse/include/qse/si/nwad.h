@@ -78,7 +78,7 @@ struct qse_nwad_t
  
 			/* note: 128 is chosen based on common path length in existing
 			 *       systems. most systems have different sizes. some 
-			 *       trailers may get truncated, when itconverted to skad. */
+			 *       trailers may get truncated, when it gets converted to skad. */
 			qse_char_t path[QSE_NWAD_LOCAL_MAX_PATH]; 
 		} local;
 	} u;
