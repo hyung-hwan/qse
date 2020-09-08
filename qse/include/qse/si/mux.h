@@ -137,6 +137,19 @@ QSE_EXPORT int qse_mux_poll (
 	const qse_ntime_t* tmout
 );
 
+QSE_EXPORT int qse_mux_setupchan (
+	qse_mux_t*         mux
+);
+
+/**
+ * The qse_mux_interrupt() function can be use break the blocking call  to
+ * qse_mux_poll() immediately. You must call qse_mux_setupchan() once on 
+ * the initialized mux before using qse_mux_interrupt().
+ */
+QSE_EXPORT void qse_mux_interrupt (
+	qse_mux_t*         mux
+);
+
 #if defined(__cplusplus)
 }
 #endif
