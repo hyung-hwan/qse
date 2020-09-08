@@ -287,3 +287,34 @@ int qse_skadsize (const qse_skad_t* skad)
 
 	return 0;
 }
+
+int qse_skadrealsize (const qse_skad_t* skad)
+{
+	sockaddr_t* sa = (sockaddr_t*)skad;
+	QSE_ASSERT (QSE_SIZEOF(*skad) >= QSE_SIZEOF(*sa));
+
+	switch (FAMILY(skad))
+	{
+	#if defined(AF_INET)
+		case AF_INET: return QSE_SIZEOF(sa->in4);
+	#endif
+
+	#if defined(AF_INET6)
+		case AF_INET6: return QSE_SIZEOF(sa->in6);
+	#endif
+
+	#if defined(AF_UNIX)
+		case AF_UNIX:
+		{
+			return QSE_OFFSETOF(struct sockaddr_un, sun_path) + qse_mbslen(sa->un.sun_path);
+		}
+	#endif
+
+	#if defined(AF_PACKET)
+		case AF_PACKET: return QSE_SIZEOF(sa->ll);
+	#endif
+
+	}
+
+	return 0;
+}
