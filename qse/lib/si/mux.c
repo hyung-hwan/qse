@@ -1146,7 +1146,16 @@ int qse_mux_setupchan (qse_mux_t* mux)
 	evt.hnd = mux->chan[0];
 	evt.mask = QSE_MUX_IN;
 	/*evt.data = ... */
-	return qse_mux_insert(mux, &evt);
+	if (qse_mux_insert(mux, &evt) <= -1)
+	{
+		close (mux->chan[0]);
+		close (mux->chan[1]);
+
+		mux->chan[0] = INVALID_CHAN;
+		mux->chan[1] = INVALID_CHAN;
+	}
+
+	return 0;
 }
 
 void qse_mux_interrupt (qse_mux_t* mux)
