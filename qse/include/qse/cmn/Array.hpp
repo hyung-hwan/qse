@@ -340,37 +340,37 @@ protected:
 	}
 
 public:
-	bool isEmpty () const
+	bool isEmpty () const QSE_CPP_NOEXCEPT
 	{
 		return this->count == 0;
 	}
 
-	qse_size_t getSize () const
+	qse_size_t getSize () const QSE_CPP_NOEXCEPT
 	{
 		return this->count;
 	}
 
-	qse_size_t getCapacity () const
+	qse_size_t getCapacity () const QSE_CPP_NOEXCEPT
 	{
 		return this->capacity;
 	}
 	
-	operator T* ()
+	operator T* () QSE_CPP_NOEXCEPT
 	{
 		return this->buffer;
 	}
 
-	operator const T* () const
+	operator const T* () const QSE_CPP_NOEXCEPT
 	{
 		return this->buffer;
 	}
 
-	T* getBuffer ()
+	T* getBuffer () QSE_CPP_NOEXCEPT
 	{
 		return this->buffer;
 	}
 
-	const T* getBuffer () const
+	const T* getBuffer () const QSE_CPP_NOEXCEPT
 	{
 		return this->buffer;
 	}
@@ -387,7 +387,7 @@ public:
 	///  const int& t = a[2];
 	///  printf ("%lu\n", (unsigned long int)a.getIndex(t)); // print 2
 	/// \endcode
-	qse_size_t getIndex (const T& v) const
+	qse_size_t getIndex (const T& v) const QSE_CPP_NOEXCEPT
 	{
 		if (&v >= &this->buffer[0] && &v < &this->buffer[this->count])
 		{
@@ -397,25 +397,25 @@ public:
 		return INVALID_INDEX;
 	}
 
-	T& operator[] (qse_size_t index)
+	T& operator[] (qse_size_t index) QSE_CPP_NOEXCEPT
 	{
 		QSE_ASSERT (index < this->count);
 		return this->buffer[index];
 	}
 
-	const T& operator[] (qse_size_t index) const
+	const T& operator[] (qse_size_t index) const QSE_CPP_NOEXCEPT
 	{
 		QSE_ASSERT (index < this->count);
 		return this->buffer[index];
 	}
 
-	T& getValueAt (qse_size_t index)
+	T& getValueAt (qse_size_t index) QSE_CPP_NOEXCEPT
 	{
 		QSE_ASSERT (index < this->count);
 		return this->buffer[index];
 	}
 
-	const T& getValueAt (qse_size_t index) const
+	const T& getValueAt (qse_size_t index) const QSE_CPP_NOEXCEPT
 	{
 		QSE_ASSERT (index < this->count);
 		return this->buffer[index];
@@ -433,12 +433,12 @@ public:
 	}
 #endif
 
-	const T& getFirst () const
+	const T& getFirst () const QSE_CPP_NOEXCEPT
 	{
 		return this->getValueAt(0);
 	}
 
-	const T& getLast () const
+	const T& getLast () const QSE_CPP_NOEXCEPT
 	{
 		return this->getValueAt(this->getSize() - 1);
 	}
