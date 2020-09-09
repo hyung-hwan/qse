@@ -157,17 +157,21 @@ public:
 
 	/// The isEmpty() function returns true if the binary heap contains no
 	/// item and false otherwise.
-	bool isEmpty() const { return ParentType::isEmpty(); }
+	bool isEmpty() const  QSE_CPP_NOEXCEPT{ return ParentType::isEmpty(); }
 
 	/// The getSize() function returns the number of items in the binary heap.
-	qse_size_t getSize() const { return ParentType::getSize(); }
+	qse_size_t getSize() const  QSE_CPP_NOEXCEPT{ return ParentType::getSize(); }
 
 	/// The getCapacity() function returns the capacity of the internal buffer
 	/// of the binary heap.
-	qse_size_t getCapacity() const { return ParentType::getCapacity(); }
+	qse_size_t getCapacity() const QSE_CPP_NOEXCEPT { return ParentType::getCapacity(); }
 
 	/// The getIndex() function returns the index of an item reference \a v.
 	qse_size_t getIndex (const T& v) const { return ParentType::getIndex(v); }
+
+	/// The setCapacity() function resizes the capacity of the internal buffer.
+	/// If the given capacity is smaller than the current capacity, it skips resizing.
+	void setCapacity (qse_size_t capa) { if (capa > ParentType::getCapacity()) ParentType::setCapacity (capa); }
 
 	/// The clear() function returns all items.
 	void clear (bool purge_buffer = false) { ParentType::clear (purge_buffer); }
@@ -178,14 +182,14 @@ public:
 
 	/// The operator[] function returns the constant reference to the item 
 	/// at the specified \a index.
-	const T& operator[] (qse_size_t index) const
+	const T& operator[] (qse_size_t index) const QSE_CPP_NOEXCEPT
 	{
 		return ParentType::getValueAt (index);
 	}
 
 	/// The getValueAt() function returns the constant reference to the item
 	/// at the specified \a index.
-	const T& getValueAt (qse_size_t index) const
+	const T& getValueAt (qse_size_t index) const QSE_CPP_NOEXCEPT
 	{
 		return ParentType::getValueAt (index);
 	}
