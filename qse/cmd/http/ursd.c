@@ -969,7 +969,7 @@ static int httpd_main (int argc, qse_char_t* argv[])
 	while (!g_stop_requested)
 	{
 		qse_ntime_t tmout;
-		qse_cleartime (&tmout);
+		qse_clear_ntime (&tmout);
 
 		/* if there are pending requests, use timeout of 0.
 		 * this way, multiplexer events and pending requests can be

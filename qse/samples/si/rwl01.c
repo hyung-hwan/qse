@@ -57,7 +57,7 @@ static int thr_exec (qse_thr_t* thr, void* ctx)
 			qse_ntime_t x;
 			OUTMSG (QSE_T("write waiting"), xtn->id);
 
-			qse_inittime (&x, 3, 0);
+			qse_init_ntime (&x, 3, 0);
 			/*if (qse_rwl_lockw (rwl, QSE_NULL) >= 0)*/
 			if (qse_rwl_lockw (rwl, &x) >= 0)
 			{

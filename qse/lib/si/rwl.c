@@ -106,9 +106,9 @@ int qse_rwl_lockr (qse_rwl_t* rwl, const qse_ntime_t* waiting_time)
 
 	if (waiting_time)
 	{
-		qse_cleartime (&zero);
+		qse_clear_ntime (&zero);
 		qse_gettime (&now);
-		qse_addtime (&now, waiting_time, &dead_line);
+		qse_add_ntime (&dead_line, &now, waiting_time);
 	}
 	if (qse_mtx_lock (&rwl->mtx, waiting_time) <= -1) return -1;
 
@@ -120,8 +120,8 @@ int qse_rwl_lockr (qse_rwl_t* rwl, const qse_ntime_t* waiting_time)
 			if (waiting_time)
 			{
 				qse_gettime (&now);
-				qse_subtime (&dead_line, &now, &rem);
-				if (qse_cmptime(&rem, &zero) <= 0)
+				qse_sub_ntime (&rem, &dead_line, &now);
+				if (qse_cmp_ntime(&rem, &zero) <= 0)
 				{
 					/* timed out */
 					rwl->rwait_count--;
@@ -170,9 +170,9 @@ int qse_rwl_lockw (qse_rwl_t* rwl, const qse_ntime_t* waiting_time)
 
 	if (waiting_time)
 	{
-		qse_cleartime (&zero);
+		qse_clear_ntime (&zero);
 		qse_gettime (&now);
-		qse_addtime (&now, waiting_time, &dead_line);
+		qse_add_ntime (&dead_line, &now, waiting_time);
 	}
 	if (qse_mtx_lock (&rwl->mtx, waiting_time) <= -1) return -1;
 
@@ -184,8 +184,8 @@ int qse_rwl_lockw (qse_rwl_t* rwl, const qse_ntime_t* waiting_time)
 			if (waiting_time)
 			{
 				qse_gettime (&now);
-				qse_subtime (&dead_line, &now, &rem);
-				if (qse_cmptime(&rem, &zero) <= 0)
+				qse_sub_ntime (&rem, &dead_line, &now);
+				if (qse_cmp_ntime(&rem, &zero) <= 0)
 				{
 					/* timed out */
 					rwl->wwait_count--;

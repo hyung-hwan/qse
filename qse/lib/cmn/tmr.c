@@ -31,7 +31,7 @@
 #define HEAP_LEFT(x)   ((x) * 2 + 1)
 #define HEAP_RIGHT(x)  ((x) * 2 + 2)
 
-#define YOUNGER_THAN(x,y) (qse_cmptime(&(x)->when, &(y)->when) < 0)
+#define YOUNGER_THAN(x,y) (qse_cmp_ntime(&(x)->when, &(y)->when) < 0)
 
 qse_tmr_t* qse_tmr_open (qse_mmgr_t* mmgr, qse_size_t xtnsize, qse_size_t capa)
 {
@@ -236,11 +236,11 @@ int qse_tmr_fire (qse_tmr_t* tmr, const qse_ntime_t* tm, qse_size_t* firecnt)
 
 	/* if the current time is not specified, get it from the system */
 	if (tm) now = *tm;
-	else if (qse_gettime (&now) <= -1) return -1;
+	else if (qse_gettime(&now) <= -1) return -1;
 
 	while (tmr->size > 0)
 	{
-		if (qse_cmptime(&tmr->event[0].when, &now) > 0) break;
+		if (qse_cmp_ntime(&tmr->event[0].when, &now) > 0) break;
 
 		event = tmr->event[0];
 		qse_tmr_delete (tmr, 0); /* remove the registered event structure */
@@ -262,10 +262,10 @@ int qse_tmr_gettmout (qse_tmr_t* tmr, const qse_ntime_t* tm, qse_ntime_t* tmout)
 
 	/* if the current time is not specified, get it from the system */
 	if (tm) now = *tm;
-	else if (qse_gettime (&now) <= -1) return -1;
+	else if (qse_gettime(&now) <= -1) return -1;
 
-	qse_subtime (&tmr->event[0].when, &now, tmout);
-	if (tmout->sec < 0) qse_cleartime (tmout);
+	qse_sub_ntime (tmout, &tmr->event[0].when, &now);
+	if (qse_is_neg_ntime(tmout)) qse_clear_ntime (tmout);
 
 	return 0;
 }
