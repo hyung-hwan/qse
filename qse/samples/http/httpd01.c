@@ -84,7 +84,7 @@ static int httpd_main (int argc, qse_char_t* argv[])
 		int trait = QSE_HTTPD_CGIERRTONUL;
 		qse_httpd_setopt (httpd, QSE_HTTPD_TRAIT,  &trait);
 
-		qse_inittime (&tmout, 10, 0);
+		qse_init_ntime (&tmout, 10, 0);
 		qse_httpd_setopt (httpd, QSE_HTTPD_TMOUT,  &tmout);
 	}
 

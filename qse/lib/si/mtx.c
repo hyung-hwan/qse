@@ -220,7 +220,7 @@ int qse_mtx_lock (qse_mtx_t* mtx, const qse_ntime_t* waiting_time)
 		struct timespec ts;
 
 		qse_gettime (&t);
-		qse_addtime (&t, waiting_time, &t);
+		qse_add_ntime (&t, waiting_time, &t);
 
 		ts.tv_sec = t.sec;
 		ts.tv_nsec = t.nsec;

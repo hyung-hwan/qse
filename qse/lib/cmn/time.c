@@ -614,7 +614,7 @@ int qse_timelocal (const qse_btime_t* bt, qse_ntime_t* nt)
 	return 0;
 }
 
-void qse_addtime (const qse_ntime_t* x, const qse_ntime_t* y, qse_ntime_t* z)
+void qse_add_ntime (qse_ntime_t* z, const qse_ntime_t* x, const qse_ntime_t* y)
 {
 	QSE_ASSERT (x->nsec >= 0 && x->nsec < QSE_NSECS_PER_SEC);
 	QSE_ASSERT (y->nsec >= 0 && y->nsec < QSE_NSECS_PER_SEC);
@@ -679,7 +679,7 @@ void qse_addtime (const qse_ntime_t* x, const qse_ntime_t* y, qse_ntime_t* z)
 #endif
 }
 
-void qse_subtime (const qse_ntime_t* x, const qse_ntime_t* y, qse_ntime_t* z)
+void qse_sub_ntime (qse_ntime_t* z, const qse_ntime_t* x, const qse_ntime_t* y)
 {
 	QSE_ASSERT (x->nsec >= 0 && x->nsec < QSE_NSECS_PER_SEC);
 	QSE_ASSERT (y->nsec >= 0 && y->nsec < QSE_NSECS_PER_SEC);

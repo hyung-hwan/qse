@@ -558,13 +558,13 @@ qse_httpd_peer_t* qse_httpd_decacheproxypeer (
 	{
 		next = peer->next;
 
-		qse_subtime (&now, &peer->timestamp, &diff);
-		if (qse_cmptime(&diff, &diff_limit) >= 0)
+		qse_sub_ntime (&diff, &now, &peer->timestamp);
+		if (qse_cmp_ntime(&diff, &diff_limit) >= 0)
 		{
 			/* the entry is too old */
 			purge_cached_proxy_peer (httpd, client, peer);
 		}
-		else if (qse_nwadequal (nwad, &peer->nwad) && qse_nwadequal (local, &peer->local))
+		else if (qse_nwadequal(nwad, &peer->nwad) && qse_nwadequal (local, &peer->local))
 		{
 			if ((secure && (peer->flags & QSE_HTTPD_PEER_SECURE)) ||
 			    (!secure && !(peer->flags & QSE_HTTPD_PEER_SECURE))) 
@@ -644,7 +644,7 @@ static qse_httpd_client_t* new_client (qse_httpd_t* httpd, qse_httpd_client_t* t
 		/* idle limit is enabled when the limit is greater than 0.0 */
 		QSE_MEMSET (&idle_event, 0, QSE_SIZEOF(idle_event));
 		qse_gettime (&idle_event.when);
-		qse_addtime (&idle_event.when, &httpd->opt.idle_limit, &idle_event.when);
+		qse_add_ntime (&idle_event.when, &httpd->opt.idle_limit, &idle_event.when);
 		idle_event.ctx = client;
 		idle_event.handler = tmr_idle_handle;
 		idle_event.updater = tmr_idle_update;
@@ -894,11 +894,11 @@ static void tmr_idle_handle (qse_tmr_t* tmr, const qse_ntime_t* now, qse_tmr_eve
 {
 	qse_httpd_client_t* client = (qse_httpd_client_t*)evt->ctx;
 
-	if (qse_cmptime(now, &client->last_active) >= 0)
+	if (qse_cmp_ntime(now, &client->last_active) >= 0)
 	{
 		qse_ntime_t diff;
-		qse_subtime (now, &client->last_active, &diff);
-		if (qse_cmptime(&diff, &client->server->httpd->opt.idle_limit) >= 0)
+		qse_sub_ntime (&diff, now, &client->last_active);
+		if (qse_cmp_ntime(&diff, &client->server->httpd->opt.idle_limit) >= 0)
 		{
 			/* this client is idle */
 			HTTPD_DBGOUT1 ("Purging idle client %zd\n", (qse_size_t)client->handle);
@@ -913,7 +913,7 @@ static void tmr_idle_handle (qse_tmr_t* tmr, const qse_ntime_t* now, qse_tmr_eve
 			/*qse_gettime (&idle_event.when);*/
 			QSE_MEMSET (&idle_event, 0, QSE_SIZEOF(idle_event));
 			idle_event.when = *now;
-			qse_addtime (&idle_event.when, &client->server->httpd->opt.idle_limit, &idle_event.when);
+			qse_add_ntime (&idle_event.when, &client->server->httpd->opt.idle_limit, &idle_event.when);
 			idle_event.ctx = client;
 			idle_event.handler = tmr_idle_handle;
 			idle_event.updater = tmr_idle_update;

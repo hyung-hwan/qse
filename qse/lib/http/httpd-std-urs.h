@@ -364,7 +364,7 @@ static void tmr_urs_tmout_handle (qse_tmr_t* tmr, const qse_ntime_t* now, qse_tm
 
 		QSE_MEMSET (&tmout_event, 0, QSE_SIZEOF(tmout_event));
 		qse_gettime (&tmout_event.when);
-		qse_addtime (&tmout_event.when, &req->urs_tmout, &tmout_event.when);
+		qse_add_ntime (&tmout_event.when, &req->urs_tmout, &tmout_event.when);
 		tmout_event.ctx = req;
 		tmout_event.handler = tmr_urs_tmout_handle;
 		tmout_event.updater = tmr_urs_tmout_update;
@@ -506,7 +506,7 @@ static int urs_send (qse_httpd_t* httpd, qse_httpd_urs_t* urs, const qse_mchar_t
 
 	QSE_MEMSET (&tmout_event, 0, QSE_SIZEOF(tmout_event));
 	qse_gettime (&tmout_event.when);
-	qse_addtime (&tmout_event.when, &req->urs_tmout, &tmout_event.when);
+	qse_add_ntime (&tmout_event.when, &req->urs_tmout, &tmout_event.when);
 	tmout_event.ctx = req;
 	tmout_event.handler = tmr_urs_tmout_handle;
 	tmout_event.updater = tmr_urs_tmout_update;

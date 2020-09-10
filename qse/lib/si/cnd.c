@@ -363,7 +363,7 @@ void qse_cnd_wait (qse_cnd_t* cnd, qse_mtx_t* mutex, const qse_ntime_t* waiting_
 		struct timespec ts;
 
 		qse_gettime (&t);
-		qse_addtime (&t, waiting_time, &t);
+		qse_add_ntime (&t, waiting_time, &t);
 
 		ts.tv_sec = t.sec;
 		ts.tv_nsec = t.nsec;
