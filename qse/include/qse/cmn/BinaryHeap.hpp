@@ -170,8 +170,8 @@ public:
 	qse_size_t getIndex (const T& v) const { return ParentType::getIndex(v); }
 
 	/// The setCapacity() function resizes the capacity of the internal buffer.
-	/// If the given capacity is smaller than the current capacity, it skips resizing.
-	void setCapacity (qse_size_t capa) { if (capa > ParentType::getCapacity()) ParentType::setCapacity (capa); }
+	/// If the given capacity is smaller than the current size, it skips resizing.
+	void setCapacity (qse_size_t capa) { if (capa > ParentType::getSize()) ParentType::setCapacity (capa); }
 
 	/// The clear() function returns all items.
 	void clear (bool purge_buffer = false) { ParentType::clear (purge_buffer); }
