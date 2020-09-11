@@ -73,7 +73,7 @@ struct ArrayResizer
 /// With C++11, the Array class move-contructs values in various context.
 /// The move constructor of the value must not raise an exception.
 /// 
-template <typename T, typename POSITIONER = ArrayPositioner<T>, typename RESIZER = ArrayResizer >
+template <typename T, typename POSITIONER = ArrayPositioner<T>, typename RESIZER = ArrayResizer>
 class Array: public Mmged, public Growable
 {
 public:
@@ -205,7 +205,7 @@ protected:
 
 		//T* tmp = new T[capa];
 		//T* tmp = (T*)::operator new (capa * QSE_SIZEOF(*tmp), this->getMmgr());
-		T* tmp = (T*)this->getMmgr()->allocate (capa * QSE_SIZEOF(*tmp));
+		T* tmp = (T*)this->getMmgr()->allocate(capa * QSE_SIZEOF(*tmp));
 
 		try 
 		{
@@ -246,7 +246,7 @@ protected:
 
 		//T* tmp = new T[capa];
 		//T* tmp = (T*)::operator new (capa * QSE_SIZEOF(*tmp), this->getMmgr());
-		T* tmp = (T*)this->getMmgr()->allocate (capa * QSE_SIZEOF(*tmp));
+		T* tmp = (T*)this->getMmgr()->allocate(capa * QSE_SIZEOF(*tmp));
 
 		try 
 		{
@@ -661,24 +661,6 @@ public:
 		this->remove(this->getSize() - 1);
 	}
 
-#if 0
-	/// \return the number of items deleted.
-	int removeByValue (const T& value)
-	{
-		qse_size_t index = this->findFirstIndex (value);
-		if (index == INVALID_INDEX) return 0;
-		this->remove (index);
-		return 1; 
-	}
-
-	qse_size_t removeAllByValue (const T& value)
-	{
-		qse_size_t cnt = 0;
-		while (this->removeByValue(value) > 0) cnt++;
-		return cnt;
-	}
-#endif
-
 public:
 	void clear (bool purge_buffer = false)
 	{
@@ -754,7 +736,7 @@ public:
 			QSE_ASSERT (this->count <= 0);
 
 			//this->buffer = (T*)::operator new (capa * QSE_SIZEOF(*this->buffer), this->getMmgr());
-			this->buffer = (T*)this->getMmgr()->allocate (capa * QSE_SIZEOF(*this->buffer));
+			this->buffer = (T*)this->getMmgr()->allocate(capa * QSE_SIZEOF(*this->buffer));
 			this->capacity = capa;
 		}
 	}
@@ -764,44 +746,6 @@ public:
 	{
 		this->setCapacity (this->size);
 	}
-
-#if 0
-	qse_size_t findFirstIndex (const T& value) const
-	{
-		for (qse_size_t i = 0; i < this->count; i++) 
-		{
-			if (this->is_equal (this->buffer[i], value)) return i;
-		}
-		return INVALID_INDEX;
-	}
-	
-	qse_size_t findFirstIndex (const T& value, qse_size_t index) const
-	{
-		for (qse_size_t i = index; i < this->count; i++) 
-		{
-			if (this->is_equal (this->buffer[i], value)) return i;
-		}
-		return INVALID_INDEX;
-	}
-
-	qse_size_t findLastIndex (const T& value) const
-	{
-		for (qse_size_t i = this->count; i > 0; ) 
-		{
-			if (this->is_equal (this->buffer[--i], value)) return i;
-		}
-		return INVALID_INDEX;
-	}
-	
-	qse_size_t findLastIndex (const T& value, qse_size_t index) const
-	{
-		for (qse_size_t i = index + 1; i > 0; ) 
-		{
-			if (this->is_equal (this->buffer[--i], value)) return i;
-		}
-		return INVALID_INDEX;
-	}
-#endif
 
 	enum RotateDirection
 	{
@@ -853,6 +797,97 @@ protected:
 	qse_size_t count;
 	qse_size_t capacity;
 	T*         buffer;
+};
+
+// euqal-to comparator
+template <typename T>
+struct SearchableArrayEqtester
+{
+	// this can be used to build a max heap
+	bool operator() (const T& v1, const T& v2) const
+	{
+		return v1 == v2;
+	}
+};
+
+template <typename T, typename EQTESTER = SearchableArrayEqtester<T>, typename POSITIONER = ArrayPositioner<T>, typename RESIZER = ArrayResizer>
+class SearchableArray: public Array<T, POSITIONER, RESIZER>
+{
+public:
+	typedef SearchableArray<T,EQTESTER,POSITIONER,RESIZER> SelfType;
+	typedef Array<T,POSITIONER,RESIZER> ParentType;
+
+	enum
+	{
+		DEFAULT_CAPACITY = ParentType::DEFAULT_CAPACITY,
+		INVALID_INDEX = ParentType::INVALID_INDEX
+	};
+
+	SearchableArray (Mmgr* mmgr = QSE_NULL): ParentType(mmgr) {}
+
+	SearchableArray (qse_size_t capacity, Mmgr* mmgr = QSE_NULL): ParentType(capacity, mmgr) {}
+
+	SearchableArray (const SelfType& heap): ParentType(heap) {}
+
+#if defined(QSE_CPP_ENABLE_CPP11_MOVE)
+	SearchableArray (SelfType&& heap): ParentType(QSE_CPP_RVREF(heap)) {}
+#endif
+	~SearchableArray () { }
+
+	/// \return the number of items deleted.
+	int removeByValue (const T& value)
+	{
+		qse_size_t index = this->findFirstIndex (value);
+		if (index == INVALID_INDEX) return 0;
+		this->remove (index);
+		return 1; 
+	}
+
+	qse_size_t removeAllByValue (const T& value)
+	{
+		qse_size_t cnt = 0;
+		while (this->removeByValue(value) > 0) cnt++;
+		return cnt;
+	}
+
+	qse_size_t findFirstIndex (const T& value) const
+	{
+		for (qse_size_t i = 0; i < this->count; i++) 
+		{
+			if (this->_eqtester(this->buffer[i], value)) return i;
+		}
+		return INVALID_INDEX;
+	}
+	
+	qse_size_t findFirstIndex (const T& value, qse_size_t index) const
+	{
+		for (qse_size_t i = index; i < this->count; i++) 
+		{
+			if (this->_eqtester(this->buffer[i], value)) return i;
+		}
+		return INVALID_INDEX;
+	}
+
+	qse_size_t findLastIndex (const T& value) const
+	{
+		for (qse_size_t i = this->count; i > 0; ) 
+		{
+			if (this->_eqtester(this->buffer[--i], value)) return i;
+		}
+		return INVALID_INDEX;
+	}
+	
+	qse_size_t findLastIndex (const T& value, qse_size_t index) const
+	{
+		for (qse_size_t i = index + 1; i > 0; ) 
+		{
+			if (this->_eqtester(this->buffer[--i], value)) return i;
+		}
+		return INVALID_INDEX;
+	}
+
+protected:
+	EQTESTER _eqtester;
 };
 
 /////////////////////////////////

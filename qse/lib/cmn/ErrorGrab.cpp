@@ -47,7 +47,7 @@ QSE_BEGIN_NAMESPACE(QSE)
 #define MSG_EPIPE "pipe error"
 
 #define MSG_EINPROG "in progress"
-#define MSG_EAGAIN  "resource unavailable unavailable"
+#define MSG_EAGAIN  "resource temporarily unavailable"
 #define MSG_EEXCEPT "exception"
 
 static const qse_mchar_t* _merrstr[] =
