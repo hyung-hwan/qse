@@ -151,7 +151,8 @@ int qse_mbsntonwad (const qse_mchar_t* str, qse_size_t len, qse_nwad_t* nwad)
 
 	if (p >= end) return -1;
 
-	if ((*p == '@' && len >= 2) || *p == '/') // with @, you can specify a relative path
+	// with @, you can specify a relative path as well as an absolute path
+	if ((*p == '@' && len >= 2) || *p == '/') 
 	{
 		/* the string begins with @. it's a local name excluding @.
 		 * if it begins with /, it's also a local name */

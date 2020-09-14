@@ -19,11 +19,6 @@ MainApp::Env::Env (MainApp* app, QSE::Mmgr* mmgr): SkvEnv(mmgr), app(app), log_t
 		(ProbeProc)&MainApp::Env::probe_log_level);
 
 	this->addItem (
-		APP_ENV_CHROOT,
-		QSE_T(""),
-		(ProbeProc)&MainApp::Env::probe_chroot);
-
-	this->addItem (
 		APP_ENV_GATE_ADDRESSES,
 		APP_GATE_ADDRESSES,
 		(ProbeProc)&MainApp::Env::probe_gate_addresses);
@@ -73,14 +68,6 @@ int MainApp::Env::probe_log_level (const qse_char_t* v)
 	if (prio == 0) return -1; // unknown name inside
 
 	if (!this->log_level_preset) this->app->setLogPriorityMask(prio);
-	return 0;
-}
-
-int MainApp::Env::probe_chroot (const qse_char_t* v)
-{
-	// nothing to inspect
-	if (v[0] != '\0' && qse_stristype(v, QSE_CTYPE_SPACE)) return -1;
-	this->chroot.update (v);
 	return 0;
 }
 
@@ -155,14 +142,14 @@ int MainApp::run (bool foreground)
 
 		try
 		{
+			this->chroot_if_needed ();
+
 			int x = this->load_config();
 
 			QSE_APP_LOG1 (this, QSE_LOG_INFO, QSE_T("starting application %d\n"), (int)getpid());
 
 			if (x <= -1) QSE_APP_LOG1 (this, QSE_LOG_WARNING, QSE_T("unable to load configuration from %js\n"), this->conffile.getData());
 			else QSE_APP_LOG1 (this, QSE_LOG_INFO, QSE_T("loaded configuration from %js\n"), this->conffile.getData());
-
-			this->chroot_if_needed ();
 
 			this->tcp_gate.setBindAddress (this->gate_addresses.isEmpty()? this->env.getGateAddresses(): this->gate_addresses.getData());
 			if (this->tcp_gate.start() <= -1)
