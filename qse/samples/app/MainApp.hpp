@@ -40,7 +40,6 @@
 
 #define APP_ENV_LOG_TYPE          QSE_T("MAIN*LOG_TYPE")
 #define APP_ENV_LOG_LEVEL         QSE_T("MAIN*LOG_LEVEL")
-#define APP_ENV_CHROOT                QSE_T("MAIN*CHROOT")
 
 #define APP_ENV_GATE_ADDRESSES        QSE_T("GATE*ADDRESSES")
 #define APP_ENV_GATE_MAX_CONNECTIONS  QSE_T("GATE*MAX_CONNECTIONS")
@@ -76,7 +75,6 @@ public:
 
 		int probe_log_type (const qse_char_t* v);
 		int probe_log_level (const qse_char_t* v);
-		int probe_chroot (const char_t* v);
 
 		int probe_gate_addresses       (const qse_char_t* v);
 		int probe_gate_max_connections (const qse_char_t* v);
