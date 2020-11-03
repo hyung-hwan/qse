@@ -349,8 +349,8 @@ static qse_xma_fblk_t* alloc_from_freelist (qse_xma_t* xma, qse_size_t xfi, qse_
 				/* shrink the size of the 'cand' block */
 				cand->size = size;
 
-				/* let 'tmp' point to the remaining part */
-				y = next_mblk(cand); /* get the next adjacent block */
+				/* let 'y' point to the remaining part */
+				y = next_mblk(cand);
 
 				/* initialize some fields */
 				y->free = 1;
@@ -647,13 +647,16 @@ void qse_xma_free (qse_xma_t* xma, void* b)
 {
 	qse_xma_mblk_t* blk = (qse_xma_mblk_t*)USR_TO_SYS(b);
 	qse_xma_mblk_t* x, * y;
+	qse_size_t org_blk_size;
 
 	DBG_VERIFY (xma, "free start");
+
+	org_blk_size = blk->size;
 
 #if defined(QSE_XMA_ENABLE_STAT)
 	/* update statistical variables */
 	xma->stat.nused--;
-	xma->stat.alloc -= blk->size;
+	xma->stat.alloc -= org_blk_size;
 #endif
 
 	x = prev_mblk(blk);
@@ -678,7 +681,7 @@ void qse_xma_free (qse_xma_t* xma, void* b)
 		 */
 		
 		qse_xma_mblk_t* z = next_mblk(y);
-		qse_size_t ns = MBLKHDRSIZE + blk->size + MBLKHDRSIZE;
+		qse_size_t ns = MBLKHDRSIZE + org_blk_size + MBLKHDRSIZE;
 		qse_size_t bs = ns + y->size;
 
 		detach_from_freelist (xma, (qse_xma_fblk_t*)x);
@@ -720,10 +723,6 @@ void qse_xma_free (qse_xma_t* xma, void* b)
 		 */
 		qse_xma_mblk_t* z = next_mblk(y);
 
-#if defined(QSE_XMA_ENABLE_STAT)
-		xma->stat.avail += blk->size + MBLKHDRSIZE;
-#endif
-
 		/* detach y from the free list */
 		detach_from_freelist (xma, (qse_xma_fblk_t*)y);
 
@@ -737,6 +736,10 @@ void qse_xma_free (qse_xma_t* xma, void* b)
 
 		/* attach blk to the free list */
 		attach_to_freelist (xma, (qse_xma_fblk_t*)blk);
+
+#if defined(QSE_XMA_ENABLE_STAT)
+		xma->stat.avail += org_blk_size + MBLKHDRSIZE;
+#endif
 	}
 	else if ((qse_uint8_t*)x >= xma->start && x->free)
 	{
@@ -754,28 +757,27 @@ void qse_xma_free (qse_xma_t* xma, void* b)
 		 * |     X                   |     Y      |
 		 * +-------------------------+------------+
 		 */
-#if defined(QSE_XMA_ENABLE_STAT)
-		xma->stat.avail += MBLKHDRSIZE + blk->size;
-#endif
-
 		detach_from_freelist (xma, (qse_xma_fblk_t*)x);
 
-		x->size += MBLKHDRSIZE + blk->size;
+		x->size += MBLKHDRSIZE + org_blk_size;
 
 		QSE_ASSERT (y == next_mblk(x));
 		if ((qse_uint8_t*)y < xma->end) y->prev_size = x->size;
 
 		attach_to_freelist (xma, (qse_xma_fblk_t*)x);
+
+#if defined(QSE_XMA_ENABLE_STAT)
+		xma->stat.avail += MBLKHDRSIZE + org_blk_size;
+#endif
 	}
 	else
 	{
-
 		blk->free = 1;
 		attach_to_freelist (xma, (qse_xma_fblk_t*)blk);
 
 #if defined(QSE_XMA_ENABLE_STAT)
 		xma->stat.nfree++;
-		xma->stat.avail += blk->size;
+		xma->stat.avail += org_blk_size;
 #endif
 	}
 
