@@ -50,7 +50,7 @@ void* HeapMmgr::allocMem (qse_size_t n) QSE_CPP_NOEXCEPT
 {
 	if (!this->xma)
 	{
-		this->xma = qse_xma_open(this->getMmgr(), QSE_SIZEOF(xma_xtn_t), heap_size);
+		this->xma = qse_xma_open(this->getMmgr(), QSE_SIZEOF(xma_xtn_t), QSE_NULL, heap_size);
 		if (!this->xma) return QSE_NULL;
 
 		xma_xtn_t* xtn = (xma_xtn_t*)qse_xma_getxtn(this->xma);
@@ -64,7 +64,7 @@ void* HeapMmgr::reallocMem (void* ptr, qse_size_t n) QSE_CPP_NOEXCEPT
 {
 	if (!this->xma)
 	{
-		this->xma = qse_xma_open(this->getMmgr(), QSE_SIZEOF(xma_xtn_t), heap_size);
+		this->xma = qse_xma_open(this->getMmgr(), QSE_SIZEOF(xma_xtn_t), QSE_NULL, heap_size);
 		if (!this->xma) return QSE_NULL;
 
 		xma_xtn_t* xtn = (xma_xtn_t*)qse_xma_getxtn(this->xma);
