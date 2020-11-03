@@ -1005,7 +1005,7 @@ static int awk_main (int argc, qse_char_t* argv[])
 #endif
 	if (arg.memlimit > 0)
 	{
-		xma_mmgr.ctx = qse_xma_open (QSE_MMGR_GETDFL(), 0, arg.memlimit);
+		xma_mmgr.ctx = qse_xma_open (QSE_MMGR_GETDFL(), 0, QSE_NULL, arg.memlimit);
 		if (xma_mmgr.ctx == QSE_NULL)
 		{
 			qse_printf (QSE_T("ERROR: cannot open memory heap\n"));
@@ -1108,7 +1108,11 @@ oops:
 	if (rtx) qse_awk_rtx_close (rtx);
 	if (awk) qse_awk_close (awk);
 
-	if (xma_mmgr.ctx) qse_xma_close (xma_mmgr.ctx);
+	if (xma_mmgr.ctx) 
+	{
+		if (app_debug) qse_xma_dump (xma_mmgr.ctx, qse_fprintf, QSE_STDERR);
+		qse_xma_close (xma_mmgr.ctx);
+	}
 	freearg (&arg);
 
 #if defined(QSE_BUILD_DEBUG)
