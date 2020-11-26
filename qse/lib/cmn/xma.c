@@ -255,7 +255,7 @@ int qse_xma_init (qse_xma_t* xma, qse_mmgr_t* mmgr, void* zoneptr, qse_size_t zo
 	/* let it be the head, which is natural with only a block */
 	xma->start = (qse_uint8_t*)first;
 	xma->end = xma->start + zonesize;
-	xma->internal = 1;
+	xma->internal = internal;
 
 	/* initialize some statistical variables */
 #if defined(QSE_XMA_ENABLE_STAT)
