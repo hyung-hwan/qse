@@ -232,6 +232,12 @@ int qse_xma_init (qse_xma_t* xma, qse_mmgr_t* mmgr, void* zoneptr, qse_size_t zo
 
 		internal = 1;
 	}
+	else if (zonesize < FBLKMINSIZE) 
+	{
+		/* the zone size is too small for an externally allocated zone. */
+/* TODO: difference error code from memory allocation failure.. this is not really memory shortage */
+		return -1;
+	}
 
 	first = (qse_xma_fblk_t*)zoneptr;
 
