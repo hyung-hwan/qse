@@ -42,16 +42,62 @@ static int write_to_current_stream(qse_xli_t* xli, const qse_char_t* ptr, qse_si
 
 	for (i = 0; i < len; i++)
 	{
+
+		if (escape)
+		{
+			if (ptr[i] == QSE_T('\\') || ptr[i] == QSE_T('\"') || 
+			    ptr[i] == QSE_T('\b') || ptr[i] == QSE_T('\f') ||
+			    ptr[i] == QSE_T('\n') || ptr[i] == QSE_T('\r') || ptr[i] == QSE_T('\t'))
+			{
+				qse_char_t ac;
+				if (arg->b.len + 2 > QSE_COUNTOF(arg->b.buf) && qse_xli_flushwstream(xli, arg) <= -1) return -1;
+				arg->b.buf[arg->b.len++] = QSE_T('\\');
+				switch (ptr[i]) 
+				{
+					case QSE_T('\b'): ac = 'b'; break;
+					case QSE_T('\f'): ac = 'f'; break;
+					case QSE_T('\n'): ac = 'n'; break;
+					case QSE_T('\r'): ac = 'r'; break;
+					case QSE_T('\t'): ac = 't'; break;
+					default: ac = ptr[i]; break;
+				}
+				arg->b.buf[arg->b.len++] = ac;
+			}
+			else if (ptr[i] >= 0x00 && ptr[i] <= 0x1F)
+			{
+				qse_char_t tmp[5];
+				if (arg->b.len + 6 > QSE_COUNTOF(arg->b.buf) && qse_xli_flushwstream(xli, arg) <= -1) return -1;
+				arg->b.buf[arg->b.len++] = QSE_T('\\');
+				arg->b.buf[arg->b.len++] = QSE_T('u');
+				/* use 'tmp' to avoid null termination beyond the buffer end */
+				qse_strxfmt(tmp, QSE_COUNTOF(tmp), QSE_T("%04X"), ptr[i]); 
+				arg->b.len += qse_strcpy(&arg->b.buf[arg->b.len], tmp);
+			}
+			else
+			{
+				goto unescaped;
+			}
+		}
+		else
+		{
+		unescaped:
+			if (arg->b.len + 1 > QSE_COUNTOF(arg->b.buf) && qse_xli_flushwstream(xli, arg) <= -1) return -1;
+			arg->b.buf[arg->b.len++] = ptr[i];
+		}
+
+
+		/*
 		if (escape && (ptr[i] == QSE_T('\\') || ptr[i] == QSE_T('\"')))
 		{
-			if (arg->b.len + 2 > QSE_COUNTOF(arg->b.buf) && qse_xli_flushwstream (xli, arg) <= -1) return -1;
+			if (arg->b.len + 2 > QSE_COUNTOF(arg->b.buf) && qse_xli_flushwstream(xli, arg) <= -1) return -1;
 			arg->b.buf[arg->b.len++] = QSE_T('\\');
 		}
 		else
 		{
-			if (arg->b.len + 1 > QSE_COUNTOF(arg->b.buf) && qse_xli_flushwstream (xli, arg) <= -1) return -1;
+			if (arg->b.len + 1 > QSE_COUNTOF(arg->b.buf) && qse_xli_flushwstream(xli, arg) <= -1) return -1;
 		}
 		arg->b.buf[arg->b.len++] = ptr[i];
+		*/
 	}
 
 	return 0;

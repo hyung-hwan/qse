@@ -85,6 +85,23 @@ enum
 		} \
 	} while (0)
 
+#if defined(QSE_CHAR_IS_MCHAR)
+
+#	define ADD_TOKEN_UINT32(xli,tok,c) \
+	do { \
+		if (c <= 0xFF) ADD_TOKEN_CHAR(xli, tok, c); \
+		else  \
+		{ \
+			qse_mchar_t __xbuf[QSE_MBLEN_MAX + 1]; \
+			qse_size_t __len, __i; \
+			__len = qse_uctoutf8(c, __xbuf, QSE_COUNTOF(__xbuf)); /* use utf8 all the time */ \
+			for (__i = 0; __i < __len; __i++) ADD_TOKEN_CHAR(xli, tok, __xbuf[__i]); \
+		} \
+	} while (0)
+#else
+#	define ADD_TOKEN_UINT32(xli,tok,c) ADD_TOKEN_CHAR(xli,tok,c);
+#endif
+
 #define SET_TOKEN_TYPE(xli,tok,code) \
 	do { (tok)->type = (code); } while (0)
 
@@ -478,6 +495,8 @@ retry:
 	{
 		/* double-quoted string - support escaping */
 		int escaped = 0;
+		qse_size_t digit_count = 0;
+		qse_uint32_t c_acc = 0;
 
 		SET_TOKEN_TYPE (xli, tok, QSE_XLI_TOK_DQSTR);
 
@@ -494,6 +513,7 @@ retry:
 
 			if (!escaped)
 			{
+			not_escaped:
 				if (c == QSE_T('\\')) 
 				{
 					escaped = 1;
@@ -509,8 +529,69 @@ retry:
 
 				ADD_TOKEN_CHAR (xli, tok, c);
 			}
+			else if (escaped == 4)
+			{
+				if (c >= QSE_T('0') && c <= QSE_T('9'))
+				{
+					c_acc = c_acc * 16 + c - QSE_T('0');
+					digit_count++;
+					if (digit_count >= escaped) 
+					{
+						ADD_TOKEN_UINT32 (xli, tok, c_acc);
+						escaped = 0;
+					}
+				}
+				else if (c >= QSE_T('A') && c <= QSE_T('F'))
+				{
+					c_acc = c_acc * 16 + c - QSE_T('A') + 10;
+					digit_count++;
+					if (digit_count >= escaped) 
+					{
+						ADD_TOKEN_UINT32 (xli, tok, c_acc);
+						escaped = 0;
+					}
+				}
+				else if (c >= QSE_T('a') && c <= QSE_T('f'))
+				{
+					c_acc = c_acc * 16 + c - QSE_T('a') + 10;
+					digit_count++;
+					if (digit_count >= escaped) 
+					{
+						ADD_TOKEN_UINT32 (xli, tok, c_acc);
+						escaped = 0;
+					}
+				}
+				else
+				{
+					/* not a hexadecimal digit */
+
+					if (digit_count == 0) 
+					{
+						/* no valid character after the escaper. keep the escaper as it is */
+						ADD_TOKEN_CHAR (xli, tok, 'u');
+					}
+					else ADD_TOKEN_UINT32 (xli, tok, c_acc);
+
+					escaped = 0;
+					goto not_escaped;
+				}
+			}
 			else
 			{
+				if (c == 'u') 
+				{
+					escaped = 4;
+					digit_count = 0;
+					c_acc = 0;
+					continue;
+				}
+
+				if (c == 'b') c = '\b';
+				else if (c == 'f') c = '\f';
+				else if (c == 'n') c = '\n';
+				else if (c == 'r') c = '\r';
+				else if (c == 't') c = '\t';
+
 				ADD_TOKEN_CHAR (xli, tok, c);
 				escaped = 0;
 			}
