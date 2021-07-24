@@ -24,8 +24,8 @@
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _QSE_SI_APP_H_
-#define _QSE_SI_APP_H_
+#ifndef _QSE_SI_APP_HPP_
+#define _QSE_SI_APP_HPP_
 
 #include <qse/Types.hpp>
 #include <qse/Uncopyable.hpp>
@@ -59,6 +59,7 @@ class App: public Uncopyable, public Types, public Mmged, public Named<32>
 {
 public:
 	typedef QSE::Bitset<QSE_NSIGS> SignalSet;
+	typedef long int child_pid_t;
 
 	enum SignalState
 	{
@@ -220,7 +221,7 @@ private:
 	};
 
 	_SigLink _sig[QSE_NSIGS]; 
-	long int _guarded_child_pid;
+	child_pid_t _guarded_child_pid;
 
 	qse_cmgr_t* _cmgr;
 	struct log_t
@@ -245,6 +246,15 @@ private:
 	static void handle_signal (int sig) QSE_CPP_NOEXCEPT;
 
 	static int put_char_to_log_buf (qse_char_t c, void* ctx) QSE_CPP_NOEXCEPT;
+
+protected:
+	enum guarded_child_state_t
+	{
+		GUARDED_CHILD_STARTED,
+		GUARDED_CHILD_EXITED
+	};
+
+	void on_guarded_child (child_pid_t pid, guarded_child_state_t state, int status) QSE_CPP_NOEXCEPT {};
 };
 
 /////////////////////////////////

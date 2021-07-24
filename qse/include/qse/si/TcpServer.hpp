@@ -24,8 +24,8 @@
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _QSE_SI_TCPSERVER_CLASS_
-#define _QSE_SI_TCPSERVER_CLASS_
+#ifndef _QSE_SI_TCPSERVER_HPP_
+#define _QSE_SI_TCPSERVER_HPP_
 
 #include <qse/si/Socket.hpp>
 #include <qse/si/SocketAddress.hpp>

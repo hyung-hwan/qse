@@ -24,8 +24,8 @@
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _QSE_SI_CONDITION_CLASS_
-#define _QSE_SI_CONDITION_CLASS_
+#ifndef _QSE_SI_CONDITION_HPP_
+#define _QSE_SI_CONDITION_HPP_
 
 #include <qse/si/cnd.h>
 #include <qse/si/Mutex.hpp>

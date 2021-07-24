@@ -24,8 +24,8 @@
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _QSE_SI_MUTEX_CLASS_
-#define _QSE_SI_MUTEX_CLASS_
+#ifndef _QSE_SI_MUTEX_HPP_
+#define _QSE_SI_MUTEX_HPP_
 
 #include <qse/Types.hpp>
 #include <qse/Uncopyable.hpp>

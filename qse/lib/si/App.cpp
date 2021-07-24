@@ -543,6 +543,7 @@ int App::guardProcess (const SignalSet& signals, bool _guard, qse_mtime_t guard_
 		// the guardian(parent) process
 		// ===============================================
 		this->_guarded_child_pid = pid;
+		this->on_guarded_child (pid, GUARDED_CHILD_STARTED, 0);
 
 		int status;
 		while (::waitpid(pid, &status, 0) != pid) 
@@ -555,6 +556,7 @@ int App::guardProcess (const SignalSet& signals, bool _guard, qse_mtime_t guard_
 			// ------------------------------------------------------
 		}
 
+		this->on_guarded_child (pid, GUARDED_CHILD_EXITED, status);
 		if (WIFEXITED(status))
 		{
 			if (WEXITSTATUS(status) == 0) 

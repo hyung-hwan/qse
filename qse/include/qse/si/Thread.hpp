@@ -24,8 +24,8 @@
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _QSE_SI_THREAD_CLASS_
-#define _QSE_SI_THREAD_CLASS_
+#ifndef _QSE_SI_THREAD_HPP_
+#define _QSE_SI_THREAD_HPP_
 
 #include <qse/si/thr.h>
 #include <qse/si/os.h>
