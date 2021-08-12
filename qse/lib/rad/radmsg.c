@@ -89,90 +89,240 @@ static void fill_authenticator_randomly (void* authenticator, int length)
 	}
 }
 
-static qse_rad_attr_hdr_t* find_attribute (qse_rad_attr_hdr_t* attr, int* len, qse_uint8_t attrid)
+static qse_rad_attr_hdr_t* find_attribute (qse_rad_attr_hdr_t* attr, int* len, qse_uint8_t attrtype)
 {
 	int rem = *len;
 
 	while (rem >= QSE_SIZEOF(*attr))
 	{
 		/* sanity checks */
-		if (rem < attr->length) return NULL;
+		if (rem < attr->length) return QSE_NULL;
 		if (attr->length < QSE_SIZEOF(*attr)) 
 		{
 			/* attribute length cannot be less than the header size.
 			 * the packet could be corrupted... */
-			return NULL; 
+			return QSE_NULL; 
 		}
 
 		rem -= attr->length;
-		if (attr->id == attrid) 
+		if (attr->type == attrtype) 
 		{
-			*len = rem;
+			*len = rem; /* remaining length */
 			return attr;
 		}
 
-		attr = (qse_rad_attr_hdr_t*) ((char*) attr + attr->length);
+		attr = (qse_rad_attr_hdr_t*)((qse_uint8_t*)attr + attr->length);
 	}
 
-	return NULL;
+	return QSE_NULL;
 }
 
-qse_rad_attr_hdr_t* qse_rad_find_attribute (qse_rad_hdr_t* hdr, qse_uint8_t attrid, int index)
+static qse_rad_attr_hdr_t* find_extended_attribute (qse_rad_attr_hdr_t* attr, int* len, qse_uint8_t xtype, qse_uint8_t attrtype)
 {
-	qse_rad_attr_hdr_t *attr = (qse_rad_attr_hdr_t*)(hdr+1);
-	int len = qse_ntoh16(hdr->length) - QSE_SIZEOF(*hdr);
-	attr = find_attribute (attr, &len, attrid);
-	while (attr)
+	int rem = *len;
+
+	/* xtype must be one of the followings:
+	 *   QSE_RAD_ATTR_EXTENDED_1
+	 *   QSE_RAD_ATTR_EXTENDED_2
+	 *   QSE_RAD_ATTR_EXTENDED_3
+	 *   QSE_RAD_ATTR_EXTENDED_4
+	 *   QSE_RAD_ATTR_EXTENDED_5
+	 *   QSE_RAD_ATTR_EXTENDED_6
+	 */
+
+	while (rem >= QSE_SIZEOF(*attr))
 	{
-		if (index <= 0) return attr;
-		index--;
-		attr = find_attribute ((qse_rad_attr_hdr_t*)((char*)attr+attr->length), &len, attrid);
-	}
+		/* sanity checks */
+		if (rem < attr->length) return QSE_NULL;
 
-	return NULL;
-}
+		/* attribute length cannot be less than the header size.
+		 * the packet could be corrupted... */
+		if (attr->length < QSE_SIZEOF(*attr)) goto oops;
 
-qse_rad_attr_hdr_t* qse_rad_find_vendor_specific_attribute (qse_rad_hdr_t* hdr, qse_uint32_t vendor, qse_uint8_t attrid, int index)
-{
-	qse_rad_attr_hdr_t *attr = (qse_rad_attr_hdr_t*)(hdr+1);
-	int len = qse_ntoh16(hdr->length) - QSE_SIZEOF(*hdr);
-
-	attr = find_attribute (attr, &len, QSE_RAD_ATTR_VENDOR_SPECIFIC);
-	while (attr)
-	{
-		qse_rad_vsattr_hdr_t* vsattr;
-
-		if (attr->length >= QSE_SIZEOF(*vsattr)) /* sanity check */
+		rem -= attr->length;
+		if (attr->type == xtype) 
 		{
-			vsattr = (qse_rad_vsattr_hdr_t*)attr;
+			qse_uint8_t xattrtype;
 
-			if (qse_ntoh32(vsattr->vendor) == vendor)
+			if (QSE_RAD_ATTR_IS_LONG_EXTENDED(xtype))
 			{
-				qse_rad_attr_hdr_t* subattr;
-				int sublen = vsattr->length - QSE_SIZEOF(*vsattr);
+				qse_rad_lxattr_hdr_t* lxattr;
+				lxattr = (qse_rad_lxattr_hdr_t*)attr;
+				if (lxattr->length < QSE_SIZEOF(*lxattr)) goto oops;
+				xattrtype = lxattr->xtype;
+			}
+			else
+			{
+				qse_rad_xattr_hdr_t* xattr;
+				xattr = (qse_rad_xattr_hdr_t*)attr;
+				if (xattr->length < QSE_SIZEOF(*xattr)) goto oops;
+				xattrtype = xattr->xtype;
+			}
 
-				if (sublen >= QSE_SIZEOF(*subattr)) /* sanity check */
+			if (xattrtype == attrtype)
+			{
+				*len = rem;
+				return attr;
+			}
+		}
+
+		attr = (qse_rad_attr_hdr_t*)((qse_uint8_t*)attr + attr->length);
+	}
+
+oops:
+	return QSE_NULL;
+}
+
+qse_rad_attr_hdr_t* qse_rad_find_attribute (qse_rad_hdr_t* hdr, qse_uint8_t attrtype, int index)
+{
+	qse_rad_attr_hdr_t *attr = (qse_rad_attr_hdr_t*)(hdr+1);
+
+	if (qse_ntoh16(hdr->length) >= QSE_SIZEOF(*hdr))
+	{
+		int len = qse_ntoh16(hdr->length) - QSE_SIZEOF(*hdr);
+		attr = find_attribute(attr, &len, attrtype);
+		while (attr)
+		{
+			if (index <= 0) return attr;
+			index--;
+			attr = find_attribute((qse_rad_attr_hdr_t*)((qse_uint8_t*)attr+attr->length), &len, attrtype);
+		}
+	}
+
+	return QSE_NULL;
+}
+
+qse_rad_attr_hdr_t* qse_rad_find_extended_attribute (qse_rad_hdr_t* hdr, qse_uint8_t xtype, qse_uint8_t attrtype, int index)
+{
+	qse_rad_attr_hdr_t *attr = (qse_rad_attr_hdr_t*)(hdr + 1);
+
+	if (QSE_RAD_ATTR_IS_EXTENDED(xtype) && qse_ntoh16(hdr->length) >= QSE_SIZEOF(*hdr))
+	{
+		int len = qse_ntoh16(hdr->length) - QSE_SIZEOF(*hdr);
+		attr = find_extended_attribute(attr, &len, xtype, attrtype);
+		while (attr)
+		{
+			if (index <= 0) return attr;
+			index--;
+			attr = find_extended_attribute((qse_rad_attr_hdr_t*)((qse_uint8_t*)attr + attr->length), &len, xtype, attrtype);
+		}
+	}
+
+	return QSE_NULL;
+}
+
+qse_rad_vsattr_hdr_t* qse_rad_find_vsattr (qse_rad_hdr_t* hdr, qse_uint32_t vendor, qse_uint8_t attrtype, int index)
+{
+	qse_rad_attr_hdr_t *attr = (qse_rad_attr_hdr_t*)(hdr+1);
+
+	if (qse_ntoh16(hdr->length) >= QSE_SIZEOF(*hdr))
+	{
+		int len = qse_ntoh16(hdr->length) - QSE_SIZEOF(*hdr);
+
+		attr = find_attribute(attr, &len, QSE_RAD_ATTR_VENDOR_SPECIFIC);
+		while (attr)
+		{
+			qse_rad_vsattr_hdr_t* vsattr;
+	
+			if (attr->length >= QSE_SIZEOF(*vsattr)) /* sanity check */
+			{
+				vsattr = (qse_rad_vsattr_hdr_t*)attr;
+	
+				if (qse_ntoh32(vsattr->vendor) == vendor && vsattr->vs.type == attrtype)
 				{
-					subattr = (qse_rad_attr_hdr_t*)(vsattr + 1);
-					if (subattr->id == attrid && subattr->length == sublen) 
+					int val_len;
+	
+					val_len = (int)vsattr->length - QSE_SIZEOF(*vsattr);
+	
+					if ((int)vsattr->vs.length == val_len + QSE_SIZEOF(vsattr->vs)) 
 					{
-						if (index <= 0) return subattr;
+						if (index <= 0) return vsattr;
 						index--;
 					}
 				}
 			}
+	
+			attr = find_attribute((qse_rad_attr_hdr_t*)((qse_uint8_t*)attr + attr->length), &len, QSE_RAD_ATTR_VENDOR_SPECIFIC);
 		}
-
-		attr = find_attribute ((qse_rad_attr_hdr_t*)((char*)attr+attr->length), &len, QSE_RAD_ATTR_VENDOR_SPECIFIC);
 	}
 
-	return NULL;
+	return QSE_NULL;
+}
+
+qse_rad_xvsattr_hdr_t* qse_rad_find_extended_vsattr (qse_rad_hdr_t* hdr, qse_uint32_t vendor, qse_uint8_t xtype, qse_uint8_t attrtype, int index)
+{
+	qse_rad_attr_hdr_t *attr = (qse_rad_attr_hdr_t*)(hdr+1);
+
+	if (QSE_RAD_ATTR_IS_EXTENDED(xtype) && qse_ntoh16(hdr->length) >= QSE_SIZEOF(*hdr))
+	{
+		int len = qse_ntoh16(hdr->length) - QSE_SIZEOF(*hdr);
+
+		attr = find_extended_attribute(attr, &len, xtype, QSE_RAD_ATTR_VENDOR_SPECIFIC);
+		while (attr)
+		{
+			if (QSE_RAD_ATTR_IS_LONG_EXTENDED(xtype))
+			{
+				qse_rad_lxvsattr_hdr_t* lxvsattr;
+				if (attr->length >= QSE_SIZEOF(*lxvsattr)) /* sanity check */
+				{
+					lxvsattr = (qse_rad_lxvsattr_hdr_t*)attr;
+	
+					if (qse_ntoh32(lxvsattr->vendor) == vendor && lxvsattr->lxvs.type == attrtype)
+					{
+						int val_len;
+	
+						val_len = (int)lxvsattr->length - QSE_SIZEOF(*lxvsattr);
+		
+						if ((int)lxvsattr->lxvs.length == val_len + QSE_SIZEOF(lxvsattr->lxvs)) 
+						{
+							/* the caller must check if the extended type is long. 
+							 * if long, it must cast back to qse_rad_lxvsattr_hdr_t* */
+							if (index <= 0) return (qse_rad_xvsattr_hdr_t*)lxvsattr;
+							index--;
+						}
+					}
+				}
+			}
+			else
+			{	
+				qse_rad_xvsattr_hdr_t* xvsattr;
+				if (attr->length >= QSE_SIZEOF(*xvsattr)) /* sanity check */
+				{
+					xvsattr = (qse_rad_xvsattr_hdr_t*)attr;
+	
+					if (qse_ntoh32(xvsattr->vendor) == vendor && xvsattr->xvs.type == attrtype)
+					{
+						int val_len;
+	
+						val_len = (int)xvsattr->length - QSE_SIZEOF(*xvsattr);
+		
+						if ((int)xvsattr->xvs.length == val_len + QSE_SIZEOF(xvsattr->xvs)) 
+						{
+							if (index <= 0) return xvsattr;
+							index--;
+						}
+					}
+				}
+			}
+	
+			attr = find_extended_attribute((qse_rad_attr_hdr_t*)((qse_uint8_t*)attr + attr->length), &len, xtype, QSE_RAD_ATTR_VENDOR_SPECIFIC);
+		}
+	}
+
+	return QSE_NULL;
+}
+
+qse_rad_attr_hdr_t* qse_rad_find_vendor_specific_attribute (qse_rad_hdr_t* hdr, qse_uint32_t vendor, qse_uint8_t attrtype, int index)
+{
+	qse_rad_vsattr_hdr_t* vsattr;
+	vsattr = qse_rad_find_vsattr(hdr, vendor, attrtype, index);
+	return vsattr? &vsattr->vs: QSE_NULL;
 }
 
 int qse_rad_walk_attributes (const qse_rad_hdr_t* hdr, qse_rad_attr_walker_t walker, void* ctx)
 {
 	int totlen, rem;
-	qse_rad_attr_hdr_t *attr;
+	qse_rad_attr_hdr_t* attr;
 
 	totlen = qse_ntoh16(hdr->length);
 	if (totlen < QSE_SIZEOF(*hdr)) return -1;
@@ -192,33 +342,30 @@ int qse_rad_walk_attributes (const qse_rad_hdr_t* hdr, qse_rad_attr_walker_t wal
 
 		rem -= attr->length;
 
-		if (attr->id == QSE_RAD_ATTR_VENDOR_SPECIFIC)
+		if (attr->type == QSE_RAD_ATTR_VENDOR_SPECIFIC)
 		{
 			qse_rad_vsattr_hdr_t* vsattr;
-			qse_rad_attr_hdr_t* subattr;
-			int sublen;
+			int val_len;
 
 			if (attr->length < QSE_SIZEOF(*vsattr)) return -1;
 			vsattr = (qse_rad_vsattr_hdr_t*)attr;
 
-			sublen = vsattr->length - QSE_SIZEOF(*vsattr);
-			if (sublen < QSE_SIZEOF(*subattr)) return -1;
-			subattr = (qse_rad_attr_hdr_t*)(vsattr + 1);
-			if (subattr->length != sublen) return -1;
+			val_len = (int)vsattr->length - QSE_SIZEOF(*vsattr);
+			if ((int)vsattr->vs.length != val_len + QSE_SIZEOF(vsattr->vs)) return -1;
 
 			/* if this vendor happens to be 0, walker can't tell
 			 * if it is vendor specific or not because 0 is passed in
 			 * for non-VSAs. but i don't care. in reality, 
 			 * 0 is reserved in IANA enterpirse number assignments.
 			 * (http://www.iana.org/assignments/enterprise-numbers) */
-			if (walker (hdr, qse_ntoh32(vsattr->vendor), subattr, ctx) <= -1) return -1;
+			if (walker(hdr, qse_ntoh32(vsattr->vendor), &vsattr->vs, ctx) <= -1) return -1;
 		}
 		else
 		{
-			if (walker (hdr, 0, attr, ctx) <= -1) return -1;
+			if (walker(hdr, 0, attr, ctx) <= -1) return -1;
 		}
 
-		attr = (qse_rad_attr_hdr_t*) ((char*) attr + attr->length);
+		attr = (qse_rad_attr_hdr_t*)((qse_uint8_t*) attr + attr->length);
 	}
 
 	return 0;
@@ -239,8 +386,8 @@ int qse_rad_insert_attribute (
 
 	if (new_auth_len > max) return -1;
 
-	attr = (qse_rad_attr_hdr_t*) ((char*)auth + auth_len);
-	attr->id = id;
+	attr = (qse_rad_attr_hdr_t*)((qse_uint8_t*)auth + auth_len);
+	attr->type = id;
 	attr->length = new_auth_len - auth_len;
 	QSE_MEMCPY (attr + 1, ptr, len);
 	auth->length = qse_hton16(new_auth_len);
@@ -248,35 +395,134 @@ int qse_rad_insert_attribute (
 	return 0;
 }
 
-int qse_rad_insert_vendor_specific_attribute (
-	qse_rad_hdr_t* auth, int max,
-	qse_uint32_t vendor, qse_uint8_t attrid, const void* ptr, qse_uint8_t len)
+int qse_rad_insert_extended_attribute (
+	qse_rad_hdr_t* auth, int max, qse_uint8_t xtype,
+	qse_uint8_t attrtype, const void* ptr, qse_uint8_t len, qse_uint8_t lxflags)
 {
-	qse_rad_vsattr_hdr_t* attr;
-	qse_rad_attr_hdr_t* subattr;
+	qse_rad_xattr_hdr_t* xattr;
 	int auth_len = qse_ntoh16(auth->length);
-	int new_auth_len;
+	int new_auth_len, maxvallen, hdrlen;
 
+	if (QSE_RAD_ATTR_IS_SHORT_EXTENDED(xtype)) 
+	{
+		maxvallen = QSE_RAD_MAX_XATTR_VALUE_LEN;
+		hdrlen = QSE_SIZEOF(qse_rad_xattr_hdr_t);
+	}
+	else if (QSE_RAD_ATTR_IS_LONG_EXTENDED(xtype)) 
+	{
+		maxvallen = QSE_RAD_MAX_LXATTR_VALUE_LEN;
+		hdrlen = QSE_SIZEOF(qse_rad_lxattr_hdr_t);
+	}
+	else return -1;
 
-	/*if (len > QSE_RAD_MAX_VSATTR_VALUE_LEN) return -1;*/
-	if (len > QSE_RAD_MAX_VSATTR_VALUE_LEN) len = QSE_RAD_MAX_VSATTR_VALUE_LEN;
-	new_auth_len = auth_len + len + QSE_SIZEOF(*attr) + QSE_SIZEOF(*subattr);
+	/*if (len > maxvallen) return -1;*/
+	if (len > maxvallen) len = maxvallen;
+	new_auth_len = auth_len + hdrlen + len;
 
 	if (new_auth_len > max) return -1;
 
-	attr = (qse_rad_vsattr_hdr_t*) ((char*)auth + auth_len);
-	attr->id = QSE_RAD_ATTR_VENDOR_SPECIFIC;
-	attr->length = new_auth_len - auth_len;
-	attr->vendor = qse_hton32 (vendor);
+	xattr = (qse_rad_xattr_hdr_t*)((qse_uint8_t*)auth + auth_len);
+	xattr->type = xtype;
+	xattr->length = new_auth_len - auth_len;
+	if (QSE_RAD_ATTR_IS_LONG_EXTENDED(xtype)) 
+	{
+		qse_rad_lxattr_hdr_t* lxattr;
+		lxattr = (qse_rad_lxattr_hdr_t*)xattr;
+		lxattr->xtype = attrtype;
+		lxattr->xflags = lxflags;
+		QSE_MEMCPY (lxattr + 1, ptr, len);
+	}
+	else
+	{
+		xattr->xtype = attrtype;
+		QSE_MEMCPY (xattr + 1, ptr, len);
+	}
+	auth->length = qse_hton16(new_auth_len);
 
-	subattr = (qse_rad_attr_hdr_t*)(attr + 1);
-	subattr->id = attrid;
-	subattr->length = len + QSE_SIZEOF(*subattr);
-	QSE_MEMCPY (subattr + 1, ptr, len);
+	return 0;
+}
+
+int qse_rad_insert_vendor_specific_attribute (
+	qse_rad_hdr_t* auth, int max,
+	qse_uint32_t vendor, qse_uint8_t attrtype, const void* ptr, qse_uint8_t len)
+{
+	qse_rad_vsattr_hdr_t* vsattr;
+	int auth_len = qse_ntoh16(auth->length);
+	int new_auth_len;
+
+	/*if (len > QSE_RAD_MAX_VSATTR_VALUE_LEN) return -1;*/
+	if (len > QSE_RAD_MAX_VSATTR_VALUE_LEN) len = QSE_RAD_MAX_VSATTR_VALUE_LEN;
+	new_auth_len = auth_len + QSE_SIZEOF(*vsattr) + len;
+
+	if (new_auth_len > max) return -1;
+
+	vsattr = (qse_rad_vsattr_hdr_t*)((qse_uint8_t*)auth + auth_len);
+	vsattr->type = QSE_RAD_ATTR_VENDOR_SPECIFIC;
+	vsattr->length = new_auth_len - auth_len;
+	vsattr->vendor = qse_hton32(vendor);
+
+	vsattr->vs.type = attrtype;
+	vsattr->vs.length = QSE_SIZEOF(vsattr->vs) + len;
+	QSE_MEMCPY (vsattr + 1, ptr, len);
 
 	auth->length = qse_hton16(new_auth_len);
 	return 0;
 }
+
+int qse_rad_insert_extended_vendor_specific_attribute (
+	qse_rad_hdr_t* auth, int max, qse_uint32_t vendor, qse_uint8_t xtype,
+	qse_uint8_t attrtype, const void* ptr, qse_uint8_t len, qse_uint8_t lxflags)
+{
+	/* RFC6929 */
+	qse_rad_xvsattr_hdr_t* xvsattr;
+	int auth_len = qse_ntoh16(auth->length);
+	int new_auth_len, maxvallen, hdrlen;
+
+	if (QSE_RAD_ATTR_IS_SHORT_EXTENDED(xtype)) 
+	{
+		maxvallen = QSE_RAD_MAX_XVSATTR_VALUE_LEN;
+		hdrlen = QSE_SIZEOF(qse_rad_xvsattr_hdr_t);
+	}
+	else if (QSE_RAD_ATTR_IS_LONG_EXTENDED(xtype)) 
+	{
+		maxvallen = QSE_RAD_MAX_LXVSATTR_VALUE_LEN;
+		hdrlen = QSE_SIZEOF(qse_rad_lxvsattr_hdr_t);
+	}
+	else return -1;
+
+	/*if (len > maxvallen) return -1;*/
+	if (len > maxvallen) len = QSE_RAD_MAX_XVSATTR_VALUE_LEN;
+	new_auth_len = auth_len + hdrlen + len;
+
+	if (new_auth_len > max) return -1;
+
+	xvsattr = (qse_rad_xvsattr_hdr_t*)((qse_uint8_t*)auth + auth_len);
+	xvsattr->type = xtype;
+	xvsattr->length = new_auth_len - auth_len;
+	xvsattr->xtype = QSE_RAD_ATTR_VENDOR_SPECIFIC;
+	xvsattr->vendor = qse_hton32(vendor);
+
+	if (QSE_RAD_ATTR_IS_LONG_EXTENDED(xtype)) 
+	{
+		/* this function is still low-level. it doesn't handle continuation of big data */
+		qse_rad_lxvsattr_hdr_t* lxvsattr;
+		lxvsattr = (qse_rad_lxvsattr_hdr_t*)xvsattr;
+		lxvsattr->lxvs.type = attrtype;
+		lxvsattr->lxvs.flags = lxflags;
+		lxvsattr->lxvs.length = len + QSE_SIZEOF(lxvsattr->lxvs);
+		QSE_MEMCPY (lxvsattr + 1, ptr, len);
+	}
+	else
+	{
+		xvsattr->xvs.type = attrtype;
+		xvsattr->xvs.length = len + QSE_SIZEOF(xvsattr->xvs);
+		QSE_MEMCPY (xvsattr + 1, ptr, len);
+	}	
+
+	auth->length = qse_hton16(new_auth_len);
+	return 0;
+}
+
 
 static int delete_attribute (qse_rad_hdr_t* auth, qse_rad_attr_hdr_t* attr)
 {
@@ -294,26 +540,34 @@ static int delete_attribute (qse_rad_hdr_t* auth, qse_rad_attr_hdr_t* attr)
 	return 0;
 }
 
-int qse_rad_delete_attribute (qse_rad_hdr_t* auth, qse_uint8_t attrid)
+int qse_rad_delete_attribute (qse_rad_hdr_t* auth, qse_uint8_t attrtype, int index)
 {
 	qse_rad_attr_hdr_t* attr;
 
-	attr = qse_rad_find_attribute (auth, attrid, 0);
-	if (attr == NULL) return 0; /* not found */
-	return (delete_attribute (auth, attr) <= -1)? -1: 1;
+	attr = qse_rad_find_attribute(auth, attrtype, index);
+	if (!attr) return 0; /* not found */
+	return (delete_attribute(auth, attr) <= -1)? -1: 1;
 }
 
 int qse_rad_delete_vendor_specific_attribute (
-	qse_rad_hdr_t* auth, qse_uint32_t vendor, qse_uint8_t attrid)
+	qse_rad_hdr_t* auth, qse_uint32_t vendor, qse_uint8_t attrtype, int index)
 {
-	qse_rad_attr_hdr_t* attr; 
 	qse_rad_vsattr_hdr_t* vsattr;
 
-	attr = qse_rad_find_vendor_specific_attribute (auth, vendor, attrid, 0);
-	if (attr == NULL) return 0; /* not found */
+	vsattr = qse_rad_find_vsattr(auth, vendor, attrtype, 0);
+	if (!vsattr) return 0; /* not found */
+	return (delete_attribute(auth, (qse_rad_attr_hdr_t*)vsattr) <= -1)? -1: 1;
+}
 
-	vsattr = (qse_rad_vsattr_hdr_t*)((qse_uint8_t*)attr - QSE_SIZEOF(qse_rad_vsattr_hdr_t));
-	return (delete_attribute (auth, (qse_rad_attr_hdr_t*)vsattr) <= -1)? -1: 1;
+int qse_rad_delete_extended_vendor_specific_attribute (
+        qse_rad_hdr_t*  auth, qse_uint32_t vendor, qse_uint8_t xtype, qse_uint8_t attrtype, int index)
+{
+	qse_rad_xvsattr_hdr_t* xvsattr;
+
+	xvsattr = qse_rad_find_extended_vsattr(auth, vendor, xtype, attrtype, 0);
+	if (!xvsattr) return 0; /* not found */
+
+	return (delete_attribute(auth, (qse_rad_attr_hdr_t*)xvsattr) <= -1)? -1: 1;
 }
 
 int qse_rad_insert_string_attribute (
@@ -321,8 +575,8 @@ int qse_rad_insert_string_attribute (
 	qse_uint8_t id, const qse_mchar_t* value)
 {
 	return (vendor == 0)?
-		qse_rad_insert_attribute (auth, max, id, value, qse_mbslen(value)):
-		qse_rad_insert_vendor_specific_attribute (auth, max, vendor, id, value, qse_mbslen(value));
+		qse_rad_insert_attribute(auth, max, id, value, qse_mbslen(value)):
+		qse_rad_insert_vendor_specific_attribute(auth, max, vendor, id, value, qse_mbslen(value));
 }
 
 int qse_rad_insert_wide_string_attribute (
@@ -333,10 +587,10 @@ int qse_rad_insert_wide_string_attribute (
 	qse_mchar_t* val;
 	qse_size_t mbslen;
 
-	val = qse_wcstombsdup (value, &mbslen, QSE_MMGR_GETDFL());
+	val = qse_wcstombsdup(value, &mbslen, QSE_MMGR_GETDFL());
 	n = (vendor == 0)?
-		qse_rad_insert_attribute (auth, max, id, val, mbslen):
-		qse_rad_insert_vendor_specific_attribute (auth, max, vendor, id, val, mbslen);
+		qse_rad_insert_attribute(auth, max, id, val, mbslen):
+		qse_rad_insert_vendor_specific_attribute(auth, max, vendor, id, val, mbslen);
 	QSE_MMGR_FREE (QSE_MMGR_GETDFL(), val);
 
 	return n;
@@ -347,8 +601,8 @@ int qse_rad_insert_string_attribute_with_length (
 	qse_uint8_t id, const qse_mchar_t* value, qse_uint8_t length)
 {
 	return (vendor == 0)?
-		qse_rad_insert_attribute (auth, max, id, value, length):
-		qse_rad_insert_vendor_specific_attribute (auth, max, vendor, id, value, length);
+		qse_rad_insert_attribute(auth, max, id, value, length):
+		qse_rad_insert_vendor_specific_attribute(auth, max, vendor, id, value, length);
 }
 
 int qse_rad_insert_wide_string_attribute_with_length (
@@ -359,10 +613,10 @@ int qse_rad_insert_wide_string_attribute_with_length (
 	qse_mchar_t* val;
 	qse_size_t mbslen;
 
-	val = qse_wcsntombsdup (value, length, &mbslen, QSE_MMGR_GETDFL());
+	val = qse_wcsntombsdup(value, length, &mbslen, QSE_MMGR_GETDFL());
 	n = (vendor == 0)?
-		qse_rad_insert_attribute (auth, max, id, val, mbslen):
-		qse_rad_insert_vendor_specific_attribute (auth, max, vendor, id, val, mbslen);
+		qse_rad_insert_attribute(auth, max, id, val, mbslen):
+		qse_rad_insert_vendor_specific_attribute(auth, max, vendor, id, val, mbslen);
 	QSE_MMGR_FREE (QSE_MMGR_GETDFL(), val);
 
 	return n;
@@ -373,8 +627,8 @@ int qse_rad_insert_uint32_attribute (
 {
 	qse_uint32_t val = qse_hton32(value);
 	return (vendor == 0)?
-		qse_rad_insert_attribute (auth, max, id, &val, QSE_SIZEOF(val)):
-		qse_rad_insert_vendor_specific_attribute (auth, max, vendor, id, &val, QSE_SIZEOF(val));
+		qse_rad_insert_attribute(auth, max, id, &val, QSE_SIZEOF(val)):
+		qse_rad_insert_vendor_specific_attribute(auth, max, vendor, id, &val, QSE_SIZEOF(val));
 }
 
 int qse_rad_insert_ipv6prefix_attribute (
@@ -419,8 +673,8 @@ int qse_rad_insert_ipv6prefix_attribute (
 	}
 	
 	return (vendor == 0)?
-		qse_rad_insert_attribute (auth, max, id, &ipv6prefix, j + 2):
-		qse_rad_insert_vendor_specific_attribute (auth, max, vendor, id, &ipv6prefix, j + 2);
+		qse_rad_insert_attribute(auth, max, id, &ipv6prefix, j + 2):
+		qse_rad_insert_vendor_specific_attribute(auth, max, vendor, id, &ipv6prefix, j + 2);
 }
 
 int qse_rad_insert_giga_attribute (
@@ -432,66 +686,31 @@ int qse_rad_insert_giga_attribute (
 
 	if (vendor == 0)
 	{
-		if (qse_rad_insert_attribute (auth, max, low_id, &low, QSE_SIZEOF(low)) <= -1) return -1;
+		if (qse_rad_insert_attribute(auth, max, low_id, &low, QSE_SIZEOF(low)) <= -1) return -1;
 
 		if (value > QSE_TYPE_MAX(qse_uint32_t))
 		{
 			qse_uint32_t high;
 			high = value >> (QSE_SIZEOF(qse_uint32_t) * 8);
 			high = qse_hton32(high);
-			if (qse_rad_insert_attribute (auth, max, high_id, &high, QSE_SIZEOF(high)) <= -1) return -1;
+			if (qse_rad_insert_attribute(auth, max, high_id, &high, QSE_SIZEOF(high)) <= -1) return -1;
 		}
 	}
 	else
 	{
-		if (qse_rad_insert_vendor_specific_attribute (auth, max, vendor, low_id, &low, QSE_SIZEOF(low)) <= -1) return -1;
+		if (qse_rad_insert_vendor_specific_attribute(auth, max, vendor, low_id, &low, QSE_SIZEOF(low)) <= -1) return -1;
 
 		if (value > QSE_TYPE_MAX(qse_uint32_t))
 		{
 			qse_uint32_t high;
 			high = value >> (QSE_SIZEOF(qse_uint32_t) * 8);
 			high = qse_hton32(high);
-			if (qse_rad_insert_vendor_specific_attribute (auth, max, vendor, high_id, &high, QSE_SIZEOF(high)) <= -1) return -1;
+			if (qse_rad_insert_vendor_specific_attribute(auth, max, vendor, high_id, &high, QSE_SIZEOF(high)) <= -1) return -1;
 		}
 	}
 
 	return 0;
 }
-
-
-int qse_rad_insert_extended_vendor_specific_attribute (
-	qse_rad_hdr_t* auth, int max, qse_uint8_t base, qse_uint32_t vendor,
-	qse_uint8_t attrid, const void* ptr, qse_uint8_t len)
-{
-	/* RFC6929 */
-	qse_rad_extvsattr_hdr_t* attr;
-	int auth_len = qse_ntoh16(auth->length);
-	int new_auth_len;
-
-	if (base < 241 && base > 244) return -1;
-/* TODO: for 245 and 246, switch to long-extended format */
-
-	/*if (len > QSE_RAD_MAX_EXTVSATTR_VALUE_LEN) return -1;*/
-	if (len > QSE_RAD_MAX_EXTVSATTR_VALUE_LEN) len = QSE_RAD_MAX_EXTVSATTR_VALUE_LEN;
-	new_auth_len = auth_len + len + QSE_SIZEOF(*attr);
-
-	if (new_auth_len > max) return -1;
-
-	attr = (qse_rad_extvsattr_hdr_t*) ((char*)auth + auth_len);
-	attr->id = base;
-	attr->length = new_auth_len - auth_len;
-	attr->xid = QSE_RAD_ATTR_VENDOR_SPECIFIC;
-	attr->vendor = qse_hton32(vendor);
-	attr->evsid = attrid;
-
-	/* no special header for the evs-value */
-	QSE_MEMCPY (attr + 1, ptr, len);
-
-	auth->length = qse_hton16(new_auth_len);
-	return 0;
-}
-
-
 
 #define PASS_BLKSIZE QSE_RAD_MAX_AUTHENTICATOR_LEN
 #define ALIGN(x,factor) ((((x) + (factor) - 1) / (factor)) * (factor))
@@ -550,8 +769,14 @@ int qse_rad_set_user_password (qse_rad_hdr_t* auth, int max, const qse_mchar_t* 
 	}
 
 	/* ok if not found or deleted. but not ok if an error occurred */
-	if (qse_rad_delete_attribute (auth, QSE_RAD_ATTR_USER_PASSWORD) <= -1) goto oops; 
-	if (qse_rad_insert_attribute (auth, max, QSE_RAD_ATTR_USER_PASSWORD, hashed, padlen) <= -1) goto oops;
+	while (1)
+	{
+		int n;
+		n = qse_rad_delete_attribute(auth, QSE_RAD_ATTR_USER_PASSWORD, 0);
+		if (n <= -1) goto oops;
+		if (n == 0) break; 
+	}
+	if (qse_rad_insert_attribute(auth, max, QSE_RAD_ATTR_USER_PASSWORD, hashed, padlen) <= -1) goto oops;
 
 	return 0;
 

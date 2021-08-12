@@ -1453,7 +1453,6 @@ static int process_attribute (
 		flags.has_tlv = 1;
 	}
 
-// TODO: what is tlv???
 	if (block_tlv) 
 	{
 		/*
@@ -1662,7 +1661,7 @@ static int load_file (qse_raddic_t* dic, const qse_char_t* fn, const qse_char_t*
 		const qse_char_t* b = qse_basename(src_file);
 		if (b != src_file)
 		{
-			fname = qse_substbasenamedup (src_file, fn, dic->mmgr);
+			fname = qse_substbasenamedup(src_file, fn, dic->mmgr);
 			if (!fname)
 			{
 				qse_raddic_seterrfmt (dic, QSE_RADDIC_ENOMEM, QSE_T("%s[%zd]: out of memory before including %s"), fn);

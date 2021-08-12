@@ -57,14 +57,19 @@ typedef enum qse_rad_code_t qse_rad_code_t;
 
 #define QSE_RAD_MAX_AUTHENTICATOR_LEN 16
 #define QSE_RAD_MAX_ATTR_VALUE_LEN  (QSE_TYPE_MAX(qse_uint8_t) - QSE_SIZEOF(qse_rad_attr_hdr_t))
-#define QSE_RAD_MAX_VSATTR_VALUE_LEN (QSE_TYPE_MAX(qse_uint8_t) - QSE_SIZEOF(qse_rad_attr_hdr_t) - QSE_SIZEOF(qse_rad_vsattr_hdr_t))
-#define QSE_RAD_MAX_EXTVSATTR_VALUE_LEN (QSE_TYPE_MAX(qse_uint8_t) - QSE_SIZEOF(qse_rad_extvsattr_hdr_t))
-
+#define QSE_RAD_MAX_XATTR_VALUE_LEN  (QSE_TYPE_MAX(qse_uint8_t) - QSE_SIZEOF(qse_rad_xattr_hdr_t))
+#define QSE_RAD_MAX_LXATTR_VALUE_LEN  (QSE_TYPE_MAX(qse_uint8_t) - QSE_SIZEOF(qse_rad_lxattr_hdr_t))
+#define QSE_RAD_MAX_VSATTR_VALUE_LEN (QSE_TYPE_MAX(qse_uint8_t) - QSE_SIZEOF(qse_rad_vsattr_hdr_t))
+#define QSE_RAD_MAX_XVSATTR_VALUE_LEN (QSE_TYPE_MAX(qse_uint8_t) - QSE_SIZEOF(qse_rad_xvsattr_hdr_t))
+#define QSE_RAD_MAX_LXVSATTR_VALUE_LEN (QSE_TYPE_MAX(qse_uint8_t) - QSE_SIZEOF(qse_rad_lxvsattr_hdr_t))
 
 typedef struct qse_rad_hdr_t qse_rad_hdr_t;
 typedef struct qse_rad_attr_hdr_t qse_rad_attr_hdr_t;
+typedef struct qse_rad_xattr_hdr_t qse_rad_xattr_hdr_t;
+typedef struct qse_rad_lxattr_hdr_t qse_rad_lxattr_hdr_t;
 typedef struct qse_rad_vsattr_hdr_t qse_rad_vsattr_hdr_t;
-typedef struct qse_rad_extvsattr_hdr_t qse_rad_extvsattr_hdr_t; /* evs */
+typedef struct qse_rad_xvsattr_hdr_t qse_rad_xvsattr_hdr_t;
+typedef struct qse_rad_lxvsattr_hdr_t qse_rad_lxvsattr_hdr_t; /* evs */
 
 typedef struct qse_rad_attr_uint32_t qse_rad_attr_uint32_t;
 #if (QSE_SIZEOF_UINT64_T > 0)
@@ -82,24 +87,61 @@ struct qse_rad_hdr_t
 
 struct qse_rad_attr_hdr_t
 {
-	qse_uint8_t id; /* qse_rad_attr_id_t */
+	qse_uint8_t type; /* qse_rad_attr_type_t */
 	qse_uint8_t length;
+};
+
+struct qse_rad_xattr_hdr_t
+{
+	qse_uint8_t type; /* qse_rad_attr_type_t - one of 241-244 */
+	qse_uint8_t length;
+	qse_uint8_t xtype; /* extended type */
+};
+
+struct qse_rad_lxattr_hdr_t
+{
+	qse_uint8_t type; /* qse_rad_attr_type_t - 245 or 256*/
+	qse_uint8_t length;
+
+	qse_uint8_t xtype; /* extended type */
+	qse_uint8_t xflags; /* bit 7: continuation, bit 6-0: reserved. */
 };
 
 struct qse_rad_vsattr_hdr_t
 {
-	qse_uint8_t  id; /* type */
+	qse_uint8_t  type; /* type - 26 */
 	qse_uint8_t  length; /* length */
 	qse_uint32_t vendor; /* in network-byte order */
+
+	/* followed by a standard attribute */
+	qse_rad_attr_hdr_t vs;
 };
 
-struct qse_rad_extvsattr_hdr_t
+struct qse_rad_xvsattr_hdr_t
 {
-	qse_uint8_t id; /* one of 241-244 */
+	qse_uint8_t type; /* one of 241-244 */
 	qse_uint8_t length;
-	qse_uint8_t xid;  /* extended type. 26 for evs */
+	qse_uint8_t xtype;  /* extended type. 26 for evs(extended vendor specific) attribute */
 	qse_uint32_t vendor; /* in network-byte order */
-	qse_uint8_t evsid;
+
+	/* followed by a standard attribute  */
+	qse_rad_attr_hdr_t xvs;
+};
+
+struct qse_rad_lxvsattr_hdr_t
+{
+	qse_uint8_t type; /* 245, 246*/
+	qse_uint8_t length;
+	qse_uint8_t xtype;  /* extended type. 26 for evs(extended vendor specific) attribute */
+	qse_uint32_t vendor; /* in network-byte order */
+
+	/* followed by an extended attribute  */
+	struct
+	{
+		qse_uint8_t type;
+		qse_uint8_t flags;  /* bit 7: continuation, bit 6-0: reserved.  */
+		qse_uint8_t length;
+	} lxvs;
 };
 
 struct qse_rad_attr_uint32_t
@@ -126,7 +168,7 @@ typedef int (*qse_rad_attr_walker_t) (
 	void*                     ctx
 );
 
-enum qse_rad_attr_id_t
+enum qse_rad_attr_type_t
 {
 	QSE_RAD_ATTR_USER_NAME             = 1,  /* string */
 	QSE_RAD_ATTR_USER_PASSWORD         = 2,  /* string encrypted */
@@ -154,8 +196,19 @@ enum qse_rad_attr_id_t
 	QSE_RAD_ATTR_NAS_PORT_TYPE         = 61, /* integer */
 	QSE_RAD_ATTR_ACCT_INTERIM_INTERVAL = 85, /* integer */
 	QSE_RAD_ATTR_NAS_PORT_ID           = 87, /* string */
-	QSE_RAD_ATTR_FRAMED_IPV6_PREFIX    = 97  /* ipv6prefix */
+	QSE_RAD_ATTR_FRAMED_IPV6_PREFIX    = 97,  /* ipv6prefix */
+
+	QSE_RAD_ATTR_EXTENDED_1            = 241,
+	QSE_RAD_ATTR_EXTENDED_2            = 242,
+	QSE_RAD_ATTR_EXTENDED_3            = 243,
+	QSE_RAD_ATTR_EXTENDED_4            = 244,
+	QSE_RAD_ATTR_EXTENDED_5            = 245, /* long extended */
+	QSE_RAD_ATTR_EXTENDED_6            = 246, /* long extended */
 };
+
+#define QSE_RAD_ATTR_IS_SHORT_EXTENDED(attrtype) ((attrtype) >= QSE_RAD_ATTR_EXTENDED_1 && (attrtype) <= QSE_RAD_ATTR_EXTENDED_4)
+#define QSE_RAD_ATTR_IS_LONG_EXTENDED(attrtype) ((attrtype) >= QSE_RAD_ATTR_EXTENDED_5 && (attrtype) <= QSE_RAD_ATTR_EXTENDED_6)
+#define QSE_RAD_ATTR_IS_EXTENDED(attrtype) ((attrtype) >= QSE_RAD_ATTR_EXTENDED_1 && (attrtype) <= QSE_RAD_ATTR_EXTENDED_6)
 
 enum qse_rad_attr_acct_status_type_t
 {
@@ -213,8 +266,23 @@ QSE_EXPORT void qse_rad_initialize (
 
 QSE_EXPORT qse_rad_attr_hdr_t* qse_rad_find_attribute (
 	qse_rad_hdr_t*  hdr,
-	qse_uint8_t     attrid,
+	qse_uint8_t     attrtype,
 	int             index
+);
+
+QSE_EXPORT qse_rad_vsattr_hdr_t* qse_rad_find_vsattr (
+	qse_rad_hdr_t*      hdr,
+	qse_uint32_t        vendor,
+	qse_uint8_t         attrtype,
+	int                 index
+);
+
+QSE_EXPORT qse_rad_xvsattr_hdr_t* qse_rad_find_extended_vsattr (
+	qse_rad_hdr_t*      hdr,
+	qse_uint32_t        vendor,
+	qse_uint8_t         xtype,
+	qse_uint8_t         attrtype,
+	int                 index
 );
 
 QSE_EXPORT qse_rad_attr_hdr_t* qse_rad_find_vendor_specific_attribute (
@@ -238,24 +306,55 @@ QSE_EXPORT int qse_rad_insert_attribute (
 	qse_uint8_t     len
 );
 
+QSE_EXPORT int qse_rad_insert_extended_attribute (
+        qse_rad_hdr_t*  auth,
+	int             max,
+	qse_uint8_t     xtype,
+        qse_uint8_t     attrtype,
+	const void*     ptr,
+	qse_uint8_t     len,
+	qse_uint8_t     lxflags
+);
+
 QSE_EXPORT int qse_rad_insert_vendor_specific_attribute (
 	qse_rad_hdr_t*  auth,
 	int             max,
 	qse_uint32_t    vendor,
-	qse_uint8_t     attrid, 
+	qse_uint8_t     attrtype, 
 	const void*     ptr,
 	qse_uint8_t     len
 );
 
+QSE_EXPORT int qse_rad_insert_extended_vendor_specific_attribute (
+	qse_rad_hdr_t*  auth,
+	int             max,
+	qse_uint32_t    vendor,
+	qse_uint8_t     xtype, /* QSE_RAD_ATTR_EXTENDED_X */
+	qse_uint8_t     attrtype, 
+	const void*     ptr,
+	qse_uint8_t     len,
+	qse_uint8_t     lxflags
+);
+
 QSE_EXPORT int qse_rad_delete_attribute (
-	qse_rad_hdr_t* hdr,
-	qse_uint8_t    attrid
+	qse_rad_hdr_t*  auth,
+	qse_uint8_t     attrtype,
+	int             index
 );
 
 QSE_EXPORT int qse_rad_delete_vendor_specific_attribute (
-	qse_rad_hdr_t*  hdr,
+	qse_rad_hdr_t*  auth,
 	qse_uint32_t    vendor,
-	qse_uint8_t     attrid
+	qse_uint8_t     attrtype,
+	int             index
+);
+
+QSE_EXPORT int qse_rad_delete_extended_vendor_specific_attribute (
+	qse_rad_hdr_t*  auth,
+	qse_uint32_t    vendor,
+	qse_uint8_t     xtype, /* QSE_RAD_ATTR_EXTENDED_X */
+	qse_uint8_t     attrtype,
+	int             index
 );
 
 QSE_EXPORT int qse_rad_insert_string_attribute (
@@ -317,18 +416,6 @@ QSE_EXPORT int qse_rad_insert_giga_attribute (
 	int               high_id,
 	qse_uint64_t      value
 );
-
-QSE_EXPORT int qse_rad_insert_extended_vendor_specific_attribute (
-	qse_rad_hdr_t*  auth,
-	int             max,
-	qse_uint8_t     base, /* one of 241-244 */
-	qse_uint32_t    vendor,
-	qse_uint8_t     attrid, 
-	const void*     ptr,
-	qse_uint8_t     len
-);
-
-/* TODO: QSE_EXPORT int qse_rad_delete_extended_vendor_specific_attribute () */
 
 QSE_EXPORT int qse_rad_set_user_password (
 	qse_rad_hdr_t*      auth,
