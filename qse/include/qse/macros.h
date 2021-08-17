@@ -37,23 +37,6 @@
  * This file contains various useful macro definitions.
  */
 
-/* =========================================================================
- * STATIC ASSERTION
- * =========================================================================*/
-#define QSE_STATIC_JOIN_INNER(x, y) x ## y
-#define QSE_STATIC_JOIN(x, y) QSE_STATIC_JOIN_INNER(x, y)
-
-#if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201112L)
-#	define QSE_STATIC_ASSERT(expr)  _Static_assert (expr, "invalid assertion")
-#elif defined(__cplusplus) && (__cplusplus >= 201103L)
-#	define QSE_STATIC_ASSERT(expr) static_assert (expr, "invalid assertion")
-#else
-#	define QSE_STATIC_ASSERT(expr) typedef char QSE_STATIC_JOIN(QSE_STATIC_ASSERT_T_, __LINE__)[(expr)? 1: -1] QSE_UNUSED
-#endif
-
-#define QSE_STATIC_ASSERT_EXPR(expr) ((void)QSE_SIZEOF(char[(expr)? 1: -1]))
-
-
 #if defined(__cplusplus) || (defined(__STDC_VERSION__) && (__STDC_VERSION__>=199901L))
 #	define QSE_INLINE inline
 #	define QSE_HAVE_INLINE
@@ -88,14 +71,6 @@
 #	define QSE_INLINE_NEVER 
 #	undef QSE_HAVE_INLINE_NEVER
 #endif
-
-
-#if defined(__GNUC__) && (__GNUC__ > 2 || (__GNUC__ == 2 && __GNUC_MINOR__ > 4))
-#	define QSE_UNUSED __attribute__((__unused__))
-#else
-#	define QSE_UNUSED
-#endif
-
 
 #if defined(_WIN32) || (defined(__WATCOMC__) && !defined(__WINDOWS_386__))
 #	define QSE_IMPORT __declspec(dllimport)

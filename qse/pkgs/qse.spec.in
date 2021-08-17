@@ -1,4 +1,4 @@
-%define _prefix /usr/local
+%define _prefix /usr
 %define _sysconfdir /etc
 
 Summary: QSE Library
@@ -22,7 +22,7 @@ QSE Library
 %package devel
 Summary: Development files for QSE
 Group: System Environment/Libraries
-Requires: @PACKAGE_NAME@= %{version}
+Requires: @PACKAGE_NAME@ = %{version}
 
 %description devel
 The header files and libraries for developing applications with QSE.

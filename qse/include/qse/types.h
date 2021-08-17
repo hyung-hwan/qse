@@ -70,6 +70,32 @@
 #	endif
 #endif
 
+/* =========================================================================
+ * STATIC ASSERTION
+ * =========================================================================*/
+#if defined(__GNUC__) && (__GNUC__ > 2 || (__GNUC__ == 2 && __GNUC_MINOR__ > 4))
+#	define QSE_UNUSED __attribute__((__unused__))
+#else
+#	define QSE_UNUSED
+#endif
+
+#define QSE_STATIC_JOIN_INNER(x, y) x ## y
+#define QSE_STATIC_JOIN(x, y) QSE_STATIC_JOIN_INNER(x, y)
+
+#if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201112L)
+#	define QSE_STATIC_ASSERT(expr)  _Static_assert (expr, "invalid assertion")
+#elif defined(__cplusplus) && (__cplusplus >= 201103L)
+#	define QSE_STATIC_ASSERT(expr) static_assert (expr, "invalid assertion")
+#else
+#	define QSE_STATIC_ASSERT(expr) typedef char QSE_STATIC_JOIN(QSE_STATIC_ASSERT_T_, __LINE__)[(expr)? 1: -1] QSE_UNUSED
+#endif
+
+#define QSE_STATIC_ASSERT_EXPR(expr) ((void)QSE_SIZEOF(char[(expr)? 1: -1]))
+
+/* =========================================================================
+ * BASIC TYPES
+ * =========================================================================*/
+
 /**
  * The qse_bool_t type defines a boolean type that can represent #QSE_TRUE 
  * and #QSE_FALSE.
