@@ -525,7 +525,7 @@ qse_mchar_t* SocketAddress::toStrBuf (qse_mchar_t* buf, qse_size_t len) const QS
 {
 	qse_nwad_t nwad;
 	qse_skadtonwad (&this->skad, &nwad);
-	qse_nwadtombs (&nwad, buf, len, QSE_NWADTOWCS_ALL);
+	qse_nwadtombs (&nwad, buf, len, QSE_NWADTOMBS_ALL);
 	return buf;
 }
 

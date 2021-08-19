@@ -164,6 +164,8 @@ static QSE_INLINE int skad_to_nwad (const sockaddr_t* skad, qse_nwad_t* nwad)
 		}
 	#endif
 		default:
+			QSE_MEMSET (nwad, 0, QSE_SIZEOF(*nwad));
+			nwad->type = QSE_NWAD_NX;
 			break;
 	}
 
@@ -237,6 +239,14 @@ static QSE_INLINE int nwad_to_skad (const qse_nwad_t* nwad, sockaddr_t* skad)
 			break;
 		}
 
+		default:
+		{
+			struct sockaddr* sa;
+			sa = (struct sockaddr*)skad;
+			QSE_MEMSET (sa, 0, QSE_SIZEOF(*sa));
+			sa->sa_family = AF_UNSPEC;
+			break;
+		}
 	}
 
 	return addrsize;
