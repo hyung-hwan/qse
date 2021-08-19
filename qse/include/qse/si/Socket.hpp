@@ -83,6 +83,7 @@ public:
 	int setTcpNodelay (int n) QSE_CPP_NOEXCEPT;
 	int setOobInline (int n) QSE_CPP_NOEXCEPT;
 	int setIpv6Only (int n) QSE_CPP_NOEXCEPT;
+	int setRecvPktinfo (int n) QSE_CPP_NOEXCEPT;
 	int setNonBlock (int n) QSE_CPP_NOEXCEPT;
 
 	// -------------------------------------------------------------------- 
@@ -130,6 +131,7 @@ public:
 
 	qse_ssize_t receive (void* buf, qse_size_t len) QSE_CPP_NOEXCEPT;
 	qse_ssize_t receive (void* buf, qse_size_t len, SocketAddress& srcaddr) QSE_CPP_NOEXCEPT;
+	qse_ssize_t receive (void* buf, qse_size_t len, SocketAddress& srcaddr, int& ifindex) QSE_CPP_NOEXCEPT;
 
 	// -------------------------------------------------------------------- 
 

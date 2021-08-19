@@ -291,12 +291,37 @@ int Socket::setOobInline (int n) QSE_CPP_NOEXCEPT
 int Socket::setIpv6Only (int n) QSE_CPP_NOEXCEPT
 {
 #if defined(IPV6_V6ONLY)
-	return this->setOption(IPPROTO_IPV6, IPV6_V6ONLY, (char*)&n, QSE_SIZEOF(n));
-#else
+	if (this->getDomain() == AF_INET6)
+		return this->setOption(IPPROTO_IPV6, IPV6_V6ONLY, (char*)&n, QSE_SIZEOF(n));
+#endif
+
 	this->setErrorNumber (E_ENOIMPL);
 	return -1;
-#endif
 }
+
+int Socket::setRecvPktinfo (int n) QSE_CPP_NOEXCEPT
+{
+	switch (this->getDomain())
+	{
+	#if defined(IP_PKTINFO)
+		case AF_INET:
+			return this->setOption(IPPROTO_IP, IP_PKTINFO, (char*)&n, QSE_SIZEOF(n));
+	#endif
+
+	#if defined(AF_INET6) && defined(IPV6_RECVPKTINFO)
+		case AF_INET6:
+			return this->setOption(IPPROTO_IPV6, IPV6_RECVPKTINFO, (char*)&n, QSE_SIZEOF(n));
+			break;
+	#endif
+
+		default:
+			break;
+	}
+
+	this->setErrorNumber (E_ENOIMPL);
+	return -1;
+}
+
 
 int Socket::setNonBlock (int n) QSE_CPP_NOEXCEPT
 {
@@ -983,6 +1008,74 @@ qse_ssize_t Socket::receive (void* buf, qse_size_t len, SocketAddress& srcaddr) 
 
 	return n; 
 }
+
+qse_ssize_t Socket::receive (void* buf, qse_size_t len, SocketAddress& srcaddr, int& ifindex) QSE_CPP_NOEXCEPT
+{
+	QSE_ASSERT (qse_is_sck_valid(this->handle));
+
+	switch (this->getDomain())
+	{
+		case AF_INET:
+		{
+			break;
+		}
+
+	#if defined(AF_INET6)
+		case AF_INET6:
+		{
+			ssize_t n;
+			struct msghdr msg;
+			struct cmsghdr* cmsg;
+			union
+			{
+				struct cmsghdr cmsg;
+				qse_uint8_t buf[CMSG_SPACE(QSE_SIZEOF(struct in6_pktinfo))];
+			} c;
+			struct iovec iov;
+			struct sockaddr_in6 from;
+		
+			QSE_MEMSET (&msg, 0, QSE_SIZEOF(msg));
+			msg.msg_control = c.buf;
+			msg.msg_controllen = QSE_SIZEOF(c);
+			msg.msg_flags = 0;
+			msg.msg_name = &from;
+			msg.msg_namelen = QSE_SIZEOF(from);
+
+			iov.iov_base = buf;
+			iov.iov_len = len;
+			msg.msg_iov = &iov;
+			msg.msg_iovlen = 1;
+
+			n = ::recvmsg(this->handle, &msg, 0);
+			if (n == -1)
+			{
+				this->setErrorFmt (syserr_to_errnum(errno), QSE_T("%hs"), strerror(errno));
+				return -1;
+			}
+
+			ifindex = 0; // not known yet
+			for (cmsg = CMSG_FIRSTHDR(&msg); cmsg; cmsg = CMSG_NXTHDR(&msg, cmsg))
+			{
+				if (cmsg->cmsg_level == IPPROTO_IPV6 && cmsg->cmsg_type == IPV6_PKTINFO)
+				{
+					struct in6_pktinfo* pi;
+
+					pi = (struct in6_pktinfo*)CMSG_DATA(cmsg);
+					ifindex = pi->ipi6_ifindex;
+					break;
+				}
+			}
+
+			srcaddr.set ((const qse_skad_t*)&from);
+			return n;
+		}
+	#endif
+	}
+
+	this->setErrorFmt (E_ENOIMPL, QSE_T("unsupported socket domain"), strerror(errno));
+	return -1;
+}
+
 
 int Socket::joinMulticastGroup (const SocketAddress& mcaddr, const SocketAddress& ifaddr) QSE_CPP_NOEXCEPT
 {
