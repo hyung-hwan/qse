@@ -86,7 +86,7 @@ public:
 		return this->_cmgr;
 	}
 
-	int daemonize (bool chdir_to_root = true, int fork_count = 1, bool root_only = false) QSE_CPP_NOEXCEPT;
+	int daemonize (bool chdir_to_root = true, int fork_count = 1, bool root_only = false, bool close_files = true) QSE_CPP_NOEXCEPT;
 
 	int chroot (const qse_mchar_t* mpath) QSE_CPP_NOEXCEPT;
 	int chroot (const qse_wchar_t* wpath) QSE_CPP_NOEXCEPT;

@@ -129,7 +129,7 @@ void App::setName (const qse_char_t* name) QSE_CPP_NOEXCEPT
 	qse_log_setident (&this->_log.logger, name);
 }
 
-int App::daemonize (bool chdir_to_root, int fork_count, bool root_only) QSE_CPP_NOEXCEPT
+int App::daemonize (bool chdir_to_root, int fork_count, bool root_only, bool close_files) QSE_CPP_NOEXCEPT
 {
 	if (root_only && QSE_GETEUID() != 0) return -1;
 
@@ -152,7 +152,7 @@ int App::daemonize (bool chdir_to_root, int fork_count, bool root_only) QSE_CPP_
 	QSE_UMASK (0);
 	if (chdir_to_root) QSE_CHDIR("/"); // don't care about failure
 
-	if (true)
+	if (close_files)
 	{
 		int keep[] = { 0, 1, 2};
 
