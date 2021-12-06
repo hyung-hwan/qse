@@ -1442,6 +1442,15 @@ QSE_EXPORT int qse_mbsxwcscmp (
 	const qse_wchar_t* s2
 );
 
+#if defined(QSE_CHAR_IS_MCHAR)
+#	define qse_strmbscmp qse_mbscmp
+#	define qse_mbsstrcmp qse_mbscmp
+#	define qse_strxmbscmp qse_mbsxcmp
+#else
+#	define qse_strmbscmp qse_wcsmbscmp
+#	define qse_mbsstrcmp qse_mbswcscmp
+#	define qse_strxmbscmp qse_wcsxmbscmp
+#endif
 
 QSE_EXPORT qse_mchar_t* qse_mbsdup (
 	const qse_mchar_t* str,
