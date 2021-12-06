@@ -178,7 +178,7 @@ int App::daemonize (bool chdir_to_root, int fork_count, bool root_only) QSE_CPP_
 			// detach from the controlling terminal manually
 			// when no fork() is requested though setsid() is supposed to 
 			// do this as well. 
-			int fd = QSE_OPEN ("/dev/tty", O_RDWR, 0);
+			int fd = QSE_OPEN("/dev/tty", O_RDWR, 0);
 			if (fd >= 0)
 			{
 				QSE_IOCTL(fd, TIOCNOTTY, NULL);

@@ -476,12 +476,12 @@ int qse_xli_readini (qse_xli_t* xli, qse_xli_io_impl_t io)
 
 	QSE_ASSERT (QSE_STR_LEN(xli->dotted_curkey) == 0);
 
-	if (qse_xli_openrstream (xli, xli->rio.inp) <= -1) return -1;
+	if (qse_xli_openrstream(xli, xli->rio.inp) <= -1) return -1;
 	/* the input stream is open now */
 
-	if (read_root_list (xli) <= -1) goto oops;
+	if (read_root_list(xli) <= -1) goto oops;
 
-	if (!MATCH (xli, QSE_XLI_TOK_EOF))
+	if (!MATCH(xli, QSE_XLI_TOK_EOF))
 	{
 		qse_xli_seterror (xli, QSE_XLI_ESYNTAX, QSE_NULL, &xli->tok.loc);
 		goto oops;
