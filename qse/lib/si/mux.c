@@ -74,6 +74,9 @@
 #		include <sys/epoll.h>
 #		if defined(HAVE_EPOLL_CREATE)
 #			define USE_EPOLL
+#			if !defined(EPOLLRDHUP)
+#				define EPOLLRDHUP (0x2000)
+#			endif
 #		endif
 /*
 #	elif defined(HAVE_POLL_H)
