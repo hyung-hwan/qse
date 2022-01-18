@@ -118,6 +118,13 @@ int SocketAddress::getFamily () const QSE_CPP_NOEXCEPT
 	//return qse_skadfamily (&this->skad);
 }
 
+void SocketAddress::setFamily (int family) QSE_CPP_NOEXCEPT
+{
+	// setFamily reset() the address to zeros
+	QSE_MEMSET (&this->skad, 0, QSE_SIZEOF(this->skad));
+	FAMILY(&this->skad) = family;
+}
+
 void SocketAddress::setIp4addr (const qse_ip4ad_t* ipaddr) QSE_CPP_NOEXCEPT
 {
 #if defined(AF_INET)

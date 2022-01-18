@@ -38,6 +38,7 @@
 #include <netinet/in.h>
 #include <string.h> // strerror
 
+#include <stdio.h>
 #if defined(HAVE_NET_IF_H)
 #	include <net/if.h>
 #endif
@@ -57,7 +58,7 @@ QSE_BEGIN_NAMESPACE(QSE)
 #include "../cmn/syserr.h"
 IMPLEMENT_SYSERR_TO_ERRNUM (Socket::ErrorNumber, Socket::)
 
-Socket::Socket () QSE_CPP_NOEXCEPT: handle(QSE_INVALID_SCKHND), domain(-1)
+Socket::Socket () QSE_CPP_NOEXCEPT: handle(QSE_INVALID_SCKHND), domain(-1), cached_binding_port(0)
 {
 }
 
@@ -402,6 +403,7 @@ int Socket::bind (const SocketAddress& target) QSE_CPP_NOEXCEPT
 		return -1;
 	}
 
+	this->cached_binding_port = target.getPort();
 	return 0;
 }
 
@@ -1009,15 +1011,69 @@ qse_ssize_t Socket::receive (void* buf, qse_size_t len, SocketAddress& srcaddr) 
 	return n; 
 }
 
-qse_ssize_t Socket::receive (void* buf, qse_size_t len, SocketAddress& srcaddr, int& ifindex) QSE_CPP_NOEXCEPT
+qse_ssize_t Socket::receive (void* buf, qse_size_t len, SocketAddress& srcaddr, int& ifindex, SocketAddress* dstaddr) QSE_CPP_NOEXCEPT
 {
 	QSE_ASSERT (qse_is_sck_valid(this->handle));
 
+#if defined(HAVE_RECVMSG)
 	switch (this->getDomain())
 	{
 		case AF_INET:
 		{
-			break;
+			ssize_t n;
+			struct msghdr msg;
+			struct cmsghdr* cmsg;
+			union
+			{
+				struct cmsghdr cmsg;
+				qse_uint8_t buf[CMSG_SPACE(QSE_SIZEOF(struct in_pktinfo))];
+			} c;
+			struct iovec iov;
+			struct sockaddr_in from;
+		
+			QSE_MEMSET (&msg, 0, QSE_SIZEOF(msg));
+			msg.msg_control = c.buf;
+			msg.msg_controllen = QSE_SIZEOF(c);
+			msg.msg_flags = 0;
+			msg.msg_name = &from;
+			msg.msg_namelen = QSE_SIZEOF(from);
+
+			iov.iov_base = buf;
+			iov.iov_len = len;
+			msg.msg_iov = &iov;
+			msg.msg_iovlen = 1;
+
+			n = ::recvmsg(this->handle, &msg, 0);
+			if (n == -1)
+			{
+				this->setErrorFmt (syserr_to_errnum(errno), QSE_T("%hs"), strerror(errno));
+				return -1;
+			}
+
+			ifindex = 0; // not known yet
+
+		#if defined(IP_PKTINFO)
+			for (cmsg = CMSG_FIRSTHDR(&msg); cmsg; cmsg = CMSG_NXTHDR(&msg, cmsg))
+			{
+				if (cmsg->cmsg_level == IPPROTO_IP && cmsg->cmsg_type == IP_PKTINFO)
+				{
+					struct in_pktinfo* pi;
+
+					pi = (struct in_pktinfo*)CMSG_DATA(cmsg);
+					ifindex = pi->ipi_ifindex;
+					if (dstaddr) 
+					{
+						dstaddr->setFamily (QSE_AF_INET);
+						dstaddr->setIp4addr ((const qse_ip4ad_t*)&pi->ipi_addr);
+						dstaddr->setPort (this->cached_binding_port);
+					}
+					break;
+				}
+			}
+		#endif
+
+			srcaddr.set ((const qse_skad_t*)&from);
+			return n;
 		}
 
 	#if defined(AF_INET6)
@@ -1054,6 +1110,7 @@ qse_ssize_t Socket::receive (void* buf, qse_size_t len, SocketAddress& srcaddr, 
 			}
 
 			ifindex = 0; // not known yet
+		#if defined(IPV6_PKTINFO)
 			for (cmsg = CMSG_FIRSTHDR(&msg); cmsg; cmsg = CMSG_NXTHDR(&msg, cmsg))
 			{
 				if (cmsg->cmsg_level == IPPROTO_IPV6 && cmsg->cmsg_type == IPV6_PKTINFO)
@@ -1062,9 +1119,16 @@ qse_ssize_t Socket::receive (void* buf, qse_size_t len, SocketAddress& srcaddr, 
 
 					pi = (struct in6_pktinfo*)CMSG_DATA(cmsg);
 					ifindex = pi->ipi6_ifindex;
+					if (dstaddr)
+					{
+						dstaddr->setFamily (QSE_AF_INET6);
+						dstaddr->setIp6addr ((const qse_ip6ad_t*)&pi->ipi6_addr);
+						dstaddr->setPort (this->cached_binding_port);
+					}
 					break;
 				}
 			}
+		#endif
 
 			srcaddr.set ((const qse_skad_t*)&from);
 			return n;
@@ -1074,8 +1138,11 @@ qse_ssize_t Socket::receive (void* buf, qse_size_t len, SocketAddress& srcaddr, 
 
 	this->setErrorFmt (E_ENOIMPL, QSE_T("unsupported socket domain"), strerror(errno));
 	return -1;
+#else
+	this->setErrorNumber (E_ENOIMPL);
+	return -1;
+#endif
 }
-
 
 int Socket::joinMulticastGroup (const SocketAddress& mcaddr, const SocketAddress& ifaddr) QSE_CPP_NOEXCEPT
 {

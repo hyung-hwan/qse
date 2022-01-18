@@ -65,6 +65,9 @@ public:
 
 	int getFamily () const QSE_CPP_NOEXCEPT;
 
+	// this resets the actual addresses to zeros just like SocketAddress(int family) constructor.
+	void setFamily (int family) QSE_CPP_NOEXCEPT;
+
 	qse_skad_t* getAddrPtr() QSE_CPP_NOEXCEPT
 	{
 		return &this->skad;

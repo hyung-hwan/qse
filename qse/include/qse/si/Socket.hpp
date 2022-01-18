@@ -131,7 +131,7 @@ public:
 
 	qse_ssize_t receive (void* buf, qse_size_t len) QSE_CPP_NOEXCEPT;
 	qse_ssize_t receive (void* buf, qse_size_t len, SocketAddress& srcaddr) QSE_CPP_NOEXCEPT;
-	qse_ssize_t receive (void* buf, qse_size_t len, SocketAddress& srcaddr, int& ifindex) QSE_CPP_NOEXCEPT;
+	qse_ssize_t receive (void* buf, qse_size_t len, SocketAddress& srcaddr, int& ifindex, SocketAddress* dstaddr = QSE_NULL) QSE_CPP_NOEXCEPT;
 
 	// -------------------------------------------------------------------- 
 
@@ -185,6 +185,7 @@ public:
 protected:
 	qse_sck_hnd_t handle;
 	int domain;
+	qse_uint16_t cached_binding_port;
 
 	int get_ifce_index (const void* name, qse_size_t len, bool wchar);
 	int get_ifce_address (int cmd, const void* name, qse_size_t len, bool wchar, SocketAddress* addr, int family);
