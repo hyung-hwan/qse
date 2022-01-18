@@ -86,6 +86,7 @@ QSE_BEGIN_NAMESPACE(QSE)
 SocketAddress::SocketAddress () QSE_CPP_NOEXCEPT
 {
 	QSE_MEMSET (&this->skad, 0, QSE_SIZEOF(this->skad));
+	FAMILY(&this->skad) = QSE_AF_UNSPEC;
 }
 
 SocketAddress::SocketAddress (int family) QSE_CPP_NOEXCEPT
@@ -115,7 +116,7 @@ bool SocketAddress::operator== (const SocketAddress& addr) const QSE_CPP_NOEXCEP
 int SocketAddress::getFamily () const QSE_CPP_NOEXCEPT
 {
 	return FAMILY(&this->skad);
-	//return qse_skadfamily (&this->skad);
+	//return qse_skadfamily(&this->skad);
 }
 
 void SocketAddress::setFamily (int family) QSE_CPP_NOEXCEPT
