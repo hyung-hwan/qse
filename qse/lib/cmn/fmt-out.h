@@ -442,6 +442,8 @@ reswitch:
 			if (flagc & FLAGC_ZEROPAD) padc = T(' '); 
 			if (((lm_flag & LF_H) && (QSE_SIZEOF(char_t) > QSE_SIZEOF(ochar_t))) ||
 			    ((lm_flag & LF_L) && (QSE_SIZEOF(char_t) < QSE_SIZEOF(ochar_t)))) goto uppercase_c;
+			/* check qse_char_t(not char_t) against ochar_t */
+			if ((lm_flag & LF_J) && QSE_SIZEOF(qse_char_t) == QSE_SIZEOF(ochar_t)) goto uppercase_c;
 		lowercase_c:
 			ach = QSE_SIZEOF(char_t) < QSE_SIZEOF(int)? va_arg(ap, int): va_arg(ap, char_t);
 
@@ -464,6 +466,8 @@ reswitch:
 			if (flagc & FLAGC_ZEROPAD) padc = T(' ');
 			if (((lm_flag & LF_H) && (QSE_SIZEOF(char_t) < QSE_SIZEOF(ochar_t))) ||
 			    ((lm_flag & LF_L) && (QSE_SIZEOF(char_t) > QSE_SIZEOF(ochar_t)))) goto lowercase_c;
+			/* check qse_char_t(not char_t) against ochar_t */
+			if ((lm_flag & LF_J) && QSE_SIZEOF(qse_char_t) == QSE_SIZEOF(char_t)) goto lowercase_s;
 		uppercase_c:
 			oach = QSE_SIZEOF(ochar_t) < QSE_SIZEOF(int)? va_arg(ap, int): va_arg(ap, ochar_t);
 
@@ -508,8 +512,14 @@ reswitch:
 			if (flagc & FLAGC_ZEROPAD) padc = T(' ');
 			if (((lm_flag & LF_H) && (QSE_SIZEOF(char_t) > QSE_SIZEOF(ochar_t))) ||
 			    ((lm_flag & LF_L) && (QSE_SIZEOF(char_t) < QSE_SIZEOF(ochar_t)))) goto uppercase_s;
+			/* check qse_char_t(not char_t) against ochar_t */
+			if ((lm_flag & LF_J) && QSE_SIZEOF(qse_char_t) == QSE_SIZEOF(ochar_t)) goto uppercase_s;
+
+
+			/* falls down here if lm_flag & LF_J */
+		
 		lowercase_s:
-			sp = va_arg (ap, char_t*);
+			sp = va_arg(ap, char_t*);
 			if (sp == QSE_NULL) p = T("(null)");
 
 		print_lowercase_s:
@@ -540,8 +550,9 @@ reswitch:
 			if (flagc & FLAGC_ZEROPAD) padc = T(' ');
 			if (((lm_flag & LF_H) && (QSE_SIZEOF(char_t) < QSE_SIZEOF(ochar_t))) ||
 			    ((lm_flag & LF_L) && (QSE_SIZEOF(char_t) > QSE_SIZEOF(ochar_t)))) goto lowercase_s;
+			/* check qse_char_t(not char_t) against ochar_t */
+			if ((lm_flag & LF_J) && QSE_SIZEOF(qse_char_t) == QSE_SIZEOF(char_t)) goto lowercase_s;
 		uppercase_s:
-
 			osp = va_arg (ap, ochar_t*);
 			if (osp == QSE_NULL) osp = OT("(null)");
 

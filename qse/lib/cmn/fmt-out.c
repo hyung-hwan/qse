@@ -134,6 +134,12 @@ static const qse_wchar_t* w_hex2ascii =
 
 /* ------------------------------------------------------------------ */
 
+/* char_t a normal character type for the format
+ * ochar_t is an opposite type to char_t 
+ * uchar_t is a normal unsigned character type */
+
+/* ------------------------------------------------------------------ */
+
 #undef char_t
 #undef uchar_t
 #undef ochar_t
@@ -147,12 +153,12 @@ static const qse_wchar_t* w_hex2ascii =
 #undef fmtout
 
 #define char_t qse_mchar_t
-#define uchar_t qse_mchar_t
+#define uchar_t qse_mchau_t
 #define ochar_t qse_wchar_t
 #define T(x) QSE_MT(x)
 #define OT(x) QSE_WT(x)
 #define CONV_MAX QSE_MBLEN_MAX
-#define toupper QSE_TOUPPER
+#define toupper QSE_TOMUPPER
 #define sprintn m_sprintn
 #define fmtout_t qse_mfmtout_t
 #define fmtout qse_mfmtout
@@ -176,7 +182,7 @@ static const qse_wchar_t* w_hex2ascii =
 #undef fmtout
 
 #define char_t qse_wchar_t
-#define uchar_t qse_wchar_t
+#define uchar_t qse_wchau_t
 #define ochar_t qse_mchar_t
 #define T(x) QSE_WT(x)
 #define OT(x) QSE_MT(x)
