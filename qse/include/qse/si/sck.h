@@ -64,11 +64,18 @@
 
 enum qse_shut_sck_how_t
 {
-	QSE_SHUTSCKHND_R  = 0,
-	QSE_SHUTSCKHND_W  = 1,
-	QSE_SHUTSCKHND_RW = 2
+	QSE_SHUT_SCK_R  = 0,
+	QSE_SHUT_SCK_W  = 1,
+	QSE_SHUT_SCK_RW = 2
 };
 typedef enum qse_shut_sck_how_t qse_shut_sck_how_t;
+
+enum qse_sck_trait_t
+{
+	QSE_SCK_TRAIT_NONBLOCK = (1 << 0),
+	QSE_SCK_TRAIT_CLOEXEC = (1 << 1)
+};
+typedef enum qse_sck_trait_t qse_sck_trait_t;
 
 #if defined(__cplusplus)
 extern "C" {
@@ -76,6 +83,13 @@ extern "C" {
 
 QSE_EXPORT int qse_is_sck_valid (
 	qse_sck_hnd_t handle
+);
+
+QSE_EXPORT qse_sck_hnd_t qse_open_sck (
+	int family,
+	int type,
+	int protocol,
+	int traits
 );
 
 QSE_EXPORT void qse_close_sck (

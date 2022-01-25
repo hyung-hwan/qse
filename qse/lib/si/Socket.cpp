@@ -77,7 +77,6 @@ int Socket::fdopen (int handle) QSE_CPP_NOEXCEPT
 int Socket::open (int domain, int type, int protocol, int traits) QSE_CPP_NOEXCEPT
 {
 	int x;
-	int fcntl_v = 0;
 
 #if defined(SOCK_NONBLOCK) && defined(SOCK_CLOEXEC)
 	if (traits & Socket::T_NONBLOCK) type |= SOCK_NONBLOCK;
@@ -106,24 +105,13 @@ open_socket:
 
 	if (traits)
 	{
-		fcntl_v = ::fcntl(x, F_GETFL, 0);
-		if (fcntl_v == -1)
+		if (((traits & Socket::T_CLOEXEC) && qse_set_sck_cloexec(x, 1) <= -1) ||
+		    ((traits & Socket::T_NONBLOCK) && qse_set_sck_nonblock(x, 1) <= -1)) 
 		{
-		fcntl_failure:
 			this->setErrorFmt (syserr_to_errnum(errno), QSE_T("%hs"), strerror(errno));
 			::close (x);
 			return -1;
 		}
-
-		if (traits & Socket::T_NONBLOCK) fcntl_v |= O_NONBLOCK;
-		else fcntl_v &= ~O_NONBLOCK;
-
-	#if defined(FD_CLOEXEC)
-		if (traits & Socket::T_CLOEXEC) fcntl_v |= FD_CLOEXEC;
-		else fcntl_v &= ~FD_CLOEXEC;
-	#endif
-
-		if (::fcntl(x, F_SETFL, fcntl_v) == -1) goto fcntl_failure;
 	}
 
 done:

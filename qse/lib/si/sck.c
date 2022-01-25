@@ -95,6 +95,48 @@ QSE_INLINE int qse_is_sck_valid (qse_sck_hnd_t handle)
 #endif
 }
 
+qse_sck_hnd_t qse_open_sck (int family, int type, int protocol, int traits)
+{
+	int x;
+
+#if defined(SOCK_NONBLOCK) && defined(SOCK_CLOEXEC)
+	if (traits & QSE_SCK_TRAIT_NONBLOCK) type |= SOCK_NONBLOCK;
+	if (traits & QSE_SCK_TRAIT_CLOEXEC) type |= SOCK_CLOEXEC;
+open_socket:
+#endif
+	x = socket(family, type, protocol);
+	if (x == -1)
+	{
+	#if defined(SOCK_NONBLOCK) && defined(SOCK_CLOEXEC)
+		if (errno == EINVAL && (type & (SOCK_NONBLOCK | SOCK_CLOEXEC)))
+		{
+			type &= ~(SOCK_NONBLOCK | SOCK_CLOEXEC);
+			goto open_socket;
+		}
+	#endif
+		return -1;
+	}
+	else
+	{
+	#if defined(SOCK_NONBLOCK) && defined(SOCK_CLOEXEC)
+		if (type & (SOCK_NONBLOCK | SOCK_CLOEXEC)) goto done;
+	#endif
+	}
+
+	if (traits)
+	{
+		if (((traits & QSE_SCK_TRAIT_CLOEXEC) && qse_set_sck_cloexec(x, 1) <= -1) ||
+		    ((traits & QSE_SCK_TRAIT_NONBLOCK) && qse_set_sck_nonblock(x, 1) <= -1))
+		{
+			close (x);
+			return -1;
+		}
+	}
+
+done:
+	return x;
+}
+
 QSE_INLINE void qse_close_sck (qse_sck_hnd_t handle)
 {
 #if defined(_WIN32)
@@ -110,7 +152,7 @@ QSE_INLINE void qse_close_sck (qse_sck_hnd_t handle)
 	t_close (handle);
 
 #else
-	QSE_CLOSE (handle);
+	close (handle);
 #endif
 }
 
@@ -131,13 +173,13 @@ QSE_INLINE void qse_shut_sck (qse_sck_hnd_t handle, qse_shut_sck_how_t how)
 	/* Is this correct? */
 	switch (how)
 	{
-		case QSE_SHUTSCKHND_R:
+		case QSE_SHUT_SCK_R:
 			t_rcvrel (handle);
 			break;
-		case QSE_SHUTSCKHND_W:
+		case QSE_SHUT_SCK_W:
 			t_sndrel (handle);
 			break;
-		case QSE_SHUTSCKHND_RW:
+		case QSE_SHUT_SCK_RW:
 			t_rcvrel (handle);
 			t_sndrel (handle);
 			break;
@@ -188,8 +230,8 @@ int qse_set_sck_cloexec (qse_sck_hnd_t handle, int enabled)
 	return -1;
 
 #elif defined(FD_CLOEXEC)
-	int flag = fcntl(handle, F_GETFL);
-	if (flag >= 0) flag = fcntl(handle, F_SETFL, (enabled? (flag | FD_CLOEXEC): (flag & ~FD_CLOEXEC)));
+	int flag = fcntl(handle, F_GETFD);
+	if (flag >= 0) flag = fcntl(handle, F_SETFD, (enabled? (flag | FD_CLOEXEC): (flag & ~FD_CLOEXEC)));
 	if (flag <= -1) return -1;
 	return 0;
 #else
@@ -406,7 +448,7 @@ void qse_sck_fini (qse_sck_t* sck)
 #elif defined(__DOS__)
 	close_s (sck->handle)
 #else
-	QSE_CLOSE (sck->handle);
+	close (sck->handle);
 #endif
 }
 

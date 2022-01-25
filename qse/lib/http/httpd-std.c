@@ -1202,13 +1202,13 @@ oops:
 
 static void client_close (qse_httpd_t* httpd, qse_httpd_client_t* client)
 {
-	qse_shut_sck (client->handle, QSE_SHUTSCKHND_RW);
+	qse_shut_sck (client->handle, QSE_SHUT_SCK_RW);
 	qse_close_sck (client->handle);
 }
 
 static void client_shutdown (qse_httpd_t* httpd, qse_httpd_client_t* client)
 {
-	qse_shut_sck (client->handle, QSE_SHUTSCKHND_RW);
+	qse_shut_sck (client->handle, QSE_SHUT_SCK_RW);
 }
 
 static qse_ssize_t client_recv (
