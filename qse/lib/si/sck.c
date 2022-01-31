@@ -58,6 +58,9 @@
 #	include "../cmn/syscall.h"
 #	include <sys/socket.h>
 #	include <netinet/in.h>
+#	if defined(HAVE_NETINET_TCP_H)
+#		include <netinet/tcp.h>
+#	endif
 #	if defined(HAVE_NETINET_SCTP_H)
 #		include <netinet/sctp.h>
 #	endif
