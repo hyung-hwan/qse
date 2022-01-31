@@ -121,6 +121,14 @@ QSE_EXPORT int qse_fini_sck_conn (
 	qse_sck_hnd_t handle
 );
 
+QSE_EXPORT int qse_set_sck_keepalive (
+	qse_sck_hnd_t handle,
+	int           enabled,
+	int           tcp_keepidle,
+	int           tcp_keepintvl,
+	int           tcp_keepcnt
+);
+
 #if defined(__cplusplus)
 }
 #endif

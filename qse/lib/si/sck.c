@@ -343,6 +343,25 @@ int qse_fini_sck_conn (qse_sck_hnd_t handle)
 	return 1; /* connected */
 }
 
+int qse_set_sck_keepalive (qse_sck_hnd_t handle, int enabled, int tcp_keepidle, int tcp_keepintvl, int tcp_keepcnt)
+{
+	if (setsockopt(handle, SOL_SOCKET, SO_KEEPALIVE, (char*)&enabled, QSE_SIZEOF(enabled)) <= -1) return -1;
+
+	// the following values are just hints. 
+	// i don't care about success and failure
+#if defined(TCP_KEEPIDLE) && defined(SOL_TCP)
+	if (tcp_keepidle > 0) setsockopt (handle, SOL_TCP, TCP_KEEPIDLE, (char*)&tcp_keepidle, QSE_SIZEOF(tcp_keepidle));
+#endif
+#if defined(TCP_KEEPINTVL) && defined(SOL_TCP)
+	if (tcp_keepintvl > 0) setsockopt (handle, SOL_TCP, TCP_KEEPINTVL, (char*)&tcp_keepintvl, QSE_SIZEOF(tcp_keepintvl));
+#endif
+#if defined(TCP_KEEPCNT) && defined(SOL_TCP)
+	if (tcp_keepcnt > 0) setsockopt (handle, SOL_TCP, TCP_KEEPCNT, (char*)&tcp_keepcnt, QSE_SIZEOF(tcp_keepcnt));
+#endif
+	return 0;
+}
+
+
 #if 0
 qse_sck_hnd_t
 
