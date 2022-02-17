@@ -1119,7 +1119,7 @@ int qse_mux_setupchan (qse_mux_t* mux)
 		return -1;
 	}
 
-#if defined(HAVE_PIPE2)
+#if defined(HAVE_PIPE2) && defined(O_CLOEXEC)
 	if (pipe2(mux->chan, O_CLOEXEC | O_NONBLOCK) <= -1)
 #else
 	if (pipe(mux->chan) <= -1)
@@ -1130,7 +1130,7 @@ int qse_mux_setupchan (qse_mux_t* mux)
 	}
 	else
 	{
-#if defined(HAVE_PIPE2)
+#if defined(HAVE_PIPE2) && defined(O_CLOEXEC)
 		/* do nothing */
 #else
 		int flags;
