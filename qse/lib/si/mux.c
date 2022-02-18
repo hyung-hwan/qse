@@ -269,10 +269,7 @@ static qse_mux_errnum_t skerr_to_errnum (int e)
 }
 #endif
 
-qse_mux_t* qse_mux_open (
-	qse_mmgr_t* mmgr, qse_size_t xtnsize, 
-	qse_mux_evtcb_t evtcb, qse_size_t capahint, 
-	qse_mux_errnum_t* errnum)
+qse_mux_t* qse_mux_open (qse_mmgr_t* mmgr, qse_size_t xtnsize, qse_mux_evtcb_t evtcb, qse_size_t capahint, qse_mux_errnum_t* errnum)
 {
 	qse_mux_t* mux;
 	
@@ -298,9 +295,7 @@ void qse_mux_close (qse_mux_t* mux)
 	QSE_MMGR_FREE (mux->mmgr, mux);
 }
 
-int qse_mux_init (
-	qse_mux_t* mux, qse_mmgr_t* mmgr,
-	qse_mux_evtcb_t evtcb, qse_size_t capahint)
+int qse_mux_init (qse_mux_t* mux, qse_mmgr_t* mmgr, qse_mux_evtcb_t evtcb, qse_size_t capahint)
 {
 	QSE_MEMSET (mux, 0, QSE_SIZEOF(*mux));
 	mux->mmgr = mmgr;
@@ -342,8 +337,8 @@ int qse_mux_init (
 	#endif
 
 #elif defined(USE_EPOLL) 
-	#if defined(HAVE_EPOLL_CREATE1) && defined(O_CLOEXEC)
-	mux->fd = epoll_create1(O_CLOEXEC);
+	#if defined(HAVE_EPOLL_CREATE1) && defined(EPOLL_CLOEXEC)
+	mux->fd = epoll_create1(EPOLL_CLOEXEC);
 	#else
 	mux->fd = epoll_create(capahint);
 	#endif
@@ -353,7 +348,7 @@ int qse_mux_init (
 		return -1;
 	}
 
-	#if defined(HAVE_EPOLL_CREATE1) && defined(O_CLOEXEC)
+	#if defined(HAVE_EPOLL_CREATE1) && defined(EPOLL_CLOEXEC)
 	/* nothing to do */
 	#elif defined(FD_CLOEXEC)
 	{
