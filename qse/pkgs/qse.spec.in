@@ -1,9 +1,12 @@
 %define _prefix /usr
 %define _sysconfdir /etc
 
+%define _nowidechar_prefix /opt/qse-nowidechar
+%define _nowidechar_libdir %{_nowidechar_prefix}/%{_lib}
+
 Summary: QSE Library
 Name: @PACKAGE_NAME@
-Version: 0.8.5
+Version: @PACKAGE_VERSION@
 Release: 1%{?dist}
 License: Simplified BSD License
 Vendor: Chung, Hyung-Hwan 
@@ -27,6 +30,15 @@ Requires: @PACKAGE_NAME@ = %{version}
 %description devel
 The header files and libraries for developing applications with QSE.
 
+%package nowidechar
+Summary: Development files for QSE Non-Widechar
+Group: System Environment/Libraries
+Requires: @PACKAGE_NAME@ = %{version}
+
+%description nowidechar
+The header files and libraries for developing applications with QSE Non-Widechar.
+The nowidecharchar version is retained for building legacy applications.
+
 %prep
 %setup -q
 
@@ -34,7 +46,9 @@ The header files and libraries for developing applications with QSE.
 RPM_OPT_FLAGS="$(echo $RPM_OPT_FLAGS | %{__sed} 's/-O2/-O3/')"
 #CFLAGS="${RPM_OPT_FLAGS} -D_GNU_SOURCE" CXXFLAGS="${RPM_OPT_FLAGS} -D_GNU_SOURCE" ./configure --prefix=%{_prefix} --libdir=%{_libdir} --sysconfdir=%{_sysconfdir} --enable-shared=no --enable-static=no --enable-wide-char=yes:2w --enable-syscall=no --enable-cxx=yes --enable-pthread_flags=yes
 
-CFLAGS="${RPM_OPT_FLAGS}" CXXFLAGS="${RPM_OPT_FLAGS}" ./configure \
+mkdir bld-wide
+pushd bld-wide
+CFLAGS="${RPM_OPT_FLAGS}" CXXFLAGS="${RPM_OPT_FLAGS}" ../configure \
 	--prefix=%{_prefix} \
 	--libdir=%{_libdir} \
 	--sysconfdir=%{_sysconfdir} \
@@ -48,11 +62,37 @@ CFLAGS="${RPM_OPT_FLAGS}" CXXFLAGS="${RPM_OPT_FLAGS}" ./configure \
 	--enable-cxx=yes \
 	--enable-pthread_flags=yes  ##CC=gcc44 CXX=g++44
 make
+popd
+
+mkdir bld-no-wide
+pushd bld-no-wide
+CFLAGS="${RPM_OPT_FLAGS}" CXXFLAGS="${RPM_OPT_FLAGS}" ../configure \
+	--prefix=%{_nowidechar_prefix} \
+	--libdir=%{_nowidechar_libdir} \
+	--enable-shared=no \
+	--enable-static=yes \
+	--enable-wide-char=no \
+	--enable-bundled-unicode=no \
+	--enable-xcmgrs=yes \
+	--enable-syscall=no \
+	--enable-debug=no \
+	--enable-cxx=yes \
+	--enable-pthread_flags=yes  ##CC=gcc44 CXX=g++44
+make
+popd
 
 %install
+pushd bld-wide
 make install DESTDIR=$RPM_BUILD_ROOT
+popd
+
+pushd bld-no-wide
+make install DESTDIR=$RPM_BUILD_ROOT
+popd
+
 ##rm -f $RPM_BUILD_ROOT%{_libdir}/*.la
 rm -rf $RPM_BUILD_ROOT%{_libdir}/pkgconfig
+rm -rf $RPM_BUILD_ROOT%{_nowidechar_libdir}/pkgconfig
 
 %clean
 rm -rf "$RPM_BUILD_ROOT"
@@ -73,3 +113,7 @@ rm -rf "$RPM_BUILD_ROOT"
 %{_includedir}/*
 %{_libdir}/*.a
 %{_libdir}/*.la
+
+%files nowidechar
+%defattr(-,root,root)
+%{_nowidechar_prefix}/*

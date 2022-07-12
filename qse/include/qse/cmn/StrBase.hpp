@@ -183,7 +183,7 @@ public:
 			// allocation. all other functions except the copy/move constructors, some
 			// assignment operators, the destructor and the truncation() function are
 			// not aware of this special condition. if you call other functions without
-			// truncate(), your program will end with a crash.
+			// truncate(), your program will end in a crash.
 			//
 			// String x(0);
 			// try { x.truncate(10); } catch (...) { return -1; }
