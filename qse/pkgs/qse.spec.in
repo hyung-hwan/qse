@@ -33,7 +33,6 @@ The header files and libraries for developing applications with QSE.
 %package nowidechar
 Summary: Development files for QSE Non-Widechar
 Group: System Environment/Libraries
-Requires: @PACKAGE_NAME@ = %{version}
 
 %description nowidechar
 The header files and libraries for developing applications with QSE Non-Widechar.
