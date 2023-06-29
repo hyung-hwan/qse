@@ -179,6 +179,11 @@ QSE_EXPORT int qse_dhcp4_add_option (
 	qse_uint8_t         olen  /**< option data length */
 );
 
+QSE_EXPORT int qse_dhcp4_delete_option (
+	qse_dhcp4_pktbuf_t* pkt,
+	int                 code
+);
+
 QSE_EXPORT void qse_dhcp4_compact_options (
 	qse_dhcp4_pktbuf_t* pkt
 );

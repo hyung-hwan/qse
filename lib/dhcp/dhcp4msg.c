@@ -77,6 +77,33 @@ int qse_dhcp4_add_option (qse_dhcp4_pktbuf_t* pkt, int code, void* optr, qse_uin
 	return 0;
 }
 
+int qse_dhcp4_delete_option (qse_dhcp4_pktbuf_t* pkt, int code)
+{
+	qse_dhcp4_opt_hdr_t* ohdr;
+	qse_size_t olen;
+	qse_uint8_t* ovend;
+
+	ohdr = qse_dhcp4_find_option((qse_dhcp4_pktinf_t*)pkt, code);
+	if (!ohdr) return -1;
+
+	olen = (code == QSE_DHCP4_OPT_PADDING || code == QSE_DHCP4_OPT_END)? 1: (ohdr->len) + QSE_SIZEOF(*ohdr);
+
+	if ((ohdr >= pkt->hdr->file && ohdr < (ovend = (qse_uint8_t*)pkt->hdr->file + QSE_SIZEOF(pkt->hdr->file))) ||
+	    (ohdr >= pkt->hdr->sname && ohdr < (ovend = (qse_uint8_t*)pkt->hdr->sname + QSE_SIZEOF(pkt->hdr->sname))))
+	{
+		/* the option resides in the overload area */
+		QSE_MEMMOVE (ohdr, (qse_uint8_t*)ohdr + olen, ovend - ((qse_uint8_t*)ohdr + olen));
+		QSE_MEMSET (ovend - olen, 0, olen);
+		/* packet length remains unchanged */
+	}
+	else
+	{
+		QSE_MEMMOVE (ohdr, (qse_uint8_t*)ohdr + olen, ((qse_uint8_t*)pkt->hdr + pkt->len) - ((qse_uint8_t*)ohdr + olen));
+		pkt->len -= olen;
+	}
+	return 0;
+}
+
 void qse_dhcp4_compact_options (qse_dhcp4_pktbuf_t* pkt)
 {
 	/* TODO: move some optiosn to sname or file fields if they are not in use. */
@@ -167,7 +194,7 @@ qse_dhcp4_opt_hdr_t* qse_dhcp4_find_option (const qse_dhcp4_pktinf_t* pkt, int c
 	int i;
 
 	optptr[0] = get_option_start(pkt->hdr, pkt->len, &optlen[0]);
-	if (optptr[0] == QSE_NULL) return QSE_NULL;
+	if (!optptr[0]) return QSE_NULL;
 
 	optptr[1] = (const qse_uint8_t*)pkt->hdr->file;
 	optptr[2] = (const qse_uint8_t*)pkt->hdr->sname;
@@ -184,38 +211,43 @@ qse_dhcp4_opt_hdr_t* qse_dhcp4_find_option (const qse_dhcp4_pktinf_t* pkt, int c
 			/* option code */
 			qse_dhcp4_opt_hdr_t* opthdr;
 
-			if (opt + QSE_SIZEOF(*opthdr) >= end) 
+			/* at least 1 byte is available. the check is because of PADDING or END */
+			if (*opt == QSE_DHCP4_OPT_PADDING) continue;
+			if (*opt == QSE_DHCP4_OPT_END)
 			{
-				/*return QSE_NULL; */
+				if (code == QSE_DHCP4_OPT_END)
+				{
+					/* the caller must handle END specially becuase it is only 1 byte long
+				 	 * for no length part in the header */
+					return (qse_dhcp4_opt_hdr_t*)opt;
+				}
 				break;
 			}
+
+			if (opt + QSE_SIZEOF(*opthdr) > end) break;
+
 			opthdr = (qse_dhcp4_opt_hdr_t*)opt;
 			opt += QSE_SIZEOF(*opthdr);
-
-			if (opthdr->code == QSE_DHCP4_OPT_PADDING) continue;
-			if (opthdr->code == QSE_DHCP4_OPT_END) break;
 
 			/* option length */
 
 			if (opthdr->code == code)
 			{
-				if (opt + opthdr->len >= end) 
-				{
-					/*return QSE_NULL; */
-					break;
-				}
-
+				if (opt + opthdr->len > end) break;
 				return opthdr;
 			}
 
+			/*
+			 * If option overload is used, the SName and/or File fields are read and
+			 * interpreted in the same way as the Options field, after all options in
+			 * the Option field are parsed. If the message actually does need to carry
+			 * a server name or boot file, these are included as separate options
+			 * (number 66 and number 67, respectively), which are variable-length and
+			 * can therefore be made exactly the length needed.
+			 */
 			if (opthdr->code == QSE_DHCP4_OPT_OVERLOAD)
 			{
-				if (opthdr->len != 1) 
-				{
-					/*return QSE_NULL; */
-					break;
-				}
-
+				if (opthdr->len != 1) break;
 				if (*opt & QSE_DHCP4_OPT_OVERLOAD_FILE) optlen[1] = QSE_SIZEOF(pkt->hdr->file);
 				if (*opt & QSE_DHCP4_OPT_OVERLOAD_SNAME) optlen[2] = QSE_SIZEOF(pkt->hdr->sname);
 			}
