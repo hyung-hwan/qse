@@ -212,7 +212,11 @@ qse_dhcp4_opt_hdr_t* qse_dhcp4_find_option (const qse_dhcp4_pktinf_t* pkt, int c
 			qse_dhcp4_opt_hdr_t* opthdr;
 
 			/* at least 1 byte is available. the check is because of PADDING or END */
-			if (*opt == QSE_DHCP4_OPT_PADDING) continue;
+			if (*opt == QSE_DHCP4_OPT_PADDING)
+			{
+				opt++;
+				continue;
+			}
 			if (*opt == QSE_DHCP4_OPT_END)
 			{
 				if (code == QSE_DHCP4_OPT_END)
