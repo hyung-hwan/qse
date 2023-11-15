@@ -9,5 +9,5 @@ embedding application and an embedded object from each other.
 * The project code is hosted at https://code.miflux.com/hyung-hwan/qse and is mirrored
   at https://github.com/hyung-hwan/qse
 
-* [QSEAWK Language](qse/doc/page/awk-lang.md)
-* [QSEAWK Embedding Guide](qse/doc/page/awk-embed.md)
+* [QSEAWK Language](doc/page/awk-lang.md)
+* [QSEAWK Embedding Guide](doc/page/awk-embed.md)
