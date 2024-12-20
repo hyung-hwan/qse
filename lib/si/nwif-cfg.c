@@ -597,10 +597,10 @@ static int get_nwifcfg (int s, qse_nwifcfg_t* cfg, struct ifreq* ifr)
 	QSE_MEMSET (cfg->ethw, 0, QSE_SIZEOF(cfg->ethw));
 	
 	if (ioctl (s, SIOCGIFADDR, ifr) >= 0)
-		qse_skadtonwad (&ifr->ifr_addr, &cfg->addr);
+		qse_skadtonwad ((const qse_skad_t*)&ifr->ifr_addr, &cfg->addr);
 
 	if (ioctl (s, SIOCGIFNETMASK, ifr) >= 0)
-		qse_skadtonwad (&ifr->ifr_addr, &cfg->mask);
+		qse_skadtonwad ((const qse_skad_t*)&ifr->ifr_addr, &cfg->mask);
 
 	#if defined(__linux)
 	if (cfg->addr.type == QSE_NWAD_NX && cfg->mask.type == QSE_NWAD_NX && cfg->type == QSE_NWIFCFG_IN6)
@@ -613,13 +613,13 @@ static int get_nwifcfg (int s, qse_nwifcfg_t* cfg, struct ifreq* ifr)
 	if ((cfg->flags & QSE_NWIFCFG_BCAST) &&
 	    ioctl (s, SIOCGIFBRDADDR, ifr) >= 0)
 	{
-		qse_skadtonwad (&ifr->ifr_broadaddr, &cfg->bcast);
+		qse_skadtonwad ((const qse_skad_t*)&ifr->ifr_broadaddr, &cfg->bcast);
 	}
 
 	if ((cfg->flags & QSE_NWIFCFG_PTOP) &&
 	    ioctl (s, SIOCGIFDSTADDR, ifr) >= 0)
 	{
-		qse_skadtonwad (&ifr->ifr_dstaddr, &cfg->ptop);
+		qse_skadtonwad ((const qse_skad_t*)&ifr->ifr_dstaddr, &cfg->ptop);
 	}
 
 	#if defined(SIOCGIFHWADDR)
@@ -672,7 +672,7 @@ static void get_moreinfo (int s, qse_nwifcfg_t* cfg, struct ifreq* ifr)
 
 		QSE_MEMSET (&ev, 0, QSE_SIZEOF(ev));
 		ev.cmd= ETHTOOL_GLINK;
-		ifr->ifr_data = &ev;
+		ifr->ifr_data = (void*)&ev;
 		if (ioctl (s, SIOCETHTOOL,ifr) >= 0)
 			cfg->flags |= ev.data? QSE_NWIFCFG_LINKUP: QSE_NWIFCFG_LINKDOWN;
 	}

@@ -24,6 +24,10 @@
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if !defined(_GNU_SOURCE)
+#	define _GNU_SOURCE 1
+#endif
+
 #include "mod-sys.h"
 #include "val.h" /* for QSE_AWK_QUICKINT_MAX */
 #include <qse/cmn/str.h>

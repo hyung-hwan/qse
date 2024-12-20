@@ -116,7 +116,7 @@ struct qse_xma_t
  * The qse_xma_dumper_t type defines a printf-like output function
  * for qse_xma_dump().
  */
-typedef int (*qse_xma_dumper_t) (
+typedef qse_ssize_t (*qse_xma_dumper_t) (
 	void*            ctx,
 	const qse_char_t* fmt,
 	...

@@ -571,18 +571,17 @@ typedef int qse_mcint_t;
  */
 
 // You may specify -DQSE_USE_CXX_CHAR16_T in CXXFLAGS to force char16_t with c++.
-#if (defined(__cplusplus) && (defined(QSE_USE_CXX_CHAR16_T) || (__cplusplus >= 201103L) || (defined(_MSC_VER) && _MSC_VER >= 1900))) /* user chosen or C++11 or later */
-#	if defined(QSE_WIDE_CHAR_SIZE) && (QSE_WIDE_CHAR_SIZE >= 4)
+#if (defined(__cplusplus) && defined(QSE_USE_CXX_CHAR16_T) && ((__cplusplus >= 201103L) || (defined(_MSC_VER) && _MSC_VER >= 1900)) && defined(QSE_WIDE_CHAR_SIZE) && (QSE_WIDE_CHAR_SIZE == 4))
 		typedef char32_t           qse_wchar_t;  /* char32_t is an unsigned integer type used for 32-bit wide characters */
 		typedef char32_t           qse_wchau_t; /* same as qse_wchar_t as it is already unsigned */
 #		define QSE_SIZEOF_WCHAR_T 4
 #		define QSE_USE_PREFIX_BIG_U
-#	else
+
+#elif (defined(__cplusplus) && defined(QSE_USE_CXX_CHAR32_T) && ((__cplusplus >= 201103L) || (defined(_MSC_VER) && _MSC_VER >= 1900))  && defined(QSE_WIDE_CHAR_SIZE) && (QSE_WIDE_CHAR_SIZE == 2))
 		typedef char16_t           qse_wchar_t;  /* char16_t is an unsigned integer type used for 16-bit wide characters */
 		typedef char16_t           qse_wchau_t; /* same as qse_wchar_t as it is already unsigned */
 #		define QSE_SIZEOF_WCHAR_T 2
 #		define QSE_USE_PREFIX_SMALL_U
-#	endif
 #elif defined(__cplusplus) && defined(QSE_WIDE_CHAR_SIZE) && (QSE_WIDE_CHAR_SIZE >= 4) && (QSE_SIZEOF_NATIVE_WCHAR_T >= 4)
 	typedef wchar_t           qse_wchar_t;
 	typedef qse_uint32_t      qse_wchau_t;

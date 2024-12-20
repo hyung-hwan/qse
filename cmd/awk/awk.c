@@ -1110,7 +1110,7 @@ oops:
 
 	if (xma_mmgr.ctx) 
 	{
-		if (app_debug) qse_xma_dump (xma_mmgr.ctx, qse_fprintf, QSE_STDERR);
+		if (app_debug) qse_xma_dump (xma_mmgr.ctx, (void*)qse_fprintf, QSE_STDERR);
 		qse_xma_close (xma_mmgr.ctx);
 	}
 	freearg (&arg);

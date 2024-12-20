@@ -409,7 +409,7 @@ static QSE_INLINE int insert_wcs (
 		return -1;
 	}
 	valuedup[1] = QSE_NULL;
-	n = insertm (env, namedup, valuedup);
+	n = insertm(env, namedup, (const qse_mchar_t**)valuedup);
 	QSE_MMGR_FREE (env->mmgr, valuedup[0]);
 	QSE_MMGR_FREE (env->mmgr, namedup);
 
@@ -430,7 +430,7 @@ static QSE_INLINE int append_wcs (qse_env_t* env, const qse_wchar_t* value[])
 	valuedup[0] = qse_wcsatombsdup (value, QSE_NULL, env->mmgr); /* TODO: ignore mbwcerr */
 	if (valuedup == QSE_NULL) return -1;
 	valuedup[1] = QSE_NULL;
-	n = appendm (env, valuedup);
+	n = appendm (env, (const qse_mchar_t**)valuedup);
 	QSE_MMGR_FREE (env->mmgr, valuedup[0]);
 
 	return n;
@@ -461,7 +461,7 @@ static QSE_INLINE int insert_mbs (
 	return n;
 #else
 	/* no conversion -> mchar */
-	return insertm (env, name, value);
+	return insertm(env, name, value);
 #endif
 }
 
@@ -650,7 +650,7 @@ static int insert_sys_mbs (qse_env_t* env, const qse_mchar_t* name)
 	if (v[0])
 	{
 		v[1] = QSE_NULL;
-		ret = insertm (env, name, v);
+		ret = insertm(env, name, (const qse_mchar_t**)v);
 		if (free) QSE_MMGR_FREE (env->mmgr, v[0]);
 	}
 	return ret;

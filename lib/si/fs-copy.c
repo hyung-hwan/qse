@@ -700,7 +700,7 @@ int qse_fs_cpfilembs (qse_fs_t* fs, const qse_mchar_t* srcpath, const qse_mchar_
 	if (flags & QSE_FS_CPFILE_GLOB)
 	{
 		fs->errnum = QSE_FS_ENOERR;
-		if (qse_globmbs(srcpath, copy_file_for_glob, &ctx, DEFAULT_GLOB_FLAGS, fs->mmgr, fs->cmgr) <= -1)
+		if (qse_globmbs(srcpath, (qse_glob_mbscbimpl_t)copy_file_for_glob, &ctx, DEFAULT_GLOB_FLAGS, fs->mmgr, fs->cmgr) <= -1)
 		{
 			if (fs->errnum == QSE_FS_ENOERR) fs->errnum = QSE_FS_EGLOB;
 			ret = -1;
@@ -738,7 +738,7 @@ int qse_fs_cpfilewcs (qse_fs_t* fs, const qse_wchar_t* srcpath, const qse_wchar_
 	if (flags & QSE_FS_CPFILE_GLOB)
 	{
 		fs->errnum = QSE_FS_ENOERR;
-		if (qse_globwcs(srcpath, copy_file_for_glob, &ctx, DEFAULT_GLOB_FLAGS, fs->mmgr, fs->cmgr) <= -1)
+		if (qse_globwcs(srcpath, (qse_glob_wcscbimpl_t)copy_file_for_glob, &ctx, DEFAULT_GLOB_FLAGS, fs->mmgr, fs->cmgr) <= -1)
 		{
 			if (fs->errnum == QSE_FS_ENOERR) fs->errnum = QSE_FS_EGLOB;
 			ret = -1;

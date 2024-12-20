@@ -200,6 +200,17 @@ static void link_task (qse_task_t* task, qse_task_slice_t* slice)
 #if defined(USE_UCONTEXT) && \
     (QSE_SIZEOF_INT == QSE_SIZEOF_INT32_T) && \
     (QSE_SIZEOF_VOID_P == (QSE_SIZEOF_INT32_T * 2))
+/*
+ * man makecontext
+ *
+       On  architectures  where  int  and  pointer types are the same size (e.g., x86-32, where both types are 32
+       bits), you may be able to get away with passing pointers as arguments  to  makecontext()  following  argc.
+       However,  doing  this is not guaranteed to be portable, is undefined according to the standards, and won't
+       work on architectures where pointers are larger than ints.  Nevertheless, starting with glibc  2.8,  glibc
+       makes some changes to makecontext(), to permit this on some 64-bit architectures (e.g., x86-64).
+
+    See the code where makecontext() is invoked. It passed 2 32-bit values if int and pointer size are different
+ */
 
 static void __CALL_BACK__ execute_current_slice (qse_uint32_t ptr1, qse_uint32_t ptr2)
 {
@@ -298,11 +309,11 @@ qse_task_slice_t* qse_task_create (
 	    (QSE_SIZEOF_VOID_P == (QSE_SIZEOF_INT32_T * 2))
 
 	/* limited work around for unclear makecontext parameters */
-	makecontext (&slice->uctx, execute_current_slice, 2, 
-		(qse_uint32_t)(((qse_uintptr_t)slice) >> 32), 
+	makecontext (&slice->uctx, (void*)execute_current_slice, 2,// void* casting to some strict compiler check on
+		(qse_uint32_t)(((qse_uintptr_t)slice) >> 32),         // systems where ucontext.h defines it to void(*)(void).
 		(qse_uint32_t)((qse_uintptr_t)slice & 0xFFFFFFFFu));
 	#else
-	makecontext (&slice->uctx, execute_current_slice, 1, slice);
+	makecontext (&slice->uctx, (void*)execute_current_slice, 1, slice);
 	#endif
 
 #else

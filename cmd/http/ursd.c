@@ -290,7 +290,7 @@ static int insert_to_mux (qse_mux_t* mux, qse_mux_hnd_t handle, int type, int in
 	qse_memset (&evt, 0, QSE_SIZEOF(evt));
 	evt.hnd = handle;
 	evt.mask = (type == TYPE_PIO_IN? QSE_MUX_OUT: QSE_MUX_IN);
-	evt.data = MAKE_MUX_DATA(type, index);
+	evt.data = (void*)MAKE_MUX_DATA(type, index);
 	return qse_mux_insert (mux, &evt);
 }
 
@@ -301,7 +301,7 @@ static int delete_from_mux (qse_mux_t* mux, qse_mux_hnd_t handle, int type, int 
 	qse_memset (&evt, 0, QSE_SIZEOF(evt));
 	evt.hnd = handle;
 	evt.mask = (type == TYPE_PIO_IN? QSE_MUX_OUT: QSE_MUX_IN);
-	evt.data = MAKE_MUX_DATA(type, index);
+	evt.data = (void*)MAKE_MUX_DATA(type, index);
 	return qse_mux_delete (mux, &evt);
 }
 
